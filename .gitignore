@@ -26,3 +26,9 @@
 *.exe
 *.out
 *.app
+
+CMakeLists.txt
+build-system/
+bb.bash
+bbc.bash
+bbr.bash
