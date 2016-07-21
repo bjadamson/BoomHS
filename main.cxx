@@ -1,141 +1,129 @@
-#include <iostream>
-#include <random>
-#include <vector>
-#include <SFML/Graphics.hpp>
-#include <boost/range/irange.hpp>
+#include <memory>
 
 // OpenGL headers
-//#define GLEW_STATIC
-//#include <GL/glew.h>
-//#include <GL/glu.h>
-//#include <GL/gl.h>
+#define GLEW_STATIC
+#include <GL/glew.h>
+#include <GL/glu.h>
+#include <GL/gl.h>
 
 // SDL headers
-//#include <SDL.h>
-//#include <SDL_opengl.h>
+#include <SDL_main.h>
+#include <SDL.h>
+#include <SDL_opengl.h>
 
-void
-debug(char const* msg)
-{
-  std::cerr << msg << std::endl;
-}
+// Boost stuff
+#include <boost/expected/expected.hpp>
+#include <boost/format.hpp>
 
-struct Vertice
-{
-  int const x, y, z;
-  Vertice(int const xp, int const yp, int const zp) : x(xp), y(yp), z(zp) {}
-};
+bool quit;
 
-template<template<typename...> class C>
-struct Terrain
-{
-  C<Vertice> const vertices;
-  Terrain(C<Vertice> &&v) : vertices(std::move(v)) {}
-};
-
-// make verice random
-auto
-make_vertice_r(std::default_random_engine &generator)
-{
-  std::uniform_int_distribution<int> xd{0, 800}, yd{0, 600}, zd{0, 0};
-  return Vertice{xd(generator), yd(generator), zd(generator)};
-}
+SDL_GLContext glContext;
+SDL_Event sdlEvent;
 
 auto
-make_terrain(std::default_random_engine &generator)
-{
-  auto constexpr SIZE = 500;
-  std::vector<Vertice> vertices;
-  vertices.reserve(SIZE);
-  auto constexpr last = 10;
-  for(auto i = 0; i < SIZE; ++i) {
-    vertices.emplace_back(make_vertice_r(generator));
-  }
-  return Terrain<std::vector>{std::move(vertices)};
-}
+make_thing() { return boost::make_unexpected("hi"); }
 
-template<typename Player>
-inline void
-move_player(Player &p)
+auto
+make_window()
 {
-  auto constexpr DELTA = 1.01;
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-    p.move(-DELTA, 0.00);
-  }
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-    p.move(+DELTA, 0.00);
-  }
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-    p.move(0, -DELTA);
-  }
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-    p.move(0, DELTA);
-  }
-}
+  auto const title = "Hello World!";
+  auto const flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
+  int const x = SDL_WINDOWPOS_CENTERED;
+  int const y = SDL_WINDOWPOS_CENTERED;
+  auto const height = 800, width = 600;
+  auto raw = SDL_CreateWindow(title, x, y, width, height, flags);
 
-template<typename E>
-inline bool
-should_close(E &event)
-{
-  bool const window_closed = event.type == sf::Event::Closed;
-  bool const escape_key_pressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Escape);
-  return escape_key_pressed || window_closed;
-}
+  using WindowType = SDL_Window;
+  using WindowPtr = std::unique_ptr<WindowType, decltype(&SDL_DestroyWindow)>;
+  class Window
+  {
+    WindowPtr w_;
+  public:
+    // ctors
+    Window(WindowPtr &&w) : w_(std::move(w)) {}
 
-template<typename T, typename W>
-void
-render_terrain(T &terrain, W &window)
-{
-  std::vector<sf::CircleShape> ccs;
-  ccs.reserve(terrain.vertices.size());
-  for (auto it : terrain.vertices) {
-    sf::CircleShape dot{5.0};
-    dot.setPosition(it.x, it.y);
-    dot.setFillColor(sf::Color::Blue);
-    ccs.emplace_back(dot);
+    // movable, not copyable
+    Window(Window &&) = default;
+    Window& operator=(Window &&) = default;
+
+    Window(Window const&) = delete;
+    Window& operator=(Window const&) = delete;
+
+    // Allow getting the window's SDL pointer
+    WindowType* raw() { return this->w_.get(); }
+  };
+
+  if (nullptr == raw) {
+    auto const fmt = boost::format("SDL could not initialize! SDL_Error: %s\n") % SDL_GetError();
+    return boost::make_unexpected(boost::str(fmt));
   }
-  for (auto it : ccs) {
-    window.draw(it);
-  }
+  WindowPtr window_ptr{raw, &SDL_DestroyWindow};
+  return boost::make_expected(Window{std::move(window_ptr)});
 }
 
 int
-notmain()
+main(int argc, char *argv[])
 {
-  debug("before");
-  sf::RenderWindow window(sf::VideoMode(800, 600), "KILL EM ALL BR");
-  debug("after");
-  sf::CircleShape minimap{100.f};
-  minimap.setFillColor(sf::Color::Green);
+    quit = false;
 
-  sf::CircleShape player{10.f};
-  player.setFillColor(sf::Color::Red);
-  player.setPosition(20, 20);
+    //Use OpenGL 3.1 core
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-  std::default_random_engine generator;
-  auto const terrain = make_terrain(generator);
-
-  while (window.isOpen()) {
-    sf::Event event;
-    while (window.pollEvent(event)) {
-      if (should_close(event)) {
-        return 0;
-      }
-      move_player(player);
-      window.clear();
-      window.draw(minimap);
-      window.draw(player);
-      render_terrain(terrain, window);
-      window.display();
+    // Initialize video subsystem
+    if(SDL_Init(SDL_INIT_VIDEO) < 0)
+    {
+        // Display error message
+        printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
+        return false;
     }
-  }
-  return 0;
-}
+    auto window = make_window();
+    if(window.raw() == NULL )
+    {
+        // Display error message
+        printf( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
+        return false;
+    }
+    else
+    {
+        // Create OpenGL context
+        glContext = SDL_GL_CreateContext(window.raw());
 
-int
-main(int argc, char **argv)
-{
-  std::cerr << "saa" << std::endl;
-  return notmain();
-}
+        if( glContext == NULL )
+        {
+            // Display error message
+            printf( "OpenGL context could not be created! SDL Error: %s\n", SDL_GetError() );
+            return false;
+        }
+        else
+        {
+            // Initialize glew
+            glewInit();
+        }
+    }
 
+    // Game loop
+    while (!quit)
+    {
+        while(SDL_PollEvent(&sdlEvent) != 0)
+        {
+            // Esc button is pressed
+            if(sdlEvent.type == SDL_QUIT)
+            {
+                quit = true;
+            }
+        }
+
+        // Set background color as cornflower blue
+        glClearColor(0.39f, 0.58f, 0.93f, 1.f);
+        // Clear color buffer
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // Update window with OpenGL rendering
+        SDL_GL_SwapWindow(window.raw());
+    }
+
+    //Quit SDL subsystems
+    SDL_Quit();
+    return 0;
+}

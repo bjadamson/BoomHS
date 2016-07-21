@@ -10,6 +10,7 @@ BINARY="${BUILD}/bin/boomhs"
 ## Does not require the project to be rebootstrapped.
 function clean() {
   rm -f ${BINARY}
+  rm -rf ${BUILD}/CMakeFiles
 }
 
 # Delete all the build artifacts from the build directory.

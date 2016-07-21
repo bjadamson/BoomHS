@@ -17,19 +17,21 @@ conan_basic_setup()
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++14 -stdlib=libc++")
 
 add_executable(boomhs main.cxx)
+
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+include_directories(${OPENGL_INDLUDE_DIRS}  ${GLEW_INCLUDE_DIRS})
+target_link_libraries(boomhs ${OPENGL_LIBRARIES}  ${GLEW_LIBRARIES})
+
+include_directories(external/include)
 
 include(FindPkgConfig)
 pkg_search_module(SDL2 REQUIRED sdl2)
 include_directories(${SDL2_INCLUDE_DIRS} ${SDL2IMAGE_INCLUDE_DIRS})
 target_link_libraries(boomhs ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES})
-
-# Detect and add SFML
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
-find_package(SFML 2.0 REQUIRED system window graphics network audio)
-target_link_libraries(boomhs ${CONAN_LIBS})
-target_link_libraries(boomhs ${SFML_LIBRARIES})
 EOF
 
 cat > "${BUILD}/conanfile.txt" << "EOF"
@@ -39,11 +41,9 @@ EOF
 
 cd ${BUILD}
 echo $(pwd)
-conan install -s compiler=clang -s arch=x86 -s compiler.version=3.9
+conan install -s compiler=clang -s arch=x86 -s compiler.version=3.9 -s compiler.libcxx=libc++ -s build_type=Debug
 cmake .. -G "Unix Makefiles" \
-  -DCMAKE_BUILD_TYPE=Debug \
-  -DCMAKE_C_COMPILER=/usr/local/bin/clang \
-  -DCMAKE_CXX_COMPILER=/usr/local/bin/clang++
+  -DCMAKE_BUILD_TYPE=Debug
 cd ..
 
 function link_script() {
@@ -53,4 +53,5 @@ function link_script() {
 # Usage is "bb", "bbc", and "bbr"
 link_script bb.bash
 link_script bbc.bash
+link_script cbb.bash
 link_script bbr.bash

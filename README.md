@@ -1,6 +1,9 @@
 # BoomHS
 Boom Headshot?!
 
+#### Required Dependencies (this is not an exhaustive list AT ALL)
+1. sudo apt-get intall libc++-dev
+
 #### Getting Started
 1. Consider adding the following alias's to your shell.
  * alias bb=./bb.bash
