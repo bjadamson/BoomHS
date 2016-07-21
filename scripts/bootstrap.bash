@@ -2,8 +2,7 @@
 source "scripts/common.bash"
 
 # Control Begins Here !!
-rm -rf ${BUILD}
-rm -f "CMakeLists.txt"
+full_clean
 
 # Now let's rebuild everything.
 mkdir -p ${BUILD}
@@ -15,14 +14,22 @@ cmake_minimum_required(VERSION 2.8.12)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED on)
+set(CMAKE_CXX_COMPILER "clang++")
+
 add_executable(boomhs main.cxx)
+
+include(FindPkgConfig)
+pkg_search_module(SDL2 REQUIRED sdl2)
+include_directories(${SDL2_INCLUDE_DIRS} ${SDL2IMAGE_INCLUDE_DIRS})
+target_link_libraries(boomhs ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES})
 
 # Detect and add SFML
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 find_package(SFML 2.0 REQUIRED system window graphics network audio)
 target_link_libraries(boomhs ${CONAN_LIBS})
 target_link_libraries(boomhs ${SFML_LIBRARIES})
-
 EOF
 
 cat > "${BUILD}/conanfile.txt" << "EOF"
@@ -39,7 +46,11 @@ cmake .. -G "Unix Makefiles" \
   -DCMAKE_CXX_COMPILER=/usr/local/bin/clang++
 cd ..
 
+function link_script() {
+  ln -fs scripts/$1 ./$2
+}
+
 # Usage is "bb", "bbc", and "bbr"
-ln -s scripts/bb.bash ./bb.bash
-ln -s scripts/bbc.bash ./bbc.bash
-ln -s scripts/bbr.bash ./bbr.bash
+link_script bb.bash
+link_script bbc.bash
+link_script bbr.bash
