@@ -27,6 +27,7 @@ include_directories(${OPENGL_INDLUDE_DIRS}  ${GLEW_INCLUDE_DIRS})
 target_link_libraries(boomhs ${OPENGL_LIBRARIES}  ${GLEW_LIBRARIES})
 
 include_directories(external/include)
+include_directories(include)
 
 include(FindPkgConfig)
 pkg_search_module(SDL2 REQUIRED sdl2)

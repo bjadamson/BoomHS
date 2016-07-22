@@ -1,0 +1,139 @@
+#pragma once
+#include <string>
+#include <boost/expected/expected.hpp>
+
+#include <game/Debug.hpp>
+#include <game/Globals.hpp>
+
+// OpenGL headers
+#define GLEW_STATIC
+#include <GL/glew.h>
+#include <GL/glu.h>
+#include <GL/gl.h>
+
+// SDL headers
+#include <SDL_main.h>
+#include <SDL.h>
+#include <SDL_opengl.h>
+
+namespace game
+{
+namespace sdl
+{
+
+boost::expected<GlobalsInitOk, std::string>
+init()
+{
+  //Use OpenGL 3.1 core
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
+  // Initialize video subsystem
+  if(SDL_Init(SDL_INIT_VIDEO) < 0)
+  {
+    // Display error message
+    auto const fmt = boost::format("SDL could not initialize! SDL_Error: %s\n") % SDL_GetError();
+    return FORMAT_STRERR(fmt);
+  }
+  return GlobalsInitOk{};
+}
+
+void
+destroy()
+{
+  if (SDL_WasInit(SDL_INIT_EVERYTHING)) {
+    SDL_Quit();
+  }
+}
+
+using WindowType = SDL_Window;
+using WindowPtr = std::unique_ptr<WindowType, decltype(&SDL_DestroyWindow)>;
+class Window
+{
+  WindowPtr w_;
+public:
+  // ctors
+  Window(WindowPtr &&w) : w_(std::move(w)) {}
+
+  // movable, not copyable
+  Window(Window &&) = default;
+  Window& operator=(Window &&) = default;
+
+  Window(Window const&) = delete;
+  Window& operator=(Window const&) = delete;
+
+  // Allow getting the window's SDL pointer
+  WindowType* raw() { return this->w_.get(); }
+};
+
+boost::expected<Window, std::string>
+make_window()
+{
+  // Hidden dependency between the ordering here, so all the logic exists in one place.
+  //
+  // * The OpenGL context MUST be initialized before the call to glewInit() takes place.
+  // This is because there is a hidden dependency on glew, it expects an OpenGL context to be
+  // initialized. The glew library knows how to find the OpenGL context in memory without any
+  // reference, so it's a bit like magic.
+  //
+  // NOTE: We don't have to do anything to shutdown glew, the processing closing will handle it (by
+  // design.
+
+  // First, create the SDL window.
+  auto const title = "Hello World!";
+  auto const flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
+  int const x = SDL_WINDOWPOS_CENTERED;
+  int const y = SDL_WINDOWPOS_CENTERED;
+  auto const height = 800, width = 600;
+  auto raw = SDL_CreateWindow(title, x, y, width, height, flags);
+  if (nullptr == raw) {
+    auto const fmt = boost::format("SDL could not initialize! SDL_Error: %s\n") % SDL_GetError();
+    return boost::make_unexpected(boost::str(fmt));
+  }
+  WindowPtr window_ptr{raw, &SDL_DestroyWindow};
+
+  // Second, create the graphics context.
+  auto *gl_context = SDL_GL_CreateContext(window_ptr.get());
+  if(nullptr == gl_context) {
+    // Display error message
+    auto const fmt = boost::format("OpenGL context could not be created! SDL Error: %s\n")
+      % SDL_GetError();
+    return FORMAT_STRERR(fmt);
+  }
+
+  // Third, initialize GLEW.
+  auto const glew_status = glewInit();
+  if (GLEW_OK != glew_status) {
+    auto const fmt = boost::format("GLEW could not initialize! GLEW error: %s\n")
+      % glewGetErrorString(glew_status);
+    return FORMAT_STRERR(fmt);
+  }
+  return Window{std::move(window_ptr)};
+}
+
+void
+game_loop(Window &&window)
+{
+  bool quit = false;
+  SDL_Event sdlEvent;
+
+  while (!quit) {
+    while(SDL_PollEvent(&sdlEvent) != 0) {
+      // Esc button is pressed
+      if(sdlEvent.type == SDL_QUIT) {
+        quit = true;
+      }
+    }
+
+    // Set background color as cornflower blue
+    glClearColor(0.39f, 0.58f, 0.93f, 1.f);
+    // Clear color buffer
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // Update window with OpenGL rendering
+    SDL_GL_SwapWindow(window.raw());
+  }
+}
+
+} // ns sdl
+} // ns game
