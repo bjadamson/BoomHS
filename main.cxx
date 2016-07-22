@@ -15,7 +15,6 @@
 // Boost stuff
 #include <boost/expected/expected.hpp>
 #include <boost/format.hpp>
-#include <boost/optional.hpp>
 
 using WindowType = SDL_Window;
 using WindowPtr = std::unique_ptr<WindowType, decltype(&SDL_DestroyWindow)>;
@@ -37,9 +36,23 @@ public:
   WindowType* raw() { return this->w_.get(); }
 };
 
+#define FORMAT_STRERR(ARG1) \
+  boost::make_unexpected(boost::str(ARG1))
+
 boost::expected<Window, std::string>
 make_window()
 {
+  // Hidden dependency between the ordering here, so all the logic exists in one place.
+  //
+  // * The OpenGL context MUST be initialized before the call to glewInit() takes place.
+  // This is because there is a hidden dependency on glew, it expects an OpenGL context to be
+  // initialized. The glew library knows how to find the OpenGL context in memory without any
+  // reference, so it's a bit like magic.
+  //
+  // NOTE: We don't have to do anything to shutdown glew, the processing closing will handle it (by
+  // design.
+
+  // First, create the SDL window.
   auto const title = "Hello World!";
   auto const flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
   int const x = SDL_WINDOWPOS_CENTERED;
@@ -51,32 +64,9 @@ make_window()
     return boost::make_unexpected(boost::str(fmt));
   }
   WindowPtr window_ptr{raw, &SDL_DestroyWindow};
-  return Window{std::move(window_ptr)};
-}
 
-struct GfxContext
-{
-  Window &&window;
-  SDL_GLContext context; // TODO: delete on destruction
-
-  GfxContext(Window &&w, SDL_GLContext c) : window(std::move(w)), context(c) {}
-
-  // movable, not copyable
-  GfxContext(GfxContext &&) = default;
-  GfxContext& operator=(GfxContext &&) = default;
-
-  GfxContext(GfxContext const&) = delete;
-  GfxContext& operator=(GfxContext const&) = delete;
-};
-
-#define FORMAT_STRERR(ARG1) \
-  boost::make_unexpected(boost::str(ARG1))
-
-boost::expected<GfxContext, std::string>
-make_gfx_context(Window &&w)
-{
-  auto *gl_context = SDL_GL_CreateContext(w.raw());
-
+  // Second, create the graphics context.
+  auto *gl_context = SDL_GL_CreateContext(window_ptr.get());
   if(nullptr == gl_context) {
     // Display error message
     auto const fmt = boost::format("OpenGL context could not be created! SDL Error: %s\n")
@@ -84,25 +74,19 @@ make_gfx_context(Window &&w)
     return FORMAT_STRERR(fmt);
   }
 
-  // Hidden dependency between the ordering here, so all the logic exists in one place.
-  // 
-  // 1. The OpenGL context MUST be initialized before the call to glewInit() takes place.
-  //    This is because there is a hidden dependency on glew, it expects an OpenGL context to be
-  //    initialized. The glew library knows how to find the OpenGL context in memory without any
-  //    reference, so it's a bit like magic.
-  //
-  // We don't have to do anything to shutdown glew, the processing closing will handle it (by
-  // design).
+  // Third, initialize GLEW.
   auto const glew_status = glewInit();
   if (GLEW_OK != glew_status) {
     auto const fmt = boost::format("GLEW could not initialize! GLEW error: %s\n")
       % glewGetErrorString(glew_status);
     return FORMAT_STRERR(fmt);
   }
-  return GfxContext{std::move(w), gl_context};
+  return Window{std::move(window_ptr)};
 }
 
-boost::optional<std::string>
+struct GlobalsInitOk {};
+
+boost::expected<GlobalsInitOk, std::string>
 init_globals()
 {
   //Use OpenGL 3.1 core
@@ -115,21 +99,19 @@ init_globals()
   {
     // Display error message
     auto const fmt = boost::format("SDL could not initialize! SDL_Error: %s\n") % SDL_GetError();
-    return boost::make_optional(boost::str(fmt));
+    return FORMAT_STRERR(fmt);
   }
-  return boost::none;
+  return GlobalsInitOk{};
 }
 
 void
-main_loop(GfxContext &&w)
+game_loop(Window &&window)
 {
   bool quit = false;
   SDL_Event sdlEvent;
 
-  while (!quit)
-  {
-    while(SDL_PollEvent(&sdlEvent) != 0)
-    {
+  while (!quit) {
+    while(SDL_PollEvent(&sdlEvent) != 0) {
       // Esc button is pressed
       if(sdlEvent.type == SDL_QUIT) {
         quit = true;
@@ -141,7 +123,7 @@ main_loop(GfxContext &&w)
     // Clear color buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // Update window with OpenGL rendering
-    SDL_GL_SwapWindow(w.window.raw());
+    SDL_GL_SwapWindow(window.raw());
   }
 }
 
@@ -152,17 +134,21 @@ main(int argc, char *argv[])
     std::cerr << "ERROR: '" << error << "'\n";
     return boost::make_unexpected(error);
   };
-  auto const init_error = init_globals();
-  if ( init_error) {
-    on_error(*init_error);
+  auto globals_init = init_globals().catch_error(on_error);
+  if (! globals_init) {
+    // If we failed to initialize the globals, just exit the program.
     return EXIT_FAILURE;
   }
 
+  // Logic begins here, we create a window and pass it to the game_loop function
   make_window()
-    .bind(make_gfx_context)
-    .map(main_loop)
+    .map(game_loop)
     .catch_error(on_error);
 
-  SDL_Quit();
+  // If an error occurs during the game_loop function, on_error() is invoked exactly once before
+  // control contintues past this point.
+  if (SDL_WasInit(SDL_INIT_EVERYTHING)) {
+    SDL_Quit();
+  }
   return 0;
 }
