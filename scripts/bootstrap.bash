@@ -9,7 +9,7 @@ mkdir -p ${BUILD}
 
 cat > "${ROOT}/CMakeLists.txt" << "EOF"
 project(BoomHS)
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.0.00)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
@@ -19,21 +19,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++14 -stdlib=libc++")
 
-add_executable(boomhs main.cxx)
+## DEFINITIONS
+file(GLOB INTERNAL_INCLUDE_DIRS include external/expected/include external/fmt)
+file(GLOB SOURCE_ENGINE_GFX source/engine/gfx/*)
 
+## move these
+add_executable(boomhs main.cxx ${SOURCE_ENGINE_GFX})
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
-include_directories(${OPENGL_INDLUDE_DIRS}  ${GLEW_INCLUDE_DIRS})
-target_link_libraries(boomhs ${OPENGL_LIBRARIES}  ${GLEW_LIBRARIES})
 
-include_directories(include)
-include_directories(external/expected/include)
-include_directories(external/fmt)
-
+## Build the application
 include(FindPkgConfig)
 pkg_search_module(SDL2 REQUIRED sdl2)
-include_directories(${SDL2_INCLUDE_DIRS} ${SDL2IMAGE_INCLUDE_DIRS})
-target_link_libraries(boomhs ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES})
+target_include_directories(boomhs PUBLIC ${SDL2_INCLUDE_DIRS} ${SDL2IMAGE_INCLUDE_DIRS} ${INTERNAL_INCLUDE_DIRS} ${OPENGL_INDLUDE_DIRS} ${GLEW_INCLUDE_DIRS})
+target_link_libraries(boomhs ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES})
 EOF
 
 cat > "${BUILD}/conanfile.txt" << "EOF"
