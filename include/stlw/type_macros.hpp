@@ -48,6 +48,11 @@ public:
   operator T() const { return this->t_; }
 };
 
+// Wrapper around a function that will be called when the instance of the class is destroyed.
+//
+// Must be passed an r-value, to keep semantics simple.
+// Cannot be moved or copied, and this class does NOT expose the function it will call after it is
+// constructed.
 template<class FN>
 class DestroyFN
 {
@@ -60,9 +65,9 @@ public:
   DestroyFN(DestroyFN const&) = delete;
   DestroyFN& operator=(DestroyFN const&) = delete;
 
-  // movable
+  // move-constructible, but NOT move-assignable.
   DestroyFN(DestroyFN &&) = default;
-  DestroyFN& operator=(DestroyFN &&) = default;
+  DestroyFN& operator=(DestroyFN &&) = delete;
 };
 
 template<class FN>
