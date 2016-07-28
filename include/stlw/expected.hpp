@@ -5,8 +5,9 @@ namespace stlw
 {
 // Macros and helper-macros for the DO_MONAD() macro.
 #define ONLY_OK(VAR_DECL, V, expr) \
-    if (! expr) { return boost::make_unexpected(expr.error()); } \
-    VAR_DECL = *expr;
+  auto V{std::move(expr)}; \
+  if (! V) { return boost::make_unexpected(V.error()); } \
+  VAR_DECL {*std::move(V)};
 
 #define ONLY_OK_HELPER(VAR_DECL, V, expr) \
   ONLY_OK(VAR_DECL, expected_##V, expr)

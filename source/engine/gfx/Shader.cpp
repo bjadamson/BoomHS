@@ -106,12 +106,10 @@ link_program(GLuint const program_id)
     auto const program_log = get_program_log(program_id);
     printf("'%s': %s\n", prefix, program_log.data());
   };
-  dump_program_log(program_id, "inside link-program RIGHT AFTER");
 
   // Check the program
   GLint Result;
   glGetProgramiv(program_id, GL_LINK_STATUS, &Result);
-  dump_program_log(program_id, "inside link-program after glGetProgramiv");
   if (Result == GL_FALSE) {
     return boost::make_unexpected("Linking the shader failed.");
   }
