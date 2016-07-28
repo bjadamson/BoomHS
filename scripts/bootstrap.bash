@@ -36,13 +36,16 @@ target_link_libraries(boomhs ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES} ${OPENGL_L
 EOF
 
 cat > "${BUILD}/conanfile.txt" << "EOF"
+[requires]
+fmt/3.0.0@memsharded/testing
+
 [generators]
 cmake
 EOF
 
 cd ${BUILD}
 echo $(pwd)
-conan install -s compiler=clang -s arch=x86 -s compiler.version=3.9 -s compiler.libcxx=libc++ -s build_type=Debug
+conan install --build missing -s compiler=clang -s arch=x86 -s compiler.version=3.9 -s compiler.libcxx=libc++ -s build_type=Debug
 cmake .. -G "Unix Makefiles" \
   -DCMAKE_BUILD_TYPE=Debug
 cd ..
