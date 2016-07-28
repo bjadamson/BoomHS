@@ -11,7 +11,7 @@
 #include <stlw/os.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
-#include <engine/gfx/Shader.hpp>
+#include <engine/gfx/shader.hpp>
 
 using ShaderHandle = stlw::ImplicitelyCastableMovableWrapper<GLuint, decltype(glDeleteShader)>;
 
@@ -62,7 +62,7 @@ retrieve_gl_log(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei*, GLchar
   return std::string{buffer.cbegin(), buffer.cend()};
 }
 
-boost::expected<ShaderHandle, std::string>
+stlw::result<ShaderHandle, std::string>
 compile_shader(char const* data, GLenum const type)
 {
   GLuint const handle = glCreateShader(type);
@@ -74,27 +74,27 @@ compile_shader(char const* data, GLenum const type)
     //return ShaderHandle{handle, glDeleteShader};
   }
   auto const get_shader_log = [](auto const handle) { return retrieve_gl_log(handle, glGetShaderInfoLog); };
-  return boost::make_unexpected(get_shader_log(handle));
+  return stlw::make_error(get_shader_log(handle));
 }
 
 template<typename T>
-boost::expected<ShaderHandle, std::string>
+stlw::result<ShaderHandle, std::string>
 compile_shader(T const& data, GLenum const type)
 { return compile_shader(data.c_str(), type); }
 
-boost::expected<GLuint, std::string>
+stlw::result<GLuint, std::string>
 create_program()
 {
   GLuint const program_id = glCreateProgram();
   if (0 == program_id) {
-    return boost::make_unexpected("GlCreateProgram returned 0.");
+    return stlw::make_error("GlCreateProgram returned 0.");
   }
   return program_id;
 }
 
 struct CreateProgramOK{};
 
-boost::expected<CreateProgramOK, std::string>
+stlw::result<CreateProgramOK, std::string>
 link_program(GLuint const program_id)
 {
   // Link the program
@@ -111,7 +111,7 @@ link_program(GLuint const program_id)
   GLint Result;
   glGetProgramiv(program_id, GL_LINK_STATUS, &Result);
   if (Result == GL_FALSE) {
-    return boost::make_unexpected("Linking the shader failed.");
+    return stlw::make_error("Linking the shader failed.");
   }
   return CreateProgramOK{};
 }
@@ -123,8 +123,8 @@ namespace engine
 namespace gfx
 {
 
-boost::expected<GLuint, std::string>
-LoadShaders(char const* vertex_file_path, char const* fragment_file_path)
+stlw::result<GLuint, std::string>
+load_shaders(char const* vertex_file_path, char const* fragment_file_path)
 {
   /*
   auto const dump_program_log = [](auto const program_id, char const* prefix)

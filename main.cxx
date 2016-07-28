@@ -1,16 +1,15 @@
 #include <memory>
 #include <cstdlib>
 
-// Boost stuff
-#include <boost/expected/expected.hpp>
-#include <game/Sdl.hpp>
+#include <stlw/result.hpp>
+#include <game/sdl.hpp>
 
 int
 main(int argc, char *argv[])
 {
   auto on_error = [](auto error) {
     std::cerr << "ERROR: '" << error << "'\n";
-    return boost::make_unexpected(error);
+    return stlw::make_error(error);
   };
   auto globals_init = game::sdl::init().catch_error(on_error);
   if (! globals_init) {

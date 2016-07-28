@@ -1,16 +1,13 @@
 #pragma once
 #include <string>
 #include <iomanip>
-#include <boost/expected/expected.hpp>
 
-#include <game/Debug.hpp>
-#include <game/Globals.hpp>
+#include <stlw/types.hpp>
+#include <game/debug.hpp>
 
 #include <engine/gfx/glew_gfx.hpp>
 #include <engine/window/sdl_window.hpp>
-
-#include <engine/gfx/Shader.hpp>
-
+#include <engine/gfx/shader.hpp>
 
 // TODO: rm
 SDL_GLContext gl_context;
@@ -30,7 +27,7 @@ namespace game
 namespace sdl
 {
 
-boost::expected<GlobalsInitOk, std::string>
+stlw::result<stlw::empty_type, std::string>
 init()
 {
   // (from the docs) The requested attributes should be set before creating an OpenGL window
@@ -66,7 +63,7 @@ init()
     auto const fmt = boost::format("SDL could not initialize! SDL_Error: %s\n") % SDL_GetError();
     return FORMAT_STRERR(fmt);
   }
-  return GlobalsInitOk{};
+  return stlw::empty_type{};
 }
 
 void
@@ -77,27 +74,27 @@ destroy()
   }
 }
 
-using WindowType = SDL_Window;
-using WindowPtr = std::unique_ptr<WindowType, decltype(&SDL_DestroyWindow)>;
-class Window
+using window_type = SDL_Window;
+using window_ptr = std::unique_ptr<window_type, decltype(&SDL_DestroyWindow)>;
+class window
 {
-  WindowPtr w_;
+  window_ptr w_;
 public:
   // ctors
-  Window(WindowPtr &&w) : w_(std::move(w)) {}
+  window(window_ptr &&w) : w_(std::move(w)) {}
 
   // movable, not copyable
-  Window(Window &&) = default;
-  Window& operator=(Window &&) = default;
+  window(window &&) = default;
+  window& operator=(window &&) = default;
 
-  Window(Window const&) = delete;
-  Window& operator=(Window const&) = delete;
+  window(window const&) = delete;
+  window& operator=(window const&) = delete;
 
   // Allow getting the window's SDL pointer
-  WindowType* raw() { return this->w_.get(); }
+  window_type* raw() { return this->w_.get(); }
 };
 
-boost::expected<Window, std::string>
+stlw::result<window, std::string>
 make_window()
 {
   // Hidden dependency between the ordering here, so all the logic exists in one place.
@@ -119,9 +116,9 @@ make_window()
   auto raw = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
   if (nullptr == raw) {
     auto const fmt = boost::format("SDL could not initialize! SDL_Error: %s\n") % SDL_GetError();
-    return boost::make_unexpected(boost::str(fmt));
+    return stlw::make_error(boost::str(fmt));
   }
-  WindowPtr window_ptr{raw, &SDL_DestroyWindow};
+  window_ptr window_ptr{raw, &SDL_DestroyWindow};
 
   // Second, create the graphics context.
   gl_context = SDL_GL_CreateContext(window_ptr.get());
@@ -141,17 +138,17 @@ make_window()
       % glewGetErrorString(glew_status);
     return FORMAT_STRERR(fmt);
   }
-  return Window{std::move(window_ptr)};
+  return window{std::move(window_ptr)};
 }
 
 void
-game_loop(Window &&window)
+game_loop(window &&window)
 {
   bool quit = false;
   SDL_Event sdlEvent;
 
   // Create and compile our GLSL program from the shaders
-  auto const expected_program = engine::gfx::LoadShaders("shader.vert", "shader.frag");
+  auto const expected_program = engine::gfx::load_shaders("shader.vert", "shader.frag");
   if (! expected_program) {
     std::cerr << "expected_program is error '" << expected_program.error() << "'\n";
     quit = true;

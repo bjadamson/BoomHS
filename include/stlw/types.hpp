@@ -1,9 +1,9 @@
 #pragma once
 
-namespace game
+namespace stlw
 {
 
 // Dummy structure used to mean a value is present.
-struct GlobalsInitOk {};
+struct empty_type {};
 
-} // ns game
+} // ns stlw

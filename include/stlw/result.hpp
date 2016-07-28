@@ -3,10 +3,21 @@
 
 namespace stlw
 {
+
+template<typename ...P>
+decltype(auto)
+make_error(P &&...p)
+{
+  return boost::make_unexpected(std::forward<P>(p)...);
+}
+
+template<typename T, typename E>
+using result = ::boost::expected<T, E>;
+
 // Macros and helper-macros for the DO_MONAD() macro.
 #define ONLY_OK(VAR_DECL, V, expr) \
   auto V{std::move(expr)}; \
-  if (! V) { return boost::make_unexpected(V.error()); } \
+  if (! V) { return stlw::make_error(V.error()); } \
   VAR_DECL {*std::move(V)};
 
 #define ONLY_OK_HELPER(VAR_DECL, V, expr) \
