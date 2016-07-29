@@ -16,11 +16,11 @@ struct window_policy_template
   static decltype(auto)
   init() { return P::init(); }
 
-  inline static void
-  uninit() { P::destroy(); }
-
   inline static decltype(auto)
   make_window() { return P::make(); }
+
+  inline static void
+  uninit() { P::uninit(); }
 
   // Export this for consumption through this policy.
   using window_type = typename P::window_type;

@@ -27,7 +27,7 @@ public:
   init();
 
   static void
-  destroy();
+  uninit();
 
   static stlw::result<sdl_window, std::string>
   make();

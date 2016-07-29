@@ -4,7 +4,9 @@
 #include <stlw/log.hpp>
 #include <stlw/result.hpp>
 #include <engine/window/window.hpp>
+
 #include <game/game.hpp>
+#include <game/boomhs/boomhs.hpp>
 
 int
 main(int argc, char *argv[])
@@ -25,9 +27,12 @@ main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
+  // Here we select which "policies" we will combine to create our final "game".
+  using gamelib = game::the_library<game::boomhs::policy>;
+
   // Logic begins here, we create a window and pass it to the game_loop function
   engine::window::the_library::make_window()
-    .map(game::the_library::game_loop)
+    .map(gamelib::game_loop)
 
     // If an error occurs during the game_loop function, on_error() is invoked exactly once before
     // control contintues past this point.

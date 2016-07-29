@@ -9,11 +9,14 @@ namespace window
 struct sdl_policy
 {
   sdl_policy() = delete;
-  inline static decltype(auto) init () { return sdl_window::init(); }
-  inline static void destroy() { sdl_window::destroy(); }
-  inline static decltype(auto) make() { return sdl_window::make(); }
 
   using window_type = sdl_window;
+
+  inline static decltype(auto) init () { return window_type::init(); }
+  inline static void uninit() { window_type::uninit(); }
+
+  inline static decltype(auto) make() { return window_type::make(); }
+
 };
 
 } // ns window

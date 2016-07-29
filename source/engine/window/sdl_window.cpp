@@ -57,7 +57,7 @@ sdl_window::init()
 }
 
 void
-sdl_window::destroy()
+sdl_window::uninit()
 {
   if (SDL_WasInit(SDL_INIT_EVERYTHING)) {
     SDL_Quit();

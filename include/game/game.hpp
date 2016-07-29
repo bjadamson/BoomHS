@@ -1,9 +1,30 @@
 #pragma once
-#include <game/boomhs_policy.hpp>
 #include <engine/window/window.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace game
 {
+
+class game_data
+{
+  using window = ::engine::window::window;
+
+  NO_COPY(game_data);
+
+  // private ctor
+  game_data(window &&w, float const& t) : window_(std::move(w)), triangle_(t) {}
+
+public:
+  // fields
+  window window_;
+  float const& triangle_;
+
+  MOVE_DEFAULT(game_data);
+
+  template<typename ...P>
+  game_data
+  static make(P &&...p) { return game_data{std::forward<P>(p)...}; }
+};
 
 // Genric template we expect a library to provide an implementation of.
 template<typename P>
@@ -21,11 +42,10 @@ struct game_policy_template
   using game_type = typename P::game_type;
 };
 
-// Here we choose to select our the_library sdl::policy implementation, effectively selecting SDL
-// as our windowing library.
-//
-// Isn't that exciting kids? ...
-using the_library = game_policy_template<boomhs_policy>;
-using game = the_library::game_type; // RE-EXPORT
+template<typename P>
+using the_library = game_policy_template<P>;
+
+template<typename P>
+using game = typename the_library<P>::game_type; // RE-EXPORT
 
 } // ns game

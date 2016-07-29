@@ -1,4 +1,4 @@
-#include <game/boomhs.hpp>
+#include <game/boomhs/boomhs.hpp>
 
 // TODO: remove this, THIS is the game loop code and this is sdl specific.
 #include <engine/window/sdl_window.hpp>
@@ -7,9 +7,11 @@
 
 namespace game
 {
+namespace boomhs
+{
 
 stlw::result<stlw::empty_type, std::string>
-boomhs::game_loop(boomhs::window_type &&window)
+boomhs_game::game_loop(boomhs_game::window_type &&window)
 {
   bool quit = false;
   SDL_Event sdlEvent;
@@ -118,4 +120,5 @@ boomhs::game_loop(boomhs::window_type &&window)
   return stlw::make_empty();
 }
 
+} // ns boomhs
 } // ns game
