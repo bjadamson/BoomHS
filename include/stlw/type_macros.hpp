@@ -1,16 +1,32 @@
 #pragma once
 
-#define DEFINE_THIS_COPY_DELETED(CLASSNAME) \
+// BEGIN Class-building macros
+#define NO_COPY(CLASSNAME) \
   CLASSNAME(CLASSNAME const&) = delete; \
   CLASSNAME& operator=(CLASSNAME const&) = delete;
 
-#define DEFINE_THIS_MOVE_DELETED(CLASSNAME) \
+#define NO_MOVE(CLASSNAME) \
   CLASSNAME(CLASSNAME &&) = delete; \
   CLASSNAME& operator=(CLASSNAME &&) = delete;
 
-#define DEFINE_THIS_MOVE_DEFAULT(CLASSNAME) \
+#define NO_COPYMOVE(CLASSNAME) NO_COPY(CLASSNAME) NO_MOVE(CLASSNAME)
+
+#define MOVE_DEFAULT(CLASSNAME) \
   CLASSNAME(CLASSNAME &&) = default; \
   CLASSNAME& operator=(CLASSNAME &&) = default;
+// END class-builing macros
+
+// BEGIN Function-defining macros
+#define DEFINE_WRAPPER_FUNCTION(FN_NAME, FUNCTION_TO_WRAP) \
+template<typename ...P> \
+decltype(auto) \
+FN_NAME(P &&...p) { return FUNCTION_TO_WRAP(std::forward<P>(p)...); }
+
+#define DEFINE_STATIC_WRAPPER_FUNCTION(FN_NAME, FUNCTION_TO_WRAP) \
+template<typename ...P> \
+static decltype(auto) \
+FN_NAME(P &&...p) { return FUNCTION_TO_WRAP(std::forward<P>(p)...); }
+// END Function-defining macros
 
 namespace stlw
 {
@@ -24,8 +40,7 @@ class ICMW
   T t_;
   DF df_;
 
-  // not-copyable
-  DEFINE_THIS_COPY_DELETED(ICMW)
+  NO_COPY(ICMW)
 public:
   ICMW(T &&t, DF const df) : t_(std::move(t)), df_(df) {}
   ICMW(T const t, DF const df) : t_(t), df_(df) {}
@@ -72,8 +87,7 @@ public:
   DestroyFN(FN &&fn) : fn_(std::forward<FN>(fn)) {}
   ~DestroyFN() { this->fn_(); }
 
-  DEFINE_THIS_COPY_DELETED(DestroyFN)
-  DEFINE_THIS_MOVE_DELETED(DestroyFN)
+  NO_COPYMOVE(DestroyFN)
 };
 
 } // ns impl

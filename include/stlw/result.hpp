@@ -1,4 +1,5 @@
 #pragma once
+#include <stlw/types.hpp>
 #include <extlibs/boost_expected.hpp>
 
 namespace stlw
@@ -13,6 +14,7 @@ make_error(P &&...p)
 
 template<typename T, typename E>
 using result = ::boost::expected<T, E>;
+} // ns stlw
 
 // Macros and helper-macros for the DO_MONAD() macro.
 #define ONLY_OK(VAR_DECL, V, expr) \
@@ -33,4 +35,3 @@ using result = ::boost::expected<T, E>;
 #define CONCAT(pre, VAR, expr) INSERT_AUTO(pre##VAR, expr)
 #define EXPAND_VAR(VAR, expr) CONCAT(__ignoreme__, VAR, expr)
 #define DO_EFFECT(expr) EXPAND_VAR(__COUNTER__, expr)
-} // ns stlw

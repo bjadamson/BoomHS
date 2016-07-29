@@ -3,6 +3,21 @@
 #include <stlw/type_macros.hpp>
 #include <extlibs/spdlog.hpp>
 
+// TODO: rm
+/*
+SDL_GLContext gl_context;
+auto const print_matrix = [](auto const& matrix)
+{
+  for (auto i = 0; i < 16; ++i) {
+    if ((i > 0) && ((i % 4) == 0)) {
+      std::cerr << "\n";
+    }
+    std::cerr << " " << "[" << std::to_string(matrix[i]) << "]";
+  }
+  std::cerr << "\n" << std::endl;
+};
+  */
+
 namespace stlw
 {
 
@@ -12,9 +27,9 @@ class logger
   L logger_;
   logger(L &&l) : logger_(std::move(l)) {}
 
-  DEFINE_THIS_COPY_DELETED(logger)
+  NO_COPY(logger)
 public:
-  DEFINE_THIS_MOVE_DEFAULT(logger)
+  MOVE_DEFAULT(logger)
 
 #define LOGGER_IMPL_DEFINE_FORWARDING_FN(FN_NAME) \
     template<typename ...Params> \
