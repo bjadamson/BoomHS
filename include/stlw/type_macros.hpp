@@ -1,5 +1,17 @@
 #pragma once
 
+#define DEFINE_THIS_COPY_DELETED(CLASSNAME) \
+  CLASSNAME(CLASSNAME const&) = delete; \
+  CLASSNAME& operator=(CLASSNAME const&) = delete;
+
+#define DEFINE_THIS_MOVE_DELETED(CLASSNAME) \
+  CLASSNAME(CLASSNAME &&) = delete; \
+  CLASSNAME& operator=(CLASSNAME &&) = delete;
+
+#define DEFINE_THIS_MOVE_DEFAULT(CLASSNAME) \
+  CLASSNAME(CLASSNAME &&) = default; \
+  CLASSNAME& operator=(CLASSNAME &&) = default;
+
 namespace stlw
 {
 
@@ -13,8 +25,7 @@ class ICMW
   DF df_;
 
   // not-copyable
-  ICMW(ICMW const&) = delete;
-  ICMW& operator=(ICMW const&) = delete;
+  DEFINE_THIS_COPY_DELETED(ICMW)
 public:
   ICMW(T &&t, DF const df) : t_(std::move(t)), df_(df) {}
   ICMW(T const t, DF const df) : t_(t), df_(df) {}
@@ -61,13 +72,8 @@ public:
   DestroyFN(FN &&fn) : fn_(std::forward<FN>(fn)) {}
   ~DestroyFN() { this->fn_(); }
 
-  // not-copyable
-  DestroyFN(DestroyFN const&) = delete;
-  DestroyFN& operator=(DestroyFN const&) = delete;
-
-  // not movable
-  DestroyFN(DestroyFN &&) = delete;
-  DestroyFN& operator=(DestroyFN &&) = delete;
+  DEFINE_THIS_COPY_DELETED(DestroyFN)
+  DEFINE_THIS_MOVE_DELETED(DestroyFN)
 };
 
 } // ns impl

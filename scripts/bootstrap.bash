@@ -20,7 +20,7 @@ set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++14 -stdlib=libc++")
 
 ## DEFINITIONS
-file(GLOB INTERNAL_INCLUDE_DIRS include external/expected/include external/fmt)
+file(GLOB INTERNAL_INCLUDE_DIRS include external/expected/include)
 file(GLOB SOURCE_ENGINE_GFX source/engine/gfx/*)
 
 ## move these
@@ -38,6 +38,7 @@ EOF
 cat > "${BUILD}/conanfile.txt" << "EOF"
 [requires]
 fmt/3.0.0@memsharded/testing
+spdlog/0.1@memsharded/testing
 
 [generators]
 cmake

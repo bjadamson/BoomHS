@@ -1,6 +1,7 @@
 #include <memory>
 #include <cstdlib>
 
+#include <stlw/log.hpp>
 #include <stlw/result.hpp>
 #include <game/sdl.hpp>
 
@@ -16,6 +17,9 @@ main(int argc, char *argv[])
     // If we failed to initialize the globals, just exit the program.
     return EXIT_FAILURE;
   }
+
+  auto logger = stlw::log_factory::make_logger("logfile", "txt", 23, 59);
+  logger.info("Hi?");
 
   // Logic begins here, we create a window and pass it to the game_loop function
   game::sdl::make_window()

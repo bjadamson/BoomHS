@@ -1,5 +1,5 @@
 #pragma once
-#include <engine/gfx/glew/extlibs.hpp>
+#include <extlibs/glew.hpp>
 namespace engine
 {
 namespace gfx

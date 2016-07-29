@@ -1,5 +1,5 @@
 #pragma once
-#include "sdl/extlibs.hpp"
+#include <extlibs/sdl.hpp>
 
 namespace engine
 {
