@@ -58,6 +58,8 @@ struct boomhs_game
   static void
   render(window_type &window, GLuint const program_id, GLuint const VAO)
   {
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
     // Render
     log_error(__LINE__);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -111,14 +113,6 @@ struct boomhs_game
       0.5f, -0.5f, 0.0f, W,
       0.0f,  0.5f, 0.0f, W
     };
-
-    GLuint VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    ON_SCOPE_EXIT([&]() { glDeleteVertexArrays(1, &VAO); });
-
-    glGenBuffers(1, &VBO);
-    ON_SCOPE_EXIT([&]() { glDeleteBuffers(1, &VBO); });
-
     auto const send_vertices_gpu = [](auto const& vbo, auto const& vertices)
     {
       // Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
@@ -130,13 +124,16 @@ struct boomhs_game
       glBindBuffer(GL_ARRAY_BUFFER, 0);
       glBindVertexArray(0); // Unbind when we are done with this scope automatically.
     };
+
+    GLuint VBO, VAO;
+    glGenVertexArrays(1, &VAO);
+    ON_SCOPE_EXIT([&]() { glDeleteVertexArrays(1, &VAO); });
+
+    glGenBuffers(1, &VBO);
+    ON_SCOPE_EXIT([&]() { glDeleteBuffers(1, &VBO); });
+
     glBindVertexArray(VAO);
     glEnableVertexAttribArray(0);
-
-    send_vertices_gpu(VBO, vertices);
-
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     // TODO: decide if it's the game loop's responsibility to load the shaders (I'm guessing not)
     DO_MONAD(GLuint const program_id, engine::gfx::load_shaders("shader.vert", "shader.frag"));
@@ -145,6 +142,7 @@ struct boomhs_game
     bool quit = false;
     while (! quit) {
       quit = loop_once(window);
+      send_vertices_gpu(VBO, vertices);
       render(window, program_id, VAO);
     }
     return stlw::make_empty();
