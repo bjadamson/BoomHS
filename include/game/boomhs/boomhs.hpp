@@ -56,7 +56,7 @@ struct boomhs_game
   }
 
   static void
-  render(window_type &window, GLuint const program_id, GLuint const VAO, GLuint const VBO)
+  render(window_type &window, GLuint const program_id, GLuint const VAO)
   {
     // Render
     log_error(__LINE__);
@@ -88,6 +88,7 @@ struct boomhs_game
     log_error(__LINE__);
     glBindVertexArray(VAO);
     log_error(__LINE__);
+
     glDrawArrays(GL_TRIANGLES, 0, 3);
     log_error(__LINE__);
     glBindVertexArray(0);
@@ -98,13 +99,11 @@ struct boomhs_game
     log_error(__LINE__);
     SDL_Delay(20);
     log_error(__LINE__);
-}
+  }
 
   static stlw::result<stlw::empty_type, std::string>
   game_loop(window_type &&window)
   {
-    bool quit = false;
-
     // Set up vertex data (and buffer(s)) and attribute pointers
     constexpr GLfloat W = 1.0f;
     constexpr GLfloat vertices[] = {
@@ -112,6 +111,7 @@ struct boomhs_game
       0.5f, -0.5f, 0.0f, W,
       0.0f,  0.5f, 0.0f, W
     };
+
     GLuint VBO, VAO;
     glGenVertexArrays(1, &VAO);
     ON_SCOPE_EXIT([&]() { glDeleteVertexArrays(1, &VAO); });
@@ -119,34 +119,33 @@ struct boomhs_game
     glGenBuffers(1, &VBO);
     ON_SCOPE_EXIT([&]() { glDeleteBuffers(1, &VBO); });
 
-    // Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    auto const send_vertices_gpu = [](auto const& vbo, auto const& vertices)
+    {
+      // Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+      glBindBuffer(GL_ARRAY_BUFFER, vbo);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0);
+      glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), static_cast<GLvoid*>(nullptr));
+
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
+      glBindVertexArray(0); // Unbind when we are done with this scope automatically.
+    };
+    glBindVertexArray(VAO);
     glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0); // Unbind when we are done with this scope automatically.
+    send_vertices_gpu(VBO, vertices);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    //auto const data = get_data();
-    // Create and compile our GLSL program from the shaders
     // TODO: decide if it's the game loop's responsibility to load the shaders (I'm guessing not)
-    auto const expected_program = engine::gfx::load_shaders("shader.vert", "shader.frag");
-    if (! expected_program) {
-      std::cerr << "expected_program is error '" << expected_program.error() << "'\n";
-      quit = true;
-    }
-    GLuint const program_id = *expected_program;
+    DO_MONAD(GLuint const program_id, engine::gfx::load_shaders("shader.vert", "shader.frag"));
     ON_SCOPE_EXIT([&]() { glDeleteProgram(program_id); });
 
+    bool quit = false;
     while (! quit) {
       quit = loop_once(window);
-      render(window, program_id, VAO, VBO);
+      render(window, program_id, VAO);
     }
     return stlw::make_empty();
   }
