@@ -100,14 +100,18 @@ render(window_type &window, GLuint const program_id, GLuint const VAO)
   log_error(__LINE__);
 }
 
-template<typename W>
+template<typename W, typename L>
 class boomhs_game
 {
 public:
   using window_type = ::engine::window::window;
 private:
   W window_;
-  boomhs_game(W &&w) : window_(std::move(w)) {}
+  L &logger_;
+
+  boomhs_game(W &&w, L &l) :
+    window_(std::move(w)),
+    logger_(l) {}
 
   friend struct factory;
 
@@ -166,12 +170,7 @@ struct factory
 {
   factory() = delete;
 
-  template<typename ...Params>
-  static auto
-  make(Params &&...p)
-  {
-    return boomhs_game<Params...>{std::forward<Params>(p)...};
-  }
+  DEFINE_STATIC_WRAPPER_FUNCTION(make, boomhs_game<P...>);
 };
 
 struct policy
