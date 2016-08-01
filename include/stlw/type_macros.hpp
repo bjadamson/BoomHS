@@ -42,7 +42,6 @@ class ICMW
 
   NO_COPY(ICMW)
 public:
-  ICMW(T &&t, DF const df) : t_(std::move(t)), df_(df) {}
   ICMW(T const t, DF const df) : t_(t), df_(df) {}
 
   // Destructor invokes destroy function.
