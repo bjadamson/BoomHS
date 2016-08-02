@@ -12,22 +12,41 @@ int
 main(int argc, char *argv[])
 {
   auto logger = stlw::log_factory::make_logger("logfile", "txt", 23, 59);
-  logger.info("Hi?");
-
-  auto const rf = [&](auto const& error)
+  auto const on_error = [&](auto const& error)
   {
     logger.error(error);
     return EXIT_FAILURE;
   };
 
-  //// Here we select which "policies" we will combine to create our final "game".
-  //using gamelib = game::the_library<game::boomhs::policy>;
+  // Select windowing library as SDL.
+  namespace w = engine::window;
+  using window_lib = w::library_wrapper<w::sdl_library>;
 
-  DO_MONAD_OR_ELSE_RETURN(auto _, engine::window::the_library::init(), rf);
-  DO_MONAD_OR_ELSE_RETURN(auto window, engine::window::the_library::make_window(), rf);
+  logger.debug("Initializing window library globals.");
+  DO_MONAD_OR_ELSE_RETURN(auto _, window_lib::init(), on_error);
 
-  auto boomhs = game::boomhs::factory::make(std::move(window), logger);
-  ON_SCOPE_EXIT( []() { engine::window::the_library::uninit(); });
-  DO_MONAD_OR_ELSE_RETURN(auto __, boomhs.game_loop(), rf);
+  logger.debug("Setting up stack guard to unitialize window library globals.");
+  ON_SCOPE_EXIT( []() { window_lib::destroy(); });
+
+  logger.debug("Instantiating window instance.");
+  DO_MONAD_OR_ELSE_RETURN(auto window, window_lib::make_window(), on_error);
+
+  // Initialize graphics renderer
+  namespace ogl = engine::gfx::opengl;
+  auto renderer = ogl::renderer::make_opengl_sdl_renderer(std::move(window));
+
+  // Selecting the game
+  using game_factory = game::game_factory;
+  using game_lib = game::boomhs::boomhs_library;
+
+  // Initialize the game instance.
+  logger.debug("Instantiating boomhs instance.");
+  auto game = game_factory::make_game(logger);
+
+  logger.debug("Starting boomhs game loop.");
+  DO_MONAD_OR_ELSE_RETURN(auto __, (game.run<decltype(renderer), game_lib>(std::move(renderer))),
+      on_error);
+
+  logger.debug("Game loop finished successfully! Ending program now !!");
   return EXIT_SUCCESS;
 }

@@ -1,22 +1,11 @@
-#include <stdio.h>
-#include <string>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <stdlib.h>
-#include <string.h>
-#include <sstream>
-
 #include <stlw/os.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
-#include <engine/gfx/shader.hpp>
-
-using ShaderHandle = stlw::ImplicitelyCastableMovableWrapper<GLuint, decltype(glDeleteShader)>;
+#include <engine/gfx/program.hpp>
 
 namespace
 {
+using compiled_shader = stlw::ImplicitelyCastableMovableWrapper<GLuint, decltype(glDeleteShader)>;
 
 inline bool
 is_compiled(GLuint const handle)
@@ -62,7 +51,7 @@ retrieve_gl_log(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei*, GLchar
   return std::string{buffer.cbegin(), buffer.cend()};
 }
 
-stlw::result<ShaderHandle, std::string>
+stlw::result<compiled_shader, std::string>
 compile_shader(char const* data, GLenum const type)
 {
   GLuint const handle = glCreateShader(type);
@@ -70,15 +59,15 @@ compile_shader(char const* data, GLenum const type)
 
   // Check Vertex Shader
   if (true == is_compiled(handle)) {
-    return ShaderHandle{handle, glDeleteShader};
-    //return ShaderHandle{handle, glDeleteShader};
+    return compiled_shader{handle, glDeleteShader};
+    //return compiled_shader{handle, glDeleteShader};
   }
   auto const get_shader_log = [](auto const handle) { return retrieve_gl_log(handle, glGetShaderInfoLog); };
   return stlw::make_error(get_shader_log(handle));
 }
 
 template<typename T>
-stlw::result<ShaderHandle, std::string>
+stlw::result<compiled_shader, std::string>
 compile_shader(T const& data, GLenum const type)
 { return compile_shader(data.c_str(), type); }
 
@@ -92,9 +81,7 @@ create_program()
   return program_id;
 }
 
-struct CreateProgramOK{};
-
-stlw::result<CreateProgramOK, std::string>
+stlw::result<stlw::empty_type, std::string>
 link_program(GLuint const program_id)
 {
   // Link the program
@@ -113,7 +100,7 @@ link_program(GLuint const program_id)
   if (Result == GL_FALSE) {
     return stlw::make_error("Linking the shader failed.");
   }
-  return CreateProgramOK{};
+  return stlw::make_empty();
 }
 
 } // ns anonymous
@@ -123,8 +110,8 @@ namespace engine
 namespace gfx
 {
 
-stlw::result<GLuint, std::string>
-load_shaders(char const* vertex_file_path, char const* fragment_file_path)
+stlw::result<program_handle, std::string>
+program_loader::load(char const* vertex_file_path, char const* fragment_file_path)
 {
   /*
   auto const dump_program_log = [](auto const program_id, char const* prefix)
@@ -150,7 +137,7 @@ load_shaders(char const* vertex_file_path, char const* fragment_file_path)
   ON_SCOPE_EXIT([&](){ glDetachShader(program_id, frag_shader_id); });
 
   DO_EFFECT(link_program(program_id));
-  return program_id;
+  return program_handle::make(program_id);
 }
 
 } // ns gfx

@@ -3,21 +3,6 @@
 #include <stlw/type_macros.hpp>
 #include <extlibs/spdlog.hpp>
 
-// TODO: rm
-/*
-SDL_GLContext gl_context;
-auto const print_matrix = [](auto const& matrix)
-{
-  for (auto i = 0; i < 16; ++i) {
-    if ((i > 0) && ((i % 4) == 0)) {
-      std::cerr << "\n";
-    }
-    std::cerr << " " << "[" << std::to_string(matrix[i]) << "]";
-  }
-  std::cerr << "\n" << std::endl;
-};
-  */
-
 namespace stlw
 {
 

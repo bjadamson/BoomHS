@@ -9,11 +9,15 @@
   CLASSNAME(CLASSNAME &&) = delete; \
   CLASSNAME& operator=(CLASSNAME &&) = delete;
 
-#define NO_COPYMOVE(CLASSNAME) NO_COPY(CLASSNAME) NO_MOVE(CLASSNAME)
+#define NO_COPY_AND_NO_MOVE(CLASSNAME) NO_COPY(CLASSNAME) NO_MOVE(CLASSNAME)
 
 #define MOVE_DEFAULT(CLASSNAME) \
   CLASSNAME(CLASSNAME &&) = default; \
   CLASSNAME& operator=(CLASSNAME &&) = default;
+
+#define MOVE_CONSTRUCTIBLE(CLASSNAME) \
+  CLASSNAME(CLASSNAME &&) = default; \
+  CLASSNAME& operator=(CLASSNAME &&) = delete;
 // END class-builing macros
 
 // BEGIN Function-defining macros
@@ -86,7 +90,7 @@ public:
   DestroyFN(FN &&fn) : fn_(std::forward<FN>(fn)) {}
   ~DestroyFN() { this->fn_(); }
 
-  NO_COPYMOVE(DestroyFN)
+  NO_COPY_AND_NO_MOVE(DestroyFN);
 };
 
 } // ns impl

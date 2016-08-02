@@ -6,10 +6,6 @@
 #include <game/debug.hpp>
 #include <engine/gfx/glew_gfx.hpp>
 #include <engine/window/sdl_window.hpp>
-#include <engine/gfx/shader.hpp>
-
-// TODO: remove this as global
-SDL_GLContext gl_context;
 
 namespace engine
 {
@@ -17,7 +13,7 @@ namespace window
 {
 
 stlw::result<stlw::empty_type, std::string>
-sdl_window::init()
+sdl_library::init()
 {
   // (from the docs) The requested attributes should be set before creating an OpenGL window
   auto const set_attribute = [](auto const attribute, auto const value)
@@ -41,11 +37,6 @@ sdl_window::init()
   // Use v-sync
   SDL_GL_SetSwapInterval(1);
 
-  // TODO: move to GL / gfx module.
-  // testing, remove??
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_CULL_FACE);
-
   // Initialize video subsystem
   if(SDL_Init(SDL_INIT_VIDEO) < 0)
   {
@@ -57,7 +48,7 @@ sdl_window::init()
 }
 
 void
-sdl_window::uninit()
+sdl_library::destroy()
 {
   if (SDL_WasInit(SDL_INIT_EVERYTHING)) {
     SDL_Quit();
@@ -65,7 +56,7 @@ sdl_window::uninit()
 }
 
 stlw::result<sdl_window, std::string>
-sdl_window::make()
+sdl_library::make_window()
 {
   // Hidden dependency between the ordering here, so all the logic exists in one place.
   //
@@ -91,7 +82,7 @@ sdl_window::make()
   window_ptr window_ptr{raw, &SDL_DestroyWindow};
 
   // Second, create the graphics context.
-  gl_context = SDL_GL_CreateContext(window_ptr.get());
+  auto gl_context = SDL_GL_CreateContext(window_ptr.get());
   if(nullptr == gl_context) {
     // Display error message
     auto const fmt = stlw::format("OpenGL context could not be created! SDL Error: %s\n")
@@ -108,7 +99,7 @@ sdl_window::make()
       % glewGetErrorString(glew_status);
     return FORMAT_STRERR(fmt);
   }
-  return sdl_window{std::move(window_ptr)};
+  return sdl_window{std::move(window_ptr), gl_context};
 }
 
 } // ns window
