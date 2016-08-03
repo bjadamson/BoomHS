@@ -22,11 +22,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++14 -stdlib=libc++")
 ## DEFINITIONS
 file(GLOB INTERNAL_INCLUDE_DIRS include external/expected/include)
 file(GLOB SOURCE_ENGINE_GFX source/engine/gfx/*)
+file(GLOB SOURCE_ENGINE_OPENGL_GFX source/engine/gfx/opengl/*)
 file(GLOB SOURCE_ENGINE_WINDOW source/engine/window/*)
 file(GLOB SOURCE_GAME source/game/*)
 
 ## move these
-add_executable(boomhs main.cxx ${SOURCE_ENGINE_GFX} ${SOURCE_ENGINE_WINDOW} ${SOURCE_GAME})
+add_executable(boomhs main.cxx ${SOURCE_ENGINE_GFX} ${SOURCE_ENGINE_OPENGL_GFX} ${SOURCE_ENGINE_WINDOW} ${SOURCE_GAME})
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 

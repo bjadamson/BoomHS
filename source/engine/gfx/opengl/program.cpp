@@ -1,7 +1,7 @@
 #include <stlw/os.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
-#include <engine/gfx/program.hpp>
+#include <engine/gfx/opengl/program.hpp>
 
 namespace
 {
@@ -109,6 +109,8 @@ namespace engine
 {
 namespace gfx
 {
+namespace opengl
+{
 
 stlw::result<program_handle, std::string>
 program_loader::load(char const* vertex_file_path, char const* fragment_file_path)
@@ -140,5 +142,6 @@ program_loader::load(char const* vertex_file_path, char const* fragment_file_pat
   return program_handle::make(program_id);
 }
 
+} // ns opengl
 } // ns gfx
 } // ns engine

@@ -1,11 +1,10 @@
 #include <engine/window/sdl_window.hpp>
+#include <engine/gfx/opengl_glew.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/format.hpp>
 
 // TODO: ditch
 #include <game/debug.hpp>
-#include <engine/gfx/glew_gfx.hpp>
-#include <engine/window/sdl_window.hpp>
 
 namespace engine
 {

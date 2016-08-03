@@ -1,7 +1,7 @@
 #pragma once
 #include <stlw/type_macros.hpp>
-#include <engine/gfx/program.hpp>
-#include <engine/gfx/opengl_sdl.hpp>
+#include <stlw/type_ctors.hpp>
+#include <engine/window/sdl_window.hpp> // SDL_Event
 
 namespace game
 {
@@ -48,8 +48,8 @@ public:
     auto instance = GameLib::make_game(this->l_);
     DO_MONAD(auto _, instance.init(renderer));
 
-    renderer.init();
-    ON_SCOPE_EXIT([&]() { renderer.destroy(); });
+    renderer.init_buffers();
+    ON_SCOPE_EXIT([&]() { renderer.destroy_buffers(); });
 
     bool quit = false;
     while (! quit) {

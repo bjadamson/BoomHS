@@ -4,8 +4,11 @@
 #include <stlw/log.hpp>
 #include <stlw/result.hpp>
 #include <engine/window/window.hpp>
-
+#include <engine/gfx/gfx.hpp>
 #include <game/game.hpp>
+
+#include <engine/window/sdl_window.hpp>
+#include <engine/gfx/opengl_gfx.hpp>
 #include <game/boomhs/boomhs.hpp>
 
 int
@@ -32,8 +35,9 @@ main(int argc, char *argv[])
   DO_MONAD_OR_ELSE_RETURN(auto window, window_lib::make_window(), on_error);
 
   // Initialize graphics renderer
-  namespace ogl = engine::gfx::opengl;
-  auto renderer = ogl::renderer::make_opengl_sdl_renderer(std::move(window));
+  namespace r = engine::gfx;
+  using render_lib = r::library_wrapper<r::opengl::opengl_library>;
+  auto renderer = render_lib::make_renderer(std::move(window));
 
   // Selecting the game
   using game_factory = game::game_factory;

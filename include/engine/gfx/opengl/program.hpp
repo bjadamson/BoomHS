@@ -1,10 +1,12 @@
 #pragma once
+#include <engine/gfx/opengl_glew.hpp>
 #include <stlw/result.hpp>
-#include <engine/gfx/glew_gfx.hpp> // TODO: this file should be moved down into glew_gfx.
 
 namespace engine
 {
 namespace gfx
+{
+namespace opengl
 {
 
 class program_handle
@@ -66,5 +68,6 @@ struct program_loader
   load(char const* vertex_file_path, char const* fragment_file_path);
 };
 
+} // ns opengl
 } // ns gfx
 } // ns engine

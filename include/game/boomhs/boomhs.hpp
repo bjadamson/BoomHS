@@ -62,8 +62,8 @@ public:
   game_loop(R &renderer)
   {
     // Set up vertex data (and buffer(s)) and attribute pointers
-    constexpr GLfloat Wcoord = 1.0f;
-    constexpr GLfloat vertices[12] = {
+    constexpr float Wcoord = 1.0f;
+    constexpr float vertices[12] = {
       -0.5f, -0.5f, 0.0f, Wcoord,
       0.5f, -0.5f, 0.0f, Wcoord,
       0.0f,  0.5f, 0.0f, Wcoord

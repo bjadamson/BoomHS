@@ -1,6 +1,7 @@
 #pragma once
 #include <engine/window/sdl_window.hpp>
-#include <engine/gfx/glew_gfx.hpp>
+#include <engine/gfx/opengl_glew.hpp>
+#include <engine/gfx/opengl/program.hpp>
 #include <stlw/type_ctors.hpp>
 
 namespace engine
@@ -62,6 +63,8 @@ class renderer
 
   NO_COPY(renderer);
   renderer& operator=(renderer &&) = delete;
+
+  friend struct opengl_library;
 public:
 
   // move-assignment OK.
@@ -77,21 +80,24 @@ public:
   }
 
   void
-  init()
+  init_buffers()
   {
+    // TODO: I think the way we're trying to encapsulate the OpenGL VAO / vertex attributes is off
+    // a bit, so these calls may be innapropriate for this constructor.
+
+    // See, it might also make more sense to refactor the VAO / VBO / vertex attributes into a
+    // different structure all-together, that isn't in any way tied to the buffer's themselves.
+    //
+    // This will come with experience playing with opengl I suppose.
     glGenVertexArrays(1, &this->VAO);
     glGenBuffers(1, &this->VBO);
 
     glBindVertexArray(this->VAO);
     glEnableVertexAttribArray(0);
-
-    // for now, to simplify rendering
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
   }
 
   void
-  destroy()
+  destroy_buffers()
   {
     glDeleteBuffers(1, &this->VBO);
     glDeleteVertexArrays(1, &this->VAO);
@@ -175,10 +181,13 @@ public:
     render(this->program_handle_, this->VAO);
   }
 
+  // TODO: Think about how it makes sense to update this state, but more functionally.
+  // Maybe we can return a new instance of ourselves instead, with the updated state.
+  // IDK.
   stlw::result<stlw::empty_type, std::string>
   load_program(vertex_shader_filename const v, fragment_shader_filename const f)
   {
-    auto expected_program_id = engine::gfx::program_loader::load(v.filename, f.filename);
+    auto expected_program_id = program_loader::load(v.filename, f.filename);
     if (! expected_program_id) {
       std::cerr << "shit" << std::endl;
       return stlw::make_error(expected_program_id.error());
@@ -186,8 +195,26 @@ public:
     this->program_handle_ = std::move(*expected_program_id);
     return stlw::make_empty();
   }
+};
 
-  DEFINE_STATIC_WRAPPER_FUNCTION(make_opengl_sdl_renderer, renderer);
+struct opengl_library
+{
+  opengl_library() = delete;
+
+  static void
+  init()
+  {
+    // for now, to simplify rendering
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+  }
+
+  static void
+  destroy()
+  {
+  }
+
+  DEFINE_STATIC_WRAPPER_FUNCTION(make_renderer, renderer);
 };
 
 } // ns opengl
