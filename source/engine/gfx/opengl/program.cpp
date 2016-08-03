@@ -60,7 +60,6 @@ compile_shader(char const* data, GLenum const type)
   // Check Vertex Shader
   if (true == is_compiled(handle)) {
     return compiled_shader{handle, glDeleteShader};
-    //return compiled_shader{handle, glDeleteShader};
   }
   auto const get_shader_log = [](auto const handle) { return retrieve_gl_log(handle, glGetShaderInfoLog); };
   return stlw::make_error(get_shader_log(handle));
