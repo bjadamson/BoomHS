@@ -35,9 +35,9 @@ main(int argc, char *argv[])
   DO_MONAD_OR_ELSE_RETURN(auto window, window_lib::make_window(), on_error);
 
   // Initialize graphics renderer
-  namespace r = engine::gfx;
-  using render_lib = r::library_wrapper<r::opengl::opengl_library>;
-  auto renderer = render_lib::make_renderer(std::move(window));
+  namespace gfx = engine::gfx;
+  using gfx_lib = gfx::library_wrapper<gfx::opengl::opengl_library>;
+  auto renderer = gfx_lib::make_renderer(std::move(window));
 
   // Selecting the game
   using game_factory = game::game_factory;
@@ -51,6 +51,6 @@ main(int argc, char *argv[])
   DO_MONAD_OR_ELSE_RETURN(auto __, (game.run<decltype(renderer), game_lib>(std::move(renderer))),
       on_error);
 
-  logger.debug("Game loop finished successfully! Ending program now !!");
+  logger.debug("Game loop finished successfully! Ending program now.");
   return EXIT_SUCCESS;
 }
