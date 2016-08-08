@@ -38,6 +38,8 @@ include(FindPkgConfig)
 pkg_search_module(SDL2 REQUIRED sdl2)
 target_include_directories(boomhs PUBLIC ${SDL2_INCLUDE_DIRS} ${SDL2IMAGE_INCLUDE_DIRS} ${INTERNAL_INCLUDE_DIRS} ${OPENGL_INDLUDE_DIRS} ${GLEW_INCLUDE_DIRS})
 target_link_libraries(boomhs ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES})
+
+add_custom_target(cppformat COMMAND clang-format ${SOURCE_FILES})
 EOF
 
 cat > "${BUILD}/conanfile.txt" << "EOF"
