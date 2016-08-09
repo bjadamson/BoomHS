@@ -4,6 +4,7 @@ set -ex
 ROOT="$(pwd)"
 BUILD="${ROOT}/build-system"
 BINARY="${BUILD}/bin/boomhs"
+SOURCE="${ROOT}/source"
 
 # Delete the binary produced by building this project.
 #
@@ -17,6 +18,6 @@ function clean() {
 #
 ## Project must be re-bootstrapped after this function is run.
 function full_clean() {
-  rm -rf ${BUILD}/*
+  rm -rf ${BUILD}
   rm -f "CMakeLists.txt"
 }

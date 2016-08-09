@@ -9,7 +9,7 @@ mkdir -p ${BUILD}
 
 cat > "${ROOT}/CMakeLists.txt" << "EOF"
 project(BoomHS)
-cmake_minimum_required(VERSION 3.0.00)
+cmake_minimum_required(VERSION 3.4.3)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
@@ -21,15 +21,26 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++14 -stdlib=libc++")
 
 ## DEFINITIONS
 file(GLOB INTERNAL_INCLUDE_DIRS include external/expected/include)
-file(GLOB SOURCE_ENGINE_GFX source/engine/gfx/*)
-file(GLOB SOURCE_ENGINE_OPENGL_GFX source/engine/gfx/opengl/*)
-file(GLOB SOURCE_ENGINE_WINDOW source/engine/window/*)
-file(GLOB SOURCE_GAME source/game/*)
-file(GLOB SOURCE_FILES main.cxx ${SOURCE_ENGINE_GFX} ${SOURCE_ENGINE_OPENGL_GFX} ${SOURCE_ENGINE_WINDOW}
-${SOURCE_GAME})
+file(GLOB_RECURSE GLOBBED_SOURCES
+  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx
+  )
 
-## move these
-add_executable(boomhs ${SOURCE_FILES})
+## Alter globbed sources so it can be passed to clang-format and other clang tools.
+file(GLOB_RECURSE GLOBBED_SOURCES *.cxx *.hpp)
+foreach (SOURCE_FILE ${ALL_SOURCE_FILES})
+  string(FIND ${SOURCE_FILE} ${PROJECT_TRDPARTY_DIR} PROJECT_TRDPARTY_DIR_FOUND)
+  if (NOT ${PROJECT_TRDPARTY_DIR_FOUND} EQUAL -1)
+    list(REMOVE_ITEM ALL_SOURCE_FILES ${SOURCE_FILE})
+  endif ()
+endforeach ()
+
+## Additional build targets CMake should generate.
+add_custom_target(cppformat COMMAND clang-format -i ${GLOBBED_SOURCES})
+
+## Declare our executable and build it.
+add_executable(boomhs ${GLOBBED_SOURCES})
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
@@ -38,8 +49,6 @@ include(FindPkgConfig)
 pkg_search_module(SDL2 REQUIRED sdl2)
 target_include_directories(boomhs PUBLIC ${SDL2_INCLUDE_DIRS} ${SDL2IMAGE_INCLUDE_DIRS} ${INTERNAL_INCLUDE_DIRS} ${OPENGL_INDLUDE_DIRS} ${GLEW_INCLUDE_DIRS})
 target_link_libraries(boomhs ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES})
-
-add_custom_target(cppformat COMMAND clang-format ${SOURCE_FILES})
 EOF
 
 cat > "${BUILD}/conanfile.txt" << "EOF"
