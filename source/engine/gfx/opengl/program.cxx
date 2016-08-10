@@ -1,7 +1,7 @@
+#include <engine/gfx/opengl/program.hpp>
 #include <stlw/os.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
-#include <engine/gfx/opengl/program.hpp>
 
 namespace
 {
@@ -16,7 +16,7 @@ is_compiled(GLuint const handle)
 }
 
 inline void
-gl_compile_shader(GLuint const handle, char const* source)
+gl_compile_shader(GLuint const handle, char const *source)
 {
   GLint *p_length = nullptr;
   auto constexpr shader_count = 1; // We're only compiling one shader (in this function anyway).
@@ -27,7 +27,7 @@ gl_compile_shader(GLuint const handle, char const* source)
 // TODO: export as reusable fn
 // also, make an abstraction over the source, not just vector<char>
 inline std::string
-retrieve_gl_log(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei*, GLchar*))
+retrieve_gl_log(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei *, GLchar *))
 {
   // We have to do a low-level dance to get the OpenGL shader logs.
   //
@@ -39,7 +39,8 @@ retrieve_gl_log(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei*, GLchar
   glGetShaderiv(handle, GL_INFO_LOG_LENGTH, &log_length);
   if (0 > log_length) {
     // fix this msg
-    return "Compiling shader failed and could not retrieve OpenGL Log info for object";
+    return "Compiling shader failed and could not retrieve OpenGL Log info for "
+           "object";
   }
 
   // Step 2
@@ -52,7 +53,7 @@ retrieve_gl_log(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei*, GLchar
 }
 
 stlw::result<compiled_shader, std::string>
-compile_shader(char const* data, GLenum const type)
+compile_shader(char const *data, GLenum const type)
 {
   GLuint const handle = glCreateShader(type);
   gl_compile_shader(handle, data);
@@ -61,14 +62,18 @@ compile_shader(char const* data, GLenum const type)
   if (true == is_compiled(handle)) {
     return compiled_shader{handle, glDeleteShader};
   }
-  auto const get_shader_log = [](auto const handle) { return retrieve_gl_log(handle, glGetShaderInfoLog); };
+  auto const get_shader_log = [](auto const handle) {
+    return retrieve_gl_log(handle, glGetShaderInfoLog);
+  };
   return stlw::make_error(get_shader_log(handle));
 }
 
-template<typename T>
+template <typename T>
 stlw::result<compiled_shader, std::string>
-compile_shader(T const& data, GLenum const type)
-{ return compile_shader(data.c_str(), type); }
+compile_shader(T const &data, GLenum const type)
+{
+  return compile_shader(data.c_str(), type);
+}
 
 stlw::result<GLuint, std::string>
 create_program()
@@ -86,9 +91,10 @@ link_program(GLuint const program_id)
   // Link the program
   printf("Linking program\n");
   glLinkProgram(program_id);
-  auto const dump_program_log = [](auto const program_id, char const* prefix)
-  {
-    auto const get_program_log = [](auto const id) { return retrieve_gl_log(id, glGetProgramInfoLog); };
+  auto const dump_program_log = [](auto const program_id, char const *prefix) {
+    auto const get_program_log = [](auto const id) {
+      return retrieve_gl_log(id, glGetProgramInfoLog);
+    };
     auto const program_log = get_program_log(program_id);
     printf("'%s': %s\n", prefix, program_log.data());
   };
@@ -112,12 +118,13 @@ namespace opengl
 {
 
 stlw::result<program_handle, std::string>
-program_loader::load(char const* vertex_file_path, char const* fragment_file_path)
+program_loader::load(char const *vertex_file_path, char const *fragment_file_path)
 {
   /*
   auto const dump_program_log = [](auto const program_id, char const* prefix)
   {
-    auto const get_program_log = [](auto const id) { return retrieve_gl_log(id, glGetProgramInfoLog); };
+    auto const get_program_log = [](auto const id) { return retrieve_gl_log(id,
+  glGetProgramInfoLog); };
     auto const program_log = get_program_log(program_id);
     printf("'%s': %s\n", prefix, program_log.data());
   };
@@ -132,10 +139,10 @@ program_loader::load(char const* vertex_file_path, char const* fragment_file_pat
   DO_MONAD(auto const program_id, create_program());
 
   glAttachShader(program_id, vertex_shader_id);
-  ON_SCOPE_EXIT([&](){ glDetachShader(program_id, vertex_shader_id); });
+  ON_SCOPE_EXIT([&]() { glDetachShader(program_id, vertex_shader_id); });
 
   glAttachShader(program_id, frag_shader_id);
-  ON_SCOPE_EXIT([&](){ glDetachShader(program_id, frag_shader_id); });
+  ON_SCOPE_EXIT([&]() { glDetachShader(program_id, frag_shader_id); });
 
   DO_EFFECT(link_program(program_id));
   return program_handle::make(program_id);

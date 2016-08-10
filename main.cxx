@@ -1,22 +1,21 @@
-#include <memory>
 #include <cstdlib>
+#include <memory>
 
+#include <engine/gfx/gfx.hpp>
+#include <engine/window/window.hpp>
+#include <game/game.hpp>
 #include <stlw/log.hpp>
 #include <stlw/result.hpp>
-#include <engine/window/window.hpp>
-#include <engine/gfx/gfx.hpp>
-#include <game/game.hpp>
 
-#include <engine/window/sdl_window.hpp>
 #include <engine/gfx/opengl_gfx.hpp>
+#include <engine/window/sdl_window.hpp>
 #include <game/boomhs/boomhs.hpp>
 
 int
 main(int argc, char *argv[])
 {
   auto logger = stlw::log_factory::make_logger("logfile", "txt", 23, 59);
-  auto const on_error = [&](auto const& error)
-  {
+  auto const on_error = [&](auto const &error) {
     logger.error(error);
     return EXIT_FAILURE;
   };
@@ -29,7 +28,7 @@ main(int argc, char *argv[])
   DO_MONAD_OR_ELSE_RETURN(auto _, window_lib::init(), on_error);
 
   logger.debug("Setting up stack guard to unitialize window library globals.");
-  ON_SCOPE_EXIT( []() { window_lib::destroy(); });
+  ON_SCOPE_EXIT([]() { window_lib::destroy(); });
 
   logger.debug("Instantiating window instance.");
   DO_MONAD_OR_ELSE_RETURN(auto window, window_lib::make_window(), on_error);
@@ -49,7 +48,7 @@ main(int argc, char *argv[])
 
   logger.debug("Starting boomhs game loop.");
   DO_MONAD_OR_ELSE_RETURN(auto __, (game.run<decltype(renderer), game_lib>(std::move(renderer))),
-      on_error);
+                          on_error);
 
   logger.debug("Game loop finished successfully! Ending program now.");
   return EXIT_SUCCESS;

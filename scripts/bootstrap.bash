@@ -27,8 +27,9 @@ file(GLOB_RECURSE GLOBBED_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx
   )
 
-## Alter globbed sources so it can be passed to clang-format and other clang tools.
-file(GLOB_RECURSE GLOBBED_SOURCES *.cxx *.hpp)
+## Gather the source files in such a way that we can pass them to clang-format and other clang
+tools.
+file(GLOB_RECURSE GLOBBED_SOURCES_CLANG_TOOLS *.cxx *.hpp)
 foreach (SOURCE_FILE ${ALL_SOURCE_FILES})
   string(FIND ${SOURCE_FILE} ${PROJECT_TRDPARTY_DIR} PROJECT_TRDPARTY_DIR_FOUND)
   if (NOT ${PROJECT_TRDPARTY_DIR_FOUND} EQUAL -1)
@@ -37,7 +38,7 @@ foreach (SOURCE_FILE ${ALL_SOURCE_FILES})
 endforeach ()
 
 ## Additional build targets CMake should generate.
-add_custom_target(cppformat COMMAND clang-format -i ${GLOBBED_SOURCES})
+add_custom_target(cppformat COMMAND clang-format -i ${GLOBBED_SOURCES_CLANG_TOOLS})
 
 ## Declare our executable and build it.
 add_executable(boomhs ${GLOBBED_SOURCES})

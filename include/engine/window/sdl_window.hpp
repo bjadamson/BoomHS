@@ -20,31 +20,40 @@ class sdl_window
 {
   window_ptr window_;
   SDL_GLContext context_;
+
 public:
   // ctors
-  sdl_window(window_ptr &&w, SDL_GLContext c) : window_(std::move(w)), context_(c) {}
-  ~sdl_window() { if (nullptr != this->context_) { SDL_GL_DeleteContext(this->context_); }}
+  sdl_window(window_ptr &&w, SDL_GLContext c)
+      : window_(std::move(w))
+      , context_(c)
+  {
+  }
+  ~sdl_window()
+  {
+    if (nullptr != this->context_) {
+      SDL_GL_DeleteContext(this->context_);
+    }
+  }
 
   NO_COPY(sdl_window)
 
   // move-constructible
-  sdl_window(sdl_window &&other) :
-    window_(std::move(other.window_)),
-    context_(other.context_)
+  sdl_window(sdl_window &&other)
+      : window_(std::move(other.window_))
+      , context_(other.context_)
   {
     other.context_ = nullptr;
     other.window_ = nullptr;
   }
 
   // not move assignable
-  sdl_window& operator=(sdl_window &&) = delete;
+  sdl_window &operator=(sdl_window &&) = delete;
 
   // Allow getting the window's SDL pointer
-  window_type* raw() { return this->window_.get(); }
+  window_type *raw() { return this->window_.get(); }
 };
 
-struct sdl_library
-{
+struct sdl_library {
   sdl_library() = delete;
 
   static stlw::result<stlw::empty_type, std::string> init();

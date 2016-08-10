@@ -1,6 +1,6 @@
 #pragma once
-#include <stlw/type_macros.hpp>
 #include <boost/format.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace stlw
 {

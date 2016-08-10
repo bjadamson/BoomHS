@@ -1,11 +1,11 @@
 #pragma once
-#include <vector>
 #include <stlw/types.hpp>
+#include <vector>
 
 namespace stlw
 {
 
-template<typename T>
+template <typename T>
 std::vector<T>
 vec_with_size(std::size_t const s)
 {
@@ -16,6 +16,9 @@ vec_with_size(std::size_t const s)
 
 // factory FN
 inline stlw::empty_type
-make_empty() { return stlw::empty_type{}; }
+make_empty()
+{
+  return stlw::empty_type{};
+}
 
 } // ns stlw

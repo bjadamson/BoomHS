@@ -1,7 +1,7 @@
-#include <engine/window/sdl_window.hpp>
 #include <engine/gfx/opengl_glew.hpp>
-#include <stlw/type_ctors.hpp>
+#include <engine/window/sdl_window.hpp>
 #include <stlw/format.hpp>
+#include <stlw/type_ctors.hpp>
 
 // TODO: ditch
 #include <game/debug.hpp>
@@ -14,17 +14,17 @@ namespace window
 stlw::result<stlw::empty_type, std::string>
 sdl_library::init()
 {
-  // (from the docs) The requested attributes should be set before creating an OpenGL window
-  auto const set_attribute = [](auto const attribute, auto const value)
-  {
+  // (from the docs) The requested attributes should be set before creating an
+  // OpenGL window
+  auto const set_attribute = [](auto const attribute, auto const value) {
     bool const set_attribute_suceeded = SDL_GL_SetAttribute(attribute, value);
-    if (! set_attribute_suceeded) {
+    if (!set_attribute_suceeded) {
       std::cerr << "Setting attribute '" << std::to_string(attribute) << "' failed, error is '"
-        << SDL_GetError() << "'\n";
+                << SDL_GetError() << "'\n";
     }
   };
 
-  //Use OpenGL 3.1 core
+  // Use OpenGL 3.1 core
   set_attribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
   set_attribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
   set_attribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -37,8 +37,7 @@ sdl_library::init()
   SDL_GL_SetSwapInterval(1);
 
   // Initialize video subsystem
-  if(SDL_Init(SDL_INIT_VIDEO) < 0)
-  {
+  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     // Display error message
     auto const fmt = stlw::format("SDL could not initialize! SDL_Error: %s\n") % SDL_GetError();
     return FORMAT_STRERR(fmt);
@@ -57,14 +56,19 @@ sdl_library::destroy()
 stlw::result<sdl_window, std::string>
 sdl_library::make_window()
 {
-  // Hidden dependency between the ordering here, so all the logic exists in one place.
+  // Hidden dependency between the ordering here, so all the logic exists in one
+  // place.
   //
-  // * The OpenGL context MUST be initialized before the call to glewInit() takes place.
-  // This is because there is a hidden dependency on glew, it expects an OpenGL context to be
-  // initialized. The glew library knows how to find the OpenGL context in memory without any
+  // * The OpenGL context MUST be initialized before the call to glewInit()
+  // takes place.
+  // This is because there is a hidden dependency on glew, it expects an OpenGL
+  // context to be
+  // initialized. The glew library knows how to find the OpenGL context in
+  // memory without any
   // reference, so it's a bit like magic.
   //
-  // NOTE: We don't have to do anything to shutdown glew, the processing closing will handle it (by
+  // NOTE: We don't have to do anything to shutdown glew, the processing closing
+  // will handle it (by
   // design.
 
   // First, create the SDL window.
@@ -73,7 +77,8 @@ sdl_library::make_window()
   int const x = SDL_WINDOWPOS_CENTERED;
   int const y = SDL_WINDOWPOS_CENTERED;
   auto const height = 800, width = 600;
-  auto raw = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
+  auto raw = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width,
+                              height, flags);
   if (nullptr == raw) {
     auto const fmt = stlw::format("SDL could not initialize! SDL_Error: %s\n") % SDL_GetError();
     return stlw::make_error(stlw::to_string(fmt));
@@ -82,10 +87,10 @@ sdl_library::make_window()
 
   // Second, create the graphics context.
   auto gl_context = SDL_GL_CreateContext(window_ptr.get());
-  if(nullptr == gl_context) {
+  if (nullptr == gl_context) {
     // Display error message
-    auto const fmt = stlw::format("OpenGL context could not be created! SDL Error: %s\n")
-      % SDL_GetError();
+    auto const fmt =
+        stlw::format("OpenGL context could not be created! SDL Error: %s\n") % SDL_GetError();
     return FORMAT_STRERR(fmt);
   }
   SDL_GL_MakeCurrent(window_ptr.get(), gl_context);
@@ -94,8 +99,8 @@ sdl_library::make_window()
   glewExperimental = GL_TRUE;
   auto const glew_status = glewInit();
   if (GLEW_OK != glew_status) {
-    auto const fmt = stlw::format("GLEW could not initialize! GLEW error: %s\n")
-      % glewGetErrorString(glew_status);
+    auto const fmt = stlw::format("GLEW could not initialize! GLEW error: %s\n") %
+                     glewGetErrorString(glew_status);
     return FORMAT_STRERR(fmt);
   }
   return sdl_window{std::move(window_ptr), gl_context};
