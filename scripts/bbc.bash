@@ -2,4 +2,6 @@
 set -ex
 source "scripts/common.bash"
 
-clean
+cd ${BUILD}
+make clangcheck
+cd ..

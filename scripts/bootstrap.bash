@@ -28,7 +28,6 @@ file(GLOB_RECURSE GLOBBED_SOURCES
   )
 
 ## Gather the source files in such a way that we can pass them to clang-format and other clang
-tools.
 file(GLOB_RECURSE GLOBBED_SOURCES_CLANG_TOOLS *.cxx *.hpp)
 foreach (SOURCE_FILE ${ALL_SOURCE_FILES})
   string(FIND ${SOURCE_FILE} ${PROJECT_TRDPARTY_DIR} PROJECT_TRDPARTY_DIR_FOUND)
@@ -39,6 +38,7 @@ endforeach ()
 
 ## Additional build targets CMake should generate.
 add_custom_target(cppformat COMMAND clang-format -i ${GLOBBED_SOURCES_CLANG_TOOLS})
+add_custom_target(clangcheck COMMAND clang-check -analyze -p ${BUILD} -s ${GLOBBED_SOURCES_CLANG_TOOLS})
 
 ## Declare our executable and build it.
 add_executable(boomhs ${GLOBBED_SOURCES})
@@ -64,8 +64,9 @@ EOF
 cd ${BUILD}
 echo $(pwd)
 conan install --build missing -s compiler=clang -s arch=x86 -s compiler.version=3.9 -s compiler.libcxx=libc++ -s build_type=Debug
-cmake .. -G "Unix Makefiles" \
-  -DCMAKE_BUILD_TYPE=Debug
+cmake .. -G "Unix Makefiles"          \
+  -DCMAKE_BUILD_TYPE=Debug            \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cd ..
 
 function link_script() {
