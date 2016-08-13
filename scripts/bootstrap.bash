@@ -56,6 +56,7 @@ cat > "${BUILD}/conanfile.txt" << "EOF"
 [requires]
 fmt/3.0.0@memsharded/testing
 spdlog/0.1@memsharded/testing
+glm/0.9.8.0@TimSimpson/testing
 
 [generators]
 cmake
