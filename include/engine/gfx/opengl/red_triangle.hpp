@@ -106,7 +106,7 @@ public:
     global_unbind_vao(this->vao_);
   }
 
-  void draw(GLfloat const the_vertices[12])
+  void draw(GLfloat const v0[12], GLfloat const v1[12])
   {
     auto const send_vertices_gpu =
         [](auto const &vbo, auto const vinfo) // GLfloat const vertices[12])
@@ -134,8 +134,12 @@ public:
       }
     };
 
-    vertices_info const vertex_info{sizeof(the_vertices[0]) * 12, the_vertices};
-    send_vertices_gpu(this->vbo_, vertex_info);
+    vertices_info const v0_info{sizeof(v0[0]) * 12, v0};
+    send_vertices_gpu(this->vbo_, v0_info);
+    render(this->program_handle_);
+
+    vertices_info const v1_info{sizeof(v1[0]) * 12, v1};
+    send_vertices_gpu(this->vbo_, v1_info);
     render(this->program_handle_);
   }
 

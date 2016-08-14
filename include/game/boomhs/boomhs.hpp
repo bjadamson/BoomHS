@@ -58,9 +58,22 @@ public:
   {
     // Set up vertex data (and buffer(s)) and attribute pointers
     constexpr float Wcoord = 1.0f;
-    constexpr float vertices[12] = {-0.5f, -0.5f,  0.0f, Wcoord, 0.5f, -0.5f,
-                                    0.0f,  Wcoord, 0.0f, 0.5f,   0.0f, Wcoord};
-    renderer.draw(vertices);
+    // clang-format off
+    constexpr float v0[12] =
+    {
+      -0.5f , -0.5f, 0.0f, Wcoord, // bottom left
+      0.0f  , -0.5f, 0.0f, Wcoord, // bottom right
+      -0.25f, 0.5f , 0.0f, Wcoord  // top middle
+    };
+    constexpr float v1[12] =
+    {
+      0.5f  , 0.0f, 0.0f, Wcoord, // bottom left
+      1.00f , 0.0f, 0.0f, Wcoord, // bottom right
+      0.75f , 1.0f, 0.0f, Wcoord  // top middle
+    };
+    // clang-format on
+
+    renderer.draw(v0, v1);
   }
 
   bool process_event(SDL_Event &event) { return is_quit_event(event); }
