@@ -26,7 +26,7 @@ class game_executor
   NO_COPY(game_executor);
 
   template <typename Game>
-  bool loop_once(Game &game)
+  inline bool loop_once(Game &game)
   {
     SDL_Event event;
     bool quit = false;

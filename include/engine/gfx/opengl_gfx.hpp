@@ -1,6 +1,7 @@
 #pragma once
 #include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl_glew.hpp>
+#include <engine/gfx/opengl/red_triangle.hpp>
 #include <engine/window/sdl_window.hpp>
 #include <stlw/type_ctors.hpp>
 
@@ -51,19 +52,24 @@ auto const print_matrix = [](auto const &matrix) {
   std::cerr << "\n" << std::endl;
 };
 
+auto const bind_vao = [](auto const vao) {
+  glBindVertexArray(vao);
+};
+
+auto const unbind_vao = [](auto const vao) {
+  glBindVertexArray(0);
+};
+
 class renderer
 {
   using W = ::engine::window::sdl_window;
 
-  GLuint VAO, VBO;
-  program_handle program_handle_;
+  red_triangle red_;
   W window_;
 
   renderer(W &&w)
       : window_(std::move(w))
-      , VAO(0)
-      , VBO(0)
-      , program_handle_(program_handle::make_invalid())
+      , red_(red_triangle::make())
   {
   }
 
@@ -75,122 +81,31 @@ class renderer
 public:
   // move-assignment OK.
   renderer(renderer &&other)
-      : VBO(other.VBO)
-      , VAO(other.VAO)
-      , program_handle_(std::move(other.program_handle_))
+      : red_(std::move(other.red_))
       , window_(std::move(other.window_))
   {
-    other.VBO = 0;
-    other.VAO = 0;
-    other.program_handle_ = program_handle::make_invalid();
   }
 
   void init_buffers()
   {
-    // TODO: I think the way we're trying to encapsulate the OpenGL VAO / vertex
-    // attributes is off
-    // a bit, so these calls may be innapropriate for this constructor.
-
-    // See, it might also make more sense to refactor the VAO / VBO / vertex
-    // attributes into a
-    // different structure all-together, that isn't in any way tied to the
-    // buffer's themselves.
-    //
-    // This will come with experience playing with opengl I suppose.
-    glGenVertexArrays(1, &this->VAO);
-    glGenBuffers(1, &this->VBO);
-
-    glBindVertexArray(this->VAO);
-    glEnableVertexAttribArray(0);
+    this->red_.init_buffers();
   }
 
   void destroy_buffers()
   {
-    glDeleteBuffers(1, &this->VBO);
-    glDeleteVertexArrays(1, &this->VAO);
+    this->red_.destroy_buffers();
   }
 
-  void render(program_handle const &program_handle, GLuint const VAO)
+  void draw(GLfloat const vertices[12])
   {
-    GLuint const program_id = program_handle.get();
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
     // Render
-    log_error(__LINE__);
     glClear(GL_COLOR_BUFFER_BIT);
-    log_error(__LINE__);
-
-    uint32_t ticks = SDL_GetTicks(), lastticks = 0;
-    ticks = SDL_GetTicks();
-    if (((ticks * 10 - lastticks * 10)) < 167) {
-      SDL_Delay((167 - ((ticks * 10 - lastticks * 10))) / 10);
-      log_error(__LINE__);
-    }
-    lastticks = SDL_GetTicks();
-    log_error(__LINE__);
-
-    /////////////////////////////////////////////////////////////////////////////////
-
-    // Draw our first triangle
-    glUseProgram(program_id);
-    log_error(__LINE__);
-
-    char buffer[2096];
-    int actual_length = 0;
-    glGetProgramInfoLog(program_id, 2096, &actual_length, buffer);
-    if (0 < actual_length) {
-      std::cerr << "log: '" << std::to_string(buffer[0]) << "'\n";
-    }
-
-    log_error(__LINE__);
-    glBindVertexArray(VAO);
-    log_error(__LINE__);
-
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    log_error(__LINE__);
-    glBindVertexArray(0);
-    log_error(__LINE__);
+    this->red_.draw(vertices);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(this->window_.raw());
-    log_error(__LINE__);
-    SDL_Delay(20);
-    log_error(__LINE__);
-  }
-
-  void draw(GLfloat const the_vertices[12])
-  {
-    // print_matrix(vertices);
-    auto const send_vertices_gpu =
-        [](auto const &vbo, auto const vinfo) // GLfloat const vertices[12])
-    {
-      // Bind the Vertex Array Object first, then bind and set vertex buffer(s)
-      // and attribute
-      // pointer(s).
-      glBindBuffer(GL_ARRAY_BUFFER, vbo);
-      glBufferData(GL_ARRAY_BUFFER, vinfo.size_in_bytes, vinfo.buffer, GL_STATIC_DRAW);
-
-      glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat),
-                            static_cast<GLvoid *>(nullptr));
-
-      glBindBuffer(GL_ARRAY_BUFFER, 0);
-      glBindVertexArray(0); // Unbind when we are done with this scope automatically.
-    };
-
-    struct vertices_info {
-      int const size_in_bytes;
-      GLfloat const *buffer;
-
-      vertices_info(int const s, GLfloat const *b)
-          : size_in_bytes(s)
-          , buffer(b)
-      {
-      }
-    };
-
-    vertices_info const vertex_info{sizeof(the_vertices[0]) * 12, the_vertices};
-    send_vertices_gpu(this->VBO, vertex_info);
-    render(this->program_handle_, this->VAO);
   }
 
   // TODO: Think about how it makes sense to update this state, but more
@@ -203,10 +118,9 @@ public:
   {
     auto expected_program_id = program_loader::load(v.filename, f.filename);
     if (!expected_program_id) {
-      std::cerr << "shit" << std::endl;
       return stlw::make_error(expected_program_id.error());
     }
-    this->program_handle_ = std::move(*expected_program_id);
+    this->red_.program_handle_ = std::move(*expected_program_id);
     return stlw::make_empty();
   }
 };
