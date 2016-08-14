@@ -51,9 +51,6 @@ public:
     auto instance = GameLib::make_game(this->l_);
     DO_MONAD(auto _, instance.init(renderer));
 
-    renderer.init_buffers();
-    ON_SCOPE_EXIT([&]() { renderer.destroy_buffers(); });
-
     bool quit = false;
     while (!quit) {
       quit = loop_once(instance);

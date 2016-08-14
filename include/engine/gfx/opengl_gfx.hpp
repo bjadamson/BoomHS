@@ -1,7 +1,7 @@
 #pragma once
 #include <engine/gfx/opengl/program.hpp>
-#include <engine/gfx/opengl_glew.hpp>
 #include <engine/gfx/opengl/red_triangle.hpp>
+#include <engine/gfx/opengl_glew.hpp>
 #include <engine/window/sdl_window.hpp>
 #include <stlw/type_ctors.hpp>
 
@@ -52,13 +52,9 @@ auto const print_matrix = [](auto const &matrix) {
   std::cerr << "\n" << std::endl;
 };
 
-auto const bind_vao = [](auto const vao) {
-  glBindVertexArray(vao);
-};
+auto const bind_vao = [](auto const vao) { glBindVertexArray(vao); };
 
-auto const unbind_vao = [](auto const vao) {
-  glBindVertexArray(0);
-};
+auto const unbind_vao = [](auto const vao) { glBindVertexArray(0); };
 
 class renderer
 {
@@ -86,15 +82,7 @@ public:
   {
   }
 
-  void init_buffers()
-  {
-    this->red_.init_buffers();
-  }
-
-  void destroy_buffers()
-  {
-    this->red_.destroy_buffers();
-  }
+  void init_buffers() {}
 
   void draw(GLfloat const v0[12], GLfloat const v1[12])
   {

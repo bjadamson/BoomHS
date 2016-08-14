@@ -1,6 +1,7 @@
 #pragma once
-#include <engine/gfx/opengl_gfx.hpp>
 #include <engine/gfx/opengl/program.hpp>
+#include <engine/gfx/opengl_gfx.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace engine
 {
@@ -9,12 +10,11 @@ namespace gfx
 namespace opengl
 {
 
-auto const global_bind_vao = [](auto const vao) {
-  glBindVertexArray(vao);
-};
+auto const global_vao_bind = [](auto const vao) { glBindVertexArray(vao); };
+auto const global_vao_unbind = []() { glBindVertexArray(0); };
 
-auto const global_unbind_vao = [](auto const vao) {
-  glBindVertexArray(0);
+auto const global_enable_vattrib_array = [](auto const index) {
+  glEnableVertexAttribArray(index);
 };
 
 auto const check_opengl_errors = [](auto const program_id) {
@@ -29,20 +29,21 @@ auto const check_opengl_errors = [](auto const program_id) {
 class red_triangle
 {
   GLuint vao_ = 0, vbo_ = 0;
+
 public:
   program_handle program_handle_ = program_handle::make_invalid();
+
 private:
-
-  static auto constexpr RED_TRIANGLE_VPOS = 0;
-  static auto constexpr NUM_VERTICES = 4;
-  static auto constexpr TYPE_OF_DATA = GL_FLOAT;
-  static auto constexpr NORMALIZE_DATA = GL_FALSE;
-  static auto constexpr STRIDE_SIZE = NUM_VERTICES * sizeof(TYPE_OF_DATA);
-  static auto constexpr OFFSET = nullptr;
-
+  static auto constexpr RED_TRIANGLE_VERTEX_POSITION_INDEX = 0;
+  static auto constexpr RED_TRIANGLE_VERTEX_COLOR_INDEX = 0;
   static auto constexpr NUM_BUFFERS = 1;
 
-  red_triangle() = default;
+  red_triangle()
+  {
+    glGenVertexArrays(NUM_BUFFERS, &this->vao_);
+    glGenBuffers(NUM_BUFFERS, &this->vbo_);
+  }
+
   NO_COPY(red_triangle);
   red_triangle &operator=(red_triangle &&) = delete;
 
@@ -58,34 +59,6 @@ public:
     other.program_handle_ = program_handle::make_invalid();
   }
 
-  void init_buffers()
-  {
-    // TODO: I think the way we're trying to encapsulate the OpenGL VAO / vertex
-    // attributes is off
-    // a bit, so these calls may be innapropriate for this constructor.
-
-    // See, it might also make more sense to refactor the VAO / VBO / vertex
-    // attributes into a
-    // different structure all-together, that isn't in any way tied to the
-    // buffer's themselves.
-    //
-    // This will come with experience playing with opengl I suppose.
-    glGenVertexArrays(NUM_BUFFERS, &this->vao_);
-    glGenBuffers(NUM_BUFFERS, &this->vbo_);
-
-    // enable this attribute position within this VAO.
-    global_bind_vao(this->vao_);
-
-    // this just needs to called once per bound VAO.
-    glEnableVertexAttribArray(0);
-  }
-
-  void destroy_buffers()
-  {
-    glDeleteBuffers(1, &this->vbo_);
-    glDeleteVertexArrays(1, &this->vao_);
-  }
-
   ~red_triangle()
   {
     glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
@@ -99,11 +72,7 @@ public:
     glUseProgram(program_id);
     check_opengl_errors(program_id);
 
-    global_bind_vao(this->vao_);
-
     glDrawArrays(GL_TRIANGLES, 0, 3);
-
-    global_unbind_vao(this->vao_);
   }
 
   void draw(GLfloat const v0[12], GLfloat const v1[12])
@@ -111,16 +80,14 @@ public:
     auto const send_vertices_gpu =
         [](auto const &vbo, auto const vinfo) // GLfloat const vertices[12])
     {
-      // Bind the Vertex Array Object first, then bind and set vertex buffer(s)
-      // and attribute
-      // pointer(s).
+      // 1. Bind the vbo object to the GL_ARRAY_BUFFER
       glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+      // 2. Setup temporary object to unbind the GL_ARRAY_BUFFER from a vbo on scope exit.
+      ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+
+      // 3. Copy the data to the GPU, then let stack cleanup gl context automatically.
       glBufferData(GL_ARRAY_BUFFER, vinfo.size_in_bytes, vinfo.buffer, GL_STATIC_DRAW);
-
-      glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat),
-                            static_cast<GLvoid *>(nullptr));
-
-      glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind when we are done with this scope automatically.
     };
 
     struct vertices_info {
@@ -133,6 +100,9 @@ public:
       {
       }
     };
+
+    global_vao_bind(this->vao_);
+    ON_SCOPE_EXIT([]() { global_vao_unbind(); });
 
     vertices_info const v0_info{sizeof(v0[0]) * 12, v0};
     send_vertices_gpu(this->vbo_, v0_info);
@@ -147,14 +117,23 @@ public:
   static red_triangle make()
   {
     red_triangle triangle;
+    global_vao_bind(triangle.vao_);
+    ON_SCOPE_EXIT([]() { global_vao_unbind(); });
 
-    global_bind_vao(triangle.vao_);
-    glEnableVertexAttribArray(RED_TRIANGLE_VPOS);
+    global_enable_vattrib_array(RED_TRIANGLE_VERTEX_POSITION_INDEX);
 
-    // configure OpenGL to associate data with vertex  attribute 0 to be read in the following way
-    glVertexAttribPointer(RED_TRIANGLE_VPOS, NUM_VERTICES, TYPE_OF_DATA, NORMALIZE_DATA, STRIDE_SIZE,
-                            OFFSET);
-    global_unbind_vao(triangle.vao_);
+    static auto constexpr NUM_VERTICES = 4;
+    static auto constexpr TYPE_OF_DATA = GL_FLOAT;
+    static auto constexpr NORMALIZE_DATA = GL_FALSE;
+    static auto constexpr STRIDE_SIZE = NUM_VERTICES * sizeof(TYPE_OF_DATA);
+    static auto constexpr OFFSET_PTR = nullptr;
+
+    glBindBuffer(GL_ARRAY_BUFFER, triangle.vbo_);
+    ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+
+    // configure this OpenGL VAO attribute array
+    glVertexAttribPointer(RED_TRIANGLE_VERTEX_POSITION_INDEX, NUM_VERTICES, TYPE_OF_DATA,
+                          NORMALIZE_DATA, STRIDE_SIZE, OFFSET_PTR);
     return triangle;
   }
 };
