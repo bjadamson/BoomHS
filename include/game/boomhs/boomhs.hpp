@@ -49,7 +49,7 @@ public:
   template <typename R>
   stlw::result<stlw::empty_type, std::string> init(R &renderer)
   {
-    DO_MONAD(auto _, renderer.load_program("shader.vert", "shader.frag"));
+    // nothing to do for now
     return stlw::make_empty();
   }
 

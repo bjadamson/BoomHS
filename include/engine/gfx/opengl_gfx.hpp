@@ -1,6 +1,6 @@
 #pragma once
+#include <engine/gfx/opengl/factory.hpp>
 #include <engine/gfx/opengl/program.hpp>
-#include <engine/gfx/opengl/red_triangle.hpp>
 #include <engine/gfx/opengl_glew.hpp>
 #include <engine/window/sdl_window.hpp>
 #include <stlw/type_ctors.hpp>
@@ -11,21 +11,6 @@ namespace gfx
 {
 namespace opengl
 {
-
-struct vertex_shader_filename {
-  char const *filename;
-  vertex_shader_filename(char const *f)
-      : filename(f)
-  {
-  }
-};
-struct fragment_shader_filename {
-  char const *filename;
-  fragment_shader_filename(char const *f)
-      : filename(f)
-  {
-  }
-};
 
 auto log_error = [](auto const line) {
   GLenum err = GL_NO_ERROR;
@@ -53,7 +38,6 @@ auto const print_matrix = [](auto const &matrix) {
 };
 
 auto const bind_vao = [](auto const vao) { glBindVertexArray(vao); };
-
 auto const unbind_vao = [](auto const vao) { glBindVertexArray(0); };
 
 class renderer
@@ -63,9 +47,9 @@ class renderer
   red_triangle red_;
   W window_;
 
-  renderer(W &&w)
+  renderer(W &&w, red_triangle &&red)
       : window_(std::move(w))
-      , red_(red_triangle::make())
+      , red_(std::move(red))
   {
   }
 
@@ -82,8 +66,6 @@ public:
   {
   }
 
-  void init_buffers() {}
-
   void draw(GLfloat const v0[12], GLfloat const v1[12])
   {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -94,22 +76,6 @@ public:
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(this->window_.raw());
-  }
-
-  // TODO: Think about how it makes sense to update this state, but more
-  // functionally.
-  // Maybe we can return a new instance of ourselves instead, with the updated
-  // state.
-  // IDK.
-  stlw::result<stlw::empty_type, std::string>
-  load_program(vertex_shader_filename const v, fragment_shader_filename const f)
-  {
-    auto expected_program_id = program_loader::load(v.filename, f.filename);
-    if (!expected_program_id) {
-      return stlw::make_error(expected_program_id.error());
-    }
-    this->red_.program_handle_ = std::move(*expected_program_id);
-    return stlw::make_empty();
   }
 };
 
@@ -123,9 +89,14 @@ struct opengl_library {
     glDisable(GL_CULL_FACE);
   }
 
-  static void destroy() {}
+  static inline void destroy() {}
 
-  DEFINE_STATIC_WRAPPER_FUNCTION(make_renderer, renderer);
+  template <typename W>
+  static inline stlw::result<renderer, std::string> make_renderer(W &&window)
+  {
+    DO_MONAD(auto red, factory::make_red_triangle_program());
+    return renderer{std::move(window), std::move(red)};
+  }
 };
 
 } // ns opengl

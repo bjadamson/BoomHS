@@ -36,7 +36,7 @@ main(int argc, char *argv[])
   // Initialize graphics renderer
   namespace gfx = engine::gfx;
   using gfx_lib = gfx::library_wrapper<gfx::opengl::opengl_library>;
-  auto renderer = gfx_lib::make_renderer(std::move(window));
+  DO_MONAD_OR_ELSE_RETURN(auto renderer, gfx_lib::make_renderer(std::move(window)), on_error);
 
   // Selecting the game
   using game_factory = game::game_factory;

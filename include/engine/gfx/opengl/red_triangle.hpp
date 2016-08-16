@@ -1,6 +1,5 @@
 #pragma once
 #include <engine/gfx/opengl/program.hpp>
-#include <engine/gfx/opengl_gfx.hpp>
 #include <stlw/type_macros.hpp>
 
 namespace engine
@@ -13,9 +12,7 @@ namespace opengl
 auto const global_vao_bind = [](auto const vao) { glBindVertexArray(vao); };
 auto const global_vao_unbind = []() { glBindVertexArray(0); };
 
-auto const global_enable_vattrib_array = [](auto const index) {
-  glEnableVertexAttribArray(index);
-};
+auto const global_enable_vattrib_array = [](auto const index) { glEnableVertexAttribArray(index); };
 
 auto const check_opengl_errors = [](auto const program_id) {
   char buffer[2096];
@@ -29,16 +26,15 @@ auto const check_opengl_errors = [](auto const program_id) {
 class red_triangle
 {
   GLuint vao_ = 0, vbo_ = 0;
+  program_handle program_handle_; // init in ctor.
 
-public:
-  program_handle program_handle_ = program_handle::make_invalid();
+  friend class factory;
 
 private:
-  static auto constexpr RED_TRIANGLE_VERTEX_POSITION_INDEX = 0;
-  static auto constexpr RED_TRIANGLE_VERTEX_COLOR_INDEX = 0;
   static auto constexpr NUM_BUFFERS = 1;
 
-  red_triangle()
+  red_triangle(program_handle ph)
+      : program_handle_(std::move(ph))
   {
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
     glGenBuffers(NUM_BUFFERS, &this->vbo_);
@@ -48,7 +44,7 @@ private:
   red_triangle &operator=(red_triangle &&) = delete;
 
 public:
-  // move-assignment OK.
+  // move-construction OK.
   red_triangle(red_triangle &&other)
       : vao_(other.vao_)
       , vbo_(other.vbo_)
@@ -111,30 +107,6 @@ public:
     vertices_info const v1_info{sizeof(v1[0]) * 12, v1};
     send_vertices_gpu(this->vbo_, v1_info);
     render(this->program_handle_);
-  }
-
-public:
-  static red_triangle make()
-  {
-    red_triangle triangle;
-    global_vao_bind(triangle.vao_);
-    ON_SCOPE_EXIT([]() { global_vao_unbind(); });
-
-    global_enable_vattrib_array(RED_TRIANGLE_VERTEX_POSITION_INDEX);
-
-    static auto constexpr NUM_VERTICES = 4;
-    static auto constexpr TYPE_OF_DATA = GL_FLOAT;
-    static auto constexpr NORMALIZE_DATA = GL_FALSE;
-    static auto constexpr STRIDE_SIZE = NUM_VERTICES * sizeof(TYPE_OF_DATA);
-    static auto constexpr OFFSET_PTR = nullptr;
-
-    glBindBuffer(GL_ARRAY_BUFFER, triangle.vbo_);
-    ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
-
-    // configure this OpenGL VAO attribute array
-    glVertexAttribPointer(RED_TRIANGLE_VERTEX_POSITION_INDEX, NUM_VERTICES, TYPE_OF_DATA,
-                          NORMALIZE_DATA, STRIDE_SIZE, OFFSET_PTR);
-    return triangle;
   }
 };
 
