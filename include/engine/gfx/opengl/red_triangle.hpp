@@ -1,6 +1,10 @@
 #pragma once
 #include <engine/gfx/opengl/program.hpp>
+#include <stlw/print.hpp>
 #include <stlw/type_macros.hpp>
+
+#include <cstring> // memcpy
+#include <vector>
 
 namespace engine
 {
@@ -12,8 +16,6 @@ namespace opengl
 auto const global_vao_bind = [](auto const vao) { glBindVertexArray(vao); };
 auto const global_vao_unbind = []() { glBindVertexArray(0); };
 
-auto const global_enable_vattrib_array = [](auto const index) { glEnableVertexAttribArray(index); };
-
 auto const check_opengl_errors = [](auto const program_id) {
   char buffer[2096];
   int actual_length = 0;
@@ -21,6 +23,17 @@ auto const check_opengl_errors = [](auto const program_id) {
   if (0 < actual_length) {
     std::cerr << "log: '" << std::to_string(buffer[0]) << "'\n";
   }
+};
+
+auto const print_matrix = [](auto const &matrix, int const total, int const num_per_row) {
+  for (auto i = 0; i < total; ++i) {
+    if ((i > 0) && ((i % num_per_row) == 0)) {
+      std::cerr << "\n";
+    }
+    std::cerr << " "
+              << "[" << std::to_string(matrix[i]) << "]";
+  }
+  std::cerr << "\n" << std::endl;
 };
 
 class red_triangle
@@ -73,9 +86,7 @@ public:
 
   void draw(GLfloat const v0[12], GLfloat const v1[12])
   {
-    auto const send_vertices_gpu =
-        [](auto const &vbo, auto const vinfo) // GLfloat const vertices[12])
-    {
+    auto const send_vertices_gpu = [](auto const &vbo, auto const &vinfo) {
       // 1. Bind the vbo object to the GL_ARRAY_BUFFER
       glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
@@ -83,30 +94,56 @@ public:
       ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
       // 3. Copy the data to the GPU, then let stack cleanup gl context automatically.
-      glBufferData(GL_ARRAY_BUFFER, vinfo.size_in_bytes, vinfo.buffer, GL_STATIC_DRAW);
+      glBufferData(GL_ARRAY_BUFFER, vinfo.size_in_bytes(), vinfo.buffer(), GL_STATIC_DRAW);
     };
 
     struct vertices_info {
-      int const size_in_bytes;
-      GLfloat const *buffer;
+      std::vector<GLfloat> data;
 
-      vertices_info(int const s, GLfloat const *b)
-          : size_in_bytes(s)
-          , buffer(b)
+      vertices_info(GLfloat const *vb, GLfloat const cb[4])
       {
+        static auto constexpr FLOATS_PV = 4; // x, y, z, w
+        static auto constexpr COLORS_PV = 4; // r, g, b, a
+
+        auto const grab_v = [&](auto *buffer, int const index) {
+          auto const row_offset = FLOATS_PV * index;
+          for (auto i = 0; i < FLOATS_PV; ++i) {
+            auto const pos = row_offset + i;
+            this->data.push_back(buffer[pos]);
+          }
+        };
+        auto const grab_c = [&](auto *buffer) {
+          for (auto i = 0; i < COLORS_PV; ++i) {
+            this->data.push_back(buffer[i]);
+          }
+        };
+
+        for (auto i = 0; i < 3; ++i) {
+          grab_v(vb, i);
+          grab_c(cb);
+        }
       }
+
+      int size_in_bytes() const { return this->data.size() * sizeof(this->data[0]); }
+      GLfloat const *buffer() const { return this->data.data(); }
     };
 
     global_vao_bind(this->vao_);
     ON_SCOPE_EXIT([]() { global_vao_unbind(); });
 
-    vertices_info const v0_info{sizeof(v0[0]) * 12, v0};
-    send_vertices_gpu(this->vbo_, v0_info);
-    render(this->program_handle_);
+    {
+      GLfloat const c0[4] = {0.25f, 0.50f, 0.75f, 1.00f};
+      vertices_info const v0_info{v0, c0};
+      send_vertices_gpu(this->vbo_, v0_info);
+      render(this->program_handle_);
+    }
 
-    vertices_info const v1_info{sizeof(v1[0]) * 12, v1};
-    send_vertices_gpu(this->vbo_, v1_info);
-    render(this->program_handle_);
+    {
+      GLfloat const c1[4] = {0.75f, 0.20f, 0.00f, 1.00f};
+      vertices_info const v1_info{v1, c1};
+      send_vertices_gpu(this->vbo_, v1_info);
+      render(this->program_handle_);
+    }
   }
 };
 

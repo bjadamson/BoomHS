@@ -31,6 +31,8 @@ load_program(vertex_shader_filename const v, fragment_shader_filename const f)
   return expected_program_id;
 }
 
+auto const global_enable_vattrib_array = [](auto const index) { glEnableVertexAttribArray(index); };
+
 } // ns anon
 
 namespace engine
@@ -49,20 +51,40 @@ factory::make_red_triangle_program()
   global_vao_bind(triangle.vao_);
   ON_SCOPE_EXIT([]() { global_vao_unbind(); });
 
+  // enable vertex attibute arrays
   global_enable_vattrib_array(RED_TRIANGLE_VERTEX_POSITION_INDEX);
-
-  static auto constexpr NUM_VERTICES = 4;
-  static auto constexpr TYPE_OF_DATA = GL_FLOAT;
-  static auto constexpr NORMALIZE_DATA = GL_FALSE;
-  static auto constexpr STRIDE_SIZE = NUM_VERTICES * sizeof(TYPE_OF_DATA);
-  static auto constexpr OFFSET_PTR = nullptr;
+  global_enable_vattrib_array(RED_TRIANGLE_VERTEX_COLOR_INDEX);
 
   glBindBuffer(GL_ARRAY_BUFFER, triangle.vbo_);
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
+  static auto constexpr DONT_NORMALIZE_THE_DATA = GL_FALSE;
+
+  static auto constexpr VERTEX_ELEMENT_COUNT = 4;
+  static auto constexpr COLOR_ELEMENT_COUNT = 4;
+  static auto constexpr STRIDE_DISTANCE =
+      (VERTEX_ELEMENT_COUNT + COLOR_ELEMENT_COUNT) * sizeof(GL_FLOAT);
+
   // configure this OpenGL VAO attribute array
-  glVertexAttribPointer(RED_TRIANGLE_VERTEX_POSITION_INDEX, NUM_VERTICES, TYPE_OF_DATA,
-                        NORMALIZE_DATA, STRIDE_SIZE, OFFSET_PTR);
+  // clang-format off
+  glVertexAttribPointer(
+      RED_TRIANGLE_VERTEX_POSITION_INDEX, // attribute
+      VERTEX_ELEMENT_COUNT,               // number of elements per-vertice
+      GL_FLOAT,                           // type of each vertice-element
+      DONT_NORMALIZE_THE_DATA,            // normalize our data
+      STRIDE_DISTANCE,                    // next vertice is every n floats
+      nullptr);                           // offset from beginning of buffer
+  {
+    static auto constexpr COLOR_OFFSET = VERTEX_ELEMENT_COUNT * sizeof(GL_FLOAT);
+    glVertexAttribPointer(
+        RED_TRIANGLE_VERTEX_COLOR_INDEX, // attribute
+        COLOR_ELEMENT_COUNT,             // number of elements per-color
+        GL_FLOAT,                        // type of each color-element
+        DONT_NORMALIZE_THE_DATA,         // normalize our data
+        STRIDE_DISTANCE,                 // next color is every n floats
+        (GLvoid*)COLOR_OFFSET);
+  }
+  // clang-format on
 
   // TODO: figure out why the compiler gets confused without the std::move() (why does it try to
   // copy instead of move the value?? Maybe c++17 (rvo guarantees) fixes this??)

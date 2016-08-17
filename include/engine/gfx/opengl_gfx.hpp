@@ -26,17 +26,6 @@ auto log_error = [](auto const line) {
   }
 };
 
-auto const print_matrix = [](auto const &matrix) {
-  for (auto i = 0; i < 16; ++i) {
-    if ((i > 0) && ((i % 4) == 0)) {
-      std::cerr << "\n";
-    }
-    std::cerr << " "
-              << "[" << std::to_string(matrix[i]) << "]";
-  }
-  std::cerr << "\n" << std::endl;
-};
-
 auto const bind_vao = [](auto const vao) { glBindVertexArray(vao); };
 auto const unbind_vao = [](auto const vao) { glBindVertexArray(0); };
 

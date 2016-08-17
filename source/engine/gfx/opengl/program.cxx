@@ -120,16 +120,6 @@ namespace opengl
 stlw::result<program_handle, std::string>
 program_loader::load(char const *vertex_file_path, char const *fragment_file_path)
 {
-  /*
-  auto const dump_program_log = [](auto const program_id, char const* prefix)
-  {
-    auto const get_program_log = [](auto const id) { return retrieve_gl_log(id,
-  glGetProgramInfoLog); };
-    auto const program_log = get_program_log(program_id);
-    printf("'%s': %s\n", prefix, program_log.data());
-  };
-  */
-
   // Read the Vertex/Fragment Shader code from ther file
   DO_MONAD(auto vertex_shader_source, stlw::read_file(vertex_file_path));
   DO_MONAD(auto fragment_shader_source, stlw::read_file(fragment_file_path));
