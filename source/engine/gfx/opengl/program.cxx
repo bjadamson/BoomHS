@@ -19,8 +19,8 @@ inline void
 gl_compile_shader(GLuint const handle, char const *source)
 {
   GLint *p_length = nullptr;
-  auto constexpr shader_count = 1; // We're only compiling one shader (in this function anyway).
-  glShaderSource(handle, 1, &source, p_length);
+  auto constexpr SHADER_COUNT = 1; // We're only compiling one shader (in this function anyway).
+  glShaderSource(handle, SHADER_COUNT, &source, p_length);
   glCompileShader(handle);
 }
 
