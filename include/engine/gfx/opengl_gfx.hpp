@@ -1,7 +1,9 @@
 #pragma once
 #include <engine/gfx/opengl/factory.hpp>
 #include <engine/gfx/opengl/program.hpp>
+#include <engine/gfx/opengl/shape_map.hpp>
 #include <engine/gfx/opengl_glew.hpp>
+#include <engine/gfx/shapes.hpp>
 #include <engine/window/sdl_window.hpp>
 #include <stlw/type_ctors.hpp>
 
@@ -55,13 +57,13 @@ public:
   {
   }
 
-  void draw(GLfloat const v0[12], GLfloat const v1[12])
+  void draw(::engine::gfx::triangle const &t0, ::engine::gfx::triangle const &t1)
   {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
     // Render
     glClear(GL_COLOR_BUFFER_BIT);
-    this->red_.draw(v0, v1);
+    this->red_.draw(map_to_gl(t0), map_to_gl(t1));
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(this->window_.raw());

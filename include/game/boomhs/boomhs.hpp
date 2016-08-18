@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 
+#include <engine/gfx/shapes.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 
@@ -59,21 +60,30 @@ public:
     // Set up vertex data (and buffer(s)) and attribute pointers
     constexpr float Wcoord = 1.0f;
     // clang-format off
-    constexpr float v0[12] =
+    constexpr std::array<float, 12> v0 =
     {
       -0.5f , -0.5f, 0.0f, Wcoord, // bottom left
       0.0f  , -0.5f, 0.0f, Wcoord, // bottom right
       -0.25f, 0.5f , 0.0f, Wcoord  // top middle
     };
-    constexpr float v1[12] =
+    constexpr std::array<float, 12> v1 =
     {
       0.5f  , 0.0f, 0.0f, Wcoord, // bottom left
       1.00f , 0.0f, 0.0f, Wcoord, // bottom right
       0.75f , 1.0f, 0.0f, Wcoord  // top middle
     };
+    constexpr std::array<float, 12> c0 =
+    {
+      1.0f, 0.0f, 0.0f, 1.0f,
+      0.0f, 1.0f, 0.0f, 1.0f,
+      0.0f, 0.0f, 1.0f, 1.0f,
+    };
     // clang-format on
+    using namespace engine::gfx;
+    constexpr triangle t0 = make_triangle(v0, c0);
+    constexpr triangle t1 = make_triangle(v1, c0);
 
-    renderer.draw(v0, v1);
+    renderer.draw(t0, t1);
   }
 
   bool process_event(SDL_Event &event) { return is_quit_event(event); }
