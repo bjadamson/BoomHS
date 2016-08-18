@@ -1,24 +1,21 @@
 #pragma once
 #include <array>
-#include <engine/gfx/opengl_glew.hpp>
 
 namespace engine
 {
 namespace gfx
 {
-namespace opengl
-{
 struct point {
-  GLfloat const x, y, z, w;
-  explicit constexpr point(GLfloat const xp, GLfloat const yp, GLfloat const zp, GLfloat const wp) :
+  float const x, y, z, w;
+  explicit constexpr point(float const xp, float const yp, float const zp, float const wp) :
     x(xp),
     y(yp),
     z(zp),
     w(wp) {}
 };
 struct color {
-  GLfloat const r, g, b, a;
-  explicit constexpr color(GLfloat const rp, GLfloat const gp, GLfloat const bp, GLfloat const ap) :
+  float const r, g, b, a;
+  explicit constexpr color(float const rp, float const gp, float const bp, float const ap) :
     r(rp),
     g(gp),
     b(bp),
@@ -41,6 +38,5 @@ struct rectangle {
   }
 };
 
-} // ns opengl
 } // ns gfx
 } // ns engine
