@@ -3,9 +3,6 @@
 #include <stlw/format.hpp>
 #include <stlw/type_ctors.hpp>
 
-// TODO: ditch
-#include <game/debug.hpp>
-
 namespace engine
 {
 namespace window
@@ -39,8 +36,8 @@ sdl_library::init()
   // Initialize video subsystem
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     // Display error message
-    auto const fmt = stlw::format("SDL could not initialize! SDL_Error: %s\n") % SDL_GetError();
-    return FORMAT_STRERR(fmt);
+    auto const error = stlw::format("SDL could not initialize! SDL_Error: {}\n", SDL_GetError());
+    return stlw::make_error(error);
   }
   return stlw::make_empty();
 }
@@ -80,8 +77,8 @@ sdl_library::make_window()
   auto raw = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width,
                               height, flags);
   if (nullptr == raw) {
-    auto const fmt = stlw::format("SDL could not initialize! SDL_Error: %s\n") % SDL_GetError();
-    return stlw::make_error(stlw::to_string(fmt));
+    auto const error = stlw::format("SDL could not initialize! SDL_Error: {}\n", SDL_GetError());
+    return stlw::make_error(error);
   }
   window_ptr window_ptr{raw, &SDL_DestroyWindow};
 
@@ -89,9 +86,9 @@ sdl_library::make_window()
   auto gl_context = SDL_GL_CreateContext(window_ptr.get());
   if (nullptr == gl_context) {
     // Display error message
-    auto const fmt =
-        stlw::format("OpenGL context could not be created! SDL Error: %s\n") % SDL_GetError();
-    return FORMAT_STRERR(fmt);
+    auto const error =
+        stlw::format("OpenGL context could not be created! SDL Error: {}\n", SDL_GetError());
+    return stlw::make_error(error);
   }
   SDL_GL_MakeCurrent(window_ptr.get(), gl_context);
 
@@ -99,9 +96,9 @@ sdl_library::make_window()
   glewExperimental = GL_TRUE;
   auto const glew_status = glewInit();
   if (GLEW_OK != glew_status) {
-    auto const fmt = stlw::format("GLEW could not initialize! GLEW error: %s\n") %
-                     glewGetErrorString(glew_status);
-    return FORMAT_STRERR(fmt);
+    auto const error = stlw::format("GLEW could not initialize! GLEW error: {}\n",
+        glewGetErrorString(glew_status));
+    return stlw::make_error(error);
   }
   return sdl_window{std::move(window_ptr), gl_context};
 }

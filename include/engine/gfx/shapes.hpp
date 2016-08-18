@@ -26,17 +26,32 @@ struct color {
   {
   }
 };
+struct texture_coord {
+  float const u, v;
+  explicit constexpr texture_coord(float const up, float const vp)
+    : u(up)
+    , v(vp)
+  {
+  }
+};
 struct triangle {
-  std::array<point, 3> const points;
-  std::array<color, 3> const colors;
-  explicit constexpr triangle(std::array<point, 3> const &p, std::array<color, 3> const &c)
-      : points(p)
-      , colors(c)
+  std::array<point, 3>         const points;
+  std::array<color, 3>         const colors;
+  std::array<texture_coord, 3> const coords;
+
+  explicit constexpr triangle(
+      std::array<point, 3> const &points_p,
+      std::array<color, 3> const &colors_p,
+      std::array<texture_coord, 3> const& coords_p)
+      : points(points_p)
+      , colors(colors_p)
+      , coords(coords_p)
   {
   }
 };
 
-triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<float, 12> const &c)
+triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<float, 12> const& c,
+    std::array<float, 6> const& tcoords)
 {
   point const p0{p[0], p[1], p[2], p[3]};
   point const p1{p[4], p[5], p[6], p[7]};
@@ -46,9 +61,26 @@ triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<floa
   color const c1{c[4], c[5], c[6], c[7]};
   color const c2{c[8], c[9], c[10], c[11]};
 
+  texture_coord const t0{tcoords[0], tcoords[1]};
+  texture_coord const t1{tcoords[2], tcoords[3]};
+  texture_coord const t2{tcoords[4], tcoords[5]};
+
   std::array<point, 3> const points{p0, p1, p2};
   std::array<color, 3> const colors{c0, c1, c2};
-  return triangle{points, colors};
+  std::array<texture_coord, 3> const texture_coordinates{t0, t1, t2};
+  return triangle{points, colors, texture_coordinates};
+}
+
+triangle constexpr make_triangle(std::array<float, 12> const& p, std::array<float, 12> const& c)
+{
+  // clang-format off
+  std::array<float, 6> const texture_coords = {
+    0.0f, 0.0f, // lower-left corner
+    1.0f, 0.0f, // lower-right corner
+    0.5f, 1.0f  // top-middle corner
+  };
+  // clang-format on
+  return make_triangle(p, c, texture_coords);
 }
 
 // type constructor for
@@ -56,10 +88,11 @@ triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<floa
 triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<float, 4> const &c)
 {
   // clang-format off
-    std::array<float, 12> const colors{
+  std::array<float, 12> const colors = {
       c[0], c[1], c[2], c[3],
       c[0], c[1], c[2], c[3],
-      c[0], c[1], c[2], c[3]};
+      c[0], c[1], c[2], c[3]
+  };
   // clang-format on
   return make_triangle(p, colors);
 }

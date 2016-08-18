@@ -15,6 +15,7 @@ class factory
 
   static auto constexpr RED_TRIANGLE_VERTEX_POSITION_INDEX = 0;
   static auto constexpr RED_TRIANGLE_VERTEX_COLOR_INDEX = 1;
+  static auto constexpr RED_TRIANGLE_VERTEX_TEXTURE_COORDINATE_INDEX = 2;
 
 public:
   static stlw::result<red_triangle, std::string> make_red_triangle_program();

@@ -57,13 +57,14 @@ public:
   {
   }
 
-  void draw(::engine::gfx::triangle const &t0, ::engine::gfx::triangle const &t1)
+  template<typename L>
+  void draw(L &logger, ::engine::gfx::triangle const &t0, ::engine::gfx::triangle const &t1)
   {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
     // Render
     glClear(GL_COLOR_BUFFER_BIT);
-    this->red_.draw(map_to_gl(t0), map_to_gl(t1));
+    this->red_.draw(logger, map_to_gl(t0), map_to_gl(t1));
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(this->window_.raw());
@@ -76,8 +77,8 @@ struct opengl_library {
   static void init()
   {
     // for now, to simplify rendering
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
+    //glDisable(GL_DEPTH_TEST);
+    //glDisable(GL_CULL_FACE);
   }
 
   static inline void destroy() {}

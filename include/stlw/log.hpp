@@ -1,6 +1,6 @@
 #pragma once
-#include <extlibs/spdlog.hpp>
 #include <memory>
+#include <stlw/format.hpp>
 #include <stlw/type_macros.hpp>
 
 namespace stlw

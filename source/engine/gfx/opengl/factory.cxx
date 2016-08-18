@@ -54,36 +54,52 @@ factory::make_red_triangle_program()
   // enable vertex attibute arrays
   global_enable_vattrib_array(RED_TRIANGLE_VERTEX_POSITION_INDEX);
   global_enable_vattrib_array(RED_TRIANGLE_VERTEX_COLOR_INDEX);
+  global_enable_vattrib_array(RED_TRIANGLE_VERTEX_TEXTURE_COORDINATE_INDEX);
 
   glBindBuffer(GL_ARRAY_BUFFER, triangle.vbo_);
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
   static auto constexpr DONT_NORMALIZE_THE_DATA = GL_FALSE;
-
-  static auto constexpr VERTEX_ELEMENT_COUNT = 4;
-  static auto constexpr COLOR_ELEMENT_COUNT = 4;
+  static auto constexpr VERTEX_ELEMENT_COUNT             = 4; // x, y, z, w
+  static auto constexpr COLOR_ELEMENT_COUNT              = 4; // r, g, b, a
+  static auto constexpr TEXTURE_COORDINATE_ELEMENT_COUNT = 2; // u, v
   static auto constexpr STRIDE_DISTANCE =
-      (VERTEX_ELEMENT_COUNT + COLOR_ELEMENT_COUNT) * sizeof(GL_FLOAT);
+      (VERTEX_ELEMENT_COUNT + COLOR_ELEMENT_COUNT + TEXTURE_COORDINATE_ELEMENT_COUNT) * sizeof(GL_FLOAT);
+
+  // list offsets sequentially
+  static auto constexpr VERTICE_OFFSET = 0;
+
+  static auto constexpr COLOR_OFFSET =
+    VERTICE_OFFSET + (VERTEX_ELEMENT_COUNT * sizeof(GL_FLOAT));
+
+  static auto constexpr TEXTURE_COORDINATE_OFFSET =
+    COLOR_OFFSET + (COLOR_ELEMENT_COUNT * sizeof(GL_FLOAT));
 
   // configure this OpenGL VAO attribute array
   // clang-format off
   glVertexAttribPointer(
-      RED_TRIANGLE_VERTEX_POSITION_INDEX, // attribute
-      VERTEX_ELEMENT_COUNT,               // number of elements per-vertice
-      GL_FLOAT,                           // type of each vertice-element
-      DONT_NORMALIZE_THE_DATA,            // normalize our data
-      STRIDE_DISTANCE,                    // next vertice is every n floats
-      nullptr);                           // offset from beginning of buffer
-  {
-    static auto constexpr COLOR_OFFSET = VERTEX_ELEMENT_COUNT * sizeof(GL_FLOAT);
-    glVertexAttribPointer(
-        RED_TRIANGLE_VERTEX_COLOR_INDEX, // attribute
-        COLOR_ELEMENT_COUNT,             // number of elements per-color
-        GL_FLOAT,                        // type of each color-element
-        DONT_NORMALIZE_THE_DATA,         // normalize our data
-        STRIDE_DISTANCE,                 // next color is every n floats
-        (GLvoid*)COLOR_OFFSET);
-  }
+      RED_TRIANGLE_VERTEX_POSITION_INDEX,           // attribute
+      VERTEX_ELEMENT_COUNT,                         // number of floats per-element
+      GL_FLOAT,                                     // type of each vertice-element
+      DONT_NORMALIZE_THE_DATA,                      // normalize our data
+      STRIDE_DISTANCE,                              // next "'vertice'" is every n floats
+      reinterpret_cast<GLvoid*>(VERTICE_OFFSET));   // offset from beginning of buffer
+
+  glVertexAttribPointer(
+      RED_TRIANGLE_VERTEX_COLOR_INDEX,              // attribute
+      COLOR_ELEMENT_COUNT,                          // number of elements per-color
+      GL_FLOAT,                                     // type of each color-element
+      DONT_NORMALIZE_THE_DATA,                      // normalize our data
+      STRIDE_DISTANCE,                              // next "'color'" is every n floats
+      reinterpret_cast<GLvoid*>(COLOR_OFFSET));     // offset from beginning of buffer
+
+  glVertexAttribPointer(
+      RED_TRIANGLE_VERTEX_TEXTURE_COORDINATE_INDEX, // attribute
+      TEXTURE_COORDINATE_ELEMENT_COUNT,             // number of floats per-element
+      GL_FLOAT,                                     // type of each color-element
+      DONT_NORMALIZE_THE_DATA,                      // normalize our data
+      STRIDE_DISTANCE,                              // next "'texture coordinate'" is every n floats
+      reinterpret_cast<GLvoid*>(TEXTURE_COORDINATE_OFFSET)); // offset from beginning of buffer
   // clang-format on
 
   // TODO: figure out why the compiler gets confused without the std::move() (why does it try to

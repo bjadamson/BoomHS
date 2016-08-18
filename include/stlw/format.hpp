@@ -1,11 +1,12 @@
 #pragma once
-#include <boost/format.hpp>
-#include <stlw/type_macros.hpp>
+#include <extlibs/spdlog.hpp>
 
 namespace stlw
 {
-
-DEFINE_WRAPPER_FUNCTION(to_string, boost::str);
-DEFINE_WRAPPER_FUNCTION(format, boost::format);
+template <typename... Params>
+decltype(auto) format(Params &&... p)
+{
+  return fmt::format(std::forward<Params>(p)...);
+}
 
 } // ns stlw

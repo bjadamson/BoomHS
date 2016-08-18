@@ -13,10 +13,10 @@ namespace boomhs
 template <typename L>
 class boomhs_game
 {
-  L &l_;
+  L &logger_;
 
   boomhs_game(L &l)
-      : l_(l)
+      : logger_(l)
   {
   }
 
@@ -83,7 +83,7 @@ public:
     constexpr triangle t0 = make_triangle(v0, c0);
     constexpr triangle t1 = make_triangle(v1, c0);
 
-    renderer.draw(t0, t1);
+    renderer.draw(this->logger_, t0, t1);
   }
 
   bool process_event(SDL_Event &event) { return is_quit_event(event); }

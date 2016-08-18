@@ -1,11 +1,14 @@
 #version 300 es
 precision mediump float;
 
-in vec4 vertex_color;
-out vec4 fragment_color;  // output fragment color
+in vec4 v_color;
+in vec2 uv;
+
+out vec4 f_color;  // output fragment color
+
+uniform sampler2D sampler;
 
 void main()
 {
-  // Output color = red
-  fragment_color = vertex_color;
+  f_color = texture(sampler, uv);
 }
