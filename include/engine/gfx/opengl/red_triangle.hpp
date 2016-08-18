@@ -55,7 +55,6 @@ class red_triangle
   // TODO: consider moving elsewhere
   GLuint texture_;
   int width_ = 0, height_ = 0;
-  unsigned char *image_ = nullptr;
   // TODO:end
 
   friend class factory;
@@ -78,15 +77,17 @@ private:
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    this->image_ = SOIL_load_image("container.jpg", &this->width_, &this->height_, 0, SOIL_LOAD_RGB);
-    if (nullptr == this->image_) {
+    unsigned char *pimage = SOIL_load_image("container.jpg", &this->width_, &this->height_, 0,
+        SOIL_LOAD_RGB);
+    if (nullptr == pimage) {
       std::cerr << "image didn't load.";
       std::abort();
     }
+    ON_SCOPE_EXIT([&]() { SOIL_free_image_data(pimage); });
 
     // actually send the texture to the GPU
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, this->width_, this->height_, 0, GL_RGB, GL_UNSIGNED_BYTE,
-        this->image_);
+        pimage);
     glGenerateMipmap(GL_TEXTURE_2D);
   }
 
@@ -99,10 +100,16 @@ public:
       : vao_(other.vao_)
       , vbo_(other.vbo_)
       , program_handle_(std::move(other.program_handle_))
+      , texture_(other.texture_)
+      , width_(other.width_)
+      , height_(other.height_)
   {
     other.vao_ = 0;
     other.vbo_ = 0;
     other.program_handle_ = program_handle::make_invalid();
+    other.texture_ = 0;
+    other.width_ = 0;
+    other.height_ = 0;
   }
 
   ~red_triangle()
@@ -110,7 +117,6 @@ public:
     glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
     glDeleteVertexArrays(NUM_BUFFERS, &this->vao_);
 
-    SOIL_free_image_data(this->image_);
   }
 
   template<typename L>
