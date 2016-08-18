@@ -51,26 +51,29 @@ factory::make_red_triangle_program()
   global_vao_bind(triangle.vao_);
   ON_SCOPE_EXIT([]() { global_vao_unbind(); });
 
-  // enable vertex attibute arrays
-  global_enable_vattrib_array(RED_TRIANGLE_VERTEX_POSITION_INDEX);
-  global_enable_vattrib_array(RED_TRIANGLE_VERTEX_COLOR_INDEX);
-  global_enable_vattrib_array(RED_TRIANGLE_VERTEX_TEXTURE_COORDINATE_INDEX);
-
   glBindBuffer(GL_ARRAY_BUFFER, triangle.vbo_);
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
   static auto constexpr VERTICE_COMPONENT_COUNT = 4;  // x, y, z, w
   static auto constexpr COLOR_COMPONENT_COUNT = 4;    // r, g, b, a
   static auto constexpr TEXCOORD_COMPONENT_COUNT = 2; // u, v
-  static auto constexpr DONT_NORMALIZE_THE_DATA = GL_FALSE;
-  static auto constexpr TOTAL_COMPONENT_COUNT = VERTICE_COMPONENT_COUNT + COLOR_COMPONENT_COUNT
-    + TEXCOORD_COMPONENT_COUNT;
+  struct skip_context
+  {
+    int offset = 0;
+  };
 
   auto const set_attrib_pointer = [](auto const attribute_index, auto const component_count,
-      auto const offset, auto const num_component_skip)
+      skip_context &sc)
   {
+    // enable vertex attibute arrays
+    global_enable_vattrib_array(attribute_index);
+
+    static auto constexpr DONT_NORMALIZE_THE_DATA = GL_FALSE;
+    static auto constexpr TOTAL_COMPONENT_COUNT = VERTICE_COMPONENT_COUNT + COLOR_COMPONENT_COUNT
+      + TEXCOORD_COMPONENT_COUNT;
+
     // clang-format off
-    auto const offset_in_bytes = (offset + num_component_skip) * sizeof(GL_FLOAT);
+    auto const offset_in_bytes = sc.offset * sizeof(GL_FLOAT);
     glVertexAttribPointer(
         attribute_index,                             // global index id
         component_count,                             // number of components per attribute
@@ -79,27 +82,14 @@ factory::make_red_triangle_program()
         TOTAL_COMPONENT_COUNT * sizeof(GL_FLOAT),    // byte-offset between consecutive vertex attributes
         reinterpret_cast<GLvoid*>(offset_in_bytes)); // offset from beginning of buffer
     // clang-format on
-    return component_count + num_component_skip;
+    sc.offset += component_count;
   };
 
   // configure this OpenGL VAO attribute array
-  int num_components = 0;
-  {
-    static auto constexpr VERTICE_ELEMENT_OFFSET = 0;
-    static auto constexpr PREV_NUM_COMPONENTS = 0;
-    num_components = set_attrib_pointer(RED_TRIANGLE_VERTEX_POSITION_INDEX, VERTICE_COMPONENT_COUNT,
-        VERTICE_ELEMENT_OFFSET, PREV_NUM_COMPONENTS);
-  }
-  {
-    static auto constexpr COLOR_ELEMENT_OFFSET = VERTICE_COMPONENT_COUNT;
-    num_components = set_attrib_pointer(RED_TRIANGLE_VERTEX_COLOR_INDEX, COLOR_COMPONENT_COUNT,
-        COLOR_ELEMENT_OFFSET, num_components);
-  }
-  {
-    static auto constexpr TEXCOORD_ELEMENT_OFFSET = VERTICE_COMPONENT_COUNT + COLOR_COMPONENT_COUNT;
-    num_components = set_attrib_pointer(RED_TRIANGLE_VERTEX_TEXTURE_COORDINATE_INDEX,
-        TEXCOORD_COMPONENT_COUNT, TEXCOORD_ELEMENT_OFFSET, num_components);
-  }
+  skip_context sc;
+  set_attrib_pointer(RED_TRIANGLE_VERTEX_POSITION_INDEX, VERTICE_COMPONENT_COUNT, *&sc);
+  set_attrib_pointer(RED_TRIANGLE_VERTEX_COLOR_INDEX, COLOR_COMPONENT_COUNT, *&sc);
+  set_attrib_pointer(RED_TRIANGLE_VERTEX_TEXTURE_COORDINATE_INDEX, TEXCOORD_COMPONENT_COUNT, *&sc);
 
   // TODO: figure out why the compiler gets confused without the std::move() (why does it try to
   // copy instead of move the value?? Maybe c++17 (rvo guarantees) fixes this??)
