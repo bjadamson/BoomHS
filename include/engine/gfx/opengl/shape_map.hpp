@@ -19,8 +19,8 @@ public:
       : data_(d)
   {
   }
-  inline decltype(auto) data() const { return this->data_.data(); }
-  inline auto size_in_bytes() const { return N * sizeof(float); }
+  inline constexpr decltype(auto) data() const { return this->data_.data(); }
+  inline constexpr auto size_in_bytes() const { return N * sizeof(float); }
 };
 using triangle = ::engine::gfx::opengl::shape<30>;
 

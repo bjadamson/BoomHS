@@ -59,48 +59,47 @@ factory::make_red_triangle_program()
   glBindBuffer(GL_ARRAY_BUFFER, triangle.vbo_);
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
+  static auto constexpr VERTICE_COMPONENT_COUNT = 4;  // x, y, z, w
+  static auto constexpr COLOR_COMPONENT_COUNT = 4;    // r, g, b, a
+  static auto constexpr TEXCOORD_COMPONENT_COUNT = 2; // u, v
   static auto constexpr DONT_NORMALIZE_THE_DATA = GL_FALSE;
-  static auto constexpr VERTEX_ELEMENT_COUNT             = 4; // x, y, z, w
-  static auto constexpr COLOR_ELEMENT_COUNT              = 4; // r, g, b, a
-  static auto constexpr TEXTURE_COORDINATE_ELEMENT_COUNT = 2; // u, v
-  static auto constexpr STRIDE_DISTANCE =
-      (VERTEX_ELEMENT_COUNT + COLOR_ELEMENT_COUNT + TEXTURE_COORDINATE_ELEMENT_COUNT) * sizeof(GL_FLOAT);
+  static auto constexpr TOTAL_COMPONENT_COUNT = VERTICE_COMPONENT_COUNT + COLOR_COMPONENT_COUNT
+    + TEXCOORD_COMPONENT_COUNT;
 
-  // list offsets sequentially
-  static auto constexpr VERTICE_OFFSET = 0;
-
-  static auto constexpr COLOR_OFFSET =
-    VERTICE_OFFSET + (VERTEX_ELEMENT_COUNT * sizeof(GL_FLOAT));
-
-  static auto constexpr TEXTURE_COORDINATE_OFFSET =
-    COLOR_OFFSET + (COLOR_ELEMENT_COUNT * sizeof(GL_FLOAT));
+  auto const set_attrib_pointer = [](auto const attribute_index, auto const component_count,
+      auto const offset, auto const num_component_skip)
+  {
+    // clang-format off
+    auto const offset_in_bytes = (offset + num_component_skip) * sizeof(GL_FLOAT);
+    glVertexAttribPointer(
+        attribute_index,                             // global index id
+        component_count,                             // number of components per attribute
+        GL_FLOAT,                                    // data-type of the components
+        DONT_NORMALIZE_THE_DATA,                     // don't normalize our data
+        TOTAL_COMPONENT_COUNT * sizeof(GL_FLOAT),    // byte-offset between consecutive vertex attributes
+        reinterpret_cast<GLvoid*>(offset_in_bytes)); // offset from beginning of buffer
+    // clang-format on
+    return component_count + num_component_skip;
+  };
 
   // configure this OpenGL VAO attribute array
-  // clang-format off
-  glVertexAttribPointer(
-      RED_TRIANGLE_VERTEX_POSITION_INDEX,           // attribute
-      VERTEX_ELEMENT_COUNT,                         // number of floats per-element
-      GL_FLOAT,                                     // type of each vertice-element
-      DONT_NORMALIZE_THE_DATA,                      // normalize our data
-      STRIDE_DISTANCE,                              // next "'vertice'" is every n floats
-      reinterpret_cast<GLvoid*>(VERTICE_OFFSET));   // offset from beginning of buffer
-
-  glVertexAttribPointer(
-      RED_TRIANGLE_VERTEX_COLOR_INDEX,              // attribute
-      COLOR_ELEMENT_COUNT,                          // number of elements per-color
-      GL_FLOAT,                                     // type of each color-element
-      DONT_NORMALIZE_THE_DATA,                      // normalize our data
-      STRIDE_DISTANCE,                              // next "'color'" is every n floats
-      reinterpret_cast<GLvoid*>(COLOR_OFFSET));     // offset from beginning of buffer
-
-  glVertexAttribPointer(
-      RED_TRIANGLE_VERTEX_TEXTURE_COORDINATE_INDEX, // attribute
-      TEXTURE_COORDINATE_ELEMENT_COUNT,             // number of floats per-element
-      GL_FLOAT,                                     // type of each color-element
-      DONT_NORMALIZE_THE_DATA,                      // normalize our data
-      STRIDE_DISTANCE,                              // next "'texture coordinate'" is every n floats
-      reinterpret_cast<GLvoid*>(TEXTURE_COORDINATE_OFFSET)); // offset from beginning of buffer
-  // clang-format on
+  int num_components = 0;
+  {
+    static auto constexpr VERTICE_ELEMENT_OFFSET = 0;
+    static auto constexpr PREV_NUM_COMPONENTS = 0;
+    num_components = set_attrib_pointer(RED_TRIANGLE_VERTEX_POSITION_INDEX, VERTICE_COMPONENT_COUNT,
+        VERTICE_ELEMENT_OFFSET, PREV_NUM_COMPONENTS);
+  }
+  {
+    static auto constexpr COLOR_ELEMENT_OFFSET = VERTICE_COMPONENT_COUNT;
+    num_components = set_attrib_pointer(RED_TRIANGLE_VERTEX_COLOR_INDEX, COLOR_COMPONENT_COUNT,
+        COLOR_ELEMENT_OFFSET, num_components);
+  }
+  {
+    static auto constexpr TEXCOORD_ELEMENT_OFFSET = VERTICE_COMPONENT_COUNT + COLOR_COMPONENT_COUNT;
+    num_components = set_attrib_pointer(RED_TRIANGLE_VERTEX_TEXTURE_COORDINATE_INDEX,
+        TEXCOORD_COMPONENT_COUNT, TEXCOORD_ELEMENT_OFFSET, num_components);
+  }
 
   // TODO: figure out why the compiler gets confused without the std::move() (why does it try to
   // copy instead of move the value?? Maybe c++17 (rvo guarantees) fixes this??)

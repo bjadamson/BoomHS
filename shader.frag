@@ -10,5 +10,5 @@ uniform sampler2D sampler;
 
 void main()
 {
-  f_color = texture(sampler, uv);
+  f_color = vec4(texture(sampler, uv).rgb, 1.0f);
 }
