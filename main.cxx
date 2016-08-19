@@ -14,7 +14,7 @@
 int
 main(int argc, char *argv[])
 {
-  auto logger = stlw::log_factory::make_logger("logfile", "txt", 23, 59);
+  auto logger = stlw::log_factory::make_logger("main logger", "DELME.log", "txt", 23, 59);
   auto const on_error = [&](auto const &error) {
     logger.error(error);
     return EXIT_FAILURE;

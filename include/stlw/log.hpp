@@ -45,16 +45,16 @@ class log_factory
 
 public:
   template <typename... Params>
-  static decltype(auto) make_logger(Params &&... p)
+  static decltype(auto) make_logger(char const* log_name, Params &&... p)
   {
     // TODO: pass in a boost::filesystem::path as the directory.
     auto constexpr debug_filename = "debug.log";
 
     std::array<spdlog::sink_ptr, 2> const sinks = {
         std::make_unique<spdlog::sinks::stdout_sink_st>(),
-        std::make_unique<spdlog::sinks::daily_file_sink_st>(debug_filename, "txt", 23, 59)};
+        std::make_unique<spdlog::sinks::daily_file_sink_st>(std::forward<Params>(p)...)};
 
-    auto log_impl_pointer = std::make_unique<spdlog::logger>("name", begin(sinks), end(sinks));
+    auto log_impl_pointer = std::make_unique<spdlog::logger>(log_name, begin(sinks), end(sinks));
     return create_logger(std::move(log_impl_pointer));
   }
 };
