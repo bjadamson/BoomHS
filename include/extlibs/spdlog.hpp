@@ -7,4 +7,5 @@
 #else
 static_assert(false, "extlibs/spdlog.hpp should only be included once per-project.");
 #endif // SPDLOG_INCLUDE_ONCE_ONLY
+#define SPDLOG_TRACE_ON
 #include <spdlog/spdlog.h>
