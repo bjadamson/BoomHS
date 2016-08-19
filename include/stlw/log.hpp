@@ -4,34 +4,17 @@
 #include <stlw/type_macros.hpp>
 #include <stlw/compiler_macros.hpp>
 
-
-// Logging macros
-#define LOG_ADAPTER_DEFINE_FN(FN_NAME)                \
-template <typename... Params>                         \
-auto& FN_NAME(Params &&... p)               \
-{                                                     \
-  this->logger_->FN_NAME(std::forward<Params>(p)...); \
-  return *this;                                       \
-}
-
-#define LOG_ADAPTER_DEFINE_DEBUG_FN(FN_NAME)               \
-template <typename... Params>                              \
-auto& FN_NAME(Params &&... p)                    \
-{                                                          \
-  SPDLOG_TRACE(this->logger_, std::forward<Params>(p)...); \
-  return *this;                                            \
-}
-
 namespace stlw
 {
 
 enum class log_level
 {
   trace = 0,
-  debug = 1,
-  info = 2,
-  warn = 3,
-  error = 4,
+  debug,
+  info,
+  warn,
+  error,
+  MAX,
 };
 
 template <typename L>
@@ -53,12 +36,12 @@ public:
 
   log_adapter& operator=(log_adapter &&) = delete;
 
-#define DEFINE_LOG_ADAPTER_METHOD(FN_NAME)             \
-  template <typename... Params>                        \
-  auto& FN_NAME(Params &&... p)                        \
-  {                                                    \
+#define DEFINE_LOG_ADAPTER_METHOD(FN_NAME)              \
+  template <typename... Params>                         \
+  auto& FN_NAME(Params &&... p)                         \
+  {                                                     \
     this->logger_->FN_NAME(std::forward<Params>(p)...); \
-    return *this;                                      \
+    return *this;                                       \
   }
 
   DEFINE_LOG_ADAPTER_METHOD(trace)
@@ -75,17 +58,13 @@ class log_group
 {
   NO_COPY(log_group)
 
-  log_adapter<L> trace_;
-  log_adapter<L> debug_;
-  log_adapter<L> info_;
-  log_adapter<L> warn_;
-  log_adapter<L> error_;
+  L trace_;
+  L debug_;
+  L info_;
+  L warn_;
+  L error_;
 public:
-  explicit log_group(log_adapter<L> &&t,
-      log_adapter<L> &&d,
-      log_adapter<L> &&i,
-      log_adapter<L> &&w,
-      log_adapter<L> &&e)
+  explicit log_group(L &&t, L &&d, L &&i, L &&w, L &&e)
     : trace_(std::move(t))
     , debug_(std::move(d))
     , info_(std::move(i))
@@ -103,12 +82,12 @@ public:
   {
   }
 
-#define DEFINE_LOG_GROUP_METHOD(FN_NAME)              \
-  template <typename... Params>                       \
-  log_group& FN_NAME(Params &&... p)                  \
-  {                                                   \
-    this->FN_NAME##_.FN_NAME(std::forward<Params>(p)...);\
-    return *this;                                     \
+#define DEFINE_LOG_GROUP_METHOD(FN_NAME)                  \
+  template <typename... Params>                           \
+  auto& FN_NAME(Params &&... p)                           \
+  {                                                       \
+    this->FN_NAME##_.FN_NAME(std::forward<Params>(p)...); \
+    return *this;                                         \
   }
 
   DEFINE_LOG_GROUP_METHOD(trace)
@@ -120,9 +99,9 @@ public:
   log_group& operator=(log_group &&) = delete;
 };
 
-#define LOGGER_DEFINE_FN(FN_NAME)                     \
+#define LOG_WRITER_DEFINE_FN(FN_NAME)                 \
 template <typename... Params>                         \
-auto& FN_NAME(Params &&... p)                       \
+auto& FN_NAME(Params &&... p)                         \
 {                                                     \
   this->group_.FN_NAME(std::forward<Params>(p)...);   \
   return *this;                                       \
@@ -132,7 +111,9 @@ template<typename L>
 class log_writer
 {
   log_group<L> group_;
+
   NO_COPY(log_writer)
+  log_writer& operator=(log_writer &&) = delete;
 public:
   explicit log_writer(log_group<L> &&g) : group_(std::move(g)) {}
 
@@ -141,23 +122,18 @@ public:
   {
   }
 
-  LOGGER_DEFINE_FN(trace)
-  LOGGER_DEFINE_FN(debug)
-  LOGGER_DEFINE_FN(info)
-  LOGGER_DEFINE_FN(warn)
-  LOGGER_DEFINE_FN(error)
+  LOG_WRITER_DEFINE_FN(trace)
+  LOG_WRITER_DEFINE_FN(debug)
+  LOG_WRITER_DEFINE_FN(info)
+  LOG_WRITER_DEFINE_FN(warn)
+  LOG_WRITER_DEFINE_FN(error)
 };
 
 class log_factory
 {
-  template <typename F>
-  static auto instantiate_logger(F &&f) -> log_adapter<F>
-  {
-    return log_adapter<F>{std::forward<F>(f)};
-  }
-
   template <typename... Params>
-  static auto make_logger(char const* log_name, log_level const level, Params &&... p)
+  static std::unique_ptr<spdlog::logger>
+  make_spdlog_logger(char const* log_name, log_level const level, Params &&... p)
   {
     std::array<spdlog::sink_ptr, 2> const sinks = {
         std::make_unique<spdlog::sinks::stdout_sink_st>(),
@@ -165,20 +141,28 @@ class log_factory
 
     auto log_impl_pointer = std::make_unique<spdlog::logger>(log_name, begin(sinks), end(sinks));
     {
+      // map abstract log levels to spdlog levels
       auto const log_level = static_cast<spdlog::level::level_enum>(level);
       log_impl_pointer->set_level(log_level);
     }
     return log_impl_pointer;
-    //return instantiate_logger(std::move(log_impl_pointer));
+    //return log_adapter<decltype(log_impl_pointer)>(std::move(log_impl_pointer));
   }
 
-  static auto make_default_log_group(char const* name)
+  template <typename L>
+  static log_adapter<L> make_log_adapter(L &&logger)
   {
-    auto const ml = [](auto const* name, auto const level) {
-      return make_logger(name, level, name + std::string{".log"}, "txt", 23, 59);
+    return log_adapter<L>{std::move(logger)};
+  }
+
+  inline static auto make_default_log_group(char const* group_name)
+  {
+      auto const ml = [](auto const* name, auto const level) -> log_adapter<std::unique_ptr<spdlog::logger>> {
+      return make_log_adapter(make_spdlog_logger(name, level, name + std::string{".log"}, "txt", 23, 59));
     };
 
-    using T = decltype(ml(name, log_level::trace));
+    // TODO: this is weird , maybe we need a log_level::max index instead?
+    using T = decltype(ml(group_name, log_level::trace));
     return log_group<T>{
         ml("trace", log_level::trace),
         ml("debug", log_level::debug),
@@ -188,7 +172,7 @@ class log_factory
   }
 
   template <typename L>
-  static auto make_log_writer(log_group<L> &&group)
+  inline static auto make_log_writer(log_group<L> &&group)
   {
     return log_writer<L>{std::move(group)};
   }
