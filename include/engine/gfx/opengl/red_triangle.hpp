@@ -86,7 +86,6 @@ class red_triangle
 
   // TODO: consider moving elsewhere
   GLuint texture_ = 0;
-  int width_ = 0, height_ = 0;
   // TODO:end
 
   friend class factory;
@@ -115,15 +114,11 @@ public:
       , vbo_(other.vbo_)
       , program_handle_(std::move(other.program_handle_))
       , texture_(other.texture_)
-      , width_(other.width_)
-      , height_(other.height_)
   {
     other.vao_ = 0;
     other.vbo_ = 0;
     other.program_handle_ = program_handle::make_invalid();
     other.texture_ = 0;
-    other.width_ = 0;
-    other.height_ = 0;
   }
 
   ~red_triangle()
