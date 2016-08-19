@@ -1,5 +1,5 @@
 #pragma once
-#include <extlibs/spdlog.hpp>
+#include <extlibs/fmt.hpp>
 
 namespace stlw
 {

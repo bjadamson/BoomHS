@@ -2,6 +2,7 @@
 #include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl/shape_map.hpp>
 #include <stlw/format.hpp>
+#include <stlw/log.hpp>
 #include <stlw/print.hpp>
 #include <stlw/type_macros.hpp>
 #include <SOIL.h>
