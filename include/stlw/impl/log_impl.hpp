@@ -119,25 +119,29 @@ public:
   auto &FN_NAME(Params &&... p)                                                                    \
   {                                                                                                \
     this->group_.FN_NAME(std::forward<Params>(p)...);                                              \
+    this->shared_.FN_NAME(std::forward<Params>(p)...);                                             \
     return *this;                                                                                  \
   }
 
-template <typename L>
+template <typename L, typename M>
 class log_writer
 {
   log_group<L> group_;
+  log_adapter<M> shared_;
 
   NO_COPY(log_writer)
   log_writer &operator=(log_writer &&) = delete;
 
 public:
-  explicit log_writer(log_group<L> &&g)
+  explicit log_writer(log_group<L> &&g, log_adapter<M> &&s)
       : group_(std::move(g))
+      , shared_(std::move(s))
   {
   }
 
   log_writer(log_writer &&other)
       : group_(std::move(other.group_))
+      , shared_(std::move(other.shared_))
   {
   }
 
@@ -147,6 +151,13 @@ public:
   LOG_WRITER_DEFINE_FN(warn)
   LOG_WRITER_DEFINE_FN(error)
 };
+
+template <typename L, typename M>
+inline auto
+make_log_writer(impl::log_group<L> &&group, impl::log_adapter<M> &&m)
+{
+  return log_writer<L, M>{std::move(group), std::move(m)};
+}
 
 } // ns impl
 } // ns stlw
