@@ -4,7 +4,8 @@
 namespace stlw
 {
 template <typename... Params>
-decltype(auto) format(Params &&... p)
+decltype(auto)
+format(Params &&... p)
 {
   return fmt::format(std::forward<Params>(p)...);
 }
