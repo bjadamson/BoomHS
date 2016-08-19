@@ -9,7 +9,7 @@ namespace gfx
 {
 namespace opengl
 {
-template <int N>
+template <int N, int VerticeCount>
 class shape
 {
   std::array<float, N> const data_;
@@ -21,8 +21,10 @@ public:
   }
   inline constexpr decltype(auto) data() const { return this->data_.data(); }
   inline constexpr auto size_in_bytes() const { return N * sizeof(float); }
+  inline constexpr auto vertice_count() const { return VerticeCount; }
 };
-using triangle = ::engine::gfx::opengl::shape<30>;
+
+using triangle = ::engine::gfx::opengl::shape<30, 3>;
 
 auto constexpr map_to_gl(::engine::gfx::triangle const &gfx_triangle)
 {

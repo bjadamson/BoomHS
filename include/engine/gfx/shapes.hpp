@@ -35,14 +35,16 @@ struct texture_coord {
   }
 };
 struct triangle {
-  std::array<point, 3>         const points;
-  std::array<color, 3>         const colors;
-  std::array<texture_coord, 3> const coords;
+  static int constexpr N = 3;
+
+  std::array<point, N>         const points;
+  std::array<color, N>         const colors;
+  std::array<texture_coord, N> const coords;
 
   explicit constexpr triangle(
-      std::array<point, 3> const &points_p,
-      std::array<color, 3> const &colors_p,
-      std::array<texture_coord, 3> const& coords_p)
+      std::array<point, N> const &points_p,
+      std::array<color, N> const &colors_p,
+      std::array<texture_coord, N> const& coords_p)
       : points(points_p)
       , colors(colors_p)
       , coords(coords_p)

@@ -16,6 +16,9 @@ namespace opengl
 auto const global_vao_bind = [](auto const vao) { glBindVertexArray(vao); };
 auto const global_vao_unbind = []() { glBindVertexArray(0); };
 
+auto const global_texture_bind = [](auto const tid) { glBindTexture(GL_TEXTURE_2D, tid); };
+auto const global_texture_unbind = []() { glBindTexture(GL_TEXTURE_2D, 0); };
+
 auto const check_opengl_errors = [](auto &logger, auto const program_id) {
   char buffer[2096];
   int actual_length = 0;
@@ -26,8 +29,7 @@ auto const check_opengl_errors = [](auto &logger, auto const program_id) {
 };
 
 auto const print_triangle = [](auto &logger, auto const &triangle) {
-  auto const make_part = [&](float const* d)
-  {
+  auto const make_part = [&](float const* d) {
     // clang-format off
     auto const fmt_s =
       "verts : [{0}, {1}, {2}, {3}], "
@@ -47,13 +49,43 @@ auto const print_triangle = [](auto &logger, auto const &triangle) {
   logger.info(msg);
 };
 
+auto const load_texture = [](char const* path)
+{
+  GLuint texture;
+  glGenTextures(1, &texture);
+
+  global_texture_bind(texture);
+  ON_SCOPE_EXIT([]() { global_texture_unbind(); });
+
+  // Set texture wrapping to GL_REPEAT (usually basic wrapping method)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  // Set texture filtering parameters
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  int w = 0, h = 0;
+  unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, SOIL_LOAD_RGB);
+  if (nullptr == pimage) {
+    std::cerr << "image didn't load.";
+    std::abort();
+  }
+  ON_SCOPE_EXIT([&]() { SOIL_free_image_data(pimage); });
+
+  // actually send the texture to the GPU
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pimage);
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  return texture;
+};
+
 class red_triangle
 {
   GLuint vao_ = 0, vbo_ = 0;
   program_handle program_handle_; // init in ctor.
 
   // TODO: consider moving elsewhere
-  GLuint texture_;
+  GLuint texture_ = 0;
   int width_ = 0, height_ = 0;
   // TODO:end
 
@@ -67,28 +99,10 @@ private:
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
     glGenBuffers(NUM_BUFFERS, &this->vbo_);
 
-    glGenTextures(1, &this->texture_);
-    glBindTexture(GL_TEXTURE_2D, this->texture_);
+    glBindBuffer(GL_ARRAY_BUFFER, this->vbo_);
+    ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
-    // Set texture wrapping to GL_REPEAT (usually basic wrapping method)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // Set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    unsigned char *pimage = SOIL_load_image("container.jpg", &this->width_, &this->height_, 0,
-        SOIL_LOAD_RGB);
-    if (nullptr == pimage) {
-      std::cerr << "image didn't load.";
-      std::abort();
-    }
-    ON_SCOPE_EXIT([&]() { SOIL_free_image_data(pimage); });
-
-    // actually send the texture to the GPU
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, this->width_, this->height_, 0, GL_RGB, GL_UNSIGNED_BYTE,
-        pimage);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    this->texture_ = load_texture("container.jpg");
   }
 
   NO_COPY(red_triangle);
@@ -116,46 +130,58 @@ public:
   {
     glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
     glDeleteVertexArrays(NUM_BUFFERS, &this->vao_);
-
   }
 
   template<typename L>
-  void render(L &logger, program_handle const &program_handle)
+  void render(GLsizei const vertice_count, L &logger, program_handle const &program_handle)
   {
     // Draw our first triangle
     GLuint const program_id = program_handle.get();
     glUseProgram(program_id);
     check_opengl_errors(logger, program_id);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    GLint const begin = 0;
+    glDrawArrays(GL_TRIANGLES, begin, vertice_count);
   }
 
-  template<typename L>
-  void draw(L &logger, triangle const &t0, triangle const &t1)
+  template<typename L, typename S>
+  void send_data_gpu(L &logger, GLuint const vbo, S const& shape)
   {
-    auto const send_vertices_gpu = [](auto const &vbo, auto const &triangle) {
-      // 1. Bind the vbo object to the GL_ARRAY_BUFFER
-      glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    // 1. Bind the vbo object to the GL_ARRAY_BUFFER
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-      // 2. Setup temporary object to unbind the GL_ARRAY_BUFFER from a vbo on scope exit.
-      ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+    // 2. Setup temporary object to unbind the GL_ARRAY_BUFFER from a vbo on scope exit.
+    ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
-      // 3. Copy the data to the GPU, then let stack cleanup gl context automatically.
-      glBufferData(GL_ARRAY_BUFFER, triangle.size_in_bytes(), triangle.data(), GL_STATIC_DRAW);
+    // 3. Copy the data to the GPU, then let stack cleanup gl context automatically.
+    auto const log_bytes = [](auto &logger, auto const& t)
+    {
+      std::string fmt = fmt::sprintf("[[ size: %d]", t.size_in_bytes());
+      for (auto i = 0; i < t.size_in_bytes(); ++i) {
+        fmt += " " + std::to_string(t.data()[i]);
+      }
+      fmt += "]";
+      logger.info(fmt);
     };
+    log_bytes(logger, shape);
+    glBufferData(GL_ARRAY_BUFFER, shape.size_in_bytes(), shape.data(), GL_STATIC_DRAW);
+  }
 
+  template<typename L, typename S>
+  void draw(L &logger, S const &t0, S const &t1)
+  {
     global_vao_bind(this->vao_);
     ON_SCOPE_EXIT([]() { global_vao_unbind(); });
 
-    glBindTexture(GL_TEXTURE_2D, this->texture_);
-    ON_SCOPE_EXIT([]() { glBindTexture(GL_TEXTURE_2D, 0); });
+    global_texture_bind(this->texture_);
+    ON_SCOPE_EXIT([]() { global_texture_unbind(); });
 
     print_triangle(logger, t0);
-    send_vertices_gpu(this->vbo_, t0);
-    render(logger, this->program_handle_);
+    send_data_gpu(logger, this->vbo_, t0);
+    render(t0.vertice_count(), logger, this->program_handle_);
 
-    send_vertices_gpu(this->vbo_, t1);
-    render(logger, this->program_handle_);
+    send_data_gpu(logger, this->vbo_, t1);
+    render(t0.vertice_count(), logger, this->program_handle_);
   }
 };
 

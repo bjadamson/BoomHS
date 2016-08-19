@@ -54,12 +54,12 @@ factory::make_red_triangle_program()
   glBindBuffer(GL_ARRAY_BUFFER, triangle.vbo_);
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
-  static auto constexpr VERTICE_COMPONENT_COUNT = 4;  // x, y, z, w
-  static auto constexpr COLOR_COMPONENT_COUNT = 4;    // r, g, b, a
-  static auto constexpr TEXCOORD_COMPONENT_COUNT = 2; // u, v
   struct skip_context
   {
-    int offset = 0;
+    GLsizei const total_component_count;
+    GLsizei components_skipped = 0;
+
+    skip_context(GLsizei const c) : total_component_count(c) {}
   };
 
   auto const set_attrib_pointer = [](auto const attribute_index, auto const component_count,
@@ -69,27 +69,55 @@ factory::make_red_triangle_program()
     global_enable_vattrib_array(attribute_index);
 
     static auto constexpr DONT_NORMALIZE_THE_DATA = GL_FALSE;
-    static auto constexpr TOTAL_COMPONENT_COUNT = VERTICE_COMPONENT_COUNT + COLOR_COMPONENT_COUNT
-      + TEXCOORD_COMPONENT_COUNT;
 
     // clang-format off
-    auto const offset_in_bytes = sc.offset * sizeof(GL_FLOAT);
+    auto const offset_in_bytes = sc.components_skipped * sizeof(GL_FLOAT);
+    auto const stride_in_bytes = sc.total_component_count * sizeof(GL_FLOAT);
     glVertexAttribPointer(
         attribute_index,                             // global index id
         component_count,                             // number of components per attribute
         GL_FLOAT,                                    // data-type of the components
         DONT_NORMALIZE_THE_DATA,                     // don't normalize our data
-        TOTAL_COMPONENT_COUNT * sizeof(GL_FLOAT),    // byte-offset between consecutive vertex attributes
+        stride_in_bytes,                             // byte-offset between consecutive vertex attributes
         reinterpret_cast<GLvoid*>(offset_in_bytes)); // offset from beginning of buffer
     // clang-format on
-    sc.offset += component_count;
+    sc.components_skipped += component_count;
+
+    GLint enabled = 0;
+    glGetVertexAttribiv(attribute_index, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
+
+    auto const s = fmt::sprintf("%-10d %-10d %-10d %-10s %-10d %-10d %-10d\n",
+        attribute_index, enabled, component_count, "float", DONT_NORMALIZE_THE_DATA, stride_in_bytes,
+        offset_in_bytes);
+    std::cerr << s;
   };
 
   // configure this OpenGL VAO attribute array
-  skip_context sc;
+  static auto constexpr VERTICE_COMPONENT_COUNT = 4;  // x, y, z, w
+  static auto constexpr COLOR_COMPONENT_COUNT = 4;    // r, g, b, a
+  static auto constexpr TEXCOORD_COMPONENT_COUNT = 2; // u, v
+  static auto constexpr COMPONENT_COUNT = VERTICE_COMPONENT_COUNT + COLOR_COMPONENT_COUNT
+    + TEXCOORD_COMPONENT_COUNT;
+
+  skip_context sc{COMPONENT_COUNT};
+  {
+    int max_attribs = 0;
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &max_attribs);
+    auto const f = fmt::sprintf("maximum number of vertex attributes: '%d'\n", max_attribs);
+    std::cerr << f;
+  }
+  {
+    auto const f = fmt::sprintf("%-10s %-10s %-10s %-10s %-10s %-10s\n",
+          "index:", "enabled", "size", "type", "normalized", "stride", "pointer");
+    std::cerr << f;
+  }
   set_attrib_pointer(RED_TRIANGLE_VERTEX_POSITION_INDEX, VERTICE_COMPONENT_COUNT, *&sc);
   set_attrib_pointer(RED_TRIANGLE_VERTEX_COLOR_INDEX, COLOR_COMPONENT_COUNT, *&sc);
   set_attrib_pointer(RED_TRIANGLE_VERTEX_TEXTURE_COORDINATE_INDEX, TEXCOORD_COMPONENT_COUNT, *&sc);
+  //std::string const s2 = fmt::sprintf("TXT1: %9.19s TXT2 %9.9s TXT3 %9.9s\n", "aaaaaaaaa", "BBBBBBEE", "dd");
+  //std::cerr << s2;
+  //std::string const s3 = fmt::sprintf("TXT1: %9.1s TXT2 %9.9s TXT3 %9.9s\n", "aaaaaaaaa", "BBBBBBEE", "dd");
+  //std::cerr << s3;
 
   // TODO: figure out why the compiler gets confused without the std::move() (why does it try to
   // copy instead of move the value?? Maybe c++17 (rvo guarantees) fixes this??)
