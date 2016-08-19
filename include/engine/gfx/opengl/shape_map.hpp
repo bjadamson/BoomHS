@@ -25,7 +25,6 @@ public:
 };
 
 using triangle = ::engine::gfx::opengl::shape<30, 3>;
-
 auto constexpr map_to_gl(::engine::gfx::triangle const &gfx_triangle)
 {
   auto const& points = gfx_triangle.points;

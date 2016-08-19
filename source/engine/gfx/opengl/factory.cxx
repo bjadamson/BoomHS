@@ -86,9 +86,9 @@ factory::make_red_triangle_program()
     GLint enabled = 0;
     glGetVertexAttribiv(attribute_index, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
 
-    auto const s = fmt::sprintf("%-10d %-10d %-10d %-10s %-10d %-10d %-10d\n",
+    auto const s = fmt::sprintf("%-10d %-10d %-10d %-10s %-10d %-10d %-10d %-10d\n",
         attribute_index, enabled, component_count, "float", DONT_NORMALIZE_THE_DATA, stride_in_bytes,
-        offset_in_bytes);
+        offset_in_bytes, sc.components_skipped);
     std::cerr << s;
   };
 
@@ -107,17 +107,13 @@ factory::make_red_triangle_program()
     std::cerr << f;
   }
   {
-    auto const f = fmt::sprintf("%-10s %-10s %-10s %-10s %-10s %-10s\n",
-          "index:", "enabled", "size", "type", "normalized", "stride", "pointer");
+    auto const f = fmt::sprintf("%-10s %-10s %-10s %-10s %-10s %-10s %-10s\n",
+          "index:", "enabled", "size", "type", "normalized", "stride", "pointer", "num skipped");
     std::cerr << f;
   }
   set_attrib_pointer(RED_TRIANGLE_VERTEX_POSITION_INDEX, VERTICE_COMPONENT_COUNT, *&sc);
   set_attrib_pointer(RED_TRIANGLE_VERTEX_COLOR_INDEX, COLOR_COMPONENT_COUNT, *&sc);
   set_attrib_pointer(RED_TRIANGLE_VERTEX_TEXTURE_COORDINATE_INDEX, TEXCOORD_COMPONENT_COUNT, *&sc);
-  //std::string const s2 = fmt::sprintf("TXT1: %9.19s TXT2 %9.9s TXT3 %9.9s\n", "aaaaaaaaa", "BBBBBBEE", "dd");
-  //std::cerr << s2;
-  //std::string const s3 = fmt::sprintf("TXT1: %9.1s TXT2 %9.9s TXT3 %9.9s\n", "aaaaaaaaa", "BBBBBBEE", "dd");
-  //std::cerr << s3;
 
   // TODO: figure out why the compiler gets confused without the std::move() (why does it try to
   // copy instead of move the value?? Maybe c++17 (rvo guarantees) fixes this??)

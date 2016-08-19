@@ -50,6 +50,7 @@ struct triangle {
       , coords(coords_p)
   {
   }
+  inline constexpr auto vertice_count() const { return N; }
 };
 
 triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<float, 12> const& c,
