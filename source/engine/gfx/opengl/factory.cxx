@@ -54,17 +54,18 @@ factory::make_red_triangle_program()
   glBindBuffer(GL_ARRAY_BUFFER, triangle.vbo_);
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
-  struct skip_context
-  {
+  struct skip_context {
     GLsizei const total_component_count;
     GLsizei components_skipped = 0;
 
-    skip_context(GLsizei const c) : total_component_count(c) {}
+    skip_context(GLsizei const c)
+        : total_component_count(c)
+    {
+    }
   };
 
   auto const set_attrib_pointer = [](auto const attribute_index, auto const component_count,
-      skip_context &sc)
-  {
+                                     skip_context &sc) {
     // enable vertex attibute arrays
     global_enable_vattrib_array(attribute_index);
 
@@ -86,9 +87,10 @@ factory::make_red_triangle_program()
     GLint enabled = 0;
     glGetVertexAttribiv(attribute_index, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
 
-    auto const s = fmt::sprintf("%-10d %-10d %-10d %-10s %-10d %-10d %-10d %-10d\n",
-        attribute_index, enabled, component_count, "float", DONT_NORMALIZE_THE_DATA, stride_in_bytes,
-        offset_in_bytes, sc.components_skipped);
+    auto const s =
+        fmt::sprintf("%-10d %-10d %-10d %-10s %-10d %-10d %-10d %-10d\n", attribute_index, enabled,
+                     component_count, "float", DONT_NORMALIZE_THE_DATA, stride_in_bytes,
+                     offset_in_bytes, sc.components_skipped);
     std::cerr << s;
   };
 
@@ -96,8 +98,8 @@ factory::make_red_triangle_program()
   static auto constexpr VERTICE_COMPONENT_COUNT = 4;  // x, y, z, w
   static auto constexpr COLOR_COMPONENT_COUNT = 4;    // r, g, b, a
   static auto constexpr TEXCOORD_COMPONENT_COUNT = 2; // u, v
-  static auto constexpr COMPONENT_COUNT = VERTICE_COMPONENT_COUNT + COLOR_COMPONENT_COUNT
-    + TEXCOORD_COMPONENT_COUNT;
+  static auto constexpr COMPONENT_COUNT =
+      VERTICE_COMPONENT_COUNT + COLOR_COMPONENT_COUNT + TEXCOORD_COMPONENT_COUNT;
 
   skip_context sc{COMPONENT_COUNT};
   {
@@ -107,8 +109,8 @@ factory::make_red_triangle_program()
     std::cerr << f;
   }
   {
-    auto const f = fmt::sprintf("%-10s %-10s %-10s %-10s %-10s %-10s %-10s\n",
-          "index:", "enabled", "size", "type", "normalized", "stride", "pointer", "num skipped");
+    auto const f = fmt::sprintf("%-10s %-10s %-10s %-10s %-10s %-10s %-10s\n", "index:", "enabled",
+                                "size", "type", "normalized", "stride", "pointer", "num skipped");
     std::cerr << f;
   }
   set_attrib_pointer(RED_TRIANGLE_VERTEX_POSITION_INDEX, VERTICE_COMPONENT_COUNT, *&sc);

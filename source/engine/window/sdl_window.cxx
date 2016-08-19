@@ -97,7 +97,7 @@ sdl_library::make_window()
   auto const glew_status = glewInit();
   if (GLEW_OK != glew_status) {
     auto const error = stlw::format("GLEW could not initialize! GLEW error: {}\n",
-        glewGetErrorString(glew_status));
+                                    glewGetErrorString(glew_status));
     return stlw::make_error(error);
   }
   return sdl_window{std::move(window_ptr), gl_context};

@@ -1,11 +1,11 @@
 #pragma once
+#include <SOIL.h>
 #include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl/shape_map.hpp>
 #include <stlw/format.hpp>
 #include <stlw/log.hpp>
 #include <stlw/print.hpp>
 #include <stlw/type_macros.hpp>
-#include <SOIL.h>
 
 namespace engine
 {
@@ -30,7 +30,7 @@ auto const check_opengl_errors = [](auto &logger, auto const program_id) {
 };
 
 auto const print_triangle = [](auto &logger, auto const &triangle) {
-  auto const make_part = [&](float const* d) {
+  auto const make_part = [&](float const *d) {
     // clang-format off
     auto const fmt_s =
       "verts : [{0}, {1}, {2}, {3}], "
@@ -50,8 +50,7 @@ auto const print_triangle = [](auto &logger, auto const &triangle) {
   logger.info(msg);
 };
 
-auto const load_texture = [](char const* path)
-{
+auto const load_texture = [](char const *path) {
   GLuint texture;
   glGenTextures(1, &texture);
 
@@ -90,6 +89,7 @@ class red_triangle
   // TODO:end
 
   friend class factory;
+
 private:
   static auto constexpr NUM_BUFFERS = 1;
 
@@ -128,7 +128,7 @@ public:
     glDeleteVertexArrays(NUM_BUFFERS, &this->vao_);
   }
 
-  template<typename L>
+  template <typename L>
   void render(GLsizei const vertice_count, L &logger, program_handle const &program_handle)
   {
     // Draw our first triangle
@@ -140,8 +140,8 @@ public:
     glDrawArrays(GL_TRIANGLES, begin, vertice_count);
   }
 
-  template<typename L, typename S>
-  void send_data_gpu(L &logger, GLuint const vbo, S const& shape)
+  template <typename L, typename S>
+  void send_data_gpu(L &logger, GLuint const vbo, S const &shape)
   {
     // 1. Bind the vbo object to the GL_ARRAY_BUFFER
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -150,8 +150,7 @@ public:
     ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
     // 3. Copy the data to the GPU, then let stack cleanup gl context automatically.
-    auto const log_bytes = [](auto &logger, auto const& t)
-    {
+    auto const log_bytes = [](auto &logger, auto const &t) {
       std::string fmt = fmt::sprintf("[[ size: %d]", t.size_in_bytes());
       for (auto i = 0; i < t.size_in_bytes(); ++i) {
         fmt += " " + std::to_string(t.data()[i]);
@@ -163,7 +162,7 @@ public:
     glBufferData(GL_ARRAY_BUFFER, shape.size_in_bytes(), shape.data(), GL_STATIC_DRAW);
   }
 
-  template<typename L, typename S>
+  template <typename L, typename S>
   void draw(L &logger, S const &t0, S const &t1)
   {
     global_vao_bind(this->vao_);

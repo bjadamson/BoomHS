@@ -57,7 +57,7 @@ public:
   {
   }
 
-  template<typename L>
+  template <typename L>
   void draw(L &logger, ::engine::gfx::triangle const &t0, ::engine::gfx::triangle const &t1)
   {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -77,8 +77,8 @@ struct opengl_library {
   static void init()
   {
     // for now, to simplify rendering
-    //glDisable(GL_DEPTH_TEST);
-    //glDisable(GL_CULL_FACE);
+    // glDisable(GL_DEPTH_TEST);
+    // glDisable(GL_CULL_FACE);
   }
 
   static inline void destroy() {}

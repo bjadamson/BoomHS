@@ -27,9 +27,9 @@ public:
 using triangle = ::engine::gfx::opengl::shape<30, 3>;
 auto constexpr map_to_gl(::engine::gfx::triangle const &gfx_triangle)
 {
-  auto const& points = gfx_triangle.points;
-  auto const& colors = gfx_triangle.colors;
-  auto const& tcords = gfx_triangle.coords;
+  auto const &points = gfx_triangle.points;
+  auto const &colors = gfx_triangle.colors;
+  auto const &tcords = gfx_triangle.coords;
 
   return triangle{{
       points[0].x, points[0].y, points[0].z, points[0].w, // point

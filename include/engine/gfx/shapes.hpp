@@ -29,22 +29,21 @@ struct color {
 struct texture_coord {
   float const u, v;
   explicit constexpr texture_coord(float const up, float const vp)
-    : u(up)
-    , v(vp)
+      : u(up)
+      , v(vp)
   {
   }
 };
 struct triangle {
   static int constexpr N = 3;
 
-  std::array<point, N>         const points;
-  std::array<color, N>         const colors;
+  std::array<point, N> const points;
+  std::array<color, N> const colors;
   std::array<texture_coord, N> const coords;
 
-  explicit constexpr triangle(
-      std::array<point, N> const &points_p,
-      std::array<color, N> const &colors_p,
-      std::array<texture_coord, N> const& coords_p)
+  explicit constexpr triangle(std::array<point, N> const &points_p,
+                              std::array<color, N> const &colors_p,
+                              std::array<texture_coord, N> const &coords_p)
       : points(points_p)
       , colors(colors_p)
       , coords(coords_p)
@@ -52,8 +51,8 @@ struct triangle {
   }
 };
 
-triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<float, 12> const& c,
-    std::array<float, 6> const& tcoords)
+triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<float, 12> const &c,
+                                 std::array<float, 6> const &tcoords)
 {
   point const p0{p[0], p[1], p[2], p[3]};
   point const p1{p[4], p[5], p[6], p[7]};
@@ -73,7 +72,7 @@ triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<floa
   return triangle{points, colors, texture_coordinates};
 }
 
-triangle constexpr make_triangle(std::array<float, 12> const& p, std::array<float, 12> const& c)
+triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<float, 12> const &c)
 {
   // clang-format off
   std::array<float, 6> const texture_coords = {
