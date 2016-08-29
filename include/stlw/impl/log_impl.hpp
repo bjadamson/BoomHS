@@ -114,6 +114,13 @@ public:
   log_group &operator=(log_group &&) = delete;
 };
 
+template<typename P>
+auto
+make_log_group(P &&a, P &&b, P &&c, P &&d, P &&e)
+{
+  return log_group<P>(std::move(a), std::move(b), std::move(c), std::move(d), std::move(e));
+}
+
 #define LOG_WRITER_DEFINE_FN(FN_NAME)                                                              \
   template <typename... Params>                                                                    \
   auto &FN_NAME(Params &&... p)                                                                    \

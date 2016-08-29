@@ -34,15 +34,14 @@ class log_factory
       return impl::make_log_adapter(std::move(logger));
     };
 
-    using T = decltype(make_adapter("", impl::log_level::MAX));
     // clang-format off
-    return impl::log_group<T>{
+    return impl::make_log_group(
       make_adapter("trace", impl::log_level::trace),
       make_adapter("debug", impl::log_level::debug),
       make_adapter("info", impl::log_level::info),
       make_adapter("warn", impl::log_level::warn),
       make_adapter("error", impl::log_level::error)
-    };
+    );
     // clang-format on
   }
 
