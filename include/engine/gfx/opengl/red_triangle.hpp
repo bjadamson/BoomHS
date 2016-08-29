@@ -102,7 +102,7 @@ private:
     glBindBuffer(GL_ARRAY_BUFFER, this->vbo_);
     ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
-    this->texture_ = load_texture("container.jpg");
+    this->texture_ = load_texture("assets/container.jpg");
   }
 
   NO_COPY(red_triangle);
