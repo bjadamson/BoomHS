@@ -114,7 +114,7 @@ public:
   log_group &operator=(log_group &&) = delete;
 };
 
-template<typename P>
+template <typename P>
 auto
 make_log_group(P &&a, P &&b, P &&c, P &&d, P &&e)
 {

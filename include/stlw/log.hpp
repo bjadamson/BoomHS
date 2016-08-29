@@ -1,10 +1,9 @@
 #pragma once
 #include <memory>
 #include <stlw/compiler_macros.hpp>
+#include <stlw/concat.hpp>
 #include <stlw/impl/log_impl.hpp>
 #include <stlw/type_macros.hpp>
-
-#include <stlw/concat.hpp>
 
 namespace stlw
 {
@@ -25,33 +24,36 @@ class log_factory
     return log_impl_pointer;
   }
 
-  template <typename A>
-  inline static auto make_default_log_group(char const *group_name, A const &prefix)
+  template <size_t N, size_t M, typename L>
+  static auto make_adapter(char const (&log_name)[N], char const (&prefix)[M], L const level)
   {
-    auto const make_adapter = [&](auto const *name, auto const level) {
-      auto const filename = prefix + std::string{name} + ".log";
-      auto logger = make_spdlog_logger(name, level, filename.data(), "txt", 23, 59);
-      return impl::make_log_adapter(std::move(logger));
-    };
+    auto const filename = stlw::concat(prefix, log_name, ".log");
+    auto logger = make_spdlog_logger(log_name, level, filename.data(), "txt", 23, 59);
+    return impl::make_log_adapter(std::move(logger));
+  }
 
+  template <size_t N>
+  inline static auto make_default_log_group(char const (&prefix)[N])
+  {
     // clang-format off
     return impl::make_log_group(
-      make_adapter("trace", impl::log_level::trace),
-      make_adapter("debug", impl::log_level::debug),
-      make_adapter("info", impl::log_level::info),
-      make_adapter("warn", impl::log_level::warn),
-      make_adapter("error", impl::log_level::error)
+      make_adapter("trace", prefix, impl::log_level::trace),
+      make_adapter("debug", prefix, impl::log_level::debug),
+      make_adapter("info", prefix, impl::log_level::info),
+      make_adapter("warn", prefix, impl::log_level::warn),
+      make_adapter("error", prefix, impl::log_level::error)
     );
     // clang-format on
   }
 
-  inline static auto make_aggregate_logger(std::string const prefix)
+  template <size_t N>
+  inline static auto make_aggregate_logger(char const (&prefix)[N])
   {
-    static auto constexpr LOG_NAME = "aggregate";
+    static char constexpr LOG_NAME[] = "aggregate";
+    auto const log_file_path = stlw::concat(prefix, LOG_NAME, ".log");
     std::array<spdlog::sink_ptr, 2> const sinks = {
         std::make_unique<spdlog::sinks::stdout_sink_st>(),
-        std::make_unique<spdlog::sinks::daily_file_sink_st>(prefix + "aggregate.log", "txt", 23,
-                                                            59)};
+        std::make_unique<spdlog::sinks::daily_file_sink_st>(log_file_path.data(), "txt", 23, 59)};
     auto shared_logger = std::make_unique<spdlog::logger>(LOG_NAME, begin(sinks), end(sinks));
     shared_logger->set_level(spdlog::level::trace);
     return impl::make_log_adapter(std::move(shared_logger));
@@ -63,7 +65,7 @@ public:
     // 1. Construct an instance of the default log group.
     // 2. Construct an instance of a logger that writes all log levels to a shared file.
     static char const prefix[] = "build-system/bin/";
-    auto log_group = make_default_log_group(name, prefix);
+    auto log_group = make_default_log_group(prefix);
     auto ad = make_aggregate_logger(prefix);
     return impl::make_log_writer(std::move(log_group), std::move(ad));
   }
