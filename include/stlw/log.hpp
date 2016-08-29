@@ -24,10 +24,11 @@ class log_factory
     return log_impl_pointer;
   }
 
-  inline static auto make_default_log_group(char const *group_name)
+  inline static auto make_default_log_group(char const *group_name, char const* prefix)
   {
-    auto const make_adapter = [](auto const *name, auto const level) {
-      auto logger = make_spdlog_logger(name, level, name + std::string{".log"}, "txt", 23, 59);
+    auto const make_adapter = [&](auto const *name, auto const level) {
+      auto const filename = prefix + std::string{name} + ".log";
+      auto logger = make_spdlog_logger(name, level, filename, "txt", 23, 59);
       return impl::make_log_adapter(std::move(logger));
     };
 
@@ -43,12 +44,12 @@ class log_factory
     // clang-format on
   }
 
-  inline static auto make_aggregate_logger()
+  inline static auto make_aggregate_logger(std::string const prefix)
   {
     static auto constexpr LOG_NAME = "aggregate";
     std::array<spdlog::sink_ptr, 2> const sinks = {
       std::make_unique<spdlog::sinks::stdout_sink_st>(),
-      std::make_unique<spdlog::sinks::daily_file_sink_st>("aggregate.log", "txt", 23, 59)
+      std::make_unique<spdlog::sinks::daily_file_sink_st>(prefix + "aggregate.log", "txt", 23, 59)
     };
     auto shared_logger = std::make_unique<spdlog::logger>(LOG_NAME, begin(sinks), end(sinks));
     shared_logger->set_level(spdlog::level::trace);
@@ -60,8 +61,9 @@ public:
   {
     // 1. Construct an instance of the default log group.
     // 2. Construct an instance of a logger that writes all log levels to a shared file.
-    auto log_group = make_default_log_group(name);
-    auto ad = make_aggregate_logger();
+    static char const* prefix = "build-system/bin/";
+    auto log_group = make_default_log_group(name, prefix);
+    auto ad = make_aggregate_logger(prefix);
     return impl::make_log_writer(std::move(log_group), std::move(ad));
   }
 };
