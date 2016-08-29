@@ -31,12 +31,13 @@ file(GLOB_RECURSE GLOBBED_SOURCES
 
 ## Gather the source files in such a way that we can pass them to clang-format and other clang
 file(GLOB_RECURSE GLOBBED_SOURCES_CLANG_TOOLS *.cxx *.hpp)
-foreach (SOURCE_FILE ${ALL_SOURCE_FILES})
-  string(FIND ${SOURCE_FILE} ${PROJECT_TRDPARTY_DIR} PROJECT_TRDPARTY_DIR_FOUND)
-  if (NOT ${PROJECT_TRDPARTY_DIR_FOUND} EQUAL -1)
-    list(REMOVE_ITEM ALL_SOURCE_FILES ${SOURCE_FILE})
-  endif ()
-endforeach ()
+set (EXCLUDE_DIR "expected/")
+foreach (TMP_PATH ${GLOBBED_SOURCES_CLANG_TOOLS})
+    string (FIND ${TMP_PATH} ${EXCLUDE_DIR} EXCLUDE_DIR_FOUND)
+    if (NOT ${EXCLUDE_DIR_FOUND} EQUAL -1)
+        list (REMOVE_ITEM GLOBBED_SOURCES_CLANG_TOOLS ${TMP_PATH})
+    endif ()
+endforeach(TMP_PATH)
 
 ## Additional build targets CMake should generate.
 add_custom_target(cppformat COMMAND clang-format -i ${GLOBBED_SOURCES_CLANG_TOOLS})
