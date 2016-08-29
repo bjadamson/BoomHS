@@ -1,11 +1,12 @@
 #pragma once
-
-namespace stlw
-{
-
 #include <array>
 #include <iostream>
 #include <utility>
+
+namespace stlw
+{
+// source:
+// http://stackoverflow.com/questions/28708497/constexpr-to-concatenate-two-or-more-char-strings
 
 template <unsigned...>
 struct seq {
