@@ -19,8 +19,8 @@ class boomhs_game
 
   boomhs_game(L &l, engine::gfx::triangle const& t0, engine::gfx::triangle const& t1)
       : logger_(l)
-      , t0_(std::move(t0))
-      , t1_(std::move(t1))
+      , t0_(t0)
+      , t1_(t1)
   {
   }
 
