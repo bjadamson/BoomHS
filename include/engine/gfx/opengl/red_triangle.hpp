@@ -2,6 +2,7 @@
 #include <SOIL.h>
 #include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl/shape_map.hpp>
+#include <glm/glm.hpp>
 #include <stlw/format.hpp>
 #include <stlw/log.hpp>
 #include <stlw/print.hpp>
@@ -153,13 +154,17 @@ public:
   }
 
   template <typename L, typename S>
-  void draw(L &logger, S const &t0, S const &t1)
+  void draw(L &logger, glm::mat4 const &view, glm::mat4 const &projection, S const &t0, S const &t1)
   {
     global_vao_bind(this->vao_);
     ON_SCOPE_EXIT([]() { global_vao_unbind(); });
 
     global_texture_bind(this->texture_);
     ON_SCOPE_EXIT([]() { global_texture_unbind(); });
+
+    // Pass the matrices to the shader
+    this->program_.set_uniform_matrix_4fv("view", view);
+    this->program_.set_uniform_matrix_4fv("projection", projection);
 
     print_triangle(logger, t0);
     send_data_gpu(logger, this->vbo_, t0);

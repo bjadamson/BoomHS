@@ -15,7 +15,20 @@ struct library_wrapper {
 
   inline static void destroy() { L::destroy(); }
 
-  inline static decltype(auto) make_window() { return L::make_window(); }
+  inline static decltype(auto) make_window(int const h, int const w)
+  {
+    return L::make_window(h, w);
+  }
+};
+
+struct dimensions {
+  int const w;
+  int const h;
+  dimensions(int const wp, int const hp)
+      : w(wp)
+      , h(hp)
+  {
+  }
 };
 
 } // ns window

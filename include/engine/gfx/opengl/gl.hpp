@@ -1,10 +1,10 @@
 #pragma once
 #include <string> // TODO: rm
 
+#include <boost/optional.hpp>
 #include <engine/gfx/opengl_glew.hpp>
 #include <stlw/format.hpp>
 #include <stlw/type_ctors.hpp>
-#include <boost/optional.hpp>
 
 namespace engine
 {
@@ -42,15 +42,19 @@ class gl_log
     // Step 3
     return std::string{buffer.cbegin(), buffer.cend()};
   }
+
 public:
-  inline static std::string
-  get_shader_log(GLuint const handle) { return retrieve(handle, glGetShaderInfoLog); }
+  inline static std::string get_shader_log(GLuint const handle)
+  {
+    return retrieve(handle, glGetShaderInfoLog);
+  }
 
-  inline static std::string
-  get_program_log(GLuint const handle) { return retrieve(handle, glGetProgramInfoLog); }
+  inline static std::string get_program_log(GLuint const handle)
+  {
+    return retrieve(handle, glGetProgramInfoLog);
+  }
 
-  inline static boost::optional<std::string>
-  get_opengl_errors(GLuint const program_id)
+  inline static boost::optional<std::string> get_opengl_errors(GLuint const program_id)
   {
     char buffer[2096];
     int actual_length = 0;

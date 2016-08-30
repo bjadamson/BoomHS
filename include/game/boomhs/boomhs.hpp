@@ -2,8 +2,13 @@
 #include <string>
 
 #include <engine/gfx/shapes.hpp>
+#include <engine/window/window.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
+
+// GLM Mathematics
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace game
 {
@@ -14,11 +19,17 @@ template <typename L>
 class boomhs_game
 {
   L &logger_;
+  engine::window::dimensions const dimensions_;
+
   engine::gfx::triangle t0_;
   engine::gfx::triangle t1_;
 
-  boomhs_game(L &l, engine::gfx::triangle const& t0, engine::gfx::triangle const& t1)
+  glm::mat4 view, projection;
+
+  boomhs_game(L &l, engine::window::dimensions const &d, engine::gfx::triangle const &t0,
+              engine::gfx::triangle const &t1)
       : logger_(l)
+      , dimensions_(d)
       , t0_(t0)
       , t1_(t1)
   {
@@ -61,18 +72,43 @@ public:
   template <typename R>
   void game_loop(R &renderer)
   {
-    renderer.draw(this->logger_, this->t0_, this->t1_);
+    renderer.draw(this->logger_, view, projection, this->t0_, this->t1_);
   }
 
-  bool process_event(SDL_Event &event) { return is_quit_event(event); }
+  bool process_event(SDL_Event &event)
+  {
+    float constexpr distance = 0.1f;
+    switch (event.type) {
+    case SDL_KEYDOWN: {
+      switch (event.key.keysym.sym) {
+      case SDLK_w: {
+        this->view = glm::translate(this->view, glm::vec3(0.0f, distance, 0.0f));
+        break;
+      }
+      case SDLK_s: {
+        this->view = glm::translate(this->view, glm::vec3(0.0f, -distance, 0.0f));
+        break;
+      }
+      case SDLK_a: {
+        this->view = glm::translate(this->view, glm::vec3(-distance, 0.0f, 0.0f));
+        break;
+      }
+      case SDLK_d: {
+        this->view = glm::translate(this->view, glm::vec3(distance, 0.0f, 0.0f));
+        break;
+      }
+      }
+    }
+    }
+    return is_quit_event(event);
+  }
 };
 
 struct boomhs_library {
   boomhs_library() = delete;
 
-  template<typename L>
-  static inline auto
-  make_game(L &logger)
+  template <typename L>
+  static inline auto make_game(L &logger, engine::window::dimensions const &dimensions)
   {
     // Set up vertex data (and buffer(s)) and attribute pointers
     constexpr float Wcoord = 1.0f;
@@ -100,7 +136,7 @@ struct boomhs_library {
     triangle t0 = make_triangle(v0, c0);
     triangle t1 = make_triangle(v1, c0);
 
-    return boomhs_game<L>{logger, t0, t1};
+    return boomhs_game<L>{logger, dimensions, t0, t1};
   }
 };
 

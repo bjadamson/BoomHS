@@ -51,6 +51,15 @@ public:
 
   // Allow getting the window's SDL pointer
   window_type *raw() { return this->window_.get(); }
+
+  dimensions get_dimensions() const
+  {
+    SDL_DisplayMode dmode;
+    SDL_GetCurrentDisplayMode(0, &dmode);
+    return {dmode.w, dmode.h};
+  }
+  int const width() const { return get_dimensions().w; }
+  int const height() const { return get_dimensions().h; }
 };
 
 struct sdl_library {
@@ -59,7 +68,7 @@ struct sdl_library {
   static stlw::result<stlw::empty_type, std::string> init();
   static void destroy();
 
-  static stlw::result<sdl_window, std::string> make_window();
+  static stlw::result<sdl_window, std::string> make_window(int const, int const);
 };
 
 } // ns window

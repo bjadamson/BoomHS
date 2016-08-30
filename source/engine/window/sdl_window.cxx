@@ -51,7 +51,7 @@ sdl_library::destroy()
 }
 
 stlw::result<sdl_window, std::string>
-sdl_library::make_window()
+sdl_library::make_window(int const height, int const width)
 {
   // Hidden dependency between the ordering here, so all the logic exists in one
   // place.
@@ -73,7 +73,6 @@ sdl_library::make_window()
   auto const flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
   int const x = SDL_WINDOWPOS_CENTERED;
   int const y = SDL_WINDOWPOS_CENTERED;
-  auto const height = 800, width = 600;
   auto raw = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width,
                               height, flags);
   if (nullptr == raw) {

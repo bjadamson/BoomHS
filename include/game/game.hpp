@@ -18,10 +18,11 @@ struct library_wrapper {
   }
 };
 
-template <typename Logger>
+template <typename Logger, typename WindowDimensions>
 class game_executor
 {
   Logger &l_;
+  WindowDimensions const window_dimensions_;
 
   NO_COPY(game_executor);
 
@@ -39,8 +40,9 @@ class game_executor
   friend class game_factory;
 
 public:
-  game_executor(Logger &l)
+  game_executor(Logger &l, engine::window::dimensions const &d)
       : l_(l)
+      , window_dimensions_(d)
   {
   }
   MOVE_CONSTRUCTIBLE(game_executor);
@@ -48,7 +50,7 @@ public:
   template <typename R, typename GameLib>
   stlw::result<stlw::empty_type, std::string> run(R &&renderer)
   {
-    auto instance = GameLib::make_game(this->l_);
+    auto instance = GameLib::make_game(this->l_, this->window_dimensions_);
     DO_MONAD(auto _, instance.init(renderer));
 
     bool quit = false;

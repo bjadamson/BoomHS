@@ -30,12 +30,14 @@ main(int argc, char *argv[])
   logger.debug("Setting up stack guard to unitialize window library globals.");
   ON_SCOPE_EXIT([]() { window_lib::destroy(); });
 
+  auto const height = 800, width = 600;
   logger.debug("Instantiating window instance.");
-  DO_MONAD_OR_ELSE_RETURN(auto window, window_lib::make_window(), on_error);
+  DO_MONAD_OR_ELSE_RETURN(auto window, window_lib::make_window(height, width), on_error);
 
   // Initialize graphics renderer
   namespace gfx = engine::gfx;
   using gfx_lib = gfx::library_wrapper<gfx::opengl::opengl_library>;
+  auto const dimensions = window.get_dimensions();
   DO_MONAD_OR_ELSE_RETURN(auto renderer, gfx_lib::make_renderer(std::move(window)), on_error);
 
   // Selecting the game
@@ -44,7 +46,7 @@ main(int argc, char *argv[])
 
   // Initialize the game instance.
   logger.debug("Instantiating boomhs instance.");
-  auto game = game_factory::make_game(logger);
+  auto game = game_factory::make_game(logger, dimensions);
 
   logger.debug("Starting boomhs game loop.");
   DO_MONAD_OR_ELSE_RETURN(auto __, (game.run<decltype(renderer), game_lib>(std::move(renderer))),

@@ -1,5 +1,5 @@
-#include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl/gl.hpp>
+#include <engine/gfx/opengl/program.hpp>
 #include <stlw/os.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
@@ -66,8 +66,8 @@ link_program(GLuint const program_id)
   GLint result;
   glGetProgramiv(program_id, GL_LINK_STATUS, &result);
   if (result == GL_FALSE) {
-    return stlw::make_error("Linking the shader failed. Progam log '"
-        + gl_log::get_program_log(program_id) + "'");
+    return stlw::make_error("Linking the shader failed. Progam log '" +
+                            gl_log::get_program_log(program_id) + "'");
   }
   return stlw::make_empty();
 }

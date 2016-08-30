@@ -1,8 +1,10 @@
 #pragma once
-#include <engine/gfx/opengl_glew.hpp>
 #include <engine/gfx/opengl/gl.hpp>
-#include <stlw/type_macros.hpp>
+#include <engine/gfx/opengl_glew.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <stlw/result.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace engine
 {
@@ -59,18 +61,27 @@ public:
     return *this;
   }
 
+  // MUTATION
+  // ----------------------------------------------------------------------------------------------
   // Make this program become "Active" for OpenGL.
   void use() { glUseProgram(this->program_id_); }
 
-  inline std::string
-  shader_log() const { return gl_log::get_shader_log(this->program_id_); }
+  void set_uniform_matrix_4fv(GLchar const *name, glm::mat4 const &matrix)
+  {
+    GLint const loc = glGetUniformLocation(this->program_id_, name);
+    GLsizei const NUM_MATRICES = 1;
+    GLboolean const transpose_matrices = GL_FALSE;
+    glUniformMatrix4fv(loc, NUM_MATRICES, transpose_matrices, glm::value_ptr(matrix));
+  }
 
-  inline std::string
-  program_log() const { return gl_log::get_program_log(this->program_id_); }
+  // IMMUTABLE
+  // ----------------------------------------------------------------------------------------------
+  inline std::string shader_log() const { return gl_log::get_shader_log(this->program_id_); }
 
-  template<typename L>
-  inline void
-  check_opengl_errors(L &logger) const
+  inline std::string program_log() const { return gl_log::get_program_log(this->program_id_); }
+
+  template <typename L>
+  inline void check_opengl_errors(L &logger) const
   {
     auto const errors = gl_log::get_opengl_errors(this->program_id_);
     if (errors) {

@@ -5,6 +5,7 @@
 #include <engine/gfx/opengl_glew.hpp>
 #include <engine/gfx/shapes.hpp>
 #include <engine/window/sdl_window.hpp>
+#include <glm/glm.hpp>
 #include <stlw/type_ctors.hpp>
 
 namespace engine
@@ -58,13 +59,14 @@ public:
   }
 
   template <typename L>
-  void draw(L &logger, ::engine::gfx::triangle const &t0, ::engine::gfx::triangle const &t1)
+  void draw(L &logger, glm::mat4 const &view, glm::mat4 const &projection,
+            ::engine::gfx::triangle const &t0, ::engine::gfx::triangle const &t1)
   {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
     // Render
     glClear(GL_COLOR_BUFFER_BIT);
-    this->red_.draw(logger, map_to_gl(t0), map_to_gl(t1));
+    this->red_.draw(logger, view, projection, map_to_gl(t0), map_to_gl(t1));
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(this->window_.raw());
@@ -77,7 +79,7 @@ struct opengl_library {
   static void init()
   {
     // for now, to simplify rendering
-    // glDisable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
     // glDisable(GL_CULL_FACE);
   }
 
