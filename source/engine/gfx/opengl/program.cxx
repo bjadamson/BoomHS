@@ -1,4 +1,5 @@
 #include <engine/gfx/opengl/program.hpp>
+#include <engine/gfx/opengl/gl.hpp>
 #include <stlw/os.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
@@ -6,6 +7,7 @@
 namespace
 {
 using compiled_shader = stlw::ImplicitelyCastableMovableWrapper<GLuint, decltype(glDeleteShader)>;
+using namespace engine::gfx::opengl;
 
 inline bool
 is_compiled(GLuint const handle)
@@ -24,34 +26,6 @@ gl_compile_shader(GLuint const handle, char const *source)
   glCompileShader(handle);
 }
 
-// TODO: export as reusable fn
-// also, make an abstraction over the source, not just vector<char>
-inline std::string
-retrieve_gl_log(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei *, GLchar *))
-{
-  // We have to do a low-level dance to get the OpenGL shader logs.
-  //
-  // 1. Ask OpenGL how buffer space we need to retrieve the buffer.
-  // 2. Retrieve the data into our buffer.
-  // 3. Return the buffer.
-  // Step 1
-  GLint log_length = 0;
-  glGetShaderiv(handle, GL_INFO_LOG_LENGTH, &log_length);
-  if (0 > log_length) {
-    // fix this msg
-    return "Compiling shader failed and could not retrieve OpenGL Log info for "
-           "object";
-  }
-
-  // Step 2
-  auto const buffer_size = log_length + 1; // +1 for null terminator character '\0'
-  auto buffer = stlw::vec_with_size<char>(buffer_size);
-  f(handle, buffer_size, nullptr, buffer.data());
-
-  // Step 3
-  return std::string{buffer.cbegin(), buffer.cend()};
-}
-
 stlw::result<compiled_shader, std::string>
 compile_shader(char const *data, GLenum const type)
 {
@@ -62,10 +36,7 @@ compile_shader(char const *data, GLenum const type)
   if (true == is_compiled(handle)) {
     return compiled_shader{handle, glDeleteShader};
   }
-  auto const get_shader_log = [](auto const handle) {
-    return retrieve_gl_log(handle, glGetShaderInfoLog);
-  };
-  return stlw::make_error(get_shader_log(handle));
+  return stlw::make_error(gl_log::get_shader_log(handle));
 }
 
 template <typename T>
@@ -89,21 +60,14 @@ stlw::result<stlw::empty_type, std::string>
 link_program(GLuint const program_id)
 {
   // Link the program
-  printf("Linking program\n");
   glLinkProgram(program_id);
-  auto const dump_program_log = [](auto const program_id, char const *prefix) {
-    auto const get_program_log = [](auto const id) {
-      return retrieve_gl_log(id, glGetProgramInfoLog);
-    };
-    auto const program_log = get_program_log(program_id);
-    printf("'%s': %s\n", prefix, program_log.data());
-  };
 
   // Check the program
-  GLint Result;
-  glGetProgramiv(program_id, GL_LINK_STATUS, &Result);
-  if (Result == GL_FALSE) {
-    return stlw::make_error("Linking the shader failed.");
+  GLint result;
+  glGetProgramiv(program_id, GL_LINK_STATUS, &result);
+  if (result == GL_FALSE) {
+    return stlw::make_error("Linking the shader failed. Progam log '"
+        + gl_log::get_program_log(program_id) + "'");
   }
   return stlw::make_empty();
 }
@@ -117,12 +81,12 @@ namespace gfx
 namespace opengl
 {
 
-stlw::result<program_handle, std::string>
+stlw::result<program, std::string>
 program_loader::load(char const *vertex_file_path, char const *fragment_file_path)
 {
   // Read the Vertex/Fragment Shader code from ther file
-  DO_MONAD(auto vertex_shader_source, stlw::read_file(vertex_file_path));
-  DO_MONAD(auto fragment_shader_source, stlw::read_file(fragment_file_path));
+  DO_MONAD(auto const vertex_shader_source, stlw::read_file(vertex_file_path));
+  DO_MONAD(auto const fragment_shader_source, stlw::read_file(fragment_file_path));
 
   DO_MONAD(auto const vertex_shader_id, compile_shader(vertex_shader_source, GL_VERTEX_SHADER));
   DO_MONAD(auto const frag_shader_id, compile_shader(fragment_shader_source, GL_FRAGMENT_SHADER));
@@ -135,7 +99,7 @@ program_loader::load(char const *vertex_file_path, char const *fragment_file_pat
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, frag_shader_id); });
 
   DO_EFFECT(link_program(program_id));
-  return program_handle::make(program_id);
+  return program::make(program_id);
 }
 
 } // ns opengl

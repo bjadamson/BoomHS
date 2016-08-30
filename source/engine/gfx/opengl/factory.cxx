@@ -21,7 +21,7 @@ struct fragment_shader_filename {
   }
 };
 
-stlw::result<gl::program_handle, std::string>
+stlw::result<gl::program, std::string>
 load_program(vertex_shader_filename const v, fragment_shader_filename const f)
 {
   auto expected_program_id = gl::program_loader::load(v.filename, f.filename);

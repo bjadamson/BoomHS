@@ -20,15 +20,6 @@ auto const global_vao_unbind = []() { glBindVertexArray(0); };
 auto const global_texture_bind = [](auto const tid) { glBindTexture(GL_TEXTURE_2D, tid); };
 auto const global_texture_unbind = []() { glBindTexture(GL_TEXTURE_2D, 0); };
 
-auto const check_opengl_errors = [](auto &logger, auto const program_id) {
-  char buffer[2096];
-  int actual_length = 0;
-  glGetProgramInfoLog(program_id, 2096, &actual_length, buffer);
-  if (0 < actual_length) {
-    logger.error("Opengl error: '{}'", std::to_string(buffer[0]));
-  }
-};
-
 auto const print_triangle = [](auto &logger, auto const &triangle) {
   auto const make_part = [&](float const *d) {
     // clang-format off
@@ -82,7 +73,7 @@ auto const load_texture = [](char const *path) {
 class red_triangle
 {
   GLuint vao_ = 0, vbo_ = 0;
-  program_handle program_handle_; // init in ctor.
+  program program_;
 
   // TODO: consider moving elsewhere
   GLuint texture_ = 0;
@@ -93,8 +84,8 @@ class red_triangle
 private:
   static auto constexpr NUM_BUFFERS = 1;
 
-  red_triangle(program_handle ph)
-      : program_handle_(std::move(ph))
+  red_triangle(program p)
+      : program_(std::move(p))
   {
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
     glGenBuffers(NUM_BUFFERS, &this->vbo_);
@@ -113,12 +104,12 @@ public:
   red_triangle(red_triangle &&other)
       : vao_(other.vao_)
       , vbo_(other.vbo_)
-      , program_handle_(std::move(other.program_handle_))
+      , program_(std::move(other.program_))
       , texture_(other.texture_)
   {
     other.vao_ = 0;
     other.vbo_ = 0;
-    other.program_handle_ = program_handle::make_invalid();
+    other.program_ = program::make_invalid();
     other.texture_ = 0;
   }
 
@@ -129,12 +120,11 @@ public:
   }
 
   template <typename L>
-  void render(GLsizei const vertice_count, L &logger, program_handle const &program_handle)
+  void render(GLsizei const vertice_count, L &logger, program &program)
   {
     // Draw our first triangle
-    GLuint const program_id = program_handle.get();
-    glUseProgram(program_id);
-    check_opengl_errors(logger, program_id);
+    program.use();
+    program.check_opengl_errors(logger);
 
     GLint const begin = 0;
     glDrawArrays(GL_TRIANGLES, begin, vertice_count);
@@ -173,10 +163,10 @@ public:
 
     print_triangle(logger, t0);
     send_data_gpu(logger, this->vbo_, t0);
-    render(t0.vertice_count(), logger, this->program_handle_);
+    render(t0.vertice_count(), logger, this->program_);
 
     send_data_gpu(logger, this->vbo_, t1);
-    render(t0.vertice_count(), logger, this->program_handle_);
+    render(t0.vertice_count(), logger, this->program_);
   }
 };
 
