@@ -2,6 +2,7 @@
 #include <engine/window/sdl_window.hpp>
 #include <stlw/format.hpp>
 #include <stlw/type_ctors.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace engine
 {
@@ -13,22 +14,25 @@ sdl_library::init()
 {
   // (from the docs) The requested attributes should be set before creating an
   // OpenGL window
-  auto const set_attribute = [](auto const attribute, auto const value) {
+  auto const set_attribute = [](auto const attribute,
+                                auto const value) -> stlw::result<stlw::empty_type, std::string> {
     bool const set_attribute_suceeded = SDL_GL_SetAttribute(attribute, value);
     if (!set_attribute_suceeded) {
-      std::cerr << "Setting attribute '" << std::to_string(attribute) << "' failed, error is '"
-                << SDL_GetError() << "'\n";
+      auto const fmt = fmt::format("Setting attribute '{}' failed, error is '{}'\n",
+                                    std::to_string(attribute), SDL_GetError());
+      return stlw::make_error(fmt);
     }
+    return stlw::make_empty();
   };
 
   // Use OpenGL 3.1 core
-  set_attribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-  set_attribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-  set_attribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+  DO_EFFECT(set_attribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
+  DO_EFFECT(set_attribute(SDL_GL_CONTEXT_MINOR_VERSION, 1));
+  DO_EFFECT(set_attribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
 
   // Turn on double buffering with a 24bit Z buffer.
   // You may need to change this to 16 or 32 for your system
-  set_attribute(SDL_GL_DOUBLEBUFFER, 1);
+  DO_EFFECT(set_attribute(SDL_GL_DOUBLEBUFFER, 1));
 
   // Use v-sync
   SDL_GL_SetSwapInterval(1);
