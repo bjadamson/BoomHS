@@ -14,9 +14,13 @@ template <typename L>
 class boomhs_game
 {
   L &logger_;
+  engine::gfx::triangle t0_;
+  engine::gfx::triangle t1_;
 
-  boomhs_game(L &l)
+  boomhs_game(L &l, engine::gfx::triangle const& t0, engine::gfx::triangle const& t1)
       : logger_(l)
+      , t0_(std::move(t0))
+      , t1_(std::move(t1))
   {
   }
 
@@ -57,6 +61,19 @@ public:
   template <typename R>
   void game_loop(R &renderer)
   {
+    renderer.draw(this->logger_, this->t0_, this->t1_);
+  }
+
+  bool process_event(SDL_Event &event) { return is_quit_event(event); }
+};
+
+struct boomhs_library {
+  boomhs_library() = delete;
+
+  template<typename L>
+  static inline auto
+  make_game(L &logger)
+  {
     // Set up vertex data (and buffer(s)) and attribute pointers
     constexpr float Wcoord = 1.0f;
     // clang-format off
@@ -80,19 +97,11 @@ public:
     };
     // clang-format on
     using namespace engine::gfx;
-    constexpr triangle t0 = make_triangle(v0, c0);
-    constexpr triangle t1 = make_triangle(v1, c0);
+    triangle t0 = make_triangle(v0, c0);
+    triangle t1 = make_triangle(v1, c0);
 
-    renderer.draw(this->logger_, t0, t1);
+    return boomhs_game<L>{logger, t0, t1};
   }
-
-  bool process_event(SDL_Event &event) { return is_quit_event(event); }
-};
-
-struct boomhs_library {
-  boomhs_library() = delete;
-
-  DEFINE_STATIC_WRAPPER_FUNCTION(make_game, boomhs_game<P...>);
 };
 
 } // ns boomhs
