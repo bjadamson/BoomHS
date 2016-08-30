@@ -77,24 +77,65 @@ public:
 
   bool process_event(SDL_Event &event)
   {
-    float constexpr distance = 0.1f;
+    float constexpr DISTANCE = 0.1f;
+    float constexpr ANGLE = 0.2f;
+    float constexpr SCALE_FACTOR = 0.1f;
+
+    auto const make_scalev = [](float const f) { return glm::vec3(1.0f + f, 1.0f + f, 1.0f + f); };
+
     switch (event.type) {
     case SDL_KEYDOWN: {
       switch (event.key.keysym.sym) {
       case SDLK_w: {
-        this->view = glm::translate(this->view, glm::vec3(0.0f, distance, 0.0f));
+        this->view = glm::translate(this->view, glm::vec3(0.0f, DISTANCE, 0.0f));
         break;
       }
       case SDLK_s: {
-        this->view = glm::translate(this->view, glm::vec3(0.0f, -distance, 0.0f));
+        this->view = glm::translate(this->view, glm::vec3(0.0f, -DISTANCE, 0.0f));
         break;
       }
       case SDLK_a: {
-        this->view = glm::translate(this->view, glm::vec3(-distance, 0.0f, 0.0f));
+        this->view = glm::translate(this->view, glm::vec3(-DISTANCE, 0.0f, 0.0f));
         break;
       }
       case SDLK_d: {
-        this->view = glm::translate(this->view, glm::vec3(distance, 0.0f, 0.0f));
+        this->view = glm::translate(this->view, glm::vec3(DISTANCE, 0.0f, 0.0f));
+        break;
+      }
+      // scaling
+      case SDLK_o: {
+        this->view = glm::scale(this->view, make_scalev(SCALE_FACTOR));
+        break;
+      }
+      case SDLK_p: {
+        this->view = glm::scale(this->view, make_scalev(-SCALE_FACTOR));
+        break;
+      }
+      // z-rotation
+      case SDLK_j: {
+        this->view = glm::rotate(this->view, ANGLE, glm::vec3(0.0f, 0.0f, 1.0f));
+        break;
+      }
+      case SDLK_k: {
+        this->view = glm::rotate(this->view, -ANGLE, glm::vec3(0.0f, 0.0f, 1.0f));
+        break;
+      }
+      // y-rotation
+      case SDLK_u: {
+        this->view = glm::rotate(this->view, ANGLE, glm::vec3(0.0f, 1.0f, 0.0f));
+        break;
+      }
+      case SDLK_i: {
+        this->view = glm::rotate(this->view, -ANGLE, glm::vec3(0.0f, 1.0f, 0.0f));
+        break;
+      }
+      // x-rotation
+      case SDLK_n: {
+        this->view = glm::rotate(this->view, ANGLE, glm::vec3(1.0f, 0.0f, 0.0f));
+        break;
+      }
+      case SDLK_m: {
+        this->view = glm::rotate(this->view, -ANGLE, glm::vec3(1.0f, 0.0f, 0.0f));
         break;
       }
       }
