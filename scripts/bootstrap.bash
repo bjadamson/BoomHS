@@ -22,7 +22,7 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++14 -stdlib=libc++")
 
 ## DEFINITIONS
-file(GLOB INTERNAL_INCLUDE_DIRS include external/expected/include)
+file(GLOB INTERNAL_INCLUDE_DIRS include external/expected/include external/hana/include external/ecst/include external/ecst/extlibs/vrm_core/include external/ecst/extlibs/vrm_pp/include)
 file(GLOB_RECURSE GLOBBED_SOURCES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cxx
@@ -62,6 +62,7 @@ cat > "${BUILD}/conanfile.txt" << "EOF"
 fmt/3.0.0@memsharded/testing
 spdlog/0.1@memsharded/testing
 glm/0.9.8.0@TimSimpson/testing
+Boost/1.60.0/lasote/stable
 
 [generators]
 cmake

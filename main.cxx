@@ -10,6 +10,7 @@
 #include <engine/gfx/opengl_gfx.hpp>
 #include <engine/window/sdl_window.hpp>
 #include <game/boomhs/boomhs.hpp>
+#include <ecst.hpp>
 
 int
 main(int argc, char *argv[])

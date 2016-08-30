@@ -4,3 +4,9 @@
 [submodule "external/expected"]
 	path = external/expected
 	url = https://github.com/ptal/expected
+[submodule "external/hana"]
+	path = external/hana
+	url = https://github.com/boostorg/hana
+[submodule "external/ecst"]
+	path = external/ecst
+	url = https://github.com/SuperV1234/ecst
