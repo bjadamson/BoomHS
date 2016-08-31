@@ -32,6 +32,27 @@ auto log_error = [](auto const line) {
 auto const bind_vao = [](auto const vao) { glBindVertexArray(vao); };
 auto const unbind_vao = [](auto const vao) { glBindVertexArray(0); };
 
+template<typename L>
+struct render_args
+{
+  L &logger;
+  glm::mat4 const& view;
+  glm::mat4 const& projection;
+
+  ::engine::gfx::triangle const& t0;
+  ::engine::gfx::triangle const& t1;
+
+  render_args(L &l, glm::mat4 const& v, glm::mat4 const& p, ::engine::gfx::triangle const& t,
+      ::engine::gfx::triangle const& tt)
+    : logger(l)
+    , view(v)
+    , projection(p)
+    , t0(t)
+    , t1(tt)
+  {
+  }
+};
+
 class gfx_engine
 {
   using W = ::engine::window::sdl_window;
@@ -59,14 +80,13 @@ public:
   }
 
   template <typename L>
-  void draw(L &logger, glm::mat4 const &view, glm::mat4 const &projection,
-            ::engine::gfx::triangle const &t0, ::engine::gfx::triangle const &t1)
+  void draw(render_args<L> const& args)
   {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
     // Render
     glClear(GL_COLOR_BUFFER_BIT);
-    this->red_.draw(logger, view, projection, map_to_gl(t0), map_to_gl(t1));
+    this->red_.draw(args.logger, args.view, args.projection, map_to_gl(args.t0), map_to_gl(args.t1));
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(this->window_.raw());

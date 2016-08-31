@@ -72,7 +72,10 @@ public:
   template <typename R>
   void game_loop(R &renderer)
   {
-    renderer.draw(this->logger_, view, projection, this->t0_, this->t1_);
+    ::engine::gfx::opengl::render_args<decltype(this->logger_)> const args{this->logger_, view,
+      projection, this->t0_, this->t1_};
+
+    renderer.draw(args);
   }
 
   bool process_event(SDL_Event &event)
