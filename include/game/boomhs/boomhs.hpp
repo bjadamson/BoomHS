@@ -1,14 +1,44 @@
 #pragma once
 #include <string>
 
+// GLM Mathematics
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <engine/gfx/shapes.hpp>
 #include <engine/window/window.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 
-// GLM Mathematics
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <game/data_types.hpp>
+
+namespace {
+
+constexpr ::engine::gfx::triangle
+wc_to_gfx_triangle(game::world_coordinate const& wc)
+{
+  using namespace engine::gfx;
+  // Set up vertex data (and buffer(s)) and attribute pointers
+  constexpr float w_coord = 1.0f;
+  constexpr float radius = 0.5;
+  // clang-format off
+ std::array<float, 12> v0 =
+  {
+    wc.x - radius, wc.y - radius, 0.0f, w_coord, // bottom left
+    wc.x + radius, wc.y - radius, 0.0f, w_coord, // bottom right
+    wc.x         , wc.y + radius, 0.0f, w_coord  // top middle
+  };
+  constexpr std::array<float, 12> c0 =
+  {
+    1.0f, 0.0f, 0.0f, 1.0f,
+    0.0f, 1.0f, 0.0f, 1.0f,
+    0.0f, 0.0f, 1.0f, 1.0f,
+  };
+  return ::engine::gfx::make_triangle(v0, c0);
+  // clang-format on
+}
+
+} // ns anon
 
 namespace game
 {
@@ -21,17 +51,17 @@ class boomhs_game
   L &logger_;
   engine::window::dimensions const dimensions_;
 
-  engine::gfx::triangle t0_;
-  engine::gfx::triangle t1_;
+  game::world_coordinate wc0_;
+  game::world_coordinate wc1_;
 
   glm::mat4 view, projection;
 
-  boomhs_game(L &l, engine::window::dimensions const &d, engine::gfx::triangle const &t0,
-              engine::gfx::triangle const &t1)
+  boomhs_game(L &l, engine::window::dimensions const &d, game::world_coordinate const &w0,
+              game::world_coordinate const &w1)
       : logger_(l)
       , dimensions_(d)
-      , t0_(t0)
-      , t1_(t1)
+      , wc0_(w0)
+      , wc1_(w1)
   {
   }
 
@@ -72,8 +102,11 @@ public:
   template <typename R>
   void game_loop(R &renderer)
   {
+    auto const t0 = wc_to_gfx_triangle(this->wc0_);
+    auto const t1 = wc_to_gfx_triangle(this->wc1_);
+
     ::engine::gfx::opengl::render_args<decltype(this->logger_)> const args{this->logger_, view,
-      projection, this->t0_, this->t1_};
+      projection, t0, t1};
 
     renderer.draw(args);
   }
@@ -154,33 +187,10 @@ struct boomhs_library {
   template <typename L>
   static inline auto make_game(L &logger, engine::window::dimensions const &dimensions)
   {
-    // Set up vertex data (and buffer(s)) and attribute pointers
-    constexpr float Wcoord = 1.0f;
-    // clang-format off
-    constexpr std::array<float, 12> v0 =
-    {
-      -0.5f , -0.5f, 0.0f, Wcoord, // bottom left
-      0.0f  , -0.5f, 0.0f, Wcoord, // bottom right
-      -0.25f, 0.5f , 0.0f, Wcoord  // top middle
-    };
-    constexpr std::array<float, 12> v1 =
-    {
-      0.5f  , 0.0f, 0.0f, Wcoord, // bottom left
-      1.00f , 0.0f, 0.0f, Wcoord, // bottom right
-      0.75f , 1.0f, 0.0f, Wcoord  // top middle
-    };
-    constexpr std::array<float, 12> c0 =
-    {
-      1.0f, 0.0f, 0.0f, 1.0f,
-      0.0f, 1.0f, 0.0f, 1.0f,
-      0.0f, 0.0f, 1.0f, 1.0f,
-    };
-    // clang-format on
-    using namespace engine::gfx;
-    triangle t0 = make_triangle(v0, c0);
-    triangle t1 = make_triangle(v1, c0);
+    auto w0 = game::world_coordinate{-0.5f, 0.0f, 0.0f, 1.0f};
+    auto w1 = game::world_coordinate{0.5f, 0.0f, 0.0f, 1.0f};
 
-    return boomhs_game<L>{logger, dimensions, t0, t1};
+    return boomhs_game<L>{logger, dimensions, w0, w1};
   }
 };
 
