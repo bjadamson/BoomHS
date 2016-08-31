@@ -32,27 +32,27 @@ auto log_error = [](auto const line) {
 auto const bind_vao = [](auto const vao) { glBindVertexArray(vao); };
 auto const unbind_vao = [](auto const vao) { glBindVertexArray(0); };
 
-class renderer
+class gfx_engine
 {
   using W = ::engine::window::sdl_window;
 
-  red_triangle red_;
+  renderer red_;
   W window_;
 
-  renderer(W &&w, red_triangle &&red)
+  gfx_engine(W &&w, renderer &&red)
       : window_(std::move(w))
       , red_(std::move(red))
   {
   }
 
-  NO_COPY(renderer);
-  renderer &operator=(renderer &&) = delete;
+  NO_COPY(gfx_engine);
+  gfx_engine &operator=(gfx_engine &&) = delete;
 
   friend struct opengl_library;
 
 public:
   // move-assignment OK.
-  renderer(renderer &&other)
+  gfx_engine(gfx_engine &&other)
       : red_(std::move(other.red_))
       , window_(std::move(other.window_))
   {
@@ -86,10 +86,10 @@ struct opengl_library {
   static inline void destroy() {}
 
   template <typename W>
-  static inline stlw::result<renderer, std::string> make_renderer(W &&window)
+  static inline stlw::result<gfx_engine, std::string> make_gfx_engine(W &&window)
   {
-    DO_MONAD(auto red, factory::make_red_triangle_program());
-    return renderer{std::move(window), std::move(red)};
+    DO_MONAD(auto red, factory::make_renderer());
+    return gfx_engine{std::move(window), std::move(red)};
   }
 };
 

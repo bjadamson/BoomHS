@@ -42,11 +42,11 @@ namespace gfx
 namespace opengl
 {
 
-stlw::result<red_triangle, std::string>
-factory::make_red_triangle_program()
+stlw::result<renderer, std::string>
+factory::make_renderer()
 {
   DO_MONAD(auto phandle, load_program("shader.vert", "shader.frag"));
-  red_triangle triangle{std::move(phandle)};
+  renderer triangle{std::move(phandle)};
 
   global_vao_bind(triangle.vao_);
   ON_SCOPE_EXIT([]() { global_vao_unbind(); });

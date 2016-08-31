@@ -1,6 +1,6 @@
 #pragma once
 #include <engine/gfx/opengl/program.hpp>
-#include <engine/gfx/opengl/red_triangle.hpp>
+#include <engine/gfx/opengl/renderer.hpp>
 
 namespace engine
 {
@@ -18,7 +18,7 @@ class factory
   static auto constexpr RED_TRIANGLE_VERTEX_TEXTURE_COORDINATE_INDEX = 2;
 
 public:
-  static stlw::result<red_triangle, std::string> make_red_triangle_program();
+  static stlw::result<renderer, std::string> make_renderer();
 };
 
 } // opengl

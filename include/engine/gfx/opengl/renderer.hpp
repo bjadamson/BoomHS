@@ -71,7 +71,7 @@ auto const load_texture = [](char const *path) {
   return texture;
 };
 
-class red_triangle
+class renderer
 {
   GLuint vao_ = 0, vbo_ = 0;
   program program_;
@@ -85,7 +85,7 @@ class red_triangle
 private:
   static auto constexpr NUM_BUFFERS = 1;
 
-  red_triangle(program p)
+  renderer(program p)
       : program_(std::move(p))
   {
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
@@ -97,12 +97,12 @@ private:
     this->texture_ = load_texture("assets/container.jpg");
   }
 
-  NO_COPY(red_triangle);
-  red_triangle &operator=(red_triangle &&) = delete;
+  NO_COPY(renderer);
+  renderer &operator=(renderer &&) = delete;
 
 public:
   // move-construction OK.
-  red_triangle(red_triangle &&other)
+  renderer(renderer &&other)
       : vao_(other.vao_)
       , vbo_(other.vbo_)
       , program_(std::move(other.program_))
@@ -114,7 +114,7 @@ public:
     other.texture_ = 0;
   }
 
-  ~red_triangle()
+  ~renderer()
   {
     glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
     glDeleteVertexArrays(NUM_BUFFERS, &this->vao_);

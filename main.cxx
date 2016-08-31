@@ -35,11 +35,11 @@ main(int argc, char *argv[])
   logger.debug("Instantiating window instance.");
   DO_MONAD_OR_ELSE_RETURN(auto window, window_lib::make_window(height, width), on_error);
 
-  // Initialize graphics renderer
+  // Initialize graphics gfx_engine
   namespace gfx = engine::gfx;
   using gfx_lib = gfx::library_wrapper<gfx::opengl::opengl_library>;
   auto const dimensions = window.get_dimensions();
-  DO_MONAD_OR_ELSE_RETURN(auto renderer, gfx_lib::make_renderer(std::move(window)), on_error);
+  DO_MONAD_OR_ELSE_RETURN(auto gfx_engine, gfx_lib::make_gfx_engine(std::move(window)), on_error);
 
   // Selecting the game
   using game_factory = game::game_factory;
@@ -50,7 +50,7 @@ main(int argc, char *argv[])
   auto game = game_factory::make_game(logger, dimensions);
 
   logger.debug("Starting boomhs game loop.");
-  DO_MONAD_OR_ELSE_RETURN(auto __, (game.run<decltype(renderer), game_lib>(std::move(renderer))),
+  DO_MONAD_OR_ELSE_RETURN(auto __, (game.run<decltype(gfx_engine), game_lib>(std::move(gfx_engine))),
                           on_error);
 
   logger.debug("Game loop finished successfully! Ending program now.");

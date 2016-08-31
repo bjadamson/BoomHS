@@ -16,9 +16,9 @@ struct library_wrapper {
   inline static void destroy() { L::destroy(); }
 
   template <typename... P>
-  inline static decltype(auto) make_renderer(P &&... p)
+  inline static decltype(auto) make_gfx_engine(P &&... p)
   {
-    return L::make_renderer(std::forward<P>(p)...);
+    return L::make_gfx_engine(std::forward<P>(p)...);
   }
 };
 
