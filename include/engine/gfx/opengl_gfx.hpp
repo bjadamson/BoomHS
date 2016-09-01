@@ -5,8 +5,39 @@
 #include <engine/gfx/opengl_glew.hpp>
 #include <engine/gfx/shapes.hpp>
 #include <engine/window/sdl_window.hpp>
-#include <glm/glm.hpp>
+#include <game/data_types.hpp>
 #include <stlw/type_ctors.hpp>
+
+#include <glm/glm.hpp>
+
+namespace {
+
+constexpr ::engine::gfx::triangle
+wc_to_gfx_triangle(game::world_coordinate const& wc)
+{
+  using namespace engine::gfx;
+  // Set up vertex data (and buffer(s)) and attribute pointers
+  constexpr float w_coord = 1.0f;
+  constexpr float radius = 0.5;
+  // clang-format off
+ std::array<float, 12> v0 =
+  {
+    wc.x - radius, wc.y - radius, 0.0f, w_coord, // bottom left
+    wc.x + radius, wc.y - radius, 0.0f, w_coord, // bottom right
+    wc.x         , wc.y + radius, 0.0f, w_coord  // top middle
+  };
+  constexpr std::array<float, 12> c0 =
+  {
+    1.0f, 0.0f, 0.0f, 1.0f,
+    0.0f, 1.0f, 0.0f, 1.0f,
+    0.0f, 0.0f, 1.0f, 1.0f,
+  };
+  return ::engine::gfx::make_triangle(v0, c0);
+  // clang-format on
+}
+
+} // nsa non
+
 
 namespace engine
 {
@@ -39,16 +70,16 @@ struct render_args
   glm::mat4 const& view;
   glm::mat4 const& projection;
 
-  ::engine::gfx::triangle const& t0;
-  ::engine::gfx::triangle const& t1;
+  game::world_coordinate const& wc0;
+  game::world_coordinate const& wc1;
 
-  render_args(L &l, glm::mat4 const& v, glm::mat4 const& p, ::engine::gfx::triangle const& t,
-      ::engine::gfx::triangle const& tt)
+  render_args(L &l, glm::mat4 const& v, glm::mat4 const& p, game::world_coordinate const& w,
+      game::world_coordinate const& ww)
     : logger(l)
     , view(v)
     , projection(p)
-    , t0(t)
-    , t1(tt)
+    , wc0(w)
+    , wc1(ww)
   {
   }
 };
@@ -84,9 +115,12 @@ public:
   {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
+    auto const wc0 = wc_to_gfx_triangle(args.wc0);
+    auto const wc1 = wc_to_gfx_triangle(args.wc1);
+
     // Render
     glClear(GL_COLOR_BUFFER_BIT);
-    this->red_.draw(args.logger, args.view, args.projection, map_to_gl(args.t0), map_to_gl(args.t1));
+    this->red_.draw(args.logger, args.view, args.projection, map_to_gl(wc0), map_to_gl(wc1));
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(this->window_.raw());
