@@ -39,14 +39,16 @@ constexpr auto
 wc_to_gfx_rectangle(game::world_coordinate const& wc)
 {
   using namespace engine::gfx;
-  constexpr float radius = 0.5;
+  constexpr float width = 0.25;
+  constexpr float height = 0.39;
 
   // clang-format off
  std::array<float, 16> v0 =
   {
-    wc.x(), wc.y(), wc.z(), wc.w(),
-    wc.x(), wc.y(), wc.z(), wc.w(),
-    wc.x(), wc.y(), wc.z(), wc.w()
+    wc.x() - width, wc.y() - height, wc.z(), wc.w(), // bottom left
+    wc.x() + width, wc.y() - height, wc.z(), wc.w(), // bottom right
+    wc.x() + width, wc.y() + height, wc.z(), wc.w(), // top left
+    wc.x() - width, wc.y() + height, wc.z(), wc.w() // top right
   };
   constexpr std::array<float, 16> c0 =
   {
@@ -139,11 +141,11 @@ public:
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
     // IS THERE SOME WAY TO ABSTRAC
-    auto const wc0 = wc_to_gfx_triangle(args.wc0);
-    auto const wc1 = wc_to_gfx_triangle(args.wc1);
+    //auto const wc0 = wc_to_gfx_triangle(args.wc0);
+    //auto const wc1 = wc_to_gfx_triangle(args.wc1);
 
-    //auto const wc0 = wc_to_gfx_rectangle(args.wc0);
-    //auto const wc1 = wc_to_gfx_rectangle(args.wc1);
+    auto const wc0 = wc_to_gfx_rectangle(args.wc0);
+    auto const wc1 = wc_to_gfx_rectangle(args.wc1);
 
     // Render
     glClear(GL_COLOR_BUFFER_BIT);
