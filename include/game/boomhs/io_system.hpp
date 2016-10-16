@@ -1,10 +1,6 @@
 #pragma once
 #include <ecst.hpp>
 
-// Define some systems.
-
-
-
 namespace s
 {
 
@@ -111,4 +107,7 @@ struct io_system
 };
 
 } // ns s
+<<<<<<< HEAD
 
+=======
+>>>>>>> Move io code out of boomhs
