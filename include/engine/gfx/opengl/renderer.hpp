@@ -38,7 +38,7 @@ auto const print_triangle = [](auto &logger, auto const &triangle) {
   auto const p1 = make_part(&triangle.data()[10]);
   auto const p2 = make_part(&triangle.data()[20]);
 
-  auto const msg = stlw::format("triangle info:\n{}\n{}\n{}\n\n", p0, p1, p2);
+  auto const msg = fmt::format("triangle info:\n{}\n{}\n{}\n\n", p0, p1, p2);
   logger.info(msg);
 };
 

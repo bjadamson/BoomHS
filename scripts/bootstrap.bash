@@ -54,7 +54,7 @@ pkg_search_module(SDL2 REQUIRED sdl2)
 
 ## We should get these through conan.io
 target_include_directories(boomhs PUBLIC ${SDL2_INCLUDE_DIRS} ${SDL2IMAGE_INCLUDE_DIRS} ${INTERNAL_INCLUDE_DIRS} ${OPENGL_INDLUDE_DIRS} ${GLEW_INCLUDE_DIRS} "/usr/include/SOIL/")
-target_link_libraries(boomhs ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} SOIL)
+target_link_libraries(boomhs ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} SOIL pthread)
 EOF
 
 cat > "${BUILD}/conanfile.txt" << "EOF"

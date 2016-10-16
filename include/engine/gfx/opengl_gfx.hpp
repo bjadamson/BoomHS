@@ -139,10 +139,10 @@ struct opengl_library {
 
   static inline void destroy() {}
 
-  template <typename W>
-  static inline stlw::result<gfx_engine, std::string> make_gfx_engine(W &&window)
+  template <typename L, typename W>
+  static inline stlw::result<gfx_engine, std::string> make_gfx_engine(L &logger, W &&window)
   {
-    DO_MONAD(auto red, factory::make_renderer());
+    DO_MONAD(auto red, factory::make_renderer(logger));
     return gfx_engine{std::move(window), std::move(red)};
   }
 };

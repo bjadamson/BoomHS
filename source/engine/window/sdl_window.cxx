@@ -1,5 +1,6 @@
 #include <engine/gfx/opengl_glew.hpp>
 #include <engine/window/sdl_window.hpp>
+#include <stlw/result.hpp>
 #include <stlw/format.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
@@ -26,13 +27,13 @@ sdl_library::init()
   };
 
   // Use OpenGL 3.1 core
-  DO_EFFECT(set_attribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
-  DO_EFFECT(set_attribute(SDL_GL_CONTEXT_MINOR_VERSION, 1));
-  DO_EFFECT(set_attribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
+  DO_MONAD(auto _, set_attribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
+  DO_MONAD(auto __, set_attribute(SDL_GL_CONTEXT_MINOR_VERSION, 1));
+  DO_MONAD(auto ___, set_attribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
 
   // Turn on double buffering with a 24bit Z buffer.
   // You may need to change this to 16 or 32 for your system
-  DO_EFFECT(set_attribute(SDL_GL_DOUBLEBUFFER, 1));
+  DO_MONAD(auto ____, set_attribute(SDL_GL_DOUBLEBUFFER, 1));
 
   // Use v-sync
   SDL_GL_SetSwapInterval(1);
@@ -40,7 +41,7 @@ sdl_library::init()
   // Initialize video subsystem
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     // Display error message
-    auto const error = stlw::format("SDL could not initialize! SDL_Error: {}\n", SDL_GetError());
+    auto const error = fmt::format("SDL could not initialize! SDL_Error: {}\n", SDL_GetError());
     return stlw::make_error(error);
   }
   return stlw::make_empty();
@@ -80,7 +81,7 @@ sdl_library::make_window(int const height, int const width)
   auto raw = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width,
                               height, flags);
   if (nullptr == raw) {
-    auto const error = stlw::format("SDL could not initialize! SDL_Error: {}\n", SDL_GetError());
+    auto const error = fmt::format("SDL could not initialize! SDL_Error: {}\n", SDL_GetError());
     return stlw::make_error(error);
   }
   window_ptr window_ptr{raw, &SDL_DestroyWindow};
@@ -90,7 +91,7 @@ sdl_library::make_window(int const height, int const width)
   if (nullptr == gl_context) {
     // Display error message
     auto const error =
-        stlw::format("OpenGL context could not be created! SDL Error: {}\n", SDL_GetError());
+        fmt::format("OpenGL context could not be created! SDL Error: {}\n", SDL_GetError());
     return stlw::make_error(error);
   }
   SDL_GL_MakeCurrent(window_ptr.get(), gl_context);
@@ -99,7 +100,7 @@ sdl_library::make_window(int const height, int const width)
   glewExperimental = GL_TRUE;
   auto const glew_status = glewInit();
   if (GLEW_OK != glew_status) {
-    auto const error = stlw::format("GLEW could not initialize! GLEW error: {}\n",
+    auto const error = fmt::format("GLEW could not initialize! GLEW error: {}\n",
                                     glewGetErrorString(glew_status));
     return stlw::make_error(error);
   }
