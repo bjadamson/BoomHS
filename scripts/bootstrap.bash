@@ -19,7 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++14 -stdlib=libc++")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++1z -stdlib=libc++")
 
 ## DEFINITIONS
 file(GLOB INTERNAL_INCLUDE_DIRS include external/expected/include external/hana/include external/ecst/include external/ecst/extlibs/vrm_core/include external/ecst/extlibs/vrm_pp/include)
