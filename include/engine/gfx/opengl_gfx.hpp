@@ -16,15 +16,14 @@ constexpr ::engine::gfx::triangle
 wc_to_gfx_triangle(game::world_coordinate const& wc)
 {
   using namespace engine::gfx;
-  // Set up vertex data (and buffer(s)) and attribute pointers
-  constexpr float w_coord = 1.0f;
   constexpr float radius = 0.5;
+
   // clang-format off
  std::array<float, 12> v0 =
   {
-    wc.x - radius, wc.y - radius, 0.0f, w_coord, // bottom left
-    wc.x + radius, wc.y - radius, 0.0f, w_coord, // bottom right
-    wc.x         , wc.y + radius, 0.0f, w_coord  // top middle
+    wc.x() - radius, wc.y() - radius, wc.z(), wc.w(), // bottom left
+    wc.x() + radius, wc.y() - radius, wc.z(), wc.w(), // bottom right
+    wc.x()         , wc.y() + radius, wc.z(), wc.w()  // top middle
   };
   constexpr std::array<float, 12> c0 =
   {

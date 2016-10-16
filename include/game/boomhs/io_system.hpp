@@ -107,7 +107,3 @@ struct io_system
 };
 
 } // ns s
-<<<<<<< HEAD
-
-=======
->>>>>>> Move io code out of boomhs

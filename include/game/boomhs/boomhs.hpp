@@ -33,6 +33,8 @@ namespace ct
 {
 // Define component tags.
 namespace sc = ecst::signature::component;
+
+constexpr auto world_coordinate = ecst::tag::component::v<game::world_coordinate>;
 } // ns ct
 
 // Setup compile-time settings.
@@ -45,7 +47,10 @@ make_csl()
   namespace sc = ecst::signature::component;
   namespace slc = ecst::signature_list::component;
 
-  return slc::make();
+  constexpr auto cs_world_coordinate =
+                sc::make(ct::world_coordinate).contiguous_buffer();
+
+  return slc::make(cs_world_coordinate);
 }
 
 // Builds and returns a "system signature list".
@@ -111,22 +116,22 @@ ecst_main(G &game, S &state)
   // Create an ECST context.
   auto ctx = ecst::context::make_uptr(s);
 
+  game::world_coordinate *p = nullptr;
+  game::world_coordinate *q = nullptr;
+
   // Initialize context with some entities.
   ctx->step([&](auto &proxy) {
-      //auto w0 = ::game::world_coordinate{-0.5f, 0.0f, 0.0f, 1.0f};
-      //mk_redtriangle(proxy, w0);
-
-      //auto w1 = game::world_coordinate{0.5f, 0.0f, 0.0f, 1.0f};
-      //mk_redtriangle(proxy, w1);
-
-      // create a single instance of the view and proj matrices
       {
-        //auto eid = proxy.create_entity();
-        //proxy.add_component(ct::view_m, eid);
+        auto eid = proxy.create_entity();
+        auto &wc = proxy.add_component(ct::world_coordinate, eid);
+        wc.set(-0.5f, 0.0f, 0.0f, 1.0f);
+        p = &wc;
       }
       {
-        //auto eid = proxy.create_entity();
-        //proxy.add_component(ct::proj_m, eid);
+        auto eid = proxy.create_entity();
+        auto &wc = proxy.add_component(ct::world_coordinate, eid);
+        wc.set(0.5f, 0.0f, 0.0f, 1.0f);
+        q = &wc;
       }
   });
 
@@ -143,27 +148,24 @@ ecst_main(G &game, S &state)
                     }));
           });
     l.trace("rendering");
-    game.game_loop(state);
+    game.game_loop(state, *p, *q);
     l.trace("game loop stepping.");
   }
 }
 
 class boomhs_game
 {
-  game::world_coordinate wc0_ = game::world_coordinate{-0.5f, 0.0f, 0.0f, 1.0f};
-  game::world_coordinate wc1_ = game::world_coordinate{0.5f, 0.0f, 0.0f, 1.0f};
-
+  NO_COPY(boomhs_game);
 public:
   boomhs_game() = default;
 
-  NO_COPY(boomhs_game);
   MOVE_DEFAULT(boomhs_game);
 
   template <typename S>
-  void game_loop(S &state)
+  void game_loop(S &state, game::world_coordinate const& wc0, game::world_coordinate const& wc1)
   {
     ::engine::gfx::opengl::render_args<decltype(state.logger)> const args{state.logger,
-      state.view, state.projection, this->wc0_, this->wc1_};
+      state.view, state.projection, wc0, wc1};
 
     state.renderer.draw(args);
   }
