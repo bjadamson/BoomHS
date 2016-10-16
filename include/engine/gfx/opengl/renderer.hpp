@@ -129,6 +129,7 @@ public:
 
     GLint const begin = 0;
     glDrawArrays(GL_TRIANGLES, begin, vertice_count);
+    //glDrawArrays(GL_POLYGON, begin, vertice_count);
   }
 
   template <typename L, typename S>

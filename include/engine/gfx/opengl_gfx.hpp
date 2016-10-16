@@ -12,7 +12,7 @@
 
 namespace {
 
-constexpr ::engine::gfx::triangle
+constexpr auto
 wc_to_gfx_triangle(game::world_coordinate const& wc)
 {
   using namespace engine::gfx;
@@ -32,6 +32,30 @@ wc_to_gfx_triangle(game::world_coordinate const& wc)
     0.0f, 0.0f, 1.0f, 1.0f,
   };
   return ::engine::gfx::make_triangle(v0, c0);
+  // clang-format on
+}
+
+constexpr auto
+wc_to_gfx_rectangle(game::world_coordinate const& wc)
+{
+  using namespace engine::gfx;
+  constexpr float radius = 0.5;
+
+  // clang-format off
+ std::array<float, 16> v0 =
+  {
+    wc.x(), wc.y(), wc.z(), wc.w(),
+    wc.x(), wc.y(), wc.z(), wc.w(),
+    wc.x(), wc.y(), wc.z(), wc.w()
+  };
+  constexpr std::array<float, 16> c0 =
+  {
+    1.0f, 0.0f, 0.0f, 1.0f,
+    0.0f, 1.0f, 0.0f, 1.0f,
+    0.0f, 0.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 0.2f, 1.0f,
+  };
+  return ::engine::gfx::make_rectangle(v0, c0);
   // clang-format on
 }
 
@@ -114,8 +138,12 @@ public:
   {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
+    // IS THERE SOME WAY TO ABSTRAC
     auto const wc0 = wc_to_gfx_triangle(args.wc0);
     auto const wc1 = wc_to_gfx_triangle(args.wc1);
+
+    //auto const wc0 = wc_to_gfx_rectangle(args.wc0);
+    //auto const wc1 = wc_to_gfx_rectangle(args.wc1);
 
     // Render
     glClear(GL_COLOR_BUFFER_BIT);

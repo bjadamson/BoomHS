@@ -3,13 +3,14 @@
 #include <engine/gfx/shapes.hpp>
 #include <tuple>
 
-namespace engine
+namespace engine::gfx::opengl
 {
-namespace gfx
-{
-namespace opengl
-{
-template <int N, int VerticeCount>
+
+// For now we assume 10 per-vertex because:
+// 4 points (x,y,z,w)
+// 4 colors (r,g,b,a),
+// 2 tex coords (u, v)
+template <int N>
 class shape
 {
   std::array<float, N> const data_;
@@ -21,31 +22,34 @@ public:
   }
   inline constexpr decltype(auto) data() const { return this->data_.data(); }
   inline constexpr auto size_in_bytes() const { return N * sizeof(float); }
-  inline constexpr auto vertice_count() const { return VerticeCount; }
+  inline constexpr auto vertice_count() const { return N/10; }
 };
 
-using triangle = ::engine::gfx::opengl::shape<30, 3>;
+// clang-format off
+#define ROW(INDEX)                                                                                 \
+  points[INDEX].x, points[INDEX].y, points[INDEX].z, points[INDEX].w, /* point */                  \
+  colors[INDEX].r, colors[INDEX].g, colors[INDEX].b, colors[INDEX].a, /* color */                  \
+  tcords[INDEX].u, tcords[INDEX].v                                    /* texture coordinates */
+// clang-format on
+
+using triangle = ::engine::gfx::opengl::shape<30>;
 auto constexpr map_to_gl(::engine::gfx::triangle const &gfx_triangle)
 {
   auto const &points = gfx_triangle.points;
   auto const &colors = gfx_triangle.colors;
   auto const &tcords = gfx_triangle.coords;
 
-  return triangle{{
-      points[0].x, points[0].y, points[0].z, points[0].w, // point
-      colors[0].r, colors[0].g, colors[0].b, colors[0].a, // color
-      tcords[0].u, tcords[0].v,                           // texture coordinates
-
-      points[1].x, points[1].y, points[1].z, points[1].w, // point
-      colors[1].r, colors[1].g, colors[1].b, colors[1].a, // color
-      tcords[1].u, tcords[1].v,                           // texture coordinates
-
-      points[2].x, points[2].y, points[2].z, points[2].w, // point
-      colors[2].r, colors[2].g, colors[2].b, colors[2].a, // color
-      tcords[2].u, tcords[2].v                            // texture coordinates
-  }};
+  return triangle{{ROW(0), ROW(1), ROW(2)}};
 }
 
-} // ns opengl
-} // ns gfx
-} // ns engine
+using rectangle = ::engine::gfx::opengl::shape<40>;
+auto constexpr map_to_gl(::engine::gfx::rectangle const &gfx_rect)
+{
+  auto const &points = gfx_rect.points;
+  auto const &colors = gfx_rect.colors;
+  auto const &tcords = gfx_rect.coords;
+
+  return rectangle{{ROW(0), ROW(1), ROW(2), ROW(3)}};
+}
+
+} // ns engine::gfx::opengl
