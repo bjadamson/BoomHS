@@ -148,7 +148,11 @@ ecst_main(G &game, S &state)
                     }));
           });
     l.trace("rendering");
-    game.game_loop(state, *p, *q);
+
+    game::shape<game::rectangle> s0{*p};
+    game::shape<game::triangle> s1{*q};
+
+    game.game_loop(state, s0, s1);
     l.trace("game loop stepping.");
   }
 }
@@ -161,13 +165,13 @@ public:
 
   MOVE_DEFAULT(boomhs_game);
 
-  template <typename S>
-  void game_loop(S &state, game::world_coordinate const& wc0, game::world_coordinate const& wc1)
+  template <typename State, typename S1, typename S2>
+  void game_loop(State &state, S1 const& s0, S2 const& s1)
   {
     ::engine::gfx::opengl::render_args<decltype(state.logger)> const args{state.logger,
-      state.view, state.projection, wc0, wc1};
+      state.view, state.projection};
 
-    state.renderer.draw(args);
+    state.renderer.draw(args, s0, s1);
   }
 };
 

@@ -36,11 +36,24 @@ public:
     this->set_w(wp);
   }
 
-  std::tuple<float, float, float, float>
+  constexpr std::tuple<float, float, float, float>
   get() const
   {
     return {this->x(), this->y(), this->z(), this->w()};
   }
+};
+
+struct triangle {};
+struct rectangle {};
+
+template<typename T>
+class shape {
+  world_coordinate coord_;
+public:
+  explicit constexpr shape(class world_coordinate const wc) :
+    coord_(wc)
+  {}
+  constexpr auto const& wc() const { return this->coord_; }
 };
 
 } // ns game

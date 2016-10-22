@@ -1,26 +1,79 @@
 #pragma once
 #include <array>
-#include <engine/gfx/shapes.hpp>
+#include <cassert>
 #include <tuple>
+
+#include <engine/gfx/shapes.hpp>
 
 namespace engine::gfx::opengl
 {
 
-// For now we assume 10 per-vertex because:
+constexpr auto
+to_triangle(game::world_coordinate const& wc)
+{
+  using namespace engine::gfx;
+  constexpr float radius = 0.5;
+
+  // clang-format off
+ std::array<float, 12> v0 =
+  {
+    wc.x() - radius, wc.y() - radius, wc.z(), wc.w(), // bottom left
+    wc.x() + radius, wc.y() - radius, wc.z(), wc.w(), // bottom right
+    wc.x()         , wc.y() + radius, wc.z(), wc.w()  // top middle
+  };
+  constexpr std::array<float, 12> c0 =
+  {
+    1.0f, 0.0f, 0.0f, 1.0f,
+    0.0f, 1.0f, 0.0f, 1.0f,
+    0.0f, 0.0f, 1.0f, 1.0f,
+  };
+  return ::engine::gfx::make_triangle(v0, c0);
+  // clang-format on
+}
+
+constexpr auto
+to_rectangle(game::world_coordinate const& wc)
+{
+  using namespace engine::gfx;
+  constexpr float width = 0.25;
+  constexpr float height = 0.39;
+
+  // clang-format off
+ std::array<float, 16> v0 =
+  {
+    wc.x() - width, wc.y() - height, wc.z(), wc.w(), // bottom left
+    wc.x() + width, wc.y() - height, wc.z(), wc.w(), // bottom right
+    wc.x() + width, wc.y() + height, wc.z(), wc.w(), // top left
+    wc.x() - width, wc.y() + height, wc.z(), wc.w() // top right
+  };
+  constexpr std::array<float, 16> c0 =
+  {
+    1.0f, 0.0f, 0.0f, 1.0f,
+    0.0f, 1.0f, 0.0f, 1.0f,
+    0.0f, 0.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 0.2f, 1.0f,
+  };
+  return ::engine::gfx::make_rectangle(v0, c0);
+  // clang-format on
+}
+
+// For now we assume 10 attributes per-vertex:
 // 4 points (x,y,z,w)
 // 4 colors (r,g,b,a),
 // 2 tex coords (u, v)
 template <int N>
 class shape
 {
+  GLenum const mode_;
   std::array<float, N> const data_;
-
 public:
-  explicit constexpr shape(std::array<float, N> const &d)
-      : data_(d)
+  explicit constexpr shape(GLenum const m, std::array<float, N> const &d)
+      : mode_(m)
+      , data_(d)
   {
   }
-  inline constexpr decltype(auto) data() const { return this->data_.data(); }
+  inline constexpr auto draw_mode() const { return this->mode_; }
+  inline constexpr auto data() const { return this->data_.data(); }
   inline constexpr auto size_in_bytes() const { return N * sizeof(float); }
   inline constexpr auto vertice_count() const { return N/10; }
 };
@@ -33,23 +86,33 @@ public:
 // clang-format on
 
 using triangle = ::engine::gfx::opengl::shape<30>;
-auto constexpr map_to_gl(::engine::gfx::triangle const &gfx_triangle)
+auto constexpr map_to_gl_priv(::engine::gfx::triangle const &gfx_triangle)
 {
   auto const &points = gfx_triangle.points;
   auto const &colors = gfx_triangle.colors;
   auto const &tcords = gfx_triangle.coords;
 
-  return triangle{{ROW(0), ROW(1), ROW(2)}};
+  return triangle{GL_TRIANGLES, {ROW(0), ROW(1), ROW(2)}};
 }
 
 using rectangle = ::engine::gfx::opengl::shape<40>;
-auto constexpr map_to_gl(::engine::gfx::rectangle const &gfx_rect)
+auto constexpr map_to_gl_priv(::engine::gfx::rectangle const &gfx_rect)
 {
   auto const &points = gfx_rect.points;
   auto const &colors = gfx_rect.colors;
   auto const &tcords = gfx_rect.coords;
 
-  return rectangle{{ROW(0), ROW(1), ROW(2), ROW(3)}};
+  return rectangle{GL_QUADS, {ROW(0), ROW(1), ROW(2), ROW(3)}};
+}
+
+triangle constexpr map_to_gl(game::shape<game::triangle> const sh)
+{
+  return map_to_gl_priv(to_triangle(sh.wc()));
+}
+
+rectangle constexpr map_to_gl(game::shape<game::rectangle> const sh)
+{
+  return map_to_gl_priv(to_rectangle(sh.wc()));
 }
 
 } // ns engine::gfx::opengl

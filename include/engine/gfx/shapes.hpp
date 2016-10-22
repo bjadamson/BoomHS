@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <tuple>
+#include <game/data_types.hpp>
 
 namespace engine
 {
@@ -26,7 +27,7 @@ struct color {
   {
   }
 
-  static constexpr std::array<float, 4> const DEFAULT_TEXTURE = {1.0f, 0.0f, 0.0f, 1.0f};
+  static constexpr std::array<float, 4> DEFAULT_TEXTURE() { return {1.0f, 0.0f, 0.0f, 0.0f}; };
 };
 struct texture_coord {
   float const u, v;
@@ -105,7 +106,7 @@ triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<floa
 
 auto constexpr make_triangle(std::array<float, 12> const &p)
 {
-  return make_triangle(p, color::DEFAULT_TEXTURE);
+  return make_triangle(p, color::DEFAULT_TEXTURE());
 }
 
 auto constexpr make_rectangle(std::array<float, 16> const &p, std::array<float, 16> const &c,
@@ -158,7 +159,7 @@ auto constexpr make_rectangle(std::array<float, 16> const &p, std::array<float, 
 
 auto constexpr make_rectangle(std::array<float, 16> const &p)
 {
-  return make_rectangle(p, color::DEFAULT_TEXTURE);
+  return make_rectangle(p, color::DEFAULT_TEXTURE());
 }
 
 } // ns gfx

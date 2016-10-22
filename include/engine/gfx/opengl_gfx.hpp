@@ -7,62 +7,7 @@
 #include <engine/window/sdl_window.hpp>
 #include <game/data_types.hpp>
 #include <stlw/type_ctors.hpp>
-
 #include <glm/glm.hpp>
-
-namespace {
-
-constexpr auto
-wc_to_gfx_triangle(game::world_coordinate const& wc)
-{
-  using namespace engine::gfx;
-  constexpr float radius = 0.5;
-
-  // clang-format off
- std::array<float, 12> v0 =
-  {
-    wc.x() - radius, wc.y() - radius, wc.z(), wc.w(), // bottom left
-    wc.x() + radius, wc.y() - radius, wc.z(), wc.w(), // bottom right
-    wc.x()         , wc.y() + radius, wc.z(), wc.w()  // top middle
-  };
-  constexpr std::array<float, 12> c0 =
-  {
-    1.0f, 0.0f, 0.0f, 1.0f,
-    0.0f, 1.0f, 0.0f, 1.0f,
-    0.0f, 0.0f, 1.0f, 1.0f,
-  };
-  return ::engine::gfx::make_triangle(v0, c0);
-  // clang-format on
-}
-
-constexpr auto
-wc_to_gfx_rectangle(game::world_coordinate const& wc)
-{
-  using namespace engine::gfx;
-  constexpr float width = 0.25;
-  constexpr float height = 0.39;
-
-  // clang-format off
- std::array<float, 16> v0 =
-  {
-    wc.x() - width, wc.y() - height, wc.z(), wc.w(), // bottom left
-    wc.x() + width, wc.y() - height, wc.z(), wc.w(), // bottom right
-    wc.x() + width, wc.y() + height, wc.z(), wc.w(), // top left
-    wc.x() - width, wc.y() + height, wc.z(), wc.w() // top right
-  };
-  constexpr std::array<float, 16> c0 =
-  {
-    1.0f, 0.0f, 0.0f, 1.0f,
-    0.0f, 1.0f, 0.0f, 1.0f,
-    0.0f, 0.0f, 1.0f, 1.0f,
-    1.0f, 1.0f, 0.2f, 1.0f,
-  };
-  return ::engine::gfx::make_rectangle(v0, c0);
-  // clang-format on
-}
-
-} // nsa non
-
 
 namespace engine
 {
@@ -95,16 +40,10 @@ struct render_args
   glm::mat4 const& view;
   glm::mat4 const& projection;
 
-  game::world_coordinate const& wc0;
-  game::world_coordinate const& wc1;
-
-  render_args(L &l, glm::mat4 const& v, glm::mat4 const& p, game::world_coordinate const& w,
-      game::world_coordinate const& ww)
+  render_args(L &l, glm::mat4 const& v, glm::mat4 const& p)
     : logger(l)
     , view(v)
     , projection(p)
-    , wc0(w)
-    , wc1(ww)
   {
   }
 };
@@ -135,21 +74,17 @@ public:
   {
   }
 
-  template <typename L>
-  void draw(render_args<L> const& args)
+  template <typename L, typename S1, typename S2>
+  void draw(render_args<L> const& args, game::shape<S1> const& s0, game::shape<S2> const& s1)
   {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
-    // IS THERE SOME WAY TO ABSTRAC
-    //auto const wc0 = wc_to_gfx_triangle(args.wc0);
-    //auto const wc1 = wc_to_gfx_triangle(args.wc1);
-
-    auto const wc0 = wc_to_gfx_rectangle(args.wc0);
-    auto const wc1 = wc_to_gfx_rectangle(args.wc1);
+    rectangle const shape0 = map_to_gl(s0);
+    triangle const shape1 = map_to_gl(s1);
 
     // Render
     glClear(GL_COLOR_BUFFER_BIT);
-    this->red_.draw(args.logger, args.view, args.projection, map_to_gl(wc0), map_to_gl(wc1));
+    this->red_.draw(args.logger, args.view, args.projection, shape0, shape1);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(this->window_.raw());

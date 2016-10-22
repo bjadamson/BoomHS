@@ -74,11 +74,8 @@ auto const load_texture = [](char const *path) {
 class renderer
 {
   GLuint vao_ = 0, vbo_ = 0;
-  program program_;
-
-  // TODO: consider moving elsewhere
   GLuint texture_ = 0;
-  // TODO:end
+  program program_;
 
   friend class factory;
 
@@ -100,36 +97,15 @@ private:
   NO_COPY(renderer);
   renderer &operator=(renderer &&) = delete;
 
-public:
-  // move-construction OK.
-  renderer(renderer &&other)
-      : vao_(other.vao_)
-      , vbo_(other.vbo_)
-      , program_(std::move(other.program_))
-      , texture_(other.texture_)
-  {
-    other.vao_ = 0;
-    other.vbo_ = 0;
-    other.program_ = program::make_invalid();
-    other.texture_ = 0;
-  }
-
-  ~renderer()
-  {
-    glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
-    glDeleteVertexArrays(NUM_BUFFERS, &this->vao_);
-  }
-
   template <typename L>
-  void render(GLsizei const vertice_count, L &logger, program &program)
+  void render(GLenum const render_mode, GLsizei const vertice_count, L &logger, program &program)
   {
     // Draw our first triangle
     program.use();
     program.check_opengl_errors(logger);
 
     GLint const begin = 0;
-    //glDrawArrays(GL_TRIANGLES, begin, vertice_count);
-    glDrawArrays(GL_QUADS, begin, vertice_count);
+    glDrawArrays(render_mode, begin, vertice_count);
   }
 
   template <typename L, typename S>
@@ -154,8 +130,36 @@ public:
     glBufferData(GL_ARRAY_BUFFER, shape.size_in_bytes(), shape.data(), GL_STATIC_DRAW);
   }
 
-  template <typename L, typename S>
-  void draw(L &logger, glm::mat4 const &view, glm::mat4 const &projection, S const &t0, S const &t1)
+  template<typename L, typename S>
+  void draw_shape(L &logger, S const& shape)
+  {
+    //print_triangle(logger, t0);
+    send_data_gpu(logger, this->vbo_, shape);
+    render(shape.draw_mode(), shape.vertice_count(), logger, this->program_);
+  }
+
+public:
+  // move-construction OK.
+  renderer(renderer &&other)
+      : vao_(other.vao_)
+      , vbo_(other.vbo_)
+      , texture_(other.texture_)
+      , program_(std::move(other.program_))
+  {
+    other.vao_ = 0;
+    other.vbo_ = 0;
+    other.texture_ = 0;
+    other.program_ = program::make_invalid();
+  }
+
+  ~renderer()
+  {
+    glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
+    glDeleteVertexArrays(NUM_BUFFERS, &this->vao_);
+  }
+
+  template <typename L, typename S1, typename S2>
+  void draw(L &logger, glm::mat4 const &view, glm::mat4 const &projection, S1 const &t0, S2 const &t1)
   {
     global_vao_bind(this->vao_);
     ON_SCOPE_EXIT([]() { global_vao_unbind(); });
@@ -167,12 +171,8 @@ public:
     this->program_.set_uniform_matrix_4fv("view", view);
     this->program_.set_uniform_matrix_4fv("projection", projection);
 
-    print_triangle(logger, t0);
-    send_data_gpu(logger, this->vbo_, t0);
-    render(t0.vertice_count(), logger, this->program_);
-
-    send_data_gpu(logger, this->vbo_, t1);
-    render(t0.vertice_count(), logger, this->program_);
+    draw_shape(logger, t0);
+    draw_shape(logger, t1);
   }
 };
 
