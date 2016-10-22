@@ -8,6 +8,24 @@
 #include <stlw/print.hpp>
 #include <stlw/type_macros.hpp>
 
+#include <tuple>
+#include <experimental/tuple>
+
+template <typename Tuple, typename F, std::size_t ...Indices>
+void for_each_impl(Tuple&& tuple, F&& f, std::index_sequence<Indices...>) {
+    using swallow = int[];
+    (void)swallow{1,
+        (f(std::get<Indices>(std::forward<Tuple>(tuple))), void(), int{})...
+    };
+}
+
+template <typename Tuple, typename F>
+void my_for_each(Tuple&& tuple, F&& f) {
+    constexpr std::size_t N = std::tuple_size<std::remove_reference_t<Tuple>>::value;
+    for_each_impl(std::forward<Tuple>(tuple), std::forward<F>(f),
+                  std::make_index_sequence<N>{});
+}
+
 namespace engine
 {
 namespace gfx
@@ -138,6 +156,19 @@ private:
     render(shape.draw_mode(), shape.vertice_count(), logger, this->program_);
   }
 
+  template<typename L, typename ...S>
+  void draw_shapes(L &logger, std::tuple<S...> const& shapes)
+  {
+    //draw_shape(logger, shapes...);
+    auto const fn = [this, &logger] (auto const& t) { this->draw_shape(logger, std::forward<decltype(t)>(t)); };
+
+    // this calls works
+    my_for_each(shapes, fn);
+
+    // this call doesn't work
+    std::experimental::apply(fn, shapes);
+  }
+
 public:
   // move-construction OK.
   renderer(renderer &&other)
@@ -158,8 +189,8 @@ public:
     glDeleteVertexArrays(NUM_BUFFERS, &this->vao_);
   }
 
-  template <typename L, typename S1, typename S2>
-  void draw(L &logger, glm::mat4 const &view, glm::mat4 const &projection, S1 const &t0, S2 const &t1)
+  template <typename L, typename ...S>
+  void draw(L &logger, glm::mat4 const &view, glm::mat4 const &projection, S const&... shapes)
   {
     global_vao_bind(this->vao_);
     ON_SCOPE_EXIT([]() { global_vao_unbind(); });
@@ -171,8 +202,9 @@ public:
     this->program_.set_uniform_matrix_4fv("view", view);
     this->program_.set_uniform_matrix_4fv("projection", projection);
 
-    draw_shape(logger, t0);
-    draw_shape(logger, t1);
+    draw_shapes(logger, std::make_tuple(shapes...));
+    //draw_shape(logger, t0);
+    //draw_shape(logger, t1);
   }
 };
 
