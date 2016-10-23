@@ -52,12 +52,12 @@ class gfx_engine
 {
   using W = ::engine::window::sdl_window;
 
-  renderer red_;
+  renderer barrel_texture_;
   W window_;
 
   gfx_engine(W &&w, renderer &&red)
       : window_(std::move(w))
-      , red_(std::move(red))
+      , barrel_texture_(std::move(red))
   {
   }
 
@@ -69,24 +69,21 @@ class gfx_engine
 public:
   // move-assignment OK.
   gfx_engine(gfx_engine &&other)
-      : red_(std::move(other.red_))
+      : barrel_texture_(std::move(other.barrel_texture_))
       , window_(std::move(other.window_))
   {
   }
 
-  template <typename L, typename S1, typename S2>
-  void draw(render_args<L> const& args, game::shape<S1> const& s0, game::shape<S2> const& s1)
+  template <typename L, typename ...S>
+  void draw(render_args<L> const& args, S const&... shapes)
   {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
-    rectangle const shape0 = map_to_gl(s0);
-    triangle const shape1 = map_to_gl(s1);
-
-    map_to_gl_hi(s0, s1);
+    auto const gl_mapped_shapes = map_to_gl(shapes...);
 
     // Render
     glClear(GL_COLOR_BUFFER_BIT);
-    this->red_.draw(args.logger, args.view, args.projection, shape0, shape1);
+    this->barrel_texture_.draw(args.logger, args.view, args.projection, gl_mapped_shapes);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(this->window_.raw());

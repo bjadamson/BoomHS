@@ -106,33 +106,20 @@ auto constexpr map_to_gl_priv(::engine::gfx::rectangle const &gfx_rect)
   return rectangle{GL_QUADS, {ROW(0), ROW(1), ROW(2), ROW(3)}};
 }
 
-triangle constexpr map_to_gl(game::shape<game::triangle> const sh)
+triangle constexpr map_to_gl(game::shape<game::triangle> const& sh)
 {
   return map_to_gl_priv(to_triangle(sh.wc()));
 }
 
-rectangle constexpr map_to_gl(game::shape<game::rectangle> const sh)
+rectangle constexpr map_to_gl(game::shape<game::rectangle> const& sh)
 {
   return map_to_gl_priv(to_rectangle(sh.wc()));
 }
 
-template<typename T, typename R>
-R constexpr map_to_gl_x(T const& shape)
-{
-  return map_to_gl(shape);
-}
-
 template<typename ...T, typename ...R>
-std::tuple<R...> constexpr map_to_gl_hi(std::tuple<T...> const& shapes)
+auto constexpr map_to_gl(T &&... shapes)
 {
-  auto fn = [] (auto &&t) { return map_to_gl(t>(t)); };
-  auto const t = stlw::apply(fn, shapes);
-}
-
-template<typename ...T, typename ...R>
-std::tuple<R...> constexpr map_to_gl_hi(T const& ...shapes)
-{
-  return map_to_gl_hi(std::make_tuple(shapes...));
+  return std::make_tuple(map_to_gl(shapes)...);
 }
 
 } // ns engine::gfx::opengl

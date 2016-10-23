@@ -39,6 +39,8 @@ void for_each(Tuple&& tuple, F&& f) {
                   std::make_index_sequence<N>{});
 }
 
+/////
+// invoke
 namespace detail {
 template <class T>
 struct is_reference_wrapper : std::false_type {};
@@ -129,20 +131,21 @@ auto invoke(F&& f, ArgTypes&&... args)
     return detail::INVOKE(std::forward<F>(f), std::forward<ArgTypes>(args)...);
 }
 
-namespace detail {
-template <class F, class Tuple, std::size_t... I>
-constexpr decltype(auto) apply_impl( F&& f, Tuple&& t, std::index_sequence<I...> )
+/////
+// apply
+template<typename F, typename Tuple, size_t ...S >
+decltype(auto) apply_tuple_impl(F&& fn, Tuple&& t, std::index_sequence<S...>)
 {
-  return invoke(std::forward<F>(f), std::get<I>(std::forward<Tuple>(t))...);
-  // Note: std::invoke is a C++17 feature
+  return std::forward<F>(fn)(std::get<S>(std::forward<Tuple>(t))...);
 }
-} // namespace detail
 
-template <class F, class Tuple>
-constexpr decltype(auto) apply(F&& f, Tuple&& t)
+template<typename F, typename Tuple>
+decltype(auto) apply(F&& fn, Tuple&& t)
 {
-    return detail::apply_impl(std::forward<F>(f), std::forward<Tuple>(t),
-        std::make_index_sequence<tuple_size_v<std::decay_t<Tuple>>>{});
+  std::size_t constexpr tSize = std::tuple_size<typename std::remove_reference<Tuple>::type>::value;
+  return apply_tuple_impl(std::forward<F>(fn),
+                       std::forward<Tuple>(t),
+                       std::make_index_sequence<tSize>());
 }
 
 } // ns stlw

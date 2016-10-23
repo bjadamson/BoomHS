@@ -118,6 +118,8 @@ ecst_main(G &game, S &state)
 
   game::world_coordinate *p = nullptr;
   game::world_coordinate *q = nullptr;
+  game::world_coordinate *r = nullptr;
+  game::world_coordinate *t = nullptr;
 
   // Initialize context with some entities.
   ctx->step([&](auto &proxy) {
@@ -132,6 +134,18 @@ ecst_main(G &game, S &state)
         auto &wc = proxy.add_component(ct::world_coordinate, eid);
         wc.set(0.5f, 0.0f, 0.0f, 1.0f);
         q = &wc;
+      }
+      {
+        auto eid = proxy.create_entity();
+        auto &wc = proxy.add_component(ct::world_coordinate, eid);
+        wc.set(0.0f, 0.5f, 0.0f, 1.0f);
+        r = &wc;
+      }
+      {
+        auto eid = proxy.create_entity();
+        auto &wc = proxy.add_component(ct::world_coordinate, eid);
+        wc.set(0.0f, -0.5f, 0.0f, 1.0f);
+        t = &wc;
       }
   });
 
@@ -151,8 +165,10 @@ ecst_main(G &game, S &state)
 
     game::shape<game::rectangle> s0{*p};
     game::shape<game::triangle> s1{*q};
+    game::shape<game::triangle> s2{*r};
+    game::shape<game::rectangle> s3{*t};
 
-    game.game_loop(state, s0, s1);
+    game.game_loop(state, s0, s1, s2, s3);
     l.trace("game loop stepping.");
   }
 }
@@ -165,13 +181,13 @@ public:
 
   MOVE_DEFAULT(boomhs_game);
 
-  template <typename State, typename S1, typename S2>
-  void game_loop(State &state, S1 const& s0, S2 const& s1)
+  template <typename State, typename ...S>
+  void game_loop(State &state, S const&... shapes)
   {
     ::engine::gfx::opengl::render_args<decltype(state.logger)> const args{state.logger,
       state.view, state.projection};
 
-    state.renderer.draw(args, s0, s1);
+    state.renderer.draw(args, shapes...);
   }
 };
 

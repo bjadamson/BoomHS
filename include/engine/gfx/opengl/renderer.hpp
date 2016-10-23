@@ -167,7 +167,7 @@ public:
   }
 
   template <typename L, typename ...S>
-  void draw(L &logger, glm::mat4 const &view, glm::mat4 const &projection, S const&... shapes)
+  void draw(L &logger, glm::mat4 const &view, glm::mat4 const &projection, std::tuple<S...> const& shapes)
   {
     global_vao_bind(this->vao_);
     ON_SCOPE_EXIT([]() { global_vao_unbind(); });
@@ -179,7 +179,7 @@ public:
     this->program_.set_uniform_matrix_4fv("view", view);
     this->program_.set_uniform_matrix_4fv("projection", projection);
 
-    draw_shapes(logger, std::make_tuple(shapes...));
+    draw_shapes(logger, shapes);
   }
 };
 
