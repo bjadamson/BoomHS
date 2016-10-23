@@ -82,6 +82,8 @@ public:
     rectangle const shape0 = map_to_gl(s0);
     triangle const shape1 = map_to_gl(s1);
 
+    map_to_gl_hi(s0, s1);
+
     // Render
     glClear(GL_COLOR_BUFFER_BIT);
     this->red_.draw(args.logger, args.view, args.projection, shape0, shape1);

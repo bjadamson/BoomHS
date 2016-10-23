@@ -2,6 +2,7 @@
 #include <array>
 #include <cassert>
 #include <tuple>
+#include <stlw/tuple.hpp>
 
 #include <engine/gfx/shapes.hpp>
 
@@ -113,6 +114,25 @@ triangle constexpr map_to_gl(game::shape<game::triangle> const sh)
 rectangle constexpr map_to_gl(game::shape<game::rectangle> const sh)
 {
   return map_to_gl_priv(to_rectangle(sh.wc()));
+}
+
+template<typename T, typename R>
+R constexpr map_to_gl_x(T const& shape)
+{
+  return map_to_gl(shape);
+}
+
+template<typename ...T, typename ...R>
+std::tuple<R...> constexpr map_to_gl_hi(std::tuple<T...> const& shapes)
+{
+  auto fn = [] (auto &&t) { return map_to_gl(t>(t)); };
+  auto const t = stlw::apply(fn, shapes);
+}
+
+template<typename ...T, typename ...R>
+std::tuple<R...> constexpr map_to_gl_hi(T const& ...shapes)
+{
+  return map_to_gl_hi(std::make_tuple(shapes...));
 }
 
 } // ns engine::gfx::opengl

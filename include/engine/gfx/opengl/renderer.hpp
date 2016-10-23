@@ -7,24 +7,7 @@
 #include <stlw/log.hpp>
 #include <stlw/print.hpp>
 #include <stlw/type_macros.hpp>
-
-#include <tuple>
-#include <experimental/tuple>
-
-template <typename Tuple, typename F, std::size_t ...Indices>
-void for_each_impl(Tuple&& tuple, F&& f, std::index_sequence<Indices...>) {
-    using swallow = int[];
-    (void)swallow{1,
-        (f(std::get<Indices>(std::forward<Tuple>(tuple))), void(), int{})...
-    };
-}
-
-template <typename Tuple, typename F>
-void my_for_each(Tuple&& tuple, F&& f) {
-    constexpr std::size_t N = std::tuple_size<std::remove_reference_t<Tuple>>::value;
-    for_each_impl(std::forward<Tuple>(tuple), std::forward<F>(f),
-                  std::make_index_sequence<N>{});
-}
+#include <stlw/tuple.hpp>
 
 namespace engine
 {
@@ -159,14 +142,8 @@ private:
   template<typename L, typename ...S>
   void draw_shapes(L &logger, std::tuple<S...> const& shapes)
   {
-    //draw_shape(logger, shapes...);
-    auto const fn = [this, &logger] (auto const& t) { this->draw_shape(logger, std::forward<decltype(t)>(t)); };
-
-    // this calls works
-    my_for_each(shapes, fn);
-
-    // this call doesn't work
-    std::experimental::apply(fn, shapes);
+    auto const fn = [this, &logger] (auto const& shape) { this->draw_shape(logger, shape); };
+    stlw::for_each(shapes, fn);
   }
 
 public:
@@ -203,8 +180,6 @@ public:
     this->program_.set_uniform_matrix_4fv("projection", projection);
 
     draw_shapes(logger, std::make_tuple(shapes...));
-    //draw_shape(logger, t0);
-    //draw_shape(logger, t1);
   }
 };
 
