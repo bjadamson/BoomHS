@@ -1,6 +1,6 @@
 #pragma once
 #include <engine/gfx/opengl/program.hpp>
-#include <engine/gfx/opengl/renderer.hpp>
+#include <engine/gfx/opengl/polygon_renderer.hpp>
 
 namespace engine
 {
@@ -51,16 +51,16 @@ class factory
 
 public:
   template<typename L>
-  static stlw::result<renderer, std::string>
-  make_renderer(L &logger)
+  static stlw::result<polygon_renderer, std::string>
+  make_polygon_renderer(L &logger)
   {
     DO_MONAD(auto phandle, impl::load_program("shader.vert", "shader.frag"));
-    renderer triangle{std::move(phandle)};
+    polygon_renderer polygon_renderer{std::move(phandle)};
 
-    global_vao_bind(triangle.vao_);
+    global_vao_bind(polygon_renderer.vao_);
     ON_SCOPE_EXIT([]() { global_vao_unbind(); });
 
-    glBindBuffer(GL_ARRAY_BUFFER, triangle.vbo_);
+    glBindBuffer(GL_ARRAY_BUFFER, polygon_renderer.vbo_);
     ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
     struct skip_context {
@@ -125,10 +125,7 @@ public:
     set_attrib_pointer(RED_TRIANGLE_VERTEX_POSITION_INDEX, VERTICE_COMPONENT_COUNT, *&sc);
     set_attrib_pointer(RED_TRIANGLE_VERTEX_COLOR_INDEX, COLOR_COMPONENT_COUNT, *&sc);
     set_attrib_pointer(RED_TRIANGLE_VERTEX_TEXTURE_COORDINATE_INDEX, TEXCOORD_COMPONENT_COUNT, *&sc);
-
-    // TODO: figure out why the compiler gets confused without the std::move() (why does it try to
-    // copy instead of move the value?? Maybe c++17 (rvo guarantees) fixes this??)
-    return std::move(triangle);
+    return polygon_renderer;
   }
 };
 

@@ -52,12 +52,12 @@ class gfx_engine
 {
   using W = ::engine::window::sdl_window;
 
-  renderer barrel_texture_;
+  polygon_renderer poly_renderer_;
   W window_;
 
-  gfx_engine(W &&w, renderer &&red)
+  gfx_engine(W &&w, polygon_renderer &&poly_r)
       : window_(std::move(w))
-      , barrel_texture_(std::move(red))
+      , poly_renderer_(std::move(poly_r))
   {
   }
 
@@ -69,7 +69,7 @@ class gfx_engine
 public:
   // move-assignment OK.
   gfx_engine(gfx_engine &&other)
-      : barrel_texture_(std::move(other.barrel_texture_))
+      : poly_renderer_(std::move(other.poly_renderer_))
       , window_(std::move(other.window_))
   {
   }
@@ -83,7 +83,7 @@ public:
 
     // Render
     glClear(GL_COLOR_BUFFER_BIT);
-    this->barrel_texture_.draw(args.logger, args.view, args.projection, gl_mapped_shapes);
+    this->poly_renderer_.draw(args.logger, args.view, args.projection, gl_mapped_shapes);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(this->window_.raw());
@@ -105,7 +105,7 @@ struct opengl_library {
   template <typename L, typename W>
   static inline stlw::result<gfx_engine, std::string> make_gfx_engine(L &logger, W &&window)
   {
-    DO_MONAD(auto red, factory::make_renderer(logger));
+    DO_MONAD(auto red, factory::make_polygon_renderer(logger));
     return gfx_engine{std::move(window), std::move(red)};
   }
 };

@@ -72,7 +72,7 @@ auto const load_texture = [](char const *path) {
   return texture;
 };
 
-class renderer
+class polygon_renderer
 {
   GLuint vao_ = 0, vbo_ = 0;
   GLuint texture_ = 0;
@@ -83,7 +83,7 @@ class renderer
 private:
   static auto constexpr NUM_BUFFERS = 1;
 
-  renderer(program p)
+  polygon_renderer(program p)
       : program_(std::move(p))
   {
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
@@ -95,8 +95,8 @@ private:
     this->texture_ = load_texture("assets/container.jpg");
   }
 
-  NO_COPY(renderer);
-  renderer &operator=(renderer &&) = delete;
+  NO_COPY(polygon_renderer);
+  polygon_renderer &operator=(polygon_renderer &&) = delete;
 
   template <typename L>
   void render(GLenum const render_mode, GLsizei const vertice_count, L &logger, program &program)
@@ -148,7 +148,7 @@ private:
 
 public:
   // move-construction OK.
-  renderer(renderer &&other)
+  polygon_renderer(polygon_renderer &&other)
       : vao_(other.vao_)
       , vbo_(other.vbo_)
       , texture_(other.texture_)
@@ -160,7 +160,7 @@ public:
     other.program_ = program::make_invalid();
   }
 
-  ~renderer()
+  ~polygon_renderer()
   {
     glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
     glDeleteVertexArrays(NUM_BUFFERS, &this->vao_);
