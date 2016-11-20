@@ -4,23 +4,32 @@
 namespace game
 {
 
+struct vertex
+{
+  float x = 0.f, y = 0.f, z = 0.f, w = 0.f;
+  vertex() = default;
+  vertex(float const xp, float const yp, float const zp, float const wp)
+    : x(xp)
+    , y(yp)
+    , z(zp)
+    , w(wp)
+    {}
+};
+
 class world_coordinate
 {
-  float x_ = 0.f, y_ = 0.f, z_ = 0.f, w_ = 0.f;
+  vertex v_ = {};
 
 public:
-  constexpr world_coordinate() = default;
-  constexpr world_coordinate(float const xp, float const yp, float const zp, float const wp)
-    : x_(xp)
-    , y_(yp)
-    , z_(zp)
-    , w_(wp)
+  world_coordinate() = default;
+  explicit world_coordinate(float const x, float const y, float const z, float const w)
+    : v_(x, y, z, w)
   {
   }
 
-#define DEFINE_GET_AND_SET_METHODS(a) \
-  constexpr float a() const { return this->a##_; } \
-  void set_##a(float const v) { this->a##_ = v; }
+#define DEFINE_GET_AND_SET_METHODS(A)                     \
+  float A() const { return this->v_.A; }                  \
+  void set_##A(float const value) { this->v_.A = value; }
 
   DEFINE_GET_AND_SET_METHODS(x)
   DEFINE_GET_AND_SET_METHODS(y)
@@ -36,24 +45,25 @@ public:
     this->set_w(wp);
   }
 
-  constexpr std::tuple<float, float, float, float>
+  vertex
   get() const
   {
-    return {this->x(), this->y(), this->z(), this->w()};
+    return this->v_;
   }
 };
 
 struct triangle {};
-struct rectangle {};
+struct rectangle {
+};
 
 template<typename T>
 class shape {
   world_coordinate coord_;
 public:
-  explicit constexpr shape(class world_coordinate const wc) :
+  explicit shape(class world_coordinate const wc) :
     coord_(wc)
   {}
-  constexpr auto const& wc() const { return this->coord_; }
+  auto const& wc() const { return this->coord_; }
 };
 
 } // ns game

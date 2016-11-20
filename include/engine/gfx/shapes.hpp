@@ -3,54 +3,23 @@
 #include <tuple>
 #include <game/data_types.hpp>
 
-namespace engine
-{
-namespace gfx
+namespace engine::gfx
 {
 struct point {
   float const x, y, z, w;
-  explicit constexpr point(float const xp, float const yp, float const zp, float const wp)
-      : x(xp)
-      , y(yp)
-      , z(zp)
-      , w(wp)
-  {
-  }
 };
 struct color {
   float const r, g, b, a;
-  explicit constexpr color(float const rp, float const gp, float const bp, float const ap)
-      : r(rp)
-      , g(gp)
-      , b(bp)
-      , a(ap)
-  {
-  }
-
   static constexpr std::array<float, 4> DEFAULT_TEXTURE() { return {1.0f, 0.0f, 0.0f, 0.0f}; };
 };
 struct texture_coord {
   float const u, v;
-  explicit constexpr texture_coord(float const up, float const vp)
-      : u(up)
-      , v(vp)
-  {
-  }
 };
 template<int N>
 struct shape {
   std::array<point, N> const points;
   std::array<color, N> const colors;
   std::array<texture_coord, N> const coords;
-
-  explicit constexpr shape(std::array<point, N> const &points_p,
-                              std::array<color, N> const &colors_p,
-                              std::array<texture_coord, N> const &coords_p)
-      : points(points_p)
-      , colors(colors_p)
-      , coords(coords_p)
-  {
-  }
 };
 
 using triangle = shape<3>;
@@ -162,5 +131,4 @@ auto constexpr make_rectangle(std::array<float, 16> const &p)
   return make_rectangle(p, color::DEFAULT_TEXTURE());
 }
 
-} // ns gfx
-} // ns engine
+} // ns engine::gfx
