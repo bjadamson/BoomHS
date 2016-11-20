@@ -1,7 +1,7 @@
 #pragma once
 #include <engine/gfx/opengl/context.hpp>
-#include <engine/gfx/opengl/factory.hpp>
 #include <engine/gfx/opengl/program.hpp>
+#include <engine/gfx/opengl/polygon_renderer.hpp>
 #include <engine/gfx/opengl/shape_map.hpp>
 #include <engine/gfx/opengl_glew.hpp>
 #include <engine/gfx/opengl/vertex_attrib.hpp>
