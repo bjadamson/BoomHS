@@ -129,7 +129,7 @@ struct opengl_library {
     };
 
     DO_MONAD(auto phandle, impl::load_program("shader.vert", "shader.frag"));
-    render_context rc{std::move(phandle)};
+    auto rc = context_factory::make_render_context(std::move(phandle), "assets/container.jpg");
     auto poly_renderer = make_polygon_renderer(logger, rc);
     return gfx_engine{std::move(window), std::move(poly_renderer), std::move(rc)};
   }

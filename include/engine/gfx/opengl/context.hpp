@@ -48,8 +48,11 @@ class render_context {
 
   NO_COPY(render_context);
   NO_MOVE_ASSIGN(render_context);
-public:
-  render_context(program &&p) : program_(std::move(p))
+
+  // private ctor, use factory function.
+  render_context(program &&p, GLuint const tid)
+    : program_(std::move(p))
+    , texture_(tid)
   {
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
     glGenBuffers(NUM_BUFFERS, &this->vbo_);
@@ -59,7 +62,7 @@ public:
 
     this->texture_ = impl::load_texture("assets/container.jpg");
   }
-
+public:
   ~render_context()
   {
     glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
@@ -83,6 +86,19 @@ public:
   inline auto vbo() const { return this->vbo_; }
   inline auto texture() const { return this->texture_; }
   inline auto& program_ref() { return this->program_; }
+
+  friend struct context_factory;
+};
+
+struct context_factory
+{
+  context_factory() = delete;
+
+  auto static make_render_context(program &&p, char const* path)
+  {
+    auto const tid = impl::load_texture(path);
+    return render_context{std::move(p), tid};
+  }
 };
 
 } // ns engine::gfx::opengl
