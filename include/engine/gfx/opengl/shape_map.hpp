@@ -51,13 +51,35 @@ to_rectangle(game::rectangle const& r)
   };
   constexpr std::array<float, 16> colors =
   {
-    1.0f, 0.0f, 0.0f, 1.0f,
-    0.0f, 1.0f, 0.0f, 1.0f,
-    0.0f, 0.0f, 1.0f, 1.0f,
-    1.0f, 1.0f, 0.2f, 1.0f
+    1.0f, 0.0f, 0.0f, 1.0f, // r
+    0.0f, 1.0f, 0.0f, 1.0f, // g
+    0.0f, 0.0f, 1.0f, 1.0f, // b
+    1.0f, 1.0f, 0.2f, 1.0f  // a
   };
   return ::engine::gfx::make_rectangle(vertices, colors);
   // clang-format on
+}
+
+auto
+to_polygon(game::polygon const& p)
+{
+  auto const num_floats = p.num_vertices() * 4; // TODO: don't hardcode this assumption.
+  stlw::sized_buffer<float> vertices{num_floats};
+  for (auto i{0}; i < num_floats;) {
+    vertices[i++] = 1.0f; // r
+    vertices[i++] = 0.0f; // g
+    vertices[i++] = 0.0f; // b
+    vertices[i++] = 1.0f; // a
+  }
+
+  stlw::sized_buffer<float> colors{num_floats};
+  for (auto i{0}; i < num_floats;) {
+    colors[i++] = 1.0f; // r
+    colors[i++] = 0.0f; // g
+    colors[i++] = 0.0f; // b
+    colors[i++] = 1.0f; // a
+  }
+  return ::engine::gfx::make_polygon(vertices, colors);
 }
 
 // For now we assume 10 attributes per-vertex:
@@ -65,7 +87,7 @@ to_rectangle(game::rectangle const& r)
 // 4 colors (r,g,b,a),
 // 2 tex coords (u, v)
 template <int N>
-class shape
+class static_shape
 {
   GLenum const mode_;
   std::array<float, N> const data_;
@@ -84,11 +106,11 @@ public:
 // clang-format off
 #define ROW(INDEX)                                                                                 \
   vertices[INDEX].x, vertices[INDEX].y, vertices[INDEX].z, vertices[INDEX].w, /* point */          \
-  colors[INDEX].r, colors[INDEX].g, colors[INDEX].b, colors[INDEX].a,         /* color */          \
-  tcords[INDEX].u, tcords[INDEX].v                                            /* texture coords */
+  colors[INDEX].r,   colors[INDEX].g,   colors[INDEX].b,   colors[INDEX].a,   /* color */          \
+  tcords[INDEX].u,   tcords[INDEX].v                                          /* texture coords */
 // clang-format on
 
-using triangle = ::engine::gfx::opengl::shape<30>;
+using triangle = static_shape<30>;
 auto constexpr map_to_gl_priv(::engine::gfx::triangle const &gfx_triangle)
 {
   auto const &vertices = gfx_triangle.vertices;
@@ -98,7 +120,7 @@ auto constexpr map_to_gl_priv(::engine::gfx::triangle const &gfx_triangle)
   return triangle{GL_TRIANGLES, {ROW(0), ROW(1), ROW(2)}};
 }
 
-using rectangle = ::engine::gfx::opengl::shape<40>;
+using rectangle = static_shape<40>;
 auto constexpr map_to_gl_priv(::engine::gfx::rectangle const &gfx_rect)
 {
   auto const &vertices = gfx_rect.vertices;

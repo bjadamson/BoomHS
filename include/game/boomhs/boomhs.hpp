@@ -186,7 +186,8 @@ public:
     auto s0 = game::shape_factory::make_rectangle(*p);
     auto s1 = game::shape_factory::make_triangle(*q);
     auto s2 = game::shape_factory::make_triangle(*r);
-    auto s3 = game::shape_factory::make_rectangle(*t);
+    auto s3 = game::shape_factory::make_polygon(*t, 4);
+    //auto s4 = game::shape_factory::make_polygon(
 
     state.renderer.begin();
     state.renderer.draw0(args, s0, s1);

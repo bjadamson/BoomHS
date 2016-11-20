@@ -1,25 +1,34 @@
 #pragma once
 #include <array>
+#include <stlw/slice.hpp>
 #include <game/data_types.hpp>
 
 namespace engine::gfx
 {
 template<int N>
-struct shape {
+struct static_shape {
   std::array<game::vertex, N> const vertices;
   std::array<game::color, N> const colors;
   std::array<game::texture_coord, N> const coords;
 
-  explicit constexpr shape(std::array<game::vertex, N> const& v,
+  /*
+  explicit constexpr static_shape(std::array<game::vertex, N> const& v,
       std::array<game::color, N> const& c, std::array<game::texture_coord, N> const& tc)
     : vertices(v)
     , colors(c)
     , coords(tc)
   {}
+  */
 };
 
-using triangle = shape<3>;
-using rectangle = shape<4>;
+struct polygon {
+  stlw::slice<game::vertex> const vertices;
+  stlw::slice<game::color> const colors;
+  stlw::slice<game::texture_coord> const coords;
+};
+
+using triangle = static_shape<3>;
+using rectangle = static_shape<4>;
 
 // TYPE CONSTRUCTORS
 triangle constexpr make_triangle(std::array<float, 12> const &v, std::array<float, 12> const &c,
@@ -73,6 +82,14 @@ triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<floa
 auto constexpr make_triangle(std::array<float, 12> const &p)
 {
   return make_triangle(p, game::color::DEFAULT_TEXTURE());
+}
+
+auto make_polygon(stlw::sized_buffer<float> const& vertices, stlw::sized_buffer<float> const& colors)
+{
+  auto const v = stlw::make_slice(vertices.length(), vertices.data());
+  auto const c = stlw::make_slice(colors.length(), colors.data());
+
+  return polygon{v, c};
 }
 
 auto constexpr make_rectangle(std::array<float, 16> const &p, std::array<float, 16> const &c,

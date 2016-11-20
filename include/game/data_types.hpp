@@ -1,5 +1,6 @@
 #pragma once
 #include <tuple>
+#include <stlw/sized_buffer.hpp>
 
 namespace game
 {
@@ -91,6 +92,21 @@ private:
   explicit constexpr rectangle(world_coordinate const& wc) : shape(wc) {}
 };
 
+struct polygon : public shape {
+  stlw::sized_buffer<vertex> vertices;
+  auto num_vertices() const { return this->vertices.length(); }
+private:
+  friend class shape_factory;
+  explicit polygon(world_coordinate const& wc, int const num_vertices)
+    : shape(wc)
+    , vertices(num_vertices)
+  {
+  }
+
+public:
+  friend struct shape_factory;
+};
+
 struct shape_factory {
   shape_factory() = delete;
 
@@ -122,6 +138,30 @@ struct shape_factory {
 
     // clang-format on
     return r;
+  }
+
+  static auto make_polygon(world_coordinate const& wc, int const num_vertices)
+  {
+    constexpr float width = 0.025;
+    constexpr float radius = width;
+    auto const V = num_vertices;
+    auto const C = V; // Assume for now #colors == #vertices
+    auto const E = V + 1; // num_edges
+
+    auto const cosfn = [&radius, &wc, &E](auto const a) {
+      auto const pos = radius * static_cast<float>(std::cos(2*M_PI*a/E));
+      return wc.x() + pos;
+    };
+    auto const sinfn = [&radius, &wc, &E](auto const a) {
+      auto const pos = radius * static_cast<float>(std::sin(2*M_PI*a/E));
+      return wc.y() + pos;
+    };
+
+    polygon p{wc, num_vertices};
+    for (auto i{0}, j{0}; i < V; ++i) {
+      p.vertices[i] = vertex{cosfn(i), sinfn(i), wc.z(), wc.w()};
+    }
+    return p;
   }
 };
 

@@ -23,6 +23,10 @@
   CLASSNAME(CLASSNAME &&) = default;                                                               \
   CLASSNAME &operator=(CLASSNAME &&) = default;
 
+#define COPY_DEFAULT(CLASSNAME)                                                                    \
+  CLASSNAME(CLASSNAME const&) = default;                                                           \
+  CLASSNAME &operator=(CLASSNAME const&) = default;
+
 #define MOVE_CONSTRUCTIBLE(CLASSNAME)                                                              \
   CLASSNAME(CLASSNAME &&) = default;
 // END class-builing macros
