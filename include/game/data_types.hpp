@@ -53,15 +53,15 @@ public:
 };
 
 struct triangle {};
-struct rectangle {
+class rectangle {
 };
 
 template<typename T>
 class shape {
   world_coordinate coord_;
 public:
-  explicit shape(class world_coordinate const wc) :
-    coord_(wc)
+  explicit shape(class world_coordinate const& wc)
+    : coord_(wc)
   {}
   auto const& wc() const { return this->coord_; }
 };

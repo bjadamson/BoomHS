@@ -59,7 +59,7 @@ to_rectangle(game::world_coordinate const& wc)
 }
 
 // For now we assume 10 attributes per-vertex:
-// 4 points (x,y,z,w)
+// 4 vertex (x,y,z,w)
 // 4 colors (r,g,b,a),
 // 2 tex coords (u, v)
 template <int N>
@@ -81,7 +81,7 @@ public:
 
 // clang-format off
 #define ROW(INDEX)                                                                                 \
-  points[INDEX].x, points[INDEX].y, points[INDEX].z, points[INDEX].w, /* point */                  \
+  vertices[INDEX].x, vertices[INDEX].y, vertices[INDEX].z, vertices[INDEX].w, /* point */                  \
   colors[INDEX].r, colors[INDEX].g, colors[INDEX].b, colors[INDEX].a, /* color */                  \
   tcords[INDEX].u, tcords[INDEX].v                                    /* texture coordinates */
 // clang-format on
@@ -89,7 +89,7 @@ public:
 using triangle = ::engine::gfx::opengl::shape<30>;
 auto constexpr map_to_gl_priv(::engine::gfx::triangle const &gfx_triangle)
 {
-  auto const &points = gfx_triangle.points;
+  auto const &vertices = gfx_triangle.vertices;
   auto const &colors = gfx_triangle.colors;
   auto const &tcords = gfx_triangle.coords;
 
@@ -99,7 +99,7 @@ auto constexpr map_to_gl_priv(::engine::gfx::triangle const &gfx_triangle)
 using rectangle = ::engine::gfx::opengl::shape<40>;
 auto constexpr map_to_gl_priv(::engine::gfx::rectangle const &gfx_rect)
 {
-  auto const &points = gfx_rect.points;
+  auto const &vertices = gfx_rect.vertices;
   auto const &colors = gfx_rect.colors;
   auto const &tcords = gfx_rect.coords;
 

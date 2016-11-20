@@ -5,7 +5,7 @@
 
 namespace engine::gfx
 {
-struct point {
+struct vertex {
   float const x, y, z, w;
 };
 struct color {
@@ -17,7 +17,7 @@ struct texture_coord {
 };
 template<int N>
 struct shape {
-  std::array<point, N> const points;
+  std::array<vertex, N> const vertices;
   std::array<color, N> const colors;
   std::array<texture_coord, N> const coords;
 };
@@ -26,12 +26,12 @@ using triangle = shape<3>;
 using rectangle = shape<4>;
 
 // TYPE CONSTRUCTORS
-triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<float, 12> const &c,
+triangle constexpr make_triangle(std::array<float, 12> const &v, std::array<float, 12> const &c,
                                  std::array<float, 6> const &tcoords)
 {
-  point const p0{p[0], p[1], p[2], p[3]};
-  point const p1{p[4], p[5], p[6], p[7]};
-  point const p2{p[8], p[9], p[10], p[11]};
+  vertex const v0{v[0], v[1], v[2], v[3]};
+  vertex const v1{v[4], v[5], v[6], v[7]};
+  vertex const v2{v[8], v[9], v[10], v[11]};
 
   color const c0{c[0], c[1], c[2], c[3]};
   color const c1{c[4], c[5], c[6], c[7]};
@@ -41,10 +41,10 @@ triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<floa
   texture_coord const t1{tcoords[2], tcoords[3]};
   texture_coord const t2{tcoords[4], tcoords[5]};
 
-  std::array<point, 3> const points{p0, p1, p2};
+  std::array<vertex, 3> const vertices{v0, v1, v2};
   std::array<color, 3> const colors{c0, c1, c2};
   std::array<texture_coord, 3> const texture_coordinates{t0, t1, t2};
-  return triangle{points, colors, texture_coordinates};
+  return triangle{vertices, colors, texture_coordinates};
 }
 
 triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<float, 12> const &c)
@@ -60,7 +60,7 @@ triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<floa
 }
 
 // type constructor for
-// The color argument is assumed for all points in the triangle.
+// The color argument is assumed for all vertexs in the triangle.
 triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<float, 4> const &c)
 {
   // clang-format off
@@ -81,10 +81,10 @@ auto constexpr make_triangle(std::array<float, 12> const &p)
 auto constexpr make_rectangle(std::array<float, 16> const &p, std::array<float, 16> const &c,
                                  std::array<float, 8> const &tcoords)
 {
-  point const p0{p[0], p[1], p[2], p[3]};
-  point const p1{p[4], p[5], p[6], p[7]};
-  point const p2{p[8], p[9], p[10], p[11]};
-  point const p3{p[12], p[13], p[14], p[15]};
+  vertex const p0{p[0], p[1], p[2], p[3]};
+  vertex const p1{p[4], p[5], p[6], p[7]};
+  vertex const p2{p[8], p[9], p[10], p[11]};
+  vertex const p3{p[12], p[13], p[14], p[15]};
 
   color const c0{c[0], c[1], c[2], c[3]};
   color const c1{c[4], c[5], c[6], c[7]};
@@ -96,10 +96,10 @@ auto constexpr make_rectangle(std::array<float, 16> const &p, std::array<float, 
   texture_coord const t2{tcoords[4], tcoords[5]};
   texture_coord const t3{tcoords[6], tcoords[7]};
 
-  std::array<point, 4> const points{p0, p1, p2, p3};
+  std::array<vertex, 4> const vertexs{p0, p1, p2, p3};
   std::array<color, 4> const colors{c0, c1, c2, c3};
   std::array<texture_coord, 4> const texture_coordinates{t0, t1, t2, t3};
-  return rectangle{points, colors, texture_coordinates};
+  return rectangle{vertexs, colors, texture_coordinates};
 }
 
 auto constexpr make_rectangle(std::array<float, 16> const &p, std::array<float, 16> const &c)
