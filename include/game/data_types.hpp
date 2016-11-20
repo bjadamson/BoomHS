@@ -55,19 +55,57 @@ public:
 struct shape {
   world_coordinate coord_;
 protected:
-  explicit shape(class world_coordinate const& wc) : coord_(wc) {}
+  explicit shape(world_coordinate const& wc) : coord_(wc) {}
 public:
   auto const& wc() const { return this->coord_; }
 };
 
 struct triangle : public shape {
-  vertex v0, v1, v2;
-  explicit triangle(class world_coordinate const& wc) : shape(wc) {}
+  vertex bottom_left, bottom_right, top_middle;
+private:
+  friend class shape_factory;
+  explicit triangle(world_coordinate const& wc) : shape(wc) {}
 };
 
 struct rectangle : public shape {
-  vertex v0, v1, v2, v3;
-  explicit rectangle(class world_coordinate const& wc) : shape(wc) {}
+  vertex bottom_left, bottom_right, top_right, top_left;
+private:
+  friend class shape_factory;
+  explicit rectangle(world_coordinate const& wc) : shape(wc) {}
+};
+
+struct shape_factory {
+  shape_factory() = delete;
+
+  static auto make_triangle(world_coordinate const& wc)
+  {
+    constexpr float radius = 0.5;
+
+    // clang-format off
+    triangle t{wc};
+    t.bottom_left  = vertex{wc.x() - radius, wc.y() - radius, wc.z(), wc.w()};
+    t.bottom_right = vertex{wc.x() + radius, wc.y() - radius, wc.z(), wc.w()};
+    t.top_middle   = vertex{wc.x()         , wc.y() + radius, wc.z(), wc.w()};
+
+    // clang-format on
+    return t;
+  }
+
+  static auto make_rectangle(world_coordinate const& wc)
+  {
+    constexpr float width = 0.25;
+    constexpr float height = 0.39;
+
+    // clang-format off
+    rectangle r{wc};
+    r.bottom_left = vertex{wc.x() - width, wc.y() - height, wc.z(), wc.w()};
+    r.bottom_right = vertex{wc.x() + width, wc.y() - height, wc.z(), wc.w()};
+    r.top_right = vertex{wc.x() + width, wc.y() + height, wc.z(), wc.w()};
+    r.top_left = vertex{wc.x() - width, wc.y() + height, wc.z(), wc.w()};
+
+    // clang-format on
+    return r;
+  }
 };
 
 } // ns game

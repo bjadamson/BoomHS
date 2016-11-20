@@ -163,10 +163,10 @@ ecst_main(G &game, S &state)
           });
     l.trace("rendering");
 
-    game::rectangle s0{*p};
-    game::triangle s1{*q};
-    game::triangle s2{*r};
-    game::rectangle s3{*t};
+    auto s0 = game::shape_factory::make_rectangle(*p);
+    auto s1 = game::shape_factory::make_triangle(*q);
+    auto s2 = game::shape_factory::make_triangle(*r);
+    auto s3 = game::shape_factory::make_rectangle(*t);
 
     game.game_loop(state, s0, s1, s2, s3);
     l.trace("game loop stepping.");
