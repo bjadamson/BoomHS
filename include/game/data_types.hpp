@@ -52,18 +52,22 @@ public:
   }
 };
 
-struct triangle {};
-class rectangle {
+struct shape {
+  world_coordinate coord_;
+protected:
+  explicit shape(class world_coordinate const& wc) : coord_(wc) {}
+public:
+  auto const& wc() const { return this->coord_; }
 };
 
-template<typename T>
-class shape {
-  world_coordinate coord_;
-public:
-  explicit shape(class world_coordinate const& wc)
-    : coord_(wc)
-  {}
-  auto const& wc() const { return this->coord_; }
+struct triangle : public shape {
+  vertex v0, v1, v2;
+  explicit triangle(class world_coordinate const& wc) : shape(wc) {}
+};
+
+struct rectangle : public shape {
+  vertex v0, v1, v2, v3;
+  explicit rectangle(class world_coordinate const& wc) : shape(wc) {}
 };
 
 } // ns game

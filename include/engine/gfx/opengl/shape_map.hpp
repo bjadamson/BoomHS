@@ -106,12 +106,12 @@ auto constexpr map_to_gl_priv(::engine::gfx::rectangle const &gfx_rect)
   return rectangle{GL_QUADS, {ROW(0), ROW(1), ROW(2), ROW(3)}};
 }
 
-triangle constexpr map_to_gl(game::shape<game::triangle> const& sh)
+triangle constexpr map_to_gl(game::triangle const& sh)
 {
   return map_to_gl_priv(to_triangle(sh.wc()));
 }
 
-rectangle constexpr map_to_gl(game::shape<game::rectangle> const& sh)
+rectangle constexpr map_to_gl(game::rectangle const& sh)
 {
   return map_to_gl_priv(to_rectangle(sh.wc()));
 }
