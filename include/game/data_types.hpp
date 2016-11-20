@@ -38,14 +38,14 @@ class world_coordinate
   vertex v_ = {};
 
 public:
-  world_coordinate() = default;
-  explicit world_coordinate(float const x, float const y, float const z, float const w)
+  constexpr world_coordinate() = default;
+  explicit constexpr world_coordinate(float const x, float const y, float const z, float const w)
     : v_(x, y, z, w)
   {
   }
 
-#define DEFINE_GET_AND_SET_METHODS(A)                     \
-  float A() const { return this->v_.A; }                  \
+#define DEFINE_GET_AND_SET_METHODS(A)                                                              \
+  constexpr float A() const { return this->v_.A; }                                                 \
   void set_##A(float const value) { this->v_.A = value; }
 
   DEFINE_GET_AND_SET_METHODS(x)
@@ -72,29 +72,29 @@ public:
 struct shape {
   world_coordinate coord_;
 protected:
-  explicit shape(world_coordinate const& wc) : coord_(wc) {}
+  explicit constexpr shape(world_coordinate const& wc) : coord_(wc) {}
 public:
-  auto const& wc() const { return this->coord_; }
+  auto constexpr const& wc() const { return this->coord_; }
 };
 
 struct triangle : public shape {
   vertex bottom_left, bottom_right, top_middle;
 private:
   friend class shape_factory;
-  explicit triangle(world_coordinate const& wc) : shape(wc) {}
+  explicit constexpr triangle(world_coordinate const& wc) : shape(wc) {}
 };
 
 struct rectangle : public shape {
   vertex bottom_left, bottom_right, top_right, top_left;
 private:
   friend class shape_factory;
-  explicit rectangle(world_coordinate const& wc) : shape(wc) {}
+  explicit constexpr rectangle(world_coordinate const& wc) : shape(wc) {}
 };
 
 struct shape_factory {
   shape_factory() = delete;
 
-  static auto make_triangle(world_coordinate const& wc)
+  static constexpr auto make_triangle(world_coordinate const& wc)
   {
     constexpr float radius = 0.5;
 

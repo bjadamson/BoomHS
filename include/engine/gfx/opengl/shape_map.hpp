@@ -10,51 +10,53 @@ namespace engine::gfx::opengl
 {
 
 constexpr auto
-to_triangle(game::world_coordinate const& wc)
+to_triangle(game::triangle const& t)
 {
+  auto const wc = t.wc();
   using namespace engine::gfx;
   constexpr float radius = 0.5;
 
   // clang-format off
- std::array<float, 12> v0 =
+  std::array<float, 12> const vertices =
   {
-    wc.x() - radius, wc.y() - radius, wc.z(), wc.w(), // bottom left
-    wc.x() + radius, wc.y() - radius, wc.z(), wc.w(), // bottom right
-    wc.x()         , wc.y() + radius, wc.z(), wc.w()  // top middle
+    t.bottom_left.x,  t.bottom_left.y,  t.bottom_left.z,  t.bottom_left.w,
+    t.bottom_right.x, t.bottom_right.y, t.bottom_right.z, t.bottom_right.w,
+    t.top_middle.x,   t.top_middle.y,   t.top_middle.z,   t.top_middle.w
   };
-  constexpr std::array<float, 12> c0 =
+  constexpr std::array<float, 12> const colors =
   {
     1.0f, 0.0f, 0.0f, 1.0f,
     0.0f, 1.0f, 0.0f, 1.0f,
     0.0f, 0.0f, 1.0f, 1.0f,
   };
-  return ::engine::gfx::make_triangle(v0, c0);
+  return ::engine::gfx::make_triangle(vertices, colors);
   // clang-format on
 }
 
 constexpr auto
-to_rectangle(game::world_coordinate const& wc)
+to_rectangle(game::rectangle const& r)
 {
+  auto const wc = r.wc();
   using namespace engine::gfx;
   constexpr float width = 0.25;
   constexpr float height = 0.39;
 
   // clang-format off
- std::array<float, 16> v0 =
+  std::array<float, 16> const vertices =
   {
-    wc.x() - width, wc.y() - height, wc.z(), wc.w(), // bottom left
-    wc.x() + width, wc.y() - height, wc.z(), wc.w(), // bottom right
-    wc.x() + width, wc.y() + height, wc.z(), wc.w(), // top left
-    wc.x() - width, wc.y() + height, wc.z(), wc.w() // top right
+    r.bottom_left.x,  r.bottom_left.y,  r.bottom_left.z,  r.bottom_left.w,
+    r.bottom_right.x, r.bottom_right.y, r.bottom_right.z, r.bottom_right.w,
+    r.top_right.x,    r.top_right.y,    r.top_right.z,    r.top_right.w,
+    r.top_left.x,     r.top_left.y,     r.top_left.z,     r.top_left.w
   };
-  constexpr std::array<float, 16> c0 =
+  constexpr std::array<float, 16> colors =
   {
     1.0f, 0.0f, 0.0f, 1.0f,
     0.0f, 1.0f, 0.0f, 1.0f,
     0.0f, 0.0f, 1.0f, 1.0f,
-    1.0f, 1.0f, 0.2f, 1.0f,
+    1.0f, 1.0f, 0.2f, 1.0f
   };
-  return ::engine::gfx::make_rectangle(v0, c0);
+  return ::engine::gfx::make_rectangle(vertices, colors);
   // clang-format on
 }
 
@@ -81,9 +83,9 @@ public:
 
 // clang-format off
 #define ROW(INDEX)                                                                                 \
-  vertices[INDEX].x, vertices[INDEX].y, vertices[INDEX].z, vertices[INDEX].w, /* point */                  \
-  colors[INDEX].r, colors[INDEX].g, colors[INDEX].b, colors[INDEX].a, /* color */                  \
-  tcords[INDEX].u, tcords[INDEX].v                                    /* texture coordinates */
+  vertices[INDEX].x, vertices[INDEX].y, vertices[INDEX].z, vertices[INDEX].w, /* point */          \
+  colors[INDEX].r, colors[INDEX].g, colors[INDEX].b, colors[INDEX].a,         /* color */          \
+  tcords[INDEX].u, tcords[INDEX].v                                            /* texture coords */
 // clang-format on
 
 using triangle = ::engine::gfx::opengl::shape<30>;
@@ -106,14 +108,14 @@ auto constexpr map_to_gl_priv(::engine::gfx::rectangle const &gfx_rect)
   return rectangle{GL_QUADS, {ROW(0), ROW(1), ROW(2), ROW(3)}};
 }
 
-triangle constexpr map_to_gl(game::triangle const& sh)
+triangle constexpr map_to_gl(game::triangle const& triangle)
 {
-  return map_to_gl_priv(to_triangle(sh.wc()));
+  return map_to_gl_priv(to_triangle(triangle));
 }
 
-rectangle constexpr map_to_gl(game::rectangle const& sh)
+rectangle constexpr map_to_gl(game::rectangle const& rect)
 {
-  return map_to_gl_priv(to_rectangle(sh.wc()));
+  return map_to_gl_priv(to_rectangle(rect));
 }
 
 template<typename ...T, typename ...R>
