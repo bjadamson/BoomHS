@@ -8,11 +8,28 @@ struct vertex
 {
   float x = 0.f, y = 0.f, z = 0.f, w = 0.f;
   vertex() = default;
-  vertex(float const xp, float const yp, float const zp, float const wp)
+  explicit constexpr vertex(float const xp, float const yp, float const zp, float const wp)
     : x(xp)
     , y(yp)
     , z(zp)
     , w(wp)
+    {}
+};
+struct color {
+  float r, g, b, a;
+  explicit constexpr color(float const rp, float const gp, float const bp, float const ap)
+    : r(rp)
+    , g(gp)
+    , b(bp)
+    , a(ap)
+    {}
+  static constexpr std::array<float, 4> DEFAULT_TEXTURE() { return {1.0f, 0.0f, 0.0f, 0.0f}; };
+};
+struct texture_coord {
+  float u, v;
+  explicit constexpr texture_coord(float const up, float const vp)
+    : u(up)
+    , v(vp)
     {}
 };
 

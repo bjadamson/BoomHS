@@ -5,21 +5,18 @@
 
 namespace engine::gfx
 {
-struct vertex {
-  float const x, y, z, w;
-};
-struct color {
-  float const r, g, b, a;
-  static constexpr std::array<float, 4> DEFAULT_TEXTURE() { return {1.0f, 0.0f, 0.0f, 0.0f}; };
-};
-struct texture_coord {
-  float const u, v;
-};
 template<int N>
 struct shape {
-  std::array<vertex, N> const vertices;
-  std::array<color, N> const colors;
-  std::array<texture_coord, N> const coords;
+  std::array<game::vertex, N> const vertices;
+  std::array<game::color, N> const colors;
+  std::array<game::texture_coord, N> const coords;
+
+  explicit constexpr shape(std::array<game::vertex, N> const& v,
+      std::array<game::color, N> const& c, std::array<game::texture_coord, N> const& tc)
+    : vertices(v)
+    , colors(c)
+    , coords(tc)
+  {}
 };
 
 using triangle = shape<3>;
@@ -29,6 +26,7 @@ using rectangle = shape<4>;
 triangle constexpr make_triangle(std::array<float, 12> const &v, std::array<float, 12> const &c,
                                  std::array<float, 6> const &tcoords)
 {
+  using namespace game;
   vertex const v0{v[0], v[1], v[2], v[3]};
   vertex const v1{v[4], v[5], v[6], v[7]};
   vertex const v2{v[8], v[9], v[10], v[11]};
@@ -75,12 +73,13 @@ triangle constexpr make_triangle(std::array<float, 12> const &p, std::array<floa
 
 auto constexpr make_triangle(std::array<float, 12> const &p)
 {
-  return make_triangle(p, color::DEFAULT_TEXTURE());
+  return make_triangle(p, game::color::DEFAULT_TEXTURE());
 }
 
 auto constexpr make_rectangle(std::array<float, 16> const &p, std::array<float, 16> const &c,
                                  std::array<float, 8> const &tcoords)
 {
+  using namespace game;
   vertex const p0{p[0], p[1], p[2], p[3]};
   vertex const p1{p[4], p[5], p[6], p[7]};
   vertex const p2{p[8], p[9], p[10], p[11]};
@@ -128,7 +127,7 @@ auto constexpr make_rectangle(std::array<float, 16> const &p, std::array<float, 
 
 auto constexpr make_rectangle(std::array<float, 16> const &p)
 {
-  return make_rectangle(p, color::DEFAULT_TEXTURE());
+  return make_rectangle(p, game::color::DEFAULT_TEXTURE());
 }
 
 } // ns engine::gfx
