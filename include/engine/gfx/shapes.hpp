@@ -1,6 +1,5 @@
 #pragma once
 #include <array>
-#include <tuple>
 #include <game/data_types.hpp>
 
 namespace engine::gfx

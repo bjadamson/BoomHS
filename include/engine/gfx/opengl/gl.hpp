@@ -6,11 +6,7 @@
 #include <stlw/format.hpp>
 #include <stlw/type_ctors.hpp>
 
-namespace engine
-{
-namespace gfx
-{
-namespace opengl
+namespace engine::gfx::opengl
 {
 
 class gl_log
@@ -67,6 +63,4 @@ public:
   }
 };
 
-} // ns opengl
-} // ns gfx
-} // ns engine
+} // ns engine::gfx::opengl

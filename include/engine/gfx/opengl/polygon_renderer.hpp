@@ -1,5 +1,6 @@
 #pragma once
 #include <SOIL.h>
+#include <engine/gfx/opengl/global.hpp>
 #include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl/shape_map.hpp>
 #include <glm/glm.hpp>
@@ -9,19 +10,8 @@
 #include <stlw/type_macros.hpp>
 #include <stlw/tuple.hpp>
 
-namespace engine
+namespace engine::gfx::opengl
 {
-namespace gfx
-{
-namespace opengl
-{
-
-auto const global_vao_bind = [](auto const vao) { glBindVertexArray(vao); };
-auto const global_vao_unbind = []() { glBindVertexArray(0); };
-
-auto const global_texture_bind = [](auto const tid) { glBindTexture(GL_TEXTURE_2D, tid); };
-auto const global_texture_unbind = []() { glBindTexture(GL_TEXTURE_2D, 0); };
-
 auto const print_triangle = [](auto &logger, auto const &triangle) {
   auto const make_part = [&](float const *d) {
     // clang-format off
@@ -47,8 +37,8 @@ auto const load_texture = [](char const *path) {
   GLuint texture;
   glGenTextures(1, &texture);
 
-  global_texture_bind(texture);
-  ON_SCOPE_EXIT([]() { global_texture_unbind(); });
+  global::texture_bind(texture);
+  ON_SCOPE_EXIT([]() { global::texture_unbind(); });
 
   // Set texture wrapping to GL_REPEAT (usually basic wrapping method)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -79,8 +69,6 @@ class polygon_renderer
   program program_;
 
   friend class factory;
-
-private:
   static auto constexpr NUM_BUFFERS = 1;
 
   polygon_renderer(program p)
@@ -166,14 +154,17 @@ public:
     glDeleteVertexArrays(NUM_BUFFERS, &this->vao_);
   }
 
+  auto vao() const { return this->vao_; }
+  auto vbo() const { return this->vbo_; }
+
   template <typename L, typename ...S>
   void draw(L &logger, glm::mat4 const &view, glm::mat4 const &projection, std::tuple<S...> const& shapes)
   {
-    global_vao_bind(this->vao_);
-    ON_SCOPE_EXIT([]() { global_vao_unbind(); });
+    global::vao_bind(this->vao_);
+    ON_SCOPE_EXIT([]() { global::vao_unbind(); });
 
-    global_texture_bind(this->texture_);
-    ON_SCOPE_EXIT([]() { global_texture_unbind(); });
+    global::texture_bind(this->texture_);
+    ON_SCOPE_EXIT([]() { global::texture_unbind(); });
 
     // Pass the matrices to the shader
     this->program_.set_uniform_matrix_4fv("view", view);
@@ -183,6 +174,4 @@ public:
   }
 };
 
-} // opengl
-} // ns gfx
-} // ns engine
+} // ns engine::gfx::opengl
