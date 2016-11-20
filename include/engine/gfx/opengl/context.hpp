@@ -1,14 +1,14 @@
 #pragma once
+#include <SOIL.h>
 #include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl/global.hpp>
-#include <engine/gfx/opengl/vertex_attrib.hpp>
 
 namespace engine::gfx::opengl
 {
 
 namespace impl {
 
-auto const load_texture = [](char const *path) {
+static auto const load_texture = [](char const *path) {
   GLuint texture;
   glGenTextures(1, &texture);
 

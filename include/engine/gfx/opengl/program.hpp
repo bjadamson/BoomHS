@@ -6,12 +6,20 @@
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace engine
+#define DEFINE_SHADER_FILENAME_TYPE(NAME)                                                          \
+struct NAME##_shader_filename {                                                                    \
+  char const *filename;                                                                            \
+  NAME##_shader_filename(char const *f)                                                            \
+      : filename(f)                                                                                \
+  {                                                                                                \
+  }                                                                                                \
+}
+
+namespace engine::gfx::opengl
 {
-namespace gfx
-{
-namespace opengl
-{
+
+DEFINE_SHADER_FILENAME_TYPE(vertex);
+DEFINE_SHADER_FILENAME_TYPE(fragment);
 
 class program
 {
@@ -102,6 +110,4 @@ struct program_loader {
   load(char const *vertex_file_path, char const *fragment_file_path);
 };
 
-} // ns opengl
-} // ns gfx
-} // ns engine
+} // ns engine::gfx::opengl

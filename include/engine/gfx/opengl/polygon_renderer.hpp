@@ -1,5 +1,4 @@
 #pragma once
-#include <SOIL.h>
 #include <engine/gfx/opengl/context.hpp>
 #include <engine/gfx/opengl/global.hpp>
 #include <engine/gfx/opengl/shape_map.hpp>
@@ -35,15 +34,12 @@ auto const print_triangle = [](auto &logger, auto const &triangle) {
 
 class polygon_renderer
 {
-  render_context render_context_;
-
   friend class factory;
 
-  // ctor
-  polygon_renderer(program &&p) : render_context_(std::move(p)) {}
   NO_COPY(polygon_renderer);
   NO_MOVE_ASSIGN(polygon_renderer);
 public:
+  polygon_renderer() = default;
   MOVE_CONSTRUCTIBLE(polygon_renderer);
 private:
 
@@ -85,40 +81,38 @@ private:
   }
 
   template<typename L, typename S>
-  void draw_shape(L &logger, S const& shape)
+  void draw_shape(L &logger, render_context &rc, S const& shape)
   {
     //print_triangle(logger, t0);
-    send_data_gpu(logger, this->render_context_, shape);
-    render(shape.draw_mode(), shape.vertice_count(), logger, this->render_context_);
+    send_data_gpu(logger, rc, shape);
+    render(shape.draw_mode(), shape.vertice_count(), logger, rc);
   }
 
   template<typename L, typename ...S>
-  void draw_shapes(L &logger, std::tuple<S...> const& shapes)
+  void draw_shapes(L &logger, render_context &rc, std::tuple<S...> const& shapes)
   {
-    auto const fn = [this, &logger] (auto const& shape) { this->draw_shape(logger, shape); };
+    auto const fn = [this, &logger, &rc] (auto const& shape) { this->draw_shape(logger, rc, shape); };
     stlw::for_each(shapes, fn);
   }
 
 public:
   template <typename L, typename ...S>
-  void draw(L &logger, glm::mat4 const &view, glm::mat4 const &projection, std::tuple<S...> const& shapes)
+  void draw(L &logger, render_context &rc, glm::mat4 const &view, glm::mat4 const &projection,
+      std::tuple<S...> const& shapes)
   {
-    global::vao_bind(this->render_context_.vao());
+    global::vao_bind(rc.vao());
     ON_SCOPE_EXIT([]() { global::vao_unbind(); });
 
-    global::texture_bind(this->render_context_.texture());
+    global::texture_bind(rc.texture());
     ON_SCOPE_EXIT([]() { global::texture_unbind(); });
 
     // Pass the matrices to the shader
-    auto &p = this->render_context_.program_ref();
+    auto &p = rc.program_ref();
     p.set_uniform_matrix_4fv("view", view);
     p.set_uniform_matrix_4fv("projection", projection);
 
-    draw_shapes(logger, shapes);
+    draw_shapes(logger, rc, shapes);
   }
-
-  auto vao() const { return this->render_context_.vao(); }
-  auto vbo() const { return this->render_context_.vbo(); }
 };
 
 } // ns engine::gfx::opengl
