@@ -1,7 +1,7 @@
 #pragma once
 #include <SOIL.h>
+#include <engine/gfx/opengl/context.hpp>
 #include <engine/gfx/opengl/global.hpp>
-#include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl/shape_map.hpp>
 #include <glm/glm.hpp>
 #include <stlw/format.hpp>
@@ -33,62 +33,26 @@ auto const print_triangle = [](auto &logger, auto const &triangle) {
   logger.info(msg);
 };
 
-auto const load_texture = [](char const *path) {
-  GLuint texture;
-  glGenTextures(1, &texture);
-
-  global::texture_bind(texture);
-  ON_SCOPE_EXIT([]() { global::texture_unbind(); });
-
-  // Set texture wrapping to GL_REPEAT (usually basic wrapping method)
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  // Set texture filtering parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  int w = 0, h = 0;
-  unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, SOIL_LOAD_RGB);
-  if (nullptr == pimage) {
-    std::cerr << "image didn't load.";
-    std::abort();
-  }
-  ON_SCOPE_EXIT([&]() { SOIL_free_image_data(pimage); });
-
-  // actually send the texture to the GPU
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pimage);
-  glGenerateMipmap(GL_TEXTURE_2D);
-
-  return texture;
-};
-
 class polygon_renderer
 {
-  GLuint vao_ = 0, vbo_ = 0;
-  GLuint texture_ = 0;
-  program program_;
+  render_context render_context_;
 
   friend class factory;
-  static auto constexpr NUM_BUFFERS = 1;
 
-  polygon_renderer(program p)
-      : program_(std::move(p))
-  {
-    glGenVertexArrays(NUM_BUFFERS, &this->vao_);
-    glGenBuffers(NUM_BUFFERS, &this->vbo_);
-
-    glBindBuffer(GL_ARRAY_BUFFER, this->vbo_);
-    ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
-
-    this->texture_ = load_texture("assets/container.jpg");
-  }
-
+  // ctor
+  polygon_renderer(program &&p) : render_context_(std::move(p)) {}
   NO_COPY(polygon_renderer);
-  polygon_renderer &operator=(polygon_renderer &&) = delete;
+  NO_MOVE_ASSIGN(polygon_renderer);
+public:
+  MOVE_CONSTRUCTIBLE(polygon_renderer);
+private:
 
   template <typename L>
-  void render(GLenum const render_mode, GLsizei const vertice_count, L &logger, program &program)
+  void render(GLenum const render_mode, GLsizei const vertice_count, L &logger,
+      render_context &rc)
   {
+    program &program = rc.program_ref();
+
     // Draw our first triangle
     program.use();
     program.check_opengl_errors(logger);
@@ -98,9 +62,10 @@ class polygon_renderer
   }
 
   template <typename L, typename S>
-  void send_data_gpu(L &logger, GLuint const vbo, S const &shape)
+  void send_data_gpu(L &logger, render_context const& rc, S const &shape)
   {
     // 1. Bind the vbo object to the GL_ARRAY_BUFFER
+    GLuint const vbo = rc.vbo();
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
     // 2. Setup temporary object to unbind the GL_ARRAY_BUFFER from a vbo on scope exit.
@@ -123,8 +88,8 @@ class polygon_renderer
   void draw_shape(L &logger, S const& shape)
   {
     //print_triangle(logger, t0);
-    send_data_gpu(logger, this->vbo_, shape);
-    render(shape.draw_mode(), shape.vertice_count(), logger, this->program_);
+    send_data_gpu(logger, this->render_context_, shape);
+    render(shape.draw_mode(), shape.vertice_count(), logger, this->render_context_);
   }
 
   template<typename L, typename ...S>
@@ -135,43 +100,25 @@ class polygon_renderer
   }
 
 public:
-  // move-construction OK.
-  polygon_renderer(polygon_renderer &&other)
-      : vao_(other.vao_)
-      , vbo_(other.vbo_)
-      , texture_(other.texture_)
-      , program_(std::move(other.program_))
-  {
-    other.vao_ = 0;
-    other.vbo_ = 0;
-    other.texture_ = 0;
-    other.program_ = program::make_invalid();
-  }
-
-  ~polygon_renderer()
-  {
-    glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
-    glDeleteVertexArrays(NUM_BUFFERS, &this->vao_);
-  }
-
-  auto vao() const { return this->vao_; }
-  auto vbo() const { return this->vbo_; }
-
   template <typename L, typename ...S>
   void draw(L &logger, glm::mat4 const &view, glm::mat4 const &projection, std::tuple<S...> const& shapes)
   {
-    global::vao_bind(this->vao_);
+    global::vao_bind(this->render_context_.vao());
     ON_SCOPE_EXIT([]() { global::vao_unbind(); });
 
-    global::texture_bind(this->texture_);
+    global::texture_bind(this->render_context_.texture());
     ON_SCOPE_EXIT([]() { global::texture_unbind(); });
 
     // Pass the matrices to the shader
-    this->program_.set_uniform_matrix_4fv("view", view);
-    this->program_.set_uniform_matrix_4fv("projection", projection);
+    auto &p = this->render_context_.program_ref();
+    p.set_uniform_matrix_4fv("view", view);
+    p.set_uniform_matrix_4fv("projection", projection);
 
     draw_shapes(logger, shapes);
   }
+
+  auto vao() const { return this->render_context_.vao(); }
+  auto vbo() const { return this->render_context_.vbo(); }
 };
 
 } // ns engine::gfx::opengl
