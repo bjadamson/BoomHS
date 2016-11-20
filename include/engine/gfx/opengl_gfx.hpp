@@ -63,14 +63,17 @@ class gfx_engine
 {
   using W = ::engine::window::sdl_window;
 
-  polygon_renderer poly_renderer_;
   W window_;
-  render_context rc_;
+  polygon_renderer pr0_, pr1_;
+  render_context rc0_, rc1_;
 
-  gfx_engine(W &&w, polygon_renderer &&poly_r, render_context &&rc)
-      : window_(std::move(w))
-      , poly_renderer_(std::move(poly_r))
-      , rc_(std::move(rc))
+  gfx_engine(W &&w, polygon_renderer &&p0, render_context &&r0, polygon_renderer &&p1,
+      render_context &&r1)
+    : window_(std::move(w))
+    , pr0_(std::move(p0))
+    , pr1_(std::move(p1))
+    , rc0_(std::move(r0))
+    , rc1_(std::move(r1))
   {
   }
 
@@ -82,25 +85,40 @@ class gfx_engine
 public:
   // move-assignment OK.
   gfx_engine(gfx_engine &&other)
-      : poly_renderer_(std::move(other.poly_renderer_))
-      , window_(std::move(other.window_))
-      , rc_(std::move(other.rc_))
+      : window_(std::move(other.window_))
+      , pr0_(std::move(other.pr0_))
+      , pr1_(std::move(other.pr1_))
+      , rc0_(std::move(other.rc0_))
+      , rc1_(std::move(other.rc1_))
   {
+    // background color
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+  }
+
+  void begin()
+  {
+    // Render
+    glClear(GL_COLOR_BUFFER_BIT);
+  }
+  void end()
+  {
+    // Update window with OpenGL rendering
+    SDL_GL_SwapWindow(this->window_.raw());
   }
 
   template <typename L, typename ...S>
-  void draw(render_args<L> const& args, S const&... shapes)
+  void draw0(render_args<L> const& args, S const&... shapes)
   {
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    auto const gl_mapped_shapes = map_to_gl(shapes...);
+    this->pr0_.draw(args.logger, this->rc0_, args.view, args.projection, gl_mapped_shapes);
+  }
 
+  template <typename L, typename ...S>
+  void draw1(render_args<L> const& args, S const&... shapes)
+  {
     auto const gl_mapped_shapes = map_to_gl(shapes...);
 
-    // Render
-    glClear(GL_COLOR_BUFFER_BIT);
-    this->poly_renderer_.draw(args.logger, this->rc_, args.view, args.projection, gl_mapped_shapes);
-
-    // Update window with OpenGL rendering
-    SDL_GL_SwapWindow(this->window_.raw());
+    this->pr1_.draw(args.logger, this->rc1_, args.view, args.projection, gl_mapped_shapes);
   }
 };
 
@@ -119,7 +137,6 @@ struct opengl_library {
   template <typename L, typename W>
   static inline stlw::result<gfx_engine, std::string> make_gfx_engine(L &logger, W &&window)
   {
-
     auto const make_polygon_renderer = [](auto &logger, auto const& rc)
     {
       polygon_renderer polyr;
@@ -128,10 +145,16 @@ struct opengl_library {
       return polyr;
     };
 
-    DO_MONAD(auto phandle, impl::load_program("shader.vert", "shader.frag"));
-    auto rc = context_factory::make_render_context(std::move(phandle), "assets/container.jpg");
-    auto poly_renderer = make_polygon_renderer(logger, rc);
-    return gfx_engine{std::move(window), std::move(poly_renderer), std::move(rc)};
+    // TODO: can they share the same program???
+    DO_MONAD(auto phandle0, impl::load_program("shader.vert", "shader.frag"));
+    auto rc0 = context_factory::make_render_context(std::move(phandle0), "assets/wall.jpg");
+
+    DO_MONAD(auto phandle1, impl::load_program("shader.vert", "shader.frag"));
+    auto rc1 = context_factory::make_render_context(std::move(phandle1), "assets/container.jpg");
+
+    auto pr0 = make_polygon_renderer(logger, rc0);
+    auto pr1 = make_polygon_renderer(logger, rc1);
+    return gfx_engine{std::move(window), std::move(pr0), std::move(rc0), std::move(pr1), std::move(rc1)};
   }
 };
 

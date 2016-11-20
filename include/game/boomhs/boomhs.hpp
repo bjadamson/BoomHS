@@ -91,6 +91,12 @@ public:
   {}
 };
 
+// TODO: bye globals
+game::world_coordinate *p = nullptr;
+game::world_coordinate *q = nullptr;
+game::world_coordinate *r = nullptr;
+game::world_coordinate *t = nullptr;
+
 template<typename G, typename S>
 void
 ecst_main(G &game, S &state)
@@ -115,11 +121,6 @@ ecst_main(G &game, S &state)
 
   // Create an ECST context.
   auto ctx = ecst::context::make_uptr(s);
-
-  game::world_coordinate *p = nullptr;
-  game::world_coordinate *q = nullptr;
-  game::world_coordinate *r = nullptr;
-  game::world_coordinate *t = nullptr;
 
   // Initialize context with some entities.
   ctx->step([&](auto &proxy) {
@@ -163,12 +164,7 @@ ecst_main(G &game, S &state)
           });
     l.trace("rendering");
 
-    auto s0 = game::shape_factory::make_rectangle(*p);
-    auto s1 = game::shape_factory::make_triangle(*q);
-    auto s2 = game::shape_factory::make_triangle(*r);
-    auto s3 = game::shape_factory::make_rectangle(*t);
-
-    game.game_loop(state, s0, s1, s2, s3);
+    game.game_loop(state);//, s0, s1, s2, s3);
     l.trace("game loop stepping.");
   }
 }
@@ -181,13 +177,21 @@ public:
 
   MOVE_DEFAULT(boomhs_game);
 
-  template <typename State, typename ...S>
-  void game_loop(State &state, S const&... shapes)
+  template <typename State>//, typename ...S>
+  void game_loop(State &state)//, S const&... shapes)
   {
     ::engine::gfx::opengl::render_args<decltype(state.logger)> const args{state.logger,
       state.view, state.projection};
 
-    state.renderer.draw(args, shapes...);
+    auto s0 = game::shape_factory::make_rectangle(*p);
+    auto s1 = game::shape_factory::make_triangle(*q);
+    auto s2 = game::shape_factory::make_triangle(*r);
+    auto s3 = game::shape_factory::make_rectangle(*t);
+
+    state.renderer.begin();
+    state.renderer.draw0(args, s0, s1);
+    state.renderer.draw1(args, s2, s3);
+    state.renderer.end();
   }
 };
 
