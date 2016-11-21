@@ -4,7 +4,7 @@
 #include <engine/window/window.hpp>
 #include <stlw/log.hpp>
 
-#include <engine/gfx/opengl_gfx.hpp>
+#include <engine/gfx/lib.hpp>
 #include <engine/window/sdl_window.hpp>
 #include <game/boomhs/boomhs.hpp>
 
