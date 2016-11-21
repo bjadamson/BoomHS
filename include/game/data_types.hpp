@@ -18,6 +18,7 @@ struct vertex
 };
 struct color {
   float r, g, b, a;
+  color() = default;
   explicit constexpr color(std::array<float, 4> const& c) : color(c[0], c[1], c[2], c[3]) {}
   explicit constexpr color(float const rp, float const gp, float const bp, float const ap)
     : r(rp)
@@ -29,6 +30,7 @@ struct color {
 };
 struct texture_coord {
   float u, v;
+  texture_coord() = default;
   explicit constexpr texture_coord(float const up, float const vp)
     : u(up)
     , v(vp)

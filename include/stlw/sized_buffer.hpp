@@ -17,7 +17,9 @@ class sized_buffer
   // TODO: see if this is necessary or not.
   inline void reserve() { this->vec_.reserve(vec_.size()); }
 public:
-  MOVE_DEFAULT(sized_buffer);
+  sized_buffer(sized_buffer &&other) : vec_(std::move(other.vec_)) {}
+  NO_MOVE_ASSIGN(sized_buffer);
+
   COPY_DEFAULT(sized_buffer);
 
   // clang-format off

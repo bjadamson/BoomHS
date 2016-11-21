@@ -1,5 +1,6 @@
 #pragma once
 #include <game/data_types.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace game {
 
@@ -11,20 +12,27 @@ public:
   auto constexpr const& wc() const { return this->coord_; }
 };
 
-struct point {
+struct vertice {
   vertex vertex;
   color color;
   texture_coord uv;
+
+  vertice() = default;
+  explicit constexpr vertice(class vertex const& v, class color const& c, texture_coord const& t)
+    : vertex(v)
+    , color(c)
+    , uv(t)
+  {}
 };
 
 // clang-format off
 struct triangle : public shape {
   static auto constexpr NUM_VERTICES = 3;
-  point bottom_left, bottom_right, top_middle;
+  vertice bottom_left, bottom_right, top_middle;
 private:
   friend class shape_factory;
-  explicit constexpr triangle(world_coordinate const& wc, point const& bl, point const& br,
-      point const& tm)
+  explicit constexpr triangle(world_coordinate const& wc, vertice const& bl, vertice const& br,
+      vertice const& tm)
     : shape(wc)
     , bottom_left(bl)
     , bottom_right(br)
@@ -34,11 +42,12 @@ private:
 // clang-format on
 
 struct rectangle : public shape {
-  point bottom_left, bottom_right, top_right, top_left;
+  static auto constexpr NUM_VERTICES = 4;
+  vertice bottom_left, bottom_right, top_right, top_left;
 private:
   friend class shape_factory;
-  explicit constexpr rectangle(world_coordinate const& wc, point const& bl, point const& br,
-      point const& tr, point const& tl)
+  explicit constexpr rectangle(world_coordinate const& wc, vertice const& bl, vertice const& br,
+      vertice const& tr, vertice const& tl)
     : shape(wc)
     , bottom_left(bl)
     , bottom_right(br)
@@ -48,8 +57,8 @@ private:
 };
 
 struct polygon : public shape {
-  stlw::sized_buffer<vertex> vertices;
-  auto num_vertices() const { return this->vertices.length(); }
+  stlw::sized_buffer<vertice> vertices;
+  int num_vertices() const { return this->vertices.length(); }
 private:
   friend class shape_factory;
   explicit polygon(world_coordinate const& wc, int const num_vertices)
@@ -82,9 +91,9 @@ struct shape_factory {
     texture_coord const uv_bottom_right{1.0f, 0.0f};
     texture_coord const uv_top_middle  {0.5f, 1.0f};
 
-    point const bottom_left{v_bottom_left, c_bottom_left, uv_bottom_left};
-    point const bottom_right{v_bottom_right, c_bottom_right, uv_bottom_right};
-    point const top_middle{v_top_middle, c_top_middle, uv_top_middle};
+    vertice const bottom_left{v_bottom_left, c_bottom_left, uv_bottom_left};
+    vertice const bottom_right{v_bottom_right, c_bottom_right, uv_bottom_right};
+    vertice const top_middle{v_top_middle, c_top_middle, uv_top_middle};
 
     // clang-format on
     return triangle{wc, bottom_left, bottom_right, top_middle};
@@ -111,19 +120,18 @@ struct shape_factory {
     texture_coord const uv_top_right   {1.0f, 1.0f};
     texture_coord const uv_top_left    {0.0f, 1.0f};
 
-    point const bottom_left {v_bottom_left,  c_bottom_left,  uv_bottom_left};
-    point const bottom_right{v_bottom_right, c_bottom_right, uv_bottom_right};
-    point const top_right   {v_top_right,    c_top_right,    uv_top_right};
-    point const top_left    {v_top_left,     c_top_left,     uv_top_left};
+    vertice const bottom_left {v_bottom_left,  c_bottom_left,  uv_bottom_left};
+    vertice const bottom_right{v_bottom_right, c_bottom_right, uv_bottom_right};
+    vertice const top_right   {v_top_right,    c_top_right,    uv_top_right};
+    vertice const top_left    {v_top_left,     c_top_left,     uv_top_left};
     // clang-format on
 
     return rectangle{wc, bottom_left, bottom_right, top_right, top_left};
   }
 
-  /*
   static auto make_polygon(world_coordinate const& wc, int const num_vertices)
   {
-    constexpr float width = 0.025;
+    constexpr float width = 0.25;
     constexpr float radius = width;
     auto const V = num_vertices;
     auto const C = V; // Assume for now #colors == #vertices
@@ -138,35 +146,16 @@ struct shape_factory {
       return wc.y() + pos;
     };
 
-    polygon p{wc, num_vertices};
+    polygon poly{wc, num_vertices};
     for (auto i{0}, j{0}; i < V; ++i) {
-      p.vertices[i] = vertex{cosfn(i), sinfn(i), wc.z(), wc.w()};
+      vertex const v{cosfn(i), sinfn(i), wc.z(), wc.w()};
+      color const  c{game::color::DEFAULT_TEXTURE()};
+      texture_coord const uv{0.0f, 0.0f}; // TODO: figure this mapping out.
+
+      poly.vertices[i] = vertice{v, c, uv};
     }
-    return p;
+    return poly;
   }
-  */
 };
-
-/*
-auto make_polygon(stlw::sized_buffer<float> const& vfloats, stlw::sized_buffer<float> const& vcolors)
-{
-  auto const sized_buffer_of_floats_to_struct = [](auto const& vfloats, auto const value) {
-    using R = decltype(value);
-    stlw::sized_buffer<R> values{vfloats.length()};
-    for (auto i{0}; i < values.length();) {
-      auto const a = vfloats[i++];
-      auto const b = vfloats[i++];
-      auto const c = vfloats[i++];
-      auto const d = vfloats[i++];
-      values[i] = R{a, b, c, d};
-    }
-    return values;
-  };
-  auto const vertices = sized_buffer_of_floats_to_struct(vfloats, game::vertex{});
-  auto const colors = sized_buffer_of_floats_to_struct(vcolors, game::color{});
-  return polygon{vertices, colors};
-}
-*/
-
 
 } // ns game
