@@ -95,6 +95,7 @@ game::world_coordinate *p = nullptr;
 game::world_coordinate *q = nullptr;
 game::world_coordinate *r = nullptr;
 game::world_coordinate *t = nullptr;
+game::world_coordinate *u = nullptr;
 
 template<typename G, typename S>
 void
@@ -147,6 +148,12 @@ ecst_main(G &game, S &state)
         wc.set(0.0f, -0.5f, 0.0f, 1.0f);
         t = &wc;
       }
+      {
+        auto eid = proxy.create_entity();
+        auto &wc = proxy.add_component(ct::world_coordinate, eid);
+        wc.set(0.65f, 0.85f, 0.0f, 1.0f);
+        u = &wc;
+      }
   });
 
   // "Game loop."
@@ -182,15 +189,15 @@ public:
     ::engine::gfx::opengl::render_args<decltype(state.logger)> const args{state.logger,
       state.view, state.projection};
 
-    //auto s0 = game::shape_factory::make_rectangle(*p);
-    //auto s1 = game::shape_factory::make_triangle(*q);
-    //auto s2 = game::shape_factory::make_triangle(*r);
-    //auto s3 = game::shape_factory::make_triangle(*t);
-    auto s3 = game::shape_factory::make_polygon(*t, 15);
+    auto s0 = game::shape_factory::make_rectangle(*p);
+    auto s1 = game::shape_factory::make_triangle(*q);
+    auto s2 = game::shape_factory::make_triangle(*r);
+    auto s3 = game::shape_factory::make_triangle(*t);
+    auto s4 = game::shape_factory::make_polygon(*u, 15);
 
     state.renderer.begin();
-    //state.renderer.draw0(args, s0, s1);
-    state.renderer.draw1(args, s3);//s2, s3);
+    state.renderer.draw0(args, s0, s1);
+    state.renderer.draw1(args, s2, s3, s4);
     state.renderer.end();
   }
 };

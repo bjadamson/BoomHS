@@ -148,9 +148,11 @@ struct shape_factory {
 
     polygon poly{wc, num_vertices};
     for (auto i{0}, j{0}; i < V; ++i) {
-      vertex const v{cosfn(i), sinfn(i), wc.z(), wc.w()};
+      auto const x = cosfn(i);
+      auto const y = sinfn(i);
+      vertex const v{x, y, wc.z(), wc.w()};
       color const  c{game::color::DEFAULT_TEXTURE()};
-      texture_coord const uv{0.0f, 0.0f}; // TODO: figure this mapping out.
+      texture_coord const uv{x, y}; // TODO: figure this mapping out.
 
       poly.vertices[i] = vertice{v, c, uv};
     }
