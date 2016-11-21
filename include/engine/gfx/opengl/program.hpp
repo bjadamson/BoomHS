@@ -1,6 +1,6 @@
 #pragma once
-#include <engine/gfx/opengl/gl.hpp>
 #include <engine/gfx/opengl_glew.hpp>
+#include <engine/gfx/opengl/global.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <stlw/result.hpp>
@@ -84,14 +84,14 @@ public:
 
   // IMMUTABLE
   // ----------------------------------------------------------------------------------------------
-  inline std::string shader_log() const { return gl_log::get_shader_log(this->program_id_); }
+  inline std::string shader_log() const { return global::log::get_shader_log(this->program_id_); }
 
-  inline std::string program_log() const { return gl_log::get_program_log(this->program_id_); }
+  inline std::string program_log() const { return global::log::get_program_log(this->program_id_); }
 
   template <typename L>
   inline void check_opengl_errors(L &logger) const
   {
-    auto const errors = gl_log::get_opengl_errors(this->program_id_);
+    auto const errors = global::log::get_errors(this->program_id_);
     if (errors) {
       logger.error("Opengl error: '{}'", *errors);
     }

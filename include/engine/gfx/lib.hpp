@@ -204,15 +204,15 @@ public:
     SDL_GL_SwapWindow(this->window_.raw());
   }
 
-  template <typename L, typename ...S>
-  void draw0(render_args<L> const& args, S const&... shapes)
+  template <typename Args, typename ...S>
+  void draw0(Args const& args, S const&... shapes)
   {
     auto const gl_mapped_shapes = shape_mapper::map_to_floats(shapes...);
     this->pr0_.draw(args.logger, this->rc0_, args.view, args.projection, gl_mapped_shapes);
   }
 
-  template <typename L, typename ...S>
-  void draw1(render_args<L> const& args, S const&... shapes)
+  template <typename Args, typename ...S>
+  void draw1(Args const& args, S const&... shapes)
   {
     auto const gl_mapped_shapes = shape_mapper::map_to_floats(shapes...);
 

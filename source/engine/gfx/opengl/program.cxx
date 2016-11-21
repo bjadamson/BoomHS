@@ -1,4 +1,3 @@
-#include <engine/gfx/opengl/gl.hpp>
 #include <engine/gfx/opengl/program.hpp>
 #include <stlw/os.hpp>
 #include <stlw/type_ctors.hpp>
@@ -36,7 +35,7 @@ compile_shader(char const *data, GLenum const type)
   if (true == is_compiled(handle)) {
     return compiled_shader{handle, glDeleteShader};
   }
-  return stlw::make_error(gl_log::get_shader_log(handle));
+  return stlw::make_error(global::log::get_shader_log(handle));
 }
 
 template <typename T>
@@ -67,7 +66,7 @@ link_program(GLuint const program_id)
   glGetProgramiv(program_id, GL_LINK_STATUS, &result);
   if (result == GL_FALSE) {
     return stlw::make_error("Linking the shader failed. Progam log '" +
-                            gl_log::get_program_log(program_id) + "'");
+                            global::log::get_program_log(program_id) + "'");
   }
   return stlw::make_empty();
 }

@@ -1,5 +1,4 @@
 #pragma once
-#include <engine/gfx/opengl/gl.hpp>
 #include <engine/gfx/opengl/context.hpp>
 
 namespace engine::gfx::opengl
