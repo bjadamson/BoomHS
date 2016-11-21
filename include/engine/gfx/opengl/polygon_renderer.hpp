@@ -1,7 +1,6 @@
 #pragma once
 #include <engine/gfx/opengl/context.hpp>
 #include <engine/gfx/opengl/global.hpp>
-#include <engine/gfx/opengl/shape_map.hpp>
 #include <glm/glm.hpp>
 #include <stlw/format.hpp>
 #include <stlw/log.hpp>

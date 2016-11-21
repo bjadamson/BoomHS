@@ -7,7 +7,6 @@
 
 #include <ecst.hpp>
 
-#include <engine/gfx/shapes.hpp>
 #include <engine/window/window.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
@@ -186,7 +185,7 @@ public:
     auto s0 = game::shape_factory::make_rectangle(*p);
     auto s1 = game::shape_factory::make_triangle(*q);
     auto s2 = game::shape_factory::make_triangle(*r);
-    auto s3 = game::shape_factory::make_polygon(*t, 4);
+    auto s3 = game::shape_factory::make_triangle(*t);
     //auto s4 = game::shape_factory::make_polygon(
 
     state.renderer.begin();
