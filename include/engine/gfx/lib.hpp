@@ -218,10 +218,10 @@ class gfx_engine
 
   W window_;
   polygon_renderer pr0_, pr1_;
-  render_context rc0_, rc1_;
+  opengl_context rc0_, rc1_;
 
-  gfx_engine(W &&w, polygon_renderer &&p0, render_context &&r0, polygon_renderer &&p1,
-      render_context &&r1)
+  gfx_engine(W &&w, polygon_renderer &&p0, opengl_context &&r0, polygon_renderer &&p1,
+      opengl_context &&r1)
     : window_(std::move(w))
     , pr0_(std::move(p0))
     , pr1_(std::move(p1))
@@ -300,10 +300,10 @@ struct opengl_library {
 
     // TODO: can they share the same program???
     DO_MONAD(auto phandle0, impl::load_program("shader.vert", "shader.frag"));
-    auto rc0 = context_factory::make_render_context(std::move(phandle0), "assets/wall.jpg");
+    auto rc0 = context_factory::make_opengl_context(std::move(phandle0), "assets/wall.jpg");
 
     DO_MONAD(auto phandle1, impl::load_program("shader.vert", "shader.frag"));
-    auto rc1 = context_factory::make_render_context(std::move(phandle1), "assets/container.jpg");
+    auto rc1 = context_factory::make_opengl_context(std::move(phandle1), "assets/container.jpg");
 
     auto pr0 = make_polygon_renderer(logger, rc0);
     auto pr1 = make_polygon_renderer(logger, rc1);

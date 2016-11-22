@@ -39,18 +39,18 @@ static auto const load_texture = [](char const *path) {
 
 } // ns impl
 
-class render_context {
+class opengl_context {
   GLuint vao_ = 0, vbo_ = 0;
   GLuint texture_ = 0;
   program program_;
 
   static auto constexpr NUM_BUFFERS = 1;
 
-  NO_COPY(render_context);
-  NO_MOVE_ASSIGN(render_context);
+  NO_COPY(opengl_context);
+  NO_MOVE_ASSIGN(opengl_context);
 
   // private ctor, use factory function.
-  render_context(program &&p, GLuint const tid)
+  opengl_context(program &&p, GLuint const tid)
     : program_(std::move(p))
     , texture_(tid)
   {
@@ -61,14 +61,14 @@ class render_context {
     ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
   }
 public:
-  ~render_context()
+  ~opengl_context()
   {
     glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
     glDeleteVertexArrays(NUM_BUFFERS, &this->vao_);
   }
 
   // move-construction OK.
-  render_context(render_context &&other)
+  opengl_context(opengl_context &&other)
       : vao_(other.vao_)
       , vbo_(other.vbo_)
       , texture_(other.texture_)
@@ -92,10 +92,10 @@ struct context_factory
 {
   context_factory() = delete;
 
-  auto static make_render_context(program &&p, char const* path)
+  auto static make_opengl_context(program &&p, char const* path)
   {
     auto const tid = impl::load_texture(path);
-    return render_context{std::move(p), tid};
+    return opengl_context{std::move(p), tid};
   }
 };
 

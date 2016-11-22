@@ -45,7 +45,7 @@ public:
 };
 
 auto
-make_vertex_attribute_config(render_context const& rc)
+make_vertex_attribute_config(opengl_context const& ctx)
 {
   // Vertex Attribute positions
   static GLint constexpr VERTEX_INDEX = 0;
@@ -64,7 +64,7 @@ make_vertex_attribute_config(render_context const& rc)
   GLint const index_uv = 2;
   attribute_index const ai{index_vertex, index_color, index_uv};
 
-  return vertex_attribute_config{rc.vao(), rc.vbo(), ccount, ai};
+  return vertex_attribute_config{ctx.vao(), ctx.vbo(), ccount, ai};
 }
 
 namespace global {

@@ -44,9 +44,9 @@ private:
 
   template <typename L>
   void render(GLenum const render_mode, GLsizei const vertice_count, L &logger,
-      render_context &rc)
+      opengl_context &ctx)
   {
-    program &program = rc.program_ref();
+    program &program = ctx.program_ref();
 
     // Draw our first triangle
     program.use();
@@ -57,10 +57,10 @@ private:
   }
 
   template <typename L, typename S>
-  void send_data_gpu(L &logger, render_context const& rc, S const &shape)
+  void send_data_gpu(L &logger, opengl_context const& ctx, S const &shape)
   {
     // 1. Bind the vbo object to the GL_ARRAY_BUFFER
-    GLuint const vbo = rc.vbo();
+    GLuint const vbo = ctx.vbo();
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
     // 2. Setup temporary object to unbind the GL_ARRAY_BUFFER from a vbo on scope exit.
@@ -80,34 +80,34 @@ private:
   }
 
   template<typename L, typename S>
-  void draw_shape(L &logger, render_context &rc, S const& shape)
+  void draw_shape(L &logger, opengl_context &ctx, S const& shape)
   {
     //print_triangle(logger, t0);
-    send_data_gpu(logger, rc, shape);
-    render(shape.draw_mode(), shape.vertice_count(), logger, rc);
+    send_data_gpu(logger, ctx, shape);
+    render(shape.draw_mode(), shape.vertice_count(), logger, ctx);
   }
 
   template<typename L, typename ...S>
-  void draw_shapes(L &logger, render_context &rc, std::tuple<S...> const& shapes)
+  void draw_shapes(L &logger, opengl_context &ctx, std::tuple<S...> const& shapes)
   {
-    auto const fn = [this, &logger, &rc] (auto const& shape) { this->draw_shape(logger, rc, shape); };
+    auto const fn = [this, &logger, &ctx] (auto const& shape) { this->draw_shape(logger, ctx, shape); };
     stlw::for_each(shapes, fn);
   }
 
 public:
   template <typename L, typename ...S>
-  void draw(L &logger, render_context &rc, glm::mat4 const &view, glm::mat4 const &projection,
+  void draw(L &logger, opengl_context &ctx, glm::mat4 const &view, glm::mat4 const &projection,
       std::tuple<S...> const& shapes)
   {
-    global::vao_bind(rc.vao());
+    global::vao_bind(ctx.vao());
     ON_SCOPE_EXIT([]() { global::vao_unbind(); });
 
     // Pass the matrices to the shader
-    auto &p = rc.program_ref();
+    auto &p = ctx.program_ref();
     p.set_uniform_matrix_4fv("view", view);
     p.set_uniform_matrix_4fv("projection", projection);
 
-    draw_shapes(logger, rc, shapes);
+    draw_shapes(logger, ctx, shapes);
   }
 };
 
