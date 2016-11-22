@@ -1,9 +1,8 @@
 #pragma once
+#include <array>
 #include <stlw/result.hpp>
 
-namespace engine
-{
-namespace gfx
+namespace engine::gfx
 {
 
 // Genric template we expect a library to provide an implementation of.
@@ -22,5 +21,4 @@ struct library_wrapper {
   }
 };
 
-} // ns window
-} // gfx
+} // ns engine::gfx

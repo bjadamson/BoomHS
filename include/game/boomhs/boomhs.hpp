@@ -189,15 +189,32 @@ public:
     ::engine::gfx::opengl::render_args<decltype(state.logger)> const args{state.logger,
       state.view, state.projection};
 
-    auto s0 = game::shape_factory::make_rectangle(*p);
-    auto s1 = game::shape_factory::make_triangle(*q);
-    auto s2 = game::shape_factory::make_triangle(*r);
-    auto s3 = game::shape_factory::make_triangle(*t);
-    auto s4 = game::shape_factory::make_polygon(*u, 15);
+    using INSIDE_PAIR = std::pair<std::array<float, 3>, float>;
+    std::array<INSIDE_PAIR, 3> const my_color = {
+      INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::RED, 1.0f},
+      INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::GREEN, 1.0f},
+      INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::BLUE, 1.0f},
+    };
+
+    std::array<INSIDE_PAIR, 4> const my_color2 = {
+      INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::RED, 1.0f},
+      INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::GREEN, 1.0f},
+      INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::BLUE, 1.0f},
+      INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::YELLOW, 1.0f},
+    };
+
+    auto s0 = game::shape_factory::make_rectangle(*p, ::engine::gfx::LIST_OF_COLORS::GRAY);
+    auto s1 = game::shape_factory::make_triangle(*t, ::engine::gfx::LIST_OF_COLORS::PINK);
+
+    auto s2 = game::shape_factory::make_triangle(*q, my_color);
+    auto s3 = game::shape_factory::make_rectangle(*r, my_color2);
+
+    auto s4 = game::shape_factory::make_polygon(*u, 5, ::engine::gfx::LIST_OF_COLORS::ORANGE);
+    auto s5 = game::shape_factory::make_polygon(*u, 5);
 
     state.renderer.begin();
-    state.renderer.draw0(args, s0, s1);
-    state.renderer.draw1(args, s2, s3, s4);
+    state.renderer.draw0(args, s0, s1, s2);
+    state.renderer.draw1(args, s3, s4, s5);
     state.renderer.end();
   }
 };

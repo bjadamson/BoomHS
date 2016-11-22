@@ -102,9 +102,6 @@ public:
     global::vao_bind(rc.vao());
     ON_SCOPE_EXIT([]() { global::vao_unbind(); });
 
-    global::texture_bind(rc.texture());
-    ON_SCOPE_EXIT([]() { global::texture_unbind(); });
-
     // Pass the matrices to the shader
     auto &p = rc.program_ref();
     p.set_uniform_matrix_4fv("view", view);
