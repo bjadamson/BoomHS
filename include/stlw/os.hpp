@@ -1,11 +1,16 @@
 #pragma once
 #include <fstream>
-#include <stlw/result.hpp>
+#include <iostream>
+#include <experimental/filesystem>
+#include <stlw/type_macros.hpp>
+#include <stlw/tuple.hpp>
 #include <string>
+#include <stlw/result.hpp>
 
 namespace stlw
 {
 
+// TODO: boost::path
 stlw::result<std::string, std::string>
 read_file(char const *path)
 {
@@ -26,6 +31,25 @@ read_file(char const *path)
     istream.close();
   }
   return sstream.str();
+}
+
+// TODO: boost::path
+template<typename ...Text>
+//stlw::result<??, std::string>
+void
+write_file(std::experimental::filesystem::path const& path, Text const&... text)
+{
+  std::filebuf fb;
+  fb.open(path.string().c_str(), std::ios::out);
+  ON_SCOPE_EXIT([&fb]() { fb.close(); });
+
+  std::ostream os(&fb);
+  auto const write_line = [&os](auto const& text) {
+    os << text;
+  };
+
+  auto const tuple_view = std::make_tuple(text...);
+  stlw::for_each(tuple_view, write_line);
 }
 
 } // ns stlw

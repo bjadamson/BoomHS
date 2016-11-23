@@ -20,7 +20,12 @@ namespace gl = engine::gfx::opengl;
 stlw::result<gl::program, std::string>
 load_program(vertex_shader_filename const v, fragment_shader_filename const f)
 {
-  auto expected_program_id = gl::program_loader::load(v.filename, f.filename);
+  auto const prefix = [](auto const& path) {
+    return std::string{"./build-system/bin/shaders/"} + path;
+  };
+  auto const vpath = prefix(v.filename);
+  auto const fpath = prefix(f.filename);
+  auto expected_program_id = gl::program_loader::load(vpath.c_str(), fpath.c_str());
   if (!expected_program_id) {
     return stlw::make_error(expected_program_id.error());
   }

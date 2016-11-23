@@ -20,6 +20,7 @@ set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17 -stdlib=libc++")
+set(TOOLS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tools/)
 
 ## DEFINITIONS
 file(GLOB INTERNAL_INCLUDE_DIRS include external/expected/include external/hana/include external/ecst/include external/ecst/extlibs/vrm_core/include external/ecst/extlibs/vrm_pp/include)
@@ -44,7 +45,10 @@ add_custom_target(cppformat COMMAND clang-format -i ${GLOBBED_SOURCES_CLANG_TOOL
 add_custom_target(clangcheck COMMAND clang-check -analyze -p ${BUILD} -s ${GLOBBED_SOURCES_CLANG_TOOLS})
 
 ## Declare our executable and build it.
+add_executable(shader_loader ${TOOLS_DIRECTORY}/main_shaderloader.cxx)
 add_executable(boomhs ${GLOBBED_SOURCES})
+
+find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
@@ -54,7 +58,11 @@ pkg_search_module(SDL2 REQUIRED sdl2)
 
 ## We should get these through conan.io
 target_include_directories(boomhs PUBLIC ${SDL2_INCLUDE_DIRS} ${SDL2IMAGE_INCLUDE_DIRS} ${INTERNAL_INCLUDE_DIRS} ${OPENGL_INDLUDE_DIRS} ${GLEW_INCLUDE_DIRS} "/usr/include/SOIL/")
-target_link_libraries(boomhs ${SDL2_LIBRARIES} ${SDL2IMAGE_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} SOIL pthread)
+
+target_link_libraries(boomhs ${SDL2_LIBRARIES} stdc++ ${SDL2IMAGE_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} SOIL pthread)
+
+target_include_directories(shader_loader PUBLIC ${INTERNAL_INCLUDE_DIRS})
+target_link_libraries(shader_loader stdc++ c++experimental)
 EOF
 
 cat > "${BUILD}/conanfile.txt" << "EOF"

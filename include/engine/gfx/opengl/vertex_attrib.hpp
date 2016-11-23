@@ -1,5 +1,6 @@
 #pragma once
 #include <engine/gfx/opengl/context.hpp>
+#include <engine/gfx/opengl/glsl.hpp>
 
 namespace engine::gfx::opengl
 {
@@ -59,10 +60,8 @@ make_vertex_attribute_config(opengl_context const& ctx)
   component_count const ccount{cc_vertex, cc_color, cc_uv};
 
   // attribute indexes
-  GLint const index_vertex = 0;
-  GLint const index_color = 1;
-  GLint const index_uv = 2;
-  attribute_index const ai{index_vertex, index_color, index_uv};
+  attribute_index const ai{VERTEX_ATTRIBUTE_INDEX_OF_POSITION,
+    VERTEX_ATTRIBUTE_INDEX_OF_COLOR, VERTEX_ATTRIBUTE_INDEX_OF_UV};
 
   return vertex_attribute_config{ctx.vao(), ctx.vbo(), ccount, ai};
 }

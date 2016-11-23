@@ -1,9 +1,7 @@
-#version 300 es
-
 // attributes input to the vertex shader
-layout (location = 0) in vec4 a_position; // position value
-layout (location = 1) in vec4 a_color;
-layout (location = 2) in vec2 a_uv;
+layout (location = VERTEX_ATTRIBUTE_INDEX_OF_POSITION) in vec4 a_position; // position value
+layout (location = VERTEX_ATTRIBUTE_INDEX_OF_COLOR) in vec4 a_color;
+layout (location = VERTEX_ATTRIBUTE_INDEX_OF_UV) in vec2 a_uv;
 
 // output of the vertex shader - input to fragment
 // shader

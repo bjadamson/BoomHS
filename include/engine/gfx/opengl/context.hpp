@@ -25,7 +25,7 @@ static auto const load_texture = [](char const *path) {
   int w = 0, h = 0;
   unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, SOIL_LOAD_RGB);
   if (nullptr == pimage) {
-    std::cerr << "image didn't load.";
+    std::cerr << "image '" << path << "' didn't load.";
     std::abort();
   }
   ON_SCOPE_EXIT([&]() { SOIL_free_image_data(pimage); });

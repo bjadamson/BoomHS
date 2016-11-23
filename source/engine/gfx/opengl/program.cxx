@@ -73,11 +73,7 @@ link_program(GLuint const program_id)
 
 } // ns anonymous
 
-namespace engine
-{
-namespace gfx
-{
-namespace opengl
+namespace engine::gfx::opengl
 {
 
 stlw::result<program, std::string>
@@ -101,6 +97,4 @@ program_loader::load(char const *vertex_file_path, char const *fragment_file_pat
   return program::make(program_id);
 }
 
-} // ns opengl
-} // ns gfx
-} // ns engine
+} // ns engine::gfx::opengl
