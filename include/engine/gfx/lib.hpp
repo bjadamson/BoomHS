@@ -1,7 +1,7 @@
 #pragma once
 #include <engine/gfx/opengl/context.hpp>
 #include <engine/gfx/opengl/program.hpp>
-#include <engine/gfx/opengl/polygon_renderer.hpp>
+#include <engine/gfx/opengl/scene_renderer.hpp>
 #include <engine/gfx/opengl_glew.hpp>
 #include <engine/gfx/opengl/vertex_attrib.hpp>
 #include <engine/window/sdl_window.hpp>
@@ -217,14 +217,10 @@ class gfx_engine
   using W = ::engine::window::sdl_window;
 
   W window_;
-  polygon_renderer pr0_, pr1_;
   opengl_context rc0_, rc1_;
 
-  gfx_engine(W &&w, polygon_renderer &&p0, opengl_context &&r0, polygon_renderer &&p1,
-      opengl_context &&r1)
+  gfx_engine(W &&w, opengl_context &&r0, opengl_context &&r1)
     : window_(std::move(w))
-    , pr0_(std::move(p0))
-    , pr1_(std::move(p1))
     , rc0_(std::move(r0))
     , rc1_(std::move(r1))
   {
@@ -239,8 +235,6 @@ public:
   // move-assignment OK.
   gfx_engine(gfx_engine &&other)
       : window_(std::move(other.window_))
-      , pr0_(std::move(other.pr0_))
-      , pr1_(std::move(other.pr1_))
       , rc0_(std::move(other.rc0_))
       , rc1_(std::move(other.rc1_))
   {
@@ -263,7 +257,7 @@ public:
   void draw0(Args const& args, S const&... shapes)
   {
     auto const gl_mapped_shapes = shape_mapper::map_to_floats(shapes...);
-    this->pr0_.draw(args.logger, this->rc0_, args.view, args.projection, gl_mapped_shapes);
+    renderer::draw_scene(args.logger, this->rc0_, args.view, args.projection, gl_mapped_shapes);
   }
 
   template <typename Args, typename ...S>
@@ -271,7 +265,7 @@ public:
   {
     auto const gl_mapped_shapes = shape_mapper::map_to_floats(shapes...);
 
-    this->pr1_.draw(args.logger, this->rc1_, args.view, args.projection, gl_mapped_shapes);
+    renderer::draw_scene(args.logger, this->rc1_, args.view, args.projection, gl_mapped_shapes);
   }
 };
 
@@ -290,24 +284,21 @@ struct opengl_library {
   template <typename L, typename W>
   static inline stlw::result<gfx_engine, std::string> make_gfx_engine(L &logger, W &&window)
   {
-    auto const make_polygon_renderer = [](auto &logger, auto const& rc)
-    {
-      polygon_renderer polyr;
-      auto vertex_attribute_config = make_vertex_attribute_config(rc);
+    auto const make_ctx = [&logger](auto &&phandle, char const* asset_path) {
+      auto context = context_factory::make_opengl_context(std::move(phandle), asset_path);
+      auto vertex_attribute_config = make_vertex_attribute_config(context);
       global::set_vertex_attributes(logger, vertex_attribute_config);
-      return polyr;
+      return context;
     };
 
     // TODO: can they share the same program???
     DO_MONAD(auto phandle0, impl::load_program("shader.vert", "shader.frag"));
-    auto rc0 = context_factory::make_opengl_context(std::move(phandle0), "assets/wall.jpg");
+    auto rc0 = make_ctx(std::move(phandle0), "assets/wall.jpg");
 
     DO_MONAD(auto phandle1, impl::load_program("shader.vert", "shader.frag"));
-    auto rc1 = context_factory::make_opengl_context(std::move(phandle1), "assets/container.jpg");
+    auto rc1 = make_ctx(std::move(phandle1), "assets/container.jpg");
 
-    auto pr0 = make_polygon_renderer(logger, rc0);
-    auto pr1 = make_polygon_renderer(logger, rc1);
-    return gfx_engine{std::move(window), std::move(pr0), std::move(rc0), std::move(pr1), std::move(rc1)};
+    return gfx_engine{std::move(window), std::move(rc0), std::move(rc1)};
   }
 };
 
