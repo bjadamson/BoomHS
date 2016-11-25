@@ -35,7 +35,7 @@ main(int argc, char *argv[])
 
   // Initialize graphics renderer
   namespace gfx = engine::gfx;
-  auto engine = gfx::factory::make_opengl_engine(logger, std::move(window));
+  auto engine = gfx::factory::make_gfx_sdl_engine(logger, std::move(window));
   DO_MONAD_OR_ELSE_RETURN(auto renderer, std::move(engine), on_error);
   using R = decltype(renderer);
 
