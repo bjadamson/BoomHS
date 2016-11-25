@@ -1,4 +1,4 @@
-#include <engine/gfx/opengl_glew.hpp>
+#include <engine/gfx/opengl/glew.hpp>
 #include <engine/window/sdl_window.hpp>
 #include <stlw/result.hpp>
 #include <stlw/format.hpp>

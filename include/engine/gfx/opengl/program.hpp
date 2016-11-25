@@ -1,5 +1,5 @@
 #pragma once
-#include <engine/gfx/opengl_glew.hpp>
+#include <engine/gfx/opengl/glew.hpp>
 #include <engine/gfx/opengl/global.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
