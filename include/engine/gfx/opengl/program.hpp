@@ -107,7 +107,7 @@ struct program_loader {
   program_loader() = delete;
 
   static stlw::result<program, std::string>
-  load(char const *vertex_file_path, char const *fragment_file_path);
+  load(vertex_shader_filename const, fragment_shader_filename const);
 };
 
 } // ns engine::gfx::opengl

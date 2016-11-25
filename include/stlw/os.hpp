@@ -33,9 +33,12 @@ read_file(char const *path)
   return sstream.str();
 }
 
+template<typename T>
+auto
+read_file(T const s) { return read_file(s.c_str()); }
+
 // TODO: boost::path
 template<typename ...Text>
-//stlw::result<??, std::string>
 void
 write_file(std::experimental::filesystem::path const& path, Text const&... text)
 {

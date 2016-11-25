@@ -77,11 +77,17 @@ namespace engine::gfx::opengl
 {
 
 stlw::result<program, std::string>
-program_loader::load(char const *vertex_file_path, char const *fragment_file_path)
+program_loader::load(vertex_shader_filename const v, fragment_shader_filename const f)
 {
+  auto const prefix = [](auto const& path) {
+    return std::string{"./build-system/bin/shaders/"} + path;
+  };
+  auto const vertex_shader_path = prefix(v.filename);
+  auto const fragment_shader_path = prefix(f.filename);
+
   // Read the Vertex/Fragment Shader code from ther file
-  DO_MONAD(auto const vertex_shader_source, stlw::read_file(vertex_file_path));
-  DO_MONAD(auto const fragment_shader_source, stlw::read_file(fragment_file_path));
+  DO_MONAD(auto const vertex_shader_source, stlw::read_file(vertex_shader_path));
+  DO_MONAD(auto const fragment_shader_source, stlw::read_file(fragment_shader_path));
 
   DO_MONAD(auto const vertex_shader_id, compile_shader(vertex_shader_source, GL_VERTEX_SHADER));
   DO_MONAD(auto const frag_shader_id, compile_shader(fragment_shader_source, GL_FRAGMENT_SHADER));

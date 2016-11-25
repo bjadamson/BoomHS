@@ -13,25 +13,6 @@
 namespace engine::gfx
 {
 
-namespace impl {
-
-stlw::result<opengl::program, std::string>
-load_program(opengl::vertex_shader_filename const v, opengl::fragment_shader_filename const f)
-{
-  auto const prefix = [](auto const& path) {
-    return std::string{"./build-system/bin/shaders/"} + path;
-  };
-  auto const vpath = prefix(v.filename);
-  auto const fpath = prefix(f.filename);
-  auto expected_program_id = opengl::program_loader::load(vpath.c_str(), fpath.c_str());
-  if (!expected_program_id) {
-    return stlw::make_error(expected_program_id.error());
-  }
-  return expected_program_id;
-}
-
-} // ns impl
-
 auto log_error = [](auto const line) {
   GLenum err = GL_NO_ERROR;
   while ((err = glGetError()) != GL_NO_ERROR) {
@@ -286,10 +267,10 @@ struct factory {
       return context;
     };
 
-    DO_MONAD(auto phandle0, impl::load_program("shader.vert", "shader.frag"));
+    DO_MONAD(auto phandle0, opengl::program_loader::load("shader.vert", "shader.frag"));
     auto rc0 = make_ctx(std::move(phandle0), "assets/wall.jpg");
 
-    DO_MONAD(auto phandle1, impl::load_program("shader.vert", "shader.frag"));
+    DO_MONAD(auto phandle1, opengl::program_loader::load("shader.vert", "shader.frag"));
     auto rc1 = make_ctx(std::move(phandle1), "assets/container.jpg");
 
     gfx_engine engine{std::move(window), std::move(rc0), std::move(rc1)};
