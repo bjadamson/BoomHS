@@ -1,5 +1,6 @@
 #pragma once
 #include <engine/gfx/lib.hpp>
+#include <engine/gfx/resources.hpp>
 #include <engine/gfx/opengl/context.hpp>
 #include <engine/gfx/opengl/gfx_to_opengl.hpp>
 #include <stlw/type_macros.hpp>
@@ -63,11 +64,14 @@ struct factory {
       return context;
     };
 
+    auto constexpr RESOURCES = resources::make_resource_table();
+    auto const get_r = [&](auto const i) { return RESOURCES[i]; };
+
     DO_MONAD(auto phandle0, program_loader::load("shader.vert", "shader.frag"));
-    auto rc0 = make_ctx(std::move(phandle0), "assets/wall.jpg");
+    auto rc0 = make_ctx(std::move(phandle0), get_r(IMAGES::WALL));
 
     DO_MONAD(auto phandle1, program_loader::load("shader.vert", "shader.frag"));
-    auto rc1 = make_ctx(std::move(phandle1), "assets/container.jpg");
+    auto rc1 = make_ctx(std::move(phandle1), get_r(IMAGES::CONTAINER));
 
     // TODO: move this
     //glEnable(GL_DEPTH_TEST);
