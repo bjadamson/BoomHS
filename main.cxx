@@ -29,19 +29,18 @@ main(int argc, char *argv[])
   logger.debug("Setting up stack guard to unitialize window library globals");
   ON_SCOPE_EXIT([]() { window_lib::destroy(); });
 
-  auto const height = 800, width = 600;
+  auto constexpr height = 800, width = 600;
   logger.debug("Instantiating window instance.");
   DO_MONAD_OR_ELSE_RETURN(auto window, window_lib::make_window(height, width), on_error);
 
   // Initialize graphics renderer
   namespace gfx = engine::gfx;
-  using gfx_lib = gfx::library_wrapper<gfx::opengl::opengl_library>;
-  auto const dimensions = window.get_dimensions();
-  DO_MONAD_OR_ELSE_RETURN(auto renderer, gfx_lib::make_gfx_engine(logger, std::move(window)),
-      on_error);
+  auto engine = gfx::factory::make_opengl_engine(logger, std::move(window));
+  DO_MONAD_OR_ELSE_RETURN(auto renderer, std::move(engine), on_error);
   using R = decltype(renderer);
 
   logger.trace("Instantiating 'state'");
+  auto const dimensions = window.get_dimensions();
   auto state = game::boomhs::game_state<L, R>{logger, renderer, dimensions};
 
   // Initialize the game instance.

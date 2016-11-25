@@ -10,22 +10,20 @@
 #include <stlw/type_ctors.hpp>
 #include <glm/glm.hpp>
 
-namespace engine::gfx::opengl
+namespace engine::gfx
 {
 
 namespace impl {
 
-namespace gl = engine::gfx::opengl;
-
-stlw::result<gl::program, std::string>
-load_program(vertex_shader_filename const v, fragment_shader_filename const f)
+stlw::result<opengl::program, std::string>
+load_program(opengl::vertex_shader_filename const v, opengl::fragment_shader_filename const f)
 {
   auto const prefix = [](auto const& path) {
     return std::string{"./build-system/bin/shaders/"} + path;
   };
   auto const vpath = prefix(v.filename);
   auto const fpath = prefix(f.filename);
-  auto expected_program_id = gl::program_loader::load(vpath.c_str(), fpath.c_str());
+  auto expected_program_id = opengl::program_loader::load(vpath.c_str(), fpath.c_str());
   if (!expected_program_id) {
     return stlw::make_error(expected_program_id.error());
   }
@@ -222,9 +220,9 @@ class gfx_engine
   using W = ::engine::window::sdl_window;
 
   W window_;
-  opengl_context rc0_, rc1_;
+  opengl::opengl_context rc0_, rc1_;
 
-  gfx_engine(W &&w, opengl_context &&r0, opengl_context &&r1)
+  gfx_engine(W &&w, opengl::opengl_context &&r0, opengl::opengl_context &&r1)
     : window_(std::move(w))
     , rc0_(std::move(r0))
     , rc1_(std::move(r1))
@@ -234,7 +232,7 @@ class gfx_engine
   NO_COPY(gfx_engine);
   gfx_engine &operator=(gfx_engine &&) = delete;
 
-  friend struct opengl_library;
+  friend struct factory;
 
 public:
   // move-assignment OK.
@@ -262,7 +260,7 @@ public:
   void draw0(Args const& args, S const&... shapes)
   {
     auto const gl_mapped_shapes = shape_mapper::map_to_floats(shapes...);
-    renderer::draw_scene(args.logger, this->rc0_, args.view, args.projection, gl_mapped_shapes);
+    opengl::renderer::draw_scene(args.logger, this->rc0_, args.view, args.projection, gl_mapped_shapes);
   }
 
   template <typename Args, typename ...S>
@@ -270,41 +268,37 @@ public:
   {
     auto const gl_mapped_shapes = shape_mapper::map_to_floats(shapes...);
 
-    renderer::draw_scene(args.logger, this->rc1_, args.view, args.projection, gl_mapped_shapes);
+    opengl::renderer::draw_scene(args.logger, this->rc1_, args.view, args.projection, gl_mapped_shapes);
   }
 };
 
-struct opengl_library {
-  opengl_library() = delete;
-
-  static void init()
-  {
-    // for now, to simplify rendering
-    glEnable(GL_DEPTH_TEST);
-    // glDisable(GL_CULL_FACE);
-  }
-
-  static inline void destroy() {}
+struct factory {
+  factory() = delete;
+  ~factory() = delete;
 
   template <typename L, typename W>
-  static inline stlw::result<gfx_engine, std::string> make_gfx_engine(L &logger, W &&window)
+  static stlw::result<gfx_engine, std::string> make_opengl_engine(L &logger, W &&window)
   {
     auto const make_ctx = [&logger](auto &&phandle, char const* asset_path) {
-      auto context = context_factory::make_opengl_context(std::move(phandle), asset_path);
+      auto context = opengl::context_factory::make_opengl_context(std::move(phandle), asset_path);
       auto vertex_attribute_config = make_vertex_attribute_config(context);
-      global::set_vertex_attributes(logger, vertex_attribute_config);
+      opengl::global::set_vertex_attributes(logger, vertex_attribute_config);
       return context;
     };
 
-    // TODO: can they share the same program???
     DO_MONAD(auto phandle0, impl::load_program("shader.vert", "shader.frag"));
     auto rc0 = make_ctx(std::move(phandle0), "assets/wall.jpg");
 
     DO_MONAD(auto phandle1, impl::load_program("shader.vert", "shader.frag"));
     auto rc1 = make_ctx(std::move(phandle1), "assets/container.jpg");
 
-    return gfx_engine{std::move(window), std::move(rc0), std::move(rc1)};
+    gfx_engine engine{std::move(window), std::move(rc0), std::move(rc1)};
+
+    // TODO: move this
+    //glEnable(GL_DEPTH_TEST);
+    // glDisable(GL_CULL_FACE);
+    return engine;
   }
 };
 
-} // ns engine::gfx::opengl
+} // ns engine::gfx

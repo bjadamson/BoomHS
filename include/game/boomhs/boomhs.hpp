@@ -186,17 +186,17 @@ public:
   template <typename State>//, typename ...S>
   void game_loop(State &state)//, S const&... shapes)
   {
-    ::engine::gfx::opengl::render_args<decltype(state.logger)> const args{state.logger,
+    ::engine::gfx::render_args<decltype(state.logger)> const args{state.logger,
       state.view, state.projection};
 
     using INSIDE_PAIR = std::pair<std::array<float, 3>, float>;
-    std::array<INSIDE_PAIR, 3> const my_color = {
+    std::array<INSIDE_PAIR, 3> constexpr my_color = {
       INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::RED, 1.0f},
       INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::GREEN, 1.0f},
       INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::BLUE, 1.0f},
     };
 
-    std::array<INSIDE_PAIR, 4> const my_color2 = {
+    std::array<INSIDE_PAIR, 4> constexpr my_color2 = {
       INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::RED, 1.0f},
       INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::GREEN, 1.0f},
       INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::BLUE, 1.0f},
