@@ -78,15 +78,15 @@ compile_sources(std::string const &vertex_shader_source, std::string const &frag
   DO_TRY(auto const frag_shader_id, compile_shader(fragment_shader_source, GL_FRAGMENT_SHADER));
   DO_TRY(auto const program_id, create_program());
 
+  glBindAttribLocation(program_id, 0, "a_position");
+  glBindAttribLocation(program_id, 1, "a_color");
+  glBindAttribLocation(program_id, 2, "a_uv");
+
   glAttachShader(program_id, vertex_shader_id);
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, vertex_shader_id); });
 
   glAttachShader(program_id, frag_shader_id);
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, frag_shader_id); });
-
-  glBindAttribLocation(program_id, 0, "a_position");
-  glBindAttribLocation(program_id, 1, "a_color");
-  glBindAttribLocation(program_id, 2, "a_uv");
 
   DO_EFFECT(link_program(program_id));
   return program::make(program_id);
