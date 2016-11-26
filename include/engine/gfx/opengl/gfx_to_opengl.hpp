@@ -3,7 +3,7 @@
 #include <engine/gfx/opengl/glew.hpp>
 #include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl/scene_renderer.hpp>
-#include <engine/gfx/opengl/vertex_attrib.hpp>
+#include <engine/gfx/opengl/vertex_attribute.hpp>
 #include <engine/window/sdl_window.hpp>
 #include <game/shape.hpp>
 #include <glm/glm.hpp>

@@ -2,6 +2,7 @@
 #include <engine/gfx/lib.hpp>
 #include <engine/gfx/opengl/context.hpp>
 #include <engine/gfx/opengl/gfx_to_opengl.hpp>
+#include <engine/gfx/opengl/vertex_attribute.hpp>
 #include <engine/gfx/resources.hpp>
 #include <stlw/type_macros.hpp>
 
@@ -56,8 +57,8 @@ struct factory {
   {
     auto const make_ctx = [&logger](auto &&phandle, char const *asset_path) {
       auto context = context_factory::make_opengl_context(std::move(phandle), asset_path);
-      auto vertex_attribute_config = make_vertex_attribute_config(context);
-      global::set_vertex_attributes(logger, vertex_attribute_config);
+      auto vertex_attribute_context = make_vertex_attribute(context);
+      global::set_vertex_attributes(logger, vertex_attribute_context);
       return context;
     };
 
