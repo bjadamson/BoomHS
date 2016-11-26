@@ -1,6 +1,7 @@
 #pragma once
 #include <engine/gfx/opengl/context.hpp>
 #include <engine/gfx/opengl/glsl.hpp>
+#include <boost/optional.hpp>
 
 namespace engine::gfx::opengl
 {
@@ -9,16 +10,24 @@ struct attribute_info
 {
   GLint const global_index;
   GLint const num_floats;
+
+  explicit attribute_info(GLint const i, GLint const nf)
+    : global_index(i)
+    , num_floats(nf)
+  {}
 };
 
+using optional_attribute = boost::optional<attribute_info>;
+
 struct attribute_list {
-  attribute_info const vertex;
-  attribute_info const color;
-  attribute_info const uv;
+  optional_attribute const vertex;
+  optional_attribute const color;
+  optional_attribute const uv;
 
   auto num_floats() const
   {
-    return this->vertex.num_floats + this->color.num_floats + this->uv.num_floats;
+    auto const add = [](auto const& opt) { return opt ? opt->num_floats : 0; };
+    return add(this->vertex) + add(this->color) + add(this->uv);
   }
 };
 
@@ -55,13 +64,13 @@ make_vertex_attribute(opengl_context const &ctx)
   GLint constexpr nf_uv = 2;     // u, v
 
   // clang-format off
-  static attribute_info constexpr vertex_info{VERTEX_ATTRIBUTE_INDEX_OF_POSITION, nf_vertex};
-  static attribute_info constexpr color_info {VERTEX_ATTRIBUTE_INDEX_OF_COLOR, nf_color};
-  static attribute_info constexpr uv_info    {VERTEX_ATTRIBUTE_INDEX_OF_UV, nf_uv};
+  static attribute_info const vertex_info{VERTEX_ATTRIBUTE_INDEX_OF_POSITION, nf_vertex};
+  static attribute_info const color_info {VERTEX_ATTRIBUTE_INDEX_OF_COLOR, nf_color};
+  static attribute_info const uv_info    {VERTEX_ATTRIBUTE_INDEX_OF_UV, nf_uv};
   // clang-format on
 
   // attribute indexes
-  attribute_list constexpr list{vertex_info, color_info, uv_info};
+  attribute_list const list{attribute_info{vertex_info}, attribute_info{color_info}, attribute_info{uv_info}};
   return vertex_attribute{ctx.vao(), ctx.vbo(), std::move(list)};
 }
 
@@ -89,8 +98,13 @@ set_vertex_attributes(L &logger, vertex_attribute const &va)
   };
 
   skip_context sc{va.num_floats()};
-  auto const set_attrib_pointer = [&logger, &sc](auto const& attribute_info)
+  auto const set_attrib_pointer = [&logger, &sc](auto const& optional_attribute_info)
   {
+    if (! optional_attribute_info) {
+      return;
+    }
+
+    auto const& attribute_info = *optional_attribute_info;
     auto const attribute_index = attribute_info.global_index;
     auto const component_count = attribute_info.num_floats;
 

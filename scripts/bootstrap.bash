@@ -23,7 +23,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17 -stdlib=libc++")
 set(TOOLS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tools/)
 
 ## DEFINITIONS
-file(GLOB INTERNAL_INCLUDE_DIRS include external/expected/include external/hana/include external/ecst/include external/ecst/extlibs/vrm_core/include external/ecst/extlibs/vrm_pp/include)
+file(GLOB INTERNAL_INCLUDE_DIRS include external/compact_optional/include external/expected/include external/hana/include external/ecst/include external/ecst/extlibs/vrm_core/include external/ecst/extlibs/vrm_pp/include)
 file(GLOB_RECURSE GLOBBED_SOURCES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cxx
