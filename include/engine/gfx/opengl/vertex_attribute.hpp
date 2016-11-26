@@ -1,20 +1,20 @@
 #pragma once
+#include <boost/optional.hpp>
 #include <engine/gfx/opengl/context.hpp>
 #include <engine/gfx/opengl/glsl.hpp>
-#include <boost/optional.hpp>
 
 namespace engine::gfx::opengl
 {
 
-struct attribute_info
-{
+struct attribute_info {
   GLint const global_index;
   GLint const num_floats;
 
   explicit attribute_info(GLint const i, GLint const nf)
-    : global_index(i)
-    , num_floats(nf)
-  {}
+      : global_index(i)
+      , num_floats(nf)
+  {
+  }
 };
 
 using optional_attribute = boost::optional<attribute_info>;
@@ -26,7 +26,7 @@ struct attribute_list {
 
   auto num_floats() const
   {
-    auto const add = [](auto const& opt) { return opt ? opt->num_floats : 0; };
+    auto const add = [](auto const &opt) { return opt ? opt->num_floats : 0; };
     return add(this->vertex) + add(this->color) + add(this->uv);
   }
 };
@@ -39,7 +39,7 @@ class vertex_attribute
   attribute_list const list_;
 
 public:
-  vertex_attribute(GLuint const vao, GLuint const vbo, attribute_list const& list)
+  vertex_attribute(GLuint const vao, GLuint const vbo, attribute_list const &list)
       : vao_(vao)
       , vbo_(vbo)
       , list_(list)
@@ -70,7 +70,8 @@ make_vertex_attribute(opengl_context const &ctx)
   // clang-format on
 
   // attribute indexes
-  attribute_list const list{attribute_info{vertex_info}, attribute_info{color_info}, attribute_info{uv_info}};
+  attribute_list const list{attribute_info{vertex_info}, attribute_info{color_info},
+                            attribute_info{uv_info}};
   return vertex_attribute{ctx.vao(), ctx.vbo(), std::move(list)};
 }
 
@@ -98,13 +99,12 @@ set_vertex_attributes(L &logger, vertex_attribute const &va)
   };
 
   skip_context sc{va.num_floats()};
-  auto const set_attrib_pointer = [&logger, &sc](auto const& optional_attribute_info)
-  {
-    if (! optional_attribute_info) {
+  auto const set_attrib_pointer = [&logger, &sc](auto const &optional_attribute_info) {
+    if (!optional_attribute_info) {
       return;
     }
 
-    auto const& attribute_info = *optional_attribute_info;
+    auto const &attribute_info = *optional_attribute_info;
     auto const attribute_index = attribute_info.global_index;
     auto const component_count = attribute_info.num_floats;
 
