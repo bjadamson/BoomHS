@@ -1,4 +1,5 @@
 #include <engine/gfx/opengl/program.hpp>
+#include <engine/gfx/opengl/glsl.hpp>
 #include <stlw/os.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
@@ -78,9 +79,9 @@ compile_sources(std::string const &vertex_shader_source, std::string const &frag
   DO_TRY(auto const frag_shader_id, compile_shader(fragment_shader_source, GL_FRAGMENT_SHADER));
   DO_TRY(auto const program_id, create_program());
 
-  glBindAttribLocation(program_id, 0, "a_position");
-  glBindAttribLocation(program_id, 1, "a_color");
-  glBindAttribLocation(program_id, 2, "a_uv");
+  glBindAttribLocation(program_id, VERTEX_ATTRIBUTE_INDEX_OF_POSITION, "a_position");
+  glBindAttribLocation(program_id, VERTEX_ATTRIBUTE_INDEX_OF_COLOR, "a_color");
+  glBindAttribLocation(program_id, VERTEX_ATTRIBUTE_INDEX_OF_UV, "a_uv");
 
   glAttachShader(program_id, vertex_shader_id);
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, vertex_shader_id); });
