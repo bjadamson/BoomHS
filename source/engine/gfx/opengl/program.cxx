@@ -84,6 +84,10 @@ compile_sources(std::string const &vertex_shader_source, std::string const &frag
   glAttachShader(program_id, frag_shader_id);
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, frag_shader_id); });
 
+  glBindAttribLocation(program_id, 0, "a_position");
+  glBindAttribLocation(program_id, 1, "a_color");
+  glBindAttribLocation(program_id, 2, "a_uv");
+
   DO_EFFECT(link_program(program_id));
   return program::make(program_id);
 }
