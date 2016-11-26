@@ -8,5 +8,5 @@ out vec4 fragment_color;  // output fragment color
 
 void main()
 {
-  fragment_color = v_color;//texture(sampler, v_uv);
+  fragment_color = texture(sampler, v_uv);
 }

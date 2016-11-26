@@ -45,7 +45,7 @@ compile_shader(T const &data, GLenum const type)
   return compile_shader(data.c_str(), type);
 }
 
-stlw::result<GLuint, std::string>
+inline stlw::result<GLuint, std::string>
 create_program()
 {
   GLuint const program_id = glCreateProgram();
@@ -55,7 +55,7 @@ create_program()
   return program_id;
 }
 
-stlw::result<stlw::empty_type, std::string>
+inline stlw::result<stlw::empty_type, std::string>
 link_program(GLuint const program_id)
 {
   // Link the program
@@ -71,24 +71,9 @@ link_program(GLuint const program_id)
   return stlw::make_empty();
 }
 
-} // ns anonymous
-
-namespace engine::gfx::opengl
-{
-
 stlw::result<program, std::string>
-program_loader::load(vertex_shader_filename const v, fragment_shader_filename const f)
+compile_sources(std::string const& vertex_shader_source, std::string const& fragment_shader_source)
 {
-  auto const prefix = [](auto const& path) {
-    return std::string{"./build-system/bin/shaders/"} + path;
-  };
-  auto const vertex_shader_path = prefix(v.filename);
-  auto const fragment_shader_path = prefix(f.filename);
-
-  // Read the Vertex/Fragment Shader code from ther file
-  DO_MONAD(auto const vertex_shader_source, stlw::read_file(vertex_shader_path));
-  DO_MONAD(auto const fragment_shader_source, stlw::read_file(fragment_shader_path));
-
   DO_MONAD(auto const vertex_shader_id, compile_shader(vertex_shader_source, GL_VERTEX_SHADER));
   DO_MONAD(auto const frag_shader_id, compile_shader(fragment_shader_source, GL_FRAGMENT_SHADER));
   DO_MONAD(auto const program_id, create_program());
@@ -101,6 +86,27 @@ program_loader::load(vertex_shader_filename const v, fragment_shader_filename co
 
   DO_EFFECT(link_program(program_id));
   return program::make(program_id);
+}
+
+} // ns anonymous
+
+namespace engine::gfx::opengl
+{
+
+stlw::result<program, std::string>
+program_loader::from_files(vertex_shader_filename const v, fragment_shader_filename const f)
+{
+  auto const prefix = [](auto const& path) {
+    return std::string{"./build-system/bin/shaders/"} + path;
+  };
+  auto const vertex_shader_path = prefix(v.filename);
+  auto const fragment_shader_path = prefix(f.filename);
+
+  // Read the Vertex/Fragment Shader code from ther file
+  DO_MONAD(auto const vertex_shader_source, stlw::read_file(vertex_shader_path));
+  DO_MONAD(auto const fragment_shader_source, stlw::read_file(fragment_shader_path));
+
+  return compile_sources(vertex_shader_source, fragment_shader_source);
 }
 
 } // ns engine::gfx::opengl

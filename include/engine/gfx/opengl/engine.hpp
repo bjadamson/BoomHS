@@ -67,10 +67,10 @@ struct factory {
     auto constexpr RESOURCES = resources::make_resource_table();
     auto const get_r = [&](auto const i) { return RESOURCES[i]; };
 
-    DO_MONAD(auto phandle0, program_loader::load("shader.vert", "shader.frag"));
+    DO_MONAD(auto phandle0, program_loader::from_files("shader.vert", "color.frag"));
     auto rc0 = make_ctx(std::move(phandle0), get_r(IMAGES::WALL));
 
-    DO_MONAD(auto phandle1, program_loader::load("shader.vert", "shader.frag"));
+    DO_MONAD(auto phandle1, program_loader::from_files("shader.vert", "image.frag"));
     auto rc1 = make_ctx(std::move(phandle1), get_r(IMAGES::CONTAINER));
 
     // TODO: move this

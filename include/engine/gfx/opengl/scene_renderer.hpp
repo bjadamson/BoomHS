@@ -85,6 +85,9 @@ void draw_scene(L &logger, opengl_context &ctx, glm::mat4 const &view, glm::mat4
   global::vao_bind(ctx.vao());
   ON_SCOPE_EXIT([]() { global::vao_unbind(); });
 
+  global::texture_bind(ctx.texture());
+  ON_SCOPE_EXIT([]() { global::texture_unbind(); });
+
   // Pass the matrices to the shader
   auto &p = ctx.program_ref();
   p.set_uniform_matrix_4fv("view", view);
