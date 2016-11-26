@@ -1,12 +1,13 @@
 #pragma once
 #include <SOIL.h>
-#include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl/global.hpp>
+#include <engine/gfx/opengl/program.hpp>
 
 namespace engine::gfx::opengl
 {
 
-namespace impl {
+namespace impl
+{
 
 static auto const load_texture = [](char const *path) {
   GLuint texture;
@@ -39,7 +40,8 @@ static auto const load_texture = [](char const *path) {
 
 } // ns impl
 
-class opengl_context {
+class opengl_context
+{
   GLuint vao_ = 0, vbo_ = 0;
   GLuint texture_ = 0;
   program program_;
@@ -51,8 +53,8 @@ class opengl_context {
 
   // private ctor, use factory function.
   opengl_context(program &&p, GLuint const tid)
-    : program_(std::move(p))
-    , texture_(tid)
+      : program_(std::move(p))
+      , texture_(tid)
   {
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
     glGenBuffers(NUM_BUFFERS, &this->vbo_);
@@ -60,6 +62,7 @@ class opengl_context {
     glBindBuffer(GL_ARRAY_BUFFER, this->vbo_);
     ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
   }
+
 public:
   ~opengl_context()
   {
@@ -83,16 +86,15 @@ public:
   inline auto vao() const { return this->vao_; }
   inline auto vbo() const { return this->vbo_; }
   inline auto texture() const { return this->texture_; }
-  inline auto& program_ref() { return this->program_; }
+  inline auto &program_ref() { return this->program_; }
 
   friend struct context_factory;
 };
 
-struct context_factory
-{
+struct context_factory {
   context_factory() = delete;
 
-  auto static make_opengl_context(program &&p, char const* path)
+  auto static make_opengl_context(program &&p, char const *path)
   {
     auto const tid = impl::load_texture(path);
     return opengl_context{std::move(p), tid};

@@ -4,12 +4,9 @@
 namespace engine::gfx
 {
 
-enum class IMAGES {
-  CONTAINER = 0,
-  WALL
-};
+enum class IMAGES { CONTAINER = 0, WALL };
 
-template<typename K, typename V, std::size_t N>
+template <typename K, typename V, std::size_t N>
 class table
 {
 private:
@@ -17,9 +14,13 @@ private:
 
   NO_COPY(table);
   NO_MOVE_ASSIGN(table);
+
 public:
   template <typename... T>
-  explicit constexpr table(T... ts) : table_{ts...} {}
+  explicit constexpr table(T... ts)
+      : table_{ts...}
+  {
+  }
 
   MOVE_CONSTRUCTIBLE(table);
 
@@ -31,21 +32,19 @@ public:
   }
 };
 
-struct resources
-{
+struct resources {
   resources() = delete;
   ~resources() = delete;
 
-  static constexpr auto
-  make_resource_table()
+  static constexpr auto make_resource_table()
   {
     using K = IMAGES;
-    using V = char const*;
+    using V = char const *;
     std::size_t constexpr N = 2;
 
     return table<K, V, N>{
-      std::make_pair(K::CONTAINER, "assets/container.jpg"),
-      std::make_pair(K::WALL, "assets/wall.jpg"),
+        std::make_pair(K::CONTAINER, "assets/container.jpg"),
+        std::make_pair(K::WALL, "assets/wall.jpg"),
     };
   }
 };

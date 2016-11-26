@@ -19,7 +19,8 @@ struct attribute_index {
   GLint const uv;
 };
 
-class vertex_attribute_config {
+class vertex_attribute_config
+{
   GLuint const vao_, vbo_;
 
   // configure this OpenGL VAO attribute with this linear layout
@@ -27,13 +28,14 @@ class vertex_attribute_config {
   attribute_index const attribute_indexes_;
 
 public:
-  vertex_attribute_config(GLuint const vao, GLuint const vbo, component_count const& cc,
-      attribute_index const& ai)
-    : vao_(vao)
-    , vbo_(vbo)
-    , ccount_(cc)
-    , attribute_indexes_(ai)
-  {}
+  vertex_attribute_config(GLuint const vao, GLuint const vbo, component_count const &cc,
+                          attribute_index const &ai)
+      : vao_(vao)
+      , vbo_(vbo)
+      , ccount_(cc)
+      , attribute_indexes_(ai)
+  {
+  }
 
   auto const vao() const { return this->vao_; }
   auto const vbo() const { return this->vbo_; }
@@ -42,11 +44,11 @@ public:
   auto num_uv() const { return this->ccount_.uv; }
   auto num_components() const { return this->ccount_.sum(); }
 
-  auto const& indexes() const { return this->attribute_indexes_; }
+  auto const &indexes() const { return this->attribute_indexes_; }
 };
 
 auto
-make_vertex_attribute_config(opengl_context const& ctx)
+make_vertex_attribute_config(opengl_context const &ctx)
 {
   // Vertex Attribute positions
   static GLint constexpr VERTEX_INDEX = 0;
@@ -60,17 +62,18 @@ make_vertex_attribute_config(opengl_context const& ctx)
   component_count const ccount{cc_vertex, cc_color, cc_uv};
 
   // attribute indexes
-  attribute_index const ai{VERTEX_ATTRIBUTE_INDEX_OF_POSITION,
-    VERTEX_ATTRIBUTE_INDEX_OF_COLOR, VERTEX_ATTRIBUTE_INDEX_OF_UV};
+  attribute_index const ai{VERTEX_ATTRIBUTE_INDEX_OF_POSITION, VERTEX_ATTRIBUTE_INDEX_OF_COLOR,
+                           VERTEX_ATTRIBUTE_INDEX_OF_UV};
 
   return vertex_attribute_config{ctx.vao(), ctx.vbo(), ccount, ai};
 }
 
-namespace global {
+namespace global
+{
 
-template<typename L>
+template <typename L>
 auto
-set_vertex_attributes(L &logger, vertex_attribute_config const& config)
+set_vertex_attributes(L &logger, vertex_attribute_config const &config)
 {
   vao_bind(config.vao());
   ON_SCOPE_EXIT([]() { vao_unbind(); });
@@ -89,7 +92,8 @@ set_vertex_attributes(L &logger, vertex_attribute_config const& config)
   };
 
   skip_context sc{config.num_components()};
-  auto const set_attrib_pointer = [&logger, &sc](auto const attribute_index, auto const component_count) {
+  auto const set_attrib_pointer = [&logger, &sc](auto const attribute_index,
+                                                 auto const component_count) {
     // enable vertex attibute arrays
     glEnableVertexAttribArray(attribute_index);
 
@@ -111,10 +115,9 @@ set_vertex_attributes(L &logger, vertex_attribute_config const& config)
     GLint enabled = 0;
     glGetVertexAttribiv(attribute_index, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
 
-    auto const s =
-        fmt::format("%-10d %-10d %-10d %-10s %-10d %-10d %-10d %-10d\n", attribute_index, enabled,
-                    component_count, "float", DONT_NORMALIZE_THE_DATA, stride_in_bytes,
-                    offset_in_bytes, sc.components_skipped);
+    auto const s = fmt::format("%-10d %-10d %-10d %-10s %-10d %-10d %-10d %-10d\n", attribute_index,
+                               enabled, component_count, "float", DONT_NORMALIZE_THE_DATA,
+                               stride_in_bytes, offset_in_bytes, sc.components_skipped);
     logger.trace(s);
   };
 
@@ -126,7 +129,7 @@ set_vertex_attributes(L &logger, vertex_attribute_config const& config)
   }
   {
     auto const fmt = fmt::format("%-10s %-10s %-10s %-10s %-10s %-10s %-10s\n", "index:", "enabled",
-                                "size", "type", "normalized", "stride", "pointer", "num skipped");
+                                 "size", "type", "normalized", "stride", "pointer", "num skipped");
     logger.trace(fmt);
   }
   set_attrib_pointer(config.indexes().vertex, config.num_vertices());

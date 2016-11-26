@@ -7,13 +7,13 @@
 #include <stlw/type_macros.hpp>
 
 #define DEFINE_SHADER_FILENAME_TYPE(NAME)                                                          \
-struct NAME##_shader_filename {                                                                    \
-  char const *filename;                                                                            \
-  NAME##_shader_filename(char const *f)                                                            \
-      : filename(f)                                                                                \
-  {                                                                                                \
-  }                                                                                                \
-}
+  struct NAME##_shader_filename {                                                                  \
+    char const *filename;                                                                          \
+    NAME##_shader_filename(char const *f)                                                          \
+        : filename(f)                                                                              \
+    {                                                                                              \
+    }                                                                                              \
+  }
 
 namespace engine::gfx::opengl
 {

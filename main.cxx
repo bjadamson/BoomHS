@@ -24,19 +24,19 @@ main(int argc, char *argv[])
   using window_lib = w::library_wrapper<w::sdl_library>;
 
   logger.debug("Initializing window library globals");
-  DO_MONAD_OR_ELSE_RETURN(auto _, window_lib::init(), on_error);
+  DO_TRY_OR_ELSE_RETURN(auto _, window_lib::init(), on_error);
 
   logger.debug("Setting up stack guard to unitialize window library globals");
   ON_SCOPE_EXIT([]() { window_lib::destroy(); });
 
   auto constexpr height = 800, width = 600;
   logger.debug("Instantiating window instance.");
-  DO_MONAD_OR_ELSE_RETURN(auto window, window_lib::make_window(height, width), on_error);
+  DO_TRY_OR_ELSE_RETURN(auto window, window_lib::make_window(height, width), on_error);
 
   // Initialize graphics renderer
   namespace gfx = engine::gfx;
   auto engine = gfx::factory::make_gfx_sdl_engine(logger, std::move(window));
-  DO_MONAD_OR_ELSE_RETURN(auto renderer, std::move(engine), on_error);
+  DO_TRY_OR_ELSE_RETURN(auto renderer, std::move(engine), on_error);
   using R = decltype(renderer);
 
   logger.trace("Instantiating 'state'");

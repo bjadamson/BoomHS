@@ -2,8 +2,8 @@
 #include <stlw/format.hpp>
 #include <stlw/type_ctors.hpp>
 
-#include <string> // TODO: rm
 #include <boost/optional.hpp>
+#include <string> // TODO: rm
 
 namespace engine::gfx::opengl::global::log::impl
 {

@@ -1,15 +1,15 @@
 #pragma once
-#include <vector>
 #include <stlw/type_macros.hpp>
+#include <vector>
 
 namespace stlw
 {
 
 // Allocates immediatly upon construction.
-template<typename T, typename A=std::allocator<T>>
+template <typename T, typename A = std::allocator<T>>
 class sized_buffer
 {
-  template<typename Tt, typename Aa>
+  template <typename Tt, typename Aa>
   using BT = std::vector<Tt, Aa>;
 
   BT<T, A> vec_;
@@ -36,31 +36,31 @@ public:
   // clang-format on
 
   // constructors
-  sized_buffer(size_type const count, T const& value, A const& alloc = A{})
-    : vec_(count, value, alloc)
-    {
-      reserve();
-    }
+  sized_buffer(size_type const count, T const &value, A const &alloc = A{})
+      : vec_(count, value, alloc)
+  {
+    reserve();
+  }
   explicit sized_buffer(size_type const count)
-    : vec_(count)
+      : vec_(count)
   {
     reserve();
   }
 
-  template<typename InputIt>
-  sized_buffer(InputIt first, InputIt last, A const& alloc = A{})
-    : vec_(first, last, alloc)
-    {
-      reserve();
-    }
+  template <typename InputIt>
+  sized_buffer(InputIt first, InputIt last, A const &alloc = A{})
+      : vec_(first, last, alloc)
+  {
+    reserve();
+  }
 
   // methods
-  reference       operator[](size_type const i) { return this->vec_[i]; }
+  reference operator[](size_type const i) { return this->vec_[i]; }
   const_reference operator[](size_type const i) const { return this->vec_[i]; }
 
   size_type length() const { return this->vec_.capacity(); }
-  T* data() { return this->vec_.data(); }
-  T const* data() const { return this->vec_.data(); }
+  T *data() { return this->vec_.data(); }
+  T const *data() const { return this->vec_.data(); }
 };
 
 } // ns stlw

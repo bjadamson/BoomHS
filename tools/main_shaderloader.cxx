@@ -1,14 +1,15 @@
-#include <stlw/os.hpp>
+#include <cstdlib>
 #include <experimental/filesystem>
 #include <iostream>
-#include <cstdlib>
+#include <stlw/os.hpp>
 
 namespace fs = std::experimental::filesystem;
 
-namespace {
+namespace
+{
 
 void
-delete_if_exists(fs::path const& path)
+delete_if_exists(fs::path const &path)
 {
   if (fs::exists(path)) {
     fs::remove(path);
@@ -16,10 +17,10 @@ delete_if_exists(fs::path const& path)
 }
 
 bool
-copy_to_outdir(std::string const& contents, fs::path const& shader_path, fs::path const& outdir)
+copy_to_outdir(std::string const &contents, fs::path const &shader_path, fs::path const &outdir)
 {
   auto const shader_read_result = stlw::read_file(shader_path.string().c_str());
-  if (! shader_read_result) {
+  if (!shader_read_result) {
     return false;
   }
   auto const shader_contents = *shader_read_result;
@@ -39,7 +40,7 @@ copy_to_outdir(std::string const& contents, fs::path const& shader_path, fs::pat
 
 } // ns anonymous
 
-template<typename L>
+template <typename L>
 auto
 make_paths(L &log)
 {
@@ -64,8 +65,8 @@ main(int argc, char *argv[])
 {
   auto &log = std::cerr;
   auto const paths = make_paths(log);
-  auto const& CWD = paths.first;
-  auto const& path_to_shaders = paths.second;
+  auto const &CWD = paths.first;
+  auto const &path_to_shaders = paths.second;
 
   auto const on_error = [&log](auto const msg) {
     log << "Error running shader loader, problem: '" << msg << "'";
@@ -80,16 +81,16 @@ main(int argc, char *argv[])
 
   // preamble
   auto const preamble_read_result = stlw::read_file("./include/engine/gfx/opengl/glsl.hpp");
-  if (! preamble_read_result) {
+  if (!preamble_read_result) {
     return false;
   }
   auto const preamble = *preamble_read_result;
   auto const glsl_version = R"(#version 300 es)";
   auto const combined = glsl_version + preamble;
 
-  for (fs::directory_iterator it{path_to_shaders} ; it != fs::directory_iterator{}; ++it) {
+  for (fs::directory_iterator it{path_to_shaders}; it != fs::directory_iterator{}; ++it) {
     auto const outdir = CWD.string() + "/build-system/bin/shaders/";
-    if (! copy_to_outdir(combined, it->path(), outdir)) {
+    if (!copy_to_outdir(combined, it->path(), outdir)) {
       return EXIT_FAILURE;
     }
   }

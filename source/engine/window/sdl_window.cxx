@@ -1,7 +1,7 @@
 #include <engine/gfx/opengl/glew.hpp>
 #include <engine/window/sdl_window.hpp>
-#include <stlw/result.hpp>
 #include <stlw/format.hpp>
+#include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
@@ -20,20 +20,20 @@ sdl_library::init()
     bool const set_attribute_suceeded = SDL_GL_SetAttribute(attribute, value);
     if (!set_attribute_suceeded) {
       auto const fmt = fmt::format("Setting attribute '{}' failed, error is '{}'\n",
-                                    std::to_string(attribute), SDL_GetError());
+                                   std::to_string(attribute), SDL_GetError());
       return stlw::make_error(fmt);
     }
     return stlw::make_empty();
   };
 
   // Use OpenGL 3.1 core
-  DO_MONAD(auto _, set_attribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
-  DO_MONAD(auto __, set_attribute(SDL_GL_CONTEXT_MINOR_VERSION, 1));
-  DO_MONAD(auto ___, set_attribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
+  DO_TRY(auto _, set_attribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
+  DO_TRY(auto __, set_attribute(SDL_GL_CONTEXT_MINOR_VERSION, 1));
+  DO_TRY(auto ___, set_attribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
 
   // Turn on double buffering with a 24bit Z buffer.
   // You may need to change this to 16 or 32 for your system
-  DO_MONAD(auto ____, set_attribute(SDL_GL_DOUBLEBUFFER, 1));
+  DO_TRY(auto ____, set_attribute(SDL_GL_DOUBLEBUFFER, 1));
 
   // Use v-sync
   SDL_GL_SetSwapInterval(1);
@@ -100,8 +100,8 @@ sdl_library::make_window(int const height, int const width)
   glewExperimental = GL_TRUE;
   auto const glew_status = glewInit();
   if (GLEW_OK != glew_status) {
-    auto const error = fmt::format("GLEW could not initialize! GLEW error: {}\n",
-                                    glewGetErrorString(glew_status));
+    auto const error =
+        fmt::format("GLEW could not initialize! GLEW error: {}\n", glewGetErrorString(glew_status));
     return stlw::make_error(error);
   }
   return sdl_window{std::move(window_ptr), gl_context};

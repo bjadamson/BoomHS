@@ -72,11 +72,11 @@ link_program(GLuint const program_id)
 }
 
 stlw::result<program, std::string>
-compile_sources(std::string const& vertex_shader_source, std::string const& fragment_shader_source)
+compile_sources(std::string const &vertex_shader_source, std::string const &fragment_shader_source)
 {
-  DO_MONAD(auto const vertex_shader_id, compile_shader(vertex_shader_source, GL_VERTEX_SHADER));
-  DO_MONAD(auto const frag_shader_id, compile_shader(fragment_shader_source, GL_FRAGMENT_SHADER));
-  DO_MONAD(auto const program_id, create_program());
+  DO_TRY(auto const vertex_shader_id, compile_shader(vertex_shader_source, GL_VERTEX_SHADER));
+  DO_TRY(auto const frag_shader_id, compile_shader(fragment_shader_source, GL_FRAGMENT_SHADER));
+  DO_TRY(auto const program_id, create_program());
 
   glAttachShader(program_id, vertex_shader_id);
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, vertex_shader_id); });
@@ -96,15 +96,15 @@ namespace engine::gfx::opengl
 stlw::result<program, std::string>
 program_loader::from_files(vertex_shader_filename const v, fragment_shader_filename const f)
 {
-  auto const prefix = [](auto const& path) {
+  auto const prefix = [](auto const &path) {
     return std::string{"./build-system/bin/shaders/"} + path;
   };
   auto const vertex_shader_path = prefix(v.filename);
   auto const fragment_shader_path = prefix(f.filename);
 
   // Read the Vertex/Fragment Shader code from ther file
-  DO_MONAD(auto const vertex_shader_source, stlw::read_file(vertex_shader_path));
-  DO_MONAD(auto const fragment_shader_source, stlw::read_file(fragment_shader_path));
+  DO_TRY(auto const vertex_shader_source, stlw::read_file(vertex_shader_path));
+  DO_TRY(auto const fragment_shader_source, stlw::read_file(fragment_shader_path));
 
   return compile_sources(vertex_shader_source, fragment_shader_source);
 }

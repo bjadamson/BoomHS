@@ -4,8 +4,7 @@
 namespace s
 {
 
-struct io_system
-{
+struct io_system {
   inline static bool is_quit_event(SDL_Event &event)
   {
     bool is_quit = false;
@@ -100,7 +99,7 @@ struct io_system
   void process(TData &data, S &state)
   {
     SDL_Event event;
-    while ((! state.quit) && (0 != SDL_PollEvent(&event))) {
+    while ((!state.quit) && (0 != SDL_PollEvent(&event))) {
       state.quit = this->process_event(event, state.view, state.projection);
     }
   }

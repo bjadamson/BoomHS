@@ -1,19 +1,17 @@
 #pragma once
 
 // BEGIN Class-building macros
-#define NO_COPY_ASSIGN(CLASSNAME)                                                                  \
-  CLASSNAME &operator=(CLASSNAME const &) = delete;
+#define NO_COPY_ASSIGN(CLASSNAME) CLASSNAME &operator=(CLASSNAME const &) = delete;
 
 #define NO_COPY(CLASSNAME)                                                                         \
   CLASSNAME(CLASSNAME const &) = delete;                                                           \
   NO_COPY_ASSIGN(CLASSNAME);
 
-#define NO_MOVE_ASSIGN(CLASSNAME)                                                                  \
-  CLASSNAME &operator=(CLASSNAME &&) = delete;
+#define NO_MOVE_ASSIGN(CLASSNAME) CLASSNAME &operator=(CLASSNAME &&) = delete;
 
 #define NO_MOVE(CLASSNAME)                                                                         \
   CLASSNAME(CLASSNAME &&) = delete;                                                                \
-  NO_MOVE_ASSIGN(CLASSNAME);                                                                       \
+  NO_MOVE_ASSIGN(CLASSNAME);
 
 #define NO_COPY_AND_NO_MOVE(CLASSNAME)                                                             \
   NO_COPY(CLASSNAME)                                                                               \
@@ -24,11 +22,10 @@
   CLASSNAME &operator=(CLASSNAME &&) = default;
 
 #define COPY_DEFAULT(CLASSNAME)                                                                    \
-  CLASSNAME(CLASSNAME const&) = default;                                                           \
-  CLASSNAME &operator=(CLASSNAME const&) = default;
+  CLASSNAME(CLASSNAME const &) = default;                                                          \
+  CLASSNAME &operator=(CLASSNAME const &) = default;
 
-#define MOVE_CONSTRUCTIBLE(CLASSNAME)                                                              \
-  CLASSNAME(CLASSNAME &&) = default;
+#define MOVE_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME &&) = default;
 // END class-builing macros
 
 // BEGIN Function-defining macros

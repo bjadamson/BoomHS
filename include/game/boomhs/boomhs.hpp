@@ -14,7 +14,8 @@
 #include <game/boomhs/io_system.hpp>
 #include <game/data_types.hpp>
 
-namespace st {
+namespace st
+{
 
 constexpr auto io_system = ecst::tag::system::v<s::io_system>;
 
@@ -46,8 +47,7 @@ make_csl()
   namespace sc = ecst::signature::component;
   namespace slc = ecst::signature_list::component;
 
-  constexpr auto cs_world_coordinate =
-                sc::make(ct::world_coordinate).contiguous_buffer();
+  constexpr auto cs_world_coordinate = sc::make(ct::world_coordinate).contiguous_buffer();
 
   return slc::make(cs_world_coordinate);
 }
@@ -66,15 +66,14 @@ make_ssl()
 
   constexpr auto PA = ips::none::v();
 
-  constexpr auto ssig_io_system = ss::make(st::io_system)
-    .parallelism(PA);
+  constexpr auto ssig_io_system = ss::make(st::io_system).parallelism(PA);
 
   // Build and return the "system signature list".
   return sls::make(ssig_io_system);
 }
 } // ns ecst_setup
 
-template<typename L, typename R>
+template <typename L, typename R>
 struct game_state {
   bool quit = false;
   L &logger;
@@ -82,12 +81,14 @@ struct game_state {
   engine::window::dimensions const dimensions;
 
   glm::mat4 view, projection;
+
 public:
-  game_state(L &l, R &r, engine::window::dimensions const& d) :
-    logger(l),
-    renderer(r),
-    dimensions(d)
-  {}
+  game_state(L &l, R &r, engine::window::dimensions const &d)
+      : logger(l)
+      , renderer(r)
+      , dimensions(d)
+  {
+  }
 };
 
 // TODO: bye globals
@@ -97,7 +98,7 @@ game::world_coordinate *r = nullptr;
 game::world_coordinate *t = nullptr;
 game::world_coordinate *u = nullptr;
 
-template<typename G, typename S>
+template <typename G, typename S>
 void
 ecst_main(G &game, S &state)
 {
@@ -109,12 +110,12 @@ ecst_main(G &game, S &state)
 
   // Define ECST context settings.
   constexpr auto s = ecst::settings::make()
-                        .allow_inner_parallelism()
-                        //.disallow_inner_parallelism()
-                        .fixed_entity_limit(ecst::sz_v<10000>)
-                        .component_signatures(make_csl())
-                        .system_signatures(make_ssl())
-                        .scheduler(cs::scheduler<ss::s_atomic_counter>);
+                         .allow_inner_parallelism()
+                         //.disallow_inner_parallelism()
+                         .fixed_entity_limit(ecst::sz_v<10000>)
+                         .component_signatures(make_csl())
+                         .system_signatures(make_ssl())
+                         .scheduler(cs::scheduler<ss::s_atomic_counter>);
 
   auto &l = state.logger;
   l.error("pre ctx creation");
@@ -124,53 +125,49 @@ ecst_main(G &game, S &state)
 
   // Initialize context with some entities.
   ctx->step([&](auto &proxy) {
-      {
-        auto eid = proxy.create_entity();
-        auto &wc = proxy.add_component(ct::world_coordinate, eid);
-        wc.set(-0.5f, 0.0f, 0.0f, 1.0f);
-        p = &wc;
-      }
-      {
-        auto eid = proxy.create_entity();
-        auto &wc = proxy.add_component(ct::world_coordinate, eid);
-        wc.set(0.5f, 0.0f, 0.0f, 1.0f);
-        q = &wc;
-      }
-      {
-        auto eid = proxy.create_entity();
-        auto &wc = proxy.add_component(ct::world_coordinate, eid);
-        wc.set(0.0f, 0.5f, 0.0f, 1.0f);
-        r = &wc;
-      }
-      {
-        auto eid = proxy.create_entity();
-        auto &wc = proxy.add_component(ct::world_coordinate, eid);
-        wc.set(0.0f, -0.5f, 0.0f, 1.0f);
-        t = &wc;
-      }
-      {
-        auto eid = proxy.create_entity();
-        auto &wc = proxy.add_component(ct::world_coordinate, eid);
-        wc.set(0.65f, 0.85f, 0.0f, 1.0f);
-        u = &wc;
-      }
+    {
+      auto eid = proxy.create_entity();
+      auto &wc = proxy.add_component(ct::world_coordinate, eid);
+      wc.set(-0.5f, 0.0f, 0.0f, 1.0f);
+      p = &wc;
+    }
+    {
+      auto eid = proxy.create_entity();
+      auto &wc = proxy.add_component(ct::world_coordinate, eid);
+      wc.set(0.5f, 0.0f, 0.0f, 1.0f);
+      q = &wc;
+    }
+    {
+      auto eid = proxy.create_entity();
+      auto &wc = proxy.add_component(ct::world_coordinate, eid);
+      wc.set(0.0f, 0.5f, 0.0f, 1.0f);
+      r = &wc;
+    }
+    {
+      auto eid = proxy.create_entity();
+      auto &wc = proxy.add_component(ct::world_coordinate, eid);
+      wc.set(0.0f, -0.5f, 0.0f, 1.0f);
+      t = &wc;
+    }
+    {
+      auto eid = proxy.create_entity();
+      auto &wc = proxy.add_component(ct::world_coordinate, eid);
+      wc.set(0.65f, 0.85f, 0.0f, 1.0f);
+      u = &wc;
+    }
   });
 
   // "Game loop."
-  while (! state.quit) {
+  while (!state.quit) {
 
-    ctx->step(
-        [&state](auto &proxy) {
-          proxy.execute_systems()(
-              sea::t(st::io_system)
-                  .for_subtasks([&state](auto &s, auto &data)
-                    {
-                      s.process(data, state);
-                    }));
-          });
+    ctx->step([&state](auto &proxy) {
+      proxy.execute_systems()(sea::t(st::io_system).for_subtasks([&state](auto &s, auto &data) {
+        s.process(data, state);
+      }));
+    });
     l.trace("rendering");
 
-    game.game_loop(state);//, s0, s1, s2, s3);
+    game.game_loop(state); //, s0, s1, s2, s3);
     l.trace("game loop stepping.");
   }
 }
@@ -178,29 +175,30 @@ ecst_main(G &game, S &state)
 class boomhs_game
 {
   NO_COPY(boomhs_game);
+
 public:
   boomhs_game() = default;
 
   MOVE_DEFAULT(boomhs_game);
 
-  template <typename State>//, typename ...S>
-  void game_loop(State &state)//, S const&... shapes)
+  template <typename State>    //, typename ...S>
+  void game_loop(State &state) //, S const&... shapes)
   {
-    ::engine::gfx::render_args<decltype(state.logger)> const args{state.logger,
-      state.view, state.projection};
+    ::engine::gfx::render_args<decltype(state.logger)> const args{state.logger, state.view,
+                                                                  state.projection};
 
     using INSIDE_PAIR = std::pair<std::array<float, 3>, float>;
     std::array<INSIDE_PAIR, 3> constexpr my_color = {
-      INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::RED, 1.0f},
-      INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::GREEN, 1.0f},
-      INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::BLUE, 1.0f},
+        INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::RED, 1.0f},
+        INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::GREEN, 1.0f},
+        INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::BLUE, 1.0f},
     };
 
     std::array<INSIDE_PAIR, 4> constexpr my_color2 = {
-      INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::RED, 1.0f},
-      INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::GREEN, 1.0f},
-      INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::BLUE, 1.0f},
-      INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::YELLOW, 1.0f},
+        INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::RED, 1.0f},
+        INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::GREEN, 1.0f},
+        INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::BLUE, 1.0f},
+        INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::YELLOW, 1.0f},
     };
 
     auto s0 = game::shape_factory::make_rectangle(*p, ::engine::gfx::LIST_OF_COLORS::GRAY);

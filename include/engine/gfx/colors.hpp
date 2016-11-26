@@ -3,7 +3,7 @@
 
 namespace engine::gfx::LIST_OF_COLORS
 {
-  // clang-format off
+// clang-format off
   constexpr std::array<float, 3> INDIAN_RED             = {0.804, 0.361, 0.361};
   constexpr std::array<float, 3> LIGHT_CORAL            = {0.941, 0.502, 0.502};
   constexpr std::array<float, 3> SALMON                 = {0.980, 0.502, 0.447};
@@ -144,5 +144,5 @@ namespace engine::gfx::LIST_OF_COLORS
   constexpr std::array<float, 3> SLATE_GRAY             = {0.439, 0.502, 0.565};
   constexpr std::array<float, 3> DARK_SLATE_GRAY        = {0.184, 0.310, 0.310};
   constexpr std::array<float, 3> BLACK                  = {0.000, 0.000, 0.000};
-  // clang-format on
+// clang-format on
 } // ns engine::gfx::LIST_OF_COLORS

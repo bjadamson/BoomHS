@@ -1,11 +1,11 @@
 #pragma once
+#include <experimental/filesystem>
 #include <fstream>
 #include <iostream>
-#include <experimental/filesystem>
-#include <stlw/type_macros.hpp>
-#include <stlw/tuple.hpp>
-#include <string>
 #include <stlw/result.hpp>
+#include <stlw/tuple.hpp>
+#include <stlw/type_macros.hpp>
+#include <string>
 
 namespace stlw
 {
@@ -33,23 +33,24 @@ read_file(char const *path)
   return sstream.str();
 }
 
-template<typename T>
+template <typename T>
 auto
-read_file(T const s) { return read_file(s.c_str()); }
+read_file(T const s)
+{
+  return read_file(s.c_str());
+}
 
 // TODO: boost::path
-template<typename ...Text>
+template <typename... Text>
 void
-write_file(std::experimental::filesystem::path const& path, Text const&... text)
+write_file(std::experimental::filesystem::path const &path, Text const &... text)
 {
   std::filebuf fb;
   fb.open(path.string().c_str(), std::ios::out);
   ON_SCOPE_EXIT([&fb]() { fb.close(); });
 
   std::ostream os(&fb);
-  auto const write_line = [&os](auto const& text) {
-    os << text;
-  };
+  auto const write_line = [&os](auto const &text) { os << text; };
 
   auto const tuple_view = std::make_tuple(text...);
   stlw::for_each(tuple_view, write_line);
