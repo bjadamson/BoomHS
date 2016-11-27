@@ -2,6 +2,7 @@
 #include <SOIL.h>
 #include <engine/gfx/opengl/global.hpp>
 #include <engine/gfx/opengl/program.hpp>
+#include <iostream>
 
 namespace engine::gfx::opengl
 {

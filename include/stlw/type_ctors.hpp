@@ -1,12 +1,20 @@
 #pragma once
+#include <array>
 #include <stlw/types.hpp>
 #include <vector>
 
 namespace stlw
 {
 
+template <size_t N, typename R, class ...T>
+constexpr auto
+make_array(T const&... values)
+{
+  return std::array<R, N>{{ values... }};
+}
+
 template <typename T>
-std::vector<T>
+auto
 vec_with_size(std::size_t const s)
 {
   std::vector<T> buffer;
@@ -15,7 +23,7 @@ vec_with_size(std::size_t const s)
 }
 
 // factory FN
-inline stlw::empty_type
+constexpr auto
 make_empty()
 {
   return stlw::empty_type{};

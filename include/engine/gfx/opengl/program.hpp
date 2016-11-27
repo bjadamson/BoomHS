@@ -72,7 +72,7 @@ public:
   // MUTATION
   // ----------------------------------------------------------------------------------------------
   // Make this program become "Active" for OpenGL.
-  void use() { glUseProgram(this->program_id_); }
+  void use();
 
   void set_uniform_matrix_4fv(GLchar const *name, glm::mat4 const &matrix)
   {
