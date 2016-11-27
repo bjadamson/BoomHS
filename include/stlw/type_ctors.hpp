@@ -13,6 +13,14 @@ make_array(Args &&... args)
   return std::array<T, N>{{ args... }};
 }
 
+template <typename T, class ...Args>
+constexpr auto
+make_array(Args &&... args)
+{
+  auto constexpr N = sizeof...(args);
+  return std::array<T, N>{{ args... }};
+}
+
 template <typename T>
 auto
 vec_with_size(std::size_t const s)
