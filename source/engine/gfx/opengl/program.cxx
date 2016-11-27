@@ -81,9 +81,9 @@ compile_sources(std::string const &vertex_shader_source, std::string const &frag
   DO_TRY(auto const frag_shader_id, compile_shader(fragment_shader_source, GL_FRAGMENT_SHADER));
   DO_TRY(auto const program_id, create_program());
 
-  glBindAttribLocation(program_id, VERTEX_ATTRIBUTE_INDEX_OF_POSITION, attribute_list::A_POSITION);
-  glBindAttribLocation(program_id, VERTEX_ATTRIBUTE_INDEX_OF_COLOR, attribute_list::A_COLOR);
-  glBindAttribLocation(program_id, VERTEX_ATTRIBUTE_INDEX_OF_UV, attribute_list::A_UV);
+  glBindAttribLocation(program_id, VERTEX_ATTRIBUTE_INDEX_OF_POSITION, attribute_info::A_POSITION);
+  glBindAttribLocation(program_id, VERTEX_ATTRIBUTE_INDEX_OF_COLOR, attribute_info::A_COLOR);
+  glBindAttribLocation(program_id, VERTEX_ATTRIBUTE_INDEX_OF_UV, attribute_info::A_UV);
 
   glAttachShader(program_id, vertex_shader_id);
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, vertex_shader_id); });
@@ -111,12 +111,12 @@ program::use()
 
   auto constexpr BUFFER_LENGTH = GL_ACTIVE_ATTRIBUTE_MAX_LENGTH;
 
-  GLsizei length = nullptr; // This is OK if we don't care about the length according to docs.
+  GLsizei *length = nullptr; // This is OK if we don't care about the length according to docs.
   GLint size;
   GLenum type;
   GLchar name[BUFFER_LENGTH] = {0};
   for (auto i{0}; i < BUFFER_LENGTH; ++i) {
-    glGetActiveAttrib(p, i, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &length, &size, &type, &name[0]);
+    glGetActiveAttrib(p, i, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, length, &size, &type, &name[0]);
   }
   */
 

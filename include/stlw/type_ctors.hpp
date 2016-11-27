@@ -6,11 +6,11 @@
 namespace stlw
 {
 
-template <size_t N, typename R, class ...T>
+template <typename T, size_t N, class ...Args>
 constexpr auto
-make_array(T const&... values)
+make_array(Args &&... args)
 {
-  return std::array<R, N>{{ values... }};
+  return std::array<T, N>{{ args... }};
 }
 
 template <typename T>
