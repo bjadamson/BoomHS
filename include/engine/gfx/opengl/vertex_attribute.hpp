@@ -27,7 +27,6 @@ struct attribute_info {
   COPY_DEFAULT(attribute_info);
   //NO_COPY(attribute_info);
 
-  static constexpr auto A_INVALID = "a_INVALID -- MOVED FROM vertex attribute";
   static constexpr auto A_POSITION = "a_position";
   static constexpr auto A_COLOR = "a_color";
   static constexpr auto A_UV = "a_uv";
@@ -174,12 +173,6 @@ make_color_uv_vertex_attribute()
   // clang-format on
 
   return impl::make_vertex_array(vertex_info, color_info, uv_info);
-}
-
-inline auto
-make_invalid_vertex_attribute()
-{
-  return impl::make_vertex_array(attribute_info{0, 0, GL_FLOAT, attribute_info::A_INVALID});
 }
 
 template <typename L>
