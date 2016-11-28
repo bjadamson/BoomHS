@@ -23,7 +23,9 @@ DEFINE_SHADER_FILENAME_TYPE(fragment);
 
 class program
 {
-  GLuint program_id_; // non-const to allow move-assignment.
+  /////////////////////////////////////////////////////////////////////////////////////////////////
+  // non-const to allow move-assignment.
+  GLuint program_id_;
 
   // https://www.opengl.org/sdk/docs/man2/xhtml/glDeleteProgram.xml
   // from the docs:
@@ -45,6 +47,8 @@ class program
     other.program_id_ = INVALID_PROGRAM_ID;
   }
 
+  /////////////////////////////////////////////////////////////////////////////////////////////////
+  // constructors
   explicit program(GLuint const p)
       : program_id_(p)
   {

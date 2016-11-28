@@ -21,11 +21,24 @@
   CLASSNAME(CLASSNAME &&) = default;                                                               \
   CLASSNAME &operator=(CLASSNAME &&) = default;
 
+#define MOVE_CONSTRUCTIBLE_ONLY(CLASSNAME)                                                         \
+  NO_COPY(CLASSNAME)                                                                               \
+  NO_MOVE_ASSIGN(CLASSNAME)                                                                        \
+  MOVE_CONSTRUCTIBLE(CLASSNAME)
+
 #define COPY_DEFAULT(CLASSNAME)                                                                    \
   CLASSNAME(CLASSNAME const &) = default;                                                          \
   CLASSNAME &operator=(CLASSNAME const &) = default;
 
 #define MOVE_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME &&) = default;
+
+#define BEGIN_END_FORWARD_FNS(CONTAINER)                                                           \
+  decltype(auto) begin() const { return CONTAINER.begin(); }                                       \
+  decltype(auto) end() const { return CONTAINER.end(); }                                           \
+                                                                                                   \
+  decltype(auto) cbegin() const { return CONTAINER.cbegin(); }                                     \
+  decltype(auto) cend() const { return CONTAINER.cend(); }
+
 // END class-builing macros
 
 // BEGIN Function-defining macros

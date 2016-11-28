@@ -37,12 +37,8 @@ auto const print_triangle = [](auto &logger, auto const &triangle) {
 
 template <typename L>
 void
-render(GLenum const render_mode, GLsizei const vertice_count, L &logger, program &program)
+render(GLenum const render_mode, GLsizei const vertice_count, L &logger)
 {
-  // Draw our first triangle
-  program.use();
-  program.check_opengl_errors(logger);
-
   GLint const begin = 0;
   glDrawArrays(render_mode, begin, vertice_count);
 }
@@ -76,7 +72,12 @@ render_shape(L &logger, opengl_context &ctx, S const &shape)
 {
   // print_triangle(logger, t0);
   copy_to_gpu(logger, ctx.vbo(), shape);
-  render(shape.draw_mode(), shape.vertice_count(), logger, ctx.program_ref());
+
+  // Draw our first triangle
+  program &p = ctx.program_ref();
+  p.use();
+  p.check_opengl_errors(logger);
+  render(shape.draw_mode(), shape.vertice_count(), logger);
 }
 
 } // ns impl
@@ -89,6 +90,9 @@ draw_scene(L &logger, opengl_context &ctx, glm::mat4 const &view, glm::mat4 cons
   global::vao_bind(ctx.vao());
   ON_SCOPE_EXIT([]() { global::vao_unbind(); });
 
+  glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+
   global::texture_bind(ctx.texture());
   ON_SCOPE_EXIT([]() { global::texture_unbind(); });
 
@@ -96,6 +100,9 @@ draw_scene(L &logger, opengl_context &ctx, glm::mat4 const &view, glm::mat4 cons
   auto &p = ctx.program_ref();
   p.set_uniform_matrix_4fv("view", view);
   p.set_uniform_matrix_4fv("projection", projection);
+
+  // Instruct the vertex-processor to enable the vertex attributes for this context.
+  global::set_vertex_attributes(logger, ctx.va());
 
   auto const fn = [&logger, &ctx](auto const &shape) { impl::render_shape(logger, ctx, shape); };
   stlw::for_each(shapes, fn);

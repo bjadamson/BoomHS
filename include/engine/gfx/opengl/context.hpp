@@ -2,6 +2,7 @@
 #include <SOIL.h>
 #include <engine/gfx/opengl/global.hpp>
 #include <engine/gfx/opengl/program.hpp>
+#include <engine/gfx/opengl/vertex_attribute.hpp>
 #include <iostream>
 
 namespace engine::gfx::opengl
@@ -44,8 +45,9 @@ static auto const load_texture = [](char const *path) {
 class opengl_context
 {
   GLuint vao_ = 0, vbo_ = 0;
-  GLuint texture_ = 0;
   program program_;
+  GLuint texture_ = 0;
+  vertex_attribute va_;
 
   static auto constexpr NUM_BUFFERS = 1;
 
@@ -53,9 +55,10 @@ class opengl_context
   NO_MOVE_ASSIGN(opengl_context);
 
   // private ctor, use factory function.
-  opengl_context(program &&p, GLuint const tid)
+  opengl_context(program &&p, GLuint const tid, vertex_attribute &&va)
       : program_(std::move(p))
       , texture_(tid)
+      , va_(std::move(va))
   {
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
     glGenBuffers(NUM_BUFFERS, &this->vbo_);
@@ -75,19 +78,21 @@ public:
   opengl_context(opengl_context &&other)
       : vao_(other.vao_)
       , vbo_(other.vbo_)
-      , texture_(other.texture_)
       , program_(std::move(other.program_))
+      , texture_(other.texture_)
+      , va_(std::move(other.va_))
   {
     other.vao_ = 0;
     other.vbo_ = 0;
-    other.texture_ = 0;
     other.program_ = program::make_invalid();
+    other.texture_ = 0;
   }
 
   inline auto vao() const { return this->vao_; }
   inline auto vbo() const { return this->vbo_; }
   inline auto texture() const { return this->texture_; }
   inline auto &program_ref() { return this->program_; }
+  inline auto const& va() { return this->va_; }
 
   friend struct context_factory;
 };
@@ -95,10 +100,10 @@ public:
 struct context_factory {
   context_factory() = delete;
 
-  auto static make_opengl_context(program &&p, char const *path)
+  auto static make_opengl_context(program &&p, char const *path, vertex_attribute &&va)
   {
     auto const tid = impl::load_texture(path);
-    return opengl_context{std::move(p), tid};
+    return opengl_context{std::move(p), tid, std::move(va)};
   }
 };
 

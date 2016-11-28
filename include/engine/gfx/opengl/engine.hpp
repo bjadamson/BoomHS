@@ -55,9 +55,9 @@ struct factory {
   static stlw::result<engine, std::string> make_opengl_engine(L &logger)
   {
     auto const make_ctx = [&logger](auto &&phandle, char const *asset_path) {
-      auto context = context_factory::make_opengl_context(std::move(phandle), asset_path);
-      auto vertex_attribute_context = global::make_color_uv_vertex_attribute(context);
-      global::set_vertex_attributes(logger, vertex_attribute_context);
+      auto vertex_array = global::make_color_uv_vertex_attribute();
+      auto context = context_factory::make_opengl_context(std::move(phandle), asset_path,
+          std::move(vertex_array));
       return context;
     };
 

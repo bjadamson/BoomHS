@@ -61,6 +61,12 @@ public:
   size_type length() const { return this->vec_.capacity(); }
   T *data() { return this->vec_.data(); }
   T const *data() const { return this->vec_.data(); }
+
+  decltype(auto) begin() const { return this->vec_.begin(); }
+  decltype(auto) end() const { return this->vec_.end(); }
+
+  decltype(auto) cbegin() const { return this->vec_.cbegin(); }
+  decltype(auto) cend() const { return this->vec_.cend(); }
 };
 
 } // ns stlw
