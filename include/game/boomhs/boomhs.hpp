@@ -248,13 +248,13 @@ public:
     auto s4 = game::polygon_factory::make(*u, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
     auto s5 = game::polygon_factory::make(*v, 5);
 
-    auto s6 = game::triangle_factory::make(*w);
+    auto s6 = game::triangle_factory::make(*w, true);
     auto s7 = game::rectangle_factory::make(*x, ::engine::gfx::LIST_OF_COLORS::BLACK, height, width);
     auto s8 = game::rectangle_factory::make(*y, my_color3, height, width);
 
     state.renderer.begin();
-    state.renderer.draw0(args, s0, s1, s2, s6, s7, s8);
-    state.renderer.draw1(args, s3, s4, s5);
+    state.renderer.draw0(args, s0, s1, s2, s3, s4, s5, s7, s8);
+    state.renderer.draw1(args, s6);
     state.renderer.end();
   }
 };

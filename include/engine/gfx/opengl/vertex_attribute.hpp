@@ -153,26 +153,43 @@ namespace global
 {
 
 inline auto
-make_color_uv_vertex_attribute()
+make_vertex_color_vertex_attribute()
 {
   // attribute indexes
   constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
   constexpr auto C_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_COLOR;
-  constexpr auto UV_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_UV;
 
   // clang-format off
   // num fields per attribute
   GLint constexpr num_fields_vertex = 4; // x, y, z, w
   GLint constexpr num_fields_color = 4;  // r, g, b, a
-  GLint constexpr num_fields_uv = 2;     // u, v
 
   using ai = attribute_info;
   attribute_info constexpr vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
   attribute_info constexpr color_info {C_INDEX,  num_fields_color,  GL_FLOAT, ai::A_COLOR};
-  //attribute_info constexpr uv_info    {UV_INDEX, num_fields_uv,     GL_FLOAT, ai::A_UV};
   // clang-format on
 
-  return impl::make_vertex_array(vertex_info, color_info);//, uv_info);
+  return impl::make_vertex_array(vertex_info, color_info);
+}
+
+inline auto
+make_vertex_uv_vertex_attribute()
+{
+  // attribute indexes
+  constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
+  constexpr auto UV_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_UV;
+
+  // clang-format off
+  // num fields per attribute
+  GLint constexpr num_fields_vertex = 4; // x, y, z, w
+  GLint constexpr num_fields_uv = 2;     // u, v
+
+  using ai = attribute_info;
+  attribute_info constexpr vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
+  attribute_info constexpr uv_info    {UV_INDEX, num_fields_uv,     GL_FLOAT, ai::A_UV};
+  // clang-format on
+
+  return impl::make_vertex_array(vertex_info, uv_info);
 }
 
 template <typename L>

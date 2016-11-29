@@ -54,8 +54,8 @@ struct factory {
   template <typename L>
   static stlw::result<engine, std::string> make_opengl_engine(L &logger)
   {
-    auto const make_ctx = [&logger](auto &&phandle, char const *asset_path) {
-      auto vertex_array = global::make_color_uv_vertex_attribute();
+    auto const make_ctx = [&logger](auto &&phandle, char const *asset_path, auto const fn) {
+      auto vertex_array = fn();
       auto context = context_factory::make_opengl_context(std::move(phandle), asset_path,
           std::move(vertex_array));
       return context;
@@ -64,11 +64,11 @@ struct factory {
     auto constexpr RESOURCES = resources::make_resource_table();
     auto const get_r = [&](auto const i) { return RESOURCES[i]; };
 
-    DO_TRY(auto phandle0, program_loader::from_files("shader.vert", "color.frag"));
-    auto rc0 = make_ctx(std::move(phandle0), get_r(IMAGES::WALL));
+    DO_TRY(auto phandle0, program_loader::from_files("color.vert", "color.frag"));
+    auto rc0 = make_ctx(std::move(phandle0), get_r(IMAGES::WALL), &global::make_vertex_color_vertex_attribute);
 
-    DO_TRY(auto phandle1, program_loader::from_files("shader.vert", "image.frag"));
-    auto rc1 = make_ctx(std::move(phandle1), get_r(IMAGES::CONTAINER));
+    DO_TRY(auto phandle1, program_loader::from_files("image.vert", "image.frag"));
+    auto rc1 = make_ctx(std::move(phandle1), get_r(IMAGES::CONTAINER), &global::make_vertex_uv_vertex_attribute);
 
     // TODO: move this
     // glEnable(GL_DEPTH_TEST);
