@@ -250,11 +250,11 @@ public:
 
     auto s6 = game::triangle_factory::make(*w, true);
     auto s7 = game::rectangle_factory::make(*x, ::engine::gfx::LIST_OF_COLORS::BLACK, height, width);
-    auto s8 = game::rectangle_factory::make(*y, my_color3, height, width);
+    auto s8 = game::rectangle_factory::make(*y, height, width, true);
 
     state.renderer.begin();
-    state.renderer.draw0(args, s0, s1, s2, s3, s4, s5, s7, s8);
-    state.renderer.draw1(args, s6);
+    state.renderer.draw0(args, s0, s1, s2, s3, s4, s5, s7);
+    state.renderer.draw1(args, s6, s8);
     state.renderer.end();
   }
 };

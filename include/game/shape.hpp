@@ -300,6 +300,20 @@ class rectangle_factory
     // clang-format on
   };
 
+  struct uv_properties
+  {
+    height_width const dimensions;
+
+    // clang-format off
+    std::array<texture_coord, 4> const uv = {
+      texture_coord{0.0f, 0.0f}, // bottom-left
+      texture_coord{1.0f, 0.0f}, // bottom-right
+      texture_coord{1.0f, 1.0f}, // top-right
+      texture_coord{0.0f, 1.0f}, // top-left
+    };
+    // clang-format on
+  };
+
   static constexpr auto
   construct(world_coordinate const &wc, color_properties const& props)
   {
@@ -311,14 +325,31 @@ class rectangle_factory
       vertex{wc.x() + width, wc.y() + height, wc.z(), wc.w()}, // top-right
       vertex{wc.x() - width, wc.y() + height, wc.z(), wc.w()}  // top-left
     };
-    auto const& colors = props.bottom_left;
-
     vertex_color_attributes const bottom_left{vertices[0], color{props.bottom_left}};
     vertex_color_attributes const bottom_right{vertices[1], color{props.bottom_right}};
     vertex_color_attributes const top_right{vertices[2], color{props.top_right}};
     vertex_color_attributes const top_left{vertices[3], color{props.top_left}};
 
     return rectangle<vertex_color_attributes>{wc, bottom_left, bottom_right, top_right, top_left};
+  }
+
+  static constexpr auto
+  construct(world_coordinate const &wc, uv_properties const& props)
+  {
+    auto const height = props.dimensions.height();
+    auto const width = props.dimensions.width();
+    std::array<vertex, 4> const vertices = {
+      vertex{wc.x() - width, wc.y() - height, wc.z(), wc.w()}, // bottom-left
+      vertex{wc.x() + width, wc.y() - height, wc.z(), wc.w()}, // bottom-right
+      vertex{wc.x() + width, wc.y() + height, wc.z(), wc.w()}, // top-right
+      vertex{wc.x() - width, wc.y() + height, wc.z(), wc.w()}  // top-left
+    };
+    vertex_uv_attributes const bottom_left{vertices[0], props.uv[0]};
+    vertex_uv_attributes const bottom_right{vertices[1], props.uv[1]};
+    vertex_uv_attributes const top_right{vertices[2],  props.uv[2]};
+    vertex_uv_attributes const top_left{vertices[3], props.uv[3]};
+
+    return rectangle<vertex_uv_attributes>{wc, bottom_left, bottom_right, top_right, top_left};
   }
 public:
 
@@ -361,6 +392,13 @@ public:
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
 
     return make(wc, color, height, width);
+  }
+
+  static constexpr auto make(world_coordinate const& wc, float const height, float const width,
+      bool const)
+  {
+    uv_properties const p{{height, width}};
+    return construct(wc, p);
   }
 };
 

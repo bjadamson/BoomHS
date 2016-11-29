@@ -172,6 +172,27 @@ class shape_mapper
     return float_vertex_color_rectangle{GL_QUADS, floats};
   }
 
+  static constexpr auto map_to_array_floats(game::rectangle<game::vertex_uv_attributes> const &r)
+  {
+    auto constexpr NUM_VERTICES = 4;
+    auto constexpr NUM_FLOATS = calc_vertex_color_num_floats(NUM_VERTICES);
+
+    auto const floats = std::array<float, NUM_FLOATS>{
+        r.bottom_left.vertex.x,  r.bottom_left.vertex.y, r.bottom_left.vertex.z,
+        r.bottom_left.vertex.w,  r.bottom_left.uv.u,     r.bottom_left.uv.v,
+
+        r.bottom_right.vertex.x, r.bottom_right.vertex.y, r.bottom_right.vertex.z,
+        r.bottom_right.vertex.w, r.bottom_right.uv.u,     r.bottom_right.uv.v,
+
+        r.top_right.vertex.x,    r.top_right.vertex.y, r.top_right.vertex.z,
+        r.top_right.vertex.w,    r.top_right.uv.u,     r.top_right.uv.v,
+
+        r.top_left.vertex.x,     r.top_left.vertex.y,  r.top_left.vertex.z,
+        r.top_left.vertex.w,     r.top_left.uv.u,      r.top_left.uv.v,
+    };
+    return float_vertex_color_rectangle{GL_QUADS, floats};
+  }
+
   static auto map_to_array_floats(game::polygon<game::vertex_color_attributes> const &p)
   {
     auto const num_vertices = p.num_vertices();
