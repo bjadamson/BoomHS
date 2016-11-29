@@ -246,7 +246,7 @@ public:
     auto s3 = game::rectangle_factory::make(*r, my_color2, height, width);
 
     auto s4 = game::polygon_factory::make(*u, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
-    auto s5 = game::polygon_factory::make(*v, 27, true);
+    auto s5 = game::polygon_factory::make(*v, 7, true);
 
     auto s6 = game::triangle_factory::make(*w, true);
     auto s7 = game::rectangle_factory::make(*x, ::engine::gfx::LIST_OF_COLORS::BLACK, height, width);
