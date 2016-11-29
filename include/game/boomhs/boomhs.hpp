@@ -101,6 +101,7 @@ game::world_coordinate *u = nullptr;
 game::world_coordinate *v = nullptr;
 game::world_coordinate *w = nullptr;
 game::world_coordinate *x = nullptr;
+game::world_coordinate *y = nullptr;
 
 template <typename G, typename S>
 void
@@ -177,6 +178,12 @@ ecst_main(G &game, S &state)
       wc.set(-0.80f, -0.80f, 0.0f, 1.0f); // bottom left
       x = &wc;
     }
+    {
+      auto eid = proxy.create_entity();
+      auto &wc = proxy.add_component(ct::world_coordinate, eid);
+      wc.set(-0.60f, -0.20f, 0.0f, 1.0f); // bottom left
+      y = &wc;
+    }
   });
 
   // "Game loop."
@@ -223,6 +230,13 @@ public:
         stlw::concat(engine::gfx::LIST_OF_COLORS::YELLOW, 1.0f)
     );
 
+    auto constexpr my_color3 = stlw::make_array<COLOR_ARRAY>(
+        stlw::concat(engine::gfx::LIST_OF_COLORS::DARK_ORANGE, 1.0f),
+        stlw::concat(engine::gfx::LIST_OF_COLORS::BLUE, 1.0f),
+        stlw::concat(engine::gfx::LIST_OF_COLORS::DARK_ORANGE, 1.0f),
+        stlw::concat(engine::gfx::LIST_OF_COLORS::BLUE, 1.0f)
+    );
+
     auto s0 = game::rectangle_factory::make(*p, ::engine::gfx::LIST_OF_COLORS::GRAY);
     auto s1 = game::triangle_factory::make(*t, ::engine::gfx::LIST_OF_COLORS::PINK);
 
@@ -231,14 +245,15 @@ public:
     auto const height = 0.25f, width = 0.39f;
     auto s3 = game::rectangle_factory::make(*r, my_color2, height, width);
 
-    auto s4 = game::polygon_factory::make(*u, 5, ::engine::gfx::LIST_OF_COLORS::ORANGE);
+    auto s4 = game::polygon_factory::make(*u, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
     auto s5 = game::polygon_factory::make(*v, 5);
 
     auto s6 = game::triangle_factory::make(*w);
-    auto s7 = game::rectangle_factory::make(*x, ::engine::gfx::LIST_OF_COLORS::ORANGE, height, width);
+    auto s7 = game::rectangle_factory::make(*x, ::engine::gfx::LIST_OF_COLORS::BLACK, height, width);
+    auto s8 = game::rectangle_factory::make(*y, my_color3, height, width);
 
     state.renderer.begin();
-    state.renderer.draw0(args, s0, s1, s2, s6, s7);
+    state.renderer.draw0(args, s0, s1, s2, s6, s7, s8);
     state.renderer.draw1(args, s3, s4, s5);
     state.renderer.end();
   }
