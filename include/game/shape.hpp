@@ -173,9 +173,8 @@ public:
     return make_triangle(wc, radius, array_colors);
   }
 
-  static constexpr auto
-  make_rectangle(world_coordinate const &wc, std::array<float, 3> const &c,
-                 float const height = 0.39f, float const width = 0.25f, float const alpha = 1.0f)
+  static constexpr auto make_rectangle(world_coordinate const &wc, std::array<color, 4> const& colors,
+      std::array<texture_coord, 4> const& uvs, float const height, float const width)
   {
     constexpr auto N = 4;
 
@@ -187,6 +186,16 @@ public:
       vertex{wc.x() - width, wc.y() + height, wc.z(), wc.w()}  // top-left
     };
 
+    return construct_rectangle(wc, vertices, colors, uvs);
+  }
+
+  static constexpr auto
+  make_rectangle(world_coordinate const &wc, std::array<float, 3> const &c,
+                 float const height = 0.39f, float const width = 0.25f, float const alpha = 1.0f)
+  {
+    constexpr auto N = 4;
+
+    // clang-format off
     std::array<color, N> const colors = {
       color{c, alpha}, // bottom-left
       color{c, alpha}, // bottom-right
@@ -202,7 +211,7 @@ public:
     };
     // clang-format on
 
-    return construct_rectangle(wc, vertices, colors, uvs);
+    return make_rectangle(wc, colors, uvs, height, width);
   }
 
   template <typename T>
@@ -219,12 +228,6 @@ public:
     std::array<float, 4> const top_right{tr.first[0], tr.first[1], tr.first[2], tr.second};
     std::array<float, 4> const top_left{tl.first[0], tl.first[1], tl.first[2], tl.second};
 
-    std::array<vertex, 4> const vertices = {
-        vertex{wc.x() - width, wc.y() - height, wc.z(), wc.w()}, // bottom-left
-        vertex{wc.x() + width, wc.y() - height, wc.z(), wc.w()}, // bottom-right
-        vertex{wc.x() + width, wc.y() + height, wc.z(), wc.w()}, // top-right
-        vertex{wc.x() - width, wc.y() + height, wc.z(), wc.w()}  // top-left
-    };
     std::array<color, 4> const colors = {
         color{bottom_left}, color{bottom_right}, color{top_right}, color{top_left},
     };
@@ -234,7 +237,7 @@ public:
         texture_coord{1.0f, 1.0f}, // top-right
         texture_coord{0.0f, 1.0f}, // top-left
     };
-    return construct_rectangle(wc, vertices, colors, uvs);
+    return make_rectangle(wc, colors, uvs, height, width);
   }
 
   static constexpr auto make_rectangle(world_coordinate const &wc)
