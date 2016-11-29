@@ -8,6 +8,7 @@
 #include <ecst.hpp>
 
 #include <engine/window/window.hpp>
+#include <stlw/algorithm.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 
@@ -97,6 +98,9 @@ game::world_coordinate *q = nullptr;
 game::world_coordinate *r = nullptr;
 game::world_coordinate *t = nullptr;
 game::world_coordinate *u = nullptr;
+game::world_coordinate *v = nullptr;
+game::world_coordinate *w = nullptr;
+game::world_coordinate *x = nullptr;
 
 template <typename G, typename S>
 void
@@ -155,6 +159,24 @@ ecst_main(G &game, S &state)
       wc.set(0.65f, 0.85f, 0.0f, 1.0f);
       u = &wc;
     }
+    {
+      auto eid = proxy.create_entity();
+      auto &wc = proxy.add_component(ct::world_coordinate, eid);
+      wc.set(-0.40f, 0.00f, 0.0f, 1.0f);
+      v = &wc;
+    }
+    {
+      auto eid = proxy.create_entity();
+      auto &wc = proxy.add_component(ct::world_coordinate, eid);
+      wc.set(-0.80f, 0.80f, 0.0f, 1.0f); // top left
+      w = &wc;
+    }
+    {
+      auto eid = proxy.create_entity();
+      auto &wc = proxy.add_component(ct::world_coordinate, eid);
+      wc.set(-0.80f, -0.80f, 0.0f, 1.0f); // bottom left
+      x = &wc;
+    }
   });
 
   // "Game loop."
@@ -167,7 +189,7 @@ ecst_main(G &game, S &state)
     });
     l.trace("rendering");
 
-    game.game_loop(state); //, s0, s1, s2, s3);
+    game.game_loop(state);
     l.trace("game loop stepping.");
   }
 }
@@ -187,31 +209,36 @@ public:
     ::engine::gfx::render_args<decltype(state.logger)> const args{state.logger, state.view,
                                                                   state.projection};
 
-    using INSIDE_PAIR = std::pair<std::array<float, 3>, float>;
-    std::array<INSIDE_PAIR, 3> constexpr my_color = {
-        INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::RED, 1.0f},
-        INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::GREEN, 1.0f},
-        INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::BLUE, 1.0f},
-    };
+    using COLOR_ARRAY = std::array<float, 4>;
+    auto constexpr my_color = stlw::make_array<COLOR_ARRAY>(
+      stlw::concat(engine::gfx::LIST_OF_COLORS::RED, 1.0f),
+      stlw::concat(engine::gfx::LIST_OF_COLORS::GREEN, 1.0f),
+      stlw::concat(engine::gfx::LIST_OF_COLORS::BLUE, 1.0f)
+    );
 
-    std::array<INSIDE_PAIR, 4> constexpr my_color2 = {
-        INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::RED, 1.0f},
-        INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::GREEN, 1.0f},
-        INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::BLUE, 1.0f},
-        INSIDE_PAIR{engine::gfx::LIST_OF_COLORS::YELLOW, 1.0f},
-    };
+    auto constexpr my_color2 = stlw::make_array<COLOR_ARRAY>(
+        stlw::concat(engine::gfx::LIST_OF_COLORS::RED, 1.0f),
+        stlw::concat(engine::gfx::LIST_OF_COLORS::GREEN, 1.0f),
+        stlw::concat(engine::gfx::LIST_OF_COLORS::BLUE, 1.0f),
+        stlw::concat(engine::gfx::LIST_OF_COLORS::YELLOW, 1.0f)
+    );
 
-    auto s0 = game::shape_factory::make_rectangle(*p, ::engine::gfx::LIST_OF_COLORS::GRAY);
-    auto s1 = game::shape_factory::make_triangle(*t, ::engine::gfx::LIST_OF_COLORS::PINK);
+    auto s0 = game::rectangle_factory::make(*p, ::engine::gfx::LIST_OF_COLORS::GRAY);
+    auto s1 = game::triangle_factory::make(*t, ::engine::gfx::LIST_OF_COLORS::PINK);
 
-    auto s2 = game::shape_factory::make_triangle(*q, my_color);
-    auto s3 = game::shape_factory::make_rectangle(*r, my_color2);
+    auto s2 = game::triangle_factory::make(*q, my_color);
 
-    auto s4 = game::shape_factory::make_polygon(*u, 5, ::engine::gfx::LIST_OF_COLORS::ORANGE);
-    auto s5 = game::shape_factory::make_polygon(*u, 5);
+    auto const height = 0.25f, width = 0.39f;
+    auto s3 = game::rectangle_factory::make(*r, my_color2, height, width);
+
+    auto s4 = game::polygon_factory::make(*u, 5, ::engine::gfx::LIST_OF_COLORS::ORANGE);
+    auto s5 = game::polygon_factory::make(*v, 5);
+
+    auto s6 = game::triangle_factory::make(*w);
+    auto s7 = game::rectangle_factory::make(*x, ::engine::gfx::LIST_OF_COLORS::ORANGE, height, width);
 
     state.renderer.begin();
-    state.renderer.draw0(args, s0, s1, s2);
+    state.renderer.draw0(args, s0, s1, s2, s6, s7);
     state.renderer.draw1(args, s3, s4, s5);
     state.renderer.end();
   }

@@ -6,6 +6,16 @@
 namespace game
 {
 
+class height_width
+{
+  std::pair<float, float> pair_;
+public:
+  constexpr height_width(float const h, float const w) : pair_(h, w) {}
+
+  auto height() const { return this->pair_.first; }
+  auto width() const { return this->pair_.second; }
+};
+
 struct shape {
   world_coordinate coord_;
 
@@ -38,7 +48,7 @@ struct triangle : public shape {
   static auto constexpr NUM_VERTICES = 3;
   vertice bottom_left, bottom_right, top_middle;
 private:
-  friend class shape_factory;
+  friend class triangle_factory;
   explicit constexpr triangle(world_coordinate const& wc, vertice const& bl, vertice const& br,
       vertice const& tm)
     : shape(wc)
@@ -55,6 +65,7 @@ struct rectangle : public shape {
 
 private:
   friend class shape_factory;
+  friend class rectangle_factory;
   explicit constexpr rectangle(world_coordinate const &wc, vertice const &bl, vertice const &br,
                                vertice const &tr, vertice const &tl)
       : shape(wc)
@@ -69,186 +80,35 @@ private:
 struct polygon : public shape {
   stlw::sized_buffer<vertice> vertices;
   int num_vertices() const { return this->vertices.length(); }
+  friend struct polygon_factory;
+
 private:
-  friend class shape_factory;
   explicit polygon(world_coordinate const &wc, int const num_vertices)
       : shape(wc)
       , vertices(num_vertices)
   {
   }
-
-public:
-  friend struct shape_factory;
 };
 
-class shape_factory
+class polygon_factory
 {
-  shape_factory() = delete;
+  polygon_factory() = delete;
 
-  static constexpr auto
-  construct_rectangle(world_coordinate const &wc, std::array<vertex, 4> const &vertices,
-                      std::array<color, 4> const &colors, std::array<texture_coord, 4> const &uv)
+  struct properties
   {
-    vertice const bottom_left{vertices[0], colors[0], uv[0]};
-    vertice const bottom_right{vertices[1], colors[1], uv[1]};
-    vertice const top_right{vertices[2], colors[2], uv[2]};
-    vertice const top_left{vertices[3], colors[3], uv[3]};
+    GLint const num_vertices;
+    std::array<float, 3> const colors;
 
-    return rectangle{wc, bottom_left, bottom_right, top_right, top_left};
-  }
+    float const alpha = 1.0f;
+    float const width = 0.25f;
+  };
 
-  static constexpr auto
-  construct_triangle(world_coordinate const &wc, std::array<vertex, 3> const &vertices,
-                     std::array<color, 3> const &colors, std::array<texture_coord, 3> const &uv)
+  static auto
+  construct(world_coordinate const& wc, properties const& props)
   {
-    vertice const bottom_left{vertices[0], colors[0], uv[0]};
-    vertice const bottom_right{vertices[1], colors[1], uv[1]};
-    vertice const top_middle{vertices[2], colors[2], uv[2]};
+    float const radius = props.width;
+    auto const num_vertices = props.num_vertices;
 
-    return triangle{wc, bottom_left, bottom_right, top_middle};
-  }
-
-public:
-  static constexpr auto
-  make_triangle(world_coordinate const &wc, float const radius, std::array<color, 3> const &colors)
-  {
-    constexpr auto N = 3;
-
-    // clang-format off
-    std::array<vertex, N> const array_vertices = {
-      vertex{wc.x() - radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-left
-      vertex{wc.x() + radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-right
-      vertex{wc.x()         , wc.y() + radius, wc.z(), wc.w()}  // top-middle
-    };
-
-    std::array<color, N> const array_colors = {
-      colors[0], // top-left
-      colors[1], // bottom-left
-      colors[2]  // top-middle
-    };
-
-    std::array<texture_coord, N> const array_uvs = {
-      texture_coord{0.0f, 0.0f}, // bottom-left
-      texture_coord{1.0f, 0.0f}, // bottom-right
-      texture_coord{0.5f, 1.0f}  // top-middle
-    };
-
-    // clang-format on
-    return construct_triangle(wc, array_vertices, array_colors, array_uvs);
-  }
-
-  static constexpr auto
-  make_triangle(world_coordinate const &wc, std::array<float, 3> const &colors)
-  {
-    auto constexpr alpha = 1.0f;
-    std::array<float, 4> const bottom_left{colors[0], colors[1], colors[2], alpha};
-    std::array<float, 4> const bottom_right{bottom_left};
-    std::array<float, 4> const top_middle{bottom_left};
-
-    constexpr float radius = 0.5;
-
-    auto const array_colors =
-        std::array<color, 3>{color{bottom_left}, color{bottom_right}, color{top_middle}};
-    return make_triangle(wc, radius, array_colors);
-  }
-
-  static constexpr auto make_triangle(world_coordinate const &wc)
-  {
-    return make_triangle(wc, ::engine::gfx::LIST_OF_COLORS::CORAL);
-  }
-
-  template <typename T>
-  static constexpr auto make_triangle(world_coordinate const &wc, T const &data)
-  {
-    auto constexpr radius = 0.5f;
-    auto const &bl = data[0];
-    auto const &br = data[1];
-    auto const &tm = data[2];
-    std::array<float, 4> const bottom_left{bl.first[0], bl.first[1], bl.first[2], bl.second};
-    std::array<float, 4> const bottom_right{br.first[0], br.first[1], br.first[2], br.second};
-    std::array<float, 4> const top_middle{tm.first[0], tm.first[1], tm.first[2], tm.second};
-
-    auto const array_colors =
-        std::array<color, 3>{color{bottom_left}, color{bottom_right}, color{top_middle}};
-    return make_triangle(wc, radius, array_colors);
-  }
-
-  static constexpr auto make_rectangle(world_coordinate const &wc, std::array<color, 4> const& colors,
-      std::array<texture_coord, 4> const& uvs, float const height, float const width)
-  {
-    constexpr auto N = 4;
-
-    // clang-format off
-    std::array<vertex, N> const vertices = {
-      vertex{wc.x() - width, wc.y() - height, wc.z(), wc.w()}, // bottom-left
-      vertex{wc.x() + width, wc.y() - height, wc.z(), wc.w()}, // bottom-right
-      vertex{wc.x() + width, wc.y() + height, wc.z(), wc.w()}, // top-right
-      vertex{wc.x() - width, wc.y() + height, wc.z(), wc.w()}  // top-left
-    };
-
-    return construct_rectangle(wc, vertices, colors, uvs);
-  }
-
-  static constexpr auto
-  make_rectangle(world_coordinate const &wc, std::array<float, 3> const &c,
-                 float const height = 0.39f, float const width = 0.25f, float const alpha = 1.0f)
-  {
-    constexpr auto N = 4;
-
-    // clang-format off
-    std::array<color, N> const colors = {
-      color{c, alpha}, // bottom-left
-      color{c, alpha}, // bottom-right
-      color{c, alpha}, // top-right
-      color{c, alpha}, // top-left
-    };
-
-    std::array<texture_coord, N> constexpr uvs = {
-      texture_coord{0.0f, 0.0f}, // bottom-left
-      texture_coord{1.0f, 0.0f}, // bottom-right
-      texture_coord{1.0f, 1.0f}, // top-right
-      texture_coord{0.0f, 1.0f}, // top-left
-    };
-    // clang-format on
-
-    return make_rectangle(wc, colors, uvs, height, width);
-  }
-
-  template <typename T>
-  static constexpr auto make_rectangle(world_coordinate const &wc, T const &data,
-                                       float const height = 0.39f, float const width = 0.25f)
-  {
-    auto constexpr radius = 0.5f;
-    auto const &bl = data[0];
-    auto const &br = data[1];
-    auto const &tr = data[2];
-    auto const &tl = data[3];
-    std::array<float, 4> const bottom_left{bl.first[0], bl.first[1], bl.first[2], bl.second};
-    std::array<float, 4> const bottom_right{br.first[0], br.first[1], br.first[2], br.second};
-    std::array<float, 4> const top_right{tr.first[0], tr.first[1], tr.first[2], tr.second};
-    std::array<float, 4> const top_left{tl.first[0], tl.first[1], tl.first[2], tl.second};
-
-    std::array<color, 4> const colors = {
-        color{bottom_left}, color{bottom_right}, color{top_right}, color{top_left},
-    };
-    std::array<texture_coord, 4> constexpr uvs = {
-        texture_coord{0.0f, 0.0f}, // bottom-left
-        texture_coord{1.0f, 0.0f}, // bottom-right
-        texture_coord{1.0f, 1.0f}, // top-right
-        texture_coord{0.0f, 1.0f}, // top-left
-    };
-    return make_rectangle(wc, colors, uvs, height, width);
-  }
-
-  static constexpr auto make_rectangle(world_coordinate const &wc)
-  {
-    return make_rectangle(wc, ::engine::gfx::LIST_OF_COLORS::RED);
-  }
-
-  static auto make_polygon(world_coordinate const &wc, int const num_vertices, float const alpha,
-                           float const width, std::array<float, 3> const &c)
-  {
-    float const radius = width;
     auto const C = num_vertices;     // Assume for now #colors == #vertices
     auto const E = num_vertices + 1; // num_edges
 
@@ -266,7 +126,8 @@ public:
       auto const x = cosfn(i);
       auto const y = sinfn(i);
 
-      color const col{c[0], c[1], c[2], alpha};
+      auto const& c = props.colors;
+      color const col{c[0], c[1], c[2], props.alpha};
       vertex const v{x, y, wc.z(), wc.w()};
       texture_coord const uv{x, y};
       poly.vertices[i] = vertice{v, col, uv};
@@ -274,17 +135,191 @@ public:
     return poly;
   }
 
-  static auto make_polygon(world_coordinate const &wc, int const num_vertices,
-                           float const alpha = 1.0f, float const width = 0.25f)
+public:
+  static auto make(world_coordinate const &wc, int const num_vertices,
+                           std::array<float, 3> const &color)
   {
-    return make_polygon(wc, num_vertices, alpha, width, ::engine::gfx::LIST_OF_COLORS::PINK);
+    properties const prop{num_vertices, color};
+    return construct(wc, prop);
   }
 
-  static auto make_polygon(world_coordinate const &wc, int const num_vertices,
-                           std::array<float, 3> const &color, float const alpha = 1.0f,
-                           float const width = 0.25f)
+  static auto make(world_coordinate const &wc, int const num_vertices)
   {
-    return make_polygon(wc, num_vertices, alpha, width, color);
+    auto constexpr COLOR = ::engine::gfx::LIST_OF_COLORS::PINK;
+    properties const prop{num_vertices, COLOR};
+    return construct(wc, prop);
+  }
+};
+
+class triangle_factory
+{
+  struct properties
+  {
+    std::array<float, 4> const& color_bottom_left;
+    std::array<float, 4> const& color_bottom_right = color_bottom_left;
+    std::array<float, 4> const& color_top_middle = color_bottom_left;
+
+    float const radius = 0.5f;
+
+    // clang-format off
+    std::array<texture_coord, 3> const uv = {
+      texture_coord{0.0f, 0.0f}, // bottom-left
+      texture_coord{1.0f, 0.0f}, // bottom-right
+      texture_coord{0.5f, 1.0f}  // top-middle
+    };
+    // clang-format on
+  };
+
+  static constexpr auto
+  construct(world_coordinate const &wc, properties const& props)
+  {
+    auto const radius = props.radius;
+    std::array<vertex, 3> const vertices = {
+      vertex{wc.x() - radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-left
+      vertex{wc.x() + radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-right
+      vertex{wc.x()         , wc.y() + radius, wc.z(), wc.w()}  // top-middle
+    };
+    auto const& uv = props.uv;
+
+    vertice const bottom_left{vertices[0], color{props.color_bottom_left}, uv[0]};
+    vertice const bottom_right{vertices[1], color{props.color_bottom_right}, uv[1]};
+    vertice const top_middle{vertices[2], color{props.color_top_middle}, uv[2]};
+
+    return triangle{wc, bottom_left, bottom_right, top_middle};
+  }
+
+public:
+  static constexpr auto
+  make(world_coordinate const &wc, float const radius, std::array<float, 3> const &c)
+  {
+    auto constexpr ALPHA = 1.0f;
+    auto const color = std::array<float, 4>{c[0], c[1], c[2], ALPHA};
+    properties const p{color, color, color, radius};
+    return construct(wc, p);
+  }
+
+  static constexpr auto
+  make(world_coordinate const &wc, std::array<float, 4> const& c)
+  {
+    properties const p{c};
+    return construct(wc, p);
+  }
+
+  static constexpr auto
+  make(world_coordinate const &wc, std::array<float, 3> const& c)
+  {
+    auto constexpr ALPHA = 1.0f;
+    auto const color = std::array<float, 4>{c[0], c[1], c[2], ALPHA};
+    properties const p{color, color, color};
+    return construct(wc, p);
+  }
+
+  static constexpr auto
+  make(world_coordinate const& wc)
+  {
+    return make(wc, ::engine::gfx::LIST_OF_COLORS::RED);
+  }
+
+  template <typename T>
+  static constexpr auto
+  make(world_coordinate const &wc, T const &data)
+  {
+    auto const &bl = data[0];
+    auto const &br = data[1];
+    auto const &tm = data[2];
+    std::array<float, 4> const bottom_left{bl[0], bl[1], bl[2], bl[3]};
+    std::array<float, 4> const bottom_right{br[0], br[1], br[2], br[3]};
+    std::array<float, 4> const top_middle{tm[0], tm[1], tm[2], tm[3]};
+
+    properties const p{bottom_left, bottom_right, top_middle};
+    return construct(wc, p);
+  }
+};
+
+class rectangle_factory
+{
+  rectangle_factory() = delete;
+
+  struct properties
+  {
+    height_width const dimensions;
+    std::array<float, 4> const& bottom_left;
+    std::array<float, 4> const& bottom_right = bottom_left;
+    std::array<float, 4> const& top_right = bottom_left;
+    std::array<float, 4> const& top_left = bottom_left;
+
+    // clang-format off
+    std::array<texture_coord, 4> const uv = {
+      texture_coord{0.0f, 0.0f}, // bottom-left
+      texture_coord{1.0f, 0.0f}, // bottom-right
+      texture_coord{1.0f, 1.0f},  // top-right
+      texture_coord{0.0f, 1.0f},  // top-left
+    };
+    // clang-format on
+  };
+
+  static constexpr auto
+  construct(world_coordinate const &wc, properties const& props)
+  {
+    auto const height = props.dimensions.height();
+    auto const width = props.dimensions.width();
+    std::array<vertex, 4> const vertices = {
+      vertex{wc.x() - width, wc.y() - height, wc.z(), wc.w()}, // bottom-left
+      vertex{wc.x() + width, wc.y() - height, wc.z(), wc.w()}, // bottom-right
+      vertex{wc.x() + width, wc.y() + height, wc.z(), wc.w()}, // top-right
+      vertex{wc.x() - width, wc.y() + height, wc.z(), wc.w()}  // top-left
+    };
+    auto const& colors = props.bottom_left;
+    auto const& uv = props.uv;
+
+    vertice const bottom_left{vertices[0], color{props.bottom_left}, uv[0]};
+    vertice const bottom_right{vertices[1], color{props.bottom_right}, uv[1]};
+    vertice const top_right{vertices[2], color{props.top_right}, uv[2]};
+    vertice const top_left{vertices[3], color{props.top_left}, uv[3]};
+
+    return rectangle{wc, bottom_left, bottom_right, top_right, top_left};
+  }
+public:
+
+  static constexpr auto
+  make(world_coordinate const &wc, std::array<float, 3> const &c,
+                 float const height = 0.39f, float const width = 0.25f, float const alpha = 1.0f)
+  {
+    properties const p{{height, width}, std::array<float, 4>{c[0], c[1], c[2], alpha}};
+    return construct(wc, p);
+  }
+
+  template <typename T>
+  static constexpr auto make(world_coordinate const &wc, T const &data, float const height,
+      float const width)
+  {
+    auto const &bl = data[0];
+    auto const &br = data[1];
+    auto const &tr = data[2];
+    auto const &tl = data[3];
+    std::array<float, 4> const bottom_left{bl[0], bl[1], bl[2], bl[3]};
+    std::array<float, 4> const bottom_right{br[0], br[1], br[2], br[3]};
+    std::array<float, 4> const top_right{tr[0], tr[1], tr[2], tr[3]};
+    std::array<float, 4> const top_left{tl[0], tl[1], tl[2], tl[3]};
+
+    properties const p{{height, width}, bottom_left, bottom_right, top_right, top_left};
+    return construct(wc, p);
+  }
+
+  static constexpr auto make(world_coordinate const &wc, std::array<float, 4> const& color,
+      float const height, float const width)
+  {
+    properties const p{{height, width}, color};
+    return construct(wc, p);
+  }
+
+  static constexpr auto make(world_coordinate const &wc, float const height, float const width)
+  {
+    auto constexpr ALPHA = 1.0f;
+    auto const c = ::engine::gfx::LIST_OF_COLORS::RED;
+    std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
+
+    return make(wc, color, height, width);
   }
 };
 

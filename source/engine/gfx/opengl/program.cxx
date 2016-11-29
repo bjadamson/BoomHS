@@ -1,6 +1,6 @@
 #include <engine/gfx/opengl/glew.hpp>
-#include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl/glsl.hpp>
+#include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl/vertex_attribute.hpp>
 #include <stlw/os.hpp>
 #include <stlw/type_ctors.hpp>
@@ -103,7 +103,7 @@ namespace engine::gfx::opengl
 void
 program::use()
 {
-  auto const& p = this->program_id_;
+  auto const &p = this->program_id_;
 
   /*
   GLint num_active_attributes;

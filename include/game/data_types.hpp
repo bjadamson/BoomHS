@@ -34,7 +34,6 @@ struct color {
       , a(ap)
   {
   }
-  static constexpr std::array<float, 4> DEFAULT_TEXTURE() { return {1.0f, 0.0f, 0.0f, 0.0f}; };
 };
 
 struct texture_coord {

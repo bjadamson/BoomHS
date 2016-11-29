@@ -38,6 +38,13 @@ concat(std::array<T, N1> const& a1, std::array<T, N2> const& a2)
   return concat(a1, a2, concat_array_algortithm::gen_seq<N1>{}, concat_array_algortithm::gen_seq<N2>{});
 }
 
+template<typename T, std::size_t N1>
+constexpr std::array<T, N1+1>
+concat(std::array<T, N1> const& a1, T const& v)
+{
+  return concat(a1, std::array<T, 1>{v});
+}
+
 } // ns stlw
 
 namespace stlw
