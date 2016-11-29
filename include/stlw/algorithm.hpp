@@ -24,7 +24,7 @@ struct gen_seq<0, Is...> : seq<Is...>{};
 template<typename T, std::size_t N1, std::size_t... I1, std::size_t N2, std::size_t... I2>
 // Expansion pack
 constexpr std::array<T, N1+N2>
-array_concat(std::array<T, N1> const& a1, std::array<T, N2> const& a2,
+concat(std::array<T, N1> const& a1, std::array<T, N2> const& a2,
     concat_array_algortithm::seq<I1...>, concat_array_algortithm::seq<I2...>)
 {
   return { a1[I1]..., a2[I2]... };
@@ -33,10 +33,15 @@ array_concat(std::array<T, N1> const& a1, std::array<T, N2> const& a2,
 template<typename T, std::size_t N1, std::size_t N2>
 // Initializer for the recursion
 constexpr std::array<T, N1+N2>
-array_concat(std::array<T, N1> const& a1, std::array<T, N2> const& a2)
+concat(std::array<T, N1> const& a1, std::array<T, N2> const& a2)
 {
-  return array_concat(a1, a2, concat_array_algortithm::gen_seq<N1>{}, concat_array_algortithm::gen_seq<N2>{});
+  return concat(a1, a2, concat_array_algortithm::gen_seq<N1>{}, concat_array_algortithm::gen_seq<N2>{});
 }
+
+} // ns stlw
+
+namespace stlw
+{
 
 // source:
 // http://stackoverflow.com/questions/28708497/constexpr-to-concatenate-two-or-more-char-strings
