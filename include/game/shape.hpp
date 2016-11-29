@@ -29,13 +29,13 @@ public:
   auto constexpr const &wc() const { return this->coord_; }
 };
 
-struct vertice {
+struct vertex_attributes {
   vertex vertex;
   color color;
   texture_coord uv;
 
-  vertice() = default;
-  explicit constexpr vertice(class vertex const &v, class color const &c, texture_coord const &t)
+  vertex_attributes() = default;
+  explicit constexpr vertex_attributes(class vertex const &v, class color const &c, texture_coord const &t)
       : vertex(v)
       , color(c)
       , uv(t)
@@ -46,11 +46,11 @@ struct vertice {
 // clang-format off
 struct triangle : public shape {
   static auto constexpr NUM_VERTICES = 3;
-  vertice bottom_left, bottom_right, top_middle;
+  vertex_attributes bottom_left, bottom_right, top_middle;
 private:
   friend class triangle_factory;
-  explicit constexpr triangle(world_coordinate const& wc, vertice const& bl, vertice const& br,
-      vertice const& tm)
+  explicit constexpr triangle(world_coordinate const& wc, vertex_attributes const& bl,
+      vertex_attributes const& br, vertex_attributes const& tm)
     : shape(wc)
     , bottom_left(bl)
     , bottom_right(br)
@@ -61,13 +61,13 @@ private:
 
 struct rectangle : public shape {
   static auto constexpr NUM_VERTICES = 4;
-  vertice bottom_left, bottom_right, top_right, top_left;
+  vertex_attributes bottom_left, bottom_right, top_right, top_left;
 
 private:
   friend class shape_factory;
   friend class rectangle_factory;
-  explicit constexpr rectangle(world_coordinate const &wc, vertice const &bl, vertice const &br,
-                               vertice const &tr, vertice const &tl)
+  explicit constexpr rectangle(world_coordinate const &wc, vertex_attributes const &bl,
+      vertex_attributes const &br, vertex_attributes const &tr, vertex_attributes const &tl)
       : shape(wc)
       , bottom_left(bl)
       , bottom_right(br)
@@ -78,14 +78,14 @@ private:
 };
 
 struct polygon : public shape {
-  stlw::sized_buffer<vertice> vertices;
-  int num_vertices() const { return this->vertices.length(); }
+  stlw::sized_buffer<vertex_attributes> vertex_attributes;
+  int num_vertices() const { return this->vertex_attributes.length(); }
   friend struct polygon_factory;
 
 private:
   explicit polygon(world_coordinate const &wc, int const num_vertices)
       : shape(wc)
-      , vertices(num_vertices)
+      , vertex_attributes(num_vertices)
   {
   }
 };
@@ -130,7 +130,7 @@ class polygon_factory
       color const col{c[0], c[1], c[2], props.alpha};
       vertex const v{x, y, wc.z(), wc.w()};
       texture_coord const uv{x, y};
-      poly.vertices[i] = vertice{v, col, uv};
+      poly.vertex_attributes[i] = vertex_attributes{v, col, uv};
     }
     return poly;
   }
@@ -181,9 +181,9 @@ class triangle_factory
     };
     auto const& uv = props.uv;
 
-    vertice const bottom_left{vertices[0], color{props.color_bottom_left}, uv[0]};
-    vertice const bottom_right{vertices[1], color{props.color_bottom_right}, uv[1]};
-    vertice const top_middle{vertices[2], color{props.color_top_middle}, uv[2]};
+    vertex_attributes const bottom_left{vertices[0], color{props.color_bottom_left}, uv[0]};
+    vertex_attributes const bottom_right{vertices[1], color{props.color_bottom_right}, uv[1]};
+    vertex_attributes const top_middle{vertices[2], color{props.color_top_middle}, uv[2]};
 
     return triangle{wc, bottom_left, bottom_right, top_middle};
   }
@@ -252,8 +252,8 @@ class rectangle_factory
     std::array<texture_coord, 4> const uv = {
       texture_coord{0.0f, 0.0f}, // bottom-left
       texture_coord{1.0f, 0.0f}, // bottom-right
-      texture_coord{1.0f, 1.0f},  // top-right
-      texture_coord{0.0f, 1.0f},  // top-left
+      texture_coord{1.0f, 1.0f}, // top-right
+      texture_coord{0.0f, 1.0f}, // top-left
     };
     // clang-format on
   };
@@ -272,10 +272,10 @@ class rectangle_factory
     auto const& colors = props.bottom_left;
     auto const& uv = props.uv;
 
-    vertice const bottom_left{vertices[0], color{props.bottom_left}, uv[0]};
-    vertice const bottom_right{vertices[1], color{props.bottom_right}, uv[1]};
-    vertice const top_right{vertices[2], color{props.top_right}, uv[2]};
-    vertice const top_left{vertices[3], color{props.top_left}, uv[3]};
+    vertex_attributes const bottom_left{vertices[0], color{props.bottom_left}, uv[0]};
+    vertex_attributes const bottom_right{vertices[1], color{props.bottom_right}, uv[1]};
+    vertex_attributes const top_right{vertices[2], color{props.top_right}, uv[2]};
+    vertex_attributes const top_left{vertices[3], color{props.top_left}, uv[3]};
 
     return rectangle{wc, bottom_left, bottom_right, top_right, top_left};
   }

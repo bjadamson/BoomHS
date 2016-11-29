@@ -166,7 +166,7 @@ class shape_mapper
 
     stlw::sized_buffer<float> floats{static_cast<size_t>(num_floats)};
     for (auto i{0}, j{0}; j < floats.length(); ++i) {
-      auto &vertice = p.vertices[i];
+      auto &vertice = p.vertex_attributes[i];
       floats[j++] = vertice.vertex.x;
       floats[j++] = vertice.vertex.y;
       floats[j++] = vertice.vertex.z;
