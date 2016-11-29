@@ -1,12 +1,47 @@
 #pragma once
 #include <array>
-#include <iostream>
 #include <utility>
 
 namespace stlw
 {
+
+namespace concat_array_algortithm
+{
+
+// http://stackoverflow.com/questions/25068481/c11-constexpr-flatten-list-of-stdarray-into-array
+//
+// I made it more generic than just 'int' for T.
+template<std::size_t... Is> struct seq{};
+template<std::size_t N, std::size_t... Is>
+
+struct gen_seq : gen_seq<N-1, N-1, Is...>{};
+
+template<std::size_t... Is>
+struct gen_seq<0, Is...> : seq<Is...>{};
+
+} // ns concat_array_algortithm
+
+template<typename T, std::size_t N1, std::size_t... I1, std::size_t N2, std::size_t... I2>
+// Expansion pack
+constexpr std::array<T, N1+N2>
+array_concat(std::array<T, N1> const& a1, std::array<T, N2> const& a2,
+    concat_array_algortithm::seq<I1...>, concat_array_algortithm::seq<I2...>)
+{
+  return { a1[I1]..., a2[I2]... };
+}
+
+template<typename T, std::size_t N1, std::size_t N2>
+// Initializer for the recursion
+constexpr std::array<T, N1+N2>
+array_concat(std::array<T, N1> const& a1, std::array<T, N2> const& a2)
+{
+  return array_concat(a1, a2, concat_array_algortithm::gen_seq<N1>{}, concat_array_algortithm::gen_seq<N2>{});
+}
+
 // source:
 // http://stackoverflow.com/questions/28708497/constexpr-to-concatenate-two-or-more-char-strings
+namespace concat_string_impl
+{
 
 template <unsigned...>
 struct seq {
@@ -69,28 +104,31 @@ concat_impl(Lhs const &lhs, Rhs const &rhs, seq<I1...>, seq<I2...>)
   return {{lhs[I1]..., rhs[I2]..., '\0'}};
 }
 
+} // ns concat_string_impl
+
 template <class Lhs, class Rhs>
-constexpr const combined_string<Lhs, Rhs>
+constexpr const concat_string_impl::combined_string<Lhs, Rhs>
 concat(Lhs const &lhs, Rhs const &rhs)
 {
+  using namespace concat_string_impl;
   return concat_impl(lhs, rhs, gen_seq<string_length<Lhs>{}>{}, gen_seq<string_length<Rhs>{}>{});
 }
 
 template <class T0, class T1, class... Ts>
-constexpr const combined_string<T0, T1, Ts...>
+constexpr const concat_string_impl::combined_string<T0, T1, Ts...>
 concat(T0 const &t0, T1 const &t1, Ts const &... ts)
 {
   return concat(t0, concat(t1, ts...));
 }
 
 template <class T>
-constexpr const combined_string<T>
+constexpr const concat_string_impl::combined_string<T>
 concat(T const &t)
 {
   return concat(t, "");
 }
 
-constexpr const combined_string<>
+constexpr const concat_string_impl::combined_string<>
 concat()
 {
   return concat("");
