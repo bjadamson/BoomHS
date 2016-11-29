@@ -89,6 +89,7 @@ using runtime_sized_array = runtime_shape_template<stlw::sized_buffer, F, V>;
 using float_vertex_color_triangle = static_vertex_color_shape<float, 24>;
 using float_vertex_color_rectangle = static_vertex_color_shape<float, 32>;
 using float_vertex_color_polygon = runtime_sized_array<float, 8>;
+using float_vertex_uv_polygon = runtime_sized_array<float, 6>;
 
 using float_vertex_uv_triangle = static_vertex_uv_shape<float, 18>;
 
@@ -211,8 +212,28 @@ class shape_mapper
       floats[j++] = vertice.color.b;
       floats[j++] = vertice.color.a;
     }
-    // TODO: deprecated
+    // TODO: GL_POLYGON is deprecated
     return float_vertex_color_polygon{GL_POLYGON, floats};
+  }
+
+  static auto map_to_array_floats(game::polygon<game::vertex_uv_attributes> const &p)
+  {
+    auto const num_vertices = p.num_vertices();
+    auto const num_floats = calc_vertex_uv_num_floats(num_vertices);
+
+    stlw::sized_buffer<float> floats{static_cast<size_t>(num_floats)};
+    for (auto i{0}, j{0}; j < floats.length(); ++i) {
+      auto &vertice = p.vertex_attributes[i];
+      floats[j++] = vertice.vertex.x;
+      floats[j++] = vertice.vertex.y;
+      floats[j++] = vertice.vertex.z;
+      floats[j++] = vertice.vertex.w;
+
+      floats[j++] = vertice.uv.u;
+      floats[j++] = vertice.uv.v;
+    }
+    // TODO: GL_POLYGON is deprecated
+    return float_vertex_uv_polygon{GL_POLYGON, floats};
   }
 
 public:

@@ -115,6 +115,14 @@ class polygon_factory
     float const width = 0.25f;
   };
 
+  struct uv_properties
+  {
+    GLint const num_vertices;
+
+    float const alpha = 1.0f;
+    float const width = 0.25f;
+  };
+
   static auto
   construct(world_coordinate const& wc, color_properties const& props)
   {
@@ -146,6 +154,36 @@ class polygon_factory
     return poly;
   }
 
+  static auto
+  construct(world_coordinate const& wc, uv_properties const& props)
+  {
+    float const radius = props.width;
+    auto const num_vertices = props.num_vertices;
+
+    auto const C = num_vertices;     // Assume for now #colors == #vertices
+    auto const E = num_vertices + 1; // num_edges
+
+    auto const cosfn = [&radius, &wc, &E](auto const a) {
+      auto const pos = radius * static_cast<float>(std::cos(2 * M_PI * a / E));
+      return wc.x() + pos;
+    };
+    auto const sinfn = [&radius, &wc, &E](auto const a) {
+      auto const pos = radius * static_cast<float>(std::sin(2 * M_PI * a / E));
+      return wc.y() + pos;
+    };
+
+    polygon<vertex_uv_attributes> poly{wc, num_vertices};
+    for (auto i{0}, j{0}; i < num_vertices; ++i) {
+      auto const x = cosfn(i);
+      auto const y = sinfn(i);
+
+      vertex const v{x, y, wc.z(), wc.w()};
+      texture_coord const uv{x, y};
+      poly.vertex_attributes[i] = vertex_uv_attributes{v, uv};
+    }
+    return poly;
+  }
+
 public:
   static auto make(world_coordinate const &wc, int const num_vertices,
                            std::array<float, 3> const &color)
@@ -159,6 +197,12 @@ public:
     auto constexpr COLOR = ::engine::gfx::LIST_OF_COLORS::PINK;
     color_properties const prop{num_vertices, COLOR};
     return construct(wc, prop);
+  }
+
+  static auto make(world_coordinate const& wc, int const num_vertices, bool const)
+  {
+    uv_properties const p{num_vertices};
+    return construct(wc, p);
   }
 };
 
@@ -190,15 +234,20 @@ private:
   };
 
   static constexpr auto
-  construct(world_coordinate const &wc, color_properties const& props)
+  calculate_vertices(world_coordinate const& wc, float const radius)
   {
-    auto const radius = props.radius;
     std::array<vertex, 3> const vertices = {
       vertex{wc.x() - radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-left
       vertex{wc.x() + radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-right
       vertex{wc.x()         , wc.y() + radius, wc.z(), wc.w()}  // top-middle
     };
+    return vertices;
+  }
 
+  static constexpr auto
+  construct(world_coordinate const& wc, color_properties const& props)
+  {
+    auto const vertices = calculate_vertices(wc, props.radius);
     vertex_color_attributes const bottom_left{vertices[0], color{props.color_bottom_left}};
     vertex_color_attributes const bottom_right{vertices[1], color{props.color_bottom_right}};
     vertex_color_attributes const top_middle{vertices[2], color{props.color_top_middle}};
@@ -209,12 +258,7 @@ private:
   static constexpr auto
   construct(world_coordinate const &wc, uv_properties const& props)
   {
-    auto const radius = props.radius;
-    std::array<vertex, 3> const vertices = {
-      vertex{wc.x() - radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-left
-      vertex{wc.x() + radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-right
-      vertex{wc.x()         , wc.y() + radius, wc.z(), wc.w()}  // top-middle
-    };
+    auto const vertices = calculate_vertices(wc, props.radius);
 
     vertex_uv_attributes const bottom_left{vertices[0], props.uv[0]};
     vertex_uv_attributes const bottom_right{vertices[1], props.uv[1]};
@@ -289,15 +333,6 @@ class rectangle_factory
     std::array<float, 4> const& bottom_right = bottom_left;
     std::array<float, 4> const& top_right = bottom_left;
     std::array<float, 4> const& top_left = bottom_left;
-
-    // clang-format off
-    std::array<texture_coord, 4> const uv = {
-      texture_coord{0.0f, 0.0f}, // bottom-left
-      texture_coord{1.0f, 0.0f}, // bottom-right
-      texture_coord{1.0f, 1.0f}, // top-right
-      texture_coord{0.0f, 1.0f}, // top-left
-    };
-    // clang-format on
   };
 
   struct uv_properties

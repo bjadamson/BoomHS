@@ -163,7 +163,7 @@ ecst_main(G &game, S &state)
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.40f, 0.00f, 0.0f, 1.0f);
+      wc.set(0.40f, 0.00f, 0.0f, 1.0f);
       v = &wc;
     }
     {
@@ -246,15 +246,15 @@ public:
     auto s3 = game::rectangle_factory::make(*r, my_color2, height, width);
 
     auto s4 = game::polygon_factory::make(*u, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
-    auto s5 = game::polygon_factory::make(*v, 5);
+    auto s5 = game::polygon_factory::make(*v, 27, true);
 
     auto s6 = game::triangle_factory::make(*w, true);
     auto s7 = game::rectangle_factory::make(*x, ::engine::gfx::LIST_OF_COLORS::BLACK, height, width);
     auto s8 = game::rectangle_factory::make(*y, height, width, true);
 
     state.renderer.begin();
-    state.renderer.draw0(args, s0, s1, s2, s3, s4, s5, s7);
-    state.renderer.draw1(args, s6, s8);
+    state.renderer.draw0(args, s0, s1, s2, s3, s4, s7);
+    state.renderer.draw1(args, s5, s6, s8);
     state.renderer.end();
   }
 };
