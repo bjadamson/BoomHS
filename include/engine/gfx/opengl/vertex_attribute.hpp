@@ -169,10 +169,10 @@ make_color_uv_vertex_attribute()
   using ai = attribute_info;
   attribute_info constexpr vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
   attribute_info constexpr color_info {C_INDEX,  num_fields_color,  GL_FLOAT, ai::A_COLOR};
-  attribute_info constexpr uv_info    {UV_INDEX, num_fields_uv,     GL_FLOAT, ai::A_UV};
+  //attribute_info constexpr uv_info    {UV_INDEX, num_fields_uv,     GL_FLOAT, ai::A_UV};
   // clang-format on
 
-  return impl::make_vertex_array(vertex_info, color_info, uv_info);
+  return impl::make_vertex_array(vertex_info, color_info);//, uv_info);
 }
 
 template <typename L>
