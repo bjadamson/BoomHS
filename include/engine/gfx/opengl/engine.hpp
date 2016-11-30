@@ -10,13 +10,14 @@ namespace engine::gfx::opengl
 
 struct engine {
   // data
-  opengl_context rc0_, rc1_;
+  opengl_context rc0_;
+  opengl_texture_context rc1_;
 
   NO_COPY(engine);
   NO_MOVE_ASSIGN(engine);
   MOVE_CONSTRUCTIBLE(engine);
 
-  engine(opengl_context &&r0, opengl_context &&r1)
+  engine(opengl_context &&r0, opengl_texture_context &&r1)
       : rc0_(std::move(r0))
       , rc1_(std::move(r1))
   {

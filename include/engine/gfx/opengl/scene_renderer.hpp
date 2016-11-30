@@ -80,6 +80,23 @@ render_shape(L &logger, opengl_context &ctx, S const &shape)
   render(shape.draw_mode(), shape.vertice_count(), logger);
 }
 
+template<typename L, typename C, typename ...S>
+void
+draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection,
+    std::tuple<S...> const& shapes)
+{
+  // Pass the matrices to the shader
+  auto &p = ctx.program_ref();
+  p.set_uniform_matrix_4fv("view", view);
+  p.set_uniform_matrix_4fv("projection", projection);
+
+  // Instruct the vertex-processor to enable the vertex attributes for this context.
+  global::set_vertex_attributes(logger, ctx.va());
+
+  auto const fn = [&logger, &ctx](auto const &shape) { impl::render_shape(logger, ctx, shape); };
+  stlw::for_each(shapes, fn);
+}
+
 } // ns impl
 
 template <typename L, typename... S>
@@ -93,24 +110,24 @@ draw_scene(L &logger, opengl_context &ctx, glm::mat4 const &view, glm::mat4 cons
   glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
-  if (ctx.texture()) {
-    global::texture_bind(*ctx.texture());
-  }
+  impl::draw_scene(logger, ctx, view, projection, shapes);
+}
 
-  // Pass the matrices to the shader
-  auto &p = ctx.program_ref();
-  p.set_uniform_matrix_4fv("view", view);
-  p.set_uniform_matrix_4fv("projection", projection);
+template <typename L, typename... S>
+void
+draw_scene(L &logger, opengl_texture_context &ctx, glm::mat4 const &view, glm::mat4 const &projection,
+           std::tuple<S...> const &shapes)
+{
+  global::vao_bind(ctx.vao());
+  ON_SCOPE_EXIT([]() { global::vao_unbind(); });
 
-  // Instruct the vertex-processor to enable the vertex attributes for this context.
-  global::set_vertex_attributes(logger, ctx.va());
+  glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
-  auto const fn = [&logger, &ctx](auto const &shape) { impl::render_shape(logger, ctx, shape); };
-  stlw::for_each(shapes, fn);
+  global::texture_bind(ctx.texture());
+  ON_SCOPE_EXIT([]() { global::texture_unbind(); });
 
-  if (ctx.texture()) {
-    global::texture_unbind();
-  }
+  impl::draw_scene(logger, ctx, view, projection, shapes);
 }
 
 } // ns engine::gfx::opengl::renderer
