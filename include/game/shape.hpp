@@ -123,9 +123,23 @@ class polygon_factory
     float const width = 0.25f;
   };
 
-  template<typename V, typename P, typename F>
   static auto
-  construct(world_coordinate const& wc, P const& props, F const fn)
+  construct(world_coordinate const& wc, color_properties const& props)
+  {
+    vertex const v{wc.x(), wc.y(), wc.z(), wc.w()};
+
+    auto const num_vertices = props.num_vertices;
+    using V = vertex_color_attributes;
+    polygon<V> poly{wc, num_vertices};
+    for (auto i{0}; i < num_vertices; ++i) {
+      color const col{props.colors[0], props.colors[1], props.colors[2], props.alpha};
+      poly.vertex_attributes[i] = V{v, col};
+    }
+    return poly;
+  }
+
+  static auto
+  construct(world_coordinate const& wc, uv_properties const& props)
   {
     float const radius = props.width;
     auto const num_vertices = props.num_vertices;
@@ -142,39 +156,17 @@ class polygon_factory
       return wc.y() + pos;
     };
 
+    using V = vertex_uv_attributes;
     polygon<V> poly{wc, num_vertices};
-    for (auto i{0}, j{0}; i < num_vertices; ++i) {
+    for (auto i{0}; i < num_vertices; ++i) {
       auto const x = cosfn(i);
       auto const y = sinfn(i);
 
       vertex const v{x, y, wc.z(), wc.w()};
-      poly.vertex_attributes[i] = fn(props);
+      texture_coord const uv{x, y};
+      poly.vertex_attributes[i] = V{v, uv};
     }
     return poly;
-  }
-
-  static auto
-  construct(world_coordinate const& wc, color_properties const& props)
-  {
-    vertex const v{wc.x(), wc.y(), wc.z(), wc.w()};
-
-    auto const make_attr = [&v](auto const& props) {
-      color const col{props.colors[0], props.colors[1], props.colors[2], props.alpha};
-      return vertex_color_attributes(v, col);
-    };
-    return construct<vertex_color_attributes>(wc, props, make_attr);
-  }
-
-  static auto
-  construct(world_coordinate const& wc, uv_properties const& props)
-  {
-    vertex const v{wc.x(), wc.y(), wc.z(), wc.w()};
-
-    auto const make_attr = [&v](auto const& props) {
-      texture_coord const uv{v.x, v.y};
-      return vertex_uv_attributes{v, uv};
-    };
-    return construct<vertex_uv_attributes>(wc, props, make_attr);
   }
 
 public:

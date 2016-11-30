@@ -4,6 +4,7 @@
 #include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl/vertex_attribute.hpp>
 #include <iostream>
+#include <experimental/optional>
 
 namespace engine::gfx::opengl
 {
@@ -46,8 +47,8 @@ class opengl_context
 {
   GLuint vao_ = 0, vbo_ = 0;
   program program_;
-  GLuint texture_ = 0;
   vertex_attribute va_;
+  std::experimental::optional<GLuint> texture_;
 
   static auto constexpr NUM_BUFFERS = 1;
 
@@ -55,10 +56,10 @@ class opengl_context
   NO_MOVE_ASSIGN(opengl_context);
 
   // private ctor, use factory function.
-  opengl_context(program &&p, GLuint const tid, vertex_attribute &&va)
+  explicit opengl_context(program &&p, vertex_attribute &&va, std::experimental::optional<GLuint> && t)
       : program_(std::move(p))
-      , texture_(tid)
       , va_(std::move(va))
+      , texture_(std::move(t))
   {
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
     glGenBuffers(NUM_BUFFERS, &this->vbo_);
@@ -79,20 +80,20 @@ public:
       : vao_(other.vao_)
       , vbo_(other.vbo_)
       , program_(std::move(other.program_))
-      , texture_(other.texture_)
       , va_(std::move(other.va_))
+      , texture_(std::move(other.texture_))
   {
     other.vao_ = 0;
     other.vbo_ = 0;
     other.program_ = program::make_invalid();
-    other.texture_ = 0;
+    other.texture_ = std::experimental::nullopt;
   }
 
   inline auto vao() const { return this->vao_; }
   inline auto vbo() const { return this->vbo_; }
-  inline auto texture() const { return this->texture_; }
   inline auto &program_ref() { return this->program_; }
   inline auto const& va() { return this->va_; }
+  inline auto texture() const { return this->texture_; }
 
   friend struct context_factory;
 };
@@ -100,10 +101,16 @@ public:
 struct context_factory {
   context_factory() = delete;
 
-  auto static make_opengl_context(program &&p, char const *path, vertex_attribute &&va)
+  auto static make_opengl_context(program &&p, vertex_attribute &&va)
+  {
+    auto tid = std::experimental::nullopt;
+    return opengl_context{std::move(p), std::move(va), std::move(tid)};
+  }
+
+  auto static make_texture_opengl_context(program &&p, char const *path, vertex_attribute &&va)
   {
     auto const tid = impl::load_texture(path);
-    return opengl_context{std::move(p), tid, std::move(va)};
+    return opengl_context{std::move(p), std::move(va), std::experimental::make_optional(tid)};
   }
 };
 

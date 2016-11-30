@@ -65,15 +65,18 @@ struct factory {
     auto const get_r = [&](auto const i) { return RESOURCES[i]; };
 
     DO_TRY(auto phandle0, program_loader::from_files("color.vert", "color.frag"));
-    auto rc0 = make_ctx(std::move(phandle0), get_r(IMAGES::WALL), &global::make_vertex_color_vertex_attribute);
+    auto va0 = global::make_vertex_color_vertex_attribute();
+    auto c0 = context_factory::make_opengl_context(std::move(phandle0), std::move(va0));
 
     DO_TRY(auto phandle1, program_loader::from_files("image.vert", "image.frag"));
-    auto rc1 = make_ctx(std::move(phandle1), get_r(IMAGES::CONTAINER), &global::make_vertex_uv_vertex_attribute);
+    auto va1 = global::make_vertex_uv_vertex_attribute();
+    auto c1 = context_factory::make_texture_opengl_context(std::move(phandle1), get_r(IMAGES::WALL),
+        std::move(va1));
 
     // TODO: move this
     // glEnable(GL_DEPTH_TEST);
     // glDisable(GL_CULL_FACE);
-    return engine{std::move(rc0), std::move(rc1)};
+    return engine{std::move(c0), std::move(c1)};
   }
 };
 

@@ -93,8 +93,9 @@ draw_scene(L &logger, opengl_context &ctx, glm::mat4 const &view, glm::mat4 cons
   glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
-  global::texture_bind(ctx.texture());
-  ON_SCOPE_EXIT([]() { global::texture_unbind(); });
+  if (ctx.texture()) {
+    global::texture_bind(*ctx.texture());
+  }
 
   // Pass the matrices to the shader
   auto &p = ctx.program_ref();
@@ -106,6 +107,10 @@ draw_scene(L &logger, opengl_context &ctx, glm::mat4 const &view, glm::mat4 cons
 
   auto const fn = [&logger, &ctx](auto const &shape) { impl::render_shape(logger, ctx, shape); };
   stlw::for_each(shapes, fn);
+
+  if (ctx.texture()) {
+    global::texture_unbind();
+  }
 }
 
 } // ns engine::gfx::opengl::renderer
