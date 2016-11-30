@@ -123,8 +123,9 @@ class polygon_factory
     float const width = 0.25f;
   };
 
+  template<typename V, typename P, typename F>
   static auto
-  construct(world_coordinate const& wc, color_properties const& props)
+  construct(world_coordinate const& wc, P const& props, F const fn)
   {
     float const radius = props.width;
     auto const num_vertices = props.num_vertices;
@@ -141,47 +142,39 @@ class polygon_factory
       return wc.y() + pos;
     };
 
-    polygon<vertex_color_attributes> poly{wc, num_vertices};
+    polygon<V> poly{wc, num_vertices};
     for (auto i{0}, j{0}; i < num_vertices; ++i) {
       auto const x = cosfn(i);
       auto const y = sinfn(i);
 
       vertex const v{x, y, wc.z(), wc.w()};
-      color const col{props.colors[0], props.colors[1], props.colors[2], props.alpha};
-      texture_coord const uv{x, y};
-      poly.vertex_attributes[i] = vertex_color_attributes{v, col};//, uv};
+      poly.vertex_attributes[i] = fn(props);
     }
     return poly;
   }
 
   static auto
+  construct(world_coordinate const& wc, color_properties const& props)
+  {
+    vertex const v{wc.x(), wc.y(), wc.z(), wc.w()};
+
+    auto const make_attr = [&v](auto const& props) {
+      color const col{props.colors[0], props.colors[1], props.colors[2], props.alpha};
+      return vertex_color_attributes(v, col);
+    };
+    return construct<vertex_color_attributes>(wc, props, make_attr);
+  }
+
+  static auto
   construct(world_coordinate const& wc, uv_properties const& props)
   {
-    float const radius = props.width;
-    auto const num_vertices = props.num_vertices;
+    vertex const v{wc.x(), wc.y(), wc.z(), wc.w()};
 
-    auto const C = num_vertices;     // Assume for now #colors == #vertices
-    auto const E = num_vertices + 1; // num_edges
-
-    auto const cosfn = [&radius, &wc, &E](auto const a) {
-      auto const pos = radius * static_cast<float>(std::cos(2 * M_PI * a / E));
-      return wc.x() + pos;
+    auto const make_attr = [&v](auto const& props) {
+      texture_coord const uv{v.x, v.y};
+      return vertex_uv_attributes{v, uv};
     };
-    auto const sinfn = [&radius, &wc, &E](auto const a) {
-      auto const pos = radius * static_cast<float>(std::sin(2 * M_PI * a / E));
-      return wc.y() + pos;
-    };
-
-    polygon<vertex_uv_attributes> poly{wc, num_vertices};
-    for (auto i{0}, j{0}; i < num_vertices; ++i) {
-      auto const x = cosfn(i);
-      auto const y = sinfn(i);
-
-      vertex const v{x, y, wc.z(), wc.w()};
-      texture_coord const uv{x, y};
-      poly.vertex_attributes[i] = vertex_uv_attributes{v, uv};
-    }
-    return poly;
+    return construct<vertex_uv_attributes>(wc, props, make_attr);
   }
 
 public:
@@ -350,16 +343,24 @@ class rectangle_factory
   };
 
   static constexpr auto
-  construct(world_coordinate const &wc, color_properties const& props)
+  calculate_vertices(world_coordinate const& wc, height_width const& hw)
   {
-    auto const height = props.dimensions.height();
-    auto const width = props.dimensions.width();
+    auto const width = hw.width();
+    auto const height = hw.height();
     std::array<vertex, 4> const vertices = {
       vertex{wc.x() - width, wc.y() - height, wc.z(), wc.w()}, // bottom-left
       vertex{wc.x() + width, wc.y() - height, wc.z(), wc.w()}, // bottom-right
       vertex{wc.x() + width, wc.y() + height, wc.z(), wc.w()}, // top-right
       vertex{wc.x() - width, wc.y() + height, wc.z(), wc.w()}  // top-left
     };
+    return vertices;
+  }
+
+  static constexpr auto
+  construct(world_coordinate const &wc, color_properties const& props)
+  {
+    auto const vertices = calculate_vertices(wc, props.dimensions);
+
     vertex_color_attributes const bottom_left{vertices[0], color{props.bottom_left}};
     vertex_color_attributes const bottom_right{vertices[1], color{props.bottom_right}};
     vertex_color_attributes const top_right{vertices[2], color{props.top_right}};
@@ -371,14 +372,8 @@ class rectangle_factory
   static constexpr auto
   construct(world_coordinate const &wc, uv_properties const& props)
   {
-    auto const height = props.dimensions.height();
-    auto const width = props.dimensions.width();
-    std::array<vertex, 4> const vertices = {
-      vertex{wc.x() - width, wc.y() - height, wc.z(), wc.w()}, // bottom-left
-      vertex{wc.x() + width, wc.y() - height, wc.z(), wc.w()}, // bottom-right
-      vertex{wc.x() + width, wc.y() + height, wc.z(), wc.w()}, // top-right
-      vertex{wc.x() - width, wc.y() + height, wc.z(), wc.w()}  // top-left
-    };
+    auto const vertices = calculate_vertices(wc, props.dimensions);
+
     vertex_uv_attributes const bottom_left{vertices[0], props.uv[0]};
     vertex_uv_attributes const bottom_right{vertices[1], props.uv[1]};
     vertex_uv_attributes const top_right{vertices[2],  props.uv[2]};
