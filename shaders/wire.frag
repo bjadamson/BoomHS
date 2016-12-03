@@ -1,11 +1,10 @@
 precision mediump float;
 
-in vec2 v_uv;
+uniform vec4 u_color;
 
-uniform sampler2D u_sampler;
 out vec4 fragment_color;  // output fragment color
 
 void main()
 {
-  fragment_color = texture(u_sampler, v_uv);
+  fragment_color = vec4(1.0, 1.0, u_color.z, 1.0);
 }

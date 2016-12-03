@@ -58,6 +58,12 @@ public:
     this->engine_.draw1(args, shapes...);
   }
 
+  template <typename Args, typename... S>
+  void draw2(Args const &args, S const &... shapes)
+  {
+    this->engine_.draw2(args, shapes...);
+  }
+
   void end()
   {
     this->engine_.end();

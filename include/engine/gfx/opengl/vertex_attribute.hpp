@@ -73,20 +73,40 @@ public:
 namespace impl
 {
 
-template<typename ...Args>
+template<typename ...Attributes>
 auto
-make_attribute_list(Args &&... args)
+make_attribute_list(Attributes &&... attributes)
 {
-  static constexpr auto N = sizeof...(args);
-  auto arr = stlw::make_array<attribute_info, N>(args...);
+  static constexpr auto N = sizeof...(attributes);
+  auto arr = stlw::make_array<attribute_info, N>(attributes...);
   return attribute_list<N>{std::move(arr)};
 }
 
-template<typename ...Args>
+template<typename L, typename ...Attributes>
 auto
-make_vertex_array(Args &&... args)
+make_vertex_array(L &logger, Attributes &&... attributes)
 {
-  auto list = make_attribute_list(std::forward<Args>(args)...);
+  auto constexpr NUM_ATTRIBUTES = sizeof...(attributes);
+  logger.trace(fmt::sprintf("Constructing vertex array from '%d' attributes.", NUM_ATTRIBUTES));
+
+  {
+    int max_attribs = 0;
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &max_attribs);
+
+    auto const fmt = fmt::sprintf(
+        "Queried OpengGL for maximum number of vertex attributes, found '%d'", max_attribs);
+    logger.trace(fmt);
+
+    if (max_attribs <= NUM_ATTRIBUTES) {
+      auto const fmt = fmt::sprintf(
+          "Error requested '%d' vertex attributes from opengl, only '%d' available",
+          NUM_ATTRIBUTES, max_attribs);
+      logger.error(fmt);
+      assert(false);
+    }
+  }
+
+  auto list = make_attribute_list(std::forward<Attributes>(attributes)...);
   return vertex_attribute{std::move(list)};
 }
 
@@ -123,28 +143,25 @@ set_attrib_pointer(L &logger, attribute_info const& attrib_info, skip_context &s
       DONT_NORMALIZE_THE_DATA,                     // don't normalize our data
       stride_in_bytes,                             // byte-offset between consecutive vertex attributes
       reinterpret_cast<GLvoid*>(offset_in_bytes)); // offset from beginning of buffer
-  // clang-format on
   sc.components_skipped += component_count;
 
-  GLint enabled = 0;
-  glGetVertexAttribiv(attribute_index, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
+  auto const make_decimals = [](auto const a0, auto const a1, auto const a2, auto const a3, auto const a4,
+      auto const a5) {
+    return fmt::sprintf("%-15d %-15d %-15d %-15d %-15d %-15d", a0, a1, a2, a3, a4, a5);
+  };
 
-  auto const s = fmt::format("%-10d %-10d %-10d %-10s %-10d %-10d %-10d %-10d\n", attribute_index,
-                              enabled, component_count, "TODO()", DONT_NORMALIZE_THE_DATA,
-                              stride_in_bytes, offset_in_bytes, sc.components_skipped);
-  logger.trace(s);
+  auto const make_strings = [](auto const a0, auto const a1, auto const a2, auto const a3, auto const a4,
+      auto const a5) {
+    return fmt::sprintf("%-15s %-15s %-15s %-15s %-15s %-15s", a0, a1, a2, a3, a4, a5);
+  };
 
-  {
-    int max_attribs = 0;
-    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &max_attribs);
-    auto const fmt = fmt::format("maximum number of vertex attributes: '%d'\n", max_attribs);
-    logger.trace(fmt);
-  }
-  {
-    auto const fmt = fmt::format("%-10s %-10s %-10s %-10s %-10s %-10s %-10s\n", "index:", "enabled",
-                                 "size", "type", "normalized", "stride", "pointer", "num skipped");
-    logger.trace(fmt);
-  }
+  auto const s = make_decimals(attribute_index, component_count, DONT_NORMALIZE_THE_DATA,
+      stride_in_bytes, offset_in_bytes, sc.components_skipped);
+  auto const z = make_strings("attribute_index", "component_count", "normalize_data", "stride", "offset",
+      "component_sk");
+
+  logger.debug(z);
+  logger.debug(s);
 }
 
 } // ns impl
@@ -152,14 +169,14 @@ set_attrib_pointer(L &logger, attribute_info const& attrib_info, skip_context &s
 namespace global
 {
 
-inline auto
-make_vertex_color_vertex_attribute()
+template<typename L>
+auto
+make_vertex_color_vertex_attribute(L &logger)
 {
   // attribute indexes
   constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
   constexpr auto C_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_COLOR;
 
-  // clang-format off
   // num fields per attribute
   GLint constexpr num_fields_vertex = 4; // x, y, z, w
   GLint constexpr num_fields_color = 4;  // r, g, b, a
@@ -167,19 +184,18 @@ make_vertex_color_vertex_attribute()
   using ai = attribute_info;
   attribute_info constexpr vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
   attribute_info constexpr color_info {C_INDEX,  num_fields_color,  GL_FLOAT, ai::A_COLOR};
-  // clang-format on
 
-  return impl::make_vertex_array(vertex_info, color_info);
+  return impl::make_vertex_array(logger, vertex_info, color_info);
 }
 
-inline auto
-make_vertex_uv_vertex_attribute()
+template<typename L>
+auto
+make_vertex_uv_vertex_attribute(L &logger)
 {
   // attribute indexes
   constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
   constexpr auto UV_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_UV;
 
-  // clang-format off
   // num fields per attribute
   GLint constexpr num_fields_vertex = 4; // x, y, z, w
   GLint constexpr num_fields_uv = 2;     // u, v
@@ -187,17 +203,42 @@ make_vertex_uv_vertex_attribute()
   using ai = attribute_info;
   attribute_info constexpr vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
   attribute_info constexpr uv_info    {UV_INDEX, num_fields_uv,     GL_FLOAT, ai::A_UV};
-  // clang-format on
 
-  return impl::make_vertex_array(vertex_info, uv_info);
+  return impl::make_vertex_array(logger, vertex_info, uv_info);
+}
+
+template<typename L>
+auto
+make_vertex_only_vertex_attribute(L &logger)
+{
+  // attribute indexes
+  constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
+
+  // num fields per attribute
+  GLint constexpr num_fields_vertex = 4; // x, y, z, w
+
+  using ai = attribute_info;
+  attribute_info constexpr vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
+
+  return impl::make_vertex_array(logger, vertex_info);
 }
 
 template <typename L>
 void
 set_vertex_attributes(L &logger, vertex_attribute const& va)
 {
+  auto const log_info = [&logger](auto const& it) {
+    GLint enabled = 0;
+    glGetVertexAttribiv(it.global_index, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
+    auto const sb = [](auto const& enabled) { return (GL_FALSE == enabled) ? "false" : "true"; };
+    auto const fmt = fmt::sprintf("Querying OpengGL, vertex attribute index '%d' enabled: '%s'",
+        it.global_index, sb(enabled));
+    logger.trace(fmt);
+  };
+
   impl::skip_context sc{va.num_components()};
   for (auto const& it : va) {
+    log_info(it);
     impl::set_attrib_pointer(logger, it, sc);
   }
 }

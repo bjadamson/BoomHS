@@ -1,5 +1,6 @@
 #pragma once
 #include <SOIL.h>
+#include <engine/gfx/colors.hpp>
 #include <engine/gfx/opengl/global.hpp>
 #include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl/vertex_attribute.hpp>
@@ -119,6 +120,30 @@ public:
   inline auto texture() const { return this->texture_; }
 };
 
+class opengl_wireframe_context : public opengl_context
+{
+  std::array<float, 4> color_;
+
+  // private
+  opengl_wireframe_context(program &&p, vertex_attribute &&va, std::array<float, 4> const& c)
+    : opengl_context(std::move(p), std::move(va))
+    , color_(c)
+  {
+  }
+  NO_COPY(opengl_wireframe_context);
+  NO_MOVE_ASSIGN(opengl_wireframe_context);
+  friend struct context_factory;
+public:
+  // move-construction OK
+  opengl_wireframe_context(opengl_wireframe_context &&other)
+    : opengl_context(std::move(other))
+    , color_(other.color_)
+  {
+    other.color_ = other.color_;
+  }
+  inline auto color() const { return this->color_; }
+};
+
 struct context_factory {
   context_factory() = delete;
 
@@ -131,6 +156,14 @@ struct context_factory {
   {
     auto const tid = impl::load_texture(path);
     return opengl_texture_context{std::move(p), std::move(va), tid};
+  }
+
+  auto static make_wireframe_opengl_context(program &&p, vertex_attribute &&va,
+      std::array<float, 3> const& c)
+  {
+    constexpr auto ALPHA = 1.0f;
+    std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
+    return opengl_wireframe_context{std::move(p), std::move(va), color};
   }
 };
 

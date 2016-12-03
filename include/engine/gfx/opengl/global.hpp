@@ -24,6 +24,7 @@ static auto const get_program_log = [](GLuint const handle) {
 };
 
 static auto const get_errors = [](GLuint const program_id) { return impl::get_errors(program_id); };
-}
+static auto const clear_gl_errors = []() { impl::clear_gl_errors(); };
+} // ns log
 
 } // ns engine::gfx::opengl::global

@@ -35,7 +35,6 @@ struct color {
   {
   }
 };
-
 struct texture_coord {
   float u, v;
   texture_coord() = default;

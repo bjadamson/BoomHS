@@ -1,5 +1,6 @@
 #pragma once
 #include <engine/gfx/opengl/glew.hpp>
+#include <engine/gfx/opengl/gl_log.hpp>
 #include <engine/gfx/opengl/global.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -20,6 +21,8 @@ namespace engine::gfx::opengl
 
 DEFINE_SHADER_FILENAME_TYPE(vertex);
 DEFINE_SHADER_FILENAME_TYPE(fragment);
+
+
 
 class program
 {
@@ -76,14 +79,58 @@ public:
   // MUTATION
   // ----------------------------------------------------------------------------------------------
   // Make this program become "Active" for OpenGL.
-  void use();
-
-  void set_uniform_matrix_4fv(GLchar const *name, glm::mat4 const &matrix)
+  void use()
   {
+    glUseProgram(this->program_id_);
+  }
+
+  template<typename L>
+  auto
+  get_uniform_location(L &logger, GLuint program, GLchar const* name)
+  {
+    global::log::clear_gl_errors();
+
+    this->use();
     GLint const loc = glGetUniformLocation(this->program_id_, name);
-    GLsizei const NUM_MATRICES = 1;
-    GLboolean const transpose_matrices = GL_FALSE;
-    glUniformMatrix4fv(loc, NUM_MATRICES, transpose_matrices, glm::value_ptr(matrix));
+    logger.trace("get_uniform_location(" + std::string{name} + ") loc is '" + std::to_string(loc)
+        + "'");
+    assert(-1 != loc);
+    this->check_opengl_errors(logger);
+    return loc;
+  }
+
+  template<typename L>
+  void set_uniform_matrix_4fv(L &logger, GLchar const *name, glm::mat4 const &matrix)
+  {
+    auto const loc = this->get_uniform_location(logger, this->program_id_, name);
+
+    // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
+    //
+    // count:
+    // For the matrix (glUniformMatrix*) commands, specifies the number of matrices that are to be
+    // modified.
+    // This should be 1 if the targeted uniform variable is not an array of matrices, and 1 or more
+    // if it is an array of matrices.
+    GLsizei constexpr COUNT = 1;
+    GLboolean constexpr TRANSPOSE_MATRICES = GL_FALSE;
+
+    glUniformMatrix4fv(loc, COUNT, TRANSPOSE_MATRICES, glm::value_ptr(matrix));
+    this->check_opengl_errors(logger);
+  }
+
+  template<typename L>
+  void set_uniform_array_4fv(L &logger, GLchar const* name, std::array<float, 4> const& floats)
+  {
+    // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
+    //
+    // For the vector (glUniform*v) commands, specifies the number of elements that are to be
+    // modified.
+    // This should be 1 if the targeted uniform variable is not an array, and 1 or more if it is an
+    // array.
+    GLsizei constexpr COUNT = 1;
+
+    auto const loc = this->get_uniform_location(logger, this->program_id_, name);
+    glUniform4fv(loc, COUNT, floats.data());
   }
 
   // IMMUTABLE

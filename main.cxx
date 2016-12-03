@@ -39,7 +39,7 @@ main(int argc, char *argv[])
   DO_TRY_OR_ELSE_RETURN(auto renderer, std::move(engine), on_error);
   using R = decltype(renderer);
 
-  logger.trace("Instantiating 'state'");
+  logger.debug("Instantiating 'state'");
   auto const dimensions = window.get_dimensions();
   auto state = game::boomhs::game_state<L, R>{logger, renderer, dimensions};
 

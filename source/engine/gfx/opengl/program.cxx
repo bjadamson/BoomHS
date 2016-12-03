@@ -100,29 +100,6 @@ compile_sources(std::string const &vertex_shader_source, std::string const &frag
 namespace engine::gfx::opengl
 {
 
-void
-program::use()
-{
-  auto const &p = this->program_id_;
-
-  /*
-  GLint num_active_attributes;
-  glGetProgramiv(p, GL_ACTIVE_ATTRIBUTES, &num_active_attributes);
-
-  auto constexpr BUFFER_LENGTH = GL_ACTIVE_ATTRIBUTE_MAX_LENGTH;
-
-  GLsizei *length = nullptr; // This is OK if we don't care about the length according to docs.
-  GLint size;
-  GLenum type;
-  GLchar name[BUFFER_LENGTH] = {0};
-  for (auto i{0}; i < BUFFER_LENGTH; ++i) {
-    glGetActiveAttrib(p, i, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, length, &size, &type, &name[0]);
-  }
-  */
-
-  glUseProgram(p);
-}
-
 stlw::result<program, std::string>
 program_loader::from_files(vertex_shader_filename const v, fragment_shader_filename const f)
 {

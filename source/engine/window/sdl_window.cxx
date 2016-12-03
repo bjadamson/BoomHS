@@ -5,10 +5,14 @@
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace engine
+namespace engine::window
 {
-namespace window
-{
+
+//std::string error = SDL_GetError();
+//if (error != "") {
+  //ostream << "SLD Error : " << error << std::endl;
+  //SDL_ClearError();
+//}
 
 stlw::result<stlw::empty_type, std::string>
 sdl_library::init()
@@ -107,5 +111,4 @@ sdl_library::make_window(int const height, int const width)
   return sdl_window{std::move(window_ptr), gl_context};
 }
 
-} // ns window
-} // ns engine
+} // ns engine::window

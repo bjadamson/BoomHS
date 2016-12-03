@@ -14,38 +14,38 @@ namespace engine::gfx::opengl::renderer
 namespace impl
 {
 
-auto const print_triangle = [](auto &logger, auto const &triangle) {
-  auto const make_part = [&](float const *d) {
-    // clang-format off
-    auto const fmt_s =
-      "verts : [{0}, {1}, {2}, {3}], "
-      "colors: [{4}, {5}, {6}, {7}], "
-      "tcords: [{8}, {9}]";
-    return fmt::format(fmt_s,
-        d[0], d[1], d[2], d[3],
-        d[4], d[5], d[6], d[7],
-        d[8], d[9]);
-    // clang-format on
-  };
-  auto const p0 = make_part(&triangle.data()[0]);
-  auto const p1 = make_part(&triangle.data()[10]);
-  auto const p2 = make_part(&triangle.data()[20]);
-
-  auto const msg = fmt::format("triangle info:\n{}\n{}\n{}\n\n", p0, p1, p2);
-  logger.info(msg);
-};
-
-template <typename L>
+template<typename L>
 void
-render(GLenum const render_mode, GLsizei const vertice_count, L &logger)
+render(L &logger, GLenum const render_mode, GLsizei const vertice_count)
 {
+  logger.info("glDrawArrays()");
+
   GLint const begin = 0;
   glDrawArrays(render_mode, begin, vertice_count);
 }
 
+template<typename L, typename S>
+void
+log_shape_bytes(L &logger, S const& shape)
+{
+  assert(0 < shape.length());
+  std::stringstream ostream;
+  ostream << "data(bytes):\n";
+  auto i{0};
+  ostream << "[";
+  ostream << std::to_string(shape.data()[i++]);
+
+  for (; i < shape.length(); ++i) {
+    ostream << ", " << std::to_string(shape.data()[i]);
+  }
+  ostream << "]";
+  ostream << "\n";
+  logger.trace(ostream.str());
+}
+
 template <typename L, typename S>
 void
-copy_to_gpu(L &logger, GLuint const vbo, S const &shape)
+copy_to_gpu(L &logger, GLuint const vbo, S const& shape)
 {
   // 1. Bind the vbo object to the GL_ARRAY_BUFFER
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -54,15 +54,7 @@ copy_to_gpu(L &logger, GLuint const vbo, S const &shape)
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
   // 3. Copy the data to the GPU, then let stack cleanup gl context automatically.
-  auto const log_bytes = [](auto &logger, auto const &t) {
-    std::string fmt = fmt::sprintf("[[ size: %d]", t.size_in_bytes());
-    for (auto i = 0; i < t.size_in_bytes(); ++i) {
-      fmt += " " + std::to_string(t.data()[i]);
-    }
-    fmt += "]";
-    logger.info(fmt);
-  };
-  log_bytes(logger, shape);
+  log_shape_bytes(logger, shape);
   glBufferData(GL_ARRAY_BUFFER, shape.size_in_bytes(), shape.data(), GL_STATIC_DRAW);
 }
 
@@ -70,14 +62,15 @@ template <typename L, typename S>
 void
 render_shape(L &logger, opengl_context &ctx, S const &shape)
 {
+  logger.trace(fmt::sprintf("%-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices"));
+  logger.trace(fmt::sprintf("%-15d %-15d %-15d\n", shape.size_in_bytes(), shape.length(),
+      shape.vertice_count()));
+
   // print_triangle(logger, t0);
   copy_to_gpu(logger, ctx.vbo(), shape);
 
   // Draw our first triangle
-  program &p = ctx.program_ref();
-  p.use();
-  p.check_opengl_errors(logger);
-  render(shape.draw_mode(), shape.vertice_count(), logger);
+  render(logger, shape.draw_mode(), shape.vertice_count());
 }
 
 template<typename L, typename C, typename ...S>
@@ -87,14 +80,35 @@ draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection
 {
   // Pass the matrices to the shader
   auto &p = ctx.program_ref();
-  p.set_uniform_matrix_4fv("view", view);
-  p.set_uniform_matrix_4fv("projection", projection);
+  logger.info("setting u_view");
+  p.set_uniform_matrix_4fv(logger, "u_view", view);
+  p.check_opengl_errors(logger);
+
+  logger.info("setting u_projection");
+  p.set_uniform_matrix_4fv(logger, "u_projection", projection);
+  p.check_opengl_errors(logger);
+
+  logger.info("using p");
+  p.use();
+  p.check_opengl_errors(logger);
 
   // Instruct the vertex-processor to enable the vertex attributes for this context.
   global::set_vertex_attributes(logger, ctx.va());
 
-  auto const fn = [&logger, &ctx](auto const &shape) { impl::render_shape(logger, ctx, shape); };
+  std::stringstream ss;
+  ss << "#########################################################################################################################\n";
+  ss << "Copying '" << sizeof...(S) << "' shapes from CPU -> OpenGL driver ...\n";
+
+  auto const fn = [&logger, &ctx, &p](auto const &shape) {
+    logger.trace("before drawing shape ...");
+    impl::render_shape(logger, ctx, shape);
+    p.check_opengl_errors(logger);
+    logger.trace("after drawing shape");
+  };
   stlw::for_each(shapes, fn);
+  ss << "#########################################################################################################################\n";
+
+  logger.trace(ss.str());
 }
 
 } // ns impl
@@ -126,6 +140,25 @@ draw_scene(L &logger, opengl_texture_context &ctx, glm::mat4 const &view, glm::m
 
   global::texture_bind(ctx.texture());
   ON_SCOPE_EXIT([]() { global::texture_unbind(); });
+
+  impl::draw_scene(logger, ctx, view, projection, shapes);
+}
+
+template <typename L, typename... S>
+void
+draw_scene(L &logger, opengl_wireframe_context &ctx, glm::mat4 const &view, glm::mat4 const &projection,
+           std::tuple<S...> const &shapes)
+{
+  global::vao_bind(ctx.vao());
+  ON_SCOPE_EXIT([]() { global::vao_unbind(); });
+
+  glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+
+  auto &p = ctx.program_ref();
+  logger.info("setting u_color");
+  p.set_uniform_array_4fv(logger, "u_color", ctx.color());
+  p.check_opengl_errors(logger);
 
   impl::draw_scene(logger, ctx, view, projection, shapes);
 }
