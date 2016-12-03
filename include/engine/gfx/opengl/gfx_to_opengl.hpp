@@ -83,9 +83,9 @@ using float_vertex_uv_triangle = static_vertex_uv_shape<18>;
 using float_vertex_only_triangle = static_vertex_only_shape<12>;
 
 // float rectangles
-using float_vertex_color_rectangle = static_vertex_color_shape<32>;
-using float_vertex_uv_rectangle = static_vertex_uv_shape<24>;
-using float_vertex_only_rectangle = static_vertex_only_shape<16>;
+using float_vertex_color_rectangle = static_vertex_color_shape<48>;
+using float_vertex_uv_rectangle = static_vertex_uv_shape<36>;
+using float_vertex_only_rectangle = static_vertex_only_shape<24>;
 
 // float polygons
 using float_vertex_color_polygon = runtime_sized_array<8>;
@@ -116,7 +116,8 @@ class shape_mapper
 
   static constexpr auto map_to_array_floats(game::triangle<game::vertex_color_attributes> const &t)
   {
-    auto constexpr NUM_VERTICES = 3;
+    using X = game::triangle<game::vertex_color_attributes>;
+    auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_color_num_floats(NUM_VERTICES);
 
     auto floats = std::array<float, NUM_FLOATS>{
@@ -137,7 +138,8 @@ class shape_mapper
 
   static constexpr auto map_to_array_floats(game::triangle<game::vertex_uv_attributes> const &t)
   {
-    auto constexpr NUM_VERTICES = 3;
+    using X = game::triangle<game::vertex_uv_attributes>;
+    auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_uv_num_floats(NUM_VERTICES);
 
     auto floats = std::array<float, NUM_FLOATS>{
@@ -155,7 +157,8 @@ class shape_mapper
 
   static constexpr auto map_to_array_floats(game::triangle<game::vertex_wireframe_attributes> const &t)
   {
-    auto constexpr NUM_VERTICES = 3;
+    using X = game::triangle<game::vertex_uv_attributes>;
+    auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_only_num_floats(NUM_VERTICES);
 
     auto floats = std::array<float, NUM_FLOATS>{
@@ -173,48 +176,89 @@ class shape_mapper
 
   static constexpr auto map_to_array_floats(game::rectangle<game::vertex_color_attributes> const &r)
   {
-    auto constexpr NUM_VERTICES = 4;
+    auto constexpr NUM_VERTICES = 6;
     auto constexpr NUM_FLOATS = calc_vertex_color_num_floats(NUM_VERTICES);
 
     auto floats = std::array<float, NUM_FLOATS>{
-        r.bottom_left.vertex.x,  r.bottom_left.vertex.y,  r.bottom_left.vertex.z,
+        r.bottom_left.vertex.x,  r.bottom_left.vertex.y,  r.bottom_left.vertex.z, // vertice 1
         r.bottom_left.vertex.w,  r.bottom_left.color.r,   r.bottom_left.color.g,
         r.bottom_left.color.b,   r.bottom_left.color.a,
 
-        r.bottom_right.vertex.x, r.bottom_right.vertex.y, r.bottom_right.vertex.z,
+        r.bottom_right.vertex.x, r.bottom_right.vertex.y, r.bottom_right.vertex.z, // vertice 2
         r.bottom_right.vertex.w, r.bottom_right.color.r,  r.bottom_right.color.g,
         r.bottom_right.color.b,  r.bottom_right.color.a,
 
-        r.top_right.vertex.x,    r.top_right.vertex.y,    r.top_right.vertex.z,
+        r.top_right.vertex.x,    r.top_right.vertex.y,    r.top_right.vertex.z, // vertice 3
         r.top_right.vertex.w,    r.top_right.color.r,     r.top_right.color.g,
         r.top_right.color.b,     r.top_right.color.a,
 
-        r.top_left.vertex.x,     r.top_left.vertex.y,     r.top_left.vertex.z,
+        r.bottom_left.vertex.x,  r.bottom_left.vertex.y,  r.bottom_left.vertex.z, // vertice 1
+        r.bottom_left.vertex.w,  r.bottom_left.color.r,   r.bottom_left.color.g,
+        r.bottom_left.color.b,   r.bottom_left.color.a,
+
+        r.top_right.vertex.x,    r.top_right.vertex.y,    r.top_right.vertex.z, // vertice 3
+        r.top_right.vertex.w,    r.top_right.color.r,     r.top_right.color.g,
+        r.top_right.color.b,     r.top_right.color.a,
+
+        r.top_left.vertex.x,     r.top_left.vertex.y,     r.top_left.vertex.z, // vertice 4
         r.top_left.vertex.w,     r.top_left.color.r,      r.top_left.color.g,
         r.top_left.color.b,      r.top_left.color.a,
     };
-    return float_vertex_color_rectangle{GL_QUADS, std::move(floats)};
+    return float_vertex_color_rectangle{GL_TRIANGLE_STRIP, std::move(floats)};
   }
 
   static constexpr auto map_to_array_floats(game::rectangle<game::vertex_uv_attributes> const &r)
   {
-    auto constexpr NUM_VERTICES = 4;
+    auto constexpr NUM_VERTICES = 6;
     auto constexpr NUM_FLOATS = calc_vertex_uv_num_floats(NUM_VERTICES);
 
     auto floats = std::array<float, NUM_FLOATS>{
-        r.bottom_left.vertex.x,  r.bottom_left.vertex.y, r.bottom_left.vertex.z,
-        r.bottom_left.vertex.w,  r.bottom_left.uv.u,     r.bottom_left.uv.v,
+        r.bottom_left.vertex.x,  r.bottom_left.vertex.y,  r.bottom_left.vertex.z, // vertice 1
+        r.bottom_left.vertex.w,  r.bottom_left.uv.u,   r.bottom_left.uv.v,
 
-        r.bottom_right.vertex.x, r.bottom_right.vertex.y, r.bottom_right.vertex.z,
-        r.bottom_right.vertex.w, r.bottom_right.uv.u,     r.bottom_right.uv.v,
+        r.bottom_right.vertex.x, r.bottom_right.vertex.y, r.bottom_right.vertex.z, // vertice 2
+        r.bottom_right.vertex.w, r.bottom_right.uv.u,  r.bottom_right.uv.v,
 
-        r.top_right.vertex.x,    r.top_right.vertex.y, r.top_right.vertex.z,
+        r.top_right.vertex.x,    r.top_right.vertex.y,    r.top_right.vertex.z, // vertice 3
         r.top_right.vertex.w,    r.top_right.uv.u,     r.top_right.uv.v,
 
-        r.top_left.vertex.x,     r.top_left.vertex.y,  r.top_left.vertex.z,
+        r.bottom_left.vertex.x,  r.bottom_left.vertex.y,  r.bottom_left.vertex.z, // vertice 1
+        r.bottom_left.vertex.w,  r.bottom_left.uv.u,   r.bottom_left.uv.v,
+
+        r.top_right.vertex.x,    r.top_right.vertex.y,    r.top_right.vertex.z, // vertice 3
+        r.top_right.vertex.w,    r.top_right.uv.u,     r.top_right.uv.v,
+
+        r.top_left.vertex.x,     r.top_left.vertex.y,     r.top_left.vertex.z, // vertice 4
         r.top_left.vertex.w,     r.top_left.uv.u,      r.top_left.uv.v,
     };
-    return float_vertex_uv_rectangle{GL_QUADS, std::move(floats)};
+    return float_vertex_uv_rectangle{GL_TRIANGLE_STRIP, std::move(floats)};
+  }
+
+  static constexpr auto map_to_array_floats(game::rectangle<game::vertex_wireframe_attributes> const &r)
+  {
+    auto constexpr NUM_VERTICES = 6;
+    auto constexpr NUM_FLOATS = calc_vertex_only_num_floats(NUM_VERTICES);
+
+    auto floats = std::array<float, NUM_FLOATS>{
+        r.bottom_left.vertex.x,  r.bottom_left.vertex.y,  r.bottom_left.vertex.z, // vertice 1
+        r.bottom_left.vertex.w,
+
+        r.bottom_right.vertex.x, r.bottom_right.vertex.y, r.bottom_right.vertex.z, // vertice 2
+        r.bottom_right.vertex.w,
+
+        r.top_right.vertex.x,    r.top_right.vertex.y,    r.top_right.vertex.z, // vertice 3
+        r.top_right.vertex.w,
+
+        r.bottom_left.vertex.x,  r.bottom_left.vertex.y,  r.bottom_left.vertex.z, // vertice 1
+        r.bottom_left.vertex.w,
+
+        r.top_right.vertex.x,    r.top_right.vertex.y,    r.top_right.vertex.z, // vertice 3
+        r.top_right.vertex.w,
+
+        r.top_left.vertex.x,     r.top_left.vertex.y,     r.top_left.vertex.z, // vertice 4
+        r.top_left.vertex.w,
+    };
+    return float_vertex_only_rectangle{GL_LINE_LOOP, std::move(floats)};
   }
 
   static auto map_to_array_floats(game::polygon<game::vertex_color_attributes> const &p)

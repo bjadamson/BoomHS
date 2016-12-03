@@ -61,7 +61,7 @@ private:
 
 template<typename V>
 struct rectangle : public shape {
-  static auto constexpr NUM_VERTICES = 4;
+  static auto constexpr NUM_VERTICES = 6;
   V bottom_left, bottom_right, top_right, top_left;
 
 private:
@@ -394,6 +394,12 @@ class rectangle_factory
     // clang-format on
   };
 
+  struct wireframe_properties
+  {
+    height_width const dimensions;
+    float const radius = 2.5f;
+  };
+
   static constexpr auto
   calculate_vertices(world_coordinate const& wc, height_width const& hw)
   {
@@ -433,6 +439,20 @@ class rectangle_factory
 
     return rectangle<vertex_uv_attributes>{wc, bottom_left, bottom_right, top_right, top_left};
   }
+
+  static constexpr auto
+  construct(world_coordinate const &wc, wireframe_properties const& props)
+  {
+    auto const vertices = calculate_vertices(wc, props.dimensions);
+
+    vertex_wireframe_attributes const bottom_left{vertices[0]};
+    vertex_wireframe_attributes const bottom_right{vertices[1]};
+    vertex_wireframe_attributes const top_right{vertices[2]};
+    vertex_wireframe_attributes const top_left{vertices[3]};
+
+    return rectangle<vertex_wireframe_attributes>{wc, bottom_left, bottom_right, top_right, top_left};
+  }
+
 public:
 
   static constexpr auto
@@ -480,6 +500,13 @@ public:
       bool const)
   {
     uv_properties const p{{height, width}};
+    return construct(wc, p);
+  }
+
+  static constexpr auto
+  make(world_coordinate const& wc, float const height, float const width, bool const, bool const)
+  {
+    wireframe_properties const p{{height, width}};
     return construct(wc, p);
   }
 };

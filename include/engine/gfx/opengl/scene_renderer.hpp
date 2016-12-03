@@ -18,9 +18,9 @@ template<typename L>
 void
 render(L &logger, GLenum const render_mode, GLsizei const vertice_count)
 {
-  logger.info("glDrawArrays()");
-
   GLint const begin = 0;
+  logger.info(fmt::sprintf("glDrawArrays() begin '%d', mode '%d', vertice_count '%d'", begin,
+        render_mode, vertice_count));
   glDrawArrays(render_mode, begin, vertice_count);
 }
 

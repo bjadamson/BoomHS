@@ -103,6 +103,7 @@ game::world_coordinate *w = nullptr;
 game::world_coordinate *x = nullptr;
 game::world_coordinate *y = nullptr;
 game::world_coordinate *z = nullptr;
+game::world_coordinate *zz = nullptr;
 
 template <typename G, typename S>
 void
@@ -191,6 +192,12 @@ ecst_main(G &game, S &state)
       wc.set(0.0f, 0.0f, 0.0f, 1.0f); // bottom left
       z = &wc;
     }
+    {
+      auto eid = proxy.create_entity();
+      auto &wc = proxy.add_component(ct::world_coordinate, eid);
+      wc.set(-0.5f, -0.5f, 0.0f, 1.0f); // bottom left
+      zz = &wc;
+    }
   });
 
   // "Game loop."
@@ -259,11 +266,12 @@ public:
     auto s7 = game::rectangle_factory::make(*x, ::engine::gfx::LIST_OF_COLORS::BLACK, height, width);
     auto s8 = game::rectangle_factory::make(*y, height, width, true);
     auto s9 = game::triangle_factory::make(*z, true, false); // wireframe
+    auto s10 = game::rectangle_factory::make(*zz, height, width, true, false); // wireframe
 
     state.renderer.begin();
     state.renderer.draw0(args, s0, s1, s2, s3, s4, s7);
     state.renderer.draw1(args, s5, s6, s8);
-    state.renderer.draw2(args, s9);
+    state.renderer.draw2(args, s9, s10);
     state.renderer.end();
   }
 };
