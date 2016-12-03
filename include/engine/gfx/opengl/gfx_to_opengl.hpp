@@ -19,11 +19,14 @@ class static_shape_template
 {
   using F = float;
   GLenum const mode_;
-  C<F, V> const data_;
+  C<F, V> data_;
+
+  NO_COPY(static_shape_template);
 public:
-  explicit constexpr static_shape_template(GLenum const m, C<F, V> const &d)
+  MOVE_DEFAULT(static_shape_template);
+  explicit constexpr static_shape_template(GLenum const m, C<F, V> &&d)
       : mode_(m)
-      , data_(d)
+      , data_(std::move(d))
   {
   }
   constexpr auto draw_mode() const { return this->mode_; }
@@ -53,12 +56,14 @@ template <template <class, class> typename C, std::size_t NUM_OF_F_PER_VERTEX,
 class runtime_shape_template
 {
   GLenum const mode_;
-  C<F, A> const data_;
+  C<F, A> data_;
 
+  NO_COPY(runtime_shape_template);
 public:
-  explicit runtime_shape_template(GLenum const m, C<F, A> const &d)
+  MOVE_DEFAULT(runtime_shape_template);
+  explicit runtime_shape_template(GLenum const m, C<F, A> &&d)
       : mode_(m)
-      , data_(d)
+      , data_(std::move(d))
   {
   }
   auto draw_mode() const { return this->mode_; }
@@ -114,7 +119,7 @@ class shape_mapper
     auto constexpr NUM_VERTICES = 3;
     auto constexpr NUM_FLOATS = calc_vertex_color_num_floats(NUM_VERTICES);
 
-    auto const floats = std::array<float, NUM_FLOATS>{
+    auto floats = std::array<float, NUM_FLOATS>{
         t.bottom_left.vertex.x,  t.bottom_left.vertex.y,  t.bottom_left.vertex.z,
         t.bottom_left.vertex.w,  t.bottom_left.color.r,   t.bottom_left.color.g,
         t.bottom_left.color.b,   t.bottom_left.color.a,
@@ -127,7 +132,7 @@ class shape_mapper
         t.top_middle.vertex.w,   t.top_middle.color.r,    t.top_middle.color.g,
         t.top_middle.color.b,    t.top_middle.color.a
     };
-    return float_vertex_color_triangle{GL_TRIANGLES, floats};
+    return float_vertex_color_triangle{GL_TRIANGLES, std::move(floats)};
   }
 
   static constexpr auto map_to_array_floats(game::triangle<game::vertex_uv_attributes> const &t)
@@ -135,7 +140,7 @@ class shape_mapper
     auto constexpr NUM_VERTICES = 3;
     auto constexpr NUM_FLOATS = calc_vertex_uv_num_floats(NUM_VERTICES);
 
-    auto const floats = std::array<float, NUM_FLOATS>{
+    auto floats = std::array<float, NUM_FLOATS>{
         t.bottom_left.vertex.x,  t.bottom_left.vertex.y, t.bottom_left.vertex.z,
         t.bottom_left.vertex.w,  t.bottom_left.uv.u,     t.bottom_left.uv.v,
 
@@ -145,7 +150,7 @@ class shape_mapper
         t.top_middle.vertex.x,   t.top_middle.vertex.y, t.top_middle.vertex.z,
         t.top_middle.vertex.w,   t.top_middle.uv.u,     t.top_middle.uv.v,
     };
-    return float_vertex_uv_triangle{GL_TRIANGLES, floats};
+    return float_vertex_uv_triangle{GL_TRIANGLES, std::move(floats)};
   }
 
   static constexpr auto map_to_array_floats(game::triangle<game::vertex_wireframe_attributes> const &t)
@@ -153,7 +158,7 @@ class shape_mapper
     auto constexpr NUM_VERTICES = 3;
     auto constexpr NUM_FLOATS = calc_vertex_only_num_floats(NUM_VERTICES);
 
-    auto const floats = std::array<float, NUM_FLOATS>{
+    auto floats = std::array<float, NUM_FLOATS>{
         t.bottom_left.vertex.x,  t.bottom_left.vertex.y,  t.bottom_left.vertex.z,
         t.bottom_left.vertex.w,
 
@@ -163,7 +168,7 @@ class shape_mapper
         t.top_middle.vertex.x,   t.top_middle.vertex.y,   t.top_middle.vertex.z,
         t.top_middle.vertex.w
     };
-    return float_vertex_only_triangle{GL_LINE_LOOP, floats};
+    return float_vertex_only_triangle{GL_LINE_LOOP, std::move(floats)};
   }
 
   static constexpr auto map_to_array_floats(game::rectangle<game::vertex_color_attributes> const &r)
@@ -171,7 +176,7 @@ class shape_mapper
     auto constexpr NUM_VERTICES = 4;
     auto constexpr NUM_FLOATS = calc_vertex_color_num_floats(NUM_VERTICES);
 
-    auto const floats = std::array<float, NUM_FLOATS>{
+    auto floats = std::array<float, NUM_FLOATS>{
         r.bottom_left.vertex.x,  r.bottom_left.vertex.y,  r.bottom_left.vertex.z,
         r.bottom_left.vertex.w,  r.bottom_left.color.r,   r.bottom_left.color.g,
         r.bottom_left.color.b,   r.bottom_left.color.a,
@@ -188,7 +193,7 @@ class shape_mapper
         r.top_left.vertex.w,     r.top_left.color.r,      r.top_left.color.g,
         r.top_left.color.b,      r.top_left.color.a,
     };
-    return float_vertex_color_rectangle{GL_QUADS, floats};
+    return float_vertex_color_rectangle{GL_QUADS, std::move(floats)};
   }
 
   static constexpr auto map_to_array_floats(game::rectangle<game::vertex_uv_attributes> const &r)
@@ -196,7 +201,7 @@ class shape_mapper
     auto constexpr NUM_VERTICES = 4;
     auto constexpr NUM_FLOATS = calc_vertex_uv_num_floats(NUM_VERTICES);
 
-    auto const floats = std::array<float, NUM_FLOATS>{
+    auto floats = std::array<float, NUM_FLOATS>{
         r.bottom_left.vertex.x,  r.bottom_left.vertex.y, r.bottom_left.vertex.z,
         r.bottom_left.vertex.w,  r.bottom_left.uv.u,     r.bottom_left.uv.v,
 
@@ -209,7 +214,7 @@ class shape_mapper
         r.top_left.vertex.x,     r.top_left.vertex.y,  r.top_left.vertex.z,
         r.top_left.vertex.w,     r.top_left.uv.u,      r.top_left.uv.v,
     };
-    return float_vertex_uv_rectangle{GL_QUADS, floats};
+    return float_vertex_uv_rectangle{GL_QUADS, std::move(floats)};
   }
 
   static auto map_to_array_floats(game::polygon<game::vertex_color_attributes> const &p)
@@ -231,7 +236,7 @@ class shape_mapper
       floats[j++] = vertice.color.a;
     }
     // TODO: GL_POLYGON is deprecated
-    return float_vertex_color_polygon{GL_POLYGON, floats};
+    return float_vertex_color_polygon{GL_POLYGON, std::move(floats)};
   }
 
   static auto map_to_array_floats(game::polygon<game::vertex_uv_attributes> const &p)
@@ -251,7 +256,7 @@ class shape_mapper
       floats[j++] = vertice.uv.v;
     }
     // TODO: GL_POLYGON is deprecated
-    return float_vertex_uv_polygon{GL_POLYGON, floats};
+    return float_vertex_uv_polygon{GL_POLYGON, std::move(floats)};
   }
 
 public:

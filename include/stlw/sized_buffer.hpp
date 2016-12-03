@@ -17,7 +17,7 @@ class sized_buffer
   // TODO: see if this is necessary or not.
   inline void reserve() { this->vec_.reserve(vec_.size()); }
 public:
-  COPY_DEFAULT(sized_buffer);
+  NO_COPY(sized_buffer);
   MOVE_DEFAULT(sized_buffer);
 
   // clang-format off
@@ -41,6 +41,7 @@ public:
   {
     reserve();
   }
+
   explicit sized_buffer(size_type const count)
       : vec_(count)
   {

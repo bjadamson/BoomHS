@@ -50,7 +50,7 @@ class vertex_attribute
   stlw::sized_buffer<attribute_info> list_;
 
 public:
-  MOVE_DEFAULT(vertex_attribute);
+  MOVE_CONSTRUCTIBLE_ONLY(vertex_attribute);
 
   template<std::size_t N>
   vertex_attribute(attribute_list<N> &&list)
@@ -78,7 +78,7 @@ auto
 make_attribute_list(Attributes &&... attributes)
 {
   static constexpr auto N = sizeof...(attributes);
-  auto arr = stlw::make_array<attribute_info, N>(attributes...);
+  auto arr = stlw::make_array<attribute_info, N>(std::forward<Attributes>(attributes)...);
   return attribute_list<N>{std::move(arr)};
 }
 
@@ -218,9 +218,9 @@ make_vertex_only_vertex_attribute(L &logger)
   GLint constexpr num_fields_vertex = 4; // x, y, z, w
 
   using ai = attribute_info;
-  attribute_info constexpr vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
+  attribute_info vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
 
-  return impl::make_vertex_array(logger, vertex_info);
+  return impl::make_vertex_array(logger, std::move(vertex_info));
 }
 
 template <typename L>
