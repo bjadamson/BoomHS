@@ -45,7 +45,7 @@ static auto const load_texture = [](char const *path) {
 
 class opengl_context
 {
-  GLuint vao_ = 0, vbo_ = 0;
+  GLuint vao_ = 0, vbo_ = 0, ebo_ = 0;
   program program_;
   vertex_attribute va_;
 
@@ -61,14 +61,13 @@ protected:
   {
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
     glGenBuffers(NUM_BUFFERS, &this->vbo_);
-
-    glBindBuffer(GL_ARRAY_BUFFER, this->vbo_);
-    ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+    glGenBuffers(NUM_BUFFERS, &this->ebo_);
   }
 
 public:
   ~opengl_context()
   {
+    glDeleteBuffers(NUM_BUFFERS, &this->ebo_);
     glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
     glDeleteVertexArrays(NUM_BUFFERS, &this->vao_);
   }
@@ -77,16 +76,19 @@ public:
   opengl_context(opengl_context &&other)
       : vao_(other.vao_)
       , vbo_(other.vbo_)
+      , ebo_(other.ebo_)
       , program_(std::move(other.program_))
       , va_(std::move(other.va_))
   {
     other.vao_ = 0;
     other.vbo_ = 0;
+    other.ebo_ = 0;
     other.program_ = program::make_invalid();
   }
 
   inline auto vao() const { return this->vao_; }
   inline auto vbo() const { return this->vbo_; }
+  inline auto ebo() const { return this->ebo_; }
   inline auto &program_ref() { return this->program_; }
   inline auto const& va() { return this->va_; }
 
@@ -144,26 +146,40 @@ public:
   inline auto color() const { return this->color_; }
 };
 
-struct context_factory {
+class context_factory {
   context_factory() = delete;
 
-  auto static make_opengl_context(program &&p, vertex_attribute &&va)
+  template<typename T, typename L, typename ...Args>
+  auto static make(L &logger, Args &&... args)
   {
-    return opengl_context{std::move(p), std::move(va)};
+    global::log::clear_gl_errors();
+    T ctx{std::forward<Args>(args)...};
+    LOG_GL_ERRORS(logger, "constructing context");
+    return std::move(ctx);
+  }
+public:
+
+  template<typename L>
+  auto static make_opengl_context(L &logger, program &&p, vertex_attribute &&va)
+  {
+    return make<opengl_context>(logger, std::move(p), std::move(va));
   }
 
-  auto static make_texture_opengl_context(program &&p, char const *path, vertex_attribute &&va)
+  template<typename L>
+  auto static make_texture_opengl_context(L &logger, program &&p, char const *path,
+      vertex_attribute &&va)
   {
     auto const tid = impl::load_texture(path);
-    return opengl_texture_context{std::move(p), std::move(va), tid};
+    return make<opengl_texture_context>(logger, std::move(p), std::move(va), tid);
   }
 
-  auto static make_wireframe_opengl_context(program &&p, vertex_attribute &&va,
+  template<typename L>
+  auto static make_wireframe_opengl_context(L &logger, program &&p, vertex_attribute &&va,
       std::array<float, 3> const& c)
   {
     constexpr auto ALPHA = 1.0f;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
-    return opengl_wireframe_context{std::move(p), std::move(va), color};
+    return make<opengl_wireframe_context>(logger, std::move(p), std::move(va), color);
   }
 };
 

@@ -34,27 +34,29 @@ struct engine {
   }
   void end() {}
 
-  template <typename Args, typename... S>
-  void draw0(Args const &args, S const &... shapes)
+  template <typename Ctx, typename Args, typename... S>
+  void draw_shape(Ctx &ctx, Args const &args, S const &... shapes)
   {
     auto const gl_mapped_shapes = shape_mapper::map_to_floats(shapes...);
-    renderer::draw_scene(args.logger, this->rc0_, args.view, args.projection, gl_mapped_shapes);
+    renderer::draw_scene(args.logger, ctx, args.view, args.projection, gl_mapped_shapes);
   }
 
   template <typename Args, typename... S>
-  void draw1(Args const &args, S const &... shapes)
+  void draw_shapes_with_colors(Args const &args, S const &... shapes)
   {
-    auto const gl_mapped_shapes = shape_mapper::map_to_floats(shapes...);
-
-    renderer::draw_scene(args.logger, this->rc1_, args.view, args.projection, gl_mapped_shapes);
+    this->draw_shape(this->rc0_, args, shapes...);
   }
 
   template <typename Args, typename... S>
-  void draw2(Args const &args, S const &... shapes)
+  void draw_shapes_with_textures(Args const &args, S const &... shapes)
   {
-    auto const gl_mapped_shapes = shape_mapper::map_to_floats(shapes...);
+    this->draw_shape(this->rc1_, args, shapes...);
+  }
 
-    renderer::draw_scene(args.logger, this->rc2_, args.view, args.projection, gl_mapped_shapes);
+  template <typename Args, typename... S>
+  void draw_shapes_with_wireframes(Args const &args, S const &... shapes)
+  {
+    this->draw_shape(this->rc2_, args, shapes...);
   }
 };
 
@@ -70,17 +72,17 @@ struct factory {
 
     DO_TRY(auto phandle0, program_loader::from_files("color.vert", "color.frag"));
     auto va0 = global::make_vertex_color_vertex_attribute(logger);
-    auto c0 = context_factory::make_opengl_context(std::move(phandle0), std::move(va0));
+    auto c0 = context_factory::make_opengl_context(logger, std::move(phandle0), std::move(va0));
 
     DO_TRY(auto phandle1, program_loader::from_files("image.vert", "image.frag"));
     auto va1 = global::make_vertex_uv_vertex_attribute(logger);
-    auto c1 = context_factory::make_texture_opengl_context(std::move(phandle1), get_r(IMAGES::WALL),
+    auto c1 = context_factory::make_texture_opengl_context(logger, std::move(phandle1), get_r(IMAGES::WALL),
         std::move(va1));
 
     DO_TRY(auto phandle2, program_loader::from_files("wire.vert", "wire.frag"));
     auto va2 = global::make_vertex_only_vertex_attribute(logger);
     auto const color = LIST_OF_COLORS::PINK;
-    auto c2 = context_factory::make_wireframe_opengl_context(std::move(phandle2), std::move(va2),
+    auto c2 = context_factory::make_wireframe_opengl_context(logger, std::move(phandle2), std::move(va2),
         color);
 
     // TODO: move this

@@ -16,46 +16,60 @@ namespace impl
 
 template<typename L>
 void
-render(L &logger, GLenum const render_mode, GLsizei const vertice_count)
+render(L &logger, GLenum const render_mode, GLsizei const element_count)
 {
-  GLint const begin = 0;
-  logger.info(fmt::sprintf("glDrawArrays() begin '%d', mode '%d', vertice_count '%d'", begin,
-        render_mode, vertice_count));
-  glDrawArrays(render_mode, begin, vertice_count);
+  auto const fmt = fmt::sprintf("glDrawElements() render_mode '%d', element_count '%d'",
+      render_mode, element_count);
+
+  logger.trace(fmt);
+
+  auto constexpr OFFSET = nullptr;
+  glDrawElements(render_mode, element_count, GL_UNSIGNED_INT, OFFSET);
 }
 
 template<typename L, typename S>
 void
 log_shape_bytes(L &logger, S const& shape)
 {
-  assert(0 < shape.length());
-  std::stringstream ostream;
-  ostream << "data(bytes):\n";
-  auto i{0};
-  ostream << "[";
-  ostream << std::to_string(shape.data()[i++]);
+  assert(0 < shape.vertices_length());
 
-  for (; i < shape.length(); ++i) {
-    ostream << ", " << std::to_string(shape.data()[i]);
-  }
-  ostream << "]";
-  ostream << "\n";
+  auto const print = [](auto &ostream, auto const length, auto const* data) {
+    auto i{0};
+    ostream << "[";
+    ostream << std::to_string(data[i++]);
+
+    for (; i < length; ++i) {
+      ostream << ", " << std::to_string(data[i]);
+    }
+    ostream << "]";
+    ostream << "\n";
+  };
+
+  std::stringstream ostream;
+  ostream << fmt::sprintf("vertices_length %d, vertices_size_in_bytes %d\n", shape.vertices_length(),
+      shape.vertices_size_in_bytes());
+  ostream << "data(bytes):\n";
+  print(ostream, shape.vertices_length(), shape.vertices_data());
+
+  ostream << fmt::sprintf("elements_count %d, elements_size_in_bytes %d\n", shape.elements_count(),
+      shape.elements_size_in_bytes());
+  ostream << "elements(bytes):\n";
+  print(ostream, shape.elements_count(), shape.elements_data());
   logger.trace(ostream.str());
 }
 
 template <typename L, typename S>
 void
-copy_to_gpu(L &logger, GLuint const vbo, S const& shape)
+copy_to_gpu(L &logger, S const& shape)
 {
-  // 1. Bind the vbo object to the GL_ARRAY_BUFFER
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-  // 2. Setup temporary object to unbind the GL_ARRAY_BUFFER from a vbo on scope exit.
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
-
-  // 3. Copy the data to the GPU, then let stack cleanup gl context automatically.
   log_shape_bytes(logger, shape);
-  glBufferData(GL_ARRAY_BUFFER, shape.size_in_bytes(), shape.data(), GL_STATIC_DRAW);
+
+  // copy the vertices
+  glBufferData(GL_ARRAY_BUFFER, shape.vertices_size_in_bytes(), shape.vertices_data(), GL_STATIC_DRAW);
+
+  // copy the vertice rendering order
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, shape.elements_size_in_bytes(), shape.elements_data(),
+      GL_STATIC_DRAW);
 }
 
 template <typename L, typename S>
@@ -63,14 +77,14 @@ void
 render_shape(L &logger, opengl_context &ctx, S const &shape)
 {
   logger.trace(fmt::sprintf("%-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices"));
-  logger.trace(fmt::sprintf("%-15d %-15d %-15d\n", shape.size_in_bytes(), shape.length(),
-      shape.vertice_count()));
+  logger.trace(fmt::sprintf("%-15d %-15d %-15d\n", shape.vertices_size_in_bytes(),
+        shape.vertices_length(), shape.vertice_count()));
 
   // print_triangle(logger, t0);
-  copy_to_gpu(logger, ctx.vbo(), shape);
+  copy_to_gpu(logger, shape);
 
   // Draw our first triangle
-  render(logger, shape.draw_mode(), shape.vertice_count());
+  render(logger, shape.draw_mode(), shape.elements_count());
 }
 
 template<typename L, typename C, typename ...S>
@@ -80,15 +94,15 @@ draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection
 {
   // Pass the matrices to the shader
   auto &p = ctx.program_ref();
-  logger.info("setting u_view");
+  logger.trace("setting u_view");
   p.set_uniform_matrix_4fv(logger, "u_view", view);
   p.check_opengl_errors(logger);
 
-  logger.info("setting u_projection");
+  logger.trace("setting u_projection");
   p.set_uniform_matrix_4fv(logger, "u_projection", projection);
   p.check_opengl_errors(logger);
 
-  logger.info("using p");
+  logger.trace("using p");
   p.use();
   p.check_opengl_errors(logger);
 
@@ -96,7 +110,7 @@ draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection
   global::set_vertex_attributes(logger, ctx.va());
 
   std::stringstream ss;
-  ss << "#########################################################################################################################\n";
+  ss << "#######################################################################################\n";
   ss << "Copying '" << sizeof...(S) << "' shapes from CPU -> OpenGL driver ...\n";
 
   auto const fn = [&logger, &ctx, &p](auto const &shape) {
@@ -106,7 +120,7 @@ draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection
     logger.trace("after drawing shape");
   };
   stlw::for_each(shapes, fn);
-  ss << "#########################################################################################################################\n";
+  ss << "#######################################################################################\n";
 
   logger.trace(ss.str());
 }
@@ -124,6 +138,9 @@ draw_scene(L &logger, opengl_context &ctx, glm::mat4 const &view, glm::mat4 cons
   glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
+
   impl::draw_scene(logger, ctx, view, projection, shapes);
 }
 
@@ -137,6 +154,9 @@ draw_scene(L &logger, opengl_texture_context &ctx, glm::mat4 const &view, glm::m
 
   glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
   global::texture_bind(ctx.texture());
   ON_SCOPE_EXIT([]() { global::texture_unbind(); });
@@ -155,8 +175,11 @@ draw_scene(L &logger, opengl_wireframe_context &ctx, glm::mat4 const &view, glm:
   glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
+
   auto &p = ctx.program_ref();
-  logger.info("setting u_color");
+  logger.trace("setting u_color");
   p.set_uniform_array_4fv(logger, "u_color", ctx.color());
   p.check_opengl_errors(logger);
 

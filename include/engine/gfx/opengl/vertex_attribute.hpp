@@ -238,8 +238,9 @@ set_vertex_attributes(L &logger, vertex_attribute const& va)
 
   impl::skip_context sc{va.num_components()};
   for (auto const& it : va) {
-    log_info(it);
+    logger.trace(fmt::sprintf("setting attribute '%d'", it.global_index));
     impl::set_attrib_pointer(logger, it, sc);
+    log_info(it);
   }
 }
 

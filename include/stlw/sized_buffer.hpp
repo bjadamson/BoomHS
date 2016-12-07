@@ -55,9 +55,21 @@ public:
     reserve();
   }
 
+  reference get_item(size_type const i)
+  {
+    assert(i < this->vec_.size());
+    return this->vec_[i];
+  }
+
+  const_reference get_item(size_type const i) const
+  {
+    assert(i < this->vec_.size());
+    return this->vec_[i];
+  }
+
   // methods
-  reference operator[](size_type const i) { return this->vec_[i]; }
-  const_reference operator[](size_type const i) const { return this->vec_[i]; }
+  reference operator[](size_type const i) { return this->get_item(i); }
+  const_reference operator[](size_type const i) const { return this->get_item(i); }
 
   size_type length() const { return this->vec_.capacity(); }
   T *data() { return this->vec_.data(); }

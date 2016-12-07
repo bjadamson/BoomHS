@@ -32,15 +32,35 @@ public:
 struct vertex_color_attributes {
   vertex vertex;
   color color;
+
+  vertex_color_attributes() = default;
+  explicit constexpr vertex_color_attributes(class vertex const &v, class color const &c)
+      : vertex(v)
+      , color(c)
+  {
+  }
 };
 
 struct vertex_uv_attributes {
   vertex vertex;
   texture_coord uv;
+
+  vertex_uv_attributes() = default;
+  explicit constexpr vertex_uv_attributes(class vertex const &v, texture_coord const &t)
+      : vertex(v)
+      , uv(t)
+  {
+  }
 };
 
-struct vertex_wireframe_attributes {
+struct wireframe_attributes {
   vertex vertex;
+
+  wireframe_attributes() = default;
+  explicit constexpr wireframe_attributes(class vertex const &v)
+      : vertex(v)
+  {
+  }
 };
 
 // clang-format off
@@ -61,7 +81,7 @@ private:
 
 template<typename V>
 struct rectangle : public shape {
-  static auto constexpr NUM_VERTICES = 6;
+  static auto constexpr NUM_VERTICES = 4;
   V bottom_left, bottom_right, top_right, top_left;
 
 private:
@@ -96,38 +116,37 @@ class polygon_factory
 {
   polygon_factory() = delete;
 
-  struct polygon_properties {
-    GLint const num_vertices;
-  };
-
   struct color_properties
   {
     GLint const num_vertices;
     std::array<float, 3> const colors;
 
     float const alpha = 1.0f;
-    float const radius = 0.25f;
+    float const width = 0.25f;
   };
 
   struct uv_properties
   {
     GLint const num_vertices;
-    float const radius = 0.25f;
+
+    float const alpha = 1.0f;
+    float const width = 0.25f;
   };
 
   struct wireframe_properties
   {
     GLint const num_vertices;
-    float const radius = 0.25f;
+    float const alpha = 1.0f;
+    float const width = 0.25f;
   };
 
-  template<typename P>
   static auto
-  make_vertices(world_coordinate const& wc, P const& props)
+  construct(world_coordinate const& wc, color_properties const& props)
   {
-    float const radius = props.radius;
+    float const radius = props.width;
     auto const num_vertices = props.num_vertices;
 
+    auto const C = num_vertices;     // Assume for now #colors == #vertices
     auto const E = num_vertices + 1; // num_edges
 
     auto const cosfn = [&radius, &wc, &E](auto const a) {
@@ -139,29 +158,15 @@ class polygon_factory
       return wc.y() + pos;
     };
 
-    using V = std::pair<float, float>;
-    stlw::sized_buffer<V> xy{static_cast<std::size_t>(num_vertices)};
-    for (auto i{0}; i < num_vertices; ++i) {
+    polygon<vertex_color_attributes> poly{wc, num_vertices};
+    for (auto i{0}, j{0}; i < num_vertices; ++i) {
       auto const x = cosfn(i);
       auto const y = sinfn(i);
-      xy[i] = std::make_pair(x, y);
-    }
 
-    return xy;
-  }
-
-  static auto
-  construct(world_coordinate const& wc, color_properties const& props)
-  {
-    vertex const v{wc.x(), wc.y(), wc.z(), wc.w()};
-
-    auto const num_vertices = props.num_vertices;
-    using V = vertex_color_attributes;
-
-    polygon<V> poly{wc, num_vertices};
-    for (auto i{0}; i < num_vertices; ++i) {
+      vertex const v{x, y, wc.z(), wc.w()};
       color const col{props.colors[0], props.colors[1], props.colors[2], props.alpha};
-      poly.vertex_attributes[i] = V{v, col};
+      texture_coord const uv{x, y};
+      poly.vertex_attributes[i] = vertex_color_attributes{v, col};//, uv};
     }
     return poly;
   }
@@ -169,19 +174,29 @@ class polygon_factory
   static auto
   construct(world_coordinate const& wc, uv_properties const& props)
   {
-    using V = vertex_uv_attributes;
-    auto const vertices = make_vertices(wc, props);
+    float const radius = props.width;
     auto const num_vertices = props.num_vertices;
 
-    assert(vertices.length() == num_vertices);
-    polygon<V> poly{wc, num_vertices};
-    for (auto i{0}; i < num_vertices; ++i) {
-      auto const x = vertices[i].first;
-      auto const y = vertices[i].second;
+    auto const C = num_vertices;     // Assume for now #colors == #vertices
+    auto const E = num_vertices + 1; // num_edges
+
+    auto const cosfn = [&radius, &wc, &E](auto const a) {
+      auto const pos = radius * static_cast<float>(std::cos(2 * M_PI * a / E));
+      return wc.x() + pos;
+    };
+    auto const sinfn = [&radius, &wc, &E](auto const a) {
+      auto const pos = radius * static_cast<float>(std::sin(2 * M_PI * a / E));
+      return wc.y() + pos;
+    };
+
+    polygon<vertex_uv_attributes> poly{wc, num_vertices};
+    for (auto i{0}, j{0}; i < num_vertices; ++i) {
+      auto const x = cosfn(i);
+      auto const y = sinfn(i);
 
       vertex const v{x, y, wc.z(), wc.w()};
       texture_coord const uv{x, y};
-      poly.vertex_attributes[i] = V{v, uv};
+      poly.vertex_attributes[i] = vertex_uv_attributes{v, uv};
     }
     return poly;
   }
@@ -189,18 +204,28 @@ class polygon_factory
   static auto
   construct(world_coordinate const& wc, wireframe_properties const& props)
   {
-    using V = vertex_wireframe_attributes;
-    auto const vertices = make_vertices(wc, props);
+    float const radius = props.width;
     auto const num_vertices = props.num_vertices;
 
-    assert(vertices.length() == num_vertices);
-    polygon<V> poly{wc, num_vertices};
-    for (auto i{0}; i < num_vertices; ++i) {
-      auto const x = vertices[i].first;
-      auto const y = vertices[i].second;
+    auto const C = num_vertices;     // Assume for now #colors == #vertices
+    auto const E = num_vertices + 1; // num_edges
+
+    auto const cosfn = [&radius, &wc, &E](auto const a) {
+      auto const pos = radius * static_cast<float>(std::cos(2 * M_PI * a / E));
+      return wc.x() + pos;
+    };
+    auto const sinfn = [&radius, &wc, &E](auto const a) {
+      auto const pos = radius * static_cast<float>(std::sin(2 * M_PI * a / E));
+      return wc.y() + pos;
+    };
+
+    polygon<wireframe_attributes> poly{wc, num_vertices};
+    for (auto i{0}, j{0}; i < num_vertices; ++i) {
+      auto const x = cosfn(i);
+      auto const y = sinfn(i);
 
       vertex const v{x, y, wc.z(), wc.w()};
-      poly.vertex_attributes[i] = V{v};
+      poly.vertex_attributes[i] = wireframe_attributes{v};
     }
     return poly;
   }
@@ -232,17 +257,6 @@ struct triangle_factory
   static float constexpr DEFAULT_RADIUS = 0.5;
 private:
 
-  static constexpr auto
-  calculate_vertices(world_coordinate const& wc, float const radius)
-  {
-    std::array<vertex, 3> const vertices = {
-      vertex{wc.x() - radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-left
-      vertex{wc.x() + radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-right
-      vertex{wc.x()         , wc.y() + radius, wc.z(), wc.w()}  // top-middle
-    };
-    return vertices;
-  }
-
   struct color_properties
   {
     std::array<float, 4> const& color_bottom_left;
@@ -269,6 +283,17 @@ private:
   {
     float const radius = DEFAULT_RADIUS;
   };
+
+  static constexpr auto
+  calculate_vertices(world_coordinate const& wc, float const radius)
+  {
+    std::array<vertex, 3> const vertices = {
+      vertex{wc.x() - radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-left
+      vertex{wc.x() + radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-right
+      vertex{wc.x()         , wc.y() + radius, wc.z(), wc.w()}  // top-middle
+    };
+    return vertices;
+  }
 
   static constexpr auto
   construct(world_coordinate const& wc, color_properties const& props)
@@ -298,11 +323,11 @@ private:
   {
     auto const vertices = calculate_vertices(wc, props.radius);
 
-    vertex_wireframe_attributes const bottom_left{vertices[0]};
-    vertex_wireframe_attributes const bottom_right{vertices[1]};
-    vertex_wireframe_attributes const top_middle{vertices[2]};
+    wireframe_attributes const bottom_left{vertices[0]};
+    wireframe_attributes const bottom_right{vertices[1]};
+    wireframe_attributes const top_middle{vertices[2]};
 
-    return triangle<vertex_wireframe_attributes>{wc, bottom_left, bottom_right, top_middle};
+    return triangle<wireframe_attributes>{wc, bottom_left, bottom_right, top_middle};
   }
 
 public:
@@ -397,21 +422,23 @@ class rectangle_factory
   struct wireframe_properties
   {
     height_width const dimensions;
-    float const radius = 2.5f;
+    GLint const num_vertices;
+
+    float const alpha = 1.0f;
+    float const width = 0.25f;
   };
 
   static constexpr auto
   calculate_vertices(world_coordinate const& wc, height_width const& hw)
   {
-    auto const width = hw.width();
     auto const height = hw.height();
-    std::array<vertex, 4> const vertices = {
+    auto const width = hw.width();
+    return std::array<vertex, 4> {
       vertex{wc.x() - width, wc.y() - height, wc.z(), wc.w()}, // bottom-left
       vertex{wc.x() + width, wc.y() - height, wc.z(), wc.w()}, // bottom-right
       vertex{wc.x() + width, wc.y() + height, wc.z(), wc.w()}, // top-right
       vertex{wc.x() - width, wc.y() + height, wc.z(), wc.w()}  // top-left
     };
-    return vertices;
   }
 
   static constexpr auto
@@ -445,14 +472,12 @@ class rectangle_factory
   {
     auto const vertices = calculate_vertices(wc, props.dimensions);
 
-    vertex_wireframe_attributes const bottom_left{vertices[0]};
-    vertex_wireframe_attributes const bottom_right{vertices[1]};
-    vertex_wireframe_attributes const top_right{vertices[2]};
-    vertex_wireframe_attributes const top_left{vertices[3]};
-
-    return rectangle<vertex_wireframe_attributes>{wc, bottom_left, bottom_right, top_right, top_left};
+    wireframe_attributes const bottom_left{vertices[0]};
+    wireframe_attributes const bottom_right{vertices[1]};
+    wireframe_attributes const top_right{vertices[2]};
+    wireframe_attributes const top_left{vertices[3]};
+    return rectangle<wireframe_attributes>{wc, bottom_left, bottom_right, top_right, top_left};
   }
-
 public:
 
   static constexpr auto
@@ -507,6 +532,23 @@ public:
   make(world_coordinate const& wc, float const height, float const width, bool const, bool const)
   {
     wireframe_properties const p{{height, width}};
+    return construct(wc, p);
+  }
+
+  template <typename T>
+  static constexpr auto
+  make(world_coordinate const &wc, float const height, float const width, T const &data)
+  {
+    auto const &bl = data[0];
+    auto const &br = data[1];
+    auto const &tr = data[2];
+    auto const &tl = data[3];
+    std::array<float, 4> const bottom_left{bl[0], bl[1], bl[2], bl[3]};
+    std::array<float, 4> const bottom_right{br[0], br[1], br[2], br[3]};
+    std::array<float, 4> const top_right{tr[0], tr[1], tr[2], tr[3]};
+    std::array<float, 4> const top_left{tl[0], tl[1], tl[2], tl[3]};
+
+    color_properties const p{{height, width}, bottom_left, bottom_right, top_right, top_left};
     return construct(wc, p);
   }
 };

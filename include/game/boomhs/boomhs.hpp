@@ -96,14 +96,13 @@ public:
 game::world_coordinate *p = nullptr;
 game::world_coordinate *q = nullptr;
 game::world_coordinate *r = nullptr;
+game::world_coordinate *s = nullptr;
 game::world_coordinate *t = nullptr;
 game::world_coordinate *u = nullptr;
 game::world_coordinate *v = nullptr;
 game::world_coordinate *w = nullptr;
 game::world_coordinate *x = nullptr;
 game::world_coordinate *y = nullptr;
-game::world_coordinate *z = nullptr;
-game::world_coordinate *zz = nullptr;
 
 template <typename G, typename S>
 void
@@ -116,7 +115,7 @@ ecst_main(G &game, S &state)
   namespace sea = ecst::system_execution_adapter;
 
   // Define ECST context settings.
-  constexpr auto s = ecst::settings::make()
+  constexpr auto scheduler = ecst::settings::make()
                          .allow_inner_parallelism()
                          //.disallow_inner_parallelism()
                          .fixed_entity_limit(ecst::sz_v<10000>)
@@ -125,30 +124,38 @@ ecst_main(G &game, S &state)
                          .scheduler(cs::scheduler<ss::s_atomic_counter>);
 
   auto &l = state.logger;
-  l.error("pre ctx creation");
+  l.trace("creating ecst context ...");
 
   // Create an ECST context.
-  auto ctx = ecst::context::make_uptr(s);
+  auto ctx = ecst::context::make_uptr(scheduler);
+
+  l.trace("stepping ecst once");
 
   // Initialize context with some entities.
   ctx->step([&](auto &proxy) {
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.5f, 0.0f, 0.0f, 1.0f);
+      wc.set(-0.2f, -0.5f, 0.0f, 1.0f);
       p = &wc;
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.5f, 0.0f, 0.0f, 1.0f);
+      wc.set(-0.5f, 0.0f, 0.0f, 1.0f);
       q = &wc;
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.0f, 0.5f, 0.0f, 1.0f);
+      wc.set(0.0f, 0.7f, 0.0f, 1.0f);
       r = &wc;
+    }
+    {
+      auto eid = proxy.create_entity();
+      auto &wc = proxy.add_component(ct::world_coordinate, eid);
+      wc.set(0.60f, -0.20f, 0.0f, 1.0f);
+      s = &wc;
     }
     {
       auto eid = proxy.create_entity();
@@ -159,53 +166,43 @@ ecst_main(G &game, S &state)
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.65f, 0.85f, 0.0f, 1.0f);
+      wc.set(-0.8f, 0.55f, 0.0f, 1.0f);
       u = &wc;
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.40f, 0.00f, 0.0f, 1.0f);
+      wc.set(0.80f, -0.20f, 0.0f, 1.0f);
       v = &wc;
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.80f, 0.80f, 0.0f, 1.0f); // top left
+      wc.set(-0.80f, 0.80f, 0.0f, 1.0f);
       w = &wc;
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.80f, -0.80f, 0.0f, 1.0f); // bottom left
+      wc.set(-0.60f, -0.60f, 0.0f, 1.0f);
       x = &wc;
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.60f, -0.20f, 0.0f, 1.0f); // bottom left
+      wc.set(0.60f, 0.60f, 0.0f, 1.0f);
       y = &wc;
     }
-    {
-      auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.0f, 0.0f, 0.0f, 1.0f); // bottom left
-      z = &wc;
-    }
-    {
-      auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.5f, -0.5f, 0.0f, 1.0f); // bottom left
-      zz = &wc;
-    }
   });
+
+  l.trace("entering main loop");
 
   // "Game loop."
   while (!state.quit) {
 
     ctx->step([&state](auto &proxy) {
-      proxy.execute_systems()(sea::t(st::io_system).for_subtasks([&state](auto &s, auto &data) {
-        s.process(data, state);
+      proxy.execute_systems()(sea::t(st::io_system).for_subtasks([&state](auto &system, auto &data) {
+        system.process(data, state);
       }));
     });
     l.debug("rendering");
@@ -231,47 +228,54 @@ public:
                                                                   state.projection};
 
     using COLOR_ARRAY = std::array<float, 4>;
-    auto constexpr my_color = stlw::make_array<COLOR_ARRAY>(
+    auto constexpr multicolor_triangle = stlw::make_array<COLOR_ARRAY>(
       stlw::concat(engine::gfx::LIST_OF_COLORS::RED, 1.0f),
       stlw::concat(engine::gfx::LIST_OF_COLORS::GREEN, 1.0f),
       stlw::concat(engine::gfx::LIST_OF_COLORS::BLUE, 1.0f)
     );
 
-    auto constexpr my_color2 = stlw::make_array<COLOR_ARRAY>(
+    auto constexpr multicolor_rect = stlw::make_array<COLOR_ARRAY>(
         stlw::concat(engine::gfx::LIST_OF_COLORS::RED, 1.0f),
         stlw::concat(engine::gfx::LIST_OF_COLORS::GREEN, 1.0f),
         stlw::concat(engine::gfx::LIST_OF_COLORS::BLUE, 1.0f),
         stlw::concat(engine::gfx::LIST_OF_COLORS::YELLOW, 1.0f)
     );
 
-    auto constexpr my_color3 = stlw::make_array<COLOR_ARRAY>(
-        stlw::concat(engine::gfx::LIST_OF_COLORS::DARK_ORANGE, 1.0f),
-        stlw::concat(engine::gfx::LIST_OF_COLORS::BLUE, 1.0f),
-        stlw::concat(engine::gfx::LIST_OF_COLORS::DARK_ORANGE, 1.0f),
-        stlw::concat(engine::gfx::LIST_OF_COLORS::BLUE, 1.0f)
-    );
-
-    auto s0 = game::rectangle_factory::make(*p, ::engine::gfx::LIST_OF_COLORS::GRAY);
-    auto s1 = game::triangle_factory::make(*t, ::engine::gfx::LIST_OF_COLORS::PINK);
-
-    auto s2 = game::triangle_factory::make(*q, my_color);
-
     auto const height = 0.25f, width = 0.39f;
-    auto s3 = game::rectangle_factory::make(*r, my_color2, height, width);
+    auto triangle_color = game::triangle_factory::make(*p, ::engine::gfx::LIST_OF_COLORS::PINK);
+    auto triangle_list_colors = game::triangle_factory::make(*q, multicolor_triangle);
+    auto triangle_texture = game::triangle_factory::make(*r, true);
+    auto triangle_wireframe = game::triangle_factory::make(*s, true, false);
 
-    auto s4 = game::polygon_factory::make(*u, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
-    auto s5 = game::polygon_factory::make(*v, 7, true);
+    auto rectangle_color = game::rectangle_factory::make(*t, ::engine::gfx::LIST_OF_COLORS::YELLOW);
+    auto rectangle_list_colors = game::rectangle_factory::make(*u, height, width, multicolor_rect);
+    auto rectangle_texture = game::rectangle_factory::make(*v, height, width, true);
+    auto rectangle_wireframe = game::rectangle_factory::make(*w, height, width, true, true);
 
-    auto s6 = game::triangle_factory::make(*w, true);
-    auto s7 = game::rectangle_factory::make(*x, ::engine::gfx::LIST_OF_COLORS::BLACK, height, width);
-    auto s8 = game::rectangle_factory::make(*y, height, width, true);
-    auto s9 = game::triangle_factory::make(*z, true, false); // wireframe
-    auto s10 = game::rectangle_factory::make(*zz, height, width, true, false); // wireframe
+    auto polygon_color = game::polygon_factory::make(*x, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
+    //auto polygon_list_of_color = game::polygon_factory::make(*u, 5, multicolor_triangle);
+    auto polygon_texture = game::polygon_factory::make(*y, 7, true);
+    //auto polygon_wireframe = game::polygon_factory::make(*v, 7, true, true);
 
     state.renderer.begin();
-    state.renderer.draw0(args, s0, s1, s2, s3, s4, s7);
-    state.renderer.draw1(args, s5, s6, s8);
-    state.renderer.draw2(args, s9, s10);
+    state.renderer.draw_shapes_with_colors(args,
+        triangle_color,
+        triangle_list_colors,
+        rectangle_color,
+        rectangle_list_colors,
+        polygon_color//,
+        //polygon_list_of_color
+        );
+    state.renderer.draw_shapes_with_textures(args,
+        triangle_texture,
+        rectangle_texture,
+        polygon_texture
+        );
+    state.renderer.draw_shapes_with_wireframes(args,
+        triangle_wireframe,
+        rectangle_wireframe//,
+        //polygon_wireframe
+        );
     state.renderer.end();
   }
 };

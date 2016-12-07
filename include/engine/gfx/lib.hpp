@@ -47,21 +47,21 @@ public:
   }
 
   template <typename Args, typename... S>
-  void draw0(Args const &args, S const &... shapes)
+  void draw_shapes_with_colors(Args const &args, S const &... shapes)
   {
-    this->engine_.draw0(args, shapes...);
+    this->engine_.draw_shapes_with_colors(args, shapes...);
   }
 
   template <typename Args, typename... S>
-  void draw1(Args const &args, S const &... shapes)
+  void draw_shapes_with_textures(Args const &args, S const &... shapes)
   {
-    this->engine_.draw1(args, shapes...);
+    this->engine_.draw_shapes_with_textures(args, shapes...);
   }
 
   template <typename Args, typename... S>
-  void draw2(Args const &args, S const &... shapes)
+  void draw_shapes_with_wireframes(Args const &args, S const &... shapes)
   {
-    this->engine_.draw2(args, shapes...);
+    this->engine_.draw_shapes_with_wireframes(args, shapes...);
   }
 
   void end()
