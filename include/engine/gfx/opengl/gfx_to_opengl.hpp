@@ -14,50 +14,55 @@
 namespace engine::gfx::opengl
 {
 
-template <template <class, std::size_t> typename C, std::size_t V, std::size_t NUM_OF_F_PER_VERTEX,
-         std::size_t NUM_ELEMENTS>
-class static_shape_template
+template <template <class, std::size_t> typename C, std::size_t NUM_VERTEXES,
+         std::size_t NUM_ELEMENTS, std::size_t NUM_OF_F_PER_VERTEX>
+class shape_data
 {
-  using F = float;
-  GLenum const mode_;
-  C<F, V> data_;
-  C<GLuint, NUM_ELEMENTS> elements_;
+  using FloatType = float; // TODO: project-wide configuration (double precision maybe)
+  using ElementType = GLuint;
+  using VertexContainer = C<FloatType, NUM_VERTEXES>;
+  using ElementContainer = C<GLuint, NUM_ELEMENTS>;
 
-  NO_COPY(static_shape_template);
+  GLenum const mode_;
+  VertexContainer data_;
+  ElementContainer elements_;
+
+  NO_COPY(shape_data);
 public:
-  MOVE_DEFAULT(static_shape_template);
-  explicit constexpr static_shape_template(GLenum const m, C<F, V> &&d, C<GLuint, NUM_ELEMENTS> const& e)
-      : mode_(m)
-      , data_(std::move(d))
-      , elements_(e)
+  MOVE_DEFAULT(shape_data);
+  explicit constexpr shape_data(GLenum const m, VertexContainer &&d, ElementContainer const& e)
+    : mode_(m)
+    , data_(std::move(d))
+    , elements_(e)
   {
   }
-
   constexpr auto draw_mode() const { return this->mode_; }
   constexpr decltype(auto) vertices_data() const { return this->data_.data(); }
   constexpr auto vertices_length() const { return this->data_.size(); }
-  constexpr std::size_t vertices_size_in_bytes() const { return this->vertices_length() * sizeof(F); }
+  constexpr std::size_t vertices_size_in_bytes() const { return this->vertices_length() * sizeof(FloatType); }
   constexpr auto vertice_count() const { return this->vertices_length() / NUM_OF_F_PER_VERTEX; }
 
   constexpr decltype(auto) elements_data() const { return this->elements_.data(); }
   constexpr std::size_t elements_count() const { return this->elements_.size(); }
-  constexpr auto elements_size_in_bytes() const { return this->elements_count() * sizeof(GLuint); }
+  constexpr auto elements_size_in_bytes() const { return this->elements_count() * sizeof(ElementType); }
 };
 
-template <std::size_t V, std::size_t NUM_OF_F_PER_VERTEX, std::size_t NUM_ELEMENTS>
-using static_shape_array = static_shape_template<std::array, V, NUM_OF_F_PER_VERTEX, NUM_ELEMENTS>;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// static data
+template <std::size_t NUM_VERTEXES, std::size_t NUM_ELEMENTS, std::size_t NUM_OF_F_PER_VERTEX>
+using static_shape_array = shape_data<std::array, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_PER_VERTEX>;
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-template<std::size_t V, std::size_t E>
-using static_vertex_color_shape = static_shape_array<V, 8, E>;
+template<std::size_t NUM_VERTEXES, std::size_t NUM_ELEMENTS>
+using static_vertex_color_shape = static_shape_array<NUM_VERTEXES, NUM_ELEMENTS, 8>;
 
-template<std::size_t V, std::size_t E>
-using static_vertex_uv_shape = static_shape_array<V, 6, E>;
+template<std::size_t NUM_VERTEXES, std::size_t NUM_ELEMENTS>
+using static_vertex_uv_shape = static_shape_array<NUM_VERTEXES, NUM_ELEMENTS, 6>;
 
-template<std::size_t V, std::size_t E>
-using static_vertex_only_shape = static_shape_array<V, 4, E>;
+template<std::size_t NUM_VERTEXES, std::size_t NUM_ELEMENTS>
+using static_vertex_only_shape = static_shape_array<NUM_VERTEXES, NUM_ELEMENTS, 4>;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// runtime-driven data
 template <template <class, class> typename C, std::size_t NUM_OF_F_PER_VERTEX,
          typename F = float, typename A = std::allocator<F>, typename B = std::allocator<GLuint>>
 class runtime_shape_template
@@ -87,8 +92,8 @@ public:
   auto elements_size_in_bytes() const { return this->elements_count() * sizeof(GLuint); }
 };
 
-template <std::size_t V>
-using runtime_sized_array = runtime_shape_template<stlw::sized_buffer, V>;
+template <std::size_t NUM_VERTEXES>
+using runtime_sized_array = runtime_shape_template<stlw::sized_buffer, NUM_VERTEXES>;
 
 // float triangles
 using float_vertex_color_triangle = static_vertex_color_shape<24, 3>;
