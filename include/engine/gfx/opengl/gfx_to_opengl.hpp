@@ -21,7 +21,7 @@ class shape_data
   using FloatType = float; // TODO: project-wide configuration (double precision maybe)
   using ElementType = GLuint;
   using VertexContainer = C<FloatType, NUM_VERTEXES>;
-  using ElementContainer = C<GLuint, NUM_ELEMENTS>;
+  using ElementContainer = C<ElementType, NUM_ELEMENTS>;
 
   GLenum const mode_;
   VertexContainer data_;
