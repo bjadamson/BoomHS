@@ -32,8 +32,8 @@ make_ssl()
 
   constexpr auto ssig_randompos_system = ss::make(st::randompos_system)
     .parallelism(PA)
-    .read(ct::world_coordinate);
-    //.write(ct::world_coordinate);
+    .read(ct::world_coordinate)
+    .write(ct::world_coordinate);
 
   // Build and return the "system signature list".
   return sls::make(ssig_io_system, ssig_randompos_system);

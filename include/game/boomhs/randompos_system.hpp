@@ -20,7 +20,7 @@ struct randompos_system {
     data.for_entities([&](auto eid)
         {
             auto &v = data.get(ct::world_coordinate, eid);
-            //v.set(30.0f, 30.0f, 30.0f, 30.0f);/
+            v.set(30.0f, 30.0f, 30.0f, 30.0f);
         });
   }
 };
