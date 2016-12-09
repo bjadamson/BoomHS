@@ -123,13 +123,13 @@ ecst_main(G &game, S &state)
                          .system_signatures(make_ssl())
                          .scheduler(cs::scheduler<ss::s_atomic_counter>);
 
-  auto &l = state.logger;
-  l.trace("creating ecst context ...");
+  auto &logger = state.logger;
+  logger.trace("creating ecst context ...");
 
   // Create an ECST context.
   auto ctx = ecst::context::make_uptr(scheduler);
 
-  l.trace("stepping ecst once");
+  logger.trace("stepping ecst once");
 
   // Initialize context with some entities.
   ctx->step([&](auto &proxy) {
@@ -195,34 +195,48 @@ ecst_main(G &game, S &state)
     }
   });
 
-  l.trace("entering main loop");
-
-  // "Game loop."
-  while (!state.quit) {
-
-    ctx->step([&state](auto &proxy) {
-      proxy.execute_systems()(sea::t(st::io_system).for_subtasks([&state](auto &system, auto &data) {
-        system.process(data, state);
-      }));
-    });
-    l.debug("rendering");
+  auto systems = sea::t(st::io_system);
+  auto const init_system = [&logger](auto &system, auto &data) {
+    system.init(logger);
+  };
+  auto const init_all_systems = systems.for_subtasks(init_system);
+  auto const process_system = [&state, &logger](auto &system, auto &data) {
+    system.process(data, state);
+  };
+  auto const process_all_systems = systems.for_subtasks(process_system);
+  auto const game_loop_body = [&state, &game, &logger, &process_all_systems](auto& proxy) {
+    logger.trace("executing systems ...");
+    proxy.execute_systems()(process_all_systems);
+    logger.trace("rendering");
 
     game.game_loop(state);
-    l.debug("game loop stepping.");
-  }
+    logger.trace("game loop stepping.");
+  };
+  auto const game_loop = [&state, &game_loop_body](auto& proxy) {
+    while (! state.quit) {
+      game_loop_body(proxy);
+    }
+  };
+  ctx->step([&](auto &proxy) {
+    logger.trace("game started, initializing all systems.");
+    proxy.execute_systems()(init_all_systems);
+    logger.trace("systems initialized.");
+
+    logger.trace("entering main loop.");
+    game_loop(proxy);
+    logger.trace("game loop finished.");
+  });
 }
 
 class boomhs_game
 {
   NO_COPY(boomhs_game);
-
 public:
   boomhs_game() = default;
-
   MOVE_DEFAULT(boomhs_game);
 
-  template <typename State>    //, typename ...S>
-  void game_loop(State &state) //, S const&... shapes)
+  template <typename State>
+  void game_loop(State &state)
   {
     ::engine::gfx::render_args<decltype(state.logger)> const args{state.logger, state.view,
                                                                   state.projection};

@@ -5,6 +5,10 @@ namespace s
 {
 
 struct io_system {
+
+  template<typename L>
+  bool init(L &logger) { return true; }
+
   inline static bool is_quit_event(SDL_Event &event)
   {
     bool is_quit = false;
