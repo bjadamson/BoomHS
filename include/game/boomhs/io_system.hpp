@@ -1,5 +1,6 @@
 #pragma once
-#include <ecst.hpp>
+#include <engine/gfx/opengl/glsl.hpp>
+#include <engine/window/sdl_window.hpp>
 
 namespace s
 {
