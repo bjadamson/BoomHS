@@ -290,13 +290,11 @@ class shape_mapper
       floats[j++] = vertice.color.b;
       floats[j++] = vertice.color.a;
     }
-    std::cerr << "hi\n";
     auto const elements_length = num_vertices;
     stlw::sized_buffer<GLuint> elements{static_cast<size_t>(elements_length)};
     for (auto i{0}; i < elements_length; ++i) {
       elements[i] = i;
     }
-    // TODO: GL_POLYGON is deprecated
     return float_vertex_color_polygon{GL_TRIANGLE_FAN, std::move(floats), std::move(elements)};
   }
 
@@ -321,7 +319,6 @@ class shape_mapper
     for (auto i{0}; i < elements_length; ++i) {
       elements[i] = i;
     }
-    // TODO: GL_POLYGON is deprecated
     return float_vertex_uv_polygon{GL_TRIANGLE_FAN, std::move(floats), std::move(elements)};
   }
 
