@@ -19,8 +19,8 @@ struct randompos_system {
     state.logger.trace("randompos::process(data, state)");
     data.for_entities([&](auto eid)
         {
-            //auto &v = data.get(ct::world_coordinate, eid)._v;
-            //v.x += 0.05f;
+            auto &v = data.get(ct::world_coordinate, eid);
+            //v.set(30.0f, 30.0f, 30.0f, 30.0f);/
         });
   }
 };
