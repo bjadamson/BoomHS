@@ -12,6 +12,7 @@
 
 #include <game/boomhs/ecst.hpp>
 #include <game/boomhs/io_system.hpp>
+#include <game/boomhs/randompos_system.hpp>
 #include <game/data_types.hpp>
 
 namespace game::boomhs
@@ -55,7 +56,6 @@ ecst_main(G &game, S &state)
 
   // Create an ECST context.
   auto ctx = ecst_setup::make_context();
-
   logger.trace("stepping ecst once");
 
   // Initialize context with some entities.
@@ -123,20 +123,27 @@ ecst_main(G &game, S &state)
   });
 
   namespace sea = ecst::system_execution_adapter;
-  auto systems = sea::t(st::io_system);
+  auto io_tags = sea::t(st::io_system);
+  auto randompos_tags = sea::t(st::randompos_system);
+
   auto const init_system = [&logger](auto &system, auto &data) {
     system.init(logger);
   };
-  auto const init_all_systems = systems.for_subtasks(init_system);
   auto const process_system = [&state, &logger](auto &system, auto &data) {
     system.process(data, state);
   };
-  auto const process_all_systems = systems.for_subtasks(process_system);
-  auto const game_loop_body = [&state, &game, &logger, &process_all_systems](auto& proxy) {
-    logger.trace("executing systems ...");
-    proxy.execute_systems()(process_all_systems);
-    logger.trace("rendering");
 
+  auto const io_init_system = io_tags.for_subtasks(init_system);
+  auto const io_process_system = io_tags.for_subtasks(process_system);
+
+  auto const randompos_init_system = randompos_tags.for_subtasks(init_system);
+  auto const randompos_process_system = randompos_tags.for_subtasks(process_system);
+
+  auto const game_loop_body = [&](auto& proxy) {
+    logger.trace("executing systems.");
+    proxy.execute_systems()(io_process_system, randompos_process_system);
+
+    logger.trace("rendering.");
     game.game_loop(state);
     logger.trace("game loop stepping.");
   };
@@ -146,11 +153,10 @@ ecst_main(G &game, S &state)
     }
   };
   ctx->step([&](auto &proxy) {
-    logger.trace("game started, initializing all systems.");
-    proxy.execute_systems()(init_all_systems);
-    logger.trace("systems initialized.");
+    logger.trace("game started, initializing systems.");
+    proxy.execute_systems()(io_init_system, randompos_init_system);
+    logger.trace("systems initialized, entering main loop.");
 
-    logger.trace("entering main loop.");
     game_loop(proxy);
     logger.trace("game loop finished.");
   });
