@@ -107,6 +107,8 @@ using float_vertex_only_rectangle = static_vertex_only_shape<16, 6>;
 
 // float cubes
 using float_vertex_color_cube = static_vertex_color_shape<64, 36>;
+using float_vertex_uv_cube = static_vertex_uv_shape<48, 36>;
+using float_vertex_only_cube = static_vertex_only_shape<32, 36>;
 
 // float polygons
 using float_vertex_color_polygon = runtime_sized_array<8>;
@@ -200,6 +202,11 @@ class shape_mapper
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // rectangles
+  static auto constexpr RECTANGLE_ELEMENTS()
+  {
+    return std::array<GLuint, 6>{0, 1, 2, 2, 3, 0};
+  }
+
   static constexpr auto map_to_array_floats(game::rectangle<game::vertex_color_attributes> const &r)
   {
     using X = game::rectangle<game::vertex_color_attributes>;
@@ -223,8 +230,7 @@ class shape_mapper
         r.top_left.vertex.w,     r.top_left.color.r,      r.top_left.color.g,
         r.top_left.color.b,      r.top_left.color.a
     };
-    auto constexpr elements = std::array<GLuint, 6>{0, 1, 2, 2, 3, 0};
-    return float_vertex_color_rectangle{GL_TRIANGLE_STRIP, std::move(floats), elements};
+    return float_vertex_color_rectangle{GL_TRIANGLE_STRIP, std::move(floats), RECTANGLE_ELEMENTS()};
   }
 
   static constexpr auto map_to_array_floats(game::rectangle<game::vertex_uv_attributes> const &r)
@@ -233,21 +239,22 @@ class shape_mapper
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_uv_num_floats(NUM_VERTICES);
 
+    // clang-format off
     auto floats = std::array<float, NUM_FLOATS>{
-        r.bottom_left.vertex.x,  r.bottom_left.vertex.y,  r.bottom_left.vertex.z, // vertice 1
-        r.bottom_left.vertex.w,  r.bottom_left.uv.u,   r.bottom_left.uv.v,
+        r.bottom_left.vertex.x,  r.bottom_left.vertex.y, r.bottom_left.vertex.z, // vertice 1
+        r.bottom_left.vertex.w,  r.bottom_left.uv.u,     r.bottom_left.uv.v,
 
         r.bottom_right.vertex.x, r.bottom_right.vertex.y, r.bottom_right.vertex.z, // vertice 2
-        r.bottom_right.vertex.w, r.bottom_right.uv.u,  r.bottom_right.uv.v,
+        r.bottom_right.vertex.w, r.bottom_right.uv.u,     r.bottom_right.uv.v,
 
         r.top_right.vertex.x,    r.top_right.vertex.y,    r.top_right.vertex.z, // vertice 3
-        r.top_right.vertex.w,    r.top_right.uv.u,     r.top_right.uv.v,
+        r.top_right.vertex.w,    r.top_right.uv.u,        r.top_right.uv.v,
 
         r.top_left.vertex.x,     r.top_left.vertex.y,     r.top_left.vertex.z, // vertice 4
-        r.top_left.vertex.w,     r.top_left.uv.u,      r.top_left.uv.v,
+        r.top_left.vertex.w,     r.top_left.uv.u,         r.top_left.uv.v,
     };
-    auto constexpr elements = std::array<GLuint, 6>{0, 1, 2, 2, 3, 0};
-    return float_vertex_uv_rectangle{GL_TRIANGLE_STRIP, std::move(floats), elements};
+    // clang-format on
+    return float_vertex_uv_rectangle{GL_TRIANGLE_STRIP, std::move(floats), RECTANGLE_ELEMENTS()};
   }
 
   static constexpr auto map_to_array_floats(game::rectangle<game::wireframe_attributes> const &r)
@@ -256,6 +263,7 @@ class shape_mapper
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_only_num_floats(NUM_VERTICES);
 
+    // clang-format off
     auto floats = std::array<float, NUM_FLOATS>{
         r.bottom_left.vertex.x,  r.bottom_left.vertex.y,  r.bottom_left.vertex.z, // vertice 1
         r.bottom_left.vertex.w,
@@ -269,21 +277,45 @@ class shape_mapper
         r.top_left.vertex.x,     r.top_left.vertex.y,     r.top_left.vertex.z, // vertice 4
         r.top_left.vertex.w,
     };
-    auto constexpr elements = std::array<GLuint, 6>{0, 1, 2, 2, 3, 0};
-    return float_vertex_only_rectangle{GL_LINE_LOOP, std::move(floats), elements};
+    // clang-format on
+    return float_vertex_only_rectangle{GL_LINE_LOOP, std::move(floats), RECTANGLE_ELEMENTS()};
   }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // cubes
+  static constexpr auto CUBE_ELEMENTS()
+  {
+    // clang-format off
+    return std::array<GLuint, 36> {
+      0, 1, 2, // front
+      2, 3, 0,
+
+      0, 7, 3, // left-side
+      3, 6, 7,
+
+      7, 4, 0, // floor
+      0, 1, 4,
+
+      4, 7, 6, // back
+      6, 4, 5,
+
+      5, 4, 1, // right-side
+      1, 5, 2,
+
+      2, 3, 6, // top
+      6, 5, 2
+    };
+    // clang-format on
+  }
+
   static constexpr auto map_to_array_floats(game::cube<game::vertex_color_attributes> const &r)
   {
     using X = game::cube<game::vertex_color_attributes>;
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_color_num_floats(NUM_VERTICES);
 
+    // clang-format off
     auto const& v = r.vertices;
-    auto const& c = r.vertices[0].color;
-
     auto floats = std::array<float, NUM_FLOATS>{
         v[0].vertex.x, v[0].vertex.y, v[0].vertex.z, v[0].vertex.w, // vertice 0
         v[0].color.r,  v[0].color.g,  v[0].color.b,  v[0].color.a,
@@ -309,26 +341,67 @@ class shape_mapper
         v[7].vertex.x, v[7].vertex.y, v[7].vertex.z, v[7].vertex.w, // vertice 7
         v[7].color.r,  v[7].color.g,  v[7].color.b,  v[7].color.a,
     };
-    auto constexpr elements = std::array<GLuint, 36>{
-      0, 1, 2, // front
-      2, 3, 0,
+    // clang-format on
+    return float_vertex_color_cube{GL_TRIANGLE_STRIP, std::move(floats), CUBE_ELEMENTS()};
+  }
 
-      0, 7, 3, // left-side
-      3, 6, 7,
+  static constexpr auto map_to_array_floats(game::cube<game::vertex_uv_attributes> const &r)
+  {
+    using X = game::cube<game::vertex_uv_attributes>;
+    auto constexpr NUM_VERTICES = X::NUM_VERTICES;
+    auto constexpr NUM_FLOATS = calc_vertex_uv_num_floats(NUM_VERTICES);
 
-      7, 4, 0, // floor
-      0, 1, 4,
+    // clang-format off
+    auto const& v = r.vertices;
+    auto floats = std::array<float, NUM_FLOATS>{
+        v[0].vertex.x, v[0].vertex.y, v[0].vertex.z, v[0].vertex.w, // vertice 0
+        v[0].uv.u,  v[0].uv.v,
 
-      4, 7, 6, // back
-      6, 4, 5,
+        v[1].vertex.x, v[1].vertex.y, v[1].vertex.z, v[1].vertex.w, // vertice 1
+        v[1].uv.u,     v[1].uv.v,
 
-      5, 4, 1, // right-side
-      1, 5, 2,
+        v[2].vertex.x, v[2].vertex.y, v[2].vertex.z, v[2].vertex.w, // vertice 2
+        v[2].uv.u,     v[2].uv.v,
 
-      2, 3, 6, // top
-      6, 5, 2,
+        v[3].vertex.x, v[3].vertex.y, v[3].vertex.z, v[3].vertex.w, // vertice 3
+        v[3].uv.u,     v[3].uv.v,
+
+        v[4].vertex.x, v[4].vertex.y, v[4].vertex.z, v[4].vertex.w, // vertice 4
+        v[4].uv.u,     v[4].uv.v,
+
+        v[5].vertex.x, v[5].vertex.y, v[5].vertex.z, v[5].vertex.w, // vertice 5
+        v[5].uv.u,     v[5].uv.v,
+
+        v[6].vertex.x, v[6].vertex.y, v[6].vertex.z, v[6].vertex.w, // vertice 6
+        v[6].uv.u,     v[6].uv.v,
+
+        v[7].vertex.x, v[7].vertex.y, v[7].vertex.z, v[7].vertex.w, // vertice 7
+        v[7].uv.u,     v[7].uv.v
     };
-    return float_vertex_color_cube{GL_TRIANGLE_STRIP, std::move(floats), elements};
+    // clang-format on
+    return float_vertex_uv_cube{GL_TRIANGLE_STRIP, std::move(floats), CUBE_ELEMENTS()};
+  }
+
+  static constexpr auto map_to_array_floats(game::cube<game::wireframe_attributes> const &r)
+  {
+    using X = game::cube<game::wireframe_attributes>;
+    auto constexpr NUM_VERTICES = X::NUM_VERTICES;
+    auto constexpr NUM_FLOATS = calc_vertex_only_num_floats(NUM_VERTICES);
+
+    // clang-format off
+    auto const& v = r.vertices;
+    auto floats = std::array<float, NUM_FLOATS>{
+        v[0].vertex.x, v[0].vertex.y, v[0].vertex.z, v[0].vertex.w, // vertice 0
+        v[1].vertex.x, v[1].vertex.y, v[1].vertex.z, v[1].vertex.w, // vertice 1
+        v[2].vertex.x, v[2].vertex.y, v[2].vertex.z, v[2].vertex.w, // vertice 2
+        v[3].vertex.x, v[3].vertex.y, v[3].vertex.z, v[3].vertex.w, // vertice 3
+        v[4].vertex.x, v[4].vertex.y, v[4].vertex.z, v[4].vertex.w, // vertice 4
+        v[5].vertex.x, v[5].vertex.y, v[5].vertex.z, v[5].vertex.w, // vertice 5
+        v[6].vertex.x, v[6].vertex.y, v[6].vertex.z, v[6].vertex.w, // vertice 6
+        v[7].vertex.x, v[7].vertex.y, v[7].vertex.z, v[7].vertex.w  // vertice 7
+    };
+    // clang-format on
+    return float_vertex_only_cube{GL_LINE_LOOP, std::move(floats), CUBE_ELEMENTS()};
   }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

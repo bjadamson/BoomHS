@@ -44,6 +44,8 @@ public:
     // Render
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glCullFace(GL_BACK); // ED: Added
     this->engine_.begin();
   }
 
@@ -88,6 +90,7 @@ struct factory {
     //glDepthMask(GL_FALSE);
     //glDisable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
     return gfx_engine{std::move(window), std::move(opengl_engine)};
   }
 };

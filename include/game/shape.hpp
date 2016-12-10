@@ -592,6 +592,29 @@ class cube_factory
     std::array<c, 8> const colors;
   };
 
+  struct uv_properties
+  {
+    height_width_length const dimensions;
+
+    // clang-format off
+    std::array<texture_coord, 4> const uv = {
+      texture_coord{0.0f, 0.0f}, // bottom-left
+      texture_coord{1.0f, 0.0f}, // bottom-right
+      texture_coord{1.0f, 1.0f}, // top-right
+      texture_coord{0.0f, 1.0f}, // top-left
+    };
+    // clang-format on
+  };
+
+  struct wireframe_properties
+  {
+    height_width_length const dimensions;
+    GLint const num_vertices;
+
+    float const alpha = 1.0f;
+    float const width = 0.25f;
+  };
+
   static constexpr auto
   calculate_vertices(world_coordinate const& wc, height_width_length const& hw)
   {
@@ -640,25 +663,86 @@ class cube_factory
     // clang-format on
   }
 
+  static constexpr auto
+  construct(world_coordinate const &wc, uv_properties const& props)
+  {
+    auto const vertices = calculate_vertices(wc, props.dimensions);
+
+    // clang-format off
+    vertex_uv_attributes const f_bottom_left  {vertices[0], props.uv[0]};
+    vertex_uv_attributes const f_bottom_right {vertices[1], props.uv[1]};
+    vertex_uv_attributes const f_top_right    {vertices[2], props.uv[2]};
+    vertex_uv_attributes const f_top_left     {vertices[3], props.uv[3]};
+
+    vertex_uv_attributes const b_bottom_left  {vertices[4], props.uv[4]};
+    vertex_uv_attributes const b_bottom_right {vertices[5], props.uv[5]};
+    vertex_uv_attributes const b_top_right    {vertices[6], props.uv[6]};
+    vertex_uv_attributes const b_top_left     {vertices[7], props.uv[7]};
+
+    auto arr = stlw::make_array<vertex_uv_attributes>(
+        f_bottom_left, f_bottom_right, f_top_right, f_top_left,
+        b_bottom_left, b_bottom_right, b_top_right, b_top_left);
+    return cube<vertex_uv_attributes>{wc, std::move(arr)};
+    // clang-format on
+  }
+
+  static constexpr auto
+  construct(world_coordinate const &wc, wireframe_properties const& props)
+  {
+    auto const vertices = calculate_vertices(wc, props.dimensions);
+
+    // clang-format off
+    wireframe_attributes const f_bottom_left  {vertices[0]};
+    wireframe_attributes const f_bottom_right {vertices[1]};
+    wireframe_attributes const f_top_right    {vertices[2]};
+    wireframe_attributes const f_top_left     {vertices[3]};
+
+    wireframe_attributes const b_bottom_left  {vertices[4]};
+    wireframe_attributes const b_bottom_right {vertices[5]};
+    wireframe_attributes const b_top_right    {vertices[6]};
+    wireframe_attributes const b_top_left     {vertices[7]};
+
+    auto arr = stlw::make_array<wireframe_attributes>(
+        f_bottom_left, f_bottom_right, f_top_right, f_top_left,
+        b_bottom_left, b_bottom_right, b_top_right, b_top_left);
+    return cube<wireframe_attributes>{wc, std::move(arr)};
+    // clang-format on
+  }
+
 public:
 
   static constexpr auto
-  make(world_coordinate const &wc, std::array<float, 3> const &c, float const height,
+  make_spotted(world_coordinate const &wc, std::array<float, 3> const &c, float const height,
       float const width, float const length)
   {
     auto const ALPHA = 1.0f;
+    std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
 
     std::array<color_properties::c, 8> const colors{
       std::array<float, 4>{1.0f, 0.0f, 0.0f, ALPHA},
+      color,
       std::array<float, 4>{0.0f, 1.0f, 0.0f, ALPHA},
-      std::array<float, 4>{0.0f, 0.0f, 1.0f, ALPHA},
-      std::array<float, 4>{1.0f, 1.0f, 1.0f, ALPHA},
-      std::array<float, 4>{1.0f, 0.0f, 1.0f, ALPHA},
-      std::array<float, 4>{0.0f, 1.0f, 1.0f, ALPHA},
+      color,
       std::array<float, 4>{0.2f, 0.5f, 0.2f, ALPHA},
+      color,
       std::array<float, 4>{0.6f, 0.4f, 0.8f, ALPHA}
     };
     color_properties const p{{height, width, length}, colors};
+    return construct(wc, p);
+  }
+
+  static constexpr auto make_textured(world_coordinate const& wc, float const height,
+      float const width, float const length)
+  {
+    uv_properties const p{{height, width, length}};
+    return construct(wc, p);
+  }
+
+  static constexpr auto
+  make_wireframe(world_coordinate const& wc, float const height, float const width,
+      float const length)
+  {
+    wireframe_properties const p{{height, width, length}};
     return construct(wc, p);
   }
 };

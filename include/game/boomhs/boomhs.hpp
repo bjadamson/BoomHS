@@ -204,7 +204,9 @@ public:
     auto triangle_texture = game::triangle_factory::make(*r, true);
     auto triangle_wireframe = game::triangle_factory::make(*s, true, false);
 
-    auto cube_color = game::cube_factory::make(*a, ::engine::gfx::LIST_OF_COLORS::BLUE, 0.25f, 0.25f, 0.25f);
+    //auto cube_color = game::cube_factory::make_textured(*a, ::engine::gfx::LIST_OF_COLORS::BLUE, 0.25f, 0.25f, 0.25f);
+    //auto cube_texture = game::cube_factory::make_textured(*a, 0.25f, 0.25f, 0.25f);
+    auto cube_wf = game::cube_factory::make_wireframe(*a, 0.25f, 0.25f, 0.25f);
 
     auto rectangle_color = game::rectangle_factory::make(*t, ::engine::gfx::LIST_OF_COLORS::YELLOW);
     auto rectangle_list_colors = game::rectangle_factory::make(*u, height, width, multicolor_rect);
@@ -217,25 +219,27 @@ public:
     //auto polygon_wireframe = game::polygon_factory::make(*v, 7, true, true);
 
     state.renderer.begin();
-    state.renderer.draw_shapes_with_colors(args,
+    //state.renderer.draw_shapes_with_colors(args,
         //triangle_color,
         //triangle_list_colors,
         //rectangle_color,
         //rectangle_list_colors,
         //polygon_color,//,
-        cube_color
+        //cube_color
         //polygon_list_of_color
-        );
+        //);
     //state.renderer.draw_shapes_with_textures(args,
         //triangle_texture,
         //rectangle_texture,
         //polygon_texture
+        //cube_texture
         //);
-    //state.renderer.draw_shapes_with_wireframes(args,
+    state.renderer.draw_shapes_with_wireframes(args,
         //triangle_wireframe,
         //rectangle_wireframe//,
         //polygon_wireframe
-        //);
+        cube_wf
+        );
     state.renderer.end();
   }
 };
