@@ -1,6 +1,7 @@
 #pragma once
 #include <engine/gfx/colors.hpp>
 #include <game/data_types.hpp>
+#include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
 namespace game
@@ -14,6 +15,19 @@ public:
 
   auto height() const { return this->pair_.first; }
   auto width() const { return this->pair_.second; }
+};
+
+class height_width_length
+{
+  std::pair<height_width, float> pair_;
+public:
+  constexpr height_width_length(float const h, float const w, float const l)
+    : pair_(height_width{h, w}, l)
+  {}
+
+  auto height() const { return this->pair_.first.height(); }
+  auto width() const { return this->pair_.first.width(); }
+  auto length() const { return this->pair_.second; }
 };
 
 struct shape {
@@ -85,7 +99,6 @@ struct rectangle : public shape {
   V bottom_left, bottom_right, top_right, top_left;
 
 private:
-  friend class shape_factory;
   friend class rectangle_factory;
   explicit constexpr rectangle(world_coordinate const &wc, V const &bl, V const &br, V const &tr,
       V const &tl)
@@ -94,6 +107,20 @@ private:
     , bottom_right(br)
     , top_right(tr)
     , top_left(tl)
+  {
+  }
+};
+
+template<typename V>
+struct cube : public shape {
+  static auto constexpr NUM_VERTICES = 8;
+  std::array<V, 8> vertices;
+
+private:
+  friend class cube_factory;
+  explicit constexpr cube(world_coordinate const &wc, std::array<V, 8> &&v)
+    : shape(wc)
+    , vertices(std::move(v))
   {
   }
 };
@@ -549,6 +576,89 @@ public:
     std::array<float, 4> const top_left{tl[0], tl[1], tl[2], tl[3]};
 
     color_properties const p{{height, width}, bottom_left, bottom_right, top_right, top_left};
+    return construct(wc, p);
+  }
+};
+
+class cube_factory
+{
+  cube_factory() = delete;
+
+  struct color_properties
+  {
+    using c = std::array<float, 4>;
+
+    height_width_length const dimensions;
+    std::array<c, 8> const colors;
+  };
+
+  static constexpr auto
+  calculate_vertices(world_coordinate const& wc, height_width_length const& hw)
+  {
+    auto const h = hw.height();
+    auto const w = hw.width();
+    auto const l = hw.length();
+
+    auto const x = wc.x();
+    auto const y = wc.y();
+    auto const z = wc.z();
+    // clang-format off
+    return std::array<vertex, 8> {
+      vertex{x - w, y - h, z + l, wc.w()}, // front bottom-left
+      vertex{x + w, y - h, z + l, wc.w()}, // front bottom-right
+      vertex{x + w, y + h, z + l, wc.w()}, // front top-right
+      vertex{x - w, y + h, z + l, wc.w()}, // front top-left
+
+      vertex{x - w, y - h, z - l, wc.w()}, // back bottom-left
+      vertex{x + w, y - h, z - l, wc.w()}, // back bottom-right
+      vertex{x + w, y + h, z - l, wc.w()}, // back top-right
+      vertex{x - w, y + h, z - l, wc.w()}  // back top-left
+    };
+    // clang-format on
+  }
+
+  static constexpr auto
+  construct(world_coordinate const &wc, color_properties const& props)
+  {
+    auto const vertices = calculate_vertices(wc, props.dimensions);
+
+    // clang-format off
+    vertex_color_attributes const f_bottom_left  {vertices[0], color{props.colors[0]}};
+    vertex_color_attributes const f_bottom_right {vertices[1], color{props.colors[1]}};
+    vertex_color_attributes const f_top_right    {vertices[2], color{props.colors[2]}};
+    vertex_color_attributes const f_top_left     {vertices[3], color{props.colors[3]}};
+
+    vertex_color_attributes const b_bottom_left  {vertices[4], color{props.colors[4]}};
+    vertex_color_attributes const b_bottom_right {vertices[5], color{props.colors[5]}};
+    vertex_color_attributes const b_top_right    {vertices[6], color{props.colors[6]}};
+    vertex_color_attributes const b_top_left     {vertices[7], color{props.colors[7]}};
+
+    auto arr = stlw::make_array<vertex_color_attributes>(
+        f_bottom_left, f_bottom_right, f_top_right, f_top_left,
+        b_bottom_left, b_bottom_right, b_top_right, b_top_left);
+    return cube<vertex_color_attributes>{wc, std::move(arr)};
+    // clang-format on
+  }
+
+public:
+
+  static constexpr auto
+  make(world_coordinate const &wc, std::array<float, 3> const &c, float const height,
+      float const width, float const length)
+  {
+    auto const ALPHA = 1.0f;
+
+    std::array<color_properties::c, 8> const colors{
+      std::array<float, 4>{1.0f, 0.0f, 0.0f, ALPHA},
+      std::array<float, 4>{0.0f, 1.0f, 0.0f, ALPHA},
+      std::array<float, 4>{0.0f, 0.0f, 1.0f, ALPHA},
+      std::array<float, 4>{1.0f, 1.0f, 1.0f, ALPHA},
+      std::array<float, 4>{1.0f, 0.0f, 1.0f, ALPHA},
+      std::array<float, 4>{0.0f, 1.0f, 1.0f, ALPHA},
+      std::array<float, 4>{0.2f, 0.5f, 0.2f, ALPHA},
+      std::array<float, 4>{0.6f, 0.4f, 0.8f, ALPHA}
+    };
+    color_properties const p{{height, width, length}, colors};
     return construct(wc, p);
   }
 };

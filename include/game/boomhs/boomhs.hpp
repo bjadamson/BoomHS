@@ -47,6 +47,8 @@ game::world_coordinate *w = nullptr;
 game::world_coordinate *x = nullptr;
 game::world_coordinate *y = nullptr;
 
+game::world_coordinate *a = nullptr;
+
 template <typename G, typename S>
 void
 ecst_main(G &game, S &state)
@@ -119,6 +121,13 @@ ecst_main(G &game, S &state)
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       wc.set(0.60f, 0.60f, 0.0f, 1.0f);
       y = &wc;
+    }
+
+    {
+      auto eid = proxy.create_entity();
+      auto &wc = proxy.add_component(ct::world_coordinate, eid);
+      wc.set(0.0f, 0.0f, 0.0f, 1.0f);
+      a = &wc;
     }
   });
 
@@ -195,6 +204,8 @@ public:
     auto triangle_texture = game::triangle_factory::make(*r, true);
     auto triangle_wireframe = game::triangle_factory::make(*s, true, false);
 
+    auto cube_color = game::cube_factory::make(*a, ::engine::gfx::LIST_OF_COLORS::BLUE, 0.25f, 0.25f, 0.25f);
+
     auto rectangle_color = game::rectangle_factory::make(*t, ::engine::gfx::LIST_OF_COLORS::YELLOW);
     auto rectangle_list_colors = game::rectangle_factory::make(*u, height, width, multicolor_rect);
     auto rectangle_texture = game::rectangle_factory::make(*v, height, width, true);
@@ -207,23 +218,24 @@ public:
 
     state.renderer.begin();
     state.renderer.draw_shapes_with_colors(args,
-        triangle_color,
-        triangle_list_colors,
-        rectangle_color,
-        rectangle_list_colors,
-        polygon_color//,
+        //triangle_color,
+        //triangle_list_colors,
+        //rectangle_color,
+        //rectangle_list_colors,
+        //polygon_color,//,
+        cube_color
         //polygon_list_of_color
         );
-    state.renderer.draw_shapes_with_textures(args,
-        triangle_texture,
-        rectangle_texture,
-        polygon_texture
-        );
-    state.renderer.draw_shapes_with_wireframes(args,
-        triangle_wireframe,
-        rectangle_wireframe//,
+    //state.renderer.draw_shapes_with_textures(args,
+        //triangle_texture,
+        //rectangle_texture,
+        //polygon_texture
+        //);
+    //state.renderer.draw_shapes_with_wireframes(args,
+        //triangle_wireframe,
+        //rectangle_wireframe//,
         //polygon_wireframe
-        );
+        //);
     state.renderer.end();
   }
 };
