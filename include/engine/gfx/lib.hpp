@@ -32,7 +32,6 @@ class gfx_engine
       : window_(std::move(w))
       , engine_(std::move(e))
   {
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
   }
 
   NO_COPY(gfx_engine);
@@ -43,6 +42,8 @@ public:
   void begin()
   {
     // Render
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     this->engine_.begin();
   }
 
@@ -86,6 +87,7 @@ struct factory {
     // glEnable(GL_DEPTH_TEST);
     //glDepthMask(GL_FALSE);
     //glDisable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
     return gfx_engine{std::move(window), std::move(opengl_engine)};
   }
 };
