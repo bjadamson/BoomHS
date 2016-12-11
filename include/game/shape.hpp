@@ -674,7 +674,7 @@ class cube_factory
 
 public:
   static constexpr auto make_spotted(world_coordinate const &wc, std::array<float, 3> const &c,
-                                     float const height, float const width, float const length)
+      height_width_length const& hwl)
   {
     auto const ALPHA = 1.0f;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
@@ -684,21 +684,19 @@ public:
         std::array<float, 4>{0.0f, 1.0f, 0.0f, ALPHA}, color,
         std::array<float, 4>{0.2f, 0.5f, 0.2f, ALPHA}, color,
         std::array<float, 4>{0.6f, 0.4f, 0.8f, ALPHA}};
-    color_properties const p{{height, width, length}, colors};
+    color_properties const p{hwl, colors};
     return construct(wc, p);
   }
 
-  static constexpr auto make_textured(world_coordinate const &wc, float const height,
-                                      float const width, float const length)
+  static constexpr auto make_textured(world_coordinate const &wc, height_width_length const& hwl)
   {
-    uv_properties const p{{height, width, length}};
+    uv_properties const p{hwl};
     return construct(wc, p);
   }
 
-  static constexpr auto make_wireframe(world_coordinate const &wc, float const height,
-                                       float const width, float const length)
+  static constexpr auto make_wireframe(world_coordinate const &wc, height_width_length const& hwl)
   {
-    wireframe_properties const p{{height, width, length}};
+    wireframe_properties const p{hwl};
     return construct(wc, p);
   }
 };

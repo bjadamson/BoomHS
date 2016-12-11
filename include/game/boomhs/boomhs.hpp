@@ -215,10 +215,10 @@ public:
     auto triangle_texture = game::triangle_factory::make(*r, true);
     auto triangle_wireframe = game::triangle_factory::make(*s, true, false);
 
-    auto cube_texture = game::cube_factory::make_textured(*a, 0.25f, 0.25f, 0.25f);
+    auto cube_texture = game::cube_factory::make_textured(*a, {0.25f, 0.25f, 0.25f});
     auto cube_color = game::cube_factory::make_spotted(*b, ::engine::gfx::LIST_OF_COLORS::BLUE,
-                                                       0.25f, 0.25f, 0.25f);
-    auto cube_wf = game::cube_factory::make_wireframe(*c, 0.25f, 0.25f, 0.25f);
+        {0.25f, 0.25f, 0.25f});
+    auto cube_wf = game::cube_factory::make_wireframe(*c, {0.25f, 0.25f, 0.25f});
 
     auto rectangle_color = game::rectangle_factory::make(*t, ::engine::gfx::LIST_OF_COLORS::YELLOW);
     auto rectangle_list_colors = game::rectangle_factory::make(*u, height, width, multicolor_rect);
