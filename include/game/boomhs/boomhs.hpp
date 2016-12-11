@@ -212,27 +212,26 @@ public:
     );
 
     auto const height = 0.25f, width = 0.39f;
-    //auto triangle_color = game::triangle_factory::make(*p, ::engine::gfx::LIST_OF_COLORS::PINK);
-    //auto triangle_list_colors = game::triangle_factory::make(*q, multicolor_triangle);
-    //auto triangle_texture = game::triangle_factory::make(*r, true);
-    //auto triangle_wireframe = game::triangle_factory::make(*s, true, false);
+    auto triangle_color = game::triangle_factory::make(*p, ::engine::gfx::LIST_OF_COLORS::PINK);
+    auto triangle_list_colors = game::triangle_factory::make(*q, multicolor_triangle);
+    auto triangle_texture = game::triangle_factory::make(*r, true);
+    auto triangle_wireframe = game::triangle_factory::make(*s, true, false);
 
     auto cube_texture = game::cube_factory::make_textured(*a, 0.25f, 0.25f, 0.25f);
-    //auto cube_color = game::cube_factory::make_spotted(*b, ::engine::gfx::LIST_OF_COLORS::BLUE, 0.25f, 0.25f, 0.25f);
-    //auto cube_wf = game::cube_factory::make_wireframe(*c, 0.25f, 0.25f, 0.25f);
+    auto cube_color = game::cube_factory::make_spotted(*b, ::engine::gfx::LIST_OF_COLORS::BLUE, 0.25f, 0.25f, 0.25f);
+    auto cube_wf = game::cube_factory::make_wireframe(*c, 0.25f, 0.25f, 0.25f);
 
-    //auto rectangle_color = game::rectangle_factory::make(*t, ::engine::gfx::LIST_OF_COLORS::YELLOW);
-    //auto rectangle_list_colors = game::rectangle_factory::make(*u, height, width, multicolor_rect);
-    auto rectangle_texture = game::rectangle_factory::make(*b, height, width, true);
-    //auto rectangle_wireframe = game::rectangle_factory::make(*w, height, width, true, true);
+    auto rectangle_color = game::rectangle_factory::make(*t, ::engine::gfx::LIST_OF_COLORS::YELLOW);
+    auto rectangle_list_colors = game::rectangle_factory::make(*u, height, width, multicolor_rect);
+    auto rectangle_texture = game::rectangle_factory::make(*v, height, width, true);
+    auto rectangle_wireframe = game::rectangle_factory::make(*w, height, width, true, true);
 
-    //auto polygon_color = game::polygon_factory::make(*x, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
+    auto polygon_color = game::polygon_factory::make(*x, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
     //auto polygon_list_of_color = game::polygon_factory::make(*u, 5, multicolor_triangle);
-    //auto polygon_texture = game::polygon_factory::make(*y, 7, true);
+    auto polygon_texture = game::polygon_factory::make(*y, 7, true);
     //auto polygon_wireframe = game::polygon_factory::make(*v, 7, true, true);
 
     state.renderer.begin();
-    /*
     state.renderer.draw_shapes_with_colors(args,
         triangle_color,
         triangle_list_colors,
@@ -242,24 +241,20 @@ public:
         cube_color
         //polygon_list_of_color,
         );
-    */
     state.renderer.draw_shapes_with_textures(args,
-        //triangle_texture,
-        rectangle_texture
-        //polygon_texture,
-        //cube_texture
+        triangle_texture,
+        rectangle_texture,
+        polygon_texture
         );
     state.renderer.draw_3dcube_shapes_with_textures(args,
         cube_texture
         );
-    /*
     state.renderer.draw_shapes_with_wireframes(args,
         triangle_wireframe,
         rectangle_wireframe,
         //polygon_wireframe
         cube_wf
         );
-    */
     state.renderer.end();
   }
 };

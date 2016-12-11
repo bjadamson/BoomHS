@@ -41,16 +41,9 @@ public:
 
   void begin()
   {
-    glCullFace(GL_BACK); // ED: Added
-    glEnable(GL_CULL_FACE); // ED: Added
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-
     // Render
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     this->engine_.begin();
   }
 
@@ -69,7 +62,14 @@ public:
   template <typename Args, typename... S>
   void draw_3dcube_shapes_with_textures(Args const &args, S const &... shapes)
   {
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+
+    glCullFace(GL_BACK);
     this->engine_.draw_3dcube_shapes(args, shapes...);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
   }
 
   template <typename Args, typename... S>
@@ -100,8 +100,8 @@ struct factory {
     // glEnable(GL_DEPTH_TEST);
     //glDepthMask(GL_FALSE);
     //glDisable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_CULL_FACE);
     return gfx_engine{std::move(window), std::move(opengl_engine)};
   }
 };
