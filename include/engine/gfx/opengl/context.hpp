@@ -1,51 +1,13 @@
 #pragma once
-#include <SOIL.h>
 #include <engine/gfx/colors.hpp>
 #include <engine/gfx/opengl/global.hpp>
 #include <engine/gfx/opengl/program.hpp>
+#include <engine/gfx/opengl/texture.hpp>
 #include <engine/gfx/opengl/vertex_attribute.hpp>
 #include <iostream>
 
 namespace engine::gfx::opengl
 {
-
-namespace impl
-{
-
-template<typename L>
-static auto const load_texture(L &logger, char const *path)
-{
-  GLuint texture;
-  glGenTextures(1, &texture);
-
-  global::texture_bind(texture);
-  ON_SCOPE_EXIT([]() { global::texture_unbind(); });
-
-  // Set texture wrapping to GL_REPEAT (usually basic wrapping method)
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  // Set texture filtering parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  int w = 0, h = 0;
-  unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, SOIL_LOAD_RGB);
-  if (nullptr == pimage) {
-    auto const fmt = fmt::sprintf("image at path '%s' failed to load, reason '%s'", path,
-        SOIL_last_result());
-    logger.error(fmt);
-    std::abort();
-  }
-  ON_SCOPE_EXIT([&]() { SOIL_free_image_data(pimage); });
-
-  // actually send the texture to the GPU
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pimage);
-  glGenerateMipmap(GL_TEXTURE_2D);
-
-  return texture;
-};
-
-} // ns impl
 
 class opengl_context
 {
@@ -101,12 +63,12 @@ public:
 
 class opengl_texture_context : public opengl_context
 {
-  GLuint texture_;
+  texture_info texture_info_;
 
   // private
-  opengl_texture_context(program &&p, vertex_attribute &&va, GLuint const t)
+  opengl_texture_context(program &&p, vertex_attribute &&va, texture_info const t)
     : opengl_context(std::move(p), std::move(va))
-    , texture_(t)
+    , texture_info_(t)
   {
   }
 
@@ -118,12 +80,12 @@ public:
   // move-construction OK.
   opengl_texture_context(opengl_texture_context &&other)
     : opengl_context(std::move(other))
-    , texture_(other.texture_)
+    , texture_info_(other.texture_info_)
   {
-    other.texture_ = 0;
+    other.texture_info_ = texture_info{0, 0};
   }
 
-  inline auto texture() const { return this->texture_; }
+  inline auto texture() const { return this->texture_info_; }
 };
 
 class opengl_wireframe_context : public opengl_context
@@ -173,7 +135,15 @@ public:
   auto static make_texture_opengl_context(L &logger, program &&p, char const *path,
       vertex_attribute &&va)
   {
-    auto const tid = impl::load_texture(logger, path);
+    auto const tid = load_2d_texture(logger, path);
+    return make<opengl_texture_context>(logger, std::move(p), std::move(va), tid);
+  }
+
+    template<typename L>
+  auto static make_3dcube_texture_opengl_context(L &logger, program &&p, char const *path,
+      vertex_attribute &&va)
+  {
+    auto const tid = load_3d_texture(logger, path);
     return make<opengl_texture_context>(logger, std::move(p), std::move(va), tid);
   }
 

@@ -67,6 +67,12 @@ public:
   }
 
   template <typename Args, typename... S>
+  void draw_3dcube_shapes_with_textures(Args const &args, S const &... shapes)
+  {
+    this->engine_.draw_3dcube_shapes(args, shapes...);
+  }
+
+  template <typename Args, typename... S>
   void draw_shapes_with_wireframes(Args const &args, S const &... shapes)
   {
     this->engine_.draw_shapes_with_wireframes(args, shapes...);

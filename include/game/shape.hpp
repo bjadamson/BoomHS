@@ -43,6 +43,16 @@ public:
   auto constexpr const &wc() const { return this->coord_; }
 };
 
+struct vertex_attributes_only {
+  vertex vertex;
+  vertex_attributes_only() = default;
+
+  explicit constexpr vertex_attributes_only(class vertex const &v)
+      : vertex(v)
+  {
+  }
+};
+
 struct vertex_color_attributes {
   vertex vertex;
   color color;
@@ -192,8 +202,7 @@ class polygon_factory
 
       vertex const v{x, y, wc.z(), wc.w()};
       color const col{props.colors[0], props.colors[1], props.colors[2], props.alpha};
-      texture_coord const uv{x, y};
-      poly.vertex_attributes[i] = vertex_color_attributes{v, col};//, uv};
+      poly.vertex_attributes[i] = vertex_color_attributes{v, col};
     }
     return poly;
   }
@@ -595,18 +604,6 @@ class cube_factory
   struct uv_properties
   {
     height_width_length const dimensions;
-
-    // clang-format off
-    std::array<texture_coord, 8> const uv = {
-        // front-vertices
-        texture_coord{-1.0f, -1.0f}, texture_coord{1.0f, -1.0f},
-        texture_coord{1.0f, 1.0f}, texture_coord{-1.0f, 1.0f},
-
-        // back-vertices
-        texture_coord{1.0f, -1.0f}, texture_coord{1.0f, 1.0f},
-        texture_coord{-1.0f, 1.0f}, texture_coord{-1.0f, -1.0f},
-    };
-    // clang-format on
   };
 
   struct wireframe_properties
@@ -672,20 +669,20 @@ class cube_factory
     auto const vertices = calculate_vertices(wc, props.dimensions);
 
     // clang-format off
-    vertex_uv_attributes const f_bottom_left  {vertices[0], props.uv[0]};
-    vertex_uv_attributes const f_bottom_right {vertices[1], props.uv[1]};
-    vertex_uv_attributes const f_top_right    {vertices[2], props.uv[2]};
-    vertex_uv_attributes const f_top_left     {vertices[3], props.uv[3]};
+    vertex_attributes_only const f_bottom_left  {vertices[0]};
+    vertex_attributes_only const f_bottom_right {vertices[1]};
+    vertex_attributes_only const f_top_right    {vertices[2]};
+    vertex_attributes_only const f_top_left     {vertices[3]};
 
-    vertex_uv_attributes const b_bottom_left  {vertices[4], props.uv[4]};
-    vertex_uv_attributes const b_bottom_right {vertices[5], props.uv[5]};
-    vertex_uv_attributes const b_top_right    {vertices[6], props.uv[6]};
-    vertex_uv_attributes const b_top_left     {vertices[7], props.uv[7]};
+    vertex_attributes_only const b_bottom_left  {vertices[4]};
+    vertex_attributes_only const b_bottom_right {vertices[5]};
+    vertex_attributes_only const b_top_right    {vertices[6]};
+    vertex_attributes_only const b_top_left     {vertices[7]};
 
-    auto arr = stlw::make_array<vertex_uv_attributes>(
+    auto arr = stlw::make_array<vertex_attributes_only>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,
         b_bottom_left, b_bottom_right, b_top_right, b_top_left);
-    return cube<vertex_uv_attributes>{wc, std::move(arr)};
+    return cube<vertex_attributes_only>{wc, std::move(arr)};
     // clang-format on
   }
 

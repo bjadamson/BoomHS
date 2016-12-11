@@ -4,7 +4,7 @@
 namespace engine::gfx
 {
 
-enum class IMAGES { CONTAINER = 0, WALL };
+enum class IMAGES { CONTAINER = 0, WALL, MULTICOLOR_RECT };
 
 template <typename K, typename V, std::size_t N>
 class table
@@ -40,11 +40,12 @@ struct resources {
   {
     using K = IMAGES;
     using V = char const *;
-    std::size_t constexpr N = 2;
+    std::size_t constexpr N = 3;
 
     return table<K, V, N>{
         std::make_pair(K::CONTAINER, "assets/container.jpg"),
-        std::make_pair(K::WALL, "assets/multicolor_rect.jpg"),
+        std::make_pair(K::WALL, "assets/wall.jpg"),
+        std::make_pair(K::MULTICOLOR_RECT, "assets/multicolor_rect.jpg"),
     };
   }
 };

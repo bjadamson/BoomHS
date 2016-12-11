@@ -22,8 +22,6 @@ namespace engine::gfx::opengl
 DEFINE_SHADER_FILENAME_TYPE(vertex);
 DEFINE_SHADER_FILENAME_TYPE(fragment);
 
-
-
 class program
 {
   /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,8 +92,8 @@ public:
     GLint const loc = glGetUniformLocation(this->program_id_, name);
     logger.trace("get_uniform_location(" + std::string{name} + ") loc is '" + std::to_string(loc)
         + "'");
-    assert(-1 != loc);
     this->check_opengl_errors(logger);
+    assert(-1 != loc);
     return loc;
   }
 

@@ -159,7 +159,7 @@ draw_scene(L &logger, opengl_texture_context &ctx, glm::mat4 const &view, glm::m
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
   global::texture_bind(ctx.texture());
-  ON_SCOPE_EXIT([]() { global::texture_unbind(); });
+  ON_SCOPE_EXIT([&ctx]() { global::texture_unbind(ctx.texture()); });
 
   impl::draw_scene(logger, ctx, view, projection, shapes);
 }
