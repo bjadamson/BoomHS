@@ -77,16 +77,6 @@ struct vertex_uv_attributes {
   }
 };
 
-struct wireframe_attributes {
-  vertex vertex;
-
-  wireframe_attributes() = default;
-  explicit constexpr wireframe_attributes(class vertex const &v)
-      : vertex(v)
-  {
-  }
-};
-
 // clang-format off
 template<typename V>
 struct triangle : public shape {
@@ -255,13 +245,13 @@ class polygon_factory
       return wc.y() + pos;
     };
 
-    polygon<wireframe_attributes> poly{wc, num_vertices};
+    polygon<vertex_attributes_only> poly{wc, num_vertices};
     for (auto i{0}, j{0}; i < num_vertices; ++i) {
       auto const x = cosfn(i);
       auto const y = sinfn(i);
 
       vertex const v{x, y, wc.z(), wc.w()};
-      poly.vertex_attributes[i] = wireframe_attributes{v};
+      poly.vertex_attributes[i] = vertex_attributes_only{v};
     }
     return poly;
   }
@@ -359,11 +349,11 @@ private:
   {
     auto const vertices = calculate_vertices(wc, props.radius);
 
-    wireframe_attributes const bottom_left{vertices[0]};
-    wireframe_attributes const bottom_right{vertices[1]};
-    wireframe_attributes const top_middle{vertices[2]};
+    vertex_attributes_only const bottom_left{vertices[0]};
+    vertex_attributes_only const bottom_right{vertices[1]};
+    vertex_attributes_only const top_middle{vertices[2]};
 
-    return triangle<wireframe_attributes>{wc, bottom_left, bottom_right, top_middle};
+    return triangle<vertex_attributes_only>{wc, bottom_left, bottom_right, top_middle};
   }
 
 public:
@@ -508,11 +498,11 @@ class rectangle_factory
   {
     auto const vertices = calculate_vertices(wc, props.dimensions);
 
-    wireframe_attributes const bottom_left{vertices[0]};
-    wireframe_attributes const bottom_right{vertices[1]};
-    wireframe_attributes const top_right{vertices[2]};
-    wireframe_attributes const top_left{vertices[3]};
-    return rectangle<wireframe_attributes>{wc, bottom_left, bottom_right, top_right, top_left};
+    vertex_attributes_only const bottom_left{vertices[0]};
+    vertex_attributes_only const bottom_right{vertices[1]};
+    vertex_attributes_only const top_right{vertices[2]};
+    vertex_attributes_only const top_left{vertices[3]};
+    return rectangle<vertex_attributes_only>{wc, bottom_left, bottom_right, top_right, top_left};
   }
 public:
 
@@ -692,20 +682,20 @@ class cube_factory
     auto const vertices = calculate_vertices(wc, props.dimensions);
 
     // clang-format off
-    wireframe_attributes const f_bottom_left  {vertices[0]};
-    wireframe_attributes const f_bottom_right {vertices[1]};
-    wireframe_attributes const f_top_right    {vertices[2]};
-    wireframe_attributes const f_top_left     {vertices[3]};
+    vertex_attributes_only const f_bottom_left  {vertices[0]};
+    vertex_attributes_only const f_bottom_right {vertices[1]};
+    vertex_attributes_only const f_top_right    {vertices[2]};
+    vertex_attributes_only const f_top_left     {vertices[3]};
 
-    wireframe_attributes const b_bottom_left  {vertices[4]};
-    wireframe_attributes const b_bottom_right {vertices[5]};
-    wireframe_attributes const b_top_right    {vertices[6]};
-    wireframe_attributes const b_top_left     {vertices[7]};
+    vertex_attributes_only const b_bottom_left  {vertices[4]};
+    vertex_attributes_only const b_bottom_right {vertices[5]};
+    vertex_attributes_only const b_top_right    {vertices[6]};
+    vertex_attributes_only const b_top_left     {vertices[7]};
 
-    auto arr = stlw::make_array<wireframe_attributes>(
+    auto arr = stlw::make_array<vertex_attributes_only>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,
         b_bottom_left, b_bottom_right, b_top_right, b_top_left);
-    return cube<wireframe_attributes>{wc, std::move(arr)};
+    return cube<vertex_attributes_only>{wc, std::move(arr)};
     // clang-format on
   }
 

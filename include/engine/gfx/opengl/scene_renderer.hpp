@@ -51,10 +51,10 @@ log_shape_bytes(L &logger, S const& shape)
   ostream << "data(bytes):\n";
   print(ostream, shape.vertices_length(), shape.vertices_data());
 
-  ostream << fmt::sprintf("elements_count %d, elements_size_in_bytes %d\n", shape.elements_count(),
-      shape.elements_size_in_bytes());
+  ostream << fmt::sprintf("ordering_count %d, ordering_size_in_bytes %d\n", shape.ordering_count(),
+      shape.ordering_size_in_bytes());
   ostream << "elements(bytes):\n";
-  print(ostream, shape.elements_count(), shape.elements_data());
+  print(ostream, shape.ordering_count(), shape.ordering_data());
   logger.trace(ostream.str());
 }
 
@@ -68,7 +68,7 @@ copy_to_gpu(L &logger, S const& shape)
   glBufferData(GL_ARRAY_BUFFER, shape.vertices_size_in_bytes(), shape.vertices_data(), GL_STATIC_DRAW);
 
   // copy the vertice rendering order
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, shape.elements_size_in_bytes(), shape.elements_data(),
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, shape.ordering_size_in_bytes(), shape.ordering_data(),
       GL_STATIC_DRAW);
 }
 
@@ -84,7 +84,7 @@ render_shape(L &logger, opengl_context &ctx, S const &shape)
   copy_to_gpu(logger, shape);
 
   // Draw our first triangle
-  render(logger, shape.draw_mode(), shape.elements_count());
+  render(logger, shape.draw_mode(), shape.ordering_count());
 }
 
 template<typename L, typename C, typename ...S>
