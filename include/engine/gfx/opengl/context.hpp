@@ -12,7 +12,9 @@ namespace engine::gfx::opengl
 namespace impl
 {
 
-static auto const load_texture = [](char const *path) {
+template<typename L>
+static auto const load_texture(L &logger, char const *path)
+{
   GLuint texture;
   glGenTextures(1, &texture);
 
@@ -29,7 +31,9 @@ static auto const load_texture = [](char const *path) {
   int w = 0, h = 0;
   unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, SOIL_LOAD_RGB);
   if (nullptr == pimage) {
-    std::cerr << "image '" << path << "' didn't load.";
+    auto const fmt = fmt::sprintf("image at path '%s' failed to load, reason '%s'", path,
+        SOIL_last_result());
+    logger.error(fmt);
     std::abort();
   }
   ON_SCOPE_EXIT([&]() { SOIL_free_image_data(pimage); });
@@ -169,7 +173,7 @@ public:
   auto static make_texture_opengl_context(L &logger, program &&p, char const *path,
       vertex_attribute &&va)
   {
-    auto const tid = impl::load_texture(path);
+    auto const tid = impl::load_texture(logger, path);
     return make<opengl_texture_context>(logger, std::move(p), std::move(va), tid);
   }
 

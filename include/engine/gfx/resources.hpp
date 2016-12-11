@@ -44,7 +44,7 @@ struct resources {
 
     return table<K, V, N>{
         std::make_pair(K::CONTAINER, "assets/container.jpg"),
-        std::make_pair(K::WALL, "assets/wall.jpg"),
+        std::make_pair(K::WALL, "assets/multicolor_rect.jpg"),
     };
   }
 };

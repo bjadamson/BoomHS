@@ -41,11 +41,16 @@ public:
 
   void begin()
   {
+    glCullFace(GL_BACK); // ED: Added
+    glEnable(GL_CULL_FACE); // ED: Added
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+
     // Render
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glCullFace(GL_BACK); // ED: Added
     this->engine_.begin();
   }
 

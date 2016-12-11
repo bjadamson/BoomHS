@@ -597,11 +597,14 @@ class cube_factory
     height_width_length const dimensions;
 
     // clang-format off
-    std::array<texture_coord, 4> const uv = {
-      texture_coord{0.0f, 0.0f}, // bottom-left
-      texture_coord{1.0f, 0.0f}, // bottom-right
-      texture_coord{1.0f, 1.0f}, // top-right
-      texture_coord{0.0f, 1.0f}, // top-left
+    std::array<texture_coord, 8> const uv = {
+        // front-vertices
+        texture_coord{-1.0f, -1.0f}, texture_coord{1.0f, -1.0f},
+        texture_coord{1.0f, 1.0f}, texture_coord{-1.0f, 1.0f},
+
+        // back-vertices
+        texture_coord{1.0f, -1.0f}, texture_coord{1.0f, 1.0f},
+        texture_coord{-1.0f, 1.0f}, texture_coord{-1.0f, -1.0f},
     };
     // clang-format on
   };

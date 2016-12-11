@@ -306,7 +306,6 @@ class shape_mapper
 
     // clang-format off
     auto floats = std::array<float, NUM_FLOATS>{
-        // We map them in this or
         v[2].vertex.x, v[2].vertex.y, v[2].vertex.z, v[2].vertex.w, // front top-right
         v[2].color.r,  v[2].color.g,  v[2].color.b,  v[2].color.a,
 
@@ -344,36 +343,40 @@ class shape_mapper
     using X = game::cube<game::vertex_uv_attributes>;
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_uv_num_floats(NUM_VERTICES);
+    auto const& v = r.vertices;
 
     // clang-format off
-    auto const& v = r.vertices;
     auto floats = std::array<float, NUM_FLOATS>{
-        v[0].vertex.x, v[0].vertex.y, v[0].vertex.z, v[0].vertex.w, // vertice 0
+        v[2].vertex.x, v[2].vertex.y, v[2].vertex.z, v[2].vertex.w, // front top-right
+        v[2].uv.u,  v[2].uv.v,
+
+        v[3].vertex.x, v[3].vertex.y, v[3].vertex.z, v[3].vertex.w, // front top-left
+        v[3].uv.u,  v[3].uv.v,
+
+        v[6].vertex.x, v[6].vertex.y, v[6].vertex.z, v[6].vertex.w, // back top-right
+        v[6].uv.u,  v[6].uv.v,
+
+        v[7].vertex.x, v[7].vertex.y, v[7].vertex.z, v[7].vertex.w, // back top-left
+        v[7].uv.u,  v[7].uv.v,
+
+        v[1].vertex.x, v[1].vertex.y, v[1].vertex.z, v[1].vertex.w, // front bottom-right
+        v[1].uv.u,  v[1].uv.v,
+
+        v[0].vertex.x, v[0].vertex.y, v[0].vertex.z, v[0].vertex.w, // front bottom-left
         v[0].uv.u,  v[0].uv.v,
 
-        v[1].vertex.x, v[1].vertex.y, v[1].vertex.z, v[1].vertex.w, // vertice 1
-        v[1].uv.u,     v[1].uv.v,
+        v[4].vertex.x, v[4].vertex.y, v[4].vertex.z, v[4].vertex.w, // back bottom-left
+        v[4].uv.u,  v[4].uv.v,
 
-        v[2].vertex.x, v[2].vertex.y, v[2].vertex.z, v[2].vertex.w, // vertice 2
-        v[2].uv.u,     v[2].uv.v,
-
-        v[3].vertex.x, v[3].vertex.y, v[3].vertex.z, v[3].vertex.w, // vertice 3
-        v[3].uv.u,     v[3].uv.v,
-
-        v[4].vertex.x, v[4].vertex.y, v[4].vertex.z, v[4].vertex.w, // vertice 4
-        v[4].uv.u,     v[4].uv.v,
-
-        v[5].vertex.x, v[5].vertex.y, v[5].vertex.z, v[5].vertex.w, // vertice 5
-        v[5].uv.u,     v[5].uv.v,
-
-        v[6].vertex.x, v[6].vertex.y, v[6].vertex.z, v[6].vertex.w, // vertice 6
-        v[6].uv.u,     v[6].uv.v,
-
-        v[7].vertex.x, v[7].vertex.y, v[7].vertex.z, v[7].vertex.w, // vertice 7
-        v[7].uv.u,     v[7].uv.v
+        v[5].vertex.x, v[5].vertex.y, v[5].vertex.z, v[5].vertex.w, // back bottom-right
+        v[5].uv.u,  v[5].uv.v,
+    };
+    auto constexpr VERTEX_ORDERING = std::array<GLuint, 14> {
+      3, 2, 6, 7, 4, 2, 0,
+      3, 1, 6, 5, 4, 1, 0
     };
     // clang-format on
-    return float_vertex_uv_cube{GL_TRIANGLE_STRIP, std::move(floats), CUBE_ELEMENTS()};
+    return float_vertex_uv_cube{GL_TRIANGLE_STRIP, std::move(floats), VERTEX_ORDERING};
   }
 
   static constexpr auto map_to_array_floats(game::cube<game::wireframe_attributes> const &r)
