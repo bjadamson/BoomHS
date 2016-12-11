@@ -121,11 +121,13 @@ template <typename V>
 struct cube : public shape {
   static auto constexpr NUM_VERTICES = 8;
   std::array<V, 8> vertices;
+  mvmatrix const& mv;
 
 private:
   friend class cube_factory;
-  explicit constexpr cube(world_coordinate const &wc, std::array<V, 8> &&v)
-      : shape(wc)
+  explicit constexpr cube(world_coordinate const &w, mvmatrix const& m, std::array<V, 8> &&v)
+      : shape(w)
+      , mv(m)
       , vertices(std::move(v))
   {
   }
@@ -566,16 +568,18 @@ class cube_factory
     using c = std::array<float, 4>;
 
     height_width_length const dimensions;
+    mvmatrix const& mv;
     std::array<c, 8> const colors;
   };
 
   struct uv_properties {
     height_width_length const dimensions;
+    mvmatrix const& mv;
   };
 
   struct wireframe_properties {
     height_width_length const dimensions;
-    GLint const num_vertices;
+    mvmatrix const& mv;
 
     float const alpha = 1.0f;
     float const width = 0.25f;
@@ -624,7 +628,7 @@ class cube_factory
     auto arr = stlw::make_array<vertex_color_attributes>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,
         b_bottom_left, b_bottom_right, b_top_right, b_top_left);
-    return cube<vertex_color_attributes>{wc, std::move(arr)};
+    return cube<vertex_color_attributes>{wc, props.mv, std::move(arr)};
     // clang-format on
   }
 
@@ -646,7 +650,7 @@ class cube_factory
     auto arr = stlw::make_array<vertex_attributes_only>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,
         b_bottom_left, b_bottom_right, b_top_right, b_top_left);
-    return cube<vertex_attributes_only>{wc, std::move(arr)};
+    return cube<vertex_attributes_only>{wc, props.mv, std::move(arr)};
     // clang-format on
   }
 
@@ -668,13 +672,13 @@ class cube_factory
     auto arr = stlw::make_array<vertex_attributes_only>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,
         b_bottom_left, b_bottom_right, b_top_right, b_top_left);
-    return cube<vertex_attributes_only>{wc, std::move(arr)};
+    return cube<vertex_attributes_only>{wc, props.mv, std::move(arr)};
     // clang-format on
   }
 
 public:
-  static constexpr auto make_spotted(world_coordinate const &wc, std::array<float, 3> const &c,
-      height_width_length const& hwl)
+  static constexpr auto make_spotted(world_coordinate const &wc, mvmatrix const& mv,
+      std::array<float, 3> const &c, height_width_length const& hwl)
   {
     auto const ALPHA = 1.0f;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
@@ -684,19 +688,21 @@ public:
         std::array<float, 4>{0.0f, 1.0f, 0.0f, ALPHA}, color,
         std::array<float, 4>{0.2f, 0.5f, 0.2f, ALPHA}, color,
         std::array<float, 4>{0.6f, 0.4f, 0.8f, ALPHA}};
-    color_properties const p{hwl, colors};
+    color_properties const p{hwl, mv, colors};
     return construct(wc, p);
   }
 
-  static constexpr auto make_textured(world_coordinate const &wc, height_width_length const& hwl)
+  static constexpr auto make_textured(world_coordinate const &wc, mvmatrix const& mv,
+      height_width_length const& hwl)
   {
-    uv_properties const p{hwl};
+    uv_properties const p{hwl, mv};
     return construct(wc, p);
   }
 
-  static constexpr auto make_wireframe(world_coordinate const &wc, height_width_length const& hwl)
+  static constexpr auto make_wireframe(world_coordinate const &wc, mvmatrix const& mv,
+      height_width_length const& hwl)
   {
-    wireframe_properties const p{hwl};
+    wireframe_properties const p{hwl, mv};
     return construct(wc, p);
   }
 };

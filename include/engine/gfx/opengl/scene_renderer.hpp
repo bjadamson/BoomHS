@@ -115,6 +115,10 @@ draw_scene(L &logger, C &ctx, glm::mat4 const &view, glm::mat4 const &projection
   ss << "Copying '" << sizeof...(S) << "' shapes from CPU -> OpenGL driver ...\n";
 
   auto const fn = [&logger, &ctx, &p](auto const &shape) {
+
+    logger.trace("setting u_mvmatrix");
+    p.set_uniform_matrix_4fv(logger, "u_mvmatrix", shape.mvmatrix().data());
+
     logger.trace("before drawing shape ...");
     impl::render_shape(logger, ctx, shape);
     p.check_opengl_errors(logger);

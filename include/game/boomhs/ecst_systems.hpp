@@ -28,10 +28,16 @@ make_ssl()
 
   constexpr auto PA = ips::none::v();
 
-  constexpr auto ssig_io_system = ss::make(st::io_system).parallelism(PA);
+  // clang-format off
+  constexpr auto ssig_io_system = ss::make(st::io_system)
+    .parallelism(PA)
+    .write(ct::mvmatrix);
 
-  constexpr auto ssig_randompos_system =
-      ss::make(st::randompos_system).parallelism(PA).write(ct::world_coordinate);
+  constexpr auto ssig_randompos_system = ss::make(st::randompos_system)
+    .parallelism(PA)
+    .write(ct::world_coordinate);
+
+  // clang-format on
 
   // Build and return the "system signature list".
   return sls::make(ssig_io_system, ssig_randompos_system);

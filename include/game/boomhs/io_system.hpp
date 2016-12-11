@@ -34,9 +34,12 @@ struct io_system {
     }
     return is_quit;
   }
-  bool process_event(SDL_Event &event, glm::mat4 &view, glm::mat4 &proj) const
+
+  template<typename L, typename TData>
+  bool process_event(L &logger, TData data, SDL_Event &event, glm::mat4 &view, glm::mat4 &proj) const
   {
-    float constexpr DISTANCE = 0.1f;
+    float constexpr PAN_DISTANCE = 0.3f;
+    float constexpr MOVE_DISTANCE = 0.1f;
     float constexpr ANGLE = 0.2f;
     float constexpr SCALE_FACTOR = 0.1f;
 
@@ -46,28 +49,30 @@ struct io_system {
     case SDL_KEYDOWN: {
       switch (event.key.keysym.sym) {
       // translation
-      case SDLK_w: {
-        view = glm::translate(view, glm::vec3(0.0f, DISTANCE, 0.0f));
+      case SDLK_UP: {
+        view = glm::translate(view, glm::vec3(0.0f, PAN_DISTANCE, 0.0f));
         break;
       }
-      case SDLK_s: {
-        view = glm::translate(view, glm::vec3(0.0f, -DISTANCE, 0.0f));
+      case SDLK_DOWN: {
+        view = glm::translate(view, glm::vec3(0.0f, -PAN_DISTANCE, 0.0f));
         break;
       }
-      case SDLK_a: {
-        view = glm::translate(view, glm::vec3(-DISTANCE, 0.0f, 0.0f));
+      case SDLK_LEFT: {
+        view = glm::translate(view, glm::vec3(-PAN_DISTANCE, 0.0f, 0.0f));
         break;
       }
-      case SDLK_d: {
-        view = glm::translate(view, glm::vec3(DISTANCE, 0.0f, 0.0f));
+      case SDLK_RIGHT: {
+        view = glm::translate(view, glm::vec3(PAN_DISTANCE, 0.0f, 0.0f));
         break;
       }
       // scaling
-      case SDLK_o: {
+      case SDLK_KP_PLUS:
+      case SDLK_PLUS: {
         view = glm::scale(view, make_scalev(SCALE_FACTOR));
         break;
       }
-      case SDLK_p: {
+      case SDLK_KP_PLUSMINUS:
+      case SDLK_MINUS: {
         view = glm::scale(view, make_scalev(-SCALE_FACTOR));
         break;
       }
@@ -98,19 +103,56 @@ struct io_system {
         view = glm::rotate(view, -ANGLE, glm::vec3(1.0f, 0.0f, 0.0f));
         break;
       }
+      case SDLK_w: {
+          auto constexpr UP_VECTOR = glm::vec3{0.0f, MOVE_DISTANCE, 0.0f};
+          move_entities(logger, data, UP_VECTOR);
+        break;
+      }
+      case SDLK_s: {
+          auto constexpr UP_VECTOR = glm::vec3{0.0f, -MOVE_DISTANCE, 0.0f};
+          move_entities(logger, data, UP_VECTOR);
+        break;
+      }
+      case SDLK_a: {
+          auto constexpr UP_VECTOR = glm::vec3{-MOVE_DISTANCE, 0.0f, 0.0f};
+          move_entities(logger, data, UP_VECTOR);
+        break;
+      }
+      case SDLK_d: {
+          auto constexpr UP_VECTOR = glm::vec3{MOVE_DISTANCE, 0.0f, 0.0f};
+          move_entities(logger, data, UP_VECTOR);
+        break;
+      }
       }
     }
     }
     return is_quit_event(event);
   }
 
+  template<typename L, typename TData>
+  void move_entity(L &logger, TData &data, ecst::entity_id const eid, glm::vec3 const& distance) const
+  {
+    logger.trace(fmt::sprintf("moving entity eid '%d'", eid));
+      auto &v = data.get(ct::mvmatrix, eid);
+      v.set(glm::translate(v.data(), distance));
+      //v.set();
+  }
+
+  template<typename L, typename TData>
+  void move_entities(L &logger, TData &data, glm::vec3 const& direction) const
+  {
+    data.for_entities([&](auto const eid) {
+        move_entity(logger, data, eid, direction);
+    });
+  }
+
   template <typename TData, typename S>
-  void process(TData &data, S &state)
+  void process(TData &data, S &state) const
   {
     state.logger.trace("io_system::process(data, state)");
     SDL_Event event;
     while ((!state.quit) && (0 != SDL_PollEvent(&event))) {
-      state.quit = this->process_event(event, state.view, state.projection);
+      state.quit = this->process_event(state.logger, data, event, state.view, state.projection);
     }
   }
 };

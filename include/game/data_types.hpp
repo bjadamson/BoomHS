@@ -1,5 +1,6 @@
 #pragma once
 #include <stlw/sized_buffer.hpp>
+#include <glm/glm.hpp>
 #include <tuple>
 
 namespace game
@@ -74,6 +75,17 @@ public:
   }
 
   vertex get() const { return this->v_; }
+};
+
+class mvmatrix
+{
+  glm::mat4 mat_ = glm::mat4{1.0f};
+public:
+  mvmatrix() = default;
+
+  auto const& data() const { return this->mat_; }
+  auto const& get() const { return this->data(); }
+  void set(glm::mat4 const& m) { this->mat_ = m; }
 };
 
 } // ns game
