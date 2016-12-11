@@ -7,7 +7,7 @@ namespace s
 
 struct io_system {
 
-  template<typename L>
+  template <typename L>
   bool init(L &logger)
   {
     logger.trace("io_system::init()");

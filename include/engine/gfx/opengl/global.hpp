@@ -10,7 +10,9 @@ namespace engine::gfx::opengl::global
 static auto const vao_bind = [](auto const vao) { glBindVertexArray(vao); };
 static auto const vao_unbind = []() { glBindVertexArray(0); };
 
-static auto const texture_bind = [](auto const texture) { glBindTexture(texture.mode, texture.id); };
+static auto const texture_bind = [](auto const texture) {
+  glBindTexture(texture.mode, texture.id);
+};
 static auto const texture_unbind = [](auto const texture) { glBindTexture(texture.mode, 0); };
 
 namespace log

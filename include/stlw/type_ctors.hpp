@@ -6,14 +6,14 @@
 namespace stlw
 {
 
-template <typename T, size_t N, class ...Args>
+template <typename T, size_t N, class... Args>
 constexpr auto
 make_array(Args &&... args)
 {
-  return std::array<T, N>{{ std::forward<Args>(args)... }};
+  return std::array<T, N>{{std::forward<Args>(args)...}};
 }
 
-template <typename T, class ...Args>
+template <typename T, class... Args>
 constexpr auto
 make_array(Args &&... args)
 {

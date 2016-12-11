@@ -7,13 +7,12 @@
 namespace engine::gfx::opengl
 {
 
-struct texture_info
-{
+struct texture_info {
   GLenum mode;
   GLuint id;
 };
 
-template<typename L>
+template <typename L>
 static auto
 load_3d_texture(L &logger, char const *path)
 {
@@ -31,14 +30,14 @@ load_3d_texture(L &logger, char const *path)
     int w = 0, h = 0;
     unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, SOIL_LOAD_RGB);
     if (nullptr == pimage) {
-      auto const fmt = fmt::sprintf("image at path '%s' failed to load, reason '%s'", path,
-          SOIL_last_result());
+      auto const fmt =
+          fmt::sprintf("image at path '%s' failed to load, reason '%s'", path, SOIL_last_result());
       logger.error(fmt);
       std::abort();
     }
     ON_SCOPE_EXIT([&]() { SOIL_free_image_data(pimage); });
     glTexImage2D(target, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pimage);
-    //glGenerateMipmap(mode); // TODO: valid?
+    // glGenerateMipmap(mode); // TODO: valid?
   };
 
   load_image(GL_TEXTURE_CUBE_MAP_POSITIVE_X);
@@ -58,7 +57,7 @@ load_3d_texture(L &logger, char const *path)
   return t;
 }
 
-template<typename L>
+template <typename L>
 static auto
 load_2d_texture(L &logger, char const *path)
 {
@@ -82,8 +81,8 @@ load_2d_texture(L &logger, char const *path)
   int w = 0, h = 0;
   unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, SOIL_LOAD_RGB);
   if (nullptr == pimage) {
-    auto const fmt = fmt::sprintf("image at path '%s' failed to load, reason '%s'", path,
-        SOIL_last_result());
+    auto const fmt =
+        fmt::sprintf("image at path '%s' failed to load, reason '%s'", path, SOIL_last_result());
     logger.error(fmt);
     std::abort();
   }

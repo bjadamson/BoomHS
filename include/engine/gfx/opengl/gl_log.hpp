@@ -48,14 +48,14 @@ get_errors(GLuint const program_id)
   return boost::make_optional(fmt);
 }
 
-template<typename L>
+template <typename L>
 auto
-log_any_gl_errors(L &logger, std::string const& msg, int const line)
+log_any_gl_errors(L &logger, std::string const &msg, int const line)
 {
   GLenum const err = glGetError();
   if (err != GL_NO_ERROR) {
-    auto const msg = fmt::sprintf("GL error detected (line %d), code: '%d', string: '%s'",
-        line, err, gluErrorString(err));
+    auto const msg = fmt::sprintf("GL error detected (line %d), code: '%d', string: '%s'", line,
+                                  err, gluErrorString(err));
     logger.error(msg);
     assert(false);
   }
@@ -64,12 +64,13 @@ log_any_gl_errors(L &logger, std::string const& msg, int const line)
 inline void
 clear_gl_errors()
 {
-  while (glGetError() != GL_NO_ERROR) {}
+  while (glGetError() != GL_NO_ERROR) {
+  }
 }
 
 } // ns engine::gfx::opengl::global::log::impl
 
-#define LOG_GL_ERRORS(logger, msg)                                                 \
-  do {                                                                             \
-    ::engine::gfx::opengl::global::log::impl::log_any_gl_errors(logger, msg, __LINE__); \
+#define LOG_GL_ERRORS(logger, msg)                                                                 \
+  do {                                                                                             \
+    ::engine::gfx::opengl::global::log::impl::log_any_gl_errors(logger, msg, __LINE__);            \
   } while (0)

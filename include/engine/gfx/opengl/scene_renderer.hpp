@@ -14,12 +14,12 @@ namespace engine::gfx::opengl::renderer
 namespace impl
 {
 
-template<typename L>
+template <typename L>
 void
 render(L &logger, GLenum const render_mode, GLsizei const element_count)
 {
   auto const fmt = fmt::sprintf("glDrawElements() render_mode '%d', element_count '%d'",
-      render_mode, element_count);
+                                render_mode, element_count);
 
   logger.trace(fmt);
 
@@ -27,13 +27,13 @@ render(L &logger, GLenum const render_mode, GLsizei const element_count)
   glDrawElements(render_mode, element_count, GL_UNSIGNED_INT, OFFSET);
 }
 
-template<typename L, typename S>
+template <typename L, typename S>
 void
-log_shape_bytes(L &logger, S const& shape)
+log_shape_bytes(L &logger, S const &shape)
 {
   assert(0 < shape.vertices_length());
 
-  auto const print = [](auto &ostream, auto const length, auto const* data) {
+  auto const print = [](auto &ostream, auto const length, auto const *data) {
     auto i{0};
     ostream << "[";
     ostream << std::to_string(data[i++]);
@@ -46,13 +46,13 @@ log_shape_bytes(L &logger, S const& shape)
   };
 
   std::stringstream ostream;
-  ostream << fmt::sprintf("vertices_length %d, vertices_size_in_bytes %d\n", shape.vertices_length(),
-      shape.vertices_size_in_bytes());
+  ostream << fmt::sprintf("vertices_length %d, vertices_size_in_bytes %d\n",
+                          shape.vertices_length(), shape.vertices_size_in_bytes());
   ostream << "data(bytes):\n";
   print(ostream, shape.vertices_length(), shape.vertices_data());
 
   ostream << fmt::sprintf("ordering_count %d, ordering_size_in_bytes %d\n", shape.ordering_count(),
-      shape.ordering_size_in_bytes());
+                          shape.ordering_size_in_bytes());
   ostream << "elements(bytes):\n";
   print(ostream, shape.ordering_count(), shape.ordering_data());
   logger.trace(ostream.str());
@@ -60,16 +60,17 @@ log_shape_bytes(L &logger, S const& shape)
 
 template <typename L, typename S>
 void
-copy_to_gpu(L &logger, S const& shape)
+copy_to_gpu(L &logger, S const &shape)
 {
   log_shape_bytes(logger, shape);
 
   // copy the vertices
-  glBufferData(GL_ARRAY_BUFFER, shape.vertices_size_in_bytes(), shape.vertices_data(), GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, shape.vertices_size_in_bytes(), shape.vertices_data(),
+               GL_STATIC_DRAW);
 
   // copy the vertice rendering order
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, shape.ordering_size_in_bytes(), shape.ordering_data(),
-      GL_STATIC_DRAW);
+               GL_STATIC_DRAW);
 }
 
 template <typename L, typename S>
@@ -78,7 +79,7 @@ render_shape(L &logger, opengl_context &ctx, S const &shape)
 {
   logger.trace(fmt::sprintf("%-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices"));
   logger.trace(fmt::sprintf("%-15d %-15d %-15d\n", shape.vertices_size_in_bytes(),
-        shape.vertices_length(), shape.vertice_count()));
+                            shape.vertices_length(), shape.vertice_count()));
 
   // print_triangle(logger, t0);
   copy_to_gpu(logger, shape);
@@ -87,10 +88,10 @@ render_shape(L &logger, opengl_context &ctx, S const &shape)
   render(logger, shape.draw_mode(), shape.ordering_count());
 }
 
-template<typename L, typename C, typename ...S>
+template <typename L, typename C, typename... S>
 void
-draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection,
-    std::tuple<S...> const& shapes)
+draw_scene(L &logger, C &ctx, glm::mat4 const &view, glm::mat4 const &projection,
+           std::tuple<S...> const &shapes)
 {
   // Pass the matrices to the shader
   auto &p = ctx.program_ref();
@@ -146,8 +147,8 @@ draw_scene(L &logger, opengl_context &ctx, glm::mat4 const &view, glm::mat4 cons
 
 template <typename L, typename... S>
 void
-draw_scene(L &logger, opengl_texture_context &ctx, glm::mat4 const &view, glm::mat4 const &projection,
-           std::tuple<S...> const &shapes)
+draw_scene(L &logger, opengl_texture_context &ctx, glm::mat4 const &view,
+           glm::mat4 const &projection, std::tuple<S...> const &shapes)
 {
   global::vao_bind(ctx.vao());
   ON_SCOPE_EXIT([]() { global::vao_unbind(); });
@@ -166,8 +167,8 @@ draw_scene(L &logger, opengl_texture_context &ctx, glm::mat4 const &view, glm::m
 
 template <typename L, typename... S>
 void
-draw_scene(L &logger, opengl_wireframe_context &ctx, glm::mat4 const &view, glm::mat4 const &projection,
-           std::tuple<S...> const &shapes)
+draw_scene(L &logger, opengl_wireframe_context &ctx, glm::mat4 const &view,
+           glm::mat4 const &projection, std::tuple<S...> const &shapes)
 {
   global::vao_bind(ctx.vao());
   ON_SCOPE_EXIT([]() { global::vao_unbind(); });

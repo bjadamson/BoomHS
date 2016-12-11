@@ -10,8 +10,12 @@ namespace game
 class height_width
 {
   std::pair<float, float> pair_;
+
 public:
-  constexpr height_width(float const h, float const w) : pair_(h, w) {}
+  constexpr height_width(float const h, float const w)
+      : pair_(h, w)
+  {
+  }
 
   auto height() const { return this->pair_.first; }
   auto width() const { return this->pair_.second; }
@@ -20,10 +24,12 @@ public:
 class height_width_length
 {
   std::pair<height_width, float> pair_;
+
 public:
   constexpr height_width_length(float const h, float const w, float const l)
-    : pair_(height_width{h, w}, l)
-  {}
+      : pair_(height_width{h, w}, l)
+  {
+  }
 
   auto height() const { return this->pair_.first.height(); }
   auto width() const { return this->pair_.first.width(); }
@@ -93,7 +99,7 @@ private:
 };
 // clang-format on
 
-template<typename V>
+template <typename V>
 struct rectangle : public shape {
   static auto constexpr NUM_VERTICES = 4;
   V bottom_left, bottom_right, top_right, top_left;
@@ -101,17 +107,17 @@ struct rectangle : public shape {
 private:
   friend class rectangle_factory;
   explicit constexpr rectangle(world_coordinate const &wc, V const &bl, V const &br, V const &tr,
-      V const &tl)
-    : shape(wc)
-    , bottom_left(bl)
-    , bottom_right(br)
-    , top_right(tr)
-    , top_left(tl)
+                               V const &tl)
+      : shape(wc)
+      , bottom_left(bl)
+      , bottom_right(br)
+      , top_right(tr)
+      , top_left(tl)
   {
   }
 };
 
-template<typename V>
+template <typename V>
 struct cube : public shape {
   static auto constexpr NUM_VERTICES = 8;
   std::array<V, 8> vertices;
@@ -119,13 +125,13 @@ struct cube : public shape {
 private:
   friend class cube_factory;
   explicit constexpr cube(world_coordinate const &wc, std::array<V, 8> &&v)
-    : shape(wc)
-    , vertices(std::move(v))
+      : shape(wc)
+      , vertices(std::move(v))
   {
   }
 };
 
-template<typename V>
+template <typename V>
 struct polygon : public shape {
   stlw::sized_buffer<V> vertex_attributes;
   int num_vertices() const { return this->vertex_attributes.length(); }
@@ -143,8 +149,7 @@ class polygon_factory
 {
   polygon_factory() = delete;
 
-  struct color_properties
-  {
+  struct color_properties {
     GLint const num_vertices;
     std::array<float, 3> const colors;
 
@@ -152,23 +157,20 @@ class polygon_factory
     float const width = 0.25f;
   };
 
-  struct uv_properties
-  {
+  struct uv_properties {
     GLint const num_vertices;
 
     float const alpha = 1.0f;
     float const width = 0.25f;
   };
 
-  struct wireframe_properties
-  {
+  struct wireframe_properties {
     GLint const num_vertices;
     float const alpha = 1.0f;
     float const width = 0.25f;
   };
 
-  static auto
-  construct(world_coordinate const& wc, color_properties const& props)
+  static auto construct(world_coordinate const &wc, color_properties const &props)
   {
     float const radius = props.width;
     auto const num_vertices = props.num_vertices;
@@ -197,8 +199,7 @@ class polygon_factory
     return poly;
   }
 
-  static auto
-  construct(world_coordinate const& wc, uv_properties const& props)
+  static auto construct(world_coordinate const &wc, uv_properties const &props)
   {
     float const radius = props.width;
     auto const num_vertices = props.num_vertices;
@@ -227,8 +228,7 @@ class polygon_factory
     return poly;
   }
 
-  static auto
-  construct(world_coordinate const& wc, wireframe_properties const& props)
+  static auto construct(world_coordinate const &wc, wireframe_properties const &props)
   {
     float const radius = props.width;
     auto const num_vertices = props.num_vertices;
@@ -257,8 +257,8 @@ class polygon_factory
   }
 
 public:
-  static auto make(world_coordinate const &wc, int const num_vertices,
-                           std::array<float, 3> const &color)
+  static auto
+  make(world_coordinate const &wc, int const num_vertices, std::array<float, 3> const &color)
   {
     color_properties const prop{num_vertices, color};
     return construct(wc, prop);
@@ -271,29 +271,26 @@ public:
     return construct(wc, prop);
   }
 
-  static auto make(world_coordinate const& wc, int const num_vertices, bool const)
+  static auto make(world_coordinate const &wc, int const num_vertices, bool const)
   {
     uv_properties const p{num_vertices};
     return construct(wc, p);
   }
 };
 
-struct triangle_factory
-{
+struct triangle_factory {
   static float constexpr DEFAULT_RADIUS = 0.5;
-private:
 
-  struct color_properties
-  {
-    std::array<float, 4> const& color_bottom_left;
-    std::array<float, 4> const& color_bottom_right = color_bottom_left;
-    std::array<float, 4> const& color_top_middle = color_bottom_left;
+private:
+  struct color_properties {
+    std::array<float, 4> const &color_bottom_left;
+    std::array<float, 4> const &color_bottom_right = color_bottom_left;
+    std::array<float, 4> const &color_top_middle = color_bottom_left;
 
     float const radius = DEFAULT_RADIUS;
   };
 
-  struct uv_properties
-  {
+  struct uv_properties {
     float const radius = DEFAULT_RADIUS;
 
     // clang-format off
@@ -305,24 +302,21 @@ private:
     // clang-format on
   };
 
-  struct wireframe_properties
-  {
+  struct wireframe_properties {
     float const radius = DEFAULT_RADIUS;
   };
 
-  static constexpr auto
-  calculate_vertices(world_coordinate const& wc, float const radius)
+  static constexpr auto calculate_vertices(world_coordinate const &wc, float const radius)
   {
     std::array<vertex, 3> const vertices = {
-      vertex{wc.x() - radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-left
-      vertex{wc.x() + radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-right
-      vertex{wc.x()         , wc.y() + radius, wc.z(), wc.w()}  // top-middle
+        vertex{wc.x() - radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-left
+        vertex{wc.x() + radius, wc.y() - radius, wc.z(), wc.w()}, // bottom-right
+        vertex{wc.x(), wc.y() + radius, wc.z(), wc.w()}           // top-middle
     };
     return vertices;
   }
 
-  static constexpr auto
-  construct(world_coordinate const& wc, color_properties const& props)
+  static constexpr auto construct(world_coordinate const &wc, color_properties const &props)
   {
     auto const vertices = calculate_vertices(wc, props.radius);
     vertex_color_attributes const bottom_left{vertices[0], color{props.color_bottom_left}};
@@ -332,8 +326,7 @@ private:
     return triangle<vertex_color_attributes>{wc, bottom_left, bottom_right, top_middle};
   }
 
-  static constexpr auto
-  construct(world_coordinate const &wc, uv_properties const& props)
+  static constexpr auto construct(world_coordinate const &wc, uv_properties const &props)
   {
     auto const vertices = calculate_vertices(wc, props.radius);
 
@@ -344,8 +337,7 @@ private:
     return triangle<vertex_uv_attributes>{wc, bottom_left, bottom_right, top_middle};
   }
 
-  static constexpr auto
-  construct(world_coordinate const &wc, wireframe_properties const& props)
+  static constexpr auto construct(world_coordinate const &wc, wireframe_properties const &props)
   {
     auto const vertices = calculate_vertices(wc, props.radius);
 
@@ -366,15 +358,13 @@ public:
     return construct(wc, p);
   }
 
-  static constexpr auto
-  make(world_coordinate const &wc, std::array<float, 4> const& c)
+  static constexpr auto make(world_coordinate const &wc, std::array<float, 4> const &c)
   {
     color_properties const p{c};
     return construct(wc, p);
   }
 
-  static constexpr auto
-  make(world_coordinate const &wc, std::array<float, 3> const& c)
+  static constexpr auto make(world_coordinate const &wc, std::array<float, 3> const &c)
   {
     auto constexpr ALPHA = 1.0f;
     auto const color = std::array<float, 4>{c[0], c[1], c[2], ALPHA};
@@ -382,15 +372,13 @@ public:
     return construct(wc, p);
   }
 
-  static constexpr auto
-  make(world_coordinate const& wc)
+  static constexpr auto make(world_coordinate const &wc)
   {
     return make(wc, ::engine::gfx::LIST_OF_COLORS::RED);
   }
 
   template <typename T>
-  static constexpr auto
-  make(world_coordinate const &wc, T const &data)
+  static constexpr auto make(world_coordinate const &wc, T const &data)
   {
     auto const &bl = data[0];
     auto const &br = data[1];
@@ -403,15 +391,13 @@ public:
     return construct(wc, p);
   }
 
-  static constexpr auto
-  make(world_coordinate const& wc, bool const use_texture)
+  static constexpr auto make(world_coordinate const &wc, bool const use_texture)
   {
     uv_properties const p;
     return construct(wc, p);
   }
 
-  static constexpr auto
-  make(world_coordinate const& wc, bool const, bool const)
+  static constexpr auto make(world_coordinate const &wc, bool const, bool const)
   {
     wireframe_properties const p;
     return construct(wc, p);
@@ -422,17 +408,15 @@ class rectangle_factory
 {
   rectangle_factory() = delete;
 
-  struct color_properties
-  {
+  struct color_properties {
     height_width const dimensions;
-    std::array<float, 4> const& bottom_left;
-    std::array<float, 4> const& bottom_right = bottom_left;
-    std::array<float, 4> const& top_right = bottom_left;
-    std::array<float, 4> const& top_left = bottom_left;
+    std::array<float, 4> const &bottom_left;
+    std::array<float, 4> const &bottom_right = bottom_left;
+    std::array<float, 4> const &top_right = bottom_left;
+    std::array<float, 4> const &top_left = bottom_left;
   };
 
-  struct uv_properties
-  {
+  struct uv_properties {
     height_width const dimensions;
 
     // clang-format off
@@ -445,8 +429,7 @@ class rectangle_factory
     // clang-format on
   };
 
-  struct wireframe_properties
-  {
+  struct wireframe_properties {
     height_width const dimensions;
     GLint const num_vertices;
 
@@ -454,21 +437,19 @@ class rectangle_factory
     float const width = 0.25f;
   };
 
-  static constexpr auto
-  calculate_vertices(world_coordinate const& wc, height_width const& hw)
+  static constexpr auto calculate_vertices(world_coordinate const &wc, height_width const &hw)
   {
     auto const height = hw.height();
     auto const width = hw.width();
-    return std::array<vertex, 4> {
-      vertex{wc.x() - width, wc.y() - height, wc.z(), wc.w()}, // bottom-left
-      vertex{wc.x() + width, wc.y() - height, wc.z(), wc.w()}, // bottom-right
-      vertex{wc.x() + width, wc.y() + height, wc.z(), wc.w()}, // top-right
-      vertex{wc.x() - width, wc.y() + height, wc.z(), wc.w()}  // top-left
+    return std::array<vertex, 4>{
+        vertex{wc.x() - width, wc.y() - height, wc.z(), wc.w()}, // bottom-left
+        vertex{wc.x() + width, wc.y() - height, wc.z(), wc.w()}, // bottom-right
+        vertex{wc.x() + width, wc.y() + height, wc.z(), wc.w()}, // top-right
+        vertex{wc.x() - width, wc.y() + height, wc.z(), wc.w()}  // top-left
     };
   }
 
-  static constexpr auto
-  construct(world_coordinate const &wc, color_properties const& props)
+  static constexpr auto construct(world_coordinate const &wc, color_properties const &props)
   {
     auto const vertices = calculate_vertices(wc, props.dimensions);
 
@@ -480,21 +461,19 @@ class rectangle_factory
     return rectangle<vertex_color_attributes>{wc, bottom_left, bottom_right, top_right, top_left};
   }
 
-  static constexpr auto
-  construct(world_coordinate const &wc, uv_properties const& props)
+  static constexpr auto construct(world_coordinate const &wc, uv_properties const &props)
   {
     auto const vertices = calculate_vertices(wc, props.dimensions);
 
     vertex_uv_attributes const bottom_left{vertices[0], props.uv[0]};
     vertex_uv_attributes const bottom_right{vertices[1], props.uv[1]};
-    vertex_uv_attributes const top_right{vertices[2],  props.uv[2]};
+    vertex_uv_attributes const top_right{vertices[2], props.uv[2]};
     vertex_uv_attributes const top_left{vertices[3], props.uv[3]};
 
     return rectangle<vertex_uv_attributes>{wc, bottom_left, bottom_right, top_right, top_left};
   }
 
-  static constexpr auto
-  construct(world_coordinate const &wc, wireframe_properties const& props)
+  static constexpr auto construct(world_coordinate const &wc, wireframe_properties const &props)
   {
     auto const vertices = calculate_vertices(wc, props.dimensions);
 
@@ -504,19 +483,19 @@ class rectangle_factory
     vertex_attributes_only const top_left{vertices[3]};
     return rectangle<vertex_attributes_only>{wc, bottom_left, bottom_right, top_right, top_left};
   }
-public:
 
+public:
   static constexpr auto
-  make(world_coordinate const &wc, std::array<float, 3> const &c,
-                 float const height = 0.39f, float const width = 0.25f, float const alpha = 1.0f)
+  make(world_coordinate const &wc, std::array<float, 3> const &c, float const height = 0.39f,
+       float const width = 0.25f, float const alpha = 1.0f)
   {
     color_properties const p{{height, width}, std::array<float, 4>{c[0], c[1], c[2], alpha}};
     return construct(wc, p);
   }
 
   template <typename T>
-  static constexpr auto make(world_coordinate const &wc, T const &data, float const height,
-      float const width)
+  static constexpr auto
+  make(world_coordinate const &wc, T const &data, float const height, float const width)
   {
     auto const &bl = data[0];
     auto const &br = data[1];
@@ -531,8 +510,8 @@ public:
     return construct(wc, p);
   }
 
-  static constexpr auto make(world_coordinate const &wc, std::array<float, 4> const& color,
-      float const height, float const width)
+  static constexpr auto make(world_coordinate const &wc, std::array<float, 4> const &color,
+                             float const height, float const width)
   {
     color_properties const p{{height, width}, color};
     return construct(wc, p);
@@ -547,15 +526,15 @@ public:
     return make(wc, color, height, width);
   }
 
-  static constexpr auto make(world_coordinate const& wc, float const height, float const width,
-      bool const)
+  static constexpr auto
+  make(world_coordinate const &wc, float const height, float const width, bool const)
   {
     uv_properties const p{{height, width}};
     return construct(wc, p);
   }
 
   static constexpr auto
-  make(world_coordinate const& wc, float const height, float const width, bool const, bool const)
+  make(world_coordinate const &wc, float const height, float const width, bool const, bool const)
   {
     wireframe_properties const p{{height, width}};
     return construct(wc, p);
@@ -583,21 +562,18 @@ class cube_factory
 {
   cube_factory() = delete;
 
-  struct color_properties
-  {
+  struct color_properties {
     using c = std::array<float, 4>;
 
     height_width_length const dimensions;
     std::array<c, 8> const colors;
   };
 
-  struct uv_properties
-  {
+  struct uv_properties {
     height_width_length const dimensions;
   };
 
-  struct wireframe_properties
-  {
+  struct wireframe_properties {
     height_width_length const dimensions;
     GLint const num_vertices;
 
@@ -606,7 +582,7 @@ class cube_factory
   };
 
   static constexpr auto
-  calculate_vertices(world_coordinate const& wc, height_width_length const& hw)
+  calculate_vertices(world_coordinate const &wc, height_width_length const &hw)
   {
     auto const h = hw.height();
     auto const w = hw.width();
@@ -630,8 +606,7 @@ class cube_factory
     // clang-format on
   }
 
-  static constexpr auto
-  construct(world_coordinate const &wc, color_properties const& props)
+  static constexpr auto construct(world_coordinate const &wc, color_properties const &props)
   {
     auto const vertices = calculate_vertices(wc, props.dimensions);
 
@@ -653,8 +628,7 @@ class cube_factory
     // clang-format on
   }
 
-  static constexpr auto
-  construct(world_coordinate const &wc, uv_properties const& props)
+  static constexpr auto construct(world_coordinate const &wc, uv_properties const &props)
   {
     auto const vertices = calculate_vertices(wc, props.dimensions);
 
@@ -676,8 +650,7 @@ class cube_factory
     // clang-format on
   }
 
-  static constexpr auto
-  construct(world_coordinate const &wc, wireframe_properties const& props)
+  static constexpr auto construct(world_coordinate const &wc, wireframe_properties const &props)
   {
     auto const vertices = calculate_vertices(wc, props.dimensions);
 
@@ -700,37 +673,30 @@ class cube_factory
   }
 
 public:
-
-  static constexpr auto
-  make_spotted(world_coordinate const &wc, std::array<float, 3> const &c, float const height,
-      float const width, float const length)
+  static constexpr auto make_spotted(world_coordinate const &wc, std::array<float, 3> const &c,
+                                     float const height, float const width, float const length)
   {
     auto const ALPHA = 1.0f;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
 
     std::array<color_properties::c, 8> const colors{
-      std::array<float, 4>{1.0f, 0.0f, 0.0f, ALPHA},
-      color,
-      std::array<float, 4>{0.0f, 1.0f, 0.0f, ALPHA},
-      color,
-      std::array<float, 4>{0.2f, 0.5f, 0.2f, ALPHA},
-      color,
-      std::array<float, 4>{0.6f, 0.4f, 0.8f, ALPHA}
-    };
+        std::array<float, 4>{1.0f, 0.0f, 0.0f, ALPHA}, color,
+        std::array<float, 4>{0.0f, 1.0f, 0.0f, ALPHA}, color,
+        std::array<float, 4>{0.2f, 0.5f, 0.2f, ALPHA}, color,
+        std::array<float, 4>{0.6f, 0.4f, 0.8f, ALPHA}};
     color_properties const p{{height, width, length}, colors};
     return construct(wc, p);
   }
 
-  static constexpr auto make_textured(world_coordinate const& wc, float const height,
-      float const width, float const length)
+  static constexpr auto make_textured(world_coordinate const &wc, float const height,
+                                      float const width, float const length)
   {
     uv_properties const p{{height, width, length}};
     return construct(wc, p);
   }
 
-  static constexpr auto
-  make_wireframe(world_coordinate const& wc, float const height, float const width,
-      float const length)
+  static constexpr auto make_wireframe(world_coordinate const &wc, float const height,
+                                       float const width, float const length)
   {
     wireframe_properties const p{{height, width, length}};
     return construct(wc, p);

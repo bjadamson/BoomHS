@@ -11,36 +11,41 @@ namespace concat_array_algortithm
 // http://stackoverflow.com/questions/25068481/c11-constexpr-flatten-list-of-stdarray-into-array
 //
 // I made it more generic than just 'int' for T.
-template<std::size_t... Is> struct seq{};
-template<std::size_t N, std::size_t... Is>
+template <std::size_t... Is>
+struct seq {
+};
+template <std::size_t N, std::size_t... Is>
 
-struct gen_seq : gen_seq<N-1, N-1, Is...>{};
+struct gen_seq : gen_seq<N - 1, N - 1, Is...> {
+};
 
-template<std::size_t... Is>
-struct gen_seq<0, Is...> : seq<Is...>{};
+template <std::size_t... Is>
+struct gen_seq<0, Is...> : seq<Is...> {
+};
 
 } // ns concat_array_algortithm
 
-template<typename T, std::size_t N1, std::size_t... I1, std::size_t N2, std::size_t... I2>
+template <typename T, std::size_t N1, std::size_t... I1, std::size_t N2, std::size_t... I2>
 // Expansion pack
-constexpr std::array<T, N1+N2>
-concat(std::array<T, N1> const& a1, std::array<T, N2> const& a2,
-    concat_array_algortithm::seq<I1...>, concat_array_algortithm::seq<I2...>)
+constexpr std::array<T, N1 + N2>
+concat(std::array<T, N1> const &a1, std::array<T, N2> const &a2,
+       concat_array_algortithm::seq<I1...>, concat_array_algortithm::seq<I2...>)
 {
-  return { a1[I1]..., a2[I2]... };
+  return {a1[I1]..., a2[I2]...};
 }
 
-template<typename T, std::size_t N1, std::size_t N2>
+template <typename T, std::size_t N1, std::size_t N2>
 // Initializer for the recursion
-constexpr std::array<T, N1+N2>
-concat(std::array<T, N1> const& a1, std::array<T, N2> const& a2)
+constexpr std::array<T, N1 + N2>
+concat(std::array<T, N1> const &a1, std::array<T, N2> const &a2)
 {
-  return concat(a1, a2, concat_array_algortithm::gen_seq<N1>{}, concat_array_algortithm::gen_seq<N2>{});
+  return concat(a1, a2, concat_array_algortithm::gen_seq<N1>{},
+                concat_array_algortithm::gen_seq<N2>{});
 }
 
-template<typename T, std::size_t N1>
-constexpr std::array<T, N1+1>
-concat(std::array<T, N1> const& a1, T const& v)
+template <typename T, std::size_t N1>
+constexpr std::array<T, N1 + 1>
+concat(std::array<T, N1> const &a1, T const &v)
 {
   return concat(a1, std::array<T, 1>{v});
 }

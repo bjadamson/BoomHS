@@ -6,7 +6,7 @@ namespace s
 
 struct randompos_system {
 
-  template<typename L>
+  template <typename L>
   bool init(L &logger)
   {
     logger.trace("randompos::init()");
@@ -17,12 +17,11 @@ struct randompos_system {
   void process(TData &data, S &state)
   {
     state.logger.trace("randompos::process(data, state)");
-    data.for_entities([&](auto const eid)
-        {
-            state.logger.trace(fmt::sprintf("eid '%d'", eid));
-            auto &v = data.get(ct::world_coordinate, eid);
-            //v.set_x(v.x() + .01f);
-        });
+    data.for_entities([&](auto const eid) {
+      state.logger.trace(fmt::sprintf("eid '%d'", eid));
+      auto &v = data.get(ct::world_coordinate, eid);
+      // v.set_x(v.x() + .01f);
+    });
   }
 };
 

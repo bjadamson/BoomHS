@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
-#include <stlw/compiler_macros.hpp>
 #include <stlw/algorithm.hpp>
+#include <stlw/compiler_macros.hpp>
 #include <stlw/impl/log_impl.hpp>
 #include <stlw/type_macros.hpp>
 

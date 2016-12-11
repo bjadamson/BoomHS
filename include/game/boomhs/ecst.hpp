@@ -15,12 +15,12 @@ make_scheduler()
 
   // Define ECST context settings.
   return ecst::settings::make()
-    .allow_inner_parallelism()
-    //.disallow_inner_parallelism()
-    .fixed_entity_limit(ecst::sz_v<10000>)
-    .component_signatures(ecst_setup::make_csl())
-    .system_signatures(ecst_setup::make_ssl())
-    .scheduler(cs::scheduler<ss::s_atomic_counter>);
+      .allow_inner_parallelism()
+      //.disallow_inner_parallelism()
+      .fixed_entity_limit(ecst::sz_v<10000>)
+      .component_signatures(ecst_setup::make_csl())
+      .system_signatures(ecst_setup::make_ssl())
+      .scheduler(cs::scheduler<ss::s_atomic_counter>);
 }
 
 auto

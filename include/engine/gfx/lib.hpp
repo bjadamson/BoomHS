@@ -98,10 +98,10 @@ struct factory {
 
     // TODO: move this
     // glEnable(GL_DEPTH_TEST);
-    //glDepthMask(GL_FALSE);
-    //glDisable(GL_CULL_FACE);
-    //glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE);
+    // glDepthMask(GL_FALSE);
+    // glDisable(GL_CULL_FACE);
+    // glEnable(GL_DEPTH_TEST);
+    // glEnable(GL_CULL_FACE);
     return gfx_engine{std::move(window), std::move(opengl_engine)};
   }
 };

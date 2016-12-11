@@ -1,6 +1,6 @@
 #pragma once
-#include <engine/gfx/opengl/glew.hpp>
 #include <engine/gfx/opengl/gl_log.hpp>
+#include <engine/gfx/opengl/glew.hpp>
 #include <engine/gfx/opengl/global.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -77,27 +77,23 @@ public:
   // MUTATION
   // ----------------------------------------------------------------------------------------------
   // Make this program become "Active" for OpenGL.
-  void use()
-  {
-    glUseProgram(this->program_id_);
-  }
+  void use() { glUseProgram(this->program_id_); }
 
-  template<typename L>
-  auto
-  get_uniform_location(L &logger, GLuint program, GLchar const* name)
+  template <typename L>
+  auto get_uniform_location(L &logger, GLuint program, GLchar const *name)
   {
     global::log::clear_gl_errors();
 
     this->use();
     GLint const loc = glGetUniformLocation(this->program_id_, name);
-    logger.trace("get_uniform_location(" + std::string{name} + ") loc is '" + std::to_string(loc)
-        + "'");
+    logger.trace("get_uniform_location(" + std::string{name} + ") loc is '" + std::to_string(loc) +
+                 "'");
     this->check_opengl_errors(logger);
     assert(-1 != loc);
     return loc;
   }
 
-  template<typename L>
+  template <typename L>
   void set_uniform_matrix_4fv(L &logger, GLchar const *name, glm::mat4 const &matrix)
   {
     auto const loc = this->get_uniform_location(logger, this->program_id_, name);
@@ -116,8 +112,8 @@ public:
     this->check_opengl_errors(logger);
   }
 
-  template<typename L>
-  void set_uniform_array_4fv(L &logger, GLchar const* name, std::array<float, 4> const& floats)
+  template <typename L>
+  void set_uniform_array_4fv(L &logger, GLchar const *name, std::array<float, 4> const &floats)
   {
     // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
     //

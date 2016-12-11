@@ -8,10 +8,10 @@
 namespace engine::window
 {
 
-//std::string error = SDL_GetError();
-//if (error != "") {
-  //ostream << "SLD Error : " << error << std::endl;
-  //SDL_ClearError();
+// std::string error = SDL_GetError();
+// if (error != "") {
+// ostream << "SLD Error : " << error << std::endl;
+// SDL_ClearError();
 //}
 
 stlw::result<stlw::empty_type, std::string>

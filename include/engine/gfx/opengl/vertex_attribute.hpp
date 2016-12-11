@@ -1,9 +1,9 @@
 #pragma once
 #include <engine/gfx/opengl/glsl.hpp>
+#include <numeric>
 #include <stlw/sized_buffer.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
-#include <numeric>
 
 namespace engine::gfx::opengl
 {
@@ -12,10 +12,10 @@ struct attribute_info {
   GLint global_index;
   GLint num_components;
   GLenum type;
-  char const* name;
+  char const *name;
 
-  //MOVE_CONSTRUCTIBLE_ONLY(attribute_info);
-  explicit constexpr attribute_info(GLint const i, GLint const nc, GLenum const ty, char const* n)
+  // MOVE_CONSTRUCTIBLE_ONLY(attribute_info);
+  explicit constexpr attribute_info(GLint const i, GLint const nc, GLenum const ty, char const *n)
       : global_index(i)
       , num_components(nc)
       , type(ty)
@@ -25,22 +25,24 @@ struct attribute_info {
 
   MOVE_DEFAULT(attribute_info);
   COPY_DEFAULT(attribute_info);
-  //NO_COPY(attribute_info);
+  // NO_COPY(attribute_info);
 
   static constexpr auto A_POSITION = "a_position";
   static constexpr auto A_COLOR = "a_color";
   static constexpr auto A_UV = "a_uv";
 };
 
-template<std::size_t N>
-class attribute_list {
+template <std::size_t N>
+class attribute_list
+{
   std::array<attribute_info, N> list_;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(attribute_list);
   attribute_list(std::array<attribute_info, N> &&attributes)
-    : list_{std::move(attributes)}
-  {}
+      : list_{std::move(attributes)}
+  {
+  }
 
   BEGIN_END_FORWARD_FNS(this->list_);
 };
@@ -52,7 +54,7 @@ class vertex_attribute
 public:
   MOVE_CONSTRUCTIBLE_ONLY(vertex_attribute);
 
-  template<std::size_t N>
+  template <std::size_t N>
   vertex_attribute(attribute_list<N> &&list)
       : list_(list.begin(), list.end())
   {
@@ -61,8 +63,10 @@ public:
   auto num_components() const
   {
     auto accumulator{0};
-    auto const count_components = [](auto const& attrib_info) { return attrib_info.num_components; };
-    for (auto const& it: this->list_) {
+    auto const count_components = [](auto const &attrib_info) {
+      return attrib_info.num_components;
+    };
+    for (auto const &it : this->list_) {
       accumulator += count_components(it);
     }
     return accumulator;
@@ -73,7 +77,7 @@ public:
 namespace impl
 {
 
-template<typename ...Attributes>
+template <typename... Attributes>
 auto
 make_attribute_list(Attributes &&... attributes)
 {
@@ -82,7 +86,7 @@ make_attribute_list(Attributes &&... attributes)
   return attribute_list<N>{std::move(arr)};
 }
 
-template<typename L, typename ...Attributes>
+template <typename L, typename... Attributes>
 auto
 make_vertex_array(L &logger, Attributes &&... attributes)
 {
@@ -98,9 +102,9 @@ make_vertex_array(L &logger, Attributes &&... attributes)
     logger.trace(fmt);
 
     if (max_attribs <= NUM_ATTRIBUTES) {
-      auto const fmt = fmt::sprintf(
-          "Error requested '%d' vertex attributes from opengl, only '%d' available",
-          NUM_ATTRIBUTES, max_attribs);
+      auto const fmt =
+          fmt::sprintf("Error requested '%d' vertex attributes from opengl, only '%d' available",
+                       NUM_ATTRIBUTES, max_attribs);
       logger.error(fmt);
       assert(false);
     }
@@ -120,9 +124,9 @@ struct skip_context {
   }
 };
 
-template<typename L>
+template <typename L>
 void
-set_attrib_pointer(L &logger, attribute_info const& attrib_info, skip_context &sc)
+set_attrib_pointer(L &logger, attribute_info const &attrib_info, skip_context &sc)
 {
   // enable vertex attibute arrays
   auto const attribute_index = attrib_info.global_index;

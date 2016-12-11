@@ -26,6 +26,7 @@ struct game_state {
   engine::window::dimensions const dimensions;
 
   glm::mat4 view, projection;
+
 public:
   game_state(L &l, R &r, engine::window::dimensions const &d)
       : logger(l)
@@ -148,9 +149,7 @@ ecst_main(G &game, S &state)
   auto io_tags = sea::t(st::io_system);
   auto randompos_tags = sea::t(st::randompos_system);
 
-  auto const init_system = [&logger](auto &system, auto &data) {
-    system.init(logger);
-  };
+  auto const init_system = [&logger](auto &system, auto &data) { system.init(logger); };
   auto const process_system = [&state, &logger](auto &system, auto &data) {
     system.process(data, state);
   };
@@ -161,7 +160,7 @@ ecst_main(G &game, S &state)
   auto const randompos_init_system = randompos_tags.for_subtasks(init_system);
   auto const randompos_process_system = randompos_tags.for_subtasks(process_system);
 
-  auto const game_loop_body = [&](auto& proxy) {
+  auto const game_loop_body = [&](auto &proxy) {
     logger.trace("executing systems.");
     proxy.execute_systems()(io_process_system, randompos_process_system);
 
@@ -169,8 +168,8 @@ ecst_main(G &game, S &state)
     game.game_loop(state);
     logger.trace("game loop stepping.");
   };
-  auto const game_loop = [&state, &game_loop_body](auto& proxy) {
-    while (! state.quit) {
+  auto const game_loop = [&state, &game_loop_body](auto &proxy) {
+    while (!state.quit) {
       game_loop_body(proxy);
     }
   };
@@ -187,6 +186,7 @@ ecst_main(G &game, S &state)
 class boomhs_game
 {
   NO_COPY(boomhs_game);
+
 public:
   boomhs_game() = default;
   MOVE_DEFAULT(boomhs_game);
@@ -198,18 +198,16 @@ public:
                                                                   state.projection};
 
     using COLOR_ARRAY = std::array<float, 4>;
-    auto constexpr multicolor_triangle = stlw::make_array<COLOR_ARRAY>(
-      stlw::concat(engine::gfx::LIST_OF_COLORS::RED, 1.0f),
-      stlw::concat(engine::gfx::LIST_OF_COLORS::GREEN, 1.0f),
-      stlw::concat(engine::gfx::LIST_OF_COLORS::BLUE, 1.0f)
-    );
+    auto constexpr multicolor_triangle =
+        stlw::make_array<COLOR_ARRAY>(stlw::concat(engine::gfx::LIST_OF_COLORS::RED, 1.0f),
+                                      stlw::concat(engine::gfx::LIST_OF_COLORS::GREEN, 1.0f),
+                                      stlw::concat(engine::gfx::LIST_OF_COLORS::BLUE, 1.0f));
 
-    auto constexpr multicolor_rect = stlw::make_array<COLOR_ARRAY>(
-        stlw::concat(engine::gfx::LIST_OF_COLORS::RED, 1.0f),
-        stlw::concat(engine::gfx::LIST_OF_COLORS::GREEN, 1.0f),
-        stlw::concat(engine::gfx::LIST_OF_COLORS::BLUE, 1.0f),
-        stlw::concat(engine::gfx::LIST_OF_COLORS::YELLOW, 1.0f)
-    );
+    auto constexpr multicolor_rect =
+        stlw::make_array<COLOR_ARRAY>(stlw::concat(engine::gfx::LIST_OF_COLORS::RED, 1.0f),
+                                      stlw::concat(engine::gfx::LIST_OF_COLORS::GREEN, 1.0f),
+                                      stlw::concat(engine::gfx::LIST_OF_COLORS::BLUE, 1.0f),
+                                      stlw::concat(engine::gfx::LIST_OF_COLORS::YELLOW, 1.0f));
 
     auto const height = 0.25f, width = 0.39f;
     auto triangle_color = game::triangle_factory::make(*p, ::engine::gfx::LIST_OF_COLORS::PINK);
@@ -218,7 +216,8 @@ public:
     auto triangle_wireframe = game::triangle_factory::make(*s, true, false);
 
     auto cube_texture = game::cube_factory::make_textured(*a, 0.25f, 0.25f, 0.25f);
-    auto cube_color = game::cube_factory::make_spotted(*b, ::engine::gfx::LIST_OF_COLORS::BLUE, 0.25f, 0.25f, 0.25f);
+    auto cube_color = game::cube_factory::make_spotted(*b, ::engine::gfx::LIST_OF_COLORS::BLUE,
+                                                       0.25f, 0.25f, 0.25f);
     auto cube_wf = game::cube_factory::make_wireframe(*c, 0.25f, 0.25f, 0.25f);
 
     auto rectangle_color = game::rectangle_factory::make(*t, ::engine::gfx::LIST_OF_COLORS::YELLOW);
@@ -226,35 +225,24 @@ public:
     auto rectangle_texture = game::rectangle_factory::make(*v, height, width, true);
     auto rectangle_wireframe = game::rectangle_factory::make(*w, height, width, true, true);
 
-    auto polygon_color = game::polygon_factory::make(*x, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
-    //auto polygon_list_of_color = game::polygon_factory::make(*u, 5, multicolor_triangle);
+    auto polygon_color =
+        game::polygon_factory::make(*x, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
+    // auto polygon_list_of_color = game::polygon_factory::make(*u, 5, multicolor_triangle);
     auto polygon_texture = game::polygon_factory::make(*y, 7, true);
-    //auto polygon_wireframe = game::polygon_factory::make(*v, 7, true, true);
+    // auto polygon_wireframe = game::polygon_factory::make(*v, 7, true, true);
 
     state.renderer.begin();
-    state.renderer.draw_shapes_with_colors(args,
-        triangle_color,
-        triangle_list_colors,
-        rectangle_color,
-        rectangle_list_colors,
-        polygon_color,
-        cube_color
-        //polygon_list_of_color,
-        );
-    state.renderer.draw_shapes_with_textures(args,
-        triangle_texture,
-        rectangle_texture,
-        polygon_texture
-        );
-    state.renderer.draw_3dcube_shapes_with_textures(args,
-        cube_texture
-        );
-    state.renderer.draw_shapes_with_wireframes(args,
-        triangle_wireframe,
-        rectangle_wireframe,
-        //polygon_wireframe
-        cube_wf
-        );
+    state.renderer.draw_shapes_with_colors(args, triangle_color, triangle_list_colors,
+                                           rectangle_color, rectangle_list_colors, polygon_color,
+                                           cube_color
+                                           // polygon_list_of_color,
+                                           );
+    state.renderer.draw_shapes_with_textures(args, triangle_texture, rectangle_texture,
+                                             polygon_texture);
+    state.renderer.draw_3dcube_shapes_with_textures(args, cube_texture);
+    state.renderer.draw_shapes_with_wireframes(args, triangle_wireframe, rectangle_wireframe,
+                                               // polygon_wireframe
+                                               cube_wf);
     state.renderer.end();
   }
 };
