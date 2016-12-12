@@ -1,7 +1,7 @@
 # BoomHS
 Boom Headshot?!
 
-![Alt text](/screenshots/early_shapes.jpg?raw=true "Some shapes being shoved at OpenGL under various transformations.")
+![Alt text](/screenshots/early_shapes.png?raw=true "Some shapes being shoved at OpenGL under various transformations.")
 
 #### Required Dependencies (this is not an exhaustive list AT ALL)
 1. sudo apt-get intall libc++-dev
