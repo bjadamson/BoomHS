@@ -106,7 +106,7 @@ ecst_main(G &game, S &state)
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.0f, 0.7f, 0.0f, 1.0f);
+      wc.set(0.0f, 0.7f, -1.0f, 1.0f);
       r = &wc;
       rmv = &proxy.add_component(ct::mvmatrix, eid);
     }
@@ -171,6 +171,7 @@ ecst_main(G &game, S &state)
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       wc.set(-0.7f, 0.7f, 0.0f, 1.0f);
       b = &wc;
+      bmv = &proxy.add_component(ct::mvmatrix, eid);
     }
     {
       auto eid = proxy.create_entity();
@@ -245,36 +246,38 @@ public:
                                       stlw::concat(engine::gfx::LIST_OF_COLORS::YELLOW, 1.0f));
 
     auto const height = 0.25f, width = 0.39f;
-    //auto triangle_color = game::triangle_factory::make(*p, ::engine::gfx::LIST_OF_COLORS::PINK);
-    //auto triangle_list_colors = game::triangle_factory::make(*q, multicolor_triangle);
-    //auto triangle_texture = game::triangle_factory::make(*r, true);
-    //auto triangle_wireframe = game::triangle_factory::make(*s, true, false);
+    auto triangle_color = game::triangle_factory::make(*p, ::engine::gfx::LIST_OF_COLORS::PINK);
+    auto triangle_list_colors = game::triangle_factory::make(*q, multicolor_triangle);
+    auto triangle_texture = game::triangle_factory::make(*r, true);
+    auto triangle_wireframe = game::triangle_factory::make(*s, true, false);
 
     auto cube_texture = game::cube_factory::make_textured(*a, *amv, {0.25f, 0.25f, 0.25f});
-    //auto cube_color = game::cube_factory::make_spotted(*b, *bmv, ::engine::gfx::LIST_OF_COLORS::BLUE,
-     //   {0.25f, 0.25f, 0.25f});
+    auto cube_color = game::cube_factory::make_spotted(*b, *bmv, ::engine::gfx::LIST_OF_COLORS::BLUE,
+        {0.25f, 0.25f, 0.25f});
     //auto cube_wf = game::cube_factory::make_wireframe(*c, *cmv, {0.25f, 0.25f, 0.25f});
 
-    //auto rectangle_color = game::rectangle_factory::make(*t, ::engine::gfx::LIST_OF_COLORS::YELLOW);
-    //auto rectangle_list_colors = game::rectangle_factory::make(*u, height, width, multicolor_rect);
-    //auto rectangle_texture = game::rectangle_factory::make(*v, height, width, true);
+    auto rectangle_color = game::rectangle_factory::make(*t, ::engine::gfx::LIST_OF_COLORS::YELLOW);
+    auto rectangle_list_colors = game::rectangle_factory::make(*u, height, width, multicolor_rect);
+    auto rectangle_texture = game::rectangle_factory::make(*v, height, width, true);
     //auto rectangle_wireframe = game::rectangle_factory::make(*w, height, width, true, true);
 
-    //auto polygon_color =
-        //game::polygon_factory::make(*x, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
+    auto polygon_color =
+        game::polygon_factory::make(*x, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
     // auto polygon_list_of_color = game::polygon_factory::make(*u, 5, multicolor_triangle);
-    //auto polygon_texture = game::polygon_factory::make(*y, 7, true);
-    // auto polygon_wireframe = game::polygon_factory::make(*v, 7, true, true);
+    auto polygon_texture = game::polygon_factory::make(*y, 7, true);
+    //auto polygon_wireframe = game::polygon_factory::make(*v, 7, true, true);
 
     state.renderer.begin();
-    //state.renderer.draw_shapes_with_colors(args, //triangle_color, triangle_list_colors,
-                                           //rectangle_color, rectangle_list_colors, polygon_color,
-                                           //cube_color
+    state.renderer.draw_2dshapes_with_colors(args, triangle_color, triangle_list_colors,
+                                           rectangle_color, rectangle_list_colors, polygon_color
                                            // polygon_list_of_color,
-                                           //);
-    //state.renderer.draw_shapes_with_textures(args, //triangle_texture, rectangle_texture,
-                                             //polygon_texture);
-    state.renderer.draw_3dcube_shapes_with_textures(args, cube_texture);
+                                           );
+    state.renderer.draw_2dshapes_with_textures(args, triangle_texture, rectangle_texture,
+                                             polygon_texture
+                                             );
+    state.renderer.draw_3dcolor_shapes(args,
+        cube_color);
+    state.renderer.draw_3dtextured_shapes(args, cube_texture);
     //state.renderer.draw_shapes_with_wireframes(args, //triangle_wireframe, rectangle_wireframe,
                                                // polygon_wireframe
                                                //cube_wf);

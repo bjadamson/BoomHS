@@ -51,12 +51,12 @@ load_3d_texture(L &logger, Paths const&... paths)
 
   std::array<char const*, N> const arr{{ paths... }};
   static constexpr auto directions = {
-    GL_TEXTURE_CUBE_MAP_POSITIVE_X,
-    GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
-    GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
-    GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
-    GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
-    GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+    GL_TEXTURE_CUBE_MAP_POSITIVE_Z, // back
+    GL_TEXTURE_CUBE_MAP_POSITIVE_X, // right
+    GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, // front
+    GL_TEXTURE_CUBE_MAP_NEGATIVE_X, // left
+    GL_TEXTURE_CUBE_MAP_POSITIVE_Y, // top
+    GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, // bottom
   };
 
   GLuint texture_id;

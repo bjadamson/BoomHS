@@ -194,7 +194,7 @@ make_vertex_color_vertex_attribute(L &logger)
 
 template<typename L>
 auto
-make_vertex_uv_vertex_attribute(L &logger)
+make_vertex_uv2d_vertex_attribute(L &logger)
 {
   // attribute indexes
   constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;

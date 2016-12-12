@@ -48,25 +48,38 @@ public:
   }
 
   template <typename Args, typename... S>
-  void draw_shapes_with_colors(Args const &args, S const &... shapes)
+  void draw_2dshapes_with_colors(Args const &args, S const &... shapes)
   {
-    this->engine_.draw_shapes_with_colors(args, shapes...);
+    this->engine_.draw_2dshapes_with_colors(args, shapes...);
   }
 
   template <typename Args, typename... S>
-  void draw_shapes_with_textures(Args const &args, S const &... shapes)
+  void draw_2dshapes_with_textures(Args const &args, S const &... shapes)
   {
-    this->engine_.draw_shapes_with_textures(args, shapes...);
+    this->engine_.draw_2dshapes_with_textures(args, shapes...);
   }
 
   template <typename Args, typename... S>
-  void draw_3dcube_shapes_with_textures(Args const &args, S const &... shapes)
+  void draw_3dcolor_shapes(Args const &args, S const &... shapes)
   {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
     glCullFace(GL_BACK);
-    this->engine_.draw_3dcube_shapes(args, shapes...);
+    this->engine_.draw_3dcolor_shapes(args, shapes...);
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+  }
+
+  template <typename Args, typename... S>
+  void draw_3dtextured_shapes(Args const &args, S const &... shapes)
+  {
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+
+    glCullFace(GL_BACK);
+    this->engine_.draw_3dtextured_shapes(args, shapes...);
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);

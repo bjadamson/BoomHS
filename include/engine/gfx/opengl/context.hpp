@@ -29,7 +29,6 @@ protected:
     glGenBuffers(NUM_BUFFERS, &this->vbo_);
     glGenBuffers(NUM_BUFFERS, &this->ebo_);
   }
-
 public:
   ~opengl_context()
   {
@@ -57,16 +56,43 @@ public:
   inline auto ebo() const { return this->ebo_; }
   inline auto &program_ref() { return this->program_; }
   inline auto const &va() { return this->va_; }
+};
 
+struct color2d_context : public opengl_context
+{
   friend struct context_factory;
+protected:
+  explicit color2d_context(program &&p, vertex_attribute &&va)
+    : opengl_context(std::move(p), std::move(va))
+  {
+  }
+  NO_COPY(color2d_context);
+  NO_MOVE_ASSIGN(color2d_context);
+public:
+  MOVE_CONSTRUCTIBLE(color2d_context);
+};
+
+class color3d_context : public opengl_context
+{
+friend struct context_factory;
+protected:
+  explicit color3d_context(program &&p, vertex_attribute &&va)
+    : opengl_context(std::move(p), std::move(va))
+  {
+  }
+  NO_COPY(color3d_context);
+  NO_MOVE_ASSIGN(color3d_context);
+public:
+  MOVE_CONSTRUCTIBLE(color3d_context);
 };
 
 class opengl_texture_context : public opengl_context
 {
+protected:
   texture_info texture_info_;
 
   // private
-  opengl_texture_context(program &&p, vertex_attribute &&va, texture_info const t)
+  explicit opengl_texture_context(program &&p, vertex_attribute &&va, texture_info const t)
       : opengl_context(std::move(p), std::move(va))
       , texture_info_(t)
   {
@@ -75,11 +101,9 @@ class opengl_texture_context : public opengl_context
   NO_COPY(opengl_texture_context);
   NO_MOVE_ASSIGN(opengl_texture_context);
 
-  friend struct context_factory;
-
 public:
   // move-construction OK.
-  opengl_texture_context(opengl_texture_context &&other)
+  explicit opengl_texture_context(opengl_texture_context &&other)
       : opengl_context(std::move(other))
       , texture_info_(other.texture_info_)
   {
@@ -89,12 +113,43 @@ public:
   inline auto texture() const { return this->texture_info_; }
 };
 
+class texture3d_context : public opengl_texture_context
+{
+  // private
+  explicit texture3d_context(program &&p, vertex_attribute &&va, texture_info const t)
+      : opengl_texture_context(std::move(p), std::move(va), t)
+  {
+  }
+
+  NO_COPY(texture3d_context);
+  NO_MOVE_ASSIGN(texture3d_context);
+  friend struct context_factory;
+
+public:
+  MOVE_CONSTRUCTIBLE(texture3d_context);
+};
+
+class texture2d_context : public opengl_texture_context
+{
+  // private
+  explicit texture2d_context(program &&p, vertex_attribute &&va, texture_info const t)
+      : opengl_texture_context(std::move(p), std::move(va), t)
+  {
+  }
+
+  NO_COPY(texture2d_context);
+  NO_MOVE_ASSIGN(texture2d_context);
+  friend struct context_factory;
+public:
+  MOVE_CONSTRUCTIBLE(texture2d_context);
+};
+
 class opengl_wireframe_context : public opengl_context
 {
   std::array<float, 4> color_;
 
   // private
-  opengl_wireframe_context(program &&p, vertex_attribute &&va, std::array<float, 4> const &c)
+  explicit opengl_wireframe_context(program &&p, vertex_attribute &&va, std::array<float, 4> const &c)
       : opengl_context(std::move(p), std::move(va))
       , color_(c)
   {
@@ -129,29 +184,35 @@ class context_factory
 
 public:
   template <typename L>
-  auto static make_opengl_context(L &logger, program &&p, vertex_attribute &&va)
+  auto static make_color2d(L &logger, program &&p, vertex_attribute &&va)
   {
-    return make<opengl_context>(logger, std::move(p), std::move(va));
+    return make<color2d_context>(logger, std::move(p), std::move(va));
   }
 
   template <typename L>
-  auto static make_texture_opengl_context(L &logger, program &&p, char const *path,
+  auto static make_texture2d(L &logger, program &&p, char const *path,
                                           vertex_attribute &&va)
   {
     auto const tid = load_2d_texture(logger, path);
-    return make<opengl_texture_context>(logger, std::move(p), std::move(va), tid);
+    return make<texture2d_context>(logger, std::move(p), std::move(va), tid);
   }
 
   template <typename L>
-  auto static make_3dcube_texture_opengl_context(L &logger, program &&p, char const *path,
-                                                 vertex_attribute &&va)
+  auto static make_color3d(L &logger, program &&p, vertex_attribute &&va)
   {
-    auto const tid = load_3d_texture(logger, path, path, path, path, path, path);
-    return make<opengl_texture_context>(logger, std::move(p), std::move(va), tid);
+    return make<color3d_context>(logger, std::move(p), std::move(va));
+  }
+
+  template <typename L, typename ...Paths>
+  auto static make_texture3d(L &logger, program &&p, vertex_attribute &&va,
+      Paths const&... paths)
+  {
+    auto const tid = load_3d_texture(logger, paths...);
+    return make<texture3d_context>(logger, std::move(p), std::move(va), tid);
   }
 
   template <typename L>
-  auto static make_wireframe_opengl_context(L &logger, program &&p, vertex_attribute &&va,
+  auto static make_wireframe(L &logger, program &&p, vertex_attribute &&va,
                                             std::array<float, 3> const &c)
   {
     constexpr auto ALPHA = 1.0f;

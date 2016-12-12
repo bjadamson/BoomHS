@@ -73,9 +73,9 @@ copy_to_gpu(L &logger, S const &shape)
                GL_STATIC_DRAW);
 }
 
-template <typename L, typename S>
+template <typename L, typename Ctx, typename S>
 void
-render_shape(L &logger, opengl_context &ctx, S const &shape)
+render_shape(L &logger, Ctx &ctx, S const &shape)
 {
   logger.trace(fmt::sprintf("%-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices"));
   logger.trace(fmt::sprintf("%-15d %-15d %-15d\n", shape.vertices_size_in_bytes(),
@@ -88,17 +88,13 @@ render_shape(L &logger, opengl_context &ctx, S const &shape)
   render(logger, shape.draw_mode(), shape.ordering_count());
 }
 
-template <typename L, typename C, typename... S>
+template <typename L, typename C, typename FN, typename... S>
 void
-draw_scene(L &logger, C &ctx, glm::mat4 const &view, glm::mat4 const &projection,
+draw_scene(L &logger, C &ctx, glm::mat4 const &projection, FN const& fn,
            std::tuple<S...> const &shapes)
 {
   // Pass the matrices to the shader
   auto &p = ctx.program_ref();
-  logger.trace("setting u_view");
-  p.set_uniform_matrix_4fv(logger, "u_view", view);
-  p.check_opengl_errors(logger);
-
   logger.trace("setting u_projection");
   p.set_uniform_matrix_4fv(logger, "u_projection", projection);
   p.check_opengl_errors(logger);
@@ -114,16 +110,6 @@ draw_scene(L &logger, C &ctx, glm::mat4 const &view, glm::mat4 const &projection
   ss << "#######################################################################################\n";
   ss << "Copying '" << sizeof...(S) << "' shapes from CPU -> OpenGL driver ...\n";
 
-  auto const fn = [&logger, &ctx, &p](auto const &shape) {
-
-    logger.trace("setting u_mvmatrix");
-    p.set_uniform_matrix_4fv(logger, "u_mvmatrix", shape.mvmatrix().data());
-
-    logger.trace("before drawing shape ...");
-    impl::render_shape(logger, ctx, shape);
-    p.check_opengl_errors(logger);
-    logger.trace("after drawing shape");
-  };
   stlw::for_each(shapes, fn);
   ss << "#######################################################################################\n";
 
@@ -134,8 +120,8 @@ draw_scene(L &logger, C &ctx, glm::mat4 const &view, glm::mat4 const &projection
 
 template <typename L, typename... S>
 void
-draw_scene(L &logger, opengl_context &ctx, glm::mat4 const &view, glm::mat4 const &projection,
-           std::tuple<S...> const &shapes)
+draw_scene(L &logger, color2d_context &ctx, glm::mat4 const &projection,
+    std::tuple<S...> const &shapes)
 {
   global::vao_bind(ctx.vao());
   ON_SCOPE_EXIT([]() { global::vao_unbind(); });
@@ -146,12 +132,81 @@ draw_scene(L &logger, opengl_context &ctx, glm::mat4 const &view, glm::mat4 cons
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
-  impl::draw_scene(logger, ctx, view, projection, shapes);
+  auto &p = ctx.program_ref();
+  auto const fn = [&logger, &ctx, &p](auto const &shape) {
+    logger.trace("before drawing shape ...");
+    impl::render_shape(logger, ctx, shape);
+    p.check_opengl_errors(logger);
+    logger.trace("after drawing shape");
+  };
+
+  impl::draw_scene(logger, ctx, projection, fn, shapes);
 }
 
 template <typename L, typename... S>
 void
-draw_scene(L &logger, opengl_texture_context &ctx, glm::mat4 const &view,
+draw_scene(L &logger, texture2d_context &ctx, glm::mat4 const &projection,
+    std::tuple<S...> const &shapes)
+{
+  global::vao_bind(ctx.vao());
+  ON_SCOPE_EXIT([]() { global::vao_unbind(); });
+
+  glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
+
+  global::texture_bind(ctx.texture());
+  ON_SCOPE_EXIT([&ctx]() { global::texture_unbind(ctx.texture()); });
+
+  auto &p = ctx.program_ref();
+  auto const fn = [&logger, &ctx, &p](auto const &shape) {
+    logger.trace("before drawing shape ...");
+    impl::render_shape(logger, ctx, shape);
+    p.check_opengl_errors(logger);
+    logger.trace("after drawing shape");
+  };
+
+  impl::draw_scene(logger, ctx, projection, fn, shapes);
+}
+
+template <typename L, typename... S>
+void
+draw_scene(L &logger, color3d_context &ctx, glm::mat4 const &view,
+           glm::mat4 const &projection, std::tuple<S...> const &shapes)
+{
+  global::vao_bind(ctx.vao());
+  ON_SCOPE_EXIT([]() { global::vao_unbind(); });
+
+  glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
+
+  auto &p = ctx.program_ref();
+  logger.trace("setting u_view");
+  p.set_uniform_matrix_4fv(logger, "u_view", view);
+  p.check_opengl_errors(logger);
+
+  auto const fn = [&logger, &ctx, &p](auto const &shape) {
+
+    logger.trace("setting u_mvmatrix");
+    p.set_uniform_matrix_4fv(logger, "u_mvmatrix", shape.mvmatrix().data());
+
+    logger.trace("before drawing shape ...");
+    impl::render_shape(logger, ctx, shape);
+    p.check_opengl_errors(logger);
+    logger.trace("after drawing shape");
+  };
+
+  impl::draw_scene(logger, ctx, projection, fn, shapes);
+}
+
+template <typename L, typename... S>
+void
+draw_scene(L &logger, texture3d_context &ctx, glm::mat4 const &view,
            glm::mat4 const &projection, std::tuple<S...> const &shapes)
 {
   global::vao_bind(ctx.vao());
@@ -166,7 +221,24 @@ draw_scene(L &logger, opengl_texture_context &ctx, glm::mat4 const &view,
   global::texture_bind(ctx.texture());
   ON_SCOPE_EXIT([&ctx]() { global::texture_unbind(ctx.texture()); });
 
-  impl::draw_scene(logger, ctx, view, projection, shapes);
+  auto &p = ctx.program_ref();
+  p.use();
+  logger.trace("setting u_view");
+  p.set_uniform_matrix_4fv(logger, "u_view", view);
+  p.check_opengl_errors(logger);
+
+  auto const fn = [&logger, &ctx, &p](auto const &shape) {
+
+    logger.trace("setting u_mvmatrix");
+    p.set_uniform_matrix_4fv(logger, "u_mvmatrix", shape.mvmatrix().data());
+
+    logger.trace("before drawing shape ...");
+    impl::render_shape(logger, ctx, shape);
+    p.check_opengl_errors(logger);
+    logger.trace("after drawing shape");
+  };
+
+  impl::draw_scene(logger, ctx, projection, fn, shapes);
 }
 
 template <typename L, typename... S>
@@ -184,11 +256,15 @@ draw_scene(L &logger, opengl_wireframe_context &ctx, glm::mat4 const &view,
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
   auto &p = ctx.program_ref();
+  logger.trace("setting u_view");
+  p.set_uniform_matrix_4fv(logger, "u_view", view);
+  p.check_opengl_errors(logger);
+
   logger.trace("setting u_color");
   p.set_uniform_array_4fv(logger, "u_color", ctx.color());
   p.check_opengl_errors(logger);
 
-  impl::draw_scene(logger, ctx, view, projection, shapes);
+  impl::draw_scene(logger, ctx, projection, shapes);
 }
 
 } // ns engine::gfx::opengl::renderer

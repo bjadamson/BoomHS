@@ -166,6 +166,30 @@ struct io_system {
           move_entities(logger, data, UP_VECTOR);
         break;
       }
+      case SDLK_KP_1: {
+        proj = glm::rotate(proj, ANGLE, glm::vec3(1.0f, 0.0f, 0.0f));
+        break;
+      }
+      case SDLK_KP_2: {
+        proj = glm::rotate(proj, -ANGLE, glm::vec3(1.0f, 0.0f, 0.0f));
+        break;
+      }
+      case SDLK_KP_3: {
+        proj = glm::rotate(proj, ANGLE, glm::vec3(0.0f, 1.0f, 0.0f));
+        break;
+      }
+      case SDLK_KP_4: {
+        proj = glm::rotate(proj, -ANGLE, glm::vec3(0.0f, 1.0f, 0.0f));
+        break;
+      }
+      case SDLK_KP_5: {
+        proj = glm::rotate(proj, ANGLE, glm::vec3(0.0f, 0.0f, 1.0f));
+        break;
+      }
+      case SDLK_KP_6: {
+        proj = glm::rotate(proj, -ANGLE, glm::vec3(0.0f, 0.0f, 1.0f));
+        break;
+      }
       }
     }
     }
