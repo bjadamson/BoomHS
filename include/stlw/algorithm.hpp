@@ -151,4 +151,16 @@ concat()
   return concat("");
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// zip
+template<typename FirstBegin, typename FirstEnd, typename SecondBegin, typename FN>
+void zip(FirstBegin fb, FirstEnd fe, SecondBegin sb, FN const& fn)
+{
+  // Assumes length(sb) > length(fe - fb)
+  auto it = sb;
+  for (auto i{fb}; i < fe; ++i, ++it) {
+    fn(*i, *it);
+  }
+}
+
 } // ns stlw

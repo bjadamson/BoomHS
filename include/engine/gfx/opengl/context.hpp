@@ -146,7 +146,7 @@ public:
   auto static make_3dcube_texture_opengl_context(L &logger, program &&p, char const *path,
                                                  vertex_attribute &&va)
   {
-    auto const tid = load_3d_texture(logger, path);
+    auto const tid = load_3d_texture(logger, path, path, path, path, path, path);
     return make<opengl_texture_context>(logger, std::move(p), std::move(va), tid);
   }
 
