@@ -57,9 +57,23 @@ include(FindPkgConfig)
 pkg_search_module(SDL2 REQUIRED sdl2)
 
 ## We should get these through conan.io
-target_include_directories(boomhs PUBLIC ${SDL2_INCLUDE_DIRS} ${SDL2IMAGE_INCLUDE_DIRS} ${INTERNAL_INCLUDE_DIRS} ${OPENGL_INDLUDE_DIRS} ${GLEW_INCLUDE_DIRS} "/usr/include/SOIL/")
+target_include_directories(boomhs PUBLIC
+  ${SDL2_INCLUDE_DIRS}
+  ${SDL2IMAGE_INCLUDE_DIRS}
+  ${INTERNAL_INCLUDE_DIRS}
+  ${OPENGL_INDLUDE_DIRS}
+  ${GLEW_INCLUDE_DIRS}
+  "/usr/include/SOIL/")
 
-target_link_libraries(boomhs ${SDL2_LIBRARIES} stdc++ ${SDL2IMAGE_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} SOIL pthread)
+target_link_libraries(boomhs
+  ${SDL2_LIBRARIES}
+  stdc++
+  ${SDL2IMAGE_LIBRARIES}
+  ${OPENGL_LIBRARIES}
+  ${GLEW_LIBRARIES}
+  SOIL
+  pthread
+  boost_system)
 
 target_include_directories(shader_loader PUBLIC ${INTERNAL_INCLUDE_DIRS})
 target_link_libraries(shader_loader stdc++ c++experimental)
