@@ -5,7 +5,8 @@
 #include <engine/gfx/opengl/scene_renderer.hpp>
 #include <engine/gfx/opengl/vertex_attribute.hpp>
 #include <engine/window/sdl_window.hpp>
-#include <game/shape.hpp>
+#include <game/shape2d.hpp>
+#include <game/shape3d.hpp>
 #include <glm/glm.hpp>
 #include <stlw/algorithm.hpp>
 #include <stlw/sized_buffer.hpp>
