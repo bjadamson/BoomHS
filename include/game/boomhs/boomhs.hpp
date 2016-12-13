@@ -50,12 +50,11 @@ make_state(L &logger, R &renderer, HW const& hw)
   auto const fwidth = static_cast<GLfloat>(hw.w);
 
   logger.error(fmt::sprintf("fheight '%f', fwidth '%f'", fheight, fwidth));
-  //auto projection = glm::perspective(60.0f, (fwidth / fheight), 0.1f, 1.0f);
-  //auto view = glm::lookAt(
-    //glm::vec3(0.0f, 0.0f, 3.0f), // camera position
-    //glm::vec3(0.0f, 0.0f, 0.0f),  // look at origin
-    //glm::vec3(0.0f, 1.0f, 0.0f)); // "up" vector
-  glm::mat4 projection, view;
+  auto projection = glm::perspective(60.0f, (fwidth / fheight), 0.1f, 1.0f);
+  auto view = glm::lookAt(
+    glm::vec3(0.0f, 0.0f, 3.0f), // camera position
+    glm::vec3(0.0f, 0.0f, 0.0f),  // look at origin
+    glm::vec3(0.0f, 1.0f, 0.0f)); // "up" vector
 
   return game_state<L, R>(logger, renderer, hw, std::move(projection), std::move(view));
 }
