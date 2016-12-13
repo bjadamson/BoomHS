@@ -27,14 +27,38 @@ struct game_state {
 
   glm::mat4 view, projection;
 
+
+  NO_COPY(game_state);
+  NO_MOVE_ASSIGN(game_state);
 public:
-  game_state(L &l, R &r, engine::window::dimensions const &d)
+  MOVE_CONSTRUCTIBLE(game_state);
+  game_state(L &l, R &r, engine::window::dimensions const &d, glm::mat4 &&pm, glm::mat4 &&vm)
       : logger(l)
       , renderer(r)
       , dimensions(d)
+      , projection(std::move(pm))
+      , view(std::move(vm))
   {
   }
 };
+
+template<typename L, typename R, typename HW>
+auto
+make_state(L &logger, R &renderer, HW const& hw)
+{
+  auto const fheight = static_cast<GLfloat>(hw.h);
+  auto const fwidth = static_cast<GLfloat>(hw.w);
+
+  logger.error(fmt::sprintf("fheight '%f', fwidth '%f'", fheight, fwidth));
+  //auto projection = glm::perspective(60.0f, (fwidth / fheight), 0.1f, 1.0f);
+  //auto view = glm::lookAt(
+    //glm::vec3(0.0f, 0.0f, 3.0f), // camera position
+    //glm::vec3(0.0f, 0.0f, 0.0f),  // look at origin
+    //glm::vec3(0.0f, 1.0f, 0.0f)); // "up" vector
+  glm::mat4 projection, view;
+
+  return game_state<L, R>(logger, renderer, hw, std::move(projection), std::move(view));
+}
 
 // TODO: bye globals
 game::world_coordinate *p = nullptr;
@@ -268,6 +292,7 @@ public:
     //auto polygon_wireframe = game::polygon_factory::make(*v, 7, true, true);
 
     state.renderer.begin();
+    /*
     state.renderer.draw_2dshapes_with_colors(args, triangle_color, triangle_list_colors,
                                            rectangle_color, rectangle_list_colors, polygon_color
                                            // polygon_list_of_color,
@@ -275,6 +300,7 @@ public:
     state.renderer.draw_2dshapes_with_textures(args, triangle_texture, rectangle_texture,
                                              polygon_texture
                                              );
+    */
     state.renderer.draw_3dcolor_shapes(args,
         cube_color);
     state.renderer.draw_3dtextured_shapes(args, cube_texture);

@@ -1,16 +1,11 @@
 #pragma once
+#include <engine/gfx/types.hpp>
 #include <game/shape.hpp>
 #include <game/data_types.hpp>
 #include <array>
 
 namespace game
 {
-
-struct height_width
-{
-  float const height;
-  float const width;
-};
 
 // clang-format off
 template<typename V>
@@ -176,6 +171,8 @@ private:
 class rectangle_factory
 {
   rectangle_factory() = delete;
+
+  using height_width = ::engine::gfx::height_width;
 
   struct color_properties {
     height_width const dimensions;

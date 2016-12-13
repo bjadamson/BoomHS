@@ -1,17 +1,11 @@
 #pragma once
+#include <engine/gfx/types.hpp>
 #include <game/shape.hpp>
 #include <game/data_types.hpp>
 #include <array>
 
 namespace game
 {
-
-struct height_width_length
-{
-  float const height;
-  float const width;
-  float const length;
-};
 
 template <typename V>
 struct cube : public shape {
@@ -32,6 +26,8 @@ private:
 class cube_factory
 {
   cube_factory() = delete;
+
+  using height_width_length = ::engine::gfx::height_width_length;
 
   struct color_properties {
     using c = std::array<float, 4>;

@@ -5,12 +5,10 @@ in vec4 a_position; // position value
 // shader
 out vec3 v_uv;
 
-uniform mat4 u_view;
-uniform mat4 u_projection;
 uniform mat4 u_mvmatrix;
 
 void main()
 {
-  gl_Position = u_mvmatrix * u_projection * u_view * a_position;
+  gl_Position = u_mvmatrix * a_position;
   v_uv = vec3(a_position.x, a_position.y, a_position.z);
 }

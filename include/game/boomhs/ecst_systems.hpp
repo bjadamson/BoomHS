@@ -31,6 +31,7 @@ make_ssl()
   // clang-format off
   constexpr auto ssig_io_system = ss::make(st::io_system)
     .parallelism(PA)
+    .read(ct::world_coordinate)
     .write(ct::mvmatrix);
 
   constexpr auto ssig_randompos_system = ss::make(st::randompos_system)

@@ -95,9 +95,7 @@ draw_scene(L &logger, C &ctx, glm::mat4 const &projection, FN const& fn,
 {
   // Pass the matrices to the shader
   auto &p = ctx.program_ref();
-  logger.trace("setting u_projection");
-  p.set_uniform_matrix_4fv(logger, "u_projection", projection);
-  p.check_opengl_errors(logger);
+  
 
   logger.trace("using p");
   p.use();
@@ -133,9 +131,19 @@ draw_scene(L &logger, color2d_context &ctx, glm::mat4 const &projection,
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
   auto &p = ctx.program_ref();
-  auto const fn = [&logger, &ctx, &p](auto const &shape) {
+  p.use();
+  logger.trace("setting u_projection");
+  p.set_uniform_matrix_4fv(logger, "u_projection", projection);
+  p.check_opengl_errors(logger);
+
+  auto const fn = [&](auto const &shape) {
+    logger.trace("setting u_projection");
+    p.set_uniform_matrix_4fv(logger, "u_projection", projection);
+    p.check_opengl_errors(logger);
+
     logger.trace("before drawing shape ...");
     impl::render_shape(logger, ctx, shape);
+
     p.check_opengl_errors(logger);
     logger.trace("after drawing shape");
   };
@@ -161,9 +169,15 @@ draw_scene(L &logger, texture2d_context &ctx, glm::mat4 const &projection,
   ON_SCOPE_EXIT([&ctx]() { global::texture_unbind(ctx.texture()); });
 
   auto &p = ctx.program_ref();
-  auto const fn = [&logger, &ctx, &p](auto const &shape) {
+  p.use();
+  logger.trace("setting u_projection");
+  p.set_uniform_matrix_4fv(logger, "u_projection", projection);
+  p.check_opengl_errors(logger);
+
+  auto const fn = [&](auto const &shape) {
     logger.trace("before drawing shape ...");
     impl::render_shape(logger, ctx, shape);
+
     p.check_opengl_errors(logger);
     logger.trace("after drawing shape");
   };
@@ -186,10 +200,7 @@ draw_scene(L &logger, color3d_context &ctx, glm::mat4 const &view,
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
   auto &p = ctx.program_ref();
-  logger.trace("setting u_view");
-  p.set_uniform_matrix_4fv(logger, "u_view", view);
-  p.check_opengl_errors(logger);
-
+  p.use();
   auto const fn = [&logger, &ctx, &p](auto const &shape) {
 
     logger.trace("setting u_mvmatrix");
@@ -223,10 +234,6 @@ draw_scene(L &logger, texture3d_context &ctx, glm::mat4 const &view,
 
   auto &p = ctx.program_ref();
   p.use();
-  logger.trace("setting u_view");
-  p.set_uniform_matrix_4fv(logger, "u_view", view);
-  p.check_opengl_errors(logger);
-
   auto const fn = [&logger, &ctx, &p](auto const &shape) {
 
     logger.trace("setting u_mvmatrix");
