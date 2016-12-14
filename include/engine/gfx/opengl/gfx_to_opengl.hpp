@@ -65,16 +65,16 @@ class shape3d_data : public shape_data<C, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_P
   using VertexContainer = typename BASE::VertexContainer;
   using VertexOrdering = typename BASE::VertexOrdering;
 
-  game::mvmatrix const& mv_;
+  game::model const& model_;
 public:
   MOVE_DEFAULT(shape3d_data);
   explicit constexpr shape3d_data(GLenum const m, VertexContainer &&d, VertexOrdering const& e,
-      game::mvmatrix const& mv)
+      game::model const& model)
     : BASE(m, std::move(d), e)
-    , mv_(mv)
+    , model_(model)
   {
   }
-  constexpr auto const& mvmatrix() const { return this->mv_; }
+  constexpr auto const& model() const { return this->model_; }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,7 +83,7 @@ template <std::size_t NUM_VERTEXES, std::size_t NUM_ELEMENTS, std::size_t NUM_OF
 using static_shape_array = shape_data<std::array, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_PER_VERTEX>;
 
 template <std::size_t NUM_VERTEXES, std::size_t NUM_ELEMENTS, std::size_t NUM_OF_F_PER_VERTEX>
-using static_shape_with_mv_array = shape3d_data<std::array, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_PER_VERTEX>;
+using static_shape_with_model_array = shape3d_data<std::array, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_PER_VERTEX>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // static shapes
@@ -97,7 +97,7 @@ template <std::size_t NUM_VERTEXES, std::size_t NUM_ELEMENTS>
 using static_vertex_only_shape = static_shape_array<NUM_VERTEXES, NUM_ELEMENTS, 4>;
 
 template <std::size_t NUM_VERTEXES, std::size_t NUM_ELEMENTS>
-using static_vertex_mv_shape = static_shape_with_mv_array<NUM_VERTEXES, NUM_ELEMENTS, 4>;
+using static_vertex_model_shape = static_shape_with_model_array<NUM_VERTEXES, NUM_ELEMENTS, 4>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // runtime-driven data
@@ -145,9 +145,9 @@ using float_vertex_uv_rectangle = static_vertex_uv_shape<24, 6>;
 using float_vertex_only_rectangle = static_vertex_only_shape<16, 6>;
 
 // float cubes
-using float_vertex_color_cube = static_vertex_mv_shape<64, 14>;
-using float_vertex_uv_cube = static_vertex_mv_shape<32, 14>;
-using float_vertex_only_cube = static_vertex_mv_shape<32, 14>;
+using float_vertex_color_cube = static_vertex_model_shape<64, 14>;
+using float_vertex_uv_cube = static_vertex_model_shape<32, 14>;
+using float_vertex_only_cube = static_vertex_model_shape<32, 14>;
 
 // float polygons
 using float_vertex_color_polygon = runtime_sized_array<8>;
@@ -357,7 +357,7 @@ class shape_mapper
     };
     // clang-format on
     return float_vertex_color_cube{GL_TRIANGLE_STRIP, std::move(floats), CUBE_VERTICE_ORDERING(),
-    r.mv};
+    r.model};
   }
 
   static constexpr auto map_to_array_floats(game::cube<game::vertex_attributes_only> const &r)
@@ -387,7 +387,7 @@ class shape_mapper
     };
     // clang-format on
     return float_vertex_uv_cube{GL_TRIANGLE_STRIP, std::move(floats), CUBE_VERTICE_ORDERING(),
-      r.mv};
+      r.model};
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////

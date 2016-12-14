@@ -97,7 +97,7 @@ struct io_system {
       }
       case SDLK_j: {
         auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
-        rotate_entities(logger, data, ANGLE, ROTATION_VECTOR, projection, view);
+        rotate_entities(logger, data, ANGLE, ROTATION_VECTOR);
         break;
       }
       case SDLK_2: {
@@ -106,7 +106,7 @@ struct io_system {
       }
       case SDLK_k: {
         auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, 0.0f, -1.0f};
-        rotate_entities(logger, data, ANGLE, ROTATION_VECTOR, projection, view);
+        rotate_entities(logger, data, ANGLE, ROTATION_VECTOR);
         break;
       }
       // y-rotation
@@ -116,7 +116,7 @@ struct io_system {
       }
       case SDLK_u: {
         auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
-        rotate_entities(logger, data, ANGLE, ROTATION_VECTOR, projection, view);
+        rotate_entities(logger, data, ANGLE, ROTATION_VECTOR);
         break;
       }
       case SDLK_4: {
@@ -125,7 +125,7 @@ struct io_system {
       }
       case SDLK_i: {
         auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, -1.0f, 0.0f};
-        rotate_entities(logger, data, ANGLE, ROTATION_VECTOR, projection, view);
+        rotate_entities(logger, data, ANGLE, ROTATION_VECTOR);
         break;
       }
       // x-rotation
@@ -135,7 +135,7 @@ struct io_system {
       }
       case SDLK_n: {
         auto constexpr ROTATION_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
-        rotate_entities(logger, data, -ANGLE, ROTATION_VECTOR, projection, view);
+        rotate_entities(logger, data, -ANGLE, ROTATION_VECTOR);
         break;
       }
       case SDLK_6: {
@@ -144,7 +144,7 @@ struct io_system {
       }
       case SDLK_m: {
         auto constexpr ROTATION_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
-        rotate_entities(logger, data, ANGLE, ROTATION_VECTOR, projection, view);
+        rotate_entities(logger, data, ANGLE, ROTATION_VECTOR);
         break;
       }
       // transform controls
@@ -210,27 +210,21 @@ struct io_system {
   void move_entity(L &logger, TData &data, ecst::entity_id const eid, glm::vec3 const& distance) const
   {
     auto const fn = [&]() {
-      auto &v = data.get(ct::mvmatrix, eid);
-      v.set(glm::translate(v.data(), distance));
+      auto &m = data.get(ct::model, eid);
+      m.translation = glm::translate(m.translation, distance);
     };
     for_entity(logger, data, eid, "moving", fn);
   }
 
   template<typename L, typename TData>
   void rotate_entity(L &logger, TData &data, ecst::entity_id const eid, float const angle,
-      glm::vec3 const& axis, glm::mat4 const& projection, glm::mat4 const& view) const
+      glm::vec3 const& axis) const
   {
     auto const fn = [&]() {
-      auto const& wc = data.get(ct::world_coordinate, eid);
-      auto &mv = data.get(ct::mvmatrix, eid);
-
-      glm::vec3 const tvec{wc.x(), wc.y(), wc.z()};
-      auto model = glm::translate(mv.data(), tvec);
-      model = glm::rotate(model, angle, axis);
-      model = glm::translate(model, -tvec);
-
-      auto const mvmatrix = projection * view * model;
-      mv.set(mvmatrix);
+      //auto const& wc = data.get(ct::world_coordinate, eid);
+      auto &m = data.get(ct::model, eid);
+      auto const q = glm::angleAxis(glm::degrees(angle), axis);
+      m.rotation = q * m.rotation;
     };
     for_entity(logger, data, eid, "rotating", fn);
   }
@@ -239,8 +233,8 @@ struct io_system {
   void scale_entity(L &logger, TData &data, ecst::entity_id const eid, glm::vec3 const& sf) const
   {
     auto const fn = [&]() {
-      auto &v = data.get(ct::mvmatrix, eid);
-      v.set(glm::scale(v.data(), sf));
+      auto &m = data.get(ct::model, eid);
+      m.scale = glm::scale(m.scale, sf);
     };
     for_entity(logger, data, eid, "scaling", fn);
   }
@@ -254,11 +248,10 @@ struct io_system {
   }
 
   template<typename L, typename TData>
-  void rotate_entities(L &logger, TData &data, float const angle, glm::vec3 const& axis,
-      glm::mat4 const& projection, glm::mat4 const& view) const
+  void rotate_entities(L &logger, TData &data, float const angle, glm::vec3 const& axis) const
   {
     data.for_entities([&](auto const eid) {
-        rotate_entity(logger, data, eid, angle, axis, projection, view);
+        rotate_entity(logger, data, eid, angle, axis);
     });
   }
 

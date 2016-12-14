@@ -2,6 +2,8 @@
 #include <engine/gfx/opengl/context.hpp>
 #include <engine/gfx/opengl/global.hpp>
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <stlw/format.hpp>
 #include <stlw/log.hpp>
 #include <stlw/print.hpp>
@@ -204,7 +206,10 @@ draw_scene(L &logger, color3d_context &ctx, glm::mat4 const &view,
   auto const fn = [&logger, &ctx, &p](auto const &shape) {
 
     logger.trace("setting u_mvmatrix");
-    p.set_uniform_matrix_4fv(logger, "u_mvmatrix", shape.mvmatrix().data());
+    auto const& model = shape.model();
+    auto const rmatrix = glm::toMat4(model.rotation);
+    auto const mvmatrix = model.translation * rmatrix * model.scale;
+    p.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
 
     logger.trace("before drawing shape ...");
     impl::render_shape(logger, ctx, shape);
@@ -237,7 +242,10 @@ draw_scene(L &logger, texture3d_context &ctx, glm::mat4 const &view,
   auto const fn = [&logger, &ctx, &p](auto const &shape) {
 
     logger.trace("setting u_mvmatrix");
-    p.set_uniform_matrix_4fv(logger, "u_mvmatrix", shape.mvmatrix().data());
+    auto const& model = shape.model();
+    auto const rmatrix = glm::toMat4(model.rotation);
+    auto const mvmatrix = model.translation * rmatrix * model.scale;
+    p.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
 
     logger.trace("before drawing shape ...");
     impl::render_shape(logger, ctx, shape);

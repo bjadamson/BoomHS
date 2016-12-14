@@ -77,15 +77,11 @@ public:
   vertex get() const { return this->v_; }
 };
 
-class mvmatrix
+struct model
 {
-  glm::mat4 mat_ = glm::mat4{1.0f};
-public:
-  mvmatrix() = default;
-
-  auto const& data() const { return this->mat_; }
-  auto const& get() const { return this->data(); }
-  void set(glm::mat4 const& m) { this->mat_ = m; }
+  glm::mat4 translation = glm::mat4{1.0f};
+  glm::quat rotation;
+  glm::mat4 scale = glm::mat4{1.0f};
 };
 
 } // ns game

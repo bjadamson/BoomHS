@@ -52,8 +52,8 @@ make_state(L &logger, R &renderer, HW const& hw)
   logger.error(fmt::sprintf("fheight '%f', fwidth '%f'", fheight, fwidth));
   auto projection = glm::perspective(60.0f, (fwidth / fheight), 0.1f, 1.0f);
   auto view = glm::lookAt(
-    glm::vec3(0.0f, 0.0f, 3.0f), // camera position
-    glm::vec3(0.0f, 0.0f, 0.0f),  // look at origin
+    glm::vec3(0.0f, 0.0f, 1.0f), // camera position
+    glm::vec3(0.0f, 0.0f, -1.0f),  // look at origin
     glm::vec3(0.0f, 1.0f, 0.0f)); // "up" vector
 
   return game_state<L, R>(logger, renderer, hw, std::move(projection), std::move(view));
@@ -61,43 +61,43 @@ make_state(L &logger, R &renderer, HW const& hw)
 
 // TODO: bye globals
 game::world_coordinate *p = nullptr;
-game::mvmatrix *pmv = nullptr;
+game::model *pmv = nullptr;
 
 game::world_coordinate *q = nullptr;
-game::mvmatrix *qmv = nullptr;
+game::model *qmv = nullptr;
 
 game::world_coordinate *r = nullptr;
-game::mvmatrix *rmv = nullptr;
+game::model *rmv = nullptr;
 
 game::world_coordinate *s = nullptr;
-game::mvmatrix *smv = nullptr;
+game::model *smv = nullptr;
 
 game::world_coordinate *t = nullptr;
-game::mvmatrix *tmv = nullptr;
+game::model *tmv = nullptr;
 
 game::world_coordinate *u = nullptr;
-game::mvmatrix *umv = nullptr;
+game::model *umv = nullptr;
 
 game::world_coordinate *v = nullptr;
-game::mvmatrix *vmv = nullptr;
+game::model *vmv = nullptr;
 
 game::world_coordinate *w = nullptr;
-game::mvmatrix *wmv = nullptr;
+game::model *wmv = nullptr;
 
 game::world_coordinate *x = nullptr;
-game::mvmatrix *xmv = nullptr;
+game::model *xmv = nullptr;
 
 game::world_coordinate *y = nullptr;
-game::mvmatrix *ymv = nullptr;
+game::model *ymv = nullptr;
 
 game::world_coordinate *a = nullptr;
-game::mvmatrix *amv = nullptr;
+game::model *amv = nullptr;
 
 game::world_coordinate *b = nullptr;
-game::mvmatrix *bmv = nullptr;
+game::model *bmv = nullptr;
 
 game::world_coordinate *c = nullptr;
-game::mvmatrix *cmv = nullptr;
+game::model *cmv = nullptr;
 
 template <typename G, typename S>
 void
@@ -117,84 +117,84 @@ ecst_main(G &game, S &state)
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       wc.set(-0.2f, -0.5f, 0.0f, 1.0f);
       p = &wc;
-      pmv = &proxy.add_component(ct::mvmatrix, eid);
+      pmv = &proxy.add_component(ct::model, eid);
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       wc.set(-0.5f, 0.0f, 0.0f, 1.0f);
       q = &wc;
-      qmv = &proxy.add_component(ct::mvmatrix, eid);
+      qmv = &proxy.add_component(ct::model, eid);
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       wc.set(0.0f, 0.7f, -1.0f, 1.0f);
       r = &wc;
-      rmv = &proxy.add_component(ct::mvmatrix, eid);
+      rmv = &proxy.add_component(ct::model, eid);
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       wc.set(0.60f, -0.20f, 0.0f, 1.0f);
       s = &wc;
-      smv = &proxy.add_component(ct::mvmatrix, eid);
+      smv = &proxy.add_component(ct::model, eid);
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       wc.set(0.0f, -0.5f, 0.0f, 1.0f);
       t = &wc;
-      tmv = &proxy.add_component(ct::mvmatrix, eid);
+      tmv = &proxy.add_component(ct::model, eid);
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       wc.set(-0.8f, 0.55f, 0.0f, 1.0f);
       u = &wc;
-      umv = &proxy.add_component(ct::mvmatrix, eid);
+      umv = &proxy.add_component(ct::model, eid);
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       wc.set(0.80f, -0.20f, 0.0f, 1.0f);
       v = &wc;
-      vmv = &proxy.add_component(ct::mvmatrix, eid);
+      vmv = &proxy.add_component(ct::model, eid);
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       wc.set(-0.80f, 0.80f, 0.0f, 1.0f);
       w = &wc;
-      wmv = &proxy.add_component(ct::mvmatrix, eid);
+      wmv = &proxy.add_component(ct::model, eid);
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       wc.set(-0.60f, -0.60f, 0.0f, 1.0f);
       x = &wc;
-      xmv = &proxy.add_component(ct::mvmatrix, eid);
+      xmv = &proxy.add_component(ct::model, eid);
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       wc.set(0.60f, 0.60f, 0.0f, 1.0f);
       y = &wc;
-      ymv = &proxy.add_component(ct::mvmatrix, eid);
+      ymv = &proxy.add_component(ct::model, eid);
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       wc.set(0.0f, 0.0f, 0.0f, 1.0f);
       a = &wc;
-      amv = &proxy.add_component(ct::mvmatrix, eid);
+      amv = &proxy.add_component(ct::model, eid);
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       wc.set(-0.7f, 0.7f, 0.0f, 1.0f);
       b = &wc;
-      bmv = &proxy.add_component(ct::mvmatrix, eid);
+      bmv = &proxy.add_component(ct::model, eid);
     }
     {
       auto eid = proxy.create_entity();
