@@ -31,12 +31,10 @@ make_ssl()
   // clang-format off
   constexpr auto ssig_io_system = ss::make(st::io_system)
     .parallelism(PA)
-    .read(ct::world_coordinate)
     .write(ct::model);
 
   constexpr auto ssig_randompos_system = ss::make(st::randompos_system)
-    .parallelism(PA)
-    .write(ct::world_coordinate);
+    .parallelism(PA);
 
   // clang-format on
 

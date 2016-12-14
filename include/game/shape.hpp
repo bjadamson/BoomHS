@@ -6,16 +6,16 @@ namespace game
 {
 
 struct shape {
-  world_coordinate coord_;
+  model model_;
 
 protected:
-  explicit constexpr shape(world_coordinate const &wc)
-      : coord_(wc)
+  explicit constexpr shape(model const &m)
+      : model_(m)
   {
   }
 
 public:
-  auto constexpr const &wc() const { return this->coord_; }
+  auto constexpr const &model() const { return this->model_; }
 };
 
 struct vertex_attributes_only {

@@ -357,7 +357,7 @@ class shape_mapper
     };
     // clang-format on
     return float_vertex_color_cube{GL_TRIANGLE_STRIP, std::move(floats), CUBE_VERTICE_ORDERING(),
-    r.model};
+    r.model()};
   }
 
   static constexpr auto map_to_array_floats(game::cube<game::vertex_attributes_only> const &r)
@@ -387,7 +387,7 @@ class shape_mapper
     };
     // clang-format on
     return float_vertex_uv_cube{GL_TRIANGLE_STRIP, std::move(floats), CUBE_VERTICE_ORDERING(),
-      r.model};
+      r.model()};
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////

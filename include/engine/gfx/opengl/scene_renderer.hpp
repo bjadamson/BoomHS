@@ -93,12 +93,10 @@ render_shape(L &logger, Ctx &ctx, S const &shape)
 
 template <typename L, typename C, typename FN, typename... S>
 void
-draw_scene(L &logger, C &ctx, glm::mat4 const &projection, FN const& fn,
-           std::tuple<S...> const &shapes)
+draw_scene(L &logger, C &ctx, FN const& fn, std::tuple<S...> const &shapes)
 {
   // Pass the matrices to the shader
   auto &p = ctx.program_ref();
-  
 
   logger.trace("using p");
   p.use();
@@ -222,7 +220,7 @@ draw_scene(L &logger, color3d_context &ctx, glm::mat4 const &view,
     logger.trace("after drawing shape");
   };
 
-  impl::draw_scene(logger, ctx, projection, fn, shapes);
+  impl::draw_scene(logger, ctx, fn, shapes);
 }
 
 template <typename L, typename... S>
@@ -252,6 +250,7 @@ draw_scene(L &logger, texture3d_context &ctx, glm::mat4 const &view,
     auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
     auto const rmatrix = glm::toMat4(model.rotation);
     auto const smatrix = glm::scale(glm::mat4{}, model.scale);
+
     auto const mmatrix = tmatrix * rmatrix * smatrix;
     auto const mvmatrix = projection * view * mmatrix;
     p.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
@@ -262,7 +261,7 @@ draw_scene(L &logger, texture3d_context &ctx, glm::mat4 const &view,
     logger.trace("after drawing shape");
   };
 
-  impl::draw_scene(logger, ctx, projection, fn, shapes);
+  impl::draw_scene(logger, ctx, fn, shapes);
 }
 
 template <typename L, typename... S>

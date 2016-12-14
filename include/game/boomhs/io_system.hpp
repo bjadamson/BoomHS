@@ -42,7 +42,7 @@ struct io_system {
     float constexpr MOVE_DISTANCE = 0.1f;
     float constexpr SF = 0.20f; // scale-factor
 
-    float constexpr ANGLE = 0.2f;
+    float constexpr ANGLE = 60.0f;
     float constexpr SCALE_FACTOR = 1.0f;
 
     glm::mat4 &view = state.view;
@@ -89,60 +89,36 @@ struct io_system {
         break;
       }
       // z-rotation
-      case SDLK_1: {
-        view = glm::rotate(view, ANGLE, glm::vec3(0.0f, 0.0f, 1.0f));
-        break;
-      }
       case SDLK_j: {
         auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
         rotate_entities(logger, data, ANGLE, ROTATION_VECTOR);
         break;
       }
-      case SDLK_2: {
-        view = glm::rotate(view, -ANGLE, glm::vec3(0.0f, 0.0f, 1.0f));
-        break;
-      }
       case SDLK_k: {
-        auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, 0.0f, -1.0f};
-        rotate_entities(logger, data, ANGLE, ROTATION_VECTOR);
+        auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
+        rotate_entities(logger, data, -ANGLE, ROTATION_VECTOR);
         break;
       }
       // y-rotation
-      case SDLK_3: {
-        view = glm::rotate(view, ANGLE, glm::vec3(0.0f, 1.0f, 0.0f));
-        break;
-      }
       case SDLK_u: {
         auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
         rotate_entities(logger, data, ANGLE, ROTATION_VECTOR);
         break;
       }
-      case SDLK_4: {
-        view = glm::rotate(view, -ANGLE, glm::vec3(0.0f, 1.0f, 0.0f));
-        break;
-      }
       case SDLK_i: {
-        auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, -1.0f, 0.0f};
-        rotate_entities(logger, data, ANGLE, ROTATION_VECTOR);
-        break;
-      }
-      // x-rotation
-      case SDLK_5: {
-        view = glm::rotate(view, ANGLE, glm::vec3(1.0f, 0.0f, 0.0f));
-        break;
-      }
-      case SDLK_n: {
-        auto constexpr ROTATION_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
+        auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
         rotate_entities(logger, data, -ANGLE, ROTATION_VECTOR);
         break;
       }
-      case SDLK_6: {
-        view = glm::rotate(view, -ANGLE, glm::vec3(1.0f, 0.0f, 0.0f));
+      // x-rotation
+      case SDLK_n: {
+        auto constexpr ROTATION_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
+        rotate_entities(logger, data, ANGLE, ROTATION_VECTOR);
         break;
       }
       case SDLK_m: {
         auto constexpr ROTATION_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
-        rotate_entities(logger, data, ANGLE, ROTATION_VECTOR);
+        rotate_entities(logger, data, -ANGLE, ROTATION_VECTOR);
         break;
       }
       // transform controls
@@ -220,8 +196,16 @@ struct io_system {
   {
     auto const fn = [&]() {
       auto &m = data.get(ct::model, eid);
-      auto const q = glm::angleAxis(glm::degrees(angle), axis);
-      m.rotation *= q;// * m.rotation;
+      auto const q = glm::angleAxis(glm::radians(angle), axis);
+      //auto const q = glm::quat(glm::vec3{0.0f, glm::radians(angle), 0.0f});
+      auto const x = q * m.rotation;
+      m.rotation = x;
+      //m.rotation = glm::normalize(m.rotation * q);
+
+      //rotated_point = origin + (orientation_quaternion * (point-origin));
+
+      //glm::vec3 rot(90.0*(float)M_PI/180.0, 0, 0);
+      //m.rotation = glm::normalize(m.rotation * glm::quat(rot));
     };
     for_entity(logger, data, eid, "rotating", fn);
   }

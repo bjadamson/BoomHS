@@ -50,9 +50,9 @@ make_state(L &logger, R &renderer, HW const& hw)
   auto const fwidth = static_cast<GLfloat>(hw.w);
 
   logger.error(fmt::sprintf("fheight '%f', fwidth '%f'", fheight, fwidth));
-  auto projection = glm::perspective(90.0f, (fwidth / fheight), 0.1f, 100.0f);
+  auto projection = glm::perspective(45.0f, (fwidth / fheight), 0.1f, 10000.0f);
   auto view = glm::lookAt(
-    glm::vec3(0.0f, 0.0f, 1.0f), // camera position
+    glm::vec3(0.0f, 0.0f, 2.0f), // camera position
     glm::vec3(0.0f, 0.0f, -1.0f),  // look at origin
     glm::vec3(0.0f, 1.0f, 0.0f)); // "up" vector
 
@@ -60,43 +60,18 @@ make_state(L &logger, R &renderer, HW const& hw)
 }
 
 // TODO: bye globals
-game::world_coordinate *p = nullptr;
 game::model *pmv = nullptr;
-
-game::world_coordinate *q = nullptr;
 game::model *qmv = nullptr;
-
-game::world_coordinate *r = nullptr;
 game::model *rmv = nullptr;
-
-game::world_coordinate *s = nullptr;
 game::model *smv = nullptr;
-
-game::world_coordinate *t = nullptr;
 game::model *tmv = nullptr;
-
-game::world_coordinate *u = nullptr;
 game::model *umv = nullptr;
-
-game::world_coordinate *v = nullptr;
 game::model *vmv = nullptr;
-
-game::world_coordinate *w = nullptr;
 game::model *wmv = nullptr;
-
-game::world_coordinate *x = nullptr;
 game::model *xmv = nullptr;
-
-game::world_coordinate *y = nullptr;
 game::model *ymv = nullptr;
-
-game::world_coordinate *a = nullptr;
 game::model *amv = nullptr;
-
-game::world_coordinate *b = nullptr;
 game::model *bmv = nullptr;
-
-game::world_coordinate *c = nullptr;
 game::model *cmv = nullptr;
 
 template <typename G, typename S>
@@ -112,100 +87,71 @@ ecst_main(G &game, S &state)
 
   // Initialize context with some entities.
   ctx->step([&](auto &proxy) {
-    /*
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.2f, -0.5f, 0.0f, 1.0f);
-      p = &wc;
       pmv = &proxy.add_component(ct::model, eid);
+      pmv->translation = glm::vec3{-0.2f, -0.5f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.5f, 0.0f, 0.0f, 1.0f);
-      q = &wc;
       qmv = &proxy.add_component(ct::model, eid);
+      qmv->translation = glm::vec3{-0.5f, 0.0f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.0f, 0.7f, -1.0f, 1.0f);
-      r = &wc;
       rmv = &proxy.add_component(ct::model, eid);
+      rmv->translation = glm::vec3{0.0f, 0.7f, -1.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.60f, -0.20f, 0.0f, 1.0f);
-      s = &wc;
       smv = &proxy.add_component(ct::model, eid);
+      smv->translation = glm::vec3{0.60f, -0.20f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.0f, -0.5f, 0.0f, 1.0f);
-      t = &wc;
       tmv = &proxy.add_component(ct::model, eid);
+      tmv->translation = glm::vec3{0.0f, -0.5f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.8f, 0.55f, 0.0f, 1.0f);
-      u = &wc;
       umv = &proxy.add_component(ct::model, eid);
+      umv->translation = glm::vec3{-0.8f, 0.55f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.80f, -0.20f, 0.0f, 1.0f);
-      v = &wc;
       vmv = &proxy.add_component(ct::model, eid);
+      vmv->translation = glm::vec3{0.80f, -0.20f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.80f, 0.80f, 0.0f, 1.0f);
-      w = &wc;
       wmv = &proxy.add_component(ct::model, eid);
+      wmv->translation = glm::vec3{-0.80f, 0.80f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.60f, -0.60f, 0.0f, 1.0f);
-      x = &wc;
       xmv = &proxy.add_component(ct::model, eid);
+      xmv->translation = glm::vec3{-0.60f, -0.60f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.60f, 0.60f, 0.0f, 1.0f);
-      y = &wc;
       ymv = &proxy.add_component(ct::model, eid);
+      ymv->translation = glm::vec3{0.60f, 0.60f, 0.0f};
     }
-    */
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      a = &wc;
-      wc.set(0.0f, 0.0f, 0.0f, 1.0f);
       amv = &proxy.add_component(ct::model, eid);
       amv->translation = glm::vec3{0.0f, 0.0f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.0f, 0.0f, 0.0f, 1.0f);
-      b = &wc;
       bmv = &proxy.add_component(ct::model, eid);
-      bmv->translation = glm::vec3{-0.7f, 0.0f, 0.0f};
+      bmv->translation = glm::vec3{0.7f, 0.0f, 0.0f};
     }
     /*
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.7f, -0.7f, 0.0f, 1.0f);
-      c = &wc;
+      cmv = &proxy.add_component(ct::model, eid);
+      cmv->translation = glm::vec3{0.7f, -0.7f, 0.0f};
     }
     */
   });
@@ -280,8 +226,8 @@ public:
     //auto triangle_texture = game::triangle_factory::make(*r, true);
     //auto triangle_wireframe = game::triangle_factory::make(*s, true, false);
 
-    auto cube_texture = game::cube_factory::make_textured(*a, *amv, {0.25f, 0.25f, 0.25f});
-    auto cube_color = game::cube_factory::make_spotted(*b, *bmv, ::engine::gfx::LIST_OF_COLORS::BLUE,
+    auto cube_texture = game::cube_factory::make_textured(*amv, {0.15f, 0.15f, 0.15f});
+    auto cube_color = game::cube_factory::make_spotted(*bmv, ::engine::gfx::LIST_OF_COLORS::BLUE,
         {0.25f, 0.25f, 0.25f});
     //auto cube_wf = game::cube_factory::make_wireframe(*c, *cmv, {0.25f, 0.25f, 0.25f});
 

@@ -11,13 +11,11 @@ template <typename V>
 struct cube : public shape {
   static auto constexpr NUM_VERTICES = 8;
   std::array<V, 8> vertices;
-  model const& model;
 
 private:
   friend class cube_factory;
-  explicit constexpr cube(world_coordinate const &w, class model const& m, std::array<V, 8> &&v)
-      : shape(w)
-      , model(m)
+  explicit constexpr cube(struct model const& m, std::array<V, 8> &&v)
+      : shape(m)
       , vertices(std::move(v))
   {
   }
@@ -33,51 +31,45 @@ class cube_factory
     using c = std::array<float, 4>;
 
     height_width_length const dimensions;
-    model const& model;
     std::array<c, 8> const colors;
   };
 
   struct uv_properties {
     height_width_length const dimensions;
-    model const& model;
   };
 
   struct wireframe_properties {
     height_width_length const dimensions;
-    model const& model;
 
     float const alpha = 1.0f;
     float const width = 0.25f;
   };
 
   static constexpr auto
-  calculate_vertices(world_coordinate const &wc, height_width_length const &hw)
+  calculate_vertices(height_width_length const &hw)
   {
     auto const h = hw.height;
     auto const w = hw.width;
     auto const l = hw.length;
 
-    auto const x = wc.x();
-    auto const y = wc.y();
-    auto const z = wc.z();
     // clang-format off
     return std::array<vertex, 8> {
-      vertex{x - w, y - h, z + l, wc.w()}, // front bottom-left
-      vertex{x + w, y - h, z + l, wc.w()}, // front bottom-right
-      vertex{x + w, y + h, z + l, wc.w()}, // front top-right
-      vertex{x - w, y + h, z + l, wc.w()}, // front top-left
+      vertex{-w, -h, l, 1.0f}, // front bottom-left
+      vertex{ w, -h, l, 1.0f}, // front bottom-right
+      vertex{ w,  h, l, 1.0f}, // front top-right
+      vertex{-w,  h, l, 1.0f}, // front top-left
 
-      vertex{x - w, y - h, z - l, wc.w()}, // back bottom-left
-      vertex{x + w, y - h, z - l, wc.w()}, // back bottom-right
-      vertex{x + w, y + h, z - l, wc.w()}, // back top-right
-      vertex{x - w, y + h, z - l, wc.w()}  // back top-left
+      vertex{-w, -h, -l, 1.0f}, // back bottom-left
+      vertex{ w, -h, -l, 1.0f}, // back bottom-right
+      vertex{ w, h,  -l, 1.0f}, // back top-right
+      vertex{-w, h,  -l, 1.0f}  // back top-left
     };
     // clang-format on
   }
 
-  static constexpr auto construct(world_coordinate const &wc, color_properties const &props)
+  static constexpr auto construct(model const &m, color_properties const &props)
   {
-    auto const vertices = calculate_vertices(wc, props.dimensions);
+    auto const vertices = calculate_vertices(props.dimensions);
 
     // clang-format off
     vertex_color_attributes const f_bottom_left  {vertices[0], color{props.colors[0]}};
@@ -93,13 +85,13 @@ class cube_factory
     auto arr = stlw::make_array<vertex_color_attributes>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,
         b_bottom_left, b_bottom_right, b_top_right, b_top_left);
-    return cube<vertex_color_attributes>{wc, props.model, std::move(arr)};
+    return cube<vertex_color_attributes>{m, std::move(arr)};
     // clang-format on
   }
 
-  static constexpr auto construct(world_coordinate const &wc, uv_properties const &props)
+  static constexpr auto construct(model const &m, uv_properties const &props)
   {
-    auto const vertices = calculate_vertices(wc, props.dimensions);
+    auto const vertices = calculate_vertices(props.dimensions);
 
     // clang-format off
     vertex_attributes_only const f_bottom_left  {vertices[0]};
@@ -115,13 +107,13 @@ class cube_factory
     auto arr = stlw::make_array<vertex_attributes_only>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,
         b_bottom_left, b_bottom_right, b_top_right, b_top_left);
-    return cube<vertex_attributes_only>{wc, props.model, std::move(arr)};
+    return cube<vertex_attributes_only>{m, std::move(arr)};
     // clang-format on
   }
 
-  static constexpr auto construct(world_coordinate const &wc, wireframe_properties const &props)
+  static constexpr auto construct(model const &m, wireframe_properties const &props)
   {
-    auto const vertices = calculate_vertices(wc, props.dimensions);
+    auto const vertices = calculate_vertices(props.dimensions);
 
     // clang-format off
     vertex_attributes_only const f_bottom_left  {vertices[0]};
@@ -137,13 +129,13 @@ class cube_factory
     auto arr = stlw::make_array<vertex_attributes_only>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,
         b_bottom_left, b_bottom_right, b_top_right, b_top_left);
-    return cube<vertex_attributes_only>{wc, props.model, std::move(arr)};
+    return cube<vertex_attributes_only>{m, std::move(arr)};
     // clang-format on
   }
 
 public:
-  static constexpr auto make_spotted(world_coordinate const &wc, model const& model,
-      std::array<float, 3> const &c, height_width_length const& hwl)
+  static constexpr auto make_spotted(model const &m, std::array<float, 3> const &c,
+      height_width_length const& hwl)
   {
     auto const ALPHA = 1.0f;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
@@ -153,22 +145,20 @@ public:
         std::array<float, 4>{0.0f, 1.0f, 0.0f, ALPHA}, color,
         std::array<float, 4>{0.2f, 0.5f, 0.2f, ALPHA}, color,
         std::array<float, 4>{0.6f, 0.4f, 0.8f, ALPHA}};
-    color_properties const p{hwl, model, colors};
-    return construct(wc, p);
+    color_properties const p{hwl, colors};
+    return construct(m, p);
   }
 
-  static constexpr auto make_textured(world_coordinate const &wc, model const& model,
-      height_width_length const& hwl)
+  static constexpr auto make_textured(model const &m, height_width_length const& hwl)
   {
-    uv_properties const p{hwl, model};
-    return construct(wc, p);
+    uv_properties const p{hwl};
+    return construct(m, p);
   }
 
-  static constexpr auto make_wireframe(world_coordinate const &wc, model const& model,
-      height_width_length const& hwl)
+  static constexpr auto make_wireframe(model const& m, height_width_length const& hwl)
   {
-    wireframe_properties const p{hwl, model};
-    return construct(wc, p);
+    wireframe_properties const p{hwl};
+    return construct(m, p);
   }
 };
 
