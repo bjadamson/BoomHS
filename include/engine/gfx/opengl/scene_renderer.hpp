@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/transform.hpp>
 #include <stlw/format.hpp>
 #include <stlw/log.hpp>
 #include <stlw/print.hpp>
@@ -203,12 +204,16 @@ draw_scene(L &logger, color3d_context &ctx, glm::mat4 const &view,
 
   auto &p = ctx.program_ref();
   p.use();
-  auto const fn = [&logger, &ctx, &p](auto const &shape) {
+  auto const fn = [&](auto const &shape) {
 
     logger.trace("setting u_mvmatrix");
     auto const& model = shape.model();
+
+    auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
     auto const rmatrix = glm::toMat4(model.rotation);
-    auto const mvmatrix = model.translation * rmatrix * model.scale;
+    auto const smatrix = glm::scale(glm::mat4{}, model.scale);
+    auto const mmatrix = tmatrix * rmatrix * smatrix;
+    auto const mvmatrix = projection * view * mmatrix;
     p.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
 
     logger.trace("before drawing shape ...");
@@ -239,12 +244,16 @@ draw_scene(L &logger, texture3d_context &ctx, glm::mat4 const &view,
 
   auto &p = ctx.program_ref();
   p.use();
-  auto const fn = [&logger, &ctx, &p](auto const &shape) {
+  auto const fn = [&](auto const &shape) {
 
     logger.trace("setting u_mvmatrix");
     auto const& model = shape.model();
+
+    auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
     auto const rmatrix = glm::toMat4(model.rotation);
-    auto const mvmatrix = model.translation * rmatrix * model.scale;
+    auto const smatrix = glm::scale(glm::mat4{}, model.scale);
+    auto const mmatrix = tmatrix * rmatrix * smatrix;
+    auto const mvmatrix = projection * view * mmatrix;
     p.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
 
     logger.trace("before drawing shape ...");

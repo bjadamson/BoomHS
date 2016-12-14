@@ -50,7 +50,7 @@ make_state(L &logger, R &renderer, HW const& hw)
   auto const fwidth = static_cast<GLfloat>(hw.w);
 
   logger.error(fmt::sprintf("fheight '%f', fwidth '%f'", fheight, fwidth));
-  auto projection = glm::perspective(60.0f, (fwidth / fheight), 0.1f, 1.0f);
+  auto projection = glm::perspective(90.0f, (fwidth / fheight), 0.1f, 100.0f);
   auto view = glm::lookAt(
     glm::vec3(0.0f, 0.0f, 1.0f), // camera position
     glm::vec3(0.0f, 0.0f, -1.0f),  // look at origin

@@ -43,11 +43,11 @@ struct io_system {
     float constexpr SF = 0.20f; // scale-factor
 
     float constexpr ANGLE = 0.2f;
-    float constexpr SCALE_FACTOR = 0.1f;
+    float constexpr SCALE_FACTOR = 1.0f;
 
     glm::mat4 &view = state.view;
     glm::mat4 &projection = state.projection;
-    auto const make_scalev = [](float const f) { return glm::vec3(1.0f + f, 1.0f + f, 1.0f + f); };
+    auto const make_scalev = [](float const f) { return glm::vec3(f, f, f); };
 
     switch (event.type) {
     case SDL_KEYDOWN: {
@@ -72,8 +72,7 @@ struct io_system {
       // scaling
       case SDLK_KP_PLUS: {
       case SDLK_o:
-        auto constexpr SCALE_VECTOR = glm::vec3{1.0f + SF, 1.0f + SF, 1.0f + SF};
-        scale_entities(logger, data, SCALE_VECTOR);
+        scale_entities(logger, data, make_scalev(SCALE_FACTOR));
         break;
       }
       case SDLK_PLUS: {
@@ -82,8 +81,7 @@ struct io_system {
       }
       case SDLK_KP_MINUS: {
       case SDLK_p:
-        auto constexpr SCALE_VECTOR = glm::vec3{1.0f - SF, 1.0f - SF, 1.0f - SF};
-        scale_entities(logger, data, SCALE_VECTOR);
+        scale_entities(logger, data, make_scalev(-SCALE_FACTOR));
         break;
       }
       case SDLK_MINUS: {
@@ -211,7 +209,7 @@ struct io_system {
   {
     auto const fn = [&]() {
       auto &m = data.get(ct::model, eid);
-      m.translation = glm::translate(m.translation, distance);
+      m.translation += distance;
     };
     for_entity(logger, data, eid, "moving", fn);
   }
@@ -221,10 +219,9 @@ struct io_system {
       glm::vec3 const& axis) const
   {
     auto const fn = [&]() {
-      //auto const& wc = data.get(ct::world_coordinate, eid);
       auto &m = data.get(ct::model, eid);
       auto const q = glm::angleAxis(glm::degrees(angle), axis);
-      m.rotation = q * m.rotation;
+      m.rotation *= q;// * m.rotation;
     };
     for_entity(logger, data, eid, "rotating", fn);
   }
@@ -234,7 +231,7 @@ struct io_system {
   {
     auto const fn = [&]() {
       auto &m = data.get(ct::model, eid);
-      m.scale = glm::scale(m.scale, sf);
+      m.scale += sf;
     };
     for_entity(logger, data, eid, "scaling", fn);
   }
