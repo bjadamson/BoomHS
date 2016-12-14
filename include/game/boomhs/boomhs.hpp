@@ -188,15 +188,17 @@ ecst_main(G &game, S &state)
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
       a = &wc;
+      wc.set(0.0f, 0.0f, 0.0f, 1.0f);
       amv = &proxy.add_component(ct::model, eid);
+      amv->translation = glm::vec3{0.0f, 0.0f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
       auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      //wc.set(-0.7f, 0.7f, 0.0f, 1.0f);
+      wc.set(0.0f, 0.0f, 0.0f, 1.0f);
       b = &wc;
       bmv = &proxy.add_component(ct::model, eid);
-      bmv->translation += glm::vec3{-0.7f, 0.0f, 0.0f};
+      bmv->translation = glm::vec3{-0.7f, 0.0f, 0.0f};
     }
     /*
     {
