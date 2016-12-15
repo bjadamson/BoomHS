@@ -2,6 +2,8 @@
 #include <engine/gfx/lib.hpp>
 #include <engine/gfx/opengl/context.hpp>
 #include <engine/gfx/opengl/gfx_to_opengl.hpp>
+#include <engine/gfx/opengl/render2d.hpp>
+#include <engine/gfx/opengl/render3d.hpp>
 #include <engine/gfx/resources.hpp>
 #include <stlw/type_macros.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -53,7 +55,7 @@ struct engine {
   void draw_2dshapes_with_colors(Args const &args, S const &... shapes)
   {
     auto const fn = [&](auto const& gl_mapped_shapes) {
-      renderer::draw_scene(args.logger, this->color2d_, args.projection, gl_mapped_shapes);
+      render2d::draw_scene(args.logger, this->color2d_, args.projection, gl_mapped_shapes);
     };
     this->draw_shape(fn, shapes...);
   }
@@ -62,7 +64,7 @@ struct engine {
   void draw_2dshapes_with_textures(Args const &args, S const &... shapes)
   {
     auto const fn = [&](auto const& gl_mapped_shapes) {
-      renderer::draw_scene(args.logger, this->texture2d_, args.projection, gl_mapped_shapes);
+      render2d::draw_scene(args.logger, this->texture2d_, args.projection, gl_mapped_shapes);
     };
     this->draw_shape(fn, shapes...);
   }
@@ -71,7 +73,7 @@ struct engine {
   void draw_3dcolor_shapes(Args const &args, S const &... shapes)
   {
     auto const fn = [&](auto const& gl_mapped_shapes) {
-      renderer::draw_scene(args.logger, this->color3d_, args.view, args.projection, gl_mapped_shapes);
+      render3d::draw_scene(args.logger, this->color3d_, args.view, args.projection, gl_mapped_shapes);
     };
     this->draw_shape(fn, shapes...);
   }
@@ -80,7 +82,7 @@ struct engine {
   void draw_3dtextured_shapes(Args const &args, S const &... shapes)
   {
     auto const fn = [&](auto const& gl_mapped_shapes) {
-      renderer::draw_scene(args.logger, this->texture3d_, args.view, args.projection, gl_mapped_shapes);
+      render3d::draw_scene(args.logger, this->texture3d_, args.view, args.projection, gl_mapped_shapes);
     };
     this->draw_shape(fn, shapes...);
   }
@@ -116,7 +118,7 @@ struct factory {
     auto c2 = context_factory::make_color3d(logger, std::move(phandle2), std::move(va2));
 
     DO_TRY(auto phandle3, program_loader::from_files("3dtexture.vert", "3dtexture.frag"));
-    auto va3 = global::make_vertex_only_vertex_attribute(logger);
+    auto va3 = global::make_3dvertex_only_vertex_attribute(logger);
     auto c3 = context_factory::make_texture3d(
         logger, std::move(phandle3), std::move(va3),
         get_r(IMAGES::CUBE_FRONT),
@@ -128,7 +130,9 @@ struct factory {
         );
 
     DO_TRY(auto phandle4, program_loader::from_files("wire.vert", "wire.frag"));
-    auto va4 = global::make_vertex_only_vertex_attribute(logger);
+    // TODO: now 2d wireframes will be broken here, need a "c5" and separate shaders until we
+    // figure out how to unify them.
+    auto va4 = global::make_3dvertex_only_vertex_attribute(logger);
     auto const color = LIST_OF_COLORS::PINK;
     auto c4 = context_factory::make_wireframe(logger, std::move(phandle4), std::move(va4), color);
 
