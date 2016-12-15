@@ -14,7 +14,8 @@ namespace engine::gfx::opengl
 struct engine {
   // data
   color2d_context color2d_;
-  texture2d_context texture2d_;
+  texture2d_context texture2d_wall_;
+  texture2d_context texture2d_container_;
 
   color3d_context color3d_;
   texture3d_context texture3d_;
@@ -25,10 +26,11 @@ struct engine {
   NO_MOVE_ASSIGN(engine);
   MOVE_CONSTRUCTIBLE(engine);
 
-  engine(color2d_context &&c2d, texture2d_context &&t2d, color3d_context &&c3d,
-      texture3d_context &&t3d, opengl_wireframe_context &&w)
+  engine(color2d_context &&c2d, texture2d_context &&t2d0, texture2d_context &&t2d1,
+      color3d_context &&c3d, texture3d_context &&t3d, opengl_wireframe_context &&w)
       : color2d_(std::move(c2d))
-      , texture2d_(std::move(t2d))
+      , texture2d_wall_(std::move(t2d0))
+      , texture2d_container_(std::move(t2d1))
       , color3d_(std::move(c3d))
       , texture3d_(std::move(t3d))
       , wireframe_(std::move(w))
@@ -61,10 +63,19 @@ struct engine {
   }
 
   template <typename Args, typename... S>
-  void draw_2dshapes_with_textures(Args const &args, S const &... shapes)
+  void draw_2dshapes_with_wall_texture(Args const &args, S const &... shapes)
   {
     auto const fn = [&](auto const& gl_mapped_shapes) {
-      render2d::draw_scene(args.logger, this->texture2d_, args.projection, gl_mapped_shapes);
+      render2d::draw_scene(args.logger, this->texture2d_wall_, args.projection, gl_mapped_shapes);
+    };
+    this->draw_shape(fn, shapes...);
+  }
+
+  template <typename Args, typename... S>
+  void draw_2dshapes_with_container_texture(Args const &args, S const &... shapes)
+  {
+    auto const fn = [&](auto const& gl_mapped_shapes) {
+      render2d::draw_scene(args.logger, this->texture2d_container_, args.projection, gl_mapped_shapes);
     };
     this->draw_shape(fn, shapes...);
   }
@@ -113,14 +124,19 @@ struct factory {
     auto c1 = context_factory::make_texture2d(logger, std::move(phandle1),
                                                            get_r(IMAGES::WALL), std::move(va1));
 
-    DO_TRY(auto phandle2, program_loader::from_files("3dcolor.vert", "3dcolor.frag"));
-    auto va2 = global::make_vertex_color_vertex_attribute(logger);
-    auto c2 = context_factory::make_color3d(logger, std::move(phandle2), std::move(va2));
+    DO_TRY(auto phandle2, program_loader::from_files("2dtexture.vert", "2dtexture.frag"));
+    auto va2 = global::make_vertex_uv2d_vertex_attribute(logger);
+    auto c2 = context_factory::make_texture2d(logger, std::move(phandle2),
+                                                           get_r(IMAGES::CONTAINER), std::move(va2));
 
-    DO_TRY(auto phandle3, program_loader::from_files("3dtexture.vert", "3dtexture.frag"));
-    auto va3 = global::make_3dvertex_only_vertex_attribute(logger);
-    auto c3 = context_factory::make_texture3d(
-        logger, std::move(phandle3), std::move(va3),
+    DO_TRY(auto phandle3, program_loader::from_files("3dcolor.vert", "3dcolor.frag"));
+    auto va3 = global::make_vertex_color_vertex_attribute(logger);
+    auto c3 = context_factory::make_color3d(logger, std::move(phandle3), std::move(va3));
+
+    DO_TRY(auto phandle4, program_loader::from_files("3dtexture.vert", "3dtexture.frag"));
+    auto va4 = global::make_3dvertex_only_vertex_attribute(logger);
+    auto c4 = context_factory::make_texture3d(
+        logger, std::move(phandle4), std::move(va4),
         get_r(IMAGES::CUBE_FRONT),
         get_r(IMAGES::CUBE_RIGHT),
         get_r(IMAGES::CUBE_BACK),
@@ -129,14 +145,15 @@ struct factory {
         get_r(IMAGES::CUBE_BOTTOM)
         );
 
-    DO_TRY(auto phandle4, program_loader::from_files("wire.vert", "wire.frag"));
+    DO_TRY(auto phandle5, program_loader::from_files("wire.vert", "wire.frag"));
     // TODO: now 2d wireframes will be broken here, need a "c5" and separate shaders until we
     // figure out how to unify them.
-    auto va4 = global::make_3dvertex_only_vertex_attribute(logger);
+    auto va5 = global::make_3dvertex_only_vertex_attribute(logger);
     auto const color = LIST_OF_COLORS::PINK;
-    auto c4 = context_factory::make_wireframe(logger, std::move(phandle4), std::move(va4), color);
+    auto c5 = context_factory::make_wireframe(logger, std::move(phandle5), std::move(va5), color);
 
-    return engine{std::move(c0), std::move(c1), std::move(c2), std::move(c3), std::move(c4)};
+    return engine{std::move(c0), std::move(c1), std::move(c2), std::move(c3), std::move(c4),
+      std::move(c5)};
   }
 };
 

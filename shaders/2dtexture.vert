@@ -6,10 +6,8 @@ in vec2 a_uv;
 // shader
 out vec2 v_uv;
 
-uniform mat4 u_projection;
-
 void main()
 {
-  gl_Position = u_projection * a_position;
+  gl_Position = a_position;
   v_uv = a_uv;
 }

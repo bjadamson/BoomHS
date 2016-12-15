@@ -3,7 +3,6 @@
 #include <engine/gfx/opengl/global.hpp>
 #include <engine/gfx/opengl/render.hpp>
 #include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/transform.hpp>
 
@@ -18,6 +17,15 @@ void
 draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection,
     std::tuple<S...> const& shapes)
 {
+  global::vao_bind(ctx.vao());
+  ON_SCOPE_EXIT([]() { global::vao_unbind(); });
+
+  glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
+
   auto &p = ctx.program_ref();
   p.use();
   auto const fn = [&](auto const &shape) {
@@ -47,15 +55,6 @@ void
 draw_scene(L &logger, color3d_context &ctx, glm::mat4 const &view,
            glm::mat4 const &projection, std::tuple<S...> const &shapes)
 {
-  global::vao_bind(ctx.vao());
-  ON_SCOPE_EXIT([]() { global::vao_unbind(); });
-
-  glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
-
   impl::draw_scene(logger, ctx, view, projection, shapes);
 }
 
@@ -64,15 +63,6 @@ void
 draw_scene(L &logger, texture3d_context &ctx, glm::mat4 const &view,
            glm::mat4 const &projection, std::tuple<S...> const &shapes)
 {
-  global::vao_bind(ctx.vao());
-  ON_SCOPE_EXIT([]() { global::vao_unbind(); });
-
-  glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
-
   global::texture_bind(ctx.texture());
   ON_SCOPE_EXIT([&ctx]() { global::texture_unbind(ctx.texture()); });
 
@@ -84,24 +74,6 @@ void
 draw_scene(L &logger, opengl_wireframe_context &ctx, glm::mat4 const &view,
            glm::mat4 const &projection, std::tuple<S...> const &shapes)
 {
-  global::vao_bind(ctx.vao());
-  ON_SCOPE_EXIT([]() { global::vao_unbind(); });
-
-  glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
-
-  auto &p = ctx.program_ref();
-  logger.trace("setting u_view");
-  p.set_uniform_matrix_4fv(logger, "u_view", view);
-  p.check_opengl_errors(logger);
-
-  logger.trace("setting u_color");
-  p.set_uniform_array_4fv(logger, "u_color", ctx.color());
-  p.check_opengl_errors(logger);
-
   impl::draw_scene(logger, ctx, projection, shapes);
 }
 

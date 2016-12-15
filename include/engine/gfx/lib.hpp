@@ -50,13 +50,34 @@ public:
   template <typename Args, typename... S>
   void draw_2dshapes_with_colors(Args const &args, S const &... shapes)
   {
+    //glDisable(GL_DEPTH_TEST);
+    //glDepthMask(GL_FALSE); // disables writing to the z-buffer
     this->engine_.draw_2dshapes_with_colors(args, shapes...);
+
+    //glDepthMask(GL_TRUE); // enables writing to the z-buffer
+    //glEnable(GL_DEPTH_TEST);
   }
 
   template <typename Args, typename... S>
-  void draw_2dshapes_with_textures(Args const &args, S const &... shapes)
+  void draw_2dshapes_with_container_texture(Args const &args, S const &... shapes)
   {
-    this->engine_.draw_2dshapes_with_textures(args, shapes...);
+    //glDisable(GL_DEPTH_TEST);
+    //glDepthMask(GL_FALSE); // disables writing to the z-buffer
+    this->engine_.draw_2dshapes_with_container_texture(args, shapes...);
+
+    //glDepthMask(GL_TRUE); // enables writing to the z-buffer
+    //glEnable(GL_DEPTH_TEST);
+  }
+
+  template <typename Args, typename... S>
+  void draw_2dshapes_with_wall_texture(Args const &args, S const &... shapes)
+  {
+    //glDisable(GL_DEPTH_TEST);
+    //glDepthMask(GL_FALSE); // disables writing to the z-buffer
+    this->engine_.draw_2dshapes_with_wall_texture(args, shapes...);
+
+    //glDepthMask(GL_TRUE); // enables writing to the z-buffer
+    //glEnable(GL_DEPTH_TEST);
   }
 
   template <typename Args, typename... S>
@@ -68,6 +89,7 @@ public:
     glCullFace(GL_BACK);
     this->engine_.draw_3dcolor_shapes(args, shapes...);
 
+    //glDepthMask(GL_FALSE);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
   }
@@ -77,10 +99,12 @@ public:
   {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+    //glDepthMask(GL_TRUE); // enables writing to the z-buffer
 
     glCullFace(GL_BACK);
     this->engine_.draw_3dtextured_shapes(args, shapes...);
 
+    //glDepthMask(GL_FALSE);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
   }

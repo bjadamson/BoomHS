@@ -10,6 +10,9 @@
 namespace engine::gfx::opengl::render
 {
 
+namespace impl
+{
+
 template <typename L>
 void
 render(L &logger, GLenum const render_mode, GLsizei const element_count)
@@ -69,6 +72,8 @@ copy_to_gpu(L &logger, S const &shape)
                GL_STATIC_DRAW);
 }
 
+} // ns impl
+
 template <typename L, typename Ctx, typename S>
 void
 render_shape(L &logger, Ctx &ctx, S const &shape)
@@ -78,10 +83,10 @@ render_shape(L &logger, Ctx &ctx, S const &shape)
                             shape.vertices_length(), shape.vertice_count()));
 
   // print_triangle(logger, t0);
-  copy_to_gpu(logger, shape);
+  impl::copy_to_gpu(logger, shape);
 
   // Draw our first triangle
-  render(logger, shape.draw_mode(), shape.ordering_count());
+  impl::render(logger, shape.draw_mode(), shape.ordering_count());
 }
 
 template <typename L, typename C, typename FN, typename... S>
