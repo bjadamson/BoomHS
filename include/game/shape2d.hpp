@@ -432,7 +432,7 @@ public:
 
   static auto make(drawmode const dm, model const &m, int const num_vertices)
   {
-    auto constexpr COLOR = ::engine::gfx::LIST_OF_COLORS::PINK;
+    auto constexpr COLOR = ::engine::gfx::LIST_OF_COLORS::LAWN_GREEN;
     color_properties const prop{num_vertices, COLOR};
     return construct(dm, m, prop);
   }
