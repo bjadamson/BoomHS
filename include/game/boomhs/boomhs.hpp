@@ -25,19 +25,20 @@ struct game_state {
   R &renderer;
   engine::window::dimensions const dimensions;
 
-  glm::mat4 view, projection;
-
+  glm::mat4 projection;
+  engine::gfx::camera camera;
 
   NO_COPY(game_state);
   NO_MOVE_ASSIGN(game_state);
 public:
   MOVE_CONSTRUCTIBLE(game_state);
-  game_state(L &l, R &r, engine::window::dimensions const &d, glm::mat4 &&pm, glm::mat4 &&vm)
-      : logger(l)
-      , renderer(r)
-      , dimensions(d)
-      , projection(std::move(pm))
-      , view(std::move(vm))
+  game_state(L &l, R &r, engine::window::dimensions const &d, glm::mat4 &&pm,
+      engine::gfx::camera &&c)
+    : logger(l)
+    , renderer(r)
+    , dimensions(d)
+    , projection(std::move(pm))
+    , camera(std::move(c))
   {
   }
 };
@@ -51,12 +52,12 @@ make_state(L &logger, R &renderer, HW const& hw)
 
   logger.error(fmt::sprintf("fheight '%f', fwidth '%f'", fheight, fwidth));
   auto projection = glm::perspective(45.0f, (fwidth / fheight), 0.1f, 10000.0f);
-  auto view = glm::lookAt(
+  engine::gfx::camera c(
     glm::vec3(0.0f, 0.0f, 2.0f), // camera position
     glm::vec3(0.0f, 0.0f, -1.0f),  // look at origin
     glm::vec3(0.0f, 1.0f, 0.0f)); // "up" vector
 
-  return game_state<L, R>(logger, renderer, hw, std::move(projection), std::move(view));
+  return game_state<L, R>(logger, renderer, hw, std::move(projection), std::move(c));
 }
 
 // TODO: bye globals
@@ -205,7 +206,7 @@ public:
   template <typename State>
   void game_loop(State &state)
   {
-    ::engine::gfx::render_args<decltype(state.logger)> const args{state.logger, state.view,
+    ::engine::gfx::render_args<decltype(state.logger)> const args{state.logger, state.camera,
                                                                   state.projection};
 
     using COLOR_ARRAY = std::array<float, 4>;

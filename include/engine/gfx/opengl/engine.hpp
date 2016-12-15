@@ -34,7 +34,7 @@ template <typename Args, typename C, typename... S>
 void draw3d(Args const &args, C &ctx, S const &... shapes)
 {
   auto const fn = [&](auto const& gl_mapped_shapes) {
-    render3d::draw_scene(args.logger, ctx, args.view, args.projection, gl_mapped_shapes);
+    render3d::draw_scene(args.logger, ctx, args.camera, args.projection, gl_mapped_shapes);
   };
   draw_shape(fn, shapes...);
 }

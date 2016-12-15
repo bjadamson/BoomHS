@@ -2,6 +2,7 @@
 #include <engine/gfx/opengl/context.hpp>
 #include <engine/gfx/opengl/global.hpp>
 #include <engine/gfx/opengl/render.hpp>
+#include <engine/gfx/camera.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/transform.hpp>
@@ -52,10 +53,11 @@ draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection
 
 template <typename L, typename C, typename... S>
 void
-draw_scene(L &logger, C &ctx, glm::mat4 const &view,
+draw_scene(L &logger, C &ctx, camera const &camera,
            glm::mat4 const &projection, std::tuple<S...> const &shapes)
 {
   auto const fn = [&]() {
+    auto const view = camera.compute_view();
     impl::draw_scene(logger, ctx, view, projection, shapes);
   };
   if constexpr (C::HAS_TEXTURE) {

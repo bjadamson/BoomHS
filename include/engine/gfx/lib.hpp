@@ -9,12 +9,12 @@ namespace engine::gfx
 template <typename L>
 struct render_args {
   L &logger;
-  glm::mat4 const &view;
-  glm::mat4 const &projection;
+  camera const& camera;
+  glm::mat4 const& projection;
 
-  render_args(L &l, glm::mat4 const &v, glm::mat4 const &p)
+  render_args(L &l, class camera const &c, glm::mat4 const &p)
       : logger(l)
-      , view(v)
+      , camera(c)
       , projection(p)
   {
   }
