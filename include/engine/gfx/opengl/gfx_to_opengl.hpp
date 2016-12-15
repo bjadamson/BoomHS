@@ -38,7 +38,6 @@ struct shape_data
       , ordering(o)
   {
   }
-
   auto constexpr num_floats_per_vertex() const { return NUM_OF_F_PER_VERTEX; }
 };
 
@@ -64,23 +63,22 @@ struct shape3d_data : public shape_data<C, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // runtime-driven data
-template <template <class, class> typename C, std::size_t NUM_OF_F_PER_VERTEX, typename F = float,
-          typename A = std::allocator<F>, typename B = std::allocator<GLuint>>
+template <template <class, class> typename C, std::size_t NUM_OF_F_PER_VERTEX,
+         typename A = std::allocator<FloatType>, typename B = std::allocator<ElementType>>
 struct runtime_shape_template
 {
   GLenum const draw_mode;
-  C<F, A> vertices;
-  C<GLuint, B> ordering;
+  C<FloatType, A> vertices;
+  C<ElementType, B> ordering;
 
   NO_COPY(runtime_shape_template);
   MOVE_DEFAULT(runtime_shape_template);
-  explicit runtime_shape_template(GLenum const dm, C<F, A> &&d, C<GLuint, B> &&e)
+  explicit runtime_shape_template(GLenum const dm, C<FloatType, A> &&d, C<ElementType, B> &&e)
       : draw_mode(dm)
       , vertices(std::move(d))
       , ordering(std::move(e))
   {
   }
-
   auto constexpr num_floats_per_vertex() const { return NUM_OF_F_PER_VERTEX; }
 };
 
@@ -130,12 +128,6 @@ using static_vertex_only_shape = static_shape_array<NUM_VERTEXES, NUM_ELEMENTS, 
 template <std::size_t NUM_VERTEXES, std::size_t NUM_ELEMENTS>
 using static_vertex_model_shape = static_shape_with_model_array<NUM_VERTEXES, NUM_ELEMENTS, 4>;
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// runtime-sized shapes
-template <std::size_t NUM_VERTEXES>
-using runtime_sized_array = runtime_shape_template<stlw::sized_buffer, NUM_VERTEXES>;
-
 // float triangles
 using float_vertex_color_triangle = static_vertex_color_shape<24, 3>;
 using float_vertex_uv_triangle = static_vertex_uv_shape<18, 3>;
@@ -150,6 +142,11 @@ using float_vertex_only_rectangle = static_vertex_only_shape<16, 6>;
 using float_vertex_color_cube = static_vertex_model_shape<64, 14>;
 using float_vertex_uv_cube = static_vertex_model_shape<32, 14>;
 using float_vertex_only_cube = static_vertex_model_shape<32, 14>;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// runtime-sized shapes
+template <std::size_t NUM_VERTEXES>
+using runtime_sized_array = runtime_shape_template<stlw::sized_buffer, NUM_VERTEXES>;
 
 // float polygons
 using float_vertex_color_polygon = runtime_sized_array<8>;
@@ -191,13 +188,14 @@ class shape_mapper
 
   static constexpr auto calc_vertex_only_num_floats(GLint const num_v) { return num_v * 4; }
 
-  static auto constexpr TRIANGLE_ELEMENTS() { return std::array<GLuint, 3>{0, 1, 2}; }
+  static auto constexpr TRIANGLE_ELEMENTS() { return std::array<ElementType, 3>{0, 1, 2}; }
   static constexpr auto map_to_array_floats(game::triangle<game::vertex_color_attributes> const &t)
   {
     using X = game::triangle<game::vertex_color_attributes>;
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_color_num_floats(NUM_VERTICES);
 
+    // clang-format off
     auto floats = std::array<float, NUM_FLOATS>{
         t.bottom_left.vertex.x,  t.bottom_left.vertex.y,  t.bottom_left.vertex.z,
         t.bottom_left.vertex.w,  t.bottom_left.color.r,   t.bottom_left.color.g,
@@ -210,6 +208,7 @@ class shape_mapper
         t.top_middle.vertex.x,   t.top_middle.vertex.y,   t.top_middle.vertex.z,
         t.top_middle.vertex.w,   t.top_middle.color.r,    t.top_middle.color.g,
         t.top_middle.color.b,    t.top_middle.color.a};
+    // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(t.draw_mode());
     return float_vertex_color_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
   }
@@ -220,6 +219,7 @@ class shape_mapper
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_uv_num_floats(NUM_VERTICES);
 
+    // clang-format off
     auto floats = std::array<float, NUM_FLOATS>{
         t.bottom_left.vertex.x,  t.bottom_left.vertex.y,  t.bottom_left.vertex.z,
         t.bottom_left.vertex.w,  t.bottom_left.uv.u,      t.bottom_left.uv.v,
@@ -229,6 +229,7 @@ class shape_mapper
 
         t.top_middle.vertex.x,   t.top_middle.vertex.y,   t.top_middle.vertex.z,
         t.top_middle.vertex.w,   t.top_middle.uv.u,       t.top_middle.uv.v};
+    // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(t.draw_mode());
     return float_vertex_uv_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
   }
@@ -239,6 +240,7 @@ class shape_mapper
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_only_num_floats(NUM_VERTICES);
 
+    // clang-format off
     auto floats = std::array<float, NUM_FLOATS>{t.bottom_left.vertex.x,  t.bottom_left.vertex.y,
                                                 t.bottom_left.vertex.z,  t.bottom_left.vertex.w,
 
@@ -247,6 +249,7 @@ class shape_mapper
 
                                                 t.top_middle.vertex.x,   t.top_middle.vertex.y,
                                                 t.top_middle.vertex.z,   t.top_middle.vertex.w};
+    // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(t.draw_mode());
     return float_vertex_only_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
   }
@@ -255,7 +258,7 @@ class shape_mapper
   // rectangles
   static auto constexpr RECTANGLE_VERTEX_ORDERING()
   {
-    return std::array<GLuint, 6>{0, 1, 2, 2, 3, 0};
+    return std::array<ElementType, 6>{0, 1, 2, 2, 3, 0};
   }
 
   static constexpr auto map_to_array_floats(game::rectangle<game::vertex_color_attributes> const &r)
@@ -264,6 +267,7 @@ class shape_mapper
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_color_num_floats(NUM_VERTICES);
 
+    // clang-format off
     auto floats = std::array<float, NUM_FLOATS>{
         r.bottom_left.vertex.x,  r.bottom_left.vertex.y,  r.bottom_left.vertex.z, // vertice 1
         r.bottom_left.vertex.w,  r.bottom_left.color.r,   r.bottom_left.color.g,
@@ -280,6 +284,7 @@ class shape_mapper
         r.top_left.vertex.x,     r.top_left.vertex.y,     r.top_left.vertex.z, // vertice 4
         r.top_left.vertex.w,     r.top_left.color.r,      r.top_left.color.g,
         r.top_left.color.b,      r.top_left.color.a};
+    // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
     return float_vertex_color_rectangle{mode, std::move(floats), RECTANGLE_VERTEX_ORDERING()};
   }
@@ -335,7 +340,7 @@ class shape_mapper
   static constexpr auto CUBE_VERTICE_ORDERING()
   {
     // clang-format off
-    return std::array<GLuint, 14> {
+    return std::array<ElementType, 14> {
       3, 2, 6, 7, 4, 2, 0,
       3, 1, 6, 5, 4, 1, 0
     };
@@ -435,7 +440,7 @@ class shape_mapper
       floats[j++] = vertice.color.a;
     }
     auto const ordering_length = num_vertices;
-    stlw::sized_buffer<GLuint> vertex_ordering{static_cast<size_t>(ordering_length)};
+    stlw::sized_buffer<ElementType> vertex_ordering{static_cast<size_t>(ordering_length)};
     for (auto i{0}; i < ordering_length; ++i) {
       vertex_ordering[i] = i;
     }
@@ -457,7 +462,7 @@ class shape_mapper
       floats[j++] = vertice.vertex.w;
     }
     auto const ordering_length = num_vertices;
-    stlw::sized_buffer<GLuint> vertex_ordering{static_cast<size_t>(ordering_length)};
+    stlw::sized_buffer<ElementType> vertex_ordering{static_cast<size_t>(ordering_length)};
     for (auto i{0}; i < ordering_length; ++i) {
       vertex_ordering[i] = i;
     }
@@ -482,7 +487,7 @@ class shape_mapper
       floats[j++] = vertice.uv.v;
     }
     auto const ordering_length = num_vertices;
-    stlw::sized_buffer<GLuint> vertex_ordering{static_cast<size_t>(ordering_length)};
+    stlw::sized_buffer<ElementType> vertex_ordering{static_cast<size_t>(ordering_length)};
     for (auto i{0}; i < ordering_length; ++i) {
       vertex_ordering[i] = i;
     }
