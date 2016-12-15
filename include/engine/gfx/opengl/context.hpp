@@ -56,6 +56,9 @@ public:
   inline auto ebo() const { return this->ebo_; }
   inline auto &program_ref() { return this->program_; }
   inline auto const &va() { return this->va_; }
+
+  // Derived context's can override this.
+  static bool constexpr HAS_TEXTURE = false;
 };
 
 struct color2d_context : public opengl_context
@@ -110,6 +113,7 @@ public:
     other.texture_info_ = texture_info{0, 0};
   }
 
+  static bool constexpr HAS_TEXTURE = true;
   inline auto texture() const { return this->texture_info_; }
 };
 

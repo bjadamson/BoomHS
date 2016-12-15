@@ -38,23 +38,21 @@ draw_scene(L &logger, C &ctx, glm::mat4 const& projection, std::tuple<S...> cons
 
 } // ns impl
 
-template <typename L, typename... S>
+template <typename L, typename C, typename... S>
 void
-draw_scene(L &logger, color2d_context &ctx, glm::mat4 const &projection,
+draw_scene(L &logger, C &ctx, glm::mat4 const &projection,
     std::tuple<S...> const &shapes)
 {
-  impl::draw_scene(logger, ctx, projection, shapes);
-}
-
-template <typename L, typename... S>
-void
-draw_scene(L &logger, texture2d_context &ctx, glm::mat4 const &projection,
-    std::tuple<S...> const &shapes)
-{
-  global::texture_bind(ctx.texture());
-  ON_SCOPE_EXIT([&ctx]() { global::texture_unbind(ctx.texture()); });
-
-  impl::draw_scene(logger, ctx, projection, shapes);
+  auto const fn = [&]() {
+    impl::draw_scene(logger, ctx, projection, shapes);
+  };
+  if constexpr (C::HAS_TEXTURE) {
+    global::texture_bind(ctx.texture());
+    ON_SCOPE_EXIT([&ctx]() { global::texture_unbind(ctx.texture()); });
+    fn();
+  } else {
+    fn();
+  }
 }
 
 } // ns engine::gfx::opengl::render2d

@@ -50,23 +50,21 @@ draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection
 
 } // ns impl
 
-template <typename L, typename... S>
+template <typename L, typename C, typename... S>
 void
-draw_scene(L &logger, color3d_context &ctx, glm::mat4 const &view,
+draw_scene(L &logger, C &ctx, glm::mat4 const &view,
            glm::mat4 const &projection, std::tuple<S...> const &shapes)
 {
-  impl::draw_scene(logger, ctx, view, projection, shapes);
-}
-
-template <typename L, typename... S>
-void
-draw_scene(L &logger, texture3d_context &ctx, glm::mat4 const &view,
-           glm::mat4 const &projection, std::tuple<S...> const &shapes)
-{
-  global::texture_bind(ctx.texture());
-  ON_SCOPE_EXIT([&ctx]() { global::texture_unbind(ctx.texture()); });
-
-  impl::draw_scene(logger, ctx, view, projection, shapes);
+  auto const fn = [&]() {
+    impl::draw_scene(logger, ctx, view, projection, shapes);
+  };
+  if constexpr (C::HAS_TEXTURE) {
+    global::texture_bind(ctx.texture());
+    ON_SCOPE_EXIT([&ctx]() { global::texture_unbind(ctx.texture()); });
+    fn();
+  } else {
+    fn();
+  }
 }
 
 template <typename L, typename... S>
