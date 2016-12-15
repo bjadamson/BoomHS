@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <stlw/type_macros.hpp>
+#include <engine/gfx/skybox.hpp>
 
 namespace engine::gfx
 {
@@ -11,6 +12,7 @@ class camera
   glm::vec3 pos_;
   glm::vec3 front_;
   glm::vec3 up_;
+  skybox skybox_;
 
   auto direction(float const speed) const
   {
@@ -31,16 +33,17 @@ class camera
   {
     return glm::vec3{0.0f, -d, 0.0f};
   }
-
-  friend struct camera_factory;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(camera);
 
-  camera(glm::vec3 const& pos, glm::vec3 const& front, glm::vec3 const& up)
+  camera(skybox &&sb, glm::vec3 const& pos, glm::vec3 const& front, glm::vec3 const& up)
     : pos_(pos)
     , front_(front)
     , up_(up)
-  {}
+    , skybox_(std::move(sb))
+  {
+    this->skybox_.model.translation = this->pos_;
+  }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   // immutable methods
@@ -58,25 +61,30 @@ public:
   // linar movement
   camera& move_forward(float const s)
   {
-    this->pos_ += direction(s);
+    auto const delta = direction(s);
+    this->pos_ += delta;
+    this->skybox_.model.translation = this->pos_;
     return *this;
   }
 
   camera& move_backward(float const s)
   {
     this->pos_ -= direction(s);
+    this->skybox_.model.translation = this->pos_;
     return *this;
   }
 
   camera& move_left(float const s)
   {
     this->pos_ += right_vector(s);
+    this->skybox_.model.translation = this->pos_;
     return *this;
   }
 
   camera& move_right(float const s)
   {
     this->pos_ -= right_vector(s);
+    this->skybox_.model.translation = this->pos_;
     return *this;
   }
 
@@ -85,27 +93,30 @@ public:
   camera& pan_up(float const d)
   {
     this->pos_ += ypan(d);
+    this->skybox_.model.translation = this->pos_;
     return *this;
   }
 
   camera& pan_down(float const d)
   {
     this->pos_ -= ypan(d);
+    this->skybox_.model.translation = this->pos_;
     return *this;
   }
 
   camera& pan_left(float const d)
   {
     this->pos_ += xpan(d);
+    this->skybox_.model.translation = this->pos_;
     return *this;
   }
 
   camera& pan_right(float const d)
   {
     this->pos_ -= xpan(d);
+    this->skybox_.model.translation = this->pos_;
     return *this;
   }
 };
-
 
 } // ns engine::gfx

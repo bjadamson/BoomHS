@@ -54,6 +54,7 @@ struct context3d_args
 {
   color3d_context color;
   texture3d_context texture;
+  skybox_context skybox;
   wireframe3d_context wireframe;
 
   MOVE_CONSTRUCTIBLE_ONLY(context3d_args);
@@ -88,15 +89,22 @@ struct engine {
     if constexpr (C::IS_2D) {
       impl::draw2d(args, ctx, shapes...);
     } else {
-      glEnable(GL_DEPTH_TEST);
-      glEnable(GL_CULL_FACE);
+      auto const draw3d = [&]() {
+        impl::draw3d(args, ctx, shapes...);
+      };
+      if constexpr (C::IS_SKYBOX) {
+        draw3d();
+      } else {
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
 
-      glCullFace(GL_BACK);
-      impl::draw3d(args, ctx, shapes...);
+        glCullFace(GL_BACK);
+        draw3d();
 
-      //glDepthMask(GL_FALSE);
-      glDisable(GL_DEPTH_TEST);
-      glDisable(GL_CULL_FACE);
+        glDepthMask(GL_FALSE);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+      }
     }
   }
 };
@@ -146,13 +154,25 @@ struct factory {
         get_r(IMAGES::CUBE_BOTTOM)
         );
 
-    DO_TRY(auto phandle6, program_loader::from_files("3dwire.vert", "wire.frag"));
+    DO_TRY(auto phandle6, program_loader::from_files("3dtexture.vert", "3dtexture.frag"));
     auto va6 = global::make_3dvertex_only_vertex_attribute(logger);
+    auto c6 = context_factory::make_skybox(
+        logger, std::move(phandle6), std::move(va6),
+        get_r(IMAGES::SB_FRONT),
+        get_r(IMAGES::SB_RIGHT),
+        get_r(IMAGES::SB_BACK),
+        get_r(IMAGES::SB_LEFT),
+        get_r(IMAGES::SB_TOP),
+        get_r(IMAGES::SB_BOTTOM)
+        );
+
+    DO_TRY(auto phandle7, program_loader::from_files("3dwire.vert", "wire.frag"));
+    auto va7 = global::make_3dvertex_only_vertex_attribute(logger);
     auto const color2 = LIST_OF_COLORS::PURPLE;
-    auto c6 = context_factory::make_wireframe3d(logger, std::move(phandle6), std::move(va6), color2);
+    auto c7 = context_factory::make_wireframe3d(logger, std::move(phandle7), std::move(va7), color2);
 
     context2d_args d2{std::move(c0), std::move(c1), std::move(c2), std::move(c3)};
-    context3d_args d3{std::move(c4), std::move(c5), std::move(c6)};
+    context3d_args d3{std::move(c4), std::move(c5), std::move(c6), std::move(c7)};
 
     auto const c = LIST_OF_COLORS::WHITE;
     auto const background_color = glm::vec4{c[0], c[1], c[2], 1.0f};

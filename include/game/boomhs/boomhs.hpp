@@ -6,6 +6,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <engine/window/window.hpp>
+#include <engine/gfx/camera.hpp>
+#include <engine/gfx/skybox.hpp>
 #include <stlw/algorithm.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
@@ -43,23 +45,6 @@ public:
   }
 };
 
-template<typename L, typename R, typename HW>
-auto
-make_state(L &logger, R &renderer, HW const& hw)
-{
-  auto const fheight = static_cast<GLfloat>(hw.h);
-  auto const fwidth = static_cast<GLfloat>(hw.w);
-
-  logger.error(fmt::sprintf("fheight '%f', fwidth '%f'", fheight, fwidth));
-  auto projection = glm::perspective(45.0f, (fwidth / fheight), 0.1f, 10000.0f);
-  engine::gfx::camera c(
-    glm::vec3(0.0f, 0.0f, 2.0f), // camera position
-    glm::vec3(0.0f, 0.0f, -1.0f),  // look at origin
-    glm::vec3(0.0f, 1.0f, 0.0f)); // "up" vector
-
-  return game_state<L, R>(logger, renderer, hw, std::move(projection), std::move(c));
-}
-
 // TODO: bye globals
 game::model *pmv = nullptr;
 game::model *qmv = nullptr;
@@ -72,10 +57,30 @@ game::model *wmv = nullptr;
 game::model *xmv = nullptr;
 game::model *ymv = nullptr;
 game::model *zmv = nullptr;
+game::model skybox_model;
 
 game::model *amv = nullptr;
 game::model *bmv = nullptr;
 game::model *cmv = nullptr;
+
+
+template<typename L, typename R, typename HW>
+auto
+make_state(L &logger, R &renderer, HW const& hw)
+{
+  auto const fheight = static_cast<GLfloat>(hw.h);
+  auto const fwidth = static_cast<GLfloat>(hw.w);
+
+  logger.error(fmt::sprintf("fheight '%f', fwidth '%f'", fheight, fwidth));
+  auto projection = glm::perspective(45.0f, (fwidth / fheight), 0.1f, 10000.0f);
+  engine::gfx::skybox sb{skybox_model};
+  engine::gfx::camera c{std::move(sb),
+    glm::vec3(0.0f, 0.0f, 2.0f), // camera position
+    glm::vec3(0.0f, 0.0f, -1.0f),  // look at origin
+    glm::vec3(0.0f, 1.0f, 0.0f)}; // "up" vector
+
+  return game_state<L, R>(logger, renderer, hw, std::move(projection), std::move(c));
+}
 
 template <typename G, typename S>
 void
@@ -90,6 +95,21 @@ ecst_main(G &game, S &state)
 
   // Initialize context with some entities.
   ctx->step([&](auto &proxy) {
+    {
+      auto eid = proxy.create_entity();
+      amv = &proxy.add_component(ct::model, eid);
+      amv->translation = glm::vec3{0.0f, 0.0f, 0.0f};
+    }
+    {
+      auto eid = proxy.create_entity();
+      bmv = &proxy.add_component(ct::model, eid);
+      bmv->translation = glm::vec3{0.7f, 0.0f, 0.0f};
+    }
+    {
+      auto eid = proxy.create_entity();
+      cmv = &proxy.add_component(ct::model, eid);
+      cmv->translation = glm::vec3{0.7f, -0.7f, 0.0f};
+    }
     {
       auto eid = proxy.create_entity();
       pmv = &proxy.add_component(ct::model, eid);
@@ -144,21 +164,6 @@ ecst_main(G &game, S &state)
       auto eid = proxy.create_entity();
       zmv = &proxy.add_component(ct::model, eid);
       zmv->translation = glm::vec3{-0.60f, -0.60f, 0.0f};
-    }
-    {
-      auto eid = proxy.create_entity();
-      amv = &proxy.add_component(ct::model, eid);
-      amv->translation = glm::vec3{0.0f, 0.0f, 0.0f};
-    }
-    {
-      auto eid = proxy.create_entity();
-      bmv = &proxy.add_component(ct::model, eid);
-      bmv->translation = glm::vec3{0.7f, 0.0f, 0.0f};
-    }
-    {
-      auto eid = proxy.create_entity();
-      cmv = &proxy.add_component(ct::model, eid);
-      cmv->translation = glm::vec3{0.7f, -0.7f, 0.0f};
     }
   });
 
@@ -233,6 +238,7 @@ public:
     auto triangle_wireframe = game::triangle_factory::make(drawmode::LINE_LOOP, *smv, true, false);
 
     auto cube_texture = game::cube_factory::make_textured(drawmode::TRIANGLE_STRIP, *amv, {0.15f, 0.15f, 0.15f});
+    auto cube_skybox = game::cube_factory::make_textured(drawmode::TRIANGLE_STRIP, skybox_model, {15.0f, 15.0f, 15.0f});
     auto cube_color = game::cube_factory::make_spotted(drawmode::TRIANGLE_STRIP, *bmv, ::engine::gfx::LIST_OF_COLORS::BLUE,
         {0.25f, 0.25f, 0.25f});
     auto cube_wf = game::cube_factory::make_wireframe(drawmode::LINE_LOOP, *cmv, {0.25f, 0.25f, 0.25f});
@@ -252,6 +258,9 @@ public:
     auto &d2 = r.engine.d2;
     auto &d3 = r.engine.d3;
     r.begin();
+
+    r.draw(args, d3.skybox, cube_skybox);
+
     r.draw(args, d2.color, triangle_color, triangle_list_colors,
                                            rectangle_color, rectangle_list_colors, polygon_color
     //                                        polygon_list_of_color,
