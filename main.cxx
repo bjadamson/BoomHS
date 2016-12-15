@@ -41,7 +41,7 @@ main(int argc, char *argv[])
 
   logger.debug("Instantiating 'state'");
   auto const dimensions = window.get_dimensions();
-  auto state = game::boomhs::game_state<L, R>{logger, renderer, dimensions};
+  auto state = game::boomhs::make_state(logger, renderer, dimensions);
 
   // Initialize the game instance.
   logger.debug("Instantiating game 'boomhs'");

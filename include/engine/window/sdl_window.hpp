@@ -56,10 +56,11 @@ public:
   {
     SDL_DisplayMode dmode;
     SDL_GetCurrentDisplayMode(0, &dmode);
-    return {dmode.w, dmode.h};
+    return {800, 600};
+    //return {dmode.w, dmode.h};
   }
-  int const width() const { return get_dimensions().w; }
-  int const height() const { return get_dimensions().h; }
+  //int const width() const { return get_dimensions().w; }
+  //int const height() const { return get_dimensions().h; }
 };
 
 struct sdl_library {

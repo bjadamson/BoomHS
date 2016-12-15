@@ -25,32 +25,57 @@ struct game_state {
   R &renderer;
   engine::window::dimensions const dimensions;
 
-  glm::mat4 view, projection;
+  glm::mat4 projection;
+  engine::gfx::camera camera;
 
+  NO_COPY(game_state);
+  NO_MOVE_ASSIGN(game_state);
 public:
-  game_state(L &l, R &r, engine::window::dimensions const &d)
-      : logger(l)
-      , renderer(r)
-      , dimensions(d)
+  MOVE_CONSTRUCTIBLE(game_state);
+  game_state(L &l, R &r, engine::window::dimensions const &d, glm::mat4 &&pm,
+      engine::gfx::camera &&c)
+    : logger(l)
+    , renderer(r)
+    , dimensions(d)
+    , projection(std::move(pm))
+    , camera(std::move(c))
   {
   }
 };
 
-// TODO: bye globals
-game::world_coordinate *p = nullptr;
-game::world_coordinate *q = nullptr;
-game::world_coordinate *r = nullptr;
-game::world_coordinate *s = nullptr;
-game::world_coordinate *t = nullptr;
-game::world_coordinate *u = nullptr;
-game::world_coordinate *v = nullptr;
-game::world_coordinate *w = nullptr;
-game::world_coordinate *x = nullptr;
-game::world_coordinate *y = nullptr;
+template<typename L, typename R, typename HW>
+auto
+make_state(L &logger, R &renderer, HW const& hw)
+{
+  auto const fheight = static_cast<GLfloat>(hw.h);
+  auto const fwidth = static_cast<GLfloat>(hw.w);
 
-game::world_coordinate *a = nullptr;
-game::world_coordinate *b = nullptr;
-game::world_coordinate *c = nullptr;
+  logger.error(fmt::sprintf("fheight '%f', fwidth '%f'", fheight, fwidth));
+  auto projection = glm::perspective(45.0f, (fwidth / fheight), 0.1f, 10000.0f);
+  engine::gfx::camera c(
+    glm::vec3(0.0f, 0.0f, 2.0f), // camera position
+    glm::vec3(0.0f, 0.0f, -1.0f),  // look at origin
+    glm::vec3(0.0f, 1.0f, 0.0f)); // "up" vector
+
+  return game_state<L, R>(logger, renderer, hw, std::move(projection), std::move(c));
+}
+
+// TODO: bye globals
+game::model *pmv = nullptr;
+game::model *qmv = nullptr;
+game::model *rmv = nullptr;
+game::model *smv = nullptr;
+game::model *tmv = nullptr;
+game::model *umv = nullptr;
+game::model *vmv = nullptr;
+game::model *wmv = nullptr;
+game::model *xmv = nullptr;
+game::model *ymv = nullptr;
+game::model *zmv = nullptr;
+
+game::model *amv = nullptr;
+game::model *bmv = nullptr;
+game::model *cmv = nullptr;
 
 template <typename G, typename S>
 void
@@ -67,81 +92,73 @@ ecst_main(G &game, S &state)
   ctx->step([&](auto &proxy) {
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.2f, -0.5f, 0.0f, 1.0f);
-      p = &wc;
+      pmv = &proxy.add_component(ct::model, eid);
+      pmv->translation = glm::vec3{-0.9f, -0.4f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.5f, 0.0f, 0.0f, 1.0f);
-      q = &wc;
+      qmv = &proxy.add_component(ct::model, eid);
+      qmv->translation = glm::vec3{-0.5f, 0.0f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.0f, 0.7f, 0.0f, 1.0f);
-      r = &wc;
+      rmv = &proxy.add_component(ct::model, eid);
+      rmv->translation = glm::vec3{0.0f, 0.7f, -1.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.60f, -0.20f, 0.0f, 1.0f);
-      s = &wc;
+      smv = &proxy.add_component(ct::model, eid);
+      smv->translation = glm::vec3{0.60f, -0.20f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.0f, -0.5f, 0.0f, 1.0f);
-      t = &wc;
+      tmv = &proxy.add_component(ct::model, eid);
+      tmv->translation = glm::vec3{0.0f, -0.5f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.8f, 0.55f, 0.0f, 1.0f);
-      u = &wc;
+      umv = &proxy.add_component(ct::model, eid);
+      umv->translation = glm::vec3{-0.8f, 0.55f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.80f, -0.20f, 0.0f, 1.0f);
-      v = &wc;
+      vmv = &proxy.add_component(ct::model, eid);
+      vmv->translation = glm::vec3{0.80f, -0.20f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.80f, 0.80f, 0.0f, 1.0f);
-      w = &wc;
+      wmv = &proxy.add_component(ct::model, eid);
+      wmv->translation = glm::vec3{-0.80f, 0.80f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.60f, -0.60f, 0.0f, 1.0f);
-      x = &wc;
+      xmv = &proxy.add_component(ct::model, eid);
+      xmv->translation = glm::vec3{-0.20f, 0.80f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.60f, 0.60f, 0.0f, 1.0f);
-      y = &wc;
+      ymv = &proxy.add_component(ct::model, eid);
+      ymv->translation = glm::vec3{0.60f, 0.60f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.0f, 0.0f, 0.0f, 1.0f);
-      a = &wc;
+      zmv = &proxy.add_component(ct::model, eid);
+      zmv->translation = glm::vec3{-0.60f, -0.60f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(-0.7f, 0.7f, 0.0f, 1.0f);
-      b = &wc;
+      amv = &proxy.add_component(ct::model, eid);
+      amv->translation = glm::vec3{0.0f, 0.0f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
-      auto &wc = proxy.add_component(ct::world_coordinate, eid);
-      wc.set(0.7f, -0.7f, 0.0f, 1.0f);
-      c = &wc;
+      bmv = &proxy.add_component(ct::model, eid);
+      bmv->translation = glm::vec3{0.7f, 0.0f, 0.0f};
+    }
+    {
+      auto eid = proxy.create_entity();
+      cmv = &proxy.add_component(ct::model, eid);
+      cmv->translation = glm::vec3{0.7f, -0.7f, 0.0f};
     }
   });
 
@@ -194,7 +211,7 @@ public:
   template <typename State>
   void game_loop(State &state)
   {
-    ::engine::gfx::render_args<decltype(state.logger)> const args{state.logger, state.view,
+    ::engine::gfx::render_args<decltype(state.logger)> const args{state.logger, state.camera,
                                                                   state.projection};
 
     using COLOR_ARRAY = std::array<float, 4>;
@@ -210,39 +227,42 @@ public:
                                       stlw::concat(engine::gfx::LIST_OF_COLORS::YELLOW, 1.0f));
 
     auto const height = 0.25f, width = 0.39f;
-    auto triangle_color = game::triangle_factory::make(*p, ::engine::gfx::LIST_OF_COLORS::PINK);
-    auto triangle_list_colors = game::triangle_factory::make(*q, multicolor_triangle);
-    auto triangle_texture = game::triangle_factory::make(*r, true);
-    auto triangle_wireframe = game::triangle_factory::make(*s, true, false);
+    auto triangle_color = game::triangle_factory::make(drawmode::TRIANGLES, *pmv, ::engine::gfx::LIST_OF_COLORS::PINK);
+    auto triangle_list_colors = game::triangle_factory::make(drawmode::TRIANGLES, *qmv, multicolor_triangle);
+    auto triangle_texture = game::triangle_factory::make(drawmode::TRIANGLES, *rmv, true);
+    auto triangle_wireframe = game::triangle_factory::make(drawmode::LINE_LOOP, *smv, true, false);
 
-    auto cube_texture = game::cube_factory::make_textured(*a, {0.25f, 0.25f, 0.25f});
-    auto cube_color = game::cube_factory::make_spotted(*b, ::engine::gfx::LIST_OF_COLORS::BLUE,
+    auto cube_texture = game::cube_factory::make_textured(drawmode::TRIANGLE_STRIP, *amv, {0.15f, 0.15f, 0.15f});
+    auto cube_color = game::cube_factory::make_spotted(drawmode::TRIANGLE_STRIP, *bmv, ::engine::gfx::LIST_OF_COLORS::BLUE,
         {0.25f, 0.25f, 0.25f});
-    auto cube_wf = game::cube_factory::make_wireframe(*c, {0.25f, 0.25f, 0.25f});
+    auto cube_wf = game::cube_factory::make_wireframe(drawmode::LINE_LOOP, *cmv, {0.25f, 0.25f, 0.25f});
 
-    auto rectangle_color = game::rectangle_factory::make(*t, ::engine::gfx::LIST_OF_COLORS::YELLOW);
-    auto rectangle_list_colors = game::rectangle_factory::make(*u, height, width, multicolor_rect);
-    auto rectangle_texture = game::rectangle_factory::make(*v, height, width, true);
-    auto rectangle_wireframe = game::rectangle_factory::make(*w, height, width, true, true);
+    auto rectangle_color = game::rectangle_factory::make(drawmode::TRIANGLE_STRIP, *tmv, ::engine::gfx::LIST_OF_COLORS::YELLOW);
+    auto rectangle_list_colors = game::rectangle_factory::make(drawmode::TRIANGLE_STRIP, *umv, height, width, multicolor_rect);
+    auto rectangle_texture = game::rectangle_factory::make(drawmode::TRIANGLE_STRIP, *vmv, height, width, true);
+    auto rectangle_wireframe = game::rectangle_factory::make(drawmode::LINE_LOOP, *wmv, height, width, true, true);
 
     auto polygon_color =
-        game::polygon_factory::make(*x, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
-    // auto polygon_list_of_color = game::polygon_factory::make(*u, 5, multicolor_triangle);
-    auto polygon_texture = game::polygon_factory::make(*y, 7, true);
-    // auto polygon_wireframe = game::polygon_factory::make(*v, 7, true, true);
+        game::polygon_factory::make(drawmode::TRIANGLE_FAN, *xmv, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
+    auto polygon_texture = game::polygon_factory::make(drawmode::TRIANGLE_FAN, *ymv, 7, true);
+    auto polygon_wireframe = game::polygon_factory::make(drawmode::LINE_LOOP, *zmv, 7, true, true);
+    //auto polygon_list_of_color = game::polygon_factory::make(drawmode::TRIANGLE_FAN, *zp1, 5, multicolor_triangle);
 
-    state.renderer.begin();
-    state.renderer.draw_shapes_with_colors(args, triangle_color, triangle_list_colors,
-                                           rectangle_color, rectangle_list_colors, polygon_color,
-                                           cube_color
-                                           // polygon_list_of_color,
+    auto &r = state.renderer;
+    auto &d2 = r.engine.d2;
+    auto &d3 = r.engine.d3;
+    r.begin();
+    r.draw(args, d2.color, triangle_color, triangle_list_colors,
+                                           rectangle_color, rectangle_list_colors, polygon_color
+    //                                        polygon_list_of_color,
                                            );
-    state.renderer.draw_shapes_with_textures(args, triangle_texture, rectangle_texture,
-                                             polygon_texture);
-    state.renderer.draw_3dcube_shapes_with_textures(args, cube_texture);
-    state.renderer.draw_shapes_with_wireframes(args, triangle_wireframe, rectangle_wireframe,
-                                               // polygon_wireframe
-                                               cube_wf);
+    r.draw(args, d2.texture_wall, triangle_texture, rectangle_texture, polygon_texture);
+    r.draw(args, d2.texture_container, polygon_texture);
+    r.draw(args, d2.wireframe, polygon_wireframe, triangle_wireframe, rectangle_wireframe);
+
+    r.draw(args, d3.color, cube_color);
+    r.draw(args, d3.texture, cube_texture);
+    r.draw(args, d3.wireframe, cube_wf);
     state.renderer.end();
   }
 };

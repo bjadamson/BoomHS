@@ -2,70 +2,102 @@
 #include <engine/gfx/lib.hpp>
 #include <engine/gfx/opengl/context.hpp>
 #include <engine/gfx/opengl/gfx_to_opengl.hpp>
+#include <engine/gfx/opengl/render2d.hpp>
+#include <engine/gfx/opengl/render3d.hpp>
 #include <engine/gfx/resources.hpp>
 #include <stlw/type_macros.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace engine::gfx::opengl
 {
 
+namespace impl
+{
+
+template <typename FN, typename... S>
+void draw_shape(FN const& fn, S const &... shapes)
+{
+  auto const gl_mapped_shapes = shape_mapper::map_to_floats(shapes...);
+  fn(gl_mapped_shapes);
+}
+
+template<typename Args, typename C, typename ...S>
+void draw2d(Args const& args, C &ctx, S const&... shapes)
+{
+  auto const fn = [&](auto const& gl_mapped_shapes) {
+    render2d::draw_scene(args.logger, ctx, gl_mapped_shapes);
+  };
+  draw_shape(fn, shapes...);
+}
+
+template <typename Args, typename C, typename... S>
+void draw3d(Args const &args, C &ctx, S const &... shapes)
+{
+  auto const fn = [&](auto const& gl_mapped_shapes) {
+    render3d::draw_scene(args.logger, ctx, args.camera, args.projection, gl_mapped_shapes);
+  };
+  draw_shape(fn, shapes...);
+}
+
+} // ns impl
+
+struct context2d_args
+{
+  color2d_context color;
+  texture2d_context texture_wall;
+  texture2d_context texture_container;
+  wireframe2d_context wireframe;
+
+  MOVE_CONSTRUCTIBLE_ONLY(context2d_args);
+};
+struct context3d_args
+{
+  color3d_context color;
+  texture3d_context texture;
+  wireframe3d_context wireframe;
+
+  MOVE_CONSTRUCTIBLE_ONLY(context3d_args);
+};
+
 struct engine {
   // data
-  opengl_context rc0_;
-  opengl_texture_context rc1_; // normal texture
-  opengl_texture_context rc2_; // cube3d
-  opengl_wireframe_context rc3_;
+  context2d_args d2;
+  context3d_args d3;
 
-  NO_COPY(engine);
-  NO_MOVE_ASSIGN(engine);
-  MOVE_CONSTRUCTIBLE(engine);
+  MOVE_CONSTRUCTIBLE_ONLY(engine);
 
-  engine(opengl_context &&r0, opengl_texture_context &&r1, opengl_texture_context &&r2,
-         opengl_wireframe_context &&r3)
-      : rc0_(std::move(r0))
-      , rc1_(std::move(r1))
-      , rc2_(std::move(r2))
-      , rc3_(std::move(r3))
+  engine(glm::vec4 const& bg, context2d_args &&context_2d, context3d_args &&context_3d)
+    : d2(std::move(context_2d))
+    , d3(std::move(context_3d))
   {
     // background color
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(bg.x, bg.y, bg.z, bg.w);
   }
 
   void begin()
   {
     // Render
     glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
   void end() {}
 
-  template <typename Ctx, typename Args, typename... S>
-  void draw_shape(Ctx &ctx, Args const &args, S const &... shapes)
+  template <typename Args, typename C, typename... S>
+  void draw(Args const& args, C &ctx, S const&... shapes)
   {
-    auto const gl_mapped_shapes = shape_mapper::map_to_floats(shapes...);
-    renderer::draw_scene(args.logger, ctx, args.view, args.projection, gl_mapped_shapes);
-  }
+    if constexpr (C::IS_2D) {
+      impl::draw2d(args, ctx, shapes...);
+    } else {
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_CULL_FACE);
 
-  template <typename Args, typename... S>
-  void draw_shapes_with_colors(Args const &args, S const &... shapes)
-  {
-    this->draw_shape(this->rc0_, args, shapes...);
-  }
+      glCullFace(GL_BACK);
+      impl::draw3d(args, ctx, shapes...);
 
-  template <typename Args, typename... S>
-  void draw_shapes_with_textures(Args const &args, S const &... shapes)
-  {
-    this->draw_shape(this->rc1_, args, shapes...);
-  }
-
-  template <typename Args, typename... S>
-  void draw_3dcube_shapes(Args const &args, S const &... shapes)
-  {
-    this->draw_shape(this->rc2_, args, shapes...);
-  }
-
-  template <typename Args, typename... S>
-  void draw_shapes_with_wireframes(Args const &args, S const &... shapes)
-  {
-    this->draw_shape(this->rc3_, args, shapes...);
+      //glDepthMask(GL_FALSE);
+      glDisable(GL_DEPTH_TEST);
+      glDisable(GL_CULL_FACE);
+    }
   }
 };
 
@@ -79,30 +111,52 @@ struct factory {
     auto constexpr RESOURCES = resources::make_resource_table();
     auto const get_r = [&](auto const i) { return RESOURCES[i]; };
 
-    DO_TRY(auto phandle0, program_loader::from_files("color.vert", "color.frag"));
+    DO_TRY(auto phandle0, program_loader::from_files("2dcolor.vert", "2dcolor.frag"));
     auto va0 = global::make_vertex_color_vertex_attribute(logger);
-    auto c0 = context_factory::make_opengl_context(logger, std::move(phandle0), std::move(va0));
+    auto c0 = context_factory::make_color2d(logger, std::move(phandle0), std::move(va0));
 
-    DO_TRY(auto phandle1, program_loader::from_files("image.vert", "image.frag"));
-    auto va1 = global::make_vertex_uv_vertex_attribute(logger);
-    auto c1 = context_factory::make_texture_opengl_context(logger, std::move(phandle1),
+    DO_TRY(auto phandle1, program_loader::from_files("2dtexture.vert", "2dtexture.frag"));
+    auto va1 = global::make_vertex_uv2d_vertex_attribute(logger);
+    auto c1 = context_factory::make_texture2d(logger, std::move(phandle1),
                                                            get_r(IMAGES::WALL), std::move(va1));
 
-    DO_TRY(auto phandle2, program_loader::from_files("3dcube.vert", "3dcube.frag"));
-    auto va2 = global::make_vertex_only_vertex_attribute(logger);
-    auto c2 = context_factory::make_3dcube_texture_opengl_context(
-        logger, std::move(phandle2), get_r(IMAGES::MULTICOLOR_RECT), std::move(va2));
+    DO_TRY(auto phandle2, program_loader::from_files("2dtexture.vert", "2dtexture.frag"));
+    auto va2 = global::make_vertex_uv2d_vertex_attribute(logger);
+    auto c2 = context_factory::make_texture2d(logger, std::move(phandle2),
+                                                           get_r(IMAGES::CONTAINER), std::move(va2));
 
     DO_TRY(auto phandle3, program_loader::from_files("wire.vert", "wire.frag"));
-    auto va3 = global::make_vertex_only_vertex_attribute(logger);
+    auto va3 = global::make_2dvertex_only_vertex_attribute(logger);
     auto const color = LIST_OF_COLORS::PINK;
-    auto c3 = context_factory::make_wireframe_opengl_context(logger, std::move(phandle3),
-                                                             std::move(va3), color);
+    auto c3 = context_factory::make_wireframe2d(logger, std::move(phandle3), std::move(va3), color);
 
-    // TODO: move this
-    // glEnable(GL_DEPTH_TEST);
-    // glDisable(GL_CULL_FACE);
-    return engine{std::move(c0), std::move(c1), std::move(c2), std::move(c3)};
+    DO_TRY(auto phandle4, program_loader::from_files("3dcolor.vert", "3dcolor.frag"));
+    auto va4 = global::make_vertex_color_vertex_attribute(logger);
+    auto c4 = context_factory::make_color3d(logger, std::move(phandle4), std::move(va4));
+
+    DO_TRY(auto phandle5, program_loader::from_files("3dtexture.vert", "3dtexture.frag"));
+    auto va5 = global::make_3dvertex_only_vertex_attribute(logger);
+    auto c5 = context_factory::make_texture3d(
+        logger, std::move(phandle5), std::move(va5),
+        get_r(IMAGES::CUBE_FRONT),
+        get_r(IMAGES::CUBE_RIGHT),
+        get_r(IMAGES::CUBE_BACK),
+        get_r(IMAGES::CUBE_LEFT),
+        get_r(IMAGES::CUBE_TOP),
+        get_r(IMAGES::CUBE_BOTTOM)
+        );
+
+    DO_TRY(auto phandle6, program_loader::from_files("3dwire.vert", "wire.frag"));
+    auto va6 = global::make_3dvertex_only_vertex_attribute(logger);
+    auto const color2 = LIST_OF_COLORS::PURPLE;
+    auto c6 = context_factory::make_wireframe3d(logger, std::move(phandle6), std::move(va6), color2);
+
+    context2d_args d2{std::move(c0), std::move(c1), std::move(c2), std::move(c3)};
+    context3d_args d3{std::move(c4), std::move(c5), std::move(c6)};
+
+    auto const c = LIST_OF_COLORS::WHITE;
+    auto const background_color = glm::vec4{c[0], c[1], c[2], 1.0f};
+    return engine{background_color, std::move(d2), std::move(d3)};
   }
 };
 

@@ -2,8 +2,12 @@
 #include <engine/gfx/opengl/gl_log.hpp>
 #include <engine/gfx/opengl/glew.hpp>
 #include <engine/gfx/opengl/global.hpp>
+
 #include <glm/glm.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include <stlw/format.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
 
@@ -83,11 +87,12 @@ public:
   auto get_uniform_location(L &logger, GLuint program, GLchar const *name)
   {
     global::log::clear_gl_errors();
-
     this->use();
+
+    logger.trace(fmt::sprintf("getting uniform '%s' location.", name));
     GLint const loc = glGetUniformLocation(this->program_id_, name);
-    logger.trace("get_uniform_location(" + std::string{name} + ") loc is '" + std::to_string(loc) +
-                 "'");
+    logger.trace(fmt::sprintf("uniform '%s' found at '%d'.", name, loc));
+
     this->check_opengl_errors(logger);
     assert(-1 != loc);
     return loc;
@@ -108,6 +113,8 @@ public:
     GLsizei constexpr COUNT = 1;
     GLboolean constexpr TRANSPOSE_MATRICES = GL_FALSE;
 
+    logger.trace(fmt::sprintf("sending uniform matrix at loc '%d' with data '%s' to GPU", loc,
+          glm::to_string(matrix)));
     glUniformMatrix4fv(loc, COUNT, TRANSPOSE_MATRICES, glm::value_ptr(matrix));
     this->check_opengl_errors(logger);
   }
@@ -125,6 +132,7 @@ public:
 
     auto const loc = this->get_uniform_location(logger, this->program_id_, name);
     glUniform4fv(loc, COUNT, floats.data());
+    this->check_opengl_errors(logger);
   }
 
   // IMMUTABLE

@@ -151,4 +151,31 @@ concat()
   return concat("");
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// zip
+template<typename FirstBegin, typename FirstEnd, typename SecondBegin, typename FN>
+void zip(FirstBegin fb, FirstEnd fe, SecondBegin sb, FN const& fn)
+{
+  // Assumes length(sb) > length(fe - fb)
+  auto it = sb;
+  for (auto i{fb}; i < fe; ++i, ++it) {
+    fn(*i, *it);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// sub_array
+template<typename T, std::size_t N>
+auto sub_array(std::array<T, N> const& data, std::size_t const begin)
+{
+  assert(N >= data.size());
+  assert(begin <= N);
+
+  std::array<T, N> arr;
+  for (auto i{0}; i < N; ++i) {
+    arr[i] = data[begin + i];
+  }
+  return arr;
+}
+
 } // ns stlw

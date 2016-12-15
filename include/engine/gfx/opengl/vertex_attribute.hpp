@@ -168,6 +168,19 @@ set_attrib_pointer(L &logger, attribute_info const &attrib_info, skip_context &s
   logger.debug(s);
 }
 
+template<typename L>
+auto
+make_vertex_only_vertex_attribute(L &logger, GLint const num_fields_vertex)
+{
+  // attribute indexes
+  constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
+
+  using ai = attribute_info;
+  attribute_info vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
+
+  return make_vertex_array(logger, std::move(vertex_info));
+}
+
 } // ns impl
 
 namespace global
@@ -194,7 +207,7 @@ make_vertex_color_vertex_attribute(L &logger)
 
 template<typename L>
 auto
-make_vertex_uv_vertex_attribute(L &logger)
+make_vertex_uv2d_vertex_attribute(L &logger)
 {
   // attribute indexes
   constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
@@ -213,18 +226,21 @@ make_vertex_uv_vertex_attribute(L &logger)
 
 template<typename L>
 auto
-make_vertex_only_vertex_attribute(L &logger)
+make_3dvertex_only_vertex_attribute(L &logger)
 {
-  // attribute indexes
-  constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
-
   // num fields per attribute
   GLint constexpr num_fields_vertex = 4; // x, y, z, w
+  return impl::make_vertex_only_vertex_attribute(logger, num_fields_vertex);
+}
 
-  using ai = attribute_info;
-  attribute_info vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
-
-  return impl::make_vertex_array(logger, std::move(vertex_info));
+template<typename L>
+auto
+make_2dvertex_only_vertex_attribute(L &logger)
+{
+  // num fields per attribute
+  // TODO: maybe 3 fields????
+  GLint constexpr num_fields_vertex = 4; // x, y, z, w
+  return impl::make_vertex_only_vertex_attribute(logger, num_fields_vertex);
 }
 
 template <typename L>

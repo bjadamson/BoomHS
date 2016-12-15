@@ -1,5 +1,6 @@
 #pragma once
 #include <stlw/sized_buffer.hpp>
+#include <glm/glm.hpp>
 #include <tuple>
 
 namespace game
@@ -45,35 +46,11 @@ struct texture_coord {
   }
 };
 
-class world_coordinate
+struct model
 {
-  vertex v_ = {};
-
-public:
-  constexpr world_coordinate() = default;
-  explicit constexpr world_coordinate(float const x, float const y, float const z, float const w)
-      : v_(x, y, z, w)
-  {
-  }
-
-#define DEFINE_GET_AND_SET_METHODS(A)                                                              \
-  constexpr float A() const { return this->v_.A; }                                                 \
-  void set_##A(float const value) { this->v_.A = value; }
-
-  DEFINE_GET_AND_SET_METHODS(x)
-  DEFINE_GET_AND_SET_METHODS(y)
-  DEFINE_GET_AND_SET_METHODS(z)
-  DEFINE_GET_AND_SET_METHODS(w)
-
-  void set(float const xp, float const yp, float const zp, float const wp)
-  {
-    this->set_x(xp);
-    this->set_y(yp);
-    this->set_z(zp);
-    this->set_w(wp);
-  }
-
-  vertex get() const { return this->v_; }
+  glm::vec3 translation{0.0f, 0.0f, 0.0f};
+  glm::quat rotation;
+  glm::vec3 scale = glm::vec3{1.0f, 1.0f, 1.0f};
 };
 
 } // ns game
