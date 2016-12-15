@@ -64,7 +64,7 @@ public:
 
   camera& move_backward(float const s)
   {
-    this->pos_ += direction(-s);
+    this->pos_ -= direction(s);
     return *this;
   }
 
@@ -76,7 +76,7 @@ public:
 
   camera& move_right(float const s)
   {
-    this->pos_ += right_vector(-s);
+    this->pos_ -= right_vector(s);
     return *this;
   }
 
@@ -90,7 +90,7 @@ public:
 
   camera& pan_down(float const d)
   {
-    this->pos_ += ypan(-d);
+    this->pos_ -= ypan(d);
     return *this;
   }
 
@@ -102,7 +102,7 @@ public:
 
   camera& pan_right(float const d)
   {
-    this->pos_ += xpan(-d);
+    this->pos_ -= xpan(d);
     return *this;
   }
 };
