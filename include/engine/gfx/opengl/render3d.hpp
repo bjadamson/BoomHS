@@ -31,7 +31,7 @@ draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection
   p.use();
   auto const fn = [&](auto const &shape) {
     logger.trace("setting u_mvmatrix");
-    auto const& model = shape.model();
+    auto const& model = shape.model;
 
     auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
     auto const rmatrix = glm::toMat4(model.rotation);

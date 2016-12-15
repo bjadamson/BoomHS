@@ -30,7 +30,7 @@ template <typename L, typename S>
 void
 log_shape_bytes(L &logger, S const &shape)
 {
-  assert(0 < shape.vertices_length());
+  assert(0 < shape.vertices.size());
 
   auto const print = [](auto &ostream, auto const length, auto const *data) {
     auto i{0};
@@ -46,14 +46,14 @@ log_shape_bytes(L &logger, S const &shape)
 
   std::stringstream ostream;
   ostream << fmt::sprintf("vertices_length %d, vertices_size_in_bytes %d\n",
-                          shape.vertices_length(), shape.vertices_size_in_bytes());
+                          shape.vertices.size(), vertices_size_in_bytes(shape));
   ostream << "data(bytes):\n";
-  print(ostream, shape.vertices_length(), shape.vertices_data());
+  print(ostream, shape.vertices.size(), shape.vertices.data());
 
-  ostream << fmt::sprintf("ordering_count %d, ordering_size_in_bytes %d\n", shape.ordering_count(),
-                          shape.ordering_size_in_bytes());
-  ostream << "elements(bytes):\n";
-  print(ostream, shape.ordering_count(), shape.ordering_data());
+  ostream << fmt::sprintf("ordering_count %d, ordering_size_in_bytes %d\n", shape.ordering.size(),
+                          ordering_size_in_bytes(shape));
+  ostream << "ordering(bytes):\n";
+  print(ostream, shape.ordering.size(), shape.ordering.data());
   logger.trace(ostream.str());
 }
 
@@ -64,11 +64,11 @@ copy_to_gpu(L &logger, S const &shape)
   log_shape_bytes(logger, shape);
 
   // copy the vertices
-  glBufferData(GL_ARRAY_BUFFER, shape.vertices_size_in_bytes(), shape.vertices_data(),
+  glBufferData(GL_ARRAY_BUFFER, vertices_size_in_bytes(shape), shape.vertices.data(),
                GL_STATIC_DRAW);
 
   // copy the vertice rendering order
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, shape.ordering_size_in_bytes(), shape.ordering_data(),
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, ordering_size_in_bytes(shape), shape.ordering.data(),
                GL_STATIC_DRAW);
 }
 
@@ -79,14 +79,14 @@ void
 render_shape(L &logger, Ctx &ctx, S const &shape)
 {
   logger.trace(fmt::sprintf("%-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices"));
-  logger.trace(fmt::sprintf("%-15d %-15d %-15d\n", shape.vertices_size_in_bytes(),
-                            shape.vertices_length(), shape.vertice_count()));
+  logger.trace(fmt::sprintf("%-15d %-15d %-15d\n", vertices_size_in_bytes(shape),
+                            shape.vertices.size(), vertice_count(shape)));
 
   // print_triangle(logger, t0);
   impl::copy_to_gpu(logger, shape);
 
   // Draw our first triangle
-  impl::render(logger, shape.draw_mode(), shape.ordering_count());
+  impl::render(logger, shape.draw_mode, shape.ordering.size());
 }
 
 template <typename L, typename C, typename FN, typename... S>

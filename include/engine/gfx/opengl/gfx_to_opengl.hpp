@@ -15,67 +15,97 @@
 namespace engine::gfx::opengl
 {
 
+// TODO: project-wide configuration (double precision maybe)
+using FloatType = float;
+using ElementType = GLuint;
+
 template <template <class, std::size_t> typename C, std::size_t NUM_VERTEXES,
           std::size_t NUM_ELEMENTS, std::size_t NUM_OF_F_PER_VERTEX>
-class shape_data
+struct shape_data
 {
-protected:
-  using FloatType = float; // TODO: project-wide configuration (double precision maybe)
-  using ElementType = GLuint;
   using VertexContainer = C<FloatType, NUM_VERTEXES>;
   using VertexOrdering = C<ElementType, NUM_ELEMENTS>;
 
-private:
-  GLenum const mode_;
-  VertexContainer data_;
-  VertexOrdering ordering_;
+  GLenum const draw_mode;
+  VertexContainer vertices;
+  VertexOrdering ordering;
 
   NO_COPY(shape_data);
-
-public:
   MOVE_DEFAULT(shape_data);
-  explicit constexpr shape_data(GLenum const m, VertexContainer &&d, VertexOrdering const &e)
-      : mode_(m)
-      , data_(std::move(d))
-      , ordering_(e)
+  explicit constexpr shape_data(GLenum const dm, VertexContainer &&v, VertexOrdering const &o)
+      : draw_mode(dm)
+      , vertices(std::move(v))
+      , ordering(o)
   {
   }
-  constexpr auto draw_mode() const { return this->mode_; }
-  constexpr decltype(auto) vertices_data() const { return this->data_.data(); }
-  constexpr auto vertices_length() const { return this->data_.size(); }
-  constexpr std::size_t vertices_size_in_bytes() const
-  {
-    return this->vertices_length() * sizeof(FloatType);
-  }
-  constexpr auto vertice_count() const { return this->vertices_length() / NUM_OF_F_PER_VERTEX; }
 
-  constexpr decltype(auto) ordering_data() const { return this->ordering_.data(); }
-  constexpr std::size_t ordering_count() const { return this->ordering_.size(); }
-  constexpr auto ordering_size_in_bytes() const
-  {
-    return this->ordering_count() * sizeof(ElementType);
-  }
+  auto constexpr num_floats_per_vertex() const { return NUM_OF_F_PER_VERTEX; }
 };
 
 template <template <class, std::size_t> typename C, std::size_t NUM_VERTEXES,
           std::size_t NUM_ELEMENTS, std::size_t NUM_OF_F_PER_VERTEX>
-class shape3d_data : public shape_data<C, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_PER_VERTEX>
+struct shape3d_data : public shape_data<C, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_PER_VERTEX>
 {
   using BASE = shape_data<C, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_PER_VERTEX>;
   using VertexContainer = typename BASE::VertexContainer;
   using VertexOrdering = typename BASE::VertexOrdering;
 
-  game::model const& model_;
-public:
+  game::model const& model;
+
   MOVE_DEFAULT(shape3d_data);
+  NO_COPY(shape3d_data);
   explicit constexpr shape3d_data(GLenum const m, VertexContainer &&d, VertexOrdering const& e,
       game::model const& model)
     : BASE(m, std::move(d), e)
-    , model_(model)
+    , model(model)
   {
   }
-  constexpr auto const& model() const { return this->model_; }
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// runtime-driven data
+template <template <class, class> typename C, std::size_t NUM_OF_F_PER_VERTEX, typename F = float,
+          typename A = std::allocator<F>, typename B = std::allocator<GLuint>>
+struct runtime_shape_template
+{
+  GLenum const draw_mode;
+  C<F, A> vertices;
+  C<GLuint, B> ordering;
+
+  NO_COPY(runtime_shape_template);
+  MOVE_DEFAULT(runtime_shape_template);
+  explicit runtime_shape_template(GLenum const dm, C<F, A> &&d, C<GLuint, B> &&e)
+      : draw_mode(dm)
+      , vertices(std::move(d))
+      , ordering(std::move(e))
+  {
+  }
+
+  auto constexpr num_floats_per_vertex() const { return NUM_OF_F_PER_VERTEX; }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// associated-functions
+template <typename S>
+constexpr auto
+ordering_size_in_bytes(S const& s)
+{
+  return s.ordering.size() * sizeof(ElementType);
+}
+
+template <typename S>
+constexpr auto
+vertice_count(S const& s)
+{
+  return s.vertices.size() / s.num_floats_per_vertex();
+}
+
+template <typename S>
+constexpr std::size_t
+vertices_size_in_bytes(S const& s)
+{
+  return s.vertices.size() * sizeof(FloatType);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // static templates
@@ -83,7 +113,8 @@ template <std::size_t NUM_VERTEXES, std::size_t NUM_ELEMENTS, std::size_t NUM_OF
 using static_shape_array = shape_data<std::array, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_PER_VERTEX>;
 
 template <std::size_t NUM_VERTEXES, std::size_t NUM_ELEMENTS, std::size_t NUM_OF_F_PER_VERTEX>
-using static_shape_with_model_array = shape3d_data<std::array, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_PER_VERTEX>;
+using static_shape_with_model_array = shape3d_data<std::array, NUM_VERTEXES, NUM_ELEMENTS,
+      NUM_OF_F_PER_VERTEX>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // static shapes
@@ -99,38 +130,9 @@ using static_vertex_only_shape = static_shape_array<NUM_VERTEXES, NUM_ELEMENTS, 
 template <std::size_t NUM_VERTEXES, std::size_t NUM_ELEMENTS>
 using static_vertex_model_shape = static_shape_with_model_array<NUM_VERTEXES, NUM_ELEMENTS, 4>;
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// runtime-driven data
-template <template <class, class> typename C, std::size_t NUM_OF_F_PER_VERTEX, typename F = float,
-          typename A = std::allocator<F>, typename B = std::allocator<GLuint>>
-class runtime_shape_template
-{
-  GLenum const mode_;
-  C<F, A> data_;
-  C<GLuint, B> ordering_;
-
-  NO_COPY(runtime_shape_template);
-
-public:
-  MOVE_DEFAULT(runtime_shape_template);
-  explicit runtime_shape_template(GLenum const m, C<F, A> &&d, C<GLuint, B> &&e)
-      : mode_(m)
-      , data_(std::move(d))
-      , ordering_(std::move(e))
-  {
-  }
-  auto draw_mode() const { return this->mode_; }
-  auto vertices_data() const { return this->data_.data(); }
-
-  std::size_t vertices_size_in_bytes() const { return this->vertices_length() * sizeof(F); }
-  auto vertice_count() const { return this->vertices_length() / NUM_OF_F_PER_VERTEX; }
-  auto vertices_length() const { return this->data_.length(); }
-
-  decltype(auto) ordering_data() const { return this->ordering_.data(); }
-  std::size_t ordering_count() const { return this->ordering_.length(); }
-  auto ordering_size_in_bytes() const { return this->ordering_count() * sizeof(GLuint); }
-};
-
+// runtime-sized shapes
 template <std::size_t NUM_VERTEXES>
 using runtime_sized_array = runtime_shape_template<stlw::sized_buffer, NUM_VERTEXES>;
 

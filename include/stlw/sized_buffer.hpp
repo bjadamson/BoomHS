@@ -72,6 +72,7 @@ public:
   const_reference operator[](size_type const i) const { return this->get_item(i); }
 
   size_type length() const { return this->vec_.capacity(); }
+  size_type size() const { return this->length(); }
   T *data() { return this->vec_.data(); }
   T const *data() const { return this->vec_.data(); }
 
