@@ -17,7 +17,7 @@ namespace impl
 template <typename FN, typename... S>
 void draw_shape(FN const& fn, S const &... shapes)
 {
-  auto const gl_mapped_shapes = shape_mapper::map_to_floats(shapes...);
+  auto const gl_mapped_shapes = shape_mapper::map_to_opengl(shapes...);
   fn(gl_mapped_shapes);
 }
 

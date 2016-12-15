@@ -129,19 +129,19 @@ template <std::size_t NUM_VERTEXES, std::size_t NUM_ELEMENTS>
 using static_vertex_model_shape = static_shape_with_model_array<NUM_VERTEXES, NUM_ELEMENTS, 4>;
 
 // float triangles
-using float_vertex_color_triangle = static_vertex_color_shape<24, 3>;
-using float_vertex_uv_triangle = static_vertex_uv_shape<18, 3>;
-using float_vertex_only_triangle = static_vertex_only_shape<12, 3>;
+using vertex_color_triangle = static_vertex_color_shape<24, 3>;
+using vertex_uv_triangle = static_vertex_uv_shape<18, 3>;
+using vertex_only_triangle = static_vertex_only_shape<12, 3>;
 
 // float rectangles
-using float_vertex_color_rectangle = static_vertex_color_shape<32, 6>;
-using float_vertex_uv_rectangle = static_vertex_uv_shape<24, 6>;
-using float_vertex_only_rectangle = static_vertex_only_shape<16, 6>;
+using vertex_color_rectangle = static_vertex_color_shape<32, 6>;
+using vertex_uv_rectangle = static_vertex_uv_shape<24, 6>;
+using vertex_only_rectangle = static_vertex_only_shape<16, 6>;
 
 // float cubes
-using float_vertex_color_cube = static_vertex_model_shape<64, 14>;
-using float_vertex_uv_cube = static_vertex_model_shape<32, 14>;
-using float_vertex_only_cube = static_vertex_model_shape<32, 14>;
+using vertex_color_cube = static_vertex_model_shape<64, 14>;
+using vertex_uv_cube = static_vertex_model_shape<32, 14>;
+using vertex_only_cube = static_vertex_model_shape<32, 14>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // runtime-sized shapes
@@ -149,9 +149,9 @@ template <std::size_t NUM_VERTEXES>
 using runtime_sized_array = runtime_shape_template<stlw::sized_buffer, NUM_VERTEXES>;
 
 // float polygons
-using float_vertex_color_polygon = runtime_sized_array<8>;
-using float_vertex_uv_polygon = runtime_sized_array<7>;
-using float_vertex_only_polygon = runtime_sized_array<4>;
+using vertex_color_polygon = runtime_sized_array<8>;
+using vertex_uv_polygon = runtime_sized_array<7>;
+using vertex_only_polygon = runtime_sized_array<4>;
 
 class shape_mapper
 {
@@ -170,6 +170,9 @@ class shape_mapper
         return GL_TRIANGLE_FAN;
       case draw_mode::LINE_LOOP:
         return GL_LINE_LOOP;
+      case draw_mode::INVALID_DRAW_MODE:
+        // fall-through
+        break;
     }
 
     // This shouldn't ever happen.
@@ -196,7 +199,7 @@ class shape_mapper
     auto constexpr NUM_FLOATS = calc_vertex_color_num_floats(NUM_VERTICES);
 
     // clang-format off
-    auto floats = std::array<float, NUM_FLOATS>{
+    auto floats = std::array<FloatType, NUM_FLOATS>{
         t.bottom_left.vertex.x,  t.bottom_left.vertex.y,  t.bottom_left.vertex.z,
         t.bottom_left.vertex.w,  t.bottom_left.color.r,   t.bottom_left.color.g,
         t.bottom_left.color.b,   t.bottom_left.color.a,
@@ -210,7 +213,7 @@ class shape_mapper
         t.top_middle.color.b,    t.top_middle.color.a};
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(t.draw_mode());
-    return float_vertex_color_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
+    return vertex_color_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
   }
 
   static constexpr auto map_to_array_floats(game::triangle<game::vertex_uv_attributes> const &t)
@@ -220,7 +223,7 @@ class shape_mapper
     auto constexpr NUM_FLOATS = calc_vertex_uv_num_floats(NUM_VERTICES);
 
     // clang-format off
-    auto floats = std::array<float, NUM_FLOATS>{
+    auto floats = std::array<FloatType, NUM_FLOATS>{
         t.bottom_left.vertex.x,  t.bottom_left.vertex.y,  t.bottom_left.vertex.z,
         t.bottom_left.vertex.w,  t.bottom_left.uv.u,      t.bottom_left.uv.v,
 
@@ -231,7 +234,7 @@ class shape_mapper
         t.top_middle.vertex.w,   t.top_middle.uv.u,       t.top_middle.uv.v};
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(t.draw_mode());
-    return float_vertex_uv_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
+    return vertex_uv_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
   }
 
   static constexpr auto map_to_array_floats(game::triangle<game::vertex_attributes_only> const &t)
@@ -241,7 +244,7 @@ class shape_mapper
     auto constexpr NUM_FLOATS = calc_vertex_only_num_floats(NUM_VERTICES);
 
     // clang-format off
-    auto floats = std::array<float, NUM_FLOATS>{t.bottom_left.vertex.x,  t.bottom_left.vertex.y,
+    auto floats = std::array<FloatType, NUM_FLOATS>{t.bottom_left.vertex.x,  t.bottom_left.vertex.y,
                                                 t.bottom_left.vertex.z,  t.bottom_left.vertex.w,
 
                                                 t.bottom_right.vertex.x, t.bottom_right.vertex.y,
@@ -251,7 +254,7 @@ class shape_mapper
                                                 t.top_middle.vertex.z,   t.top_middle.vertex.w};
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(t.draw_mode());
-    return float_vertex_only_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
+    return vertex_only_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -268,7 +271,7 @@ class shape_mapper
     auto constexpr NUM_FLOATS = calc_vertex_color_num_floats(NUM_VERTICES);
 
     // clang-format off
-    auto floats = std::array<float, NUM_FLOATS>{
+    auto floats = std::array<FloatType, NUM_FLOATS>{
         r.bottom_left.vertex.x,  r.bottom_left.vertex.y,  r.bottom_left.vertex.z, // vertice 1
         r.bottom_left.vertex.w,  r.bottom_left.color.r,   r.bottom_left.color.g,
         r.bottom_left.color.b,   r.bottom_left.color.a,
@@ -286,7 +289,7 @@ class shape_mapper
         r.top_left.color.b,      r.top_left.color.a};
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
-    return float_vertex_color_rectangle{mode, std::move(floats), RECTANGLE_VERTEX_ORDERING()};
+    return vertex_color_rectangle{mode, std::move(floats), RECTANGLE_VERTEX_ORDERING()};
   }
 
   static constexpr auto map_to_array_floats(game::rectangle<game::vertex_uv_attributes> const &r)
@@ -301,7 +304,7 @@ class shape_mapper
     auto const &tl = r.top_left;
 
     // clang-format off
-    auto floats = std::array<float, NUM_FLOATS>{
+    auto floats = std::array<FloatType, NUM_FLOATS>{
         bl.vertex.x, bl.vertex.y, bl.vertex.z, bl.vertex.w, bl.uv.u, bl.uv.v,
         br.vertex.x, br.vertex.y, br.vertex.z, br.vertex.w, br.uv.u, br.uv.v,
         tr.vertex.x, tr.vertex.y, tr.vertex.z, tr.vertex.w, tr.uv.u, tr.uv.v,
@@ -309,7 +312,7 @@ class shape_mapper
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
-    return float_vertex_uv_rectangle{mode, std::move(floats), RECTANGLE_VERTEX_ORDERING()};
+    return vertex_uv_rectangle{mode, std::move(floats), RECTANGLE_VERTEX_ORDERING()};
   }
 
   static constexpr auto map_to_array_floats(game::rectangle<game::vertex_attributes_only> const &r)
@@ -324,7 +327,7 @@ class shape_mapper
     auto const &tl = r.top_left;
 
     // clang-format off
-    auto floats = std::array<float, NUM_FLOATS>{
+    auto floats = std::array<FloatType, NUM_FLOATS>{
         bl.vertex.x, bl.vertex.y, bl.vertex.z, bl.vertex.w,
         br.vertex.x, br.vertex.y, br.vertex.z, br.vertex.w,
         tr.vertex.x, tr.vertex.y, tr.vertex.z, tr.vertex.w,
@@ -332,7 +335,7 @@ class shape_mapper
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
-    return float_vertex_only_rectangle{mode, std::move(floats), RECTANGLE_VERTEX_ORDERING()};
+    return vertex_only_rectangle{mode, std::move(floats), RECTANGLE_VERTEX_ORDERING()};
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -359,7 +362,7 @@ class shape_mapper
     // http://www.cs.umd.edu/projects/gvil/papers/av_ts.pdf
 
     // clang-format off
-    auto floats = std::array<float, NUM_FLOATS>{
+    auto floats = std::array<FloatType, NUM_FLOATS>{
         v[2].vertex.x, v[2].vertex.y, v[2].vertex.z, v[2].vertex.w, // front top-right
         v[2].color.r,  v[2].color.g,  v[2].color.b,  v[2].color.a,
 
@@ -386,7 +389,7 @@ class shape_mapper
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
-    return float_vertex_color_cube{mode, std::move(floats), CUBE_VERTICE_ORDERING(), r.model()};
+    return vertex_color_cube{mode, std::move(floats), CUBE_VERTICE_ORDERING(), r.model()};
   }
 
   static constexpr auto map_to_array_floats(game::cube<game::vertex_attributes_only> const &r)
@@ -397,7 +400,7 @@ class shape_mapper
     auto const &v = r.vertices;
 
     // clang-format off
-    auto floats = std::array<float, NUM_FLOATS>{
+    auto floats = std::array<FloatType, NUM_FLOATS>{
         v[2].vertex.x, v[2].vertex.y, v[2].vertex.z, v[2].vertex.w, // front top-right
 
         v[3].vertex.x, v[3].vertex.y, v[3].vertex.z, v[3].vertex.w, // front top-left
@@ -416,18 +419,32 @@ class shape_mapper
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
-    return float_vertex_only_cube{mode, std::move(floats), CUBE_VERTICE_ORDERING(), r.model()};
+    return vertex_only_cube{mode, std::move(floats), CUBE_VERTICE_ORDERING(), r.model()};
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // polygon
+  template <typename R, typename P, typename CountFN, typename FN>
+  static auto map_polygon(P const& p, CountFN const& count, FN const& fill_vertice)
+  {
+    auto const num_floats = count(p.num_vertices());
+
+    stlw::sized_buffer<FloatType> floats{static_cast<size_t>(num_floats)};
+    for (auto i{0}, j{0}; j < floats.length(); ++i) {
+      fill_vertice(floats, i, j);
+    }
+    auto const ordering_length = p.num_vertices();
+    stlw::sized_buffer<ElementType> vertex_ordering{static_cast<size_t>(ordering_length)};
+    for (auto i{0}; i < ordering_length; ++i) {
+      vertex_ordering[i] = i;
+    }
+    auto const mode = map_gfx_mode_to_opengl_mode(p.draw_mode());
+    return R{mode, std::move(floats), std::move(vertex_ordering)};
+  }
+
   static auto map_to_array_floats(game::polygon<game::vertex_color_attributes> const &p)
   {
-    auto const num_vertices = p.num_vertices();
-    auto const num_floats = calc_vertex_color_num_floats(num_vertices);
-
-    stlw::sized_buffer<float> floats{static_cast<size_t>(num_floats)};
-    for (auto i{0}, j{0}; j < floats.length(); ++i) {
+    auto const fill_vertice = [&p](auto &floats, auto const i, auto &j) {
       auto &vertice = p.vertex_attributes[i];
       floats[j++] = vertice.vertex.x;
       floats[j++] = vertice.vertex.y;
@@ -438,45 +455,25 @@ class shape_mapper
       floats[j++] = vertice.color.g;
       floats[j++] = vertice.color.b;
       floats[j++] = vertice.color.a;
-    }
-    auto const ordering_length = num_vertices;
-    stlw::sized_buffer<ElementType> vertex_ordering{static_cast<size_t>(ordering_length)};
-    for (auto i{0}; i < ordering_length; ++i) {
-      vertex_ordering[i] = i;
-    }
-    auto const mode = map_gfx_mode_to_opengl_mode(p.draw_mode());
-    return float_vertex_color_polygon{mode, std::move(floats), std::move(vertex_ordering)};
+    };
+    return map_polygon<vertex_color_polygon>(p, &calc_vertex_color_num_floats, fill_vertice);
   }
 
   static auto map_to_array_floats(game::polygon<game::vertex_attributes_only> const &p)
   {
-    auto const num_vertices = p.num_vertices();
-    auto const num_floats = calc_vertex_only_num_floats(num_vertices);
-
-    stlw::sized_buffer<float> floats{static_cast<size_t>(num_floats)};
-    for (auto i{0}, j{0}; j < floats.length(); ++i) {
+    auto const fill_vertice = [&p](auto &floats, auto const i, auto &j) {
       auto &vertice = p.vertex_attributes[i];
       floats[j++] = vertice.vertex.x;
       floats[j++] = vertice.vertex.y;
       floats[j++] = vertice.vertex.z;
       floats[j++] = vertice.vertex.w;
-    }
-    auto const ordering_length = num_vertices;
-    stlw::sized_buffer<ElementType> vertex_ordering{static_cast<size_t>(ordering_length)};
-    for (auto i{0}; i < ordering_length; ++i) {
-      vertex_ordering[i] = i;
-    }
-    auto const mode = map_gfx_mode_to_opengl_mode(p.draw_mode());
-    return float_vertex_only_polygon{mode, std::move(floats), std::move(vertex_ordering)};
+    };
+    return map_polygon<vertex_only_polygon>(p, &calc_vertex_only_num_floats, fill_vertice);
   }
 
   static auto map_to_array_floats(game::polygon<game::vertex_uv_attributes> const &p)
   {
-    auto const num_vertices = p.num_vertices();
-    auto const num_floats = calc_vertex_uv_num_floats(num_vertices);
-
-    stlw::sized_buffer<float> floats{static_cast<size_t>(num_floats)};
-    for (auto i{0}, j{0}; j < floats.length(); ++i) {
+    auto const fill_vertice = [&p](auto &floats, auto const i, auto &j) {
       auto &vertice = p.vertex_attributes[i];
       floats[j++] = vertice.vertex.x;
       floats[j++] = vertice.vertex.y;
@@ -485,19 +482,13 @@ class shape_mapper
 
       floats[j++] = vertice.uv.u;
       floats[j++] = vertice.uv.v;
-    }
-    auto const ordering_length = num_vertices;
-    stlw::sized_buffer<ElementType> vertex_ordering{static_cast<size_t>(ordering_length)};
-    for (auto i{0}; i < ordering_length; ++i) {
-      vertex_ordering[i] = i;
-    }
-    auto const mode = map_gfx_mode_to_opengl_mode(p.draw_mode());
-    return float_vertex_uv_polygon{mode, std::move(floats), std::move(vertex_ordering)};
+    };
+    return map_polygon<vertex_uv_polygon>(p, &calc_vertex_uv_num_floats, fill_vertice);
   }
 
 public:
   template <typename... T, typename... R>
-  static constexpr auto map_to_floats(T &&... shapes)
+  static constexpr auto map_to_opengl(T &&... shapes)
   {
     return std::make_tuple(shape_mapper::map_to_array_floats(shapes)...);
   }
