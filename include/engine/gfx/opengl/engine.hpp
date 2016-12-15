@@ -46,6 +46,7 @@ struct context2d_args
   color2d_context color;
   texture2d_context texture_wall;
   texture2d_context texture_container;
+  wireframe2d_context wireframe;
 
   MOVE_CONSTRUCTIBLE_ONLY(context2d_args);
 };
@@ -53,6 +54,7 @@ struct context3d_args
 {
   color3d_context color;
   texture3d_context texture;
+  wireframe3d_context wireframe;
 
   MOVE_CONSTRUCTIBLE_ONLY(context3d_args);
 };
@@ -62,16 +64,14 @@ struct engine {
   context2d_args d2;
   context3d_args d3;
 
-  //opengl_wireframe_context wireframe;
-
   MOVE_CONSTRUCTIBLE_ONLY(engine);
 
-  engine(context2d_args &&context_2d, context3d_args &&context_3d)
+  engine(glm::vec4 const& bg, context2d_args &&context_2d, context3d_args &&context_3d)
     : d2(std::move(context_2d))
     , d3(std::move(context_3d))
   {
     // background color
-    glClearColor(0.0f, 0.0f, 0.3f, 1.0f);
+    glClearColor(bg.x, bg.y, bg.z, bg.w);
   }
 
   void begin()
@@ -125,14 +125,19 @@ struct factory {
     auto c2 = context_factory::make_texture2d(logger, std::move(phandle2),
                                                            get_r(IMAGES::CONTAINER), std::move(va2));
 
-    DO_TRY(auto phandle3, program_loader::from_files("3dcolor.vert", "3dcolor.frag"));
-    auto va3 = global::make_vertex_color_vertex_attribute(logger);
-    auto c3 = context_factory::make_color3d(logger, std::move(phandle3), std::move(va3));
+    DO_TRY(auto phandle3, program_loader::from_files("wire.vert", "wire.frag"));
+    auto va3 = global::make_2dvertex_only_vertex_attribute(logger);
+    auto const color = LIST_OF_COLORS::PINK;
+    auto c3 = context_factory::make_wireframe2d(logger, std::move(phandle3), std::move(va3), color);
 
-    DO_TRY(auto phandle4, program_loader::from_files("3dtexture.vert", "3dtexture.frag"));
-    auto va4 = global::make_3dvertex_only_vertex_attribute(logger);
-    auto c4 = context_factory::make_texture3d(
-        logger, std::move(phandle4), std::move(va4),
+    DO_TRY(auto phandle4, program_loader::from_files("3dcolor.vert", "3dcolor.frag"));
+    auto va4 = global::make_vertex_color_vertex_attribute(logger);
+    auto c4 = context_factory::make_color3d(logger, std::move(phandle4), std::move(va4));
+
+    DO_TRY(auto phandle5, program_loader::from_files("3dtexture.vert", "3dtexture.frag"));
+    auto va5 = global::make_3dvertex_only_vertex_attribute(logger);
+    auto c5 = context_factory::make_texture3d(
+        logger, std::move(phandle5), std::move(va5),
         get_r(IMAGES::CUBE_FRONT),
         get_r(IMAGES::CUBE_RIGHT),
         get_r(IMAGES::CUBE_BACK),
@@ -141,17 +146,17 @@ struct factory {
         get_r(IMAGES::CUBE_BOTTOM)
         );
 
-    DO_TRY(auto phandle5, program_loader::from_files("wire.vert", "wire.frag"));
-    // TODO: now 2d wireframes will be broken here, need a "c5" and separate shaders until we
-    // figure out how to unify them.
-    //auto va5 = global::make_3dvertex_only_vertex_attribute(logger);
-    //auto const color = LIST_OF_COLORS::PINK;
-    //auto c5 = context_factory::make_wireframe(logger, std::move(phandle5), std::move(va5), color);
+    DO_TRY(auto phandle6, program_loader::from_files("3dwire.vert", "wire.frag"));
+    auto va6 = global::make_3dvertex_only_vertex_attribute(logger);
+    auto const color2 = LIST_OF_COLORS::PURPLE;
+    auto c6 = context_factory::make_wireframe3d(logger, std::move(phandle6), std::move(va6), color2);
 
+    context2d_args d2{std::move(c0), std::move(c1), std::move(c2), std::move(c3)};
+    context3d_args d3{std::move(c4), std::move(c5), std::move(c6)};
 
-    context2d_args d2{std::move(c0), std::move(c1), std::move(c2)};
-    context3d_args d3{std::move(c3), std::move(c4)};//, std::move(c5)};
-    return engine{std::move(d2), std::move(d3)};
+    auto const c = LIST_OF_COLORS::WHITE;
+    auto const background_color = glm::vec4{c[0], c[1], c[2], 1.0f};
+    return engine{background_color, std::move(d2), std::move(d3)};
   }
 };
 

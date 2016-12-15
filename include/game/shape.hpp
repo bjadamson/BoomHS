@@ -1,20 +1,25 @@
 #pragma once
 #include <engine/gfx/colors.hpp>
+#include <engine/gfx/mode.hpp>
 #include <game/data_types.hpp>
 
 namespace game
 {
+  using drawmode = ::engine::gfx::draw_mode;
 
 struct shape {
+  drawmode draw_mode_;
   model model_;
 
 protected:
-  explicit constexpr shape(model const &m)
-      : model_(m)
+  explicit constexpr shape(drawmode const dm, model const &m)
+      : draw_mode_(dm)
+      , model_(m)
   {
   }
 
 public:
+  auto constexpr const &draw_mode() const { return this->draw_mode_; }
   auto constexpr const &model() const { return this->model_; }
 };
 

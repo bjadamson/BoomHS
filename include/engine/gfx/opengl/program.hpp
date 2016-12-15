@@ -132,6 +132,7 @@ public:
 
     auto const loc = this->get_uniform_location(logger, this->program_id_, name);
     glUniform4fv(loc, COUNT, floats.data());
+    this->check_opengl_errors(logger);
   }
 
   // IMMUTABLE

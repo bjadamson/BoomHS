@@ -14,8 +14,8 @@ struct cube : public shape {
 
 private:
   friend class cube_factory;
-  explicit constexpr cube(struct model const& m, std::array<V, 8> &&v)
-      : shape(m)
+  explicit constexpr cube(drawmode const dm, struct model const& m, std::array<V, 8> &&v)
+      : shape(dm, m)
       , vertices(std::move(v))
   {
   }
@@ -67,7 +67,7 @@ class cube_factory
     // clang-format on
   }
 
-  static constexpr auto construct(model const &m, color_properties const &props)
+  static constexpr auto construct(drawmode const dm, model const &m, color_properties const &props)
   {
     auto const vertices = calculate_vertices(props.dimensions);
 
@@ -85,11 +85,11 @@ class cube_factory
     auto arr = stlw::make_array<vertex_color_attributes>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,
         b_bottom_left, b_bottom_right, b_top_right, b_top_left);
-    return cube<vertex_color_attributes>{m, std::move(arr)};
+    return cube<vertex_color_attributes>{dm, m, std::move(arr)};
     // clang-format on
   }
 
-  static constexpr auto construct(model const &m, uv_properties const &props)
+  static constexpr auto construct(drawmode const dm, model const &m, uv_properties const &props)
   {
     auto const vertices = calculate_vertices(props.dimensions);
 
@@ -107,11 +107,11 @@ class cube_factory
     auto arr = stlw::make_array<vertex_attributes_only>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,
         b_bottom_left, b_bottom_right, b_top_right, b_top_left);
-    return cube<vertex_attributes_only>{m, std::move(arr)};
+    return cube<vertex_attributes_only>{dm, m, std::move(arr)};
     // clang-format on
   }
 
-  static constexpr auto construct(model const &m, wireframe_properties const &props)
+  static constexpr auto construct(drawmode const dm, model const &m, wireframe_properties const &props)
   {
     auto const vertices = calculate_vertices(props.dimensions);
 
@@ -129,12 +129,12 @@ class cube_factory
     auto arr = stlw::make_array<vertex_attributes_only>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,
         b_bottom_left, b_bottom_right, b_top_right, b_top_left);
-    return cube<vertex_attributes_only>{m, std::move(arr)};
+    return cube<vertex_attributes_only>{dm, m, std::move(arr)};
     // clang-format on
   }
 
 public:
-  static constexpr auto make_spotted(model const &m, std::array<float, 3> const &c,
+  static constexpr auto make_spotted(drawmode const dm, model const &m, std::array<float, 3> const &c,
       height_width_length const& hwl)
   {
     auto const ALPHA = 1.0f;
@@ -146,19 +146,19 @@ public:
         std::array<float, 4>{0.2f, 0.5f, 0.2f, ALPHA}, color,
         std::array<float, 4>{0.6f, 0.4f, 0.8f, ALPHA}};
     color_properties const p{hwl, colors};
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 
-  static constexpr auto make_textured(model const &m, height_width_length const& hwl)
+  static constexpr auto make_textured(drawmode const dm, model const &m, height_width_length const& hwl)
   {
     uv_properties const p{hwl};
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 
-  static constexpr auto make_wireframe(model const& m, height_width_length const& hwl)
+  static constexpr auto make_wireframe(drawmode const dm, model const& m, height_width_length const& hwl)
   {
     wireframe_properties const p{hwl};
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 };
 

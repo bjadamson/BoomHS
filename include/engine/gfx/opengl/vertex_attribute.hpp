@@ -238,7 +238,8 @@ auto
 make_2dvertex_only_vertex_attribute(L &logger)
 {
   // num fields per attribute
-  GLint constexpr num_fields_vertex = 3; // x, y, z
+  // TODO: maybe 3 fields????
+  GLint constexpr num_fields_vertex = 4; // x, y, z, w
   return impl::make_vertex_only_vertex_attribute(logger, num_fields_vertex);
 }
 

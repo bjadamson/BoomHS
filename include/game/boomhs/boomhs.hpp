@@ -71,6 +71,8 @@ game::model *vmv = nullptr;
 game::model *wmv = nullptr;
 game::model *xmv = nullptr;
 game::model *ymv = nullptr;
+game::model *zmv = nullptr;
+
 game::model *amv = nullptr;
 game::model *bmv = nullptr;
 game::model *cmv = nullptr;
@@ -91,7 +93,7 @@ ecst_main(G &game, S &state)
     {
       auto eid = proxy.create_entity();
       pmv = &proxy.add_component(ct::model, eid);
-      pmv->translation = glm::vec3{-0.2f, -0.5f, 0.0f};
+      pmv->translation = glm::vec3{-0.9f, -0.4f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
@@ -131,12 +133,17 @@ ecst_main(G &game, S &state)
     {
       auto eid = proxy.create_entity();
       xmv = &proxy.add_component(ct::model, eid);
-      xmv->translation = glm::vec3{-0.60f, -0.60f, 0.0f};
+      xmv->translation = glm::vec3{-0.20f, 0.80f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
       ymv = &proxy.add_component(ct::model, eid);
       ymv->translation = glm::vec3{0.60f, 0.60f, 0.0f};
+    }
+    {
+      auto eid = proxy.create_entity();
+      zmv = &proxy.add_component(ct::model, eid);
+      zmv->translation = glm::vec3{-0.60f, -0.60f, 0.0f};
     }
     {
       auto eid = proxy.create_entity();
@@ -148,13 +155,11 @@ ecst_main(G &game, S &state)
       bmv = &proxy.add_component(ct::model, eid);
       bmv->translation = glm::vec3{0.7f, 0.0f, 0.0f};
     }
-    /*
     {
       auto eid = proxy.create_entity();
       cmv = &proxy.add_component(ct::model, eid);
       cmv->translation = glm::vec3{0.7f, -0.7f, 0.0f};
     }
-    */
   });
 
   namespace sea = ecst::system_execution_adapter;
@@ -222,26 +227,26 @@ public:
                                       stlw::concat(engine::gfx::LIST_OF_COLORS::YELLOW, 1.0f));
 
     auto const height = 0.25f, width = 0.39f;
-    auto triangle_color = game::triangle_factory::make(*pmv, ::engine::gfx::LIST_OF_COLORS::PINK);
-    auto triangle_list_colors = game::triangle_factory::make(*qmv, multicolor_triangle);
-    auto triangle_texture = game::triangle_factory::make(*rmv, true);
-    //auto triangle_wireframe = game::triangle_factory::make(*smv, true, false);
+    auto triangle_color = game::triangle_factory::make(drawmode::TRIANGLES, *pmv, ::engine::gfx::LIST_OF_COLORS::PINK);
+    auto triangle_list_colors = game::triangle_factory::make(drawmode::TRIANGLES, *qmv, multicolor_triangle);
+    auto triangle_texture = game::triangle_factory::make(drawmode::TRIANGLES, *rmv, true);
+    auto triangle_wireframe = game::triangle_factory::make(drawmode::LINE_LOOP, *smv, true, false);
 
-    auto cube_texture = game::cube_factory::make_textured(*amv, {0.15f, 0.15f, 0.15f});
-    auto cube_color = game::cube_factory::make_spotted(*bmv, ::engine::gfx::LIST_OF_COLORS::BLUE,
+    auto cube_texture = game::cube_factory::make_textured(drawmode::TRIANGLE_STRIP, *amv, {0.15f, 0.15f, 0.15f});
+    auto cube_color = game::cube_factory::make_spotted(drawmode::TRIANGLE_STRIP, *bmv, ::engine::gfx::LIST_OF_COLORS::BLUE,
         {0.25f, 0.25f, 0.25f});
-    //auto cube_wf = game::cube_factory::make_wireframe(*cmv, {0.25f, 0.25f, 0.25f});
+    auto cube_wf = game::cube_factory::make_wireframe(drawmode::LINE_LOOP, *cmv, {0.25f, 0.25f, 0.25f});
 
-    auto rectangle_color = game::rectangle_factory::make(*tmv, ::engine::gfx::LIST_OF_COLORS::YELLOW);
-    auto rectangle_list_colors = game::rectangle_factory::make(*umv, height, width, multicolor_rect);
-    auto rectangle_texture = game::rectangle_factory::make(*vmv, height, width, true);
-    //auto rectangle_wireframe = game::rectangle_factory::make(*wmv, height, width, true, true);
+    auto rectangle_color = game::rectangle_factory::make(drawmode::TRIANGLE_STRIP, *tmv, ::engine::gfx::LIST_OF_COLORS::YELLOW);
+    auto rectangle_list_colors = game::rectangle_factory::make(drawmode::TRIANGLE_STRIP, *umv, height, width, multicolor_rect);
+    auto rectangle_texture = game::rectangle_factory::make(drawmode::TRIANGLE_STRIP, *vmv, height, width, true);
+    auto rectangle_wireframe = game::rectangle_factory::make(drawmode::LINE_LOOP, *wmv, height, width, true, true);
 
     auto polygon_color =
-        game::polygon_factory::make(*xmv, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
-    //auto polygon_list_of_color = game::polygon_factory::make(*u, 5, multicolor_triangle);
-    auto polygon_texture = game::polygon_factory::make(*ymv, 7, true);
-    //auto polygon_wireframe = game::polygon_factory::make(*v, 7, true, true);
+        game::polygon_factory::make(drawmode::TRIANGLE_FAN, *xmv, 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
+    auto polygon_texture = game::polygon_factory::make(drawmode::TRIANGLE_FAN, *ymv, 7, true);
+    auto polygon_wireframe = game::polygon_factory::make(drawmode::LINE_LOOP, *zmv, 7, true, true);
+    //auto polygon_list_of_color = game::polygon_factory::make(drawmode::TRIANGLE_FAN, *zp1, 5, multicolor_triangle);
 
     auto &r = state.renderer;
     auto &d2 = r.engine.d2;
@@ -249,21 +254,15 @@ public:
     r.begin();
     r.draw(args, d2.color, triangle_color, triangle_list_colors,
                                            rectangle_color, rectangle_list_colors, polygon_color
-                                           // polygon_list_of_color,
+    //                                        polygon_list_of_color,
                                            );
-    r.draw(args, d2.texture_wall, triangle_texture, rectangle_texture,
-                                             polygon_texture
-                                             );
-
-    r.draw(args, d2.texture_container,
-                                             polygon_texture
-                                             );
+    r.draw(args, d2.texture_wall, triangle_texture, rectangle_texture, polygon_texture);
+    r.draw(args, d2.texture_container, polygon_texture);
+    r.draw(args, d2.wireframe, polygon_wireframe, triangle_wireframe, rectangle_wireframe);
 
     r.draw(args, d3.color, cube_color);
     r.draw(args, d3.texture, cube_texture);
-    //state.renderer.draw_shapes_with_wireframes(args, //triangle_wireframe, rectangle_wireframe,
-                                               // polygon_wireframe
-                                               //cube_wf);
+    r.draw(args, d3.wireframe, cube_wf);
     state.renderer.end();
   }
 };

@@ -100,6 +100,11 @@ draw_scene(L &logger, C &ctx, FN const& fn, std::tuple<S...> const &shapes)
   p.use();
   p.check_opengl_errors(logger);
 
+  if constexpr (C::HAS_COLOR_UNIFORM) {
+    p.set_uniform_array_4fv(logger, "u_color", ctx.color());
+    p.check_opengl_errors(logger);
+  }
+
   // Instruct the vertex-processor to enable the vertex attributes for this context.
   global::set_vertex_attributes(logger, ctx.va());
 

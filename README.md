@@ -1,8 +1,6 @@
 # BoomHS
 Boom Headshot?!
 
-![Alt text](/screenshots/early_shapes.png?raw=true "Some shapes being shoved at OpenGL under various transformations.")
-
 #### Required Dependencies (this is not an exhaustive list AT ALL)
 1. sudo apt-get intall libc++-dev
 
@@ -19,3 +17,7 @@ Boom Headshot?!
  + This invokes the script "bb.sh" (generated from the step #1).
 3. To run, invoke "bbr"
  + This invokes the script "bbr.sh" (generated from the step #1).
+
+![Alt text](/screenshots/early_shapes.png?raw=true "Some shapes being shoved at OpenGL under various transformations.")
+![Alt text](/screenshots/3d_movement.png?raw=true "Basic 3d camera implemented.")
+

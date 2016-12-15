@@ -59,6 +59,7 @@ public:
 
   // Derived context's can override this.
   static bool constexpr HAS_TEXTURE = false;
+  static bool constexpr HAS_COLOR_UNIFORM = false;
 };
 
 struct context2d : public opengl_context
@@ -177,29 +178,52 @@ public:
   MOVE_CONSTRUCTIBLE(texture2d_context);
 };
 
-class opengl_wireframe_context : public opengl_context
+template<typename B>
+class opengl_wireframe_context : public B
 {
   std::array<float, 4> color_;
 
-  // private
+protected:
   explicit opengl_wireframe_context(program &&p, vertex_attribute &&va, std::array<float, 4> const &c)
-      : opengl_context(std::move(p), std::move(va))
+      : B(std::move(p), std::move(va))
       , color_(c)
   {
   }
-  NO_COPY(opengl_wireframe_context);
-  NO_MOVE_ASSIGN(opengl_wireframe_context);
-  friend struct context_factory;
-
 public:
-  // move-construction OK
-  opengl_wireframe_context(opengl_wireframe_context &&other)
-      : opengl_context(std::move(other))
-      , color_(other.color_)
-  {
-    other.color_ = other.color_;
-  }
+  MOVE_CONSTRUCTIBLE_ONLY(opengl_wireframe_context);
+
+  static bool constexpr HAS_COLOR_UNIFORM = true;
   inline auto color() const { return this->color_; }
+};
+
+class wireframe2d_context : public opengl_wireframe_context<context2d>
+{
+  // private
+  explicit wireframe2d_context(program &&p, vertex_attribute &&va, std::array<float, 4> const &c)
+      : opengl_wireframe_context(std::move(p), std::move(va), c)
+  {
+  }
+
+  NO_COPY(wireframe2d_context);
+  NO_MOVE_ASSIGN(wireframe2d_context);
+  friend struct context_factory;
+public:
+  MOVE_CONSTRUCTIBLE(wireframe2d_context);
+};
+
+class wireframe3d_context : public opengl_wireframe_context<context3d>
+{
+  // private
+  explicit wireframe3d_context(program &&p, vertex_attribute &&va, std::array<float, 4> const &c)
+      : opengl_wireframe_context(std::move(p), std::move(va), c)
+  {
+  }
+
+  NO_COPY(wireframe3d_context);
+  NO_MOVE_ASSIGN(wireframe3d_context);
+  friend struct context_factory;
+public:
+  MOVE_CONSTRUCTIBLE(wireframe3d_context);
 };
 
 class context_factory
@@ -245,12 +269,21 @@ public:
   }
 
   template <typename L>
-  auto static make_wireframe(L &logger, program &&p, vertex_attribute &&va,
+  auto static make_wireframe2d(L &logger, program &&p, vertex_attribute &&va,
                                             std::array<float, 3> const &c)
   {
     constexpr auto ALPHA = 1.0f;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
-    return make<opengl_wireframe_context>(logger, std::move(p), std::move(va), color);
+    return make<wireframe2d_context>(logger, std::move(p), std::move(va), color);
+  }
+
+  template <typename L>
+  auto static make_wireframe3d(L &logger, program &&p, vertex_attribute &&va,
+                                            std::array<float, 3> const &c)
+  {
+    constexpr auto ALPHA = 1.0f;
+    std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
+    return make<wireframe3d_context>(logger, std::move(p), std::move(va), color);
   }
 };
 

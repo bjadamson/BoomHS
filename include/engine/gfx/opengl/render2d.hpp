@@ -44,6 +44,7 @@ draw_scene(L &logger, C &ctx, std::tuple<S...> const &shapes)
   auto const fn = [&]() {
     impl::draw_scene(logger, ctx, shapes);
   };
+
   if constexpr (C::HAS_TEXTURE) {
     global::texture_bind(ctx.texture());
     ON_SCOPE_EXIT([&ctx]() { global::texture_unbind(ctx.texture()); });

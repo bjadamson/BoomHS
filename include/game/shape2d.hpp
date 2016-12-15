@@ -14,8 +14,8 @@ struct triangle : public shape {
   V bottom_left, bottom_right, top_middle;
 private:
   friend class triangle_factory;
-  explicit constexpr triangle(struct model const& m, V const& bl, V const& br, V const& tm)
-    : shape(m)
+  explicit constexpr triangle(drawmode const dm,struct model const& m, V const& bl, V const& br, V const& tm)
+    : shape(dm, m)
     , bottom_left(bl)
     , bottom_right(br)
     , top_middle(tm)
@@ -23,9 +23,8 @@ private:
 };
 // clang-format on
 
-
 struct triangle_factory {
-  static float constexpr DEFAULT_RADIUS = 0.5;
+  static float constexpr DEFAULT_RADIUS = 0.25;
 
 private:
   struct color_properties {
@@ -62,17 +61,17 @@ private:
     return vertices;
   }
 
-  static constexpr auto construct(model const &m, color_properties const &props)
+  static constexpr auto construct(drawmode const dm, model const &m, color_properties const &props)
   {
     auto const vertices = calculate_vertices(m.translation, props.radius);
     vertex_color_attributes const bottom_left{vertices[0], color{props.color_bottom_left}};
     vertex_color_attributes const bottom_right{vertices[1], color{props.color_bottom_right}};
     vertex_color_attributes const top_middle{vertices[2], color{props.color_top_middle}};
 
-    return triangle<vertex_color_attributes>{m, bottom_left, bottom_right, top_middle};
+    return triangle<vertex_color_attributes>{dm, m, bottom_left, bottom_right, top_middle};
   }
 
-  static constexpr auto construct(model const &m, uv_properties const &props)
+  static constexpr auto construct(drawmode const dm, model const &m, uv_properties const &props)
   {
     auto const vertices = calculate_vertices(m.translation, props.radius);
 
@@ -80,10 +79,10 @@ private:
     vertex_uv_attributes const bottom_right{vertices[1], props.uv[1]};
     vertex_uv_attributes const top_middle{vertices[2], props.uv[2]};
 
-    return triangle<vertex_uv_attributes>{m, bottom_left, bottom_right, top_middle};
+    return triangle<vertex_uv_attributes>{dm, m, bottom_left, bottom_right, top_middle};
   }
 
-  static constexpr auto construct(model const &m, wireframe_properties const &props)
+  static constexpr auto construct(drawmode const dm, model const &m, wireframe_properties const &props)
   {
     auto const vertices = calculate_vertices(m.translation, props.radius);
 
@@ -91,40 +90,40 @@ private:
     vertex_attributes_only const bottom_right{vertices[1]};
     vertex_attributes_only const top_middle{vertices[2]};
 
-    return triangle<vertex_attributes_only>{m, bottom_left, bottom_right, top_middle};
+    return triangle<vertex_attributes_only>{dm, m, bottom_left, bottom_right, top_middle};
   }
 
 public:
   static constexpr auto
-  make(model const &m, float const radius, std::array<float, 3> const &c)
+  make(drawmode const dm, model const &m, float const radius, std::array<float, 3> const &c)
   {
     auto constexpr ALPHA = 1.0f;
     auto const color = std::array<float, 4>{c[0], c[1], c[2], ALPHA};
     color_properties const p{color, color, color, radius};
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 
-  static constexpr auto make(model const &m, std::array<float, 4> const &c)
+  static constexpr auto make(drawmode const dm, model const &m, std::array<float, 4> const &c)
   {
     color_properties const p{c};
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 
-  static constexpr auto make(model const &m, std::array<float, 3> const &c)
+  static constexpr auto make(drawmode const dm, model const &m, std::array<float, 3> const &c)
   {
     auto constexpr ALPHA = 1.0f;
     auto const color = std::array<float, 4>{c[0], c[1], c[2], ALPHA};
     color_properties const p{color, color, color};
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 
-  static constexpr auto make(model const &m)
+  static constexpr auto make(drawmode const dm, model const &m)
   {
-    return make(m, ::engine::gfx::LIST_OF_COLORS::RED);
+    return make(dm, m, ::engine::gfx::LIST_OF_COLORS::RED);
   }
 
   template <typename T>
-  static constexpr auto make(model const &m, T const &data)
+  static constexpr auto make(drawmode const dm, model const &m, T const &data)
   {
     auto const &bl = data[0];
     auto const &br = data[1];
@@ -134,19 +133,19 @@ public:
     std::array<float, 4> const top_middle{tm[0], tm[1], tm[2], tm[3]};
 
     color_properties const p{bottom_left, bottom_right, top_middle};
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 
-  static constexpr auto make(model const &m, bool const use_texture)
+  static constexpr auto make(drawmode const dm, model const &m, bool const use_texture)
   {
     uv_properties const p;
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 
-  static constexpr auto make(model const &m, bool const, bool const)
+  static constexpr auto make(drawmode const dm, model const &m, bool const, bool const)
   {
     wireframe_properties const p;
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 };
 
@@ -157,9 +156,9 @@ struct rectangle : public shape {
 
 private:
   friend class rectangle_factory;
-  explicit constexpr rectangle(struct model const &m, V const &bl, V const &br, V const &tr,
+  explicit constexpr rectangle(drawmode const dm, struct model const &m, V const &bl, V const &br, V const &tr,
                                V const &tl)
-      : shape(m)
+      : shape(dm, m)
       , bottom_left(bl)
       , bottom_right(br)
       , top_right(tr)
@@ -215,7 +214,7 @@ class rectangle_factory
     };
   }
 
-  static constexpr auto construct(model const &m, color_properties const &props)
+  static constexpr auto construct(drawmode const dm, model const &m, color_properties const &props)
   {
     auto const vertices = calculate_vertices(m.translation, props.dimensions);
 
@@ -224,10 +223,10 @@ class rectangle_factory
     vertex_color_attributes const top_right{vertices[2], color{props.top_right}};
     vertex_color_attributes const top_left{vertices[3], color{props.top_left}};
 
-    return rectangle<vertex_color_attributes>{m, bottom_left, bottom_right, top_right, top_left};
+    return rectangle<vertex_color_attributes>{dm, m, bottom_left, bottom_right, top_right, top_left};
   }
 
-  static constexpr auto construct(model const &m, uv_properties const &props)
+  static constexpr auto construct(drawmode const dm, model const &m, uv_properties const &props)
   {
     auto const vertices = calculate_vertices(m.translation, props.dimensions);
 
@@ -236,10 +235,10 @@ class rectangle_factory
     vertex_uv_attributes const top_right{vertices[2], props.uv[2]};
     vertex_uv_attributes const top_left{vertices[3], props.uv[3]};
 
-    return rectangle<vertex_uv_attributes>{m, bottom_left, bottom_right, top_right, top_left};
+    return rectangle<vertex_uv_attributes>{dm, m, bottom_left, bottom_right, top_right, top_left};
   }
 
-  static constexpr auto construct(model const &m, wireframe_properties const &props)
+  static constexpr auto construct(drawmode const dm, model const &m, wireframe_properties const &props)
   {
     auto const vertices = calculate_vertices(m.translation, props.dimensions);
 
@@ -247,21 +246,21 @@ class rectangle_factory
     vertex_attributes_only const bottom_right{vertices[1]};
     vertex_attributes_only const top_right{vertices[2]};
     vertex_attributes_only const top_left{vertices[3]};
-    return rectangle<vertex_attributes_only>{m, bottom_left, bottom_right, top_right, top_left};
+    return rectangle<vertex_attributes_only>{dm, m, bottom_left, bottom_right, top_right, top_left};
   }
 
 public:
   static constexpr auto
-  make(model const &m, std::array<float, 3> const &c, float const height = 0.39f,
+  make(drawmode const dm, model const &m, std::array<float, 3> const &c, float const height = 0.39f,
        float const width = 0.25f, float const alpha = 1.0f)
   {
     color_properties const p{{height, width}, std::array<float, 4>{c[0], c[1], c[2], alpha}};
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 
   template <typename T>
   static constexpr auto
-  make(model const &m, T const &data, float const height, float const width)
+  make(drawmode const dm, model const &m, T const &data, float const height, float const width)
   {
     auto const &bl = data[0];
     auto const &br = data[1];
@@ -273,42 +272,42 @@ public:
     std::array<float, 4> const top_left{tl[0], tl[1], tl[2], tl[3]};
 
     color_properties const p{{height, width}, bottom_left, bottom_right, top_right, top_left};
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 
-  static constexpr auto make(model const &m, std::array<float, 4> const &color,
+  static constexpr auto make(drawmode const dm, model const &m, std::array<float, 4> const &color,
                              float const height, float const width)
   {
     color_properties const p{{height, width}, color};
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 
-  static constexpr auto make(model const &m, float const height, float const width)
+  static constexpr auto make(drawmode const dm, model const &m, float const height, float const width)
   {
     auto constexpr ALPHA = 1.0f;
     auto const c = ::engine::gfx::LIST_OF_COLORS::RED;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
 
-    return make(m, color, height, width);
+    return make(dm, m, color, height, width);
   }
 
   static constexpr auto
-  make(model const &m, float const height, float const width, bool const)
+  make(drawmode const dm, model const &m, float const height, float const width, bool const)
   {
     uv_properties const p{{height, width}};
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 
   static constexpr auto
-  make(model const &m, float const height, float const width, bool const, bool const)
+  make(drawmode const dm, model const &m, float const height, float const width, bool const, bool const)
   {
     wireframe_properties const p{{height, width}};
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 
   template <typename T>
   static constexpr auto
-  make(model const &m, float const height, float const width, T const &data)
+  make(drawmode const dm, model const &m, float const height, float const width, T const &data)
   {
     auto const &bl = data[0];
     auto const &br = data[1];
@@ -320,10 +319,9 @@ public:
     std::array<float, 4> const top_left{tl[0], tl[1], tl[2], tl[3]};
 
     color_properties const p{{height, width}, bottom_left, bottom_right, top_right, top_left};
-    return construct(m, p);
+    return construct(dm, m, p);
   }
 };
-
 
 template <typename V>
 struct polygon : public shape {
@@ -332,8 +330,8 @@ struct polygon : public shape {
   friend struct polygon_factory;
 
 private:
-  explicit polygon(struct model const &m, int const num_vertices)
-      : shape(m)
+  explicit polygon(drawmode const dm, struct model const &m, int const num_vertices)
+      : shape(dm, m)
       , vertex_attributes(num_vertices)
   {
   }
@@ -364,7 +362,7 @@ class polygon_factory
     float const width = 0.25f;
   };
 
-  static auto construct(model const &m, color_properties const &props)
+  static auto construct(drawmode const dm, model const &m, color_properties const &props)
   {
     float const radius = props.width;
     auto const num_vertices = props.num_vertices;
@@ -382,7 +380,7 @@ class polygon_factory
       return t.y + pos;
     };
 
-    polygon<vertex_color_attributes> poly{m, num_vertices};
+    polygon<vertex_color_attributes> poly{dm, m, num_vertices};
     for (auto i{0}, j{0}; i < num_vertices; ++i) {
       auto const x = cosfn(i);
       auto const y = sinfn(i);
@@ -394,7 +392,7 @@ class polygon_factory
     return poly;
   }
 
-  static auto construct(model const &m, uv_properties const &props)
+  static auto construct(drawmode const dm, model const &m, uv_properties const &props)
   {
     float const radius = props.width;
     auto const num_vertices = props.num_vertices;
@@ -412,7 +410,7 @@ class polygon_factory
       return t.y + pos;
     };
 
-    polygon<vertex_uv_attributes> poly{m, num_vertices};
+    polygon<vertex_uv_attributes> poly{dm, m, num_vertices};
     for (auto i{0}, j{0}; i < num_vertices; ++i) {
       auto const x = cosfn(i);
       auto const y = sinfn(i);
@@ -424,7 +422,7 @@ class polygon_factory
     return poly;
   }
 
-  static auto construct(model const &m, wireframe_properties const &props)
+  static auto construct(drawmode const dm, model const &m, wireframe_properties const &props)
   {
     float const radius = props.width;
     auto const num_vertices = props.num_vertices;
@@ -442,7 +440,7 @@ class polygon_factory
       return t.y + pos;
     };
 
-    polygon<vertex_attributes_only> poly{m, num_vertices};
+    polygon<vertex_attributes_only> poly{dm, m, num_vertices};
     for (auto i{0}, j{0}; i < num_vertices; ++i) {
       auto const x = cosfn(i);
       auto const y = sinfn(i);
@@ -455,23 +453,29 @@ class polygon_factory
 
 public:
   static auto
-  make(model const &m, int const num_vertices, std::array<float, 3> const &color)
+  make(drawmode const dm, model const &m, int const num_vertices, std::array<float, 3> const &color)
   {
     color_properties const prop{num_vertices, color};
-    return construct(m, prop);
+    return construct(dm, m, prop);
   }
 
-  static auto make(model const &m, int const num_vertices)
+  static auto make(drawmode const dm, model const &m, int const num_vertices)
   {
     auto constexpr COLOR = ::engine::gfx::LIST_OF_COLORS::PINK;
     color_properties const prop{num_vertices, COLOR};
-    return construct(m, prop);
+    return construct(dm, m, prop);
   }
 
-  static auto make(model const &m, int const num_vertices, bool const)
+  static auto make(drawmode const dm, model const &m, int const num_vertices, bool const)
   {
     uv_properties const p{num_vertices};
-    return construct(m, p);
+    return construct(dm, m, p);
+  }
+
+  static auto make(drawmode const dm, model const &m, int const num_vertices, bool const, bool const)
+  {
+    wireframe_properties const p{num_vertices};
+    return construct(dm, m, p);
   }
 };
 
