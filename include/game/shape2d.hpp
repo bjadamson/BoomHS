@@ -362,93 +362,64 @@ class polygon_factory
     float const width = 0.25f;
   };
 
-  static auto construct(drawmode const dm, model const &m, color_properties const &props)
+  template<typename R, typename P, typename FN>
+  static auto
+  construct_polygon(drawmode const dm, model const &m, P const& properties, FN const& fill_vertice)
   {
-    float const radius = props.width;
-    auto const num_vertices = props.num_vertices;
+    float const width = properties.width;
+    auto const num_vertices = properties.num_vertices;
 
     auto const C = num_vertices;     // Assume for now #colors == #vertices
     auto const E = num_vertices + 1; // num_edges
     auto const t = m.translation;
 
-    auto const cosfn = [&radius, &t, &E](auto const a) {
-      auto const pos = radius * static_cast<float>(std::cos(2 * M_PI * a / E));
+    auto const cosfn = [&width, &t, &E](auto const a) {
+      auto const pos = width * static_cast<float>(std::cos(2 * M_PI * a / E));
       return t.x + pos;
     };
-    auto const sinfn = [&radius, &t, &E](auto const a) {
-      auto const pos = radius * static_cast<float>(std::sin(2 * M_PI * a / E));
+    auto const sinfn = [&width, &t, &E](auto const a) {
+      auto const pos = width * static_cast<float>(std::sin(2 * M_PI * a / E));
       return t.y + pos;
     };
 
-    polygon<vertex_color_attributes> poly{dm, m, num_vertices};
-    for (auto i{0}, j{0}; i < num_vertices; ++i) {
+    polygon<R> poly{dm, m, num_vertices};
+    for (auto i{0} ; i < num_vertices; ++i) {
       auto const x = cosfn(i);
       auto const y = sinfn(i);
 
       vertex const v{x, y, t.z, 1.0f};
-      color const col{props.colors[0], props.colors[1], props.colors[2], props.alpha};
-      poly.vertex_attributes[i] = vertex_color_attributes{v, col};
+      fill_vertice(poly, v, i);
     }
     return poly;
+  }
+
+  static auto construct(drawmode const dm, model const &m, color_properties const &props)
+  {
+    using R = vertex_color_attributes;
+    auto const fill_vertice = [&](auto &poly, auto const& v, auto const i) {
+      color const col{props.colors[0], props.colors[1], props.colors[2], props.alpha};
+      poly.vertex_attributes[i] = R{v, col};
+    };
+    return construct_polygon<R>(dm, m, props, fill_vertice);
   }
 
   static auto construct(drawmode const dm, model const &m, uv_properties const &props)
   {
-    float const radius = props.width;
-    auto const num_vertices = props.num_vertices;
-
-    auto const C = num_vertices;     // Assume for now #colors == #vertices
-    auto const E = num_vertices + 1; // num_edges
-    auto const t = m.translation;
-
-    auto const cosfn = [&radius, &t, &E](auto const a) {
-      auto const pos = radius * static_cast<float>(std::cos(2 * M_PI * a / E));
-      return t.x + pos;
-    };
-    auto const sinfn = [&radius, &t, &E](auto const a) {
-      auto const pos = radius * static_cast<float>(std::sin(2 * M_PI * a / E));
-      return t.y + pos;
-    };
-
-    polygon<vertex_uv_attributes> poly{dm, m, num_vertices};
-    for (auto i{0}, j{0}; i < num_vertices; ++i) {
-      auto const x = cosfn(i);
-      auto const y = sinfn(i);
-
-      vertex const v{x, y, t.z, 1.0f};
-      texture_coord const uv{x, y};
+    using R = vertex_uv_attributes;
+    auto const fill_vertice = [&](auto &poly, auto const& v, auto const i) {
+      texture_coord const uv{v.x, v.y};
       poly.vertex_attributes[i] = vertex_uv_attributes{v, uv};
-    }
-    return poly;
+    };
+    return construct_polygon<R>(dm, m, props, fill_vertice);
   }
 
   static auto construct(drawmode const dm, model const &m, wireframe_properties const &props)
   {
-    float const radius = props.width;
-    auto const num_vertices = props.num_vertices;
-
-    auto const C = num_vertices;     // Assume for now #colors == #vertices
-    auto const E = num_vertices + 1; // num_edges
-    auto const t = m.translation;
-
-    auto const cosfn = [&radius, &t, &E](auto const a) {
-      auto const pos = radius * static_cast<float>(std::cos(2 * M_PI * a / E));
-      return t.x + pos;
+    using R = vertex_attributes_only;
+    auto const fill_vertice = [&](auto &poly, auto const& v, auto const i) {
+      poly.vertex_attributes[i] = R{v};
     };
-    auto const sinfn = [&radius, &t, &E](auto const a) {
-      auto const pos = radius * static_cast<float>(std::sin(2 * M_PI * a / E));
-      return t.y + pos;
-    };
-
-    polygon<vertex_attributes_only> poly{dm, m, num_vertices};
-    for (auto i{0}, j{0}; i < num_vertices; ++i) {
-      auto const x = cosfn(i);
-      auto const y = sinfn(i);
-
-      vertex const v{x, y, t.z, 1.0f};
-      poly.vertex_attributes[i] = vertex_attributes_only{v};
-    }
-    return poly;
+    return construct_polygon<R>(dm, m, props, fill_vertice);
   }
 
 public:
