@@ -67,12 +67,4 @@ draw_scene(L &logger, C &ctx, glm::mat4 const &view,
   }
 }
 
-template <typename L, typename... S>
-void
-draw_scene(L &logger, opengl_wireframe_context &ctx, glm::mat4 const &view,
-           glm::mat4 const &projection, std::tuple<S...> const &shapes)
-{
-  impl::draw_scene(logger, ctx, projection, shapes);
-}
-
 } // ns engine::gfx::opengl::render3d

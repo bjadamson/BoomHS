@@ -2,7 +2,6 @@
 #include <engine/gfx/opengl/context.hpp>
 #include <engine/gfx/opengl/global.hpp>
 #include <engine/gfx/opengl/render.hpp>
-#include <glm/glm.hpp>
 
 namespace engine::gfx::opengl::render2d
 {
@@ -12,7 +11,7 @@ namespace impl
 
 template<typename L, typename C, typename ...S>
 void
-draw_scene(L &logger, C &ctx, glm::mat4 const& projection, std::tuple<S...> const& shapes)
+draw_scene(L &logger, C &ctx, std::tuple<S...> const& shapes)
 {
   global::vao_bind(ctx.vao());
   ON_SCOPE_EXIT([]() { global::vao_unbind(); });
@@ -40,11 +39,10 @@ draw_scene(L &logger, C &ctx, glm::mat4 const& projection, std::tuple<S...> cons
 
 template <typename L, typename C, typename... S>
 void
-draw_scene(L &logger, C &ctx, glm::mat4 const &projection,
-    std::tuple<S...> const &shapes)
+draw_scene(L &logger, C &ctx, std::tuple<S...> const &shapes)
 {
   auto const fn = [&]() {
-    impl::draw_scene(logger, ctx, projection, shapes);
+    impl::draw_scene(logger, ctx, shapes);
   };
   if constexpr (C::HAS_TEXTURE) {
     global::texture_bind(ctx.texture());

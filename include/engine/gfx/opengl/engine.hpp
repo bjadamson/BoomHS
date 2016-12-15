@@ -57,7 +57,7 @@ struct engine {
   void draw_2dshapes_with_colors(Args const &args, S const &... shapes)
   {
     auto const fn = [&](auto const& gl_mapped_shapes) {
-      render2d::draw_scene(args.logger, this->color2d_, args.projection, gl_mapped_shapes);
+      render2d::draw_scene(args.logger, this->color2d_, gl_mapped_shapes);
     };
     this->draw_shape(fn, shapes...);
   }
@@ -66,7 +66,7 @@ struct engine {
   void draw_2dshapes_with_wall_texture(Args const &args, S const &... shapes)
   {
     auto const fn = [&](auto const& gl_mapped_shapes) {
-      render2d::draw_scene(args.logger, this->texture2d_wall_, args.projection, gl_mapped_shapes);
+      render2d::draw_scene(args.logger, this->texture2d_wall_, gl_mapped_shapes);
     };
     this->draw_shape(fn, shapes...);
   }
@@ -75,7 +75,7 @@ struct engine {
   void draw_2dshapes_with_container_texture(Args const &args, S const &... shapes)
   {
     auto const fn = [&](auto const& gl_mapped_shapes) {
-      render2d::draw_scene(args.logger, this->texture2d_container_, args.projection, gl_mapped_shapes);
+      render2d::draw_scene(args.logger, this->texture2d_container_, gl_mapped_shapes);
     };
     this->draw_shape(fn, shapes...);
   }
@@ -101,6 +101,10 @@ struct engine {
   template <typename Args, typename... S>
   void draw_shapes_with_wireframes(Args const &args, S const &... shapes)
   {
+    //auto const fn = [&](auto const& gl_mapped_shapes) {
+      //render3d::draw_scene(args.logger, this->wf_, args.view, args.projection, gl_mapped_shapes);
+    //};
+    //this->draw_shape(fn, shapes...);
     //this->draw_shape(this->wf_, args, shapes...);
   }
 };
