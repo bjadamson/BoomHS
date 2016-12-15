@@ -242,22 +242,24 @@ public:
     auto polygon_texture = game::polygon_factory::make(*ymv, 7, true);
     //auto polygon_wireframe = game::polygon_factory::make(*v, 7, true, true);
 
-    state.renderer.begin();
-    state.renderer.draw_2dshapes_with_colors(args, triangle_color, triangle_list_colors,
+    auto &r = state.renderer;
+    auto &d2 = r.engine.d2;
+    auto &d3 = r.engine.d3;
+    r.begin();
+    r.draw(args, d2.color, triangle_color, triangle_list_colors,
                                            rectangle_color, rectangle_list_colors, polygon_color
                                            // polygon_list_of_color,
                                            );
-    state.renderer.draw_2dshapes_with_wall_texture(args, triangle_texture, rectangle_texture,
+    r.draw(args, d2.texture_wall, triangle_texture, rectangle_texture,
                                              polygon_texture
                                              );
 
-    state.renderer.draw_2dshapes_with_container_texture(args,
+    r.draw(args, d2.texture_container,
                                              polygon_texture
                                              );
 
-    state.renderer.draw_3dcolor_shapes(args,
-        cube_color);
-    state.renderer.draw_3dtextured_shapes(args, cube_texture);
+    r.draw(args, d3.color, cube_color);
+    r.draw(args, d3.texture, cube_texture);
     //state.renderer.draw_shapes_with_wireframes(args, //triangle_wireframe, rectangle_wireframe,
                                                // polygon_wireframe
                                                //cube_wf);

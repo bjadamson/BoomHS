@@ -11,101 +11,93 @@
 namespace engine::gfx::opengl
 {
 
+namespace impl
+{
+
+template <typename FN, typename... S>
+void draw_shape(FN const& fn, S const &... shapes)
+{
+  auto const gl_mapped_shapes = shape_mapper::map_to_floats(shapes...);
+  fn(gl_mapped_shapes);
+}
+
+template<typename Args, typename C, typename ...S>
+void draw2d(Args const& args, C &ctx, S const&... shapes)
+{
+  auto const fn = [&](auto const& gl_mapped_shapes) {
+    render2d::draw_scene(args.logger, ctx, gl_mapped_shapes);
+  };
+  draw_shape(fn, shapes...);
+}
+
+template <typename Args, typename C, typename... S>
+void draw3d(Args const &args, C &ctx, S const &... shapes)
+{
+  auto const fn = [&](auto const& gl_mapped_shapes) {
+    render3d::draw_scene(args.logger, ctx, args.view, args.projection, gl_mapped_shapes);
+  };
+  draw_shape(fn, shapes...);
+}
+
+} // ns impl
+
+struct context2d_args
+{
+  color2d_context color;
+  texture2d_context texture_wall;
+  texture2d_context texture_container;
+
+  MOVE_CONSTRUCTIBLE_ONLY(context2d_args);
+};
+struct context3d_args
+{
+  color3d_context color;
+  texture3d_context texture;
+
+  MOVE_CONSTRUCTIBLE_ONLY(context3d_args);
+};
+
 struct engine {
   // data
-  color2d_context color2d_;
-  texture2d_context texture2d_wall_;
-  texture2d_context texture2d_container_;
+  context2d_args d2;
+  context3d_args d3;
 
-  color3d_context color3d_;
-  texture3d_context texture3d_;
+  //opengl_wireframe_context wireframe;
 
-  opengl_wireframe_context wireframe_;
+  MOVE_CONSTRUCTIBLE_ONLY(engine);
 
-  NO_COPY(engine);
-  NO_MOVE_ASSIGN(engine);
-  MOVE_CONSTRUCTIBLE(engine);
-
-  engine(color2d_context &&c2d, texture2d_context &&t2d0, texture2d_context &&t2d1,
-      color3d_context &&c3d, texture3d_context &&t3d, opengl_wireframe_context &&w)
-      : color2d_(std::move(c2d))
-      , texture2d_wall_(std::move(t2d0))
-      , texture2d_container_(std::move(t2d1))
-      , color3d_(std::move(c3d))
-      , texture3d_(std::move(t3d))
-      , wireframe_(std::move(w))
+  engine(context2d_args &&context_2d, context3d_args &&context_3d)
+    : d2(std::move(context_2d))
+    , d3(std::move(context_3d))
   {
     // background color
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.3f, 1.0f);
   }
 
   void begin()
   {
     // Render
     glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
   void end() {}
 
-  template <typename FN, typename... S>
-  void draw_shape(FN const& fn, S const &... shapes)
+  template <typename Args, typename C, typename... S>
+  void draw(Args const& args, C &ctx, S const&... shapes)
   {
-    auto const gl_mapped_shapes = shape_mapper::map_to_floats(shapes...);
-    fn(gl_mapped_shapes);
-  }
+    if constexpr (C::IS_2D) {
+      impl::draw2d(args, ctx, shapes...);
+    } else {
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_CULL_FACE);
 
-  template <typename Args, typename... S>
-  void draw_2dshapes_with_colors(Args const &args, S const &... shapes)
-  {
-    auto const fn = [&](auto const& gl_mapped_shapes) {
-      render2d::draw_scene(args.logger, this->color2d_, gl_mapped_shapes);
-    };
-    this->draw_shape(fn, shapes...);
-  }
+      glCullFace(GL_BACK);
+      impl::draw3d(args, ctx, shapes...);
 
-  template <typename Args, typename... S>
-  void draw_2dshapes_with_wall_texture(Args const &args, S const &... shapes)
-  {
-    auto const fn = [&](auto const& gl_mapped_shapes) {
-      render2d::draw_scene(args.logger, this->texture2d_wall_, gl_mapped_shapes);
-    };
-    this->draw_shape(fn, shapes...);
-  }
-
-  template <typename Args, typename... S>
-  void draw_2dshapes_with_container_texture(Args const &args, S const &... shapes)
-  {
-    auto const fn = [&](auto const& gl_mapped_shapes) {
-      render2d::draw_scene(args.logger, this->texture2d_container_, gl_mapped_shapes);
-    };
-    this->draw_shape(fn, shapes...);
-  }
-
-  template <typename Args, typename... S>
-  void draw_3dcolor_shapes(Args const &args, S const &... shapes)
-  {
-    auto const fn = [&](auto const& gl_mapped_shapes) {
-      render3d::draw_scene(args.logger, this->color3d_, args.view, args.projection, gl_mapped_shapes);
-    };
-    this->draw_shape(fn, shapes...);
-  }
-
-  template <typename Args, typename... S>
-  void draw_3dtextured_shapes(Args const &args, S const &... shapes)
-  {
-    auto const fn = [&](auto const& gl_mapped_shapes) {
-      render3d::draw_scene(args.logger, this->texture3d_, args.view, args.projection, gl_mapped_shapes);
-    };
-    this->draw_shape(fn, shapes...);
-  }
-
-  template <typename Args, typename... S>
-  void draw_shapes_with_wireframes(Args const &args, S const &... shapes)
-  {
-    //auto const fn = [&](auto const& gl_mapped_shapes) {
-      //render3d::draw_scene(args.logger, this->wf_, args.view, args.projection, gl_mapped_shapes);
-    //};
-    //this->draw_shape(fn, shapes...);
-    //this->draw_shape(this->wf_, args, shapes...);
+      //glDepthMask(GL_FALSE);
+      glDisable(GL_DEPTH_TEST);
+      glDisable(GL_CULL_FACE);
+    }
   }
 };
 
@@ -152,12 +144,14 @@ struct factory {
     DO_TRY(auto phandle5, program_loader::from_files("wire.vert", "wire.frag"));
     // TODO: now 2d wireframes will be broken here, need a "c5" and separate shaders until we
     // figure out how to unify them.
-    auto va5 = global::make_3dvertex_only_vertex_attribute(logger);
-    auto const color = LIST_OF_COLORS::PINK;
-    auto c5 = context_factory::make_wireframe(logger, std::move(phandle5), std::move(va5), color);
+    //auto va5 = global::make_3dvertex_only_vertex_attribute(logger);
+    //auto const color = LIST_OF_COLORS::PINK;
+    //auto c5 = context_factory::make_wireframe(logger, std::move(phandle5), std::move(va5), color);
 
-    return engine{std::move(c0), std::move(c1), std::move(c2), std::move(c3), std::move(c4),
-      std::move(c5)};
+
+    context2d_args d2{std::move(c0), std::move(c1), std::move(c2)};
+    context3d_args d3{std::move(c3), std::move(c4)};//, std::move(c5)};
+    return engine{std::move(d2), std::move(d3)};
   }
 };
 

@@ -26,11 +26,13 @@ class gfx_engine
   friend struct factory;
 
   W window_;
-  opengl::engine engine_;
+public:
+  opengl::engine engine;
+private:
 
   gfx_engine(W &&w, opengl::engine &&e)
       : window_(std::move(w))
-      , engine_(std::move(e))
+      , engine(std::move(e))
   {
   }
 
@@ -41,83 +43,18 @@ public:
 
   void begin()
   {
-    // Render
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    this->engine_.begin();
+    this->engine.begin();
   }
 
-  template <typename Args, typename... S>
-  void draw_2dshapes_with_colors(Args const &args, S const &... shapes)
+  template <typename Args, typename C, typename... S>
+  void draw(Args const& args, C &ctx, S const&... shapes)
   {
-    //glDisable(GL_DEPTH_TEST);
-    //glDepthMask(GL_FALSE); // disables writing to the z-buffer
-    this->engine_.draw_2dshapes_with_colors(args, shapes...);
-
-    //glDepthMask(GL_TRUE); // enables writing to the z-buffer
-    //glEnable(GL_DEPTH_TEST);
-  }
-
-  template <typename Args, typename... S>
-  void draw_2dshapes_with_container_texture(Args const &args, S const &... shapes)
-  {
-    //glDisable(GL_DEPTH_TEST);
-    //glDepthMask(GL_FALSE); // disables writing to the z-buffer
-    this->engine_.draw_2dshapes_with_container_texture(args, shapes...);
-
-    //glDepthMask(GL_TRUE); // enables writing to the z-buffer
-    //glEnable(GL_DEPTH_TEST);
-  }
-
-  template <typename Args, typename... S>
-  void draw_2dshapes_with_wall_texture(Args const &args, S const &... shapes)
-  {
-    //glDisable(GL_DEPTH_TEST);
-    //glDepthMask(GL_FALSE); // disables writing to the z-buffer
-    this->engine_.draw_2dshapes_with_wall_texture(args, shapes...);
-
-    //glDepthMask(GL_TRUE); // enables writing to the z-buffer
-    //glEnable(GL_DEPTH_TEST);
-  }
-
-  template <typename Args, typename... S>
-  void draw_3dcolor_shapes(Args const &args, S const &... shapes)
-  {
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-
-    glCullFace(GL_BACK);
-    this->engine_.draw_3dcolor_shapes(args, shapes...);
-
-    //glDepthMask(GL_FALSE);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-  }
-
-  template <typename Args, typename... S>
-  void draw_3dtextured_shapes(Args const &args, S const &... shapes)
-  {
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    //glDepthMask(GL_TRUE); // enables writing to the z-buffer
-
-    glCullFace(GL_BACK);
-    this->engine_.draw_3dtextured_shapes(args, shapes...);
-
-    //glDepthMask(GL_FALSE);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-  }
-
-  template <typename Args, typename... S>
-  void draw_shapes_with_wireframes(Args const &args, S const &... shapes)
-  {
-    this->engine_.draw_shapes_with_wireframes(args, shapes...);
+    this->engine.draw(args, ctx, shapes...);
   }
 
   void end()
   {
-    this->engine_.end();
+    this->engine.end();
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(this->window_.raw());

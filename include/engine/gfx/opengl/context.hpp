@@ -61,12 +61,40 @@ public:
   static bool constexpr HAS_TEXTURE = false;
 };
 
-struct color2d_context : public opengl_context
+struct context2d : public opengl_context
+{
+  static bool constexpr IS_2D = true;
+protected:
+  explicit context2d(program &&p, vertex_attribute &&va)
+    : opengl_context(std::move(p), std::move(va))
+  {
+  }
+  NO_COPY(context2d);
+  NO_MOVE_ASSIGN(context2d);
+public:
+  MOVE_CONSTRUCTIBLE(context2d);
+};
+
+struct context3d : public opengl_context
+{
+  static bool constexpr IS_2D = false;
+protected:
+  explicit context3d(program &&p, vertex_attribute &&va)
+    : opengl_context(std::move(p), std::move(va))
+  {
+  }
+  NO_COPY(context3d);
+  NO_MOVE_ASSIGN(context3d);
+public:
+  MOVE_CONSTRUCTIBLE(context3d);
+};
+
+struct color2d_context : public context2d
 {
   friend struct context_factory;
 protected:
   explicit color2d_context(program &&p, vertex_attribute &&va)
-    : opengl_context(std::move(p), std::move(va))
+    : context2d(std::move(p), std::move(va))
   {
   }
   NO_COPY(color2d_context);
@@ -75,12 +103,12 @@ public:
   MOVE_CONSTRUCTIBLE(color2d_context);
 };
 
-class color3d_context : public opengl_context
+class color3d_context : public context3d
 {
 friend struct context_factory;
 protected:
   explicit color3d_context(program &&p, vertex_attribute &&va)
-    : opengl_context(std::move(p), std::move(va))
+    : context3d(std::move(p), std::move(va))
   {
   }
   NO_COPY(color3d_context);
@@ -89,14 +117,15 @@ public:
   MOVE_CONSTRUCTIBLE(color3d_context);
 };
 
-class opengl_texture_context : public opengl_context
+template<typename D>
+class opengl_texture_context : public D
 {
 protected:
   texture_info texture_info_;
 
   // private
   explicit opengl_texture_context(program &&p, vertex_attribute &&va, texture_info const t)
-      : opengl_context(std::move(p), std::move(va))
+      : D(std::move(p), std::move(va))
       , texture_info_(t)
   {
   }
@@ -107,7 +136,7 @@ protected:
 public:
   // move-construction OK.
   explicit opengl_texture_context(opengl_texture_context &&other)
-      : opengl_context(std::move(other))
+      : D(std::move(other))
       , texture_info_(other.texture_info_)
   {
     other.texture_info_ = texture_info{0, 0};
@@ -117,7 +146,7 @@ public:
   inline auto texture() const { return this->texture_info_; }
 };
 
-class texture3d_context : public opengl_texture_context
+class texture3d_context : public opengl_texture_context<context3d>
 {
   // private
   explicit texture3d_context(program &&p, vertex_attribute &&va, texture_info const t)
@@ -133,7 +162,7 @@ public:
   MOVE_CONSTRUCTIBLE(texture3d_context);
 };
 
-class texture2d_context : public opengl_texture_context
+class texture2d_context : public opengl_texture_context<context2d>
 {
   // private
   explicit texture2d_context(program &&p, vertex_attribute &&va, texture_info const t)
