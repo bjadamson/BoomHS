@@ -117,6 +117,11 @@ public:
     return construct(dm, m, p);
   }
 
+  static constexpr auto make(drawmode const dm, model const& m, glm::vec4 const& c)
+  {
+    return make(dm, m, std::array<float, 4>{c[0], c[1], c[2], c[3]});
+  }
+
   static constexpr auto make(drawmode const dm, model const &m)
   {
     return make(dm, m, ::engine::gfx::LIST_OF_COLORS::RED);

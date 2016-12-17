@@ -27,5 +27,8 @@
 *.out
 *.app
 
+# core dumps
+core
+
 CMakeLists.txt
 build-system/
