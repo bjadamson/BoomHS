@@ -151,4 +151,22 @@ apply(F &&fn, Tuple &&t)
                           std::make_index_sequence<tSize>());
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// to_tuple
+namespace detail
+{
+template <typename C, std::size_t... Indices>
+auto to_tuple_helper(C const& c, std::index_sequence<Indices...>) {
+  return std::make_tuple(c[Indices]...);
+}
+
+} // ns detail
+
+template <std::size_t N, typename C>
+auto to_tuple(C const& v)
+{
+  assert(v.size() >= N);
+  return detail::to_tuple_helper(v, std::make_index_sequence<N>());
+}
+
 } // ns stlw
