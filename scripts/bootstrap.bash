@@ -21,6 +21,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17 -stdlib=libc++")
 set(TOOLS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tools/)
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
 ## DEFINITIONS
 file(GLOB INTERNAL_INCLUDE_DIRS include external/compact_optional/include external/expected/include external/hana/include external/ecst/include external/ecst/extlibs/vrm_core/include external/ecst/extlibs/vrm_pp/include)
@@ -51,6 +52,7 @@ add_executable(boomhs ${GLOBBED_SOURCES})
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
+find_package(SOIL REQUIRED)
 
 ## Build the application
 include(FindPkgConfig)
@@ -63,7 +65,7 @@ target_include_directories(boomhs PUBLIC
   ${INTERNAL_INCLUDE_DIRS}
   ${OPENGL_INDLUDE_DIRS}
   ${GLEW_INCLUDE_DIRS}
-  "/usr/include/SOIL/")
+  ${SOIL_INCLUDE_DIR})
 
 target_link_libraries(boomhs
   ${SDL2_LIBRARIES}
@@ -71,7 +73,7 @@ target_link_libraries(boomhs
   ${SDL2IMAGE_LIBRARIES}
   ${OPENGL_LIBRARIES}
   ${GLEW_LIBRARIES}
-  SOIL
+  ${SOIL_LIBRARIES}
   pthread
   boost_system)
 
