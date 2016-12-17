@@ -49,7 +49,7 @@ public:
   template <typename Args, typename C, typename... S>
   void draw(Args const& args, C &ctx, S const&... shapes)
   {
-    this->engine.draw(args, ctx, shapes...);
+    this->engine.draw(args, ctx, std::make_tuple(shapes...));
   }
 
   void end()
@@ -69,13 +69,6 @@ struct factory {
   static stlw::result<gfx_engine, std::string> make_gfx_sdl_engine(L &logger, W &&window)
   {
     DO_TRY(auto opengl_engine, opengl::factory::make_opengl_engine(logger));
-
-    // TODO: move this
-    // glEnable(GL_DEPTH_TEST);
-    // glDepthMask(GL_FALSE);
-    // glDisable(GL_CULL_FACE);
-    // glEnable(GL_DEPTH_TEST);
-    // glEnable(GL_CULL_FACE);
     return gfx_engine{std::move(window), std::move(opengl_engine)};
   }
 };

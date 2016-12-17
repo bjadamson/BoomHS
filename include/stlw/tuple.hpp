@@ -2,6 +2,7 @@
 #include <experimental/tuple>
 #include <functional>
 #include <tuple>
+#include <type_traits>
 
 // This code from stack overflow. The current implementation of std::experimental:P:apply doesn't
 // work for the use cases needed, so we use this implementation instead.
@@ -167,6 +168,24 @@ auto to_tuple(C const& v)
 {
   assert(v.size() >= N);
   return detail::to_tuple_helper(v, std::make_index_sequence<N>());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// map_tuple_elements
+namespace detail
+{
+template<typename T, typename F, std::size_t... Is>
+auto constexpr map_tuple_elements(T&& tup, F& f, std::index_sequence<Is...>)
+{
+  return std::make_tuple(f(std::get<Is>(std::forward<T>(tup)))...);
+}
+
+} // ns detail
+
+template<typename T, typename F, std::size_t TupSize = stlw::tuple_size_v<std::decay_t<T>>>
+auto constexpr map_tuple_elements(T &&tup, F f)
+{
+  return detail::map_tuple_elements(std::forward<T>(tup), f, std::make_index_sequence<TupSize>{});
 }
 
 } // ns stlw

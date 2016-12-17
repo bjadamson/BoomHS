@@ -15,28 +15,28 @@ namespace impl
 {
 
 template <typename FN, typename... S>
-void draw_shape(FN const& fn, S const &... shapes)
+void draw_shape(FN const& fn, std::tuple<S...> const& shapes)
 {
-  auto const gl_mapped_shapes = shape_mapper::map_to_opengl(shapes...);
+  auto const gl_mapped_shapes = shape_mapper::map_to_opengl(shapes);
   fn(gl_mapped_shapes);
 }
 
 template<typename Args, typename C, typename ...S>
-void draw2d(Args const& args, C &ctx, S const&... shapes)
+void draw2d(Args const& args, C &ctx, std::tuple<S...> const& shapes)
 {
   auto const fn = [&](auto const& gl_mapped_shapes) {
     render2d::draw_scene(args.logger, ctx, gl_mapped_shapes);
   };
-  draw_shape(fn, shapes...);
+  draw_shape(fn, shapes);
 }
 
 template <typename Args, typename C, typename... S>
-void draw3d(Args const &args, C &ctx, S const &... shapes)
+void draw3d(Args const &args, C &ctx, std::tuple<S...> const& shapes)
 {
   auto const fn = [&](auto const& gl_mapped_shapes) {
     render3d::draw_scene(args.logger, ctx, args.camera, args.projection, gl_mapped_shapes);
   };
-  draw_shape(fn, shapes...);
+  draw_shape(fn, shapes);
 }
 
 } // ns impl
@@ -83,14 +83,14 @@ struct engine {
   }
   void end() {}
 
-  template <typename Args, typename C, typename... S>
-  void draw(Args const& args, C &ctx, S const&... shapes)
+  template <typename Args, typename C, typename ...S>
+  void draw(Args const& args, C &ctx, std::tuple<S...> const& shapes)
   {
     if constexpr (C::IS_2D) {
-      impl::draw2d(args, ctx, shapes...);
+      impl::draw2d(args, ctx, shapes);
     } else {
       auto const draw3d = [&]() {
-        impl::draw3d(args, ctx, shapes...);
+        impl::draw3d(args, ctx, shapes);
       };
       if constexpr (C::IS_SKYBOX) {
         draw3d();

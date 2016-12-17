@@ -488,9 +488,10 @@ class shape_mapper
 
 public:
   template <typename... T, typename... R>
-  static constexpr auto map_to_opengl(T &&... shapes)
+  static constexpr auto map_to_opengl(std::tuple<T...> const& shapes)
   {
-    return std::make_tuple(shape_mapper::map_to_array_floats(shapes)...);
+    auto fn = [&](auto const& s) { return shape_mapper::map_to_array_floats(s); };
+    return stlw::map_tuple_elements(std::move(shapes), fn);
   }
 };
 
