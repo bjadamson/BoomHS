@@ -203,9 +203,18 @@ public:
     auto &d3 = r.engine.d3;
     r.begin();
 
-      r.draw(args, d2.color, game::triangle_factory::make(random_mode(), *MODELS[0], random_color()),
-        game::triangle_factory::make(random_mode(), *MODELS[1], random_color())
-          );
+    std::array<game::triangle<game::vertex_color_attributes>, 4> const arr = {
+      game::triangle_factory::make(random_mode(), *MODELS[0], random_color()),
+      game::triangle_factory::make(random_mode(), *MODELS[1], random_color()),
+      game::triangle_factory::make(random_mode(), *MODELS[2], random_color()),
+      game::triangle_factory::make(random_mode(), *MODELS[3], random_color()),
+    };
+
+      r.draw(args, d2.color, stlw::tuple_from_array(arr));
+      r.draw(args, d2.color,
+        game::triangle_factory::make(random_mode(), *MODELS[4], random_color()),
+        game::triangle_factory::make(random_mode(), *MODELS[5], random_color())
+      );
     //int x = game::triangle_factory::make(drawmode::TRIANGLES, *(MODELS[0]), random_color());
     //r.draw(args, d2.color, );
     //m[1] = game::triangle_factory::make(random_mode(), *MODELS[1], random_color());

@@ -47,10 +47,17 @@ public:
   }
 
   template <typename Args, typename C, typename... S>
+  void draw(Args const& args, C &ctx, std::tuple<S...> const& shapes)
+  {
+    this->engine.draw(args, ctx, shapes);
+  }
+
+  template <typename Args, typename C, typename... S>
   void draw(Args const& args, C &ctx, S const&... shapes)
   {
-    this->engine.draw(args, ctx, std::make_tuple(shapes...));
+    this->draw(args, ctx, std::make_tuple(shapes...));
   }
+
 
   void end()
   {

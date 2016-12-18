@@ -188,4 +188,21 @@ auto constexpr map_tuple_elements(T &&tup, F f)
   return detail::map_tuple_elements(std::forward<T>(tup), f, std::make_index_sequence<TupSize>{});
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// tuple_from_array
+namespace detail {
+template<typename T, std::size_t... Is>
+auto constexpr tuple_from_array(T const& arr, std::index_sequence<Is...>)
+{
+  return std::make_tuple(arr[Is]...);
+}
+
+} // ns detail
+
+template<typename T, size_t TupSize = std::tuple_size<std::decay_t<T>>::value>
+auto constexpr tuple_from_array(T const& arr)
+{
+  return detail::tuple_from_array(arr, std::make_index_sequence<TupSize>{});
+}
+
 } // ns stlw
