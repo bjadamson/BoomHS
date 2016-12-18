@@ -197,12 +197,33 @@ auto constexpr tuple_from_array(T const& arr, std::index_sequence<Is...>)
   return std::make_tuple(arr[Is]...);
 }
 
+template<std::size_t N, typename V, typename T, std::size_t ...Is>
+auto constexpr array_from_container(T const& c, std::index_sequence<Is...>)
+{
+  return std::array<V, N>{c[Is]...};
+}
+
 } // ns detail
 
-template<typename T, size_t TupSize = std::tuple_size<std::decay_t<T>>::value>
+template<typename T>
 auto constexpr tuple_from_array(T const& arr)
 {
-  return detail::tuple_from_array(arr, std::make_index_sequence<TupSize>{});
+  auto constexpr tup_size = std::tuple_size<std::decay_t<T>>::value;
+  return detail::tuple_from_array(arr, std::make_index_sequence<tup_size>{});
+}
+
+template<typename T, std::size_t N>
+auto constexpr tuple_from_array(T const (&arr)[N])
+{
+  return detail::tuple_from_array(arr, std::make_index_sequence<N>{});
+}
+
+// not safe
+template<std::size_t N, typename T>
+auto constexpr tuple_from_container(T const& c)
+{
+  using V = typename T::value_type;
+  return tuple_from_array(detail::array_from_container<N, V>(c, std::make_index_sequence<N>{}));
 }
 
 } // ns stlw
