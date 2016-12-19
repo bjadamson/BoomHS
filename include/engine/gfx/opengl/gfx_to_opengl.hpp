@@ -491,7 +491,7 @@ public:
   static constexpr auto map_to_opengl(std::tuple<T...> const& shapes)
   {
     auto fn = [&](auto const& s) { return shape_mapper::map_to_array_floats(s); };
-    return stlw::map_tuple_elements(std::move(shapes), fn);
+    return stlw::map_tuple_elements(shapes, fn);
   }
 };
 
