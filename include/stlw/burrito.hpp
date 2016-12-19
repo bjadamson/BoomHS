@@ -35,28 +35,30 @@ struct burrito
 
 
 // This overload ensures that the types passed in are iterators.
-template<typename T>
-auto constexpr
-make_burrito(T *t0, T *t1)
-{
-  static_assert(std::is_pointer<decltype(t0)>::value, "needs to be pointers");
-  auto const p = std::make_pair(t0, t1);
-  return burrito<decltype(p), container_tag>{p};
-}
+//template<typename T>
+//auto constexpr
+//make_burrito(T *t0, T *t1)
+//{
+  //static_assert(std::is_pointer<decltype(t0)>::value, "needs to be pointers");
+  //auto const p = std::make_pair(t0, t1);
+  //return burrito<decltype(p), container_tag>{p};
+//}
 
+/*
 template<typename C>
 auto constexpr
-make_burrito(C const& c)
+make_burrito(C &&c)
 {
   return make_burrito(c.cbegin(), c.cend());
 }
+*/
 
 template<typename ...T>
 auto constexpr
-make_burrito(std::tuple<T...> const& t)
+make_burrito(std::tuple<T...> &&t)
 {
   using U = std::tuple<T...>;
-  return burrito<U, tuple_tag>{t};
+  return burrito<U, tuple_tag>{std::move(t)};
 }
 
 template<typename ...T>
