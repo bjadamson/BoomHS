@@ -69,6 +69,8 @@ make_burrito(T const&... t)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // HOF's
+namespace hof
+{
 template<typename U, typename FN, typename IGNORE=void>
 auto constexpr map(burrito<U, tuple_tag> const& b, FN const& fn)
 {
@@ -133,5 +135,7 @@ void constexpr for_each(burrito<U, container_tag> const& b, FN const& fn)
     fn(*it);
   }
 }
+
+} // ns hof
 
 } // ns stlw

@@ -492,7 +492,7 @@ public:
   static constexpr auto map_to_opengl(B const& burrito)
   {
     auto fn = [&](auto const& s) { return shape_mapper::map_to_array_floats(s); };
-    return stlw::map(burrito, fn);
+    return stlw::hof::map(burrito, fn);
   }
 };
 
