@@ -20,8 +20,8 @@ struct burrito
   template<typename T>
   burrito(T &&t) : value(std::move(t)) {}
 
-  template<typename T>
-  burrito(T t0, T t1) : value(std::make_pair(t0, t1)) {}
+  //template<typename T>
+  //burrito(T t0, T t1) : value(std::make_pair(t0, t1)) {}
 
   auto constexpr size() const
   {
@@ -90,6 +90,7 @@ auto constexpr map(burrito<U, container_tag> const& b, FN const& fn)
   return container;
 }
 
+/*
 template<typename U, typename FN, template <class, class> typename Container>
 auto constexpr map(burrito<U, container_tag> const& b, FN const& fn,
     Container<typename std::decay<decltype(*b.value.first)>::type,
@@ -119,6 +120,7 @@ auto constexpr map(burrito<U, container_tag> const& b, FN const& fn,
   }
   return std::move(cont);
 }
+*/
 
 template<typename U, typename FN>
 void constexpr for_each(burrito<U, tuple_tag> const& b, FN const& fn)
@@ -129,12 +131,8 @@ void constexpr for_each(burrito<U, tuple_tag> const& b, FN const& fn)
 template<typename U, typename FN>
 void constexpr for_each(burrito<U, container_tag> const& b, FN const& fn)
 {
-  using T1 = decltype(b.value.first);
-  using T2 = decltype(b.value.second);
-  static_assert(std::is_same<T1, T2>(), "iterator pairs must be of the same type.");
-
-  for (auto it{b.value.first}; it < b.value.second; ++it) {
-    fn(*it);
+  for (auto const& it : b.value) {
+    fn(it);
   }
 }
 
