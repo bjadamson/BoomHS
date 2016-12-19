@@ -110,9 +110,10 @@ draw_scene(L &logger, C &ctx, FN const& fn, B const &burrito)
 
   std::stringstream ss;
   ss << "#######################################################################################\n";
-  //ss << "Copying '" << burrito.size() << "' shapes from CPU -> OpenGL driver ...\n";
+  ss << "Copying '" << burrito.size() << "' shapes from CPU -> OpenGL driver ...\n";
 
-  stlw::for_each(burrito, fn);
+  //stlw::for_each(std::move(burrito.value), fn);
+  stlw::hof::for_each(burrito, fn);
   ss << "#######################################################################################\n";
 
   logger.trace(ss.str());

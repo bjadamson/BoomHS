@@ -17,7 +17,7 @@ namespace impl
 template <typename FN, typename B>
 void draw_shape(FN const& fn, B const& burrito)
 {
-  auto const gl_mapped_shapes = shape_mapper::map_to_opengl(burrito);
+  auto gl_mapped_shapes = shape_mapper::map_to_opengl(burrito);
   fn(gl_mapped_shapes);
 }
 

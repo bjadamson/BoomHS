@@ -76,7 +76,7 @@ namespace hof
 template<typename U, typename FN, typename IGNORE=void>
 auto constexpr map(burrito<U, tuple_tag> const& b, FN const& fn)
 {
-  return stlw::map_tuple_elements(b.value, fn);
+  return stlw::make_burrito(stlw::map_tuple_elements(b.value, fn));
 }
 
 template<typename U, typename FN, template <class, class> typename Container = std::vector>

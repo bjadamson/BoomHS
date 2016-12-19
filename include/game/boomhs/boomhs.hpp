@@ -216,7 +216,9 @@ public:
 
     //r.draw(args, d2.color, stlw::tuple_from_array(arr));
     r.draw(args, d2.color, stlw::make_burrito(game::triangle_factory::make(random_mode(), *MODELS[4], random_color()),
-      game::triangle_factory::make(random_mode(), *MODELS[5], random_color())));
+      game::triangle_factory::make(random_mode(), *MODELS[5], random_color()),
+      game::triangle_factory::make(random_mode(), *MODELS[6], random_color())
+        ));
 
     /*
     game::triangle<game::vertex_color_attributes> const arr2[2] = {
