@@ -18,10 +18,7 @@ struct burrito
   MOVE_CONSTRUCTIBLE_ONLY(burrito);
 
   template<typename T>
-  burrito(T &&t) : value(std::move(t)) {}
-
-  //template<typename T>
-  //burrito(T t0, T t1) : value(std::make_pair(t0, t1)) {}
+  explicit constexpr burrito(T &&t) : value(std::move(t)) {}
 
   auto constexpr size() const
   {
@@ -33,25 +30,6 @@ struct burrito
   }
 };
 
-
-// This overload ensures that the types passed in are iterators.
-//template<typename T>
-//auto constexpr
-//make_burrito(T *t0, T *t1)
-//{
-  //static_assert(std::is_pointer<decltype(t0)>::value, "needs to be pointers");
-  //auto const p = std::make_pair(t0, t1);
-  //return burrito<decltype(p), container_tag>{p};
-//}
-
-/*
-template<typename C>
-auto constexpr
-make_burrito(C &&c)
-{
-  return make_burrito(c.cbegin(), c.cend());
-}
-*/
 
 template<typename ...T>
 auto constexpr
