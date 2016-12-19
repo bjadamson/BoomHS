@@ -18,7 +18,19 @@ struct burrito
   burrito(T const& t) : value(t) {}
 
   template<typename T>
+  burrito(T &&t) : value(std::move(t)) {}
+
+  template<typename T>
   burrito(T t0, T t1) : value(std::make_pair(t0, t1)) {}
+
+  auto constexpr size() const
+  {
+    if constexpr (std::is_same<TAG_TYPE, tuple_tag>()) {
+      return std::tuple_size<U>::value;
+    } else {
+      return value.size();
+    }
+  }
 };
 
 template<typename U, typename FN, typename IGNORE=void>
@@ -87,15 +99,14 @@ void constexpr for_each(burrito<U, iterator_tag> const& b, FN const& fn)
 }
 
 // This overload ensures that the types passed in are iterators.
-/*
 template<typename T>
 auto constexpr
-make_burrito(T t0, T t1)
+make_burrito(T *t0, T *t1)
 {
+  static_assert(std::is_pointer<decltype(t0)>::value, "needs to be pointers");
   auto const p = std::make_pair(t0, t1);
   return burrito<decltype(p), iterator_tag>{p};
 }
-*/
 
 template<typename C>
 auto constexpr
