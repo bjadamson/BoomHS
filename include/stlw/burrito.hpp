@@ -63,10 +63,10 @@ make_burrito(std::tuple<T...> &&t)
 
 template<typename ...T>
 auto constexpr
-make_burrito(T const&... t)
+make_burrito(T &&... t)
 {
   using U = std::tuple<T...>;
-  return burrito<U, tuple_tag>{std::make_tuple(t...)};
+  return burrito<U, tuple_tag>{std::make_tuple(std::forward<T>(t)...)};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
