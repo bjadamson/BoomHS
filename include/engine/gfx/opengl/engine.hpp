@@ -14,29 +14,29 @@ namespace engine::gfx::opengl
 namespace impl
 {
 
-template <typename FN, typename... S>
-void draw_shape(FN const& fn, std::tuple<S...> const& shapes)
+template <typename FN, typename B>
+void draw_shape(FN const& fn, B const& burrito)
 {
-  auto const gl_mapped_shapes = shape_mapper::map_to_opengl(shapes);
+  auto const gl_mapped_shapes = shape_mapper::map_to_opengl(burrito);
   fn(gl_mapped_shapes);
 }
 
-template<typename Args, typename C, typename ...S>
-void draw2d(Args const& args, C &ctx, std::tuple<S...> const& shapes)
+template<typename Args, typename C, typename B>
+void draw2d(Args const& args, C &ctx, B const& burrito)
 {
   auto const fn = [&](auto const& gl_mapped_shapes) {
     render2d::draw_scene(args.logger, ctx, gl_mapped_shapes);
   };
-  draw_shape(fn, shapes);
+  draw_shape(fn, burrito);
 }
 
-template <typename Args, typename C, typename... S>
-void draw3d(Args const &args, C &ctx, std::tuple<S...> const& shapes)
+template <typename Args, typename C, typename B>
+void draw3d(Args const &args, C &ctx, B const& burrito)
 {
   auto const fn = [&](auto const& gl_mapped_shapes) {
     render3d::draw_scene(args.logger, ctx, args.camera, args.projection, gl_mapped_shapes);
   };
-  draw_shape(fn, shapes);
+  draw_shape(fn, burrito);
 }
 
 } // ns impl
@@ -83,14 +83,14 @@ struct engine {
   }
   void end() {}
 
-  template <typename Args, typename C, typename ...S>
-  void draw(Args const& args, C &ctx, std::tuple<S...> const& shapes)
+  template <typename Args, typename C, typename B>
+  void draw(Args const& args, C &ctx, B const& burrito)
   {
     if constexpr (C::IS_2D) {
-      impl::draw2d(args, ctx, shapes);
+      impl::draw2d(args, ctx, burrito);
     } else {
       auto const draw3d = [&]() {
-        impl::draw3d(args, ctx, shapes);
+        impl::draw3d(args, ctx, burrito);
       };
       if constexpr (C::IS_SKYBOX) {
         draw3d();

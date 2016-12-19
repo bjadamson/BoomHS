@@ -8,68 +8,116 @@ namespace stlw
 struct tuple_tag {};
 struct iterator_tag {};
 
-template<typename TAG, typename U>
+template<typename U, typename TAG>
 struct burrito
 {
-  U const value;
+  U value;
   using TAG_TYPE = TAG;
 
-  template<typename P>
-  explicit burrito(P const& p) : value(U{p}) {}
+  template<typename T>
+  burrito(T const& t) : value(t) {}
 
-  template<typename P>
-  explicit burrito(P p0, P p1) : value(std::make_pair(p0, p1)) 
-  {
-    // statically check that P models iterator, and isn't just a pair
-    // of U's passed in as a tuple.
-    using V = typename P::value_type;
-  }
-  auto const& unwrap() const { return this->value; }
+  template<typename T>
+  burrito(T t0, T t1) : value(std::make_pair(t0, t1)) {}
 };
 
-//template<typename B, typename FN>
-//void iterate(FN const& fn) const
-//{
-//if constexpr (std::is_same<tuple_tag, TAG>()) {
-//stlw::for_each(this->value, fn);
-//}/* else if (std::is_same<iterator_tag, TAG>()) {
-//for (auto it{this->value.first}; it < this->value.second; ++it) {
-//fn(it);
-//}
-//}
-//}
+template<typename U, typename FN, typename IGNORE=void>
+auto constexpr map(burrito<U, tuple_tag> const& b, FN const& fn)
+{
+  return stlw::map_tuple_elements(b.value, fn);
+}
 
+template<typename U, typename FN, template <class, class> typename Container = std::vector>
+auto constexpr map(burrito<U, iterator_tag> const& b, FN const& fn)
+{
+  using T = typename std::decay<decltype(*b.value.first)>::type;
+  Container<T, std::allocator<T>> container;
+  for (auto it{b.value.first}; it < b.value.second; ++it) {
+    container.emplace_back(fn(*it));
+  }
+  return container;
+}
+
+template<typename U, typename FN, template <class, class> typename Container>
+auto constexpr map(burrito<U, iterator_tag> const& b, FN const& fn,
+    Container<typename std::decay<decltype(*b.value.first)>::type,
+    std::allocator<typename std::decay<decltype(*b.value.first)>::type>> &&cont)
+{
+  using T1 = decltype(b.value.first);
+  using T2 = decltype(b.value.second);
+  static_assert(std::is_same<T1, T2>(), "iterator pairs must be of the same type.");
+
+  for (auto it{b.value.first}; it < b.value.second; ++it) {
+    cont.emplace_back(fn(*it));
+  }
+  return cont;
+}
+
+template<typename U, typename FN, template <class, std::size_t> typename Container, std::size_t N>
+auto constexpr map(burrito<U, iterator_tag> const& b, FN const& fn,
+    Container<typename std::decay<decltype(*b.value.first)>::type, N> &&cont)
+{
+  using T1 = decltype(b.value.first);
+  using T2 = decltype(b.value.second);
+  static_assert(std::is_same<T1, T2>(), "iterator pairs must be of the same type.");
+
+  auto i{0};
+  for (auto it{b.value.first}; it < b.value.second; ++it) {
+    cont[i++] = fn(*it);
+  }
+  return std::move(cont);
+}
+
+template<typename U, typename FN>
+void constexpr for_each(burrito<U, tuple_tag> const& b, FN const& fn)
+{
+  stlw::for_each(b.value, fn);
+}
+
+template<typename U, typename FN>
+void constexpr for_each(burrito<U, iterator_tag> const& b, FN const& fn)
+{
+  using T1 = decltype(b.value.first);
+  using T2 = decltype(b.value.second);
+  static_assert(std::is_same<T1, T2>(), "iterator pairs must be of the same type.");
+
+  for (auto it{b.value.first}; it < b.value.second; ++it) {
+    fn(*it);
+  }
+}
+
+// This overload ensures that the types passed in are iterators.
 /*
 template<typename T>
-auto
+auto constexpr
 make_burrito(T t0, T t1)
 {
   auto const p = std::make_pair(t0, t1);
-  return burrito<iterator_tag, std::pair<T, T>>{p};
-}
-
-template<typename C>
-auto
-make_burrito(C const& c)
-{
-  return make_burrito(c.begin(), c.end());
+  return burrito<decltype(p), iterator_tag>{p};
 }
 */
 
-template<typename ...T>
-auto
-make_burrito(std::tuple<T...> const& t)
+template<typename C>
+auto constexpr
+make_burrito(C const& c)
 {
-  using U = std::tuple<T...>;
-  return burrito<tuple_tag, U>{t};
+  return make_burrito(c.cbegin(), c.cend());
 }
 
 template<typename ...T>
-auto
+auto constexpr
+make_burrito(std::tuple<T...> const& t)
+{
+  using U = std::tuple<T...>;
+  return burrito<U, tuple_tag>{t};
+}
+
+template<typename ...T>
+auto constexpr
 make_burrito(T const&... t)
 {
   using U = std::tuple<T...>;
-  return burrito<tuple_tag, U>{t...};
+  return burrito<U, tuple_tag>{std::make_tuple(t...)};
 }
 
 } // ns stlw

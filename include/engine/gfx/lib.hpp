@@ -47,6 +47,17 @@ public:
     this->engine.begin();
   }
 
+  /*
+  template <typename Args, typename C, typename It>
+  void draw(Args const& args, C &ctx, It begin, It end)
+  {
+    this->draw_impl(args, ctx, stlw::make_burrito(begin, end));
+  }
+  */
+
+  // idea: try exposing this interface instead, and have implementation defined in terms of
+  // burrito.
+  /*
   template <typename Args, typename C, typename... S>
   void draw(Args const& args, C &ctx, S const&... shapes)
   {
@@ -58,11 +69,12 @@ public:
   {
     this->draw_impl(args, ctx, stlw::make_burrito(shapes));
   }
+  */
 
   template <typename Args, typename C, typename B>
-  void draw_impl(Args const& args, C &ctx, B const& burrito)
+  void draw(Args const& args, C &ctx, B const& burrito)
   {
-    this->engine.draw(args, ctx, burrito.unwrap());
+    this->engine.draw(args, ctx, burrito);
   }
 
   void end()
