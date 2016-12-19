@@ -1,6 +1,7 @@
 #pragma once
 #include <engine/gfx/opengl/engine.hpp>
 #include <engine/window/sdl_window.hpp>
+#include <stlw/burrito.hpp>
 #include <stlw/type_ctors.hpp>
 
 namespace engine::gfx
@@ -47,17 +48,22 @@ public:
   }
 
   template <typename Args, typename C, typename... S>
-  void draw(Args const& args, C &ctx, std::tuple<S...> const& shapes)
+  void draw(Args const& args, C &ctx, S const&... shapes)
   {
-    this->engine.draw(args, ctx, shapes);
+    this->draw_impl(args, ctx, stlw::make_burrito(std::make_tuple(shapes...)));
   }
 
   template <typename Args, typename C, typename... S>
-  void draw(Args const& args, C &ctx, S const&... shapes)
+  void draw(Args const& args, C &ctx, std::tuple<S...> const& shapes)
   {
-    this->draw(args, ctx, std::make_tuple(shapes...));
+    this->draw_impl(args, ctx, stlw::make_burrito(shapes));
   }
 
+  template <typename Args, typename C, typename B>
+  void draw_impl(Args const& args, C &ctx, B const& burrito)
+  {
+    this->engine.draw(args, ctx, burrito.unwrap());
+  }
 
   void end()
   {

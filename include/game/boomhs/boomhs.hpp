@@ -10,6 +10,7 @@
 #include <engine/gfx/camera.hpp>
 #include <engine/gfx/skybox.hpp>
 #include <stlw/algorithm.hpp>
+#include <stlw/burrito.hpp>
 #include <stlw/random.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
@@ -211,25 +212,27 @@ public:
       game::triangle_factory::make(random_mode(), *MODELS[2], random_color()),
       game::triangle_factory::make(random_mode(), *MODELS[3], random_color()),
     };
-
-    r.draw(args, d2.color, stlw::tuple_from_array(arr));
-    r.draw(args, d2.color,
-      game::triangle_factory::make(random_mode(), *MODELS[4], random_color()),
-      game::triangle_factory::make(random_mode(), *MODELS[5], random_color())
-    );
     */
 
+    //r.draw(args, d2.color, stlw::tuple_from_array(arr));
+    r.draw(args, d2.color, game::triangle_factory::make(random_mode(), *MODELS[4], random_color()),
+      game::triangle_factory::make(random_mode(), *MODELS[5], random_color()));
+    //*/
+
+    /*
     game::triangle<game::vertex_color_attributes> const arr2[2] = {
       game::triangle_factory::make(random_mode(), *MODELS[8], random_color()),
       game::triangle_factory::make(random_mode(), *MODELS[9], random_color())
     };
     r.draw(args, d2.color, stlw::tuple_from_array(arr2));
+    */
 
     std::vector<game::triangle<game::vertex_color_attributes>> vec;
     vec.emplace_back(game::triangle_factory::make(random_mode(), *MODELS[6], random_color()));
     vec.emplace_back(game::triangle_factory::make(random_mode(), *MODELS[7], random_color()));
 
-    r.draw(args, d2.color, stlw::tuple_from_container<2>(vec));
+    //auto const bURR = stlw::make_burrito(vec);
+    //r.draw(args, d2.color, bURR);
 
     //int x = game::triangle_factory::make(drawmode::TRIANGLES, *(MODELS[0]), random_color());
     //r.draw(args, d2.color, );
