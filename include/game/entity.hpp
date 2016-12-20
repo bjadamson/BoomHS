@@ -53,11 +53,11 @@ class entity_transformer
     for_entity(eid, "rotating", fn);
   }
 
-  void scale_entity(ecst::entity_id const eid, glm::vec3 const& sf)
+  void scale_entity(ecst::entity_id const eid, float const factor)
   {
     auto const fn = [&]() {
       auto &m = this->data.get(ct::model, eid);
-      m.scale += sf;
+      m.scale *= factor;
     };
     for_entity(eid, "scaling", fn);
   }
@@ -76,10 +76,10 @@ public:
     });
   }
 
-  void scale_entities(glm::vec3 const& sf)
+  void scale_entities(float const factor)
   {
     data.for_entities([&](auto const eid) {
-        scale_entity(eid, sf);
+        scale_entity(eid, factor);
     });
   }
 };

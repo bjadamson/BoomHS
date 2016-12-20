@@ -9,9 +9,9 @@ namespace engine::gfx::opengl::render2d
 namespace impl
 {
 
-template<typename L, typename C, typename ...S>
+template<typename L, typename C, typename B>
 void
-draw_scene(L &logger, C &ctx, std::tuple<S...> const& shapes)
+draw_scene(L &logger, C &ctx, B const& burrito)
 {
   global::vao_bind(ctx.vao());
   ON_SCOPE_EXIT([]() { global::vao_unbind(); });
@@ -32,17 +32,17 @@ draw_scene(L &logger, C &ctx, std::tuple<S...> const& shapes)
     logger.trace("after drawing shape");
   };
 
-  render::draw_scene(logger, ctx, fn, shapes);
+  render::draw_scene(logger, ctx, fn, burrito);
 }
 
 } // ns impl
 
-template <typename L, typename C, typename... S>
+template <typename L, typename C, typename B>
 void
-draw_scene(L &logger, C &ctx, std::tuple<S...> const &shapes)
+draw_scene(L &logger, C &ctx, B const &burrito)
 {
   auto const fn = [&]() {
-    impl::draw_scene(logger, ctx, shapes);
+    impl::draw_scene(logger, ctx, burrito);
   };
 
   if constexpr (C::HAS_TEXTURE) {

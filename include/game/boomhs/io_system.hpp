@@ -41,14 +41,13 @@ struct io_system {
   {
     float constexpr PAN_DISTANCE = 0.3f;
     float constexpr MOVE_DISTANCE = 0.1f;
-    float constexpr SF = 0.20f; // scale-factor
+    float constexpr SCALE_FACTOR = 0.20f;
 
     float constexpr ANGLE = 60.0f;
-    float constexpr SCALE_FACTOR = 1.0f;
 
     auto &camera = state.camera;
     auto &projection = state.projection;
-    auto const make_scalev = [](float const f) { return glm::vec3(f, f, f); };
+    auto const sf = [](float const f) { return (f > 1.0f) ? (1.0f + f) : (1.0f - f); };
 
     switch (event.type) {
     case SDL_KEYDOWN: {
@@ -67,6 +66,14 @@ struct io_system {
       }
       case SDLK_d: {
           camera.move_left(MOVE_DISTANCE);
+        break;
+      }
+      case SDLK_q: {
+        camera.move_up(MOVE_DISTANCE);
+        break;
+      }
+      case SDLK_e: {
+          camera.move_down(MOVE_DISTANCE);
         break;
       }
       case SDLK_UP: {
@@ -88,12 +95,12 @@ struct io_system {
       // scaling
       case SDLK_KP_PLUS: {
       case SDLK_o:
-        et.scale_entities(make_scalev(SCALE_FACTOR));
+        et.scale_entities(sf(SCALE_FACTOR));
         break;
       }
       case SDLK_KP_MINUS: {
       case SDLK_p:
-        et.scale_entities(make_scalev(-SCALE_FACTOR));
+        et.scale_entities(sf(-SCALE_FACTOR));
         break;
       }
       // z-rotation

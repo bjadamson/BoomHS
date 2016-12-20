@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <stlw/type_macros.hpp>
+#include <engine/gfx/skybox.hpp>
 
 namespace engine::gfx
 {
@@ -11,7 +12,10 @@ class camera
   glm::vec3 pos_;
   glm::vec3 front_;
   glm::vec3 up_;
+  skybox skybox_;
 
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // immutable helper methods
   auto direction(float const speed) const
   {
     return speed * this->front_;
@@ -32,15 +36,40 @@ class camera
     return glm::vec3{0.0f, -d, 0.0f};
   }
 
-  friend struct camera_factory;
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // mutating helper methods
+  decltype(auto) move_along_x(float const s)
+  {
+    this->pos_ += right_vector(s);
+    this->skybox_.model.translation = this->pos_;
+    return *this;
+  }
+
+  decltype(auto) move_along_y(float const s)
+  {
+    this->pos_ += (this->up_ * s);
+    this->skybox_.model.translation = this->pos_;
+    return *this;
+  }
+
+  decltype(auto) move_along_z(float const s)
+  {
+    this->pos_ += direction(s);
+    this->skybox_.model.translation = this->pos_;
+    return *this;
+  }
+
 public:
   MOVE_CONSTRUCTIBLE_ONLY(camera);
 
-  camera(glm::vec3 const& pos, glm::vec3 const& front, glm::vec3 const& up)
+  camera(skybox &&sb, glm::vec3 const& pos, glm::vec3 const& front, glm::vec3 const& up)
     : pos_(pos)
     , front_(front)
     , up_(up)
-  {}
+    , skybox_(std::move(sb))
+  {
+    this->skybox_.model.translation = this->pos_;
+  }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   // immutable methods
@@ -55,29 +84,35 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   // mutating methods
   //
-  // linar movement
+  // linear movement
   camera& move_forward(float const s)
   {
-    this->pos_ += direction(s);
-    return *this;
+    return move_along_z(-s);
   }
 
   camera& move_backward(float const s)
   {
-    this->pos_ -= direction(s);
-    return *this;
+    return move_along_z(s);
   }
 
   camera& move_left(float const s)
   {
-    this->pos_ += right_vector(s);
-    return *this;
+    return move_along_x(-s);
   }
 
   camera& move_right(float const s)
   {
-    this->pos_ -= right_vector(s);
-    return *this;
+    return move_along_x(s);
+  }
+
+  camera& move_up(float const s)
+  {
+    return move_along_y(-s);
+  }
+
+  camera& move_down(float const s)
+  {
+    return move_along_y(s);
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -85,27 +120,30 @@ public:
   camera& pan_up(float const d)
   {
     this->pos_ += ypan(d);
+    this->skybox_.model.translation = this->pos_;
     return *this;
   }
 
   camera& pan_down(float const d)
   {
     this->pos_ -= ypan(d);
+    this->skybox_.model.translation = this->pos_;
     return *this;
   }
 
   camera& pan_left(float const d)
   {
     this->pos_ += xpan(d);
+    this->skybox_.model.translation = this->pos_;
     return *this;
   }
 
   camera& pan_right(float const d)
   {
     this->pos_ -= xpan(d);
+    this->skybox_.model.translation = this->pos_;
     return *this;
   }
 };
-
 
 } // ns engine::gfx

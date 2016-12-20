@@ -27,6 +27,7 @@ make_ssl()
   namespace ipc = ecst::inner_parallelism::composer;
 
   constexpr auto PA = ips::none::v();
+  //constexpr auto PA = ips::split_evenly_fn::v_cores();
 
   // clang-format off
   constexpr auto ssig_io_system = ss::make(st::io_system)

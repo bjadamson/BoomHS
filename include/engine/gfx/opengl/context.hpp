@@ -60,6 +60,7 @@ public:
   // Derived context's can override this.
   static bool constexpr HAS_TEXTURE = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
+  static bool constexpr IS_SKYBOX = false;
 };
 
 struct context2d : public opengl_context
@@ -149,7 +150,7 @@ public:
 
 class texture3d_context : public opengl_texture_context<context3d>
 {
-  // private
+protected:
   explicit texture3d_context(program &&p, vertex_attribute &&va, texture_info const t)
       : opengl_texture_context(std::move(p), std::move(va), t)
   {
@@ -161,6 +162,23 @@ class texture3d_context : public opengl_texture_context<context3d>
 
 public:
   MOVE_CONSTRUCTIBLE(texture3d_context);
+};
+
+class skybox_context : public texture3d_context
+{
+  // private
+  explicit skybox_context(program &&p, vertex_attribute &&va, texture_info const t)
+      : texture3d_context(std::move(p), std::move(va), t)
+  {
+  }
+
+  NO_COPY(skybox_context);
+  NO_MOVE_ASSIGN(skybox_context);
+  friend struct context_factory;
+
+public:
+  MOVE_CONSTRUCTIBLE(skybox_context);
+  static bool constexpr IS_SKYBOX = true;
 };
 
 class texture2d_context : public opengl_texture_context<context2d>
@@ -266,6 +284,14 @@ public:
   {
     auto const tid = load_3d_texture(logger, paths...);
     return make<texture3d_context>(logger, std::move(p), std::move(va), tid);
+  }
+
+  template <typename L, typename ...Paths>
+  auto static make_skybox(L &logger, program &&p, vertex_attribute &&va,
+      Paths const&... paths)
+  {
+    auto const tid = load_3d_texture(logger, paths...);
+    return make<skybox_context>(logger, std::move(p), std::move(va), tid);
   }
 
   template <typename L>

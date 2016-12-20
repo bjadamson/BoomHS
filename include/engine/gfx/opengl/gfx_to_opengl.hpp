@@ -9,6 +9,7 @@
 #include <game/shape3d.hpp>
 #include <glm/glm.hpp>
 #include <stlw/algorithm.hpp>
+#include <stlw/burrito.hpp>
 #include <stlw/sized_buffer.hpp>
 #include <stlw/type_ctors.hpp>
 
@@ -487,10 +488,11 @@ class shape_mapper
   }
 
 public:
-  template <typename... T, typename... R>
-  static constexpr auto map_to_opengl(T &&... shapes)
+  template <typename B, typename... R>
+  static auto constexpr map_to_opengl(B const& burrito)
   {
-    return std::make_tuple(shape_mapper::map_to_array_floats(shapes)...);
+    auto fn = [&](auto const& s) { return shape_mapper::map_to_array_floats(s); };
+    return stlw::hof::map(burrito, fn);
   }
 };
 

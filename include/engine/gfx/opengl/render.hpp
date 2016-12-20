@@ -89,9 +89,9 @@ render_shape(L &logger, Ctx &ctx, S const &shape)
   impl::render(logger, shape.draw_mode, shape.ordering.size());
 }
 
-template <typename L, typename C, typename FN, typename... S>
+template <typename L, typename C, typename FN, typename B>
 void
-draw_scene(L &logger, C &ctx, FN const& fn, std::tuple<S...> const &shapes)
+draw_scene(L &logger, C &ctx, FN const& fn, B const &burrito)
 {
   // Pass the matrices to the shader
   auto &p = ctx.program_ref();
@@ -110,9 +110,10 @@ draw_scene(L &logger, C &ctx, FN const& fn, std::tuple<S...> const &shapes)
 
   std::stringstream ss;
   ss << "#######################################################################################\n";
-  ss << "Copying '" << sizeof...(S) << "' shapes from CPU -> OpenGL driver ...\n";
+  ss << "Copying '" << burrito.size() << "' shapes from CPU -> OpenGL driver ...\n";
 
-  stlw::for_each(shapes, fn);
+  //stlw::for_each(std::move(burrito.value), fn);
+  stlw::hof::for_each(burrito, fn);
   ss << "#######################################################################################\n";
 
   logger.trace(ss.str());

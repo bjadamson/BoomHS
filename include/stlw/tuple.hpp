@@ -2,6 +2,7 @@
 #include <experimental/tuple>
 #include <functional>
 #include <tuple>
+#include <type_traits>
 
 // This code from stack overflow. The current implementation of std::experimental:P:apply doesn't
 // work for the use cases needed, so we use this implementation instead.
@@ -149,6 +150,80 @@ apply(F &&fn, Tuple &&t)
   std::size_t constexpr tSize = std::tuple_size<typename std::remove_reference<Tuple>::type>::value;
   return apply_tuple_impl(std::forward<F>(fn), std::forward<Tuple>(t),
                           std::make_index_sequence<tSize>());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// to_tuple
+namespace detail
+{
+template <typename C, std::size_t... Indices>
+auto to_tuple_helper(C const& c, std::index_sequence<Indices...>) {
+  return std::make_tuple(c[Indices]...);
+}
+
+} // ns detail
+
+template <std::size_t N, typename C>
+auto to_tuple(C const& v)
+{
+  assert(v.size() >= N);
+  return detail::to_tuple_helper(v, std::make_index_sequence<N>());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// map_tuple_elements
+namespace detail
+{
+template<typename T, typename F, std::size_t... Is>
+auto constexpr map_tuple_elements(T&& tup, F& f, std::index_sequence<Is...>)
+{
+  return std::make_tuple(f(std::get<Is>(std::forward<T>(tup)))...);
+}
+
+} // ns detail
+
+template<typename T, typename F, std::size_t TupSize = stlw::tuple_size_v<std::decay_t<T>>>
+auto constexpr map_tuple_elements(T &&tup, F f)
+{
+  return detail::map_tuple_elements(std::forward<T>(tup), f, std::make_index_sequence<TupSize>{});
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// tuple_from_array
+namespace detail {
+template<typename T, std::size_t... Is>
+auto constexpr tuple_from_array(T const& arr, std::index_sequence<Is...>)
+{
+  return std::make_tuple(arr[Is]...);
+}
+
+template<std::size_t N, typename V, typename T, std::size_t ...Is>
+auto constexpr array_from_container(T const& c, std::index_sequence<Is...>)
+{
+  return std::array<V, N>{c[Is]...};
+}
+
+} // ns detail
+
+template<typename T>
+auto constexpr tuple_from_array(T const& arr)
+{
+  auto constexpr tup_size = std::tuple_size<std::decay_t<T>>::value;
+  return detail::tuple_from_array(arr, std::make_index_sequence<tup_size>{});
+}
+
+template<typename T, std::size_t N>
+auto constexpr tuple_from_array(T const (&arr)[N])
+{
+  return detail::tuple_from_array(arr, std::make_index_sequence<N>{});
+}
+
+// not safe
+template<std::size_t N, typename T>
+auto constexpr tuple_from_container(T const& c)
+{
+  using V = typename T::value_type;
+  return tuple_from_array(detail::array_from_container<N, V>(c, std::make_index_sequence<N>{}));
 }
 
 } // ns stlw

@@ -1,6 +1,7 @@
 #pragma once
 #include <engine/gfx/opengl/engine.hpp>
 #include <engine/window/sdl_window.hpp>
+#include <stlw/burrito.hpp>
 #include <stlw/type_ctors.hpp>
 
 namespace engine::gfx
@@ -20,6 +21,8 @@ struct render_args {
   }
 };
 
+using namespace stlw;
+
 class gfx_engine
 {
   using W = ::engine::window::sdl_window;
@@ -38,6 +41,18 @@ private:
 
   NO_COPY(gfx_engine);
 
+  template <typename Args, typename Ctx, typename B>
+  void draw_burrito(Args const& args, Ctx &ctx, B const& burrito)
+  {
+    this->engine.draw(args, ctx, stlw::make_burrito(burrito));
+  }
+
+  template <typename Args, typename Ctx, typename B>
+  void draw_burrito(Args const& args, Ctx &ctx, B &&burrito)
+  {
+    this->engine.draw(args, ctx, stlw::make_burrito(std::move(burrito)));
+  }
+
 public:
   MOVE_DEFAULT(gfx_engine);
 
@@ -46,10 +61,34 @@ public:
     this->engine.begin();
   }
 
-  template <typename Args, typename C, typename... S>
-  void draw(Args const& args, C &ctx, S const&... shapes)
+  template<typename Args, typename Ctx, template<class, std::size_t> typename C, typename T, std::size_t N>
+  void
+  draw(Args const& args, Ctx &ctx, C<T, N> const& arr)
   {
-    this->engine.draw(args, ctx, shapes...);
+    auto x = stlw::tuple_from_array(arr);
+    this->draw_burrito(args, ctx, std::move(x));
+  }
+
+  // The last parameter type here ensures that the value passed is similar to a stl container.
+  template<typename Args, typename Ctx, typename C, typename IGNORE= typename C::value_type>
+  void
+  draw(Args const& args, Ctx &ctx, C &&c)
+  {
+    this->draw_burrito(args, ctx, std::move(c));
+  }
+
+  template<typename Args, typename Ctx, typename ...T>
+  void
+  draw(Args const& args, Ctx &ctx, std::tuple<T...> &&t)
+  {
+    this->draw_burrito(args, ctx, std::move(t));
+  }
+
+  template<typename Args, typename Ctx, typename ...T>
+  void
+  draw(Args const& args, Ctx &ctx, T &&... t)
+  {
+    this->draw_burrito(args, ctx, std::make_tuple(std::forward<T>(t)...));
   }
 
   void end()
@@ -69,13 +108,6 @@ struct factory {
   static stlw::result<gfx_engine, std::string> make_gfx_sdl_engine(L &logger, W &&window)
   {
     DO_TRY(auto opengl_engine, opengl::factory::make_opengl_engine(logger));
-
-    // TODO: move this
-    // glEnable(GL_DEPTH_TEST);
-    // glDepthMask(GL_FALSE);
-    // glDisable(GL_CULL_FACE);
-    // glEnable(GL_DEPTH_TEST);
-    // glEnable(GL_CULL_FACE);
     return gfx_engine{std::move(window), std::move(opengl_engine)};
   }
 };
