@@ -1,10 +1,9 @@
 #pragma once
 #include <engine/gfx/types.hpp>
-#include <game/shape.hpp>
-#include <game/data_types.hpp>
+#include <engine/gfx/shape.hpp>
 #include <array>
 
-namespace game
+namespace engine::gfx
 {
 
 template <typename V>
@@ -14,7 +13,7 @@ struct cube : public shape {
 
 private:
   friend class cube_factory;
-  explicit constexpr cube(drawmode const dm, struct model const& m, std::array<V, 8> &&v)
+  explicit constexpr cube(enum draw_mode const dm, struct model const& m, std::array<V, 8> &&v)
       : shape(dm, m)
       , vertices(std::move(v))
   {
@@ -25,7 +24,7 @@ class cube_factory
 {
   cube_factory() = delete;
 
-  using height_width_length = ::engine::gfx::height_width_length;
+  using height_width_length = height_width_length;
 
   struct color_properties {
     using c = std::array<float, 4>;
@@ -67,7 +66,7 @@ class cube_factory
     // clang-format on
   }
 
-  static constexpr auto construct(drawmode const dm, model const &m, color_properties const &props)
+  static constexpr auto construct(enum draw_mode const dm, struct model const &m, color_properties const &props)
   {
     auto const vertices = calculate_vertices(props.dimensions);
 
@@ -89,7 +88,7 @@ class cube_factory
     // clang-format on
   }
 
-  static constexpr auto construct(drawmode const dm, model const &m, uv_properties const &props)
+  static constexpr auto construct(enum draw_mode const dm, struct model const &m, uv_properties const &props)
   {
     auto const vertices = calculate_vertices(props.dimensions);
 
@@ -111,7 +110,7 @@ class cube_factory
     // clang-format on
   }
 
-  static constexpr auto construct(drawmode const dm, model const &m, wireframe_properties const &props)
+  static constexpr auto construct(enum draw_mode const dm, struct model const &m, wireframe_properties const &props)
   {
     auto const vertices = calculate_vertices(props.dimensions);
 
@@ -134,7 +133,7 @@ class cube_factory
   }
 
 public:
-  static constexpr auto make_spotted(drawmode const dm, model const &m, std::array<float, 3> const &c,
+  static constexpr auto make_spotted(enum draw_mode const dm, struct model const &m, std::array<float, 3> const &c,
       height_width_length const& hwl)
   {
     auto const ALPHA = 1.0f;
@@ -149,17 +148,17 @@ public:
     return construct(dm, m, p);
   }
 
-  static constexpr auto make_textured(drawmode const dm, model const &m, height_width_length const& hwl)
+  static constexpr auto make_textured(enum draw_mode const dm, struct model const &m, height_width_length const& hwl)
   {
     uv_properties const p{hwl};
     return construct(dm, m, p);
   }
 
-  static constexpr auto make_wireframe(drawmode const dm, model const& m, height_width_length const& hwl)
+  static constexpr auto make_wireframe(enum draw_mode const dm, struct model const& m, height_width_length const& hwl)
   {
     wireframe_properties const p{hwl};
     return construct(dm, m, p);
   }
 };
 
-} // ns game
+} // ns engine::gfx

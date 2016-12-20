@@ -4,9 +4,9 @@
 #include <engine/gfx/opengl/glew.hpp>
 #include <engine/gfx/opengl/program.hpp>
 #include <engine/gfx/opengl/vertex_attribute.hpp>
+#include <engine/gfx/shape2d.hpp>
+#include <engine/gfx/shape3d.hpp>
 #include <engine/window/sdl_window.hpp>
-#include <game/shape2d.hpp>
-#include <game/shape3d.hpp>
 #include <glm/glm.hpp>
 #include <stlw/algorithm.hpp>
 #include <stlw/burrito.hpp>
@@ -50,12 +50,12 @@ struct shape3d_data : public shape_data<C, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_
   using VertexContainer = typename BASE::VertexContainer;
   using VertexOrdering = typename BASE::VertexOrdering;
 
-  game::model const& model;
+  model const& model;
 
   MOVE_DEFAULT(shape3d_data);
   NO_COPY(shape3d_data);
   explicit constexpr shape3d_data(GLenum const m, VertexContainer &&d, VertexOrdering const& e,
-      game::model const& model)
+      struct model const& model)
     : BASE(m, std::move(d), e)
     , model(model)
   {
@@ -193,9 +193,9 @@ class shape_mapper
   static constexpr auto calc_vertex_only_num_floats(GLint const num_v) { return num_v * 4; }
 
   static auto constexpr TRIANGLE_ELEMENTS() { return std::array<ElementType, 3>{0, 1, 2}; }
-  static constexpr auto map_to_array_floats(game::triangle<game::vertex_color_attributes> const &t)
+  static constexpr auto map_to_array_floats(triangle<vertex_color_attributes> const &t)
   {
-    using X = game::triangle<game::vertex_color_attributes>;
+    using X = triangle<vertex_color_attributes>;
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_color_num_floats(NUM_VERTICES);
 
@@ -217,9 +217,9 @@ class shape_mapper
     return vertex_color_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
   }
 
-  static constexpr auto map_to_array_floats(game::triangle<game::vertex_uv_attributes> const &t)
+  static constexpr auto map_to_array_floats(triangle<vertex_uv_attributes> const &t)
   {
-    using X = game::triangle<game::vertex_uv_attributes>;
+    using X = triangle<vertex_uv_attributes>;
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_uv_num_floats(NUM_VERTICES);
 
@@ -238,9 +238,9 @@ class shape_mapper
     return vertex_uv_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
   }
 
-  static constexpr auto map_to_array_floats(game::triangle<game::vertex_attributes_only> const &t)
+  static constexpr auto map_to_array_floats(triangle<vertex_attributes_only> const &t)
   {
-    using X = game::triangle<game::vertex_uv_attributes>;
+    using X = triangle<vertex_uv_attributes>;
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_only_num_floats(NUM_VERTICES);
 
@@ -265,9 +265,9 @@ class shape_mapper
     return std::array<ElementType, 6>{0, 1, 2, 2, 3, 0};
   }
 
-  static constexpr auto map_to_array_floats(game::rectangle<game::vertex_color_attributes> const &r)
+  static constexpr auto map_to_array_floats(rectangle<vertex_color_attributes> const &r)
   {
-    using X = game::rectangle<game::vertex_color_attributes>;
+    using X = rectangle<vertex_color_attributes>;
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_color_num_floats(NUM_VERTICES);
 
@@ -293,9 +293,9 @@ class shape_mapper
     return vertex_color_rectangle{mode, std::move(floats), RECTANGLE_VERTEX_ORDERING()};
   }
 
-  static constexpr auto map_to_array_floats(game::rectangle<game::vertex_uv_attributes> const &r)
+  static constexpr auto map_to_array_floats(rectangle<vertex_uv_attributes> const &r)
   {
-    using X = game::rectangle<game::vertex_uv_attributes>;
+    using X = rectangle<vertex_uv_attributes>;
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_uv_num_floats(NUM_VERTICES);
 
@@ -316,9 +316,9 @@ class shape_mapper
     return vertex_uv_rectangle{mode, std::move(floats), RECTANGLE_VERTEX_ORDERING()};
   }
 
-  static constexpr auto map_to_array_floats(game::rectangle<game::vertex_attributes_only> const &r)
+  static constexpr auto map_to_array_floats(rectangle<vertex_attributes_only> const &r)
   {
-    using X = game::rectangle<game::vertex_attributes_only>;
+    using X = rectangle<vertex_attributes_only>;
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_only_num_floats(NUM_VERTICES);
 
@@ -351,9 +351,9 @@ class shape_mapper
     // clang-format on
   }
 
-  static constexpr auto map_to_array_floats(game::cube<game::vertex_color_attributes> const &r)
+  static constexpr auto map_to_array_floats(cube<vertex_color_attributes> const &r)
   {
-    using X = game::cube<game::vertex_color_attributes>;
+    using X = cube<vertex_color_attributes>;
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_color_num_floats(NUM_VERTICES);
     auto const &v = r.vertices;
@@ -393,9 +393,9 @@ class shape_mapper
     return vertex_color_cube{mode, std::move(floats), CUBE_VERTICE_ORDERING(), r.model()};
   }
 
-  static constexpr auto map_to_array_floats(game::cube<game::vertex_attributes_only> const &r)
+  static constexpr auto map_to_array_floats(cube<vertex_attributes_only> const &r)
   {
-    using X = game::cube<game::vertex_attributes_only>;
+    using X = cube<vertex_attributes_only>;
     auto constexpr NUM_VERTICES = X::NUM_VERTICES;
     auto constexpr NUM_FLOATS = calc_vertex_only_num_floats(NUM_VERTICES);
     auto const &v = r.vertices;
@@ -443,7 +443,7 @@ class shape_mapper
     return R{mode, std::move(floats), std::move(vertex_ordering)};
   }
 
-  static auto map_to_array_floats(game::polygon<game::vertex_color_attributes> const &p)
+  static auto map_to_array_floats(polygon<vertex_color_attributes> const &p)
   {
     auto const fill_vertice = [&p](auto &floats, auto const i, auto &j) {
       auto &vertice = p.vertex_attributes[i];
@@ -460,7 +460,7 @@ class shape_mapper
     return map_polygon<vertex_color_polygon>(p, &calc_vertex_color_num_floats, fill_vertice);
   }
 
-  static auto map_to_array_floats(game::polygon<game::vertex_attributes_only> const &p)
+  static auto map_to_array_floats(polygon<vertex_attributes_only> const &p)
   {
     auto const fill_vertice = [&p](auto &floats, auto const i, auto &j) {
       auto &vertice = p.vertex_attributes[i];
@@ -472,7 +472,7 @@ class shape_mapper
     return map_polygon<vertex_only_polygon>(p, &calc_vertex_only_num_floats, fill_vertice);
   }
 
-  static auto map_to_array_floats(game::polygon<game::vertex_uv_attributes> const &p)
+  static auto map_to_array_floats(polygon<vertex_uv_attributes> const &p)
   {
     auto const fill_vertice = [&p](auto &floats, auto const i, auto &j) {
       auto &vertice = p.vertex_attributes[i];

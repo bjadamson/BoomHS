@@ -1,18 +1,16 @@
 #pragma once
+#include <engine/gfx/types.hpp>
 #include <engine/gfx/colors.hpp>
 #include <engine/gfx/mode.hpp>
-#include <game/data_types.hpp>
 
-namespace game
+namespace engine::gfx
 {
-  using drawmode = ::engine::gfx::draw_mode;
-
 struct shape {
-  drawmode draw_mode_;
+  draw_mode draw_mode_;
   model model_;
 
 protected:
-  explicit constexpr shape(drawmode const dm, model const &m)
+  explicit constexpr shape(draw_mode const dm, model const &m)
       : draw_mode_(dm)
       , model_(m)
   {
@@ -57,4 +55,4 @@ struct vertex_uv_attributes {
   }
 };
 
-} // ns game
+} // ns engine::gfx

@@ -7,7 +7,7 @@ namespace engine::gfx
 
 struct skybox
 {
-  game::model &model;
+  model &model;
 
   MOVE_CONSTRUCTIBLE_ONLY(skybox);
 };
