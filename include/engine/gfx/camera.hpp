@@ -62,28 +62,28 @@ public:
   camera& move_forward(float const s)
   {
     auto const delta = direction(s);
-    this->pos_ += delta;
+    this->pos_ -= delta;
     this->skybox_.model.translation = this->pos_;
     return *this;
   }
 
   camera& move_backward(float const s)
   {
-    this->pos_ -= direction(s);
+    this->pos_ += direction(s);
     this->skybox_.model.translation = this->pos_;
     return *this;
   }
 
   camera& move_left(float const s)
   {
-    this->pos_ += right_vector(s);
+    this->pos_ -= right_vector(s);
     this->skybox_.model.translation = this->pos_;
     return *this;
   }
 
   camera& move_right(float const s)
   {
-    this->pos_ -= right_vector(s);
+    this->pos_ += right_vector(s);
     this->skybox_.model.translation = this->pos_;
     return *this;
   }

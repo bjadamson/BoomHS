@@ -69,25 +69,6 @@ public:
     this->draw_burrito(args, ctx, std::move(x));
   }
 
-  template<typename Args, typename Ctx, template<class, std::size_t> typename C, typename T, std::size_t N>
-  void
-  draw(Args const& args, Ctx &ctx, C<T, N> &&arr)
-  {
-    auto const a = std::move(arr);
-    this->draw(args, ctx, a);
-  }
-
-  /*
-  template<typename Args, typename Ctx, typename C>
-  void
-  draw(Args const& args, Ctx &ctx, C const& c)
-  {
-    std::array<C, 1> const arr{c};
-    auto x = stlw::tuple_from_array(arr);
-    this->draw_burrito(args, ctx, std::move(x));
-  }
-  */
-
   // The last parameter type here ensures that the value passed is similar to a stl container.
   template<typename Args, typename Ctx, typename C, typename IGNORE= typename C::value_type>
   void
@@ -100,15 +81,7 @@ public:
   void
   draw(Args const& args, Ctx &ctx, std::tuple<T...> &&t)
   {
-    using U = std::tuple<T...>;
     this->draw_burrito(args, ctx, std::move(t));
-  }
-
-  template<typename Args, typename Ctx, typename ...T>
-  void
-  draw(Args const& args, Ctx &ctx, T const&... t)
-  {
-    this->draw_burrito(args, ctx, std::make_tuple(t...));
   }
 
   template<typename Args, typename Ctx, typename ...T>
