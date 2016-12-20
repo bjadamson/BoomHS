@@ -80,9 +80,10 @@ auto map_impl(C<T, std::allocator<T>> const& c, FN const& fn)
 
 } // ns detail
 
-template<typename B, typename FN>
-auto map(B const& b, FN const& fn)
+template<typename U, typename FN>
+auto map(burrito<U, container_tag> const& b, FN const& fn)
 {
+  using B = std::decay_t<decltype(b)>;
   using C = typename B::VALUE_TYPE;
   using T = typename C::value_type;
   return detail::map_impl<T>(b.value, fn);
