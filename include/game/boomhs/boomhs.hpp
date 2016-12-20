@@ -204,44 +204,34 @@ public:
     auto &d2 = r.engine.d2;
     auto &d3 = r.engine.d3;
     r.begin();
+    {
+      std::array<game::triangle<game::vertex_color_attributes>, 2> const arr = {
+        game::triangle_factory::make(random_mode(), *MODELS[0], random_color()),
+        game::triangle_factory::make(random_mode(), *MODELS[1], random_color())
+      };
+      r.draw(args, d2.color, stlw::make_burrito(arr));
+    }
+    {
+      std::array<game::triangle<game::vertex_color_attributes>, 2> arr = {
+        game::triangle_factory::make(random_mode(), *MODELS[2], random_color()),
+        game::triangle_factory::make(random_mode(), *MODELS[3], random_color())
+      };
+      r.draw(args, d2.color, stlw::make_burrito(std::move(arr)));
+    }
+    {
+      r.draw(args, d2.color, stlw::make_burrito(
+            game::triangle_factory::make(random_mode(), *MODELS[4], random_color()),
+            game::triangle_factory::make(random_mode(), *MODELS[5], random_color()),
+            game::triangle_factory::make(random_mode(), *MODELS[6], random_color())
+            ));
+    }
+    {
+      std::vector<game::triangle<game::vertex_color_attributes>> vec;
+      vec.emplace_back(game::triangle_factory::make(random_mode(), *MODELS[6], random_color()));
+      vec.emplace_back(game::triangle_factory::make(random_mode(), *MODELS[7], random_color()));
 
-    std::array<game::triangle<game::vertex_color_attributes>, 4> const arr = {
-      game::triangle_factory::make(random_mode(), *MODELS[0], random_color()),
-      game::triangle_factory::make(random_mode(), *MODELS[1], random_color()),
-      game::triangle_factory::make(random_mode(), *MODELS[2], random_color()),
-      game::triangle_factory::make(random_mode(), *MODELS[3], random_color()),
-    };
-
-    //r.draw(args, d2.color, stlw::make_burrito(arr.cbegin(), arr.cend()));
-
-    //r.draw(args, d2.color, stlw::tuple_from_array(arr));
-    r.draw(args, d2.color, stlw::make_burrito(
-          game::triangle_factory::make(random_mode(), *MODELS[4], random_color()),
-          game::triangle_factory::make(random_mode(), *MODELS[5], random_color()),
-          game::triangle_factory::make(random_mode(), *MODELS[6], random_color())
-          ));
-
-    /*
-    game::triangle<game::vertex_color_attributes> const arr2[2] = {
-      game::triangle_factory::make(random_mode(), *MODELS[8], random_color()),
-      game::triangle_factory::make(random_mode(), *MODELS[9], random_color())
-    };
-    r.draw(args, d2.color, stlw::tuple_from_array(arr2));
-    */
-
-    std::vector<game::triangle<game::vertex_color_attributes>> vec;
-    vec.emplace_back(game::triangle_factory::make(random_mode(), *MODELS[6], random_color()));
-    vec.emplace_back(game::triangle_factory::make(random_mode(), *MODELS[7], random_color()));
-
-    //auto bURR = stlw::make_burrito(std::move(vec));
-    r.draw(args, d2.color, stlw::make_burrito(std::move(vec)));
-
-    //int x = game::triangle_factory::make(drawmode::TRIANGLES, *(MODELS[0]), random_color());
-    //r.draw(args, d2.color, );
-    //m[1] = game::triangle_factory::make(random_mode(), *MODELS[1], random_color());
-
-    //r.draw(args, d2.color, *MODELS[0], *MODELS[1]);
-
+      r.draw(args, d2.color, stlw::make_burrito(std::move(vec)));
+    }
     /*
     r.draw(args, d3.skybox, cube_skybox);
 
