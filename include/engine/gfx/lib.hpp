@@ -84,6 +84,13 @@ public:
     this->draw_burrito(args, ctx, std::move(t));
   }
 
+  template<typename Args, typename S>
+  void
+  draw_special(Args const& args, S &&s)
+  {
+    this->draw(args, s.context, std::move(s.data));
+  }
+
   template<typename Args, typename Ctx, typename ...T>
   void
   draw(Args const& args, Ctx &ctx, T &&... t)

@@ -3,6 +3,19 @@
 namespace engine::gfx
 {
 
+enum class shape_type
+{
+  TRIANGLE = 0,
+  RECTANGLE,
+  POLYGON,
+
+  // 3d
+  CUBE,
+
+  // uhh
+  INVALID_SHAPE_TYPE
+};
+
 struct height_width
 {
   float const height;
