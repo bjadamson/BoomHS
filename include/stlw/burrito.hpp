@@ -127,8 +127,8 @@ void constexpr for_each(burrito<U, tuple_tag> const& b, FN const& fn)
   stlw::for_each(b.value, fn);
 }
 
-template<typename B, typename FN>
-void for_each(B const& b, FN const& fn)
+template<typename U, typename FN>
+void for_each(burrito<U, container_tag> const& b, FN const& fn)
 {
   for (auto const& it : b.value) {
     fn(it);
