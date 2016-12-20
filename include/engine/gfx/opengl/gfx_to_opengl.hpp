@@ -489,7 +489,7 @@ class shape_mapper
 
 public:
   template <typename B, typename... R>
-  static auto map_to_opengl(B const& burrito)
+  static auto constexpr map_to_opengl(B const& burrito)
   {
     auto fn = [&](auto const& s) { return shape_mapper::map_to_array_floats(s); };
     return stlw::hof::map(burrito, fn);
