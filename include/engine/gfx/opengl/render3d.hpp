@@ -13,10 +13,10 @@ namespace engine::gfx::opengl::render3d
 namespace impl
 {
 
-template <typename L, typename C, typename... S>
+template <typename L, typename C, typename B>
 void
 draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection,
-    std::tuple<S...> const& shapes)
+    B const& burrito)
 {
   global::vao_bind(ctx.vao());
   ON_SCOPE_EXIT([]() { global::vao_unbind(); });
@@ -46,19 +46,18 @@ draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection
     logger.trace("after drawing shape");
   };
 
-  render::draw_scene(logger, ctx, fn, shapes);
+  render::draw_scene(logger, ctx, fn, burrito);
 }
 
 } // ns impl
 
-template <typename L, typename C, typename... S>
+template <typename L, typename C, typename B>
 void
-draw_scene(L &logger, C &ctx, camera const &camera,
-           glm::mat4 const &projection, std::tuple<S...> const &shapes)
+draw_scene(L &logger, C &ctx, camera const &camera, glm::mat4 const &projection, B const& burrito)
 {
   auto const fn = [&]() {
     auto const view = camera.compute_view();
-    impl::draw_scene(logger, ctx, view, projection, shapes);
+    impl::draw_scene(logger, ctx, view, projection, burrito);
   };
   if constexpr (C::HAS_TEXTURE) {
     global::texture_bind(ctx.texture());

@@ -21,6 +21,8 @@ struct render_args {
   }
 };
 
+using namespace stlw;
+
 class gfx_engine
 {
   using W = ::engine::window::sdl_window;
@@ -39,6 +41,18 @@ private:
 
   NO_COPY(gfx_engine);
 
+  template <typename Args, typename Ctx, typename B>
+  void draw_burrito(Args const& args, Ctx &ctx, B const& burrito)
+  {
+    this->engine.draw(args, ctx, stlw::make_burrito(burrito));
+  }
+
+  template <typename Args, typename Ctx, typename B>
+  void draw_burrito(Args const& args, Ctx &ctx, B &&burrito)
+  {
+    this->engine.draw(args, ctx, stlw::make_burrito(std::move(burrito)));
+  }
+
 public:
   MOVE_DEFAULT(gfx_engine);
 
@@ -47,34 +61,61 @@ public:
     this->engine.begin();
   }
 
-  /*
-  template <typename Args, typename C, typename It>
-  void draw(Args const& args, C &ctx, It begin, It end)
+  template<typename Args, typename Ctx, template<class, std::size_t> typename C, typename T, std::size_t N>
+  void
+  draw(Args const& args, Ctx &ctx, C<T, N> const& arr)
   {
-    this->draw_impl(args, ctx, stlw::make_burrito(begin, end));
+    auto x = stlw::tuple_from_array(arr);
+    this->draw_burrito(args, ctx, std::move(x));
+  }
+
+  template<typename Args, typename Ctx, template<class, std::size_t> typename C, typename T, std::size_t N>
+  void
+  draw(Args const& args, Ctx &ctx, C<T, N> &&arr)
+  {
+    auto const a = std::move(arr);
+    this->draw(args, ctx, a);
+  }
+
+  /*
+  template<typename Args, typename Ctx, typename C>
+  void
+  draw(Args const& args, Ctx &ctx, C const& c)
+  {
+    std::array<C, 1> const arr{c};
+    auto x = stlw::tuple_from_array(arr);
+    this->draw_burrito(args, ctx, std::move(x));
   }
   */
 
-  // idea: try exposing this interface instead, and have implementation defined in terms of
-  // burrito.
-  /*
-  template <typename Args, typename C, typename... S>
-  void draw(Args const& args, C &ctx, S const&... shapes)
+  // The last parameter type here ensures that the value passed is similar to a stl container.
+  template<typename Args, typename Ctx, typename C, typename IGNORE= typename C::value_type>
+  void
+  draw(Args const& args, Ctx &ctx, C &&c)
   {
-    this->draw_impl(args, ctx, stlw::make_burrito(std::make_tuple(shapes...)));
+    this->draw_burrito(args, ctx, std::move(c));
   }
 
-  template <typename Args, typename C, typename... S>
-  void draw(Args const& args, C &ctx, std::tuple<S...> const& shapes)
+  template<typename Args, typename Ctx, typename ...T>
+  void
+  draw(Args const& args, Ctx &ctx, std::tuple<T...> &&t)
   {
-    this->draw_impl(args, ctx, stlw::make_burrito(shapes));
+    using U = std::tuple<T...>;
+    this->draw_burrito(args, ctx, std::move(t));
   }
-  */
 
-  template <typename Args, typename C, typename B>
-  void draw(Args const& args, C &ctx, B const& burrito)
+  template<typename Args, typename Ctx, typename ...T>
+  void
+  draw(Args const& args, Ctx &ctx, T const&... t)
   {
-    this->engine.draw(args, ctx, burrito);
+    this->draw_burrito(args, ctx, std::make_tuple(t...));
+  }
+
+  template<typename Args, typename Ctx, typename ...T>
+  void
+  draw(Args const& args, Ctx &ctx, T &&... t)
+  {
+    this->draw_burrito(args, ctx, std::make_tuple(std::forward<T>(t)...));
   }
 
   void end()
