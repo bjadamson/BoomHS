@@ -14,6 +14,8 @@ class camera
   glm::vec3 up_;
   skybox skybox_;
 
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // immutable helper methods
   auto direction(float const speed) const
   {
     return speed * this->front_;
@@ -33,6 +35,30 @@ class camera
   {
     return glm::vec3{0.0f, -d, 0.0f};
   }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // mutating helper methods
+  decltype(auto) move_along_x(float const s)
+  {
+    this->pos_ += right_vector(s);
+    this->skybox_.model.translation = this->pos_;
+    return *this;
+  }
+
+  decltype(auto) move_along_y(float const s)
+  {
+    this->pos_ += (this->up_ * s);
+    this->skybox_.model.translation = this->pos_;
+    return *this;
+  }
+
+  decltype(auto) move_along_z(float const s)
+  {
+    this->pos_ += direction(s);
+    this->skybox_.model.translation = this->pos_;
+    return *this;
+  }
+
 public:
   MOVE_CONSTRUCTIBLE_ONLY(camera);
 
@@ -58,34 +84,35 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   // mutating methods
   //
-  // linar movement
+  // linear movement
   camera& move_forward(float const s)
   {
-    auto const delta = direction(s);
-    this->pos_ -= delta;
-    this->skybox_.model.translation = this->pos_;
-    return *this;
+    return move_along_z(-s);
   }
 
   camera& move_backward(float const s)
   {
-    this->pos_ += direction(s);
-    this->skybox_.model.translation = this->pos_;
-    return *this;
+    return move_along_z(s);
   }
 
   camera& move_left(float const s)
   {
-    this->pos_ -= right_vector(s);
-    this->skybox_.model.translation = this->pos_;
-    return *this;
+    return move_along_x(-s);
   }
 
   camera& move_right(float const s)
   {
-    this->pos_ += right_vector(s);
-    this->skybox_.model.translation = this->pos_;
-    return *this;
+    return move_along_x(s);
+  }
+
+  camera& move_up(float const s)
+  {
+    return move_along_y(-s);
+  }
+
+  camera& move_down(float const s)
+  {
+    return move_along_y(s);
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////

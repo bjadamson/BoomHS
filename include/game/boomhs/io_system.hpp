@@ -68,6 +68,14 @@ struct io_system {
           camera.move_left(MOVE_DISTANCE);
         break;
       }
+      case SDLK_q: {
+        camera.move_up(MOVE_DISTANCE);
+        break;
+      }
+      case SDLK_e: {
+          camera.move_down(MOVE_DISTANCE);
+        break;
+      }
       case SDLK_UP: {
         camera.pan_up(PAN_DISTANCE);
         break;
