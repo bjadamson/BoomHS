@@ -3,9 +3,6 @@
 #include <tuple>
 #include <stlw/type_macros.hpp>
 
-#define DOGMA std::vector<::game::triangle<::game::vertex_color_attributes>>
-#define SAAA std::vector<::engine::gfx::opengl::vertex_color_triangle>
-
 namespace stlw
 {
 
@@ -60,17 +57,23 @@ namespace hof
   //return stlw::make_burrito(stlw::map_tuple_elements(b.value, fn));
 //}
 
-template<typename FN>
-auto map(DOGMA const& b, FN const& fn)
+template<typename T, template<class, class> typename C, typename FN>
+auto map_impl(C<T, std::allocator<T>> const& c, FN const& fn)
 {
-  using T = typename std::decay<decltype(b[0])>::type;
-  SAAA container;
-  //Container<T, std::allocator<T>> container;
+  using FN_RT = typename std::decay_t<decltype(fn(*c.cbegin()))>;
 
-  for (auto const& it : b) {
+  C<FN_RT, std::allocator<FN_RT>> container;
+  for (auto const& it : c) {
     container.emplace_back(fn(it));
   }
   return container;
+}
+
+template<typename C, typename FN>
+auto map(C const& c, FN const& fn)
+{
+  using T = typename C::value_type;
+  return map_impl<T>(c, fn);
 }
 
 /*
@@ -111,8 +114,8 @@ void constexpr for_each(burrito<U, tuple_tag> const& b, FN const& fn)
   stlw::for_each(b.value, fn);
 }
 
-template<typename FN>
-void for_each(SAAA const& b, FN const& fn)
+template<typename U, typename FN>
+void for_each(U const& b, FN const& fn)
 {
   for (auto const& it : b) {
     fn(it);
