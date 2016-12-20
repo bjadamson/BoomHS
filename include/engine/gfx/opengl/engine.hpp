@@ -17,12 +17,12 @@ namespace impl
 template <typename FN, typename B>
 void draw_shape(FN const& fn, B const& burrito)
 {
-  auto gl_mapped_shapes = shape_mapper::map_to_opengl(burrito);
+  SAAA gl_mapped_shapes = shape_mapper::map_to_opengl(burrito);
   fn(gl_mapped_shapes);
 }
 
-template<typename Args, typename C, typename B>
-void draw2d(Args const& args, C &ctx, B const& burrito)
+template<typename Args, typename C>
+void draw2d(Args const& args, C &ctx, DOGMA const& burrito)
 {
   auto const fn = [&](auto const& gl_mapped_shapes) {
     render2d::draw_scene(args.logger, ctx, gl_mapped_shapes);
@@ -83,8 +83,8 @@ struct engine {
   }
   void end() {}
 
-  template <typename Args, typename C, typename B>
-  void draw(Args const& args, C &ctx, B const& burrito)
+  template <typename Args, typename C>
+  void draw(Args const& args, C &ctx, DOGMA const& burrito)
   {
     if constexpr (C::IS_2D) {
       impl::draw2d(args, ctx, burrito);

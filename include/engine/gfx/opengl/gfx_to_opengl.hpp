@@ -9,7 +9,6 @@
 #include <game/shape3d.hpp>
 #include <glm/glm.hpp>
 #include <stlw/algorithm.hpp>
-#include <stlw/burrito.hpp>
 #include <stlw/sized_buffer.hpp>
 #include <stlw/type_ctors.hpp>
 
@@ -153,6 +152,13 @@ using runtime_sized_array = runtime_shape_template<stlw::sized_buffer, NUM_VERTE
 using vertex_color_polygon = runtime_sized_array<8>;
 using vertex_uv_polygon = runtime_sized_array<7>;
 using vertex_only_polygon = runtime_sized_array<4>;
+
+}
+#define SAAA std::vector<::engine::gfx::opengl::vertex_color_triangle>
+#include <stlw/burrito.hpp>
+
+namespace engine::gfx::opengl
+{
 
 class shape_mapper
 {
@@ -488,8 +494,8 @@ class shape_mapper
   }
 
 public:
-  template <typename B, typename... R>
-  static constexpr auto map_to_opengl(B const& burrito)
+  template <typename... R>
+  static SAAA map_to_opengl(DOGMA const& burrito)
   {
     auto fn = [&](auto const& s) { return shape_mapper::map_to_array_floats(s); };
     return stlw::hof::map(burrito, fn);

@@ -71,8 +71,8 @@ public:
   }
   */
 
-  template <typename Args, typename C, typename B>
-  void draw(Args const& args, C &ctx, B const& burrito)
+  template <typename Args, typename C>
+  void draw(Args const& args, C &ctx, DOGMA const& burrito)
   {
     this->engine.draw(args, ctx, burrito);
   }
