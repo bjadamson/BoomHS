@@ -14,6 +14,7 @@ struct burrito
 {
   U value;
   using TAG_TYPE = TAG;
+  using VALUE_TYPE = U;
 
   MOVE_CONSTRUCTIBLE_ONLY(burrito);
 
@@ -30,6 +31,12 @@ struct burrito
   }
 };
 
+template<typename C>
+auto constexpr
+make_burrito(C &&c)
+{
+  return burrito<std::decay_t<C>, container_tag>{std::move(c)};
+}
 
 template<typename ...T>
 auto constexpr
@@ -51,12 +58,14 @@ make_burrito(T &&... t)
 // HOF's
 namespace hof
 {
-//template<typename U, typename FN>
-//auto constexpr map(burrito<U, tuple_tag> const& b, FN const& fn)
-//{
-  //return stlw::make_burrito(stlw::map_tuple_elements(b.value, fn));
-//}
+template<typename U, typename FN>
+auto constexpr map(burrito<U, tuple_tag> const& b, FN const& fn)
+{
+  return stlw::make_burrito(stlw::map_tuple_elements(b.value, fn));
+}
 
+namespace detail
+{
 template<typename T, template<class, class> typename C, typename FN>
 auto map_impl(C<T, std::allocator<T>> const& c, FN const& fn)
 {
@@ -66,14 +75,17 @@ auto map_impl(C<T, std::allocator<T>> const& c, FN const& fn)
   for (auto const& it : c) {
     container.emplace_back(fn(it));
   }
-  return container;
+  return stlw::make_burrito(std::move(container));
 }
 
-template<typename C, typename FN>
-auto map(C const& c, FN const& fn)
+} // ns detail
+
+template<typename B, typename FN>
+auto map(B const& b, FN const& fn)
 {
+  using C = typename B::VALUE_TYPE;
   using T = typename C::value_type;
-  return map_impl<T>(c, fn);
+  return detail::map_impl<T>(b.value, fn);
 }
 
 /*
@@ -114,10 +126,10 @@ void constexpr for_each(burrito<U, tuple_tag> const& b, FN const& fn)
   stlw::for_each(b.value, fn);
 }
 
-template<typename U, typename FN>
-void for_each(U const& b, FN const& fn)
+template<typename B, typename FN>
+void for_each(B const& b, FN const& fn)
 {
-  for (auto const& it : b) {
+  for (auto const& it : b.value) {
     fn(it);
   }
 }
