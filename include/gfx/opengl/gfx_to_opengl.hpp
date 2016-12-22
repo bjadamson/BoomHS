@@ -13,7 +13,7 @@
 #include <stlw/sized_buffer.hpp>
 #include <stlw/type_ctors.hpp>
 
-namespace engine::gfx::opengl
+namespace gfx::opengl
 {
 
 // TODO: project-wide configuration (double precision maybe)
@@ -484,4 +484,4 @@ public:
   }
 };
 
-} // ns engine::gfx::opengl
+} // ns gfx::opengl

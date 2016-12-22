@@ -8,7 +8,7 @@ namespace engine
 
 class gfx_lib
 {
-  using W = ::engine::window::sdl_window;
+  using W = ::window::sdl_window;
   friend struct factory;
 
   W window_;

@@ -7,7 +7,7 @@
 #include <stlw/type_macros.hpp>
 #include <sstream>
 
-namespace engine::gfx::opengl::render
+namespace gfx::opengl::render
 {
 
 namespace impl
@@ -119,4 +119,4 @@ draw_scene(L &logger, C &ctx, FN const& fn, B const &burrito)
   logger.trace(ss.str());
 }
 
-} // ns engine::gfx::opengl::render
+} // ns gfx::opengl::render

@@ -1,7 +1,7 @@
 #pragma once
 #include <array>
 
-namespace engine::gfx::LIST_OF_COLORS
+namespace gfx::LIST_OF_COLORS
 {
 // clang-format off
   constexpr std::array<float, 3> INDIAN_RED             = {0.804, 0.361, 0.361};
@@ -145,4 +145,4 @@ namespace engine::gfx::LIST_OF_COLORS
   constexpr std::array<float, 3> DARK_SLATE_GRAY        = {0.184, 0.310, 0.310};
   constexpr std::array<float, 3> BLACK                  = {0.000, 0.000, 0.000};
 // clang-format on
-} // ns engine::gfx::LIST_OF_COLORS
+} // ns gfx::LIST_OF_COLORS

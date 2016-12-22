@@ -5,7 +5,7 @@
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace engine::window
+namespace window
 {
 
 // std::string error = SDL_GetError();
@@ -111,4 +111,4 @@ sdl_library::make_window(int const height, int const width)
   return sdl_window{std::move(window_ptr), gl_context};
 }
 
-} // ns engine::window
+} // ns window

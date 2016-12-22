@@ -8,8 +8,6 @@
 #include <window/window.hpp>
 #include <extlibs/sdl.hpp>
 
-namespace engine
-{
 namespace window
 {
 
@@ -73,4 +71,3 @@ struct sdl_library {
 };
 
 } // ns window
-} // ns engine

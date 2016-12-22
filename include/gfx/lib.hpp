@@ -3,7 +3,7 @@
 #include <stlw/burrito.hpp>
 #include <stlw/type_ctors.hpp>
 
-namespace engine::gfx
+namespace gfx
 {
 
 template <typename L>
@@ -109,4 +109,4 @@ struct factory {
   }
 };
 
-} // ns engine::gfx
+} // ns gfx

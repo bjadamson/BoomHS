@@ -1,6 +1,6 @@
 #pragma once
 
-namespace engine::gfx
+namespace gfx
 {
 enum class draw_mode
 {
@@ -12,4 +12,4 @@ enum class draw_mode
   INVALID_DRAW_MODE
 };
 
-} // ns engine::gfx
+} // ns gfx

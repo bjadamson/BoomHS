@@ -20,7 +20,7 @@
     }                                                                                              \
   }
 
-namespace engine::gfx::opengl
+namespace gfx::opengl
 {
 
 DEFINE_SHADER_FILENAME_TYPE(vertex);
@@ -163,4 +163,4 @@ struct program_loader {
   from_files(vertex_shader_filename const, fragment_shader_filename const);
 };
 
-} // ns engine::gfx::opengl
+} // ns gfx::opengl

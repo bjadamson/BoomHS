@@ -5,7 +5,7 @@
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace engine::gfx::opengl
+namespace gfx::opengl
 {
 
 struct attribute_info {
@@ -266,4 +266,4 @@ set_vertex_attributes(L &logger, vertex_attribute const& va)
 
 } // ns global
 
-} // ns engine::gfx::opengl
+} // ns gfx::opengl

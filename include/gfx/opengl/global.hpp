@@ -5,7 +5,7 @@
 // Functions within this namespace have global side effects within OpenGL's internal state.
 //
 // Here be dragons.
-namespace engine::gfx::opengl::global
+namespace gfx::opengl::global
 {
 static auto const vao_bind = [](auto const vao) { glBindVertexArray(vao); };
 static auto const vao_unbind = []() { glBindVertexArray(0); };
@@ -29,4 +29,4 @@ static auto const get_errors = [](GLuint const program_id) { return impl::get_er
 static auto const clear_gl_errors = []() { impl::clear_gl_errors(); };
 } // ns log
 
-} // ns engine::gfx::opengl::global
+} // ns gfx::opengl::global

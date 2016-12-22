@@ -2,7 +2,7 @@
 #include <gfx/shape2d.hpp>
 #include <gfx/shape3d.hpp>
 
-namespace engine::gfx
+namespace gfx
 {
 
 template<typename D>
@@ -55,4 +55,4 @@ public:
   }
 };
 
-} // ns engine::gfx
+} // ns gfx

@@ -6,7 +6,7 @@
 #include <boost/optional.hpp>
 #include <string> // TODO: rm
 
-namespace engine::gfx::opengl::global::log::impl
+namespace gfx::opengl::global::log::impl
 {
 
 // also, make an abstraction over the source, not just vector<char>
@@ -68,9 +68,9 @@ clear_gl_errors()
   }
 }
 
-} // ns engine::gfx::opengl::global::log::impl
+} // ns gfx::opengl::global::log::impl
 
 #define LOG_GL_ERRORS(logger, msg)                                                                 \
   do {                                                                                             \
-    ::engine::gfx::opengl::global::log::impl::log_any_gl_errors(logger, msg, __LINE__);            \
+    ::gfx::opengl::global::log::impl::log_any_gl_errors(logger, msg, __LINE__);            \
   } while (0)

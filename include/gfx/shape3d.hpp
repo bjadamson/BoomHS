@@ -3,7 +3,7 @@
 #include <gfx/shape.hpp>
 #include <array>
 
-namespace engine::gfx
+namespace gfx
 {
 
 template <typename V>
@@ -161,4 +161,4 @@ public:
   }
 };
 
-} // ns engine::gfx
+} // ns gfx

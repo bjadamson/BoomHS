@@ -7,7 +7,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/transform.hpp>
 
-namespace engine::gfx::opengl::render3d
+namespace gfx::opengl::render3d
 {
 
 namespace impl
@@ -68,4 +68,4 @@ draw_scene(L &logger, C &ctx, camera const &camera, glm::mat4 const &projection,
   }
 }
 
-} // ns engine::gfx::opengl::render3d
+} // ns gfx::opengl::render3d

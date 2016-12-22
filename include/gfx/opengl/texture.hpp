@@ -7,7 +7,7 @@
 #include <boost/filesystem/path.hpp>
 #include <array>
 
-namespace engine::gfx::opengl
+namespace gfx::opengl
 {
 
 struct texture_info {
@@ -106,4 +106,4 @@ load_2d_texture(L &logger, boost::filesystem::path const& path)
   return t;
 }
 
-} // ns engine::gfx::opengl
+} // ns gfx::opengl

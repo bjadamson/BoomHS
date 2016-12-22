@@ -4,7 +4,7 @@
 #include <stlw/type_macros.hpp>
 #include <gfx/skybox.hpp>
 
-namespace engine::gfx
+namespace gfx
 {
 
 class camera
@@ -146,4 +146,4 @@ public:
   }
 };
 
-} // ns engine::gfx
+} // ns gfx

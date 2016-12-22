@@ -9,7 +9,7 @@
 namespace
 {
 using compiled_shader = stlw::ImplicitelyCastableMovableWrapper<GLuint, decltype(glDeleteShader)>;
-using namespace engine::gfx::opengl;
+using namespace gfx::opengl;
 
 inline bool
 is_compiled(GLuint const handle)
@@ -97,7 +97,7 @@ compile_sources(std::string const &vertex_shader_source, std::string const &frag
 
 } // ns anonymous
 
-namespace engine::gfx::opengl
+namespace gfx::opengl
 {
 
 stlw::result<program, std::string>
@@ -116,4 +116,4 @@ program_loader::from_files(vertex_shader_filename const v, fragment_shader_filen
   return compile_sources(vertex_shader_source, fragment_shader_source);
 }
 
-} // ns engine::gfx::opengl
+} // ns gfx::opengl

@@ -3,7 +3,7 @@
 #include <gfx/opengl/global.hpp>
 #include <gfx/opengl/render.hpp>
 
-namespace engine::gfx::opengl::render2d
+namespace gfx::opengl::render2d
 {
 
 namespace impl
@@ -54,4 +54,4 @@ draw_scene(L &logger, C &ctx, B const &burrito)
   }
 }
 
-} // ns engine::gfx::opengl::render2d
+} // ns gfx::opengl::render2d

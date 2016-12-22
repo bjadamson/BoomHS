@@ -2,7 +2,7 @@
 #include <game/data_types.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace engine::gfx
+namespace gfx
 {
 
 struct skybox
@@ -12,4 +12,4 @@ struct skybox
   MOVE_CONSTRUCTIBLE_ONLY(skybox);
 };
 
-} // ns engine::gfx
+} // ns gfx

@@ -20,7 +20,7 @@ main(int argc, char *argv[])
   };
 
   // Select windowing library as SDL.
-  namespace w = engine::window;
+  namespace w = window;
   using window_lib = w::library_wrapper<w::sdl_library>;
 
   logger.debug("Initializing window library globals");

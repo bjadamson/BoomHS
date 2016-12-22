@@ -6,7 +6,7 @@
 #include <gfx/opengl/vertex_attribute.hpp>
 #include <iostream>
 
-namespace engine::gfx::opengl
+namespace gfx::opengl
 {
 
 class opengl_context
@@ -313,4 +313,4 @@ public:
   }
 };
 
-} // ns engine::gfx::opengl
+} // ns gfx::opengl

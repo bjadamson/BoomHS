@@ -29,18 +29,18 @@ struct game_state {
   bool quit = false;
   L &logger;
   R &renderer;
-  engine::window::dimensions const dimensions;
+  window::dimensions const dimensions;
   stlw::float_generator rnum_generator;
 
   glm::mat4 projection;
-  engine::gfx::camera camera;
+  gfx::camera camera;
 
   NO_COPY(game_state);
   NO_MOVE_ASSIGN(game_state);
 public:
   MOVE_CONSTRUCTIBLE(game_state);
-  game_state(L &l, R &r, engine::window::dimensions const &d, stlw::float_generator &&fg,
-      glm::mat4 &&pm, engine::gfx::camera &&c)
+  game_state(L &l, R &r, window::dimensions const &d, stlw::float_generator &&fg,
+      glm::mat4 &&pm, gfx::camera &&c)
     : logger(l)
     , renderer(r)
     , dimensions(d)
@@ -52,8 +52,8 @@ public:
 };
 
 // TODO: bye globals
-std::vector<::engine::gfx::model*> MODELS;
-::engine::gfx::model skybox_model;
+std::vector<::gfx::model*> MODELS;
+::gfx::model skybox_model;
 
 template<typename L, typename R, typename HW>
 auto
@@ -64,8 +64,8 @@ make_state(L &logger, R &renderer, HW const& hw)
 
   logger.error(fmt::sprintf("fheight '%f', fwidth '%f'", fheight, fwidth));
   auto projection = glm::perspective(45.0f, (fwidth / fheight), 0.1f, 10000.0f);
-  engine::gfx::skybox sb{skybox_model};
-  engine::gfx::camera c{std::move(sb),
+  gfx::skybox sb{skybox_model};
+  gfx::camera c{std::move(sb),
     glm::vec3(0.0f, 0.0f, 2.0f),  // camera position
     glm::vec3(0.0f, 0.0f, -1.0f), // look at origin
     glm::vec3(0.0f, 1.0f, 0.0f)}; // "up" vector
@@ -167,23 +167,23 @@ public:
   template <typename State>
   void game_loop(State &state)
   {
-    ::engine::gfx::render_args<decltype(state.logger)> const args{state.logger, state.camera,
+    ::gfx::render_args<decltype(state.logger)> const args{state.logger, state.camera,
                                                                   state.projection};
 
     using COLOR_ARRAY = std::array<float, 4>;
     auto constexpr multicolor_triangle =
-        stlw::make_array<COLOR_ARRAY>(stlw::concat(engine::gfx::LIST_OF_COLORS::RED, 1.0f),
-                                      stlw::concat(engine::gfx::LIST_OF_COLORS::GREEN, 1.0f),
-                                      stlw::concat(engine::gfx::LIST_OF_COLORS::BLUE, 1.0f));
+        stlw::make_array<COLOR_ARRAY>(stlw::concat(gfx::LIST_OF_COLORS::RED, 1.0f),
+                                      stlw::concat(gfx::LIST_OF_COLORS::GREEN, 1.0f),
+                                      stlw::concat(gfx::LIST_OF_COLORS::BLUE, 1.0f));
 
     auto constexpr multicolor_rect =
-        stlw::make_array<COLOR_ARRAY>(stlw::concat(engine::gfx::LIST_OF_COLORS::RED, 1.0f),
-                                      stlw::concat(engine::gfx::LIST_OF_COLORS::GREEN, 1.0f),
-                                      stlw::concat(engine::gfx::LIST_OF_COLORS::BLUE, 1.0f),
-                                      stlw::concat(engine::gfx::LIST_OF_COLORS::YELLOW, 1.0f));
+        stlw::make_array<COLOR_ARRAY>(stlw::concat(gfx::LIST_OF_COLORS::RED, 1.0f),
+                                      stlw::concat(gfx::LIST_OF_COLORS::GREEN, 1.0f),
+                                      stlw::concat(gfx::LIST_OF_COLORS::BLUE, 1.0f),
+                                      stlw::concat(gfx::LIST_OF_COLORS::YELLOW, 1.0f));
 
-    using sf = engine::gfx::shape_factory;
-    namespace gfx = engine::gfx;
+    using sf = gfx::shape_factory;
+    namespace gfx = gfx;
 
     // first, pick random shape
     auto const random_mode = [&]() {
@@ -240,23 +240,23 @@ public:
       r.draw(args, d2.color, std::move(vec));
     }
 
-    auto triangle_color = sf::make_triangle(gfx::draw_mode::TRIANGLES, *MODELS[9], ::engine::gfx::LIST_OF_COLORS::PINK);
+    auto triangle_color = sf::make_triangle(gfx::draw_mode::TRIANGLES, *MODELS[9], ::gfx::LIST_OF_COLORS::PINK);
     auto triangle_list_colors = sf::make_triangle(gfx::draw_mode::TRIANGLES, *MODELS[10], multicolor_triangle);
     auto triangle_texture = sf::make_triangle(gfx::draw_mode::TRIANGLES, *MODELS[11], true);
     auto triangle_wireframe = sf::make_triangle(gfx::draw_mode::LINE_LOOP, *MODELS[12], true, false);
 
     auto cube_texture = sf::make_textured_cube(gfx::draw_mode::TRIANGLE_STRIP, *MODELS[13], {0.15f, 0.15f, 0.15f});
-    auto cube_color = sf::make_spotted_cube(gfx::draw_mode::TRIANGLE_STRIP, *MODELS[14], ::engine::gfx::LIST_OF_COLORS::BLUE,
+    auto cube_color = sf::make_spotted_cube(gfx::draw_mode::TRIANGLE_STRIP, *MODELS[14], ::gfx::LIST_OF_COLORS::BLUE,
         {0.25f, 0.25f, 0.25f});
     auto cube_wf = sf::make_wireframe_cube(gfx::draw_mode::LINE_LOOP, *MODELS[15], {0.25f, 0.25f, 0.25f});
 
-    auto rectangle_color = sf::make_rectangle(gfx::draw_mode::TRIANGLE_STRIP, *MODELS[16], ::engine::gfx::LIST_OF_COLORS::YELLOW);
+    auto rectangle_color = sf::make_rectangle(gfx::draw_mode::TRIANGLE_STRIP, *MODELS[16], ::gfx::LIST_OF_COLORS::YELLOW);
     auto rectangle_list_colors = sf::make_rectangle(gfx::draw_mode::TRIANGLE_STRIP, *MODELS[17], height, width, multicolor_rect);
     auto rectangle_texture = sf::make_rectangle(gfx::draw_mode::TRIANGLE_STRIP, *MODELS[18], height, width, true);
     auto rectangle_wireframe = sf::make_rectangle(gfx::draw_mode::LINE_LOOP, *MODELS[19], height, width, true, true);
 
     auto polygon_color =
-        gfx::polygon_factory::make(gfx::draw_mode::TRIANGLE_FAN, *MODELS[20], 5, ::engine::gfx::LIST_OF_COLORS::DARK_ORANGE);
+        gfx::polygon_factory::make(gfx::draw_mode::TRIANGLE_FAN, *MODELS[20], 5, ::gfx::LIST_OF_COLORS::DARK_ORANGE);
     auto polygon_texture = gfx::polygon_factory::make(gfx::draw_mode::TRIANGLE_FAN, *MODELS[21], 7, true);
     auto polygon_wireframe = gfx::polygon_factory::make(gfx::draw_mode::LINE_LOOP, *MODELS[22], 7, true, true);
     //auto polygon_list_of_color = gfx::polygon_factory::make(gfx::draw_mode::TRIANGLE_FAN, *zp1, 5, multicolor_triangle);

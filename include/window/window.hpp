@@ -1,8 +1,6 @@
 #pragma once
 #include <stlw/result.hpp>
 
-namespace engine
-{
 namespace window
 {
 
@@ -32,4 +30,3 @@ struct dimensions {
 };
 
 } // ns window
-} // engine

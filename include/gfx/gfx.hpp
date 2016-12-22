@@ -2,7 +2,7 @@
 #include <array>
 #include <stlw/result.hpp>
 
-namespace engine::gfx
+namespace gfx
 {
 
 // Genric template we expect a library to provide an implementation of.
@@ -21,4 +21,4 @@ struct library_wrapper {
   }
 };
 
-} // ns engine::gfx
+} // ns gfx

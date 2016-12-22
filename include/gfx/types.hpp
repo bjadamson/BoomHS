@@ -1,6 +1,6 @@
 #pragma once
 
-namespace engine::gfx
+namespace gfx
 {
 
 struct vertex_t {
@@ -62,4 +62,4 @@ struct height_width_length
   float const length;
 };
 
-} // ns engine::gfx
+} // ns gfx

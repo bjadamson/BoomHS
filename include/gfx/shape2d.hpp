@@ -3,7 +3,7 @@
 #include <gfx/shape.hpp>
 #include <array>
 
-namespace engine::gfx
+namespace gfx
 {
 
 // clang-format off
@@ -454,4 +454,4 @@ public:
   }
 };
 
-} // ns engine::gfx
+} // ns gfx

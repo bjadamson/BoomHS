@@ -3,7 +3,7 @@
 #include <gfx/colors.hpp>
 #include <gfx/mode.hpp>
 
-namespace engine::gfx
+namespace gfx
 {
 struct shape {
   draw_mode draw_mode_;
@@ -34,4 +34,4 @@ auto constexpr color(T const& t) { return std::get<color_t>(t); }
 template<typename T>
 auto constexpr uv(T const& t) { return std::get<uv_t>(t); }
 
-} // ns engine::gfx
+} // ns gfx

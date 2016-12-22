@@ -8,7 +8,7 @@
 #include <stlw/type_macros.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-namespace engine::gfx::opengl
+namespace gfx::opengl
 {
 
 namespace impl
@@ -180,4 +180,4 @@ struct factory {
   }
 };
 
-} // ns engine::gfx::opengl
+} // ns gfx::opengl

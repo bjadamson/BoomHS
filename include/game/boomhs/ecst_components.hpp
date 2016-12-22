@@ -9,7 +9,7 @@ namespace ct
 // Define component tags.
 namespace sc = ecst::signature::component;
 
-constexpr auto model = ecst::tag::component::v<::engine::gfx::model>;
+constexpr auto model = ecst::tag::component::v<::gfx::model>;
 
 } // ns ct
 
