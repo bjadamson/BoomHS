@@ -2,7 +2,7 @@
 #include <ecst.hpp>
 
 // TODO: uncouple ecst from rendering engine?
-#include <engine/gfx/types.hpp>
+#include <gfx/types.hpp>
 
 namespace ct
 {

@@ -1,11 +1,11 @@
 #include <cstdlib>
 
-#include <engine/gfx/gfx.hpp>
-#include <engine/window/window.hpp>
+#include <gfx/gfx.hpp>
+#include <window/window.hpp>
 #include <stlw/log.hpp>
 
 #include <engine/lib.hpp>
-#include <engine/window/sdl_window.hpp>
+#include <window/sdl_window.hpp>
 #include <game/boomhs/boomhs.hpp>
 
 int

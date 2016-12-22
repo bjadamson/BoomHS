@@ -1,5 +1,5 @@
 #pragma once
-#include <engine/gfx/opengl/glew.hpp>
+#include <gfx/opengl/glew.hpp>
 #include <stlw/format.hpp>
 #include <stlw/type_ctors.hpp>
 

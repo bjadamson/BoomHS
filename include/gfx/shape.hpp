@@ -1,7 +1,7 @@
 #pragma once
-#include <engine/gfx/types.hpp>
-#include <engine/gfx/colors.hpp>
-#include <engine/gfx/mode.hpp>
+#include <gfx/types.hpp>
+#include <gfx/colors.hpp>
+#include <gfx/mode.hpp>
 
 namespace engine::gfx
 {

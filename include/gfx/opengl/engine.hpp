@@ -1,10 +1,10 @@
 #pragma once
-#include <engine/gfx/lib.hpp>
-#include <engine/gfx/opengl/context.hpp>
-#include <engine/gfx/opengl/gfx_to_opengl.hpp>
-#include <engine/gfx/opengl/render2d.hpp>
-#include <engine/gfx/opengl/render3d.hpp>
-#include <engine/gfx/resources.hpp>
+#include <gfx/lib.hpp>
+#include <gfx/opengl/context.hpp>
+#include <gfx/opengl/gfx_to_opengl.hpp>
+#include <gfx/opengl/render2d.hpp>
+#include <gfx/opengl/render3d.hpp>
+#include <gfx/resources.hpp>
 #include <stlw/type_macros.hpp>
 #include <glm/gtc/type_ptr.hpp>
 

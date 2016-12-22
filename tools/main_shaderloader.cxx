@@ -80,7 +80,7 @@ main(int argc, char *argv[])
   }
 
   // preamble
-  auto const preamble_read_result = stlw::read_file("./include/engine/gfx/opengl/glsl.hpp");
+  auto const preamble_read_result = stlw::read_file("./include/gfx/opengl/glsl.hpp");
   if (!preamble_read_result) {
     return false;
   }

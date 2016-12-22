@@ -1,7 +1,7 @@
 #pragma once
-#include <engine/gfx/opengl/gl_log.hpp>
-#include <engine/gfx/opengl/glew.hpp>
-#include <engine/gfx/opengl/global.hpp>
+#include <gfx/opengl/gl_log.hpp>
+#include <gfx/opengl/glew.hpp>
+#include <gfx/opengl/global.hpp>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>

@@ -1,6 +1,6 @@
 #pragma once
-#include <engine/gfx/shape2d.hpp>
-#include <engine/gfx/shape3d.hpp>
+#include <gfx/shape2d.hpp>
+#include <gfx/shape3d.hpp>
 
 namespace engine::gfx
 {

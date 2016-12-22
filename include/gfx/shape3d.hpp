@@ -1,6 +1,6 @@
 #pragma once
-#include <engine/gfx/types.hpp>
-#include <engine/gfx/shape.hpp>
+#include <gfx/types.hpp>
+#include <gfx/shape.hpp>
 #include <array>
 
 namespace engine::gfx

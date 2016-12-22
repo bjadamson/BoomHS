@@ -1,6 +1,6 @@
 #pragma once
-#include <engine/gfx/lib.hpp>
-#include <engine/window/sdl_window.hpp>
+#include <gfx/lib.hpp>
+#include <window/sdl_window.hpp>
 #include <stlw/type_ctors.hpp>
 
 namespace engine

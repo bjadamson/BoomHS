@@ -1,6 +1,6 @@
 #pragma once
-#include <engine/gfx/opengl/glew.hpp>
-#include <engine/gfx/opengl/global.hpp>
+#include <gfx/opengl/glew.hpp>
+#include <gfx/opengl/global.hpp>
 #include <stlw/format.hpp>
 #include <stlw/tuple.hpp>
 #include <SOIL.h>

@@ -1,5 +1,5 @@
-#include <engine/gfx/opengl/glew.hpp>
-#include <engine/window/sdl_window.hpp>
+#include <gfx/opengl/glew.hpp>
+#include <window/sdl_window.hpp>
 #include <stlw/format.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>

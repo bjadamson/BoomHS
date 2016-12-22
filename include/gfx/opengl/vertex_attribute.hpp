@@ -1,5 +1,5 @@
 #pragma once
-#include <engine/gfx/opengl/glsl.hpp>
+#include <gfx/opengl/glsl.hpp>
 #include <numeric>
 #include <stlw/sized_buffer.hpp>
 #include <stlw/type_ctors.hpp>

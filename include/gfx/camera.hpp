@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <stlw/type_macros.hpp>
-#include <engine/gfx/skybox.hpp>
+#include <gfx/skybox.hpp>
 
 namespace engine::gfx
 {

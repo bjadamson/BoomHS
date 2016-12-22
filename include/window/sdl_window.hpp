@@ -5,7 +5,7 @@
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <engine/window/window.hpp>
+#include <window/window.hpp>
 #include <extlibs/sdl.hpp>
 
 namespace engine

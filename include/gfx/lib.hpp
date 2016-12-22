@@ -1,5 +1,5 @@
 #pragma once
-#include <engine/gfx/opengl/engine.hpp>
+#include <gfx/opengl/engine.hpp>
 #include <stlw/burrito.hpp>
 #include <stlw/type_ctors.hpp>
 

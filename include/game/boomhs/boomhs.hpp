@@ -6,10 +6,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <engine/window/window.hpp>
-#include <engine/gfx/camera.hpp>
-#include <engine/gfx/factory.hpp>
-#include <engine/gfx/skybox.hpp>
+#include <window/window.hpp>
+#include <gfx/camera.hpp>
+#include <gfx/factory.hpp>
+#include <gfx/skybox.hpp>
 #include <stlw/algorithm.hpp>
 #include <stlw/burrito.hpp>
 #include <stlw/random.hpp>

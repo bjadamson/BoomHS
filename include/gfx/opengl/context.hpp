@@ -1,9 +1,9 @@
 #pragma once
-#include <engine/gfx/colors.hpp>
-#include <engine/gfx/opengl/global.hpp>
-#include <engine/gfx/opengl/program.hpp>
-#include <engine/gfx/opengl/texture.hpp>
-#include <engine/gfx/opengl/vertex_attribute.hpp>
+#include <gfx/colors.hpp>
+#include <gfx/opengl/global.hpp>
+#include <gfx/opengl/program.hpp>
+#include <gfx/opengl/texture.hpp>
+#include <gfx/opengl/vertex_attribute.hpp>
 #include <iostream>
 
 namespace engine::gfx::opengl

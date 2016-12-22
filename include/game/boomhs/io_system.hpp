@@ -1,6 +1,6 @@
 #pragma once
-#include <engine/gfx/opengl/glsl.hpp>
-#include <engine/window/sdl_window.hpp>
+#include <gfx/opengl/glsl.hpp>
+#include <window/sdl_window.hpp>
 #include <game/entity.hpp>
 
 namespace s

@@ -1,7 +1,7 @@
 #pragma once
-#include <engine/gfx/opengl/context.hpp>
-#include <engine/gfx/opengl/global.hpp>
-#include <engine/gfx/opengl/render.hpp>
+#include <gfx/opengl/context.hpp>
+#include <gfx/opengl/global.hpp>
+#include <gfx/opengl/render.hpp>
 
 namespace engine::gfx::opengl::render2d
 {

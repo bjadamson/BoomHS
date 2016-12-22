@@ -1,6 +1,6 @@
 #pragma once
-#include <engine/gfx/opengl/context.hpp>
-#include <engine/gfx/opengl/global.hpp>
+#include <gfx/opengl/context.hpp>
+#include <gfx/opengl/global.hpp>
 #include <stlw/log.hpp>
 #include <stlw/print.hpp>
 #include <stlw/tuple.hpp>

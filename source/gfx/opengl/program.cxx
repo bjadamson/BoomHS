@@ -1,7 +1,7 @@
-#include <engine/gfx/opengl/glew.hpp>
-#include <engine/gfx/opengl/glsl.hpp>
-#include <engine/gfx/opengl/program.hpp>
-#include <engine/gfx/opengl/vertex_attribute.hpp>
+#include <gfx/opengl/glew.hpp>
+#include <gfx/opengl/glsl.hpp>
+#include <gfx/opengl/program.hpp>
+#include <gfx/opengl/vertex_attribute.hpp>
 #include <stlw/os.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
