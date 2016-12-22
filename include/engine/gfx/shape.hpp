@@ -21,38 +21,17 @@ public:
   auto constexpr const &model() const { return this->model_; }
 };
 
-struct vertex_attributes_only {
-  vertex vertex;
-  vertex_attributes_only() = default;
+using vertex_color_attributes = std::tuple<vertex_t, color_t>;
+using vertex_uv_attributes    = std::tuple<vertex_t, uv_t>;
+using vertex_attributes_only  = std::tuple<vertex_t>;
 
-  explicit constexpr vertex_attributes_only(class vertex const &v)
-      : vertex(v)
-  {
-  }
-};
+template<typename T>
+auto constexpr vertex(T const& t) { return std::get<vertex_t>(t); }
 
-struct vertex_color_attributes {
-  vertex vertex;
-  color color;
+template<typename T>
+auto constexpr color(T const& t) { return std::get<color_t>(t); }
 
-  vertex_color_attributes() = default;
-  explicit constexpr vertex_color_attributes(class vertex const &v, class color const &c)
-      : vertex(v)
-      , color(c)
-  {
-  }
-};
-
-struct vertex_uv_attributes {
-  vertex vertex;
-  texture_coord uv;
-
-  vertex_uv_attributes() = default;
-  explicit constexpr vertex_uv_attributes(class vertex const &v, texture_coord const &t)
-      : vertex(v)
-      , uv(t)
-  {
-  }
-};
+template<typename T>
+auto constexpr uv(T const& t) { return std::get<uv_t>(t); }
 
 } // ns engine::gfx

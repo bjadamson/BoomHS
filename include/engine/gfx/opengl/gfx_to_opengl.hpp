@@ -201,17 +201,18 @@ class shape_mapper
 
     // clang-format off
     auto floats = std::array<FloatType, NUM_FLOATS>{
-        t.bottom_left.vertex.x,  t.bottom_left.vertex.y,  t.bottom_left.vertex.z,
-        t.bottom_left.vertex.w,  t.bottom_left.color.r,   t.bottom_left.color.g,
-        t.bottom_left.color.b,   t.bottom_left.color.a,
+        vertex(t.bottom_left).x,  vertex(t.bottom_left).y,  vertex(t.bottom_left).z,
+        vertex(t.bottom_left).w,  color(t.bottom_left).r,  color(t.bottom_left).g,
+        color(t.bottom_left).b,   color(t.bottom_left).a,
 
-        t.bottom_right.vertex.x, t.bottom_right.vertex.y, t.bottom_right.vertex.z,
-        t.bottom_right.vertex.w, t.bottom_right.color.r,  t.bottom_right.color.g,
-        t.bottom_right.color.b,  t.bottom_right.color.a,
+        vertex(t.bottom_right).x, vertex(t.bottom_right).y, vertex(t.bottom_right).z,
+        vertex(t.bottom_right).w, color(t.bottom_right).r, color(t.bottom_right).g,
+        color(t.bottom_right).b,  color(t.bottom_right).a,
 
-        t.top_middle.vertex.x,   t.top_middle.vertex.y,   t.top_middle.vertex.z,
-        t.top_middle.vertex.w,   t.top_middle.color.r,    t.top_middle.color.g,
-        t.top_middle.color.b,    t.top_middle.color.a};
+        vertex(t.top_middle).x,   vertex(t.top_middle).y, vertex(t.top_middle).z,
+        vertex(t.top_middle).w,   color(t.top_middle).r,  color(t.top_middle).g,
+        color(t.top_middle).b,    color(t.top_middle).a
+    };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(t.draw_mode());
     return vertex_color_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
@@ -225,14 +226,14 @@ class shape_mapper
 
     // clang-format off
     auto floats = std::array<FloatType, NUM_FLOATS>{
-        t.bottom_left.vertex.x,  t.bottom_left.vertex.y,  t.bottom_left.vertex.z,
-        t.bottom_left.vertex.w,  t.bottom_left.uv.u,      t.bottom_left.uv.v,
+        vertex(t.bottom_left).x,  vertex(t.bottom_left).y,  vertex(t.bottom_left).z,
+        vertex(t.bottom_left).w,  uv(t.bottom_left).u,      uv(t.bottom_left).v,
 
-        t.bottom_right.vertex.x, t.bottom_right.vertex.y, t.bottom_right.vertex.z,
-        t.bottom_right.vertex.w, t.bottom_right.uv.u,     t.bottom_right.uv.v,
+        vertex(t.bottom_right).x, vertex(t.bottom_right).y, vertex(t.bottom_right).z,
+        vertex(t.bottom_right).w, uv(t.bottom_right).u,     uv(t.bottom_right).v,
 
-        t.top_middle.vertex.x,   t.top_middle.vertex.y,   t.top_middle.vertex.z,
-        t.top_middle.vertex.w,   t.top_middle.uv.u,       t.top_middle.uv.v};
+        vertex(t.top_middle).x,   vertex(t.top_middle).y,   vertex(t.top_middle).z,
+        vertex(t.top_middle).w,   uv(t.top_middle).u,       uv(t.top_middle).v};
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(t.draw_mode());
     return vertex_uv_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
@@ -245,14 +246,11 @@ class shape_mapper
     auto constexpr NUM_FLOATS = calc_vertex_only_num_floats(NUM_VERTICES);
 
     // clang-format off
-    auto floats = std::array<FloatType, NUM_FLOATS>{t.bottom_left.vertex.x,  t.bottom_left.vertex.y,
-                                                t.bottom_left.vertex.z,  t.bottom_left.vertex.w,
-
-                                                t.bottom_right.vertex.x, t.bottom_right.vertex.y,
-                                                t.bottom_right.vertex.z, t.bottom_right.vertex.w,
-
-                                                t.top_middle.vertex.x,   t.top_middle.vertex.y,
-                                                t.top_middle.vertex.z,   t.top_middle.vertex.w};
+    auto floats = std::array<FloatType, NUM_FLOATS>{
+      vertex(t.bottom_left).x,  vertex(t.bottom_left).y, vertex(t.bottom_left).z,  vertex(t.bottom_left).w,
+      vertex(t.bottom_right).x, vertex(t.bottom_right).y, vertex(t.bottom_right).z,   vertex(t.bottom_right).w,
+      vertex(t.top_middle).x,   vertex(t.top_middle).y, vertex(t.top_middle).z, vertex(t.top_middle).w
+    };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(t.draw_mode());
     return vertex_only_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
@@ -273,21 +271,18 @@ class shape_mapper
 
     // clang-format off
     auto floats = std::array<FloatType, NUM_FLOATS>{
-        r.bottom_left.vertex.x,  r.bottom_left.vertex.y,  r.bottom_left.vertex.z, // vertice 1
-        r.bottom_left.vertex.w,  r.bottom_left.color.r,   r.bottom_left.color.g,
-        r.bottom_left.color.b,   r.bottom_left.color.a,
+        vertex(r.bottom_left).x, vertex(r.bottom_left).y, vertex(r.bottom_left).z, vertex(r.bottom_left).w,
+        color(r.bottom_left).r,  color(r.bottom_left).g,  color(r.bottom_left).b,  color(r.bottom_left).a,
 
-        r.bottom_right.vertex.x, r.bottom_right.vertex.y, r.bottom_right.vertex.z, // vertice 2
-        r.bottom_right.vertex.w, r.bottom_right.color.r,  r.bottom_right.color.g,
-        r.bottom_right.color.b,  r.bottom_right.color.a,
+        vertex(r.bottom_right).x, vertex(r.bottom_right).y, vertex(r.bottom_right).z, vertex(r.bottom_right).w,
+        color(r.bottom_right).r,  color(r.bottom_right).g,  color(r.bottom_right).b,  color(r.bottom_right).a,
 
-        r.top_right.vertex.x,    r.top_right.vertex.y,    r.top_right.vertex.z, // vertice 3
-        r.top_right.vertex.w,    r.top_right.color.r,     r.top_right.color.g,
-        r.top_right.color.b,     r.top_right.color.a,
+        vertex(r.top_right).x, vertex(r.top_right).y, vertex(r.top_right).z, vertex(r.top_right).w,
+        color(r.top_right).r,  color(r.top_right).g,  color(r.top_right).b,  color(r.top_right).a,
 
-        r.top_left.vertex.x,     r.top_left.vertex.y,     r.top_left.vertex.z, // vertice 4
-        r.top_left.vertex.w,     r.top_left.color.r,      r.top_left.color.g,
-        r.top_left.color.b,      r.top_left.color.a};
+        vertex(r.top_left).x, vertex(r.top_left).y, vertex(r.top_left).z, vertex(r.top_left).w,
+        color(r.top_left).r,  color(r.top_left).g,  color(r.top_left).b,  color(r.top_left).a,
+    };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
     return vertex_color_rectangle{mode, std::move(floats), RECTANGLE_VERTEX_ORDERING()};
@@ -306,10 +301,10 @@ class shape_mapper
 
     // clang-format off
     auto floats = std::array<FloatType, NUM_FLOATS>{
-        bl.vertex.x, bl.vertex.y, bl.vertex.z, bl.vertex.w, bl.uv.u, bl.uv.v,
-        br.vertex.x, br.vertex.y, br.vertex.z, br.vertex.w, br.uv.u, br.uv.v,
-        tr.vertex.x, tr.vertex.y, tr.vertex.z, tr.vertex.w, tr.uv.u, tr.uv.v,
-        tl.vertex.x, tl.vertex.y, tl.vertex.z, tl.vertex.w, tl.uv.u, tl.uv.v,
+        vertex(bl).x, vertex(bl).y, vertex(bl).z, vertex(bl).w, uv(bl).u, uv(bl).v,
+        vertex(br).x, vertex(br).y, vertex(br).z, vertex(br).w, uv(br).u, uv(br).v,
+        vertex(tl).x, vertex(tl).y, vertex(tl).z, vertex(tl).w, uv(tl).u, uv(tl).v,
+        vertex(tr).x, vertex(tr).y, vertex(tr).z, vertex(tr).w, uv(tr).u, uv(tr).v
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
@@ -329,10 +324,10 @@ class shape_mapper
 
     // clang-format off
     auto floats = std::array<FloatType, NUM_FLOATS>{
-        bl.vertex.x, bl.vertex.y, bl.vertex.z, bl.vertex.w,
-        br.vertex.x, br.vertex.y, br.vertex.z, br.vertex.w,
-        tr.vertex.x, tr.vertex.y, tr.vertex.z, tr.vertex.w,
-        tl.vertex.x, tl.vertex.y, tl.vertex.z, tl.vertex.w,
+        vertex(bl).x, vertex(bl).y, vertex(bl).z, vertex(bl).w,
+        vertex(br).x, vertex(br).y, vertex(br).z, vertex(br).w,
+        vertex(tr).x, vertex(tr).y, vertex(tr).z, vertex(tr).w,
+        vertex(tl).x, vertex(tl).y, vertex(tl).z, vertex(tl).w,
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
@@ -364,29 +359,29 @@ class shape_mapper
 
     // clang-format off
     auto floats = std::array<FloatType, NUM_FLOATS>{
-        v[2].vertex.x, v[2].vertex.y, v[2].vertex.z, v[2].vertex.w, // front top-right
-        v[2].color.r,  v[2].color.g,  v[2].color.b,  v[2].color.a,
+        vertex(v[2]).x, vertex(v[2]).y, vertex(v[2]).z, vertex(v[2]).w,
+        color(v[2]).r,  color(v[2]).g,  color(v[2]).b,  color(v[2]).a,
 
-        v[3].vertex.x, v[3].vertex.y, v[3].vertex.z, v[3].vertex.w, // front top-left
-        v[3].color.r,  v[3].color.g,  v[3].color.b,  v[3].color.a,
+        vertex(v[3]).x, vertex(v[3]).y, vertex(v[3]).z, vertex(v[3]).w,
+        color(v[3]).r,  color(v[3]).g,  color(v[3]).b,  color(v[3]).a,
 
-        v[6].vertex.x, v[6].vertex.y, v[6].vertex.z, v[6].vertex.w, // back top-right
-        v[6].color.r,  v[6].color.g,  v[6].color.b,  v[6].color.a,
+        vertex(v[6]).x, vertex(v[6]).y, vertex(v[6]).z, vertex(v[6]).w,
+        color(v[6]).r,  color(v[6]).g,  color(v[6]).b,  color(v[6]).a,
 
-        v[7].vertex.x, v[7].vertex.y, v[7].vertex.z, v[7].vertex.w, // back top-left
-        v[7].color.r,  v[7].color.g,  v[7].color.b,  v[7].color.a,
+        vertex(v[7]).x, vertex(v[7]).y, vertex(v[7]).z, vertex(v[7]).w,
+        color(v[7]).r,  color(v[7]).g,  color(v[7]).b,  color(v[7]).a,
 
-        v[1].vertex.x, v[1].vertex.y, v[1].vertex.z, v[1].vertex.w, // front bottom-right
-        v[1].color.r,  v[1].color.g,  v[1].color.b,  v[1].color.a,
+        vertex(v[1]).x, vertex(v[1]).y, vertex(v[1]).z, vertex(v[1]).w,
+        color(v[1]).r,  color(v[1]).g,  color(v[1]).b,  color(v[1]).a,
 
-        v[0].vertex.x, v[0].vertex.y, v[0].vertex.z, v[0].vertex.w, // front bottom-left
-        v[0].color.r,  v[0].color.g,  v[0].color.b,  v[0].color.a,
+        vertex(v[0]).x, vertex(v[0]).y, vertex(v[0]).z, vertex(v[0]).w,
+        color(v[0]).r,  color(v[0]).g,  color(v[0]).b,  color(v[0]).a,
 
-        v[4].vertex.x, v[4].vertex.y, v[4].vertex.z, v[4].vertex.w, // back bottom-left
-        v[4].color.r,  v[4].color.g,  v[4].color.b,  v[4].color.a,
+        vertex(v[4]).x, vertex(v[4]).y, vertex(v[4]).z, vertex(v[4]).w,
+        color(v[4]).r,  color(v[4]).g,  color(v[4]).b,  color(v[4]).a,
 
-        v[5].vertex.x, v[5].vertex.y, v[5].vertex.z, v[5].vertex.w, // back bottom-right
-        v[5].color.r,  v[5].color.g,  v[5].color.b,  v[5].color.a,
+        vertex(v[5]).x, vertex(v[5]).y, vertex(v[5]).z, vertex(v[5]).w,
+        color(v[5]).r,  color(v[5]).g,  color(v[5]).b,  color(v[5]).a
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
@@ -402,21 +397,14 @@ class shape_mapper
 
     // clang-format off
     auto floats = std::array<FloatType, NUM_FLOATS>{
-        v[2].vertex.x, v[2].vertex.y, v[2].vertex.z, v[2].vertex.w, // front top-right
-
-        v[3].vertex.x, v[3].vertex.y, v[3].vertex.z, v[3].vertex.w, // front top-left
-
-        v[6].vertex.x, v[6].vertex.y, v[6].vertex.z, v[6].vertex.w, // back top-right
-
-        v[7].vertex.x, v[7].vertex.y, v[7].vertex.z, v[7].vertex.w, // back top-left
-
-        v[1].vertex.x, v[1].vertex.y, v[1].vertex.z, v[1].vertex.w, // front bottom-right
-
-        v[0].vertex.x, v[0].vertex.y, v[0].vertex.z, v[0].vertex.w, // front bottom-left
-
-        v[4].vertex.x, v[4].vertex.y, v[4].vertex.z, v[4].vertex.w, // back bottom-left
-
-        v[5].vertex.x, v[5].vertex.y, v[5].vertex.z, v[5].vertex.w, // back bottom-right
+        vertex(v[2]).x, vertex(v[2]).y, vertex(v[2]).z, vertex(v[2]).w,
+        vertex(v[3]).x, vertex(v[3]).y, vertex(v[3]).z, vertex(v[3]).w,
+        vertex(v[6]).x, vertex(v[6]).y, vertex(v[6]).z, vertex(v[6]).w,
+        vertex(v[7]).x, vertex(v[7]).y, vertex(v[7]).z, vertex(v[7]).w,
+        vertex(v[1]).x, vertex(v[1]).y, vertex(v[1]).z, vertex(v[1]).w,
+        vertex(v[0]).x, vertex(v[0]).y, vertex(v[0]).z, vertex(v[0]).w,
+        vertex(v[4]).x, vertex(v[4]).y, vertex(v[4]).z, vertex(v[4]).w,
+        vertex(v[5]).x, vertex(v[5]).y, vertex(v[5]).z, vertex(v[5]).w,
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
@@ -447,15 +435,15 @@ class shape_mapper
   {
     auto const fill_vertice = [&p](auto &floats, auto const i, auto &j) {
       auto &vertice = p.vertex_attributes[i];
-      floats[j++] = vertice.vertex.x;
-      floats[j++] = vertice.vertex.y;
-      floats[j++] = vertice.vertex.z;
-      floats[j++] = vertice.vertex.w;
+      floats[j++] = vertex(vertice).x;
+      floats[j++] = vertex(vertice).y;
+      floats[j++] = vertex(vertice).z;
+      floats[j++] = vertex(vertice).w;
 
-      floats[j++] = vertice.color.r;
-      floats[j++] = vertice.color.g;
-      floats[j++] = vertice.color.b;
-      floats[j++] = vertice.color.a;
+      floats[j++] = color(vertice).r;
+      floats[j++] = color(vertice).g;
+      floats[j++] = color(vertice).b;
+      floats[j++] = color(vertice).a;
     };
     return map_polygon<vertex_color_polygon>(p, &calc_vertex_color_num_floats, fill_vertice);
   }
@@ -464,10 +452,10 @@ class shape_mapper
   {
     auto const fill_vertice = [&p](auto &floats, auto const i, auto &j) {
       auto &vertice = p.vertex_attributes[i];
-      floats[j++] = vertice.vertex.x;
-      floats[j++] = vertice.vertex.y;
-      floats[j++] = vertice.vertex.z;
-      floats[j++] = vertice.vertex.w;
+      floats[j++] = vertex(vertice).x;
+      floats[j++] = vertex(vertice).y;
+      floats[j++] = vertex(vertice).z;
+      floats[j++] = vertex(vertice).w;
     };
     return map_polygon<vertex_only_polygon>(p, &calc_vertex_only_num_floats, fill_vertice);
   }
@@ -476,13 +464,13 @@ class shape_mapper
   {
     auto const fill_vertice = [&p](auto &floats, auto const i, auto &j) {
       auto &vertice = p.vertex_attributes[i];
-      floats[j++] = vertice.vertex.x;
-      floats[j++] = vertice.vertex.y;
-      floats[j++] = vertice.vertex.z;
-      floats[j++] = vertice.vertex.w;
+      floats[j++] = vertex(vertice).x;
+      floats[j++] = vertex(vertice).y;
+      floats[j++] = vertex(vertice).z;
+      floats[j++] = vertex(vertice).w;
 
-      floats[j++] = vertice.uv.u;
-      floats[j++] = vertice.uv.v;
+      floats[j++] = uv(vertice).u;
+      floats[j++] = uv(vertice).v;
     };
     return map_polygon<vertex_uv_polygon>(p, &calc_vertex_uv_num_floats, fill_vertice);
   }
