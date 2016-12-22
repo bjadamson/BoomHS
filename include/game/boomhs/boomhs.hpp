@@ -199,10 +199,11 @@ public:
     auto cube_skybox = sf::make_textured_cube(gfx::draw_mode::TRIANGLE_STRIP, skybox_model, {15.0f, 15.0f, 15.0f});
 
 
-    auto &r = state.renderer;
-    auto &d2 = r.engine.d2;
-    auto &d3 = r.engine.d3;
-    r.begin();
+    auto &rd = state.renderer;
+    auto &r = rd.gfx;
+    auto &d2 = r.gfx_engine.d2;
+    auto &d3 = r.gfx_engine.d3;
+    rd.begin();
     auto x = ms(std::move(cube_skybox), d3.skybox);
     //r.draw_special(args, std::move(x));
     r.draw(args, d3.skybox, std::move(cube_skybox));
@@ -272,7 +273,7 @@ public:
     r.draw(args, d3.color, cube_color);
     r.draw(args, d3.texture, cube_texture);
     r.draw(args, d3.wireframe, cube_wf);
-    state.renderer.end();
+    rd.end();
   }
 };
 

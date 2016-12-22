@@ -1,6 +1,5 @@
 #pragma once
 #include <engine/gfx/opengl/engine.hpp>
-#include <engine/window/sdl_window.hpp>
 #include <stlw/burrito.hpp>
 #include <stlw/type_ctors.hpp>
 
@@ -23,42 +22,36 @@ struct render_args {
 
 using namespace stlw;
 
-class gfx_engine
+class gfx_lib
 {
-  using W = ::engine::window::sdl_window;
   friend struct factory;
-
-  W window_;
+  NO_COPY(gfx_lib);
 public:
-  opengl::engine engine;
+  opengl::engine gfx_engine;
 private:
-
-  gfx_engine(W &&w, opengl::engine &&e)
-      : window_(std::move(w))
-      , engine(std::move(e))
+  gfx_lib(opengl::engine &&e)
+      : gfx_engine(std::move(e))
   {
   }
-
-  NO_COPY(gfx_engine);
 
   template <typename Args, typename Ctx, typename B>
   void draw_burrito(Args const& args, Ctx &ctx, B const& burrito)
   {
-    this->engine.draw(args, ctx, stlw::make_burrito(burrito));
+    this->gfx_engine.draw(args, ctx, stlw::make_burrito(burrito));
   }
 
   template <typename Args, typename Ctx, typename B>
   void draw_burrito(Args const& args, Ctx &ctx, B &&burrito)
   {
-    this->engine.draw(args, ctx, stlw::make_burrito(std::move(burrito)));
+    this->gfx_engine.draw(args, ctx, stlw::make_burrito(std::move(burrito)));
   }
 
 public:
-  MOVE_DEFAULT(gfx_engine);
+  MOVE_DEFAULT(gfx_lib);
 
   void begin()
   {
-    this->engine.begin();
+    this->gfx_engine.begin();
   }
 
   template<typename Args, typename Ctx, template<class, std::size_t> typename C, typename T, std::size_t N>
@@ -100,10 +93,7 @@ public:
 
   void end()
   {
-    this->engine.end();
-
-    // Update window with OpenGL rendering
-    SDL_GL_SwapWindow(this->window_.raw());
+    this->gfx_engine.end();
   }
 };
 
@@ -111,11 +101,11 @@ struct factory {
   factory() = delete;
   ~factory() = delete;
 
-  template <typename L, typename W>
-  static stlw::result<gfx_engine, std::string> make_gfx_sdl_engine(L &logger, W &&window)
+  template <typename L>
+  static stlw::result<gfx_lib, std::string> make_gfx_engine(L &logger)
   {
     DO_TRY(auto opengl_engine, opengl::factory::make_opengl_engine(logger));
-    return gfx_engine{std::move(window), std::move(opengl_engine)};
+    return gfx_lib{std::move(opengl_engine)};
   }
 };
 

@@ -4,7 +4,7 @@
 #include <engine/window/window.hpp>
 #include <stlw/log.hpp>
 
-#include <engine/gfx/lib.hpp>
+#include <engine/lib.hpp>
 #include <engine/window/sdl_window.hpp>
 #include <game/boomhs/boomhs.hpp>
 
@@ -34,8 +34,7 @@ main(int argc, char *argv[])
   DO_TRY_OR_ELSE_RETURN(auto window, window_lib::make_window(height, width), on_error);
 
   // Initialize graphics renderer
-  namespace gfx = engine::gfx;
-  auto engine = gfx::factory::make_gfx_sdl_engine(logger, std::move(window));
+  auto engine = engine::factory::make_gfx_sdl_engine(logger, std::move(window));
   DO_TRY_OR_ELSE_RETURN(auto renderer, std::move(engine), on_error);
   using R = decltype(renderer);
 
