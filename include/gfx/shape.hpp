@@ -7,7 +7,7 @@ namespace gfx
 {
 struct shape {
   draw_mode draw_mode_;
-  model model_;
+  model const& model_;
 
 protected:
   explicit constexpr shape(draw_mode const dm, model const &m)
