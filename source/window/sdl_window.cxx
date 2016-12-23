@@ -98,7 +98,12 @@ sdl_library::make_window(int const height, int const width)
         fmt::format("OpenGL context could not be created! SDL Error: {}\n", SDL_GetError());
     return stlw::make_error(error);
   }
+  // Make the window the current one
   SDL_GL_MakeCurrent(window_ptr.get(), gl_context);
+
+  // make sdl capture the input devices
+  // http://gamedev.stackexchange.com/questions/33519/trap-mouse-in-sdl
+  SDL_SetRelativeMouseMode(SDL_TRUE);
 
   // Third, initialize GLEW.
   glewExperimental = GL_TRUE;

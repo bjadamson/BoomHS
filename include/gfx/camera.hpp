@@ -144,6 +144,44 @@ public:
     this->skybox_.model.translation = this->pos_;
     return *this;
   }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // mouse-movement
+  /*
+  camera& move_mouse_to(float x, float y, float const xdest, float const ydest)
+  {
+    //if (firstMouse) {
+      //lastX = xpos;
+      //lastY = ypos;
+      //firstMouse = false;
+    //}
+    GLfloat xoffset = xdest - x;
+    GLfloat yoffset = ydest - y;
+
+    x = xdest;
+    y = ydest;
+
+    GLfloat const sensitivity = 0.05;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    this->yaw   += xoffset;
+    this->pitch += yoffset;
+
+    if (this->pitch > 89.0f) {
+      this->pitch = 89.0f;
+    }
+    if (this->pitch < -89.0f) {
+      this->pitch = -89.0f;
+    }
+
+    glm::vec3 front;
+    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front.y = sin(glm::radians(pitch));
+    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    this->front_ = glm::normalize(front);
+  }
+  */
 };
 
 struct camera_factory

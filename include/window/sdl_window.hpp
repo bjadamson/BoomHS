@@ -52,13 +52,10 @@ public:
 
   dimensions get_dimensions() const
   {
-    SDL_DisplayMode dmode;
-    SDL_GetCurrentDisplayMode(0, &dmode);
-    return {800, 600};
-    //return {dmode.w, dmode.h};
+    int w, h;
+    SDL_GetWindowSize(this->window_.get(), &w, &h);
+    return {w, h};
   }
-  //int const width() const { return get_dimensions().w; }
-  //int const height() const { return get_dimensions().h; }
 };
 
 struct sdl_library {

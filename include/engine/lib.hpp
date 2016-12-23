@@ -10,6 +10,12 @@
 namespace engine
 {
 
+struct mouse_state
+{
+  int const x, y;
+  uint32_t const mask;
+};
+
 template<typename L>
 struct loop_state
 {
@@ -22,6 +28,7 @@ struct loop_state
   stlw::float_generator &rnum_generator;
   std::vector<gfx::model*> &MODELS;
   gfx::model &skybox_model;
+  mouse_state const mouse_state;
 
   gfx::render_args<L> render_args() const
   {
@@ -31,9 +38,10 @@ struct loop_state
 
 template<typename L>
 auto make_loop_state(L &l, bool &quit, gfx::camera &c, glm::mat4 const& p,
-    stlw::float_generator &fg, std::vector<gfx::model*> &models, gfx::model &skybox)
+    stlw::float_generator &fg, std::vector<gfx::model*> &models, gfx::model &skybox,
+    mouse_state const& ms)
 {
-  return loop_state<L>{l, quit, c, p, fg, models, skybox};
+  return loop_state<L>{l, quit, c, p, fg, models, skybox, ms};
 }
 
 class gfx_lib
@@ -79,7 +87,6 @@ public:
             auto const x = state.rnum_generator.generate_position();
             auto const y = state.rnum_generator.generate_position();
             auto const z = 0.0f;
-            logger.info(fmt::sprintf("BEN, x '%f', y '%f'", x, y));
             state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
           }
     });
@@ -99,8 +106,10 @@ public:
 
     auto const game_loop = [&state, &game, this](auto &proxy) {
       while (!state.quit) {
+        int x, y;
+        auto const mask = SDL_GetMouseState(&x, &y);
         auto loop_state = make_loop_state(state.logger, state.quit, state.camera, state.projection,
-          state.rnum_generator, state.MODELS, state.skybox_model);
+          state.rnum_generator, state.MODELS, state.skybox_model, {x, y, mask});
 
         this->loop(std::move(loop_state), game, proxy);
       }
