@@ -250,10 +250,12 @@ public:
         {0.25f, 0.25f, 0.25f});
     auto cube_wf = sf::make_wireframe_cube(gfx::draw_mode::LINE_LOOP, *MODELS[15], {0.25f, 0.25f, 0.25f});
 
-    auto rectangle_color = sf::make_rectangle(gfx::draw_mode::TRIANGLE_STRIP, *MODELS[16], ::gfx::LIST_OF_COLORS::YELLOW);
-    auto rectangle_list_colors = sf::make_rectangle(gfx::draw_mode::TRIANGLE_STRIP, *MODELS[17], height, width, multicolor_rect);
-    auto rectangle_texture = sf::make_rectangle(gfx::draw_mode::TRIANGLE_STRIP, *MODELS[18], height, width, true);
-    auto rectangle_wireframe = sf::make_rectangle(gfx::draw_mode::LINE_LOOP, *MODELS[19], height, width, true, true);
+    auto rectangle_color = sf::make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[16]},
+        gfx::color_t{}, ::gfx::LIST_OF_COLORS::YELLOW);
+    auto rectangle_list_colors = sf::make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[17], height, width},
+        gfx::color_t{}, multicolor_rect);
+    auto rectangle_texture = sf::make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[18], height, width}, gfx::uv_t{});
+    auto rectangle_wireframe = sf::make_rectangle({gfx::draw_mode::LINE_LOOP, *MODELS[19], height, width}, gfx::wireframe_t{});
 
     auto polygon_color = gfx::polygon_factory::make({gfx::draw_mode::TRIANGLE_FAN, *MODELS[20], 5}, gfx::color_t{},
         ::gfx::LIST_OF_COLORS::DARK_ORANGE);

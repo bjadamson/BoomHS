@@ -171,6 +171,13 @@ private:
   }
 };
 
+struct rectangle_properties
+{
+  draw_mode const draw_mode;
+  model const &model;
+  height_width const dimensions = {0.39f, 0.25f};
+};
+
 class rectangle_factory
 {
   rectangle_factory() = delete;
@@ -178,16 +185,13 @@ class rectangle_factory
   using height_width = height_width;
 
   struct color_properties {
-    height_width const dimensions;
-    std::array<float, 4> const &bottom_left;
-    std::array<float, 4> const &bottom_right = bottom_left;
-    std::array<float, 4> const &top_right = bottom_left;
-    std::array<float, 4> const &top_left = bottom_left;
+    color_d const &bottom_left;
+    color_d const &bottom_right = bottom_left;
+    color_d const &top_right = bottom_left;
+    color_d const &top_left = bottom_left;
   };
 
   struct uv_properties {
-    height_width const dimensions;
-
     // clang-format off
     std::array<uv_d, 4> const uv = {
       uv_d{0.0f, 0.0f}, // bottom-left
@@ -199,11 +203,7 @@ class rectangle_factory
   };
 
   struct wireframe_properties {
-    height_width const dimensions;
-    GLint const num_vertices;
-
     float const alpha = 1.0f;
-    float const width = 0.25f;
   };
 
   static constexpr auto calculate_vertices(glm::vec3 const &m, height_width const &hw)
@@ -218,112 +218,96 @@ class rectangle_factory
     };
   }
 
-  static constexpr auto construct(enum draw_mode const dm, struct model const &m, color_properties const &props)
+  static constexpr auto construct(rectangle_properties const& rprops, color_properties const &cprops)
   {
-    auto const vertices = calculate_vertices(m.translation, props.dimensions);
+    auto const vertices = calculate_vertices(rprops.model.translation, rprops.dimensions);
 
-    vertex_color_attributes const bottom_left{vertices[0], color_d{props.bottom_left}};
-    vertex_color_attributes const bottom_right{vertices[1], color_d{props.bottom_right}};
-    vertex_color_attributes const top_right{vertices[2], color_d{props.top_right}};
-    vertex_color_attributes const top_left{vertices[3], color_d{props.top_left}};
+    vertex_color_attributes const bottom_left{vertices[0], color_d{cprops.bottom_left}};
+    vertex_color_attributes const bottom_right{vertices[1], color_d{cprops.bottom_right}};
+    vertex_color_attributes const top_right{vertices[2], color_d{cprops.top_right}};
+    vertex_color_attributes const top_left{vertices[3], color_d{cprops.top_left}};
 
-    return rectangle<vertex_color_attributes>{dm, m, bottom_left, bottom_right, top_right, top_left};
+    return rectangle<vertex_color_attributes>{rprops.draw_mode, rprops.model, bottom_left, bottom_right, top_right, top_left};
   }
 
-  static constexpr auto construct(enum draw_mode const dm, struct model const &m, uv_properties const &props)
+  static constexpr auto construct(rectangle_properties const& rprops, uv_properties const &props)
   {
-    auto const vertices = calculate_vertices(m.translation, props.dimensions);
+    auto const vertices = calculate_vertices(rprops.model.translation, rprops.dimensions);
 
     vertex_uv_attributes const bottom_left{vertices[0], props.uv[0]};
     vertex_uv_attributes const bottom_right{vertices[1], props.uv[1]};
     vertex_uv_attributes const top_right{vertices[2], props.uv[2]};
     vertex_uv_attributes const top_left{vertices[3], props.uv[3]};
 
-    return rectangle<vertex_uv_attributes>{dm, m, bottom_left, bottom_right, top_right, top_left};
+    return rectangle<vertex_uv_attributes>{rprops.draw_mode, rprops.model, bottom_left, bottom_right, top_right, top_left};
   }
 
-  static constexpr auto construct(enum draw_mode const dm, struct model const &m, wireframe_properties const &props)
+  static constexpr auto construct(rectangle_properties const& rprops, wireframe_properties const &props)
   {
-    auto const vertices = calculate_vertices(m.translation, props.dimensions);
+    auto const vertices = calculate_vertices(rprops.model.translation, rprops.dimensions);
 
     vertex_attributes_only const bottom_left{vertices[0]};
     vertex_attributes_only const bottom_right{vertices[1]};
     vertex_attributes_only const top_right{vertices[2]};
     vertex_attributes_only const top_left{vertices[3]};
-    return rectangle<vertex_attributes_only>{dm, m, bottom_left, bottom_right, top_right, top_left};
+    return rectangle<vertex_attributes_only>{rprops.draw_mode, rprops.model, bottom_left, bottom_right, top_right, top_left};
   }
 
 public:
   static constexpr auto
-  make(enum draw_mode const dm, struct model const &m, std::array<float, 3> const &c, float const height = 0.39f,
-       float const width = 0.25f, float const alpha = 1.0f)
+  make(rectangle_properties const& rprops, color_t, color_properties const& cprops)
   {
-    color_properties const p{{height, width}, std::array<float, 4>{c[0], c[1], c[2], alpha}};
-    return construct(dm, m, p);
+    return construct(rprops, cprops);
   }
 
   template <typename T>
   static constexpr auto
-  make(enum draw_mode const dm, struct model const &m, T const &data, float const height, float const width)
+  make(rectangle_properties const& rprops, color_t, T const &data)
   {
     auto const &bl = data[0];
     auto const &br = data[1];
     auto const &tr = data[2];
     auto const &tl = data[3];
-    std::array<float, 4> const bottom_left{bl[0], bl[1], bl[2], bl[3]};
-    std::array<float, 4> const bottom_right{br[0], br[1], br[2], br[3]};
-    std::array<float, 4> const top_right{tr[0], tr[1], tr[2], tr[3]};
-    std::array<float, 4> const top_left{tl[0], tl[1], tl[2], tl[3]};
+    color_d const bottom_left{bl[0], bl[1], bl[2], bl[3]};
+    color_d const bottom_right{br[0], br[1], br[2], br[3]};
+    color_d const top_right{tr[0], tr[1], tr[2], tr[3]};
+    color_d const top_left{tl[0], tl[1], tl[2], tl[3]};
 
-    color_properties const p{{height, width}, bottom_left, bottom_right, top_right, top_left};
-    return construct(dm, m, p);
+    color_properties const p{bottom_left, bottom_right, top_right, top_left};
+    return construct(rprops, p);
   }
 
-  static constexpr auto make(enum draw_mode const dm, struct model const &m, std::array<float, 4> const &color,
-                             float const height, float const width)
+  static constexpr auto make(rectangle_properties const& rprops, color_t, std::array<float, 4> const &color)
   {
-    color_properties const p{{height, width}, color};
-    return construct(dm, m, p);
+    color_properties const p{color};
+    return construct(rprops, p);
   }
 
-  static constexpr auto make(enum draw_mode const dm, struct model const &m, float const height, float const width)
+  static constexpr auto make(rectangle_properties const& rprops, color_t, std::array<float, 3> const &c)
   {
     auto constexpr ALPHA = 1.0f;
-    auto const c = LIST_OF_COLORS::RED;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
+    return make(rprops, color_t{}, color);
+  }
 
-    return make(dm, m, color, height, width);
+  static constexpr auto make(rectangle_properties const& rprops)
+  {
+    auto const color = LIST_OF_COLORS::RED;
+    return make(rprops, color_t{}, color);
   }
 
   static constexpr auto
-  make(enum draw_mode const dm, struct model const &m, float const height, float const width, bool const)
+  make(rectangle_properties const& rprops, uv_t)
   {
-    uv_properties const p{{height, width}};
-    return construct(dm, m, p);
+    uv_properties const p;
+    return construct(rprops, p);
   }
 
   static constexpr auto
-  make(enum draw_mode const dm, struct model const &m, float const height, float const width, bool const, bool const)
+  make(rectangle_properties const& rprops, wireframe_t)
   {
-    wireframe_properties const p{{height, width}};
-    return construct(dm, m, p);
-  }
-
-  template <typename T>
-  static constexpr auto
-  make(enum draw_mode const dm, struct model const &m, float const height, float const width, T const &data)
-  {
-    auto const &bl = data[0];
-    auto const &br = data[1];
-    auto const &tr = data[2];
-    auto const &tl = data[3];
-    std::array<float, 4> const bottom_left{bl[0], bl[1], bl[2], bl[3]};
-    std::array<float, 4> const bottom_right{br[0], br[1], br[2], br[3]};
-    std::array<float, 4> const top_right{tr[0], tr[1], tr[2], tr[3]};
-    std::array<float, 4> const top_left{tl[0], tl[1], tl[2], tl[3]};
-
-    color_properties const p{{height, width}, bottom_left, bottom_right, top_right, top_left};
-    return construct(dm, m, p);
+    wireframe_properties const p;
+    return construct(rprops, p);
   }
 };
 
@@ -427,10 +411,17 @@ class polygon_factory
 
 public:
   static auto
-  make(polygon_properties const props, color_t, float const r, float const g, float const b, float const a = 1.0f)
+  make(polygon_properties const pprop, color_t, float const r, float const g, float const b, float const a)
   {
-    color_properties const prop{{r, g, b, a}};
-    return construct(props, prop);
+    color_properties const cprop{{r, g, b, a}};
+    return construct(pprop, cprop);
+  }
+
+  static auto
+  make(polygon_properties const pprop, color_t, float const r, float const g, float const b)
+  {
+    color_properties const cprop{{r, g, b}};
+    return construct(pprop, cprop);
   }
 
   static auto

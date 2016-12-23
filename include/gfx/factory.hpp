@@ -23,10 +23,10 @@ public:
     return triangle_factory::make(dm, model, std::forward<Args>(args)...);
   }
 
-  template<typename M, typename ...Args>
-  static auto make_rectangle(draw_mode const dm, M const& model, Args &&... args)
+  template<typename ...Args>
+  static auto make_rectangle(rectangle_properties const& properties, Args &&... args)
   {
-    return rectangle_factory::make(dm, model, std::forward<Args>(args)...);
+    return rectangle_factory::make(properties, std::forward<Args>(args)...);
   }
 
   template<typename M, typename ...Args>
