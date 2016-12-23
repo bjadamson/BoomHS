@@ -16,7 +16,6 @@
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 
-#include <game/boomhs/ecst.hpp>
 #include <game/boomhs/io_system.hpp>
 #include <game/boomhs/randompos_system.hpp>
 #include <game/data_types.hpp>
@@ -24,120 +23,44 @@
 namespace game::boomhs
 {
 
-template <typename L, typename R>
+template <typename L>
 struct game_state {
   bool quit = false;
   L &logger;
-  R &renderer;
   window::dimensions const dimensions;
   stlw::float_generator rnum_generator;
-
   glm::mat4 projection;
+  std::vector<::gfx::model*> MODELS;
+  gfx::model skybox_model;
   gfx::camera camera;
 
   NO_COPY(game_state);
   NO_MOVE_ASSIGN(game_state);
 public:
   MOVE_CONSTRUCTIBLE(game_state);
-  game_state(L &l, R &r, window::dimensions const &d, stlw::float_generator &&fg,
-      glm::mat4 &&pm, gfx::camera &&c)
+  game_state(L &l, window::dimensions const &d, stlw::float_generator &&fg,
+      glm::mat4 &&pm)
     : logger(l)
-    , renderer(r)
     , dimensions(d)
     , rnum_generator(std::move(fg))
     , projection(std::move(pm))
-    , camera(std::move(c))
+    , camera(gfx::camera_factory::make_default(this->skybox_model))
   {
   }
 };
 
 // TODO: bye globals
-std::vector<::gfx::model*> MODELS;
-::gfx::model skybox_model;
-
-template<typename L, typename R, typename HW>
+template<typename L, typename HW>
 auto
-make_state(L &logger, R &renderer, HW const& hw)
+make_state(L &logger, HW const& hw)
 {
   auto const fheight = static_cast<GLfloat>(hw.h);
   auto const fwidth = static_cast<GLfloat>(hw.w);
 
   logger.error(fmt::sprintf("fheight '%f', fwidth '%f'", fheight, fwidth));
   auto projection = glm::perspective(45.0f, (fwidth / fheight), 0.1f, 10000.0f);
-  gfx::skybox sb{skybox_model};
-  gfx::camera c{std::move(sb),
-    glm::vec3(0.0f, 0.0f, 2.0f),  // camera position
-    glm::vec3(0.0f, 0.0f, -1.0f), // look at origin
-    glm::vec3(0.0f, 1.0f, 0.0f)}; // "up" vector
   stlw::float_generator rng;
-  return game_state<L, R>(logger, renderer, hw, std::move(rng), std::move(projection), std::move(c));
-}
-
-template <typename G, typename S>
-void
-ecst_main(G &game, S &state)
-{
-  auto &logger = state.logger;
-  logger.trace("creating ecst context ...");
-
-  // Create an ECST context.
-  auto ctx = ecst_setup::make_context();
-  logger.trace("stepping ecst once");
-
-  // Initialize context with some entities.
-  ctx->step([&](auto &proxy)
-      {
-        auto const make_entity = [&proxy](auto const i, auto const& t) {
-          auto eid = proxy.create_entity();
-          auto *p = &proxy.add_component(ct::model, eid);
-          p->translation = t;
-          return p;
-        };
-        for (auto i{0}; i < 100; ++i) {
-          auto const x = state.rnum_generator.generate_position();
-          auto const y = state.rnum_generator.generate_position();
-          auto const z = 0.0f;
-          logger.info(fmt::sprintf("BEN, x '%f', y '%f'", x, y));
-          MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
-        }
-  });
-
-  namespace sea = ecst::system_execution_adapter;
-  auto io_tags = sea::t(st::io_system);
-  auto randompos_tags = sea::t(st::randompos_system);
-
-  auto const init_system = [&logger](auto &system, auto &data) { system.init(logger); };
-  auto const process_system = [&state, &logger](auto &system, auto &data) {
-    system.process(data, state);
-  };
-
-  auto const io_init_system = io_tags.for_subtasks(init_system);
-  auto const io_process_system = io_tags.for_subtasks(process_system);
-
-  auto const randompos_init_system = randompos_tags.for_subtasks(init_system);
-  auto const randompos_process_system = randompos_tags.for_subtasks(process_system);
-
-  auto const game_loop_body = [&](auto &proxy) {
-    logger.trace("executing systems.");
-    proxy.execute_systems()(io_process_system, randompos_process_system);
-
-    logger.trace("rendering.");
-    game.game_loop(state);
-    logger.trace("game loop stepping.");
-  };
-  auto const game_loop = [&state, &game_loop_body](auto &proxy) {
-    while (!state.quit) {
-      game_loop_body(proxy);
-    }
-  };
-  ctx->step([&](auto &proxy) {
-    logger.trace("game started, initializing systems.");
-    proxy.execute_systems()(io_init_system, randompos_init_system);
-    logger.trace("systems initialized, entering main loop.");
-
-    game_loop(proxy);
-    logger.trace("game loop finished.");
-  });
+  return game_state<L>(logger, hw, std::move(rng), std::move(projection));
 }
 
 template<typename D, typename C>
@@ -164,8 +87,8 @@ public:
   boomhs_game() = default;
   MOVE_DEFAULT(boomhs_game);
 
-  template <typename State>
-  void game_loop(State &state)
+  template <typename State, typename R>
+  void game_loop(State &state, R &renderer)
   {
     ::gfx::render_args<decltype(state.logger)> const args{state.logger, state.camera,
                                                                   state.projection};
@@ -196,11 +119,11 @@ public:
     gfx::shape_factory sf;
 
     auto const height = 0.25f, width = 0.39f;
-    auto cube_skybox = sf.make_textured_cube({gfx::draw_mode::TRIANGLE_STRIP, skybox_model,
+    auto cube_skybox = sf.make_textured_cube({gfx::draw_mode::TRIANGLE_STRIP, state.skybox_model,
         {15.0f, 15.0f, 15.0f}}, gfx::uv_t{});
 
-    auto &rd = state.renderer;
-    auto &r = rd.gfx;
+    auto &rd = renderer;
+    auto &r = rd;
     auto &d2 = r.gfx_engine.d2;
     auto &d3 = r.gfx_engine.d3;
     rd.begin();
@@ -209,77 +132,77 @@ public:
     r.draw(args, d3.skybox, std::move(cube_skybox));
     {
       std::array<gfx::triangle<gfx::vertex_color_attributes>, 2> const arr = {
-        gfx::triangle_factory::make({random_mode(), *MODELS[0]}, gfx::color_t{}, rc()),
-        gfx::triangle_factory::make({random_mode(), *MODELS[1]}, gfx::color_t{}, rc())
+        gfx::triangle_factory::make({random_mode(), *state.MODELS[0]}, gfx::color_t{}, rc()),
+        gfx::triangle_factory::make({random_mode(), *state.MODELS[1]}, gfx::color_t{}, rc())
       };
       r.draw(args, d2.color, arr);
     }
     {
       std::array<gfx::triangle<gfx::vertex_color_attributes>, 2> arr = {
-        gfx::triangle_factory::make({random_mode(), *MODELS[2]}, gfx::color_t{}, rc()),
-        gfx::triangle_factory::make({random_mode(), *MODELS[3]}, gfx::color_t{}, rc())
+        gfx::triangle_factory::make({random_mode(), *state.MODELS[2]}, gfx::color_t{}, rc()),
+        gfx::triangle_factory::make({random_mode(), *state.MODELS[3]}, gfx::color_t{}, rc())
       };
       r.draw(args, d2.color, std::move(arr));
     }
     {
       r.draw(args, d2.color, std::make_tuple(
-            gfx::triangle_factory::make({random_mode(), *MODELS[4]}, gfx::color_t{}, rc())
+            gfx::triangle_factory::make({random_mode(), *state.MODELS[4]}, gfx::color_t{}, rc())
             ));
     }
     {
       r.draw(args, d2.color,
-            gfx::triangle_factory::make({random_mode(), *MODELS[5]}, gfx::color_t{}, rc()),
-            gfx::triangle_factory::make({random_mode(), *MODELS[6]}, gfx::color_t{}, rc())
+            gfx::triangle_factory::make({random_mode(), *state.MODELS[5]}, gfx::color_t{}, rc()),
+            gfx::triangle_factory::make({random_mode(), *state.MODELS[6]}, gfx::color_t{}, rc())
             );
     }
     {
       std::vector<gfx::triangle<gfx::vertex_color_attributes>> vec;
-      vec.emplace_back(gfx::triangle_factory::make({random_mode(), *MODELS[7]}, gfx::color_t{}, rc()));
-      vec.emplace_back(gfx::triangle_factory::make({random_mode(), *MODELS[8]}, gfx::color_t{}, rc()));
+      vec.emplace_back(gfx::triangle_factory::make({random_mode(), *state.MODELS[7]}, gfx::color_t{}, rc()));
+      vec.emplace_back(gfx::triangle_factory::make({random_mode(), *state.MODELS[8]}, gfx::color_t{}, rc()));
 
       r.draw(args, d2.color, std::move(vec));
     }
 
-    auto triangle_color = sf.make_triangle({gfx::draw_mode::TRIANGLES, *MODELS[9]}, gfx::color_t{},
+    auto triangle_color = sf.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[9]}, gfx::color_t{},
         gfx::LIST_OF_COLORS::PINK);
 
-    auto triangle_list_colors = sf.make_triangle({gfx::draw_mode::TRIANGLES, *MODELS[10]},
+    auto triangle_list_colors = sf.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[10]},
         gfx::color_t{}, multicolor_triangle);
 
-    auto triangle_texture = sf.make_triangle({gfx::draw_mode::TRIANGLES, *MODELS[11]},
+    auto triangle_texture = sf.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[11]},
         gfx::uv_t{});
 
-    auto triangle_wireframe = sf.make_triangle({gfx::draw_mode::LINE_LOOP, *MODELS[12]},
+    auto triangle_wireframe = sf.make_triangle({gfx::draw_mode::LINE_LOOP, *state.MODELS[12]},
         gfx::wireframe_t{});
 
-    auto cube_texture = sf.make_textured_cube({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[13],
+    auto cube_texture = sf.make_textured_cube({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[13],
         {0.15f, 0.15f, 0.15f}}, gfx::uv_t{});
 
-    auto cube_color = sf.make_spotted_cube({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[14],
+    auto cube_color = sf.make_spotted_cube({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[14],
         {0.25f, 0.25f, 0.25f}}, gfx::color_t{}, ::gfx::LIST_OF_COLORS::BLUE);
 
-    auto cube_wf = sf.make_wireframe_cube({gfx::draw_mode::LINE_LOOP, *MODELS[15],
+    auto cube_wf = sf.make_wireframe_cube({gfx::draw_mode::LINE_LOOP, *state.MODELS[15],
         {0.25f, 0.25f, 0.25f}}, gfx::wireframe_t{});
 
-    auto rectangle_color = sf.make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[16]},
+    auto rectangle_color = sf.make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[16]},
         gfx::color_t{}, ::gfx::LIST_OF_COLORS::YELLOW);
 
-    auto rectangle_list_colors = sf.make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[17],
+    auto rectangle_list_colors = sf.make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[17],
         height, width}, gfx::color_t{}, multicolor_rect);
 
-    auto rectangle_texture = sf.make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[18], height,
+    auto rectangle_texture = sf.make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[18], height,
         width}, gfx::uv_t{});
 
-    auto rectangle_wireframe = sf.make_rectangle({gfx::draw_mode::LINE_LOOP, *MODELS[19], height,
+    auto rectangle_wireframe = sf.make_rectangle({gfx::draw_mode::LINE_LOOP, *state.MODELS[19], height,
         width}, gfx::wireframe_t{});
 
-    auto polygon_color = sf.make_polygon({gfx::draw_mode::TRIANGLE_FAN, *MODELS[20], 5},
+    auto polygon_color = sf.make_polygon({gfx::draw_mode::TRIANGLE_FAN, *state.MODELS[20], 5},
         gfx::color_t{}, gfx::LIST_OF_COLORS::DARK_ORANGE);
 
-    auto polygon_texture = sf.make_polygon({gfx::draw_mode::TRIANGLE_FAN, *MODELS[21], 7},
+    auto polygon_texture = sf.make_polygon({gfx::draw_mode::TRIANGLE_FAN, *state.MODELS[21], 7},
         gfx::uv_t{});
 
-    auto polygon_wireframe = sf.make_polygon({gfx::draw_mode::LINE_LOOP, *MODELS[22], 7},
+    auto polygon_wireframe = sf.make_polygon({gfx::draw_mode::LINE_LOOP, *state.MODELS[22], 7},
         gfx::wireframe_t{});
 
     //auto polygon_list_of_color = sf.make_polygon(gfx::draw_mode::TRIANGLE_FAN, *zp1, 5,

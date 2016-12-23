@@ -8,7 +8,6 @@ namespace gfx
 struct skybox
 {
   model &model;
-
   MOVE_CONSTRUCTIBLE_ONLY(skybox);
 };
 

@@ -36,18 +36,17 @@ main(int argc, char *argv[])
   // Initialize graphics renderer
   auto engine = engine::factory::make_gfx_sdl_engine(logger, std::move(window));
   DO_TRY_OR_ELSE_RETURN(auto renderer, std::move(engine), on_error);
-  using R = decltype(renderer);
 
   logger.debug("Instantiating 'state'");
   auto const dimensions = window.get_dimensions();
-  auto state = game::boomhs::make_state(logger, renderer, dimensions);
+  auto state = game::boomhs::make_state(logger, dimensions);
 
   // Initialize the game instance.
   logger.debug("Instantiating game 'boomhs'");
   game::boomhs::boomhs_game game;
 
   logger.debug("Starting game loop");
-  ecst_main(game, state);
+  renderer.start(std::move(game), std::move(state));
 
   logger.debug("Game loop finished successfully! Ending program now.");
   return EXIT_SUCCESS;

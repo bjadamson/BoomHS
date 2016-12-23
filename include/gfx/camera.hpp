@@ -9,10 +9,10 @@ namespace gfx
 
 class camera
 {
+  skybox skybox_;
   glm::vec3 pos_;
   glm::vec3 front_;
   glm::vec3 up_;
-  skybox skybox_;
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // immutable helper methods
@@ -63,10 +63,10 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(camera);
 
   camera(skybox &&sb, glm::vec3 const& pos, glm::vec3 const& front, glm::vec3 const& up)
-    : pos_(pos)
+    : skybox_(std::move(sb))
+    , pos_(pos)
     , front_(front)
     , up_(up)
-    , skybox_(std::move(sb))
   {
     this->skybox_.model.translation = this->pos_;
   }
@@ -143,6 +143,17 @@ public:
     this->pos_ -= xpan(d);
     this->skybox_.model.translation = this->pos_;
     return *this;
+  }
+};
+
+struct camera_factory
+{
+  static auto make_default(model &skybox_model)
+  {
+    return gfx::camera{skybox{skybox_model},
+      glm::vec3(0.0f, 0.0f, 2.0f),  // camera position
+      glm::vec3(0.0f, 0.0f, -1.0f), // look at origin
+      glm::vec3(0.0f, 1.0f, 0.0f)}; // "up" vector
   }
 };
 
