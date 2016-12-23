@@ -5,13 +5,6 @@
 namespace gfx
 {
 
-template<typename D>
-struct shape_properties
-{
-  draw_mode mode;
-  D dimensions;
-};
-
 class shape_factory
 {
 public:
