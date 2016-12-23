@@ -1,11 +1,40 @@
 #pragma once
 #include <gfx/lib.hpp>
 #include <window/sdl_window.hpp>
+#include <stlw/random.hpp>
 #include <stlw/type_ctors.hpp>
+
+// TODO: decouple??
 #include <game/boomhs/ecst.hpp>
 
 namespace engine
 {
+
+template<typename L>
+struct loop_state
+{
+  L &logger;
+  bool &quit;
+  gfx::camera &camera;
+  glm::mat4 const& projection;
+
+  // todo: ref or move-in??
+  stlw::float_generator &rnum_generator;
+  std::vector<gfx::model*> &MODELS;
+  gfx::model &skybox_model;
+
+  gfx::render_args<L> render_args() const
+  {
+    return gfx::make_render_args(this->logger, this->camera, this->projection);
+  }
+};
+
+template<typename L>
+auto make_loop_state(L &l, bool &quit, gfx::camera &c, glm::mat4 const& p,
+    stlw::float_generator &fg, std::vector<gfx::model*> &models, gfx::model &skybox)
+{
+  return loop_state<L>{l, quit, c, p, fg, models, skybox};
+}
 
 class gfx_lib
 {
@@ -56,43 +85,60 @@ public:
     });
 
     namespace sea = ecst::system_execution_adapter;
-    auto io_tags = sea::t(st::io_system);
-    auto randompos_tags = sea::t(st::randompos_system);
+    auto io_tags = st::io_system;
+    auto randompos_tags = st::randompos_system;
 
-    auto const init_system = [&logger](auto &system, auto &data) { system.init(logger); };
-    auto const process_system = [&state, &logger](auto &system, auto &data) {
-      system.process(data, state);
-    };
+    auto const init_system = [&logger](auto &system, auto &) { system.init(logger); };
+    auto const init = [&init_system](auto &system) { sea::t(system).for_subtasks(init_system); };
 
-    auto const io_init_system = io_tags.for_subtasks(init_system);
-    auto const io_process_system = io_tags.for_subtasks(process_system);
+    //auto game_systems = game.ecst_systems();//std::move(io_tags), std::move(randompos_tags));
+    //stlw::for_each(game_systems, init);
 
-    auto const randompos_init_system = randompos_tags.for_subtasks(init_system);
-    auto const randompos_process_system = randompos_tags.for_subtasks(process_system);
+    auto const io_init_system = sea::t(io_tags).for_subtasks(init_system);
+    auto const randompos_init_system = sea::t(randompos_tags).for_subtasks(init_system);
 
-    auto const game_loop_body = [&](auto &proxy) {
-      logger.trace("executing systems.");
-      proxy.execute_systems()(io_process_system, randompos_process_system);
-
-      this->begin();
-      logger.trace("rendering.");
-      game.game_loop(state, this->gfx);
-      logger.trace("game loop stepping.");
-      this->end();
-    };
-    auto const game_loop = [&state, &game_loop_body](auto &proxy) {
+    auto const game_loop = [&state, &game, this](auto &proxy) {
       while (!state.quit) {
-        game_loop_body(proxy);
+        auto loop_state = make_loop_state(state.logger, state.quit, state.camera, state.projection,
+          state.rnum_generator, state.MODELS, state.skybox_model);
+
+        this->loop(std::move(loop_state), game, proxy);
       }
     };
     ctx->step([&](auto &proxy) {
       logger.trace("game started, initializing systems.");
       proxy.execute_systems()(io_init_system, randompos_init_system);
+      //proxy.execute_systmes()(std::move(game_systems));
       logger.trace("systems initialized, entering main loop.");
 
       game_loop(proxy);
       logger.trace("game loop finished.");
     });
+  }
+
+  template<typename LoopState, typename Game, typename P>
+  void loop(LoopState &&state, Game &&game, P &proxy)
+  {
+    namespace sea = ecst::system_execution_adapter;
+    auto io_tags = sea::t(st::io_system);
+    auto randompos_tags = sea::t(st::randompos_system);
+
+    auto const process_system = [&state](auto &system, auto &data) {
+      system.process(data, state);
+    };
+    auto const io_process_system = io_tags.for_subtasks(process_system);
+    auto const randompos_process_system = randompos_tags.for_subtasks(process_system);
+
+    auto &logger = state.logger;
+    logger.trace("executing systems.");
+    proxy.execute_systems()(io_process_system, randompos_process_system);
+
+    this->begin();
+    logger.trace("rendering.");
+
+    game.game_loop(state, this->gfx);
+    logger.trace("game loop stepping.");
+    this->end();
   }
 
   void end()

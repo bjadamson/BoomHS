@@ -11,14 +11,13 @@ struct render_args {
   L &logger;
   camera const& camera;
   glm::mat4 const& projection;
-
-  render_args(L &l, class camera const &c, glm::mat4 const &p)
-      : logger(l)
-      , camera(c)
-      , projection(p)
-  {
-  }
 };
+
+template<typename L>
+auto make_render_args(L &l, camera const& c, glm::mat4 const& projection)
+{
+  return render_args<L>{l, c, projection};
+}
 
 using namespace stlw;
 

@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <tuple>
 #include <vector>
 
 // GLM Mathematics
@@ -49,7 +50,6 @@ public:
   }
 };
 
-// TODO: bye globals
 template<typename L, typename HW>
 auto
 make_state(L &logger, HW const& hw)
@@ -87,12 +87,14 @@ public:
   boomhs_game() = default;
   MOVE_DEFAULT(boomhs_game);
 
-  template <typename State, typename R>
-  void game_loop(State &state, R &renderer)
+  auto ecst_systems() const
   {
-    ::gfx::render_args<decltype(state.logger)> const args{state.logger, state.camera,
-                                                                  state.projection};
+    return std::make_tuple(st::io_system, st::randompos_system);
+  }
 
+  template <typename LoopState, typename R>
+  void game_loop(LoopState &state, R &renderer)
+  {
     using COLOR_ARRAY = std::array<float, 4>;
     auto constexpr multicolor_triangle =
         stlw::make_array<COLOR_ARRAY>(stlw::concat(gfx::LIST_OF_COLORS::RED, 1.0f),
@@ -128,6 +130,7 @@ public:
     auto &d3 = r.gfx_engine.d3;
     rd.begin();
     auto x = ms(std::move(cube_skybox), d3.skybox);
+    auto args = state.render_args();
     //r.draw_special(args, std::move(x));
     r.draw(args, d3.skybox, std::move(cube_skybox));
     {
