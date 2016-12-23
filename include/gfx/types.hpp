@@ -17,7 +17,10 @@ struct color_d {
       : color_d(c[0], c[1], c[2], a)
   {
   }
-  explicit constexpr color_d(float const rp, float const gp, float const bp, float const ap)
+  constexpr color_d(std::array<float, 3> const& c)
+    : color_d(c[0], c[1], c[2], 1.0f)
+  {}
+  constexpr color_d(float const rp, float const gp, float const bp, float const ap)
       : r(rp)
       , g(gp)
       , b(bp)
@@ -28,6 +31,11 @@ struct color_d {
 struct uv_d {
   float u, v;
 };
+
+// tags
+struct color_t {};
+struct uv_t {};
+struct wireframe_t {};
 
 struct model
 {

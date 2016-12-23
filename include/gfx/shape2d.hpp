@@ -341,41 +341,41 @@ private:
   }
 };
 
+struct polygon_properties
+{
+  draw_mode const draw_mode;
+  model const &model;
+  int const num_vertices;
+
+  float const width = 0.25f;
+};
+
 class polygon_factory
 {
   polygon_factory() = delete;
 
   struct color_properties {
-    GLint const num_vertices;
-    std::array<float, 3> const colors;
-
-    float const alpha = 1.0f;
-    float const width = 0.25f;
+    color_d colors;
   };
 
   struct uv_properties {
-    GLint const num_vertices;
-
     float const alpha = 1.0f;
-    float const width = 0.25f;
   };
 
   struct wireframe_properties {
-    GLint const num_vertices;
     float const alpha = 1.0f;
-    float const width = 0.25f;
   };
 
   template<typename R, typename P, typename FN>
   static auto
-  construct_polygon(enum draw_mode const dm, struct model const &m, P const& properties, FN const& fill_vertice)
+  construct_polygon(polygon_properties const pprops, P const& cprops, FN const& fill_vertice)
   {
-    float const width = properties.width;
-    auto const num_vertices = properties.num_vertices;
+    float const width = pprops.width;
+    auto const num_vertices = pprops.num_vertices;
 
     auto const C = num_vertices;     // Assume for now #colors == #vertices
     auto const E = num_vertices + 1; // num_edges
-    auto const t = m.translation;
+    auto const t = pprops.model.translation;
 
     auto const cosfn = [&width, &t, &E](auto const a) {
       auto const pos = width * static_cast<float>(std::cos(2 * M_PI * a / E));
@@ -386,7 +386,7 @@ class polygon_factory
       return t.y + pos;
     };
 
-    polygon<R> poly{dm, m, num_vertices};
+    polygon<R> poly{pprops.draw_mode, pprops.model, num_vertices};
     for (auto i{0} ; i < num_vertices; ++i) {
       auto const x = cosfn(i);
       auto const y = sinfn(i);
@@ -397,60 +397,63 @@ class polygon_factory
     return poly;
   }
 
-  static auto construct(enum draw_mode const dm, struct model const &m, color_properties const &props)
+  static auto construct(polygon_properties const pprops, color_properties const &cprops)
   {
     using R = vertex_color_attributes;
     auto const fill_vertice = [&](auto &poly, auto const& v, auto const i) {
-      color_d const col{props.colors[0], props.colors[1], props.colors[2], props.alpha};
-      poly.vertex_attributes[i] = R{v, col};
+      poly.vertex_attributes[i] = R{v, cprops.colors};
     };
-    return construct_polygon<R>(dm, m, props, fill_vertice);
+    return construct_polygon<R>(pprops, cprops, fill_vertice);
   }
 
-  static auto construct(enum draw_mode const dm, struct model const &m, uv_properties const &props)
+  static auto construct(polygon_properties const pprops, uv_properties const &cprops)
   {
     using R = vertex_uv_attributes;
     auto const fill_vertice = [&](auto &poly, auto const& v, auto const i) {
       uv_d const uv{v.x, v.y};
       poly.vertex_attributes[i] = vertex_uv_attributes{v, uv};
     };
-    return construct_polygon<R>(dm, m, props, fill_vertice);
+    return construct_polygon<R>(pprops, cprops, fill_vertice);
   }
 
-  static auto construct(enum draw_mode const dm, struct model const &m, wireframe_properties const &props)
+  static auto construct(polygon_properties const pprops, wireframe_properties const &cprops)
   {
     using R = vertex_attributes_only;
     auto const fill_vertice = [&](auto &poly, auto const& v, auto const i) {
       poly.vertex_attributes[i] = R{v};
     };
-    return construct_polygon<R>(dm, m, props, fill_vertice);
+    return construct_polygon<R>(pprops, cprops, fill_vertice);
   }
 
 public:
   static auto
-  make(enum draw_mode const dm, struct model const &m, int const num_vertices, std::array<float, 3> const &color)
+  make(polygon_properties const props, color_t, float const r, float const g, float const b, float const a = 1.0f)
   {
-    color_properties const prop{num_vertices, color};
-    return construct(dm, m, prop);
+    color_properties const prop{{r, g, b, a}};
+    return construct(props, prop);
   }
 
-  static auto make(enum draw_mode const dm, struct model const &m, int const num_vertices)
+  static auto
+  make(polygon_properties const props, color_t, std::array<float, 3> const& c)
   {
-    auto constexpr COLOR = LIST_OF_COLORS::LAWN_GREEN;
-    color_properties const prop{num_vertices, COLOR};
-    return construct(dm, m, prop);
+    return make(props, color_t{}, c[0], c[1], c[2]);
   }
 
-  static auto make(enum draw_mode const dm, struct model const &m, int const num_vertices, bool const)
+  static auto make(polygon_properties const props, color_t)
   {
-    uv_properties const p{num_vertices};
-    return construct(dm, m, p);
+    return make(props, color_t{}, LIST_OF_COLORS::LAWN_GREEN);
   }
 
-  static auto make(enum draw_mode const dm, struct model const &m, int const num_vertices, bool const, bool const)
+  static auto make(polygon_properties const props, uv_t)
   {
-    wireframe_properties const p{num_vertices};
-    return construct(dm, m, p);
+    uv_properties const uv;
+    return construct(props, uv);
+  }
+
+  static auto make(polygon_properties const props, wireframe_t)
+  {
+    wireframe_properties const wf;
+    return construct(props, wf);
   }
 };
 

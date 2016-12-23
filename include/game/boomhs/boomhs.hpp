@@ -255,10 +255,11 @@ public:
     auto rectangle_texture = sf::make_rectangle(gfx::draw_mode::TRIANGLE_STRIP, *MODELS[18], height, width, true);
     auto rectangle_wireframe = sf::make_rectangle(gfx::draw_mode::LINE_LOOP, *MODELS[19], height, width, true, true);
 
-    auto polygon_color =
-        gfx::polygon_factory::make(gfx::draw_mode::TRIANGLE_FAN, *MODELS[20], 5, ::gfx::LIST_OF_COLORS::DARK_ORANGE);
-    auto polygon_texture = gfx::polygon_factory::make(gfx::draw_mode::TRIANGLE_FAN, *MODELS[21], 7, true);
-    auto polygon_wireframe = gfx::polygon_factory::make(gfx::draw_mode::LINE_LOOP, *MODELS[22], 7, true, true);
+    auto polygon_color = gfx::polygon_factory::make({gfx::draw_mode::TRIANGLE_FAN, *MODELS[20], 5}, gfx::color_t{},
+        ::gfx::LIST_OF_COLORS::DARK_ORANGE);
+
+    auto polygon_texture = gfx::polygon_factory::make({gfx::draw_mode::TRIANGLE_FAN, *MODELS[21], 7}, gfx::uv_t{});
+    auto polygon_wireframe = gfx::polygon_factory::make({gfx::draw_mode::LINE_LOOP, *MODELS[22], 7}, gfx::wireframe_t{});
     //auto polygon_list_of_color = gfx::polygon_factory::make(gfx::draw_mode::TRIANGLE_FAN, *zp1, 5, multicolor_triangle);
 
     r.draw(args, d2.color, triangle_color, triangle_list_colors, std::move(polygon_color),
