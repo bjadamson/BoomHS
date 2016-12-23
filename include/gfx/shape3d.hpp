@@ -20,6 +20,13 @@ private:
   }
 };
 
+struct cube_properties
+{
+  draw_mode const draw_mode;
+  model const &model;
+  height_width_length const dimensions;
+};
+
 class cube_factory
 {
   cube_factory() = delete;
@@ -28,20 +35,14 @@ class cube_factory
 
   struct color_properties {
     using c = std::array<float, 4>;
-
-    height_width_length const dimensions;
     std::array<c, 8> const colors;
   };
 
   struct uv_properties {
-    height_width_length const dimensions;
   };
 
   struct wireframe_properties {
-    height_width_length const dimensions;
-
     float const alpha = 1.0f;
-    float const width = 0.25f;
   };
 
   static constexpr auto
@@ -66,9 +67,9 @@ class cube_factory
     // clang-format on
   }
 
-  static constexpr auto construct(enum draw_mode const dm, struct model const &m, color_properties const &props)
+  static constexpr auto construct(cube_properties const& cube_props, color_properties const &props)
   {
-    auto const vertices = calculate_vertices(props.dimensions);
+    auto const vertices = calculate_vertices(cube_props.dimensions);
 
     // clang-format off
     vertex_color_attributes const f_bottom_left  {vertices[0], color_d{props.colors[0]}};
@@ -84,13 +85,13 @@ class cube_factory
     auto arr = stlw::make_array<vertex_color_attributes>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,
         b_bottom_left, b_bottom_right, b_top_right, b_top_left);
-    return cube<vertex_color_attributes>{dm, m, std::move(arr)};
+    return cube<vertex_color_attributes>{cube_props.draw_mode, cube_props.model, std::move(arr)};
     // clang-format on
   }
 
-  static constexpr auto construct(enum draw_mode const dm, struct model const &m, uv_properties const &props)
+  static constexpr auto construct(cube_properties const& cube_props, uv_properties const &props)
   {
-    auto const vertices = calculate_vertices(props.dimensions);
+    auto const vertices = calculate_vertices(cube_props.dimensions);
 
     // clang-format off
     vertex_attributes_only const f_bottom_left  {vertices[0]};
@@ -106,13 +107,13 @@ class cube_factory
     auto arr = stlw::make_array<vertex_attributes_only>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,
         b_bottom_left, b_bottom_right, b_top_right, b_top_left);
-    return cube<vertex_attributes_only>{dm, m, std::move(arr)};
+    return cube<vertex_attributes_only>{cube_props.draw_mode, cube_props.model, std::move(arr)};
     // clang-format on
   }
 
-  static constexpr auto construct(enum draw_mode const dm, struct model const &m, wireframe_properties const &props)
+  static constexpr auto construct(cube_properties const& cube_props, wireframe_properties const &props)
   {
-    auto const vertices = calculate_vertices(props.dimensions);
+    auto const vertices = calculate_vertices(cube_props.dimensions);
 
     // clang-format off
     vertex_attributes_only const f_bottom_left  {vertices[0]};
@@ -128,14 +129,14 @@ class cube_factory
     auto arr = stlw::make_array<vertex_attributes_only>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,
         b_bottom_left, b_bottom_right, b_top_right, b_top_left);
-    return cube<vertex_attributes_only>{dm, m, std::move(arr)};
+    return cube<vertex_attributes_only>{cube_props.draw_mode, cube_props.model, std::move(arr)};
     // clang-format on
   }
 
 public:
-  static constexpr auto make_spotted(enum draw_mode const dm, struct model const &m, std::array<float, 3> const &c,
-      height_width_length const& hwl)
+  static constexpr auto make(cube_properties const& cube_props, color_t, std::array<float, 3> const &c)
   {
+    // TODO: this may be an advanced color function, IDK...
     auto const ALPHA = 1.0f;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
 
@@ -144,20 +145,20 @@ public:
         std::array<float, 4>{0.0f, 1.0f, 0.0f, ALPHA}, color,
         std::array<float, 4>{0.2f, 0.5f, 0.2f, ALPHA}, color,
         std::array<float, 4>{0.6f, 0.4f, 0.8f, ALPHA}};
-    color_properties const p{hwl, colors};
-    return construct(dm, m, p);
+    color_properties const p{colors};
+    return construct(cube_props, p);
   }
 
-  static constexpr auto make_textured(enum draw_mode const dm, struct model const &m, height_width_length const& hwl)
+  static constexpr auto make(cube_properties const& cube_props, uv_t)
   {
-    uv_properties const p{hwl};
-    return construct(dm, m, p);
+    uv_properties const uv;
+    return construct(cube_props, uv);
   }
 
-  static constexpr auto make_wireframe(enum draw_mode const dm, struct model const& m, height_width_length const& hwl)
+  static constexpr auto make(cube_properties const& cube_props, wireframe_t)
   {
-    wireframe_properties const p{hwl};
-    return construct(dm, m, p);
+    wireframe_properties const wf;
+    return construct(cube_props, wf);
   }
 };
 

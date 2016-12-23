@@ -191,13 +191,13 @@ public:
     };
 
     auto const random_comp = [&]() { return state.rnum_generator.generate_0to1(); };
-    auto const random_color = [&]() {
+    auto const rc = [&]() {
       return glm::vec4{random_comp(), random_comp(), random_comp(), 1.0f};
     };
 
     auto const height = 0.25f, width = 0.39f;
-    auto cube_skybox = sf::make_textured_cube(gfx::draw_mode::TRIANGLE_STRIP, skybox_model, {15.0f, 15.0f, 15.0f});
-
+    auto cube_skybox = sf::make_textured_cube({gfx::draw_mode::TRIANGLE_STRIP, skybox_model,
+        {15.0f, 15.0f, 15.0f}}, gfx::uv_t{});
 
     auto &rd = state.renderer;
     auto &r = rd.gfx;
@@ -209,60 +209,81 @@ public:
     r.draw(args, d3.skybox, std::move(cube_skybox));
     {
       std::array<gfx::triangle<gfx::vertex_color_attributes>, 2> const arr = {
-        gfx::triangle_factory::make({random_mode(), *MODELS[0]}, gfx::color_t{}, random_color()),
-        gfx::triangle_factory::make({random_mode(), *MODELS[1]}, gfx::color_t{}, random_color())
+        gfx::triangle_factory::make({random_mode(), *MODELS[0]}, gfx::color_t{}, rc()),
+        gfx::triangle_factory::make({random_mode(), *MODELS[1]}, gfx::color_t{}, rc())
       };
       r.draw(args, d2.color, arr);
     }
     {
       std::array<gfx::triangle<gfx::vertex_color_attributes>, 2> arr = {
-        gfx::triangle_factory::make({random_mode(), *MODELS[2]}, gfx::color_t{}, random_color()),
-        gfx::triangle_factory::make({random_mode(), *MODELS[3]}, gfx::color_t{}, random_color())
+        gfx::triangle_factory::make({random_mode(), *MODELS[2]}, gfx::color_t{}, rc()),
+        gfx::triangle_factory::make({random_mode(), *MODELS[3]}, gfx::color_t{}, rc())
       };
       r.draw(args, d2.color, std::move(arr));
     }
     {
       r.draw(args, d2.color, std::make_tuple(
-            gfx::triangle_factory::make({random_mode(), *MODELS[4]}, gfx::color_t{}, random_color())
+            gfx::triangle_factory::make({random_mode(), *MODELS[4]}, gfx::color_t{}, rc())
             ));
     }
     {
       r.draw(args, d2.color,
-            gfx::triangle_factory::make({random_mode(), *MODELS[5]}, gfx::color_t{}, random_color()),
-            gfx::triangle_factory::make({random_mode(), *MODELS[6]}, gfx::color_t{}, random_color())
+            gfx::triangle_factory::make({random_mode(), *MODELS[5]}, gfx::color_t{}, rc()),
+            gfx::triangle_factory::make({random_mode(), *MODELS[6]}, gfx::color_t{}, rc())
             );
     }
     {
       std::vector<gfx::triangle<gfx::vertex_color_attributes>> vec;
-      vec.emplace_back(gfx::triangle_factory::make({random_mode(), *MODELS[7]}, gfx::color_t{}, random_color()));
-      vec.emplace_back(gfx::triangle_factory::make({random_mode(), *MODELS[8]}, gfx::color_t{}, random_color()));
+      vec.emplace_back(gfx::triangle_factory::make({random_mode(), *MODELS[7]}, gfx::color_t{}, rc()));
+      vec.emplace_back(gfx::triangle_factory::make({random_mode(), *MODELS[8]}, gfx::color_t{}, rc()));
 
       r.draw(args, d2.color, std::move(vec));
     }
 
-    auto triangle_color = sf::make_triangle({gfx::draw_mode::TRIANGLES, *MODELS[9]}, gfx::color_t{}, ::gfx::LIST_OF_COLORS::PINK);
-    auto triangle_list_colors = sf::make_triangle({gfx::draw_mode::TRIANGLES, *MODELS[10]}, gfx::color_t{}, multicolor_triangle);
-    auto triangle_texture = sf::make_triangle({gfx::draw_mode::TRIANGLES, *MODELS[11]}, gfx::uv_t{});
-    auto triangle_wireframe = sf::make_triangle({gfx::draw_mode::LINE_LOOP, *MODELS[12]}, gfx::wireframe_t{});
+    auto triangle_color = sf::make_triangle({gfx::draw_mode::TRIANGLES, *MODELS[9]}, gfx::color_t{},
+        gfx::LIST_OF_COLORS::PINK);
 
-    auto cube_texture = sf::make_textured_cube(gfx::draw_mode::TRIANGLE_STRIP, *MODELS[13], {0.15f, 0.15f, 0.15f});
-    auto cube_color = sf::make_spotted_cube(gfx::draw_mode::TRIANGLE_STRIP, *MODELS[14], ::gfx::LIST_OF_COLORS::BLUE,
-        {0.25f, 0.25f, 0.25f});
-    auto cube_wf = sf::make_wireframe_cube(gfx::draw_mode::LINE_LOOP, *MODELS[15], {0.25f, 0.25f, 0.25f});
+    auto triangle_list_colors = sf::make_triangle({gfx::draw_mode::TRIANGLES, *MODELS[10]},
+        gfx::color_t{}, multicolor_triangle);
+
+    auto triangle_texture = sf::make_triangle({gfx::draw_mode::TRIANGLES, *MODELS[11]},
+        gfx::uv_t{});
+
+    auto triangle_wireframe = sf::make_triangle({gfx::draw_mode::LINE_LOOP, *MODELS[12]},
+        gfx::wireframe_t{});
+
+    auto cube_texture = sf::make_textured_cube({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[13],
+        {0.15f, 0.15f, 0.15f}}, gfx::uv_t{});
+
+    auto cube_color = sf::make_spotted_cube({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[14],
+        {0.25f, 0.25f, 0.25f}}, gfx::color_t{}, ::gfx::LIST_OF_COLORS::BLUE);
+
+    auto cube_wf = sf::make_wireframe_cube({gfx::draw_mode::LINE_LOOP, *MODELS[15],
+        {0.25f, 0.25f, 0.25f}}, gfx::wireframe_t{});
 
     auto rectangle_color = sf::make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[16]},
         gfx::color_t{}, ::gfx::LIST_OF_COLORS::YELLOW);
-    auto rectangle_list_colors = sf::make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[17], height, width},
-        gfx::color_t{}, multicolor_rect);
-    auto rectangle_texture = sf::make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[18], height, width}, gfx::uv_t{});
-    auto rectangle_wireframe = sf::make_rectangle({gfx::draw_mode::LINE_LOOP, *MODELS[19], height, width}, gfx::wireframe_t{});
 
-    auto polygon_color = gfx::polygon_factory::make({gfx::draw_mode::TRIANGLE_FAN, *MODELS[20], 5}, gfx::color_t{},
-        ::gfx::LIST_OF_COLORS::DARK_ORANGE);
+    auto rectangle_list_colors = sf::make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[17],
+        height, width}, gfx::color_t{}, multicolor_rect);
 
-    auto polygon_texture = gfx::polygon_factory::make({gfx::draw_mode::TRIANGLE_FAN, *MODELS[21], 7}, gfx::uv_t{});
-    auto polygon_wireframe = gfx::polygon_factory::make({gfx::draw_mode::LINE_LOOP, *MODELS[22], 7}, gfx::wireframe_t{});
-    //auto polygon_list_of_color = gfx::polygon_factory::make(gfx::draw_mode::TRIANGLE_FAN, *zp1, 5, multicolor_triangle);
+    auto rectangle_texture = sf::make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *MODELS[18], height,
+        width}, gfx::uv_t{});
+
+    auto rectangle_wireframe = sf::make_rectangle({gfx::draw_mode::LINE_LOOP, *MODELS[19], height,
+        width}, gfx::wireframe_t{});
+
+    auto polygon_color = gfx::polygon_factory::make({gfx::draw_mode::TRIANGLE_FAN, *MODELS[20], 5},
+        gfx::color_t{}, gfx::LIST_OF_COLORS::DARK_ORANGE);
+
+    auto polygon_texture = gfx::polygon_factory::make({gfx::draw_mode::TRIANGLE_FAN, *MODELS[21], 7},
+        gfx::uv_t{});
+
+    auto polygon_wireframe = gfx::polygon_factory::make({gfx::draw_mode::LINE_LOOP, *MODELS[22], 7},
+        gfx::wireframe_t{});
+
+    //auto polygon_list_of_color = gfx::polygon_factory::make(gfx::draw_mode::TRIANGLE_FAN, *zp1, 5,
+    //multicolor_triangle);
 
     r.draw(args, d2.color, triangle_color, triangle_list_colors, std::move(polygon_color),
                                            rectangle_color, rectangle_list_colors
