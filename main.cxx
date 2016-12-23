@@ -29,7 +29,7 @@ main(int argc, char *argv[])
   logger.debug("Setting up stack guard to unitialize window library globals");
   ON_SCOPE_EXIT([]() { window_lib::destroy(); });
 
-  auto constexpr height = 800, width = 600;
+  auto constexpr width = 800, height = 600;
   logger.debug("Instantiating window instance.");
   DO_TRY_OR_ELSE_RETURN(auto window, window_lib::make_window(height, width), on_error);
 
@@ -38,7 +38,7 @@ main(int argc, char *argv[])
   DO_TRY_OR_ELSE_RETURN(auto renderer, std::move(engine), on_error);
 
   logger.debug("Instantiating 'state'");
-  auto const dimensions = window.get_dimensions();
+  auto const dimensions = renderer.get_dimensions();
   auto state = game::boomhs::make_state(logger, dimensions);
 
   // Initialize the game instance.

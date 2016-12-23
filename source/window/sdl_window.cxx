@@ -74,8 +74,7 @@ sdl_library::make_window(int const height, int const width)
   // reference, so it's a bit like magic.
   //
   // NOTE: We don't have to do anything to shutdown glew, the processing closing
-  // will handle it (by
-  // design.
+  // will handle it (by design).
 
   // First, create the SDL window.
   auto const title = "Hello World!";
@@ -101,9 +100,17 @@ sdl_library::make_window(int const height, int const width)
   // Make the window the current one
   SDL_GL_MakeCurrent(window_ptr.get(), gl_context);
 
-  // make sdl capture the input devices
+  // make sdl capture the input device
   // http://gamedev.stackexchange.com/questions/33519/trap-mouse-in-sdl
-  SDL_SetRelativeMouseMode(SDL_TRUE);
+  {
+    int const code = SDL_SetRelativeMouseMode(SDL_TRUE);
+    if (code == -1) {
+      return stlw::make_error("Mouse relative mode not supported.");
+    }
+    else if (code != 0) {
+      return stlw::make_error(fmt::sprintf("Error setting mouse relative mode '%s'", SDL_GetError()));
+    }
+  }
 
   // Third, initialize GLEW.
   glewExperimental = GL_TRUE;

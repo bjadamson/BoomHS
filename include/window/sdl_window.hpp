@@ -52,7 +52,8 @@ public:
 
   dimensions get_dimensions() const
   {
-    int w, h;
+    int w = 0, h = 0;
+    assert(nullptr != this->window_.get());
     SDL_GetWindowSize(this->window_.get(), &w, &h);
     return {w, h};
   }

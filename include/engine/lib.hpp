@@ -157,6 +157,8 @@ public:
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(this->window_.raw());
   }
+
+  auto get_dimensions() const { return this->window_.get_dimensions(); }
 };
 
 struct factory {
