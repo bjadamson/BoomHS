@@ -3,21 +3,21 @@
 namespace gfx
 {
 
-struct vertex_t {
+struct vertex_d {
   float x = 0.f, y = 0.f, z = 0.f, w = 0.f;
 };
-struct color_t {
+struct color_d {
   float r, g, b, a;
-  color_t() = default;
-  explicit constexpr color_t(std::array<float, 4> const &c)
-      : color_t(c[0], c[1], c[2], c[3])
+  color_d() = default;
+  explicit constexpr color_d(std::array<float, 4> const &c)
+      : color_d(c[0], c[1], c[2], c[3])
   {
   }
-  explicit constexpr color_t(std::array<float, 3> const &c, float const a)
-      : color_t(c[0], c[1], c[2], a)
+  explicit constexpr color_d(std::array<float, 3> const &c, float const a)
+      : color_d(c[0], c[1], c[2], a)
   {
   }
-  explicit constexpr color_t(float const rp, float const gp, float const bp, float const ap)
+  explicit constexpr color_d(float const rp, float const gp, float const bp, float const ap)
       : r(rp)
       , g(gp)
       , b(bp)
@@ -25,7 +25,7 @@ struct color_t {
   {
   }
 };
-struct uv_t {
+struct uv_d {
   float u, v;
 };
 

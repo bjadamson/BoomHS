@@ -52,16 +52,16 @@ class cube_factory
     auto const l = hw.length;
 
     // clang-format off
-    return std::array<vertex_t, 8> {
-      vertex_t{-w, -h, l, 1.0f}, // front bottom-left
-      vertex_t{ w, -h, l, 1.0f}, // front bottom-right
-      vertex_t{ w,  h, l, 1.0f}, // front top-right
-      vertex_t{-w,  h, l, 1.0f}, // front top-left
+    return std::array<vertex_d, 8> {
+      vertex_d{-w, -h, l, 1.0f}, // front bottom-left
+      vertex_d{ w, -h, l, 1.0f}, // front bottom-right
+      vertex_d{ w,  h, l, 1.0f}, // front top-right
+      vertex_d{-w,  h, l, 1.0f}, // front top-left
 
-      vertex_t{-w, -h, -l, 1.0f}, // back bottom-left
-      vertex_t{ w, -h, -l, 1.0f}, // back bottom-right
-      vertex_t{ w, h,  -l, 1.0f}, // back top-right
-      vertex_t{-w, h,  -l, 1.0f}  // back top-left
+      vertex_d{-w, -h, -l, 1.0f}, // back bottom-left
+      vertex_d{ w, -h, -l, 1.0f}, // back bottom-right
+      vertex_d{ w, h,  -l, 1.0f}, // back top-right
+      vertex_d{-w, h,  -l, 1.0f}  // back top-left
     };
     // clang-format on
   }
@@ -71,15 +71,15 @@ class cube_factory
     auto const vertices = calculate_vertices(props.dimensions);
 
     // clang-format off
-    vertex_color_attributes const f_bottom_left  {vertices[0], color_t{props.colors[0]}};
-    vertex_color_attributes const f_bottom_right {vertices[1], color_t{props.colors[1]}};
-    vertex_color_attributes const f_top_right    {vertices[2], color_t{props.colors[2]}};
-    vertex_color_attributes const f_top_left     {vertices[3], color_t{props.colors[3]}};
+    vertex_color_attributes const f_bottom_left  {vertices[0], color_d{props.colors[0]}};
+    vertex_color_attributes const f_bottom_right {vertices[1], color_d{props.colors[1]}};
+    vertex_color_attributes const f_top_right    {vertices[2], color_d{props.colors[2]}};
+    vertex_color_attributes const f_top_left     {vertices[3], color_d{props.colors[3]}};
 
-    vertex_color_attributes const b_bottom_left  {vertices[4], color_t{props.colors[4]}};
-    vertex_color_attributes const b_bottom_right {vertices[5], color_t{props.colors[5]}};
-    vertex_color_attributes const b_top_right    {vertices[6], color_t{props.colors[6]}};
-    vertex_color_attributes const b_top_left     {vertices[7], color_t{props.colors[7]}};
+    vertex_color_attributes const b_bottom_left  {vertices[4], color_d{props.colors[4]}};
+    vertex_color_attributes const b_bottom_right {vertices[5], color_d{props.colors[5]}};
+    vertex_color_attributes const b_top_right    {vertices[6], color_d{props.colors[6]}};
+    vertex_color_attributes const b_top_left     {vertices[7], color_d{props.colors[7]}};
 
     auto arr = stlw::make_array<vertex_color_attributes>(
         f_bottom_left, f_bottom_right, f_top_right, f_top_left,

@@ -21,17 +21,17 @@ public:
   auto constexpr const &model() const { return this->model_; }
 };
 
-using vertex_color_attributes = std::tuple<vertex_t, color_t>;
-using vertex_uv_attributes    = std::tuple<vertex_t, uv_t>;
-using vertex_attributes_only  = std::tuple<vertex_t>;
+using vertex_color_attributes = std::tuple<vertex_d, color_d>;
+using vertex_uv_attributes    = std::tuple<vertex_d, uv_d>;
+using vertex_attributes_only  = std::tuple<vertex_d>;
 
 template<typename T>
-auto constexpr vertex(T const& t) { return std::get<vertex_t>(t); }
+auto constexpr vertex(T const& t) { return std::get<vertex_d>(t); }
 
 template<typename T>
-auto constexpr color(T const& t) { return std::get<color_t>(t); }
+auto constexpr color(T const& t) { return std::get<color_d>(t); }
 
 template<typename T>
-auto constexpr uv(T const& t) { return std::get<uv_t>(t); }
+auto constexpr uv(T const& t) { return std::get<uv_d>(t); }
 
 } // ns gfx

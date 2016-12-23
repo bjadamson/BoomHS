@@ -38,10 +38,10 @@ private:
     float const radius = DEFAULT_RADIUS;
 
     // clang-format off
-    std::array<uv_t, 3> const uv = {
-      uv_t{0.0f, 0.0f}, // bottom-left
-      uv_t{1.0f, 0.0f}, // bottom-right
-      uv_t{0.5f, 1.0f}  // top-middle
+    std::array<uv_d, 3> const uv = {
+      uv_d{0.0f, 0.0f}, // bottom-left
+      uv_d{1.0f, 0.0f}, // bottom-right
+      uv_d{0.5f, 1.0f}  // top-middle
     };
     // clang-format on
   };
@@ -52,10 +52,10 @@ private:
 
   static constexpr auto calculate_vertices(glm::vec3 const &m, float const radius)
   {
-    std::array<vertex_t, 3> const vertices = {
-        vertex_t{m.x - radius, m.y - radius, m.z, 1.0f}, // bottom-left
-        vertex_t{m.x + radius, m.y - radius, m.z, 1.0f}, // bottom-right
-        vertex_t{m.x, m.y + radius, m.z, 1.0f}           // top-middle
+    std::array<vertex_d, 3> const vertices = {
+        vertex_d{m.x - radius, m.y - radius, m.z, 1.0f}, // bottom-left
+        vertex_d{m.x + radius, m.y - radius, m.z, 1.0f}, // bottom-right
+        vertex_d{m.x, m.y + radius, m.z, 1.0f}           // top-middle
     };
     return vertices;
   }
@@ -63,9 +63,9 @@ private:
   static constexpr auto construct(enum draw_mode const dm, struct model const &m, color_properties const &props)
   {
     auto const vertices = calculate_vertices(m.translation, props.radius);
-    vertex_color_attributes const bottom_left{vertices[0], color_t{props.color_bottom_left}};
-    vertex_color_attributes const bottom_right{vertices[1], color_t{props.color_bottom_right}};
-    vertex_color_attributes const top_middle{vertices[2], color_t{props.color_top_middle}};
+    vertex_color_attributes const bottom_left{vertices[0], color_d{props.color_bottom_left}};
+    vertex_color_attributes const bottom_right{vertices[1], color_d{props.color_bottom_right}};
+    vertex_color_attributes const top_middle{vertices[2], color_d{props.color_top_middle}};
 
     return triangle<vertex_color_attributes>{dm, m, bottom_left, bottom_right, top_middle};
   }
@@ -189,11 +189,11 @@ class rectangle_factory
     height_width const dimensions;
 
     // clang-format off
-    std::array<uv_t, 4> const uv = {
-      uv_t{0.0f, 0.0f}, // bottom-left
-      uv_t{1.0f, 0.0f}, // bottom-right
-      uv_t{1.0f, 1.0f}, // top-right
-      uv_t{0.0f, 1.0f}, // top-left
+    std::array<uv_d, 4> const uv = {
+      uv_d{0.0f, 0.0f}, // bottom-left
+      uv_d{1.0f, 0.0f}, // bottom-right
+      uv_d{1.0f, 1.0f}, // top-right
+      uv_d{0.0f, 1.0f}, // top-left
     };
     // clang-format on
   };
@@ -210,11 +210,11 @@ class rectangle_factory
   {
     auto const height = hw.height;
     auto const width = hw.width;
-    return std::array<vertex_t, 4>{
-        vertex_t{m.x - width, m.y - height, m.z, 1.0f}, // bottom-left
-        vertex_t{m.x + width, m.y - height, m.z, 1.0f}, // bottom-right
-        vertex_t{m.x + width, m.y + height, m.z, 1.0f}, // top-right
-        vertex_t{m.x - width, m.y + height, m.z, 1.0f}  // top-left
+    return std::array<vertex_d, 4>{
+        vertex_d{m.x - width, m.y - height, m.z, 1.0f}, // bottom-left
+        vertex_d{m.x + width, m.y - height, m.z, 1.0f}, // bottom-right
+        vertex_d{m.x + width, m.y + height, m.z, 1.0f}, // top-right
+        vertex_d{m.x - width, m.y + height, m.z, 1.0f}  // top-left
     };
   }
 
@@ -222,10 +222,10 @@ class rectangle_factory
   {
     auto const vertices = calculate_vertices(m.translation, props.dimensions);
 
-    vertex_color_attributes const bottom_left{vertices[0], color_t{props.bottom_left}};
-    vertex_color_attributes const bottom_right{vertices[1], color_t{props.bottom_right}};
-    vertex_color_attributes const top_right{vertices[2], color_t{props.top_right}};
-    vertex_color_attributes const top_left{vertices[3], color_t{props.top_left}};
+    vertex_color_attributes const bottom_left{vertices[0], color_d{props.bottom_left}};
+    vertex_color_attributes const bottom_right{vertices[1], color_d{props.bottom_right}};
+    vertex_color_attributes const top_right{vertices[2], color_d{props.top_right}};
+    vertex_color_attributes const top_left{vertices[3], color_d{props.top_left}};
 
     return rectangle<vertex_color_attributes>{dm, m, bottom_left, bottom_right, top_right, top_left};
   }
@@ -391,7 +391,7 @@ class polygon_factory
       auto const x = cosfn(i);
       auto const y = sinfn(i);
 
-      vertex_t const v{x, y, t.z, 1.0f};
+      vertex_d const v{x, y, t.z, 1.0f};
       fill_vertice(poly, v, i);
     }
     return poly;
@@ -401,7 +401,7 @@ class polygon_factory
   {
     using R = vertex_color_attributes;
     auto const fill_vertice = [&](auto &poly, auto const& v, auto const i) {
-      color_t const col{props.colors[0], props.colors[1], props.colors[2], props.alpha};
+      color_d const col{props.colors[0], props.colors[1], props.colors[2], props.alpha};
       poly.vertex_attributes[i] = R{v, col};
     };
     return construct_polygon<R>(dm, m, props, fill_vertice);
@@ -411,7 +411,7 @@ class polygon_factory
   {
     using R = vertex_uv_attributes;
     auto const fill_vertice = [&](auto &poly, auto const& v, auto const i) {
-      uv_t const uv{v.x, v.y};
+      uv_d const uv{v.x, v.y};
       poly.vertex_attributes[i] = vertex_uv_attributes{v, uv};
     };
     return construct_polygon<R>(dm, m, props, fill_vertice);
