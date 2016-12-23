@@ -95,6 +95,9 @@ public:
   template <typename LoopState, typename R>
   void game_loop(LoopState &state, R &renderer)
   {
+    auto const& mpos = state.mouse_data.current();
+    state.logger.warn(fmt::sprintf("mouse x '%d' y '%d", mpos.x, mpos.y));
+
     using COLOR_ARRAY = std::array<float, 4>;
     auto constexpr multicolor_triangle =
         stlw::make_array<COLOR_ARRAY>(stlw::concat(gfx::LIST_OF_COLORS::RED, 1.0f),

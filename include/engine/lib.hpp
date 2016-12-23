@@ -12,9 +12,48 @@ namespace engine
 
 struct mouse_state
 {
-  int const x, y;
-  uint32_t const mask;
+  int x, y;
+  uint32_t mask;
+
+  COPY_DEFAULT(mouse_state);
+  MOVE_DEFAULT(mouse_state);
 };
+
+auto get_mouse_state_now()
+{
+  int x, y;
+  auto const mask = SDL_GetMouseState(&x, &y);
+  return mouse_state{x, y, mask};
+}
+
+class mouse_data
+{
+  mouse_state prev_;
+  mouse_state current_;
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(mouse_data);
+  explicit constexpr mouse_data(mouse_state const& prev, mouse_state const& curr)
+    : prev_(prev)
+    , current_(curr)
+  {
+  }
+
+
+  auto const& prev() const { return this->prev_; }
+  auto const& current() const { return this->current_; }
+
+  void add(mouse_state const& ms)
+  {
+    this->prev_ = this->current_;
+    this->current_ = ms;
+  }
+};
+
+auto make_default_mouse_data()
+{
+  auto const now = get_mouse_state_now();
+  return mouse_data{now, now};
+}
 
 template<typename L>
 struct loop_state
@@ -28,7 +67,7 @@ struct loop_state
   stlw::float_generator &rnum_generator;
   std::vector<gfx::model*> &MODELS;
   gfx::model &skybox_model;
-  mouse_state const mouse_state;
+  mouse_data &mouse_data;
 
   gfx::render_args<L> render_args() const
   {
@@ -39,9 +78,9 @@ struct loop_state
 template<typename L>
 auto make_loop_state(L &l, bool &quit, gfx::camera &c, glm::mat4 const& p,
     stlw::float_generator &fg, std::vector<gfx::model*> &models, gfx::model &skybox,
-    mouse_state const& ms)
+    mouse_data &md)
 {
-  return loop_state<L>{l, quit, c, p, fg, models, skybox, ms};
+  return loop_state<L>{l, quit, c, p, fg, models, skybox, md};
 }
 
 class gfx_lib
@@ -104,12 +143,12 @@ public:
     auto const io_init_system = sea::t(io_tags).for_subtasks(init_system);
     auto const randompos_init_system = sea::t(randompos_tags).for_subtasks(init_system);
 
-    auto const game_loop = [&state, &game, this](auto &proxy) {
+    auto mouse_data = make_default_mouse_data();
+    auto const game_loop = [&state, &game, &mouse_data, this](auto &proxy) {
       while (!state.quit) {
-        int x, y;
-        auto const mask = SDL_GetMouseState(&x, &y);
+        mouse_data.add(get_mouse_state_now());
         auto loop_state = make_loop_state(state.logger, state.quit, state.camera, state.projection,
-          state.rnum_generator, state.MODELS, state.skybox_model, {x, y, mask});
+          state.rnum_generator, state.MODELS, state.skybox_model, mouse_data);
 
         this->loop(std::move(loop_state), game, proxy);
       }

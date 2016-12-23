@@ -14,6 +14,8 @@ class camera
   glm::vec3 front_;
   glm::vec3 up_;
 
+  glm::quat raw, pitch, roll;
+
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // immutable helper methods
   auto direction(float const speed) const
