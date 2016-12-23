@@ -1,13 +1,15 @@
 #pragma once
 #include <ecst.hpp>
-#include <game/data_types.hpp>
+
+// TODO: uncouple ecst from rendering engine?
+#include <gfx/types.hpp>
 
 namespace ct
 {
 // Define component tags.
 namespace sc = ecst::signature::component;
 
-constexpr auto model = ecst::tag::component::v<game::model>;
+constexpr auto model = ecst::tag::component::v<::gfx::model>;
 
 } // ns ct
 

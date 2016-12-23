@@ -1,11 +1,11 @@
 #include <cstdlib>
 
-#include <engine/gfx/gfx.hpp>
-#include <engine/window/window.hpp>
+#include <gfx/gfx.hpp>
+#include <window/window.hpp>
 #include <stlw/log.hpp>
 
-#include <engine/gfx/lib.hpp>
-#include <engine/window/sdl_window.hpp>
+#include <engine/lib.hpp>
+#include <window/sdl_window.hpp>
 #include <game/boomhs/boomhs.hpp>
 
 int
@@ -20,7 +20,7 @@ main(int argc, char *argv[])
   };
 
   // Select windowing library as SDL.
-  namespace w = engine::window;
+  namespace w = window;
   using window_lib = w::library_wrapper<w::sdl_library>;
 
   logger.debug("Initializing window library globals");
@@ -34,21 +34,19 @@ main(int argc, char *argv[])
   DO_TRY_OR_ELSE_RETURN(auto window, window_lib::make_window(height, width), on_error);
 
   // Initialize graphics renderer
-  namespace gfx = engine::gfx;
-  auto engine = gfx::factory::make_gfx_sdl_engine(logger, std::move(window));
+  auto engine = engine::factory::make_gfx_sdl_engine(logger, std::move(window));
   DO_TRY_OR_ELSE_RETURN(auto renderer, std::move(engine), on_error);
-  using R = decltype(renderer);
 
   logger.debug("Instantiating 'state'");
   auto const dimensions = window.get_dimensions();
-  auto state = game::boomhs::make_state(logger, renderer, dimensions);
+  auto state = game::boomhs::make_state(logger, dimensions);
 
   // Initialize the game instance.
   logger.debug("Instantiating game 'boomhs'");
   game::boomhs::boomhs_game game;
 
   logger.debug("Starting game loop");
-  ecst_main(game, state);
+  renderer.start(std::move(game), std::move(state));
 
   logger.debug("Game loop finished successfully! Ending program now.");
   return EXIT_SUCCESS;

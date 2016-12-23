@@ -1,5 +1,5 @@
 #pragma once
-#include <engine/gfx/colors.hpp>
+#include <gfx/colors.hpp>
 #include <game/data_types.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/format.hpp>
