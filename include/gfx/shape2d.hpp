@@ -22,23 +22,25 @@ private:
 };
 // clang-format on
 
+struct triangle_properties
+{
+  draw_mode const draw_mode;
+  model const &model;
+  float const radius = 0.25;
+};
+
 struct triangle_factory {
-  static float constexpr DEFAULT_RADIUS = 0.25;
 
 private:
   struct color_properties {
     std::array<float, 4> const &color_bottom_left;
     std::array<float, 4> const &color_bottom_right = color_bottom_left;
     std::array<float, 4> const &color_top_middle = color_bottom_left;
-
-    float const radius = DEFAULT_RADIUS;
   };
 
   struct uv_properties {
-    float const radius = DEFAULT_RADIUS;
-
-    // clang-format off
     std::array<uv_d, 3> const uv = {
+      // clang-format off
       uv_d{0.0f, 0.0f}, // bottom-left
       uv_d{1.0f, 0.0f}, // bottom-right
       uv_d{0.5f, 1.0f}  // top-middle
@@ -47,7 +49,6 @@ private:
   };
 
   struct wireframe_properties {
-    float const radius = DEFAULT_RADIUS;
   };
 
   static constexpr auto calculate_vertices(glm::vec3 const &m, float const radius)
@@ -60,74 +61,66 @@ private:
     return vertices;
   }
 
-  static constexpr auto construct(enum draw_mode const dm, struct model const &m, color_properties const &props)
+  static constexpr auto construct(triangle_properties const& tprops, color_properties const &cprops)
   {
-    auto const vertices = calculate_vertices(m.translation, props.radius);
-    vertex_color_attributes const bottom_left{vertices[0], color_d{props.color_bottom_left}};
-    vertex_color_attributes const bottom_right{vertices[1], color_d{props.color_bottom_right}};
-    vertex_color_attributes const top_middle{vertices[2], color_d{props.color_top_middle}};
+    auto const vertices = calculate_vertices(tprops.model.translation, tprops.radius);
 
-    return triangle<vertex_color_attributes>{dm, m, bottom_left, bottom_right, top_middle};
+    vertex_color_attributes const bottom_left{vertices[0], color_d{cprops.color_bottom_left}};
+    vertex_color_attributes const bottom_right{vertices[1], color_d{cprops.color_bottom_right}};
+    vertex_color_attributes const top_middle{vertices[2], color_d{cprops.color_top_middle}};
+
+    return triangle<vertex_color_attributes>{tprops.draw_mode, tprops.model, bottom_left, bottom_right, top_middle};
   }
 
-  static constexpr auto construct(enum draw_mode const dm, struct model const &m, uv_properties const &props)
+  static constexpr auto construct(triangle_properties const& tprops, uv_properties const &cprops)
   {
-    auto const vertices = calculate_vertices(m.translation, props.radius);
+    auto const vertices = calculate_vertices(tprops.model.translation, tprops.radius);
 
-    vertex_uv_attributes const bottom_left{vertices[0], props.uv[0]};
-    vertex_uv_attributes const bottom_right{vertices[1], props.uv[1]};
-    vertex_uv_attributes const top_middle{vertices[2], props.uv[2]};
+    vertex_uv_attributes const bottom_left{vertices[0], cprops.uv[0]};
+    vertex_uv_attributes const bottom_right{vertices[1], cprops.uv[1]};
+    vertex_uv_attributes const top_middle{vertices[2], cprops.uv[2]};
 
-    return triangle<vertex_uv_attributes>{dm, m, bottom_left, bottom_right, top_middle};
+    return triangle<vertex_uv_attributes>{tprops.draw_mode, tprops.model, bottom_left, bottom_right, top_middle};
   }
 
-  static constexpr auto construct(enum draw_mode const dm, struct model const &m, wireframe_properties const &props)
+  static constexpr auto construct(triangle_properties const& tprops, wireframe_properties const &cprops)
   {
-    auto const vertices = calculate_vertices(m.translation, props.radius);
+    auto const vertices = calculate_vertices(tprops.model.translation, tprops.radius);
 
     vertex_attributes_only const bottom_left{vertices[0]};
     vertex_attributes_only const bottom_right{vertices[1]};
     vertex_attributes_only const top_middle{vertices[2]};
 
-    return triangle<vertex_attributes_only>{dm, m, bottom_left, bottom_right, top_middle};
+    return triangle<vertex_attributes_only>{tprops.draw_mode, tprops.model, bottom_left, bottom_right, top_middle};
   }
 
 public:
-  static constexpr auto
-  make(enum draw_mode const dm, struct model const &m, float const radius, std::array<float, 3> const &c)
-  {
-    auto constexpr ALPHA = 1.0f;
-    auto const color = std::array<float, 4>{c[0], c[1], c[2], ALPHA};
-    color_properties const p{color, color, color, radius};
-    return construct(dm, m, p);
-  }
-
-  static constexpr auto make(enum draw_mode const dm, struct model const &m, std::array<float, 4> const &c)
+  static constexpr auto make(triangle_properties const& tprops, color_t, std::array<float, 4> const &c)
   {
     color_properties const p{c};
-    return construct(dm, m, p);
+    return construct(tprops, p);
   }
 
-  static constexpr auto make(enum draw_mode const dm, struct model const &m, std::array<float, 3> const &c)
+  static constexpr auto make(triangle_properties const& tprops, color_t, std::array<float, 3> const &c)
   {
     auto constexpr ALPHA = 1.0f;
     auto const color = std::array<float, 4>{c[0], c[1], c[2], ALPHA};
     color_properties const p{color, color, color};
-    return construct(dm, m, p);
+    return construct(tprops, p);
   }
 
-  static constexpr auto make(enum draw_mode const dm, struct model const& m, glm::vec4 const& c)
+  static constexpr auto make(triangle_properties const& tprops, color_t, glm::vec4 const& c)
   {
-    return make(dm, m, std::array<float, 4>{c[0], c[1], c[2], c[3]});
+    return make(tprops, color_t{}, std::array<float, 4>{c[0], c[1], c[2], c[3]});
   }
 
-  static constexpr auto make(enum draw_mode const dm, struct model const &m)
+  static constexpr auto make(triangle_properties const& tprops, color_t)
   {
-    return make(dm, m, LIST_OF_COLORS::RED);
+    return make(tprops, color_t{}, LIST_OF_COLORS::RED);
   }
 
   template <typename T>
-  static constexpr auto make(enum draw_mode const dm, struct model const &m, T const &data)
+  static constexpr auto make(triangle_properties const& tprops, color_t, T const &data)
   {
     auto const &bl = data[0];
     auto const &br = data[1];
@@ -137,19 +130,19 @@ public:
     std::array<float, 4> const top_middle{tm[0], tm[1], tm[2], tm[3]};
 
     color_properties const p{bottom_left, bottom_right, top_middle};
-    return construct(dm, m, p);
+    return construct(tprops, p);
   }
 
-  static constexpr auto make(enum draw_mode const dm, struct model const &m, bool const use_texture)
+  static constexpr auto make(triangle_properties const& tprops, uv_t)
   {
     uv_properties const p;
-    return construct(dm, m, p);
+    return construct(tprops, p);
   }
 
-  static constexpr auto make(enum draw_mode const dm, struct model const &m, bool const, bool const)
+  static constexpr auto make(triangle_properties const& tprops, wireframe_t)
   {
     wireframe_properties const p;
-    return construct(dm, m, p);
+    return construct(tprops, p);
   }
 };
 

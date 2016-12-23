@@ -17,10 +17,10 @@ class shape_factory
   shape_factory() = delete;
 
 public:
-  template<typename M, typename ...Args>
-  static auto make_triangle(draw_mode const dm, M const& model, Args &&... args)
+  template<typename ...Args>
+  static auto make_triangle(triangle_properties const& properties, Args &&... args)
   {
-    return triangle_factory::make(dm, model, std::forward<Args>(args)...);
+    return triangle_factory::make(properties, std::forward<Args>(args)...);
   }
 
   template<typename ...Args>
