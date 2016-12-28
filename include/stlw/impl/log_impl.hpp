@@ -125,6 +125,13 @@ make_log_group(P &&a, P &&b, P &&c, P &&d, P &&e)
   template <typename... Params>                                                                    \
   auto &FN_NAME(Params &&... p)                                                                    \
   {                                                                                                \
+    return *this;                                                                                  \
+  }
+
+#define LOG_WRITER_DEFINE_FN_TEMP(FN_NAME)                                                         \
+  template <typename... Params>                                                                    \
+  auto &FN_NAME(Params &&... p)                                                                    \
+  {                                                                                                \
     this->group_.FN_NAME(std::forward<Params>(p)...);                                              \
     this->shared_.FN_NAME(std::forward<Params>(p)...);                                             \
     return *this;                                                                                  \
@@ -156,8 +163,8 @@ public:
   LOG_WRITER_DEFINE_FN(trace)
   LOG_WRITER_DEFINE_FN(debug)
   LOG_WRITER_DEFINE_FN(info)
-  LOG_WRITER_DEFINE_FN(warn)
-  LOG_WRITER_DEFINE_FN(error)
+  LOG_WRITER_DEFINE_FN_TEMP(warn)
+  LOG_WRITER_DEFINE_FN_TEMP(error)
 };
 
 template <typename L, typename M>

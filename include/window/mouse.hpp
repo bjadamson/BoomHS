@@ -10,13 +10,6 @@ struct mouse_state
   uint32_t mask;
 };
 
-auto mouse_position_now()
-{
-  int x, y;
-  auto const mask = SDL_GetMouseState(&x, &y);
-  return mouse_state{x, y, mask};
-}
-
 class mouse_data
 {
   mouse_state prev_;
@@ -39,9 +32,21 @@ public:
   }
 };
 
+namespace impl
+{
+
+auto mouse_position_now()
+{
+  int x, y;
+  auto const mask = SDL_GetMouseState(&x, &y);
+  return mouse_state{x, y, mask};
+}
+
+} // ns impl
+
 auto make_default_mouse_data()
 {
-  auto const md = mouse_position_now();
+  auto const md = impl::mouse_position_now();
   return mouse_data{md, md};
 }
 

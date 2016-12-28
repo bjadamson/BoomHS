@@ -128,7 +128,6 @@ public:
       {
         auto loop_state = mls(state);
         this->loop(std::move(loop_state), game, proxy);
-        mouse_data.add(window::mouse_position_now());
       };
       while (!state.quit) {
         fps_capped_game_loop(fn);

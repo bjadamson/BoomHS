@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/vector_angle.hpp>
 #include <stlw/type_macros.hpp>
 #include <gfx/skybox.hpp>
 #include <window/mouse.hpp>
@@ -9,10 +10,21 @@
 namespace gfx
 {
 
+bool between(float const v, float const a, float const b)
+{
+  return ((v <= a) && (v >= b)) || ((v <= b) && (v >= a));
+}
+
+auto constexpr X_UNIT_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
+auto constexpr Y_UNIT_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
+auto constexpr Z_UNIT_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
+
 class camera
 {
   skybox skybox_;
-  glm::vec3 pos_, left_, front_, up_;
+  glm::vec3 pos_, left_;
+  glm::vec3 const front_;
+  glm::vec3 up_;
 
   glm::quat orientation_;
 
@@ -152,7 +164,7 @@ public:
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // mouse-movement
   template<typename L>
-  camera& rotate_to(L &logger, window::mouse_state const& mouse_state, float const xrel, float const yrel)
+  camera& rotate_to(L &logger, float const, float const, float const xrel, float const yrel)
   {
     auto const calculate_angle = [](float const relative, bool const positive) {
       auto const calc_rate = [](auto const rel) {
@@ -169,17 +181,32 @@ public:
       return glm::radians(right_or_left_multiplier(positive) * calc_rate(relative));
     };
     float const xangle = calculate_angle(xrel, xrel > 800.0f / 2.0f);
-    float yangle = calculate_angle(yrel, yrel > 600.0f / 2.0f);
-    if (yangle > (3.1459 / 2)) {
-      yangle = 3.1459 / 2;
-    } else if (yangle < -(3.1459 / 2)) {
-      yangle = -(3.1459 / 2);
-    }
-    logger.error(fmt::format("xangle {}, xrel {}", xangle, xrel));
-    logger.error(fmt::format("yangle {}, yrel {}", yangle, yrel));
 
+    auto const calculate_y = [](auto const rel) {
+      float constexpr TICK_RATE = 60.0f;
+      return glm::radians(rel / TICK_RATE);
+    };
+    float yangle = calculate_y(yrel);
+    glm::vec3 const dir = glm::normalize(this->orientation_ * this->pos_);
+    //logger.error(fmt::format("dir is '{}, {}, {}'", dir.x, dir.y, dir.z));
+
+    int x, y;
+    SDL_GetMouseState(&x, &y);
+
+    bool const cpd = (y > 600.0f / 2.0f);
+    auto const ytheta = glm::degrees(glm::angle(dir, Z_UNIT_VECTOR));
+    logger.error(fmt::format("ytheta is {}, (x {}, y {}), xrel {}, yrel {}", ytheta, x, y, xrel, yrel));
+
+    if (ytheta > 45.0f && (yrel > 0.0f) && cpd) {
+      logger.error("DOWN LOCK");
+      yangle = 0.0f;
+    }
+    if (ytheta > 45.0f && (yrel < 0.0f) && !cpd) {
+      logger.error("UP LOCK");
+      yangle = 0.0f;
+    }
     auto const yaw = glm::angleAxis(xangle, glm::vec3{0.0f, 1.0f, 0.0f});
-    auto const pitch = glm::angleAxis(yangle, glm::vec3{0.0f, 0.0f, 1.0f});
+    auto const pitch = glm::angleAxis(yangle, -X_UNIT_VECTOR);
     this->orientation_ = yaw * pitch * this->orientation_;
     return *this;
   }
@@ -189,11 +216,12 @@ struct camera_factory
 {
   static auto make_default(model &skybox_model)
   {
+    glm::vec3 const position = glm::vec3{0.0f, 0.0f, 2.0f};
     return gfx::camera{skybox{skybox_model},
-      glm::vec3(0.0f, 0.0f, 2.0f),  // camera position
-      glm::vec3(-1.0f, 0.0f, 0.0f), // camera-"left"
-      glm::vec3(0.0f, 0.0f, -1.0f), // camera-look at origin
-      glm::vec3(0.0f, 1.0f, 0.0f)}; // camera-"up" vector
+      position,       // camera position
+      -X_UNIT_VECTOR, // camera-"left"
+      -Z_UNIT_VECTOR, // camera-look at origin
+      Y_UNIT_VECTOR}; // camera-"up" vector
   }
 };
 
