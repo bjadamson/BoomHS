@@ -1,8 +1,10 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <stlw/type_macros.hpp>
 #include <gfx/skybox.hpp>
+#include <window/mouse.hpp>
 
 namespace gfx
 {
@@ -10,11 +12,9 @@ namespace gfx
 class camera
 {
   skybox skybox_;
-  glm::vec3 pos_;
-  glm::vec3 front_;
-  glm::vec3 up_;
+  glm::vec3 pos_, left_, front_, up_;
 
-  glm::quat raw, pitch, roll;
+  glm::quat orientation_;
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // immutable helper methods
@@ -64,9 +64,11 @@ class camera
 public:
   MOVE_CONSTRUCTIBLE_ONLY(camera);
 
-  camera(skybox &&sb, glm::vec3 const& pos, glm::vec3 const& front, glm::vec3 const& up)
+  camera(skybox &&sb, glm::vec3 const& pos, glm::vec3 const& left, glm::vec3 const& front,
+      glm::vec3 const& up)
     : skybox_(std::move(sb))
     , pos_(pos)
+    , left_(left)
     , front_(front)
     , up_(up)
   {
@@ -79,7 +81,7 @@ public:
   compute_view() const
   {
     auto &pos = this->pos_;
-    auto const new_front = pos + this->front_;
+    auto const new_front = pos + (this->orientation_ * this->front_);
     return glm::lookAt(pos, new_front, this->up_);
   }
 
@@ -149,41 +151,38 @@ public:
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // mouse-movement
-  /*
-  camera& move_mouse_to(float x, float y, float const xdest, float const ydest)
+  template<typename L>
+  camera& rotate_to(L &logger, window::mouse_state const& mouse_state, float const xrel, float const yrel)
   {
-    //if (firstMouse) {
-      //lastX = xpos;
-      //lastY = ypos;
-      //firstMouse = false;
-    //}
-    GLfloat xoffset = xdest - x;
-    GLfloat yoffset = ydest - y;
-
-    x = xdest;
-    y = ydest;
-
-    GLfloat const sensitivity = 0.05;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-
-    this->yaw   += xoffset;
-    this->pitch += yoffset;
-
-    if (this->pitch > 89.0f) {
-      this->pitch = 89.0f;
+    auto const calculate_angle = [](float const relative, bool const positive) {
+      auto const calc_rate = [](auto const rel) {
+        float constexpr TICK_RATE = 60.0f;
+        return rel / TICK_RATE;
+      };
+      auto const right_or_left_multiplier = [](bool const positive) {
+        if (positive) {
+          return 1.0f;
+        } else {
+          return -1.0f;
+        }
+      };
+      return glm::radians(right_or_left_multiplier(positive) * calc_rate(relative));
+    };
+    float const xangle = calculate_angle(xrel, xrel > 800.0f / 2.0f);
+    float yangle = calculate_angle(yrel, yrel > 600.0f / 2.0f);
+    if (yangle > (3.1459 / 2)) {
+      yangle = 3.1459 / 2;
+    } else if (yangle < -(3.1459 / 2)) {
+      yangle = -(3.1459 / 2);
     }
-    if (this->pitch < -89.0f) {
-      this->pitch = -89.0f;
-    }
+    logger.error(fmt::format("xangle {}, xrel {}", xangle, xrel));
+    logger.error(fmt::format("yangle {}, yrel {}", yangle, yrel));
 
-    glm::vec3 front;
-    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y = sin(glm::radians(pitch));
-    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    this->front_ = glm::normalize(front);
+    auto const yaw = glm::angleAxis(xangle, glm::vec3{0.0f, 1.0f, 0.0f});
+    auto const pitch = glm::angleAxis(yangle, glm::vec3{0.0f, 0.0f, 1.0f});
+    this->orientation_ = yaw * pitch * this->orientation_;
+    return *this;
   }
-  */
 };
 
 struct camera_factory
@@ -192,8 +191,9 @@ struct camera_factory
   {
     return gfx::camera{skybox{skybox_model},
       glm::vec3(0.0f, 0.0f, 2.0f),  // camera position
-      glm::vec3(0.0f, 0.0f, -1.0f), // look at origin
-      glm::vec3(0.0f, 1.0f, 0.0f)}; // "up" vector
+      glm::vec3(-1.0f, 0.0f, 0.0f), // camera-"left"
+      glm::vec3(0.0f, 0.0f, -1.0f), // camera-look at origin
+      glm::vec3(0.0f, 1.0f, 0.0f)}; // camera-"up" vector
   }
 };
 

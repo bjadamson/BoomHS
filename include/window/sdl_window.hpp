@@ -6,7 +6,7 @@
 #include <stlw/type_macros.hpp>
 
 #include <window/window.hpp>
-#include <extlibs/sdl.hpp>
+#include <window/sdl.hpp>
 
 namespace window
 {

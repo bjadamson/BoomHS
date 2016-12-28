@@ -2,6 +2,7 @@
 #include <gfx/opengl/glsl.hpp>
 #include <window/sdl_window.hpp>
 #include <game/entity.hpp>
+#include <game/boomhs/ecst.hpp>
 
 namespace s
 {
@@ -50,6 +51,10 @@ struct io_system {
     auto const sf = [](float const f) { return (f > 1.0f) ? (1.0f + f) : (1.0f - f); };
 
     switch (event.type) {
+    case SDL_MOUSEMOTION: {
+      camera.rotate_to(logger, state.mouse_data.current(), event.motion.xrel, event.motion.yrel);
+      break;
+    }
     case SDL_KEYDOWN: {
       switch (event.key.keysym.sym) {
       case SDLK_w: {
@@ -148,7 +153,7 @@ struct io_system {
     state.logger.trace("io_system::process(data, state)");
     SDL_Event event;
 
-    auto et = game::entity_factory::make_transformer(state.logger, data);
+    auto et = ::game::entity_factory::make_transformer(state.logger, data);
     while ((!state.quit) && (0 != SDL_PollEvent(&event))) {
       state.quit = this->process_event(state.logger, et, event, state);
     }

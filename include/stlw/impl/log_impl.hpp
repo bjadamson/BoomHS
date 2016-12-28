@@ -130,6 +130,7 @@ make_log_group(P &&a, P &&b, P &&c, P &&d, P &&e)
     return *this;                                                                                  \
   }
 
+
 template <typename L, typename M>
 class log_writer
 {

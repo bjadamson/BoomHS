@@ -1,6 +1,8 @@
 #pragma once
 #include <gfx/lib.hpp>
+#include <window/mouse.hpp>
 #include <window/sdl_window.hpp>
+#include <window/timer.hpp>
 #include <stlw/random.hpp>
 #include <stlw/type_ctors.hpp>
 
@@ -10,51 +12,6 @@
 namespace engine
 {
 
-struct mouse_state
-{
-  int x, y;
-  uint32_t mask;
-
-  COPY_DEFAULT(mouse_state);
-  MOVE_DEFAULT(mouse_state);
-};
-
-auto get_mouse_state_now()
-{
-  int x, y;
-  auto const mask = SDL_GetMouseState(&x, &y);
-  return mouse_state{x, y, mask};
-}
-
-class mouse_data
-{
-  mouse_state prev_;
-  mouse_state current_;
-public:
-  MOVE_CONSTRUCTIBLE_ONLY(mouse_data);
-  explicit constexpr mouse_data(mouse_state const& prev, mouse_state const& curr)
-    : prev_(prev)
-    , current_(curr)
-  {
-  }
-
-
-  auto const& prev() const { return this->prev_; }
-  auto const& current() const { return this->current_; }
-
-  void add(mouse_state const& ms)
-  {
-    this->prev_ = this->current_;
-    this->current_ = ms;
-  }
-};
-
-auto make_default_mouse_data()
-{
-  auto const now = get_mouse_state_now();
-  return mouse_data{now, now};
-}
-
 template<typename L>
 struct loop_state
 {
@@ -63,11 +20,10 @@ struct loop_state
   gfx::camera &camera;
   glm::mat4 const& projection;
 
-  // todo: ref or move-in??
   stlw::float_generator &rnum_generator;
   std::vector<gfx::model*> &MODELS;
   gfx::model &skybox_model;
-  mouse_data &mouse_data;
+  window::mouse_data &mouse_data;
 
   gfx::render_args<L> render_args() const
   {
@@ -78,7 +34,7 @@ struct loop_state
 template<typename L>
 auto make_loop_state(L &l, bool &quit, gfx::camera &c, glm::mat4 const& p,
     stlw::float_generator &fg, std::vector<gfx::model*> &models, gfx::model &skybox,
-    mouse_data &md)
+    window::mouse_data &md)
 {
   return loop_state<L>{l, quit, c, p, fg, models, skybox, md};
 }
@@ -143,14 +99,39 @@ public:
     auto const io_init_system = sea::t(io_tags).for_subtasks(init_system);
     auto const randompos_init_system = sea::t(randompos_tags).for_subtasks(init_system);
 
-    auto mouse_data = make_default_mouse_data();
-    auto const game_loop = [&state, &game, &mouse_data, this](auto &proxy) {
-      while (!state.quit) {
-        mouse_data.add(get_mouse_state_now());
-        auto loop_state = make_loop_state(state.logger, state.quit, state.camera, state.projection,
-          state.rnum_generator, state.MODELS, state.skybox_model, mouse_data);
+    auto mouse_data = window::make_default_mouse_data();
+    int frames_counted = 0;
+    window::LTimer fps_timer;
+    auto const fps_capped_game_loop = [&](auto const& fn) {
+      window::LTimer frame_timer;
+      auto const start = frame_timer.get_ticks();
+      fn();
 
+      uint32_t const frame_ticks = frame_timer.get_ticks();
+      float constexpr ONE_60TH_OF_A_FRAME = (1/60) * 1000;
+
+      if (frame_ticks < ONE_60TH_OF_A_FRAME) {
+        logger.trace("Frame finished early, sleeping rest of frame.");
+        SDL_Delay(ONE_60TH_OF_A_FRAME - frame_ticks);
+      }
+
+      float const fps = frames_counted / (fps_timer.get_ticks() / 1000.0f);
+      logger.info(fmt::format("avg FPS is '{}'", fps));
+      ++frames_counted;
+    };
+    auto const mls = [&mouse_data](auto &state) {
+      return make_loop_state(state.logger, state.quit, state.camera, state.projection,
+          state.rnum_generator, state.MODELS, state.skybox_model, mouse_data);
+    };
+    auto const game_loop = [&](auto &proxy) {
+      auto const fn = [&]()
+      {
+        auto loop_state = mls(state);
         this->loop(std::move(loop_state), game, proxy);
+        mouse_data.add(window::mouse_position_now());
+      };
+      while (!state.quit) {
+        fps_capped_game_loop(fn);
       }
     };
     ctx->step([&](auto &proxy) {

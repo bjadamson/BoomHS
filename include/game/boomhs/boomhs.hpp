@@ -96,7 +96,10 @@ public:
   void game_loop(LoopState &state, R &renderer)
   {
     auto const& mpos = state.mouse_data.current();
-    state.logger.warn(fmt::sprintf("mouse x '%d' y '%d", mpos.x, mpos.y));
+    auto const& ppos = state.mouse_data.prev();
+    //state.logger.warn(fmt::sprintf("cmouse x '%d' y '%d", mpos.x, mpos.y));
+    //state.logger.warn(fmt::sprintf("pmouse x '%d' y '%d", ppos.x, ppos.y));
+    //state.logger.warn("");
 
     using COLOR_ARRAY = std::array<float, 4>;
     auto constexpr multicolor_triangle =
@@ -136,6 +139,7 @@ public:
     auto args = state.render_args();
     //r.draw_special(args, std::move(x));
     r.draw(args, d3.skybox, std::move(cube_skybox));
+    /*
     {
       std::array<gfx::triangle<gfx::vertex_color_attributes>, 2> const arr = {
         gfx::triangle_factory::make({random_mode(), *state.MODELS[0]}, gfx::color_t{}, rc()),
@@ -226,6 +230,7 @@ public:
     r.draw(args, d3.color, cube_color);
     r.draw(args, d3.texture, cube_texture);
     r.draw(args, d3.wireframe, cube_wf);
+    */
     rd.end();
   }
 };

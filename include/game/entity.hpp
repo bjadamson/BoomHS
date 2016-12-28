@@ -1,9 +1,11 @@
 #pragma once
 #include <gfx/colors.hpp>
 #include <game/data_types.hpp>
+#include <game/boomhs/ecst.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/format.hpp>
 
+// THIS IS ALL REUSABLE CODE, MOVE IT TO ENGINE folder.
 namespace game
 {
 
@@ -32,55 +34,60 @@ class entity_transformer
     this->logger.trace(fmt::sprintf("'%s' entity eid '%d'", action, eid));
     fn();
   }
-
-  void
-  move_entity(ecst::entity_id const eid, glm::vec3 const& distance)
-  {
-    auto const fn = [&]() {
-      auto &m = this->data.get(ct::model, eid);
-      m.translation += distance;
-    };
-    for_entity(eid, "moving", fn);
-  }
-
-  void rotate_entity(ecst::entity_id const eid, float const angle, glm::vec3 const& axis)
-  {
-    auto const fn = [&]() {
-      auto &m = this->data.get(ct::model, eid);
-      auto const new_rotation = glm::angleAxis(glm::radians(angle), axis);
-      m.rotation = new_rotation * m.rotation;
-    };
-    for_entity(eid, "rotating", fn);
-  }
-
-  void scale_entity(ecst::entity_id const eid, float const factor)
-  {
-    auto const fn = [&]() {
-      auto &m = this->data.get(ct::model, eid);
-      m.scale *= factor;
-    };
-    for_entity(eid, "scaling", fn);
-  }
 public:
   void move_entities(glm::vec3 const& direction)
   {
     data.for_entities([&](auto const eid) {
-        move_entity(eid, direction);
+        entity_transformer::move_entity(*this, eid, direction);
     });
   }
 
   void rotate_entities(float const angle, glm::vec3 const& axis)
   {
     data.for_entities([&](auto const eid) {
-        rotate_entity(eid, angle, axis);
+        entity_transformer::rotate_entity(*this, eid, angle, axis);
     });
   }
 
   void scale_entities(float const factor)
   {
     data.for_entities([&](auto const eid) {
-        scale_entity(eid, factor);
+        entity_transformer::scale_entity(*this, eid, factor);
     });
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // static fns
+  template<typename E>
+  void static rotate_entity(E &entity, ecst::entity_id const eid, float const angle,
+      glm::vec3 const& axis)
+  {
+    auto const fn = [&]() {
+      auto &m = entity.data.get(ct::model, eid);
+      auto const new_rotation = glm::angleAxis(glm::radians(angle), axis);
+      m.rotation = new_rotation * m.rotation;
+    };
+    entity.for_entity(eid, "rotating", fn);
+  }
+
+  template<typename E>
+  void static move_entity(E &entity, ecst::entity_id const eid, glm::vec3 const& distance)
+  {
+    auto const fn = [&]() {
+      auto &m = entity.data.get(ct::model, eid);
+      m.translation += distance;
+    };
+    entity.for_entity(eid, "moving", fn);
+  }
+
+  template<typename E>
+  void static scale_entity(E &entity, ecst::entity_id const eid, float const factor)
+  {
+    auto const fn = [&]() {
+      auto &m = entity.data.get(ct::model, eid);
+      m.scale *= factor;
+    };
+    entity.for_entity(eid, "scaling", fn);
   }
 };
 
