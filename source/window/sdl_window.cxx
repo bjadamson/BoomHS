@@ -112,6 +112,16 @@ sdl_library::make_window(int const height, int const width)
     }
   }
 
+  // set window initially to rhs
+  {
+    SDL_DisplayMode dmode;
+    SDL_GetDesktopDisplayMode(0, &dmode);
+
+    auto const h = dmode.h;
+    auto const w = dmode.w;
+    SDL_SetWindowPosition(window_ptr.get(), w / 2, h / 2);
+  }
+
   // Third, initialize GLEW.
   glewExperimental = GL_TRUE;
   auto const glew_status = glewInit();
