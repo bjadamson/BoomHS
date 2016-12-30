@@ -101,7 +101,6 @@ struct engine {
         glCullFace(GL_BACK);
         draw3d();
 
-        glDepthMask(GL_FALSE);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
       }

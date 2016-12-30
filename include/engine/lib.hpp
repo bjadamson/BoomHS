@@ -23,6 +23,7 @@ struct loop_state
   stlw::float_generator &rnum_generator;
   std::vector<gfx::model*> &MODELS;
   gfx::model &skybox_model;
+  gfx::model &terrain_model;
   window::mouse_data &mouse_data;
 
   gfx::render_args<L> render_args() const
@@ -34,9 +35,9 @@ struct loop_state
 template<typename L>
 auto make_loop_state(L &l, bool &quit, gfx::camera &c, glm::mat4 const& p,
     stlw::float_generator &fg, std::vector<gfx::model*> &models, gfx::model &skybox,
-    window::mouse_data &md)
+    gfx::model &terrain, window::mouse_data &md)
 {
-  return loop_state<L>{l, quit, c, p, fg, models, skybox, md};
+  return loop_state<L>{l, quit, c, p, fg, models, skybox, terrain, md};
 }
 
 class gfx_lib
@@ -121,7 +122,7 @@ public:
     };
     auto const mls = [&mouse_data](auto &state) {
       return make_loop_state(state.logger, state.quit, state.camera, state.projection,
-          state.rnum_generator, state.MODELS, state.skybox_model, mouse_data);
+          state.rnum_generator, state.MODELS, state.skybox_model, state.terrain_model, mouse_data);
     };
     auto const game_loop = [&](auto &proxy) {
       auto const fn = [&]()

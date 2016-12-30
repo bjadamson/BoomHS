@@ -29,7 +29,13 @@ public:
   template<typename ...Args>
   auto make_spotted_cube(cube_properties const& properties, Args &&... args) const
   {
-    return cube_factory::make(properties, std::forward<Args>(args)...);
+    return cube_factory::make_spotted(properties, std::forward<Args>(args)...);
+  }
+
+  template<typename ...Args>
+  auto make_color_cube(cube_properties const& properties, Args &&... args) const
+  {
+    return cube_factory::make_solid(properties, std::forward<Args>(args)...);
   }
 
   template<typename ...Args>

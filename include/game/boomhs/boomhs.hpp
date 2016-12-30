@@ -33,6 +33,7 @@ struct game_state {
   glm::mat4 projection;
   std::vector<::gfx::model*> MODELS;
   gfx::model skybox_model;
+  gfx::model terrain_model;
   gfx::camera camera;
 
   NO_COPY(game_state);
@@ -47,6 +48,7 @@ public:
     , projection(std::move(pm))
     , camera(gfx::camera_factory::make_default(this->skybox_model))
   {
+    camera.move_down(1);
   }
 };
 
@@ -57,7 +59,7 @@ make_state(L &logger, HW const& hw)
   auto const fheight = static_cast<GLfloat>(hw.h);
   auto const fwidth = static_cast<GLfloat>(hw.w);
 
-  auto projection = glm::perspective(45.0f, (fwidth / fheight), 0.1f, 10000.0f);
+  auto projection = glm::perspective(glm::radians(60.0f), (fwidth / fheight), 0.1f, 20.0f);
   stlw::float_generator rng;
   return game_state<L>(logger, hw, std::move(rng), std::move(projection));
 }
@@ -121,7 +123,10 @@ public:
 
     auto const height = 0.25f, width = 0.39f;
     auto cube_skybox = sf.make_textured_cube({gfx::draw_mode::TRIANGLE_STRIP, state.skybox_model,
-        {15.0f, 15.0f, 15.0f}}, gfx::uv_t{});
+        {10.0f, 10.0f, 10.0f}}, gfx::uv_t{});
+
+    auto cube_terrain = sf.make_color_cube({gfx::draw_mode::TRIANGLE_STRIP, state.terrain_model,
+        {10.0f, 0.1f, 10.0f}}, gfx::color_t{}, ::gfx::LIST_OF_COLORS::BROWN);
 
     auto &rd = renderer;
     auto &r = rd;
@@ -223,6 +228,7 @@ public:
     r.draw(args, d2.wireframe, std::move(polygon_wireframe), triangle_wireframe, rectangle_wireframe);
 
     */
+    r.draw(args, d3.color, cube_terrain);
     r.draw(args, d3.color, cube_color);
     r.draw(args, d3.texture, cube_texture);
     r.draw(args, d3.wireframe, cube_wf);

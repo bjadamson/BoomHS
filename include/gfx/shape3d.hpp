@@ -134,7 +134,7 @@ class cube_factory
   }
 
 public:
-  static constexpr auto make(cube_properties const& cube_props, color_t, std::array<float, 3> const &c)
+  static constexpr auto make_spotted(cube_properties const& cube_props, color_t, std::array<float, 3> const &c)
   {
     // TODO: this may be an advanced color function, IDK...
     auto const ALPHA = 1.0f;
@@ -145,6 +145,21 @@ public:
         std::array<float, 4>{0.0f, 1.0f, 0.0f, ALPHA}, color,
         std::array<float, 4>{0.2f, 0.5f, 0.2f, ALPHA}, color,
         std::array<float, 4>{0.6f, 0.4f, 0.8f, ALPHA}};
+    color_properties const p{colors};
+    return construct(cube_props, p);
+  }
+
+  static constexpr auto make_solid(cube_properties const& cube_props, color_t, std::array<float, 3> const &c)
+  {
+    // TODO: this may be an advanced color function, IDK...
+    auto const ALPHA = 1.0f;
+    std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
+
+    std::array<color_properties::c, 8> const colors{
+        color, color,
+        color, color,
+        color, color,
+        color, color};
     color_properties const p{colors};
     return construct(cube_props, p);
   }
