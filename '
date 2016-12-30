@@ -40,6 +40,7 @@ struct io_system {
   template<typename L, typename ET, typename S>
   bool process_event(L &logger, ET &et, SDL_Event &event, S &state) const
   {
+    float constexpr PAN_DISTANCE = 0.3f;
     float constexpr MOVE_DISTANCE = 0.1f;
     float constexpr SCALE_FACTOR = 0.20f;
 
@@ -52,30 +53,18 @@ struct io_system {
     switch (event.type) {
     case SDL_MOUSEMOTION: {
       add_from_event(state.mouse_data, event);
-      camera.rotate_to(logger, state.mouse_data);
+      camera.rotate_to(logger, state.mouse_data.current, state.mouse_data.sensitivity);
       break;
     }
     case SDL_MOUSEWHEEL: {
-      logger.trace("mouse wheel event detected.");
+      logger.error("MOUSE WHEEL?");
       if (event.wheel.y > 0) {
-        logger.error("increasing sensitivity by factor 2");
-        state.mouse_data.sensitivity.x *= 2.0f;
-        state.mouse_data.sensitivity.y *= 2.0f;
+        logger.error(">y");
+        state.mouse_data.sensitivity.x *= 10.0f;
       } else {
-        logger.error("decreasing sensitivity by factor 2");
-        state.mouse_data.sensitivity.x *= 0.5f;
-        state.mouse_data.sensitivity.y *= 0.5f;
+        logger.error("<y");
+        state.mouse_data.sensitivity.x *= .10f;
       }
-      break;
-    }
-    case SDL_MOUSEBUTTONDOWN:
-    {
-      logger.error("toggling mouse up/down (pitch) lock");
-      state.mouse_data.pitch_lock = !state.mouse_data.pitch_lock;
-      break;
-    }
-    case SDL_MOUSEBUTTONUP:
-    {
       break;
     }
     case SDL_KEYDOWN: {
@@ -102,6 +91,22 @@ struct io_system {
       }
       case SDLK_e: {
           camera.move_down(MOVE_DISTANCE);
+        break;
+      }
+      case SDLK_UP: {
+        camera.pan_up(PAN_DISTANCE);
+        break;
+      }
+      case SDLK_DOWN: {
+        camera.pan_down(PAN_DISTANCE);
+        break;
+      }
+      case SDLK_LEFT: {
+        camera.pan_left(PAN_DISTANCE);
+        break;
+      }
+      case SDLK_RIGHT: {
+        camera.pan_right(PAN_DISTANCE);
         break;
       }
       // scaling

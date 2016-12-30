@@ -57,7 +57,6 @@ make_state(L &logger, HW const& hw)
   auto const fheight = static_cast<GLfloat>(hw.h);
   auto const fwidth = static_cast<GLfloat>(hw.w);
 
-  logger.error(fmt::sprintf("fheight '%f', fwidth '%f'", fheight, fwidth));
   auto projection = glm::perspective(45.0f, (fwidth / fheight), 0.1f, 10000.0f);
   stlw::float_generator rng;
   return game_state<L>(logger, hw, std::move(rng), std::move(projection));

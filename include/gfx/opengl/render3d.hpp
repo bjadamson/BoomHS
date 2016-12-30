@@ -55,7 +55,7 @@ void
 draw_scene(L &logger, C &ctx, camera const &camera, glm::mat4 const &projection, B const& burrito)
 {
   auto const fn = [&]() {
-    auto const view = camera.compute_view();
+    auto const view = compute_view(camera);
     impl::draw_scene(logger, ctx, view, projection, burrito);
   };
   if constexpr (C::HAS_TEXTURE) {

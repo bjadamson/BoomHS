@@ -10,36 +10,29 @@ struct mouse_state
   uint32_t mask;
 };
 
-class mouse_data
+struct mouse_sensitivity
 {
-  mouse_state prev_;
-  mouse_state current_;
-
-  void add_impl(mouse_state const& ms)
-  {
-    this->prev_ = this->current_;
-    this->current_ = ms;
-  }
-
-public:
-  MOVE_CONSTRUCTIBLE_ONLY(mouse_data);
-  explicit constexpr mouse_data(mouse_state const& prev, mouse_state const& curr)
-    : prev_(prev)
-    , current_(curr)
-  {
-  }
-
-  auto const& prev() const { return this->prev_; }
-  auto const& current() const { return this->current_; }
-
-  template<typename E>
-  void add_from_event(E const& event)
-  {
-    auto const& m = event.motion;
-    mouse_state const ms{m.x, m.y, m.xrel, m.yrel, m.state};
-    add_impl(ms);
-  }
+  float x, y;
 };
+
+struct mouse_data
+{
+  mouse_state prev;
+  mouse_state current;
+  mouse_sensitivity sensitivity;
+  bool pitch_lock = true;
+
+  MOVE_CONSTRUCTIBLE_ONLY(mouse_data);
+};
+
+template<typename E>
+void add_from_event(mouse_data &md, E const& event)
+{
+  auto const& m = event.motion;
+  mouse_state const ms{m.x, m.y, m.xrel, m.yrel, m.state};
+  md.prev = md.current;
+  md.current = ms;
+}
 
 namespace impl
 {
@@ -56,8 +49,10 @@ auto mouse_position_now()
 
 auto make_default_mouse_data()
 {
-  auto const md = impl::mouse_position_now();
-  return mouse_data{md, md};
+  auto const init_md = impl::mouse_position_now();
+  mouse_sensitivity const init_sensitivity{0.002f, 0.002f};
+
+  return mouse_data{init_md, init_md, init_sensitivity};
 }
 
 } // ns window
