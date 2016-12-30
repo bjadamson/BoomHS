@@ -133,6 +133,7 @@ public:
     auto args = state.render_args();
     //r.draw_special(args, std::move(x));
     r.draw(args, d3.skybox, std::move(cube_skybox));
+    /*
     {
       std::array<gfx::triangle<gfx::vertex_color_attributes>, 2> const arr = {
         gfx::triangle_factory::make({random_mode(), *state.MODELS[0]}, gfx::color_t{}, rc()),
@@ -178,6 +179,7 @@ public:
     auto triangle_wireframe = sf.make_triangle({gfx::draw_mode::LINE_LOOP, *state.MODELS[12]},
         gfx::wireframe_t{});
 
+        */
     auto cube_texture = sf.make_textured_cube({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[13],
         {0.15f, 0.15f, 0.15f}}, gfx::uv_t{});
 
@@ -187,6 +189,7 @@ public:
     auto cube_wf = sf.make_wireframe_cube({gfx::draw_mode::LINE_LOOP, *state.MODELS[15],
         {0.25f, 0.25f, 0.25f}}, gfx::wireframe_t{});
 
+    /*
     auto rectangle_color = sf.make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[16]},
         gfx::color_t{}, ::gfx::LIST_OF_COLORS::YELLOW);
 
@@ -220,6 +223,7 @@ public:
     r.draw(args, d2.texture_container, std::move(polygon_texture));
     r.draw(args, d2.wireframe, std::move(polygon_wireframe), triangle_wireframe, rectangle_wireframe);
 
+    */
     r.draw(args, d3.color, cube_color);
     r.draw(args, d3.texture, cube_texture);
     r.draw(args, d3.wireframe, cube_wf);

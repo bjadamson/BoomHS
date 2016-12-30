@@ -6,7 +6,7 @@ namespace window
 
 struct mouse_state
 {
-  int x, y;
+  int x, y, xrel, yrel;
   uint32_t mask;
 };
 
@@ -14,6 +14,13 @@ class mouse_data
 {
   mouse_state prev_;
   mouse_state current_;
+
+  void add_impl(mouse_state const& ms)
+  {
+    this->prev_ = this->current_;
+    this->current_ = ms;
+  }
+
 public:
   MOVE_CONSTRUCTIBLE_ONLY(mouse_data);
   explicit constexpr mouse_data(mouse_state const& prev, mouse_state const& curr)
@@ -25,10 +32,12 @@ public:
   auto const& prev() const { return this->prev_; }
   auto const& current() const { return this->current_; }
 
-  void add(mouse_state const& ms)
+  template<typename E>
+  void add_from_event(E const& event)
   {
-    this->prev_ = this->current_;
-    this->current_ = ms;
+    auto const& m = event.motion;
+    mouse_state const ms{m.x, m.y, m.xrel, m.yrel, m.state};
+    add_impl(ms);
   }
 };
 
@@ -38,8 +47,9 @@ namespace impl
 auto mouse_position_now()
 {
   int x, y;
+  int constexpr xrel = 0, yrel = 0;
   auto const mask = SDL_GetMouseState(&x, &y);
-  return mouse_state{x, y, mask};
+  return mouse_state{x, y, xrel, yrel, mask};
 }
 
 } // ns impl

@@ -15,6 +15,14 @@ bool between(float const v, float const a, float const b)
   return ((v <= a) && (v >= b)) || ((v <= b) && (v >= a));
 }
 
+auto
+angle_between(glm::vec3 const& a, glm::vec3 const& b, glm::vec3 const& origin)
+{
+ glm::vec3 da = glm::normalize(a - origin);
+ glm::vec3 db = glm::normalize(b - origin);
+ return glm::acos(glm::dot(da, db));
+}
+
 auto constexpr X_UNIT_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
 auto constexpr Y_UNIT_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
 auto constexpr Z_UNIT_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
@@ -22,22 +30,37 @@ auto constexpr Z_UNIT_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
 class camera
 {
   skybox skybox_;
-  glm::vec3 pos_, left_;
-  glm::vec3 const front_;
-  glm::vec3 up_;
+  glm::vec3 pos_, left_, front_, up_;
 
+  float pitch_ = 0.0f, roll_ = 0.0f, yaw_ = 0.0f;
   glm::quat orientation_;
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // immutable helper methods
-  auto direction(float const speed) const
+  auto right_vector() const
   {
-    return speed * this->front_;
+    return glm::normalize(glm::cross(this->front_, this->up_));
   }
 
-  auto right_vector(float const speed) const
+  // todo: untested
+  //auto left_vector() const
+  //{
+    //return glm::normalize(glm::cross(this->front_, this->right_vector()));
+  //}
+
+  auto forward_movement_vector(float const speed) const
   {
-    return glm::normalize(glm::cross(this->front_, this->up_)) * speed;
+    return speed * (this->pos_ * this->orientation_);
+  }
+
+  auto sideways_movement_vector(float const speed) const
+  {
+    return speed * this->right_vector();
+  }
+
+  auto updown_movement_vector(float const speed) const
+  {
+    return speed * this->up_;
   }
 
   auto xpan(float const d) const
@@ -52,24 +75,21 @@ class camera
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // mutating helper methods
-  decltype(auto) move_along_x(float const s)
+  decltype(auto) move_sideways(float const s)
   {
-    this->pos_ += right_vector(s);
+    //this->pos_ += sideways_movement_vector(s);
     this->skybox_.model.translation = this->pos_;
+
+    this->front_ = glm::normalize(this->orientation_ * this->pos_);
     return *this;
   }
 
-  decltype(auto) move_along_y(float const s)
+  decltype(auto) move_updown(float const s)
   {
-    this->pos_ += (this->up_ * s);
+    //this->pos_ += updown_movement_vector(s);
     this->skybox_.model.translation = this->pos_;
-    return *this;
-  }
 
-  decltype(auto) move_along_z(float const s)
-  {
-    this->pos_ += direction(s);
-    this->skybox_.model.translation = this->pos_;
+    this->front_ = glm::normalize(this->orientation_ * this->pos_);
     return *this;
   }
 
@@ -92,43 +112,64 @@ public:
   auto
   compute_view() const
   {
-    auto &pos = this->pos_;
-    auto const new_front = pos + (this->orientation_ * this->front_);
-    return glm::lookAt(pos, new_front, this->up_);
+    //FPS camera:  RotationX(pitch) * RotationY(yaw)
+    //auto const pitch = glm::angleAxis(this->pitch_, X_UNIT_VECTOR);
+    //auto const yaw = glm::angleAxis(this->yaw_, Y_UNIT_VECTOR);
+    //auto const roll = glm::angleAxis(this->roll_, Z_UNIT_VECTOR);
+
+    //For a FPS camera we can omit roll
+    glm::mat4 const rotate = glm::mat4_cast(this->orientation_);
+
+    auto const translate = glm::translate(glm::mat4{1.0f}, -this->front_);
+    return rotate * translate;
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   // mutating methods
   //
   // linear movement
+  decltype(auto) move_forward_impl(float const s)
+  {
+    auto const dx = 0.2f;
+    auto const dz = 0.4f;
+
+    auto const mat = this->compute_view();
+    glm::vec3 const forward(mat[0][2], mat[1][2], mat[2][2]);
+    glm::vec3 const strafe( mat[0][0], mat[1][0], mat[2][0]);
+    this->front_ += (-dz * forward + dx * strafe) * s;
+    this->skybox_.model.translation = this->front_;
+
+    return *this;
+  }
+
   camera& move_forward(float const s)
   {
-    return move_along_z(-s);
+    return move_forward_impl(s);
   }
 
   camera& move_backward(float const s)
   {
-    return move_along_z(s);
+    return move_forward_impl(-s);
   }
 
   camera& move_left(float const s)
   {
-    return move_along_x(-s);
+    return move_sideways(s);
   }
 
   camera& move_right(float const s)
   {
-    return move_along_x(s);
+    return move_sideways(-s);
   }
 
   camera& move_up(float const s)
   {
-    return move_along_y(-s);
+    return move_updown(-s);
   }
 
   camera& move_down(float const s)
   {
-    return move_along_y(s);
+    return move_updown(s);
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -164,50 +205,40 @@ public:
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // mouse-movement
   template<typename L>
-  camera& rotate_to(L &logger, float const, float const, float const xrel, float const yrel)
+  camera& rotate_to(L &logger, window::mouse_state const& mstate)
   {
-    auto const calculate_angle = [](float const relative, bool const positive) {
-      auto const calc_rate = [](auto const rel) {
-        float constexpr TICK_RATE = 60.0f;
-        return rel / TICK_RATE;
-      };
-      auto const right_or_left_multiplier = [](bool const positive) {
-        if (positive) {
-          return 1.0f;
-        } else {
-          return -1.0f;
-        }
-      };
-      return glm::radians(right_or_left_multiplier(positive) * calc_rate(relative));
-    };
-    float const xangle = calculate_angle(xrel, xrel > 800.0f / 2.0f);
+    glm::vec2 const delta = glm::vec2{mstate.xrel, mstate.yrel};
 
-    auto const calculate_y = [](auto const rel) {
-      float constexpr TICK_RATE = 60.0f;
-      return glm::radians(rel / TICK_RATE);
-    };
-    float yangle = calculate_y(yrel);
-    glm::vec3 const dir = glm::normalize(this->orientation_ * this->pos_);
-    //logger.error(fmt::format("dir is '{}, {}, {}'", dir.x, dir.y, dir.z));
+    //notice that we reduce the sensitvity
+    float constexpr mouse_x_sensitivity = 0.0002f;
+    float constexpr mouse_y_sensitivity = 0.0002f;
 
-    int x, y;
-    SDL_GetMouseState(&x, &y);
+    auto const yaw = mouse_x_sensitivity * delta.x;
+    auto const pitch = mouse_y_sensitivity * delta.y;
+    auto const roll = this->roll_;
 
-    bool const cpd = (y > 600.0f / 2.0f);
-    auto const ytheta = glm::degrees(glm::angle(dir, Z_UNIT_VECTOR));
-    logger.error(fmt::format("ytheta is {}, (x {}, y {}), xrel {}, yrel {}", ytheta, x, y, xrel, yrel));
+    auto const quat = glm::quat(glm::vec3{pitch, yaw, roll});
 
-    if (ytheta > 45.0f && (yrel > 0.0f) && cpd) {
+    bool const moving_down = mstate.yrel >= 0;
+    bool const moving_up = mstate.yrel <= 0;
+
+    auto const o = glm::degrees(glm::eulerAngles(this->orientation_));
+    if(o.x > 45.0f && moving_down) {
       logger.error("DOWN LOCK");
-      yangle = 0.0f;
+      return *this;
     }
-    if (ytheta > 45.0f && (yrel < 0.0f) && !cpd) {
+        //o.x = 89.0f;
+    if(o.x < -45.0f && moving_up) {
       logger.error("UP LOCK");
-      yangle = 0.0f;
+      return *this;
     }
-    auto const yaw = glm::angleAxis(xangle, glm::vec3{0.0f, 1.0f, 0.0f});
-    auto const pitch = glm::angleAxis(yangle, -X_UNIT_VECTOR);
-    this->orientation_ = yaw * pitch * this->orientation_;
+        //o.x = -89.0f;
+
+    logger.error(fmt::format("quat {} {} {}, pi/2 {}", o.x, o.y, o.z, 3.1459/2));
+    this->yaw_ = yaw;
+    this->pitch_ = pitch;
+    this->orientation_ = glm::normalize(quat * this->orientation_);
+
     return *this;
   }
 };

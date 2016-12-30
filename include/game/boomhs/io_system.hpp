@@ -52,8 +52,8 @@ struct io_system {
 
     switch (event.type) {
     case SDL_MOUSEMOTION: {
-      state.mouse_data.add({event.motion.x, event.motion.y, event.motion.state});
-      camera.rotate_to(logger, event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel);
+      state.mouse_data.add_from_event(event);
+      camera.rotate_to(logger, state.mouse_data.current());
       break;
     }
     case SDL_KEYDOWN: {
