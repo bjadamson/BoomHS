@@ -43,13 +43,27 @@ public:
     return int_value > 0 ? true : false;
   }
 
+  using range = std::pair<int, int>;
+
+  auto generate_position(range const from, range const to)
+  {
+    std::uniform_int_distribution<int> distribution(from.first, from.second);
+    auto const int_value = distribution(this->generator_);
+    return stlw::math::normalize(int_value, from, to);
+  }
+
   auto generate_position()
   {
     auto constexpr FROM = std::make_pair(-1000, 1000);
-    auto constexpr TO = std::make_pair(-1.0f, 1.0f);
-    std::uniform_int_distribution<int> distribution(FROM.first, FROM.second);
-    auto const int_value = distribution(this->generator_);
-    return stlw::math::normalize(int_value, FROM, TO);
+    auto constexpr TO = std::make_pair(-10.0f, 10.0f);
+    return generate_position(FROM, TO);
+  }
+
+  auto generate_above_ground_position()
+  {
+    auto constexpr FROM = std::make_pair(0, 1000);
+    auto constexpr TO = std::make_pair(1.0f, 3.0f);
+    return generate_position(FROM, TO);
   }
 };
 

@@ -126,7 +126,7 @@ public:
         {10.0f, 10.0f, 10.0f}}, gfx::uv_t{});
 
     auto cube_terrain = sf.make_color_cube({gfx::draw_mode::TRIANGLE_STRIP, state.terrain_model,
-        {10.0f, 0.1f, 10.0f}}, gfx::color_t{}, ::gfx::LIST_OF_COLORS::BROWN);
+        {10.0f, 0.1f, 10.0f}}, gfx::color_t{}, ::gfx::LIST_OF_COLORS::SADDLE_BROWN);
 
     auto &rd = renderer;
     auto &r = rd;
