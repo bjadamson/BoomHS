@@ -82,7 +82,7 @@ public:
           for (auto i{0}; i < 100; ++i) {
             auto const x = state.rnum_generator.generate_position();
             auto const y = state.rnum_generator.generate_position();
-            auto const z = 0.0f;
+            auto const z = -3.0f;
             state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
           }
     });
