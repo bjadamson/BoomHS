@@ -75,10 +75,10 @@ struct height_width
   float const width;
 };
 
-struct height_width_length
+struct width_height_length
 {
-  float const height;
   float const width;
+  float const height;
   float const length;
 };
 

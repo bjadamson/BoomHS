@@ -24,14 +24,14 @@ struct cube_properties
 {
   draw_mode const draw_mode;
   model const &model;
-  height_width_length const dimensions;
+  width_height_length const dimensions;
 };
 
 class cube_factory
 {
   cube_factory() = delete;
 
-  using height_width_length = height_width_length;
+  using width_height_length = width_height_length;
 
   struct color_properties {
     using c = std::array<float, 4>;
@@ -46,7 +46,7 @@ class cube_factory
   };
 
   static constexpr auto
-  calculate_vertices(height_width_length const &hw)
+  calculate_vertices(width_height_length const &hw)
   {
     auto const h = hw.height;
     auto const w = hw.width;
