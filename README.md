@@ -18,6 +18,9 @@ Boom Headshot?!
 3. To run, invoke "bbr"
  + This invokes the script "bbr.sh" (generated from the step #1).
 
+#### links
+* https://github.com/cbaggers/cepl
+
 ![Alt text](/screenshots/early_shapes.png?raw=true "Some shapes being shoved at OpenGL under various transformations.")
 ![Alt text](/screenshots/3d_movement.png?raw=true "Basic 3d camera implemented.")
 ![Alt text](/screenshots/clusterfuck.png?raw=true "Clusterfuck of shapes using the burrito.")
