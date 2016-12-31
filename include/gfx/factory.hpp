@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <stlw/type_macros.hpp>
 #include <gfx/types.hpp>
 #include <gfx/shape.hpp>
 #include <gfx/shape2d.hpp>
@@ -15,9 +16,11 @@ struct triangle_properties
   float const radius = 0.25;
 };
 
-struct triangle_factory {
+template<typename C>
+class triangle_factory
+{
+  C &context_;
 
-private:
   struct color_properties {
     std::array<float, 4> const &color_bottom_left;
     std::array<float, 4> const &color_bottom_right = color_bottom_left;
@@ -25,8 +28,8 @@ private:
   };
 
   struct uv_properties {
+    // clang-format off
     std::array<uv_d, 3> const uv = {
-      // clang-format off
       uv_d{0.0f, 0.0f}, // bottom-left
       uv_d{1.0f, 0.0f}, // bottom-right
       uv_d{0.5f, 1.0f}  // top-middle
@@ -34,8 +37,7 @@ private:
     // clang-format on
   };
 
-  struct wireframe_properties {
-  };
+  struct wireframe_properties {};
 
   static constexpr auto calculate_vertices(glm::vec3 const &m, float const radius)
   {
@@ -81,32 +83,34 @@ private:
   }
 
 public:
-  static constexpr auto make(triangle_properties const& tprops, color_t, std::array<float, 4> const &c)
+  explicit triangle_factory(C &c) : context_(c) {}
+  MOVE_CONSTRUCTIBLE_ONLY(triangle_factory);
+  auto make(triangle_properties const& tprops, color_t, std::array<float, 4> const &c) const
   {
     color_properties const p{c};
-    return construct(tprops, p);
+    return triangle_factory::construct(tprops, p);
   }
 
-  static constexpr auto make(triangle_properties const& tprops, color_t, std::array<float, 3> const &c)
+  auto make(triangle_properties const& tprops, color_t, std::array<float, 3> const &c) const
   {
     auto constexpr ALPHA = 1.0f;
     auto const color = std::array<float, 4>{c[0], c[1], c[2], ALPHA};
     color_properties const p{color, color, color};
-    return construct(tprops, p);
+    return triangle_factory::construct(tprops, p);
   }
 
-  static constexpr auto make(triangle_properties const& tprops, color_t, glm::vec4 const& c)
+  auto make(triangle_properties const& tprops, color_t, glm::vec4 const& c) const
   {
     return make(tprops, color_t{}, std::array<float, 4>{c[0], c[1], c[2], c[3]});
   }
 
-  static constexpr auto make(triangle_properties const& tprops, color_t)
+  auto make(triangle_properties const& tprops, color_t) const
   {
     return make(tprops, color_t{}, LIST_OF_COLORS::RED);
   }
 
   template <typename T>
-  static constexpr auto make(triangle_properties const& tprops, color_t, T const &data)
+  auto make(triangle_properties const& tprops, color_t, T const &data) const
   {
     auto const &bl = data[0];
     auto const &br = data[1];
@@ -116,21 +120,25 @@ public:
     std::array<float, 4> const top_middle{tm[0], tm[1], tm[2], tm[3]};
 
     color_properties const p{bottom_left, bottom_right, top_middle};
-    return construct(tprops, p);
+    return triangle_factory::construct(tprops, p);
   }
 
-  static constexpr auto make(triangle_properties const& tprops, uv_t)
+  auto make(triangle_properties const& tprops, uv_t) const
   {
     uv_properties const p;
-    return construct(tprops, p);
+    return triangle_factory::construct(tprops, p);
   }
 
-  static constexpr auto make(triangle_properties const& tprops, wireframe_t)
+  auto make(triangle_properties const& tprops, wireframe_t) const
   {
     wireframe_properties const p;
-    return construct(tprops, p);
+    return triangle_factory::construct(tprops, p);
   }
 };
+
+template<typename C>
+auto
+make_tf(C &c) { return triangle_factory<C>{c}; }
 
 struct rectangle_properties
 {
@@ -139,12 +147,12 @@ struct rectangle_properties
   height_width const dimensions = {0.39f, 0.25f};
 };
 
+template<typename C>
 class rectangle_factory
 {
-  rectangle_factory() = delete;
+  C &context_;
 
   using height_width = height_width;
-
   struct color_properties {
     color_d const &bottom_left;
     color_d const &bottom_right = bottom_left;
@@ -215,15 +223,18 @@ class rectangle_factory
   }
 
 public:
-  static constexpr auto
-  make(rectangle_properties const& rprops, color_t, color_properties const& cprops)
+  explicit rectangle_factory(C &c) : context_(c) {}
+  MOVE_CONSTRUCTIBLE_ONLY(rectangle_factory);
+
+  constexpr auto
+  make(rectangle_properties const& rprops, color_t, color_properties const& cprops) const
   {
     return construct(rprops, cprops);
   }
 
   template <typename T>
-  static constexpr auto
-  make(rectangle_properties const& rprops, color_t, T const &data)
+  constexpr auto
+  make(rectangle_properties const& rprops, color_t, T const &data) const
   {
     auto const &bl = data[0];
     auto const &br = data[1];
@@ -238,34 +249,34 @@ public:
     return construct(rprops, p);
   }
 
-  static constexpr auto make(rectangle_properties const& rprops, color_t, std::array<float, 4> const &color)
+  constexpr auto make(rectangle_properties const& rprops, color_t, std::array<float, 4> const &color) const
   {
     color_properties const p{color};
     return construct(rprops, p);
   }
 
-  static constexpr auto make(rectangle_properties const& rprops, color_t, std::array<float, 3> const &c)
+  constexpr auto make(rectangle_properties const& rprops, color_t, std::array<float, 3> const &c) const
   {
     auto constexpr ALPHA = 1.0f;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
     return make(rprops, color_t{}, color);
   }
 
-  static constexpr auto make(rectangle_properties const& rprops)
+  constexpr auto make(rectangle_properties const& rprops) const
   {
     auto const color = LIST_OF_COLORS::RED;
     return make(rprops, color_t{}, color);
   }
 
-  static constexpr auto
-  make(rectangle_properties const& rprops, uv_t)
+  constexpr auto
+  make(rectangle_properties const& rprops, uv_t) const
   {
     uv_properties const p;
     return construct(rprops, p);
   }
 
-  static constexpr auto
-  make(rectangle_properties const& rprops, wireframe_t)
+  constexpr auto
+  make(rectangle_properties const& rprops, wireframe_t) const
   {
     wireframe_properties const p;
     return construct(rprops, p);
@@ -281,9 +292,10 @@ struct polygon_properties
   float const width = 0.25f;
 };
 
+template<typename C>
 class polygon_factory
 {
-  polygon_factory() = delete;
+  C &context_;
 
   struct color_properties {
     color_d colors;
@@ -304,7 +316,6 @@ class polygon_factory
     float const width = pprops.width;
     auto const num_vertices = pprops.num_vertices;
 
-    auto const C = num_vertices;     // Assume for now #colors == #vertices
     auto const E = num_vertices + 1; // num_edges
     auto const t = pprops.model.translation;
 
@@ -357,88 +368,352 @@ class polygon_factory
   }
 
 public:
-  static auto
-  make(polygon_properties const pprop, color_t, float const r, float const g, float const b, float const a)
+  explicit polygon_factory(C &c) : context_(c) {}
+  MOVE_CONSTRUCTIBLE_ONLY(polygon_factory);
+
+  auto
+  make(polygon_properties const pprop, color_t, float const r, float const g, float const b, float const a) const
   {
     color_properties const cprop{{r, g, b, a}};
     return construct(pprop, cprop);
   }
 
-  static auto
-  make(polygon_properties const pprop, color_t, float const r, float const g, float const b)
+  auto
+  make(polygon_properties const pprop, color_t, float const r, float const g, float const b) const
   {
     color_properties const cprop{{r, g, b}};
     return construct(pprop, cprop);
   }
 
-  static auto
-  make(polygon_properties const props, color_t, std::array<float, 3> const& c)
+  auto
+  make(polygon_properties const props, color_t, std::array<float, 3> const& c) const
   {
     return make(props, color_t{}, c[0], c[1], c[2]);
   }
 
-  static auto make(polygon_properties const props, color_t)
+  auto make(polygon_properties const props, color_t) const
   {
     return make(props, color_t{}, LIST_OF_COLORS::LAWN_GREEN);
   }
 
-  static auto make(polygon_properties const props, uv_t)
+  auto make(polygon_properties const props, uv_t) const
   {
     uv_properties const uv;
     return construct(props, uv);
   }
 
-  static auto make(polygon_properties const props, wireframe_t)
+  auto make(polygon_properties const props, wireframe_t) const
   {
     wireframe_properties const wf;
     return construct(props, wf);
   }
 };
 
+struct cube_properties
+{
+  draw_mode const draw_mode;
+  model const &model;
+  width_height_length const dimensions;
+};
+
+template<typename C>
+class cube_factory
+{
+  C &context_;
+  using width_height_length = width_height_length;
+
+  struct color_properties {
+    using c = std::array<float, 4>;
+    std::array<c, 8> const colors;
+  };
+
+  struct uv_properties {
+  };
+
+  struct wireframe_properties {
+    float const alpha = 1.0f;
+  };
+
+  static constexpr auto
+  calculate_vertices(width_height_length const &hw)
+  {
+    auto const h = hw.height;
+    auto const w = hw.width;
+    auto const l = hw.length;
+
+    // clang-format off
+    return std::array<vertex_d, 8> {
+      vertex_d{-w, -h, l, 1.0f}, // front bottom-left
+      vertex_d{ w, -h, l, 1.0f}, // front bottom-right
+      vertex_d{ w,  h, l, 1.0f}, // front top-right
+      vertex_d{-w,  h, l, 1.0f}, // front top-left
+
+      vertex_d{-w, -h, -l, 1.0f}, // back bottom-left
+      vertex_d{ w, -h, -l, 1.0f}, // back bottom-right
+      vertex_d{ w, h,  -l, 1.0f}, // back top-right
+      vertex_d{-w, h,  -l, 1.0f}  // back top-left
+    };
+    // clang-format on
+  }
+
+  static constexpr auto construct(cube_properties const& cube_props, color_properties const &props)
+  {
+    auto const vertices = calculate_vertices(cube_props.dimensions);
+
+    // clang-format off
+    vertex_color_attributes const f_bottom_left  {vertices[0], color_d{props.colors[0]}};
+    vertex_color_attributes const f_bottom_right {vertices[1], color_d{props.colors[1]}};
+    vertex_color_attributes const f_top_right    {vertices[2], color_d{props.colors[2]}};
+    vertex_color_attributes const f_top_left     {vertices[3], color_d{props.colors[3]}};
+
+    vertex_color_attributes const b_bottom_left  {vertices[4], color_d{props.colors[4]}};
+    vertex_color_attributes const b_bottom_right {vertices[5], color_d{props.colors[5]}};
+    vertex_color_attributes const b_top_right    {vertices[6], color_d{props.colors[6]}};
+    vertex_color_attributes const b_top_left     {vertices[7], color_d{props.colors[7]}};
+
+    auto arr = stlw::make_array<vertex_color_attributes>(
+        f_bottom_left, f_bottom_right, f_top_right, f_top_left,
+        b_bottom_left, b_bottom_right, b_top_right, b_top_left);
+    return cube<vertex_color_attributes>{cube_props.draw_mode, cube_props.model, std::move(arr)};
+    // clang-format on
+  }
+
+  static constexpr auto construct(cube_properties const& cube_props, uv_properties const &props)
+  {
+    auto const vertices = calculate_vertices(cube_props.dimensions);
+
+    // clang-format off
+    vertex_attributes_only const f_bottom_left  {vertices[0]};
+    vertex_attributes_only const f_bottom_right {vertices[1]};
+    vertex_attributes_only const f_top_right    {vertices[2]};
+    vertex_attributes_only const f_top_left     {vertices[3]};
+
+    vertex_attributes_only const b_bottom_left  {vertices[4]};
+    vertex_attributes_only const b_bottom_right {vertices[5]};
+    vertex_attributes_only const b_top_right    {vertices[6]};
+    vertex_attributes_only const b_top_left     {vertices[7]};
+
+    auto arr = stlw::make_array<vertex_attributes_only>(
+        f_bottom_left, f_bottom_right, f_top_right, f_top_left,
+        b_bottom_left, b_bottom_right, b_top_right, b_top_left);
+    return cube<vertex_attributes_only>{cube_props.draw_mode, cube_props.model, std::move(arr)};
+    // clang-format on
+  }
+
+  static constexpr auto construct(cube_properties const& cube_props, wireframe_properties const &props)
+  {
+    auto const vertices = calculate_vertices(cube_props.dimensions);
+
+    // clang-format off
+    vertex_attributes_only const f_bottom_left  {vertices[0]};
+    vertex_attributes_only const f_bottom_right {vertices[1]};
+    vertex_attributes_only const f_top_right    {vertices[2]};
+    vertex_attributes_only const f_top_left     {vertices[3]};
+
+    vertex_attributes_only const b_bottom_left  {vertices[4]};
+    vertex_attributes_only const b_bottom_right {vertices[5]};
+    vertex_attributes_only const b_top_right    {vertices[6]};
+    vertex_attributes_only const b_top_left     {vertices[7]};
+
+    auto arr = stlw::make_array<vertex_attributes_only>(
+        f_bottom_left, f_bottom_right, f_top_right, f_top_left,
+        b_bottom_left, b_bottom_right, b_top_right, b_top_left);
+    return cube<vertex_attributes_only>{cube_props.draw_mode, cube_props.model, std::move(arr)};
+    // clang-format on
+  }
+
+public:
+  explicit cube_factory(C &c) : context_(c) {}
+  MOVE_CONSTRUCTIBLE_ONLY(cube_factory);
+  constexpr auto make_spotted(cube_properties const& cube_props, color_t,
+      std::array<float, 3> const &c) const
+  {
+    // TODO: this may be an advanced color function, IDK...
+    auto const ALPHA = 1.0f;
+    std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
+
+    std::array<typename color_properties::c, 8> const colors{
+        std::array<float, 4>{1.0f, 0.0f, 0.0f, ALPHA}, color,
+        std::array<float, 4>{0.0f, 1.0f, 0.0f, ALPHA}, color,
+        std::array<float, 4>{0.2f, 0.5f, 0.2f, ALPHA}, color,
+        std::array<float, 4>{0.6f, 0.4f, 0.8f, ALPHA}};
+    color_properties const p{colors};
+    return construct(cube_props, p);
+  }
+
+  constexpr auto make_solid(cube_properties const& cube_props, color_t, std::array<float, 3> const &c) const
+  {
+    // TODO: this may be an advanced color function, IDK...
+    auto const ALPHA = 1.0f;
+    std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
+
+    std::array<typename color_properties::c, 8> const colors{
+        color, color,
+        color, color,
+        color, color,
+        color, color};
+    color_properties const p{colors};
+    return construct(cube_props, p);
+  }
+
+  constexpr auto make(cube_properties const& cube_props, uv_t) const
+  {
+    uv_properties const uv;
+    return construct(cube_props, uv);
+  }
+
+  constexpr auto make(cube_properties const& cube_props, wireframe_t) const
+  {
+    wireframe_properties const wf;
+    return construct(cube_props, wf);
+  }
+};
+
+
+namespace factories
+{
+
+#define DEFINE_FACTORY_METHODS(factory_type)                                                       \
+  template<typename ...Args>                                                                       \
+  auto constexpr make_triangle(triangle_properties const& properties, Args &&... args)             \
+  {                                                                                                \
+    auto const tf = make_tf(this->ctx_.backend());                                                 \
+    return tf.make(properties, factory_type{}, std::forward<Args>(args)...);                       \
+  }                                                                                                \
+                                                                                                   \
+  template<typename ...Args>                                                                       \
+  auto constexpr make_rectangle(rectangle_properties const& properties, Args &&... args)           \
+  {                                                                                                \
+    auto const rf = make_rf(this->ctx_.backend());                                                 \
+    return rf.make(properties, factory_type{}, std::forward<Args>(args)...);                       \
+  }                                                                                                \
+                                                                                                   \
+  template<typename ...Args>                                                                       \
+  auto constexpr make_polygon(polygon_properties const& properties, Args &&... args)               \
+  {                                                                                                \
+    auto const pf = make_pf(this->ctx_.backend());                                                 \
+    return pf.make(properties, factory_type{}, std::forward<Args>(args)...);                       \
+  }                                                                                                \
+                                                                                                   \
+  template<typename ...Args>                                                                       \
+  auto constexpr make_cube(cube_properties const& properties, Args &&... args)                     \
+  {                                                                                                \
+    auto const cf = make_cf(this->ctx_.backend());                                                 \
+    return cf.make(properties, factory_type{}, std::forward<Args>(args)...);                       \
+  }
+
+template<typename C>
+class color
+{
+  C ctx_;
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(color);
+  explicit constexpr color(C &&c) : ctx_(std::move(c)) {}
+
+  DEFINE_FACTORY_METHODS(color_t);
+};
+
+template<typename C>
+class uv
+{
+  C ctx_;
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(uv);
+  explicit constexpr uv(C &&c) : ctx_(std::move(c)) {}
+
+  DEFINE_FACTORY_METHODS(uv_t);
+};
+
+template<typename C>
+class wireframe
+{
+  C ctx_;
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(wireframe);
+  explicit constexpr wireframe(C &&c) : ctx_(std::move(c)) {}
+
+  DEFINE_FACTORY_METHODS(wireframe_t);
+};
+
+#undef DEFINE_FACTORY_METHODS
+
+} // ns factories
+
+template<typename T>
 class shape_factory
 {
+  rectangle_factory<T> rf_;
+  polygon_factory<T> pf_;
+  cube_factory<T> cf_;
 public:
-  template<typename ...Args>
-  auto make_triangle(triangle_properties const& properties, Args &&... args) const
-  {
-    return triangle_factory::make(properties, std::forward<Args>(args)...);
-  }
+  explicit shape_factory(rectangle_factory<T> &&rf, polygon_factory<T> &&pf, cube_factory<T> &&cf)
+    : rf_(std::move(rf))
+    , pf_(std::move(pf))
+    , cf_(std::move(cf))
+  {}
+
+  MOVE_CONSTRUCTIBLE_ONLY(shape_factory);
 
   template<typename ...Args>
   auto make_rectangle(rectangle_properties const& properties, Args &&... args) const
   {
-    return rectangle_factory::make(properties, std::forward<Args>(args)...);
+    return this->rf_.make(properties, std::forward<Args>(args)...);
   }
 
   template<typename ...Args>
   auto make_polygon(polygon_properties const& properties, Args &&... args) const
   {
-    return polygon_factory::make(properties, std::forward<Args>(args)...);
+    return this->pf_.make(properties, std::forward<Args>(args)...);
   }
 
   template<typename ...Args>
   auto make_spotted_cube(cube_properties const& properties, Args &&... args) const
   {
-    return cube_factory::make_spotted(properties, std::forward<Args>(args)...);
+    return this->cf_.make_spotted(properties, std::forward<Args>(args)...);
   }
 
   template<typename ...Args>
   auto make_color_cube(cube_properties const& properties, Args &&... args) const
   {
-    return cube_factory::make_solid(properties, std::forward<Args>(args)...);
+    return this->cf_.make_solid(properties, std::forward<Args>(args)...);
   }
 
   template<typename ...Args>
   auto make_textured_cube(cube_properties const& properties, Args &&... args) const
   {
-    return cube_factory::make(properties, std::forward<Args>(args)...);
+    return this->cf_.make(properties, std::forward<Args>(args)...);
   }
 
   template<typename ...Args>
   auto make_wireframe_cube(cube_properties const& properties, Args &&... args) const
   {
-    return cube_factory::make(properties, std::forward<Args>(args)...);
+    return this->cf_.make(properties, std::forward<Args>(args)...);
   }
 };
+
+template<typename C>
+auto make_shape_factory(C &context)
+{
+  return shape_factory<C>{rectangle_factory<C>{context}, polygon_factory<C>{context},
+    cube_factory<C>{context}};
+}
+
+template<typename C>
+auto make_color_factory(C &&context)
+{
+  return factories::color<C>{std::move(context)};
+}
+
+template<typename C>
+auto make_uv_factory(C &&context)
+{
+  return factories::uv<C>{std::move(context)};
+}
+
+template<typename C>
+auto make_wireframe_factory(C &&context)
+{
+  return factories::wireframe<C>{std::move(context)};
+}
 
 } // ns gfx

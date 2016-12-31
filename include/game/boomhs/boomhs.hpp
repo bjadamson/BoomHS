@@ -9,6 +9,7 @@
 
 #include <window/window.hpp>
 #include <gfx/camera.hpp>
+#include <gfx/context.hpp>
 #include <gfx/factory.hpp>
 #include <gfx/skybox.hpp>
 #include <stlw/algorithm.hpp>
@@ -119,7 +120,16 @@ public:
       return glm::vec4{random_comp(), random_comp(), random_comp(), 1.0f};
     };
 
-    gfx::shape_factory sf;
+    auto &rd = renderer;
+    auto &r = rd;
+    auto &d2 = r.gfx_engine.d2;
+    auto &d3 = r.gfx_engine.d3;
+    auto sf = gfx::make_shape_factory(d2.color);
+
+    auto tfc = gfx::make_color_factory(gfx::make_context(d2.color));
+    auto tfuv0 = gfx::make_uv_factory(gfx::make_context(d2.texture_wall));
+    auto tfuv1 = gfx::make_uv_factory(gfx::make_context(d2.texture_container));
+    auto tfw = gfx::make_wireframe_factory(gfx::make_context(d2.wireframe));
 
     auto const height = 0.25f, width = 0.39f;
     auto cube_skybox = sf.make_textured_cube({gfx::draw_mode::TRIANGLE_STRIP, state.skybox_model,
@@ -128,26 +138,20 @@ public:
     auto cube_terrain = sf.make_color_cube({gfx::draw_mode::TRIANGLE_STRIP, state.terrain_model,
         {10.0f, 0.1f, 10.0f}}, gfx::color_t{}, ::gfx::LIST_OF_COLORS::SADDLE_BROWN);
 
-    auto &rd = renderer;
-    auto &r = rd;
-    auto &d2 = r.gfx_engine.d2;
-    auto &d3 = r.gfx_engine.d3;
     rd.begin();
     auto x = ms(std::move(cube_skybox), d3.skybox);
     auto args = state.render_args();
     r.draw(args, d3.skybox, std::move(cube_skybox));
 
-    auto triangle_color = sf.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[9]}, gfx::color_t{},
+    auto triangle_color = tfc.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[9]},
         gfx::LIST_OF_COLORS::PINK);
 
-    auto triangle_list_colors = sf.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[10]},
-        gfx::color_t{}, multicolor_triangle);
+    auto triangle_list_colors = tfc.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[10]},
+        multicolor_triangle);
 
-    auto triangle_texture = sf.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[11]},
-        gfx::uv_t{});
+    auto triangle_texture = tfuv0.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[11]});
 
-    auto triangle_wireframe = sf.make_triangle({gfx::draw_mode::LINE_LOOP, *state.MODELS[12]},
-        gfx::wireframe_t{});
+    auto triangle_wireframe = tfw.make_triangle({gfx::draw_mode::LINE_LOOP, *state.MODELS[12]});
 
     // 3d begin
     auto cube_texture = sf.make_textured_cube({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[102],
@@ -192,50 +196,48 @@ public:
     r.draw(args, d3.texture, cube_texture);
     r.draw(args, d3.wireframe, cube_wf);
 
-    /*
     {
       std::array<gfx::triangle<gfx::vertex_color_attributes>, 2> const arr = {
-        gfx::triangle_factory::make({random_mode(), *state.MODELS[0]}, gfx::color_t{}, rc()),
-        gfx::triangle_factory::make({random_mode(), *state.MODELS[1]}, gfx::color_t{}, rc())
+        tfc.make_triangle({random_mode(), *state.MODELS[0]}, rc()),
+        tfc.make_triangle({random_mode(), *state.MODELS[1]}, rc())
       };
       r.draw(args, d2.color, arr);
     }
     {
       std::array<gfx::triangle<gfx::vertex_color_attributes>, 2> arr = {
-        gfx::triangle_factory::make({random_mode(), *state.MODELS[2]}, gfx::color_t{}, rc()),
-        gfx::triangle_factory::make({random_mode(), *state.MODELS[3]}, gfx::color_t{}, rc())
+        tfc.make_triangle({random_mode(), *state.MODELS[2]}, rc()),
+        tfc.make_triangle({random_mode(), *state.MODELS[3]}, rc())
       };
       r.draw(args, d2.color, std::move(arr));
     }
     {
       r.draw(args, d2.color, std::make_tuple(
-            gfx::triangle_factory::make({random_mode(), *state.MODELS[4]}, gfx::color_t{}, rc())
+            tfc.make_triangle({random_mode(), *state.MODELS[4]}, rc())
             ));
     }
     {
       r.draw(args, d2.color,
-            gfx::triangle_factory::make({random_mode(), *state.MODELS[5]}, gfx::color_t{}, rc()),
-            gfx::triangle_factory::make({random_mode(), *state.MODELS[6]}, gfx::color_t{}, rc())
+            tfc.make_triangle({random_mode(), *state.MODELS[5]}, rc()),
+            tfc.make_triangle({random_mode(), *state.MODELS[6]}, rc())
             );
     }
     {
       std::vector<gfx::triangle<gfx::vertex_color_attributes>> vec;
-      vec.emplace_back(gfx::triangle_factory::make({random_mode(), *state.MODELS[7]}, gfx::color_t{}, rc()));
-      vec.emplace_back(gfx::triangle_factory::make({random_mode(), *state.MODELS[8]}, gfx::color_t{}, rc()));
+      vec.emplace_back(tfc.make_triangle({random_mode(), *state.MODELS[7]}, rc()));
+      vec.emplace_back(tfc.make_triangle({random_mode(), *state.MODELS[8]}, rc()));
 
       r.draw(args, d2.color, std::move(vec));
     }
-    */
 
     // not draw 2d entities (last because we disable depth tests for these draw calls)
-    //r.draw(args, d2.color, triangle_color, triangle_list_colors, std::move(polygon_color),
-                                           //rectangle_color, rectangle_list_colors
+    r.draw(args, d2.color, triangle_color, triangle_list_colors, std::move(polygon_color),
+                                           rectangle_color, rectangle_list_colors
                                            // polygon_list_of_color,
-                                           //);
+                                           );
 
-    //r.draw(args, d2.texture_wall, triangle_texture, rectangle_texture);//, polygon_texture);
-    //r.draw(args, d2.texture_container, std::move(polygon_texture));
-    //r.draw(args, d2.wireframe, std::move(polygon_wireframe), triangle_wireframe, rectangle_wireframe);
+    r.draw(args, d2.texture_wall, triangle_texture, rectangle_texture);
+    r.draw(args, d2.texture_container, std::move(polygon_texture));
+    r.draw(args, d2.wireframe, std::move(polygon_wireframe), triangle_wireframe, rectangle_wireframe);
 
     rd.end();
   }

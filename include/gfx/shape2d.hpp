@@ -10,7 +10,9 @@ struct triangle : public shape {
   static auto constexpr NUM_VERTICES = 3;
   V bottom_left, bottom_right, top_middle;
 private:
+  template<typename T>
   friend class triangle_factory;
+
   explicit constexpr triangle(enum draw_mode const dm, struct model const& m, V const& bl, V const& br, V const& tm)
     : shape(dm, m)
     , bottom_left(bl)
@@ -25,7 +27,9 @@ struct rectangle : public shape {
   V bottom_left, bottom_right, top_right, top_left;
 
 private:
+  template<typename T>
   friend class rectangle_factory;
+
   explicit constexpr rectangle(enum draw_mode const dm, struct model const &m, V const &bl, V const &br, V const &tr,
                                V const &tl)
       : shape(dm, m)
@@ -41,6 +45,8 @@ template <typename V>
 struct polygon : public shape {
   stlw::sized_buffer<V> vertex_attributes;
   int num_vertices() const { return this->vertex_attributes.length(); }
+
+  template<typename T>
   friend struct polygon_factory;
 
 private:

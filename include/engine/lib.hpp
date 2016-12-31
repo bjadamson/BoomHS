@@ -88,7 +88,6 @@ public:
           for (auto i{100}; i < 200; ++i) {
             auto const [x, y, z] = state.rnum_generator.generate_3dabove_ground_position();
             logger.error(fmt::format("3d x, y, z is {}, {}, {}", x, y, z));
-            //auto const z = -3.0f;
             state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
           }
     });
