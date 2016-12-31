@@ -80,9 +80,15 @@ public:
             return p;
           };
           for (auto i{0}; i < 100; ++i) {
-            auto const x = state.rnum_generator.generate_position();
-            auto const y = state.rnum_generator.generate_above_ground_position();
-            auto const z = -3.0f;
+            auto const [x, y] = state.rnum_generator.generate_2dposition();
+            logger.error(fmt::format("2d x, y is {}, {}", x, y));
+            auto const z = 0.0f;
+            state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
+          }
+          for (auto i{100}; i < 200; ++i) {
+            auto const [x, y, z] = state.rnum_generator.generate_3dabove_ground_position();
+            logger.error(fmt::format("3d x, y, z is {}, {}, {}", x, y, z));
+            //auto const z = -3.0f;
             state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
           }
     });

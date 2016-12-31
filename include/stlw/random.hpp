@@ -43,27 +43,35 @@ public:
     return int_value > 0 ? true : false;
   }
 
-  using range = std::pair<int, int>;
-
-  auto generate_position(range const from, range const to)
+  using range2d = std::pair<float, float>;
+  auto generate_position(range2d const& from)
   {
-    std::uniform_int_distribution<int> distribution(from.first, from.second);
-    auto const int_value = distribution(this->generator_);
-    return stlw::math::normalize(int_value, from, to);
+    std::uniform_real_distribution<float> distribution{from.first, from.second};
+    return distribution(this->generator_);
   }
 
-  auto generate_position()
+  using range3d = std::array<float, 3>;
+  auto generate_3dposition(range3d const& lower, range3d const& upper)
   {
-    auto constexpr FROM = std::make_pair(-1000, 1000);
-    auto constexpr TO = std::make_pair(-10.0f, 10.0f);
-    return generate_position(FROM, TO);
+    auto constexpr FROM = std::make_pair(-10.0f, 10.0f);
+    auto const x = generate_position({lower[0], upper[0]});
+    auto const y = generate_position({lower[1], upper[1]});
+    auto const z = generate_position({lower[2], upper[2]});
+    return std::array<float, 3>{x, y, z};
   }
 
-  auto generate_above_ground_position()
+  auto generate_3dabove_ground_position()
   {
-    auto constexpr FROM = std::make_pair(0, 1000);
-    auto constexpr TO = std::make_pair(1.0f, 3.0f);
-    return generate_position(FROM, TO);
+    auto const LOWER = std::array<float, 3>{0, 1, 0};
+    auto const UPPER = std::array<float, 3>{10, 5, 10};
+    return generate_3dposition(LOWER, UPPER);
+  }
+
+  auto generate_2dposition()
+  {
+    auto const x = generate_position({-1.0f, 1.0f});
+    auto const y = generate_position({-1.0f, 1.0f});
+    return std::make_pair(x, y);
   }
 };
 

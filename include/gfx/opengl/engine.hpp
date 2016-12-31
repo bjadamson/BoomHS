@@ -67,12 +67,29 @@ struct engine {
 
   MOVE_CONSTRUCTIBLE_ONLY(engine);
 
+  void enable_depth_tests() {
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+  }
+
+  void disable_depth_tests() {
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+  }
+
   engine(glm::vec4 const& bg, context2d_args &&context_2d, context3d_args &&context_3d)
     : d2(std::move(context_2d))
     , d3(std::move(context_3d))
   {
     // background color
     glClearColor(bg.x, bg.y, bg.z, bg.w);
+
+    // Initially assume we are drawing 3d
+    enable_depth_tests();
   }
 
   void begin()
@@ -87,22 +104,19 @@ struct engine {
   void draw(Args const& args, C &ctx, B const& burrito)
   {
     if constexpr (C::IS_2D) {
+      disable_depth_tests();
       impl::draw2d(args, ctx, burrito);
+      enable_depth_tests();
     } else {
       auto const draw3d = [&]() {
         impl::draw3d(args, ctx, burrito);
       };
       if constexpr (C::IS_SKYBOX) {
+        disable_depth_tests();
         draw3d();
+        enable_depth_tests();
       } else {
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
-
-        glCullFace(GL_BACK);
         draw3d();
-
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_CULL_FACE);
       }
     }
   }

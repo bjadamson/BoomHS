@@ -59,7 +59,7 @@ make_state(L &logger, HW const& hw)
   auto const fheight = static_cast<GLfloat>(hw.h);
   auto const fwidth = static_cast<GLfloat>(hw.w);
 
-  auto projection = glm::perspective(glm::radians(60.0f), (fwidth / fheight), 0.1f, 20.0f);
+  auto projection = glm::perspective(glm::radians(60.0f), (fwidth / fheight), 0.1f, 200.0f);
   stlw::float_generator rng;
   return game_state<L>(logger, hw, std::move(rng), std::move(projection));
 }
@@ -135,8 +135,63 @@ public:
     rd.begin();
     auto x = ms(std::move(cube_skybox), d3.skybox);
     auto args = state.render_args();
-    //r.draw_special(args, std::move(x));
     r.draw(args, d3.skybox, std::move(cube_skybox));
+
+    auto triangle_color = sf.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[9]}, gfx::color_t{},
+        gfx::LIST_OF_COLORS::PINK);
+
+    auto triangle_list_colors = sf.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[10]},
+        gfx::color_t{}, multicolor_triangle);
+
+    auto triangle_texture = sf.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[11]},
+        gfx::uv_t{});
+
+    auto triangle_wireframe = sf.make_triangle({gfx::draw_mode::LINE_LOOP, *state.MODELS[12]},
+        gfx::wireframe_t{});
+
+    // 3d begin
+    auto cube_texture = sf.make_textured_cube({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[102],
+        {0.15f, 0.15f, 0.15f}}, gfx::uv_t{});
+
+    auto cube_color = sf.make_spotted_cube({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[101],
+        {0.25f, 0.25f, 0.25f}}, gfx::color_t{}, ::gfx::LIST_OF_COLORS::BLUE);
+
+    auto cube_wf = sf.make_wireframe_cube({gfx::draw_mode::LINE_LOOP, *state.MODELS[100],
+        {0.25f, 0.25f, 0.25f}}, gfx::wireframe_t{});
+    // 3d end
+
+    auto rectangle_color = sf.make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[16]},
+        gfx::color_t{}, ::gfx::LIST_OF_COLORS::YELLOW);
+
+    auto rectangle_list_colors = sf.make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[17],
+        height, width}, gfx::color_t{}, multicolor_rect);
+
+    auto rectangle_texture = sf.make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[18], height,
+        width}, gfx::uv_t{});
+
+    auto rectangle_wireframe = sf.make_rectangle({gfx::draw_mode::LINE_LOOP, *state.MODELS[19], height,
+        width}, gfx::wireframe_t{});
+
+    auto polygon_color = sf.make_polygon({gfx::draw_mode::TRIANGLE_FAN, *state.MODELS[20], 5},
+        gfx::color_t{}, gfx::LIST_OF_COLORS::DARK_ORANGE);
+
+    auto polygon_texture = sf.make_polygon({gfx::draw_mode::TRIANGLE_FAN, *state.MODELS[21], 7},
+        gfx::uv_t{});
+
+    auto polygon_wireframe = sf.make_polygon({gfx::draw_mode::LINE_LOOP, *state.MODELS[22], 7},
+        gfx::wireframe_t{});
+
+    //auto polygon_list_of_color = sf.make_polygon(gfx::draw_mode::TRIANGLE_FAN, *zp1, 5,
+    //multicolor_triangle);
+
+    // first draw terrain
+    r.draw(args, d3.color, cube_terrain);
+
+    // now draw entities
+    r.draw(args, d3.color, cube_color);
+    r.draw(args, d3.texture, cube_texture);
+    r.draw(args, d3.wireframe, cube_wf);
+
     /*
     {
       std::array<gfx::triangle<gfx::vertex_color_attributes>, 2> const arr = {
@@ -170,68 +225,18 @@ public:
 
       r.draw(args, d2.color, std::move(vec));
     }
-
-    auto triangle_color = sf.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[9]}, gfx::color_t{},
-        gfx::LIST_OF_COLORS::PINK);
-
-    auto triangle_list_colors = sf.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[10]},
-        gfx::color_t{}, multicolor_triangle);
-
-    auto triangle_texture = sf.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[11]},
-        gfx::uv_t{});
-
-    auto triangle_wireframe = sf.make_triangle({gfx::draw_mode::LINE_LOOP, *state.MODELS[12]},
-        gfx::wireframe_t{});
-
-        */
-    auto cube_texture = sf.make_textured_cube({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[13],
-        {0.15f, 0.15f, 0.15f}}, gfx::uv_t{});
-
-    auto cube_color = sf.make_spotted_cube({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[14],
-        {0.25f, 0.25f, 0.25f}}, gfx::color_t{}, ::gfx::LIST_OF_COLORS::BLUE);
-
-    auto cube_wf = sf.make_wireframe_cube({gfx::draw_mode::LINE_LOOP, *state.MODELS[15],
-        {0.25f, 0.25f, 0.25f}}, gfx::wireframe_t{});
-
-    /*
-    auto rectangle_color = sf.make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[16]},
-        gfx::color_t{}, ::gfx::LIST_OF_COLORS::YELLOW);
-
-    auto rectangle_list_colors = sf.make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[17],
-        height, width}, gfx::color_t{}, multicolor_rect);
-
-    auto rectangle_texture = sf.make_rectangle({gfx::draw_mode::TRIANGLE_STRIP, *state.MODELS[18], height,
-        width}, gfx::uv_t{});
-
-    auto rectangle_wireframe = sf.make_rectangle({gfx::draw_mode::LINE_LOOP, *state.MODELS[19], height,
-        width}, gfx::wireframe_t{});
-
-    auto polygon_color = sf.make_polygon({gfx::draw_mode::TRIANGLE_FAN, *state.MODELS[20], 5},
-        gfx::color_t{}, gfx::LIST_OF_COLORS::DARK_ORANGE);
-
-    auto polygon_texture = sf.make_polygon({gfx::draw_mode::TRIANGLE_FAN, *state.MODELS[21], 7},
-        gfx::uv_t{});
-
-    auto polygon_wireframe = sf.make_polygon({gfx::draw_mode::LINE_LOOP, *state.MODELS[22], 7},
-        gfx::wireframe_t{});
-
-    //auto polygon_list_of_color = sf.make_polygon(gfx::draw_mode::TRIANGLE_FAN, *zp1, 5,
-    //multicolor_triangle);
-
-    r.draw(args, d2.color, triangle_color, triangle_list_colors, std::move(polygon_color),
-                                           rectangle_color, rectangle_list_colors
-                                           // polygon_list_of_color,
-                                           );
-
-    r.draw(args, d2.texture_wall, triangle_texture, rectangle_texture);//, polygon_texture);
-    r.draw(args, d2.texture_container, std::move(polygon_texture));
-    r.draw(args, d2.wireframe, std::move(polygon_wireframe), triangle_wireframe, rectangle_wireframe);
-
     */
-    r.draw(args, d3.color, cube_terrain);
-    r.draw(args, d3.color, cube_color);
-    r.draw(args, d3.texture, cube_texture);
-    r.draw(args, d3.wireframe, cube_wf);
+
+    // not draw 2d entities (last because we disable depth tests for these draw calls)
+    //r.draw(args, d2.color, triangle_color, triangle_list_colors, std::move(polygon_color),
+                                           //rectangle_color, rectangle_list_colors
+                                           // polygon_list_of_color,
+                                           //);
+
+    //r.draw(args, d2.texture_wall, triangle_texture, rectangle_texture);//, polygon_texture);
+    //r.draw(args, d2.texture_container, std::move(polygon_texture));
+    //r.draw(args, d2.wireframe, std::move(polygon_wireframe), triangle_wireframe, rectangle_wireframe);
+
     rd.end();
   }
 };
