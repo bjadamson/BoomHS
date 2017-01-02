@@ -1,6 +1,6 @@
 #pragma once
-#include <gfx/opengl/glsl.hpp>
 #include <numeric>
+#include <gfx/opengl/glsl.hpp>
 #include <stlw/sized_buffer.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
@@ -14,7 +14,6 @@ struct attribute_info {
   GLenum type;
   char const *name;
 
-  // MOVE_CONSTRUCTIBLE_ONLY(attribute_info);
   explicit constexpr attribute_info(GLint const i, GLint const nc, GLenum const ty, char const *n)
       : global_index(i)
       , num_components(nc)
@@ -25,7 +24,6 @@ struct attribute_info {
 
   MOVE_DEFAULT(attribute_info);
   COPY_DEFAULT(attribute_info);
-  // NO_COPY(attribute_info);
 
   static constexpr auto A_POSITION = "a_position";
   static constexpr auto A_COLOR = "a_color";
@@ -186,63 +184,6 @@ make_vertex_only_vertex_attribute(L &logger, GLint const num_fields_vertex)
 namespace global
 {
 
-template<typename L>
-auto
-make_vertex_color_vertex_attribute(L &logger)
-{
-  // attribute indexes
-  constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
-  constexpr auto C_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_COLOR;
-
-  // num fields per attribute
-  GLint constexpr num_fields_vertex = 4; // x, y, z, w
-  GLint constexpr num_fields_color = 4;  // r, g, b, a
-
-  using ai = attribute_info;
-  attribute_info constexpr vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
-  attribute_info constexpr color_info {C_INDEX,  num_fields_color,  GL_FLOAT, ai::A_COLOR};
-
-  return impl::make_vertex_array(logger, vertex_info, color_info);
-}
-
-template<typename L>
-auto
-make_vertex_uv2d_vertex_attribute(L &logger)
-{
-  // attribute indexes
-  constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
-  constexpr auto UV_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_UV;
-
-  // num fields per attribute
-  GLint constexpr num_fields_vertex = 4; // x, y, z, w
-  GLint constexpr num_fields_uv = 2;     // u, v
-
-  using ai = attribute_info;
-  attribute_info constexpr vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
-  attribute_info constexpr uv_info    {UV_INDEX, num_fields_uv,     GL_FLOAT, ai::A_UV};
-
-  return impl::make_vertex_array(logger, vertex_info, uv_info);
-}
-
-template<typename L>
-auto
-make_3dvertex_only_vertex_attribute(L &logger)
-{
-  // num fields per attribute
-  GLint constexpr num_fields_vertex = 4; // x, y, z, w
-  return impl::make_vertex_only_vertex_attribute(logger, num_fields_vertex);
-}
-
-template<typename L>
-auto
-make_2dvertex_only_vertex_attribute(L &logger)
-{
-  // num fields per attribute
-  // TODO: maybe 3 fields????
-  GLint constexpr num_fields_vertex = 4; // x, y, z, w
-  return impl::make_vertex_only_vertex_attribute(logger, num_fields_vertex);
-}
-
 template <typename L>
 void
 set_vertex_attributes(L &logger, vertex_attribute const& va)
@@ -265,5 +206,58 @@ set_vertex_attributes(L &logger, vertex_attribute const& va)
 }
 
 } // ns global
+
+struct va_factory
+{
+  va_factory() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(va_factory);
+
+  template<typename L>
+  auto
+  make_vertex_color(L &logger) const
+  {
+    // attribute indexes
+    constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
+    constexpr auto C_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_COLOR;
+
+    // num fields per attribute
+    GLint constexpr num_fields_vertex = 4; // x, y, z, w
+    GLint constexpr num_fields_color = 4;  // r, g, b, a
+
+    using ai = attribute_info;
+    attribute_info constexpr vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
+    attribute_info constexpr color_info {C_INDEX,  num_fields_color,  GL_FLOAT, ai::A_COLOR};
+
+    return impl::make_vertex_array(logger, vertex_info, color_info);
+  }
+
+  template<typename L>
+  auto
+  make_vertex_uv2d(L &logger) const
+  {
+    // attribute indexes
+    constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
+    constexpr auto UV_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_UV;
+
+    // num fields per attribute
+    GLint constexpr num_fields_vertex = 4; // x, y, z, w
+    GLint constexpr num_fields_uv = 2;     // u, v
+
+    using ai = attribute_info;
+    attribute_info constexpr vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
+    attribute_info constexpr uv_info    {UV_INDEX, num_fields_uv,     GL_FLOAT, ai::A_UV};
+
+    return impl::make_vertex_array(logger, vertex_info, uv_info);
+  }
+
+  template<typename L>
+  auto
+  make_vertex_only(L &logger) const
+  {
+    // num fields per attribute
+    GLint constexpr num_fields_vertex = 4; // x, y, z, w
+    return impl::make_vertex_only_vertex_attribute(logger, num_fields_vertex);
+  }
+};
 
 } // ns gfx::opengl

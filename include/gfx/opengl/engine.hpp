@@ -135,25 +135,26 @@ public:
     auto const get_r = [&](auto const i) { return RESOURCES[i]; };
 
     pipeline_factory pf;
+    va_factory vf;
     auto c0 = context_factory::make_color2d(logger);
-    auto va0 = global::make_vertex_color_vertex_attribute(logger);
+    auto va0 = vf.make_vertex_color(logger);
     DO_TRY(auto p0, pf.make("2dcolor.vert", "2dcolor.frag", MOVE(c0), MOVE(va0)));
 
     auto c1 = context_factory::make_texture2d(logger, get_r(IMAGES::WALL));
-    auto va1 = global::make_vertex_uv2d_vertex_attribute(logger);
+    auto va1 = vf.make_vertex_uv2d(logger);
     DO_TRY(auto p1, pf.make("2dtexture.vert", "2dtexture.frag", MOVE(c1), MOVE(va1)));
 
     auto c2 = context_factory::make_texture2d(logger, get_r(IMAGES::CONTAINER));
-    auto va2 = global::make_vertex_uv2d_vertex_attribute(logger);
+    auto va2 = vf.make_vertex_uv2d(logger);
     DO_TRY(auto p2, pf.make("2dtexture.vert", "2dtexture.frag", MOVE(c2), MOVE(va2)));
 
     auto const color = LIST_OF_COLORS::PINK;
     auto c3 = context_factory::make_wireframe2d(logger, color);
-    auto va3 = global::make_2dvertex_only_vertex_attribute(logger);
+    auto va3 = vf.make_vertex_only(logger);
     DO_TRY(auto p3, pf.make("wire.vert", "wire.frag", MOVE(c3), MOVE(va3)));
 
     auto c4 = context_factory::make_color3d(logger);
-    auto va4 = global::make_vertex_color_vertex_attribute(logger);
+    auto va4 = vf.make_vertex_color(logger);
     DO_TRY(auto p4, pf.make("3dcolor.vert", "3dcolor.frag", MOVE(c4), MOVE(va4)));
 
     auto c5 = context_factory::make_texture3d(logger,
@@ -164,7 +165,7 @@ public:
         get_r(IMAGES::CUBE_TOP),
         get_r(IMAGES::CUBE_BOTTOM)
         );
-    auto va5 = global::make_3dvertex_only_vertex_attribute(logger);
+    auto va5 = vf.make_vertex_only(logger);
     DO_TRY(auto p5, pf.make("3dtexture.vert", "3dtexture.frag", MOVE(c5), MOVE(va5)));
 
     auto c6 = context_factory::make_skybox(logger,
@@ -175,12 +176,12 @@ public:
         get_r(IMAGES::SB_TOP),
         get_r(IMAGES::SB_BOTTOM)
         );
-    auto va6 = global::make_3dvertex_only_vertex_attribute(logger);
+    auto va6 = vf.make_vertex_only(logger);
     DO_TRY(auto p6, pf.make("3dtexture.vert", "3dtexture.frag", MOVE(c6), MOVE(va6)));
 
     auto const color2 = LIST_OF_COLORS::PURPLE;
     auto c7 = context_factory::make_wireframe3d(logger, color2);
-    auto va7 = global::make_3dvertex_only_vertex_attribute(logger);
+    auto va7 = vf.make_vertex_only(logger);
     DO_TRY(auto p7, pf.make("3dwire.vert", "wire.frag", MOVE(c7), MOVE(va7)));
 
     program2d d2{MOVE(p0), MOVE(p1), MOVE(p2), MOVE(p3)};
