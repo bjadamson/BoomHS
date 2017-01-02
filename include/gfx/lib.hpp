@@ -42,7 +42,7 @@ private:
   template <typename Args, typename Ctx, typename B>
   void draw_burrito(Args const& args, Ctx &ctx, B &&burrito)
   {
-    this->lib.gfx_engine.draw(args, ctx, stlw::make_burrito(std::move(burrito)));
+    this->lib.gfx_engine.draw(args, ctx, stlw::make_burrito(MOVE(burrito)));
   }
 
 public:
@@ -58,7 +58,7 @@ public:
   draw(Args const& args, Ctx &ctx, C<T, N> const& arr)
   {
     auto x = stlw::tuple_from_array(arr);
-    this->draw_burrito(args, ctx, std::move(x));
+    this->draw_burrito(args, ctx, MOVE(x));
   }
 
   // The last parameter type here ensures that the value passed is similar to a stl container.
@@ -66,21 +66,21 @@ public:
   void
   draw(Args const& args, Ctx &ctx, C &&c)
   {
-    this->draw_burrito(args, ctx, std::move(c));
+    this->draw_burrito(args, ctx, MOVE(c));
   }
 
   template<typename Args, typename Ctx, typename ...T>
   void
   draw(Args const& args, Ctx &ctx, std::tuple<T...> &&t)
   {
-    this->draw_burrito(args, ctx, std::move(t));
+    this->draw_burrito(args, ctx, MOVE(t));
   }
 
   template<typename Args, typename S>
   void
   draw_special(Args const& args, S &&s)
   {
-    this->draw(args, s.context, std::move(s.data));
+    this->draw(args, s.context, MOVE(s.data));
   }
 
   template<typename Args, typename Ctx, typename ...T>
@@ -100,11 +100,10 @@ struct factory {
   factory() = delete;
   ~factory() = delete;
 
-  template <typename L>
-  static stlw::result<gfx_lib, std::string> make_gfx_engine(L &logger)
+  template <typename L, typename LIB>
+  static stlw::result<gfx_lib, std::string> make(L &logger, LIB &&gfx)
   {
-    DO_TRY(auto opengl_lib, opengl::lib_factory::make(logger));
-    return gfx_lib{MOVE(opengl_lib)};
+    return gfx_lib{MOVE(gfx)};
   }
 };
 

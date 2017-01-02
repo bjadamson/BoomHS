@@ -1,11 +1,10 @@
 #include <cstdlib>
 
-#include <gfx/gfx.hpp>
-#include <window/window.hpp>
+#include <stlw/type_macros.hpp>
 #include <stlw/log.hpp>
 
 #include <engine/lib.hpp>
-#include <window/sdl_window.hpp>
+#include <engine/premade.hpp>
 #include <game/boomhs/boomhs.hpp>
 
 int
@@ -19,26 +18,13 @@ main(int argc, char *argv[])
     return EXIT_FAILURE;
   };
 
-  // Select windowing library as SDL.
-  namespace w = window;
-  using window_lib = w::library_wrapper<w::sdl_library>;
-
-  logger.debug("Initializing window library globals");
-  DO_TRY_OR_ELSE_RETURN(auto _, window_lib::init(), on_error);
-
-  logger.debug("Setting up stack guard to unitialize window library globals");
-  ON_SCOPE_EXIT([]() { window_lib::destroy(); });
-
-  auto constexpr width = 800, height = 600;
-  logger.debug("Instantiating window instance.");
-  DO_TRY_OR_ELSE_RETURN(auto window, window_lib::make_window(height, width), on_error);
-
-  // Initialize graphics renderer
-  auto engine = engine::factory::make_gfx_sdl_engine(logger, std::move(window));
-  DO_TRY_OR_ELSE_RETURN(auto renderer, std::move(engine), on_error);
+  auto premade_result = engine::make_opengl_sdl_premade_configuration(logger, 800, 600);
+  DO_TRY_OR_ELSE_RETURN(auto premade, MOVE(premade_result), on_error);
 
   logger.debug("Instantiating 'state'");
-  auto const dimensions = renderer.get_dimensions();
+
+  auto &engine = premade.engine();
+  auto const dimensions = engine.get_dimensions();
   auto state = game::boomhs::make_state(logger, dimensions);
 
   // Initialize the game instance.
@@ -46,7 +32,7 @@ main(int argc, char *argv[])
   game::boomhs::boomhs_game game;
 
   logger.debug("Starting game loop");
-  renderer.start(std::move(game), std::move(state));
+  engine.start(MOVE(game), MOVE(state));
 
   logger.debug("Game loop finished successfully! Ending program now.");
   return EXIT_SUCCESS;

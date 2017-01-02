@@ -40,7 +40,7 @@ auto make_loop_state(L &l, bool &quit, gfx::camera &c, glm::mat4 const& p,
   return loop_state<L>{l, quit, c, p, fg, models, skybox, terrain, md};
 }
 
-class gfx_lib
+class engine
 {
   using W = ::window::sdl_window;
   friend struct factory;
@@ -49,14 +49,14 @@ class gfx_lib
 public:
   gfx::gfx_lib gfx;
 private:
-  gfx_lib(W &&w, gfx::gfx_lib &&g)
+  engine(W &&w, gfx::gfx_lib &&g)
       : window_(std::move(w))
       , gfx(std::move(g))
   {
   }
-  NO_COPY(gfx_lib);
+  NO_COPY(engine);
 public:
-  MOVE_DEFAULT(gfx_lib);
+  MOVE_DEFAULT(engine);
 
   void begin() { this->gfx.begin(); }
 
@@ -190,11 +190,11 @@ struct factory {
   factory() = delete;
   ~factory() = delete;
 
-  template <typename L, typename W>
-  static stlw::result<gfx_lib, std::string> make_gfx_sdl_engine(L &logger, W &&window)
+  template <typename L, typename W, typename LIB>
+  static stlw::result<engine, std::string> make_engine(L &logger, W &&window, LIB &&gfx)
   {
-    DO_TRY(auto gfx, gfx::factory::make_gfx_engine(logger));
-    return gfx_lib{std::move(window), std::move(gfx)};
+    DO_TRY(auto gfx_lib, gfx::factory::make(logger, MOVE(gfx)));
+    return engine{MOVE(window), MOVE(gfx_lib)};
   }
 };
 
