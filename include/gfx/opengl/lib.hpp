@@ -1,6 +1,6 @@
 #pragma once
 #include <stlw/type_macros.hpp>
-#include <gfx/opengl/engine.hpp>
+#include <gfx/opengl/renderer.hpp>
 
 namespace gfx::opengl
 {
@@ -8,12 +8,12 @@ namespace gfx::opengl
 class opengl_lib
 {
   friend struct lib_factory;
-  opengl_engine renderer_;
+  opengl_renderer renderer_;
 public:
   opengl_contexts opengl_contexts;
 private:
-  opengl_lib(struct opengl_engine &&e, struct opengl_contexts &&c)
-    : renderer_(MOVE(e))
+  opengl_lib(struct opengl_renderer &&r, struct opengl_contexts &&c)
+    : renderer_(MOVE(r))
     , opengl_contexts(MOVE(c))
     {
     }

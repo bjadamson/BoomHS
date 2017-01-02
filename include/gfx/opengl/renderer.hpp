@@ -8,9 +8,9 @@
 namespace gfx::opengl
 {
 
-struct opengl_engine
+struct opengl_renderer
 {
-  explicit opengl_engine(glm::vec4 const& bg)
+  explicit opengl_renderer(glm::vec4 const& bg)
   {
     // background color
     glClearColor(bg.x, bg.y, bg.z, bg.w);
@@ -76,7 +76,7 @@ struct opengl_renderer_factory
   {
     auto const c = LIST_OF_COLORS::WHITE;
     auto const background_color = glm::vec4{c[0], c[1], c[2], 1.0f};
-    return opengl_engine{background_color};
+    return opengl_renderer{background_color};
   }
 };
 
