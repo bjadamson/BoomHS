@@ -9,10 +9,10 @@ class opengl_lib
 {
   friend struct lib_factory;
 public:
-  engine gfx_engine;
+  opengl_engine opengl_engine;
 private:
-  opengl_lib(engine &&e)
-    : gfx_engine(MOVE(e))
+  opengl_lib(struct opengl_engine &&e)
+    : opengl_engine(MOVE(e))
     {
     }
 public:
@@ -27,7 +27,7 @@ struct lib_factory
   static stlw::result<opengl_lib, std::string>
   make(L &logger)
   {
-    DO_TRY(auto engine, engine_factory::make(logger));
+    DO_TRY(auto engine, opengl_engine_factory::make(logger));
     return opengl_lib{MOVE(engine)};
   }
 };

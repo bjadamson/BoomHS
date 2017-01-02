@@ -61,11 +61,11 @@ struct program3d
   MOVE_CONSTRUCTIBLE_ONLY(program3d);
 };
 
-struct engine {
+struct opengl_engine {
   program2d d2;
   program3d d3;
 
-  MOVE_CONSTRUCTIBLE_ONLY(engine);
+  MOVE_CONSTRUCTIBLE_ONLY(opengl_engine);
 
   void enable_depth_tests() {
     glCullFace(GL_BACK);
@@ -81,7 +81,7 @@ struct engine {
     glDisable(GL_DEPTH_TEST);
   }
 
-  engine(glm::vec4 const& bg, program2d &&p2d, program3d &&p3d)
+  opengl_engine(glm::vec4 const& bg, program2d &&p2d, program3d &&p3d)
     : d2(MOVE(p2d))
     , d3(MOVE(p3d))
   {
@@ -123,13 +123,13 @@ struct engine {
   }
 };
 
-class engine_factory {
-  engine_factory() = delete;
-  ~engine_factory() = delete;
+class opengl_engine_factory {
+  opengl_engine_factory() = delete;
+  ~opengl_engine_factory() = delete;
 
 public:
   template <typename L>
-  static stlw::result<engine, std::string> make(L &logger)
+  static stlw::result<opengl_engine, std::string> make(L &logger)
   {
     auto constexpr RESOURCES = resources::make_resource_table();
     auto const get_r = [&](auto const i) { return RESOURCES[i]; };
@@ -189,7 +189,7 @@ public:
 
     auto const c = LIST_OF_COLORS::WHITE;
     auto const background_color = glm::vec4{c[0], c[1], c[2], 1.0f};
-    return engine{background_color, MOVE(d2), MOVE(d3)};
+    return opengl_engine{background_color, MOVE(d2), MOVE(d3)};
   }
 };
 

@@ -3,7 +3,6 @@
 #include <stlw/type_macros.hpp>
 #include <string>
 
-#include <gfx/gfx.hpp>
 #include <window/window.hpp>
 #include <window/sdl_window.hpp>
 
