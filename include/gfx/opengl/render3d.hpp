@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-namespace gfx::opengl::render3d
+namespace gfx::opengl::render
 {
 
 namespace impl
@@ -48,8 +48,6 @@ draw_scene(L &logger, P &pipeline, glm::mat4 const& view, glm::mat4 const& proje
   render::draw_scene(logger, pipeline, fn, burrito);
 }
 
-} // ns impl
-
 template <typename L, typename P, typename B>
 void
 draw_scene(L &logger, P &pipeline, camera const &camera, glm::mat4 const &projection, B const& burrito)
@@ -70,4 +68,15 @@ draw_scene(L &logger, P &pipeline, camera const &camera, glm::mat4 const &projec
   }
 }
 
-} // ns gfx::opengl::render3d
+} // ns impl
+
+template <typename Args, typename P, typename B>
+void draw3d(Args const &args, P &pipeline, B const& burrito)
+{
+  auto const fn = [&](auto const& gl_mapped_shapes) {
+    impl::draw_scene(args.logger, pipeline, args.camera, args.projection, gl_mapped_shapes);
+  };
+  render::draw_shapes(fn, burrito);
+}
+
+} // ns gfx::opengl::render

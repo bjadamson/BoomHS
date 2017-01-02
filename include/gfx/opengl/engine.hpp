@@ -1,7 +1,6 @@
 #pragma once
 #include <gfx/opengl/context.hpp>
 #include <gfx/opengl/pipeline.hpp>
-#include <gfx/opengl/gfx_to_opengl.hpp>
 #include <gfx/opengl/render2d.hpp>
 #include <gfx/opengl/render3d.hpp>
 #include <gfx/resources.hpp>
@@ -10,36 +9,6 @@
 
 namespace gfx::opengl
 {
-
-namespace impl
-{
-
-template <typename FN, typename B>
-void draw_shape(FN const& fn, B const& burrito)
-{
-  auto const gl_mapped_shapes = shape_mapper::map_to_opengl(burrito);
-  fn(gl_mapped_shapes);
-}
-
-template<typename Args, typename P, typename B>
-void draw2d(Args const& args, P &pipeline, B const& burrito)
-{
-  auto const fn = [&](auto const& gl_mapped_shapes) {
-    render2d::draw_scene(args.logger, pipeline, gl_mapped_shapes);
-  };
-  draw_shape(fn, burrito);
-}
-
-template <typename Args, typename P, typename B>
-void draw3d(Args const &args, P &pipeline, B const& burrito)
-{
-  auto const fn = [&](auto const& gl_mapped_shapes) {
-    render3d::draw_scene(args.logger, pipeline, args.camera, args.projection, gl_mapped_shapes);
-  };
-  draw_shape(fn, burrito);
-}
-
-} // ns impl
 
 struct program2d
 {
@@ -106,11 +75,11 @@ struct opengl_engine {
     using C = typename P::CTX;
     if constexpr (C::IS_2D) {
       disable_depth_tests();
-      impl::draw2d(args, pipeline, burrito);
+      render::draw2d(args, pipeline, burrito);
       enable_depth_tests();
     } else {
       auto const draw3d = [&]() {
-        impl::draw3d(args, pipeline, burrito);
+        render::draw3d(args, pipeline, burrito);
       };
       if constexpr (C::IS_SKYBOX) {
         disable_depth_tests();

@@ -1,6 +1,10 @@
 #pragma once
 #include <gfx/opengl/context.hpp>
 #include <gfx/opengl/global.hpp>
+
+// TODO: hacky
+#include <gfx/opengl/gfx_to_opengl.hpp>
+
 #include <stlw/log.hpp>
 #include <stlw/print.hpp>
 #include <stlw/tuple.hpp>
@@ -115,6 +119,13 @@ draw_scene(L &logger, P &pipeline, FN const& fn, B const &burrito)
   ss << "#######################################################################################\n";
 
   logger.trace(ss.str());
+}
+
+template <typename FN, typename B>
+void draw_shapes(FN const& fn, B const& burrito)
+{
+  auto const gl_mapped_shapes = shape_mapper::map_to_opengl(burrito);
+  fn(gl_mapped_shapes);
 }
 
 } // ns gfx::opengl::render

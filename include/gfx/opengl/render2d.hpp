@@ -3,7 +3,7 @@
 #include <gfx/opengl/global.hpp>
 #include <gfx/opengl/render.hpp>
 
-namespace gfx::opengl::render2d
+namespace gfx::opengl::render
 {
 
 namespace impl
@@ -11,7 +11,7 @@ namespace impl
 
 template<typename L, typename P, typename B>
 void
-draw_scene(L &logger, P &pipeline, B const& burrito)
+render_2d_impl(L &logger, P &pipeline, B const& burrito)
 {
   auto const& ctx = pipeline.ctx();
   global::vao_bind(ctx.vao());
@@ -35,14 +35,12 @@ draw_scene(L &logger, P &pipeline, B const& burrito)
   render::draw_scene(logger, pipeline, fn, burrito);
 }
 
-} // ns impl
-
 template <typename L, typename P, typename B>
 void
-draw_scene(L &logger, P &pipeline, B const &burrito)
+render_2dscene(L &logger, P &pipeline, B const &burrito)
 {
   auto const fn = [&]() {
-    impl::draw_scene(logger, pipeline, burrito);
+    render_2d_impl(logger, pipeline, burrito);
   };
 
   using C = typename P::CTX;
@@ -56,4 +54,15 @@ draw_scene(L &logger, P &pipeline, B const &burrito)
   }
 }
 
-} // ns gfx::opengl::render2d
+} // ns impl
+
+template<typename Args, typename P, typename B>
+void draw2d(Args const& args, P &pipeline, B const& burrito)
+{
+  auto const fn = [&](auto const& gl_mapped_shapes) {
+    impl::render_2dscene(args.logger, pipeline, gl_mapped_shapes);
+  };
+  draw_shapes(fn, burrito);
+}
+
+} // ns gfx::opengl::render
