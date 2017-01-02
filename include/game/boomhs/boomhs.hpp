@@ -122,8 +122,8 @@ public:
 
     auto &rd = renderer;
     auto &r = rd;
-    auto &d2 = r.lib.opengl_engine.d2;
-    auto &d3 = r.lib.opengl_engine.d3;
+    auto &d2 = r.lib.opengl_contexts.d2;
+    auto &d3 = r.lib.opengl_contexts.d3;
     auto sf = gfx::make_shape_factory(d2.color);
 
     auto tfc = gfx::make_color_factory(gfx::make_context(d2.color));

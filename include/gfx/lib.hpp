@@ -36,13 +36,13 @@ private:
   template <typename Args, typename Ctx, typename B>
   void draw_burrito(Args const& args, Ctx &ctx, B const& burrito)
   {
-    this->lib.opengl_engine.draw(args, ctx, stlw::make_burrito(burrito));
+    this->lib.draw(args, ctx, stlw::make_burrito(burrito));
   }
 
   template <typename Args, typename Ctx, typename B>
   void draw_burrito(Args const& args, Ctx &ctx, B &&burrito)
   {
-    this->lib.opengl_engine.draw(args, ctx, stlw::make_burrito(MOVE(burrito)));
+    this->lib.draw(args, ctx, stlw::make_burrito(MOVE(burrito)));
   }
 
 public:
@@ -50,7 +50,7 @@ public:
 
   void begin()
   {
-    this->lib.opengl_engine.begin();
+    this->lib.begin();
   }
 
   template<typename Args, typename Ctx, template<class, std::size_t> typename C, typename T, std::size_t N>
@@ -92,7 +92,7 @@ public:
 
   void end()
   {
-    this->lib.opengl_engine.end();
+    this->lib.end();
   }
 };
 
