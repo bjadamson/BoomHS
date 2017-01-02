@@ -12,11 +12,12 @@ namespace gfx::opengl::render3d
 namespace impl
 {
 
-template <typename L, typename C, typename B>
+template <typename L, typename P, typename B>
 void
-draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection,
+draw_scene(L &logger, P &pipeline, glm::mat4 const& view, glm::mat4 const& projection,
     B const& burrito)
 {
+  auto const& ctx = pipeline.ctx();
   global::vao_bind(ctx.vao());
   ON_SCOPE_EXIT([]() { global::vao_unbind(); });
 
@@ -26,8 +27,7 @@ draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
-  auto &p = ctx.pipeline_ref();
-  p.use();
+  pipeline.use();
   auto const fn = [&](auto const &shape) {
     logger.trace("setting u_mvmatrix");
     auto const& model = shape.model;
@@ -37,28 +37,31 @@ draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection
     auto const smatrix = glm::scale(glm::mat4{}, model.scale);
     auto const mmatrix = tmatrix * rmatrix * smatrix;
     auto const mvmatrix = projection * view * mmatrix;
-    p.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
+    pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
 
     logger.trace("before drawing shape ...");
-    render::render_shape(logger, ctx, shape);
-    p.check_errors(logger);
+    render::render_shape(logger, shape);
+    pipeline.check_errors(logger);
     logger.trace("after drawing shape");
   };
 
-  render::draw_scene(logger, ctx, fn, burrito);
+  render::draw_scene(logger, pipeline, fn, burrito);
 }
 
 } // ns impl
 
-template <typename L, typename C, typename B>
+template <typename L, typename P, typename B>
 void
-draw_scene(L &logger, C &ctx, camera const &camera, glm::mat4 const &projection, B const& burrito)
+draw_scene(L &logger, P &pipeline, camera const &camera, glm::mat4 const &projection, B const& burrito)
 {
   auto const fn = [&]() {
     auto const view = compute_view(camera);
-    impl::draw_scene(logger, ctx, view, projection, burrito);
+    impl::draw_scene(logger, pipeline, view, projection, burrito);
   };
+
+  using C = typename P::CTX;
   if constexpr (C::HAS_TEXTURE) {
+    auto const& ctx = pipeline.ctx();
     global::texture_bind(ctx.texture());
     ON_SCOPE_EXIT([&ctx]() { global::texture_unbind(ctx.texture()); });
     fn();

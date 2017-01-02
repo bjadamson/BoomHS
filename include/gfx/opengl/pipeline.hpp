@@ -1,18 +1,24 @@
 #pragma once
-#include <gfx/opengl/program.hpp>
 #include <stlw/type_macros.hpp>
+#include <gfx/opengl/program.hpp>
+#include <gfx/opengl/vertex_attribute.hpp>
 
 namespace gfx::opengl
 {
 
 // Essentially a "handle" over the program-object (GLuint) native OpenGL provides, but adds C++
 // move-semantics.
+template<typename C>
 class pipeline
 {
   GLuint program_;
+  C context_;
+  vertex_attribute va_;
 
-  explicit pipeline(GLuint &&p)
+  explicit pipeline(GLuint &&p, C &&ctx, vertex_attribute &&va)
       : program_(MOVE(p))
+      , context_(MOVE(ctx))
+      , va_(MOVE(va))
   {
   }
 
@@ -27,7 +33,11 @@ class pipeline
   NO_COPY(pipeline);
   NO_MOVE_ASSIGN(pipeline);
 public:
-  pipeline(pipeline &&o) : program_(o.program_)
+  using CTX = C;
+  pipeline(pipeline &&o)
+    : program_(o.program_)
+    , context_(MOVE(o.context_))
+    , va_(MOVE(o.va_))
   {
     // We don't want to destroy the underlying program, we want to transfer the ownership to this
     // instance being moved into. This implements "handle-passing" allowing the user to observe
@@ -65,6 +75,9 @@ public:
 
   /////////////////////////////////////////////////////////////////////////////////////////////////
   // IMMUTABLE
+  auto const& va() const { return this->va_; }
+  auto const& ctx() const { return this->context_; }
+
   template <typename L>
   inline void check_errors(L &logger)
   {
@@ -78,14 +91,15 @@ struct pipeline_factory
   pipeline_factory() = default;
   MOVE_CONSTRUCTIBLE_ONLY(pipeline_factory);
 
-  stlw::result<pipeline, std::string>
-  make(vertex_shader_filename const v, fragment_shader_filename const f)
+  template<typename C>
+  stlw::result<pipeline<C>, std::string>
+  make(vertex_shader_filename const v, fragment_shader_filename const f, C &&ctx,
+      vertex_attribute &&va)
   {
     DO_TRY(auto program, program_factory::from_files(v, f));
-    return pipeline{MOVE(program)};
-  }
 
-  static pipeline make_invalid() { return pipeline{program_factory::make_invalid()}; };
+    return pipeline<C>{MOVE(program), MOVE(ctx), MOVE(va)};
+  }
 };
 
 } // ns gfx::opengl

@@ -74,9 +74,9 @@ copy_to_gpu(L &logger, S const &shape)
 
 } // ns impl
 
-template <typename L, typename Ctx, typename S>
+template <typename L, typename S>
 void
-render_shape(L &logger, Ctx &ctx, S const &shape)
+render_shape(L &logger, S const &shape)
 {
   logger.trace(fmt::sprintf("%-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices"));
   logger.trace(fmt::sprintf("%-15d %-15d %-15d\n", vertices_size_in_bytes(shape),
@@ -89,24 +89,22 @@ render_shape(L &logger, Ctx &ctx, S const &shape)
   impl::render(logger, shape.draw_mode, shape.ordering.size());
 }
 
-template <typename L, typename C, typename FN, typename B>
+template <typename L, typename P, typename FN, typename B>
 void
-draw_scene(L &logger, C &ctx, FN const& fn, B const &burrito)
+draw_scene(L &logger, P &pipeline, FN const& fn, B const &burrito)
 {
-  // Pass the matrices to the shader
-  auto &p = ctx.pipeline_ref();
+  pipeline.use();
+  pipeline.check_errors(logger);
 
-  logger.trace("using p");
-  p.use();
-  p.check_errors(logger);
-
+  auto const& ctx = pipeline.ctx();
+  using C = typename P::CTX;
   if constexpr (C::HAS_COLOR_UNIFORM) {
-    p.set_uniform_array_4fv(logger, "u_color", ctx.color());
-    p.check_errors(logger);
+    pipeline.set_uniform_array_4fv(logger, "u_color", ctx.color());
+    pipeline.check_errors(logger);
   }
 
   // Instruct the vertex-processor to enable the vertex attributes for this context.
-  global::set_vertex_attributes(logger, ctx.va());
+  global::set_vertex_attributes(logger, pipeline.va());
 
   std::stringstream ss;
   ss << "#######################################################################################\n";

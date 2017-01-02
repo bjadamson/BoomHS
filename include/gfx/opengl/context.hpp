@@ -1,9 +1,7 @@
 #pragma once
 #include <gfx/colors.hpp>
 #include <gfx/opengl/global.hpp>
-#include <gfx/opengl/pipeline.hpp>
 #include <gfx/opengl/texture.hpp>
-#include <gfx/opengl/vertex_attribute.hpp>
 #include <iostream>
 
 namespace gfx::opengl
@@ -12,18 +10,12 @@ namespace gfx::opengl
 class opengl_context
 {
   GLuint vao_ = 0, vbo_ = 0, ebo_ = 0;
-  pipeline pipeline_;
-  vertex_attribute va_;
-
   static auto constexpr NUM_BUFFERS = 1;
 
   NO_COPY(opengl_context);
   NO_MOVE_ASSIGN(opengl_context);
-
 protected:
-  explicit opengl_context(pipeline &&p, vertex_attribute &&va)
-      : pipeline_(std::move(p))
-      , va_(std::move(va))
+  explicit opengl_context()
   {
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
     glGenBuffers(NUM_BUFFERS, &this->vbo_);
@@ -42,8 +34,6 @@ public:
       : vao_(other.vao_)
       , vbo_(other.vbo_)
       , ebo_(other.ebo_)
-      , pipeline_(std::move(other.pipeline_))
-      , va_(std::move(other.va_))
   {
     other.vao_ = 0;
     other.vbo_ = 0;
@@ -53,8 +43,6 @@ public:
   inline auto vao() const { return this->vao_; }
   inline auto vbo() const { return this->vbo_; }
   inline auto ebo() const { return this->ebo_; }
-  inline auto &pipeline_ref() { return this->pipeline_; }
-  inline auto const &va() { return this->va_; }
 
   // Derived context's can override this.
   static bool constexpr HAS_TEXTURE = false;
@@ -66,56 +54,36 @@ struct context2d : public opengl_context
 {
   static bool constexpr IS_2D = true;
 protected:
-  explicit context2d(pipeline &&p, vertex_attribute &&va)
-    : opengl_context(std::move(p), std::move(va))
-  {
-  }
-  NO_COPY(context2d);
-  NO_MOVE_ASSIGN(context2d);
+  explicit context2d() = default;
 public:
-  MOVE_CONSTRUCTIBLE(context2d);
+  MOVE_CONSTRUCTIBLE_ONLY(context2d);
 };
 
 struct context3d : public opengl_context
 {
   static bool constexpr IS_2D = false;
 protected:
-  explicit context3d(pipeline &&p, vertex_attribute &&va)
-    : opengl_context(std::move(p), std::move(va))
-  {
-  }
-  NO_COPY(context3d);
-  NO_MOVE_ASSIGN(context3d);
+  explicit context3d() = default;
 public:
-  MOVE_CONSTRUCTIBLE(context3d);
+  MOVE_CONSTRUCTIBLE_ONLY(context3d);
 };
 
 struct color2d_context : public context2d
 {
   friend struct context_factory;
 protected:
-  explicit color2d_context(pipeline &&p, vertex_attribute &&va)
-    : context2d(std::move(p), std::move(va))
-  {
-  }
-  NO_COPY(color2d_context);
-  NO_MOVE_ASSIGN(color2d_context);
+  explicit color2d_context() = default;
 public:
-  MOVE_CONSTRUCTIBLE(color2d_context);
+  MOVE_CONSTRUCTIBLE_ONLY(color2d_context);
 };
 
 class color3d_context : public context3d
 {
 friend struct context_factory;
 protected:
-  explicit color3d_context(pipeline &&p, vertex_attribute &&va)
-    : context3d(std::move(p), std::move(va))
-  {
-  }
-  NO_COPY(color3d_context);
-  NO_MOVE_ASSIGN(color3d_context);
+  explicit color3d_context() = default;
 public:
-  MOVE_CONSTRUCTIBLE(color3d_context);
+  MOVE_CONSTRUCTIBLE_ONLY(color3d_context);
 };
 
 template<typename D>
@@ -125,20 +93,17 @@ protected:
   texture_info texture_info_;
 
   // private
-  explicit opengl_texture_context(pipeline &&p, vertex_attribute &&va, texture_info const t)
-      : D(std::move(p), std::move(va))
-      , texture_info_(t)
+  explicit opengl_texture_context(texture_info const t)
+      : texture_info_(t)
   {
   }
 
   NO_COPY(opengl_texture_context);
   NO_MOVE_ASSIGN(opengl_texture_context);
-
 public:
   // move-construction OK.
   explicit opengl_texture_context(opengl_texture_context &&other)
-      : D(std::move(other))
-      , texture_info_(other.texture_info_)
+      : texture_info_(other.texture_info_)
   {
     other.texture_info_ = texture_info{0, 0};
   }
@@ -150,49 +115,41 @@ public:
 class texture3d_context : public opengl_texture_context<context3d>
 {
 protected:
-  explicit texture3d_context(pipeline &&p, vertex_attribute &&va, texture_info const t)
-      : opengl_texture_context(std::move(p), std::move(va), t)
+  explicit texture3d_context(texture_info const t)
+      : opengl_texture_context(t)
   {
   }
 
-  NO_COPY(texture3d_context);
-  NO_MOVE_ASSIGN(texture3d_context);
   friend struct context_factory;
-
 public:
-  MOVE_CONSTRUCTIBLE(texture3d_context);
+  MOVE_CONSTRUCTIBLE_ONLY(texture3d_context);
 };
 
 class skybox_context : public texture3d_context
 {
   // private
-  explicit skybox_context(pipeline &&p, vertex_attribute &&va, texture_info const t)
-      : texture3d_context(std::move(p), std::move(va), t)
+  explicit skybox_context(texture_info const t)
+      : texture3d_context(t)
   {
   }
 
-  NO_COPY(skybox_context);
-  NO_MOVE_ASSIGN(skybox_context);
   friend struct context_factory;
-
 public:
-  MOVE_CONSTRUCTIBLE(skybox_context);
+  MOVE_CONSTRUCTIBLE_ONLY(skybox_context);
   static bool constexpr IS_SKYBOX = true;
 };
 
 class texture2d_context : public opengl_texture_context<context2d>
 {
   // private
-  explicit texture2d_context(pipeline &&p, vertex_attribute &&va, texture_info const t)
-      : opengl_texture_context(std::move(p), std::move(va), t)
+  explicit texture2d_context(texture_info const t)
+      : opengl_texture_context(t)
   {
   }
 
-  NO_COPY(texture2d_context);
-  NO_MOVE_ASSIGN(texture2d_context);
   friend struct context_factory;
 public:
-  MOVE_CONSTRUCTIBLE(texture2d_context);
+  MOVE_CONSTRUCTIBLE_ONLY(texture2d_context);
 };
 
 template<typename B>
@@ -201,9 +158,8 @@ class opengl_wireframe_context : public B
   std::array<float, 4> color_;
 
 protected:
-  explicit opengl_wireframe_context(pipeline &&p, vertex_attribute &&va, std::array<float, 4> const &c)
-      : B(std::move(p), std::move(va))
-      , color_(c)
+  explicit opengl_wireframe_context(std::array<float, 4> const &c)
+      : color_(c)
   {
   }
 public:
@@ -216,31 +172,27 @@ public:
 class wireframe2d_context : public opengl_wireframe_context<context2d>
 {
   // private
-  explicit wireframe2d_context(pipeline &&p, vertex_attribute &&va, std::array<float, 4> const &c)
-      : opengl_wireframe_context(std::move(p), std::move(va), c)
+  explicit wireframe2d_context(std::array<float, 4> const &c)
+      : opengl_wireframe_context(c)
   {
   }
 
-  NO_COPY(wireframe2d_context);
-  NO_MOVE_ASSIGN(wireframe2d_context);
   friend struct context_factory;
 public:
-  MOVE_CONSTRUCTIBLE(wireframe2d_context);
+  MOVE_CONSTRUCTIBLE_ONLY(wireframe2d_context);
 };
 
 class wireframe3d_context : public opengl_wireframe_context<context3d>
 {
   // private
-  explicit wireframe3d_context(pipeline &&p, vertex_attribute &&va, std::array<float, 4> const &c)
-      : opengl_wireframe_context(std::move(p), std::move(va), c)
+  explicit wireframe3d_context(std::array<float, 4> const &c)
+      : opengl_wireframe_context(c)
   {
   }
 
-  NO_COPY(wireframe3d_context);
-  NO_MOVE_ASSIGN(wireframe3d_context);
   friend struct context_factory;
 public:
-  MOVE_CONSTRUCTIBLE(wireframe3d_context);
+  MOVE_CONSTRUCTIBLE_ONLY(wireframe3d_context);
 };
 
 class context_factory
@@ -258,57 +210,52 @@ class context_factory
 
 public:
   template <typename L>
-  auto static make_color2d(L &logger, pipeline &&p, vertex_attribute &&va)
+  auto static make_color2d(L &logger)
   {
-    return make<color2d_context>(logger, std::move(p), std::move(va));
+    return make<color2d_context>(logger);
   }
 
   template <typename L>
-  auto static make_texture2d(L &logger, pipeline &&p, char const *path,
-                                          vertex_attribute &&va)
+  auto static make_texture2d(L &logger, char const *path)
   {
     auto const tid = load_2d_texture(logger, path);
-    return make<texture2d_context>(logger, std::move(p), std::move(va), tid);
+    return make<texture2d_context>(logger, tid);
   }
 
   template <typename L>
-  auto static make_color3d(L &logger, pipeline &&p, vertex_attribute &&va)
+  auto static make_color3d(L &logger)
   {
-    return make<color3d_context>(logger, std::move(p), std::move(va));
+    return make<color3d_context>(logger);
   }
 
   template <typename L, typename ...Paths>
-  auto static make_texture3d(L &logger, pipeline &&p, vertex_attribute &&va,
-      Paths const&... paths)
+  auto static make_texture3d(L &logger, Paths const&... paths)
   {
     auto const tid = load_3d_texture(logger, paths...);
-    return make<texture3d_context>(logger, std::move(p), std::move(va), tid);
+    return make<texture3d_context>(logger, tid);
   }
 
   template <typename L, typename ...Paths>
-  auto static make_skybox(L &logger, pipeline &&p, vertex_attribute &&va,
-      Paths const&... paths)
+  auto static make_skybox(L &logger, Paths const&... paths)
   {
     auto const tid = load_3d_texture(logger, paths...);
-    return make<skybox_context>(logger, std::move(p), std::move(va), tid);
+    return make<skybox_context>(logger, tid);
   }
 
   template <typename L>
-  auto static make_wireframe2d(L &logger, pipeline &&p, vertex_attribute &&va,
-                                            std::array<float, 3> const &c)
+  auto static make_wireframe2d(L &logger, std::array<float, 3> const &c)
   {
     constexpr auto ALPHA = 1.0f;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
-    return make<wireframe2d_context>(logger, std::move(p), std::move(va), color);
+    return make<wireframe2d_context>(logger, color);
   }
 
   template <typename L>
-  auto static make_wireframe3d(L &logger, pipeline &&p, vertex_attribute &&va,
-                                            std::array<float, 3> const &c)
+  auto static make_wireframe3d(L &logger, std::array<float, 3> const &c)
   {
     constexpr auto ALPHA = 1.0f;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
-    return make<wireframe3d_context>(logger, std::move(p), std::move(va), color);
+    return make<wireframe3d_context>(logger, color);
   }
 };
 

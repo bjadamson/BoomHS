@@ -21,49 +21,49 @@ void draw_shape(FN const& fn, B const& burrito)
   fn(gl_mapped_shapes);
 }
 
-template<typename Args, typename C, typename B>
-void draw2d(Args const& args, C &ctx, B const& burrito)
+template<typename Args, typename P, typename B>
+void draw2d(Args const& args, P &pipeline, B const& burrito)
 {
   auto const fn = [&](auto const& gl_mapped_shapes) {
-    render2d::draw_scene(args.logger, ctx, gl_mapped_shapes);
+    render2d::draw_scene(args.logger, pipeline, gl_mapped_shapes);
   };
   draw_shape(fn, burrito);
 }
 
-template <typename Args, typename C, typename B>
-void draw3d(Args const &args, C &ctx, B const& burrito)
+template <typename Args, typename P, typename B>
+void draw3d(Args const &args, P &pipeline, B const& burrito)
 {
   auto const fn = [&](auto const& gl_mapped_shapes) {
-    render3d::draw_scene(args.logger, ctx, args.camera, args.projection, gl_mapped_shapes);
+    render3d::draw_scene(args.logger, pipeline, args.camera, args.projection, gl_mapped_shapes);
   };
   draw_shape(fn, burrito);
 }
 
 } // ns impl
 
-struct context2d_args
+struct program2d
 {
-  color2d_context color;
-  texture2d_context texture_wall;
-  texture2d_context texture_container;
-  wireframe2d_context wireframe;
+  pipeline<color2d_context> color;
+  pipeline<texture2d_context> texture_wall;
+  pipeline<texture2d_context> texture_container;
+  pipeline<wireframe2d_context> wireframe;
 
-  MOVE_CONSTRUCTIBLE_ONLY(context2d_args);
+  MOVE_CONSTRUCTIBLE_ONLY(program2d);
 };
-struct context3d_args
-{
-  color3d_context color;
-  texture3d_context texture;
-  skybox_context skybox;
-  wireframe3d_context wireframe;
 
-  MOVE_CONSTRUCTIBLE_ONLY(context3d_args);
+struct program3d
+{
+  pipeline<color3d_context> color;
+  pipeline<texture3d_context> texture;
+  pipeline<skybox_context> skybox;
+  pipeline<wireframe3d_context> wireframe;
+
+  MOVE_CONSTRUCTIBLE_ONLY(program3d);
 };
 
 struct engine {
-  // data
-  context2d_args d2;
-  context3d_args d3;
+  program2d d2;
+  program3d d3;
 
   MOVE_CONSTRUCTIBLE_ONLY(engine);
 
@@ -81,9 +81,9 @@ struct engine {
     glDisable(GL_DEPTH_TEST);
   }
 
-  engine(glm::vec4 const& bg, context2d_args &&context_2d, context3d_args &&context_3d)
-    : d2(std::move(context_2d))
-    , d3(std::move(context_3d))
+  engine(glm::vec4 const& bg, program2d &&p2d, program3d &&p3d)
+    : d2(MOVE(p2d))
+    , d3(MOVE(p3d))
   {
     // background color
     glClearColor(bg.x, bg.y, bg.z, bg.w);
@@ -100,16 +100,17 @@ struct engine {
   }
   void end() {}
 
-  template <typename Args, typename C, typename B>
-  void draw(Args const& args, C &ctx, B const& burrito)
+  template <typename Args, typename P, typename B>
+  void draw(Args const& args, P &pipeline, B const& burrito)
   {
+    using C = typename P::CTX;
     if constexpr (C::IS_2D) {
       disable_depth_tests();
-      impl::draw2d(args, ctx, burrito);
+      impl::draw2d(args, pipeline, burrito);
       enable_depth_tests();
     } else {
       auto const draw3d = [&]() {
-        impl::draw3d(args, ctx, burrito);
+        impl::draw3d(args, pipeline, burrito);
       };
       if constexpr (C::IS_SKYBOX) {
         disable_depth_tests();
@@ -122,10 +123,11 @@ struct engine {
   }
 };
 
-struct engine_factory {
+class engine_factory {
   engine_factory() = delete;
   ~engine_factory() = delete;
 
+public:
   template <typename L>
   static stlw::result<engine, std::string> make(L &logger)
   {
@@ -133,33 +135,28 @@ struct engine_factory {
     auto const get_r = [&](auto const i) { return RESOURCES[i]; };
 
     pipeline_factory pf;
-    DO_TRY(auto phandle0, pf.make("2dcolor.vert", "2dcolor.frag"));
+    auto c0 = context_factory::make_color2d(logger);
     auto va0 = global::make_vertex_color_vertex_attribute(logger);
-    auto c0 = context_factory::make_color2d(logger, std::move(phandle0), std::move(va0));
+    DO_TRY(auto p0, pf.make("2dcolor.vert", "2dcolor.frag", MOVE(c0), MOVE(va0)));
 
-    DO_TRY(auto phandle1, pf.make("2dtexture.vert", "2dtexture.frag"));
+    auto c1 = context_factory::make_texture2d(logger, get_r(IMAGES::WALL));
     auto va1 = global::make_vertex_uv2d_vertex_attribute(logger);
-    auto c1 = context_factory::make_texture2d(logger, std::move(phandle1),
-                                                           get_r(IMAGES::WALL), std::move(va1));
+    DO_TRY(auto p1, pf.make("2dtexture.vert", "2dtexture.frag", MOVE(c1), MOVE(va1)));
 
-    DO_TRY(auto phandle2, pf.make("2dtexture.vert", "2dtexture.frag"));
+    auto c2 = context_factory::make_texture2d(logger, get_r(IMAGES::CONTAINER));
     auto va2 = global::make_vertex_uv2d_vertex_attribute(logger);
-    auto c2 = context_factory::make_texture2d(logger, std::move(phandle2),
-                                                           get_r(IMAGES::CONTAINER), std::move(va2));
+    DO_TRY(auto p2, pf.make("2dtexture.vert", "2dtexture.frag", MOVE(c2), MOVE(va2)));
 
-    DO_TRY(auto phandle3, pf.make("wire.vert", "wire.frag"));
-    auto va3 = global::make_2dvertex_only_vertex_attribute(logger);
     auto const color = LIST_OF_COLORS::PINK;
-    auto c3 = context_factory::make_wireframe2d(logger, std::move(phandle3), std::move(va3), color);
+    auto c3 = context_factory::make_wireframe2d(logger, color);
+    auto va3 = global::make_2dvertex_only_vertex_attribute(logger);
+    DO_TRY(auto p3, pf.make("wire.vert", "wire.frag", MOVE(c3), MOVE(va3)));
 
-    DO_TRY(auto phandle4, pf.make("3dcolor.vert", "3dcolor.frag"));
+    auto c4 = context_factory::make_color3d(logger);
     auto va4 = global::make_vertex_color_vertex_attribute(logger);
-    auto c4 = context_factory::make_color3d(logger, std::move(phandle4), std::move(va4));
+    DO_TRY(auto p4, pf.make("3dcolor.vert", "3dcolor.frag", MOVE(c4), MOVE(va4)));
 
-    DO_TRY(auto phandle5, pf.make("3dtexture.vert", "3dtexture.frag"));
-    auto va5 = global::make_3dvertex_only_vertex_attribute(logger);
-    auto c5 = context_factory::make_texture3d(
-        logger, std::move(phandle5), std::move(va5),
+    auto c5 = context_factory::make_texture3d(logger,
         get_r(IMAGES::CUBE_FRONT),
         get_r(IMAGES::CUBE_RIGHT),
         get_r(IMAGES::CUBE_BACK),
@@ -167,11 +164,10 @@ struct engine_factory {
         get_r(IMAGES::CUBE_TOP),
         get_r(IMAGES::CUBE_BOTTOM)
         );
+    auto va5 = global::make_3dvertex_only_vertex_attribute(logger);
+    DO_TRY(auto p5, pf.make("3dtexture.vert", "3dtexture.frag", MOVE(c5), MOVE(va5)));
 
-    DO_TRY(auto phandle6, pf.make("3dtexture.vert", "3dtexture.frag"));
-    auto va6 = global::make_3dvertex_only_vertex_attribute(logger);
-    auto c6 = context_factory::make_skybox(
-        logger, std::move(phandle6), std::move(va6),
+    auto c6 = context_factory::make_skybox(logger,
         get_r(IMAGES::SB_FRONT),
         get_r(IMAGES::SB_RIGHT),
         get_r(IMAGES::SB_BACK),
@@ -179,18 +175,20 @@ struct engine_factory {
         get_r(IMAGES::SB_TOP),
         get_r(IMAGES::SB_BOTTOM)
         );
+    auto va6 = global::make_3dvertex_only_vertex_attribute(logger);
+    DO_TRY(auto p6, pf.make("3dtexture.vert", "3dtexture.frag", MOVE(c6), MOVE(va6)));
 
-    DO_TRY(auto phandle7, pf.make("3dwire.vert", "wire.frag"));
-    auto va7 = global::make_3dvertex_only_vertex_attribute(logger);
     auto const color2 = LIST_OF_COLORS::PURPLE;
-    auto c7 = context_factory::make_wireframe3d(logger, std::move(phandle7), std::move(va7), color2);
+    auto c7 = context_factory::make_wireframe3d(logger, color2);
+    auto va7 = global::make_3dvertex_only_vertex_attribute(logger);
+    DO_TRY(auto p7, pf.make("3dwire.vert", "wire.frag", MOVE(c7), MOVE(va7)));
 
-    context2d_args d2{std::move(c0), std::move(c1), std::move(c2), std::move(c3)};
-    context3d_args d3{std::move(c4), std::move(c5), std::move(c6), std::move(c7)};
+    program2d d2{MOVE(p0), MOVE(p1), MOVE(p2), MOVE(p3)};
+    program3d d3{MOVE(p4), MOVE(p5), MOVE(p6), MOVE(p7)};
 
     auto const c = LIST_OF_COLORS::WHITE;
     auto const background_color = glm::vec4{c[0], c[1], c[2], 1.0f};
-    return engine{background_color, std::move(d2), std::move(d3)};
+    return engine{background_color, MOVE(d2), MOVE(d3)};
   }
 };
 

@@ -1,7 +1,6 @@
 #pragma once
 #include <stlw/type_macros.hpp>
 #include <gfx/opengl/engine.hpp>
-#include <gfx/opengl/pipeline.hpp>
 
 namespace gfx::opengl
 {
@@ -12,11 +11,8 @@ class opengl_lib
 public:
   engine gfx_engine;
 private:
-  pipeline_factory pipeline_factory_;
-
-  opengl_lib(engine &&e, pipeline_factory &&pf)
+  opengl_lib(engine &&e)
     : gfx_engine(MOVE(e))
-    , pipeline_factory_(MOVE(pf))
     {
     }
 public:
@@ -32,7 +28,7 @@ struct lib_factory
   make(L &logger)
   {
     DO_TRY(auto engine, engine_factory::make(logger));
-    return opengl_lib{MOVE(engine), pipeline_factory{}};
+    return opengl_lib{MOVE(engine)};
   }
 };
 
