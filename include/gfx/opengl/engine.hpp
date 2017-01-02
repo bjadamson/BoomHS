@@ -1,6 +1,6 @@
 #pragma once
-#include <gfx/lib.hpp>
 #include <gfx/opengl/context.hpp>
+#include <gfx/opengl/pipeline.hpp>
 #include <gfx/opengl/gfx_to_opengl.hpp>
 #include <gfx/opengl/render2d.hpp>
 #include <gfx/opengl/render3d.hpp>
@@ -122,40 +122,41 @@ struct engine {
   }
 };
 
-struct factory {
-  factory() = delete;
-  ~factory() = delete;
+struct engine_factory {
+  engine_factory() = delete;
+  ~engine_factory() = delete;
 
   template <typename L>
-  static stlw::result<engine, std::string> make_opengl_engine(L &logger)
+  static stlw::result<engine, std::string> make(L &logger)
   {
     auto constexpr RESOURCES = resources::make_resource_table();
     auto const get_r = [&](auto const i) { return RESOURCES[i]; };
 
-    DO_TRY(auto phandle0, program_loader::from_files("2dcolor.vert", "2dcolor.frag"));
+    pipeline_factory pf;
+    DO_TRY(auto phandle0, pf.make("2dcolor.vert", "2dcolor.frag"));
     auto va0 = global::make_vertex_color_vertex_attribute(logger);
     auto c0 = context_factory::make_color2d(logger, std::move(phandle0), std::move(va0));
 
-    DO_TRY(auto phandle1, program_loader::from_files("2dtexture.vert", "2dtexture.frag"));
+    DO_TRY(auto phandle1, pf.make("2dtexture.vert", "2dtexture.frag"));
     auto va1 = global::make_vertex_uv2d_vertex_attribute(logger);
     auto c1 = context_factory::make_texture2d(logger, std::move(phandle1),
                                                            get_r(IMAGES::WALL), std::move(va1));
 
-    DO_TRY(auto phandle2, program_loader::from_files("2dtexture.vert", "2dtexture.frag"));
+    DO_TRY(auto phandle2, pf.make("2dtexture.vert", "2dtexture.frag"));
     auto va2 = global::make_vertex_uv2d_vertex_attribute(logger);
     auto c2 = context_factory::make_texture2d(logger, std::move(phandle2),
                                                            get_r(IMAGES::CONTAINER), std::move(va2));
 
-    DO_TRY(auto phandle3, program_loader::from_files("wire.vert", "wire.frag"));
+    DO_TRY(auto phandle3, pf.make("wire.vert", "wire.frag"));
     auto va3 = global::make_2dvertex_only_vertex_attribute(logger);
     auto const color = LIST_OF_COLORS::PINK;
     auto c3 = context_factory::make_wireframe2d(logger, std::move(phandle3), std::move(va3), color);
 
-    DO_TRY(auto phandle4, program_loader::from_files("3dcolor.vert", "3dcolor.frag"));
+    DO_TRY(auto phandle4, pf.make("3dcolor.vert", "3dcolor.frag"));
     auto va4 = global::make_vertex_color_vertex_attribute(logger);
     auto c4 = context_factory::make_color3d(logger, std::move(phandle4), std::move(va4));
 
-    DO_TRY(auto phandle5, program_loader::from_files("3dtexture.vert", "3dtexture.frag"));
+    DO_TRY(auto phandle5, pf.make("3dtexture.vert", "3dtexture.frag"));
     auto va5 = global::make_3dvertex_only_vertex_attribute(logger);
     auto c5 = context_factory::make_texture3d(
         logger, std::move(phandle5), std::move(va5),
@@ -167,7 +168,7 @@ struct factory {
         get_r(IMAGES::CUBE_BOTTOM)
         );
 
-    DO_TRY(auto phandle6, program_loader::from_files("3dtexture.vert", "3dtexture.frag"));
+    DO_TRY(auto phandle6, pf.make("3dtexture.vert", "3dtexture.frag"));
     auto va6 = global::make_3dvertex_only_vertex_attribute(logger);
     auto c6 = context_factory::make_skybox(
         logger, std::move(phandle6), std::move(va6),
@@ -179,7 +180,7 @@ struct factory {
         get_r(IMAGES::SB_BOTTOM)
         );
 
-    DO_TRY(auto phandle7, program_loader::from_files("3dwire.vert", "wire.frag"));
+    DO_TRY(auto phandle7, pf.make("3dwire.vert", "wire.frag"));
     auto va7 = global::make_3dvertex_only_vertex_attribute(logger);
     auto const color2 = LIST_OF_COLORS::PURPLE;
     auto c7 = context_factory::make_wireframe3d(logger, std::move(phandle7), std::move(va7), color2);

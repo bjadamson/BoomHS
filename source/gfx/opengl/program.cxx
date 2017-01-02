@@ -74,7 +74,7 @@ link_program(GLuint const program_id)
   return stlw::make_empty();
 }
 
-stlw::result<program, std::string>
+stlw::result<GLuint, std::string>
 compile_sources(std::string const &vertex_shader_source, std::string const &fragment_shader_source)
 {
   DO_TRY(auto const vertex_shader_id, compile_shader(vertex_shader_source, GL_VERTEX_SHADER));
@@ -92,7 +92,7 @@ compile_sources(std::string const &vertex_shader_source, std::string const &frag
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, frag_shader_id); });
 
   DO_EFFECT(link_program(program_id));
-  return program::make(program_id);
+  return program_id;
 }
 
 } // ns anonymous
@@ -100,8 +100,8 @@ compile_sources(std::string const &vertex_shader_source, std::string const &frag
 namespace gfx::opengl
 {
 
-stlw::result<program, std::string>
-program_loader::from_files(vertex_shader_filename const v, fragment_shader_filename const f)
+stlw::result<GLuint, std::string>
+program_factory::from_files(vertex_shader_filename const v, fragment_shader_filename const f)
 {
   auto const prefix = [](auto const &path) {
     return std::string{"./build-system/bin/shaders/"} + path;

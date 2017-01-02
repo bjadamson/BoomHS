@@ -20,147 +20,109 @@
     }                                                                                              \
   }
 
+#include <iostream>
 namespace gfx::opengl
 {
 
 DEFINE_SHADER_FILENAME_TYPE(vertex);
 DEFINE_SHADER_FILENAME_TYPE(fragment);
 
-class program
+#undef DEFINE_SHADER_FILENAME_TYPE
+
+constexpr GLuint
+INVALID_PROGRAM_ID() { return 0; }
+
+constexpr bool
+is_invalid(GLuint const p) { return p == INVALID_PROGRAM_ID(); }
+
+template <typename L>
+void
+check_opengl_errors(L &logger, GLuint const p)
 {
-  /////////////////////////////////////////////////////////////////////////////////////////////////
-  // non-const to allow move-assignment.
-  GLuint program_id_;
-
-  // https://www.opengl.org/sdk/docs/man2/xhtml/glDeleteProgram.xml
-  // from the docs:
-  // A value of 0 for program will be silently ignored.
-
-  // This means that if we assign program_id_ to 0 in the move
-  // constructor/assignment operator,
-  // this class can exhibit correct move semantics.
-  static auto constexpr INVALID_PROGRAM_ID = 0;
-
-  inline void destroy() { glDeleteProgram(this->program_id_); }
-
-  GLuint get() const { return this->program_id_; }
-
-  NO_COPY(program)
-
-  static inline void invalidate_other_shader(program &other)
-  {
-    other.program_id_ = INVALID_PROGRAM_ID;
+  auto const errors = global::log::get_errors(p);
+  if (errors) {
+    logger.error("Opengl error: '{}'", *errors);
   }
+}
 
-  /////////////////////////////////////////////////////////////////////////////////////////////////
-  // constructors
-  explicit program(GLuint const p)
-      : program_id_(p)
-  {
-  }
+inline void
+destroy_program(GLuint const p)
+{
+  glDeleteProgram(p);
+}
 
-public:
-  ~program() { destroy(); }
+inline void
+use_program(GLuint const p)
+{
+  glUseProgram(p);
+}
 
-  // Allow instances to be moved around freely, always taking care to invalidate the moved-from
-  // instance.
-  program(program &&other)
-      : program_id_(other.program_id_)
-  {
-    invalidate_other_shader(other);
-  }
+namespace impl
+{
 
-  // Move-assignment implementation.
-  program &operator=(program &&other)
-  {
-    this->program_id_ = other.program_id_;
-    invalidate_other_shader(other);
-    return *this;
-  }
+template <typename L>
+auto
+get_uniform_location(L &logger, GLuint const p, GLchar const *name)
+{
+  global::log::clear_gl_errors();
 
-  // MUTATION
-  // ----------------------------------------------------------------------------------------------
-  // Make this program become "Active" for OpenGL.
-  void use() { glUseProgram(this->program_id_); }
+  logger.trace(fmt::sprintf("getting uniform '%s' location.", name));
+  GLint const loc = glGetUniformLocation(p, name);
+  logger.trace(fmt::sprintf("uniform '%s' found at '%d'.", name, loc));
 
-  template <typename L>
-  auto get_uniform_location(L &logger, GLuint program, GLchar const *name)
-  {
-    global::log::clear_gl_errors();
-    this->use();
+  check_opengl_errors(logger, p);
+  assert(-1 != loc);
+  return loc;
+}
 
-    logger.trace(fmt::sprintf("getting uniform '%s' location.", name));
-    GLint const loc = glGetUniformLocation(this->program_id_, name);
-    logger.trace(fmt::sprintf("uniform '%s' found at '%d'.", name, loc));
+} // ns impl
 
-    this->check_opengl_errors(logger);
-    assert(-1 != loc);
-    return loc;
-  }
+template <typename L>
+void
+program_set_uniform_matrix_4fv(L &logger, GLuint const p, GLchar const *name, glm::mat4 const &matrix)
+{
+  auto const loc = impl::get_uniform_location(logger, p, name);
 
-  template <typename L>
-  void set_uniform_matrix_4fv(L &logger, GLchar const *name, glm::mat4 const &matrix)
-  {
-    auto const loc = this->get_uniform_location(logger, this->program_id_, name);
+  // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
+  //
+  // count:
+  // For the matrix (glUniformMatrix*) commands, specifies the number of matrices that are to be
+  // modified.
+  // This should be 1 if the targeted uniform variable is not an array of matrices, and 1 or more
+  // if it is an array of matrices.
+  GLsizei constexpr COUNT = 1;
+  GLboolean constexpr TRANSPOSE_MATRICES = GL_FALSE;
 
-    // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
-    //
-    // count:
-    // For the matrix (glUniformMatrix*) commands, specifies the number of matrices that are to be
-    // modified.
-    // This should be 1 if the targeted uniform variable is not an array of matrices, and 1 or more
-    // if it is an array of matrices.
-    GLsizei constexpr COUNT = 1;
-    GLboolean constexpr TRANSPOSE_MATRICES = GL_FALSE;
+  logger.trace(fmt::sprintf("sending uniform matrix at loc '%d' with data '%s' to GPU", loc,
+        glm::to_string(matrix)));
+  glUniformMatrix4fv(loc, COUNT, TRANSPOSE_MATRICES, glm::value_ptr(matrix));
+  check_opengl_errors(logger, p);
+}
 
-    logger.trace(fmt::sprintf("sending uniform matrix at loc '%d' with data '%s' to GPU", loc,
-          glm::to_string(matrix)));
-    glUniformMatrix4fv(loc, COUNT, TRANSPOSE_MATRICES, glm::value_ptr(matrix));
-    this->check_opengl_errors(logger);
-  }
+template <typename L>
+void
+program_set_uniform_array_4fv(L &logger, GLuint const p, GLchar const *name, std::array<float, 4> const &floats)
+{
+  // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
+  //
+  // For the vector (glUniform*v) commands, specifies the number of elements that are to be
+  // modified.
+  // This should be 1 if the targeted uniform variable is not an array, and 1 or more if it is an
+  // array.
+  GLsizei constexpr COUNT = 1;
 
-  template <typename L>
-  void set_uniform_array_4fv(L &logger, GLchar const *name, std::array<float, 4> const &floats)
-  {
-    // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
-    //
-    // For the vector (glUniform*v) commands, specifies the number of elements that are to be
-    // modified.
-    // This should be 1 if the targeted uniform variable is not an array, and 1 or more if it is an
-    // array.
-    GLsizei constexpr COUNT = 1;
+  auto const loc = impl::get_uniform_location(logger, p, name);
+  glUniform4fv(loc, COUNT, floats.data());
+  check_opengl_errors(logger, p);
+}
 
-    auto const loc = this->get_uniform_location(logger, this->program_id_, name);
-    glUniform4fv(loc, COUNT, floats.data());
-    this->check_opengl_errors(logger);
-  }
+struct program_factory {
+  program_factory() = delete;
 
-  // IMMUTABLE
-  // ----------------------------------------------------------------------------------------------
-  inline std::string shader_log() const { return global::log::get_shader_log(this->program_id_); }
-
-  inline std::string program_log() const { return global::log::get_program_log(this->program_id_); }
-
-  template <typename L>
-  inline void check_opengl_errors(L &logger) const
-  {
-    auto const errors = global::log::get_errors(this->program_id_);
-    if (errors) {
-      logger.error("Opengl error: '{}'", *errors);
-    }
-  }
-
-  // Factory functions
-  static program make(GLuint const program_id) { return program{program_id}; }
-
-  static program make_invalid() { return make(INVALID_PROGRAM_ID); }
-};
-
-struct program_loader {
-  program_loader() = delete;
-
-  static stlw::result<program, std::string>
+  static stlw::result<GLuint, std::string>
   from_files(vertex_shader_filename const, fragment_shader_filename const);
+
+  static GLuint make_invalid() { return INVALID_PROGRAM_ID(); }
 };
 
 } // ns gfx::opengl

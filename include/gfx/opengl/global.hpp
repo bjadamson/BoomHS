@@ -15,18 +15,4 @@ static auto const texture_bind = [](auto const texture) {
 };
 static auto const texture_unbind = [](auto const texture) { glBindTexture(texture.mode, 0); };
 
-namespace log
-{
-static auto const get_shader_log = [](GLuint const handle) {
-  return impl::retrieve(handle, glGetShaderInfoLog);
-};
-
-static auto const get_program_log = [](GLuint const handle) {
-  return impl::retrieve(handle, glGetProgramInfoLog);
-};
-
-static auto const get_errors = [](GLuint const program_id) { return impl::get_errors(program_id); };
-static auto const clear_gl_errors = []() { impl::clear_gl_errors(); };
-} // ns log
-
 } // ns gfx::opengl::global

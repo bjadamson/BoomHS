@@ -94,15 +94,15 @@ void
 draw_scene(L &logger, C &ctx, FN const& fn, B const &burrito)
 {
   // Pass the matrices to the shader
-  auto &p = ctx.program_ref();
+  auto &p = ctx.pipeline_ref();
 
   logger.trace("using p");
   p.use();
-  p.check_opengl_errors(logger);
+  p.check_errors(logger);
 
   if constexpr (C::HAS_COLOR_UNIFORM) {
     p.set_uniform_array_4fv(logger, "u_color", ctx.color());
-    p.check_opengl_errors(logger);
+    p.check_errors(logger);
   }
 
   // Instruct the vertex-processor to enable the vertex attributes for this context.

@@ -1,14 +1,9 @@
 #pragma once
 #include <gfx/mode.hpp>
-#include <gfx/opengl/context.hpp>
-#include <gfx/opengl/glew.hpp>
-#include <gfx/opengl/program.hpp>
 #include <gfx/opengl/vertex_attribute.hpp>
 #include <gfx/shape2d.hpp>
 #include <gfx/shape3d.hpp>
-#include <window/sdl_window.hpp>
 #include <glm/glm.hpp>
-#include <stlw/algorithm.hpp>
 #include <stlw/burrito.hpp>
 #include <stlw/sized_buffer.hpp>
 #include <stlw/type_ctors.hpp>

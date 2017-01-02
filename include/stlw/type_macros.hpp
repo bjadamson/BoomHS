@@ -1,4 +1,5 @@
 #pragma once
+#include <utility>
 
 // BEGIN Class-building macros
 #define NO_COPY_ASSIGN(CLASSNAME) CLASSNAME &operator=(CLASSNAME const &) = delete;
@@ -145,3 +146,5 @@ using ImplicitelyCastableMovableWrapper = impl::ICMW<T, DF>;
 #define ON_SCOPE_EXIT(expr) ON_SCOPE_EXIT_EXPAND(__COUNTER__, expr)
 
 } // ns stlw
+
+#define MOVE std::move

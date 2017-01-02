@@ -1,5 +1,5 @@
 #pragma once
-#include <gfx/opengl/engine.hpp>
+#include <gfx/opengl/lib.hpp>
 #include <stlw/burrito.hpp>
 #include <stlw/type_ctors.hpp>
 
@@ -26,23 +26,23 @@ class gfx_lib
   friend struct factory;
   NO_COPY(gfx_lib);
 public:
-  opengl::engine gfx_engine;
+  opengl::opengl_lib lib;
 private:
-  gfx_lib(opengl::engine &&e)
-      : gfx_engine(std::move(e))
+  gfx_lib(opengl::opengl_lib &&l)
+      : lib(MOVE(l))
   {
   }
 
   template <typename Args, typename Ctx, typename B>
   void draw_burrito(Args const& args, Ctx &ctx, B const& burrito)
   {
-    this->gfx_engine.draw(args, ctx, stlw::make_burrito(burrito));
+    this->lib.gfx_engine.draw(args, ctx, stlw::make_burrito(burrito));
   }
 
   template <typename Args, typename Ctx, typename B>
   void draw_burrito(Args const& args, Ctx &ctx, B &&burrito)
   {
-    this->gfx_engine.draw(args, ctx, stlw::make_burrito(std::move(burrito)));
+    this->lib.gfx_engine.draw(args, ctx, stlw::make_burrito(std::move(burrito)));
   }
 
 public:
@@ -50,7 +50,7 @@ public:
 
   void begin()
   {
-    this->gfx_engine.begin();
+    this->lib.gfx_engine.begin();
   }
 
   template<typename Args, typename Ctx, template<class, std::size_t> typename C, typename T, std::size_t N>
@@ -92,7 +92,7 @@ public:
 
   void end()
   {
-    this->gfx_engine.end();
+    this->lib.gfx_engine.end();
   }
 };
 
@@ -103,8 +103,8 @@ struct factory {
   template <typename L>
   static stlw::result<gfx_lib, std::string> make_gfx_engine(L &logger)
   {
-    DO_TRY(auto opengl_engine, opengl::factory::make_opengl_engine(logger));
-    return gfx_lib{std::move(opengl_engine)};
+    DO_TRY(auto opengl_lib, opengl::lib_factory::make(logger));
+    return gfx_lib{MOVE(opengl_lib)};
   }
 };
 

@@ -26,7 +26,7 @@ draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
-  auto &p = ctx.program_ref();
+  auto &p = ctx.pipeline_ref();
   p.use();
   auto const fn = [&](auto const &shape) {
     logger.trace("setting u_mvmatrix");
@@ -41,7 +41,7 @@ draw_scene(L &logger, C &ctx, glm::mat4 const& view, glm::mat4 const& projection
 
     logger.trace("before drawing shape ...");
     render::render_shape(logger, ctx, shape);
-    p.check_opengl_errors(logger);
+    p.check_errors(logger);
     logger.trace("after drawing shape");
   };
 

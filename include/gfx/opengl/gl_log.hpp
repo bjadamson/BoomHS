@@ -6,7 +6,10 @@
 #include <boost/optional.hpp>
 #include <string> // TODO: rm
 
-namespace gfx::opengl::global::log::impl
+namespace gfx::opengl::global::log
+{
+
+namespace impl
 {
 
 // also, make an abstraction over the source, not just vector<char>
@@ -35,6 +38,21 @@ retrieve(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei *, GLchar *))
   return std::string{buffer.cbegin(), buffer.cend()};
 }
 
+template <typename L>
+auto
+log_any_gl_errors(L &logger, std::string const &msg, int const line)
+{
+  GLenum const err = glGetError();
+  if (err != GL_NO_ERROR) {
+    auto const msg = fmt::sprintf("GL error detected (line %d), code: '%d', string: '%s'", line,
+                                  err, gluErrorString(err));
+    logger.error(msg);
+    assert(false);
+  }
+}
+
+} // ns impl
+
 static boost::optional<std::string>
 get_errors(GLuint const program_id)
 {
@@ -48,19 +66,6 @@ get_errors(GLuint const program_id)
   return boost::make_optional(fmt);
 }
 
-template <typename L>
-auto
-log_any_gl_errors(L &logger, std::string const &msg, int const line)
-{
-  GLenum const err = glGetError();
-  if (err != GL_NO_ERROR) {
-    auto const msg = fmt::sprintf("GL error detected (line %d), code: '%d', string: '%s'", line,
-                                  err, gluErrorString(err));
-    logger.error(msg);
-    assert(false);
-  }
-};
-
 inline void
 clear_gl_errors()
 {
@@ -68,9 +73,21 @@ clear_gl_errors()
   }
 }
 
-} // ns gfx::opengl::global::log::impl
+inline auto
+get_shader_log(GLuint const handle)
+{
+  return impl::retrieve(handle, glGetShaderInfoLog);
+};
 
-#define LOG_GL_ERRORS(logger, msg)                                                                 \
+inline auto
+get_program_log(GLuint const handle)
+{
+  return impl::retrieve(handle, glGetProgramInfoLog);
+};
+
+} // ns gfx::opengl::global::log
+
+#define LOG_ANY_GL_ERRORS(logger, msg)                                                             \
   do {                                                                                             \
-    ::gfx::opengl::global::log::impl::log_any_gl_errors(logger, msg, __LINE__);            \
+    ::gfx::opengl::global::log::impl::log_any_gl_errors(logger, msg, __LINE__);                    \
   } while (0)
