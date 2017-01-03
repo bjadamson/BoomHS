@@ -97,14 +97,15 @@ template <typename L, typename P, typename FN, typename B>
 void
 draw_scene(L &logger, P &pipeline, FN const& fn, B const &burrito)
 {
-  pipeline.use();
-  pipeline.check_errors(logger);
+  auto &program = pipeline.program_ref();
+  program.use();
+  program.check_errors(logger);
 
-  auto const& ctx = pipeline.ctx();
   using C = typename P::CTX;
   if constexpr (C::HAS_COLOR_UNIFORM) {
-    pipeline.set_uniform_array_4fv(logger, "u_color", ctx.color());
-    pipeline.check_errors(logger);
+    auto const& ctx = pipeline.ctx();
+    program.set_uniform_array_4fv(logger, "u_color", ctx.color());
+    program.check_errors(logger);
   }
 
   // Instruct the vertex-processor to enable the vertex attributes for this context.

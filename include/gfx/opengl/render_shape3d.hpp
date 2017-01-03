@@ -26,7 +26,7 @@ draw_scene(L &logger, P &pipeline, glm::mat4 const& view, glm::mat4 const& proje
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
-  pipeline.use();
+  auto &program = pipeline.program_ref();
   auto const fn = [&](auto const &shape) {
     logger.trace("setting u_mvmatrix");
     auto const& model = shape.model;
@@ -36,11 +36,11 @@ draw_scene(L &logger, P &pipeline, glm::mat4 const& view, glm::mat4 const& proje
     auto const smatrix = glm::scale(glm::mat4{}, model.scale);
     auto const mmatrix = tmatrix * rmatrix * smatrix;
     auto const mvmatrix = projection * view * mmatrix;
-    pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
+    program.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
 
     logger.trace("before drawing shape ...");
     render::render_shape(logger, shape);
-    pipeline.check_errors(logger);
+    program.check_errors(logger);
     logger.trace("after drawing shape");
   };
 

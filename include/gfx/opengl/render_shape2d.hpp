@@ -22,12 +22,13 @@ render_2d_impl(L &logger, P &pipeline, B const& burrito)
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
-  pipeline.use();
+  auto &program = pipeline.program_ref();
+  program.use();
   auto const fn = [&](auto const &shape) {
     logger.trace("before drawing shape ...");
     render::render_shape(logger, shape);
 
-    pipeline.check_errors(logger);
+    program.check_errors(logger);
     logger.trace("after drawing shape");
   };
 

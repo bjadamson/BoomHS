@@ -127,17 +127,11 @@ struct program_factory {
 
 // Essentially a "handle" over the program-object (GLuint) native OpenGL provides, but adds C++
 // move-semantics.
-template<typename C>
 class shader_program
 {
   GLuint program_;
-  C context_;
-  vertex_attribute va_;
-
-  explicit shader_program(GLuint &&p, C &&ctx, vertex_attribute &&va)
+  explicit shader_program(GLuint &&p)
       : program_(MOVE(p))
-      , context_(MOVE(ctx))
-      , va_(MOVE(va))
   {
   }
 
@@ -152,11 +146,8 @@ class shader_program
   NO_COPY(shader_program);
   NO_MOVE_ASSIGN(shader_program);
 public:
-  using CTX = C;
   shader_program(shader_program &&o)
     : program_(o.program_)
-    , context_(MOVE(o.context_))
-    , va_(MOVE(o.va_))
   {
     // We don't want to destroy the underlying program, we want to transfer the ownership to this
     // instance being moved into. This implements "handle-passing" allowing the user to observe
@@ -192,11 +183,6 @@ public:
     impl::program_set_uniform_array_4fv(logger, this->program_, name, floats);
   }
 
-  /////////////////////////////////////////////////////////////////////////////////////////////////
-  // IMMUTABLE
-  auto const& va() const { return this->va_; }
-  auto const& ctx() const { return this->context_; }
-
   template <typename L>
   inline void check_errors(L &logger)
   {
@@ -210,14 +196,11 @@ struct shader_program_factory
   shader_program_factory() = default;
   MOVE_CONSTRUCTIBLE_ONLY(shader_program_factory);
 
-  template<typename C>
-  stlw::result<shader_program<C>, std::string>
-  make(vertex_shader_filename const v, fragment_shader_filename const f, C &&ctx,
-      vertex_attribute &&va)
+  stlw::result<shader_program, std::string>
+  make(vertex_shader_filename const v, fragment_shader_filename const f)
   {
     DO_TRY(auto program, program_factory::from_files(v, f));
-
-    return shader_program<C>{MOVE(program), MOVE(ctx), MOVE(va)};
+    return shader_program{MOVE(program)};
   }
 };
 
