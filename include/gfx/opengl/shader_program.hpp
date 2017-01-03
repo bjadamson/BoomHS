@@ -2,6 +2,7 @@
 #include <gfx/opengl/gl_log.hpp>
 #include <gfx/opengl/glew.hpp>
 #include <gfx/opengl/global.hpp>
+#include <gfx/opengl/vertex_attribute.hpp>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -20,7 +21,6 @@
     }                                                                                              \
   }
 
-#include <iostream>
 namespace gfx::opengl
 {
 
@@ -28,6 +28,9 @@ DEFINE_SHADER_FILENAME_TYPE(vertex);
 DEFINE_SHADER_FILENAME_TYPE(fragment);
 
 #undef DEFINE_SHADER_FILENAME_TYPE
+
+namespace impl
+{
 
 constexpr GLuint
 INVALID_PROGRAM_ID() { return 0; }
@@ -57,9 +60,6 @@ use_program(GLuint const p)
   glUseProgram(p);
 }
 
-namespace impl
-{
-
 template <typename L>
 auto
 get_uniform_location(L &logger, GLuint const p, GLchar const *name)
@@ -74,8 +74,6 @@ get_uniform_location(L &logger, GLuint const p, GLchar const *name)
   assert(-1 != loc);
   return loc;
 }
-
-} // ns impl
 
 template <typename L>
 void
@@ -116,13 +114,111 @@ program_set_uniform_array_4fv(L &logger, GLuint const p, GLchar const *name, std
   check_opengl_errors(logger, p);
 }
 
+} // ns impl
+
 struct program_factory {
   program_factory() = delete;
 
   static stlw::result<GLuint, std::string>
   from_files(vertex_shader_filename const, fragment_shader_filename const);
 
-  static GLuint make_invalid() { return INVALID_PROGRAM_ID(); }
+  static GLuint make_invalid() { return impl::INVALID_PROGRAM_ID(); }
+};
+
+// Essentially a "handle" over the program-object (GLuint) native OpenGL provides, but adds C++
+// move-semantics.
+template<typename C>
+class shader_program
+{
+  GLuint program_;
+  C context_;
+  vertex_attribute va_;
+
+  explicit shader_program(GLuint &&p, C &&ctx, vertex_attribute &&va)
+      : program_(MOVE(p))
+      , context_(MOVE(ctx))
+      , va_(MOVE(va))
+  {
+  }
+
+  static void
+  destroy(shader_program &p)
+  {
+    impl::destroy_program(p.program_);
+    p.program_ = 0;
+  }
+
+  friend class shader_program_factory;
+  NO_COPY(shader_program);
+  NO_MOVE_ASSIGN(shader_program);
+public:
+  using CTX = C;
+  shader_program(shader_program &&o)
+    : program_(o.program_)
+    , context_(MOVE(o.context_))
+    , va_(MOVE(o.va_))
+  {
+    // We don't want to destroy the underlying program, we want to transfer the ownership to this
+    // instance being moved into. This implements "handle-passing" allowing the user to observe
+    // move-semantics for this object.
+    o.program_ = program_factory::make_invalid();
+  }
+
+  ~shader_program()
+  {
+    if (impl::is_invalid(this->program_)) {
+      destroy(*this);
+    }
+  }
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////
+  // MUTATION
+  void use()
+  {
+    impl::use_program(this->program_);
+  }
+
+  template <typename L>
+  void set_uniform_matrix_4fv(L &logger, GLchar const *name, glm::mat4 const &matrix)
+  {
+    use();
+    impl::program_set_uniform_matrix_4fv(logger, this->program_, name, matrix);
+  }
+
+  template <typename L>
+  void set_uniform_array_4fv(L &logger, GLchar const *name, std::array<float, 4> const &floats)
+  {
+    use();
+    impl::program_set_uniform_array_4fv(logger, this->program_, name, floats);
+  }
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////
+  // IMMUTABLE
+  auto const& va() const { return this->va_; }
+  auto const& ctx() const { return this->context_; }
+
+  template <typename L>
+  inline void check_errors(L &logger)
+  {
+    use();
+    impl::check_opengl_errors(logger, this->program_);
+  }
+};
+
+struct shader_program_factory
+{
+  shader_program_factory() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(shader_program_factory);
+
+  template<typename C>
+  stlw::result<shader_program<C>, std::string>
+  make(vertex_shader_filename const v, fragment_shader_filename const f, C &&ctx,
+      vertex_attribute &&va)
+  {
+    DO_TRY(auto program, program_factory::from_files(v, f));
+
+    return shader_program<C>{MOVE(program), MOVE(ctx), MOVE(va)};
+  }
 };
 
 } // ns gfx::opengl

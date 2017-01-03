@@ -2,7 +2,7 @@
 #include <gfx/colors.hpp>
 #include <gfx/resources.hpp>
 #include <gfx/opengl/global.hpp>
-#include <gfx/opengl/pipeline.hpp>
+#include <gfx/opengl/shader_program.hpp>
 #include <gfx/opengl/texture.hpp>
 #include <iostream>
 
@@ -263,20 +263,20 @@ public:
 
 struct program2d
 {
-  pipeline<color2d_context> color;
-  pipeline<texture2d_context> texture_wall;
-  pipeline<texture2d_context> texture_container;
-  pipeline<wireframe2d_context> wireframe;
+  shader_program<color2d_context> color;
+  shader_program<texture2d_context> texture_wall;
+  shader_program<texture2d_context> texture_container;
+  shader_program<wireframe2d_context> wireframe;
 
   MOVE_CONSTRUCTIBLE_ONLY(program2d);
 };
 
 struct program3d
 {
-  pipeline<color3d_context> color;
-  pipeline<texture3d_context> texture;
-  pipeline<skybox_context> skybox;
-  pipeline<wireframe3d_context> wireframe;
+  shader_program<color3d_context> color;
+  shader_program<texture3d_context> texture;
+  shader_program<skybox_context> skybox;
+  shader_program<wireframe3d_context> wireframe;
 
   MOVE_CONSTRUCTIBLE_ONLY(program3d);
 };
@@ -305,7 +305,7 @@ struct opengl_contexts_factory
     auto constexpr RESOURCES = resources::make_resource_table();
     auto const get_r = [&](auto const i) { return RESOURCES[i]; };
 
-    pipeline_factory pf;
+    shader_program_factory pf;
     va_factory vf;
     auto c0 = context_factory::make_color2d(logger);
     auto va0 = vf.make_vertex_color(logger);

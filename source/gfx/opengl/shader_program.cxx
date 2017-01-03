@@ -1,6 +1,6 @@
 #include <gfx/opengl/glew.hpp>
 #include <gfx/opengl/glsl.hpp>
-#include <gfx/opengl/program.hpp>
+#include <gfx/opengl/shader_program.hpp>
 #include <gfx/opengl/vertex_attribute.hpp>
 #include <stlw/os.hpp>
 #include <stlw/type_ctors.hpp>
