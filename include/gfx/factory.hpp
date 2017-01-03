@@ -136,10 +136,6 @@ public:
   }
 };
 
-template<typename C>
-auto
-make_tf(C &c) { return triangle_factory<C>{c}; }
-
 struct rectangle_properties
 {
   draw_mode const draw_mode;
@@ -525,6 +521,8 @@ class cube_factory
 public:
   explicit cube_factory(C &c) : context_(c) {}
   MOVE_CONSTRUCTIBLE_ONLY(cube_factory);
+
+  /*
   constexpr auto make_spotted(cube_properties const& cube_props, color_t,
       std::array<float, 3> const &c) const
   {
@@ -540,8 +538,9 @@ public:
     color_properties const p{colors};
     return construct(cube_props, p);
   }
+  */
 
-  constexpr auto make_solid(cube_properties const& cube_props, color_t, std::array<float, 3> const &c) const
+  constexpr auto make(cube_properties const& cube_props, color_t, std::array<float, 3> const &c) const
   {
     // TODO: this may be an advanced color function, IDK...
     auto const ALPHA = 1.0f;
@@ -569,9 +568,24 @@ public:
   }
 };
 
-
 namespace factories
 {
+
+template<typename C>
+auto
+make_tf(C &c) { return triangle_factory<C>{c}; }
+
+template<typename C>
+auto
+make_rf(C &c) { return rectangle_factory<C>{c}; }
+
+template<typename C>
+auto
+make_pf(C &c) { return polygon_factory<C>{c}; }
+
+template<typename C>
+auto
+make_cf(C &c) { return cube_factory<C>{c}; }
 
 #define DEFINE_FACTORY_METHODS(factory_type)                                                       \
   template<typename ...Args>                                                                       \
@@ -667,16 +681,16 @@ public:
   }
 
   template<typename ...Args>
-  auto make_spotted_cube(cube_properties const& properties, Args &&... args) const
+  auto make_cube(cube_properties const& properties, Args &&... args) const
   {
-    return this->cf_.make_spotted(properties, std::forward<Args>(args)...);
+    return this->cf_.make_cube(properties, std::forward<Args>(args)...);
   }
 
-  template<typename ...Args>
-  auto make_color_cube(cube_properties const& properties, Args &&... args) const
-  {
-    return this->cf_.make_solid(properties, std::forward<Args>(args)...);
-  }
+  //template<typename ...Args>
+  //auto make_color_cube(cube_properties const& properties, Args &&... args) const
+  //{
+    //return this->cf_.make_solid(properties, std::forward<Args>(args)...);
+  //}
 
   template<typename ...Args>
   auto make_textured_cube(cube_properties const& properties, Args &&... args) const
