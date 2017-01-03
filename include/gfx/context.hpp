@@ -12,7 +12,7 @@ public:
   explicit context(B &b) : backend_(b) {}
   MOVE_CONSTRUCTIBLE_ONLY(context);
 
-  B& backend() { return this->backend_; }
+  B const& backend() const { return this->backend_; }
 };
 
 template<typename B>

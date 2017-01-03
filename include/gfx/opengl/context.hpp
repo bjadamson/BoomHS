@@ -335,6 +335,4 @@ struct opengl_contexts_factory
   }
 };
 
-
-
 } // ns gfx::opengl

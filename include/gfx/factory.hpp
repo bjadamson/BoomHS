@@ -589,28 +589,28 @@ make_cf(C &c) { return cube_factory<C>{c}; }
 
 #define DEFINE_FACTORY_METHODS(factory_type)                                                       \
   template<typename ...Args>                                                                       \
-  auto constexpr make_triangle(triangle_properties const& properties, Args &&... args)             \
+  auto constexpr make_triangle(triangle_properties const& properties, Args &&... args) const             \
   {                                                                                                \
     auto const tf = make_tf(this->ctx_.backend());                                                 \
     return tf.make(properties, factory_type{}, std::forward<Args>(args)...);                       \
   }                                                                                                \
                                                                                                    \
   template<typename ...Args>                                                                       \
-  auto constexpr make_rectangle(rectangle_properties const& properties, Args &&... args)           \
+  auto constexpr make_rectangle(rectangle_properties const& properties, Args &&... args) const           \
   {                                                                                                \
     auto const rf = make_rf(this->ctx_.backend());                                                 \
     return rf.make(properties, factory_type{}, std::forward<Args>(args)...);                       \
   }                                                                                                \
                                                                                                    \
   template<typename ...Args>                                                                       \
-  auto constexpr make_polygon(polygon_properties const& properties, Args &&... args)               \
+  auto constexpr make_polygon(polygon_properties const& properties, Args &&... args) const               \
   {                                                                                                \
     auto const pf = make_pf(this->ctx_.backend());                                                 \
     return pf.make(properties, factory_type{}, std::forward<Args>(args)...);                       \
   }                                                                                                \
                                                                                                    \
   template<typename ...Args>                                                                       \
-  auto constexpr make_cube(cube_properties const& properties, Args &&... args)                     \
+  auto constexpr make_cube(cube_properties const& properties, Args &&... args) const                     \
   {                                                                                                \
     auto const cf = make_cf(this->ctx_.backend());                                                 \
     return cf.make(properties, factory_type{}, std::forward<Args>(args)...);                       \
@@ -628,12 +628,12 @@ public:
 };
 
 template<typename C>
-class uv
+class texture
 {
   C ctx_;
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(uv);
-  explicit constexpr uv(C &&c) : ctx_(std::move(c)) {}
+  MOVE_CONSTRUCTIBLE_ONLY(texture);
+  explicit constexpr texture(C &&c) : ctx_(std::move(c)) {}
 
   DEFINE_FACTORY_METHODS(uv_t);
 };
@@ -653,64 +653,50 @@ public:
 
 } // ns factories
 
-template<typename T>
-class shape_factory
+template<typename C0, typename C1, typename C2, typename C3>
+struct d2_shape_factory
 {
-  rectangle_factory<T> rf_;
-  polygon_factory<T> pf_;
-  cube_factory<T> cf_;
-public:
-  explicit shape_factory(rectangle_factory<T> &&rf, polygon_factory<T> &&pf, cube_factory<T> &&cf)
-    : rf_(std::move(rf))
-    , pf_(std::move(pf))
-    , cf_(std::move(cf))
+  factories::color<C0> color;
+  factories::texture<C1> texture_wall;
+  factories::texture<C2> texture_container;
+  factories::wireframe<C3> wireframe;
+
+  explicit d2_shape_factory(factories::color<C0> &&cf, factories::texture<C1> &&tf0,
+      factories::texture<C2> &&tf1, factories::wireframe<C3> &&wf)
+    : color(MOVE(cf))
+    , texture_wall(MOVE(tf0))
+    , texture_container(MOVE(tf1))
+    , wireframe(MOVE(wf))
   {}
 
-  MOVE_CONSTRUCTIBLE_ONLY(shape_factory);
-
-  template<typename ...Args>
-  auto make_rectangle(rectangle_properties const& properties, Args &&... args) const
-  {
-    return this->rf_.make(properties, std::forward<Args>(args)...);
-  }
-
-  template<typename ...Args>
-  auto make_polygon(polygon_properties const& properties, Args &&... args) const
-  {
-    return this->pf_.make(properties, std::forward<Args>(args)...);
-  }
-
-  template<typename ...Args>
-  auto make_cube(cube_properties const& properties, Args &&... args) const
-  {
-    return this->cf_.make_cube(properties, std::forward<Args>(args)...);
-  }
-
-  //template<typename ...Args>
-  //auto make_color_cube(cube_properties const& properties, Args &&... args) const
-  //{
-    //return this->cf_.make_solid(properties, std::forward<Args>(args)...);
-  //}
-
-  template<typename ...Args>
-  auto make_textured_cube(cube_properties const& properties, Args &&... args) const
-  {
-    return this->cf_.make(properties, std::forward<Args>(args)...);
-  }
-
-  template<typename ...Args>
-  auto make_wireframe_cube(cube_properties const& properties, Args &&... args) const
-  {
-    return this->cf_.make(properties, std::forward<Args>(args)...);
-  }
+  MOVE_CONSTRUCTIBLE_ONLY(d2_shape_factory);
 };
 
-template<typename C>
-auto make_shape_factory(C &context)
+template<typename C0, typename C1, typename C2, typename C3>
+struct d3_shape_factory
 {
-  return shape_factory<C>{rectangle_factory<C>{context}, polygon_factory<C>{context},
-    cube_factory<C>{context}};
-}
+  factories::color<C0> color;
+  factories::texture<C1> texture;
+  factories::texture<C2> skybox;
+  factories::wireframe<C3> wireframe;
+
+  explicit d3_shape_factory(factories::color<C0> &&cf, factories::texture<C1> &&tf,
+      factories::texture<C2> &&sky, factories::wireframe<C3> &&wf)
+    : color(MOVE(cf))
+    , texture(MOVE(tf))
+    , skybox(MOVE(sky))
+    , wireframe(MOVE(wf))
+  {}
+
+  MOVE_CONSTRUCTIBLE_ONLY(d3_shape_factory);
+};
+
+template<typename SF2D, typename SF3D>
+struct shape_factories
+{
+  SF2D d2;
+  SF3D d3;
+};
 
 template<typename C>
 auto make_color_factory(C &&context)
@@ -721,13 +707,36 @@ auto make_color_factory(C &&context)
 template<typename C>
 auto make_uv_factory(C &&context)
 {
-  return factories::uv<C>{std::move(context)};
+  return factories::texture<C>{std::move(context)};
 }
 
 template<typename C>
 auto make_wireframe_factory(C &&context)
 {
   return factories::wireframe<C>{std::move(context)};
+}
+
+template<typename C0, typename C1, typename C2, typename C3, typename C4, typename C5, typename C6,
+  typename C7>
+auto make_shape_factories(C0 &&c0, C1 &&c1, C2 &&c2, C3 &&c3, C4 &&c4, C5 &&c5, C6 &&c6, C7 &&c7)
+{
+  auto d2p = d2_shape_factory<C0, C1, C2, C3>{
+    factories::color<C0>{MOVE(c0)},
+    factories::texture<C1>{MOVE(c1)},
+    factories::texture<C2>{MOVE(c2)},
+    factories::wireframe<C3>{MOVE(c3)}
+  };
+
+  auto d3p = d3_shape_factory<C4, C5, C6, C7>{
+    factories::color<C4>{MOVE(c4)},
+    factories::texture<C5>{MOVE(c5)},
+    factories::texture<C6>{MOVE(c6)},
+    factories::wireframe<C7>{MOVE(c7)}
+  };
+
+  using SF2D = decltype(d2p);
+  using SF3D = decltype(d3p);
+  return shape_factories<SF2D, SF3D>{MOVE(d2p), MOVE(d3p)};
 }
 
 } // ns gfx
