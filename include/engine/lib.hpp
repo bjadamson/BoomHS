@@ -170,7 +170,7 @@ public:
     this->begin();
     logger.trace("rendering.");
 
-    game.game_loop(state, this->gfx);
+    game.game_loop(state, this->gfx, this->gfx.make_shape_factories());
     logger.trace("game loop stepping.");
     this->end();
   }

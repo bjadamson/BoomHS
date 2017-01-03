@@ -88,8 +88,8 @@ public:
     return std::make_tuple(st::io_system, st::randompos_system);
   }
 
-  template <typename LoopState, typename R>
-  void game_loop(LoopState &state, R &renderer)
+  template <typename LoopState, typename R, typename F>
+  void game_loop(LoopState &state, R &renderer, F &&sf)
   {
     using COLOR_ARRAY = std::array<float, 4>;
     auto constexpr multicolor_triangle =
@@ -118,17 +118,6 @@ public:
     auto &r = rd;
     auto &d2 = r.lib.opengl_pipelines.d2;
     auto &d3 = r.lib.opengl_pipelines.d3;
-
-    auto sf = gfx::make_shape_factories(
-      gfx::make_context(d2.color),
-      gfx::make_context(d2.texture_wall),
-      gfx::make_context(d2.texture_container),
-      gfx::make_context(d2.wireframe),
-
-      gfx::make_context(d3.color),
-      gfx::make_context(d3.texture),
-      gfx::make_context(d3.skybox),
-      gfx::make_context(d3.wireframe));
 
     auto const height = 0.25f, width = 0.39f;
     auto cube_skybox = sf.d3.skybox.make_cube({gfx::draw_mode::TRIANGLE_STRIP, state.skybox_model,

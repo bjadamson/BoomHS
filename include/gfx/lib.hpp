@@ -1,5 +1,9 @@
 #pragma once
+// TODO: ditch this
 #include <gfx/opengl/lib.hpp>
+#include <gfx/context.hpp>
+#include <gfx/factory.hpp>
+
 #include <stlw/burrito.hpp>
 #include <stlw/type_ctors.hpp>
 
@@ -53,6 +57,24 @@ public:
     this->lib.begin();
   }
 
+  // TODO: poc
+  auto
+  make_shape_factories() const
+  {
+    auto &d2 = this->lib.opengl_pipelines.d2;
+    auto &d3 = this->lib.opengl_pipelines.d3;
+    return gfx::make_shape_factories(
+      gfx::make_context(d2.color),
+      gfx::make_context(d2.texture_wall),
+      gfx::make_context(d2.texture_container),
+      gfx::make_context(d2.wireframe),
+
+      gfx::make_context(d3.color),
+      gfx::make_context(d3.texture),
+      gfx::make_context(d3.skybox),
+      gfx::make_context(d3.wireframe));
+  }
+
   template<typename Args, typename Ctx, template<class, std::size_t> typename C, typename T, std::size_t N>
   void
   draw(Args const& args, Ctx &ctx, C<T, N> const& arr)
@@ -103,6 +125,7 @@ struct factory {
   template <typename L, typename LIB>
   static stlw::result<gfx_lib, std::string> make(L &logger, LIB &&gfx)
   {
+    
     return gfx_lib{MOVE(gfx)};
   }
 };
