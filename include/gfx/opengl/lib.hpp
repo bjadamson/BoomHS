@@ -1,5 +1,6 @@
 #pragma once
 #include <stlw/type_macros.hpp>
+#include <gfx/opengl/pipeline.hpp>
 #include <gfx/opengl/renderer.hpp>
 
 namespace gfx::opengl
@@ -10,11 +11,11 @@ class opengl_lib
   friend struct lib_factory;
   opengl_renderer renderer_;
 public:
-  opengl_contexts opengl_contexts;
+  opengl_pipelines opengl_pipelines;
 private:
-  opengl_lib(struct opengl_renderer &&r, struct opengl_contexts &&c)
+  opengl_lib(struct opengl_renderer &&r, struct opengl_pipelines &&p)
     : renderer_(MOVE(r))
-    , opengl_contexts(MOVE(c))
+    , opengl_pipelines(MOVE(p))
     {
     }
 public:
@@ -46,8 +47,9 @@ struct lib_factory
   static stlw::result<opengl_lib, std::string>
   make(L &logger)
   {
-    DO_TRY(auto contexts, opengl_contexts_factory::make(logger));
-    return opengl_lib{opengl_renderer_factory::make(logger), MOVE(contexts)};
+    auto contexts = opengl_contexts_factory::make(logger);
+    DO_TRY(auto pipelines, opengl_pipelines_factory::make(logger, MOVE(contexts)));
+    return opengl_lib{opengl_renderer_factory::make(logger), MOVE(pipelines)};
   }
 };
 

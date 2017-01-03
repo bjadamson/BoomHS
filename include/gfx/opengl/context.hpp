@@ -2,7 +2,6 @@
 #include <gfx/colors.hpp>
 #include <gfx/resources.hpp>
 #include <gfx/opengl/global.hpp>
-#include <gfx/opengl/pipeline.hpp>
 #include <gfx/opengl/shader_program.hpp>
 #include <gfx/opengl/texture.hpp>
 #include <iostream>
@@ -262,36 +261,35 @@ public:
   }
 };
 
-struct pipeline2d
+struct opengl_context2d
 {
-  pipeline<color2d_context> color;
-  pipeline<texture2d_context> texture_wall;
-  pipeline<texture2d_context> texture_container;
-  pipeline<wireframe2d_context> wireframe;
+  color2d_context color;
+  texture2d_context texture_wall;
+  texture2d_context texture_container;
+  wireframe2d_context wireframe;
 
-  MOVE_CONSTRUCTIBLE_ONLY(pipeline2d);
+  MOVE_CONSTRUCTIBLE_ONLY(opengl_context2d);
 };
 
-struct pipeline3d
+struct opengl_context3d
 {
-  pipeline<color3d_context> color;
-  pipeline<texture3d_context> texture;
-  pipeline<skybox_context> skybox;
-  pipeline<wireframe3d_context> wireframe;
+  color3d_context color;
+  texture3d_context texture;
+  skybox_context skybox;
+  wireframe3d_context wireframe;
 
-  MOVE_CONSTRUCTIBLE_ONLY(pipeline3d);
+  MOVE_CONSTRUCTIBLE_ONLY(opengl_context3d);
 };
 
 struct opengl_contexts
 {
-  pipeline2d d2;
-  pipeline3d d3;
+  opengl_context2d d2;
+  opengl_context3d d3;
 
   MOVE_CONSTRUCTIBLE_ONLY(opengl_contexts);
-
-  explicit opengl_contexts(pipeline2d &&p2d, pipeline3d &&p3d)
-    : d2(MOVE(p2d))
-    , d3(MOVE(p3d))
+  explicit opengl_contexts(opengl_context2d &&c2d, opengl_context3d &&c3d)
+    : d2(MOVE(c2d))
+    , d3(MOVE(c3d))
   {
   }
 };
@@ -301,40 +299,17 @@ struct opengl_contexts_factory
   opengl_contexts_factory() = delete;
 
   template <typename L>
-  static stlw::result<opengl_contexts, std::string> make(L &logger)
+  static opengl_contexts make(L &logger)
   {
     auto constexpr RESOURCES = resources::make_resource_table();
     auto const get_r = [&](auto const i) { return RESOURCES[i]; };
 
-    shader_program_factory pf;
-    va_factory vf;
     auto c0 = context_factory::make_color2d(logger);
-    auto va0 = vf.make_vertex_color(logger);
-
-    DO_TRY(auto p0, pf.make("2dcolor.vert", "2dcolor.frag"));
-    auto pipe0 = make_pipeline(MOVE(p0), MOVE(c0), MOVE(va0));
-
     auto c1 = context_factory::make_texture2d(logger, get_r(IMAGES::WALL));
-    auto va1 = vf.make_vertex_uv2d(logger);
-    DO_TRY(auto p1, pf.make("2dtexture.vert", "2dtexture.frag"));
-    auto pipe1 = make_pipeline(MOVE(p1), MOVE(c1), MOVE(va1));
-
     auto c2 = context_factory::make_texture2d(logger, get_r(IMAGES::CONTAINER));
-    auto va2 = vf.make_vertex_uv2d(logger);
-    DO_TRY(auto p2, pf.make("2dtexture.vert", "2dtexture.frag"));
-    auto pipe2 = make_pipeline(MOVE(p2), MOVE(c2), MOVE(va2));
-
     auto const color = LIST_OF_COLORS::PINK;
     auto c3 = context_factory::make_wireframe2d(logger, color);
-    auto va3 = vf.make_vertex_only(logger);
-    DO_TRY(auto p3, pf.make("wire.vert", "wire.frag"));
-    auto pipe3 = make_pipeline(MOVE(p3), MOVE(c3), MOVE(va3));
-
     auto c4 = context_factory::make_color3d(logger);
-    auto va4 = vf.make_vertex_color(logger);
-    DO_TRY(auto p4, pf.make("3dcolor.vert", "3dcolor.frag"));
-    auto pipe4 = make_pipeline(MOVE(p4), MOVE(c4), MOVE(va4));
-
     auto c5 = context_factory::make_texture3d(logger,
         get_r(IMAGES::CUBE_FRONT),
         get_r(IMAGES::CUBE_RIGHT),
@@ -343,10 +318,6 @@ struct opengl_contexts_factory
         get_r(IMAGES::CUBE_TOP),
         get_r(IMAGES::CUBE_BOTTOM)
         );
-    auto va5 = vf.make_vertex_only(logger);
-    DO_TRY(auto p5, pf.make("3dtexture.vert", "3dtexture.frag"));
-    auto pipe5 = make_pipeline(MOVE(p5), MOVE(c5), MOVE(va5));
-
     auto c6 = context_factory::make_skybox(logger,
         get_r(IMAGES::SB_FRONT),
         get_r(IMAGES::SB_RIGHT),
@@ -355,20 +326,15 @@ struct opengl_contexts_factory
         get_r(IMAGES::SB_TOP),
         get_r(IMAGES::SB_BOTTOM)
         );
-    auto va6 = vf.make_vertex_only(logger);
-    DO_TRY(auto p6, pf.make("3dtexture.vert", "3dtexture.frag"));
-    auto pipe6 = make_pipeline(MOVE(p6), MOVE(c6), MOVE(va6));
-
     auto const color2 = LIST_OF_COLORS::PURPLE;
     auto c7 = context_factory::make_wireframe3d(logger, color2);
-    auto va7 = vf.make_vertex_only(logger);
-    DO_TRY(auto p7, pf.make("3dwire.vert", "wire.frag"));
-    auto pipe7 = make_pipeline(MOVE(p7), MOVE(c7), MOVE(va7));
 
-    pipeline2d d2{MOVE(pipe0), MOVE(pipe1), MOVE(pipe2), MOVE(pipe3)};
-    pipeline3d d3{MOVE(pipe4), MOVE(pipe5), MOVE(pipe6), MOVE(pipe7)};
+    opengl_context2d d2{MOVE(c0), MOVE(c1), MOVE(c2), MOVE(c3)};
+    opengl_context3d d3{MOVE(c4), MOVE(c5), MOVE(c6), MOVE(c7)};
     return opengl_contexts{MOVE(d2), MOVE(d3)};
   }
 };
+
+
 
 } // ns gfx::opengl
