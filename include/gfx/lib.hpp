@@ -1,7 +1,7 @@
 #pragma once
 // TODO: ditch this
 #include <gfx/opengl/lib.hpp>
-#include <gfx/context.hpp>
+#include <gfx/pipeline.hpp>
 #include <gfx/factory.hpp>
 
 #include <stlw/burrito.hpp>
@@ -63,16 +63,18 @@ public:
   {
     auto &d2 = this->lib.opengl_pipelines.d2;
     auto &d3 = this->lib.opengl_pipelines.d3;
-    return gfx::make_shape_factories(
-      gfx::make_context(d2.color),
-      gfx::make_context(d2.texture_wall),
-      gfx::make_context(d2.texture_container),
-      gfx::make_context(d2.wireframe),
 
-      gfx::make_context(d3.color),
-      gfx::make_context(d3.texture),
-      gfx::make_context(d3.skybox),
-      gfx::make_context(d3.wireframe));
+    gfx::pipeline_factory pf;
+    return gfx::make_shape_factories(
+      pf.make_pipeline(d2.color),
+      pf.make_pipeline(d2.texture_wall),
+      pf.make_pipeline(d2.texture_container),
+      pf.make_pipeline(d2.wireframe),
+
+      pf.make_pipeline(d3.color),
+      pf.make_pipeline(d3.texture),
+      pf.make_pipeline(d3.skybox),
+      pf.make_pipeline(d3.wireframe));
   }
 
   template<typename Args, typename Ctx, template<class, std::size_t> typename C, typename T, std::size_t N>
@@ -98,13 +100,6 @@ public:
     this->draw_burrito(args, ctx, MOVE(t));
   }
 
-  template<typename Args, typename S>
-  void
-  draw_special(Args const& args, S &&s)
-  {
-    this->draw(args, s.context, MOVE(s.data));
-  }
-
   template<typename Args, typename Ctx, typename ...T>
   void
   draw(Args const& args, Ctx &ctx, T &&... t)
@@ -125,7 +120,6 @@ struct factory {
   template <typename L, typename LIB>
   static stlw::result<gfx_lib, std::string> make(L &logger, LIB &&gfx)
   {
-    
     return gfx_lib{MOVE(gfx)};
   }
 };

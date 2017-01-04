@@ -8,18 +8,20 @@ namespace gfx
 template<typename B>
 class pipeline
 {
-  B backend_;
+  B &backend_;
 
-  explicit pipeline(B &&b)
-    : backend_(std::move(b))
+  explicit pipeline(B &b)
+    : backend_(b)
   {
   }
 
-  template<typename T>
-  friend pipeline<T> make;
+  friend class pipeline_factory;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(pipeline);
 
+  B const& backend() const { return this->backend_; }
+
+  /*
   void use()
   {
     this->backend_.use();
@@ -42,6 +44,7 @@ public:
   {
     this->check_opengl_errors(logger);
   }
+  */
 };
 
 #define DEFINE_SHADER_FILENAME_TYPE(NAME)                                                          \
@@ -58,21 +61,16 @@ DEFINE_SHADER_FILENAME_TYPE(fragment);
 
 #undef DEFINE_SHADER_FILENAME_TYPE
 
-template<typename B>
-class pipeline_factory
+struct pipeline_factory
 {
-  B &backend_factory_;
+  pipeline_factory() = default;
   MOVE_CONSTRUCTIBLE_ONLY(pipeline_factory);
-public:
-  explicit pipeline_factory(B &bf)
-    : backend_factory_(bf)
-  {
-  }
 
+  template<typename B>
   auto
-  make(vertex_shader_filename const& v, fragment_shader_filename const& f)
+  make_pipeline(B &backend) const
   {
-    return pipeline<B>{this->backend_factory_.make(v, f)};
+    return pipeline<B>{backend};
   }
 };
 

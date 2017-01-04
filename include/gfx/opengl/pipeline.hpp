@@ -11,12 +11,9 @@ template<typename C>
 class pipeline
 {
   shader_program program_;
-  //opengl_context context;
   C context_;
   vertex_attribute va_;
 public:
-
-  //explicit pipeline(shader_program &&sp, opengl_context &&ctx, vertex_attribute &&v)
   explicit pipeline(shader_program &&sp, C &&ctx, vertex_attribute &&v)
     : program_(MOVE(sp))
     , context_(MOVE(ctx))
