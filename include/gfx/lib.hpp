@@ -10,6 +10,31 @@
 namespace gfx
 {
 
+namespace impl
+{
+
+template<typename P>
+auto
+make_shape_factories(P &pipelines)
+{
+  auto &d2 = pipelines.d2;
+  auto &d3 = pipelines.d3;
+
+  gfx::pipeline_factory pf;
+  return gfx::make_shape_factories(
+    pf.make_pipeline(d2.color),
+    pf.make_pipeline(d2.texture_wall),
+    pf.make_pipeline(d2.texture_container),
+    pf.make_pipeline(d2.wireframe),
+
+    pf.make_pipeline(d3.color),
+    pf.make_pipeline(d3.texture),
+    pf.make_pipeline(d3.skybox),
+    pf.make_pipeline(d3.wireframe));
+}
+
+} // ns impl
+
 template <typename L>
 struct render_args {
   L &logger;
@@ -61,20 +86,7 @@ public:
   auto
   make_shape_factories() const
   {
-    auto &d2 = this->lib.opengl_pipelines.d2;
-    auto &d3 = this->lib.opengl_pipelines.d3;
-
-    gfx::pipeline_factory pf;
-    return gfx::make_shape_factories(
-      pf.make_pipeline(d2.color),
-      pf.make_pipeline(d2.texture_wall),
-      pf.make_pipeline(d2.texture_container),
-      pf.make_pipeline(d2.wireframe),
-
-      pf.make_pipeline(d3.color),
-      pf.make_pipeline(d3.texture),
-      pf.make_pipeline(d3.skybox),
-      pf.make_pipeline(d3.wireframe));
+    return impl::make_shape_factories(this->lib.opengl_pipelines);
   }
 
   template<typename Args, typename Ctx, template<class, std::size_t> typename C, typename T, std::size_t N>
