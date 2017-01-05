@@ -63,16 +63,16 @@ private:
   {
   }
 
-  template <typename Args, typename Ctx, typename Burrito>
-  void draw_burrito(Args const& args, Ctx &ctx, Burrito const& burrito)
+  template <typename Args, typename P, typename Burrito>
+  void draw_burrito(Args const& args, P &pipeline, Burrito const& burrito)
   {
-    this->lib.draw(args, ctx, stlw::make_burrito(burrito));
+    this->lib.draw(args, pipeline, stlw::make_burrito(burrito));
   }
 
-  template <typename Args, typename Ctx, typename Burrito>
-  void draw_burrito(Args const& args, Ctx &ctx, Burrito &&burrito)
+  template <typename Args, typename P, typename Burrito>
+  void draw_burrito(Args const& args, P &pipeline, Burrito &&burrito)
   {
-    this->lib.draw(args, ctx, stlw::make_burrito(MOVE(burrito)));
+    this->lib.draw(args, pipeline, stlw::make_burrito(MOVE(burrito)));
   }
 
 public:
@@ -90,34 +90,35 @@ public:
     return impl::make_shape_factories(this->lib.opengl_pipelines);
   }
 
-  template<typename Args, typename Ctx, template<class, std::size_t> typename C, typename T, std::size_t N>
+  template<typename Args, typename P, template<class, std::size_t> typename Container,
+    typename T, std::size_t N>
   void
-  draw(Args const& args, Ctx &ctx, C<T, N> const& arr)
+  draw(Args const& args, P &pipeline, Container<T, N> const& arr)
   {
     auto x = stlw::tuple_from_array(arr);
-    this->draw_burrito(args, ctx, MOVE(x));
+    this->draw_burrito(args, pipeline, MOVE(x));
   }
 
   // The last parameter type here ensures that the value passed is similar to a stl container.
-  template<typename Args, typename Ctx, typename C, typename IGNORE= typename C::value_type>
+  template<typename Args, typename P, typename Container, typename IGNORE= typename Container::value_type>
   void
-  draw(Args const& args, Ctx &ctx, C &&c)
+  draw(Args const& args, P &pipeline, Container &&c)
   {
-    this->draw_burrito(args, ctx, MOVE(c));
+    this->draw_burrito(args, pipeline, MOVE(c));
   }
 
-  template<typename Args, typename Ctx, typename ...T>
+  template<typename Args, typename P, typename ...T>
   void
-  draw(Args const& args, Ctx &ctx, std::tuple<T...> &&t)
+  draw(Args const& args, P &pipeline, std::tuple<T...> &&t)
   {
-    this->draw_burrito(args, ctx, MOVE(t));
+    this->draw_burrito(args, pipeline, MOVE(t));
   }
 
-  template<typename Args, typename Ctx, typename ...T>
+  template<typename Args, typename P, typename ...T>
   void
-  draw(Args const& args, Ctx &ctx, T &&... t)
+  draw(Args const& args, P &pipeline, T &&... t)
   {
-    this->draw_burrito(args, ctx, std::make_tuple(std::forward<T>(t)...));
+    this->draw_burrito(args, pipeline, std::make_tuple(std::forward<T>(t)...));
   }
 
   void end()
