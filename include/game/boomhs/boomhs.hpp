@@ -128,8 +128,9 @@ public:
 
     rd.begin();
     auto args = state.render_args();
-    r.draw(args, d3.skybox, MOVE(cube_skybox));
+    r.draw(args, MOVE(cube_skybox));
 
+    /*
     auto triangle_color = sf.d2.color.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[9]},
         gfx::LIST_OF_COLORS::PINK);
 
@@ -224,6 +225,7 @@ public:
     r.draw(args, d2.texture_container, MOVE(polygon_texture));
     r.draw(args, d2.wireframe, MOVE(polygon_wireframe), triangle_wireframe, rectangle_wireframe);
 
+    */
     rd.end();
   }
 };

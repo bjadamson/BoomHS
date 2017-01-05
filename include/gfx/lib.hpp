@@ -63,25 +63,29 @@ private:
   {
   }
 
-  template <typename Args, typename P, typename Wrappable>
-  void draw_wrappable(Args const& args, P &pipeline, Wrappable const& wrappable)
+  template <typename Args, typename Wrappable>
+  void draw_wrappable(Args const& args, Wrappable const& wrappable)
   {
-    auto const draw_fn = [&](auto const& shape)
+    auto const draw_fn = [&](auto &&both)
     {
-      this->lib.draw(args, pipeline, shape);
+      auto &pipeline = both.pipeline;
+      auto shape = MOVE(both.shape);
+      this->lib.draw(args, pipeline.backend(), shape);
     };
-    auto const burrito = stlw::make_burrito(wrappable);
+    auto burrito = stlw::make_burrito(wrappable);
     stlw::hof::for_each(burrito, draw_fn);
   }
 
-  template <typename Args, typename P, typename Wrappable>
-  void draw_wrappable(Args const& args, P &pipeline, Wrappable &&wrappable)
+  template <typename Args, typename Wrappable>
+  void draw_wrappable(Args const& args, Wrappable &&wrappable)
   {
-    auto const draw_fn = [&](auto const& shape)
+    auto const draw_fn = [&](auto &&both)
     {
-      this->lib.draw(args, pipeline, shape);
+      auto &pipeline = both.pipeline;
+      auto shape = MOVE(both.shape);
+      this->lib.draw(args, pipeline.backend(), MOVE(shape));
     };
-    auto const burrito = stlw::make_burrito(MOVE(wrappable));
+    auto burrito = stlw::make_burrito(MOVE(wrappable));
     stlw::hof::for_each(burrito, draw_fn);
   }
 
@@ -95,40 +99,51 @@ public:
 
   // TODO: poc
   auto
-  make_shape_factories() const
+  make_shape_factories()
   {
     return impl::make_shape_factories(this->lib.opengl_pipelines);
   }
 
-  template<typename Args, typename P, template<class, std::size_t> typename Container,
-    typename T, std::size_t N>
+  /*
+  template<typename Args, template<class, std::size_t> typename Container, typename T, std::size_t N>
   void
-  draw(Args const& args, P &pipeline, Container<T, N> const& arr)
+  draw(Args const& args, Container<T, N> const& arr)
   {
     auto x = stlw::tuple_from_array(arr);
     this->draw_wrappable(args, pipeline, MOVE(x));
   }
 
   // The last parameter type here ensures that the value passed is similar to a stl container.
-  template<typename Args, typename P, typename Container, typename IGNORE= typename Container::value_type>
+  template<typename Args, typename Container, typename IGNORE= typename Container::value_type>
   void
-  draw(Args const& args, P &pipeline, Container &&c)
+  draw(Args const& args, Container &&c)
   {
     this->draw_wrappable(args, pipeline, MOVE(c));
   }
+  */
 
   template<typename Args, typename P, typename ...T>
   void
-  draw(Args const& args, P &pipeline, std::tuple<T...> &&t)
+  draw_impl(Args const& args, P &pipeline, std::tuple<T...> &&t)
   {
     this->draw_wrappable(args, pipeline, MOVE(t));
   }
 
-  template<typename Args, typename P, typename ...T>
+  /*
+  template<typename Args, typename ...T>
   void
   draw(Args const& args, P &pipeline, T &&... t)
   {
     this->draw_wrappable(args, pipeline, std::make_tuple(std::forward<T>(t)...));
+  }
+  */
+
+  template<typename Args, typename ...T>
+  void
+  draw(Args const& args, T &&... t)
+  {
+    auto tuple = std::make_tuple(t...);
+    this->draw_wrappable(args, tuple);
   }
 
   void end()

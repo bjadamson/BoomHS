@@ -184,7 +184,7 @@ public:
   }
 
   template <typename L>
-  inline void check_errors(L &logger)
+  void check_errors(L &logger)
   {
     use();
     impl::check_opengl_errors(logger, this->program_);
@@ -197,7 +197,7 @@ struct shader_program_factory
   MOVE_CONSTRUCTIBLE_ONLY(shader_program_factory);
 
   stlw::result<shader_program, std::string>
-  make(vertex_shader_filename const v, fragment_shader_filename const f)
+  make(vertex_shader_filename const v, fragment_shader_filename const f) const
   {
     DO_TRY(auto program, program_factory::from_files(v, f));
     return shader_program{MOVE(program)};

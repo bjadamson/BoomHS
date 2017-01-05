@@ -23,6 +23,7 @@ public:
 
   auto const& va() const { return this->va_; }
   auto const& ctx() const { return this->context_; }
+
   auto& program_ref() { return this->program_; }
 
   using CTX = C;
@@ -112,6 +113,7 @@ struct opengl_pipelines_factory
     auto pipe7 = make_pipeline(MOVE(p7), MOVE(contexts.d3.wireframe), MOVE(va7));
 
     pipeline2d d2{MOVE(pipe0), MOVE(pipe1), MOVE(pipe2), MOVE(pipe3)};
+
     pipeline3d d3{MOVE(pipe4), MOVE(pipe5), MOVE(pipe6), MOVE(pipe7)};
     return opengl_pipelines{MOVE(d2), MOVE(d3)};
   }

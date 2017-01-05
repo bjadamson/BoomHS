@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <stlw/type_macros.hpp>
+#include <type_traits>
 
 namespace gfx
 {
@@ -19,32 +20,9 @@ class pipeline
 public:
   MOVE_CONSTRUCTIBLE_ONLY(pipeline);
 
-  B const& backend() const { return this->backend_; }
+  B& backend() { return this->backend_; }
 
-  /*
-  void use()
-  {
-    this->backend_.use();
-  }
-
-  template <typename L>
-  void set_uniform_matrix_4fv(L &logger, char const *name, glm::mat4 const &matrix)
-  {
-    this->backend_.set_uniform_matrix_4fv(logger, name, matrix);
-  }
-
-  template <typename L>
-  void set_uniform_array_4fv(L &logger, char const *name, std::array<float, 4> const &floats)
-  {
-    this->backend_.set_uniform_array_4fv(logger, name, floats);
-  }
-
-  template <typename L>
-  void check_errors(L &logger)
-  {
-    this->check_opengl_errors(logger);
-  }
-  */
+  using CTX = typename B::CTX;
 };
 
 #define DEFINE_SHADER_FILENAME_TYPE(NAME)                                                          \
