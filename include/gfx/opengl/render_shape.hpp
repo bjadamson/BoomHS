@@ -1,15 +1,9 @@
 #pragma once
-#include <gfx/opengl/context.hpp>
+#include <gfx/opengl/gfx_to_opengl.hpp>
 #include <gfx/opengl/global.hpp>
 
-// TODO: hacky
-#include <gfx/opengl/gfx_to_opengl.hpp>
-
 #include <stlw/log.hpp>
-#include <stlw/print.hpp>
-#include <stlw/tuple.hpp>
 #include <stlw/type_macros.hpp>
-#include <sstream>
 
 namespace gfx::opengl::render
 {
@@ -93,9 +87,9 @@ render_shape(L &logger, S const &shape)
   impl::render(logger, shape.draw_mode, shape.ordering.size());
 }
 
-template <typename L, typename P, typename FN, typename B>
+template <typename L, typename P, typename FN, typename SHAPE>
 void
-draw_scene(L &logger, P &pipeline, FN const& fn, B const &burrito)
+draw_scene(L &logger, P &pipeline, FN const& fn, SHAPE const &shape)
 {
   auto &program = pipeline.program_ref();
   program.use();
@@ -110,22 +104,13 @@ draw_scene(L &logger, P &pipeline, FN const& fn, B const &burrito)
 
   // Instruct the vertex-processor to enable the vertex attributes for this context.
   global::set_vertex_attributes(logger, pipeline.va());
-
-  std::stringstream ss;
-  ss << "#######################################################################################\n";
-  ss << "Copying '" << burrito.size() << "' shapes from CPU -> OpenGL driver ...\n";
-
-  //stlw::for_each(std::move(burrito.value), fn);
-  stlw::hof::for_each(burrito, fn);
-  ss << "#######################################################################################\n";
-
-  logger.trace(ss.str());
+  fn(shape);
 }
 
-template <typename FN, typename B>
-void draw_shapes(FN const& fn, B const& burrito)
+template <typename FN, typename SHAPE>
+void draw_shape(FN const& fn, SHAPE const& shape)
 {
-  auto const gl_mapped_shapes = shape_mapper::map_to_opengl(burrito);
+  auto const gl_mapped_shapes = shape_mapper::map_to_opengl(shape);
   fn(gl_mapped_shapes);
 }
 

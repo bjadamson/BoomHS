@@ -8,9 +8,9 @@ namespace gfx::opengl::render
 namespace impl
 {
 
-template<typename L, typename P, typename B>
+template<typename L, typename P, typename SHAPE>
 void
-render_2d_impl(L &logger, P &pipeline, B const& burrito)
+render_2d_impl(L &logger, P &pipeline, SHAPE const& shape)
 {
   auto const& ctx = pipeline.ctx();
   global::vao_bind(ctx.vao());
@@ -32,15 +32,15 @@ render_2d_impl(L &logger, P &pipeline, B const& burrito)
     logger.trace("after drawing shape");
   };
 
-  render::draw_scene(logger, pipeline, fn, burrito);
+  render::draw_scene(logger, pipeline, fn, shape);
 }
 
-template <typename L, typename P, typename B>
+template <typename L, typename P, typename SHAPE>
 void
-render_2dscene(L &logger, P &pipeline, B const &burrito)
+render_2dscene(L &logger, P &pipeline, SHAPE const &shape)
 {
   auto const fn = [&]() {
-    render_2d_impl(logger, pipeline, burrito);
+    render_2d_impl(logger, pipeline, shape);
   };
 
   using C = typename P::CTX;
@@ -56,13 +56,13 @@ render_2dscene(L &logger, P &pipeline, B const &burrito)
 
 } // ns impl
 
-template<typename Args, typename P, typename B>
-void draw2d(Args const& args, P &pipeline, B const& burrito)
+template<typename Args, typename P, typename SHAPE>
+void draw2d(Args const& args, P &pipeline, SHAPE const& shape)
 {
   auto const fn = [&](auto const& gl_mapped_shapes) {
     impl::render_2dscene(args.logger, pipeline, gl_mapped_shapes);
   };
-  draw_shapes(fn, burrito);
+  draw_shape(fn, shape);
 }
 
 } // ns gfx::opengl::render

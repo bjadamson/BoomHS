@@ -63,16 +63,26 @@ private:
   {
   }
 
-  template <typename Args, typename P, typename Burrito>
-  void draw_burrito(Args const& args, P &pipeline, Burrito const& burrito)
+  template <typename Args, typename P, typename Wrappable>
+  void draw_wrappable(Args const& args, P &pipeline, Wrappable const& wrappable)
   {
-    this->lib.draw(args, pipeline, stlw::make_burrito(burrito));
+    auto const draw_fn = [&](auto const& shape)
+    {
+      this->lib.draw(args, pipeline, shape);
+    };
+    auto const burrito = stlw::make_burrito(wrappable);
+    stlw::hof::for_each(burrito, draw_fn);
   }
 
-  template <typename Args, typename P, typename Burrito>
-  void draw_burrito(Args const& args, P &pipeline, Burrito &&burrito)
+  template <typename Args, typename P, typename Wrappable>
+  void draw_wrappable(Args const& args, P &pipeline, Wrappable &&wrappable)
   {
-    this->lib.draw(args, pipeline, stlw::make_burrito(MOVE(burrito)));
+    auto const draw_fn = [&](auto const& shape)
+    {
+      this->lib.draw(args, pipeline, shape);
+    };
+    auto const burrito = stlw::make_burrito(MOVE(wrappable));
+    stlw::hof::for_each(burrito, draw_fn);
   }
 
 public:
@@ -96,7 +106,7 @@ public:
   draw(Args const& args, P &pipeline, Container<T, N> const& arr)
   {
     auto x = stlw::tuple_from_array(arr);
-    this->draw_burrito(args, pipeline, MOVE(x));
+    this->draw_wrappable(args, pipeline, MOVE(x));
   }
 
   // The last parameter type here ensures that the value passed is similar to a stl container.
@@ -104,21 +114,21 @@ public:
   void
   draw(Args const& args, P &pipeline, Container &&c)
   {
-    this->draw_burrito(args, pipeline, MOVE(c));
+    this->draw_wrappable(args, pipeline, MOVE(c));
   }
 
   template<typename Args, typename P, typename ...T>
   void
   draw(Args const& args, P &pipeline, std::tuple<T...> &&t)
   {
-    this->draw_burrito(args, pipeline, MOVE(t));
+    this->draw_wrappable(args, pipeline, MOVE(t));
   }
 
   template<typename Args, typename P, typename ...T>
   void
   draw(Args const& args, P &pipeline, T &&... t)
   {
-    this->draw_burrito(args, pipeline, std::make_tuple(std::forward<T>(t)...));
+    this->draw_wrappable(args, pipeline, std::make_tuple(std::forward<T>(t)...));
   }
 
   void end()

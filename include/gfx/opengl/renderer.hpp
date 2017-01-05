@@ -43,17 +43,17 @@ struct opengl_renderer
   }
   void end() {}
 
-  template <typename Args, typename P, typename B>
-  void draw(Args const& args, P &pipeline, B const& burrito)
+  template <typename Args, typename P, typename SHAPE>
+  void draw(Args const& args, P &pipeline, SHAPE const& shape)
   {
     using C = typename P::CTX;
     if constexpr (C::IS_2D) {
       disable_depth_tests();
-      render::draw2d(args, pipeline, burrito);
+      render::draw2d(args, pipeline, shape);
       enable_depth_tests();
     } else {
       auto const draw3d = [&]() {
-        render::draw3d(args, pipeline, burrito);
+        render::draw3d(args, pipeline, shape);
       };
       if constexpr (C::IS_SKYBOX) {
         disable_depth_tests();

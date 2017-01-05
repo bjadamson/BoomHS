@@ -11,10 +11,10 @@ namespace gfx::opengl::render
 namespace impl
 {
 
-template <typename L, typename P, typename B>
+template <typename L, typename P, typename SHAPE>
 void
 draw_scene(L &logger, P &pipeline, glm::mat4 const& view, glm::mat4 const& projection,
-    B const& burrito)
+    SHAPE const& shape)
 {
   auto const& ctx = pipeline.ctx();
   global::vao_bind(ctx.vao());
@@ -44,16 +44,16 @@ draw_scene(L &logger, P &pipeline, glm::mat4 const& view, glm::mat4 const& proje
     logger.trace("after drawing shape");
   };
 
-  render::draw_scene(logger, pipeline, fn, burrito);
+  render::draw_scene(logger, pipeline, fn, shape);
 }
 
-template <typename L, typename P, typename B>
+template <typename L, typename P, typename SHAPE>
 void
-draw_scene(L &logger, P &pipeline, camera const &camera, glm::mat4 const &projection, B const& burrito)
+draw_scene(L &logger, P &pipeline, camera const &camera, glm::mat4 const &projection, SHAPE const& shape)
 {
   auto const fn = [&]() {
     auto const view = compute_view(camera);
-    impl::draw_scene(logger, pipeline, view, projection, burrito);
+    impl::draw_scene(logger, pipeline, view, projection, shape);
   };
 
   using C = typename P::CTX;
@@ -69,13 +69,13 @@ draw_scene(L &logger, P &pipeline, camera const &camera, glm::mat4 const &projec
 
 } // ns impl
 
-template <typename Args, typename P, typename B>
-void draw3d(Args const &args, P &pipeline, B const& burrito)
+template <typename Args, typename P, typename SHAPE>
+void draw3d(Args const &args, P &pipeline, SHAPE const& shape)
 {
   auto const fn = [&](auto const& gl_mapped_shapes) {
     impl::draw_scene(args.logger, pipeline, args.camera, args.projection, gl_mapped_shapes);
   };
-  render::draw_shapes(fn, burrito);
+  render::draw_shape(fn, shape);
 }
 
 } // ns gfx::opengl::render
