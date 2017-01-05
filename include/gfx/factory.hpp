@@ -571,21 +571,21 @@ public:
 namespace factories
 {
 
-template<typename C>
+template<typename P>
 auto
-make_tf(C &c) { return triangle_factory<C>{c}; }
+make_tf(P &p) { return triangle_factory<P>{p}; }
 
-template<typename C>
+template<typename P>
 auto
-make_rf(C &c) { return rectangle_factory<C>{c}; }
+make_rf(P &p) { return rectangle_factory<P>{p}; }
 
-template<typename C>
+template<typename P>
 auto
-make_pf(C &c) { return polygon_factory<C>{c}; }
+make_pf(P &p) { return polygon_factory<P>{p}; }
 
-template<typename C>
+template<typename P>
 auto
-make_cf(C &c) { return cube_factory<C>{c}; }
+make_cf(P &p) { return cube_factory<P>{p}; }
 
 #define DEFINE_FACTORY_METHODS(factory_type)                                                       \
   template<typename ...Args>                                                                       \
