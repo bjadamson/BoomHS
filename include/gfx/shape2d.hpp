@@ -1,6 +1,7 @@
 #pragma once
 #include <gfx/types.hpp>
 #include <gfx/shape.hpp>
+#include <stlw/sized_buffer.hpp>
 
 namespace gfx
 {

@@ -1,5 +1,5 @@
 #pragma once
-#include <game/data_types.hpp>
+#include <gfx/types.hpp>
 #include <stlw/type_macros.hpp>
 
 namespace gfx

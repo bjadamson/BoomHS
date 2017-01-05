@@ -20,7 +20,6 @@
 
 #include <game/boomhs/io_system.hpp>
 #include <game/boomhs/randompos_system.hpp>
-#include <game/data_types.hpp>
 
 namespace game::boomhs
 {

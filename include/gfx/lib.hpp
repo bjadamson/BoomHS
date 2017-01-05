@@ -1,11 +1,12 @@
 #pragma once
-// TODO: ditch this
-#include <gfx/opengl/lib.hpp>
+#include <gfx/camera.hpp>
 #include <gfx/pipeline.hpp>
 #include <gfx/factory.hpp>
 
 #include <stlw/burrito.hpp>
+#include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace gfx
 {

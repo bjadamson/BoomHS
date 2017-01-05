@@ -1,6 +1,5 @@
 #pragma once
 #include <gfx/colors.hpp>
-#include <game/data_types.hpp>
 #include <game/boomhs/ecst.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/format.hpp>

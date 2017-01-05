@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 #include <gfx/types.hpp>
 #include <gfx/shape.hpp>
