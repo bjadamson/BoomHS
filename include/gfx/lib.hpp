@@ -50,26 +50,27 @@ auto make_render_args(L &l, camera const& c, glm::mat4 const& projection)
 
 using namespace stlw;
 
+template<typename B>
 class gfx_lib
 {
   friend struct factory;
   NO_COPY(gfx_lib);
 public:
-  opengl::opengl_lib lib;
+  B lib;
 private:
-  gfx_lib(opengl::opengl_lib &&l)
+  gfx_lib(B &&l)
       : lib(MOVE(l))
   {
   }
 
-  template <typename Args, typename Ctx, typename B>
-  void draw_burrito(Args const& args, Ctx &ctx, B const& burrito)
+  template <typename Args, typename Ctx, typename Burrito>
+  void draw_burrito(Args const& args, Ctx &ctx, Burrito const& burrito)
   {
     this->lib.draw(args, ctx, stlw::make_burrito(burrito));
   }
 
-  template <typename Args, typename Ctx, typename B>
-  void draw_burrito(Args const& args, Ctx &ctx, B &&burrito)
+  template <typename Args, typename Ctx, typename Burrito>
+  void draw_burrito(Args const& args, Ctx &ctx, Burrito &&burrito)
   {
     this->lib.draw(args, ctx, stlw::make_burrito(MOVE(burrito)));
   }
@@ -130,9 +131,9 @@ struct factory {
   ~factory() = delete;
 
   template <typename L, typename LIB>
-  static stlw::result<gfx_lib, std::string> make(L &logger, LIB &&gfx)
+  static stlw::result<gfx_lib<LIB>, std::string> make(L &logger, LIB &&gfx)
   {
-    return gfx_lib{MOVE(gfx)};
+    return gfx_lib<LIB>{MOVE(gfx)};
   }
 };
 

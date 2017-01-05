@@ -40,6 +40,7 @@ auto make_loop_state(L &l, bool &quit, gfx::camera &c, glm::mat4 const& p,
   return loop_state<L>{l, quit, c, p, fg, models, skybox, terrain, md};
 }
 
+template<typename GFX_LIB>
 class engine
 {
   using W = ::window::sdl_window;
@@ -47,11 +48,11 @@ class engine
 
   W window_;
 public:
-  gfx::gfx_lib gfx;
+  gfx::gfx_lib<GFX_LIB> gfx;
 private:
-  engine(W &&w, gfx::gfx_lib &&g)
-      : window_(std::move(w))
-      , gfx(std::move(g))
+  engine(W &&w, gfx::gfx_lib<GFX_LIB> &&g)
+      : window_(MOVE(w))
+      , gfx(MOVE(g))
   {
   }
   NO_COPY(engine);
@@ -99,7 +100,7 @@ public:
     auto const init_system = [&logger](auto &system, auto &) { system.init(logger); };
     auto const init = [&init_system](auto &system) { sea::t(system).for_subtasks(init_system); };
 
-    //auto game_systems = game.ecst_systems();//std::move(io_tags), std::move(randompos_tags));
+    //auto game_systems = game.ecst_systems();//MOVE(io_tags), MOVE(randompos_tags));
     //stlw::for_each(game_systems, init);
 
     auto const io_init_system = sea::t(io_tags).for_subtasks(init_system);
@@ -133,7 +134,7 @@ public:
       auto const fn = [&]()
       {
         auto loop_state = mls(state);
-        this->loop(std::move(loop_state), game, proxy);
+        this->loop(MOVE(loop_state), game, proxy);
       };
       while (!state.quit) {
         fps_capped_game_loop(fn);
@@ -142,7 +143,7 @@ public:
     ctx->step([&](auto &proxy) {
       logger.trace("game started, initializing systems.");
       proxy.execute_systems()(io_init_system, randompos_init_system);
-      //proxy.execute_systmes()(std::move(game_systems));
+      //proxy.execute_systmes()(MOVE(game_systems));
       logger.trace("systems initialized, entering main loop.");
 
       game_loop(proxy);
@@ -191,10 +192,10 @@ struct factory {
   ~factory() = delete;
 
   template <typename L, typename W, typename LIB>
-  static stlw::result<engine, std::string> make_engine(L &logger, W &&window, LIB &&gfx)
+  static stlw::result<engine<LIB>, std::string> make_engine(L &logger, W &&window, LIB &&gfx)
   {
     DO_TRY(auto gfx_lib, gfx::factory::make(logger, MOVE(gfx)));
-    return engine{MOVE(window), MOVE(gfx_lib)};
+    return engine<LIB>{MOVE(window), MOVE(gfx_lib)};
   }
 };
 
