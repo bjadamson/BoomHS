@@ -114,11 +114,7 @@ public:
       return glm::vec4{random_comp(), random_comp(), random_comp(), 1.0f};
     };
 
-    auto &rd = renderer;
-    auto &r = rd;
-    auto &d2 = r.lib.opengl_pipelines.d2;
-    auto &d3 = r.lib.opengl_pipelines.d3;
-
+    auto &r = renderer;
     auto const height = 0.25f, width = 0.39f;
     auto cube_skybox = sf.d3.skybox.make_cube({gfx::draw_mode::TRIANGLE_STRIP, state.skybox_model,
         {10.0f, 10.0f, 10.0f}});
@@ -126,11 +122,10 @@ public:
     auto cube_terrain = sf.d3.color.make_cube({gfx::draw_mode::TRIANGLE_STRIP, state.terrain_model,
         {10.0f, 0.1f, 10.0f}}, gfx::LIST_OF_COLORS::SADDLE_BROWN);
 
-    rd.begin();
+    r.begin();
     auto args = state.render_args();
     r.draw(args, MOVE(cube_skybox));
 
-    /*
     auto triangle_color = sf.d2.color.make_triangle({gfx::draw_mode::TRIANGLES, *state.MODELS[9]},
         gfx::LIST_OF_COLORS::PINK);
 
@@ -172,61 +167,59 @@ public:
     auto polygon_wireframe = sf.d2.wireframe.make_polygon({gfx::draw_mode::LINE_LOOP, *state.MODELS[22], 7});
 
     //auto polygon_list_of_color = d2c.make_polygon(gfx::draw_mode::TRIANGLE_FAN, *zp1, 5,
-    //multicolor_triangle);
+        //multicolor_triangle);
 
     // first draw terrain
-    r.draw(args, d3.color, cube_terrain);
+    r.draw(args, cube_terrain);
 
     // now draw entities
-    r.draw(args, d3.color, cube_color);
-    r.draw(args, d3.texture, cube_texture);
-    r.draw(args, d3.wireframe, cube_wf);
+    r.draw(args, cube_color);
+    r.draw(args, cube_texture);
+    r.draw(args, cube_wf);
 
     {
-      std::array<gfx::triangle<gfx::vertex_color_attributes>, 2> const arr = {
-        sf.d2.color.make_triangle({random_mode(), *state.MODELS[0]}, rc()),
-        sf.d2.color.make_triangle({random_mode(), *state.MODELS[1]}, rc())
-      };
-      r.draw(args, d2.color, arr);
+      //std::array<gfx::triangle<gfx::vertex_color_attributes>, 2> const arr = {
+        //sf.d2.color.make_triangle({random_mode(), *state.MODELS[0]}, rc()),
+        //sf.d2.color.make_triangle({random_mode(), *state.MODELS[1]}, rc())
+      //};
+      //r.draw(args, arr);
     }
     {
-      std::array<gfx::triangle<gfx::vertex_color_attributes>, 2> arr = {
-        sf.d2.color.make_triangle({random_mode(), *state.MODELS[2]}, rc()),
-        sf.d2.color.make_triangle({random_mode(), *state.MODELS[3]}, rc())
-      };
-      r.draw(args, d2.color, MOVE(arr));
+      //std::array<gfx::triangle<gfx::vertex_color_attributes>, 2> arr = {
+        //sf.d2.color.make_triangle({random_mode(), *state.MODELS[2]}, rc()),
+        //sf.d2.color.make_triangle({random_mode(), *state.MODELS[3]}, rc())
+      //};
+      //r.draw(args, MOVE(arr));
     }
     {
-      r.draw(args, d2.color, std::make_tuple(
-            sf.d2.color.make_triangle({random_mode(), *state.MODELS[4]}, rc())
-            ));
+      //r.draw(args, std::make_tuple(
+            //sf.d2.color.make_triangle({random_mode(), *state.MODELS[4]}, rc())
+            //));
     }
     {
-      r.draw(args, d2.color,
-            sf.d2.color.make_triangle({random_mode(), *state.MODELS[5]}, rc()),
-            sf.d2.color.make_triangle({random_mode(), *state.MODELS[6]}, rc())
-            );
+      //r.draw(args,
+            //sf.d2.color.make_triangle({random_mode(), *state.MODELS[5]}, rc()),
+            //sf.d2.color.make_triangle({random_mode(), *state.MODELS[6]}, rc())
+            //);
     }
     {
-      std::vector<gfx::triangle<gfx::vertex_color_attributes>> vec;
-      vec.emplace_back(sf.d2.color.make_triangle({random_mode(), *state.MODELS[7]}, rc()));
-      vec.emplace_back(sf.d2.color.make_triangle({random_mode(), *state.MODELS[8]}, rc()));
+      //std::vector<gfx::triangle<gfx::vertex_color_attributes>> vec;
+      //vec.emplace_back(sf.d2.color.make_triangle({random_mode(), *state.MODELS[7]}, rc()));
+      //vec.emplace_back(sf.d2.color.make_triangle({random_mode(), *state.MODELS[8]}, rc()));
 
-      r.draw(args, d2.color, MOVE(vec));
+      //r.draw(args, MOVE(vec));
     }
 
     // not draw 2d entities (last because we disable depth tests for these draw calls)
-    r.draw(args, d2.color, triangle_color, triangle_list_colors, MOVE(polygon_color),
+    r.draw(args, triangle_color, triangle_list_colors, MOVE(polygon_color),
                                            rectangle_color, rectangle_list_colors
                                            // polygon_list_of_color,
                                            );
 
-    r.draw(args, d2.texture_wall, triangle_texture, rectangle_texture);
-    r.draw(args, d2.texture_container, MOVE(polygon_texture));
-    r.draw(args, d2.wireframe, MOVE(polygon_wireframe), triangle_wireframe, rectangle_wireframe);
-
-    */
-    rd.end();
+    r.draw(args, triangle_texture, rectangle_texture);
+    r.draw(args, MOVE(polygon_texture));
+    r.draw(args, MOVE(polygon_wireframe), triangle_wireframe, rectangle_wireframe);
+    r.end();
   }
 };
 
