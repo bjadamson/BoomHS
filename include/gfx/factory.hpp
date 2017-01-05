@@ -589,62 +589,62 @@ make_cf(C &c) { return cube_factory<C>{c}; }
 
 #define DEFINE_FACTORY_METHODS(factory_type)                                                       \
   template<typename ...Args>                                                                       \
-  auto constexpr make_triangle(triangle_properties const& properties, Args &&... args) const             \
+  auto constexpr make_triangle(triangle_properties const& properties, Args &&... args) const       \
   {                                                                                                \
-    auto const tf = make_tf(this->ctx_.backend());                                                 \
+    auto const tf = make_tf(this->pipeline_);                                                      \
     return tf.make(properties, factory_type{}, std::forward<Args>(args)...);                       \
   }                                                                                                \
                                                                                                    \
   template<typename ...Args>                                                                       \
-  auto constexpr make_rectangle(rectangle_properties const& properties, Args &&... args) const           \
+  auto constexpr make_rectangle(rectangle_properties const& properties, Args &&... args) const     \
   {                                                                                                \
-    auto const rf = make_rf(this->ctx_.backend());                                                 \
+    auto const rf = make_rf(this->pipeline_);                                                      \
     return rf.make(properties, factory_type{}, std::forward<Args>(args)...);                       \
   }                                                                                                \
                                                                                                    \
   template<typename ...Args>                                                                       \
-  auto constexpr make_polygon(polygon_properties const& properties, Args &&... args) const               \
+  auto constexpr make_polygon(polygon_properties const& properties, Args &&... args) const         \
   {                                                                                                \
-    auto const pf = make_pf(this->ctx_.backend());                                                 \
+    auto const pf = make_pf(this->pipeline_);                                                      \
     return pf.make(properties, factory_type{}, std::forward<Args>(args)...);                       \
   }                                                                                                \
                                                                                                    \
   template<typename ...Args>                                                                       \
-  auto constexpr make_cube(cube_properties const& properties, Args &&... args) const                     \
+  auto constexpr make_cube(cube_properties const& properties, Args &&... args) const               \
   {                                                                                                \
-    auto const cf = make_cf(this->ctx_.backend());                                                 \
+    auto const cf = make_cf(this->pipeline_);                                                      \
     return cf.make(properties, factory_type{}, std::forward<Args>(args)...);                       \
   }
 
-template<typename C>
+template<typename P>
 class color
 {
-  C ctx_;
+  P pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(color);
-  explicit constexpr color(C &&c) : ctx_(std::move(c)) {}
+  explicit constexpr color(P &&c) : pipeline_(std::move(c)) {}
 
   DEFINE_FACTORY_METHODS(color_t);
 };
 
-template<typename C>
+template<typename P>
 class texture
 {
-  C ctx_;
+  P pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(texture);
-  explicit constexpr texture(C &&c) : ctx_(std::move(c)) {}
+  explicit constexpr texture(P &&c) : pipeline_(std::move(c)) {}
 
   DEFINE_FACTORY_METHODS(uv_t);
 };
 
-template<typename C>
+template<typename P>
 class wireframe
 {
-  C ctx_;
+  P pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(wireframe);
-  explicit constexpr wireframe(C &&c) : ctx_(std::move(c)) {}
+  explicit constexpr wireframe(P &&c) : pipeline_(std::move(c)) {}
 
   DEFINE_FACTORY_METHODS(wireframe_t);
 };
@@ -653,16 +653,16 @@ public:
 
 } // ns factories
 
-template<typename C0, typename C1, typename C2, typename C3>
+template<typename P0, typename P1, typename P2, typename P3>
 struct d2_shape_factory
 {
-  factories::color<C0> color;
-  factories::texture<C1> texture_wall;
-  factories::texture<C2> texture_container;
-  factories::wireframe<C3> wireframe;
+  factories::color<P0> color;
+  factories::texture<P1> texture_wall;
+  factories::texture<P2> texture_container;
+  factories::wireframe<P3> wireframe;
 
-  explicit d2_shape_factory(factories::color<C0> &&cf, factories::texture<C1> &&tf0,
-      factories::texture<C2> &&tf1, factories::wireframe<C3> &&wf)
+  explicit d2_shape_factory(factories::color<P0> &&cf, factories::texture<P1> &&tf0,
+      factories::texture<P2> &&tf1, factories::wireframe<P3> &&wf)
     : color(MOVE(cf))
     , texture_wall(MOVE(tf0))
     , texture_container(MOVE(tf1))
@@ -672,16 +672,16 @@ struct d2_shape_factory
   MOVE_CONSTRUCTIBLE_ONLY(d2_shape_factory);
 };
 
-template<typename C0, typename C1, typename C2, typename C3>
+template<typename P0, typename P1, typename P2, typename P3>
 struct d3_shape_factory
 {
-  factories::color<C0> color;
-  factories::texture<C1> texture;
-  factories::texture<C2> skybox;
-  factories::wireframe<C3> wireframe;
+  factories::color<P0> color;
+  factories::texture<P1> texture;
+  factories::texture<P2> skybox;
+  factories::wireframe<P3> wireframe;
 
-  explicit d3_shape_factory(factories::color<C0> &&cf, factories::texture<C1> &&tf,
-      factories::texture<C2> &&sky, factories::wireframe<C3> &&wf)
+  explicit d3_shape_factory(factories::color<P0> &&cf, factories::texture<P1> &&tf,
+      factories::texture<P2> &&sky, factories::wireframe<P3> &&wf)
     : color(MOVE(cf))
     , texture(MOVE(tf))
     , skybox(MOVE(sky))
@@ -698,40 +698,22 @@ struct shape_factories
   SF3D d3;
 };
 
-template<typename C>
-auto make_color_factory(C &&context)
+template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6,
+  typename P7>
+auto make_shape_factories(P0 &&p0, P1 &&p1, P2 &&p2, P3 &&p3, P4 &&p4, P5 &&p5, P6 &&p6, P7 &&p7)
 {
-  return factories::color<C>{std::move(context)};
-}
-
-template<typename C>
-auto make_uv_factory(C &&context)
-{
-  return factories::texture<C>{std::move(context)};
-}
-
-template<typename C>
-auto make_wireframe_factory(C &&context)
-{
-  return factories::wireframe<C>{std::move(context)};
-}
-
-template<typename C0, typename C1, typename C2, typename C3, typename C4, typename C5, typename C6,
-  typename C7>
-auto make_shape_factories(C0 &&c0, C1 &&c1, C2 &&c2, C3 &&c3, C4 &&c4, C5 &&c5, C6 &&c6, C7 &&c7)
-{
-  auto d2p = d2_shape_factory<C0, C1, C2, C3>{
-    factories::color<C0>{MOVE(c0)},
-    factories::texture<C1>{MOVE(c1)},
-    factories::texture<C2>{MOVE(c2)},
-    factories::wireframe<C3>{MOVE(c3)}
+  auto d2p = d2_shape_factory<P0, P1, P2, P3>{
+    factories::color<P0>{MOVE(p0)},
+    factories::texture<P1>{MOVE(p1)},
+    factories::texture<P2>{MOVE(p2)},
+    factories::wireframe<P3>{MOVE(p3)}
   };
 
-  auto d3p = d3_shape_factory<C4, C5, C6, C7>{
-    factories::color<C4>{MOVE(c4)},
-    factories::texture<C5>{MOVE(c5)},
-    factories::texture<C6>{MOVE(c6)},
-    factories::wireframe<C7>{MOVE(c7)}
+  auto d3p = d3_shape_factory<P4, P5, P6, P7>{
+    factories::color<P4>{MOVE(p4)},
+    factories::texture<P5>{MOVE(p5)},
+    factories::texture<P6>{MOVE(p6)},
+    factories::wireframe<P7>{MOVE(p7)}
   };
 
   using SF2D = decltype(d2p);
