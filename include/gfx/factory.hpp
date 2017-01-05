@@ -588,22 +588,22 @@ auto
 make_cf(P &p) { return cube_factory<P>{p}; }
 
 template<typename S, typename P>
-struct both
+struct pipeline_shape_pair
 {
   S shape;
   P &pipeline;
 };
 
 template<typename S, typename P>
-auto make_both(S &&s, P &p) { return both<S, P>{MOVE(s), p}; }
+auto make_pipeline_shape_pair(S &&s, P &p) { return pipeline_shape_pair<S, P>{MOVE(s), p}; }
 
 #define DEFINE_FACTORY_METHODS(factory_type)                                                       \
   template<typename ...Args>                                                                       \
-  auto constexpr make_triangle(triangle_properties const& properties, Args &&... args)        \
+  auto constexpr make_triangle(triangle_properties const& properties, Args &&... args)             \
   {                                                                                                \
-    auto tf = make_tf(this->pipeline_);                                                      \
+    auto tf = make_tf(this->pipeline_);                                                            \
     auto shape = tf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
-    return make_both(MOVE(shape), this->pipeline_);                                                \
+    return make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                                 \
   }                                                                                                \
                                                                                                    \
   template<typename ...Args>                                                                       \
@@ -611,7 +611,7 @@ auto make_both(S &&s, P &p) { return both<S, P>{MOVE(s), p}; }
   {                                                                                                \
     auto rf = make_rf(this->pipeline_);                                                            \
     auto shape = rf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
-    return make_both(MOVE(shape), this->pipeline_);                                                \
+    return make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                                 \
   }                                                                                                \
                                                                                                    \
   template<typename ...Args>                                                                       \
@@ -619,7 +619,7 @@ auto make_both(S &&s, P &p) { return both<S, P>{MOVE(s), p}; }
   {                                                                                                \
     auto pf = make_pf(this->pipeline_);                                                            \
     auto shape = pf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
-    return make_both(MOVE(shape), this->pipeline_);                                                \
+    return make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                                 \
   }                                                                                                \
                                                                                                    \
   template<typename ...Args>                                                                       \
@@ -627,7 +627,7 @@ auto make_both(S &&s, P &p) { return both<S, P>{MOVE(s), p}; }
   {                                                                                                \
     auto cf = make_cf(this->pipeline_);                                                            \
     auto shape = cf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
-    return make_both(MOVE(shape), this->pipeline_);                                                \
+    return make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                                 \
   }
 
 template<typename P>

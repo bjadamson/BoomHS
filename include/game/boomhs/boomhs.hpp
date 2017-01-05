@@ -65,16 +65,6 @@ make_state(L &logger, HW const& hw)
   return game_state<L>(logger, hw, MOVE(rng), MOVE(projection));
 }
 
-template<typename D, typename C>
-struct opengl_shape
-{
-  D data;
-  C &context;
-
-  opengl_shape(D &&d, C &c) : data(MOVE(d)), context(c) {}
-  MOVE_CONSTRUCTIBLE_ONLY(opengl_shape);
-};
-
 class boomhs_game
 {
   NO_COPY(boomhs_game);

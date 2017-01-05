@@ -66,10 +66,10 @@ private:
   template <typename Args, typename Wrappable>
   void draw_wrappable(Args const& args, Wrappable const& wrappable)
   {
-    auto const draw_fn = [&](auto &&both)
+    auto const draw_fn = [&](auto &&pipeline_shape_pair)
     {
-      auto &pipeline = both.pipeline;
-      auto &&shape = MOVE(both.shape);
+      auto &pipeline = pipeline_shape_pair.pipeline;
+      auto &&shape = MOVE(pipeline_shape_pair.shape);
       this->lib.draw(args, pipeline.backend(), MOVE(shape));
     };
     auto burrito = stlw::make_burrito(wrappable);
@@ -79,10 +79,10 @@ private:
   template <typename Args, typename Wrappable>
   void draw_wrappable(Args const& args, Wrappable &&wrappable)
   {
-    auto const draw_fn = [&](auto &&both)
+    auto const draw_fn = [&](auto &&pipeline_shape)
     {
-      auto &pipeline = both.pipeline;
-      auto &&shape = MOVE(both.shape);
+      auto &pipeline = pipeline_shape.pipeline;
+      auto &&shape = MOVE(pipeline_shape.shape);
       this->lib.draw(args, pipeline.backend(), MOVE(shape));
     };
     auto burrito = stlw::make_burrito(MOVE(wrappable));
