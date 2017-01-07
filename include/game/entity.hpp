@@ -30,7 +30,7 @@ class entity_transformer
   void
   for_entity(ecst::entity_id const eid, char const* action, FN const& fn)
   {
-    this->logger.trace(fmt::sprintf("'%s' entity eid '%d'", action, eid));
+    this->LOG_TRACE(fmt::sprintf("'%s' entity eid '%d'", action, eid));
     fn();
   }
 public:

@@ -25,11 +25,11 @@ render_2d_impl(L &logger, P &pipeline, SHAPE const& shape)
   auto &program = pipeline.program_ref();
   program.use();
   auto const fn = [&](auto const &shape) {
-    logger.trace("before drawing shape ...");
+    LOG_TRACE("before drawing shape ...");
     render::render_shape(logger, shape);
 
     program.check_errors(logger);
-    logger.trace("after drawing shape");
+    LOG_TRACE("after drawing shape");
   };
 
   render::draw_scene(logger, pipeline, fn, shape);

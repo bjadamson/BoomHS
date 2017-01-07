@@ -1,6 +1,7 @@
 #pragma once
 #include <opengl/glew.hpp>
 #include <stlw/format.hpp>
+#include <stlw/log.hpp>
 #include <stlw/type_ctors.hpp>
 
 #include <boost/optional.hpp>
@@ -46,7 +47,7 @@ log_any_gl_errors(L &logger, std::string const &msg, int const line)
   if (err != GL_NO_ERROR) {
     auto const msg = fmt::sprintf("GL error detected (line %d), code: '%d', string: '%s'", line,
                                   err, gluErrorString(err));
-    logger.error(msg);
+    LOG_ERROR(msg);
     assert(false);
   }
 }

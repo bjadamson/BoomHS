@@ -5,6 +5,18 @@
 #include <stlw/impl/log_impl.hpp>
 #include <stlw/type_macros.hpp>
 
+#undef LOG_TRACE
+#undef LOG_DEBUG
+#undef LOG_INFO
+#undef LOG_WARN
+#undef LOG_ERROR
+
+#define LOG_TRACE(...) logger.trace(__VA_ARGS__)
+#define LOG_DEBUG(...) logger.debug(__VA_ARGS__)
+#define LOG_INFO(...) logger.info(__VA_ARGS__)
+#define LOG_WARN(...) logger.warn(__VA_ARGS__)
+#define LOG_ERROR(...) logger.error(__VA_ARGS__)
+
 namespace stlw
 {
 

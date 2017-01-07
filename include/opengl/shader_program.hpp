@@ -44,7 +44,7 @@ check_opengl_errors(L &logger, GLuint const p)
 {
   auto const errors = global::log::get_errors(p);
   if (errors) {
-    logger.error("Opengl error: '{}'", *errors);
+    LOG_ERROR("Opengl error: '{}'", *errors);
   }
 }
 
@@ -66,9 +66,9 @@ get_uniform_location(L &logger, GLuint const p, GLchar const *name)
 {
   global::log::clear_gl_errors();
 
-  logger.trace(fmt::sprintf("getting uniform '%s' location.", name));
+  LOG_TRACE(fmt::sprintf("getting uniform '%s' location.", name));
   GLint const loc = glGetUniformLocation(p, name);
-  logger.trace(fmt::sprintf("uniform '%s' found at '%d'.", name, loc));
+  LOG_TRACE(fmt::sprintf("uniform '%s' found at '%d'.", name, loc));
 
   check_opengl_errors(logger, p);
   assert(-1 != loc);
@@ -91,7 +91,7 @@ program_set_uniform_matrix_4fv(L &logger, GLuint const p, GLchar const *name, gl
   GLsizei constexpr COUNT = 1;
   GLboolean constexpr TRANSPOSE_MATRICES = GL_FALSE;
 
-  logger.trace(fmt::sprintf("sending uniform matrix at loc '%d' with data '%s' to GPU", loc,
+  LOG_TRACE(fmt::sprintf("sending uniform matrix at loc '%d' with data '%s' to GPU", loc,
         glm::to_string(matrix)));
   glUniformMatrix4fv(loc, COUNT, TRANSPOSE_MATRICES, glm::value_ptr(matrix));
   check_opengl_errors(logger, p);

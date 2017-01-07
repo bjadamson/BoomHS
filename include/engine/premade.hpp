@@ -62,10 +62,10 @@ make_opengl_sdl_premade_configuration(L &logger, float const width, float const 
   namespace w = window;
   using window_lib = w::library_wrapper<w::sdl_library>;
 
-  logger.debug("Initializing window library globals");
+  LOG_DEBUG("Initializing window library globals");
   DO_TRY(auto _, window_lib::init());
 
-  logger.debug("Instantiating window instance.");
+  LOG_DEBUG("Instantiating window instance.");
   DO_TRY(auto window, window_lib::make_window(height, width));
 
   DO_TRY(auto opengl, opengl::lib_factory::make(logger));

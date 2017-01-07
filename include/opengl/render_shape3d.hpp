@@ -28,7 +28,7 @@ draw_scene(L &logger, P &pipeline, glm::mat4 const& view, glm::mat4 const& proje
 
   auto &program = pipeline.program_ref();
   auto const fn = [&](auto const &shape) {
-    logger.trace("setting u_mvmatrix");
+    LOG_TRACE("setting u_mvmatrix");
     auto const& model = shape.model;
 
     auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
@@ -38,10 +38,10 @@ draw_scene(L &logger, P &pipeline, glm::mat4 const& view, glm::mat4 const& proje
     auto const mvmatrix = projection * view * mmatrix;
     program.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
 
-    logger.trace("before drawing shape ...");
+    LOG_TRACE("before drawing shape ...");
     render::render_shape(logger, shape);
     program.check_errors(logger);
-    logger.trace("after drawing shape");
+    LOG_TRACE("after drawing shape");
   };
 
   render::draw_scene(logger, pipeline, fn, shape);

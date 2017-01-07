@@ -23,7 +23,7 @@ load_image(L &logger, char const* path)
   if (nullptr == pimage) {
     auto const fmt =
         fmt::sprintf("image at path '%s' failed to load, reason '%s'", path, SOIL_last_result());
-    logger.error(fmt);
+    LOG_ERROR(fmt);
     std::abort();
   }
   pimage_t image_data{pimage, &SOIL_free_image_data};

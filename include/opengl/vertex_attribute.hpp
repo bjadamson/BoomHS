@@ -89,7 +89,7 @@ auto
 make_vertex_array(L &logger, Attributes &&... attributes)
 {
   auto constexpr NUM_ATTRIBUTES = sizeof...(attributes);
-  logger.trace(fmt::sprintf("Constructing vertex array from '%d' attributes.", NUM_ATTRIBUTES));
+  LOG_TRACE(fmt::sprintf("Constructing vertex array from '%d' attributes.", NUM_ATTRIBUTES));
 
   {
     int max_attribs = 0;
@@ -97,13 +97,13 @@ make_vertex_array(L &logger, Attributes &&... attributes)
 
     auto const fmt = fmt::sprintf(
         "Queried OpengGL for maximum number of vertex attributes, found '%d'", max_attribs);
-    logger.trace(fmt);
+    LOG_TRACE(fmt);
 
     if (max_attribs <= NUM_ATTRIBUTES) {
       auto const fmt =
           fmt::sprintf("Error requested '%d' vertex attributes from opengl, only '%d' available",
                        NUM_ATTRIBUTES, max_attribs);
-      logger.error(fmt);
+      LOG_ERROR(fmt);
       assert(false);
     }
   }
@@ -162,8 +162,8 @@ set_attrib_pointer(L &logger, attribute_info const &attrib_info, skip_context &s
   auto const z = make_strings("attribute_index", "component_count", "normalize_data", "stride", "offset",
       "component_sk");
 
-  logger.debug(z);
-  logger.debug(s);
+  LOG_DEBUG(z);
+  LOG_DEBUG(s);
 }
 
 template<typename L>
@@ -194,12 +194,12 @@ set_vertex_attributes(L &logger, vertex_attribute const& va)
     auto const sb = [](auto const& enabled) { return (GL_FALSE == enabled) ? "false" : "true"; };
     auto const fmt = fmt::sprintf("Querying OpengGL, vertex attribute index '%d' enabled: '%s'",
         it.global_index, sb(enabled));
-    logger.trace(fmt);
+    LOG_TRACE(fmt);
   };
 
   impl::skip_context sc{va.num_components()};
   for (auto const& it : va) {
-    logger.trace(fmt::sprintf("setting attribute '%d'", it.global_index));
+    LOG_TRACE(fmt::sprintf("setting attribute '%d'", it.global_index));
     impl::set_attrib_pointer(logger, it, sc);
     log_info(it);
   }

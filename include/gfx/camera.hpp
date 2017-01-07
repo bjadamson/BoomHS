@@ -158,11 +158,11 @@ public:
     auto const new_pitch = glm::degrees(this->pitch_ + pitch);
     if (mdata.pitch_lock) {
       if(new_pitch > 0.0f && moving_down) {
-        logger.error("DOWN LOCK");
+        LOG_ERROR("DOWN LOCK");
         return *this;
       }
       if(new_pitch < -45.0f && moving_up) {
-        logger.error("UP LOCK");
+        LOG_ERROR("UP LOCK");
         return *this;
       }
     }

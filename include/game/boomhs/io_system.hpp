@@ -12,7 +12,7 @@ struct io_system {
   template <typename L>
   bool init(L &logger)
   {
-    logger.trace("io_system::init()");
+    LOG_TRACE("io_system::init()");
     return true;
   }
 
@@ -56,13 +56,13 @@ struct io_system {
       break;
     }
     case SDL_MOUSEWHEEL: {
-      logger.trace("mouse wheel event detected.");
+      LOG_TRACE("mouse wheel event detected.");
       if (event.wheel.y > 0) {
-        logger.error("increasing sensitivity by factor 2");
+        LOG_ERROR("increasing sensitivity by factor 2");
         state.mouse_data.sensitivity.x *= 2.0f;
         state.mouse_data.sensitivity.y *= 2.0f;
       } else {
-        logger.error("decreasing sensitivity by factor 2");
+        LOG_ERROR("decreasing sensitivity by factor 2");
         state.mouse_data.sensitivity.x *= 0.5f;
         state.mouse_data.sensitivity.y *= 0.5f;
       }
@@ -70,7 +70,7 @@ struct io_system {
     }
     case SDL_MOUSEBUTTONDOWN:
     {
-      logger.error("toggling mouse up/down (pitch) lock");
+      LOG_ERROR("toggling mouse up/down (pitch) lock");
       state.mouse_data.pitch_lock = !state.mouse_data.pitch_lock;
       break;
     }
@@ -157,7 +157,7 @@ struct io_system {
   template <typename TData, typename S>
   void process(TData &data, S &state) const
   {
-    state.logger.trace("io_system::process(data, state)");
+    state.LOG_TRACE("io_system::process(data, state)");
     SDL_Event event;
 
     auto et = ::game::entity_factory::make_transformer(state.logger, data);

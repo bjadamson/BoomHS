@@ -93,11 +93,11 @@ public:
   void start(G &&game, S &&state)
   {
     auto &logger = state.logger;
-    logger.trace("creating ecst context ...");
+    LOG_TRACE("creating ecst context ...");
 
     // Create an ECST context.
     auto ctx = ecst_setup::make_context();
-    logger.trace("stepping ecst once");
+    LOG_TRACE("stepping ecst once");
 
     // Initialize context with some entities.
     ctx->step([&](auto &proxy)
@@ -110,13 +110,13 @@ public:
           };
           for (auto i{0}; i < 100; ++i) {
             auto const [x, y] = state.rnum_generator.generate_2dposition();
-            logger.error(fmt::format("2d x, y is {}, {}", x, y));
+            LOG_ERROR(fmt::format("2d x, y is {}, {}", x, y));
             auto const z = 0.0f;
             state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
           }
           for (auto i{100}; i < 200; ++i) {
             auto const [x, y, z] = state.rnum_generator.generate_3dabove_ground_position();
-            logger.error(fmt::format("3d x, y, z is {}, {}, {}", x, y, z));
+            LOG_ERROR(fmt::format("3d x, y, z is {}, {}, {}", x, y, z));
             state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
           }
     });
@@ -146,12 +146,12 @@ public:
       float constexpr ONE_60TH_OF_A_FRAME = (1/60) * 1000;
 
       if (frame_ticks < ONE_60TH_OF_A_FRAME) {
-        logger.trace("Frame finished early, sleeping rest of frame.");
+        LOG_TRACE("Frame finished early, sleeping rest of frame.");
         SDL_Delay(ONE_60TH_OF_A_FRAME - frame_ticks);
       }
 
       float const fps = frames_counted / (fps_timer.get_ticks() / 1000.0f);
-      logger.info(fmt::format("average FPS '{}'", fps));
+      LOG_INFO(fmt::format("average FPS '{}'", fps));
       ++frames_counted;
     };
     auto const mls = [&mouse_data](auto &state) {
@@ -169,13 +169,13 @@ public:
       }
     };
     ctx->step([&](auto &proxy) {
-      logger.trace("game started, initializing systems.");
+      LOG_TRACE("game started, initializing systems.");
       proxy.execute_systems()(io_init_system, randompos_init_system);
       //proxy.execute_systmes()(MOVE(game_systems));
-      logger.trace("systems initialized, entering main loop.");
+      LOG_TRACE("systems initialized, entering main loop.");
 
       game_loop(proxy);
-      logger.trace("game loop finished.");
+      LOG_TRACE("game loop finished.");
     });
   }
 
@@ -193,16 +193,16 @@ public:
     auto const randompos_process_system = randompos_tags.for_subtasks(process_system);
 
     auto &logger = state.logger;
-    logger.trace("executing systems.");
+    LOG_TRACE("executing systems.");
     proxy.execute_systems()(io_process_system, randompos_process_system);
 
     this->begin();
-    logger.trace("rendering.");
+    LOG_TRACE("rendering.");
 
     auto sf = impl::make_shape_factories(this->gfx.pipelines);
     game.game_loop(state, this->gfx, MOVE(sf));
     this->end();
-    logger.trace("game loop stepping.");
+    LOG_TRACE("game loop stepping.");
   }
 
   void end()

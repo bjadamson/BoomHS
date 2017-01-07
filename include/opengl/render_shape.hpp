@@ -18,7 +18,7 @@ render(L &logger, GLenum const render_mode, GLsizei const element_count)
   auto const fmt = fmt::sprintf("glDrawElements() render_mode '%d', element_count '%d'",
                                 render_mode, element_count);
 
-  logger.trace(fmt);
+  LOG_TRACE(fmt);
 
   auto constexpr OFFSET = nullptr;
   glDrawElements(render_mode, element_count, GL_UNSIGNED_INT, OFFSET);
@@ -52,7 +52,7 @@ log_shape_bytes(L &logger, S const &shape)
                           ordering_size_in_bytes(shape));
   ostream << "ordering(bytes):\n";
   print(ostream, shape.ordering.size(), shape.ordering.data());
-  logger.trace(ostream.str());
+  LOG_TRACE(ostream.str());
 }
 
 template <typename L, typename S>
@@ -76,8 +76,8 @@ template <typename L, typename S>
 void
 render_shape(L &logger, S const &shape)
 {
-  logger.trace(fmt::sprintf("%-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices"));
-  logger.trace(fmt::sprintf("%-15d %-15d %-15d\n", vertices_size_in_bytes(shape),
+  LOG_TRACE(fmt::sprintf("%-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices"));
+  LOG_TRACE(fmt::sprintf("%-15d %-15d %-15d\n", vertices_size_in_bytes(shape),
                             shape.vertices.size(), vertice_count(shape)));
 
   // print_triangle(logger, t0);

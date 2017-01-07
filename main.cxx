@@ -14,26 +14,26 @@ main(int argc, char *argv[])
   using L = decltype(logger);
 
   auto const on_error = [&](auto const &error) {
-    logger.error(error);
+    LOG_ERROR(error);
     return EXIT_FAILURE;
   };
 
   auto premade_result = engine::make_opengl_sdl_premade_configuration(logger, 800, 600);
   DO_TRY_OR_ELSE_RETURN(auto premade, MOVE(premade_result), on_error);
 
-  logger.debug("Instantiating 'state'");
+  LOG_DEBUG("Instantiating 'state'");
 
   auto &engine = premade.engine();
   auto const dimensions = engine.get_dimensions();
   auto state = game::boomhs::make_state(logger, dimensions);
 
   // Initialize the game instance.
-  logger.debug("Instantiating game 'boomhs'");
+  LOG_DEBUG("Instantiating game 'boomhs'");
   game::boomhs::boomhs_game game;
 
-  logger.debug("Starting game loop");
+  LOG_DEBUG("Starting game loop");
   engine.start(MOVE(game), MOVE(state));
 
-  logger.debug("Game loop finished successfully! Ending program now.");
+  LOG_DEBUG("Game loop finished successfully! Ending program now.");
   return EXIT_SUCCESS;
 }
