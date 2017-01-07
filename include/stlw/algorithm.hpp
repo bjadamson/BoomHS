@@ -2,6 +2,7 @@
 #include <array>
 #include <cassert>
 #include <utility>
+#include <stlw/tuple.hpp>
 
 namespace stlw
 {
@@ -162,6 +163,16 @@ void zip(FirstBegin fb, FirstEnd fe, SecondBegin sb, FN const& fn)
   for (auto i{fb}; i < fe; ++i, ++it) {
     fn(*i, *it);
   }
+}
+
+template<typename ContainerIter, typename FN, typename ...T>
+void zip(FN const& fn, ContainerIter it, std::tuple<T...> const& tuple)
+{
+  auto const zip_fn = [&fn, &it](auto const& value) {
+    fn(value, *it);
+    it++;
+  };
+  stlw::for_each(tuple, zip_fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

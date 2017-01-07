@@ -2,9 +2,9 @@
 #include <gfx/colors.hpp>
 #include <gfx/resources.hpp>
 #include <gfx/opengl/global.hpp>
+#include <gfx/opengl/image_data.hpp>
 #include <gfx/opengl/shader_program.hpp>
 #include <gfx/opengl/texture.hpp>
-#include <iostream>
 
 namespace gfx::opengl
 {
@@ -220,7 +220,8 @@ public:
   template <typename L>
   auto static make_texture2d(L &logger, char const *path)
   {
-    auto const tid = load_2d_texture(logger, path);
+    auto const image_data = load_image(logger, path);
+    auto const tid = upload_2d_texture(logger, image_data);
     return make<texture2d_context>(logger, tid);
   }
 
@@ -233,14 +234,16 @@ public:
   template <typename L, typename ...Paths>
   auto static make_texture3d(L &logger, Paths const&... paths)
   {
-    auto const tid = load_3d_texture(logger, paths...);
+    auto const image_data = load_image(logger, paths...);
+    auto const tid = upload_3dcube_texture(logger, image_data);
     return make<texture3d_context>(logger, tid);
   }
 
   template <typename L, typename ...Paths>
   auto static make_skybox(L &logger, Paths const&... paths)
   {
-    auto const tid = load_3d_texture(logger, paths...);
+    auto const image_data = load_image(logger, paths...);
+    auto const tid = upload_3dcube_texture(logger, image_data);
     return make<skybox_context>(logger, tid);
   }
 

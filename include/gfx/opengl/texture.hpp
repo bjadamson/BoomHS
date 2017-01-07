@@ -1,11 +1,9 @@
 #pragma once
 #include <gfx/opengl/glew.hpp>
 #include <gfx/opengl/global.hpp>
+#include <gfx/opengl/image_data.hpp>
 #include <stlw/format.hpp>
 #include <stlw/tuple.hpp>
-#include <SOIL.h>
-#include <boost/filesystem/path.hpp>
-#include <array>
 
 namespace gfx::opengl
 {
@@ -20,36 +18,25 @@ namespace impl
 
 template<typename L>
 void
-load_image(L &logger, char const* path, GLenum const target)
+upload_image(L &logger, image_data_t const& image, GLenum const target)
 {
-  int w = 0, h = 0;
-  unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, SOIL_LOAD_RGB);
-  if (nullptr == pimage) {
-    auto const fmt =
-        fmt::sprintf("image at path '%s' failed to load, reason '%s'", path, SOIL_last_result());
-    logger.error(fmt);
-    std::abort();
-  }
-  ON_SCOPE_EXIT([&]() { SOIL_free_image_data(pimage); });
-  glTexImage2D(target, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, pimage);
+  glTexImage2D(target, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE,
+      image.data.get());
   glGenerateMipmap(target);
 }
 
 } // ns impl
 
-namespace fs = boost::filesystem;
-
-template<typename L, typename ...Paths>
+template<typename L, typename ...ImageData>
 static auto
-load_3d_texture(L &logger, Paths const&... paths)
+upload_3dcube_texture(L &logger, std::tuple<ImageData...> const& image_data)
 {
   GLenum constexpr TEXTURE_MODE = GL_TEXTURE_CUBE_MAP;
 
   // Here is our guarantee, allowing us to have the convenient interface.
   auto constexpr N = 6;
-  static_assert(N == sizeof...(paths));
+  static_assert(N == sizeof...(ImageData), "Uploading a 3D cube requires 6 images.");
 
-  std::array<char const*, N> const arr{{ paths... }};
   static constexpr auto directions = {
     GL_TEXTURE_CUBE_MAP_POSITIVE_Z, // back
     GL_TEXTURE_CUBE_MAP_POSITIVE_X, // right
@@ -67,9 +54,10 @@ load_3d_texture(L &logger, Paths const&... paths)
   global::texture_bind(t);
   ON_SCOPE_EXIT([&t]() { global::texture_unbind(t); });
 
-  stlw::zip(arr.begin(), arr.end(), directions.begin(), [&logger](auto const& path, auto const& target) {
-      impl::load_image(logger, path, target);
-  });
+  auto const fn = [&logger](auto const& image_data, auto const& target) {
+      impl::upload_image(logger, image_data, target);
+  };
+  stlw::zip(fn, directions.begin(), image_data);
 
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -83,7 +71,7 @@ load_3d_texture(L &logger, Paths const&... paths)
 
 template <typename L>
 static auto
-load_2d_texture(L &logger, boost::filesystem::path const& path)
+upload_2d_texture(L &logger, image_data_t const& image_data)
 {
   GLenum constexpr TEXTURE_MODE = GL_TEXTURE_2D;
 
@@ -102,7 +90,7 @@ load_2d_texture(L &logger, boost::filesystem::path const& path)
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  impl::load_image(logger, path.c_str(), TEXTURE_MODE);
+  impl::upload_image(logger, image_data, TEXTURE_MODE);
   return t;
 }
 
