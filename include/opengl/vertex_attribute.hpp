@@ -1,11 +1,11 @@
 #pragma once
 #include <numeric>
-#include <gfx/opengl/glsl.hpp>
+#include <opengl/glsl.hpp>
 #include <stlw/sized_buffer.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace gfx::opengl
+namespace opengl
 {
 
 struct attribute_info {
@@ -260,4 +260,4 @@ struct va_factory
   }
 };
 
-} // ns gfx::opengl
+} // ns opengl

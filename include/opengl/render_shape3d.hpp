@@ -1,11 +1,11 @@
 #pragma once
-#include <gfx/opengl/global.hpp>
-#include <gfx/opengl/render_shape.hpp>
+#include <opengl/global.hpp>
+#include <opengl/render_shape.hpp>
 #include <gfx/camera.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-namespace gfx::opengl::render
+namespace opengl::render
 {
 
 namespace impl
@@ -78,4 +78,4 @@ void draw3d(Args const &args, P &pipeline, SHAPE const& shape)
   render::draw_shape(fn, shape);
 }
 
-} // ns gfx::opengl::render
+} // ns opengl::render

@@ -1,7 +1,7 @@
-#include <gfx/opengl/glew.hpp>
-#include <gfx/opengl/glsl.hpp>
-#include <gfx/opengl/shader_program.hpp>
-#include <gfx/opengl/vertex_attribute.hpp>
+#include <opengl/glew.hpp>
+#include <opengl/glsl.hpp>
+#include <opengl/shader_program.hpp>
+#include <opengl/vertex_attribute.hpp>
 #include <stlw/os.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
@@ -9,7 +9,7 @@
 namespace
 {
 using compiled_shader = stlw::ImplicitelyCastableMovableWrapper<GLuint, decltype(glDeleteShader)>;
-using namespace gfx::opengl;
+using namespace opengl;
 
 inline bool
 is_compiled(GLuint const handle)
@@ -97,7 +97,7 @@ compile_sources(std::string const &vertex_shader_source, std::string const &frag
 
 } // ns anonymous
 
-namespace gfx::opengl
+namespace opengl
 {
 
 stlw::result<GLuint, std::string>
@@ -116,4 +116,4 @@ program_factory::from_files(vertex_shader_filename const v, fragment_shader_file
   return compile_sources(vertex_shader_source, fragment_shader_source);
 }
 
-} // ns gfx::opengl
+} // ns opengl

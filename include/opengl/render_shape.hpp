@@ -1,11 +1,11 @@
 #pragma once
-#include <gfx/opengl/gfx_to_opengl.hpp>
-#include <gfx/opengl/global.hpp>
+#include <opengl/gfx_to_opengl.hpp>
+#include <opengl/global.hpp>
 
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace gfx::opengl::render
+namespace opengl::render
 {
 
 namespace impl
@@ -114,4 +114,4 @@ void draw_shape(FN const& fn, SHAPE const& shape)
   fn(gl_mapped_shapes);
 }
 
-} // ns gfx::opengl::render
+} // ns opengl::render

@@ -1,6 +1,6 @@
 #pragma once
+#include <opengl/vertex_attribute.hpp>
 #include <gfx/mode.hpp>
-#include <gfx/opengl/vertex_attribute.hpp>
 #include <gfx/shape2d.hpp>
 #include <gfx/shape3d.hpp>
 #include <glm/glm.hpp>
@@ -8,8 +8,10 @@
 #include <stlw/sized_buffer.hpp>
 #include <stlw/type_ctors.hpp>
 
-namespace gfx::opengl
+namespace opengl
 {
+
+using namespace gfx;
 
 // TODO: project-wide configuration (double precision maybe)
 using FloatType = float;
@@ -45,12 +47,12 @@ struct shape3d_data : public shape_data<C, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_
   using VertexContainer = typename BASE::VertexContainer;
   using VertexOrdering = typename BASE::VertexOrdering;
 
-  model const& model;
+  gfx::model const& model;
 
   MOVE_DEFAULT(shape3d_data);
   NO_COPY(shape3d_data);
   explicit constexpr shape3d_data(GLenum const m, VertexContainer &&d, VertexOrdering const& e,
-      struct model const& model)
+      gfx::model const& model)
     : BASE(m, std::move(d), e)
     , model(model)
   {
@@ -479,4 +481,4 @@ public:
   }
 };
 
-} // ns gfx::opengl
+} // ns opengl

@@ -3,7 +3,7 @@
 #include <SOIL.h>
 #include <stlw/tuple.hpp>
 
-namespace gfx::opengl
+namespace opengl
 {
 
 using pimage_t = std::unique_ptr<unsigned char, void (*)(unsigned char*)>;
@@ -41,4 +41,4 @@ load_image(L &logger, Paths const&... paths)
   return stlw::map_tuple_elements(tuple, load_fn);
 }
 
-} // ns gfx::opengl
+} // ns opengl

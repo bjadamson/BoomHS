@@ -1,11 +1,11 @@
 #pragma once
-#include <gfx/opengl/context.hpp>
-#include <gfx/opengl/render_shape2d.hpp>
-#include <gfx/opengl/render_shape3d.hpp>
+#include <opengl/context.hpp>
+#include <opengl/render_shape2d.hpp>
+#include <opengl/render_shape3d.hpp>
 #include <stlw/type_macros.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-namespace gfx::opengl
+namespace opengl
 {
 
 struct opengl_renderer
@@ -81,4 +81,4 @@ struct opengl_renderer_factory
   }
 };
 
-} // ns gfx::opengl
+} // ns opengl

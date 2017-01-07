@@ -1,9 +1,9 @@
 #pragma once
 #include <stlw/type_macros.hpp>
-#include <gfx/opengl/pipeline.hpp>
-#include <gfx/opengl/renderer.hpp>
+#include <opengl/pipeline.hpp>
+#include <opengl/renderer.hpp>
 
-namespace gfx::opengl
+namespace opengl
 {
 
 class opengl_draw_lib
@@ -64,4 +64,4 @@ struct lib_factory
   }
 };
 
-} // ns gfx::opengl
+} // ns opengl

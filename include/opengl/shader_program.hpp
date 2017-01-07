@@ -1,8 +1,8 @@
 #pragma once
-#include <gfx/opengl/gl_log.hpp>
-#include <gfx/opengl/glew.hpp>
-#include <gfx/opengl/global.hpp>
-#include <gfx/opengl/vertex_attribute.hpp>
+#include <opengl/gl_log.hpp>
+#include <opengl/glew.hpp>
+#include <opengl/global.hpp>
+#include <opengl/vertex_attribute.hpp>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -21,7 +21,7 @@
     }                                                                                              \
   }
 
-namespace gfx::opengl
+namespace opengl
 {
 
 DEFINE_SHADER_FILENAME_TYPE(vertex);
@@ -204,4 +204,4 @@ struct shader_program_factory
   }
 };
 
-} // ns gfx::opengl
+} // ns opengl

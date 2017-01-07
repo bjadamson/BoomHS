@@ -3,7 +3,7 @@
 #include <stlw/type_macros.hpp>
 #include <string>
 
-#include <gfx/opengl/lib.hpp>
+#include <opengl/lib.hpp>
 #include <window/window.hpp>
 #include <window/sdl_window.hpp>
 
@@ -55,7 +55,7 @@ template<typename GFX_LIB, typename GFX_PIPELINES>
 using premade_result = stlw::result<premade<engine<gfx::gfx_lib<GFX_LIB, GFX_PIPELINES>>>, std::string>;
 
 template<typename L>
-premade_result<gfx::opengl::opengl_draw_lib, gfx::opengl::opengl_pipelines>
+premade_result<opengl::opengl_draw_lib, opengl::opengl_pipelines>
 make_opengl_sdl_premade_configuration(L &logger, float const width, float const height)
 {
   // Select windowing library as SDL.
@@ -68,7 +68,7 @@ make_opengl_sdl_premade_configuration(L &logger, float const width, float const 
   logger.debug("Instantiating window instance.");
   DO_TRY(auto window, window_lib::make_window(height, width));
 
-  DO_TRY(auto opengl, gfx::opengl::lib_factory::make(logger));
+  DO_TRY(auto opengl, opengl::lib_factory::make(logger));
   auto engine = factory::make_engine(logger, MOVE(window), MOVE(opengl));
 
   return make_premade(MOVE(engine), &window_lib::destroy);

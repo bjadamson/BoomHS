@@ -1,5 +1,5 @@
 #pragma once
-#include <gfx/opengl/glsl.hpp>
+#include <opengl/glsl.hpp>
 #include <window/sdl_window.hpp>
 #include <game/entity.hpp>
 #include <game/boomhs/ecst.hpp>

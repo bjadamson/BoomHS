@@ -1,11 +1,11 @@
 #pragma once
-#include <gfx/opengl/glew.hpp>
-#include <gfx/opengl/global.hpp>
-#include <gfx/opengl/image_data.hpp>
+#include <opengl/glew.hpp>
+#include <opengl/global.hpp>
+#include <opengl/image_data.hpp>
 #include <stlw/format.hpp>
 #include <stlw/tuple.hpp>
 
-namespace gfx::opengl
+namespace opengl
 {
 
 struct texture_info {
@@ -94,4 +94,4 @@ upload_2d_texture(L &logger, image_data_t const& image_data)
   return t;
 }
 
-} // ns gfx::opengl
+} // ns opengl

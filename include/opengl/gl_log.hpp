@@ -1,12 +1,12 @@
 #pragma once
-#include <gfx/opengl/glew.hpp>
+#include <opengl/glew.hpp>
 #include <stlw/format.hpp>
 #include <stlw/type_ctors.hpp>
 
 #include <boost/optional.hpp>
 #include <string> // TODO: rm
 
-namespace gfx::opengl::global::log
+namespace opengl::global::log
 {
 
 namespace impl
@@ -85,9 +85,9 @@ get_program_log(GLuint const handle)
   return impl::retrieve(handle, glGetProgramInfoLog);
 };
 
-} // ns gfx::opengl::global::log
+} // ns opengl::global::log
 
 #define LOG_ANY_GL_ERRORS(logger, msg)                                                             \
   do {                                                                                             \
-    ::gfx::opengl::global::log::impl::log_any_gl_errors(logger, msg, __LINE__);                    \
+    ::opengl::global::log::impl::log_any_gl_errors(logger, msg, __LINE__);                    \
   } while (0)

@@ -1,10 +1,10 @@
 #pragma once
-#include <gfx/opengl/context.hpp>
-#include <gfx/opengl/shader_program.hpp>
-#include <gfx/opengl/vertex_attribute.hpp>
+#include <opengl/context.hpp>
+#include <opengl/shader_program.hpp>
+#include <opengl/vertex_attribute.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace gfx::opengl
+namespace opengl
 {
 
 template<typename C>
@@ -119,4 +119,4 @@ struct opengl_pipelines_factory
   }
 };
 
-} // ns gfx::opengl
+} // ns opengl
