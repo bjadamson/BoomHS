@@ -22,7 +22,7 @@ public:
 
   B& backend() { return this->backend_; }
 
-  using CTX = typename B::CTX;
+  using CTX = typename std::decay_t<B>::CTX;
 };
 
 #define DEFINE_SHADER_FILENAME_TYPE(NAME)                                                          \

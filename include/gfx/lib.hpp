@@ -1,7 +1,6 @@
 #pragma once
 #include <gfx/camera.hpp>
 #include <gfx/pipeline.hpp>
-#include <gfx/factory.hpp>
 
 #include <stlw/burrito.hpp>
 #include <stlw/result.hpp>
@@ -10,31 +9,6 @@
 
 namespace gfx
 {
-
-namespace impl
-{
-
-template<typename P>
-auto
-make_shape_factories(P &pipelines)
-{
-  auto &d2 = pipelines.d2;
-  auto &d3 = pipelines.d3;
-
-  gfx::pipeline_factory pf;
-  return gfx::make_shape_factories(
-    pf.make_pipeline(d2.color),
-    pf.make_pipeline(d2.texture_wall),
-    pf.make_pipeline(d2.texture_container),
-    pf.make_pipeline(d2.wireframe),
-
-    pf.make_pipeline(d3.color),
-    pf.make_pipeline(d3.texture),
-    pf.make_pipeline(d3.skybox),
-    pf.make_pipeline(d3.wireframe));
-}
-
-} // ns impl
 
 template <typename L>
 struct render_args {
@@ -51,16 +25,19 @@ auto make_render_args(L &l, camera const& c, glm::mat4 const& projection)
 
 using namespace stlw;
 
-template<typename B>
+template<typename LIB, typename P>
 class gfx_lib
 {
-  friend struct factory;
+  friend struct lib_factory;
   NO_COPY(gfx_lib);
 public:
-  B lib;
+  LIB draw_lib;
+  P pipelines;
+
 private:
-  gfx_lib(B &&l)
-      : lib(MOVE(l))
+  explicit gfx_lib(LIB &&lib, P &&p)
+      : draw_lib(MOVE(lib))
+      , pipelines(MOVE(p))
   {
   }
 
@@ -71,7 +48,7 @@ private:
     {
       auto &pipeline = pipeline_shape_pair.pipeline;
       auto &&shape = MOVE(pipeline_shape_pair.shape);
-      this->lib.draw(args, pipeline.backend(), MOVE(shape));
+      this->draw_lib.draw(args, pipeline.backend(), MOVE(shape));
     };
     auto burrito = stlw::make_burrito(wrappable);
     stlw::hof::for_each(burrito, draw_fn);
@@ -84,7 +61,7 @@ private:
     {
       auto &pipeline = pipeline_shape.pipeline;
       auto &&shape = MOVE(pipeline_shape.shape);
-      this->lib.draw(args, pipeline.backend(), MOVE(shape));
+      this->draw_lib.draw(args, pipeline.backend(), MOVE(shape));
     };
     auto burrito = stlw::make_burrito(MOVE(wrappable));
     stlw::hof::for_each(MOVE(burrito), draw_fn);
@@ -95,14 +72,7 @@ public:
 
   void begin()
   {
-    this->lib.begin();
-  }
-
-  // TODO: poc
-  auto
-  make_shape_factories()
-  {
-    return impl::make_shape_factories(this->lib.opengl_pipelines);
+    this->draw_lib.begin();
   }
 
   template<typename Args, template<class, std::size_t> typename Container, typename T, std::size_t N>
@@ -131,18 +101,20 @@ public:
 
   void end()
   {
-    this->lib.end();
+    this->draw_lib.end();
   }
 };
 
-struct factory {
-  factory() = delete;
-  ~factory() = delete;
+struct lib_factory {
+  lib_factory() = delete;
+  ~lib_factory() = delete;
 
-  template <typename L, typename LIB>
-  static stlw::result<gfx_lib<LIB>, std::string> make(L &logger, LIB &&gfx)
+  template <typename L, typename BACKEND_LIB>
+  static auto make(L &logger, BACKEND_LIB &&backend_lib)
   {
-    return gfx_lib<LIB>{MOVE(gfx)};
+    auto draw_lib = MOVE(backend_lib.draw_lib);
+    auto pipelines = MOVE(backend_lib.pipelines);
+    return gfx_lib<decltype(draw_lib), decltype(pipelines)>{MOVE(draw_lib), MOVE(pipelines)};
   }
 };
 

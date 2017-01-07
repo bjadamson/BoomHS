@@ -12,16 +12,16 @@ namespace engine
 
 using ON_DESTROY = void (*)();
 
-template<typename GFX_LIB>
+template<typename E>
 struct premade
 {
-  engine<GFX_LIB> engine_;
+  E engine_;
   ON_DESTROY on_destroy_;
 
   NO_MOVE_ASSIGN(premade);
   NO_COPY(premade);
 public:
-  explicit premade(engine<GFX_LIB> &&e, ON_DESTROY const fn)
+  explicit premade(E &&e, ON_DESTROY const fn)
     : engine_(MOVE(e))
     , on_destroy_(fn)
   {
@@ -44,15 +44,18 @@ public:
   auto &engine() { return this->engine_; }
 };
 
-template<typename GFX_LIB, typename E>
+template<typename E>
 auto
 make_premade(E &&e, ON_DESTROY const fn)
 {
-  return premade<GFX_LIB>{MOVE(e), fn};
+  return premade<E>{MOVE(e), fn};
 }
 
+template<typename GFX_LIB, typename GFX_PIPELINES>
+using premade_result = stlw::result<premade<engine<gfx::gfx_lib<GFX_LIB, GFX_PIPELINES>>>, std::string>;
+
 template<typename L>
-stlw::result<premade<gfx::opengl::opengl_lib>, std::string>
+premade_result<gfx::opengl::opengl_draw_lib, gfx::opengl::opengl_pipelines>
 make_opengl_sdl_premade_configuration(L &logger, float const width, float const height)
 {
   // Select windowing library as SDL.
@@ -65,11 +68,10 @@ make_opengl_sdl_premade_configuration(L &logger, float const width, float const 
   logger.debug("Instantiating window instance.");
   DO_TRY(auto window, window_lib::make_window(height, width));
 
-  DO_TRY(auto opengl_lib, gfx::opengl::lib_factory::make(logger));
-  auto engine_result = factory::make_engine(logger, MOVE(window), MOVE(opengl_lib));
-  DO_TRY(auto engine, MOVE(engine_result));
+  DO_TRY(auto opengl, gfx::opengl::lib_factory::make(logger));
+  auto engine = factory::make_engine(logger, MOVE(window), MOVE(opengl));
 
-  return make_premade<gfx::opengl::opengl_lib>(MOVE(engine), &window_lib::destroy);
+  return make_premade(MOVE(engine), &window_lib::destroy);
 }
 
 } // ns engine

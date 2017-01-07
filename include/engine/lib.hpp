@@ -1,8 +1,11 @@
 #pragma once
 #include <gfx/lib.hpp>
+#include <gfx/factory.hpp>
+
 #include <window/mouse.hpp>
 #include <window/sdl_window.hpp>
 #include <window/timer.hpp>
+
 #include <stlw/random.hpp>
 #include <stlw/type_ctors.hpp>
 
@@ -11,6 +14,31 @@
 
 namespace engine
 {
+
+namespace impl
+{
+
+template<typename P>
+auto
+make_shape_factories(P &pipelines)
+{
+  auto &d2 = pipelines.d2;
+  auto &d3 = pipelines.d3;
+
+  gfx::pipeline_factory pf;
+  return gfx::make_shape_factories(
+    pf.make_pipeline(d2.color),
+    pf.make_pipeline(d2.texture_wall),
+    pf.make_pipeline(d2.texture_container),
+    pf.make_pipeline(d2.wireframe),
+
+    pf.make_pipeline(d3.color),
+    pf.make_pipeline(d3.texture),
+    pf.make_pipeline(d3.skybox),
+    pf.make_pipeline(d3.wireframe));
+}
+
+} // ns impl
 
 template<typename L>
 struct loop_state
@@ -48,9 +76,9 @@ class engine
 
   W window_;
 public:
-  gfx::gfx_lib<GFX_LIB> gfx;
+  GFX_LIB gfx;
 private:
-  engine(W &&w, gfx::gfx_lib<GFX_LIB> &&g)
+  engine(W &&w, GFX_LIB &&g)
       : window_(MOVE(w))
       , gfx(MOVE(g))
   {
@@ -123,7 +151,7 @@ public:
       }
 
       float const fps = frames_counted / (fps_timer.get_ticks() / 1000.0f);
-      logger.info(fmt::format("avg FPS is '{}'", fps));
+      logger.info(fmt::format("average FPS '{}'", fps));
       ++frames_counted;
     };
     auto const mls = [&mouse_data](auto &state) {
@@ -171,9 +199,10 @@ public:
     this->begin();
     logger.trace("rendering.");
 
-    game.game_loop(state, this->gfx, this->gfx.make_shape_factories());
-    logger.trace("game loop stepping.");
+    auto sf = impl::make_shape_factories(this->gfx.pipelines);
+    game.game_loop(state, this->gfx, MOVE(sf));
     this->end();
+    logger.trace("game loop stepping.");
   }
 
   void end()
@@ -191,11 +220,13 @@ struct factory {
   factory() = delete;
   ~factory() = delete;
 
-  template <typename L, typename W, typename LIB>
-  static stlw::result<engine<LIB>, std::string> make_engine(L &logger, W &&window, LIB &&gfx)
+  template <typename L, typename W, typename BACKEND_LIB>
+  static auto
+  make_engine(L &logger, W &&window, BACKEND_LIB &&backend_lib)
   {
-    DO_TRY(auto gfx_lib, gfx::factory::make(logger, MOVE(gfx)));
-    return engine<LIB>{MOVE(window), MOVE(gfx_lib)};
+    auto gfx_lib = gfx::lib_factory::make(logger, MOVE(backend_lib));
+    using GFX_LIB = decltype(gfx_lib);
+    return engine<GFX_LIB>{MOVE(window), MOVE(gfx_lib)};
   }
 };
 

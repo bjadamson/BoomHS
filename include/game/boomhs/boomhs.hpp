@@ -77,8 +77,8 @@ public:
     return std::make_tuple(st::io_system, st::randompos_system);
   }
 
-  template <typename LoopState, typename R, typename F>
-  void game_loop(LoopState &state, R &renderer, F &&sf)
+  template <typename LoopState, typename R, typename ShapeFactory>
+  void game_loop(LoopState &state, R &renderer, ShapeFactory &&sf)
   {
     using COLOR_ARRAY = std::array<float, 4>;
     auto constexpr multicolor_triangle =

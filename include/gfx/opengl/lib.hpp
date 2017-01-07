@@ -6,20 +6,17 @@
 namespace gfx::opengl
 {
 
-class opengl_lib
+class opengl_draw_lib
 {
   friend struct lib_factory;
   opengl_renderer renderer_;
-public:
-  opengl_pipelines opengl_pipelines;
 private:
-  opengl_lib(struct opengl_renderer &&r, struct opengl_pipelines &&p)
+  opengl_draw_lib(struct opengl_renderer &&r)
     : renderer_(MOVE(r))
-    , opengl_pipelines(MOVE(p))
     {
     }
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(opengl_lib);
+  MOVE_CONSTRUCTIBLE_ONLY(opengl_draw_lib);
 
   template<typename ...Args>
   void
@@ -39,6 +36,19 @@ public:
   }
 };
 
+struct opengl_lib
+{
+  opengl_draw_lib draw_lib;
+  opengl_pipelines pipelines;
+
+  MOVE_CONSTRUCTIBLE_ONLY(opengl_lib);
+  opengl_lib(opengl_draw_lib && dlib, opengl_pipelines &&p)
+    : draw_lib(MOVE(dlib))
+    , pipelines(MOVE(p))
+  {
+  }
+};
+
 struct lib_factory
 {
   lib_factory() = delete;
@@ -49,7 +59,8 @@ struct lib_factory
   {
     auto contexts = opengl_contexts_factory::make(logger);
     DO_TRY(auto pipelines, opengl_pipelines_factory::make(logger, MOVE(contexts)));
-    return opengl_lib{opengl_renderer_factory::make(logger), MOVE(pipelines)};
+    opengl_draw_lib draw_lib{opengl_renderer_factory::make(logger)};
+    return opengl_lib{MOVE(draw_lib), MOVE(pipelines)};
   }
 };
 

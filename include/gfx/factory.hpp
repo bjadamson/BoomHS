@@ -637,7 +637,7 @@ class color
   P pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(color);
-  explicit constexpr color(P &&c) : pipeline_(MOVE(c)) {}
+  explicit constexpr color(P &&p) : pipeline_(MOVE(p)) {}
 
   DEFINE_FACTORY_METHODS(color_t);
 };
@@ -648,7 +648,7 @@ class texture
   P pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(texture);
-  explicit constexpr texture(P &&c) : pipeline_(MOVE(c)) {}
+  explicit constexpr texture(P &&p) : pipeline_(MOVE(p)) {}
 
   DEFINE_FACTORY_METHODS(uv_t);
 };
@@ -659,7 +659,7 @@ class wireframe
   P pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(wireframe);
-  explicit constexpr wireframe(P &&c) : pipeline_(MOVE(c)) {}
+  explicit constexpr wireframe(P &&p) : pipeline_(MOVE(p)) {}
 
   DEFINE_FACTORY_METHODS(wireframe_t);
 };
