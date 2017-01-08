@@ -4,10 +4,10 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/vector_angle.hpp>
 #include <stlw/type_macros.hpp>
-#include <gfx/skybox.hpp>
+#include <opengl/skybox.hpp>
 #include <window/mouse.hpp>
 
-namespace gfx
+namespace opengl
 {
 
 bool between(float const v, float const a, float const b)
@@ -182,8 +182,8 @@ struct camera_factory
   {
     auto const& front = -Z_UNIT_VECTOR; // camera-look at origin
     auto const& up = Y_UNIT_VECTOR;     // cameraspace "up" is === "up" in worldspace.
-    return gfx::camera{skybox{skybox_model}, front, up};
+    return opengl::camera{skybox{skybox_model}, front, up};
   }
 };
 
-} // ns gfx
+} // ns opengl

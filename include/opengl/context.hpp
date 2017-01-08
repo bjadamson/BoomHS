@@ -1,6 +1,6 @@
 #pragma once
-#include <gfx/colors.hpp>
-#include <gfx/resources.hpp>
+#include <opengl/colors.hpp>
+#include <opengl/resources.hpp>
 #include <opengl/global.hpp>
 #include <opengl/image_data.hpp>
 #include <opengl/shader_program.hpp>
@@ -304,7 +304,7 @@ struct opengl_contexts_factory
   template <typename L>
   static opengl_contexts make(L &logger)
   {
-    using namespace gfx;
+    using namespace opengl;
     auto constexpr RESOURCES = resources::make_resource_table();
     auto const get_r = [&](auto const i) { return RESOURCES[i]; };
 

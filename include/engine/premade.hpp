@@ -51,11 +51,11 @@ make_premade(E &&e, ON_DESTROY const fn)
   return premade<E>{MOVE(e), fn};
 }
 
-template<typename GFX_LIB, typename GFX_PIPELINES>
-using premade_result = stlw::result<premade<engine<gfx::gfx_lib<GFX_LIB, GFX_PIPELINES>>>, std::string>;
+template<typename GFX_LIB>
+using premade_result = stlw::result<premade<engine<GFX_LIB>>, std::string>;
 
 template<typename L>
-premade_result<opengl::opengl_draw_lib, opengl::opengl_pipelines>
+premade_result<opengl::opengl_lib>
 make_opengl_sdl_premade_configuration(L &logger, float const width, float const height)
 {
   // Select windowing library as SDL.
@@ -69,7 +69,7 @@ make_opengl_sdl_premade_configuration(L &logger, float const width, float const 
   DO_TRY(auto window, window_lib::make_window(height, width));
 
   DO_TRY(auto opengl, opengl::lib_factory::make(logger));
-  auto engine = factory::make_engine(logger, MOVE(window), MOVE(opengl));
+  auto engine = engine_factory::make_engine(logger, MOVE(window), MOVE(opengl));
 
   return make_premade(MOVE(engine), &window_lib::destroy);
 }

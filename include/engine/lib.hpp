@@ -1,6 +1,6 @@
 #pragma once
-#include <gfx/lib.hpp>
-#include <gfx/factory.hpp>
+#include <opengl/lib.hpp>
+#include <opengl/factory.hpp>
 
 #include <window/mouse.hpp>
 #include <window/sdl_window.hpp>
@@ -25,17 +25,16 @@ make_shape_factories(P &pipelines)
   auto &d2 = pipelines.d2;
   auto &d3 = pipelines.d3;
 
-  gfx::pipeline_factory pf;
-  return gfx::make_shape_factories(
-    pf.make_pipeline(d2.color),
-    pf.make_pipeline(d2.texture_wall),
-    pf.make_pipeline(d2.texture_container),
-    pf.make_pipeline(d2.wireframe),
+  return opengl::make_shape_factories(
+    d2.color,
+    d2.texture_wall,
+    d2.texture_container,
+    d2.wireframe,
 
-    pf.make_pipeline(d3.color),
-    pf.make_pipeline(d3.texture),
-    pf.make_pipeline(d3.skybox),
-    pf.make_pipeline(d3.wireframe));
+    d3.color,
+    d3.texture,
+    d3.skybox,
+    d3.wireframe);
 }
 
 } // ns impl
@@ -45,25 +44,25 @@ struct loop_state
 {
   L &logger;
   bool &quit;
-  gfx::camera &camera;
+  opengl::camera &camera;
   glm::mat4 const& projection;
 
   stlw::float_generator &rnum_generator;
-  std::vector<gfx::model*> &MODELS;
-  gfx::model &skybox_model;
-  gfx::model &terrain_model;
+  std::vector<opengl::model*> &MODELS;
+  opengl::model &skybox_model;
+  opengl::model &terrain_model;
   window::mouse_data &mouse_data;
 
-  gfx::render_args<L> render_args() const
+  opengl::render_args<L> render_args() const
   {
-    return gfx::make_render_args(this->logger, this->camera, this->projection);
+    return opengl::make_render_args(this->logger, this->camera, this->projection);
   }
 };
 
 template<typename L>
-auto make_loop_state(L &l, bool &quit, gfx::camera &c, glm::mat4 const& p,
-    stlw::float_generator &fg, std::vector<gfx::model*> &models, gfx::model &skybox,
-    gfx::model &terrain, window::mouse_data &md)
+auto make_loop_state(L &l, bool &quit, opengl::camera &c, glm::mat4 const& p,
+    stlw::float_generator &fg, std::vector<opengl::model*> &models, opengl::model &skybox,
+    opengl::model &terrain, window::mouse_data &md)
 {
   return loop_state<L>{l, quit, c, p, fg, models, skybox, terrain, md};
 }
@@ -72,22 +71,22 @@ template<typename GFX_LIB>
 class engine
 {
   using W = ::window::sdl_window;
-  friend struct factory;
+  friend struct engine_factory;
 
   W window_;
 public:
-  GFX_LIB gfx;
+  GFX_LIB lib;
 private:
-  engine(W &&w, GFX_LIB &&g)
+  explicit engine(W &&w, GFX_LIB &&gfxlib)
       : window_(MOVE(w))
-      , gfx(MOVE(g))
+      , lib(MOVE(gfxlib))
   {
   }
   NO_COPY(engine);
 public:
   MOVE_DEFAULT(engine);
 
-  void begin() { this->gfx.begin(); }
+  void begin() { this->lib.draw_lib.begin(); }
 
   template <typename G, typename S>
   void start(G &&game, S &&state)
@@ -199,15 +198,15 @@ public:
     this->begin();
     LOG_TRACE("rendering.");
 
-    auto sf = impl::make_shape_factories(this->gfx.pipelines);
-    game.game_loop(state, this->gfx, MOVE(sf));
+    auto sf = impl::make_shape_factories(this->lib.pipelines);
+    game.game_loop(state, this->lib.draw_lib, MOVE(sf));
     this->end();
     LOG_TRACE("game loop stepping.");
   }
 
   void end()
   {
-    this->gfx.end();
+    this->lib.draw_lib.end();
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(this->window_.raw());
@@ -216,16 +215,14 @@ public:
   auto get_dimensions() const { return this->window_.get_dimensions(); }
 };
 
-struct factory {
-  factory() = delete;
-  ~factory() = delete;
+struct engine_factory {
+  engine_factory() = delete;
+  ~engine_factory() = delete;
 
-  template <typename L, typename W, typename BACKEND_LIB>
+  template <typename L, typename W, typename GFX_LIB>
   static auto
-  make_engine(L &logger, W &&window, BACKEND_LIB &&backend_lib)
+  make_engine(L &logger, W &&window, GFX_LIB &&gfx_lib)
   {
-    auto gfx_lib = gfx::lib_factory::make(logger, MOVE(backend_lib));
-    using GFX_LIB = decltype(gfx_lib);
     return engine<GFX_LIB>{MOVE(window), MOVE(gfx_lib)};
   }
 };

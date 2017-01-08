@@ -2,14 +2,14 @@
 #include <ecst.hpp>
 
 // TODO: uncouple ecst from rendering engine?
-#include <gfx/types.hpp>
+#include <opengl/types.hpp>
 
 namespace ct
 {
 // Define component tags.
 namespace sc = ecst::signature::component;
 
-constexpr auto model = ecst::tag::component::v<::gfx::model>;
+constexpr auto model = ecst::tag::component::v<::opengl::model>;
 
 } // ns ct
 

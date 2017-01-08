@@ -1,8 +1,8 @@
 #pragma once
-#include <gfx/types.hpp>
+#include <opengl/types.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace gfx
+namespace opengl
 {
 
 struct skybox
@@ -11,4 +11,4 @@ struct skybox
   MOVE_CONSTRUCTIBLE_ONLY(skybox);
 };
 
-} // ns gfx
+} // ns opengl

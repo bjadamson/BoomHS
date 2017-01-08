@@ -1,9 +1,9 @@
 #pragma once
-#include <gfx/types.hpp>
-#include <gfx/shape.hpp>
+#include <opengl/types.hpp>
+#include <opengl/shape.hpp>
 #include <array>
 
-namespace gfx
+namespace opengl
 {
 
 template <typename V>
@@ -22,4 +22,4 @@ private:
   }
 };
 
-} // ns gfx
+} // ns opengl

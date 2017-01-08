@@ -1,6 +1,6 @@
 #pragma once
 
-namespace gfx
+namespace opengl
 {
 enum class draw_mode
 {
@@ -12,4 +12,4 @@ enum class draw_mode
   INVALID_DRAW_MODE
 };
 
-} // ns gfx
+} // ns opengl

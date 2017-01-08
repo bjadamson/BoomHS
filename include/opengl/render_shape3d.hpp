@@ -1,7 +1,7 @@
 #pragma once
 #include <opengl/global.hpp>
 #include <opengl/render_shape.hpp>
-#include <gfx/camera.hpp>
+#include <opengl/camera.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 

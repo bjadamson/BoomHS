@@ -1,9 +1,9 @@
 #pragma once
-#include <gfx/types.hpp>
-#include <gfx/colors.hpp>
-#include <gfx/mode.hpp>
+#include <opengl/types.hpp>
+#include <opengl/colors.hpp>
+#include <opengl/mode.hpp>
 
-namespace gfx
+namespace opengl
 {
 struct shape {
   draw_mode draw_mode_;
@@ -34,4 +34,4 @@ auto constexpr color(T const& t) { return std::get<color_d>(t); }
 template<typename T>
 auto constexpr uv(T const& t) { return std::get<uv_d>(t); }
 
-} // ns gfx
+} // ns opengl

@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-namespace gfx
+namespace opengl
 {
 
 struct vertex_d {
@@ -84,4 +84,4 @@ struct width_height_length
   float const length;
 };
 
-} // ns gfx
+} // ns opengl

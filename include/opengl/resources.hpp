@@ -1,7 +1,7 @@
 #pragma once
 #include <stlw/type_macros.hpp>
 
-namespace gfx
+namespace opengl
 {
 
 enum class IMAGES {
@@ -81,4 +81,4 @@ struct resources {
   }
 };
 
-} // ns gfx
+} // ns opengl

@@ -2,12 +2,12 @@
 #include <array>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
-#include <gfx/types.hpp>
-#include <gfx/shape.hpp>
-#include <gfx/shape2d.hpp>
-#include <gfx/shape3d.hpp>
+#include <opengl/types.hpp>
+#include <opengl/shape.hpp>
+#include <opengl/shape2d.hpp>
+#include <opengl/shape3d.hpp>
 
-namespace gfx
+namespace opengl
 {
 
 struct triangle_properties
@@ -634,10 +634,10 @@ auto make_pipeline_shape_pair(S &&s, P &p) { return pipeline_shape_pair<S, P>{MO
 template<typename P>
 class color
 {
-  P pipeline_;
+  P &pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(color);
-  explicit constexpr color(P &&p) : pipeline_(MOVE(p)) {}
+  explicit constexpr color(P &p) : pipeline_(p) {}
 
   DEFINE_FACTORY_METHODS(color_t);
 };
@@ -645,10 +645,10 @@ public:
 template<typename P>
 class texture
 {
-  P pipeline_;
+  P &pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(texture);
-  explicit constexpr texture(P &&p) : pipeline_(MOVE(p)) {}
+  explicit constexpr texture(P &p) : pipeline_(p) {}
 
   DEFINE_FACTORY_METHODS(uv_t);
 };
@@ -656,10 +656,10 @@ public:
 template<typename P>
 class wireframe
 {
-  P pipeline_;
+  P &pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(wireframe);
-  explicit constexpr wireframe(P &&p) : pipeline_(MOVE(p)) {}
+  explicit constexpr wireframe(P &p) : pipeline_(p) {}
 
   DEFINE_FACTORY_METHODS(wireframe_t);
 };
@@ -715,20 +715,20 @@ struct shape_factories
 
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6,
   typename P7>
-auto make_shape_factories(P0 &&p0, P1 &&p1, P2 &&p2, P3 &&p3, P4 &&p4, P5 &&p5, P6 &&p6, P7 &&p7)
+auto make_shape_factories(P0 &p0, P1 &p1, P2 &p2, P3 &p3, P4 &p4, P5 &p5, P6 &p6, P7 &p7)
 {
   auto d2p = d2_shape_factory<P0, P1, P2, P3>{
-    factories::color<P0>{MOVE(p0)},
-    factories::texture<P1>{MOVE(p1)},
-    factories::texture<P2>{MOVE(p2)},
-    factories::wireframe<P3>{MOVE(p3)}
+    factories::color<P0>{p0},
+    factories::texture<P1>{p1},
+    factories::texture<P2>{p2},
+    factories::wireframe<P3>{p3}
   };
 
   auto d3p = d3_shape_factory<P4, P5, P6, P7>{
-    factories::color<P4>{MOVE(p4)},
-    factories::texture<P5>{MOVE(p5)},
-    factories::texture<P6>{MOVE(p6)},
-    factories::wireframe<P7>{MOVE(p7)}
+    factories::color<P4>{p4},
+    factories::texture<P5>{p5},
+    factories::texture<P6>{p6},
+    factories::wireframe<P7>{p7}
   };
 
   using SF2D = decltype(d2p);
@@ -736,4 +736,4 @@ auto make_shape_factories(P0 &&p0, P1 &&p1, P2 &&p2, P3 &&p3, P4 &&p4, P5 &&p5, 
   return shape_factories<SF2D, SF3D>{MOVE(d2p), MOVE(d3p)};
 }
 
-} // ns gfx
+} // ns opengl
