@@ -10,3 +10,6 @@
 [submodule "external/ecst"]
 	path = external/ecst
 	url = https://github.com/SuperV1234/ecst
+[submodule "external/assimp"]
+	path = external/assimp
+	url = https://github.com/assimp/assimp

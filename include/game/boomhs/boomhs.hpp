@@ -10,6 +10,7 @@
 #include <window/window.hpp>
 #include <opengl/camera.hpp>
 #include <opengl/factory.hpp>
+#include <opengl/obj.hpp>
 #include <opengl/skybox.hpp>
 #include <stlw/algorithm.hpp>
 #include <stlw/burrito.hpp>
@@ -79,6 +80,8 @@ public:
   template <typename LoopState, typename R, typename ShapeFactory>
   void game_loop(LoopState &state, R &renderer, ShapeFactory &&sf)
   {
+    opengl::load_mesh("assets/house.obj");
+
     using COLOR_ARRAY = std::array<float, 4>;
     auto constexpr multicolor_triangle =
         stlw::make_array<COLOR_ARRAY>(stlw::concat(opengl::LIST_OF_COLORS::RED, 1.0f),
