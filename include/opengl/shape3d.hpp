@@ -12,7 +12,6 @@ struct cube : public shape {
   std::array<V, 8> vertices;
 
 private:
-  template<typename T>
   friend class cube_factory;
 
   explicit constexpr cube(enum draw_mode const dm, struct model const& m, std::array<V, 8> &&v)

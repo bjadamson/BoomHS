@@ -17,11 +17,8 @@ struct triangle_properties
   float const radius = 0.25;
 };
 
-template<typename C>
 class triangle_factory
 {
-  C &context_;
-
   struct color_properties {
     std::array<float, 4> const &color_bottom_left;
     std::array<float, 4> const &color_bottom_right = color_bottom_left;
@@ -84,7 +81,7 @@ class triangle_factory
   }
 
 public:
-  explicit triangle_factory(C &c) : context_(c) {}
+  triangle_factory() = default;
   MOVE_CONSTRUCTIBLE_ONLY(triangle_factory);
   auto make(triangle_properties const& tprops, color_t, std::array<float, 4> const &c)
   {
@@ -144,11 +141,8 @@ struct rectangle_properties
   height_width const dimensions = {0.39f, 0.25f};
 };
 
-template<typename C>
 class rectangle_factory
 {
-  C &context_;
-
   using height_width = height_width;
   struct color_properties {
     color_d const &bottom_left;
@@ -220,7 +214,7 @@ class rectangle_factory
   }
 
 public:
-  explicit rectangle_factory(C &c) : context_(c) {}
+  rectangle_factory() = default;
   MOVE_CONSTRUCTIBLE_ONLY(rectangle_factory);
 
   constexpr auto
@@ -289,11 +283,8 @@ struct polygon_properties
   float const width = 0.25f;
 };
 
-template<typename C>
 class polygon_factory
 {
-  C &context_;
-
   struct color_properties {
     color_d colors;
   };
@@ -365,7 +356,7 @@ class polygon_factory
   }
 
 public:
-  explicit polygon_factory(C &c) : context_(c) {}
+  polygon_factory() = default;
   MOVE_CONSTRUCTIBLE_ONLY(polygon_factory);
 
   auto
@@ -413,10 +404,8 @@ struct cube_properties
   width_height_length const dimensions;
 };
 
-template<typename C>
 class cube_factory
 {
-  C &context_;
   using width_height_length = width_height_length;
 
   struct color_properties {
@@ -520,7 +509,7 @@ class cube_factory
   }
 
 public:
-  explicit cube_factory(C &c) : context_(c) {}
+  cube_factory() = default;
   MOVE_CONSTRUCTIBLE_ONLY(cube_factory);
 
   /*
@@ -572,22 +561,6 @@ public:
 namespace factories
 {
 
-template<typename P>
-auto
-make_tf(P &p) { return triangle_factory<P>{p}; }
-
-template<typename P>
-auto
-make_rf(P &p) { return rectangle_factory<P>{p}; }
-
-template<typename P>
-auto
-make_pf(P &p) { return polygon_factory<P>{p}; }
-
-template<typename P>
-auto
-make_cf(P &p) { return cube_factory<P>{p}; }
-
 template<typename S, typename P>
 struct pipeline_shape_pair
 {
@@ -602,7 +575,7 @@ auto make_pipeline_shape_pair(S &&s, P &p) { return pipeline_shape_pair<S, P>{MO
   template<typename ...Args>                                                                       \
   auto constexpr make_triangle(triangle_properties const& properties, Args &&... args)             \
   {                                                                                                \
-    auto tf = make_tf(this->pipeline_);                                                            \
+    auto tf = triangle_factory{};                                                                  \
     auto shape = tf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
     return make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                                 \
   }                                                                                                \
@@ -610,7 +583,7 @@ auto make_pipeline_shape_pair(S &&s, P &p) { return pipeline_shape_pair<S, P>{MO
   template<typename ...Args>                                                                       \
   auto constexpr make_rectangle(rectangle_properties const& properties, Args &&... args)           \
   {                                                                                                \
-    auto rf = make_rf(this->pipeline_);                                                            \
+    auto rf = rectangle_factory{};                                                                 \
     auto shape = rf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
     return make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                                 \
   }                                                                                                \
@@ -618,7 +591,7 @@ auto make_pipeline_shape_pair(S &&s, P &p) { return pipeline_shape_pair<S, P>{MO
   template<typename ...Args>                                                                       \
   auto constexpr make_polygon(polygon_properties const& properties, Args &&... args)               \
   {                                                                                                \
-    auto pf = make_pf(this->pipeline_);                                                            \
+    auto pf = polygon_factory{};                                                                   \
     auto shape = pf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
     return make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                                 \
   }                                                                                                \
@@ -626,7 +599,7 @@ auto make_pipeline_shape_pair(S &&s, P &p) { return pipeline_shape_pair<S, P>{MO
   template<typename ...Args>                                                                       \
   auto constexpr make_cube(cube_properties const& properties, Args &&... args)                     \
   {                                                                                                \
-    auto cf = make_cf(this->pipeline_);                                                            \
+    auto cf = cube_factory{};                                                                      \
     auto shape = cf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
     return make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                                 \
   }
