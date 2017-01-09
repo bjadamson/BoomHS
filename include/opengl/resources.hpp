@@ -20,7 +20,13 @@ enum class IMAGES {
   SB_BACK,
   SB_LEFT,
   SB_TOP,
-  SB_BOTTOM
+  SB_BOTTOM,
+
+  HOUSE_ROOF,
+  HOUSE_BODY,
+  HOUSE_WINDOW_FRONT,
+  HOUSE_WINDOW_LEFT,
+  HOUSE_WINDOW_RIGHT
 };
 
 template <typename K, typename V, std::size_t N>
@@ -57,7 +63,7 @@ struct resources {
   {
     using K = IMAGES;
     using V = char const *;
-    std::size_t constexpr N = 3 + 6 + 6;
+    std::size_t constexpr N = 3 + 6 + 6 + 5;
 
     return table<K, V, N>{
         std::make_pair(K::CONTAINER, "assets/container.jpg"),
@@ -77,6 +83,12 @@ struct resources {
         std::make_pair(K::SB_LEFT,   "assets/sb_left.jpg"),
         std::make_pair(K::SB_TOP,    "assets/sb_top.jpg"),
         std::make_pair(K::SB_BOTTOM, "assets/sb_bottom.jpg"),
+
+        std::make_pair(K::HOUSE_ROOF,  "assets/house_roof.jpg"),
+        std::make_pair(K::HOUSE_BODY,  "assets/house_body.jpg"),
+        std::make_pair(K::HOUSE_WINDOW_FRONT,  "assets/house_window_front.jpg"),
+        std::make_pair(K::HOUSE_WINDOW_LEFT,  "assets/house_window_left.jpg"),
+        std::make_pair(K::HOUSE_WINDOW_RIGHT,  "assets/house_window_right.jpg")
     };
   }
 };
