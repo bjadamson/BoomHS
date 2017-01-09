@@ -22,13 +22,8 @@ load_mesh(char const* path)
 {
   Assimp::Importer importer;
   aiScene const* pscene = importer.ReadFile(path,
-        aiProcess_CalcTangentSpace       |
-        aiProcess_Triangulate            |
-        aiProcess_JoinIdenticalVertices  |
         aiProcess_SortByPType);
-  if (pscene == nullptr) {
-    assert(15 == 35);
-  }
+  assert(nullptr != pscene);
 
   assert(1 == pscene->mNumMeshes);
   aiMesh &mesh = *pscene->mMeshes[0];
@@ -38,8 +33,6 @@ load_mesh(char const* path)
   auto const num_floats = num_vertices * 2 * 4;
   stlw::sized_buffer<float> floats{num_floats};
 
-  std::cerr << "mNumVertices '" << std::to_string(mesh.mNumVertices) << "'\n";
-  std::cerr << "num_floats '" << std::to_string(num_floats) << "'\n";
   for(auto i{0u}, k{0u}; i < num_vertices; i++)
   {
     //auto const& face_indice = face.mIndices[j];
@@ -59,19 +52,16 @@ load_mesh(char const* path)
     //floats[k++] = uv.x;
     //floats[k++] = uv.y;
   }
-  stlw::sized_buffer<int> indices{(mesh.mNumFaces - 1) * 3};
-  /*
-  for (auto i{0u}, j{0u}; i < indices.size(); ++i)
+  stlw::sized_buffer<int> indices{mesh.mNumFaces * 3};
+  for (auto i{0u}, j{0u}; i < mesh.mNumFaces; ++i)
   {
     aiFace const& face = mesh.mFaces[i];
-    std::cerr << "num indices for face: '" << std::to_string(face.mNumIndices) << "'\n";
     assert(face.mNumIndices == 3);
 
     indices[j++] = face.mIndices[0];
     indices[j++] = face.mIndices[1];
     indices[j++] = face.mIndices[2];
   }
-  */
   return obj{MOVE(floats), MOVE(indices), num_vertices};
 }
 

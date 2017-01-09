@@ -513,10 +513,10 @@ class shape_mapper
     for (auto i{0}, j{0}; j < floats.length(); ++i) {
       fill_vertice(floats, i, j);
     }
-    auto const ordering_length = mesh.num_vertices();
+    auto const ordering_length = mesh.object_data.indices.size();
     stlw::sized_buffer<ElementType> vertex_ordering{static_cast<size_t>(ordering_length)};
     for (auto i{0}; i < ordering_length; ++i) {
-      vertex_ordering[i] = i;
+      vertex_ordering[i] = mesh.object_data.indices[i];
     }
     auto const mode = map_gfx_mode_to_opengl_mode(mesh.draw_mode());
     return R{mode, MOVE(floats), MOVE(vertex_ordering), mesh.model()};
