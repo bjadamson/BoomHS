@@ -1,6 +1,7 @@
 #pragma once
 #include <stlw/type_macros.hpp>
 #include <vector>
+#include <iostream>
 
 namespace stlw
 {
@@ -18,7 +19,14 @@ class sized_buffer
   inline void reserve() { this->vec_.reserve(vec_.size()); }
 public:
   NO_COPY(sized_buffer);
-  MOVE_DEFAULT(sized_buffer);
+
+  sized_buffer(sized_buffer &&other)
+    : vec_(MOVE(other.vec_))
+  {
+  }
+
+  sized_buffer& operator=(sized_buffer &&) = delete;
+  //MOVE_DEFAULT(sized_buffer);
 
   // clang-format off
   using value_type             = typename BT<T, A>::value_type;
@@ -57,13 +65,17 @@ public:
 
   reference get_item(size_type const i)
   {
-    assert(i < this->vec_.size());
+    if (!(i < this->vec_.capacity())) {
+      std::cerr << "i is '" << std::to_string(i) << "' and capacity is '" << std::to_string(this->vec_.capacity()) << "'\n";
+      std::abort();
+    }
+    assert(i < this->vec_.capacity());
     return this->vec_[i];
   }
 
   const_reference get_item(size_type const i) const
   {
-    assert(i < this->vec_.size());
+    assert(i < this->vec_.capacity());
     return this->vec_[i];
   }
 

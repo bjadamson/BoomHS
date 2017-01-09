@@ -80,8 +80,6 @@ public:
   template <typename LoopState, typename R, typename ShapeFactory>
   void game_loop(LoopState &state, R &renderer, ShapeFactory &&sf)
   {
-    opengl::load_mesh("assets/house.obj");
-
     using COLOR_ARRAY = std::array<float, 4>;
     auto constexpr multicolor_triangle =
         stlw::make_array<COLOR_ARRAY>(stlw::concat(opengl::LIST_OF_COLORS::RED, 1.0f),
@@ -126,14 +124,21 @@ public:
     auto triangle_wireframe = sf.d2.wireframe.make_triangle({opengl::draw_mode::LINE_LOOP, *state.MODELS[12]});
 
     // 3d begin
-    auto cube_texture = sf.d3.texture.make_cube({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[102],
+    auto cube_texture = sf.d3.texture.make_cube({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[100],
         {0.15f, 0.15f, 0.15f}});
 
     auto cube_color = sf.d3.color.make_cube({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[101],
         {0.25f, 0.25f, 0.25f}}, opengl::LIST_OF_COLORS::BLUE);
 
-    auto cube_wf = sf.d3.wireframe.make_cube({opengl::draw_mode::LINE_LOOP, *state.MODELS[100],
+    auto cube_wf = sf.d3.wireframe.make_cube({opengl::draw_mode::LINE_LOOP, *state.MODELS[102],
         {0.25f, 0.25f, 0.25f}});
+
+
+    std::cerr << "load_house\n";
+    auto house_mesh = opengl::load_mesh("assets/house.obj");
+    std::cerr << "make_mesh\n";
+    auto house_color = sf.d3.color.make_mesh({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[103],
+        house_mesh});
     // 3d end
 
     auto rectangle_color = sf.d2.color.make_rectangle({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[16]},
@@ -200,14 +205,15 @@ public:
     }
 
     // not draw 2d entities (last because we disable depth tests for these draw calls)
-    r.draw(args, triangle_color, triangle_list_colors, MOVE(polygon_color),
-                                           rectangle_color, rectangle_list_colors
+    //r.draw(args, triangle_color, triangle_list_colors, MOVE(polygon_color),
+                                           //rectangle_color, rectangle_list_colors
                                            // polygon_list_of_color,
-                                           );
+                                           //);
 
-    r.draw(args, triangle_texture, rectangle_texture);
-    r.draw(args, MOVE(polygon_texture));
-    r.draw(args, MOVE(polygon_wireframe), triangle_wireframe, rectangle_wireframe);
+    r.draw(args, house_color);
+    //r.draw(args, triangle_texture, rectangle_texture);
+    //r.draw(args, MOVE(polygon_texture));
+    //r.draw(args, MOVE(polygon_wireframe), triangle_wireframe, rectangle_wireframe);
     r.end();
   }
 };

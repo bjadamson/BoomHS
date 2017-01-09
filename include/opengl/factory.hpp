@@ -2,6 +2,7 @@
 #include <array>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
+#include <opengl/obj.hpp>
 #include <opengl/types.hpp>
 #include <opengl/shape.hpp>
 #include <opengl/shape2d.hpp>
@@ -397,6 +398,51 @@ public:
   }
 };
 
+struct mesh_properties
+{
+  draw_mode const draw_mode;
+  model const &model;
+
+  obj const& object_data;
+};
+
+class mesh_factory
+{
+  static auto
+  construct_mesh(mesh_properties const mprops)
+  {
+    auto const& buffer = mprops.object_data.buffer;
+    mesh<vertex_color_attributes> mesh{mprops.draw_mode, mprops.model, mprops.object_data};
+    for (auto i{0u}, j{0u}; i < buffer.size(); j++) {
+      auto const x = buffer[i++];
+      auto const y = buffer[i++];
+      auto const z = buffer[i++];
+      auto const w = buffer[i++];
+
+      auto const xn = buffer[i++];
+      auto const yn = buffer[i++];
+      auto const zn = buffer[i++];
+      auto const wn = buffer[i++];
+
+      // for now, treat normals as colors
+      vertex_d const vertice{x, y, z, w};
+      color_d const color{xn, yn, zn, wn};
+      mesh.vertex_attributes[j] = vertex_color_attributes{vertice, color};
+    }
+    return mesh;
+  }
+
+public:
+  mesh_factory() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(mesh_factory);
+
+  auto
+  make(mesh_properties const mprop, color_t)
+  {
+    return construct_mesh(mprop);
+  }
+};
+
 struct cube_properties
 {
   draw_mode const draw_mode;
@@ -601,6 +647,13 @@ auto make_pipeline_shape_pair(S &&s, P &p) { return pipeline_shape_pair<S, P>{MO
   {                                                                                                \
     auto cf = cube_factory{};                                                                      \
     auto shape = cf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
+    return make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                                 \
+  }                                                                                                \
+  template<typename ...Args>                                                                       \
+  auto constexpr make_mesh(mesh_properties const& properties, Args &&... args)                     \
+  {                                                                                                \
+    auto mf = mesh_factory{};                                                                      \
+    auto shape = mf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
     return make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                                 \
   }
 
