@@ -124,7 +124,7 @@ public:
     auto triangle_wireframe = sf.d2.wireframe.make_triangle({opengl::draw_mode::LINE_LOOP, *state.MODELS[12]});
 
     // 3d begin
-    auto cube_texture = sf.d3.texture.make_cube({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[100],
+    auto cube_texture = sf.d3.texture_cube.make_cube({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[100],
         {0.15f, 0.15f, 0.15f}});
 
     auto cube_color = sf.d3.color.make_cube({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[101],

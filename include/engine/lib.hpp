@@ -32,7 +32,7 @@ make_shape_factories(P &pipelines)
     d2.wireframe,
 
     d3.color,
-    d3.texture,
+    d3.texture_3dcube,
     d3.skybox,
     d3.wireframe);
 }

@@ -114,24 +114,24 @@ public:
   inline auto texture() const { return this->texture_info_; }
 };
 
-class texture3d_context : public opengl_texture_context<context3d>
+class texture_3dcube_context : public opengl_texture_context<context3d>
 {
 protected:
-  explicit texture3d_context(texture_info const t)
+  explicit texture_3dcube_context(texture_info const t)
       : opengl_texture_context(t)
   {
   }
 
   friend struct context_factory;
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(texture3d_context);
+  MOVE_CONSTRUCTIBLE_ONLY(texture_3dcube_context);
 };
 
-class skybox_context : public texture3d_context
+class skybox_context : public texture_3dcube_context
 {
   // private
   explicit skybox_context(texture_info const t)
-      : texture3d_context(t)
+      : texture_3dcube_context(t)
   {
   }
 
@@ -236,7 +236,7 @@ public:
   {
     auto const image_data = load_image(logger, paths...);
     auto const tid = upload_3dcube_texture(logger, image_data);
-    return make<texture3d_context>(logger, tid);
+    return make<texture_3dcube_context>(logger, tid);
   }
 
   template <typename L, typename ...Paths>
@@ -277,7 +277,7 @@ struct opengl_context2d
 struct opengl_context3d
 {
   color3d_context color;
-  texture3d_context texture;
+  texture_3dcube_context texture;
   skybox_context skybox;
   wireframe3d_context wireframe;
 

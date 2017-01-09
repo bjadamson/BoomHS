@@ -52,7 +52,7 @@ struct pipeline2d
 struct pipeline3d
 {
   pipeline<color3d_context> color;
-  pipeline<texture3d_context> texture;
+  pipeline<texture_3dcube_context> texture_3dcube;
   pipeline<skybox_context> skybox;
   pipeline<wireframe3d_context> wireframe;
 

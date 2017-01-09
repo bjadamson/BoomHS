@@ -717,14 +717,14 @@ template<typename P0, typename P1, typename P2, typename P3>
 struct d3_shape_factory
 {
   factories::color<P0> color;
-  factories::texture<P1> texture;
+  factories::texture<P1> texture_cube;
   factories::texture<P2> skybox;
   factories::wireframe<P3> wireframe;
 
   explicit d3_shape_factory(factories::color<P0> &&cf, factories::texture<P1> &&tf,
       factories::texture<P2> &&sky, factories::wireframe<P3> &&wf)
     : color(MOVE(cf))
-    , texture(MOVE(tf))
+    , texture_cube(MOVE(tf))
     , skybox(MOVE(sky))
     , wireframe(MOVE(wf))
   {}
