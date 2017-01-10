@@ -507,7 +507,7 @@ class shape_mapper
   template <typename R, typename M, typename FN>
   static auto map_mesh(M const& mesh, FN const& fill_vertice)
   {
-    auto const num_floats = mesh.num_vertices() * 8; // 3x pos +  3x normals
+    auto const num_floats = mesh.object_data.buffer.size();// * 8; // 3x pos +  3x normals
 
     stlw::sized_buffer<FloatType> floats{static_cast<size_t>(num_floats)};
     for (auto i{0}, j{0}; j < floats.length(); ++i) {
@@ -516,7 +516,7 @@ class shape_mapper
     auto const ordering_length = mesh.object_data.indices.size();
     stlw::sized_buffer<ElementType> vertex_ordering{static_cast<size_t>(ordering_length)};
     for (auto i{0}; i < ordering_length; ++i) {
-      vertex_ordering[i] = mesh.object_data.indices[i];
+      vertex_ordering[i] = i;//mesh.object_data.indices[i];
     }
     auto const mode = map_gfx_mode_to_opengl_mode(mesh.draw_mode());
     return R{mode, MOVE(floats), MOVE(vertex_ordering), mesh.model()};
