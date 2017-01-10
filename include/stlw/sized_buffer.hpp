@@ -75,6 +75,10 @@ public:
 
   const_reference get_item(size_type const i) const
   {
+    if (!(i < this->vec_.capacity())) {
+      std::cerr << "i is '" << std::to_string(i) << "' and capacity is '" << std::to_string(this->vec_.capacity()) << "'\n";
+      std::abort();
+    }
     assert(i < this->vec_.capacity());
     return this->vec_[i];
   }

@@ -178,7 +178,8 @@ using vertex_only_polygon = runtime_sized_2dshape<4>;
 
 // meshs
 using vertex_color_mesh = runtime_sized_3dshape<8>;
-using vertex_uv_mesh = runtime_sized_3dshape<7>;
+using vertex_normal_uv_mesh = runtime_sized_3dshape<9>;
+using vertex_uv_mesh = runtime_sized_3dshape<6>;
 using vertex_only_mesh = runtime_sized_3dshape<4>;
 
 class shape_mapper
@@ -504,8 +505,8 @@ class shape_mapper
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // mesh
-  template <typename R, typename M, typename FN>
-  static auto map_mesh(M const& mesh, FN const& fill_vertice)
+  template <typename R, typename M, typename CountFN, typename FN>
+  static auto map_mesh(M const& mesh, CountFN const& count_fn, FN const& fill_vertice)
   {
     auto const num_floats = mesh.object_data.buffer.size();// * 8; // 3x pos +  3x normals
 
@@ -516,27 +517,29 @@ class shape_mapper
     auto const ordering_length = mesh.object_data.indices.size();
     stlw::sized_buffer<ElementType> vertex_ordering{static_cast<size_t>(ordering_length)};
     for (auto i{0}; i < ordering_length; ++i) {
-      vertex_ordering[i] = i;//mesh.object_data.indices[i];
+      vertex_ordering[i] = mesh.object_data.indices[i];
     }
     auto const mode = map_gfx_mode_to_opengl_mode(mesh.draw_mode());
     return R{mode, MOVE(floats), MOVE(vertex_ordering), mesh.model()};
   }
 
-  static auto map_to_array_floats(mesh<vertex_color_attributes> const &m)
+  static auto map_to_array_floats(mesh<vertex_uv_attributes> const &m)
   {
     auto const fill_vertice = [&m](auto &floats, auto const i, auto &j) {
       auto &vertice = m.vertex_attributes[i];
       floats[j++] = vertex(vertice).x;
       floats[j++] = vertex(vertice).y;
       floats[j++] = vertex(vertice).z;
-      floats[j++] = vertex(vertice).w;
+      floats[j++] = 1.0f;
 
-      floats[j++] = color(vertice).r;
-      floats[j++] = color(vertice).g;
-      floats[j++] = color(vertice).b;
-      floats[j++] = color(vertice).a;
+      //floats[j++] = normal(vertice).nx;
+      //floats[j++] = normal(vertice).ny;
+      //floats[j++] = normal(vertice).nz;
+
+      floats[j++] = uv(vertice).u;
+      floats[j++] = uv(vertice).v;
     };
-    return map_mesh<vertex_color_mesh>(m, fill_vertice);
+    return map_mesh<vertex_uv_mesh>(m, &calc_vertex_uv_num_floats, fill_vertice);
   }
 
 public:

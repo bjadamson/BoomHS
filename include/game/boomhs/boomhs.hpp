@@ -33,6 +33,7 @@ struct game_state {
   glm::mat4 projection;
   std::vector<::opengl::model*> MODELS;
   opengl::model skybox_model;
+  opengl::model house_model;
   opengl::model terrain_model;
   opengl::camera camera;
 
@@ -111,7 +112,7 @@ public:
 
     r.begin();
     auto args = state.render_args();
-    r.draw(args, MOVE(cube_skybox));
+    //r.draw(args, MOVE(cube_skybox));
 
     auto triangle_color = sf.d2.color.make_triangle({opengl::draw_mode::TRIANGLES, *state.MODELS[9]},
         opengl::LIST_OF_COLORS::PINK);
@@ -135,9 +136,9 @@ public:
 
 
     std::cerr << "load_house\n";
-    auto house_mesh = opengl::load_mesh("assets/house.obj");
+    auto house_mesh = opengl::load_mesh("assets/house_uv.obj");
     std::cerr << "make_mesh\n";
-    auto house_color = sf.d3.color.make_mesh({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[103],
+    auto house_uv = sf.d3.house.make_mesh({opengl::draw_mode::TRIANGLE_STRIP, state.house_model,
         house_mesh});
     // 3d end
 
@@ -164,12 +165,12 @@ public:
         //multicolor_triangle);
 
     // first draw terrain
-    r.draw(args, cube_terrain);
+    //r.draw(args, cube_terrain);
 
     // now draw entities
-    r.draw(args, cube_color);
-    r.draw(args, cube_texture);
-    r.draw(args, cube_wf);
+    //r.draw(args, cube_color);
+    //r.draw(args, cube_texture);
+    //r.draw(args, cube_wf);
 
     {
       //std::array<opengl::triangle<opengl::vertex_color_attributes>, 2> const arr = {
@@ -210,7 +211,7 @@ public:
                                            // polygon_list_of_color,
                                            //);
 
-    r.draw(args, house_color);
+    r.draw(args, house_uv);
     //r.draw(args, triangle_texture, rectangle_texture);
     //r.draw(args, MOVE(polygon_texture));
     //r.draw(args, MOVE(polygon_wireframe), triangle_wireframe, rectangle_wireframe);

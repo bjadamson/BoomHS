@@ -8,6 +8,9 @@ namespace opengl
 struct vertex_d {
   float x = 0.f, y = 0.f, z = 0.f, w = 0.f;
 };
+struct normal_d {
+  float nx = 1.f, ny = 1.f, nz = 1.f;
+};
 struct color_d {
   float r, g, b;
   float a = 1.0f;

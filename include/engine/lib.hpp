@@ -33,6 +33,7 @@ make_shape_factories(P &pipelines)
 
     d3.color,
     d3.texture_3dcube,
+    d3.house,
     d3.skybox,
     d3.wireframe);
 }
@@ -49,8 +50,9 @@ struct loop_state
 
   stlw::float_generator &rnum_generator;
   std::vector<opengl::model*> &MODELS;
-  opengl::model &skybox_model;
   opengl::model &terrain_model;
+  opengl::model &house_model;
+  opengl::model &skybox_model;
   window::mouse_data &mouse_data;
 
   opengl::render_args<L> render_args() const
@@ -61,10 +63,10 @@ struct loop_state
 
 template<typename L>
 auto make_loop_state(L &l, bool &quit, opengl::camera &c, glm::mat4 const& p,
-    stlw::float_generator &fg, std::vector<opengl::model*> &models, opengl::model &skybox,
-    opengl::model &terrain, window::mouse_data &md)
+    stlw::float_generator &fg, std::vector<opengl::model*> &models, opengl::model &terrain,
+    opengl::model &house, opengl::model &skybox, window::mouse_data &md)
 {
-  return loop_state<L>{l, quit, c, p, fg, models, skybox, terrain, md};
+  return loop_state<L>{l, quit, c, p, fg, models, terrain, house, skybox, md};
 }
 
 template<typename GFX_LIB>
@@ -155,7 +157,8 @@ public:
     };
     auto const mls = [&mouse_data](auto &state) {
       return make_loop_state(state.logger, state.quit, state.camera, state.projection,
-          state.rnum_generator, state.MODELS, state.skybox_model, state.terrain_model, mouse_data);
+          state.rnum_generator, state.MODELS, state.terrain_model, state.house_model,
+          state.skybox_model, mouse_data);
     };
     auto const game_loop = [&](auto &proxy) {
       auto const fn = [&]()

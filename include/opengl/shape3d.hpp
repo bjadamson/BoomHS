@@ -28,7 +28,6 @@ struct mesh : public shape {
   obj const& object_data;
   stlw::sized_buffer<V> vertex_attributes;
 
-  // this is the number of faces * 2 (pos, normals)
   int num_vertices() const { return this->vertex_attributes.size(); }
 
 private:

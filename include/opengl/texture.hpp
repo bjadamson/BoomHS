@@ -83,8 +83,8 @@ upload_2d_texture(L &logger, image_data_t const& image_data)
   ON_SCOPE_EXIT([&t]() { global::texture_unbind(t); });
 
   // Set texture wrapping to GL_REPEAT (usually basic wrapping method)
-  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   // Set texture filtering parameters
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

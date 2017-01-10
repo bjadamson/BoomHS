@@ -412,22 +412,27 @@ class mesh_factory
   construct_mesh(mesh_properties const mprops)
   {
     auto const& buffer = mprops.object_data.buffer;
-    mesh<vertex_color_attributes> mesh{mprops.draw_mode, mprops.model, mprops.object_data};
+    std::cerr << "buffer size is '" << std::to_string(buffer.size()) << "'\n";
+    mesh<vertex_uv_attributes> mesh{mprops.draw_mode, mprops.model, mprops.object_data};
     for (auto i{0u}, j{0u}; i < buffer.size(); j++) {
       auto const x = buffer[i++];
       auto const y = buffer[i++];
       auto const z = buffer[i++];
       auto const w = buffer[i++];
 
-      auto const xn = buffer[i++];
-      auto const yn = buffer[i++];
-      auto const zn = buffer[i++];
-      auto const wn = buffer[i++];
+      //auto const xn = buffer[i++];
+      //auto const yn = buffer[i++];
+      //auto const zn = buffer[i++];
+
+      auto const u = buffer[i++];
+      auto const v = buffer[i++];
 
       // for now, treat normals as colors
       vertex_d const vertice{x, y, z, w};
-      color_d const color{xn, yn, zn, wn};
-      mesh.vertex_attributes[j] = vertex_color_attributes{vertice, color};
+      //normal_d const normal{xn, yn, zn};
+      uv_d const uv{u, v};
+      mesh.vertex_attributes[j] = vertex_uv_attributes{vertice, uv};
+      //mesh.vertex_attributes[j] = vertex_normal_uv_attributes{vertice, normal, uv};
     }
     return mesh;
   }
@@ -437,7 +442,7 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(mesh_factory);
 
   auto
-  make(mesh_properties const mprop, color_t)
+  make(mesh_properties const mprop, uv_t)
   {
     return construct_mesh(mprop);
   }
@@ -713,18 +718,21 @@ struct d2_shape_factory
   MOVE_CONSTRUCTIBLE_ONLY(d2_shape_factory);
 };
 
-template<typename P0, typename P1, typename P2, typename P3>
+template<typename P0, typename P1, typename P2, typename P3, typename P4>
 struct d3_shape_factory
 {
   factories::color<P0> color;
   factories::texture<P1> texture_cube;
-  factories::texture<P2> skybox;
-  factories::wireframe<P3> wireframe;
+  factories::texture<P2> house;
+  factories::texture<P3> skybox;
+  factories::wireframe<P4> wireframe;
 
   explicit d3_shape_factory(factories::color<P0> &&cf, factories::texture<P1> &&tf,
-      factories::texture<P2> &&sky, factories::wireframe<P3> &&wf)
+      factories::texture<P2> &&house, factories::texture<P3> &&sky,
+      factories::wireframe<P4> &&wf)
     : color(MOVE(cf))
     , texture_cube(MOVE(tf))
+    , house(MOVE(house))
     , skybox(MOVE(sky))
     , wireframe(MOVE(wf))
   {}
@@ -740,8 +748,8 @@ struct shape_factories
 };
 
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6,
-  typename P7>
-auto make_shape_factories(P0 &p0, P1 &p1, P2 &p2, P3 &p3, P4 &p4, P5 &p5, P6 &p6, P7 &p7)
+  typename P7, typename P8>
+auto make_shape_factories(P0 &p0, P1 &p1, P2 &p2, P3 &p3, P4 &p4, P5 &p5, P6 &p6, P7 &p7, P8 &p8)
 {
   auto d2p = d2_shape_factory<P0, P1, P2, P3>{
     factories::color<P0>{p0},
@@ -750,11 +758,12 @@ auto make_shape_factories(P0 &p0, P1 &p1, P2 &p2, P3 &p3, P4 &p4, P5 &p5, P6 &p6
     factories::wireframe<P3>{p3}
   };
 
-  auto d3p = d3_shape_factory<P4, P5, P6, P7>{
+  auto d3p = d3_shape_factory<P4, P5, P6, P7, P8>{
     factories::color<P4>{p4},
     factories::texture<P5>{p5},
     factories::texture<P6>{p6},
-    factories::wireframe<P7>{p7}
+    factories::texture<P7>{p7},
+    factories::wireframe<P8>{p8}
   };
 
   using SF2D = decltype(d2p);

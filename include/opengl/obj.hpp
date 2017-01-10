@@ -31,7 +31,7 @@ load_mesh(char const* path)
   //assert(nullptr == pscene->mMeshes[1]);
 
   auto const num_vertices = mesh.mNumVertices;
-  auto const num_floats = mesh.mNumFaces * 3 * 8;
+  auto const num_floats = mesh.mNumFaces * 3 * 6;
   stlw::sized_buffer<float> floats{num_floats};
 
   for(auto i{0u}, k{0u}; i < mesh.mNumFaces; ++i)
@@ -46,15 +46,14 @@ load_mesh(char const* path)
       floats[k++] = pos.z;
       floats[k++] = 1.0f;
 
-      aiVector3D const normal = mesh.mNormals[z];
-      floats[k++] = normal.x;
-      floats[k++] = normal.y;
-      floats[k++] = normal.z;
-      floats[k++] = 1.0f; // fully-transparent
+      //aiVector3D const normal = mesh.mNormals[z];
+      //floats[k++] = normal.x;
+      //floats[k++] = normal.y;
+      //floats[k++] = normal.z;
 
-      //aiVector3D const uv = mesh.mTextureCoords[0][face_indice];
-      //floats[k++] = uv.x;
-      //floats[k++] = uv.y;
+      aiVector3D const uv = mesh.mTextureCoords[0][z];
+      floats[k++] = uv.x;
+      floats[k++] = uv.y;
     }
   }
   stlw::sized_buffer<int> indices{mesh.mNumFaces * 3};
