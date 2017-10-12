@@ -107,8 +107,7 @@ struct opengl_pipelines_factory
     DO_TRY(auto p5, pf.make("3d_cubetexture.vert", "3d_cubetexture.frag"));
     auto pipe5 = make_pipeline(MOVE(p5), MOVE(contexts.d3.texture), MOVE(va5));
 
-    //auto va6 = vf.make_vertex_uv3d(logger); (not using normals in shaders atm)
-    auto va6 = vf.make_vertex_uv2d(logger);
+    auto va6 = vf.make_vertex_normal_uv3d(logger); //(not using normals in shaders atm)
     DO_TRY(auto p6, pf.make("3dtexture.vert", "3dtexture.frag"));
     auto pipe6 = make_pipeline(MOVE(p6), MOVE(contexts.d3.house_texture), MOVE(va6));
 

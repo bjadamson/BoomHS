@@ -1,5 +1,6 @@
 precision mediump float;
 
+in vec3 v_normal;
 in vec2 v_uv;
 
 uniform sampler2D u_sampler;

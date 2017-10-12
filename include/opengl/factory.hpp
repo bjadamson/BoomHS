@@ -413,26 +413,29 @@ class mesh_factory
   {
     auto const& buffer = mprops.object_data.buffer;
     std::cerr << "buffer size is '" << std::to_string(buffer.size()) << "'\n";
-    mesh<vertex_uv_attributes> mesh{mprops.draw_mode, mprops.model, mprops.object_data};
+    //mesh<vertex_uv_attributes> mesh{mprops.draw_mode, mprops.model, mprops.object_data};
+    mesh<vertex_normal_uv_attributes> mesh{mprops.draw_mode, mprops.model, mprops.object_data};
     for (auto i{0u}, j{0u}; i < buffer.size(); j++) {
       auto const x = buffer[i++];
       auto const y = buffer[i++];
       auto const z = buffer[i++];
       auto const w = buffer[i++];
 
-      //auto const xn = buffer[i++];
-      //auto const yn = buffer[i++];
-      //auto const zn = buffer[i++];
+      auto const xn = buffer[i++];
+      auto const yn = buffer[i++];
+      auto const zn = buffer[i++];
 
       auto const u = buffer[i++];
       auto const v = buffer[i++];
 
       // for now, treat normals as colors
       vertex_d const vertice{x, y, z, w};
-      //normal_d const normal{xn, yn, zn};
+      normal_d const normal{xn, yn, zn};
       uv_d const uv{u, v};
-      mesh.vertex_attributes[j] = vertex_uv_attributes{vertice, uv};
-      //mesh.vertex_attributes[j] = vertex_normal_uv_attributes{vertice, normal, uv};
+      //mesh.vertex_attributes[j] = vertex_uv_attributes{vertice, uv};
+      mesh.vertex_attributes[j] = vertex_normal_uv_attributes{vertice, normal, uv};
+
+      assert(i <= buffer.size());
     }
     return mesh;
   }

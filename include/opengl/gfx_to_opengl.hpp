@@ -210,12 +210,24 @@ class shape_mapper
 
   static constexpr auto calc_vertex_color_num_floats(GLint const num_v)
   {
+    // x, y z, w
+    // r, g, b, a
     return (num_v * 4) + (num_v * 4);
   }
 
   static constexpr auto calc_vertex_uv_num_floats(GLint const num_v)
   {
+    // x, y, z, w
+    // u, v
     return (num_v * 4) + (num_v * 2);
+  }
+
+  static constexpr auto calc_vertex_normal_uv_num_floats(GLint const num_v)
+  {
+    // x, y, z, w
+    // xn, yn, zn
+    // u, v
+    return (num_v * 4) + (num_v * 3) + (num_v * 2);
   }
 
   static constexpr auto calc_vertex_only_num_floats(GLint const num_v) { return num_v * 4; }
@@ -508,9 +520,9 @@ class shape_mapper
   template <typename R, typename M, typename CountFN, typename FN>
   static auto map_mesh(M const& mesh, CountFN const& count_fn, FN const& fill_vertice)
   {
-    auto const num_floats = mesh.object_data.buffer.size();// * 8; // 3x pos +  3x normals
+    auto const num_floats = static_cast<size_t>(mesh.object_data.buffer.size());// * 8; // 3x pos +  3x normals
 
-    stlw::sized_buffer<FloatType> floats{static_cast<size_t>(num_floats)};
+    stlw::sized_buffer<FloatType> floats{num_floats};
     for (auto i{0}, j{0}; j < floats.length(); ++i) {
       fill_vertice(floats, i, j);
     }
@@ -523,6 +535,7 @@ class shape_mapper
     return R{mode, MOVE(floats), MOVE(vertex_ordering), mesh.model()};
   }
 
+  /*
   static auto map_to_array_floats(mesh<vertex_uv_attributes> const &m)
   {
     auto const fill_vertice = [&m](auto &floats, auto const i, auto &j) {
@@ -532,14 +545,30 @@ class shape_mapper
       floats[j++] = vertex(vertice).z;
       floats[j++] = 1.0f;
 
-      //floats[j++] = normal(vertice).nx;
-      //floats[j++] = normal(vertice).ny;
-      //floats[j++] = normal(vertice).nz;
-
       floats[j++] = uv(vertice).u;
       floats[j++] = uv(vertice).v;
     };
     return map_mesh<vertex_uv_mesh>(m, &calc_vertex_uv_num_floats, fill_vertice);
+  }
+  */
+
+  static auto map_to_array_floats(mesh<vertex_normal_uv_attributes> const &m)
+  {
+    auto const fill_vertice = [&m](auto &floats, auto const i, auto &j) {
+      auto &vertice = m.vertex_attributes[i];
+      floats[j++] = vertex(vertice).x;
+      floats[j++] = vertex(vertice).y;
+      floats[j++] = vertex(vertice).z;
+      floats[j++] = vertex(vertice).w;
+
+      floats[j++] = normal(vertice).nx;
+      floats[j++] = normal(vertice).ny;
+      floats[j++] = normal(vertice).nz;
+
+      floats[j++] = uv(vertice).u;
+      floats[j++] = uv(vertice).v;
+    };
+    return map_mesh<vertex_normal_uv_mesh>(m, &calc_vertex_normal_uv_num_floats, fill_vertice);
   }
 
 public:
