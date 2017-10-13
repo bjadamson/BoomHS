@@ -11,6 +11,7 @@
 
 // TODO: decouple??
 #include <game/boomhs/ecst.hpp>
+#include <game/boomhs/assets.hpp>
 
 namespace engine
 {
@@ -32,7 +33,8 @@ make_shape_factories(P &pipelines)
     d2.wireframe,
 
     d3.color,
-    d3.texture,
+    d3.texture_3dcube,
+    d3.house,
     d3.skybox,
     d3.wireframe);
 }
@@ -49,8 +51,9 @@ struct loop_state
 
   stlw::float_generator &rnum_generator;
   std::vector<opengl::model*> &MODELS;
-  opengl::model &skybox_model;
   opengl::model &terrain_model;
+  opengl::model &house_model;
+  opengl::model &skybox_model;
   window::mouse_data &mouse_data;
 
   opengl::render_args<L> render_args() const
@@ -61,10 +64,10 @@ struct loop_state
 
 template<typename L>
 auto make_loop_state(L &l, bool &quit, opengl::camera &c, glm::mat4 const& p,
-    stlw::float_generator &fg, std::vector<opengl::model*> &models, opengl::model &skybox,
-    opengl::model &terrain, window::mouse_data &md)
+    stlw::float_generator &fg, std::vector<opengl::model*> &models, opengl::model &terrain,
+    opengl::model &house, opengl::model &skybox, window::mouse_data &md)
 {
-  return loop_state<L>{l, quit, c, p, fg, models, skybox, terrain, md};
+  return loop_state<L>{l, quit, c, p, fg, models, terrain, house, skybox, md};
 }
 
 template<typename GFX_LIB>
@@ -155,13 +158,25 @@ public:
     };
     auto const mls = [&mouse_data](auto &state) {
       return make_loop_state(state.logger, state.quit, state.camera, state.projection,
-          state.rnum_generator, state.MODELS, state.skybox_model, state.terrain_model, mouse_data);
+          state.rnum_generator, state.MODELS, state.terrain_model, state.house_model,
+          state.skybox_model, mouse_data);
     };
+    std::cerr << "load_house\n";
+    auto mesh = opengl::load_mesh("assets/chalet.obj");
+    std::cerr << "load_house finish\n";
+
+    std::cerr << "making mesh\n";
+    auto sf = impl::make_shape_factories(this->lib.pipelines);
+    auto const house_uv = sf.d3.house.make_mesh({opengl::draw_mode::TRIANGLE_STRIP, state.house_model,
+        mesh});
+    std::cerr << "finish making mesh\n";
+    game::boomhs::assets<decltype(house_uv)> const assets{house_uv};
+
     auto const game_loop = [&](auto &proxy) {
       auto const fn = [&]()
       {
         auto loop_state = mls(state);
-        this->loop(MOVE(loop_state), game, proxy);
+        this->loop(MOVE(loop_state), game, proxy, assets);
       };
       while (!state.quit) {
         fps_capped_game_loop(fn);
@@ -178,8 +193,8 @@ public:
     });
   }
 
-  template<typename LoopState, typename Game, typename P>
-  void loop(LoopState &&state, Game &&game, P &proxy)
+  template<typename LoopState, typename Game, typename P, typename SHIT>
+  void loop(LoopState &&state, Game &&game, P &proxy, game::boomhs::assets<SHIT> const& assets)
   {
     namespace sea = ecst::system_execution_adapter;
     auto io_tags = sea::t(st::io_system);
@@ -199,7 +214,7 @@ public:
     LOG_TRACE("rendering.");
 
     auto sf = impl::make_shape_factories(this->lib.pipelines);
-    game.game_loop(state, this->lib.draw_lib, MOVE(sf));
+    game.game_loop(state, this->lib.draw_lib, MOVE(sf), assets);
     this->end();
     LOG_TRACE("game loop stepping.");
   }

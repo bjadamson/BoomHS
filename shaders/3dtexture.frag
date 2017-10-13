@@ -1,8 +1,9 @@
 precision mediump float;
 
-in vec3 v_uv;
+in vec3 v_normal;
+in vec2 v_uv;
 
-uniform samplerCube u_sampler;
+uniform sampler2D u_sampler;
 out vec4 fragment_color;  // output fragment color
 
 void main()

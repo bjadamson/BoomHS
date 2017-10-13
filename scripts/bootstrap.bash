@@ -19,12 +19,30 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_CXX_COMPILER "clang++")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
+
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17 -stdlib=libc++")
 set(TOOLS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tools/)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
+set(ASSIMP_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/assimp/include")
+set(ASSIMP_LIBRARY_SO "${CMAKE_CURRENT_SOURCE_DIR}/external/assimp/lib/libassimp.so")
+
 ## DEFINITIONS
-file(GLOB INTERNAL_INCLUDE_DIRS include external/compact_optional/include external/expected/include external/hana/include external/ecst/include external/ecst/extlibs/vrm_core/include external/ecst/extlibs/vrm_pp/include)
+file(GLOB INTERNAL_INCLUDE_DIRS include
+  external/assimp/include
+  external/compact_optional/include
+  external/expected/include
+  external/hana/include
+  external/ecst/include
+  external/ecst/extlibs/vrm_core/include
+  external/ecst/extlibs/vrm_pp/include
+  external/fmt/include
+  external/spdlog/include
+  external/tinyobj/include)
+
 file(GLOB_RECURSE GLOBBED_SOURCES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cxx
@@ -60,6 +78,7 @@ pkg_search_module(SDL2 REQUIRED sdl2)
 
 ## We should get these through conan.io
 target_include_directories(boomhs PUBLIC
+  ${ASSIMP_INCLUDE_DIR}
   ${SDL2_INCLUDE_DIRS}
   ${SDL2IMAGE_INCLUDE_DIRS}
   ${INTERNAL_INCLUDE_DIRS}
@@ -70,6 +89,7 @@ target_include_directories(boomhs PUBLIC
 target_link_libraries(boomhs
   ${SDL2_LIBRARIES}
   stdc++
+  ${ASSIMP_LIBRARY_SO}
   ${SDL2IMAGE_LIBRARIES}
   ${OPENGL_LIBRARIES}
   ${GLEW_LIBRARIES}
@@ -83,8 +103,6 @@ EOF
 
 cat > "${BUILD}/conanfile.txt" << "EOF"
 [requires]
-fmt/3.0.0@memsharded/testing
-spdlog/0.1@memsharded/testing
 glm/0.9.8.0@TimSimpson/testing
 Boost/1.60.0/lasote/stable
 
@@ -94,9 +112,9 @@ EOF
 
 cd ${BUILD}
 echo $(pwd)
-conan install --build missing -s compiler=clang -s arch=x86 -s compiler.version=4.0 -s compiler.libcxx=libc++ -s build_type=Debug
+conan install --build missing -s compiler=clang -s arch=x86 -s compiler.version=4.0 -s compiler.libcxx=libc++ -s build_type=Release
 cmake .. -G "Unix Makefiles"          \
-  -DCMAKE_BUILD_TYPE=Debug            \
+  -DCMAKE_BUILD_TYPE=Release            \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cd ..
 

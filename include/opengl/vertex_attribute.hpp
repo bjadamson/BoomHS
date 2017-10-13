@@ -28,6 +28,7 @@ struct attribute_info {
   static constexpr auto A_POSITION = "a_position";
   static constexpr auto A_COLOR = "a_color";
   static constexpr auto A_UV = "a_uv";
+  static constexpr auto A_NORMAL = "a_normal";
 };
 
 template <std::size_t N>
@@ -248,6 +249,28 @@ struct va_factory
     attribute_info constexpr uv_info    {UV_INDEX, num_fields_uv,     GL_FLOAT, ai::A_UV};
 
     return impl::make_vertex_array(logger, vertex_info, uv_info);
+  }
+
+  template<typename L>
+  auto
+  make_vertex_normal_uv3d(L &logger) const
+  {
+    // attribute indexes
+    constexpr auto POS_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
+    constexpr auto NORMAL_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_NORMAL;
+    constexpr auto UV_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_UV;
+
+    // num fields per attribute
+    GLint constexpr num_fields_vertex = 4; // x, y, z, w
+    GLint constexpr num_fields_normal = 3; // xn, yn, zn
+    GLint constexpr num_fields_uv = 2;     // u, v
+
+    using ai = attribute_info;
+    attribute_info constexpr vertex_info{POS_INDEX,    num_fields_vertex, GL_FLOAT, ai::A_POSITION};
+    attribute_info constexpr normal_info{NORMAL_INDEX, num_fields_normal, GL_FLOAT, ai::A_NORMAL};
+    attribute_info constexpr uv_info    {UV_INDEX,     num_fields_uv,     GL_FLOAT, ai::A_UV};
+
+    return impl::make_vertex_array(logger, vertex_info, normal_info, uv_info);
   }
 
   template<typename L>

@@ -22,6 +22,7 @@ struct opengl_renderer
   void enable_depth_tests()
   {
     glCullFace(GL_BACK);
+    glFrontFace(GL_CW);
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);

@@ -34,6 +34,7 @@ private:
     {
     }
 
+  /*
   template<typename ...Args>
   void
   draw_impl(Args &&... args)
@@ -66,33 +67,50 @@ private:
     auto burrito = stlw::make_burrito(MOVE(wrappable));
     stlw::hof::for_each(MOVE(burrito), draw_fn);
   }
+  */
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(opengl_draw_lib);
 
-  template<typename Args, template<class, std::size_t> typename Container, typename T, std::size_t N>
+  template<typename ...Args>
   void
-  draw(Args const& args, Container<T, N> const& arr)
+  draw_impl(Args const&... args)
   {
-    auto x = stlw::tuple_from_array(arr);
-    this->draw_wrappable(args, MOVE(x));
+    this->renderer_.draw(std::forward<Args>(args)...);
   }
+
+  template<typename Args, typename T>
+  void
+  draw(Args const& args, T &pipeline_shape)
+  {
+      auto &pipeline = pipeline_shape.pipeline;
+      auto const& shape = MOVE(pipeline_shape.shape);
+      this->renderer_.draw(args, pipeline, shape);
+  }
+
+  //template<typename Args, template<class, std::size_t> typename Container, typename T, std::size_t N>
+  //void
+  //draw(Args const& args, Container<T, N> const& arr)
+  //{
+    //auto x = stlw::tuple_from_array(arr);
+    //this->draw_wrappable(args, MOVE(x));
+  //}
 
   // The last parameter type here ensures that the value passed is similar to a stl container.
-  template<typename Args, typename Container, typename IGNORE= typename Container::value_type>
-  void
-  draw(Args const& args, Container &&c)
-  {
-    this->draw_wrappable(args, MOVE(c));
-  }
+  //template<typename Args, typename Container, typename IGNORE= typename Container::value_type>
+  //void
+  //draw(Args const& args, Container &&c)
+  //{
+    //this->draw_wrappable(args, MOVE(c));
+  //}
 
-  template<typename Args, typename ...T>
-  void
-  draw(Args const& args, T &&... t)
-  {
-    auto tuple = std::make_tuple(MOVE(t)...);
-    this->draw_wrappable(args, tuple);
-  }
+  //template<typename Args, typename ...T>
+  //void
+  //draw(Args const& args, T &&... t)
+  //{
+    //auto tuple = std::make_tuple(MOVE(t)...);
+    //this->draw_wrappable(args, tuple);
+  //}
 
   void begin()
   {

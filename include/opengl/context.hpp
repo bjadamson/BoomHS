@@ -114,6 +114,33 @@ public:
   inline auto texture() const { return this->texture_info_; }
 };
 
+class texture_3dcube_context : public opengl_texture_context<context3d>
+{
+protected:
+  explicit texture_3dcube_context(texture_info const t)
+      : opengl_texture_context(t)
+  {
+  }
+
+  friend struct context_factory;
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(texture_3dcube_context);
+};
+
+class skybox_context : public texture_3dcube_context
+{
+  // private
+  explicit skybox_context(texture_info const t)
+      : texture_3dcube_context(t)
+  {
+  }
+
+  friend struct context_factory;
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(skybox_context);
+  static bool constexpr IS_SKYBOX = true;
+};
+
 class texture3d_context : public opengl_texture_context<context3d>
 {
 protected:
@@ -125,20 +152,6 @@ protected:
   friend struct context_factory;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(texture3d_context);
-};
-
-class skybox_context : public texture3d_context
-{
-  // private
-  explicit skybox_context(texture_info const t)
-      : texture3d_context(t)
-  {
-  }
-
-  friend struct context_factory;
-public:
-  MOVE_CONSTRUCTIBLE_ONLY(skybox_context);
-  static bool constexpr IS_SKYBOX = true;
 };
 
 class texture2d_context : public opengl_texture_context<context2d>
@@ -231,12 +244,20 @@ public:
     return make<color3d_context>(logger);
   }
 
+  template <typename L>
+  auto static make_texture3d(L &logger, char const* path)
+  {
+    auto const image_data = load_image(logger, path);
+    auto const tid = upload_2d_texture(logger, image_data);
+    return make<texture3d_context>(logger, tid);
+  }
+
   template <typename L, typename ...Paths>
-  auto static make_texture3d(L &logger, Paths const&... paths)
+  auto static make_texture3dcube(L &logger, Paths const&... paths)
   {
     auto const image_data = load_image(logger, paths...);
     auto const tid = upload_3dcube_texture(logger, image_data);
-    return make<texture3d_context>(logger, tid);
+    return make<texture_3dcube_context>(logger, tid);
   }
 
   template <typename L, typename ...Paths>
@@ -277,7 +298,8 @@ struct opengl_context2d
 struct opengl_context3d
 {
   color3d_context color;
-  texture3d_context texture;
+  texture_3dcube_context texture;
+  texture3d_context house_texture;
   skybox_context skybox;
   wireframe3d_context wireframe;
 
@@ -313,8 +335,9 @@ struct opengl_contexts_factory
     auto c2 = context_factory::make_texture2d(logger, get_r(IMAGES::CONTAINER));
     auto const color = LIST_OF_COLORS::PINK;
     auto c3 = context_factory::make_wireframe2d(logger, color);
+
     auto c4 = context_factory::make_color3d(logger);
-    auto c5 = context_factory::make_texture3d(logger,
+    auto c5 = context_factory::make_texture3dcube(logger,
         get_r(IMAGES::CUBE_FRONT),
         get_r(IMAGES::CUBE_RIGHT),
         get_r(IMAGES::CUBE_BACK),
@@ -322,7 +345,8 @@ struct opengl_contexts_factory
         get_r(IMAGES::CUBE_TOP),
         get_r(IMAGES::CUBE_BOTTOM)
         );
-    auto c6 = context_factory::make_skybox(logger,
+    auto c6 = context_factory::make_texture3d(logger, get_r(IMAGES::HOUSE));
+    auto c7 = context_factory::make_skybox(logger,
         get_r(IMAGES::SB_FRONT),
         get_r(IMAGES::SB_RIGHT),
         get_r(IMAGES::SB_BACK),
@@ -331,10 +355,10 @@ struct opengl_contexts_factory
         get_r(IMAGES::SB_BOTTOM)
         );
     auto const color2 = LIST_OF_COLORS::PURPLE;
-    auto c7 = context_factory::make_wireframe3d(logger, color2);
+    auto c8 = context_factory::make_wireframe3d(logger, color2);
 
     opengl_context2d d2{MOVE(c0), MOVE(c1), MOVE(c2), MOVE(c3)};
-    opengl_context3d d3{MOVE(c4), MOVE(c5), MOVE(c6), MOVE(c7)};
+    opengl_context3d d3{MOVE(c4), MOVE(c5), MOVE(c6), MOVE(c7), MOVE(c8)};
     return opengl_contexts{MOVE(d2), MOVE(d3)};
   }
 };

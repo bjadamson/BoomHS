@@ -4,6 +4,8 @@
 #include <utility>
 #include <stlw/tuple.hpp>
 
+#define FOR(q,n) for(int q=0;q<n;++q)
+
 namespace stlw
 {
 

@@ -32,7 +32,7 @@ struct shape_data
   MOVE_DEFAULT(shape_data);
   explicit constexpr shape_data(GLenum const dm, VertexContainer &&v, VertexOrdering const &o)
       : draw_mode(dm)
-      , vertices(std::move(v))
+      , vertices(MOVE(v))
       , ordering(o)
   {
   }
@@ -53,7 +53,7 @@ struct shape3d_data : public shape_data<C, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_
   NO_COPY(shape3d_data);
   explicit constexpr shape3d_data(GLenum const m, VertexContainer &&d, VertexOrdering const& e,
       opengl::model const& model)
-    : BASE(m, std::move(d), e)
+    : BASE(m, MOVE(d), e)
     , model(model)
   {
   }
@@ -63,18 +63,40 @@ struct shape3d_data : public shape_data<C, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_
 // runtime-driven data
 template <template <class, class> typename C, std::size_t NUM_OF_F_PER_VERTEX,
          typename A = std::allocator<FloatType>, typename B = std::allocator<ElementType>>
-struct runtime_shape_template
+struct runtime_2dshape_template
 {
   GLenum const draw_mode;
   C<FloatType, A> vertices;
   C<ElementType, B> ordering;
 
-  NO_COPY(runtime_shape_template);
-  MOVE_DEFAULT(runtime_shape_template);
-  explicit runtime_shape_template(GLenum const dm, C<FloatType, A> &&d, C<ElementType, B> &&e)
+  NO_COPY(runtime_2dshape_template);
+  MOVE_DEFAULT(runtime_2dshape_template);
+  explicit runtime_2dshape_template(GLenum const dm, C<FloatType, A> &&d, C<ElementType, B> &&e)
       : draw_mode(dm)
-      , vertices(std::move(d))
-      , ordering(std::move(e))
+      , vertices(MOVE(d))
+      , ordering(MOVE(e))
+  {
+  }
+  auto constexpr num_floats_per_vertex() const { return NUM_OF_F_PER_VERTEX; }
+};
+
+template <template <class, class> typename C, std::size_t NUM_OF_F_PER_VERTEX,
+         typename A = std::allocator<FloatType>, typename B = std::allocator<ElementType>>
+struct runtime_3dshape_template
+{
+  GLenum const draw_mode;
+  C<FloatType, A> vertices;
+  C<ElementType, B> ordering;
+  opengl::model const& model;
+
+  NO_COPY(runtime_3dshape_template);
+  MOVE_DEFAULT(runtime_3dshape_template);
+  explicit runtime_3dshape_template(GLenum const dm, C<FloatType, A> &&d, C<ElementType, B> &&e,
+      opengl::model const& m)
+    : draw_mode(dm)
+    , vertices(MOVE(d))
+    , ordering(MOVE(e))
+    , model(m)
   {
   }
   auto constexpr num_floats_per_vertex() const { return NUM_OF_F_PER_VERTEX; }
@@ -144,12 +166,21 @@ using vertex_only_cube = static_vertex_model_shape<32, 14>;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // runtime-sized shapes
 template <std::size_t NUM_VERTEXES>
-using runtime_sized_array = runtime_shape_template<stlw::sized_buffer, NUM_VERTEXES>;
+using runtime_sized_2dshape = runtime_2dshape_template<stlw::sized_buffer, NUM_VERTEXES>;
+
+template <std::size_t NUM_VERTEXES>
+using runtime_sized_3dshape = runtime_3dshape_template<stlw::sized_buffer, NUM_VERTEXES>;
 
 // float polygons
-using vertex_color_polygon = runtime_sized_array<8>;
-using vertex_uv_polygon = runtime_sized_array<7>;
-using vertex_only_polygon = runtime_sized_array<4>;
+using vertex_color_polygon = runtime_sized_2dshape<8>;
+using vertex_uv_polygon = runtime_sized_2dshape<7>;
+using vertex_only_polygon = runtime_sized_2dshape<4>;
+
+// meshs
+using vertex_color_mesh = runtime_sized_3dshape<8>;
+using vertex_normal_uv_mesh = runtime_sized_3dshape<9>;
+using vertex_uv_mesh = runtime_sized_3dshape<6>;
+using vertex_only_mesh = runtime_sized_3dshape<4>;
 
 class shape_mapper
 {
@@ -179,12 +210,24 @@ class shape_mapper
 
   static constexpr auto calc_vertex_color_num_floats(GLint const num_v)
   {
+    // x, y z, w
+    // r, g, b, a
     return (num_v * 4) + (num_v * 4);
   }
 
   static constexpr auto calc_vertex_uv_num_floats(GLint const num_v)
   {
+    // x, y, z, w
+    // u, v
     return (num_v * 4) + (num_v * 2);
+  }
+
+  static constexpr auto calc_vertex_normal_uv_num_floats(GLint const num_v)
+  {
+    // x, y, z, w
+    // xn, yn, zn
+    // u, v
+    return (num_v * 4) + (num_v * 3) + (num_v * 2);
   }
 
   static constexpr auto calc_vertex_only_num_floats(GLint const num_v) { return num_v * 4; }
@@ -212,7 +255,7 @@ class shape_mapper
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(t.draw_mode());
-    return vertex_color_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
+    return vertex_color_triangle{mode, MOVE(floats), TRIANGLE_ELEMENTS()};
   }
 
   static constexpr auto map_to_array_floats(triangle<vertex_uv_attributes> const &t)
@@ -233,7 +276,7 @@ class shape_mapper
         vertex(t.top_middle).w,   uv(t.top_middle).u,       uv(t.top_middle).v};
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(t.draw_mode());
-    return vertex_uv_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
+    return vertex_uv_triangle{mode, MOVE(floats), TRIANGLE_ELEMENTS()};
   }
 
   static constexpr auto map_to_array_floats(triangle<vertex_attributes_only> const &t)
@@ -250,7 +293,7 @@ class shape_mapper
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(t.draw_mode());
-    return vertex_only_triangle{mode, std::move(floats), TRIANGLE_ELEMENTS()};
+    return vertex_only_triangle{mode, MOVE(floats), TRIANGLE_ELEMENTS()};
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -282,7 +325,7 @@ class shape_mapper
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
-    return vertex_color_rectangle{mode, std::move(floats), RECTANGLE_VERTEX_ORDERING()};
+    return vertex_color_rectangle{mode, MOVE(floats), RECTANGLE_VERTEX_ORDERING()};
   }
 
   static constexpr auto map_to_array_floats(rectangle<vertex_uv_attributes> const &r)
@@ -305,7 +348,7 @@ class shape_mapper
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
-    return vertex_uv_rectangle{mode, std::move(floats), RECTANGLE_VERTEX_ORDERING()};
+    return vertex_uv_rectangle{mode, MOVE(floats), RECTANGLE_VERTEX_ORDERING()};
   }
 
   static constexpr auto map_to_array_floats(rectangle<vertex_attributes_only> const &r)
@@ -328,7 +371,7 @@ class shape_mapper
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
-    return vertex_only_rectangle{mode, std::move(floats), RECTANGLE_VERTEX_ORDERING()};
+    return vertex_only_rectangle{mode, MOVE(floats), RECTANGLE_VERTEX_ORDERING()};
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -382,7 +425,7 @@ class shape_mapper
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
-    return vertex_color_cube{mode, std::move(floats), CUBE_VERTICE_ORDERING(), r.model()};
+    return vertex_color_cube{mode, MOVE(floats), CUBE_VERTICE_ORDERING(), r.model()};
   }
 
   static constexpr auto map_to_array_floats(cube<vertex_attributes_only> const &r)
@@ -405,7 +448,7 @@ class shape_mapper
     };
     // clang-format on
     auto const mode = map_gfx_mode_to_opengl_mode(r.draw_mode());
-    return vertex_only_cube{mode, std::move(floats), CUBE_VERTICE_ORDERING(), r.model()};
+    return vertex_only_cube{mode, MOVE(floats), CUBE_VERTICE_ORDERING(), r.model()};
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -425,7 +468,7 @@ class shape_mapper
       vertex_ordering[i] = i;
     }
     auto const mode = map_gfx_mode_to_opengl_mode(p.draw_mode());
-    return R{mode, std::move(floats), std::move(vertex_ordering)};
+    return R{mode, MOVE(floats), MOVE(vertex_ordering)};
   }
 
   static auto map_to_array_floats(polygon<vertex_color_attributes> const &p)
@@ -470,6 +513,62 @@ class shape_mapper
       floats[j++] = uv(vertice).v;
     };
     return map_polygon<vertex_uv_polygon>(p, &calc_vertex_uv_num_floats, fill_vertice);
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // mesh
+  template <typename R, typename M, typename CountFN, typename FN>
+  static auto map_mesh(M const& mesh, CountFN const& count_fn, FN const& fill_vertice)
+  {
+    auto const num_floats = static_cast<size_t>(mesh.object_data.buffer.size());// * 8; // 3x pos +  3x normals
+
+    stlw::sized_buffer<FloatType> floats{num_floats};
+    for (auto i{0}, j{0}; j < floats.length(); ++i) {
+      fill_vertice(floats, i, j);
+    }
+    auto const ordering_length = mesh.object_data.indices.size();
+    stlw::sized_buffer<ElementType> vertex_ordering{static_cast<size_t>(ordering_length)};
+    for (auto i{0}; i < ordering_length; ++i) {
+      vertex_ordering[i] = mesh.object_data.indices[i];
+    }
+    auto const mode = map_gfx_mode_to_opengl_mode(mesh.draw_mode());
+    return R{mode, MOVE(floats), MOVE(vertex_ordering), mesh.model()};
+  }
+
+  /*
+  static auto map_to_array_floats(mesh<vertex_uv_attributes> const &m)
+  {
+    auto const fill_vertice = [&m](auto &floats, auto const i, auto &j) {
+      auto &vertice = m.vertex_attributes[i];
+      floats[j++] = vertex(vertice).x;
+      floats[j++] = vertex(vertice).y;
+      floats[j++] = vertex(vertice).z;
+      floats[j++] = 1.0f;
+
+      floats[j++] = uv(vertice).u;
+      floats[j++] = uv(vertice).v;
+    };
+    return map_mesh<vertex_uv_mesh>(m, &calc_vertex_uv_num_floats, fill_vertice);
+  }
+  */
+
+  static auto map_to_array_floats(mesh<vertex_normal_uv_attributes> const &m)
+  {
+    auto const fill_vertice = [&m](auto &floats, auto const i, auto &j) {
+      auto &vertice = m.vertex_attributes[i];
+      floats[j++] = vertex(vertice).x;
+      floats[j++] = vertex(vertice).y;
+      floats[j++] = vertex(vertice).z;
+      floats[j++] = vertex(vertice).w;
+
+      floats[j++] = normal(vertice).nx;
+      floats[j++] = normal(vertice).ny;
+      floats[j++] = normal(vertice).nz;
+
+      floats[j++] = uv(vertice).u;
+      floats[j++] = uv(vertice).v;
+    };
+    return map_mesh<vertex_normal_uv_mesh>(m, &calc_vertex_normal_uv_num_floats, fill_vertice);
   }
 
 public:

@@ -10,6 +10,7 @@
 #include <window/window.hpp>
 #include <opengl/camera.hpp>
 #include <opengl/factory.hpp>
+#include <opengl/obj.hpp>
 #include <opengl/skybox.hpp>
 #include <stlw/algorithm.hpp>
 #include <stlw/burrito.hpp>
@@ -17,6 +18,7 @@
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 
+#include <game/boomhs/assets.hpp>
 #include <game/boomhs/io_system.hpp>
 #include <game/boomhs/randompos_system.hpp>
 
@@ -32,6 +34,7 @@ struct game_state {
   glm::mat4 projection;
   std::vector<::opengl::model*> MODELS;
   opengl::model skybox_model;
+  opengl::model house_model;
   opengl::model terrain_model;
   opengl::camera camera;
 
@@ -76,8 +79,8 @@ public:
     return std::make_tuple(st::io_system, st::randompos_system);
   }
 
-  template <typename LoopState, typename R, typename ShapeFactory>
-  void game_loop(LoopState &state, R &renderer, ShapeFactory &&sf)
+  template <typename LoopState, typename R, typename ShapeFactory, typename SHIT>
+  void game_loop(LoopState &state, R &renderer, ShapeFactory &&sf, assets<SHIT> const& assets)
   {
     using COLOR_ARRAY = std::array<float, 4>;
     auto constexpr multicolor_triangle =
@@ -110,7 +113,7 @@ public:
 
     r.begin();
     auto args = state.render_args();
-    r.draw(args, MOVE(cube_skybox));
+    //r.draw(args, MOVE(cube_skybox));
 
     auto triangle_color = sf.d2.color.make_triangle({opengl::draw_mode::TRIANGLES, *state.MODELS[9]},
         opengl::LIST_OF_COLORS::PINK);
@@ -123,14 +126,17 @@ public:
     auto triangle_wireframe = sf.d2.wireframe.make_triangle({opengl::draw_mode::LINE_LOOP, *state.MODELS[12]});
 
     // 3d begin
-    auto cube_texture = sf.d3.texture.make_cube({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[102],
+    auto cube_texture = sf.d3.texture_cube.make_cube({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[100],
         {0.15f, 0.15f, 0.15f}});
 
     auto cube_color = sf.d3.color.make_cube({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[101],
         {0.25f, 0.25f, 0.25f}}, opengl::LIST_OF_COLORS::BLUE);
 
-    auto cube_wf = sf.d3.wireframe.make_cube({opengl::draw_mode::LINE_LOOP, *state.MODELS[100],
+    auto cube_wf = sf.d3.wireframe.make_cube({opengl::draw_mode::LINE_LOOP, *state.MODELS[102],
         {0.25f, 0.25f, 0.25f}});
+
+
+    
     // 3d end
 
     auto rectangle_color = sf.d2.color.make_rectangle({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[16]},
@@ -156,12 +162,12 @@ public:
         //multicolor_triangle);
 
     // first draw terrain
-    r.draw(args, cube_terrain);
+    //r.draw(args, cube_terrain);
 
     // now draw entities
-    r.draw(args, cube_color);
-    r.draw(args, cube_texture);
-    r.draw(args, cube_wf);
+    //r.draw(args, cube_color);
+    //r.draw(args, cube_texture);
+    //r.draw(args, cube_wf);
 
     {
       //std::array<opengl::triangle<opengl::vertex_color_attributes>, 2> const arr = {
@@ -197,14 +203,16 @@ public:
     }
 
     // not draw 2d entities (last because we disable depth tests for these draw calls)
-    r.draw(args, triangle_color, triangle_list_colors, MOVE(polygon_color),
-                                           rectangle_color, rectangle_list_colors
+    //r.draw(args, triangle_color, triangle_list_colors, MOVE(polygon_color),
+                                           //rectangle_color, rectangle_list_colors
                                            // polygon_list_of_color,
-                                           );
-
-    r.draw(args, triangle_texture, rectangle_texture);
-    r.draw(args, MOVE(polygon_texture));
-    r.draw(args, MOVE(polygon_wireframe), triangle_wireframe, rectangle_wireframe);
+                                           //);
+    std::cerr << "start drawing house\n";
+    r.draw(args, assets.house_uv);
+    std::cerr << "finished drawing house\n";
+    //r.draw(args, triangle_texture, rectangle_texture);
+    //r.draw(args, MOVE(polygon_texture));
+    //r.draw(args, MOVE(polygon_wireframe), triangle_wireframe, rectangle_wireframe);
     r.end();
   }
 };

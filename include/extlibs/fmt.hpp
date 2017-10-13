@@ -4,7 +4,10 @@
 // directory.
 #ifndef FMT_INCLUDE_ONCE_ONLY
 #define FMT_INCLUDE_ONCE_ONLY
+#define FMT_HEADER_ONLY
+#include <fmt/format.h>
+#include <fmt/printf.h>
+#include <fmt/ostream.h>
 #else
 static_assert(false, "extlibs/fmt.hpp should only be included once per-project.");
 #endif // FMT_INCLUDE_ONCE_ONLY
-#include <fmt/format.h>
