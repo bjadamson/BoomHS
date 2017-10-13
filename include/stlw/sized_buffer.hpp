@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include <stlw/type_macros.hpp>
 #include <vector>
 #include <iostream>

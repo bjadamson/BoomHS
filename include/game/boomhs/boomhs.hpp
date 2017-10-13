@@ -18,6 +18,7 @@
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 
+#include <game/boomhs/assets.hpp>
 #include <game/boomhs/io_system.hpp>
 #include <game/boomhs/randompos_system.hpp>
 
@@ -78,8 +79,8 @@ public:
     return std::make_tuple(st::io_system, st::randompos_system);
   }
 
-  template <typename LoopState, typename R, typename ShapeFactory>
-  void game_loop(LoopState &state, R &renderer, ShapeFactory &&sf)
+  template <typename LoopState, typename R, typename ShapeFactory, typename SHIT>
+  void game_loop(LoopState &state, R &renderer, ShapeFactory &&sf, assets<SHIT> const& assets)
   {
     using COLOR_ARRAY = std::array<float, 4>;
     auto constexpr multicolor_triangle =
@@ -135,11 +136,7 @@ public:
         {0.25f, 0.25f, 0.25f}});
 
 
-    std::cerr << "load_house\n";
-    auto house_mesh = opengl::load_mesh("assets/house_uv.obj");
-    std::cerr << "make_mesh\n";
-    auto house_uv = sf.d3.house.make_mesh({opengl::draw_mode::TRIANGLE_STRIP, state.house_model,
-        house_mesh});
+    
     // 3d end
 
     auto rectangle_color = sf.d2.color.make_rectangle({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[16]},
@@ -210,8 +207,9 @@ public:
                                            //rectangle_color, rectangle_list_colors
                                            // polygon_list_of_color,
                                            //);
-
-    r.draw(args, house_uv);
+    std::cerr << "start drawing house\n";
+    r.draw(args, assets.house_uv);
+    std::cerr << "finished drawing house\n";
     //r.draw(args, triangle_texture, rectangle_texture);
     //r.draw(args, MOVE(polygon_texture));
     //r.draw(args, MOVE(polygon_wireframe), triangle_wireframe, rectangle_wireframe);

@@ -26,7 +26,7 @@ public:
   auto const& va() const { return this->va_; }
   auto const& ctx() const { return this->context_; }
 
-  auto& program_ref() { return this->program_; }
+  auto &program_ref() { return this->program_; }
 
   using CTX = C;
   MOVE_CONSTRUCTIBLE_ONLY(pipeline);

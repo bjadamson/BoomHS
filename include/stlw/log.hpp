@@ -40,7 +40,7 @@ class log_factory
   static auto make_adapter(char const (&log_name)[N], char const (&prefix)[M], L const level)
   {
     auto const filename = stlw::concat(prefix, log_name, ".log");
-    auto logger = make_spdlog_logger(log_name, level, filename.data(), "txt", 23, 59);
+    auto logger = make_spdlog_logger(log_name, level, filename.data(), 23, 59);
     return impl::make_log_adapter(std::move(logger));
   }
 
@@ -64,8 +64,8 @@ class log_factory
     static char constexpr LOG_NAME[] = "aggregate";
     auto const log_file_path = stlw::concat(prefix, LOG_NAME, ".log");
     std::array<spdlog::sink_ptr, 2> const sinks = {
-        std::make_unique<spdlog::sinks::stdout_sink_st>(),
-        std::make_unique<spdlog::sinks::daily_file_sink_st>(log_file_path.data(), "txt", 23, 59)};
+        std::make_unique<spdlog::sinks::stderr_sink_st>(),
+        std::make_unique<spdlog::sinks::daily_file_sink_st>(log_file_path.data(), 23, 59)};
     auto shared_logger = std::make_unique<spdlog::logger>(LOG_NAME, begin(sinks), end(sinks));
     shared_logger->set_level(spdlog::level::trace);
     return impl::make_log_adapter(std::move(shared_logger));

@@ -36,7 +36,7 @@ private:
   explicit constexpr mesh(enum draw_mode const dm, struct model const& m, obj const& object)
       : shape(dm, m)
       , object_data(object)
-      , vertex_attributes(this->object_data.num_vertices)
+      , vertex_attributes(this->object_data.indices.size())
   {
   }
 };

@@ -11,6 +11,7 @@
 
 // TODO: decouple??
 #include <game/boomhs/ecst.hpp>
+#include <game/boomhs/assets.hpp>
 
 namespace engine
 {
@@ -160,11 +161,22 @@ public:
           state.rnum_generator, state.MODELS, state.terrain_model, state.house_model,
           state.skybox_model, mouse_data);
     };
+    std::cerr << "load_house\n";
+    auto mesh = opengl::load_mesh("assets/chalet.obj");
+    std::cerr << "load_house finish\n";
+
+    std::cerr << "making mesh\n";
+    auto sf = impl::make_shape_factories(this->lib.pipelines);
+    auto const house_uv = sf.d3.house.make_mesh({opengl::draw_mode::TRIANGLE_STRIP, state.house_model,
+        mesh});
+    std::cerr << "finish making mesh\n";
+    game::boomhs::assets<decltype(house_uv)> const assets{house_uv};
+
     auto const game_loop = [&](auto &proxy) {
       auto const fn = [&]()
       {
         auto loop_state = mls(state);
-        this->loop(MOVE(loop_state), game, proxy);
+        this->loop(MOVE(loop_state), game, proxy, assets);
       };
       while (!state.quit) {
         fps_capped_game_loop(fn);
@@ -181,8 +193,8 @@ public:
     });
   }
 
-  template<typename LoopState, typename Game, typename P>
-  void loop(LoopState &&state, Game &&game, P &proxy)
+  template<typename LoopState, typename Game, typename P, typename SHIT>
+  void loop(LoopState &&state, Game &&game, P &proxy, game::boomhs::assets<SHIT> const& assets)
   {
     namespace sea = ecst::system_execution_adapter;
     auto io_tags = sea::t(st::io_system);
@@ -202,7 +214,7 @@ public:
     LOG_TRACE("rendering.");
 
     auto sf = impl::make_shape_factories(this->lib.pipelines);
-    game.game_loop(state, this->lib.draw_lib, MOVE(sf));
+    game.game_loop(state, this->lib.draw_lib, MOVE(sf), assets);
     this->end();
     LOG_TRACE("game loop stepping.");
   }

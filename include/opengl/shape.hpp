@@ -2,6 +2,7 @@
 #include <opengl/types.hpp>
 #include <opengl/colors.hpp>
 #include <opengl/mode.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace opengl
 {
@@ -17,6 +18,7 @@ protected:
   }
 
 public:
+
   auto constexpr const &draw_mode() const { return this->draw_mode_; }
   auto constexpr const &model() const { return this->model_; }
 };
