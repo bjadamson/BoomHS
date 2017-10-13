@@ -162,7 +162,7 @@ public:
           state.skybox_model, mouse_data);
     };
     std::cerr << "load_house\n";
-    auto mesh = opengl::load_mesh("assets/chalet.obj");
+    auto mesh = opengl::load_mesh("assets/house_uv.obj");
     std::cerr << "load_house finish\n";
 
     std::cerr << "making mesh\n";
