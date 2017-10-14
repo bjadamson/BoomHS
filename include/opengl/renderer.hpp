@@ -47,6 +47,8 @@ struct opengl_renderer
   template <typename Args, typename P, typename SHAPE>
   void draw(Args const& args, P &pipeline, SHAPE const& shape)
   {
+    std::cerr << "renderer.hpp shape.object_data.buffer.size() is '" << shape.object_data.buffer.size() << "'\n";
+    std::cerr << "renderer.hpp shape.object_data.indices.size() is '" << shape.object_data.indices.size() << "'\n";
     // TODO: move this draw fn() up one left (out of opengl).
     using C = typename P::CTX;
     if constexpr (C::IS_2D) {

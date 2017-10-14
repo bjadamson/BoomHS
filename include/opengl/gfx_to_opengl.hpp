@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <opengl/vertex_attribute.hpp>
 #include <opengl/mode.hpp>
 #include <opengl/shape2d.hpp>
@@ -15,14 +16,17 @@ using namespace opengl;
 
 // TODO: project-wide configuration (double precision maybe)
 using FloatType = float;
-using ElementType = GLuint;
+using IndicesType = GLuint;
+
+static_assert(sizeof(IndicesType) == sizeof(uint32_t),
+    "OpenGL unsigned int size must match uint32_t, otherwise conversion functions will behave incorrectly");
 
 template <template <class, std::size_t> typename C, std::size_t NUM_VERTEXES,
           std::size_t NUM_ELEMENTS, std::size_t NUM_OF_F_PER_VERTEX>
 struct shape_data
 {
   using VertexContainer = C<FloatType, NUM_VERTEXES>;
-  using VertexOrdering = C<ElementType, NUM_ELEMENTS>;
+  using VertexOrdering = C<IndicesType, NUM_ELEMENTS>;
 
   GLenum const draw_mode;
   VertexContainer vertices;
@@ -62,16 +66,16 @@ struct shape3d_data : public shape_data<C, NUM_VERTEXES, NUM_ELEMENTS, NUM_OF_F_
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // runtime-driven data
 template <template <class, class> typename C, std::size_t NUM_OF_F_PER_VERTEX,
-         typename A = std::allocator<FloatType>, typename B = std::allocator<ElementType>>
+         typename A = std::allocator<FloatType>, typename B = std::allocator<IndicesType>>
 struct runtime_2dshape_template
 {
   GLenum const draw_mode;
   C<FloatType, A> vertices;
-  C<ElementType, B> ordering;
+  C<IndicesType, B> ordering;
 
   NO_COPY(runtime_2dshape_template);
   MOVE_DEFAULT(runtime_2dshape_template);
-  explicit runtime_2dshape_template(GLenum const dm, C<FloatType, A> &&d, C<ElementType, B> &&e)
+  explicit runtime_2dshape_template(GLenum const dm, C<FloatType, A> &&d, C<IndicesType, B> &&e)
       : draw_mode(dm)
       , vertices(MOVE(d))
       , ordering(MOVE(e))
@@ -81,17 +85,17 @@ struct runtime_2dshape_template
 };
 
 template <template <class, class> typename C, std::size_t NUM_OF_F_PER_VERTEX,
-         typename A = std::allocator<FloatType>, typename B = std::allocator<ElementType>>
+         typename A = std::allocator<FloatType>, typename B = std::allocator<IndicesType>>
 struct runtime_3dshape_template
 {
   GLenum const draw_mode;
   C<FloatType, A> vertices;
-  C<ElementType, B> ordering;
+  C<IndicesType, B> ordering;
   opengl::model const& model;
 
   NO_COPY(runtime_3dshape_template);
   MOVE_DEFAULT(runtime_3dshape_template);
-  explicit runtime_3dshape_template(GLenum const dm, C<FloatType, A> &&d, C<ElementType, B> &&e,
+  explicit runtime_3dshape_template(GLenum const dm, C<FloatType, A> &&d, C<IndicesType, B> &&e,
       opengl::model const& m)
     : draw_mode(dm)
     , vertices(MOVE(d))
@@ -108,7 +112,7 @@ template <typename S>
 constexpr auto
 ordering_size_in_bytes(S const& s)
 {
-  return s.ordering.size() * sizeof(ElementType);
+  return s.ordering.size() * sizeof(IndicesType);
 }
 
 template <typename S>
@@ -232,7 +236,7 @@ class shape_mapper
 
   static constexpr auto calc_vertex_only_num_floats(GLint const num_v) { return num_v * 4; }
 
-  static auto constexpr TRIANGLE_ELEMENTS() { return std::array<ElementType, 3>{0, 1, 2}; }
+  static auto constexpr TRIANGLE_ELEMENTS() { return std::array<IndicesType, 3>{0, 1, 2}; }
   static constexpr auto map_to_array_floats(triangle<vertex_color_attributes> const &t)
   {
     using X = triangle<vertex_color_attributes>;
@@ -300,7 +304,7 @@ class shape_mapper
   // rectangles
   static auto constexpr RECTANGLE_VERTEX_ORDERING()
   {
-    return std::array<ElementType, 6>{0, 1, 2, 2, 3, 0};
+    return std::array<IndicesType, 6>{0, 1, 2, 2, 3, 0};
   }
 
   static constexpr auto map_to_array_floats(rectangle<vertex_color_attributes> const &r)
@@ -379,7 +383,7 @@ class shape_mapper
   static constexpr auto CUBE_VERTICE_ORDERING()
   {
     // clang-format off
-    return std::array<ElementType, 14> {
+    return std::array<IndicesType, 14> {
       3, 2, 6, 7, 4, 2, 0,
       3, 1, 6, 5, 4, 1, 0
     };
@@ -463,7 +467,7 @@ class shape_mapper
       fill_vertice(floats, i, j);
     }
     auto const ordering_length = p.num_vertices();
-    stlw::sized_buffer<ElementType> vertex_ordering{static_cast<size_t>(ordering_length)};
+    stlw::sized_buffer<IndicesType> vertex_ordering{static_cast<size_t>(ordering_length)};
     for (auto i{0}; i < ordering_length; ++i) {
       vertex_ordering[i] = i;
     }
@@ -527,7 +531,7 @@ class shape_mapper
       fill_vertice(floats, i, j);
     }
     auto const ordering_length = mesh.object_data.indices.size();
-    stlw::sized_buffer<ElementType> vertex_ordering{static_cast<size_t>(ordering_length)};
+    stlw::sized_buffer<IndicesType> vertex_ordering{static_cast<size_t>(ordering_length)};
     for (auto i{0}; i < ordering_length; ++i) {
       vertex_ordering[i] = mesh.object_data.indices[i];
     }

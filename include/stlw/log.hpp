@@ -11,11 +11,19 @@
 #undef LOG_WARN
 #undef LOG_ERROR
 
+#ifdef NDEBUG
+#define LOG_TRACE(...) logger.log_nothing()
+#define LOG_DEBUG(...) logger.log_nothing()
+#define LOG_INFO(...) logger.log_nothing()
+#define LOG_WARN(...) logger.log_nothing()
+#define LOG_ERROR(...) logger.log_nothing()
+#else
 #define LOG_TRACE(...) logger.trace(__VA_ARGS__)
 #define LOG_DEBUG(...) logger.debug(__VA_ARGS__)
 #define LOG_INFO(...) logger.info(__VA_ARGS__)
 #define LOG_WARN(...) logger.warn(__VA_ARGS__)
 #define LOG_ERROR(...) logger.error(__VA_ARGS__)
+#endif
 
 namespace stlw
 {

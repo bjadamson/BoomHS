@@ -13,15 +13,17 @@ namespace impl
 
 template <typename L>
 void
-render(L &logger, GLenum const render_mode, GLsizei const element_count)
+render(L &logger, GLenum const render_mode, GLsizei const element_count, GLvoid const* pindices)
 {
   auto const fmt = fmt::sprintf("glDrawElements() render_mode '%d', element_count '%d'",
                                 render_mode, element_count);
 
   LOG_TRACE(fmt);
+  std::cerr << fmt << "\n";
 
   auto constexpr OFFSET = nullptr;
   glDrawElements(render_mode, element_count, GL_UNSIGNED_INT, OFFSET);
+  std::abort();
 }
 
 template <typename L, typename S>
@@ -51,8 +53,11 @@ log_shape_bytes(L &logger, S const &shape)
   ostream << fmt::sprintf("ordering_count %d, ordering_size_in_bytes %d\n", shape.ordering.size(),
                           ordering_size_in_bytes(shape));
   ostream << "ordering(bytes):\n";
+
   print(ostream, shape.ordering.size(), shape.ordering.data());
+
   LOG_TRACE(ostream.str());
+  std::cerr << ostream.str() << "\n";
 }
 
 template <typename L, typename S>
@@ -84,7 +89,7 @@ render_shape(L &logger, S const &shape)
   impl::copy_to_gpu(logger, shape);
 
   // Draw our first triangle
-  impl::render(logger, shape.draw_mode, shape.ordering.size());
+  impl::render(logger, shape.draw_mode, shape.ordering.size(), shape.ordering.data());
 }
 
 template <typename L, typename P, typename FN, typename SHAPE>

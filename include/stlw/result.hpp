@@ -1,5 +1,6 @@
 #pragma once
 #include <extlibs/boost_expected.hpp>
+#include <stlw/type_macros.hpp>
 #include <stlw/types.hpp>
 
 namespace stlw
@@ -18,11 +19,11 @@ using result = ::boost::expected<T, E>;
 
 // General-purpose eval function.
 #define DO_GENERAL_EVAL(VAR_DECL, V, expr)                                                         \
-  auto V{std::move(expr)};                                                                         \
+  auto V{expr};                                                                                    \
   if (!V) {                                                                                        \
     return stlw::make_error(V.error());                                                            \
   }                                                                                                \
-  VAR_DECL{*std::move(V)};
+  VAR_DECL{*MOVE(V)};
 
 // DO_TRY
 #define DO_TRY_CONCAT(VAR_DECL, V, expr) DO_GENERAL_EVAL(VAR_DECL, _DO_TRY_TEMPORARY_##V, expr)
@@ -31,11 +32,11 @@ using result = ::boost::expected<T, E>;
 
 // OR_ELSE
 #define DO_GENERAL_OR_ELSE_EVAL(VAR_DECL, V, expr, fn)                                             \
-  auto V{std::move(expr)};                                                                         \
+  auto V{expr};                                                                                    \
   if (!V) {                                                                                        \
     fn(V.error());                                                                                 \
   }                                                                                                \
-  VAR_DECL{*std::move(V)};
+  VAR_DECL{*MOVE(V)};
 
 #define DO_TRY_OR_ELSE_EVAL(VAR_DECL, V, expr, fn) DO_GENERAL_OR_ELSE_EVAL(VAR_DECL, V, expr, fn)
 #define DO_TRY_OR_ELSE_CONCAT(VAR_DECL, to_concat, expr, fn)                                       \
@@ -53,7 +54,7 @@ using result = ::boost::expected<T, E>;
 
 // DO_EFFECT_OR_ELSE
 #define DO_GENERAL_EFFECT(V, expr, or_else_fn)                                                     \
-  auto V{std::move(expr)};                                                                         \
+  auto V{expr};                                                                                    \
   if (!V) {                                                                                        \
     return or_else_fn(V.error());                                                                  \
   }

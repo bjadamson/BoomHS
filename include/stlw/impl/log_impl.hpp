@@ -29,14 +29,14 @@ class log_adapter
   L p_logger_;
 
   log_adapter(L &&l)
-      : p_logger_(std::move(l))
+      : p_logger_(MOVE(l))
   {
   }
 
   NO_COPY(log_adapter)
 public:
   log_adapter(log_adapter &&other)
-      : p_logger_(std::move(other.p_logger_))
+      : p_logger_(MOVE(other.p_logger_))
   {
   }
 
@@ -44,7 +44,7 @@ public:
 
 #define DEFINE_LOG_ADAPTER_METHOD(FN_NAME)                                                         \
   template <typename... Params>                                                                    \
-  auto &FN_NAME(Params &&... p)                                                                    \
+  auto& FN_NAME(Params &&... p)                                                                    \
   {                                                                                                \
     this->p_logger_->FN_NAME(std::forward<Params>(p)...);                                          \
     return *this;                                                                                  \
@@ -56,6 +56,9 @@ public:
   DEFINE_LOG_ADAPTER_METHOD(warn)
   DEFINE_LOG_ADAPTER_METHOD(error)
 
+  template <typename... Params>
+  auto& log_nothing(Params &&...) const { return *this;}
+
   template <typename OL>
   friend log_adapter<OL> make_log_adapter(OL &&);
 };
@@ -64,7 +67,7 @@ template <typename L>
 log_adapter<L>
 make_log_adapter(L &&logger)
 {
-  return log_adapter<L>{std::move(logger)};
+  return log_adapter<L>{MOVE(logger)};
 }
 
 template <typename L>
@@ -80,20 +83,20 @@ class log_group
 
 public:
   explicit log_group(L &&t, L &&d, L &&i, L &&w, L &&e)
-      : trace_(std::move(t))
-      , debug_(std::move(d))
-      , info_(std::move(i))
-      , warn_(std::move(w))
-      , error_(std::move(e))
+      : trace_(MOVE(t))
+      , debug_(MOVE(d))
+      , info_(MOVE(i))
+      , warn_(MOVE(w))
+      , error_(MOVE(e))
   {
   }
 
   log_group(log_group &&other)
-      : trace_(std::move(other.trace_))
-      , debug_(std::move(other.debug_))
-      , info_(std::move(other.info_))
-      , warn_(std::move(other.warn_))
-      , error_(std::move(other.error_))
+      : trace_(MOVE(other.trace_))
+      , debug_(MOVE(other.debug_))
+      , info_(MOVE(other.info_))
+      , warn_(MOVE(other.warn_))
+      , error_(MOVE(other.error_))
   {
   }
 
@@ -111,6 +114,9 @@ public:
   DEFINE_LOG_GROUP_METHOD(warn)
   DEFINE_LOG_GROUP_METHOD(error)
 
+  template <typename... Params>
+  auto& log_nothing(Params &&...) const { return *this;}
+
   log_group &operator=(log_group &&) = delete;
 };
 
@@ -118,7 +124,7 @@ template <typename P>
 auto
 make_log_group(P &&a, P &&b, P &&c, P &&d, P &&e)
 {
-  return log_group<P>(std::move(a), std::move(b), std::move(c), std::move(d), std::move(e));
+  return log_group<P>(MOVE(a), MOVE(b), MOVE(c), MOVE(d), MOVE(e));
 }
 
 #define LOG_WRITER_DEFINE_FN(FN_NAME)                                                              \
@@ -149,14 +155,14 @@ class log_writer
 
 public:
   explicit log_writer(log_group<L> &&g, log_adapter<M> &&s)
-      : group_(std::move(g))
-      , shared_(std::move(s))
+      : group_(MOVE(g))
+      , shared_(MOVE(s))
   {
   }
 
   log_writer(log_writer &&other)
-      : group_(std::move(other.group_))
-      , shared_(std::move(other.shared_))
+      : group_(MOVE(other.group_))
+      , shared_(MOVE(other.shared_))
   {
   }
 
@@ -165,13 +171,15 @@ public:
   LOG_WRITER_DEFINE_FN(info)
   LOG_WRITER_DEFINE_FN_TEMP(warn)
   LOG_WRITER_DEFINE_FN_TEMP(error)
+
+  LOG_WRITER_DEFINE_FN_TEMP(log_nothing)
 };
 
 template <typename L, typename M>
 inline auto
 make_log_writer(impl::log_group<L> &&group, impl::log_adapter<M> &&m)
 {
-  return log_writer<L, M>{std::move(group), std::move(m)};
+  return log_writer<L, M>{MOVE(group), MOVE(m)};
 }
 
 } // ns impl
