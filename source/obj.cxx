@@ -76,7 +76,7 @@ load_mesh(char const* path)
       buffer.push_back(u);
       buffer.push_back(v);
 
-      indices.push_back(indices.size());
+      indices.push_back(indices.size()); // 0, 1, 2, ...
     }
   }
   std::cerr << "buffer.size() '" << buffer.size() << "'\n";

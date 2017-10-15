@@ -16,14 +16,14 @@ void
 draw_scene(L &logger, P &pipeline, glm::mat4 const& view, glm::mat4 const& projection,
     SHAPE const& shape)
 {
-  auto const& ctx = pipeline.ctx();
-  global::vao_bind(ctx.vao());
+  auto const& gl_buffers = pipeline.ctx().gl_buffers();
+  global::vao_bind(gl_buffers.vao());
   ON_SCOPE_EXIT([]() { global::vao_unbind(); });
 
-  glBindBuffer(GL_ARRAY_BUFFER, ctx.vbo());
+  glBindBuffer(GL_ARRAY_BUFFER, gl_buffers.vbo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx.ebo());
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_buffers.ebo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
   auto &program = pipeline.program_ref();

@@ -34,6 +34,7 @@ set(ASSIMP_LIBRARY_SO "${CMAKE_CURRENT_SOURCE_DIR}/external/assimp/lib/libassimp
 ## DEFINITIONS
 file(GLOB INTERNAL_INCLUDE_DIRS include
   external/assimp/include
+  external/backward/include
   external/compact_optional/include
   external/expected/include
   external/hana/include
@@ -46,6 +47,7 @@ file(GLOB INTERNAL_INCLUDE_DIRS include
 
 file(GLOB_RECURSE GLOBBED_SOURCES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/backward/source/*.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx
   )
@@ -72,6 +74,7 @@ find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(SOIL REQUIRED)
+find_package(BFD REQUIRED)
 
 ## Build the application
 include(FindPkgConfig)
@@ -95,6 +98,8 @@ target_link_libraries(boomhs
   ${OPENGL_LIBRARIES}
   ${GLEW_LIBRARIES}
   ${SOIL_LIBRARIES}
+  bfd ## BFD and dl are both needed for linux backtraces.
+  dl
   pthread
   boost_system)
 

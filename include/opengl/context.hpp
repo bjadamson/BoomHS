@@ -6,25 +6,28 @@
 #include <opengl/shader_program.hpp>
 #include <opengl/texture.hpp>
 
+#include <backward/backward.hpp>
+
 namespace opengl
 {
 
-class opengl_context
+class opengl_buffers
 {
   GLuint vao_ = 0, vbo_ = 0, ebo_ = 0;
   static auto constexpr NUM_BUFFERS = 1;
 
-  NO_COPY(opengl_context);
-  NO_MOVE_ASSIGN(opengl_context);
-protected:
-  explicit opengl_context()
+  explicit opengl_buffers()
   {
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
     glGenBuffers(NUM_BUFFERS, &this->vbo_);
     glGenBuffers(NUM_BUFFERS, &this->ebo_);
   }
+
+  NO_COPY(opengl_buffers);
+  NO_MOVE_ASSIGN(opengl_buffers);
 public:
-  ~opengl_context()
+  friend struct context_factory;
+  ~opengl_buffers()
   {
     glDeleteBuffers(NUM_BUFFERS, &this->ebo_);
     glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
@@ -32,7 +35,7 @@ public:
   }
 
   // move-construction OK.
-  opengl_context(opengl_context &&other)
+  opengl_buffers(opengl_buffers &&other)
       : vao_(other.vao_)
       , vbo_(other.vbo_)
       , ebo_(other.ebo_)
@@ -45,169 +48,189 @@ public:
   inline auto vao() const { return this->vao_; }
   inline auto vbo() const { return this->vbo_; }
   inline auto ebo() const { return this->ebo_; }
-
-  // Derived context's can override this.
-  static bool constexpr HAS_TEXTURE = false;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr IS_SKYBOX = false;
 };
 
-struct context2d : public opengl_context
+class color2d_context
 {
+  opengl_buffers buffers_;
+
+  explicit color2d_context(opengl_buffers &&b)
+    : buffers_(MOVE(b))
+  {
+  }
+public:
   static bool constexpr IS_2D = true;
-protected:
-  explicit context2d() = default;
-public:
-  MOVE_CONSTRUCTIBLE_ONLY(context2d);
-};
+  static bool constexpr IS_SKYBOX = false;
+  static bool constexpr HAS_COLOR_UNIFORM = false;
+  static bool constexpr HAS_TEXTURE = false;
 
-struct context3d : public opengl_context
-{
-  static bool constexpr IS_2D = false;
-protected:
-  explicit context3d() = default;
-public:
-  MOVE_CONSTRUCTIBLE_ONLY(context3d);
-};
-
-struct color2d_context : public context2d
-{
   friend struct context_factory;
-protected:
-  explicit color2d_context() = default;
-public:
   MOVE_CONSTRUCTIBLE_ONLY(color2d_context);
+
+  auto const& gl_buffers() const { return this->buffers_; }
 };
 
-class color3d_context : public context3d
+class color3d_context
 {
-friend struct context_factory;
-protected:
-  explicit color3d_context() = default;
+  opengl_buffers buffers_;
+
+  explicit color3d_context(opengl_buffers &&b)
+    : buffers_(MOVE(b))
+  {
+  }
+
 public:
+  friend struct context_factory;
   MOVE_CONSTRUCTIBLE_ONLY(color3d_context);
+
+  static bool constexpr IS_2D = false;
+  static bool constexpr IS_SKYBOX = false;
+  static bool constexpr HAS_COLOR_UNIFORM = false;
+  static bool constexpr HAS_TEXTURE = false;
+
+  auto const& gl_buffers() const { return this->buffers_; }
 };
 
-template<typename D>
-class opengl_texture_context : public D
+class texture3d_context
 {
-protected:
+  opengl_buffers buffers_;
   texture_info texture_info_;
 
-  // private
-  explicit opengl_texture_context(texture_info const t)
-      : texture_info_(t)
+  explicit texture3d_context(opengl_buffers &&b, texture_info const t)
+      : buffers_(MOVE(b))
+      , texture_info_(t)
   {
   }
 
-  NO_COPY(opengl_texture_context);
-  NO_MOVE_ASSIGN(opengl_texture_context);
 public:
-  // move-construction OK.
-  explicit opengl_texture_context(opengl_texture_context &&other)
-      : texture_info_(other.texture_info_)
-  {
-    other.texture_info_ = texture_info{0, 0};
-  }
-
-  static bool constexpr HAS_TEXTURE = true;
-  inline auto texture() const { return this->texture_info_; }
-};
-
-class texture_3dcube_context : public opengl_texture_context<context3d>
-{
-protected:
-  explicit texture_3dcube_context(texture_info const t)
-      : opengl_texture_context(t)
-  {
-  }
-
   friend struct context_factory;
-public:
-  MOVE_CONSTRUCTIBLE_ONLY(texture_3dcube_context);
-};
-
-class skybox_context : public texture_3dcube_context
-{
-  // private
-  explicit skybox_context(texture_info const t)
-      : texture_3dcube_context(t)
-  {
-  }
-
-  friend struct context_factory;
-public:
-  MOVE_CONSTRUCTIBLE_ONLY(skybox_context);
-  static bool constexpr IS_SKYBOX = true;
-};
-
-class texture3d_context : public opengl_texture_context<context3d>
-{
-protected:
-  explicit texture3d_context(texture_info const t)
-      : opengl_texture_context(t)
-  {
-  }
-
-  friend struct context_factory;
-public:
   MOVE_CONSTRUCTIBLE_ONLY(texture3d_context);
+
+  static bool constexpr IS_2D = false;
+  static bool constexpr IS_SKYBOX = false;
+  static bool constexpr HAS_COLOR_UNIFORM = false;
+  static bool constexpr HAS_TEXTURE = true;
+
+  auto const& gl_buffers() const { return this->buffers_; }
+  auto texture() const { return this->texture_info_; }
 };
 
-class texture2d_context : public opengl_texture_context<context2d>
+class texture_3dcube_context
 {
-  // private
-  explicit texture2d_context(texture_info const t)
-      : opengl_texture_context(t)
+  opengl_buffers buffers_;
+  texture_info texture_info_;
+  explicit texture_3dcube_context(opengl_buffers &&b, texture_info const t)
+      : buffers_(MOVE(b))
+      , texture_info_(t)
   {
   }
 
-  friend struct context_factory;
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(texture2d_context);
+  friend struct context_factory;
+  MOVE_CONSTRUCTIBLE_ONLY(texture_3dcube_context);
+
+  static bool constexpr IS_2D = false;
+  static bool constexpr IS_SKYBOX = false;
+  static bool constexpr HAS_COLOR_UNIFORM = false;
+  static bool constexpr HAS_TEXTURE = true;
+
+  auto const& gl_buffers() const { return this->buffers_; }
+  auto texture() const { return this->texture_info_; }
 };
 
-template<typename B>
-class opengl_wireframe_context : public B
+class skybox_context
 {
+  opengl_buffers buffers_;
+  texture_info texture_info_;
+
+  explicit skybox_context(opengl_buffers &&b, texture_info const t)
+      : buffers_(MOVE(b))
+      , texture_info_(t)
+  {
+  }
+
+public:
+  friend struct context_factory;
+  MOVE_CONSTRUCTIBLE_ONLY(skybox_context);
+
+  static bool constexpr IS_2D = false;
+  static bool constexpr IS_SKYBOX = true;
+  static bool constexpr HAS_COLOR_UNIFORM = false;
+  static bool constexpr HAS_TEXTURE = true;
+
+  auto const& gl_buffers() const { return this->buffers_; }
+  auto texture() const { return this->texture_info_; }
+};
+
+class texture2d_context
+{
+  opengl_buffers buffers_;
+  texture_info texture_info_;
+  explicit texture2d_context(opengl_buffers &&b, texture_info const t)
+      : buffers_(MOVE(b))
+      , texture_info_(t)
+  {
+  }
+
+public:
+  friend struct context_factory;
+  MOVE_CONSTRUCTIBLE_ONLY(texture2d_context);
+
+  static bool constexpr IS_2D = true;
+  static bool constexpr IS_SKYBOX = false;
+  static bool constexpr HAS_COLOR_UNIFORM = false;
+  static bool constexpr HAS_TEXTURE = true;
+
+  auto const& gl_buffers() const { return this->buffers_; }
+  auto texture() const { return this->texture_info_; }
+};
+
+class wireframe2d_context
+{
+  opengl_buffers buffers_;
   std::array<float, 4> color_;
 
-protected:
-  explicit opengl_wireframe_context(std::array<float, 4> const &c)
-      : color_(c)
+  explicit wireframe2d_context(opengl_buffers &&b, std::array<float, 4> const &color)
+      : buffers_(MOVE(b))
+      , color_(color)
   {
   }
+
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(opengl_wireframe_context);
-
-  static bool constexpr HAS_COLOR_UNIFORM = true;
-  inline auto color() const { return this->color_; }
-};
-
-class wireframe2d_context : public opengl_wireframe_context<context2d>
-{
-  // private
-  explicit wireframe2d_context(std::array<float, 4> const &c)
-      : opengl_wireframe_context(c)
-  {
-  }
-
   friend struct context_factory;
-public:
   MOVE_CONSTRUCTIBLE_ONLY(wireframe2d_context);
+
+  static bool constexpr IS_2D = true;
+  static bool constexpr IS_SKYBOX = false;
+  static bool constexpr HAS_COLOR_UNIFORM = true;
+  static bool constexpr HAS_TEXTURE = false;
+
+  inline auto color() const { return this->color_; }
+  auto const& gl_buffers() const { return this->buffers_; }
 };
 
-class wireframe3d_context : public opengl_wireframe_context<context3d>
+class wireframe3d_context
 {
-  // private
-  explicit wireframe3d_context(std::array<float, 4> const &c)
-      : opengl_wireframe_context(c)
+  opengl_buffers buffers_;
+  std::array<float, 4> color_;
+
+  explicit wireframe3d_context(opengl_buffers &&b, std::array<float, 4> const &color)
+      : buffers_(MOVE(b))
+      , color_(color)
   {
   }
 
-  friend struct context_factory;
 public:
+  friend struct context_factory;
   MOVE_CONSTRUCTIBLE_ONLY(wireframe3d_context);
+
+  static bool constexpr IS_2D = false;
+  static bool constexpr IS_SKYBOX = false;
+  static bool constexpr HAS_COLOR_UNIFORM = true;
+  static bool constexpr HAS_TEXTURE = false;
+
+  inline auto color() const { return this->color_; }
+  auto const& gl_buffers() const { return this->buffers_; }
 };
 
 class context_factory
@@ -218,9 +241,9 @@ class context_factory
   auto static make(L &logger, Args &&... args)
   {
     global::log::clear_gl_errors();
-    T ctx{std::forward<Args>(args)...};
+    T ctx{opengl_buffers{}, std::forward<Args>(args)...};
     LOG_ANY_GL_ERRORS(logger, "constructing context");
-    return std::move(ctx);
+    return ctx;
   }
 
 public:

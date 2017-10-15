@@ -23,7 +23,6 @@ render(L &logger, GLenum const render_mode, GLsizei const element_count, GLvoid 
 
   auto constexpr OFFSET = nullptr;
   glDrawElements(render_mode, element_count, GL_UNSIGNED_INT, OFFSET);
-  std::abort();
 }
 
 template <typename L, typename S>
@@ -57,7 +56,6 @@ log_shape_bytes(L &logger, S const &shape)
   print(ostream, shape.ordering.size(), shape.ordering.data());
 
   LOG_TRACE(ostream.str());
-  std::cerr << ostream.str() << "\n";
 }
 
 template <typename L, typename S>

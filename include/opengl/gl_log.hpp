@@ -54,7 +54,7 @@ log_any_gl_errors(L &logger, std::string const &msg, int const line)
 
 } // ns impl
 
-static boost::optional<std::string>
+static inline boost::optional<std::string>
 get_errors(GLuint const program_id)
 {
   char buffer[2096];
@@ -90,5 +90,5 @@ get_program_log(GLuint const handle)
 
 #define LOG_ANY_GL_ERRORS(logger, msg)                                                             \
   do {                                                                                             \
-    ::opengl::global::log::impl::log_any_gl_errors(logger, msg, __LINE__);                    \
+    ::opengl::global::log::impl::log_any_gl_errors(logger, msg, __LINE__);                         \
   } while (0)
