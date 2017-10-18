@@ -31,6 +31,12 @@ draw_scene(L &logger, P &pipeline, SHAPE const &shape, FN const& fn)
   global::vao_bind(gl_buffers.vao());
   ON_SCOPE_EXIT([]() { global::vao_unbind(); });
 
+  glBindBuffer(GL_ARRAY_BUFFER, gl_buffers.vbo());
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_buffers.ebo());
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
+
   auto &program = pipeline.program_ref();
   program.use();
   program.check_errors(logger);
@@ -152,7 +158,9 @@ void draw_3dshape(Args const &args, P &pipeline, SHAPE const& shape)
 
     LOG_TRACE("before drawing shape ...");
     if constexpr (C::IS_SKYBOX) {
+      opengl::disable_depth_tests();
       render_shape(logger, shape);
+      opengl::enable_depth_tests();
     } else {
       render_shape(logger, shape);
     }
@@ -172,7 +180,7 @@ draw_2dshape(Args const &args, P &pipeline, SHAPE const &shape)
   using C = typename P::CTX;
 
   auto &logger = args.logger;
-  auto const draw_2d_shape_fn = [&]() {
+  auto const draw_2d_shape_fn = [&](auto const& shape) {
     render_shape(logger, shape);
   };
 
@@ -203,9 +211,9 @@ void draw(Args const& args, PIPELINE_SHAPE const& pipeline_shape)
 
 void enable_depth_tests()
 {
-  glCullFace(GL_BACK);
-  glFrontFace(GL_CW);
-  glEnable(GL_CULL_FACE);
+  //glCullFace(GL_BACK);
+  //glFrontFace(GL_CW);
+  //glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
 }
@@ -214,12 +222,12 @@ void disable_depth_tests()
 {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
-  glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
 }
 
 void init()
 {
+  glDisable(GL_CULL_FACE);
   enable_depth_tests();
 }
 
@@ -251,10 +259,10 @@ copy_to_gpu(L &logger, PIPELINE_SHAPE &pipeline_shape)
   ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
   glBindBuffer(GL_ARRAY_BUFFER, gl_buffers.vbo());
-  //ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_buffers.ebo());
-  //ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
   // copy the vertices
   auto const vertices_size = detail::vertices_size_in_bytes(shape);

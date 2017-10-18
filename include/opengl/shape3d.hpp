@@ -1,25 +1,38 @@
 #pragma once
+#include <array>
+#include <iostream>
 #include <opengl/obj.hpp>
 #include <opengl/types.hpp>
 #include <opengl/shape.hpp>
-#include <array>
-#include <iostream>
+#include <stlw/type_macros.hpp>
 
 namespace opengl
 {
 
-template <typename V>
-struct cube : public shape {
-  static auto constexpr NUM_VERTICES = 8;
-  std::array<V, 8> vertices;
+template <typename V, std::size_t N>
+class cube : public shape {
+  std::array<float, N> vertices_;
 
-private:
   friend class cube_factory;
+public:
+  static auto constexpr NUM_VERTICES = 8;
 
-  explicit constexpr cube(GLenum const dm, struct model const& m, std::array<V, 8> &&v)
+  explicit constexpr cube(GLenum const dm, struct model const& m, std::array<float, N> &&v)
       : shape(dm, m)
-      , vertices(std::move(v))
+      , vertices_(MOVE(v))
   {
+  }
+
+  auto const& vertices() const { return this->vertices_; }
+  auto const& indices() const
+  {
+    // clang-format off
+    static constexpr auto INDICES = std::array<GLuint, 14> {
+      3, 2, 6, 7, 4, 2, 0,
+      3, 1, 6, 5, 4, 1, 0
+    };
+    // clang-format on
+    return INDICES;
   }
 };
 
@@ -36,7 +49,6 @@ public:
   {
   }
 
-  //int num_vertices() const { return this->vertex_attributes.size(); }
   auto const& vertices() const { return this->object_data_.vertices; }
   auto const& indices() const { return this->object_data_.indices; }
 };

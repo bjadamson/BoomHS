@@ -6,52 +6,84 @@
 namespace opengl
 {
 
-template<typename V>
-struct triangle : public shape {
-  static auto constexpr NUM_VERTICES = 3;
-  V bottom_left, bottom_right, top_middle;
-private:
-  friend class triangle_factory;
+template<typename V, std::size_t N>
+class triangle : public shape {
+  std::array<float, N> vertices_;
 
-  explicit constexpr triangle(GLenum const dm, struct model const& m, V const& bl, V const& br, V const& tm)
+  explicit constexpr triangle(GLenum const dm, struct model const& m, std::array<float, N> &&v)
     : shape(dm, m)
-    , bottom_left(bl)
-    , bottom_right(br)
-    , top_middle(tm)
+    , vertices_(MOVE(v))
   {}
+
+  friend class triangle_factory;
+public:
+  static auto constexpr NUM_VERTICES = 3;
+  static auto constexpr NUM_FLOATS_PER_VERTEX = V::NUM_FLOATS_PER_VERTEX;
+
+  auto const& vertices() const { return this->vertices_; }
+  auto const& indices() const
+  {
+    static constexpr auto INDICES = std::array<GLuint, NUM_VERTICES>{0, 1, 2};
+    return INDICES;
+  }
 };
 
-template <typename V>
-struct rectangle : public shape {
-  static auto constexpr NUM_VERTICES = 4;
-  V bottom_left, bottom_right, top_right, top_left;
+template <typename V, std::size_t N>
+class rectangle : public shape {
+  std::array<float, N> vertices_;
 
-private:
-  friend class rectangle_factory;
-
-  explicit constexpr rectangle(GLenum const dm, struct model const &m, V const &bl, V const &br, V const &tr,
-                               V const &tl)
+  explicit constexpr rectangle(GLenum const dm, struct model const &m, std::array<float, N> &&v)
       : shape(dm, m)
-      , bottom_left(bl)
-      , bottom_right(br)
-      , top_right(tr)
-      , top_left(tl)
+      , vertices_(MOVE(v))
   {
+  }
+
+  friend class rectangle_factory;
+public:
+  static auto constexpr NUM_VERTICES = 4;
+  static auto constexpr NUM_FLOATS_PER_VERTEX = V::NUM_FLOATS_PER_VERTEX;
+
+  auto const& vertices() const { return this->vertices_; }
+  auto const& indices() const
+  {
+    static constexpr auto INDICES = std::array<GLuint, NUM_VERTICES>{0, 1, 2, 3};
+    return INDICES;
   }
 };
 
 template <typename V>
-struct polygon : public shape {
-  stlw::sized_buffer<V> vertex_attributes;
-  int num_vertices() const { return this->vertex_attributes.length(); }
+class polygon : public shape {
+  int const num_vertices_;
+  stlw::sized_buffer<float> vertices_;
+
+  // TODO: This is super wasteful.. we only need to yield an integer sequence.
+  stlw::sized_buffer<float> indices_;
+
+  explicit polygon(GLenum const dm, struct model const &m, int num_vertices, int const num_floats)
+      : shape(dm, m)
+      , num_vertices_(num_vertices)
+      , vertices_(num_floats)
+      , indices_(num_vertices)
+  {
+    assert((num_floats % num_vertices) == 0);
+
+    // TODO: wasteful
+    FOR(i, num_vertices) {
+      indices_[i] = i;
+    }
+  }
 
   friend struct polygon_factory;
-private:
-  explicit polygon(GLenum const dm, struct model const &m, int const num_vertices)
-      : shape(dm, m)
-      , vertex_attributes(num_vertices)
-  {
-  }
+public:
+  static auto constexpr NUM_FLOATS_PER_VERTEX = V::NUM_FLOATS_PER_VERTEX;
+
+  int num_vertices() const { return this->num_vertices_; }
+  int num_floats_per_vertice() const { return this->vertices_().size() / this->num_vertices(); }
+
+  auto const& vertices() const { return this->vertices_; }
+  auto &vertices() { return this->vertices_; }
+
+  auto const& indices() const { return this->indices_; }
 };
 
 } // ns opengl

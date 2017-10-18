@@ -62,11 +62,8 @@ public:
   auto num_components() const
   {
     auto accumulator{0};
-    auto const count_components = [](auto const &attrib_info) {
-      return attrib_info.num_components;
-    };
     for (auto const &it : this->list_) {
-      accumulator += count_components(it);
+      accumulator += it.num_components;
     }
     return accumulator;
   }

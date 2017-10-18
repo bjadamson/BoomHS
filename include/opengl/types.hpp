@@ -52,11 +52,11 @@ struct uv_d {
 };
 
 // tags
-struct vertex_t {};
-struct normal_t {};
-struct color_t {};
-struct uv_t {};
-struct wireframe_t {};
+struct vertex_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 4; };
+struct normal_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 3; };
+struct color_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 4; };
+struct uv_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 2; };
+struct wireframe_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 0; };
 
 struct model
 {

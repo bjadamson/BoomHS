@@ -105,134 +105,128 @@ public:
       return glm::vec4{random_comp(), random_comp(), random_comp(), 1.0f};
     };
 
-    /*
+    auto &logger = state.logger;
     auto const height = 0.25f, width = 0.39f;
-    auto cube_skybox = sf.d3.skybox.make_cube({opengl::draw_mode::TRIANGLE_STRIP, state.skybox_model,
+    auto cube_skybox = sf.d3.skybox.make_cube(logger, {GL_TRIANGLE_STRIP, state.skybox_model,
         {10.0f, 10.0f, 10.0f}});
 
-    auto cube_terrain = sf.d3.color.make_cube({opengl::draw_mode::TRIANGLE_STRIP, state.terrain_model,
-        {10.0f, 0.1f, 10.0f}}, opengl::LIST_OF_COLORS::SADDLE_BROWN);
-    */
-
     auto args = state.render_args();
-    /*
-    {
-      auto &pipeline = state.pipelines.d3.skybox;
-      auto const& gl_buffers = pipeline.ctx().gl_buffers();
-      opengl::global::vao_bind(gl_buffers.vao());
-      ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+    opengl::draw(args, cube_skybox);
 
-      glBindBuffer(GL_ARRAY_BUFFER, gl_buffers.vbo());
-      ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
-
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_buffers.ebo());
-      ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
-
-      opengl::render::copy_to_gpu(state.logger, cube_skybox);
-    }
-    r.draw(args, cube_skybox);
-
-    auto triangle_color = sf.d2.color.make_triangle({opengl::draw_mode::TRIANGLES, *state.MODELS[9]},
+    auto triangle_color = sf.d2.color.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[9]},
         opengl::LIST_OF_COLORS::PINK);
 
-    auto triangle_list_colors = sf.d2.color.make_triangle({opengl::draw_mode::TRIANGLES, *state.MODELS[10]},
+    auto triangle_list_colors = sf.d2.color.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[10]},
         multicolor_triangle);
 
-    auto triangle_texture = sf.d2.texture_wall.make_triangle({opengl::draw_mode::TRIANGLES, *state.MODELS[11]});
+    auto triangle_texture = sf.d2.texture_wall.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[11]});
 
-    auto triangle_wireframe = sf.d2.wireframe.make_triangle({opengl::draw_mode::LINE_LOOP, *state.MODELS[12]});
+    auto triangle_wireframe = sf.d2.wireframe.make_triangle(logger, {GL_LINE_LOOP, *state.MODELS[12]});
 
     // 3d begin
-    auto cube_texture = sf.d3.texture_cube.make_cube({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[100],
+    auto cube_texture = sf.d3.texture_cube.make_cube(logger, {GL_TRIANGLE_STRIP, *state.MODELS[100],
         {0.15f, 0.15f, 0.15f}});
 
-    auto cube_color = sf.d3.color.make_cube({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[101],
+    auto cube_color = sf.d3.color.make_cube(logger, {GL_TRIANGLE_STRIP, *state.MODELS[101],
         {0.25f, 0.25f, 0.25f}}, opengl::LIST_OF_COLORS::BLUE);
 
-    auto cube_wf = sf.d3.wireframe.make_cube({opengl::draw_mode::LINE_LOOP, *state.MODELS[102],
+    auto cube_wf = sf.d3.wireframe.make_cube(logger, {GL_LINE_LOOP, *state.MODELS[102],
         {0.25f, 0.25f, 0.25f}});
     // 3d end
 
-    auto rectangle_color = sf.d2.color.make_rectangle({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[16]},
+    auto rectangle_color = sf.d2.color.make_rectangle(logger, {GL_TRIANGLES, *state.MODELS[16]},
         opengl::LIST_OF_COLORS::YELLOW);
 
-    auto rectangle_list_colors = sf.d2.color.make_rectangle({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[17],
+    auto rectangle_list_colors = sf.d2.color.make_rectangle(logger, {GL_TRIANGLE_STRIP, *state.MODELS[17],
         height, width}, multicolor_rect);
 
-    auto rectangle_texture = sf.d2.texture_wall.make_rectangle({opengl::draw_mode::TRIANGLE_STRIP, *state.MODELS[18],
+    auto rectangle_texture = sf.d2.texture_wall.make_rectangle(logger, {GL_TRIANGLE_STRIP, *state.MODELS[18],
         height, width});
 
-    auto rectangle_wireframe = sf.d2.wireframe.make_rectangle({opengl::draw_mode::LINE_LOOP, *state.MODELS[19], height,
+    auto rectangle_wireframe = sf.d2.wireframe.make_rectangle(logger, {GL_LINE_LOOP, *state.MODELS[19], height,
         width});
 
-    auto polygon_color = sf.d2.color.make_polygon({opengl::draw_mode::TRIANGLE_FAN, *state.MODELS[20], 5},
+    auto polygon_color = sf.d2.color.make_polygon(logger, {GL_TRIANGLE_FAN, *state.MODELS[20], 5},
         opengl::LIST_OF_COLORS::DARK_ORANGE);
 
-    auto polygon_texture = sf.d2.texture_container.make_polygon({opengl::draw_mode::TRIANGLE_FAN, *state.MODELS[21], 7});
+    auto polygon_texture = sf.d2.texture_container.make_polygon(logger, {GL_TRIANGLE_FAN, *state.MODELS[21], 7});
 
-    auto polygon_wireframe = sf.d2.wireframe.make_polygon({opengl::draw_mode::LINE_LOOP, *state.MODELS[22], 7});
+    auto polygon_wireframe = sf.d2.wireframe.make_polygon(logger, {GL_LINE_LOOP, *state.MODELS[22], 7});
 
-    //auto polygon_list_of_color = d2c.make_polygon(opengl::draw_mode::TRIANGLE_FAN, *zp1, 5,
-        //multicolor_triangle);
+    //auto polygon_list_of_color = sf.d2.color.make_polygon(logger, {GL_TRIANGLE_FAN, *state.MODELS[23], 5},
+        //multicolor_triangle});
 
     // first draw terrain
-    r.draw(args, cube_terrain);
+    auto cube_terrain = sf.d3.color.make_cube(logger, {GL_TRIANGLE_STRIP, state.terrain_model,
+        {10.0f, 0.1f, 10.0f}}, opengl::LIST_OF_COLORS::SADDLE_BROWN);
+    opengl::draw(args, cube_terrain);
 
     // now draw entities
-    r.draw(args, cube_color);
-    r.draw(args, cube_texture);
-    r.draw(args, cube_wf);
+    opengl::draw(args, cube_color);
+    opengl::draw(args, cube_texture);
+    opengl::draw(args, cube_wf);
 
     using COLOR_TRIANGLE = opengl::factories::pipeline_shape_pair<
-      opengl::triangle<opengl::vertex_color_attributes>, opengl::pipeline<opengl::color2d_context>>;
-    */
+      opengl::triangle<opengl::vertex_color_attributes, 3 * 8>, opengl::pipeline<opengl::color2d_context>>;
 
     {
-      //std::array<COLOR_TRIANGLE, 2> const arr = {
-        //sf.d2.color.make_triangle({opengl::draw_mode::TRIANGLES, *state.MODELS[0]}, rc()),
-        //sf.d2.color.make_triangle({opengl::draw_mode::TRIANGLES, *state.MODELS[1]}, rc())
-      //};
-      //r.draw(args, arr);
+      std::array<COLOR_TRIANGLE, 2> const arr = {
+        sf.d2.color.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[0]}, rc()),
+        sf.d2.color.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[1]}, rc())
+      };
+      for (auto const& it : arr) {
+        opengl::draw(args, it);
+      }
     }
     {
-      //opengl::triangle<opengl::vertex_color_attributes> t0{opengl::draw_mode::TRIANGLES, *state.MODELS[2]};
-      //opengl::triangle<opengl::vertex_color_attributes> t1{opengl::draw_mode::TRIANGLES, *state.MODELS[3]};
-      //std::array<opengl::triangle<opengl::vertex_color_attributes>, 2> arr = {
-        //sf.d2.color.make_triangle(MOVE(t0), rc()),
-        //sf.d2.color.make_triangle(MOVE(t1), rc())
-      //};
-      //r.draw(args, MOVE(arr));
+      std::array<COLOR_TRIANGLE, 2> const arr = {
+        sf.d2.color.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[2]}, rc()),
+        sf.d2.color.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[3]}, rc())
+      };
+      for (auto const& it : arr) {
+        opengl::draw(args, it);
+      }
     }
     {
-      //r.draw(args, std::make_tuple(
-            //sf.d2.color.make_triangle({random_mode(), *state.MODELS[4]}, rc())
-            //));
+      auto const t = sf.d2.color.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[4]}, rc());
+      opengl::draw(args, t);
     }
     {
-      //r.draw(args,
-            //sf.d2.color.make_triangle({random_mode(), *state.MODELS[5]}, rc()),
-            //sf.d2.color.make_triangle({random_mode(), *state.MODELS[6]}, rc())
-            //);
+      std::array<COLOR_TRIANGLE, 2> const arr = {
+        sf.d2.color.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[5]}, rc()),
+        sf.d2.color.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[6]}, rc())
+      };
+      for (auto const& it : arr) {
+        opengl::draw(args, it);
+      }
     }
     {
-      //std::vector<opengl::triangle<opengl::vertex_color_attributes>> vec;
-      //vec.emplace_back(sf.d2.color.make_triangle({random_mode(), *state.MODELS[7]}, rc()));
-      //vec.emplace_back(sf.d2.color.make_triangle({random_mode(), *state.MODELS[8]}, rc()));
-
-      //r.draw(args, MOVE(vec));
+      std::array<COLOR_TRIANGLE, 2> const arr = {
+        sf.d2.color.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[7]}, rc()),
+        sf.d2.color.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[8]}, rc())
+      };
+      for (auto const& it : arr) {
+        opengl::draw(args, it);
+      }
     }
 
     // not draw 2d entities (last because we disable depth tests for these draw calls)
-    //r.draw(args, triangle_color, triangle_list_colors, MOVE(polygon_color),
-                                           //rectangle_color, rectangle_list_colors
-                                           // polygon_list_of_color,
-                                           //);
+    opengl::draw(args, polygon_color);
+    //opengl::draw(args, polygon_list_of_color);
+    opengl::draw(args, rectangle_color);
+    opengl::draw(args, rectangle_list_colors);
+    opengl::draw(args, triangle_color);
+
     std::cerr << "start drawing house\n";
     opengl::draw(args, assets.house_uv);
-    //std::cerr << "finished drawing house\n";
-    //r.draw(args, triangle_texture, rectangle_texture);
-    //r.draw(args, MOVE(polygon_texture));
-    //r.draw(args, MOVE(polygon_wireframe), triangle_wireframe, rectangle_wireframe);
+    std::cerr << "finished drawing house\n";
+
+    opengl::draw(args, triangle_texture);
+    opengl::draw(args, rectangle_texture);
+    opengl::draw(args, polygon_texture);
+    opengl::draw(args, polygon_wireframe);
+    opengl::draw(args, triangle_wireframe);
+    opengl::draw(args, rectangle_wireframe);
   }
 };
 

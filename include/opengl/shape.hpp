@@ -26,21 +26,22 @@ public:
   void set_is_in_gpu_memory(bool const v) { this->in_gpu_memory_ = v; }
 };
 
-using vertex_color_attributes     = std::tuple<vertex_d, color_d>;
-using vertex_uv_attributes        = std::tuple<vertex_d, uv_d>;
-using vertex_normal_uv_attributes = std::tuple<vertex_t, normal_t, uv_t>;
-using vertex_attributes_only      = std::tuple<vertex_d>;
+struct vertex_attributes_only {
+  static constexpr auto NUM_FLOATS_PER_VERTEX = vertex_t::NUM_FLOATS_PER_VERTEX;
+};
 
-template<typename T>
-auto constexpr vertex(T const& t) { return std::get<vertex_d>(t); }
+struct vertex_color_attributes {
+  static constexpr auto NUM_FLOATS_PER_VERTEX = vertex_t::NUM_FLOATS_PER_VERTEX + color_t::NUM_FLOATS_PER_VERTEX;
+};
 
-template<typename T>
-auto constexpr color(T const& t) { return std::get<color_d>(t); }
+struct vertex_uv_attributes {
+  static constexpr auto NUM_FLOATS_PER_VERTEX = vertex_t::NUM_FLOATS_PER_VERTEX + uv_t::NUM_FLOATS_PER_VERTEX;
+};
 
-template<typename T>
-auto constexpr normal(T const& t) { return std::get<normal_d>(t); }
-
-template<typename T>
-auto constexpr uv(T const& t) { return std::get<uv_d>(t); }
+struct vertex_normal_uv_attributes {
+  static constexpr auto NUM_FLOATS_PER_VERTEX = vertex_t::NUM_FLOATS_PER_VERTEX
+    + normal_t::NUM_FLOATS_PER_VERTEX
+    + uv_t::NUM_FLOATS_PER_VERTEX;
+};
 
 } // ns opengl

@@ -163,8 +163,6 @@ public:
     auto sf = impl::make_shape_factories(this->lib.pipelines);
     auto house_uv = sf.d3.house.make_mesh(state.logger,
         {GL_TRIANGLES, state.house_model, mesh});
-
-    opengl::copy_to_gpu(state.logger, house_uv);
     game::boomhs::assets<decltype(house_uv)> const assets{house_uv};
 
     auto const game_loop = [&](auto &proxy) {
