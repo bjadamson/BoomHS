@@ -2,6 +2,7 @@
 #include <array>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <opengl/glew.hpp>
 
 namespace opengl
 {
@@ -51,6 +52,8 @@ struct uv_d {
 };
 
 // tags
+struct vertex_t {};
+struct normal_t {};
 struct color_t {};
 struct uv_t {};
 struct wireframe_t {};

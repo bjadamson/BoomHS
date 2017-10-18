@@ -27,12 +27,8 @@ auto make_render_args(L &l, camera const& c, glm::mat4 const& projection)
 class opengl_draw_lib
 {
   friend struct lib_factory;
-  opengl_renderer renderer_;
 private:
-  explicit opengl_draw_lib(struct opengl_renderer &&r)
-    : renderer_(MOVE(r))
-    {
-    }
+  explicit opengl_draw_lib() {}
 
   /*
   template<typename ...Args>
@@ -72,12 +68,12 @@ private:
 public:
   MOVE_CONSTRUCTIBLE_ONLY(opengl_draw_lib);
 
-  template<typename ...Args>
-  void
-  draw_impl(Args const&... args)
-  {
-    this->renderer_.draw(std::forward<Args>(args)...);
-  }
+  //template<typename ...Args>
+  //void
+  ////draw_impl(Args const&... args)
+  //{
+    //opengl::draw(std::forward<Args>(args)...);
+  //}
 
   template<typename Args, typename T>
   void
@@ -85,16 +81,17 @@ public:
   {
       auto &pipeline = pipeline_shape.pipeline;
       auto const& shape = MOVE(pipeline_shape.shape);
-      this->renderer_.draw(args, pipeline, shape);
+      opengl::draw(args, pipeline, shape);
   }
 
-  //template<typename Args, template<class, std::size_t> typename Container, typename T, std::size_t N>
-  //void
-  //draw(Args const& args, Container<T, N> const& arr)
-  //{
-    //auto x = stlw::tuple_from_array(arr);
-    //this->draw_wrappable(args, MOVE(x));
-  //}
+  template<typename Args, template<class, std::size_t> typename Container, typename T, std::size_t N>
+  void
+  draw(Args const& args, Container<T, N> const& arr)
+  {
+    for (auto const& d : arr) {
+      this->draw(args, d);
+    }
+  }
 
   // The last parameter type here ensures that the value passed is similar to a stl container.
   //template<typename Args, typename Container, typename IGNORE= typename Container::value_type>
@@ -114,24 +111,22 @@ public:
 
   void begin()
   {
-    this->renderer_.begin();
+    opengl::begin();
   }
 
   void end()
   {
-    this->renderer_.end();
+    opengl::end();
   }
 };
 
 struct opengl_lib
 {
-  opengl_draw_lib draw_lib;
   opengl_pipelines pipelines;
 
   MOVE_CONSTRUCTIBLE_ONLY(opengl_lib);
-  opengl_lib(opengl_draw_lib && dlib, opengl_pipelines &&p)
-    : draw_lib(MOVE(dlib))
-    , pipelines(MOVE(p))
+  opengl_lib(opengl_pipelines &&p)
+    : pipelines(MOVE(p))
   {
   }
 };
@@ -146,8 +141,7 @@ struct lib_factory
   {
     auto contexts = opengl_contexts_factory::make(logger);
     DO_TRY(auto pipelines, opengl_pipelines_factory::make(logger, MOVE(contexts)));
-    opengl_draw_lib draw_lib{opengl_renderer_factory::make(logger)};
-    return opengl_lib{MOVE(draw_lib), MOVE(pipelines)};
+    return opengl_lib{MOVE(pipelines)};
   }
 };
 

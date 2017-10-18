@@ -2,6 +2,7 @@
 #include <array>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
+#include <opengl/glew.hpp>
 #include <opengl/obj.hpp>
 #include <opengl/types.hpp>
 #include <opengl/shape.hpp>
@@ -13,7 +14,7 @@ namespace opengl
 
 struct triangle_properties
 {
-  draw_mode const draw_mode;
+  GLenum const draw_mode;
   model const &model;
   float const radius = 0.25;
 };
@@ -137,7 +138,7 @@ public:
 
 struct rectangle_properties
 {
-  draw_mode const draw_mode;
+  GLenum const draw_mode;
   model const &model;
   height_width const dimensions = {0.39f, 0.25f};
 };
@@ -277,7 +278,7 @@ public:
 
 struct polygon_properties
 {
-  draw_mode const draw_mode;
+  GLenum const draw_mode;
   model const &model;
   int const num_vertices;
 
@@ -400,7 +401,7 @@ public:
 
 struct mesh_properties
 {
-  draw_mode const draw_mode;
+  GLenum const draw_mode;
   model const &model;
 
   obj const& object_data;
@@ -411,31 +412,7 @@ class mesh_factory
   static auto
   construct_mesh(mesh_properties const mprops)
   {
-    auto const& buffer = mprops.object_data.buffer;
-    std::cerr << "buffer size is '" << std::to_string(buffer.size()) << "'\n";
-    mesh<vertex_normal_uv_attributes> mesh{mprops.draw_mode, mprops.model, mprops.object_data};
-    for (auto i{0u}, j{0u}; i < buffer.size(); j++) {
-      auto const x = buffer[i++];
-      auto const y = buffer[i++];
-      auto const z = buffer[i++];
-      auto const w = buffer[i++];
-
-      auto const xn = buffer[i++];
-      auto const yn = buffer[i++];
-      auto const zn = buffer[i++];
-
-      auto const u = buffer[i++];
-      auto const v = buffer[i++];
-
-      // for now, treat normals as colors
-      vertex_d const vertice{x, y, z, w};
-      normal_d const normal{xn, yn, zn};
-      uv_d const uv{u, v};
-      mesh.vertex_attributes[j] = vertex_normal_uv_attributes{vertice, normal, uv};
-
-      assert(i <= buffer.size());
-    }
-    return mesh;
+    return mesh<vertex_normal_uv_attributes>{mprops.draw_mode, mprops.model, mprops.object_data};
   }
 
 public:
@@ -451,7 +428,7 @@ public:
 
 struct cube_properties
 {
-  draw_mode const draw_mode;
+  GLenum const draw_mode;
   model const &model;
   width_height_length const dimensions;
 };
@@ -618,6 +595,8 @@ struct pipeline_shape_pair
 {
   S shape;
   P &pipeline;
+
+  using PIPE = P;
 };
 
 template<typename S, typename P>
@@ -655,8 +634,8 @@ auto make_pipeline_shape_pair(S &&s, P &p) { return pipeline_shape_pair<S, P>{MO
     auto shape = cf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
     return make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                                 \
   }                                                                                                \
-  template<typename ...Args>                                                                       \
-  auto constexpr make_mesh(mesh_properties const& properties, Args &&... args)                     \
+  template<typename L, typename ...Args>                                                           \
+  auto constexpr make_mesh(L &logger, mesh_properties const& properties, Args &&... args)          \
   {                                                                                                \
     auto mf = mesh_factory{};                                                                      \
     auto shape = mf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \

@@ -13,7 +13,7 @@ struct triangle : public shape {
 private:
   friend class triangle_factory;
 
-  explicit constexpr triangle(enum draw_mode const dm, struct model const& m, V const& bl, V const& br, V const& tm)
+  explicit constexpr triangle(GLenum const dm, struct model const& m, V const& bl, V const& br, V const& tm)
     : shape(dm, m)
     , bottom_left(bl)
     , bottom_right(br)
@@ -29,7 +29,7 @@ struct rectangle : public shape {
 private:
   friend class rectangle_factory;
 
-  explicit constexpr rectangle(enum draw_mode const dm, struct model const &m, V const &bl, V const &br, V const &tr,
+  explicit constexpr rectangle(GLenum const dm, struct model const &m, V const &bl, V const &br, V const &tr,
                                V const &tl)
       : shape(dm, m)
       , bottom_left(bl)
@@ -47,7 +47,7 @@ struct polygon : public shape {
 
   friend struct polygon_factory;
 private:
-  explicit polygon(enum draw_mode const dm, struct model const &m, int const num_vertices)
+  explicit polygon(GLenum const dm, struct model const &m, int const num_vertices)
       : shape(dm, m)
       , vertex_attributes(num_vertices)
   {

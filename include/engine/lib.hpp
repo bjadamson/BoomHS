@@ -1,5 +1,6 @@
 #pragma once
 #include <opengl/lib.hpp>
+#include <opengl/renderer.hpp>
 #include <opengl/factory.hpp>
 
 #include <window/mouse.hpp>
@@ -89,8 +90,6 @@ private:
 public:
   MOVE_DEFAULT(engine);
 
-  void begin() { this->lib.draw_lib.begin(); }
-
   template <typename G, typename S>
   void start(G &&game, S &&state)
   {
@@ -156,25 +155,26 @@ public:
       LOG_INFO(fmt::format("average FPS '{}'", fps));
       ++frames_counted;
     };
-    auto const mls = [&mouse_data](auto &state) {
-      return make_loop_state(state.logger, state.quit, state.camera, state.projection,
-          state.rnum_generator, state.MODELS, state.terrain_model, state.house_model,
-          state.skybox_model, mouse_data);
-    };
     std::cerr << "load_house\n";
-    auto mesh = opengl::load_mesh("assets/house_uv.obj");
+    auto mesh = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl");
     std::cerr << "load_house finish\n";
 
     std::cerr << "making mesh\n";
     auto sf = impl::make_shape_factories(this->lib.pipelines);
-    auto const house_uv = sf.d3.house.make_mesh({opengl::draw_mode::TRIANGLE_STRIP, state.house_model,
-        mesh});
-    std::cerr << "finish making mesh\n";
+    auto house_uv = sf.d3.house.make_mesh(state.logger,
+        {GL_TRIANGLES, state.house_model, mesh});
+
+    opengl::copy_to_gpu(state.logger, house_uv);
     game::boomhs::assets<decltype(house_uv)> const assets{house_uv};
 
     auto const game_loop = [&](auto &proxy) {
       auto const fn = [&]()
       {
+        auto const mls = [&mouse_data](auto &state) {
+          return make_loop_state(state.logger, state.quit, state.camera, state.projection,
+              state.rnum_generator, state.MODELS, state.terrain_model, state.house_model,
+              state.skybox_model, mouse_data);
+        };
         auto loop_state = mls(state);
         this->loop(MOVE(loop_state), game, proxy, assets);
       };
@@ -214,14 +214,16 @@ public:
     LOG_TRACE("rendering.");
 
     auto sf = impl::make_shape_factories(this->lib.pipelines);
-    game.game_loop(state, this->lib.draw_lib, MOVE(sf), assets);
+    game.game_loop(state, MOVE(sf), assets);
     this->end();
     LOG_TRACE("game loop stepping.");
   }
 
+  void begin() { opengl::begin(); }
+
   void end()
   {
-    this->lib.draw_lib.end();
+    opengl::end();
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(this->window_.raw());

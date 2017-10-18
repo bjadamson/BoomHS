@@ -16,7 +16,7 @@ struct cube : public shape {
 private:
   friend class cube_factory;
 
-  explicit constexpr cube(enum draw_mode const dm, struct model const& m, std::array<V, 8> &&v)
+  explicit constexpr cube(GLenum const dm, struct model const& m, std::array<V, 8> &&v)
       : shape(dm, m)
       , vertices(std::move(v))
   {
@@ -24,21 +24,21 @@ private:
 };
 
 template <typename V>
-struct mesh : public shape {
-  obj const& object_data;
-  stlw::sized_buffer<V> vertex_attributes;
+class mesh : public shape {
+  obj const& object_data_;
 
-  int num_vertices() const { return this->vertex_attributes.size(); }
-
-private:
+public:
   friend class mesh_factory;
 
-  explicit constexpr mesh(enum draw_mode const dm, struct model const& m, obj const& object)
+  explicit constexpr mesh(GLenum const dm, struct model const& m, obj const& object)
       : shape(dm, m)
-      , object_data(object)
-      , vertex_attributes(this->object_data.indices.size())
+      , object_data_(object)
   {
   }
+
+  //int num_vertices() const { return this->vertex_attributes.size(); }
+  auto const& vertices() const { return this->object_data_.vertices; }
+  auto const& indices() const { return this->object_data_.indices; }
 };
 
 } // ns opengl
