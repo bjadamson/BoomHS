@@ -38,7 +38,8 @@ load_mesh(char const* objpath, char const* mtlpath)
   std::vector<float> vertices;
   std::vector<uint32_t> indices;
 
-  std::cerr << "vertice count '" << (attrib.vertices.size() / 3) << "'\n";
+  unsigned int const num_vertices = attrib.vertices.size() / 3;
+  std::cerr << "vertice count '" << num_vertices << "'\n";
   std::cerr << "normal count '" << attrib.normals.size() << "'\n";
   std::cerr << "texcoords count '" << attrib.texcoords.size() << "'\n";
   std::cerr << "color count '" << attrib.colors.size() << "'\n";
@@ -111,7 +112,7 @@ load_mesh(char const* objpath, char const* mtlpath)
   std::cerr << "vertices.size() '" << vertices.size() << "'\n";
   std::cerr << "indices.size() '" << indices.size() << "'\n";
   std::cerr << "return obj, parsed\n" << std::endl;
-  return obj{GL_TRIANGLES, MOVE(vertices), MOVE(indices)};
+  return obj{GL_TRIANGLES, num_vertices, MOVE(vertices), MOVE(indices)};
 }
 
 } // ns opengl

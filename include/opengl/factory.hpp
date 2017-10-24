@@ -180,12 +180,27 @@ class rectangle_factory
   {
     auto const height = hw.height;
     auto const width = hw.width;
-    return std::array<float, 16>{
-        m.x - width, m.y - height, m.z, 1.0f, // bottom-left
-        m.x + width, m.y - height, m.z, 1.0f, // bottom-right
-        m.x + width, m.y + height, m.z, 1.0f, // top-right
-        m.x - width, m.y + height, m.z, 1.0f  // top-left
-    };
+
+    auto const bl = stlw::make_array<float>(m.x - width, m.y - height, m.z, 1.0f);
+    auto const br = stlw::make_array<float>(m.x + width, m.y - height, m.z, 1.0f);
+    auto const tr = stlw::make_array<float>(m.x + width, m.y + height, m.z, 1.0f);
+    auto const tl = stlw::make_array<float>(m.x - width, m.y + height, m.z, 1.0f);
+
+#define RECT_VERTICES_0 bl[0], bl[1], bl[2], bl[3]
+#define RECT_VERTICES_1 br[0], br[1], br[2], br[3]
+#define RECT_VERTICES_2 tr[0], tr[1], tr[2], tr[3]
+#define RECT_VERTICES_3 tl[0], tl[1], tl[2], tl[3]
+
+    // Two triangles produce the rectangle.
+    return stlw::make_array<float>(
+        RECT_VERTICES_0,
+        RECT_VERTICES_1,
+        RECT_VERTICES_2,
+
+        RECT_VERTICES_2,
+        RECT_VERTICES_3,
+        RECT_VERTICES_0
+        );
   }
 
   static auto construct(rectangle_properties const& rprops, color_properties const &cprops)
@@ -198,11 +213,15 @@ class rectangle_factory
     auto const& c3 = cprops.top_left;
 
     // clang-format off
+    // 0, 1, 2, 2, 3, 0
     auto arr = stlw::make_array<float>(
-        vertices[0],  vertices[1],  vertices[2],  vertices[3],  c0.r, c0.g, c0.b, c0.a,
-        vertices[4],  vertices[5],  vertices[6],  vertices[7],  c1.r, c1.g, c1.b, c1.a,
-        vertices[8],  vertices[9],  vertices[10], vertices[11], c2.r, c2.g, c2.b, c2.a,
-        vertices[12], vertices[13], vertices[14], vertices[15], c3.r, c3.g, c3.b, c3.a
+        vertices[0], vertices[1], vertices[2],  vertices[3],  c0.r, c0.g, c0.b, c0.a,
+        vertices[4], vertices[5], vertices[6],  vertices[7],  c1.r, c1.g, c1.b, c1.a,
+        vertices[8], vertices[9], vertices[10], vertices[11], c2.r, c2.g, c2.b, c2.a,
+
+        vertices[12], vertices[13], vertices[14], vertices[15], c2.r, c2.g, c2.b, c2.a,
+        vertices[16], vertices[17], vertices[18], vertices[19], c3.r, c3.g, c3.b, c3.a,
+        vertices[20], vertices[21], vertices[22], vertices[23], c0.r, c0.g, c0.b, c0.a
         );
     // clang-format on
 
@@ -214,11 +233,19 @@ class rectangle_factory
     auto const vertices = calculate_vertices(rprops.model.translation, rprops.dimensions);
 
     auto const& uv = props.uv;
+    auto const bl = stlw::make_array<float>(uv[0], uv[1]);
+    auto const br = stlw::make_array<float>(uv[2], uv[3]);
+    auto const tr = stlw::make_array<float>(uv[4], uv[5]);
+    auto const tl = stlw::make_array<float>(uv[6], uv[7]);
+
     auto arr = stlw::make_array<float>(
-        vertices[0], vertices[1], vertices[2], vertices[3], uv[0], uv[1],
-        vertices[4], vertices[5], vertices[6], vertices[7], uv[2], uv[3],
-        vertices[8], vertices[9], vertices[10], vertices[11], uv[4], uv[5],
-        vertices[12], vertices[13], vertices[14], vertices[15], uv[6], uv[7]
+        vertices[0], vertices[1], vertices[2], vertices[3], bl[0], bl[1],
+        vertices[4], vertices[5], vertices[6], vertices[7], br[0], br[1],
+        vertices[8], vertices[9], vertices[10], vertices[11], tr[0], tr[1],
+
+        vertices[12], vertices[13], vertices[14], vertices[15], tr[0], tr[1],
+        vertices[16], vertices[17], vertices[18], vertices[19], tl[0], tl[1],
+        vertices[20], vertices[21], vertices[22], vertices[23], bl[0], bl[1]
         );
     return rectangle<vertex_uv_attributes, arr.size()>{rprops.draw_mode, rprops.model, MOVE(arr)};
   }
@@ -231,7 +258,10 @@ class rectangle_factory
         vertices[0], vertices[1], vertices[2], vertices[3],
         vertices[4], vertices[5], vertices[6], vertices[7],
         vertices[8], vertices[9], vertices[10], vertices[11],
-        vertices[12], vertices[13], vertices[14], vertices[15]
+
+        vertices[12], vertices[13], vertices[14], vertices[15],
+        vertices[16], vertices[17], vertices[18], vertices[19],
+        vertices[20], vertices[21], vertices[22], vertices[23]
         );
     return rectangle<vertex_attributes_only, arr.size()>{rprops.draw_mode, rprops.model, MOVE(arr)};
   }
@@ -328,15 +358,21 @@ class polygon_factory
     float const width = pprops.width;
     auto const num_vertices = pprops.num_vertices;
 
-    auto const E = num_vertices + 1; // num_edges
+    auto const NUM_EDGES = num_vertices + 1;
     auto const t = pprops.model.translation;
 
-    auto const cosfn = [&width, &t, &E](auto const a) {
-      auto const pos = width * static_cast<float>(std::cos(2 * M_PI * a / E));
+    auto const calc_angle = [&](auto const angle) {
+      return 2 * M_PI * angle / NUM_EDGES;
+    };
+
+    auto const cosfn = [&](auto const a) {
+      auto const angle = static_cast<float>(std::cos(calc_angle(a)));
+      auto const pos = width * angle;
       return t.x + pos;
     };
-    auto const sinfn = [&width, &t, &E](auto const a) {
-      auto const pos = width * static_cast<float>(std::sin(2 * M_PI * a / E));
+    auto const sinfn = [&](auto const a) {
+      auto const angle = static_cast<float>(std::sin(calc_angle(a)));
+      auto const pos = width * angle;
       return t.y + pos;
     };
 
@@ -344,16 +380,24 @@ class polygon_factory
     polygon<R> poly{pprops.draw_mode, pprops.model, num_vertices, num_floats};
 
     int vertices_filled{0};
+    std::cerr << "floats_per_vertice '" << floats_per_vertice << "'\n";
+    std::cerr << "num_vertices '" << num_vertices << "'\n";
+    std::cerr << "num_floats '" << num_floats << "'\n";
     for (auto i{0}; i < num_floats;) {
       auto const x = cosfn(i);
       auto const y = sinfn(i);
       auto const z = t.z;
       auto const w = 1.0f;
 
+      std::cerr << "0i: '" << i << "\n";
       poly.vertices()[i++] = x;
+      std::cerr << "1i: '" << i << "\n";
       poly.vertices()[i++] = y;
+      std::cerr << "2i: '" << i << "\n";
       poly.vertices()[i++] = z;
+      std::cerr << "3i: '" << i << "\n";
       poly.vertices()[i++] = w;
+      std::cerr << "4i: '" << i << "\n";
 
       fill_after_positions(poly, i);
       vertices_filled += floats_per_vertice;
@@ -367,14 +411,19 @@ class polygon_factory
     using R = vertex_color_attributes;
 
     auto const fill_color = [&](auto &poly, auto &i) {
+      std::cerr << "fill_color begin i: '" << i << "'\n";
       poly.vertices()[i++] = cprops.colors.r;
+      std::cerr << "fill_color i: '" << i << "'\n";
       poly.vertices()[i++] = cprops.colors.g;
+      std::cerr << "fill_color i: '" << i << "'\n";
       poly.vertices()[i++] = cprops.colors.b;
+      std::cerr << "fill_color i: '" << i << "'\n";
       poly.vertices()[i++] = cprops.colors.a;
+      std::cerr << "fill_color end i: '" << i << "'\n";
     };
 
     // 4 for position, 4 for colors
-    static auto constexpr FLOATS_PER_VERTICE = 8; // TODO: can we read this from somewhere??
+    static auto constexpr FLOATS_PER_VERTICE = 4 + 4; // TODO: can we read this from somewhere??
     return construct_polygon<R>(pprops, FLOATS_PER_VERTICE, fill_color);
   }
 
@@ -386,19 +435,19 @@ class polygon_factory
       poly.vertices()[i++] = 1.0;
     };
     // 4 for position, 2 for uv
-    static auto constexpr FLOATS_PER_VERTICE = 6; // TODO: can we read this from somewhere??
+    static auto constexpr FLOATS_PER_VERTICE = 4 + 2; // TODO: can we read this from somewhere??
     return construct_polygon<R>(pprops, FLOATS_PER_VERTICE, fill_uv);
   }
 
   static auto construct(polygon_properties const pprops, wireframe_properties const &cprops)
   {
     using R = vertex_attributes_only;
-    auto const fill_vertice = [&](auto &poly, auto &i) {
+    auto const no_op = [&](auto &poly, auto &i) {
       // Nothing, wire-frame color gets passed in as a uniform var.
     };
     // 4 for position only
     static auto constexpr FLOATS_PER_VERTICE = 4; // TODO: can we read this from somewhere??
-    return construct_polygon<R>(pprops, FLOATS_PER_VERTICE, fill_vertice);
+    return construct_polygon<R>(pprops, FLOATS_PER_VERTICE, no_op);
   }
 
 public:

@@ -139,7 +139,7 @@ set_attrib_pointer(L &logger, attribute_info const &attrib_info, skip_context &s
   glVertexAttribPointer(
       attribute_index,                             // global index id
       component_count,                             // number of components per attribute
-      attrib_info.type,                            // data-type of the components
+      attribute_type,                              // data-type of the components
       DONT_NORMALIZE_THE_DATA,                     // don't normalize our data
       stride_in_bytes,                             // byte-offset between consecutive vertex attributes
       reinterpret_cast<GLvoid*>(offset_in_bytes)); // offset from beginning of buffer
@@ -169,7 +169,7 @@ auto
 make_vertex_only_vertex_attribute(L &logger, GLint const num_fields_vertex)
 {
   // attribute indexes
-  constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
+  constexpr auto V_INDEX = 0;
 
   using ai = attribute_info;
   attribute_info vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};
@@ -215,8 +215,8 @@ struct va_factory
   make_vertex_color(L &logger) const
   {
     // attribute indexes
-    constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
-    constexpr auto C_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_COLOR;
+    constexpr auto V_INDEX = 0;
+    constexpr auto C_INDEX = 1;
 
     // num fields per attribute
     GLint constexpr num_fields_vertex = 4; // x, y, z, w
@@ -234,8 +234,8 @@ struct va_factory
   make_vertex_uv2d(L &logger) const
   {
     // attribute indexes
-    constexpr auto V_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
-    constexpr auto UV_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_UV;
+    constexpr auto V_INDEX = 0;
+    constexpr auto UV_INDEX = 1;
 
     // num fields per attribute
     GLint constexpr num_fields_vertex = 4; // x, y, z, w
@@ -253,9 +253,9 @@ struct va_factory
   make_vertex_normal_uv3d(L &logger) const
   {
     // attribute indexes
-    constexpr auto POS_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_POSITION;
-    constexpr auto NORMAL_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_NORMAL;
-    constexpr auto UV_INDEX = VERTEX_ATTRIBUTE_INDEX_OF_UV;
+    constexpr auto POS_INDEX = 0;
+    constexpr auto NORMAL_INDEX = 1;
+    constexpr auto UV_INDEX = 2;
 
     // num fields per attribute
     GLint constexpr num_fields_vertex = 4; // x, y, z, w

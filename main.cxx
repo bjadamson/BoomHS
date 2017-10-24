@@ -11,8 +11,6 @@ int
 main(int argc, char *argv[])
 {
   auto logger = stlw::log_factory::make_default_logger("main logger");
-  using L = decltype(logger);
-
   auto const on_error = [&](auto const &error) {
     LOG_ERROR(error);
     return EXIT_FAILURE;

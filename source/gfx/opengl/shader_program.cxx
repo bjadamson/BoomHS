@@ -28,24 +28,18 @@ gl_compile_shader(GLuint const handle, char const *source)
   glCompileShader(handle);
 }
 
+template <typename T>
 stlw::result<compiled_shader, std::string>
-compile_shader(char const *data, GLenum const type)
+compile_shader(T const &data, GLenum const type)
 {
   GLuint const handle = glCreateShader(type);
-  gl_compile_shader(handle, data);
+  gl_compile_shader(handle, data.c_str());
 
   // Check Vertex Shader
   if (true == is_compiled(handle)) {
     return compiled_shader{handle, glDeleteShader};
   }
   return stlw::make_error(global::log::get_shader_log(handle));
-}
-
-template <typename T>
-stlw::result<compiled_shader, std::string>
-compile_shader(T const &data, GLenum const type)
-{
-  return compile_shader(data.c_str(), type);
 }
 
 inline stlw::result<GLuint, std::string>
@@ -74,16 +68,34 @@ link_program(GLuint const program_id)
   return stlw::make_empty();
 }
 
+struct AttributeVariableInfo {
+  std::string variable;
+};
+
+struct VertexShaderInfo {
+  std::string const& filename;
+  std::string const& source;
+
+  std::vector<AttributeVariableInfo> attribute_infos;
+};
+
 stlw::result<GLuint, std::string>
-compile_sources(std::string const &vertex_shader_source, std::string const &fragment_shader_source)
+compile_sources(VertexShaderInfo const &vertex_shader, std::string const &fragment_shader_source)
 {
+  auto const& vertex_shader_source = vertex_shader.source;
   DO_TRY(auto const vertex_shader_id, compile_shader(vertex_shader_source, GL_VERTEX_SHADER));
   DO_TRY(auto const frag_shader_id, compile_shader(fragment_shader_source, GL_FRAGMENT_SHADER));
   DO_TRY(auto const program_id, create_program());
 
-  glBindAttribLocation(program_id, VERTEX_ATTRIBUTE_INDEX_OF_POSITION, attribute_info::A_POSITION);
-  glBindAttribLocation(program_id, VERTEX_ATTRIBUTE_INDEX_OF_COLOR, attribute_info::A_COLOR);
-  glBindAttribLocation(program_id, VERTEX_ATTRIBUTE_INDEX_OF_UV, attribute_info::A_UV);
+  auto const& variable_infos = vertex_shader.attribute_infos;
+  for (auto i = 0; i < variable_infos.size(); ++i) {
+    auto const& vinfo = variable_infos[i];
+    glBindAttribLocation(program_id, i, vinfo.variable.c_str());
+  }
+
+  //glBindAttribLocation(program_id, 0, attribute_info::A_POSITION);
+  //glBindAttribLocation(program_id, 1, attribute_info::A_COLOR);
+  //glBindAttribLocation(program_id, 2, attribute_info::A_UV);
 
   glAttachShader(program_id, vertex_shader_id);
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, vertex_shader_id); });
@@ -93,6 +105,62 @@ compile_sources(std::string const &vertex_shader_source, std::string const &frag
 
   DO_EFFECT(link_program(program_id));
   return program_id;
+}
+
+stlw::result<std::vector<AttributeVariableInfo>, std::string>
+from_vertex_shader(std::string const& filename, std::string const& source)
+{
+  int idx = 0;
+  std::string buffer;
+  auto const make_error = [&](auto const& reason) {
+    auto constexpr PREAMBLE = "Error parsing vertex shader for attribute information. Reason: '";
+    auto constexpr SUFFIX = "'. Shader filename: '%s', line number: '%s', line string: '%s.";
+    auto const error = PREAMBLE + std::string{reason} + SUFFIX;
+    auto const fmt = fmt::sprintf(error, filename, std::to_string(idx), buffer);
+    return stlw::make_error(fmt);
+  };
+
+  std::vector<AttributeVariableInfo> infos;
+  std::istringstream iss(source.c_str());
+  for (auto idx = 0; !std::getline(iss, buffer); ++idx) {
+    auto constexpr IN_PREFIX = "in ";
+    bool const begins_with_in_prefix = buffer.compare(0, ::strlen(IN_PREFIX), IN_PREFIX) == 0;
+    if (!begins_with_in_prefix) {
+      continue;
+    }
+
+    // The characters between the white-space and the semi-colon are the variable name.
+    auto const semicolon_position = buffer.find(";", 0);
+    if (semicolon_position == std::string::npos) {
+        auto constexpr REASON = "No semi-colon found on variable line. ";
+        return make_error(REASON);
+    }
+
+    // The character after the last whitespace before the semi-colon is the first character of the
+    // input variable.
+    auto const last_whitespace_position = buffer.find_last_of(" ", semicolon_position);
+    if (last_whitespace_position == std::string::npos) {
+      auto constexpr REASON = "No white-space found on input variable declaration. "
+        "Unexpected syntax.";
+      return make_error(REASON);
+    }
+
+    auto const start_pos = last_whitespace_position + 1;
+    auto const length = semicolon_position - start_pos;
+    auto variable_name = buffer.substr(start_pos, length);
+
+    AttributeVariableInfo avi{MOVE(variable_name)};
+    infos.emplace_back(MOVE(avi));
+
+    // We don't have to parse whole shader, can stop at out variable declarations.
+    auto constexpr OUT_PREFIX = "out ";
+    bool const begins_with_out_variable = buffer.compare(0, ::strlen(OUT_PREFIX), OUT_PREFIX) == 0;
+    if (begins_with_out_variable) {
+      break;
+    }
+  }
+
+  return infos;
 }
 
 } // ns anonymous
@@ -111,9 +179,14 @@ program_factory::from_files(vertex_shader_filename const v, fragment_shader_file
 
   // Read the Vertex/Fragment Shader code from ther file
   DO_TRY(auto const vertex_shader_source, stlw::read_file(vertex_shader_path));
+  DO_TRY(auto attribute_variable_info, from_vertex_shader(vertex_shader_path, vertex_shader_source));
+
+  VertexShaderInfo const vertex_shader{vertex_shader_path, vertex_shader_source,
+    MOVE(attribute_variable_info)};
+
   DO_TRY(auto const fragment_shader_source, stlw::read_file(fragment_shader_path));
 
-  return compile_sources(vertex_shader_source, fragment_shader_source);
+  return compile_sources(vertex_shader, fragment_shader_source);
 }
 
 } // ns opengl

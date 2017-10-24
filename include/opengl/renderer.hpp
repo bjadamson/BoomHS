@@ -31,6 +31,7 @@ draw_scene(L &logger, P &pipeline, SHAPE const &shape, FN const& fn)
   global::vao_bind(gl_buffers.vao());
   ON_SCOPE_EXIT([]() { global::vao_unbind(); });
 
+  // Buffers need to be bound before we call global::set_vertex_attributes(...).
   glBindBuffer(GL_ARRAY_BUFFER, gl_buffers.vbo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
@@ -71,13 +72,6 @@ indices_size_in_bytes(S const& s)
   return s.indices().size() * sizeof(GLuint);
 }
 
-//template <typename S>
-//constexpr auto
-//vertex_count(S const& s)
-//{
-  //return s.vertices().size() / s.num_floats_per_vertex();
-//}
-
 template <typename S>
 constexpr std::size_t
 vertices_size_in_bytes(S const& s)
@@ -114,6 +108,7 @@ log_shape_bytes(L &logger, S const &shape)
   ostream << "indices(bytes):\n";
 
   print(ostream, shape.indices().size(), shape.indices().data());
+  std::cerr << ostream.str();
 
   LOG_TRACE(ostream.str());
 }
@@ -123,12 +118,13 @@ void
 render_shape(L &logger, S const &shape)
 {
   LOG_TRACE(fmt::sprintf("%-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices"));
-  //LOG_TRACE(fmt::sprintf("%-15d %-15d %-15d\n", vertices_size_in_bytes(shape),
-                            //shape.vertices.size(), vertex_count(shape)));
-
-  auto const fmt = fmt::sprintf("glDrawElements() render_mode '%d', element_count '%d'",
+  LOG_TRACE(fmt::sprintf("%-15d %-15d %-15d\n", vertices_size_in_bytes(shape),
+                            shape.vertices().size(), shape.num_vertices()));
+  auto const fmt = fmt::sprintf("glDrawElements() render_mode '%d', indices_count '%d'",
                                 shape.draw_mode(), shape.indices().size());
-  LOG_TRACE(fmt);
+  //LOG_TRACE(fmt);
+  std::cerr << fmt << "\n";
+  detail::log_shape_bytes(logger, shape);
 
   auto constexpr OFFSET = nullptr;
   glDrawElements(shape.draw_mode(), shape.indices().size(), GL_UNSIGNED_INT, OFFSET);
@@ -177,7 +173,6 @@ void
 draw_2dshape(Args const &args, P &pipeline, SHAPE const &shape)
 {
   using namespace opengl;
-  using C = typename P::CTX;
 
   auto &logger = args.logger;
   auto const draw_2d_shape_fn = [&](auto const& shape) {
@@ -200,6 +195,9 @@ void draw(Args const& args, PIPELINE_SHAPE const& pipeline_shape)
   auto const& shape = pipeline_shape.shape;
   auto &pipeline = pipeline_shape.pipeline;
   auto &logger = args.logger;
+
+  // TODO: figure out why this call is necessary currently ...
+  copy_to_gpu(logger, pipeline_shape);
   if constexpr (C::IS_2D) {
     opengl::disable_depth_tests();
     detail::draw_2dshape(args, pipeline, shape);
@@ -211,9 +209,9 @@ void draw(Args const& args, PIPELINE_SHAPE const& pipeline_shape)
 
 void enable_depth_tests()
 {
-  //glCullFace(GL_BACK);
+  glCullFace(GL_BACK);
   //glFrontFace(GL_CW);
-  //glEnable(GL_CULL_FACE);
+  glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
 }
@@ -222,6 +220,8 @@ void disable_depth_tests()
 {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
+
+  glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
 }
 
@@ -247,10 +247,10 @@ void end() {}
 
 template<typename L, typename PIPELINE_SHAPE>
 void
-copy_to_gpu(L &logger, PIPELINE_SHAPE &pipeline_shape)
+copy_to_gpu(L &logger, PIPELINE_SHAPE const& pipeline_shape)
 {
   auto &shape = pipeline_shape.shape;
-  detail::log_shape_bytes(logger, shape);
+  //detail::log_shape_bytes(logger, shape);
 
   auto &pipeline = pipeline_shape.pipeline;
   auto const& gl_buffers = pipeline.ctx().gl_buffers();
@@ -274,7 +274,7 @@ copy_to_gpu(L &logger, PIPELINE_SHAPE &pipeline_shape)
   auto const& indices_data = shape.indices().data();
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, indices_data, GL_STATIC_DRAW);
 
-  shape.set_is_in_gpu_memory(true);
+  //shape.set_is_in_gpu_memory(true);
 }
 
 } // ns opengl

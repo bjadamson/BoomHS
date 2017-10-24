@@ -1,6 +1,8 @@
 #pragma once
 #include <utility>
 
+#define MOVE std::move
+
 // BEGIN Class-building macros
 #define NO_COPY_ASSIGN(CLASSNAME) CLASSNAME &operator=(CLASSNAME const &) = delete;
 
@@ -89,7 +91,7 @@ public:
   // noexcept movable
   ICMW(ICMW &&other)
   noexcept
-      : t_(std::move(other.t_))
+      : t_(MOVE(other.t_))
       , df_(other.df_)
   {
     other.df_ = nullptr;
@@ -97,7 +99,7 @@ public:
 
   ICMW &operator=(ICMW &&other) noexcept
   {
-    this->t_ = std::move(other.t_);
+    this->t_ = MOVE(other.t_);
     this->df_ = other.df_;
 
     // moved-from doesn't call destroy function
@@ -139,12 +141,11 @@ using ImplicitelyCastableMovableWrapper = impl::ICMW<T, DF>;
 #define ON_SCOPE_EXIT_CONSTRUCT_IN_PLACE(VAR, fn)                                                  \
   ::stlw::impl::DestroyFN<decltype((fn))> const VAR{fn};
 #define ON_SCOPE_EXIT_MOVE_EXPR_INTO_VAR(VAR, expr)                                                \
-  auto &&TEMPORARY##VAR = std::move(expr);                                                         \
-  ON_SCOPE_EXIT_CONSTRUCT_IN_PLACE(VAR, std::move(TEMPORARY##VAR))
+  auto TEMPORARY##VAR = MOVE(expr);                                                                \
+  ON_SCOPE_EXIT_CONSTRUCT_IN_PLACE(VAR, MOVE(TEMPORARY##VAR))
+
 #define ON_SCOPE_EXIT_CONCAT(pre, VAR, expr) ON_SCOPE_EXIT_MOVE_EXPR_INTO_VAR(pre##VAR, (expr))
 #define ON_SCOPE_EXIT_EXPAND(VAR, expr) ON_SCOPE_EXIT_CONCAT(__scopeignoreme__, VAR, expr)
 #define ON_SCOPE_EXIT(expr) ON_SCOPE_EXIT_EXPAND(__COUNTER__, expr)
 
 } // ns stlw
-
-#define MOVE std::move

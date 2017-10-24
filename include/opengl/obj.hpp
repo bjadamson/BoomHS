@@ -9,6 +9,7 @@ struct obj
 {
   GLenum const draw_mode;
 
+  unsigned int num_vertices;
   std::vector<float> vertices;
   std::vector<uint32_t> indices;
 };
