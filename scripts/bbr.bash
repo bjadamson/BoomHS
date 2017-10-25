@@ -5,4 +5,5 @@ source "scripts/common.bash"
 # Allow core dumps
 ulimit -c unlimited
 
+${BUILD}/bin/shader_loader
 ${BINARY}
