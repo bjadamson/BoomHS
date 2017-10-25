@@ -4,16 +4,20 @@
 #include <opengl/types.hpp>
 #include <stlw/algorithm.hpp>
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include <tinyobj/tinyobj.hpp>
+#include <extlibs/tinyobj.hpp>
 
 namespace opengl
 {
 
 obj
+load_mesh(char const* objpath)
+{
+  return load_mesh(objpath, nullptr);
+}
+
+obj
 load_mesh(char const* objpath, char const* mtlpath)
 {
-  std::cerr << "load_mesh obj: '" << objpath << "', mtl: '" << mtlpath << "'\n";
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
   std::vector<tinyobj::material_t> materials;

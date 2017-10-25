@@ -59,7 +59,7 @@ class polygon : public shape {
   stlw::sized_buffer<float> vertices_;
 
   // TODO: This is super wasteful.. we only need to yield an integer sequence.
-  stlw::sized_buffer<float> indices_;
+  stlw::sized_buffer<GLuint> indices_;
 
   explicit polygon(GLenum const dm, struct model const &m, int num_vertices, int const num_floats)
       : shape(dm, m)
@@ -73,22 +73,16 @@ class polygon : public shape {
     FOR(i, num_vertices) {
       indices_[i] = i;
     }
-
-    std::cerr << "indices: \n";
-    FOR(i, num_vertices) {
-      std::cerr << indices_[i] << "\n";
-    }
   }
 
   friend struct polygon_factory;
 public:
   static auto constexpr NUM_FLOATS_PER_VERTEX = V::NUM_FLOATS_PER_VERTEX;
 
-  int num_vertices() const { return this->num_vertices_; }
-  //int num_floats_per_vertice() const { return this->vertices_().size() / this->num_vertices(); }
+  auto num_vertices() const { return this->num_vertices_; }
 
   auto const& vertices() const { return this->vertices_; }
-  auto &vertices() { return this->vertices_; }
+  auto& vertices() { return this->vertices_; }
 
   auto const& indices() const { return this->indices_; }
 };

@@ -156,7 +156,7 @@ public:
       ++frames_counted;
     };
     std::cerr << "load_house\n";
-    auto mesh = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl");
+    auto mesh = opengl::load_mesh("assets/house_uv.obj");//, "assets/house_uv.mtl");
     std::cerr << "load_house finish\n";
 
     std::cerr << "making mesh\n";

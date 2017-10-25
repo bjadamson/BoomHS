@@ -111,7 +111,7 @@ public:
         {10.0f, 10.0f, 10.0f}});
 
     auto args = state.render_args();
-    //opengl::draw(args, cube_skybox);
+    opengl::draw(args, cube_skybox);
 
     auto triangle_color = sf.d2.color.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[9]},
         opengl::LIST_OF_COLORS::PINK);
@@ -140,36 +140,35 @@ public:
     auto rectangle_list_colors = sf.d2.color.make_rectangle(logger, {GL_TRIANGLE_STRIP, *state.MODELS[17],
         height, width}, multicolor_rect);
 
-    //auto rectangle_texture = sf.d2.texture_wall.make_rectangle(logger, {GL_TRIANGLES, *state.MODELS[18],
-        //height, width});
+    auto rectangle_texture = sf.d2.texture_wall.make_rectangle(logger, {GL_TRIANGLES, *state.MODELS[18],
+        height, width});
 
     auto rectangle_wireframe = sf.d2.wireframe.make_rectangle(logger, {GL_LINE_LOOP, *state.MODELS[19], height,
         width});
 
-    auto polygon_color = sf.d2.color.make_polygon(logger, {GL_TRIANGLE_FAN, *state.MODELS[18], 5},
-        opengl::LIST_OF_COLORS::DARK_ORANGE);
+    auto polygon_color = sf.d2.color.make_polygon(logger, {GL_TRIANGLE_FAN, *state.MODELS[20], 17},
+        opengl::LIST_OF_COLORS::RED);
 
-    //auto polygon_texture = sf.d2.texture_container.make_polygon(logger, {GL_TRIANGLE_FAN, *state.MODELS[21], 7});
+    auto polygon_texture = sf.d2.texture_container.make_polygon(logger, {GL_TRIANGLE_FAN, *state.MODELS[21], 7});
 
-    //auto polygon_wireframe = sf.d2.wireframe.make_polygon(logger, {GL_LINE_LOOP, *state.MODELS[22], 7});
+    auto polygon_wireframe = sf.d2.wireframe.make_polygon(logger, {GL_LINE_LOOP, *state.MODELS[22], 7});
 
     //auto polygon_list_of_color = sf.d2.color.make_polygon(logger, {GL_TRIANGLE_FAN, *state.MODELS[23], 5},
         //multicolor_triangle});
 
     // first draw terrain
-    //auto cube_terrain = sf.d3.color.make_cube(logger, {GL_TRIANGLE_STRIP, state.terrain_model,
-        //{10.0f, 0.1f, 10.0f}}, opengl::LIST_OF_COLORS::SADDLE_BROWN);
-    //opengl::draw(args, cube_terrain);
+    auto cube_terrain = sf.d3.color.make_cube(logger, {GL_TRIANGLE_STRIP, state.terrain_model,
+        {2.0f, 0.4f, 2.0f}}, opengl::LIST_OF_COLORS::SADDLE_BROWN);
+    opengl::draw(args, cube_terrain);
 
     // now draw entities
-    //opengl::draw(args, cube_color);
-    //opengl::draw(args, cube_texture);
-    //opengl::draw(args, cube_wf);
+    opengl::draw(args, cube_color);
+    opengl::draw(args, cube_texture);
+    opengl::draw(args, cube_wf);
 
     using COLOR_TRIANGLE = opengl::factories::pipeline_shape_pair<
       opengl::triangle<opengl::vertex_color_attributes, 3 * 8>, opengl::pipeline<opengl::color2d_context>>;
 
-    /*
     {
       std::array<COLOR_TRIANGLE, 2> const arr = {
         sf.d2.color.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[0]}, rc()),
@@ -210,27 +209,24 @@ public:
         opengl::draw(args, it);
       }
     }
-    */
 
     // not draw 2d entities (last because we disable depth tests for these draw calls)
-    std::cerr << "start drawing rectangle\n";
+    std::cerr << "started drawing ...\n";
     opengl::draw(args, polygon_color);
     //opengl::draw(args, polygon_list_of_color);
-    //opengl::draw(args, rectangle_color);
-    std::cerr << "finished drawing rectangle\n";
-    //opengl::draw(args, rectangle_list_colors);
-    //opengl::draw(args, triangle_color);
+    opengl::draw(args, rectangle_color);
+    opengl::draw(args, rectangle_list_colors);
+    opengl::draw(args, triangle_color);
 
-    //std::cerr << "start drawing house\n";
-    //opengl::draw(args, assets.house_uv);
-    //std::cerr << "finished drawing house\n";
+    opengl::draw(args, assets.house_uv);
 
-    //opengl::draw(args, triangle_texture);
-    //opengl::draw(args, rectangle_texture);
-    //opengl::draw(args, polygon_texture);
-    //opengl::draw(args, polygon_wireframe);
-    //opengl::draw(args, triangle_wireframe);
-    //opengl::draw(args, rectangle_wireframe);
+    opengl::draw(args, triangle_texture);
+    opengl::draw(args, rectangle_texture);
+    opengl::draw(args, polygon_texture);
+    opengl::draw(args, polygon_wireframe);
+    opengl::draw(args, triangle_wireframe);
+    opengl::draw(args, rectangle_wireframe);
+    std::cerr << "finished drawing\n";
   }
 };
 

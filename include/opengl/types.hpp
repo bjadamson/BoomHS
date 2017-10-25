@@ -65,19 +65,6 @@ struct model
   glm::vec3 scale = glm::vec3{1.0f, 1.0f, 1.0f};
 };
 
-enum class shape_type
-{
-  TRIANGLE = 0,
-  RECTANGLE,
-  POLYGON,
-
-  // 3d
-  CUBE,
-
-  // uhh
-  INVALID_SHAPE_TYPE
-};
-
 struct height_width
 {
   float const height;

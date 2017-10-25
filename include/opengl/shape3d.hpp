@@ -50,7 +50,7 @@ public:
   {
   }
 
-  auto const num_vertices() const { return this->object_data_.num_vertices; }
+  auto num_vertices() const { return this->object_data_.num_vertices; }
   auto const& vertices() const { return this->object_data_.vertices; }
   auto const& indices() const { return this->object_data_.indices; }
 };

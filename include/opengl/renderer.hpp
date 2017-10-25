@@ -85,7 +85,7 @@ log_shape_bytes(L &logger, S const &shape)
 {
   assert(0 < shape.vertices().size());
 
-  auto const print = [](auto &ostream, auto const length, auto const *data) {
+  auto const print_bytes = [](auto &ostream, auto const length, auto const *data) {
     auto i{0};
     ostream << "[";
     ostream << std::to_string(data[i++]);
@@ -98,19 +98,19 @@ log_shape_bytes(L &logger, S const &shape)
   };
 
   std::stringstream ostream;
-  ostream << fmt::sprintf("vertices count '%d', vertices_size_in_bytes %d\n",
-                          shape.vertices().size(), vertices_size_in_bytes(shape));
-  ostream << "data(bytes):\n";
-  print(ostream, shape.vertices().size(), shape.vertices().data());
+  ostream << fmt::sprintf("vertices: %-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices");
+  ostream << fmt::sprintf("          %-15d %-15d %-15d\n", vertices_size_in_bytes(shape),
+                            shape.vertices().size(), shape.num_vertices());
 
   ostream << fmt::sprintf("indices count '%d', indices_size_in_bytes %d\n", shape.indices().size(),
                           indices_size_in_bytes(shape));
   ostream << "indices(bytes):\n";
 
-  print(ostream, shape.indices().size(), shape.indices().data());
-  std::cerr << ostream.str();
+  print_bytes(ostream, shape.vertices().size(), shape.vertices().data());
+  print_bytes(ostream, shape.indices().size(), shape.indices().data());
 
-  LOG_TRACE(ostream.str());
+  //std::cerr << ostream.str();
+  //LOG_TRACE(ostream.str());
 }
 
 template <typename L, typename S>
@@ -122,9 +122,9 @@ render_shape(L &logger, S const &shape)
                             shape.vertices().size(), shape.num_vertices()));
   auto const fmt = fmt::sprintf("glDrawElements() render_mode '%d', indices_count '%d'",
                                 shape.draw_mode(), shape.indices().size());
+
   //LOG_TRACE(fmt);
-  std::cerr << fmt << "\n";
-  detail::log_shape_bytes(logger, shape);
+  //detail::log_shape_bytes(logger, shape);
 
   auto constexpr OFFSET = nullptr;
   glDrawElements(shape.draw_mode(), shape.indices().size(), GL_UNSIGNED_INT, OFFSET);
@@ -209,9 +209,9 @@ void draw(Args const& args, PIPELINE_SHAPE const& pipeline_shape)
 
 void enable_depth_tests()
 {
-  glCullFace(GL_BACK);
+  //glCullFace(GL_BACK);
   //glFrontFace(GL_CW);
-  glEnable(GL_CULL_FACE);
+  //glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
 }

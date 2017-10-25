@@ -8,4 +8,5 @@
 #else
 static_assert(false, "extlibs/tinyobj.hpp should only be included once per-project.");
 #endif // TINYOBJ_INCLUDE_ONCE_ONLY
+#define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobj/tinyobj.hpp>

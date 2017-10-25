@@ -17,4 +17,7 @@ struct obj
 obj
 load_mesh(char const*, char const*);
 
+obj
+load_mesh(char const*);
+
 } // ns opengl

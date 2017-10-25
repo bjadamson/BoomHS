@@ -358,11 +358,11 @@ class polygon_factory
     float const width = pprops.width;
     auto const num_vertices = pprops.num_vertices;
 
-    auto const NUM_EDGES = num_vertices + 1;
+    auto const num_edges = num_vertices + 1;
     auto const t = pprops.model.translation;
 
-    auto const calc_angle = [&](auto const angle) {
-      return 2 * M_PI * angle / NUM_EDGES;
+    auto const calc_angle = [&num_edges](auto const angle) {
+      return 2 * M_PI * angle / num_edges;
     };
 
     auto const cosfn = [&](auto const a) {
@@ -380,29 +380,35 @@ class polygon_factory
     polygon<R> poly{pprops.draw_mode, pprops.model, num_vertices, num_floats};
 
     int vertices_filled{0};
-    std::cerr << "floats_per_vertice '" << floats_per_vertice << "'\n";
     std::cerr << "num_vertices '" << num_vertices << "'\n";
     std::cerr << "num_floats '" << num_floats << "'\n";
+    std::cerr << "floats_per_vertice '" << floats_per_vertice << "'\n";
+    FOR(i, num_floats) {
+      std::cerr << "poly.vertices()[i] is '" << poly.vertices()[i] << "'\n";
+    }
+    std::cerr << "begin\n";
     for (auto i{0}; i < num_floats;) {
       auto const x = cosfn(i);
       auto const y = sinfn(i);
-      auto const z = t.z;
-      auto const w = 1.0f;
 
-      std::cerr << "0i: '" << i << "\n";
       poly.vertices()[i++] = x;
-      std::cerr << "1i: '" << i << "\n";
       poly.vertices()[i++] = y;
-      std::cerr << "2i: '" << i << "\n";
-      poly.vertices()[i++] = z;
-      std::cerr << "3i: '" << i << "\n";
-      poly.vertices()[i++] = w;
-      std::cerr << "4i: '" << i << "\n";
+      poly.vertices()[i++] = t.z;
+      poly.vertices()[i++] = 1.0;
 
       fill_after_positions(poly, i);
       vertices_filled += floats_per_vertice;
+
+      if (i == num_floats) {
+        std::cerr << "i == num_floats\n";
+      }
+    }
+    FOR(i, num_floats) {
+      std::cerr << "poly.vertices()[" << i << "] is '" << poly.vertices()[i] << "'\n";
     }
     assert(vertices_filled == num_floats);
+    std::cerr << "end\n";
+    std::cerr << "vertices_filled '" << vertices_filled << "'\n";
     return poly;
   }
 
@@ -411,15 +417,10 @@ class polygon_factory
     using R = vertex_color_attributes;
 
     auto const fill_color = [&](auto &poly, auto &i) {
-      std::cerr << "fill_color begin i: '" << i << "'\n";
       poly.vertices()[i++] = cprops.colors.r;
-      std::cerr << "fill_color i: '" << i << "'\n";
       poly.vertices()[i++] = cprops.colors.g;
-      std::cerr << "fill_color i: '" << i << "'\n";
       poly.vertices()[i++] = cprops.colors.b;
-      std::cerr << "fill_color i: '" << i << "'\n";
       poly.vertices()[i++] = cprops.colors.a;
-      std::cerr << "fill_color end i: '" << i << "'\n";
     };
 
     // 4 for position, 4 for colors
@@ -550,7 +551,7 @@ class cube_factory
     auto const l = hw.length;
 
     // clang-format off
-    return stlw::make_array<float>(
+    auto const arr = stlw::make_array<float>(
       -w, -h, l, 1.0f, // front bottom-left
        w, -h, l, 1.0f, // front bottom-right
        w,  h, l, 1.0f, // front top-right
@@ -561,6 +562,27 @@ class cube_factory
        w,  h, -l, 1.0f, // back top-right
       -w,  h, -l, 1.0f  // back top-left
     );
+
+#define CUBE_ROW_0 arr[0], arr[1], arr[2], arr[3]
+#define CUBE_ROW_1 arr[4], arr[5], arr[6], arr[7]
+#define CUBE_ROW_2 arr[8], arr[9], arr[10], arr[11]
+#define CUBE_ROW_3 arr[12], arr[13], arr[14], arr[15]
+#define CUBE_ROW_4 arr[16], arr[17], arr[18], arr[19]
+#define CUBE_ROW_5 arr[20], arr[21], arr[22], arr[23]
+#define CUBE_ROW_6 arr[24], arr[25], arr[26], arr[27]
+#define CUBE_ROW_7 arr[28], arr[29], arr[30], arr[31]
+#define CUBE_ROW_8 arr[32], arr[33], arr[34], arr[35]
+    return stlw::make_array<float>(
+        CUBE_ROW_2,
+        CUBE_ROW_3,
+        CUBE_ROW_6,
+        CUBE_ROW_7,
+
+        CUBE_ROW_1,
+        CUBE_ROW_0,
+        CUBE_ROW_4,
+        CUBE_ROW_5
+        );
     // clang-format on
   }
 
