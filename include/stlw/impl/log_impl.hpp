@@ -129,7 +129,7 @@ make_log_group(P &&a, P &&b, P &&c, P &&d, P &&e)
 
 #define LOG_WRITER_DEFINE_FN(FN_NAME)                                                              \
   template <typename... Params>                                                                    \
-  auto &FN_NAME(Params &&... p)                                                                    \
+  auto &FN_NAME(Params &&... )                                                                     \
   {                                                                                                \
     return *this;                                                                                  \
   }

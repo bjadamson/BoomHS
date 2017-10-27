@@ -123,9 +123,9 @@ public:
     auto const &bl = data[0];
     auto const &br = data[1];
     auto const &tm = data[2];
-    std::array<float, 4> const bottom_left{bl[0], bl[1], bl[2], bl[3]};
-    std::array<float, 4> const bottom_right{br[0], br[1], br[2], br[3]};
-    std::array<float, 4> const top_middle{tm[0], tm[1], tm[2], tm[3]};
+    std::array<float, 4> const bottom_left{{bl[0], bl[1], bl[2], bl[3]}};
+    std::array<float, 4> const bottom_right{{br[0], br[1], br[2], br[3]}};
+    std::array<float, 4> const top_middle{{tm[0], tm[1], tm[2], tm[3]}};
 
     color_properties const p{bottom_left, bottom_right, top_middle};
     return triangle_factory::construct(tprops, p);
@@ -380,14 +380,7 @@ class polygon_factory
     polygon<R> poly{pprops.draw_mode, pprops.model, num_vertices, num_floats};
 
     int vertices_filled{0};
-    std::cerr << "num_vertices '" << num_vertices << "'\n";
-    std::cerr << "num_floats '" << num_floats << "'\n";
-    std::cerr << "floats_per_vertice '" << floats_per_vertice << "'\n";
-    FOR(i, num_floats) {
-      std::cerr << "poly.vertices()[i] is '" << poly.vertices()[i] << "'\n";
-    }
-    std::cerr << "begin\n";
-    for (auto i{0}; i < num_floats;) {
+    for (auto i = 0u; i < num_floats;) {
       auto const x = cosfn(i);
       auto const y = sinfn(i);
 
@@ -398,17 +391,8 @@ class polygon_factory
 
       fill_after_positions(poly, i);
       vertices_filled += floats_per_vertice;
-
-      if (i == num_floats) {
-        std::cerr << "i == num_floats\n";
-      }
-    }
-    FOR(i, num_floats) {
-      std::cerr << "poly.vertices()[" << i << "] is '" << poly.vertices()[i] << "'\n";
     }
     assert(vertices_filled == num_floats);
-    std::cerr << "end\n";
-    std::cerr << "vertices_filled '" << vertices_filled << "'\n";
     return poly;
   }
 

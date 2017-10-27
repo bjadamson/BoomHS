@@ -27,17 +27,6 @@ draw_scene(L &logger, P &pipeline, SHAPE const &shape, FN const& fn)
   using namespace opengl;
   using C = typename P::CTX;
 
-  auto const& gl_buffers = pipeline.ctx().gl_buffers();
-  global::vao_bind(gl_buffers.vao());
-  ON_SCOPE_EXIT([]() { global::vao_unbind(); });
-
-  // Buffers need to be bound before we call global::set_vertex_attributes(...).
-  glBindBuffer(GL_ARRAY_BUFFER, gl_buffers.vbo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_buffers.ebo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
-
   auto &program = pipeline.program_ref();
   program.use();
   program.check_errors(logger);
@@ -47,6 +36,16 @@ draw_scene(L &logger, P &pipeline, SHAPE const &shape, FN const& fn)
     program.set_uniform_array_4fv(logger, "u_color", ctx.color());
     program.check_errors(logger);
   }
+
+  global::vao_bind(pipeline.ctx().vao());
+  //ON_SCOPE_EXIT([]() { global::vao_unbind(); });
+
+  // Buffers need to be bound before we call global::set_vertex_attributes(...).
+  glBindBuffer(GL_ARRAY_BUFFER, shape.vbo());
+  //ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shape.ebo());
+  //ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
   // Instruct the vertex-processor to enable the vertex attributes for this context.
   global::set_vertex_attributes(logger, pipeline.va());
@@ -196,8 +195,6 @@ void draw(Args const& args, PIPELINE_SHAPE const& pipeline_shape)
   auto &pipeline = pipeline_shape.pipeline;
   auto &logger = args.logger;
 
-  // TODO: figure out why this call is necessary currently ...
-  copy_to_gpu(logger, pipeline_shape);
   if constexpr (C::IS_2D) {
     opengl::disable_depth_tests();
     detail::draw_2dshape(args, pipeline, shape);
@@ -253,16 +250,15 @@ copy_to_gpu(L &logger, PIPELINE_SHAPE const& pipeline_shape)
   //detail::log_shape_bytes(logger, shape);
 
   auto &pipeline = pipeline_shape.pipeline;
-  auto const& gl_buffers = pipeline.ctx().gl_buffers();
 
-  opengl::global::vao_bind(gl_buffers.vao());
-  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+  opengl::global::vao_bind(pipeline.ctx().vao());
+  //ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
-  glBindBuffer(GL_ARRAY_BUFFER, gl_buffers.vbo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+  glBindBuffer(GL_ARRAY_BUFFER, shape.vbo());
+  //ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_buffers.ebo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shape.ebo());
+  //ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
   // copy the vertices
   auto const vertices_size = detail::vertices_size_in_bytes(shape);

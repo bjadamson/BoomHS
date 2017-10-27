@@ -23,15 +23,15 @@ public:
   {
   }
 
-  auto const num_vertices() const { return NUM_VERTICES; }
+  auto num_vertices() const { return NUM_VERTICES; }
   auto const& vertices() const { return this->vertices_; }
   auto const& indices() const
   {
     // clang-format off
-    static constexpr auto INDICES = std::array<GLuint, 14> {
+    static constexpr std::array<GLuint, 14> INDICES = {{
       3, 2, 6, 7, 4, 2, 0,
       3, 1, 6, 5, 4, 1, 0
-    };
+    }};
     // clang-format on
     return INDICES;
   }

@@ -20,11 +20,11 @@ public:
   static auto constexpr NUM_VERTICES = 3;
   static auto constexpr NUM_FLOATS_PER_VERTEX = V::NUM_FLOATS_PER_VERTEX;
 
-  auto const num_vertices() const { return NUM_VERTICES; }
+  auto num_vertices() const { return NUM_VERTICES; }
   auto const& vertices() const { return this->vertices_; }
   auto const& indices() const
   {
-    static constexpr auto INDICES = std::array<GLuint, NUM_VERTICES>{0, 1, 2};
+    static constexpr std::array<GLuint, NUM_VERTICES> INDICES = {{0, 1, 2}};
     return INDICES;
   }
 };
@@ -44,11 +44,11 @@ public:
   static auto constexpr NUM_VERTICES = 6;
   static auto constexpr NUM_FLOATS_PER_VERTEX = V::NUM_FLOATS_PER_VERTEX;
 
-  auto const num_vertices() const { return NUM_VERTICES; }
+  auto num_vertices() const { return NUM_VERTICES; }
   auto const& vertices() const { return this->vertices_; }
   auto const& indices() const
   {
-    static constexpr auto INDICES = std::array<GLuint, NUM_VERTICES>{0, 1, 2, 3, 4, 5};
+    static constexpr std::array<GLuint, NUM_VERTICES> INDICES = {{0, 1, 2, 3, 4, 5}};
     return INDICES;
   }
 };
@@ -75,7 +75,7 @@ class polygon : public shape {
     }
   }
 
-  friend struct polygon_factory;
+  friend class polygon_factory;
 public:
   static auto constexpr NUM_FLOATS_PER_VERTEX = V::NUM_FLOATS_PER_VERTEX;
 

@@ -53,7 +53,7 @@ load_mesh(char const* objpath, char const* mtlpath)
     // Loop over faces(polygon)
     size_t index_offset = 0;
     FOR(f, shapes[s].mesh.num_face_vertices.size()) {
-      int const fv = shapes[s].mesh.num_face_vertices[f];
+      auto const fv = shapes[s].mesh.num_face_vertices[f];
 
       // Loop over vertices in the face.
       FOR(vi, fv) {

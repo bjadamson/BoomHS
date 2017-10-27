@@ -88,7 +88,7 @@ compile_sources(VertexShaderInfo const &vertex_shader, std::string const &fragme
   DO_TRY(auto const program_id, create_program());
 
   auto const& variable_infos = vertex_shader.attribute_infos;
-  for (auto i = 0; i < variable_infos.size(); ++i) {
+  FOR(i, variable_infos.size()) {
     auto const& vinfo = variable_infos[i];
     glBindAttribLocation(program_id, i, vinfo.variable.c_str());
   }

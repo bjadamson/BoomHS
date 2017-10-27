@@ -90,7 +90,7 @@ make_vertex_array(L &logger, Attributes &&... attributes)
   LOG_TRACE(fmt::sprintf("Constructing vertex array from '%d' attributes.", NUM_ATTRIBUTES));
 
   {
-    int max_attribs = 0;
+    auto max_attribs = 0;
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &max_attribs);
 
     auto const fmt = fmt::sprintf(

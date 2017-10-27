@@ -11,76 +11,68 @@
 namespace opengl
 {
 
-class opengl_buffers
-{
-  GLuint vao_ = 0, vbo_ = 0, ebo_ = 0;
-  static auto constexpr NUM_BUFFERS = 1;
+class opengl_vao {
+  GLuint vao_ = 0;
 
-  explicit opengl_buffers()
+  static constexpr auto NUM_BUFFERS = 1;
+
+  explicit opengl_vao()
   {
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
-    glGenBuffers(NUM_BUFFERS, &this->vbo_);
-    glGenBuffers(NUM_BUFFERS, &this->ebo_);
   }
 
-  NO_COPY(opengl_buffers);
-  NO_MOVE_ASSIGN(opengl_buffers);
 public:
-  friend struct context_factory;
-  ~opengl_buffers()
+  friend class context_factory;
+  NO_COPY(opengl_vao);
+  NO_MOVE_ASSIGN(opengl_vao);
+
+  ~opengl_vao()
   {
-    glDeleteBuffers(NUM_BUFFERS, &this->ebo_);
-    glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
     glDeleteVertexArrays(NUM_BUFFERS, &this->vao_);
   }
 
   // move-construction OK.
-  opengl_buffers(opengl_buffers &&other)
+  opengl_vao(opengl_vao &&other)
       : vao_(other.vao_)
-      , vbo_(other.vbo_)
-      , ebo_(other.ebo_)
   {
     other.vao_ = 0;
-    other.vbo_ = 0;
-    other.ebo_ = 0;
   }
 
-  inline auto vao() const { return this->vao_; }
-  inline auto vbo() const { return this->vbo_; }
-  inline auto ebo() const { return this->ebo_; }
+  inline auto gl_raw_value() const { return this->vao_; }
 };
+
 
 class color2d_context
 {
-  opengl_buffers buffers_;
+  opengl_vao vao_;
 
-  explicit color2d_context(opengl_buffers &&b)
-    : buffers_(MOVE(b))
+  explicit color2d_context(opengl_vao &&b)
+    : vao_(MOVE(b))
   {
   }
 public:
+  friend class context_factory;
+  MOVE_CONSTRUCTIBLE_ONLY(color2d_context);
+
   static bool constexpr IS_2D = true;
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = false;
 
-  friend struct context_factory;
-  MOVE_CONSTRUCTIBLE_ONLY(color2d_context);
-
-  auto const& gl_buffers() const { return this->buffers_; }
+  auto const& vao() const { return this->vao_; }
 };
 
 class color3d_context
 {
-  opengl_buffers buffers_;
+  opengl_vao vao_;
 
-  explicit color3d_context(opengl_buffers &&b)
-    : buffers_(MOVE(b))
+  explicit color3d_context(opengl_vao &&b)
+    : vao_(MOVE(b))
   {
   }
 
 public:
-  friend struct context_factory;
+  friend class context_factory;
   MOVE_CONSTRUCTIBLE_ONLY(color3d_context);
 
   static bool constexpr IS_2D = false;
@@ -88,22 +80,22 @@ public:
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = false;
 
-  auto const& gl_buffers() const { return this->buffers_; }
+  auto const& vao() const { return this->vao_; }
 };
 
 class texture3d_context
 {
-  opengl_buffers buffers_;
+  opengl_vao vao_;
   texture_info texture_info_;
 
-  explicit texture3d_context(opengl_buffers &&b, texture_info const t)
-      : buffers_(MOVE(b))
+  explicit texture3d_context(opengl_vao &&b, texture_info const t)
+      : vao_(MOVE(b))
       , texture_info_(t)
   {
   }
 
 public:
-  friend struct context_factory;
+  friend class context_factory;
   MOVE_CONSTRUCTIBLE_ONLY(texture3d_context);
 
   static bool constexpr IS_2D = false;
@@ -111,22 +103,22 @@ public:
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = true;
 
-  auto const& gl_buffers() const { return this->buffers_; }
+  auto const& vao() const { return this->vao_; }
   auto texture() const { return this->texture_info_; }
 };
 
 class texture_3dcube_context
 {
-  opengl_buffers buffers_;
+  opengl_vao vao_;
   texture_info texture_info_;
-  explicit texture_3dcube_context(opengl_buffers &&b, texture_info const t)
-      : buffers_(MOVE(b))
+  explicit texture_3dcube_context(opengl_vao &&b, texture_info const t)
+      : vao_(MOVE(b))
       , texture_info_(t)
   {
   }
 
 public:
-  friend struct context_factory;
+  friend class context_factory;
   MOVE_CONSTRUCTIBLE_ONLY(texture_3dcube_context);
 
   static bool constexpr IS_2D = false;
@@ -134,23 +126,23 @@ public:
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = true;
 
-  auto const& gl_buffers() const { return this->buffers_; }
+  auto const& vao() const { return this->vao_; }
   auto texture() const { return this->texture_info_; }
 };
 
 class skybox_context
 {
-  opengl_buffers buffers_;
+  opengl_vao vao_;
   texture_info texture_info_;
 
-  explicit skybox_context(opengl_buffers &&b, texture_info const t)
-      : buffers_(MOVE(b))
+  explicit skybox_context(opengl_vao &&b, texture_info const t)
+      : vao_(MOVE(b))
       , texture_info_(t)
   {
   }
 
 public:
-  friend struct context_factory;
+  friend class context_factory;
   MOVE_CONSTRUCTIBLE_ONLY(skybox_context);
 
   static bool constexpr IS_2D = false;
@@ -158,22 +150,22 @@ public:
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = true;
 
-  auto const& gl_buffers() const { return this->buffers_; }
+  auto const& vao() const { return this->vao_; }
   auto texture() const { return this->texture_info_; }
 };
 
 class texture2d_context
 {
-  opengl_buffers buffers_;
+  opengl_vao vao_;
   texture_info texture_info_;
-  explicit texture2d_context(opengl_buffers &&b, texture_info const t)
-      : buffers_(MOVE(b))
+  explicit texture2d_context(opengl_vao &&b, texture_info const t)
+      : vao_(MOVE(b))
       , texture_info_(t)
   {
   }
 
 public:
-  friend struct context_factory;
+  friend class context_factory;
   MOVE_CONSTRUCTIBLE_ONLY(texture2d_context);
 
   static bool constexpr IS_2D = true;
@@ -181,23 +173,23 @@ public:
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = true;
 
-  auto const& gl_buffers() const { return this->buffers_; }
+  auto const& vao() const { return this->vao_; }
   auto texture() const { return this->texture_info_; }
 };
 
 class wireframe2d_context
 {
-  opengl_buffers buffers_;
+  opengl_vao vao_;
   std::array<float, 4> color_;
 
-  explicit wireframe2d_context(opengl_buffers &&b, std::array<float, 4> const &color)
-      : buffers_(MOVE(b))
+  explicit wireframe2d_context(opengl_vao &&b, std::array<float, 4> const &color)
+      : vao_(MOVE(b))
       , color_(color)
   {
   }
 
 public:
-  friend struct context_factory;
+  friend class context_factory;
   MOVE_CONSTRUCTIBLE_ONLY(wireframe2d_context);
 
   static bool constexpr IS_2D = true;
@@ -206,22 +198,22 @@ public:
   static bool constexpr HAS_TEXTURE = false;
 
   inline auto color() const { return this->color_; }
-  auto const& gl_buffers() const { return this->buffers_; }
+  auto const& vao() const { return this->vao_; }
 };
 
 class wireframe3d_context
 {
-  opengl_buffers buffers_;
+  opengl_vao vao_;
   std::array<float, 4> color_;
 
-  explicit wireframe3d_context(opengl_buffers &&b, std::array<float, 4> const &color)
-      : buffers_(MOVE(b))
+  explicit wireframe3d_context(opengl_vao &&b, std::array<float, 4> const &color)
+      : vao_(MOVE(b))
       , color_(color)
   {
   }
 
 public:
-  friend struct context_factory;
+  friend class context_factory;
   MOVE_CONSTRUCTIBLE_ONLY(wireframe3d_context);
 
   static bool constexpr IS_2D = false;
@@ -230,7 +222,7 @@ public:
   static bool constexpr HAS_TEXTURE = false;
 
   inline auto color() const { return this->color_; }
-  auto const& gl_buffers() const { return this->buffers_; }
+  auto const& vao() const { return this->vao_; }
 };
 
 class context_factory
@@ -241,7 +233,7 @@ class context_factory
   auto static make(L &logger, Args &&... args)
   {
     global::log::clear_gl_errors();
-    T ctx{opengl_buffers{}, std::forward<Args>(args)...};
+    T ctx{opengl_vao{}, std::forward<Args>(args)...};
     LOG_ANY_GL_ERRORS(logger, "constructing context");
     return ctx;
   }

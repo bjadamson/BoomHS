@@ -46,7 +46,6 @@ struct io_system {
     float constexpr ANGLE = 60.0f;
 
     auto &camera = state.camera;
-    auto &projection = state.projection;
     auto const sf = [](float const f) { return (f > 1.0f) ? (1.0f + f) : (1.0f - f); };
 
     switch (event.type) {

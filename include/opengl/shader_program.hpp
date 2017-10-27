@@ -142,7 +142,7 @@ class shader_program
     p.program_ = 0;
   }
 
-  friend class shader_program_factory;
+  friend struct shader_program_factory;
   NO_COPY(shader_program);
   NO_MOVE_ASSIGN(shader_program);
 public:

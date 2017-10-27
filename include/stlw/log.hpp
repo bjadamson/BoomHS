@@ -80,7 +80,7 @@ class log_factory
   }
 
 public:
-  static auto make_default_logger(char const *name)
+  static auto make_default_logger(char const *)
   {
     // 1. Construct an instance of the default log group.
     // 2. Construct an instance of a logger that writes all log levels to a shared file.

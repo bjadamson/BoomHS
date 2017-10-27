@@ -4,7 +4,7 @@
 #include <utility>
 #include <stlw/tuple.hpp>
 
-#define FOR(q,n) for(int q=0;q<n;++q)
+#define FOR(q,n) for(auto q=0u;q<n;++q)
 
 namespace stlw
 {

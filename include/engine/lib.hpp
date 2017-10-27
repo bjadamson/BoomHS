@@ -127,7 +127,7 @@ public:
     auto randompos_tags = st::randompos_system;
 
     auto const init_system = [&logger](auto &system, auto &) { system.init(logger); };
-    auto const init = [&init_system](auto &system) { sea::t(system).for_subtasks(init_system); };
+    [&init_system](auto &system) { sea::t(system).for_subtasks(init_system); };
 
     //auto game_systems = game.ecst_systems();//MOVE(io_tags), MOVE(randompos_tags));
     //stlw::for_each(game_systems, init);
