@@ -331,7 +331,7 @@ struct polygon_properties
 {
   GLenum const draw_mode;
   model const &model;
-  int const num_vertices;
+  unsigned int const num_vertices;
 
   float const width = 0.25f;
 };
@@ -352,7 +352,7 @@ class polygon_factory
 
   template<typename R, typename FN>
   static auto
-  construct_polygon(polygon_properties const pprops, int const floats_per_vertice,
+  construct_polygon(polygon_properties const pprops, unsigned int const floats_per_vertice,
       FN const& fill_after_positions)
   {
     float const width = pprops.width;
@@ -379,7 +379,7 @@ class polygon_factory
     auto const num_floats = num_vertices * floats_per_vertice;
     polygon<R> poly{pprops.draw_mode, pprops.model, num_vertices, num_floats};
 
-    int vertices_filled{0};
+    auto vertices_filled = 0u;
     for (auto i = 0u; i < num_floats;) {
       auto const x = cosfn(i);
       auto const y = sinfn(i);

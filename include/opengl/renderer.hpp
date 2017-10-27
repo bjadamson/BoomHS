@@ -37,10 +37,10 @@ draw_scene(L &logger, P &pipeline, SHAPE const &shape, FN const& fn)
     program.check_errors(logger);
   }
 
+  // Buffers need to be bound before we call global::set_vertex_attributes(...).
   global::vao_bind(pipeline.ctx().vao());
   //ON_SCOPE_EXIT([]() { global::vao_unbind(); });
 
-  // Buffers need to be bound before we call global::set_vertex_attributes(...).
   glBindBuffer(GL_ARRAY_BUFFER, shape.vbo());
   //ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
@@ -85,7 +85,7 @@ log_shape_bytes(L &logger, S const &shape)
   assert(0 < shape.vertices().size());
 
   auto const print_bytes = [](auto &ostream, auto const length, auto const *data) {
-    auto i{0};
+    auto i = 0u;
     ostream << "[";
     ostream << std::to_string(data[i++]);
 
@@ -244,21 +244,21 @@ void end() {}
 
 template<typename L, typename PIPELINE_SHAPE>
 void
-copy_to_gpu(L &logger, PIPELINE_SHAPE const& pipeline_shape)
+copy_to_gpu(L &logger, PIPELINE_SHAPE &pipeline_shape)
 {
   auto &shape = pipeline_shape.shape;
-  //detail::log_shape_bytes(logger, shape);
+  detail::log_shape_bytes(logger, shape);
 
   auto &pipeline = pipeline_shape.pipeline;
 
   opengl::global::vao_bind(pipeline.ctx().vao());
-  //ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
   glBindBuffer(GL_ARRAY_BUFFER, shape.vbo());
-  //ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shape.ebo());
-  //ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
   // copy the vertices
   auto const vertices_size = detail::vertices_size_in_bytes(shape);
@@ -270,7 +270,7 @@ copy_to_gpu(L &logger, PIPELINE_SHAPE const& pipeline_shape)
   auto const& indices_data = shape.indices().data();
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, indices_data, GL_STATIC_DRAW);
 
-  //shape.set_is_in_gpu_memory(true);
+  shape.set_is_in_gpu_memory(true);
 }
 
 } // ns opengl

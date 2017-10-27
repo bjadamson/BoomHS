@@ -17,7 +17,7 @@ class triangle : public shape {
 
   friend class triangle_factory;
 public:
-  static auto constexpr NUM_VERTICES = 3;
+  static auto constexpr NUM_VERTICES = 3u;
   static auto constexpr NUM_FLOATS_PER_VERTEX = V::NUM_FLOATS_PER_VERTEX;
 
   auto num_vertices() const { return NUM_VERTICES; }
@@ -41,7 +41,7 @@ class rectangle : public shape {
 
   friend class rectangle_factory;
 public:
-  static auto constexpr NUM_VERTICES = 6;
+  static auto constexpr NUM_VERTICES = 6u;
   static auto constexpr NUM_FLOATS_PER_VERTEX = V::NUM_FLOATS_PER_VERTEX;
 
   auto num_vertices() const { return NUM_VERTICES; }
@@ -55,13 +55,13 @@ public:
 
 template <typename V>
 class polygon : public shape {
-  int const num_vertices_;
+  unsigned int const num_vertices_;
   stlw::sized_buffer<float> vertices_;
 
   // TODO: This is super wasteful.. we only need to yield an integer sequence.
   stlw::sized_buffer<GLuint> indices_;
 
-  explicit polygon(GLenum const dm, struct model const &m, int num_vertices, int const num_floats)
+  explicit polygon(GLenum const dm, struct model const &m, unsigned int num_vertices, unsigned int const num_floats)
       : shape(dm, m)
       , num_vertices_(num_vertices)
       , vertices_(num_floats)

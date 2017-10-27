@@ -9,13 +9,13 @@ namespace opengl
 {
 
 struct attribute_info {
-  GLint global_index;
+  GLint index;
   GLint num_components;
   GLenum type;
   char const *name;
 
   explicit constexpr attribute_info(GLint const i, GLint const nc, GLenum const ty, char const *n)
-      : global_index(i)
+      : index(i)
       , num_components(nc)
       , type(ty)
       , name(n)
@@ -32,42 +32,42 @@ struct attribute_info {
 };
 
 template <std::size_t N>
-class attribute_list
+class attribute_info_array
 {
-  std::array<attribute_info, N> list_;
+  std::array<attribute_info, N> attributes_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(attribute_list);
-  attribute_list(std::array<attribute_info, N> &&attributes)
-      : list_{std::move(attributes)}
+  MOVE_CONSTRUCTIBLE_ONLY(attribute_info_array);
+  attribute_info_array(std::array<attribute_info, N> &&attributes)
+      : attributes_{MOVE(attributes)}
   {
   }
 
-  BEGIN_END_FORWARD_FNS(this->list_);
+  BEGIN_END_FORWARD_FNS(this->attributes_);
 };
 
 class vertex_attribute
 {
-  stlw::sized_buffer<attribute_info> list_;
+  stlw::sized_buffer<attribute_info> attributes_;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(vertex_attribute);
 
   template <std::size_t N>
-  vertex_attribute(attribute_list<N> &&list)
-      : list_(list.begin(), list.end())
+  vertex_attribute(attribute_info_array<N> &&arr)
+      : attributes_(arr.begin(), arr.end())
   {
   }
 
   auto num_components() const
   {
     auto accumulator{0};
-    for (auto const &it : this->list_) {
+    for (auto const &it : this->attributes_) {
       accumulator += it.num_components;
     }
     return accumulator;
   }
-  BEGIN_END_FORWARD_FNS(this->list_);
+  BEGIN_END_FORWARD_FNS(this->attributes_);
 };
 
 namespace impl
@@ -75,18 +75,18 @@ namespace impl
 
 template <typename... Attributes>
 auto
-make_attribute_list(Attributes &&... attributes)
+make_attribute_info_array(Attributes &&... attributes)
 {
   static constexpr auto N = sizeof...(attributes);
   auto arr = stlw::make_array<attribute_info, N>(std::forward<Attributes>(attributes)...);
-  return attribute_list<N>{std::move(arr)};
+  return attribute_info_array<N>{std::move(arr)};
 }
 
 template <typename L, typename... Attributes>
 auto
 make_vertex_array(L &logger, Attributes &&... attributes)
 {
-  auto constexpr NUM_ATTRIBUTES = sizeof...(attributes);
+  int constexpr NUM_ATTRIBUTES = sizeof...(attributes);
   LOG_TRACE(fmt::sprintf("Constructing vertex array from '%d' attributes.", NUM_ATTRIBUTES));
 
   {
@@ -106,7 +106,7 @@ make_vertex_array(L &logger, Attributes &&... attributes)
     }
   }
 
-  auto list = make_attribute_list(std::forward<Attributes>(attributes)...);
+  auto list = make_attribute_info_array(std::forward<Attributes>(attributes)...);
   return vertex_attribute{std::move(list)};
 }
 
@@ -125,7 +125,7 @@ void
 set_attrib_pointer(L &logger, attribute_info const &attrib_info, skip_context &sc)
 {
   // enable vertex attibute arrays
-  auto const attribute_index = attrib_info.global_index;
+  auto const attribute_index = attrib_info.index;
   auto const attribute_type = attrib_info.type;
   glEnableVertexAttribArray(attribute_index);
 
@@ -188,16 +188,16 @@ set_vertex_attributes(L &logger, vertex_attribute const& va)
 {
   auto const log_info = [&logger](auto const& it) {
     GLint enabled = 0;
-    glGetVertexAttribiv(it.global_index, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
+    glGetVertexAttribiv(it.index, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
     auto const sb = [](auto const& enabled) { return (GL_FALSE == enabled) ? "false" : "true"; };
     auto const fmt = fmt::sprintf("Querying OpengGL, vertex attribute index '%d' enabled: '%s'",
-        it.global_index, sb(enabled));
+        it.index, sb(enabled));
     LOG_TRACE(fmt);
   };
 
   impl::skip_context sc{va.num_components()};
   for (auto const& it : va) {
-    LOG_TRACE(fmt::sprintf("setting attribute '%d'", it.global_index));
+    LOG_TRACE(fmt::sprintf("setting attribute '%d'", it.index));
     impl::set_attrib_pointer(logger, it, sc);
     log_info(it);
   }
