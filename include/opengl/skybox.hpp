@@ -7,7 +7,7 @@ namespace opengl
 
 struct skybox
 {
-  model &model;
+  Model &model;
   MOVE_CONSTRUCTIBLE_ONLY(skybox);
 };
 

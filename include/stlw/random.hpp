@@ -53,7 +53,6 @@ public:
   using range3d = std::array<float, 3>;
   auto generate_3dposition(range3d const& lower, range3d const& upper)
   {
-    auto constexpr FROM = std::make_pair(-10.0f, 10.0f);
     auto const x = generate_position({lower[0], upper[0]});
     auto const y = generate_position({lower[1], upper[1]});
     auto const z = generate_position({lower[2], upper[2]});

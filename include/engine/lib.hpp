@@ -51,10 +51,10 @@ struct loop_state
   glm::mat4 const& projection;
 
   stlw::float_generator &rnum_generator;
-  std::vector<opengl::model*> &MODELS;
-  opengl::model &terrain_model;
-  opengl::model &house_model;
-  opengl::model &skybox_model;
+  std::vector<opengl::Model*> &MODELS;
+  opengl::Model &terrain_model;
+  opengl::Model &house_model;
+  opengl::Model &skybox_model;
   window::mouse_data &mouse_data;
 
   opengl::render_args<L> render_args() const
@@ -65,8 +65,8 @@ struct loop_state
 
 template<typename L>
 auto make_loop_state(L &l, bool &quit, opengl::camera &c, glm::mat4 const& p,
-    stlw::float_generator &fg, std::vector<opengl::model*> &models, opengl::model &terrain,
-    opengl::model &house, opengl::model &skybox, window::mouse_data &md)
+    stlw::float_generator &fg, std::vector<opengl::Model*> &models, opengl::Model &terrain,
+    opengl::Model &house, opengl::Model &skybox, window::mouse_data &md)
 {
   return loop_state<L>{l, quit, c, p, fg, models, terrain, house, skybox, md};
 }
@@ -109,17 +109,22 @@ public:
             p->translation = t;
             return p;
           };
-          for (auto i{0}; i < 100; ++i) {
-            auto const [x, y] = state.rnum_generator.generate_2dposition();
-            LOG_ERROR(fmt::format("2d x, y is {}, {}", x, y));
-            auto const z = 0.0f;
-            state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
+
+          auto constexpr Z = 0.0f;
+          FOR(x, 10) {
+            FOR(y, 10) {
+              state.MODELS.emplace_back(make_entity(x*y, glm::vec3{x, y, Z}));
+            }
           }
-          for (auto i{100}; i < 200; ++i) {
-            auto const [x, y, z] = state.rnum_generator.generate_3dabove_ground_position();
-            LOG_ERROR(fmt::format("3d x, y, z is {}, {}, {}", x, y, z));
-            state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
-          }
+          //for (auto i{0}; i < 100; ++i) {
+            //auto const [x, y] = state.rnum_generator.generate_2dposition();
+            //auto const z = 0.0f;
+            //state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
+          //}
+          //for (auto i{100}; i < 200; ++i) {
+            //auto const [x, y, z] = state.rnum_generator.generate_3dabove_ground_position();
+            //state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
+          //}
     });
 
     namespace sea = ecst::system_execution_adapter;
@@ -156,7 +161,7 @@ public:
       ++frames_counted;
     };
     std::cerr << "load_house\n";
-    auto mesh = opengl::load_mesh("assets/house_uv.obj");//, "assets/house_uv.mtl");
+    auto mesh = opengl::load_mesh("assets/house_uv.obj");//, "assets/chalet.mtl");
     std::cerr << "load_house finish\n";
 
     std::cerr << "making mesh\n";

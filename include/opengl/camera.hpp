@@ -178,7 +178,7 @@ public:
 
 struct camera_factory
 {
-  static auto make_default(model &skybox_model)
+  static auto make_default(Model &skybox_model)
   {
     auto const& front = -Z_UNIT_VECTOR; // camera-look at origin
     auto const& up = Y_UNIT_VECTOR;     // cameraspace "up" is === "up" in worldspace.

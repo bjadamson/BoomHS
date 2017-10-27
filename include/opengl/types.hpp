@@ -58,7 +58,7 @@ struct color_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 4; };
 struct uv_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 2; };
 struct wireframe_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 0; };
 
-struct model
+struct Model
 {
   glm::vec3 translation{0.0f, 0.0f, 0.0f};
   glm::quat rotation;

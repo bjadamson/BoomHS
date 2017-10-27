@@ -32,10 +32,10 @@ struct game_state {
   window::dimensions const dimensions;
   stlw::float_generator rnum_generator;
   glm::mat4 projection;
-  std::vector<::opengl::model*> MODELS;
-  opengl::model skybox_model;
-  opengl::model house_model;
-  opengl::model terrain_model;
+  std::vector<::opengl::Model*> MODELS;
+  opengl::Model skybox_model;
+  opengl::Model house_model;
+  opengl::Model terrain_model;
   opengl::camera camera;
 
   NO_COPY(game_state);
@@ -65,6 +65,35 @@ make_state(L &logger, HW const& hw)
   stlw::float_generator rng;
   return game_state<L>(logger, hw, MOVE(rng), MOVE(projection));
 }
+
+struct Tile {
+  bool is_wall = true;
+};
+
+class TileMap {
+  std::vector<Tile> tiles_;
+  unsigned int width_;
+
+public:
+  TileMap(std::vector<Tile> &&t, unsigned int width)
+    : tiles_(MOVE(t))
+    , width_(width)
+    {
+      assert((tiles_.size() % width_) == 0);
+    }
+
+  auto width() const { return this->width_; }
+
+  inline Tile const& data(unsigned int x, unsigned int y) const
+  {
+    return this->tiles_[x + y * this->width()];
+  }
+
+  inline Tile& data(unsigned int x, unsigned int y)
+  {
+    return this->tiles_[x + y * this->width()];
+  }
+};
 
 class boomhs_game
 {
@@ -111,6 +140,7 @@ public:
         {10.0f, 10.0f, 10.0f}});
 
     auto args = state.render_args();
+    /*
     opengl::draw(args, cube_skybox);
 
     auto triangle_color = sf.d2.color.make_triangle(logger, {GL_TRIANGLES, *state.MODELS[9]},
@@ -209,17 +239,31 @@ public:
         opengl::draw(args, it);
       }
     }
+    */
 
     // not draw 2d entities (last because we disable depth tests for these draw calls)
+    /*
     std::cerr << "started drawing ...\n";
     opengl::draw(args, polygon_color);
     //opengl::draw(args, polygon_list_of_color);
     opengl::draw(args, rectangle_color);
     opengl::draw(args, rectangle_list_colors);
     opengl::draw(args, triangle_color);
+    */
 
-    opengl::draw(args, assets.house_uv);
+    auto const tmap = std::vector<Tile>(10 * 10);
 
+    //opengl::draw(args, assets.house_uv);
+
+    auto hashtag_mesh = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl");
+    auto hashtag = sf.d3.house.make_mesh(state.logger,
+          {GL_TRIANGLES, *state.MODELS[0], hashtag_mesh});
+
+    FOR(i, 100) {
+      opengl::draw(args, *state.MODELS[i], hashtag);
+    }
+
+    /*
     opengl::draw(args, triangle_texture);
     opengl::draw(args, rectangle_texture);
     opengl::draw(args, polygon_texture);
@@ -227,6 +271,7 @@ public:
     opengl::draw(args, triangle_wireframe);
     opengl::draw(args, rectangle_wireframe);
     std::cerr << "finished drawing\n";
+    */
   }
 };
 

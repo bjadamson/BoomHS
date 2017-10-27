@@ -130,7 +130,7 @@ render_shape(L &logger, S const &shape)
 }
 
 template <typename Args, typename P, typename SHAPE>
-void draw_3dshape(Args const &args, P &pipeline, SHAPE const& shape)
+void draw_3dshape(Args const &args, opengl::Model const& model, P &pipeline, SHAPE const& shape)
 {
   using C = typename P::CTX;
 
@@ -142,8 +142,6 @@ void draw_3dshape(Args const &args, P &pipeline, SHAPE const& shape)
 
   auto const draw_3d_shape_fn = [&](auto const &shape) {
     LOG_TRACE("setting u_mvmatrix");
-    auto const& model = shape.model();
-
     auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
     auto const rmatrix = glm::toMat4(model.rotation);
     auto const smatrix = glm::scale(glm::mat4{}, model.scale);
@@ -186,7 +184,7 @@ draw_2dshape(Args const &args, P &pipeline, SHAPE const &shape)
 namespace opengl {
 
 template <typename Args, typename PIPELINE_SHAPE>
-void draw(Args const& args, PIPELINE_SHAPE const& pipeline_shape)
+void draw(Args const& args, Model const& model, PIPELINE_SHAPE const& pipeline_shape)
 {
   using PIPE = typename PIPELINE_SHAPE::PIPE;
   using C = typename PIPE::CTX;
@@ -200,9 +198,16 @@ void draw(Args const& args, PIPELINE_SHAPE const& pipeline_shape)
     detail::draw_2dshape(args, pipeline, shape);
     opengl::enable_depth_tests();
   } else {
-    detail::draw_3dshape(args, pipeline, shape);
+    detail::draw_3dshape(args, model, pipeline, shape);
   }
 }
+
+//template <typename Args, typename PIPELINE_SHAPE>
+//void draw(Args const& args, PIPELINE_SHAPE const& pipeline_shape)
+//{
+  //auto const& model = pipeline_shape.shape.model();
+  //draw(args, model, pipeline_shape);
+//}
 
 void enable_depth_tests()
 {

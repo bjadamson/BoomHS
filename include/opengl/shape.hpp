@@ -42,12 +42,12 @@ public:
 
 class shape {
   GLenum draw_mode_;
-  model const& model_;
+  Model const& model_;
   opengl_buffers gl_buffers_;
   bool in_gpu_memory_ = false;
 
 protected:
-  explicit shape(GLenum const dm, model const &m)
+  explicit shape(GLenum const dm, Model const &m)
       : draw_mode_(dm)
       , model_(m)
   {
@@ -56,7 +56,7 @@ protected:
 public:
 
   auto constexpr draw_mode() const { return this->draw_mode_; }
-  auto const& model() const { return this->model_; }
+  //auto const& model() const { return this->model_; }
 
   inline auto vbo() const { return this->gl_buffers_.vbo(); }
   inline auto ebo() const { return this->gl_buffers_.ebo(); }

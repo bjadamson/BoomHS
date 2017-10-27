@@ -17,7 +17,7 @@ class cube : public shape {
 public:
   static auto constexpr NUM_VERTICES = 8;
 
-  explicit constexpr cube(GLenum const dm, struct model const& m, std::array<float, N> &&v)
+  explicit constexpr cube(GLenum const dm, Model const& m, std::array<float, N> &&v)
       : shape(dm, m)
       , vertices_(MOVE(v))
   {
@@ -44,7 +44,7 @@ class mesh : public shape {
 public:
   friend class mesh_factory;
 
-  explicit constexpr mesh(GLenum const dm, struct model const& m, obj const& object)
+  explicit constexpr mesh(GLenum const dm, Model const& m, obj const& object)
       : shape(dm, m)
       , object_data_(object)
   {

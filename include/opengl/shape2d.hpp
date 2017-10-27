@@ -10,7 +10,7 @@ template<typename V, std::size_t N>
 class triangle : public shape {
   std::array<float, N> vertices_;
 
-  explicit constexpr triangle(GLenum const dm, struct model const& m, std::array<float, N> &&v)
+  explicit constexpr triangle(GLenum const dm, Model const& m, std::array<float, N> &&v)
     : shape(dm, m)
     , vertices_(MOVE(v))
   {}
@@ -33,7 +33,7 @@ template <typename V, std::size_t N>
 class rectangle : public shape {
   std::array<float, N> vertices_;
 
-  explicit constexpr rectangle(GLenum const dm, struct model const &m, std::array<float, N> &&v)
+  explicit constexpr rectangle(GLenum const dm, Model const &m, std::array<float, N> &&v)
       : shape(dm, m)
       , vertices_(MOVE(v))
   {
@@ -61,7 +61,7 @@ class polygon : public shape {
   // TODO: This is super wasteful.. we only need to yield an integer sequence.
   stlw::sized_buffer<GLuint> indices_;
 
-  explicit polygon(GLenum const dm, struct model const &m, unsigned int num_vertices, unsigned int const num_floats)
+  explicit polygon(GLenum const dm, Model const &m, unsigned int num_vertices, unsigned int const num_floats)
       : shape(dm, m)
       , num_vertices_(num_vertices)
       , vertices_(num_floats)

@@ -15,7 +15,7 @@ namespace opengl
 struct triangle_properties
 {
   GLenum const draw_mode;
-  model const &model;
+  Model const &model;
   float const radius = 0.25;
 };
 
@@ -147,7 +147,7 @@ public:
 struct rectangle_properties
 {
   GLenum const draw_mode;
-  model const &model;
+  Model const &model;
   height_width const dimensions = {0.39f, 0.25f};
 };
 
@@ -330,7 +330,7 @@ public:
 struct polygon_properties
 {
   GLenum const draw_mode;
-  model const &model;
+  Model const &model;
   unsigned int const num_vertices;
 
   float const width = 0.25f;
@@ -480,7 +480,7 @@ public:
 struct mesh_properties
 {
   GLenum const draw_mode;
-  model const &model;
+  Model const &model;
 
   obj const& object_data;
 };
@@ -507,7 +507,7 @@ public:
 struct cube_properties
 {
   GLenum const draw_mode;
-  model const &model;
+  Model const &model;
   width_height_length const dimensions;
 };
 
