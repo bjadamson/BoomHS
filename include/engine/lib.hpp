@@ -94,6 +94,8 @@ public:
   template <typename G, typename S>
   void start(G &&game, S &&state)
   {
+    using namespace opengl;
+
     auto &logger = state.logger;
     LOG_TRACE("creating ecst context ...");
 
@@ -111,13 +113,13 @@ public:
             return p;
           };
 
-          auto constexpr Z = 0.0f;
+          auto constexpr Z = 1.0f;
           auto count = 0u;
 
           // The 2D objects
           while(count < 100) {
             auto const [x, y] = state.rnum_generator.generate_2dposition();
-            auto const translation = glm::vec3{x, y, Z};
+            auto const translation = glm::normalize(glm::vec3{x, y, Z});
             state.MODELS.emplace_back(make_entity(count++, translation));
           }
 
@@ -129,6 +131,14 @@ public:
               }
             }
           }
+            //auto const [x, y] = state.rnum_generator.generate_2dposition();
+            //auto const z = 0.0f;
+            //state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
+          //}
+          //for (auto i{100}; i < 200; ++i) {
+            //auto const [x, y, z] = state.rnum_generator.generate_3dabove_ground_position();
+            //state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
+          //}
     });
 
     namespace sea = ecst::system_execution_adapter;
@@ -165,14 +175,18 @@ public:
       ++frames_counted;
     };
     std::cerr << "load_house\n";
-    auto mesh = opengl::load_mesh("assets/house_uv.obj");//, "assets/chalet.mtl");
+    auto house_mesh = opengl::load_mesh("assets/house_uv.obj", LoadNormals{true}, LoadUvs{true});//, "assets/chalet.mtl");
     std::cerr << "load_house finish\n";
 
     std::cerr << "making mesh\n";
     auto sf = impl::make_shape_factories(this->lib.pipelines);
-    auto house_uv = sf.d3.house.make_mesh(state.logger,
-        {GL_TRIANGLES, mesh});
-    game::boomhs::assets<decltype(house_uv)> const assets{house_uv};
+    auto house_uv = sf.d3.house.make_mesh(state.logger, {GL_TRIANGLES, house_mesh});
+
+    auto const hashtag_mesh = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", LoadNormals{false}, LoadUvs{false});
+    auto const hashtag = sf.d3.wall.make_mesh(state.logger, {GL_TRIANGLES, hashtag_mesh});
+
+    //game::boomhs::assets<decltype(house_uv)> const assets{house_uv, hashtag};
+    auto const assets = game::boomhs::make_assets(house_uv, hashtag);
 
     auto const game_loop = [&](auto &proxy) {
       auto const fn = [&]()
@@ -200,8 +214,8 @@ public:
     });
   }
 
-  template<typename LoopState, typename Game, typename P, typename SHIT>
-  void loop(LoopState &&state, Game &&game, P &proxy, game::boomhs::assets<SHIT> const& assets)
+  template<typename LoopState, typename Game, typename P, typename ASSETS>
+  void loop(LoopState &&state, Game &&game, P &proxy, ASSETS const& assets)
   {
     namespace sea = ecst::system_execution_adapter;
     auto io_tags = sea::t(st::io_system);

@@ -10,13 +10,14 @@ namespace opengl
 {
 
 obj
-load_mesh(char const* objpath)
+load_mesh(char const* objpath, LoadNormals const load_normals, LoadUvs const load_uvs)
 {
-  return load_mesh(objpath, nullptr);
+  auto constexpr MTLPATH = nullptr;
+  return load_mesh(objpath, MTLPATH, load_normals, load_uvs);
 }
 
 obj
-load_mesh(char const* objpath, char const* mtlpath)
+load_mesh(char const* objpath, char const* mtlpath, LoadNormals const load_normals, LoadUvs const load_uvs)
 {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
@@ -72,31 +73,36 @@ load_mesh(char const* objpath, char const* mtlpath)
         vertices.push_back(z);
         vertices.push_back(w);
 
-        //auto const ni = 3 * index.normal_index;
-        //if (ni >= 0) {
-          //auto const xn = attrib.normals[ni + 0];
-          //auto const yn = attrib.normals[ni + 1];
-          //auto const zn = attrib.normals[ni + 2];
+        if (load_normals.value) {
+          auto const ni = 3 * index.normal_index;
+          if (ni >= 0) {
+            auto const xn = attrib.normals[ni + 0];
+            auto const yn = attrib.normals[ni + 1];
+            auto const zn = attrib.normals[ni + 2];
 
-          //vertices.push_back(xn);
-          //vertices.push_back(yn);
-          //vertices.push_back(zn);
-        //} else {
-          //vertices.push_back(1.0);
-          //vertices.push_back(1.0);
-          //vertices.push_back(1.0);
-        //}
+            vertices.push_back(xn);
+            vertices.push_back(yn);
+            vertices.push_back(zn);
+          } else {
+            vertices.push_back(1.0);
+            vertices.push_back(1.0);
+            vertices.push_back(1.0);
+          }
+        }
 
-        auto const ti = 2 * index.texcoord_index;
-        if (ti >= 0) {
-          auto const u = attrib.texcoords[ti + 0];
-          auto const v = 1.0f - attrib.texcoords[ti + 1];
+        if (load_uvs.value) {
+          auto const ti = 2 * index.texcoord_index;
+          if (ti >= 0) {
+            auto const u = attrib.texcoords[ti + 0];
+            auto const v = 1.0f - attrib.texcoords[ti + 1];
 
-          vertices.push_back(0.0);
-          vertices.push_back(1.0);
+            vertices.push_back(u);
+            vertices.push_back(v);
 
-          vertices.push_back(0.0);
-          vertices.push_back(1.0);
+          } else {
+            vertices.push_back(0.0);
+            vertices.push_back(0.0);
+          }
         } else {
           vertices.push_back(1.0); // r, g, b, a
           vertices.push_back(0.0);

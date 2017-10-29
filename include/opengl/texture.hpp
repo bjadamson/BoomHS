@@ -13,7 +13,7 @@
 namespace opengl
 {
 
-static constexpr auto RESOURCES = resources::make_resource_table();
+static constexpr auto TEXTURE_RESOURCES = resources::make_texture_table();
 
 struct texture_info {
   GLenum mode;
@@ -51,7 +51,7 @@ template<typename L>
 void
 upload_image(L &logger, IMAGES const& image, GLenum const target)
 {
-  char const *path = RESOURCES[image];
+  char const *path = TEXTURE_RESOURCES[image];
   auto const image_data = load_image_into_memory(logger, path);
 
   auto const width = image_data.width;

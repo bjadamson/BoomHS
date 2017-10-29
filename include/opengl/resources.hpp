@@ -55,7 +55,7 @@ struct resources {
   resources() = delete;
   ~resources() = delete;
 
-  static constexpr auto make_resource_table()
+  static constexpr auto make_texture_table()
   {
     using K = IMAGES;
     using V = char const *;

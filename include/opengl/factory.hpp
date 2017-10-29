@@ -485,10 +485,11 @@ struct mesh_properties
 
 class mesh_factory
 {
+  template<typename VA>
   static auto
   construct_mesh(mesh_properties const mprops)
   {
-    return mesh<vertex_normal_uv_attributes>{mprops.draw_mode, mprops.object_data};
+    return mesh<VA>{mprops.draw_mode, mprops.object_data};
   }
 
 public:
@@ -498,19 +499,19 @@ public:
   auto
   make(mesh_properties const mprop, uv_t)
   {
-    return construct_mesh(mprop);
+    return construct_mesh<vertex_normal_uv_attributes>(mprop);
   }
 
   auto
   make(mesh_properties const mprop, color_t)
   {
-    return construct_mesh(mprop);
+    return construct_mesh<vertex_color_attributes>(mprop);
   }
 
   auto
   make(mesh_properties const mprop, wireframe_t)
   {
-    return construct_mesh(mprop);
+    return construct_mesh<vertex_attributes_only>(mprop);
   }
 };
 

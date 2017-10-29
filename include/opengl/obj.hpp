@@ -14,10 +14,20 @@ struct obj
   std::vector<uint32_t> indices;
 };
 
-obj
-load_mesh(char const*, char const*);
+struct LoadNormals
+{
+  bool const value = false;
+};
+
+struct LoadUvs
+{
+  bool const value = false;
+};
 
 obj
-load_mesh(char const*);
+load_mesh(char const*, char const*, LoadNormals const, LoadUvs const);
+
+obj
+load_mesh(char const*, LoadNormals const, LoadUvs const);
 
 } // ns opengl

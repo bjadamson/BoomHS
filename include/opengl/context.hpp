@@ -47,6 +47,7 @@ public:
   color2d_context() = default;
 
   static bool constexpr IS_2D = true;
+  static bool constexpr IS_INSTANCED = false;
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = false;
@@ -63,6 +64,7 @@ public:
   color3d_context() = default;
 
   static bool constexpr IS_2D = false;
+  static bool constexpr IS_INSTANCED = false;
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = false;
@@ -73,17 +75,20 @@ public:
 class wall_context
 {
   opengl_vao vao_;
+  GLuint const instance_count_ = 2;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(wall_context);
   wall_context() = default;
 
   static bool constexpr IS_2D = false;
+  static bool constexpr IS_INSTANCED = true;
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = false;
 
-  auto const& vao() const { return this->vao_; }
+  inline auto instance_count() const { return this->instance_count_; }
+  inline auto const& vao() const { return this->vao_; }
 };
 
 class texture3d_context
@@ -100,6 +105,7 @@ public:
   }
 
   static bool constexpr IS_2D = false;
+  static bool constexpr IS_INSTANCED = false;
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = true;
@@ -122,6 +128,7 @@ public:
   }
 
   static bool constexpr IS_2D = false;
+  static bool constexpr IS_INSTANCED = false;
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = true;
@@ -144,6 +151,7 @@ public:
   }
 
   static bool constexpr IS_2D = false;
+  static bool constexpr IS_INSTANCED = false;
   static bool constexpr IS_SKYBOX = true;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = true;
@@ -166,6 +174,7 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(texture2d_context);
 
   static bool constexpr IS_2D = true;
+  static bool constexpr IS_INSTANCED = false;
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = true;
@@ -189,6 +198,7 @@ public:
   }
 
   static bool constexpr IS_2D = IS_2D_T;
+  static bool constexpr IS_INSTANCED = false;
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = true;
   static bool constexpr HAS_TEXTURE = false;

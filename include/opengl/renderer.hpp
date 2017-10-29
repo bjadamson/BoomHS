@@ -112,6 +112,7 @@ log_shape_bytes(L &logger, S const &shape)
   //LOG_TRACE(ostream.str());
 }
 
+/*
 template <typename L, typename S>
 void
 render_shape(L &logger, S const& shape)
@@ -137,6 +138,33 @@ render_shape_with_instancing(L &logger, S const& shape, GLsizei const prim_count
   glDrawElementsInstanced(shape.draw_mode(), shape.indices().size(), GL_UNSIGNED_INT, OFFSET,
       prim_count);
 }
+*/
+
+template <typename L, typename P, typename SHAPE>
+void render_shape(L &logger, P &pipeline, SHAPE const& shape)
+{
+  using C = typename P::CTX;
+
+  auto const draw_mode = shape.draw_mode();
+  auto const indices_size = shape.indices().size();
+  auto constexpr OFFSET = nullptr;
+  //detail::log_shape_bytes(logger, shape);
+
+  if constexpr (C::IS_INSTANCED) {
+    auto const& ctx = pipeline.ctx();
+    auto const instance_count = ctx.instance_count();
+    glDrawElementsInstanced(draw_mode, indices_size, GL_UNSIGNED_INT, OFFSET, instance_count);
+  } else {
+    LOG_TRACE(fmt::sprintf("%-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices"));
+    LOG_TRACE(fmt::sprintf("%-15d %-15d %-15d\n", vertices_size_in_bytes(shape),
+                              shape.vertices().size(), shape.num_vertices()));
+    auto const fmt = fmt::sprintf("glDrawElements() render_mode '%d', indices_count '%d'",
+                                  shape.draw_mode(), shape.indices().size());
+
+    //LOG_TRACE(fmt);
+    glDrawElements(draw_mode, indices_size, GL_UNSIGNED_INT, OFFSET);
+  }
+}
 
 template <typename Args, typename P, typename SHAPE>
 void draw_3dshape(Args const &args, opengl::Model const& model, P &pipeline, SHAPE const& shape)
@@ -159,11 +187,11 @@ void draw_3dshape(Args const &args, opengl::Model const& model, P &pipeline, SHA
 
     if constexpr (C::IS_SKYBOX) {
       opengl::disable_depth_tests();
-      render_shape(logger, shape);
+      render_shape(logger, pipeline, shape);
       opengl::enable_depth_tests();
     } else {
-      //render_shape(logger, shape);
-      render_shape_with_instancing(logger, shape, 3);
+      render_shape(logger, pipeline, shape);
+      //render_shape_with_instancing(logger, shape, 3);
     }
   };
 
@@ -185,7 +213,7 @@ draw_2dshape(Args const &args, opengl::Model const& model, P &pipeline, SHAPE co
     auto const smatrix = glm::scale(glm::mat4{}, model.scale);
     auto const mvmatrix = tmatrix * rmatrix * smatrix;
     program.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
-    render_shape(logger, shape);
+    render_shape(logger, pipeline, shape);
   };
 
   draw_scene(logger, pipeline, shape, draw_2d_shape_fn);

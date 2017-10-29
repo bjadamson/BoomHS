@@ -108,8 +108,8 @@ public:
     return std::make_tuple(st::io_system, st::randompos_system);
   }
 
-  template <typename LoopState, typename ShapeFactory, typename SHIT>
-  void game_loop(LoopState &state, ShapeFactory &&sf, assets<SHIT> const& assets)
+  template <typename LoopState, typename ShapeFactory, typename ASSETS>
+  void game_loop(LoopState &state, ShapeFactory &&sf, ASSETS const& assets)
   {
     {
       auto const color = opengl::LIST_OF_COLORS::WHITE;
@@ -251,7 +251,6 @@ public:
     }
 
     // not draw 2d entities (last because we disable depth tests for these draw calls)
-    std::cerr << "started drawing ...\n";
     opengl::draw(args, *state.MODELS[20], polygon_color);
     //opengl::draw(args, polygon_list_of_color);
     opengl::draw(args, *state.MODELS[16], rectangle_color);
@@ -262,14 +261,12 @@ public:
     //opengl::draw(args, *state.MODELS[10], triangle_list_colors);
 
     auto const tmap = std::vector<Tile>(10 * 10);
-    //opengl::draw(args, state.house_model, assets.house_uv);
-
-    auto hashtag_mesh = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl");
-    auto hashtag = sf.d3.wall.make_mesh(state.logger,
-          {GL_TRIANGLES, hashtag_mesh});
+    // THIS is blocked from working until we separate instancing during rendering somehow ...
+    // thinking maybe the context
+    opengl::draw(args, state.house_model, assets.house_uv);
 
     for(auto i = 100u; i < 200u; ++i) {
-      opengl::draw(args, *state.MODELS[i], hashtag);
+      opengl::draw(args, *state.MODELS[i], assets.hashtag);
     }
 
     opengl::draw(args, *state.MODELS[11], triangle_texture);
@@ -278,7 +275,6 @@ public:
     opengl::draw(args, *state.MODELS[21], polygon_texture);
     opengl::draw(args, *state.MODELS[22], polygon_wireframe);
     opengl::draw(args, *state.MODELS[19], rectangle_wireframe);
-    std::cerr << "finished drawing\n";
   }
 };
 
