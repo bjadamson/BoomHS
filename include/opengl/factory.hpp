@@ -15,7 +15,6 @@ namespace opengl
 struct triangle_properties
 {
   GLenum const draw_mode;
-  Model const &model;
   float const radius = 0.25;
 };
 
@@ -39,8 +38,9 @@ class triangle_factory
 
   struct wireframe_properties {};
 
-  static constexpr auto calculate_vertices(glm::vec3 const &m, float const radius)
+  static constexpr auto calculate_vertices(float const radius)
   {
+    glm::vec3 constexpr m{0.0, 0.0, 0.0};
     std::array<float, 12> const vertices = {
         m.x - radius, m.y - radius, m.z, 1.0f, // bottom-left
         m.x + radius, m.y - radius, m.z, 1.0f, // bottom-right
@@ -51,7 +51,7 @@ class triangle_factory
 
   static auto construct(triangle_properties const& tprops, color_properties const &cprops)
   {
-    auto const vertices = calculate_vertices(tprops.model.translation, tprops.radius);
+    auto const vertices = calculate_vertices(tprops.radius);
     auto const& c0 = cprops.color_bottom_left;
     auto const& c1 = cprops.color_bottom_right;
     auto const& c2 = cprops.color_top_middle;
@@ -61,12 +61,12 @@ class triangle_factory
         vertices[4], vertices[5], vertices[6], vertices[7], c1[0], c1[1], c1[2], c1[3],
         vertices[8], vertices[9], vertices[10], vertices[11], c2[0], c2[1], c2[2], c2[3]
         );
-    return triangle<vertex_color_attributes, arr.size()>{tprops.draw_mode, tprops.model, MOVE(arr)};
+    return triangle<vertex_color_attributes, arr.size()>{tprops.draw_mode, MOVE(arr)};
   }
 
   static auto construct(triangle_properties const& tprops, uv_properties const &cprops)
   {
-    auto const vertices = calculate_vertices(tprops.model.translation, tprops.radius);
+    auto const vertices = calculate_vertices(tprops.radius);
     auto const& uv = cprops.uv;
 
     auto arr = stlw::make_array<float>(
@@ -75,19 +75,19 @@ class triangle_factory
         vertices[8], vertices[9], vertices[10], vertices[11], uv[4], uv[5]
         );
 
-    return triangle<vertex_uv_attributes, arr.size()>{tprops.draw_mode, tprops.model, MOVE(arr)};
+    return triangle<vertex_uv_attributes, arr.size()>{tprops.draw_mode, MOVE(arr)};
   }
 
   static auto construct(triangle_properties const& tprops, wireframe_properties const &cprops)
   {
-    auto const vertices = calculate_vertices(tprops.model.translation, tprops.radius);
+    auto const vertices = calculate_vertices(tprops.radius);
 
     auto arr = stlw::make_array<float>(
         vertices[0], vertices[1], vertices[2], vertices[3],
         vertices[4], vertices[5], vertices[6], vertices[7],
         vertices[8], vertices[9], vertices[10], vertices[11]
         );
-    return triangle<vertex_attributes_only, arr.size()>{tprops.draw_mode, tprops.model, MOVE(arr)};
+    return triangle<vertex_attributes_only, arr.size()>{tprops.draw_mode, MOVE(arr)};
   }
 
 public:
@@ -147,7 +147,6 @@ public:
 struct rectangle_properties
 {
   GLenum const draw_mode;
-  Model const &model;
   height_width const dimensions = {0.39f, 0.25f};
 };
 
@@ -176,10 +175,11 @@ class rectangle_factory
     float const alpha = 1.0f;
   };
 
-  static constexpr auto calculate_vertices(glm::vec3 const &m, height_width const &hw)
+  static constexpr auto calculate_vertices(height_width const &hw)
   {
     auto const height = hw.height;
     auto const width = hw.width;
+    auto constexpr m = glm::vec3{0.0, 0.0, 0.0};
 
     auto const bl = stlw::make_array<float>(m.x - width, m.y - height, m.z, 1.0f);
     auto const br = stlw::make_array<float>(m.x + width, m.y - height, m.z, 1.0f);
@@ -205,7 +205,7 @@ class rectangle_factory
 
   static auto construct(rectangle_properties const& rprops, color_properties const &cprops)
   {
-    auto const vertices = calculate_vertices(rprops.model.translation, rprops.dimensions);
+    auto const vertices = calculate_vertices(rprops.dimensions);
 
     auto const& c0 = cprops.bottom_left;
     auto const& c1 = cprops.bottom_right;
@@ -225,12 +225,12 @@ class rectangle_factory
         );
     // clang-format on
 
-    return rectangle<vertex_color_attributes, arr.size()>{rprops.draw_mode, rprops.model, MOVE(arr)};
+    return rectangle<vertex_color_attributes, arr.size()>{rprops.draw_mode, MOVE(arr)};
   }
 
   static auto construct(rectangle_properties const& rprops, uv_properties const &props)
   {
-    auto const vertices = calculate_vertices(rprops.model.translation, rprops.dimensions);
+    auto const vertices = calculate_vertices(rprops.dimensions);
 
     auto const& uv = props.uv;
     auto const bl = stlw::make_array<float>(uv[0], uv[1]);
@@ -247,12 +247,12 @@ class rectangle_factory
         vertices[16], vertices[17], vertices[18], vertices[19], tl[0], tl[1],
         vertices[20], vertices[21], vertices[22], vertices[23], bl[0], bl[1]
         );
-    return rectangle<vertex_uv_attributes, arr.size()>{rprops.draw_mode, rprops.model, MOVE(arr)};
+    return rectangle<vertex_uv_attributes, arr.size()>{rprops.draw_mode, MOVE(arr)};
   }
 
   static auto construct(rectangle_properties const& rprops, wireframe_properties const &props)
   {
-    auto const vertices = calculate_vertices(rprops.model.translation, rprops.dimensions);
+    auto const vertices = calculate_vertices(rprops.dimensions);
 
     auto arr = stlw::make_array<float>(
         vertices[0], vertices[1], vertices[2], vertices[3],
@@ -263,7 +263,7 @@ class rectangle_factory
         vertices[16], vertices[17], vertices[18], vertices[19],
         vertices[20], vertices[21], vertices[22], vertices[23]
         );
-    return rectangle<vertex_attributes_only, arr.size()>{rprops.draw_mode, rprops.model, MOVE(arr)};
+    return rectangle<vertex_attributes_only, arr.size()>{rprops.draw_mode, MOVE(arr)};
   }
 
 public:
@@ -330,7 +330,6 @@ public:
 struct polygon_properties
 {
   GLenum const draw_mode;
-  Model const &model;
   unsigned int const num_vertices;
 
   float const width = 0.25f;
@@ -359,7 +358,7 @@ class polygon_factory
     auto const num_vertices = pprops.num_vertices;
 
     auto const num_edges = num_vertices + 1;
-    auto const t = pprops.model.translation;
+    auto constexpr t = glm::vec3{0.0, 0.0, 0.0};
 
     auto const calc_angle = [&num_edges](auto const angle) {
       return 2 * M_PI * angle / num_edges;
@@ -377,7 +376,7 @@ class polygon_factory
     };
 
     auto const num_floats = num_vertices * floats_per_vertice;
-    polygon<R> poly{pprops.draw_mode, pprops.model, num_vertices, num_floats};
+    polygon<R> poly{pprops.draw_mode, num_vertices, num_floats};
 
     auto vertices_filled = 0u;
     for (auto i = 0u; i < num_floats;) {
@@ -480,7 +479,6 @@ public:
 struct mesh_properties
 {
   GLenum const draw_mode;
-  Model const &model;
 
   obj const& object_data;
 };
@@ -490,7 +488,7 @@ class mesh_factory
   static auto
   construct_mesh(mesh_properties const mprops)
   {
-    return mesh<vertex_normal_uv_attributes>{mprops.draw_mode, mprops.model, mprops.object_data};
+    return mesh<vertex_normal_uv_attributes>{mprops.draw_mode, mprops.object_data};
   }
 
 public:
@@ -502,12 +500,23 @@ public:
   {
     return construct_mesh(mprop);
   }
+
+  auto
+  make(mesh_properties const mprop, color_t)
+  {
+    return construct_mesh(mprop);
+  }
+
+  auto
+  make(mesh_properties const mprop, wireframe_t)
+  {
+    return construct_mesh(mprop);
+  }
 };
 
 struct cube_properties
 {
   GLenum const draw_mode;
-  Model const &model;
   width_height_length const dimensions;
 };
 
@@ -604,8 +613,7 @@ class cube_factory
         vertices[32], vertices[33], vertices[34], vertices[35],
         colors[8][0], colors[8][1], colors[8][2], colors[8][3]
           );
-    return cube<vertex_color_attributes, arr.size()>{cube_props.draw_mode, cube_props.model,
-      MOVE(arr)};
+    return cube<vertex_color_attributes, arr.size()>{cube_props.draw_mode, MOVE(arr)};
     // clang-format on
   }
 
@@ -625,8 +633,7 @@ class cube_factory
         vertices[28], vertices[29], vertices[30], vertices[31],
         vertices[32], vertices[33], vertices[34], vertices[35]
         );
-    return cube<vertex_attributes_only, arr.size()>{cube_props.draw_mode, cube_props.model,
-      MOVE(arr)};
+    return cube<vertex_attributes_only, arr.size()>{cube_props.draw_mode, MOVE(arr)};
     // clang-format on
   }
 
@@ -646,8 +653,7 @@ class cube_factory
         vertices[28], vertices[29], vertices[30], vertices[31],
         vertices[32], vertices[33], vertices[34], vertices[35]
         );
-    return cube<vertex_attributes_only, arr.size()>{cube_props.draw_mode, cube_props.model,
-      MOVE(arr)};
+    return cube<vertex_attributes_only, arr.size()>{cube_props.draw_mode, MOVE(arr)};
     // clang-format on
   }
 
@@ -822,19 +828,21 @@ struct d2_shape_factory
   MOVE_CONSTRUCTIBLE_ONLY(d2_shape_factory);
 };
 
-template<typename P0, typename P1, typename P2, typename P3, typename P4>
+template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5>
 struct d3_shape_factory
 {
   factories::color<P0> color;
-  factories::texture<P1> texture_cube;
-  factories::texture<P2> house;
-  factories::texture<P3> skybox;
-  factories::wireframe<P4> wireframe;
+  factories::color<P1> wall;
+  factories::texture<P2> texture_cube;
+  factories::texture<P3> house;
+  factories::texture<P4> skybox;
+  factories::wireframe<P5> wireframe;
 
-  explicit d3_shape_factory(factories::color<P0> &&cf, factories::texture<P1> &&tf,
-      factories::texture<P2> &&house, factories::texture<P3> &&sky,
-      factories::wireframe<P4> &&wf)
+  explicit d3_shape_factory(factories::color<P0> &&cf, factories::color<P1> &&wallf,
+      factories::texture<P2> &&tf, factories::texture<P3> &&house, factories::texture<P4> &&sky,
+      factories::wireframe<P5> &&wf)
     : color(MOVE(cf))
+    , wall(MOVE(wallf))
     , texture_cube(MOVE(tf))
     , house(MOVE(house))
     , skybox(MOVE(sky))
@@ -852,8 +860,9 @@ struct shape_factories
 };
 
 template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6,
-  typename P7, typename P8>
-auto make_shape_factories(P0 &p0, P1 &p1, P2 &p2, P3 &p3, P4 &p4, P5 &p5, P6 &p6, P7 &p7, P8 &p8)
+  typename P7, typename P8, typename P9>
+auto make_shape_factories(P0 &p0, P1 &p1, P2 &p2, P3 &p3, P4 &p4, P5 &p5, P6 &p6, P7 &p7, P8 &p8,
+    P9 &p9)
 {
   auto d2p = d2_shape_factory<P0, P1, P2, P3>{
     factories::color<P0>{p0},
@@ -862,12 +871,13 @@ auto make_shape_factories(P0 &p0, P1 &p1, P2 &p2, P3 &p3, P4 &p4, P5 &p5, P6 &p6
     factories::wireframe<P3>{p3}
   };
 
-  auto d3p = d3_shape_factory<P4, P5, P6, P7, P8>{
+  auto d3p = d3_shape_factory<P4, P5, P6, P7, P8, P9>{
     factories::color<P4>{p4},
-    factories::texture<P5>{p5},
+    factories::color<P5>{p5},
     factories::texture<P6>{p6},
     factories::texture<P7>{p7},
-    factories::wireframe<P8>{p8}
+    factories::texture<P8>{p8},
+    factories::wireframe<P9>{p9}
   };
 
   using SF2D = decltype(d2p);

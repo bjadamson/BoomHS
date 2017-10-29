@@ -52,6 +52,7 @@ struct pipeline2d
 struct pipeline3d
 {
   pipeline<color3d_context> color;
+  pipeline<wall_context> wall;
   pipeline<texture_3dcube_context> texture_3dcube;
   pipeline<texture3d_context> house;
   pipeline<skybox_context> skybox;
@@ -103,24 +104,28 @@ struct opengl_pipelines_factory
     DO_TRY(auto p4, pf.make("3dcolor.vert", "3dcolor.frag"));
     auto pipe4 = make_pipeline(MOVE(p4), MOVE(contexts.d3.color), MOVE(va4));
 
-    auto va5 = vf.make_vertex_only(logger);
-    DO_TRY(auto p5, pf.make("3d_cubetexture.vert", "3d_cubetexture.frag"));
-    auto pipe5 = make_pipeline(MOVE(p5), MOVE(contexts.d3.texture), MOVE(va5));
+    auto va5 = vf.make_vertex_color(logger);
+    DO_TRY(auto p5, pf.make("wall.vert", "wall.frag"));
+    auto pipe5 = make_pipeline(MOVE(p5), MOVE(contexts.d3.wall), MOVE(va5));
 
-    auto va6 = vf.make_vertex_normal_uv3d(logger); //(not using normals in shaders atm)
-    DO_TRY(auto p6, pf.make("3dtexture.vert", "3dtexture.frag"));
-    auto pipe6 = make_pipeline(MOVE(p6), MOVE(contexts.d3.house_texture), MOVE(va6));
+    auto va6 = vf.make_vertex_only(logger);
+    DO_TRY(auto p6, pf.make("3d_cubetexture.vert", "3d_cubetexture.frag"));
+    auto pipe6 = make_pipeline(MOVE(p6), MOVE(contexts.d3.texture), MOVE(va6));
 
-    auto va7 = vf.make_vertex_only(logger);
-    DO_TRY(auto p7, pf.make("3d_cubetexture.vert", "3d_cubetexture.frag"));
-    auto pipe7 = make_pipeline(MOVE(p7), MOVE(contexts.d3.skybox), MOVE(va7));
+    auto va7 = vf.make_vertex_normal_uv3d(logger); //(not using normals in shaders atm)
+    DO_TRY(auto p7, pf.make("3dtexture.vert", "3dtexture.frag"));
+    auto pipe7 = make_pipeline(MOVE(p7), MOVE(contexts.d3.house_texture), MOVE(va7));
 
     auto va8 = vf.make_vertex_only(logger);
-    DO_TRY(auto p8, pf.make("3dwire.vert", "wire.frag"));
-    auto pipe8 = make_pipeline(MOVE(p8), MOVE(contexts.d3.wireframe), MOVE(va8));
+    DO_TRY(auto p8, pf.make("3d_cubetexture.vert", "3d_cubetexture.frag"));
+    auto pipe8 = make_pipeline(MOVE(p8), MOVE(contexts.d3.skybox), MOVE(va8));
+
+    auto va9 = vf.make_vertex_only(logger);
+    DO_TRY(auto p9, pf.make("3dwire.vert", "wire.frag"));
+    auto pipe9 = make_pipeline(MOVE(p9), MOVE(contexts.d3.wireframe), MOVE(va9));
 
     pipeline2d d2{MOVE(pipe0), MOVE(pipe1), MOVE(pipe2), MOVE(pipe3)};
-    pipeline3d d3{MOVE(pipe4), MOVE(pipe5), MOVE(pipe6), MOVE(pipe7), MOVE(pipe8)};
+    pipeline3d d3{MOVE(pipe4), MOVE(pipe5), MOVE(pipe6), MOVE(pipe7), MOVE(pipe8), MOVE(pipe9)};
     return opengl_pipelines{MOVE(d2), MOVE(d3)};
   }
 };

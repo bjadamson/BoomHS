@@ -1,8 +1,6 @@
 #pragma once
 #include <opengl/colors.hpp>
-#include <opengl/resources.hpp>
 #include <opengl/global.hpp>
-#include <opengl/image_data.hpp>
 #include <opengl/shader_program.hpp>
 #include <opengl/texture.hpp>
 
@@ -16,13 +14,12 @@ class opengl_vao {
 
   static constexpr auto NUM_BUFFERS = 1;
 
+public:
   explicit opengl_vao()
   {
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
   }
 
-public:
-  friend class context_factory;
   NO_COPY(opengl_vao);
   NO_MOVE_ASSIGN(opengl_vao);
 
@@ -41,18 +38,13 @@ public:
   inline auto gl_raw_value() const { return this->vao_; }
 };
 
-
 class color2d_context
 {
   opengl_vao vao_;
 
-  explicit color2d_context(opengl_vao &&b)
-    : vao_(MOVE(b))
-  {
-  }
 public:
-  friend class context_factory;
   MOVE_CONSTRUCTIBLE_ONLY(color2d_context);
+  color2d_context() = default;
 
   static bool constexpr IS_2D = true;
   static bool constexpr IS_SKYBOX = false;
@@ -66,14 +58,25 @@ class color3d_context
 {
   opengl_vao vao_;
 
-  explicit color3d_context(opengl_vao &&b)
-    : vao_(MOVE(b))
-  {
-  }
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(color3d_context);
+  color3d_context() = default;
+
+  static bool constexpr IS_2D = false;
+  static bool constexpr IS_SKYBOX = false;
+  static bool constexpr HAS_COLOR_UNIFORM = false;
+  static bool constexpr HAS_TEXTURE = false;
+
+  auto const& vao() const { return this->vao_; }
+};
+
+class wall_context
+{
+  opengl_vao vao_;
 
 public:
-  friend class context_factory;
-  MOVE_CONSTRUCTIBLE_ONLY(color3d_context);
+  MOVE_CONSTRUCTIBLE_ONLY(wall_context);
+  wall_context() = default;
 
   static bool constexpr IS_2D = false;
   static bool constexpr IS_SKYBOX = false;
@@ -88,15 +91,13 @@ class texture3d_context
   opengl_vao vao_;
   texture_info texture_info_;
 
-  explicit texture3d_context(opengl_vao &&b, texture_info const t)
-      : vao_(MOVE(b))
-      , texture_info_(t)
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(texture3d_context);
+
+  explicit texture3d_context(texture_info const t)
+      : texture_info_(t)
   {
   }
-
-public:
-  friend class context_factory;
-  MOVE_CONSTRUCTIBLE_ONLY(texture3d_context);
 
   static bool constexpr IS_2D = false;
   static bool constexpr IS_SKYBOX = false;
@@ -111,15 +112,14 @@ class texture_3dcube_context
 {
   opengl_vao vao_;
   texture_info texture_info_;
-  explicit texture_3dcube_context(opengl_vao &&b, texture_info const t)
-      : vao_(MOVE(b))
-      , texture_info_(t)
-  {
-  }
 
 public:
-  friend class context_factory;
   MOVE_CONSTRUCTIBLE_ONLY(texture_3dcube_context);
+
+  explicit texture_3dcube_context(texture_info const t)
+      : texture_info_(t)
+  {
+  }
 
   static bool constexpr IS_2D = false;
   static bool constexpr IS_SKYBOX = false;
@@ -135,15 +135,13 @@ class skybox_context
   opengl_vao vao_;
   texture_info texture_info_;
 
-  explicit skybox_context(opengl_vao &&b, texture_info const t)
-      : vao_(MOVE(b))
-      , texture_info_(t)
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(skybox_context);
+
+  explicit skybox_context(texture_info const t)
+      : texture_info_(t)
   {
   }
-
-public:
-  friend class context_factory;
-  MOVE_CONSTRUCTIBLE_ONLY(skybox_context);
 
   static bool constexpr IS_2D = false;
   static bool constexpr IS_SKYBOX = true;
@@ -158,14 +156,13 @@ class texture2d_context
 {
   opengl_vao vao_;
   texture_info texture_info_;
-  explicit texture2d_context(opengl_vao &&b, texture_info const t)
-      : vao_(MOVE(b))
-      , texture_info_(t)
+
+public:
+  explicit texture2d_context(texture_info const t)
+      : texture_info_(t)
   {
   }
 
-public:
-  friend class context_factory;
   MOVE_CONSTRUCTIBLE_ONLY(texture2d_context);
 
   static bool constexpr IS_2D = true;
@@ -177,22 +174,21 @@ public:
   auto texture() const { return this->texture_info_; }
 };
 
-class wireframe2d_context
+template<bool IS_2D_T>
+class wireframe_context
 {
   opengl_vao vao_;
   std::array<float, 4> color_;
 
-  explicit wireframe2d_context(opengl_vao &&b, std::array<float, 4> const &color)
-      : vao_(MOVE(b))
-      , color_(color)
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(wireframe_context);
+
+  explicit wireframe_context(std::array<float, 4> const &color)
+      : color_(color)
   {
   }
 
-public:
-  friend class context_factory;
-  MOVE_CONSTRUCTIBLE_ONLY(wireframe2d_context);
-
-  static bool constexpr IS_2D = true;
+  static bool constexpr IS_2D = IS_2D_T;
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = true;
   static bool constexpr HAS_TEXTURE = false;
@@ -201,94 +197,57 @@ public:
   auto const& vao() const { return this->vao_; }
 };
 
-class wireframe3d_context
+using wireframe2d_context = wireframe_context<true>;
+using wireframe3d_context = wireframe_context<false>;
+
+class opengl_context2d
 {
-  opengl_vao vao_;
-  std::array<float, 4> color_;
-
-  explicit wireframe3d_context(opengl_vao &&b, std::array<float, 4> const &color)
-      : vao_(MOVE(b))
-      , color_(color)
-  {
-  }
-
-public:
-  friend class context_factory;
-  MOVE_CONSTRUCTIBLE_ONLY(wireframe3d_context);
-
-  static bool constexpr IS_2D = false;
-  static bool constexpr IS_SKYBOX = false;
-  static bool constexpr HAS_COLOR_UNIFORM = true;
-  static bool constexpr HAS_TEXTURE = false;
-
-  inline auto color() const { return this->color_; }
-  auto const& vao() const { return this->vao_; }
-};
-
-class context_factory
-{
-  context_factory() = delete;
-
-  template <typename T, typename L, typename... Args>
-  auto static make(L &logger, Args &&... args)
-  {
-    global::log::clear_gl_errors();
-    T ctx{opengl_vao{}, std::forward<Args>(args)...};
-    LOG_ANY_GL_ERRORS(logger, "constructing context");
-    return ctx;
-  }
-
-public:
-  template <typename L>
-  auto static make_color2d(L &logger)
-  {
-    return make<color2d_context>(logger);
-  }
-
-  template <typename L>
-  auto static make_texture2d(L &logger, char const *path)
-  {
-    auto const image_data = load_image(logger, path);
-    auto const tid = upload_2d_texture(logger, image_data);
-    return make<texture2d_context>(logger, tid);
-  }
-
-  template <typename L>
-  auto static make_color3d(L &logger)
-  {
-    return make<color3d_context>(logger);
-  }
-
-  template <typename L>
-  auto static make_texture3d(L &logger, char const* path)
-  {
-    auto const image_data = load_image(logger, path);
-    auto const tid = upload_2d_texture(logger, image_data);
-    return make<texture3d_context>(logger, tid);
-  }
-
-  template <typename L, typename ...Paths>
-  auto static make_texture3dcube(L &logger, Paths const&... paths)
-  {
-    auto const image_data = load_image(logger, paths...);
-    auto const tid = upload_3dcube_texture(logger, image_data);
-    return make<texture_3dcube_context>(logger, tid);
-  }
-
-  template <typename L, typename ...Paths>
-  auto static make_skybox(L &logger, Paths const&... paths)
-  {
-    auto const image_data = load_image(logger, paths...);
-    auto const tid = upload_3dcube_texture(logger, image_data);
-    return make<skybox_context>(logger, tid);
-  }
-
   template <typename L>
   auto static make_wireframe2d(L &logger, std::array<float, 3> const &c)
   {
     constexpr auto ALPHA = 1.0f;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
-    return make<wireframe2d_context>(logger, color);
+    return wireframe2d_context{color};
+  }
+
+  template<typename L>
+  static auto make_2dtexture(L &logger, IMAGES const image)
+  {
+    return texture2d_context(texture::allocate_texture(logger, image));
+  }
+
+public:
+  color2d_context color;
+  texture2d_context texture_wall;
+  texture2d_context texture_container;
+  wireframe2d_context wireframe;
+
+  MOVE_CONSTRUCTIBLE_ONLY(opengl_context2d);
+
+  template<typename L>
+  opengl_context2d(L &logger)
+    : texture_wall(make_2dtexture(logger, IMAGES::WALL))
+    , texture_container(make_2dtexture(logger, IMAGES::CONTAINER))
+    , wireframe(make_wireframe2d(logger, LIST_OF_COLORS::PINK))
+  {
+    LOG_ANY_GL_ERRORS(logger, "constructing 2dcontext");
+  }
+};
+
+class opengl_context3d
+{
+  template <typename L, typename ...IMAGES>
+  auto static make_texture3dcube(L &logger, IMAGES const&... images)
+  {
+    auto const tid = texture::upload_3dcube_texture(logger, images...);
+    return texture_3dcube_context{tid};
+  }
+
+  template <typename L, typename ...IMAGES>
+  auto static make_skybox(L &logger, IMAGES const&... images)
+  {
+    auto const tid = texture::upload_3dcube_texture(logger, images...);
+    return skybox_context{tid};
   }
 
   template <typename L>
@@ -296,29 +255,42 @@ public:
   {
     constexpr auto ALPHA = 1.0f;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
-    return make<wireframe3d_context>(logger, color);
+    return wireframe3d_context{color};
   }
-};
 
-struct opengl_context2d
-{
-  color2d_context color;
-  texture2d_context texture_wall;
-  texture2d_context texture_container;
-  wireframe2d_context wireframe;
-
-  MOVE_CONSTRUCTIBLE_ONLY(opengl_context2d);
-};
-
-struct opengl_context3d
-{
+public:
   color3d_context color;
+  wall_context wall;
   texture_3dcube_context texture;
   texture3d_context house_texture;
   skybox_context skybox;
   wireframe3d_context wireframe;
 
   MOVE_CONSTRUCTIBLE_ONLY(opengl_context3d);
+
+  template<typename L>
+  opengl_context3d(L &logger)
+    : texture(make_texture3dcube(logger,
+        IMAGES::CUBE_FRONT,
+        IMAGES::CUBE_RIGHT,
+        IMAGES::CUBE_BACK,
+        IMAGES::CUBE_LEFT,
+        IMAGES::CUBE_TOP,
+        IMAGES::CUBE_BOTTOM
+        ))
+    , house_texture(texture::allocate_texture(logger, IMAGES::HOUSE))
+    , skybox(make_skybox(logger,
+        IMAGES::SB_FRONT,
+        IMAGES::SB_RIGHT,
+        IMAGES::SB_BACK,
+        IMAGES::SB_LEFT,
+        IMAGES::SB_TOP,
+        IMAGES::SB_BOTTOM
+        ))
+    , wireframe(make_wireframe3d(logger, LIST_OF_COLORS::PURPLE))
+    {
+      LOG_ANY_GL_ERRORS(logger, "constructing 3dcontext");
+    }
 };
 
 struct opengl_contexts
@@ -327,54 +299,12 @@ struct opengl_contexts
   opengl_context3d d3;
 
   MOVE_CONSTRUCTIBLE_ONLY(opengl_contexts);
-  explicit opengl_contexts(opengl_context2d &&c2d, opengl_context3d &&c3d)
-    : d2(MOVE(c2d))
-    , d3(MOVE(c3d))
+
+  template<typename L>
+  opengl_contexts(L &logger)
+    : d2(logger)
+    , d3(logger)
   {
-  }
-};
-
-struct opengl_contexts_factory
-{
-  opengl_contexts_factory() = delete;
-
-  template <typename L>
-  static opengl_contexts make(L &logger)
-  {
-    using namespace opengl;
-    auto constexpr RESOURCES = resources::make_resource_table();
-    auto const get_r = [&](auto const i) { return RESOURCES[i]; };
-
-    auto c0 = context_factory::make_color2d(logger);
-    auto c1 = context_factory::make_texture2d(logger, get_r(IMAGES::WALL));
-    auto c2 = context_factory::make_texture2d(logger, get_r(IMAGES::CONTAINER));
-    auto const color = LIST_OF_COLORS::PINK;
-    auto c3 = context_factory::make_wireframe2d(logger, color);
-
-    auto c4 = context_factory::make_color3d(logger);
-    auto c5 = context_factory::make_texture3dcube(logger,
-        get_r(IMAGES::CUBE_FRONT),
-        get_r(IMAGES::CUBE_RIGHT),
-        get_r(IMAGES::CUBE_BACK),
-        get_r(IMAGES::CUBE_LEFT),
-        get_r(IMAGES::CUBE_TOP),
-        get_r(IMAGES::CUBE_BOTTOM)
-        );
-    auto c6 = context_factory::make_texture3d(logger, get_r(IMAGES::HOUSE));
-    auto c7 = context_factory::make_skybox(logger,
-        get_r(IMAGES::SB_FRONT),
-        get_r(IMAGES::SB_RIGHT),
-        get_r(IMAGES::SB_BACK),
-        get_r(IMAGES::SB_LEFT),
-        get_r(IMAGES::SB_TOP),
-        get_r(IMAGES::SB_BOTTOM)
-        );
-    auto const color2 = LIST_OF_COLORS::PURPLE;
-    auto c8 = context_factory::make_wireframe3d(logger, color2);
-
-    opengl_context2d d2{MOVE(c0), MOVE(c1), MOVE(c2), MOVE(c3)};
-    opengl_context3d d3{MOVE(c4), MOVE(c5), MOVE(c6), MOVE(c7), MOVE(c8)};
-    return opengl_contexts{MOVE(d2), MOVE(d3)};
   }
 };
 

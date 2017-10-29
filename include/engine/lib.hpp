@@ -34,6 +34,7 @@ make_shape_factories(P &pipelines)
     d2.wireframe,
 
     d3.color,
+    d3.wall,
     d3.texture_3dcube,
     d3.house,
     d3.skybox,
@@ -111,20 +112,23 @@ public:
           };
 
           auto constexpr Z = 0.0f;
-          FOR(x, 10) {
-            FOR(y, 10) {
-              state.MODELS.emplace_back(make_entity(x*y, glm::vec3{x, y, Z}));
+          auto count = 0u;
+
+          // The 2D objects
+          while(count < 100) {
+            auto const [x, y] = state.rnum_generator.generate_2dposition();
+            auto const translation = glm::vec3{x, y, Z};
+            state.MODELS.emplace_back(make_entity(count++, translation));
+          }
+
+          // The 3D objects
+          while(count < 200) {
+            FOR(x, 20) {
+              FOR(y, 5) {
+                state.MODELS.emplace_back(make_entity(count++, glm::vec3{x, y, Z}));
+              }
             }
           }
-          //for (auto i{0}; i < 100; ++i) {
-            //auto const [x, y] = state.rnum_generator.generate_2dposition();
-            //auto const z = 0.0f;
-            //state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
-          //}
-          //for (auto i{100}; i < 200; ++i) {
-            //auto const [x, y, z] = state.rnum_generator.generate_3dabove_ground_position();
-            //state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
-          //}
     });
 
     namespace sea = ecst::system_execution_adapter;
@@ -167,7 +171,7 @@ public:
     std::cerr << "making mesh\n";
     auto sf = impl::make_shape_factories(this->lib.pipelines);
     auto house_uv = sf.d3.house.make_mesh(state.logger,
-        {GL_TRIANGLES, state.house_model, mesh});
+        {GL_TRIANGLES, mesh});
     game::boomhs::assets<decltype(house_uv)> const assets{house_uv};
 
     auto const game_loop = [&](auto &proxy) {

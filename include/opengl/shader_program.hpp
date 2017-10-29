@@ -45,6 +45,8 @@ check_opengl_errors(L &logger, GLuint const p)
   auto const errors = global::log::get_errors(p);
   if (errors) {
     LOG_ERROR("Opengl error: '{}'", *errors);
+    std::cerr <<  "Opengl error: '"<< *errors << "'\n";
+    std::abort();
   }
 }
 

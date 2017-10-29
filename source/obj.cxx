@@ -28,8 +28,6 @@ load_mesh(char const* objpath, char const* mtlpath)
     std::cerr << "error loading obj, msg: '" << err << "'\n";
     std::abort();
   }
-  std::cerr << "load obj successful.\n";
-  std::cerr << "shapes size: '" << shapes.size() << "'\n";
 
   // TODO: for now only loading one mesh exactly
   assert(1 == shapes.size());
@@ -74,31 +72,36 @@ load_mesh(char const* objpath, char const* mtlpath)
         vertices.push_back(z);
         vertices.push_back(w);
 
-        auto const ni = 3 * index.normal_index;
-        if (ni >= 0) {
-          auto const xn = attrib.normals[ni + 0];
-          auto const yn = attrib.normals[ni + 1];
-          auto const zn = attrib.normals[ni + 2];
+        //auto const ni = 3 * index.normal_index;
+        //if (ni >= 0) {
+          //auto const xn = attrib.normals[ni + 0];
+          //auto const yn = attrib.normals[ni + 1];
+          //auto const zn = attrib.normals[ni + 2];
 
-          vertices.push_back(xn);
-          vertices.push_back(yn);
-          vertices.push_back(zn);
-        } else {
-          vertices.push_back(1.0);
-          vertices.push_back(1.0);
-          vertices.push_back(1.0);
-        }
+          //vertices.push_back(xn);
+          //vertices.push_back(yn);
+          //vertices.push_back(zn);
+        //} else {
+          //vertices.push_back(1.0);
+          //vertices.push_back(1.0);
+          //vertices.push_back(1.0);
+        //}
 
         auto const ti = 2 * index.texcoord_index;
         if (ti >= 0) {
           auto const u = attrib.texcoords[ti + 0];
           auto const v = 1.0f - attrib.texcoords[ti + 1];
 
-          vertices.push_back(u);
-          vertices.push_back(v);
+          vertices.push_back(0.0);
+          vertices.push_back(1.0);
+
+          vertices.push_back(0.0);
+          vertices.push_back(1.0);
         } else {
+          vertices.push_back(1.0); // r, g, b, a
           vertices.push_back(0.0);
           vertices.push_back(0.0);
+          vertices.push_back(1.0);
         }
 
         // Optional: vertex colors

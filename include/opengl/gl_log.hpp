@@ -41,14 +41,14 @@ retrieve(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei *, GLchar *))
 
 template <typename L>
 auto
-log_any_gl_errors(L &logger, std::string const &msg, int const line)
+log_any_gl_errors(L &logger, std::string const &prefix, int const line)
 {
   GLenum const err = glGetError();
   if (err != GL_NO_ERROR) {
-    auto const msg = fmt::sprintf("GL error detected (line %d), code: '%d', string: '%s'", line,
-                                  err, gluErrorString(err));
+    auto const msg = fmt::sprintf("PREFIX: '%s', GL error detected (line %d), code: '%d', string: '%s'",
+        prefix, line, err, gluErrorString(err));
     LOG_ERROR(msg);
-    assert(false);
+    std::abort();
   }
 }
 

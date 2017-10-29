@@ -114,7 +114,7 @@ log_shape_bytes(L &logger, S const &shape)
 
 template <typename L, typename S>
 void
-render_shape(L &logger, S const &shape)
+render_shape(L &logger, S const& shape)
 {
   LOG_TRACE(fmt::sprintf("%-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices"));
   LOG_TRACE(fmt::sprintf("%-15d %-15d %-15d\n", vertices_size_in_bytes(shape),
@@ -129,6 +129,15 @@ render_shape(L &logger, S const &shape)
   glDrawElements(shape.draw_mode(), shape.indices().size(), GL_UNSIGNED_INT, OFFSET);
 }
 
+template <typename L, typename S>
+void
+render_shape_with_instancing(L &logger, S const& shape, GLsizei const prim_count)
+{
+  auto constexpr OFFSET = nullptr;
+  glDrawElementsInstanced(shape.draw_mode(), shape.indices().size(), GL_UNSIGNED_INT, OFFSET,
+      prim_count);
+}
+
 template <typename Args, typename P, typename SHAPE>
 void draw_3dshape(Args const &args, opengl::Model const& model, P &pipeline, SHAPE const& shape)
 {
@@ -141,7 +150,6 @@ void draw_3dshape(Args const &args, opengl::Model const& model, P &pipeline, SHA
   auto &program = pipeline.program_ref();
 
   auto const draw_3d_shape_fn = [&](auto const &shape) {
-    LOG_TRACE("setting u_mvmatrix");
     auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
     auto const rmatrix = glm::toMat4(model.rotation);
     auto const smatrix = glm::scale(glm::mat4{}, model.scale);
@@ -149,17 +157,14 @@ void draw_3dshape(Args const &args, opengl::Model const& model, P &pipeline, SHA
     auto const mvmatrix = projection * view * mmatrix;
     program.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
 
-    LOG_TRACE("before drawing shape ...");
     if constexpr (C::IS_SKYBOX) {
       opengl::disable_depth_tests();
       render_shape(logger, shape);
       opengl::enable_depth_tests();
     } else {
-      render_shape(logger, shape);
+      //render_shape(logger, shape);
+      render_shape_with_instancing(logger, shape, 3);
     }
-
-    program.check_errors(logger);
-    LOG_TRACE("after drawing shape");
   };
 
   draw_scene(logger, pipeline, shape, draw_3d_shape_fn);
@@ -167,12 +172,19 @@ void draw_3dshape(Args const &args, opengl::Model const& model, P &pipeline, SHA
 
 template <typename Args, typename P, typename SHAPE>
 void
-draw_2dshape(Args const &args, P &pipeline, SHAPE const &shape)
+draw_2dshape(Args const &args, opengl::Model const& model, P &pipeline, SHAPE const &shape)
 {
   using namespace opengl;
 
+  auto &program = pipeline.program_ref();
   auto &logger = args.logger;
   auto const draw_2d_shape_fn = [&](auto const& shape) {
+    auto const& t = model.translation;
+    auto const tmatrix = glm::translate(glm::mat4{}, glm::vec3{t.x, t.y, 0.0});
+    auto const rmatrix = glm::toMat4(model.rotation);
+    auto const smatrix = glm::scale(glm::mat4{}, model.scale);
+    auto const mvmatrix = tmatrix * rmatrix * smatrix;
+    program.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
     render_shape(logger, shape);
   };
 
@@ -195,19 +207,12 @@ void draw(Args const& args, Model const& model, PIPELINE_SHAPE const& pipeline_s
 
   if constexpr (C::IS_2D) {
     opengl::disable_depth_tests();
-    detail::draw_2dshape(args, pipeline, shape);
+    detail::draw_2dshape(args, model, pipeline, shape);
     opengl::enable_depth_tests();
   } else {
     detail::draw_3dshape(args, model, pipeline, shape);
   }
 }
-
-//template <typename Args, typename PIPELINE_SHAPE>
-//void draw(Args const& args, PIPELINE_SHAPE const& pipeline_shape)
-//{
-  //auto const& model = pipeline_shape.shape.model();
-  //draw(args, model, pipeline_shape);
-//}
 
 void enable_depth_tests()
 {
