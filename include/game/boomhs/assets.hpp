@@ -1,27 +1,27 @@
 #pragma once
+#include <stlw/type_macros.hpp>
 
 namespace game::boomhs {
 
-//using SHIT = opengl::factories::pipeline_shape_pair<opengl::mesh<
-    //std::tuple<opengl::vertex_d, opengl::normal_d, opengl::uv_d> >,
-    //opengl::pipeline<opengl::texture3d_context> >;
 template<typename HOUSE_UV, typename HASHTAG>
 struct assets {
-  HOUSE_UV const& house_uv;
-  HASHTAG const& hashtag;
+  HOUSE_UV house_uv;
+  HASHTAG hashtag;
 
-  assets(HOUSE_UV const& house, HASHTAG const& hashtag)
-    : house_uv(house)
-    , hashtag(hashtag)
+  explicit assets(HOUSE_UV &&house, HASHTAG &&hashtag_p)
+    : house_uv(MOVE(house))
+    , hashtag(MOVE(hashtag_p))
   {
   }
+
+  MOVE_CONSTRUCTIBLE_ONLY(assets);
 };
 
 template<typename HOUSE_UV, typename HASHTAG>
 auto
-make_assets(HOUSE_UV const& huv, HASHTAG const& ht)
+make_assets(HOUSE_UV &&huv, HASHTAG &&ht)
 {
-  return assets<HOUSE_UV, HASHTAG>(huv, ht);
+  return assets<HOUSE_UV, HASHTAG>(MOVE(huv), MOVE(ht));
 }
 
 } // ns game::boomhs

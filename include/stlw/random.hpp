@@ -27,6 +27,15 @@ public:
   {
   }
 
+  float generate_negative1to1()
+  {
+    auto constexpr FROM = std::make_pair(-255, 255);
+    auto constexpr TO = std::make_pair(-1.0f, 1.0f);
+    std::uniform_int_distribution<int> distribution(FROM.first, FROM.second);
+    int const value = distribution(this->generator_);
+    return stlw::math::normalize(value, FROM, TO);
+  }
+
   float generate_0to1()
   {
     auto constexpr FROM = std::make_pair(0, 255);

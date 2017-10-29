@@ -191,7 +191,6 @@ void draw_3dshape(Args const &args, opengl::Model const& model, P &pipeline, SHA
       opengl::enable_depth_tests();
     } else {
       render_shape(logger, pipeline, shape);
-      //render_shape_with_instancing(logger, shape, 3);
     }
   };
 

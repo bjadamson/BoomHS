@@ -24,6 +24,8 @@
   CLASSNAME(CLASSNAME &&) = default;                                                               \
   CLASSNAME &operator=(CLASSNAME &&) = default;
 
+#define MOVE_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME &&) = default;
+
 #define MOVE_CONSTRUCTIBLE_ONLY(CLASSNAME)                                                         \
   NO_COPY(CLASSNAME)                                                                               \
   NO_MOVE_ASSIGN(CLASSNAME)                                                                        \
@@ -33,7 +35,6 @@
   CLASSNAME(CLASSNAME const &) = default;                                                          \
   CLASSNAME &operator=(CLASSNAME const &) = default;
 
-#define MOVE_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME &&) = default;
 
 #define BEGIN_END_FORWARD_FNS(CONTAINER)                                                           \
   decltype(auto) begin() const { return CONTAINER.begin(); }                                       \

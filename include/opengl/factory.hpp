@@ -480,16 +480,22 @@ struct mesh_properties
 {
   GLenum const draw_mode;
 
-  obj const& object_data;
+  obj object_data;
+
+  explicit mesh_properties(GLenum const dm, obj &&obj)
+    : draw_mode(dm)
+    , object_data(MOVE(obj))
+  {
+  }
 };
 
 class mesh_factory
 {
   template<typename VA>
   static auto
-  construct_mesh(mesh_properties const mprops)
+  construct_mesh(mesh_properties &&mprop)
   {
-    return mesh<VA>{mprops.draw_mode, mprops.object_data};
+    return mesh<VA>{mprop.draw_mode, MOVE(mprop.object_data)};
   }
 
 public:
@@ -497,21 +503,21 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(mesh_factory);
 
   auto
-  make(mesh_properties const mprop, uv_t)
+  make(mesh_properties &&mprop, uv_t)
   {
-    return construct_mesh<vertex_normal_uv_attributes>(mprop);
+    return construct_mesh<vertex_normal_uv_attributes>(MOVE(mprop));
   }
 
   auto
-  make(mesh_properties const mprop, color_t)
+  make(mesh_properties &&mprop, color_t)
   {
-    return construct_mesh<vertex_color_attributes>(mprop);
+    return construct_mesh<vertex_color_attributes>(MOVE(mprop));
   }
 
   auto
-  make(mesh_properties const mprop, wireframe_t)
+  make(mesh_properties &&mprop, wireframe_t)
   {
-    return construct_mesh<vertex_attributes_only>(mprop);
+    return construct_mesh<vertex_attributes_only>(MOVE(mprop));
   }
 };
 
@@ -764,10 +770,10 @@ auto make_pipeline_shape_pair(S &&s, P &p) { return pipeline_shape_pair<S, P>{MO
     return pair;                                                                                   \
   }                                                                                                \
   template<typename L, typename ...Args>                                                           \
-  auto make_mesh(L &logger, mesh_properties const& properties, Args &&... args)                    \
+  auto make_mesh(L &logger, mesh_properties &&properties, Args &&... args)                         \
   {                                                                                                \
     auto mf = mesh_factory{};                                                                      \
-    auto shape = mf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
+    auto shape = mf.make(MOVE(properties), factory_type{}, std::forward<Args>(args)...);           \
     auto pair = make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                            \
     copy_to_gpu(logger, pair);                                                                     \
     return pair;                                                                                   \

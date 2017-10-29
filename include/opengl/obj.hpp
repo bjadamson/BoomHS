@@ -1,6 +1,7 @@
 #pragma once
 #include <opengl/glew.hpp>
 #include <stlw/sized_buffer.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace opengl
 {
@@ -12,6 +13,8 @@ struct obj
   unsigned int num_vertices;
   std::vector<float> vertices;
   std::vector<uint32_t> indices;
+
+  MOVE_CONSTRUCTIBLE_ONLY(obj);
 };
 
 struct LoadNormals

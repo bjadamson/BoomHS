@@ -104,41 +104,9 @@ public:
     LOG_TRACE("stepping ecst once");
 
     // Initialize context with some entities.
-    ctx->step([&](auto &proxy)
-        {
-          auto const make_entity = [&proxy](auto const i, auto const& t) {
-            auto eid = proxy.create_entity();
-            auto *p = &proxy.add_component(ct::model, eid);
-            p->translation = t;
-            return p;
-          };
-
-          auto constexpr Z = 1.0f;
-          auto count = 0u;
-
-          // The 2D objects
-          while(count < 100) {
-            auto const [x, y] = state.rnum_generator.generate_2dposition();
-            auto const translation = glm::normalize(glm::vec3{x, y, Z});
-            state.MODELS.emplace_back(make_entity(count++, translation));
-          }
-
-          // The 3D objects
-          while(count < 200) {
-            FOR(x, 20) {
-              FOR(y, 5) {
-                state.MODELS.emplace_back(make_entity(count++, glm::vec3{x, y, Z}));
-              }
-            }
-          }
-            //auto const [x, y] = state.rnum_generator.generate_2dposition();
-            //auto const z = 0.0f;
-            //state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
-          //}
-          //for (auto i{100}; i < 200; ++i) {
-            //auto const [x, y, z] = state.rnum_generator.generate_3dabove_ground_position();
-            //state.MODELS.emplace_back(make_entity(i, glm::vec3{x, y, z}));
-          //}
+    auto sf = impl::make_shape_factories(this->lib.pipelines);
+    auto const assets = ctx->step([&](auto &proxy) {
+        return game.init(proxy, state, sf);
     });
 
     namespace sea = ecst::system_execution_adapter;
@@ -174,19 +142,6 @@ public:
       LOG_INFO(fmt::format("average FPS '{}'", fps));
       ++frames_counted;
     };
-    std::cerr << "load_house\n";
-    auto house_mesh = opengl::load_mesh("assets/house_uv.obj", LoadNormals{true}, LoadUvs{true});//, "assets/chalet.mtl");
-    std::cerr << "load_house finish\n";
-
-    std::cerr << "making mesh\n";
-    auto sf = impl::make_shape_factories(this->lib.pipelines);
-    auto house_uv = sf.d3.house.make_mesh(state.logger, {GL_TRIANGLES, house_mesh});
-
-    auto const hashtag_mesh = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", LoadNormals{false}, LoadUvs{false});
-    auto const hashtag = sf.d3.wall.make_mesh(state.logger, {GL_TRIANGLES, hashtag_mesh});
-
-    //game::boomhs::assets<decltype(house_uv)> const assets{house_uv, hashtag};
-    auto const assets = game::boomhs::make_assets(house_uv, hashtag);
 
     auto const game_loop = [&](auto &proxy) {
       auto const fn = [&]()
@@ -197,7 +152,7 @@ public:
               state.skybox_model, mouse_data);
         };
         auto loop_state = mls(state);
-        this->loop(MOVE(loop_state), game, proxy, assets);
+        this->loop(MOVE(loop_state), game, proxy, sf, assets);
       };
       while (!state.quit) {
         fps_capped_game_loop(fn);
@@ -214,8 +169,8 @@ public:
     });
   }
 
-  template<typename LoopState, typename Game, typename P, typename ASSETS>
-  void loop(LoopState &&state, Game &&game, P &proxy, ASSETS const& assets)
+  template<typename LoopState, typename Game, typename P, typename SF, typename ASSETS>
+  void loop(LoopState &&state, Game &&game, P &proxy, SF &sf, ASSETS const& assets)
   {
     namespace sea = ecst::system_execution_adapter;
     auto io_tags = sea::t(st::io_system);
@@ -234,8 +189,7 @@ public:
     this->begin();
     LOG_TRACE("rendering.");
 
-    auto sf = impl::make_shape_factories(this->lib.pipelines);
-    game.game_loop(state, MOVE(sf), assets);
+    game.game_loop(state, sf, assets);
     this->end();
     LOG_TRACE("game loop stepping.");
   }

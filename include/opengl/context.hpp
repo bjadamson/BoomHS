@@ -75,7 +75,7 @@ public:
 class wall_context
 {
   opengl_vao vao_;
-  GLuint const instance_count_ = 2;
+  static constexpr GLuint INSTANCE_COUNT = 3u;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(wall_context);
@@ -87,7 +87,7 @@ public:
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = false;
 
-  inline auto instance_count() const { return this->instance_count_; }
+  inline auto instance_count() const { return wall_context::INSTANCE_COUNT; }
   inline auto const& vao() const { return this->vao_; }
 };
 

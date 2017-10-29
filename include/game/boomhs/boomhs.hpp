@@ -60,13 +60,15 @@ make_state(L &logger, HW const& hw)
 {
   auto const fheight = static_cast<GLfloat>(hw.h);
   auto const fwidth = static_cast<GLfloat>(hw.w);
+  auto const aspect = fwidth / fheight;
 
-  auto projection = glm::perspective(glm::radians(60.0f), (fwidth / fheight), 0.1f, 200.0f);
+  auto projection = glm::perspective(glm::radians(90.0f), aspect, 0.1f, 200.0f);
   stlw::float_generator rng;
   return game_state<L>(logger, hw, MOVE(rng), MOVE(projection));
 }
 
 struct Tile {
+  opengl::Model const& model;
   bool is_wall = true;
 };
 
@@ -93,6 +95,8 @@ public:
   {
     return this->tiles_[x + y * this->width()];
   }
+
+  BEGIN_END_FORWARD_FNS(this->tiles_);
 };
 
 class boomhs_game
@@ -108,8 +112,53 @@ public:
     return std::make_tuple(st::io_system, st::randompos_system);
   }
 
+  template<typename PROXY, typename STATE, typename SF>
+  auto
+  init(PROXY &proxy, STATE &state, SF &sf)
+  {
+    auto const make_entity = [&proxy](auto const i, auto const& t) {
+      auto eid = proxy.create_entity();
+      auto *p = &proxy.add_component(ct::model, eid);
+      p->translation = t;
+      return p;
+    };
+    auto count = 0u;
+
+    // The 2D objects
+    while(count < 100) {
+      auto const [x, y] = state.rnum_generator.generate_2dposition();
+      auto constexpr Z = 0.0f;
+      auto const translation = glm::vec3{x, y, Z};
+      state.MODELS.emplace_back(make_entity(count++, translation));
+    }
+
+    // The 3D objects
+    count = 0;
+    while(count < 1000) {
+      auto constexpr y = 0.0;
+      auto Z = 0.0;
+      FOR(x, 50) {
+        Z = 0.0;
+        FOR(_, 20) {
+          state.MODELS.emplace_back(make_entity(count++, glm::vec3{x, y, Z}));
+          Z += 1.0f;
+        }
+      }
+    }
+
+    // LOAD different assets.
+    //"assets/chalet.mtl"
+    auto house_mesh = opengl::load_mesh("assets/house_uv.obj", opengl::LoadNormals{true}, opengl::LoadUvs{true});
+    auto house_uv = sf.d3.house.make_mesh(state.logger, opengl::mesh_properties{GL_TRIANGLES, MOVE(house_mesh)});
+
+    auto hashtag_mesh = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
+    auto hashtag = sf.d3.wall.make_mesh(state.logger, opengl::mesh_properties{GL_TRIANGLES, MOVE(hashtag_mesh)});
+
+    return make_assets(MOVE(house_uv), MOVE(hashtag));
+  }
+
   template <typename LoopState, typename ShapeFactory, typename ASSETS>
-  void game_loop(LoopState &state, ShapeFactory &&sf, ASSETS const& assets)
+  void game_loop(LoopState &state, ShapeFactory &sf, ASSETS const& assets)
   {
     {
       auto const color = opengl::LIST_OF_COLORS::WHITE;
@@ -139,7 +188,7 @@ public:
     auto cube_skybox = sf.d3.skybox.make_cube(logger, {GL_TRIANGLE_STRIP, {10.0f, 10.0f, 10.0f}});
 
     auto args = state.render_args();
-    opengl::draw(args, state.skybox_model, cube_skybox);
+    //opengl::draw(args, state.skybox_model, cube_skybox);
 
     auto triangle_color = sf.d2.color.make_triangle(logger, {GL_TRIANGLES}, opengl::LIST_OF_COLORS::PINK);
 
@@ -183,6 +232,7 @@ public:
         //multicolor_triangle});
 
     // first draw terrain
+    /*
     {
       auto cube_terrain = sf.d3.color.make_cube(logger, {GL_TRIANGLE_STRIP, {2.0f, 0.4f, 2.0f}},
           opengl::LIST_OF_COLORS::SADDLE_BROWN);
@@ -260,21 +310,29 @@ public:
     // TODO: test
     //opengl::draw(args, *state.MODELS[10], triangle_list_colors);
 
-    auto const tmap = std::vector<Tile>(10 * 10);
-    // THIS is blocked from working until we separate instancing during rendering somehow ...
-    // thinking maybe the context
-    opengl::draw(args, state.house_model, assets.house_uv);
-
-    for(auto i = 100u; i < 200u; ++i) {
-      opengl::draw(args, *state.MODELS[i], assets.hashtag);
-    }
-
     opengl::draw(args, *state.MODELS[11], triangle_texture);
     opengl::draw(args, *state.MODELS[12], triangle_wireframe);
     opengl::draw(args, *state.MODELS[18], rectangle_texture);
     opengl::draw(args, *state.MODELS[21], polygon_texture);
     opengl::draw(args, *state.MODELS[22], polygon_wireframe);
     opengl::draw(args, *state.MODELS[19], rectangle_wireframe);
+    */
+
+    auto tile_vec = std::vector<Tile>{};
+    tile_vec.reserve(1000);
+    for(auto i = 0; i < 1000; ++i) {
+      Tile tile{*state.MODELS[100 + i]};
+      tile_vec.emplace_back(MOVE(tile));
+    }
+    auto const tmap = TileMap{MOVE(tile_vec), 100};
+
+    // THIS is blocked from working until we separate instancing during rendering somehow ...
+    // thinking maybe the context
+    opengl::draw(args, state.house_model, assets.house_uv);
+
+    for (auto const& it : tmap) {
+      opengl::draw(args, it.model, assets.hashtag);
+    }
   }
 };
 

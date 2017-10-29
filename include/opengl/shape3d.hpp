@@ -39,14 +39,15 @@ public:
 
 template <typename V>
 class mesh : public shape {
-  obj const& object_data_;
+  obj object_data_;
 
 public:
   friend class mesh_factory;
+  MOVE_CONSTRUCTIBLE_ONLY(mesh);
 
-  explicit constexpr mesh(GLenum const dm, obj const& object)
+  explicit constexpr mesh(GLenum const dm, obj &&object)
       : shape(dm)
-      , object_data_(object)
+      , object_data_(MOVE(object))
   {
   }
 
