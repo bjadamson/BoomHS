@@ -6,8 +6,6 @@
 #include <opengl/obj.hpp>
 #include <opengl/types.hpp>
 #include <opengl/shape.hpp>
-#include <opengl/shape2d.hpp>
-#include <opengl/shape3d.hpp>
 
 namespace opengl
 {
