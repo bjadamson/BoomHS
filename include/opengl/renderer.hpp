@@ -48,7 +48,7 @@ draw_scene(L &logger, P &pipeline, SHAPE const &shape, FN const& fn)
   //ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
   // Instruct the vertex-processor to enable the vertex attributes for this context.
-  global::set_vertex_attributes(logger, pipeline.va());
+  va::set_vertex_attributes(logger, pipeline.va());
 
   LOG_TRACE("before drawing shape ...");
 
