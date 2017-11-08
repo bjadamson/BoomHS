@@ -139,8 +139,7 @@ struct lib_factory
   static stlw::result<opengl_lib, std::string>
   make(L &logger)
   {
-    auto contexts = opengl_contexts{logger};
-    DO_TRY(auto pipelines, opengl_pipelines_factory::make(logger, MOVE(contexts)));
+    DO_TRY(auto pipelines, opengl_pipelines_factory::make(logger));
     return opengl_lib{MOVE(pipelines)};
   }
 };

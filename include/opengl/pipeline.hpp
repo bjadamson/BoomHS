@@ -32,13 +32,6 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(pipeline);
 };
 
-template<typename C>
-auto
-make_pipeline(shader_program &&sp, C &&context, vertex_attribute &&va)
-{
-  return pipeline<C>{MOVE(sp), MOVE(context), MOVE(va)};
-}
-
 struct pipeline2d
 {
   pipeline<color2d_context> color;
@@ -74,57 +67,77 @@ struct opengl_pipelines
   }
 };
 
-struct opengl_pipelines_factory
+template<typename C>
+auto
+make_pipeline(shader_program &&sp, C &&context, vertex_attribute &&va)
+{
+  return pipeline<C>{MOVE(sp), MOVE(context), MOVE(va)};
+}
+
+template<typename C>
+stlw::result<pipeline<C>, std::string>
+//auto
+make_it(char const* vertex_s, char const* frag_s, vertex_attribute &&va, C &&ctx)
+{
+  shader_program_factory pf;
+  DO_TRY(auto sp, pf.make(vertex_s, frag_s));
+  return make_pipeline(MOVE(sp), MOVE(ctx), MOVE(va));
+}
+
+class opengl_pipelines_factory
 {
   opengl_pipelines_factory() = delete;
 
+public:
   template<typename L>
   static stlw::result<opengl_pipelines, std::string>
-  make(L &logger, opengl_contexts &&contexts)
+  make(L &logger)
   {
-    shader_program_factory pf;
-    auto va0 = va::vertex_color(logger);
-    DO_TRY(auto p0, pf.make("2dcolor.vert", "2dcolor.frag"));
-    auto pipe0 = make_pipeline(MOVE(p0), MOVE(contexts.d2.color), MOVE(va0));
+    // TODO: don't bother constructing opengl_contexts...
+    DO_TRY(auto d2color, make_it("2dcolor.vert", "2dcolor.frag", va::vertex_color(logger),
+          color2d_context{}));
 
-    auto va1 = va::vertex_uv2d(logger);
-    DO_TRY(auto p1, pf.make("2dtexture.vert", "2dtexture.frag"));
-    auto pipe1 = make_pipeline(MOVE(p1), MOVE(contexts.d2.texture_wall), MOVE(va1));
+    DO_TRY(auto d2texture_wall, make_it("2dtexture.vert", "2dtexture.frag", va::vertex_uv2d(logger),
+          opengl_context2d::make_2dtexture(logger, IMAGES::WALL)));
 
-    auto va2 = va::vertex_uv2d(logger);
-    DO_TRY(auto p2, pf.make("2dtexture.vert", "2dtexture.frag"));
-    auto pipe2 = make_pipeline(MOVE(p2), MOVE(contexts.d2.texture_container), MOVE(va2));
+    DO_TRY(auto d2texture_container, make_it("2dtexture.vert", "2dtexture.frag", va::vertex_uv2d(logger),
+          opengl_context2d::make_2dtexture(logger, IMAGES::CONTAINER)));
 
-    auto va3 = va::vertex_only(logger);
-    DO_TRY(auto p3, pf.make("wire.vert", "wire.frag"));
-    auto pipe3 = make_pipeline(MOVE(p3), MOVE(contexts.d2.wireframe), MOVE(va3));
+    DO_TRY(auto d2wire, make_it("wire.vert", "wire.frag", va::vertex_only(logger),
+          opengl_context2d::make_wireframe2d(logger, LIST_OF_COLORS::PINK)));
 
-    auto va4 = va::vertex_color(logger);
-    DO_TRY(auto p4, pf.make("3dcolor.vert", "3dcolor.frag"));
-    auto pipe4 = make_pipeline(MOVE(p4), MOVE(contexts.d3.color), MOVE(va4));
+    DO_TRY(auto d3color, make_it("3dcolor.vert", "3dcolor.frag", va::vertex_color(logger),
+          color3d_context{}));
 
-    auto va5 = va::vertex_color(logger);
-    DO_TRY(auto p5, pf.make("wall.vert", "wall.frag"));
-    auto pipe5 = make_pipeline(MOVE(p5), MOVE(contexts.d3.wall), MOVE(va5));
+    DO_TRY(auto d3wall, make_it("wall.vert", "wall.frag", va::vertex_color(logger),
+          wall_context{}));
 
-    auto va6 = va::vertex_only(logger);
-    DO_TRY(auto p6, pf.make("3d_cubetexture.vert", "3d_cubetexture.frag"));
-    auto pipe6 = make_pipeline(MOVE(p6), MOVE(contexts.d3.texture), MOVE(va6));
+    DO_TRY(auto d3cube, make_it("3d_cubetexture.vert", "3d_cubetexture.frag", va::vertex_only(logger),
+          opengl_context3d::make_texture3dcube(logger,
+            IMAGES::CUBE_FRONT,
+            IMAGES::CUBE_RIGHT,
+            IMAGES::CUBE_BACK,
+            IMAGES::CUBE_LEFT,
+            IMAGES::CUBE_TOP,
+            IMAGES::CUBE_BOTTOM)));
 
-    auto va7 = va::vertex_normal_uv3d(logger); //(not using normals in shaders atm)
-    DO_TRY(auto p7, pf.make("3dtexture.vert", "3dtexture.frag"));
-    auto pipe7 = make_pipeline(MOVE(p7), MOVE(contexts.d3.house_texture), MOVE(va7));
+    DO_TRY(auto d3house, make_it("3dtexture.vert", "3dtexture.frag", va::vertex_normal_uv3d(logger),
+          texture3d_context{texture::allocate_texture(logger, IMAGES::HOUSE)}));
 
-    auto va8 = va::vertex_only(logger);
-    DO_TRY(auto p8, pf.make("3d_cubetexture.vert", "3d_cubetexture.frag"));
-    auto pipe8 = make_pipeline(MOVE(p8), MOVE(contexts.d3.skybox), MOVE(va8));
+    DO_TRY(auto d3skybox, make_it("3d_cubetexture.vert", "3d_cubetexture.frag", va::vertex_only(logger),
+          opengl_context3d::make_skybox(logger,
+            IMAGES::SB_FRONT,
+            IMAGES::SB_RIGHT,
+            IMAGES::SB_BACK,
+            IMAGES::SB_LEFT,
+            IMAGES::SB_TOP,
+            IMAGES::SB_BOTTOM)));
 
-    auto va9 = va::vertex_only(logger);
-    DO_TRY(auto p9, pf.make("3dwire.vert", "wire.frag"));
-    auto pipe9 = make_pipeline(MOVE(p9), MOVE(contexts.d3.wireframe), MOVE(va9));
+    DO_TRY(auto d3wire, make_it("3dwire.vert", "wire.frag", va::vertex_only(logger),
+          opengl_context3d::make_wireframe3d(logger, LIST_OF_COLORS::PURPLE)));
 
-    pipeline2d d2{MOVE(pipe0), MOVE(pipe1), MOVE(pipe2), MOVE(pipe3)};
-    pipeline3d d3{MOVE(pipe4), MOVE(pipe5), MOVE(pipe6), MOVE(pipe7), MOVE(pipe8), MOVE(pipe9)};
+    pipeline2d d2{MOVE(d2color), MOVE(d2texture_wall), MOVE(d2texture_container), MOVE(d2wire)};
+    pipeline3d d3{MOVE(d3color), MOVE(d3wall), MOVE(d3cube), MOVE(d3house), MOVE(d3skybox), MOVE(d3wire)};
     return opengl_pipelines{MOVE(d2), MOVE(d3)};
   }
 };

@@ -107,7 +107,7 @@ make_vertex_array(L &logger, Attributes &&... attributes)
   }
 
   auto list = make_attribute_info_array(std::forward<Attributes>(attributes)...);
-  return vertex_attribute{std::move(list)};
+  return vertex_attribute{MOVE(list)};
 }
 
 struct skip_context {
@@ -166,7 +166,7 @@ set_attrib_pointer(L &logger, attribute_info const &attrib_info, skip_context &s
 
 } // ns impl
 
-namespace va
+namespace va // vertex_attribute
 {
 
 template <typename L>
@@ -254,11 +254,11 @@ template<typename L>
 auto
 vertex_only(L &logger)
 {
-  // num fields per attribute
-  GLint constexpr num_fields_vertex = 4; // x, y, z, w
-
   // attribute indexes
   constexpr auto V_INDEX = 0;
+
+  // num fields per attribute
+  GLint constexpr num_fields_vertex = 4; // x, y, z, w
 
   using ai = attribute_info;
   attribute_info vertex_info{V_INDEX,  num_fields_vertex, GL_FLOAT, ai::A_POSITION};

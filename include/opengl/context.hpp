@@ -210,7 +210,7 @@ public:
 using wireframe2d_context = wireframe_context<true>;
 using wireframe3d_context = wireframe_context<false>;
 
-class opengl_context2d
+struct opengl_context2d
 {
   template <typename L>
   auto static make_wireframe2d(L &logger, std::array<float, 3> const &c)
@@ -225,26 +225,9 @@ class opengl_context2d
   {
     return texture2d_context(texture::allocate_texture(logger, image));
   }
-
-public:
-  color2d_context color;
-  texture2d_context texture_wall;
-  texture2d_context texture_container;
-  wireframe2d_context wireframe;
-
-  MOVE_CONSTRUCTIBLE_ONLY(opengl_context2d);
-
-  template<typename L>
-  opengl_context2d(L &logger)
-    : texture_wall(make_2dtexture(logger, IMAGES::WALL))
-    , texture_container(make_2dtexture(logger, IMAGES::CONTAINER))
-    , wireframe(make_wireframe2d(logger, LIST_OF_COLORS::PINK))
-  {
-    LOG_ANY_GL_ERRORS(logger, "constructing 2dcontext");
-  }
 };
 
-class opengl_context3d
+struct opengl_context3d
 {
   template <typename L, typename ...IMAGES>
   auto static make_texture3dcube(L &logger, IMAGES const&... images)
@@ -267,40 +250,6 @@ class opengl_context3d
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
     return wireframe3d_context{color};
   }
-
-public:
-  color3d_context color;
-  wall_context wall;
-  texture_3dcube_context texture;
-  texture3d_context house_texture;
-  skybox_context skybox;
-  wireframe3d_context wireframe;
-
-  MOVE_CONSTRUCTIBLE_ONLY(opengl_context3d);
-
-  template<typename L>
-  opengl_context3d(L &logger)
-    : texture(make_texture3dcube(logger,
-        IMAGES::CUBE_FRONT,
-        IMAGES::CUBE_RIGHT,
-        IMAGES::CUBE_BACK,
-        IMAGES::CUBE_LEFT,
-        IMAGES::CUBE_TOP,
-        IMAGES::CUBE_BOTTOM
-        ))
-    , house_texture(texture::allocate_texture(logger, IMAGES::HOUSE))
-    , skybox(make_skybox(logger,
-        IMAGES::SB_FRONT,
-        IMAGES::SB_RIGHT,
-        IMAGES::SB_BACK,
-        IMAGES::SB_LEFT,
-        IMAGES::SB_TOP,
-        IMAGES::SB_BOTTOM
-        ))
-    , wireframe(make_wireframe3d(logger, LIST_OF_COLORS::PURPLE))
-    {
-      LOG_ANY_GL_ERRORS(logger, "constructing 3dcontext");
-    }
 };
 
 struct opengl_contexts
