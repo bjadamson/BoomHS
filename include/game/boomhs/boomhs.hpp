@@ -7,7 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <window/window.hpp>
+#include <window/sdl_window.hpp>
 #include <opengl/camera.hpp>
 #include <opengl/factory.hpp>
 #include <opengl/obj.hpp>

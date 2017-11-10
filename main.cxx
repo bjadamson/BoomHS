@@ -8,7 +8,6 @@
 
 #include <engine/lib.hpp>
 #include <opengl/lib.hpp>
-#include <window/window.hpp>
 #include <window/sdl_window.hpp>
 
 #include <game/boomhs/boomhs.hpp>
@@ -21,14 +20,11 @@ premade_result<opengl::opengl_lib>
 make_opengl_sdl_premade_configuration(L &logger, float const width, float const height)
 {
   // Select windowing library as SDL.
-  namespace w = window;
-  using window_lib = w::library_wrapper<w::sdl_library>;
-
   LOG_DEBUG("Initializing window library globals");
-  DO_TRY(auto _, window_lib::init());
+  DO_TRY(auto _, window::sdl_library::init());
 
   LOG_DEBUG("Instantiating window instance.");
-  DO_TRY(auto window, window_lib::make_window(height, width));
+  DO_TRY(auto window, window::sdl_library::make_window(height, width));
 
   DO_TRY(auto opengl, opengl::lib_factory::make(logger));
   return engine::engine_factory::make_engine(logger, MOVE(window), MOVE(opengl));

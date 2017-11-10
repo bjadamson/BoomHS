@@ -4,12 +4,20 @@
 
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
-
-#include <window/window.hpp>
 #include <window/sdl.hpp>
 
 namespace window
 {
+
+struct dimensions {
+  int const w;
+  int const h;
+  dimensions(int const wp, int const hp)
+      : w(wp)
+      , h(hp)
+  {
+  }
+};
 
 using window_type = SDL_Window;
 using window_ptr = std::unique_ptr<window_type, decltype(&SDL_DestroyWindow)>;

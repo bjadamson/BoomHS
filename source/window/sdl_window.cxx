@@ -130,7 +130,7 @@ sdl_library::make_window(int const height, int const width)
         fmt::format("GLEW could not initialize! GLEW error: {}\n", glewGetErrorString(glew_status));
     return stlw::make_error(error);
   }
-  return sdl_window{std::move(window_ptr), gl_context};
+  return sdl_window{MOVE(window_ptr), gl_context};
 }
 
 } // ns window
