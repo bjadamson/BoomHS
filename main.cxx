@@ -1,11 +1,38 @@
 #include <cstdlib>
+#include <string>
 
 #include <stlw/type_macros.hpp>
 #include <stlw/log.hpp>
+#include <stlw/result.hpp>
+#include <stlw/type_macros.hpp>
 
 #include <engine/lib.hpp>
-#include <engine/premade.hpp>
+#include <opengl/lib.hpp>
+#include <window/window.hpp>
+#include <window/sdl_window.hpp>
+
 #include <game/boomhs/boomhs.hpp>
+
+template<typename GFX_LIB>
+using premade_result = stlw::result<engine::engine<GFX_LIB>, std::string>;
+
+template<typename L>
+premade_result<opengl::opengl_lib>
+make_opengl_sdl_premade_configuration(L &logger, float const width, float const height)
+{
+  // Select windowing library as SDL.
+  namespace w = window;
+  using window_lib = w::library_wrapper<w::sdl_library>;
+
+  LOG_DEBUG("Initializing window library globals");
+  DO_TRY(auto _, window_lib::init());
+
+  LOG_DEBUG("Instantiating window instance.");
+  DO_TRY(auto window, window_lib::make_window(height, width));
+
+  DO_TRY(auto opengl, opengl::lib_factory::make(logger));
+  return engine::engine_factory::make_engine(logger, MOVE(window), MOVE(opengl));
+}
 
 int
 main(int argc, char *argv[])
@@ -16,12 +43,11 @@ main(int argc, char *argv[])
     return EXIT_FAILURE;
   };
 
-  auto premade_result = engine::make_opengl_sdl_premade_configuration(logger, 800, 600);
-  DO_TRY_OR_ELSE_RETURN(auto premade, MOVE(premade_result), on_error);
+  DO_TRY_OR_ELSE_RETURN(auto engine,
+      make_opengl_sdl_premade_configuration(logger, 800, 600),
+      on_error);
 
   LOG_DEBUG("Instantiating 'state'");
-
-  auto &engine = premade.engine();
   auto const dimensions = engine.get_dimensions();
   auto state = game::boomhs::make_state(logger, dimensions);
 
