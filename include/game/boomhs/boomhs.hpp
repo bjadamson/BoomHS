@@ -101,11 +101,16 @@ public:
 
 class boomhs_game
 {
-  NO_COPY(boomhs_game);
+  opengl::opengl_pipelines &opengl_;
 
+  NO_COPY(boomhs_game);
 public:
-  boomhs_game() = default;
   MOVE_DEFAULT(boomhs_game);
+
+  explicit boomhs_game(opengl::opengl_pipelines &ogl)
+    : opengl_(ogl)
+  {
+  }
 
   auto ecst_systems() const
   {

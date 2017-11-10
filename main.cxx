@@ -12,11 +12,10 @@
 
 #include <game/boomhs/boomhs.hpp>
 
-template<typename GFX_LIB>
-using premade_result = stlw::result<engine::engine<GFX_LIB>, std::string>;
+using EngineResult = stlw::result<engine::Engine, std::string>;
 
 template<typename L>
-premade_result<opengl::opengl_lib>
+EngineResult
 make_opengl_sdl_premade_configuration(L &logger, float const width, float const height)
 {
   // Select windowing library as SDL.
@@ -27,7 +26,7 @@ make_opengl_sdl_premade_configuration(L &logger, float const width, float const 
   DO_TRY(auto window, window::sdl_library::make_window(height, width));
 
   DO_TRY(auto opengl, opengl::lib_factory::make(logger));
-  return engine::engine_factory::make_engine(logger, MOVE(window), MOVE(opengl));
+  return engine::make_engine(logger, MOVE(window), MOVE(opengl));
 }
 
 int
@@ -44,15 +43,15 @@ main(int argc, char *argv[])
       on_error);
 
   LOG_DEBUG("Instantiating 'state'");
-  auto const dimensions = engine.get_dimensions();
+  auto const dimensions = engine::get_dimensions(engine);
   auto state = game::boomhs::make_state(logger, dimensions);
 
   // Initialize the game instance.
   LOG_DEBUG("Instantiating game 'boomhs'");
-  game::boomhs::boomhs_game game;
+  game::boomhs::boomhs_game game{engine.gfx_lib};
 
   LOG_DEBUG("Starting game loop");
-  engine.start(MOVE(game), MOVE(state));
+  engine::start(engine, MOVE(game), MOVE(state));
 
   LOG_DEBUG("Game loop finished successfully! Ending program now.");
   return EXIT_SUCCESS;

@@ -5,142 +5,133 @@
 #include <stlw/type_macros.hpp>
 
 #include <opengl/camera.hpp>
-#include <opengl/pipeline.hpp>
 #include <opengl/renderer.hpp>
 
 namespace opengl
 {
 
-template <typename L>
-struct render_args {
-  L &logger;
-  camera const& camera;
-  glm::mat4 const& projection;
-};
-
-template<typename L>
-auto make_render_args(L &l, camera const& c, glm::mat4 const& projection)
+template<typename C>
+class pipeline
 {
-  return render_args<L>{l, c, projection};
-}
-
-class opengl_draw_lib
-{
-  friend struct lib_factory;
-private:
-  explicit opengl_draw_lib() {}
-
-  /*
-  template<typename ...Args>
-  void
-  draw_impl(Args &&... args)
-  {
-    this->renderer_.draw(std::forward<Args>(args)...);
-  }
-
-  template <typename Args, typename Wrappable>
-  void draw_wrappable(Args const& args, Wrappable const& wrappable)
-  {
-    auto const draw_fn = [&](auto &&pipeline_shape_pair)
-    {
-      auto &pipeline = pipeline_shape_pair.pipeline;
-      auto &&shape = MOVE(pipeline_shape_pair.shape);
-      this->draw_impl(args, pipeline, MOVE(shape));
-    };
-    auto burrito = stlw::make_burrito(wrappable);
-    stlw::hof::for_each(burrito, draw_fn);
-  }
-
-  template <typename Args, typename Wrappable>
-  void draw_wrappable(Args const& args, Wrappable &&wrappable)
-  {
-    auto const draw_fn = [&](auto &&pipeline_shape)
-    {
-      auto &pipeline = pipeline_shape.pipeline;
-      auto &&shape = MOVE(pipeline_shape.shape);
-      this->draw_impl(args, pipeline, MOVE(shape));
-    };
-    auto burrito = stlw::make_burrito(MOVE(wrappable));
-    stlw::hof::for_each(MOVE(burrito), draw_fn);
-  }
-  */
-
+  shader_program program_;
+  C context_;
+  vertex_attribute va_;
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(opengl_draw_lib);
-
-  //template<typename ...Args>
-  //void
-  ////draw_impl(Args const&... args)
-  //{
-    //opengl::draw(std::forward<Args>(args)...);
-  //}
-
-  template<typename Args, typename T>
-  void
-  draw(Args const& args, T &pipeline_shape)
+  explicit pipeline(shader_program &&sp, C &&ctx, vertex_attribute &&v)
+    : program_(MOVE(sp))
+    , context_(MOVE(ctx))
+    , va_(MOVE(v))
   {
-      auto &pipeline = pipeline_shape.pipeline;
-      auto const& shape = MOVE(pipeline_shape.shape);
-      opengl::draw(args, pipeline, shape);
   }
 
-  template<typename Args, template<class, std::size_t> typename Container, typename T, std::size_t N>
-  void
-  draw(Args const& args, Container<T, N> const& arr)
-  {
-    for (auto const& d : arr) {
-      this->draw(args, d);
-    }
-  }
+  auto const& va() const { return this->va_; }
+  auto const& ctx() const { return this->context_; }
 
-  // The last parameter type here ensures that the value passed is similar to a stl container.
-  //template<typename Args, typename Container, typename IGNORE= typename Container::value_type>
-  //void
-  //draw(Args const& args, Container &&c)
-  //{
-    //this->draw_wrappable(args, MOVE(c));
-  //}
+  auto& program_ref() { return this->program_; }
 
-  //template<typename Args, typename ...T>
-  //void
-  //draw(Args const& args, T &&... t)
-  //{
-    //auto tuple = std::make_tuple(MOVE(t)...);
-    //this->draw_wrappable(args, tuple);
-  //}
-
-  void begin()
-  {
-    opengl::begin();
-  }
-
-  void end()
-  {
-    opengl::end();
-  }
+  using CTX = C;
+  MOVE_CONSTRUCTIBLE_ONLY(pipeline);
 };
 
-struct opengl_lib
+struct pipeline2d
 {
-  opengl_pipelines pipelines;
+  pipeline<color2d_context> color;
+  pipeline<texture2d_context> texture_wall;
+  pipeline<texture2d_context> texture_container;
+  pipeline<wireframe2d_context> wireframe;
 
-  MOVE_CONSTRUCTIBLE_ONLY(opengl_lib);
-  opengl_lib(opengl_pipelines &&p)
-    : pipelines(MOVE(p))
+  MOVE_CONSTRUCTIBLE_ONLY(pipeline2d);
+};
+
+struct pipeline3d
+{
+  pipeline<color3d_context> color;
+  pipeline<wall_context> wall;
+  pipeline<texture_3dcube_context> texture_3dcube;
+  pipeline<texture3d_context> house;
+  pipeline<skybox_context> skybox;
+  pipeline<wireframe3d_context> wireframe;
+
+  MOVE_CONSTRUCTIBLE_ONLY(pipeline3d);
+};
+
+struct opengl_pipelines
+{
+  pipeline2d d2;
+  pipeline3d d3;
+
+  MOVE_CONSTRUCTIBLE_ONLY(opengl_pipelines);
+  explicit opengl_pipelines(pipeline2d &&p2d, pipeline3d &&p3d)
+    : d2(MOVE(p2d))
+    , d3(MOVE(p3d))
   {
   }
 };
 
-struct lib_factory
+class lib_factory
 {
   lib_factory() = delete;
 
+  template<typename C>
+  static stlw::result<pipeline<C>, std::string>
+  make_pipeline(char const* vertex_s, char const* frag_s, vertex_attribute &&va, C &&context)
+  {
+    shader_program_factory pf;
+    DO_TRY(auto sp, pf.make(vertex_s, frag_s));
+    return pipeline<C>{MOVE(sp), MOVE(context), MOVE(va)};
+  }
+
+public:
   template<typename L>
-  static stlw::result<opengl_lib, std::string>
+  static stlw::result<opengl_pipelines, std::string>
   make(L &logger)
   {
-    DO_TRY(auto pipelines, opengl_pipelines_factory::make(logger));
-    return opengl_lib{MOVE(pipelines)};
+    // TODO: don't bother constructing opengl_contexts...
+    DO_TRY(auto d2color, make_pipeline("2dcolor.vert", "2dcolor.frag", va::vertex_color(logger),
+          color2d_context{}));
+
+    DO_TRY(auto d2texture_wall, make_pipeline("2dtexture.vert", "2dtexture.frag", va::vertex_uv2d(logger),
+          opengl_context2d::make_2dtexture(logger, IMAGES::WALL)));
+
+    DO_TRY(auto d2texture_container, make_pipeline("2dtexture.vert", "2dtexture.frag", va::vertex_uv2d(logger),
+          opengl_context2d::make_2dtexture(logger, IMAGES::CONTAINER)));
+
+    DO_TRY(auto d2wire, make_pipeline("wire.vert", "wire.frag", va::vertex_only(logger),
+          opengl_context2d::make_wireframe2d(logger, LIST_OF_COLORS::PINK)));
+
+    DO_TRY(auto d3color, make_pipeline("3dcolor.vert", "3dcolor.frag", va::vertex_color(logger),
+          color3d_context{}));
+
+    DO_TRY(auto d3wall, make_pipeline("wall.vert", "wall.frag", va::vertex_color(logger),
+          wall_context{}));
+
+    DO_TRY(auto d3cube, make_pipeline("3d_cubetexture.vert", "3d_cubetexture.frag", va::vertex_only(logger),
+          opengl_context3d::make_texture3dcube(logger,
+            IMAGES::CUBE_FRONT,
+            IMAGES::CUBE_RIGHT,
+            IMAGES::CUBE_BACK,
+            IMAGES::CUBE_LEFT,
+            IMAGES::CUBE_TOP,
+            IMAGES::CUBE_BOTTOM)));
+
+    DO_TRY(auto d3house, make_pipeline("3dtexture.vert", "3dtexture.frag", va::vertex_normal_uv3d(logger),
+          texture3d_context{texture::allocate_texture(logger, IMAGES::HOUSE)}));
+
+    DO_TRY(auto d3skybox, make_pipeline("3d_cubetexture.vert", "3d_cubetexture.frag", va::vertex_only(logger),
+          opengl_context3d::make_skybox(logger,
+            IMAGES::SB_FRONT,
+            IMAGES::SB_RIGHT,
+            IMAGES::SB_BACK,
+            IMAGES::SB_LEFT,
+            IMAGES::SB_TOP,
+            IMAGES::SB_BOTTOM)));
+
+    DO_TRY(auto d3wire, make_pipeline("3dwire.vert", "wire.frag", va::vertex_only(logger),
+          opengl_context3d::make_wireframe3d(logger, LIST_OF_COLORS::PURPLE)));
+
+    pipeline2d d2{MOVE(d2color), MOVE(d2texture_wall), MOVE(d2texture_container), MOVE(d2wire)};
+    pipeline3d d3{MOVE(d3color), MOVE(d3wall), MOVE(d3cube), MOVE(d3house), MOVE(d3skybox), MOVE(d3wire)};
+    return opengl_pipelines{MOVE(d2), MOVE(d3)};
   }
 };
 
