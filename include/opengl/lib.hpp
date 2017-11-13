@@ -47,7 +47,7 @@ struct pipeline2d
 struct pipeline3d
 {
   factories::color<pipeline<color3d_context>> color;
-  factories::color<pipeline<wall_context>> wall;
+  factories::color<pipeline<hashtag3d_context>> hashtag;
   factories::texture<pipeline<texture_3dcube_context>> texture_cube;
   factories::texture<pipeline<texture3d_context>> house;
   factories::texture<pipeline<skybox_context>> skybox;
@@ -111,9 +111,9 @@ public:
           va::vertex_color(logger),
           color3d_context{}));
 
-    DO_TRY(auto d3wall, make_pipeline<factories::color>("wall.vert", "wall.frag",
+    DO_TRY(auto d3hashtag, make_pipeline<factories::color>("3d_hashtag.vert", "3d_hashtag.frag",
           va::vertex_color(logger),
-          wall_context{}));
+          hashtag3d_context{}));
 
     DO_TRY(auto d3cube, make_pipeline<factories::texture>("3d_cubetexture.vert", "3d_cubetexture.frag",
           va::vertex_only(logger),
@@ -144,7 +144,7 @@ public:
           opengl_context3d::make_wireframe3d(logger, LIST_OF_COLORS::PURPLE)));
 
     pipeline2d d2{MOVE(d2color), MOVE(d2texture_wall), MOVE(d2texture_container), MOVE(d2wire)};
-    pipeline3d d3{MOVE(d3color), MOVE(d3wall), MOVE(d3cube), MOVE(d3house), MOVE(d3skybox), MOVE(d3wire)};
+    pipeline3d d3{MOVE(d3color), MOVE(d3hashtag), MOVE(d3cube), MOVE(d3house), MOVE(d3skybox), MOVE(d3wire)};
     return opengl_pipelines{MOVE(d2), MOVE(d3)};
   }
 };

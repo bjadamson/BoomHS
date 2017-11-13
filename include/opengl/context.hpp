@@ -2,6 +2,7 @@
 #include <opengl/colors.hpp>
 #include <opengl/global.hpp>
 #include <opengl/shader_program.hpp>
+#include <opengl/types.hpp>
 #include <opengl/texture.hpp>
 
 #include <backward/backward.hpp>
@@ -46,6 +47,8 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(color2d_context);
   color2d_context() = default;
 
+  using info_t = color_t;
+
   static bool constexpr IS_2D = true;
   static bool constexpr IS_INSTANCED = false;
   static bool constexpr IS_SKYBOX = false;
@@ -63,6 +66,8 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(color3d_context);
   color3d_context() = default;
 
+  using info_t = color_t;
+
   static bool constexpr IS_2D = false;
   static bool constexpr IS_INSTANCED = false;
   static bool constexpr IS_SKYBOX = false;
@@ -72,14 +77,15 @@ public:
   auto const& vao() const { return this->vao_; }
 };
 
-class wall_context
+class hashtag3d_context
 {
   opengl_vao vao_;
-  static constexpr GLuint INSTANCE_COUNT = 3u;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(wall_context);
-  wall_context() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(hashtag3d_context);
+  hashtag3d_context() = default;
+
+  using info_t = color_t;
 
   static bool constexpr IS_2D = false;
   static bool constexpr IS_INSTANCED = true;
@@ -87,7 +93,7 @@ public:
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = false;
 
-  inline auto instance_count() const { return wall_context::INSTANCE_COUNT; }
+  inline auto instance_count() const { return 3u; }
   inline auto const& vao() const { return this->vao_; }
 };
 
@@ -98,6 +104,7 @@ class texture3d_context
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(texture3d_context);
+  using info_t = uv_t;
 
   explicit texture3d_context(texture_info const t)
       : texture_info_(t)
@@ -121,6 +128,7 @@ class texture_3dcube_context
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(texture_3dcube_context);
+  using info_t = uv_t;
 
   explicit texture_3dcube_context(texture_info const t)
       : texture_info_(t)
@@ -144,6 +152,7 @@ class skybox_context
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(skybox_context);
+  using info_t = uv_t;
 
   explicit skybox_context(texture_info const t)
       : texture_info_(t)
@@ -166,12 +175,13 @@ class texture2d_context
   texture_info texture_info_;
 
 public:
+  MOVE_CONSTRUCTIBLE_ONLY(texture2d_context);
+  using info_t = uv_t;
+
   explicit texture2d_context(texture_info const t)
       : texture_info_(t)
   {
   }
-
-  MOVE_CONSTRUCTIBLE_ONLY(texture2d_context);
 
   static bool constexpr IS_2D = true;
   static bool constexpr IS_INSTANCED = false;
@@ -191,6 +201,7 @@ class wireframe_context
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(wireframe_context);
+  using info_t = wireframe_t;
 
   explicit wireframe_context(std::array<float, 4> const &color)
       : color_(color)

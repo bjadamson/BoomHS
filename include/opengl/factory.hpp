@@ -753,7 +753,7 @@ auto make_pipeline_shape_pair(S &&s, P &p) { return pipeline_shape_pair<S, P>{MO
   {                                                                                                \
     auto pf = polygon_factory{};                                                                   \
     auto shape = pf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
-    auto pair = make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                            \
+    auto pair = make_pipeline_shape_pair(MOVE(shape), this->pipeline());                           \
     copy_to_gpu(logger, pair);                                                                     \
     return pair;                                                                                   \
   }                                                                                                \
@@ -763,19 +763,26 @@ auto make_pipeline_shape_pair(S &&s, P &p) { return pipeline_shape_pair<S, P>{MO
   {                                                                                                \
     auto cf = cube_factory{};                                                                      \
     auto shape = cf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
-    auto pair = make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                            \
+    auto pair = make_pipeline_shape_pair(MOVE(shape), this->pipeline());                           \
     copy_to_gpu(logger, pair);                                                                     \
     return pair;                                                                                   \
   }                                                                                                \
-  template<typename L, typename ...Args>                                                           \
-  auto make_mesh(L &logger, mesh_properties &&properties, Args &&... args)                         \
-  {                                                                                                \
-    auto mf = mesh_factory{};                                                                      \
-    auto shape = mf.make(MOVE(properties), factory_type{}, std::forward<Args>(args)...);           \
-    auto pair = make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                            \
-    copy_to_gpu(logger, pair);                                                                     \
-    return pair;                                                                                   \
-  }
+
+template<typename L, typename P, typename ...Args>
+auto make_mesh(L &logger, P &pipeline, mesh_properties &&properties, Args &&... args)
+{
+  auto const& ctx = pipeline.ctx();
+
+  using CTX_REF = decltype(ctx);
+  using CTX = typename std::remove_reference<CTX_REF>::type;
+  using factory_type = typename CTX::info_t;
+
+  auto mf = mesh_factory{};
+  auto shape = mf.make(MOVE(properties), factory_type{}, std::forward<Args>(args)...);
+  auto pair = make_pipeline_shape_pair(MOVE(shape), pipeline);
+  copy_to_gpu(logger, pair);
+  return pair;
+}
 
 template<typename P>
 class color
@@ -783,9 +790,12 @@ class color
   P pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(color);
-  explicit constexpr color(P &&p) : pipeline_(MOVE(p)) {}
+  explicit color(P &&p) : pipeline_(MOVE(p)) {}
 
   DEFINE_FACTORY_METHODS(color_t);
+
+  // TODO: remove
+  auto & pipeline() { return this->pipeline_; }
 };
 
 template<typename P>
@@ -794,9 +804,12 @@ class texture
   P pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(texture);
-  explicit constexpr texture(P &&p) : pipeline_(MOVE(p)) {}
+  explicit texture(P &&p) : pipeline_(MOVE(p)) {}
 
   DEFINE_FACTORY_METHODS(uv_t);
+
+  // TODO: remove
+  auto & pipeline() { return this->pipeline_; }
 };
 
 template<typename P>
@@ -805,9 +818,12 @@ class wireframe
   P pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(wireframe);
-  explicit constexpr wireframe(P &&p) : pipeline_(MOVE(p)) {}
+  explicit wireframe(P &&p) : pipeline_(MOVE(p)) {}
 
   DEFINE_FACTORY_METHODS(wireframe_t);
+
+  // TODO: remove
+  auto & pipeline() { return this->pipeline_; }
 };
 
 #undef DEFINE_FACTORY_METHODS

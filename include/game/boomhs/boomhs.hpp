@@ -113,7 +113,7 @@ public:
 
   template<typename PROXY, typename STATE>
   auto
-  init(PROXY &proxy, STATE &state, opengl::opengl_pipelines &sf)
+  init(PROXY &proxy, STATE &state, opengl::opengl_pipelines &gfx)
   {
     auto const make_entity = [&proxy](auto const i, auto const& t) {
       auto eid = proxy.create_entity();
@@ -147,11 +147,14 @@ public:
 
     // LOAD different assets.
     //"assets/chalet.mtl"
+    auto &logger = state.logger;
     auto house_mesh = opengl::load_mesh("assets/house_uv.obj", opengl::LoadNormals{true}, opengl::LoadUvs{true});
-    auto house_uv = sf.d3.house.make_mesh(state.logger, opengl::mesh_properties{GL_TRIANGLES, MOVE(house_mesh)});
+    auto house_uv = opengl::factories::make_mesh(logger, gfx.d3.house.pipeline(),
+        opengl::mesh_properties{GL_TRIANGLES, MOVE(house_mesh)});
 
     auto hashtag_mesh = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
-    auto hashtag = sf.d3.wall.make_mesh(state.logger, opengl::mesh_properties{GL_TRIANGLES, MOVE(hashtag_mesh)});
+    auto hashtag = opengl::factories::make_mesh(logger, gfx.d3.hashtag.pipeline(),
+        opengl::mesh_properties{GL_TRIANGLES, MOVE(hashtag_mesh)});
 
     return make_assets(MOVE(house_uv), MOVE(hashtag));
   }
