@@ -25,7 +25,7 @@ make_opengl_sdl_premade_configuration(L &logger, float const width, float const 
   LOG_DEBUG("Instantiating window instance.");
   DO_TRY(auto window, window::sdl_library::make_window(height, width));
 
-  DO_TRY(auto opengl, opengl::lib_factory::make(logger));
+  DO_TRY(auto opengl, opengl::lib_factory::make_opengl_factories(logger));
   return engine::make_engine(logger, MOVE(window), MOVE(opengl));
 }
 
@@ -48,7 +48,7 @@ main(int argc, char *argv[])
 
   // Initialize the game instance.
   LOG_DEBUG("Instantiating game 'boomhs'");
-  game::boomhs::boomhs_game game{engine.gfx_lib};
+  game::boomhs::boomhs_game game;
 
   LOG_DEBUG("Starting game loop");
   engine::start(engine, MOVE(game), MOVE(state));

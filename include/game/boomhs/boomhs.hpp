@@ -101,25 +101,19 @@ public:
 
 class boomhs_game
 {
-  opengl::opengl_pipelines &opengl_;
-
   NO_COPY(boomhs_game);
 public:
   MOVE_DEFAULT(boomhs_game);
-
-  explicit boomhs_game(opengl::opengl_pipelines &ogl)
-    : opengl_(ogl)
-  {
-  }
+  boomhs_game() = default;
 
   auto ecst_systems() const
   {
     return std::make_tuple(st::io_system, st::randompos_system);
   }
 
-  template<typename PROXY, typename STATE, typename SF>
+  template<typename PROXY, typename STATE>
   auto
-  init(PROXY &proxy, STATE &state, SF &sf)
+  init(PROXY &proxy, STATE &state, opengl::opengl_pipelines &sf)
   {
     auto const make_entity = [&proxy](auto const i, auto const& t) {
       auto eid = proxy.create_entity();

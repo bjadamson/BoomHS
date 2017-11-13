@@ -780,10 +780,10 @@ auto make_pipeline_shape_pair(S &&s, P &p) { return pipeline_shape_pair<S, P>{MO
 template<typename P>
 class color
 {
-  P &pipeline_;
+  P pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(color);
-  explicit constexpr color(P &p) : pipeline_(p) {}
+  explicit constexpr color(P &&p) : pipeline_(MOVE(p)) {}
 
   DEFINE_FACTORY_METHODS(color_t);
 };
@@ -791,10 +791,10 @@ public:
 template<typename P>
 class texture
 {
-  P &pipeline_;
+  P pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(texture);
-  explicit constexpr texture(P &p) : pipeline_(p) {}
+  explicit constexpr texture(P &&p) : pipeline_(MOVE(p)) {}
 
   DEFINE_FACTORY_METHODS(uv_t);
 };
@@ -802,10 +802,10 @@ public:
 template<typename P>
 class wireframe
 {
-  P &pipeline_;
+  P pipeline_;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(wireframe);
-  explicit constexpr wireframe(P &p) : pipeline_(p) {}
+  explicit constexpr wireframe(P &&p) : pipeline_(MOVE(p)) {}
 
   DEFINE_FACTORY_METHODS(wireframe_t);
 };
@@ -813,81 +813,5 @@ public:
 #undef DEFINE_FACTORY_METHODS
 
 } // ns factories
-
-template<typename P0, typename P1, typename P2, typename P3>
-struct d2_shape_factory
-{
-  factories::color<P0> color;
-  factories::texture<P1> texture_wall;
-  factories::texture<P2> texture_container;
-  factories::wireframe<P3> wireframe;
-
-  explicit d2_shape_factory(factories::color<P0> &&cf, factories::texture<P1> &&tf0,
-      factories::texture<P2> &&tf1, factories::wireframe<P3> &&wf)
-    : color(MOVE(cf))
-    , texture_wall(MOVE(tf0))
-    , texture_container(MOVE(tf1))
-    , wireframe(MOVE(wf))
-  {}
-
-  MOVE_CONSTRUCTIBLE_ONLY(d2_shape_factory);
-};
-
-template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5>
-struct d3_shape_factory
-{
-  factories::color<P0> color;
-  factories::color<P1> wall;
-  factories::texture<P2> texture_cube;
-  factories::texture<P3> house;
-  factories::texture<P4> skybox;
-  factories::wireframe<P5> wireframe;
-
-  explicit d3_shape_factory(factories::color<P0> &&cf, factories::color<P1> &&wallf,
-      factories::texture<P2> &&tf, factories::texture<P3> &&house, factories::texture<P4> &&sky,
-      factories::wireframe<P5> &&wf)
-    : color(MOVE(cf))
-    , wall(MOVE(wallf))
-    , texture_cube(MOVE(tf))
-    , house(MOVE(house))
-    , skybox(MOVE(sky))
-    , wireframe(MOVE(wf))
-  {}
-
-  MOVE_CONSTRUCTIBLE_ONLY(d3_shape_factory);
-};
-
-template<typename SF2D, typename SF3D>
-struct shape_factories
-{
-  SF2D d2;
-  SF3D d3;
-};
-
-template<typename P0, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6,
-  typename P7, typename P8, typename P9>
-auto make_shape_factories(P0 &p0, P1 &p1, P2 &p2, P3 &p3, P4 &p4, P5 &p5, P6 &p6, P7 &p7, P8 &p8,
-    P9 &p9)
-{
-  auto d2p = d2_shape_factory<P0, P1, P2, P3>{
-    factories::color<P0>{p0},
-    factories::texture<P1>{p1},
-    factories::texture<P2>{p2},
-    factories::wireframe<P3>{p3}
-  };
-
-  auto d3p = d3_shape_factory<P4, P5, P6, P7, P8, P9>{
-    factories::color<P4>{p4},
-    factories::color<P5>{p5},
-    factories::texture<P6>{p6},
-    factories::texture<P7>{p7},
-    factories::texture<P8>{p8},
-    factories::wireframe<P9>{p9}
-  };
-
-  using SF2D = decltype(d2p);
-  using SF3D = decltype(d3p);
-  return shape_factories<SF2D, SF3D>{MOVE(d2p), MOVE(d3p)};
-}
 
 } // ns opengl

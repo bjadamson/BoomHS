@@ -83,8 +83,8 @@ void end(Engine &e)
   SDL_GL_SwapWindow(e.window.raw());
 }
 
-template<typename LoopState, typename Game, typename P, typename SF, typename ASSETS>
-void loop(Engine &engine, LoopState &&state, Game &&game, P &proxy, SF &sf, ASSETS const& assets)
+template<typename LoopState, typename Game, typename P, typename ASSETS>
+void loop(Engine &engine, LoopState &&state, Game &&game, P &proxy, ASSETS const& assets)
 {
   namespace sea = ecst::system_execution_adapter;
   auto io_tags = sea::t(st::io_system);
@@ -103,7 +103,7 @@ void loop(Engine &engine, LoopState &&state, Game &&game, P &proxy, SF &sf, ASSE
   begin();
   LOG_TRACE("rendering.");
 
-  game.game_loop(state, sf, assets);
+  game.game_loop(state, engine.gfx_lib, assets);
   end(engine);
   LOG_TRACE("game loop stepping.");
 }
@@ -120,23 +120,8 @@ void start(Engine &engine, G &&game, S &&state)
   auto ctx = ecst_setup::make_context();
   LOG_TRACE("stepping ecst once");
 
-  // Initialize context with some entities.
-  auto &d2 = engine.gfx_lib.d2;
-  auto &d3 = engine.gfx_lib.d3;
-  auto sf = opengl::make_shape_factories(
-    d2.color,
-    d2.texture_wall,
-    d2.texture_container,
-    d2.wireframe,
-
-    d3.color,
-    d3.wall,
-    d3.texture_3dcube,
-    d3.house,
-    d3.skybox,
-    d3.wireframe);
   auto const assets = ctx->step([&](auto &proxy) {
-      return game.init(proxy, state, sf);
+      return game.init(proxy, state, engine.gfx_lib);
   });
 
   namespace sea = ecst::system_execution_adapter;
@@ -182,7 +167,7 @@ void start(Engine &engine, G &&game, S &&state)
             state.skybox_model, mouse_data);
       };
       auto loop_state = mls(state);
-      loop(engine, MOVE(loop_state), game, proxy, sf, assets);
+      loop(engine, MOVE(loop_state), game, proxy, assets);
     };
     while (!state.quit) {
       fps_capped_game_loop(fn);
