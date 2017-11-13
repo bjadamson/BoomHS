@@ -727,52 +727,70 @@ struct pipeline_shape_pair
 template<typename S, typename P>
 auto make_pipeline_shape_pair(S &&s, P &p) { return pipeline_shape_pair<S, P>{MOVE(s), p}; }
 
-#define DEFINE_FACTORY_METHODS(factory_type)                                                       \
-  template<typename L, typename ...Args>                                                           \
-  auto make_triangle(L &logger, triangle_properties const& properties, Args &&... args)            \
-  {                                                                                                \
-    auto tf = triangle_factory{};                                                                  \
-    auto shape = tf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
-    auto pair = make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                            \
-    copy_to_gpu(logger, pair);                                                                     \
-    return pair;                                                                                   \
-  }                                                                                                \
-                                                                                                   \
-  template<typename L, typename ...Args>                                                           \
-  auto make_rectangle(L &logger, rectangle_properties const& properties, Args &&... args)          \
-  {                                                                                                \
-    auto rf = rectangle_factory{};                                                                 \
-    auto shape = rf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
-    auto pair = make_pipeline_shape_pair(MOVE(shape), this->pipeline_);                            \
-    copy_to_gpu(logger, pair);                                                                     \
-    return pair;                                                                                   \
-  }                                                                                                \
-                                                                                                   \
-  template<typename L, typename ...Args>                                                           \
-  auto make_polygon(L &logger, polygon_properties const& properties, Args &&... args)              \
-  {                                                                                                \
-    auto pf = polygon_factory{};                                                                   \
-    auto shape = pf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
-    auto pair = make_pipeline_shape_pair(MOVE(shape), this->pipeline());                           \
-    copy_to_gpu(logger, pair);                                                                     \
-    return pair;                                                                                   \
-  }                                                                                                \
-                                                                                                   \
-  template<typename L, typename ...Args>                                                           \
-  auto make_cube(L &logger, cube_properties const& properties, Args &&... args)                    \
-  {                                                                                                \
-    auto cf = cube_factory{};                                                                      \
-    auto shape = cf.make(properties, factory_type{}, std::forward<Args>(args)...);                 \
-    auto pair = make_pipeline_shape_pair(MOVE(shape), this->pipeline());                           \
-    copy_to_gpu(logger, pair);                                                                     \
-    return pair;                                                                                   \
-  }                                                                                                \
+template<typename L, typename P, typename ...Args>
+auto make_triangle(L &logger, P &pipeline, triangle_properties const& properties, Args &&... args)
+{
+  auto const& ctx = pipeline.ctx();
+  using CTX_REF = decltype(ctx);
+  using CTX = typename std::remove_reference<CTX_REF>::type;
+  using factory_type = typename CTX::info_t;
+
+  auto tf = triangle_factory{};
+  auto shape = tf.make(properties, factory_type{}, std::forward<Args>(args)...);
+  auto pair = make_pipeline_shape_pair(MOVE(shape), pipeline);
+  copy_to_gpu(logger, pair);
+  return pair;
+}
+
+template<typename L, typename P, typename ...Args>
+auto make_rectangle(L &logger, P &pipeline, rectangle_properties const& properties, Args &&... args)
+{
+  auto const& ctx = pipeline.ctx();
+  using CTX_REF = decltype(ctx);
+  using CTX = typename std::remove_reference<CTX_REF>::type;
+  using factory_type = typename CTX::info_t;
+
+  auto rf = rectangle_factory{};
+  auto shape = rf.make(properties, factory_type{}, std::forward<Args>(args)...);
+  auto pair = make_pipeline_shape_pair(MOVE(shape), pipeline);
+  copy_to_gpu(logger, pair);
+  return pair;
+}
+
+template<typename L, typename P, typename ...Args>
+auto make_polygon(L &logger, P &pipeline, polygon_properties const& properties, Args &&... args)
+{
+  auto const& ctx = pipeline.ctx();
+  using CTX_REF = decltype(ctx);
+  using CTX = typename std::remove_reference<CTX_REF>::type;
+  using factory_type = typename CTX::info_t;
+
+  auto pf = polygon_factory{};
+  auto shape = pf.make(properties, factory_type{}, std::forward<Args>(args)...);
+  auto pair = make_pipeline_shape_pair(MOVE(shape), pipeline);
+  copy_to_gpu(logger, pair);
+  return pair;
+}
+
+template<typename L, typename P, typename ...Args>
+auto make_cube(L &logger, P &pipeline, cube_properties const& properties, Args &&... args)
+{
+  auto const& ctx = pipeline.ctx();
+  using CTX_REF = decltype(ctx);
+  using CTX = typename std::remove_reference<CTX_REF>::type;
+  using factory_type = typename CTX::info_t;
+
+  auto cf = cube_factory{};
+  auto shape = cf.make(properties, factory_type{}, std::forward<Args>(args)...);
+  auto pair = make_pipeline_shape_pair(MOVE(shape), pipeline);
+  copy_to_gpu(logger, pair);
+  return pair;
+}
 
 template<typename L, typename P, typename ...Args>
 auto make_mesh(L &logger, P &pipeline, mesh_properties &&properties, Args &&... args)
 {
   auto const& ctx = pipeline.ctx();
-
   using CTX_REF = decltype(ctx);
   using CTX = typename std::remove_reference<CTX_REF>::type;
   using factory_type = typename CTX::info_t;
@@ -792,8 +810,6 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(color);
   explicit color(P &&p) : pipeline_(MOVE(p)) {}
 
-  DEFINE_FACTORY_METHODS(color_t);
-
   // TODO: remove
   auto & pipeline() { return this->pipeline_; }
 };
@@ -806,8 +822,6 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(texture);
   explicit texture(P &&p) : pipeline_(MOVE(p)) {}
 
-  DEFINE_FACTORY_METHODS(uv_t);
-
   // TODO: remove
   auto & pipeline() { return this->pipeline_; }
 };
@@ -819,8 +833,6 @@ class wireframe
 public:
   MOVE_CONSTRUCTIBLE_ONLY(wireframe);
   explicit wireframe(P &&p) : pipeline_(MOVE(p)) {}
-
-  DEFINE_FACTORY_METHODS(wireframe_t);
 
   // TODO: remove
   auto & pipeline() { return this->pipeline_; }
