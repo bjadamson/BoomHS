@@ -39,13 +39,13 @@ public:
   inline auto gl_raw_value() const { return this->vao_; }
 };
 
-class color2d_context
+class color2d_vao
 {
   opengl_vao vao_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(color2d_context);
-  color2d_context() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(color2d_vao);
+  color2d_vao() = default;
 
   using info_t = color_t;
 
@@ -58,13 +58,13 @@ public:
   auto const& vao() const { return this->vao_; }
 };
 
-class color3d_context
+class color3d_vao
 {
   opengl_vao vao_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(color3d_context);
-  color3d_context() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(color3d_vao);
+  color3d_vao() = default;
 
   using info_t = color_t;
 
@@ -77,13 +77,13 @@ public:
   auto const& vao() const { return this->vao_; }
 };
 
-class hashtag3d_context
+class hashtag3d_vao
 {
   opengl_vao vao_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(hashtag3d_context);
-  hashtag3d_context() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(hashtag3d_vao);
+  hashtag3d_vao() = default;
 
   using info_t = color_t;
 
@@ -97,16 +97,16 @@ public:
   inline auto const& vao() const { return this->vao_; }
 };
 
-class texture3d_context
+class texture3d_vao
 {
   opengl_vao vao_;
   texture_info texture_info_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(texture3d_context);
+  MOVE_CONSTRUCTIBLE_ONLY(texture3d_vao);
   using info_t = uv_t;
 
-  explicit texture3d_context(texture_info const t)
+  explicit texture3d_vao(texture_info const t)
       : texture_info_(t)
   {
   }
@@ -121,16 +121,16 @@ public:
   auto texture() const { return this->texture_info_; }
 };
 
-class texture_3dcube_context
+class texture_3dcube_vao
 {
   opengl_vao vao_;
   texture_info texture_info_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(texture_3dcube_context);
+  MOVE_CONSTRUCTIBLE_ONLY(texture_3dcube_vao);
   using info_t = uv_t;
 
-  explicit texture_3dcube_context(texture_info const t)
+  explicit texture_3dcube_vao(texture_info const t)
       : texture_info_(t)
   {
   }
@@ -145,16 +145,16 @@ public:
   auto texture() const { return this->texture_info_; }
 };
 
-class skybox_context
+class skybox_vao
 {
   opengl_vao vao_;
   texture_info texture_info_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(skybox_context);
+  MOVE_CONSTRUCTIBLE_ONLY(skybox_vao);
   using info_t = uv_t;
 
-  explicit skybox_context(texture_info const t)
+  explicit skybox_vao(texture_info const t)
       : texture_info_(t)
   {
   }
@@ -169,16 +169,16 @@ public:
   auto texture() const { return this->texture_info_; }
 };
 
-class texture2d_context
+class texture2d_vao
 {
   opengl_vao vao_;
   texture_info texture_info_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(texture2d_context);
+  MOVE_CONSTRUCTIBLE_ONLY(texture2d_vao);
   using info_t = uv_t;
 
-  explicit texture2d_context(texture_info const t)
+  explicit texture2d_vao(texture_info const t)
       : texture_info_(t)
   {
   }
@@ -194,16 +194,16 @@ public:
 };
 
 template<bool IS_2D_T>
-class wireframe_context
+class wireframe_vao
 {
   opengl_vao vao_;
   std::array<float, 4> color_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(wireframe_context);
+  MOVE_CONSTRUCTIBLE_ONLY(wireframe_vao);
   using info_t = wireframe_t;
 
-  explicit wireframe_context(std::array<float, 4> const &color)
+  explicit wireframe_vao(std::array<float, 4> const &color)
       : color_(color)
   {
   }
@@ -218,40 +218,40 @@ public:
   auto const& vao() const { return this->vao_; }
 };
 
-using wireframe2d_context = wireframe_context<true>;
-using wireframe3d_context = wireframe_context<false>;
+using wireframe2d_vao = wireframe_vao<true>;
+using wireframe3d_vao = wireframe_vao<false>;
 
-struct opengl_context2d
+struct opengl_vao2d
 {
   template <typename L>
   auto static make_wireframe2d(L &logger, std::array<float, 3> const &c)
   {
     constexpr auto ALPHA = 1.0f;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
-    return wireframe2d_context{color};
+    return wireframe2d_vao{color};
   }
 
   template<typename L>
   static auto make_2dtexture(L &logger, IMAGES const image)
   {
-    return texture2d_context(texture::allocate_texture(logger, image));
+    return texture2d_vao(texture::allocate_texture(logger, image));
   }
 };
 
-struct opengl_context3d
+struct opengl_vao3d
 {
   template <typename L, typename ...IMAGES>
   auto static make_texture3dcube(L &logger, IMAGES const&... images)
   {
     auto const tid = texture::upload_3dcube_texture(logger, images...);
-    return texture_3dcube_context{tid};
+    return texture_3dcube_vao{tid};
   }
 
   template <typename L, typename ...IMAGES>
   auto static make_skybox(L &logger, IMAGES const&... images)
   {
     auto const tid = texture::upload_3dcube_texture(logger, images...);
-    return skybox_context{tid};
+    return skybox_vao{tid};
   }
 
   template <typename L>
@@ -259,19 +259,19 @@ struct opengl_context3d
   {
     constexpr auto ALPHA = 1.0f;
     std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
-    return wireframe3d_context{color};
+    return wireframe3d_vao{color};
   }
 };
 
-struct opengl_contexts
+struct opengl_vaos
 {
-  opengl_context2d d2;
-  opengl_context3d d3;
+  opengl_vao2d d2;
+  opengl_vao3d d3;
 
-  MOVE_CONSTRUCTIBLE_ONLY(opengl_contexts);
+  MOVE_CONSTRUCTIBLE_ONLY(opengl_vaos);
 
   template<typename L>
-  opengl_contexts(L &logger)
+  opengl_vaos(L &logger)
     : d2(logger)
     , d3(logger)
   {

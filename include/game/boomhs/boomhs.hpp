@@ -251,7 +251,7 @@ public:
     opengl::draw(args, *state.MODELS[102], cube_wf);
 
     using COLOR_TRIANGLE = opengl::factories::pipeline_shape_pair<
-      opengl::triangle<opengl::vertex_color_attributes, 3 * 8>, opengl::pipeline<opengl::color2d_context>>;
+      opengl::triangle<opengl::vertex_color_attributes, 3 * 8>, opengl::pipeline<opengl::color2d_vao>>;
 
     {
       std::array<COLOR_TRIANGLE, 2> const arr = {

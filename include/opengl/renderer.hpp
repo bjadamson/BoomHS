@@ -1,8 +1,7 @@
 #pragma once
-#include <opengl/context.hpp>
-
 #include <opengl/global.hpp>
 #include <opengl/camera.hpp>
+#include <opengl/vertex_attribute.hpp>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -47,7 +46,7 @@ draw_scene(L &logger, P &pipeline, SHAPE const &shape, FN const& fn)
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shape.ebo());
   //ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
-  // Instruct the vertex-processor to enable the vertex attributes for this context.
+  // Instruct the vertex-processor to enable the vertex attributes for this pipeline.
   va::set_vertex_attributes(logger, pipeline.va());
 
   LOG_TRACE("before drawing shape ...");
