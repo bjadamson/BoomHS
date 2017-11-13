@@ -36,22 +36,22 @@ public:
 
 struct pipeline2d
 {
-  factories::color<pipeline<color2d_context>> color;
-  factories::texture<pipeline<texture2d_context>> texture_wall;
-  factories::texture<pipeline<texture2d_context>> texture_container;
-  factories::wireframe<pipeline<wireframe2d_context>> wireframe;
+  pipeline<color2d_context> color;
+  pipeline<texture2d_context> texture_wall;
+  pipeline<texture2d_context> texture_container;
+  pipeline<wireframe2d_context> wireframe;
 
   MOVE_CONSTRUCTIBLE_ONLY(pipeline2d);
 };
 
 struct pipeline3d
 {
-  factories::color<pipeline<color3d_context>> color;
-  factories::color<pipeline<hashtag3d_context>> hashtag;
-  factories::texture<pipeline<texture_3dcube_context>> texture_cube;
-  factories::texture<pipeline<texture3d_context>> house;
-  factories::texture<pipeline<skybox_context>> skybox;
-  factories::wireframe<pipeline<wireframe3d_context>> wireframe;
+  pipeline<color3d_context> color;
+  pipeline<hashtag3d_context> hashtag;
+  pipeline<texture_3dcube_context> texture_cube;
+  pipeline<texture3d_context> house;
+  pipeline<skybox_context> skybox;
+  pipeline<wireframe3d_context> wireframe;
 
   MOVE_CONSTRUCTIBLE_ONLY(pipeline3d);
 };
@@ -73,14 +73,13 @@ class lib_factory
 {
   lib_factory() = delete;
 
-  template<template<typename> typename FACTORY, typename C>
-  static stlw::result<FACTORY<pipeline<C>>, std::string>
+  template<typename C>
+  static stlw::result<pipeline<C>, std::string>
   make_pipeline(char const* vertex_s, char const* frag_s, vertex_attribute &&va, C &&context)
   {
     shader_program_factory pf;
     DO_TRY(auto sp, pf.make(vertex_s, frag_s));
-    pipeline<C> pipeline{MOVE(sp), MOVE(context), MOVE(va)};
-    return FACTORY<decltype(pipeline)>{MOVE(pipeline)};
+    return pipeline<C>{MOVE(sp), MOVE(context), MOVE(va)};
   }
 
 public:
@@ -89,33 +88,33 @@ public:
   make_opengl_factories(L &logger)
   {
     // TODO: don't bother constructing opengl_contexts...
-    DO_TRY(auto d2color, make_pipeline<factories::color>("2dcolor.vert", "2dcolor.frag",
+    DO_TRY(auto d2color, make_pipeline("2dcolor.vert", "2dcolor.frag",
           va::vertex_color(logger), color2d_context{}));
 
     DO_TRY(auto d2texture_wall,
-        make_pipeline<factories::texture>("2dtexture.vert", "2dtexture.frag",
+        make_pipeline("2dtexture.vert", "2dtexture.frag",
           va::vertex_uv2d(logger),
           opengl_context2d::make_2dtexture(logger, IMAGES::WALL)));
 
     DO_TRY(auto d2texture_container,
-        make_pipeline<factories::texture>("2dtexture.vert", "2dtexture.frag",
+        make_pipeline("2dtexture.vert", "2dtexture.frag",
           va::vertex_uv2d(logger),
           opengl_context2d::make_2dtexture(logger, IMAGES::CONTAINER)));
 
     DO_TRY(auto d2wire,
-        make_pipeline<factories::wireframe>("wire.vert", "wire.frag",
+        make_pipeline("wire.vert", "wire.frag",
           va::vertex_only(logger),
           opengl_context2d::make_wireframe2d(logger, LIST_OF_COLORS::PINK)));
 
-    DO_TRY(auto d3color, make_pipeline<factories::color>("3dcolor.vert", "3dcolor.frag",
+    DO_TRY(auto d3color, make_pipeline("3dcolor.vert", "3dcolor.frag",
           va::vertex_color(logger),
           color3d_context{}));
 
-    DO_TRY(auto d3hashtag, make_pipeline<factories::color>("3d_hashtag.vert", "3d_hashtag.frag",
+    DO_TRY(auto d3hashtag, make_pipeline("3d_hashtag.vert", "3d_hashtag.frag",
           va::vertex_color(logger),
           hashtag3d_context{}));
 
-    DO_TRY(auto d3cube, make_pipeline<factories::texture>("3d_cubetexture.vert", "3d_cubetexture.frag",
+    DO_TRY(auto d3cube, make_pipeline("3d_cubetexture.vert", "3d_cubetexture.frag",
           va::vertex_only(logger),
           opengl_context3d::make_texture3dcube(logger,
             IMAGES::CUBE_FRONT,
@@ -125,11 +124,11 @@ public:
             IMAGES::CUBE_TOP,
             IMAGES::CUBE_BOTTOM)));
 
-    DO_TRY(auto d3house, make_pipeline<factories::texture>("3dtexture.vert", "3dtexture.frag",
+    DO_TRY(auto d3house, make_pipeline("3dtexture.vert", "3dtexture.frag",
           va::vertex_normal_uv3d(logger),
           texture3d_context{texture::allocate_texture(logger, IMAGES::HOUSE)}));
 
-    DO_TRY(auto d3skybox, make_pipeline<factories::texture>("3d_cubetexture.vert", "3d_cubetexture.frag",
+    DO_TRY(auto d3skybox, make_pipeline("3d_cubetexture.vert", "3d_cubetexture.frag",
           va::vertex_only(logger),
           opengl_context3d::make_skybox(logger,
             IMAGES::SB_FRONT,
@@ -139,7 +138,7 @@ public:
             IMAGES::SB_TOP,
             IMAGES::SB_BOTTOM)));
 
-    DO_TRY(auto d3wire, make_pipeline<factories::wireframe>("3dwire.vert", "wire.frag",
+    DO_TRY(auto d3wire, make_pipeline("3dwire.vert", "wire.frag",
           va::vertex_only(logger),
           opengl_context3d::make_wireframe3d(logger, LIST_OF_COLORS::PURPLE)));
 

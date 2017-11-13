@@ -147,13 +147,15 @@ public:
 
     // LOAD different assets.
     //"assets/chalet.mtl"
+    namespace OF = opengl::factories;
     auto &logger = state.logger;
+
     auto house_mesh = opengl::load_mesh("assets/house_uv.obj", opengl::LoadNormals{true}, opengl::LoadUvs{true});
-    auto house_uv = opengl::factories::make_mesh(logger, gfx.d3.house.pipeline(),
+    auto house_uv = OF::make_mesh(logger, gfx.d3.house,
         opengl::mesh_properties{GL_TRIANGLES, MOVE(house_mesh)});
 
     auto hashtag_mesh = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
-    auto hashtag = opengl::factories::make_mesh(logger, gfx.d3.hashtag.pipeline(),
+    auto hashtag = OF::make_mesh(logger, gfx.d3.hashtag,
         opengl::mesh_properties{GL_TRIANGLES, MOVE(hashtag_mesh)});
 
     return make_assets(MOVE(house_uv), MOVE(hashtag));
@@ -189,56 +191,56 @@ public:
     auto const height = 0.25f, width = 0.39f;
 
     namespace OF = opengl::factories;
-    auto cube_skybox = OF::make_cube(logger, sf.d3.skybox.pipeline(), {GL_TRIANGLE_STRIP, {10.0f, 10.0f, 10.0f}});
+    auto cube_skybox = OF::make_cube(logger, sf.d3.skybox, {GL_TRIANGLE_STRIP, {10.0f, 10.0f, 10.0f}});
 
     auto args = state.render_args();
-    //opengl::draw(args, state.skybox_model, cube_skybox);
+    opengl::draw(args, state.skybox_model, cube_skybox);
 
-    auto triangle_color = OF::make_triangle(logger, sf.d2.color.pipeline(), {GL_TRIANGLES}, opengl::LIST_OF_COLORS::PINK);
+    auto triangle_color = OF::make_triangle(logger, sf.d2.color, {GL_TRIANGLES}, opengl::LIST_OF_COLORS::PINK);
 
-    //auto triangle_list_colors = OF::make_triangle(logger, sf.d2.color.pipeline(), {GL_TRIANGLES},
+    //auto triangle_list_colors = OF::make_triangle(logger, sf.d2.color, {GL_TRIANGLES},
         //multicolor_triangle);
 
-    auto triangle_texture = OF::make_triangle(logger, sf.d2.texture_wall.pipeline(), {GL_TRIANGLES});
+    auto triangle_texture = OF::make_triangle(logger, sf.d2.texture_wall, {GL_TRIANGLES});
 
-    auto triangle_wireframe = OF::make_triangle(logger, sf.d2.wireframe.pipeline(), {GL_LINE_LOOP});
+    auto triangle_wireframe = OF::make_triangle(logger, sf.d2.wireframe, {GL_LINE_LOOP});
 
     // 3d begin
-    auto cube_texture = OF::make_cube(logger, sf.d3.texture_cube.pipeline(), {GL_TRIANGLE_STRIP,
+    auto cube_texture = OF::make_cube(logger, sf.d3.texture_cube, {GL_TRIANGLE_STRIP,
         {0.15f, 0.15f, 0.15f}});
 
-    auto cube_color = OF::make_cube(logger, sf.d3.color.pipeline(), {GL_TRIANGLE_STRIP, {0.25f, 0.25f, 0.25f}},
+    auto cube_color = OF::make_cube(logger, sf.d3.color, {GL_TRIANGLE_STRIP, {0.25f, 0.25f, 0.25f}},
         opengl::LIST_OF_COLORS::BLUE);
 
-    auto cube_wf = OF::make_cube(logger, sf.d3.wireframe.pipeline(), {GL_LINE_LOOP, {0.25f, 0.25f, 0.25f}});
+    auto cube_wf = OF::make_cube(logger, sf.d3.wireframe, {GL_LINE_LOOP, {0.25f, 0.25f, 0.25f}});
     // 3d end
 
-    auto rectangle_color = OF::make_rectangle(logger, sf.d2.color.pipeline(), {GL_TRIANGLES},
+    auto rectangle_color = OF::make_rectangle(logger, sf.d2.color, {GL_TRIANGLES},
         opengl::LIST_OF_COLORS::ORANGE);
 
-    auto rectangle_list_colors = OF::make_rectangle(logger, sf.d2.color.pipeline(), {GL_TRIANGLE_STRIP, height,
+    auto rectangle_list_colors = OF::make_rectangle(logger, sf.d2.color, {GL_TRIANGLE_STRIP, height,
         width}, multicolor_rect);
 
-    auto rectangle_texture = OF::make_rectangle(logger, sf.d2.texture_wall.pipeline(), {GL_TRIANGLES,
+    auto rectangle_texture = OF::make_rectangle(logger, sf.d2.texture_wall, {GL_TRIANGLES,
         height, width});
 
-    auto rectangle_wireframe = OF::make_rectangle(logger, sf.d2.wireframe.pipeline(), {GL_LINE_LOOP, height,
+    auto rectangle_wireframe = OF::make_rectangle(logger, sf.d2.wireframe, {GL_LINE_LOOP, height,
         width});
 
-    auto polygon_color = OF::make_polygon(logger, sf.d2.color.pipeline(), {GL_TRIANGLE_FAN, 17},
+    auto polygon_color = OF::make_polygon(logger, sf.d2.color, {GL_TRIANGLE_FAN, 17},
         opengl::LIST_OF_COLORS::RED);
 
-    auto polygon_texture = OF::make_polygon(logger, sf.d2.texture_container.pipeline(), {GL_TRIANGLE_FAN, 7});
+    auto polygon_texture = OF::make_polygon(logger, sf.d2.texture_container, {GL_TRIANGLE_FAN, 7});
 
-    auto polygon_wireframe = OF::make_polygon(logger, sf.d2.wireframe.pipeline(), {GL_LINE_LOOP, 7});
+    auto polygon_wireframe = OF::make_polygon(logger, sf.d2.wireframe, {GL_LINE_LOOP, 7});
 
-    //auto color = OF::make_polygon(polygon_list_of_color = sf.d2, logger.pipeline(), {GL_TRIANGLE_FAN, *state.MODELS[23], 5},
+    //auto color = OF::make_polygon(polygon_list_of_color = sf.d2, logger, {GL_TRIANGLE_FAN, *state.MODELS[23], 5},
         //multicolor_triangle});
 
     // first draw terrain
     /*
     {
-      auto cube_terrain = OF::make_cube(logger, sf.d3.color.pipeline(), {GL_TRIANGLE_STRIP, {2.0f, 0.4f, 2.0f}},
+      auto cube_terrain = OF::make_cube(logger, sf.d3.color, {GL_TRIANGLE_STRIP, {2.0f, 0.4f, 2.0f}},
           opengl::LIST_OF_COLORS::SADDLE_BROWN);
       opengl::draw(args, state.terrain_model, cube_terrain);
     }
@@ -253,8 +255,8 @@ public:
 
     {
       std::array<COLOR_TRIANGLE, 2> const arr = {
-      OF::make_triangle(logger, sf.d2.color.pipeline(), {GL_TRIANGLES}, rc()),
-      OF::make_triangle(logger, sf.d2.color.pipeline(), {GL_TRIANGLES}, rc())
+      OF::make_triangle(logger, sf.d2.color, {GL_TRIANGLES}, rc()),
+      OF::make_triangle(logger, sf.d2.color, {GL_TRIANGLES}, rc())
       };
       FOR(i, arr.size()) {
         auto const offset = (i % 2 == 0 ? 0 : 1);
@@ -265,8 +267,8 @@ public:
     }
     {
       std::array<COLOR_TRIANGLE, 2> const arr = {
-      OF::make_triangle(logger, sf.d2.color.pipeline(), {GL_TRIANGLES}, rc()),
-      OF::make_triangle(logger, sf.d2.color.pipeline(), {GL_TRIANGLES}, rc())
+      OF::make_triangle(logger, sf.d2.color, {GL_TRIANGLES}, rc()),
+      OF::make_triangle(logger, sf.d2.color, {GL_TRIANGLES}, rc())
       };
       FOR(i, arr.size()) {
         auto const offset = (i % 2 == 0 ? 0 : 1);
@@ -276,13 +278,13 @@ public:
       }
     }
     {
-      auto const t = OF::make_triangle(logger, sf.d2.color.pipeline(), {GL_TRIANGLES}, rc());
+      auto const t = OF::make_triangle(logger, sf.d2.color, {GL_TRIANGLES}, rc());
       opengl::draw(args, *state.MODELS[4], t);
     }
     {
       std::array<COLOR_TRIANGLE, 2> const arr = {
-      OF::make_triangle(logger, sf.d2.color.pipeline(), {GL_TRIANGLES}, rc()),
-      OF::make_triangle(logger, sf.d2.color.pipeline(), {GL_TRIANGLES}, rc())
+      OF::make_triangle(logger, sf.d2.color, {GL_TRIANGLES}, rc()),
+      OF::make_triangle(logger, sf.d2.color, {GL_TRIANGLES}, rc())
       };
       FOR(i, arr.size()) {
         auto const offset = (i % 2 == 0 ? 0 : 1);
@@ -293,8 +295,8 @@ public:
     }
     {
       std::array<COLOR_TRIANGLE, 2> const arr = {
-      OF::make_triangle(logger, sf.d2.color.pipeline(), {GL_TRIANGLES}, rc()),
-      OF::make_triangle(logger, sf.d2.color.pipeline(), {GL_TRIANGLES}, rc())
+      OF::make_triangle(logger, sf.d2.color, {GL_TRIANGLES}, rc()),
+      OF::make_triangle(logger, sf.d2.color, {GL_TRIANGLES}, rc())
       };
       FOR(i, arr.size()) {
         auto const offset = (i % 2 == 0 ? 0 : 1);
