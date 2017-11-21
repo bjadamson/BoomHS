@@ -77,91 +77,29 @@ vertices_size_in_bytes(S const& s)
   return s.vertices().size() * sizeof(GLfloat);
 }
 
-template <typename L, typename S>
-void
-log_shape_bytes(L &logger, S const &shape)
-{
-  assert(0 < shape.vertices().size());
-
-  auto const print_bytes = [](auto &ostream, auto const length, auto const *data) {
-    auto i = 0u;
-    ostream << "[";
-    ostream << std::to_string(data[i++]);
-
-    for (; i < length; ++i) {
-      ostream << ", " << std::to_string(data[i]);
-    }
-    ostream << "]";
-    ostream << "\n";
-  };
-
-  std::stringstream ostream;
-  ostream << fmt::sprintf("vertices: %-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices");
-  ostream << fmt::sprintf("          %-15d %-15d %-15d\n", vertices_size_in_bytes(shape),
-                            shape.vertices().size(), shape.num_vertices());
-
-  ostream << fmt::sprintf("indices count '%d', indices_size_in_bytes %d\n", shape.indices().size(),
-                          indices_size_in_bytes(shape));
-  ostream << "indices(bytes):\n";
-
-  print_bytes(ostream, shape.vertices().size(), shape.vertices().data());
-  print_bytes(ostream, shape.indices().size(), shape.indices().data());
-
-  //std::cerr << ostream.str();
-  //LOG_TRACE(ostream.str());
-}
-
-/*
-template <typename L, typename S>
-void
-render_shape(L &logger, S const& shape)
-{
-  LOG_TRACE(fmt::sprintf("%-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices"));
-  LOG_TRACE(fmt::sprintf("%-15d %-15d %-15d\n", vertices_size_in_bytes(shape),
-                            shape.vertices().size(), shape.num_vertices()));
-  auto const fmt = fmt::sprintf("glDrawElements() render_mode '%d', indices_count '%d'",
-                                shape.draw_mode(), shape.indices().size());
-
-  //LOG_TRACE(fmt);
-  //detail::log_shape_bytes(logger, shape);
-
-  auto constexpr OFFSET = nullptr;
-  glDrawElements(shape.draw_mode(), shape.indices().size(), GL_UNSIGNED_INT, OFFSET);
-}
-
-template <typename L, typename S>
-void
-render_shape_with_instancing(L &logger, S const& shape, GLsizei const prim_count)
-{
-  auto constexpr OFFSET = nullptr;
-  glDrawElementsInstanced(shape.draw_mode(), shape.indices().size(), GL_UNSIGNED_INT, OFFSET,
-      prim_count);
-}
-*/
-
 template <typename L, typename P, typename SHAPE>
 void render_shape(L &logger, P &pipeline, SHAPE const& shape)
 {
   using C = typename P::CTX;
 
   auto const draw_mode = shape.draw_mode();
-  auto const indices_size = shape.indices().size();
+  auto const num_indices = shape.num_indices();
   auto constexpr OFFSET = nullptr;
   //detail::log_shape_bytes(logger, shape);
+
+  //LOG_TRACE(fmt::sprintf("%-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices"));
+  //LOG_TRACE(fmt::sprintf("%-15d %-15d %-15d\n", vertices_size_in_bytes(shape),
+                            //shape.vertices().size(), shape.num_vertices()));
+  //auto const fmt = fmt::sprintf("glDrawElements() render_mode '%d', num_indices '%d'",
+                                //shape.draw_mode(), num_indices);
+  //LOG_TRACE(fmt);
 
   if constexpr (C::IS_INSTANCED) {
     auto const& ctx = pipeline.ctx();
     auto const instance_count = ctx.instance_count();
-    glDrawElementsInstanced(draw_mode, indices_size, GL_UNSIGNED_INT, OFFSET, instance_count);
+    glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET, instance_count);
   } else {
-    LOG_TRACE(fmt::sprintf("%-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices"));
-    LOG_TRACE(fmt::sprintf("%-15d %-15d %-15d\n", vertices_size_in_bytes(shape),
-                              shape.vertices().size(), shape.num_vertices()));
-    auto const fmt = fmt::sprintf("glDrawElements() render_mode '%d', indices_count '%d'",
-                                  shape.draw_mode(), shape.indices().size());
-
-    //LOG_TRACE(fmt);
-    glDrawElements(draw_mode, indices_size, GL_UNSIGNED_INT, OFFSET);
+    glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
   }
 }
 
@@ -233,10 +171,10 @@ void draw(Args const& args, Model const& model, PIPELINE_SHAPE const& pipeline_s
 
   if constexpr (C::IS_2D) {
     opengl::disable_depth_tests();
-    detail::draw_2dshape(args, model, pipeline, shape);
+    ::detail::draw_2dshape(args, model, pipeline, shape);
     opengl::enable_depth_tests();
   } else {
-    detail::draw_3dshape(args, model, pipeline, shape);
+    ::detail::draw_3dshape(args, model, pipeline, shape);
   }
 }
 
@@ -277,36 +215,5 @@ void begin()
 }
 
 void end() {}
-
-template<typename L, typename PIPELINE_SHAPE>
-void
-copy_to_gpu(L &logger, PIPELINE_SHAPE &pipeline_shape)
-{
-  auto &shape = pipeline_shape.shape;
-  detail::log_shape_bytes(logger, shape);
-
-  auto &pipeline = pipeline_shape.pipeline;
-
-  opengl::global::vao_bind(pipeline.ctx().vao());
-  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
-
-  glBindBuffer(GL_ARRAY_BUFFER, shape.vbo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shape.ebo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
-
-  // copy the vertices
-  auto const vertices_size = detail::vertices_size_in_bytes(shape);
-  auto const& vertices_data = shape.vertices().data();
-  glBufferData(GL_ARRAY_BUFFER, vertices_size, vertices_data, GL_STATIC_DRAW);
-
-  // copy the vertice rendering order
-  auto const indices_size = detail::indices_size_in_bytes(shape);
-  auto const& indices_data = shape.indices().data();
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, indices_data, GL_STATIC_DRAW);
-
-  shape.set_is_in_gpu_memory(true);
-}
 
 } // ns opengl
