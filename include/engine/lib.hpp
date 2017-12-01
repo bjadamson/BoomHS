@@ -17,49 +17,6 @@
 namespace engine
 {
 
-template <typename L>
-struct render_args {
-  L &logger;
-  opengl::camera const& camera;
-  glm::mat4 const& projection;
-};
-
-template<typename L>
-auto make_render_args(L &l, opengl::camera const& c, glm::mat4 const& projection)
-{
-  return render_args<L>{l, c, projection};
-}
-
-template<typename L, typename TileMap>
-struct loop_state
-{
-  L &logger;
-  bool &quit;
-  opengl::camera &camera;
-  glm::mat4 const& projection;
-
-  stlw::float_generator &rnum_generator;
-  std::vector<opengl::Model*> &MODELS;
-  opengl::Model &terrain_model;
-  opengl::Model &house_model;
-  opengl::Model &skybox_model;
-  window::mouse_data &mouse_data;
-  TileMap const& tilemap;
-
-  render_args<L> render_args() const
-  {
-    return make_render_args(this->logger, this->camera, this->projection);
-  }
-};
-
-template<typename L, typename TileMap>
-auto make_loop_state(L &l, bool &quit, opengl::camera &c, glm::mat4 const& p,
-    stlw::float_generator &fg, std::vector<opengl::Model*> &models, opengl::Model &terrain,
-    opengl::Model &house, opengl::Model &skybox, window::mouse_data &md, TileMap const& tilemap)
-{
-  return loop_state<L, TileMap>{l, quit, c, p, fg, models, terrain, house, skybox, md, tilemap};
-}
-
 struct Engine
 {
   ::window::sdl_window window;
@@ -83,8 +40,8 @@ void end(Engine &e)
   SDL_GL_SwapWindow(e.window.raw());
 }
 
-template<typename LoopState, typename Game, typename P, typename ASSETS>
-void loop(Engine &engine, LoopState &state, Game &game, P &proxy, ASSETS const& assets)
+template<typename State, typename Game, typename P, typename ASSETS>
+void loop(Engine &engine, State &state, Game &game, P &proxy, ASSETS const& assets)
 {
   namespace sea = ecst::system_execution_adapter;
   auto io_tags = sea::t(st::io_system);
@@ -137,7 +94,6 @@ void start(Engine &engine, G &game, S &state)
   auto const io_init_system = sea::t(io_tags).for_subtasks(init_system);
   auto const randompos_init_system = sea::t(randompos_tags).for_subtasks(init_system);
 
-  auto mouse_data = window::make_default_mouse_data();
   int frames_counted = 0;
   window::LTimer fps_timer;
   auto const fps_capped_game_loop = [&](auto const& fn) {
@@ -161,13 +117,7 @@ void start(Engine &engine, G &game, S &state)
   auto const game_loop = [&](auto &proxy) {
     auto const fn = [&]()
     {
-      auto const mls = [&mouse_data, &state]() {
-        return make_loop_state(state.logger, state.quit, state.camera, state.projection,
-            state.rnum_generator, state.MODELS, state.terrain_model, state.house_model,
-            state.skybox_model, mouse_data, state.tilemap);
-      };
-      auto loop_state = mls();
-      loop(engine, loop_state, game, proxy, assets);
+      loop(engine, state, game, proxy, assets);
     };
     while (!state.quit) {
       fps_capped_game_loop(fn);

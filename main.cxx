@@ -16,7 +16,7 @@ using EngineResult = stlw::result<engine::Engine, std::string>;
 
 template<typename L>
 EngineResult
-make_opengl_sdl_premade_configuration(L &logger, float const width, float const height)
+make_opengl_sdl_engine(L &logger, float const width, float const height)
 {
   // Select windowing library as SDL.
   LOG_DEBUG("Initializing window library globals");
@@ -39,7 +39,7 @@ main(int argc, char *argv[])
   };
 
   DO_TRY_OR_ELSE_RETURN(auto engine,
-      make_opengl_sdl_premade_configuration(logger, 800, 600),
+      make_opengl_sdl_engine(logger, 1024, 768),
       on_error);
 
   LOG_DEBUG("Instantiating 'state'");

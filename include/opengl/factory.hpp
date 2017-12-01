@@ -15,11 +15,11 @@ struct mesh_properties
 {
   GLenum const draw_mode;
 
-  obj object_data;
+  obj const& object_data;
 
-  explicit mesh_properties(GLenum const dm, obj &&obj)
+  explicit mesh_properties(GLenum const dm, obj const& obj)
     : draw_mode(dm)
-    , object_data(MOVE(obj))
+    , object_data(obj)
   {
   }
 };
