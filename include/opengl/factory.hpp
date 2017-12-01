@@ -321,6 +321,92 @@ auto make_mesh(L &logger, P &pipeline, mesh_properties &&mprop, Args &&... args)
   return pair;
 }
 
+struct TilemapProperties
+{
+  GLenum const draw_mode;
+
+  std::vector<float> const& vertices;
+  std::vector<uint32_t> const& indices;
+};
+
+auto make_tiledata(std::vector<float> const& vertices)
+{
+  std::vector<GLfloat> tile_data;
+
+  // Copy one whole Tile's worth of 3DObject data.
+  for (std::size_t i{0u}; i < vertices.size();) {
+    auto const& data = vertices.data();
+    FOR(_, 4) {
+      tile_data.emplace_back(data[i++]);
+    }
+    FOR(_, 4) {
+      tile_data.emplace_back(data[i++]);
+    }
+  }
+  assert((tile_data.size() % 8) == 0);
+  return tile_data;
+}
+
+template<typename L, typename P, typename TileMap>
+auto copy_tilemap_gpu(L &logger, P &pipeline, TilemapProperties &&tprops, TileMap const& tile_map)
+{
+  // assume (x, y, z, w) all present
+  // assume (r, g, b, a) all present
+  assert((tprops.vertices.size() % 8) == 0);
+
+  std::size_t const num_tiles = tile_map.num_tiles();
+  std::size_t const tilemap_width = tile_map.width();
+
+  assert((num_tiles % tilemap_width) == 0);
+  auto const& vertices = tprops.vertices;
+  auto const& indices = tprops.indices;
+  //std::size_t const tilemap_height = num_tiles / tilemap_width;
+
+  auto const num_indices = static_cast<GLuint>(indices.size());// * num_tiles);
+
+  // 1. Bind the vao (even before instantiating the shape)
+  opengl::global::vao_bind(pipeline.ctx().vao());
+
+  // 2. Create the "shape" representing the TileMap in GPU memory.
+  shape instance{tprops.draw_mode, num_indices};
+
+  // 3. setup cleanup
+  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
+  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
+
+  // 4. Calculate how much room the buffers need.
+  std::size_t const vertices_num_bytes = (vertices.size() * sizeof(GLfloat)) * num_tiles;
+  glBindBuffer(GL_ARRAY_BUFFER, instance.vbo());
+  glBufferData(GL_ARRAY_BUFFER, vertices_num_bytes, nullptr, GL_STATIC_DRAW);
+
+  std::size_t const indices_num_bytes = (indices.size() * sizeof(GLuint)) * num_tiles;
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, instance.ebo());
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_num_bytes, nullptr, GL_STATIC_DRAW);
+
+  auto const tile_data = make_tiledata(vertices);
+
+  // 5. Copy the model data to the buffer.
+  GLintptr vertices_offset = 0, indices_offset = 0;
+  for (auto const& tile : tile_map) {
+
+    // copy the vector into the GPU buffer
+    void const* p_vdata = static_cast<void const*>(tile_data.data());
+    std::size_t const vertices_size = sizeof(GLfloat) * tile_data.size();
+    glBindBuffer(GL_ARRAY_BUFFER, instance.vbo());
+    glBufferSubData(GL_ARRAY_BUFFER, vertices_offset, vertices_size, p_vdata);
+    vertices_offset += vertices_size;
+
+    // copy the indices vector into the GPU buffer
+    void const* p_idata = static_cast<void const*>(indices.data());
+    std::size_t const indices_size = sizeof(GLuint) * indices.size();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, instance.ebo());
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, indices_offset, indices_size, p_idata);
+    indices_offset += indices_size;
+  }
+  return make_pipeline_shape_pair(MOVE(instance), pipeline);
+}
+
 } // ns factories
 
 } // ns opengl

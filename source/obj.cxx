@@ -42,10 +42,12 @@ load_mesh(char const* objpath, char const* mtlpath, LoadNormals const load_norma
   std::vector<uint32_t> indices;
 
   unsigned int const num_vertices = attrib.vertices.size() / 3;
+  /*
   std::cerr << "vertice count '" << num_vertices << "'\n";
   std::cerr << "normal count '" << attrib.normals.size() << "'\n";
   std::cerr << "texcoords count '" << attrib.texcoords.size() << "'\n";
   std::cerr << "color count '" << attrib.colors.size() << "'\n";
+  */
 
   // Loop over shapes
   FOR(s, shapes.size()) {
@@ -122,9 +124,12 @@ load_mesh(char const* objpath, char const* mtlpath, LoadNormals const load_norma
       //shapes[s].mesh.material_ids[f];
     }
   }
+  /*
   std::cerr << "vertices.size() '" << vertices.size() << "'\n";
   std::cerr << "indices.size() '" << indices.size() << "'\n";
   std::cerr << "return obj, parsed\n" << std::endl;
+  std::cerr << "size is: '" << (vertices.size() * sizeof(GLfloat)) << "'\n";
+  */
   return obj{GL_TRIANGLES, num_vertices, MOVE(vertices), MOVE(indices)};
 }
 

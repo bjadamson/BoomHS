@@ -116,6 +116,23 @@ program_set_uniform_array_4fv(L &logger, GLuint const p, GLchar const *name, std
   check_opengl_errors(logger, p);
 }
 
+template <typename L>
+void
+program_set_uniform_array_3fv(L &logger, GLuint const p, GLchar const *name, std::array<float, 3> const &floats)
+{
+  // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
+  //
+  // For the vector (glUniform*v) commands, specifies the number of elements that are to be
+  // modified.
+  // This should be 1 if the targeted uniform variable is not an array, and 1 or more if it is an
+  // array.
+  GLsizei constexpr COUNT = 1;
+
+  auto const loc = impl::get_uniform_location(logger, p, name);
+  glUniform3fv(loc, COUNT, floats.data());
+  check_opengl_errors(logger, p);
+}
+
 } // ns impl
 
 struct program_factory {
@@ -183,6 +200,15 @@ public:
   {
     use();
     impl::program_set_uniform_array_4fv(logger, this->program_, name, floats);
+  }
+
+  template <typename L>
+  void program_set_uniform_array_3fv(L &logger, GLchar const* name, glm::vec3 const& data)
+  {
+    use();
+
+    std::array<float, 3> const array{data.x, data.y, data.z};
+    impl::program_set_uniform_array_3fv(logger, this->program_, name, array);
   }
 
   template <typename L>

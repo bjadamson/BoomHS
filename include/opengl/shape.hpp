@@ -56,14 +56,14 @@ public:
   {
   }
 
-  auto constexpr draw_mode() const { return this->draw_mode_; }
+  inline auto draw_mode() const { return this->draw_mode_; }
 
   inline auto vbo() const { return this->gpu_buffers_.vbo(); }
   inline auto ebo() const { return this->gpu_buffers_.ebo(); }
   inline auto num_indices() const { return this->num_indices_; }
 
-  bool is_in_gpu_memory() const { return this->in_gpu_memory_; }
-  void set_is_in_gpu_memory(bool const v) { this->in_gpu_memory_ = v; }
+  inline bool is_in_gpu_memory() const { return this->in_gpu_memory_; }
+  inline void set_is_in_gpu_memory(bool const v) { this->in_gpu_memory_ = v; }
 };
 
 } // ns opengl

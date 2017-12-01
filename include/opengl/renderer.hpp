@@ -97,7 +97,9 @@ void render_shape(L &logger, P &pipeline, SHAPE const& shape)
   if constexpr (C::IS_INSTANCED) {
     auto const& ctx = pipeline.ctx();
     auto const instance_count = ctx.instance_count();
-    glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET, instance_count);
+
+    glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, instance_count);
+    LOG_ANY_GL_ERRORS(logger, "glDrawElementsInstanced 1");
   } else {
     glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
   }
@@ -132,6 +134,48 @@ void draw_3dshape(Args const &args, opengl::Model const& model, P &pipeline, SHA
   };
 
   draw_scene(logger, pipeline, shape, draw_3d_shape_fn);
+}
+
+template <typename Args, typename P, typename SHAPE, typename TILEMAP>
+void draw_3dwalls(Args const &args, opengl::Model const& model, P &pipeline, SHAPE const& shape,
+    TILEMAP const& tilemap)
+{
+  using C = typename P::CTX;
+
+  auto const view = compute_view(args.camera);
+  auto const& projection = args.projection;
+
+  auto &logger = args.logger;
+  auto &program = pipeline.program_ref();
+
+  auto const draw_3d_walls_fn = [&](auto const &shape) {
+    auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
+    auto const rmatrix = glm::toMat4(model.rotation);
+    auto const smatrix = glm::scale(glm::mat4{}, model.scale);
+    auto const mmatrix = tmatrix * rmatrix * smatrix;
+    auto const mvmatrix = projection * view * mmatrix;
+    program.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
+
+    auto const instance_count = pipeline.ctx().instance_count();
+    auto const draw_mode = shape.draw_mode();
+    auto const num_indices = shape.num_indices();
+
+    std::size_t offset = 0u;
+    auto const draw_one = [&](auto const& tile) {
+      program.program_set_uniform_array_3fv(logger, "u_offset", tile.pos);
+
+      GLvoid const* p_offset = reinterpret_cast<GLvoid const*>(offset);
+      glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, p_offset, instance_count);
+      LOG_ANY_GL_ERRORS(logger, "glDrawElementsInstanced");
+      offset += sizeof(GLuint) * num_indices;
+    };
+
+    for(auto const& tile : tilemap) {
+      draw_one(tile);
+    }
+  };
+
+  draw_scene(logger, pipeline, shape, draw_3d_walls_fn);
 }
 
 template <typename Args, typename P, typename SHAPE>
@@ -176,6 +220,24 @@ void draw(Args const& args, Model const& model, PIPELINE_SHAPE const& pipeline_s
   } else {
     ::detail::draw_3dshape(args, model, pipeline, shape);
   }
+}
+
+template <typename Args, typename PIPELINE_SHAPE, typename TILEMAP>
+void draw_tilemap(Args const& args, opengl::Model const& model, PIPELINE_SHAPE const& tilemap_shape,
+    TILEMAP const& tilemap)
+{
+  using PIPE = typename PIPELINE_SHAPE::PIPE;
+  using C = typename PIPE::CTX;
+
+  auto const& shape = tilemap_shape.shape;
+  auto &pipeline = tilemap_shape.pipeline;
+  auto &logger = args.logger;
+
+  auto const draw_fn = [&](auto const& shape) {
+    ::detail::draw_3dwalls(args, model, pipeline, shape, tilemap);
+  };
+
+  ::detail::draw_scene(logger, pipeline, shape, draw_fn);
 }
 
 void enable_depth_tests()

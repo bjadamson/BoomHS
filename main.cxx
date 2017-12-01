@@ -51,7 +51,7 @@ main(int argc, char *argv[])
   game::boomhs::boomhs_game game;
 
   LOG_DEBUG("Starting game loop");
-  engine::start(engine, MOVE(game), MOVE(state));
+  engine::start(engine, game, state);
 
   LOG_DEBUG("Game loop finished successfully! Ending program now.");
   return EXIT_SUCCESS;

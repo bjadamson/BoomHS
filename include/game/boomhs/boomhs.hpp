@@ -25,50 +25,8 @@
 namespace game::boomhs
 {
 
-template <typename L>
-struct game_state {
-  bool quit = false;
-  L &logger;
-  window::dimensions const dimensions;
-  stlw::float_generator rnum_generator;
-  glm::mat4 projection;
-  std::vector<::opengl::Model*> MODELS;
-  opengl::Model skybox_model;
-  opengl::Model house_model;
-  opengl::Model terrain_model;
-  opengl::camera camera;
-
-  NO_COPY(game_state);
-  NO_MOVE_ASSIGN(game_state);
-public:
-  MOVE_CONSTRUCTIBLE(game_state);
-  game_state(L &l, window::dimensions const &d, stlw::float_generator &&fg,
-      glm::mat4 &&pm)
-    : logger(l)
-    , dimensions(d)
-    , rnum_generator(MOVE(fg))
-    , projection(MOVE(pm))
-    , camera(opengl::camera_factory::make_default(this->skybox_model))
-  {
-    camera.move_down(1);
-  }
-};
-
-template<typename L, typename HW>
-auto
-make_state(L &logger, HW const& hw)
-{
-  auto const fheight = static_cast<GLfloat>(hw.h);
-  auto const fwidth = static_cast<GLfloat>(hw.w);
-  auto const aspect = fwidth / fheight;
-
-  auto projection = glm::perspective(glm::radians(90.0f), aspect, 0.1f, 200.0f);
-  stlw::float_generator rng;
-  return game_state<L>(logger, hw, MOVE(rng), MOVE(projection));
-}
-
 struct Tile {
-  opengl::Model const& model;
+  glm::vec3 const pos;
   bool is_wall = true;
 };
 
@@ -77,6 +35,7 @@ class TileMap {
   unsigned int width_;
 
 public:
+  MOVE_CONSTRUCTIBLE_ONLY(TileMap);
   TileMap(std::vector<Tile> &&t, unsigned int width)
     : tiles_(MOVE(t))
     , width_(width)
@@ -96,8 +55,83 @@ public:
     return this->tiles_[x + y * this->width()];
   }
 
+  inline auto num_tiles() const
+  {
+    return this->tiles_.size();
+  }
+
   BEGIN_END_FORWARD_FNS(this->tiles_);
 };
+
+template <typename L>
+struct game_state {
+  bool quit = false;
+  L &logger;
+  window::dimensions const dimensions;
+  stlw::float_generator rnum_generator;
+  glm::mat4 projection;
+  std::vector<::opengl::Model*> MODELS;
+  opengl::Model skybox_model;
+  opengl::Model house_model;
+  opengl::Model terrain_model;
+  opengl::camera camera;
+
+  TileMap tilemap;
+
+  NO_COPY(game_state);
+  NO_MOVE_ASSIGN(game_state);
+public:
+  MOVE_CONSTRUCTIBLE(game_state);
+  game_state(L &l, window::dimensions const &d, stlw::float_generator &&fg,
+      glm::mat4 &&pm, TileMap &&tmap)
+    : logger(l)
+    , dimensions(d)
+    , rnum_generator(MOVE(fg))
+    , projection(MOVE(pm))
+    , camera(opengl::camera_factory::make_default(this->skybox_model))
+    , tilemap(MOVE(tmap))
+  {
+    camera.move_down(1);
+  }
+};
+
+template<typename L, typename HW>
+auto
+make_state(L &logger, HW const& hw)
+{
+  auto const fheight = static_cast<GLfloat>(hw.h);
+  auto const fwidth = static_cast<GLfloat>(hw.w);
+  auto const aspect = fwidth / fheight;
+
+  auto projection = glm::perspective(glm::radians(90.0f), aspect, 0.1f, 200.0f);
+  stlw::float_generator rng;
+
+  auto constexpr NUM_TILES = 10000;
+  auto constexpr WIDTH = NUM_TILES / 100;
+  auto constexpr DEPTH = 20;
+  assert((NUM_TILES % WIDTH) == 0);
+
+  auto tile_vec = std::vector<Tile>{};
+  tile_vec.reserve(NUM_TILES);
+
+  std::size_t count = 0;
+  while(count < NUM_TILES) {
+    auto constexpr y = 0.0;
+    auto Z = 0.0;
+    FOR(x, 50) {
+      Z = 0.0;
+      FOR(_, 20) {
+        Tile tile{glm::vec3{x, y, Z}};
+        tile_vec.emplace_back(MOVE(tile));
+        Z += 1.0f;
+        ++count;
+      }
+    }
+  }
+  assert(tile_vec.size() == NUM_TILES);
+  auto tmap = TileMap{MOVE(tile_vec), WIDTH};
+  return game_state<L>(logger, hw, MOVE(rng), MOVE(projection), MOVE(tmap));
+}
 
 class boomhs_game
 {
@@ -161,8 +195,8 @@ public:
     return make_assets(MOVE(house_uv), MOVE(hashtag));
   }
 
-  template <typename LoopState, typename ShapeFactory, typename ASSETS>
-  void game_loop(LoopState &state, ShapeFactory &sf, ASSETS const& assets)
+  template <typename LoopState, typename ASSETS>
+  void game_loop(LoopState &state, opengl::opengl_pipelines &gfx, ASSETS const& assets)
   {
     {
       auto const color = opengl::LIST_OF_COLORS::WHITE;
@@ -179,22 +213,22 @@ public:
     auto const height = 0.25f, width = 0.39f;
 
     namespace OF = opengl::factories;
-    auto cube_skybox = OF::make_cube(logger, sf.d3.skybox, {GL_TRIANGLE_STRIP, {10.0f, 10.0f, 10.0f}});
+    auto cube_skybox = OF::make_cube(logger, gfx.d3.skybox, {GL_TRIANGLE_STRIP, {10.0f, 10.0f, 10.0f}});
 
     auto args = state.render_args();
     opengl::draw(args, state.skybox_model, cube_skybox);
 
-    auto cube_texture = OF::make_cube(logger, sf.d3.texture_cube, {GL_TRIANGLE_STRIP,
+    auto cube_texture = OF::make_cube(logger, gfx.d3.texture_cube, {GL_TRIANGLE_STRIP,
         {0.15f, 0.15f, 0.15f}});
 
-    auto cube_color = OF::make_cube(logger, sf.d3.color, {GL_TRIANGLE_STRIP, {0.25f, 0.25f, 0.25f}},
+    auto cube_color = OF::make_cube(logger, gfx.d3.color, {GL_TRIANGLE_STRIP, {0.25f, 0.25f, 0.25f}},
         opengl::LIST_OF_COLORS::BLUE);
 
-    auto cube_wf = OF::make_cube(logger, sf.d3.wireframe, {GL_LINE_LOOP, {0.25f, 0.25f, 0.25f}});
+    auto cube_wf = OF::make_cube(logger, gfx.d3.wireframe, {GL_LINE_LOOP, {0.25f, 0.25f, 0.25f}});
 
     // first draw terrain
     {
-      auto cube_terrain = OF::make_cube(logger, sf.d3.color, {GL_TRIANGLE_STRIP, {2.0f, 0.4f, 2.0f}},
+      auto cube_terrain = OF::make_cube(logger, gfx.d3.color, {GL_TRIANGLE_STRIP, {2.0f, 0.4f, 2.0f}},
           opengl::LIST_OF_COLORS::SADDLE_BROWN);
       opengl::draw(args, state.terrain_model, cube_terrain);
     }
@@ -204,21 +238,14 @@ public:
     opengl::draw(args, *state.MODELS[100], cube_texture);
     opengl::draw(args, *state.MODELS[102], cube_wf);
 
-    auto tile_vec = std::vector<Tile>{};
-    tile_vec.reserve(1000);
-    for(auto i = 0; i < 1000; ++i) {
-      Tile tile{*state.MODELS[100 + i]};
-      tile_vec.emplace_back(MOVE(tile));
-    }
-    auto const tmap = TileMap{MOVE(tile_vec), 100};
-
-    // THIS is blocked from working until we separate instancing during rendering somehow ...
-    // thinking maybe the context
     opengl::draw(args, state.house_model, assets.house_uv);
 
-    for (auto const& it : tmap) {
-      opengl::draw(args, it.model, assets.hashtag);
-    }
+    auto hashtag_mesh = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl",
+        opengl::LoadNormals{false}, opengl::LoadUvs{false});
+    auto tilemap_handle = OF::copy_tilemap_gpu(logger, gfx.d3.hashtag,
+        {GL_TRIANGLES, hashtag_mesh.vertices, hashtag_mesh.indices},
+        state.tilemap);
+    opengl::draw_tilemap(args, *state.MODELS[100], tilemap_handle, state.tilemap);
   }
 };
 
