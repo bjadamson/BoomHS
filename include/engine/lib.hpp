@@ -11,8 +11,8 @@
 #include <stlw/type_ctors.hpp>
 
 // TODO: decouple??
-#include <game/boomhs/ecst.hpp>
-#include <game/boomhs/assets.hpp>
+#include <boomhs/ecst.hpp>
+#include <boomhs/assets.hpp>
 
 namespace engine
 {
@@ -20,9 +20,9 @@ namespace engine
 struct Engine
 {
   ::window::sdl_window window;
-  opengl::opengl_pipelines gfx_lib;
+  opengl::OpenglPipelines gfx_lib;
 
-  explicit Engine(::window::sdl_window &&w, opengl::opengl_pipelines &&gfxlib)
+  explicit Engine(::window::sdl_window &&w, opengl::OpenglPipelines &&gfxlib)
       : window(MOVE(w))
       , gfx_lib(MOVE(gfxlib))
   {
@@ -136,9 +136,9 @@ void start(Engine &engine, G &game, S &state)
 
 auto get_dimensions(Engine const& e) { return e.window.get_dimensions(); }
 
-template <typename L, typename W, typename GFX_LIB>
+template <typename W, typename GFX_LIB>
 auto
-make_engine(L &logger, W &&window, GFX_LIB &&gfx_lib)
+make_engine(stlw::Logger &logger, W &&window, GFX_LIB &&gfx_lib)
 {
   return Engine{MOVE(window), MOVE(gfx_lib)};
 }

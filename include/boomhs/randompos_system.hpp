@@ -1,5 +1,5 @@
 #pragma once
-#include <game/boomhs/ecst_components.hpp>
+#include <boomhs/ecst_components.hpp>
 
 namespace s
 {

@@ -19,31 +19,25 @@
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 
-#include <game/boomhs/assets.hpp>
-#include <game/boomhs/io_system.hpp>
-#include <game/boomhs/randompos_system.hpp>
-#include <game/boomhs/tilemap.hpp>
+#include <boomhs/assets.hpp>
+#include <boomhs/io_system.hpp>
+#include <boomhs/randompos_system.hpp>
+#include <boomhs/tilemap.hpp>
 
-namespace game::boomhs
+using stlw::Logger;
+
+namespace boomhs
 {
 
-template <typename L>
 struct RenderArgs {
-  L &logger;
+  Logger &logger;
   opengl::camera const& camera;
   glm::mat4 const& projection;
 };
 
-template<typename L>
-auto make_render_args(L &l, opengl::camera const& c, glm::mat4 const& projection)
-{
-  return RenderArgs<L>{l, c, projection};
-}
-
-template <typename L>
 struct GameState {
   bool quit = false;
-  L &logger;
+  Logger &logger;
   window::dimensions const dimensions;
   stlw::float_generator rnum_generator;
   glm::mat4 projection;
@@ -58,7 +52,7 @@ struct GameState {
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
-  GameState(L &l, window::dimensions const &d, stlw::float_generator &&fg,
+  GameState(Logger &l, window::dimensions const &d, stlw::float_generator &&fg,
       glm::mat4 &&pm, TileMap &&tmap)
     : logger(l)
     , dimensions(d)
@@ -71,15 +65,15 @@ public:
     camera.move_down(1);
   }
 
-  RenderArgs<L> render_args() const
+  RenderArgs render_args() const
   {
-    return make_render_args(this->logger, this->camera, this->projection);
+    return RenderArgs{this->logger, this->camera, this->projection};
   }
 };
 
-template<typename L, typename HW>
+template<typename HW>
 auto
-make_state(L &logger, HW const& hw)
+make_state(Logger &logger, HW const& hw)
 {
   auto const fheight = static_cast<GLfloat>(hw.h);
   auto const fwidth = static_cast<GLfloat>(hw.w);
@@ -111,7 +105,7 @@ make_state(L &logger, HW const& hw)
   }
   assert(tile_vec.size() == NUM_TILES);
   auto tmap = TileMap{MOVE(tile_vec), WIDTH};
-  return GameState<L>(logger, hw, MOVE(rng), MOVE(projection), MOVE(tmap));
+  return GameState(logger, hw, MOVE(rng), MOVE(projection), MOVE(tmap));
 }
 
 class boomhs_game
@@ -126,9 +120,9 @@ public:
     return std::make_tuple(st::io_system, st::randompos_system);
   }
 
-  template<typename PROXY, typename STATE>
+  template<typename PROXY>
   auto
-  init(PROXY &proxy, STATE &state, opengl::opengl_pipelines &gfx)
+  init(PROXY &proxy, GameState &state, opengl::OpenglPipelines &gfx)
   {
     auto const make_entity = [&proxy](auto const i, auto const& t) {
       auto eid = proxy.create_entity();
@@ -167,8 +161,8 @@ public:
         MOVE(tilemap_handle));
   }
 
-  template <typename L, typename ASSETS>
-  void game_loop(GameState<L> &state, opengl::opengl_pipelines &gfx, ASSETS const& assets)
+  template <typename ASSETS>
+  void game_loop(GameState &state, opengl::OpenglPipelines &gfx, ASSETS const& assets)
   {
     {
       auto const color = opengl::LIST_OF_COLORS::WHITE;
@@ -219,4 +213,4 @@ public:
   }
 };
 
-} // ns game::boomhs
+} // ns boomhs

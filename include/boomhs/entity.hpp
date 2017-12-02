@@ -1,6 +1,6 @@
 #pragma once
 #include <opengl/colors.hpp>
-#include <game/boomhs/ecst.hpp>
+#include <boomhs/ecst.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/format.hpp>
 

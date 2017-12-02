@@ -3,7 +3,7 @@
 
 #include <glm/glm.hpp>
 
-namespace game::boomhs
+namespace boomhs
 {
 
 struct Tile {
@@ -44,4 +44,4 @@ public:
   BEGIN_END_FORWARD_FNS(this->tiles_);
 };
 
-} // ns game::boomhs
+} // ns boomhs

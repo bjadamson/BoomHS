@@ -10,13 +10,13 @@
 #include <opengl/lib.hpp>
 #include <window/sdl_window.hpp>
 
-#include <game/boomhs/boomhs.hpp>
+#include <boomhs/boomhs.hpp>
 
 using EngineResult = stlw::result<engine::Engine, std::string>;
+using stlw::Logger;
 
-template<typename L>
 EngineResult
-make_opengl_sdl_engine(L &logger, float const width, float const height)
+make_opengl_sdl_engine(Logger &logger, float const width, float const height)
 {
   // Select windowing library as SDL.
   LOG_DEBUG("Initializing window library globals");
@@ -25,14 +25,14 @@ make_opengl_sdl_engine(L &logger, float const width, float const height)
   LOG_DEBUG("Instantiating window instance.");
   DO_TRY(auto window, window::sdl_library::make_window(height, width));
 
-  DO_TRY(auto opengl, opengl::lib_factory::make_opengl_factories(logger));
+  DO_TRY(auto opengl, opengl::load_resources(logger));
   return engine::make_engine(logger, MOVE(window), MOVE(opengl));
 }
 
 int
 main(int argc, char *argv[])
 {
-  auto logger = stlw::log_factory::make_default_logger("main logger");
+  Logger logger = stlw::log_factory::make_default_logger("main logger");
   auto const on_error = [&](auto const &error) {
     LOG_ERROR(error);
     return EXIT_FAILURE;
@@ -44,11 +44,11 @@ main(int argc, char *argv[])
 
   LOG_DEBUG("Instantiating 'state'");
   auto const dimensions = engine::get_dimensions(engine);
-  auto state = game::boomhs::make_state(logger, dimensions);
+  auto state = boomhs::make_state(logger, dimensions);
 
   // Initialize the game instance.
   LOG_DEBUG("Instantiating game 'boomhs'");
-  game::boomhs::boomhs_game game;
+  boomhs::boomhs_game game;
 
   LOG_DEBUG("Starting game loop");
   engine::start(engine, game, state);

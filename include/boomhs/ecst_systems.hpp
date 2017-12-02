@@ -1,8 +1,8 @@
 #pragma once
 #include <ecst.hpp>
-#include <game/boomhs/ecst_components.hpp>
-#include <game/boomhs/io_system.hpp>
-#include <game/boomhs/randompos_system.hpp>
+#include <boomhs/ecst_components.hpp>
+#include <boomhs/io_system.hpp>
+#include <boomhs/randompos_system.hpp>
 
 namespace st
 {

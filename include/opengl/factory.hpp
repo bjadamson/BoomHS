@@ -171,58 +171,22 @@ make_cube(std::array<float, 32> const& vertices, wireframe_t)
 
 namespace detail
 {
-
-template <typename L, typename S>
+template<typename PH, typename VERTICES, typename INDICES>
 void
-log_shape_bytes(L &logger, S const &shape)
-{
-  //assert(0 < shape.vertices().size());
-
-  auto const print_bytes = [](auto &ostream, auto const length, auto const *data) {
-    auto i = 0u;
-    ostream << "[";
-    ostream << std::to_string(data[i++]);
-
-    for (; i < length; ++i) {
-      ostream << ", " << std::to_string(data[i]);
-    }
-    ostream << "]";
-    ostream << "\n";
-  };
-
-  //std::stringstream ostream;
-  //ostream << fmt::sprintf("vertices: %-15s %-15s %-15s\n", "num bytes", "num floats", "num vertices");
-  //ostream << fmt::sprintf("          %-15d %-15d %-15d\n", vertices_size_in_bytes(shape),
-                            //shape.vertices().size(), shape.num_vertices());
-
-  //ostream << fmt::sprintf("indices count '%d', indices_size_in_bytes %d\n", shape.indices().size(),
-                          //indices_size_in_bytes(shape));
-  //ostream << "indices(bytes):\n";
-
-  //print_bytes(ostream, shape.vertices().size(), shape.vertices().data());
-  //print_bytes(ostream, shape.indices().size(), shape.indices().data());
-
-  //std::cerr << ostream.str();
-  //LOG_TRACE(ostream.str());
-}
-
-template<typename L, typename PIPELINE_SHAPE, typename VERTICES, typename INDICES>
-void
-copy_to_gpu(L &logger, PIPELINE_SHAPE &pipeline_shape, VERTICES const& vertices,
+copy_to_gpu(stlw::Logger &logger, PH const& pipeline_handle, VERTICES const& vertices,
     INDICES const& indices)
 {
-  auto &shape = pipeline_shape.shape;
-  log_shape_bytes(logger, shape);
+  auto &dinfo = pipeline_handle.dinfo;
 
-  auto &pipeline = pipeline_shape.pipeline;
+  auto &pipeline = pipeline_handle.pipeline;
 
-  opengl::global::vao_bind(pipeline.ctx().vao());
+  opengl::global::vao_bind(pipeline.vao());
   ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
-  glBindBuffer(GL_ARRAY_BUFFER, shape.vbo());
+  glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shape.ebo());
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
   // copy the vertices
@@ -234,8 +198,6 @@ copy_to_gpu(L &logger, PIPELINE_SHAPE &pipeline_shape, VERTICES const& vertices,
   auto const indices_size = sizeof(GLuint) * indices.size();
   auto const& indices_data = indices.data();
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, indices_data, GL_STATIC_DRAW);
-
-  shape.set_is_in_gpu_memory(true);
 }
 
 } // ns detail
@@ -243,20 +205,20 @@ copy_to_gpu(L &logger, PIPELINE_SHAPE &pipeline_shape, VERTICES const& vertices,
 namespace factories
 {
 
-template<typename S, typename P>
-struct pipeline_shape_pair
+template<typename P>
+struct pipeline_handle_pair
 {
-  S shape;
+  DrawInfo dinfo;
   P &pipeline;
 
   using PIPE = P;
 };
 
-template<typename S, typename P>
-auto make_pipeline_shape_pair(S &&s, P &p) { return pipeline_shape_pair<S, P>{MOVE(s), p}; }
+template<typename P>
+auto make_pipeline_handle_pair(DrawInfo &&dh, P &p) { return pipeline_handle_pair<P>{MOVE(dh), p}; }
 
-template<typename L, typename P, typename ...Args>
-auto make_cube(L &logger, P &pipeline, cube_factory::cube_properties const& cprop, Args &&... args)
+template<typename PIPE, typename ...Args>
+auto make_cube(stlw::Logger &logger, PIPE &pipeline, cube_factory::cube_properties const& cprop, Args &&... args)
 {
   // clang-format off
   static constexpr std::array<GLuint, 14> INDICES = {{
@@ -265,10 +227,7 @@ auto make_cube(L &logger, P &pipeline, cube_factory::cube_properties const& cpro
   }};
   // clang-format on
 
-  auto const& ctx = pipeline.ctx();
-  using CTX_REF = decltype(ctx);
-  using CTX = typename std::remove_reference<CTX_REF>::type;
-  using factory_type = typename CTX::info_t;
+  using factory_type = typename PIPE::info_t;
 
   auto const& hw = cprop.dimensions;
   auto const h = hw.height;
@@ -301,22 +260,22 @@ auto make_cube(L &logger, P &pipeline, cube_factory::cube_properties const& cpro
       );
   auto const vertices = cube_factory::make_cube(v, factory_type{}, std::forward<Args>(args)...);
 
-  shape instance{cprop.draw_mode, INDICES.size()};
-  auto pair = make_pipeline_shape_pair(MOVE(instance), pipeline);
+  DrawInfo dinfo{cprop.draw_mode, INDICES.size()};
+  auto pair = make_pipeline_handle_pair(MOVE(dinfo), pipeline);
   detail::copy_to_gpu(logger, pair, vertices, INDICES);
   return pair;
 }
 
-template<typename L, typename P, typename ...Args>
-auto make_mesh(L &logger, P &pipeline, mesh_properties &&mprop, Args &&... args)
+template<typename P, typename ...Args>
+auto make_mesh(stlw::Logger &logger, P &pipeline, mesh_properties &&mprop, Args &&... args)
 {
   auto const& indices = mprop.object_data.indices;
   auto const& vertices = mprop.object_data.vertices;
 
   auto const num_indices = static_cast<GLuint>(mprop.object_data.indices.size());
-  shape instance{mprop.draw_mode, num_indices};
+  DrawInfo dinfo{mprop.draw_mode, num_indices};
 
-  auto pair = make_pipeline_shape_pair(MOVE(instance), pipeline);
+  auto pair = make_pipeline_handle_pair(MOVE(dinfo), pipeline);
   detail::copy_to_gpu(logger, pair, vertices, indices);
   return pair;
 }
@@ -347,8 +306,8 @@ auto make_tiledata(std::vector<float> const& vertices)
   return tile_data;
 }
 
-template<typename L, typename P, typename TileMap>
-auto copy_tilemap_gpu(L &logger, P &pipeline, TilemapProperties &&tprops, TileMap const& tile_map)
+template<typename P, typename TileMap>
+auto copy_tilemap_gpu(stlw::Logger &logger, P &pipeline, TilemapProperties &&tprops, TileMap const& tile_map)
 {
   // assume (x, y, z, w) all present
   // assume (r, g, b, a) all present
@@ -364,24 +323,27 @@ auto copy_tilemap_gpu(L &logger, P &pipeline, TilemapProperties &&tprops, TileMa
 
   auto const num_indices = static_cast<GLuint>(indices.size());// * num_tiles);
 
-  // 1. Bind the vao (even before instantiating the shape)
-  opengl::global::vao_bind(pipeline.ctx().vao());
+  // 1. Bind the vao (even before instantiating the DrawInfo)
+  opengl::global::vao_bind(pipeline.vao());
 
-  // 2. Create the "shape" representing the TileMap in GPU memory.
-  shape instance{tprops.draw_mode, num_indices};
+  // 2. Create the "DrawInfo" representing the TileMap in GPU memory.
+  DrawInfo dinfo{tprops.draw_mode, num_indices};
 
   // 3. setup cleanup
   ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
   ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
+  auto const ebo = dinfo.ebo();
+  auto const vbo = dinfo.vbo();
+
   // 4. Calculate how much room the buffers need.
   std::size_t const vertices_num_bytes = (vertices.size() * sizeof(GLfloat)) * num_tiles;
-  glBindBuffer(GL_ARRAY_BUFFER, instance.vbo());
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(GL_ARRAY_BUFFER, vertices_num_bytes, nullptr, GL_STATIC_DRAW);
 
   std::size_t const indices_num_bytes = (indices.size() * sizeof(GLuint)) * num_tiles;
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, instance.ebo());
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_num_bytes, nullptr, GL_STATIC_DRAW);
 
   auto const tile_data = make_tiledata(vertices);
@@ -391,20 +353,24 @@ auto copy_tilemap_gpu(L &logger, P &pipeline, TilemapProperties &&tprops, TileMa
   for (auto const& tile : tile_map) {
 
     // copy the vector into the GPU buffer
-    void const* p_vdata = static_cast<void const*>(tile_data.data());
-    std::size_t const vertices_size = sizeof(GLfloat) * tile_data.size();
-    glBindBuffer(GL_ARRAY_BUFFER, instance.vbo());
-    glBufferSubData(GL_ARRAY_BUFFER, vertices_offset, vertices_size, p_vdata);
-    vertices_offset += vertices_size;
+    {
+      void const* p_vdata = static_cast<void const*>(tile_data.data());
+      std::size_t const vertices_size = sizeof(GLfloat) * tile_data.size();
+      glBindBuffer(GL_ARRAY_BUFFER, vbo);
+      glBufferSubData(GL_ARRAY_BUFFER, vertices_offset, vertices_size, p_vdata);
+      vertices_offset += vertices_size;
+    }
 
     // copy the indices vector into the GPU buffer
-    void const* p_idata = static_cast<void const*>(indices.data());
-    std::size_t const indices_size = sizeof(GLuint) * indices.size();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, instance.ebo());
-    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, indices_offset, indices_size, p_idata);
-    indices_offset += indices_size;
+    {
+      void const* p_idata = static_cast<void const*>(indices.data());
+      std::size_t const indices_size = sizeof(GLuint) * indices.size();
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+      glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, indices_offset, indices_size, p_idata);
+      indices_offset += indices_size;
+    }
   }
-  return make_pipeline_shape_pair(MOVE(instance), pipeline);
+  return make_pipeline_handle_pair(MOVE(dinfo), pipeline);
 }
 
 } // ns factories

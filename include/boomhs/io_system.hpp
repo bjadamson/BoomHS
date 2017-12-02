@@ -1,8 +1,8 @@
 #pragma once
 #include <opengl/glsl.hpp>
 #include <window/sdl_window.hpp>
-#include <game/entity.hpp>
-#include <game/boomhs/ecst.hpp>
+#include <boomhs/entity.hpp>
+#include <boomhs/ecst.hpp>
 
 namespace s
 {

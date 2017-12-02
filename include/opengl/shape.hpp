@@ -9,29 +9,29 @@
 namespace opengl
 {
 
-class gpu_buffers
+class GpuHandles
 {
   GLuint vbo_ = 0, ebo_ = 0;
   static auto constexpr NUM_BUFFERS = 1;
 
-  explicit gpu_buffers()
+  explicit GpuHandles()
   {
     glGenBuffers(NUM_BUFFERS, &this->vbo_);
     glGenBuffers(NUM_BUFFERS, &this->ebo_);
   }
 
-  NO_COPY(gpu_buffers);
-  NO_MOVE_ASSIGN(gpu_buffers);
+  NO_COPY(GpuHandles);
+  NO_MOVE_ASSIGN(GpuHandles);
 public:
-  friend class shape;
-  ~gpu_buffers()
+  friend class DrawInfo;
+  ~GpuHandles()
   {
     glDeleteBuffers(NUM_BUFFERS, &this->ebo_);
     glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
   }
 
   // move-construction OK.
-  gpu_buffers(gpu_buffers &&other)
+  GpuHandles(GpuHandles &&other)
       : vbo_(other.vbo_)
       , ebo_(other.ebo_)
   {
@@ -43,14 +43,13 @@ public:
   inline auto ebo() const { return this->ebo_; }
 };
 
-class shape {
+class DrawInfo {
   GLenum draw_mode_;
   GLuint num_indices_;
-  gpu_buffers gpu_buffers_;
-  bool in_gpu_memory_ = false;
+  GpuHandles handles_;
 
 public:
-  explicit shape(GLenum const dm, GLuint const num_indices)
+  explicit DrawInfo(GLenum const dm, GLuint const num_indices)
       : draw_mode_(dm)
       , num_indices_(num_indices)
   {
@@ -58,12 +57,9 @@ public:
 
   inline auto draw_mode() const { return this->draw_mode_; }
 
-  inline auto vbo() const { return this->gpu_buffers_.vbo(); }
-  inline auto ebo() const { return this->gpu_buffers_.ebo(); }
+  inline auto vbo() const { return this->handles_.vbo(); }
+  inline auto ebo() const { return this->handles_.ebo(); }
   inline auto num_indices() const { return this->num_indices_; }
-
-  inline bool is_in_gpu_memory() const { return this->in_gpu_memory_; }
-  inline void set_is_in_gpu_memory(bool const v) { this->in_gpu_memory_ = v; }
 };
 
 } // ns opengl

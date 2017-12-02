@@ -3,7 +3,7 @@
 #include <opengl/obj.hpp>
 #include <opengl/shape.hpp>
 
-namespace game::boomhs {
+namespace boomhs {
 
 struct Objs {
   opengl::obj house_obj;
@@ -39,4 +39,4 @@ make_assets(opengl::obj &&house_obj, opengl::obj &&hashtag_obj, HOUSE_UV &&huv, 
   return assets<HOUSE_UV, HASHTAG, TILEMAP_HANDLE>{MOVE(objs), MOVE(buffers)};
 }
 
-} // ns game::boomhs
+} // ns boomhs

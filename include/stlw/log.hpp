@@ -34,14 +34,14 @@ class log_factory
   inline static auto
   make_spdlog_logger(char const *name, impl::log_level const level, Params &&... p)
   {
-    auto sink_ptr = std::make_unique<spdlog::sinks::daily_file_sink_st>(std::forward<Params>(p)...);
-    auto log_impl_pointer = std::make_unique<spdlog::logger>(name, std::move(sink_ptr));
+    auto sink = std::make_unique<spdlog::sinks::daily_file_sink_st>(std::forward<Params>(p)...);
+    auto log_pointer = std::make_unique<spdlog::logger>(name, MOVE(sink));
     {
       // map abstract log levels to spdlog levels
       auto const log_level = static_cast<spdlog::level::level_enum>(level);
-      log_impl_pointer->set_level(log_level);
+      log_pointer->set_level(log_level);
     }
-    return log_impl_pointer;
+    return log_pointer;
   }
 
   template <size_t N, size_t M, typename L>
@@ -49,20 +49,20 @@ class log_factory
   {
     auto const filename = stlw::concat(prefix, log_name, ".log");
     auto logger = make_spdlog_logger(log_name, level, filename.data(), 23, 59);
-    return impl::make_log_adapter(std::move(logger));
+    return impl::log_adapter{MOVE(logger)};
   }
 
   template <size_t N>
   inline static auto make_default_log_group(char const (&prefix)[N])
   {
     // clang-format off
-    return impl::make_log_group(
+    return impl::log_group{
       make_adapter("trace", prefix, impl::log_level::trace),
       make_adapter("debug", prefix, impl::log_level::debug),
       make_adapter("info", prefix, impl::log_level::info),
       make_adapter("warn", prefix, impl::log_level::warn),
       make_adapter("error", prefix, impl::log_level::error)
-    );
+    };
     // clang-format on
   }
 
@@ -76,7 +76,7 @@ class log_factory
         std::make_unique<spdlog::sinks::daily_file_sink_st>(log_file_path.data(), 23, 59)};
     auto shared_logger = std::make_unique<spdlog::logger>(LOG_NAME, begin(sinks), end(sinks));
     shared_logger->set_level(spdlog::level::trace);
-    return impl::make_log_adapter(std::move(shared_logger));
+    return impl::log_adapter{MOVE(shared_logger)};
   }
 
 public:
@@ -87,7 +87,7 @@ public:
     static char const prefix[] = "build-system/bin/";
     auto log_group = make_default_log_group(prefix);
     auto ad = make_aggregate_logger(prefix);
-    return impl::make_log_writer(std::move(log_group), std::move(ad));
+    return impl::log_writer{MOVE(log_group), MOVE(ad)};
   }
 };
 

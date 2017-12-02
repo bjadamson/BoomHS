@@ -6,6 +6,13 @@
 
 namespace stlw
 {
+
+namespace impl {
+class log_writer;
+} // ns impl
+using Logger = ::stlw::impl::log_writer;
+using LoggerPointer = std::unique_ptr<spdlog::logger>;
+
 namespace impl
 {
 
@@ -23,18 +30,16 @@ enum class log_level {
 // Adapts an underlying logger to the standard logging interface.
 //
 // It is assumed the value passed in has unique_ptr semantics.
-template <typename L>
 class log_adapter
 {
-  L p_logger_;
+  LoggerPointer p_logger_;
+  NO_COPY(log_adapter)
+public:
 
-  log_adapter(L &&l)
+  explicit log_adapter(LoggerPointer &&l)
       : p_logger_(MOVE(l))
   {
   }
-
-  NO_COPY(log_adapter)
-public:
   log_adapter(log_adapter &&other)
       : p_logger_(MOVE(other.p_logger_))
   {
@@ -59,30 +64,21 @@ public:
   template <typename... Params>
   auto& log_nothing(Params &&...) const { return *this;}
 
-  template <typename OL>
-  friend log_adapter<OL> make_log_adapter(OL &&);
+  friend log_adapter make_log_adapter(LoggerPointer &&);
 };
 
-template <typename L>
-log_adapter<L>
-make_log_adapter(L &&logger)
-{
-  return log_adapter<L>{MOVE(logger)};
-}
-
-template <typename L>
 class log_group
 {
   NO_COPY(log_group)
 
-  L trace_;
-  L debug_;
-  L info_;
-  L warn_;
-  L error_;
+  log_adapter trace_;
+  log_adapter debug_;
+  log_adapter info_;
+  log_adapter warn_;
+  log_adapter error_;
 
 public:
-  explicit log_group(L &&t, L &&d, L &&i, L &&w, L &&e)
+  explicit log_group(log_adapter &&t, log_adapter &&d, log_adapter &&i, log_adapter &&w, log_adapter &&e)
       : trace_(MOVE(t))
       , debug_(MOVE(d))
       , info_(MOVE(i))
@@ -120,13 +116,6 @@ public:
   log_group &operator=(log_group &&) = delete;
 };
 
-template <typename P>
-auto
-make_log_group(P &&a, P &&b, P &&c, P &&d, P &&e)
-{
-  return log_group<P>(MOVE(a), MOVE(b), MOVE(c), MOVE(d), MOVE(e));
-}
-
 #define LOG_WRITER_DEFINE_FN(FN_NAME)                                                              \
   template <typename... Params>                                                                    \
   auto &FN_NAME(Params &&... )                                                                     \
@@ -144,17 +133,16 @@ make_log_group(P &&a, P &&b, P &&c, P &&d, P &&e)
   }
 
 
-template <typename L, typename M>
 class log_writer
 {
-  log_group<L> group_;
-  log_adapter<M> shared_;
+  log_group group_;
+  log_adapter shared_;
 
   NO_COPY(log_writer)
   log_writer &operator=(log_writer &&) = delete;
 
 public:
-  explicit log_writer(log_group<L> &&g, log_adapter<M> &&s)
+  explicit log_writer(log_group &&g, log_adapter &&s)
       : group_(MOVE(g))
       , shared_(MOVE(s))
   {
@@ -174,13 +162,6 @@ public:
 
   LOG_WRITER_DEFINE_FN_TEMP(log_nothing)
 };
-
-template <typename L, typename M>
-inline auto
-make_log_writer(impl::log_group<L> &&group, impl::log_adapter<M> &&m)
-{
-  return log_writer<L, M>{MOVE(group), MOVE(m)};
-}
 
 } // ns impl
 } // ns stlw

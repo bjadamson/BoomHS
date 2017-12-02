@@ -1,7 +1,7 @@
 #pragma once
 #include <ecst.hpp>
-#include <game/boomhs/ecst_components.hpp>
-#include <game/boomhs/ecst_systems.hpp>
+#include <boomhs/ecst_components.hpp>
+#include <boomhs/ecst_systems.hpp>
 
 namespace ecst_setup
 {
