@@ -5,8 +5,6 @@
 #include <stlw/type_macros.hpp>
 
 #include <opengl/camera.hpp>
-#include <opengl/factory.hpp>
-#include <opengl/renderer.hpp>
 #include <opengl/vao.hpp>
 
 namespace opengl

@@ -71,7 +71,7 @@ struct height_width
   float const width;
 };
 
-struct width_height_length
+struct WidthHeightLength
 {
   float const width;
   float const height;

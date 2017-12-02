@@ -1,9 +1,9 @@
-#include <opengl/glew.hpp>
 #include <window/sdl_window.hpp>
 #include <stlw/format.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
+#include <opengl/glew.hpp>
 
 namespace window
 {
@@ -59,8 +59,8 @@ sdl_library::destroy()
   }
 }
 
-stlw::result<sdl_window, std::string>
-sdl_library::make_window(int const height, int const width)
+stlw::result<SDLWindow, std::string>
+sdl_library::make_window(bool const fullscreen, int const height, int const width)
 {
   // Hidden dependency between the ordering here, so all the logic exists in one
   // place.
@@ -78,7 +78,7 @@ sdl_library::make_window(int const height, int const width)
 
   // First, create the SDL window.
   auto const title = "Hello World!";
-  auto const flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
+  auto const flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | (fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
   int const x = SDL_WINDOWPOS_CENTERED;
   int const y = SDL_WINDOWPOS_CENTERED;
   auto raw = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width,
@@ -130,7 +130,7 @@ sdl_library::make_window(int const height, int const width)
         fmt::format("GLEW could not initialize! GLEW error: {}\n", glewGetErrorString(glew_status));
     return stlw::make_error(error);
   }
-  return sdl_window{MOVE(window_ptr), gl_context};
+  return SDLWindow{MOVE(window_ptr), gl_context};
 }
 
 } // ns window

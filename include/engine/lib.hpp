@@ -13,20 +13,19 @@
 // TODO: decouple??
 #include <boomhs/ecst.hpp>
 #include <boomhs/assets.hpp>
+#include <boomhs/boomhs.hpp>
 
 namespace engine
 {
 
+namespace game = boomhs;
+using State = game::GameState;
+
 struct Engine
 {
-  ::window::sdl_window window;
+  ::window::SDLWindow window;
   opengl::OpenglPipelines gfx_lib;
 
-  explicit Engine(::window::sdl_window &&w, opengl::OpenglPipelines &&gfxlib)
-      : window(MOVE(w))
-      , gfx_lib(MOVE(gfxlib))
-  {
-  }
   MOVE_CONSTRUCTIBLE_ONLY(Engine);
 };
 
@@ -40,8 +39,8 @@ void end(Engine &e)
   SDL_GL_SwapWindow(e.window.raw());
 }
 
-template<typename State, typename Game, typename P, typename ASSETS>
-void loop(Engine &engine, State &state, Game &game, P &proxy, ASSETS const& assets)
+template<typename P>
+void loop(Engine &engine, State &state, P &proxy, game::Assets const& assets)
 {
   namespace sea = ecst::system_execution_adapter;
   auto io_tags = sea::t(st::io_system);
@@ -60,13 +59,13 @@ void loop(Engine &engine, State &state, Game &game, P &proxy, ASSETS const& asse
   begin();
   LOG_TRACE("rendering.");
 
-  game.game_loop(state, engine.gfx_lib, assets);
+  game::game_loop(state, engine.gfx_lib, assets);
   end(engine);
   LOG_TRACE("game loop stepping.");
 }
 
-template <typename G, typename S>
-void start(Engine &engine, G &game, S &state)
+template <typename S>
+void start(Engine &engine, S &state)
 {
   using namespace opengl;
 
@@ -78,7 +77,7 @@ void start(Engine &engine, G &game, S &state)
   LOG_TRACE("stepping ecst once");
 
   auto const assets = ctx->step([&](auto &proxy) {
-      return game.init(proxy, state, engine.gfx_lib);
+      return game::init(proxy, state, engine.gfx_lib);
   });
 
   namespace sea = ecst::system_execution_adapter;
@@ -117,7 +116,7 @@ void start(Engine &engine, G &game, S &state)
   auto const game_loop = [&](auto &proxy) {
     auto const fn = [&]()
     {
-      loop(engine, state, game, proxy, assets);
+      loop(engine, state, proxy, assets);
     };
     while (!state.quit) {
       fps_capped_game_loop(fn);
@@ -135,12 +134,5 @@ void start(Engine &engine, G &game, S &state)
 }
 
 auto get_dimensions(Engine const& e) { return e.window.get_dimensions(); }
-
-template <typename W, typename GFX_LIB>
-auto
-make_engine(stlw::Logger &logger, W &&window, GFX_LIB &&gfx_lib)
-{
-  return Engine{MOVE(window), MOVE(gfx_lib)};
-}
 
 } // ns engine

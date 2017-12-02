@@ -1,6 +1,8 @@
 #pragma once
 #include <opengl/global.hpp>
 #include <opengl/camera.hpp>
+#include <opengl/draw_info.hpp>
+#include <opengl/lib.hpp>
 #include <opengl/vertex_attribute.hpp>
 
 #include <glm/glm.hpp>
@@ -140,13 +142,9 @@ draw_2dshape(Args const &args, opengl::Model const& model, PIPE &pipeline, DrawI
 
 } // ns detail
 
-template <typename Args, typename PIPELINE_dinfo>
-void draw(Args const& args, Model const& model, PIPELINE_dinfo const& pipeline_dinfo)
+template <typename Args, typename PIPE>
+void draw(Args const& args, Model const& model, PIPE &pipeline, DrawInfo const& dinfo)
 {
-  using PIPE = typename PIPELINE_dinfo::PIPE;
-
-  auto const& dinfo = pipeline_dinfo.dinfo;
-  auto &pipeline = pipeline_dinfo.pipeline;
   auto &logger = args.logger;
 
   if constexpr (PIPE::IS_2D) {
@@ -158,14 +156,11 @@ void draw(Args const& args, Model const& model, PIPELINE_dinfo const& pipeline_d
   }
 }
 
-template <typename Args, typename PIPELINE_dinfo, typename TILEMAP>
-void draw_tilemap(Args const& args, opengl::Model const& model, PIPELINE_dinfo const& tilemap_dinfo,
-    TILEMAP const& tilemap)
+template <typename Args, typename TILEMAP>
+void draw_tilemap(Args const& args, Model const& model, PipelineHashtag3D &pipeline,
+    DrawInfo const& dinfo, TILEMAP const& tilemap)
 {
-  auto const& dinfo = tilemap_dinfo.dinfo;
   auto &logger = args.logger;
-
-  auto &pipeline = tilemap_dinfo.pipeline;
   auto &program = pipeline.program_ref();
 
   auto const view = compute_view(args.camera);

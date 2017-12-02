@@ -4,9 +4,10 @@
 #include <stlw/type_macros.hpp>
 #include <opengl/glew.hpp>
 #include <opengl/global.hpp>
+#include <opengl/lib.hpp>
 #include <opengl/obj.hpp>
 #include <opengl/types.hpp>
-#include <opengl/shape.hpp>
+#include <opengl/draw_info.hpp>
 
 namespace opengl
 {
@@ -27,12 +28,12 @@ struct mesh_properties
 namespace cube_factory
 {
 
-using width_height_length = width_height_length;
+using CubeDimensions = WidthHeightLength;
 
 struct cube_properties
 {
   GLenum const draw_mode;
-  width_height_length const dimensions;
+  CubeDimensions const dimensions;
 };
 
 struct color_properties {
@@ -171,15 +172,11 @@ make_cube(std::array<float, 32> const& vertices, wireframe_t)
 
 namespace detail
 {
-template<typename PH, typename VERTICES, typename INDICES>
+template<typename PIPE, typename VERTICES, typename INDICES>
 void
-copy_to_gpu(stlw::Logger &logger, PH const& pipeline_handle, VERTICES const& vertices,
+copy_to_gpu(stlw::Logger &logger, PIPE &pipeline, DrawInfo const& dinfo, VERTICES const& vertices,
     INDICES const& indices)
 {
-  auto &dinfo = pipeline_handle.dinfo;
-
-  auto &pipeline = pipeline_handle.pipeline;
-
   opengl::global::vao_bind(pipeline.vao());
   ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
@@ -205,20 +202,8 @@ copy_to_gpu(stlw::Logger &logger, PH const& pipeline_handle, VERTICES const& ver
 namespace factories
 {
 
-template<typename P>
-struct pipeline_handle_pair
-{
-  DrawInfo dinfo;
-  P &pipeline;
-
-  using PIPE = P;
-};
-
-template<typename P>
-auto make_pipeline_handle_pair(DrawInfo &&dh, P &p) { return pipeline_handle_pair<P>{MOVE(dh), p}; }
-
 template<typename PIPE, typename ...Args>
-auto make_cube(stlw::Logger &logger, PIPE &pipeline, cube_factory::cube_properties const& cprop, Args &&... args)
+auto copy_cube_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory::cube_properties const& cprop, Args &&... args)
 {
   // clang-format off
   static constexpr std::array<GLuint, 14> INDICES = {{
@@ -261,9 +246,8 @@ auto make_cube(stlw::Logger &logger, PIPE &pipeline, cube_factory::cube_properti
   auto const vertices = cube_factory::make_cube(v, factory_type{}, std::forward<Args>(args)...);
 
   DrawInfo dinfo{cprop.draw_mode, INDICES.size()};
-  auto pair = make_pipeline_handle_pair(MOVE(dinfo), pipeline);
-  detail::copy_to_gpu(logger, pair, vertices, INDICES);
-  return pair;
+  detail::copy_to_gpu(logger, pipeline, dinfo, vertices, INDICES);
+  return dinfo;
 }
 
 template<typename P, typename ...Args>
@@ -275,9 +259,8 @@ auto make_mesh(stlw::Logger &logger, P &pipeline, mesh_properties &&mprop, Args 
   auto const num_indices = static_cast<GLuint>(mprop.object_data.indices.size());
   DrawInfo dinfo{mprop.draw_mode, num_indices};
 
-  auto pair = make_pipeline_handle_pair(MOVE(dinfo), pipeline);
-  detail::copy_to_gpu(logger, pair, vertices, indices);
-  return pair;
+  detail::copy_to_gpu(logger, pipeline, dinfo, vertices, indices);
+  return dinfo;
 }
 
 struct TilemapProperties
@@ -306,8 +289,9 @@ auto make_tiledata(std::vector<float> const& vertices)
   return tile_data;
 }
 
-template<typename P, typename TileMap>
-auto copy_tilemap_gpu(stlw::Logger &logger, P &pipeline, TilemapProperties &&tprops, TileMap const& tile_map)
+template<typename TileMap>
+auto copy_tilemap_gpu(stlw::Logger &logger, ::opengl::PipelineHashtag3D &pipeline,
+    TilemapProperties &&tprops, TileMap const& tile_map)
 {
   // assume (x, y, z, w) all present
   // assume (r, g, b, a) all present
@@ -370,7 +354,7 @@ auto copy_tilemap_gpu(stlw::Logger &logger, P &pipeline, TilemapProperties &&tpr
       indices_offset += indices_size;
     }
   }
-  return make_pipeline_handle_pair(MOVE(dinfo), pipeline);
+  return dinfo;
 }
 
 } // ns factories

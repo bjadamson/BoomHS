@@ -9,10 +9,10 @@
 namespace window
 {
 
-struct dimensions {
+struct Dimensions {
   int const w;
   int const h;
-  dimensions(int const wp, int const hp)
+  Dimensions(int const wp, int const hp)
       : w(wp)
       , h(hp)
   {
@@ -22,30 +22,30 @@ struct dimensions {
 using window_type = SDL_Window;
 using window_ptr = std::unique_ptr<window_type, decltype(&SDL_DestroyWindow)>;
 
-class sdl_window
+class SDLWindow
 {
   window_ptr window_;
   SDL_GLContext context_;
 
 public:
   // ctors
-  sdl_window(window_ptr &&w, SDL_GLContext c)
-      : window_(std::move(w))
+  SDLWindow(window_ptr &&w, SDL_GLContext c)
+      : window_(MOVE(w))
       , context_(c)
   {
   }
-  ~sdl_window()
+  ~SDLWindow()
   {
     if (nullptr != this->context_) {
       SDL_GL_DeleteContext(this->context_);
     }
   }
 
-  NO_COPY(sdl_window)
+  NO_COPY(SDLWindow)
 
   // move-constructible
-  sdl_window(sdl_window &&other)
-      : window_(std::move(other.window_))
+  SDLWindow(SDLWindow &&other)
+      : window_(MOVE(other.window_))
       , context_(other.context_)
   {
     other.context_ = nullptr;
@@ -53,12 +53,12 @@ public:
   }
 
   // not move assignable
-  sdl_window &operator=(sdl_window &&) = delete;
+  SDLWindow &operator=(SDLWindow &&) = delete;
 
   // Allow getting the window's SDL pointer
   window_type *raw() { return this->window_.get(); }
 
-  dimensions get_dimensions() const
+  Dimensions get_dimensions() const
   {
     int w = 0, h = 0;
     assert(nullptr != this->window_.get());
@@ -73,7 +73,7 @@ struct sdl_library {
   static stlw::result<stlw::empty_type, std::string> init();
   static void destroy();
 
-  static stlw::result<sdl_window, std::string> make_window(int const, int const);
+  static stlw::result<SDLWindow, std::string> make_window(bool const, int const, int const);
 };
 
 } // ns window

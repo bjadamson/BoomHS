@@ -16,17 +16,17 @@ using EngineResult = stlw::result<engine::Engine, std::string>;
 using stlw::Logger;
 
 EngineResult
-make_opengl_sdl_engine(Logger &logger, float const width, float const height)
+make_opengl_sdl_engine(Logger &logger, bool const fullscreen, float const width, float const height)
 {
   // Select windowing library as SDL.
   LOG_DEBUG("Initializing window library globals");
   DO_TRY(auto _, window::sdl_library::init());
 
   LOG_DEBUG("Instantiating window instance.");
-  DO_TRY(auto window, window::sdl_library::make_window(height, width));
+  DO_TRY(auto window, window::sdl_library::make_window(fullscreen, height, width));
 
   DO_TRY(auto opengl, opengl::load_resources(logger));
-  return engine::make_engine(logger, MOVE(window), MOVE(opengl));
+  return engine::Engine{MOVE(window), MOVE(opengl)};
 }
 
 int
@@ -38,20 +38,17 @@ main(int argc, char *argv[])
     return EXIT_FAILURE;
   };
 
+  bool constexpr FULLSCREEN = false;
   DO_TRY_OR_ELSE_RETURN(auto engine,
-      make_opengl_sdl_engine(logger, 1024, 768),
+      make_opengl_sdl_engine(logger, FULLSCREEN, 1024, 768),
       on_error);
 
   LOG_DEBUG("Instantiating 'state'");
   auto const dimensions = engine::get_dimensions(engine);
   auto state = boomhs::make_state(logger, dimensions);
 
-  // Initialize the game instance.
-  LOG_DEBUG("Instantiating game 'boomhs'");
-  boomhs::boomhs_game game;
-
   LOG_DEBUG("Starting game loop");
-  engine::start(engine, game, state);
+  engine::start(engine, state);
 
   LOG_DEBUG("Game loop finished successfully! Ending program now.");
   return EXIT_SUCCESS;
