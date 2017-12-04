@@ -3,25 +3,24 @@
 #include <boomhs/ecst.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/format.hpp>
+#include <stlw/log.hpp>
 
 // THIS IS ALL REUSABLE CODE, MOVE IT TO ENGINE folder.
 namespace game
 {
 
-template<typename L, typename TData>
+template<typename TData>
 class entity_transformer
 {
   // TODO: Make no copy/ no move once we can use template argument deduction for constructors,
   // and we get get rid of the make_entity_transformer() fn.
   //NO_COPY(entity_transformer);
   //NO_MOVE(entity_transformer);
-
-  // private
-  L &logger;
+  stlw::Logger &logger;
   TData &data;
 
   friend struct entity_factory;
-  entity_transformer(L &l, TData &d)
+  entity_transformer(stlw::Logger &l, TData &d)
     : logger(l)
     , data(d)
   {}
@@ -94,10 +93,10 @@ struct entity_factory
 {
   entity_factory() = delete;
 
-  template<typename L, typename TData>
-  static auto make_transformer(L &logger, TData &data)
+  template<typename TData>
+  static auto make_transformer(stlw::Logger &logger, TData &data)
   {
-    return entity_transformer<L, TData>(logger, data);
+    return entity_transformer<TData>(logger, data);
   }
 };
 

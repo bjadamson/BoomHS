@@ -1,7 +1,6 @@
 #pragma once
 #include <opengl/colors.hpp>
 #include <opengl/global.hpp>
-#include <opengl/shader_program.hpp>
 #include <opengl/types.hpp>
 #include <opengl/texture.hpp>
 

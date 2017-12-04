@@ -1,6 +1,6 @@
+#include <opengl/shader_program.hpp>
 #include <opengl/glew.hpp>
 #include <opengl/glsl.hpp>
-#include <opengl/shader_program.hpp>
 #include <opengl/vertex_attribute.hpp>
 #include <stlw/os.hpp>
 #include <stlw/type_ctors.hpp>
@@ -8,8 +8,15 @@
 
 namespace
 {
+
 using compiled_shader = stlw::ImplicitelyCastableMovableWrapper<GLuint, decltype(glDeleteShader)>;
 using namespace opengl;
+
+constexpr GLuint
+INVALID_PROGRAM_ID() { return 0; }
+
+constexpr bool
+is_invalid(GLuint const p) { return p == INVALID_PROGRAM_ID(); }
 
 inline bool
 is_compiled(GLuint const handle)
@@ -163,11 +170,132 @@ from_vertex_shader(std::string const& filename, std::string const& source)
   return infos;
 }
 
+void
+check_opengl_errors(stlw::Logger &logger, GLuint const p)
+{
+  auto const errors = global::log::get_errors(p);
+  if (errors) {
+    LOG_ERROR("Opengl error: '{}'", *errors);
+    std::cerr <<  "Opengl error: '"<< *errors << "'\n";
+    std::abort();
+  }
+}
+
+auto
+get_uniform_location(stlw::Logger &logger, GLuint const p, GLchar const *name)
+{
+  global::log::clear_gl_errors();
+
+  LOG_TRACE(fmt::sprintf("getting uniform '%s' location.", name));
+  GLint const loc = glGetUniformLocation(p, name);
+  LOG_TRACE(fmt::sprintf("uniform '%s' found at '%d'.", name, loc));
+
+  check_opengl_errors(logger, p);
+  assert(-1 != loc);
+  return loc;
+}
+
 } // ns anonymous
 
 namespace opengl
 {
 
+ShaderProgram::ShaderProgram(ShaderProgram &&o)
+  : program_(o.program_)
+{
+  // We don't want to destroy the underlying program, we want to transfer the ownership to this
+  // instance being moved into. This implements "handle-passing" allowing the user to observe
+  // move-semantics for this object.
+  o.program_ = program_factory::make_invalid();
+}
+
+ShaderProgram::~ShaderProgram()
+{
+  if (is_invalid(this->program_)) {
+    glDeleteProgram(this->program_);
+    this->program_ = 0;
+  }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+// MUTATION
+void ShaderProgram::use()
+{
+  glUseProgram(this->program_);
+}
+
+void
+ShaderProgram::set_uniform_matrix_4fv(stlw::Logger &logger, GLchar const *name, glm::mat4 const &matrix)
+{
+  use();
+
+  auto const p = this->program_;
+  auto const loc = get_uniform_location(logger, p, name);
+  // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
+  //
+  // count:
+  // For the matrix (glUniformMatrix*) commands, specifies the number of matrices that are to be
+  // modified.
+  // This should be 1 if the targeted uniform variable is not an array of matrices, and 1 or more
+  // if it is an array of matrices.
+  GLsizei constexpr COUNT = 1;
+  GLboolean constexpr TRANSPOSE_MATRICES = GL_FALSE;
+
+  LOG_TRACE(fmt::sprintf("sending uniform matrix at loc '%d' with data '%s' to GPU", loc,
+        glm::to_string(matrix)));
+  glUniformMatrix4fv(loc, COUNT, TRANSPOSE_MATRICES, glm::value_ptr(matrix));
+  check_opengl_errors(logger, p);
+}
+
+void
+ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, std::array<float, 4> const &floats)
+{
+  use();
+
+  auto const p = this->program_;
+  auto const loc = get_uniform_location(logger, p, name);
+  // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
+  //
+  // For the vector (glUniform*v) commands, specifies the number of elements that are to be
+  // modified.
+  // This should be 1 if the targeted uniform variable is not an array, and 1 or more if it is an
+  // array.
+  GLsizei constexpr COUNT = 1;
+
+  glUniform4fv(loc, COUNT, floats.data());
+  check_opengl_errors(logger, p);
+}
+
+void
+ShaderProgram::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, glm::vec3 const& data)
+{
+  use();
+
+  auto const p = this->program_;
+  std::array<float, 3> const array{data.x, data.y, data.z};
+
+  // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
+  //
+  // For the vector (glUniform*v) commands, specifies the number of elements that are to be
+  // modified.
+  // This should be 1 if the targeted uniform variable is not an array, and 1 or more if it is an
+  // array.
+  GLsizei constexpr COUNT = 1;
+
+  auto const loc = get_uniform_location(logger, p, name);
+  glUniform3fv(loc, COUNT, array.data());
+  check_opengl_errors(logger, p);
+}
+
+void
+ShaderProgram::check_errors(stlw::Logger &logger)
+{
+  use();
+  check_opengl_errors(logger, this->program_);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// program_factory
 stlw::result<GLuint, std::string>
 program_factory::from_files(vertex_shader_filename const v, fragment_shader_filename const f)
 {
@@ -187,6 +315,12 @@ program_factory::from_files(vertex_shader_filename const v, fragment_shader_file
   DO_TRY(auto const fragment_shader_source, stlw::read_file(fragment_shader_path));
 
   return compile_sources(vertex_shader, fragment_shader_source);
+}
+
+GLuint
+program_factory::make_invalid()
+{
+  return INVALID_PROGRAM_ID();
 }
 
 } // ns opengl

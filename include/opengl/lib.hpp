@@ -5,6 +5,7 @@
 #include <stlw/type_macros.hpp>
 
 #include <opengl/camera.hpp>
+#include <opengl/shader_program.hpp>
 #include <opengl/vao.hpp>
 
 namespace opengl
@@ -12,11 +13,11 @@ namespace opengl
 
 class BasePipeline
 {
-  shader_program program_;
+  ShaderProgram program_;
   vertex_attribute va_;
   VAO vao_;
 public:
-  explicit BasePipeline(shader_program &&sp, vertex_attribute &&va)
+  explicit BasePipeline(ShaderProgram &&sp, vertex_attribute &&va)
     : program_(MOVE(sp))
     , va_(MOVE(va))
     {
@@ -29,7 +30,7 @@ public:
 
 #define PIPELINE_CTOR(CLASSNAME)                                                                   \
   MOVE_CONSTRUCTIBLE_ONLY(CLASSNAME);                                                              \
-  explicit CLASSNAME(shader_program &&sp, vertex_attribute &&va)                                   \
+  explicit CLASSNAME(ShaderProgram &&sp, vertex_attribute &&va)                                    \
     : BasePipeline(MOVE(sp), MOVE(va))                                                             \
     {                                                                                              \
     }
@@ -73,7 +74,7 @@ struct PipelineHashtag3D : public BasePipeline
 };
 
 #define PIPELINE_TEXTURE_CTOR(CLASSNAME)                                                           \
-  explicit CLASSNAME(shader_program &&sp, vertex_attribute &&va, texture_info const t)             \
+  explicit CLASSNAME(ShaderProgram &&sp, vertex_attribute &&va, texture_info const t)              \
     : BasePipeline(MOVE(sp), MOVE(va))                                                             \
     , texture_info_(t)                                                                             \
     {                                                                                              \
@@ -149,7 +150,7 @@ class PipelineWireframe : public BasePipeline
 {
   std::array<float, 4> color_;
 public:
-  explicit PipelineWireframe(shader_program &&sp, vertex_attribute &&va, std::array<float, 4> const& c)
+  explicit PipelineWireframe(ShaderProgram &&sp, vertex_attribute &&va, std::array<float, 4> const& c)
     : BasePipeline(MOVE(sp), MOVE(va))
     , color_(c)
     {
@@ -211,8 +212,7 @@ namespace detail
   static stlw::result<R, std::string>
   make_pipeline(char const* vertex_s, char const* frag_s, vertex_attribute &&va, Args &&... args)
   {
-    shader_program_factory pf;
-    DO_TRY(auto sp, pf.make(vertex_s, frag_s));
+    DO_TRY(auto sp, ShaderProgramFactory::make(vertex_s, frag_s));
     return R{MOVE(sp), MOVE(va), std::forward<Args>(args)...};
   }
 } // ns detail

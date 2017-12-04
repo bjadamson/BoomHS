@@ -180,7 +180,7 @@ void draw_tilemap(Args const& args, Model const& model, PipelineHashtag3D &pipel
 
     std::size_t offset = 0u;
     auto const draw_tile = [&](auto const& tile) {
-      program.program_set_uniform_array_3fv(logger, "u_offset", tile.pos);
+      program.set_uniform_array_3fv(logger, "u_offset", tile.pos);
 
       GLvoid const* p_offset = reinterpret_cast<GLvoid const*>(offset);
       glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, p_offset, instance_count);

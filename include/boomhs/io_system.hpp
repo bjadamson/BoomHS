@@ -3,14 +3,14 @@
 #include <window/sdl_window.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/ecst.hpp>
+#include <stlw/log.hpp>
 
 namespace s
 {
 
 struct io_system {
 
-  template <typename L>
-  bool init(L &logger)
+  bool init(stlw::Logger &logger)
   {
     LOG_TRACE("io_system::init()");
     return true;
@@ -37,8 +37,8 @@ struct io_system {
     return is_quit;
   }
 
-  template<typename L, typename ET, typename S>
-  bool process_event(L &logger, ET &et, SDL_Event &event, S &state) const
+  template<typename ET, typename S>
+  bool process_event(stlw::Logger &logger, ET &et, SDL_Event &event, S &state) const
   {
     float constexpr MOVE_DISTANCE = 0.1f;
     float constexpr SCALE_FACTOR = 0.20f;
