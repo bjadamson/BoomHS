@@ -178,7 +178,7 @@ void game_loop(GameState &state, opengl::OpenglPipelines &gfx, Assets const& ass
   //auto &logger = state.logger;
 
   // first, draw terrain
-  opengl::draw(render_args, state.terrain_model, gfx.d3.color, assets.handles.terrain);
+  //opengl::draw(render_args, state.terrain_model, gfx.d3.color, assets.handles.terrain);
 
   // now draw entities
   opengl::draw(render_args, state.skybox_model, gfx.d3.skybox, assets.handles.cube_skybox);

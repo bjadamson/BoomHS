@@ -25,6 +25,7 @@ draw_scene(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const
 {
   using namespace opengl;
 
+  // Use the pipeline's PROGRAM.
   auto &program = pipeline.program_ref();
   program.use();
   program.check_errors(logger);
@@ -34,18 +35,9 @@ draw_scene(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const
     program.check_errors(logger);
   }
 
-  // Buffers need to be bound before we call global::set_vertex_attributes(...).
+  // Enable the pipeline's VAO.
   global::vao_bind(pipeline.vao());
   ON_SCOPE_EXIT([]() { global::vao_unbind(); });
-
-  glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
-
-  // Instruct the vertex-processor to enable the vertex attributes for this pipeline.
-  va::set_vertex_attributes(logger, pipeline.va());
 
   LOG_TRACE("before drawing dinfo ...");
   if constexpr (PIPE::HAS_TEXTURE) {

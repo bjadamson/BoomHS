@@ -181,10 +181,9 @@ copy_to_gpu(stlw::Logger &logger, PIPE &pipeline, DrawInfo const& dinfo, VERTICE
   ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
   glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
-
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
+
+  va::set_vertex_attributes(logger, pipeline.va());
 
   // copy the vertices
   auto const vertices_size = vertices.size() * sizeof(GLfloat);
@@ -307,27 +306,25 @@ auto copy_tilemap_gpu(stlw::Logger &logger, ::opengl::PipelineHashtag3D &pipelin
 
   auto const num_indices = static_cast<GLuint>(indices.size());// * num_tiles);
 
-  // 1. Bind the vao (even before instantiating the DrawInfo)
+  // Bind the vao (even before instantiating the DrawInfo)
   opengl::global::vao_bind(pipeline.vao());
-
-  // 2. Create the "DrawInfo" representing the TileMap in GPU memory.
-  DrawInfo dinfo{tprops.draw_mode, num_indices};
-
-  // 3. setup cleanup
   ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ARRAY_BUFFER, 0); });
-  ON_SCOPE_EXIT([]() { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); });
 
+  DrawInfo dinfo{tprops.draw_mode, num_indices};
   auto const ebo = dinfo.ebo();
   auto const vbo = dinfo.vbo();
 
-  // 4. Calculate how much room the buffers need.
-  std::size_t const vertices_num_bytes = (vertices.size() * sizeof(GLfloat)) * num_tiles;
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
+  // Enable the VertexAttributes for this pipeline's VAO.
+  va::set_vertex_attributes(logger, pipeline.va());
+
+  // Calculate how much room the buffers need.
+  std::size_t const vertices_num_bytes = (vertices.size() * sizeof(GLfloat)) * num_tiles;
   glBufferData(GL_ARRAY_BUFFER, vertices_num_bytes, nullptr, GL_STATIC_DRAW);
 
   std::size_t const indices_num_bytes = (indices.size() * sizeof(GLuint)) * num_tiles;
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_num_bytes, nullptr, GL_STATIC_DRAW);
 
   auto const tile_data = make_tiledata(vertices);
@@ -340,7 +337,6 @@ auto copy_tilemap_gpu(stlw::Logger &logger, ::opengl::PipelineHashtag3D &pipelin
     {
       void const* p_vdata = static_cast<void const*>(tile_data.data());
       std::size_t const vertices_size = sizeof(GLfloat) * tile_data.size();
-      glBindBuffer(GL_ARRAY_BUFFER, vbo);
       glBufferSubData(GL_ARRAY_BUFFER, vertices_offset, vertices_size, p_vdata);
       vertices_offset += vertices_size;
     }
@@ -349,7 +345,6 @@ auto copy_tilemap_gpu(stlw::Logger &logger, ::opengl::PipelineHashtag3D &pipelin
     {
       void const* p_idata = static_cast<void const*>(indices.data());
       std::size_t const indices_size = sizeof(GLuint) * indices.size();
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
       glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, indices_offset, indices_size, p_idata);
       indices_offset += indices_size;
     }

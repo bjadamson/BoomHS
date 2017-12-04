@@ -15,13 +15,12 @@ class VAO {
   static constexpr auto NUM_BUFFERS = 1;
 
 public:
+  NO_COPY(VAO);
+  NO_MOVE_ASSIGN(VAO);
   explicit VAO()
   {
     glGenVertexArrays(NUM_BUFFERS, &this->vao_);
   }
-
-  NO_COPY(VAO);
-  NO_MOVE_ASSIGN(VAO);
 
   ~VAO()
   {
