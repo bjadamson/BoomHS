@@ -170,35 +170,48 @@ from_vertex_shader(std::string const& filename, std::string const& source)
   return infos;
 }
 
-void
-check_opengl_errors(stlw::Logger &logger, GLuint const p)
-{
-  auto const errors = global::log::get_errors(p);
-  if (errors) {
-    LOG_ERROR("Opengl error: '{}'", *errors);
-    std::cerr <<  "Opengl error: '"<< *errors << "'\n";
-    std::abort();
+struct program_factory {
+  program_factory() = delete;
+
+  static stlw::result<GLuint, std::string>
+  from_files(vertex_shader_filename const v, fragment_shader_filename const f)
+  {
+    auto const prefix = [](auto const &path) {
+      return std::string{"./build-system/bin/shaders/"} + path;
+    };
+    auto const vertex_shader_path = prefix(v.filename);
+    auto const fragment_shader_path = prefix(f.filename);
+
+    // Read the Vertex/Fragment Shader code from ther file
+    DO_TRY(auto const vertex_shader_source, stlw::read_file(vertex_shader_path));
+    DO_TRY(auto attribute_variable_info, from_vertex_shader(vertex_shader_path, vertex_shader_source));
+
+    VertexShaderInfo const vertex_shader{vertex_shader_path, vertex_shader_source,
+      MOVE(attribute_variable_info)};
+
+    DO_TRY(auto const fragment_shader_source, stlw::read_file(fragment_shader_path));
+
+    return compile_sources(vertex_shader, fragment_shader_source);
   }
-}
 
-auto
-get_uniform_location(stlw::Logger &logger, GLuint const p, GLchar const *name)
-{
-  global::log::clear_gl_errors();
-
-  LOG_TRACE(fmt::sprintf("getting uniform '%s' location.", name));
-  GLint const loc = glGetUniformLocation(p, name);
-  LOG_TRACE(fmt::sprintf("uniform '%s' found at '%d'.", name, loc));
-
-  check_opengl_errors(logger, p);
-  assert(-1 != loc);
-  return loc;
-}
+  static GLuint
+  make_invalid()
+  {
+    return INVALID_PROGRAM_ID();
+  }
+};
 
 } // ns anonymous
 
 namespace opengl
 {
+
+stlw::result<ShaderProgram, std::string>
+make_shader_program(vertex_shader_filename const v, fragment_shader_filename const f)
+{
+  DO_TRY(auto program, program_factory::from_files(v, f));
+  return ShaderProgram{program};
+}
 
 ShaderProgram::ShaderProgram(ShaderProgram &&o)
   : program_(o.program_)
@@ -217,110 +230,25 @@ ShaderProgram::~ShaderProgram()
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
-// MUTATION
-void ShaderProgram::use()
+void
+ShaderProgram::use(stlw::Logger &logger)
 {
   glUseProgram(this->program_);
+  LOG_ANY_GL_ERRORS(logger, "ShaderProgram use/enable");
 }
 
-void
-ShaderProgram::set_uniform_matrix_4fv(stlw::Logger &logger, GLchar const *name, glm::mat4 const &matrix)
+GLint
+ShaderProgram::get_uniform_location(stlw::Logger &logger, GLchar const *name)
 {
-  use();
+  global::log::clear_gl_errors();
 
-  auto const p = this->program_;
-  auto const loc = get_uniform_location(logger, p, name);
-  // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
-  //
-  // count:
-  // For the matrix (glUniformMatrix*) commands, specifies the number of matrices that are to be
-  // modified.
-  // This should be 1 if the targeted uniform variable is not an array of matrices, and 1 or more
-  // if it is an array of matrices.
-  GLsizei constexpr COUNT = 1;
-  GLboolean constexpr TRANSPOSE_MATRICES = GL_FALSE;
+  LOG_TRACE(fmt::sprintf("getting uniform '%s' location.", name));
+  GLint const loc = glGetUniformLocation(this->program_, name);
+  LOG_TRACE(fmt::sprintf("uniform '%s' found at '%d'.", name, loc));
 
-  LOG_TRACE(fmt::sprintf("sending uniform matrix at loc '%d' with data '%s' to GPU", loc,
-        glm::to_string(matrix)));
-  glUniformMatrix4fv(loc, COUNT, TRANSPOSE_MATRICES, glm::value_ptr(matrix));
-  check_opengl_errors(logger, p);
-}
-
-void
-ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, std::array<float, 4> const &floats)
-{
-  use();
-
-  auto const p = this->program_;
-  auto const loc = get_uniform_location(logger, p, name);
-  // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
-  //
-  // For the vector (glUniform*v) commands, specifies the number of elements that are to be
-  // modified.
-  // This should be 1 if the targeted uniform variable is not an array, and 1 or more if it is an
-  // array.
-  GLsizei constexpr COUNT = 1;
-
-  glUniform4fv(loc, COUNT, floats.data());
-  check_opengl_errors(logger, p);
-}
-
-void
-ShaderProgram::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, glm::vec3 const& data)
-{
-  use();
-
-  auto const p = this->program_;
-  std::array<float, 3> const array{data.x, data.y, data.z};
-
-  // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
-  //
-  // For the vector (glUniform*v) commands, specifies the number of elements that are to be
-  // modified.
-  // This should be 1 if the targeted uniform variable is not an array, and 1 or more if it is an
-  // array.
-  GLsizei constexpr COUNT = 1;
-
-  auto const loc = get_uniform_location(logger, p, name);
-  glUniform3fv(loc, COUNT, array.data());
-  check_opengl_errors(logger, p);
-}
-
-void
-ShaderProgram::check_errors(stlw::Logger &logger)
-{
-  use();
-  check_opengl_errors(logger, this->program_);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// program_factory
-stlw::result<GLuint, std::string>
-program_factory::from_files(vertex_shader_filename const v, fragment_shader_filename const f)
-{
-  auto const prefix = [](auto const &path) {
-    return std::string{"./build-system/bin/shaders/"} + path;
-  };
-  auto const vertex_shader_path = prefix(v.filename);
-  auto const fragment_shader_path = prefix(f.filename);
-
-  // Read the Vertex/Fragment Shader code from ther file
-  DO_TRY(auto const vertex_shader_source, stlw::read_file(vertex_shader_path));
-  DO_TRY(auto attribute_variable_info, from_vertex_shader(vertex_shader_path, vertex_shader_source));
-
-  VertexShaderInfo const vertex_shader{vertex_shader_path, vertex_shader_source,
-    MOVE(attribute_variable_info)};
-
-  DO_TRY(auto const fragment_shader_source, stlw::read_file(fragment_shader_path));
-
-  return compile_sources(vertex_shader, fragment_shader_source);
-}
-
-GLuint
-program_factory::make_invalid()
-{
-  return INVALID_PROGRAM_ID();
+  LOG_ANY_GL_ERRORS(logger, "get_uniform_location");
+  assert(-1 != loc);
+  return loc;
 }
 
 } // ns opengl

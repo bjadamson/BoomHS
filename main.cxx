@@ -7,7 +7,7 @@
 #include <stlw/type_macros.hpp>
 
 #include <engine/lib.hpp>
-#include <opengl/lib.hpp>
+#include <opengl/pipelines.hpp>
 #include <window/sdl_window.hpp>
 
 #include <boomhs/boomhs.hpp>
@@ -25,7 +25,7 @@ make_opengl_sdl_engine(Logger &logger, bool const fullscreen, float const width,
   LOG_DEBUG("Instantiating window instance.");
   DO_TRY(auto window, window::sdl_library::make_window(fullscreen, height, width));
 
-  DO_TRY(auto opengl, opengl::load_resources(logger));
+  DO_TRY(auto opengl, opengl::load_pipelines(logger));
   return engine::Engine{MOVE(window), MOVE(opengl)};
 }
 

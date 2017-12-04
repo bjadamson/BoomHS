@@ -1,5 +1,5 @@
 #pragma once
-#include <opengl/lib.hpp>
+#include <opengl/pipelines.hpp>
 #include <opengl/renderer.hpp>
 #include <opengl/factory.hpp>
 
@@ -24,7 +24,7 @@ using State = game::GameState;
 struct Engine
 {
   ::window::SDLWindow window;
-  opengl::OpenglPipelines gfx_lib;
+  opengl::OpenglPipelines opengl_lib;
 
   MOVE_CONSTRUCTIBLE_ONLY(Engine);
 };
@@ -59,7 +59,7 @@ void loop(Engine &engine, State &state, P &proxy, game::Assets const& assets)
   begin();
   LOG_TRACE("rendering.");
 
-  game::game_loop(state, engine.gfx_lib, assets);
+  game::game_loop(state, engine.opengl_lib, assets);
   end(engine);
   LOG_TRACE("game loop stepping.");
 }
@@ -77,7 +77,7 @@ void start(Engine &engine, S &state)
   LOG_TRACE("stepping ecst once");
 
   auto const assets = ctx->step([&](auto &proxy) {
-      return game::init(proxy, state, engine.gfx_lib);
+      return game::init(proxy, state, engine.opengl_lib);
   });
 
   namespace sea = ecst::system_execution_adapter;

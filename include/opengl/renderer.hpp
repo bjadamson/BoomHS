@@ -2,7 +2,6 @@
 #include <opengl/global.hpp>
 #include <opengl/camera.hpp>
 #include <opengl/draw_info.hpp>
-#include <opengl/lib.hpp>
 #include <opengl/vertex_attribute.hpp>
 
 #include <glm/glm.hpp>
@@ -13,6 +12,12 @@
 #include <stlw/type_macros.hpp>
 
 namespace opengl {
+
+struct RenderArgs {
+  stlw::Logger &logger;
+  opengl::camera const& camera;
+  glm::mat4 const& projection;
+};
 
 void enable_depth_tests();
 void disable_depth_tests();
@@ -27,19 +32,17 @@ draw_scene(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const
 
   // Use the pipeline's PROGRAM.
   auto &program = pipeline.program_ref();
-  program.use();
-  program.check_errors(logger);
+  program.use(logger);
 
   if constexpr (PIPE::HAS_COLOR_UNIFORM) {
-    program.set_uniform_array_4fv(logger, "u_color", pipeline.color());
-    program.check_errors(logger);
+    pipeline.set_uniform_array_4fv(logger, "u_color", pipeline.color());
   }
 
   // Enable the pipeline's VAO.
   global::vao_bind(pipeline.vao());
   ON_SCOPE_EXIT([]() { global::vao_unbind(); });
 
-  LOG_TRACE("before drawing dinfo ...");
+  LOG_ANY_GL_ERRORS(logger, "before drawing scene");
   if constexpr (PIPE::HAS_TEXTURE) {
     global::texture_bind(pipeline.texture());
     ON_SCOPE_EXIT([&pipeline]() { global::texture_unbind(pipeline.texture()); });
@@ -47,22 +50,7 @@ draw_scene(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const
   } else {
     fn(dinfo);
   }
-  LOG_TRACE("after drawing dinfo ...");
-  program.check_errors(logger);
-}
-
-template <typename S>
-constexpr auto
-indices_size_in_bytes(S const& s)
-{
-  return s.indices().size() * sizeof(GLuint);
-}
-
-template <typename S>
-constexpr std::size_t
-vertices_size_in_bytes(S const& s)
-{
-  return s.vertices().size() * sizeof(GLfloat);
+  LOG_ANY_GL_ERRORS(logger, "after drawing scene");
 }
 
 template <typename PIPE>
@@ -82,8 +70,8 @@ void render_shape(stlw::Logger &logger, PIPE &pipeline, DrawInfo const& dinfo)
   }
 }
 
-template <typename Args, typename PIPE>
-void draw_3dshape(Args const &args, opengl::Model const& model, PIPE &pipeline, DrawInfo const& dinfo)
+template <typename PIPE>
+void draw_3dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipeline, DrawInfo const& dinfo)
 {
   auto const view = compute_view(args.camera);
   auto const& projection = args.projection;
@@ -97,7 +85,7 @@ void draw_3dshape(Args const &args, opengl::Model const& model, PIPE &pipeline, 
     auto const smatrix = glm::scale(glm::mat4{}, model.scale);
     auto const mmatrix = tmatrix * rmatrix * smatrix;
     auto const mvmatrix = projection * view * mmatrix;
-    program.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
+    pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
 
     if constexpr (PIPE::IS_SKYBOX) {
       opengl::disable_depth_tests();
@@ -111,9 +99,9 @@ void draw_3dshape(Args const &args, opengl::Model const& model, PIPE &pipeline, 
   draw_scene(logger, pipeline, dinfo, draw_3d_shape_fn);
 }
 
-template <typename Args, typename PIPE>
+template <typename PIPE>
 void
-draw_2dshape(Args const &args, opengl::Model const& model, PIPE &pipeline, DrawInfo const &dinfo)
+draw_2dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipeline, DrawInfo const &dinfo)
 {
   using namespace opengl;
 
@@ -125,7 +113,7 @@ draw_2dshape(Args const &args, opengl::Model const& model, PIPE &pipeline, DrawI
     auto const rmatrix = glm::toMat4(model.rotation);
     auto const smatrix = glm::scale(glm::mat4{}, model.scale);
     auto const mvmatrix = tmatrix * rmatrix * smatrix;
-    program.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
+    pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
     render_shape(logger, pipeline, dinfo);
   };
 
@@ -134,8 +122,8 @@ draw_2dshape(Args const &args, opengl::Model const& model, PIPE &pipeline, DrawI
 
 } // ns detail
 
-template <typename Args, typename PIPE>
-void draw(Args const& args, Model const& model, PIPE &pipeline, DrawInfo const& dinfo)
+template <typename PIPE>
+void draw(RenderArgs const& args, Model const& model, PIPE &pipeline, DrawInfo const& dinfo)
 {
   auto &logger = args.logger;
 
@@ -148,8 +136,8 @@ void draw(Args const& args, Model const& model, PIPE &pipeline, DrawInfo const& 
   }
 }
 
-template <typename Args, typename TILEMAP>
-void draw_tilemap(Args const& args, Model const& model, PipelineHashtag3D &pipeline,
+template <typename TILEMAP>
+void draw_tilemap(RenderArgs const& args, Model const& model, PipelineHashtag3D &pipeline,
     DrawInfo const& dinfo, TILEMAP const& tilemap)
 {
   auto &logger = args.logger;
@@ -164,7 +152,7 @@ void draw_tilemap(Args const& args, Model const& model, PipelineHashtag3D &pipel
     auto const smatrix = glm::scale(glm::mat4{}, model.scale);
     auto const mmatrix = tmatrix * rmatrix * smatrix;
     auto const mvmatrix = projection * view * mmatrix;
-    program.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
+    pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
 
     auto const instance_count = pipeline.instance_count();
     auto const draw_mode = dinfo.draw_mode();
@@ -172,7 +160,7 @@ void draw_tilemap(Args const& args, Model const& model, PipelineHashtag3D &pipel
 
     std::size_t offset = 0u;
     auto const draw_tile = [&](auto const& tile) {
-      program.set_uniform_array_3fv(logger, "u_offset", tile.pos);
+      pipeline.set_uniform_array_3fv(logger, "u_offset", tile.pos);
 
       GLvoid const* p_offset = reinterpret_cast<GLvoid const*>(offset);
       glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, p_offset, instance_count);

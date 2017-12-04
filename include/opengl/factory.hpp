@@ -4,7 +4,6 @@
 #include <stlw/type_macros.hpp>
 #include <opengl/glew.hpp>
 #include <opengl/global.hpp>
-#include <opengl/lib.hpp>
 #include <opengl/obj.hpp>
 #include <opengl/types.hpp>
 #include <opengl/draw_info.hpp>

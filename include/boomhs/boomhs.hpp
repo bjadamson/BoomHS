@@ -12,9 +12,9 @@
 #include <opengl/camera.hpp>
 #include <opengl/factory.hpp>
 #include <opengl/obj.hpp>
+#include <opengl/renderer.hpp>
 #include <opengl/skybox.hpp>
 #include <stlw/algorithm.hpp>
-#include <stlw/burrito.hpp>
 #include <stlw/random.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
@@ -28,12 +28,6 @@ using stlw::Logger;
 
 namespace boomhs
 {
-
-struct RenderArgs {
-  Logger &logger;
-  opengl::camera const& camera;
-  glm::mat4 const& projection;
-};
 
 struct GameState {
   bool quit = false;
@@ -65,9 +59,9 @@ public:
     camera.move_down(1);
   }
 
-  RenderArgs render_args() const
+  opengl::RenderArgs render_args() const
   {
-    return RenderArgs{this->logger, this->camera, this->projection};
+    return opengl::RenderArgs{this->logger, this->camera, this->projection};
   }
 };
 

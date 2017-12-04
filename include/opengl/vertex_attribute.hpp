@@ -121,7 +121,7 @@ struct skip_context {
   }
 };
 
-static void
+inline void
 set_attrib_pointer(stlw::Logger &logger, attribute_info const &attrib_info, skip_context &sc)
 {
   // enable vertex attibute arrays
@@ -169,7 +169,7 @@ set_attrib_pointer(stlw::Logger &logger, attribute_info const &attrib_info, skip
 namespace va // vertex_attribute
 {
 
-static void
+inline void
 set_vertex_attributes(stlw::Logger &logger, vertex_attribute const& va)
 {
   auto const log_info = [&logger](auto const& it) {
@@ -189,7 +189,7 @@ set_vertex_attributes(stlw::Logger &logger, vertex_attribute const& va)
   }
 }
 
-static auto
+inline auto
 vertex_color(stlw::Logger &logger)
 {
   // attribute indexes
@@ -207,7 +207,7 @@ vertex_color(stlw::Logger &logger)
   return impl::make_vertex_array(logger, vertex_info, color_info);
 }
 
-static auto
+inline auto
 vertex_uv2d(stlw::Logger &logger)
 {
   // attribute indexes
@@ -225,7 +225,7 @@ vertex_uv2d(stlw::Logger &logger)
   return impl::make_vertex_array(logger, vertex_info, uv_info);
 }
 
-static auto
+inline auto
 vertex_normal_uv3d(stlw::Logger &logger)
 {
   // attribute indexes
@@ -246,7 +246,7 @@ vertex_normal_uv3d(stlw::Logger &logger)
   return impl::make_vertex_array(logger, vertex_info, normal_info, uv_info);
 }
 
-static auto
+inline auto
 vertex_only(stlw::Logger &logger)
 {
   // attribute indexes

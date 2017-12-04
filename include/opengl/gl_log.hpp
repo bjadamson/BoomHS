@@ -39,9 +39,8 @@ retrieve(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei *, GLchar *))
   return std::string{buffer.cbegin(), buffer.cend()};
 }
 
-template <typename L>
-auto
-log_any_gl_errors(L &logger, std::string const &prefix, int const line)
+inline auto
+log_any_gl_errors(stlw::Logger &logger, std::string const &prefix, int const line)
 {
   GLenum const err = glGetError();
   if (err != GL_NO_ERROR) {

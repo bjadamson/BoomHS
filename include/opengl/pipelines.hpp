@@ -4,12 +4,18 @@
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <opengl/camera.hpp>
+#include <glm/glm.hpp>
 #include <opengl/shader_program.hpp>
 #include <opengl/vao.hpp>
+#include <opengl/vertex_attribute.hpp>
 
 namespace opengl
 {
+
+struct OpenglPipelines;
+
+stlw::result<OpenglPipelines, std::string>
+load_pipelines(stlw::Logger &);
 
 class BasePipeline
 {
@@ -26,9 +32,14 @@ public:
   auto const& va() const { return this->va_; }
   auto const& vao() const { return this->vao_; }
   auto& program_ref() { return this->program_; }
+
+  void set_uniform_matrix_4fv(stlw::Logger &, GLchar const *, glm::mat4 const &);
+
+  void set_uniform_array_4fv(stlw::Logger &, GLchar const *, std::array<float, 4> const &);
+  void set_uniform_array_3fv(stlw::Logger &, GLchar const*, glm::vec3 const&);
 };
 
-#define PIPELINE_CTOR(CLASSNAME)                                                                   \
+#define PIPELINE_DEFAULT_CTOR(CLASSNAME)                                                           \
   MOVE_CONSTRUCTIBLE_ONLY(CLASSNAME);                                                              \
   explicit CLASSNAME(ShaderProgram &&sp, vertex_attribute &&va)                                    \
     : BasePipeline(MOVE(sp), MOVE(va))                                                             \
@@ -37,7 +48,7 @@ public:
 
 struct PipelineColor2D : public BasePipeline
 {
-  PIPELINE_CTOR(PipelineColor2D);
+  PIPELINE_DEFAULT_CTOR(PipelineColor2D);
   using info_t = color_t;
 
   static bool constexpr IS_2D = true;
@@ -49,7 +60,7 @@ struct PipelineColor2D : public BasePipeline
 
 struct PipelineColor3D : public BasePipeline
 {
-  PIPELINE_CTOR(PipelineColor3D);
+  PIPELINE_DEFAULT_CTOR(PipelineColor3D);
   using info_t = color_t;
 
   static bool constexpr IS_2D = false;
@@ -61,7 +72,7 @@ struct PipelineColor3D : public BasePipeline
 
 struct PipelineHashtag3D : public BasePipeline
 {
-  PIPELINE_CTOR(PipelineHashtag3D);
+  PIPELINE_DEFAULT_CTOR(PipelineHashtag3D);
   using info_t = color_t;
 
   auto instance_count() const { return 3u; }
@@ -79,6 +90,8 @@ struct PipelineHashtag3D : public BasePipeline
     , texture_info_(t)                                                                             \
     {                                                                                              \
     }
+
+#undef PIPELINE_DEFAULT_CTOR
 
 class PipelineTexture3D : public BasePipeline
 {
@@ -169,8 +182,6 @@ public:
 using PipelineWireframe2D = PipelineWireframe<true>;
 using PipelineWireframe3D = PipelineWireframe<false>;
 
-#undef PIPELINE_CTOR
-
 struct Pipeline2D
 {
   PipelineColor2D color;
@@ -205,83 +216,5 @@ struct OpenglPipelines
   {
   }
 };
-
-namespace detail
-{
-  template<typename R, typename ...Args>
-  static stlw::result<R, std::string>
-  make_pipeline(char const* vertex_s, char const* frag_s, vertex_attribute &&va, Args &&... args)
-  {
-    DO_TRY(auto sp, ShaderProgramFactory::make(vertex_s, frag_s));
-    return R{MOVE(sp), MOVE(va), std::forward<Args>(args)...};
-  }
-} // ns detail
-
-stlw::result<OpenglPipelines, std::string>
-load_resources(stlw::Logger &logger)
-{
-  using detail::make_pipeline;
-
-  DO_TRY(auto d2color, make_pipeline<PipelineColor2D>("2dcolor.vert", "2dcolor.frag",
-        va::vertex_color(logger)));
-
-  DO_TRY(auto d2texture_wall,
-      make_pipeline<PipelineTexture2D>("2dtexture.vert", "2dtexture.frag",
-        va::vertex_uv2d(logger),
-        texture::allocate_texture(logger, IMAGES::WALL)));
-
-  DO_TRY(auto d2texture_container,
-      make_pipeline<PipelineTexture2D>("2dtexture.vert", "2dtexture.frag",
-        va::vertex_uv2d(logger),
-        texture::allocate_texture(logger, IMAGES::CONTAINER)));
-
-  auto const make_color = [](auto const& color) {
-    constexpr auto ALPHA = 1.0f;
-    return stlw::make_array<float>(color[0], color[1], color[2], ALPHA);
-  };
-
-  DO_TRY(auto d2wire,
-      make_pipeline<PipelineWireframe2D>("wire.vert", "wire.frag",
-        va::vertex_only(logger),
-        make_color(LIST_OF_COLORS::PINK)));
-
-  DO_TRY(auto d3color, make_pipeline<PipelineColor3D>("3dcolor.vert", "3dcolor.frag",
-        va::vertex_color(logger)));
-
-  DO_TRY(auto d3hashtag, make_pipeline<PipelineHashtag3D>("3d_hashtag.vert", "3d_hashtag.frag",
-        va::vertex_color(logger)));
-
-  DO_TRY(auto d3cube, make_pipeline<PipelineTextureCube3D>("3d_cubetexture.vert", "3d_cubetexture.frag",
-        va::vertex_only(logger),
-        texture::upload_3dcube_texture(logger,
-          IMAGES::CUBE_FRONT,
-          IMAGES::CUBE_RIGHT,
-          IMAGES::CUBE_BACK,
-          IMAGES::CUBE_LEFT,
-          IMAGES::CUBE_TOP,
-          IMAGES::CUBE_BOTTOM)));
-
-  DO_TRY(auto d3house, make_pipeline<PipelineTexture3D>("3dtexture.vert", "3dtexture.frag",
-        va::vertex_normal_uv3d(logger),
-        texture::allocate_texture(logger, IMAGES::HOUSE)));
-
-  DO_TRY(auto d3skybox, make_pipeline<PipelineSkybox3D>("3d_cubetexture.vert", "3d_cubetexture.frag",
-        va::vertex_only(logger),
-        texture::upload_3dcube_texture(logger,
-          IMAGES::SB_FRONT,
-          IMAGES::SB_RIGHT,
-          IMAGES::SB_BACK,
-          IMAGES::SB_LEFT,
-          IMAGES::SB_TOP,
-          IMAGES::SB_BOTTOM)));
-
-  DO_TRY(auto d3wire, make_pipeline<PipelineWireframe3D>("3dwire.vert", "wire.frag",
-        va::vertex_only(logger),
-        make_color(LIST_OF_COLORS::PURPLE)));
-
-  Pipeline2D d2{MOVE(d2color), MOVE(d2texture_wall), MOVE(d2texture_container), MOVE(d2wire)};
-  Pipeline3D d3{MOVE(d3color), MOVE(d3hashtag), MOVE(d3cube), MOVE(d3house), MOVE(d3skybox), MOVE(d3wire)};
-  return OpenglPipelines{MOVE(d2), MOVE(d3)};
-}
 
 } // ns opengl
