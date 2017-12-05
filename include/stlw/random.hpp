@@ -68,7 +68,7 @@ public:
     return std::array<float, 3>{x, y, z};
   }
 
-  auto generate_3dabove_ground_position()
+  auto generate_3dposition_above_ground()
   {
     auto const LOWER = std::array<float, 3>{0, 1, 0};
     auto const UPPER = std::array<float, 3>{10, 5, 10};

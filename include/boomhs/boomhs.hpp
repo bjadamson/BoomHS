@@ -35,9 +35,14 @@ struct GameState {
   window::Dimensions const dimensions;
   stlw::float_generator rnum_generator;
   glm::mat4 projection;
+
   std::vector<::opengl::Model*> MODELS;
+  opengl::Model color_cube_model;
+
+
   opengl::Model skybox_model;
   opengl::Model house_model;
+  opengl::Model tilemap_model;
   opengl::Model terrain_model;
   opengl::camera camera;
 
@@ -120,11 +125,15 @@ init(PROXY &proxy, GameState &state, opengl::OpenglPipelines &gfx)
 
   // The 2D objects
   while(count < 100) {
-    auto const [x, y] = state.rnum_generator.generate_2dposition();
-    auto constexpr Z = 0.0f;
-    auto const translation = glm::vec3{x, y, Z};
+    auto const [x, y, z] = state.rnum_generator.generate_3dposition_above_ground();
+    auto const translation = glm::vec3{x, y, z};
     state.MODELS.emplace_back(make_entity(count++, translation));
   }
+
+  state.color_cube_model.translation = glm::vec3{2.0f, 2.0f, 2.0f};
+  state.house_model.translation = glm::vec3{-2.0f, 0.0f, -2.0f};
+  state.tilemap_model.translation = glm::vec3{0.0f, 0.0f, 0.0f};
+  state.terrain_model.translation = glm::vec3{0.0f, 5.0f, 0.0f};
 
   // LOAD different assets.
   //"assets/chalet.mtl"
@@ -143,20 +152,28 @@ init(PROXY &proxy, GameState &state, opengl::OpenglPipelines &gfx)
   auto cube_skybox = OF::copy_cube_gpu(logger, gfx.d3.skybox, {GL_TRIANGLE_STRIP, {10.0f, 10.0f, 10.0f}});
   auto cube_textured = OF::copy_cube_gpu(logger, gfx.d3.texture_cube, {GL_TRIANGLE_STRIP,
       {0.15f, 0.15f, 0.15f}});
+
   auto cube_colored = OF::copy_cube_gpu(logger, gfx.d3.color, {GL_TRIANGLE_STRIP, {0.25f, 0.25f, 0.25f}},
       opengl::LIST_OF_COLORS::BLUE);
 
   auto cube_wf = OF::copy_cube_gpu(logger, gfx.d3.wireframe, {GL_LINE_LOOP, {0.25f, 0.25f, 0.25f}});
 
-  auto terrain_handle = OF::copy_cube_gpu(logger, gfx.d3.color, {GL_TRIANGLE_STRIP, {2.0f, 0.4f, 2.0f}},
+  auto terrain_handle = OF::copy_cube_gpu(logger, gfx.d3.terrain, {GL_TRIANGLE_STRIP, {2.0f, 0.4f, 2.0f}},
       opengl::LIST_OF_COLORS::SADDLE_BROWN);
 
   auto tilemap_handle = OF::copy_tilemap_gpu(logger, gfx.d3.hashtag,
       {GL_TRIANGLES, objs.hashtag.vertices, objs.hashtag.indices},
       state.tilemap);
 
-  GpuHandles handles{MOVE(house), MOVE(hashtag), MOVE(cube_skybox), MOVE(cube_textured),
-    MOVE(cube_colored), MOVE(cube_wf), MOVE(terrain_handle), MOVE(tilemap_handle)};
+  GpuHandles handles{
+    MOVE(house),
+    MOVE(hashtag),
+    MOVE(cube_skybox),
+    MOVE(cube_textured),
+    MOVE(cube_colored),
+    MOVE(cube_wf),
+    MOVE(terrain_handle),
+    MOVE(tilemap_handle)};
   return Assets{MOVE(objs), MOVE(handles)};
 }
 
@@ -169,15 +186,12 @@ void game_loop(GameState &state, opengl::OpenglPipelines &gfx, Assets const& ass
   }
 
   auto render_args = state.render_args();
-  //auto &logger = state.logger;
 
-  // first, draw terrain
-  //opengl::draw(render_args, state.terrain_model, gfx.d3.color, assets.handles.terrain);
-
-  // now draw entities
+  // skybox
   opengl::draw(render_args, state.skybox_model, gfx.d3.skybox, assets.handles.cube_skybox);
 
-  opengl::draw(render_args, *state.MODELS[0], gfx.d3.color, assets.handles.cube_colored);
+  // random
+  opengl::draw(render_args, state.color_cube_model, gfx.d3.color, assets.handles.cube_colored);
   opengl::draw(render_args, *state.MODELS[1], gfx.d3.texture_cube, assets.handles.cube_textured);
   opengl::draw(render_args, *state.MODELS[2], gfx.d3.wireframe, assets.handles.cube_wireframe);
 
@@ -185,8 +199,11 @@ void game_loop(GameState &state, opengl::OpenglPipelines &gfx, Assets const& ass
   opengl::draw(render_args, state.house_model, gfx.d3.house, assets.handles.house);
 
   // tilemap
-  opengl::draw_tilemap(render_args, *state.MODELS[3], gfx.d3.hashtag,
+  opengl::draw_tilemap(render_args, state.tilemap_model, gfx.d3.hashtag,
       assets.handles.tilemap, state.tilemap);
+
+  // terrain
+  opengl::draw(render_args, state.terrain_model, gfx.d3.terrain, assets.handles.terrain);
 }
 
 } // ns boomhs

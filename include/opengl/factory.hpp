@@ -119,31 +119,12 @@ construct_cube(std::array<float, 32> const& vertices, wireframe_properties const
   // clang-format on
 }
 
-/*
-  auto make_spotted(cube_properties const& cube_props, color_t,
-      std::array<float, 3> const &c)
-  {
-    // TODO: this may be an advanced color function, IDK...
-    auto const ALPHA = 1.0f;
-    std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
-
-    std::array<typename color_properties::c, 8> const colors{
-        std::array<float, 4>{1.0f, 0.0f, 0.0f, ALPHA}, color,
-        std::array<float, 4>{0.0f, 1.0f, 0.0f, ALPHA}, color,
-        std::array<float, 4>{0.2f, 0.5f, 0.2f, ALPHA}, color,
-        std::array<float, 4>{0.6f, 0.4f, 0.8f, ALPHA}};
-    color_properties const p{colors};
-    return construct(cube_props, p);
-  }
-  */
-
 auto
 make_cube(std::array<float, 32> const& vertices, color_t, std::array<float, 3> const &c)
 {
   // TODO: this may be an advanced color function, IDK...
   auto const ALPHA = 1.0f;
   std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
-
   std::array<typename color_properties::c, 8> const colors{
       color, color,
       color, color,
@@ -182,7 +163,8 @@ copy_to_gpu(stlw::Logger &logger, PIPE &pipeline, DrawInfo const& dinfo, VERTICE
   glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
 
-  va::set_vertex_attributes(logger, pipeline.va());
+  auto const& va = pipeline.va();
+  va.upload_vertex_format_to_glbound_vao(logger);
 
   // copy the vertices
   auto const vertices_size = vertices.size() * sizeof(GLfloat);
@@ -201,7 +183,8 @@ namespace factories
 {
 
 template<typename PIPE, typename ...Args>
-auto copy_cube_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory::cube_properties const& cprop, Args &&... args)
+auto copy_cube_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory::cube_properties const& cprop,
+    Args &&... args)
 {
   // clang-format off
   static constexpr std::array<GLuint, 14> INDICES = {{
@@ -317,7 +300,8 @@ auto copy_tilemap_gpu(stlw::Logger &logger, ::opengl::PipelineHashtag3D &pipelin
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
   // Enable the VertexAttributes for this pipeline's VAO.
-  va::set_vertex_attributes(logger, pipeline.va());
+  auto const& va = pipeline.va();
+  va.upload_vertex_format_to_glbound_vao(logger);
 
   // Calculate how much room the buffers need.
   std::size_t const vertices_num_bytes = (vertices.size() * sizeof(GLfloat)) * num_tiles;

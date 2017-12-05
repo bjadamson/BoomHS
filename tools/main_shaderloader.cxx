@@ -79,18 +79,11 @@ main(int argc, char *argv[])
     return on_error("found 'shader' to not be a directory at this path.");
   }
 
-  // preamble
-  auto const preamble_read_result = stlw::read_file("./include/opengl/glsl.hpp");
-  if (!preamble_read_result) {
-    return false;
-  }
-  auto const preamble = *preamble_read_result;
   auto const glsl_version = R"(#version 300 es)";
-  auto const combined = glsl_version + preamble;
 
   for (fs::directory_iterator it{path_to_shaders}; it != fs::directory_iterator{}; ++it) {
     auto const outdir = CWD.string() + "/build-system/bin/shaders/";
-    if (!copy_to_outdir(combined, it->path(), outdir)) {
+    if (!copy_to_outdir(glsl_version, it->path(), outdir)) {
       return EXIT_FAILURE;
     }
   }

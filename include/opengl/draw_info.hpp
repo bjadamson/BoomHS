@@ -9,29 +9,29 @@
 namespace opengl
 {
 
-class GpuHandles
+class GpuBufferHandles
 {
   GLuint vbo_ = 0, ebo_ = 0;
   static auto constexpr NUM_BUFFERS = 1;
 
-  explicit GpuHandles()
+  explicit GpuBufferHandles()
   {
     glGenBuffers(NUM_BUFFERS, &this->vbo_);
     glGenBuffers(NUM_BUFFERS, &this->ebo_);
   }
 
-  NO_COPY(GpuHandles);
-  NO_MOVE_ASSIGN(GpuHandles);
+  NO_COPY(GpuBufferHandles);
+  NO_MOVE_ASSIGN(GpuBufferHandles);
 public:
   friend class DrawInfo;
-  ~GpuHandles()
+  ~GpuBufferHandles()
   {
     glDeleteBuffers(NUM_BUFFERS, &this->ebo_);
     glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
   }
 
   // move-construction OK.
-  GpuHandles(GpuHandles &&other)
+  GpuBufferHandles(GpuBufferHandles &&other)
       : vbo_(other.vbo_)
       , ebo_(other.ebo_)
   {
@@ -46,7 +46,7 @@ public:
 class DrawInfo {
   GLenum draw_mode_;
   GLuint num_indices_;
-  GpuHandles handles_;
+  GpuBufferHandles handles_;
 
 public:
   explicit DrawInfo(GLenum const dm, GLuint const num_indices)

@@ -1,5 +1,4 @@
 #pragma once
-#include <opengl/glsl.hpp>
 #include <window/sdl_window.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/ecst.hpp>

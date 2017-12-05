@@ -20,10 +20,10 @@ load_pipelines(stlw::Logger &);
 class BasePipeline
 {
   ShaderProgram program_;
-  vertex_attribute va_;
+  VertexAttribute va_;
   VAO vao_;
 public:
-  explicit BasePipeline(ShaderProgram &&sp, vertex_attribute &&va)
+  explicit BasePipeline(ShaderProgram &&sp, VertexAttribute &&va)
     : program_(MOVE(sp))
     , va_(MOVE(va))
     {
@@ -31,17 +31,18 @@ public:
 
   auto const& va() const { return this->va_; }
   auto const& vao() const { return this->vao_; }
-  auto& program_ref() { return this->program_; }
 
   void set_uniform_matrix_4fv(stlw::Logger &, GLchar const *, glm::mat4 const &);
 
   void set_uniform_array_4fv(stlw::Logger &, GLchar const *, std::array<float, 4> const &);
   void set_uniform_array_3fv(stlw::Logger &, GLchar const*, glm::vec3 const&);
+
+  void make_active(stlw::Logger &);
 };
 
 #define PIPELINE_DEFAULT_CTOR(CLASSNAME)                                                           \
   MOVE_CONSTRUCTIBLE_ONLY(CLASSNAME);                                                              \
-  explicit CLASSNAME(ShaderProgram &&sp, vertex_attribute &&va)                                    \
+  explicit CLASSNAME(ShaderProgram &&sp, VertexAttribute &&va)                                     \
     : BasePipeline(MOVE(sp), MOVE(va))                                                             \
     {                                                                                              \
     }
@@ -85,7 +86,7 @@ struct PipelineHashtag3D : public BasePipeline
 };
 
 #define PIPELINE_TEXTURE_CTOR(CLASSNAME)                                                           \
-  explicit CLASSNAME(ShaderProgram &&sp, vertex_attribute &&va, texture_info const t)              \
+  explicit CLASSNAME(ShaderProgram &&sp, VertexAttribute &&va, texture_info const t)               \
     : BasePipeline(MOVE(sp), MOVE(va))                                                             \
     , texture_info_(t)                                                                             \
     {                                                                                              \
@@ -163,7 +164,7 @@ class PipelineWireframe : public BasePipeline
 {
   std::array<float, 4> color_;
 public:
-  explicit PipelineWireframe(ShaderProgram &&sp, vertex_attribute &&va, std::array<float, 4> const& c)
+  explicit PipelineWireframe(ShaderProgram &&sp, VertexAttribute &&va, std::array<float, 4> const& c)
     : BasePipeline(MOVE(sp), MOVE(va))
     , color_(c)
     {
@@ -199,6 +200,7 @@ struct Pipeline3D
   PipelineTextureCube3D texture_cube;
   PipelineTexture3D house;
   PipelineSkybox3D skybox;
+  PipelineColor3D terrain;
   PipelineWireframe3D wireframe;
 
   MOVE_CONSTRUCTIBLE_ONLY(Pipeline3D);

@@ -1,7 +1,5 @@
 #include <opengl/shader_program.hpp>
 #include <opengl/glew.hpp>
-#include <opengl/glsl.hpp>
-#include <opengl/vertex_attribute.hpp>
 #include <stlw/os.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>

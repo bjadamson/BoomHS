@@ -6,7 +6,7 @@ namespace
 
   template<typename R, typename ...Args>
   static stlw::result<R, std::string>
-  make_pipeline(char const* vertex_s, char const* fragment_s, vertex_attribute &&va, Args &&... args)
+  make_pipeline(char const* vertex_s, char const* fragment_s, VertexAttribute &&va, Args &&... args)
   {
     vertex_shader_filename v{vertex_s};
     fragment_shader_filename f{fragment_s};
@@ -74,12 +74,23 @@ load_pipelines(stlw::Logger &logger)
           IMAGES::SB_TOP,
           IMAGES::SB_BOTTOM)));
 
+  DO_TRY(auto d3terrain, make_pipeline<PipelineColor3D>("3dcolor.vert", "3dcolor.frag",
+        va::vertex_color(logger)));
+
   DO_TRY(auto d3wire, make_pipeline<PipelineWireframe3D>("3dwire.vert", "wire.frag",
         va::vertex_only(logger),
         make_color(LIST_OF_COLORS::PURPLE)));
 
   Pipeline2D d2{MOVE(d2color), MOVE(d2texture_wall), MOVE(d2texture_container), MOVE(d2wire)};
-  Pipeline3D d3{MOVE(d3color), MOVE(d3hashtag), MOVE(d3cube), MOVE(d3house), MOVE(d3skybox), MOVE(d3wire)};
+
+  Pipeline3D d3{
+    MOVE(d3color),
+    MOVE(d3hashtag),
+    MOVE(d3cube),
+    MOVE(d3house),
+    MOVE(d3skybox),
+    MOVE(d3terrain),
+    MOVE(d3wire)};
   return OpenglPipelines{MOVE(d2), MOVE(d3)};
 }
 
@@ -144,6 +155,12 @@ BasePipeline::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, gl
   auto const loc = this->program_.get_uniform_location(logger, name);
   glUniform3fv(loc, COUNT, array.data());
   LOG_ANY_GL_ERRORS(logger, "set_uniform_array_3fv");
+}
+
+void
+BasePipeline::make_active(stlw::Logger &logger)
+{
+  this->program_.use(logger);
 }
 
 } // ns opengl

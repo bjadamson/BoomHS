@@ -2,7 +2,6 @@
 #include <opengl/global.hpp>
 #include <opengl/camera.hpp>
 #include <opengl/draw_info.hpp>
-#include <opengl/vertex_attribute.hpp>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -31,8 +30,7 @@ draw_scene(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const
   using namespace opengl;
 
   // Use the pipeline's PROGRAM.
-  auto &program = pipeline.program_ref();
-  program.use(logger);
+  pipeline.make_active(logger);
 
   if constexpr (PIPE::HAS_COLOR_UNIFORM) {
     pipeline.set_uniform_array_4fv(logger, "u_color", pipeline.color());
@@ -54,7 +52,7 @@ draw_scene(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const
 }
 
 template <typename PIPE>
-void render_shape(stlw::Logger &logger, PIPE &pipeline, DrawInfo const& dinfo)
+void render_element_buffer(stlw::Logger &logger, PIPE &pipeline, DrawInfo const& dinfo)
 {
   auto const draw_mode = dinfo.draw_mode();
   auto const num_indices = dinfo.num_indices();
@@ -75,9 +73,7 @@ void draw_3dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipe
 {
   auto const view = compute_view(args.camera);
   auto const& projection = args.projection;
-
   auto &logger = args.logger;
-  auto &program = pipeline.program_ref();
 
   auto const draw_3d_shape_fn = [&](auto const &dinfo) {
     auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
@@ -89,10 +85,10 @@ void draw_3dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipe
 
     if constexpr (PIPE::IS_SKYBOX) {
       opengl::disable_depth_tests();
-      render_shape(logger, pipeline, dinfo);
+      render_element_buffer(logger, pipeline, dinfo);
       opengl::enable_depth_tests();
     } else {
-      render_shape(logger, pipeline, dinfo);
+      render_element_buffer(logger, pipeline, dinfo);
     }
   };
 
@@ -105,7 +101,6 @@ draw_2dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipeline,
 {
   using namespace opengl;
 
-  auto &program = pipeline.program_ref();
   auto &logger = args.logger;
   auto const draw_2d_shape_fn = [&](auto const& dinfo) {
     auto const& t = model.translation;
@@ -114,7 +109,7 @@ draw_2dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipeline,
     auto const smatrix = glm::scale(glm::mat4{}, model.scale);
     auto const mvmatrix = tmatrix * rmatrix * smatrix;
     pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
-    render_shape(logger, pipeline, dinfo);
+    render_element_buffer(logger, pipeline, dinfo);
   };
 
   draw_scene(logger, pipeline, dinfo, draw_2d_shape_fn);
@@ -140,11 +135,9 @@ template <typename TILEMAP>
 void draw_tilemap(RenderArgs const& args, Model const& model, PipelineHashtag3D &pipeline,
     DrawInfo const& dinfo, TILEMAP const& tilemap)
 {
-  auto &logger = args.logger;
-  auto &program = pipeline.program_ref();
-
   auto const view = compute_view(args.camera);
   auto const& projection = args.projection;
+  auto &logger = args.logger;
 
   auto const draw_3d_walls_fn = [&](auto const &dinfo) {
     auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
