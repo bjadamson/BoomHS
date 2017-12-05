@@ -157,8 +157,8 @@ void
 copy_to_gpu(stlw::Logger &logger, PIPE &pipeline, DrawInfo const& dinfo, VERTICES const& vertices,
     INDICES const& indices)
 {
-  opengl::global::vao_bind(pipeline.vao());
-  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+  // Activate pipeline
+  pipeline.make_active(logger);
 
   glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
@@ -289,8 +289,7 @@ auto copy_tilemap_gpu(stlw::Logger &logger, ::opengl::PipelineHashtag3D &pipelin
   auto const num_indices = static_cast<GLuint>(indices.size());// * num_tiles);
 
   // Bind the vao (even before instantiating the DrawInfo)
-  opengl::global::vao_bind(pipeline.vao());
-  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+  pipeline.make_active(logger);
 
   DrawInfo dinfo{tprops.draw_mode, num_indices};
   auto const ebo = dinfo.ebo();

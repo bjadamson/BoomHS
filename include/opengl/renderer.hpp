@@ -36,10 +36,6 @@ draw_scene(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const
     pipeline.set_uniform_array_4fv(logger, "u_color", pipeline.color());
   }
 
-  // Enable the pipeline's VAO.
-  global::vao_bind(pipeline.vao());
-  ON_SCOPE_EXIT([]() { global::vao_unbind(); });
-
   LOG_ANY_GL_ERRORS(logger, "before drawing scene");
   if constexpr (PIPE::HAS_TEXTURE) {
     global::texture_bind(pipeline.texture());
