@@ -179,12 +179,7 @@ init(PROXY &proxy, GameState &state, opengl::OpenglPipelines &gfx)
 
 void game_loop(GameState &state, opengl::OpenglPipelines &gfx, Assets const& assets)
 {
-  {
-    auto const color = opengl::LIST_OF_COLORS::WHITE;
-    glm::vec4 const vec4 = {color[0], color[1], color[2], 1.0};
-    opengl::clear_screen(vec4);
-  }
-
+  opengl::clear_screen(opengl::LIST_OF_COLORS::BLACK);
   auto render_args = state.render_args();
 
   // skybox

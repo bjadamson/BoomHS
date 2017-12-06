@@ -33,7 +33,7 @@ draw_scene(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const
   pipeline.make_active(logger);
 
   if constexpr (PIPE::HAS_COLOR_UNIFORM) {
-    pipeline.set_uniform_array_4fv(logger, "u_color", pipeline.color());
+    pipeline.set_uniform_array_4fv(logger, "u_color", pipeline.color().to_array());
   }
 
   LOG_ANY_GL_ERRORS(logger, "before drawing scene");
@@ -189,9 +189,9 @@ void init()
   enable_depth_tests();
 }
 
-void clear_screen(glm::vec4 const& color)
+void clear_screen(Color const& color)
 {
-  glClearColor(color.x, color.y, color.z, color.w);
+  glClearColor(color.r, color.g, color.b, color.a);
 }
 
 void begin()

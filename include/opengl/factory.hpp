@@ -36,8 +36,7 @@ struct cube_properties
 };
 
 struct color_properties {
-    using c = std::array<float, 4>;
-    std::array<c, 8> const colors;
+    std::array<Color, 8> const colors;
   };
 
 struct uv_properties {
@@ -54,31 +53,31 @@ construct_cube(std::array<float, 32> const& vertices, color_properties const &pr
   auto const& colors = props.colors;
   return stlw::make_array<float>(
       vertices[0], vertices[1], vertices[2], vertices[3],
-      colors[0][0], colors[0][1], colors[0][2], colors[0][3],
+      colors[0].r, colors[0].g, colors[0].a, colors[0].a,
 
       vertices[4], vertices[5], vertices[6], vertices[7],
-      colors[1][0], colors[1][1], colors[1][2], colors[1][3],
+      colors[1].r, colors[1].g, colors[1].a, colors[1].a,
 
       vertices[8], vertices[9], vertices[10], vertices[11],
-      colors[2][0], colors[2][1], colors[2][2], colors[2][3],
+      colors[2].r, colors[2].g, colors[2].a, colors[2].a,
 
       vertices[12], vertices[13], vertices[14], vertices[15],
-      colors[3][0], colors[3][1], colors[3][2], colors[3][3],
+      colors[3].r, colors[3].g, colors[3].a, colors[3].a,
 
       vertices[16], vertices[17], vertices[18], vertices[19],
-      colors[4][0], colors[4][1], colors[4][2], colors[4][3],
+      colors[4].r, colors[4].g, colors[4].a, colors[4].a,
 
       vertices[20], vertices[21], vertices[22], vertices[23],
-      colors[5][0], colors[5][1], colors[5][2], colors[5][3],
+      colors[5].r, colors[5].g, colors[5].a, colors[5].a,
 
       vertices[24], vertices[25], vertices[26], vertices[27],
-      colors[6][0], colors[6][1], colors[6][2], colors[6][3],
+      colors[6].r, colors[6].g, colors[6].a, colors[6].a,
 
       vertices[28], vertices[29], vertices[30], vertices[31],
-      colors[7][0], colors[7][1], colors[7][2], colors[7][3],
+      colors[7].r, colors[7].g, colors[7].a, colors[7].a,
 
       vertices[32], vertices[33], vertices[34], vertices[35],
-      colors[8][0], colors[8][1], colors[8][2], colors[8][3]
+      colors[8].r, colors[8].g, colors[8].a, colors[8].a
         );
   // clang-format on
 }
@@ -120,12 +119,10 @@ construct_cube(std::array<float, 32> const& vertices, wireframe_properties const
 }
 
 auto
-make_cube(std::array<float, 32> const& vertices, color_t, std::array<float, 3> const &c)
+make_cube(std::array<float, 32> const& vertices, color_t, Color const& color)
 {
   // TODO: this may be an advanced color function, IDK...
-  auto const ALPHA = 1.0f;
-  std::array<float, 4> const color{c[0], c[1], c[2], ALPHA};
-  std::array<typename color_properties::c, 8> const colors{
+  std::array<Color, 8> const colors{
       color, color,
       color, color,
       color, color,

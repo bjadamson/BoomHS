@@ -162,11 +162,11 @@ public:
 template<bool IS_2D_T>
 class PipelineWireframe : public BasePipeline
 {
-  std::array<float, 4> color_;
+  Color color_;
 public:
-  explicit PipelineWireframe(ShaderProgram &&sp, VertexAttribute &&va, std::array<float, 4> const& c)
+  explicit PipelineWireframe(ShaderProgram &&sp, VertexAttribute &&va, Color const& color)
     : BasePipeline(MOVE(sp), MOVE(va))
-    , color_(c)
+    , color_(color)
     {
     }
   using info_t = wireframe_t;

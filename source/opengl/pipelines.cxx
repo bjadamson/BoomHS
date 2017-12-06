@@ -34,15 +34,9 @@ load_pipelines(stlw::Logger &logger)
         va::vertex_uv2d(logger),
         texture::allocate_texture(logger, IMAGES::CONTAINER)));
 
-  auto const make_color = [](auto const& color) {
-    constexpr auto ALPHA = 1.0f;
-    return stlw::make_array<float>(color[0], color[1], color[2], ALPHA);
-  };
-
   DO_TRY(auto d2wire,
       make_pipeline<PipelineWireframe2D>("wire.vert", "wire.frag",
-        va::vertex_only(logger),
-        make_color(LIST_OF_COLORS::PINK)));
+        va::vertex_only(logger), LIST_OF_COLORS::PINK));
 
   DO_TRY(auto d3color, make_pipeline<PipelineColor3D>("3dcolor.vert", "3dcolor.frag",
         va::vertex_color(logger)));
@@ -78,8 +72,7 @@ load_pipelines(stlw::Logger &logger)
         va::vertex_color(logger)));
 
   DO_TRY(auto d3wire, make_pipeline<PipelineWireframe3D>("3dwire.vert", "wire.frag",
-        va::vertex_only(logger),
-        make_color(LIST_OF_COLORS::PURPLE)));
+        va::vertex_only(logger), LIST_OF_COLORS::PURPLE));
 
   Pipeline2D d2{MOVE(d2color), MOVE(d2texture_wall), MOVE(d2texture_container), MOVE(d2wire)};
 
