@@ -81,26 +81,25 @@ make_state(Logger &logger, window::Dimensions const& hw)
   stlw::float_generator rng;
 
   auto constexpr NUM_TILES = 1000;
-  auto constexpr WIDTH = NUM_TILES / 100;
+  auto constexpr WIDTH = 10;
+  auto constexpr HEIGHT = 10;
+  auto constexpr LENGTH = 10;
   assert((NUM_TILES % WIDTH) == 0);
+  assert((HEIGHT * WIDTH * LENGTH) == NUM_TILES);
 
   auto tile_vec = std::vector<Tile>{};
   tile_vec.reserve(NUM_TILES);
 
-  std::size_t count = 0;
-  while(count < NUM_TILES) {
-    auto constexpr y = 0.0;
-    auto Z = 0.0;
-    FOR(x, 50) {
-      Z = 0.0;
-      FOR(_, 20) {
-        Tile tile{glm::vec3{x, y, Z}};
+  FOR(x, WIDTH) {
+    FOR(y, HEIGHT) {
+      FOR(z, LENGTH) {
+        Tile tile{glm::vec3{x, y, z}};
         tile_vec.emplace_back(MOVE(tile));
-        Z += 1.0f;
-        ++count;
       }
     }
   }
+
+  assert(tile_vec.capacity() == tile_vec.size());
   assert(tile_vec.size() == NUM_TILES);
   auto tmap = TileMap{MOVE(tile_vec), WIDTH};
   return GameState(logger, hw, MOVE(rng), MOVE(projection), MOVE(tmap));
