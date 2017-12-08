@@ -27,16 +27,18 @@ public:
     return this->dimensions_;
   }
 
-  inline Tile const& data(std::size_t const x, std::size_t const y) const
+  inline Tile const& data(std::size_t const x, std::size_t const y, std::size_t const z) const
   {
     auto const [h, w, l] = this->dimensions();
-    return this->tiles_[x + y * w];
+    auto const cell = (z * w * h) + (y * w) + x;
+    return this->tiles_[cell];
   }
 
-  inline Tile& data(std::size_t const x, std::size_t const y)
+  inline Tile& data(std::size_t const x, std::size_t const y, std::size_t const z)
   {
     auto const [h, w, l] = this->dimensions();
-    return this->tiles_[x + y * w];
+    auto const cell = (z * w * h) + (y * w) + x;
+    return this->tiles_[cell];
   }
 
   inline auto num_tiles() const
