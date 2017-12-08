@@ -8,6 +8,7 @@ namespace boomhs {
 struct Objs {
   opengl::obj house;
   opengl::obj hashtag;
+  opengl::obj at;
 
   MOVE_CONSTRUCTIBLE_ONLY(Objs);
 };
@@ -15,6 +16,7 @@ struct Objs {
 struct GpuHandles {
   opengl::DrawInfo house;
   opengl::DrawInfo hashtag;
+  opengl::DrawInfo at;
 
   opengl::DrawInfo cube_skybox;
   opengl::DrawInfo cube_textured;

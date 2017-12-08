@@ -81,27 +81,23 @@ make_state(Logger &logger, window::Dimensions const& hw)
   stlw::float_generator rng;
 
   auto constexpr NUM_TILES = 1000;
-  auto constexpr WIDTH = 10;
-  auto constexpr HEIGHT = 10;
-  auto constexpr LENGTH = 10;
-  assert((NUM_TILES % WIDTH) == 0);
-  assert((HEIGHT * WIDTH * LENGTH) == NUM_TILES);
+  auto const [W, H, L] = std::array<std::size_t, 3>{10, 10, 10};
+  assert((W * H * L) == NUM_TILES);
 
   auto tile_vec = std::vector<Tile>{};
   tile_vec.reserve(NUM_TILES);
 
-  FOR(x, WIDTH) {
-    FOR(y, HEIGHT) {
-      FOR(z, LENGTH) {
-        Tile tile{glm::vec3{x, y, z}};
-        tile_vec.emplace_back(MOVE(tile));
+  FOR(x, W) {
+    FOR(y, H) {
+      FOR(z, L) {
+        tile_vec.emplace_back(Tile{});
       }
     }
   }
 
   assert(tile_vec.capacity() == tile_vec.size());
   assert(tile_vec.size() == NUM_TILES);
-  auto tmap = TileMap{MOVE(tile_vec), WIDTH};
+  auto tmap = TileMap{MOVE(tile_vec), W, H, L};
   return GameState(logger, hw, MOVE(rng), MOVE(projection), MOVE(tmap));
 }
 
@@ -141,12 +137,15 @@ init(PROXY &proxy, GameState &state, opengl::OpenglPipelines &gfx)
 
   auto house_obj = opengl::load_mesh("assets/house_uv.obj", opengl::LoadNormals{true}, opengl::LoadUvs{true});
   auto hashtag_obj = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
-  Objs objs{MOVE(house_obj), MOVE(hashtag_obj)};
+  auto at_obj = opengl::load_mesh("assets/at.obj", "assets/at.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
+  Objs objs{MOVE(house_obj), MOVE(hashtag_obj), MOVE(at_obj)};
 
-  auto house = OF::make_mesh(logger, gfx.d3.house,
-      opengl::mesh_properties{GL_TRIANGLES, objs.house});
-  auto hashtag = OF::make_mesh(logger, gfx.d3.hashtag,
-      opengl::mesh_properties{GL_TRIANGLES, objs.hashtag});
+  auto house_handle = OF::make_mesh(logger, gfx.d3.house,
+      opengl::MeshProperties{GL_TRIANGLES, objs.house});
+  auto hashtag_handle = OF::make_mesh(logger, gfx.d3.hashtag,
+      opengl::MeshProperties{GL_TRIANGLES, objs.hashtag});
+  auto at_handle = OF::make_mesh(logger, gfx.d3.at,
+      opengl::MeshProperties{GL_TRIANGLES, objs.at});
 
   auto cube_skybox = OF::copy_cube_gpu(logger, gfx.d3.skybox, {GL_TRIANGLE_STRIP, {10.0f, 10.0f, 10.0f}});
   auto cube_textured = OF::copy_cube_gpu(logger, gfx.d3.texture_cube, {GL_TRIANGLE_STRIP,
@@ -165,8 +164,9 @@ init(PROXY &proxy, GameState &state, opengl::OpenglPipelines &gfx)
       state.tilemap);
 
   GpuHandles handles{
-    MOVE(house),
-    MOVE(hashtag),
+    MOVE(house_handle),
+    MOVE(hashtag_handle),
+    MOVE(at_handle),
     MOVE(cube_skybox),
     MOVE(cube_textured),
     MOVE(cube_colored),

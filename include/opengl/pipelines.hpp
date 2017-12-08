@@ -4,7 +4,6 @@
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <glm/glm.hpp>
 #include <opengl/shader_program.hpp>
 #include <opengl/vao.hpp>
 #include <opengl/vertex_attribute.hpp>
@@ -35,7 +34,7 @@ public:
   void set_uniform_matrix_4fv(stlw::Logger &, GLchar const *, glm::mat4 const &);
 
   void set_uniform_array_4fv(stlw::Logger &, GLchar const *, std::array<float, 4> const &);
-  void set_uniform_array_3fv(stlw::Logger &, GLchar const*, glm::vec3 const&);
+  void set_uniform_array_3fv(stlw::Logger &, GLchar const*, std::array<float, 3> const&);
 
   void make_active(stlw::Logger &);
 };
@@ -80,6 +79,18 @@ struct PipelineHashtag3D : public BasePipeline
 
   static bool constexpr IS_2D = false;
   static bool constexpr IS_INSTANCED = true;
+  static bool constexpr IS_SKYBOX = false;
+  static bool constexpr HAS_COLOR_UNIFORM = false;
+  static bool constexpr HAS_TEXTURE = false;
+};
+
+struct PipelineAt3D : public BasePipeline
+{
+  PIPELINE_DEFAULT_CTOR(PipelineAt3D);
+  //using info_t = color_t;
+
+  static bool constexpr IS_2D = false;
+  static bool constexpr IS_INSTANCED = false;
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = false;
@@ -197,6 +208,7 @@ struct Pipeline3D
 {
   PipelineColor3D color;
   PipelineHashtag3D hashtag;
+  PipelineAt3D at;
   PipelineTextureCube3D texture_cube;
   PipelineTexture3D house;
   PipelineSkybox3D skybox;

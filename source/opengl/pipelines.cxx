@@ -44,6 +44,9 @@ load_pipelines(stlw::Logger &logger)
   DO_TRY(auto d3hashtag, make_pipeline<PipelineHashtag3D>("3d_hashtag.vert", "3d_hashtag.frag",
         va::vertex_color(logger)));
 
+  DO_TRY(auto d3at, make_pipeline<PipelineAt3D>("3d_at.vert", "3d_at.frag",
+        va::vertex_only(logger)));
+
   DO_TRY(auto d3cube, make_pipeline<PipelineTextureCube3D>("3d_cubetexture.vert", "3d_cubetexture.frag",
         va::vertex_only(logger),
         texture::upload_3dcube_texture(logger,
@@ -79,6 +82,7 @@ load_pipelines(stlw::Logger &logger)
   Pipeline3D d3{
     MOVE(d3color),
     MOVE(d3hashtag),
+    MOVE(d3at),
     MOVE(d3cube),
     MOVE(d3house),
     MOVE(d3skybox),
@@ -130,12 +134,10 @@ BasePipeline::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, st
 }
 
 void
-BasePipeline::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, glm::vec3 const& data)
+BasePipeline::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, std::array<float, 3> const& array)
 {
   auto& p = this->program_;
   p.use(logger);
-
-  std::array<float, 3> const array{data.x, data.y, data.z};
 
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
   //

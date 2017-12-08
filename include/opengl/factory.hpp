@@ -11,13 +11,13 @@
 namespace opengl
 {
 
-struct mesh_properties
+struct MeshProperties
 {
   GLenum const draw_mode;
 
   obj const& object_data;
 
-  explicit mesh_properties(GLenum const dm, obj const& obj)
+  explicit MeshProperties(GLenum const dm, obj const& obj)
     : draw_mode(dm)
     , object_data(obj)
   {
@@ -29,25 +29,25 @@ namespace cube_factory
 
 using CubeDimensions = WidthHeightLength;
 
-struct cube_properties
+struct CubeProperties
 {
   GLenum const draw_mode;
   CubeDimensions const dimensions;
 };
 
-struct color_properties {
+struct ColorProperties {
     std::array<Color, 8> const colors;
   };
 
-struct uv_properties {
+struct UVProperties {
 };
 
-struct wireframe_properties {
+struct WireframeProperties {
   float const alpha = 1.0f;
 };
 
 auto
-construct_cube(std::array<float, 32> const& vertices, color_properties const &props)
+construct_cube(std::array<float, 32> const& vertices, ColorProperties const &props)
 {
   // clang-format off
   auto const& colors = props.colors;
@@ -83,7 +83,7 @@ construct_cube(std::array<float, 32> const& vertices, color_properties const &pr
 }
 
 auto
-construct_cube(std::array<float, 32> const& vertices, uv_properties const &props)
+construct_cube(std::array<float, 32> const& vertices, UVProperties const &props)
 {
   // clang-format off
   return stlw::make_array<float>(
@@ -101,7 +101,7 @@ construct_cube(std::array<float, 32> const& vertices, uv_properties const &props
 }
 
 auto
-construct_cube(std::array<float, 32> const& vertices, wireframe_properties const &props)
+construct_cube(std::array<float, 32> const& vertices, WireframeProperties const &props)
 {
   // clang-format off
   return stlw::make_array<float>(
@@ -121,27 +121,25 @@ construct_cube(std::array<float, 32> const& vertices, wireframe_properties const
 auto
 make_cube(std::array<float, 32> const& vertices, color_t, Color const& color)
 {
-  // TODO: this may be an advanced color function, IDK...
   std::array<Color, 8> const colors{
-      color, color,
-      color, color,
-      color, color,
-      color, color};
-  color_properties const p{colors};
+      color, color, color, color,
+      color, color, color, color
+  };
+  ColorProperties const p{colors};
   return construct_cube(vertices, p);
 }
 
 auto
 make_cube(std::array<float, 32> const& vertices, uv_t)
 {
-  uv_properties const uv;
+  UVProperties const uv;
   return construct_cube(vertices, uv);
 }
 
 auto
 make_cube(std::array<float, 32> const& vertices, wireframe_t)
 {
-  wireframe_properties const wf;
+  WireframeProperties const wf;
   return construct_cube(vertices, wf);
 }
 
@@ -180,7 +178,7 @@ namespace factories
 {
 
 template<typename PIPE, typename ...Args>
-auto copy_cube_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory::cube_properties const& cprop,
+auto copy_cube_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory::CubeProperties const& cprop,
     Args &&... args)
 {
   // clang-format off
@@ -229,7 +227,7 @@ auto copy_cube_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory::cube_prop
 }
 
 template<typename P, typename ...Args>
-auto make_mesh(stlw::Logger &logger, P &pipeline, mesh_properties &&mprop, Args &&... args)
+auto make_mesh(stlw::Logger &logger, P &pipeline, MeshProperties &&mprop, Args &&... args)
 {
   auto const& indices = mprop.object_data.indices;
   auto const& vertices = mprop.object_data.vertices;
@@ -271,19 +269,15 @@ template<typename TileMap>
 auto copy_tilemap_gpu(stlw::Logger &logger, ::opengl::PipelineHashtag3D &pipeline,
     TilemapProperties &&tprops, TileMap const& tile_map)
 {
-  // assume (x, y, z, w) all present
-  // assume (r, g, b, a) all present
-  assert((tprops.vertices.size() % 8) == 0);
-
-  std::size_t const num_tiles = tile_map.num_tiles();
-  std::size_t const tilemap_width = tile_map.width();
-
-  assert((num_tiles % tilemap_width) == 0);
   auto const& vertices = tprops.vertices;
   auto const& indices = tprops.indices;
-  //std::size_t const tilemap_height = num_tiles / tilemap_width;
 
-  auto const num_indices = static_cast<GLuint>(indices.size());// * num_tiles);
+  // assume (x, y, z, w) all present
+  // assume (r, g, b, a) all present
+  assert((vertices.size() % 8) == 0);
+
+  std::size_t const num_tiles = tile_map.num_tiles();
+  auto const num_indices = static_cast<GLuint>(indices.size());
 
   // Bind the vao (even before instantiating the DrawInfo)
   pipeline.make_active(logger);

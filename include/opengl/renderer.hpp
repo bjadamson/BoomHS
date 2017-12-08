@@ -148,8 +148,8 @@ void draw_tilemap(RenderArgs const& args, Model const& model, PipelineHashtag3D 
     auto const num_indices = dinfo.num_indices();
 
     std::size_t offset = 0u;
-    auto const draw_tile = [&](auto const& tile) {
-      pipeline.set_uniform_array_3fv(logger, "u_offset", tile.pos);
+    auto const draw_tile = [&](auto const& arr) {
+      pipeline.set_uniform_array_3fv(logger, "u_offset", arr);
 
       GLvoid const* p_offset = reinterpret_cast<GLvoid const*>(offset);
       glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, p_offset, instance_count);
@@ -157,8 +157,15 @@ void draw_tilemap(RenderArgs const& args, Model const& model, PipelineHashtag3D 
       offset += sizeof(GLuint) * num_indices;
     };
 
-    for(auto const& tile : tilemap) {
-      draw_tile(tile);
+    auto const [w, h, l] = tilemap.dimensions();
+    FOR(a, w) {
+      FOR(b, h) {
+        FOR(c, l) {
+          auto const cast = [](auto const v) { return static_cast<float>(v); };
+          auto const arr = stlw::make_array<float>(cast(a), cast(b), cast(c));
+          draw_tile(arr);
+        }
+      }
     }
   };
 
