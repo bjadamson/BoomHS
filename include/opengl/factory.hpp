@@ -247,24 +247,6 @@ struct TilemapProperties
   std::vector<uint32_t> const& indices;
 };
 
-auto make_tiledata(std::vector<float> const& vertices)
-{
-  std::vector<GLfloat> tile_data;
-
-  // Copy one whole Tile's worth of 3DObject data.
-  for (std::size_t i{0u}; i < vertices.size();) {
-    auto const& data = vertices.data();
-    FOR(_, 4) {
-      tile_data.emplace_back(data[i++]);
-    }
-    FOR(_, 4) {
-      tile_data.emplace_back(data[i++]);
-    }
-  }
-  assert((tile_data.size() % 8) == 0);
-  return tile_data;
-}
-
 template<typename TileMap>
 auto copy_tilemap_gpu(stlw::Logger &logger, ::opengl::PipelineHashtag3D &pipeline,
     TilemapProperties &&tprops, TileMap const& tile_map)
@@ -300,16 +282,14 @@ auto copy_tilemap_gpu(stlw::Logger &logger, ::opengl::PipelineHashtag3D &pipelin
   std::size_t const indices_num_bytes = (indices.size() * sizeof(GLuint)) * num_tiles;
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_num_bytes, nullptr, GL_STATIC_DRAW);
 
-  auto const tile_data = make_tiledata(vertices);
-
   // 5. Copy the model data to the buffer.
   GLintptr vertices_offset = 0, indices_offset = 0;
   for (auto const& tile : tile_map) {
 
     // copy the vector into the GPU buffer
     {
-      void const* p_vdata = static_cast<void const*>(tile_data.data());
-      std::size_t const vertices_size = sizeof(GLfloat) * tile_data.size();
+      void const* p_vdata = static_cast<void const*>(vertices.data());
+      std::size_t const vertices_size = sizeof(GLfloat) * vertices.size();
       glBufferSubData(GL_ARRAY_BUFFER, vertices_offset, vertices_size, p_vdata);
       vertices_offset += vertices_size;
     }
