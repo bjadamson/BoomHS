@@ -29,8 +29,9 @@ draw_scene(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const
 {
   using namespace opengl;
 
-  // Use the pipeline's PROGRAM.
+  // Use the pipeline's PROGRAM and bind the pipeline's VAO.
   pipeline.make_active(logger);
+  global::vao_bind(pipeline.vao());
 
   if constexpr (PIPE::HAS_COLOR_UNIFORM) {
     pipeline.set_uniform_array_4fv(logger, "u_color", pipeline.color().to_array());
@@ -147,14 +148,11 @@ void draw_tilemap(RenderArgs const& args, Model const& model, PipelineHashtag3D 
     auto const draw_mode = dinfo.draw_mode();
     auto const num_indices = dinfo.num_indices();
 
-    std::size_t offset = 0u;
     auto const draw_tile = [&](auto const& arr) {
       pipeline.set_uniform_array_3fv(logger, "u_offset", arr);
 
-      GLvoid const* p_offset = reinterpret_cast<GLvoid const*>(offset);
-      glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, p_offset, instance_count);
+      glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, instance_count);
       LOG_ANY_GL_ERRORS(logger, "glDrawElementsInstanced");
-      offset += sizeof(GLuint) * num_indices;
     };
 
     auto const [w, h, l] = tilemap.dimensions();

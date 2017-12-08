@@ -156,7 +156,6 @@ void
 BasePipeline::make_active(stlw::Logger &logger)
 {
   this->program_.use(logger);
-  global::vao_bind(this->vao());
 }
 
 } // ns opengl

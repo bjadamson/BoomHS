@@ -152,8 +152,8 @@ void
 copy_to_gpu(stlw::Logger &logger, PIPE &pipeline, DrawInfo const& dinfo, VERTICES const& vertices,
     INDICES const& indices)
 {
-  // Activate pipeline
-  pipeline.make_active(logger);
+  // Activate VAO
+  global::vao_bind(pipeline.vao());
 
   glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
@@ -258,12 +258,10 @@ auto copy_tilemap_gpu(stlw::Logger &logger, ::opengl::PipelineHashtag3D &pipelin
   // assume (r, g, b, a) all present
   assert((vertices.size() % 8) == 0);
 
-  std::size_t const num_tiles = tile_map.num_tiles();
-  auto const num_indices = static_cast<GLuint>(indices.size());
-
   // Bind the vao (even before instantiating the DrawInfo)
-  pipeline.make_active(logger);
+  global::vao_bind(pipeline.vao());
 
+  auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{tprops.draw_mode, num_indices};
   auto const ebo = dinfo.ebo();
   auto const vbo = dinfo.vbo();
@@ -276,32 +274,11 @@ auto copy_tilemap_gpu(stlw::Logger &logger, ::opengl::PipelineHashtag3D &pipelin
   va.upload_vertex_format_to_glbound_vao(logger);
 
   // Calculate how much room the buffers need.
-  std::size_t const vertices_num_bytes = (vertices.size() * sizeof(GLfloat)) * num_tiles;
-  glBufferData(GL_ARRAY_BUFFER, vertices_num_bytes, nullptr, GL_STATIC_DRAW);
+  std::size_t const vertices_num_bytes = (vertices.size() * sizeof(GLfloat));
+  glBufferData(GL_ARRAY_BUFFER, vertices_num_bytes, vertices.data(), GL_STATIC_DRAW);
 
-  std::size_t const indices_num_bytes = (indices.size() * sizeof(GLuint)) * num_tiles;
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_num_bytes, nullptr, GL_STATIC_DRAW);
-
-  // 5. Copy the model data to the buffer.
-  GLintptr vertices_offset = 0, indices_offset = 0;
-  for (auto const& tile : tile_map) {
-
-    // copy the vector into the GPU buffer
-    {
-      void const* p_vdata = static_cast<void const*>(vertices.data());
-      std::size_t const vertices_size = sizeof(GLfloat) * vertices.size();
-      glBufferSubData(GL_ARRAY_BUFFER, vertices_offset, vertices_size, p_vdata);
-      vertices_offset += vertices_size;
-    }
-
-    // copy the indices vector into the GPU buffer
-    {
-      void const* p_idata = static_cast<void const*>(indices.data());
-      std::size_t const indices_size = sizeof(GLuint) * indices.size();
-      glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, indices_offset, indices_size, p_idata);
-      indices_offset += indices_size;
-    }
-  }
+  std::size_t const indices_num_bytes = (indices.size() * sizeof(GLuint));
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_num_bytes, indices.data(), GL_STATIC_DRAW);
   return dinfo;
 }
 
