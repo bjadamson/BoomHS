@@ -57,28 +57,28 @@ class Camera
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // mutating helper methods
-  decltype(auto) move(float const s, glm::vec3 const& dir)
+  auto& move(float const s, glm::vec3 const& dir)
   {
     this->front_ += dir * s;
     this->skybox_.model.translation = this->front_;
 
     return *this;
   }
-  decltype(auto) move_z(float const s)
+  auto& move_z(float const s)
   {
     auto const mat = compute_view(*this);
     glm::vec3 const forward{mat[0][2], mat[1][2], mat[2][2]};
     return move(s, -forward);
   }
 
-  decltype(auto) move_x(float const s)
+  auto& move_x(float const s)
   {
     auto const mat = compute_view(*this);
     glm::vec3 const strafe {mat[0][0], mat[1][0], mat[2][0]};
     return move(s, strafe);
   }
 
-  decltype(auto) move_y(float const s)
+  auto& move_y(float const s)
   {
     auto const mat = compute_view(*this);
     glm::vec3 const updown{mat[0][1], mat[1][1], mat[2][1]};
