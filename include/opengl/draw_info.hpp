@@ -49,6 +49,7 @@ class DrawInfo {
   GpuBufferHandles handles_;
 
 public:
+  MOVE_CONSTRUCTIBLE_ONLY(DrawInfo);
   explicit DrawInfo(GLenum const dm, GLuint const num_indices)
       : draw_mode_(dm)
       , num_indices_(num_indices)

@@ -243,23 +243,21 @@ struct TilemapProperties
 {
   GLenum const draw_mode;
 
-  std::vector<float> const& vertices;
-  std::vector<uint32_t> const& indices;
+  obj const& hashtag;
 };
 
-template<typename TileMap>
-auto copy_tilemap_gpu(stlw::Logger &logger, ::opengl::PipelineHashtag3D &pipeline,
-    TilemapProperties &&tprops, TileMap const& tile_map)
+auto copy_tilemap_gpu(stlw::Logger &logger, PipelineHashtag3D &hash_pipe,
+    TilemapProperties &&tprops)
 {
-  auto const& vertices = tprops.vertices;
-  auto const& indices = tprops.indices;
+  auto const& vertices = tprops.hashtag.vertices;
+  auto const& indices = tprops.hashtag.indices;
 
   // assume (x, y, z, w) all present
   // assume (r, g, b, a) all present
   assert((vertices.size() % 8) == 0);
 
   // Bind the vao (even before instantiating the DrawInfo)
-  global::vao_bind(pipeline.vao());
+  global::vao_bind(hash_pipe.vao());
 
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{tprops.draw_mode, num_indices};
@@ -270,7 +268,7 @@ auto copy_tilemap_gpu(stlw::Logger &logger, ::opengl::PipelineHashtag3D &pipelin
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
   // Enable the VertexAttributes for this pipeline's VAO.
-  auto const& va = pipeline.va();
+  auto const& va = hash_pipe.va();
   va.upload_vertex_format_to_glbound_vao(logger);
 
   // Calculate how much room the buffers need.

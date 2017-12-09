@@ -33,35 +33,40 @@ struct GameState {
   bool quit = false;
   Logger &logger;
   window::Dimensions const dimensions;
+
+  // NOTE: Keep this data member above the "camera" data member.
+  std::vector<::opengl::Model*> MODELS;
+
   stlw::float_generator rnum_generator;
   glm::mat4 projection;
-
-  std::vector<::opengl::Model*> MODELS;
-  opengl::Model color_cube_model;
-
-
-  opengl::Model skybox_model;
-  opengl::Model house_model;
-  opengl::Model tilemap_model;
-  opengl::Model terrain_model;
-  opengl::camera camera;
+  opengl::Camera camera;
 
   TileMap tilemap;
   window::mouse_data mouse_data;
 
-public:
+  static constexpr std::size_t COLOR_CUBE_INDEX = 0;
+  static constexpr std::size_t TEXTURE_CUBE_INDEX = 1;
+  static constexpr std::size_t WIREFRAME_CUBE_INDEX = 2;
+  static constexpr std::size_t SKYBOX_INDEX = 3;
+  static constexpr std::size_t HOUSE_INDEX = 4;
+  static constexpr std::size_t AT_INDEX = 5;
+  static constexpr std::size_t TILEMAP_INDEX = 6;
+  static constexpr std::size_t TERRAIN_INDEX = 7;
+  static constexpr std::size_t CAMERA_INDEX = 8;
+
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
   GameState(Logger &l, window::Dimensions const &d, stlw::float_generator &&fg,
-      glm::mat4 &&pm, TileMap &&tmap)
+      glm::mat4 &&pm, TileMap &&tmap, std::vector<::opengl::Model*> &&models)
     : logger(l)
     , dimensions(d)
+    , MODELS(MOVE(models))
     , rnum_generator(MOVE(fg))
     , projection(MOVE(pm))
-    , camera(opengl::camera_factory::make_default(this->skybox_model))
+    , camera(opengl::CameraFactory::make_default(*this->MODELS[SKYBOX_INDEX]))
     , tilemap(MOVE(tmap))
     , mouse_data(window::make_default_mouse_data())
   {
-    camera.move_down(1);
+    this->camera.move_down(1);
   }
 
   opengl::RenderArgs render_args() const
@@ -70,11 +75,18 @@ public:
   }
 };
 
-auto
-make_state(Logger &logger, window::Dimensions const& hw)
+auto ecst_systems()
 {
-  auto const fheight = static_cast<GLfloat>(hw.h);
-  auto const fwidth = static_cast<GLfloat>(hw.w);
+  return std::make_tuple(st::io_system, st::randompos_system);
+}
+
+
+template<typename PROXY>
+auto
+init(stlw::Logger &logger, PROXY &proxy, window::Dimensions const& dimensions)
+{
+  auto const fheight = static_cast<GLfloat>(dimensions.h);
+  auto const fwidth = static_cast<GLfloat>(dimensions.w);
   auto const aspect = fwidth / fheight;
 
   auto projection = glm::perspective(glm::radians(90.0f), aspect, 0.1f, 200.0f);
@@ -90,7 +102,9 @@ make_state(Logger &logger, window::Dimensions const& hw)
   FOR(x, W) {
     FOR(y, H) {
       FOR(z, L) {
-        tile_vec.emplace_back(Tile{});
+        Tile tile;
+        tile.is_wall = rng.generate_bool();
+        tile_vec.emplace_back(MOVE(tile));
       }
     }
   }
@@ -98,42 +112,46 @@ make_state(Logger &logger, window::Dimensions const& hw)
   assert(tile_vec.capacity() == tile_vec.size());
   assert(tile_vec.size() == NUM_TILES);
   auto tmap = TileMap{MOVE(tile_vec), W, H, L};
-  return GameState(logger, hw, MOVE(rng), MOVE(projection), MOVE(tmap));
-}
 
-auto ecst_systems()
-{
-  return std::make_tuple(st::io_system, st::randompos_system);
-}
-
-template<typename PROXY>
-auto
-init(PROXY &proxy, GameState &state, opengl::OpenglPipelines &gfx)
-{
-  auto const make_entity = [&proxy](auto const i, auto const& t) {
+  // Create entities
+  std::vector<::opengl::Model*> models;
+  auto const make_entity = [&proxy, &models](auto const& t) {
     auto eid = proxy.create_entity();
-    auto *p = &proxy.add_component(ct::model, eid);
-    p->translation = t;
-    return p;
+    auto &p = proxy.add_component(ct::model, eid);
+    p.translation = t;
+
+    models.emplace_back(&p);
   };
-  auto count = 0u;
+
+  make_entity(glm::vec3{2.0f, 2.0f, 2.0f});   // COLOR_CUBE
+  make_entity(glm::vec3{4.0f, -4.0f, -2.0f}); // TEXTURE_CUBE
+  make_entity(glm::vec3{3.0f, -2.0f, 2.0f});  // WIREFRAME_CUBE_INDEX
+  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // SKYBOX_INDEX
+  make_entity(glm::vec3{2.0f, 0.0f, -4.0f});  // HOUSE_CUBE
+  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // AT_INDEX
+  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // TILEMAP_INDEX
+  make_entity(glm::vec3{0.0f, 5.0f, 0.0f});   // TERRAIN_INDEX
+  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // CAMERA_INDEX
+
+  //auto count = GameState::CAMERA_INDEX + 1;
 
   // The 2D objects
-  while(count < 100) {
-    auto const [x, y, z] = state.rnum_generator.generate_3dposition_above_ground();
-    auto const translation = glm::vec3{x, y, z};
-    state.MODELS.emplace_back(make_entity(count++, translation));
+  /*
+  while(count < (100 + GameState::CAMERA_INDEX)) {
+    auto const [x, y, z] = rng.generate_3dposition_above_ground();
+    make_entity(glm::vec3{x, y, z});
   }
+  */
 
-  state.color_cube_model.translation = glm::vec3{2.0f, 2.0f, 2.0f};
-  state.house_model.translation = glm::vec3{-2.0f, 0.0f, -2.0f};
-  state.tilemap_model.translation = glm::vec3{0.0f, 0.0f, 0.0f};
-  state.terrain_model.translation = glm::vec3{0.0f, 5.0f, 0.0f};
+  return GameState(logger, dimensions, MOVE(rng), MOVE(projection), MOVE(tmap), MOVE(models));
+}
 
+Assets
+load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
+{
   // LOAD different assets.
   //"assets/chalet.mtl"
   namespace OF = opengl::factories;
-  auto &logger = state.logger;
 
   auto house_obj = opengl::load_mesh("assets/house_uv.obj", opengl::LoadNormals{true}, opengl::LoadUvs{true});
   auto hashtag_obj = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
@@ -160,8 +178,7 @@ init(PROXY &proxy, GameState &state, opengl::OpenglPipelines &gfx)
       opengl::LIST_OF_COLORS::SADDLE_BROWN);
 
   auto tilemap_handle = OF::copy_tilemap_gpu(logger, gfx.d3.hashtag,
-      {GL_TRIANGLES, objs.hashtag.vertices, objs.hashtag.indices},
-      state.tilemap);
+      {GL_TRIANGLES, objs.hashtag});
 
   GpuHandles handles{
     MOVE(house_handle),
@@ -182,22 +199,26 @@ void game_loop(GameState &state, opengl::OpenglPipelines &gfx, Assets const& ass
   auto render_args = state.render_args();
 
   // skybox
-  opengl::draw(render_args, state.skybox_model, gfx.d3.skybox, assets.handles.cube_skybox);
+  opengl::draw(render_args, *state.MODELS[GameState::SKYBOX_INDEX], gfx.d3.skybox, assets.handles.cube_skybox);
 
   // random
-  opengl::draw(render_args, state.color_cube_model, gfx.d3.color, assets.handles.cube_colored);
-  opengl::draw(render_args, *state.MODELS[1], gfx.d3.texture_cube, assets.handles.cube_textured);
-  opengl::draw(render_args, *state.MODELS[2], gfx.d3.wireframe, assets.handles.cube_wireframe);
+  opengl::draw(render_args, *state.MODELS[GameState::COLOR_CUBE_INDEX], gfx.d3.color, assets.handles.cube_colored);
+  opengl::draw(render_args, *state.MODELS[GameState::TEXTURE_CUBE_INDEX], gfx.d3.texture_cube, assets.handles.cube_textured);
+  opengl::draw(render_args, *state.MODELS[GameState::WIREFRAME_CUBE_INDEX], gfx.d3.wireframe, assets.handles.cube_wireframe);
 
   // house
-  opengl::draw(render_args, state.house_model, gfx.d3.house, assets.handles.house);
+  opengl::draw(render_args, *state.MODELS[GameState::HOUSE_INDEX], gfx.d3.house, assets.handles.house);
 
   // tilemap
-  opengl::draw_tilemap(render_args, state.tilemap_model, gfx.d3.hashtag,
+  opengl::draw_tilemap(render_args, *state.MODELS[GameState::TILEMAP_INDEX], gfx.d3.hashtag,
       assets.handles.tilemap, state.tilemap);
 
+
+  // player
+  opengl::draw(render_args, *state.MODELS[GameState::AT_INDEX], gfx.d3.at, assets.handles.at);
+
   // terrain
-  opengl::draw(render_args, state.terrain_model, gfx.d3.terrain, assets.handles.terrain);
+  //opengl::draw(render_args, *state.MODELS[GameState::TERRAIN_INDEX], gfx.d3.terrain, assets.handles.terrain);
 }
 
 } // ns boomhs

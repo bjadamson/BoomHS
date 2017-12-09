@@ -39,6 +39,12 @@ void end(Engine &e)
   SDL_GL_SwapWindow(e.window.raw());
 }
 
+auto
+get_dimensions(Engine const& e)
+{
+  return e.window.get_dimensions();
+}
+
 template<typename P>
 void loop(Engine &engine, State &state, P &proxy, game::Assets const& assets)
 {
@@ -64,20 +70,21 @@ void loop(Engine &engine, State &state, P &proxy, game::Assets const& assets)
   LOG_TRACE("game loop stepping.");
 }
 
-template <typename S>
-void start(Engine &engine, S &state)
+void start(stlw::Logger &logger, Engine &engine)
 {
   using namespace opengl;
 
-  auto &logger = state.logger;
-  LOG_TRACE("creating ecst context ...");
+  LOG_TRACE("Loading assets.");
+  auto const assets = game::load_assets(logger, engine.opengl_lib);
 
   // Create an ECST context.
+  LOG_TRACE("creating ecst context ...");
   auto ctx = ecst_setup::make_context();
-  LOG_TRACE("stepping ecst once");
 
-  auto const assets = ctx->step([&](auto &proxy) {
-      return game::init(proxy, state, engine.opengl_lib);
+  LOG_TRACE("stepping ecst once");
+  auto state = ctx->step([&logger, &engine](auto &proxy) {
+      auto const dimensions = engine::get_dimensions(engine);
+      return game::init(logger, proxy, dimensions);
   });
 
   namespace sea = ecst::system_execution_adapter;
@@ -132,7 +139,5 @@ void start(Engine &engine, S &state)
     LOG_TRACE("game loop finished.");
   });
 }
-
-auto get_dimensions(Engine const& e) { return e.window.get_dimensions(); }
 
 } // ns engine

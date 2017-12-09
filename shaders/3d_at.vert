@@ -1,5 +1,6 @@
 // attributes input to the vertex shader
 in vec4 a_position; // position value
+in vec4 a_color; // position value
 
 // output of the vertex shader - input to fragment
 // shader
@@ -13,5 +14,5 @@ void main()
   vec4 color = vec4(1.0, 1.0, 1.0, 1.0);
 
   gl_Position = u_mvmatrix * a_position;
-  v_color = color;
+  v_color = a_color;
 }

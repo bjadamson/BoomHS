@@ -45,7 +45,7 @@ load_pipelines(stlw::Logger &logger)
         va::vertex_color(logger)));
 
   DO_TRY(auto d3at, make_pipeline<PipelineAt3D>("3d_at.vert", "3d_at.frag",
-        va::vertex_only(logger)));
+        va::vertex_color(logger)));
 
   DO_TRY(auto d3cube, make_pipeline<PipelineTextureCube3D>("3d_cubetexture.vert", "3d_cubetexture.frag",
         va::vertex_only(logger),

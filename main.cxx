@@ -9,7 +9,6 @@
 #include <engine/lib.hpp>
 #include <opengl/pipelines.hpp>
 #include <window/sdl_window.hpp>
-
 #include <boomhs/boomhs.hpp>
 
 using EngineResult = stlw::result<engine::Engine, std::string>;
@@ -43,12 +42,8 @@ main(int argc, char *argv[])
       make_opengl_sdl_engine(logger, FULLSCREEN, 1024, 768),
       on_error);
 
-  LOG_DEBUG("Instantiating 'state'");
-  auto const dimensions = engine::get_dimensions(engine);
-  auto state = boomhs::make_state(logger, dimensions);
-
   LOG_DEBUG("Starting game loop");
-  engine::start(engine, state);
+  engine::start(logger, engine);
 
   LOG_DEBUG("Game loop finished successfully! Ending program now.");
   return EXIT_SUCCESS;

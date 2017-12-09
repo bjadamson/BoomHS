@@ -14,7 +14,7 @@ namespace opengl {
 
 struct RenderArgs {
   stlw::Logger &logger;
-  opengl::camera const& camera;
+  opengl::Camera const& camera;
   glm::mat4 const& projection;
 };
 
@@ -159,6 +159,10 @@ void draw_tilemap(RenderArgs const& args, Model const& model, PipelineHashtag3D 
     FOR(a, w) {
       FOR(b, h) {
         FOR(c, l) {
+          // don't draw non-wall tiles for now
+          if (!tilemap.data(a, b, c).is_wall) {
+            continue;
+          }
           auto const cast = [](auto const v) { return static_cast<float>(v); };
           auto const arr = stlw::make_array<float>(cast(a), cast(b), cast(c));
           draw_tile(arr);

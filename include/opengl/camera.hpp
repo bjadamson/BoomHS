@@ -30,7 +30,7 @@ compute_view(C const& camera)
   return rotate * translate;
 }
 
-class camera
+class Camera
 {
   skybox skybox_;
   glm::vec3 front_, up_;
@@ -86,10 +86,10 @@ class camera
   }
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(camera);
+  MOVE_CONSTRUCTIBLE_ONLY(Camera);
 
-  camera(skybox &&sb, glm::vec3 const& front, glm::vec3 const& up)
-    : skybox_(std::move(sb))
+  Camera(skybox &&sb, glm::vec3 const& front, glm::vec3 const& up)
+    : skybox_(MOVE(sb))
     , front_(front)
     , up_(up)
   {
@@ -108,32 +108,32 @@ public:
   // mutating methods
   //
   // linear movement
-  camera& move_forward(float const s)
+  auto& move_forward(float const s)
   {
     return move_z(s);
   }
 
-  camera& move_backward(float const s)
+  auto& move_backward(float const s)
   {
     return move_z(-s);
   }
 
-  camera& move_left(float const s)
+  auto& move_left(float const s)
   {
     return move_x(s);
   }
 
-  camera& move_right(float const s)
+  auto& move_right(float const s)
   {
     return move_x(-s);
   }
 
-  camera& move_up(float const s)
+  auto& move_up(float const s)
   {
     return move_y(-s);
   }
 
-  camera& move_down(float const s)
+  auto& move_down(float const s)
   {
     return move_y(s);
   }
@@ -141,7 +141,7 @@ public:
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // mouse-movement
   template<typename L>
-  camera& rotate_to(L &logger, window::mouse_data const& mdata)
+  auto& rotate_to(L &logger, window::mouse_data const& mdata)
   {
     auto const& current = mdata.current;
     auto const& mouse_sens = mdata.sensitivity;
@@ -176,13 +176,13 @@ public:
   }
 };
 
-struct camera_factory
+struct CameraFactory
 {
   static auto make_default(Model &skybox_model)
   {
     auto const& front = -Z_UNIT_VECTOR; // camera-look at origin
     auto const& up = Y_UNIT_VECTOR;     // cameraspace "up" is === "up" in worldspace.
-    return opengl::camera{skybox{skybox_model}, front, up};
+    return opengl::Camera{skybox{skybox_model}, front, up};
   }
 };
 
