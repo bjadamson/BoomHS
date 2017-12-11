@@ -52,7 +52,7 @@ create_program()
 {
   GLuint const program_id = glCreateProgram();
   if (0 == program_id) {
-    return stlw::make_error("GlCreateProgram returned 0.");
+    return stlw::make_error(std::string{"GlCreateProgram returned 0."});
   }
   return program_id;
 }

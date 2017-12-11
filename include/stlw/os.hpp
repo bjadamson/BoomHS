@@ -2,6 +2,7 @@
 #include <experimental/filesystem>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <stlw/result.hpp>
 #include <stlw/tuple.hpp>
 #include <stlw/type_macros.hpp>

@@ -105,7 +105,7 @@ sdl_library::make_window(bool const fullscreen, int const height, int const widt
   {
     int const code = SDL_SetRelativeMouseMode(SDL_TRUE);
     if (code == -1) {
-      return stlw::make_error("Mouse relative mode not supported.");
+      return stlw::make_error(std::string{"Mouse relative mode not supported."});
     }
     else if (code != 0) {
       return stlw::make_error(fmt::sprintf("Error setting mouse relative mode '%s'", SDL_GetError()));

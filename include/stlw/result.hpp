@@ -1,5 +1,5 @@
 #pragma once
-#include <extlibs/boost_expected.hpp>
+#include <extlibs/expected.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/types.hpp>
 
@@ -10,11 +10,11 @@ template <typename... P>
 decltype(auto)
 make_error(P &&... p)
 {
-  return boost::make_unexpected(std::forward<P>(p)...);
+  return ::nonstd::make_unexpected(std::forward<P>(p)...);
 }
 
 template <typename T, typename E>
-using result = ::boost::expected<T, E>;
+using result = ::nonstd::expected<T, E>;
 } // ns stlw
 
 // General-purpose eval function.
