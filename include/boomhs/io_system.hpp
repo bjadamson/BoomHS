@@ -36,8 +36,9 @@ struct io_system {
   }
 
   template<typename ET, typename S>
-  bool process_event(stlw::Logger &logger, ET &et, SDL_Event &event, S &state) const
+  bool process_event(S &state, ET &et, SDL_Event &event) const
   {
+    stlw::Logger &logger = state.logger;
     float constexpr MOVE_DISTANCE = 0.1f;
     float constexpr SCALE_FACTOR = 0.20f;
 
@@ -48,6 +49,11 @@ struct io_system {
 
     switch (event.type) {
     case SDL_MOUSEMOTION: {
+
+      // If the user pressed enter, don't move the camera based on mouse movements.
+      if (state.ui_state.enter_pressed) {
+        break;
+      }
       add_from_event(state.mouse_data, event);
       camera.rotate_to(logger, state.mouse_data);
       break;
@@ -145,6 +151,12 @@ struct io_system {
         et.rotate_entities(-ANGLE, ROTATION_VECTOR);
         break;
       }
+      case SDLK_RETURN: {
+        // Toggle state
+        auto &ep = state.ui_state.enter_pressed;
+        ep ^= true;
+        break;
+      }
       }
     }
     }
@@ -158,7 +170,7 @@ struct io_system {
 
     auto et = ::game::entity_factory::make_transformer(state.logger, data);
     while ((!state.quit) && (0 != SDL_PollEvent(&event))) {
-      state.quit = this->process_event(state.logger, et, event, state);
+      state.quit = this->process_event(state, et, event);
     }
   }
 };

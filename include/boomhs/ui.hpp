@@ -22,9 +22,11 @@ void draw_ui(GameState &state)
   ImGui::SliderFloat("y:", &pos.y, -5.0f, 5.0f);
   ImGui::SliderFloat("z:", &pos.z, -5.0f, 5.0f);
 
-  //auto const framerate = imgui.Framerate;
-  //auto const ms_frame = 1000.0f / framerate;
-  //ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", ms_frame, framerate);
+  ImGui::Checkbox("Enter Pressed", &state.ui_state.enter_pressed);
+
+  auto const framerate = imgui.Framerate;
+  auto const ms_frame = 1000.0f / framerate;
+  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", ms_frame, framerate);
 }
 
 } // ns boomhs

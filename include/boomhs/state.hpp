@@ -17,6 +17,11 @@ using stlw::Logger;
 namespace boomhs
 {
 
+struct UiState
+{
+  bool enter_pressed = false;
+};
+
 struct GameState
 {
   bool quit = false;
@@ -33,6 +38,8 @@ struct GameState
 
   TileMap tilemap;
   window::mouse_data mouse_data;
+
+  UiState ui_state;
 
   static constexpr std::size_t COLOR_CUBE_INDEX = 0;
   static constexpr std::size_t TEXTURE_CUBE_INDEX = 1;
