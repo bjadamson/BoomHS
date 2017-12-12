@@ -1,80 +1,27 @@
 #pragma once
-#include <string>
-#include <tuple>
-#include <vector>
 
-// GLM Mathematics
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <imgui/imgui.hpp>
 
-#include <window/mouse.hpp>
-#include <opengl/camera.hpp>
 #include <opengl/factory.hpp>
 #include <opengl/obj.hpp>
 #include <opengl/renderer.hpp>
 #include <opengl/skybox.hpp>
-#include <stlw/algorithm.hpp>
-#include <stlw/random.hpp>
-#include <stlw/result.hpp>
-#include <stlw/type_ctors.hpp>
 
 #include <boomhs/assets.hpp>
 #include <boomhs/io_system.hpp>
 #include <boomhs/randompos_system.hpp>
 #include <boomhs/tilemap.hpp>
+#include <boomhs/state.hpp>
+#include <boomhs/ui.hpp>
+
+#include <stlw/log.hpp>
+
+#include <vector>
 
 using stlw::Logger;
 
 namespace boomhs
 {
-
-struct GameState {
-  bool quit = false;
-  Logger &logger;
-  ImGuiIO &imgui;
-  window::Dimensions const dimensions;
-
-  // NOTE: Keep this data member above the "camera" data member.
-  std::vector<::opengl::Model*> MODELS;
-
-  stlw::float_generator rnum_generator;
-  glm::mat4 projection;
-  opengl::Camera camera;
-
-  TileMap tilemap;
-  window::mouse_data mouse_data;
-
-  static constexpr std::size_t COLOR_CUBE_INDEX = 0;
-  static constexpr std::size_t TEXTURE_CUBE_INDEX = 1;
-  static constexpr std::size_t WIREFRAME_CUBE_INDEX = 2;
-  static constexpr std::size_t SKYBOX_INDEX = 3;
-  static constexpr std::size_t HOUSE_INDEX = 4;
-  static constexpr std::size_t AT_INDEX = 5;
-  static constexpr std::size_t TILEMAP_INDEX = 6;
-  static constexpr std::size_t TERRAIN_INDEX = 7;
-  static constexpr std::size_t CAMERA_INDEX = 8;
-
-  MOVE_CONSTRUCTIBLE_ONLY(GameState);
-  GameState(Logger &l, ImGuiIO &i,window::Dimensions const &d, stlw::float_generator &&fg,
-      glm::mat4 &&pm, TileMap &&tmap, std::vector<::opengl::Model*> &&models)
-    : logger(l)
-    , imgui(i)
-    , dimensions(d)
-    , MODELS(MOVE(models))
-    , rnum_generator(MOVE(fg))
-    , projection(MOVE(pm))
-    , camera(opengl::CameraFactory::make_default(*this->MODELS[SKYBOX_INDEX]))
-    , tilemap(MOVE(tmap))
-    , mouse_data(window::make_default_mouse_data())
-  {
-    this->camera.move_down(1);
-  }
-
-  opengl::RenderArgs render_args() const
-  {
-    return opengl::RenderArgs{this->logger, this->camera, this->projection};
-  }
-};
 
 auto ecst_systems()
 {
@@ -219,44 +166,29 @@ void game_loop(GameState &state, opengl::OpenglPipelines &gfx, Assets const& ass
   auto render_args = state.render_args();
 
   // skybox
-  //opengl::draw(render_args, *state.MODELS[GameState::SKYBOX_INDEX], gfx.d3.skybox, assets.handles.cube_skybox);
+  //opengl::draw(render_args, *state.entities[GameState::SKYBOX_INDEX], gfx.d3.skybox, assets.handles.cube_skybox);
 
   // random
-  opengl::draw(render_args, *state.MODELS[GameState::COLOR_CUBE_INDEX], gfx.d3.color, assets.handles.cube_colored);
-  opengl::draw(render_args, *state.MODELS[GameState::TEXTURE_CUBE_INDEX], gfx.d3.texture_cube, assets.handles.cube_textured);
-  opengl::draw(render_args, *state.MODELS[GameState::WIREFRAME_CUBE_INDEX], gfx.d3.wireframe, assets.handles.cube_wireframe);
+  opengl::draw(render_args, *state.entities[GameState::COLOR_CUBE_INDEX], gfx.d3.color, assets.handles.cube_colored);
+  opengl::draw(render_args, *state.entities[GameState::TEXTURE_CUBE_INDEX], gfx.d3.texture_cube, assets.handles.cube_textured);
+  opengl::draw(render_args, *state.entities[GameState::WIREFRAME_CUBE_INDEX], gfx.d3.wireframe, assets.handles.cube_wireframe);
 
   // house
-  opengl::draw(render_args, *state.MODELS[GameState::HOUSE_INDEX], gfx.d3.house, assets.handles.house);
+  opengl::draw(render_args, *state.entities[GameState::HOUSE_INDEX], gfx.d3.house, assets.handles.house);
 
   // tilemap
-  opengl::draw_tilemap(render_args, *state.MODELS[GameState::TILEMAP_INDEX], gfx.d3.hashtag,
+  opengl::draw_tilemap(render_args, *state.entities[GameState::TILEMAP_INDEX], gfx.d3.hashtag,
       assets.handles.tilemap, state.tilemap);
 
 
   // player
-  opengl::draw(render_args, *state.MODELS[GameState::AT_INDEX], gfx.d3.at, assets.handles.at);
+  opengl::draw(render_args, *state.entities[GameState::AT_INDEX], gfx.d3.at, assets.handles.at);
 
   // terrain
-  //opengl::draw(render_args, *state.MODELS[GameState::TERRAIN_INDEX], gfx.d3.terrain, assets.handles.terrain);
+  //opengl::draw(render_args, *state.entities[GameState::TERRAIN_INDEX], gfx.d3.terrain, assets.handles.terrain);
 
   // UI code
-  // Render & swap video buffers
-  //
-  // Most of your application code here
-  ImGui::Begin("TEST");
-  ImGui::Text("Hello World");
-  ImGui::End();
-
-  ImGui::Begin("TEST");
-  static float f = 0.0f;
-  ImGui::Text("Hello, world!");
-  ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-      1000.0f / state.imgui.Framerate,
-      state.imgui.Framerate);
-  ImGui::End();
-
+  draw_ui(state);
 }
 
 } // ns boomhs
