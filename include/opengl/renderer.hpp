@@ -192,8 +192,11 @@ void disable_depth_tests()
   glDisable(GL_DEPTH_TEST);
 }
 
-void init()
+void init(window::Dimensions const& dimensions)
 {
+  // Initialize opengl
+  glViewport(0, 0, dimensions.w, dimensions.h);
+
   glDisable(GL_CULL_FACE);
   enable_depth_tests();
 }
@@ -203,7 +206,6 @@ void clear_screen(Color const& color)
   glClearColor(color.r, color.g, color.b, color.a);
 
   // Render
-  glClear(GL_COLOR_BUFFER_BIT);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 

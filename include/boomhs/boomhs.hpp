@@ -31,6 +31,7 @@ namespace boomhs
 struct GameState {
   bool quit = false;
   Logger &logger;
+  ImGuiIO &imgui;
   window::Dimensions const dimensions;
 
   // NOTE: Keep this data member above the "camera" data member.
@@ -54,9 +55,10 @@ struct GameState {
   static constexpr std::size_t CAMERA_INDEX = 8;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
-  GameState(Logger &l, window::Dimensions const &d, stlw::float_generator &&fg,
+  GameState(Logger &l, ImGuiIO &i,window::Dimensions const &d, stlw::float_generator &&fg,
       glm::mat4 &&pm, TileMap &&tmap, std::vector<::opengl::Model*> &&models)
     : logger(l)
+    , imgui(i)
     , dimensions(d)
     , MODELS(MOVE(models))
     , rnum_generator(MOVE(fg))
@@ -126,17 +128,9 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
   return Assets{MOVE(objs), MOVE(handles)};
 }
 
-template<typename PROXY>
 auto
-init(stlw::Logger &logger, PROXY &proxy, window::Dimensions const& dimensions)
+make_tilemap(stlw::float_generator &rng)
 {
-  auto const fheight = static_cast<GLfloat>(dimensions.h);
-  auto const fwidth = static_cast<GLfloat>(dimensions.w);
-  auto const aspect = fwidth / fheight;
-
-  auto projection = glm::perspective(glm::radians(90.0f), aspect, 0.1f, 200.0f);
-  stlw::float_generator rng;
-
   auto constexpr NUM_TILES = 1000;
   auto const [W, H, L] = std::array<std::size_t, 3>{10, 10, 10};
   assert((W * H * L) == NUM_TILES);
@@ -156,16 +150,21 @@ init(stlw::Logger &logger, PROXY &proxy, window::Dimensions const& dimensions)
 
   assert(tile_vec.capacity() == tile_vec.size());
   assert(tile_vec.size() == NUM_TILES);
-  auto tmap = TileMap{MOVE(tile_vec), W, H, L};
+  return TileMap{MOVE(tile_vec), W, H, L};
+}
 
+template<typename PROXY>
+auto
+make_entities(PROXY &proxy)
+{
   // Create entities
-  std::vector<::opengl::Model*> models;
-  auto const make_entity = [&proxy, &models](auto const& t) {
+  std::vector<::opengl::Model*> entities;
+  auto const make_entity = [&proxy, &entities](auto const& t) {
     auto eid = proxy.create_entity();
     auto &p = proxy.add_component(ct::model, eid);
     p.translation = t;
 
-    models.emplace_back(&p);
+    entities.emplace_back(&p);
   };
 
   make_entity(glm::vec3{2.0f, 2.0f, 2.0f});   // COLOR_CUBE
@@ -187,16 +186,40 @@ init(stlw::Logger &logger, PROXY &proxy, window::Dimensions const& dimensions)
     make_entity(glm::vec3{x, y, z});
   }
   */
-  return GameState(logger, dimensions, MOVE(rng), MOVE(projection), MOVE(tmap), MOVE(models));
+  return entities;
+}
+
+template<typename PROXY>
+auto
+init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions const& dimensions)
+{
+  auto const fheight = dimensions.h;
+  auto const fwidth = dimensions.w;
+  auto const aspect = static_cast<GLfloat>(fwidth / fheight);
+
+  // Initialize opengl
+  opengl::init(dimensions);
+
+  // Configure Imgui
+  imgui.MouseDrawCursor = true;
+  imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
+
+  auto projection = glm::perspective(glm::radians(90.0f), aspect, 0.1f, 200.0f);
+  stlw::float_generator rng;
+
+  auto tmap = make_tilemap(rng);
+  auto entities = make_entities(proxy);
+
+  return GameState(logger, imgui, dimensions, MOVE(rng), MOVE(projection), MOVE(tmap), MOVE(entities));
 }
 
 void game_loop(GameState &state, opengl::OpenglPipelines &gfx, Assets const& assets)
 {
-  opengl::clear_screen(opengl::LIST_OF_COLORS::WHITE);
+  opengl::clear_screen(opengl::LIST_OF_COLORS::LIGHT_BLUE);
   auto render_args = state.render_args();
 
   // skybox
-  opengl::draw(render_args, *state.MODELS[GameState::SKYBOX_INDEX], gfx.d3.skybox, assets.handles.cube_skybox);
+  //opengl::draw(render_args, *state.MODELS[GameState::SKYBOX_INDEX], gfx.d3.skybox, assets.handles.cube_skybox);
 
   // random
   opengl::draw(render_args, *state.MODELS[GameState::COLOR_CUBE_INDEX], gfx.d3.color, assets.handles.cube_colored);
@@ -216,6 +239,24 @@ void game_loop(GameState &state, opengl::OpenglPipelines &gfx, Assets const& ass
 
   // terrain
   //opengl::draw(render_args, *state.MODELS[GameState::TERRAIN_INDEX], gfx.d3.terrain, assets.handles.terrain);
+
+  // UI code
+  // Render & swap video buffers
+  //
+  // Most of your application code here
+  ImGui::Begin("TEST");
+  ImGui::Text("Hello World");
+  ImGui::End();
+
+  ImGui::Begin("TEST");
+  static float f = 0.0f;
+  ImGui::Text("Hello, world!");
+  ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+      1000.0f / state.imgui.Framerate,
+      state.imgui.Framerate);
+  ImGui::End();
+
 }
 
 } // ns boomhs

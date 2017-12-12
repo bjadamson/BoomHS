@@ -58,34 +58,16 @@ void loop(Engine &engine, State &state, P &proxy, game::Assets const& assets)
       io_process_system,
       randompos_process_system);
 
-  LOG_TRACE("clearing screen.");
-  opengl::clear_screen(opengl::LIST_OF_COLORS::BLACK);
-  glClear(GL_COLOR_BUFFER_BIT);
+  // Pass SDL events to GUI library.
+  ImGui_ImplSdlGL3_ProcessEvent(&event);
+
+  // Reset Imgui for next game frame.
+  ImGui_ImplSdlGL3_NewFrame(engine.window.raw());
 
   LOG_TRACE("rendering opengl.");
   game::game_loop(state, engine.opengl_lib, assets);
 
-  // Pass SDL events to GUI library.
-  ImGui_ImplSdlGL3_ProcessEvent(&event);
-  LOG_TRACE("rendering UI.");
-  ImGui_ImplSdlGL3_NewFrame(engine.window.raw());
-
-  // UI code
-  // Render & swap video buffers
-  //
-  // Most of your application code here
-  ImGui::Begin("TEST");
-  ImGui::Text("Hello World");
-  ImGui::End();
-
-  ImGui::Begin("TEST");
-  static float f = 0.0f;
-  ImGui::Text("Hello, world!");
-  ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-  ImGui::End();
-
-  glViewport(0, 0, (int)ImGui::GetIO().DisplaySize.x, (int)ImGui::GetIO().DisplaySize.y);
+  // Render Imgui UI
   ImGui::Render();
 
   // Update window with OpenGL rendering
@@ -105,12 +87,6 @@ inline void start(stlw::Logger &logger, Engine &engine)
   LOG_TRACE("creating ecst context ...");
   auto ctx = ecst_setup::make_context();
 
-  LOG_TRACE("stepping ecst once");
-  auto state = ctx->step([&logger, &engine](auto &proxy) {
-      auto const dimensions = engine::get_dimensions(engine);
-      return game::init(logger, proxy, dimensions);
-  });
-
   namespace sea = ecst::system_execution_adapter;
   auto io_tags = st::io_system;
   auto randompos_tags = st::randompos_system;
@@ -127,6 +103,13 @@ inline void start(stlw::Logger &logger, Engine &engine)
   // Initialize GUI library
   ImGui_ImplSdlGL3_Init(engine.window.raw());
   ON_SCOPE_EXIT([]() { ImGui_ImplSdlGL3_Shutdown(); });
+
+  LOG_TRACE("stepping ecst once");
+  auto state = ctx->step([&logger, &engine](auto &proxy) {
+      auto const dimensions = engine::get_dimensions(engine);
+      auto &imgui = ImGui::GetIO();
+      return game::init(logger, proxy, imgui, dimensions);
+  });
 
   int frames_counted = 0;
   window::LTimer fps_timer;
