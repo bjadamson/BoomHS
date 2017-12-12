@@ -53,6 +53,7 @@ log_any_gl_errors(stlw::Logger &logger, std::string const &prefix, int const lin
 
 } // ns impl
 
+/*
 static inline boost::optional<std::string>
 get_errors(GLuint const program_id)
 {
@@ -65,12 +66,27 @@ get_errors(GLuint const program_id)
   auto fmt = fmt::sprintf("Opengl error: '{}'", std::to_string(buffer[0]));
   return boost::make_optional(fmt);
 }
+*/
 
 inline void
 clear_gl_errors()
 {
   while (glGetError() != GL_NO_ERROR) {
   }
+}
+
+inline auto
+get_gl_errors()
+{
+  std::vector<std::string> errors;
+  for(GLenum error_code = glGetError();; error_code = glGetError()) {
+    if (error_code == GL_NO_ERROR) {
+      break;
+    }
+    std::string e = reinterpret_cast<char const*>(gluErrorString(error_code));
+    errors.emplace_back(MOVE(e));
+  }
+  return errors;
 }
 
 inline auto

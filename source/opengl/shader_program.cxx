@@ -98,10 +98,6 @@ compile_sources(VertexShaderInfo const &vertex_shader, std::string const &fragme
     glBindAttribLocation(program_id, i, vinfo.variable.c_str());
   }
 
-  //glBindAttribLocation(program_id, 0, attribute_info::A_POSITION);
-  //glBindAttribLocation(program_id, 1, attribute_info::A_COLOR);
-  //glBindAttribLocation(program_id, 2, attribute_info::A_UV);
-
   glAttachShader(program_id, vertex_shader_id);
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, vertex_shader_id); });
 

@@ -1,4 +1,7 @@
 #pragma once
+#include <imgui/imgui.hpp>
+#include <imgui/imgui_impl_sdl_gl3.h>
+
 #include <opengl/pipelines.hpp>
 #include <opengl/renderer.hpp>
 #include <opengl/factory.hpp>
@@ -29,17 +32,7 @@ struct Engine
   MOVE_CONSTRUCTIBLE_ONLY(Engine);
 };
 
-void begin() { opengl::begin(); }
-
-void end(Engine &e)
-{
-  opengl::end();
-
-  // Update window with OpenGL rendering
-  SDL_GL_SwapWindow(e.window.raw());
-}
-
-auto
+inline auto
 get_dimensions(Engine const& e)
 {
   return e.window.get_dimensions();
@@ -52,25 +45,56 @@ void loop(Engine &engine, State &state, P &proxy, game::Assets const& assets)
   auto io_tags = sea::t(st::io_system);
   auto randompos_tags = sea::t(st::randompos_system);
 
-  auto const process_system = [&state](auto &system, auto &data) {
-    system.process(data, state);
+  auto &logger = state.logger;
+  SDL_Event event;
+  auto const process_system = [&state, &event](auto &system, auto &data) {
+    system.process(data, state, event);
   };
   auto const io_process_system = io_tags.for_subtasks(process_system);
   auto const randompos_process_system = randompos_tags.for_subtasks(process_system);
 
-  auto &logger = state.logger;
   LOG_TRACE("executing systems.");
-  proxy.execute_systems()(io_process_system, randompos_process_system);
+  proxy.execute_systems()(
+      io_process_system,
+      randompos_process_system);
 
-  begin();
-  LOG_TRACE("rendering.");
+  LOG_TRACE("clearing screen.");
+  opengl::clear_screen(opengl::LIST_OF_COLORS::BLACK);
+  glClear(GL_COLOR_BUFFER_BIT);
 
+  LOG_TRACE("rendering opengl.");
   game::game_loop(state, engine.opengl_lib, assets);
-  end(engine);
+
+  // Pass SDL events to GUI library.
+  ImGui_ImplSdlGL3_ProcessEvent(&event);
+  LOG_TRACE("rendering UI.");
+  ImGui_ImplSdlGL3_NewFrame(engine.window.raw());
+
+  // UI code
+  // Render & swap video buffers
+  //
+  // Most of your application code here
+  ImGui::Begin("TEST");
+  ImGui::Text("Hello World");
+  ImGui::End();
+
+  ImGui::Begin("TEST");
+  static float f = 0.0f;
+  ImGui::Text("Hello, world!");
+  ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+  ImGui::End();
+
+  glViewport(0, 0, (int)ImGui::GetIO().DisplaySize.x, (int)ImGui::GetIO().DisplaySize.y);
+  ImGui::Render();
+
+  // Update window with OpenGL rendering
+  SDL_GL_SwapWindow(engine.window.raw());
+
   LOG_TRACE("game loop stepping.");
 }
 
-void start(stlw::Logger &logger, Engine &engine)
+inline void start(stlw::Logger &logger, Engine &engine)
 {
   using namespace opengl;
 
@@ -100,34 +124,30 @@ void start(stlw::Logger &logger, Engine &engine)
   auto const io_init_system = sea::t(io_tags).for_subtasks(init_system);
   auto const randompos_init_system = sea::t(randompos_tags).for_subtasks(init_system);
 
+  // Initialize GUI library
+  ImGui_ImplSdlGL3_Init(engine.window.raw());
+  ON_SCOPE_EXIT([]() { ImGui_ImplSdlGL3_Shutdown(); });
+
   int frames_counted = 0;
   window::LTimer fps_timer;
-  auto const fps_capped_game_loop = [&](auto const& fn) {
-    window::LTimer frame_timer;
-    auto const start = frame_timer.get_ticks();
-    fn();
-
-    uint32_t const frame_ticks = frame_timer.get_ticks();
-    float constexpr ONE_60TH_OF_A_FRAME = (1/60) * 1000;
-
-    if (frame_ticks < ONE_60TH_OF_A_FRAME) {
-      LOG_TRACE("Frame finished early, sleeping rest of frame.");
-      SDL_Delay(ONE_60TH_OF_A_FRAME - frame_ticks);
-    }
-
-    float const fps = frames_counted / (fps_timer.get_ticks() / 1000.0f);
-    LOG_INFO(fmt::format("average FPS '{}'", fps));
-    ++frames_counted;
-  };
-
   auto const game_loop = [&](auto &proxy) {
-    auto const fn = [&]()
-    {
-      loop(engine, state, proxy, assets);
-    };
     while (!state.quit) {
-      fps_capped_game_loop(fn);
-    }
+      window::LTimer frame_timer;
+      auto const start = frame_timer.get_ticks();
+      loop(engine, state, proxy, assets);
+
+      uint32_t const frame_ticks = frame_timer.get_ticks();
+      float constexpr ONE_60TH_OF_A_FRAME = (1/60) * 1000;
+
+      if (frame_ticks < ONE_60TH_OF_A_FRAME) {
+        LOG_TRACE("Frame finished early, sleeping rest of frame.");
+        SDL_Delay(ONE_60TH_OF_A_FRAME - frame_ticks);
+      }
+
+      float const fps = frames_counted / (fps_timer.get_ticks() / 1000.0f);
+      LOG_INFO(fmt::format("average FPS '{}'", fps));
+      ++frames_counted;
+      }
   };
   ctx->step([&](auto &proxy) {
     LOG_TRACE("game started, initializing systems.");

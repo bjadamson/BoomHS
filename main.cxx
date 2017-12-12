@@ -9,7 +9,6 @@
 #include <engine/lib.hpp>
 #include <opengl/pipelines.hpp>
 #include <window/sdl_window.hpp>
-#include <boomhs/boomhs.hpp>
 
 using EngineResult = stlw::result<engine::Engine, std::string>;
 using stlw::Logger;
@@ -32,7 +31,7 @@ int
 main(int argc, char *argv[])
 {
   Logger logger = stlw::log_factory::make_default_logger("main logger");
-  auto const on_error = [&](auto const &error) {
+  auto const on_error = [&logger](auto const &error) {
     LOG_ERROR(error);
     return EXIT_FAILURE;
   };

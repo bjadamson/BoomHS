@@ -8,7 +8,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <window/mouse.hpp>
-#include <window/sdl_window.hpp>
 #include <opengl/camera.hpp>
 #include <opengl/factory.hpp>
 #include <opengl/obj.hpp>
@@ -80,6 +79,52 @@ auto ecst_systems()
   return std::make_tuple(st::io_system, st::randompos_system);
 }
 
+Assets
+load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
+{
+  // LOAD different assets.
+  //"assets/chalet.mtl"
+  namespace OF = opengl::factories;
+
+  auto house_obj = opengl::load_mesh("assets/house_uv.obj", opengl::LoadNormals{true}, opengl::LoadUvs{true});
+  auto hashtag_obj = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
+  auto at_obj = opengl::load_mesh("assets/at.obj", "assets/at.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
+  Objs objs{MOVE(house_obj), MOVE(hashtag_obj), MOVE(at_obj)};
+
+  auto house_handle = OF::make_mesh(logger, gfx.d3.house,
+      opengl::MeshProperties{GL_TRIANGLES, objs.house});
+  auto hashtag_handle = OF::make_mesh(logger, gfx.d3.hashtag,
+      opengl::MeshProperties{GL_TRIANGLES, objs.hashtag});
+  auto at_handle = OF::make_mesh(logger, gfx.d3.at,
+      opengl::MeshProperties{GL_TRIANGLES, objs.at});
+
+  auto cube_skybox = OF::copy_cube_gpu(logger, gfx.d3.skybox, {GL_TRIANGLE_STRIP, {10.0f, 10.0f, 10.0f}});
+  auto cube_textured = OF::copy_cube_gpu(logger, gfx.d3.texture_cube, {GL_TRIANGLE_STRIP,
+      {0.15f, 0.15f, 0.15f}});
+
+  auto cube_colored = OF::copy_cube_gpu(logger, gfx.d3.color, {GL_TRIANGLE_STRIP, {0.25f, 0.25f, 0.25f}},
+      opengl::LIST_OF_COLORS::BLUE);
+
+  auto cube_wf = OF::copy_cube_gpu(logger, gfx.d3.wireframe, {GL_LINE_LOOP, {0.25f, 0.25f, 0.25f}});
+
+  auto terrain_handle = OF::copy_cube_gpu(logger, gfx.d3.terrain, {GL_TRIANGLE_STRIP, {2.0f, 0.4f, 2.0f}},
+      opengl::LIST_OF_COLORS::SADDLE_BROWN);
+
+  auto tilemap_handle = OF::copy_tilemap_gpu(logger, gfx.d3.hashtag,
+      {GL_TRIANGLES, objs.hashtag});
+
+  GpuHandles handles{
+    MOVE(house_handle),
+    MOVE(hashtag_handle),
+    MOVE(at_handle),
+    MOVE(cube_skybox),
+    MOVE(cube_textured),
+    MOVE(cube_colored),
+    MOVE(cube_wf),
+    MOVE(terrain_handle),
+    MOVE(tilemap_handle)};
+  return Assets{MOVE(objs), MOVE(handles)};
+}
 
 template<typename PROXY>
 auto
@@ -142,60 +187,12 @@ init(stlw::Logger &logger, PROXY &proxy, window::Dimensions const& dimensions)
     make_entity(glm::vec3{x, y, z});
   }
   */
-
   return GameState(logger, dimensions, MOVE(rng), MOVE(projection), MOVE(tmap), MOVE(models));
-}
-
-Assets
-load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
-{
-  // LOAD different assets.
-  //"assets/chalet.mtl"
-  namespace OF = opengl::factories;
-
-  auto house_obj = opengl::load_mesh("assets/house_uv.obj", opengl::LoadNormals{true}, opengl::LoadUvs{true});
-  auto hashtag_obj = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
-  auto at_obj = opengl::load_mesh("assets/at.obj", "assets/at.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
-  Objs objs{MOVE(house_obj), MOVE(hashtag_obj), MOVE(at_obj)};
-
-  auto house_handle = OF::make_mesh(logger, gfx.d3.house,
-      opengl::MeshProperties{GL_TRIANGLES, objs.house});
-  auto hashtag_handle = OF::make_mesh(logger, gfx.d3.hashtag,
-      opengl::MeshProperties{GL_TRIANGLES, objs.hashtag});
-  auto at_handle = OF::make_mesh(logger, gfx.d3.at,
-      opengl::MeshProperties{GL_TRIANGLES, objs.at});
-
-  auto cube_skybox = OF::copy_cube_gpu(logger, gfx.d3.skybox, {GL_TRIANGLE_STRIP, {10.0f, 10.0f, 10.0f}});
-  auto cube_textured = OF::copy_cube_gpu(logger, gfx.d3.texture_cube, {GL_TRIANGLE_STRIP,
-      {0.15f, 0.15f, 0.15f}});
-
-  auto cube_colored = OF::copy_cube_gpu(logger, gfx.d3.color, {GL_TRIANGLE_STRIP, {0.25f, 0.25f, 0.25f}},
-      opengl::LIST_OF_COLORS::BLUE);
-
-  auto cube_wf = OF::copy_cube_gpu(logger, gfx.d3.wireframe, {GL_LINE_LOOP, {0.25f, 0.25f, 0.25f}});
-
-  auto terrain_handle = OF::copy_cube_gpu(logger, gfx.d3.terrain, {GL_TRIANGLE_STRIP, {2.0f, 0.4f, 2.0f}},
-      opengl::LIST_OF_COLORS::SADDLE_BROWN);
-
-  auto tilemap_handle = OF::copy_tilemap_gpu(logger, gfx.d3.hashtag,
-      {GL_TRIANGLES, objs.hashtag});
-
-  GpuHandles handles{
-    MOVE(house_handle),
-    MOVE(hashtag_handle),
-    MOVE(at_handle),
-    MOVE(cube_skybox),
-    MOVE(cube_textured),
-    MOVE(cube_colored),
-    MOVE(cube_wf),
-    MOVE(terrain_handle),
-    MOVE(tilemap_handle)};
-  return Assets{MOVE(objs), MOVE(handles)};
 }
 
 void game_loop(GameState &state, opengl::OpenglPipelines &gfx, Assets const& assets)
 {
-  opengl::clear_screen(opengl::LIST_OF_COLORS::BLACK);
+  opengl::clear_screen(opengl::LIST_OF_COLORS::WHITE);
   auto render_args = state.render_args();
 
   // skybox

@@ -201,15 +201,10 @@ void init()
 void clear_screen(Color const& color)
 {
   glClearColor(color.r, color.g, color.b, color.a);
-}
 
-void begin()
-{
   // Render
   glClear(GL_COLOR_BUFFER_BIT);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
-
-void end() {}
 
 } // ns opengl

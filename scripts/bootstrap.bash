@@ -32,6 +32,8 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 set(ASSIMP_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/assimp/include")
 set(ASSIMP_LIBRARY_SO "${CMAKE_CURRENT_SOURCE_DIR}/external/assimp/lib/libassimp.so")
 
+set(IMGUI_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/include")
+
 ## DEFINITIONS
 file(GLOB INTERNAL_INCLUDE_DIRS include
   external/assimp/include
@@ -43,12 +45,14 @@ file(GLOB INTERNAL_INCLUDE_DIRS include
   external/ecst/extlibs/vrm_core/include
   external/ecst/extlibs/vrm_pp/include
   external/fmt/include
+  external/imgui/include
   external/spdlog/include
   external/tinyobj/include)
 
 file(GLOB_RECURSE GLOBBED_SOURCES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/external/backward/source/*.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/source/*.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx
   )
@@ -86,6 +90,7 @@ target_include_directories(boomhs PUBLIC
   ${ASSIMP_INCLUDE_DIR}
   ${SDL2_INCLUDE_DIRS}
   ${SDL2IMAGE_INCLUDE_DIRS}
+  ${IMGUI_INCLUDE_DIR}
   ${INTERNAL_INCLUDE_DIRS}
   ${OPENGL_INDLUDE_DIRS}
   ${GLEW_INCLUDE_DIRS}

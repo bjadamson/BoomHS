@@ -79,11 +79,12 @@ main(int argc, char *argv[])
     return on_error("found 'shader' to not be a directory at this path.");
   }
 
-  auto const glsl_version = R"(#version 300 es)";
+  constexpr char const* prefix = R"(#version 300 es
+precision mediump float;)";
 
   for (fs::directory_iterator it{path_to_shaders}; it != fs::directory_iterator{}; ++it) {
     auto const outdir = CWD.string() + "/build-system/bin/shaders/";
-    if (!copy_to_outdir(glsl_version, it->path(), outdir)) {
+    if (!copy_to_outdir(prefix, it->path(), outdir)) {
       return EXIT_FAILURE;
     }
   }

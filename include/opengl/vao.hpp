@@ -4,8 +4,6 @@
 #include <opengl/types.hpp>
 #include <opengl/texture.hpp>
 
-#include <backward/backward.hpp>
-
 namespace opengl
 {
 

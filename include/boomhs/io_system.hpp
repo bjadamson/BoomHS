@@ -1,5 +1,4 @@
 #pragma once
-#include <window/sdl_window.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/ecst.hpp>
 #include <stlw/log.hpp>
@@ -153,10 +152,9 @@ struct io_system {
   }
 
   template <typename TData, typename S>
-  void process(TData &data, S &state) const
+  void process(TData &data, S &state, SDL_Event &event) const
   {
     state.LOG_TRACE("io_system::process(data, state)");
-    SDL_Event event;
 
     auto et = ::game::entity_factory::make_transformer(state.logger, data);
     while ((!state.quit) && (0 != SDL_PollEvent(&event))) {

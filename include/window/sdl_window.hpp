@@ -9,16 +9,6 @@
 namespace window
 {
 
-struct Dimensions {
-  int const w;
-  int const h;
-  Dimensions(int const wp, int const hp)
-      : w(wp)
-      , h(hp)
-  {
-  }
-};
-
 using window_type = SDL_Window;
 using window_ptr = std::unique_ptr<window_type, decltype(&SDL_DestroyWindow)>;
 

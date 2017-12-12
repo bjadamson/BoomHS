@@ -1,5 +1,3 @@
-precision mediump float;
-
 in vec3 v_uv;
 
 uniform samplerCube u_sampler;
