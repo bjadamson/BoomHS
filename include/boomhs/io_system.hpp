@@ -8,8 +8,10 @@ namespace s
 
 struct io_system {
 
-  bool init(stlw::Logger &logger)
+  template <typename TData, typename S>
+  bool init(TData &tdata, S &state)
   {
+    auto &logger = state.logger;
     LOG_TRACE("io_system::init()");
     return true;
   }

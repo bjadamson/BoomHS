@@ -107,7 +107,7 @@ load_mesh(char const* objpath, char const* mtlpath, LoadNormals const load_norma
           }
         } else {
           vertices.push_back(1.0); // r, g, b, a
-          vertices.push_back(0.0);
+          vertices.push_back(0.64705882352);
           vertices.push_back(0.0);
           vertices.push_back(1.0);
         }

@@ -7,9 +7,10 @@ namespace s
 
 struct randompos_system {
 
-  template <typename L>
-  bool init(L &logger)
+  template <typename TData, typename S>
+  bool init(TData &tdata, S &state)
   {
+    auto &logger = state.logger;
     LOG_TRACE("randompos::init()");
     return true;
   }

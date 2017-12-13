@@ -38,25 +38,26 @@ get_dimensions(Engine const& e)
   return e.window.get_dimensions();
 }
 
-template<typename P>
-void loop(Engine &engine, State &state, P &proxy, game::Assets const& assets)
+template<typename PROXY>
+void loop(Engine &engine, State &state, PROXY &proxy, game::Assets const& assets)
 {
-  namespace sea = ecst::system_execution_adapter;
-  auto io_tags = sea::t(st::io_system);
-  auto randompos_tags = sea::t(st::randompos_system);
-
   auto &logger = state.logger;
   SDL_Event event;
   auto const process_system = [&state, &event](auto &system, auto &data) {
     system.process(data, state, event);
   };
-  auto const io_process_system = io_tags.for_subtasks(process_system);
-  auto const randompos_process_system = randompos_tags.for_subtasks(process_system);
+
+  auto run_system = [&process_system](auto &tv) {
+    namespace sea = ecst::system_execution_adapter;
+    auto tag = sea::t(tv);
+    return tag.for_subtasks(process_system);
+  };
 
   LOG_TRACE("executing systems.");
   proxy.execute_systems()(
-      io_process_system,
-      randompos_process_system);
+      run_system(st::io_system),
+      run_system(st::randompos_system),
+      run_system(st::player_system));
 
   // Pass SDL events to GUI library.
   ImGui_ImplSdlGL3_ProcessEvent(&event);
@@ -65,7 +66,7 @@ void loop(Engine &engine, State &state, P &proxy, game::Assets const& assets)
   ImGui_ImplSdlGL3_NewFrame(engine.window.raw());
 
   LOG_TRACE("rendering opengl.");
-  game::game_loop(state, engine.opengl_lib, assets);
+  game::game_loop(state, proxy, engine.opengl_lib, assets);
 
   // Render Imgui UI
   ImGui::Render();
@@ -83,26 +84,13 @@ inline void start(stlw::Logger &logger, Engine &engine)
   LOG_TRACE("Loading assets.");
   auto const assets = game::load_assets(logger, engine.opengl_lib);
 
-  // Create an ECST context.
-  LOG_TRACE("creating ecst context ...");
-  auto ctx = ecst_setup::make_context();
-
-  namespace sea = ecst::system_execution_adapter;
-  auto io_tags = st::io_system;
-  auto randompos_tags = st::randompos_system;
-
-  auto const init_system = [&logger](auto &system, auto &) { system.init(logger); };
-  [&init_system](auto &system) { sea::t(system).for_subtasks(init_system); };
-
-  //auto game_systems = game.ecst_systems();//MOVE(io_tags), MOVE(randompos_tags));
-  //stlw::for_each(game_systems, init);
-
-  auto const io_init_system = sea::t(io_tags).for_subtasks(init_system);
-  auto const randompos_init_system = sea::t(randompos_tags).for_subtasks(init_system);
-
   // Initialize GUI library
   ImGui_ImplSdlGL3_Init(engine.window.raw());
   ON_SCOPE_EXIT([]() { ImGui_ImplSdlGL3_Shutdown(); });
+
+  // Create an ECST context.
+  LOG_TRACE("creating ecst context ...");
+  auto ctx = ecst_setup::make_context();
 
   LOG_TRACE("stepping ecst once");
   auto state = ctx->step([&logger, &engine](auto &proxy) {
@@ -132,9 +120,24 @@ inline void start(stlw::Logger &logger, Engine &engine)
       ++frames_counted;
       }
   };
+
+  namespace sea = ecst::system_execution_adapter;
+  auto io_tags = st::io_system;
+  auto randompos_tags = st::randompos_system;
+  auto player_tags = st::player_system;
+
+  auto const init_system = [&state](auto &system, auto &tdata) { system.init(tdata, state); };
+  [&init_system](auto &system) { sea::t(system).for_subtasks(init_system); };
+
+  //auto game_systems = game.ecst_systems();//MOVE(io_tags), MOVE(randompos_tags));
+  //stlw::for_each(game_systems, init);
+
+  auto const io_init_system = sea::t(io_tags).for_subtasks(init_system);
+  auto const randompos_init_system = sea::t(randompos_tags).for_subtasks(init_system);
+  auto const player_init_system = sea::t(player_tags).for_subtasks(init_system);
   ctx->step([&](auto &proxy) {
     LOG_TRACE("game started, initializing systems.");
-    proxy.execute_systems()(io_init_system, randompos_init_system);
+    proxy.execute_systems()(io_init_system, randompos_init_system, player_init_system);
     //proxy.execute_systmes()(MOVE(game_systems));
     LOG_TRACE("systems initialized, entering main loop.");
 

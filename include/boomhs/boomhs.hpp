@@ -38,7 +38,9 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
   auto house_obj = opengl::load_mesh("assets/house_uv.obj", opengl::LoadNormals{true}, opengl::LoadUvs{true});
   auto hashtag_obj = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
   auto at_obj = opengl::load_mesh("assets/at.obj", "assets/at.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
-  Objs objs{MOVE(house_obj), MOVE(hashtag_obj), MOVE(at_obj)};
+  auto plus_obj = opengl::load_mesh("assets/plus.obj", "assets/plus.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
+
+  Objs objs{MOVE(house_obj), MOVE(hashtag_obj), MOVE(at_obj), MOVE(plus_obj)};
 
   auto house_handle = OF::make_mesh(logger, gfx.d3.house,
       opengl::MeshProperties{GL_TRIANGLES, objs.house});
@@ -46,6 +48,8 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
       opengl::MeshProperties{GL_TRIANGLES, objs.hashtag});
   auto at_handle = OF::make_mesh(logger, gfx.d3.at,
       opengl::MeshProperties{GL_TRIANGLES, objs.at});
+  auto plus_handle = OF::make_mesh(logger, gfx.d3.plus,
+      opengl::MeshProperties{GL_TRIANGLES, objs.plus});
 
   auto cube_skybox = OF::copy_cube_gpu(logger, gfx.d3.skybox, {GL_TRIANGLE_STRIP, {10.0f, 10.0f, 10.0f}});
   auto cube_textured = OF::copy_cube_gpu(logger, gfx.d3.texture_cube, {GL_TRIANGLE_STRIP,
@@ -66,6 +70,7 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
     MOVE(house_handle),
     MOVE(hashtag_handle),
     MOVE(at_handle),
+    MOVE(plus_handle),
     MOVE(cube_skybox),
     MOVE(cube_textured),
     MOVE(cube_colored),
@@ -78,9 +83,8 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
 auto
 make_tilemap(stlw::float_generator &rng)
 {
-  auto constexpr NUM_TILES = 1000;
-  auto const [W, H, L] = std::array<std::size_t, 3>{10, 10, 10};
-  assert((W * H * L) == NUM_TILES);
+  auto const [W, H, L] = stlw::make_array<std::size_t>(100ul, 1ul, 100ul);
+  auto const NUM_TILES = W * H * L;
 
   auto tile_vec = std::vector<Tile>{};
   tile_vec.reserve(NUM_TILES);
@@ -160,7 +164,8 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   return GameState(logger, imgui, dimensions, MOVE(rng), MOVE(projection), MOVE(tmap), MOVE(entities));
 }
 
-void game_loop(GameState &state, opengl::OpenglPipelines &gfx, Assets const& assets)
+template<typename PROXY>
+void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Assets const& assets)
 {
   opengl::clear_screen(opengl::LIST_OF_COLORS::LIGHT_BLUE);
   auto render_args = state.render_args();
@@ -177,8 +182,9 @@ void game_loop(GameState &state, opengl::OpenglPipelines &gfx, Assets const& ass
   opengl::draw(render_args, *state.entities[GameState::HOUSE_INDEX], gfx.d3.house, assets.handles.house);
 
   // tilemap
-  opengl::draw_tilemap(render_args, *state.entities[GameState::TILEMAP_INDEX], gfx.d3.hashtag,
-      assets.handles.tilemap, state.tilemap);
+  opengl::draw_tilemap(render_args, *state.entities[GameState::TILEMAP_INDEX],
+      {assets.handles.hashtag, gfx.d3.hashtag, assets.handles.plus, gfx.d3.plus},
+      state.tilemap);
 
 
   // player
@@ -188,7 +194,7 @@ void game_loop(GameState &state, opengl::OpenglPipelines &gfx, Assets const& ass
   //opengl::draw(render_args, *state.entities[GameState::TERRAIN_INDEX], gfx.d3.terrain, assets.handles.terrain);
 
   // UI code
-  draw_ui(state);
+  draw_ui(state, proxy);
 }
 
 } // ns boomhs

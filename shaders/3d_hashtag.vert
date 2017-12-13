@@ -11,7 +11,7 @@ uniform vec3 u_offset;
 
 void main()
 {
-  const vec3 offsets[3] = vec3[3]( vec3(0.0, 0.0, 0.0), vec3(0.0, 0.2, 0.0), vec3(0.0, 0.4, 0.0) );
+  const vec3 offsets[3] = vec3[3]( vec3(0.0, 0.0, 0.0), vec3(0.0, 0.02, 0.0), vec3(0.0, 0.04, 0.0) );
   const vec3 colors[3] = vec3[3]( vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0) );
   vec3 offset = offsets[gl_InstanceID];
   vec4 color = vec4(colors[gl_InstanceID], 1.0);

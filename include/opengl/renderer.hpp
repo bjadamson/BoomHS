@@ -29,10 +29,6 @@ draw_scene(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const
 {
   using namespace opengl;
 
-  // Use the pipeline's PROGRAM and bind the pipeline's VAO.
-  pipeline.make_active(logger);
-  global::vao_bind(pipeline.vao());
-
   if constexpr (PIPE::HAS_COLOR_UNIFORM) {
     pipeline.set_uniform_array_4fv(logger, "u_color", pipeline.color().to_array());
   }
@@ -89,6 +85,10 @@ void draw_3dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipe
     }
   };
 
+  // Use the pipeline's PROGRAM and bind the pipeline's VAO.
+  pipeline.make_active(logger);
+  global::vao_bind(pipeline.vao());
+
   draw_scene(logger, pipeline, dinfo, draw_3d_shape_fn);
 }
 
@@ -109,6 +109,9 @@ draw_2dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipeline,
     render_element_buffer(logger, pipeline, dinfo);
   };
 
+  // Use the pipeline's PROGRAM and bind the pipeline's VAO.
+  pipeline.make_active(logger);
+  global::vao_bind(pipeline.vao());
   draw_scene(logger, pipeline, dinfo, draw_2d_shape_fn);
 }
 
@@ -128,50 +131,53 @@ void draw(RenderArgs const& args, Model const& model, PIPE &pipeline, DrawInfo c
   }
 }
 
-template <typename TILEMAP>
-void draw_tilemap(RenderArgs const& args, Model const& model, PipelineHashtag3D &pipeline,
-    DrawInfo const& dinfo, TILEMAP const& tilemap)
+struct DrawTilemapArgs
 {
+  DrawInfo const& hashtag_dinfo;
+  PipelineHashtag3D &hashtag_pipeline;
+
+  DrawInfo const& plus_dinfo;
+  PipelinePlus3D &plus_pipeline;
+};
+
+template <typename TILEMAP>
+void draw_tilemap(RenderArgs const& args, Model const& model, DrawTilemapArgs &&dt_args, TILEMAP const& tilemap)
+{
+  auto const& dinfo = dt_args.hashtag_dinfo;
   auto const view = compute_view(args.camera);
   auto const& projection = args.projection;
   auto &logger = args.logger;
 
-  auto const draw_3d_walls_fn = [&](auto const &dinfo) {
-    auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
-    auto const rmatrix = glm::toMat4(model.rotation);
-    auto const smatrix = glm::scale(glm::mat4{}, model.scale);
-    auto const mmatrix = tmatrix * rmatrix * smatrix;
-    auto const mvmatrix = projection * view * mmatrix;
+  auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
+  auto const rmatrix = glm::toMat4(model.rotation);
+  auto const smatrix = glm::scale(glm::mat4{}, model.scale);
+  auto const mmatrix = tmatrix * rmatrix * smatrix;
+  auto const mvmatrix = projection * view * mmatrix;
+
+  auto const draw_tile = [&logger, &mvmatrix](auto &pipeline, auto const& dinfo, auto const& arr) {
+    pipeline.make_active(logger);
+    global::vao_bind(pipeline.vao());
     pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
+    pipeline.set_uniform_array_3fv(logger, "u_offset", arr);
 
-    auto const instance_count = pipeline.instance_count();
-    auto const draw_mode = dinfo.draw_mode();
-    auto const num_indices = dinfo.num_indices();
+    detail::render_element_buffer(logger, pipeline, dinfo);
+  };
 
-    auto const draw_tile = [&](auto const& arr) {
-      pipeline.set_uniform_array_3fv(logger, "u_offset", arr);
-
-      glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, instance_count);
-      LOG_ANY_GL_ERRORS(logger, "glDrawElementsInstanced");
-    };
-
-    auto const [w, h, l] = tilemap.dimensions();
-    FOR(a, w) {
-      FOR(b, h) {
-        FOR(c, l) {
-          // don't draw non-wall tiles for now
-          if (!tilemap.data(a, b, c).is_wall) {
-            continue;
-          }
-          auto const cast = [](auto const v) { return static_cast<float>(v); };
-          auto const arr = stlw::make_array<float>(cast(a), cast(b), cast(c));
-          draw_tile(arr);
+  auto const [w, h, l] = tilemap.dimensions();
+  FOR(a, w) {
+    FOR(b, h) {
+      FOR(c, l) {
+        // don't draw non-wall tiles for now
+        auto const cast = [](auto const v) { return static_cast<float>(v) / 10.0f; };
+        auto const arr = stlw::make_array<float>(cast(a), cast(b), cast(c));
+        if(tilemap.data(a, b, c).is_wall) {
+          draw_tile(dt_args.hashtag_pipeline, dt_args.hashtag_dinfo, arr);
+        } else {
+          draw_tile(dt_args.plus_pipeline, dt_args.plus_dinfo, arr);
         }
       }
     }
-  };
-
-  detail::draw_scene(logger, pipeline, dinfo, draw_3d_walls_fn);
+  }
 }
 
 void enable_depth_tests()
