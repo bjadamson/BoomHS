@@ -36,7 +36,7 @@ public:
   void set_uniform_array_4fv(stlw::Logger &, GLchar const *, std::array<float, 4> const &);
   void set_uniform_array_3fv(stlw::Logger &, GLchar const*, std::array<float, 3> const&);
 
-  void make_active(stlw::Logger &);
+  void use_program(stlw::Logger &);
 };
 
 #define PIPELINE_DEFAULT_CTOR(CLASSNAME)                                                           \

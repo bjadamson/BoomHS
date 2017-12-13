@@ -86,7 +86,7 @@ void draw_3dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipe
   };
 
   // Use the pipeline's PROGRAM and bind the pipeline's VAO.
-  pipeline.make_active(logger);
+  pipeline.use_program(logger);
   global::vao_bind(pipeline.vao());
 
   draw_scene(logger, pipeline, dinfo, draw_3d_shape_fn);
@@ -110,7 +110,7 @@ draw_2dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipeline,
   };
 
   // Use the pipeline's PROGRAM and bind the pipeline's VAO.
-  pipeline.make_active(logger);
+  pipeline.use_program(logger);
   global::vao_bind(pipeline.vao());
   draw_scene(logger, pipeline, dinfo, draw_2d_shape_fn);
 }
@@ -155,7 +155,7 @@ void draw_tilemap(RenderArgs const& args, Model const& model, DrawTilemapArgs &&
   auto const mvmatrix = projection * view * mmatrix;
 
   auto const draw_tile = [&logger, &mvmatrix](auto &pipeline, auto const& dinfo, auto const& arr) {
-    pipeline.make_active(logger);
+    pipeline.use_program(logger);
     global::vao_bind(pipeline.vao());
     pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
     pipeline.set_uniform_array_3fv(logger, "u_offset", arr);
@@ -168,7 +168,7 @@ void draw_tilemap(RenderArgs const& args, Model const& model, DrawTilemapArgs &&
     FOR(b, h) {
       FOR(c, l) {
         // don't draw non-wall tiles for now
-        auto const cast = [](auto const v) { return static_cast<float>(v) / 10.0f; };
+        auto const cast = [](auto const v) { return static_cast<float>(v)/* / 10.0f*/; };
         auto const arr = stlw::make_array<float>(cast(a), cast(b), cast(c));
         if(tilemap.data(a, b, c).is_wall) {
           draw_tile(dt_args.hashtag_pipeline, dt_args.hashtag_dinfo, arr);

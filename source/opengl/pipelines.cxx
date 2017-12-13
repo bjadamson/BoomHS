@@ -157,7 +157,7 @@ BasePipeline::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, st
 }
 
 void
-BasePipeline::make_active(stlw::Logger &logger)
+BasePipeline::use_program(stlw::Logger &logger)
 {
   this->program_.use(logger);
 }
