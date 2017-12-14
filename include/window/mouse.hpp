@@ -26,7 +26,8 @@ struct mouse_data
 };
 
 template<typename E>
-void add_from_event(mouse_data &md, E const& event)
+void
+add_from_event(mouse_data &md, E const& event)
 {
   auto const& m = event.motion;
   mouse_state const ms{m.x, m.y, m.xrel, m.yrel, m.state};
@@ -37,7 +38,8 @@ void add_from_event(mouse_data &md, E const& event)
 namespace impl
 {
 
-auto mouse_position_now()
+inline auto
+mouse_position_now()
 {
   int x, y;
   int constexpr xrel = 0, yrel = 0;
@@ -47,7 +49,8 @@ auto mouse_position_now()
 
 } // ns impl
 
-auto make_default_mouse_data()
+inline auto
+make_default_mouse_data()
 {
   auto const init_md = impl::mouse_position_now();
   mouse_sensitivity const init_sensitivity{0.002f, 0.002f};

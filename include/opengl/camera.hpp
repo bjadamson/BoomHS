@@ -10,7 +10,8 @@
 namespace opengl
 {
 
-bool between(float const v, float const a, float const b)
+inline bool
+between(float const v, float const a, float const b)
 {
   return ((v <= a) && (v >= b)) || ((v <= b) && (v >= a));
 }

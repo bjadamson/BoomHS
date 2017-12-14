@@ -14,15 +14,17 @@ void draw_ui(GameState &state, PROXY &proxy)
   static int eid = GameState::AT_INDEX;
   ImGui::SliderInt("eid:", &eid, 0, state.entities.size());
 
-  static float x, y, z = 0.0f;
   auto *const pe = state.entities[eid];
   assert(pe);
 
   auto &e = *pe;
   auto &pos = e.translation;
-  ImGui::SliderFloat("x:", &pos.x, -5.0f, 5.0f);
-  ImGui::SliderFloat("y:", &pos.y, -5.0f, 5.0f);
-  ImGui::SliderFloat("z:", &pos.z, -5.0f, 5.0f);
+  ImGui::InputFloat3("pos:", glm::value_ptr(pos));
+
+  glm::vec3 euler_angles{0, 0, 0};
+  if (ImGui::InputFloat3("rot:", glm::value_ptr(euler_angles))) {
+    e.rotation = glm::quat(euler_angles);
+  }
 
   using gef = game::entity_factory;
   auto et = gef::make_transformer(state.logger, proxy);

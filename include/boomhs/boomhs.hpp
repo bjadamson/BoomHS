@@ -8,7 +8,6 @@
 #include <opengl/skybox.hpp>
 
 #include <boomhs/assets.hpp>
-#include <boomhs/io_system.hpp>
 #include <boomhs/randompos_system.hpp>
 #include <boomhs/tilemap.hpp>
 #include <boomhs/state.hpp>
@@ -22,11 +21,6 @@ using stlw::Logger;
 
 namespace boomhs
 {
-
-auto ecst_systems()
-{
-  return std::make_tuple(st::io_system, st::randompos_system);
-}
 
 Assets
 load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
@@ -83,7 +77,7 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
 auto
 make_tilemap(stlw::float_generator &rng)
 {
-  auto const [W, H, L] = stlw::make_array<std::size_t>(100ul, 1ul, 100ul);
+  auto const [W, H, L] = stlw::make_array<std::size_t>(10ul, 1ul, 10ul);
   auto const NUM_TILES = W * H * L;
 
   auto tile_vec = std::vector<Tile>{};
@@ -168,30 +162,34 @@ template<typename PROXY>
 void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Assets const& assets)
 {
   opengl::clear_screen(opengl::LIST_OF_COLORS::LIGHT_BLUE);
-  auto render_args = state.render_args();
+  auto rargs = state.render_args();
+  auto const& ents = state.entities;
+  auto const& handles = assets.handles;
+  auto &d3 = gfx.d3;
+
+  using GS = GameState;
 
   // skybox
-  //opengl::draw(render_args, *state.entities[GameState::SKYBOX_INDEX], gfx.d3.skybox, assets.handles.cube_skybox);
+  //opengl::draw(render_args, *ents[GameState::SKYBOX_INDEX], d3.skybox, handles.cube_skybox);
 
   // random
-  opengl::draw(render_args, *state.entities[GameState::COLOR_CUBE_INDEX], gfx.d3.color, assets.handles.cube_colored);
-  opengl::draw(render_args, *state.entities[GameState::TEXTURE_CUBE_INDEX], gfx.d3.texture_cube, assets.handles.cube_textured);
-  opengl::draw(render_args, *state.entities[GameState::WIREFRAME_CUBE_INDEX], gfx.d3.wireframe, assets.handles.cube_wireframe);
+  opengl::draw(rargs, *ents[GS::COLOR_CUBE_INDEX], d3.color, handles.cube_colored);
+  opengl::draw(rargs, *ents[GS::TEXTURE_CUBE_INDEX], d3.texture_cube, handles.cube_textured);
+  opengl::draw(rargs, *ents[GS::WIREFRAME_CUBE_INDEX], d3.wireframe, handles.cube_wireframe);
 
   // house
-  opengl::draw(render_args, *state.entities[GameState::HOUSE_INDEX], gfx.d3.house, assets.handles.house);
+  opengl::draw(rargs, *ents[GS::HOUSE_INDEX], d3.house, handles.house);
 
   // tilemap
-  opengl::draw_tilemap(render_args, *state.entities[GameState::TILEMAP_INDEX],
-      {assets.handles.hashtag, gfx.d3.hashtag, assets.handles.plus, gfx.d3.plus},
+  opengl::draw_tilemap(rargs, *ents[GS::TILEMAP_INDEX],
+      {handles.hashtag, d3.hashtag, handles.plus, d3.plus},
       state.tilemap);
 
-
   // player
-  opengl::draw(render_args, *state.entities[GameState::AT_INDEX], gfx.d3.at, assets.handles.at);
+  opengl::draw(rargs, *ents[GS::AT_INDEX], d3.at, handles.at);
 
   // terrain
-  //opengl::draw(render_args, *state.entities[GameState::TERRAIN_INDEX], gfx.d3.terrain, assets.handles.terrain);
+  //opengl::draw(rargs, *ents[GS::TERRAIN_INDEX], d3.terrain, handles.terrain);
 
   // UI code
   draw_ui(state, proxy);

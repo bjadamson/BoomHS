@@ -1,6 +1,5 @@
 #pragma once
 #include <boomhs/ecst_components.hpp>
-#include <window/sdl.hpp>
 
 namespace s
 {
@@ -16,7 +15,7 @@ struct randompos_system {
   }
 
   template <typename TData, typename S>
-  void process(TData &data, S &state, SDL_Event &event)
+  void process(TData &data, S &state)
   {
     state.LOG_TRACE("randompos::process(data, state)");
     data.for_entities([&](auto const eid) {

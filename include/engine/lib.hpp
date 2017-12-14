@@ -16,6 +16,7 @@
 // TODO: decouple??
 #include <boomhs/ecst.hpp>
 #include <boomhs/assets.hpp>
+#include <boomhs/io.hpp>
 #include <boomhs/boomhs.hpp>
 
 namespace engine
@@ -42,28 +43,26 @@ template<typename PROXY>
 void loop(Engine &engine, State &state, PROXY &proxy, game::Assets const& assets)
 {
   auto &logger = state.logger;
-  SDL_Event event;
-  auto const process_system = [&state, &event](auto &system, auto &data) {
-    system.process(data, state, event);
-  };
-
-  auto run_system = [&process_system](auto &tv) {
-    namespace sea = ecst::system_execution_adapter;
-    auto tag = sea::t(tv);
-    return tag.for_subtasks(process_system);
-  };
-
-  LOG_TRACE("executing systems.");
-  proxy.execute_systems()(
-      run_system(st::io_system),
-      run_system(st::randompos_system),
-      run_system(st::player_system));
-
-  // Pass SDL events to GUI library.
-  ImGui_ImplSdlGL3_ProcessEvent(&event);
-
   // Reset Imgui for next game frame.
   ImGui_ImplSdlGL3_NewFrame(engine.window.raw());
+
+  SDL_Event event;
+  boomhs::IO::process(state, event);
+  auto &imgui = ImGui::GetIO();
+  {
+    auto const exec = [&state](auto &system, auto &data) {
+      system.process(data, state);
+    };
+    auto const exec_system = [&exec](auto &tv) {
+      namespace sea = ecst::system_execution_adapter;
+      auto tag = sea::t(tv);
+      return tag.for_subtasks(exec);
+    };
+    LOG_TRACE("executing systems.");
+    proxy.execute_systems()(
+        exec_system(st::randompos_system),
+        exec_system(st::player_system));
+  }
 
   LOG_TRACE("rendering opengl.");
   game::game_loop(state, proxy, engine.opengl_lib, assets);
@@ -77,12 +76,38 @@ void loop(Engine &engine, State &state, PROXY &proxy, game::Assets const& assets
   LOG_TRACE("game loop stepping.");
 }
 
-inline void start(stlw::Logger &logger, Engine &engine)
+template<typename PROXY>
+void
+timed_game_loop(PROXY &proxy, Engine &engine, boomhs::GameState &state, boomhs::Assets const& assets)
+{
+  auto &logger = state.logger;
+
+  int frames_counted = 0;
+  window::LTimer fps_timer;
+
+  while (!state.quit) {
+    window::LTimer frame_timer;
+    auto const start = frame_timer.get_ticks();
+    loop(engine, state, proxy, assets);
+
+    uint32_t const frame_ticks = frame_timer.get_ticks();
+    float constexpr ONE_60TH_OF_A_FRAME = (1/60) * 1000;
+
+    if (frame_ticks < ONE_60TH_OF_A_FRAME) {
+      LOG_TRACE("Frame finished early, sleeping rest of frame.");
+      SDL_Delay(ONE_60TH_OF_A_FRAME - frame_ticks);
+    }
+
+    float const fps = frames_counted / (fps_timer.get_ticks() / 1000.0f);
+    LOG_INFO(fmt::format("average FPS '{}'", fps));
+    ++frames_counted;
+  }
+}
+
+inline void
+start(stlw::Logger &logger, Engine &engine)
 {
   using namespace opengl;
-
-  LOG_TRACE("Loading assets.");
-  auto const assets = game::load_assets(logger, engine.opengl_lib);
 
   // Initialize GUI library
   ImGui_ImplSdlGL3_Init(engine.window.raw());
@@ -99,49 +124,24 @@ inline void start(stlw::Logger &logger, Engine &engine)
       return game::init(logger, proxy, imgui, dimensions);
   });
 
-  int frames_counted = 0;
-  window::LTimer fps_timer;
-  auto const game_loop = [&](auto &proxy) {
-    while (!state.quit) {
-      window::LTimer frame_timer;
-      auto const start = frame_timer.get_ticks();
-      loop(engine, state, proxy, assets);
+  LOG_TRACE("Loading assets.");
+  auto const assets = game::load_assets(state.logger, engine.opengl_lib);
 
-      uint32_t const frame_ticks = frame_timer.get_ticks();
-      float constexpr ONE_60TH_OF_A_FRAME = (1/60) * 1000;
-
-      if (frame_ticks < ONE_60TH_OF_A_FRAME) {
-        LOG_TRACE("Frame finished early, sleeping rest of frame.");
-        SDL_Delay(ONE_60TH_OF_A_FRAME - frame_ticks);
-      }
-
-      float const fps = frames_counted / (fps_timer.get_ticks() / 1000.0f);
-      LOG_INFO(fmt::format("average FPS '{}'", fps));
-      ++frames_counted;
-      }
+  auto const init = [&state](auto &system, auto &tdata) { system.init(tdata, state); };
+  auto const system_init = [&init](auto &tv) {
+    namespace sea = ecst::system_execution_adapter;
+    auto tag = sea::t(tv);
+    return tag.for_subtasks(init);
   };
 
-  namespace sea = ecst::system_execution_adapter;
-  auto io_tags = st::io_system;
-  auto randompos_tags = st::randompos_system;
-  auto player_tags = st::player_system;
-
-  auto const init_system = [&state](auto &system, auto &tdata) { system.init(tdata, state); };
-  [&init_system](auto &system) { sea::t(system).for_subtasks(init_system); };
-
-  //auto game_systems = game.ecst_systems();//MOVE(io_tags), MOVE(randompos_tags));
-  //stlw::for_each(game_systems, init);
-
-  auto const io_init_system = sea::t(io_tags).for_subtasks(init_system);
-  auto const randompos_init_system = sea::t(randompos_tags).for_subtasks(init_system);
-  auto const player_init_system = sea::t(player_tags).for_subtasks(init_system);
   ctx->step([&](auto &proxy) {
     LOG_TRACE("game started, initializing systems.");
-    proxy.execute_systems()(io_init_system, randompos_init_system, player_init_system);
-    //proxy.execute_systmes()(MOVE(game_systems));
-    LOG_TRACE("systems initialized, entering main loop.");
+    proxy.execute_systems()(
+        system_init(st::randompos_system),
+        system_init(st::player_system));
 
-    game_loop(proxy);
+    LOG_TRACE("systems initialized, entering main loop.");
+    timed_game_loop(proxy, engine, state, assets);
     LOG_TRACE("game loop finished.");
   });
 }

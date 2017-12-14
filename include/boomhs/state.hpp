@@ -8,6 +8,7 @@
 #include <stlw/random.hpp>
 
 #include <opengl/camera.hpp>
+#include <opengl/renderer.hpp>
 #include <window/mouse.hpp>
 
 #include <boomhs/tilemap.hpp>
@@ -21,6 +22,7 @@ namespace boomhs
 struct UiState
 {
   bool enter_pressed = false;
+  bool block_input = false;
 };
 
 struct GameState

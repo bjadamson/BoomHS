@@ -2,6 +2,7 @@
 #include <opengl/global.hpp>
 #include <opengl/camera.hpp>
 #include <opengl/draw_info.hpp>
+#include <opengl/pipelines.hpp>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -18,8 +19,46 @@ struct RenderArgs {
   glm::mat4 const& projection;
 };
 
-void enable_depth_tests();
-void disable_depth_tests();
+inline void
+enable_depth_tests()
+{
+  //glCullFace(GL_BACK);
+  //glFrontFace(GL_CW);
+  //glEnable(GL_CULL_FACE);
+  glEnable(GL_DEPTH_TEST);
+  glDisable(GL_BLEND);
+}
+
+inline void
+disable_depth_tests()
+{
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+
+  glDisable(GL_CULL_FACE);
+  glDisable(GL_DEPTH_TEST);
+}
+
+inline void
+init(window::Dimensions const& dimensions)
+{
+  // Initialize opengl
+  glViewport(0, 0, dimensions.w, dimensions.h);
+
+  glDisable(GL_CULL_FACE);
+  enable_depth_tests();
+}
+
+inline void
+clear_screen(Color const& color)
+{
+  glClearColor(color.r, color.g, color.b, color.a);
+
+  // Render
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+
 
 namespace detail {
 
@@ -33,7 +72,6 @@ draw_scene(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const
     pipeline.set_uniform_array_4fv(logger, "u_color", pipeline.color().to_array());
   }
 
-  LOG_ANY_GL_ERRORS(logger, "before drawing scene");
   if constexpr (PIPE::HAS_TEXTURE) {
     global::texture_bind(pipeline.texture());
     ON_SCOPE_EXIT([&pipeline]() { global::texture_unbind(pipeline.texture()); });
@@ -41,7 +79,6 @@ draw_scene(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const
   } else {
     fn(dinfo);
   }
-  LOG_ANY_GL_ERRORS(logger, "after drawing scene");
 }
 
 template <typename PIPE>
@@ -55,7 +92,6 @@ void render_element_buffer(stlw::Logger &logger, PIPE &pipeline, DrawInfo const&
     auto const instance_count = pipeline.instance_count();
 
     glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, instance_count);
-    LOG_ANY_GL_ERRORS(logger, "glDrawElementsInstanced 1");
   } else {
     glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
   }
@@ -143,7 +179,6 @@ struct DrawTilemapArgs
 template <typename TILEMAP>
 void draw_tilemap(RenderArgs const& args, Model const& model, DrawTilemapArgs &&dt_args, TILEMAP const& tilemap)
 {
-  auto const& dinfo = dt_args.hashtag_dinfo;
   auto const view = compute_view(args.camera);
   auto const& projection = args.projection;
   auto &logger = args.logger;
@@ -168,7 +203,7 @@ void draw_tilemap(RenderArgs const& args, Model const& model, DrawTilemapArgs &&
     FOR(b, h) {
       FOR(c, l) {
         // don't draw non-wall tiles for now
-        auto const cast = [](auto const v) { return static_cast<float>(v)/* / 10.0f*/; };
+        auto const cast = [](auto const v) { return static_cast<float>(v); };
         auto const arr = stlw::make_array<float>(cast(a), cast(b), cast(c));
         if(tilemap.data(a, b, c).is_wall) {
           draw_tile(dt_args.hashtag_pipeline, dt_args.hashtag_dinfo, arr);
@@ -178,41 +213,6 @@ void draw_tilemap(RenderArgs const& args, Model const& model, DrawTilemapArgs &&
       }
     }
   }
-}
-
-void enable_depth_tests()
-{
-  //glCullFace(GL_BACK);
-  //glFrontFace(GL_CW);
-  //glEnable(GL_CULL_FACE);
-  glEnable(GL_DEPTH_TEST);
-  glDisable(GL_BLEND);
-}
-
-void disable_depth_tests()
-{
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-
-  glDisable(GL_CULL_FACE);
-  glDisable(GL_DEPTH_TEST);
-}
-
-void init(window::Dimensions const& dimensions)
-{
-  // Initialize opengl
-  glViewport(0, 0, dimensions.w, dimensions.h);
-
-  glDisable(GL_CULL_FACE);
-  enable_depth_tests();
-}
-
-void clear_screen(Color const& color)
-{
-  glClearColor(color.r, color.g, color.b, color.a);
-
-  // Render
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 } // ns opengl
