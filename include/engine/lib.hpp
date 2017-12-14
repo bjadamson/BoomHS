@@ -58,13 +58,11 @@ void loop(Engine &engine, State &state, PROXY &proxy, game::Assets const& assets
       auto tag = sea::t(tv);
       return tag.for_subtasks(exec);
     };
-    LOG_TRACE("executing systems.");
     proxy.execute_systems()(
         exec_system(st::randompos_system),
         exec_system(st::player_system));
   }
 
-  LOG_TRACE("rendering opengl.");
   game::game_loop(state, proxy, engine.opengl_lib, assets);
 
   // Render Imgui UI
@@ -72,8 +70,6 @@ void loop(Engine &engine, State &state, PROXY &proxy, game::Assets const& assets
 
   // Update window with OpenGL rendering
   SDL_GL_SwapWindow(engine.window.raw());
-
-  LOG_TRACE("game loop stepping.");
 }
 
 template<typename PROXY>

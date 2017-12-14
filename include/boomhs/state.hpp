@@ -23,6 +23,10 @@ struct UiState
 {
   bool enter_pressed = false;
   bool block_input = false;
+
+  // primitive buffers
+  int eid_buffer = 0;
+  glm::vec3 euler_angle_buffer;
 };
 
 struct GameState

@@ -3,33 +3,49 @@
 #include <boomhs/state.hpp>
 #include <boomhs/entity.hpp>
 
+namespace boomhs::detail
+{
+
+void
+draw_entity_editor(GameState &state)
+{
+  auto &imgui = state.imgui;
+  auto &eid_buffer = state.ui_state.eid_buffer;
+
+  ImGui::InputInt("eid:", &eid_buffer, 0, state.entities.size());
+  auto *const pe = state.entities[eid_buffer];
+  assert(pe);
+  auto &e = *pe;
+
+  ImGui::InputFloat3("pos:", glm::value_ptr(e.translation));
+
+  auto &euler_buffer = state.ui_state.euler_angle_buffer;
+  euler_buffer = glm::degrees(glm::eulerAngles(e.rotation));
+
+  if (ImGui::InputFloat3("rot:", glm::value_ptr(euler_buffer))) {
+    e.rotation = glm::quat(euler_buffer * (3.14159f / 180.f));
+  }
+
+  ImGui::InputFloat3("scale:", glm::value_ptr(e.scale));
+}
+
+} // ns boomhs::detail
+
 namespace boomhs
 {
 
 template<typename PROXY>
 void draw_ui(GameState &state, PROXY &proxy)
 {
-  auto &imgui = state.imgui;
-
-  static int eid = GameState::AT_INDEX;
-  ImGui::SliderInt("eid:", &eid, 0, state.entities.size());
-
-  auto *const pe = state.entities[eid];
-  assert(pe);
-
-  auto &e = *pe;
-  auto &pos = e.translation;
-  ImGui::InputFloat3("pos:", glm::value_ptr(pos));
-
-  glm::vec3 euler_angles{0, 0, 0};
-  if (ImGui::InputFloat3("rot:", glm::value_ptr(euler_angles))) {
-    e.rotation = glm::quat(euler_angles);
-  }
-
+  using namespace detail;
   using gef = game::entity_factory;
+
+  draw_entity_editor(state);
+
   auto et = gef::make_transformer(state.logger, proxy);
 
   if(ImGui::Checkbox("Enter Pressed", &state.ui_state.enter_pressed)) {
+    int const& eid = state.ui_state.eid_buffer;;
     ecst::entity_id const id{static_cast<std::size_t>(eid)};
   }
 
@@ -66,6 +82,7 @@ void draw_ui(GameState &state, PROXY &proxy)
     }
   ImGui::End();
 
+  auto const& imgui = state.imgui;
   auto const framerate = imgui.Framerate;
   auto const ms_frame = 1000.0f / framerate;
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", ms_frame, framerate);
