@@ -36,14 +36,10 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
 
   Objs objs{MOVE(house_obj), MOVE(hashtag_obj), MOVE(at_obj), MOVE(plus_obj)};
 
-  auto house_handle = OF::make_mesh(logger, gfx.d3.house,
-      opengl::MeshProperties{GL_TRIANGLES, objs.house});
-  auto hashtag_handle = OF::make_mesh(logger, gfx.d3.hashtag,
-      opengl::MeshProperties{GL_TRIANGLES, objs.hashtag});
-  auto at_handle = OF::make_mesh(logger, gfx.d3.at,
-      opengl::MeshProperties{GL_TRIANGLES, objs.at});
-  auto plus_handle = OF::make_mesh(logger, gfx.d3.plus,
-      opengl::MeshProperties{GL_TRIANGLES, objs.plus});
+  auto house_handle = OF::make_mesh(logger,   gfx.d3.house,   opengl::MeshProperties{objs.house});
+  auto hashtag_handle = OF::make_mesh(logger, gfx.d3.hashtag, opengl::MeshProperties{objs.hashtag});
+  auto at_handle = OF::make_mesh(logger,      gfx.d3.at,      opengl::MeshProperties{objs.at});
+  auto plus_handle = OF::make_mesh(logger,    gfx.d3.plus,    opengl::MeshProperties{objs.plus});
 
   auto cube_skybox = OF::copy_cube_gpu(logger, gfx.d3.skybox, {{10.0f, 10.0f, 10.0f}});
   auto cube_textured = OF::copy_cube_gpu(logger, gfx.d3.texture_cube, {{0.15f, 0.15f, 0.15f}});

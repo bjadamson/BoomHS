@@ -13,13 +13,10 @@ namespace opengl
 
 struct MeshProperties
 {
-  GLenum const draw_mode;
-
   obj const& object_data;
 
-  explicit MeshProperties(GLenum const dm, obj const& obj)
-    : draw_mode(dm)
-    , object_data(obj)
+  explicit MeshProperties(obj const& obj)
+    : object_data(obj)
   {
   }
 };
@@ -278,7 +275,7 @@ auto make_mesh(stlw::Logger &logger, P &pipeline, MeshProperties &&mprop, Args &
   auto const& vertices = mprop.object_data.vertices;
 
   auto const num_indices = static_cast<GLuint>(mprop.object_data.indices.size());
-  DrawInfo dinfo{mprop.draw_mode, num_indices};
+  DrawInfo dinfo{GL_TRIANGLES, num_indices};
 
   detail::copy_to_gpu(logger, pipeline, dinfo, vertices, indices);
   return dinfo;
