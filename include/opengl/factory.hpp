@@ -31,8 +31,8 @@ using CubeDimensions = WidthHeightLength;
 
 struct CubeProperties
 {
-  GLenum const draw_mode;
   CubeDimensions const dimensions;
+  bool wireframe = false;
 };
 
 struct ColorProperties {
@@ -182,6 +182,51 @@ auto copy_cube_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory::CubePrope
     Args &&... args)
 {
   // clang-format off
+  static constexpr std::array<GLuint, 36> INDICES = {{
+    0, 1, 2,  2, 3, 0, // front
+    1, 5, 6,  6, 2, 1, // top
+    7, 6, 5,  5, 4, 7, // back
+    4, 0, 3,  3, 7, 4, // bottom
+    4, 5, 1,  1, 0, 4, // left
+    3, 2, 6,  6, 7, 3, // right
+  }};
+  // clang-format on
+
+  using factory_type = typename PIPE::info_t;
+
+  auto const& hw = cprop.dimensions;
+  auto const h = hw.height;
+  auto const w = hw.width;
+  auto const l = hw.length;
+
+  // Define the 8 vertices of a unit cube
+  float constexpr W = 1.0f;
+  static const std::array<float, 32> v = stlw::make_array<float>(
+      // front
+    -1.0f, -1.0f,  1.0f, W,
+     1.0f, -1.0f,  1.0f, W,
+     1.0f,  1.0f,  1.0f, W,
+    -1.0f,  1.0f,  1.0f, W,
+    // back
+    -1.0f, -1.0f, -1.0f, W,
+     1.0f, -1.0f, -1.0f, W,
+     1.0f,  1.0f, -1.0f, W,
+    -1.0f,  1.0f, -1.0f, W
+  );
+
+  auto const vertices = cube_factory::make_cube(v, factory_type{}, std::forward<Args>(args)...);
+
+  GLenum const draw_mode = cprop.wireframe ? GL_LINE_LOOP : GL_TRIANGLES;
+  DrawInfo dinfo{draw_mode, INDICES.size()};
+  detail::copy_to_gpu(logger, pipeline, dinfo, vertices, INDICES);
+  return dinfo;
+}
+
+template<typename PIPE, typename ...Args>
+auto copy_cube_14indices_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory::CubeProperties const& cprop,
+    Args &&... args)
+{
+  // clang-format off
   static constexpr std::array<GLuint, 14> INDICES = {{
     3, 2, 6, 7, 4, 2, 0,
     3, 1, 6, 5, 4, 1, 0
@@ -221,7 +266,7 @@ auto copy_cube_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory::CubePrope
       );
   auto const vertices = cube_factory::make_cube(v, factory_type{}, std::forward<Args>(args)...);
 
-  DrawInfo dinfo{cprop.draw_mode, INDICES.size()};
+  DrawInfo dinfo{GL_TRIANGLE_STRIP, INDICES.size()};
   detail::copy_to_gpu(logger, pipeline, dinfo, vertices, INDICES);
   return dinfo;
 }

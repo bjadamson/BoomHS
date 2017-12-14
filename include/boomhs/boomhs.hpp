@@ -45,20 +45,19 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
   auto plus_handle = OF::make_mesh(logger, gfx.d3.plus,
       opengl::MeshProperties{GL_TRIANGLES, objs.plus});
 
-  auto cube_skybox = OF::copy_cube_gpu(logger, gfx.d3.skybox, {GL_TRIANGLE_STRIP, {10.0f, 10.0f, 10.0f}});
-  auto cube_textured = OF::copy_cube_gpu(logger, gfx.d3.texture_cube, {GL_TRIANGLE_STRIP,
-      {0.15f, 0.15f, 0.15f}});
+  auto cube_skybox = OF::copy_cube_gpu(logger, gfx.d3.skybox, {{10.0f, 10.0f, 10.0f}});
+  auto cube_textured = OF::copy_cube_gpu(logger, gfx.d3.texture_cube, {{0.15f, 0.15f, 0.15f}});
 
-  auto cube_colored = OF::copy_cube_gpu(logger, gfx.d3.color, {GL_TRIANGLE_STRIP, {0.25f, 0.25f, 0.25f}},
+  auto cube_colored = OF::copy_cube_gpu(logger, gfx.d3.color, {{0.25f, 0.25f, 0.25f}},
       opengl::LIST_OF_COLORS::BLUE);
 
-  auto cube_wf = OF::copy_cube_gpu(logger, gfx.d3.wireframe, {GL_LINE_LOOP, {0.25f, 0.25f, 0.25f}});
+  auto cube_wf = OF::copy_cube_gpu(logger, gfx.d3.wireframe, {{0.25f, 0.25f, 0.25f}, true});
 
-  auto terrain_handle = OF::copy_cube_gpu(logger, gfx.d3.terrain, {GL_TRIANGLE_STRIP, {2.0f, 0.4f, 2.0f}},
+  auto terrain_handle = OF::copy_cube_gpu(logger, gfx.d3.terrain, {{2.0f, 0.4f, 2.0f}},
       opengl::LIST_OF_COLORS::SADDLE_BROWN);
 
   auto tilemap_handle = OF::copy_tilemap_gpu(logger, gfx.d3.hashtag,
-      {GL_TRIANGLES, objs.hashtag});
+      {GL_TRIANGLE_STRIP, objs.hashtag});
 
   GpuHandles handles{
     MOVE(house_handle),
@@ -161,7 +160,7 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
 template<typename PROXY>
 void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Assets const& assets)
 {
-  opengl::clear_screen(opengl::LIST_OF_COLORS::LIGHT_BLUE);
+  opengl::clear_screen(opengl::LIST_OF_COLORS::BLACK);
   auto rargs = state.render_args();
   auto const& ents = state.entities;
   auto const& handles = assets.handles;
@@ -170,7 +169,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
   using GS = GameState;
 
   // skybox
-  //opengl::draw(render_args, *ents[GameState::SKYBOX_INDEX], d3.skybox, handles.cube_skybox);
+  opengl::draw(rargs, *ents[GameState::SKYBOX_INDEX], d3.skybox, handles.cube_skybox);
 
   // random
   opengl::draw(rargs, *ents[GS::COLOR_CUBE_INDEX], d3.color, handles.cube_colored);
