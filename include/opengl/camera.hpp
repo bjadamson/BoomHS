@@ -7,32 +7,35 @@
 #include <opengl/skybox.hpp>
 #include <window/mouse.hpp>
 
+namespace opengl::detail
+{
+
+//inline bool
+//between(float const v, float const a, float const b)
+//{
+  //return ((v <= a) && (v >= b)) || ((v <= b) && (v >= a));
+//}
+
+} // ns detail
+
 namespace opengl
 {
 
-inline bool
-between(float const v, float const a, float const b)
+struct Projection
 {
-  return ((v <= a) && (v >= b)) || ((v <= b) && (v >= a));
-}
+  float const field_of_view;
+  float const viewport_aspect_ratio;
+  float const near_plane;
+  float const far_plane;
+};
 
 auto constexpr X_UNIT_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
 auto constexpr Y_UNIT_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
 auto constexpr Z_UNIT_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// immutable methods
-template<typename C>
-auto
-compute_view(C const& camera)
-{
-  glm::mat4 const rotate = glm::mat4_cast(camera.orientation());
-  auto const translate = glm::translate(glm::mat4{1.0f}, -camera.front());
-  return rotate * translate;
-}
-
 class Camera
 {
+  Projection const projection_;
   skybox skybox_;
   glm::vec3 front_, up_;
 
@@ -67,30 +70,34 @@ class Camera
   }
   auto& move_z(float const s)
   {
-    auto const mat = compute_view(*this);
-    glm::vec3 const forward{mat[0][2], mat[1][2], mat[2][2]};
+    auto const viewm = view();
+    glm::vec3 const forward{viewm[0][2], viewm[1][2], viewm[2][2]};
     return move(s, -forward);
   }
 
   auto& move_x(float const s)
   {
-    auto const mat = compute_view(*this);
-    glm::vec3 const strafe {mat[0][0], mat[1][0], mat[2][0]};
+    auto const viewm = view();
+    glm::vec3 const strafe {viewm[0][0], viewm[1][0], viewm[2][0]};
     return move(s, strafe);
   }
 
   auto& move_y(float const s)
   {
-    auto const mat = compute_view(*this);
-    glm::vec3 const updown{mat[0][1], mat[1][1], mat[2][1]};
+    auto const viewm = view();
+    glm::vec3 const updown{viewm[0][1], viewm[1][1], viewm[2][1]};
     return move(s, updown);
   }
+
+  glm::vec3 const&
+  front() const { return this->front_; }
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
 
-  Camera(skybox &&sb, glm::vec3 const& front, glm::vec3 const& up)
-    : skybox_(MOVE(sb))
+  Camera(Projection const& proj, skybox &&sb, glm::vec3 const& front, glm::vec3 const& up)
+    : projection_(proj)
+    , skybox_(MOVE(sb))
     , front_(front)
     , up_(up)
   {
@@ -102,8 +109,32 @@ public:
   glm::quat const&
   orientation() const { return this->orientation_; }
 
-  glm::vec3 const&
-  front() const { return this->front_; }
+  glm::mat4 projection() const
+  {
+    auto const& p = this->projection_;
+    auto const fov = glm::radians(p.field_of_view);
+    return glm::perspective(fov, p.viewport_aspect_ratio, p.near_plane, p.far_plane);
+  }
+
+  glm::mat4 matrix() const
+  {
+    return projection() * view();
+  }
+
+  glm::mat4 view() const
+  {
+    glm::vec3 const pos = -front();
+    auto const translation = glm::translate(glm::mat4(), pos);
+
+    glm::mat4 const orientation = glm::mat4_cast(this->orientation());
+    return orientation * translation;
+  }
+
+  glm::vec3
+  direction_facing_degrees() const
+  {
+    return glm::degrees(glm::eulerAngles(this->orientation()));
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // mutating methods
@@ -179,11 +210,11 @@ public:
 
 struct CameraFactory
 {
-  static auto make_default(Model &skybox_model)
+  static auto make_default(Projection const& proj, Model &skybox_model)
   {
     auto const& front = -Z_UNIT_VECTOR; // camera-look at origin
     auto const& up = Y_UNIT_VECTOR;     // cameraspace "up" is === "up" in worldspace.
-    return opengl::Camera{skybox{skybox_model}, front, up};
+    return opengl::Camera{proj, skybox{skybox_model}, front, up};
   }
 };
 

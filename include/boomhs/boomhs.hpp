@@ -144,13 +144,15 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   imgui.MouseDrawCursor = true;
   imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
 
-  auto projection = glm::perspective(glm::radians(90.0f), aspect, 0.1f, 200.0f);
-  stlw::float_generator rng;
+  using CF = opengl::CameraFactory;
+  opengl::Projection const proj{90.0f, 4.0f/3.0f, 0.1f, 200.0f};
 
+  stlw::float_generator rng;
   auto tmap = make_tilemap(rng);
   auto entities = make_entities(proxy);
+  auto camera = CF::make_default(proj, *entities[GameState::SKYBOX_INDEX]);
 
-  return GameState(logger, imgui, dimensions, MOVE(rng), MOVE(projection), MOVE(tmap), MOVE(entities));
+  return GameState(logger, imgui, dimensions, MOVE(rng), MOVE(camera), MOVE(tmap), MOVE(entities));
 }
 
 template<typename PROXY>
@@ -165,7 +167,9 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
   using GS = GameState;
 
   // skybox
-  opengl::draw(rargs, *ents[GameState::SKYBOX_INDEX], d3.skybox, handles.cube_skybox);
+  if (state.draw_skybox) {
+    opengl::draw(rargs, *ents[GameState::SKYBOX_INDEX], d3.skybox, handles.cube_skybox);
+  }
 
   // random
   opengl::draw(rargs, *ents[GS::COLOR_CUBE_INDEX], d3.color, handles.cube_colored);

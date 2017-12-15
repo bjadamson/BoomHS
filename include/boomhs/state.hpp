@@ -32,6 +32,7 @@ struct UiState
 struct GameState
 {
   bool quit = false;
+  bool draw_skybox = false;
   Logger &logger;
   ImGuiIO &imgui;
   window::Dimensions const dimensions;
@@ -39,9 +40,8 @@ struct GameState
   // NOTE: Keep this data member above the "camera" data member.
   std::vector<::opengl::Model*> entities;
 
-  stlw::float_generator rnum_generator;
-  glm::mat4 projection;
   opengl::Camera camera;
+  stlw::float_generator rnum_generator;
 
   TileMap tilemap;
   window::mouse_data mouse_data;
@@ -59,15 +59,14 @@ struct GameState
   static constexpr std::size_t CAMERA_INDEX = 8;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
-  GameState(Logger &l, ImGuiIO &i,window::Dimensions const &d, stlw::float_generator &&fg,
-      glm::mat4 &&pm, TileMap &&tmap, std::vector<::opengl::Model*> &&ents)
+  GameState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
+      opengl::Camera &&cam, TileMap &&tmap, std::vector<::opengl::Model*> &&ents)
     : logger(l)
     , imgui(i)
     , dimensions(d)
     , entities(MOVE(ents))
+    , camera(MOVE(cam))
     , rnum_generator(MOVE(fg))
-    , projection(MOVE(pm))
-    , camera(opengl::CameraFactory::make_default(*this->entities[SKYBOX_INDEX]))
     , tilemap(MOVE(tmap))
     , mouse_data(window::make_default_mouse_data())
   {
@@ -76,7 +75,7 @@ struct GameState
 
   opengl::RenderArgs render_args() const
   {
-    return opengl::RenderArgs{this->logger, this->camera, this->projection};
+    return opengl::RenderArgs{this->logger, this->camera};
   }
 };
 

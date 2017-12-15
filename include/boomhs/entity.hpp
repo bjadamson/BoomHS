@@ -14,8 +14,8 @@ class entity_transformer
 {
   // TODO: Make no copy/ no move once we can use template argument deduction for constructors,
   // and we get get rid of the make_entity_transformer() fn.
-  //NO_COPY(entity_transformer);
-  //NO_MOVE(entity_transformer);
+  NO_COPY(entity_transformer);
+
   stlw::Logger &logger;
   PROXY &proxy;
 
@@ -33,6 +33,7 @@ class entity_transformer
     fn();
   }
 public:
+  MOVE_DEFAULT(entity_transformer);
   void move_entities(glm::vec3 const& direction) const
   {
     proxy.for_entities([&](auto const eid) {

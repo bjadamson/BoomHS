@@ -29,6 +29,20 @@ draw_entity_editor(GameState &state)
   ImGui::InputFloat3("scale:", glm::value_ptr(e.scale));
 }
 
+void
+draw_camera_info(GameState &state)
+{
+  ImGui::Begin("CAMERA INFO WINDOW");
+  auto const f = state.camera.direction_facing_degrees();
+
+  auto const x = std::to_string(f.x);
+  auto const y = std::to_string(f.y);
+  auto const z = std::to_string(f.z);
+  ImGui::Text("x: '%s', y: '%s', z: '%s'", x.c_str(), y.c_str(), z.c_str());
+
+  ImGui::End();
+}
+
 } // ns boomhs::detail
 
 namespace boomhs
@@ -38,11 +52,10 @@ template<typename PROXY>
 void draw_ui(GameState &state, PROXY &proxy)
 {
   using namespace detail;
-  using gef = game::entity_factory;
-
   draw_entity_editor(state);
+  draw_camera_info(state);
 
-  auto et = gef::make_transformer(state.logger, proxy);
+  ImGui::Checkbox("Draw Skybox", &state.draw_skybox);
 
   if(ImGui::Checkbox("Enter Pressed", &state.ui_state.enter_pressed)) {
     int const& eid = state.ui_state.eid_buffer;;
@@ -52,10 +65,6 @@ void draw_ui(GameState &state, PROXY &proxy)
   ImGui::Begin("MY MENU", nullptr, ImGuiWindowFlags_MenuBar);
   if (ImGui::BeginMenuBar())
     {
-        if (ImGui::BeginMenu("Menu"))
-        {
-            ImGui::MenuItem("BLAH", nullptr, nullptr);
-        }
         if (ImGui::BeginMenu("Examples"))
         {
             ImGui::MenuItem("Main menu bar", nullptr, nullptr);

@@ -16,7 +16,6 @@ namespace opengl {
 struct RenderArgs {
   stlw::Logger &logger;
   opengl::Camera const& camera;
-  glm::mat4 const& projection;
 };
 
 inline void
@@ -58,13 +57,11 @@ clear_screen(Color const& color)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-
-
 namespace detail {
 
 template <typename PIPE, typename FN>
 void
-draw_scene(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const& fn)
+bind_stuff_and_draw(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const& fn)
 {
   using namespace opengl;
 
@@ -100,8 +97,7 @@ void render_element_buffer(stlw::Logger &logger, PIPE &pipeline, DrawInfo const&
 template <typename PIPE>
 void draw_3dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipeline, DrawInfo const& dinfo)
 {
-  auto const view = compute_view(args.camera);
-  auto const& projection = args.projection;
+  auto const cmatrix = args.camera.matrix();
   auto &logger = args.logger;
 
   auto const draw_3d_shape_fn = [&](auto const &dinfo) {
@@ -109,7 +105,7 @@ void draw_3dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipe
     auto const rmatrix = glm::toMat4(model.rotation);
     auto const smatrix = glm::scale(glm::mat4{}, model.scale);
     auto const mmatrix = tmatrix * rmatrix * smatrix;
-    auto const mvmatrix = projection * view * mmatrix;
+    auto const mvmatrix = cmatrix * mmatrix;
     pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
 
     if constexpr (PIPE::IS_SKYBOX) {
@@ -125,7 +121,7 @@ void draw_3dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipe
   pipeline.use_program(logger);
   global::vao_bind(pipeline.vao());
 
-  draw_scene(logger, pipeline, dinfo, draw_3d_shape_fn);
+  bind_stuff_and_draw(logger, pipeline, dinfo, draw_3d_shape_fn);
 }
 
 template <typename PIPE>
@@ -148,7 +144,7 @@ draw_2dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipeline,
   // Use the pipeline's PROGRAM and bind the pipeline's VAO.
   pipeline.use_program(logger);
   global::vao_bind(pipeline.vao());
-  draw_scene(logger, pipeline, dinfo, draw_2d_shape_fn);
+  bind_stuff_and_draw(logger, pipeline, dinfo, draw_2d_shape_fn);
 }
 
 } // ns detail
@@ -179,15 +175,14 @@ struct DrawTilemapArgs
 template <typename TILEMAP>
 void draw_tilemap(RenderArgs const& args, Model const& model, DrawTilemapArgs &&dt_args, TILEMAP const& tilemap)
 {
-  auto const view = compute_view(args.camera);
-  auto const& projection = args.projection;
+  auto const cmatrix = args.camera.matrix();
   auto &logger = args.logger;
 
   auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
   auto const rmatrix = glm::toMat4(model.rotation);
   auto const smatrix = glm::scale(glm::mat4{}, model.scale);
   auto const mmatrix = tmatrix * rmatrix * smatrix;
-  auto const mvmatrix = projection * view * mmatrix;
+  auto const mvmatrix = cmatrix * mmatrix;
 
   auto const draw_tile = [&logger, &mvmatrix](auto &pipeline, auto const& dinfo, auto const& arr) {
     pipeline.use_program(logger);

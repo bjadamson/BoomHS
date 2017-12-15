@@ -14,5 +14,5 @@ void main()
   vec4 color = vec4(1.0, 1.0, 1.0, 1.0);
 
   gl_Position = u_mvmatrix * a_position;
-  v_color = a_color;
+  v_color = color;
 }
