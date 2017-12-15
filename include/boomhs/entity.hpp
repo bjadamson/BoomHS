@@ -27,27 +27,27 @@ class entity_transformer
 
   template<typename FN>
   void
-  for_entity(ecst::entity_id const eid, char const* action, FN const& fn)
+  for_entity(ecst::entity_id const eid, char const* action, FN const& fn) const
   {
-    this->LOG_TRACE(fmt::sprintf("'%s' entity eid '%d'", action, eid));
+    LOG_TRACE(fmt::sprintf("'%s' entity eid '%d'", action, eid));
     fn();
   }
 public:
-  void move_entities(glm::vec3 const& direction)
+  void move_entities(glm::vec3 const& direction) const
   {
     proxy.for_entities([&](auto const eid) {
         entity_transformer::move_entity(*this, eid, direction);
     });
   }
 
-  void rotate_entities(float const angle, glm::vec3 const& axis)
+  void rotate_entities(float const angle, glm::vec3 const& axis) const
   {
     proxy.for_entities([&](auto const eid) {
         entity_transformer::rotate_entity(*this, eid, angle, axis);
     });
   }
 
-  void scale_entities(float const factor)
+  void scale_entities(float const factor) const
   {
     proxy.for_entities([&](auto const eid) {
         entity_transformer::scale_entity(*this, eid, factor);
@@ -57,7 +57,7 @@ public:
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // static fns
   template<typename E>
-  void static rotate_entity(E &transformer, ecst::entity_id const eid, float const angle,
+  void static rotate_entity(E const& transformer, ecst::entity_id const eid, float const angle,
       glm::vec3 const& axis)
   {
     auto const fn = [&]() {
@@ -69,7 +69,7 @@ public:
   }
 
   template<typename E>
-  void static move_entity(E &transformer, ecst::entity_id const eid, glm::vec3 const& distance)
+  void static move_entity(E const& transformer, ecst::entity_id const eid, glm::vec3 const& distance)
   {
     auto const fn = [&]() {
       auto &m = transformer.proxy.get(ct::model, eid);
@@ -79,7 +79,7 @@ public:
   }
 
   template<typename E>
-  void static scale_entity(E &transformer, ecst::entity_id const eid, float const factor)
+  void static scale_entity(E const& transformer, ecst::entity_id const eid, float const factor)
   {
     auto const fn = [&]() {
       auto &m = transformer.proxy.get(ct::model, eid);
