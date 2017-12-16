@@ -3,6 +3,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/vector_angle.hpp>
+#include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 #include <opengl/skybox.hpp>
 #include <window/mouse.hpp>
@@ -43,24 +44,14 @@ class Camera
   glm::quat orientation_;
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
-  // immutable helper methods
+  // immutable
   auto right_vector() const
   {
     return glm::normalize(glm::cross(this->front_, this->up_));
   }
 
-  auto xpan(float const d) const
-  {
-    return glm::vec3{d, 0.0f, 0.0f};
-  }
-
-  auto ypan(float const d) const
-  {
-    return glm::vec3{0.0f, -d, 0.0f};
-  }
-
   //////////////////////////////////////////////////////////////////////////////////////////////////
-  // mutating helper methods
+  // mutation
   auto& move(float const s, glm::vec3 const& dir)
   {
     this->front_ += dir * s;
@@ -92,6 +83,25 @@ class Camera
   glm::vec3 const&
   front() const { return this->front_; }
 
+  glm::quat const&
+  orientation() const { return this->orientation_; }
+
+  glm::mat4 projection() const
+  {
+    auto const& p = this->projection_;
+    auto const fov = glm::radians(p.field_of_view);
+    return glm::perspective(fov, p.viewport_aspect_ratio, p.near_plane, p.far_plane);
+  }
+
+  glm::mat4 view() const
+  {
+    glm::vec3 const pos = -front();
+    auto const translation = glm::translate(glm::mat4(), pos);
+
+    glm::mat4 const orientation = glm::mat4_cast(this->orientation());
+    return orientation * translation;
+  }
+
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
 
@@ -105,29 +115,10 @@ public:
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
-  // immutable methods
-  glm::quat const&
-  orientation() const { return this->orientation_; }
-
-  glm::mat4 projection() const
-  {
-    auto const& p = this->projection_;
-    auto const fov = glm::radians(p.field_of_view);
-    return glm::perspective(fov, p.viewport_aspect_ratio, p.near_plane, p.far_plane);
-  }
-
+  // immutable
   glm::mat4 matrix() const
   {
     return projection() * view();
-  }
-
-  glm::mat4 view() const
-  {
-    glm::vec3 const pos = -front();
-    auto const translation = glm::translate(glm::mat4(), pos);
-
-    glm::mat4 const orientation = glm::mat4_cast(this->orientation());
-    return orientation * translation;
   }
 
   glm::vec3
@@ -137,9 +128,7 @@ public:
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
-  // mutating methods
-  //
-  // linear movement
+  // mutation
   auto& move_forward(float const s)
   {
     return move_z(s);
@@ -172,8 +161,7 @@ public:
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // mouse-movement
-  template<typename L>
-  auto& rotate_to(L &logger, window::mouse_data const& mdata)
+  auto& rotate_to(stlw::Logger &logger, window::mouse_data const& mdata)
   {
     auto const& current = mdata.current;
     auto const& mouse_sens = mdata.sensitivity;
