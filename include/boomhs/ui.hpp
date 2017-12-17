@@ -33,8 +33,18 @@ void
 draw_camera_info(GameState &state)
 {
   ImGui::Begin("CAMERA INFO WINDOW");
-  auto const f = state.camera.direction_facing_degrees();
+  ImGui::Checkbox("Flip Y", &state.ui_state.flip_y);
+  if (ImGui::Checkbox("Orbit Mode", &state.ui_state.orbit_mode)) {
+    auto &c = state.camera;
+    auto const& mode = state.ui_state.orbit_mode;
+    if (mode == opengl::FPS) {
+      c.set_mode(opengl::FPS);
+    } else {
+      c.set_mode(opengl::ORBIT);
+    }
+  }
 
+  auto const f = state.camera.direction_facing_degrees();
   auto const x = std::to_string(f.x);
   auto const y = std::to_string(f.y);
   auto const z = std::to_string(f.z);

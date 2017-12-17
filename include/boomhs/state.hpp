@@ -23,10 +23,17 @@ struct UiState
 {
   bool enter_pressed = false;
   bool block_input = false;
+  bool flip_y = false;
+  bool orbit_mode;
 
   // primitive buffers
   int eid_buffer = 0;
   glm::vec3 euler_angle_buffer;
+
+  explicit UiState(bool const orbit)
+    : orbit_mode(orbit)
+  {
+  }
 };
 
 struct GameState
@@ -60,7 +67,8 @@ struct GameState
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
   GameState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
-      opengl::Camera &&cam, TileMap &&tmap, std::vector<::opengl::Model*> &&ents)
+      opengl::Camera &&cam, TileMap &&tmap, std::vector<::opengl::Model*> &&ents,
+      UiState &&uistate)
     : logger(l)
     , imgui(i)
     , dimensions(d)
@@ -69,8 +77,9 @@ struct GameState
     , rnum_generator(MOVE(fg))
     , tilemap(MOVE(tmap))
     , mouse_data(window::make_default_mouse_data())
+    , ui_state(MOVE(uistate))
   {
-    this->camera.move_down(1);
+    //this->camera.move_down(1);
   }
 
   opengl::RenderArgs render_args() const

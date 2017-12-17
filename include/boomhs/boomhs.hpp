@@ -88,6 +88,12 @@ make_tilemap(stlw::float_generator &rng)
     }
   }
 
+  // origin is never a wall
+  if (!tile_vec.empty()) {
+    Tile &origin = tile_vec.front();
+    origin.is_wall = false;
+  }
+
   assert(tile_vec.capacity() == tile_vec.size());
   assert(tile_vec.size() == NUM_TILES);
   return TileMap{MOVE(tile_vec), W, H, L};
@@ -150,9 +156,12 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   stlw::float_generator rng;
   auto tmap = make_tilemap(rng);
   auto entities = make_entities(proxy);
-  auto camera = CF::make_default(proj, *entities[GameState::SKYBOX_INDEX]);
+  auto const cmode = opengl::CameraMode::FPS;
+  auto camera = CF::make_default(cmode, proj, *entities[GameState::SKYBOX_INDEX]);
 
-  return GameState(logger, imgui, dimensions, MOVE(rng), MOVE(camera), MOVE(tmap), MOVE(entities));
+  UiState ui{cmode};
+  return GameState(logger, imgui, dimensions, MOVE(rng), MOVE(camera), MOVE(tmap), MOVE(entities),
+      MOVE(ui));
 }
 
 template<typename PROXY>

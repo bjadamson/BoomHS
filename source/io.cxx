@@ -50,7 +50,8 @@ bool process_event(GameState &state, SDL_Event &event)
       break;
     }
     add_from_event(state.mouse_data, event);
-    camera.rotate_to(logger, state.mouse_data);
+    //camera.rotate_to(logger, state.mouse_data);
+    camera.rotate(logger, state.ui_state, state.mouse_data);
     break;
   }
   case SDL_MOUSEWHEEL: {
@@ -79,27 +80,27 @@ bool process_event(GameState &state, SDL_Event &event)
   case SDL_KEYDOWN: {
     switch (event.key.keysym.sym) {
     case SDLK_w: {
-      camera.move_forward(MOVE_DISTANCE);
+      //camera.move_forward(MOVE_DISTANCE);
       break;
     }
     case SDLK_s: {
-      camera.move_backward(MOVE_DISTANCE);
+      //camera.move_backward(MOVE_DISTANCE);
       break;
     }
     case SDLK_a: {
-      camera.move_right(MOVE_DISTANCE);
+      //camera.move_right(MOVE_DISTANCE);
       break;
     }
     case SDLK_d: {
-        camera.move_left(MOVE_DISTANCE);
+        //camera.move_left(MOVE_DISTANCE);
       break;
     }
     case SDLK_q: {
-      camera.move_up(MOVE_DISTANCE);
+      //camera.move_up(MOVE_DISTANCE);
       break;
     }
     case SDLK_e: {
-        camera.move_down(MOVE_DISTANCE);
+        //camera.move_down(MOVE_DISTANCE);
       break;
     }
     // scaling
