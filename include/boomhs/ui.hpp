@@ -32,23 +32,23 @@ draw_entity_editor(GameState &state)
 void
 draw_camera_info(GameState &state)
 {
+  auto &camera = state.camera;
+
   ImGui::Begin("CAMERA INFO WINDOW");
-  ImGui::Checkbox("Flip Y", &state.ui_state.flip_y);
-  if (ImGui::Checkbox("Orbit Mode", &state.ui_state.orbit_mode)) {
-    auto &c = state.camera;
-    auto const& mode = state.ui_state.orbit_mode;
-    if (mode == opengl::FPS) {
-      c.set_mode(opengl::FPS);
-    } else {
-      c.set_mode(opengl::ORBIT);
-    }
+  {
+    auto const display = camera.display();
+    ImGui::Text("%s", display.c_str());
+  }
+  {
+    auto const target_display = camera.follow_target_display();
+    ImGui::Text("target: '%s'", target_display.c_str());
   }
 
-  auto const f = state.camera.direction_facing_degrees();
-  auto const x = std::to_string(f.x);
-  auto const y = std::to_string(f.y);
-  auto const z = std::to_string(f.z);
-  ImGui::Text("x: '%s', y: '%s', z: '%s'", x.c_str(), y.c_str(), z.c_str());
+  ImGui::Checkbox("Flip Y", &state.ui_state.flip_y);
+  bool ign_;
+  if (ImGui::Checkbox("Toggle Mode", &ign_)) {
+    state.camera.toggle_mode();
+  }
 
   ImGui::End();
 }

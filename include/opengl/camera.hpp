@@ -40,7 +40,7 @@ enum CameraMode
 class OrbitCamera
 {
   glm::vec3 front_, up_;
-  float radius_ = 1.5f, theta_, phi_;
+  float radius_ = 1.5f, theta_ = -2.33f, phi_ = 0.95f;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(OrbitCamera);
@@ -52,9 +52,12 @@ public:
 
   auto const& front() const { return this->front_; }
   auto const& up() const { return this->up_; }
+  std::string display() const;
 
   glm::quat orientation() const { return to_cartesian(radius_, theta_, phi_); }
-  glm::mat4 view() const;
+  glm::mat4 view(Model const&) const;
+
+  void set_front(glm::vec3 const& f) { this->front_ = f; }
 
   OrbitCamera&
   rotate(stlw::Logger &, boomhs::UiState &, window::mouse_data const&);
@@ -66,6 +69,9 @@ class FpsCamera
   glm::quat orientation_;
 
   float pitch_ = 0.0f, roll_ = 0.0f, yaw_ = 0.0f;
+
+  glm::vec3
+  direction_facing_degrees() const;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(FpsCamera);
@@ -79,7 +85,10 @@ public:
   auto const& up() const { return this->up_; }
 
   glm::quat orientation() const { return this->orientation_; }
-  glm::mat4 view() const;
+  glm::mat4 view(Model const&) const;
+  std::string display() const;
+
+  void set_front(glm::vec3 const& f) { this->front_ = f; }
 
   FpsCamera&
   rotate(stlw::Logger &, boomhs::UiState &, window::mouse_data const&);
@@ -95,45 +104,7 @@ class Camera
   OrbitCamera orbit_;
 
   CameraMode active_mode_;
-
-  /*
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  // immutable
-  auto right_vector() const
-  {
-    return glm::normalize(glm::cross(this->front_, this->up_));
-  }
-
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  // mutation
-  auto& move(float const s, glm::vec3 const& dir)
-  {
-    this->front_ += dir * s;
-    this->skybox_.model.translation = this->front_;
-
-    return *this;
-  }
-  auto& move_z(float const s)
-  {
-    auto const viewm = view();
-    glm::vec3 const forward{viewm[0][2], viewm[1][2], viewm[2][2]};
-    return move(s, -forward);
-  }
-
-  auto& move_x(float const s)
-  {
-    auto const viewm = view();
-    glm::vec3 const strafe {viewm[0][0], viewm[1][0], viewm[2][0]};
-    return move(s, strafe);
-  }
-
-  auto& move_y(float const s)
-  {
-    auto const viewm = view();
-    glm::vec3 const updown{viewm[0][1], viewm[1][1], viewm[2][1]};
-    return move(s, updown);
-  }
-  */
+  Model &target_;
 
   glm::vec3 const&
   front() const
@@ -155,26 +126,6 @@ class Camera
     }
   }
 
-  glm::mat4
-  view() const
-  {
-    if (active_mode_ == FPS) {
-      return fps_.view();
-    } else {
-      return orbit_.view();
-    }
-  }
-
-  glm::quat
-  orientation() const
-  {
-    if (active_mode_ == FPS) {
-      return fps_.orientation();
-    } else {
-      return orbit_.orientation();
-    }
-  }
-
   glm::mat4 projection() const
   {
     auto const& p = this->projection_;
@@ -186,19 +137,36 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
 
   Camera(Projection const& proj, skybox &&sb, glm::vec3 const& front, glm::vec3 const& up,
-      CameraMode const);
+      CameraMode const, Model &);
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  // immutable
+  glm::quat
+  orientation() const
+  {
+    if (active_mode_ == FPS) {
+      return fps_.orientation();
+    } else {
+      return orbit_.orientation();
+    }
+  }
+
+  glm::mat4
+  view() const
+  {
+    if (active_mode_ == FPS) {
+      return fps_.view(target_);
+    } else {
+      return orbit_.view(target_);
+    }
+  }
   glm::mat4 matrix() const
   {
     return projection() * view();
   }
 
-  glm::vec3
-  direction_facing_degrees() const
+  void
+  set_follow_target(Model &m)
   {
-    return glm::degrees(glm::eulerAngles(this->orientation()));
+    this->target_ = m;
   }
 
   void
@@ -207,55 +175,50 @@ public:
     this->active_mode_ = cmode;
   }
 
-  /*
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  // mutation
-  auto& move_forward(float const s)
+  void
+  set_front(glm::vec3 const& f)
   {
-    return move_z(s);
+    if (active_mode_ == FPS) {
+      return fps_.set_front(f);
+    } else {
+      return orbit_.set_front(f);
+    }
   }
 
-  auto& move_backward(float const s)
+  void
+  toggle_mode()
   {
-    return move_z(-s);
+    if (active_mode_ == FPS) {
+      active_mode_ = ORBIT;
+    } else {
+      active_mode_ = FPS;
+    }
   }
 
-  auto& move_left(float const s)
-  {
-    return move_x(s);
-  }
+  std::string display() const;
+  std::string follow_target_display() const;
 
-  auto& move_right(float const s)
-  {
-    return move_x(-s);
-  }
-
-  auto& move_up(float const s)
-  {
-    return move_y(-s);
-  }
-
-  auto& move_down(float const s)
-  {
-    return move_y(s);
-  }
-  */
-
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  // mouse-movement
   Camera&
   rotate(stlw::Logger &, boomhs::UiState &, window::mouse_data const&);
+
+  //Camera&
+  //move(float const s, glm::vec3 const& dir)
+  //{
+    //auto const& front = this->front();
+    //set_front(front + (dir * s));
+
+    //this->skybox_.model.translation = front;
+
+    //return *this;
+  //}
 };
-
-
 
 struct CameraFactory
 {
-  static auto make_default(CameraMode const cmode, Projection const& proj, Model &skybox_model)
+  static auto make_default(CameraMode const cmode, Projection const& proj, Model &skybox_model,
+      Model &target, glm::vec3 const& front, glm::vec3 const& up)
   {
-    auto const& front = -Z_UNIT_VECTOR; // camera-look at origin
-    auto const& up = Y_UNIT_VECTOR;     // cameraspace "up" is === "up" in worldspace.
-    return opengl::Camera{proj, skybox{skybox_model}, front, up, cmode};
+    return opengl::Camera{proj, skybox{skybox_model}, front, up, cmode, target};
   }
 };
 

@@ -122,16 +122,6 @@ make_entities(PROXY &proxy)
   make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // TILEMAP_INDEX
   make_entity(glm::vec3{0.0f, 5.0f, 0.0f});   // TERRAIN_INDEX
   make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // CAMERA_INDEX
-
-  //auto count = GameState::CAMERA_INDEX + 1;
-
-  // The 2D objects
-  /*
-  while(count < (100 + GameState::CAMERA_INDEX)) {
-    auto const [x, y, z] = rng.generate_3dposition_above_ground();
-    make_entity(glm::vec3{x, y, z});
-  }
-  */
   return entities;
 }
 
@@ -156,12 +146,20 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   stlw::float_generator rng;
   auto tmap = make_tilemap(rng);
   auto entities = make_entities(proxy);
-  auto const cmode = opengl::CameraMode::FPS;
-  auto camera = CF::make_default(cmode, proj, *entities[GameState::SKYBOX_INDEX]);
+  auto constexpr cmode = opengl::CameraMode::FPS;
 
-  UiState ui{cmode};
-  return GameState(logger, imgui, dimensions, MOVE(rng), MOVE(camera), MOVE(tmap), MOVE(entities),
-      MOVE(ui));
+  auto &skybox_ent = *entities[GameState::SKYBOX_INDEX];
+  auto &player_ent = *entities[GameState::AT_INDEX];
+
+  // camera-look at origin
+  // cameraspace "up" is === "up" in worldspace.  auto constexpr UP = opengl::Y_UNIT_VECTOR;
+  auto const FORWARD = -opengl::Z_UNIT_VECTOR;
+  auto constexpr UP = opengl::Y_UNIT_VECTOR;
+  auto camera = CF::make_default(cmode, proj, skybox_ent, player_ent, FORWARD, UP);
+  Player player{player_ent, FORWARD, UP};
+
+  return GameState{logger, imgui, dimensions, MOVE(rng), MOVE(tmap), MOVE(entities), MOVE(camera),
+      MOVE(player)};
 }
 
 template<typename PROXY>

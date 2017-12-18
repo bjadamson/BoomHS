@@ -16,14 +16,30 @@ to_cartesian(float const radius, float const theta, float const phi)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FpsCamera
-glm::mat4
-FpsCamera::view() const
+glm::vec3
+FpsCamera::direction_facing_degrees() const
 {
-  glm::vec3 const pos = -front_;
+  return glm::degrees(glm::eulerAngles(this->orientation()));
+}
+
+glm::mat4
+FpsCamera::view(Model const& target_model) const
+{
+  glm::vec3 const pos = -target_model.translation;
   auto const translation = glm::translate(glm::mat4(), pos);
 
   glm::mat4 const orientation = glm::mat4_cast(this->orientation_);
   return orientation * translation;
+}
+
+std::string
+FpsCamera::display() const
+{
+  auto const f = direction_facing_degrees();
+  auto const x = std::to_string(f.x);
+  auto const y = std::to_string(f.y);
+  auto const z = std::to_string(f.z);
+  return fmt::sprintf("x: '%s', y: '%s', z: '%s'", x.c_str(), y.c_str(), z.c_str());
 }
 
 FpsCamera&
@@ -64,12 +80,21 @@ FpsCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mouse_
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // OrbitCamera
 glm::mat4
-OrbitCamera::view() const
+OrbitCamera::view(Model const& target_model) const
 {
-  auto const TARGET = glm::vec3{0.0, 0.0, 0.0};
-  auto const position_xyz = TARGET + to_cartesian(radius_, theta_, phi_);
+  auto const& target = target_model.translation;
+  auto const position_xyz = target + to_cartesian(radius_, theta_, phi_);
 
-  return glm::lookAt(position_xyz, TARGET, this->up());
+  return glm::lookAt(position_xyz, target, this->up());
+}
+
+std::string
+OrbitCamera::display() const
+{
+  auto const r = std::to_string(radius_);
+  auto const t = std::to_string(theta_);
+  auto const p = std::to_string(phi_);
+  return fmt::sprintf("r: '%s', t: '%s', p: '%s'", r.c_str(), t.c_str(), p.c_str());
 }
 
 OrbitCamera&
@@ -115,14 +140,27 @@ OrbitCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mous
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
 Camera::Camera(Projection const& proj, skybox &&sb, glm::vec3 const& front, glm::vec3 const& up,
-    CameraMode const cmode)
+    CameraMode const cmode, Model &target)
   : projection_(proj)
   , skybox_(MOVE(sb))
   , fps_(front, up)
   , orbit_(front, up)
   , active_mode_(cmode)
+  , target_(target)
 {
   this->skybox_.model.translation = front;
+}
+
+std::string
+Camera::display() const
+{
+  return active_mode_ == opengl::FPS ? fps_.display() : orbit_.display();
+}
+
+std::string
+Camera::follow_target_display() const
+{
+  return fmt::sprintf("follow target: '%s'", glm::to_string(target_.translation));
 }
 
 Camera&
