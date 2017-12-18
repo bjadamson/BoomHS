@@ -107,21 +107,18 @@ OrbitCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mous
   float const d_theta = mouse_sens.x * delta.x;
   float const d_phi = mouse_sens.y * delta.y;
 
-  if (up_.y > 0.0f) {
-    theta_ -= d_theta;
-  } else {
-    theta_ += d_theta;
-  }
+  theta_ = (up_.y > 0.0f) ? (theta_ - d_theta) : (theta_ + d_theta);
 
-  if (uistate.flip_y) {
-    phi_ += d_phi;
-  } else {
-    phi_ -= d_phi;
+  float constexpr PI = glm::pi<float>();
+  float constexpr TWO_PI = PI * 2.0f;
+
+  float const new_phi = uistate.flip_y ? (phi_ + d_phi) : (phi_ - d_phi);
+  bool const top_hemisphere = (new_phi > 0 && new_phi < (PI/2.0f)) || (new_phi < -(PI/2.0f) && new_phi > -TWO_PI);
+  if (top_hemisphere) {
+    phi_ = new_phi;
   }
 
   // Keep phi within -2PI to +2PI for easy 'up' comparison
-  float constexpr PI = glm::pi<float>();
-  float constexpr TWO_PI = PI * 2.0f;
   if (phi_ > TWO_PI) {
     phi_ -= TWO_PI;
   } else if (phi_ < -TWO_PI) {
@@ -134,6 +131,7 @@ OrbitCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mous
   } else {
     up_ = -Y_UNIT_VECTOR;
   }
+
   return *this;
 }
 
