@@ -10,7 +10,7 @@ class Player
 {
   opengl::Model &model_;
   glm::vec3 front_, up_;
-  glm::quat orientation_;
+  //glm::quat orientation_;
 
   auto& move(float const s, glm::vec3 const& dir)
   {
@@ -82,9 +82,18 @@ public:
   }
 
   void
-  set_orientation(glm::quat const& o)
+  rotate(float const angle, window::mouse_data const& mdata)
   {
-   model_.rotation = o;
+    auto const& current = mdata.current;
+    glm::vec2 const delta = glm::vec2{current.xrel, current.yrel};
+
+    auto const& mouse_sens = mdata.sensitivity;
+    auto constexpr yaw = 0.0f;
+    auto const pitch = angle * mouse_sens.x * delta.x;
+    auto constexpr roll = 0.0f;
+
+    auto const quat = glm::quat{glm::vec3{yaw, pitch, roll}};
+    model_.rotation = glm::normalize(quat * model_.rotation);
   }
 };
 

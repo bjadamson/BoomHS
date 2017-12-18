@@ -52,7 +52,14 @@ bool process_event(GameState &state, SDL_Event &event)
     }
     add_from_event(state.mouse_data, event);
     camera.rotate(logger, state.ui_state, state.mouse_data);
-    //player.set_orientation(camera.orientation());
+
+    if (event.motion.state & SDL_BUTTON_RMASK) {
+      //bool const right = event.motion.xrel > 0;
+      //bool const left = event.motion.xrel < 0;
+      //assert((right != left) || (!right && !left));
+      float constexpr ANGLE = 3.5f;
+      player.rotate(ANGLE, /*right,*/ state.mouse_data);
+    }
     break;
   }
   case SDL_MOUSEWHEEL: {

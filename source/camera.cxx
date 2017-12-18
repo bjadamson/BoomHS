@@ -72,7 +72,7 @@ FpsCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mouse_
   this->yaw_ += yaw;
   this->pitch_ += pitch;
 
-  auto const quat = glm::quat(glm::vec3{pitch, yaw, roll});
+  auto const quat = glm::quat{glm::vec3{pitch, yaw, roll}};
   this->orientation_ = glm::normalize(quat * this->orientation_);
   return *this;
 }
