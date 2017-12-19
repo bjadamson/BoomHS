@@ -9,12 +9,14 @@ namespace boomhs
 class Player
 {
   opengl::Model &model_;
+  opengl::Model &arrow_;
   glm::vec3 front_, up_;
   //glm::quat orientation_;
 
   auto& move(float const s, glm::vec3 const& dir)
   {
     model_.translation += (dir * s);
+    arrow_.translation = model_.translation;
     return *this;
   }
 
@@ -44,8 +46,9 @@ class Player
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Player);
-  explicit Player(opengl::Model &m, glm::vec3 const& front, glm::vec3 const& up)
+  explicit Player(opengl::Model &m, opengl::Model &a, glm::vec3 const& front, glm::vec3 const& up)
     : model_(m)
+    , arrow_(a)
     , front_(front)
     , up_(up)
   {

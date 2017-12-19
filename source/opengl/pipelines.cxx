@@ -47,8 +47,11 @@ load_pipelines(stlw::Logger &logger)
   DO_TRY(auto d3at, make_pipeline<PipelineAt3D>("3d_at.vert", "3d_at.frag",
         va::vertex_color(logger)));
 
-    DO_TRY(auto d3plus, make_pipeline<PipelinePlus3D>("3d_plus.vert", "3d_plus.frag",
-        va::vertex_color(logger)));
+  DO_TRY(auto d3plus, make_pipeline<PipelinePlus3D>("3d_plus.vert", "3d_plus.frag",
+      va::vertex_color(logger)));
+
+  DO_TRY(auto d3arrow, make_pipeline<PipelineArrow3D>("3d_arrow.vert", "3d_arrow.frag",
+      va::vertex_color(logger)));
 
   DO_TRY(auto d3cube, make_pipeline<PipelineTextureCube3D>("3d_cubetexture.vert", "3d_cubetexture.frag",
         va::vertex_only(logger),
@@ -87,6 +90,7 @@ load_pipelines(stlw::Logger &logger)
     MOVE(d3hashtag),
     MOVE(d3at),
     MOVE(d3plus),
+    MOVE(d3arrow),
     MOVE(d3cube),
     MOVE(d3house),
     MOVE(d3skybox),

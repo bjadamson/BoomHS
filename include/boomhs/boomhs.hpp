@@ -33,13 +33,15 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
   auto hashtag_obj = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
   auto at_obj = opengl::load_mesh("assets/at.obj", "assets/at.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
   auto plus_obj = opengl::load_mesh("assets/plus.obj", "assets/plus.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
+  auto arrow_obj = opengl::load_mesh("assets/arrow.obj", "assets/arrow.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
 
-  Objs objs{MOVE(house_obj), MOVE(hashtag_obj), MOVE(at_obj), MOVE(plus_obj)};
+  Objs objs{MOVE(house_obj), MOVE(hashtag_obj), MOVE(at_obj), MOVE(plus_obj), MOVE(arrow_obj)};
 
   auto house_handle = OF::make_mesh(logger,   gfx.d3.house,   opengl::MeshProperties{objs.house});
   auto hashtag_handle = OF::make_mesh(logger, gfx.d3.hashtag, opengl::MeshProperties{objs.hashtag});
   auto at_handle = OF::make_mesh(logger,      gfx.d3.at,      opengl::MeshProperties{objs.at});
   auto plus_handle = OF::make_mesh(logger,    gfx.d3.plus,    opengl::MeshProperties{objs.plus});
+  auto arrow_handle = OF::make_mesh(logger,    gfx.d3.arrow,  opengl::MeshProperties{objs.arrow});
 
   auto cube_skybox = OF::copy_cube_gpu(logger, gfx.d3.skybox, {{10.0f, 10.0f, 10.0f}});
   auto cube_textured = OF::copy_cube_gpu(logger, gfx.d3.texture_cube, {{0.15f, 0.15f, 0.15f}});
@@ -60,6 +62,7 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
     MOVE(hashtag_handle),
     MOVE(at_handle),
     MOVE(plus_handle),
+    MOVE(arrow_handle),
     MOVE(cube_skybox),
     MOVE(cube_textured),
     MOVE(cube_colored),
@@ -119,6 +122,7 @@ make_entities(PROXY &proxy)
   make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // SKYBOX_INDEX
   make_entity(glm::vec3{2.0f, 0.0f, -4.0f});  // HOUSE_CUBE
   make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // AT_INDEX
+  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // ARROW_INDEX
   make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // TILEMAP_INDEX
   make_entity(glm::vec3{0.0f, 5.0f, 0.0f});   // TERRAIN_INDEX
   make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // CAMERA_INDEX
@@ -151,12 +155,15 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   auto &skybox_ent = *entities[GameState::SKYBOX_INDEX];
   auto &player_ent = *entities[GameState::AT_INDEX];
 
+  auto &arrow_ent = *entities[GameState::ARROW_INDEX];
+  arrow_ent.scale = glm::vec3{0.1f, 0.1f, 0.1f};
+
   // camera-look at origin
   // cameraspace "up" is === "up" in worldspace.  auto constexpr UP = opengl::Y_UNIT_VECTOR;
   auto const FORWARD = -opengl::Z_UNIT_VECTOR;
   auto constexpr UP = opengl::Y_UNIT_VECTOR;
   auto camera = CF::make_default(cmode, proj, skybox_ent, player_ent, FORWARD, UP);
-  Player player{player_ent, FORWARD, UP};
+  Player player{player_ent, arrow_ent, FORWARD, UP};
 
   return GameState{logger, imgui, dimensions, MOVE(rng), MOVE(tmap), MOVE(entities), MOVE(camera),
       MOVE(player)};
@@ -193,6 +200,9 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
 
   // player
   opengl::draw(rargs, *ents[GS::AT_INDEX], d3.at, handles.at);
+
+  // arrow
+  opengl::draw(rargs, *ents[GS::ARROW_INDEX], d3.arrow, handles.arrow);
 
   // terrain
   //opengl::draw(rargs, *ents[GS::TERRAIN_INDEX], d3.terrain, handles.terrain);

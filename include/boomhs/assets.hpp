@@ -10,6 +10,7 @@ struct Objs {
   opengl::obj hashtag;
   opengl::obj at;
   opengl::obj plus;
+  opengl::obj arrow;
 
   MOVE_CONSTRUCTIBLE_ONLY(Objs);
 };
@@ -19,6 +20,7 @@ struct GpuHandles {
   opengl::DrawInfo hashtag;
   opengl::DrawInfo at;
   opengl::DrawInfo plus;
+  opengl::DrawInfo arrow;
 
   opengl::DrawInfo cube_skybox;
   opengl::DrawInfo cube_textured;

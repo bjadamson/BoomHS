@@ -58,9 +58,10 @@ struct GameState
   static constexpr std::size_t SKYBOX_INDEX = 3;
   static constexpr std::size_t HOUSE_INDEX = 4;
   static constexpr std::size_t AT_INDEX = 5;
-  static constexpr std::size_t TILEMAP_INDEX = 6;
-  static constexpr std::size_t TERRAIN_INDEX = 7;
-  static constexpr std::size_t CAMERA_INDEX = 8;
+  static constexpr std::size_t ARROW_INDEX = 6;
+  static constexpr std::size_t TILEMAP_INDEX = 7;
+  static constexpr std::size_t TERRAIN_INDEX = 8;
+  static constexpr std::size_t CAMERA_INDEX = 9;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
   GameState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
