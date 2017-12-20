@@ -62,9 +62,15 @@ struct GameState
   static constexpr std::size_t TILEMAP_INDEX = 7;
   static constexpr std::size_t TERRAIN_INDEX = 8;
   static constexpr std::size_t CAMERA_INDEX = 9;
-  static constexpr std::size_t AXIS_X_INDEX = 10;
-  static constexpr std::size_t AXIS_Y_INDEX = 11;
-  static constexpr std::size_t AXIS_Z_INDEX = 12;
+  static constexpr std::size_t GLOBAL_AXIS_X_INDEX = 10;
+  static constexpr std::size_t GLOBAL_AXIS_Y_INDEX = 11;
+  static constexpr std::size_t GLOBAL_AXIS_Z_INDEX = 12;
+
+  static constexpr std::size_t LOCAL_AXIS_X_INDEX = 13;
+  static constexpr std::size_t LOCAL_AXIS_Y_INDEX = 14;
+  static constexpr std::size_t LOCAL_AXIS_Z_INDEX = 15;
+
+  static constexpr std::size_t LOCAL_FORWARD_INDEX = 16;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
   GameState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,

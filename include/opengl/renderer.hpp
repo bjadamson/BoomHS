@@ -150,7 +150,8 @@ draw_2dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipeline,
 } // ns detail
 
 template <typename PIPE>
-void draw(RenderArgs const& args, Model const& model, PIPE &pipeline, DrawInfo const& dinfo)
+void
+draw(RenderArgs const& args, Model const& model, PIPE &pipeline, DrawInfo const& dinfo)
 {
   auto &logger = args.logger;
 

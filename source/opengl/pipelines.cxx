@@ -53,12 +53,21 @@ load_pipelines(stlw::Logger &logger)
   DO_TRY(auto d3arrow, make_pipeline<PipelineArrow3D>("3d_arrow.vert", "3d_arrow.frag",
       va::vertex_color(logger)));
 
-  DO_TRY(auto x_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
+  DO_TRY(auto global_x_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
       va::vertex_color(logger)));
-  DO_TRY(auto y_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
+  DO_TRY(auto global_y_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
       va::vertex_color(logger)));
-  DO_TRY(auto z_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
+  DO_TRY(auto global_z_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
       va::vertex_color(logger)));
+
+  DO_TRY(auto local_x_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
+      va::vertex_color(logger)));
+  DO_TRY(auto local_y_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
+      va::vertex_color(logger)));
+  DO_TRY(auto local_z_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
+      va::vertex_color(logger)));
+  DO_TRY(auto local_forward_arrow, make_pipeline<PipelineAxisArrow3D>(
+        "axis_arrow.vert", "axis_arrow.frag", va::vertex_color(logger)));
 
   DO_TRY(auto d3cube, make_pipeline<PipelineTextureCube3D>("3d_cubetexture.vert", "3d_cubetexture.frag",
         va::vertex_only(logger),
@@ -98,9 +107,16 @@ load_pipelines(stlw::Logger &logger)
     MOVE(d3at),
     MOVE(d3plus),
     MOVE(d3arrow),
-    MOVE(x_axis_arrow),
-    MOVE(y_axis_arrow),
-    MOVE(z_axis_arrow),
+
+    MOVE(global_x_axis_arrow),
+    MOVE(global_y_axis_arrow),
+    MOVE(global_z_axis_arrow),
+
+    MOVE(local_x_axis_arrow),
+    MOVE(local_y_axis_arrow),
+    MOVE(local_z_axis_arrow),
+    MOVE(local_forward_arrow),
+
     MOVE(d3cube),
     MOVE(d3house),
     MOVE(d3skybox),

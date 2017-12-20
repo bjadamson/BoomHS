@@ -95,20 +95,16 @@ class Player
     return *this;
   }
 
-  auto right_vector() const
+  glm::vec3
+  right_vector() const
   {
-    return glm::normalize(glm::cross(forward_, up_));
+    auto const cross = glm::cross(forward_vector(), up_vector());
+    return glm::normalize(cross);
   }
 
-  auto back_vector() const { return -forward_; }
+  auto back_vector() const { return -forward_vector(); }
   auto left_vector() const { return -right_vector(); }
-  auto down_vector() const { return -up_; }
-
-  glm::quat
-  orientation() const
-  {
-    return model_.rotation;
-  }
+  auto down_vector() const { return -up_vector(); }
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Player);
@@ -120,40 +116,73 @@ public:
   {
   }
 
+  std::string
+  display() const
+  {
+    auto const& pos = position();
+    return fmt::sprintf(
+        "pos: '%s'\nforward_: '%s'\nforward_vector: '%s'\nright_vector: '%s'up_vector: '%s'\nquat: '%s'\n",
+        glm::to_string(pos),
+        glm::to_string(forward_),
+        glm::to_string(forward_vector()),
+        glm::to_string(right_vector()),
+        glm::to_string(up_vector()),
+        glm::to_string(orientation())
+        );
+  }
+
+  glm::vec3
+  forward_vector() const
+  {
+    return forward_ * model_.rotation;
+  }
+
+  glm::vec3
+  up_vector() const
+  {
+    return up_ * model_.rotation;
+  }
+
+  glm::quat const&
+  orientation() const
+  {
+    return model_.rotation;
+  }
+
+  glm::vec3 const&
+  position() const
+  {
+    return model_.translation;
+  }
+
   auto& move_forward(float const s)
   {
-    auto const vec = -opengl::Z_UNIT_VECTOR;// * model_.rotation;
-    return move(s, vec);
+    return move(s, forward_vector());
   }
 
   auto& move_backward(float const s)
   {
-    auto const vec = opengl::Z_UNIT_VECTOR;// * model_.rotation;
-    return move(s, vec);
+    return move(s, back_vector());
   }
 
   auto& move_left(float const s)
   {
-    auto const vec = -opengl::X_UNIT_VECTOR;//glm::vec3{0.0f, 0.0f, 1.0f};// * model_.rotation;
-    return move(s, vec);
+    return move(s, left_vector());
   }
 
   auto& move_right(float const s)
   {
-    auto const vec = opengl::X_UNIT_VECTOR;//glm::vec3{0.0f, 0.0f, -1.0f};// * model_.rotation;
-    return move(s, vec);
+    return move(s, right_vector());
   }
 
   auto& move_up(float const s)
   {
-    auto const vec = opengl::Y_UNIT_VECTOR;//glm::vec3{0.0f, 1.0f, 0.0f};// * model_.rotation;
-    return move(s, vec);
+    return move(s, up_vector());
   }
 
   auto& move_down(float const s)
   {
-    auto const vec = -opengl::Y_UNIT_VECTOR;//glm::vec3{0.0f, -1.0f, 0.0f};// * model_.rotation;
-    return move(s, vec);
+    return move(s, down_vector());
   }
 
   void
@@ -176,6 +205,7 @@ public:
     float const a = left ? 5.0f : -5.0f;
     glm::quat const new_rotation = glm::angleAxis(glm::radians(a), glm::vec3{0.0, 1.0f, 0.0f});
     model_.rotation = new_rotation * model_.rotation;
+    arrow_.rotation = new_rotation * arrow_.rotation;
   }
 
   void

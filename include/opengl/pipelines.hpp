@@ -247,9 +247,17 @@ struct Pipeline3D
   PipelineAt3D at;
   PipelinePlus3D plus;
   PipelineArrow3D arrow;
-  PipelineAxisArrow3D x_axis_arrow;
-  PipelineAxisArrow3D y_axis_arrow;
-  PipelineAxisArrow3D z_axis_arrow;
+
+  PipelineAxisArrow3D global_x_axis_arrow;
+  PipelineAxisArrow3D global_y_axis_arrow;
+  PipelineAxisArrow3D global_z_axis_arrow;
+
+  PipelineAxisArrow3D local_x_axis_arrow;
+  PipelineAxisArrow3D local_y_axis_arrow;
+  PipelineAxisArrow3D local_z_axis_arrow;
+
+  PipelineAxisArrow3D local_forward_arrow;
+
   PipelineTextureCube3D texture_cube;
   PipelineTexture3D house;
   PipelineSkybox3D skybox;

@@ -39,16 +39,25 @@ draw_camera_info(GameState &state)
     auto const display = camera.display();
     ImGui::Text("%s", display.c_str());
   }
-  {
-    auto const target_display = camera.follow_target_display();
-    ImGui::Text("target: '%s'", target_display.c_str());
-  }
-
   ImGui::Checkbox("Flip Y", &state.ui_state.flip_y);
   //bool ign_;
   //if (ImGui::Checkbox("Toggle Mode", &ign_)) {
     //state.camera.toggle_mode();
   //}
+
+  ImGui::End();
+}
+
+void
+draw_player_info(GameState &state)
+{
+  auto &player = state.player;
+
+  ImGui::Begin("PLAYER INFO WINDOW");
+  {
+    auto const display = player.display();
+    ImGui::Text("%s", display.c_str());
+  }
 
   ImGui::End();
 }
@@ -64,6 +73,7 @@ void draw_ui(GameState &state, PROXY &proxy)
   using namespace detail;
   draw_entity_editor(state);
   draw_camera_info(state);
+  draw_player_info(state);
 
   ImGui::Checkbox("Draw Skybox", &state.draw_skybox);
 
