@@ -18,6 +18,7 @@
 #include <vector>
 
 using stlw::Logger;
+namespace LOC = opengl::LIST_OF_COLORS;
 
 namespace boomhs
 {
@@ -28,34 +29,53 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
   // LOAD different assets.
   //"assets/chalet.mtl"
   namespace OF = opengl::factories;
+  using namespace opengl;
 
-  auto house_obj = opengl::load_mesh("assets/house_uv.obj", opengl::LoadNormals{true}, opengl::LoadUvs{true});
-  auto hashtag_obj = opengl::load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
-  auto at_obj = opengl::load_mesh("assets/at.obj", "assets/at.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
-  auto plus_obj = opengl::load_mesh("assets/plus.obj", "assets/plus.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
-  auto arrow_obj = opengl::load_mesh("assets/arrow.obj", "assets/arrow.mtl", opengl::LoadNormals{false}, opengl::LoadUvs{false});
+  auto loader = ObjLoader{LOC::ORANGE};
+  auto house_obj = loader.load_mesh("assets/house_uv.obj", LoadNormals{true}, LoadUvs{true});
+  auto hashtag_obj = loader.load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", LoadNormals{false}, LoadUvs{false});
+
+  auto at_obj = loader.load_mesh("assets/at.obj", "assets/at.mtl", LoadNormals{false}, LoadUvs{false});
+  auto plus_obj = loader.load_mesh("assets/plus.obj", "assets/plus.mtl", LoadNormals{false}, LoadUvs{false});
+
+  loader.set_color(LOC::YELLOW);
+  auto arrow_obj = loader.load_mesh("assets/arrow.obj", "assets/arrow.mtl", LoadNormals{false}, LoadUvs{false});
+
+  //loader.set_color(LOC::RED);
+  //auto x_arrow_obj = loader.load_mesh("assets/arrow.obj", "assets/arrow.mtl", LoadNormals{false}, LoadUvs{false});
+
+  //loader.set_color(LOC::GREEN);
+  //auto y_arrow_obj = loader.load_mesh("assets/arrow.obj", "assets/arrow.mtl", LoadNormals{false}, LoadUvs{false});
+
+  //loader.set_color(LOC::BLUE);
+  //auto z_arrow_obj = loader.load_mesh("assets/arrow.obj", "assets/arrow.mtl", LoadNormals{false}, LoadUvs{false});
 
   Objs objs{MOVE(house_obj), MOVE(hashtag_obj), MOVE(at_obj), MOVE(plus_obj), MOVE(arrow_obj)};
+      //MOVE(x_arrow_obj), MOVE(y_arrow_obj), MOVE(z_arrow_obj)};
 
-  auto house_handle = OF::make_mesh(logger,   gfx.d3.house,   opengl::MeshProperties{objs.house});
-  auto hashtag_handle = OF::make_mesh(logger, gfx.d3.hashtag, opengl::MeshProperties{objs.hashtag});
-  auto at_handle = OF::make_mesh(logger,      gfx.d3.at,      opengl::MeshProperties{objs.at});
-  auto plus_handle = OF::make_mesh(logger,    gfx.d3.plus,    opengl::MeshProperties{objs.plus});
-  auto arrow_handle = OF::make_mesh(logger,    gfx.d3.arrow,  opengl::MeshProperties{objs.arrow});
+  auto house_handle = OF::make_mesh(logger,   gfx.d3.house,   MeshProperties{objs.house});
+  auto hashtag_handle = OF::make_mesh(logger, gfx.d3.hashtag, MeshProperties{objs.hashtag});
+  auto at_handle = OF::make_mesh(logger,      gfx.d3.at,      MeshProperties{objs.at});
+  auto plus_handle = OF::make_mesh(logger,    gfx.d3.plus,    MeshProperties{objs.plus});
+  auto arrow_handle = OF::make_mesh(logger,    gfx.d3.arrow,  MeshProperties{objs.arrow});
 
   auto cube_skybox = OF::copy_cube_gpu(logger, gfx.d3.skybox, {{10.0f, 10.0f, 10.0f}});
   auto cube_textured = OF::copy_cube_gpu(logger, gfx.d3.texture_cube, {{0.15f, 0.15f, 0.15f}});
 
   auto cube_colored = OF::copy_cube_gpu(logger, gfx.d3.color, {{0.25f, 0.25f, 0.25f}},
-      opengl::LIST_OF_COLORS::BLUE);
+      LOC::BLUE);
 
   auto cube_wf = OF::copy_cube_gpu(logger, gfx.d3.wireframe, {{0.25f, 0.25f, 0.25f}, true});
 
   auto terrain_handle = OF::copy_cube_gpu(logger, gfx.d3.terrain, {{2.0f, 0.4f, 2.0f}},
-      opengl::LIST_OF_COLORS::SADDLE_BROWN);
+      LOC::SADDLE_BROWN);
 
   auto tilemap_handle = OF::copy_tilemap_gpu(logger, gfx.d3.hashtag,
       {GL_TRIANGLE_STRIP, objs.hashtag});
+
+  auto x_axis_handle = OF::create_x_axis_arrow(logger, gfx.d3.x_axis_arrow);
+  auto y_axis_handle = OF::create_y_axis_arrow(logger, gfx.d3.y_axis_arrow);
+  auto z_axis_handle = OF::create_z_axis_arrow(logger, gfx.d3.z_axis_arrow);
 
   GpuHandles handles{
     MOVE(house_handle),
@@ -63,6 +83,9 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
     MOVE(at_handle),
     MOVE(plus_handle),
     MOVE(arrow_handle),
+    MOVE(x_axis_handle),
+    MOVE(y_axis_handle),
+    MOVE(z_axis_handle),
     MOVE(cube_skybox),
     MOVE(cube_textured),
     MOVE(cube_colored),
@@ -114,6 +137,7 @@ make_entities(PROXY &proxy)
     p.translation = t;
 
     entities.emplace_back(&p);
+    return eid;
   };
 
   make_entity(glm::vec3{2.0f, 2.0f, 2.0f});   // COLOR_CUBE
@@ -122,10 +146,14 @@ make_entities(PROXY &proxy)
   make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // SKYBOX_INDEX
   make_entity(glm::vec3{2.0f, 0.0f, -4.0f});  // HOUSE_CUBE
   make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // AT_INDEX
-  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // ARROW_INDEX
+  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // PLAYER_ARROW_INDEX
   make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // TILEMAP_INDEX
   make_entity(glm::vec3{0.0f, 5.0f, 0.0f});   // TERRAIN_INDEX
   make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // CAMERA_INDEX
+
+  auto const xaxis_eid = make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // AXIS_X_INDEX
+  auto const yaxis_eid = make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // AXIS_Y_INDEX
+  auto const zaxis_eid = make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // AXIS_Z_INDEX
   return entities;
 }
 
@@ -150,19 +178,29 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   stlw::float_generator rng;
   auto tmap = make_tilemap(rng);
   auto entities = make_entities(proxy);
-  auto constexpr cmode = opengl::CameraMode::FPS;
 
   auto &skybox_ent = *entities[GameState::SKYBOX_INDEX];
   auto &player_ent = *entities[GameState::AT_INDEX];
 
-  auto &arrow_ent = *entities[GameState::ARROW_INDEX];
+  auto &arrow_ent = *entities[GameState::PLAYER_ARROW_INDEX];
   arrow_ent.scale = glm::vec3{0.1f, 0.1f, 0.1f};
+
+  //auto const set_arrow = [&entities](std::size_t const index, glm::vec3 const& axis) {
+    //auto &entity = *entities[index];
+    //entity.scale = glm::vec3{0.3f, 0.1f, 0.1f};
+    //entity.rotation = glm::angleAxis(glm::radians(90.0f), axis) * entity.rotation;
+//
+    //entity.translation += (3 * axis);
+  //};
+  //set_arrow(GameState::AXIS_X_INDEX, opengl::X_UNIT_VECTOR);
+  //set_arrow(GameState::AXIS_Y_INDEX, opengl::Y_UNIT_VECTOR);
+  //set_arrow(GameState::AXIS_Z_INDEX, opengl::Z_UNIT_VECTOR);
 
   // camera-look at origin
   // cameraspace "up" is === "up" in worldspace.  auto constexpr UP = opengl::Y_UNIT_VECTOR;
   auto const FORWARD = -opengl::Z_UNIT_VECTOR;
   auto constexpr UP = opengl::Y_UNIT_VECTOR;
-  auto camera = CF::make_default(cmode, proj, skybox_ent, player_ent, FORWARD, UP);
+  auto camera = CF::make_default(proj, skybox_ent, player_ent, FORWARD, UP);
   Player player{player_ent, arrow_ent, FORWARD, UP};
 
   return GameState{logger, imgui, dimensions, MOVE(rng), MOVE(tmap), MOVE(entities), MOVE(camera),
@@ -172,7 +210,7 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
 template<typename PROXY>
 void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Assets const& assets)
 {
-  opengl::clear_screen(opengl::LIST_OF_COLORS::BLACK);
+  opengl::clear_screen(LOC::BLACK);
   auto rargs = state.render_args();
   auto const& ents = state.entities;
   auto const& handles = assets.handles;
@@ -194,15 +232,24 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
   opengl::draw(rargs, *ents[GS::HOUSE_INDEX], d3.house, handles.house);
 
   // tilemap
-  opengl::draw_tilemap(rargs, *ents[GS::TILEMAP_INDEX],
-      {handles.hashtag, d3.hashtag, handles.plus, d3.plus},
-      state.tilemap);
+  //opengl::draw_tilemap(rargs, *ents[GS::TILEMAP_INDEX],
+      //{handles.hashtag, d3.hashtag, handles.plus, d3.plus},
+      //state.tilemap);
 
   // player
   opengl::draw(rargs, *ents[GS::AT_INDEX], d3.at, handles.at);
 
   // arrow
-  opengl::draw(rargs, *ents[GS::ARROW_INDEX], d3.arrow, handles.arrow);
+  opengl::draw(rargs, *ents[GS::PLAYER_ARROW_INDEX], d3.arrow, handles.arrow);
+
+  opengl::draw(rargs, *ents[GS::AXIS_X_INDEX], d3.x_axis_arrow, handles.x_axis_arrow);
+  opengl::draw(rargs, *ents[GS::AXIS_Y_INDEX], d3.y_axis_arrow, handles.y_axis_arrow);
+  opengl::draw(rargs, *ents[GS::AXIS_Z_INDEX], d3.z_axis_arrow, handles.z_axis_arrow);
+  //opengl::draw_axis(rargs, d3.x_axis_arrow, handles.x_axis_arrow);
+  //opengl::draw(rargs, *ents[GS::AXIS_Y_INDEX], d3.y_axis_arrow, handles.y_axis_arrow);
+  //opengl::draw(rargs, *ents[GS::AXIS_Z_INDEX], d3.z_axis_arrow, handles.z_axis_arrow);
+
+  //opengl::draw(rargs, *ents[GS::AXIS_X_INDEX], d3.x_axis_arrow, handles.z_axis_arrow);
 
   // terrain
   //opengl::draw(rargs, *ents[GS::TERRAIN_INDEX], d3.terrain, handles.terrain);

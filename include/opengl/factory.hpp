@@ -268,6 +268,87 @@ auto copy_cube_14indices_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory:
   return dinfo;
 }
 
+
+template<typename PIPE, typename ...Args>
+auto
+create_axis_arrow(stlw::Logger &logger, PIPE &pipeline, Color const& c,
+    glm::vec3 const& head, glm::vec3 const& tip1, glm::vec3 const& tip2)
+{
+#define COLOR c.r, c.g, c.b, c.a
+#define EOA head.x, head.y, head.z, 1.0f
+  auto const vertices = stlw::make_array<float>(
+    0.0f, 0.0f, 0.0f, 1.0f, // origin
+    COLOR,
+
+    EOA,
+    COLOR,
+
+    EOA,
+    COLOR,
+
+    tip1.x, tip1.y, tip1.z, 1.0f,
+    COLOR,
+
+    EOA,
+    COLOR,
+
+    tip2.x, tip2.y, tip2.z, 1.0f,
+    COLOR
+      );
+#undef EOA
+#undef COLOR
+
+  static constexpr std::array<GLuint, 6> INDICES = {{
+    0, 1, 2, 3, 4, 5
+  }};
+
+  DrawInfo dinfo{GL_LINES, INDICES.size()};
+  detail::copy_to_gpu(logger, pipeline, dinfo, vertices, INDICES);
+  return dinfo;
+}
+
+template<typename PIPE, typename ...Args>
+auto
+create_x_axis_arrow(stlw::Logger &logger, PIPE &pipeline, Args &&... args)
+{
+  float constexpr AHH = 0.125f; // arrow head height
+  float constexpr AHL = 0.65f; // arrow head length
+
+  glm::vec3 const head = X_UNIT_VECTOR;
+
+  glm::vec3 const tip1{AHL, AHH, 0.0f};
+  glm::vec3 const tip2{AHL, -AHH, 0.0f};
+  Color const c = LOC::RED;
+  return create_axis_arrow(logger, pipeline, c, head, tip1, tip2);
+}
+
+template<typename PIPE, typename ...Args>
+auto
+create_y_axis_arrow(stlw::Logger &logger, PIPE &pipeline, Args &&... args)
+{
+  float constexpr AHH = 0.125f; // arrow head height
+  float constexpr AHL = 0.65f; // arrow head length
+
+  glm::vec3 const head = Y_UNIT_VECTOR;
+  glm::vec3 const tip1{AHH, AHL, 0.0f};
+  glm::vec3 const tip2{-AHH, AHL, 0.0f};
+  Color const c = LOC::GREEN;
+  return create_axis_arrow(logger, pipeline, c, head, tip1, tip2);
+}
+
+template<typename PIPE, typename ...Args>
+auto
+create_z_axis_arrow(stlw::Logger &logger, PIPE &pipeline, Args &&... args)
+{
+  float constexpr AHH = 0.125f; // arrow head height
+  float constexpr AHL = 0.65f; // arrow head length
+  glm::vec3 const head = Z_UNIT_VECTOR;
+  glm::vec3 const tip1{AHH, 0.0f, AHL};
+  glm::vec3 const tip2{-AHH, 0.0f, AHL};
+  Color const c = LOC::BLUE;
+  return create_axis_arrow(logger, pipeline, c, head, tip1, tip2);
+}
+
 template<typename P, typename ...Args>
 auto make_mesh(stlw::Logger &logger, P &pipeline, MeshProperties &&mprop, Args &&... args)
 {

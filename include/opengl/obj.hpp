@@ -1,10 +1,21 @@
 #pragma once
+#include <opengl/colors.hpp>
 #include <opengl/glew.hpp>
 #include <stlw/sized_buffer.hpp>
 #include <stlw/type_macros.hpp>
 
 namespace opengl
 {
+
+struct LoadNormals
+{
+  bool const value = false;
+};
+
+struct LoadUvs
+{
+  bool const value = false;
+};
 
 struct obj
 {
@@ -17,20 +28,25 @@ struct obj
   MOVE_CONSTRUCTIBLE_ONLY(obj);
 };
 
-struct LoadNormals
+class ObjLoader
 {
-  bool const value = false;
+  Color color_;
+public:
+  explicit ObjLoader(Color const& c)
+    : color_(c)
+  {
+  }
+
+  obj
+  load_mesh(char const*, char const*, LoadNormals const, LoadUvs const) const;
+
+  obj
+  load_mesh(char const*, LoadNormals const, LoadUvs const) const;
+
+  void set_color(Color const& c)
+  {
+    color_ = c;
+  }
 };
-
-struct LoadUvs
-{
-  bool const value = false;
-};
-
-obj
-load_mesh(char const*, char const*, LoadNormals const, LoadUvs const);
-
-obj
-load_mesh(char const*, LoadNormals const, LoadUvs const);
 
 } // ns opengl

@@ -6,7 +6,7 @@ namespace opengl
 
 struct Color
 {
-  float const r, g, b, a;
+  float r, g, b, a;
 
   static constexpr float DEFAULT_ALPHA = 1.0f;
 
@@ -186,3 +186,5 @@ namespace LIST_OF_COLORS
 // clang-format on
 } // ns LIST_OF_COLORS
 } // ns opengl
+
+namespace LOC = opengl::LIST_OF_COLORS;

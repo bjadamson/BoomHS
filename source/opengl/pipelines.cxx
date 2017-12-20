@@ -53,6 +53,13 @@ load_pipelines(stlw::Logger &logger)
   DO_TRY(auto d3arrow, make_pipeline<PipelineArrow3D>("3d_arrow.vert", "3d_arrow.frag",
       va::vertex_color(logger)));
 
+  DO_TRY(auto x_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
+      va::vertex_color(logger)));
+  DO_TRY(auto y_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
+      va::vertex_color(logger)));
+  DO_TRY(auto z_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
+      va::vertex_color(logger)));
+
   DO_TRY(auto d3cube, make_pipeline<PipelineTextureCube3D>("3d_cubetexture.vert", "3d_cubetexture.frag",
         va::vertex_only(logger),
         texture::upload_3dcube_texture(logger,
@@ -91,6 +98,9 @@ load_pipelines(stlw::Logger &logger)
     MOVE(d3at),
     MOVE(d3plus),
     MOVE(d3arrow),
+    MOVE(x_axis_arrow),
+    MOVE(y_axis_arrow),
+    MOVE(z_axis_arrow),
     MOVE(d3cube),
     MOVE(d3house),
     MOVE(d3skybox),

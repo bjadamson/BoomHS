@@ -45,10 +45,10 @@ draw_camera_info(GameState &state)
   }
 
   ImGui::Checkbox("Flip Y", &state.ui_state.flip_y);
-  bool ign_;
-  if (ImGui::Checkbox("Toggle Mode", &ign_)) {
-    state.camera.toggle_mode();
-  }
+  //bool ign_;
+  //if (ImGui::Checkbox("Toggle Mode", &ign_)) {
+    //state.camera.toggle_mode();
+  //}
 
   ImGui::End();
 }

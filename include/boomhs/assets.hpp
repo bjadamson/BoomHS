@@ -21,6 +21,9 @@ struct GpuHandles {
   opengl::DrawInfo at;
   opengl::DrawInfo plus;
   opengl::DrawInfo arrow;
+  opengl::DrawInfo x_axis_arrow;
+  opengl::DrawInfo y_axis_arrow;
+  opengl::DrawInfo z_axis_arrow;
 
   opengl::DrawInfo cube_skybox;
   opengl::DrawInfo cube_textured;

@@ -51,34 +51,48 @@ bool process_event(GameState &state, SDL_Event &event)
       break;
     }
     add_from_event(state.mouse_data, event);
-    camera.rotate(logger, state.ui_state, state.mouse_data);
 
     if (event.motion.state & SDL_BUTTON_RMASK) {
+
+      //auto const& c = state.mouse.current;
+      //auto const player_to_mouse = glm::normalize(player.pos - glm::vec3{c.x, c.y, 0.0f});
+      //player.match_camera_rotation(camera);
       //bool const right = event.motion.xrel > 0;
       //bool const left = event.motion.xrel < 0;
       //assert((right != left) || (!right && !left));
-      float constexpr ANGLE = 3.5f;
+      //float constexpr ANGLE = 3.5f;
       player.rotate(ANGLE, /*right,*/ state.mouse_data);
+      //player.match__rotation();
+
+      // idea
+      // Set the camera's position equal to the player's position
+      //glm::vec3 const distance = player.forward() * camera.radius();
+      //camera.pos = distance;
+      //camera.look_at_target();
+      //camera.reset_
+    } else {
+      camera.rotate(logger, state.ui_state, state.mouse_data);
     }
     break;
   }
   case SDL_MOUSEWHEEL: {
     LOG_TRACE("mouse wheel event detected.");
+    float constexpr ZOOM_FACTOR = 1.1f;
     if (event.wheel.y > 0) {
-      LOG_ERROR("increasing sensitivity by factor 2");
-      state.mouse_data.sensitivity.x *= 2.0f;
-      state.mouse_data.sensitivity.y *= 2.0f;
+      camera.zoom(ZOOM_FACTOR);
     } else {
-      LOG_ERROR("decreasing sensitivity by factor 2");
-      state.mouse_data.sensitivity.x *= 0.5f;
-      state.mouse_data.sensitivity.y *= 0.5f;
+      camera.zoom(-ZOOM_FACTOR);
     }
     break;
   }
   case SDL_MOUSEBUTTONDOWN:
   {
+    if (event.button.button == SDL_BUTTON_RIGHT) {
+      //camera.match_target_rotation();
+      player.match_camera_rotation(camera);
+    }
     LOG_ERROR("toggling mouse up/down (pitch) lock");
-    state.mouse_data.pitch_lock = !state.mouse_data.pitch_lock;
+    state.mouse_data.pitch_lock ^= true;
     break;
   }
   case SDL_MOUSEBUTTONUP:
@@ -113,7 +127,7 @@ bool process_event(GameState &state, SDL_Event &event)
     }
     case SDLK_t: {
       // invert
-      state.camera.toggle_mode();
+      //state.camera.toggle_mode();
       break;
     }
     // scaling

@@ -1,47 +1,182 @@
 #include <opengl/camera.hpp>
 #include <boomhs/state.hpp>
+#include <limits>
+
+namespace {
+
+//glm::vec3
+//direction_facing_degrees(glm::quat const& orientation)
+//{
+  //return glm::degrees(glm::eulerAngles(orientation));
+//}
+
+} // ns anonymous
 
 namespace opengl
 {
 
-glm::vec3
-to_cartesian(float const radius, float const theta, float const phi)
+SphericalCoordinates
+to_spherical(glm::vec3 cartesian)
 {
-  float const x = radius * sinf(phi) * sinf(theta);
+  static constexpr float EPSILONF = std::numeric_limits<float>::epsilon();
+
+  if (cartesian.x == 0) {
+    cartesian.x = EPSILONF;
+  }
+  float const radius = sqrt((cartesian.x * cartesian.x)
+                  + (cartesian.y * cartesian.y)
+                  + (cartesian.z * cartesian.z));
+  float theta = acos(cartesian.z / radius);
+  //float theta = atan(cartesian.z / cartesian.x);
+  if (cartesian.x < 0) {
+    float constexpr PI = glm::pi<float>();
+    theta += PI;
+  }
+  float const phi = atan(cartesian.y / cartesian.x);
+
+  return SphericalCoordinates{radius, theta, phi};
+}
+
+glm::vec3
+to_cartesian(SphericalCoordinates const& coords)
+{
+  float const radius = coords.radius;
+  float const theta = coords.theta;
+  float const phi = coords.phi;
+
+  float const sin_phi = sinf(phi);
+
+  float const x = radius * sin_phi * sinf(theta);
   float const y = radius * cosf(phi);
-  float const z = radius * sinf(phi) * cosf(theta);
+  float const z = radius * sin_phi * cosf(theta);
 
   return glm::vec3{x, y, z};
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// FpsCamera
-glm::vec3
-FpsCamera::direction_facing_degrees() const
-{
-  return glm::degrees(glm::eulerAngles(this->orientation()));
-}
-
+// OrbitCamera
 glm::mat4
-FpsCamera::view(Model const& target_model) const
+OrbitCamera::view(Model const& target_model) const
 {
-  glm::vec3 const pos = -target_model.translation;
-  auto const translation = glm::translate(glm::mat4(), pos);
+  auto const& target = target_model.translation;
+  auto const position_xyz = target + to_cartesian(coordinates_);
 
-  glm::mat4 const orientation = glm::mat4_cast(this->orientation_);
-  return orientation * translation;
+  return glm::lookAt(position_xyz, target, this->up());
 }
 
 std::string
-FpsCamera::display() const
+OrbitCamera::display() const
 {
-  auto const f = direction_facing_degrees();
-  auto const x = std::to_string(f.x);
-  auto const y = std::to_string(f.y);
-  auto const z = std::to_string(f.z);
-  return fmt::sprintf("x: '%s', y: '%s', z: '%s'", x.c_str(), y.c_str(), z.c_str());
+  auto const r = std::to_string(coordinates_.radius);
+  auto const t = std::to_string(coordinates_.theta);
+  auto const p = std::to_string(coordinates_.phi);
+
+  auto const cart = to_cartesian(coordinates_);
+  auto const x = std::to_string(cart.x);
+  auto const y = std::to_string(cart.y);
+  auto const z = std::to_string(cart.z);
+  return fmt::sprintf("camera info:\nx: '%s', y: '%s', z: '%s'\n", x.c_str(), y.c_str(), z.c_str())
+    + " " + fmt::sprintf("r: '%s', t: '%s', p: '%s'", r.c_str(), t.c_str(), p.c_str());
 }
 
+OrbitCamera&
+OrbitCamera::zoom(float const distance)
+{
+  float const new_radius = coordinates_.radius - distance;
+  if (new_radius > 0.0f) {
+    coordinates_.radius -= distance;
+  } else {
+    coordinates_.radius = 0.0001f;
+  }
+  return *this;
+
+  // Don't let the radius go negative
+  // If it does, re-project our target down the look vector
+  //if (m_radius <= 0.0f) {
+    //coordinates_.radius = 30.0f;
+    //auto const look = glm::normalize(m_target - to_cartesian());
+    //target_ = DirectX::XMVectorAdd(m_target, DirectX::XMVectorScale(look, 30.0f));
+  //}
+}
+
+OrbitCamera&
+OrbitCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mouse_data const& mdata)
+{
+  auto const& current = mdata.current;
+  glm::vec2 const delta = glm::vec2{current.xrel, current.yrel};
+
+  auto const& mouse_sens = mdata.sensitivity;
+  float const d_theta = mouse_sens.x * delta.x;
+  float const d_phi = mouse_sens.y * delta.y;
+
+  {
+    auto const& theta = coordinates_.theta;
+    coordinates_.theta = (up_.y > 0.0f) ? (theta - d_theta) : (theta + d_theta);
+  }
+
+  float constexpr PI = glm::pi<float>();
+  float constexpr TWO_PI = PI * 2.0f;
+
+  auto &phi = coordinates_.phi;
+  float const new_phi = uistate.flip_y ? (phi + d_phi) : (phi - d_phi);
+  bool const top_hemisphere = (new_phi > 0 && new_phi < (PI/2.0f)) || (new_phi < -(PI/2.0f) && new_phi > -TWO_PI);
+  if (top_hemisphere) {
+    phi = new_phi;
+  }
+
+  // Keep phi within -2PI to +2PI for easy 'up' comparison
+  if (phi > TWO_PI) {
+    phi -= TWO_PI;
+  } else if (phi < -TWO_PI) {
+    phi += TWO_PI;
+  }
+
+  // If phi is between 0 to PI or -PI to -2PI, make 'up' be positive Y, other wise make it negative Y
+  if ((phi > 0 && phi < PI) || (phi < -PI && phi > -TWO_PI)) {
+    up_ = Y_UNIT_VECTOR;
+  } else {
+    up_ = -Y_UNIT_VECTOR;
+  }
+
+  return *this;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Camera
+Camera::Camera(Projection const& proj, skybox &&sb, glm::vec3 const& forward, glm::vec3 const& up,
+    Model &target)
+  : projection_(proj)
+  , skybox_(MOVE(sb))
+  , orbit_(up)
+  , target_(target)
+{
+  this->skybox_.model.translation = forward;
+}
+
+std::string
+Camera::display() const
+{
+  return orbit_.display();
+}
+
+std::string
+Camera::follow_target_display() const
+{
+  return fmt::sprintf("follow target\nxyz: '%s'\nrot rtp: '%s'",
+      glm::to_string(target_.translation),
+      glm::to_string(target_.rotation));
+}
+
+Camera&
+Camera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mouse_data const& mdata)
+{
+  orbit_.rotate(logger, uistate, mdata);
+  return *this;
+}
+
+} // ns opengl
+
+/*
 FpsCamera&
 FpsCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mouse_data const& mdata)
 {
@@ -76,101 +211,4 @@ FpsCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mouse_
   this->orientation_ = glm::normalize(quat * this->orientation_);
   return *this;
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// OrbitCamera
-glm::mat4
-OrbitCamera::view(Model const& target_model) const
-{
-  auto const& target = target_model.translation;
-  auto const position_xyz = target + to_cartesian(radius_, theta_, phi_);
-
-  return glm::lookAt(position_xyz, target, this->up());
-}
-
-std::string
-OrbitCamera::display() const
-{
-  auto const r = std::to_string(radius_);
-  auto const t = std::to_string(theta_);
-  auto const p = std::to_string(phi_);
-  return fmt::sprintf("r: '%s', t: '%s', p: '%s'", r.c_str(), t.c_str(), p.c_str());
-}
-
-OrbitCamera&
-OrbitCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mouse_data const& mdata)
-{
-  auto const& current = mdata.current;
-  glm::vec2 const delta = glm::vec2{current.xrel, current.yrel};
-
-  auto const& mouse_sens = mdata.sensitivity;
-  float const d_theta = mouse_sens.x * delta.x;
-  float const d_phi = mouse_sens.y * delta.y;
-
-  theta_ = (up_.y > 0.0f) ? (theta_ - d_theta) : (theta_ + d_theta);
-
-  float constexpr PI = glm::pi<float>();
-  float constexpr TWO_PI = PI * 2.0f;
-
-  float const new_phi = uistate.flip_y ? (phi_ + d_phi) : (phi_ - d_phi);
-  bool const top_hemisphere = (new_phi > 0 && new_phi < (PI/2.0f)) || (new_phi < -(PI/2.0f) && new_phi > -TWO_PI);
-  if (top_hemisphere) {
-    phi_ = new_phi;
-  }
-
-  // Keep phi within -2PI to +2PI for easy 'up' comparison
-  if (phi_ > TWO_PI) {
-    phi_ -= TWO_PI;
-  } else if (phi_ < -TWO_PI) {
-    phi_ += TWO_PI;
-  }
-
-  // If phi is between 0 to PI or -PI to -2PI, make 'up' be positive Y, other wise make it negative Y
-  if ((phi_ > 0 && phi_ < PI) || (phi_ < -PI && phi_ > -TWO_PI)) {
-    up_ = Y_UNIT_VECTOR;
-  } else {
-    up_ = -Y_UNIT_VECTOR;
-  }
-
-  return *this;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Camera
-Camera::Camera(Projection const& proj, skybox &&sb, glm::vec3 const& front, glm::vec3 const& up,
-    CameraMode const cmode, Model &target)
-  : projection_(proj)
-  , skybox_(MOVE(sb))
-  , fps_(front, up)
-  , orbit_(front, up)
-  , active_mode_(cmode)
-  , target_(target)
-{
-  this->skybox_.model.translation = front;
-}
-
-std::string
-Camera::display() const
-{
-  return active_mode_ == opengl::FPS ? fps_.display() : orbit_.display();
-}
-
-std::string
-Camera::follow_target_display() const
-{
-  return fmt::sprintf("follow target: '%s'", glm::to_string(target_.translation));
-}
-
-Camera&
-Camera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mouse_data const& mdata)
-{
-  if (active_mode_ == FPS) {
-    fps_.rotate(logger, uistate, mdata);
-  } else {
-    orbit_.rotate(logger, uistate, mdata);
-  }
-  return *this;
-}
-
-
-} // ns opengl
+*/

@@ -120,6 +120,18 @@ struct PipelineArrow3D : public BasePipeline
   static bool constexpr HAS_TEXTURE = false;
 };
 
+struct PipelineAxisArrow3D : public BasePipeline
+{
+  PIPELINE_DEFAULT_CTOR(PipelineAxisArrow3D);
+  using info_t = color_t;
+
+  static bool constexpr IS_2D = false;
+  static bool constexpr IS_INSTANCED = false;
+  static bool constexpr IS_SKYBOX = false;
+  static bool constexpr HAS_COLOR_UNIFORM = false;
+  static bool constexpr HAS_TEXTURE = false;
+};
+
 #define PIPELINE_TEXTURE_CTOR(CLASSNAME)                                                           \
   explicit CLASSNAME(ShaderProgram &&sp, VertexAttribute &&va, texture_info const t)               \
     : BasePipeline(MOVE(sp), MOVE(va))                                                             \
@@ -235,6 +247,9 @@ struct Pipeline3D
   PipelineAt3D at;
   PipelinePlus3D plus;
   PipelineArrow3D arrow;
+  PipelineAxisArrow3D x_axis_arrow;
+  PipelineAxisArrow3D y_axis_arrow;
+  PipelineAxisArrow3D z_axis_arrow;
   PipelineTextureCube3D texture_cube;
   PipelineTexture3D house;
   PipelineSkybox3D skybox;
