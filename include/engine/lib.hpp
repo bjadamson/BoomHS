@@ -59,8 +59,8 @@ void loop(Engine &engine, State &state, PROXY &proxy, game::Assets const& assets
       return tag.for_subtasks(exec);
     };
     proxy.execute_systems()(
-        exec_system(st::randompos_system),
-        exec_system(st::player_system));
+        // ADD MORE SYSTEMS HERE
+        exec_system(st::randompos_system));
   }
 
   game::game_loop(state, proxy, engine.opengl_lib, assets);
@@ -133,8 +133,8 @@ start(stlw::Logger &logger, Engine &engine)
   ctx->step([&](auto &proxy) {
     LOG_TRACE("game started, initializing systems.");
     proxy.execute_systems()(
-        system_init(st::randompos_system),
-        system_init(st::player_system));
+        // ADD MORE SYSTEMS HERE
+        system_init(st::randompos_system));
 
     LOG_TRACE("systems initialized, entering main loop.");
     timed_game_loop(proxy, engine, state, assets);

@@ -1,13 +1,11 @@
 #pragma once
 #include <ecst.hpp>
 #include <boomhs/ecst_components.hpp>
-#include <boomhs/player_system.hpp>
 #include <boomhs/randompos_system.hpp>
 
 namespace st
 {
 constexpr auto randompos_system = ecst::tag::system::v<s::randompos_system>;
-constexpr auto player_system = ecst::tag::system::v<s::player_system>;
 
 } // ns st
 
@@ -33,14 +31,10 @@ make_ssl()
   constexpr auto ssig_randompos_system = ss::make(st::randompos_system)
     .parallelism(PA);
 
-  constexpr auto ssig_player_system = ss::make(st::player_system)
-    .parallelism(PA)
-    .write(ct::model);
-
   // clang-format on
 
   // Build and return the "system signature list".
-  return sls::make(ssig_randompos_system, ssig_player_system);
+  return sls::make(ssig_randompos_system);
 }
 
 } // ns ecst_setup

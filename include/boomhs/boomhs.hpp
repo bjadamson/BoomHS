@@ -189,7 +189,7 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
 
   auto &skybox_ent = *entities[GameState::SKYBOX_INDEX];
   auto &player_ent = *entities[GameState::AT_INDEX];
-  //player_ent.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR) * player_ent.rotation;
+  player_ent.scale = glm::vec3{0.25f};
 
   auto &arrow_ent = *entities[GameState::PLAYER_ARROW_INDEX];
   arrow_ent.scale = glm::vec3{0.1f, 0.1f, 0.1f};
