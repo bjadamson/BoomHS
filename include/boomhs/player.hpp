@@ -91,7 +91,7 @@ class Player
   move(float const s, glm::vec3 const& dir)
   {
     model_.translation += (s * dir);
-    arrow_.translation = model_.translation;
+    arrow_.translation += (s * dir);
     return *this;
   }
 
@@ -121,7 +121,7 @@ public:
   {
     auto const& pos = position();
     return fmt::sprintf(
-        "pos: '%s'\nforward_: '%s'\nforward_vector: '%s'\nright_vector: '%s'up_vector: '%s'\nquat: '%s'\n",
+        "pos: '%s'\nforward_: '%s'\nforward_vector: '%s'\nright_vector: '%s'\nup_vector: '%s'\nquat: '%s'\n",
         glm::to_string(pos),
         glm::to_string(forward_),
         glm::to_string(forward_vector()),
@@ -188,22 +188,18 @@ public:
   void
   rotate(float const angle, window::mouse_data const& mdata)
   {
-    //auto const& current = mdata.current;
-    //glm::vec2 const delta = glm::vec2{current.xrel, current.yrel};
+    auto const& current = mdata.current;
+    glm::vec2 const delta = glm::vec2{current.xrel, current.yrel};
 
-    //auto const& mouse_sens = mdata.sensitivity;
-    //auto constexpr yaw = 0.0f;
-    //auto const pitch = angle * mouse_sens.x * delta.x;
-    //auto constexpr roll = 0.0f;
-    //auto const quat = glm::quat{glm::vec3{yaw, pitch, roll}};
+    auto const& mouse_sens = mdata.sensitivity;
+    auto constexpr yaw = 0.0f;
+    auto const pitch = angle * mouse_sens.x * delta.x;
+    auto constexpr roll = 0.0f;
+    auto const new_rotation = glm::quat{glm::vec3{yaw, pitch, roll}};
 
-    //model_.rotation = glm::normalize(quat * model_.rotation);
-    //arrow_.rglm::vec3{1.0f, 0.0f, 0.0f}otation = model_.rotation;
-
-    //front_ = glm::normalize(glm::eulerAngles(model_.rotation));
-    bool const left = mdata.current.xrel < 0;
-    float const a = left ? 5.0f : -5.0f;
-    glm::quat const new_rotation = glm::angleAxis(glm::radians(a), glm::vec3{0.0, 1.0f, 0.0f});
+    //bool const left = mdata.current.xrel < 0;
+    //float const a = left ? 5.0f : -5.0f;
+    //glm::quat const new_rotation = glm::angleAxis(glm::radians(a), glm::vec3{0.0, 1.0f, 0.0f});
     model_.rotation = new_rotation * model_.rotation;
     arrow_.rotation = new_rotation * arrow_.rotation;
   }

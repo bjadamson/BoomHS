@@ -57,6 +57,12 @@ draw_player_info(GameState &state)
   {
     auto const display = player.display();
     ImGui::Text("%s", display.c_str());
+
+
+    glm::quat const quat = glm::angleAxis(glm::radians(0.0f), opengl::Y_UNIT_VECTOR);
+    float const dot = glm::dot(player.orientation(), quat);
+    std::string const dots = std::to_string(dot);
+    ImGui::Text("dot product: '%s'", dots.c_str());
   }
 
   ImGui::End();

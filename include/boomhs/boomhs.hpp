@@ -30,6 +30,7 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
   // LOAD different assets.
   //"assets/chalet.mtl"
   using namespace opengl;
+  auto &d3 = gfx.d3;
 
   auto loader = ObjLoader{LOC::ORANGE};
   auto house_obj = loader.load_mesh("assets/house_uv.obj", LoadNormals{true}, LoadUvs{true});
@@ -41,42 +42,32 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
   loader.set_color(LOC::YELLOW);
   auto arrow_obj = loader.load_mesh("assets/arrow.obj", "assets/arrow.mtl", LoadNormals{false}, LoadUvs{false});
 
-  //loader.set_color(LOC::RED);
-  //auto x_arrow_obj = loader.load_mesh("assets/arrow.obj", "assets/arrow.mtl", LoadNormals{false}, LoadUvs{false});
-
-  //loader.set_color(LOC::GREEN);
-  //auto y_arrow_obj = loader.load_mesh("assets/arrow.obj", "assets/arrow.mtl", LoadNormals{false}, LoadUvs{false});
-
-  //loader.set_color(LOC::BLUE);
-  //auto z_arrow_obj = loader.load_mesh("assets/arrow.obj", "assets/arrow.mtl", LoadNormals{false}, LoadUvs{false});
-
   Objs objs{MOVE(house_obj), MOVE(hashtag_obj), MOVE(at_obj), MOVE(plus_obj), MOVE(arrow_obj)};
-      //MOVE(x_arrow_obj), MOVE(y_arrow_obj), MOVE(z_arrow_obj)};
 
-  auto house_handle = OF::make_mesh(logger,   gfx.d3.house,   MeshProperties{objs.house});
-  auto hashtag_handle = OF::make_mesh(logger, gfx.d3.hashtag, MeshProperties{objs.hashtag});
-  auto at_handle = OF::make_mesh(logger,      gfx.d3.at,      MeshProperties{objs.at});
-  auto plus_handle = OF::make_mesh(logger,    gfx.d3.plus,    MeshProperties{objs.plus});
-  auto arrow_handle = OF::make_mesh(logger,    gfx.d3.arrow,  MeshProperties{objs.arrow});
+  auto house_handle = OF::make_mesh(logger,   d3.house,   MeshProperties{objs.house});
+  auto hashtag_handle = OF::make_mesh(logger, d3.hashtag, MeshProperties{objs.hashtag});
+  auto at_handle = OF::make_mesh(logger,      d3.at,      MeshProperties{objs.at});
+  auto plus_handle = OF::make_mesh(logger,    d3.plus,    MeshProperties{objs.plus});
+  auto arrow_handle = OF::make_mesh(logger,    d3.arrow,  MeshProperties{objs.arrow});
 
-  auto cube_skybox = OF::copy_cube_gpu(logger, gfx.d3.skybox, {{10.0f, 10.0f, 10.0f}});
-  auto cube_textured = OF::copy_cube_gpu(logger, gfx.d3.texture_cube, {{0.15f, 0.15f, 0.15f}});
+  auto cube_skybox = OF::copy_cube_gpu(logger, d3.skybox, {{10.0f, 10.0f, 10.0f}});
+  auto cube_textured = OF::copy_cube_gpu(logger, d3.texture_cube, {{0.15f, 0.15f, 0.15f}});
 
-  auto cube_colored = OF::copy_cube_gpu(logger, gfx.d3.color, {{0.25f, 0.25f, 0.25f}},
+  auto cube_colored = OF::copy_cube_gpu(logger, d3.color, {{0.25f, 0.25f, 0.25f}},
       LOC::BLUE);
 
-  auto cube_wf = OF::copy_cube_gpu(logger, gfx.d3.wireframe, {{0.25f, 0.25f, 0.25f}, true});
+  auto cube_wf = OF::copy_cube_gpu(logger, d3.wireframe, {{0.25f, 0.25f, 0.25f}, true});
 
-  auto terrain_handle = OF::copy_cube_gpu(logger, gfx.d3.terrain, {{2.0f, 0.4f, 2.0f}},
+  auto terrain_handle = OF::copy_cube_gpu(logger, d3.terrain, {{2.0f, 0.4f, 2.0f}},
       LOC::SADDLE_BROWN);
 
-  auto tilemap_handle = OF::copy_tilemap_gpu(logger, gfx.d3.hashtag,
+  auto tilemap_handle = OF::copy_tilemap_gpu(logger, d3.hashtag,
       {GL_TRIANGLE_STRIP, objs.hashtag});
 
   glm::vec3 constexpr ORIGIN{0.0f, 0.0f, 0.0f};
-  auto x_axis_handle = OF::create_x_axis_arrow(logger, gfx.d3.global_x_axis_arrow, ORIGIN);
-  auto y_axis_handle = OF::create_y_axis_arrow(logger, gfx.d3.global_y_axis_arrow, ORIGIN);
-  auto z_axis_handle = OF::create_z_axis_arrow(logger, gfx.d3.global_z_axis_arrow, ORIGIN);
+
+  auto world_arrows = OF::create_world_axis_arrows(logger, d3.global_x_axis_arrow,
+      d3.global_y_axis_arrow, d3.global_z_axis_arrow, ORIGIN);
 
   GpuHandles handles{
     MOVE(house_handle),
@@ -85,9 +76,9 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
     MOVE(plus_handle),
     MOVE(arrow_handle),
 
-    MOVE(x_axis_handle),
-    MOVE(y_axis_handle),
-    MOVE(z_axis_handle),
+    MOVE(world_arrows.x_dinfo),
+    MOVE(world_arrows.y_dinfo),
+    MOVE(world_arrows.z_dinfo),
 
     MOVE(cube_skybox),
     MOVE(cube_textured),
@@ -189,13 +180,14 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
 
   auto &skybox_ent = *entities[GameState::SKYBOX_INDEX];
   auto &player_ent = *entities[GameState::AT_INDEX];
-  player_ent.scale = glm::vec3{0.25f};
+  player_ent.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
 
   auto &arrow_ent = *entities[GameState::PLAYER_ARROW_INDEX];
-  arrow_ent.scale = glm::vec3{0.1f, 0.1f, 0.1f};
+  arrow_ent.scale = glm::vec3{0.025f, 0.025f, 0.025f};
+  arrow_ent.translation = arrow_ent.translation + (0.125f * opengl::Y_UNIT_VECTOR);
 
   // camera-look at origin
-  // cameraspace "up" is === "up" in worldspace.  auto constexpr UP = opengl::Y_UNIT_VECTOR;
+  // cameraspace "up" is === "up" in worldspace.
   auto const FORWARD = -opengl::Z_UNIT_VECTOR;
   auto constexpr UP = opengl::Y_UNIT_VECTOR;
   auto camera = CF::make_default(proj, skybox_ent, player_ent, FORWARD, UP);
@@ -212,7 +204,9 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
   auto rargs = state.render_args();
   auto const& ents = state.entities;
   auto const& handles = assets.handles;
+  auto const& player = state.player;
   auto &d3 = gfx.d3;
+  auto &logger = state.logger;
 
   using GS = GameState;
 
@@ -246,29 +240,39 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
   opengl::draw(rargs, *ents[GS::GLOBAL_AXIS_Z_INDEX], d3.global_z_axis_arrow, handles.z_axis_arrow);
 
   // local coordinates
-  float constexpr lscale = 0.95f;
-  auto const& player_pos = ents[GS::AT_INDEX]->translation;
   {
-    auto handle = OF::create_x_axis_arrow(state.logger, gfx.d3.local_x_axis_arrow, player_pos, lscale);
-    opengl::draw(rargs, *ents[GS::LOCAL_AXIS_X_INDEX], d3.local_x_axis_arrow, handle);
+    float constexpr lscale = 0.95f;
+    auto const& player_pos = ents[GS::AT_INDEX]->translation;
+    {
+      //auto handle = OF::create_x_axis_arrow(logger, gfx.d3.local_x_axis_arrow, player_pos, lscale);
+      //opengl::draw(rargs, *ents[GS::LOCAL_AXIS_X_INDEX], d3.local_x_axis_arrow, handle);
+    }
+    {
+      //auto handle = OF::create_y_axis_arrow(logger, gfx.d3.local_y_axis_arrow, player_pos, lscale);
+      //opengl::draw(rargs, *ents[GS::LOCAL_AXIS_Y_INDEX], d3.local_y_axis_arrow, handle);
+    }
+    {
+      //auto handle = OF::create_z_axis_arrow(logger, gfx.d3.local_z_axis_arrow, player_pos, lscale);
+      //opengl::draw(rargs, *ents[GS::LOCAL_AXIS_Z_INDEX], d3.local_z_axis_arrow, handle);
+    }
   }
+  // draw forward arrow
   {
-    auto handle = OF::create_y_axis_arrow(state.logger, gfx.d3.local_y_axis_arrow, player_pos, lscale);
-    opengl::draw(rargs, *ents[GS::LOCAL_AXIS_Y_INDEX], d3.local_y_axis_arrow, handle);
-  }
-  {
-    auto handle = OF::create_z_axis_arrow(state.logger, gfx.d3.local_z_axis_arrow, player_pos, lscale);
-    opengl::draw(rargs, *ents[GS::LOCAL_AXIS_Z_INDEX], d3.local_z_axis_arrow, handle);
-  }
-  // draw forward line
-  {
-    glm::vec3 const begin = state.player.position();
-    glm::vec3 const end = state.player.position() + (1.0f * state.player.forward_vector());
-    auto handle = OF::create_line(state.logger, gfx.d3.local_forward_arrow,
-        begin, LOC::BROWN, end, LOC::PINK);
+    glm::vec3 const start = player.position();
+    glm::vec3 const head = start + (1.0f * player.forward_vector());
+    auto const calculate_tip = [&player, head](float const angle) {
+      glm::mat4 const rot = glm::rotate(glm::mat4{}, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+      glm::vec3 const rotvec = rot * glm::vec4{player.forward_vector(), 1.0f};
+      return head + (0.25f * rotvec);
+    };
+    float constexpr ANGLE = 35.0f;
+    auto const tip1 = calculate_tip(ANGLE);
+    auto const tip2 = calculate_tip(-ANGLE);
 
-    opengl::draw(rargs, *ents[GS::LOCAL_FORWARD_INDEX],
-        d3.local_forward_arrow, handle);
+    auto handle = OF::create_arrow(logger, gfx.d3.local_forward_arrow,
+        OF::ArrowParams{LOC::LIGHT_BLUE, start, head, tip1, tip2});
+
+    opengl::draw(rargs, *ents[GS::LOCAL_FORWARD_INDEX], d3.local_forward_arrow, handle);
   }
 
   // terrain

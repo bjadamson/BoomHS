@@ -52,26 +52,23 @@ bool process_event(GameState &state, SDL_Event &event)
     }
     add_from_event(state.mouse_data, event);
 
-    if (event.motion.state & SDL_BUTTON_RMASK) {
-
-      //auto const& c = state.mouse.current;
-      //auto const player_to_mouse = glm::normalize(player.pos - glm::vec3{c.x, c.y, 0.0f});
-      //player.match_camera_rotation(camera);
-      //bool const right = event.motion.xrel > 0;
-      //bool const left = event.motion.xrel < 0;
-      //assert((right != left) || (!right && !left));
-      //float constexpr ANGLE = 3.5f;
-      player.rotate(ANGLE, /*right,*/ state.mouse_data);
-      //player.match__rotation();
-
-      // idea
-      // Set the camera's position equal to the player's position
-      //glm::vec3 const distance = player.forward() * camera.radius();
-      //camera.pos = distance;
-      //camera.look_at_target();
-      //camera.reset_
-    } else {
+    bool const left = event.motion.state & SDL_BUTTON_LMASK;
+    bool const right = event.motion.state & SDL_BUTTON_RMASK;
+    bool const both = left && right;
+    auto const rot_player = [&]() {
+      player.rotate(ANGLE, state.mouse_data);
+    };
+    auto const rot_camera = [&]() {
       camera.rotate(logger, state.ui_state, state.mouse_data);
+    };
+    if (both) {
+      rot_player();
+      rot_camera();
+    } else if (right) {
+      rot_player();
+      rot_camera();
+    } else if (left) {
+      rot_camera();
     }
     break;
   }

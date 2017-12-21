@@ -58,7 +58,7 @@ auto constexpr Z_UNIT_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
 class OrbitCamera
 {
   glm::vec3 up_;
-  SphericalCoordinates coordinates_;//{1.5f, -2.33f, 0.95f};
+  SphericalCoordinates coordinates_{1.0f, -2.608, 0.772};
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(OrbitCamera);
