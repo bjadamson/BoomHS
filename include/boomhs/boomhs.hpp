@@ -180,6 +180,7 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   auto &skybox_ent = *entities[GameState::SKYBOX_INDEX];
   auto &player_ent = *entities[GameState::AT_INDEX];
   player_ent.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
+  player_ent.scale = 0.25f * glm::one<glm::vec3>();
 
   auto &arrow_ent = *entities[GameState::PLAYER_ARROW_INDEX];
   arrow_ent.scale = glm::vec3{0.025f, 0.025f, 0.025f};
@@ -241,8 +242,8 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
 
   // local coordinates
   {
-    float constexpr lscale = 0.95f;
-    auto const& player_pos = ents[GS::AT_INDEX]->translation;
+    //float constexpr lscale = 0.95f;
+    //auto const& player_pos = ents[GS::AT_INDEX]->translation;
     {
       //auto handle = OF::create_x_axis_arrow(logger, gfx.d3.local_x_axis_arrow, player_pos, lscale);
       //render::draw(rargs, *ents[GS::LOCAL_AXIS_X_INDEX], d3.local_x_axis_arrow, handle);
@@ -258,6 +259,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
   }
   // draw forward arrow
   {
+    // strange offset going on for some reason..
     glm::vec3 const start = player.position();
     glm::vec3 const head = start + (1.0f * player.forward_vector());
     auto const calculate_tip = [&player, head](float const angle) {

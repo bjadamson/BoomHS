@@ -96,6 +96,16 @@ class Player
     return *this;
   }
 
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(Player);
+  explicit Player(boomhs::Transform &m, boomhs::Transform &a, glm::vec3 const& forward, glm::vec3 const& up)
+    : transform_(m)
+    , arrow_(a)
+    , forward_(forward)
+    , up_(up)
+  {
+  }
+
   glm::vec3
   right_vector() const
   {
@@ -106,16 +116,6 @@ class Player
   auto back_vector() const { return -forward_vector(); }
   auto left_vector() const { return -right_vector(); }
   auto down_vector() const { return -up_vector(); }
-
-public:
-  MOVE_CONSTRUCTIBLE_ONLY(Player);
-  explicit Player(boomhs::Transform &m, boomhs::Transform &a, glm::vec3 const& forward, glm::vec3 const& up)
-    : transform_(m)
-    , arrow_(a)
-    , forward_(forward)
-    , up_(up)
-  {
-  }
 
   std::string
   display() const
@@ -194,7 +194,7 @@ public:
 
     auto const& mouse_sens = mdata.sensitivity;
     auto constexpr yaw = 0.0f;
-    auto const pitch = angle * mouse_sens.x * delta.x;
+    auto const pitch = angle * mouse_sens.x * delta.x * 0.1f;
     auto constexpr roll = 0.0f;
     auto const new_rotation = glm::quat{glm::vec3{yaw, pitch, roll}};
 
