@@ -1,7 +1,7 @@
 #include <opengl/obj.hpp>
 
 #include <cassert>
-#include <opengl/types.hpp>
+#include <boomhs/types.hpp>
 #include <stlw/algorithm.hpp>
 
 #include <extlibs/tinyobj.hpp>

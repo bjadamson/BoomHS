@@ -2,14 +2,14 @@
 #include <ecst.hpp>
 
 // TODO: uncouple ecst from rendering engine?
-#include <opengl/types.hpp>
+#include <boomhs/types.hpp>
 
 namespace ct
 {
 // Define component tags.
 namespace sc = ecst::signature::component;
 
-constexpr auto model = ecst::tag::component::v<::opengl::Model>;
+constexpr auto transform = ecst::tag::component::v<::boomhs::Transform>;
 
 } // ns ct
 
@@ -23,9 +23,9 @@ make_csl()
   namespace sc = ecst::signature::component;
   namespace slc = ecst::signature_list::component;
 
-  constexpr auto cs_model = sc::make(ct::model).contiguous_buffer();
+  constexpr auto cs_transform = sc::make(ct::transform).contiguous_buffer();
 
-  return slc::make(cs_model);
+  return slc::make(cs_transform);
 }
 
 } // ns ecst_setup

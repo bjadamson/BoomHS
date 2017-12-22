@@ -3,7 +3,6 @@
 #include <imgui/imgui_impl_sdl_gl3.h>
 
 #include <opengl/pipelines.hpp>
-#include <opengl/renderer.hpp>
 #include <opengl/factory.hpp>
 
 #include <window/mouse.hpp>

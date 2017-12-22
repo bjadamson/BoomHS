@@ -4,7 +4,8 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/norm.hpp>
 #include <glm/ext.hpp>
-#include <opengl/types.hpp>
+#include <boomhs/types.hpp>
+#include <stlw/format.hpp>
 #include <iostream>
 
 namespace boomhs
@@ -83,14 +84,14 @@ rotate_towards(glm::quat q1, glm::quat q2, float const max_angle)
 
 class Player
 {
-  opengl::Model &model_;
-  opengl::Model &arrow_;
+  boomhs::Transform &transform_;
+  boomhs::Transform &arrow_;
   glm::vec3 forward_, up_;
 
   auto&
   move(float const s, glm::vec3 const& dir)
   {
-    model_.translation += (s * dir);
+    transform_.translation += (s * dir);
     arrow_.translation += (s * dir);
     return *this;
   }
@@ -108,8 +109,8 @@ class Player
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Player);
-  explicit Player(opengl::Model &m, opengl::Model &a, glm::vec3 const& forward, glm::vec3 const& up)
-    : model_(m)
+  explicit Player(boomhs::Transform &m, boomhs::Transform &a, glm::vec3 const& forward, glm::vec3 const& up)
+    : transform_(m)
     , arrow_(a)
     , forward_(forward)
     , up_(up)
@@ -134,25 +135,25 @@ public:
   glm::vec3
   forward_vector() const
   {
-    return forward_ * model_.rotation;
+    return forward_ * transform_.rotation;
   }
 
   glm::vec3
   up_vector() const
   {
-    return up_ * model_.rotation;
+    return up_ * transform_.rotation;
   }
 
   glm::quat const&
   orientation() const
   {
-    return model_.rotation;
+    return transform_.rotation;
   }
 
   glm::vec3 const&
   position() const
   {
-    return model_.translation;
+    return transform_.translation;
   }
 
   auto& move_forward(float const s)
@@ -200,12 +201,12 @@ public:
     //bool const left = mdata.current.xrel < 0;
     //float const a = left ? 5.0f : -5.0f;
     //glm::quat const new_rotation = glm::angleAxis(glm::radians(a), glm::vec3{0.0, 1.0f, 0.0f});
-    model_.rotation = new_rotation * model_.rotation;
+    transform_.rotation = new_rotation * transform_.rotation;
     arrow_.rotation = new_rotation * arrow_.rotation;
   }
 
   void
-  match_camera_rotation(opengl::Camera const& camera)
+  match_camera_rotation(Camera const& camera)
   {
     //glm::vec3 cam_euler = glm::eulerAngles(camera.orientation());
     //glm::vec3 player_euler = glm::eulerAngles(this->orientation());
@@ -217,7 +218,7 @@ public:
     //QTransition = QFinal * QInitial^{-1}
     //auto const transition = camera_end * player_initial_inverse;
 
-    //model_.rotation = camera.orientation();//model_.rotation * transition;
+    //transform_.rotation = camera.orientation();//transform_.rotation * transition;
     //arrow_.rotation = camera.orientation();//arrow_.rotation * transition;
 
     float constexpr PI = glm::pi<float>();
@@ -226,7 +227,7 @@ public:
     auto const delta_rot = rotate_towards(player_or, camera_or, PI/8);
 
     std::cerr << "matching camera's rotation\n";
-    //model_.rotation = camera.orientation();
+    //transform_.rotation = camera.orientation();
     //arrow_.rotation = camera.orientation();
   }
 };

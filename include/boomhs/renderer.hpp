@@ -1,6 +1,5 @@
 #pragma once
 #include <opengl/global.hpp>
-#include <opengl/camera.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/pipelines.hpp>
 
@@ -8,15 +7,22 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <boomhs/camera.hpp>
+#include <boomhs/tilemap.hpp>
+
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace opengl {
+namespace boomhs {
 
 struct RenderArgs {
   stlw::Logger &logger;
-  opengl::Camera const& camera;
+  Camera const& camera;
 };
+
+} // ns boomhs
+
+namespace boomhs::render {
 
 inline void
 enable_depth_tests()
@@ -49,7 +55,7 @@ init(window::Dimensions const& dimensions)
 }
 
 inline void
-clear_screen(Color const& color)
+clear_screen(opengl::Color const& color)
 {
   glClearColor(color.r, color.g, color.b, color.a);
 
@@ -61,7 +67,7 @@ namespace detail {
 
 template <typename PIPE, typename FN>
 void
-bind_stuff_and_draw(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo, FN const& fn)
+bind_stuff_and_draw(stlw::Logger &logger, PIPE &pipeline, opengl::DrawInfo const &dinfo, FN const& fn)
 {
   using namespace opengl;
 
@@ -70,8 +76,8 @@ bind_stuff_and_draw(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo,
   }
 
   if constexpr (PIPE::HAS_TEXTURE) {
-    global::texture_bind(pipeline.texture());
-    ON_SCOPE_EXIT([&pipeline]() { global::texture_unbind(pipeline.texture()); });
+    opengl::global::texture_bind(pipeline.texture());
+    ON_SCOPE_EXIT([&pipeline]() { opengl::global::texture_unbind(pipeline.texture()); });
     fn(dinfo);
   } else {
     fn(dinfo);
@@ -79,7 +85,7 @@ bind_stuff_and_draw(stlw::Logger &logger, PIPE &pipeline, DrawInfo const &dinfo,
 }
 
 template <typename PIPE>
-void render_element_buffer(stlw::Logger &logger, PIPE &pipeline, DrawInfo const& dinfo)
+void render_element_buffer(stlw::Logger &logger, PIPE &pipeline, opengl::DrawInfo const& dinfo)
 {
   auto const draw_mode = dinfo.draw_mode();
   auto const num_indices = dinfo.num_indices();
@@ -95,23 +101,23 @@ void render_element_buffer(stlw::Logger &logger, PIPE &pipeline, DrawInfo const&
 }
 
 template <typename PIPE>
-void draw_3dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipeline, DrawInfo const& dinfo)
+void draw_3dshape(RenderArgs const &args, boomhs::Transform const& transform, PIPE &pipeline, opengl::DrawInfo const& dinfo)
 {
   auto const cmatrix = args.camera.matrix();
   auto &logger = args.logger;
 
   auto const draw_3d_shape_fn = [&](auto const &dinfo) {
-    auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
-    auto const rmatrix = glm::toMat4(model.rotation);
-    auto const smatrix = glm::scale(glm::mat4{}, model.scale);
+    auto const tmatrix = glm::translate(glm::mat4{}, transform.translation);
+    auto const rmatrix = glm::toMat4(transform.rotation);
+    auto const smatrix = glm::scale(glm::mat4{}, transform.scale);
     auto const mmatrix = tmatrix * rmatrix * smatrix;
     auto const mvmatrix = cmatrix * mmatrix;
     pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
 
     if constexpr (PIPE::IS_SKYBOX) {
-      opengl::disable_depth_tests();
+      disable_depth_tests();
       render_element_buffer(logger, pipeline, dinfo);
-      opengl::enable_depth_tests();
+      enable_depth_tests();
     } else {
       render_element_buffer(logger, pipeline, dinfo);
     }
@@ -119,23 +125,23 @@ void draw_3dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipe
 
   // Use the pipeline's PROGRAM and bind the pipeline's VAO.
   pipeline.use_program(logger);
-  global::vao_bind(pipeline.vao());
+  opengl::global::vao_bind(pipeline.vao());
 
   bind_stuff_and_draw(logger, pipeline, dinfo, draw_3d_shape_fn);
 }
 
 template <typename PIPE>
 void
-draw_2dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipeline, DrawInfo const &dinfo)
+draw_2dshape(RenderArgs const &args, boomhs::Transform const& transform, PIPE &pipeline, opengl::DrawInfo const &dinfo)
 {
   using namespace opengl;
 
   auto &logger = args.logger;
   auto const draw_2d_shape_fn = [&](auto const& dinfo) {
-    auto const& t = model.translation;
+    auto const& t = transform.translation;
     auto const tmatrix = glm::translate(glm::mat4{}, glm::vec3{t.x, t.y, 0.0});
-    auto const rmatrix = glm::toMat4(model.rotation);
-    auto const smatrix = glm::scale(glm::mat4{}, model.scale);
+    auto const rmatrix = glm::toMat4(transform.rotation);
+    auto const smatrix = glm::scale(glm::mat4{}, transform.scale);
     auto const mvmatrix = tmatrix * rmatrix * smatrix;
     pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
     render_element_buffer(logger, pipeline, dinfo);
@@ -143,7 +149,7 @@ draw_2dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipeline,
 
   // Use the pipeline's PROGRAM and bind the pipeline's VAO.
   pipeline.use_program(logger);
-  global::vao_bind(pipeline.vao());
+  opengl::global::vao_bind(pipeline.vao());
   bind_stuff_and_draw(logger, pipeline, dinfo, draw_2d_shape_fn);
 }
 
@@ -151,43 +157,43 @@ draw_2dshape(RenderArgs const &args, opengl::Model const& model, PIPE &pipeline,
 
 template <typename PIPE>
 void
-draw(RenderArgs const& args, Model const& model, PIPE &pipeline, DrawInfo const& dinfo)
+draw(RenderArgs const& args, Transform const& transform, PIPE &pipeline, opengl::DrawInfo const& dinfo)
 {
   auto &logger = args.logger;
 
   if constexpr (PIPE::IS_2D) {
-    opengl::disable_depth_tests();
-    detail::draw_2dshape(args, model, pipeline, dinfo);
-    opengl::enable_depth_tests();
+    disable_depth_tests();
+    detail::draw_2dshape(args, transform, pipeline, dinfo);
+    enable_depth_tests();
   } else {
-    detail::draw_3dshape(args, model, pipeline, dinfo);
+    detail::draw_3dshape(args, transform, pipeline, dinfo);
   }
 }
 
 struct DrawTilemapArgs
 {
-  DrawInfo const& hashtag_dinfo;
-  PipelineHashtag3D &hashtag_pipeline;
+  opengl::DrawInfo const& hashtag_dinfo;
+  opengl::PipelineHashtag3D &hashtag_pipeline;
 
-  DrawInfo const& plus_dinfo;
-  PipelinePlus3D &plus_pipeline;
+  opengl::DrawInfo const& plus_dinfo;
+  opengl::PipelinePlus3D &plus_pipeline;
 };
 
 template <typename TILEMAP>
-void draw_tilemap(RenderArgs const& args, Model const& model, DrawTilemapArgs &&dt_args, TILEMAP const& tilemap)
+void draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs &&dt_args, TILEMAP const& tilemap)
 {
   auto const cmatrix = args.camera.matrix();
   auto &logger = args.logger;
 
-  auto const tmatrix = glm::translate(glm::mat4{}, model.translation);
-  auto const rmatrix = glm::toMat4(model.rotation);
-  auto const smatrix = glm::scale(glm::mat4{}, model.scale);
+  auto const tmatrix = glm::translate(glm::mat4{}, transform.translation);
+  auto const rmatrix = glm::toMat4(transform.rotation);
+  auto const smatrix = glm::scale(glm::mat4{}, transform.scale);
   auto const mmatrix = tmatrix * rmatrix * smatrix;
   auto const mvmatrix = cmatrix * mmatrix;
 
   auto const draw_tile = [&logger, &mvmatrix](auto &pipeline, auto const& dinfo, auto const& arr) {
     pipeline.use_program(logger);
-    global::vao_bind(pipeline.vao());
+    opengl::global::vao_bind(pipeline.vao());
     pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
     pipeline.set_uniform_array_3fv(logger, "u_offset", arr);
 
@@ -211,4 +217,4 @@ void draw_tilemap(RenderArgs const& args, Model const& model, DrawTilemapArgs &&
   }
 }
 
-} // ns opengl
+} // ns boomhs::render

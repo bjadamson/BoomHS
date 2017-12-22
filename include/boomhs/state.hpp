@@ -7,11 +7,11 @@
 #include <stlw/log.hpp>
 #include <stlw/random.hpp>
 
-#include <opengl/camera.hpp>
-#include <opengl/renderer.hpp>
 #include <window/mouse.hpp>
 
+#include <boomhs/camera.hpp>
 #include <boomhs/player.hpp>
+#include <boomhs/renderer.hpp>
 #include <boomhs/tilemap.hpp>
 #include <vector>
 
@@ -46,10 +46,10 @@ struct GameState
   UiState ui_state;
 
   // NOTE: Keep this data member above the "camera" data member.
-  std::vector<::opengl::Model*> entities;
+  std::vector<Transform*> entities;
 
   // player needs to come AFTER "camera".
-  opengl::Camera camera;
+  Camera camera;
   Player player;
 
   static constexpr std::size_t COLOR_CUBE_INDEX = 0;
@@ -74,7 +74,7 @@ struct GameState
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
   GameState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
-      TileMap &&tmap, std::vector<::opengl::Model*> &&ents, opengl::Camera &&cam, Player &&pl)
+      TileMap &&tmap, std::vector<Transform*> &&ents, Camera &&cam, Player &&pl)
     : logger(l)
     , imgui(i)
     , dimensions(d)
@@ -88,9 +88,9 @@ struct GameState
     //this->camera.move_down(1);
   }
 
-  opengl::RenderArgs render_args() const
+  RenderArgs render_args() const
   {
-    return opengl::RenderArgs{this->logger, this->camera};
+    return RenderArgs{this->logger, this->camera};
   }
 };
 

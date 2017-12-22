@@ -2,9 +2,8 @@
 #include <array>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <opengl/glew.hpp>
 
-namespace opengl
+namespace boomhs
 {
 
 // tags
@@ -14,7 +13,7 @@ struct color_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 4; };
 struct uv_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 2; };
 struct wireframe_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 0; };
 
-struct Model
+struct Transform
 {
   glm::vec3 translation{0.0f, 0.0f, 0.0f};
   glm::quat rotation;

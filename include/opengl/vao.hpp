@@ -1,7 +1,7 @@
 #pragma once
 #include <opengl/colors.hpp>
 #include <opengl/global.hpp>
-#include <opengl/types.hpp>
+#include <boomhs/types.hpp>
 #include <opengl/texture.hpp>
 
 namespace opengl

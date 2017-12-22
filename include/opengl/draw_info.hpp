@@ -1,6 +1,6 @@
 #pragma once
 #include <array>
-#include <opengl/types.hpp>
+#include <boomhs/types.hpp>
 #include <opengl/colors.hpp>
 #include <opengl/obj.hpp>
 #include <stlw/sized_buffer.hpp>

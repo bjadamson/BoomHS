@@ -1,4 +1,4 @@
-#include <opengl/camera.hpp>
+#include <boomhs/camera.hpp>
 #include <boomhs/state.hpp>
 #include <limits>
 
@@ -12,7 +12,7 @@ namespace {
 
 } // ns anonymous
 
-namespace opengl
+namespace boomhs
 {
 
 SphericalCoordinates
@@ -56,9 +56,9 @@ to_cartesian(SphericalCoordinates const& coords)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // OrbitCamera
 glm::mat4
-OrbitCamera::view(Model const& target_model) const
+OrbitCamera::view(Transform const& target_transform) const
 {
-  auto const& target = target_model.translation;
+  auto const& target = target_transform.translation;
   auto const position_xyz = target + to_cartesian(coordinates_);
 
   return glm::lookAt(position_xyz, target, this->up());
@@ -100,7 +100,7 @@ OrbitCamera::zoom(float const distance)
 }
 
 OrbitCamera&
-OrbitCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mouse_data const& mdata)
+OrbitCamera::rotate(stlw::Logger &logger, UiState &uistate, window::mouse_data const& mdata)
 {
   auto const& current = mdata.current;
   glm::vec2 const delta = glm::vec2{current.xrel, current.yrel};
@@ -133,9 +133,9 @@ OrbitCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mous
 
   // If phi is between 0 to PI or -PI to -2PI, make 'up' be positive Y, other wise make it negative Y
   if ((phi > 0 && phi < PI) || (phi < -PI && phi > -TWO_PI)) {
-    up_ = Y_UNIT_VECTOR;
+    up_ = opengl::Y_UNIT_VECTOR;
   } else {
-    up_ = -Y_UNIT_VECTOR;
+    up_ = -opengl::Y_UNIT_VECTOR;
   }
 
   return *this;
@@ -144,13 +144,13 @@ OrbitCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mous
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
 Camera::Camera(Projection const& proj, skybox &&sb, glm::vec3 const& forward, glm::vec3 const& up,
-    Model &target)
+    Transform &target)
   : projection_(proj)
   , skybox_(MOVE(sb))
   , orbit_(up)
   , target_(target)
 {
-  this->skybox_.model.translation = forward;
+  this->skybox_.transform.translation = forward;
 }
 
 std::string
@@ -168,13 +168,13 @@ Camera::follow_target_display() const
 }
 
 Camera&
-Camera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mouse_data const& mdata)
+Camera::rotate(stlw::Logger &logger, UiState &uistate, window::mouse_data const& mdata)
 {
   orbit_.rotate(logger, uistate, mdata);
   return *this;
 }
 
-} // ns opengl
+} // ns boomhs
 
 /*
 FpsCamera&

@@ -3,7 +3,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/vector_angle.hpp>
-#include <opengl/skybox.hpp>
+#include <boomhs/skybox.hpp>
+#include <opengl/constants.hpp>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 #include <window/mouse.hpp>
@@ -11,10 +12,6 @@
 namespace boomhs
 {
 struct UiState;
-} // ns boomhs
-
-namespace opengl
-{
 
 struct SphericalCoordinates
 {
@@ -51,10 +48,6 @@ struct Projection
   float const far_plane;
 };
 
-auto constexpr X_UNIT_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
-auto constexpr Y_UNIT_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
-auto constexpr Z_UNIT_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
-
 class OrbitCamera
 {
   glm::vec3 up_;
@@ -71,7 +64,7 @@ public:
   std::string display() const;
 
   glm::quat orientation() const { return to_cartesian(coordinates_); }
-  glm::mat4 view(Model const&) const;
+  glm::mat4 view(Transform const&) const;
 
   OrbitCamera&
   zoom(float const);
@@ -87,7 +80,7 @@ class Camera
 
   OrbitCamera orbit_;
 
-  Model &target_;
+  Transform &target_;
 
   glm::vec3 const&
   up() const
@@ -105,7 +98,7 @@ class Camera
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
 
-  Camera(Projection const&, skybox &&, glm::vec3 const& front, glm::vec3 const& up, Model &);
+  Camera(Projection const&, skybox &&, glm::vec3 const& f, glm::vec3 const& u, Transform &);
 
   glm::quat
   orientation() const
@@ -126,7 +119,7 @@ public:
   }
 
   void
-  set_follow_target(Model &m)
+  set_follow_target(Transform &m)
   {
     this->target_ = m;
   }
@@ -150,7 +143,7 @@ public:
     //auto const& front = this->front();
     //set_front(front + (dir * s));
 
-    //this->skybox_.model.translation = front;
+    //this->skybox_.transform.translation = front;
 
     //return *this;
   //}
@@ -158,11 +151,11 @@ public:
 
 struct CameraFactory
 {
-  static auto make_default(Projection const& proj, Model &skybox_model,
-      Model &target, glm::vec3 const& forward, glm::vec3 const& up)
+  static auto make_default(Projection const& proj, Transform &skybox_transform,
+      Transform &target, glm::vec3 const& forward, glm::vec3 const& up)
   {
-    return opengl::Camera{proj, skybox{skybox_model}, forward, up, target};
+    return Camera{proj, skybox{skybox_transform}, forward, up, target};
   }
 };
 
-} // ns opengl
+} // ns boomhs

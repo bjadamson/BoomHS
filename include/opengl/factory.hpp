@@ -5,7 +5,7 @@
 #include <opengl/glew.hpp>
 #include <opengl/global.hpp>
 #include <opengl/obj.hpp>
-#include <opengl/types.hpp>
+#include <boomhs/types.hpp>
 #include <opengl/draw_info.hpp>
 
 namespace opengl
@@ -24,7 +24,7 @@ struct MeshProperties
 namespace cube_factory
 {
 
-using CubeDimensions = WidthHeightLength;
+using CubeDimensions = boomhs::WidthHeightLength;
 
 struct CubeProperties
 {
@@ -116,7 +116,7 @@ construct_cube(std::array<float, 32> const& vertices, WireframeProperties const 
 }
 
 auto
-make_cube(std::array<float, 32> const& vertices, color_t, Color const& color)
+make_cube(std::array<float, 32> const& vertices, boomhs::color_t, Color const& color)
 {
   std::array<Color, 8> const colors{
       color, color, color, color,
@@ -127,14 +127,14 @@ make_cube(std::array<float, 32> const& vertices, color_t, Color const& color)
 }
 
 auto
-make_cube(std::array<float, 32> const& vertices, uv_t)
+make_cube(std::array<float, 32> const& vertices, boomhs::uv_t)
 {
   UVProperties const uv;
   return construct_cube(vertices, uv);
 }
 
 auto
-make_cube(std::array<float, 32> const& vertices, wireframe_t)
+make_cube(std::array<float, 32> const& vertices, boomhs::wireframe_t)
 {
   WireframeProperties const wf;
   return construct_cube(vertices, wf);

@@ -1,14 +1,14 @@
 #pragma once
-#include <opengl/types.hpp>
+#include <boomhs/types.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace opengl
+namespace boomhs
 {
 
 struct skybox
 {
-  Model &model;
+  Transform &transform;
   MOVE_CONSTRUCTIBLE_ONLY(skybox);
 };
 
-} // ns opengl
+} // ns boomhs

@@ -62,7 +62,7 @@ public:
       glm::vec3 const& axis)
   {
     auto const fn = [&]() {
-      auto &m = transformer.proxy.get(ct::model, eid);
+      auto &m = transformer.proxy.get(ct::transform, eid);
       auto const new_rotation = glm::angleAxis(glm::radians(angle), axis);
       m.rotation = new_rotation * m.rotation;
     };
@@ -73,7 +73,7 @@ public:
   void static move_entity(E const& transformer, ecst::entity_id const eid, glm::vec3 const& distance)
   {
     auto const fn = [&]() {
-      auto &m = transformer.proxy.get(ct::model, eid);
+      auto &m = transformer.proxy.get(ct::transform, eid);
       m.translation += distance;
     };
     transformer.for_entity(eid, "moving", fn);
@@ -83,7 +83,7 @@ public:
   void static scale_entity(E const& transformer, ecst::entity_id const eid, float const factor)
   {
     auto const fn = [&]() {
-      auto &m = transformer.proxy.get(ct::model, eid);
+      auto &m = transformer.proxy.get(ct::transform, eid);
       m.scale *= factor;
     };
     transformer.for_entity(eid, "scaling", fn);
