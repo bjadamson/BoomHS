@@ -80,13 +80,13 @@ OrbitCamera::display() const
 }
 
 OrbitCamera&
-OrbitCamera::zoom(float const distance)
+OrbitCamera::zoom(float const factor)
 {
-  float const new_radius = coordinates_.radius - distance;
-  if (new_radius > 0.0f) {
-    coordinates_.radius -= distance;
+  float const new_radius = coordinates_.radius * factor;
+  if (new_radius >= 0.01f) {
+    coordinates_.radius = new_radius;
   } else {
-    coordinates_.radius = 0.0001f;
+    coordinates_.radius = 0.01f;
   }
   return *this;
 

@@ -74,11 +74,11 @@ bool process_event(GameState &state, SDL_Event &event)
   }
   case SDL_MOUSEWHEEL: {
     LOG_TRACE("mouse wheel event detected.");
-    float constexpr ZOOM_FACTOR = 1.1f;
+    float constexpr ZOOM_FACTOR = 2.0f;
     if (event.wheel.y > 0) {
-      camera.zoom(ZOOM_FACTOR);
+      camera.zoom(1.0f / ZOOM_FACTOR);
     } else {
-      camera.zoom(-ZOOM_FACTOR);
+      camera.zoom(ZOOM_FACTOR);
     }
     break;
   }
