@@ -61,12 +61,10 @@ bool process_event(GameState &state, SDL_Event &event)
     auto const rot_camera = [&]() {
       camera.rotate(logger, state.ui_state, state.mouse_data);
     };
-    if (both) {
+
+    if (right) {
       rot_player();
-      rot_camera();
-    } else if (right) {
-      rot_player();
-      rot_camera();
+      //rot_camera();
     } else if (left) {
       rot_camera();
     }
@@ -85,8 +83,12 @@ bool process_event(GameState &state, SDL_Event &event)
   case SDL_MOUSEBUTTONDOWN:
   {
     if (event.button.button == SDL_BUTTON_RIGHT) {
-      //camera.match_target_rotation();
-      player.match_camera_rotation(camera);
+      // rot from player -> camera
+      //glm::quat const rot = camera.orientation() * glm::inverse(player.orientation());
+      //auto euler = glm::eulerAngles(rot);
+      //auto const newrot = glm::rotate(glm::mat4{}, euler.x, opengl::X_UNIT_VECTOR);
+      //player.multiply_quat(newrot);
+      //player.rotate(
     }
     LOG_ERROR("toggling mouse up/down (pitch) lock");
     state.mouse_data.pitch_lock ^= true;

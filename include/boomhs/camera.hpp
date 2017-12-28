@@ -8,6 +8,7 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 #include <window/mouse.hpp>
+#include <string>
 
 namespace boomhs
 {
@@ -35,6 +36,15 @@ struct SphericalCoordinates
     : SphericalCoordinates(v.x, v.y, v.z)
   {
   }
+
+  std::string
+  radius_string() const { return std::to_string(this->radius); }
+
+  std::string
+  theta_string() const { return std::to_string(this->theta); }
+
+  std::string
+  phi_string() const { return std::to_string(this->phi); }
 };
 
 glm::vec3
@@ -48,46 +58,15 @@ struct Projection
   float const far_plane;
 };
 
-class OrbitCamera
-{
-  glm::vec3 up_;
-  SphericalCoordinates coordinates_{1.0f, -2.608, 0.772};
-
-public:
-  MOVE_CONSTRUCTIBLE_ONLY(OrbitCamera);
-  OrbitCamera(glm::vec3 const& up)
-    : up_(up)
-  {
-  }
-
-  auto const& up() const { return this->up_; }
-  std::string display() const;
-
-  glm::quat orientation() const { return to_cartesian(coordinates_); }
-  glm::mat4 view(Transform const&) const;
-
-  OrbitCamera&
-  zoom(float const);
-
-  OrbitCamera&
-  rotate(stlw::Logger &, boomhs::UiState &, window::mouse_data const&);
-};
-
 class Camera
 {
+  SphericalCoordinates coordinates_{1.0f, -2.608, 0.772};
+  glm::vec3 forward_, up_;
+
   Projection const projection_;
   skybox skybox_;
 
-  OrbitCamera orbit_;
-
   Transform &target_;
-
-  glm::vec3 const&
-  up() const
-  {
-    return orbit_.up();
-  }
-
   glm::mat4 projection() const
   {
     auto const& p = projection_;
@@ -103,13 +82,72 @@ public:
   glm::quat
   orientation() const
   {
-    return orbit_.orientation();
+    return to_cartesian(coordinates_);
   }
 
   glm::mat4
-  view() const
+  view() const;
+
+  glm::vec3
+  forward_vector() const
   {
-    return orbit_.view(target_);
+    return forward_ * orientation();
+  }
+
+  glm::vec3
+  backward_vector() const
+  {
+    return -forward_vector();
+  }
+
+  glm::vec3
+  right_vector() const
+  {
+    auto const cross = glm::cross(forward_vector(), up_vector());
+    return glm::normalize(cross);
+  }
+
+  glm::vec3
+  left_vector() const
+  {
+    return -right_vector();
+  }
+
+  glm::vec3
+  up_vector() const
+  {
+    return up_ * orientation();
+  }
+
+  glm::vec3
+  down_vector() const
+  {
+    return -up_vector();
+  }
+
+  SphericalCoordinates
+  spherical_coordinates() const
+  {
+    return coordinates_;
+  }
+
+  glm::vec3
+  local_position() const
+  {
+    return to_cartesian(coordinates_);
+  }
+
+  glm::vec3
+  world_position() const
+  {
+    auto const& target = target_.translation;
+    return target + local_position();
+  }
+
+  glm::vec3
+  target_position() const
+  {
+    return this->target_.translation;
   }
 
   glm::mat4
@@ -124,19 +162,11 @@ public:
     this->target_ = m;
   }
 
-  std::string display() const;
-  std::string follow_target_display() const;
+  Camera&
+  rotate(stlw::Logger &, UiState &, window::mouse_data const&);
 
   Camera&
-  rotate(stlw::Logger &, boomhs::UiState &, window::mouse_data const&);
-
-  Camera&
-  zoom(float const distance)
-  {
-    orbit_.zoom(distance);
-    return *this;
-  }
-
+  zoom(float const);
   //Camera&
   //move(float const s, glm::vec3 const& dir)
   //{

@@ -36,15 +36,33 @@ draw_camera_info(GameState &state)
 
   ImGui::Begin("CAMERA INFO WINDOW");
   {
-    auto const display = camera.display();
-    ImGui::Text("%s", display.c_str());
+    auto const coords = camera.spherical_coordinates();
+    auto const r = coords.radius_string();
+    auto const t = coords.theta_string();
+    auto const p = coords.phi_string();
+    ImGui::Text("Spherical Coordinates:\nr: '%s', t: '%s', p: '%s'", r.c_str(), t.c_str(), p.c_str());
+  }
+  {
+    auto const text = glm::to_string(camera.world_position());
+    ImGui::Text("world position:\n'%s'", text.c_str());
+  }
+  {
+    auto const coords = to_cartesian(camera.spherical_coordinates());
+    auto const x = std::to_string(coords.x);
+    auto const y = std::to_string(coords.y);
+    auto const z = std::to_string(coords.z);
+    ImGui::Text("Cartesian Coordinates (should match world position):\nx: '%s', y: '%s', z: '%s'",
+        x.c_str(), y.c_str(), z.c_str());
+  }
+  {
+    glm::vec3 const target_coords = camera.target_position();
+    auto const x = std::to_string(target_coords.x);
+    auto const y = std::to_string(target_coords.y);
+    auto const z = std::to_string(target_coords.z);
+    ImGui::Text("Follow Target position:\nx: '%s', y: '%s', z: '%s'",
+        x.c_str(), y.c_str(), z.c_str());
   }
   ImGui::Checkbox("Flip Y", &state.ui_state.flip_y);
-  //bool ign_;
-  //if (ImGui::Checkbox("Toggle Mode", &ign_)) {
-    //state.camera.toggle_mode();
-  //}
-
   ImGui::End();
 }
 

@@ -64,10 +64,8 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
   auto tilemap_handle = OF::copy_tilemap_gpu(logger, d3.hashtag,
       {GL_TRIANGLE_STRIP, objs.hashtag});
 
-  glm::vec3 constexpr ORIGIN{0.0f, 0.0f, 0.0f};
-
   auto world_arrows = OF::create_world_axis_arrows(logger, d3.global_x_axis_arrow,
-      d3.global_y_axis_arrow, d3.global_z_axis_arrow, ORIGIN);
+      d3.global_y_axis_arrow, d3.global_z_axis_arrow);
 
   GpuHandles handles{
     MOVE(house_handle),
@@ -133,7 +131,7 @@ make_entities(PROXY &proxy)
     entities.emplace_back(&p);
   };
 
-  glm::vec3 constexpr TILEMAP_POS = glm::vec3{0.2f, 0.0f, 0.2f};
+  glm::vec3 constexpr TILEMAP_POS = glm::vec3{0.0f, 0.0f, 0.0f};
   make_entity(glm::vec3{-2.0f, -2.0f, -2.0f});   // COLOR_CUBE
   make_entity(glm::vec3{-4.0f, -4.0f, -2.0f}); // TEXTURE_CUBE
   make_entity(glm::vec3{-3.0f, -2.0f, 2.0f}); // WIREFRAME_CUBE_INDEX
@@ -149,10 +147,14 @@ make_entities(PROXY &proxy)
   make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // GLOBAL_AXIS_Y_INDEX
   make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // GLOBAL_AXIS_Z_INDEX
 
-  make_entity(glm::vec3{TILEMAP_POS});        //LOCAL_AXIS_X_INDEX
-  make_entity(glm::vec3{TILEMAP_POS});        //LOCAL_AXIS_Y_INDEX
-  make_entity(glm::vec3{TILEMAP_POS});        //LOCAL_AXIS_Z_INDEX
-  make_entity(glm::vec3{TILEMAP_POS});        //LOCAL_FORWARD_INDEX
+  make_entity(TILEMAP_POS);                   //LOCAL_AXIS_X_INDEX
+  make_entity(TILEMAP_POS);                   //LOCAL_AXIS_Y_INDEX
+  make_entity(TILEMAP_POS);                   //LOCAL_AXIS_Z_INDEX
+  make_entity(TILEMAP_POS);                   //LOCAL_FORWARD_INDEX
+
+  make_entity(TILEMAP_POS);                   //CAMERA_ARROW_INDEX0
+  make_entity(TILEMAP_POS);                   //CAMERA_ARROW_INDEX1
+  make_entity(TILEMAP_POS);                   //CAMERA_ARROW_INDEX2
   return entities;
 }
 
@@ -206,6 +208,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
   auto const& ents = state.entities;
   auto const& handles = assets.handles;
   auto const& player = state.player;
+  auto const& camera = state.camera;
   auto &d3 = gfx.d3;
   auto &logger = state.logger;
 
@@ -242,39 +245,47 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
 
   // local coordinates
   {
-    //float constexpr lscale = 0.95f;
-    //auto const& player_pos = ents[GS::AT_INDEX]->translation;
+    auto const& player_pos = ents[GS::AT_INDEX]->translation;
     {
-      //auto handle = OF::create_x_axis_arrow(logger, gfx.d3.local_x_axis_arrow, player_pos, lscale);
-      //render::draw(rargs, *ents[GS::LOCAL_AXIS_X_INDEX], d3.local_x_axis_arrow, handle);
-    }
-    {
-      //auto handle = OF::create_y_axis_arrow(logger, gfx.d3.local_y_axis_arrow, player_pos, lscale);
-      //render::draw(rargs, *ents[GS::LOCAL_AXIS_Y_INDEX], d3.local_y_axis_arrow, handle);
-    }
-    {
-      //auto handle = OF::create_z_axis_arrow(logger, gfx.d3.local_z_axis_arrow, player_pos, lscale);
-      //render::draw(rargs, *ents[GS::LOCAL_AXIS_Z_INDEX], d3.local_z_axis_arrow, handle);
+      auto world_coords = OF::create_axis_arrows(logger,
+          d3.local_x_axis_arrow,
+          d3.local_y_axis_arrow,
+          d3.local_z_axis_arrow,
+          player_pos);
+      render::draw(rargs, *ents[GS::LOCAL_AXIS_X_INDEX], d3.local_x_axis_arrow, world_coords.x_dinfo);
+      render::draw(rargs, *ents[GS::LOCAL_AXIS_Y_INDEX], d3.local_y_axis_arrow, world_coords.y_dinfo);
+      render::draw(rargs, *ents[GS::LOCAL_AXIS_Z_INDEX], d3.local_z_axis_arrow, world_coords.z_dinfo);
     }
   }
+
   // draw forward arrow
   {
-    // strange offset going on for some reason..
-    glm::vec3 const start = player.position();
-    glm::vec3 const head = start + (1.0f * player.forward_vector());
-    auto const calculate_tip = [&player, head](float const angle) {
-      glm::mat4 const rot = glm::rotate(glm::mat4{}, angle, glm::vec3(0.0f, 1.0f, 0.0f));
-      glm::vec3 const rotvec = rot * glm::vec4{player.forward_vector(), 1.0f};
-      return head + (0.25f * rotvec);
-    };
-    float constexpr ANGLE = 35.0f;
-    auto const tip1 = calculate_tip(ANGLE);
-    auto const tip2 = calculate_tip(-ANGLE);
+    {
+      glm::vec3 const start = player.world_position();
+      glm::vec3 const head = start + (1.0f * player.forward_vector());
 
-    auto handle = OF::create_arrow(logger, gfx.d3.local_forward_arrow,
-        OF::ArrowParams{LOC::LIGHT_BLUE, start, head, tip1, tip2});
+      auto handle = OF::create_arrow(logger, gfx.d3.local_forward_arrow,
+          OF::ArrowCreateParams{LOC::LIGHT_BLUE, start, head});
 
-    render::draw(rargs, *ents[GS::LOCAL_FORWARD_INDEX], d3.local_forward_arrow, handle);
+      render::draw(rargs, *ents[GS::LOCAL_FORWARD_INDEX], d3.local_forward_arrow, handle);
+    }
+    {
+      glm::vec3 const start = glm::zero<glm::vec3>();
+      glm::vec3 const head = camera.target_position();
+      auto handle = OF::create_arrow(logger, gfx.d3.camera_arrow0,
+        OF::ArrowCreateParams{LOC::YELLOW, start, head});
+
+      render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX0], d3.camera_arrow0, handle);
+    }
+    {
+      glm::vec3 const start = camera.target_position();
+      glm::vec3 const head = camera.target_position() + camera.backward_vector();
+
+      auto handle = OF::create_arrow(logger, gfx.d3.camera_arrow1,
+        OF::ArrowCreateParams{LOC::PINK, start, head});
+
+      render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX1], d3.camera_arrow1, handle);
+    }
   }
 
   // terrain

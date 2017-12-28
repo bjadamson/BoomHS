@@ -2,40 +2,8 @@
 #include <boomhs/state.hpp>
 #include <limits>
 
-namespace {
-
-//glm::vec3
-//direction_facing_degrees(glm::quat const& orientation)
-//{
-  //return glm::degrees(glm::eulerAngles(orientation));
-//}
-
-} // ns anonymous
-
 namespace boomhs
 {
-
-SphericalCoordinates
-to_spherical(glm::vec3 cartesian)
-{
-  static constexpr float EPSILONF = std::numeric_limits<float>::epsilon();
-
-  if (cartesian.x == 0) {
-    cartesian.x = EPSILONF;
-  }
-  float const radius = sqrt((cartesian.x * cartesian.x)
-                  + (cartesian.y * cartesian.y)
-                  + (cartesian.z * cartesian.z));
-  float theta = acos(cartesian.z / radius);
-  //float theta = atan(cartesian.z / cartesian.x);
-  if (cartesian.x < 0) {
-    float constexpr PI = glm::pi<float>();
-    theta += PI;
-  }
-  float const phi = atan(cartesian.y / cartesian.x);
-
-  return SphericalCoordinates{radius, theta, phi};
-}
 
 glm::vec3
 to_cartesian(SphericalCoordinates const& coords)
@@ -54,53 +22,20 @@ to_cartesian(SphericalCoordinates const& coords)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// OrbitCamera
-glm::mat4
-OrbitCamera::view(Transform const& target_transform) const
+// Camera
+Camera::Camera(Projection const& proj, skybox &&sb, glm::vec3 const& forward, glm::vec3 const& up,
+    Transform &target)
+  : forward_(forward)
+  , up_(up)
+  , projection_(proj)
+  , skybox_(MOVE(sb))
+  , target_(target)
 {
-  auto const& target = target_transform.translation;
-  auto const position_xyz = target + to_cartesian(coordinates_);
-
-  return glm::lookAt(position_xyz, target, this->up());
+  this->skybox_.transform.translation = forward;
 }
 
-std::string
-OrbitCamera::display() const
-{
-  auto const r = std::to_string(coordinates_.radius);
-  auto const t = std::to_string(coordinates_.theta);
-  auto const p = std::to_string(coordinates_.phi);
-
-  auto const cart = to_cartesian(coordinates_);
-  auto const x = std::to_string(cart.x);
-  auto const y = std::to_string(cart.y);
-  auto const z = std::to_string(cart.z);
-  return fmt::sprintf("camera info:\nx: '%s', y: '%s', z: '%s'\n", x.c_str(), y.c_str(), z.c_str())
-    + " " + fmt::sprintf("r: '%s', t: '%s', p: '%s'", r.c_str(), t.c_str(), p.c_str());
-}
-
-OrbitCamera&
-OrbitCamera::zoom(float const factor)
-{
-  float const new_radius = coordinates_.radius * factor;
-  if (new_radius >= 0.01f) {
-    coordinates_.radius = new_radius;
-  } else {
-    coordinates_.radius = 0.01f;
-  }
-  return *this;
-
-  // Don't let the radius go negative
-  // If it does, re-project our target down the look vector
-  //if (m_radius <= 0.0f) {
-    //coordinates_.radius = 30.0f;
-    //auto const look = glm::normalize(m_target - to_cartesian());
-    //target_ = DirectX::XMVectorAdd(m_target, DirectX::XMVectorScale(look, 30.0f));
-  //}
-}
-
-OrbitCamera&
-OrbitCamera::rotate(stlw::Logger &logger, UiState &uistate, window::mouse_data const& mdata)
+Camera&
+Camera::rotate(stlw::Logger &logger, UiState &uistate, window::mouse_data const& mdata)
 {
   auto const& current = mdata.current;
   glm::vec2 const delta = glm::vec2{current.xrel, current.yrel};
@@ -137,46 +72,72 @@ OrbitCamera::rotate(stlw::Logger &logger, UiState &uistate, window::mouse_data c
   } else {
     up_ = -opengl::Y_UNIT_VECTOR;
   }
-
   return *this;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Camera
-Camera::Camera(Projection const& proj, skybox &&sb, glm::vec3 const& forward, glm::vec3 const& up,
-    Transform &target)
-  : projection_(proj)
-  , skybox_(MOVE(sb))
-  , orbit_(up)
-  , target_(target)
+glm::mat4
+Camera::view() const
 {
-  this->skybox_.transform.translation = forward;
-}
-
-std::string
-Camera::display() const
-{
-  return orbit_.display();
-}
-
-std::string
-Camera::follow_target_display() const
-{
-  return fmt::sprintf("follow target\nxyz: '%s'\nrot rtp: '%s'",
-      glm::to_string(target_.translation),
-      glm::to_string(target_.rotation));
+  auto const& target = target_.translation;
+  auto const position_xyz = world_position();
+  return glm::lookAt(position_xyz, target, up_);
 }
 
 Camera&
-Camera::rotate(stlw::Logger &logger, UiState &uistate, window::mouse_data const& mdata)
+Camera::zoom(float const factor)
 {
-  orbit_.rotate(logger, uistate, mdata);
+  float constexpr MIN_RADIUS = 0.01f;
+  float const new_radius = coordinates_.radius * factor;
+  if (new_radius >= MIN_RADIUS) {
+    coordinates_.radius = new_radius;
+  } else {
+    coordinates_.radius = MIN_RADIUS;
+  }
   return *this;
+
+  // Don't let the radius go negative
+  // If it does, re-project our target down the look vector
+  //if (m_radius <= 0.0f) {
+    //coordinates_.radius = 30.0f;
+    //auto const look = glm::normalize(m_target - to_cartesian());
+    //target_ = DirectX::XMVectorAdd(m_target, DirectX::XMVectorScale(look, 30.0f));
+  //}
 }
 
 } // ns boomhs
 
 /*
+namespace
+{
+
+glm::vec3
+direction_facing_degrees(glm::quat const& orientation)
+{
+  return glm::degrees(glm::eulerAngles(orientation));
+}
+
+SphericalCoordinates
+to_spherical(glm::vec3 cartesian)
+{
+  static constexpr float EPSILONF = std::numeric_limits<float>::epsilon();
+
+  if (cartesian.x == 0) {
+    cartesian.x = EPSILONF;
+  }
+  float const radius = sqrt((cartesian.x * cartesian.x)
+                  + (cartesian.y * cartesian.y)
+                  + (cartesian.z * cartesian.z));
+  float theta = acos(cartesian.z / radius);
+  //float theta = atan(cartesian.z / cartesian.x);
+  if (cartesian.x < 0) {
+    float constexpr PI = glm::pi<float>();
+    theta += PI;
+  }
+  float const phi = atan(cartesian.y / cartesian.x);
+
+  return SphericalCoordinates{radius, theta, phi};
+}
+
 FpsCamera&
 FpsCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mouse_data const& mdata)
 {
@@ -211,4 +172,6 @@ FpsCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mouse_
   this->orientation_ = glm::normalize(quat * this->orientation_);
   return *this;
 }
+
+} // ns anonymous
 */

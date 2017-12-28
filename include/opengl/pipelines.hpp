@@ -258,6 +258,10 @@ struct Pipeline3D
 
   PipelineAxisArrow3D local_forward_arrow;
 
+  PipelineAxisArrow3D camera_arrow0;
+  PipelineAxisArrow3D camera_arrow1;
+  PipelineAxisArrow3D camera_arrow2;
+
   PipelineTextureCube3D texture_cube;
   PipelineTexture3D house;
   PipelineSkybox3D skybox;

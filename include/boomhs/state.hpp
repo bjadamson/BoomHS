@@ -71,6 +71,9 @@ struct GameState
   static constexpr std::size_t LOCAL_AXIS_Z_INDEX = 15;
 
   static constexpr std::size_t LOCAL_FORWARD_INDEX = 16;
+  static constexpr std::size_t CAMERA_ARROW_INDEX0 = 17;
+  static constexpr std::size_t CAMERA_ARROW_INDEX1 = 18;
+  static constexpr std::size_t CAMERA_ARROW_INDEX2 = 19;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
   GameState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,

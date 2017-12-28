@@ -1,12 +1,18 @@
 #pragma once
 #include <array>
-#include <stlw/type_ctors.hpp>
-#include <stlw/type_macros.hpp>
+#include <cmath>
+#include <glm/gtx/vector_query.hpp>
+#include <glm/gtc/epsilon.hpp>
+
+#include <opengl/draw_info.hpp>
 #include <opengl/glew.hpp>
 #include <opengl/global.hpp>
 #include <opengl/obj.hpp>
+
+#include <stlw/type_macros.hpp>
+#include <stlw/type_ctors.hpp>
+
 #include <boomhs/types.hpp>
-#include <opengl/draw_info.hpp>
 
 namespace opengl
 {
@@ -268,35 +274,70 @@ auto copy_cube_14indices_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory:
   return dinfo;
 }
 
-struct ArrowParams
+struct ArrowCreateParams
 {
   Color const& color;
 
   glm::vec3 const& start;
-  glm::vec3 const& head;
-  glm::vec3 const& tip1;
-  glm::vec3 const& tip2;
+  glm::vec3 const& end;
+
+  float const tip_length_factor = 4.0f;
 };
 
 template<typename PIPE>
 auto
-create_arrow(stlw::Logger &logger, PIPE &pipeline, ArrowParams &&params)
+create_arrow(stlw::Logger &logger, PIPE &pipeline, ArrowCreateParams &&params)
 {
+  auto const adjust_if_zero = [=](glm::vec3 const& v) {
+    auto constexpr ZERO_VEC = glm::zero<glm::vec3>();
+    auto constexpr EPSILON = std::numeric_limits<float>::epsilon();
+    auto constexpr EPSILON_VEC = glm::vec3{EPSILON, EPSILON, EPSILON};
+    bool const is_zero = glm::all(glm::epsilonEqual(v, ZERO_VEC, EPSILON));
+    return is_zero ? EPSILON_VEC : v;
+  };
+
+  // Normalizing a zero vector is undefined. Therefore if the user passes us a zero vector, since
+  // we are creating an arrow, pretend the point is EPSILON away from the true origin (so
+  // normalizing the crossproduct doesn't yield vector's with NaN for their components).
+  auto const A = adjust_if_zero(params.start);
+  auto const B = adjust_if_zero(params.end);
+
+  glm::vec3 const v = A - B;
+  glm::vec3 const rev = -v;
+
+  glm::vec3 const cross1 = glm::normalize(glm::cross(A, B));
+  glm::vec3 const cross2 = glm::normalize(glm::cross(B, A));
+
+  glm::vec3 const vp1 = glm::normalize(rev + cross1);
+  glm::vec3 const vp2 = glm::normalize(rev + cross2) ;
+
+  float const factor = params.tip_length_factor;
+  glm::vec3 const p1 = B - (vp1 / factor);
+  glm::vec3 const p2 = B - (vp2 / factor);
+
 #define COLOR params.color.r, params.color.g, params.color.b, params.color.a
-#define HEAD params.head.x, params.head.y, params.head.z, 1.0f
 #define START params.start.x, params.start.y, params.start.z, 1.0f
-#define TIP1 params.tip1.x, params.tip1.y, params.tip1.z, 1.0f
-#define TIP2 params.tip2.x, params.tip2.y, params.tip2.z, 1.0f
+#define END params.end.x, params.end.y, params.end.z, 1.0f
+#define P1 p1.x, p1.y, p1.z, 1.0f
+#define P2 p2.x, p2.y, p2.z, 1.0f
   auto const vertices = stlw::make_array<float>(
-      START, COLOR, //
-      HEAD, COLOR,  // START -> HEAD
+      // START -> END
+      START, COLOR,
+      END, COLOR,
 
-      HEAD, COLOR, //
-      TIP1, COLOR, // HEAD -> TIP1
+      // END -> P1
+      END, COLOR,
+      P1, COLOR,
 
-      HEAD, COLOR, //
-      TIP2, COLOR  // HEAD -> TIP2
+      // END -> P2
+      END, COLOR,
+      P2, COLOR
       );
+#undef COLOR
+#undef START
+#undef END
+#undef P1
+#undef P2
   static constexpr std::array<GLuint, 6> INDICES = {{
     0, 1, 2, 3, 4, 5
   }};
@@ -304,11 +345,6 @@ create_arrow(stlw::Logger &logger, PIPE &pipeline, ArrowParams &&params)
   DrawInfo dinfo{GL_LINES, INDICES.size()};
   detail::copy_to_gpu(logger, pipeline, dinfo, vertices, INDICES);
   return dinfo;
-#undef COLOR
-#undef HEAD
-#undef START
-#undef TIP1
-#undef TIP2
 }
 
 struct WorldOriginArrows {
@@ -319,22 +355,21 @@ struct WorldOriginArrows {
 
 template<typename X_PIPE, typename Y_PIPE, typename Z_PIPE>
 WorldOriginArrows
-create_world_axis_arrows(stlw::Logger &logger, X_PIPE &x_pipe, Y_PIPE &y_pipe, Z_PIPE &z_pipe,
+create_axis_arrows(stlw::Logger &logger, X_PIPE &x_pipe, Y_PIPE &y_pipe, Z_PIPE &z_pipe,
     glm::vec3 const& origin)
 {
-  float constexpr AHH = 0.125f; // arrow head height
-  float const AHL = 0.45f; // arrow head length
-
-  auto x = create_arrow(logger, x_pipe, ArrowParams{LOC::RED, origin, X_UNIT_VECTOR,
-      {AHL, AHH, 0.0f},
-      {AHL, -AHH, 0.0f}});
-  auto y = create_arrow(logger, y_pipe, ArrowParams{LOC::GREEN, origin, Y_UNIT_VECTOR,
-      {AHH, AHL, 0.0f},
-      {-AHH, AHL, 0.0f}});
-  auto z = create_arrow(logger, z_pipe, ArrowParams{LOC::BLUE, origin, Z_UNIT_VECTOR,
-      {AHH, 0.0f, AHL},
-      {-AHH, 0.0f, AHL}});
+  auto x = create_arrow(logger, x_pipe, ArrowCreateParams{LOC::RED, origin, origin + X_UNIT_VECTOR});
+  auto y = create_arrow(logger, y_pipe, ArrowCreateParams{LOC::GREEN, origin, origin + Y_UNIT_VECTOR});
+  auto z = create_arrow(logger, z_pipe, ArrowCreateParams{LOC::BLUE, origin, origin + Z_UNIT_VECTOR});
   return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
+}
+
+template<typename X_PIPE, typename Y_PIPE, typename Z_PIPE>
+WorldOriginArrows
+create_world_axis_arrows(stlw::Logger &logger, X_PIPE &x_pipe, Y_PIPE &y_pipe, Z_PIPE &z_pipe)
+{
+  glm::vec3 constexpr ORIGIN{0.0001f, 0.0001f, 0.0001f};
+  return create_axis_arrows(logger, x_pipe, y_pipe, z_pipe, ORIGIN);
 }
 
 template<typename P, typename ...Args>
