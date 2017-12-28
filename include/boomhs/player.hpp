@@ -1,6 +1,4 @@
 #pragma once
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtc/quaternion.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/types.hpp>
 #include <window/mouse.hpp>

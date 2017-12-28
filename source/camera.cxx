@@ -1,6 +1,20 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/state.hpp>
 #include <limits>
+#include <cmath>
+
+namespace
+{
+
+inline bool
+is_zero_length(glm::vec3 const& v)
+{
+  float const x = v.x, y = v.y, z = v.z;
+  float sqlen = (x * x) + (y * y) + (z * z);
+  return (sqlen < (1e-06 * 1e-06));
+}
+
+} // ns anonymous
 
 namespace boomhs
 {
@@ -18,7 +32,52 @@ to_cartesian(SphericalCoordinates const& coords)
   float const y = radius * cosf(phi);
   float const z = radius * sin_phi * cosf(theta);
 
+  //Convert spherical coordinates into Cartesian coordinates
+  //float const x = cos(theta) * sin(phi) * radius;
+  //float const y = sin(theta) * sin(phi) * radius;
+  //float const z = cos(phi) * radius;
+
   return glm::vec3{x, y, z};
+}
+
+glm::quat
+get_rotation_to(glm::vec3 const& begin, glm::vec3 const& end,
+    glm::vec3 const& fallback_axis)
+{
+  float constexpr PI = glm::pi<float>();
+  // Based on Stan Melax's article in Game Programming Gems
+
+  // Copy, since cannot modify local
+  glm::vec3 const v0 = glm::normalize(begin);
+  glm::vec3 const v1 = glm::normalize(end);
+
+  float const dotproduct = glm::dot(v0, v1);
+
+  // If dot == 1, vectors are the same
+  if (dotproduct >= 1.0f) {
+    return glm::quat{};
+  }
+  if (dotproduct < (1e-6f - 1.0f)) {
+    if (fallback_axis != glm::zero<glm::vec3>()) {
+      return glm::angleAxis(glm::radians(PI), fallback_axis);
+    } else {
+      // Generate an axis
+      // If their cross product is zero length, try other axis.
+      glm::vec3 const cross = glm::cross(opengl::X_UNIT_VECTOR, v0);
+      glm::vec3 const axis = is_zero_length(cross) ? glm::cross(opengl::Y_UNIT_VECTOR, v0) : cross;
+      return glm::angleAxis(glm::radians(PI), glm::normalize(axis));
+    }
+  } else {
+    float const s = sqrt((1.0f + dotproduct) * 2);
+    float const invs = 1.0f / s;
+
+    glm::vec3 const c = glm::cross(v0, v1);
+    float const x = c.x * invs;
+    float const y = c.y * invs;
+    float const z = c.z * invs;
+    float const w = s * 0.5f;
+    return glm::normalize(glm::quat{x, y, z, w});
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

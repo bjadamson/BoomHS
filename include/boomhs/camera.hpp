@@ -2,12 +2,15 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/quaternion.hpp>
+
 #include <glm/gtx/vector_angle.hpp>
 #include <boomhs/skybox.hpp>
 #include <opengl/constants.hpp>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 #include <window/mouse.hpp>
+#include <cmath>
 #include <string>
 
 namespace boomhs
@@ -58,6 +61,9 @@ struct Projection
   float const far_plane;
 };
 
+glm::quat
+get_rotation_to(glm::vec3 const& begin, glm::vec3 const& end, glm::vec3 const& fallback_axis);
+
 class Camera
 {
   SphericalCoordinates coordinates_{1.0f, -2.608, 0.772};
@@ -82,7 +88,9 @@ public:
   glm::quat
   orientation() const
   {
-    return to_cartesian(coordinates_);
+    glm::vec3 const direction = glm::normalize(to_cartesian(coordinates_));
+    glm::quat const rot = get_rotation_to(glm::zero<glm::vec3>(), direction, glm::zero<glm::vec3>());
+    return rot;
   }
 
   glm::mat4
