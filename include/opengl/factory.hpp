@@ -368,7 +368,7 @@ template<typename X_PIPE, typename Y_PIPE, typename Z_PIPE>
 WorldOriginArrows
 create_world_axis_arrows(stlw::Logger &logger, X_PIPE &x_pipe, Y_PIPE &y_pipe, Z_PIPE &z_pipe)
 {
-  glm::vec3 constexpr ORIGIN{0.0001f, 0.0001f, 0.0001f};
+  glm::vec3 constexpr ORIGIN = glm::zero<glm::vec3>();
   return create_axis_arrows(logger, x_pipe, y_pipe, z_pipe, ORIGIN);
 }
 
