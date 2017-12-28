@@ -192,11 +192,11 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   // cameraspace "up" is === "up" in worldspace.
   auto const FORWARD = -opengl::Z_UNIT_VECTOR;
   auto constexpr UP = opengl::Y_UNIT_VECTOR;
-  auto camera = CameraFactory::make_default(proj, skybox_ent, player_ent, FORWARD, UP);
+  auto camera = CameraFactory::make_default(proj, player_ent, FORWARD, UP);
   Player player{player_ent, arrow_ent, FORWARD, UP};
 
   return GameState{logger, imgui, dimensions, MOVE(rng), MOVE(tmap), MOVE(entities), MOVE(camera),
-      MOVE(player)};
+      MOVE(player), MOVE(Skybox{skybox_ent})};
 }
 
 template<typename PROXY>
@@ -215,8 +215,9 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
   using GS = GameState;
 
   // skybox
+  state.skybox.transform.translation = ents[GameState::AT_INDEX]->translation;
   if (state.draw_skybox) {
-    render::draw(rargs, *ents[GameState::SKYBOX_INDEX], d3.skybox, handles.cube_skybox);
+    render::draw(rargs, state.skybox.transform, d3.skybox, handles.cube_skybox);
   }
 
   // random
@@ -271,7 +272,9 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
     }
     {
       glm::vec3 const start = glm::zero<glm::vec3>();
-      glm::vec3 const head = camera.world_position();
+      glm::vec3 const head = camera.world_position() + camera.forward_vector();
+      std::cerr << "camera.forward_vector() '" << glm::to_string(camera.forward_vector()) << "'\n";
+      std::cerr << "head: '" << glm::to_string(head) << "'\n";
       auto handle = OF::create_arrow(logger, gfx.d3.camera_arrow0,
         OF::ArrowCreateParams{LOC::YELLOW, start, head});
 
@@ -287,7 +290,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
       render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX1], d3.camera_arrow1, handle);
     }
     {
-      glm::vec3 const start = camera.world_position();
+      glm::vec3 const start = glm::zero<glm::vec3>();
       glm::vec3 const head = start + camera.backward_vector();
 
       auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow2,

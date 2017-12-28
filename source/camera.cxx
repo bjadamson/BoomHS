@@ -3,19 +3,6 @@
 #include <limits>
 #include <cmath>
 
-namespace
-{
-
-inline bool
-is_zero_length(glm::vec3 const& v)
-{
-  float const x = v.x, y = v.y, z = v.z;
-  float sqlen = (x * x) + (y * y) + (z * z);
-  return (sqlen < (1e-06 * 1e-06));
-}
-
-} // ns anonymous
-
 namespace boomhs
 {
 
@@ -27,7 +14,6 @@ to_cartesian(SphericalCoordinates const& coords)
   float const phi = coords.phi;
 
   float const sin_phi = sinf(phi);
-
   float const x = radius * sin_phi * sinf(theta);
   float const y = radius * cosf(phi);
   float const z = radius * sin_phi * cosf(theta);
@@ -40,57 +26,15 @@ to_cartesian(SphericalCoordinates const& coords)
   return glm::vec3{x, y, z};
 }
 
-glm::quat
-get_rotation_to(glm::vec3 const& begin, glm::vec3 const& end,
-    glm::vec3 const& fallback_axis)
-{
-  float constexpr PI = glm::pi<float>();
-  // Based on Stan Melax's article in Game Programming Gems
-
-  // Copy, since cannot modify local
-  glm::vec3 const v0 = glm::normalize(begin);
-  glm::vec3 const v1 = glm::normalize(end);
-
-  float const dotproduct = glm::dot(v0, v1);
-
-  // If dot == 1, vectors are the same
-  if (dotproduct >= 1.0f) {
-    return glm::quat{};
-  }
-  if (dotproduct < (1e-6f - 1.0f)) {
-    if (fallback_axis != glm::zero<glm::vec3>()) {
-      return glm::angleAxis(glm::radians(PI), fallback_axis);
-    } else {
-      // Generate an axis
-      // If their cross product is zero length, try other axis.
-      glm::vec3 const cross = glm::cross(opengl::X_UNIT_VECTOR, v0);
-      glm::vec3 const axis = is_zero_length(cross) ? glm::cross(opengl::Y_UNIT_VECTOR, v0) : cross;
-      return glm::angleAxis(glm::radians(PI), glm::normalize(axis));
-    }
-  } else {
-    float const s = sqrt((1.0f + dotproduct) * 2);
-    float const invs = 1.0f / s;
-
-    glm::vec3 const c = glm::cross(v0, v1);
-    float const x = c.x * invs;
-    float const y = c.y * invs;
-    float const z = c.z * invs;
-    float const w = s * 0.5f;
-    return glm::normalize(glm::quat{x, y, z, w});
-  }
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
-Camera::Camera(Projection const& proj, skybox &&sb, glm::vec3 const& forward, glm::vec3 const& up,
+Camera::Camera(Projection const& proj, glm::vec3 const& forward, glm::vec3 const& up,
     Transform &target)
   : forward_(forward)
   , up_(up)
   , projection_(proj)
-  , skybox_(MOVE(sb))
   , target_(target)
 {
-  this->skybox_.transform.translation = forward;
 }
 
 Camera&
@@ -153,14 +97,6 @@ Camera::zoom(float const factor)
     coordinates_.radius = MIN_RADIUS;
   }
   return *this;
-
-  // Don't let the radius go negative
-  // If it does, re-project our target down the look vector
-  //if (m_radius <= 0.0f) {
-    //coordinates_.radius = 30.0f;
-    //auto const look = glm::normalize(m_target - to_cartesian());
-    //target_ = DirectX::XMVectorAdd(m_target, DirectX::XMVectorScale(look, 30.0f));
-  //}
 }
 
 } // ns boomhs

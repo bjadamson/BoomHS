@@ -5,10 +5,10 @@
 namespace boomhs
 {
 
-struct skybox
+struct Skybox
 {
   Transform &transform;
-  MOVE_CONSTRUCTIBLE_ONLY(skybox);
+  MOVE_CONSTRUCTIBLE_ONLY(Skybox);
 };
 
 } // ns boomhs

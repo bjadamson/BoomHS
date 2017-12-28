@@ -5,8 +5,8 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include <glm/gtx/vector_angle.hpp>
-#include <boomhs/skybox.hpp>
 #include <opengl/constants.hpp>
+#include <boomhs/types.hpp>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 #include <window/mouse.hpp>
@@ -61,16 +61,12 @@ struct Projection
   float const far_plane;
 };
 
-glm::quat
-get_rotation_to(glm::vec3 const& begin, glm::vec3 const& end, glm::vec3 const& fallback_axis);
-
 class Camera
 {
   SphericalCoordinates coordinates_{1.0f, -2.608, 0.772};
   glm::vec3 forward_, up_;
 
   Projection const projection_;
-  skybox skybox_;
 
   Transform &target_;
   glm::mat4 projection() const
@@ -83,14 +79,13 @@ class Camera
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
 
-  Camera(Projection const&, skybox &&, glm::vec3 const& f, glm::vec3 const& u, Transform &);
+  Camera(Projection const&,  glm::vec3 const& f, glm::vec3 const& u, Transform &);
 
   glm::quat
   orientation() const
   {
     glm::vec3 const direction = glm::normalize(to_cartesian(coordinates_));
-    glm::quat const rot = get_rotation_to(glm::zero<glm::vec3>(), direction, glm::zero<glm::vec3>());
-    return rot;
+    return glm::quat{direction};
   }
 
   glm::mat4
@@ -167,7 +162,7 @@ public:
   void
   set_follow_target(Transform &m)
   {
-    this->target_ = m;
+    target_ = m;
   }
 
   Camera&
@@ -175,24 +170,13 @@ public:
 
   Camera&
   zoom(float const);
-  //Camera&
-  //move(float const s, glm::vec3 const& dir)
-  //{
-    //auto const& front = this->front();
-    //set_front(front + (dir * s));
-
-    //this->skybox_.transform.translation = front;
-
-    //return *this;
-  //}
 };
 
 struct CameraFactory
 {
-  static auto make_default(Projection const& proj, Transform &skybox_transform,
-      Transform &target, glm::vec3 const& forward, glm::vec3 const& up)
+  static auto make_default(Projection const& proj, Transform &target, glm::vec3 const& forward, glm::vec3 const& up)
   {
-    return Camera{proj, skybox{skybox_transform}, forward, up, target};
+    return Camera{proj, forward, up, target};
   }
 };
 

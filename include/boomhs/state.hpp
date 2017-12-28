@@ -13,6 +13,7 @@
 #include <boomhs/player.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/tilemap.hpp>
+#include <boomhs/skybox.hpp>
 #include <vector>
 
 using stlw::Logger;
@@ -51,6 +52,7 @@ struct GameState
   // player needs to come AFTER "camera".
   Camera camera;
   Player player;
+  Skybox skybox;
 
   static constexpr std::size_t COLOR_CUBE_INDEX = 0;
   static constexpr std::size_t TEXTURE_CUBE_INDEX = 1;
@@ -77,7 +79,7 @@ struct GameState
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
   GameState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
-      TileMap &&tmap, std::vector<Transform*> &&ents, Camera &&cam, Player &&pl)
+      TileMap &&tmap, std::vector<Transform*> &&ents, Camera &&cam, Player &&pl, Skybox &&sbox)
     : logger(l)
     , imgui(i)
     , dimensions(d)
@@ -87,6 +89,7 @@ struct GameState
     , entities(MOVE(ents))
     , camera(MOVE(cam))
     , player(MOVE(pl))
+    , skybox(MOVE(sbox))
   {
     //this->camera.move_down(1);
   }
