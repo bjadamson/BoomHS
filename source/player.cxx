@@ -109,8 +109,9 @@ Player::rotate(float const angle, window::mouse_data const& mdata)
   //auto constexpr roll = 0.0f;
   //auto const new_rotation = glm::quat{glm::vec3{yaw, pitch, roll}};
 
+  float constexpr ROT = 3.0f;
   bool const left = mdata.current.xrel < 0;
-  float const a = left ? 5.0f : -5.0f;
+  float const a = left ? ROT : -ROT;
   glm::quat const new_rotation = glm::angleAxis(glm::radians(a), glm::vec3{0.0, 1.0f, 0.0f});
   transform_.rotation = new_rotation * transform_.rotation;
   arrow_.rotation = new_rotation * arrow_.rotation;
