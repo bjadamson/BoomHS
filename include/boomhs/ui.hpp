@@ -62,10 +62,6 @@ draw_camera_info(GameState &state)
     ImGui::Text("Follow Target position:\nx: '%s', y: '%s', z: '%s'",
         x.c_str(), y.c_str(), z.c_str());
   }
-  ImGui::Checkbox("Flip Y", &state.ui_state.flip_y);
-  ImGui::Checkbox("Global Axis", &state.ui_state.show_global_axis);
-  ImGui::Checkbox("Local Axis", &state.ui_state.show_local_axis);
-  ImGui::Checkbox("Target Forward/Right/Up Vectors", &state.ui_state.show_target_vectors);
   ImGui::End();
 }
 
@@ -109,34 +105,18 @@ void draw_ui(GameState &state, PROXY &proxy)
     ecst::entity_id const id{static_cast<std::size_t>(eid)};
   }
 
-  ImGui::Begin("MY MENU", nullptr, ImGuiWindowFlags_MenuBar);
-  if (ImGui::BeginMenuBar())
-    {
-        if (ImGui::BeginMenu("Examples"))
-        {
-            ImGui::MenuItem("Main menu bar", nullptr, nullptr);
-            ImGui::MenuItem("Console", nullptr, nullptr);
-            ImGui::MenuItem("Log", nullptr, nullptr);
-            ImGui::MenuItem("Simple layout", nullptr, nullptr);
-            ImGui::MenuItem("Property editor", nullptr, nullptr);
-            ImGui::MenuItem("Long text display", nullptr, nullptr);
-            ImGui::MenuItem("Auto-resizing window", nullptr, nullptr);
-            ImGui::MenuItem("Constrained-resizing window", nullptr, nullptr);
-            ImGui::MenuItem("Simple overlay", nullptr, nullptr);
-            ImGui::MenuItem("Manipulating window titles", nullptr, nullptr);
-            ImGui::MenuItem("Custom rendering", nullptr, nullptr);
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("Help"))
-        {
-            ImGui::MenuItem("Metrics", nullptr, nullptr);
-            ImGui::MenuItem("Style Editor", nullptr, nullptr);
-            ImGui::MenuItem("About Dear ImGui", nullptr, nullptr);
-            ImGui::EndMenu();
-        }
-        ImGui::EndMenuBar();
+  //ImGui::Begin("MY MENU", nullptr, ImGuiWindowFlags_MenuBar);
+  if (ImGui::BeginMainMenuBar()) {
+    if (ImGui::BeginMenu("Camera")) {
+      ImGui::MenuItem("Flip Y", nullptr, &state.ui_state.flip_y);
+      ImGui::MenuItem("Global Axis", nullptr, &state.ui_state.show_global_axis);
+      ImGui::MenuItem("Local Axis", nullptr, &state.ui_state.show_local_axis);
+      ImGui::MenuItem("Target Forward/Right/Up Vectors", nullptr, &state.ui_state.show_target_vectors);
+
+      ImGui::EndMenu();
     }
-  ImGui::End();
+  }
+  ImGui::EndMainMenuBar();
 
   auto const& imgui = state.imgui;
   auto const framerate = imgui.Framerate;
