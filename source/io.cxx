@@ -56,8 +56,10 @@ bool process_event(GameState &state, SDL_Event &event)
     bool const left = event.motion.state & SDL_BUTTON_LMASK;
     bool const right = event.motion.state & SDL_BUTTON_RMASK;
     bool const both = left && right;
+
     auto const rot_player = [&]() {
       player.rotate(ANGLE, state.mouse_data);
+      state.render.redraw_tilemap = true;
     };
     auto const rot_camera = [&]() {
       camera.rotate(logger, state.ui_state, state.mouse_data);
@@ -94,6 +96,7 @@ bool process_event(GameState &state, SDL_Event &event)
     if (state.mouse.left_pressed && state.mouse.right_pressed) {
       std::cerr << "BOTH BUTTONS PRESSED\n";
       camera.move_behind_player(player);
+      state.render.redraw_tilemap = true;
       // rot from player -> camera
       //glm::quat const rot = camera.orientation() * glm::inverse(player.orientation());
       //auto euler = glm::eulerAngles(rot);
@@ -117,29 +120,33 @@ bool process_event(GameState &state, SDL_Event &event)
     break;
   }
   case SDL_KEYDOWN: {
+    auto const move_player = [&state, &player](Player& (Player::*fn)(float)) {
+      state.render.redraw_tilemap = true;
+      (player.*fn)(MOVE_DISTANCE);
+    };
     switch (event.key.keysym.sym) {
     case SDLK_w: {
-      player.move_forward(MOVE_DISTANCE);
+      move_player(&Player::move_forward);
       break;
     }
     case SDLK_s: {
-      player.move_backward(MOVE_DISTANCE);
+      move_player(&Player::move_backward);
       break;
     }
     case SDLK_a: {
-      player.move_left(MOVE_DISTANCE);
+      move_player(&Player::move_left);
       break;
     }
     case SDLK_d: {
-      player.move_right(MOVE_DISTANCE);
+      move_player(&Player::move_right);
       break;
     }
     case SDLK_q: {
-      player.move_up(MOVE_DISTANCE);
+      move_player(&Player::move_up);
       break;
     }
     case SDLK_e: {
-      player.move_down(MOVE_DISTANCE);
+      move_player(&Player::move_down);
       break;
     }
     case SDLK_t: {

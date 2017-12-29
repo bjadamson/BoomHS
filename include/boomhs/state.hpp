@@ -47,11 +47,18 @@ struct WindowState
   window::FullscreenFlags fullscreen = window::NOT_FULLSCREEN;
 };
 
+struct RenderState
+{
+  bool draw_skybox = false;
+  bool redraw_tilemap = true;
+};
+
 struct GameState
 {
   bool quit = false;
-  bool draw_skybox = false;
+
   MouseState mouse;
+  RenderState render;
   WindowState window;
 
   Logger &logger;

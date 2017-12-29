@@ -91,7 +91,7 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
 auto
 make_tilemap(stlw::float_generator &rng)
 {
-  auto const [W, H, L] = stlw::make_array<std::size_t>(10ul, 1ul, 10ul);
+  auto const [W, H, L] = stlw::make_array<std::size_t>(10ul, 2ul, 10ul);
   auto const NUM_TILES = W * H * L;
 
   auto tile_vec = std::vector<Tile>{};
@@ -132,30 +132,31 @@ make_entities(PROXY &proxy)
     entities.emplace_back(&p);
   };
 
-  glm::vec3 constexpr TILEMAP_POS = glm::vec3{0.0f, 0.0f, 0.0f};
-  make_entity(glm::vec3{-2.0f, -2.0f, -2.0f});   // COLOR_CUBE
+  glm::vec3 constexpr ZERO = glm::zero<glm::vec3>();
+  glm::vec3 constexpr TILEMAP_POS = ZERO;
+  make_entity(glm::vec3{-2.0f, -2.0f, -2.0f}); // COLOR_CUBE
   make_entity(glm::vec3{-4.0f, -4.0f, -2.0f}); // TEXTURE_CUBE
-  make_entity(glm::vec3{-3.0f, -2.0f, 2.0f}); // WIREFRAME_CUBE_INDEX
-  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // SKYBOX_INDEX
-  make_entity(glm::vec3{2.0f, 0.0f, -4.0f});  // HOUSE_CUBE
-  make_entity(TILEMAP_POS);                   // AT_INDEX
-  make_entity(TILEMAP_POS);                   // PLAYER_ARROW_INDEX
-  make_entity(TILEMAP_POS);                   // TILEMAP_INDEX
-  make_entity(glm::vec3{0.0f, 5.0f, 0.0f});   // TERRAIN_INDEX
-  make_entity(TILEMAP_POS);                   // CAMERA_INDEX
+  make_entity(glm::vec3{-3.0f, -2.0f, 2.0f});  // WIREFRAME_CUBE_INDEX
+  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});    // SKYBOX_INDEX
+  make_entity(glm::vec3{2.0f, 0.0f, -4.0f});   // HOUSE_CUBE
+  make_entity(ZERO);                           // AT_INDEX
+  make_entity(ZERO);                           // PLAYER_ARROW_INDEX
+  make_entity(TILEMAP_POS);                    // TILEMAP_INDEX
+  make_entity(glm::vec3{0.0f, 5.0f, 0.0f});    // TERRAIN_INDEX
+  make_entity(ZERO);                           // CAMERA_INDEX
 
-  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // GLOBAL_AXIS_X_INDEX
-  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // GLOBAL_AXIS_Y_INDEX
-  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});   // GLOBAL_AXIS_Z_INDEX
+  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});    // GLOBAL_AXIS_X_INDEX
+  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});    // GLOBAL_AXIS_Y_INDEX
+  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});    // GLOBAL_AXIS_Z_INDEX
 
-  make_entity(TILEMAP_POS);                   //LOCAL_AXIS_X_INDEX
-  make_entity(TILEMAP_POS);                   //LOCAL_AXIS_Y_INDEX
-  make_entity(TILEMAP_POS);                   //LOCAL_AXIS_Z_INDEX
-  make_entity(TILEMAP_POS);                   //LOCAL_FORWARD_INDEX
+  make_entity(ZERO);                           //LOCAL_AXIS_X_INDEX
+  make_entity(ZERO);                           //LOCAL_AXIS_Y_INDEX
+  make_entity(ZERO);                           //LOCAL_AXIS_Z_INDEX
+  make_entity(ZERO);                           //LOCAL_FORWARD_INDEX
 
-  make_entity(TILEMAP_POS);                   //CAMERA_ARROW_INDEX0
-  make_entity(TILEMAP_POS);                   //CAMERA_ARROW_INDEX1
-  make_entity(TILEMAP_POS);                   //CAMERA_ARROW_INDEX2
+  make_entity(ZERO);                           //CAMERA_ARROW_INDEX0
+  make_entity(ZERO);                           //CAMERA_ARROW_INDEX1
+  make_entity(ZERO);                           //CAMERA_ARROW_INDEX2
   return entities;
 }
 
@@ -202,10 +203,9 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
 
 template<typename PROXY>
 void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, window::SDLWindow &window,
-    Assets const& assets)
+    Assets &assets)
 {
-  render::clear_screen(LOC::BLACK);
-
+  using GS = GameState;
   auto rargs = state.render_args();
   auto const& ents = state.entities;
   auto const& handles = assets.handles;
@@ -214,11 +214,21 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
   auto &d3 = gfx.d3;
   auto &logger = state.logger;
 
-  using GS = GameState;
+  if (state.render.redraw_tilemap) {
+    std::cerr << "Redrawing tilemap\n";
+    auto tilemap = make_tilemap(state.rnum_generator);
+    assets.handles.tilemap = OF::copy_tilemap_gpu(logger, d3.hashtag,
+        {GL_TRIANGLE_STRIP, assets.objects.hashtag});
+
+    // We don't need to recompute the tilemap, we just did.
+    state.render.redraw_tilemap = false;
+  }
+
+  render::clear_screen(LOC::BLACK);
 
   // skybox
   state.skybox.transform.translation = ents[GameState::AT_INDEX]->translation;
-  if (state.draw_skybox) {
+  if (state.render.draw_skybox) {
     render::draw(rargs, state.skybox.transform, d3.skybox, handles.cube_skybox);
   }
 

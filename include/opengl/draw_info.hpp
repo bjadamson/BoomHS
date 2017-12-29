@@ -21,7 +21,6 @@ class GpuBufferHandles
   }
 
   NO_COPY(GpuBufferHandles);
-  NO_MOVE_ASSIGN(GpuBufferHandles);
 public:
   friend class DrawInfo;
   ~GpuBufferHandles()
@@ -39,6 +38,17 @@ public:
     other.ebo_ = 0;
   }
 
+  GpuBufferHandles&
+  operator=(GpuBufferHandles &&other)
+  {
+    vbo_ = other.vbo_;
+    ebo_ = other.ebo_;
+
+    other.vbo_ = 0;
+    other.ebo_ = 0;
+    return *this;
+  }
+
   inline auto vbo() const { return this->vbo_; }
   inline auto ebo() const { return this->ebo_; }
 };
@@ -49,11 +59,20 @@ class DrawInfo {
   GpuBufferHandles handles_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(DrawInfo);
+  NO_COPY(DrawInfo);
   explicit DrawInfo(GLenum const dm, GLuint const num_indices)
       : draw_mode_(dm)
       , num_indices_(num_indices)
   {
+  }
+
+  DrawInfo(DrawInfo &&) = default;
+  DrawInfo& operator=(DrawInfo &&di)
+  {
+    draw_mode_ = di.draw_mode_;
+    num_indices_ = di.num_indices_;
+    handles_ = MOVE(di.handles_);
+    return *this;
   }
 
   inline auto draw_mode() const { return this->draw_mode_; }

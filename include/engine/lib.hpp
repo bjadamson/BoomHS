@@ -39,7 +39,7 @@ get_dimensions(Engine const& e)
 }
 
 template<typename PROXY>
-void loop(Engine &engine, State &state, PROXY &proxy, game::Assets const& assets)
+void loop(Engine &engine, State &state, PROXY &proxy, game::Assets &assets)
 {
   auto &logger = state.logger;
   // Reset Imgui for next game frame.
@@ -73,7 +73,7 @@ void loop(Engine &engine, State &state, PROXY &proxy, game::Assets const& assets
 
 template<typename PROXY>
 void
-timed_game_loop(PROXY &proxy, Engine &engine, boomhs::GameState &state, boomhs::Assets const& assets)
+timed_game_loop(PROXY &proxy, Engine &engine, boomhs::GameState &state, boomhs::Assets &assets)
 {
   auto &logger = state.logger;
 
@@ -120,7 +120,7 @@ start(stlw::Logger &logger, Engine &engine)
   });
 
   LOG_TRACE("Loading assets.");
-  auto const assets = game::load_assets(state.logger, engine.opengl_lib);
+  auto assets = game::load_assets(state.logger, engine.opengl_lib);
 
   auto const init = [&state](auto &system, auto &tdata) { system.init(tdata, state); };
   auto const system_init = [&init](auto &tv) {

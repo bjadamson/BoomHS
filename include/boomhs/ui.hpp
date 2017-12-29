@@ -99,7 +99,7 @@ void draw_ui(GameState &state, window::SDLWindow &window, PROXY &proxy)
   draw_camera_info(state);
   draw_player_info(state);
 
-  ImGui::Checkbox("Draw Skybox", &state.draw_skybox);
+  ImGui::Checkbox("Draw Skybox", &state.render.draw_skybox);
 
   if(ImGui::Checkbox("Enter Pressed", &state.ui_state.enter_pressed)) {
     int const& eid = state.ui_state.eid_buffer;;
