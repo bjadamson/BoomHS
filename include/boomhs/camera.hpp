@@ -53,6 +53,9 @@ struct SphericalCoordinates
 glm::vec3
 to_cartesian(SphericalCoordinates const&);
 
+SphericalCoordinates
+to_spherical(glm::vec3);
+
 struct Projection
 {
   float const field_of_view;
@@ -64,10 +67,10 @@ struct Projection
 class Camera
 {
   SphericalCoordinates coordinates_{1.0f, -2.608, 0.772};
-  glm::vec3 forward_, up_;
-
+  glm::mat4 view_;
   Projection const projection_;
   Transform &target_;
+  glm::vec3 forward_, up_;
 
   glm::mat4
   projection_matrix() const
@@ -83,12 +86,27 @@ class Camera
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
 
-  Camera(Projection const&, glm::vec3 const& f, glm::vec3 const& u, Transform &);
+  Camera(Projection const&, Transform &, glm::vec3 const& f, glm::vec3 const& u);
 
   glm::mat4
   camera_matrix() const
   {
     return projection_matrix() * view_matrix();
+  }
+
+  void
+  set_coordinates(SphericalCoordinates const& sc)
+  {
+    coordinates_ = sc;
+  }
+
+  void
+  snap_behind_player()
+  {
+    // desired location is behind the target on the z-axis
+    //glm::vec3 const world_pos = player.world_position() + player.back_vector();
+    //glm::vec3 const& target_pos = player.world_position();
+    //view_ = glm::lookAt(world_pos, target_pos, up_);
   }
 
   /*
@@ -147,20 +165,13 @@ public:
   glm::vec3
   world_position() const
   {
-    auto const& target = target_.translation;
-    return target + local_position();
+    return target_position() + local_position();
   }
 
   glm::vec3
   target_position() const
   {
-    return this->target_.translation;
-  }
-
-  void
-  set_follow_target(Transform &m)
-  {
-    target_ = m;
+    return target_.translation;
   }
 
   Camera&
@@ -168,14 +179,6 @@ public:
 
   Camera&
   zoom(float const);
-};
-
-struct CameraFactory
-{
-  static auto make_default(Projection const& proj, Transform &target, glm::vec3 const& forward, glm::vec3 const& up)
-  {
-    return Camera{proj, forward, up, target};
-  }
 };
 
 } // ns boomhs

@@ -26,14 +26,35 @@ to_cartesian(SphericalCoordinates const& coords)
   return glm::vec3{x, y, z};
 }
 
+SphericalCoordinates
+to_spherical(glm::vec3 cartesian)
+{
+  static constexpr float EPSILONF = std::numeric_limits<float>::epsilon();
+
+  if (cartesian.x == 0) {
+    cartesian.x = EPSILONF;
+  }
+  float const radius = sqrt((cartesian.x * cartesian.x)
+                  + (cartesian.y * cartesian.y)
+                  + (cartesian.z * cartesian.z));
+  //float theta = acos(cartesian.z / radius);
+  float theta = atan(cartesian.z / cartesian.x);
+  if (cartesian.x < 0) {
+    float constexpr PI = glm::pi<float>();
+    theta += PI;
+  }
+  float const phi = atan(cartesian.y / cartesian.x);
+
+  return SphericalCoordinates{radius, theta, phi};
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
-Camera::Camera(Projection const& proj, glm::vec3 const& forward, glm::vec3 const& up,
-    Transform &target)
-  : forward_(forward)
+Camera::Camera(Projection const& proj, Transform &t,glm::vec3 const& forward, glm::vec3 const& up)
+  : projection_(proj)
+  , target_(t)
+  , forward_(forward)
   , up_(up)
-  , projection_(proj)
-  , target_(target)
 {
 }
 
@@ -111,27 +132,7 @@ direction_facing_degrees(glm::quat const& orientation)
   return glm::degrees(glm::eulerAngles(orientation));
 }
 
-SphericalCoordinates
-to_spherical(glm::vec3 cartesian)
-{
-  static constexpr float EPSILONF = std::numeric_limits<float>::epsilon();
 
-  if (cartesian.x == 0) {
-    cartesian.x = EPSILONF;
-  }
-  float const radius = sqrt((cartesian.x * cartesian.x)
-                  + (cartesian.y * cartesian.y)
-                  + (cartesian.z * cartesian.z));
-  float theta = acos(cartesian.z / radius);
-  //float theta = atan(cartesian.z / cartesian.x);
-  if (cartesian.x < 0) {
-    float constexpr PI = glm::pi<float>();
-    theta += PI;
-  }
-  float const phi = atan(cartesian.y / cartesian.x);
-
-  return SphericalCoordinates{radius, theta, phi};
-}
 
 FpsCamera&
 FpsCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mouse_data const& mdata)

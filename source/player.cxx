@@ -138,7 +138,7 @@ Player::multiply_quat(glm::quat const& quat)
   //auto const camera_or = glm::eulerAngles(camera.orientation());
   //auto const delta_rot = rotate_towards(player_or, camera_or, PI/8);
 
-  std::cerr << "matching camera's rotation\n";
+  //std::cerr << "matching camera's rotation\n";
 
   //glm::quat const quat = rotation_between_vectors(forward_vector(), fwd_v);
   ////transform_.rotation = quat * transform_.rotation;

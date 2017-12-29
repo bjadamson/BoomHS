@@ -1,5 +1,4 @@
 #pragma once
-#include <boomhs/camera.hpp>
 #include <boomhs/types.hpp>
 #include <window/mouse.hpp>
 #include <stlw/type_macros.hpp>

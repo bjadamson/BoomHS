@@ -84,6 +84,7 @@ bool process_event(GameState &state, SDL_Event &event)
   case SDL_MOUSEBUTTONDOWN:
   {
     if (event.button.button == SDL_BUTTON_RIGHT) {
+      camera.snap_behind_player();
       // rot from player -> camera
       //glm::quat const rot = camera.orientation() * glm::inverse(player.orientation());
       //auto euler = glm::eulerAngles(rot);

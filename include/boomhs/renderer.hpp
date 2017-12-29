@@ -178,7 +178,7 @@ template <typename TILEMAP>
 void draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs &&dt_args, TILEMAP const& tilemap)
 {
   auto &logger = args.logger;
-  glm::mat4 const camera_matrix = args.camera.camera_matrix();;
+  glm::mat4 const camera_matrix = args.camera.camera_matrix();
   auto const model_matrix = transform.model_matrix();
   auto const mvp_matrix = camera_matrix * model_matrix;
 

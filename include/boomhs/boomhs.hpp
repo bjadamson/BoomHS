@@ -192,8 +192,8 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   // cameraspace "up" is === "up" in worldspace.
   auto const FORWARD = -opengl::Z_UNIT_VECTOR;
   auto constexpr UP = opengl::Y_UNIT_VECTOR;
-  auto camera = CameraFactory::make_default(proj, player_ent, FORWARD, UP);
   Player player{player_ent, arrow_ent, FORWARD, UP};
+  Camera camera(proj, player_ent, FORWARD, UP);
 
   return GameState{logger, imgui, dimensions, MOVE(rng), MOVE(tmap), MOVE(entities), MOVE(camera),
       MOVE(player), MOVE(Skybox{skybox_ent})};
@@ -273,8 +273,6 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
   {
     glm::vec3 const start = player.world_position();
     glm::vec3 const head = camera.world_position();
-    std::cerr << "camera.world_position() '" << glm::to_string(camera.world_position()) << "'\n";
-    std::cerr << "player.world_position() '" << glm::to_string(player.world_position()) << "'\n";
     auto handle = OF::create_arrow(logger, gfx.d3.camera_arrow0,
       OF::ArrowCreateParams{LOC::YELLOW, start, head});
 
@@ -282,18 +280,18 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
   }
   // draw forward arrow (for camera)
   {
-    //glm::vec3 const start = camera.world_position();
-    //glm::vec3 const head = start + camera.backward_vector();
+    glm::vec3 const start = player.world_position();
+    glm::vec3 const head = start + player.back_vector();
 
-    //auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow1,
-      //OF::ArrowCreateParams{LOC::PINK, start, head});
+    auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow1,
+      OF::ArrowCreateParams{LOC::PINK, start, head});
 
-    //render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX1], d3.camera_arrow1, handle);
+    render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX1], d3.camera_arrow1, handle);
   }
   // draw arrow from origin -> camera
   {
-    glm::vec3 const start = glm::zero<glm::vec3>();
-    glm::vec3 const head = camera.world_position();
+    glm::vec3 const start = player.world_position();
+    glm::vec3 const head = start + player.right_vector();
 
     auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow2,
       OF::ArrowCreateParams{LOC::PURPLE, start, head});
