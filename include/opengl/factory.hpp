@@ -205,7 +205,7 @@ auto copy_cube_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory::CubePrope
   // Define the 8 vertices of a unit cube
   float constexpr W = 1.0f;
   static const std::array<float, 32> v = stlw::make_array<float>(
-      // front
+    // front
     -1.0f, -1.0f,  1.0f, W,
      1.0f, -1.0f,  1.0f, W,
      1.0f,  1.0f,  1.0f, W,

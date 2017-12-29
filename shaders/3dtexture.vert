@@ -8,11 +8,11 @@ in vec2 a_uv;
 out vec3 v_normal;
 out vec2 v_uv;
 
-uniform mat4 u_mvmatrix;
+uniform mat4 u_mvpmatrix;
 
 void main()
 {
-  gl_Position = u_mvmatrix * a_position;
+  gl_Position = u_mvpmatrix * a_position;
   v_normal = a_normal;
   v_uv = a_uv;
 }

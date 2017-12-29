@@ -6,7 +6,7 @@ in vec4 a_color;
 // shader
 out vec4 v_color;
 
-uniform mat4 u_mvmatrix;
+uniform mat4 u_mvpmatrix;
 uniform vec3 u_offset;
 
 void main()
@@ -17,6 +17,6 @@ void main()
   vec4 color = vec4(colors[gl_InstanceID], 1.0);
 
   vec4 pos = a_position + vec4(offset, 1.0);
-  gl_Position = u_mvmatrix * pos;
+  gl_Position = u_mvpmatrix * pos;
   v_color = color;
 }

@@ -6,10 +6,10 @@ in vec4 a_color;
 // shader
 out vec4 v_color;
 
-uniform mat4 u_mvmatrix;
+uniform mat4 u_modelmatrix;
 
 void main()
 {
-  gl_Position = u_mvmatrix * a_position;
+  gl_Position = u_modelmatrix * a_position;
   v_color = a_color;
 }

@@ -67,34 +67,36 @@ class Camera
   glm::vec3 forward_, up_;
 
   Projection const projection_;
-
   Transform &target_;
-  glm::mat4 projection() const
+
+  glm::mat4
+  projection_matrix() const
   {
     auto const& p = projection_;
     auto const fov = glm::radians(p.field_of_view);
     return glm::perspective(fov, p.viewport_aspect_ratio, p.near_plane, p.far_plane);
   }
 
+  glm::mat4
+  view_matrix() const;
+
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
 
-  Camera(Projection const&,  glm::vec3 const& f, glm::vec3 const& u, Transform &);
-
-  glm::quat
-  orientation() const
-  {
-    glm::vec3 const direction = glm::normalize(to_cartesian(coordinates_));
-    return glm::quat{direction};
-  }
+  Camera(Projection const&, glm::vec3 const& f, glm::vec3 const& u, Transform &);
 
   glm::mat4
-  view() const;
+  camera_matrix() const
+  {
+    return projection_matrix() * view_matrix();
+  }
 
+  /*
   glm::vec3
   forward_vector() const
   {
-    return forward_ * orientation();
+    glm::vec3 const& row = view_[2];
+    return glm::vec3{row.x, row.y, row.z};
   }
 
   glm::vec3
@@ -119,7 +121,8 @@ public:
   glm::vec3
   up_vector() const
   {
-    return up_ * orientation();
+    glm::vec3 const& row = view_[1];
+    return glm::vec3{row.x, row.y, row.z};
   }
 
   glm::vec3
@@ -127,6 +130,7 @@ public:
   {
     return -up_vector();
   }
+  */
 
   SphericalCoordinates
   spherical_coordinates() const
@@ -151,12 +155,6 @@ public:
   target_position() const
   {
     return this->target_.translation;
-  }
-
-  glm::mat4
-  matrix() const
-  {
-    return projection() * view();
   }
 
   void

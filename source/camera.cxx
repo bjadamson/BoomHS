@@ -79,7 +79,7 @@ Camera::rotate(stlw::Logger &logger, UiState &uistate, window::mouse_data const&
 }
 
 glm::mat4
-Camera::view() const
+Camera::view_matrix() const
 {
   auto const& target = target_.translation;
   auto const position_xyz = world_position();

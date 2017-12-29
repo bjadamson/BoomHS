@@ -207,8 +207,8 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
   auto rargs = state.render_args();
   auto const& ents = state.entities;
   auto const& handles = assets.handles;
-  auto const& player = state.player;
-  auto const& camera = state.camera;
+  auto &player = state.player;
+  auto &camera = state.camera;
   auto &d3 = gfx.d3;
   auto &logger = state.logger;
 
@@ -259,45 +259,46 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
     }
   }
 
-  // draw forward arrow
+  // draw forward arrow (for player)
   {
-    {
-      glm::vec3 const start = player.world_position();
-      glm::vec3 const head = start + (1.0f * player.forward_vector());
+    glm::vec3 const start = player.world_position();
+    glm::vec3 const head = start + (1.0f * player.forward_vector());
 
-      auto const handle = OF::create_arrow(logger, gfx.d3.local_forward_arrow,
-          OF::ArrowCreateParams{LOC::LIGHT_BLUE, start, head});
+    auto const handle = OF::create_arrow(logger, gfx.d3.local_forward_arrow,
+        OF::ArrowCreateParams{LOC::LIGHT_BLUE, start, head});
 
-      render::draw(rargs, *ents[GS::LOCAL_FORWARD_INDEX], d3.local_forward_arrow, handle);
-    }
-    {
-      glm::vec3 const start = glm::zero<glm::vec3>();
-      glm::vec3 const head = camera.world_position() + camera.forward_vector();
-      std::cerr << "camera.forward_vector() '" << glm::to_string(camera.forward_vector()) << "'\n";
-      std::cerr << "head: '" << glm::to_string(head) << "'\n";
-      auto handle = OF::create_arrow(logger, gfx.d3.camera_arrow0,
-        OF::ArrowCreateParams{LOC::YELLOW, start, head});
+    render::draw(rargs, *ents[GS::LOCAL_FORWARD_INDEX], d3.local_forward_arrow, handle);
+  }
+  // draw forward arrow (for camera)
+  {
+    glm::vec3 const start = player.world_position();
+    glm::vec3 const head = camera.world_position();
+    std::cerr << "camera.world_position() '" << glm::to_string(camera.world_position()) << "'\n";
+    std::cerr << "player.world_position() '" << glm::to_string(player.world_position()) << "'\n";
+    auto handle = OF::create_arrow(logger, gfx.d3.camera_arrow0,
+      OF::ArrowCreateParams{LOC::YELLOW, start, head});
 
-      render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX0], d3.camera_arrow0, handle);
-    }
-    {
-      glm::vec3 const start = camera.world_position();
-      glm::vec3 const head = start + camera.forward_vector();
+    render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX0], d3.camera_arrow0, handle);
+  }
+  // draw forward arrow (for camera)
+  {
+    //glm::vec3 const start = camera.world_position();
+    //glm::vec3 const head = start + camera.backward_vector();
 
-      auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow1,
-        OF::ArrowCreateParams{LOC::PINK, start, head});
+    //auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow1,
+      //OF::ArrowCreateParams{LOC::PINK, start, head});
 
-      render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX1], d3.camera_arrow1, handle);
-    }
-    {
-      glm::vec3 const start = glm::zero<glm::vec3>();
-      glm::vec3 const head = start + camera.backward_vector();
+    //render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX1], d3.camera_arrow1, handle);
+  }
+  // draw arrow from origin -> camera
+  {
+    glm::vec3 const start = glm::zero<glm::vec3>();
+    glm::vec3 const head = camera.world_position();
 
-      auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow2,
-        OF::ArrowCreateParams{LOC::PURPLE, start, head});
+    auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow2,
+      OF::ArrowCreateParams{LOC::PURPLE, start, head});
 
-      render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX2], d3.camera_arrow2, handle);
-    }
+    render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX2], d3.camera_arrow2, handle);
   }
 
   // terrain

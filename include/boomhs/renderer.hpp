@@ -103,16 +103,15 @@ void render_element_buffer(stlw::Logger &logger, PIPE &pipeline, opengl::DrawInf
 template <typename PIPE>
 void draw_3dshape(RenderArgs const &args, boomhs::Transform const& transform, PIPE &pipeline, opengl::DrawInfo const& dinfo)
 {
-  auto const cmatrix = args.camera.matrix();
   auto &logger = args.logger;
+  glm::mat4 const camera_matrix = args.camera.camera_matrix();
 
   auto const draw_3d_shape_fn = [&](auto const &dinfo) {
-    auto const tmatrix = glm::translate(glm::mat4{}, transform.translation);
-    auto const rmatrix = glm::toMat4(transform.rotation);
-    auto const smatrix = glm::scale(glm::mat4{}, transform.scale);
-    auto const mmatrix = tmatrix * rmatrix * smatrix;
-    auto const mvmatrix = cmatrix * mmatrix;
-    pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
+    auto const model_matrix = transform.model_matrix();
+
+    // Model View Projection matrix
+    auto const mvp_matrix = camera_matrix * model_matrix;
+    pipeline.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 
     if constexpr (PIPE::IS_SKYBOX) {
       disable_depth_tests();
@@ -138,12 +137,8 @@ draw_2dshape(RenderArgs const &args, boomhs::Transform const& transform, PIPE &p
 
   auto &logger = args.logger;
   auto const draw_2d_shape_fn = [&](auto const& dinfo) {
-    auto const& t = transform.translation;
-    auto const tmatrix = glm::translate(glm::mat4{}, glm::vec3{t.x, t.y, 0.0});
-    auto const rmatrix = glm::toMat4(transform.rotation);
-    auto const smatrix = glm::scale(glm::mat4{}, transform.scale);
-    auto const mvmatrix = tmatrix * rmatrix * smatrix;
-    pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
+    auto const model_matrix = transform.model_matrix();
+    pipeline.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
     render_element_buffer(logger, pipeline, dinfo);
   };
 
@@ -182,19 +177,15 @@ struct DrawTilemapArgs
 template <typename TILEMAP>
 void draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs &&dt_args, TILEMAP const& tilemap)
 {
-  auto const cmatrix = args.camera.matrix();
   auto &logger = args.logger;
+  glm::mat4 const camera_matrix = args.camera.camera_matrix();;
+  auto const model_matrix = transform.model_matrix();
+  auto const mvp_matrix = camera_matrix * model_matrix;
 
-  auto const tmatrix = glm::translate(glm::mat4{}, transform.translation);
-  auto const rmatrix = glm::toMat4(transform.rotation);
-  auto const smatrix = glm::scale(glm::mat4{}, transform.scale);
-  auto const mmatrix = tmatrix * rmatrix * smatrix;
-  auto const mvmatrix = cmatrix * mmatrix;
-
-  auto const draw_tile = [&logger, &mvmatrix](auto &pipeline, auto const& dinfo, auto const& arr) {
+  auto const draw_tile = [&logger, &mvp_matrix](auto &pipeline, auto const& dinfo, auto const& arr) {
     pipeline.use_program(logger);
     opengl::global::vao_bind(pipeline.vao());
-    pipeline.set_uniform_matrix_4fv(logger, "u_mvmatrix", mvmatrix);
+    pipeline.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
     pipeline.set_uniform_array_3fv(logger, "u_offset", arr);
 
     detail::render_element_buffer(logger, pipeline, dinfo);
