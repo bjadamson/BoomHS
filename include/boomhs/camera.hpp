@@ -3,6 +3,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include <glm/gtx/vector_angle.hpp>
 #include <opengl/constants.hpp>
@@ -15,6 +16,7 @@
 
 namespace boomhs
 {
+class Player;
 struct UiState;
 
 struct SphericalCoordinates
@@ -24,7 +26,7 @@ struct SphericalCoordinates
   float phi;
 
   SphericalCoordinates()
-    : radius(1.0f)
+    : radius(0.0f)
     , theta(0.0f)
     , phi(0.0f)
   {
@@ -67,7 +69,6 @@ struct Projection
 class Camera
 {
   SphericalCoordinates coordinates_{1.0f, -2.608, 0.772};
-  glm::mat4 view_;
   Projection const projection_;
   Transform &target_;
   glm::vec3 forward_, up_;
@@ -179,6 +180,9 @@ public:
 
   Camera&
   zoom(float const);
+
+  void
+  move_behind_player(Player const&);
 };
 
 } // ns boomhs

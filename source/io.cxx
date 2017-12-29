@@ -83,8 +83,17 @@ bool process_event(GameState &state, SDL_Event &event)
   }
   case SDL_MOUSEBUTTONDOWN:
   {
-    if (event.button.button == SDL_BUTTON_RIGHT) {
-      camera.snap_behind_player();
+    auto const& button = event.button.button;
+    if (button == SDL_BUTTON_RIGHT) {
+      state.mouse.right_pressed = true;
+    }
+    else if (button == SDL_BUTTON_LEFT) {
+      state.mouse.left_pressed = true;
+    }
+
+    if (state.mouse.left_pressed && state.mouse.right_pressed) {
+      std::cerr << "BOTH BUTTONS PRESSED\n";
+      camera.move_behind_player(player);
       // rot from player -> camera
       //glm::quat const rot = camera.orientation() * glm::inverse(player.orientation());
       //auto euler = glm::eulerAngles(rot);
@@ -98,6 +107,13 @@ bool process_event(GameState &state, SDL_Event &event)
   }
   case SDL_MOUSEBUTTONUP:
   {
+    auto const& button = event.button.button;
+    if (button == SDL_BUTTON_RIGHT) {
+      state.mouse.right_pressed = false;
+    }
+    else if (button == SDL_BUTTON_LEFT) {
+      state.mouse.left_pressed = false;
+    }
     break;
   }
   case SDL_KEYDOWN: {

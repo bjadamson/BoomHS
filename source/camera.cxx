@@ -1,4 +1,5 @@
 #include <boomhs/camera.hpp>
+#include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
 #include <limits>
 #include <cmath>
@@ -34,16 +35,18 @@ to_spherical(glm::vec3 cartesian)
   if (cartesian.x == 0) {
     cartesian.x = EPSILONF;
   }
-  float const radius = sqrt((cartesian.x * cartesian.x)
-                  + (cartesian.y * cartesian.y)
-                  + (cartesian.z * cartesian.z));
-  //float theta = acos(cartesian.z / radius);
-  float theta = atan(cartesian.z / cartesian.x);
+  float const& x = cartesian.x, y = cartesian.y, z = cartesian.z;
+  float const x2 = x*x;
+  float const y2 = y*y;
+  float const z2 = z*z;
+
+  float const radius = sqrt(x2 + y2 + z2);
+  float theta = atan(y / x);
   if (cartesian.x < 0) {
     float constexpr PI = glm::pi<float>();
     theta += PI;
   }
-  float const phi = atan(cartesian.y / cartesian.x);
+  float const phi = atan((x2 + y2) / z);
 
   return SphericalCoordinates{radius, theta, phi};
 }
@@ -118,6 +121,21 @@ Camera::zoom(float const factor)
     coordinates_.radius = MIN_RADIUS;
   }
   return *this;
+}
+
+void
+Camera::move_behind_player(Player const& player)
+{
+  //auto const cam_pos = world_position();
+  //auto const new_cam_pos = player.world_position() + player.back_vector();
+  //auto const newLocalXYZ = new_cam_pos - player.world_position();
+
+  //coordinates_ = to_spherical(newLocalXYZ);
+
+  //auto const localXYZ = to_cartesian(coordinates_);
+  //auto const newXYZ = cam_pos - new_cam_pos - localXYZ;
+
+  //coordinates_ = to_spherical(newXYZ);
 }
 
 } // ns boomhs

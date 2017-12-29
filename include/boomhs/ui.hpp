@@ -63,6 +63,9 @@ draw_camera_info(GameState &state)
         x.c_str(), y.c_str(), z.c_str());
   }
   ImGui::Checkbox("Flip Y", &state.ui_state.flip_y);
+  ImGui::Checkbox("Global Axis", &state.ui_state.show_global_axis);
+  ImGui::Checkbox("Local Axis", &state.ui_state.show_local_axis);
+  ImGui::Checkbox("Target Forward/Right/Up Vectors", &state.ui_state.show_target_vectors);
   ImGui::End();
 }
 

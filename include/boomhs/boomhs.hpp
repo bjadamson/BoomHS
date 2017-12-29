@@ -240,12 +240,14 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
   render::draw(rargs, *ents[GS::PLAYER_ARROW_INDEX], d3.arrow, handles.arrow);
 
   // global coordinates
-  render::draw(rargs, *ents[GS::GLOBAL_AXIS_X_INDEX], d3.global_x_axis_arrow, handles.x_axis_arrow);
-  render::draw(rargs, *ents[GS::GLOBAL_AXIS_Y_INDEX], d3.global_y_axis_arrow, handles.y_axis_arrow);
-  render::draw(rargs, *ents[GS::GLOBAL_AXIS_Z_INDEX], d3.global_z_axis_arrow, handles.z_axis_arrow);
+  if (state.ui_state.show_global_axis) {
+    render::draw(rargs, *ents[GS::GLOBAL_AXIS_X_INDEX], d3.global_x_axis_arrow, handles.x_axis_arrow);
+    render::draw(rargs, *ents[GS::GLOBAL_AXIS_Y_INDEX], d3.global_y_axis_arrow, handles.y_axis_arrow);
+    render::draw(rargs, *ents[GS::GLOBAL_AXIS_Z_INDEX], d3.global_z_axis_arrow, handles.z_axis_arrow);
+  }
 
   // local coordinates
-  {
+  if (state.ui_state.show_local_axis) {
     auto const& player_pos = ents[GS::AT_INDEX]->translation;
     {
       auto const world_coords = OF::create_axis_arrows(logger,
@@ -260,43 +262,45 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
   }
 
   // draw forward arrow (for player)
-  {
-    glm::vec3 const start = player.world_position();
-    glm::vec3 const head = start + (1.0f * player.forward_vector());
+  if (state.ui_state.show_target_vectors) {
+    {
+      glm::vec3 const start = player.world_position();
+      glm::vec3 const head = start + (1.0f * player.forward_vector());
 
-    auto const handle = OF::create_arrow(logger, gfx.d3.local_forward_arrow,
-        OF::ArrowCreateParams{LOC::LIGHT_BLUE, start, head});
+      auto const handle = OF::create_arrow(logger, gfx.d3.local_forward_arrow,
+          OF::ArrowCreateParams{LOC::LIGHT_BLUE, start, head});
 
-    render::draw(rargs, *ents[GS::LOCAL_FORWARD_INDEX], d3.local_forward_arrow, handle);
-  }
-  // draw forward arrow (for camera)
-  {
-    glm::vec3 const start = player.world_position();
-    glm::vec3 const head = camera.world_position();
-    auto handle = OF::create_arrow(logger, gfx.d3.camera_arrow0,
-      OF::ArrowCreateParams{LOC::YELLOW, start, head});
+      render::draw(rargs, *ents[GS::LOCAL_FORWARD_INDEX], d3.local_forward_arrow, handle);
+    }
+    // draw forward arrow (for camera)
+    {
+      glm::vec3 const start = player.world_position();
+      glm::vec3 const head = camera.world_position();
+      auto handle = OF::create_arrow(logger, gfx.d3.camera_arrow0,
+        OF::ArrowCreateParams{LOC::YELLOW, start, head});
 
-    render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX0], d3.camera_arrow0, handle);
-  }
-  // draw forward arrow (for camera)
-  {
-    glm::vec3 const start = player.world_position();
-    glm::vec3 const head = start + player.back_vector();
+      render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX0], d3.camera_arrow0, handle);
+    }
+    // draw forward arrow (for camera)
+    {
+      glm::vec3 const start = player.world_position();
+      glm::vec3 const head = start + player.back_vector();
 
-    auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow1,
-      OF::ArrowCreateParams{LOC::PINK, start, head});
+      auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow1,
+        OF::ArrowCreateParams{LOC::PINK, start, head});
 
-    render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX1], d3.camera_arrow1, handle);
-  }
-  // draw arrow from origin -> camera
-  {
-    glm::vec3 const start = player.world_position();
-    glm::vec3 const head = start + player.right_vector();
+      render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX1], d3.camera_arrow1, handle);
+    }
+    // draw arrow from origin -> camera
+    {
+      glm::vec3 const start = player.world_position();
+      glm::vec3 const head = start + player.right_vector();
 
-    auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow2,
-      OF::ArrowCreateParams{LOC::PURPLE, start, head});
+      auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow2,
+        OF::ArrowCreateParams{LOC::PURPLE, start, head});
 
-    render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX2], d3.camera_arrow2, handle);
+      render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX2], d3.camera_arrow2, handle);
+    }
   }
 
   // terrain

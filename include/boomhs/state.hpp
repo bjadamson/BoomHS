@@ -26,16 +26,27 @@ struct UiState
   bool enter_pressed = false;
   bool block_input = false;
   bool flip_y = false;
+  bool show_global_axis = true;
+  bool show_local_axis = false;
+  bool show_target_vectors = true;
 
   // primitive buffers
   int eid_buffer = 0;
   glm::vec3 euler_angle_buffer;
 };
 
+struct MouseState
+{
+  bool left_pressed = false;
+  bool right_pressed = false;
+};
+
 struct GameState
 {
   bool quit = false;
   bool draw_skybox = false;
+  MouseState mouse;
+
   Logger &logger;
   ImGuiIO &imgui;
   window::Dimensions const dimensions;
