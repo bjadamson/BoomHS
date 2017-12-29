@@ -2,6 +2,7 @@
 #include <imgui/imgui.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/entity.hpp>
+#include <window/sdl_window.hpp>
 
 namespace boomhs::detail
 {
@@ -91,7 +92,7 @@ namespace boomhs
 {
 
 template<typename PROXY>
-void draw_ui(GameState &state, PROXY &proxy)
+void draw_ui(GameState &state, window::SDLWindow &window, PROXY &proxy)
 {
   using namespace detail;
   draw_entity_editor(state);
@@ -105,8 +106,19 @@ void draw_ui(GameState &state, PROXY &proxy)
     ecst::entity_id const id{static_cast<std::size_t>(eid)};
   }
 
-  //ImGui::Begin("MY MENU", nullptr, ImGuiWindowFlags_MenuBar);
   if (ImGui::BeginMainMenuBar()) {
+    if (ImGui::BeginMenu("Window")) {
+      auto const draw_row = [&window, &state](char const* text, auto const fullscreen) {
+        if (ImGui::MenuItem(text, nullptr, nullptr, state.window.fullscreen != fullscreen)) {
+          window.set_fullscreen(fullscreen);
+          state.window.fullscreen = fullscreen;
+        }
+      };
+      draw_row("NOT Fullscreen", window::FullscreenFlags::NOT_FULLSCREEN);
+      draw_row("Fullscreen", window::FullscreenFlags::FULLSCREEN);
+      draw_row("Fullscreen DESKTOP", window::FullscreenFlags::FULLSCREEN_DESKTOP);
+      ImGui::EndMenu();
+    }
     if (ImGui::BeginMenu("Camera")) {
       ImGui::MenuItem("Flip Y", nullptr, &state.ui_state.flip_y);
       ImGui::MenuItem("Global Axis", nullptr, &state.ui_state.show_global_axis);

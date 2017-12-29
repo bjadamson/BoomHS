@@ -12,6 +12,7 @@
 #include <boomhs/tilemap.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/ui.hpp>
+#include <window/sdl_window.hpp>
 
 #include <stlw/log.hpp>
 
@@ -200,7 +201,8 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
 }
 
 template<typename PROXY>
-void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Assets const& assets)
+void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, window::SDLWindow &window,
+    Assets const& assets)
 {
   render::clear_screen(LOC::BLACK);
 
@@ -307,7 +309,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, Ass
   //render::draw(rargs, *ents[GS::TERRAIN_INDEX], d3.terrain, handles.terrain);
 
   // UI code
-  draw_ui(state, proxy);
+  draw_ui(state, window, proxy);
 }
 
 } // ns boomhs

@@ -9,6 +9,12 @@
 namespace window
 {
 
+enum FullscreenFlags {
+  NOT_FULLSCREEN = 0,
+  FULLSCREEN,
+  FULLSCREEN_DESKTOP
+};
+
 using window_type = SDL_Window;
 using window_ptr = std::unique_ptr<window_type, decltype(&SDL_DestroyWindow)>;
 
@@ -46,14 +52,33 @@ public:
   SDLWindow &operator=(SDLWindow &&) = delete;
 
   // Allow getting the window's SDL pointer
-  window_type *raw() { return this->window_.get(); }
+  window_type*
+  raw()
+  {
+    return this->window_.get();
+  }
 
-  Dimensions get_dimensions() const
+  Dimensions
+  get_dimensions() const
   {
     int w = 0, h = 0;
     assert(nullptr != this->window_.get());
     SDL_GetWindowSize(this->window_.get(), &w, &h);
     return {w, h};
+  }
+
+  void
+  set_fullscreen(FullscreenFlags const fs)
+  {
+    uint32_t sdl_flags = 0;
+    if (fs == FULLSCREEN) {
+      sdl_flags = SDL_WINDOW_FULLSCREEN;
+    } else if (fs == FULLSCREEN_DESKTOP) {
+      sdl_flags = SDL_WINDOW_FULLSCREEN_DESKTOP;
+    }
+
+    int const result = SDL_SetWindowFullscreen(this->window_.get(), sdl_flags);
+    assert(0 == result);
   }
 };
 

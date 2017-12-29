@@ -8,6 +8,7 @@
 #include <stlw/random.hpp>
 
 #include <window/mouse.hpp>
+#include <window/sdl_window.hpp>
 
 #include <boomhs/camera.hpp>
 #include <boomhs/player.hpp>
@@ -41,11 +42,17 @@ struct MouseState
   bool right_pressed = false;
 };
 
+struct WindowState
+{
+  window::FullscreenFlags fullscreen = window::NOT_FULLSCREEN;
+};
+
 struct GameState
 {
   bool quit = false;
   bool draw_skybox = false;
   MouseState mouse;
+  WindowState window;
 
   Logger &logger;
   ImGuiIO &imgui;

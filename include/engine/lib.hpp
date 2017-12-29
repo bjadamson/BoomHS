@@ -62,7 +62,7 @@ void loop(Engine &engine, State &state, PROXY &proxy, game::Assets const& assets
         exec_system(st::randompos_system));
   }
 
-  game::game_loop(state, proxy, engine.opengl_lib, assets);
+  game::game_loop(state, proxy, engine.opengl_lib, engine.window, assets);
 
   // Render Imgui UI
   ImGui::Render();
