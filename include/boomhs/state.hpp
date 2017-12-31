@@ -27,7 +27,6 @@ struct UiState
   bool enter_pressed = false;
   bool block_input = false;
   bool flip_y = false;
-  
 
   // primitive buffers
   int eid_buffer = 0;
@@ -45,23 +44,37 @@ struct WindowState
   window::FullscreenFlags fullscreen = window::NOT_FULLSCREEN;
 };
 
+struct TilemapRender
+{
+  bool redraw = true;
+  bool reveal = false;
+
+  // Both related to drawing GRID LINES
+  bool show_grid_lines = true;
+  bool show_yaxis_lines = false;
+};
+
 struct RenderState
 {
   bool draw_skybox = false;
-  bool redraw_tilemap = true;
 
   bool show_global_axis = true;
   bool show_local_axis = false;
   bool show_target_vectors = true;
-  bool show_grid_lines = true;
 
-  bool reveal_tilemap = false;
+  TilemapRender tilemap;
+};
+
+struct Collision
+{
+  bool player = true;
 };
 
 struct GameState
 {
   bool quit = false;
 
+  Collision collision;
   MouseState mouse;
   RenderState render;
   WindowState window;

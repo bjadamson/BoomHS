@@ -59,7 +59,7 @@ bool process_event(GameState &state, SDL_Event &event)
 
     auto const rot_player = [&]() {
       player.rotate(ANGLE, state.mouse_data);
-      state.render.redraw_tilemap = true;
+      state.render.tilemap.redraw = true;
     };
     auto const rot_camera = [&]() {
       camera.rotate(logger, state.ui_state, state.mouse_data);
@@ -96,7 +96,7 @@ bool process_event(GameState &state, SDL_Event &event)
     if (state.mouse.left_pressed && state.mouse.right_pressed) {
       std::cerr << "BOTH BUTTONS PRESSED\n";
       camera.move_behind_player(player);
-      state.render.redraw_tilemap = true;
+      state.render.tilemap.redraw = true;
       // rot from player -> camera
       //glm::quat const rot = camera.orientation() * glm::inverse(player.orientation());
       //auto euler = glm::eulerAngles(rot);
@@ -120,33 +120,42 @@ bool process_event(GameState &state, SDL_Event &event)
     break;
   }
   case SDL_KEYDOWN: {
-    auto const move_player = [&state, &player](Player& (Player::*fn)(float)) {
-      state.render.redraw_tilemap = true;
-      (player.*fn)(MOVE_DISTANCE);
+    auto const move_player = [&](glm::vec3 (Player::*fn)() const) {
+      auto const player_pos = player.tilemap_position();
+      glm::vec3 const move_vec = (player.*fn)();
+
+      auto const& new_pos_tile = state.tilemap.data(player_pos + move_vec);
+      if (!state.collision.player) {
+        player.move(MOVE_DISTANCE, move_vec);
+        state.render.tilemap.redraw = true;
+      } else if (!new_pos_tile.is_wall) {
+        player.move(MOVE_DISTANCE, move_vec);
+        state.render.tilemap.redraw = true;
+      }
     };
     switch (event.key.keysym.sym) {
     case SDLK_w: {
-      move_player(&Player::move_forward);
+      move_player(&Player::forward_vector);
       break;
     }
     case SDLK_s: {
-      move_player(&Player::move_backward);
+      move_player(&Player::backward_vector);
       break;
     }
     case SDLK_a: {
-      move_player(&Player::move_left);
+      move_player(&Player::left_vector);
       break;
     }
     case SDLK_d: {
-      move_player(&Player::move_right);
+      move_player(&Player::right_vector);
       break;
     }
     case SDLK_q: {
-      move_player(&Player::move_up);
+      move_player(&Player::up_vector);
       break;
     }
     case SDLK_e: {
-      move_player(&Player::move_down);
+      move_player(&Player::down_vector);
       break;
     }
     case SDLK_t: {

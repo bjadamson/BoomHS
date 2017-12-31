@@ -35,19 +35,28 @@ public:
     return this->dimensions_;
   }
 
-  inline Tile const& data(std::size_t const x, std::size_t const y, std::size_t const z) const
+  inline Tile&
+  data(std::size_t const x, std::size_t const y, std::size_t const z)
   {
     auto const [h, w, l] = this->dimensions();
     auto const cell = (z * w * h) + (y * w) + x;
     return this->tiles_[cell];
   }
 
-  inline Tile& data(std::size_t const x, std::size_t const y, std::size_t const z)
+  inline Tile const&
+  data(std::size_t const x, std::size_t const y, std::size_t const z) const
   {
     auto const [h, w, l] = this->dimensions();
     auto const cell = (z * w * h) + (y * w) + x;
     return this->tiles_[cell];
   }
+
+  inline Tile&
+  data(glm::vec3 &vec) { return data(vec.x, vec.y, vec.z); }
+
+  inline Tile const&
+  data(glm::vec3 const& vec) { return data(vec.x, vec.y, vec.z); }
+
 
   inline auto num_tiles() const
   {

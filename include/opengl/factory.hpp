@@ -351,7 +351,7 @@ create_arrow(stlw::Logger &logger, PIPE &pipeline, ArrowCreateParams &&params)
 template<typename PIPE>
 auto
 create_tilegrid(stlw::Logger &logger, PIPE &pipeline, boomhs::TileMap const& tmap,
-    Color const& color = LOC::RED)
+    bool const show_yaxis_lines, Color const& color = LOC::RED)
 {
   std::vector<float> vertices;
   vertices.reserve(tmap.num_tiles() * 4);
@@ -379,7 +379,7 @@ create_tilegrid(stlw::Logger &logger, PIPE &pipeline, boomhs::TileMap const& tma
     add_point(p1);
   };
 
-  auto const visit_fn = [&add_line](auto const& pos) {
+  auto const visit_fn = [&add_line, &show_yaxis_lines](auto const& pos) {
     auto const x = pos.x, y = pos.y, z = pos.z;
 #define P0 glm::vec3{x, y, z}
 #define P1 glm::vec3{x + 1, y, z}
@@ -391,14 +391,21 @@ create_tilegrid(stlw::Logger &logger, PIPE &pipeline, boomhs::TileMap const& tma
 #define P6 glm::vec3{x + 1, y + 1, z + 1}
 #define P7 glm::vec3{x, y + 1, z + 1}
     add_line(P0, P1);
-    add_line(P1, P2);
-    add_line(P2, P3);
-    add_line(P3, P0);
-
-    add_line(P0, P4);
     add_line(P1, P5);
-    add_line(P2, P6);
-    add_line(P3, P7);
+    add_line(P5, P4);
+    add_line(P4, P0);
+
+    if (show_yaxis_lines) {
+      add_line(P0, P3);
+      add_line(P1, P2);
+      add_line(P5, P6);
+      add_line(P4, P7);
+
+      add_line(P3, P7);
+      add_line(P2, P6);
+      add_line(P6, P7);
+      add_line(P7, P3);
+    }
 #undef P0
 #undef P1
 #undef P2

@@ -106,9 +106,9 @@ void draw_ui(GameState &state, window::SDLWindow &window, PROXY &proxy)
     ecst::entity_id const id{static_cast<std::size_t>(eid)};
   }
 
-  if (ImGui::BeginMainMenuBar()) {
+  auto const window_menu = [&window, &state]() {
     if (ImGui::BeginMenu("Window")) {
-      auto const draw_row = [&window, &state](char const* text, auto const fullscreen) {
+      auto const draw_row = [&](char const* text, auto const fullscreen) {
         if (ImGui::MenuItem(text, nullptr, nullptr, state.window.fullscreen != fullscreen)) {
           window.set_fullscreen(fullscreen);
           state.window.fullscreen = fullscreen;
@@ -119,21 +119,46 @@ void draw_ui(GameState &state, window::SDLWindow &window, PROXY &proxy)
       draw_row("Fullscreen DESKTOP", window::FullscreenFlags::FULLSCREEN_DESKTOP);
       ImGui::EndMenu();
     }
+  };
+  auto const camera_menu = [&state]() {
     if (ImGui::BeginMenu("Camera")) {
       ImGui::MenuItem("Flip Y", nullptr, &state.ui_state.flip_y);
       ImGui::EndMenu();
     }
-
+  };
+  auto const world_menu = [&state]() {
     if (ImGui::BeginMenu("World")) {
       ImGui::MenuItem("Global Axis", nullptr, &state.render.show_global_axis);
       ImGui::MenuItem("Local Axis", nullptr, &state.render.show_local_axis);
       ImGui::MenuItem("Target Forward/Right/Up Vectors", nullptr, &state.render.show_target_vectors);
-      ImGui::MenuItem("Show Grid Lines", nullptr, &state.render.show_grid_lines);
-      if (ImGui::MenuItem("Reveal Tilemap", nullptr, &state.render.reveal_tilemap)) {
-        state.render.redraw_tilemap = true;
+
+      auto &tmap_render = state.render.tilemap;
+      if (ImGui::MenuItem("Reveal Tilemap", nullptr, &tmap_render.reveal)) {
+        tmap_render.redraw = true;
+      }
+
+      if (ImGui::BeginMenu("TileMap GridLines (Debug)")) {
+        ImGui::MenuItem("Show (x, z)-axis lines", nullptr, &tmap_render.show_grid_lines);
+        if (ImGui::MenuItem("Show y-axis Lines ", nullptr, &tmap_render.show_yaxis_lines)) {
+          tmap_render.redraw = true;
+        }
+        ImGui::EndMenu();
       }
       ImGui::EndMenu();
     }
+  };
+  auto const player_menu = [&state]() {
+    if (ImGui::BeginMenu("Player")) {
+      ImGui::MenuItem("Player Collisions Enabled", nullptr, &state.collision.player);
+      ImGui::EndMenu();
+    }
+  };
+
+  if (ImGui::BeginMainMenuBar()) {
+    window_menu();
+    camera_menu();
+    world_menu();
+    player_menu();
   }
   ImGui::EndMainMenuBar();
 

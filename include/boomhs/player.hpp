@@ -1,6 +1,7 @@
 #pragma once
 #include <boomhs/types.hpp>
 #include <window/mouse.hpp>
+#include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 #include <string>
 
@@ -12,14 +13,6 @@ class Player
   boomhs::Transform &transform_;
   boomhs::Transform &arrow_;
   glm::vec3 forward_, up_;
-
-  auto&
-  move(float const s, glm::vec3 const& dir)
-  {
-    transform_.translation += (s * dir);
-    arrow_.translation += (s * dir);
-    return *this;
-  }
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Player);
@@ -38,7 +31,7 @@ public:
     return glm::normalize(cross);
   }
 
-  auto back_vector() const { return -forward_vector(); }
+  auto backward_vector() const { return -forward_vector(); }
   auto left_vector() const { return -right_vector(); }
   auto down_vector() const { return -up_vector(); }
 
@@ -69,34 +62,12 @@ public:
     return transform_.translation;
   }
 
-  auto& move_forward(float const s)
+  auto&
+  move(float const s, glm::vec3 const& dir)
   {
-    return move(s, forward_vector());
-  }
-
-  auto& move_backward(float const s)
-  {
-    return move(s, back_vector());
-  }
-
-  auto& move_left(float const s)
-  {
-    return move(s, left_vector());
-  }
-
-  auto& move_right(float const s)
-  {
-    return move(s, right_vector());
-  }
-
-  auto& move_up(float const s)
-  {
-    return move(s, up_vector());
-  }
-
-  auto& move_down(float const s)
-  {
-    return move(s, down_vector());
+    transform_.translation += (s * dir);
+    arrow_.translation += (s * dir);
+    return *this;
   }
 
   void
@@ -104,6 +75,16 @@ public:
 
   void
   multiply_quat(glm::quat const&);
+
+  auto
+  tilemap_position() const
+  {
+    auto const& pos = transform_.translation;
+
+    // Truncate the floating point values to get tilemap position
+    auto const trunc = [](float const v) { return abs(v); };
+    return glm::vec3{trunc(pos.x), trunc(pos.y), trunc(pos.z)};
+  }
 };
 
 } // ns boomhs

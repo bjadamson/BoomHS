@@ -215,11 +215,9 @@ update_visible_tiles(TileMap &tmap, Player const& player, bool const reveal_tile
       if (!found_wall && !tile.is_wall) {
         // This is probably not always necessary. Consider starting with all tiles visible?
         tile.is_visible = true;
-        std::cerr << "[floor] : '{" << pos.x << ", " << pos.y << ", " << pos.z << "}'\n";
       }
       else if(!found_wall && tile.is_wall) {
         tile.is_visible = true;
-        std::cerr << "[wall] making tile visible: '{" << pos.x << ", " << pos.y << ", " << pos.z << "}'\n";
         found_wall = true;
       } else {
         tile.is_visible = false;
@@ -238,9 +236,6 @@ update_visible_tiles(TileMap &tmap, Player const& player, bool const reveal_tile
       }
     }
   }
-  std::cerr << "player pos: '" << glm::to_string(player.world_position()) << "'\n";
-  std::cerr << "tile positions: '";
-
   for (auto const& pos : positions) {
     auto const cmp = [&pos](auto const& pcached) {
       return pcached == pos;
@@ -353,14 +348,14 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
   auto &d3 = gfx.d3;
   auto &logger = state.logger;
 
-  if (state.render.redraw_tilemap) {
+  if (state.render.tilemap.redraw) {
     std::cerr << "Updating tilemap\n";
-    update_visible_tiles(state.tilemap, state.player, state.render.reveal_tilemap);
+    update_visible_tiles(state.tilemap, state.player, state.render.tilemap.reveal);
     //assets.handles.tilemap = OF::copy_tilemap_gpu(logger, d3.hashtag,
         //{GL_TRIANGLE_STRIP, assets.objects.hashtag});
 
     // We don't need to recompute the tilemap, we just did.
-    state.render.redraw_tilemap = false;
+    state.render.tilemap.redraw = false;
   }
 
   render::clear_screen(LOC::BLACK);
@@ -382,11 +377,12 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
   // tilemap
   render::draw_tilemap(rargs, *ents[GS::TILEMAP_INDEX],
       {handles.hashtag, d3.hashtag, handles.plus, d3.plus},
-      state.tilemap, state.render.reveal_tilemap);
+      state.tilemap, state.render.tilemap.reveal);
 
-  if (state.render.show_grid_lines) {
+  if (state.render.tilemap.show_grid_lines) {
     auto &pipeline = d3.global_x_axis_arrow;
-    auto const tilegrid = OF::create_tilegrid(logger, pipeline, state.tilemap);
+    auto const tilegrid = OF::create_tilegrid(logger, pipeline, state.tilemap,
+        state.render.tilemap.show_yaxis_lines);
     render::draw_tilegrid(rargs, *ents[GS::TILEMAP_INDEX], pipeline, tilegrid);
   }
 
@@ -441,7 +437,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
     // draw forward arrow (for camera)
     {
       glm::vec3 const start = player.world_position();
-      glm::vec3 const head = start + player.back_vector();
+      glm::vec3 const head = start + player.backward_vector();
 
       auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow1,
         OF::ArrowCreateParams{LOC::PINK, start, head});
