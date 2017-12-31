@@ -9,6 +9,7 @@ namespace boomhs
 
 struct Tile {
   bool is_wall = true;
+  bool is_visible = false;
 };
 
 class TileMap {
@@ -17,13 +18,19 @@ class TileMap {
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(TileMap);
-  TileMap(std::vector<Tile> &&t, std::size_t const width, std::size_t const height, std::size_t const length)
+
+  TileMap(std::vector<Tile> &&t, std::array<std::size_t, 3> const& dimensions)
     : tiles_(MOVE(t))
-    , dimensions_({width, height, length})
+    , dimensions_(dimensions)
+  {
+  }
+  TileMap(std::vector<Tile> &&t, std::size_t const width, std::size_t const height, std::size_t const length)
+    : TileMap(MOVE(t), stlw::make_array<std::size_t>(width, height, length))
   {
   }
 
-  auto dimensions() const
+  auto
+  dimensions() const
   {
     return this->dimensions_;
   }
@@ -45,6 +52,20 @@ public:
   inline auto num_tiles() const
   {
     return this->tiles_.size();
+  }
+
+  template<typename FN>
+  void
+  visit_each(FN const& fn) const
+  {
+    auto const [w, h, l] = dimensions();
+    FOR(x, w) {
+      FOR(y, h) {
+        FOR(z, l) {
+          fn(glm::vec3{x, y, z});
+        }
+      }
+    }
   }
 
   BEGIN_END_FORWARD_FNS(this->tiles_);

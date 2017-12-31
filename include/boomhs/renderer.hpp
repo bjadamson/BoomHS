@@ -8,7 +8,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <boomhs/camera.hpp>
-#include <boomhs/tilemap.hpp>
 
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
@@ -174,8 +173,10 @@ struct DrawTilemapArgs
   opengl::PipelinePlus3D &plus_pipeline;
 };
 
-template <typename TILEMAP>
-void draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs &&dt_args, TILEMAP const& tilemap)
+template<typename TILEMAP>
+void
+draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs &&dt_args, TILEMAP const& tilemap,
+    bool const reveal_map)
 {
   auto &logger = args.logger;
   glm::mat4 const camera_matrix = args.camera.camera_matrix();
@@ -191,21 +192,36 @@ void draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilema
     detail::render_element_buffer(logger, pipeline, dinfo);
   };
 
-  auto const [w, h, l] = tilemap.dimensions();
-  FOR(a, w) {
-    FOR(b, h) {
-      FOR(c, l) {
-        // don't draw non-wall tiles for now
-        auto const cast = [](auto const v) { return static_cast<float>(v); };
-        auto const arr = stlw::make_array<float>(cast(a), cast(b), cast(c));
-        if(tilemap.data(a, b, c).is_wall) {
-          draw_tile(dt_args.hashtag_pipeline, dt_args.hashtag_dinfo, arr);
-        } else {
-          draw_tile(dt_args.plus_pipeline, dt_args.plus_dinfo, arr);
-        }
-      }
+  auto const draw_all_tiles = [&](auto const& pos) {
+    auto const& tile = tilemap.data(pos.x, pos.y, pos.z);
+    if (!reveal_map && !tile.is_visible) {
+      return;
     }
-  }
+    auto const cast = [](auto const v) { return static_cast<float>(v * 2.0f); };
+    auto const arr = stlw::make_array<float>(cast(pos.x), cast(pos.y), cast(pos.z));
+    if(tile.is_wall) {
+      draw_tile(dt_args.hashtag_pipeline, dt_args.hashtag_dinfo, arr);
+    } else {
+      draw_tile(dt_args.plus_pipeline, dt_args.plus_dinfo, arr);
+    }
+  };
+  tilemap.visit_each(draw_all_tiles);
+}
+
+template<typename PIPELINE>
+void
+draw_tilegrid(RenderArgs const& args, Transform const& transform, PIPELINE &pipeline,
+    opengl::DrawInfo const& dinfo)
+{
+  auto &logger = args.logger;
+  glm::mat4 const camera_matrix = args.camera.camera_matrix();
+  auto const model_matrix = transform.model_matrix();
+  auto const mvp_matrix = camera_matrix * model_matrix;
+
+  pipeline.use_program(logger);
+  opengl::global::vao_bind(pipeline.vao());
+
+  detail::render_element_buffer(logger, pipeline, dinfo);
 }
 
 } // ns boomhs::render

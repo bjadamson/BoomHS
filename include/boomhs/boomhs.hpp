@@ -91,7 +91,7 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
 auto
 make_tilemap(stlw::float_generator &rng)
 {
-  auto const [W, H, L] = stlw::make_array<std::size_t>(10ul, 2ul, 10ul);
+  auto const [W, H, L] = stlw::make_array<std::size_t>(10ul, 1ul, 10ul);
   auto const NUM_TILES = W * H * L;
 
   auto tile_vec = std::vector<Tile>{};
@@ -116,6 +116,145 @@ make_tilemap(stlw::float_generator &rng)
   assert(tile_vec.capacity() == tile_vec.size());
   assert(tile_vec.size() == NUM_TILES);
   return TileMap{MOVE(tile_vec), W, H, L};
+}
+
+struct TilePosition
+{
+  int x, y, z;
+};
+bool operator==(TilePosition const& a, TilePosition const& b)
+{
+  return (a.x == b.x) && (a.y == b.y) && (a.z == b.z);
+}
+
+auto
+tiles_in_line(int x0, int y0, int x1, int y1)
+{
+  std::vector<TilePosition> positions;
+
+  int dx = abs(x1-x0);
+  int dy = abs(y1-y0);
+
+  int sx = x0 < x1 ? 1 : -1;
+  int sy = y0 < y1 ? 1 : -1;
+  int err = dx-dy;
+
+  while (true) {
+    positions.emplace_back(TilePosition{x0, y0, 0});
+
+    if (x0==x1 && y0==y1) {
+      break;
+    }
+
+    int e2 = err * 2;
+    if (e2 > -dx) {
+      err -= dy;
+      x0 += sx;
+    }
+    if (e2 < dx){
+      err += dx;
+      y0 += sy;
+    }
+  }
+  return positions;
+}
+
+void
+bresenham_3d(int x0, int y0, int z0, int x1, int y1, int z1, TileMap &tmap)
+{
+  int const dx = abs(x1-x0), sx = x0<x1 ? 1 : -1;
+  int const dy = abs(y1-y0), sy = y0<y1 ? 1 : -1;
+  int const dz = abs(z1-z0), sz = z0<z1 ? 1 : -1;
+  auto const arr = stlw::make_array<int>(dx, dy, dz);
+
+  //int const dm = std::max(dx,dy,dz); /* maximum difference */
+  auto const it = std::max_element(arr.cbegin(), arr.cend());
+  assert(it);
+  int const dm = *it;
+  int i = dm;
+  x1 = y1 = z1 = dm/2; /* error offset */
+
+  bool found_wall = false;
+  auto const set_tile = [&found_wall](auto &tile) {
+    if (found_wall) {
+      // Can't see tile's behind a wall.
+      tile.is_visible = false;
+    }
+    else if (!tile.is_wall) {
+      tile.is_visible = true;
+    } else if (tile.is_wall) {
+      found_wall = true;
+      tile.is_visible = true;
+    } else {
+      tile.is_visible = false;
+    }
+  };
+
+   for(;;) {  /* loop */
+     auto &tile = tmap.data(x0, y0, z0);
+      set_tile(tile);
+      if (i-- == 0) break;
+      x1 -= dx; if (x1 < 0) { x1 += dm; x0 += sx; }
+      y1 -= dy; if (y1 < 0) { y1 += dm; y0 += sy; }
+      z1 -= dz; if (z1 < 0) { z1 += dm; z0 += sz; }
+   }
+}
+
+void
+update_visible_tiles(TileMap &tmap, Player const& player, bool const reveal_tilemap)
+{
+  auto const& wp = player.world_position();
+
+  // Collect all the visible tiles for the player
+  auto const [w, h, l] = tmap.dimensions();
+
+  std::vector<TilePosition> visited;
+  auto const update_tile = [&tmap, &visited](TilePosition const& pos) {
+    bool found_wall = false;
+      auto &tile = tmap.data(pos.x, pos.y, pos.z);
+      if (!found_wall && !tile.is_wall) {
+        // This is probably not always necessary. Consider starting with all tiles visible?
+        tile.is_visible = true;
+        std::cerr << "[floor] : '{" << pos.x << ", " << pos.y << ", " << pos.z << "}'\n";
+      }
+      else if(!found_wall && tile.is_wall) {
+        tile.is_visible = true;
+        std::cerr << "[wall] making tile visible: '{" << pos.x << ", " << pos.y << ", " << pos.z << "}'\n";
+        found_wall = true;
+      } else {
+        tile.is_visible = false;
+      }
+    };
+
+  std::vector<TilePosition> positions;
+  FOR(x, w) {
+    FOR(y, h) {
+      FOR (z, l) {
+        if (reveal_tilemap) {
+          tmap.data(x, y, z).is_visible = true;
+        } else {
+          bresenham_3d(wp.x, wp.y, wp.z, x, y, z, tmap);
+        }
+      }
+    }
+  }
+  std::cerr << "player pos: '" << glm::to_string(player.world_position()) << "'\n";
+  std::cerr << "tile positions: '";
+
+  for (auto const& pos : positions) {
+    auto const cmp = [&pos](auto const& pcached) {
+      return pcached == pos;
+    };
+    bool const seen_already = std::find_if(visited.cbegin(), visited.cend(), cmp) != visited.cend();
+    if (seen_already) {
+      // This tile has already been visited, skip
+      continue;
+    }
+    visited.emplace_back(pos);
+  }
+  for (auto const& ppos : visited) {
+    update_tile(ppos);
+  }
 }
 
 template<typename PROXY>
@@ -184,7 +323,7 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   auto &skybox_ent = *entities[GameState::SKYBOX_INDEX];
   auto &player_ent = *entities[GameState::AT_INDEX];
   player_ent.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
-  player_ent.scale = 0.25f * glm::one<glm::vec3>();
+  player_ent.scale = 1.0f * glm::one<glm::vec3>();
 
   auto &arrow_ent = *entities[GameState::PLAYER_ARROW_INDEX];
   arrow_ent.scale = glm::vec3{0.025f, 0.025f, 0.025f};
@@ -215,10 +354,10 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
   auto &logger = state.logger;
 
   if (state.render.redraw_tilemap) {
-    std::cerr << "Redrawing tilemap\n";
-    auto tilemap = make_tilemap(state.rnum_generator);
-    assets.handles.tilemap = OF::copy_tilemap_gpu(logger, d3.hashtag,
-        {GL_TRIANGLE_STRIP, assets.objects.hashtag});
+    std::cerr << "Updating tilemap\n";
+    update_visible_tiles(state.tilemap, state.player, state.render.reveal_tilemap);
+    //assets.handles.tilemap = OF::copy_tilemap_gpu(logger, d3.hashtag,
+        //{GL_TRIANGLE_STRIP, assets.objects.hashtag});
 
     // We don't need to recompute the tilemap, we just did.
     state.render.redraw_tilemap = false;
@@ -243,7 +382,13 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
   // tilemap
   render::draw_tilemap(rargs, *ents[GS::TILEMAP_INDEX],
       {handles.hashtag, d3.hashtag, handles.plus, d3.plus},
-      state.tilemap);
+      state.tilemap, state.render.reveal_tilemap);
+
+  if (state.render.show_grid_lines) {
+    auto &pipeline = d3.global_x_axis_arrow;
+    auto const tilegrid = OF::create_tilegrid(logger, pipeline, state.tilemap);
+    render::draw_tilegrid(rargs, *ents[GS::TILEMAP_INDEX], pipeline, tilegrid);
+  }
 
   // player
   render::draw(rargs, *ents[GS::AT_INDEX], d3.at, handles.at);
@@ -252,14 +397,14 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
   render::draw(rargs, *ents[GS::PLAYER_ARROW_INDEX], d3.arrow, handles.arrow);
 
   // global coordinates
-  if (state.ui_state.show_global_axis) {
+  if (state.render.show_global_axis) {
     render::draw(rargs, *ents[GS::GLOBAL_AXIS_X_INDEX], d3.global_x_axis_arrow, handles.x_axis_arrow);
     render::draw(rargs, *ents[GS::GLOBAL_AXIS_Y_INDEX], d3.global_y_axis_arrow, handles.y_axis_arrow);
     render::draw(rargs, *ents[GS::GLOBAL_AXIS_Z_INDEX], d3.global_z_axis_arrow, handles.z_axis_arrow);
   }
 
   // local coordinates
-  if (state.ui_state.show_local_axis) {
+  if (state.render.show_local_axis) {
     auto const& player_pos = ents[GS::AT_INDEX]->translation;
     {
       auto const world_coords = OF::create_axis_arrows(logger,
@@ -274,7 +419,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
   }
 
   // draw forward arrow (for player)
-  if (state.ui_state.show_target_vectors) {
+  if (state.render.show_target_vectors) {
     {
       glm::vec3 const start = player.world_position();
       glm::vec3 const head = start + (1.0f * player.forward_vector());

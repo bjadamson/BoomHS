@@ -121,10 +121,17 @@ void draw_ui(GameState &state, window::SDLWindow &window, PROXY &proxy)
     }
     if (ImGui::BeginMenu("Camera")) {
       ImGui::MenuItem("Flip Y", nullptr, &state.ui_state.flip_y);
-      ImGui::MenuItem("Global Axis", nullptr, &state.ui_state.show_global_axis);
-      ImGui::MenuItem("Local Axis", nullptr, &state.ui_state.show_local_axis);
-      ImGui::MenuItem("Target Forward/Right/Up Vectors", nullptr, &state.ui_state.show_target_vectors);
+      ImGui::EndMenu();
+    }
 
+    if (ImGui::BeginMenu("World")) {
+      ImGui::MenuItem("Global Axis", nullptr, &state.render.show_global_axis);
+      ImGui::MenuItem("Local Axis", nullptr, &state.render.show_local_axis);
+      ImGui::MenuItem("Target Forward/Right/Up Vectors", nullptr, &state.render.show_target_vectors);
+      ImGui::MenuItem("Show Grid Lines", nullptr, &state.render.show_grid_lines);
+      if (ImGui::MenuItem("Reveal Tilemap", nullptr, &state.render.reveal_tilemap)) {
+        state.render.redraw_tilemap = true;
+      }
       ImGui::EndMenu();
     }
   }

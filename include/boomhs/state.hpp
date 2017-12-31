@@ -27,9 +27,7 @@ struct UiState
   bool enter_pressed = false;
   bool block_input = false;
   bool flip_y = false;
-  bool show_global_axis = true;
-  bool show_local_axis = false;
-  bool show_target_vectors = true;
+  
 
   // primitive buffers
   int eid_buffer = 0;
@@ -51,6 +49,13 @@ struct RenderState
 {
   bool draw_skybox = false;
   bool redraw_tilemap = true;
+
+  bool show_global_axis = true;
+  bool show_local_axis = false;
+  bool show_target_vectors = true;
+  bool show_grid_lines = true;
+
+  bool reveal_tilemap = false;
 };
 
 struct GameState

@@ -12,6 +12,7 @@
 #include <stlw/type_macros.hpp>
 #include <stlw/type_ctors.hpp>
 
+#include <boomhs/tilemap.hpp>
 #include <boomhs/types.hpp>
 
 namespace opengl
@@ -344,6 +345,80 @@ create_arrow(stlw::Logger &logger, PIPE &pipeline, ArrowCreateParams &&params)
 
   DrawInfo dinfo{GL_LINES, INDICES.size()};
   detail::copy_to_gpu(logger, pipeline, dinfo, vertices, INDICES);
+  return dinfo;
+}
+
+template<typename PIPE>
+auto
+create_tilegrid(stlw::Logger &logger, PIPE &pipeline, boomhs::TileMap const& tmap,
+    Color const& color = LOC::RED)
+{
+  std::vector<float> vertices;
+  vertices.reserve(tmap.num_tiles() * 4);
+
+  std::vector<GLuint> indices;
+  indices.reserve(tmap.num_tiles());
+
+  std::size_t count = 0u;
+  auto const add_point = [&indices, &vertices, &count, &color](glm::vec3 const& point) {
+    vertices.emplace_back(point.x);
+    vertices.emplace_back(point.y);
+    vertices.emplace_back(point.z);
+    vertices.emplace_back(1.0f);
+
+    vertices.emplace_back(color.r);
+    vertices.emplace_back(color.g);
+    vertices.emplace_back(color.b);
+    vertices.emplace_back(color.a);
+
+    indices.emplace_back(count++);
+  };
+
+  auto const add_line = [&add_point](glm::vec3 const& p0, glm::vec3 const& p1) {
+    add_point(p0);
+    add_point(p1);
+  };
+
+  auto const visit_fn = [&add_line](auto const& pos) {
+    auto const x = pos.x, y = pos.y, z = pos.z;
+#define P0 glm::vec3{x, y, z}
+#define P1 glm::vec3{x + 1, y, z}
+#define P2 glm::vec3{x + 1, y + 1, z}
+#define P3 glm::vec3{x, y + 1, z}
+
+#define P4 glm::vec3{x, y, z + 1}
+#define P5 glm::vec3{x + 1, y, z + 1}
+#define P6 glm::vec3{x + 1, y + 1, z + 1}
+#define P7 glm::vec3{x, y + 1, z + 1}
+    add_line(P0, P1);
+    add_line(P1, P2);
+    add_line(P2, P3);
+    add_line(P3, P0);
+
+    add_line(P0, P4);
+    add_line(P1, P5);
+    add_line(P2, P6);
+    add_line(P3, P7);
+#undef P0
+#undef P1
+#undef P2
+#undef P3
+#undef P4
+#undef P0
+#undef P1
+#undef P2
+#undef P3
+#undef P4
+#undef P5
+#undef P6
+#undef P7
+  };
+
+  tmap.visit_each(visit_fn);
+
+  auto const num_indices = static_cast<GLuint>(indices.size());
+  DrawInfo dinfo{GL_LINES, num_indices};
+  detail::copy_to_gpu(logger, pipeline, dinfo, vertices, indices);
   return dinfo;
 }
 
