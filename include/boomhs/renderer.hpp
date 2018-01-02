@@ -175,19 +175,19 @@ struct DrawTilemapArgs
 
 template<typename TILEMAP>
 void
-draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs &&dt_args, TILEMAP const& tilemap,
-    bool const reveal_map)
+draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs &&dt_args,
+    TILEMAP const& tilemap, bool const reveal_map)
 {
   auto &logger = args.logger;
   glm::mat4 const camera_matrix = args.camera.camera_matrix();
   auto const model_matrix = transform.model_matrix();
   auto const mvp_matrix = camera_matrix * model_matrix;
 
-  auto const draw_tile = [&logger, &mvp_matrix](auto &pipeline, auto const& dinfo, auto const& arr) {
+  auto const& draw_tile = [&logger, &mvp_matrix](auto &pipeline, auto const& dinfo, auto const& offset) {
     pipeline.use_program(logger);
     opengl::global::vao_bind(pipeline.vao());
     pipeline.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
-    pipeline.set_uniform_array_3fv(logger, "u_offset", arr);
+    pipeline.set_uniform_array_3fv(logger, "u_offset", offset);
 
     detail::render_element_buffer(logger, pipeline, dinfo);
   };
@@ -198,30 +198,37 @@ draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs
       return;
     }
     auto const cast = [](auto const v) { return static_cast<float>(v * 2.0f); };
-    auto const arr = stlw::make_array<float>(cast(pos.x), cast(pos.y), cast(pos.z));
+    auto const offset = stlw::make_array<float>(cast(pos.x), cast(pos.y), cast(pos.z));
     if(tile.is_wall) {
-      draw_tile(dt_args.hashtag_pipeline, dt_args.hashtag_dinfo, arr);
+      draw_tile(dt_args.hashtag_pipeline, dt_args.hashtag_dinfo, offset);
     } else {
-      draw_tile(dt_args.plus_pipeline, dt_args.plus_dinfo, arr);
+      draw_tile(dt_args.plus_pipeline, dt_args.plus_dinfo, offset);
     }
   };
   tilemap.visit_each(draw_all_tiles);
 }
 
-template<typename PIPELINE>
-void
-draw_tilegrid(RenderArgs const& args, Transform const& transform, PIPELINE &pipeline,
-    opengl::DrawInfo const& dinfo)
+template<typename PIPE>
+struct Drawable
 {
-  auto &logger = args.logger;
+  PIPE &pipeline;
+  opengl::DrawInfo const& dinfo;
+};
+
+inline void
+draw_tilegrid(RenderArgs const& args, Transform const& transform,
+    Drawable<opengl::PipelineAxisArrow3D> &&drawable)
+{
   glm::mat4 const camera_matrix = args.camera.camera_matrix();
   auto const model_matrix = transform.model_matrix();
   auto const mvp_matrix = camera_matrix * model_matrix;
 
+  auto &logger = args.logger;
+  auto &pipeline = drawable.pipeline;
   pipeline.use_program(logger);
   opengl::global::vao_bind(pipeline.vao());
 
-  detail::render_element_buffer(logger, pipeline, dinfo);
+  detail::render_element_buffer(logger, pipeline, drawable.dinfo);
 }
 
 } // ns boomhs::render

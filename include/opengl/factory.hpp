@@ -455,7 +455,8 @@ create_world_axis_arrows(stlw::Logger &logger, X_PIPE &x_pipe, Y_PIPE &y_pipe, Z
 }
 
 template<typename P, typename ...Args>
-auto make_mesh(stlw::Logger &logger, P &pipeline, MeshProperties &&mprop, Args &&... args)
+auto
+make_mesh(stlw::Logger &logger, P &pipeline, MeshProperties &&mprop, Args &&... args)
 {
   auto const& indices = mprop.object_data.indices;
   auto const& vertices = mprop.object_data.vertices;
@@ -467,28 +468,22 @@ auto make_mesh(stlw::Logger &logger, P &pipeline, MeshProperties &&mprop, Args &
   return dinfo;
 }
 
-struct TilemapProperties
+template<typename PIPE>
+auto
+copy_gpu(stlw::Logger &logger, GLenum const draw_mode, PIPE &pipe, obj const& object)
 {
-  GLenum const draw_mode;
-
-  obj const& hashtag;
-};
-
-auto copy_tilemap_gpu(stlw::Logger &logger, PipelineHashtag3D &hash_pipe,
-    TilemapProperties &&tprops)
-{
-  auto const& vertices = tprops.hashtag.vertices;
-  auto const& indices = tprops.hashtag.indices;
+  auto const& vertices = object.vertices;
+  auto const& indices = object.indices;
 
   // assume (x, y, z, w) all present
   // assume (r, g, b, a) all present
   assert((vertices.size() % 8) == 0);
 
   // Bind the vao (even before instantiating the DrawInfo)
-  global::vao_bind(hash_pipe.vao());
+  global::vao_bind(pipe.vao());
 
   auto const num_indices = static_cast<GLuint>(indices.size());
-  DrawInfo dinfo{tprops.draw_mode, num_indices};
+  DrawInfo dinfo{draw_mode, num_indices};
   auto const ebo = dinfo.ebo();
   auto const vbo = dinfo.vbo();
 
@@ -496,7 +491,7 @@ auto copy_tilemap_gpu(stlw::Logger &logger, PipelineHashtag3D &hash_pipe,
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
   // Enable the VertexAttributes for this pipeline's VAO.
-  auto const& va = hash_pipe.va();
+  auto const& va = pipe.va();
   va.upload_vertex_format_to_glbound_vao(logger);
 
   // Calculate how much room the buffers need.

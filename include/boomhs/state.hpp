@@ -120,6 +120,10 @@ struct GameState
   static constexpr std::size_t CAMERA_ARROW_INDEX1 = 18;
   static constexpr std::size_t CAMERA_ARROW_INDEX2 = 19;
 
+  static constexpr std::size_t ORC_INDEX = 20;
+  static constexpr std::size_t TROLL_INDEX = 21;
+  static constexpr std::size_t INDEX_MAX = 22;
+
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
   GameState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
       TileMap &&tmap, std::vector<Transform*> &&ents, Camera &&cam, Player &&pl, Skybox &&sbox)

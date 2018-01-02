@@ -7,12 +7,9 @@ in vec4 a_color; // position value
 out vec4 v_color;
 
 uniform mat4 u_mvpmatrix;
-uniform vec3 u_offset;
 
 void main()
 {
-  vec4 color = vec4(1.0, 1.0, 1.0, 1.0);
-
   gl_Position = u_mvpmatrix * a_position;
-  v_color = color;
+  v_color = a_color;
 }

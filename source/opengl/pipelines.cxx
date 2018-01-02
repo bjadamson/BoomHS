@@ -53,6 +53,12 @@ load_pipelines(stlw::Logger &logger)
   DO_TRY(auto d3arrow, make_pipeline<PipelineArrow3D>("3d_arrow.vert", "3d_arrow.frag",
       va::vertex_color(logger)));
 
+  DO_TRY(auto d3_letterO, make_pipeline<PipelineAt3D>("3d_at.vert", "3d_at.frag",
+        va::vertex_color(logger)));
+
+  DO_TRY(auto d3_letterT, make_pipeline<PipelineAt3D>("3d_at.vert", "3d_at.frag",
+        va::vertex_color(logger)));
+
   DO_TRY(auto global_x_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
       va::vertex_color(logger)));
   DO_TRY(auto global_y_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
@@ -115,6 +121,10 @@ load_pipelines(stlw::Logger &logger)
     MOVE(d3at),
     MOVE(d3plus),
     MOVE(d3arrow),
+
+    // alphabet
+    MOVE(d3_letterO),
+    MOVE(d3_letterT),
 
     MOVE(global_x_axis_arrow),
     MOVE(global_y_axis_arrow),

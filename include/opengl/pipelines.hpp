@@ -248,6 +248,10 @@ struct Pipeline3D
   PipelinePlus3D plus;
   PipelineArrow3D arrow;
 
+  // alphabet
+  PipelineAt3D O;
+  PipelineAt3D T;
+
   PipelineAxisArrow3D global_x_axis_arrow;
   PipelineAxisArrow3D global_y_axis_arrow;
   PipelineAxisArrow3D global_z_axis_arrow;

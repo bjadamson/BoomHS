@@ -4,7 +4,6 @@
 #include <stlw/type_macros.hpp>
 #include <algorithm>
 #include <boost/optional.hpp>
-#include <iostream>
 #include <vector>
 #include <utility>
 
@@ -16,6 +15,7 @@ using namespace boomhs;
 static auto constexpr ROOM_MAX_SIZE = 5;
 static auto constexpr ROOM_MIN_SIZE = 3;
 static auto constexpr MAX_ROOMS = 30;
+static auto constexpr MAX_ROOM_MONSTERS = 3;
 
 struct RectCenter
 {
@@ -87,7 +87,6 @@ try_create_room(CreateRoomParameters &&params)
   // run through the other rooms and see if they intersect with this one
   for(auto const& r : params.rooms) {
     // bail early
-    std::cerr << "room: '{" << r.x1 << ", " << r.y1 << ", " << r.x2 << ", " << r.y2 << "}']\n";
     if (!new_room.in_tilemap(params.tmap) || new_room.intersects_with(r)) {
       return {}; // NONE
     }
@@ -129,6 +128,45 @@ create_v_tunnel(int const y1, int const y2, int const x, TileMap &tmap)
   int const min = std::min(y1, y2), max = std::max(y1, y2) + 1;
   for(auto y = min; y <= max; ++y) {
     tmap.data(x, 0, y).is_wall = false;
+  }
+}
+
+bool
+is_blocked(int const x, int const y, TileMap const& tmap)
+{
+  if (tmap.data(x, 0, y).is_wall) {
+    return true;
+  }
+  return false;
+}
+
+auto
+generate_monster_position(Rect const& room, TileMap const& tmap, stlw::float_generator &rng)
+{
+  int x, y;
+  while(true) {
+    x = rng.gen_int_range(room.x1 + 1, room.x2);
+    y = rng.gen_int_range(room.y1 + 1, room.y2);
+
+    if (!is_blocked(x, y, tmap)) {
+      break;
+    }
+  }
+  return TilePosition{x, 0, y};
+}
+
+void
+place_objects(Rect const& room, TileMap const& tmap, stlw::float_generator &rng)
+{
+  auto const num_monsters = rng.gen_int_range(0, MAX_ROOM_MONSTERS + 1);
+
+  FOR(i, num_monsters) {
+    auto const pos = generate_monster_position(room, tmap, rng);
+    if (rng.gen_bool()) {
+      // create orc
+    } else {
+      // generate troll
+    }
   }
 }
 
@@ -175,6 +213,10 @@ make_tilemap(int const width, int const height, int const length, stlw::float_ge
         create_h_tunnel(prev_center.x, new_center.x, new_center.y, tmap);
       }
     }
+
+    // add content to the room
+    place_objects(new_room, tmap, rng);
+
     // finally, append the new room to the list
     rooms.emplace_back(new_room);
   }

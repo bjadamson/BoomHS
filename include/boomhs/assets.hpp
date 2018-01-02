@@ -12,6 +12,10 @@ struct Objs {
   opengl::obj plus;
   opengl::obj arrow;
 
+  // Alphabet
+  opengl::obj O;
+  opengl::obj T;
+
   MOVE_CONSTRUCTIBLE_ONLY(Objs);
 };
 
@@ -21,6 +25,10 @@ struct GpuHandles {
   opengl::DrawInfo at;
   opengl::DrawInfo plus;
   opengl::DrawInfo arrow;
+
+  // Alphabet
+  opengl::DrawInfo O;
+  opengl::DrawInfo T;
 
   opengl::DrawInfo x_axis_arrow;
   opengl::DrawInfo y_axis_arrow;

@@ -18,6 +18,7 @@
 #include <stlw/log.hpp>
 
 using stlw::Logger;
+using GS = boomhs::GameState;
 namespace OF = opengl::factories;
 namespace LOC = opengl::LIST_OF_COLORS;
 
@@ -32,23 +33,37 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
   using namespace opengl;
   auto &d3 = gfx.d3;
 
-  auto loader = ObjLoader{LOC::ORANGE};
+  auto loader = ObjLoader{LOC::WHITE};
   auto house_obj = loader.load_mesh("assets/house_uv.obj", LoadNormals{true}, LoadUvs{true});
   auto hashtag_obj = loader.load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", LoadNormals{false}, LoadUvs{false});
 
   auto at_obj = loader.load_mesh("assets/at.obj", "assets/at.mtl", LoadNormals{false}, LoadUvs{false});
+  loader.set_color(LOC::ORANGE);
   auto plus_obj = loader.load_mesh("assets/plus.obj", "assets/plus.mtl", LoadNormals{false}, LoadUvs{false});
+
+  loader.set_color(LOC::PINK);
+  auto O_obj = loader.load_mesh("assets/O.obj", "assets/O.mtl", LoadNormals{false}, LoadUvs{false});
+  loader.set_color(LOC::PURPLE);
+  auto T_obj = loader.load_mesh("assets/T.obj", "assets/T.mtl", LoadNormals{false}, LoadUvs{false});
 
   loader.set_color(LOC::YELLOW);
   auto arrow_obj = loader.load_mesh("assets/arrow.obj", "assets/arrow.mtl", LoadNormals{false}, LoadUvs{false});
 
-  Objs objs{MOVE(house_obj), MOVE(hashtag_obj), MOVE(at_obj), MOVE(plus_obj), MOVE(arrow_obj)};
+  Objs objs{MOVE(house_obj), MOVE(hashtag_obj), MOVE(at_obj), MOVE(plus_obj), MOVE(arrow_obj),
+    MOVE(O_obj), MOVE(T_obj)};
 
   auto house_handle = OF::make_mesh(logger,   d3.house,   MeshProperties{objs.house});
   auto hashtag_handle = OF::make_mesh(logger, d3.hashtag, MeshProperties{objs.hashtag});
   auto at_handle = OF::make_mesh(logger,      d3.at,      MeshProperties{objs.at});
   auto plus_handle = OF::make_mesh(logger,    d3.plus,    MeshProperties{objs.plus});
   auto arrow_handle = OF::make_mesh(logger,    d3.arrow,  MeshProperties{objs.arrow});
+
+  auto const make_letter = [&](auto const& pipe, auto const& obj) {
+    return OF::copy_gpu(logger, GL_TRIANGLES, pipe, obj);
+  };
+
+  auto O_handle = make_letter(d3.O, objs.O);
+  auto T_handle = make_letter(d3.T, objs.T);
 
   auto cube_skybox = OF::copy_cube_gpu(logger, d3.skybox, {{10.0f, 10.0f, 10.0f}});
   auto cube_textured = OF::copy_cube_gpu(logger, d3.texture_cube, {{0.15f, 0.15f, 0.15f}});
@@ -61,8 +76,7 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
   auto terrain_handle = OF::copy_cube_gpu(logger, d3.terrain, {{2.0f, 0.4f, 2.0f}},
       LOC::SADDLE_BROWN);
 
-  auto tilemap_handle = OF::copy_tilemap_gpu(logger, d3.hashtag,
-      {GL_TRIANGLE_STRIP, objs.hashtag});
+  auto tilemap_handle = OF::copy_gpu(logger, GL_TRIANGLE_STRIP, d3.hashtag, objs.hashtag);
 
   auto world_arrows = OF::create_world_axis_arrows(logger, d3.global_x_axis_arrow,
       d3.global_y_axis_arrow, d3.global_z_axis_arrow);
@@ -73,6 +87,9 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
     MOVE(at_handle),
     MOVE(plus_handle),
     MOVE(arrow_handle),
+
+    MOVE(O_handle),
+    MOVE(T_handle),
 
     MOVE(world_arrows.x_dinfo),
     MOVE(world_arrows.y_dinfo),
@@ -218,39 +235,35 @@ make_entities(PROXY &proxy)
 {
   // Create entities
   std::vector<Transform*> entities;
-  auto const make_entity = [&proxy, &entities](auto const& t) {
+  auto const make_entity = [&proxy, &entities]() {
     auto eid = proxy.create_entity();
     auto &p = proxy.add_component(ct::transform, eid);
-    p.translation = t;
+    p.translation = glm::zero<glm::vec3>();
 
     entities.emplace_back(&p);
   };
 
-  glm::vec3 constexpr ZERO = glm::zero<glm::vec3>();
-  glm::vec3 constexpr TILEMAP_POS = ZERO;
-  make_entity(glm::vec3{-2.0f, -2.0f, -2.0f}); // COLOR_CUBE
-  make_entity(glm::vec3{-4.0f, -4.0f, -2.0f}); // TEXTURE_CUBE
-  make_entity(glm::vec3{-3.0f, -2.0f, 2.0f});  // WIREFRAME_CUBE_INDEX
-  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});    // SKYBOX_INDEX
-  make_entity(glm::vec3{2.0f, 0.0f, -4.0f});   // HOUSE_CUBE
-  make_entity(ZERO);                           // AT_INDEX
-  make_entity(ZERO);                           // PLAYER_ARROW_INDEX
-  make_entity(TILEMAP_POS);                    // TILEMAP_INDEX
-  make_entity(glm::vec3{0.0f, 5.0f, 0.0f});    // TERRAIN_INDEX
-  make_entity(ZERO);                           // CAMERA_INDEX
+  FOR(i, GameState::INDEX_MAX) {
+    make_entity();
+  }
 
-  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});    // GLOBAL_AXIS_X_INDEX
-  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});    // GLOBAL_AXIS_Y_INDEX
-  make_entity(glm::vec3{0.0f, 0.0f, 0.0f});    // GLOBAL_AXIS_Z_INDEX
+  entities[GS::COLOR_CUBE_INDEX]->translation = glm::vec3{-2.0f, -2.0f, -2.0f};
+  entities[GS::TEXTURE_CUBE_INDEX]->translation = glm::vec3{-4.0f, -4.0f, -2.0f};
+  entities[GS::WIREFRAME_CUBE_INDEX]->translation = glm::vec3{-3.0f, -2.0f, 2.0f};
+  entities[GS::SKYBOX_INDEX]->translation = glm::vec3{0.0f, 0.0f, 0.0f};
+  entities[GS::HOUSE_INDEX]->translation = glm::vec3{2.0f, 0.0f, -4.0f};
+  entities[GS::TERRAIN_INDEX]->translation = glm::vec3{0.0f, 5.0f, 0.0f};
 
-  make_entity(ZERO);                           //LOCAL_AXIS_X_INDEX
-  make_entity(ZERO);                           //LOCAL_AXIS_Y_INDEX
-  make_entity(ZERO);                           //LOCAL_AXIS_Z_INDEX
-  make_entity(ZERO);                           //LOCAL_FORWARD_INDEX
 
-  make_entity(ZERO);                           //CAMERA_ARROW_INDEX0
-  make_entity(ZERO);                           //CAMERA_ARROW_INDEX1
-  make_entity(ZERO);                           //CAMERA_ARROW_INDEX2
+  //auto const make_standing = [&entities](int const index) {
+    //auto &entity = *entities[index];
+    //entity.translation = glm::vec3{0.0f, 0.0f, 0.0f};
+    //entity.rotation = glm::rotate(glm::mat4{}, glm::radians(90.0f), opengl::X_UNIT_VECTOR);
+  //};
+
+  //make_standing(GS::ORC_INDEX);
+  //make_standing(GS::TROLL_INDEX);
+
   return entities;
 }
 
@@ -293,7 +306,6 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   {
     auto &startingpos = tmap_startingpos.second;
     auto const pos = glm::vec3{startingpos.x, startingpos.y, startingpos.z};
-    std::cerr << "starting pos: '" << glm::to_string(pos) << "'\n";
     player.move_to(pos);
   }
   Camera camera(proj, player_ent, FORWARD, UP);
@@ -306,7 +318,6 @@ template<typename PROXY>
 void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, window::SDLWindow &window,
     Assets &assets)
 {
-  using GS = GameState;
   auto rargs = state.render_args();
   auto const& ents = state.entities;
   auto const& handles = assets.handles;
@@ -350,11 +361,15 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
     auto &pipeline = d3.global_x_axis_arrow;
     auto const tilegrid = OF::create_tilegrid(logger, pipeline, state.tilemap,
         state.render.tilemap.show_yaxis_lines);
-    render::draw_tilegrid(rargs, *ents[GS::TILEMAP_INDEX], pipeline, tilegrid);
+    render::draw_tilegrid(rargs, *ents[GS::TILEMAP_INDEX], {pipeline, tilegrid});
   }
 
   // player
   render::draw(rargs, *ents[GS::AT_INDEX], d3.at, handles.at);
+
+  // enemies
+  render::draw(rargs, *ents[GS::ORC_INDEX], d3.O, handles.O);
+  render::draw(rargs, *ents[GS::TROLL_INDEX], d3.T, handles.T);
 
   // arrow
   render::draw(rargs, *ents[GS::PLAYER_ARROW_INDEX], d3.arrow, handles.arrow);
