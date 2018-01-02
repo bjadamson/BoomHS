@@ -85,6 +85,12 @@ public:
     auto const trunc = [](float const v) { return abs(v); };
     return glm::vec3{trunc(pos.x), trunc(pos.y), trunc(pos.z)};
   }
+
+  void
+  move_to(glm::vec3 const& pos)
+  {
+    transform_.translation = pos;
+  }
 };
 
 } // ns boomhs

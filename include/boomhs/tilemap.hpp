@@ -1,11 +1,23 @@
 #pragma once
+#include <array>
 #include <vector>
+#include <stlw/algorithm.hpp>
 #include <stlw/type_ctors.hpp>
+#include <stlw/type_macros.hpp>
 
 #include <glm/glm.hpp>
 
 namespace boomhs
 {
+
+struct TilePosition
+{
+  int x = 0, y = 0, z = 0;
+};
+inline bool operator==(TilePosition const& a, TilePosition const& b)
+{
+  return (a.x == b.x) && (a.y == b.y) && (a.z == b.z);
+}
 
 struct Tile {
   bool is_wall = true;
@@ -32,35 +44,35 @@ public:
   auto
   dimensions() const
   {
-    return this->dimensions_;
+    return dimensions_;
   }
 
-  inline Tile&
+  Tile&
   data(std::size_t const x, std::size_t const y, std::size_t const z)
   {
-    auto const [h, w, l] = this->dimensions();
+    auto const [h, w, l] = dimensions();
     auto const cell = (z * w * h) + (y * w) + x;
-    return this->tiles_[cell];
+    return tiles_[cell];
   }
 
-  inline Tile const&
+  Tile const&
   data(std::size_t const x, std::size_t const y, std::size_t const z) const
   {
-    auto const [h, w, l] = this->dimensions();
+    auto const [h, w, l] = dimensions();
     auto const cell = (z * w * h) + (y * w) + x;
-    return this->tiles_[cell];
+    return tiles_[cell];
   }
 
-  inline Tile&
+  Tile&
   data(glm::vec3 &vec) { return data(vec.x, vec.y, vec.z); }
 
-  inline Tile const&
+  Tile const&
   data(glm::vec3 const& vec) { return data(vec.x, vec.y, vec.z); }
 
-
-  inline auto num_tiles() const
+  auto
+  num_tiles() const
   {
-    return this->tiles_.size();
+    return tiles_.size();
   }
 
   template<typename FN>
@@ -77,7 +89,7 @@ public:
     }
   }
 
-  BEGIN_END_FORWARD_FNS(this->tiles_);
+  BEGIN_END_FORWARD_FNS(tiles_);
 };
 
 } // ns boomhs

@@ -7,6 +7,7 @@
 #include <boomhs/skybox.hpp>
 
 #include <boomhs/assets.hpp>
+#include <boomhs/level_generator.hpp>
 #include <boomhs/randompos_system.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/tilemap.hpp>
@@ -15,8 +16,6 @@
 #include <window/sdl_window.hpp>
 
 #include <stlw/log.hpp>
-
-#include <vector>
 
 using stlw::Logger;
 namespace OF = opengl::factories;
@@ -86,45 +85,6 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
     MOVE(terrain_handle),
     MOVE(tilemap_handle)};
   return Assets{MOVE(objs), MOVE(handles)};
-}
-
-auto
-make_tilemap(stlw::float_generator &rng)
-{
-  auto const [W, H, L] = stlw::make_array<std::size_t>(10ul, 1ul, 10ul);
-  auto const NUM_TILES = W * H * L;
-
-  auto tile_vec = std::vector<Tile>{};
-  tile_vec.reserve(NUM_TILES);
-
-  FOR(x, W) {
-    FOR(y, H) {
-      FOR(z, L) {
-        Tile tile;
-        tile.is_wall = rng.generate_bool();
-        tile_vec.emplace_back(MOVE(tile));
-      }
-    }
-  }
-
-  // origin is never a wall
-  if (!tile_vec.empty()) {
-    Tile &origin = tile_vec.front();
-    origin.is_wall = false;
-  }
-
-  assert(tile_vec.capacity() == tile_vec.size());
-  assert(tile_vec.size() == NUM_TILES);
-  return TileMap{MOVE(tile_vec), W, H, L};
-}
-
-struct TilePosition
-{
-  int x, y, z;
-};
-bool operator==(TilePosition const& a, TilePosition const& b)
-{
-  return (a.x == b.x) && (a.y == b.y) && (a.z == b.z);
 }
 
 auto
@@ -312,7 +272,8 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   Projection const proj{90.0f, 4.0f/3.0f, 0.1f, 200.0f};
 
   stlw::float_generator rng;
-  auto tmap = make_tilemap(rng);
+  auto tmap_startingpos = level_generator::make_tilemap(80, 1, 45, rng);
+  auto tmap = MOVE(tmap_startingpos.first);
   auto entities = make_entities(proxy);
 
   auto &skybox_ent = *entities[GameState::SKYBOX_INDEX];
@@ -329,6 +290,12 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   auto const FORWARD = -opengl::Z_UNIT_VECTOR;
   auto constexpr UP = opengl::Y_UNIT_VECTOR;
   Player player{player_ent, arrow_ent, FORWARD, UP};
+  {
+    auto &startingpos = tmap_startingpos.second;
+    auto const pos = glm::vec3{startingpos.x, startingpos.y, startingpos.z};
+    std::cerr << "starting pos: '" << glm::to_string(pos) << "'\n";
+    player.move_to(pos);
+  }
   Camera camera(proj, player_ent, FORWARD, UP);
 
   return GameState{logger, imgui, dimensions, MOVE(rng), MOVE(tmap), MOVE(entities), MOVE(camera),
