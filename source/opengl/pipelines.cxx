@@ -38,50 +38,39 @@ load_pipelines(stlw::Logger &logger)
       make_pipeline<PipelineWireframe2D>("wire.vert", "wire.frag",
         va::vertex_only(logger), LIST_OF_COLORS::PINK));
 
-  DO_TRY(auto d3color, make_pipeline<PipelineColor3D>("3dcolor.vert", "3dcolor.frag",
-        va::vertex_color(logger)));
+  auto const make_3dcolor = [&logger]() {
+    return make_pipeline<PipelineColor3D>(
+        "3d_color.vert", "3d_color.frag", va::vertex_color(logger));
+  };
+  DO_TRY(auto d3color, make_3dcolor());
 
   DO_TRY(auto d3hashtag, make_pipeline<PipelineHashtag3D>("3d_hashtag.vert", "3d_hashtag.frag",
         va::vertex_color(logger)));
 
-  DO_TRY(auto d3at, make_pipeline<PipelineAt3D>("3d_at.vert", "3d_at.frag",
-        va::vertex_color(logger)));
+  DO_TRY(auto d3at, make_3dcolor());
 
   DO_TRY(auto d3plus, make_pipeline<PipelinePlus3D>("3d_plus.vert", "3d_plus.frag",
       va::vertex_color(logger)));
 
-  DO_TRY(auto d3arrow, make_pipeline<PipelineArrow3D>("3d_arrow.vert", "3d_arrow.frag",
-      va::vertex_color(logger)));
+  DO_TRY(auto d3arrow, make_3dcolor());
 
-  DO_TRY(auto d3_letterO, make_pipeline<PipelineAt3D>("3d_at.vert", "3d_at.frag",
-        va::vertex_color(logger)));
+  DO_TRY(auto d3_letterO, make_3dcolor());
 
-  DO_TRY(auto d3_letterT, make_pipeline<PipelineAt3D>("3d_at.vert", "3d_at.frag",
-        va::vertex_color(logger)));
+  DO_TRY(auto d3_letterT, make_3dcolor());
 
-  DO_TRY(auto global_x_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
-      va::vertex_color(logger)));
-  DO_TRY(auto global_y_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
-      va::vertex_color(logger)));
-  DO_TRY(auto global_z_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
-      va::vertex_color(logger)));
+  DO_TRY(auto global_x_axis_arrow, make_3dcolor());
+  DO_TRY(auto global_y_axis_arrow, make_3dcolor());
+  DO_TRY(auto global_z_axis_arrow, make_3dcolor());
 
-  DO_TRY(auto local_x_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
-      va::vertex_color(logger)));
-  DO_TRY(auto local_y_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
-      va::vertex_color(logger)));
-  DO_TRY(auto local_z_axis_arrow, make_pipeline<PipelineAxisArrow3D>("axis_arrow.vert", "axis_arrow.frag",
-      va::vertex_color(logger)));
+  DO_TRY(auto local_x_axis_arrow, make_3dcolor());
+  DO_TRY(auto local_y_axis_arrow, make_3dcolor());
+  DO_TRY(auto local_z_axis_arrow, make_3dcolor());
 
-  DO_TRY(auto local_forward_arrow, make_pipeline<PipelineAxisArrow3D>(
-        "axis_arrow.vert", "axis_arrow.frag", va::vertex_color(logger)));
+  DO_TRY(auto local_forward_arrow, make_3dcolor());
 
-  DO_TRY(auto camera_arrow0, make_pipeline<PipelineAxisArrow3D>(
-        "axis_arrow.vert", "axis_arrow.frag", va::vertex_color(logger)));
-  DO_TRY(auto camera_arrow1, make_pipeline<PipelineAxisArrow3D>(
-        "axis_arrow.vert", "axis_arrow.frag", va::vertex_color(logger)));
-  DO_TRY(auto camera_arrow2, make_pipeline<PipelineAxisArrow3D>(
-        "axis_arrow.vert", "axis_arrow.frag", va::vertex_color(logger)));
+  DO_TRY(auto camera_arrow0, make_3dcolor());
+  DO_TRY(auto camera_arrow1, make_3dcolor());
+  DO_TRY(auto camera_arrow2, make_3dcolor());
 
   DO_TRY(auto d3cube, make_pipeline<PipelineTextureCube3D>("3d_cubetexture.vert", "3d_cubetexture.frag",
         va::vertex_only(logger),

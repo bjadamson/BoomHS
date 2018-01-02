@@ -84,45 +84,9 @@ struct PipelineHashtag3D : public BasePipeline
   static bool constexpr HAS_TEXTURE = false;
 };
 
-struct PipelineAt3D : public BasePipeline
-{
-  PIPELINE_DEFAULT_CTOR(PipelineAt3D);
-  //using info_t = boomhs::color_t;
-
-  static bool constexpr IS_2D = false;
-  static bool constexpr IS_INSTANCED = false;
-  static bool constexpr IS_SKYBOX = false;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr HAS_TEXTURE = false;
-};
-
 struct PipelinePlus3D : public BasePipeline
 {
   PIPELINE_DEFAULT_CTOR(PipelinePlus3D);
-  using info_t = boomhs::color_t;
-
-  static bool constexpr IS_2D = false;
-  static bool constexpr IS_INSTANCED = false;
-  static bool constexpr IS_SKYBOX = false;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr HAS_TEXTURE = false;
-};
-
-struct PipelineArrow3D : public BasePipeline
-{
-  PIPELINE_DEFAULT_CTOR(PipelineArrow3D);
-  using info_t = boomhs::color_t;
-
-  static bool constexpr IS_2D = false;
-  static bool constexpr IS_INSTANCED = false;
-  static bool constexpr IS_SKYBOX = false;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr HAS_TEXTURE = false;
-};
-
-struct PipelineAxisArrow3D : public BasePipeline
-{
-  PIPELINE_DEFAULT_CTOR(PipelineAxisArrow3D);
   using info_t = boomhs::color_t;
 
   static bool constexpr IS_2D = false;
@@ -244,27 +208,27 @@ struct Pipeline3D
 {
   PipelineColor3D color;
   PipelineHashtag3D hashtag;
-  PipelineAt3D at;
+  PipelineColor3D at;
   PipelinePlus3D plus;
-  PipelineArrow3D arrow;
+  PipelineColor3D arrow;
 
   // alphabet
-  PipelineAt3D O;
-  PipelineAt3D T;
+  PipelineColor3D O;
+  PipelineColor3D T;
 
-  PipelineAxisArrow3D global_x_axis_arrow;
-  PipelineAxisArrow3D global_y_axis_arrow;
-  PipelineAxisArrow3D global_z_axis_arrow;
+  PipelineColor3D global_x_axis_arrow;
+  PipelineColor3D global_y_axis_arrow;
+  PipelineColor3D global_z_axis_arrow;
 
-  PipelineAxisArrow3D local_x_axis_arrow;
-  PipelineAxisArrow3D local_y_axis_arrow;
-  PipelineAxisArrow3D local_z_axis_arrow;
+  PipelineColor3D local_x_axis_arrow;
+  PipelineColor3D local_y_axis_arrow;
+  PipelineColor3D local_z_axis_arrow;
 
-  PipelineAxisArrow3D local_forward_arrow;
+  PipelineColor3D local_forward_arrow;
 
-  PipelineAxisArrow3D camera_arrow0;
-  PipelineAxisArrow3D camera_arrow1;
-  PipelineAxisArrow3D camera_arrow2;
+  PipelineColor3D camera_arrow0;
+  PipelineColor3D camera_arrow1;
+  PipelineColor3D camera_arrow2;
 
   PipelineTextureCube3D texture_cube;
   PipelineTexture3D house;

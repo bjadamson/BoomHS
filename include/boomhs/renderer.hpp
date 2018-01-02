@@ -217,7 +217,7 @@ struct Drawable
 
 inline void
 draw_tilegrid(RenderArgs const& args, Transform const& transform,
-    Drawable<opengl::PipelineAxisArrow3D> &&drawable)
+    Drawable<opengl::PipelineColor3D> &&drawable)
 {
   glm::mat4 const camera_matrix = args.camera.camera_matrix();
   auto const model_matrix = transform.model_matrix();
