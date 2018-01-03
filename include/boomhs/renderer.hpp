@@ -95,19 +95,21 @@ void
 draw_3dshape(RenderArgs const &args, boomhs::Transform const& transform, PIPE &pipeline, opengl::DrawInfo const& dinfo)
 {
   auto &logger = args.logger;
-  glm::mat4 const camera_matrix = args.camera.camera_matrix();
+  glm::mat4 const view_matrix = args.camera.camera_matrix();
 
   auto const draw_3d_shape_fn = [&](auto const &dinfo) {
     auto const model_matrix = transform.model_matrix();
 
     // various matrices
-    pipeline.set_uniform_matrix_4fv(logger, "u_mvpmatrix", camera_matrix * model_matrix);
+    pipeline.set_uniform_matrix_4fv(logger, "u_mvpmatrix", view_matrix * model_matrix);
 
     if constexpr (PIPE::RECEIVES_LIGHT) {
+      pipeline.set_uniform_float1(logger, "u_specularstrength", args.world.specular_strength);
       pipeline.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
       pipeline.set_uniform_color(logger, "u_ambient", args.world.ambient);
       pipeline.set_uniform_color(logger, "u_diffuse_color", args.world.diffuse_color);
       pipeline.set_uniform_array_vec3(logger, "u_diffuse_pos", args.entities[GameState::LIGHT_INDEX]->translation);
+      pipeline.set_uniform_array_vec3(logger, "u_viewpos", args.camera.world_position());
     }
 
     if constexpr (PIPE::IS_SKYBOX) {
@@ -177,20 +179,22 @@ draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs
     TILEMAP const& tilemap, bool const reveal_map)
 {
   auto &logger = args.logger;
-  glm::mat4 const camera_matrix = args.camera.camera_matrix();
+  glm::mat4 const view_matrix = args.camera.camera_matrix();
   auto const model_matrix = transform.model_matrix();
-  auto const mvp_matrix = camera_matrix * model_matrix;
+  auto const mvp_matrix = view_matrix * model_matrix;
 
   auto const& draw_tile = [&](auto &pipeline, auto const& dinfo, auto const& offset) {
     pipeline.use_program(logger);
     opengl::global::vao_bind(pipeline.vao());
 
     pipeline.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
+    pipeline.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
     pipeline.set_uniform_color(logger, "u_ambient", args.world.ambient);
     pipeline.set_uniform_color(logger, "u_diffuse_color", args.world.diffuse_color);
     pipeline.set_uniform_array_vec3(logger, "u_diffuse_pos", args.entities[GameState::LIGHT_INDEX]->translation);
+    pipeline.set_uniform_array_vec3(logger, "u_viewpos", args.camera.world_position());
 
-    pipeline.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
+    pipeline.set_uniform_float1(logger, "u_specularstrength", args.world.specular_strength);
     pipeline.set_uniform_array_3fv(logger, "u_offset", offset);
 
     detail::render_element_buffer(logger, pipeline, dinfo);
@@ -223,9 +227,9 @@ inline void
 draw_tilegrid(RenderArgs const& args, Transform const& transform,
     Drawable<opengl::PipelinePositionColor3D> &&drawable)
 {
-  glm::mat4 const camera_matrix = args.camera.camera_matrix();
+  glm::mat4 const view_matrix = args.camera.camera_matrix();
   auto const model_matrix = transform.model_matrix();
-  auto const mvp_matrix = camera_matrix * model_matrix;
+  auto const mvp_matrix = view_matrix * model_matrix;
 
   auto &logger = args.logger;
   auto &pipeline = drawable.pipeline;

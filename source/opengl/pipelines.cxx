@@ -209,6 +209,17 @@ BasePipeline::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, st
 }
 
 void
+BasePipeline::set_uniform_float1(stlw::Logger &logger, GLchar const* name, float const value)
+{
+  auto& p = this->program_;
+  p.use(logger);
+
+  auto const loc = this->program_.get_uniform_location(logger, name);
+  glUniform1f(loc, value);
+  LOG_ANY_GL_ERRORS(logger, "glUniform1f");
+}
+
+void
 BasePipeline::use_program(stlw::Logger &logger)
 {
   this->program_.use(logger);

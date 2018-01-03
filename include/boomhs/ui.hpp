@@ -106,6 +106,8 @@ show_lighting_window(GameState &state)
     if (ImGui::Button("Close", ImVec2(120,0))) {
       state.ui_state.show_lighting_window = false;
     }
+    ImGui::Separator();
+    ImGui::SliderFloat("Specular Strength", &state.world.specular_strength, 0.0f, 1.0f);
     ImGui::End();
   }
 }

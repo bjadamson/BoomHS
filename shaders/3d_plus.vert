@@ -16,7 +16,7 @@ void main()
   pos -= vec4(0.0, 0.5, 0.0, 0.0);
   gl_Position = u_mvpmatrix * pos;
 
-  v_normal = a_normal;
+  v_normal = mat3(transpose(inverse(u_modelmatrix))) * a_normal;
   v_color = a_color;
   v_fragpos_worldspace = vec3(u_modelmatrix * a_position);
 }

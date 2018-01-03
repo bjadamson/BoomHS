@@ -20,7 +20,7 @@ void main()
   vec4 pos = a_position + vec4(offset, 1.0);
   gl_Position = u_mvpmatrix * pos;
 
-  v_normal = a_normal;
+  v_normal = mat3(transpose(inverse(u_modelmatrix))) * a_normal;
   v_color = color;
   v_fragpos_worldspace = vec3(u_modelmatrix * a_position);
 }

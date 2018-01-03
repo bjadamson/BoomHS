@@ -26,6 +26,7 @@ struct WorldState
 {
   opengl::Color ambient = LOC::WHITE;
   opengl::Color diffuse_color = LOC::HOT_PINK;
+  float specular_strength = 1.0f;
 };
 
 struct RenderArgs {

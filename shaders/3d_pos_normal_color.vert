@@ -13,7 +13,7 @@ void main()
 {
   gl_Position = u_mvpmatrix * a_position;
 
-  v_normal = a_normal;
+  v_normal = mat3(transpose(inverse(u_modelmatrix))) * a_normal;
   v_color = a_color;
   v_fragpos_worldspace = vec3(u_modelmatrix * a_position);
 }
