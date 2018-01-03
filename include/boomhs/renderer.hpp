@@ -112,7 +112,7 @@ draw_3dshape(RenderArgs const &args, boomhs::Transform const& transform, PIPE &p
       pipeline.set_uniform_array_vec3(logger, "u_material.ambient",  glm::vec3{1.0f, 0.5f, 0.31f});
       pipeline.set_uniform_array_vec3(logger, "u_material.diffuse",  glm::vec3{1.0f, 0.5f, 0.31f});
       pipeline.set_uniform_array_vec3(logger, "u_material.specular", glm::vec3{0.5f, 0.5f, 0.5f});
-      pipeline.set_uniform_float1(logger, "u_material.shininess", 332.0f);
+      pipeline.set_uniform_float1(logger, "u_material.shininess", 32.0f);
     }
 
     if constexpr (PIPE::IS_SKYBOX) {
@@ -123,10 +123,6 @@ draw_3dshape(RenderArgs const &args, boomhs::Transform const& transform, PIPE &p
       render_element_buffer(logger, pipeline, dinfo);
     }
   };
-
-  // Use the pipeline's PROGRAM and bind the pipeline's VAO.
-  pipeline.use_program(logger);
-  opengl::global::vao_bind(pipeline.vao());
 
   bind_stuff_and_draw(logger, pipeline, dinfo, draw_3d_shape_fn);
 }
@@ -144,9 +140,6 @@ draw_2dshape(RenderArgs const &args, boomhs::Transform const& transform, PIPE &p
     render_element_buffer(logger, pipeline, dinfo);
   };
 
-  // Use the pipeline's PROGRAM and bind the pipeline's VAO.
-  pipeline.use_program(logger);
-  opengl::global::vao_bind(pipeline.vao());
   bind_stuff_and_draw(logger, pipeline, dinfo, draw_2d_shape_fn);
 }
 
@@ -157,6 +150,10 @@ void
 draw(RenderArgs const& args, Transform const& transform, PIPE &pipeline, opengl::DrawInfo const& dinfo)
 {
   auto &logger = args.logger;
+
+  // Use the pipeline's PROGRAM and bind the pipeline's VAO.
+  pipeline.use_program(logger);
+  opengl::global::vao_bind(pipeline.vao());
 
   if constexpr (PIPE::IS_2D) {
     disable_depth_tests();
@@ -190,19 +187,8 @@ draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs
     pipeline.use_program(logger);
     opengl::global::vao_bind(pipeline.vao());
 
-    pipeline.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
-    pipeline.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
-    pipeline.set_uniform_color_3fv(logger, "u_lightcolor", args.world.light_color);
-    pipeline.set_uniform_array_vec3(logger, "u_lightpos", args.entities[GameState::LIGHT_INDEX]->translation);
-    pipeline.set_uniform_array_vec3(logger, "u_viewpos", args.camera.world_position());
-
-    pipeline.set_uniform_array_vec3(logger, "u_material.ambient",  glm::vec3{1.0f, 0.5f, 0.31f});
-    pipeline.set_uniform_array_vec3(logger, "u_material.diffuse",  glm::vec3{1.0f, 0.5f, 0.31f});
-    pipeline.set_uniform_array_vec3(logger, "u_material.specular", glm::vec3{0.5f, 0.5f, 0.5f});
-    pipeline.set_uniform_float1(logger, "u_material.shininess", 332.0f);
-
     pipeline.set_uniform_array_3fv(logger, "u_offset", offset);
-    detail::render_element_buffer(logger, pipeline, dinfo);
+    detail::draw_3dshape(args, transform, pipeline, dinfo);
   };
 
   auto const draw_all_tiles = [&](auto const& pos) {
