@@ -18,16 +18,6 @@
 namespace opengl
 {
 
-struct MeshProperties
-{
-  obj const& object_data;
-
-  explicit MeshProperties(obj const& obj)
-    : object_data(obj)
-  {
-  }
-};
-
 namespace cube_factory
 {
   // clang-format off
@@ -45,6 +35,7 @@ namespace cube_factory
 
 namespace detail
 {
+
 template<typename PIPE, typename VERTICES, typename INDICES>
 void
 copy_to_gpu(stlw::Logger &logger, PIPE &pipeline, DrawInfo const& dinfo, VERTICES const& vertices,
@@ -388,20 +379,6 @@ create_world_axis_arrows(stlw::Logger &logger, X_PIPE &x_pipe, Y_PIPE &y_pipe, Z
   return create_axis_arrows(logger, x_pipe, y_pipe, z_pipe, ORIGIN);
 }
 
-template<typename P, typename ...Args>
-auto
-make_mesh(stlw::Logger &logger, P &pipeline, MeshProperties &&mprop, Args &&... args)
-{
-  auto const& indices = mprop.object_data.indices;
-  auto const& vertices = mprop.object_data.vertices;
-
-  auto const num_indices = static_cast<GLuint>(mprop.object_data.indices.size());
-  DrawInfo dinfo{GL_TRIANGLES, num_indices};
-
-  detail::copy_to_gpu(logger, pipeline, dinfo, vertices, indices);
-  return dinfo;
-}
-
 template<typename PIPE>
 auto
 copy_gpu(stlw::Logger &logger, GLenum const draw_mode, PIPE &pipe, obj const& object)
@@ -409,32 +386,9 @@ copy_gpu(stlw::Logger &logger, GLenum const draw_mode, PIPE &pipe, obj const& ob
   auto const& vertices = object.vertices;
   auto const& indices = object.indices;
 
-  // assume (x, y, z, w) all present
-  // assume (xn, yn, zn) all present
-  // assume (r, g, b, a) all present
-  assert((vertices.size() % (4 + 3 + 4)) == 0);
-
-  // Bind the vao (even before instantiating the DrawInfo)
-  global::vao_bind(pipe.vao());
-
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{draw_mode, num_indices};
-  auto const ebo = dinfo.ebo();
-  auto const vbo = dinfo.vbo();
-
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-
-  // Enable the VertexAttributes for this pipeline's VAO.
-  auto const& va = pipe.va();
-  va.upload_vertex_format_to_glbound_vao(logger);
-
-  // Calculate how much room the buffers need.
-  std::size_t const vertices_num_bytes = (vertices.size() * sizeof(GLfloat));
-  glBufferData(GL_ARRAY_BUFFER, vertices_num_bytes, vertices.data(), GL_STATIC_DRAW);
-
-  std::size_t const indices_num_bytes = (indices.size() * sizeof(GLuint));
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_num_bytes, indices.data(), GL_STATIC_DRAW);
+  detail::copy_to_gpu(logger, pipe, dinfo, vertices, indices);
   return dinfo;
 }
 

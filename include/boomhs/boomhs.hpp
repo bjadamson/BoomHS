@@ -52,11 +52,11 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
   Objs objs{MOVE(house_obj), MOVE(hashtag_obj), MOVE(at_obj), MOVE(plus_obj), MOVE(arrow_obj),
     MOVE(O_obj), MOVE(T_obj)};
 
-  auto house_handle = OF::make_mesh(logger,   d3.house,   MeshProperties{objs.house});
-  auto hashtag_handle = OF::make_mesh(logger, d3.hashtag, MeshProperties{objs.hashtag});
-  auto at_handle = OF::make_mesh(logger,      d3.at,      MeshProperties{objs.at});
-  auto plus_handle = OF::make_mesh(logger,    d3.plus,    MeshProperties{objs.plus});
-  auto arrow_handle = OF::make_mesh(logger,    d3.arrow,  MeshProperties{objs.arrow});
+  auto house_handle = OF::copy_gpu(logger,   GL_TRIANGLES, d3.house,   objs.house);
+  auto hashtag_handle = OF::copy_gpu(logger, GL_TRIANGLES, d3.hashtag, objs.hashtag);
+  auto at_handle = OF::copy_gpu(logger,      GL_TRIANGLES, d3.at,      objs.at);
+  auto plus_handle = OF::copy_gpu(logger,    GL_TRIANGLES, d3.plus,    objs.plus);
+  auto arrow_handle = OF::copy_gpu(logger,    GL_TRIANGLES, d3.arrow,  objs.arrow);
 
   auto const make_letter = [&](auto const& pipe, auto const& obj) {
     return OF::copy_gpu(logger, GL_TRIANGLES, pipe, obj);
