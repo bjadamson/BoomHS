@@ -30,128 +30,16 @@ struct MeshProperties
 
 namespace cube_factory
 {
-
-using CubeDimensions = boomhs::WidthHeightLength;
-
-struct CubeProperties
-{
-  CubeDimensions const dimensions;
-  bool wireframe = false;
-};
-
-struct ColorProperties {
-    std::array<Color, 8> const colors;
-  };
-
-struct UVProperties {
-};
-
-struct WireframeProperties {
-  float const alpha = 1.0f;
-};
-
-auto
-construct_cube(std::array<float, 32> const& vertices, ColorProperties const &props)
-{
   // clang-format off
-  auto const& colors = props.colors;
-  return stlw::make_array<float>(
-      vertices[0], vertices[1], vertices[2], vertices[3],
-      colors[0].r, colors[0].g, colors[0].a, colors[0].a,
-
-      vertices[4], vertices[5], vertices[6], vertices[7],
-      colors[1].r, colors[1].g, colors[1].a, colors[1].a,
-
-      vertices[8], vertices[9], vertices[10], vertices[11],
-      colors[2].r, colors[2].g, colors[2].a, colors[2].a,
-
-      vertices[12], vertices[13], vertices[14], vertices[15],
-      colors[3].r, colors[3].g, colors[3].a, colors[3].a,
-
-      vertices[16], vertices[17], vertices[18], vertices[19],
-      colors[4].r, colors[4].g, colors[4].a, colors[4].a,
-
-      vertices[20], vertices[21], vertices[22], vertices[23],
-      colors[5].r, colors[5].g, colors[5].a, colors[5].a,
-
-      vertices[24], vertices[25], vertices[26], vertices[27],
-      colors[6].r, colors[6].g, colors[6].a, colors[6].a,
-
-      vertices[28], vertices[29], vertices[30], vertices[31],
-      colors[7].r, colors[7].g, colors[7].a, colors[7].a,
-
-      vertices[32], vertices[33], vertices[34], vertices[35],
-      colors[8].r, colors[8].g, colors[8].a, colors[8].a
-        );
+  static constexpr std::array<GLuint, 36> INDICES = {{
+    0, 1, 2,  2, 3, 0, // front
+    1, 5, 6,  6, 2, 1, // top
+    7, 6, 5,  5, 4, 7, // back
+    4, 0, 3,  3, 7, 4, // bottom
+    4, 5, 1,  1, 0, 4, // left
+    3, 2, 6,  6, 7, 3, // right
+  }};
   // clang-format on
-}
-
-auto
-construct_cube(std::array<float, 32> const& vertices, UVProperties const &props)
-{
-  // clang-format off
-  return stlw::make_array<float>(
-      vertices[0], vertices[1], vertices[2], vertices[3],
-      vertices[4], vertices[5], vertices[6], vertices[7],
-      vertices[8], vertices[9], vertices[10], vertices[11],
-      vertices[12], vertices[13], vertices[14], vertices[15],
-      vertices[16], vertices[17], vertices[18], vertices[19],
-      vertices[20], vertices[21], vertices[22], vertices[23],
-      vertices[24], vertices[25], vertices[26], vertices[27],
-      vertices[28], vertices[29], vertices[30], vertices[31],
-      vertices[32], vertices[33], vertices[34], vertices[35]
-      );
-  // clang-format on
-}
-
-auto
-construct_cube(std::array<float, 32> const& vertices, WireframeProperties const &props)
-{
-  // clang-format off
-  return stlw::make_array<float>(
-      vertices[0], vertices[1], vertices[2], vertices[3],
-      vertices[4], vertices[5], vertices[6], vertices[7],
-      vertices[8], vertices[9], vertices[10], vertices[11],
-      vertices[12], vertices[13], vertices[14], vertices[15],
-      vertices[16], vertices[17], vertices[18], vertices[19],
-      vertices[20], vertices[21], vertices[22], vertices[23],
-      vertices[24], vertices[25], vertices[26], vertices[27],
-      vertices[28], vertices[29], vertices[30], vertices[31],
-      vertices[32], vertices[33], vertices[34], vertices[35]
-      );
-  // clang-format on
-}
-
-auto
-make_cube(std::array<float, 32> const& vertices, boomhs::none_t)
-{
-  return vertices;
-}
-
-auto
-make_cube(std::array<float, 32> const& vertices, boomhs::color_t, Color const& color)
-{
-  std::array<Color, 8> const colors{
-      color, color, color, color,
-      color, color, color, color
-  };
-  ColorProperties const p{colors};
-  return construct_cube(vertices, p);
-}
-
-auto
-make_cube(std::array<float, 32> const& vertices, boomhs::uv_t)
-{
-  UVProperties const uv;
-  return construct_cube(vertices, uv);
-}
-
-auto
-make_cube(std::array<float, 32> const& vertices, boomhs::wireframe_t)
-{
-  WireframeProperties const wf;
-  return construct_cube(vertices, wf);
-}
 
 } // ns cube_factory
 
@@ -182,33 +70,9 @@ copy_to_gpu(stlw::Logger &logger, PIPE &pipeline, DrawInfo const& dinfo, VERTICE
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, indices_data, GL_STATIC_DRAW);
 }
 
-} // ns detail
-
-namespace factories
+auto
+cube_vertices()
 {
-
-template<typename PIPE, typename ...Args>
-auto copy_cube_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory::CubeProperties const& cprop,
-    Args &&... args)
-{
-  // clang-format off
-  static constexpr std::array<GLuint, 36> INDICES = {{
-    0, 1, 2,  2, 3, 0, // front
-    1, 5, 6,  6, 2, 1, // top
-    7, 6, 5,  5, 4, 7, // back
-    4, 0, 3,  3, 7, 4, // bottom
-    4, 5, 1,  1, 0, 4, // left
-    3, 2, 6,  6, 7, 3, // right
-  }};
-  // clang-format on
-
-  using factory_type = typename PIPE::info_t;
-
-  auto const& hw = cprop.dimensions;
-  auto const h = hw.height;
-  auto const w = hw.width;
-  auto const l = hw.length;
-
   // Define the 8 vertices of a unit cube
   float constexpr W = 1.0f;
   static const std::array<float, 32> v = stlw::make_array<float>(
@@ -223,18 +87,89 @@ auto copy_cube_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory::CubePrope
      1.0f,  1.0f, -1.0f, W,
     -1.0f,  1.0f, -1.0f, W
   );
+  return v;
+}
 
-  auto const vertices = cube_factory::make_cube(v, factory_type{}, std::forward<Args>(args)...);
-
-  GLenum const draw_mode = cprop.wireframe ? GL_LINE_LOOP : GL_TRIANGLES;
-  DrawInfo dinfo{draw_mode, INDICES.size()};
-  detail::copy_to_gpu(logger, pipeline, dinfo, vertices, INDICES);
+template<std::size_t N, typename PIPE>
+DrawInfo
+make_cube_drawinfo(stlw::Logger &logger, std::array<float, N> const& vertex_data, PIPE &pipeline)
+{
+  DrawInfo dinfo{GL_TRIANGLES, cube_factory::INDICES.size()};
+  detail::copy_to_gpu(logger, pipeline, dinfo, vertex_data, cube_factory::INDICES);
   return dinfo;
 }
 
+} // ns detail
+
+namespace factories
+{
+
+template<typename PIPE>
+auto
+copy_colorcube_gpu(stlw::Logger &logger, PIPE &pipeline, Color const& color)
+{
+  // clang-format off
+  std::array<Color, 8> const color_array{
+      color, color, color, color,
+      color, color, color, color
+  };
+  auto const vertices = detail::cube_vertices();
+  auto const vertex_data = stlw::make_array<float>(
+      vertices[0], vertices[1], vertices[2], vertices[3],
+      color_array[0].r, color_array[0].g, color_array[0].a, color_array[0].a,
+
+      vertices[4], vertices[5], vertices[6], vertices[7],
+      color_array[1].r, color_array[1].g, color_array[1].a, color_array[1].a,
+
+      vertices[8], vertices[9], vertices[10], vertices[11],
+      color_array[2].r, color_array[2].g, color_array[2].a, color_array[2].a,
+
+      vertices[12], vertices[13], vertices[14], vertices[15],
+      color_array[3].r, color_array[3].g, color_array[3].a, color_array[3].a,
+
+      vertices[16], vertices[17], vertices[18], vertices[19],
+      color_array[4].r, color_array[4].g, color_array[4].a, color_array[4].a,
+
+      vertices[20], vertices[21], vertices[22], vertices[23],
+      color_array[5].r, color_array[5].g, color_array[5].a, color_array[5].a,
+
+      vertices[24], vertices[25], vertices[26], vertices[27],
+      color_array[6].r, color_array[6].g, color_array[6].a, color_array[6].a,
+
+      vertices[28], vertices[29], vertices[30], vertices[31],
+      color_array[7].r, color_array[7].g, color_array[7].a, color_array[7].a,
+
+      vertices[32], vertices[33], vertices[34], vertices[35],
+      color_array[8].r, color_array[8].g, color_array[8].a, color_array[8].a
+        );
+  // clang-format on
+  return detail::make_cube_drawinfo(logger, vertex_data, pipeline);
+}
+
+
+template<typename PIPE>
+auto
+copy_texturecube_gpu(stlw::Logger &logger, PIPE &pipeline)
+{
+  // clang-format off
+  auto const vertices = detail::cube_vertices();
+  auto const vertex_data = stlw::make_array<float>(
+      vertices[0], vertices[1], vertices[2], vertices[3],
+      vertices[4], vertices[5], vertices[6], vertices[7],
+      vertices[8], vertices[9], vertices[10], vertices[11],
+      vertices[12], vertices[13], vertices[14], vertices[15],
+      vertices[16], vertices[17], vertices[18], vertices[19],
+      vertices[20], vertices[21], vertices[22], vertices[23],
+      vertices[24], vertices[25], vertices[26], vertices[27],
+      vertices[28], vertices[29], vertices[30], vertices[31],
+      vertices[32], vertices[33], vertices[34], vertices[35]
+      );
+  return detail::make_cube_drawinfo(logger, vertex_data, pipeline);
+}
+
 template<typename PIPE, typename ...Args>
-auto copy_cube_14indices_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory::CubeProperties const& cprop,
-    Args &&... args)
+auto
+copy_cube_14indices_gpu(stlw::Logger &logger, PIPE &pipeline, Args &&... args)
 {
   // clang-format off
   static constexpr std::array<GLuint, 14> INDICES = {{
@@ -243,24 +178,17 @@ auto copy_cube_14indices_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory:
   }};
   // clang-format on
 
-  using factory_type = typename PIPE::info_t;
-
-  auto const& hw = cprop.dimensions;
-  auto const h = hw.height;
-  auto const w = hw.width;
-  auto const l = hw.length;
-
   // clang-format off
   auto const arr = stlw::make_array<float>(
-   -w, -h, l, 1.0f, // front bottom-left
-    w, -h, l, 1.0f, // front bottom-right
-    w,  h, l, 1.0f, // front top-right
-   -w,  h, l, 1.0f, // front top-left
+   -1.0f, -1.0f, 1.0f, 1.0f, // front bottom-left
+    1.0f, -1.0f, 1.0f, 1.0f, // front bottom-right
+    1.0f,  1.0f, 1.0f, 1.0f, // front top-right
+   -1.0f,  1.0f, 1.0f, 1.0f, // front top-left
 
-    -w, -h, -l, 1.0f, // back bottom-left
-     w, -h, -l, 1.0f, // back bottom-right
-     w,  h, -l, 1.0f, // back top-right
-    -w,  h, -l, 1.0f  // back top-left
+    -1.0f, -1.0f, -1.0f, 1.0f, // back bottom-left
+     1.0f, -1.0f, -1.0f, 1.0f, // back bottom-right
+     1.0f,  1.0f, -1.0f, 1.0f, // back top-right
+    -1.0f,  1.0f, -1.0f, 1.0f  // back top-left
   );
 
   auto const v = stlw::make_array<float>(
@@ -274,7 +202,7 @@ auto copy_cube_14indices_gpu(stlw::Logger &logger, PIPE &pipeline, cube_factory:
       arr[16], arr[17], arr[18], arr[19], // CUBE_ROW_4,
       arr[20], arr[21], arr[22], arr[23]  // CUBE_ROW_5
       );
-  auto const vertices = cube_factory::make_cube(v, factory_type{}, std::forward<Args>(args)...);
+  auto const& vertices = v;
 
   DrawInfo dinfo{GL_TRIANGLE_STRIP, INDICES.size()};
   detail::copy_to_gpu(logger, pipeline, dinfo, vertices, INDICES);

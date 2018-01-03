@@ -61,10 +61,6 @@ bind_stuff_and_draw(stlw::Logger &logger, PIPE &pipeline, opengl::DrawInfo const
 {
   using namespace opengl;
 
-  if constexpr (PIPE::HAS_COLOR_UNIFORM) {
-    pipeline.set_uniform_array_4fv(logger, "u_color", pipeline.color().to_array());
-  }
-
   if constexpr (PIPE::HAS_TEXTURE) {
     opengl::global::texture_bind(pipeline.texture());
     ON_SCOPE_EXIT([&pipeline]() { opengl::global::texture_unbind(pipeline.texture()); });

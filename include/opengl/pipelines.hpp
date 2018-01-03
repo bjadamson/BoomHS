@@ -72,7 +72,6 @@ public:
 struct PipelineColor2D : public BasePipeline
 {
   PIPELINE_DEFAULT_CTOR(PipelineColor2D);
-  using info_t = boomhs::color_t;
 
   static bool constexpr IS_2D = true;
   static bool constexpr IS_INSTANCED = false;
@@ -87,7 +86,6 @@ struct PipelineColor2D : public BasePipeline
 struct PipelinePositionNormalColor3D : public BasePipeline
 {
   PIPELINE_DEFAULT_CTOR(PipelinePositionNormalColor3D);
-  using info_t = boomhs::color_t;
 
   static bool constexpr IS_2D = false;
   static bool constexpr IS_INSTANCED = false;
@@ -102,7 +100,6 @@ struct PipelinePositionNormalColor3D : public BasePipeline
 struct PipelinePositionColor3D : public BasePipeline
 {
   PIPELINE_DEFAULT_CTOR(PipelinePositionColor3D);
-  using info_t = boomhs::color_t;
 
   static bool constexpr IS_2D = false;
   static bool constexpr IS_INSTANCED = false;
@@ -117,7 +114,6 @@ struct PipelinePositionColor3D : public BasePipeline
 struct PipelineLightSource3D : public BasePipeline
 {
   PIPELINE_DEFAULT_CTOR(PipelineLightSource3D);
-  using info_t = boomhs::none_t;
 
   static bool constexpr IS_2D = false;
   static bool constexpr IS_INSTANCED = false;
@@ -132,7 +128,6 @@ struct PipelineLightSource3D : public BasePipeline
 struct PipelineHashtag3D : public BasePipeline
 {
   PIPELINE_DEFAULT_CTOR(PipelineHashtag3D);
-  using info_t = boomhs::color_t;
 
   auto instance_count() const { return 3u; }
 
@@ -149,7 +144,6 @@ struct PipelineHashtag3D : public BasePipeline
 struct PipelinePlus3D : public BasePipeline
 {
   PIPELINE_DEFAULT_CTOR(PipelinePlus3D);
-  using info_t = boomhs::color_t;
 
   static bool constexpr IS_2D = false;
   static bool constexpr IS_INSTANCED = false;
@@ -175,7 +169,6 @@ class PipelineTexture3D : public BasePipeline
   texture_info texture_info_;
 public:
   PIPELINE_TEXTURE_CTOR(PipelineTexture3D);
-  using info_t = boomhs::uv_t;
 
   auto texture() const { return this->texture_info_; }
 
@@ -194,7 +187,6 @@ class PipelineTextureCube3D : public BasePipeline
   texture_info texture_info_;
 public:
   PIPELINE_TEXTURE_CTOR(PipelineTextureCube3D);
-  using info_t = boomhs::uv_t;
 
   auto texture() const { return this->texture_info_; }
 
@@ -213,7 +205,6 @@ class PipelineSkybox3D : public BasePipeline
   texture_info texture_info_;
 public:
   PIPELINE_TEXTURE_CTOR(PipelineSkybox3D);
-  using info_t = boomhs::uv_t;
 
   auto texture() const { return this->texture_info_; }
 
@@ -232,7 +223,6 @@ class PipelineTexture2D : public BasePipeline
   texture_info texture_info_;
 public:
   PIPELINE_TEXTURE_CTOR(PipelineTexture2D);
-  using info_t = boomhs::uv_t;
 
   auto texture() const { return this->texture_info_; }
 
@@ -247,39 +237,11 @@ public:
 };
 #undef PIPELINE_TEXTURE_CTOR
 
-template<bool IS_2D_T>
-class PipelineWireframe : public BasePipeline
-{
-  Color color_;
-public:
-  explicit PipelineWireframe(ShaderProgram &&sp, VertexAttribute &&va, Color const& color)
-    : BasePipeline(MOVE(sp), MOVE(va))
-    , color_(color)
-    {
-    }
-  using info_t = boomhs::wireframe_t;
-
-  auto color() const { return this->color_; }
-
-  static bool constexpr IS_2D = IS_2D_T;
-  static bool constexpr IS_INSTANCED = false;
-  static bool constexpr IS_SKYBOX = false;
-  static bool constexpr HAS_COLOR_UNIFORM = true;
-  static bool constexpr HAS_TEXTURE = false;
-
-  static bool constexpr IS_LIGHTSOURCE = false;
-  static bool constexpr RECEIVES_LIGHT = false;
-};
-
-using PipelineWireframe2D = PipelineWireframe<true>;
-using PipelineWireframe3D = PipelineWireframe<false>;
-
 struct Pipeline2D
 {
   PipelineColor2D color;
   PipelineTexture2D texture_wall;
   PipelineTexture2D texture_container;
-  PipelineWireframe2D wireframe;
 
   MOVE_CONSTRUCTIBLE_ONLY(Pipeline2D);
 };
@@ -321,7 +283,6 @@ struct Pipeline3D
 
   // NORMAL???
   PipelinePositionColor3D terrain;
-  PipelineWireframe3D wireframe;
 
   MOVE_CONSTRUCTIBLE_ONLY(Pipeline3D);
 };

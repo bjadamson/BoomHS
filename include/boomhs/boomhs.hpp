@@ -65,18 +65,11 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
   auto O_handle = make_letter(d3.O, objs.O);
   auto T_handle = make_letter(d3.T, objs.T);
 
-  auto light_handle = OF::copy_cube_gpu(logger, d3.light0, {{1.0f, 1.0f, 1.0f}});
+  auto cube_skybox = OF::copy_texturecube_gpu(logger, d3.skybox);
+  auto cube_textured = OF::copy_texturecube_gpu(logger, d3.texture_cube);
 
-  auto cube_skybox = OF::copy_cube_gpu(logger, d3.skybox, {{10.0f, 10.0f, 10.0f}});
-  auto cube_textured = OF::copy_cube_gpu(logger, d3.texture_cube, {{0.15f, 0.15f, 0.15f}});
-
-  auto cube_colored = OF::copy_cube_gpu(logger, d3.color, {{0.25f, 0.25f, 0.25f}},
-      LOC::BLUE);
-
-  auto cube_wf = OF::copy_cube_gpu(logger, d3.wireframe, {{0.25f, 0.25f, 0.25f}, true});
-
-  auto terrain_handle = OF::copy_cube_gpu(logger, d3.terrain, {{2.0f, 0.4f, 2.0f}},
-      LOC::SADDLE_BROWN);
+  auto cube_colored = OF::copy_colorcube_gpu(logger, d3.color, LOC::BLUE);
+  auto terrain_handle = OF::copy_colorcube_gpu(logger, d3.terrain, LOC::SADDLE_BROWN);
 
   auto tilemap_handle = OF::copy_gpu(logger, GL_TRIANGLE_STRIP, d3.hashtag, objs.hashtag);
 
@@ -93,8 +86,6 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
     MOVE(O_handle),
     MOVE(T_handle),
 
-    MOVE(light_handle),
-
     MOVE(world_arrows.x_dinfo),
     MOVE(world_arrows.y_dinfo),
     MOVE(world_arrows.z_dinfo),
@@ -102,7 +93,6 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
     MOVE(cube_skybox),
     MOVE(cube_textured),
     MOVE(cube_colored),
-    MOVE(cube_wf),
     MOVE(terrain_handle),
     MOVE(tilemap_handle)};
   return Assets{MOVE(objs), MOVE(handles)};
@@ -345,7 +335,10 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
   render::clear_screen(LOC::BLACK);
 
   // light
-  render::draw(rargs, *ents[GS::LIGHT_INDEX], d3.light0, handles.light);
+  {
+    auto light_handle = OF::copy_colorcube_gpu(logger, d3.light0, state.world.light_color);
+    render::draw(rargs, *ents[GS::LIGHT_INDEX], d3.light0, light_handle);
+  }
 
   // skybox
   state.skybox.transform.translation = ents[GameState::AT_INDEX]->translation;
@@ -356,7 +349,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
   // random
   render::draw(rargs, *ents[GS::COLOR_CUBE_INDEX], d3.color, handles.cube_colored);
   render::draw(rargs, *ents[GS::TEXTURE_CUBE_INDEX], d3.texture_cube, handles.cube_textured);
-  render::draw(rargs, *ents[GS::WIREFRAME_CUBE_INDEX], d3.wireframe, handles.cube_wireframe);
+  //render::draw(rargs, *ents[GS::WIREFRAME_CUBE_INDEX], d3.wireframe, handles.cube_wireframe);
 
   // house
   render::draw(rargs, *ents[GS::HOUSE_INDEX], d3.house, handles.house);
