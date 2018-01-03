@@ -45,10 +45,10 @@ load_pipelines(stlw::Logger &logger)
   DO_TRY(auto d3at, make_3d_posnormcolor());
   DO_TRY(auto d3_letterO, make_3d_posnormcolor());
   DO_TRY(auto d3_letterT, make_3d_posnormcolor());
-  DO_TRY(auto d3hashtag, make_pipeline<PipelineHashtag3D>("3d_hashtag.vert", "3d_hashtag.frag",
+  DO_TRY(auto d3hashtag, make_pipeline<PipelineHashtag3D>("3d_hashtag.vert", "3d_pos_normal_color.frag",
         va::vertex_normal_color(logger)));
 
-  DO_TRY(auto d3plus, make_pipeline<PipelinePlus3D>("3d_plus.vert", "3d_plus.frag",
+  DO_TRY(auto d3plus, make_pipeline<PipelinePlus3D>("3d_plus.vert", "3d_pos_normal_color.frag",
       va::vertex_normal_color(logger)));
 
   // arrows
