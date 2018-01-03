@@ -8,7 +8,8 @@ namespace
 
 using namespace opengl;
 
-class UploadFormatState {
+class UploadFormatState
+{
   static constexpr auto INVALID_TYPE = 0;
 
   GLsizei const stride_;
@@ -128,6 +129,20 @@ vertex_color(stlw::Logger &logger)
 
   return make_vertex_attribute({
     MOVE(A_POSITION),
+    MOVE(A_COLOR)
+    });
+}
+
+VertexAttribute
+vertex_normal_color(stlw::Logger &logger)
+{
+  AttributePointerInfo A_POSITION{0, GL_FLOAT, 4}; // x, y, z, w
+  AttributePointerInfo A_NORMAL  {1, GL_FLOAT, 3}; // xn, yn, zn
+  AttributePointerInfo A_COLOR   {2, GL_FLOAT, 4}; // r, g, b, a
+
+  return make_vertex_attribute({
+    MOVE(A_POSITION),
+    MOVE(A_NORMAL),
     MOVE(A_COLOR)
     });
 }

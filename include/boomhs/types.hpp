@@ -13,6 +13,7 @@ struct normal_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 3; };
 struct color_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 4; };
 struct uv_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 2; };
 struct wireframe_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 0; };
+struct none_t { static constexpr std::size_t NUM_FLOATS_PER_VERTEX = 0; };
 
 struct Transform
 {

@@ -86,9 +86,8 @@ ObjLoader::load_mesh(char const* objpath, char const* mtlpath, LoadNormals const
             vertices.push_back(yn);
             vertices.push_back(zn);
           } else {
-            vertices.push_back(1.0);
-            vertices.push_back(1.0);
-            vertices.push_back(1.0);
+            std::cerr << "no normals found\n";
+            std::abort();
           }
         }
 
@@ -102,8 +101,9 @@ ObjLoader::load_mesh(char const* objpath, char const* mtlpath, LoadNormals const
             vertices.push_back(v);
 
           } else {
-            vertices.push_back(0.0);
-            vertices.push_back(0.0);
+            std::abort();
+            //vertices.push_back(0.0);
+            //vertices.push_back(0.0);
           }
         } else {
           vertices.push_back(color_.r);

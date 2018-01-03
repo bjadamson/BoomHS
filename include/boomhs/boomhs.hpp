@@ -35,19 +35,19 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
 
   auto loader = ObjLoader{LOC::WHITE};
   auto house_obj = loader.load_mesh("assets/house_uv.obj", LoadNormals{true}, LoadUvs{true});
-  auto hashtag_obj = loader.load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", LoadNormals{false}, LoadUvs{false});
+  auto hashtag_obj = loader.load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", LoadNormals{true}, LoadUvs{false});
 
-  auto at_obj = loader.load_mesh("assets/at.obj", "assets/at.mtl", LoadNormals{false}, LoadUvs{false});
+  auto at_obj = loader.load_mesh("assets/at.obj", "assets/at.mtl", LoadNormals{true}, LoadUvs{false});
   loader.set_color(LOC::ORANGE);
-  auto plus_obj = loader.load_mesh("assets/plus.obj", "assets/plus.mtl", LoadNormals{false}, LoadUvs{false});
+  auto plus_obj = loader.load_mesh("assets/plus.obj", "assets/plus.mtl", LoadNormals{true}, LoadUvs{false});
 
   loader.set_color(LOC::PINK);
-  auto O_obj = loader.load_mesh("assets/O.obj", "assets/O.mtl", LoadNormals{false}, LoadUvs{false});
+  auto O_obj = loader.load_mesh("assets/O.obj", "assets/O.mtl", LoadNormals{true}, LoadUvs{false});
   loader.set_color(LOC::PURPLE);
-  auto T_obj = loader.load_mesh("assets/T.obj", "assets/T.mtl", LoadNormals{false}, LoadUvs{false});
+  auto T_obj = loader.load_mesh("assets/T.obj", "assets/T.mtl", LoadNormals{true}, LoadUvs{false});
 
   loader.set_color(LOC::YELLOW);
-  auto arrow_obj = loader.load_mesh("assets/arrow.obj", "assets/arrow.mtl", LoadNormals{false}, LoadUvs{false});
+  auto arrow_obj = loader.load_mesh("assets/arrow.obj", "assets/arrow.mtl", LoadNormals{true}, LoadUvs{false});
 
   Objs objs{MOVE(house_obj), MOVE(hashtag_obj), MOVE(at_obj), MOVE(plus_obj), MOVE(arrow_obj),
     MOVE(O_obj), MOVE(T_obj)};
@@ -64,6 +64,8 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
 
   auto O_handle = make_letter(d3.O, objs.O);
   auto T_handle = make_letter(d3.T, objs.T);
+
+  auto light_handle = OF::copy_cube_gpu(logger, d3.light0, {{1.0f, 1.0f, 1.0f}});
 
   auto cube_skybox = OF::copy_cube_gpu(logger, d3.skybox, {{10.0f, 10.0f, 10.0f}});
   auto cube_textured = OF::copy_cube_gpu(logger, d3.texture_cube, {{0.15f, 0.15f, 0.15f}});
@@ -90,6 +92,8 @@ load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
 
     MOVE(O_handle),
     MOVE(T_handle),
+
+    MOVE(light_handle),
 
     MOVE(world_arrows.x_dinfo),
     MOVE(world_arrows.y_dinfo),
@@ -254,6 +258,9 @@ make_entities(PROXY &proxy)
   entities[GS::HOUSE_INDEX]->translation = glm::vec3{2.0f, 0.0f, -4.0f};
   entities[GS::TERRAIN_INDEX]->translation = glm::vec3{0.0f, 5.0f, 0.0f};
 
+  entities[GS::LIGHT_INDEX]->scale = glm::vec3{1.0f};
+  entities[GS::LIGHT_INDEX]->translation = glm::vec3{0.0f};
+  entities[GS::LIGHT_INDEX]->translation.y = 1.0f;
 
   //auto const make_standing = [&entities](int const index) {
     //auto &entity = *entities[index];
@@ -310,8 +317,9 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   }
   Camera camera(proj, player_ent, FORWARD, UP);
 
-  return GameState{logger, imgui, dimensions, MOVE(rng), MOVE(tmap), MOVE(entities), MOVE(camera),
+  GameState gs{logger, imgui, dimensions, MOVE(rng), MOVE(tmap), MOVE(entities), MOVE(camera),
       MOVE(player), MOVE(Skybox{skybox_ent})};
+  return MOVE(gs);
 }
 
 template<typename PROXY>
@@ -329,14 +337,15 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
   if (state.render.tilemap.redraw) {
     std::cerr << "Updating tilemap\n";
     update_visible_tiles(state.tilemap, state.player, state.render.tilemap.reveal);
-    //assets.handles.tilemap = OF::copy_tilemap_gpu(logger, d3.hashtag,
-        //{GL_TRIANGLE_STRIP, assets.objects.hashtag});
 
     // We don't need to recompute the tilemap, we just did.
     state.render.tilemap.redraw = false;
   }
 
   render::clear_screen(LOC::BLACK);
+
+  // light
+  render::draw(rargs, *ents[GS::LIGHT_INDEX], d3.light0, handles.light);
 
   // skybox
   state.skybox.transform.translation = ents[GameState::AT_INDEX]->translation;
@@ -372,7 +381,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
   render::draw(rargs, *ents[GS::TROLL_INDEX], d3.T, handles.T);
 
   // arrow
-  render::draw(rargs, *ents[GS::PLAYER_ARROW_INDEX], d3.arrow, handles.arrow);
+  //render::draw(rargs, *ents[GS::PLAYER_ARROW_INDEX], d3.arrow, handles.arrow);
 
   // global coordinates
   if (state.render.show_global_axis) {

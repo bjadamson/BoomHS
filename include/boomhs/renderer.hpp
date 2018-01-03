@@ -7,19 +7,10 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <boomhs/camera.hpp>
+#include <boomhs/state.hpp>
 
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
-
-namespace boomhs {
-
-struct RenderArgs {
-  stlw::Logger &logger;
-  Camera const& camera;
-};
-
-} // ns boomhs
 
 namespace boomhs::render {
 
@@ -100,7 +91,8 @@ void render_element_buffer(stlw::Logger &logger, PIPE &pipeline, opengl::DrawInf
 }
 
 template <typename PIPE>
-void draw_3dshape(RenderArgs const &args, boomhs::Transform const& transform, PIPE &pipeline, opengl::DrawInfo const& dinfo)
+void
+draw_3dshape(RenderArgs const &args, boomhs::Transform const& transform, PIPE &pipeline, opengl::DrawInfo const& dinfo)
 {
   auto &logger = args.logger;
   glm::mat4 const camera_matrix = args.camera.camera_matrix();
@@ -108,9 +100,15 @@ void draw_3dshape(RenderArgs const &args, boomhs::Transform const& transform, PI
   auto const draw_3d_shape_fn = [&](auto const &dinfo) {
     auto const model_matrix = transform.model_matrix();
 
-    // Model View Projection matrix
-    auto const mvp_matrix = camera_matrix * model_matrix;
-    pipeline.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
+    // various matrices
+    pipeline.set_uniform_matrix_4fv(logger, "u_mvpmatrix", camera_matrix * model_matrix);
+
+    if constexpr (PIPE::RECEIVES_LIGHT) {
+      pipeline.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
+      pipeline.set_uniform_color(logger, "u_ambient", args.world.ambient);
+      pipeline.set_uniform_color(logger, "u_diffuse_color", args.world.diffuse_color);
+      pipeline.set_uniform_array_vec3(logger, "u_diffuse_pos", args.entities[GameState::LIGHT_INDEX]->translation);
+    }
 
     if constexpr (PIPE::IS_SKYBOX) {
       disable_depth_tests();
@@ -183,9 +181,15 @@ draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs
   auto const model_matrix = transform.model_matrix();
   auto const mvp_matrix = camera_matrix * model_matrix;
 
-  auto const& draw_tile = [&logger, &mvp_matrix](auto &pipeline, auto const& dinfo, auto const& offset) {
+  auto const& draw_tile = [&](auto &pipeline, auto const& dinfo, auto const& offset) {
     pipeline.use_program(logger);
     opengl::global::vao_bind(pipeline.vao());
+
+    pipeline.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
+    pipeline.set_uniform_color(logger, "u_ambient", args.world.ambient);
+    pipeline.set_uniform_color(logger, "u_diffuse_color", args.world.diffuse_color);
+    pipeline.set_uniform_array_vec3(logger, "u_diffuse_pos", args.entities[GameState::LIGHT_INDEX]->translation);
+
     pipeline.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
     pipeline.set_uniform_array_3fv(logger, "u_offset", offset);
 
@@ -217,7 +221,7 @@ struct Drawable
 
 inline void
 draw_tilegrid(RenderArgs const& args, Transform const& transform,
-    Drawable<opengl::PipelineColor3D> &&drawable)
+    Drawable<opengl::PipelinePositionColor3D> &&drawable)
 {
   glm::mat4 const camera_matrix = args.camera.camera_matrix();
   auto const model_matrix = transform.model_matrix();

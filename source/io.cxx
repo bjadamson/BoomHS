@@ -3,6 +3,7 @@
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_sdl_gl3.h>
 #include <stlw/log.hpp>
+#include <iostream>
 
 namespace {
 using namespace boomhs;

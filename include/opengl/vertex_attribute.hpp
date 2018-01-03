@@ -60,6 +60,9 @@ VertexAttribute
 vertex_color(stlw::Logger &);
 
 VertexAttribute
+vertex_normal_color(stlw::Logger &);
+
+VertexAttribute
 vertex_uv2d(stlw::Logger &);
 
 VertexAttribute

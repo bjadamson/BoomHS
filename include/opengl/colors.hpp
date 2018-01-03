@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <ostream>
 
 namespace opengl
 {
@@ -33,12 +34,30 @@ struct Color
   {
   }
 
-  inline auto
+  auto
   to_array() const
   {
     return std::array<float, 4>{this->r, this->g, this->b, this->a};
   }
+
+  auto
+  data()
+  {
+    return &r;
+  }
 };
+
+inline std::ostream&
+operator<<(std::ostream &os, Color const& c)
+{
+  os << "{"
+    << c.r << ", "
+    << c.g << ", "
+    << c.b << ", "
+    << c.a
+    << "}";
+   return os;
+}
 
 namespace LIST_OF_COLORS
 {

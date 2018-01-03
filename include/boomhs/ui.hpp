@@ -86,13 +86,67 @@ draw_player_info(GameState &state)
   ImGui::End();
 }
 
+void
+show_lighting_window(GameState &state)
+{
+  if (ImGui::Begin("Edit Lighting")) {
+    {
+      auto ambient = state.world.ambient.to_array();
+      if (ImGui::SliderFloat3("Ambient COLOR", ambient.data(), 0.0f, 1.0f)) {
+        state.world.ambient = opengl::Color{ambient};
+      }
+    }
+    ImGui::Separator();
+    {
+      float constexpr POS_MAX = 10.0f;
+      auto &ent = *state.entities[GameState::LIGHT_INDEX];
+      ImGui::SliderFloat3("diffuse POSITION", glm::value_ptr(ent.translation), -POS_MAX, POS_MAX);
+    }
+    ImGui::SliderFloat4("Diffuse COLOR", state.world.diffuse_color.data(), 0.0f, 1.0f);
+    if (ImGui::Button("Close", ImVec2(120,0))) {
+      state.ui_state.show_lighting_window = false;
+    }
+    ImGui::End();
+  }
+}
+
+void
+world_menu(GameState &state)
+{
+  bool &edit_lighting = state.ui_state.show_lighting_window;
+  if (ImGui::BeginMenu("World")) {
+    ImGui::MenuItem("Global Axis", nullptr, &state.render.show_global_axis);
+    ImGui::MenuItem("Local Axis", nullptr, &state.render.show_local_axis);
+    ImGui::MenuItem("Target Forward/Right/Up Vectors", nullptr, &state.render.show_target_vectors);
+
+    auto &tmap_render = state.render.tilemap;
+    if (ImGui::MenuItem("Reveal Tilemap", nullptr, &tmap_render.reveal)) {
+      tmap_render.redraw = true;
+    }
+
+    if (ImGui::BeginMenu("TileMap GridLines (Debug)")) {
+      ImGui::MenuItem("Show (x, z)-axis lines", nullptr, &tmap_render.show_grid_lines);
+      if (ImGui::MenuItem("Show y-axis Lines ", nullptr, &tmap_render.show_yaxis_lines)) {
+        tmap_render.redraw = true;
+      }
+      ImGui::EndMenu();
+    }
+    ImGui::MenuItem("Set Lighting Values", nullptr, &edit_lighting);
+    ImGui::EndMenu();
+  }
+  if (edit_lighting) {
+    show_lighting_window(state);
+  }
+}
+
 } // ns boomhs::detail
 
 namespace boomhs
 {
 
 template<typename PROXY>
-void draw_ui(GameState &state, window::SDLWindow &window, PROXY &proxy)
+void
+draw_ui(GameState &state, window::SDLWindow &window, PROXY &proxy)
 {
   using namespace detail;
   draw_entity_editor(state);
@@ -126,27 +180,6 @@ void draw_ui(GameState &state, window::SDLWindow &window, PROXY &proxy)
       ImGui::EndMenu();
     }
   };
-  auto const world_menu = [&state]() {
-    if (ImGui::BeginMenu("World")) {
-      ImGui::MenuItem("Global Axis", nullptr, &state.render.show_global_axis);
-      ImGui::MenuItem("Local Axis", nullptr, &state.render.show_local_axis);
-      ImGui::MenuItem("Target Forward/Right/Up Vectors", nullptr, &state.render.show_target_vectors);
-
-      auto &tmap_render = state.render.tilemap;
-      if (ImGui::MenuItem("Reveal Tilemap", nullptr, &tmap_render.reveal)) {
-        tmap_render.redraw = true;
-      }
-
-      if (ImGui::BeginMenu("TileMap GridLines (Debug)")) {
-        ImGui::MenuItem("Show (x, z)-axis lines", nullptr, &tmap_render.show_grid_lines);
-        if (ImGui::MenuItem("Show y-axis Lines ", nullptr, &tmap_render.show_yaxis_lines)) {
-          tmap_render.redraw = true;
-        }
-        ImGui::EndMenu();
-      }
-      ImGui::EndMenu();
-    }
-  };
   auto const player_menu = [&state]() {
     if (ImGui::BeginMenu("Player")) {
       ImGui::MenuItem("Player Collisions Enabled", nullptr, &state.collision.player);
@@ -157,7 +190,7 @@ void draw_ui(GameState &state, window::SDLWindow &window, PROXY &proxy)
   if (ImGui::BeginMainMenuBar()) {
     window_menu();
     camera_menu();
-    world_menu();
+    world_menu(state);
     player_menu();
   }
   ImGui::EndMainMenuBar();

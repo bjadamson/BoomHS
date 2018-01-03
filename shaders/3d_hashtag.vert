@@ -1,12 +1,13 @@
-// attributes input to the vertex shader
-in vec4 a_position; // position value
+in vec4 a_position;
+in vec3 a_normal;
 in vec4 a_color;
 
-// output of the vertex shader - input to fragment
-// shader
+out vec3 v_normal;
 out vec4 v_color;
+out vec3 v_fragpos_worldspace;
 
 uniform mat4 u_mvpmatrix;
+uniform mat4 u_modelmatrix;
 uniform vec3 u_offset;
 
 void main()
@@ -18,5 +19,8 @@ void main()
 
   vec4 pos = a_position + vec4(offset, 1.0);
   gl_Position = u_mvpmatrix * pos;
+
+  v_normal = a_normal;
   v_color = color;
+  v_fragpos_worldspace = vec3(u_modelmatrix * a_position);
 }

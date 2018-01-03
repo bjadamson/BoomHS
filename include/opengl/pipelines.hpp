@@ -36,6 +36,20 @@ public:
   void set_uniform_array_4fv(stlw::Logger &, GLchar const *, std::array<float, 4> const &);
   void set_uniform_array_3fv(stlw::Logger &, GLchar const*, std::array<float, 3> const&);
 
+  void
+  set_uniform_array_vec3(stlw::Logger &logger, GLchar const* name, glm::vec3 const& v)
+  {
+    auto const arr = stlw::make_array<float>(v.x, v.y, v.z);
+    set_uniform_array_3fv(logger, name, arr);
+  }
+
+  void
+  set_uniform_color(stlw::Logger &logger, GLchar const* name, Color const& c)
+  {
+    auto const arr = stlw::make_array<float>(c.r, c.g, c.b, c.a);
+    set_uniform_array_4fv(logger, name, arr);
+  }
+
   void use_program(stlw::Logger &);
 };
 
@@ -56,11 +70,14 @@ struct PipelineColor2D : public BasePipeline
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = false;
+
+  static bool constexpr IS_LIGHTSOURCE = false;
+  static bool constexpr RECEIVES_LIGHT = false;
 };
 
-struct PipelineColor3D : public BasePipeline
+struct PipelinePositionNormalColor3D : public BasePipeline
 {
-  PIPELINE_DEFAULT_CTOR(PipelineColor3D);
+  PIPELINE_DEFAULT_CTOR(PipelinePositionNormalColor3D);
   using info_t = boomhs::color_t;
 
   static bool constexpr IS_2D = false;
@@ -68,6 +85,39 @@ struct PipelineColor3D : public BasePipeline
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = false;
+
+  static bool constexpr IS_LIGHTSOURCE = false;
+  static bool constexpr RECEIVES_LIGHT = true;
+};
+
+struct PipelinePositionColor3D : public BasePipeline
+{
+  PIPELINE_DEFAULT_CTOR(PipelinePositionColor3D);
+  using info_t = boomhs::color_t;
+
+  static bool constexpr IS_2D = false;
+  static bool constexpr IS_INSTANCED = false;
+  static bool constexpr IS_SKYBOX = false;
+  static bool constexpr HAS_COLOR_UNIFORM = false;
+  static bool constexpr HAS_TEXTURE = false;
+
+  static bool constexpr IS_LIGHTSOURCE = false;
+  static bool constexpr RECEIVES_LIGHT = false;
+};
+
+struct PipelineLightSource3D : public BasePipeline
+{
+  PIPELINE_DEFAULT_CTOR(PipelineLightSource3D);
+  using info_t = boomhs::none_t;
+
+  static bool constexpr IS_2D = false;
+  static bool constexpr IS_INSTANCED = false;
+  static bool constexpr IS_SKYBOX = false;
+  static bool constexpr HAS_COLOR_UNIFORM = false;
+  static bool constexpr HAS_TEXTURE = false;
+
+  static bool constexpr IS_LIGHTSOURCE = true;
+  static bool constexpr RECEIVES_LIGHT = false;
 };
 
 struct PipelineHashtag3D : public BasePipeline
@@ -82,6 +132,9 @@ struct PipelineHashtag3D : public BasePipeline
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = false;
+
+  static bool constexpr IS_LIGHTSOURCE = false;
+  static bool constexpr RECEIVES_LIGHT = true;
 };
 
 struct PipelinePlus3D : public BasePipeline
@@ -94,6 +147,9 @@ struct PipelinePlus3D : public BasePipeline
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = false;
+
+  static bool constexpr IS_LIGHTSOURCE = false;
+  static bool constexpr RECEIVES_LIGHT = true;
 };
 
 #define PIPELINE_TEXTURE_CTOR(CLASSNAME)                                                           \
@@ -119,6 +175,9 @@ public:
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = true;
+
+  static bool constexpr IS_LIGHTSOURCE = false;
+  static bool constexpr RECEIVES_LIGHT = false;
 };
 
 class PipelineTextureCube3D : public BasePipeline
@@ -135,6 +194,9 @@ public:
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = true;
+
+  static bool constexpr IS_LIGHTSOURCE = false;
+  static bool constexpr RECEIVES_LIGHT = false;
 };
 
 class PipelineSkybox3D : public BasePipeline
@@ -151,6 +213,9 @@ public:
   static bool constexpr IS_SKYBOX = true;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = true;
+
+  static bool constexpr IS_LIGHTSOURCE = false;
+  static bool constexpr RECEIVES_LIGHT = false;
 };
 
 class PipelineTexture2D : public BasePipeline
@@ -167,6 +232,9 @@ public:
   static bool constexpr IS_SKYBOX = true;
   static bool constexpr HAS_COLOR_UNIFORM = false;
   static bool constexpr HAS_TEXTURE = true;
+
+  static bool constexpr IS_LIGHTSOURCE = false;
+  static bool constexpr RECEIVES_LIGHT = false;
 };
 #undef PIPELINE_TEXTURE_CTOR
 
@@ -189,6 +257,9 @@ public:
   static bool constexpr IS_SKYBOX = false;
   static bool constexpr HAS_COLOR_UNIFORM = true;
   static bool constexpr HAS_TEXTURE = false;
+
+  static bool constexpr IS_LIGHTSOURCE = false;
+  static bool constexpr RECEIVES_LIGHT = false;
 };
 
 using PipelineWireframe2D = PipelineWireframe<true>;
@@ -206,34 +277,41 @@ struct Pipeline2D
 
 struct Pipeline3D
 {
-  PipelineColor3D color;
   PipelineHashtag3D hashtag;
-  PipelineColor3D at;
+  PipelinePositionNormalColor3D at;
   PipelinePlus3D plus;
-  PipelineColor3D arrow;
 
   // alphabet
-  PipelineColor3D O;
-  PipelineColor3D T;
+  PipelinePositionNormalColor3D O;
+  PipelinePositionNormalColor3D T;
 
-  PipelineColor3D global_x_axis_arrow;
-  PipelineColor3D global_y_axis_arrow;
-  PipelineColor3D global_z_axis_arrow;
+  // 3d arrow (with normals)
+  PipelinePositionColor3D local_forward_arrow;
 
-  PipelineColor3D local_x_axis_arrow;
-  PipelineColor3D local_y_axis_arrow;
-  PipelineColor3D local_z_axis_arrow;
+  // 2d arrows
+  PipelinePositionColor3D arrow;
+  PipelinePositionColor3D color;
 
-  PipelineColor3D local_forward_arrow;
+  PipelinePositionColor3D global_x_axis_arrow;
+  PipelinePositionColor3D global_y_axis_arrow;
+  PipelinePositionColor3D global_z_axis_arrow;
 
-  PipelineColor3D camera_arrow0;
-  PipelineColor3D camera_arrow1;
-  PipelineColor3D camera_arrow2;
+  PipelinePositionColor3D local_x_axis_arrow;
+  PipelinePositionColor3D local_y_axis_arrow;
+  PipelinePositionColor3D local_z_axis_arrow;
+
+  PipelinePositionColor3D camera_arrow0;
+  PipelinePositionColor3D camera_arrow1;
+  PipelinePositionColor3D camera_arrow2;
+
+  PipelineLightSource3D light0;
 
   PipelineTextureCube3D texture_cube;
   PipelineTexture3D house;
   PipelineSkybox3D skybox;
-  PipelineColor3D terrain;
+
+  // NORMAL???
+  PipelinePositionColor3D terrain;
   PipelineWireframe3D wireframe;
 
   MOVE_CONSTRUCTIBLE_ONLY(Pipeline3D);

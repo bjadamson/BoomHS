@@ -3,6 +3,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <imgui/imgui.hpp>
+#include <opengl/colors.hpp>
 
 #include <stlw/log.hpp>
 #include <stlw/random.hpp>
@@ -12,7 +13,6 @@
 
 #include <boomhs/camera.hpp>
 #include <boomhs/player.hpp>
-#include <boomhs/renderer.hpp>
 #include <boomhs/tilemap.hpp>
 #include <boomhs/skybox.hpp>
 #include <vector>
@@ -22,11 +22,27 @@ using stlw::Logger;
 namespace boomhs
 {
 
+struct WorldState
+{
+  opengl::Color ambient = LOC::WHITE;
+  opengl::Color diffuse_color = LOC::HOT_PINK;
+};
+
+struct RenderArgs {
+  Logger &logger;
+  Camera const& camera;
+
+  std::vector<Transform*> &entities;
+  WorldState &world;
+};
+
 struct UiState
 {
   bool enter_pressed = false;
   bool block_input = false;
   bool flip_y = false;
+
+  bool show_lighting_window = false;
 
   // primitive buffers
   int eid_buffer = 0;
@@ -78,6 +94,7 @@ struct GameState
   MouseState mouse;
   RenderState render;
   WindowState window;
+  WorldState world;
 
   Logger &logger;
   ImGuiIO &imgui;
@@ -122,7 +139,9 @@ struct GameState
 
   static constexpr std::size_t ORC_INDEX = 20;
   static constexpr std::size_t TROLL_INDEX = 21;
-  static constexpr std::size_t INDEX_MAX = 22;
+
+  static constexpr std::size_t LIGHT_INDEX = 22;
+  static constexpr std::size_t INDEX_MAX = 23;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
   GameState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
@@ -138,12 +157,11 @@ struct GameState
     , player(MOVE(pl))
     , skybox(MOVE(sbox))
   {
-    //this->camera.move_down(1);
   }
 
-  RenderArgs render_args() const
+  RenderArgs render_args()
   {
-    return RenderArgs{this->logger, this->camera};
+    return RenderArgs{this->logger, this->camera, this->entities, this->world};
   }
 };
 

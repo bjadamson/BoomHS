@@ -8,13 +8,10 @@ out vec3 v_fragpos_worldspace;
 
 uniform mat4 u_mvpmatrix;
 uniform mat4 u_modelmatrix;
-uniform vec3 u_offset;
 
 void main()
 {
-  vec4 pos = a_position + vec4(u_offset, 1.0);
-  pos -= vec4(0.0, 0.5, 0.0, 0.0);
-  gl_Position = u_mvpmatrix * pos;
+  gl_Position = u_mvpmatrix * a_position;
 
   v_normal = a_normal;
   v_color = a_color;

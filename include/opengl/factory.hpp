@@ -123,6 +123,12 @@ construct_cube(std::array<float, 32> const& vertices, WireframeProperties const 
 }
 
 auto
+make_cube(std::array<float, 32> const& vertices, boomhs::none_t)
+{
+  return vertices;
+}
+
+auto
 make_cube(std::array<float, 32> const& vertices, boomhs::color_t, Color const& color)
 {
   std::array<Color, 8> const colors{
@@ -476,8 +482,9 @@ copy_gpu(stlw::Logger &logger, GLenum const draw_mode, PIPE &pipe, obj const& ob
   auto const& indices = object.indices;
 
   // assume (x, y, z, w) all present
+  // assume (xn, yn, zn) all present
   // assume (r, g, b, a) all present
-  assert((vertices.size() % 8) == 0);
+  assert((vertices.size() % (4 + 3 + 4)) == 0);
 
   // Bind the vao (even before instantiating the DrawInfo)
   global::vao_bind(pipe.vao());

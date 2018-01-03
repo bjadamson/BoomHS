@@ -30,6 +30,8 @@ struct GpuHandles {
   opengl::DrawInfo O;
   opengl::DrawInfo T;
 
+  opengl::DrawInfo light;
+
   opengl::DrawInfo x_axis_arrow;
   opengl::DrawInfo y_axis_arrow;
   opengl::DrawInfo z_axis_arrow;
