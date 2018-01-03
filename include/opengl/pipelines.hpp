@@ -3,9 +3,11 @@
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
+#include <opengl/colors.hpp>
 #include <opengl/shader_program.hpp>
 #include <opengl/vao.hpp>
 #include <opengl/vertex_attribute.hpp>
+#include <opengl/texture.hpp>
 #include <boomhs/types.hpp>
 
 namespace opengl

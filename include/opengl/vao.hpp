@@ -1,8 +1,5 @@
 #pragma once
-#include <opengl/colors.hpp>
-#include <opengl/global.hpp>
-#include <boomhs/types.hpp>
-#include <opengl/texture.hpp>
+#include <opengl/glew.hpp>
 
 namespace opengl
 {
