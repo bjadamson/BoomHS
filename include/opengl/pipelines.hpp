@@ -50,6 +50,13 @@ public:
     set_uniform_array_4fv(logger, name, arr);
   }
 
+  void
+  set_uniform_color_3fv(stlw::Logger &logger, GLchar const* name, Color const& c)
+  {
+    auto const arr = stlw::make_array<float>(c.r, c.g, c.b);
+    set_uniform_array_3fv(logger, name, arr);
+  }
+
   void set_uniform_float1(stlw::Logger &logger, GLchar const*, float const);
 
   void use_program(stlw::Logger &);

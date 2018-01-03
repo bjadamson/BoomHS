@@ -104,12 +104,15 @@ draw_3dshape(RenderArgs const &args, boomhs::Transform const& transform, PIPE &p
     pipeline.set_uniform_matrix_4fv(logger, "u_mvpmatrix", view_matrix * model_matrix);
 
     if constexpr (PIPE::RECEIVES_LIGHT) {
-      pipeline.set_uniform_float1(logger, "u_specularstrength", args.world.specular_strength);
       pipeline.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
-      pipeline.set_uniform_color(logger, "u_ambient", args.world.ambient);
-      pipeline.set_uniform_color(logger, "u_diffuse_color", args.world.diffuse_color);
-      pipeline.set_uniform_array_vec3(logger, "u_diffuse_pos", args.entities[GameState::LIGHT_INDEX]->translation);
+      pipeline.set_uniform_color_3fv(logger, "u_lightcolor", args.world.light_color);
+      pipeline.set_uniform_array_vec3(logger, "u_lightpos", args.entities[GameState::LIGHT_INDEX]->translation);
       pipeline.set_uniform_array_vec3(logger, "u_viewpos", args.camera.world_position());
+
+      pipeline.set_uniform_array_vec3(logger, "u_material.ambient",  glm::vec3{1.0f, 0.5f, 0.31f});
+      pipeline.set_uniform_array_vec3(logger, "u_material.diffuse",  glm::vec3{1.0f, 0.5f, 0.31f});
+      pipeline.set_uniform_array_vec3(logger, "u_material.specular", glm::vec3{0.5f, 0.5f, 0.5f});
+      pipeline.set_uniform_float1(logger, "u_material.shininess", 332.0f);
     }
 
     if constexpr (PIPE::IS_SKYBOX) {
@@ -189,14 +192,16 @@ draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs
 
     pipeline.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
     pipeline.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
-    pipeline.set_uniform_color(logger, "u_ambient", args.world.ambient);
-    pipeline.set_uniform_color(logger, "u_diffuse_color", args.world.diffuse_color);
-    pipeline.set_uniform_array_vec3(logger, "u_diffuse_pos", args.entities[GameState::LIGHT_INDEX]->translation);
+    pipeline.set_uniform_color_3fv(logger, "u_lightcolor", args.world.light_color);
+    pipeline.set_uniform_array_vec3(logger, "u_lightpos", args.entities[GameState::LIGHT_INDEX]->translation);
     pipeline.set_uniform_array_vec3(logger, "u_viewpos", args.camera.world_position());
 
-    pipeline.set_uniform_float1(logger, "u_specularstrength", args.world.specular_strength);
-    pipeline.set_uniform_array_3fv(logger, "u_offset", offset);
+    pipeline.set_uniform_array_vec3(logger, "u_material.ambient",  glm::vec3{1.0f, 0.5f, 0.31f});
+    pipeline.set_uniform_array_vec3(logger, "u_material.diffuse",  glm::vec3{1.0f, 0.5f, 0.31f});
+    pipeline.set_uniform_array_vec3(logger, "u_material.specular", glm::vec3{0.5f, 0.5f, 0.5f});
+    pipeline.set_uniform_float1(logger, "u_material.shininess", 332.0f);
 
+    pipeline.set_uniform_array_3fv(logger, "u_offset", offset);
     detail::render_element_buffer(logger, pipeline, dinfo);
   };
 

@@ -100,14 +100,14 @@ show_lighting_window(GameState &state)
     {
       float constexpr POS_MAX = 10.0f;
       auto &ent = *state.entities[GameState::LIGHT_INDEX];
-      ImGui::SliderFloat3("diffuse POSITION", glm::value_ptr(ent.translation), -POS_MAX, POS_MAX);
+      ImGui::SliderFloat3("light POSITION", glm::value_ptr(ent.translation), -POS_MAX, POS_MAX);
     }
-    ImGui::SliderFloat4("Diffuse COLOR", state.world.diffuse_color.data(), 0.0f, 1.0f);
+    ImGui::SliderFloat4("light COLOR", state.world.light_color.data(), 0.0f, 1.0f);
     if (ImGui::Button("Close", ImVec2(120,0))) {
       state.ui_state.show_lighting_window = false;
     }
     ImGui::Separator();
-    ImGui::SliderFloat("Specular Strength", &state.world.specular_strength, 0.0f, 1.0f);
+    //ImGui::SliderFloat("Specular Strength", &state.world.specular_strength, 0.0f, 1.0f);
     ImGui::End();
   }
 }
