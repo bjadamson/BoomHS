@@ -55,7 +55,7 @@ to_spherical(glm::vec3 cartesian)
 // Camera
 Camera::Camera(Projection const& proj, Transform &t,glm::vec3 const& forward, glm::vec3 const& up)
   : projection_(proj)
-  , target_(t)
+  , target_(&t)
   , forward_(forward)
   , up_(up)
 {
@@ -105,7 +105,7 @@ Camera::rotate(stlw::Logger &logger, UiState &uistate, window::mouse_data const&
 glm::mat4
 Camera::view_matrix() const
 {
-  auto const& target = target_.translation;
+  auto const& target = target_->translation;
   auto const position_xyz = world_position();
   return glm::lookAt(position_xyz, target, up_);
 }
@@ -123,69 +123,4 @@ Camera::zoom(float const factor)
   return *this;
 }
 
-void
-Camera::move_behind_player(Player const& player)
-{
-  //auto const cam_pos = world_position();
-  //auto const new_cam_pos = player.world_position() + player.back_vector();
-  //auto const newLocalXYZ = new_cam_pos - player.world_position();
-
-  //coordinates_ = to_spherical(newLocalXYZ);
-
-  //auto const localXYZ = to_cartesian(coordinates_);
-  //auto const newXYZ = cam_pos - new_cam_pos - localXYZ;
-
-  //coordinates_ = to_spherical(newXYZ);
-}
-
 } // ns boomhs
-
-/*
-namespace
-{
-
-glm::vec3
-direction_facing_degrees(glm::quat const& orientation)
-{
-  return glm::degrees(glm::eulerAngles(orientation));
-}
-
-
-
-FpsCamera&
-FpsCamera::rotate(stlw::Logger &logger, boomhs::UiState &uistate, window::mouse_data const& mdata)
-{
-  auto const& current = mdata.current;
-  auto const& mouse_sens = mdata.sensitivity;
-
-  glm::vec2 const delta = glm::vec2{current.xrel, current.yrel};
-
-  auto const yaw = mouse_sens.x * delta.x;
-  auto const pitch = mouse_sens.y * delta.y;
-  auto const roll = this->roll_;
-
-  bool const moving_down = current.yrel >= 0;
-  bool const moving_up = current.yrel <= 0;
-
-  auto const new_pitch = glm::degrees(this->pitch_ + pitch);
-  if (mdata.pitch_lock) {
-    if(new_pitch > 0.0f && moving_down) {
-      LOG_ERROR("DOWN LOCK");
-      return *this;
-    }
-    if(new_pitch < -45.0f && moving_up) {
-      LOG_ERROR("UP LOCK");
-      return *this;
-    }
-  }
-
-  this->yaw_ += yaw;
-  this->pitch_ += pitch;
-
-  auto const quat = glm::quat{glm::vec3{pitch, yaw, roll}};
-  this->orientation_ = glm::normalize(quat * this->orientation_);
-  return *this;
-}
-
-} // ns anonymous
-*/

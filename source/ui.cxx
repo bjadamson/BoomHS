@@ -23,7 +23,7 @@ draw_entity_editor(GameState &state)
     "SKYBOX\0"
     "HOUSE\0"
     "AT\0"
-    "PLAYER"
+    "PLAYER\0"
     "TILEMAP\0"
     "TERRAIN\0"
     "CAMERA\0"
@@ -43,25 +43,24 @@ draw_entity_editor(GameState &state)
     "TROLL\0"
 
     "LIGHT\0"
-    "MAX\0\0";
+    "\0";
 
-  auto &current_entity = state.ui_state.entity_window_current;
-  if (ImGui::Combo("Entity", &current_entity, ENTITIES_S)) {
+  auto &current = state.ui_state.entity_window_current;
+  if (ImGui::Combo("Entity", &current, ENTITIES_S)) {
+    auto &entity = *state.entities[current];
+    state.camera.set_target(entity);
+    state.player.set_transform(entity);
   }
 
-  ImGui::InputInt("eid:", &eid_buffer, 0, state.entities.size());
-  auto *const pe = state.entities[eid_buffer];
-  assert(pe);
-  auto &e = *pe;
-
-  ImGui::InputFloat3("pos:", glm::value_ptr(e.translation));
+  auto &entity = *state.entities[current];
+  ImGui::InputFloat3("pos:", glm::value_ptr(entity.translation));
   {
-    auto buffer = glm::degrees(glm::eulerAngles(e.rotation));
+    auto buffer = glm::degrees(glm::eulerAngles(entity.rotation));
     if (ImGui::InputFloat3("rot:", glm::value_ptr(buffer))) {
-      e.rotation = glm::quat(buffer * (3.14159f / 180.f));
+      entity.rotation = glm::quat(buffer * (3.14159f / 180.f));
     }
   }
-  ImGui::InputFloat3("scale:", glm::value_ptr(e.scale));
+  ImGui::InputFloat3("scale:", glm::value_ptr(entity.scale));
 }
 
 void

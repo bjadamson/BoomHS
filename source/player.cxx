@@ -26,7 +26,7 @@ void
 Player::rotate(float const angle, glm::vec3 const& axis)
 {
   glm::quat const new_rotation{axis * glm::radians(angle)};
-  transform_.rotation = new_rotation * transform_.rotation;
+  transform_->rotation = new_rotation * transform_->rotation;
   arrow_.rotation = new_rotation * arrow_.rotation;
 }
 

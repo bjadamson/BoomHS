@@ -10,14 +10,14 @@ namespace boomhs
 
 class Player
 {
-  boomhs::Transform &transform_;
+  boomhs::Transform *transform_;
   boomhs::Transform &arrow_;
   glm::vec3 forward_, up_;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Player);
   explicit Player(boomhs::Transform &m, boomhs::Transform &a, glm::vec3 const& forward, glm::vec3 const& up)
-    : transform_(m)
+    : transform_(&m)
     , arrow_(a)
     , forward_(forward)
     , up_(up)
@@ -53,19 +53,19 @@ public:
   glm::quat const&
   orientation() const
   {
-    return transform_.rotation;
+    return transform_->rotation;
   }
 
   glm::vec3 const&
   world_position() const
   {
-    return transform_.translation;
+    return transform_->translation;
   }
 
   auto&
   move(float const s, glm::vec3 const& dir)
   {
-    transform_.translation += (s * dir);
+    transform_->translation += (s * dir);
     arrow_.translation += (s * dir);
     return *this;
   }
@@ -76,7 +76,7 @@ public:
   auto
   tilemap_position() const
   {
-    auto const& pos = transform_.translation;
+    auto const& pos = transform_->translation;
 
     // Truncate the floating point values to get tilemap position
     auto const trunc = [](float const v) { return abs(v); };
@@ -86,7 +86,13 @@ public:
   void
   move_to(glm::vec3 const& pos)
   {
-    transform_.translation = pos;
+    transform_->translation = pos;
+  }
+
+  void
+  set_transform(Transform &transform)
+  {
+    transform_ = &transform;
   }
 };
 

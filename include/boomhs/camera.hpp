@@ -71,7 +71,7 @@ class Camera
 {
   SphericalCoordinates coordinates_{1.0f, -2.608, 0.772};
   Projection const projection_;
-  Transform &target_;
+  Transform *target_;
   glm::vec3 forward_, up_;
 
   glm::mat4
@@ -123,7 +123,7 @@ public:
   glm::vec3
   target_position() const
   {
-    return target_.translation;
+    return target_->translation;
   }
 
   Camera&
@@ -133,7 +133,10 @@ public:
   zoom(float const);
 
   void
-  move_behind_player(Player const&);
+  set_target(Transform &target)
+  {
+    target_ = &target;
+  }
 };
 
 } // ns boomhs

@@ -43,7 +43,7 @@ void main()
   float theta = dot(light_dir, -u_player.direction);
 
   // ambient
-    vec3 ambient = u_light.ambient * u_material.ambient;
+  vec3 ambient = u_light.ambient * u_material.ambient;
 
   if(theta > u_player.cutoff) {
     // diffuse
