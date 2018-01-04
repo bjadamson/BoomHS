@@ -148,7 +148,7 @@ draw(RenderArgs const& args, Transform const& transform, PIPE &pipeline, opengl:
 
   // Use the pipeline's PROGRAM and bind the pipeline's VAO.
   pipeline.use_program(logger);
-  opengl::global::vao_bind(pipeline.vao());
+  opengl::global::vao_bind(dinfo.vao());
 
   if constexpr (PIPE::IS_2D) {
     disable_depth_tests();
@@ -177,7 +177,7 @@ draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs
   auto const& draw_tile_helper = [&](auto &pipeline, auto const& dinfo, glm::vec3 const& tile_pos) {
     auto &logger = args.logger;
     pipeline.use_program(logger);
-    opengl::global::vao_bind(pipeline.vao());
+    opengl::global::vao_bind(dinfo.vao());
 
     glm::mat4 const model_matrix = transform.model_matrix();
     glm::mat4 const translated = glm::translate(model_matrix, tile_pos);
@@ -215,10 +215,11 @@ draw_tilegrid(RenderArgs const& args, Transform const& transform,
 
   auto &logger = args.logger;
   auto &pipeline = drawable.pipeline;
+  auto &dinfo = drawable.dinfo;
   pipeline.use_program(logger);
-  opengl::global::vao_bind(pipeline.vao());
+  opengl::global::vao_bind(dinfo.vao());
 
-  detail::render_element_buffer(logger, pipeline, drawable.dinfo);
+  detail::render_element_buffer(logger, pipeline, dinfo);
 }
 
 } // ns boomhs::render

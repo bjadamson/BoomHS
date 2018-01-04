@@ -5,7 +5,6 @@
 
 #include <opengl/colors.hpp>
 #include <opengl/shader_program.hpp>
-#include <opengl/vao.hpp>
 #include <opengl/vertex_attribute.hpp>
 #include <opengl/texture.hpp>
 #include <boomhs/types.hpp>
@@ -22,7 +21,6 @@ class BasePipeline
 {
   ShaderProgram program_;
   VertexAttribute va_;
-  VAO vao_;
 public:
   explicit BasePipeline(ShaderProgram &&sp, VertexAttribute &&va)
     : program_(MOVE(sp))
@@ -31,7 +29,6 @@ public:
     }
 
   auto const& va() const { return this->va_; }
-  auto const& vao() const { return this->vao_; }
 
   void set_uniform_matrix_4fv(stlw::Logger &, GLchar const *, glm::mat4 const &);
 

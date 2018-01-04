@@ -42,7 +42,7 @@ copy_to_gpu(stlw::Logger &logger, PIPE &pipeline, DrawInfo const& dinfo, VERTICE
     INDICES const& indices)
 {
   // Activate VAO
-  global::vao_bind(pipeline.vao());
+  global::vao_bind(dinfo.vao());
 
   glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());

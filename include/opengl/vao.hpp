@@ -4,22 +4,22 @@
 namespace opengl
 {
 
-class VAO {
+class VAO
+{
   GLuint vao_ = 0;
 
   static constexpr auto NUM_BUFFERS = 1;
-
 public:
   NO_COPY(VAO);
   NO_MOVE_ASSIGN(VAO);
   explicit VAO()
   {
-    glGenVertexArrays(NUM_BUFFERS, &this->vao_);
+    glGenVertexArrays(NUM_BUFFERS, &vao_);
   }
 
   ~VAO()
   {
-    glDeleteVertexArrays(NUM_BUFFERS, &this->vao_);
+    glDeleteVertexArrays(NUM_BUFFERS, &vao_);
   }
 
   // move-construction OK.
@@ -29,7 +29,7 @@ public:
     other.vao_ = 0;
   }
 
-  inline auto gl_raw_value() const { return this->vao_; }
+  inline auto gl_raw_value() const { return vao_; }
 };
 
 } // ns opengl

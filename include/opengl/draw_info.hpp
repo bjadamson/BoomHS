@@ -1,9 +1,5 @@
 #pragma once
-#include <array>
-#include <boomhs/types.hpp>
-#include <opengl/colors.hpp>
-#include <opengl/obj.hpp>
-#include <stlw/sized_buffer.hpp>
+#include <opengl/vao.hpp>
 #include <stlw/type_macros.hpp>
 
 namespace opengl
@@ -16,8 +12,8 @@ class GpuBufferHandles
 
   explicit GpuBufferHandles()
   {
-    glGenBuffers(NUM_BUFFERS, &this->vbo_);
-    glGenBuffers(NUM_BUFFERS, &this->ebo_);
+    glGenBuffers(NUM_BUFFERS, &vbo_);
+    glGenBuffers(NUM_BUFFERS, &ebo_);
   }
 
   NO_COPY(GpuBufferHandles);
@@ -25,8 +21,8 @@ public:
   friend class DrawInfo;
   ~GpuBufferHandles()
   {
-    glDeleteBuffers(NUM_BUFFERS, &this->ebo_);
-    glDeleteBuffers(NUM_BUFFERS, &this->vbo_);
+    glDeleteBuffers(NUM_BUFFERS, &ebo_);
+    glDeleteBuffers(NUM_BUFFERS, &vbo_);
   }
 
   // move-construction OK.
@@ -49,14 +45,16 @@ public:
     return *this;
   }
 
-  inline auto vbo() const { return this->vbo_; }
-  inline auto ebo() const { return this->ebo_; }
+  auto vbo() const { return vbo_; }
+  auto ebo() const { return ebo_; }
 };
 
-class DrawInfo {
+class DrawInfo
+{
   GLenum draw_mode_;
   GLuint num_indices_;
   GpuBufferHandles handles_;
+  VAO vao_;
 
 public:
   NO_COPY(DrawInfo);
@@ -75,11 +73,12 @@ public:
     return *this;
   }
 
-  inline auto draw_mode() const { return this->draw_mode_; }
+  auto const& vao() const { return vao_; }
 
-  inline auto vbo() const { return this->handles_.vbo(); }
-  inline auto ebo() const { return this->handles_.ebo(); }
-  inline auto num_indices() const { return this->num_indices_; }
+  auto draw_mode() const { return draw_mode_; }
+  auto vbo() const { return handles_.vbo(); }
+  auto ebo() const { return handles_.ebo(); }
+  auto num_indices() const { return num_indices_; }
 };
 
 } // ns opengl
