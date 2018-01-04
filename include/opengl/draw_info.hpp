@@ -64,12 +64,20 @@ public:
   {
   }
 
-  DrawInfo(DrawInfo &&) = default;
+  DrawInfo(DrawInfo &&other)
+    : draw_mode_(other.draw_mode_)
+    , num_indices_(other.num_indices_)
+    , handles_(MOVE(other.handles_))
+    , vao_(MOVE(other.vao_))
+  {
+  }
+
   DrawInfo& operator=(DrawInfo &&di)
   {
     draw_mode_ = di.draw_mode_;
     num_indices_ = di.num_indices_;
     handles_ = MOVE(di.handles_);
+    vao_ = MOVE(di.vao_);
     return *this;
   }
 
