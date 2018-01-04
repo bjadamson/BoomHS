@@ -106,7 +106,7 @@ draw_3dshape(RenderArgs const &args, glm::mat4 const& model_matrix, SP &shader_p
       shader_program.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
       shader_program.set_uniform_vec3(logger, "u_viewpos", camera.world_position());
       {
-        auto const light_pos = args.entities[GameState::LIGHT_INDEX]->translation;
+        auto const light_pos = args.entities[LIGHT_INDEX]->translation;
         shader_program.set_uniform_vec3(logger, "u_light.position", light_pos);
       }
       shader_program.set_uniform_color_3fv(logger, "u_light.ambient", light.ambient);

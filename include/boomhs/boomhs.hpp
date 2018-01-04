@@ -17,7 +17,6 @@
 #include <stlw/log.hpp>
 
 using stlw::Logger;
-using GS = boomhs::GameState;
 namespace OF = opengl::factories;
 namespace LOC = opengl::LIST_OF_COLORS;
 
@@ -113,16 +112,16 @@ make_entities(PROXY &proxy)
     entities.emplace_back(&p);
   };
 
-  FOR(i, GameState::INDEX_MAX) {
+  FOR(i, INDEX_MAX) {
     make_entity();
   }
 
-  entities[GS::COLOR_CUBE_INDEX]->translation = glm::vec3{-2.0f, -2.0f, -2.0f};
-  entities[GS::TEXTURE_CUBE_INDEX]->translation = glm::vec3{-4.0f, -4.0f, -2.0f};
-  entities[GS::WIREFRAME_CUBE_INDEX]->translation = glm::vec3{-3.0f, -2.0f, 2.0f};
-  entities[GS::SKYBOX_INDEX]->translation = glm::vec3{0.0f, 0.0f, 0.0f};
-  entities[GS::HOUSE_INDEX]->translation = glm::vec3{2.0f, 0.0f, -4.0f};
-  entities[GS::TERRAIN_INDEX]->translation = glm::vec3{0.0f, 5.0f, 0.0f};
+  entities[COLOR_CUBE_INDEX]->translation = glm::vec3{-2.0f, -2.0f, -2.0f};
+  entities[TEXTURE_CUBE_INDEX]->translation = glm::vec3{-4.0f, -4.0f, -2.0f};
+  entities[WIREFRAME_CUBE_INDEX]->translation = glm::vec3{-3.0f, -2.0f, 2.0f};
+  entities[SKYBOX_INDEX]->translation = glm::vec3{0.0f, 0.0f, 0.0f};
+  entities[HOUSE_INDEX]->translation = glm::vec3{2.0f, 0.0f, -4.0f};
+  entities[TERRAIN_INDEX]->translation = glm::vec3{0.0f, 5.0f, 0.0f};
 
   //auto const make_standing = [&entities](int const index) {
     //auto &entity = *entities[index];
@@ -130,8 +129,8 @@ make_entities(PROXY &proxy)
     //entity.rotation = glm::rotate(glm::mat4{}, glm::radians(90.0f), opengl::X_UNIT_VECTOR);
   //};
 
-  //make_standing(GS::ORC_INDEX);
-  //make_standing(GS::TROLL_INDEX);
+  //make_standing(ORC_INDEX);
+  //make_standing(TROLL_INDEX);
 
   return entities;
 }
@@ -158,11 +157,11 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   auto tmap = MOVE(tmap_startingpos.first);
   auto entities = make_entities(proxy);
 
-  auto &skybox_ent = *entities[GS::SKYBOX_INDEX];
-  auto &player_ent = *entities[GS::AT_INDEX];
+  auto &skybox_ent = *entities[SKYBOX_INDEX];
+  auto &player_ent = *entities[AT_INDEX];
   player_ent.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
 
-  auto &arrow_ent = *entities[GS::PLAYER_ARROW_INDEX];
+  auto &arrow_ent = *entities[PLAYER_ARROW_INDEX];
   arrow_ent.scale = glm::vec3{0.025f, 0.025f, 0.025f};
   arrow_ent.translation = arrow_ent.translation + (0.125f * opengl::Y_UNIT_VECTOR);
 
@@ -176,7 +175,7 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
     auto const pos = glm::vec3{startingpos.x, startingpos.y, startingpos.z};
     player.move_to(pos);
 
-    auto &light_ent = *entities[GS::LIGHT_INDEX];
+    auto &light_ent = *entities[LIGHT_INDEX];
     light_ent.translation = pos;
     //light_ent.translation.y += 1.0f;
     //light_ent.translation.z += 5.0f;
@@ -224,25 +223,25 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
   // light
   {
     auto light_handle = OF::copy_colorcube_gpu(logger, d3.light0, state.light.diffuse);
-    render::draw(rargs, *ents[GS::LIGHT_INDEX], d3.light0, light_handle);
+    render::draw(rargs, *ents[LIGHT_INDEX], d3.light0, light_handle);
   }
 
   // skybox
-  state.skybox.transform.translation = ents[GameState::AT_INDEX]->translation;
+  state.skybox.transform.translation = ents[AT_INDEX]->translation;
   if (state.render.draw_skybox) {
     render::draw(rargs, state.skybox.transform, d3.skybox, handles.cube_skybox);
   }
 
   // random
-  render::draw(rargs, *ents[GS::COLOR_CUBE_INDEX], d3.color, handles.cube_colored);
-  render::draw(rargs, *ents[GS::TEXTURE_CUBE_INDEX], d3.texture_cube, handles.cube_textured);
-  //render::draw(rargs, *ents[GS::WIREFRAME_CUBE_INDEX], d3.wireframe, handles.cube_wireframe);
+  render::draw(rargs, *ents[COLOR_CUBE_INDEX], d3.color, handles.cube_colored);
+  render::draw(rargs, *ents[TEXTURE_CUBE_INDEX], d3.texture_cube, handles.cube_textured);
+  //render::draw(rargs, *ents[WIREFRAME_CUBE_INDEX], d3.wireframe, handles.cube_wireframe);
 
   // house
-  render::draw(rargs, *ents[GS::HOUSE_INDEX], d3.house, handles.house);
+  render::draw(rargs, *ents[HOUSE_INDEX], d3.house, handles.house);
 
   // tilemap
-  render::draw_tilemap(rargs, *ents[GS::TILEMAP_INDEX],
+  render::draw_tilemap(rargs, *ents[TILEMAP_INDEX],
       {handles.hashtag, d3.hashtag, handles.plus, d3.plus},
       state.tilemap, state.render.tilemap.reveal);
 
@@ -250,38 +249,38 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
     auto &sp = d3.global_x_axis_arrow;
     auto const tilegrid = OF::create_tilegrid(logger, sp, state.tilemap,
         state.render.tilemap.show_yaxis_lines);
-    render::draw_tilegrid(rargs, *ents[GS::TILEMAP_INDEX], {sp, tilegrid});
+    render::draw_tilegrid(rargs, *ents[TILEMAP_INDEX], {sp, tilegrid});
   }
 
   // player
-  render::draw(rargs, *ents[GS::AT_INDEX], d3.at, handles.at);
+  render::draw(rargs, *ents[AT_INDEX], d3.at, handles.at);
 
   // enemies
-  render::draw(rargs, *ents[GS::ORC_INDEX], d3.O, handles.O);
-  render::draw(rargs, *ents[GS::TROLL_INDEX], d3.T, handles.T);
+  render::draw(rargs, *ents[ORC_INDEX], d3.O, handles.O);
+  render::draw(rargs, *ents[TROLL_INDEX], d3.T, handles.T);
 
   // arrow
-  //render::draw(rargs, *ents[GS::PLAYER_ARROW_INDEX], d3.arrow, handles.arrow);
+  //render::draw(rargs, *ents[PLAYER_ARROW_INDEX], d3.arrow, handles.arrow);
 
   // global coordinates
   if (state.render.show_global_axis) {
-    render::draw(rargs, *ents[GS::GLOBAL_AXIS_X_INDEX], d3.global_x_axis_arrow, handles.x_axis_arrow);
-    render::draw(rargs, *ents[GS::GLOBAL_AXIS_Y_INDEX], d3.global_y_axis_arrow, handles.y_axis_arrow);
-    render::draw(rargs, *ents[GS::GLOBAL_AXIS_Z_INDEX], d3.global_z_axis_arrow, handles.z_axis_arrow);
+    render::draw(rargs, *ents[GLOBAL_AXIS_X_INDEX], d3.global_x_axis_arrow, handles.x_axis_arrow);
+    render::draw(rargs, *ents[GLOBAL_AXIS_Y_INDEX], d3.global_y_axis_arrow, handles.y_axis_arrow);
+    render::draw(rargs, *ents[GLOBAL_AXIS_Z_INDEX], d3.global_z_axis_arrow, handles.z_axis_arrow);
   }
 
   // local coordinates
   if (state.render.show_local_axis) {
-    auto const& player_pos = ents[GS::AT_INDEX]->translation;
+    auto const& player_pos = ents[AT_INDEX]->translation;
     {
       auto const world_coords = OF::create_axis_arrows(logger,
           d3.local_x_axis_arrow,
           d3.local_y_axis_arrow,
           d3.local_z_axis_arrow,
           player_pos);
-      render::draw(rargs, *ents[GS::LOCAL_AXIS_X_INDEX], d3.local_x_axis_arrow, world_coords.x_dinfo);
-      render::draw(rargs, *ents[GS::LOCAL_AXIS_Y_INDEX], d3.local_y_axis_arrow, world_coords.y_dinfo);
-      render::draw(rargs, *ents[GS::LOCAL_AXIS_Z_INDEX], d3.local_z_axis_arrow, world_coords.z_dinfo);
+      render::draw(rargs, *ents[LOCAL_AXIS_X_INDEX], d3.local_x_axis_arrow, world_coords.x_dinfo);
+      render::draw(rargs, *ents[LOCAL_AXIS_Y_INDEX], d3.local_y_axis_arrow, world_coords.y_dinfo);
+      render::draw(rargs, *ents[LOCAL_AXIS_Z_INDEX], d3.local_z_axis_arrow, world_coords.z_dinfo);
     }
   }
 
@@ -294,7 +293,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
       auto const handle = OF::create_arrow(logger, gfx.d3.local_forward_arrow,
           OF::ArrowCreateParams{LOC::LIGHT_BLUE, start, head});
 
-      render::draw(rargs, *ents[GS::LOCAL_FORWARD_INDEX], d3.local_forward_arrow, handle);
+      render::draw(rargs, *ents[LOCAL_FORWARD_INDEX], d3.local_forward_arrow, handle);
     }
     // draw forward arrow (for camera)
     {
@@ -303,7 +302,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
       auto handle = OF::create_arrow(logger, gfx.d3.camera_arrow0,
         OF::ArrowCreateParams{LOC::YELLOW, start, head});
 
-      render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX0], d3.camera_arrow0, handle);
+      render::draw(rargs, *ents[CAMERA_ARROW_INDEX0], d3.camera_arrow0, handle);
     }
     // draw forward arrow (for camera)
     {
@@ -313,7 +312,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
       auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow1,
         OF::ArrowCreateParams{LOC::PINK, start, head});
 
-      render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX1], d3.camera_arrow1, handle);
+      render::draw(rargs, *ents[CAMERA_ARROW_INDEX1], d3.camera_arrow1, handle);
     }
     // draw arrow from origin -> camera
     {
@@ -323,12 +322,12 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
       auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow2,
         OF::ArrowCreateParams{LOC::PURPLE, start, head});
 
-      render::draw(rargs, *ents[GS::CAMERA_ARROW_INDEX2], d3.camera_arrow2, handle);
+      render::draw(rargs, *ents[CAMERA_ARROW_INDEX2], d3.camera_arrow2, handle);
     }
   }
 
   // terrain
-  //render::draw(rargs, *ents[GS::TERRAIN_INDEX], d3.terrain, handles.terrain);
+  //render::draw(rargs, *ents[TERRAIN_INDEX], d3.terrain, handles.terrain);
 
   // UI code
   draw_ui(state, window);

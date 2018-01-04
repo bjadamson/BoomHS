@@ -23,6 +23,36 @@ using stlw::Logger;
 namespace boomhs
 {
 
+static constexpr std::size_t COLOR_CUBE_INDEX = 0;
+static constexpr std::size_t TEXTURE_CUBE_INDEX = 1;
+static constexpr std::size_t WIREFRAME_CUBE_INDEX = 2;
+static constexpr std::size_t SKYBOX_INDEX = 3;
+static constexpr std::size_t HOUSE_INDEX = 4;
+static constexpr std::size_t AT_INDEX = 5;
+static constexpr std::size_t PLAYER_ARROW_INDEX = 6;
+static constexpr std::size_t TILEMAP_INDEX = 7;
+static constexpr std::size_t TERRAIN_INDEX = 8;
+static constexpr std::size_t CAMERA_INDEX = 9;
+static constexpr std::size_t GLOBAL_AXIS_X_INDEX = 10;
+static constexpr std::size_t GLOBAL_AXIS_Y_INDEX = 11;
+static constexpr std::size_t GLOBAL_AXIS_Z_INDEX = 12;
+
+static constexpr std::size_t LOCAL_AXIS_X_INDEX = 13;
+static constexpr std::size_t LOCAL_AXIS_Y_INDEX = 14;
+static constexpr std::size_t LOCAL_AXIS_Z_INDEX = 15;
+
+static constexpr std::size_t LOCAL_FORWARD_INDEX = 16;
+static constexpr std::size_t CAMERA_ARROW_INDEX0 = 17;
+static constexpr std::size_t CAMERA_ARROW_INDEX1 = 18;
+static constexpr std::size_t CAMERA_ARROW_INDEX2 = 19;
+
+static constexpr std::size_t ORC_INDEX = 20;
+static constexpr std::size_t TROLL_INDEX = 21;
+
+static constexpr std::size_t LIGHT_INDEX = 22;
+static constexpr std::size_t INDEX_MAX = 23;
+
+// other
 static constexpr auto INIT_ATTENUATION_INDEX = 8;
 
 struct LightColors
@@ -64,6 +94,7 @@ struct UiState
   int eid_buffer = 0;
   glm::vec3 euler_angle_buffer;
   int attenuation_current_item = INIT_ATTENUATION_INDEX;
+  int entity_window_current = AT_INDEX;
 };
 
 struct MouseState
@@ -136,35 +167,6 @@ struct GameState
   Player player;
   Skybox skybox;
 
-  static constexpr std::size_t COLOR_CUBE_INDEX = 0;
-  static constexpr std::size_t TEXTURE_CUBE_INDEX = 1;
-  static constexpr std::size_t WIREFRAME_CUBE_INDEX = 2;
-  static constexpr std::size_t SKYBOX_INDEX = 3;
-  static constexpr std::size_t HOUSE_INDEX = 4;
-  static constexpr std::size_t AT_INDEX = 5;
-  static constexpr std::size_t PLAYER_ARROW_INDEX = 6;
-  static constexpr std::size_t TILEMAP_INDEX = 7;
-  static constexpr std::size_t TERRAIN_INDEX = 8;
-  static constexpr std::size_t CAMERA_INDEX = 9;
-  static constexpr std::size_t GLOBAL_AXIS_X_INDEX = 10;
-  static constexpr std::size_t GLOBAL_AXIS_Y_INDEX = 11;
-  static constexpr std::size_t GLOBAL_AXIS_Z_INDEX = 12;
-
-  static constexpr std::size_t LOCAL_AXIS_X_INDEX = 13;
-  static constexpr std::size_t LOCAL_AXIS_Y_INDEX = 14;
-  static constexpr std::size_t LOCAL_AXIS_Z_INDEX = 15;
-
-  static constexpr std::size_t LOCAL_FORWARD_INDEX = 16;
-  static constexpr std::size_t CAMERA_ARROW_INDEX0 = 17;
-  static constexpr std::size_t CAMERA_ARROW_INDEX1 = 18;
-  static constexpr std::size_t CAMERA_ARROW_INDEX2 = 19;
-
-  static constexpr std::size_t ORC_INDEX = 20;
-  static constexpr std::size_t TROLL_INDEX = 21;
-
-  static constexpr std::size_t LIGHT_INDEX = 22;
-  static constexpr std::size_t INDEX_MAX = 23;
-
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
   GameState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
       TileMap &&tmap, std::vector<Transform*> &&ents, Camera &&cam, Player &&pl, Skybox &&sbox)
@@ -186,6 +188,5 @@ struct GameState
     return RenderArgs{this->logger, this->camera, this->player, this->entities, this->light, this->at_materials};
   }
 };
-using GS = GameState;
 
 } // ns boomhs

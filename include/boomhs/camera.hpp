@@ -88,14 +88,6 @@ class Camera
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
 
-  glm::vec3
-  forward_vector() const
-  {
-    // TODO: should be camera_matrix()????
-    auto const vm = view_matrix();
-    return glm::row(vm, 3);
-  }
-
   Camera(Projection const&, Transform &, glm::vec3 const& f, glm::vec3 const& u);
 
   glm::mat4
@@ -109,56 +101,6 @@ public:
   {
     coordinates_ = sc;
   }
-
-  void
-  snap_behind_player()
-  {
-    // desired location is behind the target on the z-axis
-    //glm::vec3 const world_pos = player.world_position() + player.back_vector();
-    //glm::vec3 const& target_pos = player.world_position();
-    //view_ = glm::lookAt(world_pos, target_pos, up_);
-  }
-
-  /*
-  glm::vec3
-  forward_vector() const
-  {
-    glm::vec3 const& row = view_[2];
-    return glm::vec3{row.x, row.y, row.z};
-  }
-
-  glm::vec3
-  backward_vector() const
-  {
-    return -forward_vector();
-  }
-
-  glm::vec3
-  right_vector() const
-  {
-    auto const cross = glm::cross(forward_vector(), up_vector());
-    return glm::normalize(cross);
-  }
-
-  glm::vec3
-  left_vector() const
-  {
-    return -right_vector();
-  }
-
-  glm::vec3
-  up_vector() const
-  {
-    glm::vec3 const& row = view_[1];
-    return glm::vec3{row.x, row.y, row.z};
-  }
-
-  glm::vec3
-  down_vector() const
-  {
-    return -up_vector();
-  }
-  */
 
   SphericalCoordinates
   spherical_coordinates() const

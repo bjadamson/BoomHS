@@ -16,6 +16,39 @@ draw_entity_editor(GameState &state)
   auto &imgui = state.imgui;
   auto &eid_buffer = state.ui_state.eid_buffer;
 
+  auto constexpr ENTITIES_S =
+    "COLOR_CUBE\0"
+    "TEXTURE_CUBE\0"
+    "WIREFRAME_CUBE\0"
+    "SKYBOX\0"
+    "HOUSE\0"
+    "AT\0"
+    "PLAYER"
+    "TILEMAP\0"
+    "TERRAIN\0"
+    "CAMERA\0"
+    "GLOBAL_X\0"
+    "GLOBAL_Y\0"
+    "GLOBAL_Z\0"
+    "LOCAL_X\0"
+    "LOCAL_Y\0"
+    "LOCAL_Z\0"
+
+    "LOCAL_FORWARD\0"
+    "CAMERA_ARROW_0\0"
+    "CAMERA_ARROW_1\0"
+    "CAMERA_ARROW_2\0"
+
+    "ORC\0"
+    "TROLL\0"
+
+    "LIGHT\0"
+    "MAX\0\0";
+
+  auto &current_entity = state.ui_state.entity_window_current;
+  if (ImGui::Combo("Entity", &current_entity, ENTITIES_S)) {
+  }
+
   ImGui::InputInt("eid:", &eid_buffer, 0, state.entities.size());
   auto *const pe = state.entities[eid_buffer];
   assert(pe);
@@ -112,7 +145,7 @@ show_lighting_window(GameState &state)
     ImGui::Separator();
 
     {
-      auto &t = state.entities[GS::LIGHT_INDEX]->translation;
+      auto &t = state.entities[LIGHT_INDEX]->translation;
       auto *light_pos = glm::value_ptr(t);
       ImGui::SliderFloat3("Light Position", light_pos, -100.0f, 100.0f);
       std::string const s = glm::to_string(glm::normalize(t));
