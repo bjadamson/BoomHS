@@ -92,4 +92,9 @@ public:
   BEGIN_END_FORWARD_FNS(tiles_);
 };
 
+
+class Player;
+void
+update_visible_tiles(TileMap &, Player const&, bool const);
+
 } // ns boomhs
