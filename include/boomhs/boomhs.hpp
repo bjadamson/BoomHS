@@ -316,22 +316,33 @@ template<typename PROXY>
 void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, window::SDLWindow &window,
     Assets &assets)
 {
+  auto &player = state.player;
+  auto &mouse = state.mouse;
+  auto &render = state.render;
+
+  // game logic
+  if (mouse.right_pressed && mouse.left_pressed) {
+    player.move(0.25f, player.forward_vector());
+    render.tilemap.redraw = true;
+  }
+
+  auto &logger = state.logger;
+  auto &camera = state.camera;
   auto rargs = state.render_args();
   auto const& ents = state.entities;
   auto const& handles = assets.handles;
-  auto &player = state.player;
-  auto &camera = state.camera;
-  auto &d3 = gfx.d3;
-  auto &logger = state.logger;
 
-  if (state.render.tilemap.redraw) {
+  ///////////////////////////////////////////////////////////////////
+  // drawing
+  if (render.tilemap.redraw) {
     std::cerr << "Updating tilemap\n";
-    update_visible_tiles(state.tilemap, state.player, state.render.tilemap.reveal);
+    update_visible_tiles(state.tilemap, player, render.tilemap.reveal);
 
     // We don't need to recompute the tilemap, we just did.
     state.render.tilemap.redraw = false;
   }
 
+  auto &d3 = gfx.d3;
   render::clear_screen(LOC::BLACK);
 
   // light
@@ -402,7 +413,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
   if (state.render.show_target_vectors) {
     {
       glm::vec3 const start = player.world_position();
-      glm::vec3 const head = start + (1.0f * player.forward_vector());
+      glm::vec3 const head = start + (2.0f * player.forward_vector());
 
       auto const handle = OF::create_arrow(logger, gfx.d3.local_forward_arrow,
           OF::ArrowCreateParams{LOC::LIGHT_BLUE, start, head});

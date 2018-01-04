@@ -39,7 +39,7 @@ public:
   void set_uniform_array_3fv(stlw::Logger &, GLchar const*, std::array<float, 3> const&);
 
   void
-  set_uniform_array_vec3(stlw::Logger &logger, GLchar const* name, glm::vec3 const& v)
+  set_uniform_vec3(stlw::Logger &logger, GLchar const* name, glm::vec3 const& v)
   {
     auto const arr = stlw::make_array<float>(v.x, v.y, v.z);
     set_uniform_array_3fv(logger, name, arr);

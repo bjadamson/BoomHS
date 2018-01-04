@@ -98,53 +98,11 @@ Player::display() const
 }
 
 void
-Player::rotate(float const angle, window::mouse_data const& mdata)
+Player::rotate(float const angle, glm::vec3 const& axis)
 {
-  //auto const& current = mdata.current;
-  //glm::vec2 const delta = glm::vec2{current.xrel, current.yrel};
-
-  //auto const& mouse_sens = mdata.sensitivity;
-  //auto constexpr yaw = 0.0f;
-  //auto const pitch = angle * mouse_sens.x * delta.x * 0.1f;
-  //auto constexpr roll = 0.0f;
-  //auto const new_rotation = glm::quat{glm::vec3{yaw, pitch, roll}};
-
-  float constexpr ROT = 3.0f;
-  bool const left = mdata.current.xrel < 0;
-  float const a = left ? ROT : -ROT;
-  glm::quat const new_rotation = glm::angleAxis(glm::radians(a), glm::vec3{0.0, 1.0f, 0.0f});
+  glm::quat const new_rotation{axis * glm::radians(angle)};
   transform_.rotation = new_rotation * transform_.rotation;
   arrow_.rotation = new_rotation * arrow_.rotation;
-}
-
-void
-Player::multiply_quat(glm::quat const& quat)
-{
-  //glm::vec3 cam_euler = glm::eulerAngles(camera.orientation());
-  //glm::vec3 player_euler = glm::eulerAngles(this->orientation());
-
-  //auto const player_initial = this->orientation();
-  //glm::quat const player_initial_inverse = glm::inverse(player_initial);
-  //auto const camera_end = camera.orientation();
-
-  //QTransition = QFinal * QInitial^{-1}
-  //auto const transition = camera_end * player_initial_inverse;
-
-  //transform_.rotation = camera.orientation();//transform_.rotation * transition;
-  //arrow_.rotation = camera.orientation();//arrow_.rotation * transition;
-
-  //float constexpr PI = glm::pi<float>();
-  //auto const player_or = glm::eulerAngles(this->orientation());
-  //auto const camera_or = glm::eulerAngles(camera.orientation());
-  //auto const delta_rot = rotate_towards(player_or, camera_or, PI/8);
-
-  //std::cerr << "matching camera's rotation\n";
-
-  //glm::quat const quat = rotation_between_vectors(forward_vector(), fwd_v);
-  ////transform_.rotation = quat * transform_.rotation;
-  //arrow_.rotation = quat * arrow_.rotation;
-  //transform_.rotation = camera.orientation();
-  //arrow_.rotation = camera.orientation();
 }
 
 } // ns boomhs

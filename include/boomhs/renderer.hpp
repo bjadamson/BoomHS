@@ -88,13 +88,12 @@ void render_element_buffer(stlw::Logger &logger, PIPE &pipeline, opengl::DrawInf
 
 template <typename PIPE>
 void
-draw_3dshape(RenderArgs const &args, boomhs::Transform const& transform, PIPE &pipeline, opengl::DrawInfo const& dinfo)
+draw_3dshape(RenderArgs const &args, glm::mat4 const& model_matrix, PIPE &pipeline, opengl::DrawInfo const& dinfo)
 {
   auto &logger = args.logger;
   glm::mat4 const view_matrix = args.camera.camera_matrix();
 
   auto const draw_3d_shape_fn = [&](auto const &dinfo) {
-    auto const model_matrix = transform.model_matrix();
 
     // various matrices
     pipeline.set_uniform_matrix_4fv(logger, "u_mvpmatrix", view_matrix * model_matrix);
@@ -102,12 +101,12 @@ draw_3dshape(RenderArgs const &args, boomhs::Transform const& transform, PIPE &p
     if constexpr (PIPE::RECEIVES_LIGHT) {
       pipeline.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
       pipeline.set_uniform_color_3fv(logger, "u_lightcolor", args.world.light_color);
-      pipeline.set_uniform_array_vec3(logger, "u_lightpos", args.entities[GameState::LIGHT_INDEX]->translation);
-      pipeline.set_uniform_array_vec3(logger, "u_viewpos", args.camera.world_position());
+      pipeline.set_uniform_vec3(logger, "u_lightpos", args.entities[GameState::LIGHT_INDEX]->translation);
+      pipeline.set_uniform_vec3(logger, "u_viewpos", args.camera.world_position());
 
-      pipeline.set_uniform_array_vec3(logger, "u_material.ambient",  glm::vec3{1.0f, 0.5f, 0.31f});
-      pipeline.set_uniform_array_vec3(logger, "u_material.diffuse",  glm::vec3{1.0f, 0.5f, 0.31f});
-      pipeline.set_uniform_array_vec3(logger, "u_material.specular", glm::vec3{0.5f, 0.5f, 0.5f});
+      pipeline.set_uniform_vec3(logger, "u_material.ambient",  glm::vec3{0.5f, 1.0f, 0.31f});
+      pipeline.set_uniform_vec3(logger, "u_material.diffuse",  glm::vec3{0.5f, 1.0f, 0.31f});
+      pipeline.set_uniform_vec3(logger, "u_material.specular", glm::vec3{1.0f, 1.0f, 0.5f});
       pipeline.set_uniform_float1(logger, "u_material.shininess", 32.0f);
     }
 
@@ -156,7 +155,8 @@ draw(RenderArgs const& args, Transform const& transform, PIPE &pipeline, opengl:
     detail::draw_2dshape(args, transform, pipeline, dinfo);
     enable_depth_tests();
   } else {
-    detail::draw_3dshape(args, transform, pipeline, dinfo);
+    auto const model_matrix = transform.model_matrix();
+    detail::draw_3dshape(args, model_matrix, pipeline, dinfo);
   }
 }
 
@@ -174,17 +174,14 @@ void
 draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs &&dt_args,
     TILEMAP const& tilemap, bool const reveal_map)
 {
-  auto &logger = args.logger;
-  glm::mat4 const view_matrix = args.camera.camera_matrix();
-  auto const model_matrix = transform.model_matrix();
-  auto const mvp_matrix = view_matrix * model_matrix;
-
-  auto const& draw_tile = [&](auto &pipeline, auto const& dinfo, auto const& offset) {
+  auto const& draw_tile_helper = [&](auto &pipeline, auto const& dinfo, glm::vec3 const& tile_pos) {
+    auto &logger = args.logger;
     pipeline.use_program(logger);
     opengl::global::vao_bind(pipeline.vao());
 
-    pipeline.set_uniform_array_3fv(logger, "u_offset", offset);
-    detail::draw_3dshape(args, transform, pipeline, dinfo);
+    glm::mat4 const model_matrix = transform.model_matrix();
+    glm::mat4 const translated = glm::translate(model_matrix, tile_pos);
+    detail::draw_3dshape(args, translated, pipeline, dinfo);
   };
 
   auto const draw_all_tiles = [&](auto const& pos) {
@@ -192,12 +189,10 @@ draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs
     if (!reveal_map && !tile.is_visible) {
       return;
     }
-    auto const cast = [](auto const v) { return static_cast<float>(v * 2.0f); };
-    auto const offset = stlw::make_array<float>(cast(pos.x), cast(pos.y), cast(pos.z));
     if(tile.is_wall) {
-      draw_tile(dt_args.hashtag_pipeline, dt_args.hashtag_dinfo, offset);
+      draw_tile_helper(dt_args.hashtag_pipeline, dt_args.hashtag_dinfo, pos);
     } else {
-      draw_tile(dt_args.plus_pipeline, dt_args.plus_dinfo, offset);
+      draw_tile_helper(dt_args.plus_pipeline, dt_args.plus_dinfo, pos);
     }
   };
   tilemap.visit_each(draw_all_tiles);

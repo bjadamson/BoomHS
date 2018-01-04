@@ -29,10 +29,11 @@ inline bool is_quit_event(SDL_Event &event)
   return is_quit;
 }
 
-bool process_event(GameState &state, SDL_Event &event)
+bool
+process_event(GameState &state, SDL_Event &event)
 {
   stlw::Logger &logger = state.logger;
-  float constexpr MOVE_DISTANCE = 0.1f;
+  float constexpr MOVE_DISTANCE = 1.0f;
   float constexpr SCALE_FACTOR = 0.20f;
 
   float constexpr ANGLE = 60.0f;
@@ -44,6 +45,20 @@ bool process_event(GameState &state, SDL_Event &event)
   if (state.ui_state.block_input) {
     return is_quit_event(event);
   }
+
+  auto const move_player = [&](glm::vec3 (Player::*fn)() const) {
+    auto const player_pos = player.tilemap_position();
+    glm::vec3 const move_vec = (player.*fn)();
+
+    auto const& new_pos_tile = state.tilemap.data(player_pos + move_vec);
+    if (!state.collision.player) {
+      player.move(MOVE_DISTANCE, move_vec);
+      state.render.tilemap.redraw = true;
+    } else if (!new_pos_tile.is_wall) {
+      player.move(MOVE_DISTANCE, move_vec);
+      state.render.tilemap.redraw = true;
+    }
+  };
 
   switch (event.type) {
   case SDL_MOUSEMOTION: {
@@ -59,7 +74,7 @@ bool process_event(GameState &state, SDL_Event &event)
     bool const both = left && right;
 
     auto const rot_player = [&]() {
-      player.rotate(ANGLE, state.mouse_data);
+      //player.rotate(ANGLE, state.mouse_data);
       state.render.tilemap.redraw = true;
     };
     auto const rot_camera = [&]() {
@@ -95,15 +110,7 @@ bool process_event(GameState &state, SDL_Event &event)
     }
 
     if (state.mouse.left_pressed && state.mouse.right_pressed) {
-      std::cerr << "BOTH BUTTONS PRESSED\n";
-      camera.move_behind_player(player);
-      state.render.tilemap.redraw = true;
-      // rot from player -> camera
-      //glm::quat const rot = camera.orientation() * glm::inverse(player.orientation());
-      //auto euler = glm::eulerAngles(rot);
-      //auto const newrot = glm::rotate(glm::mat4{}, euler.x, opengl::X_UNIT_VECTOR);
-      //player.multiply_quat(newrot);
-      //player.rotate(
+      move_player(&Player::forward_vector);
     }
     LOG_ERROR("toggling mouse up/down (pitch) lock");
     state.mouse_data.pitch_lock ^= true;
@@ -121,18 +128,10 @@ bool process_event(GameState &state, SDL_Event &event)
     break;
   }
   case SDL_KEYDOWN: {
-    auto const move_player = [&](glm::vec3 (Player::*fn)() const) {
-      auto const player_pos = player.tilemap_position();
-      glm::vec3 const move_vec = (player.*fn)();
-
-      auto const& new_pos_tile = state.tilemap.data(player_pos + move_vec);
-      if (!state.collision.player) {
-        player.move(MOVE_DISTANCE, move_vec);
-        state.render.tilemap.redraw = true;
-      } else if (!new_pos_tile.is_wall) {
-        player.move(MOVE_DISTANCE, move_vec);
-        state.render.tilemap.redraw = true;
-      }
+    auto const rotate_player = [&](float const angle, glm::vec3 const& axis)
+    {
+      player.rotate(angle, axis);
+      state.render.tilemap.redraw = true;
     };
     switch (event.key.keysym.sym) {
     case SDLK_w: {
@@ -157,6 +156,14 @@ bool process_event(GameState &state, SDL_Event &event)
     }
     case SDLK_e: {
       move_player(&Player::down_vector);
+      break;
+    }
+    case SDLK_LEFT: {
+      rotate_player(-90.0f, opengl::Y_UNIT_VECTOR);
+      break;
+    }
+    case SDLK_RIGHT: {
+      rotate_player(90.0f, opengl::Y_UNIT_VECTOR);
       break;
     }
     case SDLK_t: {

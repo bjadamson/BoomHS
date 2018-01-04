@@ -71,10 +71,7 @@ public:
   }
 
   void
-  rotate(float const, window::mouse_data const&);
-
-  void
-  multiply_quat(glm::quat const&);
+  rotate(float const, glm::vec3 const&);
 
   auto
   tilemap_position() const

@@ -13,7 +13,7 @@ uniform vec3 u_offset;
 void main()
 {
   vec4 pos = a_position + vec4(u_offset, 1.0);
-  pos -= vec4(0.0, 0.5, 0.0, 0.0);
+  pos -= vec4(0.0, 1.0, 0.0, 0.0);
   gl_Position = u_mvpmatrix * pos;
 
   v_normal = mat3(transpose(inverse(u_modelmatrix))) * a_normal;
