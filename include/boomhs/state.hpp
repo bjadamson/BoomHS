@@ -4,6 +4,7 @@
 
 #include <imgui/imgui.hpp>
 #include <opengl/colors.hpp>
+#include <opengl/lighting.hpp>
 
 #include <stlw/log.hpp>
 #include <stlw/random.hpp>
@@ -22,11 +23,15 @@ using stlw::Logger;
 namespace boomhs
 {
 
+static constexpr auto INIT_ATTENUATION_INDEX = 8;
+
 struct LightColors
 {
   opengl::Color ambient = LOC::WHITE;
   opengl::Color diffuse = LOC::BLUE;
   opengl::Color specular = LOC::RED;
+
+  opengl::Attenuation attenuation = opengl::ATTENUATION_VALUE_TABLE[INIT_ATTENUATION_INDEX];
 };
 
 struct MaterialColors
@@ -40,6 +45,7 @@ struct MaterialColors
 struct RenderArgs {
   Logger &logger;
   Camera const& camera;
+  Player const& player;
 
   std::vector<Transform*> &entities;
   LightColors &light;
@@ -57,6 +63,7 @@ struct UiState
   // primitive buffers
   int eid_buffer = 0;
   glm::vec3 euler_angle_buffer;
+  int attenuation_current_item = INIT_ATTENUATION_INDEX;
 };
 
 struct MouseState
@@ -176,7 +183,7 @@ struct GameState
 
   RenderArgs render_args()
   {
-    return RenderArgs{this->logger, this->camera, this->entities, this->light, this->at_materials};
+    return RenderArgs{this->logger, this->camera, this->player, this->entities, this->light, this->at_materials};
   }
 };
 using GS = GameState;

@@ -1,7 +1,9 @@
 #include <boomhs/ui.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <imgui/imgui.hpp>
 #include <boomhs/state.hpp>
+#include <stlw/format.hpp>
 #include <window/sdl_window.hpp>
 
 namespace
@@ -110,12 +112,20 @@ show_lighting_window(GameState &state)
     ImGui::Separator();
 
     {
-      auto *light_dir = glm::value_ptr(state.entities[GS::LIGHT_INDEX]->translation);
-      ImGui::SliderFloat3("Light Position", light_dir, -100.0f, 100.0f);
+      auto &t = state.entities[GS::LIGHT_INDEX]->translation;
+      auto *light_pos = glm::value_ptr(t);
+      ImGui::SliderFloat3("Light Position", light_pos, -100.0f, 100.0f);
+      std::string const s = glm::to_string(glm::normalize(t));
+      ImGui::Text(fmt::sprintf("Light Direction: '%s'", s).c_str());
     }
     color_float3slider("Light Ambient", state.light.ambient);
     color_float3slider("Light Diffuse", state.light.diffuse);
     color_float3slider("Light Specular", state.light.specular);
+
+    auto &current_item = state.ui_state.attenuation_current_item;
+    if (ImGui::Combo("Attenuation", &current_item, opengl::ATTENUATION_DISTANCE_STRINGS)) {
+      state.light.attenuation = opengl::ATTENUATION_VALUE_TABLE[current_item];
+    }
 
     if (ImGui::Button("Close", ImVec2(120,0))) {
       state.ui_state.show_lighting_window = false;

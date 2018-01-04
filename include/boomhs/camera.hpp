@@ -4,6 +4,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <glm/gtc/matrix_access.hpp>
 
 #include <glm/gtx/vector_angle.hpp>
 #include <opengl/constants.hpp>
@@ -86,6 +87,14 @@ class Camera
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
+
+  glm::vec3
+  forward_vector() const
+  {
+    // TODO: should be camera_matrix()????
+    auto const vm = view_matrix();
+    return glm::row(vm, 3);
+  }
 
   Camera(Projection const&, Transform &, glm::vec3 const& f, glm::vec3 const& u);
 

@@ -158,7 +158,7 @@ check_errors();
 
     auto const h = dmode.h;
     auto const w = dmode.w;
-    SDL_SetWindowPosition(window_ptr.get(), w / 2, h / 2);
+    SDL_SetWindowPosition(window_ptr.get(), 0, 0);
 check_errors();
   }
 

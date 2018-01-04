@@ -124,10 +124,6 @@ make_entities(PROXY &proxy)
   entities[GS::HOUSE_INDEX]->translation = glm::vec3{2.0f, 0.0f, -4.0f};
   entities[GS::TERRAIN_INDEX]->translation = glm::vec3{0.0f, 5.0f, 0.0f};
 
-  entities[GS::LIGHT_INDEX]->scale = glm::vec3{1.0f};
-  entities[GS::LIGHT_INDEX]->translation = glm::vec3{0.0f};
-  entities[GS::LIGHT_INDEX]->translation.y = 1.0f;
-
   //auto const make_standing = [&entities](int const index) {
     //auto &entity = *entities[index];
     //entity.translation = glm::vec3{0.0f, 0.0f, 0.0f};
@@ -162,12 +158,11 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   auto tmap = MOVE(tmap_startingpos.first);
   auto entities = make_entities(proxy);
 
-  auto &skybox_ent = *entities[GameState::SKYBOX_INDEX];
-  auto &player_ent = *entities[GameState::AT_INDEX];
+  auto &skybox_ent = *entities[GS::SKYBOX_INDEX];
+  auto &player_ent = *entities[GS::AT_INDEX];
   player_ent.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
-  player_ent.scale = 1.0f * glm::one<glm::vec3>();
 
-  auto &arrow_ent = *entities[GameState::PLAYER_ARROW_INDEX];
+  auto &arrow_ent = *entities[GS::PLAYER_ARROW_INDEX];
   arrow_ent.scale = glm::vec3{0.025f, 0.025f, 0.025f};
   arrow_ent.translation = arrow_ent.translation + (0.125f * opengl::Y_UNIT_VECTOR);
 
@@ -180,6 +175,11 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
     auto &startingpos = tmap_startingpos.second;
     auto const pos = glm::vec3{startingpos.x, startingpos.y, startingpos.z};
     player.move_to(pos);
+
+    auto &light_ent = *entities[GS::LIGHT_INDEX];
+    light_ent.translation = pos;
+    //light_ent.translation.y += 1.0f;
+    //light_ent.translation.z += 5.0f;
   }
   Camera camera(proj, player_ent, FORWARD, UP);
 
