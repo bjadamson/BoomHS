@@ -4,7 +4,6 @@
 #include <stlw/type_macros.hpp>
 
 #include <opengl/colors.hpp>
-#include <opengl/shader_program.hpp>
 #include <opengl/vertex_attribute.hpp>
 #include <opengl/texture.hpp>
 #include <boomhs/types.hpp>
@@ -12,23 +11,54 @@
 namespace opengl
 {
 
-struct OpenglPipelines;
+#define DEFINE_SHADER_FILENAME_TYPE(NAME)                                                          \
+  struct NAME##_shader_filename {                                                                  \
+    char const *filename;                                                                          \
+    explicit NAME##_shader_filename(char const *f)                                                 \
+        : filename(f)                                                                              \
+    {                                                                                              \
+    }                                                                                              \
+  }
 
-stlw::result<OpenglPipelines, std::string>
-load_pipelines(stlw::Logger &);
+DEFINE_SHADER_FILENAME_TYPE(vertex);
+DEFINE_SHADER_FILENAME_TYPE(fragment);
+#undef DEFINE_SHADER_FILENAME_TYPE
 
-class BasePipeline
+struct ShaderPrograms;
+
+stlw::result<ShaderPrograms, std::string>
+load_shader_programs(stlw::Logger &);
+
+class ProgramHandle
 {
-  ShaderProgram program_;
+  GLuint program_;
+
+public:
+  NO_COPY(ProgramHandle);
+  NO_MOVE_ASSIGN(ProgramHandle);
+
+  explicit ProgramHandle(GLuint const);
+  ProgramHandle(ProgramHandle &&);
+  ~ProgramHandle();
+
+  auto handle() const { return program_; }
+};
+
+class ShaderProgram
+{
+  ProgramHandle program_;
   VertexAttribute va_;
 public:
-  explicit BasePipeline(ShaderProgram &&sp, VertexAttribute &&va)
-    : program_(MOVE(sp))
+  explicit ShaderProgram(ProgramHandle &&ph, VertexAttribute &&va)
+    : program_(MOVE(ph))
     , va_(MOVE(va))
     {
     }
 
   auto const& va() const { return this->va_; }
+
+  void use_program(stlw::Logger &);
+  GLint get_uniform_location(stlw::Logger &, GLchar const *);
 
   void set_uniform_matrix_4fv(stlw::Logger &, GLchar const *, glm::mat4 const &);
 
@@ -57,20 +87,18 @@ public:
   }
 
   void set_uniform_float1(stlw::Logger &logger, GLchar const*, float const);
-
-  void use_program(stlw::Logger &);
 };
 
-#define PIPELINE_DEFAULT_CTOR(CLASSNAME)                                                           \
+#define SHADERPROGRAM_DEFAULT_CTOR(CLASSNAME)                                                      \
   MOVE_CONSTRUCTIBLE_ONLY(CLASSNAME);                                                              \
-  explicit CLASSNAME(ShaderProgram &&sp, VertexAttribute &&va)                                     \
-    : BasePipeline(MOVE(sp), MOVE(va))                                                             \
+  explicit CLASSNAME(ProgramHandle &&ph, VertexAttribute &&va)                                     \
+    : ShaderProgram(MOVE(ph), MOVE(va))                                                            \
     {                                                                                              \
     }
 
-struct PipelineColor2D : public BasePipeline
+struct ShaderProgramColor2D : public ShaderProgram
 {
-  PIPELINE_DEFAULT_CTOR(PipelineColor2D);
+  SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramColor2D);
 
   static bool constexpr IS_2D = true;
   static bool constexpr IS_INSTANCED = false;
@@ -82,9 +110,9 @@ struct PipelineColor2D : public BasePipeline
   static bool constexpr RECEIVES_LIGHT = false;
 };
 
-struct PipelinePositionNormalColor3D : public BasePipeline
+struct ShaderProgramPositionNormalColor3D : public ShaderProgram
 {
-  PIPELINE_DEFAULT_CTOR(PipelinePositionNormalColor3D);
+  SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramPositionNormalColor3D);
 
   static bool constexpr IS_2D = false;
   static bool constexpr IS_INSTANCED = false;
@@ -96,9 +124,9 @@ struct PipelinePositionNormalColor3D : public BasePipeline
   static bool constexpr RECEIVES_LIGHT = true;
 };
 
-struct PipelinePositionColor3D : public BasePipeline
+struct ShaderProgramPositionColor3D : public ShaderProgram
 {
-  PIPELINE_DEFAULT_CTOR(PipelinePositionColor3D);
+  SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramPositionColor3D);
 
   static bool constexpr IS_2D = false;
   static bool constexpr IS_INSTANCED = false;
@@ -110,9 +138,9 @@ struct PipelinePositionColor3D : public BasePipeline
   static bool constexpr RECEIVES_LIGHT = false;
 };
 
-struct PipelineLightSource3D : public BasePipeline
+struct ShaderProgramLightSource3D : public ShaderProgram
 {
-  PIPELINE_DEFAULT_CTOR(PipelineLightSource3D);
+  SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramLightSource3D);
 
   static bool constexpr IS_2D = false;
   static bool constexpr IS_INSTANCED = false;
@@ -124,9 +152,9 @@ struct PipelineLightSource3D : public BasePipeline
   static bool constexpr RECEIVES_LIGHT = false;
 };
 
-struct PipelineHashtag3D : public BasePipeline
+struct ShaderProgramHashtag3D : public ShaderProgram
 {
-  PIPELINE_DEFAULT_CTOR(PipelineHashtag3D);
+  SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramHashtag3D);
 
   auto instance_count() const { return 3u; }
 
@@ -140,9 +168,9 @@ struct PipelineHashtag3D : public BasePipeline
   static bool constexpr RECEIVES_LIGHT = true;
 };
 
-struct PipelinePlus3D : public BasePipeline
+struct ShaderProgramPlus3D : public ShaderProgram
 {
-  PIPELINE_DEFAULT_CTOR(PipelinePlus3D);
+  SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramPlus3D);
 
   static bool constexpr IS_2D = false;
   static bool constexpr IS_INSTANCED = false;
@@ -154,20 +182,20 @@ struct PipelinePlus3D : public BasePipeline
   static bool constexpr RECEIVES_LIGHT = true;
 };
 
-#define PIPELINE_TEXTURE_CTOR(CLASSNAME)                                                           \
-  explicit CLASSNAME(ShaderProgram &&sp, VertexAttribute &&va, texture_info const t)               \
-    : BasePipeline(MOVE(sp), MOVE(va))                                                             \
+#define SHADERPROGRAM_TEXTURE_CTOR(CLASSNAME)                                                      \
+  explicit CLASSNAME(ProgramHandle &&ph, VertexAttribute &&va, texture_info const t)               \
+    : ShaderProgram(MOVE(ph), MOVE(va))                                                            \
     , texture_info_(t)                                                                             \
     {                                                                                              \
     }
 
-#undef PIPELINE_DEFAULT_CTOR
+#undef SHADERPROGRAM_DEFAULT_CTOR
 
-class PipelineTexture3D : public BasePipeline
+class ShaderProgramTexture3D : public ShaderProgram
 {
   texture_info texture_info_;
 public:
-  PIPELINE_TEXTURE_CTOR(PipelineTexture3D);
+  SHADERPROGRAM_TEXTURE_CTOR(ShaderProgramTexture3D);
 
   auto texture() const { return this->texture_info_; }
 
@@ -181,11 +209,11 @@ public:
   static bool constexpr RECEIVES_LIGHT = false;
 };
 
-class PipelineTextureCube3D : public BasePipeline
+class ShaderProgramTextureCube3D : public ShaderProgram
 {
   texture_info texture_info_;
 public:
-  PIPELINE_TEXTURE_CTOR(PipelineTextureCube3D);
+  SHADERPROGRAM_TEXTURE_CTOR(ShaderProgramTextureCube3D);
 
   auto texture() const { return this->texture_info_; }
 
@@ -199,11 +227,11 @@ public:
   static bool constexpr RECEIVES_LIGHT = false;
 };
 
-class PipelineSkybox3D : public BasePipeline
+class ShaderProgramSkybox3D : public ShaderProgram
 {
   texture_info texture_info_;
 public:
-  PIPELINE_TEXTURE_CTOR(PipelineSkybox3D);
+  SHADERPROGRAM_TEXTURE_CTOR(ShaderProgramSkybox3D);
 
   auto texture() const { return this->texture_info_; }
 
@@ -217,11 +245,11 @@ public:
   static bool constexpr RECEIVES_LIGHT = false;
 };
 
-class PipelineTexture2D : public BasePipeline
+class ShaderProgramTexture2D : public ShaderProgram
 {
   texture_info texture_info_;
 public:
-  PIPELINE_TEXTURE_CTOR(PipelineTexture2D);
+  SHADERPROGRAM_TEXTURE_CTOR(ShaderProgramTexture2D);
 
   auto texture() const { return this->texture_info_; }
 
@@ -234,67 +262,67 @@ public:
   static bool constexpr IS_LIGHTSOURCE = false;
   static bool constexpr RECEIVES_LIGHT = false;
 };
-#undef PIPELINE_TEXTURE_CTOR
+#undef SHADERPROGRAM_TEXTURE_CTOR
 
-struct Pipeline2D
+struct ShaderPrograms2D
 {
-  PipelineColor2D color;
-  PipelineTexture2D texture_wall;
-  PipelineTexture2D texture_container;
+  ShaderProgramColor2D color;
+  ShaderProgramTexture2D texture_wall;
+  ShaderProgramTexture2D texture_container;
 
-  MOVE_CONSTRUCTIBLE_ONLY(Pipeline2D);
+  MOVE_CONSTRUCTIBLE_ONLY(ShaderPrograms2D);
 };
 
-struct Pipeline3D
+struct ShaderPrograms3D
 {
-  PipelineHashtag3D hashtag;
-  PipelinePositionNormalColor3D at;
-  PipelinePlus3D plus;
+  ShaderProgramHashtag3D hashtag;
+  ShaderProgramPositionNormalColor3D at;
+  ShaderProgramPlus3D plus;
 
   // alphabet
-  PipelinePositionNormalColor3D O;
-  PipelinePositionNormalColor3D T;
+  ShaderProgramPositionNormalColor3D O;
+  ShaderProgramPositionNormalColor3D T;
 
   // 3d arrow (with normals)
-  PipelinePositionColor3D local_forward_arrow;
+  ShaderProgramPositionColor3D local_forward_arrow;
 
   // 2d arrows
-  PipelinePositionColor3D arrow;
-  PipelinePositionColor3D color;
+  ShaderProgramPositionColor3D arrow;
+  ShaderProgramPositionColor3D color;
 
-  PipelinePositionColor3D global_x_axis_arrow;
-  PipelinePositionColor3D global_y_axis_arrow;
-  PipelinePositionColor3D global_z_axis_arrow;
+  ShaderProgramPositionColor3D global_x_axis_arrow;
+  ShaderProgramPositionColor3D global_y_axis_arrow;
+  ShaderProgramPositionColor3D global_z_axis_arrow;
 
-  PipelinePositionColor3D local_x_axis_arrow;
-  PipelinePositionColor3D local_y_axis_arrow;
-  PipelinePositionColor3D local_z_axis_arrow;
+  ShaderProgramPositionColor3D local_x_axis_arrow;
+  ShaderProgramPositionColor3D local_y_axis_arrow;
+  ShaderProgramPositionColor3D local_z_axis_arrow;
 
-  PipelinePositionColor3D camera_arrow0;
-  PipelinePositionColor3D camera_arrow1;
-  PipelinePositionColor3D camera_arrow2;
+  ShaderProgramPositionColor3D camera_arrow0;
+  ShaderProgramPositionColor3D camera_arrow1;
+  ShaderProgramPositionColor3D camera_arrow2;
 
-  PipelineLightSource3D light0;
+  ShaderProgramLightSource3D light0;
 
-  PipelineTextureCube3D texture_cube;
-  PipelineTexture3D house;
-  PipelineSkybox3D skybox;
+  ShaderProgramTextureCube3D texture_cube;
+  ShaderProgramTexture3D house;
+  ShaderProgramSkybox3D skybox;
 
   // NORMAL???
-  PipelinePositionColor3D terrain;
+  ShaderProgramPositionColor3D terrain;
 
-  MOVE_CONSTRUCTIBLE_ONLY(Pipeline3D);
+  MOVE_CONSTRUCTIBLE_ONLY(ShaderPrograms3D);
 };
 
-struct OpenglPipelines
+struct ShaderPrograms
 {
-  Pipeline2D d2;
-  Pipeline3D d3;
+  ShaderPrograms2D d2;
+  ShaderPrograms3D d3;
 
-  MOVE_CONSTRUCTIBLE_ONLY(OpenglPipelines);
-  explicit OpenglPipelines(Pipeline2D &&p2d, Pipeline3D &&p3d)
-    : d2(MOVE(p2d))
-    , d3(MOVE(p3d))
+  MOVE_CONSTRUCTIBLE_ONLY(ShaderPrograms);
+  explicit ShaderPrograms(ShaderPrograms2D &&sp2d, ShaderPrograms3D &&sp3d)
+    : d2(MOVE(sp2d))
+    , d3(MOVE(sp3d))
   {
   }
 };

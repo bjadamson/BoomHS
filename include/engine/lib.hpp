@@ -2,8 +2,8 @@
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_sdl_gl3.h>
 
-#include <opengl/pipelines.hpp>
 #include <opengl/factory.hpp>
+#include <opengl/shader.hpp>
 
 #include <window/mouse.hpp>
 #include <window/sdl_window.hpp>
@@ -27,7 +27,7 @@ using State = game::GameState;
 struct Engine
 {
   ::window::SDLWindow window;
-  opengl::OpenglPipelines opengl_lib;
+  opengl::ShaderPrograms opengl_lib;
 
   MOVE_CONSTRUCTIBLE_ONLY(Engine);
 };

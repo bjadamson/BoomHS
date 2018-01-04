@@ -36,9 +36,9 @@ namespace cube_factory
 namespace detail
 {
 
-template<typename PIPE, typename VERTICES, typename INDICES>
+template<typename SP, typename VERTICES, typename INDICES>
 void
-copy_to_gpu(stlw::Logger &logger, PIPE &pipeline, DrawInfo const& dinfo, VERTICES const& vertices,
+copy_to_gpu(stlw::Logger &logger, SP &shader_program, DrawInfo const& dinfo, VERTICES const& vertices,
     INDICES const& indices)
 {
   // Activate VAO
@@ -47,7 +47,7 @@ copy_to_gpu(stlw::Logger &logger, PIPE &pipeline, DrawInfo const& dinfo, VERTICE
   glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
 
-  auto const& va = pipeline.va();
+  auto const& va = shader_program.va();
   va.upload_vertex_format_to_glbound_vao(logger);
 
   // copy the vertices
@@ -81,12 +81,12 @@ cube_vertices()
   return v;
 }
 
-template<std::size_t N, typename PIPE>
+template<std::size_t N, typename SP>
 DrawInfo
-make_cube_drawinfo(stlw::Logger &logger, std::array<float, N> const& vertex_data, PIPE &pipeline)
+make_cube_drawinfo(stlw::Logger &logger, std::array<float, N> const& vertex_data, SP &shader_program)
 {
   DrawInfo dinfo{GL_TRIANGLES, cube_factory::INDICES.size()};
-  detail::copy_to_gpu(logger, pipeline, dinfo, vertex_data, cube_factory::INDICES);
+  detail::copy_to_gpu(logger, shader_program, dinfo, vertex_data, cube_factory::INDICES);
   return dinfo;
 }
 
@@ -95,9 +95,9 @@ make_cube_drawinfo(stlw::Logger &logger, std::array<float, N> const& vertex_data
 namespace factories
 {
 
-template<typename PIPE>
+template<typename SP>
 auto
-copy_colorcube_gpu(stlw::Logger &logger, PIPE &pipeline, Color const& color)
+copy_colorcube_gpu(stlw::Logger &logger, SP &shader_program, Color const& color)
 {
   // clang-format off
   std::array<Color, 8> const color_array{
@@ -134,13 +134,13 @@ copy_colorcube_gpu(stlw::Logger &logger, PIPE &pipeline, Color const& color)
       color_array[8].r, color_array[8].g, color_array[8].a, color_array[8].a
         );
   // clang-format on
-  return detail::make_cube_drawinfo(logger, vertex_data, pipeline);
+  return detail::make_cube_drawinfo(logger, vertex_data, shader_program);
 }
 
 
-template<typename PIPE>
+template<typename SP>
 auto
-copy_texturecube_gpu(stlw::Logger &logger, PIPE &pipeline)
+copy_texturecube_gpu(stlw::Logger &logger, SP &shader_program)
 {
   // clang-format off
   auto const vertices = detail::cube_vertices();
@@ -155,12 +155,12 @@ copy_texturecube_gpu(stlw::Logger &logger, PIPE &pipeline)
       vertices[28], vertices[29], vertices[30], vertices[31],
       vertices[32], vertices[33], vertices[34], vertices[35]
       );
-  return detail::make_cube_drawinfo(logger, vertex_data, pipeline);
+  return detail::make_cube_drawinfo(logger, vertex_data, shader_program);
 }
 
-template<typename PIPE, typename ...Args>
+template<typename SP, typename ...Args>
 auto
-copy_cube_14indices_gpu(stlw::Logger &logger, PIPE &pipeline, Args &&... args)
+copy_cube_14indices_gpu(stlw::Logger &logger, SP &shader_program, Args &&... args)
 {
   // clang-format off
   static constexpr std::array<GLuint, 14> INDICES = {{
@@ -196,7 +196,7 @@ copy_cube_14indices_gpu(stlw::Logger &logger, PIPE &pipeline, Args &&... args)
   auto const& vertices = v;
 
   DrawInfo dinfo{GL_TRIANGLE_STRIP, INDICES.size()};
-  detail::copy_to_gpu(logger, pipeline, dinfo, vertices, INDICES);
+  detail::copy_to_gpu(logger, shader_program, dinfo, vertices, INDICES);
   return dinfo;
 }
 
@@ -210,9 +210,9 @@ struct ArrowCreateParams
   float const tip_length_factor = 4.0f;
 };
 
-template<typename PIPE>
+template<typename SP>
 auto
-create_arrow(stlw::Logger &logger, PIPE &pipeline, ArrowCreateParams &&params)
+create_arrow(stlw::Logger &logger, SP &shader_program, ArrowCreateParams &&params)
 {
   auto const adjust_if_zero = [=](glm::vec3 const& v) {
     auto constexpr ZERO_VEC = glm::zero<glm::vec3>();
@@ -269,13 +269,13 @@ create_arrow(stlw::Logger &logger, PIPE &pipeline, ArrowCreateParams &&params)
   }};
 
   DrawInfo dinfo{GL_LINES, INDICES.size()};
-  detail::copy_to_gpu(logger, pipeline, dinfo, vertices, INDICES);
+  detail::copy_to_gpu(logger, shader_program, dinfo, vertices, INDICES);
   return dinfo;
 }
 
-template<typename PIPE>
+template<typename SP>
 auto
-create_tilegrid(stlw::Logger &logger, PIPE &pipeline, boomhs::TileMap const& tmap,
+create_tilegrid(stlw::Logger &logger, SP &shader_program, boomhs::TileMap const& tmap,
     bool const show_yaxis_lines, Color const& color = LOC::RED)
 {
   std::vector<float> vertices;
@@ -350,7 +350,7 @@ create_tilegrid(stlw::Logger &logger, PIPE &pipeline, boomhs::TileMap const& tma
 
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{GL_LINES, num_indices};
-  detail::copy_to_gpu(logger, pipeline, dinfo, vertices, indices);
+  detail::copy_to_gpu(logger, shader_program, dinfo, vertices, indices);
   return dinfo;
 }
 
@@ -360,35 +360,35 @@ struct WorldOriginArrows {
   DrawInfo z_dinfo;
 };
 
-template<typename X_PIPE, typename Y_PIPE, typename Z_PIPE>
+template<typename X_SP, typename Y_SP, typename Z_SP>
 WorldOriginArrows
-create_axis_arrows(stlw::Logger &logger, X_PIPE &x_pipe, Y_PIPE &y_pipe, Z_PIPE &z_pipe,
+create_axis_arrows(stlw::Logger &logger, X_SP &x_sp, Y_SP &y_sp, Z_SP &z_sp,
     glm::vec3 const& origin)
 {
-  auto x = create_arrow(logger, x_pipe, ArrowCreateParams{LOC::RED, origin, origin + X_UNIT_VECTOR});
-  auto y = create_arrow(logger, y_pipe, ArrowCreateParams{LOC::GREEN, origin, origin + Y_UNIT_VECTOR});
-  auto z = create_arrow(logger, z_pipe, ArrowCreateParams{LOC::BLUE, origin, origin + Z_UNIT_VECTOR});
+  auto x = create_arrow(logger, x_sp, ArrowCreateParams{LOC::RED, origin, origin + X_UNIT_VECTOR});
+  auto y = create_arrow(logger, y_sp, ArrowCreateParams{LOC::GREEN, origin, origin + Y_UNIT_VECTOR});
+  auto z = create_arrow(logger, z_sp, ArrowCreateParams{LOC::BLUE, origin, origin + Z_UNIT_VECTOR});
   return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
 }
 
-template<typename X_PIPE, typename Y_PIPE, typename Z_PIPE>
+template<typename X_SP, typename Y_SP, typename Z_SP>
 WorldOriginArrows
-create_world_axis_arrows(stlw::Logger &logger, X_PIPE &x_pipe, Y_PIPE &y_pipe, Z_PIPE &z_pipe)
+create_world_axis_arrows(stlw::Logger &logger, X_SP &x_sp, Y_SP &y_sp, Z_SP &z_sp)
 {
   glm::vec3 constexpr ORIGIN = glm::zero<glm::vec3>();
-  return create_axis_arrows(logger, x_pipe, y_pipe, z_pipe, ORIGIN);
+  return create_axis_arrows(logger, x_sp, y_sp, z_sp, ORIGIN);
 }
 
-template<typename PIPE>
+template<typename SP>
 auto
-copy_gpu(stlw::Logger &logger, GLenum const draw_mode, PIPE &pipe, obj const& object)
+copy_gpu(stlw::Logger &logger, GLenum const draw_mode, SP &sp, obj const& object)
 {
   auto const& vertices = object.vertices;
   auto const& indices = object.indices;
 
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{draw_mode, num_indices};
-  detail::copy_to_gpu(logger, pipe, dinfo, vertices, indices);
+  detail::copy_to_gpu(logger, sp, dinfo, vertices, indices);
   return dinfo;
 }
 

@@ -26,7 +26,7 @@ namespace boomhs
 {
 
 Assets
-load_assets(stlw::Logger &logger, opengl::OpenglPipelines &gfx)
+load_assets(stlw::Logger &logger, opengl::ShaderPrograms &gfx)
 {
   // LOAD different assets.
   //"assets/chalet.mtl"
@@ -313,7 +313,7 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
 }
 
 template<typename PROXY>
-void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, window::SDLWindow &window,
+void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, window::SDLWindow &window,
     Assets &assets)
 {
   auto &player = state.player;
@@ -371,10 +371,10 @@ void game_loop(GameState &state, PROXY &proxy, opengl::OpenglPipelines &gfx, win
       state.tilemap, state.render.tilemap.reveal);
 
   if (state.render.tilemap.show_grid_lines) {
-    auto &pipeline = d3.global_x_axis_arrow;
-    auto const tilegrid = OF::create_tilegrid(logger, pipeline, state.tilemap,
+    auto &sp = d3.global_x_axis_arrow;
+    auto const tilegrid = OF::create_tilegrid(logger, sp, state.tilemap,
         state.render.tilemap.show_yaxis_lines);
-    render::draw_tilegrid(rargs, *ents[GS::TILEMAP_INDEX], {pipeline, tilegrid});
+    render::draw_tilegrid(rargs, *ents[GS::TILEMAP_INDEX], {sp, tilegrid});
   }
 
   // player
