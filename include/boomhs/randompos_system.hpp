@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/ecst_components.hpp>
+#include <stlw/format.hpp>
 
 namespace s
 {

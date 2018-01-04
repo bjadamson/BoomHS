@@ -22,11 +22,19 @@ using stlw::Logger;
 namespace boomhs
 {
 
-struct WorldState
+struct LightColors
 {
   opengl::Color ambient = LOC::WHITE;
-  opengl::Color light_color = LOC::HOT_PINK;
-  //float specular_strength = 1.0f;
+  opengl::Color diffuse = LOC::BLUE;
+  opengl::Color specular = LOC::RED;
+};
+
+struct MaterialColors
+{
+  opengl::Color ambient{0.5f, 1.0f, 0.31f, 1.0f};
+  opengl::Color diffuse{0.5f, 1.0f, 0.31f, 1.0f};
+  opengl::Color specular{1.0f, 1.0f, 0.5f, 1.0f};
+  float shininess = 32.0f;
 };
 
 struct RenderArgs {
@@ -34,7 +42,8 @@ struct RenderArgs {
   Camera const& camera;
 
   std::vector<Transform*> &entities;
-  WorldState &world;
+  LightColors &light;
+  MaterialColors &at_materials;
 };
 
 struct UiState
@@ -95,7 +104,12 @@ struct GameState
   MouseState mouse;
   RenderState render;
   WindowState window;
-  WorldState world;
+
+  // singular light in the scene
+  LightColors light;
+
+  // Materials for the "@" (player)
+  MaterialColors at_materials;
 
   Logger &logger;
   ImGuiIO &imgui;
@@ -162,8 +176,9 @@ struct GameState
 
   RenderArgs render_args()
   {
-    return RenderArgs{this->logger, this->camera, this->entities, this->world};
+    return RenderArgs{this->logger, this->camera, this->entities, this->light, this->at_materials};
   }
 };
+using GS = GameState;
 
 } // ns boomhs

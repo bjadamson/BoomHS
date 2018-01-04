@@ -8,7 +8,6 @@
 
 #include <boomhs/assets.hpp>
 #include <boomhs/level_generator.hpp>
-#include <boomhs/randompos_system.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/tilemap.hpp>
 #include <boomhs/state.hpp>
@@ -224,7 +223,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
 
   // light
   {
-    auto light_handle = OF::copy_colorcube_gpu(logger, d3.light0, state.world.light_color);
+    auto light_handle = OF::copy_colorcube_gpu(logger, d3.light0, state.light.diffuse);
     render::draw(rargs, *ents[GS::LIGHT_INDEX], d3.light0, light_handle);
   }
 
@@ -332,7 +331,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
   //render::draw(rargs, *ents[GS::TERRAIN_INDEX], d3.terrain, handles.terrain);
 
   // UI code
-  draw_ui(state, window, proxy);
+  draw_ui(state, window);
 }
 
 } // ns boomhs

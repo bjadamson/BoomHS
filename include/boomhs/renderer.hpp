@@ -90,6 +90,9 @@ void
 draw_3dshape(RenderArgs const &args, glm::mat4 const& model_matrix, SP &shader_program, opengl::DrawInfo const& dinfo)
 {
   auto &logger = args.logger;
+  auto const& light = args.light;
+  auto const& at_materials = args.at_materials;
+
   glm::mat4 const view_matrix = args.camera.camera_matrix();
 
   auto const draw_3d_shape_fn = [&](auto const &dinfo) {
@@ -99,14 +102,19 @@ draw_3dshape(RenderArgs const &args, glm::mat4 const& model_matrix, SP &shader_p
 
     if constexpr (SP::RECEIVES_LIGHT) {
       shader_program.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
-      shader_program.set_uniform_color_3fv(logger, "u_lightcolor", args.world.light_color);
-      shader_program.set_uniform_vec3(logger, "u_lightpos", args.entities[GameState::LIGHT_INDEX]->translation);
       shader_program.set_uniform_vec3(logger, "u_viewpos", args.camera.world_position());
+      {
+        auto const light_dir = glm::normalize(args.entities[GameState::LIGHT_INDEX]->translation);
+        shader_program.set_uniform_vec3(logger, "u_light.direction", light_dir);
+      }
+      shader_program.set_uniform_color_3fv(logger, "u_light.ambient", light.ambient);
+      shader_program.set_uniform_color_3fv(logger, "u_light.diffuse", light.diffuse);
+      shader_program.set_uniform_color_3fv(logger, "u_light.specular", light.specular);
 
-      shader_program.set_uniform_vec3(logger, "u_material.ambient",  glm::vec3{0.5f, 1.0f, 0.31f});
-      shader_program.set_uniform_vec3(logger, "u_material.diffuse",  glm::vec3{0.5f, 1.0f, 0.31f});
-      shader_program.set_uniform_vec3(logger, "u_material.specular", glm::vec3{1.0f, 1.0f, 0.5f});
-      shader_program.set_uniform_float1(logger, "u_material.shininess", 32.0f);
+      shader_program.set_uniform_color_3fv(logger, "u_material.ambient",  at_materials.ambient);
+      shader_program.set_uniform_color_3fv(logger, "u_material.diffuse",  at_materials.diffuse);
+      shader_program.set_uniform_color_3fv(logger, "u_material.specular", at_materials.specular);
+      shader_program.set_uniform_float1(logger, "u_material.shininess", at_materials.shininess);
     }
 
     if constexpr (SP::IS_SKYBOX) {
