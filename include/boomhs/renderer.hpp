@@ -124,7 +124,7 @@ draw_3dshape(RenderArgs const &args, glm::mat4 const& model_matrix, SP &shader_p
 
       shader_program.set_uniform_vec3(logger, "u_player.position",  player.world_position());
       shader_program.set_uniform_vec3(logger, "u_player.direction",  player.forward_vector());
-      shader_program.set_uniform_float1(logger, "u_player.cutoff",  glm::cos(glm::radians(45.0f)));
+      shader_program.set_uniform_float1(logger, "u_player.cutoff",  glm::cos(glm::radians(90.0f)));
     }
 
     if constexpr (SP::IS_SKYBOX) {

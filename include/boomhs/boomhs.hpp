@@ -163,7 +163,10 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
 
   auto &arrow_ent = *entities[PLAYER_ARROW_INDEX];
   arrow_ent.scale = glm::vec3{0.025f, 0.025f, 0.025f};
-  arrow_ent.translation = arrow_ent.translation + (0.125f * opengl::Y_UNIT_VECTOR);
+  arrow_ent.translation = player_ent.translation + (0.125f * opengl::Y_UNIT_VECTOR);
+
+  auto &light_ent = *entities[LIGHT_INDEX];
+  light_ent.scale = glm::vec3{0.2f};
 
   // camera-look at origin
   // cameraspace "up" is === "up" in worldspace.
@@ -175,7 +178,6 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
     auto const pos = glm::vec3{startingpos.x, startingpos.y, startingpos.z};
     player.move_to(pos);
 
-    auto &light_ent = *entities[LIGHT_INDEX];
     light_ent.translation = pos;
     //light_ent.translation.y += 1.0f;
     //light_ent.translation.z += 5.0f;

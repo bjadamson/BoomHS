@@ -137,7 +137,7 @@ show_lighting_window(GameState &state)
     color_float3slider("@/+/# Ambient", state.at_materials.ambient);
     color_float3slider("@/+/# Diffuse", state.at_materials.diffuse);
     color_float3slider("@/+/# Specular", state.at_materials.specular);
-    ImGui::SliderFloat("@/+/# Shininess", &state.at_materials.shininess, 0.0f, 32.0f);
+    ImGui::SliderFloat("@/+/# Shininess", &state.at_materials.shininess, 0.0f, 128.0f);
 
     ImGui::Text("Light Instance #0");
     ImGui::Separator();

@@ -74,7 +74,8 @@ process_event(GameState &state, SDL_Event &event)
     bool const both = left && right;
 
     auto const rot_player = [&]() {
-      //player.rotate(ANGLE, state.mouse_data);
+      float const angle = event.motion.xrel > 0 ? 1.0 : -1.0f;
+      player.rotate(angle, opengl::Y_UNIT_VECTOR);
       state.render.tilemap.redraw = true;
     };
     auto const rot_camera = [&]() {

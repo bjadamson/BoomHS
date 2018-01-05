@@ -40,7 +40,7 @@ out vec4 fragment_color;
 void main()
 {
   vec3 light_dir = normalize(u_light.position - v_fragpos_worldspace);
-  float theta = dot(light_dir, -u_player.direction);
+  float theta = dot(-light_dir, u_player.direction);
 
   // ambient
   vec3 ambient = u_light.ambient * u_material.ambient;
@@ -52,8 +52,8 @@ void main()
     vec3 diffuse = diff * (u_light.diffuse * u_material.diffuse);
 
     // specular
-    vec3 view_dir = normalize(u_viewpos - v_fragpos_worldspace);
     vec3 reflect_dir = reflect(-light_dir, norm);
+    vec3 view_dir = normalize(u_viewpos - v_fragpos_worldspace);
     float spec = pow(max(dot(view_dir, reflect_dir), 0.0), u_material.shininess);
     vec3 specular = u_light.specular * spec * u_material.specular;
 
