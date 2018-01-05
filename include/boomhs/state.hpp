@@ -57,18 +57,18 @@ static constexpr auto INIT_ATTENUATION_INDEX = 8;
 
 struct LightColors
 {
-  opengl::Color ambient = LOC::WHITE;
-  opengl::Color diffuse = LOC::BLUE;
-  opengl::Color specular = LOC::RED;
+  opengl::Color ambient = LOC::GREEN;
+  opengl::Color diffuse = LOC::WHITE;
+  opengl::Color specular = LOC::BLACK;
 
   opengl::Attenuation attenuation = opengl::ATTENUATION_VALUE_TABLE[INIT_ATTENUATION_INDEX];
 };
 
 struct MaterialColors
 {
-  opengl::Color ambient{0.5f, 1.0f, 0.31f, 1.0f};
-  opengl::Color diffuse{0.5f, 1.0f, 0.31f, 1.0f};
-  opengl::Color specular{1.0f, 1.0f, 0.5f, 1.0f};
+  opengl::Color ambient{0.0f, 1.0f, 0.0f, 1.0f};
+  opengl::Color diffuse{1.0f, 1.0f, 1.0f, 1.0f};
+  opengl::Color specular{0.0f, 0.0f, 0.0f, 1.0f};
   float shininess = 32.0f;
 };
 
@@ -125,6 +125,8 @@ struct RenderState
   bool show_global_axis = true;
   bool show_local_axis = false;
   bool show_target_vectors = true;
+
+  opengl::Color background = LOC::BLACK;
 
   TilemapRender tilemap;
 };

@@ -67,6 +67,7 @@ void
 draw_camera_info(GameState &state)
 {
   auto &camera = state.camera;
+  auto &player = state.player;
 
   ImGui::Begin("CAMERA INFO WINDOW");
   {
@@ -96,6 +97,15 @@ draw_camera_info(GameState &state)
     ImGui::Text("Follow Target position:\nx: '%s', y: '%s', z: '%s'",
         x.c_str(), y.c_str(), z.c_str());
   }
+  ImGui::Separator();
+  ImGui::Separator();
+  {
+    auto const player_fwd_viewspace = player.model_matrix();
+    //float const theta = glm::dot(glm::vec4{-opengl::Z_UNIT_VECTOR, 1.0f}, player_fwd_viewspace);
+    //ImGui::Text("pfw: '%s', theta: '%s'\n",
+        //glm::to_string(player_fwd_viewspace).c_str(),
+        //std::to_string(theta).c_str());
+  }
   ImGui::End();
 }
 
@@ -123,12 +133,28 @@ void
 show_lighting_window(GameState &state)
 {
   if (ImGui::Begin("Lighting")) {
-    auto const color_float3slider = [](char const* text, auto &color) {
+    auto const floatslider = [](char const* text, auto &color, auto const& fn) {
       auto array = color.to_array();
-      if (ImGui::SliderFloat3(text, array.data(), 0.0f, 1.0f)) {
+      if (fn(text, array.data())) {
         color = opengl::Color{array};
       }
     };
+    auto const color_float3slider = [&floatslider](char const* text, auto &color) {
+      auto array = color.to_array();
+      if (ImGui::ColorEdit3(text, array.data())) {
+        color = opengl::Color{array};
+      }
+    };
+    auto const color_float4slider = [](char const* text, auto &color) {
+      auto array = color.to_array();
+      if (ImGui::ColorEdit4(text, array.data())) {
+        color = opengl::Color{array};
+      }
+    };
+
+    ImGui::Separator();
+    ImGui::Separator();
+    color_float4slider("Background Color", state.render.background);
 
     ImGui::Text("@/+/# (Player) Material");
     ImGui::Separator();
@@ -148,7 +174,7 @@ show_lighting_window(GameState &state)
       auto *light_pos = glm::value_ptr(t);
       ImGui::SliderFloat3("Light Position", light_pos, -100.0f, 100.0f);
       std::string const s = glm::to_string(glm::normalize(t));
-      ImGui::Text(fmt::sprintf("Light Direction: '%s'", s).c_str());
+      ImGui::Text("Light Direction: '%s'", s.c_str());
     }
     color_float3slider("Light Ambient", state.light.ambient);
     color_float3slider("Light Diffuse", state.light.diffuse);

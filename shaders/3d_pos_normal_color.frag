@@ -45,11 +45,13 @@ void main()
   // ambient
   vec3 ambient = u_light.ambient * u_material.ambient;
 
-  if(theta > u_player.cutoff) {
+  //if(theta > u_player.cutoff) {
     // diffuse
     vec3 norm = normalize(v_normal);
+
+    float diff_intensity = 5.0f;
     float diff = max(dot(norm, light_dir), 0.0);
-    vec3 diffuse = diff * (u_light.diffuse * u_material.diffuse);
+    vec3 diffuse = diff_intensity * diff * (u_light.diffuse * u_material.diffuse);
 
     // specular
     vec3 reflect_dir = reflect(-light_dir, norm);
@@ -64,9 +66,9 @@ void main()
     specular *= attenuation;
     vec4 result = vec4(ambient + diffuse + specular, 1.0) * v_color;
     fragment_color = result;
-  } else {
+  //} else {
     // else, use ambient light so scene isn't completely dark outside the spotlight.
     //fragment_color = vec4(ambient, 1.0);
-    fragment_color = vec4(0.0);//u_light.ambient * vec3(texture(material.diffuse, TexCoords)), 1.0);
-  }
+    //fragment_color = vec4(0.0);//u_light.ambient * vec3(texture(material.diffuse, TexCoords)), 1.0);
+  //}
 }

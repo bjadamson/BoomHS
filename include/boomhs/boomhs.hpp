@@ -220,7 +220,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
   }
 
   auto &d3 = gfx.d3;
-  render::clear_screen(LOC::BLACK);
+  render::clear_screen(render.background);
 
   // light
   {

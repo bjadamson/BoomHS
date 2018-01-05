@@ -94,6 +94,9 @@ public:
   {
     transform_ = &transform;
   }
+
+  glm::mat4
+  model_matrix() const { return transform_->model_matrix(); }
 };
 
 } // ns boomhs
