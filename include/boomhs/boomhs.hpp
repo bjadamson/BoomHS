@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cpptoml/cpptoml.h>
 #include <imgui/imgui.hpp>
 
 #include <opengl/factory.hpp>

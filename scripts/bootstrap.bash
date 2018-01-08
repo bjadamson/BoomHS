@@ -29,14 +29,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17 -stdlib=libc++")
 set(TOOLS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tools/)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
-set(ASSIMP_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/assimp/include")
-set(ASSIMP_LIBRARY_SO "${CMAKE_CURRENT_SOURCE_DIR}/external/assimp/lib/libassimp.so")
-
 set(IMGUI_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/include")
+set(CPPTOML_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/cpptoml/include")
 
 ## DEFINITIONS
 file(GLOB INTERNAL_INCLUDE_DIRS include
-  external/assimp/include
   external/backward/include
   external/compact_optional/include
   external/expected/include
@@ -87,7 +84,7 @@ pkg_search_module(SDL2 REQUIRED sdl2)
 
 ## We should get these through conan.io
 target_include_directories(boomhs PUBLIC
-  ${ASSIMP_INCLUDE_DIR}
+  ${CPPTOML_INCLUDE_DIR}
   ${SDL2_INCLUDE_DIRS}
   ${SDL2IMAGE_INCLUDE_DIRS}
   ${IMGUI_INCLUDE_DIR}
@@ -99,7 +96,6 @@ target_include_directories(boomhs PUBLIC
 target_link_libraries(boomhs
   ${SDL2_LIBRARIES}
   stdc++
-  ${ASSIMP_LIBRARY_SO}
   ${SDL2IMAGE_LIBRARIES}
   ${OPENGL_LIBRARIES}
   ${GLEW_LIBRARIES}
