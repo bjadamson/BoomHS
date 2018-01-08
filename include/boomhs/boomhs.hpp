@@ -30,6 +30,7 @@ load_assets(stlw::Logger &logger, opengl::ShaderPrograms &gfx)
   //"assets/chalet.mtl"
   using namespace opengl;
   auto &d3 = gfx.d3;
+  auto &d2 = gfx.d2;
 
   auto loader = ObjLoader{LOC::WHITE};
   auto house_obj = loader.load_mesh("assets/house_uv.obj", LoadNormals{true}, LoadUvs{true});
@@ -63,7 +64,7 @@ load_assets(stlw::Logger &logger, opengl::ShaderPrograms &gfx)
   auto O_handle = make_letter(d3.O, objs.O);
   auto T_handle = make_letter(d3.T, objs.T);
 
-  auto cube_skybox = OF::copy_texturecube_gpu(logger, d3.skybox);
+  auto skybox = OF::copy_texturecube_gpu(logger, d3.skybox);
   auto cube_textured = OF::copy_texturecube_gpu(logger, d3.texture_cube);
 
   auto cube_colored = OF::copy_colorcube_gpu(logger, d3.color, LOC::BLUE);
@@ -74,29 +75,28 @@ load_assets(stlw::Logger &logger, opengl::ShaderPrograms &gfx)
   auto world_arrows = OF::create_world_axis_arrows(logger, d3.global_x_axis_arrow,
       d3.global_y_axis_arrow, d3.global_z_axis_arrow);
 
-  GpuHandles handles{
-    MOVE(house_handle),
-    MOVE(hashtag_handle),
-    MOVE(at_handle),
-    MOVE(plus_handle),
-    MOVE(arrow_handle),
+  GpuHandles handles;
+  handles.set(HOUSE, MOVE(house_handle));
+  handles.set(HASHTAG, MOVE(hashtag_handle));
+  handles.set(AT, MOVE(at_handle));
+  handles.set(PLUS, MOVE(plus_handle));
+  handles.set(PLAYER_ARROW, MOVE(arrow_handle));
 
-    MOVE(O_handle),
-    MOVE(T_handle),
+  handles.set(COLOR_CUBE, MOVE(cube_colored));
+  handles.set(TEXTURE_CUBE, MOVE(cube_textured));
+  handles.set(SKYBOX, MOVE(skybox));
 
-    MOVE(world_arrows.x_dinfo),
-    MOVE(world_arrows.y_dinfo),
-    MOVE(world_arrows.z_dinfo),
+  handles.set(GLOBAL_AXIS_X, MOVE(world_arrows.x_dinfo));
+  handles.set(GLOBAL_AXIS_Y, MOVE(world_arrows.y_dinfo));
+  handles.set(GLOBAL_AXIS_Z, MOVE(world_arrows.z_dinfo));
 
-    MOVE(cube_skybox),
-    MOVE(cube_textured),
-    MOVE(cube_colored),
-    MOVE(terrain_handle),
-    MOVE(tilemap_handle)};
+  handles.set(TERRAIN, MOVE(terrain_handle));
+  handles.set(TILEMAP, MOVE(tilemap_handle));
+
+  handles.set(ORC, MOVE(O_handle));
+  handles.set(TROLL, MOVE(T_handle));
   return Assets{MOVE(objs), MOVE(handles)};
 }
-
-
 
 template<typename PROXY>
 auto
@@ -118,7 +118,6 @@ make_entities(PROXY &proxy)
 
   entities[COLOR_CUBE_INDEX]->translation = glm::vec3{-2.0f, -2.0f, -2.0f};
   entities[TEXTURE_CUBE_INDEX]->translation = glm::vec3{-4.0f, -4.0f, -2.0f};
-  entities[WIREFRAME_CUBE_INDEX]->translation = glm::vec3{-3.0f, -2.0f, 2.0f};
   entities[SKYBOX_INDEX]->translation = glm::vec3{0.0f, 0.0f, 0.0f};
   entities[HOUSE_INDEX]->translation = glm::vec3{2.0f, 0.0f, -4.0f};
   entities[TERRAIN_INDEX]->translation = glm::vec3{0.0f, 5.0f, 0.0f};
@@ -220,6 +219,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
   }
 
   auto &d3 = gfx.d3;
+  auto &d2 = gfx.d2;
   render::clear_screen(render.background);
 
   // light
@@ -231,20 +231,19 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
   // skybox
   state.skybox.transform.translation = ents[AT_INDEX]->translation;
   if (state.render.draw_skybox) {
-    render::draw(rargs, state.skybox.transform, d3.skybox, handles.cube_skybox);
+    render::draw(rargs, state.skybox.transform, d3.skybox, handles.get("SKYBOX"));
   }
 
   // random
-  render::draw(rargs, *ents[COLOR_CUBE_INDEX], d3.color, handles.cube_colored);
-  render::draw(rargs, *ents[TEXTURE_CUBE_INDEX], d3.texture_cube, handles.cube_textured);
-  //render::draw(rargs, *ents[WIREFRAME_CUBE_INDEX], d3.wireframe, handles.cube_wireframe);
+  render::draw(rargs, *ents[COLOR_CUBE_INDEX], d3.color, handles.get("COLOR_CUBE"));
+  render::draw(rargs, *ents[TEXTURE_CUBE_INDEX], d3.texture_cube, handles.get("TEXTURE_CUBE"));
 
   // house
-  render::draw(rargs, *ents[HOUSE_INDEX], d3.house, handles.house);
+  render::draw(rargs, *ents[HOUSE_INDEX], d3.house, handles.get("HOUSE"));
 
   // tilemap
   render::draw_tilemap(rargs, *ents[TILEMAP_INDEX],
-      {handles.hashtag, d3.hashtag, handles.plus, d3.plus},
+      {handles.get("HASHTAG"), d3.hashtag, handles.get("PLUS"), d3.plus},
       state.tilemap, state.render.tilemap.reveal);
 
   if (state.render.tilemap.show_grid_lines) {
@@ -255,20 +254,20 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
   }
 
   // player
-  render::draw(rargs, *ents[AT_INDEX], d3.at, handles.at);
+  render::draw(rargs, *ents[AT_INDEX], d3.at, handles.get("AT"));
 
   // enemies
-  render::draw(rargs, *ents[ORC_INDEX], d3.O, handles.O);
-  render::draw(rargs, *ents[TROLL_INDEX], d3.T, handles.T);
+  render::draw(rargs, *ents[ORC_INDEX], d3.O, handles.get("ORC"));
+  render::draw(rargs, *ents[TROLL_INDEX], d3.T, handles.get("TROLL"));
 
   // arrow
   //render::draw(rargs, *ents[PLAYER_ARROW_INDEX], d3.arrow, handles.arrow);
 
   // global coordinates
   if (state.render.show_global_axis) {
-    render::draw(rargs, *ents[GLOBAL_AXIS_X_INDEX], d3.global_x_axis_arrow, handles.x_axis_arrow);
-    render::draw(rargs, *ents[GLOBAL_AXIS_Y_INDEX], d3.global_y_axis_arrow, handles.y_axis_arrow);
-    render::draw(rargs, *ents[GLOBAL_AXIS_Z_INDEX], d3.global_z_axis_arrow, handles.z_axis_arrow);
+    render::draw(rargs, *ents[GLOBAL_AXIS_X_INDEX], d3.global_x_axis_arrow, handles.get("GLOBAL_AXIS_X"));
+    render::draw(rargs, *ents[GLOBAL_AXIS_Y_INDEX], d3.global_y_axis_arrow, handles.get("GLOBAL_AXIS_X"));
+    render::draw(rargs, *ents[GLOBAL_AXIS_Z_INDEX], d3.global_z_axis_arrow, handles.get("GLOBAL_AXIS_X"));
   }
 
   // local coordinates
@@ -280,9 +279,9 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
           d3.local_y_axis_arrow,
           d3.local_z_axis_arrow,
           player_pos);
-      render::draw(rargs, *ents[LOCAL_AXIS_X_INDEX], d3.local_x_axis_arrow, world_coords.x_dinfo);
-      render::draw(rargs, *ents[LOCAL_AXIS_Y_INDEX], d3.local_y_axis_arrow, world_coords.y_dinfo);
-      render::draw(rargs, *ents[LOCAL_AXIS_Z_INDEX], d3.local_z_axis_arrow, world_coords.z_dinfo);
+      render::draw(rargs, *ents[LOCAL_AXIS_X_INDEX], d3.local_x_axis_arrow, handles.get("LOCAL_AXIS_X"));
+      render::draw(rargs, *ents[LOCAL_AXIS_Y_INDEX], d3.local_y_axis_arrow, handles.get("LOCAL_AXIS_Y"));
+      render::draw(rargs, *ents[LOCAL_AXIS_Z_INDEX], d3.local_z_axis_arrow, handles.get("LOCAL_AXIS_Z"));
     }
   }
 
@@ -299,12 +298,15 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
     }
     // draw forward arrow (for camera)
     {
-      glm::vec3 const start = player.world_position();
-      glm::vec3 const head = camera.world_position();
+      //glm::vec3 const start = glm::vec3{0.0f, 0.0f, 1.0f};
+      //glm::vec3 const head = glm::vec3{0.0f, 0.0f, 2.0f};
+      glm::vec3 const start = glm::vec3{0, 0, 0};
+      glm::vec3 const head = state.ui_state.last_mouse_clicked_pos;
+
       auto handle = OF::create_arrow(logger, gfx.d3.camera_arrow0,
         OF::ArrowCreateParams{LOC::YELLOW, start, head});
 
-      render::draw(rargs, *ents[CAMERA_ARROW_INDEX0], d3.camera_arrow0, handle);
+      render::draw(rargs, *ents[CAMERA_LOCAL_AXIS0_INDEX], d3.camera_arrow0, handle);
     }
     // draw forward arrow (for camera)
     {
@@ -314,7 +316,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
       auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow1,
         OF::ArrowCreateParams{LOC::PINK, start, head});
 
-      render::draw(rargs, *ents[CAMERA_ARROW_INDEX1], d3.camera_arrow1, handle);
+      render::draw(rargs, *ents[CAMERA_LOCAL_AXIS2_INDEX], d3.camera_arrow1, handle);
     }
     // draw arrow from origin -> camera
     {
@@ -324,7 +326,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &gfx, wind
       auto const handle = OF::create_arrow(logger, gfx.d3.camera_arrow2,
         OF::ArrowCreateParams{LOC::PURPLE, start, head});
 
-      render::draw(rargs, *ents[CAMERA_ARROW_INDEX2], d3.camera_arrow2, handle);
+      render::draw(rargs, *ents[CAMERA_LOCAL_AXIS2_INDEX], d3.camera_arrow2, handle);
     }
   }
 

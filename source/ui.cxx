@@ -5,6 +5,7 @@
 #include <boomhs/state.hpp>
 #include <stlw/format.hpp>
 #include <window/sdl_window.hpp>
+#include <iostream>
 
 namespace
 {
@@ -100,11 +101,28 @@ draw_camera_info(GameState &state)
   ImGui::Separator();
   ImGui::Separator();
   {
-    auto const player_fwd_viewspace = player.model_matrix();
-    //float const theta = glm::dot(glm::vec4{-opengl::Z_UNIT_VECTOR, 1.0f}, player_fwd_viewspace);
-    //ImGui::Text("pfw: '%s', theta: '%s'\n",
-        //glm::to_string(player_fwd_viewspace).c_str(),
-        //std::to_string(theta).c_str());
+    auto const& player_transform = player.transform();
+    auto const scoords = to_spherical(player_transform.translation);
+    auto const ccoords = camera.spherical_coordinates();
+
+    //glm::mat4 const origin_m = glm::translate(glm::mat4{}, glm::vec3{0.0f});
+    //glm::mat4 m = origin_m * glm::toMat4(player.orientation());
+    //glm::vec3 player_fwd = origin_m * glm::vec4{player.forward_vector(), 1.0f};
+    //player_fwd = glm::normalize(player_fwd);
+
+    //glm::vec3 const camera_fwd = camera.forward_vector();
+    //float const theta = acos(glm::dot(player_fwd, camera_fwd));
+    ImGui::Text("player xyz: '%s', player phi: '%s' player theta: '%s'\n",
+        glm::to_string(player_transform.translation).c_str(),
+        std::to_string(scoords.phi).c_str(),
+        std::to_string(scoords.theta).c_str()
+        );
+    ImGui::Separator();
+    ImGui::Text("camera xyz: '%s', camera phi: '%s', camera theta: '%s'\n",
+        glm::to_string(camera.world_position()).c_str(),
+        std::to_string(camera.spherical_coordinates().phi).c_str(),
+        std::to_string(camera.spherical_coordinates().theta).c_str()
+        );
   }
   ImGui::End();
 }
@@ -235,6 +253,7 @@ draw_ui(GameState &state, window::SDLWindow &window)
 
   ImGui::Checkbox("Draw Skybox", &state.render.draw_skybox);
   ImGui::Checkbox("Enter Pressed", &state.ui_state.enter_pressed);
+  ImGui::Checkbox("Mouse Rotation Lock", &state.ui_state.rotate_lock);
 
   auto const window_menu = [&window, &state]() {
     if (ImGui::BeginMenu("Window")) {

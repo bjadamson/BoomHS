@@ -32,8 +32,8 @@ public:
   }
   ~SDLWindow()
   {
-    if (nullptr != this->context_) {
-      SDL_GL_DeleteContext(this->context_);
+    if (nullptr != context_) {
+      SDL_GL_DeleteContext(context_);
     }
   }
 
@@ -55,16 +55,19 @@ public:
   window_type*
   raw()
   {
-    return this->window_.get();
+    return window_.get();
   }
 
   Dimensions
   get_dimensions() const
   {
     int w = 0, h = 0;
-    assert(nullptr != this->window_.get());
-    SDL_GetWindowSize(this->window_.get(), &w, &h);
-    return {w, h};
+    assert(nullptr != window_.get());
+    SDL_GetWindowSize(window_.get(), &w, &h);
+
+    int x, y;
+    SDL_GetWindowPosition(window_.get(), &x, &y);
+    return {x, y, w, h};
   }
 
   void
@@ -77,7 +80,7 @@ public:
       sdl_flags = SDL_WINDOW_FULLSCREEN_DESKTOP;
     }
 
-    int const result = SDL_SetWindowFullscreen(this->window_.get(), sdl_flags);
+    int const result = SDL_SetWindowFullscreen(window_.get(), sdl_flags);
     assert(0 == result);
   }
 };

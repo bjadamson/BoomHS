@@ -22,16 +22,11 @@ struct UiState;
 
 struct SphericalCoordinates
 {
-  float radius;
-  float theta;
-  float phi;
+  float radius = 0.0f;
+  float theta = 0.0f;
+  float phi = 0.0f;
 
-  SphericalCoordinates()
-    : radius(0.0f)
-    , theta(0.0f)
-    , phi(0.0f)
-  {
-  }
+  SphericalCoordinates() = default;
   SphericalCoordinates(float const r, float const t, float const p)
     : radius(r)
     , theta(t)
@@ -47,10 +42,10 @@ struct SphericalCoordinates
   radius_string() const { return std::to_string(this->radius); }
 
   std::string
-  theta_string() const { return std::to_string(this->theta); }
+  theta_string() const { return std::to_string(glm::degrees(this->theta)); }
 
   std::string
-  phi_string() const { return std::to_string(this->phi); }
+  phi_string() const { return std::to_string(glm::degrees(this->phi)); }
 };
 
 glm::vec3
@@ -69,10 +64,15 @@ struct Projection
 
 class Camera
 {
-  SphericalCoordinates coordinates_{1.0f, -2.608, 0.772};
+  SphericalCoordinates coordinates_{0.0f, 0.0f, 0.0f};
+  float extra_theta_ = 0.0f;
   Projection const projection_;
   Transform *target_;
   glm::vec3 forward_, up_;
+
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(Camera);
+  Camera(Projection const&, Transform &, glm::vec3 const& f, glm::vec3 const& u);
 
   glm::mat4
   projection_matrix() const
@@ -85,15 +85,22 @@ class Camera
   glm::mat4
   view_matrix() const;
 
-public:
-  MOVE_CONSTRUCTIBLE_ONLY(Camera);
-
-  Camera(Projection const&, Transform &, glm::vec3 const& f, glm::vec3 const& u);
-
   glm::mat4
   camera_matrix() const
   {
     return projection_matrix() * view_matrix();
+  }
+
+  auto const&
+  projection() const
+  {
+    return projection_;
+  }
+
+  glm::vec3
+  forward_vector() const
+  {
+    return glm::normalize(world_position() - target_position());
   }
 
   void
@@ -125,6 +132,9 @@ public:
   {
     return target_->translation;
   }
+
+  void
+  rotate_behind_player(stlw::Logger &, Player const&);
 
   Camera&
   rotate(stlw::Logger &, UiState &, window::mouse_data const&);

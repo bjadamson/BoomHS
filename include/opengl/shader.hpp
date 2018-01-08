@@ -152,6 +152,22 @@ struct ShaderProgramLightSource3D : public ShaderProgram
   static bool constexpr RECEIVES_LIGHT = false;
 };
 
+struct ShaderProgramAt3D : public ShaderProgram
+{
+  SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramAt3D);
+
+  auto instance_count() const { return 2u; }
+
+  static bool constexpr IS_2D = false;
+  static bool constexpr IS_INSTANCED = true;
+  static bool constexpr IS_SKYBOX = false;
+  static bool constexpr HAS_COLOR_UNIFORM = false;
+  static bool constexpr HAS_TEXTURE = false;
+
+  static bool constexpr IS_LIGHTSOURCE = false;
+  static bool constexpr RECEIVES_LIGHT = true;
+};
+
 struct ShaderProgramHashtag3D : public ShaderProgram
 {
   SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramHashtag3D);
@@ -276,7 +292,7 @@ struct ShaderPrograms2D
 struct ShaderPrograms3D
 {
   ShaderProgramHashtag3D hashtag;
-  ShaderProgramPositionNormalColor3D at;
+  ShaderProgramAt3D at;
   ShaderProgramPlus3D plus;
 
   // alphabet

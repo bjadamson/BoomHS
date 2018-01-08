@@ -22,35 +22,39 @@ using stlw::Logger;
 
 namespace boomhs
 {
+#define DEFINE_BOTH(INDEX, NAME)             \
+  static constexpr char const* NAME = #NAME; \
+  static constexpr int NAME##_INDEX = INDEX
 
-static constexpr std::size_t COLOR_CUBE_INDEX = 0;
-static constexpr std::size_t TEXTURE_CUBE_INDEX = 1;
-static constexpr std::size_t WIREFRAME_CUBE_INDEX = 2;
-static constexpr std::size_t SKYBOX_INDEX = 3;
-static constexpr std::size_t HOUSE_INDEX = 4;
-static constexpr std::size_t AT_INDEX = 5;
-static constexpr std::size_t PLAYER_ARROW_INDEX = 6;
-static constexpr std::size_t TILEMAP_INDEX = 7;
-static constexpr std::size_t TERRAIN_INDEX = 8;
-static constexpr std::size_t CAMERA_INDEX = 9;
-static constexpr std::size_t GLOBAL_AXIS_X_INDEX = 10;
-static constexpr std::size_t GLOBAL_AXIS_Y_INDEX = 11;
-static constexpr std::size_t GLOBAL_AXIS_Z_INDEX = 12;
+DEFINE_BOTH(0, HOUSE);
+DEFINE_BOTH(1, PLAYER_ARROW);
+DEFINE_BOTH(2, COLOR_CUBE);
+DEFINE_BOTH(3, TEXTURE_CUBE);
+DEFINE_BOTH(4, SKYBOX);
 
-static constexpr std::size_t LOCAL_AXIS_X_INDEX = 13;
-static constexpr std::size_t LOCAL_AXIS_Y_INDEX = 14;
-static constexpr std::size_t LOCAL_AXIS_Z_INDEX = 15;
+DEFINE_BOTH(5, GLOBAL_AXIS_X);
+DEFINE_BOTH(6, GLOBAL_AXIS_Y);
+DEFINE_BOTH(7, GLOBAL_AXIS_Z);
+DEFINE_BOTH(8, LOCAL_AXIS_X);
+DEFINE_BOTH(9, LOCAL_AXIS_Y);
+DEFINE_BOTH(10, LOCAL_AXIS_Z);
 
-static constexpr std::size_t LOCAL_FORWARD_INDEX = 16;
-static constexpr std::size_t CAMERA_ARROW_INDEX0 = 17;
-static constexpr std::size_t CAMERA_ARROW_INDEX1 = 18;
-static constexpr std::size_t CAMERA_ARROW_INDEX2 = 19;
+DEFINE_BOTH(10, CAMERA_LOCAL_AXIS0);
+DEFINE_BOTH(11, CAMERA_LOCAL_AXIS1);
+DEFINE_BOTH(12, CAMERA_LOCAL_AXIS2);
+DEFINE_BOTH(13, LOCAL_FORWARD);
 
-static constexpr std::size_t ORC_INDEX = 20;
-static constexpr std::size_t TROLL_INDEX = 21;
+DEFINE_BOTH(14, TERRAIN);
+DEFINE_BOTH(15, TILEMAP);
+DEFINE_BOTH(16, LIGHT);
 
-static constexpr std::size_t LIGHT_INDEX = 22;
-static constexpr std::size_t INDEX_MAX = 23;
+DEFINE_BOTH(17, HASHTAG);
+DEFINE_BOTH(18, AT);
+DEFINE_BOTH(19, PLUS);
+DEFINE_BOTH(20, ORC);
+DEFINE_BOTH(21, TROLL);
+#define INDEX_MAX 22
+#undef DEFINE_BOTH
 
 // other
 static constexpr auto INIT_ATTENUATION_INDEX = 8;
@@ -86,13 +90,16 @@ struct UiState
 {
   bool enter_pressed = false;
   bool block_input = false;
+  bool rotate_lock = false;
   bool flip_y = false;
 
   bool show_lighting_window = false;
 
+
   // primitive buffers
   int eid_buffer = 0;
   glm::vec3 euler_angle_buffer;
+  glm::vec3 last_mouse_clicked_pos;
   int attenuation_current_item = INIT_ATTENUATION_INDEX;
   int entity_window_current = AT_INDEX;
 };

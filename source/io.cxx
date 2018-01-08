@@ -2,6 +2,7 @@
 #include <boomhs/state.hpp>
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_sdl_gl3.h>
+#include <glm/gtx/intersect.hpp>
 #include <stlw/log.hpp>
 #include <iostream>
 
@@ -27,6 +28,32 @@ inline bool is_quit_event(SDL_Event &event)
   }
   }
   return is_quit;
+}
+
+glm::vec2
+getNormalizedCoords(float const x, float const y, float const width, float const height)
+{
+  float const ndc_x = 2.0 * x/width - 1.0;
+  float const ndc_y = 1.0 - 2.0 * y/height; // invert Y axis
+  return glm::vec2{ndc_x, ndc_y};
+}
+
+glm::vec3
+calculateMouseRay(Camera const& camera, int const mouse_x, int const mouse_y, window::Dimensions const& dimensions)
+{
+  glm::vec4 const viewport = glm::vec4(dimensions.x, dimensions.y, dimensions.w, dimensions.h);
+  glm::mat4 const modelview = camera.view_matrix();
+  glm::mat4 const projection = camera.projection_matrix();
+  float const height = dimensions.h;
+  std::cerr << "viewport: '" << glm::to_string(viewport) << "'\n";
+
+  float z = 0.0;
+  glm::vec3 screenPos = glm::vec3(mouse_x, dimensions.h - mouse_y - 1.0f, z);
+  std::cerr << "mouse clickpos: xyz: '" << glm::to_string(screenPos) << "'\n";
+
+  glm::vec3 const worldPos = glm::unProject(screenPos, modelview, projection, viewport);
+  std::cerr << "calculated worldpos: xyz: '" << glm::to_string(worldPos) << "'\n";
+  return worldPos;
 }
 
 bool
@@ -71,7 +98,6 @@ process_event(GameState &state, SDL_Event &event)
 
     bool const left = event.motion.state & SDL_BUTTON_LMASK;
     bool const right = event.motion.state & SDL_BUTTON_RMASK;
-    bool const both = left && right;
 
     auto const rot_player = [&]() {
       float const angle = event.motion.xrel > 0 ? 1.0 : -1.0f;
@@ -175,12 +201,43 @@ process_event(GameState &state, SDL_Event &event)
     // scaling
     case SDLK_KP_PLUS: {
     case SDLK_o:
+      camera.rotate_behind_player(logger, player);
       //et.scale_entities(sf(SCALE_FACTOR));
       break;
     }
     case SDLK_KP_MINUS: {
     case SDLK_p:
-      //et.scale_entities(sf(-SCALE_FACTOR));
+      {
+        // 1) Convert mouse location to
+        // 3d normalised device coordinates
+        int const mouse_x = state.mouse_data.current.x, mouse_y = state.mouse_data.current.y;
+        auto const width = state.dimensions.w, height = state.dimensions.h;
+        float const x = (2.0f * mouse_x) / width - 1.0f;
+        float const y = 1.0f - (2.0f * mouse_y) / height;
+        float const z = 1.0f;
+        glm::vec3 const ray_nds{x, y, z};
+
+        // homongonize coordinates
+        glm::vec4 const ray_clip{ray_nds.x, ray_nds.y, -1.0, 1.0};
+        glm::vec4 ray_eye = glm::inverse(camera.projection_matrix()) * ray_clip;
+        ray_eye.z = -1.0f;
+        ray_eye.w = 0.0f;
+
+        glm::vec3 const ray_wor = glm::normalize(glm::vec3{glm::inverse(camera.view_matrix()) * ray_eye});
+        //std::cerr << "mouse: '" << std::to_string(mouse_x) << "', '" << std::to_string(mouse_y) << "'\n";
+        //std::cerr << "ray_wor: '" << glm::to_string(ray_wor) << "'\n";
+
+        glm::vec3 const ray_dir = ray_eye;
+        glm::vec3 const ray_origin = camera.world_position();
+        glm::vec3 const plane_origin{0, 0, 0};
+        glm::vec3 const plane_normal{0, -1, 0};
+
+        float distance = 0.0f;
+        //bool intersects = glm::intersectRayPlane(ray_origin, ray_dir, plane_origin, plane_normal, distance);
+        //std::cerr << "intersects: '" << intersects << "', distance: '" << distance << "'\n";
+
+        auto const ray = calculateMouseRay(camera, mouse_x, mouse_y, state.dimensions);
+      }
       break;
     }
     // z-rotation

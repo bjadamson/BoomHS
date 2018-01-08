@@ -204,15 +204,20 @@ struct ArrowCreateParams
 {
   Color const& color;
 
-  glm::vec3 const& start;
-  glm::vec3 const& end;
+  glm::vec3 start;
+  glm::vec3 end;
 
   float const tip_length_factor = 4.0f;
 };
 
-template<typename SP>
+struct ArrowEndpoints
+{
+  glm::vec3 p1;
+  glm::vec3 p2;
+};
+
 auto
-create_arrow(stlw::Logger &logger, SP &shader_program, ArrowCreateParams &&params)
+calculate_arrow_endpoints(ArrowCreateParams const& params)
 {
   auto const adjust_if_zero = [=](glm::vec3 const& v) {
     auto constexpr ZERO_VEC = glm::zero<glm::vec3>();
@@ -241,12 +246,19 @@ create_arrow(stlw::Logger &logger, SP &shader_program, ArrowCreateParams &&param
   glm::vec3 const p1 = B - (vp1 / factor);
   glm::vec3 const p2 = B - (vp2 / factor);
 
+  return ArrowEndpoints{p1, p2};
+}
+
+inline auto
+make_arrow_vertices(ArrowCreateParams const& params, ArrowEndpoints const& endpoints)
+{
+  auto const& p1 = endpoints.p1, p2 = endpoints.p2;
 #define COLOR params.color.r, params.color.g, params.color.b, params.color.a
 #define START params.start.x, params.start.y, params.start.z, 1.0f
 #define END params.end.x, params.end.y, params.end.z, 1.0f
 #define P1 p1.x, p1.y, p1.z, 1.0f
 #define P2 p2.x, p2.y, p2.z, 1.0f
-  auto const vertices = stlw::make_array<float>(
+  return stlw::make_array<float>(
       // START -> END
       START, COLOR,
       END, COLOR,
@@ -264,6 +276,36 @@ create_arrow(stlw::Logger &logger, SP &shader_program, ArrowCreateParams &&param
 #undef END
 #undef P1
 #undef P2
+}
+
+template<typename SP>
+auto
+create_arrow_2d(stlw::Logger &logger, SP &shader_program, ArrowCreateParams &&params)
+{
+  //params.start.z = 0.0f;
+  //params.end.z = 0.0f;
+
+  auto endpoints = calculate_arrow_endpoints(params);
+  //endpoints.p1.z = 0.0f;
+  //endpoints.p2.z = 0.0f;
+  auto const vertices = make_arrow_vertices(params, endpoints);
+
+  static constexpr std::array<GLuint, 6> INDICES = {{
+    0, 1, 2, 3, 4, 5
+  }};
+
+  DrawInfo dinfo{GL_LINES, INDICES.size()};
+  detail::copy_to_gpu(logger, shader_program, dinfo, vertices, INDICES);
+  return dinfo;
+}
+
+template<typename SP>
+auto
+create_arrow(stlw::Logger &logger, SP &shader_program, ArrowCreateParams &&params)
+{
+  auto const endpoints = calculate_arrow_endpoints(params);
+  auto const vertices = make_arrow_vertices(params, endpoints);
+
   static constexpr std::array<GLuint, 6> INDICES = {{
     0, 1, 2, 3, 4, 5
   }};

@@ -1,7 +1,15 @@
 #pragma once
-#include <stlw/type_macros.hpp>
+#include <array>
+#include <vector>
+#include <utility>
+#include <opengl/draw_info.hpp>
 #include <opengl/obj.hpp>
 #include <opengl/factory.hpp>
+#include <boomhs/state.hpp>
+#include <stlw/format.hpp>
+#include <stlw/log.hpp>
+#include <stlw/type_macros.hpp>
+#include <stlw/sized_buffer.hpp>
 
 namespace boomhs {
 
@@ -19,27 +27,43 @@ struct Objs {
   MOVE_CONSTRUCTIBLE_ONLY(Objs);
 };
 
-struct GpuHandles {
-  opengl::DrawInfo house;
-  opengl::DrawInfo hashtag;
-  opengl::DrawInfo at;
-  opengl::DrawInfo plus;
-  opengl::DrawInfo arrow;
+class GpuHandles
+{
+  std::vector<opengl::DrawInfo> drawinfos_;
+  std::vector<char const*> names_;
 
-  // Alphabet
-  opengl::DrawInfo O;
-  opengl::DrawInfo T;
+public:
+  GpuHandles() = default;
 
-  opengl::DrawInfo x_axis_arrow;
-  opengl::DrawInfo y_axis_arrow;
-  opengl::DrawInfo z_axis_arrow;
+  std::size_t
+  set(char const* name, opengl::DrawInfo &&di)
+  {
+    auto const pos = drawinfos_.size();
+    drawinfos_.emplace_back(MOVE(di));
+    names_.emplace_back(name);
 
-  opengl::DrawInfo cube_skybox;
-  opengl::DrawInfo cube_textured;
-  opengl::DrawInfo cube_colored;
+    // return the index di was stored in.
+    return pos;
+  }
 
-  opengl::DrawInfo terrain;
-  opengl::DrawInfo tilemap;
+  opengl::DrawInfo const&
+  get(std::size_t const index) const
+  {
+    return drawinfos_[index];
+  }
+
+  opengl::DrawInfo const&
+  get(char const* name) const
+  {
+    FOR(i, names_.size()) {
+      if (names_[i] == name) {
+        return get(i);
+      }
+    }
+    auto const fmt = fmt::sprintf("Error could not find asset '%s'", name);
+    std::cerr << fmt << "\n";
+    std::abort();
+  }
 
   MOVE_CONSTRUCTIBLE_ONLY(GpuHandles);
 };

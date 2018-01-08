@@ -95,6 +95,12 @@ public:
     transform_ = &transform;
   }
 
+  auto const&
+  transform() const
+  {
+    return *transform_;
+  }
+
   glm::mat4
   model_matrix() const { return transform_->model_matrix(); }
 };

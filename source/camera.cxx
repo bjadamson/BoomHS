@@ -2,6 +2,7 @@
 #include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
 #include <limits>
+#include <iostream>
 #include <cmath>
 
 namespace boomhs
@@ -20,8 +21,8 @@ to_cartesian(SphericalCoordinates const& coords)
   float const z = radius * sin_phi * cosf(theta);
 
   //Convert spherical coordinates into Cartesian coordinates
-  //float const x = cos(theta) * sin(phi) * radius;
-  //float const y = sin(theta) * sin(phi) * radius;
+  //float const x = sin(phi) * cos(theta) * radius;
+  //float const y = sin(phi) * sin(theta) * radius;
   //float const z = cos(phi) * radius;
 
   return glm::vec3{x, y, z};
@@ -47,6 +48,7 @@ to_spherical(glm::vec3 cartesian)
     theta += PI;
   }
   float const phi = atan((x2 + y2) / z);
+  //std::cerr << "r: '" << radius << "', theta: '" << theta << "', phi: '" << phi << "'\n";
 
   return SphericalCoordinates{radius, theta, phi};
 }
@@ -61,6 +63,23 @@ Camera::Camera(Projection const& proj, Transform &t,glm::vec3 const& forward, gl
 {
 }
 
+void
+Camera::rotate_behind_player(stlw::Logger &logger, Player const& player)
+{
+  //auto const& player_transform = player.transform();
+  //glm::mat4 const origin_m = glm::translate(glm::mat4{}, glm::vec3{0.0f});
+  //glm::mat4 const m = origin_m * glm::toMat4(player.orientation());
+  //glm::vec3 player_fwd = origin_m * glm::vec4{player.forward_vector(), 1.0f};
+  //player_fwd = glm::normalize(player_fwd);
+
+  //glm::vec3 const camera_fwd = this->forward_vector();
+  //float const theta = acos(glm::dot(player_fwd, camera_fwd));
+  auto const scoords = to_spherical(player.transform().translation);
+  coordinates_.phi = scoords.phi;
+  coordinates_.theta = scoords.theta;
+  //auto const ccoords = this->spherical_coordinates();
+}
+
 Camera&
 Camera::rotate(stlw::Logger &logger, UiState &uistate, window::mouse_data const& mdata)
 {
@@ -71,18 +90,26 @@ Camera::rotate(stlw::Logger &logger, UiState &uistate, window::mouse_data const&
   float const d_theta = mouse_sens.x * delta.x;
   float const d_phi = mouse_sens.y * delta.y;
 
+  float constexpr PI = glm::pi<float>();
+  float constexpr TWO_PI = PI * 2.0f;
+
   {
     auto const& theta = coordinates_.theta;
     coordinates_.theta = (up_.y > 0.0f) ? (theta - d_theta) : (theta + d_theta);
   }
-
-  float constexpr PI = glm::pi<float>();
-  float constexpr TWO_PI = PI * 2.0f;
+  {
+    auto &theta = coordinates_.theta;
+    if (theta > TWO_PI) {
+      theta -= TWO_PI;
+    } else if (theta < -TWO_PI) {
+      theta += TWO_PI;
+    }
+  }
 
   auto &phi = coordinates_.phi;
   float const new_phi = uistate.flip_y ? (phi + d_phi) : (phi - d_phi);
   bool const top_hemisphere = (new_phi > 0 && new_phi < (PI/2.0f)) || (new_phi < -(PI/2.0f) && new_phi > -TWO_PI);
-  if (top_hemisphere) {
+  if (!uistate.rotate_lock || top_hemisphere) {
     phi = new_phi;
   }
 
