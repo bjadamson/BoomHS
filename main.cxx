@@ -23,8 +23,7 @@ make_opengl_sdl_engine(Logger &logger, bool const fullscreen, float const width,
   LOG_DEBUG("Instantiating window instance.");
   DO_TRY(auto window, window::sdl_library::make_window(fullscreen, height, width));
 
-  DO_TRY(auto opengl, opengl::load_shader_programs(logger));
-  return engine::Engine{MOVE(window), MOVE(opengl)};
+  return engine::Engine{MOVE(window)};
 }
 
 int
@@ -42,7 +41,8 @@ main(int argc, char *argv[])
       on_error);
 
   LOG_DEBUG("Starting game loop");
-  engine::start(logger, engine);
+  DO_TRY_OR_ELSE_RETURN(auto _, engine::start(logger, engine),
+        on_error);
 
   LOG_DEBUG("Game loop finished successfully! Ending program now.");
   return EXIT_SUCCESS;

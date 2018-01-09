@@ -180,10 +180,10 @@ draw(RenderArgs const& args, Transform const& transform, SP &shader_program, ope
 struct DrawTilemapArgs
 {
   opengl::DrawInfo const& hashtag_dinfo;
-  opengl::ShaderProgramHashtag3D &hashtag_shader_program;
+  opengl::ShaderProgram &hashtag_shader_program;
 
   opengl::DrawInfo const& plus_dinfo;
-  opengl::ShaderProgramPlus3D &plus_shader_program;
+  opengl::ShaderProgram &plus_shader_program;
 };
 
 template<typename TILEMAP>
@@ -215,24 +215,15 @@ draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs
   tilemap.visit_each(draw_all_tiles);
 }
 
-template<typename SP>
-struct Drawable
-{
-  SP &shader_program;
-  opengl::DrawInfo const& dinfo;
-};
-
 inline void
-draw_tilegrid(RenderArgs const& args, Transform const& transform,
-    Drawable<opengl::ShaderProgramPositionColor3D> &&drawable)
+draw_tilegrid(RenderArgs const& args, Transform const& transform, opengl::ShaderProgram &shader_program,
+    opengl::DrawInfo const& dinfo)
 {
   glm::mat4 const view_matrix = args.camera.camera_matrix();
   auto const model_matrix = transform.model_matrix();
   auto const mvp_matrix = view_matrix * model_matrix;
 
   auto &logger = args.logger;
-  auto &shader_program = drawable.shader_program;
-  auto &dinfo = drawable.dinfo;
   shader_program.use_program(logger);
   opengl::global::vao_bind(dinfo.vao());
 

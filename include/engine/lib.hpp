@@ -27,7 +27,6 @@ using State = game::GameState;
 struct Engine
 {
   ::window::SDLWindow window;
-  opengl::ShaderPrograms opengl_lib;
 
   MOVE_CONSTRUCTIBLE_ONLY(Engine);
 };
@@ -39,7 +38,9 @@ get_dimensions(Engine const& e)
 }
 
 template<typename PROXY>
-void loop(Engine &engine, State &state, PROXY &proxy, game::Assets &assets)
+void
+loop(Engine &engine, State &state, PROXY &proxy, game::DrawHandles &drawhandles,
+    opengl::ShaderPrograms &sp)
 {
   auto &logger = state.logger;
   // Reset Imgui for next game frame.
@@ -62,7 +63,7 @@ void loop(Engine &engine, State &state, PROXY &proxy, game::Assets &assets)
         exec_system(st::randompos_system));
   }
 
-  game::game_loop(state, proxy, engine.opengl_lib, engine.window, assets);
+  game::game_loop(state, proxy, sp, engine.window, drawhandles);
 
   // Render Imgui UI
   ImGui::Render();
@@ -73,7 +74,8 @@ void loop(Engine &engine, State &state, PROXY &proxy, game::Assets &assets)
 
 template<typename PROXY>
 void
-timed_game_loop(PROXY &proxy, Engine &engine, boomhs::GameState &state, boomhs::Assets &assets)
+timed_game_loop(PROXY &proxy, Engine &engine, boomhs::GameState &state, boomhs::DrawHandles &drawhandles,
+    opengl::ShaderPrograms &sp)
 {
   auto &logger = state.logger;
 
@@ -83,7 +85,7 @@ timed_game_loop(PROXY &proxy, Engine &engine, boomhs::GameState &state, boomhs::
   while (!state.quit) {
     window::LTimer frame_timer;
     auto const start = frame_timer.get_ticks();
-    loop(engine, state, proxy, assets);
+    loop(engine, state, proxy, drawhandles, sp);
 
     uint32_t const frame_ticks = frame_timer.get_ticks();
     float constexpr ONE_60TH_OF_A_FRAME = (1/60) * 1000;
@@ -99,7 +101,7 @@ timed_game_loop(PROXY &proxy, Engine &engine, boomhs::GameState &state, boomhs::
   }
 }
 
-inline void
+inline stlw::result<stlw::empty_type, std::string>
 start(stlw::Logger &logger, Engine &engine)
 {
   using namespace opengl;
@@ -120,7 +122,8 @@ start(stlw::Logger &logger, Engine &engine)
   });
 
   LOG_TRACE("Loading assets.");
-  auto assets = game::load_assets(state.logger, engine.opengl_lib);
+  DO_TRY(auto assets, game::load_assets(logger));
+  DO_TRY(auto drawinfos, game::copy_assets_gpu(logger, assets.obj_cache, assets.shader_programs));
 
   auto const init = [&state](auto &system, auto &tdata) { system.init(tdata, state); };
   auto const system_init = [&init](auto &tv) {
@@ -136,9 +139,11 @@ start(stlw::Logger &logger, Engine &engine)
         system_init(st::randompos_system));
 
     LOG_TRACE("systems initialized, entering main loop.");
-    timed_game_loop(proxy, engine, state, assets);
+    timed_game_loop(proxy, engine, state, drawinfos, assets.shader_programs);
     LOG_TRACE("game loop finished.");
   });
+
+  return stlw::empty_type{};
 }
 
 } // ns engine

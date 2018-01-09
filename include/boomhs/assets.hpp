@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <string>
 #include <vector>
 #include <utility>
 #include <opengl/draw_info.hpp>
@@ -13,18 +14,41 @@
 
 namespace boomhs {
 
-struct Objs {
-  opengl::obj house;
-  opengl::obj hashtag;
-  opengl::obj at;
-  opengl::obj plus;
-  opengl::obj arrow;
+class ObjCache
+{
+  using pair_t = std::pair<std::string, opengl::obj>;
+  std::vector<pair_t> objects_;
+public:
+  ObjCache() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(ObjCache);
 
-  // Alphabet
-  opengl::obj O;
-  opengl::obj T;
+  void
+  add_obj(std::string const& name, opengl::obj &&o)
+  {
+    auto pair = std::make_pair(name, MOVE(o));
+    objects_.emplace_back(MOVE(pair));
+  }
 
-  MOVE_CONSTRUCTIBLE_ONLY(Objs);
+  void
+  add_obj(char const* name, opengl::obj &&o)
+  {
+    add_obj(std::string{name}, MOVE(o));
+  }
+
+  auto const&
+  get_obj(char const* name) const
+  {
+    auto const cmp = [&name](auto const& pair) {
+      return pair.first == name;
+    };
+    auto const it = std::find_if(objects_.cbegin(), objects_.cend(), cmp);
+
+    // for now, assume all queries are found
+    assert(it != objects_.cend());
+
+    // yield reference to data
+    return it->second;
+  }
 };
 
 class GpuHandles
@@ -68,11 +92,10 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(GpuHandles);
 };
 
-struct Assets {
-  Objs objects;
+struct DrawHandles {
   GpuHandles handles;
 
-  MOVE_CONSTRUCTIBLE_ONLY(Assets);
+  MOVE_CONSTRUCTIBLE_ONLY(DrawHandles);
 };
 
 } // ns boomhs

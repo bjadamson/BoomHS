@@ -1,5 +1,6 @@
 #pragma once
 #include <extlibs/expected.hpp>
+#include <boost/optional.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/types.hpp>
 
@@ -28,9 +29,14 @@ using result = ::nonstd::expected<T, E>;
   VAR_DECL{*MOVE(V)};
 
 // DO_TRY
-#define DO_TRY_CONCAT(VAR_DECL, V, expr) DO_GENERAL_EVAL(VAR_DECL, _DO_TRY_TEMPORARY_##V, expr)
-#define DO_TRY_EXPAND_VAR(VAR_DECL, to_concat, expr) DO_TRY_CONCAT(VAR_DECL, to_concat, expr)
-#define DO_TRY(VAR_DECL, expr) DO_TRY_EXPAND_VAR(VAR_DECL, __COUNTER__, expr)
+#define DO_TRY_CONCAT(VAR_DECL, TO_CONCAT, expr)                                                   \
+  DO_GENERAL_EVAL(VAR_DECL, _DO_TRY_TEMPORARY_##TO_CONCAT, expr)
+
+#define DO_TRY_EXPAND_VAR(VAR_DECL, to_concat, expr)                                               \
+  DO_TRY_CONCAT(VAR_DECL, to_concat, expr)
+
+#define DO_TRY(VAR_DECL, expr)                                                                     \
+  DO_TRY_EXPAND_VAR(VAR_DECL, __COUNTER__, expr)
 
 // OR_ELSE
 #define DO_GENERAL_OR_ELSE_EVAL(VAR_DECL, V, expr, fn)                                             \

@@ -12,6 +12,23 @@ struct AttributePointerInfo
   GLuint index = 0;
   GLint type = INVALID_TYPE;
   GLsizei component_count = 0;
+
+  AttributePointerInfo() = default;
+
+  COPY_DEFAULT(AttributePointerInfo);
+  AttributePointerInfo(GLuint const i, GLint const t, GLsizei const cc)
+    : index(i)
+    , type(t)
+    , component_count(cc)
+  {
+  }
+  AttributePointerInfo(AttributePointerInfo &&other)
+    : AttributePointerInfo(other.index, other.type, other.component_count)
+  {
+    other.index = 0;
+    other.type = INVALID_TYPE;
+    other.component_count = 0;
+  }
 };
 
 class VertexAttribute
@@ -36,21 +53,42 @@ public:
   void upload_vertex_format_to_glbound_vao(stlw::Logger &) const;
 };
 
-inline
-auto make_vertex_attribute(std::initializer_list<AttributePointerInfo> list)
+template<typename ITB, typename ITE>
+auto
+make_vertex_attribute(ITB const begin, ITE const end)
 {
   // Requested to many APIs. Increase maximum number (more memory per instance required)
-  assert(list.size() <= VertexAttribute::API_BUFFER_SIZE);
+  std::size_t const num_vas = std::distance(begin, end);
+  assert(num_vas <= VertexAttribute::API_BUFFER_SIZE);
 
   std::array<AttributePointerInfo, VertexAttribute::API_BUFFER_SIZE> infos;
-  std::copy(list.begin(), list.end(), infos.begin());
+  std::copy(begin, end, infos.begin());
 
   GLsizei stride = 0;
-  for(auto const& it : list) {
-    stride += it.component_count;
+  for(auto it = begin; it != end; std::advance(it, 1)) {
+    stride += it->component_count;
   }
 
-  return VertexAttribute{list.size(), stride, MOVE(infos)};
+  return VertexAttribute{num_vas, stride, MOVE(infos)};
+}
+
+inline auto
+make_vertex_attribute(std::initializer_list<AttributePointerInfo> apis)
+{
+  return make_vertex_attribute(apis.begin(), apis.end());
+}
+
+template<std::size_t N>
+auto
+make_vertex_attribute(std::array<AttributePointerInfo, N> const& apis)
+{
+  return make_vertex_attribute(apis.begin(), apis.end());
+}
+
+auto
+make_vertex_attribute(std::vector<AttributePointerInfo> const& container)
+{
+  return make_vertex_attribute(container.begin(), container.end());
 }
 
 namespace va // vertex_attribute

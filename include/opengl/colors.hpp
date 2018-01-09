@@ -7,10 +7,11 @@ namespace opengl
 
 struct Color
 {
-  float r, g, b, a;
-
   static constexpr float DEFAULT_ALPHA = 1.0f;
 
+  float r = 1.0, g = 1.0, b = 1.0, a = DEFAULT_ALPHA;
+
+  Color() = default;
   explicit constexpr Color(float rp, float gp, float bp, float ap)
     : r(rp)
     , g(gp)
