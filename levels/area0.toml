@@ -20,10 +20,10 @@ left = "cube_left.jpg"
 top = "cube_top.jpg"
 bottom = "cube_bottom.jpg"
 
-#[[resource]]
-#name = "container"
-#type = "texture:2d"
-#2dtexture = "container.jpg"
+[[resource]]
+name = "container"
+type = "texture:2d"
+filename = "container.jpg"
 
 ################## MESHES #####################
 [[meshes]]
@@ -60,3 +60,19 @@ name = "T"
 normals = true
 uvs = false
 color = [0.000, 1.000, 1.000, 1.000]
+
+########### ENTITY #############
+[[entity]]
+pos = [-2.0, -2.0, -2.0]
+shader = "3d_pos_color"
+color = [0.0, 1.0, 0.0, 1.0]
+
+[[entity]]
+pos = [2.0, 2.0, -2.0]
+shader = "3d_pos_color"
+color = [1.0, 0.0, 0.0, 1.0]
+
+[[entity]]
+pos = [2.0, 2.0, 2.0]
+shader = "3d_pos_color"
+color = [1.0, 0.0, 1.0, 1.0]

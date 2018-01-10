@@ -30,13 +30,13 @@ inline bool is_quit_event(SDL_Event &event)
   return is_quit;
 }
 
-glm::vec2
-getNormalizedCoords(float const x, float const y, float const width, float const height)
-{
-  float const ndc_x = 2.0 * x/width - 1.0;
-  float const ndc_y = 1.0 - 2.0 * y/height; // invert Y axis
-  return glm::vec2{ndc_x, ndc_y};
-}
+//glm::vec2
+//getNormalizedCoords(float const x, float const y, float const width, float const height)
+//{
+  //float const ndc_x = 2.0 * x/width - 1.0;
+  //float const ndc_y = 1.0 - 2.0 * y/height; // invert Y axis
+  //return glm::vec2{ndc_x, ndc_y};
+//}
 
 glm::vec3
 calculateMouseRay(Camera const& camera, int const mouse_x, int const mouse_y, window::Dimensions const& dimensions)

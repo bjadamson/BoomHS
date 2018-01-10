@@ -41,7 +41,7 @@ get_dimensions(Engine const& e)
 template<typename PROXY>
 void
 loop(Engine &engine, State &state, PROXY &proxy, game::DrawHandles &drawhandles,
-    opengl::ShaderPrograms &sp)
+    opengl::ShaderPrograms &sp, game::LoadedEntities const& entities)
 {
   auto &logger = state.logger;
   // Reset Imgui for next game frame.
@@ -64,7 +64,7 @@ loop(Engine &engine, State &state, PROXY &proxy, game::DrawHandles &drawhandles,
         exec_system(st::randompos_system));
   }
 
-  game::game_loop(state, proxy, sp, engine.window, drawhandles);
+  game::game_loop(state, proxy, sp, engine.window, drawhandles, entities);
 
   // Render Imgui UI
   ImGui::Render();
@@ -76,7 +76,7 @@ loop(Engine &engine, State &state, PROXY &proxy, game::DrawHandles &drawhandles,
 template<typename PROXY>
 void
 timed_game_loop(PROXY &proxy, Engine &engine, boomhs::GameState &state, boomhs::DrawHandles &drawhandles,
-    opengl::ShaderPrograms &sp)
+    opengl::ShaderPrograms &sp, game::LoadedEntities const& entities)
 {
   auto &logger = state.logger;
 
@@ -86,7 +86,7 @@ timed_game_loop(PROXY &proxy, Engine &engine, boomhs::GameState &state, boomhs::
   while (!state.quit) {
     window::LTimer frame_timer;
     auto const start = frame_timer.get_ticks();
-    loop(engine, state, proxy, drawhandles, sp);
+    loop(engine, state, proxy, drawhandles, sp, entities);
 
     uint32_t const frame_ticks = frame_timer.get_ticks();
     float constexpr ONE_60TH_OF_A_FRAME = (1/60) * 1000;
@@ -111,20 +111,22 @@ start(stlw::Logger &logger, Engine &engine)
   ImGui_ImplSdlGL3_Init(engine.window.raw());
   ON_SCOPE_EXIT([]() { ImGui_ImplSdlGL3_Shutdown(); });
 
+  LOG_TRACE("Loading assets.");
+  DO_TRY(auto assets, game::load_assets(logger));
+
+  LOG_TRACE("Copy assets to GPU.");
+  DO_TRY(auto drawinfos, game::copy_assets_gpu(logger, assets.obj_cache, assets.shader_programs));
+
   // Create an ECST context.
   LOG_TRACE("creating ecst context ...");
   auto ctx = ecst_setup::make_context();
 
   LOG_TRACE("stepping ecst once");
-  auto state = ctx->step([&logger, &engine](auto &proxy) {
+  auto state = ctx->step([&assets, &logger, &engine](auto &proxy) {
       auto const dimensions = engine::get_dimensions(engine);
       auto &imgui = ImGui::GetIO();
-      return game::init(logger, proxy, imgui, dimensions);
+      return game::init(logger, proxy, imgui, dimensions, assets.loaded_entities);
   });
-
-  LOG_TRACE("Loading assets.");
-  DO_TRY(auto assets, game::load_assets(logger));
-  DO_TRY(auto drawinfos, game::copy_assets_gpu(logger, assets.obj_cache, assets.shader_programs));
 
   auto const init = [&state](auto &system, auto &tdata) { system.init(tdata, state); };
   auto const system_init = [&init](auto &tv) {
@@ -140,7 +142,7 @@ start(stlw::Logger &logger, Engine &engine)
         system_init(st::randompos_system));
 
     LOG_TRACE("systems initialized, entering main loop.");
-    timed_game_loop(proxy, engine, state, drawinfos, assets.shader_programs);
+    timed_game_loop(proxy, engine, state, drawinfos, assets.shader_programs, assets.loaded_entities);
     LOG_TRACE("game loop finished.");
   });
 

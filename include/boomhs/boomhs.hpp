@@ -1,5 +1,6 @@
 #pragma once
 #include <cassert>
+#include <boost/algorithm/string.hpp>
 #include <boost/optional.hpp>
 #include <imgui/imgui.hpp>
 
@@ -57,7 +58,6 @@ copy_assets_gpu(stlw::Logger &logger, ObjCache const& obj_cache, opengl::ShaderP
   auto const copy_cubecolor = [&logger](auto const& shader, opengl::Color const color) {
     return OF::copy_colorcube_gpu(logger, shader, color);
   };
-  handles.set(COLOR_CUBE, copy_cubecolor(sps.ref_sp("3d_pos_color"), LOC::BLUE));
   handles.set(TERRAIN, copy_cubecolor(sps.ref_sp("3d_pos_color"), LOC::SADDLE_BROWN));
 
   // world-axis
@@ -88,7 +88,6 @@ make_entities(PROXY &proxy)
     make_entity();
   }
 
-  entities[COLOR_CUBE_INDEX]->translation = glm::vec3{-2.0f, -2.0f, -2.0f};
   entities[TEXTURE_CUBE_INDEX]->translation = glm::vec3{-4.0f, -4.0f, -2.0f};
   entities[SKYBOX_INDEX]->translation = glm::vec3{0.0f, 0.0f, 0.0f};
   entities[HOUSE_INDEX]->translation = glm::vec3{2.0f, 0.0f, -4.0f};
@@ -98,7 +97,29 @@ make_entities(PROXY &proxy)
 
 template<typename PROXY>
 auto
-init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions const& dimensions)
+make_dynamic_entities(PROXY &proxy, LoadedEntities const& loaded_entites)
+{
+  std::vector<Transform*> entities;
+  for (auto const& it : loaded_entites) {
+    auto eid = proxy.create_entity();
+
+    // assign through the reference
+    auto &p = proxy.add_component(ct::transform, eid);
+    *&p = it.transform;
+
+    if (it.shader && it.color) {
+    }
+
+    entities.emplace_back(&p);
+  }
+
+  return entities;
+}
+
+template<typename PROXY>
+auto
+init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions const& dimensions,
+    LoadedEntities const& entities_from_file)
 {
   auto const fheight = dimensions.h;
   auto const fwidth = dimensions.w;
@@ -116,13 +137,17 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   stlw::float_generator rng;
   auto tmap_startingpos = level_generator::make_tilemap(80, 1, 45, rng);
   auto tmap = MOVE(tmap_startingpos.first);
-  auto entities = make_entities(proxy);
 
-  auto &skybox_ent = *entities[SKYBOX_INDEX];
-  auto &player_ent = *entities[AT_INDEX];
+  // TODO: HACK (FOR NOW, static entities are infront of the dynamic entities)
+  auto dynamic_entities = make_dynamic_entities(proxy, entities_from_file);
+  auto static_entities = make_entities(proxy);
+  auto entities = stlw::combine_vectors(MOVE(static_entities), MOVE(dynamic_entities));
+
+  auto &skybox_ent = *static_entities[SKYBOX_INDEX];
+  auto &player_ent = *static_entities[AT_INDEX];
   player_ent.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
 
-  auto &light_ent = *entities[LIGHT_INDEX];
+  auto &light_ent = *static_entities[LIGHT_INDEX];
   light_ent.scale = glm::vec3{0.2f};
 
   // camera-look at origin
@@ -134,13 +159,9 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
     auto &startingpos = tmap_startingpos.second;
     auto const pos = glm::vec3{startingpos.x, startingpos.y, startingpos.z};
     player.move_to(pos);
-
     light_ent.translation = pos;
-    //light_ent.translation.y += 1.0f;
-    //light_ent.translation.z += 5.0f;
   }
   Camera camera(proj, player_ent, FORWARD, UP);
-
   GameState gs{logger, imgui, dimensions, MOVE(rng), MOVE(tmap), MOVE(entities), MOVE(camera),
       MOVE(player), MOVE(Skybox{skybox_ent})};
   return MOVE(gs);
@@ -148,7 +169,7 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
 
 template<typename PROXY>
 void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &sps, window::SDLWindow &window,
-    DrawHandles &drawhandles)
+    DrawHandles &drawhandles, LoadedEntities const& entities_from_file)
 {
   auto &player = state.player;
   auto &mouse = state.mouse;
@@ -178,6 +199,21 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &sps, wind
 
   render::clear_screen(render.background);
 
+  // render entites from the file
+  for (auto const& et : entities_from_file) {
+    auto const shader_name = *et.shader;
+    auto &shader_ref = sps.ref_sp(shader_name.c_str());
+
+    if (et.shader && et.color) {
+      auto handle = OF::copy_colorcube_gpu(logger, shader_ref, *et.color);
+      render::draw(rargs, et.transform, shader_ref, handle);
+    } else if (et.shader) {
+      // TODO: TOTAL HACK (won't work, especially since they aren't added to level file yet.
+      //auto &handle = handles.get(handle_name.c_str());
+      //render::draw(rargs, et.transform, shader_ref, handle);
+    }
+  }
+
   // light
   {
     auto light_handle = OF::copy_colorcube_gpu(logger, sps.ref_sp("light"), state.light.diffuse);
@@ -191,7 +227,6 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &sps, wind
   }
 
   // random
-  render::draw(rargs, *ents[COLOR_CUBE_INDEX], sps.ref_sp("3d_pos_color"), handles.get("COLOR_CUBE"));
   render::draw(rargs, *ents[TEXTURE_CUBE_INDEX], sps.ref_sp("3dcube_texture"), handles.get("TEXTURE_CUBE"));
 
   // house

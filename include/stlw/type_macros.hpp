@@ -40,6 +40,9 @@
   decltype(auto) begin() { return CONTAINER.begin(); }                                             \
   decltype(auto) end() { return CONTAINER.end(); }                                                 \
                                                                                                    \
+  decltype(auto) begin() const { return CONTAINER.begin(); }                                       \
+  decltype(auto) end() const { return CONTAINER.end(); }                                           \
+                                                                                                   \
   decltype(auto) cbegin() const { return CONTAINER.cbegin(); }                                     \
   decltype(auto) cend() const { return CONTAINER.cend(); }
 

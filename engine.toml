@@ -33,20 +33,21 @@ name = "3dtexture"
 vertex = "3dtexture.vert"
 fragment = "3dtexture.frag"
 va = "vertex_normal_uvs"
+has_texture = "true"
 
 [[shaders]]
 name = "3dcube_texture"
 vertex = "3dcube_texture.vert"
 fragment = "3dcube_texture.frag"
 va = "vertex_only"
-has_texture = "cube"
+has_texture = "true"
 
 [[shaders]]
 name = "skybox"
 vertex = "3dcube_texture.vert"
 fragment = "3dcube_texture.frag"
 va = "vertex_only"
-has_texture = "skybox"
+has_texture = "true"
 is_skybox = true
 
 [[shaders]]

@@ -96,6 +96,44 @@ get_bool_or_abort(CppTable const& table, char const* name)
   return get_or_abort<bool>(table, name);
 }
 
+boost::optional<opengl::Color>
+get_color(CppTable const& table, char const* name)
+{
+  auto const load_colors = table->template get_array_of<double>(name);
+  if (!load_colors) {
+    return boost::none;
+  }
+
+  auto const& c = *load_colors;
+  opengl::Color color;
+  color.r = c[0];
+  color.g = c[1];
+  color.b = c[2];
+  color.a = c[3];
+  return boost::make_optional(color);
+}
+
+boost::optional<glm::vec3>
+get_vec3(CppTable const& table, char const* name)
+{
+  auto const load_data = table->template get_array_of<double>(name);
+  if (!load_data) {
+    return boost::none;
+  }
+  auto const& ld = *load_data;
+  return glm::vec3{ld[0], ld[1], ld[2]};
+}
+
+glm::vec3
+get_vec3_or_abort(CppTable const& table, char const* name)
+{
+  auto const vec3_data = get_vec3(table, name);
+  if (!vec3_data) {
+    std::abort();
+  }
+  return *vec3_data;
+}
+
 auto
 load_meshes(opengl::ObjLoader &loader, CppTableArray const& mesh_table)
 {
@@ -110,14 +148,9 @@ load_meshes(opengl::ObjLoader &loader, CppTableArray const& mesh_table)
 
     // cpptoml (not sure if TOML in general) won't let me have an array of floats,
     // so an array of doubles (buffer) is used to read from the file.
-    auto const load_colors = table->template get_array_of<double>("color");
-    if (load_colors) {
-      opengl::Color color;
-      color.r = (*load_colors)[0];
-      color.g = (*load_colors)[1];
-      color.b = (*load_colors)[2];
-      color.a = (*load_colors)[3];
-      loader.set_color(color);
+    auto const color_o = get_color(table, "color");
+    if (color_o) {
+      loader.set_color(*color_o);
     }
     auto mesh = loader.load_mesh(obj.c_str(), mtl.c_str(), normals, uvs);
     return std::make_pair(name, MOVE(mesh));
@@ -145,7 +178,7 @@ public:
     pair_.emplace_back(MOVE(pair));
   }
 
-  auto
+  opengl::VertexAttribute
   get_copy_of_va(std::string const& va_name)
   {
     auto const cmp = [&va_name](auto const& it) { return it.first == va_name; };
@@ -198,26 +231,58 @@ auto
 load_resources(stlw::Logger &logger, CppTable const& config)
 {
   ResourceTable rtable;
-  auto const resource_table = get_table_array_or_abort(config, "resource");
-
-  for (auto const& resource : *resource_table) {
+  auto const load_resource = [&rtable](auto const& resource) {
     auto const name = get_string_or_abort(resource, "name");
     auto const type = get_string_or_abort(resource, "type");
 
-    // TODO: support other types than 3dcube texture's
-    assert(type == "texture:3dcube");
+    if (type == "texture:3dcube") {
+      auto const front = get_string_or_abort(resource, "front");
+      auto const right = get_string_or_abort(resource, "right");
+      auto const back = get_string_or_abort(resource, "back");
+      auto const left = get_string_or_abort(resource, "left");
+      auto const top = get_string_or_abort(resource, "top");
+      auto const bottom = get_string_or_abort(resource, "bottom");
 
-    auto const front = get_string_or_abort(resource, "front");
-    auto const right = get_string_or_abort(resource, "right");
-    auto const back = get_string_or_abort(resource, "back");
-    auto const left = get_string_or_abort(resource, "left");
-    auto const top = get_string_or_abort(resource, "top");
-    auto const bottom = get_string_or_abort(resource, "bottom");
+      TextureFilenames texture_names{name, {front, right, back, left, top, bottom}};
+      rtable.add_texture(MOVE(texture_names));
+    } else if (type == "texture:2d") {
+      auto const filename = get_string_or_abort(resource, "filename");
+      std::cerr << "loading resource (name): '" << name << "', filename: '" << filename << "'\n";
+      TextureFilenames texture_names{name, {filename}};
+      rtable.add_texture(MOVE(texture_names));
+    }
+  };
 
-    TextureFilenames texture_names{name, {front, right, back, left, top, bottom}};
-    rtable.add_texture(MOVE(texture_names));
-  }
+  auto const resource_table = get_table_array_or_abort(config, "resource");
+  std::for_each(resource_table->begin(), resource_table->end(), load_resource);
   return rtable;
+}
+
+auto
+load_entities(stlw::Logger &logger, CppTable const& config)
+{
+  auto const load_entity = [](auto const& entity) {
+    auto shader = get_string_or_abort(entity, "shader");
+    auto pos = get_vec3_or_abort(entity, "pos");
+    auto color = get_color(entity, "color");
+
+    Transform transform;
+    transform.translation = pos;
+
+    // TODO: allow reading in a texture name here??
+    return boomhs::EntityInfo{MOVE(transform), shader, color};
+  };
+
+  LoadedEntities entities;
+  auto const entity_table = get_table_array(config, "entity");
+  if (!entity_table) {
+    return entities;
+  }
+  for (auto const& it : *entity_table) {
+    auto entity = load_entity(it);
+    entities.data.emplace_back(MOVE(entity));
+  }
+  return entities;
 }
 
 using LoadResult = stlw::result<std::pair<std::string, opengl::ShaderProgram>, std::string>;
@@ -259,18 +324,21 @@ upload_sp_textures(stlw::Logger &logger, ShaderPrograms &shader_programs,
     ResourceTable const& resource_table, CppTable const& table)
 {
   auto const upload_texture = [&logger, &resource_table, &table](auto &shader_program) {
-    auto const texture_name = get_string(table, "has_texture");
-    if (texture_name) {
-      // find resource
-      auto const textures = resource_table.get_texture(*texture_name);
-      auto const& filenames = textures.filenames;
-      if (textures.is_3dcube()) {
-        auto texture = opengl::texture::upload_3dcube_texture(logger, filenames);
-        shader_program.texture = boost::make_optional(MOVE(texture));
-      } else if (textures.is_2d()) {
-        auto texture = opengl::texture::allocate_texture(logger, filenames[0]);
-        shader_program.texture = boost::make_optional(MOVE(texture));
-      }
+    auto const has_texture_o = get_bool(table, "has_texture");
+    if (!has_texture_o) {
+      return;
+    }
+
+    // find resource
+    auto const filename = get_string_or_abort(table, "filename");
+    auto const textures = resource_table.get_texture(filename);
+    auto const& filenames = textures.filenames;
+    if (textures.is_3dcube()) {
+      auto texture = opengl::texture::upload_3dcube_texture(logger, filenames);
+      shader_program.texture = boost::make_optional(MOVE(texture));
+    } else if (textures.is_2d()) {
+      auto texture = opengl::texture::allocate_texture(logger, filenames[0]);
+      shader_program.texture = boost::make_optional(MOVE(texture));
     }
   };
   for (auto &pair : shader_programs) {
@@ -306,8 +374,8 @@ load_vas(CppTable const& config)
     return cpptoml::option<opengl::AttributePointerInfo>{MOVE(api)};
   };
 
-  auto const add_next_found = [&](auto &apis, auto const& va_table, std::size_t const index) {
-    auto data_o = read_data(va_table, index);
+  auto const add_next_found = [&read_data](auto &apis, auto const& table, std::size_t const index) {
+    auto data_o = read_data(table, index);
     bool const data_read = !!data_o;
     if (data_read) {
       auto data = MOVE(*data_o);
@@ -317,14 +385,15 @@ load_vas(CppTable const& config)
   };
 
   ParsedVertexAttributes pvas;
-  for(auto const& va_table : *vas_table_array) {
-    auto const name = get_string_or_abort(va_table, "name");
+  auto const fn = [&pvas, &add_next_found](auto const& table) {
+    auto const name = get_string_or_abort(table, "name");
 
     std::size_t i = 0u;
     std::vector<opengl::AttributePointerInfo> apis;
-    while(add_next_found(apis, va_table, i++)) {}
+    while(add_next_found(apis, table, i++)) {}
     pvas.add(name, make_vertex_attribute(apis));
-  }
+  };
+  std::for_each((*vas_table_array).begin(), (*vas_table_array).end(), fn);
   return pvas;
 }
 
@@ -352,7 +421,8 @@ load_assets(stlw::Logger &logger)
   auto loader = opengl::ObjLoader{LOC::WHITE};
   auto meshes = load_meshes(loader, mesh_table);
 
-  return Assets{MOVE(meshes), MOVE(shader_programs)};
+  auto entities = load_entities(logger, area_config);
+  return Assets{MOVE(meshes), MOVE(shader_programs), MOVE(entities)};
 }
 
 } // ns boomhs

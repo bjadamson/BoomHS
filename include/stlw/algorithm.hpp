@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <cassert>
+#include <vector>
 #include <utility>
 #include <stlw/tuple.hpp>
 
@@ -8,6 +9,18 @@
 
 namespace stlw
 {
+
+template<typename T>
+auto
+combine_vectors(std::vector<T> &&a, std::vector<T> &&b)
+{
+  std::vector<T> dest;
+  dest.reserve(a.size() + b.size());
+
+  dest.insert(dest.end(), a.cbegin(), a.cend());
+  dest.insert(dest.end(), b.cbegin(), b.cend());
+  return MOVE(dest);
+}
 
 namespace concat_array_algortithm
 {

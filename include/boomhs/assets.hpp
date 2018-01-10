@@ -5,8 +5,6 @@
 #include <opengl/factory.hpp>
 #include <opengl/shader.hpp>
 
-#include <boomhs/state.hpp>
-
 #include <stlw/format.hpp>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
@@ -56,11 +54,30 @@ public:
   }
 };
 
+struct EntityInfo
+{
+  Transform const transform;
+
+  // THOUGHT: It doesn't make sense to have a "color" but not a "shader".
+  //
+  // We lost our compile time guarantees, how to compensate?
+  boost::optional<std::string> const shader;
+  boost::optional<opengl::Color> const color;
+};
+
+struct LoadedEntities
+{
+  std::vector<EntityInfo> data;
+
+  BEGIN_END_FORWARD_FNS(data);
+};
+
 // TODO: not final by any means..
 struct Assets
 {
   ObjCache obj_cache;
   opengl::ShaderPrograms shader_programs;
+  LoadedEntities loaded_entities;
 };
 
 class GpuHandles

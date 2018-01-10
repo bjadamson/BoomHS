@@ -21,6 +21,7 @@ Boom Headshot?!
 #### links
 * https://github.com/cbaggers/cepl
 
+![Alt text](/screenshots/13.png?raw=true "01/10/2018")
 ![Alt text](/screenshots/12.png?raw=true "01/02/2018")
 ![Alt text](/screenshots/11.png?raw=true "01/02/2018")
 ![Alt text](/screenshots/10.png?raw=true "12/29/2017")
@@ -28,9 +29,3 @@ Boom Headshot?!
 ![Alt text](/screenshots/8.png?raw=true "12/21/2017")
 ![Alt text](/screenshots/7.png?raw=true "12/16/2017")
 ![Alt text](/screenshots/6.png?raw=true "12/14/2017")
-![Alt text](/screenshots/hashtag_plus.png?raw=true "Hashtag Plus.")
-![Alt text](/screenshots/hashtag_grid.png?raw=true "Hashtag.")
-![Alt text](/screenshots/house_broken.png?raw=true "House broken.")
-![Alt text](/screenshots/early_shapes.png?raw=true "Some shapes being shoved at OpenGL under various transformations.")
-![Alt text](/screenshots/3d_movement.png?raw=true "Basic 3d camera implemented.")
-![Alt text](/screenshots/clusterfuck.png?raw=true "Clusterfuck of shapes using the burrito.")
