@@ -5,15 +5,12 @@
 
 #include <opengl/glew.hpp>
 #include <opengl/global.hpp>
-#include <opengl/resources.hpp>
 
 #include <stlw/format.hpp>
 #include <stlw/tuple.hpp>
 
 namespace opengl
 {
-
-static constexpr auto TEXTURE_RESOURCES = resources::make_texture_table();
 
 struct texture_info {
   GLenum mode;
@@ -49,10 +46,10 @@ load_image_into_memory(L &logger, char const* path)
 
 template<typename L>
 void
-upload_image(L &logger, IMAGES const& image, GLenum const target)
+upload_image(L &logger, std::string const& filename, GLenum const target)
 {
-  char const *path = TEXTURE_RESOURCES[image];
-  auto const image_data = load_image_into_memory(logger, path);
+  std::string const path = "assets/" + filename;
+  auto const image_data = load_image_into_memory(logger, path.c_str());
 
   auto const width = image_data.width;
   auto const height = image_data.height;
@@ -68,7 +65,7 @@ namespace texture
 
 template <typename L>
 static auto
-allocate_texture(L &logger, IMAGES const& image)
+allocate_texture(L &logger, std::string const& filename)
 {
   GLenum constexpr TEXTURE_MODE = GL_TEXTURE_2D;
 
@@ -87,19 +84,16 @@ allocate_texture(L &logger, IMAGES const& image)
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  impl::upload_image(logger, image, TEXTURE_MODE);
+  impl::upload_image(logger, filename, TEXTURE_MODE);
   return t;
 }
 
-template<typename L, typename ...IMAGES>
+template<typename L>
 static auto
-upload_3dcube_texture(L &logger, IMAGES const&... images)
+upload_3dcube_texture(L &logger, std::vector<std::string> const& paths)
 {
+  assert(paths.size() == 6);
   GLenum constexpr TEXTURE_MODE = GL_TEXTURE_CUBE_MAP;
-
-  // Here is our guarantee, allowing us to have the convenient interface.
-  auto constexpr N = 6;
-  static_assert(N == sizeof...(IMAGES), "Uploading a 3D cube requires 6 images.");
 
   static constexpr auto directions = {
     GL_TEXTURE_CUBE_MAP_POSITIVE_Z, // back
@@ -119,11 +113,11 @@ upload_3dcube_texture(L &logger, IMAGES const&... images)
   ON_SCOPE_EXIT([&t]() { global::texture_unbind(t); });
   LOG_ANY_GL_ERRORS(logger, "texture_bind");
 
-  auto const upload_fn = [&logger](auto const image, auto const& target) {
-      impl::upload_image(logger, image, target);
+  auto const upload_fn = [&logger](std::string const& filename, auto const& target) {
+      impl::upload_image(logger, filename, target);
   };
-  auto const images_tuple = std::make_tuple(images...);
-  stlw::zip(upload_fn, directions.begin(), images_tuple);
+  auto const paths_tuple = std::make_tuple(paths[0], paths[1], paths[2], paths[3], paths[4], paths[5]);
+  stlw::zip(upload_fn, directions.begin(), paths_tuple);
 
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

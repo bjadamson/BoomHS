@@ -1,0 +1,62 @@
+title = "Level 0"
+
+[[resource]]
+name = "skybox"
+type = "texture:3dcube"
+front = "sb_front.jpg"
+right = "sb_right.jpg"
+back = "sb_back.jpg"
+left = "sb_left.jpg"
+top = "sb_top.jpg"
+bottom = "sb_bottom.jpg"
+
+[[resource]]
+name = "cube"
+type = "texture:3dcube"
+front = "cube_front.jpg"
+right = "cube_right.jpg"
+back = "cube_back.jpg"
+left = "cube_left.jpg"
+top = "cube_top.jpg"
+bottom = "cube_bottom.jpg"
+
+#[[resource]]
+#name = "container"
+#type = "texture:2d"
+#2dtexture = "container.jpg"
+
+################## MESHES #####################
+[[meshes]]
+name = "house_uv"
+normals = true
+uvs = true
+
+[[meshes]]
+name = "hashtag"
+normals = true
+uvs = false
+color = [1.000, 1.000, 1.000, 1.000]
+
+[[meshes]]
+name = "at"
+normals = true
+uvs = false
+color = [1.000, 0.647, 0.000, 1.000] # ORANGE
+
+[[meshes]]
+name = "plus"
+normals = true
+uvs = false
+color = [0.000, 0.000, 1.000, 1.000]
+
+[[meshes]]
+name = "O"
+normals = true
+uvs = false
+color = [1.000, 0.000, 1.000, 1.000]
+
+[[meshes]]
+name = "T"
+normals = true
+uvs = false
+color = [0.000, 1.000, 1.000, 1.000]

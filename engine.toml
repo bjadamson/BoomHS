@@ -1,23 +1,4 @@
-title = "Level 0"
-
-[[resources]]
-sb_textures = [
-  "sb_front.jpg",
-  "sb_right.jpg",
-  "sb_back.jpg",
-  "sb_left.jpg",
-  "sb_top.jpg",
-  "sb_bottom.jpg"
-  ]
-
-cube_textures = [
-  "cube_front.jpg",
-  "cube_right.jpg",
-  "cube_back.jpg",
-  "cube_left.jpg",
-  "cube_top.jpg",
-  "cube_bottom.jpg"
-  ]
+title = "Engine Configuration"
 
 ######### VERTEX ATTRIBUTE INFOS ######
 [[vas]]
@@ -55,18 +36,17 @@ va = "vertex_normal_uvs"
 
 [[shaders]]
 name = "3dcube_texture"
-vertex = "3dtexture.vert"
 vertex = "3dcube_texture.vert"
 fragment = "3dcube_texture.frag"
 va = "vertex_only"
-has_texture = true
+has_texture = "cube"
 
 [[shaders]]
 name = "skybox"
 vertex = "3dcube_texture.vert"
 fragment = "3dcube_texture.frag"
 va = "vertex_only"
-has_texture = true
+has_texture = "skybox"
 is_skybox = true
 
 [[shaders]]
@@ -83,7 +63,9 @@ fragment = "3d_pos_color.frag"
 va = "vertex_color"
 
 ############# letters
+
 [[shaders]]
+name = "hashtag"
 vertex = "3d_hashtag.vert"
 fragment = "3d_pos_normal_color.frag"
 va = "vertex_normal_color"
@@ -91,49 +73,15 @@ instance_count = 3
 receives_light = true
 
 [[shaders]]
+name = "plus"
 vertex = "3d_plus.vert"
 fragment = "3d_pos_normal_color.frag"
 va = "vertex_normal_color"
 receives_light = true
 
 [[shaders]]
+name = "light"
 vertex = "light.vert"
 fragment = "light.frag"
 va = "vertex_color"
 is_lightsource = true
-
-################## MESHES #####################
-[[meshes]]
-name = "house_uv"
-normals = true
-uvs = true
-
-[[meshes]]
-name = "hashtag"
-normals = true
-uvs = false
-color = [1.000, 1.000, 1.000, 1.000]
-
-[[meshes]]
-name = "at"
-normals = true
-uvs = false
-color = [1.000, 0.647, 0.000, 1.000] # ORANGE
-
-[[meshes]]
-name = "plus"
-normals = true
-uvs = false
-color = [0.000, 0.000, 1.000, 1.000]
-
-[[meshes]]
-name = "O"
-normals = true
-uvs = false
-color = [1.000, 0.000, 1.000, 1.000]
-
-[[meshes]]
-name = "T"
-normals = true
-uvs = false
-color = [0.000, 1.000, 1.000, 1.000]

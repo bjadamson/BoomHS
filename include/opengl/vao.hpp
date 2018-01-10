@@ -1,5 +1,6 @@
 #pragma once
 #include <opengl/glew.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace opengl
 {

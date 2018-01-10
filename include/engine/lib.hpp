@@ -17,6 +17,7 @@
 #include <boomhs/assets.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/boomhs.hpp>
+#include <boomhs/level_loader.hpp>
 
 namespace engine
 {

@@ -61,9 +61,9 @@ bind_stuff_and_draw(stlw::Logger &logger, SP &shader_program, opengl::DrawInfo c
 {
   using namespace opengl;
 
-  if constexpr (SP::HAS_TEXTURE) {
-    opengl::global::texture_bind(shader_program.texture());
-    ON_SCOPE_EXIT([&shader_program]() { opengl::global::texture_unbind(shader_program.texture()); });
+  if (shader_program.texture) {
+    opengl::global::texture_bind(*shader_program.texture);
+    ON_SCOPE_EXIT([&shader_program]() { opengl::global::texture_unbind(*shader_program.texture); });
     fn(dinfo);
   } else {
     fn(dinfo);
@@ -77,9 +77,9 @@ void render_element_buffer(stlw::Logger &logger, SP &shader_program, opengl::Dra
   auto const num_indices = dinfo.num_indices();
   auto constexpr OFFSET = nullptr;
 
-  if constexpr (SP::IS_INSTANCED) {
-    auto const instance_count = shader_program.instance_count();
-    glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, instance_count);
+  if (shader_program.instance_count) {
+    auto const ic = *shader_program.instance_count;
+    glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
   } else {
     glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
   }
@@ -102,7 +102,7 @@ draw_3dshape(RenderArgs const &args, glm::mat4 const& model_matrix, SP &shader_p
     // various matrices
     shader_program.set_uniform_matrix_4fv(logger, "u_mvpmatrix", view_matrix * model_matrix);
 
-    if constexpr (SP::RECEIVES_LIGHT) {
+    if (shader_program.receives_light) {
       shader_program.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
       shader_program.set_uniform_vec3(logger, "u_viewpos", camera.world_position());
       {
@@ -127,7 +127,7 @@ draw_3dshape(RenderArgs const &args, glm::mat4 const& model_matrix, SP &shader_p
       shader_program.set_uniform_float1(logger, "u_player.cutoff",  glm::cos(glm::radians(90.0f)));
     }
 
-    if constexpr (SP::IS_SKYBOX) {
+    if (shader_program.is_skybox) {
       disable_depth_tests();
       render_element_buffer(logger, shader_program, dinfo);
       enable_depth_tests();
@@ -167,7 +167,7 @@ draw(RenderArgs const& args, Transform const& transform, SP &shader_program, ope
   shader_program.use_program(logger);
   opengl::global::vao_bind(dinfo.vao());
 
-  if constexpr (SP::IS_2D) {
+  if (shader_program.is_2d) {
     disable_depth_tests();
     detail::draw_2dshape(args, transform, shader_program, dinfo);
     enable_depth_tests();

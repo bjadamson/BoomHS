@@ -61,7 +61,7 @@ copy_to_gpu(stlw::Logger &logger, SP &shader_program, DrawInfo const& dinfo, VER
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, indices_data, GL_STATIC_DRAW);
 }
 
-auto
+inline auto
 cube_vertices()
 {
   // Define the 8 vertices of a unit cube
@@ -216,7 +216,7 @@ struct ArrowEndpoints
   glm::vec3 p2;
 };
 
-auto
+inline auto
 calculate_arrow_endpoints(ArrowCreateParams const& params)
 {
   auto const adjust_if_zero = [=](glm::vec3 const& v) {

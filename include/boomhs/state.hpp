@@ -60,18 +60,18 @@ static constexpr auto INIT_ATTENUATION_INDEX = 8;
 
 struct LightColors
 {
-  opengl::Color ambient = LOC::GREEN;
+  opengl::Color ambient = LOC::WHITE;
   opengl::Color diffuse = LOC::WHITE;
-  opengl::Color specular = LOC::BLACK;
+  opengl::Color specular = LOC::WHITE;
 
   opengl::Attenuation attenuation = opengl::ATTENUATION_VALUE_TABLE[INIT_ATTENUATION_INDEX];
 };
 
 struct MaterialColors
 {
-  opengl::Color ambient{0.0f, 1.0f, 0.0f, 1.0f};
+  opengl::Color ambient{1.0f, 1.0f, 1.0f, 1.0f};
   opengl::Color diffuse{1.0f, 1.0f, 1.0f, 1.0f};
-  opengl::Color specular{0.0f, 0.0f, 0.0f, 1.0f};
+  opengl::Color specular{1.0f, 1.0f, 1.0f, 1.0f};
   float shininess = 32.0f;
 };
 

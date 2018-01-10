@@ -14,6 +14,15 @@ struct AttributePointerInfo
   GLsizei component_count = 0;
 
   AttributePointerInfo() = default;
+private:
+  void static
+  invalidate(AttributePointerInfo &api)
+  {
+    api.index = 0;
+    api.type = INVALID_TYPE;
+    api.component_count = 0;
+  }
+public:
 
   COPY_DEFAULT(AttributePointerInfo);
   AttributePointerInfo(GLuint const i, GLint const t, GLsizei const cc)
@@ -25,9 +34,17 @@ struct AttributePointerInfo
   AttributePointerInfo(AttributePointerInfo &&other)
     : AttributePointerInfo(other.index, other.type, other.component_count)
   {
-    other.index = 0;
-    other.type = INVALID_TYPE;
-    other.component_count = 0;
+    invalidate(other);
+  }
+  AttributePointerInfo&
+  operator=(AttributePointerInfo &&other) noexcept
+  {
+    index = other.index;
+    type = other.type;
+    component_count = other.component_count;
+
+    invalidate(other);
+    return *this;
   }
 };
 
@@ -37,12 +54,13 @@ public:
   static constexpr GLsizei API_BUFFER_SIZE = 4;
 
 private:
-  std::size_t const num_apis;
-  GLsizei const stride;
+  std::size_t num_apis;
+  GLsizei stride;
   std::array<AttributePointerInfo, API_BUFFER_SIZE> apis;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(VertexAttribute);
+  MOVE_DEFAULT(VertexAttribute);
+  COPY_DEFAULT(VertexAttribute);
   explicit VertexAttribute(std::size_t const n_apis, GLsizei const stride_p,
       std::array<AttributePointerInfo, API_BUFFER_SIZE> &&array)
     : num_apis(n_apis)
@@ -85,29 +103,10 @@ make_vertex_attribute(std::array<AttributePointerInfo, N> const& apis)
   return make_vertex_attribute(apis.begin(), apis.end());
 }
 
-auto
+inline auto
 make_vertex_attribute(std::vector<AttributePointerInfo> const& container)
 {
   return make_vertex_attribute(container.begin(), container.end());
 }
 
-namespace va // vertex_attribute
-{
-
-VertexAttribute
-vertex_color(stlw::Logger &);
-
-VertexAttribute
-vertex_normal_color(stlw::Logger &);
-
-VertexAttribute
-vertex_uv2d(stlw::Logger &);
-
-VertexAttribute
-vertex_normal_uv3d(stlw::Logger &);
-
-VertexAttribute
-vertex_only(stlw::Logger &);
-
-} // ns va
 } // ns opengl

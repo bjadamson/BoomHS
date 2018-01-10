@@ -1,18 +1,23 @@
 #pragma once
-#include <array>
-#include <string>
-#include <vector>
-#include <utility>
+
 #include <opengl/draw_info.hpp>
 #include <opengl/obj.hpp>
 #include <opengl/factory.hpp>
+#include <opengl/shader.hpp>
+
 #include <boomhs/state.hpp>
+
 #include <stlw/format.hpp>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/sized_buffer.hpp>
+#include <array>
+#include <string>
+#include <vector>
+#include <utility>
 
-namespace boomhs {
+namespace boomhs
+{
 
 class ObjCache
 {
@@ -49,6 +54,13 @@ public:
     // yield reference to data
     return it->second;
   }
+};
+
+// TODO: not final by any means..
+struct Assets
+{
+  ObjCache obj_cache;
+  opengl::ShaderPrograms shader_programs;
 };
 
 class GpuHandles
