@@ -19,27 +19,6 @@
 #include <iostream>
 #include <opengl/gl_log.hpp>
 
-namespace {
-void check_errors()
-{
-   std::string const error = SDL_GetError();
-   if (error != "") {
-     std::cerr << "SLD Error : " << error << std::endl;
-     std::abort();
-  }
-
-   auto const gl_errors = opengl::global::log::get_gl_errors();
-   if (!gl_errors.empty()) {
-     std::cerr << "GL errors!\n";
-     for (auto const& e : gl_errors) {
-       std::cerr << "e: '" << e << "'\n";
-     }
-     std::abort();
-   }
-}
-
-} // namespace anonymous
-
 // Data
 static double       g_Time = 0.0f;
 static bool         g_MousePressed[3] = { false, false, false };
@@ -55,7 +34,6 @@ static unsigned int g_VboHandle = 0, g_VaoHandle = 0, g_ElementsHandle = 0;
 // If text or lines are blurry when integrating ImGui in your engine: in your Render function, try translating your projection matrix by (0.5f,0.5f) or (0.375f,0.375f)
 void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
 {
-  check_errors();
     // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
     ImGuiIO& io = ImGui::GetIO();
     int fb_width = (int)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
@@ -66,61 +44,34 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
 
     // Backup GL state
     GLenum last_active_texture; glGetIntegerv(GL_ACTIVE_TEXTURE, (GLint*)&last_active_texture);
-  check_errors();
     glActiveTexture(GL_TEXTURE0);
-  check_errors();
     GLint last_program; glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
-  check_errors();
     GLint last_texture; glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-  check_errors();
     GLint last_sampler; glGetIntegerv(GL_SAMPLER_BINDING, &last_sampler);
-  check_errors();
     GLint last_array_buffer; glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
-  check_errors();
     GLint last_element_array_buffer; glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &last_element_array_buffer);
-  check_errors();
     GLint last_vertex_array; glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &last_vertex_array);
-  check_errors();
     GLint last_polygon_mode[2]; glGetIntegerv(GL_POLYGON_MODE, last_polygon_mode);
-  check_errors();
     GLint last_viewport[4]; glGetIntegerv(GL_VIEWPORT, last_viewport);
-  check_errors();
     GLint last_scissor_box[4]; glGetIntegerv(GL_SCISSOR_BOX, last_scissor_box);
-  check_errors();
     GLenum last_blend_src_rgb; glGetIntegerv(GL_BLEND_SRC_RGB, (GLint*)&last_blend_src_rgb);
-  check_errors();
     GLenum last_blend_dst_rgb; glGetIntegerv(GL_BLEND_DST_RGB, (GLint*)&last_blend_dst_rgb);
-  check_errors();
     GLenum last_blend_src_alpha; glGetIntegerv(GL_BLEND_SRC_ALPHA, (GLint*)&last_blend_src_alpha);
-  check_errors();
     GLenum last_blend_dst_alpha; glGetIntegerv(GL_BLEND_DST_ALPHA, (GLint*)&last_blend_dst_alpha);
-  check_errors();
     GLenum last_blend_equation_rgb; glGetIntegerv(GL_BLEND_EQUATION_RGB, (GLint*)&last_blend_equation_rgb);
-  check_errors();
     GLenum last_blend_equation_alpha; glGetIntegerv(GL_BLEND_EQUATION_ALPHA, (GLint*)&last_blend_equation_alpha);
-  check_errors();
     GLboolean last_enable_blend = glIsEnabled(GL_BLEND);
-  check_errors();
     GLboolean last_enable_cull_face = glIsEnabled(GL_CULL_FACE);
-  check_errors();
     GLboolean last_enable_depth_test = glIsEnabled(GL_DEPTH_TEST);
-  check_errors();
     GLboolean last_enable_scissor_test = glIsEnabled(GL_SCISSOR_TEST);
-  check_errors();
 
     // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled, polygon fill
     glEnable(GL_BLEND);
-  check_errors();
     glBlendEquation(GL_FUNC_ADD);
-  check_errors();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  check_errors();
     glDisable(GL_CULL_FACE);
-  check_errors();
     glDisable(GL_DEPTH_TEST);
-  check_errors();
     glEnable(GL_SCISSOR_TEST);
-  check_errors();
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Setup viewport, orthographic projection matrix
@@ -133,15 +84,10 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         {-1.0f,                  1.0f,                   0.0f, 1.0f },
     };
     glUseProgram(g_ShaderHandle);
-  check_errors();
     glUniform1i(g_AttribLocationTex, 0);
-  check_errors();
     glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
-  check_errors();
     glBindVertexArray(g_VaoHandle);
-  check_errors();
     glBindSampler(0, 0); // Rely on combined texture/sampler state.
-  check_errors();
 
     for (int n = 0; n < draw_data->CmdListsCount; n++)
     {
@@ -149,14 +95,10 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         const ImDrawIdx* idx_buffer_offset = 0;
 
         glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
-  check_errors();
         glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), (const GLvoid*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW);
-  check_errors();
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle);
-  check_errors();
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), (const GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW);
-  check_errors();
 
         for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
         {
@@ -168,11 +110,8 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
             else
             {
                 glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId);
-  check_errors();
                 glScissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
-  check_errors();
                 glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset);
-  check_errors();
             }
             idx_buffer_offset += pcmd->ElemCount;
         }
@@ -180,36 +119,21 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
 
     // Restore modified GL state
     glUseProgram(last_program);
-  check_errors();
     glBindTexture(GL_TEXTURE_2D, last_texture);
-  check_errors();
     glBindSampler(0, last_sampler);
-  check_errors();
     glActiveTexture(last_active_texture);
-  check_errors();
     glBindVertexArray(last_vertex_array);
-  check_errors();
     glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
-  check_errors();
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, last_element_array_buffer);
-  check_errors();
     glBlendEquationSeparate(last_blend_equation_rgb, last_blend_equation_alpha);
-  check_errors();
     glBlendFuncSeparate(last_blend_src_rgb, last_blend_dst_rgb, last_blend_src_alpha, last_blend_dst_alpha);
-  check_errors();
     if (last_enable_blend) glEnable(GL_BLEND); else glDisable(GL_BLEND);
-  check_errors();
     if (last_enable_cull_face) glEnable(GL_CULL_FACE); else glDisable(GL_CULL_FACE);
-  check_errors();
     if (last_enable_depth_test) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
-  check_errors();
     if (last_enable_scissor_test) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
     glPolygonMode(GL_FRONT_AND_BACK, last_polygon_mode[0]);
-  check_errors();
     glViewport(last_viewport[0], last_viewport[1], (GLsizei)last_viewport[2], (GLsizei)last_viewport[3]);
-  check_errors();
     glScissor(last_scissor_box[0], last_scissor_box[1], (GLsizei)last_scissor_box[2], (GLsizei)last_scissor_box[3]);
-  check_errors();
 }
 
 static const char* ImGui_ImplSdlGL3_GetClipboardText(void*)
@@ -277,26 +201,18 @@ void ImGui_ImplSdlGL3_CreateFontsTexture()
     // Upload texture to graphics system
     GLint last_texture;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-  check_errors();
     glGenTextures(1, &g_FontTexture);
-  check_errors();
     glBindTexture(GL_TEXTURE_2D, g_FontTexture);
-  check_errors();
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  check_errors();
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  check_errors();
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-  check_errors();
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-  check_errors();
 
     // Store our identifier
     io.Fonts->TexID = (void *)(intptr_t)g_FontTexture;
 
     // Restore state
     glBindTexture(GL_TEXTURE_2D, last_texture);
-  check_errors();
 }
 
 inline bool
@@ -315,11 +231,8 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
     // Backup GL state
     GLint last_texture, last_array_buffer, last_vertex_array;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-  check_errors();
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
-  check_errors();
     glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &last_vertex_array);
-  check_errors();
 
     const GLchar *vertex_shader =
         "#version 300 es\n"
@@ -351,56 +264,44 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
         "}\n";
 
     g_ShaderHandle = glCreateProgram();
-  check_errors();
     if (is_invalid(g_ShaderHandle)) {
       std::cerr << "g_ShaderHandle glCreateProgram() invalid\n";
       std::abort();
     }
     g_VertHandle = glCreateShader(GL_VERTEX_SHADER);
-  check_errors();
     if (is_invalid(g_VertHandle)) {
       std::cerr << "g_VertHandle glCreateShader() invalid\n";
       std::abort();
     }
     g_FragHandle = glCreateShader(GL_FRAGMENT_SHADER);
-  check_errors();
     if (is_invalid(g_FragHandle)) {
       std::cerr << "g_FragHandle glCreateShader() invalid\n";
       std::abort();
     }
     glShaderSource(g_VertHandle, 1, &vertex_shader, 0);
-  check_errors();
     glShaderSource(g_FragHandle, 1, &fragment_shader, 0);
-  check_errors();
     glCompileShader(g_VertHandle);
-  check_errors();
     if (!is_compiled(g_VertHandle)) {
       std::cerr << "failed to compile vertex shader\n";
       std::abort();
     }
     glCompileShader(g_FragHandle);
-  check_errors();
     if (!is_compiled(g_FragHandle)) {
       std::cerr << "failed to compile vertex shader\n";
       std::abort();
     }
     glAttachShader(g_ShaderHandle, g_VertHandle);
-  check_errors();
     glAttachShader(g_ShaderHandle, g_FragHandle);
-  check_errors();
     glLinkProgram(g_ShaderHandle);
-  check_errors();
 
     GLint link_result;
     glGetProgramiv(g_ShaderHandle, GL_LINK_STATUS, &link_result);
-  check_errors();
     if (link_result == GL_FALSE) {
       std::cerr << "Linking the shader failed. Progam log '" <<
         opengl::global::log::get_shader_log(g_ShaderHandle) << "'";
       std::abort();
     }
     glUseProgram(g_ShaderHandle);
-  check_errors();
     namespace GL_LOG = opengl::global::log;
     //auto const pl = GL_LOG::get_program_log(g_ShaderHandle);
     //if (!pl.empty()) {
@@ -416,56 +317,35 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
     //if (!fSLOG.empty()) {
       //std::cerr << "fSLOG: '" << fSLOG << "' (len: '" << fSLOG.length() << "')\n";
     //}
-  check_errors();
 
     g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "Texture");
-  check_errors();
     g_AttribLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "ProjMtx");
-  check_errors();
     g_AttribLocationPosition = glGetAttribLocation(g_ShaderHandle, "Position");
-  check_errors();
-  check_errors();
     g_AttribLocationUV = glGetAttribLocation(g_ShaderHandle, "UV");
-  check_errors();
     g_AttribLocationColor = glGetAttribLocation(g_ShaderHandle, "Color");
-  check_errors();
 
     glGenBuffers(1, &g_VboHandle);
-  check_errors();
     glGenBuffers(1, &g_ElementsHandle);
-  check_errors();
 
     glGenVertexArrays(1, &g_VaoHandle);
-  check_errors();
     glBindVertexArray(g_VaoHandle);
-  check_errors();
     glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
-  check_errors();
     glEnableVertexAttribArray(g_AttribLocationPosition);
-  check_errors();
     glEnableVertexAttribArray(g_AttribLocationUV);
-  check_errors();
     glEnableVertexAttribArray(g_AttribLocationColor);
-  check_errors();
 
 #define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
     glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, pos));
-  check_errors();
     glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, uv));
-  check_errors();
     glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, col));
-  check_errors();
 #undef OFFSETOF
 
     ImGui_ImplSdlGL3_CreateFontsTexture();
 
     // Restore modified GL state
     glBindTexture(GL_TEXTURE_2D, last_texture);
-  check_errors();
     glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
-  check_errors();
     glBindVertexArray(last_vertex_array);
-  check_errors();
 
     return true;
 }
@@ -473,33 +353,24 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
 void    ImGui_ImplSdlGL3_InvalidateDeviceObjects()
 {
     if (g_VaoHandle) glDeleteVertexArrays(1, &g_VaoHandle);
-  check_errors();
     if (g_VboHandle) glDeleteBuffers(1, &g_VboHandle);
-  check_errors();
     if (g_ElementsHandle) glDeleteBuffers(1, &g_ElementsHandle);
-  check_errors();
     g_VaoHandle = g_VboHandle = g_ElementsHandle = 0;
 
     if (g_ShaderHandle && g_VertHandle) glDetachShader(g_ShaderHandle, g_VertHandle);
-  check_errors();
     if (g_VertHandle) glDeleteShader(g_VertHandle);
-  check_errors();
     g_VertHandle = 0;
 
     if (g_ShaderHandle && g_FragHandle) glDetachShader(g_ShaderHandle, g_FragHandle);
-  check_errors();
     if (g_FragHandle) glDeleteShader(g_FragHandle);
-  check_errors();
     g_FragHandle = 0;
 
     if (g_ShaderHandle) glDeleteProgram(g_ShaderHandle);
-  check_errors();
     g_ShaderHandle = 0;
 
     if (g_FontTexture)
     {
         glDeleteTextures(1, &g_FontTexture);
-  check_errors();
         ImGui::GetIO().Fonts->TexID = 0;
         g_FontTexture = 0;
     }
@@ -562,9 +433,7 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     int w, h;
     int display_w, display_h;
     SDL_GetWindowSize(window, &w, &h);
-  check_errors();
     SDL_GL_GetDrawableSize(window, &display_w, &display_h);
-  check_errors();
     io.DisplaySize = ImVec2((float)w, (float)h);
     io.DisplayFramebufferScale = ImVec2(w > 0 ? ((float)display_w / w) : 0, h > 0 ? ((float)display_h / h) : 0);
 
@@ -578,7 +447,6 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
     // (we already got mouse wheel, keyboard keys & characters from SDL_PollEvent())
     int mx, my;
     Uint32 mouseMask = SDL_GetMouseState(&mx, &my);
-  check_errors();
     if (SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_FOCUS)
         io.MousePos = ImVec2((float)mx, (float)my);   // Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)
     else
@@ -594,9 +462,7 @@ void ImGui_ImplSdlGL3_NewFrame(SDL_Window* window)
 
     // Hide OS mouse cursor if ImGui is drawing it
     SDL_ShowCursor(io.MouseDrawCursor ? 0 : 1);
-  check_errors();
 
     // Start the frame. This call will update the io.WantCaptureMouse, io.WantCaptureKeyboard flag that you can use to dispatch inputs (or not) to your application.
     ImGui::NewFrame();
-  check_errors();
 }
