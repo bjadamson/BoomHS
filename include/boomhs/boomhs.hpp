@@ -28,32 +28,46 @@ namespace boomhs
 {
 
 stlw::result<DrawHandles, std::string>
-copy_assets_gpu(stlw::Logger &logger, ObjCache const& obj_cache, opengl::ShaderPrograms &sps)
+copy_assets_gpu(stlw::Logger &logger, ObjCache const& obj_cache, opengl::ShaderPrograms &sps,
+    opengl::TextureTable const& ttable)
 {
   using namespace opengl;
-  auto const copy = [&logger, &obj_cache](auto const mode, auto const& shader, char const* name) {
-    auto const& obj = obj_cache.get_obj(name);
-    auto handle = OF::copy_gpu(logger, mode, shader, obj);
-    return handle;
+
+  GpuHandles handles;
+  auto const handle_set = [&](auto const mode, char const* handle_name,
+      char const* shadername, char const* obj_name, char const* texture_name)
+  {
+    auto const& obj = obj_cache.get_obj(obj_name);
+    auto texture_o = ttable.lookup_texture(texture_name);
+
+    std::cerr << "looking for texture: '";
+    char const* tn = (nullptr != texture_name) ? texture_name : "nullptr";
+    std::cerr << tn << "'\n";
+
+    auto &sp = sps.ref_sp(shadername);
+    auto handle = OF::copy_gpu(logger, mode, sp, obj, MOVE(texture_o));
+    handles.set(handle_name, MOVE(handle));
   };
 
   // clang-format off
-  GpuHandles handles;
-  handles.set(HOUSE,  copy(GL_TRIANGLES,       sps.ref_sp("3dtexture"),   "house_uv"));
-  handles.set(TILEMAP, copy(GL_TRIANGLE_STRIP, sps.ref_sp("hashtag"), "hashtag"));
+  //         DRAW_MODE          HANDLE_NAME  SHADERNAME             OBJFILENAME  TEXTURENAME
+  handle_set(GL_TRIANGLES,      HOUSE,       "3dtexture",           "house",    "TextureAtlas.jpg");
+  handle_set(GL_TRIANGLE_STRIP, TILEMAP,     "hashtag",             "hashtag",  nullptr);
 
-  handles.set(HASHTAG, copy(GL_TRIANGLES, sps.ref_sp("hashtag"),             "hashtag"));
-  handles.set(AT,      copy(GL_TRIANGLES, sps.ref_sp("3d_pos_normal_color"), "at"));
-  handles.set(PLUS,    copy(GL_TRIANGLES, sps.ref_sp("plus"),                "plus"));
-  handles.set(ORC,     copy(GL_TRIANGLES, sps.ref_sp("3d_pos_normal_color"), "O"));
-  handles.set(TROLL,   copy(GL_TRIANGLES, sps.ref_sp("3d_pos_normal_color"), "T"));
+  handle_set(GL_TRIANGLES,      HASHTAG,     "hashtag",             "hashtag",  nullptr);
+  handle_set(GL_TRIANGLES,      AT,          "3d_pos_normal_color", "at",       nullptr);
+  handle_set(GL_TRIANGLES,      PLUS,        "plus",                "plus",     nullptr);
+  handle_set(GL_TRIANGLES,      ORC,         "3d_pos_normal_color", "O",        nullptr);
+  handle_set(GL_TRIANGLES,      TROLL,       "3d_pos_normal_color", "T",        nullptr);
   // clang-format on
 
-  auto const copy_texturecube = [&logger](auto const& shader) {
-    return OF::copy_texturecube_gpu(logger, shader);
+  auto const copy_texturecube = [&logger, &sps, &ttable](char const* shadername, char const* texture_name) {
+    auto texture_o = ttable.lookup_texture(texture_name);
+    return OF::copy_texturecube_gpu(logger, sps.ref_sp(shadername), MOVE(texture_o));
   };
-  handles.set(SKYBOX,       copy_texturecube(sps.ref_sp("skybox")));
-  handles.set(TEXTURE_CUBE, copy_texturecube(sps.ref_sp("3dcube_texture")));
+
+  handles.set(SKYBOX,       copy_texturecube("skybox", "skybox"));
+  handles.set(TEXTURE_CUBE, copy_texturecube("3dcube_texture", "cube"));
 
   auto const copy_cubecolor = [&logger](auto const& shader, opengl::Color const color) {
     return OF::copy_colorcube_gpu(logger, shader, color);

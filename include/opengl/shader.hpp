@@ -7,7 +7,6 @@
 
 #include <opengl/colors.hpp>
 #include <opengl/vertex_attribute.hpp>
-#include <opengl/texture.hpp>
 #include <boomhs/types.hpp>
 
 namespace opengl
@@ -75,7 +74,6 @@ public:
 
   // public data members
   boost::optional<GLsizei> instance_count = boost::none;
-  boost::optional<texture_info> texture = boost::none;
   bool is_lightsource = false;
   bool receives_light = false;
   bool is_skybox = false;

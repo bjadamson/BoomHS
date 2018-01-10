@@ -74,7 +74,8 @@ struct MaterialColors
   float shininess = 32.0f;
 };
 
-struct RenderArgs {
+struct RenderArgs
+{
   Logger &logger;
   Camera const& camera;
   Player const& player;

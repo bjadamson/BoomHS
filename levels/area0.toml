@@ -25,9 +25,19 @@ name = "container"
 type = "texture:2d"
 filename = "container.jpg"
 
+[[resource]]
+name = "wall"
+type = "texture:2d"
+filename = "wall.jpg"
+
+[[resource]]
+name = "TextureAtlas"
+type = "texture:2d"
+filename = "TextureAtlas.jpg"
+
 ################## MESHES #####################
 [[meshes]]
-name = "house_uv"
+name = "house"
 normals = true
 uvs = true
 

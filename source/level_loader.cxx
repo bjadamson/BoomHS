@@ -190,48 +190,11 @@ public:
   }
 };
 
-struct TextureFilenames
-{
-  std::string name;
-  std::vector<std::string> filenames;
-
-  auto num_filenames() const { return filenames.size(); }
-
-  // TODO: should this check be made an explicit enum or something somewhere?
-  bool is_3dcube() const { return filenames.size() == 6; }
-  bool is_2d() const { return filenames.size() == 1; }
-};
-
-class ResourceTable
-{
-  std::vector<TextureFilenames> filenames_;
-public:
-  ResourceTable() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(ResourceTable);
-
-  void
-  add_texture(TextureFilenames &&f)
-  {
-    filenames_.emplace_back(MOVE(f));
-  }
-
-  TextureFilenames
-  get_texture(std::string const& name) const
-  {
-    auto const cmp = [&name](auto const& it) { return it.name == name; };
-    auto const find_it = std::find_if(filenames_.cbegin(), filenames_.cend(), cmp);
-
-    // TODO: for now assume always find texture
-    assert(find_it != filenames_.cend());
-    return *find_it;
-  }
-};
-
 auto
-load_resources(stlw::Logger &logger, CppTable const& config)
+load_textures(stlw::Logger &logger, CppTable const& config)
 {
-  ResourceTable rtable;
-  auto const load_resource = [&rtable](auto const& resource) {
+  opengl::TextureTable ttable;
+  auto const load_texture = [&logger, &ttable](auto const& resource) {
     auto const name = get_string_or_abort(resource, "name");
     auto const type = get_string_or_abort(resource, "type");
 
@@ -243,19 +206,22 @@ load_resources(stlw::Logger &logger, CppTable const& config)
       auto const top = get_string_or_abort(resource, "top");
       auto const bottom = get_string_or_abort(resource, "bottom");
 
-      TextureFilenames texture_names{name, {front, right, back, left, top, bottom}};
-      rtable.add_texture(MOVE(texture_names));
+      opengl::TextureFilenames texture_names{name, {front, right, back, left, top, bottom}};
+      auto ti = opengl::texture::upload_3dcube_texture(logger, texture_names.filenames);
+      ttable.add_texture(MOVE(texture_names), MOVE(ti));
     } else if (type == "texture:2d") {
       auto const filename = get_string_or_abort(resource, "filename");
       std::cerr << "loading resource (name): '" << name << "', filename: '" << filename << "'\n";
-      TextureFilenames texture_names{name, {filename}};
-      rtable.add_texture(MOVE(texture_names));
+      opengl::TextureFilenames texture_names{name, {filename}};
+
+      auto ti = opengl::texture::allocate_texture(logger, texture_names.filenames[0]);
+      ttable.add_texture(MOVE(texture_names), MOVE(ti));
     }
   };
 
   auto const resource_table = get_table_array_or_abort(config, "resource");
-  std::for_each(resource_table->begin(), resource_table->end(), load_resource);
-  return rtable;
+  std::for_each(resource_table->begin(), resource_table->end(), load_texture);
+  return ttable;
 }
 
 auto
@@ -268,8 +234,6 @@ load_entities(stlw::Logger &logger, CppTable const& config)
 
     Transform transform;
     transform.translation = pos;
-
-    // TODO: allow reading in a texture name here??
     return boomhs::EntityInfo{MOVE(transform), shader, color};
   };
 
@@ -319,6 +283,7 @@ load_shaders(stlw::Logger &logger, ParsedVertexAttributes &&pvas, CppTable const
   return sps;
 }
 
+/*
 void
 upload_sp_textures(stlw::Logger &logger, ShaderPrograms &shader_programs,
     ResourceTable const& resource_table, CppTable const& table)
@@ -346,6 +311,7 @@ upload_sp_textures(stlw::Logger &logger, ShaderPrograms &shader_programs,
     upload_texture(sp);
   }
 }
+*/
 
 auto
 load_vas(CppTable const& config)
@@ -414,15 +380,13 @@ load_assets(stlw::Logger &logger)
   CppTable area_config = cpptoml::parse_file("levels/area0.toml");
   assert(area_config);
 
-  auto const resource_table = load_resources(logger, area_config);
-  upload_sp_textures(logger, shader_programs, resource_table, area_config);
-
   auto const mesh_table = get_table_array_or_abort(area_config, "meshes");
   auto loader = opengl::ObjLoader{LOC::WHITE};
   auto meshes = load_meshes(loader, mesh_table);
 
+  auto texture_table = load_textures(logger, area_config);
   auto entities = load_entities(logger, area_config);
-  return Assets{MOVE(meshes), MOVE(shader_programs), MOVE(entities)};
+  return Assets{MOVE(meshes), MOVE(shader_programs), MOVE(entities), MOVE(texture_table)};
 }
 
 } // ns boomhs

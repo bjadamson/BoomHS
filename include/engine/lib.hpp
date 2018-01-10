@@ -115,7 +115,7 @@ start(stlw::Logger &logger, Engine &engine)
   DO_TRY(auto assets, game::load_assets(logger));
 
   LOG_TRACE("Copy assets to GPU.");
-  DO_TRY(auto drawinfos, game::copy_assets_gpu(logger, assets.obj_cache, assets.shader_programs));
+  DO_TRY(auto drawinfos, game::copy_assets_gpu(logger, assets.obj_cache, assets.shader_programs, assets.texture_table));
 
   // Create an ECST context.
   LOG_TRACE("creating ecst context ...");

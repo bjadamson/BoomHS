@@ -1,11 +1,16 @@
 #include <opengl/shader.hpp>
 #include <opengl/glew.hpp>
-#include <glm/gtx/string_cast.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <opengl/global.hpp>
+
+#include <stlw/format.hpp>
+#include <stlw/result.hpp>
 #include <stlw/os.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
+
+#include <glm/gtx/string_cast.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace
 {

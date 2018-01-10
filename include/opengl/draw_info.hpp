@@ -1,6 +1,8 @@
 #pragma once
+#include <opengl/texture.hpp>
 #include <opengl/vao.hpp>
 #include <stlw/type_macros.hpp>
+#include <boost/optional.hpp>
 
 namespace opengl
 {
@@ -56,11 +58,14 @@ class DrawInfo
   GpuBufferHandles handles_;
   VAO vao_;
 
+  boost::optional<texture_info> texture_info_;
+
 public:
   NO_COPY(DrawInfo);
-  explicit DrawInfo(GLenum const dm, GLuint const num_indices)
+  explicit DrawInfo(GLenum const dm, GLuint const num_indices, boost::optional<texture_info> &&ti)
       : draw_mode_(dm)
       , num_indices_(num_indices)
+      , texture_info_(MOVE(ti))
   {
   }
 
@@ -69,15 +74,20 @@ public:
     , num_indices_(other.num_indices_)
     , handles_(MOVE(other.handles_))
     , vao_(MOVE(other.vao_))
+    , texture_info_(MOVE(other.texture_info_))
   {
   }
 
-  DrawInfo& operator=(DrawInfo &&di)
+  DrawInfo& operator=(DrawInfo &&other)
   {
-    draw_mode_ = di.draw_mode_;
-    num_indices_ = di.num_indices_;
-    handles_ = MOVE(di.handles_);
-    vao_ = MOVE(di.vao_);
+    draw_mode_ = other.draw_mode_;
+    num_indices_ = other.num_indices_;
+    other.draw_mode_ = -1;
+    other.num_indices_ = 0;
+
+    handles_ = MOVE(other.handles_);
+    vao_ = MOVE(other.vao_);
+    texture_info_ = MOVE(other.texture_info_);
     return *this;
   }
 
@@ -87,6 +97,8 @@ public:
   auto vbo() const { return handles_.vbo(); }
   auto ebo() const { return handles_.ebo(); }
   auto num_indices() const { return num_indices_; }
+
+  auto texture_info() const { return texture_info_; }
 };
 
 } // ns opengl

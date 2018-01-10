@@ -24,7 +24,8 @@ struct Tile {
   bool is_visible = false;
 };
 
-class TileMap {
+class TileMap
+{
   std::vector<Tile> tiles_;
   std::array<std::size_t, 3> dimensions_;
 

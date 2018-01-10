@@ -4,6 +4,7 @@
 #include <opengl/obj.hpp>
 #include <opengl/factory.hpp>
 #include <opengl/shader.hpp>
+#include <opengl/texture.hpp>
 
 #include <stlw/format.hpp>
 #include <stlw/log.hpp>
@@ -78,6 +79,7 @@ struct Assets
   ObjCache obj_cache;
   opengl::ShaderPrograms shader_programs;
   LoadedEntities loaded_entities;
+  opengl::TextureTable texture_table;
 };
 
 class GpuHandles

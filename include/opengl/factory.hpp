@@ -1,19 +1,24 @@
 #pragma once
-#include <array>
-#include <cmath>
-#include <glm/gtx/vector_query.hpp>
-#include <glm/gtc/epsilon.hpp>
-
 #include <opengl/draw_info.hpp>
 #include <opengl/glew.hpp>
 #include <opengl/global.hpp>
 #include <opengl/obj.hpp>
+#include <opengl/shader.hpp>
+#include <opengl/texture.hpp>
 
 #include <stlw/type_macros.hpp>
 #include <stlw/type_ctors.hpp>
 
 #include <boomhs/tilemap.hpp>
 #include <boomhs/types.hpp>
+
+#include <glm/gtx/vector_query.hpp>
+#include <glm/gtc/epsilon.hpp>
+
+#include <boost/optional.hpp>
+#include <array>
+#include <cmath>
+
 
 namespace opengl
 {
@@ -83,9 +88,10 @@ cube_vertices()
 
 template<std::size_t N, typename SP>
 DrawInfo
-make_cube_drawinfo(stlw::Logger &logger, std::array<float, N> const& vertex_data, SP &shader_program)
+make_cube_drawinfo(stlw::Logger &logger, std::array<float, N> const& vertex_data, SP &shader_program,
+    boost::optional<texture_info> &&ti)
 {
-  DrawInfo dinfo{GL_TRIANGLES, cube_factory::INDICES.size()};
+  DrawInfo dinfo{GL_TRIANGLES, cube_factory::INDICES.size(), MOVE(ti)};
   detail::copy_to_gpu(logger, shader_program, dinfo, vertex_data, cube_factory::INDICES);
   return dinfo;
 }
@@ -134,13 +140,13 @@ copy_colorcube_gpu(stlw::Logger &logger, SP &shader_program, Color const& color)
       color_array[8].r, color_array[8].g, color_array[8].a, color_array[8].a
         );
   // clang-format on
-  return detail::make_cube_drawinfo(logger, vertex_data, shader_program);
+  return detail::make_cube_drawinfo(logger, vertex_data, shader_program, boost::none);
 }
 
 
 template<typename SP>
 auto
-copy_texturecube_gpu(stlw::Logger &logger, SP &shader_program)
+copy_texturecube_gpu(stlw::Logger &logger, SP &shader_program, boost::optional<texture_info> &&ti)
 {
   // clang-format off
   auto const vertices = detail::cube_vertices();
@@ -155,12 +161,12 @@ copy_texturecube_gpu(stlw::Logger &logger, SP &shader_program)
       vertices[28], vertices[29], vertices[30], vertices[31],
       vertices[32], vertices[33], vertices[34], vertices[35]
       );
-  return detail::make_cube_drawinfo(logger, vertex_data, shader_program);
+  return detail::make_cube_drawinfo(logger, vertex_data, shader_program, MOVE(ti));
 }
 
-template<typename SP, typename ...Args>
+template<typename SP>
 auto
-copy_cube_14indices_gpu(stlw::Logger &logger, SP &shader_program, Args &&... args)
+copy_cube_14indices_gpu(stlw::Logger &logger, SP &shader_program, boost::optional<texture_info> &&ti)
 {
   // clang-format off
   static constexpr std::array<GLuint, 14> INDICES = {{
@@ -195,7 +201,7 @@ copy_cube_14indices_gpu(stlw::Logger &logger, SP &shader_program, Args &&... arg
       );
   auto const& vertices = v;
 
-  DrawInfo dinfo{GL_TRIANGLE_STRIP, INDICES.size()};
+  DrawInfo dinfo{GL_TRIANGLE_STRIP, INDICES.size(), MOVE(ti)};
   detail::copy_to_gpu(logger, shader_program, dinfo, vertices, INDICES);
   return dinfo;
 }
@@ -294,7 +300,7 @@ create_arrow_2d(stlw::Logger &logger, SP &shader_program, ArrowCreateParams &&pa
     0, 1, 2, 3, 4, 5
   }};
 
-  DrawInfo dinfo{GL_LINES, INDICES.size()};
+  DrawInfo dinfo{GL_LINES, INDICES.size(), boost::none};
   detail::copy_to_gpu(logger, shader_program, dinfo, vertices, INDICES);
   return dinfo;
 }
@@ -310,7 +316,7 @@ create_arrow(stlw::Logger &logger, SP &shader_program, ArrowCreateParams &&param
     0, 1, 2, 3, 4, 5
   }};
 
-  DrawInfo dinfo{GL_LINES, INDICES.size()};
+  DrawInfo dinfo{GL_LINES, INDICES.size(), boost::none};
   detail::copy_to_gpu(logger, shader_program, dinfo, vertices, INDICES);
   return dinfo;
 }
@@ -391,7 +397,7 @@ create_tilegrid(stlw::Logger &logger, SP &shader_program, boomhs::TileMap const&
   tmap.visit_each(visit_fn);
 
   auto const num_indices = static_cast<GLuint>(indices.size());
-  DrawInfo dinfo{GL_LINES, num_indices};
+  DrawInfo dinfo{GL_LINES, num_indices, boost::none};
   detail::copy_to_gpu(logger, shader_program, dinfo, vertices, indices);
   return dinfo;
 }
@@ -421,15 +427,15 @@ create_world_axis_arrows(stlw::Logger &logger, X_SP &x_sp, Y_SP &y_sp, Z_SP &z_s
   return create_axis_arrows(logger, x_sp, y_sp, z_sp, ORIGIN);
 }
 
-template<typename SP>
-auto
-copy_gpu(stlw::Logger &logger, GLenum const draw_mode, SP &sp, obj const& object)
+inline auto
+copy_gpu(stlw::Logger &logger, GLenum const draw_mode, ShaderProgram &sp, obj const& object,
+    boost::optional<texture_info> &&ti)
 {
   auto const& vertices = object.vertices;
   auto const& indices = object.indices;
 
   auto const num_indices = static_cast<GLuint>(indices.size());
-  DrawInfo dinfo{draw_mode, num_indices};
+  DrawInfo dinfo{draw_mode, num_indices, MOVE(ti)};
   detail::copy_to_gpu(logger, sp, dinfo, vertices, indices);
   return dinfo;
 }
