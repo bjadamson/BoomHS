@@ -52,10 +52,10 @@ inline std::ostream&
 operator<<(std::ostream &os, Color const& c)
 {
   os << "{"
-    << c.r << ", "
-    << c.g << ", "
-    << c.b << ", "
-    << c.a
+    << std::to_string(c.r) << ", "
+    << std::to_string(c.g) << ", "
+    << std::to_string(c.b) << ", "
+    << std::to_string(c.a)
     << "}";
    return os;
 }

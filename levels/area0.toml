@@ -73,16 +73,6 @@ color = [0.000, 1.000, 1.000, 1.000]
 
 ########### ENTITY #############
 [[entity]]
-pos = [-2.0, -2.0, -2.0]
+pos = [0.0, 0.0, 0.0]
 shader = "3d_pos_color"
-color = [0.0, 1.0, 0.0, 1.0]
-
-[[entity]]
-pos = [2.0, 2.0, -2.0]
-shader = "3d_pos_color"
-color = [1.0, 0.0, 0.0, 1.0]
-
-[[entity]]
-pos = [2.0, 2.0, 2.0]
-shader = "3d_pos_color"
-color = [1.0, 0.0, 1.0, 1.0]
+color = [0.0, 0.0, 1.0, 0.0]

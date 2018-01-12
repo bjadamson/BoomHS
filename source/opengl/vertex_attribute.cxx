@@ -118,4 +118,31 @@ VertexAttribute::upload_vertex_format_to_glbound_vao(stlw::Logger &logger) const
   }
 }
 
+std::ostream&
+operator<<(std::ostream& stream, AttributePointerInfo const& api)
+{
+  stream << fmt::format("(API) -- '{}' type: {}' component_count: '{}'",
+      api.index,
+      api.type,
+      api.component_count);
+  return stream;
+}
+
+std::ostream&
+operator<<(std::ostream& stream, VertexAttribute const& va)
+{
+  auto const print_delim = [&stream]() { stream << "-----------\n"; };
+  print_delim();
+  stream << fmt::format("(VA) -- num_apis: '{}' stride: '{}'\n",
+      va.num_apis,
+      va.stride);
+  for(auto const& api : va.apis) {
+    stream << "    ";
+    stream << api;
+    stream << "\n";
+  }
+  print_delim();
+  return stream;
+}
+
 } // ns opengl

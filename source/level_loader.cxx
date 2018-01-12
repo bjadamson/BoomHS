@@ -211,9 +211,7 @@ load_textures(stlw::Logger &logger, CppTable const& config)
       ttable.add_texture(MOVE(texture_names), MOVE(ti));
     } else if (type == "texture:2d") {
       auto const filename = get_string_or_abort(resource, "filename");
-      std::cerr << "loading resource (name): '" << name << "', filename: '" << filename << "'\n";
       opengl::TextureFilenames texture_names{name, {filename}};
-
       auto ti = opengl::texture::allocate_texture(logger, texture_names.filenames[0]);
       ttable.add_texture(MOVE(texture_names), MOVE(ti));
     }

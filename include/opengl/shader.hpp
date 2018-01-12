@@ -80,6 +80,7 @@ public:
   bool is_2d = false;
 
   // public member fns
+  auto handle() const { return program_.handle(); }
   auto const& va() const { return this->va_; }
 
   void use_program(stlw::Logger &);
@@ -113,6 +114,9 @@ public:
 
   void set_uniform_float1(stlw::Logger &logger, GLchar const*, float const);
 };
+
+std::ostream&
+operator<<(std::ostream&, ShaderProgram const&);
 
 inline stlw::result<ShaderProgram, std::string>
 make_shader_program(std::string const& vertex_s, std::string const& fragment_s, VertexAttribute &&va)

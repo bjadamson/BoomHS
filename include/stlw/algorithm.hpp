@@ -1,14 +1,22 @@
 #pragma once
 #include <array>
+#include <cstring>
 #include <cassert>
 #include <vector>
 #include <utility>
 #include <stlw/tuple.hpp>
 
 #define FOR(q,n) for(auto q=0u;q<n;++q)
+#define FORI(q,n) for(auto q=0;q<n;++q)
 
 namespace stlw
 {
+
+inline void
+memzero(void *const dest, std::size_t const count)
+{
+  std::memset(dest, 0, count);
+}
 
 template<typename T>
 auto

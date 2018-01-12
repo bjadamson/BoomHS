@@ -1,4 +1,5 @@
 #include <opengl/shader.hpp>
+#include <opengl/debug.hpp>
 #include <opengl/glew.hpp>
 #include <opengl/global.hpp>
 
@@ -90,17 +91,24 @@ struct VertexShaderInfo {
   std::vector<AttributeVariableInfo> attribute_infos;
 };
 
+struct FragmentShaderInfo {
+  std::string const& filename;
+  std::string const& source;
+};
+
 stlw::result<GLuint, std::string>
-compile_sources(VertexShaderInfo const &vertex_shader, std::string const &fragment_shader_source)
+compile_sources(VertexShaderInfo const &vertex_shader, FragmentShaderInfo const &fragment_shader)
 {
-  auto const& vertex_shader_source = vertex_shader.source;
-  DO_TRY(auto const vertex_shader_id, compile_shader(vertex_shader_source, GL_VERTEX_SHADER));
-  DO_TRY(auto const frag_shader_id, compile_shader(fragment_shader_source, GL_FRAGMENT_SHADER));
+  DO_TRY(auto const vertex_shader_id, compile_shader(vertex_shader.source, GL_VERTEX_SHADER));
+  DO_TRY(auto const frag_shader_id, compile_shader(fragment_shader.source, GL_FRAGMENT_SHADER));
   DO_TRY(auto const program_id, create_program());
 
+  std::cerr << fmt::format("compiling '{}'/'{}'\n", vertex_shader.filename, fragment_shader.filename);
   auto const& variable_infos = vertex_shader.attribute_infos;
+  std::cerr << "number of variable infos: '" << variable_infos.size() << "'\n";
   FOR(i, variable_infos.size()) {
     auto const& vinfo = variable_infos[i];
+    std::cerr << fmt::format("binding program_id: {}, name: {}, index: {}\n", program_id, vinfo.variable, i);
     glBindAttribLocation(program_id, i, vinfo.variable.c_str());
   }
 
@@ -111,6 +119,7 @@ compile_sources(VertexShaderInfo const &vertex_shader, std::string const &fragme
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, frag_shader_id); });
 
   DO_EFFECT(link_program(program_id));
+  std::cerr << "finished compiling\n";
   return program_id;
 }
 
@@ -129,7 +138,7 @@ from_vertex_shader(std::string const& filename, std::string const& source)
 
   std::vector<AttributeVariableInfo> infos;
   std::istringstream iss(source.c_str());
-  for (auto idx = 0; !std::getline(iss, buffer); ++idx) {
+  for (; std::getline(iss, buffer); ++idx) {
     auto constexpr IN_PREFIX = "in ";
     bool const begins_with_in_prefix = buffer.compare(0, ::strlen(IN_PREFIX), IN_PREFIX) == 0;
     if (!begins_with_in_prefix) {
@@ -166,10 +175,31 @@ from_vertex_shader(std::string const& filename, std::string const& source)
       break;
     }
   }
-
   return infos;
 }
 
+std::string
+attrib_type_to_string(GLenum const type)
+{
+  auto const& table = debug::attrib_to_string_table();
+  auto const it = std::find_if(table.cbegin(), table.cend(), [&type](auto const& pair) { return pair.first == type; });
+  assert(it != table.cend());
+
+  auto const index = std::distance(table.cbegin(), it);
+  return table[index].second;
+}
+
+std::string
+uniform_type_to_string(GLenum const type)
+{
+  auto const& table = debug::uniform_to_string_table();
+  auto const it = std::find_if(table.cbegin(), table.cend(), [&type](auto const& tuple) { return std::get<0>(tuple) == type; });
+  assert(it != table.cend());
+
+  auto const index = std::distance(table.cbegin(), it);
+  auto const string = std::get<1>(table[index]);
+  return string;
+}
 
 } // ns anonymous
 
@@ -190,13 +220,13 @@ program_factory::from_files(vertex_shader_filename const v, fragment_shader_file
   // Read the Vertex/Fragment Shader code from ther file
   DO_TRY(auto const vertex_shader_source, stlw::read_file(vertex_shader_path));
   DO_TRY(auto attribute_variable_info, from_vertex_shader(vertex_shader_path, vertex_shader_source));
+  DO_TRY(auto const fragment_source, stlw::read_file(fragment_shader_path));
 
   VertexShaderInfo const vertex_shader{vertex_shader_path, vertex_shader_source,
     MOVE(attribute_variable_info)};
+  FragmentShaderInfo const fragment_shader{fragment_shader_path, fragment_source};
 
-  DO_TRY(auto const fragment_shader_source, stlw::read_file(fragment_shader_path));
-
-  return compile_sources(vertex_shader, fragment_shader_source);
+  return compile_sources(vertex_shader, fragment_shader);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -207,7 +237,7 @@ ProgramHandle::ProgramHandle(GLuint const p)
 }
 
 ProgramHandle::ProgramHandle(ProgramHandle &&o)
-  : program_(o.program_)
+  : program_(MOVE(o.program_))
 {
   // We don't want to destroy the underlying program, we want to transfer the ownership to this
   // instance being moved into. This implements "handle-passing" allowing the user to observe
@@ -312,6 +342,68 @@ ShaderProgram::set_uniform_float1(stlw::Logger &logger, GLchar const* name, floa
   auto const loc = get_uniform_location(logger, name);
   glUniform1f(loc, value);
   LOG_ANY_GL_ERRORS(logger, "glUniform1f");
+}
+
+void
+print_active_attributes(std::ostream &stream, GLuint const program)
+{
+  GLint buffer_size{0};
+  glGetProgramiv(program, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &buffer_size);
+
+  GLint count{0};
+  glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &count);
+
+  GLsizei length{0};
+  GLint size{0};
+  GLenum type{0};
+
+  GLchar name[buffer_size];
+  stlw::memzero(name, buffer_size);
+
+  stream << "Active Attributes: " << std::to_string(count) << "\n";
+  FORI(i, count) {
+    glGetActiveAttrib(program, static_cast<GLuint>(i), buffer_size, &length, &size, &type, name);
+
+    auto const attrib_type_string = attrib_type_to_string(type);
+    auto const name_string = std::to_string(name[0]);
+    stream << fmt::format("Attribute #{} Type: {} Name: {}\n", i, attrib_type_string, name_string);
+  }
+}
+
+void
+print_active_uniforms(std::ostream &stream, GLuint const program)
+{
+  GLint buffer_size{0};
+  glGetProgramiv(program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &buffer_size);
+
+  GLint count{0};
+  glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
+
+  GLsizei length{0};
+  GLint size{0};
+  GLenum type{0};
+
+  GLchar name[buffer_size];
+  stlw::memzero(name, buffer_size);
+
+  printf("Active Uniforms: %d\n", count);
+  FORI(i, count) {
+    glGetActiveUniform(program, static_cast<GLuint>(i), buffer_size, &length, &size, &type, name);
+
+    auto const uniform_type_string = uniform_type_to_string(type);
+    auto const name_string = std::to_string(name[0]);
+
+    stream << fmt::format("Uniform #{} Type: {} Name: {}\n", i, uniform_type_string, name_string);
+  }
+}
+
+std::ostream&
+operator<<(std::ostream& stream, ShaderProgram const& sp)
+{
+  auto const& program = sp.handle();
+  print_active_attributes(stream, program);
+  print_active_uniforms(stream, program);
+  return stream;
 }
 
 } // ns opengl

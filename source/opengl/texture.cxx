@@ -42,12 +42,10 @@ upload_image(stlw::Logger &logger, std::string const& filename, GLenum const tar
 {
   std::string const path = "assets/" + filename;
   auto const image_data = load_image_into_memory(logger, path.c_str());
-  std::cerr << "uploading image: '" << path << "'\n";
 
   auto const width = image_data.width;
   auto const height = image_data.height;
   auto const* data = image_data.data.get();
-
   glTexImage2D(target, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 }
 

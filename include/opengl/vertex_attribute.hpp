@@ -1,6 +1,7 @@
 #pragma once
 #include <opengl/glew.hpp>
 #include <stlw/log.hpp>
+#include <string>
 
 namespace opengl
 {
@@ -46,7 +47,12 @@ public:
     invalidate(other);
     return *this;
   }
+
+  friend std::ostream& operator<<(std::ostream&, AttributePointerInfo const&);
 };
+
+std::ostream&
+operator<<(std::ostream&, AttributePointerInfo const&);
 
 class VertexAttribute
 {
@@ -69,7 +75,13 @@ public:
   {
   }
   void upload_vertex_format_to_glbound_vao(stlw::Logger &) const;
+
+
+  friend std::ostream& operator<<(std::ostream&, VertexAttribute const&);
 };
+
+std::ostream&
+operator<<(std::ostream&, VertexAttribute const&);
 
 template<typename ITB, typename ITE>
 auto

@@ -40,10 +40,6 @@ copy_assets_gpu(stlw::Logger &logger, ObjCache const& obj_cache, opengl::ShaderP
     auto const& obj = obj_cache.get_obj(obj_name);
     auto texture_o = ttable.lookup_texture(texture_name);
 
-    std::cerr << "looking for texture: '";
-    char const* tn = (nullptr != texture_name) ? texture_name : "nullptr";
-    std::cerr << tn << "'\n";
-
     auto &sp = sps.ref_sp(shadername);
     auto handle = OF::copy_gpu(logger, mode, sp, obj, MOVE(texture_o));
     handles.set(handle_name, MOVE(handle));
@@ -51,7 +47,7 @@ copy_assets_gpu(stlw::Logger &logger, ObjCache const& obj_cache, opengl::ShaderP
 
   // clang-format off
   //         DRAW_MODE          HANDLE_NAME  SHADERNAME             OBJFILENAME  TEXTURENAME
-  handle_set(GL_TRIANGLES,      HOUSE,       "3dtexture",           "house",    "TextureAtlas.jpg");
+  handle_set(GL_TRIANGLES,      HOUSE,       "3dtexture",           "house",    "TextureAtlas");
   handle_set(GL_TRIANGLE_STRIP, TILEMAP,     "hashtag",             "hashtag",  nullptr);
 
   handle_set(GL_TRIANGLES,      HASHTAG,     "hashtag",             "hashtag",  nullptr);
@@ -172,7 +168,7 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
   {
     auto &startingpos = tmap_startingpos.second;
     auto const pos = glm::vec3{startingpos.x, startingpos.y, startingpos.z};
-    player.move_to(pos);
+    //player.move_to(pos);
     light_ent.translation = pos;
   }
   Camera camera(proj, player_ent, FORWARD, UP);
@@ -182,7 +178,8 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
 }
 
 template<typename PROXY>
-void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &sps, window::SDLWindow &window,
+void
+game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &sps, window::SDLWindow &window,
     DrawHandles &drawhandles, LoadedEntities const& entities_from_file)
 {
   auto &player = state.player;
@@ -221,14 +218,18 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &sps, wind
     if (et.shader && et.color) {
       auto handle = OF::copy_colorcube_gpu(logger, shader_ref, *et.color);
       render::draw(rargs, et.transform, shader_ref, handle);
+      std::cerr << "dynamic entity color: '" << *et.color << "'\n";
     } else if (et.shader) {
       // TODO: TOTAL HACK (won't work, especially since they aren't added to level file yet.
       //auto &handle = handles.get(handle_name.c_str());
       //render::draw(rargs, et.transform, shader_ref, handle);
+      std::abort();
     }
   }
+  std::cerr << "\n\n";
 
   // light
+  /*
   {
     auto light_handle = OF::copy_colorcube_gpu(logger, sps.ref_sp("light"), state.light.diffuse);
     render::draw(rargs, *ents[LIGHT_INDEX], sps.ref_sp("light"), light_handle);
@@ -335,6 +336,7 @@ void game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &sps, wind
   // terrain
   //render::draw(rargs, *ents[TERRAIN_INDEX], sps.ref_sp("terrain"), handles.terrain);
 
+*/
   // UI code
   draw_ui(state, window);
 }

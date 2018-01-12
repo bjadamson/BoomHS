@@ -17,6 +17,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <iostream>
 
 using namespace opengl;
 using namespace boomhs;
@@ -31,6 +32,7 @@ bind_stuff_and_draw(stlw::Logger &logger, DrawInfo const &dinfo, FN const& fn)
   using namespace opengl;
 
   if (dinfo.texture_info()) {
+    std::abort();
     auto const& ti = *dinfo.texture_info();
     opengl::global::texture_bind(ti);
     ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
@@ -134,19 +136,13 @@ namespace boomhs::render
 void
 enable_depth_tests()
 {
-  //glCullFace(GL_BACK);
-  //glFrontFace(GL_CW);
-  //glEnable(GL_CULL_FACE);
+  glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
-  glDisable(GL_BLEND);
 }
 
 void
 disable_depth_tests()
 {
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-
   glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
 }
@@ -158,15 +154,20 @@ init(window::Dimensions const& dimensions)
   glViewport(0, 0, dimensions.w, dimensions.h);
 
   glDisable(GL_CULL_FACE);
+  glEnable(GL_BLEND);
+
   enable_depth_tests();
 }
 
 void
 clear_screen(Color const& color)
 {
-  glClearColor(color.r, color.g, color.b, color.a);
+  // https://stackoverflow.com/a/23944124/562174
+  glDisable(GL_DEPTH_TEST);
+  ON_SCOPE_EXIT([]() { glEnable(GL_DEPTH_TEST); });
 
   // Render
+  glClearColor(color.r, color.g, color.b, color.a);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -178,6 +179,8 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &shader_p
   // Use the shader_program's PROGRAM and bind the shader_program's VAO.
   shader_program.use_program(logger);
   opengl::global::vao_bind(dinfo.vao());
+  std::cerr << "drawing object!\n";
+  std::cerr << shader_program << "\n";
 
   if (shader_program.is_2d) {
     disable_depth_tests();
