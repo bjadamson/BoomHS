@@ -344,6 +344,13 @@ ShaderProgram::set_uniform_float1(stlw::Logger &logger, GLchar const* name, floa
   LOG_ANY_GL_ERRORS(logger, "glUniform1f");
 }
 
+std::string
+glchar_ptr_to_string(GLchar const* ptr)
+{
+  char const* cstring = static_cast<char const*>(ptr);
+  return std::string{cstring};
+}
+
 void
 print_active_attributes(std::ostream &stream, GLuint const program)
 {
@@ -364,9 +371,9 @@ print_active_attributes(std::ostream &stream, GLuint const program)
   FORI(i, count) {
     glGetActiveAttrib(program, static_cast<GLuint>(i), buffer_size, &length, &size, &type, name);
 
-    auto const attrib_type_string = attrib_type_to_string(type);
-    auto const name_string = std::to_string(name[0]);
-    stream << fmt::format("Attribute #{} Type: {} Name: {}\n", i, attrib_type_string, name_string);
+    auto const type_string = attrib_type_to_string(type);
+    auto const name_string = glchar_ptr_to_string(name);
+    stream << fmt::format("Attribute #{} Type: {} Name: {}\n", i, type_string, name_string);
   }
 }
 
@@ -386,14 +393,14 @@ print_active_uniforms(std::ostream &stream, GLuint const program)
   GLchar name[buffer_size];
   stlw::memzero(name, buffer_size);
 
-  printf("Active Uniforms: %d\n", count);
+  stream << "Active Uniforms: '" << std::to_string(count) << "'\n";
   FORI(i, count) {
     glGetActiveUniform(program, static_cast<GLuint>(i), buffer_size, &length, &size, &type, name);
 
-    auto const uniform_type_string = uniform_type_to_string(type);
-    auto const name_string = std::to_string(name[0]);
+    auto const type_string = uniform_type_to_string(type);
+    auto const name_string = glchar_ptr_to_string(name);
 
-    stream << fmt::format("Uniform #{} Type: {} Name: {}\n", i, uniform_type_string, name_string);
+    stream << fmt::format("Uniform #{} Type: {} Name: {}\n", i, type_string, name_string);
   }
 }
 
