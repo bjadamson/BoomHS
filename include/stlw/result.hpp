@@ -17,6 +17,8 @@ template <typename T, typename E>
 using result = ::nonstd::expected<T, E>;
 } // ns stlw
 
+#define ERROR ::stlw::make_error
+
 // General-purpose eval function.
 #define DO_GENERAL_EVAL(VAR_DECL, V, expr)                                                         \
   auto V{expr};                                                                                    \

@@ -6,4 +6,5 @@ source "scripts/common.bash"
 ulimit -c unlimited
 
 ${BUILD}/bin/shader_loader
+${BUILD}/bin/log_mover
 ${BINARY}

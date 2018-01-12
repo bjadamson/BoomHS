@@ -24,13 +24,15 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -g -O0 ${MY_EXTRA_
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O0")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17 -stdlib=libc++")
-set(TOOLS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tools/)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
+
 
 set(IMGUI_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/include")
 set(CPPTOML_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/cpptoml/include")
+
+set(TOOLS_SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tools/source/)
+set(TOOLS_INCLUDE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tools/include/")
 
 ## DEFINITIONS
 file(GLOB INTERNAL_INCLUDE_DIRS include
@@ -54,6 +56,11 @@ file(GLOB_RECURSE GLOBBED_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx
   )
 
+file(GLOB_RECURSE TOOLS_COMMON
+  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/tools/source/common.cxx
+  )
+
 ## Gather the source files in such a way that we can pass them to clang-format and other clang
 file(GLOB_RECURSE GLOBBED_SOURCES_CLANG_TOOLS *.cxx *.hpp)
 set (EXCLUDE_DIR "expected/")
@@ -69,7 +76,8 @@ add_custom_target(cppformat COMMAND clang-format -i ${GLOBBED_SOURCES_CLANG_TOOL
 add_custom_target(clangcheck COMMAND clang-check -analyze -p ${BUILD} -s ${GLOBBED_SOURCES_CLANG_TOOLS})
 
 ## Declare our executable and build it.
-add_executable(shader_loader ${TOOLS_DIRECTORY}/main_shaderloader.cxx)
+add_executable(shader_loader ${TOOLS_COMMON} ${TOOLS_SOURCE_DIRECTORY}/main_shaderloader.cxx)
+add_executable(log_mover ${TOOLS_COMMON} ${TOOLS_SOURCE_DIRECTORY}/main_logmover.cxx)
 add_executable(boomhs ${GLOBBED_SOURCES})
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
@@ -105,8 +113,16 @@ target_link_libraries(boomhs
   pthread
   boost_system)
 
-target_include_directories(shader_loader PUBLIC ${INTERNAL_INCLUDE_DIRS})
+target_include_directories(shader_loader PUBLIC
+  ${INTERNAL_INCLUDE_DIRS}
+  ${TOOLS_INCLUDE_DIRECTORY})
 target_link_libraries(shader_loader stdc++ c++experimental)
+
+target_include_directories(log_mover PUBLIC
+  ${INTERNAL_INCLUDE_DIRS}
+  ${TOOLS_INCLUDE_DIRECTORY})
+target_link_libraries(log_mover stdc++ c++experimental)
+
 EOF
 
 cat > "${BUILD}/conanfile.txt" << "EOF"
