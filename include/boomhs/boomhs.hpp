@@ -34,49 +34,49 @@ copy_assets_gpu(stlw::Logger &logger, ObjCache const& obj_cache, opengl::ShaderP
   using namespace opengl;
 
   GpuHandles handles;
-  auto const handle_set = [&](auto const mode, char const* handle_name,
-      char const* shadername, char const* obj_name, char const* texture_name)
-  {
-    auto const& obj = obj_cache.get_obj(obj_name);
-    auto texture_o = ttable.lookup_texture(texture_name);
+  //auto const handle_set = [&](auto const mode, char const* handle_name,
+      //char const* shadername, char const* obj_name, char const* texture_name)
+  //{
+    //auto const& obj = obj_cache.get_obj(obj_name);
+    //auto texture_o = ttable.find(texture_name);
 
-    auto &sp = sps.ref_sp(shadername);
-    auto handle = OF::copy_gpu(logger, mode, sp, obj, MOVE(texture_o));
-    handles.set(handle_name, MOVE(handle));
-  };
+    //auto &sp = sps.ref_sp(shadername);
+    //auto handle = OF::copy_gpu(logger, mode, sp, obj, MOVE(texture_o));
+    //handles.set(handle_name, MOVE(handle));
+  //};
 
   // clang-format off
   //         DRAW_MODE          HANDLE_NAME  SHADERNAME             OBJFILENAME  TEXTURENAME
-  handle_set(GL_TRIANGLES,      HOUSE,       "3dtexture",           "house",    "TextureAtlas");
-  handle_set(GL_TRIANGLE_STRIP, TILEMAP,     "hashtag",             "hashtag",  nullptr);
+  //handle_set(GL_TRIANGLES,      HOUSE,       "3dtexture",           "house",    "TextureAtlas");
+  //handle_set(GL_TRIANGLE_STRIP, TILEMAP,     "hashtag",             "hashtag",  nullptr);
 
-  handle_set(GL_TRIANGLES,      HASHTAG,     "hashtag",             "hashtag",  nullptr);
-  handle_set(GL_TRIANGLES,      AT,          "3d_pos_normal_color", "at",       nullptr);
-  handle_set(GL_TRIANGLES,      PLUS,        "plus",                "plus",     nullptr);
-  handle_set(GL_TRIANGLES,      ORC,         "3d_pos_normal_color", "O",        nullptr);
-  handle_set(GL_TRIANGLES,      TROLL,       "3d_pos_normal_color", "T",        nullptr);
+  //handle_set(GL_TRIANGLES,      HASHTAG,     "hashtag",             "hashtag",  nullptr);
+  //handle_set(GL_TRIANGLES,      AT,          "3d_pos_normal_color", "at",       nullptr);
+  //handle_set(GL_TRIANGLES,      PLUS,        "plus",                "plus",     nullptr);
+  //handle_set(GL_TRIANGLES,      ORC,         "3d_pos_normal_color", "O",        nullptr);
+  //handle_set(GL_TRIANGLES,      TROLL,       "3d_pos_normal_color", "T",        nullptr);
   // clang-format on
 
-  auto const copy_texturecube = [&logger, &sps, &ttable](char const* shadername, char const* texture_name) {
-    auto texture_o = ttable.lookup_texture(texture_name);
-    return OF::copy_texturecube_gpu(logger, sps.ref_sp(shadername), MOVE(texture_o));
-  };
+  //auto const copy_texturecube = [&logger, &sps, &ttable](char const* shadername, char const* texture_name) {
+    //auto texture_o = ttable.find(texture_name);
+    //return OF::copy_texturecube_gpu(logger, sps.ref_sp(shadername), MOVE(texture_o));
+  //};
 
-  handles.set(SKYBOX,       copy_texturecube("skybox", "skybox"));
-  handles.set(TEXTURE_CUBE, copy_texturecube("3dcube_texture", "cube"));
+  //handles.set(SKYBOX,       copy_texturecube("skybox", "skybox"));
+  //handles.set(TEXTURE_CUBE, copy_texturecube("3dcube_texture", "cube"));
 
-  auto const copy_cubecolor = [&logger](auto const& shader, opengl::Color const color) {
-    return OF::copy_colorcube_gpu(logger, shader, color);
-  };
-  handles.set(TERRAIN, copy_cubecolor(sps.ref_sp("3d_pos_color"), LOC::SADDLE_BROWN));
+  //auto const copy_cubecolor = [&logger](auto const& shader, opengl::Color const color) {
+    //return OF::copy_colorcube_gpu(logger, shader, color);
+  //};
+  //handles.set(TERRAIN, copy_cubecolor(sps.ref_sp("3d_pos_color"), LOC::SADDLE_BROWN));
 
   // world-axis
-  auto world_arrows = OF::create_world_axis_arrows(logger, sps.ref_sp("3d_pos_color"),
-      sps.ref_sp("3d_pos_color"), sps.ref_sp("3d_pos_color"));
+  //auto world_arrows = OF::create_world_axis_arrows(logger, sps.ref_sp("3d_pos_color"),
+      //sps.ref_sp("3d_pos_color"), sps.ref_sp("3d_pos_color"));
 
-  handles.set(GLOBAL_AXIS_X, MOVE(world_arrows.x_dinfo));
-  handles.set(GLOBAL_AXIS_Y, MOVE(world_arrows.y_dinfo));
-  handles.set(GLOBAL_AXIS_Z, MOVE(world_arrows.z_dinfo));
+  //handles.set(GLOBAL_AXIS_X, MOVE(world_arrows.x_dinfo));
+  //handles.set(GLOBAL_AXIS_Y, MOVE(world_arrows.y_dinfo));
+  //handles.set(GLOBAL_AXIS_Z, MOVE(world_arrows.z_dinfo));
   return DrawHandles{MOVE(handles)};
 }
 
@@ -180,7 +180,8 @@ init(stlw::Logger &logger, PROXY &proxy, ImGuiIO &imgui, window::Dimensions cons
 template<typename PROXY>
 void
 game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &sps, window::SDLWindow &window,
-    DrawHandles &drawhandles, LoadedEntities const& entities_from_file)
+    DrawHandles &drawhandles, LoadedEntities const& entities_from_file,
+    opengl::TextureTable const& ttable, ObjCache const& obj_cache)
 {
   auto &player = state.player;
   auto &mouse = state.mouse;
@@ -201,7 +202,7 @@ game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &sps, window::S
   ///////////////////////////////////////////////////////////////////
   // drawing
   if (render.tilemap.redraw) {
-    std::cerr << "Updating tilemap\n";
+    LOG_INFO("Updating tilemap\n");
     update_visible_tiles(state.tilemap, player, render.tilemap.reveal);
 
     // We don't need to recompute the tilemap, we just did.
@@ -212,18 +213,42 @@ game_loop(GameState &state, PROXY &proxy, opengl::ShaderPrograms &sps, window::S
 
   // render entites from the file
   for (auto const& et : entities_from_file) {
+    assert(et.shader);
     auto const shader_name = *et.shader;
     auto &shader_ref = sps.ref_sp(shader_name.c_str());
 
     if (et.shader && et.color) {
-      auto handle = OF::copy_colorcube_gpu(logger, shader_ref, *et.color);
-      render::draw(rargs, et.transform, shader_ref, handle);
-      std::cerr << "dynamic entity color: '" << *et.color << "'\n";
-    } else if (et.shader) {
-      // TODO: TOTAL HACK (won't work, especially since they aren't added to level file yet.
-      //auto &handle = handles.get(handle_name.c_str());
-      //render::draw(rargs, et.transform, shader_ref, handle);
-      std::abort();
+      switch(et.type) {
+        case GeometryType::Cube: {
+          auto handle = OF::copy_colorcube_gpu(logger, shader_ref, *et.color);
+          render::draw(rargs, et.transform, shader_ref, handle);
+          break;
+        }
+        case GeometryType::Mesh: {
+          //auto const& obj = obj_cache.get_obj(*et.mesh_name);
+          //auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, *et.texture);
+          //render::draw(rargs, et.transform, shader_ref, handle);
+          // TODO: implement this
+          std::abort();
+          break;
+        }
+      }
+    } else if (et.shader && et.texture) {
+      switch(et.type) {
+        case GeometryType::Cube: {
+          auto handle = OF::copy_texturecube_gpu(logger, shader_ref, *et.texture);
+          render::draw(rargs, et.transform, shader_ref, handle);
+          break;
+        }
+        case GeometryType::Mesh: {
+          auto const& obj = obj_cache.get_obj(*et.mesh_name);
+          auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, *et.texture);
+          render::draw(rargs, et.transform, shader_ref, handle);
+          break;
+        }
+        default:
+        std::abort();
+      }
     }
   }
   std::cerr << "\n\n";

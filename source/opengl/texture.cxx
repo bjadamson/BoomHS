@@ -56,14 +56,14 @@ namespace opengl
 namespace texture
 {
 
-texture_info
+TextureInfo
 allocate_texture(stlw::Logger &logger, std::string const& filename)
 {
   GLenum constexpr TEXTURE_MODE = GL_TEXTURE_2D;
 
   GLuint texture_id;
   glGenTextures(1, &texture_id);
-  texture_info const t{TEXTURE_MODE, texture_id};
+  TextureInfo const t{TEXTURE_MODE, texture_id};
 
   global::texture_bind(t);
   ON_SCOPE_EXIT([&t]() { global::texture_unbind(t); });
@@ -80,7 +80,7 @@ allocate_texture(stlw::Logger &logger, std::string const& filename)
   return t;
 }
 
-texture_info
+TextureInfo
 upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& paths)
 {
   assert(paths.size() == 6);
@@ -97,7 +97,7 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
 
   GLuint texture_id;
   glGenTextures(1, &texture_id);
-  texture_info const t{TEXTURE_MODE, texture_id};
+  TextureInfo const t{TEXTURE_MODE, texture_id};
   LOG_ANY_GL_ERRORS(logger, "glGenTextures");
 
   global::texture_bind(t);

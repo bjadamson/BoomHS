@@ -60,22 +60,22 @@ public:
   static constexpr GLsizei API_BUFFER_SIZE = 4;
 
 private:
-  std::size_t num_apis;
-  GLsizei stride;
-  std::array<AttributePointerInfo, API_BUFFER_SIZE> apis;
+  std::size_t num_apis_;
+  GLsizei stride_;
+  std::array<AttributePointerInfo, API_BUFFER_SIZE> apis_;
 
 public:
   MOVE_DEFAULT(VertexAttribute);
   COPY_DEFAULT(VertexAttribute);
   explicit VertexAttribute(std::size_t const n_apis, GLsizei const stride_p,
       std::array<AttributePointerInfo, API_BUFFER_SIZE> &&array)
-    : num_apis(n_apis)
-    , stride(stride_p)
-    , apis(MOVE(array))
+    : num_apis_(n_apis)
+    , stride_(stride_p)
+    , apis_(MOVE(array))
   {
   }
   void upload_vertex_format_to_glbound_vao(stlw::Logger &) const;
-
+  auto stride() const { return stride_; }
 
   friend std::ostream& operator<<(std::ostream&, VertexAttribute const&);
 };

@@ -32,7 +32,6 @@ bind_stuff_and_draw(stlw::Logger &logger, DrawInfo const &dinfo, FN const& fn)
   using namespace opengl;
 
   if (dinfo.texture_info()) {
-    std::abort();
     auto const& ti = *dinfo.texture_info();
     opengl::global::texture_bind(ti);
     ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
@@ -69,7 +68,6 @@ draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, Shad
   auto const& at_materials = args.at_materials;
 
   glm::mat4 const view_matrix = camera.camera_matrix();
-
   auto const draw_3d_shape_fn = [&](auto const &dinfo) {
 
     // various matrices
@@ -172,15 +170,24 @@ clear_screen(Color const& color)
 }
 
 void
-draw(RenderArgs const& args, Transform const& transform, ShaderProgram &shader_program, DrawInfo const& dinfo)
+draw(RenderArgs const& args, Transform const& transform, ShaderProgram &shader_program,
+    DrawInfo const& dinfo)
 {
   auto &logger = args.logger;
 
   // Use the shader_program's PROGRAM and bind the shader_program's VAO.
   shader_program.use_program(logger);
   opengl::global::vao_bind(dinfo.vao());
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
+  glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
+  std::cerr << "---------------------------------------------------------------------------\n";
   std::cerr << "drawing object!\n";
-  std::cerr << shader_program << "\n";
+  std::cerr << "shader_program:\n" << shader_program << "\n";
+
+  std::cerr << "draw_info:\n";
+  dinfo.print_self(std::cerr, shader_program.va());
+  std::cerr << "\n";
+  std::cerr << "---------------------------------------------------------------------------\n";
 
   if (shader_program.is_2d) {
     disable_depth_tests();

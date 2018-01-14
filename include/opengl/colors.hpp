@@ -40,12 +40,6 @@ struct Color
   {
     return std::array<float, 4>{this->r, this->g, this->b, this->a};
   }
-
-  auto
-  data()
-  {
-    return &r;
-  }
 };
 
 inline std::ostream&

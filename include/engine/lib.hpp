@@ -41,7 +41,8 @@ get_dimensions(Engine const& e)
 template<typename PROXY>
 void
 loop(Engine &engine, State &state, PROXY &proxy, game::DrawHandles &drawhandles,
-    opengl::ShaderPrograms &sp, game::LoadedEntities const& entities)
+    opengl::ShaderPrograms &sp, game::LoadedEntities const& entities, opengl::TextureTable const& ttable,
+    game::ObjCache const& obj_cache)
 {
   auto &logger = state.logger;
   // Reset Imgui for next game frame.
@@ -64,7 +65,7 @@ loop(Engine &engine, State &state, PROXY &proxy, game::DrawHandles &drawhandles,
         exec_system(st::randompos_system));
   }
 
-  game::game_loop(state, proxy, sp, engine.window, drawhandles, entities);
+  game::game_loop(state, proxy, sp, engine.window, drawhandles, entities, ttable, obj_cache);
 
   // Render Imgui UI
   ImGui::Render();
@@ -76,7 +77,8 @@ loop(Engine &engine, State &state, PROXY &proxy, game::DrawHandles &drawhandles,
 template<typename PROXY>
 void
 timed_game_loop(PROXY &proxy, Engine &engine, boomhs::GameState &state, boomhs::DrawHandles &drawhandles,
-    opengl::ShaderPrograms &sp, game::LoadedEntities const& entities)
+    opengl::ShaderPrograms &sp, game::LoadedEntities const& entities, opengl::TextureTable const& ttable,
+    game::ObjCache const& obj_cache)
 {
   auto &logger = state.logger;
 
@@ -86,7 +88,7 @@ timed_game_loop(PROXY &proxy, Engine &engine, boomhs::GameState &state, boomhs::
   while (!state.quit) {
     window::LTimer frame_timer;
     auto const start = frame_timer.get_ticks();
-    loop(engine, state, proxy, drawhandles, sp, entities);
+    loop(engine, state, proxy, drawhandles, sp, entities, ttable, obj_cache);
 
     uint32_t const frame_ticks = frame_timer.get_ticks();
     float constexpr ONE_60TH_OF_A_FRAME = (1/60) * 1000;
@@ -142,7 +144,8 @@ start(stlw::Logger &logger, Engine &engine)
         system_init(st::randompos_system));
 
     LOG_TRACE("systems initialized, entering main loop.");
-    timed_game_loop(proxy, engine, state, drawinfos, assets.shader_programs, assets.loaded_entities);
+    timed_game_loop(proxy, engine, state, drawinfos, assets.shader_programs, assets.loaded_entities,
+        assets.texture_table, assets.obj_cache);
     LOG_TRACE("game loop finished.");
   });
 

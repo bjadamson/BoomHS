@@ -6,8 +6,8 @@
 #include <utility>
 #include <stlw/tuple.hpp>
 
-#define FOR(q,n) for(auto q=0u;q<n;++q)
-#define FORI(q,n) for(auto q=0;q<n;++q)
+#define FOR(q,n) for(unsigned int q=0u;q<n;++q)
+#define FORI(q,n) for(int q=0;q<n;++q)
 
 namespace stlw
 {

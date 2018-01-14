@@ -405,7 +405,7 @@ print_active_uniforms(std::ostream &stream, GLuint const program)
 }
 
 std::ostream&
-operator<<(std::ostream& stream, ShaderProgram const& sp)
+operator<<(std::ostream &stream, ShaderProgram const& sp)
 {
   auto const& program = sp.handle();
   print_active_attributes(stream, program);

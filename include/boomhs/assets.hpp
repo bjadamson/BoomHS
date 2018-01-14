@@ -10,6 +10,8 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/sized_buffer.hpp>
+
+#include <boost/algorithm/string.hpp>
 #include <array>
 #include <string>
 #include <vector>
@@ -53,17 +55,44 @@ public:
     // yield reference to data
     return it->second;
   }
+
+  auto const&
+  get_obj(std::string const& s) const
+  {
+    return get_obj(s.c_str());
+  }
 };
+
+enum GeometryType
+{
+  Cube = 0,
+  Mesh,
+};
+
+inline GeometryType
+from_string(std::string &string)
+{
+  boost::to_lower(string);
+  if (string == "cube") {
+    return Cube;
+  } else if (string == "mesh") {
+    return Mesh;
+  }
+  std::abort();
+}
 
 struct EntityInfo
 {
   Transform const transform;
+  GeometryType const type;
 
   // THOUGHT: It doesn't make sense to have a "color" but not a "shader".
   //
   // We lost our compile time guarantees, how to compensate?
   boost::optional<std::string> const shader;
+  boost::optional<std::string> const mesh_name;
   boost::optional<opengl::Color> const color;
+  boost::optional<opengl::TextureInfo> const texture;
 };
 
 struct LoadedEntities
@@ -118,6 +147,12 @@ public:
     auto const fmt = fmt::sprintf("Error could not find asset '%s'", name);
     std::cerr << fmt << "\n";
     std::abort();
+  }
+
+  auto const&
+  get(std::string const& name) const
+  {
+    return get(name.c_str());
   }
 
   MOVE_CONSTRUCTIBLE_ONLY(GpuHandles);

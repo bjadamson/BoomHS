@@ -108,9 +108,9 @@ namespace opengl
 void
 VertexAttribute::upload_vertex_format_to_glbound_vao(stlw::Logger &logger) const
 {
-  UploadFormatState ufs{this->stride};
-  FOR(i, this->num_apis) {
-    auto const& api = this->apis[i];
+  UploadFormatState ufs{this->stride_};
+  FOR(i, this->num_apis_) {
+    auto const& api = this->apis_[i];
     assert(api.type != AttributePointerInfo::INVALID_TYPE);
     assert(api.component_count > 0);
 
@@ -134,9 +134,9 @@ operator<<(std::ostream& stream, VertexAttribute const& va)
   auto const print_delim = [&stream]() { stream << "-----------\n"; };
   print_delim();
   stream << fmt::format("(VA) -- num_apis: '{}' stride: '{}'\n",
-      va.num_apis,
-      va.stride);
-  for(auto const& api : va.apis) {
+      va.num_apis_,
+      va.stride_);
+  for(auto const& api : va.apis_) {
     stream << "    ";
     stream << api;
     stream << "\n";

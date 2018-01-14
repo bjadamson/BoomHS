@@ -104,7 +104,7 @@ get_color(CppTable const& table, char const* name)
     return boost::none;
   }
 
-  auto const& c = *load_colors;
+  std::vector<double> const& c = *load_colors;
   opengl::Color color;
   color.r = c[0];
   color.g = c[1];
@@ -223,16 +223,26 @@ load_textures(stlw::Logger &logger, CppTable const& config)
 }
 
 auto
-load_entities(stlw::Logger &logger, CppTable const& config)
+load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& ttable)
 {
-  auto const load_entity = [](auto const& entity) {
+  auto const load_entity = [&ttable](auto const& entity) {
     auto shader = get_string_or_abort(entity, "shader");
+    auto geometry = get_string_or_abort(entity, "geometry");
     auto pos = get_vec3_or_abort(entity, "pos");
     auto color = get_color(entity, "color");
+    auto texture_name = get_string(entity, "texture");
+    auto mesh_name = get_string(entity, "mesh");
+
+    // texture OR color fields, not both
+    assert((!!color) != (!!texture_name));
+
+    auto const texture = ttable.find(texture_name);
 
     Transform transform;
     transform.translation = pos;
-    return boomhs::EntityInfo{MOVE(transform), shader, color};
+
+    GeometryType const type{from_string(geometry)};
+    return boomhs::EntityInfo{MOVE(transform), type, shader, mesh_name, color, texture};
   };
 
   LoadedEntities entities;
@@ -383,7 +393,7 @@ load_assets(stlw::Logger &logger)
   auto meshes = load_meshes(loader, mesh_table);
 
   auto texture_table = load_textures(logger, area_config);
-  auto entities = load_entities(logger, area_config);
+  auto entities = load_entities(logger, area_config, texture_table);
   return Assets{MOVE(meshes), MOVE(shader_programs), MOVE(entities), MOVE(texture_table)};
 }
 
