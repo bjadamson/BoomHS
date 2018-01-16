@@ -94,8 +94,8 @@ public:
 };
 
 
-class Player;
+class WorldObject;
 void
-update_visible_tiles(TileMap &, Player const&, bool const);
+update_visible_tiles(TileMap &, WorldObject const&, bool const);
 
 } // ns boomhs

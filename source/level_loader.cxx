@@ -1,7 +1,9 @@
 #include <boomhs/level_loader.hpp>
 #include <boomhs/assets.hpp>
+#include <boomhs/components.hpp>
 #include <opengl/obj.hpp>
 #include <stlw/result.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace boomhs;
 using namespace opengl;
@@ -223,26 +225,55 @@ load_textures(stlw::Logger &logger, CppTable const& config)
 }
 
 auto
-load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& ttable)
+load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& ttable,
+    entt::DefaultRegistry &registry)
 {
-  auto const load_entity = [&ttable](auto const& entity) {
-    auto shader = get_string_or_abort(entity, "shader");
-    auto geometry = get_string_or_abort(entity, "geometry");
-    auto pos = get_vec3_or_abort(entity, "pos");
-    auto color = get_color(entity, "color");
-    auto texture_name = get_string(entity, "texture");
-    auto mesh_name = get_string(entity, "mesh");
+  auto const load_entity = [&registry, &ttable](auto const& file) {
+    auto shader =       get_string_or_abort(file, "shader");
+    auto geometry =     get_string_or_abort(file, "geometry");
+    auto pos =          get_vec3_or_abort(file, "pos");
+    auto color =        get_color(file, "color");
+    auto texture_name = get_string(file, "texture");
+    auto light =        get_string(file, "light");
+    auto player =       get_string(file, "player");
 
     // texture OR color fields, not both
-    assert((!!color) != (!!texture_name));
+    assert((!color && !texture_name) || (!color && texture_name) || (color && !texture_name));
 
-    auto const texture = ttable.find(texture_name);
-
-    Transform transform;
+    auto entity = registry.create();
+    auto &transform = registry.assign<Transform>(entity);
     transform.translation = pos;
 
-    GeometryType const type{from_string(geometry)};
-    return boomhs::EntityInfo{MOVE(transform), type, shader, mesh_name, color, texture};
+    auto &sn = registry.assign<ShaderName>(entity);
+    sn.value = shader;
+
+    if (player) {
+      registry.assign<Player>(entity);
+    }
+    if (geometry == "cube") {
+      registry.assign<CubeRenderable>(entity);
+    }
+    else if (boost::starts_with(geometry, "mesh")) {
+      auto &meshc = registry.assign<MeshRenderable>(entity);
+      auto const len = ::strlen("mesh:");
+      assert(0 < len);
+      meshc.name = geometry.substr(len, geometry.length() - len);
+    }
+    if (color) {
+      auto &cc = registry.assign<Color>(entity);
+      *&cc = *color;
+    }
+    if (texture_name) {
+      auto &tc = registry.assign<TextureRenderable>(entity);
+      auto texture_o = ttable.find(*texture_name);
+      assert(texture_o);
+      tc.texture_info = *texture_o;
+    }
+
+    if (light) {
+      auto &cc = registry.assign<Light>(entity);
+    }
+    return entity;
   };
 
   LoadedEntities entities;
@@ -290,36 +321,6 @@ load_shaders(stlw::Logger &logger, ParsedVertexAttributes &&pvas, CppTable const
   }
   return sps;
 }
-
-/*
-void
-upload_sp_textures(stlw::Logger &logger, ShaderPrograms &shader_programs,
-    ResourceTable const& resource_table, CppTable const& table)
-{
-  auto const upload_texture = [&logger, &resource_table, &table](auto &shader_program) {
-    auto const has_texture_o = get_bool(table, "has_texture");
-    if (!has_texture_o) {
-      return;
-    }
-
-    // find resource
-    auto const filename = get_string_or_abort(table, "filename");
-    auto const textures = resource_table.get_texture(filename);
-    auto const& filenames = textures.filenames;
-    if (textures.is_3dcube()) {
-      auto texture = opengl::texture::upload_3dcube_texture(logger, filenames);
-      shader_program.texture = boost::make_optional(MOVE(texture));
-    } else if (textures.is_2d()) {
-      auto texture = opengl::texture::allocate_texture(logger, filenames[0]);
-      shader_program.texture = boost::make_optional(MOVE(texture));
-    }
-  };
-  for (auto &pair : shader_programs) {
-    auto &sp = pair.second;
-    upload_texture(sp);
-  }
-}
-*/
 
 auto
 load_vas(CppTable const& config)
@@ -376,8 +377,8 @@ load_vas(CppTable const& config)
 namespace boomhs
 {
 
-stlw::result<Assets, std::string>
-load_assets(stlw::Logger &logger)
+stlw::result<AssetPair, std::string>
+load_assets(stlw::Logger &logger, entt::DefaultRegistry &registry)
 {
   CppTable engine_config = cpptoml::parse_file("engine.toml");
   assert(engine_config);
@@ -393,8 +394,9 @@ load_assets(stlw::Logger &logger)
   auto meshes = load_meshes(loader, mesh_table);
 
   auto texture_table = load_textures(logger, area_config);
-  auto entities = load_entities(logger, area_config, texture_table);
-  return Assets{MOVE(meshes), MOVE(shader_programs), MOVE(entities), MOVE(texture_table)};
+  auto entities = load_entities(logger, area_config, texture_table, registry);
+  Assets assets{MOVE(meshes), MOVE(entities), MOVE(texture_table)};
+  return std::make_pair(MOVE(assets), MOVE(shader_programs));
 }
 
 } // ns boomhs

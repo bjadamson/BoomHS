@@ -77,7 +77,7 @@ draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, Shad
       shader_program.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
       shader_program.set_uniform_vec3(logger, "u_viewpos", camera.world_position());
       {
-        auto const light_pos = args.entities[LIGHT_INDEX]->translation;
+        auto const light_pos = args.light.single_light_position;
         shader_program.set_uniform_vec3(logger, "u_light.position", light_pos);
       }
       shader_program.set_uniform_color_3fv(logger, "u_light.ambient", light.ambient);
@@ -153,6 +153,7 @@ init(window::Dimensions const& dimensions)
 
   glDisable(GL_CULL_FACE);
   glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   enable_depth_tests();
 }
@@ -180,6 +181,7 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &shader_p
   opengl::global::vao_bind(dinfo.vao());
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
   glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
+  /*
   std::cerr << "---------------------------------------------------------------------------\n";
   std::cerr << "drawing object!\n";
   std::cerr << "shader_program:\n" << shader_program << "\n";
@@ -188,6 +190,7 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &shader_p
   dinfo.print_self(std::cerr, shader_program.va());
   std::cerr << "\n";
   std::cerr << "---------------------------------------------------------------------------\n";
+  */
 
   if (shader_program.is_2d) {
     disable_depth_tests();

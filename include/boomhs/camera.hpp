@@ -17,7 +17,7 @@
 
 namespace boomhs
 {
-class Player;
+class WorldObject;
 struct UiState;
 
 struct SphericalCoordinates
@@ -134,7 +134,7 @@ public:
   }
 
   void
-  rotate_behind_player(stlw::Logger &, Player const&);
+  rotate_behind_player(stlw::Logger &, WorldObject const&);
 
   Camera&
   rotate(stlw::Logger &, UiState &, window::mouse_data const&);

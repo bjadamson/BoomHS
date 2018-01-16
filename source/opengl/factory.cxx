@@ -42,7 +42,6 @@ copy_to_gpu(stlw::Logger &logger, ShaderProgram const& shader_program, DrawInfo 
   // copy the vertices
   auto const vertices_size = vertices.size() * sizeof(GLfloat);
   auto const& vertices_data = vertices.data();
-  std::cerr << "\n";
   LOG_TRACE(fmt::format("inserting '%i' vertices into GL_BUFFER_ARRAY\n", vertices.size()));
   glBufferData(GL_ARRAY_BUFFER, vertices_size, vertices_data, GL_STATIC_DRAW);
 
@@ -116,8 +115,7 @@ copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program, Co
 }
 
 DrawInfo
-copy_texturecube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program,
-    boost::optional<TextureInfo> const& ti)
+copy_texturecube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program, TextureInfo const& ti)
 {
   // clang-format off
   auto const vertices = cube_vertices();
@@ -131,7 +129,7 @@ copy_texturecube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program,
       vertices[24], vertices[25], vertices[26], vertices[27],
       vertices[28], vertices[29], vertices[30], vertices[31],
       };
-  return make_cube_drawinfo(logger, vertex_data, shader_program, ti);
+  return make_cube_drawinfo(logger, vertex_data, shader_program, boost::make_optional(ti));
 }
 
 DrawInfo

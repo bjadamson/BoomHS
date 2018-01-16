@@ -43,7 +43,7 @@ DrawInfo
 copy_colorcube_gpu(stlw::Logger &, ShaderProgram const&, Color const&);
 
 DrawInfo
-copy_texturecube_gpu(stlw::Logger &, ShaderProgram const&, boost::optional<TextureInfo> const&);
+copy_texturecube_gpu(stlw::Logger &, ShaderProgram const&, TextureInfo const&);
 
 DrawInfo
 copy_cube_14indices_gpu(stlw::Logger &, ShaderProgram const&, boost::optional<TextureInfo> const&);

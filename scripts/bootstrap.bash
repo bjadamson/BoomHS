@@ -36,11 +36,9 @@ set(CPPTOML_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/cpptoml/include")
 file(GLOB INTERNAL_INCLUDE_DIRS include
   external/backward/include
   external/compact_optional/include
+  external/entt/include
   external/expected/include
   external/hana/include
-  external/ecst/include
-  external/ecst/extlibs/vrm_core/include
-  external/ecst/extlibs/vrm_pp/include
   external/fmt/include
   external/imgui/include
   external/spdlog/include

@@ -165,6 +165,19 @@ public:
   }
 
 #undef LOOKUP_SP
+  ShaderProgram const&
+  ref_sp(std::string const& s) const
+  {
+    return ref_sp(s.c_str());
+  }
+
+  ShaderProgram&
+  ref_sp(std::string const& s)
+  {
+    return ref_sp(s.c_str());
+  }
+
+
   BEGIN_END_FORWARD_FNS(shader_programs_);
 };
 

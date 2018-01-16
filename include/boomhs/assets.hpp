@@ -3,7 +3,6 @@
 #include <opengl/draw_info.hpp>
 #include <opengl/obj.hpp>
 #include <opengl/factory.hpp>
-#include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
 
 #include <stlw/format.hpp>
@@ -97,7 +96,7 @@ struct EntityInfo
 
 struct LoadedEntities
 {
-  std::vector<EntityInfo> data;
+  std::vector<std::uint32_t> data;
 
   BEGIN_END_FORWARD_FNS(data);
 };
@@ -106,62 +105,58 @@ struct LoadedEntities
 struct Assets
 {
   ObjCache obj_cache;
-  opengl::ShaderPrograms shader_programs;
   LoadedEntities loaded_entities;
   opengl::TextureTable texture_table;
 };
 
-class GpuHandles
+class GpuHandleList
 {
   std::vector<opengl::DrawInfo> drawinfos_;
-  std::vector<char const*> names_;
+  std::vector<std::uint32_t> entities_;
 
 public:
-  GpuHandles() = default;
+  GpuHandleList() = default;
 
   std::size_t
-  set(char const* name, opengl::DrawInfo &&di)
+  add(std::uint32_t const entity, opengl::DrawInfo &&di)
   {
     auto const pos = drawinfos_.size();
     drawinfos_.emplace_back(MOVE(di));
-    names_.emplace_back(name);
+    entities_.emplace_back(entity);
 
     // return the index di was stored in.
     return pos;
   }
 
   opengl::DrawInfo const&
-  get(std::size_t const index) const
+  get(std::uint32_t const entity) const
   {
-    return drawinfos_[index];
-  }
-
-  opengl::DrawInfo const&
-  get(char const* name) const
-  {
-    FOR(i, names_.size()) {
-      if (names_[i] == name) {
-        return get(i);
+    FOR(i, entities_.size()) {
+      if (entities_[i] == entity) {
+        return drawinfos_[i];
       }
     }
-    auto const fmt = fmt::sprintf("Error could not find asset '%s'", name);
-    std::cerr << fmt << "\n";
+    std::cerr << fmt::format("Error could not find gpu handle associated to entity {}'\n", entity);
     std::abort();
   }
 
-  auto const&
-  get(std::string const& name) const
-  {
-    return get(name.c_str());
-  }
-
-  MOVE_CONSTRUCTIBLE_ONLY(GpuHandles);
+  MOVE_CONSTRUCTIBLE_ONLY(GpuHandleList);
 };
 
-struct DrawHandles {
-  GpuHandles handles;
+class HandleManager {
+  GpuHandleList list_;
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(HandleManager);
+  explicit HandleManager(GpuHandleList &&list)
+    : list_(MOVE(list))
+  {
+  }
 
-  MOVE_CONSTRUCTIBLE_ONLY(DrawHandles);
+  auto&
+  lookup(std::uint32_t const entity) const
+  {
+    return list_.get(entity);
+  }
 };
 
 } // ns boomhs

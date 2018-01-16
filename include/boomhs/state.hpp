@@ -13,46 +13,14 @@
 #include <window/sdl_window.hpp>
 
 #include <boomhs/camera.hpp>
-#include <boomhs/player.hpp>
+#include <boomhs/world_object.hpp>
 #include <boomhs/tilemap.hpp>
-#include <boomhs/skybox.hpp>
 #include <vector>
 
 using stlw::Logger;
 
 namespace boomhs
 {
-#define DEFINE_BOTH(INDEX, NAME)             \
-  static constexpr char const* NAME = #NAME; \
-  static constexpr int NAME##_INDEX = INDEX
-
-DEFINE_BOTH(0, HOUSE);
-DEFINE_BOTH(1, TEXTURE_CUBE);
-DEFINE_BOTH(2, SKYBOX);
-
-DEFINE_BOTH(3, GLOBAL_AXIS_X);
-DEFINE_BOTH(4, GLOBAL_AXIS_Y);
-DEFINE_BOTH(5, GLOBAL_AXIS_Z);
-DEFINE_BOTH(6, LOCAL_AXIS_X);
-DEFINE_BOTH(7, LOCAL_AXIS_Y);
-DEFINE_BOTH(8, LOCAL_AXIS_Z);
-
-DEFINE_BOTH(9, CAMERA_LOCAL_AXIS0);
-DEFINE_BOTH(10, CAMERA_LOCAL_AXIS1);
-DEFINE_BOTH(11, CAMERA_LOCAL_AXIS2);
-DEFINE_BOTH(12, LOCAL_FORWARD);
-
-DEFINE_BOTH(13, TERRAIN);
-DEFINE_BOTH(14, TILEMAP);
-DEFINE_BOTH(15, LIGHT);
-
-DEFINE_BOTH(16, HASHTAG);
-DEFINE_BOTH(17, AT);
-DEFINE_BOTH(18, PLUS);
-DEFINE_BOTH(19, ORC);
-DEFINE_BOTH(20, TROLL);
-#define INDEX_MAX 21
-#undef DEFINE_BOTH
 
 // other
 static constexpr auto INIT_ATTENUATION_INDEX = 8;
@@ -64,6 +32,9 @@ struct LightColors
   opengl::Color specular = LOC::WHITE;
 
   opengl::Attenuation attenuation = opengl::ATTENUATION_VALUE_TABLE[INIT_ATTENUATION_INDEX];
+
+  // TODO: this is a hack, should be based on other entities position(s)
+  glm::vec3 single_light_position{0.0f, 0.0f, 0.0f};
 };
 
 struct MaterialColors
@@ -78,7 +49,7 @@ struct RenderArgs
 {
   Logger &logger;
   Camera const& camera;
-  Player const& player;
+  WorldObject const& player;
 
   std::vector<Transform*> &entities;
   LightColors &light;
@@ -100,7 +71,7 @@ struct UiState
   glm::vec3 euler_angle_buffer;
   glm::vec3 last_mouse_clicked_pos;
   int attenuation_current_item = INIT_ATTENUATION_INDEX;
-  int entity_window_current = AT_INDEX;
+  int entity_window_current = 0;
 };
 
 struct MouseState
@@ -170,14 +141,12 @@ struct GameState
   // NOTE: Keep this data member above the "camera" data member.
   std::vector<Transform*> entities;
 
-  // player needs to come AFTER "camera".
   Camera camera;
-  Player player;
-  Skybox skybox;
+  WorldObject player;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
   GameState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
-      TileMap &&tmap, std::vector<Transform*> &&ents, Camera &&cam, Player &&pl, Skybox &&sbox)
+      TileMap &&tmap, std::vector<Transform*> &&ents, Camera &&cam, WorldObject &&pl)
     : logger(l)
     , imgui(i)
     , dimensions(d)
@@ -187,7 +156,6 @@ struct GameState
     , entities(MOVE(ents))
     , camera(MOVE(cam))
     , player(MOVE(pl))
-    , skybox(MOVE(sbox))
   {
   }
 

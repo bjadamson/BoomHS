@@ -1,6 +1,6 @@
 #include <boomhs/camera.hpp>
-#include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
+#include <boomhs/world_object.hpp>
 #include <limits>
 #include <iostream>
 #include <cmath>
@@ -64,7 +64,7 @@ Camera::Camera(Projection const& proj, Transform &t,glm::vec3 const& forward, gl
 }
 
 void
-Camera::rotate_behind_player(stlw::Logger &logger, Player const& player)
+Camera::rotate_behind_player(stlw::Logger &logger, WorldObject const& player)
 {
   //auto const& player_transform = player.transform();
   //glm::mat4 const origin_m = glm::translate(glm::mat4{}, glm::vec3{0.0f});

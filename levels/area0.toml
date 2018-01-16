@@ -63,44 +63,79 @@ color = [0.000, 0.000, 1.000, 1.000]
 name = "O"
 normals = true
 uvs = false
-color = [1.000, 0.000, 1.000, 1.000]
+color = [1.000, 0.000, 0.000, 1.000]
 
 [[meshes]]
 name = "T"
 normals = true
 uvs = false
-color = [0.000, 1.000, 1.000, 1.000]
+color = [0.000, 1.000, 0.000, 1.000]
 
 ########### ENTITY #############
 [[entity]]
-pos = [0.0, 0.0, 0.0]
+pos = [4.0, 4.0, 0.0]
 shader = "3d_pos_color"
-color = [0.2, 0.4, 0.8, 0.0]
+color = [0.8, 0.0, 0.0, 0.7]
 geometry = "cube"
 
 [[entity]]
-pos = [0.0, 4.0, 4.0]
+pos = [-4.0, 4.0, 0.0]
+shader = "3d_pos_color"
+color = [0.0, 0.0, 0.8, 0.4]
+geometry = "cube"
+
+[[entity]]
+pos = [1.0, 0.0, 0.0]
 shader = "3dcube_texture"
 geometry = "cube"
 texture = "boring_cube"
 
 [[entity]]
-pos = [-4.0, 4.0, 4.0]
+pos = [-1.0, 0.0, 0.0]
 shader = "3dcube_texture"
 geometry = "cube"
 texture = "skybox"
 
 [[entity]]
-pos = [4.0, -4.0, 4.0]
+pos = [2.0, -2.0, 2.0]
 shader = "3dtexture"
-geometry = "mesh"
-mesh = "house"
+geometry = "mesh:house"
 texture = "TextureAtlas"
 
-#[[entity]]
-#pos = [8, 4, 0]
-#shader = "3d_pos_color"
-#geometry = "mesh"
-#mesh = "at"
-#color = [1.0, 0.0, 0.0]
+[[entity]]
+pos = [0.0, 0.0, 2.0]
+shader = "light"
+geometry = "cube"
+color = [0.0, 1.0, 0.0, 0.3]
+light = "light"
 
+[[entity]]
+pos = [0.0, 0.0, 0.0]
+shader = "3d_pos_normal_color"
+geometry = "mesh:at"
+player = "player"
+
+[[entity]]
+pos = [-3.0, 0.0, -5.0]
+shader = "3d_pos_normal_color"
+geometry = "mesh:T"
+# DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
+# IN THE MESHES TABLE.
+#color = [0.0, 1.0, 0.0, 1.0]
+
+[[entity]]
+pos = [3.0, 0.0, -5.0]
+shader = "3d_pos_normal_color"
+geometry = "mesh:O"
+# DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
+# IN THE MESHES TABLE.
+#color = [0.0, 0.0, 1.0, 1.0]
+
+[[entity]]
+pos = [5.0, 0.0, -5.0]
+shader = "3d_pos_normal_color"
+geometry = "mesh:O"
+
+# DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
+# IN THE MESHES TABLE.
+#color = [1.0, 0.0, 0.0, 1.0]

@@ -1,9 +1,11 @@
 #include <boomhs/io.hpp>
 #include <boomhs/state.hpp>
+#include <boomhs/world_object.hpp>
+#include <stlw/log.hpp>
+
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_sdl_gl3.h>
 #include <glm/gtx/intersect.hpp>
-#include <stlw/log.hpp>
 #include <iostream>
 
 namespace {
@@ -73,7 +75,7 @@ process_event(GameState &state, SDL_Event &event)
     return is_quit_event(event);
   }
 
-  auto const move_player = [&](glm::vec3 (Player::*fn)() const) {
+  auto const move_player = [&](glm::vec3 (WorldObject::*fn)() const) {
     auto const player_pos = player.tilemap_position();
     glm::vec3 const move_vec = (player.*fn)();
 
@@ -137,7 +139,7 @@ process_event(GameState &state, SDL_Event &event)
     }
 
     if (state.mouse.left_pressed && state.mouse.right_pressed) {
-      move_player(&Player::forward_vector);
+      move_player(&WorldObject::forward_vector);
     }
     LOG_ERROR("toggling mouse up/down (pitch) lock");
     state.mouse_data.pitch_lock ^= true;
@@ -162,27 +164,27 @@ process_event(GameState &state, SDL_Event &event)
     };
     switch (event.key.keysym.sym) {
     case SDLK_w: {
-      move_player(&Player::forward_vector);
+      move_player(&WorldObject::forward_vector);
       break;
     }
     case SDLK_s: {
-      move_player(&Player::backward_vector);
+      move_player(&WorldObject::backward_vector);
       break;
     }
     case SDLK_a: {
-      move_player(&Player::left_vector);
+      move_player(&WorldObject::left_vector);
       break;
     }
     case SDLK_d: {
-      move_player(&Player::right_vector);
+      move_player(&WorldObject::right_vector);
       break;
     }
     case SDLK_q: {
-      move_player(&Player::up_vector);
+      move_player(&WorldObject::up_vector);
       break;
     }
     case SDLK_e: {
-      move_player(&Player::down_vector);
+      move_player(&WorldObject::down_vector);
       break;
     }
     case SDLK_LEFT: {

@@ -188,7 +188,7 @@ show_lighting_window(GameState &state)
     ImGui::Separator();
 
     {
-      auto &t = state.entities[LIGHT_INDEX]->translation;
+      auto &t = state.light.single_light_position;
       auto *light_pos = glm::value_ptr(t);
       ImGui::SliderFloat3("Light Position", light_pos, -100.0f, 100.0f);
       std::string const s = glm::to_string(glm::normalize(t));
