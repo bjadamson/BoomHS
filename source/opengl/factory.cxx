@@ -352,20 +352,19 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, boomh
 }
 
 WorldOriginArrows
-create_axis_arrows(stlw::Logger &logger, ShaderProgram &x_sp, ShaderProgram &y_sp, ShaderProgram &z_sp,
-    glm::vec3 const& origin)
+create_axis_arrows(stlw::Logger &logger, ShaderProgram &sp, glm::vec3 const& origin)
 {
-  auto x = create_arrow(logger, x_sp, ArrowCreateParams{LOC::RED, origin, origin + X_UNIT_VECTOR});
-  auto y = create_arrow(logger, y_sp, ArrowCreateParams{LOC::GREEN, origin, origin + Y_UNIT_VECTOR});
-  auto z = create_arrow(logger, z_sp, ArrowCreateParams{LOC::BLUE, origin, origin + Z_UNIT_VECTOR});
+  auto x = create_arrow(logger, sp, ArrowCreateParams{LOC::RED, origin, origin + X_UNIT_VECTOR});
+  auto y = create_arrow(logger, sp, ArrowCreateParams{LOC::GREEN, origin, origin + Y_UNIT_VECTOR});
+  auto z = create_arrow(logger, sp, ArrowCreateParams{LOC::BLUE, origin, origin + Z_UNIT_VECTOR});
   return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
 }
 
 WorldOriginArrows
-create_world_axis_arrows(stlw::Logger &logger, ShaderProgram &x_sp, ShaderProgram &y_sp, ShaderProgram &z_sp)
+create_world_axis_arrows(stlw::Logger &logger, ShaderProgram &sp)
 {
   glm::vec3 constexpr ORIGIN = glm::zero<glm::vec3>();
-  return create_axis_arrows(logger, x_sp, y_sp, z_sp, ORIGIN);
+  return create_axis_arrows(logger, sp, ORIGIN);
 }
 
 DrawInfo

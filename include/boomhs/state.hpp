@@ -97,13 +97,15 @@ struct TilemapRender
 
 struct RenderState
 {
+  bool draw_entities = true;
   bool draw_skybox = false;
+  bool draw_tilemap = true;
 
   bool show_global_axis = true;
   bool show_local_axis = false;
   bool show_target_vectors = true;
 
-  opengl::Color background = LOC::WHITE;
+  opengl::Color background = LOC::BLACK;
 
   TilemapRender tilemap;
 };

@@ -52,14 +52,12 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
   registry.view<ShaderName, opengl::Color, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
-        std::cerr << "copying cube with colors: '" << color << "'\n";
         auto handle = OF::copy_colorcube_gpu(logger, shader_ref, color);
         handle_list.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, opengl::Color, MeshRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &mesh) {
         auto const &obj = obj_cache.get_obj(mesh.name);
-        std::cerr << "copying mesh with colors: '" << color << "'\n";
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, boost::none);
         handle_list.add(entity, MOVE(handle));
@@ -87,7 +85,7 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
   return HandleManager{MOVE(handle_list)};
 }
 
-auto &
+auto&
 find_player(entt::DefaultRegistry &registry)
 {
   // for now assume only 1 entity has the Player tag
@@ -124,7 +122,6 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
   auto tmap_startingpos = level_generator::make_tilemap(80, 1, 45, rng);
   auto tmap = MOVE(tmap_startingpos.first);
   auto &startingpos = tmap_startingpos.second;
-  auto const pos = glm::vec3{startingpos.x, startingpos.y, startingpos.z};
 
   // Construct entities
   std::vector<Transform *> entities;
@@ -136,9 +133,10 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
   assert(1 == registry.view<Light>().size());
 
   auto light_view = registry.view<Light, Transform>();
-  for (auto entity : light_view) {
+  for (auto const entity : light_view) {
     auto &transform = light_view.get<Transform>(entity);
     transform.scale = glm::vec3{0.2f};
+    transform.translation = glm::vec3{startingpos.x, startingpos.y, startingpos.z};
   }
 
   // camera-look at origin
@@ -158,6 +156,61 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
 }
 
 void
+draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
+    HandleManager &handles)
+{
+  auto const draw_fn = [&handles, &sps, &state](auto entity, auto &sn, auto &transform) {
+    auto &shader_ref = sps.ref_sp(sn.value);
+    auto &handle = handles.lookup(entity);
+    render::draw(state.render_args(), transform, shader_ref, handle);
+  };
+
+  //
+  // Draw all entities which have a ShaderName component along with a Transform component
+  registry.view<ShaderName, Transform>().each(draw_fn);
+}
+
+void
+draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
+    HandleManager &handles)
+{
+  auto &logger = state.logger;
+
+  auto entity = registry.create();
+  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
+
+  // TODO: How do we "GET" the hashtag and plus shaders under the new entity management system?
+  //
+  // PROBLEM:
+  //    We currently store one draw handle to every entity. For the TileMap, we need to store two
+  //    (an array) of DrawInfo instances to the one entity.
+  //
+  // THOUGHT:
+  //    It probably makes sense to render the tilemap differently now. We should assume more than
+  //    just two tile type's will be necessary, and will have to devise a strategy for quickly
+  //    rendering the tilemap using different tile's. Maybe store the different tile type's
+  //    together somehow for rendering?
+  auto &transform = registry.assign<Transform>(entity);
+  auto &hash_sp = sps.ref_sp("hashtag");
+  auto &plus_sp = sps.ref_sp("plus");
+
+  auto const load_normals = opengl::LoadNormals{true};
+  auto const load_uvs = opengl::LoadUvs{false};
+
+  auto loader = opengl::ObjLoader{LOC::WHITE};
+  auto hashtag_obj = loader.load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", load_normals, load_uvs);
+  auto hashtag_handle = OF::copy_gpu(logger, GL_TRIANGLES, hash_sp, hashtag_obj, boost::none);
+
+  //auto &hash_handle = handles.get(
+  auto plus_obj = loader.load_mesh("assets/plus.obj", "assets/plus.mtl", load_normals, load_uvs);
+  auto plus_handle = OF::copy_gpu(logger, GL_TRIANGLES, plus_sp, plus_obj, boost::none);
+
+  render::draw_tilemap(state.render_args(), transform,
+      {hashtag_handle, hash_sp, plus_handle, plus_sp},
+      state.tilemap, state.render.tilemap.reveal);
+}
+
+void
 draw_tilegrid(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps)
 {
   auto &logger = state.logger;
@@ -174,19 +227,91 @@ draw_tilegrid(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
 }
 
 void
+draw_global_axis(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps)
+{
+  auto &logger = state.logger;
+  auto &sp = sps.ref_sp("3d_pos_color");
+  auto world_arrows = OF::create_world_axis_arrows(logger, sp);
+
+  auto entity = registry.create();
+  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
+
+  auto &transform = registry.assign<Transform>(entity);
+
+  auto const& rargs = state.render_args();
+  render::draw(rargs, transform, sp, world_arrows.x_dinfo);
+  render::draw(rargs, transform, sp, world_arrows.y_dinfo);
+  render::draw(rargs, transform, sp, world_arrows.z_dinfo);
+}
+
+void
+draw_local_axis(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
+    glm::vec3 const& player_pos)
+{
+  auto &logger = state.logger;
+  auto &sp = sps.ref_sp("3d_pos_color");
+  auto const axis_arrows = OF::create_axis_arrows(logger, sp, player_pos);
+
+  auto entity = registry.create();
+  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
+
+  auto &transform = registry.assign<Transform>(entity);
+
+  auto const& rargs = state.render_args();
+  render::draw(rargs, transform, sp, axis_arrows.x_dinfo);
+  render::draw(rargs, transform, sp, axis_arrows.y_dinfo);
+  render::draw(rargs, transform, sp, axis_arrows.z_dinfo);
+}
+
+void
+draw_target_vectors(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
+    WorldObject const& player)
+{
+  auto &logger = state.logger;
+  auto &sp = sps.ref_sp("3d_pos_color");
+
+  auto const draw_arrow = [&](auto const& start, auto const& head, auto const& color) {
+    auto const handle = OF::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
+
+    auto entity = registry.create();
+    ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
+    auto &transform = registry.assign<Transform>(entity);
+
+    auto const& rargs = state.render_args();
+    render::draw(rargs, transform, sp, handle);
+  };
+
+  // draw player forward
+  {
+    glm::vec3 const player_pos = player.world_position();
+    glm::vec3 const player_fwd = player_pos + (2.0f * player.forward_vector());
+
+    draw_arrow(player_pos, player_fwd, LOC::LIGHT_BLUE);
+  }
+
+  // draw forward arrow (for camera) ??
+  {
+    glm::vec3 const start = glm::vec3{0, 0, 0};
+    glm::vec3 const head = state.ui_state.last_mouse_clicked_pos;
+    draw_arrow(start, head, LOC::PURPLE);
+  }
+
+  // draw forward arrow (for camera) ??
+  {
+    glm::vec3 const start = player.world_position();
+    glm::vec3 const head = start + player.backward_vector();
+    draw_arrow(start, head, LOC::PINK);
+  };
+}
+
+void
 game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
           window::SDLWindow &window, HandleManager &handles, Assets const &assets)
 {
-  LoadedEntities const &entities_from_file = assets.loaded_entities;
-  opengl::TextureTable const &ttable = assets.texture_table;
-  ObjCache const &obj_cache = assets.obj_cache;
-  auto const &ents = state.entities;
   auto &player = state.player;
   auto &mouse = state.mouse;
   auto &render = state.render;
   auto &logger = state.logger;
-  auto &camera = state.camera;
-  auto rargs = state.render_args();
 
   // game logic
   if (mouse.right_pressed && mouse.left_pressed) {
@@ -200,127 +325,35 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
     update_visible_tiles(state.tilemap, player, render.tilemap.reveal);
 
     // We don't need to recompute the tilemap, we just did.
-    state.render.tilemap.redraw = false;
+    render.tilemap.redraw = false;
   }
 
   // action begins here
   render::clear_screen(render.background);
 
-  // Draw all entities which have a ShaderName component along with a Transform component
-  registry.view<ShaderName, Transform>().each(
-      [&handles, &sps, &rargs](auto entity, auto &sn, auto &transform) {
-        auto &shader_ref = sps.ref_sp(sn.value);
-        auto &handle = handles.lookup(entity);
-        render::draw(rargs, transform, shader_ref, handle);
-      });
-
-  draw_tilegrid(state, registry, sps);
-
-  /*
-  // light
-  {
-    auto entity = registry.create();
-    auto &transform = registry.assign<Transform>(entity);
-
-    auto light_handle = OF::copy_colorcube_gpu(logger, sps.ref_sp("light"), state.light.diffuse);
-    render::draw(rargs, transform, sps.ref_sp("light"), light_handle);
+  if (render.draw_entities) {
+    draw_entities(state, registry, sps, handles);
+  }
+  if (render.draw_skybox) {
+    //draw_skybox();
+    // TODO
+  }
+  if (render.draw_tilemap) {
+    draw_tilemap(state, registry, sps, handles);
   }
 
-  // skybox
-  state.skybox.transform.translation = ents[AT_INDEX]->translation;
-  if (state.render.draw_skybox) {
-    render::draw(rargs, state.skybox.transform, sps.ref_sp("skybox"), handles.get("SKYBOX"));
+  if (render.tilemap.show_grid_lines) {
+    draw_tilegrid(state, registry, sps);
   }
-
-  // tilemap
-  render::draw_tilemap(rargs, *ents[TILEMAP_INDEX],
-      {handles.get("HASHTAG"), sps.ref_sp("hashtag"), handles.get("PLUS"), sps.ref_sp("plus")},
-      state.tilemap, state.render.tilemap.reveal);
-
-  // player
-  render::draw(rargs, *ents[AT_INDEX], sps.ref_sp("3d_pos_normal_color"), handles.get("AT"));
-
-  // enemies
-  render::draw(rargs, *ents[ORC_INDEX], sps.ref_sp("3d_pos_normal_color"), handles.get("ORC"));
-  render::draw(rargs, *ents[TROLL_INDEX], sps.ref_sp("3d_pos_normal_color"), handles.get("TROLL"));
-
-  // global coordinates
-  if (state.render.show_global_axis) {
-    render::draw(rargs, *ents[GLOBAL_AXIS_X_INDEX], sps.ref_sp("3d_pos_color"),
-  handles.get("GLOBAL_AXIS_X"));
-    render::draw(rargs, *ents[GLOBAL_AXIS_Y_INDEX], sps.ref_sp("3d_pos_color"),
-  handles.get("GLOBAL_AXIS_X"));
-    render::draw(rargs, *ents[GLOBAL_AXIS_Z_INDEX], sps.ref_sp("3d_pos_color"),
-  handles.get("GLOBAL_AXIS_X"));
+  if (render.show_global_axis) {
+    draw_global_axis(state, registry, sps);
   }
-
-  // local coordinates
-  if (state.render.show_local_axis) {
-    auto const& player_pos = ents[AT_INDEX]->translation;
-    {
-      auto const world_coords = OF::create_axis_arrows(logger,
-          sps.ref_sp("3d_pos_color"),
-          sps.ref_sp("3d_pos_color"),
-          sps.ref_sp("3d_pos_color"),
-          player_pos);
-      render::draw(rargs, *ents[LOCAL_AXIS_X_INDEX], sps.ref_sp("3d_pos_color"),
-  handles.get("LOCAL_AXIS_X"));
-      render::draw(rargs, *ents[LOCAL_AXIS_Y_INDEX], sps.ref_sp("3d_pos_color"),
-  handles.get("LOCAL_AXIS_Y"));
-      render::draw(rargs, *ents[LOCAL_AXIS_Z_INDEX], sps.ref_sp("3d_pos_color"),
-  handles.get("LOCAL_AXIS_Z"));
-    }
+  if (render.show_local_axis) {
+    draw_local_axis(state, registry, sps, player.world_position());
   }
-
-  // draw forward arrow (for player)
-  if (state.render.show_target_vectors) {
-    {
-      glm::vec3 const start = player.world_position();
-      glm::vec3 const head = start + (2.0f * player.forward_vector());
-
-      auto const handle = OF::create_arrow(logger, sps.ref_sp("3d_pos_color"),
-          OF::ArrowCreateParams{LOC::LIGHT_BLUE, start, head});
-
-      render::draw(rargs, *ents[LOCAL_FORWARD_INDEX], sps.ref_sp("3d_pos_color"), handle);
-    }
-    // draw forward arrow (for camera)
-    {
-      //glm::vec3 const start = glm::vec3{0.0f, 0.0f, 1.0f};
-      //glm::vec3 const head = glm::vec3{0.0f, 0.0f, 2.0f};
-      glm::vec3 const start = glm::vec3{0, 0, 0};
-      glm::vec3 const head = state.ui_state.last_mouse_clicked_pos;
-
-      auto handle = OF::create_arrow(logger, sps.ref_sp("3d_pos_color"),
-        OF::ArrowCreateParams{LOC::YELLOW, start, head});
-
-      render::draw(rargs, *ents[CAMERA_LOCAL_AXIS0_INDEX], sps.ref_sp("3d_pos_color"), handle);
-    }
-    // draw forward arrow (for camera)
-    {
-      glm::vec3 const start = player.world_position();
-      glm::vec3 const head = start + player.backward_vector();
-
-      auto const handle = OF::create_arrow(logger, sps.ref_sp("3d_pos_color"),
-        OF::ArrowCreateParams{LOC::PINK, start, head});
-
-      render::draw(rargs, *ents[CAMERA_LOCAL_AXIS2_INDEX], sps.ref_sp("3d_pos_color"), handle);
-    }
-    // draw arrow from origin -> camera
-    {
-      glm::vec3 const start = player.world_position();
-      glm::vec3 const head = start + player.right_vector();
-
-      auto const handle = OF::create_arrow(logger, sps.ref_sp("3d_pos_color"),
-        OF::ArrowCreateParams{LOC::PURPLE, start, head});
-
-      render::draw(rargs, *ents[CAMERA_LOCAL_AXIS2_INDEX], sps.ref_sp("3d_pos_color"), handle);
-    }
+  if (render.show_target_vectors) {
+    draw_target_vectors(state, registry, sps, player);
   }
-
-  // terrain
-  //render::draw(rargs, *ents[TERRAIN_INDEX], sps.ref_sp("terrain"), handles.terrain);
-
-*/
   // UI code
   draw_ui(state, window);
 }

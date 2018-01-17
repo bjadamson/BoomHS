@@ -81,14 +81,12 @@ struct WorldOriginArrows {
 };
 
 WorldOriginArrows
-create_axis_arrows(stlw::Logger &, ShaderProgram &x_sp, ShaderProgram &y_sp, ShaderProgram &z_sp,
-    glm::vec3 const& origin);
+create_axis_arrows(stlw::Logger &, ShaderProgram &, glm::vec3 const&);
 
 WorldOriginArrows
-create_world_axis_arrows(stlw::Logger &logger, ShaderProgram &x_sp, ShaderProgram &y_sp, ShaderProgram &z_sp);
+create_world_axis_arrows(stlw::Logger &logger, ShaderProgram &);
 
 DrawInfo
-copy_gpu(stlw::Logger &logger, GLenum const draw_mode, ShaderProgram &sp, obj const& object,
-    boost::optional<TextureInfo> const&);
+copy_gpu(stlw::Logger &, GLenum const, ShaderProgram &, obj const&, boost::optional<TextureInfo> const&);
 
 } // ns opengl::factories
