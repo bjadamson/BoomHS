@@ -163,7 +163,8 @@ struct GameState
 
   RenderArgs render_args()
   {
-    return RenderArgs{this->logger, this->camera, this->player, this->entities, this->light, this->at_materials};
+    return RenderArgs{this->logger, this->camera, this->player, this->entities, this->light,
+      this->at_materials};
   }
 };
 

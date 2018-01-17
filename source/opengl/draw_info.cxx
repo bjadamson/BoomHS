@@ -28,8 +28,8 @@ BufferHandles::BufferHandles(BufferHandles &&other)
 BufferHandles&
 BufferHandles::operator=(BufferHandles &&other)
 {
-  vbo_ = other.vbo_;
-  ebo_ = other.ebo_;
+  vbo_ = MOVE(other.vbo_);
+  ebo_ = MOVE(other.ebo_);
 
   other.vbo_ = 0;
   other.ebo_ = 0;
