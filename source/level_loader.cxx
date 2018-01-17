@@ -253,6 +253,9 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     if (geometry == "cube") {
       registry.assign<CubeRenderable>(entity);
     }
+    else if (geometry == "skybox") {
+      registry.assign<SkyboxRenderable>(entity);
+    }
     else if (boost::starts_with(geometry, "mesh")) {
       auto &meshc = registry.assign<MeshRenderable>(entity);
       auto const len = ::strlen("mesh:");

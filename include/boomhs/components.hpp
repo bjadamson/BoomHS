@@ -27,6 +27,10 @@ struct MeshRenderable
   std::string name;
 };
 
+struct SkyboxRenderable
+{
+};
+
 struct TextureRenderable
 {
   opengl::TextureInfo texture_info;

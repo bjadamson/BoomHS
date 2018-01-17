@@ -68,6 +68,12 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
         auto handle = OF::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
         handle_list.add(entity, MOVE(handle));
       });
+  registry.view<ShaderName, SkyboxRenderable, TextureRenderable>().each(
+      [&](auto entity, auto &sn, auto &, auto &texture) {
+        auto &shader_ref = sps.ref_sp(sn.value);
+        auto handle = OF::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
+        handle_list.add(entity, MOVE(handle));
+      });
   registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &mesh, auto &texture) {
         auto const &obj = obj_cache.get_obj(mesh.name);
@@ -165,9 +171,21 @@ draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
     render::draw(state.render_args(), transform, shader_ref, handle);
   };
 
+  auto const draw_adapter = [&](auto entity, auto &sn, auto &transform, auto &) {
+    draw_fn(entity, sn, transform);
+  };
+
   //
-  // Draw all entities which have a ShaderName component along with a Transform component
-  registry.view<ShaderName, Transform>().each(draw_fn);
+  // Actual drawing begins here
+  registry.view<ShaderName, Transform, CubeRenderable>().each(draw_adapter);
+  registry.view<ShaderName, Transform, MeshRenderable>().each(draw_adapter);
+
+  auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {
+    if (state.render.draw_skybox) {
+      draw_fn(entity, sn, transform);
+    }
+  };
+  registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
 }
 
 void

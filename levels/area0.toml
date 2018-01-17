@@ -1,7 +1,7 @@
 title = "Level 0"
 
 [[resource]]
-name = "skybox"
+name = "building_skybox"
 type = "texture:3dcube"
 front = "sb_front.jpg"
 right = "sb_right.jpg"
@@ -93,8 +93,8 @@ texture = "boring_cube"
 [[entity]]
 pos = [-5.0, 0.0, -2.0]
 shader = "3dcube_texture"
-geometry = "cube"
-texture = "skybox"
+geometry = "skybox"
+texture = "building_skybox"
 
 [[entity]]
 pos = [2.0, -2.0, 2.0]
@@ -113,6 +113,8 @@ light = "light"
 pos = [0.0, 0.0, 0.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:at"
+# DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
+# IN THE MESHES TABLE.
 player = "player"
 
 [[entity]]
