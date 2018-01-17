@@ -1,15 +1,14 @@
-#include <boomhs/player.hpp>
+#include <boomhs/world_object.hpp>
 #include <stlw/format.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
 #include <glm/ext.hpp>
-#include <iostream>
 
 namespace boomhs
 {
 
 std::string
-Player::display() const
+WorldObject::display() const
 {
   return fmt::sprintf(
       "world_pos: '%s'\nforward_: '%s'\nforward_vector: '%s'\nright_vector: '%s'\nup_vector: '%s'\nquat: '%s'\n",
@@ -23,11 +22,10 @@ Player::display() const
 }
 
 void
-Player::rotate(float const angle, glm::vec3 const& axis)
+WorldObject::rotate(float const angle, glm::vec3 const& axis)
 {
   glm::quat const new_rotation{axis * glm::radians(angle)};
   transform_->rotation = new_rotation * transform_->rotation;
-  arrow_.rotation = new_rotation * arrow_.rotation;
 }
 
 } // ns boomhs

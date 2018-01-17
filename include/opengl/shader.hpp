@@ -1,11 +1,12 @@
 #pragma once
+#include <algorithm>
+#include <boost/optional.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <opengl/colors.hpp>
 #include <opengl/vertex_attribute.hpp>
-#include <opengl/texture.hpp>
 #include <boomhs/types.hpp>
 
 namespace opengl
@@ -13,7 +14,11 @@ namespace opengl
 
 #define DEFINE_SHADER_FILENAME_TYPE(NAME)                                                          \
   struct NAME##_shader_filename {                                                                  \
-    char const *filename;                                                                          \
+    std::string const filename;                                                                    \
+    explicit NAME##_shader_filename(std::string const& fn)                                         \
+        : filename(fn)                                                                             \
+    {                                                                                              \
+    }                                                                                              \
     explicit NAME##_shader_filename(char const *f)                                                 \
         : filename(f)                                                                              \
     {                                                                                              \
@@ -24,10 +29,22 @@ DEFINE_SHADER_FILENAME_TYPE(vertex);
 DEFINE_SHADER_FILENAME_TYPE(fragment);
 #undef DEFINE_SHADER_FILENAME_TYPE
 
-struct ShaderPrograms;
+struct program_factory
+{
+  program_factory() = delete;
 
-stlw::result<ShaderPrograms, std::string>
-load_shader_programs(stlw::Logger &);
+  static stlw::result<GLuint, std::string>
+  from_files(vertex_shader_filename const, fragment_shader_filename const);
+
+  static constexpr GLuint
+  INVALID_PROGRAM_ID() { return 0; }
+
+  static GLuint
+  make_invalid()
+  {
+    return INVALID_PROGRAM_ID();
+  }
+};
 
 class ProgramHandle
 {
@@ -52,9 +69,18 @@ public:
   explicit ShaderProgram(ProgramHandle &&ph, VertexAttribute &&va)
     : program_(MOVE(ph))
     , va_(MOVE(va))
-    {
-    }
+  {
+  }
 
+  // public data members
+  boost::optional<GLsizei> instance_count = boost::none;
+  bool is_lightsource = false;
+  bool receives_light = false;
+  bool is_skybox = false;
+  bool is_2d = false;
+
+  // public member fns
+  auto handle() const { return program_.handle(); }
   auto const& va() const { return this->va_; }
 
   void use_program(stlw::Logger &);
@@ -89,258 +115,70 @@ public:
   void set_uniform_float1(stlw::Logger &logger, GLchar const*, float const);
 };
 
-#define SHADERPROGRAM_DEFAULT_CTOR(CLASSNAME)                                                      \
-  MOVE_CONSTRUCTIBLE_ONLY(CLASSNAME);                                                              \
-  explicit CLASSNAME(ProgramHandle &&ph, VertexAttribute &&va)                                     \
-    : ShaderProgram(MOVE(ph), MOVE(va))                                                            \
-    {                                                                                              \
-    }
+std::ostream&
+operator<<(std::ostream&, ShaderProgram const&);
 
-struct ShaderProgramColor2D : public ShaderProgram
+inline stlw::result<ShaderProgram, std::string>
+make_shader_program(std::string const& vertex_s, std::string const& fragment_s, VertexAttribute &&va)
 {
-  SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramColor2D);
+  vertex_shader_filename v{vertex_s};
+  fragment_shader_filename f{fragment_s};
+  DO_TRY(auto sp, program_factory::from_files(v, f));
+  return ShaderProgram{ProgramHandle{sp}, MOVE(va)};
+}
 
-  static bool constexpr IS_2D = true;
-  static bool constexpr IS_INSTANCED = false;
-  static bool constexpr IS_SKYBOX = false;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr HAS_TEXTURE = false;
-
-  static bool constexpr IS_LIGHTSOURCE = false;
-  static bool constexpr RECEIVES_LIGHT = false;
-};
-
-struct ShaderProgramPositionNormalColor3D : public ShaderProgram
+class ShaderPrograms
 {
-  SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramPositionNormalColor3D);
+  using pair_t = std::pair<std::string, ShaderProgram>;
+  std::vector<pair_t> shader_programs_;
 
-  static bool constexpr IS_2D = false;
-  static bool constexpr IS_INSTANCED = false;
-  static bool constexpr IS_SKYBOX = false;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr HAS_TEXTURE = false;
-
-  static bool constexpr IS_LIGHTSOURCE = false;
-  static bool constexpr RECEIVES_LIGHT = true;
-};
-
-struct ShaderProgramPositionColor3D : public ShaderProgram
-{
-  SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramPositionColor3D);
-
-  static bool constexpr IS_2D = false;
-  static bool constexpr IS_INSTANCED = false;
-  static bool constexpr IS_SKYBOX = false;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr HAS_TEXTURE = false;
-
-  static bool constexpr IS_LIGHTSOURCE = false;
-  static bool constexpr RECEIVES_LIGHT = false;
-};
-
-struct ShaderProgramLightSource3D : public ShaderProgram
-{
-  SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramLightSource3D);
-
-  static bool constexpr IS_2D = false;
-  static bool constexpr IS_INSTANCED = false;
-  static bool constexpr IS_SKYBOX = false;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr HAS_TEXTURE = false;
-
-  static bool constexpr IS_LIGHTSOURCE = true;
-  static bool constexpr RECEIVES_LIGHT = false;
-};
-
-struct ShaderProgramAt3D : public ShaderProgram
-{
-  SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramAt3D);
-
-  auto instance_count() const { return 2u; }
-
-  static bool constexpr IS_2D = false;
-  static bool constexpr IS_INSTANCED = true;
-  static bool constexpr IS_SKYBOX = false;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr HAS_TEXTURE = false;
-
-  static bool constexpr IS_LIGHTSOURCE = false;
-  static bool constexpr RECEIVES_LIGHT = true;
-};
-
-struct ShaderProgramHashtag3D : public ShaderProgram
-{
-  SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramHashtag3D);
-
-  auto instance_count() const { return 3u; }
-
-  static bool constexpr IS_2D = false;
-  static bool constexpr IS_INSTANCED = true;
-  static bool constexpr IS_SKYBOX = false;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr HAS_TEXTURE = false;
-
-  static bool constexpr IS_LIGHTSOURCE = false;
-  static bool constexpr RECEIVES_LIGHT = true;
-};
-
-struct ShaderProgramPlus3D : public ShaderProgram
-{
-  SHADERPROGRAM_DEFAULT_CTOR(ShaderProgramPlus3D);
-
-  static bool constexpr IS_2D = false;
-  static bool constexpr IS_INSTANCED = false;
-  static bool constexpr IS_SKYBOX = false;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr HAS_TEXTURE = false;
-
-  static bool constexpr IS_LIGHTSOURCE = false;
-  static bool constexpr RECEIVES_LIGHT = true;
-};
-
-#define SHADERPROGRAM_TEXTURE_CTOR(CLASSNAME)                                                      \
-  explicit CLASSNAME(ProgramHandle &&ph, VertexAttribute &&va, texture_info const t)               \
-    : ShaderProgram(MOVE(ph), MOVE(va))                                                            \
-    , texture_info_(t)                                                                             \
-    {                                                                                              \
-    }
-
-#undef SHADERPROGRAM_DEFAULT_CTOR
-
-class ShaderProgramTexture3D : public ShaderProgram
-{
-  texture_info texture_info_;
 public:
-  SHADERPROGRAM_TEXTURE_CTOR(ShaderProgramTexture3D);
+  ShaderPrograms() = default;
 
-  auto texture() const { return this->texture_info_; }
-
-  static bool constexpr IS_2D = false;
-  static bool constexpr IS_INSTANCED = false;
-  static bool constexpr IS_SKYBOX = false;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr HAS_TEXTURE = true;
-
-  static bool constexpr IS_LIGHTSOURCE = false;
-  static bool constexpr RECEIVES_LIGHT = false;
-};
-
-class ShaderProgramTextureCube3D : public ShaderProgram
-{
-  texture_info texture_info_;
-public:
-  SHADERPROGRAM_TEXTURE_CTOR(ShaderProgramTextureCube3D);
-
-  auto texture() const { return this->texture_info_; }
-
-  static bool constexpr IS_2D = false;
-  static bool constexpr IS_INSTANCED = false;
-  static bool constexpr IS_SKYBOX = false;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr HAS_TEXTURE = true;
-
-  static bool constexpr IS_LIGHTSOURCE = false;
-  static bool constexpr RECEIVES_LIGHT = false;
-};
-
-class ShaderProgramSkybox3D : public ShaderProgram
-{
-  texture_info texture_info_;
-public:
-  SHADERPROGRAM_TEXTURE_CTOR(ShaderProgramSkybox3D);
-
-  auto texture() const { return this->texture_info_; }
-
-  static bool constexpr IS_2D = false;
-  static bool constexpr IS_INSTANCED = false;
-  static bool constexpr IS_SKYBOX = true;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr HAS_TEXTURE = true;
-
-  static bool constexpr IS_LIGHTSOURCE = false;
-  static bool constexpr RECEIVES_LIGHT = false;
-};
-
-class ShaderProgramTexture2D : public ShaderProgram
-{
-  texture_info texture_info_;
-public:
-  SHADERPROGRAM_TEXTURE_CTOR(ShaderProgramTexture2D);
-
-  auto texture() const { return this->texture_info_; }
-
-  static bool constexpr IS_2D = false;
-  static bool constexpr IS_INSTANCED = false;
-  static bool constexpr IS_SKYBOX = true;
-  static bool constexpr HAS_COLOR_UNIFORM = false;
-  static bool constexpr HAS_TEXTURE = true;
-
-  static bool constexpr IS_LIGHTSOURCE = false;
-  static bool constexpr RECEIVES_LIGHT = false;
-};
-#undef SHADERPROGRAM_TEXTURE_CTOR
-
-struct ShaderPrograms2D
-{
-  ShaderProgramColor2D color;
-  ShaderProgramTexture2D texture_wall;
-  ShaderProgramTexture2D texture_container;
-
-  MOVE_CONSTRUCTIBLE_ONLY(ShaderPrograms2D);
-};
-
-struct ShaderPrograms3D
-{
-  ShaderProgramHashtag3D hashtag;
-  ShaderProgramAt3D at;
-  ShaderProgramPlus3D plus;
-
-  // alphabet
-  ShaderProgramPositionNormalColor3D O;
-  ShaderProgramPositionNormalColor3D T;
-
-  // 3d arrow (with normals)
-  ShaderProgramPositionColor3D local_forward_arrow;
-
-  // 2d arrows
-  ShaderProgramPositionColor3D arrow;
-  ShaderProgramPositionColor3D color;
-
-  ShaderProgramPositionColor3D global_x_axis_arrow;
-  ShaderProgramPositionColor3D global_y_axis_arrow;
-  ShaderProgramPositionColor3D global_z_axis_arrow;
-
-  ShaderProgramPositionColor3D local_x_axis_arrow;
-  ShaderProgramPositionColor3D local_y_axis_arrow;
-  ShaderProgramPositionColor3D local_z_axis_arrow;
-
-  ShaderProgramPositionColor3D camera_arrow0;
-  ShaderProgramPositionColor3D camera_arrow1;
-  ShaderProgramPositionColor3D camera_arrow2;
-
-  ShaderProgramLightSource3D light0;
-
-  ShaderProgramTextureCube3D texture_cube;
-  ShaderProgramTexture3D house;
-  ShaderProgramSkybox3D skybox;
-
-  // NORMAL???
-  ShaderProgramPositionColor3D terrain;
-
-  MOVE_CONSTRUCTIBLE_ONLY(ShaderPrograms3D);
-};
-
-struct ShaderPrograms
-{
-  ShaderPrograms2D d2;
-  ShaderPrograms3D d3;
-
-  MOVE_CONSTRUCTIBLE_ONLY(ShaderPrograms);
-  explicit ShaderPrograms(ShaderPrograms2D &&sp2d, ShaderPrograms3D &&sp3d)
-    : d2(MOVE(sp2d))
-    , d3(MOVE(sp3d))
+  void
+  add(std::string const& s, ShaderProgram &&sp)
   {
+    auto pair = std::make_pair(s, MOVE(sp));
+    shader_programs_.emplace_back(MOVE(pair));
   }
+
+#define LOOKUP_SP(name)                                                                   \
+  auto const lookup_sp = [this](char const* s) {                                          \
+      auto const cmp = [&s, this](auto const& it) { return it.first == s; };              \
+      auto const it = std::find_if(shader_programs_.begin(), shader_programs_.end(), cmp);\
+      assert(shader_programs_.end() != it);                                               \
+      return it;                                                                          \
+  }
+
+  ShaderProgram const&
+  ref_sp(char const* s) const
+  {
+    LOOKUP_SP(s);
+    return lookup_sp(s)->second;
+  }
+
+  ShaderProgram&
+  ref_sp(char const* s)
+  {
+    LOOKUP_SP(s);
+    return lookup_sp(s)->second;
+  }
+
+#undef LOOKUP_SP
+  ShaderProgram const&
+  ref_sp(std::string const& s) const
+  {
+    return ref_sp(s.c_str());
+  }
+
+  ShaderProgram&
+  ref_sp(std::string const& s)
+  {
+    return ref_sp(s.c_str());
+  }
+
+
+  BEGIN_END_FORWARD_FNS(shader_programs_);
 };
 
 } // ns opengl

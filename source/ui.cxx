@@ -178,9 +178,9 @@ show_lighting_window(GameState &state)
     ImGui::Separator();
     ImGui::Separator();
 
-    color_float3slider("@/+/# Ambient", state.at_materials.ambient);
-    color_float3slider("@/+/# Diffuse", state.at_materials.diffuse);
-    color_float3slider("@/+/# Specular", state.at_materials.specular);
+    color_float4slider("@/+/# Ambient", state.at_materials.ambient);
+    color_float4slider("@/+/# Diffuse", state.at_materials.diffuse);
+    color_float4slider("@/+/# Specular", state.at_materials.specular);
     ImGui::SliderFloat("@/+/# Shininess", &state.at_materials.shininess, 0.0f, 128.0f);
 
     ImGui::Text("Light Instance #0");
@@ -188,15 +188,15 @@ show_lighting_window(GameState &state)
     ImGui::Separator();
 
     {
-      auto &t = state.entities[LIGHT_INDEX]->translation;
+      auto &t = state.light.single_light_position;
       auto *light_pos = glm::value_ptr(t);
       ImGui::SliderFloat3("Light Position", light_pos, -100.0f, 100.0f);
       std::string const s = glm::to_string(glm::normalize(t));
       ImGui::Text("Light Direction: '%s'", s.c_str());
     }
-    color_float3slider("Light Ambient", state.light.ambient);
-    color_float3slider("Light Diffuse", state.light.diffuse);
-    color_float3slider("Light Specular", state.light.specular);
+    color_float4slider("Light Ambient", state.light.ambient);
+    color_float4slider("Light Diffuse", state.light.diffuse);
+    color_float4slider("Light Specular", state.light.specular);
 
     auto &current_item = state.ui_state.attenuation_current_item;
     if (ImGui::Combo("Attenuation", &current_item, opengl::ATTENUATION_DISTANCE_STRINGS)) {

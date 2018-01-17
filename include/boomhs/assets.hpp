@@ -1,78 +1,162 @@
 #pragma once
-#include <array>
-#include <vector>
-#include <utility>
+
 #include <opengl/draw_info.hpp>
 #include <opengl/obj.hpp>
 #include <opengl/factory.hpp>
-#include <boomhs/state.hpp>
+#include <opengl/texture.hpp>
+
 #include <stlw/format.hpp>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/sized_buffer.hpp>
 
-namespace boomhs {
+#include <boost/algorithm/string.hpp>
+#include <array>
+#include <string>
+#include <vector>
+#include <utility>
 
-struct Objs {
-  opengl::obj house;
-  opengl::obj hashtag;
-  opengl::obj at;
-  opengl::obj plus;
-  opengl::obj arrow;
+namespace boomhs
+{
 
-  // Alphabet
-  opengl::obj O;
-  opengl::obj T;
+class ObjCache
+{
+  using pair_t = std::pair<std::string, opengl::obj>;
+  std::vector<pair_t> objects_;
+public:
+  ObjCache() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(ObjCache);
 
-  MOVE_CONSTRUCTIBLE_ONLY(Objs);
+  void
+  add_obj(std::string const& name, opengl::obj &&o)
+  {
+    auto pair = std::make_pair(name, MOVE(o));
+    objects_.emplace_back(MOVE(pair));
+  }
+
+  void
+  add_obj(char const* name, opengl::obj &&o)
+  {
+    add_obj(std::string{name}, MOVE(o));
+  }
+
+  auto const&
+  get_obj(char const* name) const
+  {
+    auto const cmp = [&name](auto const& pair) {
+      return pair.first == name;
+    };
+    auto const it = std::find_if(objects_.cbegin(), objects_.cend(), cmp);
+
+    // for now, assume all queries are found
+    assert(it != objects_.cend());
+
+    // yield reference to data
+    return it->second;
+  }
+
+  auto const&
+  get_obj(std::string const& s) const
+  {
+    return get_obj(s.c_str());
+  }
 };
 
-class GpuHandles
+enum GeometryType
+{
+  Cube = 0,
+  Mesh,
+};
+
+inline GeometryType
+from_string(std::string &string)
+{
+  boost::to_lower(string);
+  if (string == "cube") {
+    return Cube;
+  } else if (string == "mesh") {
+    return Mesh;
+  }
+  std::abort();
+}
+
+struct EntityInfo
+{
+  Transform const transform;
+  GeometryType const type;
+
+  // THOUGHT: It doesn't make sense to have a "color" but not a "shader".
+  //
+  // We lost our compile time guarantees, how to compensate?
+  boost::optional<std::string> const shader;
+  boost::optional<std::string> const mesh_name;
+  boost::optional<opengl::Color> const color;
+  boost::optional<opengl::TextureInfo> const texture;
+};
+
+struct LoadedEntities
+{
+  std::vector<std::uint32_t> data;
+
+  BEGIN_END_FORWARD_FNS(data);
+};
+
+// TODO: not final by any means..
+struct Assets
+{
+  ObjCache obj_cache;
+  LoadedEntities loaded_entities;
+  opengl::TextureTable texture_table;
+};
+
+class GpuHandleList
 {
   std::vector<opengl::DrawInfo> drawinfos_;
-  std::vector<char const*> names_;
+  std::vector<std::uint32_t> entities_;
 
 public:
-  GpuHandles() = default;
+  GpuHandleList() = default;
 
   std::size_t
-  set(char const* name, opengl::DrawInfo &&di)
+  add(std::uint32_t const entity, opengl::DrawInfo &&di)
   {
     auto const pos = drawinfos_.size();
     drawinfos_.emplace_back(MOVE(di));
-    names_.emplace_back(name);
+    entities_.emplace_back(entity);
 
     // return the index di was stored in.
     return pos;
   }
 
   opengl::DrawInfo const&
-  get(std::size_t const index) const
+  get(std::uint32_t const entity) const
   {
-    return drawinfos_[index];
-  }
-
-  opengl::DrawInfo const&
-  get(char const* name) const
-  {
-    FOR(i, names_.size()) {
-      if (names_[i] == name) {
-        return get(i);
+    FOR(i, entities_.size()) {
+      if (entities_[i] == entity) {
+        return drawinfos_[i];
       }
     }
-    auto const fmt = fmt::sprintf("Error could not find asset '%s'", name);
-    std::cerr << fmt << "\n";
+    std::cerr << fmt::format("Error could not find gpu handle associated to entity {}'\n", entity);
     std::abort();
   }
 
-  MOVE_CONSTRUCTIBLE_ONLY(GpuHandles);
+  MOVE_CONSTRUCTIBLE_ONLY(GpuHandleList);
 };
 
-struct Assets {
-  Objs objects;
-  GpuHandles handles;
+class HandleManager {
+  GpuHandleList list_;
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(HandleManager);
+  explicit HandleManager(GpuHandleList &&list)
+    : list_(MOVE(list))
+  {
+  }
 
-  MOVE_CONSTRUCTIBLE_ONLY(Assets);
+  auto&
+  lookup(std::uint32_t const entity) const
+  {
+    return list_.get(entity);
+  }
 };
 
 } // ns boomhs

@@ -1,6 +1,5 @@
 #pragma once
 #include <boomhs/types.hpp>
-#include <window/mouse.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 #include <string>
@@ -8,17 +7,15 @@
 namespace boomhs
 {
 
-class Player
+class WorldObject
 {
   boomhs::Transform *transform_;
-  boomhs::Transform &arrow_;
   glm::vec3 forward_, up_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(Player);
-  explicit Player(boomhs::Transform &m, boomhs::Transform &a, glm::vec3 const& forward, glm::vec3 const& up)
+  MOVE_CONSTRUCTIBLE_ONLY(WorldObject);
+  explicit WorldObject(boomhs::Transform &m, glm::vec3 const& forward, glm::vec3 const& up)
     : transform_(&m)
-    , arrow_(a)
     , forward_(forward)
     , up_(up)
   {
@@ -66,7 +63,6 @@ public:
   move(float const s, glm::vec3 const& dir)
   {
     transform_->translation += (s * dir);
-    arrow_.translation += (s * dir);
     return *this;
   }
 

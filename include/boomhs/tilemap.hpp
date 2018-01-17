@@ -24,7 +24,8 @@ struct Tile {
   bool is_visible = false;
 };
 
-class TileMap {
+class TileMap
+{
   std::vector<Tile> tiles_;
   std::array<std::size_t, 3> dimensions_;
 
@@ -93,8 +94,8 @@ public:
 };
 
 
-class Player;
+class WorldObject;
 void
-update_visible_tiles(TileMap &, Player const&, bool const);
+update_visible_tiles(TileMap &, WorldObject const&, bool const);
 
 } // ns boomhs

@@ -160,7 +160,7 @@ place_objects(Rect const& room, TileMap const& tmap, stlw::float_generator &rng)
 {
   auto const num_monsters = rng.gen_int_range(0, MAX_ROOM_MONSTERS + 1);
 
-  FOR(i, num_monsters) {
+  FORI(i, num_monsters) {
     auto const pos = generate_monster_position(room, tmap, rng);
     if (rng.gen_bool()) {
       // create orc

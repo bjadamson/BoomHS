@@ -1,11 +1,17 @@
 #include <opengl/shader.hpp>
+#include <opengl/debug.hpp>
 #include <opengl/glew.hpp>
-#include <glm/gtx/string_cast.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <opengl/global.hpp>
+
+#include <stlw/format.hpp>
+#include <stlw/result.hpp>
 #include <stlw/os.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
+
+#include <glm/gtx/string_cast.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace
 {
@@ -13,11 +19,9 @@ namespace
 using compiled_shader = stlw::ImplicitelyCastableMovableWrapper<GLuint, decltype(glDeleteShader)>;
 using namespace opengl;
 
-constexpr GLuint
-INVALID_PROGRAM_ID() { return 0; }
 
 constexpr bool
-is_invalid(GLuint const p) { return p == INVALID_PROGRAM_ID(); }
+is_invalid(GLuint const p) { return p == program_factory::INVALID_PROGRAM_ID(); }
 
 inline bool
 is_compiled(GLuint const handle)
@@ -87,17 +91,24 @@ struct VertexShaderInfo {
   std::vector<AttributeVariableInfo> attribute_infos;
 };
 
+struct FragmentShaderInfo {
+  std::string const& filename;
+  std::string const& source;
+};
+
 stlw::result<GLuint, std::string>
-compile_sources(VertexShaderInfo const &vertex_shader, std::string const &fragment_shader_source)
+compile_sources(VertexShaderInfo const &vertex_shader, FragmentShaderInfo const &fragment_shader)
 {
-  auto const& vertex_shader_source = vertex_shader.source;
-  DO_TRY(auto const vertex_shader_id, compile_shader(vertex_shader_source, GL_VERTEX_SHADER));
-  DO_TRY(auto const frag_shader_id, compile_shader(fragment_shader_source, GL_FRAGMENT_SHADER));
+  DO_TRY(auto const vertex_shader_id, compile_shader(vertex_shader.source, GL_VERTEX_SHADER));
+  DO_TRY(auto const frag_shader_id, compile_shader(fragment_shader.source, GL_FRAGMENT_SHADER));
   DO_TRY(auto const program_id, create_program());
 
+  std::cerr << fmt::format("compiling '{}'/'{}'\n", vertex_shader.filename, fragment_shader.filename);
   auto const& variable_infos = vertex_shader.attribute_infos;
+  std::cerr << "number of variable infos: '" << variable_infos.size() << "'\n";
   FOR(i, variable_infos.size()) {
     auto const& vinfo = variable_infos[i];
+    std::cerr << fmt::format("binding program_id: {}, name: {}, index: {}\n", program_id, vinfo.variable, i);
     glBindAttribLocation(program_id, i, vinfo.variable.c_str());
   }
 
@@ -108,6 +119,7 @@ compile_sources(VertexShaderInfo const &vertex_shader, std::string const &fragme
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, frag_shader_id); });
 
   DO_EFFECT(link_program(program_id));
+  std::cerr << "finished compiling\n";
   return program_id;
 }
 
@@ -126,7 +138,7 @@ from_vertex_shader(std::string const& filename, std::string const& source)
 
   std::vector<AttributeVariableInfo> infos;
   std::istringstream iss(source.c_str());
-  for (auto idx = 0; !std::getline(iss, buffer); ++idx) {
+  for (; std::getline(iss, buffer); ++idx) {
     auto constexpr IN_PREFIX = "in ";
     bool const begins_with_in_prefix = buffer.compare(0, ::strlen(IN_PREFIX), IN_PREFIX) == 0;
     if (!begins_with_in_prefix) {
@@ -163,49 +175,30 @@ from_vertex_shader(std::string const& filename, std::string const& source)
       break;
     }
   }
-
   return infos;
 }
 
-struct program_factory {
-  program_factory() = delete;
-
-  static stlw::result<GLuint, std::string>
-  from_files(vertex_shader_filename const v, fragment_shader_filename const f)
-  {
-    auto const prefix = [](auto const &path) {
-      return std::string{"./build-system/bin/shaders/"} + path;
-    };
-    auto const vertex_shader_path = prefix(v.filename);
-    auto const fragment_shader_path = prefix(f.filename);
-
-    // Read the Vertex/Fragment Shader code from ther file
-    DO_TRY(auto const vertex_shader_source, stlw::read_file(vertex_shader_path));
-    DO_TRY(auto attribute_variable_info, from_vertex_shader(vertex_shader_path, vertex_shader_source));
-
-    VertexShaderInfo const vertex_shader{vertex_shader_path, vertex_shader_source,
-      MOVE(attribute_variable_info)};
-
-    DO_TRY(auto const fragment_shader_source, stlw::read_file(fragment_shader_path));
-
-    return compile_sources(vertex_shader, fragment_shader_source);
-  }
-
-  static GLuint
-  make_invalid()
-  {
-    return INVALID_PROGRAM_ID();
-  }
-};
-
-template<typename R, typename ...Args>
-static stlw::result<R, std::string>
-make_program(char const* vertex_s, char const* fragment_s, VertexAttribute &&va, Args &&... args)
+std::string
+attrib_type_to_string(GLenum const type)
 {
-  vertex_shader_filename v{vertex_s};
-  fragment_shader_filename f{fragment_s};
-  DO_TRY(auto sp, program_factory::from_files(v, f));
-  return R{MOVE(ProgramHandle{sp}), MOVE(va), std::forward<Args>(args)...};
+  auto const& table = debug::attrib_to_string_table();
+  auto const it = std::find_if(table.cbegin(), table.cend(), [&type](auto const& pair) { return pair.first == type; });
+  assert(it != table.cend());
+
+  auto const index = std::distance(table.cbegin(), it);
+  return table[index].second;
+}
+
+std::string
+uniform_type_to_string(GLenum const type)
+{
+  auto const& table = debug::uniform_to_string_table();
+  auto const it = std::find_if(table.cbegin(), table.cend(), [&type](auto const& tuple) { return std::get<0>(tuple) == type; });
+  assert(it != table.cend());
+
+  auto const index = std::distance(table.cbegin(), it);
+  auto const string = std::get<1>(table[index]);
+  return string;
 }
 
 } // ns anonymous
@@ -213,127 +206,27 @@ make_program(char const* vertex_s, char const* fragment_s, VertexAttribute &&va,
 namespace opengl
 {
 
-stlw::result<ShaderPrograms, std::string>
-load_shader_programs(stlw::Logger &logger)
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// grogram_factory
+stlw::result<GLuint, std::string>
+program_factory::from_files(vertex_shader_filename const v, fragment_shader_filename const f)
 {
-  DO_TRY(auto d2color, make_program<ShaderProgramColor2D>("2dcolor.vert", "2dcolor.frag",
-        va::vertex_color(logger)));
-
-  DO_TRY(auto d2texture_wall,
-      make_program<ShaderProgramTexture2D>("2dtexture.vert", "2dtexture.frag",
-        va::vertex_uv2d(logger),
-        texture::allocate_texture(logger, IMAGES::WALL)));
-
-  DO_TRY(auto d2texture_container,
-      make_program<ShaderProgramTexture2D>("2dtexture.vert", "2dtexture.frag",
-        va::vertex_uv2d(logger),
-        texture::allocate_texture(logger, IMAGES::CONTAINER)));
-
-  DO_TRY(auto d3at, make_program<ShaderProgramAt3D>("3d_pos_normal_color.vert", "3d_pos_normal_color.frag",
-      va::vertex_normal_color(logger)));
-  DO_TRY(auto d3hashtag, make_program<ShaderProgramHashtag3D>("3d_hashtag.vert", "3d_pos_normal_color.frag",
-        va::vertex_normal_color(logger)));
-
-  auto const make_3d_posnormcolor = [&logger]() {
-    return make_program<ShaderProgramPositionNormalColor3D>(
-        "3d_pos_normal_color.vert", "3d_pos_normal_color.frag", va::vertex_normal_color(logger));
+  auto const prefix = [](auto const &path) {
+    return std::string{"./build-system/bin/shaders/"} + path;
   };
-  DO_TRY(auto d3_letterO, make_3d_posnormcolor());
-  DO_TRY(auto d3_letterT, make_3d_posnormcolor());
+  auto const vertex_shader_path = prefix(v.filename);
+  auto const fragment_shader_path = prefix(f.filename);
 
-  DO_TRY(auto d3plus, make_program<ShaderProgramPlus3D>("3d_plus.vert", "3d_pos_normal_color.frag",
-      va::vertex_normal_color(logger)));
+  // Read the Vertex/Fragment Shader code from ther file
+  DO_TRY(auto const vertex_shader_source, stlw::read_file(vertex_shader_path));
+  DO_TRY(auto attribute_variable_info, from_vertex_shader(vertex_shader_path, vertex_shader_source));
+  DO_TRY(auto const fragment_source, stlw::read_file(fragment_shader_path));
 
-  // arrows
-  auto const make_3d_poscolor = [&logger]() {
-    return make_program<ShaderProgramPositionColor3D>(
-        "3d_pos_color.vert", "3d_pos_color.frag", va::vertex_color(logger));
-  };
-  DO_TRY(auto d3arrow, make_3d_poscolor());
-  DO_TRY(auto d3color, make_3d_poscolor());
+  VertexShaderInfo const vertex_shader{vertex_shader_path, vertex_shader_source,
+    MOVE(attribute_variable_info)};
+  FragmentShaderInfo const fragment_shader{fragment_shader_path, fragment_source};
 
-  DO_TRY(auto global_x_axis_arrow, make_3d_poscolor());
-  DO_TRY(auto global_y_axis_arrow, make_3d_poscolor());
-  DO_TRY(auto global_z_axis_arrow, make_3d_poscolor());
-
-  DO_TRY(auto local_x_axis_arrow, make_3d_poscolor());
-  DO_TRY(auto local_y_axis_arrow, make_3d_poscolor());
-  DO_TRY(auto local_z_axis_arrow, make_3d_poscolor());
-
-  DO_TRY(auto local_forward_arrow, make_3d_poscolor());
-
-  DO_TRY(auto camera_arrow0, make_3d_poscolor());
-  DO_TRY(auto camera_arrow1, make_3d_poscolor());
-  DO_TRY(auto camera_arrow2, make_3d_poscolor());
-
-  DO_TRY(auto light0, make_program<ShaderProgramLightSource3D>("light.vert", "light.frag",
-        va::vertex_color(logger)));
-
-  DO_TRY(auto d3cube, make_program<ShaderProgramTextureCube3D>("3d_cubetexture.vert", "3d_cubetexture.frag",
-        va::vertex_only(logger),
-        texture::upload_3dcube_texture(logger,
-          IMAGES::CUBE_FRONT,
-          IMAGES::CUBE_RIGHT,
-          IMAGES::CUBE_BACK,
-          IMAGES::CUBE_LEFT,
-          IMAGES::CUBE_TOP,
-          IMAGES::CUBE_BOTTOM)));
-
-  DO_TRY(auto d3house, make_program<ShaderProgramTexture3D>("3dtexture.vert", "3dtexture.frag",
-        va::vertex_normal_uv3d(logger),
-        texture::allocate_texture(logger, IMAGES::HOUSE)));
-
-  DO_TRY(auto d3skybox, make_program<ShaderProgramSkybox3D>("3d_cubetexture.vert", "3d_cubetexture.frag",
-        va::vertex_only(logger),
-        texture::upload_3dcube_texture(logger,
-          IMAGES::SB_FRONT,
-          IMAGES::SB_RIGHT,
-          IMAGES::SB_BACK,
-          IMAGES::SB_LEFT,
-          IMAGES::SB_TOP,
-          IMAGES::SB_BOTTOM)));
-
-  // TODO: normal??
-  DO_TRY(auto d3terrain, make_3d_poscolor());
-
-  ShaderPrograms2D d2{MOVE(d2color), MOVE(d2texture_wall), MOVE(d2texture_container)};
-
-  ShaderPrograms3D d3{
-    MOVE(d3hashtag),
-    MOVE(d3at),
-    MOVE(d3plus),
-
-    // alphabet
-    MOVE(d3_letterO),
-    MOVE(d3_letterT),
-
-    // 3d arrow (normals)
-    MOVE(local_forward_arrow),
-
-    // 2d arrows
-    MOVE(d3arrow),
-    MOVE(d3color),
-
-    MOVE(global_x_axis_arrow),
-    MOVE(global_y_axis_arrow),
-    MOVE(global_z_axis_arrow),
-
-    MOVE(local_x_axis_arrow),
-    MOVE(local_y_axis_arrow),
-    MOVE(local_z_axis_arrow),
-
-    MOVE(camera_arrow0),
-    MOVE(camera_arrow1),
-    MOVE(camera_arrow2),
-
-    MOVE(light0),
-
-    MOVE(d3cube),
-    MOVE(d3house),
-    MOVE(d3skybox),
-
-    MOVE(d3terrain)};
-  return ShaderPrograms{MOVE(d2), MOVE(d3)};
+  return compile_sources(vertex_shader, fragment_shader);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -344,7 +237,7 @@ ProgramHandle::ProgramHandle(GLuint const p)
 }
 
 ProgramHandle::ProgramHandle(ProgramHandle &&o)
-  : program_(o.program_)
+  : program_(MOVE(o.program_))
 {
   // We don't want to destroy the underlying program, we want to transfer the ownership to this
   // instance being moved into. This implements "handle-passing" allowing the user to observe
@@ -449,6 +342,75 @@ ShaderProgram::set_uniform_float1(stlw::Logger &logger, GLchar const* name, floa
   auto const loc = get_uniform_location(logger, name);
   glUniform1f(loc, value);
   LOG_ANY_GL_ERRORS(logger, "glUniform1f");
+}
+
+std::string
+glchar_ptr_to_string(GLchar const* ptr)
+{
+  char const* cstring = static_cast<char const*>(ptr);
+  return std::string{cstring};
+}
+
+void
+print_active_attributes(std::ostream &stream, GLuint const program)
+{
+  GLint buffer_size{0};
+  glGetProgramiv(program, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &buffer_size);
+
+  GLint count{0};
+  glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &count);
+
+  GLsizei length{0};
+  GLint size{0};
+  GLenum type{0};
+
+  GLchar name[buffer_size];
+  stlw::memzero(name, buffer_size);
+
+  stream << "Active Attributes: " << std::to_string(count) << "\n";
+  FORI(i, count) {
+    glGetActiveAttrib(program, static_cast<GLuint>(i), buffer_size, &length, &size, &type, name);
+
+    auto const type_string = attrib_type_to_string(type);
+    auto const name_string = glchar_ptr_to_string(name);
+    stream << fmt::format("Attribute #{} Type: {} Name: {}\n", i, type_string, name_string);
+  }
+}
+
+void
+print_active_uniforms(std::ostream &stream, GLuint const program)
+{
+  GLint buffer_size{0};
+  glGetProgramiv(program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &buffer_size);
+
+  GLint count{0};
+  glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
+
+  GLsizei length{0};
+  GLint size{0};
+  GLenum type{0};
+
+  GLchar name[buffer_size];
+  stlw::memzero(name, buffer_size);
+
+  stream << "Active Uniforms: '" << std::to_string(count) << "'\n";
+  FORI(i, count) {
+    glGetActiveUniform(program, static_cast<GLuint>(i), buffer_size, &length, &size, &type, name);
+
+    auto const type_string = uniform_type_to_string(type);
+    auto const name_string = glchar_ptr_to_string(name);
+
+    stream << fmt::format("Uniform #{} Type: {} Name: {}\n", i, type_string, name_string);
+  }
+}
+
+std::ostream&
+operator<<(std::ostream &stream, ShaderProgram const& sp)
+{
+  auto const& program = sp.handle();
+  print_active_attributes(stream, program);
+  print_active_uniforms(stream, program);
+  return stream;
 }
 
 } // ns opengl

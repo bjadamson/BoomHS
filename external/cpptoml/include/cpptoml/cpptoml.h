@@ -86,6 +86,11 @@ class option
         return alternative;
     }
 
+    T move_out()
+    {
+      return MOVE(value_);
+    }
+
   private:
     bool empty_;
     T value_;

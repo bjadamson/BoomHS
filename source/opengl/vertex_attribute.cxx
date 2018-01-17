@@ -108,9 +108,9 @@ namespace opengl
 void
 VertexAttribute::upload_vertex_format_to_glbound_vao(stlw::Logger &logger) const
 {
-  UploadFormatState ufs{this->stride};
-  FOR(i, this->num_apis) {
-    auto const& api = this->apis[i];
+  UploadFormatState ufs{this->stride_};
+  FOR(i, this->num_apis_) {
+    auto const& api = this->apis_[i];
     assert(api.type != AttributePointerInfo::INVALID_TYPE);
     assert(api.component_count > 0);
 
@@ -118,70 +118,31 @@ VertexAttribute::upload_vertex_format_to_glbound_vao(stlw::Logger &logger) const
   }
 }
 
-namespace va
+std::ostream&
+operator<<(std::ostream& stream, AttributePointerInfo const& api)
 {
-
-VertexAttribute
-vertex_color(stlw::Logger &logger)
-{
-  AttributePointerInfo A_POSITION{0, GL_FLOAT, 4}; // x, y, z, w
-  AttributePointerInfo A_COLOR   {1, GL_FLOAT, 4}; // r, g, b, a
-
-  return make_vertex_attribute({
-    MOVE(A_POSITION),
-    MOVE(A_COLOR)
-    });
+  stream << fmt::format("(API) -- '{}' type: {}' component_count: '{}'",
+      api.index,
+      api.type,
+      api.component_count);
+  return stream;
 }
 
-VertexAttribute
-vertex_normal_color(stlw::Logger &logger)
+std::ostream&
+operator<<(std::ostream& stream, VertexAttribute const& va)
 {
-  AttributePointerInfo A_POSITION{0, GL_FLOAT, 4}; // x, y, z, w
-  AttributePointerInfo A_NORMAL  {1, GL_FLOAT, 3}; // xn, yn, zn
-  AttributePointerInfo A_COLOR   {2, GL_FLOAT, 4}; // r, g, b, a
-
-  return make_vertex_attribute({
-    MOVE(A_POSITION),
-    MOVE(A_NORMAL),
-    MOVE(A_COLOR)
-    });
+  auto const print_delim = [&stream]() { stream << "-----------\n"; };
+  print_delim();
+  stream << fmt::format("(VA) -- num_apis: '{}' stride: '{}'\n",
+      va.num_apis_,
+      va.stride_);
+  for(auto const& api : va.apis_) {
+    stream << "    ";
+    stream << api;
+    stream << "\n";
+  }
+  print_delim();
+  return stream;
 }
 
-VertexAttribute
-vertex_uv2d(stlw::Logger &logger)
-{
-  AttributePointerInfo A_POSITION{0, GL_FLOAT, 4}; // x, y, z, w
-  AttributePointerInfo A_UV      {1, GL_FLOAT, 2}; // u, v
-
-  return make_vertex_attribute({
-    MOVE(A_POSITION),
-    MOVE(A_UV)
-    });
-}
-
-VertexAttribute
-vertex_normal_uv3d(stlw::Logger &logger)
-{
-  AttributePointerInfo A_POSITION{0, GL_FLOAT, 4}; // x, y, z, w
-  AttributePointerInfo A_NORMAL  {1, GL_FLOAT, 3}; // xn, yn, zn
-  AttributePointerInfo A_UV      {2, GL_FLOAT, 2}; // u, v
-
-  return make_vertex_attribute({
-    MOVE(A_POSITION),
-    MOVE(A_NORMAL),
-    MOVE(A_UV),
-    });
-}
-
-VertexAttribute
-vertex_only(stlw::Logger &logger)
-{
-  AttributePointerInfo A_POSITION{0, GL_FLOAT, 4}; // x, y, z, w
-
-  return make_vertex_attribute({
-    MOVE(A_POSITION)
-    });
-}
-
-} // ns va
 } // ns opengl

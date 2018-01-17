@@ -1,6 +1,7 @@
 #pragma once
 #include <opengl/glew.hpp>
 #include <stlw/log.hpp>
+#include <string>
 
 namespace opengl
 {
@@ -12,7 +13,46 @@ struct AttributePointerInfo
   GLuint index = 0;
   GLint type = INVALID_TYPE;
   GLsizei component_count = 0;
+
+  AttributePointerInfo() = default;
+private:
+  void static
+  invalidate(AttributePointerInfo &api)
+  {
+    api.index = 0;
+    api.type = INVALID_TYPE;
+    api.component_count = 0;
+  }
+public:
+
+  COPY_DEFAULT(AttributePointerInfo);
+  AttributePointerInfo(GLuint const i, GLint const t, GLsizei const cc)
+    : index(i)
+    , type(t)
+    , component_count(cc)
+  {
+  }
+  AttributePointerInfo(AttributePointerInfo &&other)
+    : AttributePointerInfo(other.index, other.type, other.component_count)
+  {
+    invalidate(other);
+  }
+  AttributePointerInfo&
+  operator=(AttributePointerInfo &&other) noexcept
+  {
+    index = other.index;
+    type = other.type;
+    component_count = other.component_count;
+
+    invalidate(other);
+    return *this;
+  }
+
+  friend std::ostream& operator<<(std::ostream&, AttributePointerInfo const&);
 };
+
+std::ostream&
+operator<<(std::ostream&, AttributePointerInfo const&);
 
 class VertexAttribute
 {
@@ -20,56 +60,65 @@ public:
   static constexpr GLsizei API_BUFFER_SIZE = 4;
 
 private:
-  std::size_t const num_apis;
-  GLsizei const stride;
-  std::array<AttributePointerInfo, API_BUFFER_SIZE> apis;
+  std::size_t num_apis_;
+  GLsizei stride_;
+  std::array<AttributePointerInfo, API_BUFFER_SIZE> apis_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(VertexAttribute);
+  MOVE_DEFAULT(VertexAttribute);
+  COPY_DEFAULT(VertexAttribute);
   explicit VertexAttribute(std::size_t const n_apis, GLsizei const stride_p,
       std::array<AttributePointerInfo, API_BUFFER_SIZE> &&array)
-    : num_apis(n_apis)
-    , stride(stride_p)
-    , apis(MOVE(array))
+    : num_apis_(n_apis)
+    , stride_(stride_p)
+    , apis_(MOVE(array))
   {
   }
   void upload_vertex_format_to_glbound_vao(stlw::Logger &) const;
+  auto stride() const { return stride_; }
+
+  friend std::ostream& operator<<(std::ostream&, VertexAttribute const&);
 };
 
-inline
-auto make_vertex_attribute(std::initializer_list<AttributePointerInfo> list)
+std::ostream&
+operator<<(std::ostream&, VertexAttribute const&);
+
+template<typename ITB, typename ITE>
+auto
+make_vertex_attribute(ITB const begin, ITE const end)
 {
   // Requested to many APIs. Increase maximum number (more memory per instance required)
-  assert(list.size() <= VertexAttribute::API_BUFFER_SIZE);
+  std::size_t const num_vas = std::distance(begin, end);
+  assert(num_vas <= VertexAttribute::API_BUFFER_SIZE);
 
   std::array<AttributePointerInfo, VertexAttribute::API_BUFFER_SIZE> infos;
-  std::copy(list.begin(), list.end(), infos.begin());
+  std::copy(begin, end, infos.begin());
 
   GLsizei stride = 0;
-  for(auto const& it : list) {
-    stride += it.component_count;
+  for(auto it = begin; it != end; std::advance(it, 1)) {
+    stride += it->component_count;
   }
 
-  return VertexAttribute{list.size(), stride, MOVE(infos)};
+  return VertexAttribute{num_vas, stride, MOVE(infos)};
 }
 
-namespace va // vertex_attribute
+inline auto
+make_vertex_attribute(std::initializer_list<AttributePointerInfo> apis)
 {
+  return make_vertex_attribute(apis.begin(), apis.end());
+}
 
-VertexAttribute
-vertex_color(stlw::Logger &);
+template<std::size_t N>
+auto
+make_vertex_attribute(std::array<AttributePointerInfo, N> const& apis)
+{
+  return make_vertex_attribute(apis.begin(), apis.end());
+}
 
-VertexAttribute
-vertex_normal_color(stlw::Logger &);
+inline auto
+make_vertex_attribute(std::vector<AttributePointerInfo> const& container)
+{
+  return make_vertex_attribute(container.begin(), container.end());
+}
 
-VertexAttribute
-vertex_uv2d(stlw::Logger &);
-
-VertexAttribute
-vertex_normal_uv3d(stlw::Logger &);
-
-VertexAttribute
-vertex_only(stlw::Logger &);
-
-} // ns va
 } // ns opengl

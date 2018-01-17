@@ -13,73 +13,43 @@
 #include <window/sdl_window.hpp>
 
 #include <boomhs/camera.hpp>
-#include <boomhs/player.hpp>
+#include <boomhs/world_object.hpp>
 #include <boomhs/tilemap.hpp>
-#include <boomhs/skybox.hpp>
 #include <vector>
 
 using stlw::Logger;
 
 namespace boomhs
 {
-#define DEFINE_BOTH(INDEX, NAME)             \
-  static constexpr char const* NAME = #NAME; \
-  static constexpr int NAME##_INDEX = INDEX
-
-DEFINE_BOTH(0, HOUSE);
-DEFINE_BOTH(1, PLAYER_ARROW);
-DEFINE_BOTH(2, COLOR_CUBE);
-DEFINE_BOTH(3, TEXTURE_CUBE);
-DEFINE_BOTH(4, SKYBOX);
-
-DEFINE_BOTH(5, GLOBAL_AXIS_X);
-DEFINE_BOTH(6, GLOBAL_AXIS_Y);
-DEFINE_BOTH(7, GLOBAL_AXIS_Z);
-DEFINE_BOTH(8, LOCAL_AXIS_X);
-DEFINE_BOTH(9, LOCAL_AXIS_Y);
-DEFINE_BOTH(10, LOCAL_AXIS_Z);
-
-DEFINE_BOTH(10, CAMERA_LOCAL_AXIS0);
-DEFINE_BOTH(11, CAMERA_LOCAL_AXIS1);
-DEFINE_BOTH(12, CAMERA_LOCAL_AXIS2);
-DEFINE_BOTH(13, LOCAL_FORWARD);
-
-DEFINE_BOTH(14, TERRAIN);
-DEFINE_BOTH(15, TILEMAP);
-DEFINE_BOTH(16, LIGHT);
-
-DEFINE_BOTH(17, HASHTAG);
-DEFINE_BOTH(18, AT);
-DEFINE_BOTH(19, PLUS);
-DEFINE_BOTH(20, ORC);
-DEFINE_BOTH(21, TROLL);
-#define INDEX_MAX 22
-#undef DEFINE_BOTH
 
 // other
 static constexpr auto INIT_ATTENUATION_INDEX = 8;
 
 struct LightColors
 {
-  opengl::Color ambient = LOC::GREEN;
+  opengl::Color ambient = LOC::WHITE;
   opengl::Color diffuse = LOC::WHITE;
-  opengl::Color specular = LOC::BLACK;
+  opengl::Color specular = LOC::WHITE;
 
   opengl::Attenuation attenuation = opengl::ATTENUATION_VALUE_TABLE[INIT_ATTENUATION_INDEX];
+
+  // TODO: this is a hack, should be based on other entities position(s)
+  glm::vec3 single_light_position{0.0f, 0.0f, 0.0f};
 };
 
 struct MaterialColors
 {
-  opengl::Color ambient{0.0f, 1.0f, 0.0f, 1.0f};
+  opengl::Color ambient{1.0f, 1.0f, 1.0f, 1.0f};
   opengl::Color diffuse{1.0f, 1.0f, 1.0f, 1.0f};
-  opengl::Color specular{0.0f, 0.0f, 0.0f, 1.0f};
+  opengl::Color specular{1.0f, 1.0f, 1.0f, 1.0f};
   float shininess = 32.0f;
 };
 
-struct RenderArgs {
+struct RenderArgs
+{
   Logger &logger;
   Camera const& camera;
-  Player const& player;
+  WorldObject const& player;
 
   std::vector<Transform*> &entities;
   LightColors &light;
@@ -101,7 +71,7 @@ struct UiState
   glm::vec3 euler_angle_buffer;
   glm::vec3 last_mouse_clicked_pos;
   int attenuation_current_item = INIT_ATTENUATION_INDEX;
-  int entity_window_current = AT_INDEX;
+  int entity_window_current = 0;
 };
 
 struct MouseState
@@ -127,7 +97,9 @@ struct TilemapRender
 
 struct RenderState
 {
+  bool draw_entities = true;
   bool draw_skybox = false;
+  bool draw_tilemap = true;
 
   bool show_global_axis = true;
   bool show_local_axis = false;
@@ -171,14 +143,12 @@ struct GameState
   // NOTE: Keep this data member above the "camera" data member.
   std::vector<Transform*> entities;
 
-  // player needs to come AFTER "camera".
   Camera camera;
-  Player player;
-  Skybox skybox;
+  WorldObject player;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
   GameState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
-      TileMap &&tmap, std::vector<Transform*> &&ents, Camera &&cam, Player &&pl, Skybox &&sbox)
+      TileMap &&tmap, std::vector<Transform*> &&ents, Camera &&cam, WorldObject &&pl)
     : logger(l)
     , imgui(i)
     , dimensions(d)
@@ -188,13 +158,13 @@ struct GameState
     , entities(MOVE(ents))
     , camera(MOVE(cam))
     , player(MOVE(pl))
-    , skybox(MOVE(sbox))
   {
   }
 
   RenderArgs render_args()
   {
-    return RenderArgs{this->logger, this->camera, this->player, this->entities, this->light, this->at_materials};
+    return RenderArgs{this->logger, this->camera, this->player, this->entities, this->light,
+      this->at_materials};
   }
 };
 

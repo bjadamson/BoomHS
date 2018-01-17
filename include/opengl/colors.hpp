@@ -7,10 +7,11 @@ namespace opengl
 
 struct Color
 {
-  float r, g, b, a;
-
   static constexpr float DEFAULT_ALPHA = 1.0f;
 
+  float r = 1.0, g = 1.0, b = 1.0, a = DEFAULT_ALPHA;
+
+  Color() = default;
   explicit constexpr Color(float rp, float gp, float bp, float ap)
     : r(rp)
     , g(gp)
@@ -39,22 +40,16 @@ struct Color
   {
     return std::array<float, 4>{this->r, this->g, this->b, this->a};
   }
-
-  auto
-  data()
-  {
-    return &r;
-  }
 };
 
 inline std::ostream&
 operator<<(std::ostream &os, Color const& c)
 {
   os << "{"
-    << c.r << ", "
-    << c.g << ", "
-    << c.b << ", "
-    << c.a
+    << std::to_string(c.r) << ", "
+    << std::to_string(c.g) << ", "
+    << std::to_string(c.b) << ", "
+    << std::to_string(c.a)
     << "}";
    return os;
 }

@@ -1,13 +1,34 @@
 #pragma once
 #include <array>
+#include <cstring>
 #include <cassert>
+#include <vector>
 #include <utility>
 #include <stlw/tuple.hpp>
 
-#define FOR(q,n) for(auto q=0u;q<n;++q)
+#define FOR(q,n) for(unsigned int q=0u;q<n;++q)
+#define FORI(q,n) for(int q=0;q<n;++q)
 
 namespace stlw
 {
+
+inline void
+memzero(void *const dest, std::size_t const count)
+{
+  std::memset(dest, 0, count);
+}
+
+template<typename T>
+auto
+combine_vectors(std::vector<T> &&a, std::vector<T> &&b)
+{
+  std::vector<T> dest;
+  dest.reserve(a.size() + b.size());
+
+  dest.insert(dest.end(), a.cbegin(), a.cend());
+  dest.insert(dest.end(), b.cbegin(), b.cend());
+  return MOVE(dest);
+}
 
 namespace concat_array_algortithm
 {

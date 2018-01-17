@@ -1,0 +1,85 @@
+title = "Engine Configuration"
+
+######### VERTEX ATTRIBUTE INFOS ######
+[[vas]]
+name = "vertex_only"
+data0 = { type = "float", num = 4 } # vertices
+
+[[vas]]
+name = "vertex_color"
+data0 = { type = "float", num = 4 } # vertices
+data1 = { type = "float", num = 4 } # colors
+
+[[vas]]
+name = "vertex_uvs"
+data0 = { type = "float", num = 4 } # vertices
+data1 = { type = "float", num = 2 } # uvs
+
+[[vas]]
+name = "vertex_normal_color"
+data0 = { type = "float", num = 4 } # vertices
+data1 = { type = "float", num = 3 } # normals
+data2 = { type = "float", num = 4 } # colors
+
+[[vas]]
+name = "vertex_normal_uvs"
+data0 = { type = "float", num = 4 } # vertices
+data1 = { type = "float", num = 3 } # normals
+data2 = { type = "float", num = 2 } # uvs
+
+########### SHADERS #################
+[[shaders]]
+name = "3dtexture"
+vertex = "3dtexture.vert"
+fragment = "3dtexture.frag"
+va = "vertex_normal_uvs"
+
+[[shaders]]
+name = "3dcube_texture"
+vertex = "3dcube_texture.vert"
+fragment = "3dcube_texture.frag"
+va = "vertex_only"
+
+[[shaders]]
+name = "skybox"
+vertex = "3dcube_texture.vert"
+fragment = "3dcube_texture.frag"
+va = "vertex_only"
+is_skybox = true
+
+[[shaders]]
+name = "3d_pos_normal_color"
+vertex = "3d_pos_normal_color.vert"
+fragment = "3d_pos_normal_color.frag"
+va = "vertex_normal_color"
+receives_light = true
+
+[[shaders]]
+name = "3d_pos_color"
+vertex = "3d_pos_color.vert"
+fragment = "3d_pos_color.frag"
+va = "vertex_color"
+
+############# letters
+
+[[shaders]]
+name = "hashtag"
+vertex = "3d_hashtag.vert"
+fragment = "3d_pos_normal_color.frag"
+va = "vertex_normal_color"
+instance_count = 3
+receives_light = true
+
+[[shaders]]
+name = "plus"
+vertex = "3d_plus.vert"
+fragment = "3d_pos_normal_color.frag"
+va = "vertex_normal_color"
+receives_light = true
+
+[[shaders]]
+name = "light"
+vertex = "light.vert"
+fragment = "light.frag"
+va = "vertex_color"
+is_lightsource = true

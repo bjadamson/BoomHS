@@ -17,7 +17,7 @@ namespace impl
 static std::string
 retrieve(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei *, GLchar *))
 {
-  // We have to do a low-level dance to get the OpenGL shader logs.
+  // We have to do dance to get the OpenGL shader logs.
   //
   // 1. Ask OpenGL how buffer space we need to retrieve the buffer.
   // 2. Retrieve the data into our buffer.

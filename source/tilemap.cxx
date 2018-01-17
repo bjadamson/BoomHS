@@ -1,5 +1,5 @@
 #include <boomhs/tilemap.hpp>
-#include <boomhs/player.hpp>
+#include <boomhs/world_object.hpp>
 
 namespace
 {
@@ -18,7 +18,7 @@ bresenham_3d(int x0, int y0, int z0, int x1, int y1, int z1, TileMap &tmap)
   assert(it);
   int const dm = *it;
   int i = dm;
-  x1 = y1 = z1 = dm/2; /* error offset */
+  x1 = y1 = z1 = dm / 2;
 
   bool found_wall = false;
   auto const set_tile = [&found_wall](auto &tile) {
@@ -36,14 +36,14 @@ bresenham_3d(int x0, int y0, int z0, int x1, int y1, int z1, TileMap &tmap)
     }
   };
 
-   for(;;) {  /* loop */
-     auto &tile = tmap.data(x0, y0, z0);
-      set_tile(tile);
-      if (i-- == 0) break;
-      x1 -= dx; if (x1 < 0) { x1 += dm; x0 += sx; }
-      y1 -= dy; if (y1 < 0) { y1 += dm; y0 += sy; }
-      z1 -= dz; if (z1 < 0) { z1 += dm; z0 += sz; }
-   }
+  while(true) {
+    auto &tile = tmap.data(x0, y0, z0);
+    set_tile(tile);
+    if (i-- == 0) break;
+    x1 -= dx; if (x1 < 0) { x1 += dm; x0 += sx; }
+    y1 -= dy; if (y1 < 0) { y1 += dm; y0 += sy; }
+    z1 -= dz; if (z1 < 0) { z1 += dm; z0 += sz; }
+  }
 }
 
 } // ns anon
@@ -52,7 +52,7 @@ namespace boomhs
 {
 
 void
-update_visible_tiles(TileMap &tmap, Player const& player, bool const reveal_tilemap)
+update_visible_tiles(TileMap &tmap, WorldObject const& player, bool const reveal_tilemap)
 {
   auto const& wp = player.world_position();
 

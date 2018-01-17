@@ -21,9 +21,12 @@ struct obj
 {
   GLenum const draw_mode;
 
+  using vertices_t = std::vector<float>;
+  using indices_t = std::vector<uint32_t>;
+
   unsigned int num_vertices;
-  std::vector<float> vertices;
-  std::vector<uint32_t> indices;
+  vertices_t vertices;
+  indices_t indices;
 
   MOVE_CONSTRUCTIBLE_ONLY(obj);
 };
