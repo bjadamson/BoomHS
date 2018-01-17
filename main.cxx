@@ -352,10 +352,6 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
   if (render.draw_entities) {
     draw_entities(state, registry, sps, handles);
   }
-  if (render.draw_skybox) {
-    //draw_skybox();
-    // TODO
-  }
   if (render.draw_tilemap) {
     draw_tilemap(state, registry, sps, handles);
   }
