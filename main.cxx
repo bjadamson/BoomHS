@@ -39,6 +39,7 @@
 namespace OF = opengl::factories;
 namespace LOC = opengl::LIST_OF_COLORS;
 using namespace boomhs;
+using namespace opengl;
 using stlw::Logger;
 
 namespace boomhs
@@ -53,6 +54,12 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
       [&](auto entity, auto &sn, auto &color, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_colorcube_gpu(logger, shader_ref, color);
+        handle_list.add(entity, MOVE(handle));
+      });
+  registry.view<ShaderName, PointLight, CubeRenderable>().each(
+      [&](auto entity, auto &sn, auto &pointlight, auto &) {
+        auto &shader_ref = sps.ref_sp(sn.value);
+        auto handle = OF::copy_colorcube_gpu(logger, shader_ref, pointlight.light.diffuse);
         handle_list.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, opengl::Color, MeshRenderable>().each(
@@ -123,16 +130,10 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
   imgui.MouseDrawCursor = true;
   imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
 
-  // Construct entities
-  std::vector<Transform *> entities;
-  registry.view<Transform>().each(
-      [&entities](auto entity, auto &transform) { entities.emplace_back(&transform); });
-  assert(0 < entities.size());
-
   // for now assume only 1 entity has the Light tag
-  assert(1 == registry.view<Light>().size());
+  assert(PointLights::MAX_NUMBER_POINTLIGHTS >= registry.view<PointLight>().size());
 
-  auto light_view = registry.view<Light, Transform>();
+  auto light_view = registry.view<PointLight, Transform>();
   for (auto const entity : light_view) {
     auto &transform = light_view.get<Transform>(entity);
     transform.scale = glm::vec3{0.2f};
@@ -163,8 +164,7 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
   auto const bgcolor = LOC::BLACK;
   ZoneState zs{bgcolor, MOVE(tmap)};
 
-  EngineState es{logger,     imgui,          dimensions,   MOVE(rng),
-               MOVE(entities), MOVE(camera), MOVE(player)};
+  EngineState es{logger, imgui, dimensions, MOVE(rng), MOVE(camera), MOVE(player)};
 
   return GameState{MOVE(es), MOVE(zs)};
 }
@@ -173,10 +173,10 @@ void
 draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
     HandleManager &handles)
 {
-  auto const draw_fn = [&handles, &sps, &state](auto entity, auto &sn, auto &transform) {
+  auto const draw_fn = [&handles, &sps, &registry, &state](auto entity, auto &sn, auto &transform) {
     auto &shader_ref = sps.ref_sp(sn.value);
     auto &handle = handles.lookup(entity);
-    render::draw(state.render_args(), transform, shader_ref, handle);
+    render::draw(state.render_args(), transform, shader_ref, handle, registry);
   };
 
   auto const draw_adapter = [&](auto entity, auto &sn, auto &transform, auto &) {
@@ -188,12 +188,12 @@ draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
   registry.view<ShaderName, Transform, CubeRenderable>().each(draw_adapter);
   registry.view<ShaderName, Transform, MeshRenderable>().each(draw_adapter);
 
-  auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {
-    if (state.engine_state.draw_skybox) {
+  if (state.engine_state.draw_skybox) {
+    auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {
       draw_fn(entity, sn, transform);
-    }
-  };
-  registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
+    };
+    registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
+  }
 }
 
 void
@@ -233,7 +233,7 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
 
   render::draw_tilemap(state.render_args(), transform,
       {hashtag_handle, hash_sp, plus_handle, plus_sp},
-      state.zone_state.tilemap, state.engine_state.tilemap_state.reveal);
+      state.zone_state.tilemap, state.engine_state.tilemap_state.reveal, registry);
 }
 
 void
@@ -264,9 +264,9 @@ draw_global_axis(GameState &state, entt::DefaultRegistry &registry, opengl::Shad
   auto &transform = registry.assign<Transform>(entity);
 
   auto const& rargs = state.render_args();
-  render::draw(rargs, transform, sp, world_arrows.x_dinfo);
-  render::draw(rargs, transform, sp, world_arrows.y_dinfo);
-  render::draw(rargs, transform, sp, world_arrows.z_dinfo);
+  render::draw(rargs, transform, sp, world_arrows.x_dinfo, registry);
+  render::draw(rargs, transform, sp, world_arrows.y_dinfo, registry);
+  render::draw(rargs, transform, sp, world_arrows.z_dinfo, registry);
 }
 
 void
@@ -283,9 +283,9 @@ draw_local_axis(GameState &state, entt::DefaultRegistry &registry, opengl::Shade
   auto &transform = registry.assign<Transform>(entity);
 
   auto const& rargs = state.render_args();
-  render::draw(rargs, transform, sp, axis_arrows.x_dinfo);
-  render::draw(rargs, transform, sp, axis_arrows.y_dinfo);
-  render::draw(rargs, transform, sp, axis_arrows.z_dinfo);
+  render::draw(rargs, transform, sp, axis_arrows.x_dinfo, registry);
+  render::draw(rargs, transform, sp, axis_arrows.y_dinfo, registry);
+  render::draw(rargs, transform, sp, axis_arrows.z_dinfo, registry);
 }
 
 void
@@ -303,7 +303,7 @@ draw_target_vectors(GameState &state, entt::DefaultRegistry &registry, opengl::S
     auto &transform = registry.assign<Transform>(entity);
 
     auto const& rargs = state.render_args();
-    render::draw(rargs, transform, sp, handle);
+    render::draw(rargs, transform, sp, handle, registry);
   };
 
   // draw player forward
@@ -365,7 +365,6 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
   if (engine_state.draw_tilemap) {
     draw_tilemap(state, registry, sps, handles);
   }
-
   if (tilemap_state.show_grid_lines) {
     draw_tilegrid(state, registry, sps);
   }

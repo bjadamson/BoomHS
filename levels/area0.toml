@@ -73,17 +73,41 @@ color = [0.000, 1.000, 0.000, 1.000]
 
 ########### ENTITY #############
 [[entity]]
-pos = [2.0, 2.0, 0.0]
-shader = "3d_pos_color"
-color = [0.0, 0.8, 0.0, 0.7]
-geometry = "cube"
+pos = [0.0, 0.0, 0.0]
+shader = "3d_pos_normal_color"
+geometry = "mesh:at"
+player = "player"
 
+######### POINT LIGHTS
+# LIGHT #0
 [[entity]]
-pos = [-4.0, 4.0, 0.0]
-shader = "3d_pos_color"
-color = [0.0, 0.0, 0.8, 0.4]
+pos = [0.0, 0.0, 0.0]
+shader = "light"
 geometry = "cube"
+light = [0.0, 0.0, 1.0]
 
+# LIGHT #1
+[[entity]]
+pos = [5.0, 0.0, 0.0]
+shader = "light"
+geometry = "cube"
+light = [0.0, 0.0, 1.0]
+
+# LIGHT #2
+[[entity]]
+pos = [0.0, 0.0, 5.0]
+shader = "light"
+geometry = "cube"
+light = [0.0, 0.0, 1.0]
+
+# LIGHT #3
+[[entity]]
+pos = [5.0, 0.0, 5.0]
+shader = "light"
+geometry = "cube"
+light = [1.0, 0.0, 0.0]
+
+##################### OTHERS
 [[entity]]
 pos = [-5.0, -2.0, 0.0]
 shader = "3dcube_texture"
@@ -101,21 +125,6 @@ pos = [2.0, -2.0, 2.0]
 shader = "3dtexture"
 geometry = "mesh:house"
 texture = "TextureAtlas"
-
-[[entity]]
-pos = [0.0, 0.0, 2.0]
-shader = "light"
-geometry = "cube"
-color = [0.0, 1.0, 0.0, 0.3]
-light = "light"
-
-[[entity]]
-pos = [0.0, 0.0, 0.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:at"
-# DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
-# IN THE MESHES TABLE.
-player = "player"
 
 [[entity]]
 pos = [-3.0, 0.0, -5.0]
@@ -137,7 +146,6 @@ geometry = "mesh:O"
 pos = [5.0, 0.0, -5.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:O"
-
 # DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
 # IN THE MESHES TABLE.
 #color = [1.0, 0.0, 0.0, 1.0]

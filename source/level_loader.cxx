@@ -234,7 +234,7 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     auto pos =          get_vec3_or_abort(file, "pos");
     auto color =        get_color(file, "color");
     auto texture_name = get_string(file, "texture");
-    auto light =        get_string(file, "light");
+    auto light_o =      get_vec3(file, "light");
     auto player =       get_string(file, "player");
 
     // texture OR color fields, not both
@@ -273,8 +273,11 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       tc.texture_info = *texture_o;
     }
 
-    if (light) {
-      auto &cc = registry.assign<Light>(entity);
+    if (light_o) {
+      auto &light_component = registry.assign<PointLight>(entity);
+      glm::vec3 const vec = *light_o;
+      Color const light_c{vec.x, vec.y, vec.z};
+      light_component.light.diffuse = light_c;
     }
     return entity;
   };

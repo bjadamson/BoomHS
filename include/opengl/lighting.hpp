@@ -45,4 +45,34 @@ static auto constexpr ATTENUATION_DISTANCE_STRINGS =
     "3250\0"
     "\0";
 
+struct Light
+{
+  opengl::Color diffuse = LOC::WHITE;
+  opengl::Color specular = LOC::BLACK;
+
+  static constexpr auto INIT_ATTENUATION_INDEX = 1;
+  Attenuation attenuation = opengl::ATTENUATION_VALUE_TABLE[INIT_ATTENUATION_INDEX];
+};
+
+struct PointLight
+{
+  Light light;
+};
+
+struct PointLights
+{
+  std::size_t static constexpr MAX_NUMBER_POINTLIGHTS = 4;
+  std::array<Light, MAX_NUMBER_POINTLIGHTS> pointlights;
+};
+
+struct GlobalLight
+{
+  opengl::Color ambient = LOC::WHITE;
+
+  Light directional_light;
+
+  // TODO: could there be more than one instance of "directional light"?
+  glm::vec3 directional_light_position{0.0f, 0.0f, 0.0f};
+};
+
 } // ns opengl

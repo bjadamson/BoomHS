@@ -42,6 +42,12 @@ namespace opengl::factories
 DrawInfo
 copy_colorcube_gpu(stlw::Logger &, ShaderProgram const&, Color const&);
 
+inline DrawInfo
+copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, glm::vec3 const& c)
+{
+  return copy_colorcube_gpu(logger, sp, Color{c.r, c.g, c.b, 1.0f});
+}
+
 DrawInfo
 copy_texturecube_gpu(stlw::Logger &, ShaderProgram const&, TextureInfo const&);
 

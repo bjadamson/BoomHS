@@ -14,6 +14,13 @@ using namespace boomhs;
 void
 draw_entity_editor(GameState &state)
 {
+  // Construct entities
+  //std::vector<Transform *> entities;
+  //registry.view<Transform>().each(
+      //[&entities](auto entity, auto &transform) { entities.emplace_back(&transform); });
+  //assert(0 < entities.size());
+
+  /*
   auto &engine_state = state.engine_state;
   auto &imgui = engine_state.imgui;
   auto &ui_state = engine_state.ui_state;
@@ -68,6 +75,7 @@ draw_entity_editor(GameState &state)
     }
   }
   ImGui::InputFloat3("scale:", glm::value_ptr(entity.scale));
+  */
 }
 
 void
@@ -185,22 +193,23 @@ show_lighting_window(GameState &state)
     ImGui::Separator();
     ImGui::Separator();
 
-    auto &light = state.zone_state.light;
+    auto &global_light = state.zone_state.global_light;
     {
-      auto &t = light.single_light_position;
+      auto &t = global_light.directional_light_position;
       auto *light_pos = glm::value_ptr(t);
-      ImGui::SliderFloat3("Light Position", light_pos, -100.0f, 100.0f);
+      ImGui::SliderFloat3("Global Light Position", light_pos, -100.0f, 100.0f);
       std::string const s = glm::to_string(glm::normalize(t));
-      ImGui::Text("Light Direction: '%s'", s.c_str());
+      ImGui::Text("Global Light Direction: '%s'", s.c_str());
     }
-    color_float4slider("Light Ambient", light.ambient);
-    color_float4slider("Light Diffuse", light.diffuse);
-    color_float4slider("Light Specular", light.specular);
+    auto &directional_light = global_light.directional_light;
+    color_float4slider("Global Light Ambient", global_light.ambient);
+    color_float4slider("Directional Light Diffuse", directional_light.diffuse);
+    color_float4slider("Directional Light Specular", directional_light.specular);
 
     auto &ui_state = state.engine_state.ui_state;
     auto &current_item = ui_state.attenuation_current_item;
-    if (ImGui::Combo("Attenuation", &current_item, opengl::ATTENUATION_DISTANCE_STRINGS)) {
-      light.attenuation = opengl::ATTENUATION_VALUE_TABLE[current_item];
+    if (ImGui::Combo("Global Light Attenuation", &current_item, opengl::ATTENUATION_DISTANCE_STRINGS)) {
+      directional_light.attenuation = opengl::ATTENUATION_VALUE_TABLE[current_item];
     }
 
     if (ImGui::Button("Close", ImVec2(120,0))) {

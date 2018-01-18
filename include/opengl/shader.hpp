@@ -99,10 +99,22 @@ public:
   }
 
   void
+  set_uniform_vec3(stlw::Logger &logger, std::string const& name, glm::vec3 const& v)
+  {
+    return set_uniform_vec3(logger, name.c_str(), v);
+  }
+
+  void
   set_uniform_color(stlw::Logger &logger, GLchar const* name, Color const& c)
   {
     auto const arr = stlw::make_array<float>(c.r, c.g, c.b, c.a);
     set_uniform_array_4fv(logger, name, arr);
+  }
+
+  void
+  set_uniform_color(stlw::Logger &logger, std::string const& name, Color const& c)
+  {
+    return set_uniform_color(logger, name.c_str(), c);
   }
 
   void
@@ -112,7 +124,18 @@ public:
     set_uniform_array_3fv(logger, name, arr);
   }
 
+  void
+  set_uniform_color_3fv(stlw::Logger &logger, std::string const& name, Color const& c)
+  {
+    return set_uniform_color_3fv(logger, name.c_str(), c);
+  }
+
   void set_uniform_float1(stlw::Logger &logger, GLchar const*, float const);
+
+  void set_uniform_float1(stlw::Logger &logger, std::string const& name, float const value)
+  {
+    return set_uniform_float1(logger, name.c_str(), value);
+  }
 };
 
 std::ostream&

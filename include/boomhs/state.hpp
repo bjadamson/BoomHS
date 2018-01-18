@@ -37,7 +37,7 @@ struct UiState
   int eid_buffer = 0;
   glm::vec3 euler_angle_buffer;
   glm::vec3 last_mouse_clicked_pos;
-  int attenuation_current_item = INIT_ATTENUATION_INDEX;
+  int attenuation_current_item = opengl::Light::INIT_ATTENUATION_INDEX;
   int entity_window_current = 0;
 };
 
@@ -64,8 +64,10 @@ struct TilemapState
 
 struct ZoneState
 {
+  //PointLights point_lights;
+
   // singular light in the scene
-  LightColors light;
+  opengl::GlobalLight global_light;
   opengl::Color background;
 
   TileMap tilemap;
@@ -103,22 +105,18 @@ struct EngineState
   window::mouse_data mouse_data;
   UiState ui_state;
 
-  // NOTE: Keep this data member above the "camera" data member.
-  std::vector<Transform*> entities;
-
   Camera camera;
   RenderableObject player;
 
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);
   EngineState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
-      std::vector<Transform*> &&ents, Camera &&cam, RenderableObject &&pl)
+      Camera &&cam, RenderableObject &&pl)
     : logger(l)
     , imgui(i)
     , dimensions(d)
     , rnum_generator(MOVE(fg))
     , mouse_data(window::make_default_mouse_data())
-    , entities(MOVE(ents))
     , camera(MOVE(cam))
     , player(MOVE(pl))
   {
@@ -141,14 +139,13 @@ struct GameState
   render_args()
   {
     auto &logger = engine_state.logger;
-    auto &entities = engine_state.entities;
 
     auto const& camera = engine_state.camera;
     auto const& player = engine_state.player;
 
-    auto const& light = zone_state.light;
+    auto const& global_light = zone_state.global_light;
 
-    return RenderArgs{camera, player, logger, entities, light};
+    return RenderArgs{camera, player, logger, global_light};
   }
 };
 

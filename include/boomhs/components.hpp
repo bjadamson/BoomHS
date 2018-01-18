@@ -1,4 +1,7 @@
 #pragma once
+#include <glm/glm.hpp>
+#include <opengl/colors.hpp>
+#include <opengl/lighting.hpp>
 #include <opengl/texture.hpp>
 #include <string>
 
@@ -6,10 +9,6 @@ namespace boomhs
 {
 
 struct Player
-{
-};
-
-struct Light
 {
 };
 
