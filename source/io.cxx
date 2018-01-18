@@ -61,31 +61,35 @@ calculateMouseRay(Camera const& camera, int const mouse_x, int const mouse_y, wi
 bool
 process_event(GameState &state, SDL_Event &event)
 {
-  stlw::Logger &logger = state.logger;
+  auto &engine_state = state.engine_state;
+  stlw::Logger &logger = engine_state.logger;
   float constexpr MOVE_DISTANCE = 1.0f;
   float constexpr SCALE_FACTOR = 0.20f;
 
   float constexpr ANGLE = 60.0f;
 
-  auto &camera = state.camera;
-  auto &player = state.player;
+  auto &camera = engine_state.camera;
+  auto &player = engine_state.player.world_object;
   auto const sf = [](float const f) { return (f > 1.0f) ? (1.0f + f) : (1.0f - f); };
 
-  if (state.ui_state.block_input) {
+  auto &ui_state = engine_state.ui_state;
+  if (ui_state.block_input) {
     return is_quit_event(event);
   }
 
+  auto &tilemap_state = engine_state.tilemap_state;
+  auto &mouse_state = engine_state.mouse_state;
   auto const move_player = [&](glm::vec3 (WorldObject::*fn)() const) {
     auto const player_pos = player.tilemap_position();
     glm::vec3 const move_vec = (player.*fn)();
 
-    auto const& new_pos_tile = state.tilemap.data(player_pos + move_vec);
-    if (!state.collision.player) {
+    auto const& new_pos_tile = state.zone_state.tilemap.data(player_pos + move_vec);
+    if (!engine_state.player_collision) {
       player.move(MOVE_DISTANCE, move_vec);
-      state.render.tilemap.redraw = true;
+      tilemap_state.redraw = true;
     } else if (!new_pos_tile.is_wall) {
       player.move(MOVE_DISTANCE, move_vec);
-      state.render.tilemap.redraw = true;
+      tilemap_state.redraw = true;
     }
   };
 
@@ -93,10 +97,10 @@ process_event(GameState &state, SDL_Event &event)
   case SDL_MOUSEMOTION: {
 
     // If the user pressed enter, don't move the camera based on mouse movements.
-    if (state.ui_state.enter_pressed) {
+    if (ui_state.enter_pressed) {
       break;
     }
-    add_from_event(state.mouse_data, event);
+    add_from_event(engine_state.mouse_data, event);
 
     bool const left = event.motion.state & SDL_BUTTON_LMASK;
     bool const right = event.motion.state & SDL_BUTTON_RMASK;
@@ -104,10 +108,10 @@ process_event(GameState &state, SDL_Event &event)
     auto const rot_player = [&]() {
       float const angle = event.motion.xrel > 0 ? 1.0 : -1.0f;
       player.rotate(angle, opengl::Y_UNIT_VECTOR);
-      state.render.tilemap.redraw = true;
+      tilemap_state.redraw = true;
     };
     auto const rot_camera = [&]() {
-      camera.rotate(logger, state.ui_state, state.mouse_data);
+      camera.rotate(logger, ui_state, engine_state.mouse_data);
     };
 
     if (right) {
@@ -132,27 +136,27 @@ process_event(GameState &state, SDL_Event &event)
   {
     auto const& button = event.button.button;
     if (button == SDL_BUTTON_RIGHT) {
-      state.mouse.right_pressed = true;
+      mouse_state.right_pressed = true;
     }
     else if (button == SDL_BUTTON_LEFT) {
-      state.mouse.left_pressed = true;
+      mouse_state.left_pressed = true;
     }
 
-    if (state.mouse.left_pressed && state.mouse.right_pressed) {
+    if (mouse_state.left_pressed && mouse_state.right_pressed) {
       move_player(&WorldObject::forward_vector);
     }
     LOG_ERROR("toggling mouse up/down (pitch) lock");
-    state.mouse_data.pitch_lock ^= true;
+    engine_state.mouse_data.pitch_lock ^= true;
     break;
   }
   case SDL_MOUSEBUTTONUP:
   {
     auto const& button = event.button.button;
     if (button == SDL_BUTTON_RIGHT) {
-      state.mouse.right_pressed = false;
+      mouse_state.right_pressed = false;
     }
     else if (button == SDL_BUTTON_LEFT) {
-      state.mouse.left_pressed = false;
+      mouse_state.left_pressed = false;
     }
     break;
   }
@@ -160,7 +164,7 @@ process_event(GameState &state, SDL_Event &event)
     auto const rotate_player = [&](float const angle, glm::vec3 const& axis)
     {
       player.rotate(angle, axis);
-      state.render.tilemap.redraw = true;
+      tilemap_state.redraw = true;
     };
     switch (event.key.keysym.sym) {
     case SDLK_w: {
@@ -212,8 +216,8 @@ process_event(GameState &state, SDL_Event &event)
       {
         // 1) Convert mouse location to
         // 3d normalised device coordinates
-        int const mouse_x = state.mouse_data.current.x, mouse_y = state.mouse_data.current.y;
-        auto const width = state.dimensions.w, height = state.dimensions.h;
+        int const mouse_x = engine_state.mouse_data.current.x, mouse_y = engine_state.mouse_data.current.y;
+        auto const width = engine_state.dimensions.w, height = engine_state.dimensions.h;
         float const x = (2.0f * mouse_x) / width - 1.0f;
         float const y = 1.0f - (2.0f * mouse_y) / height;
         float const z = 1.0f;
@@ -238,7 +242,7 @@ process_event(GameState &state, SDL_Event &event)
         //bool intersects = glm::intersectRayPlane(ray_origin, ray_dir, plane_origin, plane_normal, distance);
         //std::cerr << "intersects: '" << intersects << "', distance: '" << distance << "'\n";
 
-        auto const ray = calculateMouseRay(camera, mouse_x, mouse_y, state.dimensions);
+        auto const ray = calculateMouseRay(camera, mouse_x, mouse_y, engine_state.dimensions);
       }
       break;
     }
@@ -277,7 +281,7 @@ process_event(GameState &state, SDL_Event &event)
     }
     case SDLK_RETURN: {
       // Toggle state
-      auto &ep = state.ui_state.enter_pressed;
+      auto &ep = ui_state.enter_pressed;
       ep ^= true;
       break;
     }
@@ -295,15 +299,17 @@ namespace boomhs
 void
 IO::process(GameState &state, SDL_Event &event)
 {
-  state.LOG_TRACE("IO::process(data, state)");
+  auto &engine_state = state.engine_state;
+
+  engine_state.LOG_TRACE("IO::process(data, state)");
 
   //auto et = ::game::entity_factory::make_transformer(state.logger, data);
-  while ((!state.quit) && (0 != SDL_PollEvent(&event))) {
+  while ((!engine_state.quit) && (0 != SDL_PollEvent(&event))) {
     ImGui_ImplSdlGL3_ProcessEvent(&event);
 
-    auto &imgui = state.imgui;
+    auto &imgui = engine_state.imgui;
     if (!imgui.WantCaptureMouse && !imgui.WantCaptureKeyboard) {
-      state.quit = process_event(state, event);
+      engine_state.quit = process_event(state, event);
     }
   }
 }

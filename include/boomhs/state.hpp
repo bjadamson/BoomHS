@@ -13,7 +13,8 @@
 #include <window/sdl_window.hpp>
 
 #include <boomhs/camera.hpp>
-#include <boomhs/world_object.hpp>
+#include <boomhs/renderable_object.hpp>
+#include <boomhs/renderer.hpp>
 #include <boomhs/tilemap.hpp>
 #include <vector>
 
@@ -21,40 +22,6 @@ using stlw::Logger;
 
 namespace boomhs
 {
-
-// other
-static constexpr auto INIT_ATTENUATION_INDEX = 8;
-
-struct LightColors
-{
-  opengl::Color ambient = LOC::WHITE;
-  opengl::Color diffuse = LOC::WHITE;
-  opengl::Color specular = LOC::WHITE;
-
-  opengl::Attenuation attenuation = opengl::ATTENUATION_VALUE_TABLE[INIT_ATTENUATION_INDEX];
-
-  // TODO: this is a hack, should be based on other entities position(s)
-  glm::vec3 single_light_position{0.0f, 0.0f, 0.0f};
-};
-
-struct MaterialColors
-{
-  opengl::Color ambient{1.0f, 1.0f, 1.0f, 1.0f};
-  opengl::Color diffuse{1.0f, 1.0f, 1.0f, 1.0f};
-  opengl::Color specular{1.0f, 1.0f, 1.0f, 1.0f};
-  float shininess = 32.0f;
-};
-
-struct RenderArgs
-{
-  Logger &logger;
-  Camera const& camera;
-  WorldObject const& player;
-
-  std::vector<Transform*> &entities;
-  LightColors &light;
-  MaterialColors &at_materials;
-};
 
 struct UiState
 {
@@ -85,7 +52,7 @@ struct WindowState
   window::FullscreenFlags fullscreen = window::NOT_FULLSCREEN;
 };
 
-struct TilemapRender
+struct TilemapState
 {
   bool redraw = true;
   bool reveal = false;
@@ -95,8 +62,27 @@ struct TilemapRender
   bool show_yaxis_lines = false;
 };
 
-struct RenderState
+struct ZoneState
 {
+  // singular light in the scene
+  LightColors light;
+  opengl::Color background;
+
+  TileMap tilemap;
+
+  explicit ZoneState(opengl::Color const& bgcolor, TileMap &&tmap)
+    : background(bgcolor)
+    , tilemap(MOVE(tmap))
+  {
+  }
+};
+
+struct EngineState
+{
+  bool quit = false;
+  bool player_collision = true;
+
+  // rendering state
   bool draw_entities = true;
   bool draw_skybox = false;
   bool draw_tilemap = true;
@@ -105,66 +91,64 @@ struct RenderState
   bool show_local_axis = false;
   bool show_target_vectors = true;
 
-  opengl::Color background = LOC::BLACK;
-
-  TilemapRender tilemap;
-};
-
-struct Collision
-{
-  bool player = true;
-};
-
-struct GameState
-{
-  bool quit = false;
-
-  Collision collision;
-  MouseState mouse;
-  RenderState render;
-  WindowState window;
-
-  // singular light in the scene
-  LightColors light;
-
-  // Materials for the "@" (player)
-  MaterialColors at_materials;
+  MouseState mouse_state;
+  WindowState window_state;
+  TilemapState tilemap_state;
 
   Logger &logger;
   ImGuiIO &imgui;
   window::Dimensions const dimensions;
   stlw::float_generator rnum_generator;
 
-  TileMap tilemap;
   window::mouse_data mouse_data;
-
   UiState ui_state;
 
   // NOTE: Keep this data member above the "camera" data member.
   std::vector<Transform*> entities;
 
   Camera camera;
-  WorldObject player;
+  RenderableObject player;
 
-  MOVE_CONSTRUCTIBLE_ONLY(GameState);
-  GameState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
-      TileMap &&tmap, std::vector<Transform*> &&ents, Camera &&cam, WorldObject &&pl)
+  // Constructors
+  MOVE_CONSTRUCTIBLE_ONLY(EngineState);
+  EngineState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
+      std::vector<Transform*> &&ents, Camera &&cam, RenderableObject &&pl)
     : logger(l)
     , imgui(i)
     , dimensions(d)
     , rnum_generator(MOVE(fg))
-    , tilemap(MOVE(tmap))
     , mouse_data(window::make_default_mouse_data())
     , entities(MOVE(ents))
     , camera(MOVE(cam))
     , player(MOVE(pl))
   {
   }
+};
 
-  RenderArgs render_args()
+struct GameState
+{
+  EngineState engine_state;
+  ZoneState zone_state;
+
+  MOVE_CONSTRUCTIBLE_ONLY(GameState);
+  explicit GameState(EngineState &&es, ZoneState &&zs)
+    : engine_state(MOVE(es))
+    , zone_state(MOVE(zs))
   {
-    return RenderArgs{this->logger, this->camera, this->player, this->entities, this->light,
-      this->at_materials};
+  }
+
+  RenderArgs
+  render_args()
+  {
+    auto &logger = engine_state.logger;
+    auto &entities = engine_state.entities;
+
+    auto const& camera = engine_state.camera;
+    auto const& player = engine_state.player;
+
+    auto const& light = zone_state.light;
+
+    return RenderArgs{camera, player, logger, entities, light};
   }
 };
 

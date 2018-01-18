@@ -42,8 +42,7 @@ set_mvpmatrix(stlw::Logger &logger, glm::mat4 const& model_matrix, ShaderProgram
 }
 
 void
-render_element_buffer(stlw::Logger &logger, ShaderProgram &shader_program,
-    DrawInfo const& dinfo)
+draw_drawinfo(stlw::Logger &logger, ShaderProgram &shader_program, DrawInfo const& dinfo)
 {
   auto const draw_mode = dinfo.draw_mode();
   auto const num_indices = dinfo.num_indices();
@@ -63,9 +62,9 @@ draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, Shad
 {
   auto &logger = args.logger;
   auto const& camera = args.camera;
-  auto const& player = args.player;
+  auto const& player = args.player.world_object;
+  auto const& player_material = args.player.material;
   auto const& light = args.light;
-  auto const& at_materials = args.at_materials;
 
   glm::mat4 const view_matrix = camera.camera_matrix();
   auto const draw_3d_shape_fn = [&](auto const &dinfo) {
@@ -89,10 +88,10 @@ draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, Shad
       shader_program.set_uniform_float1(logger, "u_light.linear",    light.attenuation.linear);
       shader_program.set_uniform_float1(logger, "u_light.quadratic", light.attenuation.quadratic);
 
-      shader_program.set_uniform_color_3fv(logger, "u_material.ambient",  at_materials.ambient);
-      shader_program.set_uniform_color_3fv(logger, "u_material.diffuse",  at_materials.diffuse);
-      shader_program.set_uniform_color_3fv(logger, "u_material.specular", at_materials.specular);
-      shader_program.set_uniform_float1(logger, "u_material.shininess", at_materials.shininess);
+      shader_program.set_uniform_vec3(logger, "u_material.ambient",  player_material.ambient);
+      shader_program.set_uniform_vec3(logger, "u_material.diffuse",  player_material.diffuse);
+      shader_program.set_uniform_vec3(logger, "u_material.specular", player_material.specular);
+      shader_program.set_uniform_float1(logger, "u_material.shininess", player_material.shininess);
 
       shader_program.set_uniform_vec3(logger, "u_player.position",  player.world_position());
       shader_program.set_uniform_vec3(logger, "u_player.direction",  player.forward_vector());
@@ -101,10 +100,10 @@ draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, Shad
 
     if (shader_program.is_skybox) {
       render::disable_depth_tests();
-      render_element_buffer(logger, shader_program, dinfo);
+      draw_drawinfo(logger, shader_program, dinfo);
       render::enable_depth_tests();
     } else {
-      render_element_buffer(logger, shader_program, dinfo);
+      draw_drawinfo(logger, shader_program, dinfo);
     }
   };
 
@@ -242,7 +241,7 @@ draw_tilegrid(RenderArgs const& args, Transform const& transform, ShaderProgram 
   opengl::global::vao_bind(dinfo.vao());
 
   set_mvpmatrix(logger, transform.model_matrix(), shader_program, args.camera);
-  render_element_buffer(logger, shader_program, dinfo);
+  draw_drawinfo(logger, shader_program, dinfo);
 }
 
 } // ns boomhs::render

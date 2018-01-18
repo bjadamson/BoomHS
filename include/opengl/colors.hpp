@@ -1,4 +1,5 @@
 #pragma once
+#include <glm/glm.hpp>
 #include <array>
 #include <ostream>
 
@@ -39,6 +40,12 @@ struct Color
   to_array() const
   {
     return std::array<float, 4>{this->r, this->g, this->b, this->a};
+  }
+
+  auto
+  rgb() const
+  {
+    return glm::vec3{r, g, b};
   }
 };
 

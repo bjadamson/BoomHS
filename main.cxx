@@ -123,12 +123,6 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
   imgui.MouseDrawCursor = true;
   imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
 
-  // Construct tilemap
-  stlw::float_generator rng;
-  auto tmap_startingpos = level_generator::make_tilemap(80, 1, 45, rng);
-  auto tmap = MOVE(tmap_startingpos.first);
-  auto &startingpos = tmap_startingpos.second;
-
   // Construct entities
   std::vector<Transform *> entities;
   registry.view<Transform>().each(
@@ -142,7 +136,6 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
   for (auto const entity : light_view) {
     auto &transform = light_view.get<Transform>(entity);
     transform.scale = glm::vec3{0.2f};
-    transform.translation = glm::vec3{startingpos.x, startingpos.y, startingpos.z};
   }
 
   // camera-look at origin
@@ -153,12 +146,27 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
   auto &player_transform = find_player(registry);
   player_transform.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
 
-  WorldObject player{player_transform, FORWARD, UP};
+  WorldObject wo{player_transform, FORWARD, UP};
+
+  Material material{LOC::WHITE, LOC::WHITE, LOC::WHITE, 1.0f};
+  RenderableObject player{MOVE(wo), MOVE(material)};
+
   Projection const proj{90.0f, 4.0f / 3.0f, 0.1f, 200.0f};
   Camera camera(proj, player_transform, FORWARD, UP);
-  GameState gs{logger,     imgui,          dimensions,   MOVE(rng),
-               MOVE(tmap), MOVE(entities), MOVE(camera), MOVE(player)};
-  return gs;
+
+  // Construct tilemap
+  stlw::float_generator rng;
+  auto tmap_startingpos = level_generator::make_tilemap(80, 1, 45, rng);
+  auto tmap = MOVE(tmap_startingpos.first);
+  auto &startingpos = tmap_startingpos.second;
+
+  auto const bgcolor = LOC::BLACK;
+  ZoneState zs{bgcolor, MOVE(tmap)};
+
+  EngineState es{logger,     imgui,          dimensions,   MOVE(rng),
+               MOVE(entities), MOVE(camera), MOVE(player)};
+
+  return GameState{MOVE(es), MOVE(zs)};
 }
 
 void
@@ -181,7 +189,7 @@ draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
   registry.view<ShaderName, Transform, MeshRenderable>().each(draw_adapter);
 
   auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {
-    if (state.render.draw_skybox) {
+    if (state.engine_state.draw_skybox) {
       draw_fn(entity, sn, transform);
     }
   };
@@ -192,7 +200,7 @@ void
 draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
     HandleManager &handles)
 {
-  auto &logger = state.logger;
+  auto &logger = state.engine_state.logger;
 
   auto entity = registry.create();
   ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
@@ -225,18 +233,19 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
 
   render::draw_tilemap(state.render_args(), transform,
       {hashtag_handle, hash_sp, plus_handle, plus_sp},
-      state.tilemap, state.render.tilemap.reveal);
+      state.zone_state.tilemap, state.engine_state.tilemap_state.reveal);
 }
 
 void
 draw_tilegrid(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps)
 {
-  auto &logger = state.logger;
+  auto &engine_state = state.engine_state;
+  auto &logger = engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
-  auto const& tilemap = state.tilemap;
+  auto const& tilemap = state.zone_state.tilemap;
 
   Transform transform;
-  bool const show_y = state.render.tilemap.show_yaxis_lines;
+  bool const show_y = engine_state.tilemap_state.show_yaxis_lines;
   auto const tilegrid = OF::create_tilegrid(logger, sp, tilemap, show_y);
   render::draw_tilegrid(state.render_args(), transform, sp, tilegrid);
 }
@@ -244,7 +253,8 @@ draw_tilegrid(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
 void
 draw_global_axis(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps)
 {
-  auto &logger = state.logger;
+  auto &engine_state = state.engine_state;
+  auto &logger = engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
   auto world_arrows = OF::create_world_axis_arrows(logger, sp);
 
@@ -263,7 +273,7 @@ void
 draw_local_axis(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
     glm::vec3 const& player_pos)
 {
-  auto &logger = state.logger;
+  auto &logger = state.engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
   auto const axis_arrows = OF::create_axis_arrows(logger, sp, player_pos);
 
@@ -282,7 +292,7 @@ void
 draw_target_vectors(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
     WorldObject const& player)
 {
-  auto &logger = state.logger;
+  auto &logger = state.engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
 
   auto const draw_arrow = [&](auto const& start, auto const& head, auto const& color) {
@@ -307,7 +317,7 @@ draw_target_vectors(GameState &state, entt::DefaultRegistry &registry, opengl::S
   // draw forward arrow (for camera) ??
   {
     glm::vec3 const start = glm::vec3{0, 0, 0};
-    glm::vec3 const head = state.ui_state.last_mouse_clicked_pos;
+    glm::vec3 const head = state.engine_state.ui_state.last_mouse_clicked_pos;
     draw_arrow(start, head, LOC::PURPLE);
   }
 
@@ -323,46 +333,49 @@ void
 game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
           window::SDLWindow &window, HandleManager &handles, Assets const &assets)
 {
-  auto &player = state.player;
-  auto &mouse = state.mouse;
-  auto &render = state.render;
-  auto &logger = state.logger;
+  auto &engine_state = state.engine_state;
+  auto &zone_state = state.zone_state;
+
+  auto &player = engine_state.player.world_object;
+  auto &mouse = engine_state.mouse_state;
+  auto &tilemap_state = state.engine_state.tilemap_state;
+  auto &logger = engine_state.logger;
 
   // game logic
   if (mouse.right_pressed && mouse.left_pressed) {
     player.move(0.25f, player.forward_vector());
-    render.tilemap.redraw = true;
+    tilemap_state.redraw = true;
   }
 
   // compute tilemap
-  if (render.tilemap.redraw) {
+  if (tilemap_state.redraw) {
     LOG_INFO("Updating tilemap\n");
-    update_visible_tiles(state.tilemap, player, render.tilemap.reveal);
+    update_visible_tiles(zone_state.tilemap, player, tilemap_state.reveal);
 
     // We don't need to recompute the tilemap, we just did.
-    render.tilemap.redraw = false;
+    tilemap_state.redraw = false;
   }
 
   // action begins here
-  render::clear_screen(render.background);
+  render::clear_screen(zone_state.background);
 
-  if (render.draw_entities) {
+  if (engine_state.draw_entities) {
     draw_entities(state, registry, sps, handles);
   }
-  if (render.draw_tilemap) {
+  if (engine_state.draw_tilemap) {
     draw_tilemap(state, registry, sps, handles);
   }
 
-  if (render.tilemap.show_grid_lines) {
+  if (tilemap_state.show_grid_lines) {
     draw_tilegrid(state, registry, sps);
   }
-  if (render.show_global_axis) {
+  if (engine_state.show_global_axis) {
     draw_global_axis(state, registry, sps);
   }
-  if (render.show_local_axis) {
+  if (engine_state.show_local_axis) {
     draw_local_axis(state, registry, sps, player.world_position());
   }
-  if (render.show_target_vectors) {
+  if (engine_state.show_target_vectors) {
     draw_target_vectors(state, registry, sps, player);
   }
   // UI code
@@ -388,7 +401,7 @@ void
 loop(Engine &engine, State &state, entt::DefaultRegistry &registry, boomhs::HandleManager &handles,
      opengl::ShaderPrograms &sp, Assets const &assets)
 {
-  auto &logger = state.logger;
+  auto &logger = state.engine_state.logger;
   // Reset Imgui for next game frame.
   ImGui_ImplSdlGL3_NewFrame(engine.window.raw());
 
@@ -407,13 +420,11 @@ void
 timed_game_loop(entt::DefaultRegistry &registry, Engine &engine, boomhs::GameState &state,
                 boomhs::HandleManager &handles, opengl::ShaderPrograms &sp, Assets const &assets)
 {
-  auto &logger = state.logger;
-
   int frames_counted = 0;
-  window::LTimer fps_timer;
+  window::LTimer frame_timer;
 
-  while (!state.quit) {
-    window::LTimer frame_timer;
+  auto &logger = state.engine_state.logger;
+  while (!state.engine_state.quit) {
     auto const start = frame_timer.get_ticks();
     loop(engine, state, registry, handles, sp, assets);
 
@@ -425,7 +436,7 @@ timed_game_loop(entt::DefaultRegistry &registry, Engine &engine, boomhs::GameSta
       SDL_Delay(ONE_60TH_OF_A_FRAME - frame_ticks);
     }
 
-    float const fps = frames_counted / (fps_timer.get_ticks() / 1000.0f);
+    float const fps = frames_counted / (frame_timer.get_ticks() / 1000.0f);
     LOG_INFO(fmt::format("average FPS '{}'", fps));
     ++frames_counted;
   }

@@ -14,8 +14,14 @@ using namespace boomhs;
 void
 draw_entity_editor(GameState &state)
 {
-  auto &imgui = state.imgui;
-  auto &eid_buffer = state.ui_state.eid_buffer;
+  auto &engine_state = state.engine_state;
+  auto &imgui = engine_state.imgui;
+  auto &ui_state = engine_state.ui_state;
+
+  auto &eid_buffer = ui_state.eid_buffer;
+  auto &camera = engine_state.camera;
+  auto &player = engine_state.player.world_object;
+  auto &entities = engine_state.entities;
 
   auto constexpr ENTITIES_S =
     "COLOR_CUBE\0"
@@ -46,14 +52,14 @@ draw_entity_editor(GameState &state)
     "LIGHT\0"
     "\0";
 
-  auto &current = state.ui_state.entity_window_current;
+  auto &current = ui_state.entity_window_current;
   if (ImGui::Combo("Entity", &current, ENTITIES_S)) {
-    auto &entity = *state.entities[current];
-    state.camera.set_target(entity);
-    state.player.set_transform(entity);
+    auto &entity = *engine_state.entities[current];
+    camera.set_target(entity);
+    player.set_transform(entity);
   }
 
-  auto &entity = *state.entities[current];
+  auto &entity = *entities[current];
   ImGui::InputFloat3("pos:", glm::value_ptr(entity.translation));
   {
     auto buffer = glm::degrees(glm::eulerAngles(entity.rotation));
@@ -67,8 +73,8 @@ draw_entity_editor(GameState &state)
 void
 draw_camera_info(GameState &state)
 {
-  auto &camera = state.camera;
-  auto &player = state.player;
+  auto &camera = state.engine_state.camera;
+  auto &player = state.engine_state.player.world_object;
 
   ImGui::Begin("CAMERA INFO WINDOW");
   {
@@ -130,7 +136,7 @@ draw_camera_info(GameState &state)
 void
 draw_player_info(GameState &state)
 {
-  auto &player = state.player;
+  auto &player = state.engine_state.player.world_object;
 
   ImGui::Begin("PLAYER INFO WINDOW");
   {
@@ -151,17 +157,8 @@ void
 show_lighting_window(GameState &state)
 {
   if (ImGui::Begin("Lighting")) {
-    auto const floatslider = [](char const* text, auto &color, auto const& fn) {
-      auto array = color.to_array();
-      if (fn(text, array.data())) {
-        color = opengl::Color{array};
-      }
-    };
-    auto const color_float3slider = [&floatslider](char const* text, auto &color) {
-      auto array = color.to_array();
-      if (ImGui::ColorEdit3(text, array.data())) {
-        color = opengl::Color{array};
-      }
+    auto const float3slider = [](char const* text, auto &color) {
+      ImGui::ColorEdit3(text, glm::value_ptr(color));
     };
     auto const color_float4slider = [](char const* text, auto &color) {
       auto array = color.to_array();
@@ -172,39 +169,42 @@ show_lighting_window(GameState &state)
 
     ImGui::Separator();
     ImGui::Separator();
-    color_float4slider("Background Color", state.render.background);
+    color_float4slider("Background Color", state.zone_state.background);
 
     ImGui::Text("@/+/# (Player) Material");
     ImGui::Separator();
     ImGui::Separator();
 
-    color_float4slider("@/+/# Ambient", state.at_materials.ambient);
-    color_float4slider("@/+/# Diffuse", state.at_materials.diffuse);
-    color_float4slider("@/+/# Specular", state.at_materials.specular);
-    ImGui::SliderFloat("@/+/# Shininess", &state.at_materials.shininess, 0.0f, 128.0f);
+    auto &player_materials = state.engine_state.player.material;
+    float3slider("@/+/# Ambient", player_materials.ambient);
+    float3slider("@/+/# Diffuse", player_materials.diffuse);
+    float3slider("@/+/# Specular", player_materials.specular);
+    ImGui::SliderFloat("@/+/# Shininess", &player_materials.shininess, 0.0f, 128.0f);
 
     ImGui::Text("Light Instance #0");
     ImGui::Separator();
     ImGui::Separator();
 
+    auto &light = state.zone_state.light;
     {
-      auto &t = state.light.single_light_position;
+      auto &t = light.single_light_position;
       auto *light_pos = glm::value_ptr(t);
       ImGui::SliderFloat3("Light Position", light_pos, -100.0f, 100.0f);
       std::string const s = glm::to_string(glm::normalize(t));
       ImGui::Text("Light Direction: '%s'", s.c_str());
     }
-    color_float4slider("Light Ambient", state.light.ambient);
-    color_float4slider("Light Diffuse", state.light.diffuse);
-    color_float4slider("Light Specular", state.light.specular);
+    color_float4slider("Light Ambient", light.ambient);
+    color_float4slider("Light Diffuse", light.diffuse);
+    color_float4slider("Light Specular", light.specular);
 
-    auto &current_item = state.ui_state.attenuation_current_item;
+    auto &ui_state = state.engine_state.ui_state;
+    auto &current_item = ui_state.attenuation_current_item;
     if (ImGui::Combo("Attenuation", &current_item, opengl::ATTENUATION_DISTANCE_STRINGS)) {
-      state.light.attenuation = opengl::ATTENUATION_VALUE_TABLE[current_item];
+      light.attenuation = opengl::ATTENUATION_VALUE_TABLE[current_item];
     }
 
     if (ImGui::Button("Close", ImVec2(120,0))) {
-      state.ui_state.show_lighting_window = false;
+      ui_state.show_lighting_window = false;
     }
     ImGui::End();
   }
@@ -213,21 +213,24 @@ show_lighting_window(GameState &state)
 void
 world_menu(GameState &state)
 {
-  bool &edit_lighting = state.ui_state.show_lighting_window;
-  if (ImGui::BeginMenu("World")) {
-    ImGui::MenuItem("Global Axis", nullptr, &state.render.show_global_axis);
-    ImGui::MenuItem("Local Axis", nullptr, &state.render.show_local_axis);
-    ImGui::MenuItem("Target Forward/Right/Up Vectors", nullptr, &state.render.show_target_vectors);
+  auto &ui_state = state.engine_state.ui_state;
+  auto &engine_state = state.engine_state;
 
-    auto &tmap_render = state.render.tilemap;
-    if (ImGui::MenuItem("Reveal Tilemap", nullptr, &tmap_render.reveal)) {
-      tmap_render.redraw = true;
+  bool &edit_lighting = ui_state.show_lighting_window;
+  if (ImGui::BeginMenu("World")) {
+    ImGui::MenuItem("Global Axis", nullptr, &engine_state.show_global_axis);
+    ImGui::MenuItem("Local Axis", nullptr, &engine_state.show_local_axis);
+    ImGui::MenuItem("Target Forward/Right/Up Vectors", nullptr, &engine_state.show_target_vectors);
+
+    auto &tilemap_state = engine_state.tilemap_state;
+    if (ImGui::MenuItem("Reveal Tilemap", nullptr, &tilemap_state.reveal)) {
+      tilemap_state.redraw = true;
     }
 
     if (ImGui::BeginMenu("TileMap GridLines (Debug)")) {
-      ImGui::MenuItem("Show (x, z)-axis lines", nullptr, &tmap_render.show_grid_lines);
-      if (ImGui::MenuItem("Show y-axis Lines ", nullptr, &tmap_render.show_yaxis_lines)) {
-        tmap_render.redraw = true;
+      ImGui::MenuItem("Show (x, z)-axis lines", nullptr, &tilemap_state.show_grid_lines);
+      if (ImGui::MenuItem("Show y-axis Lines ", nullptr, &tilemap_state.show_yaxis_lines)) {
+        tilemap_state.redraw = true;
       }
       ImGui::EndMenu();
     }
@@ -251,16 +254,20 @@ draw_ui(GameState &state, window::SDLWindow &window)
   draw_camera_info(state);
   draw_player_info(state);
 
-  ImGui::Checkbox("Draw Skybox", &state.render.draw_skybox);
-  ImGui::Checkbox("Enter Pressed", &state.ui_state.enter_pressed);
-  ImGui::Checkbox("Mouse Rotation Lock", &state.ui_state.rotate_lock);
+  auto &engine_state = state.engine_state;
+  auto &ui_state = engine_state.ui_state;
+  auto &window_state = engine_state.window_state;
 
-  auto const window_menu = [&window, &state]() {
+  ImGui::Checkbox("Draw Skybox", &engine_state.draw_skybox);
+  ImGui::Checkbox("Enter Pressed", &ui_state.enter_pressed);
+  ImGui::Checkbox("Mouse Rotation Lock", &ui_state.rotate_lock);
+
+  auto const window_menu = [&window, &window_state]() {
     if (ImGui::BeginMenu("Window")) {
       auto const draw_row = [&](char const* text, auto const fullscreen) {
-        if (ImGui::MenuItem(text, nullptr, nullptr, state.window.fullscreen != fullscreen)) {
+        if (ImGui::MenuItem(text, nullptr, nullptr, window_state.fullscreen != fullscreen)) {
           window.set_fullscreen(fullscreen);
-          state.window.fullscreen = fullscreen;
+          window_state.fullscreen = fullscreen;
         }
       };
       draw_row("NOT Fullscreen", window::FullscreenFlags::NOT_FULLSCREEN);
@@ -269,15 +276,15 @@ draw_ui(GameState &state, window::SDLWindow &window)
       ImGui::EndMenu();
     }
   };
-  auto const camera_menu = [&state]() {
+  auto const camera_menu = [&ui_state]() {
     if (ImGui::BeginMenu("Camera")) {
-      ImGui::MenuItem("Flip Y", nullptr, &state.ui_state.flip_y);
+      ImGui::MenuItem("Flip Y", nullptr, &ui_state.flip_y);
       ImGui::EndMenu();
     }
   };
-  auto const player_menu = [&state]() {
+  auto const player_menu = [&engine_state]() {
     if (ImGui::BeginMenu("Player")) {
-      ImGui::MenuItem("Player Collisions Enabled", nullptr, &state.collision.player);
+      ImGui::MenuItem("Player Collisions Enabled", nullptr, &engine_state.player_collision);
       ImGui::EndMenu();
     }
   };
@@ -290,8 +297,7 @@ draw_ui(GameState &state, window::SDLWindow &window)
   }
   ImGui::EndMainMenuBar();
 
-  auto const& imgui = state.imgui;
-  auto const framerate = imgui.Framerate;
+  auto const framerate = engine_state.imgui.Framerate;
   auto const ms_frame = 1000.0f / framerate;
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", ms_frame, framerate);
 }

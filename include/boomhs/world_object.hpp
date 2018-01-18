@@ -9,12 +9,12 @@ namespace boomhs
 
 class WorldObject
 {
-  boomhs::Transform *transform_;
+  Transform *transform_;
   glm::vec3 forward_, up_;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(WorldObject);
-  explicit WorldObject(boomhs::Transform &m, glm::vec3 const& forward, glm::vec3 const& up)
+  explicit WorldObject(Transform &m, glm::vec3 const& forward, glm::vec3 const& up)
     : transform_(&m)
     , forward_(forward)
     , up_(up)
