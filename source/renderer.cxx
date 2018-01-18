@@ -25,20 +25,20 @@ using namespace boomhs;
 namespace
 {
 
-template <typename FN>
 void
-bind_stuff_and_draw(stlw::Logger &logger, DrawInfo const &dinfo, FN const& fn)
+set_modelmatrix(stlw::Logger &logger, glm::mat4 const& model_matrix, ShaderProgram &shader_program)
 {
-  using namespace opengl;
+  shader_program.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
+}
 
-  if (dinfo.texture_info()) {
-    auto const& ti = *dinfo.texture_info();
-    opengl::global::texture_bind(ti);
-    ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
-    fn(dinfo);
-  } else {
-    fn(dinfo);
-  }
+void
+set_mvpmatrix(stlw::Logger &logger, glm::mat4 const& model_matrix, ShaderProgram &shader_program,
+    Camera const& camera)
+{
+  glm::mat4 const view_matrix = camera.camera_matrix();
+  auto const mvp_matrix = view_matrix * model_matrix;
+
+  shader_program.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 }
 
 void
@@ -71,10 +71,11 @@ draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, Shad
   auto const draw_3d_shape_fn = [&](auto const &dinfo) {
 
     // various matrices
-    shader_program.set_uniform_matrix_4fv(logger, "u_mvpmatrix", view_matrix * model_matrix);
+    set_mvpmatrix(logger, model_matrix, shader_program, camera);
 
     if (shader_program.receives_light) {
-      shader_program.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
+      set_modelmatrix(logger, model_matrix, shader_program);
+      //shader_program.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
       shader_program.set_uniform_vec3(logger, "u_viewpos", camera.world_position());
       {
         auto const light_pos = args.light.single_light_position;
@@ -107,23 +108,14 @@ draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, Shad
     }
   };
 
-  bind_stuff_and_draw(logger, dinfo, draw_3d_shape_fn);
-}
-
-void
-draw_2dshape(RenderArgs const &args, boomhs::Transform const& transform,
-    ShaderProgram &shader_program, DrawInfo const &dinfo)
-{
-  using namespace opengl;
-
-  auto &logger = args.logger;
-  auto const draw_2d_shape_fn = [&](auto const& dinfo) {
-    auto const model_matrix = transform.model_matrix();
-    shader_program.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
-    render_element_buffer(logger, shader_program, dinfo);
-  };
-
-  bind_stuff_and_draw(logger, dinfo, draw_2d_shape_fn);
+  if (dinfo.texture_info()) {
+    auto const& ti = *dinfo.texture_info();
+    opengl::global::texture_bind(ti);
+    ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
+    draw_3d_shape_fn(dinfo);
+  } else {
+    draw_3d_shape_fn(dinfo);
+  }
 }
 
 } // ns anonymous
@@ -192,13 +184,24 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &shader_p
   std::cerr << "---------------------------------------------------------------------------\n";
   */
 
-  if (shader_program.is_2d) {
-    disable_depth_tests();
-    draw_2dshape(args, transform, shader_program, dinfo);
-    enable_depth_tests();
+  auto const draw_fn = [&]()
+  {
+    if (shader_program.is_2d) {
+      disable_depth_tests();
+      set_modelmatrix(logger, transform.model_matrix(), shader_program);
+      enable_depth_tests();
+    } else {
+      draw_3dshape(args, transform.model_matrix(), shader_program, dinfo);
+    }
+  };
+
+  if (dinfo.texture_info()) {
+    auto const& ti = *dinfo.texture_info();
+    opengl::global::texture_bind(ti);
+    ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
+    draw_fn();
   } else {
-    auto const model_matrix = transform.model_matrix();
-    draw_3dshape(args, model_matrix, shader_program, dinfo);
+    draw_fn();
   }
 }
 
@@ -234,15 +237,12 @@ void
 draw_tilegrid(RenderArgs const& args, Transform const& transform, ShaderProgram &shader_program,
     DrawInfo const& dinfo)
 {
-  glm::mat4 const view_matrix = args.camera.camera_matrix();
-  auto const model_matrix = transform.model_matrix();
-  auto const mvp_matrix = view_matrix * model_matrix;
-
   auto &logger = args.logger;
   shader_program.use_program(logger);
   opengl::global::vao_bind(dinfo.vao());
 
+  set_mvpmatrix(logger, transform.model_matrix(), shader_program, args.camera);
   render_element_buffer(logger, shader_program, dinfo);
 }
 
-}
+} // ns boomhs::render

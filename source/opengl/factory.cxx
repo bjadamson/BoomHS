@@ -276,7 +276,7 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, boomh
     bool const show_yaxis_lines, Color const& color)
 {
   std::vector<float> vertices;
-  vertices.reserve(tmap.num_tiles() * 4);
+  vertices.reserve(tmap.num_tiles() * 8);
 
   std::vector<GLuint> indices;
   indices.reserve(tmap.num_tiles());

@@ -232,15 +232,12 @@ void
 draw_tilegrid(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps)
 {
   auto &logger = state.logger;
-
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-
-  auto &transform = registry.assign<Transform>(entity);
-
   auto &sp = sps.ref_sp("3d_pos_color");
-  auto const tilegrid =
-      OF::create_tilegrid(logger, sp, state.tilemap, state.render.tilemap.show_yaxis_lines);
+  auto const& tilemap = state.tilemap;
+
+  Transform transform;
+  bool const show_y = state.render.tilemap.show_yaxis_lines;
+  auto const tilegrid = OF::create_tilegrid(logger, sp, tilemap, show_y);
   render::draw_tilegrid(state.render_args(), transform, sp, tilegrid);
 }
 
