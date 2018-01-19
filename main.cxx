@@ -157,6 +157,7 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
   auto tmap_startingpos = level_generator::make_tilemap(80, 1, 45, rng);
   auto tmap = MOVE(tmap_startingpos.first);
   auto &startingpos = tmap_startingpos.second;
+  player.move_to(TilePosition{8, 0, 7});
 
   auto const bgcolor = LOC::BLACK;
   ZoneState zs{bgcolor, assets.global_light, MOVE(tmap)};

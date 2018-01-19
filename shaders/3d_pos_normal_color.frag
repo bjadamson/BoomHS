@@ -93,42 +93,25 @@ calculate_attenuation(PointLight light)
 vec3
 calc_pointlight(PointLight light, vec3 normal, vec3 view_dir)
 {
-  //vec3 light_dir = normalize(light.position - v_fragpos_worldspace);
+  vec3 light_dir = normalize(light.position - v_fragpos_worldspace);
   //float theta = dot(-light_dir, u_player.direction);
 
-  //float diff_intensity = 5.0f;
-  //float diff = max(dot(normal, light_dir), 0.0);
-
   // TODO: turn into adjustable knob
-  //vec3 diffuse = diff_intensity * diff * (light.diffuse * u_material.diffuse);
+  //float diff_intensity = 5.0f;
+  float diff = max(dot(normal, light_dir), 0.0);
+
+  vec3 diffuse = diff * (light.diffuse * u_material.diffuse);
 
   // specular
-  //vec3 reflect_dir = reflect(-light_dir, normal);
-  //float spec = pow(max(dot(view_dir, reflect_dir), 0.0), u_material.shininess);
-  //vec3 specular = light.specular * spec * u_material.specular;
+  vec3 reflect_dir = reflect(-light_dir, normal);
+  float spec = pow(max(dot(view_dir, reflect_dir), 0.0), u_material.shininess);
+  vec3 specular = light.specular * spec * u_material.specular;
 
-  //float attenuation = calculate_attenuation(light);
+  float attenuation = calculate_attenuation(light);
 
-  //diffuse *= attenuation;
-  //specular *= attenuation;
-  //return diffuse + specular;
-
-    vec3 lightDir = normalize(light.position - v_fragpos_worldspace);
-    // diffuse shading
-    float diff = max(dot(normal, lightDir), 0.0);
-    // specular shading
-    vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(view_dir, reflectDir), 0.0), u_material.shininess);
-    // attenuation
-    float distance    = length(light.position - v_fragpos_worldspace);
-    float attenuation = 1.0 / (light.attenuation.constant + light.attenuation.linear * distance + light.attenuation.quadratic * (distance * distance));
-
-    // combine results
-    vec3 diffuse  = light.diffuse  * diff;// * vec3(texture(u_material.diffuse, TexCoords));
-    vec3 specular = light.specular * spec;// * vec3(texture(u_material.specular, TexCoords));
-    diffuse  *= attenuation;
-    specular *= attenuation;
-    return (diffuse + specular);
+  diffuse *= attenuation;
+  specular *= attenuation;
+  return diffuse + specular;
 }
 
 void main()

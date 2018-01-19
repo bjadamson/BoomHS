@@ -1,4 +1,5 @@
 #pragma once
+#include <boomhs/tilemap.hpp>
 #include <boomhs/types.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
@@ -83,6 +84,12 @@ public:
   move_to(glm::vec3 const& pos)
   {
     transform_->translation = pos;
+  }
+
+  void
+  move_to(TilePosition const& pos)
+  {
+    move_to(glm::vec3{pos.x, pos.y, pos.z});
   }
 
   void

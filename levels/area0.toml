@@ -81,31 +81,31 @@ receives_light = true
 ######### POINT LIGHTS
 # LIGHT #0
 [[entity]]
-pos = [0.0, 0.0, 0.0]
+pos = [5.0, 0.0, 5.0]
 shader = "light"
 geometry = "cube"
 pointlight = [0.0, 1.0, 0.0]
 
 # LIGHT #1
 [[entity]]
-pos = [5.0, 0.0, 0.0]
+pos = [10.0, 0.0, 5.0]
 shader = "light"
 geometry = "cube"
-pointlight = [0.0, 1.0, 0.0]
+pointlight = [1.0, 0.0, 0.0]
 
 # LIGHT #2
 [[entity]]
-pos = [0.0, 0.0, 5.0]
+pos = [5.0, 0.0, 10.0]
 shader = "light"
 geometry = "cube"
-pointlight = [0.0, 1.0, 0.0]
+pointlight = [0.0, 0.0, 1.0]
 
 # LIGHT #3
 [[entity]]
-pos = [5.0, 0.0, 5.0]
+pos = [10.0, 0.0, 10.0]
 shader = "light"
 geometry = "cube"
-pointlight = [0.0, 1.0, 0.0]
+pointlight = [1.0, 1.0, 1.0]
 
 ##################### OTHERS
 [[entity]]
@@ -121,7 +121,7 @@ geometry = "skybox"
 texture = "building_skybox"
 
 [[entity]]
-pos = [2.0, -2.0, 2.0]
+pos = [20.0, 0.0, 20.0]
 shader = "3dtexture"
 geometry = "mesh:house"
 texture = "TextureAtlas"

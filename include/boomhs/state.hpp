@@ -66,7 +66,7 @@ struct TilemapState
   bool reveal = false;
 
   // Both related to drawing GRID LINES
-  bool show_grid_lines = false;
+  bool show_grid_lines = true;
   bool show_yaxis_lines = false;
 };
 
