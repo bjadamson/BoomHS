@@ -45,6 +45,32 @@ static auto constexpr ATTENUATION_DISTANCE_STRINGS =
     "3250\0"
     "\0";
 
+struct Material
+{
+  glm::vec3 ambient = LOC::WHITE.rgb();
+  glm::vec3 diffuse = LOC::WHITE.rgb();
+  glm::vec3 specular = LOC::WHITE.rgb();
+  float shininess = 1.0;
+
+  Material() = default;
+
+  Material(glm::vec3 const& amb, glm::vec3 const& diff, glm::vec3 const& spec, float const shiny)
+    : ambient(amb)
+    , diffuse(diff)
+    , specular(spec)
+    , shininess(shiny)
+  {
+  }
+
+  //
+  // The alpha value for the colors is truncated.
+  Material(opengl::Color const& amb, opengl::Color const& diff, opengl::Color const& spec,
+      float const shiny)
+    : Material(amb.rgb(), diff.rgb(), spec.rgb(), shiny)
+  {
+  }
+};
+
 struct Light
 {
   opengl::Color diffuse = LOC::WHITE;
@@ -65,14 +91,18 @@ struct PointLights
   std::array<Light, MAX_NUMBER_POINTLIGHTS> pointlights;
 };
 
+struct DirectionalLight
+{
+  Light light;
+  glm::vec3 direction{0.0f, 0.0f, 0.0f};
+};
+
 struct GlobalLight
 {
   opengl::Color ambient = LOC::WHITE;
 
-  Light directional_light;
-
   // TODO: could there be more than one instance of "directional light"?
-  glm::vec3 directional_light_position{0.0f, 0.0f, 0.0f};
+  DirectionalLight directional;
 };
 
 } // ns opengl

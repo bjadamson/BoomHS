@@ -45,8 +45,11 @@ copy_colorcube_gpu(stlw::Logger &, ShaderProgram const&, Color const&);
 inline DrawInfo
 copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, glm::vec3 const& c)
 {
-  return copy_colorcube_gpu(logger, sp, Color{c.r, c.g, c.b, 1.0f});
+  return copy_colorcube_gpu(logger, sp, Color{c.x, c.y, c.z, 1.0f});
 }
+
+DrawInfo
+copy_vertexonlycube_gpu(stlw::Logger &, ShaderProgram const&);
 
 DrawInfo
 copy_texturecube_gpu(stlw::Logger &, ShaderProgram const&, TextureInfo const&);

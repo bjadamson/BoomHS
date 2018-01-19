@@ -95,7 +95,7 @@ copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program, Co
       color, color, color, color,
       color, color, color, color,
   };
-#define COLOR(i) c[i].r, c[i].g, c[i].b, c[i].a
+#define COLOR(i) c[i].r(), c[i].g(), c[i].b(), c[i].a()
 #define VERTS(a, b, c, d) v[a], v[b], v[c], v[d]
   auto const v = cube_vertices();
   auto const vertex_data = std::array<float, (32 * 2)>{
@@ -115,21 +115,17 @@ copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program, Co
 }
 
 DrawInfo
+copy_vertexonlycube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program)
+{
+  auto const vertices = cube_vertices();
+  return make_cube_drawinfo(logger, vertices, shader_program, boost::none);
+}
+
+DrawInfo
 copy_texturecube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program, TextureInfo const& ti)
 {
-  // clang-format off
   auto const vertices = cube_vertices();
-  auto const vertex_data = std::array<float, 32>{
-      vertices[0], vertices[1], vertices[2], vertices[3],
-      vertices[4], vertices[5], vertices[6], vertices[7],
-      vertices[8], vertices[9], vertices[10], vertices[11],
-      vertices[12], vertices[13], vertices[14], vertices[15],
-      vertices[16], vertices[17], vertices[18], vertices[19],
-      vertices[20], vertices[21], vertices[22], vertices[23],
-      vertices[24], vertices[25], vertices[26], vertices[27],
-      vertices[28], vertices[29], vertices[30], vertices[31],
-      };
-  return make_cube_drawinfo(logger, vertex_data, shader_program, boost::make_optional(ti));
+  return make_cube_drawinfo(logger, vertices, shader_program, boost::make_optional(ti));
 }
 
 DrawInfo
@@ -141,9 +137,7 @@ copy_cube_14indices_gpu(stlw::Logger &logger, ShaderProgram const& shader_progra
     3, 2, 6, 7, 4, 2, 0,
     3, 1, 6, 5, 4, 1, 0
   }};
-  // clang-format on
 
-  // clang-format off
   auto const arr = stlw::make_array<float>(
    -1.0f, -1.0f, 1.0f, 1.0f, // front bottom-left
     1.0f, -1.0f, 1.0f, 1.0f, // front bottom-right
@@ -167,6 +161,7 @@ copy_cube_14indices_gpu(stlw::Logger &logger, ShaderProgram const& shader_progra
       arr[16], arr[17], arr[18], arr[19], // CUBE_ROW_4,
       arr[20], arr[21], arr[22], arr[23]  // CUBE_ROW_5
       );
+  // clang-format on
   auto const& vertices = v;
 
   DrawInfo dinfo{GL_TRIANGLE_STRIP, vertices.size(), INDICES.size(), ti};
@@ -211,7 +206,7 @@ auto
 make_arrow_vertices(ArrowCreateParams const& params, ArrowEndpoints const& endpoints)
 {
   auto const& p1 = endpoints.p1, p2 = endpoints.p2;
-#define COLOR params.color.r, params.color.g, params.color.b, params.color.a
+#define COLOR params.color.r(), params.color.g(), params.color.b(), params.color.a()
 #define START params.start.x, params.start.y, params.start.z, 1.0f
 #define END params.end.x, params.end.y, params.end.z, 1.0f
 #define P1 p1.x, p1.y, p1.z, 1.0f
@@ -288,10 +283,10 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, boomh
     vertices.emplace_back(point.z);
     vertices.emplace_back(1.0f);
 
-    vertices.emplace_back(color.r);
-    vertices.emplace_back(color.g);
-    vertices.emplace_back(color.b);
-    vertices.emplace_back(color.a);
+    vertices.emplace_back(color.r());
+    vertices.emplace_back(color.g());
+    vertices.emplace_back(color.b());
+    vertices.emplace_back(color.a());
 
     indices.emplace_back(count++);
   };

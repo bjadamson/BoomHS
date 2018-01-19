@@ -74,8 +74,7 @@ public:
 
   // public data members
   boost::optional<GLsizei> instance_count = boost::none;
-  bool is_lightsource = false;
-  bool receives_light = false;
+
   bool is_skybox = false;
   bool is_2d = false;
 
@@ -107,7 +106,7 @@ public:
   void
   set_uniform_color(stlw::Logger &logger, GLchar const* name, Color const& c)
   {
-    auto const arr = stlw::make_array<float>(c.r, c.g, c.b, c.a);
+    auto const arr = stlw::make_array<float>(c.r(), c.g(), c.b(), c.a());
     set_uniform_array_4fv(logger, name, arr);
   }
 
@@ -120,7 +119,7 @@ public:
   void
   set_uniform_color_3fv(stlw::Logger &logger, GLchar const* name, Color const& c)
   {
-    auto const arr = stlw::make_array<float>(c.r, c.g, c.b);
+    auto const arr = stlw::make_array<float>(c.r(), c.g(), c.b());
     set_uniform_array_3fv(logger, name, arr);
   }
 

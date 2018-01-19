@@ -108,10 +108,10 @@ get_color(CppTable const& table, char const* name)
 
   std::vector<double> const& c = *load_colors;
   opengl::Color color;
-  color.r = c[0];
-  color.g = c[1];
-  color.b = c[2];
-  color.a = c[3];
+  color.set_r(c[0]);
+  color.set_g(c[1]);
+  color.set_b(c[2]);
+  color.set_a(c[3]);
   return boost::make_optional(color);
 }
 
@@ -229,13 +229,16 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     entt::DefaultRegistry &registry)
 {
   auto const load_entity = [&registry, &ttable](auto const& file) {
-    auto shader =       get_string_or_abort(file, "shader");
-    auto geometry =     get_string_or_abort(file, "geometry");
-    auto pos =          get_vec3_or_abort(file, "pos");
-    auto color =        get_color(file, "color");
-    auto texture_name = get_string(file, "texture");
-    auto light_o =      get_vec3(file, "light");
-    auto player =       get_string(file, "player");
+    // clang-format off
+    auto shader =           get_string_or_abort(file, "shader");
+    auto geometry =         get_string_or_abort(file, "geometry");
+    auto pos =              get_vec3_or_abort(file,   "pos");
+    auto color =            get_color(file,           "color");
+    auto texture_name =     get_string(file,          "texture");
+    auto pointlight_o =     get_vec3(file,            "pointlight");
+    auto player =           get_string(file,          "player");
+    auto receives_light_o = get_bool(file,            "receives_light");
+    // clang-format on
 
     // texture OR color fields, not both
     assert((!color && !texture_name) || (!color && texture_name) || (color && !texture_name));
@@ -273,11 +276,15 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       tc.texture_info = *texture_o;
     }
 
-    if (light_o) {
+    if (pointlight_o) {
       auto &light_component = registry.assign<PointLight>(entity);
-      glm::vec3 const vec = *light_o;
+      glm::vec3 const vec = *pointlight_o;
       Color const light_c{vec.x, vec.y, vec.z};
       light_component.light.diffuse = light_c;
+    }
+    if (receives_light_o) {
+      // TODO: fill in fields
+      registry.assign<Material>(entity);
     }
     return entity;
   };
@@ -310,8 +317,7 @@ load_shader(stlw::Logger &logger, ParsedVertexAttributes &pvas, CppTable const& 
   program.is_skybox = get_bool(table, "is_skybox").get_value_or(false);
   program.instance_count = get_sizei(table, "instance_count");
 
-  program.receives_light = get_bool(table, "receives_light").get_value_or(false);
-  program.is_lightsource = get_bool(table, "is_lightsource").get_value_or(false);
+  
 
   return std::make_pair(name, MOVE(program));
 }

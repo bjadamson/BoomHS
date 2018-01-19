@@ -1,28 +1,27 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <stlw/type_ctors.hpp>
 #include <array>
 #include <ostream>
 
 namespace opengl
 {
 
-struct Color
+class Color
 {
   static constexpr float DEFAULT_ALPHA = 1.0f;
 
-  float r = 1.0, g = 1.0, b = 1.0, a = DEFAULT_ALPHA;
+  std::array<float, 4> colors_ = stlw::make_array<float>(1.0f, 1.0f, 1.0f, 1.0f);
+public:
 
   Color() = default;
-  explicit constexpr Color(float rp, float gp, float bp, float ap)
-    : r(rp)
-    , g(gp)
-    , b(bp)
-    , a(ap)
+  explicit constexpr Color(float const r, float const g, float const b, float const a)
+    : colors_(stlw::make_array<float>(r, g, b, a))
   {
   }
 
-  constexpr Color(float rp, float gp, float bp)
-    : Color(rp, gp, bp, DEFAULT_ALPHA)
+  constexpr Color(float const r, float const g, float const b)
+    : Color(r, g, b, DEFAULT_ALPHA)
   {
   }
 
@@ -36,16 +35,32 @@ struct Color
   {
   }
 
-  auto
-  to_array() const
-  {
-    return std::array<float, 4>{this->r, this->g, this->b, this->a};
-  }
+  float r() const { return this->colors_[0]; }
+  float g() const { return this->colors_[1]; }
+  float b() const { return this->colors_[2]; }
+  float a() const { return this->colors_[3]; }
+
+  void set_r(float const v) { this->colors_[0] = v; }
+  void set_g(float const v) { this->colors_[1] = v; }
+  void set_b(float const v) { this->colors_[2] = v; }
+  void set_a(float const v) { this->colors_[3] = v; }
+
+  auto const*
+  data() const { return colors_.data(); }
+
+  auto*
+  data() { return colors_.data(); }
 
   auto
   rgb() const
   {
-    return glm::vec3{r, g, b};
+    return glm::vec3{r(), g(), b()};
+  }
+
+  auto
+  rgba() const
+  {
+    return glm::vec4{r(), g(), b(), a()};
   }
 };
 
@@ -53,10 +68,10 @@ inline std::ostream&
 operator<<(std::ostream &os, Color const& c)
 {
   os << "{"
-    << std::to_string(c.r) << ", "
-    << std::to_string(c.g) << ", "
-    << std::to_string(c.b) << ", "
-    << std::to_string(c.a)
+    << std::to_string(c.r()) << ", "
+    << std::to_string(c.g()) << ", "
+    << std::to_string(c.b()) << ", "
+    << std::to_string(c.a())
     << "}";
    return os;
 }

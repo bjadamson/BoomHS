@@ -59,7 +59,7 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
   registry.view<ShaderName, PointLight, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &pointlight, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_colorcube_gpu(logger, shader_ref, pointlight.light.diffuse);
+        auto handle = OF::copy_vertexonlycube_gpu(logger, shader_ref);
         handle_list.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, opengl::Color, MeshRenderable>().each(
@@ -147,10 +147,7 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
   auto &player_transform = find_player(registry);
   player_transform.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
 
-  WorldObject wo{player_transform, FORWARD, UP};
-
-  Material material{LOC::WHITE, LOC::WHITE, LOC::WHITE, 1.0f};
-  RenderableObject player{MOVE(wo), MOVE(material)};
+  WorldObject player{player_transform, FORWARD, UP};
 
   Projection const proj{90.0f, 4.0f / 3.0f, 0.1f, 200.0f};
   Camera camera(proj, player_transform, FORWARD, UP);
@@ -176,7 +173,7 @@ draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
   auto const draw_fn = [&handles, &sps, &registry, &state](auto entity, auto &sn, auto &transform) {
     auto &shader_ref = sps.ref_sp(sn.value);
     auto &handle = handles.lookup(entity);
-    render::draw(state.render_args(), transform, shader_ref, handle, registry);
+    render::draw(state.render_args(), transform, shader_ref, handle, entity, registry);
   };
 
   auto const draw_adapter = [&](auto entity, auto &sn, auto &transform, auto &) {
@@ -264,9 +261,9 @@ draw_global_axis(GameState &state, entt::DefaultRegistry &registry, opengl::Shad
   auto &transform = registry.assign<Transform>(entity);
 
   auto const& rargs = state.render_args();
-  render::draw(rargs, transform, sp, world_arrows.x_dinfo, registry);
-  render::draw(rargs, transform, sp, world_arrows.y_dinfo, registry);
-  render::draw(rargs, transform, sp, world_arrows.z_dinfo, registry);
+  render::draw(rargs, transform, sp, world_arrows.x_dinfo, entity, registry);
+  render::draw(rargs, transform, sp, world_arrows.y_dinfo, entity, registry);
+  render::draw(rargs, transform, sp, world_arrows.z_dinfo, entity, registry);
 }
 
 void
@@ -283,9 +280,9 @@ draw_local_axis(GameState &state, entt::DefaultRegistry &registry, opengl::Shade
   auto &transform = registry.assign<Transform>(entity);
 
   auto const& rargs = state.render_args();
-  render::draw(rargs, transform, sp, axis_arrows.x_dinfo, registry);
-  render::draw(rargs, transform, sp, axis_arrows.y_dinfo, registry);
-  render::draw(rargs, transform, sp, axis_arrows.z_dinfo, registry);
+  render::draw(rargs, transform, sp, axis_arrows.x_dinfo, entity, registry);
+  render::draw(rargs, transform, sp, axis_arrows.y_dinfo, entity, registry);
+  render::draw(rargs, transform, sp, axis_arrows.z_dinfo, entity, registry);
 }
 
 void
@@ -303,7 +300,7 @@ draw_target_vectors(GameState &state, entt::DefaultRegistry &registry, opengl::S
     auto &transform = registry.assign<Transform>(entity);
 
     auto const& rargs = state.render_args();
-    render::draw(rargs, transform, sp, handle, registry);
+    render::draw(rargs, transform, sp, handle, entity, registry);
   };
 
   // draw player forward
@@ -336,7 +333,7 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
   auto &engine_state = state.engine_state;
   auto &zone_state = state.zone_state;
 
-  auto &player = engine_state.player.world_object;
+  auto &player = engine_state.player;
   auto &mouse = engine_state.mouse_state;
   auto &tilemap_state = state.engine_state.tilemap_state;
   auto &logger = engine_state.logger;
@@ -378,7 +375,7 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
     draw_target_vectors(state, registry, sps, player);
   }
   // UI code
-  draw_ui(state, window);
+  draw_ui(state, window, registry);
 }
 
 } // ns boomhs

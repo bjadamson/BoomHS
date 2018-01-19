@@ -106,10 +106,10 @@ ObjLoader::load_mesh(char const* objpath, char const* mtlpath, LoadNormals const
             //vertices.push_back(0.0);
           }
         } else {
-          vertices.push_back(color_.r);
-          vertices.push_back(color_.g);
-          vertices.push_back(color_.b);
-          vertices.push_back(color_.a);
+          vertices.push_back(color_.r());
+          vertices.push_back(color_.g());
+          vertices.push_back(color_.b());
+          vertices.push_back(color_.a());
         }
 
         // Optional: vertex colors

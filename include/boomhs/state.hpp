@@ -13,9 +13,9 @@
 #include <window/sdl_window.hpp>
 
 #include <boomhs/camera.hpp>
-#include <boomhs/renderable_object.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/tilemap.hpp>
+#include <boomhs/world_object.hpp>
 #include <vector>
 
 using stlw::Logger;
@@ -30,8 +30,15 @@ struct UiState
   bool rotate_lock = false;
   bool flip_y = false;
 
-  bool show_lighting_window = false;
+  bool show_background_window = false;
 
+  int selected_pointlight = 0;
+  bool show_pointlight_window = false;
+
+  bool show_globallight_window = false;
+
+  int selected_material = 0;
+  bool show_entitymaterial_window = false;
 
   // primitive buffers
   int eid_buffer = 0;
@@ -106,12 +113,12 @@ struct EngineState
   UiState ui_state;
 
   Camera camera;
-  RenderableObject player;
+  WorldObject player;
 
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);
   EngineState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
-      Camera &&cam, RenderableObject &&pl)
+      Camera &&cam, WorldObject &&pl)
     : logger(l)
     , imgui(i)
     , dimensions(d)

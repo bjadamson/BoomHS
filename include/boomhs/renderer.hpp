@@ -19,8 +19,8 @@ namespace boomhs
 class Camera;
 struct RenderArgs;
 struct Transform;
-struct RenderableObject;
 class TileMap;
+class WorldObject;
 } // ns boomhs
 
 namespace boomhs
@@ -29,7 +29,7 @@ namespace boomhs
 struct RenderArgs
 {
   Camera const& camera;
-  RenderableObject const& player;
+  WorldObject const& player;
 
   stlw::Logger &logger;
   opengl::GlobalLight const& global_light;
@@ -54,7 +54,7 @@ clear_screen(opengl::Color const&);
 
 void
 draw(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
-    entt::DefaultRegistry &);
+    std::uint32_t const, entt::DefaultRegistry &);
 
 struct DrawTilemapArgs
 {

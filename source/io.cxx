@@ -69,7 +69,7 @@ process_event(GameState &state, SDL_Event &event)
   float constexpr ANGLE = 60.0f;
 
   auto &camera = engine_state.camera;
-  auto &player = engine_state.player.world_object;
+  auto &player = engine_state.player;
   auto const sf = [](float const f) { return (f > 1.0f) ? (1.0f + f) : (1.0f - f); };
 
   auto &ui_state = engine_state.ui_state;

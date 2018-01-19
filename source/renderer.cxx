@@ -74,21 +74,6 @@ set_dirlight(stlw::Logger &logger, ShaderProgram &sp, GlobalLight const& global_
 }
 */
 
-std::vector<uint32_t>
-find_pointlights(entt::DefaultRegistry &registry)
-{
-  // for now assume only 1 entity has the Player tag
-  assert(PointLights::MAX_NUMBER_POINTLIGHTS >= registry.view<PointLight>().size());
-
-  std::vector<std::uint32_t> point_lights;
-  auto view = registry.view<PointLight, Transform>();
-  for (auto const entity : view) {
-    point_lights.emplace_back(entity);
-  }
-  std::cerr << "found '" << point_lights.size() << "' point lights\n";
-  return point_lights;
-}
-
 void
 set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
     PointLight const& pointlight, glm::vec3 const& pointlight_position)
@@ -122,16 +107,17 @@ set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
 }
 
 void
-draw_3dwithlighting(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix,
-    ShaderProgram &sp, DrawInfo const& dinfo, entt::DefaultRegistry &registry)
+set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix,
+    ShaderProgram &sp, DrawInfo const& dinfo, std::uint32_t const entity,
+    entt::DefaultRegistry &registry)
 {
   auto const& camera = args.camera;
   auto const& global_light = args.global_light;
-  auto const& player = args.player.world_object;
-  auto const& player_material = args.player.material;
+  auto const& player = args.player;
   auto &logger = args.logger;
 
-  assert(sp.receives_light);
+  bool const receives_light = registry.has<Material>(entity);
+  assert(receives_light);
 
   set_modelmatrix(logger, model_matrix, sp);
   sp.set_uniform_vec3(logger, "u_viewpos", camera.world_position());
@@ -148,10 +134,14 @@ draw_3dwithlighting(boomhs::RenderArgs const &args, glm::mat4 const& model_matri
   }
   std::cerr << "------------------------------------------------------------\n\n\n";
 
-  sp.set_uniform_vec3(logger, "u_material.ambient",  player_material.ambient);
-  sp.set_uniform_vec3(logger, "u_material.diffuse",  player_material.diffuse);
-  sp.set_uniform_vec3(logger, "u_material.specular", player_material.specular);
-  sp.set_uniform_float1(logger, "u_material.shininess", player_material.shininess);
+  auto const entity_o = find_entity_with_component<Material>(entity, registry);
+  assert(boost::none != entity_o);
+  Material const& material = registry.get<Material>(*entity_o);
+
+  sp.set_uniform_vec3(logger, "u_material.ambient",  material.ambient);
+  sp.set_uniform_vec3(logger, "u_material.diffuse",  material.diffuse);
+  sp.set_uniform_vec3(logger, "u_material.specular", material.specular);
+  sp.set_uniform_float1(logger, "u_material.shininess", material.shininess);
 
   sp.set_uniform_vec3(logger, "u_player.position",  player.world_position());
   sp.set_uniform_vec3(logger, "u_player.direction",  player.forward_vector());
@@ -159,8 +149,33 @@ draw_3dwithlighting(boomhs::RenderArgs const &args, glm::mat4 const& model_matri
 }
 
 void
-draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix,
-    ShaderProgram &sp, DrawInfo const& dinfo, entt::DefaultRegistry &registry)
+set_3dlightsource_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix,
+    ShaderProgram &sp, DrawInfo const& dinfo, std::uint32_t const entity,
+    entt::DefaultRegistry &registry)
+{
+  auto &logger = args.logger;
+
+  bool const is_lightsource = registry.has<PointLight>(entity);
+  assert(is_lightsource);
+  auto const pointlights = find_pointlights(registry);
+
+  PointLight *ptr = nullptr;
+  FOR(i, pointlights.size()) {
+    auto const e = pointlights[i];
+    if (entity == e) {
+      ptr = &registry.get<PointLight>(e);
+      break;
+    }
+  }
+  assert(nullptr != ptr);
+
+  auto const diffuse = ptr->light.diffuse;
+  sp.set_uniform_color_3fv(logger, "u_lightcolor", diffuse);
+}
+
+void
+draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, ShaderProgram &sp,
+  DrawInfo const& dinfo, std::uint32_t const entity, entt::DefaultRegistry &registry)
 {
   auto &logger = args.logger;
   auto const& camera = args.camera;
@@ -171,8 +186,19 @@ draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix,
     // various matrices
     set_mvpmatrix(logger, model_matrix, sp, camera);
 
-    if (sp.receives_light) {
-      draw_3dwithlighting(args, model_matrix, sp, dinfo, registry);
+    // We do this assert during load time, but still valid here.
+    bool const receives_light = registry.has<Material>(entity);
+    bool const is_lightsource = registry.has<PointLight>(entity);
+
+    assert(
+        (!receives_light && !is_lightsource) ||
+        (receives_light && !is_lightsource) ||
+        (!receives_light && is_lightsource));
+
+    if (receives_light) {
+      set_receiveslight_uniforms(args, model_matrix, sp, dinfo, entity, registry);
+    } else if (is_lightsource) {
+      set_3dlightsource_uniforms(args, model_matrix, sp, dinfo, entity, registry);
     }
 
     if (sp.is_skybox) {
@@ -220,8 +246,9 @@ init(window::Dimensions const& dimensions)
   glViewport(0, 0, dimensions.w, dimensions.h);
 
   glDisable(GL_CULL_FACE);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glEnable(GL_BLEND);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_BLEND);
 
   enable_depth_tests();
 }
@@ -234,13 +261,13 @@ clear_screen(Color const& color)
   ON_SCOPE_EXIT([]() { glEnable(GL_DEPTH_TEST); });
 
   // Render
-  glClearColor(color.r, color.g, color.b, color.a);
+  glClearColor(color.r(), color.g(), color.b(), color.a());
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void
 draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
-    DrawInfo const& dinfo, entt::DefaultRegistry &registry)
+    DrawInfo const& dinfo, std::uint32_t const entity, entt::DefaultRegistry &registry)
 {
   auto &logger = args.logger;
 
@@ -267,7 +294,7 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
       set_modelmatrix(logger, transform.model_matrix(), sp);
       enable_depth_tests();
     } else {
-      draw_3dshape(args, transform.model_matrix(), sp, dinfo, registry);
+      draw_3dshape(args, transform.model_matrix(), sp, dinfo, entity, registry);
     }
   };
 
@@ -293,7 +320,7 @@ draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs
 
     glm::mat4 const model_matrix = transform.model_matrix();
     glm::mat4 const translated = glm::translate(model_matrix, tile_pos);
-    draw_3dshape(args, translated, sp, dinfo, registry);
+    //draw_3dshape(args, translated, sp, dinfo, registry);
   };
 
   auto const draw_all_tiles = [&](auto const& pos) {
