@@ -163,19 +163,13 @@ draw_player_info(GameState &state)
 }
 
 void
-show_globallight_window(GameState &state)
+show_directionallight_window(GameState &state)
 {
   auto &zone_state = state.zone_state;
+  auto &directional = zone_state.global_light.directional;
   auto &ui_state = state.engine_state.ui_state;
 
-  if (ImGui::Begin("Global Light Editor")) {
-    ImGui::Text("Global Light");
-    auto &zone_state = state.zone_state;
-    auto &global_light = zone_state.global_light;
-    ImGui::ColorEdit3("Ambient Light Color:", global_light.ambient.data());
-
-    ImGui::Separator();
-    auto &directional = global_light.directional;
+  if (ImGui::Begin("Directional Light Editor")) {
     ImGui::Text("Directional Light");
     ImGui::InputFloat3("direction:", glm::value_ptr(directional.direction));
 
@@ -190,28 +184,27 @@ show_globallight_window(GameState &state)
     ImGui::InputFloat("quadratic:", &attenuation.quadratic, 0.0f, 1.0f);
 
     if (ImGui::Button("Close", ImVec2(120,0))) {
-      ui_state.show_globallight_window = false;
+      ui_state.show_directionallight_window = false;
     }
     ImGui::End();
   }
-  //auto &global_light = state.zone_state.global_light;
-  //{
-    //auto &t = global_light.directional_light_position;
-    //auto *light_pos = glm::value_ptr(t);
-    //ImGui::SliderFloat3("Global Light Position", light_pos, -100.0f, 100.0f);
-    //std::string const s = glm::to_string(glm::normalize(t));
-    //ImGui::Text("Global Light Direction: '%s'", s.c_str());
-  //}
-  //auto &directional_light = global_light.directional_light;
-  //color_float4slider("Global Light Ambient", global_light.ambient);
-  //color_float4slider("Directional Light Diffuse", directional_light.diffuse);
-  //color_float4slider("Directional Light Specular", directional_light.specular);
+}
 
-  //auto &ui_state = state.engine_state.ui_state;
-  //auto &current_item = ui_state.attenuation_current_item;
-  //if (ImGui::Combo("Global Light Attenuation", &current_item, ATTENUATION_DISTANCE_STRINGS)) {
-    //directional_light.attenuation = ATTENUATION_VALUE_TABLE[current_item];
-  //}
+void
+show_ambientlight_window(GameState &state)
+{
+  auto &ui_state = state.engine_state.ui_state;
+  if (ImGui::Begin("Global Light Editor")) {
+    ImGui::Text("Global Light");
+    auto &zone_state = state.zone_state;
+    auto &global_light = zone_state.global_light;
+    ImGui::ColorEdit3("Ambient Light Color:", global_light.ambient.data());
+
+    if (ImGui::Button("Close", ImVec2(120,0))) {
+      ui_state.show_ambientlight_window = false;
+    }
+    ImGui::End();
+  }
 }
 
 void
@@ -358,20 +351,25 @@ lighting_menu(GameState &state, entt::DefaultRegistry &registry)
 {
   auto &ui_state = state.engine_state.ui_state;
   bool &edit_pointlights = ui_state.show_pointlight_window;
-  bool &edit_globallights = ui_state.show_globallight_window;
+  bool &edit_ambientlight = ui_state.show_ambientlight_window;
+  bool &edit_directionallights = ui_state.show_directionallight_window;
   bool &edit_entitymaterials = ui_state.show_entitymaterial_window;
 
   if (ImGui::BeginMenu("Lighting")) {
     ImGui::MenuItem("Point-Lights", nullptr, &edit_pointlights);
-    ImGui::MenuItem("Global Lights", nullptr, &edit_globallights);
+    ImGui::MenuItem("Ambient Lighting", nullptr, &edit_ambientlight);
+    ImGui::MenuItem("Directional Lighting", nullptr, &edit_directionallights);
     ImGui::MenuItem("Entity Materials", nullptr, &edit_entitymaterials);
     ImGui::EndMenu();
   }
   if (edit_pointlights) {
     show_pointlight_window(state, registry);
   }
-  if (edit_globallights) {
-    show_globallight_window(state);
+  if (edit_ambientlight) {
+    show_ambientlight_window(state);
+  }
+  if (edit_directionallights) {
+    show_directionallight_window(state);
   }
   if (edit_entitymaterials) {
     show_entitymaterials_window(state, registry);

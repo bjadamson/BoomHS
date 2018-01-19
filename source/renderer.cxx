@@ -136,9 +136,10 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
   sp.set_uniform_vec3(logger, "u_material.specular", material.specular);
   sp.set_uniform_float1(logger, "u_material.shininess", material.shininess);
 
-  sp.set_uniform_vec3(logger, "u_player.position",  player.world_position());
-  sp.set_uniform_vec3(logger, "u_player.direction",  player.forward_vector());
-  sp.set_uniform_float1(logger, "u_player.cutoff",  glm::cos(glm::radians(90.0f)));
+  // TODO: when re-implementing LOS restrictions
+  //sp.set_uniform_vec3(logger, "u_player.position",  player.world_position());
+  //sp.set_uniform_vec3(logger, "u_player.direction",  player.forward_vector());
+  //sp.set_uniform_float1(logger, "u_player.cutoff",  glm::cos(glm::radians(90.0f)));
 }
 
 void

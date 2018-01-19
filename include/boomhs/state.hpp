@@ -35,7 +35,8 @@ struct UiState
   int selected_pointlight = 0;
   bool show_pointlight_window = false;
 
-  bool show_globallight_window = false;
+  bool show_ambientlight_window = false;
+  bool show_directionallight_window = false;
 
   int selected_material = 0;
   bool show_entitymaterial_window = false;
@@ -71,8 +72,6 @@ struct TilemapState
 
 struct ZoneState
 {
-  //PointLights point_lights;
-
   // singular light in the scene
   opengl::Color background;
   opengl::GlobalLight global_light;

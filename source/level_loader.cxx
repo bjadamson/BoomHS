@@ -148,12 +148,6 @@ load_meshes(opengl::ObjLoader &loader, CppTableArray const& mesh_table)
     auto const obj = "assets/" + name + ".obj";
     auto const mtl = "assets/" + name + ".mtl";
 
-    // cpptoml (not sure if TOML in general) won't let me have an array of floats,
-    // so an array of doubles (buffer) is used to read from the file.
-    auto const color_o = get_color(table, "color");
-    if (color_o) {
-      loader.set_color(*color_o);
-    }
     auto mesh = loader.load_mesh(obj.c_str(), mtl.c_str(), normals, uvs);
     return std::make_pair(name, MOVE(mesh));
   };
@@ -403,12 +397,12 @@ load_assets(stlw::Logger &logger, entt::DefaultRegistry &registry)
   auto loader = opengl::ObjLoader{LOC::WHITE};
   auto meshes = load_meshes(loader, mesh_table);
 
+  auto texture_table = load_textures(logger, area_config);
+  auto entities = load_entities(logger, area_config, texture_table, registry);
+
   auto const directional_light_diffuse = Color{get_vec3_or_abort(area_config, "directional_light_diffuse")};
   auto const directional_light_specular = Color{get_vec3_or_abort(area_config, "directional_light_specular")};
   auto const directional_light_direction = get_vec3_or_abort(area_config, "directional_light_direction");
-
-  auto texture_table = load_textures(logger, area_config);
-  auto entities = load_entities(logger, area_config, texture_table, registry);
 
   Light light{directional_light_diffuse, directional_light_specular};
   DirectionalLight dlight{MOVE(light), directional_light_direction};

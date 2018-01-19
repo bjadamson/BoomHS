@@ -49,31 +49,26 @@ uvs = true
 name = "hashtag"
 normals = true
 uvs = false
-color = [1.000, 1.000, 1.000, 1.000]
 
 [[meshes]]
 name = "at"
 normals = true
 uvs = false
-color = [1.000, 0.647, 0.000, 1.000] # ORANGE
 
 [[meshes]]
 name = "plus"
 normals = true
 uvs = false
-color = [0.000, 0.000, 1.000, 1.000]
 
 [[meshes]]
 name = "O"
 normals = true
 uvs = false
-color = [1.000, 0.000, 0.000, 1.000]
 
 [[meshes]]
 name = "T"
 normals = true
 uvs = false
-color = [0.000, 1.000, 0.000, 1.000]
 
 ########### ENTITY #############
 [[entity]]
@@ -89,28 +84,28 @@ receives_light = true
 pos = [0.0, 0.0, 0.0]
 shader = "light"
 geometry = "cube"
-pointlight = [0.0, 0.0, 1.0]
+pointlight = [0.0, 1.0, 0.0]
 
 # LIGHT #1
 [[entity]]
 pos = [5.0, 0.0, 0.0]
 shader = "light"
 geometry = "cube"
-pointlight = [0.0, 0.0, 1.0]
+pointlight = [0.0, 1.0, 0.0]
 
 # LIGHT #2
 [[entity]]
 pos = [0.0, 0.0, 5.0]
 shader = "light"
 geometry = "cube"
-pointlight = [0.0, 0.0, 1.0]
+pointlight = [0.0, 1.0, 0.0]
 
 # LIGHT #3
 [[entity]]
 pos = [5.0, 0.0, 5.0]
 shader = "light"
 geometry = "cube"
-pointlight = [1.0, 0.0, 0.0]
+pointlight = [0.0, 1.0, 0.0]
 
 ##################### OTHERS
 [[entity]]
