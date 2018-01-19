@@ -1,8 +1,8 @@
 #pragma once
-
 #include <opengl/draw_info.hpp>
 #include <opengl/obj.hpp>
 #include <opengl/factory.hpp>
+#include <opengl/lighting.hpp>
 #include <opengl/texture.hpp>
 
 #include <stlw/format.hpp>
@@ -107,6 +107,8 @@ struct Assets
   ObjCache obj_cache;
   LoadedEntities loaded_entities;
   opengl::TextureTable texture_table;
+
+  opengl::GlobalLight global_light;
 };
 
 class GpuHandleList

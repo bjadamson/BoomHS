@@ -317,8 +317,6 @@ load_shader(stlw::Logger &logger, ParsedVertexAttributes &pvas, CppTable const& 
   program.is_skybox = get_bool(table, "is_skybox").get_value_or(false);
   program.instance_count = get_sizei(table, "instance_count");
 
-  
-
   return std::make_pair(name, MOVE(program));
 }
 
@@ -405,9 +403,18 @@ load_assets(stlw::Logger &logger, entt::DefaultRegistry &registry)
   auto loader = opengl::ObjLoader{LOC::WHITE};
   auto meshes = load_meshes(loader, mesh_table);
 
+  auto const directional_light_diffuse = Color{get_vec3_or_abort(area_config, "directional_light_diffuse")};
+  auto const directional_light_specular = Color{get_vec3_or_abort(area_config, "directional_light_specular")};
+  auto const directional_light_direction = get_vec3_or_abort(area_config, "directional_light_direction");
+
   auto texture_table = load_textures(logger, area_config);
   auto entities = load_entities(logger, area_config, texture_table, registry);
-  Assets assets{MOVE(meshes), MOVE(entities), MOVE(texture_table)};
+
+  Light light{directional_light_diffuse, directional_light_specular};
+  DirectionalLight dlight{MOVE(light), directional_light_direction};
+  GlobalLight glight{MOVE(dlight)};
+
+  Assets assets{MOVE(meshes), MOVE(entities), MOVE(texture_table), MOVE(glight)};
   return std::make_pair(MOVE(assets), MOVE(shader_programs));
 }
 

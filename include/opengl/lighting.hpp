@@ -2,6 +2,7 @@
 #include <array>
 #include <opengl/glew.hpp>
 #include <stlw/type_ctors.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace opengl
 {
@@ -103,6 +104,11 @@ struct GlobalLight
 
   // TODO: could there be more than one instance of "directional light"?
   DirectionalLight directional;
+
+  explicit GlobalLight(DirectionalLight &&dl)
+    : directional(MOVE(dl))
+  {
+  }
 };
 
 } // ns opengl

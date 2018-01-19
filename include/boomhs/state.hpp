@@ -74,13 +74,14 @@ struct ZoneState
   //PointLights point_lights;
 
   // singular light in the scene
-  opengl::GlobalLight global_light;
   opengl::Color background;
+  opengl::GlobalLight global_light;
 
   TileMap tilemap;
 
-  explicit ZoneState(opengl::Color const& bgcolor, TileMap &&tmap)
+  explicit ZoneState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight, TileMap &&tmap)
     : background(bgcolor)
+    , global_light(MOVE(glight))
     , tilemap(MOVE(tmap))
   {
   }

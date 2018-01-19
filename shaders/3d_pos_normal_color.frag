@@ -27,6 +27,14 @@ struct GlobalLight {
 };
 uniform GlobalLight u_globallight;
 
+struct GlobalDirLight {
+  vec3 direction;
+
+  vec3 diffuse;
+  vec3 specular;
+};
+uniform GlobalDirLight u_dirlight;
+
 struct LightAttenuation
 {
   float constant;
@@ -34,7 +42,7 @@ struct LightAttenuation
   float quadratic;
 };
 
-struct Light {
+struct PointLight {
   vec3 position;
 
   vec3 diffuse;
@@ -42,32 +50,46 @@ struct Light {
 
   LightAttenuation attenuation;
 };
-//uniform Light u_dirlight;
 
 // TODO: somehow generate or read from single source of truth.
 #define MAX_NUM_POINTLIGHTS 4
-uniform Light u_pointlights[MAX_NUM_POINTLIGHTS];
+uniform PointLight u_pointlights[MAX_NUM_POINTLIGHTS];
 
 out vec4 fragment_color;
 
 vec3
-calc_pointlight(Light light)
+calc_global_dirlight(GlobalDirLight light, vec3 normal, vec3 view_dir)
 {
-  vec3 norm = normalize(v_normal);
+  vec3 light_dir = normalize(-light.direction);
 
+  // diffuse shading
+  float diff = max(dot(normal, light_dir), 0.0);
+
+  // specular shading
+  vec3 reflect_dir = reflect(-light_dir, normal);
+  float spec = pow(max(dot(view_dir, reflect_dir), 0.0), u_material.shininess);
+
+  // combine results
+  //vec3 ambient  = light.ambient;//  * vec3(texture(u_material.diffuse, TexCoords));
+  vec3 diffuse  = light.diffuse  * diff;// * vec3(texture(u_material.diffuse, TexCoords));
+  vec3 specular = light.specular * spec;// * vec3(texture(u_material.specular, TexCoords));
+  return (diffuse + specular);
+}
+
+vec3
+calc_pointlight(PointLight light, vec3 normal, vec3 view_dir)
+{
   vec3 light_dir = normalize(light.position - v_fragpos_worldspace);
   //float theta = dot(-light_dir, u_player.direction);
 
-
   float diff_intensity = 5.0f;
-  float diff = max(dot(norm, light_dir), 0.0);
+  float diff = max(dot(normal, light_dir), 0.0);
 
   // TODO: turn into adjustable knob
   vec3 diffuse = diff_intensity * diff * (light.diffuse * u_material.diffuse);
 
   // specular
-  vec3 reflect_dir = reflect(-light_dir, norm);
-  vec3 view_dir = normalize(u_viewpos - v_fragpos_worldspace);
+  vec3 reflect_dir = reflect(-light_dir, normal);
   float spec = pow(max(dot(view_dir, reflect_dir), 0.0), u_material.shininess);
   vec3 specular = light.specular * spec * u_material.specular;
 
@@ -81,12 +103,15 @@ calc_pointlight(Light light)
 
 void main()
 {
+  vec3 normal = normalize(v_normal);
+  vec3 view_dir = normalize(u_viewpos - v_fragpos_worldspace);
+
   // ambient
   vec3 ambient = u_globallight.ambient * u_material.ambient;
 
-  vec3 pointlight_contribution = vec3(0.0, 0.0, 0.0);
+  vec3 pointlight_contribution = calc_global_dirlight(u_dirlight, normal, view_dir);
   for(int i = 0; i < MAX_NUM_POINTLIGHTS; i++) {
-    pointlight_contribution += calc_pointlight(u_pointlights[i]);
+    pointlight_contribution += calc_pointlight(u_pointlights[i], normal, view_dir);
   }
   vec4 result = vec4(ambient + pointlight_contribution, 1.0) * v_color;
   fragment_color = result;

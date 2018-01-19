@@ -35,6 +35,16 @@ public:
   {
   }
 
+  explicit constexpr Color(glm::vec3 const& vec)
+    : Color(vec[0], vec[1], vec[2], DEFAULT_ALPHA)
+  {
+  }
+
+  explicit constexpr Color(glm::vec4 const& vec)
+    : Color(vec[0], vec[1], vec[2], vec[3])
+  {
+  }
+
   float r() const { return this->colors_[0]; }
   float g() const { return this->colors_[1]; }
   float b() const { return this->colors_[2]; }

@@ -56,23 +56,16 @@ draw_drawinfo(stlw::Logger &logger, ShaderProgram &sp, DrawInfo const& dinfo)
   }
 }
 
-/*
 void
 set_dirlight(stlw::Logger &logger, ShaderProgram &sp, GlobalLight const& global_light)
 {
-  auto const light_pos = global_light.directional_light_position;
-  auto const& directional_light = global_light.directional_light;
-  sp.set_uniform_vec3(logger, "u_dirlight.position", light_pos);
+  auto const& directional_light = global_light.directional;
+  sp.set_uniform_vec3(logger, "u_dirlight.direction", directional_light.direction);
 
-  sp.set_uniform_color_3fv(logger, "u_dirlight.diffuse", directional_light.diffuse);
-  sp.set_uniform_color_3fv(logger, "u_dirlight.specular", directional_light.specular);
-
-  auto const& attenuation = directional_light.attenuation;
-  sp.set_uniform_float1(logger, "u_dirlight.attenuation.constant",  attenuation.constant);
-  sp.set_uniform_float1(logger, "u_dirlight.attenuation.linear",    attenuation.linear);
-  sp.set_uniform_float1(logger, "u_dirlight.attenuation.quadratic", attenuation.quadratic);
+  auto const& light = directional_light.light;
+  sp.set_uniform_color_3fv(logger, "u_dirlight.diffuse", light.diffuse);
+  sp.set_uniform_color_3fv(logger, "u_dirlight.specular", light.specular);
 }
-*/
 
 void
 set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
@@ -123,7 +116,7 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
   sp.set_uniform_vec3(logger, "u_viewpos", camera.world_position());
   sp.set_uniform_color_3fv(logger, "u_globallight.ambient", global_light.ambient);
 
-  //set_dirlight(logger, sp, global_light);
+  set_dirlight(logger, sp, global_light);
 
   auto const pointlights = find_pointlights(registry);
   FOR(i, pointlights.size()) {

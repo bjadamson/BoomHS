@@ -117,7 +117,7 @@ find_player(entt::DefaultRegistry &registry)
 
 auto
 init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
-     window::Dimensions const &dimensions, LoadedEntities const &entities_from_file)
+     window::Dimensions const &dimensions, Assets const &assets)
 {
   auto const fheight = dimensions.h;
   auto const fwidth = dimensions.w;
@@ -159,7 +159,7 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
   auto &startingpos = tmap_startingpos.second;
 
   auto const bgcolor = LOC::BLACK;
-  ZoneState zs{bgcolor, MOVE(tmap)};
+  ZoneState zs{bgcolor, assets.global_light, MOVE(tmap)};
 
   EngineState es{logger, imgui, dimensions, MOVE(rng), MOVE(camera), MOVE(player)};
 
@@ -459,7 +459,7 @@ start(stlw::Logger &logger, Engine &engine)
          boomhs::copy_assets_gpu(logger, shader_programs, registry, assets.obj_cache));
 
   auto &imgui = ImGui::GetIO();
-  auto state = boomhs::init(logger, registry, imgui, engine.dimensions(), assets.loaded_entities);
+  auto state = boomhs::init(logger, registry, imgui, engine.dimensions(), assets);
 
   timed_game_loop(registry, engine, state, drawinfos, shader_programs, assets);
   LOG_TRACE("game loop finished.");
