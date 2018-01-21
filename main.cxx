@@ -195,6 +195,29 @@ draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
 }
 
 void
+draw_terrain(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps)
+{
+  auto entity = registry.create();
+  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
+
+  auto &logger = state.engine_state.logger;
+  auto &terrain_sp = sps.ref_sp("3d_pos_normal_color");
+  auto terrain = OF::copy_normalcolorcube_gpu(logger, terrain_sp, LOC::WHITE);
+
+  auto &transform = registry.assign<Transform>(entity);
+  auto &scale = transform.scale;
+  scale.x = 50.0f;
+  scale.y = 0.2f;
+  scale.z = 50.0f;
+  auto &translation = transform.translation;
+  //translation.x = 3.0f;
+  translation.y = -2.0f;
+  //translation.z = 2.0f;
+  render::draw(state.render_args(), transform, terrain_sp, terrain, entity, registry);
+}
+
+
+void
 draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
     HandleManager &handles)
 {
@@ -360,6 +383,11 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
   if (engine_state.draw_entities) {
     draw_entities(state, registry, sps, handles);
   }
+
+  if (engine_state.draw_terrain) {
+    draw_terrain(state, registry, sps);
+  }
+
   if (engine_state.draw_tilemap) {
     draw_tilemap(state, registry, sps, handles);
   }

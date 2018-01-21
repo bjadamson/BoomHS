@@ -89,8 +89,8 @@ set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
     return make_field("attenuation.") + fieldname;
   };
   auto const constant = attenuation_field("constant");
-  auto const linear = attenuation_field("constant");
-  auto const quadratic = attenuation_field("constant");
+  auto const linear = attenuation_field("linear");
+  auto const quadratic = attenuation_field("quadratic");
   std::cerr << constant << "\n";
   std::cerr << linear << "\n";
   std::cerr << quadratic << "\n";
@@ -119,13 +119,14 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
   set_dirlight(logger, sp, global_light);
 
   auto const pointlights = find_pointlights(registry);
+  std::cerr << "===============================\n";
   FOR(i, pointlights.size()) {
     auto const& entity = pointlights[i];
     auto &transform = registry.get<Transform>(entity);
     auto &pointlight = registry.get<PointLight>(entity);
     set_pointlight(logger, sp, i, pointlight, transform.translation);
   }
-  std::cerr << "------------------------------------------------------------\n\n\n";
+  std::cerr << "===============================\n\n\n";
 
   auto const entity_o = find_entity_with_component<Material>(entity, registry);
   assert(boost::none != entity_o);
@@ -240,9 +241,9 @@ init(window::Dimensions const& dimensions)
   glViewport(0, 0, dimensions.w, dimensions.h);
 
   glDisable(GL_CULL_FACE);
-  //glEnable(GL_BLEND);
-  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glDisable(GL_BLEND);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glDisable(GL_BLEND);
 
   enable_depth_tests();
 }

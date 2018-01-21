@@ -120,13 +120,6 @@ draw_camera_info(GameState &state)
     auto const scoords = to_spherical(player_transform.translation);
     auto const ccoords = camera.spherical_coordinates();
 
-    //glm::mat4 const origin_m = glm::translate(glm::mat4{}, glm::vec3{0.0f});
-    //glm::mat4 m = origin_m * glm::toMat4(player.orientation());
-    //glm::vec3 player_fwd = origin_m * glm::vec4{player.forward_vector(), 1.0f};
-    //player_fwd = glm::normalize(player_fwd);
-
-    //glm::vec3 const camera_fwd = camera.forward_vector();
-    //float const theta = acos(glm::dot(player_fwd, camera_fwd));
     ImGui::Text("player xyz: '%s', player phi: '%s' player theta: '%s'\n",
         glm::to_string(player_transform.translation).c_str(),
         std::to_string(scoords.phi).c_str(),
@@ -252,7 +245,7 @@ show_entitymaterials_window(GameState &state, entt::DefaultRegistry &registry)
     ImGui::ColorEdit3("ambient:", glm::value_ptr(material.ambient));
     ImGui::ColorEdit3("diffuse:", glm::value_ptr(material.diffuse));
     ImGui::ColorEdit3("specular:", glm::value_ptr(material.specular));
-    ImGui::InputFloat("shininess:", &material.shininess);
+    ImGui::SliderFloat("shininess:", &material.shininess, 0.0f, 1.0f);
 
     if (ImGui::Button("Close", ImVec2(120,0))) {
       ui_state.show_entitymaterial_window = false;
@@ -279,8 +272,8 @@ show_pointlight_window(GameState &state, entt::DefaultRegistry &registry)
 
     ImGui::Text("Attenuation");
     auto &attenuation = pointlight.light.attenuation;
-    ImGui::InputFloat("constant:", &attenuation.constant);
-    ImGui::InputFloat("linear:", &attenuation.linear);
+    ImGui::SliderFloat("constant:", &attenuation.constant, 0.0f, 1.0f);
+    ImGui::SliderFloat("linear:", &attenuation.linear, 0.0f, 1.0f);
     ImGui::SliderFloat("quadratic:", &attenuation.quadratic, 0.0f, 1.0f);
   };
 

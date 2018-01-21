@@ -114,6 +114,126 @@ copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program, Co
   return make_cube_drawinfo(logger, vertex_data, shader_program, boost::none);
 }
 
+/*
+Vec3f RibbonMesh::calcNormal( const Vec3f &p1, const Vec3f &p2, const Vec3f &p3 )
+{
+    Vec3f V1= (p2 - p1);
+    Vec3f V2 = (p3 - p1);
+    Vec3f surfaceNormal;
+    surfaceNormal.x = (V1.y*V2.z) - (V1.z-V2.y);
+    surfaceNormal.y = - ( (V2.z * V1.x) - (V2.x * V1.z) );
+    surfaceNormal.z = (V1.x-V2.y) - (V1.y-V2.x);
+
+    // Dont forget to normalize if needed
+    return surfaceNormal;
+}
+*/
+
+using Face = std::array<float, 6 * (4 + 3 + 4)>;
+
+
+
+DrawInfo
+copy_normalcolorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color const& color)
+{
+  // clang-format off
+  static std::array<glm::vec3, 8> constexpr points = {{
+    glm::vec3{-0.5f, -0.5f,  0.5f},
+    glm::vec3{-0.5f,  0.5f,  0.5f},
+    glm::vec3{ 0.5f,  0.5f,  0.5f},
+    glm::vec3{ 0.5f, -0.5f,  0.5f},
+    glm::vec3{-0.5f, -0.5f, -0.5f},
+    glm::vec3{-0.5f,  0.5f, -0.5f},
+    glm::vec3{ 0.5f,  0.5f, -0.5f},
+    glm::vec3{ 0.5f, -0.5f, -0.5f}
+  }};
+
+  std::array<glm::vec3, 36> vertices = {glm::vec3{0.0f}};
+  std::array<glm::vec3, 36> normals{glm::vec3{0.0f}};
+  std::array<Color, 36> colors{LOC::BLACK};
+
+
+  auto make_face = [&vertices, &normals, &colors](int const a, int const b, int const c, int const d,
+      std::array<glm::vec3, 8> const& points, Color const& face_color, int index)
+  {
+    using namespace glm;
+    vec3 const normal = normalize(cross(points[c] - points[b], points[a] - points[b]));
+
+  //#define VERTEX(p) points[p].x,    points[p].y,    points[p].z, 1.0
+  //#define NORMAL(p) normal.x,       normal.y,       normal.z
+  //#define COLOR(p)  face_color.r(), face_color.g(), face_color.b(), face_color.a()
+  //#define FACE(p) VERTEX(p), NORMAL(p), COLOR(p)
+
+    vertices[index] = points[a];
+    normals[index] = normal;
+    colors[index] = face_color;
+    index++;
+
+    vertices[index] = points[b];
+    normals[index] = normal;
+    colors[index] = face_color;
+    index++;
+
+    vertices[index] = points[c];
+    normals[index] = normal;
+    colors[index] = face_color;
+    index++;
+
+    vertices[index] = points[a];
+    normals[index] = normal;
+    colors[index] = face_color;
+    index++;
+
+    vertices[index] = points[c];
+    normals[index] = normal;
+    colors[index] = face_color;
+    index++;
+
+    vertices[index] = points[d];
+    normals[index] = normal;
+    colors[index] = face_color;
+
+    //return Face{FACE(a), FACE(b), FACE(c), FACE(a), FACE(c), FACE(d)};
+  //#undef VERTEX
+  //#undef NORMAL
+  //#undef COLOR
+  //#undef FACE
+  };
+
+  make_face(1, 0, 3, 2, points, color, 6 * 0); // z
+  make_face(2, 3, 7, 6, points, color, 6 * 1); // x
+  make_face(3, 0, 4, 7, points, color, 6 * 2); // -y
+  make_face(6, 5, 1, 2, points, color, 6 * 3); // y
+  make_face(4, 5, 6, 7, points, color, 6 * 4); // -z
+  make_face(5, 4, 0, 1, points, color, 6 * 5); // -x
+
+#define FACE_VERTEX(v) vertices[v], vertices[v+1], vertices[v+2], 1.0f, \
+  normals[v], normals[v+1], normals[v+2], \
+  color.r(), color.g(), color.b(), color.a()
+
+  std::vector<float> vertex_data;
+  FOR(i, vertices.size()) {
+    vertex_data.emplace_back(vertices[i].x);
+    vertex_data.emplace_back(vertices[i].y);
+    vertex_data.emplace_back(vertices[i].z);
+    vertex_data.emplace_back(1.0f);
+
+    vertex_data.emplace_back(normals[i].x);
+    vertex_data.emplace_back(normals[i].y);
+    vertex_data.emplace_back(normals[i].z);
+
+    vertex_data.emplace_back(colors[i].r());
+    vertex_data.emplace_back(colors[i].g());
+    vertex_data.emplace_back(colors[i].b());
+    vertex_data.emplace_back(colors[i].a());
+  }
+
+  auto const& indices = cube_factory::INDICES_LIGHT;
+  DrawInfo dinfo{GL_TRIANGLES, vertex_data.size(), indices.size(), boost::none};
+  copy_to_gpu(logger, sp, dinfo, vertex_data, indices);
+  return dinfo;
+}
+
 DrawInfo
 copy_vertexonlycube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program)
 {

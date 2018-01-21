@@ -95,6 +95,7 @@ struct EngineState
   bool draw_entities = true;
   bool draw_skybox = false;
   bool draw_tilemap = true;
+  bool draw_terrain = true;
 
   bool show_global_axis = true;
   bool show_local_axis = false;
