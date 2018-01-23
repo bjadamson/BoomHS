@@ -95,6 +95,13 @@ shader = "light"
 geometry = "cube"
 pointlight = [0.0, 1.0, 0.0]
 
+# LIGHT #1
+#[[entity]]
+#pos = [11.0, 0.0, 11.0]
+#shader = "light"
+#geometry = "cube"
+#pointlight = [1.0, 0.0, 0.0]
+
 ##################### OTHERS
 [[entity]]
 pos = [-5.0, -2.0, 0.0]

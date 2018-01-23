@@ -34,7 +34,7 @@ public:
   lookup() const { return registry_.get<T>(eid_); }
 
   void
-  set_entity_id(std::uint32_t const eid)
+  set_eid(std::uint32_t const eid)
   {
     eid_ = eid;
   }

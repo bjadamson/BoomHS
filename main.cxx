@@ -98,8 +98,8 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
     handle_list.add(entity, MOVE(handle));
   });
 
-  auto const make_special = [&](char const* name) {
-    auto const& obj = obj_cache.get_obj(name);
+  auto const make_special = [&](char const *name) {
+    auto const &obj = obj_cache.get_obj(name);
     auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(name), obj, boost::none);
     auto const entity = registry.create();
     registry.assign<Transform>(entity).scale = glm::vec3{0.2f, 0.2f, 0.2f};
@@ -176,7 +176,9 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
 
   Projection const proj{90.0f, 4.0f / 3.0f, 0.1f, 200.0f};
   Camera camera(proj, player_lookup, FORWARD, UP);
-  camera.set_coordinates(SphericalCoordinates{assets.camera_spherical_coords});
+
+  SphericalCoordinates sc{assets.camera_spherical_coords};
+  camera.set_coordinates(MOVE(sc));
 
   // Construct tilemap
   stlw::float_generator rng;
@@ -192,7 +194,7 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
 
 void
 draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
-    HandleManager &handles)
+              HandleManager &handles)
 {
   auto const draw_fn = [&handles, &sps, &registry, &state](auto entity, auto &sn, auto &transform) {
     auto &shader_ref = sps.ref_sp(sn.value);
@@ -233,16 +235,15 @@ draw_terrain(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
   scale.y = 0.2f;
   scale.z = 50.0f;
   auto &translation = transform.translation;
-  //translation.x = 3.0f;
+  // translation.x = 3.0f;
   translation.y = -2.0f;
-  //translation.z = 2.0f;
+  // translation.z = 2.0f;
   render::draw(state.render_args(), transform, terrain_sp, terrain, entity, registry);
 }
 
-
 void
 draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
-    HandleManager &handles)
+             HandleManager &handles)
 {
   using namespace render;
   auto &logger = state.engine_state.logger;
@@ -257,21 +258,14 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
   //    just two tile type's will be necessary, and will have to devise a strategy for quickly
   //    rendering the tilemap using different tile's. Maybe store the different tile type's
   //    together somehow for rendering?
-  DrawPlusArgs plus{
-    sps.ref_sp("plus"),
-    handles.lookup(handles.plus_eid),
-    handles.plus_eid
-  };
-  DrawHashtagArgs hashtag{
-    sps.ref_sp("hashtag"),
-    handles.lookup(handles.hashtag_eid),
-    handles.hashtag_eid
-  };
+  DrawPlusArgs plus{sps.ref_sp("plus"), handles.lookup(handles.plus_eid), handles.plus_eid};
+  DrawHashtagArgs hashtag{sps.ref_sp("hashtag"), handles.lookup(handles.hashtag_eid),
+                          handles.hashtag_eid};
   DrawTilemapArgs dta{MOVE(plus), MOVE(hashtag)};
 
   std::cerr << "Drawing tilemap ...\n";
-  render::draw_tilemap(state.render_args(), dta,
-      state.zone_state.tilemap, state.engine_state.tilemap_state.reveal, registry);
+  render::draw_tilemap(state.render_args(), dta, state.zone_state.tilemap,
+                       state.engine_state.tilemap_state.reveal, registry);
 }
 
 void
@@ -280,7 +274,7 @@ draw_tilegrid(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
   auto &engine_state = state.engine_state;
   auto &logger = engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
-  auto const& tilemap = state.zone_state.tilemap;
+  auto const &tilemap = state.zone_state.tilemap;
 
   Transform transform;
   bool const show_y = engine_state.tilemap_state.show_yaxis_lines;
@@ -302,7 +296,7 @@ draw_global_axis(GameState &state, entt::DefaultRegistry &registry, opengl::Shad
   auto &transform = registry.assign<Transform>(entity);
   transform.translation = glm::vec3{0.0, 0.0, 0.0}; // explicit
 
-  auto const& rargs = state.render_args();
+  auto const &rargs = state.render_args();
   render::draw(rargs, transform, sp, world_arrows.x_dinfo, entity, registry);
   render::draw(rargs, transform, sp, world_arrows.y_dinfo, entity, registry);
   render::draw(rargs, transform, sp, world_arrows.z_dinfo, entity, registry);
@@ -310,7 +304,7 @@ draw_global_axis(GameState &state, entt::DefaultRegistry &registry, opengl::Shad
 
 void
 draw_local_axis(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
-    glm::vec3 const& player_pos)
+                glm::vec3 const &player_pos)
 {
   auto &logger = state.engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
@@ -322,7 +316,7 @@ draw_local_axis(GameState &state, entt::DefaultRegistry &registry, opengl::Shade
   auto &transform = registry.assign<Transform>(entity);
   transform.translation = player_pos;
 
-  auto const& rargs = state.render_args();
+  auto const &rargs = state.render_args();
   render::draw(rargs, transform, sp, axis_arrows.x_dinfo, entity, registry);
   render::draw(rargs, transform, sp, axis_arrows.y_dinfo, entity, registry);
   render::draw(rargs, transform, sp, axis_arrows.z_dinfo, entity, registry);
@@ -330,19 +324,19 @@ draw_local_axis(GameState &state, entt::DefaultRegistry &registry, opengl::Shade
 
 void
 draw_target_vectors(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
-    WorldObject const& player)
+                    WorldObject const &player)
 {
   auto &logger = state.engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
 
-  auto const draw_arrow = [&](auto const& start, auto const& head, auto const& color) {
+  auto const draw_arrow = [&](auto const &start, auto const &head, auto const &color) {
     auto const handle = OF::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
 
     auto entity = registry.create();
     ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
     auto &transform = registry.assign<Transform>(entity);
 
-    auto const& rargs = state.render_args();
+    auto const &rargs = state.render_args();
     render::draw(rargs, transform, sp, handle, entity, registry);
   };
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <string>
+#include <ostream>
 
 namespace boomhs
 {
@@ -24,14 +25,17 @@ struct SphericalCoordinates
   }
 
   std::string
-  radius_string() const { return std::to_string(this->radius); }
+  radius_display_string() const { return std::to_string(this->radius); }
 
   std::string
-  theta_string() const { return std::to_string(glm::degrees(this->theta)); }
+  theta_display_string() const { return std::to_string(glm::degrees(this->theta)); }
 
   std::string
-  phi_string() const { return std::to_string(glm::degrees(this->phi)); }
+  phi_display_string() const { return std::to_string(glm::degrees(this->phi)); }
 };
+
+std::ostream&
+operator<<(std::ostream &, SphericalCoordinates const&);
 
 glm::vec3
 to_cartesian(SphericalCoordinates const&);

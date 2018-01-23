@@ -11,13 +11,13 @@ namespace boomhs
 
 class WorldObject
 {
-  EnttLookup player_lookup_;
+  EnttLookup ent_lookup_;
   glm::vec3 forward_, up_;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(WorldObject);
   explicit WorldObject(EnttLookup const& plookup, glm::vec3 const& forward, glm::vec3 const& up)
-    : player_lookup_(plookup)
+    : ent_lookup_(plookup)
     , forward_(forward)
     , up_(up)
   {
@@ -26,13 +26,13 @@ public:
   auto const&
   transform() const
   {
-    return player_lookup_.lookup<Transform>();
+    return ent_lookup_.lookup<Transform>();
   }
 
   auto&
   transform()
   {
-    return player_lookup_.lookup<Transform>();
+    return ent_lookup_.lookup<Transform>();
   }
 
   glm::vec3
@@ -105,11 +105,11 @@ public:
     move_to(glm::vec3{pos.x, pos.y, pos.z});
   }
 
-  //void
-  //set_transform(Transform &transform)
-  //{
-    //transform_ = &transform;
-  //}
+  void
+  set_eid(std::uint32_t const eid)
+  {
+    ent_lookup_.set_eid(eid);
+  }
 
   glm::mat4
   model_matrix() const { return transform().model_matrix(); }

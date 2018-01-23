@@ -1,6 +1,6 @@
 precision mediump float;
 
-in vec4 v_position;
+in vec3 v_worldposition;
 in vec3 v_surfacenormal;
 in vec4 v_color;
 
@@ -46,9 +46,9 @@ uniform int u_drawnormals;
 out vec4 fragment_color;
 
 float
-calculate_attenuation(PointLight light, vec3 world_position)
+calculate_attenuation(PointLight light)
 {
-  float distance = length(light.position - world_position);
+  float distance = length(light.position - v_worldposition);
 
   float constant = light.attenuation.constant;
   float linear = light.attenuation.linear * distance;
@@ -60,7 +60,7 @@ calculate_attenuation(PointLight light, vec3 world_position)
 }
 
 vec3
-calc_pointlight(PointLight light, vec3 v_tolight, vec3 world_position)
+calc_pointlight(PointLight light, vec3 v_tolight)
 {
   float dotp = dot(v_surfacenormal, v_tolight);
   float brightness = max(dotp, 0.0);
@@ -74,7 +74,7 @@ calc_pointlight(PointLight light, vec3 v_tolight, vec3 world_position)
   float damped_factor = pow(specular_factor, u_material.shininess);
   vec3 specular = damped_factor * u_reflectivity * light.specular;
 
-  float attenuation = calculate_attenuation(light, world_position);
+  float attenuation = calculate_attenuation(light);
   diffuse *= attenuation;
   specular *= attenuation;
 
@@ -83,12 +83,11 @@ calc_pointlight(PointLight light, vec3 v_tolight, vec3 world_position)
 
 void main()
 {
-  vec3 world_position = (u_modelmatrix * v_position).xyz;
   vec3 ambient = u_globallight.ambient * u_material.ambient;
 
   vec3 pointlights = vec3(0.0);
   for(int i = 0; i < MAX_NUM_POINTLIGHTS; i++) {
-    pointlights += calc_pointlight(u_pointlights[i], v_tolights[i], world_position);
+    pointlights += calc_pointlight(u_pointlights[i], v_tolights[i]);
   }
 
   vec3 light = ambient + pointlights;

@@ -58,4 +58,17 @@ to_spherical(glm::vec3 cartesian)
   return SphericalCoordinates{radius, theta, phi};
 }
 
+std::ostream&
+operator<<(std::ostream &stream, SphericalCoordinates const& sc)
+{
+  stream << "{";
+  stream << sc.radius;
+  stream << ", ";
+  stream << sc.theta;
+  stream << ", ";
+  stream << sc.phi;
+  stream << "}";
+  return stream;
+}
+
 } // ns boomhs

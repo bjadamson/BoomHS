@@ -41,12 +41,13 @@ struct UiState
   int selected_material = 0;
   bool show_entitymaterial_window = false;
 
+  int selected_entity = 0;
+
   // primitive buffers
   int eid_buffer = 0;
   glm::vec3 euler_angle_buffer;
   glm::vec3 last_mouse_clicked_pos;
   int attenuation_current_item = opengl::Light::INIT_ATTENUATION_INDEX;
-  int entity_window_current = 0;
 };
 
 struct MouseState

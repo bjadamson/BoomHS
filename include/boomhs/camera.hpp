@@ -107,7 +107,7 @@ public:
   void
   set_target(std::uint32_t const eid)
   {
-    player_lookup_.set_entity_id(eid);
+    player_lookup_.set_eid(eid);
   }
 };
 
