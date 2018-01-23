@@ -388,6 +388,7 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
   ImGui::Checkbox("Draw Skybox", &engine_state.draw_skybox);
   ImGui::Checkbox("Enter Pressed", &ui_state.enter_pressed);
   ImGui::Checkbox("Mouse Rotation Lock", &ui_state.rotate_lock);
+  ImGui::Checkbox("Draw Normals", &engine_state.draw_normals);
 
   auto const window_menu = [&window, &window_state]() {
     if (ImGui::BeginMenu("Window")) {

@@ -129,12 +129,15 @@ public:
     return set_uniform_color_3fv(logger, name.c_str(), c);
   }
 
-  void set_uniform_float1(stlw::Logger &logger, GLchar const*, float const);
+  void set_uniform_float1(stlw::Logger &, GLchar const*, float const);
 
   void set_uniform_float1(stlw::Logger &logger, std::string const& name, float const value)
   {
     return set_uniform_float1(logger, name.c_str(), value);
   }
+
+  void set_uniform_bool(stlw::Logger &, GLchar const*, bool const);
+  void set_uniform_int1(stlw::Logger &, GLchar const*, int const);
 };
 
 std::ostream&

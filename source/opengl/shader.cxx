@@ -344,6 +344,26 @@ ShaderProgram::set_uniform_float1(stlw::Logger &logger, GLchar const* name, floa
   LOG_ANY_GL_ERRORS(logger, "glUniform1f");
 }
 
+void
+ShaderProgram::set_uniform_int1(stlw::Logger &logger, GLchar const* name, int const value)
+{
+  use_program(logger);
+
+  auto const loc = get_uniform_location(logger, name);
+  glUniform1i(loc, value);
+  LOG_ANY_GL_ERRORS(logger, "glUniform1i");
+}
+
+void
+ShaderProgram::set_uniform_bool(stlw::Logger &logger, GLchar const* name, bool const value)
+{
+  use_program(logger);
+
+  auto const loc = get_uniform_location(logger, name);
+  glUniform1i(loc, static_cast<int>(value));
+  LOG_ANY_GL_ERRORS(logger, "glUniform1i");
+}
+
 std::string
 glchar_ptr_to_string(GLchar const* ptr)
 {

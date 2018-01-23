@@ -96,6 +96,7 @@ struct EngineState
   bool draw_skybox = false;
   bool draw_tilemap = true;
   bool draw_terrain = true;
+  bool draw_normals = false;
 
   bool show_global_axis = true;
   bool show_local_axis = false;
@@ -152,8 +153,9 @@ struct GameState
     auto const& player = engine_state.player;
 
     auto const& global_light = zone_state.global_light;
+    bool const draw_normals = engine_state.draw_normals;
 
-    return RenderArgs{camera, player, logger, global_light};
+    return RenderArgs{camera, player, logger, global_light, draw_normals};
   }
 };
 

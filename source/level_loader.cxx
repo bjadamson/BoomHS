@@ -227,6 +227,7 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     auto shader =           get_string_or_abort(file, "shader");
     auto geometry =         get_string_or_abort(file, "geometry");
     auto pos =              get_vec3_or_abort(file,   "pos");
+    auto scale_o =            get_vec3(file,          "scale");
     auto color =            get_color(file,           "color");
     auto texture_name =     get_string(file,          "texture");
     auto pointlight_o =     get_vec3(file,            "pointlight");
@@ -240,6 +241,10 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     auto entity = registry.create();
     auto &transform = registry.assign<Transform>(entity);
     transform.translation = pos;
+
+    if (scale_o) {
+      transform.scale = *scale_o;
+    }
 
     auto &sn = registry.assign<ShaderName>(entity);
     sn.value = shader;
@@ -272,9 +277,7 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
 
     if (pointlight_o) {
       auto &light_component = registry.assign<PointLight>(entity);
-      glm::vec3 const vec = *pointlight_o;
-      Color const light_c{vec.x, vec.y, vec.z};
-      light_component.light.diffuse = light_c;
+      light_component.light.diffuse = Color{*pointlight_o};
     }
     if (receives_light_o) {
       // TODO: fill in fields

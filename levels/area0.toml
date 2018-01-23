@@ -70,42 +70,49 @@ name = "T"
 normals = true
 uvs = false
 
+[[meshes]]
+name = "cube"
+normals = true
+uvs = false
+
 ########### ENTITY #############
 [[entity]]
 pos = [0.0, 0.0, 0.0]
 shader = "3d_pos_normal_color"
-geometry = "mesh:at"
+geometry = "mesh:cube"
 player = "player"
 receives_light = true
+color = [1.0, 1.0, 1.0]
+scale = [0.2, 0.2, 0.2]
 
 ######### POINT LIGHTS
 # LIGHT #0
 [[entity]]
-pos = [5.0, 0.0, 5.0]
+pos = [50.0, 0.0, 50.0]
 shader = "light"
 geometry = "cube"
 pointlight = [0.0, 1.0, 0.0]
 
 # LIGHT #1
 [[entity]]
-pos = [10.0, 0.0, 5.0]
+pos = [100.0, 0.0, 50.0]
 shader = "light"
 geometry = "cube"
 pointlight = [1.0, 0.0, 0.0]
 
 # LIGHT #2
 [[entity]]
-pos = [5.0, 0.0, 10.0]
+pos = [50.0, 0.0, 100.0]
 shader = "light"
 geometry = "cube"
 pointlight = [0.0, 0.0, 1.0]
 
 # LIGHT #3
 [[entity]]
-pos = [10.0, 0.0, 10.0]
+pos = [100.0, 0.0, 100.0]
 shader = "light"
 geometry = "cube"
-pointlight = [1.0, 1.0, 1.0]
+pointlight = [1.0, 1.0, 0.0]
 
 ##################### OTHERS
 [[entity]]

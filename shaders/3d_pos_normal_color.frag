@@ -1,18 +1,12 @@
 precision mediump float;
 
-in vec3 v_normal;
+in vec3 v_surfacenormal;
+in vec4 v_position;
 in vec4 v_color;
-in vec3 v_fragpos_worldspace;
+in vec3 v_tocamera;
 
-uniform vec3 u_viewpos;
-
-//struct Player {
-  //vec3 position;
-  //vec3 direction;
-  //float cutoff;
-//};
-
-//uniform Player u_player;
+#define MAX_NUM_POINTLIGHTS 4
+in vec3 v_tolights[MAX_NUM_POINTLIGHTS];
 
 struct Material {
   vec3 ambient;
@@ -20,20 +14,10 @@ struct Material {
   vec3 specular;
   float shininess;
 };
-uniform Material u_material;
 
 struct GlobalLight {
   vec3 ambient;
 };
-uniform GlobalLight u_globallight;
-
-struct GlobalDirLight {
-  vec3 direction;
-
-  vec3 diffuse;
-  vec3 specular;
-};
-uniform GlobalDirLight u_dirlight;
 
 struct LightAttenuation
 {
@@ -51,35 +35,20 @@ struct PointLight {
   LightAttenuation attenuation;
 };
 
-// TODO: somehow generate or read from single source of truth.
-#define MAX_NUM_POINTLIGHTS 4
 uniform PointLight u_pointlights[MAX_NUM_POINTLIGHTS];
+
+uniform Material u_material;
+uniform GlobalLight u_globallight;
+uniform float u_reflectivity;
+uniform mat4 u_modelmatrix;
+uniform int u_drawnormals;
 
 out vec4 fragment_color;
 
-vec3
-calc_global_dirlight(GlobalDirLight light, vec3 normal, vec3 view_dir)
-{
-  vec3 light_dir = normalize(-light.direction);
-
-  // diffuse shading
-  float diff = max(dot(normal, light_dir), 0.0);
-
-  // specular shading
-  vec3 reflect_dir = reflect(-light_dir, normal);
-  float spec = pow(max(dot(view_dir, reflect_dir), 0.0), u_material.shininess);
-
-  // combine results
-  //vec3 ambient  = light.ambient;//  * vec3(texture(u_material.diffuse, TexCoords));
-  vec3 diffuse  = light.diffuse  * diff;// * vec3(texture(u_material.diffuse, TexCoords));
-  vec3 specular = light.specular * spec;// * vec3(texture(u_material.specular, TexCoords));
-  return (diffuse + specular);
-}
-
 float
-calculate_attenuation(PointLight light)
+calculate_attenuation(PointLight light, vec3 world_position)
 {
-  float distance = length(light.position - v_fragpos_worldspace);
+  float distance = length(light.position - world_position);
 
   float constant = light.attenuation.constant;
   float linear = light.attenuation.linear * distance;
@@ -91,48 +60,42 @@ calculate_attenuation(PointLight light)
 }
 
 vec3
-calc_pointlight(PointLight light, vec3 normal, vec3 view_dir)
+calc_pointlight(PointLight light, vec3 v_tolight, vec3 world_position)
 {
-  vec3 light_dir = normalize(light.position - v_fragpos_worldspace);
-  //float theta = dot(-light_dir, u_player.direction);
+  float dotp = dot(v_surfacenormal, v_tolight);
+  float brightness = max(dotp, 0.0);
+  vec3 diffuse = brightness * light.diffuse * u_material.diffuse;
 
-  // TODO: turn into adjustable knob
-  //float diff_intensity = 5.0f;
-  float diff = max(dot(normal, light_dir), 0.0);
+  vec3 light_direction = -v_tolight;
+  vec3 reflected_light_v = reflect(light_direction, v_surfacenormal);
 
-  vec3 diffuse = diff * (light.diffuse * u_material.diffuse);
+  float specular_factor = dot(reflected_light_v, v_tocamera);
+  specular_factor = max(specular_factor, 0.0);
+  float damped_factor = pow(specular_factor, u_material.shininess);
+  vec3 specular = damped_factor * u_reflectivity * light.specular;
 
-  // specular
-  vec3 reflect_dir = reflect(-light_dir, normal);
-  float spec = pow(max(dot(view_dir, reflect_dir), 0.0), u_material.shininess);
-  vec3 specular = light.specular * spec * u_material.specular;
-
-  float attenuation = calculate_attenuation(light);
-
+  float attenuation = calculate_attenuation(light, world_position);
   diffuse *= attenuation;
   specular *= attenuation;
+
   return diffuse + specular;
 }
 
 void main()
 {
-  vec3 normal = normalize(v_normal);
-  vec3 view_dir = normalize(u_viewpos - v_fragpos_worldspace);
-
-  // ambient
+  vec3 world_position = (u_modelmatrix * v_position).xyz;
   vec3 ambient = u_globallight.ambient * u_material.ambient;
 
-  vec3 pointlight_contribution = calc_global_dirlight(u_dirlight, normal, view_dir);
+  vec3 pointlights = vec3(0.0);
   for(int i = 0; i < MAX_NUM_POINTLIGHTS; i++) {
-    pointlight_contribution += calc_pointlight(u_pointlights[i], normal, view_dir);
+    pointlights += calc_pointlight(u_pointlights[i], v_tolights[i], world_position);
   }
-  vec4 result = vec4(ambient + pointlight_contribution, 1.0) * v_color;
-  fragment_color = result;
 
-  //if(theta > u_player.cutoff) {
-  //} else {
-    // else, use ambient light so scene isn't completely dark outside the spotlight.
-    //fragment_color = vec4(ambient, 1.0);
-    //fragment_color = vec4(0.0);//u_dirlight.ambient * vec3(texture(material.diffuse, TexCoords)), 1.0);
-  //}
+  vec3 light = ambient + pointlights;
+
+  if (u_drawnormals == 1) {
+    fragment_color = vec4(v_surfacenormal, 1.0);
+  } else {
+    fragment_color = vec4(light, 1.0) * v_color;
+  }
 }

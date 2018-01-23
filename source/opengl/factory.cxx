@@ -12,6 +12,7 @@
 #include <boomhs/tilemap.hpp>
 #include <boomhs/types.hpp>
 
+#include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/vector_query.hpp>
 #include <glm/gtc/epsilon.hpp>
 
@@ -354,12 +355,7 @@ make_arrow_vertices(ArrowCreateParams const& params, ArrowEndpoints const& endpo
 DrawInfo
 create_arrow_2d(stlw::Logger &logger, ShaderProgram const& shader_program, ArrowCreateParams &&params)
 {
-  //params.start.z = 0.0f;
-  //params.end.z = 0.0f;
-
   auto endpoints = calculate_arrow_endpoints(params);
-  //endpoints.p1.z = 0.0f;
-  //endpoints.p2.z = 0.0f;
   auto const vertices = make_arrow_vertices(params, endpoints);
 
   static constexpr std::array<GLuint, 6> INDICES = {{
@@ -480,6 +476,69 @@ create_world_axis_arrows(stlw::Logger &logger, ShaderProgram &sp)
 {
   glm::vec3 constexpr ORIGIN = glm::zero<glm::vec3>();
   return create_axis_arrows(logger, sp, ORIGIN);
+}
+
+DrawInfo
+create_modelnormals(stlw::Logger &logger, ShaderProgram const& sp, glm::mat4 const& model_matrix,
+    obj const& obj, Color const& color)
+{
+  auto const normal_matrix = glm::inverseTranspose(model_matrix);
+  std::vector<float> const& vertices = obj.vertices;
+
+  assert((vertices.size() % 11) == 0);
+  std::vector<glm::vec4> positions;
+  std::vector<glm::vec3> normals;
+  for(auto i = 0u; i < vertices.size(); i += 11) {
+    auto const x = vertices[i + 0];
+    auto const y = vertices[i + 1];
+    auto const z = vertices[i + 2];
+    auto const w = 1.0f;
+
+    positions.emplace_back(glm::vec4{x, y, z, w});
+
+    auto const xn = vertices[i + 4];
+    auto const yn = vertices[i + 5];
+    auto const zn = vertices[i + 6];
+
+    normals.emplace_back(glm::vec3{xn, yn, zn});
+  }
+  assert(normals.size() == positions.size());
+
+  auto const compute_surfacenormal = [&normal_matrix, &model_matrix](auto const& a_normal) {
+    auto const v_normal = normal_matrix * glm::vec4{a_normal, 0.0};
+    return glm::normalize(model_matrix * v_normal);
+  };
+
+  std::vector<float> line_vertices;
+  std::vector<uint32_t> indices;
+  FOR(i, normals.size()) {
+    line_vertices.emplace_back(positions[i].x);
+    line_vertices.emplace_back(positions[i].y);
+    line_vertices.emplace_back(positions[i].z);
+    line_vertices.emplace_back(positions[i].w);
+
+    line_vertices.emplace_back(LOC::PINK.r());
+    line_vertices.emplace_back(LOC::PINK.g());
+    line_vertices.emplace_back(LOC::PINK.b());
+    line_vertices.emplace_back(LOC::PINK.a());
+
+    auto const surfacenormal = compute_surfacenormal(normals[i]);
+    line_vertices.emplace_back(positions[i].x + surfacenormal.x);
+    line_vertices.emplace_back(positions[i].y + surfacenormal.y);
+    line_vertices.emplace_back(positions[i].z + surfacenormal.z);
+    line_vertices.emplace_back(1.0f);
+
+    line_vertices.emplace_back(LOC::PURPLE.r());
+    line_vertices.emplace_back(LOC::PURPLE.g());
+    line_vertices.emplace_back(LOC::PURPLE.b());
+    line_vertices.emplace_back(LOC::PURPLE.a());
+
+    indices.push_back(i);
+  }
+
+  DrawInfo dinfo{GL_LINES, vertices.size(), static_cast<GLuint>(indices.size()), boost::none};
+  copy_to_gpu(logger, sp, dinfo, vertices, indices);
+  return dinfo;
 }
 
 DrawInfo

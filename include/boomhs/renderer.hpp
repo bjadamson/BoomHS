@@ -33,6 +33,8 @@ struct RenderArgs
 
   stlw::Logger &logger;
   opengl::GlobalLight const& global_light;
+
+  bool const draw_normals;
 };
 
 } // ns boomhs

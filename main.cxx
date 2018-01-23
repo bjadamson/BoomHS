@@ -154,7 +154,7 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
 
   // Construct tilemap
   stlw::float_generator rng;
-  auto tmap_startingpos = level_generator::make_tilemap(80, 1, 45, rng);
+  auto tmap_startingpos = level_generator::make_tilemap(150, 1, 150, rng);
   auto tmap = MOVE(tmap_startingpos.first);
   auto &startingpos = tmap_startingpos.second;
   player.move_to(TilePosition{8, 0, 7});
@@ -191,6 +191,11 @@ draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
       draw_fn(entity, sn, transform);
     };
     registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
+  }
+
+  if (state.engine_state.draw_normals) {
+    auto const obj = 
+    auto handle = OF::create_modelnormals(logger, sps.ref_sp("3d_pos_color"), ??, 
   }
 }
 
