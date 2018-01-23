@@ -409,7 +409,7 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
       ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Camera")) {
-      ImGui::MenuItem("Flip Y", nullptr, &ui_state.flip_y);
+      ImGui::MenuItem("Flip Y Sensitivity", nullptr, &ui_state.flip_y);
       ImGui::EndMenu();
     }
     world_menu(state);
@@ -417,6 +417,7 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
 
     auto const framerate = engine_state.imgui.Framerate;
     auto const ms_frame = 1000.0f / framerate;
+    ImGui::SameLine(ImGui::GetWindowWidth() * 0.76f);
     ImGui::Text("FPS(avg): %.1f ms/frame: %.3f", framerate, ms_frame);
     ImGui::EndMainMenuBar();
   }
