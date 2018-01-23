@@ -92,7 +92,6 @@ void main()
   }
 
   vec3 light = ambient + pointlights;
-
   if (u_drawnormals == 1) {
     fragment_color = vec4(v_surfacenormal, 1.0);
   } else {
