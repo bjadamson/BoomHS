@@ -106,10 +106,7 @@ struct WorldOriginArrows {
 };
 
 WorldOriginArrows
-create_axis_arrows(stlw::Logger &, ShaderProgram &, glm::vec3 const&);
-
-WorldOriginArrows
-create_world_axis_arrows(stlw::Logger &logger, ShaderProgram &);
+create_axis_arrows(stlw::Logger &, ShaderProgram &);
 
 DrawInfo
 copy_gpu(stlw::Logger &, GLenum const, ShaderProgram &, obj const&, boost::optional<TextureInfo> const&);

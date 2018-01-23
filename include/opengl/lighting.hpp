@@ -77,7 +77,7 @@ struct Light
   opengl::Color diffuse = LOC::WHITE;
   opengl::Color specular = LOC::BLACK;
 
-  static constexpr auto INIT_ATTENUATION_INDEX = 1;
+  static constexpr auto INIT_ATTENUATION_INDEX = ATTENUATION_VALUE_TABLE.size() - 1;
   Attenuation attenuation = opengl::ATTENUATION_VALUE_TABLE[INIT_ATTENUATION_INDEX];
 };
 
@@ -88,8 +88,7 @@ struct PointLight
 
 struct PointLights
 {
-  std::size_t static constexpr MAX_NUMBER_POINTLIGHTS = 4;
-  std::array<Light, MAX_NUMBER_POINTLIGHTS> pointlights;
+  std::vector<Light> pointlights;
 };
 
 struct DirectionalLight
@@ -100,7 +99,7 @@ struct DirectionalLight
 
 struct GlobalLight
 {
-  opengl::Color ambient = LOC::WHITE;
+  opengl::Color ambient = LOC::BLACK;
 
   // TODO: could there be more than one instance of "directional light"?
   DirectionalLight directional;

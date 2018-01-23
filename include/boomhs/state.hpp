@@ -89,18 +89,18 @@ struct ZoneState
 struct EngineState
 {
   bool quit = false;
-  bool player_collision = true;
+  bool player_collision = false;
 
   // rendering state
   bool draw_entities = true;
   bool draw_skybox = false;
-  bool draw_tilemap = true;
-  bool draw_terrain = true;
+  bool draw_tilemap = false;
+  bool draw_terrain = false;
   bool draw_normals = false;
 
-  bool show_global_axis = true;
+  bool show_global_axis = false;
   bool show_local_axis = false;
-  bool show_target_vectors = true;
+  bool show_target_vectors = false;
 
   MouseState mouse_state;
   WindowState window_state;

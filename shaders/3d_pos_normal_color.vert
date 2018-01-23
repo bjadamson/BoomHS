@@ -6,7 +6,7 @@ out vec4 v_position;
 out vec3 v_surfacenormal;
 out vec4 v_color;
 
-#define MAX_NUM_POINTLIGHTS 4
+#define MAX_NUM_POINTLIGHTS 1
 out vec3 v_tolights[MAX_NUM_POINTLIGHTS];
 out vec3 v_tocamera;
 

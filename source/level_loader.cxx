@@ -2,7 +2,9 @@
 #include <boomhs/assets.hpp>
 #include <boomhs/components.hpp>
 #include <opengl/obj.hpp>
+
 #include <stlw/result.hpp>
+
 #include <boost/algorithm/string/predicate.hpp>
 
 using namespace boomhs;
@@ -227,7 +229,8 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     auto shader =           get_string_or_abort(file, "shader");
     auto geometry =         get_string_or_abort(file, "geometry");
     auto pos =              get_vec3_or_abort(file,   "pos");
-    auto scale_o =            get_vec3(file,          "scale");
+    auto scale_o =          get_vec3(file,            "scale");
+    auto rotation_o =       get_vec3(file,            "rotation");
     auto color =            get_color(file,           "color");
     auto texture_name =     get_string(file,          "texture");
     auto pointlight_o =     get_vec3(file,            "pointlight");
@@ -245,6 +248,16 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     if (scale_o) {
       transform.scale = *scale_o;
     }
+    if (rotation_o) {
+      // TODO: simplify
+      glm::vec3 const rotation = *rotation_o;
+      auto const x_rotation = glm::angleAxis(glm::radians(rotation.x), opengl::X_UNIT_VECTOR);
+      auto const y_rotation = glm::angleAxis(glm::radians(rotation.y), opengl::Y_UNIT_VECTOR);
+      auto const z_rotation = glm::angleAxis(glm::radians(rotation.z), opengl::Z_UNIT_VECTOR);
+      transform.rotation = x_rotation * transform.rotation;
+      transform.rotation = y_rotation * transform.rotation;
+      transform.rotation = z_rotation * transform.rotation;
+    }
 
     auto &sn = registry.assign<ShaderName>(entity);
     sn.value = shader;
@@ -259,10 +272,13 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       registry.assign<SkyboxRenderable>(entity);
     }
     else if (boost::starts_with(geometry, "mesh")) {
+      auto const parse_meshname = [](auto const& field) {
+        auto const len = ::strlen("mesh:");
+        assert(0 < len);
+        return field.substr(len, field.length() - len);
+      };
       auto &meshc = registry.assign<MeshRenderable>(entity);
-      auto const len = ::strlen("mesh:");
-      assert(0 < len);
-      meshc.name = geometry.substr(len, geometry.length() - len);
+      meshc.name = parse_meshname(geometry);
     }
     if (color) {
       auto &cc = registry.assign<Color>(entity);
@@ -400,9 +416,12 @@ load_assets(stlw::Logger &logger, entt::DefaultRegistry &registry)
   auto loader = opengl::ObjLoader{LOC::WHITE};
   auto meshes = load_meshes(loader, mesh_table);
 
+  std::cerr << "loading textures ...\n";
   auto texture_table = load_textures(logger, area_config);
+  std::cerr << "loading entities ...\n";
   auto entities = load_entities(logger, area_config, texture_table, registry);
 
+  std::cerr << "loading lights ...\n";
   auto const directional_light_diffuse = Color{get_vec3_or_abort(area_config, "directional_light_diffuse")};
   auto const directional_light_specular = Color{get_vec3_or_abort(area_config, "directional_light_specular")};
   auto const directional_light_direction = get_vec3_or_abort(area_config, "directional_light_direction");
@@ -411,7 +430,12 @@ load_assets(stlw::Logger &logger, entt::DefaultRegistry &registry)
   DirectionalLight dlight{MOVE(light), directional_light_direction};
   GlobalLight glight{MOVE(dlight)};
 
-  Assets assets{MOVE(meshes), MOVE(entities), MOVE(texture_table), MOVE(glight)};
+  auto const bg_color = Color{get_vec3_or_abort(area_config, "background")};
+  auto const camera_spherical_coords_o = get_vec3(area_config, "camera_spherical_coords");
+  auto const camera_spherical_coords = camera_spherical_coords_o ? *camera_spherical_coords_o : glm::zero<glm::vec3>();
+  Assets assets{MOVE(meshes), MOVE(entities), MOVE(texture_table), MOVE(glight),
+    bg_color, camera_spherical_coords};
+  std::cerr << "yielding assets\n";
   return std::make_pair(MOVE(assets), MOVE(shader_programs));
 }
 

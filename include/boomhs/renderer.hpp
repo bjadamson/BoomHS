@@ -58,18 +58,31 @@ void
 draw(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
     std::uint32_t const, entt::DefaultRegistry &);
 
+struct DrawPlusArgs
+{
+  opengl::ShaderProgram &sp;
+  opengl::DrawInfo const& dinfo;
+
+  std::uint32_t const eid;
+};
+
+struct DrawHashtagArgs
+{
+  opengl::ShaderProgram &sp;
+  opengl::DrawInfo const& dinfo;
+
+  std::uint32_t const eid;
+};
+
 struct DrawTilemapArgs
 {
-  opengl::DrawInfo const& hashtag_dinfo;
-  opengl::ShaderProgram &hashtag_shader_program;
-
-  opengl::DrawInfo const& plus_dinfo;
-  opengl::ShaderProgram &plus_shader_program;
+  DrawPlusArgs plus;
+  DrawHashtagArgs hashtag;
 };
 
 void
-draw_tilemap(RenderArgs const&, Transform const&, DrawTilemapArgs &&, TileMap const&,
-    bool const reveal_map, entt::DefaultRegistry &);
+draw_tilemap(RenderArgs const&, DrawTilemapArgs &, TileMap const&, bool const reveal_map,
+    entt::DefaultRegistry &);
 
 void
 draw_tilegrid(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawInfo const&);

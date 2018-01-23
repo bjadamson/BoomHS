@@ -1,66 +1,47 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
-#include <limits>
-#include <iostream>
+
+#include <opengl/constants.hpp>
+
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
+#include <glm/gtc/matrix_access.hpp>
+
 #include <cmath>
+#include <limits>
 
 namespace boomhs
 {
 
-glm::vec3
-to_cartesian(SphericalCoordinates const& coords)
-{
-  float const radius = coords.radius;
-  float const theta = coords.theta;
-  float const phi = coords.phi;
-
-  float const sin_phi = sinf(phi);
-  float const x = radius * sin_phi * sinf(theta);
-  float const y = radius * cosf(phi);
-  float const z = radius * sin_phi * cosf(theta);
-
-  //Convert spherical coordinates into Cartesian coordinates
-  //float const x = sin(phi) * cos(theta) * radius;
-  //float const y = sin(phi) * sin(theta) * radius;
-  //float const z = cos(phi) * radius;
-
-  return glm::vec3{x, y, z};
-}
-
-SphericalCoordinates
-to_spherical(glm::vec3 cartesian)
-{
-  static constexpr float EPSILONF = std::numeric_limits<float>::epsilon();
-
-  if (cartesian.x == 0) {
-    cartesian.x = EPSILONF;
-  }
-  float const& x = cartesian.x, y = cartesian.y, z = cartesian.z;
-  float const x2 = x*x;
-  float const y2 = y*y;
-  float const z2 = z*z;
-
-  float const radius = sqrt(x2 + y2 + z2);
-  float theta = atan(y / x);
-  if (cartesian.x < 0) {
-    float constexpr PI = glm::pi<float>();
-    theta += PI;
-  }
-  float const phi = atan((x2 + y2) / z);
-  //std::cerr << "r: '" << radius << "', theta: '" << theta << "', phi: '" << phi << "'\n";
-
-  return SphericalCoordinates{radius, theta, phi};
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Camera
-Camera::Camera(Projection const& proj, Transform &t,glm::vec3 const& forward, glm::vec3 const& up)
+Camera::Camera(Projection const& proj, EnttLookup const& player_lookup, glm::vec3 const& forward,
+    glm::vec3 const& up)
   : projection_(proj)
-  , target_(&t)
+  , player_lookup_(player_lookup)
   , forward_(forward)
   , up_(up)
 {
+}
+
+glm::mat4
+Camera::projection_matrix() const
+{
+  auto const& p = projection_;
+  auto const fov = glm::radians(p.field_of_view);
+  return glm::perspective(fov, p.viewport_aspect_ratio, p.near_plane, p.far_plane);
+}
+
+glm::mat4
+Camera::camera_matrix() const
+{
+  return projection_matrix() * view_matrix();
+}
+
+glm::vec3
+Camera::forward_vector() const
+{
+  return glm::normalize(world_position() - target_position());
 }
 
 void
@@ -132,7 +113,7 @@ Camera::rotate(stlw::Logger &logger, UiState &uistate, window::mouse_data const&
 glm::mat4
 Camera::view_matrix() const
 {
-  auto const& target = target_->translation;
+  auto const& target = get_target().translation;
   auto const position_xyz = world_position();
   return glm::lookAt(position_xyz, target, up_);
 }

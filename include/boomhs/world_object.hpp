@@ -1,4 +1,5 @@
 #pragma once
+#include <boomhs/components.hpp>
 #include <boomhs/tilemap.hpp>
 #include <boomhs/types.hpp>
 #include <stlw/type_ctors.hpp>
@@ -10,16 +11,28 @@ namespace boomhs
 
 class WorldObject
 {
-  Transform *transform_;
+  EnttLookup player_lookup_;
   glm::vec3 forward_, up_;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(WorldObject);
-  explicit WorldObject(Transform &m, glm::vec3 const& forward, glm::vec3 const& up)
-    : transform_(&m)
+  explicit WorldObject(EnttLookup const& plookup, glm::vec3 const& forward, glm::vec3 const& up)
+    : player_lookup_(plookup)
     , forward_(forward)
     , up_(up)
   {
+  }
+
+  auto const&
+  transform() const
+  {
+    return player_lookup_.lookup<Transform>();
+  }
+
+  auto&
+  transform()
+  {
+    return player_lookup_.lookup<Transform>();
   }
 
   glm::vec3
@@ -51,19 +64,19 @@ public:
   glm::quat const&
   orientation() const
   {
-    return transform_->rotation;
+    return transform().rotation;
   }
 
   glm::vec3 const&
   world_position() const
   {
-    return transform_->translation;
+    return transform().translation;
   }
 
   auto&
   move(float const s, glm::vec3 const& dir)
   {
-    transform_->translation += (s * dir);
+    transform().translation += (s * dir);
     return *this;
   }
 
@@ -73,7 +86,7 @@ public:
   auto
   tilemap_position() const
   {
-    auto const& pos = transform_->translation;
+    auto const& pos = transform().translation;
 
     // Truncate the floating point values to get tilemap position
     auto const trunc = [](float const v) { return abs(v); };
@@ -83,7 +96,7 @@ public:
   void
   move_to(glm::vec3 const& pos)
   {
-    transform_->translation = pos;
+    transform().translation = pos;
   }
 
   void
@@ -92,20 +105,14 @@ public:
     move_to(glm::vec3{pos.x, pos.y, pos.z});
   }
 
-  void
-  set_transform(Transform &transform)
-  {
-    transform_ = &transform;
-  }
-
-  auto const&
-  transform() const
-  {
-    return *transform_;
-  }
+  //void
+  //set_transform(Transform &transform)
+  //{
+    //transform_ = &transform;
+  //}
 
   glm::mat4
-  model_matrix() const { return transform_->model_matrix(); }
+  model_matrix() const { return transform().model_matrix(); }
 };
 
 } // ns boomhs

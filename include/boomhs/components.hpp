@@ -14,6 +14,32 @@
 namespace boomhs
 {
 
+struct EnttLookup
+{
+  std::uint32_t eid_;
+  entt::DefaultRegistry &registry_;
+public:
+  explicit EnttLookup(std::uint32_t const eid, entt::DefaultRegistry &registry)
+    : eid_(eid)
+    , registry_(registry)
+  {
+  }
+
+  template<typename T>
+  T&
+  lookup() { return registry_.get<T>(eid_); }
+
+  template<typename T>
+  T const&
+  lookup() const { return registry_.get<T>(eid_); }
+
+  void
+  set_entity_id(std::uint32_t const eid)
+  {
+    eid_ = eid;
+  }
+};
+
 struct Player
 {
 };
@@ -70,7 +96,7 @@ find_materials(entt::DefaultRegistry &registry)
   for (auto const entity : view) {
     materials.emplace_back(entity);
   }
-  std::cerr << "found '" << materials.size() << "' materials\n";
+  //std::cerr << "found '" << materials.size() << "' materials\n";
   return materials;
 }
 
@@ -81,15 +107,12 @@ find_pointlights(entt::DefaultRegistry &registry)
   using namespace boomhs;
   using namespace opengl;
 
-  // for now assume only 1 entity has the Player tag
-  assert(PointLights::MAX_NUMBER_POINTLIGHTS >= registry.view<PointLight>().size());
-
   std::vector<std::uint32_t> point_lights;
   auto view = registry.view<PointLight, Transform>();
   for (auto const entity : view) {
     point_lights.emplace_back(entity);
   }
-  std::cerr << "found '" << point_lights.size() << "' point lights\n";
+  //std::cerr << "found '" << point_lights.size() << "' point lights\n";
   return point_lights;
 }
 

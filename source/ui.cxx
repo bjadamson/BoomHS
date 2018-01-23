@@ -21,45 +21,8 @@ draw_entity_editor(GameState &state)
       //[&entities](auto entity, auto &transform) { entities.emplace_back(&transform); });
   //assert(0 < entities.size());
 
+
   /*
-  auto &engine_state = state.engine_state;
-  auto &imgui = engine_state.imgui;
-  auto &ui_state = engine_state.ui_state;
-
-  auto &eid_buffer = ui_state.eid_buffer;
-  auto &camera = engine_state.camera;
-  auto &player = engine_state.player;
-  auto &entities = engine_state.entities;
-
-  auto constexpr ENTITIES_S =
-    "COLOR_CUBE\0"
-    "TEXTURE_CUBE\0"
-    "WIREFRAME_CUBE\0"
-    "SKYBOX\0"
-    "HOUSE\0"
-    "AT\0"
-    "PLAYER\0"
-    "TILEMAP\0"
-    "TERRAIN\0"
-    "CAMERA\0"
-    "GLOBAL_X\0"
-    "GLOBAL_Y\0"
-    "GLOBAL_Z\0"
-    "LOCAL_X\0"
-    "LOCAL_Y\0"
-    "LOCAL_Z\0"
-
-    "LOCAL_FORWARD\0"
-    "CAMERA_ARROW_0\0"
-    "CAMERA_ARROW_1\0"
-    "CAMERA_ARROW_2\0"
-
-    "ORC\0"
-    "TROLL\0"
-
-    "LIGHT\0"
-    "\0";
-
   auto &current = ui_state.entity_window_current;
   if (ImGui::Combo("Entity", &current, ENTITIES_S)) {
     auto &entity = *engine_state.entities[current];
@@ -388,7 +351,10 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
   ImGui::Checkbox("Draw Skybox", &engine_state.draw_skybox);
   ImGui::Checkbox("Enter Pressed", &ui_state.enter_pressed);
   ImGui::Checkbox("Mouse Rotation Lock", &ui_state.rotate_lock);
+  ImGui::Checkbox("Draw Entities", &engine_state.draw_entities);
+  ImGui::Checkbox("Draw Tilemap", &engine_state.draw_tilemap);
   ImGui::Checkbox("Draw Normals", &engine_state.draw_normals);
+  ImGui::Checkbox("Player Collisions Enabled", &engine_state.player_collision);
 
   auto const window_menu = [&window, &window_state]() {
     if (ImGui::BeginMenu("Window")) {
@@ -410,25 +376,19 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
       ImGui::EndMenu();
     }
   };
-  auto const player_menu = [&engine_state]() {
-    if (ImGui::BeginMenu("Player")) {
-      ImGui::MenuItem("Player Collisions Enabled", nullptr, &engine_state.player_collision);
-      ImGui::EndMenu();
-    }
-  };
 
   if (ImGui::BeginMainMenuBar()) {
     window_menu();
     camera_menu();
     world_menu(state);
     lighting_menu(state, registry);
-    player_menu();
   }
-  ImGui::EndMainMenuBar();
 
   auto const framerate = engine_state.imgui.Framerate;
   auto const ms_frame = 1000.0f / framerate;
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", ms_frame, framerate);
+
+  ImGui::EndMainMenuBar();
 }
 
 } // ns anonymous

@@ -77,8 +77,8 @@ set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
     return varname + "." + fieldname;
   };
 
-  std::cerr << "pointlight POSITION: '" << glm::to_string(pointlight_position) << "'\n";
-  std::cerr << "pointlight DIFFUSE: '" << pointlight.light.diffuse << "'\n";
+  //std::cerr << "pointlight POSITION: '" << glm::to_string(pointlight_position) << "'\n";
+  //std::cerr << "pointlight DIFFUSE: '" << pointlight.light.diffuse << "'\n";
 
   auto const diffuse = make_field("diffuse");
   auto const specular = make_field("specular");
@@ -92,9 +92,9 @@ set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
   auto const constant = attenuation_field("constant");
   auto const linear = attenuation_field("linear");
   auto const quadratic = attenuation_field("quadratic");
-  std::cerr << constant << "\n";
-  std::cerr << linear << "\n";
-  std::cerr << quadratic << "\n";
+  //std::cerr << constant << "\n";
+  //std::cerr << linear << "\n";
+  //std::cerr << quadratic << "\n";
   sp.set_uniform_float1(logger, constant,  attenuation.constant);
   sp.set_uniform_float1(logger, linear,    attenuation.linear);
   sp.set_uniform_float1(logger, quadratic, attenuation.quadratic);
@@ -121,18 +121,17 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
   //set_dirlight(logger, sp, global_light);
 
   auto const pointlights = find_pointlights(registry);
-  std::cerr << "===============================\n";
+  //std::cerr << "===============================\n";
   FOR(i, pointlights.size()) {
     auto const& entity = pointlights[i];
     auto &transform = registry.get<Transform>(entity);
     auto &pointlight = registry.get<PointLight>(entity);
     set_pointlight(logger, sp, i, pointlight, transform.translation);
   }
-  std::cerr << "===============================\n\n\n";
+  //std::cerr << "===============================\n\n\n";
 
-  auto const entity_o = find_entity_with_component<Material>(entity, registry);
-  assert(boost::none != entity_o);
-  Material const& material = registry.get<Material>(*entity_o);
+  assert(registry.has<Material>(entity));
+  Material const& material = registry.get<Material>(entity);
 
   sp.set_uniform_vec3(logger, "u_material.ambient",  material.ambient);
   sp.set_uniform_vec3(logger, "u_material.diffuse",  material.diffuse);
@@ -311,29 +310,32 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
 }
 
 void
-draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs &&dt_args,
+draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args,
     TileMap const& tilemap, bool const reveal_map, entt::DefaultRegistry &registry)
 {
-  auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, glm::vec3 const& tile_pos) {
+  auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, std::uint32_t const entity,
+      glm::vec3 const& tile_pos)
+  {
     auto &logger = args.logger;
     sp.use_program(logger);
     opengl::global::vao_bind(dinfo.vao());
     ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
-    glm::mat4 const model_matrix = transform.model_matrix();
-    glm::mat4 const translated = glm::translate(model_matrix, tile_pos);
-    //draw_3dshape(args, translated, sp, dinfo, registry);
+    glm::mat4 const translated = glm::translate(glm::mat4{}, tile_pos);
+    draw_3dshape(args, translated, sp, dinfo, entity, registry);
   };
 
+  auto &plus = dt_args.plus;
+  auto &hashtag = dt_args.hashtag;
   auto const draw_all_tiles = [&](auto const& pos) {
     auto const& tile = tilemap.data(pos.x, pos.y, pos.z);
     if (!reveal_map && !tile.is_visible) {
       return;
     }
     if(tile.is_wall) {
-      draw_tile_helper(dt_args.hashtag_shader_program, dt_args.hashtag_dinfo, pos);
+      draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, pos);
     } else {
-      draw_tile_helper(dt_args.plus_shader_program, dt_args.plus_dinfo, pos);
+      draw_tile_helper(plus.sp, plus.dinfo, plus.eid, pos);
     }
   };
   tilemap.visit_each(draw_all_tiles);

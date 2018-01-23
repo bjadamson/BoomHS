@@ -1,12 +1,12 @@
 precision mediump float;
 
-in vec3 v_surfacenormal;
 in vec4 v_position;
+in vec3 v_surfacenormal;
 in vec4 v_color;
-in vec3 v_tocamera;
 
-#define MAX_NUM_POINTLIGHTS 4
+#define MAX_NUM_POINTLIGHTS 1
 in vec3 v_tolights[MAX_NUM_POINTLIGHTS];
+in vec3 v_tocamera;
 
 struct Material {
   vec3 ambient;

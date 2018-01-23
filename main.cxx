@@ -25,6 +25,7 @@
 #include <stlw/type_macros.hpp>
 
 #include <entt/entt.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_sdl_gl3.h>
@@ -62,6 +63,7 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
         auto handle = OF::copy_vertexonlycube_gpu(logger, shader_ref);
         handle_list.add(entity, MOVE(handle));
       });
+
   registry.view<ShaderName, opengl::Color, MeshRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &mesh) {
         auto const &obj = obj_cache.get_obj(mesh.name);
@@ -88,6 +90,7 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
         auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
         handle_list.add(entity, MOVE(handle));
       });
+
   registry.view<ShaderName, MeshRenderable>().each([&](auto entity, auto &sn, auto &mesh) {
     auto const &obj = obj_cache.get_obj(mesh.name);
     auto &shader_ref = sps.ref_sp(sn.value);
@@ -95,24 +98,46 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
     handle_list.add(entity, MOVE(handle));
   });
 
-  return HandleManager{MOVE(handle_list)};
+  auto const make_special = [&](char const* name) {
+    auto const& obj = obj_cache.get_obj(name);
+    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(name), obj, boost::none);
+    auto const entity = registry.create();
+    registry.assign<Transform>(entity).scale = glm::vec3{0.2f, 0.2f, 0.2f};
+    registry.assign<Material>(entity);
+    auto meshc = registry.assign<MeshRenderable>(entity);
+    meshc.name = name;
+
+    auto &color = registry.assign<Color>(entity);
+    color.set_r(0.0);
+    color.set_g(0.0);
+    color.set_b(0.0);
+    color.set_a(0.0);
+
+    handle_list.add(entity, MOVE(handle));
+    return entity;
+  };
+
+  auto const plus_eid = make_special("plus");
+  auto const hashtag_eid = make_special("hashtag");
+
+  return HandleManager{MOVE(handle_list), plus_eid, hashtag_eid};
 }
 
-auto&
+std::uint32_t
 find_player(entt::DefaultRegistry &registry)
 {
   // for now assume only 1 entity has the Player tag
   assert(1 == registry.view<Player>().size());
 
-  Transform *ptransform = nullptr;
   auto view = registry.view<Player, Transform>();
-  for (auto entity : view) {
+  boost::optional<uint32_t> entity{boost::none};
+  for (auto const e : view) {
     // This assert ensures this loop only runs once.
-    assert(nullptr == ptransform);
-
-    ptransform = &view.get<Transform>(entity);
+    assert(boost::none == entity);
+    entity = e;
   }
-  return *ptransform;
+  assert(boost::none != entity);
+  return *entity;
 }
 
 auto
@@ -131,8 +156,6 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
   imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
 
   // for now assume only 1 entity has the Light tag
-  assert(PointLights::MAX_NUMBER_POINTLIGHTS >= registry.view<PointLight>().size());
-
   auto light_view = registry.view<PointLight, Transform>();
   for (auto const entity : light_view) {
     auto &transform = light_view.get<Transform>(entity);
@@ -144,24 +167,24 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
   auto const FORWARD = -opengl::Z_UNIT_VECTOR;
   auto constexpr UP = opengl::Y_UNIT_VECTOR;
 
-  auto &player_transform = find_player(registry);
+  auto const player_eid = find_player(registry);
+  auto &player_transform = registry.get<Transform>(player_eid);
   player_transform.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
 
-  WorldObject player{player_transform, FORWARD, UP};
+  EnttLookup player_lookup{player_eid, registry};
+  WorldObject player{player_lookup, FORWARD, UP};
 
   Projection const proj{90.0f, 4.0f / 3.0f, 0.1f, 200.0f};
-  Camera camera(proj, player_transform, FORWARD, UP);
+  Camera camera(proj, player_lookup, FORWARD, UP);
+  camera.set_coordinates(SphericalCoordinates{assets.camera_spherical_coords});
 
   // Construct tilemap
   stlw::float_generator rng;
-  auto tmap_startingpos = level_generator::make_tilemap(150, 1, 150, rng);
+  auto tmap_startingpos = level_generator::make_tilemap(35, 1, 35, rng);
   auto tmap = MOVE(tmap_startingpos.first);
   auto &startingpos = tmap_startingpos.second;
-  player.move_to(TilePosition{8, 0, 7});
 
-  auto const bgcolor = LOC::BLACK;
-  ZoneState zs{bgcolor, assets.global_light, MOVE(tmap)};
-
+  ZoneState zs{assets.background_color, assets.global_light, MOVE(tmap)};
   EngineState es{logger, imgui, dimensions, MOVE(rng), MOVE(camera), MOVE(player)};
 
   return GameState{MOVE(es), MOVE(zs)};
@@ -192,11 +215,6 @@ draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
     };
     registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
   }
-
-  if (state.engine_state.draw_normals) {
-    auto const obj = 
-    auto handle = OF::create_modelnormals(logger, sps.ref_sp("3d_pos_color"), ??, 
-  }
 }
 
 void
@@ -226,11 +244,8 @@ void
 draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
     HandleManager &handles)
 {
+  using namespace render;
   auto &logger = state.engine_state.logger;
-
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-
   // TODO: How do we "GET" the hashtag and plus shaders under the new entity management system?
   //
   // PROBLEM:
@@ -242,23 +257,20 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
   //    just two tile type's will be necessary, and will have to devise a strategy for quickly
   //    rendering the tilemap using different tile's. Maybe store the different tile type's
   //    together somehow for rendering?
-  auto &transform = registry.assign<Transform>(entity);
-  auto &hash_sp = sps.ref_sp("hashtag");
-  auto &plus_sp = sps.ref_sp("plus");
+  DrawPlusArgs plus{
+    sps.ref_sp("plus"),
+    handles.lookup(handles.plus_eid),
+    handles.plus_eid
+  };
+  DrawHashtagArgs hashtag{
+    sps.ref_sp("hashtag"),
+    handles.lookup(handles.hashtag_eid),
+    handles.hashtag_eid
+  };
+  DrawTilemapArgs dta{MOVE(plus), MOVE(hashtag)};
 
-  auto const load_normals = opengl::LoadNormals{true};
-  auto const load_uvs = opengl::LoadUvs{false};
-
-  auto loader = opengl::ObjLoader{LOC::WHITE};
-  auto hashtag_obj = loader.load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", load_normals, load_uvs);
-  auto hashtag_handle = OF::copy_gpu(logger, GL_TRIANGLES, hash_sp, hashtag_obj, boost::none);
-
-  //auto &hash_handle = handles.get(
-  auto plus_obj = loader.load_mesh("assets/plus.obj", "assets/plus.mtl", load_normals, load_uvs);
-  auto plus_handle = OF::copy_gpu(logger, GL_TRIANGLES, plus_sp, plus_obj, boost::none);
-
-  render::draw_tilemap(state.render_args(), transform,
-      {hashtag_handle, hash_sp, plus_handle, plus_sp},
+  std::cerr << "Drawing tilemap ...\n";
+  render::draw_tilemap(state.render_args(), dta,
       state.zone_state.tilemap, state.engine_state.tilemap_state.reveal, registry);
 }
 
@@ -282,12 +294,13 @@ draw_global_axis(GameState &state, entt::DefaultRegistry &registry, opengl::Shad
   auto &engine_state = state.engine_state;
   auto &logger = engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
-  auto world_arrows = OF::create_world_axis_arrows(logger, sp);
+  auto world_arrows = OF::create_axis_arrows(logger, sp);
 
   auto entity = registry.create();
   ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
 
   auto &transform = registry.assign<Transform>(entity);
+  transform.translation = glm::vec3{0.0, 0.0, 0.0}; // explicit
 
   auto const& rargs = state.render_args();
   render::draw(rargs, transform, sp, world_arrows.x_dinfo, entity, registry);
@@ -301,12 +314,13 @@ draw_local_axis(GameState &state, entt::DefaultRegistry &registry, opengl::Shade
 {
   auto &logger = state.engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
-  auto const axis_arrows = OF::create_axis_arrows(logger, sp, player_pos);
+  auto const axis_arrows = OF::create_axis_arrows(logger, sp);
 
   auto entity = registry.create();
   ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
 
   auto &transform = registry.assign<Transform>(entity);
+  transform.translation = player_pos;
 
   auto const& rargs = state.render_args();
   render::draw(rargs, transform, sp, axis_arrows.x_dinfo, entity, registry);
@@ -388,11 +402,9 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
   if (engine_state.draw_entities) {
     draw_entities(state, registry, sps, handles);
   }
-
   if (engine_state.draw_terrain) {
     draw_terrain(state, registry, sps);
   }
-
   if (engine_state.draw_tilemap) {
     draw_tilemap(state, registry, sps, handles);
   }

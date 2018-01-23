@@ -4,6 +4,7 @@
 #include <stlw/type_macros.hpp>
 #include <algorithm>
 #include <boost/optional.hpp>
+#include <iostream>
 #include <vector>
 #include <utility>
 
@@ -178,6 +179,7 @@ namespace boomhs::level_generator
 std::pair<TileMap, TilePosition>
 make_tilemap(int const width, int const height, int const length, stlw::float_generator &rng)
 {
+  std::cerr << "making tilemap ...\n";
   int const num_tiles = width * height * length;
   std::vector<Tile> tiles{static_cast<std::size_t>(num_tiles)};
   tiles.reserve(height * width * length);
@@ -220,6 +222,7 @@ make_tilemap(int const width, int const height, int const length, stlw::float_ge
     // finally, append the new room to the list
     rooms.emplace_back(new_room);
   }
+  std::cerr << "finished!\n";
   return std::make_pair(MOVE(tmap), starting_position);
 }
 
