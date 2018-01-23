@@ -12,54 +12,6 @@ namespace
 using namespace boomhs;
 using namespace opengl;
 
-
-/*
-auto const combo_callback = [](void *vec, int const idx, const char** out_text) {
-  auto *pvector = reinterpret_cast<std::vector<std::string>*>(vec);
-  auto const index_size = static_cast<std::size_t>(idx);
-
-  if (idx < 0 || index_size >= pvector->size()) {
-    return false;
-  }
-  *out_text = pvector->at(idx).c_str();
-  return true;
-};
-if (ImGui::Begin("Entity Materials Editor")) {
-  auto const entities_with_materials = find_materials(registry);
-  {
-    std::vector<std::string> text;
-    assert(!entities_with_materials.empty());
-
-    for(std::uint32_t const e : entities_with_materials) {
-      text.emplace_back(std::to_string(e));
-    }
-
-    void *pdata = reinterpret_cast<void*>(&text);
-    auto const num_data = text.size();
-    int selected = static_cast<int>(selected_material);
-    if (ImGui::Combo("Entity", &selected, combo_callback, pdata, num_data)) {
-      selected_material = selected;
-    }
-  }
-
-  auto const& selected_entity = entities_with_materials[selected_material];
-  auto const entity_o = find_entity_with_component<Material>(selected_entity, registry);
-  assert(boost::none != entity_o);
-  auto &material = registry.get<Material>(*entity_o);
-
-  ImGui::Separator();
-  ImGui::Text("Entity Material:");
-  ImGui::ColorEdit3("ambient:", glm::value_ptr(material.ambient));
-  ImGui::ColorEdit3("diffuse:", glm::value_ptr(material.diffuse));
-  ImGui::ColorEdit3("specular:", glm::value_ptr(material.specular));
-  ImGui::SliderFloat("shininess:", &material.shininess, 0.0f, 1.0f);
-
-  if (ImGui::Button("Close", ImVec2(120,0))) {
-    ui_state.show_entitymaterial_window = false;
-  }
-  ImGui::End();
-}*/
-
 void
 draw_entity_editor(GameState &state, entt::DefaultRegistry &registry)
 {
@@ -413,24 +365,38 @@ namespace boomhs
 void
 draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &registry)
 {
-  draw_entity_editor(state, registry);
-  draw_camera_info(state);
-  draw_player_info(state);
-
   auto &engine_state = state.engine_state;
   auto &ui_state = engine_state.ui_state;
   auto &window_state = engine_state.window_state;
 
-  ImGui::Checkbox("Draw Skybox", &engine_state.draw_skybox);
-  ImGui::Checkbox("Enter Pressed", &ui_state.enter_pressed);
-  ImGui::Checkbox("Mouse Rotation Lock", &ui_state.rotate_lock);
-  ImGui::Checkbox("Draw Entities", &engine_state.draw_entities);
-  ImGui::Checkbox("Draw Tilemap", &engine_state.draw_tilemap);
-  ImGui::Checkbox("Draw Normals", &engine_state.draw_normals);
-  ImGui::Checkbox("Player Collisions Enabled", &engine_state.player_collision);
+  if (ui_state.show_entitywindow) {
+    draw_entity_editor(state, registry);
+  }
+  if (ui_state.show_camerawindow) {
+    draw_camera_info(state);
+  }
+  if (ui_state.show_playerwindow) {
+    draw_player_info(state);
+  }
+  if (ui_state.show_debugwindow) {
+    ImGui::Checkbox("Draw Skybox", &engine_state.draw_skybox);
+    ImGui::Checkbox("Enter Pressed", &ui_state.enter_pressed);
+    ImGui::Checkbox("Mouse Rotation Lock", &ui_state.rotate_lock);
+    ImGui::Checkbox("Draw Entities", &engine_state.draw_entities);
+    ImGui::Checkbox("Draw Tilemap", &engine_state.draw_tilemap);
+    ImGui::Checkbox("Draw Normals", &engine_state.draw_normals);
+    ImGui::Checkbox("Player Collisions Enabled", &engine_state.player_collision);
+  }
 
-  auto const window_menu = [&window, &window_state]() {
-    if (ImGui::BeginMenu("Window")) {
+  if (ImGui::BeginMainMenuBar()) {
+    if (ImGui::BeginMenu("Windows")) {
+      ImGui::MenuItem("Debug Menu", nullptr, &ui_state.show_debugwindow);
+      ImGui::MenuItem("Entity Menu", nullptr, &ui_state.show_entitywindow);
+      ImGui::MenuItem("Camera Menu", nullptr, &ui_state.show_camerawindow);
+      ImGui::MenuItem("Player Menu", nullptr, &ui_state.show_playerwindow);
+      ImGui::EndMenu();
+    }
+    if (ImGui::BeginMenu("Settings")) {
       auto const draw_row = [&](char const* text, auto const fullscreen) {
         if (ImGui::MenuItem(text, nullptr, nullptr, window_state.fullscreen != fullscreen)) {
           window.set_fullscreen(fullscreen);
@@ -442,26 +408,18 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
       draw_row("Fullscreen DESKTOP", window::FullscreenFlags::FULLSCREEN_DESKTOP);
       ImGui::EndMenu();
     }
-  };
-  auto const camera_menu = [&ui_state]() {
     if (ImGui::BeginMenu("Camera")) {
       ImGui::MenuItem("Flip Y", nullptr, &ui_state.flip_y);
       ImGui::EndMenu();
     }
-  };
-
-  if (ImGui::BeginMainMenuBar()) {
-    window_menu();
-    camera_menu();
     world_menu(state);
     lighting_menu(state, registry);
+
+    auto const framerate = engine_state.imgui.Framerate;
+    auto const ms_frame = 1000.0f / framerate;
+    ImGui::Text("FPS(avg): %.1f ms/frame: %.3f", framerate, ms_frame);
+    ImGui::EndMainMenuBar();
   }
-
-  auto const framerate = engine_state.imgui.Framerate;
-  auto const ms_frame = 1000.0f / framerate;
-  ImGui::Text("FPS(avg): %.1f ms/frame: %.3f", framerate, ms_frame);
-
-  ImGui::EndMainMenuBar();
 }
 
 } // ns anonymous

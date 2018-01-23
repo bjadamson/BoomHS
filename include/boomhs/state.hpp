@@ -48,6 +48,11 @@ struct UiState
   glm::vec3 euler_angle_buffer;
   glm::vec3 last_mouse_clicked_pos;
   int attenuation_current_item = opengl::Light::INIT_ATTENUATION_INDEX;
+
+  bool show_debugwindow = true;
+  bool show_entitywindow = false;
+  bool show_camerawindow = false;
+  bool show_playerwindow = false;
 };
 
 struct MouseState
