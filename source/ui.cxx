@@ -132,24 +132,18 @@ draw_camera_info(GameState &state)
           x.c_str(), y.c_str(), z.c_str());
     }
     ImGui::Separator();
+    ImGui::Text("camera xyz: '%s', camera phi: '%s', camera theta: '%s'\n",
+        glm::to_string(camera.world_position()).c_str(),
+        std::to_string(camera.spherical_coordinates().phi).c_str(),
+        std::to_string(camera.spherical_coordinates().theta).c_str()
+        );
     ImGui::Separator();
-    {
-      auto const& player_transform = player.transform();
-      auto const scoords = to_spherical(player_transform.translation);
-      auto const ccoords = camera.spherical_coordinates();
+    ImGui::Separator();
 
-      ImGui::Text("player xyz: '%s', player phi: '%s' player theta: '%s'\n",
-          glm::to_string(player_transform.translation).c_str(),
-          std::to_string(scoords.phi).c_str(),
-          std::to_string(scoords.theta).c_str()
-          );
-      ImGui::Separator();
-      ImGui::Text("camera xyz: '%s', camera phi: '%s', camera theta: '%s'\n",
-          glm::to_string(camera.world_position()).c_str(),
-          std::to_string(camera.spherical_coordinates().phi).c_str(),
-          std::to_string(camera.spherical_coordinates().theta).c_str()
-          );
-    }
+    auto &projection = camera.projection_ref();
+    ImGui::InputFloat("Field of View", &projection.field_of_view);
+    ImGui::InputFloat("Near Plane", &projection.near_plane);
+    ImGui::InputFloat("Far Plane", &projection.far_plane);
     ImGui::End();
   }
 }

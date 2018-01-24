@@ -69,12 +69,12 @@ struct WindowState
 
 struct TilemapState
 {
-  bool draw_tilemap = false;
+  bool draw_tilemap = true;
   bool recompute = true;
   bool reveal = false;
 
   // Both related to drawing GRID LINES
-  bool show_grid_lines = true;
+  bool show_grid_lines = false;
   bool show_yaxis_lines = false;
 
   glm::vec3 floor_offset = {0.0f, -0.5f, 0.0f};

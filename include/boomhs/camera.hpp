@@ -16,17 +16,17 @@ struct UiState;
 
 struct Projection
 {
-  float const field_of_view;
+  float field_of_view;
   float const viewport_aspect_ratio;
-  float const near_plane;
-  float const far_plane;
+  float near_plane;
+  float far_plane;
 };
 
 class Camera
 {
   SphericalCoordinates coordinates_{0.0f, 0.0f, 0.0f};
   float extra_theta_ = 0.0f;
-  Projection const projection_;
+  Projection projection_;
   EnttLookup player_lookup_;
   glm::vec3 forward_, up_;
 
@@ -108,6 +108,12 @@ public:
   set_target(std::uint32_t const eid)
   {
     player_lookup_.set_eid(eid);
+  }
+
+  auto&
+  projection_ref()
+  {
+    return projection_;
   }
 };
 
