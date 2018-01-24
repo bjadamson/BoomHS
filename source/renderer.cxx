@@ -82,8 +82,10 @@ set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
 
   auto const diffuse = make_field("diffuse");
   auto const specular = make_field("specular");
+  auto const position = make_field("position");
   sp.set_uniform_color_3fv(logger, diffuse, pointlight.light.diffuse);
   sp.set_uniform_color_3fv(logger, specular, pointlight.light.specular);
+  sp.set_uniform_vec3(logger, position, pointlight_position);
 
   auto const& attenuation = pointlight.light.attenuation;
   auto const attenuation_field = [&make_field](char const* fieldname) {
