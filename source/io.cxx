@@ -83,17 +83,24 @@ process_event(GameState &state, SDL_Event &event)
   auto const move_player = [&](glm::vec3 (WorldObject::*fn)() const) {
     auto const player_pos = player.tilemap_position();
     glm::vec3 const move_vec = (player.*fn)();
+    auto const& tilemap = state.zone_state.tilemap;
 
-    auto const& new_pos_tile = state.zone_state.tilemap.data(player_pos + move_vec);
+    auto const [x, y, z] = tilemap.dimensions();
+    auto const new_pos = player_pos + move_vec;
+    bool const out_of_bounds = new_pos.x > x || new_pos.y > y || new_pos.z > z
+      || new_pos.x < 0 || new_pos.y < 0 || new_pos.z < 0;
+    if (out_of_bounds) {
+      return;
+    }
+    auto const& new_tile = tilemap.data(player_pos + move_vec);
     if (!engine_state.player_collision) {
       player.move(MOVE_DISTANCE, move_vec);
       tilemap_state.recompute = true;
-    } else if (!new_pos_tile.is_wall) {
+    } else if (!new_tile.is_wall) {
       player.move(MOVE_DISTANCE, move_vec);
       tilemap_state.recompute = true;
     }
   };
-
   switch (event.type) {
   case SDL_MOUSEMOTION: {
 

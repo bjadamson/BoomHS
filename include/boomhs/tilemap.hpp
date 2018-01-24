@@ -68,7 +68,7 @@ public:
   data(glm::vec3 &vec) { return data(vec.x, vec.y, vec.z); }
 
   Tile const&
-  data(glm::vec3 const& vec) { return data(vec.x, vec.y, vec.z); }
+  data(glm::vec3 const& vec) const { return data(vec.x, vec.y, vec.z); }
 
   auto
   num_tiles() const
