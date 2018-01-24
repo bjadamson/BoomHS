@@ -4,7 +4,7 @@ in vec4 v_position;
 in vec3 v_surfacenormal;
 in vec4 v_color;
 
-#define MAX_NUM_POINTLIGHTS 2
+#define MAX_NUM_POINTLIGHTS 4
 in vec3 v_lightstofrag[MAX_NUM_POINTLIGHTS];
 
 struct Material {

@@ -12,48 +12,54 @@ namespace
 using namespace boomhs;
 using namespace opengl;
 
-void
-draw_entity_editor(GameState &state, entt::DefaultRegistry &registry)
-{
-  using pair_t = std::pair<std::string, std::uint32_t>;
-  auto const combo_callback = [](void *vec, int const idx, const char** out_text) {
-    auto *ppairs = reinterpret_cast<std::vector<pair_t>*>(vec);
-    auto const index_size = static_cast<std::size_t>(idx);
+using pair_t = std::pair<std::string, std::uint32_t>;
 
-    if (idx < 0 || index_size >= ppairs->size()) {
-      return false;
-    }
-    *out_text = ppairs->at(idx).first.c_str();
-    return true;
-  };
-  auto const find_entity = [](int const selected, auto const& pairs) {
-    auto const cmp = [&selected](auto const& pair) {
-      return pair.second == static_cast<std::uint32_t>(selected);
-    };
-    auto const find_it = std::find_if(pairs.cbegin(), pairs.cend(), cmp);
-    assert(find_it != pairs.cend());
-    return find_it->second;
-  };
+template<typename ...T>
+auto
+collect_all(entt::DefaultRegistry &registry)
+{
   std::vector<pair_t> pairs;
-  for(auto const entity : registry.view<Transform>())
+  for(auto const entity : registry.view<T...>())
   {
     auto pair = std::make_pair(std::to_string(entity), entity);
     pairs.emplace_back(MOVE(pair));
   }
+  return pairs;
+}
 
+template<typename ...T>
+bool
+display_combo_for_entities(char const* text, int *selected, entt::DefaultRegistry &registry)
+{
+  auto const combo_callback = [](void *const pvec, int const idx, const char** out_text)
+  {
+    std::vector<pair_t> const& vec = *reinterpret_cast<std::vector<pair_t>*>(pvec);
+
+    auto const index_size = static_cast<std::size_t>(idx);
+    if (idx < 0 || index_size >= vec.size()) {
+      return false;
+    }
+    auto const& pair = vec[idx];
+    auto const& name = pair.first;
+    *out_text = name.c_str();
+    return true;
+  };
+
+  auto pairs = collect_all<T...>(registry);
+  void *pdata = reinterpret_cast<void *>(&pairs);
+  return ImGui::Combo(text, selected, combo_callback, pdata, pairs.size());
+}
+
+void
+draw_entity_editor(GameState &state, entt::DefaultRegistry &registry)
+{
+  auto &selected_entity = state.engine_state.ui_state.selected_entity;
   if (ImGui::Begin("Entity Editor Window")) {
-    auto &selected_entity = state.engine_state.ui_state.selected_entity;
-    int selected = static_cast<int>(selected_entity);
-
-    void *pdata = reinterpret_cast<void*>(&pairs);
-    if (ImGui::Combo("Entity", &selected, combo_callback, pdata, pairs.size())) {
-      selected_entity = selected;
-
+    if (display_combo_for_entities<Transform>("Entity", &selected_entity, registry)) {
       state.engine_state.camera.set_target(selected_entity);
       state.engine_state.player.set_eid(selected_entity);
     }
-    auto const entity = find_entity(selected, pairs);
-    auto &transform = registry.get<Transform>(entity);
+    auto &transform = registry.get<Transform>(selected_entity);
     ImGui::InputFloat3("pos:", glm::value_ptr(transform.translation));
     {
       auto buffer = glm::degrees(glm::eulerAngles(transform.rotation));
@@ -194,40 +200,12 @@ show_entitymaterials_window(GameState &state, entt::DefaultRegistry &registry)
   auto &ui_state = state.engine_state.ui_state;
   auto &selected_material = ui_state.selected_material;
 
-  auto const combo_callback = [](void *vec, int const idx, const char** out_text) {
-    auto *pvector = reinterpret_cast<std::vector<std::string>*>(vec);
-    auto const index_size = static_cast<std::size_t>(idx);
-
-    if (idx < 0 || index_size >= pvector->size()) {
-      return false;
-    }
-    *out_text = pvector->at(idx).c_str();
-    return true;
-  };
-
   if (ImGui::Begin("Entity Materials Editor")) {
+    display_combo_for_entities<Material, Transform>("Entity", &selected_material, registry);
+
     auto const entities_with_materials = find_materials(registry);
-    {
-      std::vector<std::string> text;
-      assert(!entities_with_materials.empty());
-
-      for(std::uint32_t const e : entities_with_materials) {
-        text.emplace_back(std::to_string(e));
-      }
-
-      void *pdata = reinterpret_cast<void*>(&text);
-      auto const num_data = text.size();
-      int selected = static_cast<int>(selected_material);
-      if (ImGui::Combo("Entity", &selected, combo_callback, pdata, num_data)) {
-        selected_material = selected;
-      }
-    }
-
     auto const& selected_entity = entities_with_materials[selected_material];
-    auto const entity_o = find_entity_with_component<Material>(selected_entity, registry);
-    assert(boost::none != entity_o);
-    auto &material = registry.get<Material>(*entity_o);
-
+    auto &material = registry.get<Material>(selected_entity);
     ImGui::Separator();
     ImGui::Text("Entity Material:");
     ImGui::ColorEdit3("ambient:", glm::value_ptr(material.ambient));
@@ -245,13 +223,9 @@ show_entitymaterials_window(GameState &state, entt::DefaultRegistry &registry)
 void
 show_pointlight_window(GameState &state, entt::DefaultRegistry &registry)
 {
-  auto const display_pointlight = [&registry](auto const index, auto const& pointlights) {
-    auto const& entity = pointlights[index];
+  auto const display_pointlight = [&registry](std::uint32_t const entity) {
     auto &transform = registry.get<Transform>(entity);
     auto &pointlight = registry.get<PointLight>(entity);
-    std::string const text = "PointLight #" + std::to_string(index);
-    ImGui::Text("PointLight #%s", std::to_string(index).c_str());
-
     auto &light = pointlight.light;
     ImGui::InputFloat3("position:", glm::value_ptr(transform.translation));
     ImGui::ColorEdit3("diffuse:", light.diffuse.data());
@@ -267,10 +241,12 @@ show_pointlight_window(GameState &state, entt::DefaultRegistry &registry)
 
   auto &ui_state = state.engine_state.ui_state;
   if (ImGui::Begin("Pointlight Editor")) {
-    ImGui::InputInt("PointLight #:", &ui_state.selected_pointlight);
-    auto const pointlights = find_pointlights(registry);
+    auto &selected_pointlight = state.engine_state.ui_state.selected_pointlight;
+    display_combo_for_entities<PointLight, Transform>("PointLight:", &selected_pointlight, registry);
 
-    display_pointlight(ui_state.selected_pointlight, pointlights);
+    auto const pointlights = find_pointlights(registry);
+    display_pointlight(pointlights[selected_pointlight]);
+
     if (ImGui::Button("Close", ImVec2(120,0))) {
       ui_state.show_pointlight_window = false;
     }

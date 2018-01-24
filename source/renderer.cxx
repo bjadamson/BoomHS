@@ -143,8 +143,6 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
 
   sp.set_uniform_bool(logger, "u_drawnormals", args.draw_normals);
 
-  
-
   // TODO: when re-implementing LOS restrictions
   //sp.set_uniform_vec3(logger, "u_player.position",  player.world_position());
   //sp.set_uniform_vec3(logger, "u_player.direction",  player.forward_vector());
