@@ -34,14 +34,15 @@ struct PointLight {
   LightAttenuation attenuation;
 };
 
-uniform PointLight u_pointlights[MAX_NUM_POINTLIGHTS];
-
-uniform Material u_material;
+uniform Material    u_material;
+uniform PointLight  u_pointlights[MAX_NUM_POINTLIGHTS];
 uniform GlobalLight u_globallight;
+
+uniform int   u_drawnormals;
 uniform float u_reflectivity;
+
 uniform mat4 u_modelmatrix;
 uniform mat4 u_viewmatrix;
-uniform int u_drawnormals;
 
 out vec4 fragment_color;
 

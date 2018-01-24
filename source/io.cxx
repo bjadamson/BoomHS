@@ -87,10 +87,10 @@ process_event(GameState &state, SDL_Event &event)
     auto const& new_pos_tile = state.zone_state.tilemap.data(player_pos + move_vec);
     if (!engine_state.player_collision) {
       player.move(MOVE_DISTANCE, move_vec);
-      tilemap_state.redraw = true;
+      tilemap_state.recompute = true;
     } else if (!new_pos_tile.is_wall) {
       player.move(MOVE_DISTANCE, move_vec);
-      tilemap_state.redraw = true;
+      tilemap_state.recompute = true;
     }
   };
 
@@ -109,7 +109,7 @@ process_event(GameState &state, SDL_Event &event)
     auto const rot_player = [&]() {
       float const angle = event.motion.xrel > 0 ? 1.0 : -1.0f;
       player.rotate(angle, opengl::Y_UNIT_VECTOR);
-      tilemap_state.redraw = true;
+      tilemap_state.recompute = true;
     };
     auto const rot_camera = [&]() {
       camera.rotate(logger, ui_state, engine_state.mouse_data);
@@ -165,7 +165,7 @@ process_event(GameState &state, SDL_Event &event)
     auto const rotate_player = [&](float const angle, glm::vec3 const& axis)
     {
       player.rotate(angle, axis);
-      tilemap_state.redraw = true;
+      tilemap_state.recompute = true;
     };
     switch (event.key.keysym.sym) {
     case SDLK_w: {

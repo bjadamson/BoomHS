@@ -15,9 +15,6 @@ void main()
   v_position = a_position;
   gl_Position = u_mvpmatrix * v_position;
 
-  mat3 normal_matrix = mat3(transpose(inverse(u_modelmatrix)));
-  //v_surfacenormal = normalize(u_normalmatrix * a_normal);
-  v_surfacenormal = normalize(normal_matrix * a_normal);
-
+  v_surfacenormal = normalize(u_normalmatrix * a_normal);
   v_color = a_color;
 }

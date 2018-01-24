@@ -113,12 +113,11 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
   assert(receives_light);
 
   set_modelmatrix(logger, model_matrix, sp);
-  //sp.set_uniform_matrix_3fv(logger, "u_normalmatrix", glm::inverseTranspose(glm::mat3{model_matrix}));
+  sp.set_uniform_matrix_3fv(logger, "u_normalmatrix", glm::inverseTranspose(glm::mat3{model_matrix}));
 
   //set_dirlight(logger, sp, global_light);
 
   // ambient
-  //std::cerr << "global ambient: '" << global_light.ambient << "'\n";
   sp.set_uniform_color_3fv(logger, "u_globallight.ambient", global_light.ambient);
 
   // specular
@@ -142,15 +141,7 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
   sp.set_uniform_vec3(logger, "u_material.specular", material.specular);
   sp.set_uniform_float1(logger, "u_material.shininess", material.shininess);
 
-  std::cerr << "entity: '" << entity << "'\n";
-  //std::cerr << "material ambient: '" << glm::to_string(material.ambient) << "'\n";
-  //std::cerr << "material diffuse: '" << glm::to_string(material.diffuse) << "'\n";
-  //std::cerr << "material specular: '" << glm::to_string(material.specular) << "'\n";
-  //std::cerr << "material shininess: '" << material.shininess << "'\n";
-  //std::cerr << "===============================\n\n\n";
-
   sp.set_uniform_bool(logger, "u_drawnormals", args.draw_normals);
-
   // TODO: when re-implementing LOS restrictions
   //sp.set_uniform_vec3(logger, "u_player.position",  player.world_position());
   //sp.set_uniform_vec3(logger, "u_player.direction",  player.forward_vector());
@@ -319,30 +310,32 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
 
 void
 draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args,
-    TileMap const& tilemap, bool const reveal_map, entt::DefaultRegistry &registry)
+    TileMap const& tilemap, TilemapState const& tilemap_state, entt::DefaultRegistry &registry)
 {
+  auto &logger = args.logger;
   auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, std::uint32_t const entity,
       glm::vec3 const& tile_pos)
   {
-    auto &logger = args.logger;
     sp.use_program(logger);
     opengl::global::vao_bind(dinfo.vao());
     ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
     glm::mat4 const translated = glm::translate(glm::mat4{}, tile_pos);
-    draw_3dshape(args, translated, sp, dinfo, entity, registry);
+    glm::mat4 const scaled = glm::scale(translated, tilemap_state.tile_scaling);
+    draw_3dshape(args, scaled, sp, dinfo, entity, registry);
   };
 
   auto &plus = dt_args.plus;
   auto &hashtag = dt_args.hashtag;
   auto const draw_all_tiles = [&](auto const& pos) {
     auto const& tile = tilemap.data(pos.x, pos.y, pos.z);
-    if (!reveal_map && !tile.is_visible) {
+    if (!tilemap_state.reveal && !tile.is_visible) {
       return;
     }
     if(tile.is_wall) {
       draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, pos);
     } else {
+      plus.sp.set_uniform_vec3(logger, "u_offset", tilemap_state.floor_offset);
       draw_tile_helper(plus.sp, plus.dinfo, plus.eid, pos);
     }
   };

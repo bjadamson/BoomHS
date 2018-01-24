@@ -277,7 +277,7 @@ ShaderProgram::get_uniform_location(stlw::Logger &logger, GLchar const *name)
 }
 
 void
-ShaderProgram::set_uniform_matrix_3fv(stlw::Logger &logger, GLchar const *name, glm::mat4 const &matrix)
+ShaderProgram::set_uniform_matrix_3fv(stlw::Logger &logger, GLchar const *name, glm::mat3 const &matrix)
 {
   use_program(logger);
 

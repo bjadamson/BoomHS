@@ -75,6 +75,29 @@ draw_entity_editor(GameState &state, entt::DefaultRegistry &registry)
 }
 
 void
+draw_tilemap_editor(GameState &state)
+{
+  auto &tm_state = state.engine_state.tilemap_state;
+
+  if (ImGui::Begin("Tilemap Editor Window")) {
+    ImGui::InputFloat3("Floor Offset:", glm::value_ptr(tm_state.floor_offset));
+    ImGui::InputFloat3("Tile Scaling:", glm::value_ptr(tm_state.tile_scaling));
+
+    bool recompute = false;
+    recompute |= ImGui::Checkbox("Reveal Tilemap", &tm_state.reveal);
+    recompute |= ImGui::Checkbox("Show (x, z)-axis lines", &tm_state.show_grid_lines);
+    recompute |= ImGui::Checkbox("Show y-axis Lines ", &tm_state.show_yaxis_lines);
+    recompute |= ImGui::Checkbox("Draw Tilemap", &tm_state.draw_tilemap);
+
+    if (recompute) {
+      std::cerr << "forcing redraw\n";
+      tm_state.recompute = true;
+    }
+    ImGui::End();
+  }
+}
+
+void
 draw_camera_info(GameState &state)
 {
   auto &camera = state.engine_state.camera;
@@ -290,19 +313,6 @@ world_menu(GameState &state)
     ImGui::MenuItem("Local Axis", nullptr, &engine_state.show_local_axis);
     ImGui::MenuItem("Global Axis", nullptr, &engine_state.show_global_axis);
     ImGui::MenuItem("Target Forward/Right/Up Vectors", nullptr, &engine_state.show_target_vectors);
-
-    auto &tilemap_state = engine_state.tilemap_state;
-    if (ImGui::MenuItem("Reveal Tilemap", nullptr, &tilemap_state.reveal)) {
-      tilemap_state.redraw = true;
-    }
-
-    if (ImGui::BeginMenu("TileMap GridLines (Debug)")) {
-      ImGui::MenuItem("Show (x, z)-axis lines", nullptr, &tilemap_state.show_grid_lines);
-      if (ImGui::MenuItem("Show y-axis Lines ", nullptr, &tilemap_state.show_yaxis_lines)) {
-        tilemap_state.redraw = true;
-      }
-      ImGui::EndMenu();
-    }
     ImGui::EndMenu();
   }
 
@@ -362,12 +372,14 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
   if (ui_state.show_playerwindow) {
     draw_player_info(state);
   }
+  if (ui_state.show_tilemapwindow) {
+    draw_tilemap_editor(state);
+  }
   if (ui_state.show_debugwindow) {
     ImGui::Checkbox("Draw Skybox", &engine_state.draw_skybox);
     ImGui::Checkbox("Enter Pressed", &ui_state.enter_pressed);
     ImGui::Checkbox("Mouse Rotation Lock", &ui_state.rotate_lock);
     ImGui::Checkbox("Draw Entities", &engine_state.draw_entities);
-    ImGui::Checkbox("Draw Tilemap", &engine_state.draw_tilemap);
     ImGui::Checkbox("Draw Normals", &engine_state.draw_normals);
     ImGui::Checkbox("Player Collisions Enabled", &engine_state.player_collision);
   }
@@ -378,6 +390,7 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
       ImGui::MenuItem("Entity Menu", nullptr, &ui_state.show_entitywindow);
       ImGui::MenuItem("Camera Menu", nullptr, &ui_state.show_camerawindow);
       ImGui::MenuItem("Player Menu", nullptr, &ui_state.show_playerwindow);
+      ImGui::MenuItem("Tilemap Menu", nullptr, &ui_state.show_tilemapwindow);
       ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Settings")) {

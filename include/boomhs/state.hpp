@@ -53,6 +53,7 @@ struct UiState
   bool show_entitywindow = false;
   bool show_camerawindow = false;
   bool show_playerwindow = false;
+  bool show_tilemapwindow = false;
 };
 
 struct MouseState
@@ -68,12 +69,16 @@ struct WindowState
 
 struct TilemapState
 {
-  bool redraw = true;
+  bool draw_tilemap = false;
+  bool recompute = true;
   bool reveal = false;
 
   // Both related to drawing GRID LINES
   bool show_grid_lines = true;
   bool show_yaxis_lines = false;
+
+  glm::vec3 floor_offset = {0.0f, -0.5f, 0.0f};
+  glm::vec3 tile_scaling = {0.5f, 0.5f, 0.5f};
 };
 
 struct ZoneState
@@ -100,7 +105,6 @@ struct EngineState
   // rendering state
   bool draw_entities = true;
   bool draw_skybox = false;
-  bool draw_tilemap = false;
   bool draw_terrain = false;
   bool draw_normals = false;
 

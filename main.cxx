@@ -267,7 +267,7 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
 
   std::cerr << "Drawing tilemap ...\n";
   render::draw_tilemap(state.render_args(), dta, state.zone_state.tilemap,
-                       state.engine_state.tilemap_state.reveal, registry);
+                       state.engine_state.tilemap_state, registry);
 }
 
 void
@@ -380,16 +380,16 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
   // game logic
   if (mouse.right_pressed && mouse.left_pressed) {
     player.move(0.25f, player.forward_vector());
-    tilemap_state.redraw = true;
+    tilemap_state.recompute = true;
   }
 
   // compute tilemap
-  if (tilemap_state.redraw) {
+  if (tilemap_state.recompute) {
     LOG_INFO("Updating tilemap\n");
     update_visible_tiles(zone_state.tilemap, player, tilemap_state.reveal);
 
     // We don't need to recompute the tilemap, we just did.
-    tilemap_state.redraw = false;
+    tilemap_state.recompute = false;
   }
 
   // action begins here
@@ -401,7 +401,7 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
   if (engine_state.draw_terrain) {
     draw_terrain(state, registry, sps);
   }
-  if (engine_state.draw_tilemap) {
+  if (tilemap_state.draw_tilemap) {
     draw_tilemap(state, registry, sps, handles);
   }
   if (tilemap_state.show_grid_lines) {

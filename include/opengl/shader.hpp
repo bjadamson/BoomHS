@@ -85,11 +85,11 @@ public:
   void use_program(stlw::Logger &);
   GLint get_uniform_location(stlw::Logger &, GLchar const *);
 
+  void set_uniform_matrix_3fv(stlw::Logger &, GLchar const *, glm::mat3 const &);
   void set_uniform_matrix_4fv(stlw::Logger &, GLchar const *, glm::mat4 const &);
-  void set_uniform_matrix_3fv(stlw::Logger &, GLchar const *, glm::mat4 const &);
 
-  void set_uniform_array_4fv(stlw::Logger &, GLchar const *, std::array<float, 4> const &);
   void set_uniform_array_3fv(stlw::Logger &, GLchar const*, std::array<float, 3> const&);
+  void set_uniform_array_4fv(stlw::Logger &, GLchar const *, std::array<float, 4> const &);
 
   void
   set_uniform_vec3(stlw::Logger &logger, GLchar const* name, glm::vec3 const& v)

@@ -8,33 +8,25 @@ out vec4 v_color;
 
 uniform mat4 u_mvpmatrix;
 uniform mat4 u_modelmatrix;
-uniform mat4 u_normalmatrix;
-uniform mat4 u_viewmatrix;
+uniform mat3 u_normalmatrix;
 
-struct LightAttenuation
-{
-  float constant;
-  float linear;
-  float quadratic;
-};
-
-struct PointLight {
-  vec3 position;
-
-  vec3 diffuse;
-  vec3 specular;
-
-  LightAttenuation attenuation;
-};
+uniform vec3 u_offset;
 
 void main()
 {
-  gl_Position = u_mvpmatrix * a_position;
-  gl_Position -= (u_mvpmatrix * vec4(0.0, 1.0, 0.0, 1.0));
-
   v_position = a_position;
-  vec3 v_normal = (u_normalmatrix * vec4(a_normal, 0.0)).xyz;
-  v_surfacenormal = normalize((u_modelmatrix * vec4(v_normal, 0.0)).xyz);
+  v_surfacenormal = normalize(u_normalmatrix * a_normal);
+  v_color = vec4(0.0, 1.0, 0.0, 1.0);
 
-  v_color = a_color;
+  // Transform v_position to world-space
+  vec4 pos_world = u_modelmatrix * v_position;
+
+  // Move the point down in the Y axis
+  pos_world += vec4(u_offset, 0.0);
+
+  // Transform pos_world to it's original space
+  pos_world = inverse(u_modelmatrix) * pos_world;
+
+  // Transform pos_world to ndc
+  gl_Position = u_mvpmatrix * pos_world;
 }

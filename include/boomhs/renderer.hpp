@@ -20,6 +20,7 @@ class Camera;
 struct RenderArgs;
 struct Transform;
 class TileMap;
+struct TilemapState;
 class WorldObject;
 } // ns boomhs
 
@@ -81,7 +82,7 @@ struct DrawTilemapArgs
 };
 
 void
-draw_tilemap(RenderArgs const&, DrawTilemapArgs &, TileMap const&, bool const reveal_map,
+draw_tilemap(RenderArgs const&, DrawTilemapArgs &, TileMap const&, TilemapState const&,
     entt::DefaultRegistry &);
 
 void
