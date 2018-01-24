@@ -79,7 +79,7 @@ uvs = false
 
 ########### ENTITY #############
 [[entity]]
-pos = [8.0, 0.0, 8.0]
+pos = [8.5, 0.0, 8.5]
 shader = "3d_pos_normal_color"
 geometry = "mesh:at"
 player = "player"

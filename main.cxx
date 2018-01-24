@@ -171,7 +171,7 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
 
   auto const player_eid = find_player(registry);
   auto &player_transform = registry.get<Transform>(player_eid);
-  player_transform.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
+  //player_transform.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
 
   EnttLookup player_lookup{player_eid, registry};
   WorldObject player{player_lookup, FORWARD, UP};
@@ -265,7 +265,6 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
                           handles.hashtag_eid};
   DrawTilemapArgs dta{MOVE(plus), MOVE(hashtag)};
 
-  std::cerr << "Drawing tilemap ...\n";
   render::draw_tilemap(state.render_args(), dta, state.zone_state.tilemap,
                        state.engine_state.tilemap_state, registry);
 }

@@ -90,7 +90,6 @@ find_materials(entt::DefaultRegistry &registry)
   return find_all_entities_with_component<Material, Transform>(registry);
 }
 
-
 inline auto
 find_pointlights(entt::DefaultRegistry &registry)
 {

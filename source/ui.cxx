@@ -5,7 +5,7 @@
 #include <boomhs/state.hpp>
 #include <stlw/format.hpp>
 #include <window/sdl_window.hpp>
-#include <iostream>
+#include <algorithm>
 
 namespace
 {
@@ -24,12 +24,14 @@ collect_all(entt::DefaultRegistry &registry)
     auto pair = std::make_pair(std::to_string(entity), entity);
     pairs.emplace_back(MOVE(pair));
   }
+  std::reverse(pairs.begin(), pairs.end());
   return pairs;
 }
 
-template<typename ...T>
+template<typename T>
 bool
-display_combo_for_entities(char const* text, int *selected, entt::DefaultRegistry &registry)
+display_combo_for_entities(char const* text, int *selected, entt::DefaultRegistry &registry,
+    std::vector<T> &pairs)
 {
   auto const combo_callback = [](void *const pvec, int const idx, const char** out_text)
   {
@@ -45,9 +47,19 @@ display_combo_for_entities(char const* text, int *selected, entt::DefaultRegistr
     return true;
   };
 
-  auto pairs = collect_all<T...>(registry);
   void *pdata = reinterpret_cast<void *>(&pairs);
   return ImGui::Combo(text, selected, combo_callback, pdata, pairs.size());
+}
+
+std::uint32_t
+comboselected_to_eid(int const selected_index, std::vector<pair_t> const& pairs)
+{
+  auto const selected_string = std::to_string(selected_index);
+  auto const cmp = [&selected_string](auto const& pair) { return pair.first == selected_string; };
+  auto const it = std::find_if(pairs.cbegin(), pairs.cend(), cmp);
+  assert(it != pairs.cend());
+
+  return it->second;
 }
 
 void
@@ -55,13 +67,14 @@ draw_entity_editor(GameState &state, entt::DefaultRegistry &registry)
 {
   auto &selected = state.engine_state.ui_state.selected_entity;
   if (ImGui::Begin("Entity Editor Window")) {
-    if (display_combo_for_entities<Transform>("Entity", &selected, registry)) {
-      state.engine_state.camera.set_target(selected);
-      state.engine_state.player.set_eid(selected);
+    auto pairs = collect_all<Transform>(registry);
+    if (display_combo_for_entities("Entity", &selected, registry, pairs)) {
+      auto const eid = comboselected_to_eid(selected, pairs);
+      state.engine_state.camera.set_target(eid);
+      state.engine_state.player.set_eid(eid);
     }
-    auto const transforms = find_all_entities_with_component<Transform>(registry);
-    auto const& selected_entity = transforms[selected];
-    auto &transform = registry.get<Transform>(selected_entity);
+    auto const eid = comboselected_to_eid(selected, pairs);
+    auto &transform = registry.get<Transform>(eid);
     ImGui::InputFloat3("pos:", glm::value_ptr(transform.translation));
     {
       auto buffer = glm::degrees(glm::eulerAngles(transform.rotation));
@@ -78,7 +91,6 @@ void
 draw_tilemap_editor(GameState &state)
 {
   auto &tm_state = state.engine_state.tilemap_state;
-
   if (ImGui::Begin("Tilemap Editor Window")) {
     ImGui::InputFloat3("Floor Offset:", glm::value_ptr(tm_state.floor_offset));
     ImGui::InputFloat3("Tile Scaling:", glm::value_ptr(tm_state.tile_scaling));
@@ -90,7 +102,6 @@ draw_tilemap_editor(GameState &state)
     recompute |= ImGui::Checkbox("Draw Tilemap", &tm_state.draw_tilemap);
 
     if (recompute) {
-      std::cerr << "forcing redraw\n";
       tm_state.recompute = true;
     }
     ImGui::End();
@@ -100,10 +111,11 @@ draw_tilemap_editor(GameState &state)
 void
 draw_camera_info(GameState &state)
 {
-  auto &camera = state.engine_state.camera;
-  auto &player = state.engine_state.player;
-
+  auto &es = state.engine_state;
+  auto &camera = es.camera;
+  auto &player = es.player;
   if (ImGui::Begin("CAMERA INFO WINDOW")) {
+    ImGui::Checkbox("Flip Y Sensitivity", &es.ui_state.flip_y);
     {
       auto const coords = camera.spherical_coordinates();
       auto const r = coords.radius_display_string();
@@ -139,7 +151,6 @@ draw_camera_info(GameState &state)
         );
     ImGui::Separator();
     ImGui::Separator();
-
     auto &projection = camera.projection_ref();
     ImGui::InputFloat("Field of View", &projection.field_of_view);
     ImGui::InputFloat("Near Plane", &projection.near_plane);
@@ -153,8 +164,7 @@ draw_player_info(GameState &state)
 {
   auto &player = state.engine_state.player;
 
-  ImGui::Begin("PLAYER INFO WINDOW");
-  {
+  if (ImGui::Begin("PLAYER INFO WINDOW")) {
     auto const display = player.display();
     ImGui::Text("%s", display.c_str());
 
@@ -163,9 +173,8 @@ draw_player_info(GameState &state)
     float const dot = glm::dot(player.orientation(), quat);
     std::string const dots = std::to_string(dot);
     ImGui::Text("dot product: '%s'", dots.c_str());
+    ImGui::End();
   }
-
-  ImGui::End();
 }
 
 void
@@ -220,11 +229,11 @@ show_entitymaterials_window(GameState &state, entt::DefaultRegistry &registry)
   auto &selected_material = ui_state.selected_material;
 
   if (ImGui::Begin("Entity Materials Editor")) {
-    display_combo_for_entities<Material, Transform>("Entity", &selected_material, registry);
+    auto pairs = collect_all<Material, Transform>(registry);
+    display_combo_for_entities<>("Entity", &selected_material, registry, pairs);
 
     auto const entities_with_materials = find_materials(registry);
     auto const& selected_entity = entities_with_materials[selected_material];
-    std::cerr << "ui: selected entity: '" << selected_entity << "'\n";
 
     auto &material = registry.get<Material>(selected_entity);
     ImGui::Separator();
@@ -233,10 +242,6 @@ show_entitymaterials_window(GameState &state, entt::DefaultRegistry &registry)
     ImGui::ColorEdit3("diffuse:", glm::value_ptr(material.diffuse));
     ImGui::ColorEdit3("specular:", glm::value_ptr(material.specular));
     ImGui::SliderFloat("shininess:", &material.shininess, 0.0f, 1.0f);
-
-    std::cerr << "ambient: '" << glm::to_string(material.ambient) << "'\n";
-    std::cerr << "diffuse: '" << glm::to_string(material.diffuse) << "'\n";
-    std::cerr << "specular: '" << glm::to_string(material.specular) << "'\n";
 
     if (ImGui::Button("Close", ImVec2(120,0))) {
       ui_state.show_entitymaterial_window = false;
@@ -259,15 +264,15 @@ show_pointlight_window(GameState &state, entt::DefaultRegistry &registry)
 
     ImGui::Text("Attenuation");
     auto &attenuation = pointlight.light.attenuation;
-    ImGui::SliderFloat("constant:", &attenuation.constant, 0.0f, 1.0f);
-    ImGui::SliderFloat("linear:", &attenuation.linear, 0.0f, 1.0f);
-    ImGui::SliderFloat("quadratic:", &attenuation.quadratic, 0.0f, 1.0f);
+    ImGui::InputFloat("constant:", &attenuation.constant);
+    ImGui::InputFloat("linear:", &attenuation.linear);
+    ImGui::InputFloat("quadratic:", &attenuation.quadratic);
   };
-
   auto &ui_state = state.engine_state.ui_state;
   if (ImGui::Begin("Pointlight Editor")) {
     auto &selected_pointlight = state.engine_state.ui_state.selected_pointlight;
-    display_combo_for_entities<PointLight, Transform>("PointLight:", &selected_pointlight, registry);
+    auto pairs = collect_all<PointLight, Transform>(registry);
+    display_combo_for_entities<>("PointLight:", &selected_pointlight, registry, pairs);
 
     auto const pointlights = find_pointlights(registry);
     display_pointlight(pointlights[selected_pointlight]);
@@ -285,7 +290,6 @@ show_background_window(GameState &state)
   auto &engine_state = state.engine_state;
   auto &zone_state = state.zone_state;
   auto &ui_state = engine_state.ui_state;
-
   if (ImGui::Begin("Background Color")) {
     ImGui::ColorEdit3("Background Color:", zone_state.background.data());
 
@@ -398,10 +402,6 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
       draw_row("NOT Fullscreen", window::FullscreenFlags::NOT_FULLSCREEN);
       draw_row("Fullscreen", window::FullscreenFlags::FULLSCREEN);
       draw_row("Fullscreen DESKTOP", window::FullscreenFlags::FULLSCREEN_DESKTOP);
-      ImGui::EndMenu();
-    }
-    if (ImGui::BeginMenu("Camera")) {
-      ImGui::MenuItem("Flip Y Sensitivity", nullptr, &ui_state.flip_y);
       ImGui::EndMenu();
     }
     world_menu(state);

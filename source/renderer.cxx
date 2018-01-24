@@ -329,13 +329,14 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
     if (!tilemap_state.reveal && !tile.is_visible) {
       return;
     }
+    glm::vec3 constexpr VIEWING_OFFSET{0.50f, 0.0f, 0.50f};
     if(tile.is_wall) {
-      auto const tmat = glm::translate(glm::mat4{}, tile_pos);
-      auto const rmat = glm::rotate(tmat, glm::degrees(90.0f), opengl::X_UNIT_VECTOR);
+      auto const tmat = glm::translate(glm::mat4{}, tile_pos + VIEWING_OFFSET);
+      auto const rmat = glm::rotate(tmat, glm::degrees(00.0f), opengl::X_UNIT_VECTOR);
       auto const smat = glm::scale(rmat, tilemap_state.tile_scaling);
       draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, smat);
     } else {
-      auto const tmat = glm::translate(glm::mat4{}, tile_pos);
+      auto const tmat = glm::translate(glm::mat4{}, tile_pos + VIEWING_OFFSET);
       auto const smat = glm::scale(tmat, tilemap_state.tile_scaling);
       plus.sp.set_uniform_vec3(logger, "u_offset", tilemap_state.floor_offset);
       draw_tile_helper(plus.sp, plus.dinfo, plus.eid, smat);
