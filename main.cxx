@@ -213,12 +213,12 @@ draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
   registry.view<ShaderName, Transform, CubeRenderable>().each(draw_adapter);
   registry.view<ShaderName, Transform, MeshRenderable>().each(draw_adapter);
 
-  //if (state.engine_state.draw_skybox) {
-    //auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {
-      //draw_fn(entity, sn, transform);
-    //};
-    //registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
-  //}
+  if (state.engine_state.draw_skybox) {
+    auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {
+      draw_fn(entity, sn, transform);
+    };
+    registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
+  }
 }
 
 void

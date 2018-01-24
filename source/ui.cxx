@@ -377,6 +377,7 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
   }
   if (ui_state.show_debugwindow) {
     ImGui::Checkbox("Draw Skybox", &engine_state.draw_skybox);
+    ImGui::Checkbox("Draw Terrain", &engine_state.draw_terrain);
     ImGui::Checkbox("Enter Pressed", &ui_state.enter_pressed);
     ImGui::Checkbox("Mouse Rotation Lock", &ui_state.rotate_lock);
     ImGui::Checkbox("Draw Entities", &engine_state.draw_entities);
