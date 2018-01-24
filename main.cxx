@@ -100,20 +100,20 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
     handle_list.add(entity, MOVE(handle));
   });
 
-  auto const make_special = [&](char const *name) {
+  auto const make_special = [&handle_list, &logger, &obj_cache, &sps, &registry](char const *name) {
     auto const &obj = obj_cache.get_obj(name);
     auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(name), obj, boost::none);
     auto const entity = registry.create();
-    registry.assign<Transform>(entity).scale = glm::vec3{0.2f, 0.2f, 0.2f};
+    registry.assign<Transform>(entity);//.scale = glm::vec3{0.2f, 0.2f, 0.2f};
     registry.assign<Material>(entity);
     auto meshc = registry.assign<MeshRenderable>(entity);
     meshc.name = name;
 
     auto &color = registry.assign<Color>(entity);
-    color.set_r(0.0);
-    color.set_g(0.0);
-    color.set_b(0.0);
-    color.set_a(0.0);
+    color.set_r(1.0);
+    color.set_g(1.0);
+    color.set_b(1.0);
+    color.set_a(1.0);
 
     handle_list.add(entity, MOVE(handle));
     return entity;

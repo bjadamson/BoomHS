@@ -309,8 +309,8 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
 }
 
 void
-draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args,
-    TileMap const& tilemap, TilemapState const& tilemap_state, entt::DefaultRegistry &registry)
+draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& tilemap,
+    TilemapState const& tilemap_state, entt::DefaultRegistry &registry)
 {
   auto &logger = args.logger;
   auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, std::uint32_t const entity,
@@ -320,9 +320,10 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args,
     opengl::global::vao_bind(dinfo.vao());
     ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
-    glm::mat4 const translated = glm::translate(glm::mat4{}, tile_pos);
-    glm::mat4 const scaled = glm::scale(translated, tilemap_state.tile_scaling);
-    draw_3dshape(args, scaled, sp, dinfo, entity, registry);
+    auto const tmat = glm::translate(glm::mat4{}, tile_pos);
+    auto const rmat = glm::rotate(tmat, 90.0f, opengl::X_UNIT_VECTOR);
+    auto const smat = glm::scale(rmat, tilemap_state.tile_scaling);
+    draw_3dshape(args, smat, sp, dinfo, entity, registry);
   };
 
   auto &plus = dt_args.plus;
