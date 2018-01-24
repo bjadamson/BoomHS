@@ -79,13 +79,9 @@ set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
 
   //std::cerr << "pointlight POSITION: '" << glm::to_string(pointlight_position) << "'\n";
   //std::cerr << "pointlight DIFFUSE: '" << pointlight.light.diffuse << "'\n";
-
-  auto const diffuse = make_field("diffuse");
-  auto const specular = make_field("specular");
-  auto const position = make_field("position");
-  sp.set_uniform_color_3fv(logger, diffuse, pointlight.light.diffuse);
-  sp.set_uniform_color_3fv(logger, specular, pointlight.light.specular);
-  sp.set_uniform_vec3(logger, position, pointlight_position);
+  sp.set_uniform_color_3fv(logger, make_field("diffuse"), pointlight.light.diffuse);
+  sp.set_uniform_color_3fv(logger, make_field("specular"), pointlight.light.specular);
+  sp.set_uniform_vec3(logger, make_field("position"), pointlight_position);
 
   auto const& attenuation = pointlight.light.attenuation;
   auto const attenuation_field = [&make_field](char const* fieldname) {
@@ -116,11 +112,16 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
   assert(receives_light);
 
   set_modelmatrix(logger, model_matrix, sp);
-  sp.set_uniform_matrix_4fv(logger, "u_normalmatrix", glm::inverseTranspose(model_matrix));
-  sp.set_uniform_matrix_4fv(logger, "u_viewmatrix", camera.view_matrix());
-  sp.set_uniform_color_3fv(logger, "u_globallight.ambient", global_light.ambient);
+  //sp.set_uniform_matrix_4fv(logger, "u_normalmatrix", glm::inverseTranspose(model_matrix));
 
   //set_dirlight(logger, sp, global_light);
+
+  // ambient
+  //sp.set_uniform_color_3fv(logger, "u_globallight.ambient", global_light.ambient);
+
+  // specular
+  //sp.set_uniform_matrix_4fv(logger, "u_viewmatrix", camera.view_matrix());
+  //sp.set_uniform_float1(logger, "u_reflectivity", 1.0f);
 
   auto const pointlights = find_pointlights(registry);
   //std::cerr << "===============================\n";
@@ -142,8 +143,7 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
 
   sp.set_uniform_bool(logger, "u_drawnormals", args.draw_normals);
 
-  // specular
-  sp.set_uniform_float1(logger, "u_reflectivity", 1.0f);
+  
 
   // TODO: when re-implementing LOS restrictions
   //sp.set_uniform_vec3(logger, "u_player.position",  player.world_position());
