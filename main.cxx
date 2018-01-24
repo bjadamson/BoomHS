@@ -25,6 +25,7 @@
 #include <stlw/type_macros.hpp>
 
 #include <entt/entt.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_sdl_gl3.h>
@@ -39,6 +40,7 @@
 namespace OF = opengl::factories;
 namespace LOC = opengl::LIST_OF_COLORS;
 using namespace boomhs;
+using namespace opengl;
 using stlw::Logger;
 
 namespace boomhs
@@ -49,12 +51,21 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
                 ObjCache const &obj_cache)
 {
   GpuHandleList handle_list;
+  /*
   registry.view<ShaderName, opengl::Color, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_colorcube_gpu(logger, shader_ref, color);
         handle_list.add(entity, MOVE(handle));
       });
+      */
+  registry.view<ShaderName, PointLight, CubeRenderable>().each(
+      [&](auto entity, auto &sn, auto &pointlight, auto &) {
+        auto &shader_ref = sps.ref_sp(sn.value);
+        auto handle = OF::copy_vertexonlycube_gpu(logger, shader_ref);
+        handle_list.add(entity, MOVE(handle));
+      });
+
   registry.view<ShaderName, opengl::Color, MeshRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &mesh) {
         auto const &obj = obj_cache.get_obj(mesh.name);
@@ -81,6 +92,7 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
         auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
         handle_list.add(entity, MOVE(handle));
       });
+
   registry.view<ShaderName, MeshRenderable>().each([&](auto entity, auto &sn, auto &mesh) {
     auto const &obj = obj_cache.get_obj(mesh.name);
     auto &shader_ref = sps.ref_sp(sn.value);
@@ -88,29 +100,51 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
     handle_list.add(entity, MOVE(handle));
   });
 
-  return HandleManager{MOVE(handle_list)};
+  auto const make_special = [&handle_list, &logger, &obj_cache, &sps, &registry](char const *name) {
+    auto const &obj = obj_cache.get_obj(name);
+    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(name), obj, boost::none);
+    auto const entity = registry.create();
+    registry.assign<Transform>(entity);//.scale = glm::vec3{0.2f, 0.2f, 0.2f};
+    registry.assign<Material>(entity);
+    auto meshc = registry.assign<MeshRenderable>(entity);
+    meshc.name = name;
+
+    auto &color = registry.assign<Color>(entity);
+    color.set_r(1.0);
+    color.set_g(1.0);
+    color.set_b(1.0);
+    color.set_a(1.0);
+
+    handle_list.add(entity, MOVE(handle));
+    return entity;
+  };
+
+  auto const plus_eid = make_special("plus");
+  auto const hashtag_eid = make_special("hashtag");
+
+  return HandleManager{MOVE(handle_list), plus_eid, hashtag_eid};
 }
 
-auto&
+std::uint32_t
 find_player(entt::DefaultRegistry &registry)
 {
   // for now assume only 1 entity has the Player tag
   assert(1 == registry.view<Player>().size());
 
-  Transform *ptransform = nullptr;
   auto view = registry.view<Player, Transform>();
-  for (auto entity : view) {
+  boost::optional<uint32_t> entity{boost::none};
+  for (auto const e : view) {
     // This assert ensures this loop only runs once.
-    assert(nullptr == ptransform);
-
-    ptransform = &view.get<Transform>(entity);
+    assert(boost::none == entity);
+    entity = e;
   }
-  return *ptransform;
+  assert(boost::none != entity);
+  return *entity;
 }
 
 auto
 init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
-     window::Dimensions const &dimensions, LoadedEntities const &entities_from_file)
+     window::Dimensions const &dimensions, Assets const &assets)
 {
   auto const fheight = dimensions.h;
   auto const fwidth = dimensions.w;
@@ -123,16 +157,8 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
   imgui.MouseDrawCursor = true;
   imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
 
-  // Construct entities
-  std::vector<Transform *> entities;
-  registry.view<Transform>().each(
-      [&entities](auto entity, auto &transform) { entities.emplace_back(&transform); });
-  assert(0 < entities.size());
-
   // for now assume only 1 entity has the Light tag
-  assert(1 == registry.view<Light>().size());
-
-  auto light_view = registry.view<Light, Transform>();
+  auto light_view = registry.view<PointLight, Transform>();
   for (auto const entity : light_view) {
     auto &transform = light_view.get<Transform>(entity);
     transform.scale = glm::vec3{0.2f};
@@ -143,40 +169,39 @@ init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
   auto const FORWARD = -opengl::Z_UNIT_VECTOR;
   auto constexpr UP = opengl::Y_UNIT_VECTOR;
 
-  auto &player_transform = find_player(registry);
+  auto const player_eid = find_player(registry);
+  auto &player_transform = registry.get<Transform>(player_eid);
   player_transform.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
 
-  WorldObject wo{player_transform, FORWARD, UP};
-
-  Material material{LOC::WHITE, LOC::WHITE, LOC::WHITE, 1.0f};
-  RenderableObject player{MOVE(wo), MOVE(material)};
+  EnttLookup player_lookup{player_eid, registry};
+  WorldObject player{player_lookup, FORWARD, UP};
 
   Projection const proj{90.0f, 4.0f / 3.0f, 0.1f, 200.0f};
-  Camera camera(proj, player_transform, FORWARD, UP);
+  Camera camera(proj, player_lookup, FORWARD, UP);
+
+  SphericalCoordinates sc{assets.camera_spherical_coords};
+  camera.set_coordinates(MOVE(sc));
 
   // Construct tilemap
   stlw::float_generator rng;
-  auto tmap_startingpos = level_generator::make_tilemap(80, 1, 45, rng);
+  auto tmap_startingpos = level_generator::make_tilemap(35, 1, 35, rng);
   auto tmap = MOVE(tmap_startingpos.first);
   auto &startingpos = tmap_startingpos.second;
 
-  auto const bgcolor = LOC::BLACK;
-  ZoneState zs{bgcolor, MOVE(tmap)};
-
-  EngineState es{logger,     imgui,          dimensions,   MOVE(rng),
-               MOVE(entities), MOVE(camera), MOVE(player)};
+  ZoneState zs{assets.background_color, assets.global_light, MOVE(tmap)};
+  EngineState es{logger, imgui, dimensions, MOVE(rng), MOVE(camera), MOVE(player)};
 
   return GameState{MOVE(es), MOVE(zs)};
 }
 
 void
 draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
-    HandleManager &handles)
+              HandleManager &handles)
 {
-  auto const draw_fn = [&handles, &sps, &state](auto entity, auto &sn, auto &transform) {
+  auto const draw_fn = [&handles, &sps, &registry, &state](auto entity, auto &sn, auto &transform) {
     auto &shader_ref = sps.ref_sp(sn.value);
     auto &handle = handles.lookup(entity);
-    render::draw(state.render_args(), transform, shader_ref, handle);
+    render::draw(state.render_args(), transform, shader_ref, handle, entity, registry);
   };
 
   auto const draw_adapter = [&](auto entity, auto &sn, auto &transform, auto &) {
@@ -188,23 +213,42 @@ draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
   registry.view<ShaderName, Transform, CubeRenderable>().each(draw_adapter);
   registry.view<ShaderName, Transform, MeshRenderable>().each(draw_adapter);
 
-  auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {
-    if (state.engine_state.draw_skybox) {
+  if (state.engine_state.draw_skybox) {
+    auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {
       draw_fn(entity, sn, transform);
-    }
-  };
-  registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
+    };
+    registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
+  }
+}
+
+void
+draw_terrain(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps)
+{
+  auto entity = registry.create();
+  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
+
+  auto &logger = state.engine_state.logger;
+  auto &terrain_sp = sps.ref_sp("3d_pos_normal_color");
+  auto terrain = OF::copy_normalcolorcube_gpu(logger, terrain_sp, LOC::WHITE);
+
+  auto &transform = registry.assign<Transform>(entity);
+  auto &scale = transform.scale;
+  scale.x = 50.0f;
+  scale.y = 0.2f;
+  scale.z = 50.0f;
+  auto &translation = transform.translation;
+  // translation.x = 3.0f;
+  translation.y = -2.0f;
+  // translation.z = 2.0f;
+  render::draw(state.render_args(), transform, terrain_sp, terrain, entity, registry);
 }
 
 void
 draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
-    HandleManager &handles)
+             HandleManager &handles)
 {
+  using namespace render;
   auto &logger = state.engine_state.logger;
-
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-
   // TODO: How do we "GET" the hashtag and plus shaders under the new entity management system?
   //
   // PROBLEM:
@@ -216,24 +260,14 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
   //    just two tile type's will be necessary, and will have to devise a strategy for quickly
   //    rendering the tilemap using different tile's. Maybe store the different tile type's
   //    together somehow for rendering?
-  auto &transform = registry.assign<Transform>(entity);
-  auto &hash_sp = sps.ref_sp("hashtag");
-  auto &plus_sp = sps.ref_sp("plus");
+  DrawPlusArgs plus{sps.ref_sp("plus"), handles.lookup(handles.plus_eid), handles.plus_eid};
+  DrawHashtagArgs hashtag{sps.ref_sp("hashtag"), handles.lookup(handles.hashtag_eid),
+                          handles.hashtag_eid};
+  DrawTilemapArgs dta{MOVE(plus), MOVE(hashtag)};
 
-  auto const load_normals = opengl::LoadNormals{true};
-  auto const load_uvs = opengl::LoadUvs{false};
-
-  auto loader = opengl::ObjLoader{LOC::WHITE};
-  auto hashtag_obj = loader.load_mesh("assets/hashtag.obj", "assets/hashtag.mtl", load_normals, load_uvs);
-  auto hashtag_handle = OF::copy_gpu(logger, GL_TRIANGLES, hash_sp, hashtag_obj, boost::none);
-
-  //auto &hash_handle = handles.get(
-  auto plus_obj = loader.load_mesh("assets/plus.obj", "assets/plus.mtl", load_normals, load_uvs);
-  auto plus_handle = OF::copy_gpu(logger, GL_TRIANGLES, plus_sp, plus_obj, boost::none);
-
-  render::draw_tilemap(state.render_args(), transform,
-      {hashtag_handle, hash_sp, plus_handle, plus_sp},
-      state.zone_state.tilemap, state.engine_state.tilemap_state.reveal);
+  std::cerr << "Drawing tilemap ...\n";
+  render::draw_tilemap(state.render_args(), dta, state.zone_state.tilemap,
+                       state.engine_state.tilemap_state, registry);
 }
 
 void
@@ -242,7 +276,7 @@ draw_tilegrid(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
   auto &engine_state = state.engine_state;
   auto &logger = engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
-  auto const& tilemap = state.zone_state.tilemap;
+  auto const &tilemap = state.zone_state.tilemap;
 
   Transform transform;
   bool const show_y = engine_state.tilemap_state.show_yaxis_lines;
@@ -256,54 +290,56 @@ draw_global_axis(GameState &state, entt::DefaultRegistry &registry, opengl::Shad
   auto &engine_state = state.engine_state;
   auto &logger = engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
-  auto world_arrows = OF::create_world_axis_arrows(logger, sp);
+  auto world_arrows = OF::create_axis_arrows(logger, sp);
 
   auto entity = registry.create();
   ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
 
   auto &transform = registry.assign<Transform>(entity);
+  transform.translation = glm::vec3{0.0, 0.0, 0.0}; // explicit
 
-  auto const& rargs = state.render_args();
-  render::draw(rargs, transform, sp, world_arrows.x_dinfo);
-  render::draw(rargs, transform, sp, world_arrows.y_dinfo);
-  render::draw(rargs, transform, sp, world_arrows.z_dinfo);
+  auto const &rargs = state.render_args();
+  render::draw(rargs, transform, sp, world_arrows.x_dinfo, entity, registry);
+  render::draw(rargs, transform, sp, world_arrows.y_dinfo, entity, registry);
+  render::draw(rargs, transform, sp, world_arrows.z_dinfo, entity, registry);
 }
 
 void
 draw_local_axis(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
-    glm::vec3 const& player_pos)
+                glm::vec3 const &player_pos)
 {
   auto &logger = state.engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
-  auto const axis_arrows = OF::create_axis_arrows(logger, sp, player_pos);
+  auto const axis_arrows = OF::create_axis_arrows(logger, sp);
 
   auto entity = registry.create();
   ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
 
   auto &transform = registry.assign<Transform>(entity);
+  transform.translation = player_pos;
 
-  auto const& rargs = state.render_args();
-  render::draw(rargs, transform, sp, axis_arrows.x_dinfo);
-  render::draw(rargs, transform, sp, axis_arrows.y_dinfo);
-  render::draw(rargs, transform, sp, axis_arrows.z_dinfo);
+  auto const &rargs = state.render_args();
+  render::draw(rargs, transform, sp, axis_arrows.x_dinfo, entity, registry);
+  render::draw(rargs, transform, sp, axis_arrows.y_dinfo, entity, registry);
+  render::draw(rargs, transform, sp, axis_arrows.z_dinfo, entity, registry);
 }
 
 void
 draw_target_vectors(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
-    WorldObject const& player)
+                    WorldObject const &player)
 {
   auto &logger = state.engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
 
-  auto const draw_arrow = [&](auto const& start, auto const& head, auto const& color) {
+  auto const draw_arrow = [&](auto const &start, auto const &head, auto const &color) {
     auto const handle = OF::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
 
     auto entity = registry.create();
     ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
     auto &transform = registry.assign<Transform>(entity);
 
-    auto const& rargs = state.render_args();
-    render::draw(rargs, transform, sp, handle);
+    auto const &rargs = state.render_args();
+    render::draw(rargs, transform, sp, handle, entity, registry);
   };
 
   // draw player forward
@@ -336,7 +372,7 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
   auto &engine_state = state.engine_state;
   auto &zone_state = state.zone_state;
 
-  auto &player = engine_state.player.world_object;
+  auto &player = engine_state.player;
   auto &mouse = engine_state.mouse_state;
   auto &tilemap_state = state.engine_state.tilemap_state;
   auto &logger = engine_state.logger;
@@ -344,16 +380,16 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
   // game logic
   if (mouse.right_pressed && mouse.left_pressed) {
     player.move(0.25f, player.forward_vector());
-    tilemap_state.redraw = true;
+    tilemap_state.recompute = true;
   }
 
   // compute tilemap
-  if (tilemap_state.redraw) {
+  if (tilemap_state.recompute) {
     LOG_INFO("Updating tilemap\n");
     update_visible_tiles(zone_state.tilemap, player, tilemap_state.reveal);
 
     // We don't need to recompute the tilemap, we just did.
-    tilemap_state.redraw = false;
+    tilemap_state.recompute = false;
   }
 
   // action begins here
@@ -362,10 +398,12 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
   if (engine_state.draw_entities) {
     draw_entities(state, registry, sps, handles);
   }
-  if (engine_state.draw_tilemap) {
+  if (engine_state.draw_terrain) {
+    draw_terrain(state, registry, sps);
+  }
+  if (tilemap_state.draw_tilemap) {
     draw_tilemap(state, registry, sps, handles);
   }
-
   if (tilemap_state.show_grid_lines) {
     draw_tilegrid(state, registry, sps);
   }
@@ -379,7 +417,7 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
     draw_target_vectors(state, registry, sps, player);
   }
   // UI code
-  draw_ui(state, window);
+  draw_ui(state, window, registry);
 }
 
 } // ns boomhs
@@ -463,7 +501,7 @@ start(stlw::Logger &logger, Engine &engine)
          boomhs::copy_assets_gpu(logger, shader_programs, registry, assets.obj_cache));
 
   auto &imgui = ImGui::GetIO();
-  auto state = boomhs::init(logger, registry, imgui, engine.dimensions(), assets.loaded_entities);
+  auto state = boomhs::init(logger, registry, imgui, engine.dimensions(), assets);
 
   timed_game_loop(registry, engine, state, drawinfos, shader_programs, assets);
   LOG_TRACE("game loop finished.");

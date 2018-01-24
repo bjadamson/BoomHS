@@ -52,7 +52,6 @@ name = "3d_pos_normal_color"
 vertex = "3d_pos_normal_color.vert"
 fragment = "3d_pos_normal_color.frag"
 va = "vertex_normal_color"
-receives_light = true
 
 [[shaders]]
 name = "3d_pos_color"
@@ -68,18 +67,15 @@ vertex = "3d_hashtag.vert"
 fragment = "3d_pos_normal_color.frag"
 va = "vertex_normal_color"
 instance_count = 3
-receives_light = true
 
 [[shaders]]
 name = "plus"
 vertex = "3d_plus.vert"
 fragment = "3d_pos_normal_color.frag"
 va = "vertex_normal_color"
-receives_light = true
 
 [[shaders]]
 name = "light"
 vertex = "light.vert"
 fragment = "light.frag"
-va = "vertex_color"
-is_lightsource = true
+va = "vertex_only"

@@ -4,8 +4,10 @@
 #include <boomhs/types.hpp>
 
 #include <glm/glm.hpp>
-#include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include <opengl/draw_info.hpp>
 #include <opengl/global.hpp>
@@ -26,30 +28,30 @@ namespace
 {
 
 void
-set_modelmatrix(stlw::Logger &logger, glm::mat4 const& model_matrix, ShaderProgram &shader_program)
+set_modelmatrix(stlw::Logger &logger, glm::mat4 const& model_matrix, ShaderProgram &sp)
 {
-  shader_program.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
+  sp.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
 }
 
 void
-set_mvpmatrix(stlw::Logger &logger, glm::mat4 const& model_matrix, ShaderProgram &shader_program,
+set_mvpmatrix(stlw::Logger &logger, glm::mat4 const& model_matrix, ShaderProgram &sp,
     Camera const& camera)
 {
   glm::mat4 const view_matrix = camera.camera_matrix();
   auto const mvp_matrix = view_matrix * model_matrix;
 
-  shader_program.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
+  sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 }
 
 void
-draw_drawinfo(stlw::Logger &logger, ShaderProgram &shader_program, DrawInfo const& dinfo)
+draw_drawinfo(stlw::Logger &logger, ShaderProgram &sp, DrawInfo const& dinfo)
 {
   auto const draw_mode = dinfo.draw_mode();
   auto const num_indices = dinfo.num_indices();
   auto constexpr OFFSET = nullptr;
 
-  if (shader_program.instance_count) {
-    auto const ic = *shader_program.instance_count;
+  if (sp.instance_count) {
+    auto const ic = *sp.instance_count;
     glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
   } else {
     glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
@@ -57,58 +59,159 @@ draw_drawinfo(stlw::Logger &logger, ShaderProgram &shader_program, DrawInfo cons
 }
 
 void
-draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, ShaderProgram &shader_program,
-    DrawInfo const& dinfo)
+set_dirlight(stlw::Logger &logger, ShaderProgram &sp, GlobalLight const& global_light)
+{
+  auto const& directional_light = global_light.directional;
+  sp.set_uniform_vec3(logger, "u_dirlight.direction", directional_light.direction);
+
+  auto const& light = directional_light.light;
+  sp.set_uniform_color_3fv(logger, "u_dirlight.diffuse", light.diffuse);
+  sp.set_uniform_color_3fv(logger, "u_dirlight.specular", light.specular);
+}
+
+void
+set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
+    PointLight const& pointlight, glm::vec3 const& pointlight_position)
+{
+  std::string const varname = "u_pointlights[" + std::to_string(index) + "]";
+  auto const make_field = [&varname](char const* fieldname) {
+    return varname + "." + fieldname;
+  };
+
+  //std::cerr << "pointlight POSITION: '" << glm::to_string(pointlight_position) << "'\n";
+  //std::cerr << "pointlight DIFFUSE: '" << pointlight.light.diffuse << "'\n";
+  sp.set_uniform_color_3fv(logger, make_field("diffuse"), pointlight.light.diffuse);
+  sp.set_uniform_color_3fv(logger, make_field("specular"), pointlight.light.specular);
+  sp.set_uniform_vec3(logger, make_field("position"), pointlight_position);
+
+  auto const& attenuation = pointlight.light.attenuation;
+  auto const attenuation_field = [&make_field](char const* fieldname) {
+    return make_field("attenuation.") + fieldname;
+  };
+  auto const constant = attenuation_field("constant");
+  auto const linear = attenuation_field("linear");
+  auto const quadratic = attenuation_field("quadratic");
+  //std::cerr << constant << "\n";
+  //std::cerr << linear << "\n";
+  //std::cerr << quadratic << "\n";
+  sp.set_uniform_float1(logger, constant,  attenuation.constant);
+  sp.set_uniform_float1(logger, linear,    attenuation.linear);
+  sp.set_uniform_float1(logger, quadratic, attenuation.quadratic);
+}
+
+void
+set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix,
+    ShaderProgram &sp, DrawInfo const& dinfo, std::uint32_t const entity,
+    entt::DefaultRegistry &registry)
+{
+  auto const& camera = args.camera;
+  auto const& global_light = args.global_light;
+  auto const& player = args.player;
+  auto &logger = args.logger;
+
+  bool const receives_light = registry.has<Material>(entity);
+  assert(receives_light);
+
+  set_modelmatrix(logger, model_matrix, sp);
+  sp.set_uniform_matrix_3fv(logger, "u_normalmatrix", glm::inverseTranspose(glm::mat3{model_matrix}));
+
+  //set_dirlight(logger, sp, global_light);
+
+  // ambient
+  sp.set_uniform_color_3fv(logger, "u_globallight.ambient", global_light.ambient);
+
+  // specular
+  sp.set_uniform_matrix_4fv(logger, "u_viewmatrix", camera.view_matrix());
+  sp.set_uniform_float1(logger, "u_reflectivity", 1.0f);
+
+  auto const pointlights = find_pointlights(registry);
+  //std::cerr << "===============================\n";
+  FOR(i, pointlights.size()) {
+    auto const& entity = pointlights[i];
+    auto &transform = registry.get<Transform>(entity);
+    auto &pointlight = registry.get<PointLight>(entity);
+    set_pointlight(logger, sp, i, pointlight, transform.translation);
+  }
+
+  assert(registry.has<Material>(entity));
+  Material const& material = registry.get<Material>(entity);
+
+  sp.set_uniform_vec3(logger, "u_material.ambient",  material.ambient);
+  sp.set_uniform_vec3(logger, "u_material.diffuse",  material.diffuse);
+  sp.set_uniform_vec3(logger, "u_material.specular", material.specular);
+  sp.set_uniform_float1(logger, "u_material.shininess", material.shininess);
+
+  sp.set_uniform_bool(logger, "u_drawnormals", args.draw_normals);
+  // TODO: when re-implementing LOS restrictions
+  //sp.set_uniform_vec3(logger, "u_player.position",  player.world_position());
+  //sp.set_uniform_vec3(logger, "u_player.direction",  player.forward_vector());
+  //sp.set_uniform_float1(logger, "u_player.cutoff",  glm::cos(glm::radians(90.0f)));
+}
+
+void
+set_3dlightsource_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix,
+    ShaderProgram &sp, DrawInfo const& dinfo, std::uint32_t const entity,
+    entt::DefaultRegistry &registry)
+{
+  auto &logger = args.logger;
+
+  bool const is_lightsource = registry.has<PointLight>(entity);
+  assert(is_lightsource);
+  auto const pointlights = find_pointlights(registry);
+
+  PointLight *ptr = nullptr;
+  FOR(i, pointlights.size()) {
+    auto const e = pointlights[i];
+    if (entity == e) {
+      ptr = &registry.get<PointLight>(e);
+      break;
+    }
+  }
+  assert(nullptr != ptr);
+
+  auto const diffuse = ptr->light.diffuse;
+  sp.set_uniform_color_3fv(logger, "u_lightcolor", diffuse);
+}
+
+void
+draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, ShaderProgram &sp,
+  DrawInfo const& dinfo, std::uint32_t const entity, entt::DefaultRegistry &registry)
 {
   auto &logger = args.logger;
   auto const& camera = args.camera;
-  auto const& player = args.player.world_object;
-  auto const& player_material = args.player.material;
-  auto const& light = args.light;
 
   glm::mat4 const view_matrix = camera.camera_matrix();
   auto const draw_3d_shape_fn = [&](auto const &dinfo) {
 
     // various matrices
-    set_mvpmatrix(logger, model_matrix, shader_program, camera);
+    set_mvpmatrix(logger, model_matrix, sp, camera);
 
-    if (shader_program.receives_light) {
-      set_modelmatrix(logger, model_matrix, shader_program);
-      //shader_program.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
-      shader_program.set_uniform_vec3(logger, "u_viewpos", camera.world_position());
-      {
-        auto const light_pos = args.light.single_light_position;
-        shader_program.set_uniform_vec3(logger, "u_light.position", light_pos);
-      }
-      shader_program.set_uniform_color_3fv(logger, "u_light.ambient", light.ambient);
-      shader_program.set_uniform_color_3fv(logger, "u_light.diffuse", light.diffuse);
-      shader_program.set_uniform_color_3fv(logger, "u_light.specular", light.specular);
+    // We do this assert during load time, but still valid here.
+    bool const receives_light = registry.has<Material>(entity);
+    bool const is_lightsource = registry.has<PointLight>(entity);
 
-      shader_program.set_uniform_float1(logger, "u_light.constant",  light.attenuation.constant);
-      shader_program.set_uniform_float1(logger, "u_light.linear",    light.attenuation.linear);
-      shader_program.set_uniform_float1(logger, "u_light.quadratic", light.attenuation.quadratic);
+    assert(
+        (!receives_light && !is_lightsource) ||
+        (receives_light && !is_lightsource) ||
+        (!receives_light && is_lightsource));
 
-      shader_program.set_uniform_vec3(logger, "u_material.ambient",  player_material.ambient);
-      shader_program.set_uniform_vec3(logger, "u_material.diffuse",  player_material.diffuse);
-      shader_program.set_uniform_vec3(logger, "u_material.specular", player_material.specular);
-      shader_program.set_uniform_float1(logger, "u_material.shininess", player_material.shininess);
-
-      shader_program.set_uniform_vec3(logger, "u_player.position",  player.world_position());
-      shader_program.set_uniform_vec3(logger, "u_player.direction",  player.forward_vector());
-      shader_program.set_uniform_float1(logger, "u_player.cutoff",  glm::cos(glm::radians(90.0f)));
+    if (receives_light) {
+      set_receiveslight_uniforms(args, model_matrix, sp, dinfo, entity, registry);
+    } else if (is_lightsource) {
+      set_3dlightsource_uniforms(args, model_matrix, sp, dinfo, entity, registry);
     }
 
-    if (shader_program.is_skybox) {
+    if (sp.is_skybox) {
       render::disable_depth_tests();
-      draw_drawinfo(logger, shader_program, dinfo);
+      draw_drawinfo(logger, sp, dinfo);
       render::enable_depth_tests();
     } else {
-      draw_drawinfo(logger, shader_program, dinfo);
+      draw_drawinfo(logger, sp, dinfo);
     }
   };
 
   if (dinfo.texture_info()) {
-    auto const& ti = *dinfo.texture_info();
+    auto const ti = *dinfo.texture_info();
     opengl::global::texture_bind(ti);
     ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
     draw_3d_shape_fn(dinfo);
@@ -145,6 +248,7 @@ init(window::Dimensions const& dimensions)
   glDisable(GL_CULL_FACE);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glDisable(GL_BLEND);
 
   enable_depth_tests();
 }
@@ -157,40 +261,40 @@ clear_screen(Color const& color)
   ON_SCOPE_EXIT([]() { glEnable(GL_DEPTH_TEST); });
 
   // Render
-  glClearColor(color.r, color.g, color.b, color.a);
+  glClearColor(color.r(), color.g(), color.b(), color.a());
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void
-draw(RenderArgs const& args, Transform const& transform, ShaderProgram &shader_program,
-    DrawInfo const& dinfo)
+draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
+    DrawInfo const& dinfo, std::uint32_t const entity, entt::DefaultRegistry &registry)
 {
   auto &logger = args.logger;
 
-  // Use the shader_program's PROGRAM and bind the shader_program's VAO.
-  shader_program.use_program(logger);
+  // Use the sp's PROGRAM and bind the sp's VAO.
+  sp.use_program(logger);
   opengl::global::vao_bind(dinfo.vao());
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
-  glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
+  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+
   /*
   std::cerr << "---------------------------------------------------------------------------\n";
   std::cerr << "drawing object!\n";
-  std::cerr << "shader_program:\n" << shader_program << "\n";
+  std::cerr << "sp:\n" << sp << "\n";
 
   std::cerr << "draw_info:\n";
-  dinfo.print_self(std::cerr, shader_program.va());
+  dinfo.print_self(std::cerr, sp.va());
   std::cerr << "\n";
   std::cerr << "---------------------------------------------------------------------------\n";
   */
 
   auto const draw_fn = [&]()
   {
-    if (shader_program.is_2d) {
+    if (sp.is_2d) {
       disable_depth_tests();
-      set_modelmatrix(logger, transform.model_matrix(), shader_program);
+      set_modelmatrix(logger, transform.model_matrix(), sp);
       enable_depth_tests();
     } else {
-      draw_3dshape(args, transform.model_matrix(), shader_program, dinfo);
+      draw_3dshape(args, transform.model_matrix(), sp, dinfo, entity, registry);
     }
   };
 
@@ -205,43 +309,51 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &shader_p
 }
 
 void
-draw_tilemap(RenderArgs const& args, Transform const& transform, DrawTilemapArgs &&dt_args,
-    TileMap const& tilemap, bool const reveal_map)
+draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& tilemap,
+    TilemapState const& tilemap_state, entt::DefaultRegistry &registry)
 {
-  auto const& draw_tile_helper = [&](auto &shader_program, auto const& dinfo, glm::vec3 const& tile_pos) {
-    auto &logger = args.logger;
-    shader_program.use_program(logger);
+  auto &logger = args.logger;
+  auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, std::uint32_t const entity,
+      glm::vec3 const& tile_pos)
+  {
+    sp.use_program(logger);
     opengl::global::vao_bind(dinfo.vao());
+    ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
-    glm::mat4 const model_matrix = transform.model_matrix();
-    glm::mat4 const translated = glm::translate(model_matrix, tile_pos);
-    draw_3dshape(args, translated, shader_program, dinfo);
+    auto const tmat = glm::translate(glm::mat4{}, tile_pos);
+    auto const rmat = glm::rotate(tmat, 90.0f, opengl::X_UNIT_VECTOR);
+    auto const smat = glm::scale(rmat, tilemap_state.tile_scaling);
+    draw_3dshape(args, smat, sp, dinfo, entity, registry);
   };
 
+  auto &plus = dt_args.plus;
+  auto &hashtag = dt_args.hashtag;
   auto const draw_all_tiles = [&](auto const& pos) {
     auto const& tile = tilemap.data(pos.x, pos.y, pos.z);
-    if (!reveal_map && !tile.is_visible) {
+    if (!tilemap_state.reveal && !tile.is_visible) {
       return;
     }
     if(tile.is_wall) {
-      draw_tile_helper(dt_args.hashtag_shader_program, dt_args.hashtag_dinfo, pos);
+      draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, pos);
     } else {
-      draw_tile_helper(dt_args.plus_shader_program, dt_args.plus_dinfo, pos);
+      plus.sp.set_uniform_vec3(logger, "u_offset", tilemap_state.floor_offset);
+      draw_tile_helper(plus.sp, plus.dinfo, plus.eid, pos);
     }
   };
   tilemap.visit_each(draw_all_tiles);
 }
 
 void
-draw_tilegrid(RenderArgs const& args, Transform const& transform, ShaderProgram &shader_program,
+draw_tilegrid(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
     DrawInfo const& dinfo)
 {
   auto &logger = args.logger;
-  shader_program.use_program(logger);
+  sp.use_program(logger);
   opengl::global::vao_bind(dinfo.vao());
+  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
-  set_mvpmatrix(logger, transform.model_matrix(), shader_program, args.camera);
-  draw_drawinfo(logger, shader_program, dinfo);
+  set_mvpmatrix(logger, transform.model_matrix(), sp, args.camera);
+  draw_drawinfo(logger, sp, dinfo);
 }
 
 } // ns boomhs::render

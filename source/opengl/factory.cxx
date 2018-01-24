@@ -12,8 +12,10 @@
 #include <boomhs/tilemap.hpp>
 #include <boomhs/types.hpp>
 
+#include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/vector_query.hpp>
 #include <glm/gtc/epsilon.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include <boost/optional.hpp>
 #include <array>
@@ -95,7 +97,7 @@ copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program, Co
       color, color, color, color,
       color, color, color, color,
   };
-#define COLOR(i) c[i].r, c[i].g, c[i].b, c[i].a
+#define COLOR(i) c[i].r(), c[i].g(), c[i].b(), c[i].a()
 #define VERTS(a, b, c, d) v[a], v[b], v[c], v[d]
   auto const v = cube_vertices();
   auto const vertex_data = std::array<float, (32 * 2)>{
@@ -114,22 +116,138 @@ copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program, Co
   return make_cube_drawinfo(logger, vertex_data, shader_program, boost::none);
 }
 
+/*
+Vec3f RibbonMesh::calcNormal( const Vec3f &p1, const Vec3f &p2, const Vec3f &p3 )
+{
+    Vec3f V1= (p2 - p1);
+    Vec3f V2 = (p3 - p1);
+    Vec3f surfaceNormal;
+    surfaceNormal.x = (V1.y*V2.z) - (V1.z-V2.y);
+    surfaceNormal.y = - ( (V2.z * V1.x) - (V2.x * V1.z) );
+    surfaceNormal.z = (V1.x-V2.y) - (V1.y-V2.x);
+
+    // Dont forget to normalize if needed
+    return surfaceNormal;
+}
+*/
+
+using Face = std::array<float, 6 * (4 + 3 + 4)>;
+
+
+
+DrawInfo
+copy_normalcolorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color const& color)
+{
+  // clang-format off
+  static std::array<glm::vec3, 8> constexpr points = {{
+    glm::vec3{-0.5f, -0.5f,  0.5f},
+    glm::vec3{-0.5f,  0.5f,  0.5f},
+    glm::vec3{ 0.5f,  0.5f,  0.5f},
+    glm::vec3{ 0.5f, -0.5f,  0.5f},
+    glm::vec3{-0.5f, -0.5f, -0.5f},
+    glm::vec3{-0.5f,  0.5f, -0.5f},
+    glm::vec3{ 0.5f,  0.5f, -0.5f},
+    glm::vec3{ 0.5f, -0.5f, -0.5f}
+  }};
+
+  std::array<glm::vec3, 36> vertices = {glm::vec3{0.0f}};
+  std::array<glm::vec3, 36> normals{glm::vec3{0.0f}};
+  std::array<Color, 36> colors{LOC::BLACK};
+
+
+  auto make_face = [&vertices, &normals, &colors](int const a, int const b, int const c, int const d,
+      std::array<glm::vec3, 8> const& points, Color const& face_color, int index)
+  {
+    using namespace glm;
+    vec3 const normal = normalize(cross(points[c] - points[b], points[a] - points[b]));
+
+  //#define VERTEX(p) points[p].x,    points[p].y,    points[p].z, 1.0
+  //#define NORMAL(p) normal.x,       normal.y,       normal.z
+  //#define COLOR(p)  face_color.r(), face_color.g(), face_color.b(), face_color.a()
+  //#define FACE(p) VERTEX(p), NORMAL(p), COLOR(p)
+
+    vertices[index] = points[a];
+    normals[index] = normal;
+    colors[index] = face_color;
+    index++;
+
+    vertices[index] = points[b];
+    normals[index] = normal;
+    colors[index] = face_color;
+    index++;
+
+    vertices[index] = points[c];
+    normals[index] = normal;
+    colors[index] = face_color;
+    index++;
+
+    vertices[index] = points[a];
+    normals[index] = normal;
+    colors[index] = face_color;
+    index++;
+
+    vertices[index] = points[c];
+    normals[index] = normal;
+    colors[index] = face_color;
+    index++;
+
+    vertices[index] = points[d];
+    normals[index] = normal;
+    colors[index] = face_color;
+
+    //return Face{FACE(a), FACE(b), FACE(c), FACE(a), FACE(c), FACE(d)};
+  //#undef VERTEX
+  //#undef NORMAL
+  //#undef COLOR
+  //#undef FACE
+  };
+
+  make_face(1, 0, 3, 2, points, color, 6 * 0); // z
+  make_face(2, 3, 7, 6, points, color, 6 * 1); // x
+  make_face(3, 0, 4, 7, points, color, 6 * 2); // -y
+  make_face(6, 5, 1, 2, points, color, 6 * 3); // y
+  make_face(4, 5, 6, 7, points, color, 6 * 4); // -z
+  make_face(5, 4, 0, 1, points, color, 6 * 5); // -x
+
+#define FACE_VERTEX(v) vertices[v], vertices[v+1], vertices[v+2], 1.0f, \
+  normals[v], normals[v+1], normals[v+2], \
+  color.r(), color.g(), color.b(), color.a()
+
+  std::vector<float> vertex_data;
+  FOR(i, vertices.size()) {
+    vertex_data.emplace_back(vertices[i].x);
+    vertex_data.emplace_back(vertices[i].y);
+    vertex_data.emplace_back(vertices[i].z);
+    vertex_data.emplace_back(1.0f);
+
+    vertex_data.emplace_back(normals[i].x);
+    vertex_data.emplace_back(normals[i].y);
+    vertex_data.emplace_back(normals[i].z);
+
+    vertex_data.emplace_back(colors[i].r());
+    vertex_data.emplace_back(colors[i].g());
+    vertex_data.emplace_back(colors[i].b());
+    vertex_data.emplace_back(colors[i].a());
+  }
+
+  auto const& indices = cube_factory::INDICES_LIGHT;
+  DrawInfo dinfo{GL_TRIANGLES, vertex_data.size(), indices.size(), boost::none};
+  copy_to_gpu(logger, sp, dinfo, vertex_data, indices);
+  return dinfo;
+}
+
+DrawInfo
+copy_vertexonlycube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program)
+{
+  auto const vertices = cube_vertices();
+  return make_cube_drawinfo(logger, vertices, shader_program, boost::none);
+}
+
 DrawInfo
 copy_texturecube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program, TextureInfo const& ti)
 {
-  // clang-format off
   auto const vertices = cube_vertices();
-  auto const vertex_data = std::array<float, 32>{
-      vertices[0], vertices[1], vertices[2], vertices[3],
-      vertices[4], vertices[5], vertices[6], vertices[7],
-      vertices[8], vertices[9], vertices[10], vertices[11],
-      vertices[12], vertices[13], vertices[14], vertices[15],
-      vertices[16], vertices[17], vertices[18], vertices[19],
-      vertices[20], vertices[21], vertices[22], vertices[23],
-      vertices[24], vertices[25], vertices[26], vertices[27],
-      vertices[28], vertices[29], vertices[30], vertices[31],
-      };
-  return make_cube_drawinfo(logger, vertex_data, shader_program, boost::make_optional(ti));
+  return make_cube_drawinfo(logger, vertices, shader_program, boost::make_optional(ti));
 }
 
 DrawInfo
@@ -141,9 +259,7 @@ copy_cube_14indices_gpu(stlw::Logger &logger, ShaderProgram const& shader_progra
     3, 2, 6, 7, 4, 2, 0,
     3, 1, 6, 5, 4, 1, 0
   }};
-  // clang-format on
 
-  // clang-format off
   auto const arr = stlw::make_array<float>(
    -1.0f, -1.0f, 1.0f, 1.0f, // front bottom-left
     1.0f, -1.0f, 1.0f, 1.0f, // front bottom-right
@@ -167,6 +283,7 @@ copy_cube_14indices_gpu(stlw::Logger &logger, ShaderProgram const& shader_progra
       arr[16], arr[17], arr[18], arr[19], // CUBE_ROW_4,
       arr[20], arr[21], arr[22], arr[23]  // CUBE_ROW_5
       );
+  // clang-format on
   auto const& vertices = v;
 
   DrawInfo dinfo{GL_TRIANGLE_STRIP, vertices.size(), INDICES.size(), ti};
@@ -211,7 +328,7 @@ auto
 make_arrow_vertices(ArrowCreateParams const& params, ArrowEndpoints const& endpoints)
 {
   auto const& p1 = endpoints.p1, p2 = endpoints.p2;
-#define COLOR params.color.r, params.color.g, params.color.b, params.color.a
+#define COLOR params.color.r(), params.color.g(), params.color.b(), params.color.a()
 #define START params.start.x, params.start.y, params.start.z, 1.0f
 #define END params.end.x, params.end.y, params.end.z, 1.0f
 #define P1 p1.x, p1.y, p1.z, 1.0f
@@ -239,12 +356,7 @@ make_arrow_vertices(ArrowCreateParams const& params, ArrowEndpoints const& endpo
 DrawInfo
 create_arrow_2d(stlw::Logger &logger, ShaderProgram const& shader_program, ArrowCreateParams &&params)
 {
-  //params.start.z = 0.0f;
-  //params.end.z = 0.0f;
-
   auto endpoints = calculate_arrow_endpoints(params);
-  //endpoints.p1.z = 0.0f;
-  //endpoints.p2.z = 0.0f;
   auto const vertices = make_arrow_vertices(params, endpoints);
 
   static constexpr std::array<GLuint, 6> INDICES = {{
@@ -288,10 +400,10 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, boomh
     vertices.emplace_back(point.z);
     vertices.emplace_back(1.0f);
 
-    vertices.emplace_back(color.r);
-    vertices.emplace_back(color.g);
-    vertices.emplace_back(color.b);
-    vertices.emplace_back(color.a);
+    vertices.emplace_back(color.r());
+    vertices.emplace_back(color.g());
+    vertices.emplace_back(color.b());
+    vertices.emplace_back(color.a());
 
     indices.emplace_back(count++);
   };
@@ -352,19 +464,77 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, boomh
 }
 
 WorldOriginArrows
-create_axis_arrows(stlw::Logger &logger, ShaderProgram &sp, glm::vec3 const& origin)
+create_axis_arrows(stlw::Logger &logger, ShaderProgram &sp)
 {
-  auto x = create_arrow(logger, sp, ArrowCreateParams{LOC::RED, origin, origin + X_UNIT_VECTOR});
-  auto y = create_arrow(logger, sp, ArrowCreateParams{LOC::GREEN, origin, origin + Y_UNIT_VECTOR});
-  auto z = create_arrow(logger, sp, ArrowCreateParams{LOC::BLUE, origin, origin + Z_UNIT_VECTOR});
+  glm::vec3 constexpr ORIGIN = glm::zero<glm::vec3>();
+
+  auto x = create_arrow(logger, sp, ArrowCreateParams{LOC::RED,   ORIGIN, ORIGIN + X_UNIT_VECTOR});
+  auto y = create_arrow(logger, sp, ArrowCreateParams{LOC::GREEN, ORIGIN, ORIGIN + Y_UNIT_VECTOR});
+  auto z = create_arrow(logger, sp, ArrowCreateParams{LOC::BLUE,  ORIGIN, ORIGIN + Z_UNIT_VECTOR});
   return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
 }
 
-WorldOriginArrows
-create_world_axis_arrows(stlw::Logger &logger, ShaderProgram &sp)
+DrawInfo
+create_modelnormals(stlw::Logger &logger, ShaderProgram const& sp, glm::mat4 const& model_matrix,
+    obj const& obj, Color const& color)
 {
-  glm::vec3 constexpr ORIGIN = glm::zero<glm::vec3>();
-  return create_axis_arrows(logger, sp, ORIGIN);
+  auto const normal_matrix = glm::inverseTranspose(model_matrix);
+  std::vector<float> const& vertices = obj.vertices;
+
+  assert((vertices.size() % 11) == 0);
+  std::vector<glm::vec4> positions;
+  std::vector<glm::vec3> normals;
+  for(auto i = 0u; i < vertices.size(); i += 11) {
+    auto const x = vertices[i + 0];
+    auto const y = vertices[i + 1];
+    auto const z = vertices[i + 2];
+    auto const w = 1.0f;
+
+    positions.emplace_back(glm::vec4{x, y, z, w});
+
+    auto const xn = vertices[i + 4];
+    auto const yn = vertices[i + 5];
+    auto const zn = vertices[i + 6];
+
+    normals.emplace_back(glm::vec3{xn, yn, zn});
+  }
+  assert(normals.size() == positions.size());
+
+  auto const compute_surfacenormal = [&normal_matrix, &model_matrix](auto const& a_normal) {
+    auto const v_normal = normal_matrix * glm::vec4{a_normal, 0.0};
+    return glm::normalize(model_matrix * v_normal);
+  };
+
+  std::vector<float> line_vertices;
+  std::vector<uint32_t> indices;
+  FOR(i, normals.size()) {
+    line_vertices.emplace_back(positions[i].x);
+    line_vertices.emplace_back(positions[i].y);
+    line_vertices.emplace_back(positions[i].z);
+    line_vertices.emplace_back(positions[i].w);
+
+    line_vertices.emplace_back(LOC::PINK.r());
+    line_vertices.emplace_back(LOC::PINK.g());
+    line_vertices.emplace_back(LOC::PINK.b());
+    line_vertices.emplace_back(LOC::PINK.a());
+
+    auto const surfacenormal = compute_surfacenormal(normals[i]);
+    line_vertices.emplace_back(positions[i].x + surfacenormal.x);
+    line_vertices.emplace_back(positions[i].y + surfacenormal.y);
+    line_vertices.emplace_back(positions[i].z + surfacenormal.z);
+    line_vertices.emplace_back(1.0f);
+
+    line_vertices.emplace_back(LOC::PURPLE.r());
+    line_vertices.emplace_back(LOC::PURPLE.g());
+    line_vertices.emplace_back(LOC::PURPLE.b());
+    line_vertices.emplace_back(LOC::PURPLE.a());
+
+    indices.push_back(i);
+  }
+
+  DrawInfo dinfo{GL_LINES, vertices.size(), static_cast<GLuint>(indices.size()), boost::none};
+  copy_to_gpu(logger, sp, dinfo, vertices, indices);
+  return dinfo;
 }
 
 DrawInfo

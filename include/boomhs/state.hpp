@@ -13,9 +13,9 @@
 #include <window/sdl_window.hpp>
 
 #include <boomhs/camera.hpp>
-#include <boomhs/renderable_object.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/tilemap.hpp>
+#include <boomhs/world_object.hpp>
 #include <vector>
 
 using stlw::Logger;
@@ -30,15 +30,30 @@ struct UiState
   bool rotate_lock = false;
   bool flip_y = false;
 
-  bool show_lighting_window = false;
+  bool show_background_window = false;
 
+  int selected_pointlight = 0;
+  bool show_pointlight_window = false;
+
+  bool show_ambientlight_window = false;
+  bool show_directionallight_window = false;
+
+  int selected_material = 0;
+  bool show_entitymaterial_window = false;
+
+  int selected_entity = 0;
 
   // primitive buffers
   int eid_buffer = 0;
   glm::vec3 euler_angle_buffer;
   glm::vec3 last_mouse_clicked_pos;
-  int attenuation_current_item = INIT_ATTENUATION_INDEX;
-  int entity_window_current = 0;
+  int attenuation_current_item = opengl::Light::INIT_ATTENUATION_INDEX;
+
+  bool show_debugwindow = true;
+  bool show_entitywindow = false;
+  bool show_camerawindow = false;
+  bool show_playerwindow = false;
+  bool show_tilemapwindow = false;
 };
 
 struct MouseState
@@ -54,24 +69,29 @@ struct WindowState
 
 struct TilemapState
 {
-  bool redraw = true;
+  bool draw_tilemap = false;
+  bool recompute = true;
   bool reveal = false;
 
   // Both related to drawing GRID LINES
-  bool show_grid_lines = false;
+  bool show_grid_lines = true;
   bool show_yaxis_lines = false;
+
+  glm::vec3 floor_offset = {0.0f, -0.5f, 0.0f};
+  glm::vec3 tile_scaling = {0.5f, 0.5f, 0.5f};
 };
 
 struct ZoneState
 {
   // singular light in the scene
-  LightColors light;
   opengl::Color background;
+  opengl::GlobalLight global_light;
 
   TileMap tilemap;
 
-  explicit ZoneState(opengl::Color const& bgcolor, TileMap &&tmap)
+  explicit ZoneState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight, TileMap &&tmap)
     : background(bgcolor)
+    , global_light(MOVE(glight))
     , tilemap(MOVE(tmap))
   {
   }
@@ -80,16 +100,17 @@ struct ZoneState
 struct EngineState
 {
   bool quit = false;
-  bool player_collision = true;
+  bool player_collision = false;
 
   // rendering state
   bool draw_entities = true;
   bool draw_skybox = false;
-  bool draw_tilemap = true;
+  bool draw_terrain = false;
+  bool draw_normals = false;
 
-  bool show_global_axis = true;
+  bool show_global_axis = false;
   bool show_local_axis = false;
-  bool show_target_vectors = true;
+  bool show_target_vectors = false;
 
   MouseState mouse_state;
   WindowState window_state;
@@ -103,22 +124,18 @@ struct EngineState
   window::mouse_data mouse_data;
   UiState ui_state;
 
-  // NOTE: Keep this data member above the "camera" data member.
-  std::vector<Transform*> entities;
-
   Camera camera;
-  RenderableObject player;
+  WorldObject player;
 
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);
   EngineState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
-      std::vector<Transform*> &&ents, Camera &&cam, RenderableObject &&pl)
+      Camera &&cam, WorldObject &&pl)
     : logger(l)
     , imgui(i)
     , dimensions(d)
     , rnum_generator(MOVE(fg))
     , mouse_data(window::make_default_mouse_data())
-    , entities(MOVE(ents))
     , camera(MOVE(cam))
     , player(MOVE(pl))
   {
@@ -141,14 +158,14 @@ struct GameState
   render_args()
   {
     auto &logger = engine_state.logger;
-    auto &entities = engine_state.entities;
 
     auto const& camera = engine_state.camera;
     auto const& player = engine_state.player;
 
-    auto const& light = zone_state.light;
+    auto const& global_light = zone_state.global_light;
+    bool const draw_normals = engine_state.draw_normals;
 
-    return RenderArgs{camera, player, logger, entities, light};
+    return RenderArgs{camera, player, logger, global_light, draw_normals};
   }
 };
 

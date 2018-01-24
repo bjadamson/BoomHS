@@ -32,6 +32,14 @@ namespace opengl::cube_factory
     4, 5, 1,  1, 0, 4, // left
     3, 2, 6,  6, 7, 3, // right
   }};
+
+  static constexpr std::array<GLuint, 36> INDICES_LIGHT = {{
+    0, 1, 2, 3, 4, 5, 6,
+    7, 8, 9, 10, 11, 12, 13,
+    14, 15, 16, 17, 18, 19, 20,
+    21, 22, 23, 24, 25, 26, 27,
+    28, 29, 30, 31, 32, 33, 34, 35
+  }};
   // clang-format on
 
 } // ns opengl::cube_factory
@@ -41,6 +49,18 @@ namespace opengl::factories
 
 DrawInfo
 copy_colorcube_gpu(stlw::Logger &, ShaderProgram const&, Color const&);
+
+inline DrawInfo
+copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, glm::vec3 const& c)
+{
+  return copy_colorcube_gpu(logger, sp, Color{c.x, c.y, c.z, 1.0f});
+}
+
+DrawInfo
+copy_vertexonlycube_gpu(stlw::Logger &, ShaderProgram const&);
+
+DrawInfo
+copy_normalcolorcube_gpu(stlw::Logger &, ShaderProgram const&, Color const&);
 
 DrawInfo
 copy_texturecube_gpu(stlw::Logger &, ShaderProgram const&, TextureInfo const&);
@@ -74,6 +94,11 @@ DrawInfo
 create_tilegrid(stlw::Logger &, ShaderProgram const&, boomhs::TileMap const&,
     bool const show_yaxis_lines, Color const& color = LOC::RED);
 
+DrawInfo
+create_modelnormals(stlw::Logger &, ShaderProgram const&, glm::mat4 const&,
+    obj const&, Color const&);
+
+
 struct WorldOriginArrows {
   DrawInfo x_dinfo;
   DrawInfo y_dinfo;
@@ -81,10 +106,7 @@ struct WorldOriginArrows {
 };
 
 WorldOriginArrows
-create_axis_arrows(stlw::Logger &, ShaderProgram &, glm::vec3 const&);
-
-WorldOriginArrows
-create_world_axis_arrows(stlw::Logger &logger, ShaderProgram &);
+create_axis_arrows(stlw::Logger &, ShaderProgram &);
 
 DrawInfo
 copy_gpu(stlw::Logger &, GLenum const, ShaderProgram &, obj const&, boost::optional<TextureInfo> const&);

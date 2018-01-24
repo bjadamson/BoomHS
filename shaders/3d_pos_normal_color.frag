@@ -1,18 +1,11 @@
 precision mediump float;
 
-in vec3 v_normal;
+in vec4 v_position;
+in vec3 v_surfacenormal;
 in vec4 v_color;
-in vec3 v_fragpos_worldspace;
 
-uniform vec3 u_viewpos;
-
-struct Player {
-  vec3 position;
-  vec3 direction;
-  float cutoff;
-};
-
-uniform Player u_player;
+#define MAX_NUM_POINTLIGHTS 4
+in vec3 v_lightstofrag[MAX_NUM_POINTLIGHTS];
 
 struct Material {
   vec3 ambient;
@@ -20,55 +13,93 @@ struct Material {
   vec3 specular;
   float shininess;
 };
-uniform Material u_material;
 
-struct Light {
-  vec3 position;
-
+struct GlobalLight {
   vec3 ambient;
-  vec3 diffuse;
-  vec3 specular;
+};
 
+struct LightAttenuation
+{
   float constant;
   float linear;
   float quadratic;
 };
-uniform Light u_light;
+
+struct PointLight {
+  vec3 position;
+
+  vec3 diffuse;
+  vec3 specular;
+
+  LightAttenuation attenuation;
+};
+
+uniform Material    u_material;
+uniform PointLight  u_pointlights[MAX_NUM_POINTLIGHTS];
+uniform GlobalLight u_globallight;
+
+uniform int   u_drawnormals;
+uniform float u_reflectivity;
+
+uniform mat4 u_modelmatrix;
+uniform mat4 u_viewmatrix;
 
 out vec4 fragment_color;
 
+float
+calculate_attenuation(PointLight light, vec3 frag_world_position)
+{
+  float distance = length(light.position - frag_world_position);
+
+  float constant = light.attenuation.constant;
+  float linear = light.attenuation.linear * distance;
+  float quadratic = light.attenuation.quadratic * (distance * distance);
+
+  float denominator = constant + linear + quadratic;
+  float attenuation = 1.0 / denominator;
+  return attenuation;
+}
+
+vec3
+calc_pointlight(PointLight light, vec3 v_lighttofrag, vec3 frag_world_position)
+{
+  float dotp = dot(v_surfacenormal, v_lighttofrag);
+  float brightness = max(dotp, 0.0);
+  vec3 diffuse = brightness * light.diffuse * u_material.diffuse;
+
+  vec3 light_direction = -v_lighttofrag;
+  vec3 reflected_light_v = reflect(light_direction, v_surfacenormal);
+
+  vec3 camera_position = (inverse(u_viewmatrix) * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+  vec3 v_cameratofrag = normalize(camera_position - frag_world_position);
+
+  float specular_factor = dot(reflected_light_v, v_cameratofrag);
+  specular_factor = max(specular_factor, 0.0);
+  float damped_factor = pow(specular_factor, u_material.shininess);
+  vec3 specular = damped_factor * u_reflectivity * light.specular;
+
+  float attenuation = calculate_attenuation(light, frag_world_position);
+  diffuse *= attenuation;
+  specular *= attenuation;
+
+  return diffuse + specular;
+}
+
 void main()
 {
-  vec3 light_dir = normalize(u_light.position - v_fragpos_worldspace);
-  float theta = dot(-light_dir, u_player.direction);
+  vec3 ambient = u_globallight.ambient * u_material.ambient;
+  vec3 frag_world_position = (u_modelmatrix * v_position).xyz;
 
-  // ambient
-  vec3 ambient = u_light.ambient * u_material.ambient;
+  vec3 pointlights = vec3(0.0);
+  for(int i = 0; i < MAX_NUM_POINTLIGHTS; i++) {
+    vec3 light_to_frag = normalize(u_pointlights[i].position - frag_world_position);
+    pointlights += calc_pointlight(u_pointlights[i], light_to_frag, frag_world_position);
+  }
 
-  //if(theta > u_player.cutoff) {
-    // diffuse
-    vec3 norm = normalize(v_normal);
-
-    float diff_intensity = 5.0f;
-    float diff = max(dot(norm, light_dir), 0.0);
-    vec3 diffuse = diff_intensity * diff * (u_light.diffuse * u_material.diffuse);
-
-    // specular
-    vec3 reflect_dir = reflect(-light_dir, norm);
-    vec3 view_dir = normalize(u_viewpos - v_fragpos_worldspace);
-    float spec = pow(max(dot(view_dir, reflect_dir), 0.0), u_material.shininess);
-    vec3 specular = u_light.specular * spec * u_material.specular;
-
-    float distance    = length(u_player.position - v_fragpos_worldspace);
-    float attenuation = 1.0 / (u_light.constant + u_light.linear * distance + u_light.quadratic * (distance * distance));
-
-    diffuse  *= attenuation;
-    specular *= attenuation;
-    vec4 result = vec4(ambient + diffuse + specular, 1.0) * v_color;
-    fragment_color = result;
-  //} else {
-    // else, use ambient light so scene isn't completely dark outside the spotlight.
-    //fragment_color = vec4(ambient, 1.0);
-    //fragment_color = vec4(0.0);//u_light.ambient * vec3(texture(material.diffuse, TexCoords)), 1.0);
-  //}
+  vec3 light = ambient + pointlights;
+  if (u_drawnormals == 1) {
+    fragment_color = vec4(v_surfacenormal, 1.0);
+  } else {
+    fragment_color = vec4(light, 1.0) * v_color;
+  }
 }

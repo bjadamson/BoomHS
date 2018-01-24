@@ -74,8 +74,7 @@ public:
 
   // public data members
   boost::optional<GLsizei> instance_count = boost::none;
-  bool is_lightsource = false;
-  bool receives_light = false;
+
   bool is_skybox = false;
   bool is_2d = false;
 
@@ -86,10 +85,11 @@ public:
   void use_program(stlw::Logger &);
   GLint get_uniform_location(stlw::Logger &, GLchar const *);
 
+  void set_uniform_matrix_3fv(stlw::Logger &, GLchar const *, glm::mat3 const &);
   void set_uniform_matrix_4fv(stlw::Logger &, GLchar const *, glm::mat4 const &);
 
-  void set_uniform_array_4fv(stlw::Logger &, GLchar const *, std::array<float, 4> const &);
   void set_uniform_array_3fv(stlw::Logger &, GLchar const*, std::array<float, 3> const&);
+  void set_uniform_array_4fv(stlw::Logger &, GLchar const *, std::array<float, 4> const &);
 
   void
   set_uniform_vec3(stlw::Logger &logger, GLchar const* name, glm::vec3 const& v)
@@ -99,20 +99,46 @@ public:
   }
 
   void
+  set_uniform_vec3(stlw::Logger &logger, std::string const& name, glm::vec3 const& v)
+  {
+    return set_uniform_vec3(logger, name.c_str(), v);
+  }
+
+  void
   set_uniform_color(stlw::Logger &logger, GLchar const* name, Color const& c)
   {
-    auto const arr = stlw::make_array<float>(c.r, c.g, c.b, c.a);
+    auto const arr = stlw::make_array<float>(c.r(), c.g(), c.b(), c.a());
     set_uniform_array_4fv(logger, name, arr);
+  }
+
+  void
+  set_uniform_color(stlw::Logger &logger, std::string const& name, Color const& c)
+  {
+    return set_uniform_color(logger, name.c_str(), c);
   }
 
   void
   set_uniform_color_3fv(stlw::Logger &logger, GLchar const* name, Color const& c)
   {
-    auto const arr = stlw::make_array<float>(c.r, c.g, c.b);
+    auto const arr = stlw::make_array<float>(c.r(), c.g(), c.b());
     set_uniform_array_3fv(logger, name, arr);
   }
 
-  void set_uniform_float1(stlw::Logger &logger, GLchar const*, float const);
+  void
+  set_uniform_color_3fv(stlw::Logger &logger, std::string const& name, Color const& c)
+  {
+    return set_uniform_color_3fv(logger, name.c_str(), c);
+  }
+
+  void set_uniform_float1(stlw::Logger &, GLchar const*, float const);
+
+  void set_uniform_float1(stlw::Logger &logger, std::string const& name, float const value)
+  {
+    return set_uniform_float1(logger, name.c_str(), value);
+  }
+
+  void set_uniform_bool(stlw::Logger &, GLchar const*, bool const);
+  void set_uniform_int1(stlw::Logger &, GLchar const*, int const);
 };
 
 std::ostream&

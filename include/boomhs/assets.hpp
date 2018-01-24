@@ -1,8 +1,8 @@
 #pragma once
-
 #include <opengl/draw_info.hpp>
 #include <opengl/obj.hpp>
 #include <opengl/factory.hpp>
+#include <opengl/lighting.hpp>
 #include <opengl/texture.hpp>
 
 #include <stlw/format.hpp>
@@ -107,6 +107,11 @@ struct Assets
   ObjCache obj_cache;
   LoadedEntities loaded_entities;
   opengl::TextureTable texture_table;
+
+  opengl::GlobalLight global_light;
+  opengl::Color background_color;
+
+  glm::vec3 camera_spherical_coords;
 };
 
 class GpuHandleList
@@ -146,9 +151,14 @@ public:
 class HandleManager {
   GpuHandleList list_;
 public:
+  std::uint32_t plus_eid;
+  std::uint32_t hashtag_eid;
+
   MOVE_CONSTRUCTIBLE_ONLY(HandleManager);
-  explicit HandleManager(GpuHandleList &&list)
+  explicit HandleManager(GpuHandleList &&list, std::uint32_t const plus, std::uint32_t const hashtag)
     : list_(MOVE(list))
+    , plus_eid(plus)
+    , hashtag_eid(hashtag)
   {
   }
 

@@ -25,7 +25,8 @@ void
 WorldObject::rotate(float const angle, glm::vec3 const& axis)
 {
   glm::quat const new_rotation{axis * glm::radians(angle)};
-  transform_->rotation = new_rotation * transform_->rotation;
+  auto &t = transform();
+  t.rotation = new_rotation * t.rotation;
 }
 
 } // ns boomhs

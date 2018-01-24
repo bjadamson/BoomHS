@@ -1,4 +1,5 @@
 #pragma once
+#include <entt/entt.hpp>
 
 namespace window
 {
@@ -10,6 +11,6 @@ namespace boomhs
 
 struct GameState;
 void
-draw_ui(GameState &state, window::SDLWindow &window);
+draw_ui(GameState &, window::SDLWindow &, entt::DefaultRegistry &);
 
 } // ns boomhs

@@ -123,13 +123,3 @@ cmake .. -G "Unix Makefiles"          \
   -DCMAKE_BUILD_TYPE=Debug            \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cd ..
-
-function link_script() {
-  ln -fs scripts/$1 ./$2
-}
-
-# Usage is "bb", "bbc", and "bbr"
-link_script bb.bash
-link_script bbc.bash
-link_script cbb.bash
-link_script bbr.bash
