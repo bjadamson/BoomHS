@@ -67,53 +67,37 @@ struct TextureRenderable
   opengl::TextureInfo texture_info;
 };
 
-template<typename C>
-boost::optional<std::uint32_t>
-find_entity_with_component(std::uint32_t const entity, entt::DefaultRegistry &registry)
-{
-  boost::optional<std::uint32_t> result_o = boost::none;
-  auto const view = registry.view<C>();
-  for (auto const e : view) {
-    if (entity == e) {
-      result_o = e;
-      continue;
-    }
-    else if (boost::none != result_o) {
-      assert(entity != e);
-    }
-  }
-  return result_o;
-}
-
-inline std::vector<uint32_t>
-find_materials(entt::DefaultRegistry &registry)
+template<typename ...C>
+auto
+find_all_entities_with_component(entt::DefaultRegistry &registry)
 {
   using namespace boomhs;
   using namespace opengl;
 
-  std::vector<std::uint32_t> materials;
-  auto view = registry.view<Material, Transform>();
-  for (auto const entity : view) {
-    materials.emplace_back(entity);
+  std::vector<std::uint32_t> entities;
+  auto const view = registry.view<C...>();
+  for (auto const e : view) {
+    entities.emplace_back(e);
   }
-  //std::cerr << "found '" << materials.size() << "' materials\n";
-  return materials;
+  return entities;
+}
+
+inline auto
+find_materials(entt::DefaultRegistry &registry)
+{
+  using namespace boomhs;
+  using namespace opengl;
+  return find_all_entities_with_component<Material, Transform>(registry);
 }
 
 
-inline std::vector<uint32_t>
+inline auto
 find_pointlights(entt::DefaultRegistry &registry)
 {
   using namespace boomhs;
   using namespace opengl;
 
-  std::vector<std::uint32_t> point_lights;
-  auto view = registry.view<PointLight, Transform>();
-  for (auto const entity : view) {
-    point_lights.emplace_back(entity);
-  }
-  //std::cerr << "found '" << point_lights.size() << "' point lights\n";
-  return point_lights;
+  return find_all_entities_with_component<PointLight, Transform>(registry);
 }
 
 } // ns boomhs

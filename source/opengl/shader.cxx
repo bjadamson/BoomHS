@@ -277,6 +277,28 @@ ShaderProgram::get_uniform_location(stlw::Logger &logger, GLchar const *name)
 }
 
 void
+ShaderProgram::set_uniform_matrix_3fv(stlw::Logger &logger, GLchar const *name, glm::mat4 const &matrix)
+{
+  use_program(logger);
+
+  auto const loc = get_uniform_location(logger, name);
+  // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
+  //
+  // count:
+  // For the matrix (glUniformMatrix*) commands, specifies the number of matrices that are to be
+  // modified.
+  // This should be 1 if the targeted uniform variable is not an array of matrices, and 1 or more
+  // if it is an array of matrices.
+  GLsizei constexpr COUNT = 1;
+  GLboolean constexpr TRANSPOSE_MATRICES = GL_FALSE;
+
+  LOG_TRACE(fmt::sprintf("sending uniform mat3 at loc '%d' with data '%s' to GPU", loc,
+        glm::to_string(matrix)));
+  glUniformMatrix3fv(loc, COUNT, TRANSPOSE_MATRICES, glm::value_ptr(matrix));
+  LOG_ANY_GL_ERRORS(logger, "set_uniform_matrix_3fv");
+}
+
+void
 ShaderProgram::set_uniform_matrix_4fv(stlw::Logger &logger, GLchar const *name, glm::mat4 const &matrix)
 {
   use_program(logger);

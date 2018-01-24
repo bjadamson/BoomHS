@@ -53,12 +53,14 @@ display_combo_for_entities(char const* text, int *selected, entt::DefaultRegistr
 void
 draw_entity_editor(GameState &state, entt::DefaultRegistry &registry)
 {
-  auto &selected_entity = state.engine_state.ui_state.selected_entity;
+  auto &selected = state.engine_state.ui_state.selected_entity;
   if (ImGui::Begin("Entity Editor Window")) {
-    if (display_combo_for_entities<Transform>("Entity", &selected_entity, registry)) {
-      state.engine_state.camera.set_target(selected_entity);
-      state.engine_state.player.set_eid(selected_entity);
+    if (display_combo_for_entities<Transform>("Entity", &selected, registry)) {
+      state.engine_state.camera.set_target(selected);
+      state.engine_state.player.set_eid(selected);
     }
+    auto const transforms = find_all_entities_with_component<Transform>(registry);
+    auto const& selected_entity = transforms[selected];
     auto &transform = registry.get<Transform>(selected_entity);
     ImGui::InputFloat3("pos:", glm::value_ptr(transform.translation));
     {
@@ -205,6 +207,8 @@ show_entitymaterials_window(GameState &state, entt::DefaultRegistry &registry)
 
     auto const entities_with_materials = find_materials(registry);
     auto const& selected_entity = entities_with_materials[selected_material];
+    std::cerr << "ui: selected entity: '" << selected_entity << "'\n";
+
     auto &material = registry.get<Material>(selected_entity);
     ImGui::Separator();
     ImGui::Text("Entity Material:");
@@ -212,6 +216,10 @@ show_entitymaterials_window(GameState &state, entt::DefaultRegistry &registry)
     ImGui::ColorEdit3("diffuse:", glm::value_ptr(material.diffuse));
     ImGui::ColorEdit3("specular:", glm::value_ptr(material.specular));
     ImGui::SliderFloat("shininess:", &material.shininess, 0.0f, 1.0f);
+
+    std::cerr << "ambient: '" << glm::to_string(material.ambient) << "'\n";
+    std::cerr << "diffuse: '" << glm::to_string(material.diffuse) << "'\n";
+    std::cerr << "specular: '" << glm::to_string(material.specular) << "'\n";
 
     if (ImGui::Button("Close", ImVec2(120,0))) {
       ui_state.show_entitymaterial_window = false;

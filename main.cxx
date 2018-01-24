@@ -51,12 +51,14 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
                 ObjCache const &obj_cache)
 {
   GpuHandleList handle_list;
+  /*
   registry.view<ShaderName, opengl::Color, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_colorcube_gpu(logger, shader_ref, color);
         handle_list.add(entity, MOVE(handle));
       });
+      */
   registry.view<ShaderName, PointLight, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &pointlight, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
@@ -211,12 +213,12 @@ draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
   registry.view<ShaderName, Transform, CubeRenderable>().each(draw_adapter);
   registry.view<ShaderName, Transform, MeshRenderable>().each(draw_adapter);
 
-  if (state.engine_state.draw_skybox) {
-    auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {
-      draw_fn(entity, sn, transform);
-    };
-    registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
-  }
+  //if (state.engine_state.draw_skybox) {
+    //auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {
+      //draw_fn(entity, sn, transform);
+    //};
+    //registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
+  //}
 }
 
 void
