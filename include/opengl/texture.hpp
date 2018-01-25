@@ -18,6 +18,29 @@ struct TextureInfo
   GLuint id;
 };
 
+struct TextureAllocation
+{
+  TextureInfo info;
+  bool should_destroy = false;
+
+  static std::size_t constexpr NUM_BUFFERS = 1;
+
+  TextureAllocation();
+  ~TextureAllocation();
+
+  NO_COPY(TextureAllocation);
+  NO_MOVE_ASSIGN(TextureAllocation);
+
+  TextureAllocation(TextureAllocation &&other)
+    : info(MOVE(other.info))
+    , should_destroy(other.should_destroy)
+  {
+    other.info.id = 0;
+    other.info.mode = 0;
+    other.should_destroy = false;
+  }
+};
+
 struct TextureFilenames
 {
   std::string name;
@@ -25,16 +48,12 @@ struct TextureFilenames
 
   auto num_filenames() const { return filenames.size(); }
 
-  // TODO: should this check be made an explicit enum or something somewhere?
-  bool is_3dcube() const { return filenames.size() == 6; }
-  bool is_2d() const { return filenames.size() == 1; }
-
   MOVE_CONSTRUCTIBLE_ONLY(TextureFilenames);
 };
 
 class TextureTable
 {
-  using pair_t = std::pair<TextureFilenames, TextureInfo>;
+  using pair_t = std::pair<TextureFilenames, TextureAllocation>;
   std::vector<pair_t> data_;
 
   boost::optional<TextureInfo>
@@ -45,7 +64,7 @@ class TextureTable
     }
     auto const cmp = [&name](auto const& it) { return it.first.name == name; };
     auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
-    return it == data_.cend() ? boost::none : boost::make_optional(it->second);
+    return it == data_.cend() ? boost::none : boost::make_optional(it->second.info);
   }
 
 public:
@@ -53,9 +72,9 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(TextureTable);
 
   void
-  add_texture(TextureFilenames &&tf, TextureInfo &&ti)
+  add_texture(TextureFilenames &&tf, TextureAllocation &&ta)
   {
-    auto pair = std::make_pair(MOVE(tf), MOVE(ti));
+    auto pair = std::make_pair(MOVE(tf), MOVE(ta));
     data_.emplace_back(MOVE(pair));
   }
 
@@ -75,10 +94,10 @@ public:
 namespace texture
 {
 
-TextureInfo
+TextureAllocation
 allocate_texture(stlw::Logger &logger, std::string const&);
 
-TextureInfo
+TextureAllocation
 upload_3dcube_texture(stlw::Logger &, std::vector<std::string> const&);
 
 } // ns texture

@@ -53,20 +53,37 @@ upload_image(stlw::Logger &logger, std::string const& filename, GLenum const tar
 
 namespace opengl
 {
-namespace texture
+
+TextureAllocation::TextureAllocation()
+{
+  glGenTextures(TextureAllocation::NUM_BUFFERS, &this->info.id);
+}
+
+TextureAllocation::~TextureAllocation()
+{
+  if (this->should_destroy) {
+    glDeleteTextures(TextureAllocation::NUM_BUFFERS, &this->info.id);
+    this->should_destroy = false;
+  }
+}
+
+} // ns opengl
+
+namespace opengl::texture
 {
 
-TextureInfo
+TextureAllocation
 allocate_texture(stlw::Logger &logger, std::string const& filename)
 {
   GLenum constexpr TEXTURE_MODE = GL_TEXTURE_2D;
 
-  GLuint texture_id;
-  glGenTextures(1, &texture_id);
-  TextureInfo const t{TEXTURE_MODE, texture_id};
+  TextureAllocation ta;
+  ta.info.mode = TEXTURE_MODE;
+  glGenTextures(1, &ta.info.id);
 
-  global::texture_bind(t);
-  ON_SCOPE_EXIT([&t]() { global::texture_unbind(t); });
+  auto const ti = ta.info;
+  global::texture_bind(ti);
+  ON_SCOPE_EXIT([&ti]() { global::texture_unbind(ti); });
 
   // Set texture wrapping to GL_REPEAT (usually basic wrapping method)
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -77,10 +94,11 @@ allocate_texture(stlw::Logger &logger, std::string const& filename)
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   upload_image(logger, filename, TEXTURE_MODE);
-  return t;
+  ta.should_destroy = true;
+  return ta;
 }
 
-TextureInfo
+TextureAllocation
 upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& paths)
 {
   assert(paths.size() == 6);
@@ -95,13 +113,15 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
     GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, // bottom
   };
 
-  GLuint texture_id;
-  glGenTextures(1, &texture_id);
-  TextureInfo const t{TEXTURE_MODE, texture_id};
+  TextureAllocation ta;
+  ta.info.mode = TEXTURE_MODE;
+  glGenTextures(1, &ta.info.id);
+
   LOG_ANY_GL_ERRORS(logger, "glGenTextures");
 
-  global::texture_bind(t);
-  ON_SCOPE_EXIT([&t]() { global::texture_unbind(t); });
+  auto const ti = ta.info;
+  global::texture_bind(ti);
+  ON_SCOPE_EXIT([&ti]() { global::texture_unbind(ti); });
   LOG_ANY_GL_ERRORS(logger, "texture_bind");
 
   auto const upload_fn = [&logger](std::string const& filename, auto const& target) {
@@ -109,6 +129,7 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   };
   auto const paths_tuple = std::make_tuple(paths[0], paths[1], paths[2], paths[3], paths[4], paths[5]);
   stlw::zip(upload_fn, directions.begin(), paths_tuple);
+  ta.should_destroy = true;
 
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -120,8 +141,7 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   glGenerateMipmap(TEXTURE_MODE);
   LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
 
-  return t;
+  return ta;
 }
 
-} // ns texture
-} // ns opengl
+} // ns opengl::texture

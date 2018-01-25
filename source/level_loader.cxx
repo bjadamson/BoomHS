@@ -208,13 +208,13 @@ load_textures(stlw::Logger &logger, CppTable const& config)
       auto const bottom = get_string_or_abort(resource, "bottom");
 
       opengl::TextureFilenames texture_names{name, {front, right, back, left, top, bottom}};
-      auto ti = opengl::texture::upload_3dcube_texture(logger, texture_names.filenames);
-      ttable.add_texture(MOVE(texture_names), MOVE(ti));
+      auto ta = opengl::texture::upload_3dcube_texture(logger, texture_names.filenames);
+      ttable.add_texture(MOVE(texture_names), MOVE(ta));
     } else if (type == "texture:2d") {
       auto const filename = get_string_or_abort(resource, "filename");
       opengl::TextureFilenames texture_names{name, {filename}};
-      auto ti = opengl::texture::allocate_texture(logger, texture_names.filenames[0]);
-      ttable.add_texture(MOVE(texture_names), MOVE(ti));
+      auto ta = opengl::texture::allocate_texture(logger, texture_names.filenames[0]);
+      ttable.add_texture(MOVE(texture_names), MOVE(ta));
     }
   };
 
