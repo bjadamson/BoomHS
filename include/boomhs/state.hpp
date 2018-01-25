@@ -1,21 +1,23 @@
 #pragma once
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <imgui/imgui.hpp>
-#include <opengl/colors.hpp>
-#include <opengl/lighting.hpp>
-
-#include <stlw/log.hpp>
-#include <stlw/random.hpp>
-
-#include <window/mouse.hpp>
-#include <window/sdl_window.hpp>
-
+#include <boomhs/assets.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/tilemap.hpp>
 #include <boomhs/world_object.hpp>
+
+#include <opengl/colors.hpp>
+#include <opengl/lighting.hpp>
+#include <opengl/shader.hpp>
+
+#include <window/mouse.hpp>
+#include <window/sdl_window.hpp>
+
+#include <stlw/log.hpp>
+#include <stlw/type_macros.hpp>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <imgui/imgui.hpp>
 #include <vector>
 
 using stlw::Logger;
@@ -87,13 +89,66 @@ struct ZoneState
   opengl::Color background;
   opengl::GlobalLight global_light;
 
+  HandleManager handles;
+  opengl::ShaderPrograms sps;
   TileMap tilemap;
 
-  explicit ZoneState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight, TileMap &&tmap)
+  Camera camera;
+  WorldObject player;
+  entt::DefaultRegistry &registry;
+
+  explicit ZoneState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
+      HandleManager &&hm, opengl::ShaderPrograms &&sp, TileMap &&tmap, Camera &&cam,
+      WorldObject &&pl, entt::DefaultRegistry &reg)
     : background(bgcolor)
     , global_light(MOVE(glight))
+    , handles(MOVE(hm))
+    , sps(MOVE(sp))
     , tilemap(MOVE(tmap))
+    , camera(MOVE(cam))
+    , player(MOVE(pl))
+    , registry(reg)
   {
+  }
+
+  MOVE_CONSTRUCTIBLE_ONLY(ZoneState);
+};
+
+class ZoneStates
+{
+  // This class is meant to be used through the ZoneManager class, construct an instance of
+  // ZoneManager to work with this data.
+public:
+  static std::size_t constexpr NUM_ZSTATES = 2;
+private:
+  std::array<ZoneState, NUM_ZSTATES> zstates_;
+  int active_ = 0;
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(ZoneStates);
+
+  // TODO: pass in active zone to support loading levels
+  explicit ZoneStates(std::array<ZoneState, NUM_ZSTATES> &&zstates)
+    : zstates_(MOVE(zstates))
+  {
+  }
+private:
+  friend class ZoneManager;
+  auto const&
+  data() const
+  {
+    return zstates_;
+  }
+
+  auto&
+  data()
+  {
+    return zstates_;
+  }
+
+  auto
+  active() const
+  {
+    return active_;
   }
 };
 
@@ -119,25 +174,17 @@ struct EngineState
   Logger &logger;
   ImGuiIO &imgui;
   window::Dimensions const dimensions;
-  stlw::float_generator rnum_generator;
 
   window::mouse_data mouse_data;
   UiState ui_state;
 
-  Camera camera;
-  WorldObject player;
-
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);
-  EngineState(Logger &l, ImGuiIO &i, window::Dimensions const &d, stlw::float_generator &&fg,
-      Camera &&cam, WorldObject &&pl)
+  EngineState(Logger &l, ImGuiIO &i, window::Dimensions const &d)
     : logger(l)
     , imgui(i)
     , dimensions(d)
-    , rnum_generator(MOVE(fg))
     , mouse_data(window::make_default_mouse_data())
-    , camera(MOVE(cam))
-    , player(MOVE(pl))
   {
   }
 };
@@ -145,28 +192,17 @@ struct EngineState
 struct GameState
 {
   EngineState engine_state;
-  ZoneState zone_state;
+  ZoneStates zone_states;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
-  explicit GameState(EngineState &&es, ZoneState &&zs)
+  explicit GameState(EngineState &&es, ZoneStates &&zs)
     : engine_state(MOVE(es))
-    , zone_state(MOVE(zs))
+    , zone_states(MOVE(zs))
   {
   }
 
   RenderArgs
-  render_args()
-  {
-    auto &logger = engine_state.logger;
-
-    auto const& camera = engine_state.camera;
-    auto const& player = engine_state.player;
-
-    auto const& global_light = zone_state.global_light;
-    bool const draw_normals = engine_state.draw_normals;
-
-    return RenderArgs{camera, player, logger, global_light, draw_normals};
-  }
+  render_args();
 };
 
 } // ns boomhs

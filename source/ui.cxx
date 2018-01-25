@@ -1,10 +1,12 @@
 #include <boomhs/ui.hpp>
+#include <boomhs/state.hpp>
+#include <boomhs/zone.hpp>
+#include <stlw/format.hpp>
+#include <window/sdl_window.hpp>
+
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <imgui/imgui.hpp>
-#include <boomhs/state.hpp>
-#include <stlw/format.hpp>
-#include <window/sdl_window.hpp>
 #include <algorithm>
 
 namespace
@@ -70,8 +72,14 @@ draw_entity_editor(GameState &state, entt::DefaultRegistry &registry)
     auto pairs = collect_all<Transform>(registry);
     if (display_combo_for_entities("Entity", &selected, registry, pairs)) {
       auto const eid = comboselected_to_eid(selected, pairs);
-      state.engine_state.camera.set_target(eid);
-      state.engine_state.player.set_eid(eid);
+
+      ZoneManager zm{state.zone_states};
+      auto &active = zm.active();
+      auto &player = active.player;
+      auto &camera = active.camera;
+
+      camera.set_target(eid);
+      player.set_eid(eid);
     }
     auto const eid = comboselected_to_eid(selected, pairs);
     auto &transform = registry.get<Transform>(eid);
@@ -112,8 +120,12 @@ void
 draw_camera_info(GameState &state)
 {
   auto &es = state.engine_state;
-  auto &camera = es.camera;
-  auto &player = es.player;
+
+  ZoneManager zm{state.zone_states};
+  auto &active = zm.active();
+  auto &player = active.player;
+  auto &camera = active.camera;
+
   if (ImGui::Begin("CAMERA INFO WINDOW")) {
     ImGui::Checkbox("Flip Y Sensitivity", &es.ui_state.flip_y);
     {
@@ -162,7 +174,9 @@ draw_camera_info(GameState &state)
 void
 draw_player_info(GameState &state)
 {
-  auto &player = state.engine_state.player;
+  ZoneManager zm{state.zone_states};
+  auto &active = zm.active();
+  auto &player = active.player;
 
   if (ImGui::Begin("PLAYER INFO WINDOW")) {
     auto const display = player.display();
@@ -180,7 +194,8 @@ draw_player_info(GameState &state)
 void
 show_directionallight_window(GameState &state)
 {
-  auto &zone_state = state.zone_state;
+  ZoneManager zm{state.zone_states};
+  auto &zone_state = zm.active();
   auto &directional = zone_state.global_light.directional;
   auto &ui_state = state.engine_state.ui_state;
 
@@ -211,7 +226,9 @@ show_ambientlight_window(GameState &state)
   auto &ui_state = state.engine_state.ui_state;
   if (ImGui::Begin("Global Light Editor")) {
     ImGui::Text("Global Light");
-    auto &zone_state = state.zone_state;
+    ZoneManager zm{state.zone_states};
+    auto &zone_state = zm.active();
+
     auto &global_light = zone_state.global_light;
     ImGui::ColorEdit3("Ambient Light Color:", global_light.ambient.data());
 
@@ -288,7 +305,9 @@ void
 show_background_window(GameState &state)
 {
   auto &engine_state = state.engine_state;
-  auto &zone_state = state.zone_state;
+  ZoneManager zm{state.zone_states};
+  auto &zone_state = zm.active();
+
   auto &ui_state = engine_state.ui_state;
   if (ImGui::Begin("Background Color")) {
     ImGui::ColorEdit3("Background Color:", zone_state.background.data());

@@ -10,6 +10,9 @@
 using namespace boomhs;
 using namespace opengl;
 
+using CppTableArray = std::shared_ptr<cpptoml::table_array>;
+using CppTable = std::shared_ptr<cpptoml::table>;
+
 #define TRY_OPTION_GENERAL_EVAL(VAR_DECL, V, expr)                                                 \
   auto V{expr};                                                                                    \
   if (!V) {                                                                                        \
@@ -395,13 +398,15 @@ load_vas(CppTable const& config)
   return pvas;
 }
 
+
+
 } // ns anon
 
 namespace boomhs
 {
 
-stlw::result<AssetPair, std::string>
-load_assets(stlw::Logger &logger, entt::DefaultRegistry &registry)
+stlw::result<LevelData, std::string>
+load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string const& filename)
 {
   CppTable engine_config = cpptoml::parse_file("engine.toml");
   assert(engine_config);
@@ -409,7 +414,7 @@ load_assets(stlw::Logger &logger, entt::DefaultRegistry &registry)
   ParsedVertexAttributes pvas = load_vas(engine_config);
   DO_TRY(auto shader_programs, load_shaders(logger, MOVE(pvas), engine_config));
 
-  CppTable area_config = cpptoml::parse_file("levels/area0.toml");
+  CppTable area_config = cpptoml::parse_file("levels/" + filename);
   assert(area_config);
 
   auto const mesh_table = get_table_array_or_abort(area_config, "meshes");
@@ -431,12 +436,10 @@ load_assets(stlw::Logger &logger, entt::DefaultRegistry &registry)
   GlobalLight glight{MOVE(dlight)};
 
   auto const bg_color = Color{get_vec3_or_abort(area_config, "background")};
-  auto const camera_spherical_coords_o = get_vec3(area_config, "camera_spherical_coords");
-  auto const camera_spherical_coords = camera_spherical_coords_o ? *camera_spherical_coords_o : glm::zero<glm::vec3>();
-  Assets assets{MOVE(meshes), MOVE(entities), MOVE(texture_table), MOVE(glight),
-    bg_color, camera_spherical_coords};
+  Assets assets{MOVE(meshes), MOVE(entities), MOVE(texture_table), MOVE(glight), bg_color};
   std::cerr << "yielding assets\n";
-  return std::make_pair(MOVE(assets), MOVE(shader_programs));
+  return LevelData{MOVE(assets), MOVE(shader_programs)};
 }
+
 
 } // ns boomhs

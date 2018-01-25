@@ -17,6 +17,7 @@
 #include <boomhs/state.hpp>
 #include <boomhs/tilemap.hpp>
 #include <boomhs/ui.hpp>
+#include <boomhs/zone.hpp>
 
 #include <stlw/log.hpp>
 #include <stlw/random.hpp>
@@ -142,58 +143,6 @@ find_player(entt::DefaultRegistry &registry)
   return *entity;
 }
 
-auto
-init(stlw::Logger &logger, entt::DefaultRegistry &registry, ImGuiIO &imgui,
-     window::Dimensions const &dimensions, Assets const &assets)
-{
-  auto const fheight = dimensions.h;
-  auto const fwidth = dimensions.w;
-  auto const aspect = static_cast<GLfloat>(fwidth / fheight);
-
-  // Initialize opengl
-  render::init(dimensions);
-
-  // Configure Imgui
-  imgui.MouseDrawCursor = true;
-  imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
-
-  // for now assume only 1 entity has the Light tag
-  auto light_view = registry.view<PointLight, Transform>();
-  for (auto const entity : light_view) {
-    auto &transform = light_view.get<Transform>(entity);
-    transform.scale = glm::vec3{0.2f};
-  }
-
-  // camera-look at origin
-  // cameraspace "up" is === "up" in worldspace.
-  auto const FORWARD = -opengl::Z_UNIT_VECTOR;
-  auto constexpr UP = opengl::Y_UNIT_VECTOR;
-
-  auto const player_eid = find_player(registry);
-  auto &player_transform = registry.get<Transform>(player_eid);
-  //player_transform.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
-
-  EnttLookup player_lookup{player_eid, registry};
-  WorldObject player{player_lookup, FORWARD, UP};
-
-  Projection const proj{90.0f, 4.0f / 3.0f, 0.1f, 200.0f};
-  Camera camera(proj, player_lookup, FORWARD, UP);
-
-  SphericalCoordinates sc{assets.camera_spherical_coords};
-  camera.set_coordinates(MOVE(sc));
-
-  // Construct tilemap
-  stlw::float_generator rng;
-  auto tmap_startingpos = level_generator::make_tilemap(35, 1, 35, rng);
-  auto tmap = MOVE(tmap_startingpos.first);
-  auto &startingpos = tmap_startingpos.second;
-
-  ZoneState zs{assets.background_color, assets.global_light, MOVE(tmap)};
-  EngineState es{logger, imgui, dimensions, MOVE(rng), MOVE(camera), MOVE(player)};
-
-  return GameState{MOVE(es), MOVE(zs)};
-}
-
 void
 draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
               HandleManager &handles)
@@ -265,7 +214,9 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
                           handles.hashtag_eid};
   DrawTilemapArgs dta{MOVE(plus), MOVE(hashtag)};
 
-  render::draw_tilemap(state.render_args(), dta, state.zone_state.tilemap,
+  ZoneManager zm{state.zone_states};
+  auto const& tilemap = zm.active().tilemap;
+  render::draw_tilemap(state.render_args(), dta, tilemap,
                        state.engine_state.tilemap_state, registry);
 }
 
@@ -275,7 +226,9 @@ draw_tilegrid(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
   auto &engine_state = state.engine_state;
   auto &logger = engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
-  auto const &tilemap = state.zone_state.tilemap;
+
+  ZoneManager zm{state.zone_states};
+  auto const& tilemap = zm.active().tilemap;
 
   Transform transform;
   bool const show_y = engine_state.tilemap_state.show_yaxis_lines;
@@ -365,16 +318,17 @@ draw_target_vectors(GameState &state, entt::DefaultRegistry &registry, opengl::S
 }
 
 void
-game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
-          window::SDLWindow &window, HandleManager &handles, Assets const &assets)
+game_loop(GameState &state, window::SDLWindow &window)
 {
   auto &engine_state = state.engine_state;
-  auto &zone_state = state.zone_state;
+  ZoneManager zm{state.zone_states};
+  auto &zone_state = zm.active();
 
-  auto &player = engine_state.player;
+  auto &player = zone_state.player;
   auto &mouse = engine_state.mouse_state;
   auto &tilemap_state = state.engine_state.tilemap_state;
   auto &logger = engine_state.logger;
+  auto &registry = zone_state.registry;
 
   // game logic
   if (mouse.right_pressed && mouse.left_pressed) {
@@ -394,6 +348,8 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
   // action begins here
   render::clear_screen(zone_state.background);
 
+  auto &handles = zone_state.handles;
+  auto &sps = zone_state.sps;
   if (engine_state.draw_entities) {
     draw_entities(state, registry, sps, handles);
   }
@@ -424,10 +380,10 @@ game_loop(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderProgr
 namespace
 {
 
-using State = boomhs::GameState;
-
-struct Engine {
+struct Engine
+{
   ::window::SDLWindow window;
+  std::array<entt::DefaultRegistry, 2> registries = {};
 
   MOVE_CONSTRUCTIBLE_ONLY(Engine);
 
@@ -435,8 +391,7 @@ struct Engine {
 };
 
 void
-loop(Engine &engine, State &state, entt::DefaultRegistry &registry, boomhs::HandleManager &handles,
-     opengl::ShaderPrograms &sp, Assets const &assets)
+loop(Engine &engine, GameState &state)
 {
   auto &logger = state.engine_state.logger;
   // Reset Imgui for next game frame.
@@ -444,7 +399,7 @@ loop(Engine &engine, State &state, entt::DefaultRegistry &registry, boomhs::Hand
 
   SDL_Event event;
   boomhs::IO::process(state, event);
-  boomhs::game_loop(state, registry, sp, engine.window, handles, assets);
+  boomhs::game_loop(state, engine.window);
 
   // Render Imgui UI
   ImGui::Render();
@@ -454,8 +409,7 @@ loop(Engine &engine, State &state, entt::DefaultRegistry &registry, boomhs::Hand
 }
 
 void
-timed_game_loop(entt::DefaultRegistry &registry, Engine &engine, boomhs::GameState &state,
-                boomhs::HandleManager &handles, opengl::ShaderPrograms &sp, Assets const &assets)
+timed_game_loop(Engine &engine, GameState &state)
 {
   int frames_counted = 0;
   window::LTimer frame_timer;
@@ -463,7 +417,7 @@ timed_game_loop(entt::DefaultRegistry &registry, Engine &engine, boomhs::GameSta
   auto &logger = state.engine_state.logger;
   while (!state.engine_state.quit) {
     auto const start = frame_timer.get_ticks();
-    loop(engine, state, registry, handles, sp, assets);
+    loop(engine, state);
 
     uint32_t const frame_ticks = frame_timer.get_ticks();
     float constexpr ONE_60TH_OF_A_FRAME = (1 / 60) * 1000;
@@ -479,30 +433,89 @@ timed_game_loop(entt::DefaultRegistry &registry, Engine &engine, boomhs::GameSta
   }
 }
 
+inline auto
+make_init_gamestate(stlw::Logger &logger, ImGuiIO &imgui, ZoneStates &&zs, window::Dimensions const &dimensions)
+{
+  // Initialize opengl
+  render::init(dimensions);
+
+  // Configure Imgui
+  imgui.MouseDrawCursor = true;
+  imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
+
+  EngineState es{logger, imgui, dimensions};
+  return GameState{MOVE(es), MOVE(zs)};
+}
+
 inline stlw::result<stlw::empty_type, std::string>
 start(stlw::Logger &logger, Engine &engine)
 {
   using namespace opengl;
 
-  entt::DefaultRegistry registry;
-
   // Initialize GUI library
   ImGui_ImplSdlGL3_Init(engine.window.raw());
   ON_SCOPE_EXIT([]() { ImGui_ImplSdlGL3_Shutdown(); });
 
-  LOG_TRACE("Loading assets.");
-  DO_TRY(auto asset_pair, boomhs::load_assets(logger, registry));
-  auto assets = MOVE(asset_pair.first);
-  auto shader_programs = MOVE(asset_pair.second);
+  // Construct tilemap
+  stlw::float_generator rng;
+  auto const make_zs = [&](LevelData &&level_data, entt::DefaultRegistry &registry) {
+    LOG_TRACE("Copy assets to GPU.");
+    auto const& objcache = level_data.assets.obj_cache;
+    auto &sps = level_data.shader_programs;
 
-  LOG_TRACE("Copy assets to GPU.");
-  DO_TRY(auto drawinfos,
-         boomhs::copy_assets_gpu(logger, shader_programs, registry, assets.obj_cache));
+    auto handle_result = boomhs::copy_assets_gpu(logger, sps, registry, objcache);
+    assert(handle_result);
+    auto handlem = MOVE(*handle_result);
+
+    auto tmap_startingpos = level_generator::make_tilemap(35, 1, 35, rng);
+    auto tmap = MOVE(tmap_startingpos.first);
+    auto &startingpos = tmap_startingpos.second;
+
+    ////////////////////////////////
+    // for now assume only 1 entity has the Light tag
+    auto light_view = registry.view<PointLight, Transform>();
+    for (auto const entity : light_view) {
+      auto &transform = light_view.get<Transform>(entity);
+      transform.scale = glm::vec3{0.2f};
+    }
+
+    // camera-look at origin
+    // cameraspace "up" is === "up" in worldspace.
+    auto const FORWARD = -opengl::Z_UNIT_VECTOR;
+    auto constexpr UP = opengl::Y_UNIT_VECTOR;
+
+    auto const player_eid = find_player(registry);
+    auto &player_transform = registry.get<Transform>(player_eid);
+    //player_transform.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
+
+    EnttLookup player_lookup{player_eid, registry};
+    WorldObject player{player_lookup, FORWARD, UP};
+
+    Projection const proj{90.0f, 4.0f / 3.0f, 0.1f, 200.0f};
+    Camera camera(proj, player_lookup, FORWARD, UP);
+
+    SphericalCoordinates sc;
+    camera.set_coordinates(MOVE(sc));
+    //////////////////////////
+
+    auto const& assets = level_data.assets;
+    return ZoneState{assets.background_color, assets.global_light, MOVE(handlem), MOVE(sps),
+      MOVE(tmap), MOVE(camera), MOVE(player), registry};
+  };
+
+  auto &registries = engine.registries;
+  DO_TRY(auto ld0, boomhs::load_level(logger, registries[0], "area0.toml"));
+  DO_TRY(auto ld1, boomhs::load_level(logger, registries[1], "area0.toml"));
+  auto zs0 = make_zs(MOVE(ld0), registries[0]);
+  auto zs1 = make_zs(MOVE(ld1), registries[1]);
+
+  std::array<ZoneState, ZoneStates::NUM_ZSTATES> zstates_arr{MOVE(zs0), MOVE(zs1)};
+  ZoneStates zs{MOVE(zstates_arr)};
 
   auto &imgui = ImGui::GetIO();
-  auto state = boomhs::init(logger, registry, imgui, engine.dimensions(), assets);
+  auto state = make_init_gamestate(logger, imgui, MOVE(zs), engine.dimensions());
 
-  timed_game_loop(registry, engine, state, drawinfos, shader_programs, assets);
+  timed_game_loop(engine, state);
   LOG_TRACE("game loop finished.");
   return stlw::empty_type{};
 }

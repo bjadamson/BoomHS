@@ -1,13 +1,14 @@
 #pragma once
-#include <algorithm>
-#include <boost/optional.hpp>
+#include <opengl/colors.hpp>
+#include <opengl/vertex_attribute.hpp>
+#include <boomhs/types.hpp>
+
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <opengl/colors.hpp>
-#include <opengl/vertex_attribute.hpp>
-#include <boomhs/types.hpp>
+#include <algorithm>
+#include <boost/optional.hpp>
 
 namespace opengl
 {

@@ -1,6 +1,7 @@
 #include <boomhs/io.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
+#include <boomhs/zone.hpp>
 #include <stlw/log.hpp>
 
 #include <imgui/imgui.hpp>
@@ -66,11 +67,13 @@ process_event(GameState &state, SDL_Event &event)
   stlw::Logger &logger = engine_state.logger;
   float constexpr MOVE_DISTANCE = 1.0f;
   float constexpr SCALE_FACTOR = 0.20f;
-
   float constexpr ANGLE = 60.0f;
 
-  auto &camera = engine_state.camera;
-  auto &player = engine_state.player;
+  ZoneManager zm{state.zone_states};
+  auto &active = zm.active();
+  auto &camera = active.camera;
+  auto &player = active.player;
+
   auto const sf = [](float const f) { return (f > 1.0f) ? (1.0f + f) : (1.0f - f); };
 
   auto &ui_state = engine_state.ui_state;
@@ -83,7 +86,9 @@ process_event(GameState &state, SDL_Event &event)
   auto const move_player = [&](glm::vec3 (WorldObject::*fn)() const) {
     auto const player_pos = player.tilemap_position();
     glm::vec3 const move_vec = (player.*fn)();
-    auto const& tilemap = state.zone_state.tilemap;
+
+    ZoneManager zm{state.zone_states};
+    auto const& tilemap = zm.active().tilemap;
 
     auto const [x, y, z] = tilemap.dimensions();
     auto const new_pos = player_pos + move_vec;

@@ -13,12 +13,13 @@
 namespace boomhs
 {
 
-using CppTableArray = std::shared_ptr<cpptoml::table_array>;
-using CppTable = std::shared_ptr<cpptoml::table>;
+struct LevelData
+{
+  Assets assets;
+  opengl::ShaderPrograms shader_programs;
+};
 
-using AssetPair = std::pair<Assets, opengl::ShaderPrograms>;
-
-stlw::result<AssetPair, std::string>
-load_assets(stlw::Logger &, entt::DefaultRegistry &);
+stlw::result<LevelData, std::string>
+load_level(stlw::Logger &, entt::DefaultRegistry &, std::string const&);
 
 } // ns boomhs

@@ -110,8 +110,6 @@ struct Assets
 
   opengl::GlobalLight global_light;
   opengl::Color background_color;
-
-  glm::vec3 camera_spherical_coords;
 };
 
 class GpuHandleList
