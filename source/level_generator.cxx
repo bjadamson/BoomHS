@@ -73,7 +73,7 @@ struct CreateRoomParameters
 };
 
 boost::optional<Rect>
-try_create_room(CreateRoomParameters &&params)
+try_create_room(CreateRoomParameters const& params)
 {
   auto &rng = params.rng;
   // random width and height
@@ -100,24 +100,24 @@ try_create_room(CreateRoomParameters &&params)
   return new_room;
 }
 
-Rect
-create_room(CreateRoomParameters &&params)
+auto
+create_room(CreateRoomParameters const& params, std::size_t const max_tries)
 {
   assert(params.max_height - ROOM_MAX_SIZE > 0);
   boost::optional<Rect> room;
 
-  while(!room) {
-    room = try_create_room(MOVE(params));
+  std::size_t trials{0u};
+  while(!room && (trials < max_tries)) {
+    room = try_create_room(params);
+    ++trials;
   }
-  assert(room);
-  return *room;
+  return room;
 }
 
 void
 create_h_tunnel(int const x1, int const x2, int const y, TileMap &tmap)
 {
   int const min = std::min(x1, x2), max = std::max(x1, x2) + 1;
-
   for (auto x = min; x <= max; ++x) {
     tmap.data(x, 0, y).is_wall = false;
   }
@@ -176,26 +176,35 @@ place_objects(Rect const& room, TileMap const& tmap, stlw::float_generator &rng)
 namespace boomhs::level_generator
 {
 
-std::pair<TileMap, TilePosition>
-make_tilemap(int const width, int const height, int const length, stlw::float_generator &rng)
+struct Rooms
 {
-  std::cerr << "making tilemap ...\n";
-  int const num_tiles = width * height * length;
-  std::vector<Tile> tiles{static_cast<std::size_t>(num_tiles)};
-  tiles.reserve(height * width * length);
-
-  auto const cast = [](int const v) { return static_cast<std::size_t>(v); };
-  TileMap tmap{MOVE(tiles), cast(width), cast(height), cast(length)};
-
-  std::vector<Rect> rooms;
+  std::vector<Rect> rects;
   TilePosition starting_position;
+
+  MOVE_DEFAULT(Rooms);
+  NO_COPY(Rooms);
+};
+
+boost::optional<Rooms>
+create_rooms(int const max_width, int const max_height, TileMap &tmap, stlw::float_generator &rng)
+{
+  auto constexpr MAX_NUM_CREATE_TRIES = 50000;
+  std::vector<Rect> rects;
+  TilePosition starting_position;
+
   FOR(_, MAX_ROOMS) {
-    auto const new_room = create_room({width, length, rooms, tmap, rng});
+    CreateRoomParameters const params{max_width, max_height, rects, tmap, rng};
+    auto new_room_o = create_room(params, MAX_NUM_CREATE_TRIES);
+    if(!new_room_o) {
+      return boost::none;
+    }
+    auto new_room = *new_room_o;
     auto const new_center = new_room.center();
 
-    if (rooms.empty()) {
+    if (rects.empty()) {
       // beginning room, where player starts at
       auto const center = new_center;
+
       starting_position.x = center.x;
       starting_position.z = center.y;
     } else {
@@ -203,7 +212,7 @@ make_tilemap(int const width, int const height, int const length, stlw::float_ge
       // connect it to the previous room with a tunnel
 
       // center coordinates of the previous room
-      auto const prev_center = rooms[rooms.size() - 1].center();
+      auto const prev_center = rects[rects.size() - 1].center();
 
       if (rng.gen_bool()) {
         // first move horizontally, then vertically
@@ -220,10 +229,27 @@ make_tilemap(int const width, int const height, int const length, stlw::float_ge
     place_objects(new_room, tmap, rng);
 
     // finally, append the new room to the list
-    rooms.emplace_back(new_room);
+    rects.emplace_back(new_room);
   }
-  std::cerr << "finished!\n";
-  return std::make_pair(MOVE(tmap), starting_position);
+  return Rooms{MOVE(rects), MOVE(starting_position)};
+}
+
+std::pair<TileMap, TilePosition>
+make_tilemap(int const width, int const height, int const length, stlw::float_generator &rng)
+{
+  int const num_tiles = width * height * length;
+  std::vector<Tile> tiles{static_cast<std::size_t>(num_tiles)};
+  tiles.reserve(height * width * length);
+
+  auto const cast = [](int const v) { return static_cast<std::size_t>(v); };
+  TileMap tmap{MOVE(tiles), cast(width), cast(height), cast(length)};
+
+  boost::optional<Rooms> rooms = boost::none;
+  while(!rooms) {
+    rooms = create_rooms(width, length, tmap, rng);
+  }
+  auto const& sp = (*rooms).starting_position;
+  return std::make_pair(MOVE(tmap), sp);
 }
 
 } // ns boomhs::level_generator

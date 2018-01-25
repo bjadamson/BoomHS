@@ -2,7 +2,7 @@
 This repository contains the source code for the <b>BoomHS</b> project. BoomHS is a project in
 active development.
 
-![Alt text](/screenshots/17.png?raw=true "01/24/2018")
+![Alt text](/screenshots/19.png?raw=true "01/25/2018")
 
 ## Table of contents
 
@@ -82,13 +82,14 @@ on the fingers (from the command line). You can see the symlink for yourself in 
   + bbk => kill the running game process (parses PID table, unstable).
 
 ## Screenshots
+![Alt text](/screenshots/18.png?raw=true "01/25/2018")
+![Alt text](/screenshots/17.png?raw=true "01/24/2018")
 ![Alt text](/screenshots/16.png?raw=true "01/24/2018")
 ![Alt text](/screenshots/15.png?raw=true "01/10/2018")
 ![Alt text](/screenshots/14.png?raw=true "01/02/2018")
 ![Alt text](/screenshots/13.png?raw=true "01/02/2018")
 ![Alt text](/screenshots/12.png?raw=true "12/29/2017")
 ![Alt text](/screenshots/11.png?raw=true "12/29/2017")
-![Alt text](/screenshots/10.png?raw=true "12/21/2017")
 
 #### links
 * https://github.com/cbaggers/cepl
