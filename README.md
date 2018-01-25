@@ -1,39 +1,62 @@
 # BoomHS
 Boom Headshot?!
+<p>
+  This repository contains the source code for the <b>BoomHS</b> project. BoomHS is a project in
+  active development.
+</p>
 
-#### Required Dependencies (this is not an exhaustive list AT ALL)
-1. sudo apt-get intall libc++-dev
+#![Alt text](/screenshots/17.png?raw=true "01/24/2018")
 
-#### Getting Started
-1. Install dependencies.
+## Table of contents
+
+  + [Getting Started \(quick-guide\)](#getting-started quick-guide)
+
+  + [Getting Started (longer-guide)]
+    * [Install Dependencies](#install-dependencies)
+    * [Bootstrapping](#bootstrap-the-project)
+    * [Run the Project](#run-the-project)
+  + [Notes](#notes)
+  + [Screenshots](#notes)
+
+## Getting Started (quick-guide)
+```bash
+git clone https://github.com/bjadamson/BoomHS.git
+cd BoomHS
+scripts/install-dependencies.bash
+scripts/bootstrap.bash
+scripts/build.bash
+scripts/build-and-run.bash
+```
+
+## Getting Started (longer-guide)
+### Install dependencies.
   + On a bash system, simply invoke the auto-installer script like so:
     * scripts/install-dependencies.bash
   + or
     * sudo scripts/install-dependencies.bash
 
-2. Bootstrap the project (setup cmake)
+#### Bootstrap the project
   + Invoke the bootstrap script
     * scripts/bootstrap.bash
 
-3. Run the project
+##### Run the project
   + Invoke the build-then-run script
     * scripts/bbr.bash
 
-#### NOTES
-1. The following symlinks in the project's root directory exist to make running the scripts easier
+## NOTES
+### The following symlinks in the project's root directory exist to make running the scripts easier
 on the fingers (from the command line). You can see the symlink for yourself in the root directory.
   + bb  => build the project
   + bbc => clean the project (requires bootstrapping again)
   + bbr => build and RUN the project
   + bbf => run the clang formatter on the source code.
 
-2. **NOTE ME** When adding a new source file to the project, you must run the bootstrap script
+#### **IMPORTANT** When adding a new source file to the project, you must run the bootstrap script
    again.
   + Appoplogies ahead of time on this one, but with the way cmake is setup, right now running the
     bootstrapping process again is required to "pickup" the new source file.
 
-#### Screenshots (some)
-![Alt text](/screenshots/17.png?raw=true "01/24/2018")
+## Screenshots
 ![Alt text](/screenshots/16.png?raw=true "01/24/2018")
 ![Alt text](/screenshots/15.png?raw=true "01/10/2018")
 ![Alt text](/screenshots/14.png?raw=true "01/02/2018")
