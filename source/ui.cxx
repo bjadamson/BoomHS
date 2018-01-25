@@ -98,11 +98,34 @@ draw_entity_editor(GameState &state, entt::DefaultRegistry &registry)
 void
 draw_tilemap_editor(GameState &state)
 {
-  auto &tm_state = state.engine_state.tilemap_state;
+  auto &es = state.engine_state;
+  auto &tm_state = es.tilemap_state;
   if (ImGui::Begin("Tilemap Editor Window")) {
     ImGui::InputFloat3("Floor Offset:", glm::value_ptr(tm_state.floor_offset));
     ImGui::InputFloat3("Tile Scaling:", glm::value_ptr(tm_state.tile_scaling));
 
+    ZoneManager zm{state.zone_states};
+    std::vector<std::string> levels;
+    FOR(i, zm.num_zones()) {
+      levels.emplace_back(std::to_string(i));
+    }
+    auto const combo_callback = [](void *const pvec, int const idx, const char** out_text)
+    {
+      auto const& vec = *reinterpret_cast<std::vector<std::string>*>(pvec);
+
+      auto const index_size = static_cast<std::size_t>(idx);
+      if (idx < 0 || index_size >= vec.size()) {
+        return false;
+      }
+      *out_text = vec[idx].c_str();
+      return true;
+    };
+    void *pdata = reinterpret_cast<void *>(&levels);
+    auto &selected = es.ui_state.selected_level;
+
+    if (ImGui::Combo("Current Level:", &selected, combo_callback, pdata, zm.num_zones())) {
+      zm.make_zone_active(selected, state);
+    }
     bool recompute = false;
     recompute |= ImGui::Checkbox("Reveal Tilemap", &tm_state.reveal);
     recompute |= ImGui::Checkbox("Show (x, z)-axis lines", &tm_state.show_grid_lines);

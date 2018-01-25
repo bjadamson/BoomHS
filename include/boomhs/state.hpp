@@ -44,6 +44,7 @@ struct UiState
   bool show_entitymaterial_window = false;
 
   int selected_entity = 0;
+  int selected_level = 0;
 
   // primitive buffers
   int eid_buffer = 0;
@@ -149,6 +150,18 @@ private:
   active() const
   {
     return active_;
+  }
+
+  void
+  set_active(int const zone_number)
+  {
+    active_ = zone_number;
+  }
+
+  auto
+  size() const
+  {
+    return zstates_.size();
   }
 };
 
