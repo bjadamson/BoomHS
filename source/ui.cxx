@@ -30,27 +30,41 @@ collect_all(entt::DefaultRegistry &registry)
   return pairs;
 }
 
+auto
+callback_from_pairs(void *const pvec, int const idx, const char** out_text)
+{
+  std::vector<pair_t> const& vec = *reinterpret_cast<std::vector<pair_t>*>(pvec);
+
+  auto const index_size = static_cast<std::size_t>(idx);
+  if (idx < 0 || index_size >= vec.size()) {
+    return false;
+  }
+  auto const& pair = vec[idx];
+  auto const& name = pair.first;
+  *out_text = name.c_str();
+  return true;
+};
+
+auto
+callback_from_strings(void *const pvec, int const idx, const char** out_text)
+{
+  auto const& vec = *reinterpret_cast<std::vector<std::string>*>(pvec);
+
+  auto const index_size = static_cast<std::size_t>(idx);
+  if (idx < 0 || index_size >= vec.size()) {
+    return false;
+  }
+  *out_text = vec[idx].c_str();
+  return true;
+};
+
 template<typename T>
 bool
 display_combo_for_entities(char const* text, int *selected, entt::DefaultRegistry &registry,
     std::vector<T> &pairs)
 {
-  auto const combo_callback = [](void *const pvec, int const idx, const char** out_text)
-  {
-    std::vector<pair_t> const& vec = *reinterpret_cast<std::vector<pair_t>*>(pvec);
-
-    auto const index_size = static_cast<std::size_t>(idx);
-    if (idx < 0 || index_size >= vec.size()) {
-      return false;
-    }
-    auto const& pair = vec[idx];
-    auto const& name = pair.first;
-    *out_text = name.c_str();
-    return true;
-  };
-
   void *pdata = reinterpret_cast<void *>(&pairs);
-  return ImGui::Combo(text, selected, combo_callback, pdata, pairs.size());
+  return ImGui::Combo(text, selected, callback_from_pairs, pdata, pairs.size());
 }
 
 std::uint32_t
@@ -109,21 +123,10 @@ draw_tilemap_editor(GameState &state)
     FOR(i, zm.num_zones()) {
       levels.emplace_back(std::to_string(i));
     }
-    auto const combo_callback = [](void *const pvec, int const idx, const char** out_text)
-    {
-      auto const& vec = *reinterpret_cast<std::vector<std::string>*>(pvec);
-
-      auto const index_size = static_cast<std::size_t>(idx);
-      if (idx < 0 || index_size >= vec.size()) {
-        return false;
-      }
-      *out_text = vec[idx].c_str();
-      return true;
-    };
     void *pdata = reinterpret_cast<void *>(&levels);
     auto &selected = es.ui_state.selected_level;
 
-    if (ImGui::Combo("Current Level:", &selected, combo_callback, pdata, zm.num_zones())) {
+    if (ImGui::Combo("Current Level:", &selected, callback_from_strings, pdata, zm.num_zones())) {
       zm.make_zone_active(selected, state);
     }
     bool recompute = false;
@@ -149,8 +152,10 @@ draw_camera_info(GameState &state)
   auto &player = active.player;
   auto &camera = active.camera;
 
-  if (ImGui::Begin("CAMERA INFO WINDOW")) {
-    ImGui::Checkbox("Flip Y Sensitivity", &es.ui_state.flip_y);
+  auto const draw_perspective_controls = [&]()
+  {
+    ImGui::Text("Perspective Projection");
+    ImGui::Separator();
     {
       auto const coords = camera.spherical_coordinates();
       auto const r = coords.radius_display_string();
@@ -186,10 +191,47 @@ draw_camera_info(GameState &state)
         );
     ImGui::Separator();
     ImGui::Separator();
-    auto &projection = camera.projection_ref();
-    ImGui::InputFloat("Field of View", &projection.field_of_view);
-    ImGui::InputFloat("Near Plane", &projection.near_plane);
-    ImGui::InputFloat("Far Plane", &projection.far_plane);
+    auto &perspective = camera.perspective_ref();
+    ImGui::InputFloat("Field of View", &perspective.field_of_view);
+    ImGui::InputFloat("Near Plane", &perspective.near_plane);
+    ImGui::InputFloat("Far Plane", &perspective.far_plane);
+  };
+  auto const draw_ortho_controls = [&]() {
+    ImGui::Text("Orthographic Projection");
+    ImGui::Separator();
+    auto &ortho = camera.ortho_ref();
+    ImGui::InputFloat("Left:", &ortho.left);
+    ImGui::InputFloat("Right:", &ortho.right);
+    ImGui::InputFloat("Bottom:", &ortho.bottom);
+    ImGui::InputFloat("Top:", &ortho.top);
+    ImGui::InputFloat("Far:", &ortho.far);
+    ImGui::InputFloat("Near:", &ortho.near);
+  };
+  if (ImGui::Begin("CAMERA INFO WINDOW")) {
+    ImGui::Checkbox("Flip Y Sensitivity", &es.ui_state.flip_y);
+    std::vector<std::string> mode_strings;
+    for(auto const& it : CAMERA_MODES) {
+      mode_strings.emplace_back(it.second);
+    }
+    int selected = static_cast<int>(camera.mode());;
+    void *pdata = reinterpret_cast<void *>(&mode_strings);
+    if (ImGui::Combo("Mode:", &selected, callback_from_strings, pdata, mode_strings.size())) {
+      auto const mode = static_cast<CameraMode>(selected);
+      camera.set_mode(mode);
+    }
+    switch(camera.mode()) {
+      case Perspective: {
+        draw_perspective_controls();
+        break;
+      }
+      case Ortho: {
+        draw_ortho_controls();
+        break;
+      }
+      default: {
+        break;
+      }
+    }
     ImGui::End();
   }
 }

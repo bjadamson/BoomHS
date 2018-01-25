@@ -491,8 +491,7 @@ start(stlw::Logger &logger, Engine &engine)
     EnttLookup player_lookup{player_eid, registry};
     WorldObject player{player_lookup, FORWARD, UP};
 
-    Projection const proj{90.0f, 4.0f / 3.0f, 0.1f, 200.0f};
-    Camera camera(proj, player_lookup, FORWARD, UP);
+    Camera camera(player_lookup, FORWARD, UP);
 
     SphericalCoordinates sc;
     camera.set_coordinates(MOVE(sc));

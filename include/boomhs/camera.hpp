@@ -14,7 +14,7 @@ namespace boomhs
 class WorldObject;
 struct UiState;
 
-struct Projection
+struct PerspectiveProjection
 {
   float field_of_view;
   float const viewport_aspect_ratio;
@@ -22,13 +22,34 @@ struct Projection
   float far_plane;
 };
 
+struct OrthoProjection
+{
+  float left, right, bottom, top, far, near;
+};
+
+enum CameraMode
+{
+  Perspective = 0,
+  Ortho,
+  MAX
+};
+
+using ModeNamePair = std::pair<CameraMode, char const*>;
+std::array<ModeNamePair, 2> constexpr CAMERA_MODES = {{
+  {Perspective, "Perspective"},
+  {Ortho, "Ortho"}
+}};
+
 class Camera
 {
-  SphericalCoordinates coordinates_{0.0f, 0.0f, 0.0f};
-  float extra_theta_ = 0.0f;
-  Projection projection_;
   EnttLookup player_lookup_;
   glm::vec3 forward_, up_;
+
+  SphericalCoordinates coordinates_;
+  CameraMode mode_ = Perspective;
+
+  PerspectiveProjection perspective_;
+  OrthoProjection ortho_;
 
   Transform&
   get_target()
@@ -44,7 +65,7 @@ class Camera
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(Projection const&, EnttLookup const&, glm::vec3 const& f, glm::vec3 const& u);
+  Camera(EnttLookup const&, glm::vec3 const& f, glm::vec3 const& u);
 
   glm::mat4
   projection_matrix() const;
@@ -56,9 +77,21 @@ public:
   camera_matrix() const;
 
   auto const&
-  projection() const
+  perspective() const
   {
-    return projection_;
+    return perspective_;
+  }
+
+  auto
+  mode() const
+  {
+    return mode_;
+  }
+
+  void
+  set_mode(CameraMode const m)
+  {
+    mode_ = m;
   }
 
   glm::vec3
@@ -111,9 +144,15 @@ public:
   }
 
   auto&
-  projection_ref()
+  perspective_ref()
   {
-    return projection_;
+    return perspective_;
+  }
+
+  auto&
+  ortho_ref()
+  {
+    return ortho_;
   }
 };
 

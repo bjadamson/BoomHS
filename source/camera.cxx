@@ -15,21 +15,36 @@
 namespace boomhs
 {
 
-Camera::Camera(Projection const& proj, EnttLookup const& player_lookup, glm::vec3 const& forward,
-    glm::vec3 const& up)
-  : projection_(proj)
-  , player_lookup_(player_lookup)
+Camera::Camera(EnttLookup const& player_lookup, glm::vec3 const& forward, glm::vec3 const& up)
+  : player_lookup_(player_lookup)
   , forward_(forward)
   , up_(up)
+  , coordinates_(0.0f, 0.0f, 0.0f)
+  , perspective_({90.0f, 4.0f / 3.0f, 0.1f, 200.0f})
+  , ortho_({-10, 10, -10, 10, -200, 200})
 {
 }
 
 glm::mat4
 Camera::projection_matrix() const
 {
-  auto const& p = projection_;
+  auto const& p = perspective_;
   auto const fov = glm::radians(p.field_of_view);
-  return glm::perspective(fov, p.viewport_aspect_ratio, p.near_plane, p.far_plane);
+  switch(mode_) {
+    case Perspective: {
+      return glm::perspective(fov, p.viewport_aspect_ratio, p.near_plane, p.far_plane);
+    }
+    case Ortho: {
+      auto const& o = ortho_;
+      return glm::ortho(o.left, o.right, o.bottom, o.top, o.far, o.near);
+    }
+    case MAX: {
+      break;
+    }
+  }
+
+  std::abort();
+  return glm::mat4{}; // appease compiler
 }
 
 glm::mat4
@@ -115,7 +130,23 @@ Camera::view_matrix() const
 {
   auto const& target = get_target().translation;
   auto const position_xyz = world_position();
-  return glm::lookAt(position_xyz, target, up_);
+
+  switch (mode_) {
+    case Perspective: {
+      return glm::lookAt(position_xyz, target, up_);
+    }
+    case Ortho: {
+      return glm::lookAt(
+        glm::vec3{0, 0, 0},
+        target,
+        opengl::Y_UNIT_VECTOR);
+    }
+    case MAX: {
+      break;
+    }
+  }
+  std::abort();
+  return glm::mat4{}; // appease compiler
 }
 
 Camera&
