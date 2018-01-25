@@ -1,1 +1,1 @@
-scripts/bb.bash
+scripts/build.bash

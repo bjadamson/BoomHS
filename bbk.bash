@@ -1,1 +1,1 @@
-scripts/bbk.bash
+scripts/kill-running-process.bash

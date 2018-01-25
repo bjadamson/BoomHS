@@ -1,1 +1,1 @@
-scripts/bbc.bash
+scripts/clean-everything.bash

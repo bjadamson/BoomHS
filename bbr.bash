@@ -1,1 +1,1 @@
-scripts/bbr.bash
+scripts/build-and-run.bash

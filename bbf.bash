@@ -1,1 +1,1 @@
-scripts/bbf.bash
+scripts/format-code.bash

@@ -1,14 +1,8 @@
 # BoomHS
-Boom Headshot?!
-<p>
-  This repository contains the source code for the <b>BoomHS</b> project. BoomHS is a project in
-  active development.
-</p>
+This repository contains the source code for the <b>BoomHS</b> project. BoomHS is a project in
+active development.
 
-<table>
-<img src="/screenshots/17.png?raw=true" align="left" vspace="50">
-<img src="/screenshots/16.png?raw=true" align="left" vspace="50">
-</table>
+![Alt text](/screenshots/17.png?raw=true "01/24/2018")
 
 ## Table of contents
 
@@ -18,8 +12,9 @@ Boom Headshot?!
     * [Bootstrapping](#bootstrap-the-project)
     * [Compiling](#compiling-the-project)
     * [Run the Project](#run-the-project)
+  + [Other Information](#other-information)
   + [Hints](#hints)
-  + [Screenshots](#notes)
+  + [Screenshots](#screenshots)
 
 ## Getting Started
 The easiest way to get started is to use the installation script to install required libraries. Run
@@ -71,13 +66,20 @@ to run the build-and-run script.
 scripts/build-and-run.bash
 ```
 
+## Other Information
+  + Source-code formatting. The clang-formatter tool is used for this purpose.
+```bash
+scripts/code-format.bash
+```
+
 ## HINTS
 ### The following symlinks in the project's root directory exist to make running the scripts easier
 on the fingers (from the command line). You can see the symlink for yourself in the root directory.
   + bb  => build the project
   + bbc => clean the project (requires bootstrapping again)
   + bbr => build and RUN the project
-  + bbf => run the clang formatter on the source code.
+  + bbf => run the source code formatter.
+  + bbk => kill the running game process (parses PID table, unstable).
 
 ## Screenshots
 ![Alt text](/screenshots/16.png?raw=true "01/24/2018")
