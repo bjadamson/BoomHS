@@ -5,20 +5,25 @@ Boom Headshot?!
   active development.
 </p>
 
-#![Alt text](/screenshots/17.png?raw=true "01/24/2018")
+<table>
+<img src="/screenshots/17.png?raw=true" align="left" vspace="50">
+<img src="/screenshots/16.png?raw=true" align="left" vspace="50">
+</table>
 
 ## Table of contents
 
-  + [Getting Started \(quick-guide\)](#getting-started quick-guide)
-
-  + [Getting Started (longer-guide)]
+  + [Getting Started](#getting-started)
+  + [Project Information](#project-information)
     * [Install Dependencies](#install-dependencies)
     * [Bootstrapping](#bootstrap-the-project)
+    * [Compiling](#compiling-the-project)
     * [Run the Project](#run-the-project)
-  + [Notes](#notes)
+  + [Hints](#hints)
   + [Screenshots](#notes)
 
-## Getting Started (quick-guide)
+## Getting Started
+The easiest way to get started is to use the installation script to install required libraries. Run
+the following commands to install dependencies, 
 ```bash
 git clone https://github.com/bjadamson/BoomHS.git
 cd BoomHS
@@ -28,33 +33,51 @@ scripts/build.bash
 scripts/build-and-run.bash
 ```
 
-## Getting Started (longer-guide)
+## Project Information
 ### Install dependencies.
-  + On a bash system, simply invoke the auto-installer script like so:
-    * scripts/install-dependencies.bash
-  + or
-    * sudo scripts/install-dependencies.bash
+To install external dependencies, we rely on a script (for reproducability) so we can reliably
+setup builds that work on new machines. The intent is to make it easy to startup development on a
+new machine quickly. <i>Today</i> this is a goal, not a reality.
+```bash
+scripts/install-dependencies.bash
+```
 
-#### Bootstrap the project
-  + Invoke the bootstrap script
-    * scripts/bootstrap.bash
+### Bootstrap the project
+Bootstrapping the project is handled through a script. This script takes care of enumerating all
+the source files in the project and telling cmake about them. It also takes care of finding the
+compiler on your system. It then invokes cmake with the list of source file (and external libraries
+defined in the script as well).
+```bash
+scripts/bootstrap.bash
+```
 
-##### Run the project
-  + Invoke the build-then-run script
-    * scripts/bbr.bash
+### Compiling the Project
+Compiling is easy, all the hard work was done during the bootstrapping process. Compiling the
+project is as easy as running the build script.
 
-## NOTES
+```bash
+scripts/build.bash
+```
+
+#### Important Note
+When adding a new source file to the project, you must run the bootstrap script again. Appoplogies
+ahead of time on this one, but with the way cmake is setup, right now running the bootstrapping
+process again is required to "pickup" the new source file.
+
+### Run the project
+Running the project is easy too (yep you guessed it) if your using the command line, you just need
+to run the build-and-run script.
+```bash
+scripts/build-and-run.bash
+```
+
+## HINTS
 ### The following symlinks in the project's root directory exist to make running the scripts easier
 on the fingers (from the command line). You can see the symlink for yourself in the root directory.
   + bb  => build the project
   + bbc => clean the project (requires bootstrapping again)
   + bbr => build and RUN the project
   + bbf => run the clang formatter on the source code.
-
-#### **IMPORTANT** When adding a new source file to the project, you must run the bootstrap script
-   again.
-  + Appoplogies ahead of time on this one, but with the way cmake is setup, right now running the
-    bootstrapping process again is required to "pickup" the new source file.
 
 ## Screenshots
 ![Alt text](/screenshots/16.png?raw=true "01/24/2018")
