@@ -49,7 +49,6 @@ file(GLOB_RECURSE GLOBBED_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/external/backward/source/*.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/source/*.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx
   )
 
 ## Gather the source files in such a way that we can pass them to clang-format and other clang
