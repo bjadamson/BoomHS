@@ -330,12 +330,6 @@ game_loop(GameState &state, window::SDLWindow &window)
   auto &logger = engine_state.logger;
   auto &registry = zone_state.registry;
 
-  // game logic
-  if (mouse.right_pressed && mouse.left_pressed) {
-    player.move(0.25f, player.forward_vector());
-    tilemap_state.recompute = true;
-  }
-
   // compute tilemap
   if (tilemap_state.recompute) {
     LOG_INFO("Updating tilemap\n");

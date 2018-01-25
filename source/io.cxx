@@ -1,4 +1,5 @@
 #include <boomhs/io.hpp>
+#include <boomhs/camera.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
 #include <boomhs/zone.hpp>
@@ -126,7 +127,6 @@ process_event(GameState &state, SDL_Event &event)
     auto const rot_camera = [&]() {
       camera.rotate(logger, ui_state, engine_state.mouse_data);
     };
-
     if (right) {
       rot_player();
       //rot_camera();
@@ -154,10 +154,10 @@ process_event(GameState &state, SDL_Event &event)
     else if (button == SDL_BUTTON_LEFT) {
       mouse_state.left_pressed = true;
     }
-
     if (mouse_state.left_pressed && mouse_state.right_pressed) {
-      move_player(&WorldObject::forward_vector);
+      camera.rotate_behind_player(logger, player);
     }
+
     LOG_ERROR("toggling mouse up/down (pitch) lock");
     engine_state.mouse_data.pitch_lock ^= true;
     break;

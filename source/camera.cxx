@@ -62,18 +62,10 @@ Camera::forward_vector() const
 void
 Camera::rotate_behind_player(stlw::Logger &logger, WorldObject const& player)
 {
-  //auto const& player_transform = player.transform();
-  //glm::mat4 const origin_m = glm::translate(glm::mat4{}, glm::vec3{0.0f});
-  //glm::mat4 const m = origin_m * glm::toMat4(player.orientation());
-  //glm::vec3 player_fwd = origin_m * glm::vec4{player.forward_vector(), 1.0f};
-  //player_fwd = glm::normalize(player_fwd);
+  auto const playerdir_eye = glm::normalize(glm::vec4{player.forward_vector(), 1.0f} * view_matrix());
+  auto const angle = glm::dot(glm::vec3{playerdir_eye}, forward_vector());
 
-  //glm::vec3 const camera_fwd = this->forward_vector();
-  //float const theta = acos(glm::dot(player_fwd, camera_fwd));
-  auto const scoords = to_spherical(player.transform().translation);
-  coordinates_.phi = scoords.phi;
-  coordinates_.theta = scoords.theta;
-  //auto const ccoords = this->spherical_coordinates();
+  coordinates_.theta += glm::degrees(angle);
 }
 
 Camera&
