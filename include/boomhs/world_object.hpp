@@ -8,6 +8,7 @@
 
 namespace boomhs
 {
+class Camera;
 
 class WorldObject
 {
@@ -82,6 +83,9 @@ public:
 
   void
   rotate(float const, glm::vec3 const&);
+
+  void
+  rotate_to_match_camera_rotation(Camera const&);
 
   auto
   tilemap_position() const

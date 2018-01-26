@@ -8,6 +8,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtc/matrix_access.hpp>
+#include <glm/gtx/vector_angle.hpp>
 
 #include <cmath>
 #include <limits>
@@ -57,15 +58,6 @@ glm::vec3
 Camera::forward_vector() const
 {
   return glm::normalize(world_position() - target_position());
-}
-
-void
-Camera::rotate_behind_player(stlw::Logger &logger, WorldObject const& player)
-{
-  auto const playerdir_eye = glm::normalize(glm::vec4{player.forward_vector(), 1.0f} * view_matrix());
-  auto const angle = glm::dot(glm::vec3{playerdir_eye}, forward_vector());
-
-  coordinates_.theta += glm::degrees(angle);
 }
 
 Camera&

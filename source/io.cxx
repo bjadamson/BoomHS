@@ -7,12 +7,36 @@
 
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_sdl_gl3.h>
+#include <glm/glm.hpp>
 #include <glm/gtx/intersect.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <iostream>
 
 namespace {
 using namespace boomhs;
+
+/*
+template <typename T>
+inline glm::tmat4x4<T, glm::defaultp> perspectiveInverse(
+    T const & fovy,
+    T const & aspect,
+    T const & zNear,
+    T const & zFar)
+{
+    glm::tmat4x4<T, glm::defaultp> m(static_cast<T>(0));
+
+    const T tanHalfFovy = tan(fovy / static_cast<T>(2));
+    m[0][0] = tanHalfFovy * aspect;
+    m[1][1] = tanHalfFovy;
+    m[3][2] = static_cast<T>(-1);
+
+    const T d = static_cast<T>(2) * zFar * zNear;
+    m[2][3] = (zNear - zFar) / d;
+    m[3][3] = (zFar + zNear) / d;
+
+    return m;
+}
+*/
 
 inline bool is_quit_event(SDL_Event &event)
 {
@@ -44,21 +68,34 @@ inline bool is_quit_event(SDL_Event &event)
 //}
 
 glm::vec3
-calculateMouseRay(Camera const& camera, int const mouse_x, int const mouse_y, window::Dimensions const& dimensions)
+calculate_mouse_worldpos(Camera const& camera, WorldObject const& player, int const mouse_x,
+    int const mouse_y, window::Dimensions const& dimensions)
 {
-  glm::vec4 const viewport = glm::vec4(dimensions.x, dimensions.y, dimensions.w, dimensions.h);
-  glm::mat4 const modelview = camera.view_matrix();
+  auto const& a = camera.perspective_ref();
+  glm::vec4 const viewport = glm::vec4(0, 0, 1024, 768);
+  glm::mat4 const view = camera.view_matrix();
   glm::mat4 const projection = camera.projection_matrix();
   float const height = dimensions.h;
   std::cerr << "viewport: '" << glm::to_string(viewport) << "'\n";
 
-  float z = 0.0;
-  glm::vec3 screenPos = glm::vec3(mouse_x, dimensions.h - mouse_y - 1.0f, z);
-  std::cerr << "mouse clickpos: xyz: '" << glm::to_string(screenPos) << "'\n";
+  // Calculate the view-projection matrix.
+  glm::mat4 const transform = projection * view;
 
-  glm::vec3 const worldPos = glm::unProject(screenPos, modelview, projection, viewport);
-  std::cerr << "calculated worldpos: xyz: '" << glm::to_string(worldPos) << "'\n";
-  return worldPos;
+  // Calculate the intersection of the mouse ray with the near (z=0) and far (z=1) planes.
+  glm::vec3 const near = glm::unProject(glm::vec3{mouse_x, dimensions.h - mouse_y, 0}, glm::mat4(), transform, viewport);
+  glm::vec3 const far = glm::unProject(glm::vec3{mouse_x, dimensions.h - mouse_y, 1}, glm::mat4(), transform, viewport);
+
+  auto const z = 0.0f;
+  glm::vec3 const world_pos = glm::mix(near, far, ((z - near.z) / (far.z - near.z)));
+
+  //float const Z_PLANE = 0.0;
+  //assert(768 == dimensions.h);
+  //glm::vec3 screen_pos = glm::vec3(mouse_x, (dimensions.h - mouse_y), Z_PLANE);
+  //std::cerr << "mouse clickpos: xyz: '" << glm::to_string(screen_pos) << "'\n";
+
+  //glm::vec3 const world_pos = glm::unProject(screen_pos, view, projection, viewport);
+  std::cerr << "calculated worldpos: xyz: '" << glm::to_string(world_pos) << "'\n";
+  return world_pos;
 }
 
 bool
@@ -127,9 +164,11 @@ process_event(GameState &state, SDL_Event &event)
     auto const rot_camera = [&]() {
       camera.rotate(logger, ui_state, engine_state.mouse_data);
     };
-    if (right) {
+    if (right && left) {
+      move_player(&WorldObject::forward_vector);
+    }
+    else if (right) {
       rot_player();
-      //rot_camera();
     } else if (left) {
       rot_camera();
     }
@@ -155,7 +194,7 @@ process_event(GameState &state, SDL_Event &event)
       mouse_state.left_pressed = true;
     }
     if (mouse_state.left_pressed && mouse_state.right_pressed) {
-      camera.rotate_behind_player(logger, player);
+      player.rotate_to_match_camera_rotation(camera);
     }
 
     LOG_ERROR("toggling mouse up/down (pitch) lock");
@@ -220,7 +259,7 @@ process_event(GameState &state, SDL_Event &event)
     // scaling
     case SDLK_KP_PLUS: {
     case SDLK_o:
-      camera.rotate_behind_player(logger, player);
+      //camera.rotate_behind_player(logger, player);
       //et.scale_entities(sf(SCALE_FACTOR));
       break;
     }
@@ -238,24 +277,26 @@ process_event(GameState &state, SDL_Event &event)
 
         // homongonize coordinates
         glm::vec4 const ray_clip{ray_nds.x, ray_nds.y, -1.0, 1.0};
-        glm::vec4 ray_eye = glm::inverse(camera.projection_matrix()) * ray_clip;
-        ray_eye.z = -1.0f;
-        ray_eye.w = 0.0f;
 
-        glm::vec3 const ray_wor = glm::normalize(glm::vec3{glm::inverse(camera.view_matrix()) * ray_eye});
+        //auto &a = camera.perspective_ref();
+        //glm::vec4 ray_eye = perspectiveInverse(a.field_of_view, a.viewport_aspect_ratio, a.near_plane, a.far_plane) * ray_clip;
+        //ray_eye.z = -1.0f;
+        //ray_eye.w = 0.0f;
+
+        //glm::vec3 const ray_wor = glm::normalize(glm::vec3{glm::inverse(camera.view_matrix()) * ray_eye});
         //std::cerr << "mouse: '" << std::to_string(mouse_x) << "', '" << std::to_string(mouse_y) << "'\n";
         //std::cerr << "ray_wor: '" << glm::to_string(ray_wor) << "'\n";
 
-        glm::vec3 const ray_dir = ray_eye;
-        glm::vec3 const ray_origin = camera.world_position();
-        glm::vec3 const plane_origin{0, 0, 0};
-        glm::vec3 const plane_normal{0, -1, 0};
+        //glm::vec3 const ray_dir = ray_eye;
+        //glm::vec3 const ray_origin = camera.world_position();
+        //glm::vec3 const plane_origin{0, 0, 0};
+        //glm::vec3 const plane_normal{0, -1, 0};
 
-        float distance = 0.0f;
+        //float distance = 0.0f;
         //bool intersects = glm::intersectRayPlane(ray_origin, ray_dir, plane_origin, plane_normal, distance);
         //std::cerr << "intersects: '" << intersects << "', distance: '" << distance << "'\n";
 
-        auto const ray = calculateMouseRay(camera, mouse_x, mouse_y, engine_state.dimensions);
+        auto const ray = calculate_mouse_worldpos(camera, player, mouse_x, mouse_y, engine_state.dimensions);
       }
       break;
     }

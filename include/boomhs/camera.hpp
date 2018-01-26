@@ -14,7 +14,7 @@ namespace boomhs
 class WorldObject;
 struct UiState;
 
-struct PerspectiveProjection
+struct PerspectiveViewport
 {
   float field_of_view;
   float const viewport_aspect_ratio;
@@ -48,7 +48,7 @@ class Camera
   SphericalCoordinates coordinates_;
   CameraMode mode_ = Perspective;
 
-  PerspectiveProjection perspective_;
+  PerspectiveViewport perspective_;
   OrthoProjection ortho_;
 
   Transform&
@@ -128,9 +128,6 @@ public:
     return target.translation;
   }
 
-  void
-  rotate_behind_player(stlw::Logger &, WorldObject const&);
-
   Camera&
   rotate(stlw::Logger &, UiState &, window::mouse_data const&);
 
@@ -141,6 +138,12 @@ public:
   set_target(std::uint32_t const eid)
   {
     player_lookup_.set_eid(eid);
+  }
+
+  auto const&
+  perspective_ref() const
+  {
+    return perspective_;
   }
 
   auto&

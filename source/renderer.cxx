@@ -15,10 +15,6 @@
 #include <opengl/shader.hpp>
 
 #include <stlw/log.hpp>
-
-#include <glm/glm.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
 using namespace opengl;

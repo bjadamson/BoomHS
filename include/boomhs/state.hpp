@@ -77,7 +77,7 @@ struct TilemapState
   bool reveal = false;
 
   // Both related to drawing GRID LINES
-  bool show_grid_lines = false;
+  bool show_grid_lines = true;
   bool show_yaxis_lines = false;
 
   glm::vec3 floor_offset = {0.0f, -0.5f, 0.0f};
@@ -176,9 +176,9 @@ struct EngineState
   bool draw_terrain = false;
   bool draw_normals = false;
 
-  bool show_global_axis = false;
+  bool show_global_axis = true;
   bool show_local_axis = false;
-  bool show_target_vectors = false;
+  bool show_target_vectors = true;
 
   MouseState mouse_state;
   WindowState window_state;
