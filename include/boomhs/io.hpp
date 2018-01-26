@@ -7,7 +7,7 @@ namespace boomhs
 struct GameState;
 
 struct IO {
-  static void process(GameState &, SDL_Event &);
+  static void process(GameState &, SDL_Event &, float const);
 };
 
 } // ns boomhs

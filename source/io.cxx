@@ -99,7 +99,7 @@ calculate_mouse_worldpos(Camera const& camera, WorldObject const& player, int co
 }
 
 bool
-process_event(GameState &state, SDL_Event &event)
+process_event(GameState &state, SDL_Event &event, float const delta_time)
 {
   auto &engine_state = state.engine_state;
   stlw::Logger &logger = engine_state.logger;
@@ -351,7 +351,7 @@ namespace boomhs
 {
 
 void
-IO::process(GameState &state, SDL_Event &event)
+IO::process(GameState &state, SDL_Event &event, float const delta_time)
 {
   auto &engine_state = state.engine_state;
 
@@ -363,7 +363,7 @@ IO::process(GameState &state, SDL_Event &event)
 
     auto &imgui = engine_state.imgui;
     if (!imgui.WantCaptureMouse && !imgui.WantCaptureKeyboard) {
-      engine_state.quit = process_event(state, event);
+      engine_state.quit = process_event(state, event, delta_time);
     }
   }
 }

@@ -378,6 +378,7 @@ struct Engine
 {
   ::window::SDLWindow window;
   std::array<entt::DefaultRegistry, 2> registries = {};
+  float delta_time = 0.0f;
 
   MOVE_CONSTRUCTIBLE_ONLY(Engine);
 
@@ -392,7 +393,7 @@ loop(Engine &engine, GameState &state)
   ImGui_ImplSdlGL3_NewFrame(engine.window.raw());
 
   SDL_Event event;
-  boomhs::IO::process(state, event);
+  boomhs::IO::process(state, event, engine.delta_time);
   boomhs::game_loop(state, engine.window);
 
   // Render Imgui UI
@@ -405,25 +406,18 @@ loop(Engine &engine, GameState &state)
 void
 timed_game_loop(Engine &engine, GameState &state)
 {
-  int frames_counted = 0;
-  window::LTimer frame_timer;
+  window::Clock clock;
+  window::FrameDelayer delayer;
+  window::FrameCounter counter;
 
   auto &logger = state.engine_state.logger;
   while (!state.engine_state.quit) {
-    auto const start = frame_timer.get_ticks();
+    engine.delta_time = clock.delta * 1000.0f / SDL_GetPerformanceFrequency();
+
     loop(engine, state);
-
-    uint32_t const frame_ticks = frame_timer.get_ticks();
-    float constexpr ONE_60TH_OF_A_FRAME = (1 / 60) * 1000;
-
-    if (frame_ticks < ONE_60TH_OF_A_FRAME) {
-      LOG_TRACE("Frame finished early, sleeping rest of frame.");
-      SDL_Delay(ONE_60TH_OF_A_FRAME - frame_ticks);
-    }
-
-    float const fps = frames_counted / (frame_timer.get_ticks() / 1000.0f);
-    LOG_INFO(fmt::format("average FPS '{}'", fps));
-    ++frames_counted;
+    clock.update(logger);
+    counter.update(logger, clock);
+    delayer.delay_if_necessary(logger, clock);
   }
 }
 
