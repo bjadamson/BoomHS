@@ -62,7 +62,7 @@ move_ontilemap(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObje
   auto const [x, y, z] = tilemap.dimensions();
 
   auto const move_vec = (wo.*fn)();
-  auto const pos = wo.tilemap_position() + move_vec;
+  auto const pos = wo.tilemap_position() + (move_vec * dt * wo.speed());
   bool const x_outofbounds = pos.x > x || pos.x < 0;
   bool const y_outofbounds = pos.y > y || pos.y < 0;
   bool const z_outofbounds = pos.z > z || pos.z < 0;
@@ -84,12 +84,12 @@ move_ontilemap(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObje
   } else if (out_of_bounds) {
     return;
   }
-  auto const& new_tile = tilemap.data(pos + move_vec);
+  auto const& new_tile = tilemap.data(pos);
   if (!es.player_collision) {
-    wo.move(move_vec, dt);
+    wo.move_to(pos);
     ts.recompute = true;
   } else if (!new_tile.is_wall) {
-    wo.move(move_vec, dt);
+    wo.move_to(pos);
     ts.recompute = true;
   }
 }

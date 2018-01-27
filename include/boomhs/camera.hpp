@@ -69,7 +69,7 @@ public:
   // public fields
   bool flip_y = false;
   bool rotate_lock = false;
-  float rotation_speed = 35.0f;
+  float rotation_speed = 300.0f;
 
   glm::mat4
   projection_matrix() const;

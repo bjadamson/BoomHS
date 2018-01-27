@@ -325,6 +325,7 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
     if (!tilemap_state.reveal && !tile.is_visible) {
       return;
     }
+    // This offset causes the tile's to appear in the "middle"
     glm::vec3 constexpr VIEWING_OFFSET{0.50f, 0.0f, 0.50f};
     if(tile.is_wall) {
       auto const tmat = glm::translate(glm::mat4{}, tile_pos + VIEWING_OFFSET);
