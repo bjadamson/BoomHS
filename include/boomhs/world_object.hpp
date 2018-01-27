@@ -4,6 +4,7 @@
 #include <boomhs/types.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
+#include <iostream>
 #include <string>
 
 namespace boomhs
@@ -15,6 +16,7 @@ class WorldObject
 {
   EnttLookup ent_lookup_;
   glm::vec3 forward_, up_;
+  float speed_ = 240.0;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(WorldObject);
@@ -75,10 +77,13 @@ public:
     return transform().translation;
   }
 
+  auto speed() const { return speed_; }
+  void set_speed(float const s) { speed_ = s; }
+
   auto&
-  move(float const s, glm::vec3 const& dir)
+  move(glm::vec3 const& dir, double const dt)
   {
-    transform().translation += (s * dir);
+    transform().translation += (speed() * dir) * static_cast<float>(dt);
     return *this;
   }
 
@@ -127,6 +132,6 @@ public:
 };
 
 void
-move_ontilemap(GameState &, float const, glm::vec3 (WorldObject::*)() const, WorldObject &);
+move_ontilemap(GameState &, glm::vec3 (WorldObject::*)() const, WorldObject &, double const);
 
 } // ns boomhs

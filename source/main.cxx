@@ -126,23 +126,6 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
   return HandleManager{MOVE(handle_list), plus_eid, hashtag_eid};
 }
 
-std::uint32_t
-find_player(entt::DefaultRegistry &registry)
-{
-  // for now assume only 1 entity has the Player tag
-  assert(1 == registry.view<Player>().size());
-
-  auto view = registry.view<Player, Transform>();
-  boost::optional<uint32_t> entity{boost::none};
-  for (auto const e : view) {
-    // This assert ensures this loop only runs once.
-    assert(boost::none == entity);
-    entity = e;
-  }
-  assert(boost::none != entity);
-  return *entity;
-}
-
 void
 draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
               HandleManager &handles)
@@ -318,7 +301,7 @@ draw_target_vectors(GameState &state, entt::DefaultRegistry &registry, opengl::S
 }
 
 void
-game_loop(GameState &state, window::SDLWindow &window, float const delta_time)
+game_loop(GameState &state, window::SDLWindow &window, double const dt)
 {
   auto &engine_state = state.engine_state;
   ZoneManager zm{state.zone_states};
@@ -330,20 +313,17 @@ game_loop(GameState &state, window::SDLWindow &window, float const delta_time)
   auto &logger = engine_state.logger;
   auto &registry = zone_state.registry;
 
-  // We do this here, so that it gets checked every frame.
-  //
-  // While the buttons are pressed, move the player.
   if (mouse.both_pressed()) {
-    // TODO: figure this out
-    //float const angle = xrel > 0 ? 1.0 : -1.0f;
-    //player.rotate(angle, opengl::Y_UNIT_VECTOR);
-
-    move_ontilemap(state, 0.25f, &WorldObject::forward_vector, player);
+    // We do this here, so that it gets checked every frame.
+    //
+    // While the buttons are pressed, move the player.
+    move_ontilemap(state, &WorldObject::forward_vector, player, dt);
   }
 
   // compute tilemap
   if (tilemap_state.recompute) {
     LOG_INFO("Updating tilemap\n");
+
     update_visible_tiles(zone_state.tilemap, player, tilemap_state.reveal);
 
     // We don't need to recompute the tilemap, we just did.
@@ -397,15 +377,15 @@ struct Engine
 };
 
 void
-loop(Engine &engine, GameState &state, float const delta_time)
+loop(Engine &engine, GameState &state, double const dt)
 {
   auto &logger = state.engine_state.logger;
   // Reset Imgui for next game frame.
   ImGui_ImplSdlGL3_NewFrame(engine.window.raw());
 
   SDL_Event event;
-  boomhs::IO::process(state, event, delta_time);
-  boomhs::game_loop(state, engine.window, delta_time);
+  boomhs::IO::process(state, event, dt);
+  boomhs::game_loop(state, engine.window, dt);
 
   // Render Imgui UI
   ImGui::Render();
@@ -421,17 +401,17 @@ timed_game_loop(Engine &engine, GameState &state)
   window::FrameCounter counter;
 
   auto &logger = state.engine_state.logger;
+  auto const freq = SDL_GetPerformanceFrequency();
   while (!state.engine_state.quit) {
-    float const delta_time = clock.delta * 1000.0f / SDL_GetPerformanceFrequency();
-    std::cerr << "dt: '" << delta_time << "'\n";
+    double const dt = (clock.ticks() * 1000.0 / freq);
 
-    loop(engine, state, delta_time);
+    loop(engine, state, dt);
     clock.update(logger);
     counter.update(logger, clock);
   }
 }
 
-inline auto
+auto
 make_init_gamestate(stlw::Logger &logger, ImGuiIO &imgui, ZoneStates &&zs, window::Dimensions const &dimensions)
 {
   // Initialize opengl
@@ -445,7 +425,7 @@ make_init_gamestate(stlw::Logger &logger, ImGuiIO &imgui, ZoneStates &&zs, windo
   return GameState{MOVE(es), MOVE(zs)};
 }
 
-inline stlw::result<stlw::empty_type, std::string>
+stlw::result<stlw::empty_type, std::string>
 start(stlw::Logger &logger, Engine &engine)
 {
   using namespace opengl;

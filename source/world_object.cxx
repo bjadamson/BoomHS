@@ -56,8 +56,7 @@ WorldObject::rotate_to_match_camera_rotation(Camera const& camera)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void
-move_ontilemap(GameState &state, float const move_distance, glm::vec3 (WorldObject::*fn)() const,
-    WorldObject &wo)
+move_ontilemap(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObject &wo, double const dt)
 {
   auto &es = state.engine_state;
   auto &ts = es.tilemap_state;
@@ -91,10 +90,10 @@ move_ontilemap(GameState &state, float const move_distance, glm::vec3 (WorldObje
   }
   auto const& new_tile = tilemap.data(pos + move_vec);
   if (!es.player_collision) {
-    wo.move(move_distance, move_vec);
+    wo.move(move_vec, dt);
     ts.recompute = true;
   } else if (!new_tile.is_wall) {
-    wo.move(move_distance, move_vec);
+    wo.move(move_vec, dt);
     ts.recompute = true;
   }
 }

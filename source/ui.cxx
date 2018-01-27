@@ -251,8 +251,10 @@ draw_mouse_window(GameState &state)
 }
 
 void
-draw_player_window(GameState &state)
+draw_player_window(GameState &state, entt::DefaultRegistry &registry)
 {
+  auto &es = state.engine_state;
+
   ZoneManager zm{state.zone_states};
   auto &active = zm.active();
   auto &player = active.player;
@@ -261,6 +263,11 @@ draw_player_window(GameState &state)
     auto const display = player.display();
     ImGui::Text("%s", display.c_str());
 
+    ImGui::Checkbox("Player Collisions Enabled", &es.player_collision);
+    float speed = player.speed();
+    if (ImGui::InputFloat("Player Speed", &speed)) {
+      player.set_speed(speed);
+    }
 
     glm::quat const quat = glm::angleAxis(glm::radians(0.0f), Y_UNIT_VECTOR);
     float const dot = glm::dot(player.orientation(), quat);
@@ -469,7 +476,7 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
     draw_mouse_window(state);
   }
   if (ui_state.show_playerwindow) {
-    draw_player_window(state);
+    draw_player_window(state, registry);
   }
   if (ui_state.show_tilemapwindow) {
     draw_tilemap_editor(state);
@@ -481,7 +488,6 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
     ImGui::Checkbox("Mouse Rotation Lock", &ui_state.rotate_lock);
     ImGui::Checkbox("Draw Entities", &engine_state.draw_entities);
     ImGui::Checkbox("Draw Normals", &engine_state.draw_normals);
-    ImGui::Checkbox("Player Collisions Enabled", &engine_state.player_collision);
     ImGui::Checkbox("Mariolike Edges", &engine_state.mariolike_edges);
   }
 

@@ -75,7 +75,7 @@ is_quit_event(SDL_Event &event)
 
 
 void
-process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, float const delta_time)
+process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, float const dt)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
@@ -108,7 +108,7 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, float 
 }
 
 void
-process_mousebutton_down(GameState &state, SDL_MouseButtonEvent const& event, float const delta_time)
+process_mousebutton_down(GameState &state, SDL_MouseButtonEvent const& event, float const dt)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
@@ -135,7 +135,7 @@ process_mousebutton_down(GameState &state, SDL_MouseButtonEvent const& event, fl
 }
 
 void
-process_mousebutton_up(GameState &state, SDL_MouseButtonEvent const& event, float const delta_time)
+process_mousebutton_up(GameState &state, SDL_MouseButtonEvent const& event, float const dt)
 {
   auto &es = state.engine_state;
   auto &ms = es.mouse_state;
@@ -150,12 +150,12 @@ process_mousebutton_up(GameState &state, SDL_MouseButtonEvent const& event, floa
 }
 
 void
-process_keyup(GameState &state, SDL_Event const& event, float const delta_time)
+process_keyup(GameState &state, SDL_Event const& event, float const dt)
 {
 }
 
 void
-process_keydown(GameState &state, SDL_Event const& event, float const delta_time)
+process_keydown(GameState &state, SDL_Event const& event, float const dt)
 {
   auto &es = state.engine_state;
   auto &ui = es.ui_state;
@@ -252,7 +252,7 @@ process_keydown(GameState &state, SDL_Event const& event, float const delta_time
 }
 
 void
-process_mousewheel(GameState &state, SDL_MouseWheelEvent const& wheel, float const delta_time)
+process_mousewheel(GameState &state, SDL_MouseWheelEvent const& wheel, float const dt)
 {
   auto &logger = state.engine_state.logger;
   LOG_TRACE("mouse wheel event detected.");
@@ -268,7 +268,7 @@ process_mousewheel(GameState &state, SDL_MouseWheelEvent const& wheel, float con
 }
 
 void
-process_keystate(GameState &state, float const time_delta)
+process_keystate(GameState &state, double const dt)
 {
   // continual keypress responses procesed here
   uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
@@ -281,22 +281,22 @@ process_keystate(GameState &state, float const time_delta)
   auto &player = active.player;
 
   if (keystate[SDL_SCANCODE_W]) {
-    move_ontilemap(state, MOVE_DISTANCE, &WorldObject::forward_vector, player);
+    move_ontilemap(state, &WorldObject::forward_vector, player, dt);
   }
   if (keystate[SDL_SCANCODE_S]) {
-    move_ontilemap(state, MOVE_DISTANCE, &WorldObject::backward_vector, player);
+    move_ontilemap(state, &WorldObject::backward_vector, player, dt);
   }
   if (keystate[SDL_SCANCODE_A]) {
-    move_ontilemap(state, MOVE_DISTANCE, &WorldObject::left_vector, player);
+    move_ontilemap(state, &WorldObject::left_vector, player, dt);
   }
   if (keystate[SDL_SCANCODE_D]) {
-    move_ontilemap(state, MOVE_DISTANCE, &WorldObject::right_vector, player);
+    move_ontilemap(state, &WorldObject::right_vector, player, dt);
   }
   if (keystate[SDL_SCANCODE_Q]) {
-    move_ontilemap(state, MOVE_DISTANCE, &WorldObject::up_vector, player);
+    move_ontilemap(state, &WorldObject::up_vector, player, dt);
   }
   if (keystate[SDL_SCANCODE_E]) {
-    move_ontilemap(state, MOVE_DISTANCE, &WorldObject::down_vector, player);
+    move_ontilemap(state, &WorldObject::down_vector, player, dt);
   }
   auto const rotate_player = [&](float const angle, glm::vec3 const& axis) {
     player.rotate(angle, axis);
@@ -311,7 +311,7 @@ process_keystate(GameState &state, float const time_delta)
 }
 
 bool
-process_event(GameState &state, SDL_Event &event, float const delta_time)
+process_event(GameState &state, SDL_Event &event, float const dt)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
@@ -324,22 +324,22 @@ process_event(GameState &state, SDL_Event &event, float const delta_time)
 
   switch (event.type) {
     case SDL_MOUSEBUTTONDOWN:
-      process_mousebutton_down(state, event.button, delta_time);
+      process_mousebutton_down(state, event.button, dt);
       break;
     case SDL_MOUSEBUTTONUP:
-      process_mousebutton_up(state, event.button, delta_time);
+      process_mousebutton_up(state, event.button, dt);
       break;
   case SDL_MOUSEMOTION:
-      process_mousemotion(state, event.motion, delta_time);
+      process_mousemotion(state, event.motion, dt);
       break;
   case SDL_MOUSEWHEEL:
-      process_mousewheel(state, event.wheel, delta_time);
+      process_mousewheel(state, event.wheel, dt);
       break;
   case SDL_KEYDOWN:
-      process_keydown(state, event, delta_time);
+      process_keydown(state, event, dt);
       break;
   case SDL_KEYUP:
-      process_keyup(state, event, delta_time);
+      process_keyup(state, event, dt);
       break;
   }
   return is_quit_event(event);
@@ -351,7 +351,7 @@ namespace boomhs
 {
 
 void
-IO::process(GameState &state, SDL_Event &event, float const delta_time)
+IO::process(GameState &state, SDL_Event &event, double const dt)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
@@ -362,10 +362,10 @@ IO::process(GameState &state, SDL_Event &event, float const delta_time)
 
     auto &imgui = es.imgui;
     if (!imgui.WantCaptureMouse && !imgui.WantCaptureKeyboard) {
-      es.quit = process_event(state, event, delta_time);
+      es.quit = process_event(state, event, dt);
     }
   }
-  process_keystate(state, delta_time);
+  process_keystate(state, dt);
 }
 
 } // ns boomhs

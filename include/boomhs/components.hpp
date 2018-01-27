@@ -99,4 +99,21 @@ find_pointlights(entt::DefaultRegistry &registry)
   return find_all_entities_with_component<PointLight, Transform>(registry);
 }
 
+inline std::uint32_t
+find_player(entt::DefaultRegistry &registry)
+{
+  // for now assume only 1 entity has the Player tag
+  assert(1 == registry.view<Player>().size());
+
+  auto view = registry.view<Player, Transform>();
+  boost::optional<uint32_t> entity{boost::none};
+  for (auto const e : view) {
+    // This assert ensures this loop only runs once.
+    assert(boost::none == entity);
+    entity = e;
+  }
+  assert(boost::none != entity);
+  return *entity;
+}
+
 } // ns boomhs
