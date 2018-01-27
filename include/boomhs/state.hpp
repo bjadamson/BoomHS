@@ -30,8 +30,6 @@ struct UiState
   bool draw_ui = true;
   bool enter_pressed = false;
   bool block_input = false;
-  bool rotate_lock = false;
-  bool flip_y = false;
 
   bool show_background_window = false;
 

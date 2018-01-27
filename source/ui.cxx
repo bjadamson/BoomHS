@@ -208,6 +208,9 @@ draw_camera_window(GameState &state)
     ImGui::InputFloat("Near:", &ortho.near);
   };
   if (ImGui::Begin("CAMERA INFO WINDOW")) {
+    ImGui::Checkbox("Flip Y Sensitivity", &camera.flip_y);
+    ImGui::Checkbox("Mouse Rotation Lock", &camera.rotate_lock);
+    ImGui::InputFloat("Mouse Rotation Speed", &camera.rotation_speed);
     std::vector<std::string> mode_strings;
     for(auto const& it : CAMERA_MODES) {
       mode_strings.emplace_back(it.second);
@@ -243,7 +246,6 @@ draw_mouse_window(GameState &state)
   auto &ui = es.ui_state;
 
   if (ImGui::Begin("MOUSE INFO WINDOW")) {
-    ImGui::Checkbox("Flip Y Sensitivity", &ui.flip_y);
     ImGui::InputFloat("X sensitivity:", &ms.sensitivity.x, 0.0f, 1.0f);
     ImGui::InputFloat("Y sensitivity:", &ms.sensitivity.y, 0.0f, 1.0f);
     ImGui::End();
@@ -485,7 +487,6 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
     ImGui::Checkbox("Draw Skybox", &engine_state.draw_skybox);
     ImGui::Checkbox("Draw Terrain", &engine_state.draw_terrain);
     ImGui::Checkbox("Enter Pressed", &ui_state.enter_pressed);
-    ImGui::Checkbox("Mouse Rotation Lock", &ui_state.rotate_lock);
     ImGui::Checkbox("Draw Entities", &engine_state.draw_entities);
     ImGui::Checkbox("Draw Normals", &engine_state.draw_normals);
     ImGui::Checkbox("Mariolike Edges", &engine_state.mariolike_edges);

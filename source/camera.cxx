@@ -62,31 +62,23 @@ Camera::forward_vector() const
 }
 
 Camera&
-Camera::rotate(stlw::Logger &logger, UiState &uistate, glm::vec2 const& delta)
+Camera::rotate(float const d_theta, float const d_phi)
 {
-  float const d_theta = delta.x;
-  float const d_phi = delta.y;
-
   float constexpr PI = glm::pi<float>();
   float constexpr TWO_PI = PI * 2.0f;
 
-  {
-    auto const& theta = coordinates_.theta;
-    coordinates_.theta = (up_.y > 0.0f) ? (theta - d_theta) : (theta + d_theta);
-  }
-  {
-    auto &theta = coordinates_.theta;
-    if (theta > TWO_PI) {
-      theta -= TWO_PI;
-    } else if (theta < -TWO_PI) {
-      theta += TWO_PI;
-    }
+  auto &theta = coordinates_.theta;
+  theta = (up_.y > 0.0f) ? (theta - d_theta) : (theta + d_theta);
+  if (theta > TWO_PI) {
+    theta -= TWO_PI;
+  } else if (theta < -TWO_PI) {
+    theta += TWO_PI;
   }
 
   auto &phi = coordinates_.phi;
-  float const new_phi = uistate.flip_y ? (phi + d_phi) : (phi - d_phi);
+  float const new_phi = flip_y ? (phi + d_phi) : (phi - d_phi);
   bool const top_hemisphere = (new_phi > 0 && new_phi < (PI/2.0f)) || (new_phi < -(PI/2.0f) && new_phi > -TWO_PI);
-  if (!uistate.rotate_lock || top_hemisphere) {
+  if (!rotate_lock || top_hemisphere) {
     phi = new_phi;
   }
 
@@ -98,10 +90,11 @@ Camera::rotate(stlw::Logger &logger, UiState &uistate, glm::vec2 const& delta)
   }
 
   // If phi is between 0 to PI or -PI to -2PI, make 'up' be positive Y, other wise make it negative Y
+  auto &up = up_;
   if ((phi > 0 && phi < PI) || (phi < -PI && phi > -TWO_PI)) {
-    up_ = opengl::Y_UNIT_VECTOR;
+    up = opengl::Y_UNIT_VECTOR;
   } else {
-    up_ = -opengl::Y_UNIT_VECTOR;
+    up = -opengl::Y_UNIT_VECTOR;
   }
   return *this;
 }

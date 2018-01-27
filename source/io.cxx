@@ -72,8 +72,6 @@ is_quit_event(SDL_Event &event)
   return is_quit;
 }
 
-
-
 void
 process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, float const dt)
 {
@@ -93,18 +91,22 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, float 
 
   if (ms.both_pressed()) {
     player.rotate_to_match_camera_rotation(camera);
+    move_ontilemap(state, &WorldObject::forward_vector, player, dt);
   }
-    if (ms.left_pressed) {
-      auto const& sens = ms.sensitivity;
-      float const dx = sens.x * xrel;
-      float const dy = sens.y * yrel;
-      glm::vec2 const delta{dx, dy};
-      camera.rotate(logger, ui, delta);
-    }
-    if (ms.right_pressed) {
-      float const angle = xrel > 0 ? 1.0 : -1.0f;
-      player.rotate(angle, opengl::Y_UNIT_VECTOR);
-    }
+  if (ms.left_pressed) {
+    auto const& sens = ms.sensitivity;
+    float const dx = sens.x * xrel;
+    float const dy = sens.y * yrel;
+    camera.rotate(dx, dy);
+  }
+  if (ms.right_pressed) {
+    float const speed = camera.rotation_speed;
+    float const angle = xrel > 0 ? speed : -speed;
+    auto const x_dt = angle * dt;
+    auto constexpr y_dt = 0.0f;
+    camera.rotate(x_dt, y_dt);
+    player.rotate_to_match_camera_rotation(camera);
+  }
 }
 
 void

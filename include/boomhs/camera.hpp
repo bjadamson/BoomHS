@@ -12,7 +12,6 @@ namespace boomhs
 {
 class WorldObject;
 struct MouseState;
-struct UiState;
 
 struct PerspectiveViewport
 {
@@ -66,6 +65,11 @@ class Camera
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
   Camera(EnttLookup const&, glm::vec3 const& f, glm::vec3 const& u);
+
+  // public fields
+  bool flip_y = false;
+  bool rotate_lock = false;
+  float rotation_speed = 35.0f;
 
   glm::mat4
   projection_matrix() const;
@@ -129,7 +133,7 @@ public:
   }
 
   Camera&
-  rotate(stlw::Logger &, UiState &, glm::vec2 const&);
+  rotate(float const d_angle, float const d_phi);
 
   Camera&
   zoom(float const);
