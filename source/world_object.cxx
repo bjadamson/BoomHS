@@ -34,21 +34,17 @@ WorldObject::rotate(float const angle, glm::vec3 const& axis)
 void
 WorldObject::rotate_to_match_camera_rotation(Camera const& camera)
 {
-  glm::vec3 eyespace_fwd = camera.forward_vector();
+  // camera "forward" is actually reverse due to -Z being +Z in eyespace.
+  glm::vec3 eyespace_fwd = -camera.forward_vector();
   eyespace_fwd.y = 0;
   eyespace_fwd = glm::normalize(eyespace_fwd);
 
   glm::vec3 player_fwd = forward_vector();
   player_fwd.y = 0;
+  player_fwd = glm::normalize(player_fwd);
 
-
-  using namespace stlw;
-  float const angle = math::angle_between_vectors(eyespace_fwd, player_fwd, glm::zero<glm::vec3>());
-  glm::quat new_rotation = math::rotation_between_vectors(eyespace_fwd, player_fwd);
-
-  // TODO: I'm not sure why the extra 180 is requied currently. Without it, the player ends up
-  // facing backwars (maybe -Z being FORWARD) is why? Either way, need to grok.
-  new_rotation = new_rotation * glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
+  float const angle = stlw::math::angle_between_vectors(eyespace_fwd, player_fwd, glm::zero<glm::vec3>());
+  glm::quat new_rotation = stlw::math::rotation_between_vectors(eyespace_fwd, player_fwd);
 
   auto &t = transform();
   t.rotation = new_rotation * t.rotation;

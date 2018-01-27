@@ -464,7 +464,6 @@ start(stlw::Logger &logger, Engine &engine)
 
     auto const player_eid = find_player(registry);
     auto &player_transform = registry.get<Transform>(player_eid);
-    //player_transform.rotation = glm::angleAxis(glm::radians(180.0f), opengl::Y_UNIT_VECTOR);
 
     EnttLookup player_lookup{player_eid, registry};
     WorldObject player{player_lookup, FORWARD, UP};

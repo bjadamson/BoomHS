@@ -77,11 +77,16 @@ name = "cube"
 normals = true
 uvs = false
 
+[[meshes]]
+name = "robot"
+normals = true
+uvs = false
+
 ########### ENTITY #############
 [[entity]]
 pos = [8.5, 0.0, 8.5]
 shader = "3d_pos_normal_color"
-geometry = "mesh:at"
+geometry = "mesh:robot"
 player = "player"
 receives_light = true
 color = [1.0, 1.0, 1.0]
