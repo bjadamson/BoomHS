@@ -3,34 +3,67 @@
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
+#include <gfx/gl_sdl_log.hpp>
 #include <opengl/glew.hpp>
-#include <opengl/gl_log.hpp>
 
 #include <iostream>
 
 namespace {
-void check_errors()
+void
+check_errors()
 {
-   std::string const error = SDL_GetError();
-   if (error != "") {
-     std::cerr << "SLD Error : " << error << std::endl;
-     std::abort();
-  }
-
-   auto const gl_errors = opengl::global::log::get_gl_errors();
-   if (!gl_errors.empty()) {
-     std::cerr << "GL errors!\n";
-     for (auto const& e : gl_errors) {
-       std::cerr << "e: '" << e << "'\n";
-     }
-     std::abort();
-   }
+  gfx::ErrorLog::abort_if_any_errors(std::cerr);
 }
 
 } // namespace anonymous
 
 namespace window
 {
+
+bool
+SDLWindow::try_set_swapinterval(SwapIntervalFlag const swap_flag)
+{
+  if (swap_flag == SwapIntervalFlag::IMMEDIATE) {
+    // TODO: implement delay using SDL_Wait() (or someother sleep functionality)
+    std::exit(1);
+  }
+  auto const to_int = [&](auto const flag) {
+    // https://wiki.libsdl.org/SDL_GL_SetSwapInterval
+    if (SwapIntervalFlag::IMMEDIATE == flag) {
+      return 0;
+    }
+    if (SwapIntervalFlag::SYNCHRONIZED == flag) {
+      return 1;
+    }
+    if (SwapIntervalFlag::LATE_TEARING == flag) {
+      return -1;
+    }
+
+    // invalid
+    std::exit(1);
+    return 0;
+  };
+  int const r = SDL_GL_SetSwapInterval(to_int(swap_flag));
+  return 0 == r;
+}
+
+void
+SDLWindow::set_fullscreen(FullscreenFlags const fs)
+{
+  uint32_t sdl_flags = 0;
+  if (fs == FullscreenFlags::NOT_FULLSCREEN) {
+    // do nothing
+  }
+  else if (fs == FullscreenFlags::FULLSCREEN) {
+    sdl_flags = SDL_WINDOW_FULLSCREEN;
+  }
+  else if (fs == FullscreenFlags::FULLSCREEN_DESKTOP) {
+    sdl_flags = SDL_WINDOW_FULLSCREEN_DESKTOP;
+  }
+
+  int const result = SDL_SetWindowFullscreen(window_.get(), sdl_flags);
+  assert(0 == result);
+}
 
 stlw::result<stlw::empty_type, std::string>
 sdl_library::init()
@@ -124,6 +157,7 @@ check_errors();
         fmt::format("OpenGL context could not be created! SDL Error: {}\n", SDL_GetError());
     return stlw::make_error(error);
   }
+
   // Make the window the current one
   auto const mc_r = SDL_GL_MakeCurrent(window_ptr.get(), gl_context);
 check_errors();
@@ -131,11 +165,6 @@ check_errors();
     auto const fmt = fmt::format("Error making window current. SDL Error: {}\n", SDL_GetError());
     return stlw::make_error(fmt);
   }
-
-  // Use v-sync
-  // NOTE: must happen AFTER SDL_GL_MakeCurrent call occurs.
-  SDL_GL_SetSwapInterval(1);
-check_errors();
 
   // make sdl capture the input device
   // http://gamedev.stackexchange.com/questions/33519/trap-mouse-in-sdl
@@ -172,8 +201,21 @@ check_errors();
     return stlw::make_error(error);
   }
 
-  opengl::global::log::clear_gl_errors();
-  return SDLWindow{MOVE(window_ptr), gl_context};
+  // Use v-sync
+  // NOTE: must happen AFTER SDL_GL_MakeCurrent call occurs.
+  SDLWindow window{MOVE(window_ptr), gl_context};
+  bool const success = window.try_set_swapinterval(SwapIntervalFlag::LATE_TEARING);
+  if (!success) {
+    // SDL fills up the log with info about the failed attempt above.
+    gfx::ErrorLog::clear();
+
+    bool const backup_success = window.try_set_swapinterval(SwapIntervalFlag::SYNCHRONIZED);
+    if (!backup_success) {
+      std::abort();
+    }
+  }
+  check_errors();
+  return window;
 }
 
 } // ns window

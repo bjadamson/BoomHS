@@ -29,7 +29,6 @@ calculate_mouse_worldpos(Camera const& camera, WorldObject const& player, int co
   glm::mat4 const view = camera.view_matrix();
   glm::mat4 const projection = camera.projection_matrix();
   float const height = dimensions.h;
-  std::cerr << "viewport: '" << glm::to_string(viewport) << "'\n";
 
   // Calculate the view-projection matrix.
   glm::mat4 const transform = projection * view;
@@ -95,7 +94,6 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, float 
   if (ms.both_pressed()) {
     player.rotate_to_match_camera_rotation(camera);
   }
-  else {
     if (ms.left_pressed) {
       auto const& sens = ms.sensitivity;
       float const dx = sens.x * xrel;
@@ -107,13 +105,11 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, float 
       float const angle = xrel > 0 ? 1.0 : -1.0f;
       player.rotate(angle, opengl::Y_UNIT_VECTOR);
     }
-  }
 }
 
 void
 process_mousebutton_down(GameState &state, SDL_MouseButtonEvent const& event, float const delta_time)
 {
-  std::cerr << "mb_down\n";
   auto &es = state.engine_state;
   auto &logger = es.logger;
   auto &ms = es.mouse_state;
@@ -141,7 +137,6 @@ process_mousebutton_down(GameState &state, SDL_MouseButtonEvent const& event, fl
 void
 process_mousebutton_up(GameState &state, SDL_MouseButtonEvent const& event, float const delta_time)
 {
-  std::cerr << "mb_up\n";
   auto &es = state.engine_state;
   auto &ms = es.mouse_state;
 

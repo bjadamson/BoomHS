@@ -318,7 +318,7 @@ draw_target_vectors(GameState &state, entt::DefaultRegistry &registry, opengl::S
 }
 
 void
-game_loop(GameState &state, window::SDLWindow &window)
+game_loop(GameState &state, window::SDLWindow &window, float const delta_time)
 {
   auto &engine_state = state.engine_state;
   ZoneManager zm{state.zone_states};
@@ -390,7 +390,6 @@ struct Engine
 {
   ::window::SDLWindow window;
   std::array<entt::DefaultRegistry, 2> registries = {};
-  float delta_time = 0.0f;
 
   MOVE_CONSTRUCTIBLE_ONLY(Engine);
 
@@ -398,15 +397,15 @@ struct Engine
 };
 
 void
-loop(Engine &engine, GameState &state)
+loop(Engine &engine, GameState &state, float const delta_time)
 {
   auto &logger = state.engine_state.logger;
   // Reset Imgui for next game frame.
   ImGui_ImplSdlGL3_NewFrame(engine.window.raw());
 
   SDL_Event event;
-  boomhs::IO::process(state, event, engine.delta_time);
-  boomhs::game_loop(state, engine.window);
+  boomhs::IO::process(state, event, delta_time);
+  boomhs::game_loop(state, engine.window, delta_time);
 
   // Render Imgui UI
   ImGui::Render();
@@ -419,17 +418,16 @@ void
 timed_game_loop(Engine &engine, GameState &state)
 {
   window::Clock clock;
-  window::FrameDelayer delayer;
   window::FrameCounter counter;
 
   auto &logger = state.engine_state.logger;
   while (!state.engine_state.quit) {
-    engine.delta_time = clock.delta * 1000.0f / SDL_GetPerformanceFrequency();
+    float const delta_time = clock.delta * 1000.0f / SDL_GetPerformanceFrequency();
+    std::cerr << "dt: '" << delta_time << "'\n";
 
-    loop(engine, state);
+    loop(engine, state, delta_time);
     clock.update(logger);
     counter.update(logger, clock);
-    delayer.delay_if_necessary(logger, clock);
   }
 }
 

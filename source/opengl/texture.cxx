@@ -2,6 +2,7 @@
 
 #include <opengl/glew.hpp>
 #include <opengl/global.hpp>
+#include <gfx/gl_sdl_log.hpp>
 
 #include <stlw/format.hpp>
 #include <stlw/tuple.hpp>

@@ -80,7 +80,7 @@ struct MouseState
 
 struct WindowState
 {
-  window::FullscreenFlags fullscreen = window::NOT_FULLSCREEN;
+  window::FullscreenFlags fullscreen = window::FullscreenFlags::NOT_FULLSCREEN;
 };
 
 struct TilemapState

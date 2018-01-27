@@ -1,5 +1,4 @@
 #pragma once
-#include <opengl/gl_log.hpp>
 #include <opengl/glew.hpp>
 
 // Functions within this namespace have global side effects within OpenGL's internal state.

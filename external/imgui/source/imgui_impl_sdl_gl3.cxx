@@ -22,7 +22,6 @@
 #include <opengl/glew.hpp>
 
 #include <iostream>
-#include <opengl/gl_log.hpp>
 
 // Data
 static double g_Time = 0.0f;
@@ -348,26 +347,9 @@ ImGui_ImplSdlGL3_CreateDeviceObjects()
   GLint link_result;
   glGetProgramiv(g_ShaderHandle, GL_LINK_STATUS, &link_result);
   if (link_result == GL_FALSE) {
-    std::cerr << "Linking the shader failed. Progam log '"
-              << opengl::global::log::get_shader_log(g_ShaderHandle) << "'";
     std::abort();
   }
   glUseProgram(g_ShaderHandle);
-  namespace GL_LOG = opengl::global::log;
-  // auto const pl = GL_LOG::get_program_log(g_ShaderHandle);
-  // if (!pl.empty()) {
-  // std::cerr << "program_log: '" << pl << "'\n";
-  // std::abort();
-  //}
-  // auto const vSLOG = GL_LOG::get_shader_log(g_VertHandle);
-  // if (!vSLOG.empty()) {
-  // std::cerr << "vSLOG: '" << vSLOG << "' (len: '" << vSLOG.length() << "')\n";
-  // std::abort();
-  //}
-  // auto const fSLOG = GL_LOG::get_shader_log(g_FragHandle);
-  // if (!fSLOG.empty()) {
-  // std::cerr << "fSLOG: '" << fSLOG << "' (len: '" << fSLOG.length() << "')\n";
-  //}
 
   g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "Texture");
   g_AttribLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "ProjMtx");

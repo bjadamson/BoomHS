@@ -2,6 +2,7 @@
 #include <opengl/debug.hpp>
 #include <opengl/glew.hpp>
 #include <opengl/global.hpp>
+#include <gfx/gl_sdl_log.hpp>
 
 #include <stlw/format.hpp>
 #include <stlw/result.hpp>
@@ -51,7 +52,7 @@ compile_shader(T const &data, GLenum const type)
   if (true == is_compiled(handle)) {
     return compiled_shader{handle, glDeleteShader};
   }
-  return stlw::make_error(global::log::get_shader_log(handle));
+  return stlw::make_error(gfx::get_shader_log(handle));
 }
 
 inline stlw::result<GLuint, std::string>
@@ -75,7 +76,7 @@ link_program(GLuint const program_id)
   glGetProgramiv(program_id, GL_LINK_STATUS, &result);
   if (result == GL_FALSE) {
     return stlw::make_error("Linking the shader failed. Progam log '" +
-                            global::log::get_program_log(program_id) + "'");
+                            gfx::get_program_log(program_id) + "'");
   }
   return stlw::make_empty();
 }
@@ -265,8 +266,6 @@ ShaderProgram::use_program(stlw::Logger &logger)
 GLint
 ShaderProgram::get_uniform_location(stlw::Logger &logger, GLchar const *name)
 {
-  global::log::clear_gl_errors();
-
   LOG_TRACE(fmt::sprintf("getting uniform '%s' location.", name));
   GLint const loc = glGetUniformLocation(this->program_.handle(), name);
   LOG_TRACE(fmt::sprintf("uniform '%s' found at '%d'.", name, loc));

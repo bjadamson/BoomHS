@@ -42,19 +42,4 @@ struct FrameCounter
   }
 };
 
-struct FrameDelayer
-{
-  void
-  delay_if_necessary(stlw::Logger &logger, Clock const& clock)
-  {
-    uint32_t const ticks = clock.ticks_now();
-
-    float constexpr ONE_60TH_OF_A_FRAME = (1 / 60) * 1000;
-    if (ticks < ONE_60TH_OF_A_FRAME) {
-      LOG_TRACE("Frame finished early, sleeping rest of frame.");
-      SDL_Delay(ONE_60TH_OF_A_FRAME - ticks);
-    }
-  }
-};
-
 } // ns window
