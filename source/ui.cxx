@@ -143,7 +143,7 @@ draw_tilemap_editor(GameState &state)
 }
 
 void
-draw_camera_info(GameState &state)
+draw_camera_window(GameState &state)
 {
   auto &es = state.engine_state;
 
@@ -208,7 +208,6 @@ draw_camera_info(GameState &state)
     ImGui::InputFloat("Near:", &ortho.near);
   };
   if (ImGui::Begin("CAMERA INFO WINDOW")) {
-    ImGui::Checkbox("Flip Y Sensitivity", &es.ui_state.flip_y);
     std::vector<std::string> mode_strings;
     for(auto const& it : CAMERA_MODES) {
       mode_strings.emplace_back(it.second);
@@ -237,7 +236,22 @@ draw_camera_info(GameState &state)
 }
 
 void
-draw_player_info(GameState &state)
+draw_mouse_window(GameState &state)
+{
+  auto &es = state.engine_state;
+  auto &ms = es.mouse_state;
+  auto &ui = es.ui_state;
+
+  if (ImGui::Begin("MOUSE INFO WINDOW")) {
+    ImGui::Checkbox("Flip Y Sensitivity", &ui.flip_y);
+    ImGui::InputFloat("X sensitivity:", &ms.sensitivity.x, 0.0f, 1.0f);
+    ImGui::InputFloat("Y sensitivity:", &ms.sensitivity.y, 0.0f, 1.0f);
+    ImGui::End();
+  }
+}
+
+void
+draw_player_window(GameState &state)
 {
   ZoneManager zm{state.zone_states};
   auto &active = zm.active();
@@ -449,10 +463,13 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
     draw_entity_editor(state, registry);
   }
   if (ui_state.show_camerawindow) {
-    draw_camera_info(state);
+    draw_camera_window(state);
+  }
+  if (ui_state.show_mousewindow) {
+    draw_mouse_window(state);
   }
   if (ui_state.show_playerwindow) {
-    draw_player_info(state);
+    draw_player_window(state);
   }
   if (ui_state.show_tilemapwindow) {
     draw_tilemap_editor(state);
@@ -465,6 +482,7 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
     ImGui::Checkbox("Draw Entities", &engine_state.draw_entities);
     ImGui::Checkbox("Draw Normals", &engine_state.draw_normals);
     ImGui::Checkbox("Player Collisions Enabled", &engine_state.player_collision);
+    ImGui::Checkbox("Mariolike Edges", &engine_state.mariolike_edges);
   }
 
   if (ImGui::BeginMainMenuBar()) {
@@ -472,6 +490,7 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
       ImGui::MenuItem("Debug Menu", nullptr, &ui_state.show_debugwindow);
       ImGui::MenuItem("Entity Menu", nullptr, &ui_state.show_entitywindow);
       ImGui::MenuItem("Camera Menu", nullptr, &ui_state.show_camerawindow);
+      ImGui::MenuItem("Mouse Menu", nullptr, &ui_state.show_mousewindow);
       ImGui::MenuItem("Player Menu", nullptr, &ui_state.show_playerwindow);
       ImGui::MenuItem("Tilemap Menu", nullptr, &ui_state.show_tilemapwindow);
       ImGui::EndMenu();

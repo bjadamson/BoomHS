@@ -330,6 +330,17 @@ game_loop(GameState &state, window::SDLWindow &window)
   auto &logger = engine_state.logger;
   auto &registry = zone_state.registry;
 
+  // We do this here, so that it gets checked every frame.
+  //
+  // While the buttons are pressed, move the player.
+  if (mouse.both_pressed()) {
+    // TODO: figure this out
+    //float const angle = xrel > 0 ? 1.0 : -1.0f;
+    //player.rotate(angle, opengl::Y_UNIT_VECTOR);
+
+    move_ontilemap(state, 0.25f, &WorldObject::forward_vector, player);
+  }
+
   // compute tilemap
   if (tilemap_state.recompute) {
     LOG_INFO("Updating tilemap\n");
@@ -365,8 +376,9 @@ game_loop(GameState &state, window::SDLWindow &window)
   if (engine_state.show_target_vectors) {
     draw_target_vectors(state, registry, sps, player);
   }
-  // UI code
-  draw_ui(state, window, registry);
+  if (engine_state.ui_state.draw_ui) {
+    draw_ui(state, window, registry);
+  }
 }
 
 } // ns boomhs

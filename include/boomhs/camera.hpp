@@ -2,7 +2,6 @@
 #include <boomhs/components.hpp>
 #include <boomhs/types.hpp>
 #include <boomhs/spherical.hpp>
-#include <window/mouse.hpp>
 
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
@@ -12,6 +11,7 @@
 namespace boomhs
 {
 class WorldObject;
+struct MouseState;
 struct UiState;
 
 struct PerspectiveViewport
@@ -129,7 +129,7 @@ public:
   }
 
   Camera&
-  rotate(stlw::Logger &, UiState &, window::mouse_data const&);
+  rotate(stlw::Logger &, UiState &, glm::vec2 const&);
 
   Camera&
   zoom(float const);

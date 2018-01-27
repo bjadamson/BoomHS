@@ -1,5 +1,8 @@
 #include <boomhs/world_object.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/state.hpp>
+#include <boomhs/zone.hpp>
+
 #include <stlw/format.hpp>
 #include <stlw/math.hpp>
 
@@ -49,6 +52,51 @@ WorldObject::rotate_to_match_camera_rotation(Camera const& camera)
 
   auto &t = transform();
   t.rotation = new_rotation * t.rotation;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+void
+move_ontilemap(GameState &state, float const move_distance, glm::vec3 (WorldObject::*fn)() const,
+    WorldObject &wo)
+{
+  auto &es = state.engine_state;
+  auto &ts = es.tilemap_state;
+
+  ZoneManager zm{state.zone_states};
+  auto const& tilemap = zm.active().tilemap;
+  auto const [x, y, z] = tilemap.dimensions();
+
+  auto const move_vec = (wo.*fn)();
+  auto const pos = wo.tilemap_position() + move_vec;
+  bool const x_outofbounds = pos.x > x || pos.x < 0;
+  bool const y_outofbounds = pos.y > y || pos.y < 0;
+  bool const z_outofbounds = pos.z > z || pos.z < 0;
+  bool const out_of_bounds = x_outofbounds || y_outofbounds || z_outofbounds;
+
+  if (out_of_bounds && es.mariolike_edges) {
+    if (x_outofbounds) {
+      auto const new_x = pos.x < 0 ? x : 0;
+      wo.move_to(new_x, pos.y, pos.z);
+    }
+    else if (y_outofbounds) {
+      auto const new_y = pos.y < 0 ? y : 0;
+      wo.move_to(pos.x, new_y, pos.z);
+    }
+    else if (z_outofbounds) {
+      auto const new_z = pos.z < 0 ? z : 0;
+      wo.move_to(pos.x, pos.y, new_z);
+    }
+  } else if (out_of_bounds) {
+    return;
+  }
+  auto const& new_tile = tilemap.data(pos + move_vec);
+  if (!es.player_collision) {
+    wo.move(move_distance, move_vec);
+    ts.recompute = true;
+  } else if (!new_tile.is_wall) {
+    wo.move(move_distance, move_vec);
+    ts.recompute = true;
+  }
 }
 
 } // ns boomhs

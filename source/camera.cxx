@@ -3,6 +3,7 @@
 #include <boomhs/world_object.hpp>
 
 #include <opengl/constants.hpp>
+#include <window/mouse.hpp>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -61,14 +62,10 @@ Camera::forward_vector() const
 }
 
 Camera&
-Camera::rotate(stlw::Logger &logger, UiState &uistate, window::mouse_data const& mdata)
+Camera::rotate(stlw::Logger &logger, UiState &uistate, glm::vec2 const& delta)
 {
-  auto const& current = mdata.current;
-  glm::vec2 const delta = glm::vec2{current.xrel, current.yrel};
-
-  auto const& mouse_sens = mdata.sensitivity;
-  float const d_theta = mouse_sens.x * delta.x;
-  float const d_phi = mouse_sens.y * delta.y;
+  float const d_theta = delta.x;
+  float const d_phi = delta.y;
 
   float constexpr PI = glm::pi<float>();
   float constexpr TWO_PI = PI * 2.0f;

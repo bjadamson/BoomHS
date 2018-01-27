@@ -12,64 +12,17 @@
 #include <glm/gtx/string_cast.hpp>
 #include <iostream>
 
+float constexpr MOVE_DISTANCE = 1.0f;
+float constexpr SCALE_FACTOR = 0.20f;
+float constexpr ZOOM_FACTOR = 2.0f;
+
 namespace {
 using namespace boomhs;
-
-/*
-template <typename T>
-inline glm::tmat4x4<T, glm::defaultp> perspectiveInverse(
-    T const & fovy,
-    T const & aspect,
-    T const & zNear,
-    T const & zFar)
-{
-    glm::tmat4x4<T, glm::defaultp> m(static_cast<T>(0));
-
-    const T tanHalfFovy = tan(fovy / static_cast<T>(2));
-    m[0][0] = tanHalfFovy * aspect;
-    m[1][1] = tanHalfFovy;
-    m[3][2] = static_cast<T>(-1);
-
-    const T d = static_cast<T>(2) * zFar * zNear;
-    m[2][3] = (zNear - zFar) / d;
-    m[3][3] = (zFar + zNear) / d;
-
-    return m;
-}
-*/
-
-inline bool is_quit_event(SDL_Event &event)
-{
-  bool is_quit = false;
-
-  switch (event.type) {
-  case SDL_QUIT: {
-    is_quit = true;
-    break;
-  }
-  case SDL_KEYDOWN: {
-    switch (event.key.keysym.sym) {
-    case SDLK_ESCAPE: {
-      is_quit = true;
-      break;
-    }
-    }
-  }
-  }
-  return is_quit;
-}
-
-//glm::vec2
-//getNormalizedCoords(float const x, float const y, float const width, float const height)
-//{
-  //float const ndc_x = 2.0 * x/width - 1.0;
-  //float const ndc_y = 1.0 - 2.0 * y/height; // invert Y axis
-  //return glm::vec2{ndc_x, ndc_y};
-//}
+using namespace window;
 
 glm::vec3
 calculate_mouse_worldpos(Camera const& camera, WorldObject const& player, int const mouse_x,
-    int const mouse_y, window::Dimensions const& dimensions)
+    int const mouse_y, Dimensions const& dimensions)
 {
   auto const& a = camera.perspective_ref();
   glm::vec4 const viewport = glm::vec4(0, 0, 1024, 768);
@@ -99,177 +52,139 @@ calculate_mouse_worldpos(Camera const& camera, WorldObject const& player, int co
 }
 
 bool
-process_event(GameState &state, SDL_Event &event, float const delta_time)
+is_quit_event(SDL_Event &event)
 {
-  auto &engine_state = state.engine_state;
-  stlw::Logger &logger = engine_state.logger;
-  float constexpr MOVE_DISTANCE = 1.0f;
-  float constexpr SCALE_FACTOR = 0.20f;
-  float constexpr ANGLE = 60.0f;
+  bool is_quit = false;
 
-  ZoneManager zm{state.zone_states};
-  auto &active = zm.active();
-  auto &camera = active.camera;
-  auto &player = active.player;
-
-  auto const sf = [](float const f) { return (f > 1.0f) ? (1.0f + f) : (1.0f - f); };
-
-  auto &ui_state = engine_state.ui_state;
-  if (ui_state.block_input) {
-    return is_quit_event(event);
-  }
-
-  auto &tilemap_state = engine_state.tilemap_state;
-  auto &mouse_state = engine_state.mouse_state;
-  auto const move_player = [&](glm::vec3 (WorldObject::*fn)() const) {
-    auto const player_pos = player.tilemap_position();
-    glm::vec3 const move_vec = (player.*fn)();
-
-    ZoneManager zm{state.zone_states};
-    auto const& tilemap = zm.active().tilemap;
-
-    auto const [x, y, z] = tilemap.dimensions();
-    auto const new_pos = player_pos + move_vec;
-    bool const out_of_bounds = new_pos.x > x || new_pos.y > y || new_pos.z > z
-      || new_pos.x < 0 || new_pos.y < 0 || new_pos.z < 0;
-    if (out_of_bounds) {
-      return;
-    }
-    auto const& new_tile = tilemap.data(player_pos + move_vec);
-    if (!engine_state.player_collision) {
-      player.move(MOVE_DISTANCE, move_vec);
-      tilemap_state.recompute = true;
-    } else if (!new_tile.is_wall) {
-      player.move(MOVE_DISTANCE, move_vec);
-      tilemap_state.recompute = true;
-    }
-  };
   switch (event.type) {
-  case SDL_MOUSEMOTION: {
-
-    // If the user pressed enter, don't move the camera based on mouse movements.
-    if (ui_state.enter_pressed) {
-      break;
-    }
-    add_from_event(engine_state.mouse_data, event);
-
-    bool const left = event.motion.state & SDL_BUTTON_LMASK;
-    bool const right = event.motion.state & SDL_BUTTON_RMASK;
-
-    auto const rot_player = [&]() {
-      float const angle = event.motion.xrel > 0 ? 1.0 : -1.0f;
-      player.rotate(angle, opengl::Y_UNIT_VECTOR);
-      tilemap_state.recompute = true;
-    };
-    auto const rot_camera = [&]() {
-      camera.rotate(logger, ui_state, engine_state.mouse_data);
-    };
-    if (right && left) {
-      move_player(&WorldObject::forward_vector);
-    }
-    else if (right) {
-      rot_player();
-    } else if (left) {
-      rot_camera();
-    }
-    break;
-  }
-  case SDL_MOUSEWHEEL: {
-    LOG_TRACE("mouse wheel event detected.");
-    float constexpr ZOOM_FACTOR = 2.0f;
-    if (event.wheel.y > 0) {
-      camera.zoom(1.0f / ZOOM_FACTOR);
-    } else {
-      camera.zoom(ZOOM_FACTOR);
-    }
-    break;
-  }
-  case SDL_MOUSEBUTTONDOWN:
-  {
-    auto const& button = event.button.button;
-    if (button == SDL_BUTTON_RIGHT) {
-      mouse_state.right_pressed = true;
-    }
-    else if (button == SDL_BUTTON_LEFT) {
-      mouse_state.left_pressed = true;
-    }
-    if (mouse_state.left_pressed && mouse_state.right_pressed) {
-      player.rotate_to_match_camera_rotation(camera);
-    }
-
-    LOG_ERROR("toggling mouse up/down (pitch) lock");
-    engine_state.mouse_data.pitch_lock ^= true;
-    break;
-  }
-  case SDL_MOUSEBUTTONUP:
-  {
-    auto const& button = event.button.button;
-    if (button == SDL_BUTTON_RIGHT) {
-      mouse_state.right_pressed = false;
-    }
-    else if (button == SDL_BUTTON_LEFT) {
-      mouse_state.left_pressed = false;
-    }
+  case SDL_QUIT: {
+    is_quit = true;
     break;
   }
   case SDL_KEYDOWN: {
-    auto const rotate_player = [&](float const angle, glm::vec3 const& axis)
-    {
-      player.rotate(angle, axis);
-      tilemap_state.recompute = true;
-    };
     switch (event.key.keysym.sym) {
-    case SDLK_w: {
-      move_player(&WorldObject::forward_vector);
+    case SDLK_ESCAPE: {
+      is_quit = true;
       break;
     }
-    case SDLK_s: {
-      move_player(&WorldObject::backward_vector);
-      break;
     }
-    case SDLK_a: {
-      move_player(&WorldObject::left_vector);
-      break;
+  }
+  }
+  return is_quit;
+}
+
+
+
+void
+process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, float const delta_time)
+{
+  auto &es = state.engine_state;
+  auto &logger = es.logger;
+  auto &ms = es.mouse_state;
+  auto &ts = es.tilemap_state;
+  auto &ui = es.ui_state;
+
+  ZoneManager zm{state.zone_states};
+  auto &active = zm.active();
+  auto &player = active.player;
+  auto &camera = active.camera;
+
+  auto const xrel = motion.xrel;
+  auto const yrel = motion.yrel;
+
+  if (ms.both_pressed()) {
+    player.rotate_to_match_camera_rotation(camera);
+  }
+  else {
+    if (ms.left_pressed) {
+      auto const& sens = ms.sensitivity;
+      float const dx = sens.x * xrel;
+      float const dy = sens.y * yrel;
+      glm::vec2 const delta{dx, dy};
+      camera.rotate(logger, ui, delta);
     }
-    case SDLK_d: {
-      move_player(&WorldObject::right_vector);
-      break;
+    if (ms.right_pressed) {
+      float const angle = xrel > 0 ? 1.0 : -1.0f;
+      player.rotate(angle, opengl::Y_UNIT_VECTOR);
     }
-    case SDLK_q: {
-      move_player(&WorldObject::up_vector);
+  }
+}
+
+void
+process_mousebutton_down(GameState &state, SDL_MouseButtonEvent const& event, float const delta_time)
+{
+  std::cerr << "mb_down\n";
+  auto &es = state.engine_state;
+  auto &logger = es.logger;
+  auto &ms = es.mouse_state;
+
+  auto const& button = event.button;
+  if (button == SDL_BUTTON_LEFT) {
+    ms.left_pressed = true;
+  }
+  else if (button == SDL_BUTTON_RIGHT) {
+    ms.right_pressed = true;
+  }
+  if (ms.both_pressed()) {
+    LOG_ERROR("toggling mouse up/down (pitch) lock");
+    ms.pitch_lock ^= true;
+
+    ZoneManager zm{state.zone_states};
+    auto &active = zm.active();
+    auto &player = active.player;
+    auto &camera = active.camera;
+
+    player.rotate_to_match_camera_rotation(camera);
+  }
+}
+
+void
+process_mousebutton_up(GameState &state, SDL_MouseButtonEvent const& event, float const delta_time)
+{
+  std::cerr << "mb_up\n";
+  auto &es = state.engine_state;
+  auto &ms = es.mouse_state;
+
+  auto const& button = event.button;
+  if (SDL_BUTTON_LEFT == button) {
+    ms.left_pressed = false;
+  }
+  else if (SDL_BUTTON_RIGHT == button) {
+    ms.right_pressed = false;
+  }
+}
+
+void
+process_keyup(GameState &state, SDL_Event const& event, float const delta_time)
+{
+}
+
+void
+process_keydown(GameState &state, SDL_Event const& event, float const delta_time)
+{
+  auto &es = state.engine_state;
+  auto &ui = es.ui_state;
+  switch (event.key.keysym.sym) {
+    case SDLK_F11:
+      ui.draw_ui ^= true;
       break;
-    }
-    case SDLK_e: {
-      move_player(&WorldObject::down_vector);
-      break;
-    }
-    case SDLK_LEFT: {
-      rotate_player(-90.0f, opengl::Y_UNIT_VECTOR);
-      break;
-    }
-    case SDLK_RIGHT: {
-      rotate_player(90.0f, opengl::Y_UNIT_VECTOR);
-      break;
-    }
-    case SDLK_t: {
+    case SDLK_t:
       // invert
       //state.camera.toggle_mode();
       break;
-    }
     // scaling
-    case SDLK_KP_PLUS: {
+    case SDLK_KP_PLUS:
     case SDLK_o:
-      //camera.rotate_behind_player(logger, player);
       //et.scale_entities(sf(SCALE_FACTOR));
       break;
-    }
-    case SDLK_KP_MINUS: {
+    case SDLK_KP_MINUS:
+    /*
     case SDLK_p:
       {
         // 1) Convert mouse location to
         // 3d normalised device coordinates
-        int const mouse_x = engine_state.mouse_data.current.x, mouse_y = engine_state.mouse_data.current.y;
-        auto const width = engine_state.dimensions.w, height = engine_state.dimensions.h;
+        int const mouse_x = es.mouse_data.current.x, mouse_y = es.mouse_data.current.y;
+        auto const width = es.dimensions.w, height = es.dimensions.h;
         float const x = (2.0f * mouse_x) / width - 1.0f;
         float const y = 1.0f - (2.0f * mouse_y) / height;
         float const z = 1.0f;
@@ -296,11 +211,12 @@ process_event(GameState &state, SDL_Event &event, float const delta_time)
         //bool intersects = glm::intersectRayPlane(ray_origin, ray_dir, plane_origin, plane_normal, distance);
         //std::cerr << "intersects: '" << intersects << "', distance: '" << distance << "'\n";
 
-        auto const ray = calculate_mouse_worldpos(camera, player, mouse_x, mouse_y, engine_state.dimensions);
+        auto const ray = calculate_mouse_worldpos(camera, player, mouse_x, mouse_y, es.dimensions);
       }
       break;
-    }
+    */
     // z-rotation
+      break;
     case SDLK_j: {
       auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
       //et.rotate_entities(ANGLE, ROTATION_VECTOR);
@@ -333,14 +249,103 @@ process_event(GameState &state, SDL_Event &event, float const delta_time)
       //et.rotate_entities(-ANGLE, ROTATION_VECTOR);
       break;
     }
-    case SDLK_RETURN: {
+    case SDLK_RETURN:
       // Toggle state
-      auto &ep = ui_state.enter_pressed;
-      ep ^= true;
+      ui.enter_pressed ^= true;
       break;
-    }
-    }
   }
+}
+
+void
+process_mousewheel(GameState &state, SDL_MouseWheelEvent const& wheel, float const delta_time)
+{
+  auto &logger = state.engine_state.logger;
+  LOG_TRACE("mouse wheel event detected.");
+
+  ZoneManager zm{state.zone_states};
+  auto &active = zm.active();
+  auto &camera = active.camera;
+  if (wheel.y > 0) {
+    camera.zoom(1.0f / ZOOM_FACTOR);
+  } else {
+    camera.zoom(ZOOM_FACTOR);
+  }
+}
+
+void
+process_keystate(GameState &state, float const time_delta)
+{
+  // continual keypress responses procesed here
+  uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
+  assert(keystate);
+
+  auto &es = state.engine_state;
+  auto &ts = es.tilemap_state;
+  ZoneManager zm{state.zone_states};
+  auto &active = zm.active();
+  auto &player = active.player;
+
+  if (keystate[SDL_SCANCODE_W]) {
+    move_ontilemap(state, MOVE_DISTANCE, &WorldObject::forward_vector, player);
+  }
+  if (keystate[SDL_SCANCODE_S]) {
+    move_ontilemap(state, MOVE_DISTANCE, &WorldObject::backward_vector, player);
+  }
+  if (keystate[SDL_SCANCODE_A]) {
+    move_ontilemap(state, MOVE_DISTANCE, &WorldObject::left_vector, player);
+  }
+  if (keystate[SDL_SCANCODE_D]) {
+    move_ontilemap(state, MOVE_DISTANCE, &WorldObject::right_vector, player);
+  }
+  if (keystate[SDL_SCANCODE_Q]) {
+    move_ontilemap(state, MOVE_DISTANCE, &WorldObject::up_vector, player);
+  }
+  if (keystate[SDL_SCANCODE_E]) {
+    move_ontilemap(state, MOVE_DISTANCE, &WorldObject::down_vector, player);
+  }
+  auto const rotate_player = [&](float const angle, glm::vec3 const& axis) {
+    player.rotate(angle, axis);
+    ts.recompute = true;
+  };
+  if (keystate[SDL_SCANCODE_LEFT]) {
+    rotate_player(-90.0f, opengl::Y_UNIT_VECTOR);
+  }
+  if (keystate[SDL_SCANCODE_RIGHT]) {
+    rotate_player(90.0f, opengl::Y_UNIT_VECTOR);
+  }
+}
+
+bool
+process_event(GameState &state, SDL_Event &event, float const delta_time)
+{
+  auto &es = state.engine_state;
+  auto &logger = es.logger;
+
+  // If the user pressed enter, don't process mouse events (for the game)
+  auto &ui = es.ui_state;
+  if (ui.block_input || ui.enter_pressed) {
+    return is_quit_event(event);
+  }
+
+  switch (event.type) {
+    case SDL_MOUSEBUTTONDOWN:
+      process_mousebutton_down(state, event.button, delta_time);
+      break;
+    case SDL_MOUSEBUTTONUP:
+      process_mousebutton_up(state, event.button, delta_time);
+      break;
+  case SDL_MOUSEMOTION:
+      process_mousemotion(state, event.motion, delta_time);
+      break;
+  case SDL_MOUSEWHEEL:
+      process_mousewheel(state, event.wheel, delta_time);
+      break;
+  case SDL_KEYDOWN:
+      process_keydown(state, event, delta_time);
+      break;
+  case SDL_KEYUP:
+      process_keyup(state, event, delta_time);
+      break;
   }
   return is_quit_event(event);
 }
@@ -353,19 +358,19 @@ namespace boomhs
 void
 IO::process(GameState &state, SDL_Event &event, float const delta_time)
 {
-  auto &engine_state = state.engine_state;
+  auto &es = state.engine_state;
+  auto &logger = es.logger;
 
-  engine_state.LOG_TRACE("IO::process(data, state)");
-
-  //auto et = ::game::entity_factory::make_transformer(state.logger, data);
-  while ((!engine_state.quit) && (0 != SDL_PollEvent(&event))) {
+  LOG_TRACE("IO::process(data, state)");
+  while ((!es.quit) && (0 != SDL_PollEvent(&event))) {
     ImGui_ImplSdlGL3_ProcessEvent(&event);
 
-    auto &imgui = engine_state.imgui;
+    auto &imgui = es.imgui;
     if (!imgui.WantCaptureMouse && !imgui.WantCaptureKeyboard) {
-      engine_state.quit = process_event(state, event, delta_time);
+      es.quit = process_event(state, event, delta_time);
     }
   }
+  process_keystate(state, delta_time);
 }
 
 } // ns boomhs

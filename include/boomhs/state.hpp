@@ -27,6 +27,7 @@ namespace boomhs
 
 struct UiState
 {
+  bool draw_ui = true;
   bool enter_pressed = false;
   bool block_input = false;
   bool rotate_lock = false;
@@ -52,9 +53,10 @@ struct UiState
   glm::vec3 last_mouse_clicked_pos;
   int attenuation_current_item = opengl::Light::INIT_ATTENUATION_INDEX;
 
+  bool show_camerawindow = false;
   bool show_debugwindow = true;
   bool show_entitywindow = false;
-  bool show_camerawindow = false;
+  bool show_mousewindow = false;
   bool show_playerwindow = false;
   bool show_tilemapwindow = false;
 };
@@ -63,6 +65,17 @@ struct MouseState
 {
   bool left_pressed = false;
   bool right_pressed = false;
+  bool pitch_lock = true;
+
+  window::MouseSensitivity sensitivity{0.002f, 0.002f};
+
+  // "coords" is meant to updated with the *current* screen coordinates of the mouse.
+  // "pcoords" is meant to lag behind one frame from *current*, important for calculating the
+  // relative difference per-frame.
+  window::ScreenCoordinates coords{0, 0};
+  window::ScreenCoordinates relative{0, 0};
+
+  bool both_pressed() const { return left_pressed && right_pressed; }
 };
 
 struct WindowState
@@ -169,6 +182,7 @@ struct EngineState
 {
   bool quit = false;
   bool player_collision = false;
+  bool mariolike_edges = false;
 
   // rendering state
   bool draw_entities = true;
@@ -188,7 +202,6 @@ struct EngineState
   ImGuiIO &imgui;
   window::Dimensions const dimensions;
 
-  window::mouse_data mouse_data;
   UiState ui_state;
 
   // Constructors
@@ -197,7 +210,6 @@ struct EngineState
     : logger(l)
     , imgui(i)
     , dimensions(d)
-    , mouse_data(window::make_default_mouse_data())
   {
   }
 };

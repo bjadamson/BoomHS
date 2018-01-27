@@ -9,6 +9,7 @@
 namespace boomhs
 {
 class Camera;
+struct GameState;
 
 class WorldObject
 {
@@ -104,9 +105,15 @@ public:
   }
 
   void
+  move_to(float const x, float const y, float const z)
+  {
+    move_to(glm::vec3{x, y, z});
+  }
+
+  void
   move_to(TilePosition const& pos)
   {
-    move_to(glm::vec3{pos.x, pos.y, pos.z});
+    move_to(pos.x, pos.y, pos.z);
   }
 
   void
@@ -118,5 +125,8 @@ public:
   glm::mat4
   model_matrix() const { return transform().model_matrix(); }
 };
+
+void
+move_ontilemap(GameState &, float const, glm::vec3 (WorldObject::*)() const, WorldObject &);
 
 } // ns boomhs
