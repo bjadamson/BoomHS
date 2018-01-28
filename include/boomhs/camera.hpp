@@ -50,17 +50,8 @@ class Camera
   PerspectiveViewport perspective_;
   OrthoProjection ortho_;
 
-  Transform&
-  get_target()
-  {
-    return player_lookup_.lookup<Transform>();
-  }
-
-  Transform const&
-  get_target() const
-  {
-    return player_lookup_.lookup<Transform>();
-  }
+  Transform& get_target() { return player_lookup_.lookup<Transform>(); }
+  Transform const& get_target() const { return player_lookup_.lookup<Transform>(); }
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
@@ -71,47 +62,23 @@ public:
   bool rotate_lock = false;
   float rotation_speed = 300.0f;
 
-  glm::mat4
-  projection_matrix() const;
+  glm::mat4 projection_matrix() const;
+  glm::mat4 view_matrix() const;
+  glm::mat4 camera_matrix() const;
+  auto const& perspective() const { return perspective_; }
 
-  glm::mat4
-  view_matrix() const;
-
-  glm::mat4
-  camera_matrix() const;
-
-  auto const&
-  perspective() const
-  {
-    return perspective_;
-  }
-
-  auto
-  mode() const
-  {
-    return mode_;
-  }
-
-  void
-  set_mode(CameraMode const m)
-  {
-    mode_ = m;
-  }
+  auto mode() const { return mode_; }
+  void set_mode(CameraMode const m) { mode_ = m; }
 
   glm::vec3
-  forward_vector() const;
-
-  void
-  set_coordinates(SphericalCoordinates const& sc)
+  world_forward() const
   {
-    coordinates_ = sc;
+    return glm::normalize(world_position() - target_position());
   }
 
   SphericalCoordinates
-  spherical_coordinates() const
-  {
-    return coordinates_;
-  }
+  spherical_coordinates() const { return coordinates_; }
+  void set_coordinates(SphericalCoordinates const& sc) { coordinates_ = sc; }
 
   glm::vec3
   local_position() const

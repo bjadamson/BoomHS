@@ -91,7 +91,7 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, float 
 
   if (ms.both_pressed()) {
     player.rotate_to_match_camera_rotation(camera);
-    move_ontilemap(state, &WorldObject::forward_vector, player, dt);
+    move_ontilemap(state, &WorldObject::world_forward, player, dt);
   }
   if (ms.left_pressed) {
     auto const& sens = ms.sensitivity;
@@ -299,22 +299,22 @@ process_keystate(GameState &state, double const dt)
   auto &player = active.player;
 
   if (keystate[SDL_SCANCODE_W]) {
-    move_ontilemap(state, &WorldObject::forward_vector, player, dt);
+    move_ontilemap(state, &WorldObject::world_forward, player, dt);
   }
   if (keystate[SDL_SCANCODE_S]) {
-    move_ontilemap(state, &WorldObject::backward_vector, player, dt);
+    move_ontilemap(state, &WorldObject::world_backward, player, dt);
   }
   if (keystate[SDL_SCANCODE_A]) {
-    move_ontilemap(state, &WorldObject::left_vector, player, dt);
+    move_ontilemap(state, &WorldObject::world_left, player, dt);
   }
   if (keystate[SDL_SCANCODE_D]) {
-    move_ontilemap(state, &WorldObject::right_vector, player, dt);
+    move_ontilemap(state, &WorldObject::world_right, player, dt);
   }
   if (keystate[SDL_SCANCODE_Q]) {
-    move_ontilemap(state, &WorldObject::up_vector, player, dt);
+    move_ontilemap(state, &WorldObject::world_up, player, dt);
   }
   if (keystate[SDL_SCANCODE_E]) {
-    move_ontilemap(state, &WorldObject::down_vector, player, dt);
+    move_ontilemap(state, &WorldObject::world_down, player, dt);
   }
 }
 

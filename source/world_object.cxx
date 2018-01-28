@@ -13,12 +13,12 @@ std::string
 WorldObject::display() const
 {
   return fmt::sprintf(
-      "world_pos: '%s'\nforward_: '%s'\nforward_vector: '%s'\nright_vector: '%s'\nup_vector: '%s'\nquat: '%s'\n",
+      "world_pos: '%s'\neye_forward: '%s'\nworld_forward: '%s'\nworld_right: '%s'\nworld_up: '%s'\nquat: '%s'\n",
       glm::to_string(world_position()),
-      glm::to_string(forward_),
-      glm::to_string(forward_vector()),
-      glm::to_string(right_vector()),
-      glm::to_string(up_vector()),
+      glm::to_string(eye_forward()),
+      glm::to_string(world_forward()),
+      glm::to_string(world_right()),
+      glm::to_string(world_up()),
       glm::to_string(orientation())
       );
 }
@@ -35,11 +35,11 @@ void
 WorldObject::rotate_to_match_camera_rotation(Camera const& camera)
 {
   // camera "forward" is actually reverse due to -Z being +Z in eyespace.
-  glm::vec3 eyespace_fwd = -camera.forward_vector();
+  glm::vec3 eyespace_fwd = -camera.world_forward();
   eyespace_fwd.y = 0;
   eyespace_fwd = glm::normalize(eyespace_fwd);
 
-  glm::vec3 player_fwd = forward_vector();
+  glm::vec3 player_fwd = world_forward();
   player_fwd.y = 0;
   player_fwd = glm::normalize(player_fwd);
 

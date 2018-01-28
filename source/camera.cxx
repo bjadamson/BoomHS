@@ -55,12 +55,6 @@ Camera::camera_matrix() const
   return projection_matrix() * view_matrix();
 }
 
-glm::vec3
-Camera::forward_vector() const
-{
-  return glm::normalize(world_position() - target_position());
-}
-
 Camera&
 Camera::rotate(float const d_theta, float const d_phi)
 {

@@ -280,7 +280,7 @@ draw_target_vectors(GameState &state, entt::DefaultRegistry &registry, opengl::S
   // draw player forward
   {
     glm::vec3 const player_pos = player.world_position();
-    glm::vec3 const player_fwd = player_pos + (2.0f * player.forward_vector());
+    glm::vec3 const player_fwd = player_pos + (2.0f * player.world_forward());
 
     draw_arrow(player_pos, player_fwd, LOC::LIGHT_BLUE);
   }
@@ -295,7 +295,7 @@ draw_target_vectors(GameState &state, entt::DefaultRegistry &registry, opengl::S
   // draw forward arrow (for camera) ??
   {
     glm::vec3 const start = player.world_position();
-    glm::vec3 const head = start + player.backward_vector();
+    glm::vec3 const head = start + player.world_backward();
     draw_arrow(start, head, LOC::PINK);
   };
 }
@@ -317,7 +317,7 @@ game_loop(GameState &state, window::SDLWindow &window, double const dt)
     // We do this here, so that it gets checked every frame.
     //
     // While the buttons are pressed, move the player.
-    move_ontilemap(state, &WorldObject::forward_vector, player, dt);
+    move_ontilemap(state, &WorldObject::world_forward, player, dt);
   }
 
   // compute tilemap
