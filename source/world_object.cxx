@@ -88,7 +88,7 @@ move_ontilemap(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObje
   if (!es.player_collision) {
     wo.move_to(pos);
     ts.recompute = true;
-  } else if (!new_tile.is_wall) {
+  } else if (new_tile.type != TileType::WALL) {
     wo.move_to(pos);
     ts.recompute = true;
   }

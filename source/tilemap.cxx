@@ -22,13 +22,14 @@ bresenham_3d(int x0, int y0, int z0, int x1, int y1, int z1, TileMap &tmap)
 
   bool found_wall = false;
   auto const set_tile = [&found_wall](auto &tile) {
+    bool const is_wall = tile.type == TileType::WALL;
     if (found_wall) {
       // Can't see tile's behind a wall.
       tile.is_visible = false;
     }
-    else if (!tile.is_wall) {
+    else if (!is_wall) {
       tile.is_visible = true;
-    } else if (tile.is_wall) {
+    } else if (is_wall) {
       found_wall = true;
       tile.is_visible = true;
     } else {
@@ -63,11 +64,12 @@ update_visible_tiles(TileMap &tmap, WorldObject const& player, bool const reveal
   auto const update_tile = [&tmap, &visited](TilePosition const& pos) {
     bool found_wall = false;
       auto &tile = tmap.data(pos.x, pos.y, pos.z);
-      if (!found_wall && !tile.is_wall) {
+      bool const is_wall = tile.type == TileType::WALL;
+      if (!found_wall && !is_wall) {
         // This is probably not always necessary. Consider starting with all tiles visible?
         tile.is_visible = true;
       }
-      else if(!found_wall && tile.is_wall) {
+      else if(!found_wall && is_wall) {
         tile.is_visible = true;
         found_wall = true;
       } else {

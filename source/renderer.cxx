@@ -317,7 +317,6 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
     ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
     draw_3dshape(args, model_mat, sp, dinfo, entity, registry);
   };
-
   auto &plus = dt_args.plus;
   auto &hashtag = dt_args.hashtag;
   auto const draw_all_tiles = [&](auto const& tile_pos) {
@@ -327,16 +326,29 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
     }
     // This offset causes the tile's to appear in the "middle"
     glm::vec3 constexpr VIEWING_OFFSET{0.50f, 0.0f, 0.50f};
-    if(tile.is_wall) {
-      auto const tmat = glm::translate(glm::mat4{}, tile_pos + VIEWING_OFFSET);
-      auto const rmat = glm::rotate(tmat, glm::degrees(90.0f), opengl::X_UNIT_VECTOR);
-      auto const smat = glm::scale(rmat, tilemap_state.tile_scaling);
-      draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, smat);
-    } else {
-      auto const tmat = glm::translate(glm::mat4{}, tile_pos + VIEWING_OFFSET);
-      auto const smat = glm::scale(tmat, tilemap_state.tile_scaling);
-      plus.sp.set_uniform_vec3(logger, "u_offset", tilemap_state.floor_offset);
-      draw_tile_helper(plus.sp, plus.dinfo, plus.eid, smat);
+    switch(tile.type) {
+      case TileType::FLOOR:
+        {
+          auto const tmat = glm::translate(glm::mat4{}, tile_pos + VIEWING_OFFSET);
+          auto const smat = glm::scale(tmat, tilemap_state.tile_scaling);
+          plus.sp.set_uniform_vec3(logger, "u_offset", tilemap_state.floor_offset);
+          draw_tile_helper(plus.sp, plus.dinfo, plus.eid, smat);
+        }
+        break;
+      case TileType::WALL:
+        {
+          auto const tmat = glm::translate(glm::mat4{}, tile_pos + VIEWING_OFFSET);
+          auto const rmat = glm::rotate(tmat, glm::degrees(90.0f), opengl::X_UNIT_VECTOR);
+          auto const smat = glm::scale(rmat, tilemap_state.tile_scaling);
+          draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, smat);
+        }
+        break;
+      case TileType::STAIR_WELL:
+        {
+          // TODO: implement
+          std::exit(1);
+        }
+        break;
     }
   };
   tilemap.visit_each(draw_all_tiles);

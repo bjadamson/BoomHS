@@ -94,7 +94,7 @@ try_create_room(CreateRoomParameters const& params)
   }
   for(int x = new_room.x1 + 1; x < new_room.x2; ++x) {
     for (int y = new_room.y1 + 1; y < new_room.y2; ++y) {
-      params.tmap.data(x, 0, y).is_wall = false;
+      params.tmap.data(x, 0, y).type = TileType::FLOOR;
     }
   }
   return new_room;
@@ -119,7 +119,7 @@ create_h_tunnel(int const x1, int const x2, int const y, TileMap &tmap)
 {
   int const min = std::min(x1, x2), max = std::max(x1, x2) + 1;
   for (auto x = min; x <= max; ++x) {
-    tmap.data(x, 0, y).is_wall = false;
+    tmap.data(x, 0, y).type = TileType::FLOOR;
   }
 }
 
@@ -128,14 +128,14 @@ create_v_tunnel(int const y1, int const y2, int const x, TileMap &tmap)
 {
   int const min = std::min(y1, y2), max = std::max(y1, y2) + 1;
   for(auto y = min; y <= max; ++y) {
-    tmap.data(x, 0, y).is_wall = false;
+    tmap.data(x, 0, y).type = TileType::FLOOR;
   }
 }
 
 bool
 is_blocked(int const x, int const y, TileMap const& tmap)
 {
-  if (tmap.data(x, 0, y).is_wall) {
+  if (tmap.data(x, 0, y).type == TileType::WALL) {
     return true;
   }
   return false;

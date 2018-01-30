@@ -1,11 +1,11 @@
 #pragma once
-#include <array>
-#include <vector>
 #include <stlw/algorithm.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <glm/glm.hpp>
+#include <array>
+#include <vector>
 
 namespace boomhs
 {
@@ -14,31 +14,45 @@ struct TilePosition
 {
   int x = 0, y = 0, z = 0;
 };
-inline bool operator==(TilePosition const& a, TilePosition const& b)
+inline bool
+operator==(TilePosition const& a, TilePosition const& b)
 {
   return (a.x == b.x) && (a.y == b.y) && (a.z == b.z);
 }
 
-struct Tile {
-  bool is_wall = true;
+enum class TileType
+{
+  FLOOR = 0,
+  WALL,
+  STAIR_WELL,
+};
+
+struct StairwellInfo
+{
+  std::size_t static constexpr NUM_EXITS = 2;
+  int tile_pos[NUM_EXITS];
+  int exit_pos[NUM_EXITS];
+};
+
+struct Tile
+{
   bool is_visible = false;
+  TileType type = TileType::WALL;
 };
 
 class TileMap
 {
-  std::vector<Tile> tiles_;
   std::array<std::size_t, 3> dimensions_;
+
+  std::vector<Tile> tiles_;
+  std::vector<StairwellInfo> stairwell_infos_;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(TileMap);
 
-  TileMap(std::vector<Tile> &&t, std::array<std::size_t, 3> const& dimensions)
-    : tiles_(MOVE(t))
-    , dimensions_(dimensions)
-  {
-  }
   TileMap(std::vector<Tile> &&t, std::size_t const width, std::size_t const height, std::size_t const length)
-    : TileMap(MOVE(t), stlw::make_array<std::size_t>(width, height, length))
+    : dimensions_(stlw::make_array<std::size_t>(width, height, length))
+    , tiles_(MOVE(t))
   {
   }
 
