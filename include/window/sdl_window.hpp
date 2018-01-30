@@ -89,6 +89,9 @@ public:
 
   bool
   try_set_swapinterval(SwapIntervalFlag const);
+
+  void
+  set_swapinterval(SwapIntervalFlag const);
 };
 
 struct sdl_library {

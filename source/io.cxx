@@ -101,12 +101,10 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, float 
   }
   if (ms.right_pressed) {
     float const speed = camera.rotation_speed;
-    float const angle = xrel > 0 ? -speed : speed;
+    float const angle = xrel > 0 ? speed : -speed;
     auto const x_dt = angle * dt;
     auto constexpr y_dt = 0.0f;
     player.rotate(x_dt, opengl::Y_UNIT_VECTOR);
-    //camera.rotate(x_dt, y_dt);
-    //player.rotate_to_match_camera_rotation(camera);
   }
 }
 

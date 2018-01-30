@@ -33,8 +33,8 @@ void
 set_mvpmatrix(stlw::Logger &logger, glm::mat4 const& model_matrix, ShaderProgram &sp,
     Camera const& camera)
 {
-  glm::mat4 const view_matrix = camera.camera_matrix();
-  auto const mvp_matrix = view_matrix * model_matrix;
+  glm::mat4 const cam_matrix = camera.camera_matrix();
+  auto const mvp_matrix = cam_matrix * model_matrix;
 
   sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 }

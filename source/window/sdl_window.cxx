@@ -48,6 +48,15 @@ SDLWindow::try_set_swapinterval(SwapIntervalFlag const swap_flag)
 }
 
 void
+SDLWindow::set_swapinterval(SwapIntervalFlag const swap)
+{
+  if (false == try_set_swapinterval(swap)) {
+    std::abort();
+  }
+}
+
+
+void
 SDLWindow::set_fullscreen(FullscreenFlags const fs)
 {
   uint32_t sdl_flags = 0;
@@ -62,7 +71,10 @@ SDLWindow::set_fullscreen(FullscreenFlags const fs)
   }
 
   int const result = SDL_SetWindowFullscreen(window_.get(), sdl_flags);
-  assert(0 == result);
+  if (0 != result) {
+    // TODO: handle
+    std::exit(1);
+  }
 }
 
 stlw::result<stlw::empty_type, std::string>

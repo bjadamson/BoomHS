@@ -13,7 +13,8 @@ std::string
 WorldObject::display() const
 {
   return fmt::sprintf(
-      "world_pos: '%s'\neye_forward: '%s'\nworld_forward: '%s'\nworld_right: '%s'\nworld_up: '%s'\nquat: '%s'\n",
+      "world_pos: '%s'\neye_forward: '%s'\nworld_forward: '%s'\n"
+      "world_right: '%s'\nworld_up: '%s'\nquat: '%s'\n",
       glm::to_string(world_position()),
       glm::to_string(eye_forward()),
       glm::to_string(world_forward()),
@@ -26,9 +27,8 @@ WorldObject::display() const
 void
 WorldObject::rotate(float const angle, glm::vec3 const& axis)
 {
-  glm::quat const new_rotation{axis * glm::radians(angle)};
   auto &t = transform();
-  t.rotation = new_rotation * t.rotation;
+  t.rotation = glm::angleAxis(glm::radians(angle), axis) * t.rotation;
 }
 
 void

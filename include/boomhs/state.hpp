@@ -79,6 +79,7 @@ struct MouseState
 struct WindowState
 {
   window::FullscreenFlags fullscreen = window::FullscreenFlags::NOT_FULLSCREEN;
+  window::SwapIntervalFlag sync = window::SwapIntervalFlag::SYNCHRONIZED;
 };
 
 struct TilemapState
@@ -190,7 +191,9 @@ struct EngineState
 
   bool show_global_axis = true;
   bool show_local_axis = false;
-  bool show_target_vectors = true;
+
+  bool show_player_localspace_vectors = true;
+  bool show_player_worldspace_vectors = true;
 
   MouseState mouse_state;
   WindowState window_state;

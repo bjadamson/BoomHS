@@ -260,8 +260,8 @@ draw_local_axis(GameState &state, entt::DefaultRegistry &registry, opengl::Shade
 }
 
 void
-draw_target_vectors(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
-                    WorldObject const &player)
+conditionally_draw_player_vectors(GameState &state, entt::DefaultRegistry &registry, ShaderPrograms &sps,
+    WorldObject const &player)
 {
   auto &logger = state.engine_state.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
@@ -277,27 +277,30 @@ draw_target_vectors(GameState &state, entt::DefaultRegistry &registry, opengl::S
     render::draw(rargs, transform, sp, handle, entity, registry);
   };
 
-  // draw player forward
-  {
-    glm::vec3 const player_pos = player.world_position();
-    glm::vec3 const player_fwd = player_pos + (2.0f * player.world_forward());
+  auto &es = state.engine_state;
+  glm::vec3 const pos = player.world_position();
+  if (es.show_player_localspace_vectors) {
+    // local-space
+    //
+    // forward
+    auto const fwd = player.eye_forward();
+    draw_arrow(pos, pos + fwd, LOC::GREEN);
 
-    draw_arrow(player_pos, player_fwd, LOC::LIGHT_BLUE);
+    // right
+    auto const right = player.eye_right();
+    draw_arrow(pos, pos + right, LOC::RED);
   }
+  if (es.show_player_worldspace_vectors) {
+    // world-space
+    //
+    // forward
+    auto const fwd = player.world_forward();
+    draw_arrow(pos, pos + (2.0f * fwd), LOC::LIGHT_BLUE);
 
-  // draw forward arrow (for camera) ??
-  {
-    glm::vec3 const start = glm::vec3{0, 0, 0};
-    glm::vec3 const head = state.engine_state.ui_state.last_mouse_clicked_pos;
-    draw_arrow(start, head, LOC::PURPLE);
+    // backward
+    glm::vec3 const right = player.world_right();
+    draw_arrow(pos, pos + right, LOC::PINK);
   }
-
-  // draw forward arrow (for camera) ??
-  {
-    glm::vec3 const start = player.world_position();
-    glm::vec3 const head = start + player.world_backward();
-    draw_arrow(start, head, LOC::PINK);
-  };
 }
 
 void
@@ -353,9 +356,11 @@ game_loop(GameState &state, window::SDLWindow &window, double const dt)
   if (engine_state.show_local_axis) {
     draw_local_axis(state, registry, sps, player.world_position());
   }
-  if (engine_state.show_target_vectors) {
-    draw_target_vectors(state, registry, sps, player);
+  if (engine_state.show_player_localspace_vectors) {
+    conditionally_draw_player_vectors(state, registry, sps, player);
   }
+  // if checks happen inside fn
+  conditionally_draw_player_vectors(state, registry, sps, player);
   if (engine_state.ui_state.draw_ui) {
     draw_ui(state, window, registry);
   }

@@ -266,6 +266,8 @@ draw_player_window(GameState &state, entt::DefaultRegistry &registry)
     ImGui::Text("%s", display.c_str());
 
     ImGui::Checkbox("Player Collisions Enabled", &es.player_collision);
+    ImGui::Checkbox("Localspace Vectors Vectors", &es.show_player_localspace_vectors);
+    ImGui::Checkbox("Worldspace Vectors Vectors", &es.show_player_worldspace_vectors);
     float speed = player.speed();
     if (ImGui::InputFloat("Player Speed", &speed)) {
       player.set_speed(speed);
@@ -417,7 +419,6 @@ world_menu(GameState &state)
     ImGui::MenuItem("Background Color", nullptr, &ui_state.show_background_window);
     ImGui::MenuItem("Local Axis", nullptr, &engine_state.show_local_axis);
     ImGui::MenuItem("Global Axis", nullptr, &engine_state.show_global_axis);
-    ImGui::MenuItem("Target Forward/Right/Up Vectors", nullptr, &engine_state.show_target_vectors);
     ImGui::EndMenu();
   }
 
@@ -503,15 +504,23 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
       ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Settings")) {
-      auto const draw_row = [&](char const* text, auto const fullscreen) {
+      auto const setwindow_row = [&](char const* text, auto const fullscreen) {
         if (ImGui::MenuItem(text, nullptr, nullptr, window_state.fullscreen != fullscreen)) {
           window.set_fullscreen(fullscreen);
           window_state.fullscreen = fullscreen;
         }
       };
-      draw_row("NOT Fullscreen", window::FullscreenFlags::NOT_FULLSCREEN);
-      draw_row("Fullscreen", window::FullscreenFlags::FULLSCREEN);
-      draw_row("Fullscreen DESKTOP", window::FullscreenFlags::FULLSCREEN_DESKTOP);
+      setwindow_row("NOT Fullscreen", window::FullscreenFlags::NOT_FULLSCREEN);
+      setwindow_row("Fullscreen", window::FullscreenFlags::FULLSCREEN);
+      setwindow_row("Fullscreen DESKTOP", window::FullscreenFlags::FULLSCREEN_DESKTOP);
+      auto const setsync_row = [&](char const* text, auto const sync) {
+        if (ImGui::MenuItem(text, nullptr, nullptr, window_state.sync != sync)) {
+          window.set_swapinterval(sync);
+          window_state.sync = sync;
+        }
+      };
+      setsync_row("Synchronized", window::SwapIntervalFlag::SYNCHRONIZED);
+      setsync_row("Late Tearing", window::SwapIntervalFlag::LATE_TEARING);
       ImGui::EndMenu();
     }
     world_menu(state);
