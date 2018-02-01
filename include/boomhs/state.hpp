@@ -43,7 +43,6 @@ struct UiState
   bool show_entitymaterial_window = false;
 
   int selected_entity = 0;
-  int selected_level = 0;
 
   // primitive buffers
   int eid_buffer = 0;
@@ -93,7 +92,7 @@ struct TilemapState
   bool show_yaxis_lines = false;
 
   glm::vec3 floor_offset = {0.0f, -0.5f, 0.0f};
-  glm::vec3 tile_scaling = {0.5f, 0.5f, 0.5f};
+  glm::vec3 tile_scaling = {1.0f, 1.0f, 1.0f};
 };
 
 struct ZoneState

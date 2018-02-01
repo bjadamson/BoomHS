@@ -140,8 +140,8 @@ struct Edges
   void
   visit_each(FN const& fn) const
   {
-    for(auto x = left; x < right; ++x) {
-      for (auto y = bottom; y < top; ++y) {
+    for(auto x = left; x <= right; ++x) {
+      for (auto y = bottom; y <= top; ++y) {
         fn(TilePosition{x, y});
       }
     }
@@ -164,12 +164,13 @@ operator<<(std::ostream& stream, Edges const& e)
 // clang-format on
 
 auto
-calculate_edges(TilePosition const& tpos, int const width, int const length, int const distance)
+calculate_edges(TilePosition const& tpos, int const tmap_width, int const tmap_length,
+    int const distance)
 {
   auto const left   = std::max(tpos.z - distance, 0);
-  auto const right  = std::min(tpos.z + distance, width);
+  auto const right  = std::min(tpos.z + distance, tmap_width);
 
-  auto const top    = std::min(tpos.x + distance, length);
+  auto const top    = std::min(tpos.x + distance, tmap_length);
   auto const bottom = std::max(tpos.x - distance, 0);
 
   return Edges{left, top, right, bottom};
@@ -186,6 +187,11 @@ find_neighbor(TileMap const& tmap, TilePosition const& pos, TileType const type,
   assert(distance > 0);
 
   auto const edges = calculate_edges(pos, width, length, distance);
+  std::cerr << "find_neighbor for '" << pos << "'\n";
+  std::cerr << "width: '" << width << "' length: '" << length << "' distance: '"
+    << distance << "'\n";
+  std::cerr << "edges: '" << edges << "'\n";
+  std::cerr << "============================================\n\n\n";
 
   std::array<TilePosition, 8> neighbors;
   auto count = 0ul;

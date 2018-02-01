@@ -145,8 +145,6 @@ geometry = "mesh:house"
 texture = "TextureAtlas"
 scale = [0.2, 0.2, 0.2]
 
-
-
 [[entity]]
 pos = [-3.0, 0.0, -5.0]
 shader = "3d_pos_normal_color"

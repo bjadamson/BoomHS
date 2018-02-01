@@ -236,28 +236,29 @@ create_rooms(int const width, int const height, TileMap &tmap, stlw::float_gener
 }
 
 bool
-try_place_stairs(int const floor_number, TileMap &tmap, stlw::float_generator &rng,
-    entt::DefaultRegistry &registry)
+try_place_stairs(int const floor_number, int const num_floors, TileMap &tmap,
+    stlw::float_generator &rng, entt::DefaultRegistry &registry)
 {
   using namespace boomhs::stairwell_generator;
 
   auto const max_tries = 5;
-  auto const max_floors = 2;
   auto const num_stairs_perfloor = 3;
 
   auto const calculate_updown = [&]() {
-    if (floor_number == max_floors) {
+    if (floor_number == num_floors) {
       return StairDirections::DOWN;
     }
     if (floor_number == 0) {
       return StairDirections::UP;
-    } else {
+    } else if (floor_number == (num_floors - 1)) {
+      return StairDirections::DOWN;
+    }else {
       std::abort();
     }
   };
 
   auto const direction = calculate_updown();
-  PlaceStairsParams ps{max_tries, max_floors, num_stairs_perfloor, direction,
+  PlaceStairsParams ps{max_tries, num_floors, num_stairs_perfloor, direction,
     tmap, rng, registry};
   return stairwell_generator::place_stairs(ps);
 }
@@ -280,7 +281,7 @@ place_rooms_and_stairs(TileMap &tmap, MakeTilemapParams &params)
     }
     while(!stairs) {
       std::cerr << "placing stairs ...\n";
-      stairs = try_place_stairs(params.floor_number, tmap, rng, registry);
+      stairs = try_place_stairs(params.floor_number, params.num_floors, tmap, rng, registry);
     }
   }
   return (*rooms).starting_position;

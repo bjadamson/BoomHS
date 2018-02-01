@@ -124,7 +124,7 @@ draw_tilemap_editor(GameState &state)
       levels.emplace_back(std::to_string(i));
     }
     void *pdata = reinterpret_cast<void *>(&levels);
-    auto &selected = es.ui_state.selected_level;
+    int selected = zm.active_zone();
 
     if (ImGui::Combo("Current Level:", &selected, callback_from_strings, pdata, zm.num_zones())) {
       zm.make_zone_active(selected, state);

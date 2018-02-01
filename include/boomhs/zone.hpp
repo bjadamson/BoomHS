@@ -43,6 +43,12 @@ public:
   {
     return zstates_.size();
   }
+
+  int
+  active_zone() const
+  {
+    return zstates_.active();
+  }
 };
 
 } // ns boomhs

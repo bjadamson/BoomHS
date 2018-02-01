@@ -67,41 +67,36 @@ namespace boomhs::stairwell_generator
 bool
 place_stairs(PlaceStairsParams &params)
 {
-  int const max_tries  = params.max_tries;
   int const num_stairs = params.num_stairs;
-  int const max_floors = params.max_floors;
   auto const direction = params.direction;
   auto &tmap           = params.tmap;
   auto &rng            = params.rng;
   auto &registry       = params.registry;
 
-  int num_placed = 0, num_tries = 0;
+  int num_placed = 0;
   auto const find_stairpositions = [&](auto const& pos) {
-    if (!should_skip_tile(tmap, pos, rng, num_placed)) {
-      auto &tile = tmap.data(pos);
-      tile.type = TileType::STAIRS;
-
-      auto &si = registry.assign<StairInfo>(tile.eid);
-
-      auto const behavior = TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY;
-      auto const neighbors = find_neighbor(tmap, pos, TileType::FLOOR, behavior);
-      std::cerr << "neigbors size: '" << neighbors.size() << "'\n";
-      assert(neighbors.size() > 0);
-
-      TilePosition const stair_exitpos = neighbors[0];
-
-      si.tile_position = pos;
-      si.exit_position = glm::vec3{stair_exitpos.x, 0.0, stair_exitpos.z};
-      si.direction = direction;
-      ++num_placed;
-
-      // since we placed successfully, reset num_tries
-      num_tries = 0;
+    if (should_skip_tile(tmap, pos, rng, num_placed)) {
+      return;
     }
+    auto &tile = tmap.data(pos);
+    tile.type = TileType::STAIRS;
+
+    auto &si = registry.assign<StairInfo>(tile.eid);
+
+    auto const behavior = TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY;
+    auto const neighbors = find_neighbor(tmap, pos, TileType::FLOOR, behavior);
+    std::cerr << "neighbors size: '" << neighbors.size() << "'\n";
+    assert(neighbors.size() > 0);
+
+    TilePosition const stair_exitpos = neighbors[0];
+
+    si.tile_position = pos;
+    si.exit_position = glm::vec3{stair_exitpos.x, 0.0, stair_exitpos.z};
+    si.direction = direction;
+    ++num_placed;
   };
-  while(num_placed < num_stairs || num_tries < max_tries) {
+  while(num_placed < num_stairs) {
     tmap.visit_each(find_stairpositions);
-    ++num_tries;
   }
   if (num_placed < num_stairs) {
     return false;

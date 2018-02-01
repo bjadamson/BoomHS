@@ -333,7 +333,6 @@ game_loop(GameState &state, window::SDLWindow &window, double const dt)
   auto const cast = [](float const f) { return static_cast<int>(f);};
   auto &tp = pc.tile_position;
   auto &tmap = zone_state.tilemap;
-  auto &ui = es.ui_state;
   {
     auto const [w, l] = tmap.dimensions();
     assert(wp.x < w);
@@ -355,10 +354,11 @@ game_loop(GameState &state, window::SDLWindow &window, double const dt)
         auto const& stair = registry.get<StairInfo>(eid);
         if (stair.tile_position == tp) {
 
-          auto const current = ui.selected_level;
+          int const current = zm.active_zone();
           auto const newlevel = stair.direction == StairDirections::UP
             ? current + 1
             : current - 1;
+          assert(newlevel < zm.num_zones());
           zm.make_zone_active(newlevel, state);
           player.move_to(stair.exit_position);
           tilemap_state.recompute = true;
@@ -489,7 +489,9 @@ start(stlw::Logger &logger, Engine &engine)
 
   // Construct tilemap
   stlw::float_generator rng;
-  auto const make_zs = [&](LevelData &&level_data, entt::DefaultRegistry &registry) {
+  auto const make_zs = [&](int const floor_number, int const num_floors, LevelData &&level_data,
+      entt::DefaultRegistry &registry)
+  {
     LOG_TRACE("Copy assets to GPU.");
     auto const& objcache = level_data.assets.obj_cache;
     auto &sps = level_data.shader_programs;
@@ -498,9 +500,8 @@ start(stlw::Logger &logger, Engine &engine)
     assert(handle_result);
     auto handlem = MOVE(*handle_result);
 
-    static auto constexpr NUM_FLOORS = 2;
-    static auto constexpr FLOOR_NUMBR = 0;
-    MakeTilemapParams mt{35, 35, NUM_FLOORS, FLOOR_NUMBR, rng, registry};
+    int const width = 35, length = 35;
+    MakeTilemapParams mt{width, length, num_floors, floor_number, rng, registry};
     auto tmap_startingpos = level_generator::make_tilemap(mt);
     auto tmap = MOVE(tmap_startingpos.first);
     auto &startingpos = tmap_startingpos.second;
@@ -538,8 +539,11 @@ start(stlw::Logger &logger, Engine &engine)
   auto &registries = engine.registries;
   DO_TRY(auto ld0, boomhs::load_level(logger, registries[0], "area0.toml"));
   DO_TRY(auto ld1, boomhs::load_level(logger, registries[1], "area0.toml"));
-  auto zs0 = make_zs(MOVE(ld0), registries[0]);
-  auto zs1 = make_zs(MOVE(ld1), registries[1]);
+
+
+  static auto constexpr NUM_FLOORS = 2;
+  auto zs0 = make_zs(0, NUM_FLOORS, MOVE(ld0), registries[0]);
+  auto zs1 = make_zs(1, NUM_FLOORS, MOVE(ld1), registries[1]);
 
   std::array<ZoneState, ZoneStates::NUM_ZSTATES> zstates_arr{MOVE(zs0), MOVE(zs1)};
   ZoneStates zs{MOVE(zstates_arr)};
