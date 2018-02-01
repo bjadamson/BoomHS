@@ -492,17 +492,20 @@ start(stlw::Logger &logger, Engine &engine)
   auto const make_zs = [&](int const floor_number, int const num_floors, LevelData &&level_data,
       entt::DefaultRegistry &registry)
   {
-    LOG_TRACE("Copy assets to GPU.");
     auto const& objcache = level_data.assets.obj_cache;
     auto &sps = level_data.shader_programs;
 
+    LOG_TRACE("Copy assets to GPU.");
     auto handle_result = boomhs::copy_assets_gpu(logger, sps, registry, objcache);
     assert(handle_result);
     auto handlem = MOVE(*handle_result);
 
     int const width = 35, length = 35;
     MakeTilemapParams mt{width, length, num_floors, floor_number, rng, registry};
-    auto tmap_startingpos = level_generator::make_tilemap(mt);
+
+    int const num_up_stairs_per_floor = 3;
+    ProcGenState procgen_state{num_up_stairs_per_floor};
+    auto tmap_startingpos = level_generator::make_tilemap(mt, procgen_state);
     auto tmap = MOVE(tmap_startingpos.first);
     auto &startingpos = tmap_startingpos.second;
 
@@ -541,7 +544,7 @@ start(stlw::Logger &logger, Engine &engine)
   DO_TRY(auto ld1, boomhs::load_level(logger, registries[1], "area0.toml"));
 
 
-  static auto constexpr NUM_FLOORS = 2;
+  static auto constexpr NUM_FLOORS = 3;
   auto zs0 = make_zs(0, NUM_FLOORS, MOVE(ld0), registries[0]);
   auto zs1 = make_zs(1, NUM_FLOORS, MOVE(ld1), registries[1]);
 

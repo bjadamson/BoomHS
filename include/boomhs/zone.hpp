@@ -38,7 +38,7 @@ public:
     tm_state.recompute = true;
   }
 
-  auto
+  int
   num_zones() const
   {
     return zstates_.size();

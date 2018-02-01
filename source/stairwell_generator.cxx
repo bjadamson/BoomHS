@@ -1,4 +1,5 @@
 #include <boomhs/stairwell_generator.hpp>
+#include <boomhs/level_generator.hpp>
 #include <boomhs/tilemap.hpp>
 #include <stlw/random.hpp>
 
@@ -65,13 +66,16 @@ namespace boomhs::stairwell_generator
 {
 
 bool
-place_stairs(PlaceStairsParams &params)
+place_stairs(PlaceStairsParams &params, ProcGenState &procgen_state)
 {
+  // clang-format off
   int const num_stairs = params.num_stairs;
+  int const floor_number = params.floor_number;
   auto const direction = params.direction;
   auto &tmap           = params.tmap;
   auto &rng            = params.rng;
   auto &registry       = params.registry;
+  // clang-format on
 
   int num_placed = 0;
   auto const find_stairpositions = [&](auto const& pos) {

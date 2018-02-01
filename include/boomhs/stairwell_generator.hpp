@@ -11,6 +11,7 @@ class float_generator;
 
 namespace boomhs
 {
+struct ProcGenState;
 class TileMap;
 } // ns boomhs
 
@@ -19,7 +20,7 @@ namespace boomhs::stairwell_generator
 
 struct PlaceStairsParams
 {
-  int const max_tries, max_floors, num_stairs;
+  int const floor_number, max_floors, num_stairs;
   StairDirections const direction;
 
   TileMap &tmap;
@@ -28,6 +29,6 @@ struct PlaceStairsParams
 };
 
 bool
-place_stairs(PlaceStairsParams &);
+place_stairs(PlaceStairsParams &, ProcGenState &);
 
 } // ns boomhs::stairwell_generator

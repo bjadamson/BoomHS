@@ -120,7 +120,7 @@ draw_tilemap_editor(GameState &state)
 
     ZoneManager zm{state.zone_states};
     std::vector<std::string> levels;
-    FOR(i, zm.num_zones()) {
+    FORI(i, zm.num_zones()) {
       levels.emplace_back(std::to_string(i));
     }
     void *pdata = reinterpret_cast<void *>(&levels);
