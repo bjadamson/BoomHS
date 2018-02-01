@@ -101,11 +101,11 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
     handle_list.add(entity, MOVE(handle));
   });
 
-  auto const make_special = [&handle_list, &logger, &obj_cache, &sps, &registry](char const *name) {
+  auto const make_special = [&handle_list, &logger, &obj_cache, &sps, &registry](char const *name, char const*vshader_name) {
     auto const &obj = obj_cache.get_obj(name);
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(name), obj, boost::none);
+    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, boost::none);
     auto const entity = registry.create();
-    registry.assign<Transform>(entity);//.scale = glm::vec3{0.2f, 0.2f, 0.2f};
+    registry.assign<Transform>(entity);
     registry.assign<Material>(entity);
     auto meshc = registry.assign<MeshRenderable>(entity);
     meshc.name = name;
@@ -120,10 +120,11 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
     return entity;
   };
 
-  auto const plus_eid = make_special("plus");
-  auto const hashtag_eid = make_special("hashtag");
+  auto const plus_eid = make_special("plus", "plus");
+  auto const hashtag_eid = make_special("hashtag", "hashtag");
+  auto const stairs_eid = make_special("stairs", "3d_pos_normal_color");
 
-  return HandleManager{MOVE(handle_list), plus_eid, hashtag_eid};
+  return HandleManager{MOVE(handle_list), plus_eid, hashtag_eid, stairs_eid};
 }
 
 void
@@ -195,7 +196,9 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
   DrawPlusArgs plus{sps.ref_sp("plus"), handles.lookup(handles.plus_eid), handles.plus_eid};
   DrawHashtagArgs hashtag{sps.ref_sp("hashtag"), handles.lookup(handles.hashtag_eid),
                           handles.hashtag_eid};
-  DrawTilemapArgs dta{MOVE(plus), MOVE(hashtag)};
+  DrawStairsArgs stairs{sps.ref_sp("3d_pos_normal_color"), handles.lookup(handles.stairs_eid),
+    handles.stairs_eid};
+  DrawTilemapArgs dta{MOVE(plus), MOVE(hashtag), MOVE(stairs)};
 
   ZoneManager zm{state.zone_states};
   auto const& tilemap = zm.active().tilemap;
@@ -206,15 +209,15 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
 void
 draw_tilegrid(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps)
 {
-  auto &engine_state = state.engine_state;
-  auto &logger = engine_state.logger;
+  auto &es = state.engine_state;
+  auto &logger = es.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
 
   ZoneManager zm{state.zone_states};
   auto const& tilemap = zm.active().tilemap;
 
   Transform transform;
-  bool const show_y = engine_state.tilemap_state.show_yaxis_lines;
+  bool const show_y = es.tilemap_state.show_yaxis_lines;
   auto const tilegrid = OF::create_tilegrid(logger, sp, tilemap, show_y);
   render::draw_tilegrid(state.render_args(), transform, sp, tilegrid);
 }
@@ -222,8 +225,8 @@ draw_tilegrid(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
 void
 draw_global_axis(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps)
 {
-  auto &engine_state = state.engine_state;
-  auto &logger = engine_state.logger;
+  auto &es = state.engine_state;
+  auto &logger = es.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
   auto world_arrows = OF::create_axis_arrows(logger, sp);
 
@@ -306,14 +309,14 @@ conditionally_draw_player_vectors(GameState &state, entt::DefaultRegistry &regis
 void
 game_loop(GameState &state, window::SDLWindow &window, double const dt)
 {
-  auto &engine_state = state.engine_state;
+  auto &es = state.engine_state;
   ZoneManager zm{state.zone_states};
   auto &zone_state = zm.active();
 
   auto &player = zone_state.player;
-  auto &mouse = engine_state.mouse_state;
+  auto &mouse = es.mouse_state;
   auto &tilemap_state = state.engine_state.tilemap_state;
-  auto &logger = engine_state.logger;
+  auto &logger = es.logger;
   auto &registry = zone_state.registry;
 
   if (mouse.both_pressed()) {
@@ -323,11 +326,56 @@ game_loop(GameState &state, window::SDLWindow &window, double const dt)
     move_ontilemap(state, &WorldObject::world_forward, player, dt);
   }
 
+  /////////////////////////
+  auto const wp = player.world_position();
+  auto const eid = find_player(registry);
+  auto &pc = registry.get<Player>(eid);
+  auto const cast = [](float const f) { return static_cast<int>(f);};
+  auto &tp = pc.tile_position;
+  auto &tmap = zone_state.tilemap;
+  auto &ui = es.ui_state;
+  {
+    auto const [w, l] = tmap.dimensions();
+    assert(wp.x < w);
+    assert(wp.z < l);
+  }
+  if (tp != TilePosition{cast(wp.x), cast(wp.z)}) {
+    tp.x = cast(wp.x);
+    tp.z = cast(wp.z);
+
+    auto const& tile = tmap.data(tp);
+    if (tile.type == TileType::STAIRS) {
+      // lookup stairs in tilemap
+
+      auto const stair_eids = find_stairs(registry);
+      assert(!stair_eids.empty());
+
+      for (auto const& eid : stair_eids) {
+
+        auto const& stair = registry.get<StairInfo>(eid);
+        if (stair.tile_position == tp) {
+
+          auto const current = ui.selected_level;
+          auto const newlevel = stair.direction == StairDirections::UP
+            ? current + 1
+            : current - 1;
+          zm.make_zone_active(newlevel, state);
+          player.move_to(stair.exit_position);
+          tilemap_state.recompute = true;
+
+          // TODO: not just jump first stair we find
+          break;
+        }
+      }
+    }
+  }
+  /////////////////////////
+
   // compute tilemap
   if (tilemap_state.recompute) {
     LOG_INFO("Updating tilemap\n");
 
-    update_visible_tiles(zone_state.tilemap, player, tilemap_state.reveal);
+    update_visible_tiles(tmap, player, tilemap_state.reveal);
 
     // We don't need to recompute the tilemap, we just did.
     tilemap_state.recompute = false;
@@ -338,10 +386,10 @@ game_loop(GameState &state, window::SDLWindow &window, double const dt)
 
   auto &handles = zone_state.handles;
   auto &sps = zone_state.sps;
-  if (engine_state.draw_entities) {
+  if (es.draw_entities) {
     draw_entities(state, registry, sps, handles);
   }
-  if (engine_state.draw_terrain) {
+  if (es.draw_terrain) {
     draw_terrain(state, registry, sps);
   }
   if (tilemap_state.draw_tilemap) {
@@ -350,18 +398,18 @@ game_loop(GameState &state, window::SDLWindow &window, double const dt)
   if (tilemap_state.show_grid_lines) {
     draw_tilegrid(state, registry, sps);
   }
-  if (engine_state.show_global_axis) {
+  if (es.show_global_axis) {
     draw_global_axis(state, registry, sps);
   }
-  if (engine_state.show_local_axis) {
+  if (es.show_local_axis) {
     draw_local_axis(state, registry, sps, player.world_position());
   }
-  if (engine_state.show_player_localspace_vectors) {
+  if (es.show_player_localspace_vectors) {
     conditionally_draw_player_vectors(state, registry, sps, player);
   }
   // if checks happen inside fn
   conditionally_draw_player_vectors(state, registry, sps, player);
-  if (engine_state.ui_state.draw_ui) {
+  if (es.ui_state.draw_ui) {
     draw_ui(state, window, registry);
   }
 }
@@ -450,7 +498,10 @@ start(stlw::Logger &logger, Engine &engine)
     assert(handle_result);
     auto handlem = MOVE(*handle_result);
 
-    auto tmap_startingpos = level_generator::make_tilemap(35, 1, 35, rng);
+    static auto constexpr NUM_FLOORS = 2;
+    static auto constexpr FLOOR_NUMBR = 0;
+    MakeTilemapParams mt{35, 35, NUM_FLOORS, FLOOR_NUMBR, rng, registry};
+    auto tmap_startingpos = level_generator::make_tilemap(mt);
     auto tmap = MOVE(tmap_startingpos.first);
     auto &startingpos = tmap_startingpos.second;
 

@@ -4,6 +4,7 @@
 #include <opengl/lighting.hpp>
 #include <opengl/texture.hpp>
 #include <boomhs/types.hpp>
+#include <boomhs/tile.hpp>
 
 #include <entt/entt.hpp>
 #include <cassert>
@@ -16,10 +17,10 @@ namespace boomhs
 
 struct EnttLookup
 {
-  std::uint32_t eid_;
+  uint32_t eid_;
   entt::DefaultRegistry &registry_;
 public:
-  explicit EnttLookup(std::uint32_t const eid, entt::DefaultRegistry &registry)
+  explicit EnttLookup(uint32_t const eid, entt::DefaultRegistry &registry)
     : eid_(eid)
     , registry_(registry)
   {
@@ -34,14 +35,29 @@ public:
   lookup() const { return registry_.get<T>(eid_); }
 
   void
-  set_eid(std::uint32_t const eid)
+  set_eid(uint32_t const eid)
   {
     eid_ = eid;
   }
 };
 
+enum class StairDirections
+{
+  UP = 0,
+  DOWN,
+  INVALID
+};
+
+struct StairInfo
+{
+  TilePosition tile_position;
+  glm::vec3 exit_position;
+  StairDirections direction = StairDirections::INVALID;
+};
+
 struct Player
 {
+  TilePosition tile_position;
 };
 
 struct ShaderName
@@ -74,7 +90,7 @@ find_all_entities_with_component(entt::DefaultRegistry &registry)
   using namespace boomhs;
   using namespace opengl;
 
-  std::vector<std::uint32_t> entities;
+  std::vector<uint32_t> entities;
   auto const view = registry.view<C...>();
   for (auto const e : view) {
     entities.emplace_back(e);
@@ -99,7 +115,16 @@ find_pointlights(entt::DefaultRegistry &registry)
   return find_all_entities_with_component<PointLight, Transform>(registry);
 }
 
-inline std::uint32_t
+inline auto
+find_stairs(entt::DefaultRegistry &registry)
+{
+  using namespace boomhs;
+  using namespace opengl;
+
+  return find_all_entities_with_component<StairInfo>(registry);
+}
+
+inline uint32_t
 find_player(entt::DefaultRegistry &registry)
 {
   // for now assume only 1 entity has the Player tag

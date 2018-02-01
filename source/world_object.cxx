@@ -1,6 +1,7 @@
 #include <boomhs/world_object.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/state.hpp>
+#include <boomhs/tilemap.hpp>
 #include <boomhs/zone.hpp>
 
 #include <stlw/format.hpp>
@@ -59,23 +60,18 @@ move_ontilemap(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObje
 
   ZoneManager zm{state.zone_states};
   auto const& tilemap = zm.active().tilemap;
-  auto const [x, y, z] = tilemap.dimensions();
-
+  auto const [x, z] = tilemap.dimensions();
   auto const move_vec = (wo.*fn)();
+
   auto const pos = wo.tilemap_position() + (move_vec * dt * wo.speed());
   bool const x_outofbounds = pos.x > x || pos.x < 0;
-  bool const y_outofbounds = pos.y > y || pos.y < 0;
   bool const z_outofbounds = pos.z > z || pos.z < 0;
-  bool const out_of_bounds = x_outofbounds || y_outofbounds || z_outofbounds;
+  bool const out_of_bounds = x_outofbounds || z_outofbounds;
 
   if (out_of_bounds && es.mariolike_edges) {
     if (x_outofbounds) {
       auto const new_x = pos.x < 0 ? x : 0;
       wo.move_to(new_x, pos.y, pos.z);
-    }
-    else if (y_outofbounds) {
-      auto const new_y = pos.y < 0 ? y : 0;
-      wo.move_to(pos.x, new_y, pos.z);
     }
     else if (z_outofbounds) {
       auto const new_z = pos.z < 0 ? z : 0;
@@ -84,12 +80,10 @@ move_ontilemap(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObje
   } else if (out_of_bounds) {
     return;
   }
-  auto const& new_tile = tilemap.data(pos);
-  if (!es.player_collision) {
-    wo.move_to(pos);
-    ts.recompute = true;
-  } else if (new_tile.type != TileType::WALL) {
-    wo.move_to(pos);
+  auto const& new_tile = tilemap.data(pos.x, pos.z);
+  bool const should_move = (!es.player_collision) || (new_tile.type != TileType::WALL);
+  if (should_move) {
+    wo.move(move_vec, dt);
     ts.recompute = true;
   }
 }

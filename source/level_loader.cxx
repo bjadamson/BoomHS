@@ -2,6 +2,7 @@
 #include <boomhs/assets.hpp>
 #include <boomhs/components.hpp>
 #include <opengl/obj.hpp>
+#include <extlibs/cpptoml.hpp>
 
 #include <stlw/result.hpp>
 

@@ -23,6 +23,7 @@
 
 using namespace opengl;
 using namespace opengl::factories;
+using namespace boomhs;
 
 namespace
 {
@@ -384,7 +385,7 @@ create_arrow(stlw::Logger &logger, ShaderProgram const& shader_program, ArrowCre
 }
 
 DrawInfo
-create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, boomhs::TileMap const& tmap,
+create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, TileMap const& tmap,
     bool const show_yaxis_lines, Color const& color)
 {
   std::vector<float> vertices;
@@ -394,10 +395,10 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, boomh
   indices.reserve(tmap.num_tiles());
 
   std::size_t count = 0u;
-  auto const add_point = [&indices, &vertices, &count, &color](glm::vec3 const& point) {
-    vertices.emplace_back(point.x);
-    vertices.emplace_back(point.y);
-    vertices.emplace_back(point.z);
+  auto const add_point = [&indices, &vertices, &count, &color](glm::vec3 const& pos) {
+    vertices.emplace_back(pos.x);
+    vertices.emplace_back(pos.y);
+    vertices.emplace_back(pos.z);
     vertices.emplace_back(1.0f);
 
     vertices.emplace_back(color.r());
@@ -414,7 +415,7 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, boomh
   };
 
   auto const visit_fn = [&add_line, &show_yaxis_lines](auto const& pos) {
-    auto const x = pos.x, y = pos.y, z = pos.z;
+    auto const x = pos.x, y = 0, z = pos.z;
 #define P0 glm::vec3{x, y, z}
 #define P1 glm::vec3{x + 1, y, z}
 #define P2 glm::vec3{x + 1, y + 1, z}

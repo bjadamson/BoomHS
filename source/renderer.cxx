@@ -319,36 +319,32 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
   };
   auto &plus = dt_args.plus;
   auto &hashtag = dt_args.hashtag;
+  auto &stairs = dt_args.stairs;
   auto const draw_all_tiles = [&](auto const& tile_pos) {
-    auto const& tile = tilemap.data(tile_pos.x, tile_pos.y, tile_pos.z);
+    auto const& tile = tilemap.data(tile_pos);
     if (!tilemap_state.reveal && !tile.is_visible) {
       return;
     }
     // This offset causes the tile's to appear in the "middle"
     glm::vec3 constexpr VIEWING_OFFSET{0.50f, 0.0f, 0.50f};
+    auto const tmatrix = glm::translate(glm::mat4{}, tile_pos + VIEWING_OFFSET);
+    auto const rmatrix = glm::rotate(glm::mat4{}, glm::degrees(90.0f), opengl::X_UNIT_VECTOR);
+    auto const smatrix = glm::scale(glm::mat4{}, tilemap_state.tile_scaling);
+    auto const mmatrix = tmatrix * rmatrix * smatrix;
+
     switch(tile.type) {
       case TileType::FLOOR:
-        {
-          auto const tmat = glm::translate(glm::mat4{}, tile_pos + VIEWING_OFFSET);
-          auto const smat = glm::scale(tmat, tilemap_state.tile_scaling);
-          plus.sp.set_uniform_vec3(logger, "u_offset", tilemap_state.floor_offset);
-          draw_tile_helper(plus.sp, plus.dinfo, plus.eid, smat);
-        }
+        plus.sp.set_uniform_vec3(logger, "u_offset", tilemap_state.floor_offset);
+        draw_tile_helper(plus.sp, plus.dinfo, plus.eid, tmatrix * smatrix);
         break;
       case TileType::WALL:
-        {
-          auto const tmat = glm::translate(glm::mat4{}, tile_pos + VIEWING_OFFSET);
-          auto const rmat = glm::rotate(tmat, glm::degrees(90.0f), opengl::X_UNIT_VECTOR);
-          auto const smat = glm::scale(rmat, tilemap_state.tile_scaling);
-          draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, smat);
-        }
+        draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, mmatrix);
         break;
-      case TileType::STAIR_WELL:
-        {
-          // TODO: implement
-          std::exit(1);
-        }
+      case TileType::STAIRS:
+        draw_tile_helper(stairs.sp, stairs.dinfo, stairs.eid, mmatrix);
         break;
+      default:
+        std::exit(1);
     }
   };
   tilemap.visit_each(draw_all_tiles);
