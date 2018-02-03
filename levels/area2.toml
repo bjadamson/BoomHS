@@ -1,5 +1,5 @@
 title = "Level 0"
-background = [1.0, 0.0, 1.0]
+background = [0.0, 0.0, 0.0]
 camera_spherical_coords = [2.56, 6.6446330, 56.379040]
 
 directional_light_diffuse = [0.0, 0.0, 0.0]

@@ -152,11 +152,15 @@ public:
 private:
   friend class ZoneManager;
 
-  ZoneState& active() { return zstates_[active_]; }
-  ZoneState const& active() const { return zstates_[active_]; }
-
-  int active_zone() const { return active_; }
+  int active_zone() const
+  {
+    assert(active_ < size());
+    return active_;
+  }
   int size() const { return zstates_.size(); }
+
+  ZoneState& active() { return zstates_[active_zone()]; }
+  ZoneState const& active() const { return zstates_[active_zone()]; }
 
   void
   set_active(int const zone_number)

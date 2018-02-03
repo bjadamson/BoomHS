@@ -187,7 +187,7 @@ struct Rooms
 boost::optional<Rooms>
 create_rooms(int const width, int const height, TileMap &tmap, stlw::float_generator &rng)
 {
-  auto constexpr MAX_NUM_CREATE_TRIES = 50000;
+  auto constexpr MAX_NUM_CREATE_TRIES = 5000;
   std::vector<Rect> rects;
   TilePosition starting_position;
 

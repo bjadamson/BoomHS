@@ -2,7 +2,7 @@
 This repository contains the source code for the <b>BoomHS</b> project. BoomHS is a project in
 active development.
 
-![Alt text](/screenshots/19.png?raw=true "01/25/2018")
+![Alt text](/screenshots/21.png?raw=true "01/25/2018")
 
 ## Table of contents
 
@@ -82,6 +82,7 @@ on the fingers (from the command line). You can see the symlink for yourself in 
   + bbk => kill the running game process (parses PID table, unstable).
 
 ## Screenshots
+![Alt text](/screenshots/20.png?raw=true "01/25/2018")
 ![Alt text](/screenshots/18.png?raw=true "01/25/2018")
 ![Alt text](/screenshots/17.png?raw=true "01/24/2018")
 ![Alt text](/screenshots/16.png?raw=true "01/24/2018")

@@ -42,6 +42,7 @@ namespace OF = opengl::factories;
 namespace LOC = opengl::LIST_OF_COLORS;
 using namespace boomhs;
 using namespace opengl;
+using namespace window;
 using stlw::Logger;
 
 namespace boomhs
@@ -307,7 +308,7 @@ conditionally_draw_player_vectors(GameState &state, entt::DefaultRegistry &regis
 }
 
 void
-game_loop(GameState &state, window::SDLWindow &window, double const dt)
+game_loop(GameState &state, SDLWindow &window, double const dt)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
@@ -430,10 +431,14 @@ namespace
 
 struct Engine
 {
-  ::window::SDLWindow window;
+  SDLWindow window;
+  std::array<entt::DefaultRegistry, 5> registries = {};
 
   Engine() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(Engine);
+
+  // We mark this as no-move/copy so the registries data never moves, allowing the rest of the
+  // program to store references into the data owned by registries.
+  NO_COPY_AND_NO_MOVE(Engine);
 
   auto dimensions() const { return window.get_dimensions(); }
 };
@@ -509,10 +514,10 @@ start(stlw::Logger &logger, Engine &engine)
     assert(handle_result);
     auto handlem = MOVE(*handle_result);
 
-    auto const stairs_perfloor = 8;
+    auto const stairs_perfloor = 2;
     StairGenConfig const sgconfig{floor_count, floor_number, stairs_perfloor};
 
-    int const width = 35, length = 35;
+    int const width = 40, length = 40;
     TilemapConfig tconfig{width, length, sgconfig};
 
     auto tmap_startingpos = level_generator::make_tilemap(tconfig, rng, registry);
@@ -549,8 +554,9 @@ start(stlw::Logger &logger, Engine &engine)
       MOVE(tmap), MOVE(camera), MOVE(player), registry};
   };
 
-  static auto constexpr FLOOR_COUNT = 5;
-  std::array<entt::DefaultRegistry, 5> registries;
+  auto &registries = engine.registries;
+  auto const FLOOR_COUNT = 5;
+
   DO_TRY(auto ld0, boomhs::load_level(logger, registries[0], "area0.toml"));
   DO_TRY(auto ld1, boomhs::load_level(logger, registries[1], "area1.toml"));
   DO_TRY(auto ld2, boomhs::load_level(logger, registries[2], "area2.toml"));
@@ -591,19 +597,16 @@ start(stlw::Logger &logger, Engine &engine)
 
 } // ns anon
 
-using EngineResult = stlw::result<Engine, std::string>;
-
-EngineResult
-make_opengl_sdl_engine(Logger &logger, bool const fullscreen, float const width, float const height)
+using WindowResult = stlw::result<SDLWindow, std::string>;
+WindowResult
+make_window(Logger &logger, bool const fullscreen, float const width, float const height)
 {
   // Select windowing library as SDL.
   LOG_DEBUG("Initializing window library globals");
   DO_TRY(auto _, window::sdl_library::init());
 
   LOG_DEBUG("Instantiating window instance.");
-  DO_TRY(auto window, window::sdl_library::make_window(fullscreen, height, width));
-
-  return Engine{MOVE(window)};
+  return window::sdl_library::make_window(fullscreen, height, width);
 }
 
 int
@@ -615,9 +618,12 @@ main(int argc, char *argv[])
     return EXIT_FAILURE;
   };
 
+  LOG_DEBUG("Creating window ...");
   bool constexpr FULLSCREEN = false;
-  DO_TRY_OR_ELSE_RETURN(auto engine, make_opengl_sdl_engine(logger, FULLSCREEN, 1024, 768),
+  DO_TRY_OR_ELSE_RETURN(auto window, make_window(logger, FULLSCREEN, 1024, 768),
                         on_error);
+
+  Engine engine{MOVE(window)};
 
   LOG_DEBUG("Starting game loop");
   DO_TRY_OR_ELSE_RETURN(auto _, start(logger, engine), on_error);
