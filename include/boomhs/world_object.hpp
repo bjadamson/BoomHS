@@ -48,14 +48,7 @@ public:
   std::string display() const;
 
   glm::quat const& orientation() const { return transform().rotation; }
-  glm::vec3 const& world_position() const
-  {
-    // TODO: this is showing up *sometimes*
-    assert(!::isnan(transform().translation.x));
-    assert(!::isnan(transform().translation.y));
-    assert(!::isnan(transform().translation.z));
-    return transform().translation;
-  }
+  glm::vec3 const& world_position() const;
 
   auto speed() const { return speed_; }
   void set_speed(float const s) { speed_ = s; }

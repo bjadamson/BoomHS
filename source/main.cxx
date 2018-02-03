@@ -308,68 +308,90 @@ conditionally_draw_player_vectors(GameState &state, entt::DefaultRegistry &regis
 }
 
 void
-game_loop(GameState &state, SDLWindow &window, double const dt)
+move_betweentilemaps_ifonstairs(GameState &state)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
   auto &tilemap_state = es.tilemap_state;
 
-  {
-    ZoneManager zm{state.zone_states};
-    auto &zone_state = zm.active();
+  ZoneManager zm{state.zone_states};
+  auto &zone_state = zm.active();
 
-    auto &player = zone_state.player;
-    auto &registry = zone_state.registry;
+  auto &player = zone_state.player;
+  auto &registry = zone_state.registry;
 
-    /////////////////////////
-    auto const wp = player.world_position();
-    assert(!::isnan(wp.x));
-    assert(!::isnan(wp.y));
-    assert(!::isnan(wp.z));
+  auto const wp_orzeroifnan = [](auto const& wp) {
+    auto const anynan = stlw::math::anynan(wp);
+    auto const allnan = stlw::math::allnan(wp);
 
-    auto const eid = find_player(registry);
-    auto &pc = registry.get<Player>(eid);
-    auto const cast = [](float const f) { return static_cast<int>(f);};
-    auto &tp = pc.tile_position;
-    auto &tmap = zone_state.tilemap;
-    {
-      auto const [w, l] = tmap.dimensions();
-      // TODO: work out why x/z are NaN after moving levels.
-      assert(wp.x < w);
-      assert(wp.z < l);
+    // If any are NaN, then all should be NaN.
+    assert(anynan ? allnan : true);
+    if (anynan) {
+      return glm::zero<glm::vec3>();
     }
-    if (tp != TilePosition{cast(wp.x), cast(wp.z)}) {
-      tp.x = cast(wp.x);
-      tp.z = cast(wp.z);
+    return wp;
+  };
 
-      auto const& tile = tmap.data(tp);
-      if (tile.type == TileType::STAIRS) {
-        // lookup stairs in tilemap
+  // We need to check for NaN in cases where the camera becomes perpendicular to the Y axis. When
+  // this occurs the view calculation (lookAt) can yield Nan's for the position.
+  //
+  // Ran into this during development, thus handling it now.
+  auto const wp = player.world_position();
+  std::cerr << "wp.x '" << wp.x << " wp.z '" << wp.z << "'\n";
 
-        auto const stair_eids = find_stairs(registry);
-        assert(!stair_eids.empty());
+  auto const eid = find_player(registry);
+  auto &pc = registry.get<Player>(eid);
+  auto const cast = [](float const f) { return static_cast<int>(f);};
+  auto &tp = pc.tile_position;
+  auto &tmap = zone_state.tilemap;
+  {
+    auto const [w, l] = tmap.dimensions();
+    // TODO: work out why x/z are NaN after moving levels.
+    assert(wp.x < w);
+    assert(wp.z < l);
+  }
+  if (tp == TilePosition{cast(wp.x), cast(wp.z)}) {
+    return;
+  }
+  tp.x = cast(wp.x);
+  tp.z = cast(wp.z);
 
-        for (auto const& eid : stair_eids) {
+  auto const& tile = tmap.data(tp);
+  if (tile.type != TileType::STAIRS) {
+    return;
+  }
+  // lookup stairs in tilemap
+  auto const stair_eids = find_stairs(registry);
+  assert(!stair_eids.empty());
 
-          auto const& stair = registry.get<StairInfo>(eid);
-          if (stair.tile_position == tp) {
+  auto const move_player_through_stairs = [&](StairInfo const& stair) {
+    int const current = zm.active_zone();
+    int const newlevel = current + (stair.direction == StairDirection::UP ? 1 : -1);
+    std::cerr << "moving through stair '" << stair.direction << "'\n";
+    assert(newlevel < zm.num_zones());
+    zm.make_zone_active(newlevel, state);
+    player.move_to(stair.exit_position);
+    tilemap_state.recompute = true;
+  };
+  for (auto const& eid : stair_eids) {
+    auto const& stair = registry.get<StairInfo>(eid);
+    if (stair.tile_position == tp) {
+      move_player_through_stairs(stair);
 
-            // TODO: just ask the stair
-            int const current = zm.active_zone();
-            int const newlevel = current + (stair.direction == StairDirection::UP ? 1 : -1);
-            std::cerr << "moving through stair '" << stair.direction << "'\n";
-            assert(newlevel < zm.num_zones());
-            zm.make_zone_active(newlevel, state);
-            player.move_to(stair.exit_position);
-            tilemap_state.recompute = true;
-
-            // TODO: not just jump first stair we find
-            break;
-          }
-        }
-      }
+      // TODO: not just jump first stair we find
+      break;
     }
   }
+}
+
+void
+game_loop(GameState &state, SDLWindow &window, double const dt)
+{
+  auto &es = state.engine_state;
+  auto &logger = es.logger;
+  auto &tilemap_state = es.tilemap_state;
+  move_betweentilemaps_ifonstairs(state);
+
   /////////////////////////
   ZoneManager zm{state.zone_states};
   auto &zone_state = zm.active();
@@ -432,9 +454,14 @@ namespace
 struct Engine
 {
   SDLWindow window;
-  std::array<entt::DefaultRegistry, 5> registries = {};
+  std::vector<entt::DefaultRegistry> registries = {};
 
-  Engine() = default;
+  Engine() = delete;
+  explicit Engine(SDLWindow &&w)
+    : window(MOVE(w))
+  {
+    registries.resize(5);
+  }
 
   // We mark this as no-move/copy so the registries data never moves, allowing the rest of the
   // program to store references into the data owned by registries.
@@ -538,7 +565,6 @@ start(stlw::Logger &logger, Engine &engine)
     auto constexpr UP = opengl::Y_UNIT_VECTOR;
 
     auto const player_eid = find_player(registry);
-    auto &player_transform = registry.get<Transform>(player_eid);
 
     EnttLookup player_lookup{player_eid, registry};
     WorldObject player{player_lookup, FORWARD, UP};

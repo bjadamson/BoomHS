@@ -6,9 +6,22 @@
 
 #include <array>
 #include <utility>
+#include <cmath>
 
 namespace stlw::math
 {
+
+inline bool
+allnan(glm::vec3 const& v)
+{
+  return std::isnan(v.x) && std::isnan(v.y) && std::isnan(v.z);
+}
+
+inline bool
+anynan(glm::vec3 const& v)
+{
+  return std::isnan(v.x) || std::isnan(v.y) || std::isnan(v.z);
+}
 
 // Normalizes "value" from the "from_range" to the "to_range"
 template <typename T, typename P1, typename P2>

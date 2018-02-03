@@ -25,6 +25,12 @@ WorldObject::display() const
       );
 }
 
+glm::vec3 const&
+WorldObject::world_position() const
+{
+  return transform().translation;
+}
+
 void
 WorldObject::rotate(float const angle, glm::vec3 const& axis)
 {
@@ -45,7 +51,7 @@ WorldObject::rotate_to_match_camera_rotation(Camera const& camera)
   player_fwd = glm::normalize(player_fwd);
 
   float const angle = stlw::math::angle_between_vectors(eyespace_fwd, player_fwd, glm::zero<glm::vec3>());
-  glm::quat new_rotation = stlw::math::rotation_between_vectors(eyespace_fwd, player_fwd);
+  glm::quat const new_rotation = stlw::math::rotation_between_vectors(eyespace_fwd, player_fwd);
 
   auto &t = transform();
   t.rotation = new_rotation * t.rotation;
