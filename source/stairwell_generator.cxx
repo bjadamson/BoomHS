@@ -86,19 +86,29 @@ place_stairs(PlaceStairsState &ps, TileMap &tmap, stlw::float_generator &rng,
 
   auto const calculate_direction = [&]()
   {
+    auto const UP = [&]() {
+      upstairs_to_place++;
+      return StairDirection::UP;
+    };
+    auto const DOWN = [&]() {
+      downstairs_to_place++;
+      return StairDirection::DOWN;
+    };
+
     bool const is_bottom_floor = 0 == stairconfig.floor_number;
     bool const is_top_floor    = (stairconfig.floor_number == (stairconfig.floor_count - 1));
     if (is_bottom_floor) {
-      return StairDirection::UP;
+      return UP();
     }
     else if (is_top_floor) {
-      return StairDirection::DOWN;
+      return DOWN();
     }
     else {
       if (upstairs_to_place > 0) {
-        return StairDirection::UP;
+        return UP();
       } else if (downstairs_to_place > 0) {
-        return StairDirection::DOWN;
+        std::abort();
+        return DOWN();
       } else {
         // We should not have any more stairs to be placing at this point.
         std::abort();
@@ -108,7 +118,7 @@ place_stairs(PlaceStairsState &ps, TileMap &tmap, stlw::float_generator &rng,
   int num_placed = 0;
   auto const find_stairpositions = [&](auto const& pos) {
     if (should_skip_tile(stairs_perfloor, num_placed, tmap, pos, rng)) {
-      std::cerr << "(floor '" << floor_number << "/" << floor_count << "' skipping\n";
+      std::cerr << "(floor '" << floor_number << "/" << (floor_count-1) << "' skipping\n";
       return;
     }
     auto &tile = tmap.data(pos);

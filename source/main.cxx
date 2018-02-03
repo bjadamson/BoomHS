@@ -322,7 +322,6 @@ game_loop(GameState &state, window::SDLWindow &window, double const dt)
 
     /////////////////////////
     auto const wp = player.world_position();
-    std::cerr << "wp: '" << glm::to_string(wp) << "'\n";
     assert(!::isnan(wp.x));
     assert(!::isnan(wp.y));
     assert(!::isnan(wp.z));
@@ -432,7 +431,6 @@ namespace
 struct Engine
 {
   ::window::SDLWindow window;
-  std::array<entt::DefaultRegistry, 2> registries = {};
 
   Engine() = default;
   MOVE_CONSTRUCTIBLE_ONLY(Engine);
@@ -500,7 +498,7 @@ start(stlw::Logger &logger, Engine &engine)
 
   // Construct tilemap
   stlw::float_generator rng;
-  auto const make_zs = [&](int const floor_number, int const floor_count, LevelData &&level_data,
+  auto const make_zs = [&](int const floor_number, auto const floor_count, LevelData &&level_data,
       entt::DefaultRegistry &registry)
   {
     auto const& objcache = level_data.assets.obj_cache;
@@ -511,7 +509,7 @@ start(stlw::Logger &logger, Engine &engine)
     assert(handle_result);
     auto handlem = MOVE(*handle_result);
 
-    int const stairs_perfloor = 4;
+    auto const stairs_perfloor = 8;
     StairGenConfig const sgconfig{floor_count, floor_number, stairs_perfloor};
 
     int const width = 35, length = 35;
@@ -551,28 +549,37 @@ start(stlw::Logger &logger, Engine &engine)
       MOVE(tmap), MOVE(camera), MOVE(player), registry};
   };
 
-  auto &registries = engine.registries;
+  static auto constexpr FLOOR_COUNT = 5;
+  std::array<entt::DefaultRegistry, 5> registries;
   DO_TRY(auto ld0, boomhs::load_level(logger, registries[0], "area0.toml"));
-  DO_TRY(auto ld1, boomhs::load_level(logger, registries[1], "area0.toml"));
+  DO_TRY(auto ld1, boomhs::load_level(logger, registries[1], "area1.toml"));
+  DO_TRY(auto ld2, boomhs::load_level(logger, registries[2], "area2.toml"));
+  DO_TRY(auto ld3, boomhs::load_level(logger, registries[3], "area3.toml"));
+  DO_TRY(auto ld4, boomhs::load_level(logger, registries[4], "area4.toml"));
 
-
-  static auto constexpr FLOOR_COUNT = 2;
   auto zs0 = make_zs(0, FLOOR_COUNT, MOVE(ld0), registries[0]);
   auto zs1 = make_zs(1, FLOOR_COUNT, MOVE(ld1), registries[1]);
+  auto zs2 = make_zs(2, FLOOR_COUNT, MOVE(ld2), registries[2]);
+  auto zs3 = make_zs(3, FLOOR_COUNT, MOVE(ld3), registries[3]);
+  auto zs4 = make_zs(4, FLOOR_COUNT, MOVE(ld4), registries[4]);
 
-  std::array<ZoneState, 2> zstates_arr{MOVE(zs0), MOVE(zs1)};
+  std::array<ZoneState, FLOOR_COUNT> zstates_arr{MOVE(zs0), MOVE(zs1), MOVE(zs2),
+   MOVE(zs3), MOVE(zs4)};
   ZoneStates zs{MOVE(zstates_arr)};
 
-  //auto &registries = engine.registries;
-  //static auto constexpr FLOOR_COUNT = 2;
-  //std::vector<ZoneState> zstates;
-//
-  //FOR(i, FLOOR_COUNT) {
-    //DO_TRY(auto ld, boomhs::load_level(logger, registries[i], "area0.toml"));
-    //auto zs = make_zs(i, FLOOR_COUNT, MOVE(ld), registries[i]);
-    //zstates.emplace_back(MOVE(zs));
-  //}
-  //ZoneStates zs{MOVE(zstates)};
+  /*
+  auto &registries = engine.registries;
+  static auto constexpr FLOOR_COUNT = 2;
+  std::vector<ZoneState> zstates;
+  //registries.resize(FLOOR_COUNT);
+
+  FOR(i, FLOOR_COUNT) {
+    DO_TRY(auto ld, boomhs::load_level(logger, registries[i], "area0.toml"));
+    auto zs = make_zs(i, FLOOR_COUNT, MOVE(ld), registries[i]);
+    zstates.emplace_back(MOVE(zs));
+  }
+  ZoneStates zs{MOVE(zstates)};
+  */
 
   auto &imgui = ImGui::GetIO();
   auto state = make_init_gamestate(logger, imgui, MOVE(zs), engine.dimensions());
@@ -585,7 +592,6 @@ start(stlw::Logger &logger, Engine &engine)
 } // ns anon
 
 using EngineResult = stlw::result<Engine, std::string>;
-using stlw::Logger;
 
 EngineResult
 make_opengl_sdl_engine(Logger &logger, bool const fullscreen, float const width, float const height)

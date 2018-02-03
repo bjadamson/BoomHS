@@ -237,15 +237,23 @@ TilePosition
 place_rooms_and_stairs(TilemapConfig &tconfig, TileMap &tmap,
     stlw::float_generator &rng, entt::DefaultRegistry &registry)
 {
+  auto const stairs_perfloor = tconfig.stairconfig.stairs_perfloor;
+  assert(stairs_perfloor > 0);
+
   boost::optional<Rooms> rooms = boost::none;
   bool stairs = false;
+
+
   while(!rooms && !stairs) {
     std::cerr << "creating rooms ...\n";
     while(!rooms) {
       rooms = create_rooms(tconfig.width, tconfig.length, tmap, rng);
     }
 
-    uint32_t const num_upstair = 3, num_downstair = 3;
+    int const num_upstair = stairs_perfloor / 2;
+    int const num_downstair = stairs_perfloor - num_upstair;
+    assert((num_upstair + num_downstair) == stairs_perfloor);
+
     PlaceStairsState ps{tconfig.stairconfig, num_upstair, num_downstair};
     while(!stairs) {
       std::cerr << "placing stairs ...\n";

@@ -187,11 +187,11 @@ find_neighbor(TileMap const& tmap, TilePosition const& pos, TileType const type,
   assert(distance > 0);
 
   auto const edges = calculate_edges(pos, width, length, distance);
-  std::cerr << "find_neighbor for '" << pos << "'\n";
-  std::cerr << "width: '" << width << "' length: '" << length << "' distance: '"
-    << distance << "'\n";
-  std::cerr << "edges: '" << edges << "'\n";
-  std::cerr << "============================================\n\n\n";
+  //std::cerr << "find_neighbor for '" << pos << "'\n";
+  //std::cerr << "width: '" << width << "' length: '" << length << "' distance: '"
+    //<< distance << "'\n";
+  //std::cerr << "edges: '" << edges << "'\n";
+  //std::cerr << "============================================\n\n\n";
 
   std::array<TilePosition, 8> neighbors;
   auto count = 0ul;

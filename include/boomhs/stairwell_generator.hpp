@@ -25,10 +25,10 @@ struct StairGenConfig
 struct PlaceStairsState
 {
   StairGenConfig const& stairconfig;
-  uint32_t const num_upstairs;
-  uint32_t const num_downstairs;
+  int const num_upstairs;
+  int const num_downstairs;
 
-  PlaceStairsState(StairGenConfig const& sgc, uint32_t const nu, uint32_t const nd)
+  PlaceStairsState(StairGenConfig const& sgc, int const nu, int const nd)
     : stairconfig(sgc)
     , num_upstairs(nu)
     , num_downstairs(nd)

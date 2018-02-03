@@ -161,6 +161,7 @@ class ShaderPrograms
 
 public:
   ShaderPrograms() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(ShaderPrograms);
 
   void
   add(std::string const& s, ShaderProgram &&sp)
@@ -203,7 +204,6 @@ public:
   {
     return ref_sp(s.c_str());
   }
-
 
   BEGIN_END_FORWARD_FNS(shader_programs_);
 };

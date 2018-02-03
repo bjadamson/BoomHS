@@ -3,12 +3,10 @@
 #include <opengl/shader.hpp>
 #include <stlw/log.hpp>
 #include <stlw/result.hpp>
+#include <stlw/type_macros.hpp>
 
-#include <cpptoml/cpptoml.h>
 #include <entt/entt.hpp>
-
 #include <string>
-#include <utility>
 
 namespace boomhs
 {
@@ -17,6 +15,8 @@ struct LevelData
 {
   Assets assets;
   opengl::ShaderPrograms shader_programs;
+
+  MOVE_CONSTRUCTIBLE_ONLY(LevelData);
 };
 
 stlw::result<LevelData, std::string>

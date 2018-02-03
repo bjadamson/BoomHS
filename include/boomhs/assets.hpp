@@ -9,6 +9,7 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/sized_buffer.hpp>
+#include <stlw/type_macros.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <array>
@@ -92,12 +93,16 @@ struct EntityInfo
   boost::optional<std::string> const mesh_name;
   boost::optional<opengl::Color> const color;
   boost::optional<opengl::TextureInfo> const texture;
+
+  MOVE_CONSTRUCTIBLE_ONLY(EntityInfo);
 };
 
 struct LoadedEntities
 {
-  std::vector<uint32_t> data;
+  std::vector<uint32_t> data = {};
 
+  LoadedEntities() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(LoadedEntities);
   BEGIN_END_FORWARD_FNS(data);
 };
 
@@ -110,6 +115,8 @@ struct Assets
 
   opengl::GlobalLight global_light;
   opengl::Color background_color;
+
+  MOVE_CONSTRUCTIBLE_ONLY(Assets);
 };
 
 class GpuHandleList
@@ -119,6 +126,7 @@ class GpuHandleList
 
 public:
   GpuHandleList() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(GpuHandleList);
 
   std::size_t
   add(uint32_t const entity, opengl::DrawInfo &&di)
@@ -142,8 +150,6 @@ public:
     std::cerr << fmt::format("Error could not find gpu handle associated to entity {}'\n", entity);
     std::abort();
   }
-
-  MOVE_CONSTRUCTIBLE_ONLY(GpuHandleList);
 };
 
 class HandleManager {

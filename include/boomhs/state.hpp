@@ -15,9 +15,11 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
+#include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <imgui/imgui.hpp>
+#include <cassert>
 #include <vector>
 
 using stlw::Logger;
@@ -137,13 +139,13 @@ struct ZoneState
 // ZoneManager to work with this data.
 class ZoneStates
 {
-  std::array<ZoneState, 2> zstates_;
+  std::array<ZoneState, 5> zstates_;
   int active_ = 0;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(ZoneStates);
 
   // TODO: pass in active zone to support loading levels
-  explicit ZoneStates(std::array<ZoneState, 2> &&zstates)
+  explicit ZoneStates(std::array<ZoneState, 5> &&zstates)
     : zstates_(MOVE(zstates))
   {
   }
@@ -153,14 +155,15 @@ private:
   ZoneState& active() { return zstates_[active_]; }
   ZoneState const& active() const { return zstates_[active_]; }
 
+  int active_zone() const { return active_; }
+  int size() const { return zstates_.size(); }
+
   void
   set_active(int const zone_number)
   {
+    assert(zone_number < size());
     active_ = zone_number;
   }
-
-  int active_zone() const { return active_; }
-  auto size() const { return zstates_.size(); }
 };
 
 struct EngineState

@@ -374,8 +374,6 @@ process_event(GameState &state, SDL_Event &event, float const dt)
   return is_quit_event(event);
 }
 
-
-
 } // ns anon
 
 namespace boomhs
