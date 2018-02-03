@@ -528,6 +528,11 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
 
     auto const framerate = engine_state.imgui.Framerate;
     auto const ms_frame = 1000.0f / framerate;
+
+    ZoneManager zm{state.zone_states};
+    ImGui::SameLine(ImGui::GetWindowWidth() * 0.56f);
+    ImGui::Text("Current Level: %i", zm.active_zone());
+
     ImGui::SameLine(ImGui::GetWindowWidth() * 0.76f);
     ImGui::Text("FPS(avg): %.1f ms/frame: %.3f", framerate, ms_frame);
     ImGui::EndMainMenuBar();

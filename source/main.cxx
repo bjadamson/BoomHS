@@ -310,65 +310,75 @@ void
 game_loop(GameState &state, window::SDLWindow &window, double const dt)
 {
   auto &es = state.engine_state;
-  ZoneManager zm{state.zone_states};
-  auto &zone_state = zm.active();
-
-  auto &player = zone_state.player;
-  auto &mouse = es.mouse_state;
-  auto &tilemap_state = state.engine_state.tilemap_state;
   auto &logger = es.logger;
-  auto &registry = zone_state.registry;
+  auto &tilemap_state = es.tilemap_state;
 
-  if (mouse.both_pressed()) {
-    // We do this here, so that it gets checked every frame.
-    //
-    // While the buttons are pressed, move the player.
-    move_ontilemap(state, &WorldObject::world_forward, player, dt);
-  }
-
-  /////////////////////////
-  auto const wp = player.world_position();
-  auto const eid = find_player(registry);
-  auto &pc = registry.get<Player>(eid);
-  auto const cast = [](float const f) { return static_cast<int>(f);};
-  auto &tp = pc.tile_position;
-  auto &tmap = zone_state.tilemap;
   {
-    auto const [w, l] = tmap.dimensions();
-    assert(wp.x < w);
-    assert(wp.z < l);
-  }
-  if (tp != TilePosition{cast(wp.x), cast(wp.z)}) {
-    tp.x = cast(wp.x);
-    tp.z = cast(wp.z);
+    ZoneManager zm{state.zone_states};
+    auto &zone_state = zm.active();
 
-    auto const& tile = tmap.data(tp);
-    if (tile.type == TileType::STAIRS) {
-      // lookup stairs in tilemap
+    auto &player = zone_state.player;
+    auto &registry = zone_state.registry;
 
-      auto const stair_eids = find_stairs(registry);
-      assert(!stair_eids.empty());
+    /////////////////////////
+    auto const wp = player.world_position();
+    std::cerr << "wp: '" << glm::to_string(wp) << "'\n";
+    assert(!::isnan(wp.x));
+    assert(!::isnan(wp.y));
+    assert(!::isnan(wp.z));
 
-      for (auto const& eid : stair_eids) {
+    auto const eid = find_player(registry);
+    auto &pc = registry.get<Player>(eid);
+    auto const cast = [](float const f) { return static_cast<int>(f);};
+    auto &tp = pc.tile_position;
+    auto &tmap = zone_state.tilemap;
+    {
+      auto const [w, l] = tmap.dimensions();
+      // TODO: work out why x/z are NaN after moving levels.
+      assert(wp.x < w);
+      assert(wp.z < l);
+    }
+    if (tp != TilePosition{cast(wp.x), cast(wp.z)}) {
+      tp.x = cast(wp.x);
+      tp.z = cast(wp.z);
 
-        auto const& stair = registry.get<StairInfo>(eid);
-        if (stair.tile_position == tp) {
+      auto const& tile = tmap.data(tp);
+      if (tile.type == TileType::STAIRS) {
+        // lookup stairs in tilemap
 
-          int const current = zm.active_zone();
-          auto const newlevel = stair.direction == StairDirections::UP
-            ? current + 1
-            : current - 1;
-          assert(newlevel < zm.num_zones());
-          zm.make_zone_active(newlevel, state);
-          player.move_to(stair.exit_position);
-          tilemap_state.recompute = true;
+        auto const stair_eids = find_stairs(registry);
+        assert(!stair_eids.empty());
 
-          // TODO: not just jump first stair we find
-          break;
+        for (auto const& eid : stair_eids) {
+
+          auto const& stair = registry.get<StairInfo>(eid);
+          if (stair.tile_position == tp) {
+
+            // TODO: just ask the stair
+            int const current = zm.active_zone();
+            int const newlevel = current + (stair.direction == StairDirection::UP ? 1 : -1);
+            std::cerr << "moving through stair '" << stair.direction << "'\n";
+            assert(newlevel < zm.num_zones());
+            zm.make_zone_active(newlevel, state);
+            player.move_to(stair.exit_position);
+            tilemap_state.recompute = true;
+
+            // TODO: not just jump first stair we find
+            break;
+          }
         }
       }
     }
   }
+  /////////////////////////
+  ZoneManager zm{state.zone_states};
+  auto &zone_state = zm.active();
+  auto &tmap = zone_state.tilemap;
+
+  auto &player = zone_state.player;
+  auto &registry = zone_state.registry;
+
+  auto const wp = player.world_position();
   /////////////////////////
 
   // compute tilemap
@@ -424,6 +434,7 @@ struct Engine
   ::window::SDLWindow window;
   std::array<entt::DefaultRegistry, 2> registries = {};
 
+  Engine() = default;
   MOVE_CONSTRUCTIBLE_ONLY(Engine);
 
   auto dimensions() const { return window.get_dimensions(); }
@@ -489,7 +500,7 @@ start(stlw::Logger &logger, Engine &engine)
 
   // Construct tilemap
   stlw::float_generator rng;
-  auto const make_zs = [&](int const floor_number, int const num_floors, LevelData &&level_data,
+  auto const make_zs = [&](int const floor_number, int const floor_count, LevelData &&level_data,
       entt::DefaultRegistry &registry)
   {
     auto const& objcache = level_data.assets.obj_cache;
@@ -500,12 +511,13 @@ start(stlw::Logger &logger, Engine &engine)
     assert(handle_result);
     auto handlem = MOVE(*handle_result);
 
-    int const width = 35, length = 35;
-    MakeTilemapParams mt{width, length, num_floors, floor_number, rng, registry};
+    int const stairs_perfloor = 4;
+    StairGenConfig const sgconfig{floor_count, floor_number, stairs_perfloor};
 
-    int const num_up_stairs_per_floor = 3;
-    ProcGenState procgen_state{num_up_stairs_per_floor};
-    auto tmap_startingpos = level_generator::make_tilemap(mt, procgen_state);
+    int const width = 35, length = 35;
+    TilemapConfig tconfig{width, length, sgconfig};
+
+    auto tmap_startingpos = level_generator::make_tilemap(tconfig, rng, registry);
     auto tmap = MOVE(tmap_startingpos.first);
     auto &startingpos = tmap_startingpos.second;
 
@@ -544,12 +556,23 @@ start(stlw::Logger &logger, Engine &engine)
   DO_TRY(auto ld1, boomhs::load_level(logger, registries[1], "area0.toml"));
 
 
-  static auto constexpr NUM_FLOORS = 3;
-  auto zs0 = make_zs(0, NUM_FLOORS, MOVE(ld0), registries[0]);
-  auto zs1 = make_zs(1, NUM_FLOORS, MOVE(ld1), registries[1]);
+  static auto constexpr FLOOR_COUNT = 2;
+  auto zs0 = make_zs(0, FLOOR_COUNT, MOVE(ld0), registries[0]);
+  auto zs1 = make_zs(1, FLOOR_COUNT, MOVE(ld1), registries[1]);
 
-  std::array<ZoneState, ZoneStates::NUM_ZSTATES> zstates_arr{MOVE(zs0), MOVE(zs1)};
+  std::array<ZoneState, 2> zstates_arr{MOVE(zs0), MOVE(zs1)};
   ZoneStates zs{MOVE(zstates_arr)};
+
+  //auto &registries = engine.registries;
+  //static auto constexpr FLOOR_COUNT = 2;
+  //std::vector<ZoneState> zstates;
+//
+  //FOR(i, FLOOR_COUNT) {
+    //DO_TRY(auto ld, boomhs::load_level(logger, registries[i], "area0.toml"));
+    //auto zs = make_zs(i, FLOOR_COUNT, MOVE(ld), registries[i]);
+    //zstates.emplace_back(MOVE(zs));
+  //}
+  //ZoneStates zs{MOVE(zstates)};
 
   auto &imgui = ImGui::GetIO();
   auto state = make_init_gamestate(logger, imgui, MOVE(zs), engine.dimensions());

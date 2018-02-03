@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/state.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace boomhs
 {
@@ -8,25 +9,22 @@ class ZoneManager
 {
   ZoneStates &zstates_;
 public:
+  NO_COPY_AND_NO_MOVE(ZoneManager);
   explicit ZoneManager(ZoneStates &zs)
     : zstates_(zs)
   {
   }
 
-  auto const&
+  ZoneState const&
   active() const
   {
-    auto const& data = zstates_.data();
-    auto const active = zstates_.active();
-    return data[active];
+    return zstates_.active();
   }
 
-  auto&
+  ZoneState&
   active()
   {
-    auto &data = zstates_.data();
-    auto const active = zstates_.active();
-    return data[active];
+    return zstates_.active();
   }
 
   void
@@ -47,7 +45,7 @@ public:
   int
   active_zone() const
   {
-    return zstates_.active();
+    return zstates_.active_zone();
   }
 };
 

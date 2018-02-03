@@ -20,34 +20,42 @@ namespace {
 using namespace boomhs;
 using namespace window;
 
-glm::vec3
-calculate_mouse_worldpos(Camera const& camera, WorldObject const& player, int const mouse_x,
-    int const mouse_y, Dimensions const& dimensions)
+void
+move_ontilemap(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObject &wo, double const dt)
 {
-  auto const& a = camera.perspective_ref();
-  glm::vec4 const viewport = glm::vec4(0, 0, 1024, 768);
-  glm::mat4 const view = camera.view_matrix();
-  glm::mat4 const projection = camera.projection_matrix();
-  float const height = dimensions.h;
+  auto &es = state.engine_state;
+  auto &ts = es.tilemap_state;
 
-  // Calculate the view-projection matrix.
-  glm::mat4 const transform = projection * view;
+  ZoneManager zm{state.zone_states};
+  auto const& tilemap = zm.active().tilemap;
+  auto const [x, z] = tilemap.dimensions();
+  glm::vec3 const move_vec = (wo.*fn)();
 
-  // Calculate the intersection of the mouse ray with the near (z=0) and far (z=1) planes.
-  glm::vec3 const near = glm::unProject(glm::vec3{mouse_x, dimensions.h - mouse_y, 0}, glm::mat4(), transform, viewport);
-  glm::vec3 const far = glm::unProject(glm::vec3{mouse_x, dimensions.h - mouse_y, 1}, glm::mat4(), transform, viewport);
+  // TODO: stop doing this when we use double instead of float
+  auto const dtf = static_cast<float>(dt);
+  auto const wpos = wo.tilemap_position() + (move_vec * dtf * wo.speed());
+  bool const x_outofbounds = wpos.x > x || wpos.x < 0;
+  bool const z_outofbounds = wpos.z > z || wpos.z < 0;
+  bool const out_of_bounds = x_outofbounds || z_outofbounds;
 
-  auto const z = 0.0f;
-  glm::vec3 const world_pos = glm::mix(near, far, ((z - near.z) / (far.z - near.z)));
-
-  //float const Z_PLANE = 0.0;
-  //assert(768 == dimensions.h);
-  //glm::vec3 screen_pos = glm::vec3(mouse_x, (dimensions.h - mouse_y), Z_PLANE);
-  //std::cerr << "mouse clickpos: xyz: '" << glm::to_string(screen_pos) << "'\n";
-
-  //glm::vec3 const world_pos = glm::unProject(screen_pos, view, projection, viewport);
-  std::cerr << "calculated worldpos: xyz: '" << glm::to_string(world_pos) << "'\n";
-  return world_pos;
+  if (out_of_bounds && es.mariolike_edges) {
+    if (x_outofbounds) {
+      auto const new_x = wpos.x < 0 ? x : 0;
+      wo.move_to(new_x, wpos.y, wpos.z);
+    }
+    else if (z_outofbounds) {
+      auto const new_z = wpos.z < 0 ? z : 0;
+      wo.move_to(wpos.x, wpos.y, new_z);
+    }
+  } else if (out_of_bounds) {
+    return;
+  }
+  auto const& new_tile = tilemap.data(wpos.x, wpos.z);
+  bool const should_move = (!es.player_collision) || (new_tile.type != TileType::WALL);
+  if (should_move) {
+    wo.move(move_vec, dt);
+    ts.recompute = true;
+  }
 }
 
 bool
@@ -316,6 +324,21 @@ process_keystate(GameState &state, double const dt)
   }
 }
 
+void
+process_mousestate(GameState &state, double const dt)
+{
+  auto &es = state.engine_state;
+  auto &ms = es.mouse_state;
+  if (ms.both_pressed()) {
+
+    ZoneManager zm{state.zone_states};
+    auto &zone_state = zm.active();
+    auto &player = zone_state.player;
+
+    move_ontilemap(state, &WorldObject::world_forward, player, dt);
+  }
+}
+
 bool
 process_event(GameState &state, SDL_Event &event, float const dt)
 {
@@ -351,6 +374,8 @@ process_event(GameState &state, SDL_Event &event, float const dt)
   return is_quit_event(event);
 }
 
+
+
 } // ns anon
 
 namespace boomhs
@@ -372,6 +397,7 @@ IO::process(GameState &state, SDL_Event &event, double const dt)
     }
   }
   process_keystate(state, dt);
+  process_mousestate(state, dt);
 }
 
 } // ns boomhs

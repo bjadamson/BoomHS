@@ -27,6 +27,8 @@ namespace boomhs
 
 struct UiState
 {
+  MOVE_CONSTRUCTIBLE_ONLY(UiState);
+
   bool draw_ui = true;
   bool enter_pressed = false;
   bool block_input = false;
@@ -60,6 +62,8 @@ struct UiState
 
 struct MouseState
 {
+  MOVE_CONSTRUCTIBLE_ONLY(MouseState);
+
   bool left_pressed = false;
   bool right_pressed = false;
   bool pitch_lock = true;
@@ -77,12 +81,16 @@ struct MouseState
 
 struct WindowState
 {
+  MOVE_CONSTRUCTIBLE_ONLY(WindowState);
+
   window::FullscreenFlags fullscreen = window::FullscreenFlags::NOT_FULLSCREEN;
   window::SwapIntervalFlag sync = window::SwapIntervalFlag::SYNCHRONIZED;
 };
 
 struct TilemapState
 {
+  MOVE_CONSTRUCTIBLE_ONLY(TilemapState);
+
   bool draw_tilemap = true;
   bool recompute = true;
   bool reveal = false;
@@ -122,46 +130,28 @@ struct ZoneState
     , registry(reg)
   {
   }
-
   MOVE_CONSTRUCTIBLE_ONLY(ZoneState);
 };
 
+// This class is meant to be used through the ZoneManager class, construct an instance of
+// ZoneManager to work with this data.
 class ZoneStates
 {
-  // This class is meant to be used through the ZoneManager class, construct an instance of
-  // ZoneManager to work with this data.
-public:
-  static std::size_t constexpr NUM_ZSTATES = 2;
-private:
-  std::array<ZoneState, NUM_ZSTATES> zstates_;
+  std::array<ZoneState, 2> zstates_;
   int active_ = 0;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(ZoneStates);
 
   // TODO: pass in active zone to support loading levels
-  explicit ZoneStates(std::array<ZoneState, NUM_ZSTATES> &&zstates)
+  explicit ZoneStates(std::array<ZoneState, 2> &&zstates)
     : zstates_(MOVE(zstates))
   {
   }
 private:
   friend class ZoneManager;
-  auto const&
-  data() const
-  {
-    return zstates_;
-  }
 
-  auto&
-  data()
-  {
-    return zstates_;
-  }
-
-  auto
-  active() const
-  {
-    return active_;
-  }
+  ZoneState& active() { return zstates_[active_]; }
+  ZoneState const& active() const { return zstates_[active_]; }
 
   void
   set_active(int const zone_number)
@@ -169,11 +159,8 @@ private:
     active_ = zone_number;
   }
 
-  auto
-  size() const
-  {
-    return zstates_.size();
-  }
+  int active_zone() const { return active_; }
+  auto size() const { return zstates_.size(); }
 };
 
 struct EngineState
@@ -194,15 +181,14 @@ struct EngineState
   bool show_player_localspace_vectors = true;
   bool show_player_worldspace_vectors = true;
 
-  MouseState mouse_state;
-  WindowState window_state;
-  TilemapState tilemap_state;
+  MouseState mouse_state = {};
+  WindowState window_state = {};
+  TilemapState tilemap_state = {};
+  UiState ui_state = {};
 
   Logger &logger;
   ImGuiIO &imgui;
   window::Dimensions const dimensions;
-
-  UiState ui_state;
 
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);

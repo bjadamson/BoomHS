@@ -48,7 +48,14 @@ public:
   std::string display() const;
 
   glm::quat const& orientation() const { return transform().rotation; }
-  glm::vec3 const& world_position() const { return transform().translation; }
+  glm::vec3 const& world_position() const
+  {
+    // TODO: this is showing up *sometimes*
+    assert(!::isnan(transform().translation.x));
+    assert(!::isnan(transform().translation.y));
+    assert(!::isnan(transform().translation.z));
+    return transform().translation;
+  }
 
   auto speed() const { return speed_; }
   void set_speed(float const s) { speed_ = s; }
@@ -80,7 +87,5 @@ public:
   void set_eid(std::uint32_t const eid) { ent_lookup_.set_eid(eid); }
   glm::mat4 model_matrix() const { return transform().model_matrix(); }
 };
-
-void move_ontilemap(GameState &, glm::vec3 (WorldObject::*)() const, WorldObject &, double const);
 
 } // ns boomhs

@@ -64,52 +64,50 @@ struct Rect
   }
 };
 
-struct CreateRoomParameters
+struct RoomGenConfig
 {
   int const width;
   int const height;
   std::vector<Rect> const& rooms;
-  TileMap &tmap;
-  stlw::float_generator &rng;
 };
 
 boost::optional<Rect>
-try_create_room(CreateRoomParameters const& params)
+try_create_room(RoomGenConfig const& rgconfig, TileMap &tmap, stlw::float_generator &rng)
 {
-  auto &rng = params.rng;
   // random width and height
   auto const w = rng.gen_int_range(ROOM_MIN_SIZE, ROOM_MAX_SIZE + 1);
   auto const h = rng.gen_int_range(ROOM_MIN_SIZE, ROOM_MAX_SIZE + 1);
 
   // random position without going out of the boundaries of the map
-  auto const xr = rng.gen_int_range(0, params.width - w);
-  auto const zr = rng.gen_int_range(0, params.height - h);
+  auto const xr = rng.gen_int_range(0, rgconfig.width - w);
+  auto const zr = rng.gen_int_range(0, rgconfig.height - h);
   Rect const new_room{xr, zr, w, h};
 
   // run through the other rooms and see if they intersect with this one
-  for(auto const& r : params.rooms) {
+  for(auto const& r : rgconfig.rooms) {
     // bail early
-    if (!new_room.in_tilemap(params.tmap) || new_room.intersects_with(r)) {
+    if (!new_room.in_tilemap(tmap) || new_room.intersects_with(r)) {
       return {}; // NONE
     }
   }
   for(int x = new_room.x1 + 1; x < new_room.x2; ++x) {
     for (int z = new_room.y1 + 1; z < new_room.y2; ++z) {
-      params.tmap.data(x, z).type = TileType::FLOOR;
+      tmap.data(x, z).type = TileType::FLOOR;
     }
   }
   return new_room;
 }
 
 auto
-create_room(CreateRoomParameters const& params, std::size_t const max_tries)
+create_room(size_t const max_tries, RoomGenConfig const& rgconfig, TileMap &tmap,
+    stlw::float_generator &rng)
 {
-  assert(params.height - ROOM_MAX_SIZE > 0);
+  assert(rgconfig.height - ROOM_MAX_SIZE > 0);
   boost::optional<Rect> room;
 
   std::size_t trials{0u};
   while(!room && (trials < max_tries)) {
-    room = try_create_room(params);
+    room = try_create_room(rgconfig, tmap, rng);
     ++trials;
   }
   return room;
@@ -194,8 +192,8 @@ create_rooms(int const width, int const height, TileMap &tmap, stlw::float_gener
   TilePosition starting_position;
 
   FOR(_, MAX_ROOMS) {
-    CreateRoomParameters const params{width, height, rects, tmap, rng};
-    auto new_room_o = create_room(params, MAX_NUM_CREATE_TRIES);
+    RoomGenConfig const rgconfig{width, height, rects};
+    auto new_room_o = create_room(MAX_NUM_CREATE_TRIES, rgconfig, tmap, rng);
     if(!new_room_o) {
       return boost::none;
     }
@@ -235,70 +233,45 @@ create_rooms(int const width, int const height, TileMap &tmap, stlw::float_gener
   return Rooms{MOVE(rects), MOVE(starting_position)};
 }
 
-bool
-try_place_stairs(int const floor_number, int const num_floors, ProcGenState &procgen_state,
-    TileMap &tmap, stlw::float_generator &rng, entt::DefaultRegistry &registry)
-{
-  using namespace boomhs::stairwell_generator;
-
-  auto const calculate_updown = [&]() {
-    if (floor_number == num_floors) {
-      return StairDirections::DOWN;
-    }
-    if (floor_number == 0) {
-      return StairDirections::UP;
-    } else if (floor_number == (num_floors - 1)) {
-      return StairDirections::DOWN;
-    } else {
-      std::abort();
-    }
-  };
-
-  auto const direction = calculate_updown();
-  int const num_stairs_perfloor = procgen_state.stairs_generated.size();
-  PlaceStairsParams ps{floor_number, num_floors, num_stairs_perfloor, direction,
-    tmap, rng, registry};
-  return stairwell_generator::place_stairs(ps, procgen_state);
-}
-
 TilePosition
-place_rooms_and_stairs(TileMap &tmap, MakeTilemapParams &params, ProcGenState &procgen_state)
+place_rooms_and_stairs(TilemapConfig &tconfig, TileMap &tmap,
+    stlw::float_generator &rng, entt::DefaultRegistry &registry)
 {
-  int const width = params.width;
-  int const length = params.length;
-  int const num_floors = params.num_floors;
-  auto &registry = params.registry;
-  auto &rng = params.rng;
-
   boost::optional<Rooms> rooms = boost::none;
   bool stairs = false;
   while(!rooms && !stairs) {
     std::cerr << "creating rooms ...\n";
     while(!rooms) {
-      rooms = create_rooms(width, length, tmap, rng);
+      rooms = create_rooms(tconfig.width, tconfig.length, tmap, rng);
     }
+
+    uint32_t const num_upstair = 3, num_downstair = 3;
+    PlaceStairsState ps{tconfig.stairconfig, num_upstair, num_downstair};
     while(!stairs) {
       std::cerr << "placing stairs ...\n";
-      stairs = try_place_stairs(params.floor_number, params.num_floors, procgen_state, tmap, rng,
-          registry);
+      stairs = stairwell_generator::place_stairs(ps, tmap, rng, registry);
     }
   }
+
+  // This seems hacky?
   return (*rooms).starting_position;
 }
 
 std::pair<TileMap, TilePosition>
-make_tilemap(MakeTilemapParams &params, ProcGenState &procgen_state)
+make_tilemap(TilemapConfig &tconfig, stlw::float_generator &rng, entt::DefaultRegistry &registry)
 {
-  int const width = params.width;
-  int const length = params.length;
+  // clang-format off
+  int const width     = tconfig.width;
+  int const length    = tconfig.length;
   int const num_tiles = width * length;
+  // clang-format on
 
   std::vector<Tile> tiles{static_cast<std::size_t>(num_tiles)};
   tiles.reserve(width * length);
-  TileMap tmap{MOVE(tiles), width, length, params.registry};
+  TileMap tmap{MOVE(tiles), width, length, registry};
 
   std::cerr << "======================================\n";
-  auto starting_pos = place_rooms_and_stairs(tmap, params, procgen_state);
+  auto starting_pos = place_rooms_and_stairs(tconfig, tmap, rng, registry);
   std::cerr << "======================================\n";
 
   return std::make_pair(MOVE(tmap), MOVE(starting_pos));

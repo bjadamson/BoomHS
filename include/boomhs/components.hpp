@@ -9,15 +9,16 @@
 #include <entt/entt.hpp>
 #include <cassert>
 #include <iostream>
+#include <ostream>
 #include <string>
 #include <vector>
 
 namespace boomhs
 {
 
-struct EnttLookup
+class EnttLookup
 {
-  uint32_t eid_;
+  uint32_t eid_ = UINT32_MAX;
   entt::DefaultRegistry &registry_;
 public:
   explicit EnttLookup(uint32_t const eid, entt::DefaultRegistry &registry)
@@ -28,11 +29,21 @@ public:
 
   template<typename T>
   T&
-  lookup() { return registry_.get<T>(eid_); }
+  lookup()
+  {
+    assert(eid_ != UINT32_MAX);
+    assert(registry_.has<T>(eid_));
+    return registry_.get<T>(eid_);
+  }
 
   template<typename T>
   T const&
-  lookup() const { return registry_.get<T>(eid_); }
+  lookup() const
+  {
+    assert(eid_ != UINT32_MAX);
+    assert(registry_.has<T>(eid_));
+    return registry_.get<T>(eid_);
+  }
 
   void
   set_eid(uint32_t const eid)
@@ -41,18 +52,37 @@ public:
   }
 };
 
-enum class StairDirections
+enum class StairDirection
 {
   UP = 0,
   DOWN,
   INVALID
 };
+inline std::ostream&
+operator<<(std::ostream &stream, StairDirection const& sd)
+{
+  switch(sd) {
+    case StairDirection::UP:
+      stream << "UP";
+      break;
+    case StairDirection::DOWN:
+      stream << "DOWN";
+      break;
+    case StairDirection::INVALID:
+      stream << "INVALID";
+      break;
+    default:
+      std::abort();
+      break;
+  }
+  return stream;
+}
 
 struct StairInfo
 {
   TilePosition tile_position;
   glm::vec3 exit_position;
-  StairDirections direction = StairDirections::INVALID;
+  StairDirection direction = StairDirection::INVALID;
 };
 
 struct Player
