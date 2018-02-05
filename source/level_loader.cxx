@@ -329,7 +329,7 @@ load_shader(stlw::Logger &logger, ParsedVertexAttributes &pvas, CppTable const& 
 
   // TODO: ugly hack, maybe think about...
   auto va = pvas.get_copy_of_va(va_name);
-  DO_TRY(auto program, opengl::make_shader_program(vertex, fragment, MOVE(va)));
+  DO_TRY(auto program, opengl::make_shader_program(logger, vertex, fragment, MOVE(va)));
 
   program.is_skybox = get_bool(table, "is_skybox").get_value_or(false);
   program.instance_count = get_sizei(table, "instance_count");

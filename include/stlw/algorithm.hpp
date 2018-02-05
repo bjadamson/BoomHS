@@ -213,4 +213,37 @@ auto sub_array(std::array<T, N> const& data, std::size_t const begin)
   return arr;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// array_from_visitarray
+// This function visit each element in the array, invoking a function on each element. This
+// function stores the return values of these function invocations in an array that is provided by
+// the caller.
+template<typename T, typename U, typename FN, size_t N>
+void
+array_from_visitarray_inplace(std::array<T, N> const& array, FN const& fn,
+    std::array<U, N> *buffer)
+{
+  FOR(i, N) {
+    (*buffer)[i] = fn(array[i]);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// array_from_visitarray
+// This function visit each element in the array, invoking a function on each element. This
+// function stores the return values of these function invocations in an array that is returned to
+// the caller.
+//
+// See "array_from_visitarray_inplace" for modifying an array in place using the same traversal
+// pattern.
+template<typename T, typename FN, size_t N>
+auto
+array_from_visitarray(std::array<T, N> const& array, FN const& fn)
+{
+  using R = decltype(fn(array[0]));
+  std::array<R, N> accumulator;
+  array_from_visitarray_inplace(array, fn, &accumulator);
+  return accumulator;
+}
+
 } // ns stlw

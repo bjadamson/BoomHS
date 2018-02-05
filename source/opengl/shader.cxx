@@ -13,6 +13,7 @@
 
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <cstring>
 
 namespace
 {
@@ -33,20 +34,19 @@ is_compiled(GLuint const handle)
 }
 
 inline void
-gl_compile_shader(GLuint const handle, char const *source)
+gl_compile_shader(stlw::Logger &logger, GLuint const handle, char const* source)
 {
-  GLint *p_length = nullptr;
-  auto constexpr SHADER_COUNT = 1; // We're only compiling one shader (in this function anyway).
-  glShaderSource(handle, SHADER_COUNT, &source, p_length);
+  glShaderSource(handle, 1, &source, nullptr);
+  LOG_ANY_GL_ERRORS(logger, "glShaderSource");
   glCompileShader(handle);
+  LOG_ANY_GL_ERRORS(logger, "glCompileShader");
 }
 
-template <typename T>
 stlw::result<compiled_shader, std::string>
-compile_shader(T const &data, GLenum const type)
+compile_shader(stlw::Logger &logger, GLenum const type, std::string const& data)
 {
   GLuint const handle = glCreateShader(type);
-  gl_compile_shader(handle, data.c_str());
+  gl_compile_shader(logger, handle, data.data());
 
   // Check Vertex Shader
   if (true == is_compiled(handle)) {
@@ -98,10 +98,11 @@ struct FragmentShaderInfo {
 };
 
 stlw::result<GLuint, std::string>
-compile_sources(VertexShaderInfo const &vertex_shader, FragmentShaderInfo const &fragment_shader)
+compile_sources(stlw::Logger &logger, VertexShaderInfo const &vertex_shader,
+    FragmentShaderInfo const &fragment_shader)
 {
-  DO_TRY(auto const vertex_shader_id, compile_shader(vertex_shader.source, GL_VERTEX_SHADER));
-  DO_TRY(auto const frag_shader_id, compile_shader(fragment_shader.source, GL_FRAGMENT_SHADER));
+  DO_TRY(auto const vertex_shader_id, compile_shader(logger, GL_VERTEX_SHADER, vertex_shader.source));
+  DO_TRY(auto const frag_shader_id, compile_shader(logger, GL_FRAGMENT_SHADER, fragment_shader.source));
   DO_TRY(auto const program_id, create_program());
 
   std::cerr << fmt::format("compiling '{}'/'{}'\n", vertex_shader.filename, fragment_shader.filename);
@@ -210,7 +211,8 @@ namespace opengl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // grogram_factory
 stlw::result<GLuint, std::string>
-program_factory::from_files(vertex_shader_filename const v, fragment_shader_filename const f)
+program_factory::from_files(stlw::Logger &logger, vertex_shader_filename const v,
+    fragment_shader_filename const f)
 {
   auto const prefix = [](auto const &path) {
     return std::string{"./build-system/bin/shaders/"} + path;
@@ -227,7 +229,7 @@ program_factory::from_files(vertex_shader_filename const v, fragment_shader_file
     MOVE(attribute_variable_info)};
   FragmentShaderInfo const fragment_shader{fragment_shader_path, fragment_source};
 
-  return compile_sources(vertex_shader, fragment_shader);
+  return compile_sources(logger, vertex_shader, fragment_shader);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -443,6 +445,15 @@ print_active_uniforms(std::ostream &stream, GLuint const program)
 
     stream << fmt::format("Uniform #{} Type: {} Name: {}\n", i, type_string, name_string);
   }
+}
+
+stlw::result<ShaderProgram, std::string>
+make_shader_program(stlw::Logger &logger, std::string const& vertex_s, std::string const& fragment_s, VertexAttribute &&va)
+{
+  vertex_shader_filename v{vertex_s};
+  fragment_shader_filename f{fragment_s};
+  DO_TRY(auto sp, program_factory::from_files(logger, v, f));
+  return ShaderProgram{ProgramHandle{sp}, MOVE(va)};
 }
 
 std::ostream&
