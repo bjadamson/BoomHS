@@ -42,7 +42,7 @@ uniform int   u_drawnormals;
 uniform float u_reflectivity;
 
 uniform mat4 u_modelmatrix;
-uniform mat4 u_viewmatrix;
+uniform mat4 u_invviewmatrix;
 
 out vec4 fragment_color;
 
@@ -70,7 +70,7 @@ calc_pointlight(PointLight light, vec3 v_lighttofrag, vec3 frag_world_position)
   vec3 light_direction = -v_lighttofrag;
   vec3 reflected_light_v = reflect(light_direction, v_surfacenormal);
 
-  vec3 camera_position = (inverse(u_viewmatrix) * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+  vec3 camera_position = (u_invviewmatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
   vec3 v_cameratofrag = normalize(camera_position - frag_world_position);
 
   float specular_factor = dot(reflected_light_v, v_cameratofrag);

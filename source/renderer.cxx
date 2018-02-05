@@ -117,9 +117,10 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
   sp.set_uniform_color_3fv(logger, "u_globallight.ambient", global_light.ambient);
 
   // specular
-  sp.set_uniform_matrix_4fv(logger, "u_viewmatrix", camera.view_matrix());
   sp.set_uniform_float1(logger, "u_reflectivity", 1.0f);
 
+  // pointlight
+  sp.set_uniform_matrix_4fv(logger, "u_invviewmatrix", glm::inverse(glm::mat3{camera.view_matrix()}));
   auto const pointlights = find_pointlights(registry);
   //std::cerr << "===============================\n";
   FOR(i, pointlights.size()) {
