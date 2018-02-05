@@ -14,7 +14,7 @@
 
 float constexpr MOVE_DISTANCE = 1.0f;
 float constexpr SCALE_FACTOR = 0.20f;
-float constexpr ZOOM_FACTOR = 2.0f;
+float constexpr ZOOM_FACTOR = 0.2f;
 
 namespace {
 using namespace boomhs;
@@ -285,9 +285,9 @@ process_mousewheel(GameState &state, SDL_MouseWheelEvent const& wheel, float con
   auto &active = zm.active();
   auto &camera = active.camera;
   if (wheel.y > 0) {
-    camera.zoom(1.0f / ZOOM_FACTOR);
+    camera.decrease_zoom(ZOOM_FACTOR);
   } else {
-    camera.zoom(ZOOM_FACTOR);
+    camera.increase_zoom(ZOOM_FACTOR);
   }
 }
 

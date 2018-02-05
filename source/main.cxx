@@ -572,6 +572,9 @@ start(stlw::Logger &logger, Engine &engine)
     Camera camera(player_lookup, FORWARD, UP);
 
     SphericalCoordinates sc;
+    sc.radius = 3.8f;
+    sc.theta = glm::radians(-0.229f);
+    sc.phi = glm::radians(38.2735f);
     camera.set_coordinates(MOVE(sc));
     //////////////////////////
 

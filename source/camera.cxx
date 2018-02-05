@@ -154,17 +154,28 @@ Camera::view_matrix() const
   return glm::mat4{}; // appease compiler
 }
 
-Camera&
-Camera::zoom(float const factor)
+void
+Camera::zoom(float const amount)
 {
   float constexpr MIN_RADIUS = 0.01f;
-  float const new_radius = coordinates_.radius * factor;
+  float const new_radius = coordinates_.radius + amount;
   if (new_radius >= MIN_RADIUS) {
     coordinates_.radius = new_radius;
   } else {
     coordinates_.radius = MIN_RADIUS;
   }
-  return *this;
+}
+
+void
+Camera::decrease_zoom(float const amount)
+{
+  zoom(-amount);
+}
+
+void
+Camera::increase_zoom(float const amount)
+{
+  zoom(amount);
 }
 
 } // ns boomhs
