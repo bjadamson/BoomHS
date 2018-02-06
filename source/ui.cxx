@@ -130,10 +130,11 @@ draw_tilemap_editor(GameState &state)
       zm.make_zone_active(selected, state);
     }
     bool recompute = false;
-    recompute |= ImGui::Checkbox("Reveal Tilemap", &tm_state.reveal);
+    recompute |= ImGui::Checkbox("Draw Tilemap", &tm_state.draw_tilemap);
+    recompute |= ImGui::Checkbox("Reveal Tilemap Hidden", &tm_state.reveal);
     recompute |= ImGui::Checkbox("Show (x, z)-axis lines", &tm_state.show_grid_lines);
     recompute |= ImGui::Checkbox("Show y-axis Lines ", &tm_state.show_yaxis_lines);
-    recompute |= ImGui::Checkbox("Draw Tilemap", &tm_state.draw_tilemap);
+    ImGui::Checkbox("Draw Neighbor Arrows", &tm_state.show_neighbortile_arrows);
 
     if (recompute) {
       tm_state.recompute = true;

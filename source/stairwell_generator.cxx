@@ -1,6 +1,6 @@
 #include <boomhs/stairwell_generator.hpp>
 #include <boomhs/level_generator.hpp>
-#include <boomhs/tilemap.hpp>
+#include <boomhs/tilemap_algorithms.hpp>
 #include <stlw/random.hpp>
 
 using namespace boomhs;
@@ -35,22 +35,21 @@ should_skip_tile(int const stairs_perfloor, int const num_placed, TileMap const&
     // tile is already a stairwell
     return true;
   }
-  if(any_tilemap_neighbors(pos, tmap, MIN_DISTANCE_BETWEEN_STAIRS, is_stair)) {
+  if(any_tilemap_neighbors(tmap, pos, MIN_DISTANCE_BETWEEN_STAIRS, is_stair)) {
     std::cerr << "too close stair neighbor\n";
     // nearby neighbor tile is a stairwell
     return true;
   }
-  if (!any_tilemap_neighbors(pos, tmap, 2, is_floor)) {
+  if (!any_tilemap_neighbors(tmap, pos, 2, is_floor)) {
     // nearby there must be atleast one floor tile
     std::cerr << "!atleast one floor neighbor\n";
     return true;
   }
   {
     auto const behavior = TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY;
-    auto const neighbors = find_neighbor(tmap, pos, TileType::FLOOR, TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY);
+    auto const neighbors = find_neighbors(tmap, pos, TileType::FLOOR, TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY);
     auto const ncount = neighbors.size();
     if (ncount < 1 || ncount > 3) {
-      std::cerr << "ncount: '" << ncount << "\n";
       return true;
     }
   }
@@ -118,14 +117,14 @@ place_stairs(PlaceStairsState &ps, TileMap &tmap, stlw::float_generator &rng,
   int num_placed = 0;
   auto const find_stairpositions = [&](auto const& pos) {
     if (should_skip_tile(stairs_perfloor, num_placed, tmap, pos, rng)) {
-      std::cerr << "(floor '" << floor_number << "/" << (floor_count-1) << "' skipping\n";
+      //std::cerr << "(floor '" << floor_number << "/" << (floor_count-1) << "' skipping\n";
       return;
     }
     auto &tile = tmap.data(pos);
     tile.type = calculate_direction();
 
     auto const behavior = TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY;
-    auto const neighbors = find_neighbor(tmap, pos, TileType::FLOOR, behavior);
+    auto const neighbors = find_neighbors(tmap, pos, TileType::FLOOR, behavior);
     std::cerr << "neighbors size: '" << neighbors.size() << "'\n";
     assert(neighbors.size() > 0);
 

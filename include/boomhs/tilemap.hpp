@@ -8,7 +8,6 @@
 
 #include <entt/entt.hpp>
 #include <array>
-#include <iostream>
 #include <vector>
 
 namespace boomhs
@@ -154,20 +153,5 @@ public:
   }
   BEGIN_END_FORWARD_FNS(tiles_);
 };
-
-class TileMap;
-size_t
-adjacent_neighbor_tilecount(TileType const, TilePosition const&, TileMap const&,
-    TileLookupBehavior const);
-
-bool
-any_tilemap_neighbors(TilePosition const&, TileMap const&, int32_t const, bool (*)(Tile const&));
-
-TileNeighbors
-find_neighbor(TileMap const&, TilePosition const&, TileType const, TileLookupBehavior const);
-
-class WorldObject;
-void
-update_visible_tiles(TileMap &, WorldObject const&, bool const);
 
 } // ns boomhs

@@ -16,6 +16,7 @@
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilemap.hpp>
+#include <boomhs/tilemap_algorithms.hpp>
 #include <boomhs/ui.hpp>
 #include <boomhs/zone.hpp>
 
@@ -276,46 +277,72 @@ draw_local_axis(GameState &state, entt::DefaultRegistry &registry, opengl::Shade
 }
 
 void
+draw_arrow(GameState &state, opengl::ShaderPrograms &sps, entt::DefaultRegistry &registry,
+    glm::vec3 const& start, glm::vec3 const& head, Color const& color)
+{
+  auto &sp = sps.ref_sp("3d_pos_color");
+  auto &logger = state.engine_state.logger;
+
+  auto const handle = OF::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
+
+  auto entity = registry.create();
+  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
+  auto &transform = registry.assign<Transform>(entity);
+
+  auto const &rargs = state.render_args();
+  render::draw(rargs, transform, sp, handle, entity, registry);
+}
+
+void
+draw_arrow_abovetile_and_neighbors(GameState &state,  entt::DefaultRegistry &registry,
+    ShaderPrograms &sps, TileMap const& tmap, TilePosition const& tpos)
+{
+  glm::vec3 constexpr offset{0.5f, 2.0f, 0.5f};
+
+  auto const draw_the_arrow = [&](auto const& ntpos, auto const& color) {
+    auto const bottom = glm::vec3{ntpos.x + offset.x, offset.y, ntpos.z + offset.z};
+    auto const top = bottom + (Y_UNIT_VECTOR * 2.0f);
+
+    draw_arrow(state, sps, registry, top, bottom, color);
+  };
+
+  draw_the_arrow(tpos, LOC::BLUE);
+  auto const neighbors = find_neighbors(tmap, tpos, TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY,
+      [](auto const& tpos) { return true; });
+  FOR(i, neighbors.size()) {
+    draw_the_arrow(neighbors[i], LOC::LIME_GREEN);
+  }
+}
+
+void
 conditionally_draw_player_vectors(GameState &state, entt::DefaultRegistry &registry, ShaderPrograms &sps,
     WorldObject const &player)
 {
-  auto &logger = state.engine_state.logger;
-  auto &sp = sps.ref_sp("3d_pos_color");
-
-  auto const draw_arrow = [&](auto const &start, auto const &head, auto const &color) {
-    auto const handle = OF::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
-
-    auto entity = registry.create();
-    ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-    auto &transform = registry.assign<Transform>(entity);
-
-    auto const &rargs = state.render_args();
-    render::draw(rargs, transform, sp, handle, entity, registry);
-  };
-
   auto &es = state.engine_state;
+  auto &logger = es.logger;
+
   glm::vec3 const pos = player.world_position();
   if (es.show_player_localspace_vectors) {
     // local-space
     //
     // forward
     auto const fwd = player.eye_forward();
-    draw_arrow(pos, pos + fwd, LOC::GREEN);
+    draw_arrow(state, sps, registry, pos, pos + fwd, LOC::GREEN);
 
     // right
     auto const right = player.eye_right();
-    draw_arrow(pos, pos + right, LOC::RED);
+    draw_arrow(state, sps, registry, pos, pos + right, LOC::RED);
   }
   if (es.show_player_worldspace_vectors) {
     // world-space
     //
     // forward
     auto const fwd = player.world_forward();
-    draw_arrow(pos, pos + (2.0f * fwd), LOC::LIGHT_BLUE);
+    draw_arrow(state, sps, registry, pos, pos + (2.0f * fwd), LOC::LIGHT_BLUE);
 
     // backward
     glm::vec3 const right = player.world_right();
-    draw_arrow(pos, pos + right, LOC::PINK);
+    draw_arrow(state, sps, registry, pos, pos + right, LOC::PINK);
   }
 }
 
@@ -408,8 +435,6 @@ game_loop(GameState &state, SDLWindow &window, double const dt)
 
   auto &player = zone_state.player;
   auto &registry = zone_state.registry;
-
-  auto const wp = player.world_position();
   /////////////////////////
 
   // compute tilemap
@@ -439,6 +464,10 @@ game_loop(GameState &state, SDLWindow &window, double const dt)
   if (tilemap_state.show_grid_lines) {
     draw_tilegrid(state, registry, sps);
   }
+  if (tilemap_state.show_neighbortile_arrows) {
+    auto const& wp = player.world_position();
+    draw_arrow_abovetile_and_neighbors(state, registry, sps, tmap, TilePosition{static_cast<int>(wp.x), static_cast<int>(wp.z)});
+  }
   if (es.show_global_axis) {
     draw_global_axis(state, registry, sps);
   }
@@ -448,6 +477,7 @@ game_loop(GameState &state, SDLWindow &window, double const dt)
   if (es.show_player_localspace_vectors) {
     conditionally_draw_player_vectors(state, registry, sps, player);
   }
+
   // if checks happen inside fn
   conditionally_draw_player_vectors(state, registry, sps, player);
   if (es.ui_state.draw_ui) {
