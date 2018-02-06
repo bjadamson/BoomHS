@@ -55,9 +55,7 @@ scripts/build.bash
 ```
 
 #### Important Note
-When adding a new source file to the project, you must run the bootstrap script again. Appoplogies
-ahead of time on this one, but with the way cmake is setup, right now running the bootstrapping
-process again is required to "pickup" the new source file.
+When adding a new source file to the project, you must run the bootstrap script again.
 
 ### Run the project
 Running the project is easy too (yep you guessed it) if your using the command line, you just need

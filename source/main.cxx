@@ -365,7 +365,9 @@ move_betweentilemaps_ifonstairs(GameState &state)
     //std::cerr << "moving through stair '" << stair.direction << "'\n";
     assert(newlevel < zm.num_zones());
     zm.make_zone_active(newlevel, state);
-    player.move_to(stair.exit_position);
+
+    auto const spos = stair.exit_position;
+    player.move_to(spos.x, player.world_position().y, spos.z);
     tilemap_state.recompute = true;
   };
   for (auto const& eid : stair_eids) {

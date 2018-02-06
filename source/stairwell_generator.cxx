@@ -129,11 +129,9 @@ place_stairs(PlaceStairsState &ps, TileMap &tmap, stlw::float_generator &rng,
     std::cerr << "neighbors size: '" << neighbors.size() << "'\n";
     assert(neighbors.size() > 0);
 
-    TilePosition const stair_exitpos = neighbors[0];
-
     auto &si = registry.assign<StairInfo>(tile.eid);
     si.tile_position = pos;
-    si.exit_position = glm::vec3{stair_exitpos.x, 0.0, stair_exitpos.z};
+    si.exit_position = neighbors[0];
     ++num_placed;
   };
 

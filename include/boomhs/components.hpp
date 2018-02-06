@@ -55,7 +55,7 @@ public:
 struct StairInfo
 {
   TilePosition tile_position;
-  glm::vec3 exit_position;
+  TilePosition exit_position;
 };
 
 struct Player
