@@ -35,14 +35,14 @@ template<typename FN>
 void
 flood_visit_skipping_position(Edges const& edge, FN const& fn)
 {
-  for(auto z = edge.left; z <= edge.right; ++z) {
-    for (auto x = edge.bottom; x <= edge.top; ++x) {
-      //if (edge.position == std::make_pair(z, x)) {
-      if (x == edge.position.x || z == edge.position.z) {
+  for(auto x = edge.left; x <= edge.right; ++x) {
+    for (auto y = edge.bottom; y <= edge.top; ++y) {
+      if (edge.position == std::make_pair(x, y)) {
+      //if (x == edge.position.x || y == edge.position.y) {
         // skip over the tile (only iterating edges), not original tile
         continue;
       }
-      fn(TilePosition{z, x});
+      fn(TilePosition{x, y});
     }
   }
 }
@@ -71,7 +71,7 @@ find_neighbors(TileMap const& tmap, TilePosition const& tpos, FN const& fn,
     switch (config.behavior) {
       case TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY:
         {
-          if (tpos.x != neighbor_pos.x && tpos.z != neighbor_pos.z) {
+          if (tpos.x != neighbor_pos.x && tpos.y != neighbor_pos.y) {
             // skip neighbors not on same horiz/vert planes
             return;
           }

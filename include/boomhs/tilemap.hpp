@@ -72,10 +72,10 @@ public:
   data(size_t const, size_t const) const;
 
   Tile&
-  data(TilePosition const& tp) { return data(tp.x, tp.z); }
+  data(TilePosition const& tp) { return data(tp.x, tp.y); }
 
   Tile const&
-  data(TilePosition const& tp) const { return data(tp.x, tp.z); }
+  data(TilePosition const& tp) const { return data(tp.x, tp.y); }
 
   template<typename FN>
   void
@@ -97,20 +97,20 @@ public:
     assert(w == l); // TODO: test if this works if this assumption not true
 
     // clang-format off
-    bool const edgeof_left  = pos.z == 0;
-    bool const edgeof_right = pos.z == static_cast<int>(l - 1);
+    bool const edgeof_left  = pos.x == 0;
+    bool const edgeof_right = pos.x == static_cast<int>(l - 1);
 
-    bool const edgeof_below = pos.x == 0;
-    bool const edgeof_above = pos.x == static_cast<int>(w - 1);
+    bool const edgeof_below = pos.y == 0;
+    bool const edgeof_above = pos.y == static_cast<int>(w - 1);
 
-    auto const leftbelow  = [&]() { fn(pos.x + -1, pos.z + -1); };
-    auto const left       = [&]() { fn(pos.x + 0,  pos.z + -1); };
-    auto const leftabove  = [&]() { fn(pos.x + 1,  pos.z + -1); };
-    auto const above      = [&]() { fn(pos.x + 1,  pos.z + 0); };
-    auto const rightabove = [&]() { fn(pos.x + 1,  pos.z + 1); };
-    auto const right      = [&]() { fn(pos.x + 0,  pos.z + 1); };
-    auto const rightbelow = [&]() { fn(pos.x + -1, pos.z + 1); };
-    auto const below      = [&]() { fn(pos.x + -1, pos.z + 0); };
+    auto const leftbelow  = [&]() { fn(pos.x + -1, pos.y + -1); };
+    auto const left       = [&]() { fn(pos.x + 0,  pos.y + -1); };
+    auto const leftabove  = [&]() { fn(pos.x + 1,  pos.y + -1); };
+    auto const above      = [&]() { fn(pos.x + 1,  pos.y + 0); };
+    auto const rightabove = [&]() { fn(pos.x + 1,  pos.y + 1); };
+    auto const right      = [&]() { fn(pos.x + 0,  pos.y + 1); };
+    auto const rightbelow = [&]() { fn(pos.x + -1, pos.y + 1); };
+    auto const below      = [&]() { fn(pos.x + -1, pos.y + 0); };
     // clang-format on
 
     auto const all8_behavior = [&]()

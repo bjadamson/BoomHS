@@ -4,7 +4,7 @@
 #include <stlw/random.hpp>
 
 using namespace boomhs;
-static constexpr auto MIN_DISTANCE_BETWEEN_STAIRS = 8;
+static constexpr auto MIN_DISTANCE_BETWEEN_STAIRS = 2;
 
 namespace
 {
@@ -40,16 +40,19 @@ should_skip_tile(int const num_to_place, int const num_placed, TileMap const& tm
     // nearby neighbor tile is a stairwell
     return true;
   }
-  if (!any_tilemap_neighbors(tmap, pos, 4, is_floor)) {
-    // nearby there must be atleast one floor tile
-    std::cerr << "!atleast one floor neighbor\n";
-    return true;
+  {
+    auto const behavior = TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY;
+    auto const neighbors = find_immediate_neighbors(tmap, pos, TileType::WALL, behavior);
+    auto const ncount = neighbors.size();
+    if (ncount < 3) {
+      return true;
+    }
   }
   {
     auto const behavior = TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY;
-    auto const neighbors = find_immediate_neighbors(tmap, pos, TileType::FLOOR, TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY);
+    auto const neighbors = find_immediate_neighbors(tmap, pos, TileType::FLOOR, behavior);
     auto const ncount = neighbors.size();
-    if (ncount < 1 || ncount > 3) {
+    if (ncount < 1) {
       return true;
     }
   }
@@ -57,7 +60,6 @@ should_skip_tile(int const num_to_place, int const num_placed, TileMap const& tm
   // many stairs have been placed previously.
   FORI(i, num_placed) {
     if (!rng.gen_bool()) {
-      std::cerr << "rng failed\n";
       return true;
     }
   }
@@ -104,14 +106,17 @@ place_stairs(StairGenConfig const& sc, TileMap &tmap, stlw::float_generator &rng
       return DOWN();
     }
     else {
-      if (upstairs_to_place > 0) {
+      bool const can_place_up = upstairs_to_place > 0;
+      bool const can_place_down = downstairs_to_place > 0;
+      if (can_place_up && !can_place_down) {
         return UP();
-      } else if (downstairs_to_place > 0) {
-        return DOWN();
-      } else {
-        // We should not have any more stairs to be placing at this point.
-        std::abort();
       }
+      else if (!can_place_up && can_place_down) {
+        return DOWN();
+      }
+      assert(can_place_up && can_place_down);
+      bool const place_up = rng.gen_bool();
+      return place_up ? UP() : DOWN();
     }
   };
   int num_placed = 0;
@@ -136,7 +141,6 @@ place_stairs(StairGenConfig const& sc, TileMap &tmap, stlw::float_generator &rng
   if (num_placed < stairs_perfloor) {
     return false;
   }
-  std::cerr << "num placed: '" << num_placed << "' num_to_place: '" << num_to_place << "'\n";
   assert(num_placed == num_to_place);
   return true;
 }

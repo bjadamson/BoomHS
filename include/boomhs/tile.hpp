@@ -9,12 +9,12 @@ struct TilePosition
 {
   using ValueT = int;
 
-  ValueT x = 0, z = 0;
+  ValueT x = 0, y = 0;
 };
 inline bool
 operator==(TilePosition const& a, TilePosition const& b)
 {
-  return (a.x == b.x) && (a.z == b.z);
+  return (a.x == b.x) && (a.y == b.y);
 }
 inline bool
 operator!=(TilePosition const& a, TilePosition const& b)
@@ -25,7 +25,7 @@ inline bool
 operator==(TilePosition const& tp, std::pair<TilePosition::ValueT, TilePosition::ValueT> const& pair)
 {
   return tp.x == pair.first
-    && tp.z == pair.second;
+    && tp.y == pair.second;
 }
 
 glm::vec3

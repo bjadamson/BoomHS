@@ -248,7 +248,6 @@ draw_global_axis(GameState &state, entt::DefaultRegistry &registry, opengl::Shad
   ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
 
   auto &transform = registry.assign<Transform>(entity);
-  transform.translation = glm::vec3{0.0, 0.0, 0.0}; // explicit
 
   auto const &rargs = state.render_args();
   render::draw(rargs, transform, sp, world_arrows.x_dinfo, entity, registry);
@@ -300,7 +299,7 @@ draw_arrow_abovetile_and_neighbors(GameState &state,  entt::DefaultRegistry &reg
   glm::vec3 constexpr offset{0.5f, 2.0f, 0.5f};
 
   auto const draw_the_arrow = [&](auto const& ntpos, auto const& color) {
-    auto const bottom = glm::vec3{ntpos.x + offset.x, offset.y, ntpos.z + offset.z};
+    auto const bottom = glm::vec3{ntpos.x + offset.x, offset.y, ntpos.y + offset.y};
     auto const top = bottom + (Y_UNIT_VECTOR * 2.0f);
 
     draw_arrow(state, sps, registry, top, bottom, color);
@@ -381,15 +380,15 @@ move_betweentilemaps_ifonstairs(GameState &state)
   auto &tmap = zone_state.tilemap;
   auto const wp = player.world_position();
   {
-    auto const [w, l] = tmap.dimensions();
+    auto const [w, h] = tmap.dimensions();
     assert(wp.x < w);
-    assert(wp.z < l);
+    assert(wp.y < h);
   }
   if (tp == TilePosition{cast(wp.x), cast(wp.z)}) {
     return;
   }
   tp.x = cast(wp.x);
-  tp.z = cast(wp.z);
+  tp.y = cast(wp.z);
 
   auto const& tile = tmap.data(tp);
   if (!tile.is_stair()) {
@@ -420,8 +419,8 @@ move_betweentilemaps_ifonstairs(GameState &state)
 
 
     auto const spos = stair.exit_position;
-    std::cerr << "moving through stair to '" << glm::to_string(glm::vec3{spos.x, player.world_position().y, spos.z}) << "'\n";
-    player.move_to(spos.x, player.world_position().y, spos.z);
+    std::cerr << "moving through stair to '" << glm::to_string(glm::vec3{spos.x, player.world_position().y, spos.y}) << "'\n";
+    player.move_to(spos.x, player.world_position().y, spos.y);
     tilemap_state.recompute = true;
   };
   for (auto const& eid : stair_eids) {
@@ -646,7 +645,7 @@ start(stlw::Logger &logger, Engine &engine)
     assert(handle_result);
     auto handlem = MOVE(*handle_result);
 
-    auto const stairs_perfloor = 5;
+    auto const stairs_perfloor = 8;
     StairGenConfig const sgconfig{floor_count, floor_number, stairs_perfloor};
 
     int const width = 40, length = 40;

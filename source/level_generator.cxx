@@ -80,8 +80,8 @@ try_create_room(RoomGenConfig const& rgconfig, TileMap &tmap, stlw::float_genera
 
   // random position without going out of the boundaries of the map
   auto const xr = rng.gen_int_range(0, rgconfig.width - w);
-  auto const zr = rng.gen_int_range(0, rgconfig.height - h);
-  Rect const new_room{xr, zr, w, h};
+  auto const yr = rng.gen_int_range(0, rgconfig.height - h);
+  Rect const new_room{xr, yr, w, h};
 
   // run through the other rooms and see if they intersect with this one
   for(auto const& r : rgconfig.rooms) {
@@ -91,8 +91,8 @@ try_create_room(RoomGenConfig const& rgconfig, TileMap &tmap, stlw::float_genera
     }
   }
   for(int x = new_room.x1 + 1; x < new_room.x2; ++x) {
-    for (int z = new_room.y1 + 1; z < new_room.y2; ++z) {
-      tmap.data(x, z).type = TileType::FLOOR;
+    for (int y = new_room.y1 + 1; y < new_room.y2; ++y) {
+      tmap.data(x, y).type = TileType::FLOOR;
     }
   }
   return new_room;
@@ -114,27 +114,27 @@ create_room(size_t const max_tries, RoomGenConfig const& rgconfig, TileMap &tmap
 }
 
 void
-create_h_tunnel(int const x1, int const x2, int const z, TileMap &tmap)
+create_h_tunnel(int const x1, int const x2, int const y, TileMap &tmap)
 {
   int const min = std::min(x1, x2), max = std::max(x1, x2) + 1;
   for (auto x = min; x <= max; ++x) {
-    tmap.data(x, z).type = TileType::FLOOR;
+    tmap.data(x, y).type = TileType::FLOOR;
   }
 }
 
 void
-create_v_tunnel(int const z1, int const z2, int const x, TileMap &tmap)
+create_v_tunnel(int const y1, int const y2, int const x, TileMap &tmap)
 {
-  int const min = std::min(z1, z2), max = std::max(z1, z2) + 1;
-  for(auto z = min; z <= max; ++z) {
-    tmap.data(x, z).type = TileType::FLOOR;
+  int const min = std::min(y1, y2), max = std::max(y1, y2) + 1;
+  for(auto y = min; y <= max; ++y) {
+    tmap.data(x, y).type = TileType::FLOOR;
   }
 }
 
 bool
-is_blocked(int const x, int const z, TileMap const& tmap)
+is_blocked(int const x, int const y, TileMap const& tmap)
 {
-  if (tmap.data(x, z).type == TileType::WALL) {
+  if (tmap.data(x, y).type == TileType::WALL) {
     return true;
   }
   return false;
@@ -143,16 +143,16 @@ is_blocked(int const x, int const z, TileMap const& tmap)
 auto
 generate_monster_position(Rect const& room, TileMap const& tmap, stlw::float_generator &rng)
 {
-  int x, z;
+  int x, y;
   while(true) {
     x = rng.gen_int_range(room.x1 + 1, room.x2);
-    z = rng.gen_int_range(room.y1 + 1, room.y2);
+    y = rng.gen_int_range(room.y1 + 1, room.y2);
 
-    if (!is_blocked(x, z, tmap)) {
+    if (!is_blocked(x, y, tmap)) {
       break;
     }
   }
-  return TilePosition{x, z};
+  return TilePosition{x, y};
 }
 
 void
@@ -205,7 +205,7 @@ create_rooms(int const width, int const height, TileMap &tmap, stlw::float_gener
       auto const center = new_center;
 
       starting_position.x = center.x;
-      starting_position.z = center.y;
+      starting_position.y = center.y;
     } else {
       // all rooms after the first:
       // connect it to the previous room with a tunnel

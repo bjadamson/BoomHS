@@ -51,14 +51,14 @@ namespace boomhs::detail
 {
 
 Edges
-calculate_edges(TilePosition const& tpos, int const tmap_width, int const tmap_length,
+calculate_edges(TilePosition const& tpos, int const tmap_width, int const tmap_height,
     int const distance)
 {
   auto const left   = std::max(tpos.x - distance, 0);
   auto const right  = std::min(tpos.x + distance, tmap_width);
 
-  auto const top    = std::min(tpos.z + distance, tmap_length);
-  auto const bottom = std::max(tpos.z - distance, 0);
+  auto const top    = std::min(tpos.y + distance, tmap_height);
+  auto const bottom = std::max(tpos.y - distance, 0);
 
   assert(left <= right);
   assert(bottom <= top);
@@ -117,11 +117,11 @@ update_visible_tiles(TileMap &tmap, WorldObject const& player, bool const reveal
   // Collect all the visible tiles for the player
   auto const& wp = player.world_position();
   auto const fn = [&](auto const& pos) {
-    auto const x = pos.x, z = pos.z;
+    auto const x = pos.x, y = pos.y;
     if (reveal_tilemap) {
       tmap.data(pos).is_visible = true;
     } else {
-      bresenham_3d(wp.x, wp.z, x, z, tmap);
+      bresenham_3d(wp.x, wp.z, x, y, tmap);
     }
   };
   tmap.visit_each(fn);
