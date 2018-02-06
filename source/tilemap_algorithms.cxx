@@ -50,6 +50,27 @@ bresenham_3d(int x0, int z0, int x1, int z1, TileMap &tmap)
 namespace boomhs::detail
 {
 
+Edges
+calculate_edges(TilePosition const& tpos, int const tmap_width, int const tmap_length,
+    int const distance)
+{
+  auto const left   = std::max(tpos.x - distance, 0);
+  auto const right  = std::min(tpos.x + distance, tmap_width);
+
+  auto const top    = std::min(tpos.z + distance, tmap_length);
+  auto const bottom = std::max(tpos.z - distance, 0);
+
+  assert(left <= right);
+  assert(bottom <= top);
+
+  return Edges{tpos, left, top, right, bottom};
+}
+
+} // ns boomhs::detail
+
+namespace boomhs
+{
+
 std::ostream&
 operator<<(std::ostream& stream, Edges const& e)
 {
@@ -65,43 +86,6 @@ operator<<(std::ostream& stream, Edges const& e)
   return stream;
 }
 
-Edges
-calculate_edges(TilePosition const& tpos, int const tmap_width, int const tmap_length,
-    int const distance)
-{
-  auto const left   = std::max(tpos.z - distance, 0);
-  auto const right  = std::min(tpos.z + distance, tmap_width);
-
-  auto const top    = std::min(tpos.x + distance, tmap_length);
-  auto const bottom = std::max(tpos.x - distance, 0);
-
-  assert(left <= right);
-  assert(bottom <= top);
-
-  return Edges{tpos, left, top, right, bottom};
-}
-
-} // ns boomhs::detail
-
-namespace boomhs
-{
-
-size_t
-adjacent_neighbor_tilecount(TileType const type, TilePosition const& pos,
-    TileMap const& tmap, TileLookupBehavior const behavior)
-{
-  size_t neighbor_count = 0u;
-  auto const check_neighbor = [&](int const x_offset, int const z_offset) {
-    auto const tile = TilePosition{pos.x + x_offset, pos.z + z_offset};
-    if (tmap.data(tile).type == type) {
-      ++neighbor_count;
-    }
-  };
-
-  tmap.visit_neighbors(pos, check_neighbor, behavior);
-  return neighbor_count;
-}
-
 bool
 any_tilemap_neighbors(TileMap const& tmap, TilePosition const& pos, int32_t const distance,
   bool (*fn)(Tile const&))
@@ -112,8 +96,7 @@ any_tilemap_neighbors(TileMap const& tmap, TilePosition const& pos, int32_t cons
   assert(distance > 0);
   assert(length > distance);
   assert(width > distance);
-  auto const edges = detail::calculate_edges(pos, width, length, distance);
-  std::cerr << "tilepos: '" << pos << "' distance: '" << distance << "' edge: '" << edges << "'\n";
+  auto const edge = detail::calculate_edges(pos, width, length, distance);
 
   bool found_one = false;
   auto const any_neighbors = [&](auto const& neighbor_pos) {
@@ -124,7 +107,7 @@ any_tilemap_neighbors(TileMap const& tmap, TilePosition const& pos, int32_t cons
       found_one = true;
     }
   };
-  edges.visit_each(any_neighbors);
+  flood_visit_skipping_position(edge, any_neighbors);
   return found_one;
 }
 

@@ -531,7 +531,11 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
     auto const ms_frame = 1000.0f / framerate;
 
     ZoneManager zm{state.zone_states};
-    ImGui::SameLine(ImGui::GetWindowWidth() * 0.56f);
+
+    ImGui::SameLine(ImGui::GetWindowWidth() * 0.25f);
+    ImGui::Text("Player Position: %s", glm::to_string(zm.active().player.world_position()).c_str());
+
+    ImGui::SameLine(ImGui::GetWindowWidth() * 0.60f);
     ImGui::Text("Current Level: %i", zm.active_zone());
 
     ImGui::SameLine(ImGui::GetWindowWidth() * 0.76f);

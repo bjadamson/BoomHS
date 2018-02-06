@@ -307,8 +307,9 @@ draw_arrow_abovetile_and_neighbors(GameState &state,  entt::DefaultRegistry &reg
   };
 
   draw_the_arrow(tpos, LOC::BLUE);
-  auto const neighbors = find_neighbors(tmap, tpos, TileLookupBehavior::ALL_8_DIRECTIONS,
+  auto const neighbors = find_immediate_neighbors(tmap, tpos, TileLookupBehavior::ALL_8_DIRECTIONS,
       [](auto const& tpos) { return true; });
+  //assert(neighbors.size() <= 8);
   FOR(i, neighbors.size()) {
     draw_the_arrow(neighbors[i], LOC::LIME_GREEN);
   }

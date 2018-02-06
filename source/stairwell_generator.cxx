@@ -47,7 +47,7 @@ should_skip_tile(int const stairs_perfloor, int const num_placed, TileMap const&
   }
   {
     auto const behavior = TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY;
-    auto const neighbors = find_neighbors(tmap, pos, TileType::FLOOR, TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY);
+    auto const neighbors = find_immediate_neighbors(tmap, pos, TileType::FLOOR, TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY);
     auto const ncount = neighbors.size();
     if (ncount < 1 || ncount > 3) {
       return true;
@@ -124,7 +124,7 @@ place_stairs(PlaceStairsState &ps, TileMap &tmap, stlw::float_generator &rng,
     tile.type = calculate_direction();
 
     auto const behavior = TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY;
-    auto const neighbors = find_neighbors(tmap, pos, TileType::FLOOR, behavior);
+    auto const neighbors = find_immediate_neighbors(tmap, pos, TileType::FLOOR, behavior);
     std::cerr << "neighbors size: '" << neighbors.size() << "'\n";
     assert(neighbors.size() > 0);
 

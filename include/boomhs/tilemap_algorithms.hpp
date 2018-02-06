@@ -3,33 +3,25 @@
 #include <boomhs/tilemap.hpp>
 
 #include <array>
+#include <iostream>
 
-namespace boomhs::detail
+namespace boomhs
 {
 
 struct Edges
 {
-  TilePosition position;
+  TilePosition const position;
   int32_t const left, top, right, bottom;
-
-  template<typename FN>
-  void
-  visit_each(FN const& fn) const
-  {
-    for(auto z = left; z <= right; ++z) {
-      for (auto x = bottom; x <= top; ++x) {
-        if (position == std::make_pair(z, x)) {
-          // skip over the tile (only iterating edges), not original tile
-          continue;
-        }
-        fn(TilePosition{x, z});
-      }
-    }
-  }
 };
 
+struct Edges;
 std::ostream&
 operator<<(std::ostream &, Edges const&);
+
+} // ns boomhs
+
+namespace boomhs::detail
+{
 
 Edges
 calculate_edges(TilePosition const& tpos, int const, int const, int const);
@@ -40,22 +32,42 @@ namespace boomhs
 {
 
 template<typename FN>
-TileNeighbors
-find_neighbors(TileMap const& tmap, TilePosition const& tpos, TileLookupBehavior const behavior,
-    FN const& fn)
+void
+flood_visit_skipping_position(Edges const& edge, FN const& fn)
 {
-  static auto constexpr distance = 1;
+  for(auto z = edge.left; z <= edge.right; ++z) {
+    for (auto x = edge.bottom; x <= edge.top; ++x) {
+      if (edge.position == std::make_pair(z, x)) {
+        // skip over the tile (only iterating edges), not original tile
+        continue;
+      }
+      fn(TilePosition{z, x});
+    }
+  }
+}
+
+struct FindNeighborConfig
+{
+  TileLookupBehavior const behavior;
+  uint32_t const distance;
+};
+
+template<typename FN>
+TileNeighbors
+find_neighbors(TileMap const& tmap, TilePosition const& tpos, FN const& fn,
+    FindNeighborConfig const& config)
+{
   auto const [width, length] = tmap.dimensions();
+  auto const distance = config.distance;
   assert(length > 0);
   assert(width > 0);
   assert(distance > 0);
 
   auto const edges = detail::calculate_edges(tpos, width, length, distance);
   std::vector<TilePosition> neighbors;
-  auto count = 0ul;
-  auto const count_neighbors = [&](auto const& neighbor_pos)
+  auto const collect_neighbor_positions = [&](auto const& neighbor_pos)
   {
-    switch (behavior) {
+    switch (config.behavior) {
       case TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY:
         {
           if (tpos.x != neighbor_pos.x && tpos.z != neighbor_pos.z) {
@@ -77,22 +89,36 @@ find_neighbors(TileMap const& tmap, TilePosition const& tpos, TileLookupBehavior
         break;
     }
   };
-  edges.visit_each(count_neighbors);
+  flood_visit_skipping_position(edges, collect_neighbor_positions);
   return TileNeighbors{MOVE(neighbors)};
 }
 
 inline TileNeighbors
 find_neighbors(TileMap const& tmap, TilePosition const& tpos, TileType const type,
-    TileLookupBehavior const behavior)
+    FindNeighborConfig const& config)
 {
-  auto const fn = [](auto const& neighbor_tile) { return neighbor_tile.type == TileType::WALL; };
-  return find_neighbors(tmap, tpos, behavior, fn);
+  auto const fn = [&](auto const& neighbor_tile) { return neighbor_tile.type == type; };
+  return find_neighbors(tmap, tpos, fn, config);
 }
 
-class TileMap;
-size_t
-adjacent_neighbor_tilecount(TileType const, TilePosition const&, TileMap const&,
-    TileLookupBehavior const);
+template<typename FN>
+TileNeighbors
+find_immediate_neighbors(TileMap const& tmap, TilePosition const& tpos,
+    TileLookupBehavior const behavior, FN const& fn)
+{
+  size_t static constexpr DISTANCE = 1;
+  FindNeighborConfig const config{behavior, DISTANCE};
+  return find_neighbors(tmap, tpos, fn, config);
+}
+
+inline TileNeighbors
+find_immediate_neighbors(TileMap const& tmap, TilePosition const& tpos, TileType const type,
+    TileLookupBehavior const behavior)
+{
+  size_t static constexpr DISTANCE = 1;
+  FindNeighborConfig const config{behavior, DISTANCE};
+  return find_neighbors(tmap, tpos, type, config);
+}
 
 bool
 any_tilemap_neighbors(TileMap const&, TilePosition const&, int32_t const, bool (*)(Tile const&));

@@ -26,12 +26,12 @@ public:
   explicit TileNeighbors(std::vector<TilePosition> &&n)
     : neighbors_(MOVE(n))
   {
-    std::cerr << "neighbors_ size: '" << neighbors_.size() << "'\n";
   }
 
   MOVE_CONSTRUCTIBLE_ONLY(TileNeighbors);
 
   auto size() const { return neighbors_.size(); }
+  bool empty() const { return neighbors_.empty(); }
 
   TilePosition const&
   operator[](size_t const i) const
@@ -94,6 +94,7 @@ public:
     auto const [w, l] = dimensions();
     assert(w == l); // TODO: test if this works if this assumption not true
 
+    // clang-format off
     bool const edgeof_left  = pos.z == 0;
     bool const edgeof_right = pos.z == static_cast<int>(l - 1);
 
@@ -108,6 +109,7 @@ public:
     auto const right      = [&]() { fn(pos.x + 0,  pos.z + 1); };
     auto const rightbelow = [&]() { fn(pos.x + -1, pos.z + 1); };
     auto const below      = [&]() { fn(pos.x + -1, pos.z + 0); };
+    // clang-format on
 
     auto const all8_behavior = [&]()
     {
