@@ -3,21 +3,6 @@
 namespace boomhs
 {
 
-TileNeighbors::TileNeighbors(size_t const num, std::array<TilePosition, 8> &&n)
-  : num_neighbors_(num)
-  , neighbors_(MOVE(n))
-{
-  assert(num_neighbors_ <= neighbors_.size());
-}
-
-TilePosition const&
-TileNeighbors::operator[](size_t const i) const
-{
-  assert(i < size());
-  assert(num_neighbors_ <= neighbors_.size());
-  return neighbors_[i];
-}
-
 TileMap::TileMap(std::vector<Tile> &&t, int32_t const width, int32_t const height,
     entt::DefaultRegistry &registry)
   : dimensions_(stlw::make_array<int32_t>(width, height))

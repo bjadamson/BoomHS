@@ -21,6 +21,12 @@ operator!=(TilePosition const& a, TilePosition const& b)
 {
   return !(a == b);
 }
+inline bool
+operator==(TilePosition const& tp, std::pair<TilePosition::ValueT, TilePosition::ValueT> const& pair)
+{
+  return tp.x == pair.first
+    && tp.z == pair.second;
+}
 
 glm::vec3
 operator+(TilePosition const&, glm::vec3 const&);

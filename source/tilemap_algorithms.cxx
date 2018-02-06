@@ -75,7 +75,10 @@ calculate_edges(TilePosition const& tpos, int const tmap_width, int const tmap_l
   auto const top    = std::min(tpos.x + distance, tmap_length);
   auto const bottom = std::max(tpos.x - distance, 0);
 
-  return Edges{left, top, right, bottom};
+  assert(left <= right);
+  assert(bottom <= top);
+
+  return Edges{tpos, left, top, right, bottom};
 }
 
 } // ns boomhs::detail
@@ -97,14 +100,6 @@ adjacent_neighbor_tilecount(TileType const type, TilePosition const& pos,
 
   tmap.visit_neighbors(pos, check_neighbor, behavior);
   return neighbor_count;
-}
-
-TileNeighbors
-find_neighbors(TileMap const& tmap, TilePosition const& tpos, TileType const type,
-    TileLookupBehavior const behavior)
-{
-  auto const fn = [](auto const& neighbor_tile) { return neighbor_tile.type == TileType::WALL; };
-  return find_neighbors(tmap, tpos, behavior, fn);
 }
 
 bool

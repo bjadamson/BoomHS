@@ -21,14 +21,24 @@ enum class TileLookupBehavior
 
 class TileNeighbors
 {
-  std::size_t num_neighbors_;
-  std::array<TilePosition, 8> neighbors_;
+  std::vector<TilePosition> neighbors_;
 public:
-  explicit TileNeighbors(size_t const, std::array<TilePosition, 8> &&);
+  explicit TileNeighbors(std::vector<TilePosition> &&n)
+    : neighbors_(MOVE(n))
+  {
+    std::cerr << "neighbors_ size: '" << neighbors_.size() << "'\n";
+  }
+
   MOVE_CONSTRUCTIBLE_ONLY(TileNeighbors);
 
-  TilePosition const& operator[](size_t const) const;
-  auto size() const { return num_neighbors_; }
+  auto size() const { return neighbors_.size(); }
+
+  TilePosition const&
+  operator[](size_t const i) const
+  {
+    assert(i < size());
+    return neighbors_[i];
+  }
 };
 
 class TileMap

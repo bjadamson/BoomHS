@@ -9,15 +9,20 @@ namespace boomhs::detail
 
 struct Edges
 {
+  TilePosition position;
   int32_t const left, top, right, bottom;
 
   template<typename FN>
   void
   visit_each(FN const& fn) const
   {
-    for(auto x = left; x <= right; ++x) {
-      for (auto y = bottom; y <= top; ++y) {
-        fn(TilePosition{x, y});
+    for(auto z = left; z <= right; ++z) {
+      for (auto x = bottom; x <= top; ++x) {
+        if (position == std::make_pair(z, x)) {
+          // skip over the tile (only iterating edges), not original tile
+          continue;
+        }
+        fn(TilePosition{x, z});
       }
     }
   }
@@ -46,7 +51,7 @@ find_neighbors(TileMap const& tmap, TilePosition const& tpos, TileLookupBehavior
   assert(distance > 0);
 
   auto const edges = detail::calculate_edges(tpos, width, length, distance);
-  std::array<TilePosition, 8> neighbors;
+  std::vector<TilePosition> neighbors;
   auto count = 0ul;
   auto const count_neighbors = [&](auto const& neighbor_pos)
   {
@@ -63,7 +68,7 @@ find_neighbors(TileMap const& tmap, TilePosition const& tpos, TileLookupBehavior
         {
           auto const& neighbor_tile = tmap.data(neighbor_pos);
           if (fn(neighbor_tile)) {
-            neighbors[count++] = neighbor_pos;
+            neighbors.emplace_back(neighbor_pos);
           }
         }
         break;
@@ -73,7 +78,15 @@ find_neighbors(TileMap const& tmap, TilePosition const& tpos, TileLookupBehavior
     }
   };
   edges.visit_each(count_neighbors);
-  return TileNeighbors{count, MOVE(neighbors)};
+  return TileNeighbors{MOVE(neighbors)};
+}
+
+inline TileNeighbors
+find_neighbors(TileMap const& tmap, TilePosition const& tpos, TileType const type,
+    TileLookupBehavior const behavior)
+{
+  auto const fn = [](auto const& neighbor_tile) { return neighbor_tile.type == TileType::WALL; };
+  return find_neighbors(tmap, tpos, behavior, fn);
 }
 
 class TileMap;
@@ -83,9 +96,6 @@ adjacent_neighbor_tilecount(TileType const, TilePosition const&, TileMap const&,
 
 bool
 any_tilemap_neighbors(TileMap const&, TilePosition const&, int32_t const, bool (*)(Tile const&));
-
-TileNeighbors
-find_neighbors(TileMap const&, TilePosition const&, TileType const, TileLookupBehavior const);
 
 class WorldObject;
 void
