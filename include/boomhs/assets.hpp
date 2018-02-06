@@ -9,6 +9,7 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/sized_buffer.hpp>
+#include <stlw/type_macros.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <array>
@@ -92,12 +93,16 @@ struct EntityInfo
   boost::optional<std::string> const mesh_name;
   boost::optional<opengl::Color> const color;
   boost::optional<opengl::TextureInfo> const texture;
+
+  MOVE_CONSTRUCTIBLE_ONLY(EntityInfo);
 };
 
 struct LoadedEntities
 {
-  std::vector<std::uint32_t> data;
+  std::vector<uint32_t> data = {};
 
+  LoadedEntities() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(LoadedEntities);
   BEGIN_END_FORWARD_FNS(data);
 };
 
@@ -110,18 +115,21 @@ struct Assets
 
   opengl::GlobalLight global_light;
   opengl::Color background_color;
+
+  MOVE_CONSTRUCTIBLE_ONLY(Assets);
 };
 
 class GpuHandleList
 {
   std::vector<opengl::DrawInfo> drawinfos_;
-  std::vector<std::uint32_t> entities_;
+  std::vector<uint32_t> entities_;
 
 public:
   GpuHandleList() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(GpuHandleList);
 
   std::size_t
-  add(std::uint32_t const entity, opengl::DrawInfo &&di)
+  add(uint32_t const entity, opengl::DrawInfo &&di)
   {
     auto const pos = drawinfos_.size();
     drawinfos_.emplace_back(MOVE(di));
@@ -132,7 +140,7 @@ public:
   }
 
   opengl::DrawInfo const&
-  get(std::uint32_t const entity) const
+  get(uint32_t const entity) const
   {
     FOR(i, entities_.size()) {
       if (entities_[i] == entity) {
@@ -142,26 +150,27 @@ public:
     std::cerr << fmt::format("Error could not find gpu handle associated to entity {}'\n", entity);
     std::abort();
   }
-
-  MOVE_CONSTRUCTIBLE_ONLY(GpuHandleList);
 };
 
 class HandleManager {
   GpuHandleList list_;
 public:
-  std::uint32_t plus_eid;
-  std::uint32_t hashtag_eid;
+  uint32_t plus_eid;
+  uint32_t hashtag_eid;
+  uint32_t stairs_eid;
 
   MOVE_CONSTRUCTIBLE_ONLY(HandleManager);
-  explicit HandleManager(GpuHandleList &&list, std::uint32_t const plus, std::uint32_t const hashtag)
+  explicit HandleManager(GpuHandleList &&list, uint32_t const plus, uint32_t const hashtag,
+      uint32_t const stairs)
     : list_(MOVE(list))
     , plus_eid(plus)
     , hashtag_eid(hashtag)
+    , stairs_eid(stairs)
   {
   }
 
   auto&
-  lookup(std::uint32_t const entity) const
+  lookup(uint32_t const entity) const
   {
     return list_.get(entity);
   }

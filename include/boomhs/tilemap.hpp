@@ -1,115 +1,171 @@
 #pragma once
+#include <boomhs/components.hpp>
+#include <boomhs/tile.hpp>
+
 #include <stlw/algorithm.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <glm/glm.hpp>
+#include <entt/entt.hpp>
 #include <array>
 #include <vector>
 
 namespace boomhs
 {
 
-struct TilePosition
+enum class TileLookupBehavior
 {
-  int x = 0, y = 0, z = 0;
-};
-inline bool
-operator==(TilePosition const& a, TilePosition const& b)
-{
-  return (a.x == b.x) && (a.y == b.y) && (a.z == b.z);
-}
-
-enum class TileType
-{
-  FLOOR = 0,
-  WALL,
-  STAIR_WELL,
+  ALL_8_DIRECTIONS = 0,
+  VERTICAL_HORIZONTAL_ONLY
 };
 
-struct StairwellInfo
+class TileNeighbors
 {
-  std::size_t static constexpr NUM_EXITS = 2;
-  int tile_pos[NUM_EXITS];
-  int exit_pos[NUM_EXITS];
-};
+  std::vector<TilePosition> neighbors_;
+public:
+  explicit TileNeighbors(std::vector<TilePosition> &&n)
+    : neighbors_(MOVE(n))
+  {
+  }
 
-struct Tile
-{
-  bool is_visible = false;
-  TileType type = TileType::WALL;
+  MOVE_CONSTRUCTIBLE_ONLY(TileNeighbors);
+
+  auto size() const { return neighbors_.size(); }
+  bool empty() const { return neighbors_.empty(); }
+
+  TilePosition const&
+  operator[](size_t const i) const
+  {
+    assert(i < size());
+    return neighbors_[i];
+  }
+
+  auto const& front() const { return neighbors_.front(); }
 };
 
 class TileMap
 {
-  std::array<std::size_t, 3> dimensions_;
+  std::array<int32_t, 2> dimensions_;
+  entt::DefaultRegistry &registry_;
 
   std::vector<Tile> tiles_;
-  std::vector<StairwellInfo> stairwell_infos_;
+
+  bool destroy_entities_ = true;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(TileMap);
+  NO_COPY(TileMap);
+  NO_MOVE_ASSIGN(TileMap);
 
-  TileMap(std::vector<Tile> &&t, std::size_t const width, std::size_t const height, std::size_t const length)
-    : dimensions_(stlw::make_array<std::size_t>(width, height, length))
-    , tiles_(MOVE(t))
-  {
-  }
+  TileMap(std::vector<Tile> &&, int32_t const, int32_t const, entt::DefaultRegistry &);
 
-  auto
-  dimensions() const
-  {
-    return dimensions_;
-  }
+  ~TileMap();
+
+  TileMap(TileMap &&);
+
+  auto dimensions() const { return dimensions_; }
+  auto num_tiles() const { return tiles_.size(); }
 
   Tile&
-  data(std::size_t const x, std::size_t const y, std::size_t const z)
-  {
-    auto const [h, w, l] = dimensions();
-    auto const cell = (z * w * h) + (y * w) + x;
-    return tiles_[cell];
-  }
+  data(size_t const, size_t const);
 
   Tile const&
-  data(std::size_t const x, std::size_t const y, std::size_t const z) const
-  {
-    auto const [h, w, l] = dimensions();
-    auto const cell = (z * w * h) + (y * w) + x;
-    return tiles_[cell];
-  }
+  data(size_t const, size_t const) const;
 
   Tile&
-  data(glm::vec3 &vec) { return data(vec.x, vec.y, vec.z); }
+  data(TilePosition const& tp) { return data(tp.x, tp.y); }
 
   Tile const&
-  data(glm::vec3 const& vec) const { return data(vec.x, vec.y, vec.z); }
-
-  auto
-  num_tiles() const
-  {
-    return tiles_.size();
-  }
+  data(TilePosition const& tp) const { return data(tp.x, tp.y); }
 
   template<typename FN>
   void
   visit_each(FN const& fn) const
   {
-    auto const [w, h, l] = dimensions();
-    FOR(x, w) {
-      FOR(y, h) {
-        FOR(z, l) {
-          fn(glm::vec3{x, y, z});
-        }
+    auto const [w, l] = dimensions();
+    FORI(x, w) {
+      FORI(z, l) {
+        fn(TilePosition{x, z});
       }
     }
   }
 
+  template<typename FN>
+  void
+  visit_neighbors(TilePosition const& pos, FN const& fn, TileLookupBehavior const behavior) const
+  {
+    auto const [w, l] = dimensions();
+    assert(w == l); // TODO: test if this works if this assumption not true
+
+    // clang-format off
+    bool const edgeof_left  = pos.x == 0;
+    bool const edgeof_right = pos.x == static_cast<int>(l - 1);
+
+    bool const edgeof_below = pos.y == 0;
+    bool const edgeof_above = pos.y == static_cast<int>(w - 1);
+
+    auto const leftbelow  = [&]() { fn(pos.x + -1, pos.y + -1); };
+    auto const left       = [&]() { fn(pos.x + 0,  pos.y + -1); };
+    auto const leftabove  = [&]() { fn(pos.x + 1,  pos.y + -1); };
+    auto const above      = [&]() { fn(pos.x + 1,  pos.y + 0); };
+    auto const rightabove = [&]() { fn(pos.x + 1,  pos.y + 1); };
+    auto const right      = [&]() { fn(pos.x + 0,  pos.y + 1); };
+    auto const rightbelow = [&]() { fn(pos.x + -1, pos.y + 1); };
+    auto const below      = [&]() { fn(pos.x + -1, pos.y + 0); };
+    // clang-format on
+
+    auto const all8_behavior = [&]()
+    {
+      if (!edgeof_left && !edgeof_below) {
+        leftbelow();
+      }
+      if (!edgeof_left) {
+        left();
+      }
+      if (!edgeof_left && !edgeof_above) {
+        leftabove();
+      }
+      if (!edgeof_above) {
+        above();
+      }
+      if (!edgeof_right && !edgeof_above) {
+        rightabove();
+      }
+      if (!edgeof_right) {
+        right();
+      }
+      if (!edgeof_right && !edgeof_below) {
+        rightbelow();
+      }
+      if (!edgeof_below) {
+        below();
+      }
+    };
+    auto const vh_behavior = [&]() {
+      if (!edgeof_left) {
+        left();
+      }
+      if (!edgeof_above) {
+        above();
+      }
+      if (!edgeof_right) {
+        right();
+      }
+      if (!edgeof_below) {
+        below();
+      }
+    };
+    switch(behavior) {
+      case TileLookupBehavior::ALL_8_DIRECTIONS:
+        all8_behavior();
+        break;
+      case TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY:
+        vh_behavior();
+        break;
+      default:
+        std::exit(1);
+    }
+  }
   BEGIN_END_FORWARD_FNS(tiles_);
 };
-
-
-class WorldObject;
-void
-update_visible_tiles(TileMap &, WorldObject const&, bool const);
 
 } // ns boomhs

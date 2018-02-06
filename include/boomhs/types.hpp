@@ -1,8 +1,6 @@
 #pragma once
+#include <stlw/math.hpp>
 #include <array>
-#include <glm/glm.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 namespace boomhs
 {
@@ -16,10 +14,7 @@ struct Transform
   glm::mat4
   model_matrix() const
   {
-    auto const tmatrix = glm::translate(glm::mat4{}, this->translation);
-    auto const rmatrix = glm::toMat4(this->rotation);
-    auto const smatrix = glm::scale(glm::mat4{}, this->scale);
-    return tmatrix * rmatrix * smatrix;
+    return stlw::math::calculate_modelmatrix(translation, rotation, scale);
   }
 };
 

@@ -35,7 +35,7 @@ struct program_factory
   program_factory() = delete;
 
   static stlw::result<GLuint, std::string>
-  from_files(vertex_shader_filename const, fragment_shader_filename const);
+  from_files(stlw::Logger &, vertex_shader_filename const, fragment_shader_filename const);
 
   static constexpr GLuint
   INVALID_PROGRAM_ID() { return 0; }
@@ -83,7 +83,7 @@ public:
   auto handle() const { return program_.handle(); }
   auto const& va() const { return this->va_; }
 
-  void use_program(stlw::Logger &);
+  void use(stlw::Logger &);
   GLint get_uniform_location(stlw::Logger &, GLchar const *);
 
   void set_uniform_matrix_3fv(stlw::Logger &, GLchar const *, glm::mat3 const &);
@@ -142,18 +142,6 @@ public:
   void set_uniform_int1(stlw::Logger &, GLchar const*, int const);
 };
 
-std::ostream&
-operator<<(std::ostream&, ShaderProgram const&);
-
-inline stlw::result<ShaderProgram, std::string>
-make_shader_program(std::string const& vertex_s, std::string const& fragment_s, VertexAttribute &&va)
-{
-  vertex_shader_filename v{vertex_s};
-  fragment_shader_filename f{fragment_s};
-  DO_TRY(auto sp, program_factory::from_files(v, f));
-  return ShaderProgram{ProgramHandle{sp}, MOVE(va)};
-}
-
 class ShaderPrograms
 {
   using pair_t = std::pair<std::string, ShaderProgram>;
@@ -161,6 +149,7 @@ class ShaderPrograms
 
 public:
   ShaderPrograms() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(ShaderPrograms);
 
   void
   add(std::string const& s, ShaderProgram &&sp)
@@ -204,8 +193,13 @@ public:
     return ref_sp(s.c_str());
   }
 
-
   BEGIN_END_FORWARD_FNS(shader_programs_);
 };
+
+stlw::result<ShaderProgram, std::string>
+make_shader_program(stlw::Logger &, std::string const&, std::string const&, VertexAttribute &&);
+
+std::ostream&
+operator<<(std::ostream&, ShaderProgram const&);
 
 } // ns opengl

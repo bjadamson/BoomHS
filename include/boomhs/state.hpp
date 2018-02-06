@@ -15,9 +15,11 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
+#include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <imgui/imgui.hpp>
+#include <cassert>
 #include <vector>
 
 using stlw::Logger;
@@ -27,6 +29,8 @@ namespace boomhs
 
 struct UiState
 {
+  MOVE_CONSTRUCTIBLE_ONLY(UiState);
+
   bool draw_ui = true;
   bool enter_pressed = false;
   bool block_input = false;
@@ -43,7 +47,6 @@ struct UiState
   bool show_entitymaterial_window = false;
 
   int selected_entity = 0;
-  int selected_level = 0;
 
   // primitive buffers
   int eid_buffer = 0;
@@ -61,6 +64,8 @@ struct UiState
 
 struct MouseState
 {
+  MOVE_CONSTRUCTIBLE_ONLY(MouseState);
+
   bool left_pressed = false;
   bool right_pressed = false;
   bool pitch_lock = true;
@@ -78,12 +83,16 @@ struct MouseState
 
 struct WindowState
 {
+  MOVE_CONSTRUCTIBLE_ONLY(WindowState);
+
   window::FullscreenFlags fullscreen = window::FullscreenFlags::NOT_FULLSCREEN;
   window::SwapIntervalFlag sync = window::SwapIntervalFlag::SYNCHRONIZED;
 };
 
 struct TilemapState
 {
+  MOVE_CONSTRUCTIBLE_ONLY(TilemapState);
+
   bool draw_tilemap = true;
   bool recompute = true;
   bool reveal = false;
@@ -91,9 +100,10 @@ struct TilemapState
   // Both related to drawing GRID LINES
   bool show_grid_lines = true;
   bool show_yaxis_lines = false;
+  bool show_neighbortile_arrows = true;
 
   glm::vec3 floor_offset = {0.0f, -0.5f, 0.0f};
-  glm::vec3 tile_scaling = {0.5f, 0.5f, 0.5f};
+  glm::vec3 tile_scaling = {1.0f, 1.0f, 1.0f};
 };
 
 struct ZoneState
@@ -123,57 +133,41 @@ struct ZoneState
     , registry(reg)
   {
   }
-
   MOVE_CONSTRUCTIBLE_ONLY(ZoneState);
 };
 
+// This class is meant to be used through the ZoneManager class, construct an instance of
+// ZoneManager to work with this data.
 class ZoneStates
 {
-  // This class is meant to be used through the ZoneManager class, construct an instance of
-  // ZoneManager to work with this data.
-public:
-  static std::size_t constexpr NUM_ZSTATES = 2;
-private:
-  std::array<ZoneState, NUM_ZSTATES> zstates_;
+  std::array<ZoneState, 5> zstates_;
   int active_ = 0;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(ZoneStates);
 
   // TODO: pass in active zone to support loading levels
-  explicit ZoneStates(std::array<ZoneState, NUM_ZSTATES> &&zstates)
+  explicit ZoneStates(std::array<ZoneState, 5> &&zstates)
     : zstates_(MOVE(zstates))
   {
   }
 private:
   friend class ZoneManager;
-  auto const&
-  data() const
-  {
-    return zstates_;
-  }
 
-  auto&
-  data()
+  int active_zone() const
   {
-    return zstates_;
-  }
-
-  auto
-  active() const
-  {
+    assert(active_ < size());
     return active_;
   }
+  int size() const { return zstates_.size(); }
+
+  ZoneState& active() { return zstates_[active_zone()]; }
+  ZoneState const& active() const { return zstates_[active_zone()]; }
 
   void
   set_active(int const zone_number)
   {
+    assert(zone_number < size());
     active_ = zone_number;
-  }
-
-  auto
-  size() const
-  {
-    return zstates_.size();
   }
 };
 
@@ -195,15 +189,14 @@ struct EngineState
   bool show_player_localspace_vectors = true;
   bool show_player_worldspace_vectors = true;
 
-  MouseState mouse_state;
-  WindowState window_state;
-  TilemapState tilemap_state;
+  MouseState mouse_state = {};
+  WindowState window_state = {};
+  TilemapState tilemap_state = {};
+  UiState ui_state = {};
 
   Logger &logger;
   ImGuiIO &imgui;
   window::Dimensions const dimensions;
-
-  UiState ui_state;
 
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);

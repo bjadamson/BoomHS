@@ -6,6 +6,11 @@ name = "vertex_only"
 data0 = { type = "float", num = 4 } # vertices
 
 [[vas]]
+name = "vertex_normal"
+data0 = { type = "float", num = 4 } # vertices
+data1 = { type = "float", num = 3 } # normals
+
+[[vas]]
 name = "vertex_color"
 data0 = { type = "float", num = 4 } # vertices
 data1 = { type = "float", num = 4 } # colors
@@ -69,13 +74,13 @@ va = "vertex_normal_color"
 instance_count = 3
 
 [[shaders]]
-name = "plus"
-vertex = "3d_plus.vert"
-fragment = "3d_pos_normal_color.frag"
-va = "vertex_normal_color"
-
-[[shaders]]
 name = "light"
 vertex = "light.vert"
 fragment = "light.frag"
 va = "vertex_only"
+
+[[shaders]]
+name = "stair"
+vertex = "stair.vert"
+fragment = "stair.frag"
+va = "vertex_normal"

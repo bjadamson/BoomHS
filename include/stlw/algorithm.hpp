@@ -13,7 +13,7 @@ namespace stlw
 {
 
 inline void
-memzero(void *const dest, std::size_t const count)
+memzero(void *const dest, size_t const count)
 {
   std::memset(dest, 0, count);
 }
@@ -36,21 +36,21 @@ namespace concat_array_algortithm
 // http://stackoverflow.com/questions/25068481/c11-constexpr-flatten-list-of-stdarray-into-array
 //
 // I made it more generic than just 'int' for T.
-template <std::size_t... Is>
+template <size_t... Is>
 struct seq {
 };
-template <std::size_t N, std::size_t... Is>
+template <size_t N, size_t... Is>
 
 struct gen_seq : gen_seq<N - 1, N - 1, Is...> {
 };
 
-template <std::size_t... Is>
+template <size_t... Is>
 struct gen_seq<0, Is...> : seq<Is...> {
 };
 
 } // ns concat_array_algortithm
 
-template <typename T, std::size_t N1, std::size_t... I1, std::size_t N2, std::size_t... I2>
+template <typename T, size_t N1, size_t... I1, size_t N2, size_t... I2>
 // Expansion pack
 constexpr std::array<T, N1 + N2>
 concat(std::array<T, N1> const &a1, std::array<T, N2> const &a2,
@@ -59,7 +59,7 @@ concat(std::array<T, N1> const &a1, std::array<T, N2> const &a2,
   return {a1[I1]..., a2[I2]...};
 }
 
-template <typename T, std::size_t N1, std::size_t N2>
+template <typename T, size_t N1, size_t N2>
 // Initializer for the recursion
 constexpr std::array<T, N1 + N2>
 concat(std::array<T, N1> const &a1, std::array<T, N2> const &a2)
@@ -68,7 +68,7 @@ concat(std::array<T, N1> const &a1, std::array<T, N2> const &a2)
                 concat_array_algortithm::gen_seq<N2>{});
 }
 
-template <typename T, std::size_t N1>
+template <typename T, size_t N1>
 constexpr std::array<T, N1 + 1>
 concat(std::array<T, N1> const &a1, T const &v)
 {
@@ -200,8 +200,8 @@ void zip(FN const& fn, ContainerIter it, std::tuple<T...> const& tuple)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // sub_array
-template<typename T, std::size_t N>
-auto sub_array(std::array<T, N> const& data, std::size_t const begin)
+template<typename T, size_t N>
+auto sub_array(std::array<T, N> const& data, size_t const begin)
 {
   assert(N >= data.size());
   assert(begin <= N);
@@ -211,6 +211,39 @@ auto sub_array(std::array<T, N> const& data, std::size_t const begin)
     arr[i] = data[begin + i];
   }
   return arr;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// array_from_visitarray
+// This function visit each element in the array, invoking a function on each element. This
+// function stores the return values of these function invocations in an array that is provided by
+// the caller.
+template<typename T, typename U, typename FN, size_t N>
+void
+array_from_visitarray_inplace(std::array<T, N> const& array, FN const& fn,
+    std::array<U, N> *buffer)
+{
+  FOR(i, N) {
+    (*buffer)[i] = fn(array[i]);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// array_from_visitarray
+// This function visit each element in the array, invoking a function on each element. This
+// function stores the return values of these function invocations in an array that is returned to
+// the caller.
+//
+// See "array_from_visitarray_inplace" for modifying an array in place using the same traversal
+// pattern.
+template<typename T, typename FN, size_t N>
+auto
+array_from_visitarray(std::array<T, N> const& array, FN const& fn)
+{
+  using R = decltype(fn(array[0]));
+  std::array<R, N> accumulator;
+  array_from_visitarray_inplace(array, fn, &accumulator);
+  return accumulator;
 }
 
 } // ns stlw

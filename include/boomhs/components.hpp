@@ -4,22 +4,24 @@
 #include <opengl/lighting.hpp>
 #include <opengl/texture.hpp>
 #include <boomhs/types.hpp>
+#include <boomhs/tile.hpp>
 
 #include <entt/entt.hpp>
 #include <cassert>
 #include <iostream>
+#include <ostream>
 #include <string>
 #include <vector>
 
 namespace boomhs
 {
 
-struct EnttLookup
+class EnttLookup
 {
-  std::uint32_t eid_;
+  uint32_t eid_ = UINT32_MAX;
   entt::DefaultRegistry &registry_;
 public:
-  explicit EnttLookup(std::uint32_t const eid, entt::DefaultRegistry &registry)
+  explicit EnttLookup(uint32_t const eid, entt::DefaultRegistry &registry)
     : eid_(eid)
     , registry_(registry)
   {
@@ -27,21 +29,38 @@ public:
 
   template<typename T>
   T&
-  lookup() { return registry_.get<T>(eid_); }
+  lookup()
+  {
+    assert(eid_ != UINT32_MAX);
+    assert(registry_.has<T>(eid_));
+    return registry_.get<T>(eid_);
+  }
 
   template<typename T>
   T const&
-  lookup() const { return registry_.get<T>(eid_); }
+  lookup() const
+  {
+    assert(eid_ != UINT32_MAX);
+    assert(registry_.has<T>(eid_));
+    return registry_.get<T>(eid_);
+  }
 
   void
-  set_eid(std::uint32_t const eid)
+  set_eid(uint32_t const eid)
   {
     eid_ = eid;
   }
 };
 
+struct StairInfo
+{
+  TilePosition tile_position;
+  TilePosition exit_position;
+};
+
 struct Player
 {
+  TilePosition tile_position;
 };
 
 struct ShaderName
@@ -74,7 +93,7 @@ find_all_entities_with_component(entt::DefaultRegistry &registry)
   using namespace boomhs;
   using namespace opengl;
 
-  std::vector<std::uint32_t> entities;
+  std::vector<uint32_t> entities;
   auto const view = registry.view<C...>();
   for (auto const e : view) {
     entities.emplace_back(e);
@@ -99,7 +118,32 @@ find_pointlights(entt::DefaultRegistry &registry)
   return find_all_entities_with_component<PointLight, Transform>(registry);
 }
 
-inline std::uint32_t
+inline auto
+find_stairs(entt::DefaultRegistry &registry)
+{
+  using namespace boomhs;
+  using namespace opengl;
+
+  return find_all_entities_with_component<StairInfo>(registry);
+}
+
+class TileMap;
+std::vector<uint32_t>
+find_stairs_withtype(entt::DefaultRegistry &, TileMap const&, TileType const);
+
+inline auto
+find_upstairs(entt::DefaultRegistry &registry, TileMap const& tmap)
+{
+  return find_stairs_withtype(registry, tmap, TileType::STAIR_UP);
+}
+
+inline auto
+find_downstairs(entt::DefaultRegistry &registry, TileMap const& tmap)
+{
+  return find_stairs_withtype(registry, tmap, TileType::STAIR_DOWN);
+}
+
+inline uint32_t
 find_player(entt::DefaultRegistry &registry)
 {
   // for now assume only 1 entity has the Player tag

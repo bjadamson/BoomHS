@@ -2,6 +2,7 @@
 #include <boomhs/assets.hpp>
 #include <boomhs/components.hpp>
 #include <opengl/obj.hpp>
+#include <extlibs/cpptoml.hpp>
 
 #include <stlw/result.hpp>
 
@@ -147,13 +148,15 @@ load_meshes(opengl::ObjLoader &loader, CppTableArray const& mesh_table)
   auto const load = [&loader](auto const& table) {
     auto const name = get_string_or_abort(table, "name");
 
-    auto const normals = opengl::LoadNormals{get_bool_or_abort(table, "normals")};
-    auto const uvs = opengl::LoadUvs{get_bool_or_abort(table, "uvs")};
+    auto const load_colors = get_bool_or_abort(table, "colors");
+    auto const load_normals = get_bool_or_abort(table, "normals");
+    auto const load_uvs = get_bool_or_abort(table, "uvs");
 
     auto const obj = "assets/" + name + ".obj";
     auto const mtl = "assets/" + name + ".mtl";
 
-    auto mesh = loader.load_mesh(obj.c_str(), mtl.c_str(), normals, uvs);
+    opengl::LoadMeshConfig const cfg{load_colors, load_normals, load_uvs};
+    auto mesh = loader.load_mesh(obj.c_str(), mtl.c_str(), cfg);
     return std::make_pair(name, MOVE(mesh));
   };
   ObjCache cache;
@@ -328,7 +331,7 @@ load_shader(stlw::Logger &logger, ParsedVertexAttributes &pvas, CppTable const& 
 
   // TODO: ugly hack, maybe think about...
   auto va = pvas.get_copy_of_va(va_name);
-  DO_TRY(auto program, opengl::make_shader_program(vertex, fragment, MOVE(va)));
+  DO_TRY(auto program, opengl::make_shader_program(logger, vertex, fragment, MOVE(va)));
 
   program.is_skybox = get_bool(table, "is_skybox").get_value_or(false);
   program.instance_count = get_sizei(table, "instance_count");

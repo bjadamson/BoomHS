@@ -2,13 +2,36 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include <glm/gtx/norm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
 #include <array>
 #include <utility>
+#include <cmath>
 
 namespace stlw::math
 {
+
+inline glm::mat4
+calculate_modelmatrix(glm::vec3 const& translation, glm::quat const& rotation, glm::vec3 const& scale)
+{
+  auto const tmatrix = glm::translate(glm::mat4{}, translation);
+  auto const rmatrix = glm::toMat4(rotation);
+  auto const smatrix = glm::scale(glm::mat4{}, scale);
+  return tmatrix * rmatrix * smatrix;
+}
+
+inline bool
+allnan(glm::vec3 const& v)
+{
+  return std::isnan(v.x) && std::isnan(v.y) && std::isnan(v.z);
+}
+
+inline bool
+anynan(glm::vec3 const& v)
+{
+  return std::isnan(v.x) || std::isnan(v.y) || std::isnan(v.z);
+}
 
 // Normalizes "value" from the "from_range" to the "to_range"
 template <typename T, typename P1, typename P2>
@@ -23,7 +46,6 @@ normalize(T const value, P1 const& from_range, P2 const& to_range)
   auto const normalized = ((ceil - floor) * (value - minimum))/(maximum - minimum) + floor;
   return static_cast<float>(normalized);
 }
-
 
 inline float
 angle_between_vectors(glm::vec3 const& a, glm::vec3 const& b, glm::vec3 const& origin)

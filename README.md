@@ -2,7 +2,7 @@
 This repository contains the source code for the <b>BoomHS</b> project. BoomHS is a project in
 active development.
 
-![Alt text](/screenshots/19.png?raw=true "01/25/2018")
+![Alt text](/screenshots/22.png?raw=true "02/05/2018")
 
 ## Table of contents
 
@@ -55,9 +55,7 @@ scripts/build.bash
 ```
 
 #### Important Note
-When adding a new source file to the project, you must run the bootstrap script again. Appoplogies
-ahead of time on this one, but with the way cmake is setup, right now running the bootstrapping
-process again is required to "pickup" the new source file.
+When adding a new source file to the project, you must run the bootstrap script again.
 
 ### Run the project
 Running the project is easy too (yep you guessed it) if your using the command line, you just need
@@ -82,6 +80,8 @@ on the fingers (from the command line). You can see the symlink for yourself in 
   + bbk => kill the running game process (parses PID table, unstable).
 
 ## Screenshots
+![Alt text](/screenshots/21.png?raw=true "01/25/2018")
+![Alt text](/screenshots/20.png?raw=true "01/25/2018")
 ![Alt text](/screenshots/18.png?raw=true "01/25/2018")
 ![Alt text](/screenshots/17.png?raw=true "01/24/2018")
 ![Alt text](/screenshots/16.png?raw=true "01/24/2018")
@@ -89,7 +89,6 @@ on the fingers (from the command line). You can see the symlink for yourself in 
 ![Alt text](/screenshots/14.png?raw=true "01/02/2018")
 ![Alt text](/screenshots/13.png?raw=true "01/02/2018")
 ![Alt text](/screenshots/12.png?raw=true "12/29/2017")
-![Alt text](/screenshots/11.png?raw=true "12/29/2017")
 
 #### links
 * https://github.com/cbaggers/cepl

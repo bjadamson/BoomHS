@@ -1,0 +1,182 @@
+title = "Level 0"
+background = [0.0, 1.0, 0.0]
+camera_spherical_coords = [2.56, 6.6446330, 56.379040]
+
+directional_light_diffuse = [0.0, 0.0, 0.0]
+directional_light_specular = [0.0, 0.0, 0.0]
+directional_light_direction = [-1.0, 0.0, -1.0]
+
+[[resource]]
+name = "building_skybox"
+type = "texture:3dcube"
+front = "sb_front.jpg"
+right = "sb_right.jpg"
+back = "sb_back.jpg"
+left = "sb_left.jpg"
+top = "sb_top.jpg"
+bottom = "sb_bottom.jpg"
+
+[[resource]]
+name = "boring_cube"
+type = "texture:3dcube"
+front = "cube_front.jpg"
+right = "cube_right.jpg"
+back = "cube_back.jpg"
+left = "cube_left.jpg"
+top = "cube_top.jpg"
+bottom = "cube_bottom.jpg"
+
+[[resource]]
+name = "container"
+type = "texture:2d"
+filename = "container.jpg"
+
+[[resource]]
+name = "wall"
+type = "texture:2d"
+filename = "wall.jpg"
+
+[[resource]]
+name = "TextureAtlas"
+type = "texture:2d"
+filename = "TextureAtlas.jpg"
+
+################## MESHES #####################
+[[meshes]]
+name = "house"
+colors = false
+normals = true
+uvs = true
+
+[[meshes]]
+name = "hashtag"
+colors = true
+normals = true
+uvs = false
+
+[[meshes]]
+name = "at"
+colors = true
+normals = true
+uvs = false
+
+[[meshes]]
+name = "plus"
+colors = true
+normals = true
+uvs = false
+
+[[meshes]]
+name = "O"
+colors = true
+normals = true
+uvs = false
+
+[[meshes]]
+name = "T"
+colors = true
+normals = true
+uvs = false
+
+[[meshes]]
+name = "cube"
+colors = true
+normals = true
+uvs = false
+
+[[meshes]]
+name = "robot"
+colors = true
+normals = true
+uvs = false
+
+[[meshes]]
+name = "stair"
+colors = false
+normals = true
+uvs = false
+
+########### ENTITY #############
+[[entity]]
+pos = [8.5, 0.0, 8.5]
+shader = "3d_pos_normal_color"
+geometry = "mesh:at"
+player = "player"
+receives_light = true
+color = [1.0, 1.0, 1.0]
+
+######### POINT LIGHTS
+# LIGHT #0
+[[entity]]
+pos = [5.0, 5.0, 5.0]
+shader = "light"
+geometry = "cube"
+pointlight = [0.0, 1.0, 0.0]
+
+# LIGHT #1
+[[entity]]
+pos = [11.0, 5.0, 11.0]
+shader = "light"
+geometry = "cube"
+pointlight = [1.0, 0.0, 0.0]
+
+# LIGHT #2
+[[entity]]
+pos = [5.0, 5.0, 11.0]
+shader = "light"
+geometry = "cube"
+pointlight = [0.5, 0.2, 0.7]
+
+# LIGHT #3
+[[entity]]
+pos = [11.0, 5.0, 5.0]
+shader = "light"
+geometry = "cube"
+pointlight = [0.0, 0.0, 1.0]
+
+##################### OTHERS
+[[entity]]
+pos = [-5.0, -2.0, 0.0]
+shader = "3dcube_texture"
+geometry = "cube"
+texture = "boring_cube"
+
+[[entity]]
+pos = [-5.0, 0.0, -2.0]
+shader = "3dcube_texture"
+geometry = "skybox"
+texture = "building_skybox"
+
+[[entity]]
+pos = [20.0, 0.0, 20.0]
+shader = "3dtexture"
+geometry = "mesh:house"
+texture = "TextureAtlas"
+scale = [0.2, 0.2, 0.2]
+
+[[entity]]
+pos = [-3.0, 0.0, -5.0]
+shader = "3d_pos_normal_color"
+geometry = "mesh:T"
+receives_light = true
+# DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
+# IN THE MESHES TABLE.
+#color = [0.0, 1.0, 0.0, 1.0]
+
+[[entity]]
+pos = [3.0, 0.0, -5.0]
+shader = "3d_pos_normal_color"
+geometry = "mesh:O"
+receives_light = true
+# DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
+# IN THE MESHES TABLE.
+#color = [0.0, 0.0, 1.0, 1.0]
+
+[[entity]]
+pos = [5.0, 0.0, -5.0]
+shader = "3d_pos_normal_color"
+geometry = "mesh:O"
+receives_light = true
+# DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
+# IN THE MESHES TABLE.
+#color = [1.0, 0.0, 0.0, 1.0]

@@ -1,6 +1,6 @@
 #pragma once
 #include <boomhs/components.hpp>
-#include <boomhs/tilemap.hpp>
+#include <boomhs/tile.hpp>
 #include <boomhs/types.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
@@ -48,7 +48,7 @@ public:
   std::string display() const;
 
   glm::quat const& orientation() const { return transform().rotation; }
-  glm::vec3 const& world_position() const { return transform().translation; }
+  glm::vec3 const& world_position() const;
 
   auto speed() const { return speed_; }
   void set_speed(float const s) { speed_ = s; }
@@ -64,24 +64,21 @@ public:
 
   void rotate_to_match_camera_rotation(Camera const&);
 
-  auto
+  TilePosition
   tilemap_position() const
   {
     auto const& pos = transform().translation;
 
     // Truncate the floating point values to get tilemap position
-    auto const trunc = [](float const v) { return abs(v); };
-    return glm::vec3{trunc(pos.x), trunc(pos.y), trunc(pos.z)};
+    auto const trunc = [](float const v) -> int { return abs(v); };
+    return TilePosition{trunc(pos.x), trunc(pos.z)};
   }
 
   void move_to(glm::vec3 const& pos) { transform().translation = pos; }
   void move_to(float const x, float const y, float const z) { move_to(glm::vec3{x, y, z}); }
-  void move_to(TilePosition const& pos) { move_to(pos.x, pos.y, pos.z); }
 
   void set_eid(std::uint32_t const eid) { ent_lookup_.set_eid(eid); }
   glm::mat4 model_matrix() const { return transform().model_matrix(); }
 };
-
-void move_ontilemap(GameState &, glm::vec3 (WorldObject::*)() const, WorldObject &, double const);
 
 } // ns boomhs

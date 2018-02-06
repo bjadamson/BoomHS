@@ -120,20 +120,21 @@ draw_tilemap_editor(GameState &state)
 
     ZoneManager zm{state.zone_states};
     std::vector<std::string> levels;
-    FOR(i, zm.num_zones()) {
+    FORI(i, zm.num_zones()) {
       levels.emplace_back(std::to_string(i));
     }
     void *pdata = reinterpret_cast<void *>(&levels);
-    auto &selected = es.ui_state.selected_level;
+    int selected = zm.active_zone();
 
     if (ImGui::Combo("Current Level:", &selected, callback_from_strings, pdata, zm.num_zones())) {
       zm.make_zone_active(selected, state);
     }
     bool recompute = false;
-    recompute |= ImGui::Checkbox("Reveal Tilemap", &tm_state.reveal);
+    recompute |= ImGui::Checkbox("Draw Tilemap", &tm_state.draw_tilemap);
+    recompute |= ImGui::Checkbox("Reveal Tilemap Hidden", &tm_state.reveal);
     recompute |= ImGui::Checkbox("Show (x, z)-axis lines", &tm_state.show_grid_lines);
     recompute |= ImGui::Checkbox("Show y-axis Lines ", &tm_state.show_yaxis_lines);
-    recompute |= ImGui::Checkbox("Draw Tilemap", &tm_state.draw_tilemap);
+    ImGui::Checkbox("Draw Neighbor Arrows", &tm_state.show_neighbortile_arrows);
 
     if (recompute) {
       tm_state.recompute = true;
@@ -528,6 +529,15 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
 
     auto const framerate = engine_state.imgui.Framerate;
     auto const ms_frame = 1000.0f / framerate;
+
+    ZoneManager zm{state.zone_states};
+
+    ImGui::SameLine(ImGui::GetWindowWidth() * 0.25f);
+    ImGui::Text("Player Position: %s", glm::to_string(zm.active().player.world_position()).c_str());
+
+    ImGui::SameLine(ImGui::GetWindowWidth() * 0.60f);
+    ImGui::Text("Current Level: %i", zm.active_zone());
+
     ImGui::SameLine(ImGui::GetWindowWidth() * 0.76f);
     ImGui::Text("FPS(avg): %.1f ms/frame: %.3f", framerate, ms_frame);
     ImGui::EndMainMenuBar();

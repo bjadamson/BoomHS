@@ -44,41 +44,55 @@ filename = "TextureAtlas.jpg"
 ################## MESHES #####################
 [[meshes]]
 name = "house"
+colors = false
 normals = true
 uvs = true
 
 [[meshes]]
 name = "hashtag"
+colors = true
 normals = true
 uvs = false
 
 [[meshes]]
 name = "at"
+colors = true
 normals = true
 uvs = false
 
 [[meshes]]
 name = "plus"
+colors = true
 normals = true
 uvs = false
 
 [[meshes]]
 name = "O"
+colors = true
 normals = true
 uvs = false
 
 [[meshes]]
 name = "T"
+colors = true
 normals = true
 uvs = false
 
 [[meshes]]
 name = "cube"
+colors = true
 normals = true
 uvs = false
 
 [[meshes]]
 name = "robot"
+colors = true
+normals = true
+uvs = false
+
+[[meshes]]
+name = "stair"
+colors = false
 normals = true
 uvs = false
 

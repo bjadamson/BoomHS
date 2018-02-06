@@ -13,6 +13,7 @@
 
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <cstring>
 
 namespace
 {
@@ -32,21 +33,18 @@ is_compiled(GLuint const handle)
   return GL_FALSE != is_compiled;
 }
 
-inline void
-gl_compile_shader(GLuint const handle, char const *source)
-{
-  GLint *p_length = nullptr;
-  auto constexpr SHADER_COUNT = 1; // We're only compiling one shader (in this function anyway).
-  glShaderSource(handle, SHADER_COUNT, &source, p_length);
-  glCompileShader(handle);
-}
 
-template <typename T>
 stlw::result<compiled_shader, std::string>
-compile_shader(T const &data, GLenum const type)
+compile_shader(stlw::Logger &logger, GLenum const type, std::string const& data)
 {
   GLuint const handle = glCreateShader(type);
-  gl_compile_shader(handle, data.c_str());
+
+  char const* source = data.data();
+  glShaderSource(handle, 1, &source, nullptr);
+  LOG_ANY_GL_ERRORS(logger, "glShaderSource");
+
+  glCompileShader(handle);
+  LOG_ANY_GL_ERRORS(logger, "glCompileShader");
 
   // Check Vertex Shader
   if (true == is_compiled(handle)) {
@@ -66,17 +64,22 @@ create_program()
 }
 
 inline stlw::result<stlw::empty_type, std::string>
-link_program(GLuint const program_id)
+link_program(stlw::Logger &logger, GLuint const program_id)
 {
   // Link the program
+  LOG_ANY_GL_ERRORS(logger, "glLinkProgram before");
   glLinkProgram(program_id);
+  LOG_ANY_GL_ERRORS(logger, "glLinkProgram after");
 
   // Check the program
   GLint result;
   glGetProgramiv(program_id, GL_LINK_STATUS, &result);
   if (result == GL_FALSE) {
-    return stlw::make_error("Linking the shader failed. Progam log '" +
-                            gfx::get_program_log(program_id) + "'");
+    auto const program_log = gfx::get_program_log(program_id);
+    auto const shader_log = gfx::get_shader_log(program_id);
+    auto const fmt = fmt::sprintf("Linking the shader failed. Progam log '%s'. Shader Log '%s'",
+        program_log, shader_log);
+    return stlw::make_error(fmt);
   }
   return stlw::make_empty();
 }
@@ -98,10 +101,11 @@ struct FragmentShaderInfo {
 };
 
 stlw::result<GLuint, std::string>
-compile_sources(VertexShaderInfo const &vertex_shader, FragmentShaderInfo const &fragment_shader)
+compile_sources(stlw::Logger &logger, VertexShaderInfo const &vertex_shader,
+    FragmentShaderInfo const &fragment_shader)
 {
-  DO_TRY(auto const vertex_shader_id, compile_shader(vertex_shader.source, GL_VERTEX_SHADER));
-  DO_TRY(auto const frag_shader_id, compile_shader(fragment_shader.source, GL_FRAGMENT_SHADER));
+  DO_TRY(auto const vertex_shader_id, compile_shader(logger, GL_VERTEX_SHADER, vertex_shader.source));
+  DO_TRY(auto const frag_shader_id, compile_shader(logger, GL_FRAGMENT_SHADER, fragment_shader.source));
   DO_TRY(auto const program_id, create_program());
 
   std::cerr << fmt::format("compiling '{}'/'{}'\n", vertex_shader.filename, fragment_shader.filename);
@@ -119,7 +123,7 @@ compile_sources(VertexShaderInfo const &vertex_shader, FragmentShaderInfo const 
   glAttachShader(program_id, frag_shader_id);
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, frag_shader_id); });
 
-  DO_EFFECT(link_program(program_id));
+  DO_EFFECT(link_program(logger, program_id));
   std::cerr << "finished compiling\n";
   return program_id;
 }
@@ -210,7 +214,8 @@ namespace opengl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // grogram_factory
 stlw::result<GLuint, std::string>
-program_factory::from_files(vertex_shader_filename const v, fragment_shader_filename const f)
+program_factory::from_files(stlw::Logger &logger, vertex_shader_filename const v,
+    fragment_shader_filename const f)
 {
   auto const prefix = [](auto const &path) {
     return std::string{"./build-system/bin/shaders/"} + path;
@@ -227,7 +232,7 @@ program_factory::from_files(vertex_shader_filename const v, fragment_shader_file
     MOVE(attribute_variable_info)};
   FragmentShaderInfo const fragment_shader{fragment_shader_path, fragment_source};
 
-  return compile_sources(vertex_shader, fragment_shader);
+  return compile_sources(logger, vertex_shader, fragment_shader);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -257,7 +262,7 @@ ProgramHandle::~ProgramHandle()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // ShaderProgram
 void
-ShaderProgram::use_program(stlw::Logger &logger)
+ShaderProgram::use(stlw::Logger &logger)
 {
   glUseProgram(this->program_.handle());
   LOG_ANY_GL_ERRORS(logger, "Shader use/enable");
@@ -278,7 +283,7 @@ ShaderProgram::get_uniform_location(stlw::Logger &logger, GLchar const *name)
 void
 ShaderProgram::set_uniform_matrix_3fv(stlw::Logger &logger, GLchar const *name, glm::mat3 const &matrix)
 {
-  use_program(logger);
+  use(logger);
 
   auto const loc = get_uniform_location(logger, name);
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
@@ -300,7 +305,7 @@ ShaderProgram::set_uniform_matrix_3fv(stlw::Logger &logger, GLchar const *name, 
 void
 ShaderProgram::set_uniform_matrix_4fv(stlw::Logger &logger, GLchar const *name, glm::mat4 const &matrix)
 {
-  use_program(logger);
+  use(logger);
 
   auto const loc = get_uniform_location(logger, name);
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
@@ -322,7 +327,7 @@ ShaderProgram::set_uniform_matrix_4fv(stlw::Logger &logger, GLchar const *name, 
 void
 ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, std::array<float, 4> const &floats)
 {
-  use_program(logger);
+  use(logger);
 
   auto const loc = get_uniform_location(logger, name);
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
@@ -340,7 +345,7 @@ ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, s
 void
 ShaderProgram::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, std::array<float, 3> const& array)
 {
-  use_program(logger);
+  use(logger);
 
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
   //
@@ -358,7 +363,7 @@ ShaderProgram::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, s
 void
 ShaderProgram::set_uniform_float1(stlw::Logger &logger, GLchar const* name, float const value)
 {
-  use_program(logger);
+  use(logger);
 
   auto const loc = get_uniform_location(logger, name);
   glUniform1f(loc, value);
@@ -368,7 +373,7 @@ ShaderProgram::set_uniform_float1(stlw::Logger &logger, GLchar const* name, floa
 void
 ShaderProgram::set_uniform_int1(stlw::Logger &logger, GLchar const* name, int const value)
 {
-  use_program(logger);
+  use(logger);
 
   auto const loc = get_uniform_location(logger, name);
   glUniform1i(loc, value);
@@ -378,7 +383,7 @@ ShaderProgram::set_uniform_int1(stlw::Logger &logger, GLchar const* name, int co
 void
 ShaderProgram::set_uniform_bool(stlw::Logger &logger, GLchar const* name, bool const value)
 {
-  use_program(logger);
+  use(logger);
 
   auto const loc = get_uniform_location(logger, name);
   glUniform1i(loc, static_cast<int>(value));
@@ -443,6 +448,15 @@ print_active_uniforms(std::ostream &stream, GLuint const program)
 
     stream << fmt::format("Uniform #{} Type: {} Name: {}\n", i, type_string, name_string);
   }
+}
+
+stlw::result<ShaderProgram, std::string>
+make_shader_program(stlw::Logger &logger, std::string const& vertex_s, std::string const& fragment_s, VertexAttribute &&va)
+{
+  vertex_shader_filename v{vertex_s};
+  fragment_shader_filename f{fragment_s};
+  DO_TRY(auto sp, program_factory::from_files(logger, v, f));
+  return ShaderProgram{ProgramHandle{sp}, MOVE(va)};
 }
 
 std::ostream&

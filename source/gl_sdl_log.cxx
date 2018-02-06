@@ -3,6 +3,7 @@
 
 #include <stlw/format.hpp>
 #include <stlw/log.hpp>
+#include <iostream>
 #include <string>
 
 namespace
@@ -26,8 +27,11 @@ retrieve(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei *, GLchar *))
   }
 
   // Step 2
-  auto const buffer_size = log_length + 1; // +1 for null terminator character '\0'
-  auto buffer = stlw::vec_with_size<char>(buffer_size);
+  int const buffer_size = log_length + 1; // +1 for null terminator character '\0'
+  std::cerr << "buffer size: '" << buffer_size << "'\n";
+
+  // explicitely using parenthesis to not trigger initializer_list ctor
+  std::vector<char> buffer(buffer_size);
   f(handle, buffer_size, nullptr, buffer.data());
 
   // Step 3

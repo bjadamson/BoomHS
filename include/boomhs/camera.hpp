@@ -53,6 +53,8 @@ class Camera
   Transform& get_target() { return player_lookup_.lookup<Transform>(); }
   Transform const& get_target() const { return player_lookup_.lookup<Transform>(); }
 
+  void zoom(float);
+
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
   Camera(EnttLookup const&, glm::vec3 const& f, glm::vec3 const& u);
@@ -100,13 +102,16 @@ public:
   }
 
   Camera&
-  rotate(float const d_angle, float const d_phi);
-
-  Camera&
-  zoom(float const);
+  rotate(float, float);
 
   void
-  set_target(std::uint32_t const eid)
+  decrease_zoom(float);
+
+  void
+  increase_zoom(float);
+
+  void
+  set_target(uint32_t const eid)
   {
     player_lookup_.set_eid(eid);
   }

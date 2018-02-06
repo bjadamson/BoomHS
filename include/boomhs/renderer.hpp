@@ -75,10 +75,19 @@ struct DrawHashtagArgs
   std::uint32_t const eid;
 };
 
+struct DrawStairsArgs
+{
+  opengl::ShaderProgram &sp;
+  opengl::DrawInfo const& dinfo;
+
+  std::uint32_t const eid;
+};
+
 struct DrawTilemapArgs
 {
   DrawPlusArgs plus;
   DrawHashtagArgs hashtag;
+  DrawStairsArgs stairs;
 };
 
 void
