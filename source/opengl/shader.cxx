@@ -33,20 +33,18 @@ is_compiled(GLuint const handle)
   return GL_FALSE != is_compiled;
 }
 
-inline void
-gl_compile_shader(stlw::Logger &logger, GLuint const handle, char const* source)
-{
-  glShaderSource(handle, 1, &source, nullptr);
-  LOG_ANY_GL_ERRORS(logger, "glShaderSource");
-  glCompileShader(handle);
-  LOG_ANY_GL_ERRORS(logger, "glCompileShader");
-}
 
 stlw::result<compiled_shader, std::string>
 compile_shader(stlw::Logger &logger, GLenum const type, std::string const& data)
 {
   GLuint const handle = glCreateShader(type);
-  gl_compile_shader(logger, handle, data.data());
+
+  char const* source = data.data();
+  glShaderSource(handle, 1, &source, nullptr);
+  LOG_ANY_GL_ERRORS(logger, "glShaderSource");
+
+  glCompileShader(handle);
+  LOG_ANY_GL_ERRORS(logger, "glCompileShader");
 
   // Check Vertex Shader
   if (true == is_compiled(handle)) {
@@ -66,17 +64,22 @@ create_program()
 }
 
 inline stlw::result<stlw::empty_type, std::string>
-link_program(GLuint const program_id)
+link_program(stlw::Logger &logger, GLuint const program_id)
 {
   // Link the program
+  LOG_ANY_GL_ERRORS(logger, "glLinkProgram before");
   glLinkProgram(program_id);
+  LOG_ANY_GL_ERRORS(logger, "glLinkProgram after");
 
   // Check the program
   GLint result;
   glGetProgramiv(program_id, GL_LINK_STATUS, &result);
   if (result == GL_FALSE) {
-    return stlw::make_error("Linking the shader failed. Progam log '" +
-                            gfx::get_program_log(program_id) + "'");
+    auto const program_log = gfx::get_program_log(program_id);
+    auto const shader_log = gfx::get_shader_log(program_id);
+    auto const fmt = fmt::sprintf("Linking the shader failed. Progam log '%s'. Shader Log '%s'",
+        program_log, shader_log);
+    return stlw::make_error(fmt);
   }
   return stlw::make_empty();
 }
@@ -120,7 +123,7 @@ compile_sources(stlw::Logger &logger, VertexShaderInfo const &vertex_shader,
   glAttachShader(program_id, frag_shader_id);
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, frag_shader_id); });
 
-  DO_EFFECT(link_program(program_id));
+  DO_EFFECT(link_program(logger, program_id));
   std::cerr << "finished compiling\n";
   return program_id;
 }
@@ -259,7 +262,7 @@ ProgramHandle::~ProgramHandle()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // ShaderProgram
 void
-ShaderProgram::use_program(stlw::Logger &logger)
+ShaderProgram::use(stlw::Logger &logger)
 {
   glUseProgram(this->program_.handle());
   LOG_ANY_GL_ERRORS(logger, "Shader use/enable");
@@ -280,7 +283,7 @@ ShaderProgram::get_uniform_location(stlw::Logger &logger, GLchar const *name)
 void
 ShaderProgram::set_uniform_matrix_3fv(stlw::Logger &logger, GLchar const *name, glm::mat3 const &matrix)
 {
-  use_program(logger);
+  use(logger);
 
   auto const loc = get_uniform_location(logger, name);
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
@@ -302,7 +305,7 @@ ShaderProgram::set_uniform_matrix_3fv(stlw::Logger &logger, GLchar const *name, 
 void
 ShaderProgram::set_uniform_matrix_4fv(stlw::Logger &logger, GLchar const *name, glm::mat4 const &matrix)
 {
-  use_program(logger);
+  use(logger);
 
   auto const loc = get_uniform_location(logger, name);
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
@@ -324,7 +327,7 @@ ShaderProgram::set_uniform_matrix_4fv(stlw::Logger &logger, GLchar const *name, 
 void
 ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, std::array<float, 4> const &floats)
 {
-  use_program(logger);
+  use(logger);
 
   auto const loc = get_uniform_location(logger, name);
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
@@ -342,7 +345,7 @@ ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, s
 void
 ShaderProgram::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, std::array<float, 3> const& array)
 {
-  use_program(logger);
+  use(logger);
 
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
   //
@@ -360,7 +363,7 @@ ShaderProgram::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, s
 void
 ShaderProgram::set_uniform_float1(stlw::Logger &logger, GLchar const* name, float const value)
 {
-  use_program(logger);
+  use(logger);
 
   auto const loc = get_uniform_location(logger, name);
   glUniform1f(loc, value);
@@ -370,7 +373,7 @@ ShaderProgram::set_uniform_float1(stlw::Logger &logger, GLchar const* name, floa
 void
 ShaderProgram::set_uniform_int1(stlw::Logger &logger, GLchar const* name, int const value)
 {
-  use_program(logger);
+  use(logger);
 
   auto const loc = get_uniform_location(logger, name);
   glUniform1i(loc, value);
@@ -380,7 +383,7 @@ ShaderProgram::set_uniform_int1(stlw::Logger &logger, GLchar const* name, int co
 void
 ShaderProgram::set_uniform_bool(stlw::Logger &logger, GLchar const* name, bool const value)
 {
-  use_program(logger);
+  use(logger);
 
   auto const loc = get_uniform_location(logger, name);
   glUniform1i(loc, static_cast<int>(value));

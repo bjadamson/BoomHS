@@ -7,16 +7,6 @@
 namespace opengl
 {
 
-struct LoadNormals
-{
-  bool const value = false;
-};
-
-struct LoadUvs
-{
-  bool const value = false;
-};
-
 struct obj
 {
   GLenum const draw_mode;
@@ -31,6 +21,13 @@ struct obj
   MOVE_CONSTRUCTIBLE_ONLY(obj);
 };
 
+struct LoadMeshConfig
+{
+  bool colors = false;
+  bool normals = false;
+  bool uvs = false;
+};
+
 class ObjLoader
 {
   Color color_;
@@ -41,10 +38,10 @@ public:
   }
 
   obj
-  load_mesh(char const*, char const*, LoadNormals const, LoadUvs const) const;
+  load_mesh(char const*, char const*, LoadMeshConfig const&) const;
 
   obj
-  load_mesh(char const*, LoadNormals const, LoadUvs const) const;
+  load_mesh(char const*, LoadMeshConfig const&) const;
 
   void set_color(Color const& c)
   {

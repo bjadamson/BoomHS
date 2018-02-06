@@ -98,7 +98,7 @@ set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
 void
 set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix,
     ShaderProgram &sp, DrawInfo const& dinfo, std::uint32_t const entity,
-    entt::DefaultRegistry &registry)
+    entt::DefaultRegistry &registry, bool const receives_ambient_light)
 {
   auto const& camera = args.camera;
   auto const& global_light = args.global_light;
@@ -114,7 +114,9 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
   //set_dirlight(logger, sp, global_light);
 
   // ambient
-  sp.set_uniform_color_3fv(logger, "u_globallight.ambient", global_light.ambient);
+  if (receives_ambient_light) {
+    sp.set_uniform_color_3fv(logger, "u_globallight.ambient", global_light.ambient);
+  }
 
   // specular
   sp.set_uniform_float1(logger, "u_reflectivity", 1.0f);
@@ -172,7 +174,8 @@ set_3dlightsource_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
 
 void
 draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, ShaderProgram &sp,
-  DrawInfo const& dinfo, std::uint32_t const entity, entt::DefaultRegistry &registry)
+  DrawInfo const& dinfo, std::uint32_t const entity, entt::DefaultRegistry &registry,
+  bool const receives_ambient_light)
 {
   auto &logger = args.logger;
   auto const& camera = args.camera;
@@ -193,7 +196,8 @@ draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, Shad
         (!receives_light && is_lightsource));
 
     if (receives_light) {
-      set_receiveslight_uniforms(args, model_matrix, sp, dinfo, entity, registry);
+      set_receiveslight_uniforms(args, model_matrix, sp, dinfo, entity, registry,
+          receives_ambient_light);
     } else if (is_lightsource) {
       set_3dlightsource_uniforms(args, model_matrix, sp, dinfo, entity, registry);
     }
@@ -269,7 +273,7 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
   auto &logger = args.logger;
 
   // Use the sp's PROGRAM and bind the sp's VAO.
-  sp.use_program(logger);
+  sp.use(logger);
   opengl::global::vao_bind(dinfo.vao());
   ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
@@ -291,7 +295,9 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
       set_modelmatrix(logger, transform.model_matrix(), sp);
       enable_depth_tests();
     } else {
-      draw_3dshape(args, transform.model_matrix(), sp, dinfo, entity, registry);
+      bool constexpr receives_ambient_light = true;
+      draw_3dshape(args, transform.model_matrix(), sp, dinfo, entity, registry,
+          receives_ambient_light);
     }
   };
 
@@ -311,17 +317,17 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
 {
   auto &logger = args.logger;
   auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, std::uint32_t const entity,
-      glm::mat4 const& model_mat)
+      glm::mat4 const& model_mat, bool const receives_ambient_light)
   {
-    sp.use_program(logger);
+    sp.use(logger);
     opengl::global::vao_bind(dinfo.vao());
     ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
-    draw_3dshape(args, model_mat, sp, dinfo, entity, registry);
+    draw_3dshape(args, model_mat, sp, dinfo, entity, registry, receives_ambient_light);
   };
   auto &plus = dt_args.plus;
   auto &hashtag = dt_args.hashtag;
   auto &stairs = dt_args.stairs;
-  auto const draw_all_tiles = [&](auto const& tile_pos) {
+  auto const draw_tile = [&](auto const& tile_pos) {
     auto const& tile = tilemap.data(tile_pos);
     if (!tilemap_state.reveal && !tile.is_visible) {
       return;
@@ -338,30 +344,40 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
     };
     switch(tile.type) {
       case TileType::FLOOR:
-        draw_tile_helper(plus.sp, plus.dinfo, plus.eid, normal_modelmatrix());
+        draw_tile_helper(plus.sp, plus.dinfo, plus.eid, normal_modelmatrix(),
+            true);
         break;
       case TileType::WALL:
-        draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, normal_modelmatrix());
+        draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, normal_modelmatrix(),
+            true);
         break;
       case TileType::STAIR_DOWN:
         {
-          glm::vec3 constexpr scale{0.6f, 0.2f, 0.4f};
+          stairs.sp.use(logger);
+          stairs.sp.set_uniform_color(logger, "u_color", LOC::GREEN);
+
+          bool const receives_ambient_light = false;
+          glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
           auto const model_matrix = stlw::math::calculate_modelmatrix(translation, rotation, scale);
-          draw_tile_helper(stairs.sp, stairs.dinfo, stairs.eid, model_matrix);
+          draw_tile_helper(stairs.sp, stairs.dinfo, stairs.eid, model_matrix, receives_ambient_light);
         }
         break;
       case TileType::STAIR_UP:
         {
-          glm::vec3 constexpr scale{0.6f, 0.8f, 0.4f};
+          stairs.sp.use(logger);
+          stairs.sp.set_uniform_color(logger, "u_color", LOC::RED);
+
+          bool const receives_ambient_light = false;
+          glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
           auto const model_matrix = stlw::math::calculate_modelmatrix(translation, rotation, scale);
-          draw_tile_helper(stairs.sp, stairs.dinfo, stairs.eid, model_matrix);
+          draw_tile_helper(stairs.sp, stairs.dinfo, stairs.eid, model_matrix, receives_ambient_light);
         }
         break;
       default:
         std::exit(1);
     }
   };
-  tilemap.visit_each(draw_all_tiles);
+  tilemap.visit_each(draw_tile);
 }
 
 void
@@ -369,7 +385,7 @@ draw_tilegrid(RenderArgs const& args, Transform const& transform, ShaderProgram 
     DrawInfo const& dinfo)
 {
   auto &logger = args.logger;
-  sp.use_program(logger);
+  sp.use(logger);
   opengl::global::vao_bind(dinfo.vao());
   ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 

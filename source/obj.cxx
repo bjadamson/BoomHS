@@ -6,18 +6,85 @@
 
 #include <extlibs/tinyobj.hpp>
 
+using namespace opengl;
+
+namespace
+{
+
+void
+load_positions(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
+    std::vector<float> *pvertices)
+{
+  auto const pos_index = 3 * index.vertex_index;
+  if (pos_index < 0) {
+    std::abort();
+  }
+  auto const x = attrib.vertices[pos_index + 0];
+  auto const y = attrib.vertices[pos_index + 1];
+  auto const z = attrib.vertices[pos_index + 2];
+  auto const w = 1.0;
+
+  auto &vertices = *pvertices;
+  vertices.push_back(x);
+  vertices.push_back(y);
+  vertices.push_back(z);
+  vertices.push_back(w);
+}
+
+void
+load_normals(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
+    std::vector<float> *pvertices)
+{
+  auto const ni = 3 * index.normal_index;
+  if (ni >= 0) {
+    auto const xn = attrib.normals[ni + 0];
+    auto const yn = attrib.normals[ni + 1];
+    auto const zn = attrib.normals[ni + 2];
+
+    auto &vertices = *pvertices;
+    vertices.emplace_back(xn);
+    vertices.emplace_back(yn);
+    vertices.emplace_back(zn);
+  } else {
+    std::cerr << "no normals found\n";
+    std::abort();
+  }
+}
+
+void
+load_uvs(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
+    std::vector<float> *pvertices)
+{
+  auto const ti = 2 * index.texcoord_index;
+  if (ti >= 0) {
+    auto const u = attrib.texcoords[ti + 0];
+    auto const v = 1.0f - attrib.texcoords[ti + 1];
+
+    auto &vertices = *pvertices;
+    vertices.emplace_back(u);
+    vertices.emplace_back(v);
+  } else {
+    std::abort();
+  }
+}
+
+void
+load_colors(Color const& color, std::vector<float> *pvertices)
+{
+  auto &vertices = *pvertices;
+  vertices.push_back(color.r());
+  vertices.push_back(color.g());
+  vertices.push_back(color.b());
+  vertices.push_back(color.a());
+}
+
+} // ns anon
+
 namespace opengl
 {
 
 obj
-ObjLoader::load_mesh(char const* objpath, LoadNormals const load_normals, LoadUvs const load_uvs) const
-{
-  auto constexpr MTLPATH = nullptr;
-  return load_mesh(objpath, MTLPATH, load_normals, load_uvs);
-}
-
-obj
-ObjLoader::load_mesh(char const* objpath, char const* mtlpath, LoadNormals const load_normals, LoadUvs const load_uvs) const
+ObjLoader::load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config) const
 {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
@@ -61,61 +128,20 @@ ObjLoader::load_mesh(char const* objpath, char const* mtlpath, LoadNormals const
         // access to vertex
         tinyobj::index_t const index = shapes[s].mesh.indices[index_offset + vi];
 
-        auto const pos_index = 3 * index.vertex_index;
-        if (pos_index < 0) {
-          std::abort();
+        load_positions(index, attrib, &vertices);
+        if (config.normals) {
+          load_normals(index, attrib, &vertices);
         }
-        auto const x = attrib.vertices[pos_index + 0];
-        auto const y = attrib.vertices[pos_index + 1];
-        auto const z = attrib.vertices[pos_index + 2];
-        auto const w = 1.0;
-
-        vertices.push_back(x);
-        vertices.push_back(y);
-        vertices.push_back(z);
-        vertices.push_back(w);
-
-        if (load_normals.value) {
-          auto const ni = 3 * index.normal_index;
-          if (ni >= 0) {
-            auto const xn = attrib.normals[ni + 0];
-            auto const yn = attrib.normals[ni + 1];
-            auto const zn = attrib.normals[ni + 2];
-
-            vertices.push_back(xn);
-            vertices.push_back(yn);
-            vertices.push_back(zn);
-          } else {
-            std::cerr << "no normals found\n";
-            std::abort();
-          }
+        if (config.uvs) {
+          load_uvs(index, attrib, &vertices);
         }
-
-        if (load_uvs.value) {
-          auto const ti = 2 * index.texcoord_index;
-          if (ti >= 0) {
-            auto const u = attrib.texcoords[ti + 0];
-            auto const v = 1.0f - attrib.texcoords[ti + 1];
-
-            vertices.push_back(u);
-            vertices.push_back(v);
-
-          } else {
-            std::abort();
-            //vertices.push_back(0.0);
-            //vertices.push_back(0.0);
-          }
-        } else {
-          vertices.push_back(color_.r());
-          vertices.push_back(color_.g());
-          vertices.push_back(color_.b());
-          vertices.push_back(color_.a());
+        if (config.colors) {
+          // Optional: vertex colors
+          // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
+          // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
+          // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
+          load_colors(color_, &vertices);
         }
-
-        // Optional: vertex colors
-        // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
-        // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
-        // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
         indices.push_back(indices.size()); // 0, 1, 2, ...
       }
       index_offset += fv;
@@ -131,6 +157,13 @@ ObjLoader::load_mesh(char const* objpath, char const* mtlpath, LoadNormals const
   std::cerr << "size is: '" << (vertices.size() * sizeof(GLfloat)) << "'\n";
   */
   return obj{GL_TRIANGLES, num_vertices, MOVE(vertices), MOVE(indices)};
+}
+
+obj
+ObjLoader::load_mesh(char const* objpath, LoadMeshConfig const& config) const
+{
+  auto constexpr MTLPATH = nullptr;
+  return load_mesh(objpath, MTLPATH, config);
 }
 
 } // ns opengl

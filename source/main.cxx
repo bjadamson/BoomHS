@@ -119,10 +119,22 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
     handle_list.add(entity, MOVE(handle));
     return entity;
   };
+  auto const make_stair = [&]() {
+    auto const* name = "stair";
+    auto const &obj = obj_cache.get_obj(name);
+    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(name), obj, boost::none);
+    auto const eid = registry.create();
+    registry.assign<Material>(eid);
+    auto meshc = registry.assign<MeshRenderable>(eid);
+    meshc.name = name;
+
+    handle_list.add(eid, MOVE(handle));
+    return eid;
+  };
 
   auto const plus_eid = make_special("plus", "3d_pos_normal_color");
   auto const hashtag_eid = make_special("hashtag", "hashtag");
-  auto const stairs_eid = make_special("stair", "3d_pos_normal_color");
+  auto const stairs_eid = make_stair();
 
   return HandleManager{MOVE(handle_list), plus_eid, hashtag_eid, stairs_eid};
 }
@@ -197,7 +209,7 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
     handles.plus_eid};
   DrawHashtagArgs hashtag{sps.ref_sp("hashtag"), handles.lookup(handles.hashtag_eid),
                           handles.hashtag_eid};
-  DrawStairsArgs stairs{sps.ref_sp("3d_pos_normal_color"), handles.lookup(handles.stairs_eid),
+  DrawStairsArgs stairs{sps.ref_sp("stair"), handles.lookup(handles.stairs_eid),
     handles.stairs_eid};
   DrawTilemapArgs dta{MOVE(plus), MOVE(hashtag), MOVE(stairs)};
 
@@ -519,8 +531,6 @@ make_init_gamestate(stlw::Logger &logger, ImGuiIO &imgui, ZoneStates &&zs, windo
 stlw::result<stlw::empty_type, std::string>
 start(stlw::Logger &logger, Engine &engine)
 {
-  using namespace opengl;
-
   // Initialize GUI library
   ImGui_ImplSdlGL3_Init(engine.window.raw());
   ON_SCOPE_EXIT([]() { ImGui_ImplSdlGL3_Shutdown(); });

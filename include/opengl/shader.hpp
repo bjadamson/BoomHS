@@ -83,7 +83,7 @@ public:
   auto handle() const { return program_.handle(); }
   auto const& va() const { return this->va_; }
 
-  void use_program(stlw::Logger &);
+  void use(stlw::Logger &);
   GLint get_uniform_location(stlw::Logger &, GLchar const *);
 
   void set_uniform_matrix_3fv(stlw::Logger &, GLchar const *, glm::mat3 const &);
