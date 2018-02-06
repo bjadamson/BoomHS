@@ -74,6 +74,7 @@ TileMap::TileMap(std::vector<Tile> &&t, int32_t const width, int32_t const heigh
 {
   for (auto &tile : tiles_) {
     tile.eid = registry_.create();
+    auto &transform = registry_.assign<Transform>(tile.eid);
   }
 }
 

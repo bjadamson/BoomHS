@@ -327,22 +327,35 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
       return;
     }
     // This offset causes the tile's to appear in the "middle"
-    glm::vec3 constexpr VIEWING_OFFSET{0.50f, 0.0f, 0.50f};
-    auto const tmatrix = glm::translate(glm::mat4{}, tile_pos + VIEWING_OFFSET);
-    auto const rmatrix = glm::rotate(glm::mat4{}, glm::degrees(90.0f), opengl::X_UNIT_VECTOR);
-    auto const smatrix = glm::scale(glm::mat4{}, tilemap_state.tile_scaling);
-    auto const mmatrix = tmatrix * rmatrix * smatrix;
+    auto &transform = registry.get<Transform>(tile.eid);
+    glm::vec3 constexpr VIEWING_OFFSET{0.5f, 0.0f, 0.5f};
 
+    auto const translation = tile_pos + VIEWING_OFFSET;
+    auto const& rotation   = transform.rotation;
+    auto const normal_modelmatrix = [&]()
+    {
+      return stlw::math::calculate_modelmatrix(translation, rotation, transform.scale);
+    };
     switch(tile.type) {
       case TileType::FLOOR:
-        plus.sp.set_uniform_vec3(logger, "u_offset", tilemap_state.floor_offset);
-        draw_tile_helper(plus.sp, plus.dinfo, plus.eid, tmatrix * smatrix);
+        draw_tile_helper(plus.sp, plus.dinfo, plus.eid, normal_modelmatrix());
         break;
       case TileType::WALL:
-        draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, mmatrix);
+        draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, normal_modelmatrix());
         break;
-      case TileType::STAIRS:
-        draw_tile_helper(stairs.sp, stairs.dinfo, stairs.eid, mmatrix);
+      case TileType::STAIR_DOWN:
+        {
+          glm::vec3 constexpr scale{0.6f, 0.2f, 0.4f};
+          auto const model_matrix = stlw::math::calculate_modelmatrix(translation, rotation, scale);
+          draw_tile_helper(stairs.sp, stairs.dinfo, stairs.eid, model_matrix);
+        }
+        break;
+      case TileType::STAIR_UP:
+        {
+          glm::vec3 constexpr scale{0.6f, 0.8f, 0.4f};
+          auto const model_matrix = stlw::math::calculate_modelmatrix(translation, rotation, scale);
+          draw_tile_helper(stairs.sp, stairs.dinfo, stairs.eid, model_matrix);
+        }
         break;
       default:
         std::exit(1);

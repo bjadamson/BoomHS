@@ -12,7 +12,7 @@ namespace
 bool
 is_stair(Tile const& tile)
 {
-  return tile.type == TileType::STAIRS;
+  return tile.is_stair();
 }
 
 bool
@@ -30,7 +30,7 @@ should_skip_tile(int const stairs_perfloor, int const num_placed, TileMap const&
     // placed too many
     return true;
   }
-  if (tmap.data(pos).type == TileType::STAIRS) {
+  if (tmap.data(pos).is_stair()) {
     std::cerr << "tile already stair\n";
     // tile is already a stairwell
     return true;
@@ -79,20 +79,21 @@ place_stairs(PlaceStairsState &ps, TileMap &tmap, stlw::float_generator &rng,
   int const floor_number     = stairconfig.floor_number;
   int const floor_count      = stairconfig.floor_count;
   int const stairs_perfloor  = stairconfig.stairs_perfloor;
-  // clang-format on
 
-  uint32_t upstairs_to_place = ps.num_upstairs;
-  uint32_t downstairs_to_place = ps.num_downstairs;
+  int upstairs_to_place   = ps.num_upstairs;
+  int downstairs_to_place = ps.num_downstairs;
+  assert(stairs_perfloor == (upstairs_to_place + downstairs_to_place));
+  // clang-format on
 
   auto const calculate_direction = [&]()
   {
     auto const UP = [&]() {
-      upstairs_to_place++;
-      return StairDirection::UP;
+      upstairs_to_place--;
+      return TileType::STAIR_UP;
     };
     auto const DOWN = [&]() {
-      downstairs_to_place++;
-      return StairDirection::DOWN;
+      downstairs_to_place--;
+      return TileType::STAIR_DOWN;
     };
 
     bool const is_bottom_floor = 0 == stairconfig.floor_number;
@@ -107,7 +108,6 @@ place_stairs(PlaceStairsState &ps, TileMap &tmap, stlw::float_generator &rng,
       if (upstairs_to_place > 0) {
         return UP();
       } else if (downstairs_to_place > 0) {
-        std::abort();
         return DOWN();
       } else {
         // We should not have any more stairs to be placing at this point.
@@ -122,9 +122,7 @@ place_stairs(PlaceStairsState &ps, TileMap &tmap, stlw::float_generator &rng,
       return;
     }
     auto &tile = tmap.data(pos);
-    tile.type = TileType::STAIRS;
-
-    auto &si = registry.assign<StairInfo>(tile.eid);
+    tile.type = calculate_direction();
 
     auto const behavior = TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY;
     auto const neighbors = find_neighbor(tmap, pos, TileType::FLOOR, behavior);
@@ -133,13 +131,15 @@ place_stairs(PlaceStairsState &ps, TileMap &tmap, stlw::float_generator &rng,
 
     TilePosition const stair_exitpos = neighbors[0];
 
+    auto &si = registry.assign<StairInfo>(tile.eid);
     si.tile_position = pos;
     si.exit_position = glm::vec3{stair_exitpos.x, 0.0, stair_exitpos.z};
-    auto const direction = calculate_direction();
-    si.direction = calculate_direction();
     ++num_placed;
   };
+
   while(num_placed < stairs_perfloor) {
+    auto const num_remaining = (upstairs_to_place + downstairs_to_place);
+    assert((num_remaining + num_placed) == stairs_perfloor);
     tmap.visit_each(find_stairpositions);
   }
   if (num_placed < stairs_perfloor) {

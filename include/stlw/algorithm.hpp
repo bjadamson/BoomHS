@@ -13,7 +13,7 @@ namespace stlw
 {
 
 inline void
-memzero(void *const dest, std::size_t const count)
+memzero(void *const dest, size_t const count)
 {
   std::memset(dest, 0, count);
 }
@@ -36,21 +36,21 @@ namespace concat_array_algortithm
 // http://stackoverflow.com/questions/25068481/c11-constexpr-flatten-list-of-stdarray-into-array
 //
 // I made it more generic than just 'int' for T.
-template <std::size_t... Is>
+template <size_t... Is>
 struct seq {
 };
-template <std::size_t N, std::size_t... Is>
+template <size_t N, size_t... Is>
 
 struct gen_seq : gen_seq<N - 1, N - 1, Is...> {
 };
 
-template <std::size_t... Is>
+template <size_t... Is>
 struct gen_seq<0, Is...> : seq<Is...> {
 };
 
 } // ns concat_array_algortithm
 
-template <typename T, std::size_t N1, std::size_t... I1, std::size_t N2, std::size_t... I2>
+template <typename T, size_t N1, size_t... I1, size_t N2, size_t... I2>
 // Expansion pack
 constexpr std::array<T, N1 + N2>
 concat(std::array<T, N1> const &a1, std::array<T, N2> const &a2,
@@ -59,7 +59,7 @@ concat(std::array<T, N1> const &a1, std::array<T, N2> const &a2,
   return {a1[I1]..., a2[I2]...};
 }
 
-template <typename T, std::size_t N1, std::size_t N2>
+template <typename T, size_t N1, size_t N2>
 // Initializer for the recursion
 constexpr std::array<T, N1 + N2>
 concat(std::array<T, N1> const &a1, std::array<T, N2> const &a2)
@@ -68,7 +68,7 @@ concat(std::array<T, N1> const &a1, std::array<T, N2> const &a2)
                 concat_array_algortithm::gen_seq<N2>{});
 }
 
-template <typename T, std::size_t N1>
+template <typename T, size_t N1>
 constexpr std::array<T, N1 + 1>
 concat(std::array<T, N1> const &a1, T const &v)
 {
@@ -200,8 +200,8 @@ void zip(FN const& fn, ContainerIter it, std::tuple<T...> const& tuple)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // sub_array
-template<typename T, std::size_t N>
-auto sub_array(std::array<T, N> const& data, std::size_t const begin)
+template<typename T, size_t N>
+auto sub_array(std::array<T, N> const& data, size_t const begin)
 {
   assert(N >= data.size());
   assert(begin <= N);

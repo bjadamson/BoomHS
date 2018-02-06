@@ -83,7 +83,7 @@ normals = true
 uvs = false
 
 [[meshes]]
-name = "stairs"
+name = "stair"
 normals = true
 uvs = false
 

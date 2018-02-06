@@ -52,37 +52,10 @@ public:
   }
 };
 
-enum class StairDirection
-{
-  UP = 0,
-  DOWN,
-  INVALID
-};
-inline std::ostream&
-operator<<(std::ostream &stream, StairDirection const& sd)
-{
-  switch(sd) {
-    case StairDirection::UP:
-      stream << "UP";
-      break;
-    case StairDirection::DOWN:
-      stream << "DOWN";
-      break;
-    case StairDirection::INVALID:
-      stream << "INVALID";
-      break;
-    default:
-      std::abort();
-      break;
-  }
-  return stream;
-}
-
 struct StairInfo
 {
   TilePosition tile_position;
   glm::vec3 exit_position;
-  StairDirection direction = StairDirection::INVALID;
 };
 
 struct Player

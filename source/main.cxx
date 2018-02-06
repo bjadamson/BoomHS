@@ -106,7 +106,6 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
     auto const &obj = obj_cache.get_obj(name);
     auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, boost::none);
     auto const entity = registry.create();
-    registry.assign<Transform>(entity);
     registry.assign<Material>(entity);
     auto meshc = registry.assign<MeshRenderable>(entity);
     meshc.name = name;
@@ -121,9 +120,9 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
     return entity;
   };
 
-  auto const plus_eid = make_special("plus", "plus");
+  auto const plus_eid = make_special("plus", "3d_pos_normal_color");
   auto const hashtag_eid = make_special("hashtag", "hashtag");
-  auto const stairs_eid = make_special("stairs", "3d_pos_normal_color");
+  auto const stairs_eid = make_special("stair", "3d_pos_normal_color");
 
   return HandleManager{MOVE(handle_list), plus_eid, hashtag_eid, stairs_eid};
 }
@@ -194,7 +193,8 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
   //    just two tile type's will be necessary, and will have to devise a strategy for quickly
   //    rendering the tilemap using different tile's. Maybe store the different tile type's
   //    together somehow for rendering?
-  DrawPlusArgs plus{sps.ref_sp("plus"), handles.lookup(handles.plus_eid), handles.plus_eid};
+  DrawPlusArgs plus{sps.ref_sp("3d_pos_normal_color"), handles.lookup(handles.plus_eid),
+    handles.plus_eid};
   DrawHashtagArgs hashtag{sps.ref_sp("hashtag"), handles.lookup(handles.hashtag_eid),
                           handles.hashtag_eid};
   DrawStairsArgs stairs{sps.ref_sp("3d_pos_normal_color"), handles.lookup(handles.stairs_eid),
@@ -332,21 +332,16 @@ move_betweentilemaps_ifonstairs(GameState &state)
     return wp;
   };
 
-  // We need to check for NaN in cases where the camera becomes perpendicular to the Y axis. When
-  // this occurs the view calculation (lookAt) can yield Nan's for the position.
-  //
-  // Ran into this during development, thus handling it now.
-  auto const wp = player.world_position();
-  std::cerr << "wp.x '" << wp.x << " wp.z '" << wp.z << "'\n";
-
   auto const eid = find_player(registry);
   auto &pc = registry.get<Player>(eid);
+  registry.get<Transform>(eid).translation.y = 0.5f;
+
   auto const cast = [](float const f) { return static_cast<int>(f);};
   auto &tp = pc.tile_position;
   auto &tmap = zone_state.tilemap;
+  auto const wp = player.world_position();
   {
     auto const [w, l] = tmap.dimensions();
-    // TODO: work out why x/z are NaN after moving levels.
     assert(wp.x < w);
     assert(wp.z < l);
   }
@@ -357,7 +352,7 @@ move_betweentilemaps_ifonstairs(GameState &state)
   tp.z = cast(wp.z);
 
   auto const& tile = tmap.data(tp);
-  if (tile.type != TileType::STAIRS) {
+  if (!tile.is_stair()) {
     return;
   }
   // lookup stairs in tilemap
@@ -366,8 +361,8 @@ move_betweentilemaps_ifonstairs(GameState &state)
 
   auto const move_player_through_stairs = [&](StairInfo const& stair) {
     int const current = zm.active_zone();
-    int const newlevel = current + (stair.direction == StairDirection::UP ? 1 : -1);
-    std::cerr << "moving through stair '" << stair.direction << "'\n";
+    int const newlevel = current + (tile.is_stair_up() ? 1 : -1);
+    //std::cerr << "moving through stair '" << stair.direction << "'\n";
     assert(newlevel < zm.num_zones());
     zm.make_zone_active(newlevel, state);
     player.move_to(stair.exit_position);
