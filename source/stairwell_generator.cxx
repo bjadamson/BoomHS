@@ -126,11 +126,11 @@ place_stairs(PlaceStairsState &ps, TileMap &tmap, stlw::float_generator &rng,
     auto const behavior = TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY;
     auto const neighbors = find_immediate_neighbors(tmap, pos, TileType::FLOOR, behavior);
     std::cerr << "neighbors size: '" << neighbors.size() << "'\n";
-    assert(neighbors.size() > 0);
+    assert(!neighbors.empty());
 
     auto &si = registry.assign<StairInfo>(tile.eid);
     si.tile_position = pos;
-    si.exit_position = neighbors[0];
+    si.exit_position = neighbors.front();
     ++num_placed;
   };
 

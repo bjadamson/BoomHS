@@ -399,14 +399,28 @@ move_betweentilemaps_ifonstairs(GameState &state)
   auto const stair_eids = find_stairs(registry);
   assert(!stair_eids.empty());
 
-  auto const move_player_through_stairs = [&](StairInfo const& stair) {
-    int const current = zm.active_zone();
-    int const newlevel = current + (tile.is_stair_up() ? 1 : -1);
-    //std::cerr << "moving through stair '" << stair.direction << "'\n";
-    assert(newlevel < zm.num_zones());
-    zm.make_zone_active(newlevel, state);
+  auto const move_player_through_stairs = [&state, &tile, &tilemap_state](StairInfo const& stair) {
+    {
+      ZoneManager zm{state.zone_states};
+      auto &zone_state = zm.active();
+
+      int const current = zm.active_zone();
+      int const newlevel = current + (tile.is_stair_up() ? 1 : -1);
+      //std::cerr << "moving through stair '" << stair.direction << "'\n";
+      assert(newlevel < zm.num_zones());
+      zm.make_zone_active(newlevel, state);
+    }
+
+    // now that the zone has changed, all references through zm are pointing to old level
+    ZoneManager zm{state.zone_states};
+    auto &zone_state = zm.active();
+
+    auto &player = zone_state.player;
+    auto &registry = zone_state.registry;
+
 
     auto const spos = stair.exit_position;
+    std::cerr << "moving through stair to '" << glm::to_string(glm::vec3{spos.x, player.world_position().y, spos.z}) << "'\n";
     player.move_to(spos.x, player.world_position().y, spos.z);
     tilemap_state.recompute = true;
   };

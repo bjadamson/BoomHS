@@ -39,6 +39,8 @@ public:
     assert(i < size());
     return neighbors_[i];
   }
+
+  auto const& front() const { return neighbors_.front(); }
 };
 
 class TileMap
