@@ -115,26 +115,7 @@ void
 update_visible_tiles(TileMap &tmap, WorldObject const& player, bool const reveal_tilemap)
 {
   // Collect all the visible tiles for the player
-  auto const [w, _] = tmap.dimensions();
-  auto const update_tile = [&](TilePosition const& pos) {
-    bool found_wall = false;
-    auto &tile = tmap.data(pos);
-    bool const is_wall = tile.type == TileType::WALL;
-    if (!found_wall && !is_wall) {
-      // This is probably not always necessary. Consider starting with all tiles visible?
-      tile.is_visible = true;
-    }
-    else if(!found_wall && is_wall) {
-      tile.is_visible = true;
-      found_wall = true;
-    } else {
-      tile.is_visible = false;
-    }
-  };
-
-  // TODO: wtf is going on here, why again am I looping twice? unclear, document or something.
   auto const& wp = player.world_position();
-  std::vector<TilePosition> positions;
   auto const fn = [&](auto const& pos) {
     auto const x = pos.x, z = pos.z;
     if (reveal_tilemap) {
@@ -144,22 +125,6 @@ update_visible_tiles(TileMap &tmap, WorldObject const& player, bool const reveal
     }
   };
   tmap.visit_each(fn);
-
-  std::vector<TilePosition> visited;
-  for (auto const& pos : positions) {
-    auto const cmp = [&pos](auto const& pcached) {
-      return pcached == pos;
-    };
-    bool const seen_already = std::find_if(visited.cbegin(), visited.cend(), cmp) != visited.cend();
-    if (seen_already) {
-      // This tile has already been visited, skip
-      continue;
-    }
-    visited.emplace_back(pos);
-  }
-  for (auto const& tpos : visited) {
-    update_tile(tpos);
-  }
 }
 
 } // ns boomhs

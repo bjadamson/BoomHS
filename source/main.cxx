@@ -573,6 +573,59 @@ make_init_gamestate(stlw::Logger &logger, ImGuiIO &imgui, ZoneStates &&zs, windo
   return GameState{MOVE(es), MOVE(zs)};
 }
 
+void
+bridge_staircases(ZoneState &a, ZoneState &b)
+{
+  auto const stairs_up_a = find_upstairs(a.registry, a.tilemap);
+  assert(!stairs_up_a.empty());
+
+  //auto const stairs_down_a = find_downstairs(a.registry, a.tilemap);
+  //assert(!stairs_down_a.empty());
+
+  //auto const stairs_up_b = find_upstairs(b.registry, b.tilemap);
+  //assert(!stairs_up_b.empty());
+
+  auto const stairs_down_b = find_downstairs(b.registry, b.tilemap);
+  assert(!stairs_down_b.empty());
+
+  std::cerr << "stairs_up_a: '" << stairs_up_a.size() << "'\n";
+  //std::cerr << "stairs_down_a: '" << stairs_down_a.size() << "'\n";
+
+  //std::cerr << "stairs_up_b: '" << stairs_up_b.size() << "'\n";
+  std::cerr << "stairs_down_b: '" << stairs_down_b.size() << "'\n";
+
+  auto &a_registry = a.registry;
+  auto &b_registry = b.registry;
+
+  auto const behavior = TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY;
+
+  assert(stairs_up_a.size() == stairs_down_b.size());
+  auto const num_stairs = stairs_up_a.size();
+  FOR(i, num_stairs) {
+    auto const a_updowneid = stairs_up_a[i];
+    auto const b_downeid = stairs_down_b[i];
+
+    assert(a_registry.has<StairInfo>(a_updowneid));
+    StairInfo &si_a = a_registry.get<StairInfo>(a_updowneid);
+
+    assert(b_registry.has<StairInfo>(b_downeid));
+    StairInfo &si_b = b_registry.get<StairInfo>(b_downeid);
+
+    // find a suitable neighbor tile for each stair
+    auto const a_neighbors = find_immediate_neighbors(a.tilemap, si_a.tile_position, TileType::FLOOR,
+        behavior);
+    assert(!a_neighbors.empty());
+
+    auto const b_neighbors = find_immediate_neighbors(b.tilemap, si_b.tile_position, TileType::FLOOR,
+        behavior);
+    assert(!b_neighbors.empty());
+
+    // Set A's exit position to B's neighbor, and visa versa
+    si_a.exit_position = b_neighbors.front();
+    si_b.exit_position = a_neighbors.front();
+  }
+}
+
 stlw::result<stlw::empty_type, std::string>
 start(stlw::Logger &logger, Engine &engine)
 {
@@ -593,7 +646,7 @@ start(stlw::Logger &logger, Engine &engine)
     assert(handle_result);
     auto handlem = MOVE(*handle_result);
 
-    auto const stairs_perfloor = 2;
+    auto const stairs_perfloor = 5;
     StairGenConfig const sgconfig{floor_count, floor_number, stairs_perfloor};
 
     int const width = 40, length = 40;
@@ -650,20 +703,26 @@ start(stlw::Logger &logger, Engine &engine)
   auto zs3 = make_zs(3, FLOOR_COUNT, MOVE(ld3), registries[3]);
   auto zs4 = make_zs(4, FLOOR_COUNT, MOVE(ld4), registries[4]);
 
+  bridge_staircases(zs0, zs1);
+  bridge_staircases(zs1, zs2);
+  bridge_staircases(zs2, zs3);
+  bridge_staircases(zs3, zs4);
+
   std::array<ZoneState, FLOOR_COUNT> zstates_arr{MOVE(zs0), MOVE(zs1), MOVE(zs2),
    MOVE(zs3), MOVE(zs4)};
   ZoneStates zs{MOVE(zstates_arr)};
 
   /*
-  auto &registries = engine.registries;
-  static auto constexpr FLOOR_COUNT = 2;
   std::vector<ZoneState> zstates;
   //registries.resize(FLOOR_COUNT);
-
   FOR(i, FLOOR_COUNT) {
-    DO_TRY(auto ld, boomhs::load_level(logger, registries[i], "area0.toml"));
+    DO_TRY(auto ld, boomhs::load_level(logger, registries[i], "area" + std::to_string(i) + ".toml"));
     auto zs = make_zs(i, FLOOR_COUNT, MOVE(ld), registries[i]);
     zstates.emplace_back(MOVE(zs));
+  }
+  assert(FLOOR_COUNT >= 1);
+  for(auto i = 1; i < FLOOR_COUNT; ++i) {
+    bridge_staircases(zstates[i - 1], zstates[i]);
   }
   ZoneStates zs{MOVE(zstates)};
   */

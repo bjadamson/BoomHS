@@ -22,27 +22,12 @@ struct StairGenConfig
   NO_COPY_AND_NO_MOVE(StairGenConfig);
 };
 
-struct PlaceStairsState
-{
-  StairGenConfig const& stairconfig;
-  int const num_upstairs;
-  int const num_downstairs;
-
-  PlaceStairsState(StairGenConfig const& sgc, int const nu, int const nd)
-    : stairconfig(sgc)
-    , num_upstairs(nu)
-    , num_downstairs(nd)
-  {
-  }
-  NO_COPY_AND_NO_MOVE(PlaceStairsState);
-};
-
 } // ns boomhs
 
 namespace boomhs::stairwell_generator
 {
 
 bool
-place_stairs(PlaceStairsState &, TileMap &, stlw::float_generator &, entt::DefaultRegistry &);
+place_stairs(StairGenConfig const&, TileMap &, stlw::float_generator &, entt::DefaultRegistry &);
 
 } // ns boomhs::stairwell_generator

@@ -127,6 +127,22 @@ find_stairs(entt::DefaultRegistry &registry)
   return find_all_entities_with_component<StairInfo>(registry);
 }
 
+class TileMap;
+std::vector<uint32_t>
+find_stairs_withtype(entt::DefaultRegistry &, TileMap const&, TileType const);
+
+inline auto
+find_upstairs(entt::DefaultRegistry &registry, TileMap const& tmap)
+{
+  return find_stairs_withtype(registry, tmap, TileType::STAIR_UP);
+}
+
+inline auto
+find_downstairs(entt::DefaultRegistry &registry, TileMap const& tmap)
+{
+  return find_stairs_withtype(registry, tmap, TileType::STAIR_DOWN);
+}
+
 inline uint32_t
 find_player(entt::DefaultRegistry &registry)
 {

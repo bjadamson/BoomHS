@@ -37,7 +37,8 @@ flood_visit_skipping_position(Edges const& edge, FN const& fn)
 {
   for(auto z = edge.left; z <= edge.right; ++z) {
     for (auto x = edge.bottom; x <= edge.top; ++x) {
-      if (edge.position == std::make_pair(z, x)) {
+      //if (edge.position == std::make_pair(z, x)) {
+      if (x == edge.position.x || z == edge.position.z) {
         // skip over the tile (only iterating edges), not original tile
         continue;
       }
