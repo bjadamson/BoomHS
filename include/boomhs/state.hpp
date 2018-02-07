@@ -100,7 +100,7 @@ struct TilemapState
   // Both related to drawing GRID LINES
   bool show_grid_lines = true;
   bool show_yaxis_lines = false;
-  bool show_neighbortile_arrows = true;
+  bool show_neighbortile_arrows = false;
 
   glm::vec3 floor_offset = {0.0f, -0.5f, 0.0f};
   glm::vec3 tile_scaling = {1.0f, 1.0f, 1.0f};

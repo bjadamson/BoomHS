@@ -26,17 +26,17 @@ should_skip_tile(int const num_to_place, int const num_placed, TileMap const& tm
     TilePosition const& pos, stlw::float_generator &rng)
 {
   if(num_placed >= num_to_place) {
-    std::cerr << "placed too many stairs\n";
+    //std::cerr << "placed too many stairs\n";
     // placed too many
     return true;
   }
   if (tmap.data(pos).is_stair()) {
-    std::cerr << "tile already stair\n";
+    //std::cerr << "tile already stair\n";
     // tile is already a stairwell
     return true;
   }
   if(any_tilemap_neighbors(tmap, pos, MIN_DISTANCE_BETWEEN_STAIRS, is_stair)) {
-    std::cerr << "too close stair neighbor\n";
+    //std::cerr << "too close stair neighbor\n";
     // nearby neighbor tile is a stairwell
     return true;
   }

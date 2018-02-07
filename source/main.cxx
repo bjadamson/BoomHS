@@ -414,13 +414,15 @@ move_betweentilemaps_ifonstairs(GameState &state)
     ZoneManager zm{state.zone_states};
     auto &zone_state = zm.active();
 
+    auto &camera = zone_state.camera;
     auto &player = zone_state.player;
     auto &registry = zone_state.registry;
-
 
     auto const spos = stair.exit_position;
     std::cerr << "moving through stair to '" << glm::to_string(glm::vec3{spos.x, player.world_position().y, spos.y}) << "'\n";
     player.move_to(spos.x, player.world_position().y, spos.y);
+    player.rotate_to_match_camera_rotation(camera);
+
     tilemap_state.recompute = true;
   };
   for (auto const& eid : stair_eids) {
@@ -713,7 +715,7 @@ start(stlw::Logger &logger, Engine &engine)
 
   /*
   std::vector<ZoneState> zstates;
-  //registries.resize(FLOOR_COUNT);
+  registries.resize(FLOOR_COUNT);
   FOR(i, FLOOR_COUNT) {
     DO_TRY(auto ld, boomhs::load_level(logger, registries[i], "area" + std::to_string(i) + ".toml"));
     auto zs = make_zs(i, FLOOR_COUNT, MOVE(ld), registries[i]);
