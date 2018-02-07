@@ -74,6 +74,13 @@ va = "vertex_normal_color"
 instance_count = 3
 
 [[shaders]]
+name = "river"
+vertex = "river.vert"
+fragment = "3d_pos_normal_color.frag"
+va = "vertex_normal_color"
+instance_count = 2
+
+[[shaders]]
 name = "light"
 vertex = "light.vert"
 fragment = "light.frag"

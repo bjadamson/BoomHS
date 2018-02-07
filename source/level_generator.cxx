@@ -254,6 +254,10 @@ place_rooms_and_stairs(TilemapConfig &tconfig, TileMap &tmap,
       stairs = stairwell_generator::place_stairs(sc, tmap, rng, registry);
     }
   }
+  // hack
+  tmap.data(0, 0).type = TileType::RIVER;
+  tmap.data(1, 0).type = TileType::RIVER;
+  tmap.data(2, 0).type = TileType::RIVER;
 
   // This seems hacky?
   return (*rooms).starting_position;

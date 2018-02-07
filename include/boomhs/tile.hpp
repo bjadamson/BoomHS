@@ -38,6 +38,7 @@ enum class TileType
 {
   FLOOR = 0,
   WALL,
+  RIVER,
   STAIR_DOWN,
   STAIR_UP,
 };

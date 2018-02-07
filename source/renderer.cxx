@@ -14,11 +14,14 @@
 #include <opengl/draw_info.hpp>
 #include <opengl/shader.hpp>
 
+#include <window/timer.hpp>
+
 #include <stlw/log.hpp>
 #include <iostream>
 
-using namespace opengl;
 using namespace boomhs;
+using namespace opengl;
+using namespace window;
 
 namespace
 {
@@ -313,7 +316,7 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
 
 void
 draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& tilemap,
-    TilemapState const& tilemap_state, entt::DefaultRegistry &registry)
+    TilemapState const& tilemap_state, entt::DefaultRegistry &registry, FrameTime const& ft)
 {
   auto &logger = args.logger;
   auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, std::uint32_t const entity,
@@ -324,10 +327,7 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
     ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
     draw_3dshape(args, model_mat, sp, dinfo, entity, registry, receives_ambient_light);
   };
-  auto &plus = dt_args.plus;
-  auto &hashtag = dt_args.hashtag;
-  auto &stairs_down = dt_args.stairs_down;
-  auto &stairs_up = dt_args.stairs_up;
+  
   auto const draw_tile = [&](auto const& tile_pos) {
     auto const& tile = tilemap.data(tile_pos);
     if (!tilemap_state.reveal && !tile.is_visible) {
@@ -343,14 +343,25 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
     {
       return stlw::math::calculate_modelmatrix(translation, rotation, transform.scale);
     };
+
+    auto &plus = dt_args.plus;
+    auto &hashtag = dt_args.hashtag;
+    auto &river = dt_args.river;
+    auto &stairs_down = dt_args.stairs_down;
+    auto &stairs_up = dt_args.stairs_up;
     switch(tile.type) {
       case TileType::FLOOR:
-        draw_tile_helper(plus.sp, plus.dinfo, plus.eid, normal_modelmatrix(),
-            true);
+        draw_tile_helper(plus.sp, plus.dinfo, plus.eid, normal_modelmatrix(), true);
         break;
       case TileType::WALL:
-        draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, normal_modelmatrix(),
-            true);
+        draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, normal_modelmatrix(), true);
+        break;
+      case TileType::RIVER:
+        {
+          river.sp.set_uniform_float1(logger, "u_ticks", ft.ticks);
+          std::cerr << "delta: " << ft.delta << "' ticks: '" << ft.ticks << "'\n";
+          draw_tile_helper(river.sp, river.dinfo, river.eid, normal_modelmatrix(), true);
+        }
         break;
       case TileType::STAIR_DOWN:
         {

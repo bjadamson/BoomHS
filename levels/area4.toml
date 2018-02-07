@@ -102,6 +102,12 @@ colors = false
 normals = true
 uvs = false
 
+[[meshes]]
+name = "tilde"
+colors = true
+normals = true
+uvs = false
+
 ########### ENTITY #############
 [[entity]]
 pos = [8.5, 0.0, 8.5]

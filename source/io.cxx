@@ -3,6 +3,7 @@
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
 #include <boomhs/zone.hpp>
+#include <window/timer.hpp>
 #include <stlw/log.hpp>
 
 #include <imgui/imgui.hpp>
@@ -21,7 +22,8 @@ using namespace boomhs;
 using namespace window;
 
 void
-move_ontilemap(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObject &wo, double const dt)
+move_ontilemap(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObject &wo,
+    FrameTime const& ft)
 {
   auto &es = state.engine_state;
   auto &ts = es.tilemap_state;
@@ -32,7 +34,7 @@ move_ontilemap(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObje
   glm::vec3 const move_vec = (wo.*fn)();
 
   // TODO: stop doing this when we use double instead of float
-  auto const dtf = static_cast<float>(dt);
+  auto const dtf = static_cast<float>(ft.delta);
   auto const wpos = wo.tilemap_position() + (move_vec * dtf * wo.speed());
   bool const x_outofbounds = wpos.x > x || wpos.x < 0;
   bool const z_outofbounds = wpos.z > z || wpos.z < 0;
@@ -53,7 +55,7 @@ move_ontilemap(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObje
   auto const& new_tile = tilemap.data(wpos.x, wpos.z);
   bool const should_move = (!es.player_collision) || (new_tile.type != TileType::WALL);
   if (should_move) {
-    wo.move(move_vec, dt);
+    wo.move(move_vec, ft.delta);
     ts.recompute = true;
   }
 }
@@ -81,7 +83,7 @@ is_quit_event(SDL_Event &event)
 }
 
 void
-process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, float const dt)
+process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, FrameTime const& ft)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
@@ -99,7 +101,7 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, float 
 
   if (ms.both_pressed()) {
     player.rotate_to_match_camera_rotation(camera);
-    move_ontilemap(state, &WorldObject::world_forward, player, dt);
+    move_ontilemap(state, &WorldObject::world_forward, player, ft);
   }
   if (ms.left_pressed) {
     auto const& sens = ms.sensitivity;
@@ -110,14 +112,15 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, float 
   if (ms.right_pressed) {
     float const speed = camera.rotation_speed;
     float const angle = xrel > 0 ? speed : -speed;
-    auto const x_dt = angle * dt;
+
+    auto const x_dt = angle * ft.delta;
     auto constexpr y_dt = 0.0f;
     player.rotate(x_dt, opengl::Y_UNIT_VECTOR);
   }
 }
 
 void
-process_mousebutton_down(GameState &state, SDL_MouseButtonEvent const& event, float const dt)
+process_mousebutton_down(GameState &state, SDL_MouseButtonEvent const& event, FrameTime const& ft)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
@@ -144,7 +147,7 @@ process_mousebutton_down(GameState &state, SDL_MouseButtonEvent const& event, fl
 }
 
 void
-process_mousebutton_up(GameState &state, SDL_MouseButtonEvent const& event, float const dt)
+process_mousebutton_up(GameState &state, SDL_MouseButtonEvent const& event, FrameTime const& ft)
 {
   auto &es = state.engine_state;
   auto &ms = es.mouse_state;
@@ -159,12 +162,12 @@ process_mousebutton_up(GameState &state, SDL_MouseButtonEvent const& event, floa
 }
 
 void
-process_keyup(GameState &state, SDL_Event const& event, float const dt)
+process_keyup(GameState &state, SDL_Event const& event, FrameTime const& ft)
 {
 }
 
 void
-process_keydown(GameState &state, SDL_Event const& event, float const dt)
+process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
 {
   auto &es = state.engine_state;
   auto &ui = es.ui_state;
@@ -276,7 +279,7 @@ process_keydown(GameState &state, SDL_Event const& event, float const dt)
 }
 
 void
-process_mousewheel(GameState &state, SDL_MouseWheelEvent const& wheel, float const dt)
+process_mousewheel(GameState &state, SDL_MouseWheelEvent const& wheel, FrameTime const& ft)
 {
   auto &logger = state.engine_state.logger;
   LOG_TRACE("mouse wheel event detected.");
@@ -292,7 +295,7 @@ process_mousewheel(GameState &state, SDL_MouseWheelEvent const& wheel, float con
 }
 
 void
-process_keystate(GameState &state, double const dt)
+process_keystate(GameState &state, FrameTime const& ft)
 {
   // continual keypress responses procesed here
   uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
@@ -305,27 +308,27 @@ process_keystate(GameState &state, double const dt)
   auto &player = active.player;
 
   if (keystate[SDL_SCANCODE_W]) {
-    move_ontilemap(state, &WorldObject::world_forward, player, dt);
+    move_ontilemap(state, &WorldObject::world_forward, player, ft);
   }
   if (keystate[SDL_SCANCODE_S]) {
-    move_ontilemap(state, &WorldObject::world_backward, player, dt);
+    move_ontilemap(state, &WorldObject::world_backward, player, ft);
   }
   if (keystate[SDL_SCANCODE_A]) {
-    move_ontilemap(state, &WorldObject::world_left, player, dt);
+    move_ontilemap(state, &WorldObject::world_left, player, ft);
   }
   if (keystate[SDL_SCANCODE_D]) {
-    move_ontilemap(state, &WorldObject::world_right, player, dt);
+    move_ontilemap(state, &WorldObject::world_right, player, ft);
   }
   if (keystate[SDL_SCANCODE_Q]) {
-    move_ontilemap(state, &WorldObject::world_up, player, dt);
+    move_ontilemap(state, &WorldObject::world_up, player, ft);
   }
   if (keystate[SDL_SCANCODE_E]) {
-    move_ontilemap(state, &WorldObject::world_down, player, dt);
+    move_ontilemap(state, &WorldObject::world_down, player, ft);
   }
 }
 
 void
-process_mousestate(GameState &state, double const dt)
+process_mousestate(GameState &state, FrameTime const& ft)
 {
   auto &es = state.engine_state;
   auto &ms = es.mouse_state;
@@ -335,12 +338,12 @@ process_mousestate(GameState &state, double const dt)
     auto &zone_state = zm.active();
     auto &player = zone_state.player;
 
-    move_ontilemap(state, &WorldObject::world_forward, player, dt);
+    move_ontilemap(state, &WorldObject::world_forward, player, ft);
   }
 }
 
 bool
-process_event(GameState &state, SDL_Event &event, float const dt)
+process_event(GameState &state, SDL_Event &event, FrameTime const& ft)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
@@ -353,22 +356,22 @@ process_event(GameState &state, SDL_Event &event, float const dt)
 
   switch (event.type) {
     case SDL_MOUSEBUTTONDOWN:
-      process_mousebutton_down(state, event.button, dt);
+      process_mousebutton_down(state, event.button, ft);
       break;
     case SDL_MOUSEBUTTONUP:
-      process_mousebutton_up(state, event.button, dt);
+      process_mousebutton_up(state, event.button, ft);
       break;
   case SDL_MOUSEMOTION:
-      process_mousemotion(state, event.motion, dt);
+      process_mousemotion(state, event.motion, ft);
       break;
   case SDL_MOUSEWHEEL:
-      process_mousewheel(state, event.wheel, dt);
+      process_mousewheel(state, event.wheel, ft);
       break;
   case SDL_KEYDOWN:
-      process_keydown(state, event, dt);
+      process_keydown(state, event, ft);
       break;
   case SDL_KEYUP:
-      process_keyup(state, event, dt);
+      process_keyup(state, event, ft);
       break;
   }
   return is_quit_event(event);
@@ -380,7 +383,7 @@ namespace boomhs
 {
 
 void
-IO::process(GameState &state, SDL_Event &event, double const dt)
+IO::process(GameState &state, SDL_Event &event, FrameTime const& ft)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
@@ -391,11 +394,11 @@ IO::process(GameState &state, SDL_Event &event, double const dt)
 
     auto &imgui = es.imgui;
     if (!imgui.WantCaptureMouse && !imgui.WantCaptureKeyboard) {
-      es.quit = process_event(state, event, dt);
+      es.quit = process_event(state, event, ft);
     }
   }
-  process_keystate(state, dt);
-  process_mousestate(state, dt);
+  process_keystate(state, ft);
+  process_mousestate(state, ft);
 }
 
 } // ns boomhs

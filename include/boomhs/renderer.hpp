@@ -14,6 +14,11 @@ class DrawInfo;
 class ShaderProgram;
 } // ns opengl
 
+namespace window
+{
+struct FrameTime;
+} // ns window
+
 namespace boomhs
 {
 class Camera;
@@ -95,13 +100,14 @@ struct DrawTilemapArgs
 {
   DrawPlusArgs plus;
   DrawHashtagArgs hashtag;
+  DrawHashtagArgs river;
   DrawStairsDownArgs stairs_down;
   DrawStairsUpArgs stairs_up;
 };
 
 void
 draw_tilemap(RenderArgs const&, DrawTilemapArgs &, TileMap const&, TilemapState const&,
-    entt::DefaultRegistry &);
+    entt::DefaultRegistry &, window::FrameTime const&);
 
 void
 draw_tilegrid(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawInfo const&);

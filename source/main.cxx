@@ -103,13 +103,13 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
     handle_list.add(entity, MOVE(handle));
   });
 
-  auto const make_special = [&handle_list, &logger, &obj_cache, &sps, &registry](char const *name, char const*vshader_name) {
-    auto const &obj = obj_cache.get_obj(name);
+  auto const make_special = [&handle_list, &logger, &obj_cache, &sps, &registry](char const *mesh_name, char const*vshader_name) {
+    auto const &obj = obj_cache.get_obj(mesh_name);
     auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, boost::none);
     auto const entity = registry.create();
     registry.assign<Material>(entity);
     auto meshc = registry.assign<MeshRenderable>(entity);
-    meshc.name = name;
+    meshc.name = mesh_name;
 
     auto &color = registry.assign<Color>(entity);
     color.set_r(1.0);
@@ -120,13 +120,13 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
     handle_list.add(entity, MOVE(handle));
     return entity;
   };
-  auto const make_stair = [&](char const* vshader_name, char const* name) {
-    auto const &obj = obj_cache.get_obj(name);
+  auto const make_stair = [&](char const* vshader_name, char const* mesh_name) {
+    auto const &obj = obj_cache.get_obj(mesh_name);
     auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, boost::none);
     auto const eid = registry.create();
     registry.assign<Material>(eid);
     auto meshc = registry.assign<MeshRenderable>(eid);
-    meshc.name = name;
+    meshc.name = mesh_name;
 
     handle_list.add(eid, MOVE(handle));
     return eid;
@@ -134,10 +134,12 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
 
   auto const plus_eid = make_special("plus", "3d_pos_normal_color");
   auto const hashtag_eid = make_special("hashtag", "hashtag");
+  auto const river_eid = make_special("tilde", "river");
   auto const stair_down_eid = make_stair("stair", "stair_down");
   auto const stair_up_eid = make_stair("stair", "stair_up");
 
-  return HandleManager{MOVE(handle_list), plus_eid, hashtag_eid, stair_down_eid, stair_up_eid};
+  return HandleManager{MOVE(handle_list), plus_eid, hashtag_eid, river_eid, stair_down_eid,
+    stair_up_eid};
 }
 
 void
@@ -191,7 +193,7 @@ draw_terrain(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
 
 void
 draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
-             HandleManager &handles)
+             HandleManager &handles, FrameTime const& ft)
 {
   using namespace render;
   auto &logger = state.engine_state.logger;
@@ -210,16 +212,18 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
     handles.plus_eid};
   DrawHashtagArgs hashtag{sps.ref_sp("hashtag"), handles.lookup(handles.hashtag_eid),
                           handles.hashtag_eid};
+  DrawHashtagArgs river{sps.ref_sp("river"), handles.lookup(handles.river_eid),
+                          handles.river_eid};
 
   auto &stair_sp = sps.ref_sp("stair");
   DrawStairsDownArgs stairs_down{stair_sp, handles.lookup(handles.stair_down_eid), handles.stair_down_eid};
   DrawStairsUpArgs stairs_up{stair_sp, handles.lookup(handles.stair_up_eid), handles.stair_up_eid};
-  DrawTilemapArgs dta{MOVE(plus), MOVE(hashtag), MOVE(stairs_down), MOVE(stairs_up)};
+  DrawTilemapArgs dta{MOVE(plus), MOVE(hashtag), MOVE(river), MOVE(stairs_down), MOVE(stairs_up)};
 
   ZoneManager zm{state.zone_states};
   auto const& tilemap = zm.active().tilemap;
   render::draw_tilemap(state.render_args(), dta, tilemap,
-                       state.engine_state.tilemap_state, registry);
+                       state.engine_state.tilemap_state, registry, ft);
 }
 
 void
@@ -421,7 +425,6 @@ move_betweentilemaps_ifonstairs(GameState &state)
     auto &registry = zone_state.registry;
 
     auto const spos = stair.exit_position;
-    std::cerr << "moving through stair to '" << glm::to_string(glm::vec3{spos.x, player.world_position().y, spos.y}) << "'\n";
     player.move_to(spos.x, player.world_position().y, spos.y);
     player.rotate_to_match_camera_rotation(camera);
 
@@ -439,7 +442,7 @@ move_betweentilemaps_ifonstairs(GameState &state)
 }
 
 void
-game_loop(GameState &state, SDLWindow &window, double const dt)
+game_loop(GameState &state, SDLWindow &window, FrameTime const& ft)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
@@ -477,7 +480,7 @@ game_loop(GameState &state, SDLWindow &window, double const dt)
     draw_terrain(state, registry, sps);
   }
   if (tilemap_state.draw_tilemap) {
-    draw_tilemap(state, registry, sps, handles);
+    draw_tilemap(state, registry, sps, handles, ft);
   }
   if (tilemap_state.show_grid_lines) {
     draw_tilegrid(state, registry, sps);
@@ -528,15 +531,15 @@ struct Engine
 };
 
 void
-loop(Engine &engine, GameState &state, double const dt)
+loop(Engine &engine, GameState &state, FrameTime const& ft)
 {
   auto &logger = state.engine_state.logger;
   // Reset Imgui for next game frame.
   ImGui_ImplSdlGL3_NewFrame(engine.window.raw());
 
   SDL_Event event;
-  boomhs::IO::process(state, event, dt);
-  boomhs::game_loop(state, engine.window, dt);
+  boomhs::IO::process(state, event, ft);
+  boomhs::game_loop(state, engine.window, ft);
 
   // Render Imgui UI
   ImGui::Render();
@@ -552,11 +555,9 @@ timed_game_loop(Engine &engine, GameState &state)
   window::FrameCounter counter;
 
   auto &logger = state.engine_state.logger;
-  auto const freq = SDL_GetPerformanceFrequency();
   while (!state.engine_state.quit) {
-    double const dt = (clock.ticks() * 1000.0 / freq);
-
-    loop(engine, state, dt);
+    auto const ft = clock.frame_time();
+    loop(engine, state, ft);
     clock.update(logger);
     counter.update(logger, clock);
   }
@@ -591,11 +592,11 @@ bridge_staircases(ZoneState &a, ZoneState &b)
   auto const stairs_down_b = find_downstairs(b.registry, b.tilemap);
   assert(!stairs_down_b.empty());
 
-  std::cerr << "stairs_up_a: '" << stairs_up_a.size() << "'\n";
+  //std::cerr << "stairs_up_a: '" << stairs_up_a.size() << "'\n";
   //std::cerr << "stairs_down_a: '" << stairs_down_a.size() << "'\n";
 
   //std::cerr << "stairs_up_b: '" << stairs_up_b.size() << "'\n";
-  std::cerr << "stairs_down_b: '" << stairs_down_b.size() << "'\n";
+  //std::cerr << "stairs_down_b: '" << stairs_down_b.size() << "'\n";
 
   auto &a_registry = a.registry;
   auto &b_registry = b.registry;
