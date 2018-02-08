@@ -3,73 +3,66 @@
 #include <boost/optional.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/types.hpp>
+#include <stlw/try.hpp>
 
 namespace stlw
 {
 
-template <typename... P>
-decltype(auto)
+template <typename ...P>
+auto
 make_error(P &&... p)
 {
   return ::nonstd::make_unexpected(std::forward<P>(p)...);
+}
+
+template <typename R>
+auto
+lift_error(R const& result)
+{
+  return stlw::make_error(result.error());
 }
 
 template <typename T, typename E>
 using result = ::nonstd::expected<T, E>;
 } // ns stlw
 
-#define ERROR ::stlw::make_error
-
-// General-purpose eval function.
-#define DO_GENERAL_EVAL(VAR_DECL, V, expr)                                                         \
-  auto V{expr};                                                                                    \
-  if (!V) {                                                                                        \
-    return stlw::make_error(V.error());                                                            \
-  }                                                                                                \
-  VAR_DECL{*MOVE(V)};
-
-// DO_TRY
-#define DO_TRY_CONCAT(VAR_DECL, TO_CONCAT, expr)                                                   \
-  DO_GENERAL_EVAL(VAR_DECL, _DO_TRY_TEMPORARY_##TO_CONCAT, expr)
-
-#define DO_TRY_EXPAND_VAR(VAR_DECL, to_concat, expr)                                               \
-  DO_TRY_CONCAT(VAR_DECL, to_concat, expr)
-
-#define DO_TRY(VAR_DECL, expr)                                                                     \
-  DO_TRY_EXPAND_VAR(VAR_DECL, __COUNTER__, expr)
-
-// OR_ELSE
-#define DO_GENERAL_OR_ELSE_EVAL(VAR_DECL, V, expr, fn)                                             \
-  auto V{expr};                                                                                    \
-  if (!V) {                                                                                        \
-    fn(V.error());                                                                                 \
-  }                                                                                                \
-  VAR_DECL{*MOVE(V)};
-
-#define DO_TRY_OR_ELSE_EVAL(VAR_DECL, V, expr, fn) DO_GENERAL_OR_ELSE_EVAL(VAR_DECL, V, expr, fn)
-#define DO_TRY_OR_ELSE_CONCAT(VAR_DECL, to_concat, expr, fn)                                       \
-  DO_TRY_OR_ELSE_EVAL(VAR_DECL, _DO_TRY_OR_ELSE_TEMPORARY_##to_concat, expr, fn)
-#define DO_TRY_OR_ELSE_EXPAND(VAR_DECL, to_concat, expr, fn)                                       \
-  DO_TRY_OR_ELSE_CONCAT(VAR_DECL, to_concat, expr, fn)
-#define DO_TRY_OR_ELSE_RETURN(VAR_DECL, expr, fn)                                                  \
-  DO_TRY_OR_ELSE_EXPAND(VAR_DECL, __COUNTER__, expr, fn)
+// These macros are specific for working with stlw::result<T>.
+//
+// They each have separate use cases, and build upon the general purpose macros inside
+// stlw/try.hpp.
 
 // DO_EFFECT
-#define DO_EFFECT_INSERT_AUTO(VAR, expr) DO_TRY(auto VAR, expr)
-#define DO_EFFECT_CONCAT(pre, VAR, expr) DO_EFFECT_INSERT_AUTO(pre##VAR, expr)
-#define DO_EFFECT_EXPAND_VAR(VAR, expr) DO_EFFECT_CONCAT(_DO_EFFECT_MACRO_TEMPORARY_, VAR, expr)
-#define DO_EFFECT(expr) DO_EFFECT_EXPAND_VAR(__COUNTER__, expr)
+//
+// Evaluates the expression, behaves accordingly:
+//   * If evaluating the expression yields an error, causes that error to be returned (at the
+//   callsite the macro is invoked at).
+//
+//   * If evaluating the expression yields an ok() result, disregards the result (running the
+//   values destructor immediatly, if applicable).
+#define DO_EFFECT(expr)                                                                            \
+  EVAL_INTO_VAR_OR(auto _, expr, stlw::lift_error)                                                 \
 
-// DO_EFFECT_OR_ELSE
-#define DO_GENERAL_EFFECT(V, expr, or_else_fn)                                                     \
-  auto V{expr};                                                                                    \
-  if (!V) {                                                                                        \
-    return or_else_fn(V.error());                                                                  \
-  }
+// DO_TRY
+//
+// Tries to evaluate an expression, storing the result into a variable provided by the caller.
+#define DO_TRY(VAR_NAME, expr)                                                                     \
+  EVAL_INTO_VAR_OR(VAR_NAME, expr, stlw::lift_error);                                              \
 
-#define DO_EFFECT_OR_ELSE_GENERAL_EVAL(VAR, expr, fn) DO_GENERAL_EFFECT(VAR, expr, fn)
-#define DO_EFFECT_OR_ELSE_CONCAT(pre, VAR, expr, fn)                                               \
-  DO_EFFECT_OR_ELSE_GENERAL_EVAL(pre##VAR, expr, fn)
-#define DO_EFFECT_OR_ELSE_EXPAND(VAR, expr, fn)                                                    \
-  DO_EFFECT_OR_ELSE_CONCAT(_DO_EFFECT_OR_ELSE_TEMPORARY_, VAR, expr, fn)
-#define DO_EFFECT_OR_ELSE_RETURN(expr, fn) DO_EFFECT_OR_ELSE_EXPAND(__COUNTER__, expr, fn)
+// DO_TRY_OR_ELSE_RETURN
+//
+// Evaluates the expression, behaves accordingly:
+//   * If evaluated the expression yields an error, invokes the user provided function  on the
+//   error. The value returned from the function invocation is returned at the callsite of the
+//   macro.
+//   * Otherwise MOVES the evaluated expression into the variable VAR_NAME.
+#define DO_TRY_OR_ELSE_RETURN(VAR_NAME, expr, fn)                                                  \
+  EVAL_INTO_VAR_OR(VAR_NAME, expr,                                                                 \
+      [&fn](auto const& r) { return fn(r.error()); })
+
+// DO_TRY_OR_ELSE_RETURN_DEFAULT_T
+//
+// Evaluates the expression, behaves accordingly.
+//   * If the evaluated expression yields an error, return a default instance of T.
+//   * Otherwise MOVES the evaluated expression into the variable VAR_NAME.
+#define DO_TRY_OR_ELSE_RETURN_T(VAR_NAME, expr, T)                                                 \
+  EVAL_INTO_VAR_OR(VAR_NAME, expr, [](auto const&) { return T{}; })                                \

@@ -52,13 +52,19 @@ public:
   }
 };
 
-struct RiverInfo
+struct RiverWiggle
 {
   float speed;
   float z_jiggle;
 
-  glm::vec3 left, right, top, bottom;
   glm::vec3 position;
+};
+
+struct RiverInfo
+{
+  glm::vec3 left, right, top, bottom;
+
+  std::vector<RiverWiggle> wiggles;
 };
 
 struct StairInfo

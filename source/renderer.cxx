@@ -415,27 +415,33 @@ draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInf
 
   auto const& left = rinfo.left;
   auto const& right = rinfo.right;
-  auto &x = rinfo.position.x;
-  x += abscos(ft.delta) / rinfo.speed;
-  if (x > right.x) {
-    x = left.x;
-  }
 
   sp.use(rargs.logger);
 
-  auto const u_zoffset = abscos(ft.delta * rinfo.z_jiggle);
-  sp.set_uniform_float1(rargs.logger, "u_zoffset", u_zoffset);
-  sp.set_uniform_color(rargs.logger, "u_color", LOC::BLUE);
-  opengl::global::vao_bind(dinfo.vao());
-  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+  auto const draw_wiggle = [&](auto &wiggle) {
+    auto &x = wiggle.position.x;
+    x += abscos(ft.delta) / wiggle.speed;
+    if (x > right.x) {
+      x = left.x;
+    }
 
-  auto const tr = rinfo.position;
-  auto const rot = glm::quat{};
-  auto const scale = glm::vec3{1.0};
+    auto const u_zoffset = abscos(ft.delta * wiggle.z_jiggle);
+    sp.set_uniform_float1(rargs.logger, "u_zoffset", u_zoffset);
+    sp.set_uniform_color(rargs.logger, "u_color", LOC::BLUE);
+    opengl::global::vao_bind(dinfo.vao());
+    ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
-  bool const receives_ambient = false;
-  auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
-  draw_3dshape(rargs, modelmatrix, sp, dinfo, river_eid, registry, receives_ambient);
+    auto const tr = wiggle.position;
+    auto const rot = glm::quat{};
+    auto const scale = glm::vec3{1.0};
+
+    bool const receives_ambient = false;
+    auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
+    draw_3dshape(rargs, modelmatrix, sp, dinfo, river_eid, registry, receives_ambient);
+  };
+  for (auto &w : rinfo.wiggles) {
+    draw_wiggle(w);
+  }
 }
 
 void

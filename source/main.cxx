@@ -799,7 +799,6 @@ main(int argc, char *argv[])
   bool constexpr FULLSCREEN = false;
   DO_TRY_OR_ELSE_RETURN(auto window, make_window(logger, FULLSCREEN, 1024, 768),
                         on_error);
-
   Engine engine{MOVE(window)};
 
   LOG_DEBUG("Starting game loop");
