@@ -54,7 +54,9 @@ public:
 
 struct RiverInfo
 {
-  float speed = 0.0;
+  float speed;
+  float z_jiggle;
+
   glm::vec3 left, right, top, bottom;
   glm::vec3 position;
 };

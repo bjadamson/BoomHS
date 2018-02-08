@@ -4,6 +4,7 @@ in vec3 a_normal;
 out vec4 v_position;
 out vec3 v_surfacenormal;
 
+uniform float u_zoffset;
 uniform mat4 u_mvpmatrix;
 uniform mat4 u_modelmatrix;
 uniform mat3 u_normalmatrix;
@@ -11,6 +12,7 @@ uniform mat3 u_normalmatrix;
 void main()
 {
   const float offset_z = 0.15;
+
   const vec3 vertical_offsets[2] = vec3[2]( vec3(0.0, 0.0, -offset_z), vec3(0.0, 0.0, offset_z) );
   vec3 offset = vertical_offsets[gl_InstanceID];
 
@@ -19,6 +21,7 @@ void main()
 
   // Transform v_position to world-space
   vec4 pos_world = u_modelmatrix * v_position;
+  pos_world.z += u_zoffset;
 
   // Calculate the position of the vertex using the offset array
   pos_world += vec4(offset, 0.0);

@@ -83,6 +83,12 @@ public:
     return std::make_pair(x, y);
   }
 
+  auto gen_float_range(float const low, float const high)
+  {
+    std::uniform_real_distribution<float> distribution{low, high};
+    return distribution(this->generator_);
+  }
+
   auto gen_int_range(int const low, int const high)
   {
     std::uniform_int_distribution<int> distribution{low, high};

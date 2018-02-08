@@ -244,17 +244,17 @@ place_rooms_and_stairs(TilemapConfig &tconfig, TileMap &tmap,
   boost::optional<Rooms> rooms = boost::none;
   bool stairs = false;
 
-
   auto const add_river = [&](auto const x, auto const y) {
     auto &tile = tmap.data(x, y);
     tile.type = TileType::RIVER;
 
-    auto constexpr WIDTH = 3;
-    auto constexpr HEIGHT = 3;
+    auto constexpr WIDTH = 5;
+    auto constexpr HEIGHT = 5;
 
     auto &ri = registry.assign<RiverInfo>(tile.eid);
     ri.position = glm::vec3{x, 0, y};
-    ri.speed    = 100;
+    ri.speed    = rng.gen_float_range(50.0, 250.0);
+    ri.z_jiggle = rng.gen_float_range(1000.0, 1500.0f);
     ri.left     = glm::vec3{x, 0, 0};
     ri.right    = glm::vec3{x + WIDTH, 0, 0};
 
@@ -267,10 +267,8 @@ place_rooms_and_stairs(TilemapConfig &tconfig, TileMap &tmap,
     while(!rooms) {
       rooms = create_rooms(tconfig.width, tconfig.length, tmap, rng);
     }
-    FOR(i, 8) {
-      FOR(j, 8) {
-        add_river(i, j);
-      }
+    FOR(i, 20) {
+      add_river(0, i);
     }
     while(!stairs) {
       std::cerr << "placing stairs ...\n";

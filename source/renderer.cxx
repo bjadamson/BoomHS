@@ -409,21 +409,22 @@ draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInf
     entt::DefaultRegistry &registry, window::FrameTime const& ft, uint32_t const river_eid,
     RiverInfo &rinfo)
 {
-  auto const move_component = [&](auto const less, auto const greater, auto &c) {
-    c += std::abs(std::cos(ft.delta)) / rinfo.speed;
-    if (c > greater) {
-      c = less;
-    }
+  auto const abscos = [&rinfo](float const v) {
+    return std::abs(std::cos(v));
   };
 
   auto const& left = rinfo.left;
   auto const& right = rinfo.right;
-  auto const& top = rinfo.top;
-  auto const& bottom = rinfo.bottom;
-  move_component(left.x, right.x, rinfo.position.x);
-  move_component(top.x, bottom.z, rinfo.position.z);
+  auto &x = rinfo.position.x;
+  x += abscos(ft.delta) / rinfo.speed;
+  if (x > right.x) {
+    x = left.x;
+  }
 
   sp.use(rargs.logger);
+
+  auto const u_zoffset = abscos(ft.delta * rinfo.z_jiggle);
+  sp.set_uniform_float1(rargs.logger, "u_zoffset", u_zoffset);
   sp.set_uniform_color(rargs.logger, "u_color", LOC::BLUE);
   opengl::global::vao_bind(dinfo.vao());
   ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
