@@ -157,15 +157,17 @@ class HandleManager {
 public:
   uint32_t plus_eid;
   uint32_t hashtag_eid;
-  uint32_t stairs_eid;
+  uint32_t stair_down_eid;
+  uint32_t stair_up_eid;
 
   MOVE_CONSTRUCTIBLE_ONLY(HandleManager);
   explicit HandleManager(GpuHandleList &&list, uint32_t const plus, uint32_t const hashtag,
-      uint32_t const stairs)
+      uint32_t const stair_down, uint32_t const stair_up)
     : list_(MOVE(list))
     , plus_eid(plus)
     , hashtag_eid(hashtag)
-    , stairs_eid(stairs)
+    , stair_down_eid(stair_down)
+    , stair_up_eid(stair_up)
   {
   }
 

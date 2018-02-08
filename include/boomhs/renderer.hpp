@@ -57,14 +57,14 @@ clear_screen(opengl::Color const&);
 
 void
 draw(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
-    std::uint32_t const, entt::DefaultRegistry &);
+    uint32_t const, entt::DefaultRegistry &);
 
 struct DrawPlusArgs
 {
   opengl::ShaderProgram &sp;
   opengl::DrawInfo const& dinfo;
 
-  std::uint32_t const eid;
+  uint32_t const eid;
 };
 
 struct DrawHashtagArgs
@@ -72,22 +72,31 @@ struct DrawHashtagArgs
   opengl::ShaderProgram &sp;
   opengl::DrawInfo const& dinfo;
 
-  std::uint32_t const eid;
+  uint32_t const eid;
 };
 
-struct DrawStairsArgs
+struct DrawStairsDownArgs
 {
   opengl::ShaderProgram &sp;
   opengl::DrawInfo const& dinfo;
 
-  std::uint32_t const eid;
+  uint32_t const eid;
+};
+
+struct DrawStairsUpArgs
+{
+  opengl::ShaderProgram &sp;
+  opengl::DrawInfo const& dinfo;
+
+  uint32_t const eid;
 };
 
 struct DrawTilemapArgs
 {
   DrawPlusArgs plus;
   DrawHashtagArgs hashtag;
-  DrawStairsArgs stairs;
+  DrawStairsDownArgs stairs_down;
+  DrawStairsUpArgs stairs_up;
 };
 
 void

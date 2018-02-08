@@ -120,10 +120,9 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
     handle_list.add(entity, MOVE(handle));
     return entity;
   };
-  auto const make_stair = [&]() {
-    auto const* name = "stair";
+  auto const make_stair = [&](char const* vshader_name, char const* name) {
     auto const &obj = obj_cache.get_obj(name);
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(name), obj, boost::none);
+    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, boost::none);
     auto const eid = registry.create();
     registry.assign<Material>(eid);
     auto meshc = registry.assign<MeshRenderable>(eid);
@@ -135,9 +134,10 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
 
   auto const plus_eid = make_special("plus", "3d_pos_normal_color");
   auto const hashtag_eid = make_special("hashtag", "hashtag");
-  auto const stairs_eid = make_stair();
+  auto const stair_down_eid = make_stair("stair", "stair_down");
+  auto const stair_up_eid = make_stair("stair", "stair_up");
 
-  return HandleManager{MOVE(handle_list), plus_eid, hashtag_eid, stairs_eid};
+  return HandleManager{MOVE(handle_list), plus_eid, hashtag_eid, stair_down_eid, stair_up_eid};
 }
 
 void
@@ -210,9 +210,11 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
     handles.plus_eid};
   DrawHashtagArgs hashtag{sps.ref_sp("hashtag"), handles.lookup(handles.hashtag_eid),
                           handles.hashtag_eid};
-  DrawStairsArgs stairs{sps.ref_sp("stair"), handles.lookup(handles.stairs_eid),
-    handles.stairs_eid};
-  DrawTilemapArgs dta{MOVE(plus), MOVE(hashtag), MOVE(stairs)};
+
+  auto &stair_sp = sps.ref_sp("stair");
+  DrawStairsDownArgs stairs_down{stair_sp, handles.lookup(handles.stair_down_eid), handles.stair_down_eid};
+  DrawStairsUpArgs stairs_up{stair_sp, handles.lookup(handles.stair_up_eid), handles.stair_up_eid};
+  DrawTilemapArgs dta{MOVE(plus), MOVE(hashtag), MOVE(stairs_down), MOVE(stairs_up)};
 
   ZoneManager zm{state.zone_states};
   auto const& tilemap = zm.active().tilemap;

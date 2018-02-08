@@ -91,7 +91,13 @@ normals = true
 uvs = false
 
 [[meshes]]
-name = "stair"
+name = "stair_down"
+colors = false
+normals = true
+uvs = false
+
+[[meshes]]
+name = "stair_up"
 colors = false
 normals = true
 uvs = false

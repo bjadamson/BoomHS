@@ -326,7 +326,8 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
   };
   auto &plus = dt_args.plus;
   auto &hashtag = dt_args.hashtag;
-  auto &stairs = dt_args.stairs;
+  auto &stairs_down = dt_args.stairs_down;
+  auto &stairs_up = dt_args.stairs_up;
   auto const draw_tile = [&](auto const& tile_pos) {
     auto const& tile = tilemap.data(tile_pos);
     if (!tilemap_state.reveal && !tile.is_visible) {
@@ -353,24 +354,26 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
         break;
       case TileType::STAIR_DOWN:
         {
-          stairs.sp.use(logger);
-          stairs.sp.set_uniform_color(logger, "u_color", LOC::GREEN);
+          auto &sp = stairs_down.sp;
+          sp.use(logger);
+          sp.set_uniform_color(logger, "u_color", LOC::GREEN);
 
           bool const receives_ambient_light = false;
           glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
           auto const model_matrix = stlw::math::calculate_modelmatrix(translation, rotation, scale);
-          draw_tile_helper(stairs.sp, stairs.dinfo, stairs.eid, model_matrix, receives_ambient_light);
+          draw_tile_helper(sp, stairs_down.dinfo, stairs_down.eid, model_matrix, receives_ambient_light);
         }
         break;
       case TileType::STAIR_UP:
         {
-          stairs.sp.use(logger);
-          stairs.sp.set_uniform_color(logger, "u_color", LOC::RED);
+          auto &sp = stairs_up.sp;
+          sp.use(logger);
+          sp.set_uniform_color(logger, "u_color", LOC::RED);
 
           bool const receives_ambient_light = false;
           glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
           auto const model_matrix = stlw::math::calculate_modelmatrix(translation, rotation, scale);
-          draw_tile_helper(stairs.sp, stairs.dinfo, stairs.eid, model_matrix, receives_ambient_light);
+          draw_tile_helper(sp, stairs_up.dinfo, stairs_up.eid, model_matrix, receives_ambient_light);
         }
         break;
       default:
