@@ -35,6 +35,10 @@ should_skip_tile(int const num_to_place, int const num_placed, TileMap const& tm
     // tile is already a stairwell
     return true;
   }
+  if (tmap.data(pos).type == TileType::RIVER) {
+    // HACK, for now
+    return true;
+  }
   if(any_tilemap_neighbors(tmap, pos, MIN_DISTANCE_BETWEEN_STAIRS, is_stair)) {
     //std::cerr << "too close stair neighbor\n";
     // nearby neighbor tile is a stairwell

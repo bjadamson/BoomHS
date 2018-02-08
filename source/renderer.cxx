@@ -409,7 +409,6 @@ draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInf
     entt::DefaultRegistry &registry, window::FrameTime const& ft, uint32_t const river_eid,
     RiverInfo &rinfo)
 {
-
   auto const move_component = [&](auto const less, auto const greater, auto &c) {
     c += std::abs(std::cos(ft.delta)) / rinfo.speed;
     if (c > greater) {
@@ -425,6 +424,7 @@ draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInf
   move_component(top.x, bottom.z, rinfo.position.z);
 
   sp.use(rargs.logger);
+  sp.set_uniform_color(rargs.logger, "u_color", LOC::BLUE);
   opengl::global::vao_bind(dinfo.vao());
   ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
@@ -432,8 +432,9 @@ draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInf
   auto const rot = glm::quat{};
   auto const scale = glm::vec3{1.0};
 
+  bool const receives_ambient = false;
   auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
-  draw_3dshape(rargs, modelmatrix, sp, dinfo, river_eid, registry, true);
+  draw_3dshape(rargs, modelmatrix, sp, dinfo, river_eid, registry, receives_ambient);
 }
 
 void

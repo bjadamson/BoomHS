@@ -244,35 +244,37 @@ place_rooms_and_stairs(TilemapConfig &tconfig, TileMap &tmap,
   boost::optional<Rooms> rooms = boost::none;
   bool stairs = false;
 
-  while(!rooms && !stairs) {
-    std::cerr << "creating rooms ...\n";
-    while(!rooms) {
-      rooms = create_rooms(tconfig.width, tconfig.length, tmap, rng);
-    }
-    while(!stairs) {
-      std::cerr << "placing stairs ...\n";
-      stairs = stairwell_generator::place_stairs(sc, tmap, rng, registry);
-    }
-  }
-  // hack
+
   auto const add_river = [&](auto const x, auto const y) {
     auto &tile = tmap.data(x, y);
-    if (tile.type != TileType::WALL) {
-      return;
-    }
     tile.type = TileType::RIVER;
+
+    auto constexpr WIDTH = 3;
+    auto constexpr HEIGHT = 3;
 
     auto &ri = registry.assign<RiverInfo>(tile.eid);
     ri.position = glm::vec3{x, 0, y};
     ri.speed    = 100;
     ri.left     = glm::vec3{x, 0, 0};
-    ri.right    = glm::vec3{x + 30, 0, 0};
-    ri.top      = glm::vec3{0, 0, 0};
-    ri.bottom   = glm::vec3{0, 0, y + 10};
+    ri.right    = glm::vec3{x + WIDTH, 0, 0};
+
+    ri.top      = glm::vec3{0, 0, y};
+    ri.bottom   = glm::vec3{0, 0, y + HEIGHT};
   };
-  FOR(i, 8) {
-    FOR(j, 8) {
-      add_river(i, j);
+
+  while(!rooms && !stairs) {
+    std::cerr << "creating rooms ...\n";
+    while(!rooms) {
+      rooms = create_rooms(tconfig.width, tconfig.length, tmap, rng);
+    }
+    FOR(i, 8) {
+      FOR(j, 8) {
+        add_river(i, j);
+      }
+    }
+    while(!stairs) {
+      std::cerr << "placing stairs ...\n";
+      stairs = stairwell_generator::place_stairs(sc, tmap, rng, registry);
     }
   }
 

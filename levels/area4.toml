@@ -104,7 +104,7 @@ uvs = false
 
 [[meshes]]
 name = "tilde"
-colors = true
+colors = false
 normals = true
 uvs = false
 
