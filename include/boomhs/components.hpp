@@ -52,6 +52,14 @@ public:
   }
 };
 
+struct RiverInfo
+{
+  float speed = 0.0;
+  glm::vec3 left, right, top, bottom;
+  glm::vec3 position;
+  uint32_t tile_eid;
+};
+
 struct StairInfo
 {
   TilePosition tile_position;
@@ -116,6 +124,15 @@ find_pointlights(entt::DefaultRegistry &registry)
   using namespace opengl;
 
   return find_all_entities_with_component<PointLight, Transform>(registry);
+}
+
+inline auto
+find_rivers(entt::DefaultRegistry &registry)
+{
+  using namespace boomhs;
+  using namespace opengl;
+
+  return find_all_entities_with_component<RiverInfo>(registry);
 }
 
 inline auto

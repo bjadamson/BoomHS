@@ -6,7 +6,6 @@ out vec4 v_position;
 out vec3 v_surfacenormal;
 out vec4 v_color;
 
-uniform float u_ticks;
 uniform mat4 u_mvpmatrix;
 uniform mat4 u_modelmatrix;
 uniform mat3 u_normalmatrix;
@@ -15,8 +14,7 @@ void main()
 {
   const float offset_z = 0.15;
   const vec3 vertical_offsets[2] = vec3[2]( vec3(0.0, 0.0, -offset_z), vec3(0.0, 0.0, offset_z) );
-  float zoffset = mix(0, sin(u_ticks) / 50.0, 1);
-  vec3 offset = vertical_offsets[gl_InstanceID] + (vec3(0.0, 0.0, zoffset));
+  vec3 offset = vertical_offsets[gl_InstanceID];
 
   v_position = a_position;
   v_surfacenormal = normalize(u_normalmatrix * a_normal);

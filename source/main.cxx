@@ -143,9 +143,12 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
 }
 
 void
-draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
-              HandleManager &handles)
+draw_entities(GameState &state, opengl::ShaderPrograms &sps, HandleManager &handles)
 {
+  ZoneManager zm{state.zone_states};
+  auto &active = zm.active();
+  auto &registry = active.registry;
+
   auto const draw_fn = [&handles, &sps, &registry, &state](auto entity, auto &sn, auto &transform) {
     auto &shader_ref = sps.ref_sp(sn.value);
     auto &handle = handles.lookup(entity);
@@ -170,8 +173,12 @@ draw_entities(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderP
 }
 
 void
-draw_terrain(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps)
+draw_terrain(GameState &state, opengl::ShaderPrograms &sps)
 {
+  ZoneManager zm{state.zone_states};
+  auto &active = zm.active();
+  auto &registry = active.registry;
+
   auto entity = registry.create();
   ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
 
@@ -192,8 +199,8 @@ draw_terrain(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
 }
 
 void
-draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps,
-             HandleManager &handles, FrameTime const& ft)
+draw_tilemap(GameState &state, opengl::ShaderPrograms &sps, HandleManager &handles,
+    FrameTime const& ft)
 {
   using namespace render;
   auto &logger = state.engine_state.logger;
@@ -221,20 +228,39 @@ draw_tilemap(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPr
   DrawTilemapArgs dta{MOVE(plus), MOVE(hashtag), MOVE(river), MOVE(stairs_down), MOVE(stairs_up)};
 
   ZoneManager zm{state.zone_states};
-  auto const& tilemap = zm.active().tilemap;
+  auto &active = zm.active();
+  auto &registry = active.registry;
+  auto const& tilemap = active.tilemap;
   render::draw_tilemap(state.render_args(), dta, tilemap,
                        state.engine_state.tilemap_state, registry, ft);
 }
 
 void
-draw_tilegrid(GameState &state, entt::DefaultRegistry &registry, opengl::ShaderPrograms &sps)
+draw_rivers(GameState &state, opengl::ShaderPrograms &sps, HandleManager &handles,
+    FrameTime const& ft)
+{
+  auto const rargs = state.render_args();
+  ZoneManager zm{state.zone_states};
+  auto &active = zm.active();
+  auto &registry = active.registry;
+
+  auto &sp = sps.ref_sp("river");
+  auto &river_handle = handles.lookup(handles.river_eid);
+
+  //render::draw_rivers(rargs, sp, river_handle, registry, ft, tile_eid, river_eid, tile_transform);
+}
+
+void
+draw_tilegrid(GameState &state, opengl::ShaderPrograms &sps)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
   auto &sp = sps.ref_sp("3d_pos_color");
 
   ZoneManager zm{state.zone_states};
-  auto const& tilemap = zm.active().tilemap;
+  auto &active = zm.active();
+  auto &registry = active.registry;
+  auto const& tilemap = active.tilemap;
 
   Transform transform;
   bool const show_y = es.tilemap_state.show_yaxis_lines;
@@ -474,16 +500,17 @@ game_loop(GameState &state, SDLWindow &window, FrameTime const& ft)
   auto &handles = zone_state.handles;
   auto &sps = zone_state.sps;
   if (es.draw_entities) {
-    draw_entities(state, registry, sps, handles);
+    draw_entities(state, sps, handles);
   }
   if (es.draw_terrain) {
-    draw_terrain(state, registry, sps);
+    draw_terrain(state, sps);
   }
   if (tilemap_state.draw_tilemap) {
-    draw_tilemap(state, registry, sps, handles, ft);
+    draw_tilemap(state, sps, handles, ft);
+    draw_rivers(state, sps, handles, ft);
   }
   if (tilemap_state.show_grid_lines) {
-    draw_tilegrid(state, registry, sps);
+    draw_tilegrid(state, sps);
   }
   if (tilemap_state.show_neighbortile_arrows) {
     auto const& wp = player.world_position();

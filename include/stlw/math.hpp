@@ -12,6 +12,13 @@
 namespace stlw::math
 {
 
+inline
+glm::vec3
+lerp(glm::vec3 const& a, glm::vec3 const& b, float const f)
+{
+  return (a * (1.0 - f)) + (b * f);
+}
+
 inline glm::mat4
 calculate_modelmatrix(glm::vec3 const& translation, glm::quat const& rotation, glm::vec3 const& scale)
 {

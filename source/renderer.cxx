@@ -327,7 +327,6 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
     ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
     draw_3dshape(args, model_mat, sp, dinfo, entity, registry, receives_ambient_light);
   };
-  
   auto const draw_tile = [&](auto const& tile_pos) {
     auto const& tile = tilemap.data(tile_pos);
     if (!tilemap_state.reveal && !tile.is_visible) {
@@ -337,11 +336,9 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
     auto &transform = registry.get<Transform>(tile.eid);
     glm::vec3 constexpr VIEWING_OFFSET{0.5f, 0.0f, 0.5f};
 
-    auto const translation = tile_pos + VIEWING_OFFSET;
-    auto const& rotation   = transform.rotation;
-    auto const normal_modelmatrix = [&]()
+    auto const mmatrix = [&](auto const& translation, auto const& rotation, auto const& scale)
     {
-      return stlw::math::calculate_modelmatrix(translation, rotation, transform.scale);
+      return stlw::math::calculate_modelmatrix(translation, rotation, scale);
     };
 
     auto &plus = dt_args.plus;
@@ -351,39 +348,52 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
     auto &stairs_up = dt_args.stairs_up;
     switch(tile.type) {
       case TileType::FLOOR:
-        draw_tile_helper(plus.sp, plus.dinfo, plus.eid, normal_modelmatrix(), true);
+        {
+          auto const translation = tile_pos + VIEWING_OFFSET;
+          auto const& rotation   = transform.rotation;
+          draw_tile_helper(plus.sp, plus.dinfo, plus.eid, mmatrix(translation, rotation, transform.scale), true);
+        }
         break;
       case TileType::WALL:
-        draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, normal_modelmatrix(), true);
+        {
+          auto const translation = tile_pos + VIEWING_OFFSET;
+          auto const& rotation   = transform.rotation;
+          draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, mmatrix(translation, rotation, transform.scale), true);
+        }
         break;
       case TileType::RIVER:
         {
-          river.sp.set_uniform_float1(logger, "u_ticks", ft.ticks);
-          std::cerr << "delta: " << ft.delta << "' ticks: '" << ft.ticks << "'\n";
-          draw_tile_helper(river.sp, river.dinfo, river.eid, normal_modelmatrix(), true);
+          // do nothing, explicitely as we handle drawing rivers separately from the rest of the
+          // tilemap.
+          draw_rivers(args, river.sp, river.dinfo, registry, ft, tile.eid, river.eid);
+          break;
         }
         break;
       case TileType::STAIR_DOWN:
         {
           auto &sp = stairs_down.sp;
-          sp.use(logger);
           sp.set_uniform_color(logger, "u_color", LOC::GREEN);
+
+          auto const translation = tile_pos + VIEWING_OFFSET;
+          auto const& rotation   = transform.rotation;
 
           bool const receives_ambient_light = false;
           glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
-          auto const model_matrix = stlw::math::calculate_modelmatrix(translation, rotation, scale);
+          auto const model_matrix = mmatrix(translation, rotation, scale);
           draw_tile_helper(sp, stairs_down.dinfo, stairs_down.eid, model_matrix, receives_ambient_light);
         }
         break;
       case TileType::STAIR_UP:
         {
           auto &sp = stairs_up.sp;
-          sp.use(logger);
           sp.set_uniform_color(logger, "u_color", LOC::RED);
+
+          auto const translation = tile_pos + VIEWING_OFFSET;
+          auto const& rotation   = transform.rotation;
 
           bool const receives_ambient_light = false;
           glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
-          auto const model_matrix = stlw::math::calculate_modelmatrix(translation, rotation, scale);
+          auto const model_matrix = mmatrix(translation, rotation, scale);
           draw_tile_helper(sp, stairs_up.dinfo, stairs_up.eid, model_matrix, receives_ambient_light);
         }
         break;
@@ -392,6 +402,44 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
     }
   };
   tilemap.visit_each(draw_tile);
+}
+
+void
+draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInfo const& dinfo,
+    entt::DefaultRegistry &registry, window::FrameTime const& ft, uint32_t const tile_eid,
+    uint32_t const river_eid)
+{
+  assert(registry.has<RiverInfo>(tile_eid));
+  auto &rinfo = registry.get<RiverInfo>(tile_eid);
+
+  auto const rinfos = find_rivers(registry);
+  assert(rinfos.size() == 1);
+  assert(tile_eid == rinfos[0]);
+
+  auto const move_component = [&](auto const less, auto const greater, auto &c) {
+    c += std::abs(std::cos(ft.delta)) / rinfo.speed;
+    if (c > greater) {
+      c = less;
+    }
+  };
+
+  auto const& left = rinfo.left;
+  auto const& right = rinfo.right;
+  auto const& top = rinfo.top;
+  auto const& bottom = rinfo.bottom;
+  move_component(left.x, right.x, rinfo.position.x);
+  move_component(top.x, bottom.z, rinfo.position.z);
+
+  sp.use(rargs.logger);
+  opengl::global::vao_bind(dinfo.vao());
+  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+
+  auto const tr = rinfo.position;
+  auto const rot = glm::quat{};
+  auto const scale = glm::vec3{1.0};
+
+  auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
+  draw_3dshape(rargs, modelmatrix, sp, dinfo, river_eid, registry, true);
 }
 
 void
