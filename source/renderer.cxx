@@ -365,7 +365,7 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
         {
           // do nothing, explicitely as we handle drawing rivers separately from the rest of the
           // tilemap.
-          draw_rivers(args, river.sp, river.dinfo, registry, ft, tile.eid, river.eid);
+          //draw_rivers(args, river.sp, river.dinfo, registry, ft, tile.eid, river.eid);
           break;
         }
         break;
@@ -406,15 +406,9 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
 
 void
 draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInfo const& dinfo,
-    entt::DefaultRegistry &registry, window::FrameTime const& ft, uint32_t const tile_eid,
-    uint32_t const river_eid)
+    entt::DefaultRegistry &registry, window::FrameTime const& ft, uint32_t const river_eid,
+    RiverInfo &rinfo)
 {
-  assert(registry.has<RiverInfo>(tile_eid));
-  auto &rinfo = registry.get<RiverInfo>(tile_eid);
-
-  auto const rinfos = find_rivers(registry);
-  assert(rinfos.size() == 1);
-  assert(tile_eid == rinfos[0]);
 
   auto const move_component = [&](auto const less, auto const greater, auto &c) {
     c += std::abs(std::cos(ft.delta)) / rinfo.speed;

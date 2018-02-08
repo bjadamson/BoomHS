@@ -247,7 +247,13 @@ draw_rivers(GameState &state, opengl::ShaderPrograms &sps, HandleManager &handle
   auto &sp = sps.ref_sp("river");
   auto &river_handle = handles.lookup(handles.river_eid);
 
-  //render::draw_rivers(rargs, sp, river_handle, registry, ft, tile_eid, river_eid, tile_transform);
+  auto const rinfos = find_rivers(registry);
+  for (auto const eid : rinfos) {
+    assert(registry.has<RiverInfo>(eid));
+    auto &rinfo = registry.get<RiverInfo>(eid);
+
+    render::draw_rivers(rargs, sp, river_handle, registry, ft, handles.river_eid, rinfo);
+  }
 }
 
 void

@@ -98,7 +98,7 @@ struct DrawStairsUpArgs
 
 void
 draw_rivers(RenderArgs const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
-    entt::DefaultRegistry &, window::FrameTime const&, uint32_t, uint32_t);
+    entt::DefaultRegistry &, window::FrameTime const&, uint32_t, RiverInfo &);
 
 struct DrawTilemapArgs
 {

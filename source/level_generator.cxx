@@ -257,20 +257,24 @@ place_rooms_and_stairs(TilemapConfig &tconfig, TileMap &tmap,
   // hack
   auto const add_river = [&](auto const x, auto const y) {
     auto &tile = tmap.data(x, y);
+    if (tile.type != TileType::WALL) {
+      return;
+    }
     tile.type = TileType::RIVER;
 
     auto &ri = registry.assign<RiverInfo>(tile.eid);
     ri.position = glm::vec3{x, 0, y};
-    ri.speed    = 200;
-    ri.left     = glm::vec3{0, 0, 0};
-    ri.right    = glm::vec3{3, 0, 0};
+    ri.speed    = 100;
+    ri.left     = glm::vec3{x, 0, 0};
+    ri.right    = glm::vec3{x + 30, 0, 0};
     ri.top      = glm::vec3{0, 0, 0};
-    ri.bottom   = glm::vec3{0, 0, 1};
-    ri.tile_eid = tile.eid;
+    ri.bottom   = glm::vec3{0, 0, y + 10};
   };
-  add_river(0, 0);
-  //add_river(1, 0);
-  //add_river(2, 0);
+  FOR(i, 8) {
+    FOR(j, 8) {
+      add_river(i, j);
+    }
+  }
 
   // This seems hacky?
   return (*rooms).starting_position;

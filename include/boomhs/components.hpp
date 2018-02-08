@@ -57,7 +57,6 @@ struct RiverInfo
   float speed = 0.0;
   glm::vec3 left, right, top, bottom;
   glm::vec3 position;
-  uint32_t tile_eid;
 };
 
 struct StairInfo
