@@ -89,10 +89,10 @@ struct EntityInfo
   // THOUGHT: It doesn't make sense to have a "color" but not a "shader".
   //
   // We lost our compile time guarantees, how to compensate?
-  boost::optional<std::string> const shader;
-  boost::optional<std::string> const mesh_name;
-  boost::optional<opengl::Color> const color;
-  boost::optional<opengl::TextureInfo> const texture;
+  stlw::optional<std::string> const shader;
+  stlw::optional<std::string> const mesh_name;
+  stlw::optional<opengl::Color> const color;
+  stlw::optional<opengl::TextureInfo> const texture;
 
   MOVE_CONSTRUCTIBLE_ONLY(EntityInfo);
 };

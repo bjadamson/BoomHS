@@ -1,6 +1,5 @@
 #pragma once
 #include <extlibs/expected.hpp>
-#include <boost/optional.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/types.hpp>
 #include <stlw/try.hpp>
@@ -37,22 +36,25 @@ using result = ::nonstd::expected<T, E>;
 //   * If evaluating the expression yields an error, causes that error to be returned (at the
 //   callsite the macro is invoked at).
 //
-//   * If evaluating the expression yields an ok() result, disregards the result (running the
-//   values destructor immediatly, if applicable).
+//   * Otherwise immediatly disregards the result (running the values destructor immediatly, if
+//   applicable).
 #define DO_EFFECT(expr)                                                                            \
   EVAL_INTO_VAR_OR(auto _, expr, stlw::lift_error)                                                 \
 
 // DO_TRY
 //
-// Tries to evaluate an expression, storing the result into a variable provided by the caller.
+// Tries to evaluate an expression, MOVING the evaluated expression from the "result value" into the
+// variable VAR_NAME.
 #define DO_TRY(VAR_NAME, expr)                                                                     \
   EVAL_INTO_VAR_OR(VAR_NAME, expr, stlw::lift_error);                                              \
 
 // DO_TRY_OR_ELSE_RETURN
 //
 // Evaluates the expression, behaves accordingly:
-//   * If evaluated the expression yields an error, invokes the user provided function  on the
-//   error. The value returned from the function invocation is returned at the callsite of the
+//   * If evaluating the expression yields an error, invokes the user provided function on the
+//   error, returning the value from the function call.
+//
+//   The value returned from the function invocation is returned at the callsite of the
 //   macro.
 //   * Otherwise MOVES the evaluated expression into the variable VAR_NAME.
 #define DO_TRY_OR_ELSE_RETURN(VAR_NAME, expr, fn)                                                  \
@@ -62,7 +64,7 @@ using result = ::nonstd::expected<T, E>;
 // DO_TRY_OR_ELSE_RETURN_DEFAULT_T
 //
 // Evaluates the expression, behaves accordingly.
-//   * If the evaluated expression yields an error, return a default instance of T.
+//   * If evaluating the expression yields an error, return a default instance of T.
 //   * Otherwise MOVES the evaluated expression into the variable VAR_NAME.
-#define DO_TRY_OR_ELSE_RETURN_T(VAR_NAME, expr, T)                                                 \
+#define DO_TRY_OR_ELSE_RETURN_DEFAULT_T(VAR_NAME, expr, T)                                         \
   EVAL_INTO_VAR_OR(VAR_NAME, expr, [](auto const&) { return T{}; })                                \

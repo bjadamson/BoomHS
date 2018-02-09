@@ -33,7 +33,7 @@
 #include <imgui/imgui_impl_sdl_gl3.h>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/optional.hpp>
+#include <stlw/optional.hpp>
 
 #include <cassert>
 #include <cstdlib>
@@ -73,7 +73,7 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
       [&](auto entity, auto &sn, auto &color, auto &mesh) {
         auto const &obj = obj_cache.get_obj(mesh.name);
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, boost::none);
+        auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, stlw::none);
         handle_list.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
@@ -99,13 +99,13 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
   registry.view<ShaderName, MeshRenderable>().each([&](auto entity, auto &sn, auto &mesh) {
     auto const &obj = obj_cache.get_obj(mesh.name);
     auto &shader_ref = sps.ref_sp(sn.value);
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, boost::none);
+    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, stlw::none);
     handle_list.add(entity, MOVE(handle));
   });
 
   auto const make_special = [&handle_list, &logger, &obj_cache, &sps, &registry](char const *mesh_name, char const*vshader_name) {
     auto const &obj = obj_cache.get_obj(mesh_name);
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, boost::none);
+    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, stlw::none);
     auto const entity = registry.create();
     registry.assign<Material>(entity);
     auto meshc = registry.assign<MeshRenderable>(entity);
@@ -122,7 +122,7 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
   };
   auto const make_stair = [&](char const* vshader_name, char const* mesh_name) {
     auto const &obj = obj_cache.get_obj(mesh_name);
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, boost::none);
+    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, stlw::none);
     auto const eid = registry.create();
     registry.assign<Material>(eid);
     auto meshc = registry.assign<MeshRenderable>(eid);

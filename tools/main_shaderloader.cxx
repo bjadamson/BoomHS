@@ -1,10 +1,11 @@
 #include <cstdlib>
 #include <experimental/filesystem>
 #include <iostream>
+#include <stlw/optional.hpp>
 #include <stlw/os.hpp>
 
 namespace fs = std::experimental::filesystem;
-using OptionalString = boost::optional<std::string>;
+using OptionalString = stlw::optional<std::string>;
 
 namespace
 {

@@ -174,13 +174,13 @@ find_player(entt::DefaultRegistry &registry)
   assert(1 == registry.view<Player>().size());
 
   auto view = registry.view<Player, Transform>();
-  boost::optional<uint32_t> entity{boost::none};
+  stlw::optional<uint32_t> entity{stlw::none};
   for (auto const e : view) {
     // This assert ensures this loop only runs once.
-    assert(boost::none == entity);
+    assert(stlw::none == entity);
     entity = e;
   }
-  assert(boost::none != entity);
+  assert(stlw::none != entity);
   return *entity;
 }
 

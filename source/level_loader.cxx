@@ -51,14 +51,14 @@ get_table_array_or_abort(CppTable const& config, char const* name)
 }
 
 template<typename T>
-boost::optional<T>
+stlw::optional<T>
 get_value(CppTable const& table, char const* name)
 {
   auto cpptoml_option = table->get_as<T>(name);
   if (!cpptoml_option) {
-    return boost::none;
+    return stlw::none;
   }
-  // Move value out of cpptoml and into boost::optional
+  // Move value out of cpptoml and into stlw::optional
   auto value = cpptoml_option.move_out();
   return boost::make_optional(MOVE(value));
 }
@@ -75,7 +75,7 @@ get_bool(CppTable const& table, char const* name)
   return get_value<bool>(table, name);
 }
 
-boost::optional<GLsizei>
+stlw::optional<GLsizei>
 get_sizei(CppTable const& table, char const* name)
 {
   return get_value<GLsizei>(table, name);
@@ -104,12 +104,12 @@ get_bool_or_abort(CppTable const& table, char const* name)
   return get_or_abort<bool>(table, name);
 }
 
-boost::optional<opengl::Color>
+stlw::optional<opengl::Color>
 get_color(CppTable const& table, char const* name)
 {
   auto const load_colors = table->template get_array_of<double>(name);
   if (!load_colors) {
-    return boost::none;
+    return stlw::none;
   }
 
   std::vector<double> const& c = *load_colors;
@@ -121,12 +121,12 @@ get_color(CppTable const& table, char const* name)
   return boost::make_optional(color);
 }
 
-boost::optional<glm::vec3>
+stlw::optional<glm::vec3>
 get_vec3(CppTable const& table, char const* name)
 {
   auto const load_data = table->template get_array_of<double>(name);
   if (!load_data) {
-    return boost::none;
+    return stlw::none;
   }
   auto const& ld = *load_data;
   return glm::vec3{ld[0], ld[1], ld[2]};

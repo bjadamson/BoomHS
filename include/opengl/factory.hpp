@@ -11,7 +11,7 @@
 #include <boomhs/tilemap.hpp>
 #include <boomhs/types.hpp>
 
-#include <boost/optional.hpp>
+#include <stlw/optional.hpp>
 #include <array>
 #include <cmath>
 
@@ -66,7 +66,7 @@ DrawInfo
 copy_texturecube_gpu(stlw::Logger &, ShaderProgram const&, TextureInfo const&);
 
 DrawInfo
-copy_cube_14indices_gpu(stlw::Logger &, ShaderProgram const&, boost::optional<TextureInfo> const&);
+copy_cube_14indices_gpu(stlw::Logger &, ShaderProgram const&, stlw::optional<TextureInfo> const&);
 
 struct ArrowCreateParams
 {
@@ -109,6 +109,6 @@ WorldOriginArrows
 create_axis_arrows(stlw::Logger &, ShaderProgram &);
 
 DrawInfo
-copy_gpu(stlw::Logger &, GLenum const, ShaderProgram &, obj const&, boost::optional<TextureInfo> const&);
+copy_gpu(stlw::Logger &, GLenum const, ShaderProgram &, obj const&, stlw::optional<TextureInfo> const&);
 
 } // ns opengl::factories

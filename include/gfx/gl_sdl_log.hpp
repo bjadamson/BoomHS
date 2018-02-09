@@ -3,7 +3,7 @@
 
 #include <stlw/log.hpp>
 #include <stlw/type_ctors.hpp>
-#include <boost/optional.hpp>
+#include <stlw/optional.hpp>
 #include <string>
 #include <vector>
 
@@ -14,7 +14,7 @@ struct GlErrors
 {
   std::vector<std::string> values;
 
-  static boost::optional<GlErrors>
+  static stlw::optional<GlErrors>
   retrieve();
 
   static void
@@ -31,7 +31,7 @@ struct SdlErrors
   static constexpr char const* SDL_NO_ERRORS = "none";
   std::string value;
 
-  static boost::optional<SdlErrors>
+  static stlw::optional<SdlErrors>
   retrieve();
 
   static void clear();

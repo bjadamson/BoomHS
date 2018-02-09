@@ -8,7 +8,7 @@
 #include <stlw/type_macros.hpp>
 
 #include <algorithm>
-#include <boost/optional.hpp>
+#include <stlw/optional.hpp>
 
 namespace opengl
 {
@@ -74,7 +74,7 @@ public:
   }
 
   // public data members
-  boost::optional<GLsizei> instance_count = boost::none;
+  stlw::optional<GLsizei> instance_count = stlw::none;
 
   bool is_skybox = false;
   bool is_2d = false;
