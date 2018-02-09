@@ -1,4 +1,4 @@
-#include <boomhs/tilemap_algorithms.hpp>
+#include <boomhs/tiledata_algorithms.hpp>
 #include <boomhs/world_object.hpp>
 #include <glm/gtx/string_cast.hpp>
 
@@ -7,7 +7,7 @@ namespace
 
 using namespace boomhs;
 void
-bresenham_3d(int x0, int z0, int x1, int z1, TileMap &tmap)
+bresenham_3d(int x0, int z0, int x1, int z1, TileData &tdata)
 {
   int const dx = abs(x1-x0), sx = x0<x1 ? 1 : -1;
   int const dz = abs(z1-z0), sz = z0<z1 ? 1 : -1;
@@ -37,7 +37,7 @@ bresenham_3d(int x0, int z0, int x1, int z1, TileMap &tmap)
     }
   };
   while(true) {
-    auto &tile = tmap.data(x0, z0);
+    auto &tile = tdata.data(x0, z0);
     set_tile(tile);
     if (i-- == 0) break;
     x1 -= dx; if (x1 < 0) { x1 += dm; x0 += sx; }
@@ -51,13 +51,13 @@ namespace boomhs::detail
 {
 
 Edges
-calculate_edges(TilePosition const& tpos, int const tmap_width, int const tmap_height,
+calculate_edges(TilePosition const& tpos, int const tdata_width, int const tdata_height,
     int const distance)
 {
   auto const left   = std::max(tpos.x - distance, 0);
-  auto const right  = std::min(tpos.x + distance, tmap_width);
+  auto const right  = std::min(tpos.x + distance, tdata_width);
 
-  auto const top    = std::min(tpos.y + distance, tmap_height);
+  auto const top    = std::min(tpos.y + distance, tdata_height);
   auto const bottom = std::max(tpos.y - distance, 0);
 
   assert(left <= right);
@@ -87,10 +87,10 @@ operator<<(std::ostream& stream, Edges const& e)
 }
 
 bool
-any_tilemap_neighbors(TileMap const& tmap, TilePosition const& pos, int32_t const distance,
+any_tiledata_neighbors(TileData const& tdata, TilePosition const& pos, int32_t const distance,
   bool (*fn)(Tile const&))
 {
-  auto const [width, length] = tmap.dimensions();
+  auto const [width, length] = tdata.dimensions();
   assert(width > 0);
   assert(length > 0);
   assert(distance > 0);
@@ -103,7 +103,7 @@ any_tilemap_neighbors(TileMap const& tmap, TilePosition const& pos, int32_t cons
     if (found_one) {
       return;
     }
-    if (fn(tmap.data(neighbor_pos))) {
+    if (fn(tdata.data(neighbor_pos))) {
       found_one = true;
     }
   };
@@ -112,19 +112,19 @@ any_tilemap_neighbors(TileMap const& tmap, TilePosition const& pos, int32_t cons
 }
 
 void
-update_visible_tiles(TileMap &tmap, WorldObject const& player, bool const reveal_tilemap)
+update_visible_tiles(TileData &tdata, WorldObject const& player, bool const reveal_tiledata)
 {
   // Collect all the visible tiles for the player
   auto const& wp = player.world_position();
   auto const fn = [&](auto const& pos) {
     auto const x = pos.x, y = pos.y;
-    if (reveal_tilemap) {
-      tmap.data(pos).is_visible = true;
+    if (reveal_tiledata) {
+      tdata.data(pos).is_visible = true;
     } else {
-      bresenham_3d(wp.x, wp.z, x, y, tmap);
+      bresenham_3d(wp.x, wp.z, x, y, tdata);
     }
   };
-  tmap.visit_each(fn);
+  tdata.visit_each(fn);
 }
 
 } // ns boomhs

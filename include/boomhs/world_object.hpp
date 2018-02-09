@@ -65,11 +65,11 @@ public:
   void rotate_to_match_camera_rotation(Camera const&);
 
   TilePosition
-  tilemap_position() const
+  tiledata_position() const
   {
     auto const& pos = transform().translation;
 
-    // Truncate the floating point values to get tilemap position
+    // Truncate the floating point values to get tiledata position
     auto const trunc = [](float const v) -> int { return abs(v); };
     return TilePosition{trunc(pos.x), trunc(pos.z)};
   }

@@ -8,7 +8,7 @@
 #include <stlw/type_macros.hpp>
 #include <stlw/type_ctors.hpp>
 
-#include <boomhs/tilemap.hpp>
+#include <boomhs/tiledata.hpp>
 #include <boomhs/types.hpp>
 
 #include <stlw/optional.hpp>
@@ -91,7 +91,7 @@ DrawInfo
 create_arrow(stlw::Logger &, ShaderProgram const&, ArrowCreateParams &&);
 
 DrawInfo
-create_tilegrid(stlw::Logger &, ShaderProgram const&, boomhs::TileMap const&,
+create_tilegrid(stlw::Logger &, ShaderProgram const&, boomhs::TileData const&,
     bool const show_yaxis_lines, Color const& color = LOC::RED);
 
 DrawInfo

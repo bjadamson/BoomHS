@@ -43,7 +43,7 @@ public:
   auto const& front() const { return neighbors_.front(); }
 };
 
-class TileMap
+class TileData
 {
   std::array<int32_t, 2> dimensions_;
   entt::DefaultRegistry &registry_;
@@ -53,14 +53,14 @@ class TileMap
   bool destroy_entities_ = true;
 
 public:
-  NO_COPY(TileMap);
-  NO_MOVE_ASSIGN(TileMap);
+  NO_COPY(TileData);
+  NO_MOVE_ASSIGN(TileData);
 
-  TileMap(std::vector<Tile> &&, int32_t const, int32_t const, entt::DefaultRegistry &);
+  TileData(std::vector<Tile> &&, int32_t const, int32_t const, entt::DefaultRegistry &);
 
-  ~TileMap();
+  ~TileData();
 
-  TileMap(TileMap &&);
+  TileData(TileData &&);
 
   auto dimensions() const { return dimensions_; }
   auto num_tiles() const { return tiles_.size(); }

@@ -11,7 +11,7 @@ class float_generator;
 
 namespace boomhs
 {
-class TileMap;
+class TileData;
 
 struct StairGenConfig
 {
@@ -28,6 +28,6 @@ namespace boomhs::stairwell_generator
 {
 
 bool
-place_stairs(StairGenConfig const&, TileMap &, stlw::float_generator &, entt::DefaultRegistry &);
+place_stairs(StairGenConfig const&, TileData &, stlw::float_generator &, entt::DefaultRegistry &);
 
 } // ns boomhs::stairwell_generator

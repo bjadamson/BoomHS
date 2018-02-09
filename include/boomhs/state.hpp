@@ -1,8 +1,8 @@
 #pragma once
 #include <boomhs/assets.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/leveldata.hpp>
 #include <boomhs/renderer.hpp>
-#include <boomhs/tilemap.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <opengl/colors.hpp>
@@ -59,7 +59,7 @@ struct UiState
   bool show_entitywindow = false;
   bool show_mousewindow = false;
   bool show_playerwindow = false;
-  bool show_tilemapwindow = false;
+  bool show_tiledatawindow = false;
 };
 
 struct MouseState
@@ -89,11 +89,11 @@ struct WindowState
   window::SwapIntervalFlag sync = window::SwapIntervalFlag::SYNCHRONIZED;
 };
 
-struct TilemapState
+struct TiledataState
 {
-  MOVE_CONSTRUCTIBLE_ONLY(TilemapState);
+  MOVE_CONSTRUCTIBLE_ONLY(TiledataState);
 
-  bool draw_tilemap = true;
+  bool draw_tiledata = true;
   bool recompute = true;
   bool reveal = false;
 
@@ -114,20 +114,20 @@ struct ZoneState
 
   HandleManager handles;
   opengl::ShaderPrograms sps;
-  TileMap tilemap;
+  LevelData level_data;
 
   Camera camera;
   WorldObject player;
   entt::DefaultRegistry &registry;
 
   explicit ZoneState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
-      HandleManager &&hm, opengl::ShaderPrograms &&sp, TileMap &&tmap, Camera &&cam,
+      HandleManager &&hm, opengl::ShaderPrograms &&sp, LevelData &&ldata, Camera &&cam,
       WorldObject &&pl, entt::DefaultRegistry &reg)
     : background(bgcolor)
     , global_light(MOVE(glight))
     , handles(MOVE(hm))
     , sps(MOVE(sp))
-    , tilemap(MOVE(tmap))
+    , level_data(MOVE(ldata))
     , camera(MOVE(cam))
     , player(MOVE(pl))
     , registry(reg)
@@ -191,7 +191,7 @@ struct EngineState
 
   MouseState mouse_state = {};
   WindowState window_state = {};
-  TilemapState tilemap_state = {};
+  TiledataState tiledata_state = {};
   UiState ui_state = {};
 
   Logger &logger;

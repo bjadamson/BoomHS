@@ -110,10 +110,10 @@ draw_entity_editor(GameState &state, entt::DefaultRegistry &registry)
 }
 
 void
-draw_tilemap_editor(GameState &state)
+draw_tiledata_editor(GameState &state)
 {
   auto &es = state.engine_state;
-  auto &tm_state = es.tilemap_state;
+  auto &tm_state = es.tiledata_state;
   if (ImGui::Begin("Tilemap Editor Window")) {
     ImGui::InputFloat3("Floor Offset:", glm::value_ptr(tm_state.floor_offset));
     ImGui::InputFloat3("Tile Scaling:", glm::value_ptr(tm_state.tile_scaling));
@@ -130,7 +130,7 @@ draw_tilemap_editor(GameState &state)
       zm.make_zone_active(selected, state);
     }
     bool recompute = false;
-    recompute |= ImGui::Checkbox("Draw Tilemap", &tm_state.draw_tilemap);
+    recompute |= ImGui::Checkbox("Draw Tilemap", &tm_state.draw_tiledata);
     recompute |= ImGui::Checkbox("Reveal Tilemap Hidden", &tm_state.reveal);
     recompute |= ImGui::Checkbox("Show (x, z)-axis lines", &tm_state.show_grid_lines);
     recompute |= ImGui::Checkbox("Show y-axis Lines ", &tm_state.show_yaxis_lines);
@@ -482,8 +482,8 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
   if (ui_state.show_playerwindow) {
     draw_player_window(state, registry);
   }
-  if (ui_state.show_tilemapwindow) {
-    draw_tilemap_editor(state);
+  if (ui_state.show_tiledatawindow) {
+    draw_tiledata_editor(state);
   }
   if (ui_state.show_debugwindow) {
     ImGui::Checkbox("Draw Skybox", &engine_state.draw_skybox);
@@ -501,7 +501,7 @@ draw_ui(GameState &state, window::SDLWindow &window, entt::DefaultRegistry &regi
       ImGui::MenuItem("Camera Menu", nullptr, &ui_state.show_camerawindow);
       ImGui::MenuItem("Mouse Menu", nullptr, &ui_state.show_mousewindow);
       ImGui::MenuItem("Player Menu", nullptr, &ui_state.show_playerwindow);
-      ImGui::MenuItem("Tilemap Menu", nullptr, &ui_state.show_tilemapwindow);
+      ImGui::MenuItem("Tilemap Menu", nullptr, &ui_state.show_tiledatawindow);
       ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Settings")) {

@@ -32,7 +32,7 @@ public:
   {
     zstates_.set_active(zone_number);
 
-    auto &tm_state = state.engine_state.tilemap_state;
+    auto &tm_state = state.engine_state.tiledata_state;
     tm_state.recompute = true;
   }
 

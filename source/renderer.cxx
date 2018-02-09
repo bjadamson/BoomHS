@@ -1,6 +1,6 @@
 #include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/tilemap.hpp>
+#include <boomhs/tiledata.hpp>
 #include <boomhs/types.hpp>
 
 #include <glm/glm.hpp>
@@ -315,8 +315,8 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
 }
 
 void
-draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& tilemap,
-    TilemapState const& tilemap_state, entt::DefaultRegistry &registry, FrameTime const& ft)
+draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const& tiledata,
+    TiledataState const& tiledata_state, entt::DefaultRegistry &registry, FrameTime const& ft)
 {
   auto &logger = args.logger;
   auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, std::uint32_t const entity,
@@ -328,8 +328,8 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
     draw_3dshape(args, model_mat, sp, dinfo, entity, registry, receives_ambient_light);
   };
   auto const draw_tile = [&](auto const& tile_pos) {
-    auto const& tile = tilemap.data(tile_pos);
-    if (!tilemap_state.reveal && !tile.is_visible) {
+    auto const& tile = tiledata.data(tile_pos);
+    if (!tiledata_state.reveal && !tile.is_visible) {
       return;
     }
     // This offset causes the tile's to appear in the "middle"
@@ -364,7 +364,7 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
       case TileType::RIVER:
         {
           // do nothing, explicitely as we handle drawing rivers separately from the rest of the
-          // tilemap.
+          // tiledata.
           //draw_rivers(args, river.sp, river.dinfo, registry, ft, tile.eid, river.eid);
           break;
         }
@@ -401,31 +401,22 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
         std::exit(1);
     }
   };
-  tilemap.visit_each(draw_tile);
+  tiledata.visit_each(draw_tile);
 }
 
 void
 draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInfo const& dinfo,
     entt::DefaultRegistry &registry, window::FrameTime const& ft, uint32_t const river_eid,
-    RiverInfo &rinfo)
+    RiverInfo const& rinfo)
 {
-  auto const abscos = [&rinfo](float const v) {
-    return std::abs(std::cos(v));
-  };
-
   auto const& left = rinfo.left;
   auto const& right = rinfo.right;
 
+  // TODO: unnecessary
   sp.use(rargs.logger);
+  auto const draw_wiggle = [&](auto const& wiggle) {
 
-  auto const draw_wiggle = [&](auto &wiggle) {
-    auto &x = wiggle.position.x;
-    x += abscos(ft.delta) / wiggle.speed;
-    if (x > right.x) {
-      x = left.x;
-    }
-
-    auto const u_zoffset = abscos(ft.delta * wiggle.z_jiggle);
+    auto const u_zoffset = std::abs(std::cos(ft.delta * wiggle.z_jiggle));
     sp.set_uniform_float1(rargs.logger, "u_zoffset", u_zoffset);
     sp.set_uniform_color(rargs.logger, "u_color", LOC::BLUE);
     opengl::global::vao_bind(dinfo.vao());
@@ -439,7 +430,7 @@ draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInf
     auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
     draw_3dshape(rargs, modelmatrix, sp, dinfo, river_eid, registry, receives_ambient);
   };
-  for (auto &w : rinfo.wiggles) {
+  for (auto const& w : rinfo.wiggles) {
     draw_wiggle(w);
   }
 }

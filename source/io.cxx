@@ -22,20 +22,20 @@ using namespace boomhs;
 using namespace window;
 
 void
-move_ontilemap(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObject &wo,
+move_ontiledata(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObject &wo,
     FrameTime const& ft)
 {
   auto &es = state.engine_state;
-  auto &ts = es.tilemap_state;
+  auto &ts = es.tiledata_state;
 
   ZoneManager zm{state.zone_states};
-  auto const& tilemap = zm.active().tilemap;
-  auto const [x, z] = tilemap.dimensions();
+  LevelData const& leveldata = zm.active().level_data;
+  auto const [x, z] = leveldata.dimensions();
   glm::vec3 const move_vec = (wo.*fn)();
 
   // TODO: stop doing this when we use double instead of float
   auto const dtf = static_cast<float>(ft.delta);
-  auto const wpos = wo.tilemap_position() + (move_vec * dtf * wo.speed());
+  auto const wpos = wo.tiledata_position() + (move_vec * dtf * wo.speed());
   bool const x_outofbounds = wpos.x > x || wpos.x < 0;
   bool const z_outofbounds = wpos.z > z || wpos.z < 0;
   bool const out_of_bounds = x_outofbounds || z_outofbounds;
@@ -52,8 +52,8 @@ move_ontilemap(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObje
   } else if (out_of_bounds) {
     return;
   }
-  auto const& new_tile = tilemap.data(wpos.x, wpos.z);
-  bool const should_move = (!es.player_collision) || (new_tile.type != TileType::WALL);
+  auto const tpos = TilePosition::from_floats_truncated(wpos.x, wpos.z);
+  bool const should_move = (!es.player_collision) || !leveldata.is_wall(tpos);
   if (should_move) {
     wo.move(move_vec, ft.delta);
     ts.recompute = true;
@@ -88,7 +88,7 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, FrameT
   auto &es = state.engine_state;
   auto &logger = es.logger;
   auto &ms = es.mouse_state;
-  auto &ts = es.tilemap_state;
+  auto &ts = es.tiledata_state;
   auto &ui = es.ui_state;
 
   ZoneManager zm{state.zone_states};
@@ -101,7 +101,7 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, FrameT
 
   if (ms.both_pressed()) {
     player.rotate_to_match_camera_rotation(camera);
-    move_ontilemap(state, &WorldObject::world_forward, player, ft);
+    move_ontiledata(state, &WorldObject::world_forward, player, ft);
   }
   if (ms.left_pressed) {
     auto const& sens = ms.sensitivity;
@@ -171,7 +171,7 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
 {
   auto &es = state.engine_state;
   auto &ui = es.ui_state;
-  auto &ts = es.tilemap_state;
+  auto &ts = es.tiledata_state;
 
   ZoneManager zm{state.zone_states};
   auto &active = zm.active();
@@ -302,28 +302,28 @@ process_keystate(GameState &state, FrameTime const& ft)
   assert(keystate);
 
   auto &es = state.engine_state;
-  auto &ts = es.tilemap_state;
+  auto &ts = es.tiledata_state;
   ZoneManager zm{state.zone_states};
   auto &active = zm.active();
   auto &player = active.player;
 
   if (keystate[SDL_SCANCODE_W]) {
-    move_ontilemap(state, &WorldObject::world_forward, player, ft);
+    move_ontiledata(state, &WorldObject::world_forward, player, ft);
   }
   if (keystate[SDL_SCANCODE_S]) {
-    move_ontilemap(state, &WorldObject::world_backward, player, ft);
+    move_ontiledata(state, &WorldObject::world_backward, player, ft);
   }
   if (keystate[SDL_SCANCODE_A]) {
-    move_ontilemap(state, &WorldObject::world_left, player, ft);
+    move_ontiledata(state, &WorldObject::world_left, player, ft);
   }
   if (keystate[SDL_SCANCODE_D]) {
-    move_ontilemap(state, &WorldObject::world_right, player, ft);
+    move_ontiledata(state, &WorldObject::world_right, player, ft);
   }
   if (keystate[SDL_SCANCODE_Q]) {
-    move_ontilemap(state, &WorldObject::world_up, player, ft);
+    move_ontiledata(state, &WorldObject::world_up, player, ft);
   }
   if (keystate[SDL_SCANCODE_E]) {
-    move_ontilemap(state, &WorldObject::world_down, player, ft);
+    move_ontiledata(state, &WorldObject::world_down, player, ft);
   }
 }
 
@@ -338,7 +338,7 @@ process_mousestate(GameState &state, FrameTime const& ft)
     auto &zone_state = zm.active();
     auto &player = zone_state.player;
 
-    move_ontilemap(state, &WorldObject::world_forward, player, ft);
+    move_ontiledata(state, &WorldObject::world_forward, player, ft);
   }
 }
 
@@ -361,16 +361,16 @@ process_event(GameState &state, SDL_Event &event, FrameTime const& ft)
     case SDL_MOUSEBUTTONUP:
       process_mousebutton_up(state, event.button, ft);
       break;
-  case SDL_MOUSEMOTION:
+    case SDL_MOUSEMOTION:
       process_mousemotion(state, event.motion, ft);
       break;
-  case SDL_MOUSEWHEEL:
+    case SDL_MOUSEWHEEL:
       process_mousewheel(state, event.wheel, ft);
       break;
-  case SDL_KEYDOWN:
+    case SDL_KEYDOWN:
       process_keydown(state, event, ft);
       break;
-  case SDL_KEYUP:
+    case SDL_KEYUP:
       process_keyup(state, event, ft);
       break;
   }

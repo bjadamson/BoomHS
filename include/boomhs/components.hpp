@@ -52,21 +52,6 @@ public:
   }
 };
 
-struct RiverWiggle
-{
-  float speed;
-  float z_jiggle;
-
-  glm::vec3 position;
-};
-
-struct RiverInfo
-{
-  glm::vec3 left, right, top, bottom;
-
-  std::vector<RiverWiggle> wiggles;
-};
-
 struct StairInfo
 {
   TilePosition tile_position;
@@ -134,15 +119,6 @@ find_pointlights(entt::DefaultRegistry &registry)
 }
 
 inline auto
-find_rivers(entt::DefaultRegistry &registry)
-{
-  using namespace boomhs;
-  using namespace opengl;
-
-  return find_all_entities_with_component<RiverInfo>(registry);
-}
-
-inline auto
 find_stairs(entt::DefaultRegistry &registry)
 {
   using namespace boomhs;
@@ -151,20 +127,20 @@ find_stairs(entt::DefaultRegistry &registry)
   return find_all_entities_with_component<StairInfo>(registry);
 }
 
-class TileMap;
+class TileData;
 std::vector<uint32_t>
-find_stairs_withtype(entt::DefaultRegistry &, TileMap const&, TileType const);
+find_stairs_withtype(entt::DefaultRegistry &, TileData const&, TileType const);
 
 inline auto
-find_upstairs(entt::DefaultRegistry &registry, TileMap const& tmap)
+find_upstairs(entt::DefaultRegistry &registry, TileData const& tdata)
 {
-  return find_stairs_withtype(registry, tmap, TileType::STAIR_UP);
+  return find_stairs_withtype(registry, tdata, TileType::STAIR_UP);
 }
 
 inline auto
-find_downstairs(entt::DefaultRegistry &registry, TileMap const& tmap)
+find_downstairs(entt::DefaultRegistry &registry, TileData const& tdata)
 {
-  return find_stairs_withtype(registry, tmap, TileType::STAIR_DOWN);
+  return find_stairs_withtype(registry, tdata, TileType::STAIR_DOWN);
 }
 
 inline uint32_t

@@ -15,8 +15,8 @@
 #include <boomhs/renderer.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/tilemap.hpp>
-#include <boomhs/tilemap_algorithms.hpp>
+#include <boomhs/tiledata.hpp>
+#include <boomhs/tiledata_algorithms.hpp>
 #include <boomhs/ui.hpp>
 #include <boomhs/zone.hpp>
 
@@ -199,7 +199,7 @@ draw_terrain(GameState &state, opengl::ShaderPrograms &sps)
 }
 
 void
-draw_tilemap(GameState &state, opengl::ShaderPrograms &sps, HandleManager &handles,
+draw_tiledata(GameState &state, opengl::ShaderPrograms &sps, HandleManager &handles,
     FrameTime const& ft)
 {
   using namespace render;
@@ -207,13 +207,13 @@ draw_tilemap(GameState &state, opengl::ShaderPrograms &sps, HandleManager &handl
   // TODO: How do we "GET" the hashtag and plus shaders under the new entity management system?
   //
   // PROBLEM:
-  //    We currently store one draw handle to every entity. For the TileMap, we need to store two
+  //    We currently store one draw handle to every entity. For the TileData, we need to store two
   //    (an array) of DrawInfo instances to the one entity.
   //
   // THOUGHT:
-  //    It probably makes sense to render the tilemap differently now. We should assume more than
+  //    It probably makes sense to render the tiledata differently now. We should assume more than
   //    just two tile type's will be necessary, and will have to devise a strategy for quickly
-  //    rendering the tilemap using different tile's. Maybe store the different tile type's
+  //    rendering the tiledata using different tile's. Maybe store the different tile type's
   //    together somehow for rendering?
   DrawPlusArgs plus{sps.ref_sp("3d_pos_normal_color"), handles.lookup(handles.plus_eid),
     handles.plus_eid};
@@ -225,14 +225,14 @@ draw_tilemap(GameState &state, opengl::ShaderPrograms &sps, HandleManager &handl
   auto &stair_sp = sps.ref_sp("stair");
   DrawStairsDownArgs stairs_down{stair_sp, handles.lookup(handles.stair_down_eid), handles.stair_down_eid};
   DrawStairsUpArgs stairs_up{stair_sp, handles.lookup(handles.stair_up_eid), handles.stair_up_eid};
-  DrawTilemapArgs dta{MOVE(plus), MOVE(hashtag), MOVE(river), MOVE(stairs_down), MOVE(stairs_up)};
+  DrawTileDataArgs dta{MOVE(plus), MOVE(hashtag), MOVE(river), MOVE(stairs_down), MOVE(stairs_up)};
 
   ZoneManager zm{state.zone_states};
   auto &active = zm.active();
   auto &registry = active.registry;
-  auto const& tilemap = active.tilemap;
-  render::draw_tilemap(state.render_args(), dta, tilemap,
-                       state.engine_state.tilemap_state, registry, ft);
+  auto const& leveldata = active.level_data;
+  render::draw_tiledata(state.render_args(), dta, leveldata.tiledata(),
+                       state.engine_state.tiledata_state, registry, ft);
 }
 
 void
@@ -247,11 +247,8 @@ draw_rivers(GameState &state, opengl::ShaderPrograms &sps, HandleManager &handle
   auto &sp = sps.ref_sp("river");
   auto &river_handle = handles.lookup(handles.river_eid);
 
-  auto const rinfos = find_rivers(registry);
-  for (auto const eid : rinfos) {
-    assert(registry.has<RiverInfo>(eid));
-    auto &rinfo = registry.get<RiverInfo>(eid);
-
+  auto const& rinfos = active.level_data.rivers();
+  for (auto const& rinfo : rinfos) {
     render::draw_rivers(rargs, sp, river_handle, registry, ft, handles.river_eid, rinfo);
   }
 }
@@ -266,11 +263,12 @@ draw_tilegrid(GameState &state, opengl::ShaderPrograms &sps)
   ZoneManager zm{state.zone_states};
   auto &active = zm.active();
   auto &registry = active.registry;
-  auto const& tilemap = active.tilemap;
+  auto const& leveldata = active.level_data;
+  auto const& tiledata = leveldata.tiledata();
 
   Transform transform;
-  bool const show_y = es.tilemap_state.show_yaxis_lines;
-  auto const tilegrid = OF::create_tilegrid(logger, sp, tilemap, show_y);
+  bool const show_y = es.tiledata_state.show_yaxis_lines;
+  auto const tilegrid = OF::create_tilegrid(logger, sp, tiledata, show_y);
   render::draw_tilegrid(state.render_args(), transform, sp, tilegrid);
 }
 
@@ -331,8 +329,8 @@ draw_arrow(GameState &state, opengl::ShaderPrograms &sps, entt::DefaultRegistry 
 }
 
 void
-draw_arrow_abovetile_and_neighbors(GameState &state,  entt::DefaultRegistry &registry,
-    ShaderPrograms &sps, TileMap const& tmap, TilePosition const& tpos)
+draw_arrow_abovetile_and_neighbors(GameState &state, entt::DefaultRegistry &registry,
+    ShaderPrograms &sps, TileData const& tdata, TilePosition const& tpos)
 {
   glm::vec3 constexpr offset{0.5f, 2.0f, 0.5f};
 
@@ -344,7 +342,7 @@ draw_arrow_abovetile_and_neighbors(GameState &state,  entt::DefaultRegistry &reg
   };
 
   draw_the_arrow(tpos, LOC::BLUE);
-  auto const neighbors = find_immediate_neighbors(tmap, tpos, TileLookupBehavior::ALL_8_DIRECTIONS,
+  auto const neighbors = find_immediate_neighbors(tdata, tpos, TileLookupBehavior::ALL_8_DIRECTIONS,
       [](auto const& tpos) { return true; });
   //assert(neighbors.size() <= 8);
   FOR(i, neighbors.size()) {
@@ -385,11 +383,11 @@ conditionally_draw_player_vectors(GameState &state, entt::DefaultRegistry &regis
 }
 
 void
-move_betweentilemaps_ifonstairs(GameState &state)
+move_betweentiledatas_ifonstairs(GameState &state)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
-  auto &tilemap_state = es.tilemap_state;
+  auto &tiledata_state = es.tiledata_state;
 
   ZoneManager zm{state.zone_states};
   auto &zone_state = zm.active();
@@ -415,10 +413,13 @@ move_betweentilemaps_ifonstairs(GameState &state)
 
   auto const cast = [](float const f) { return static_cast<int>(f);};
   auto &tp = pc.tile_position;
-  auto &tmap = zone_state.tilemap;
+
+  auto const& leveldata = zone_state.level_data;
+  auto const& tiledata = leveldata.tiledata();
+
   auto const wp = player.world_position();
   {
-    auto const [w, h] = tmap.dimensions();
+    auto const [w, h] = leveldata.dimensions();
     assert(wp.x < w);
     assert(wp.y < h);
   }
@@ -428,15 +429,15 @@ move_betweentilemaps_ifonstairs(GameState &state)
   tp.x = cast(wp.x);
   tp.y = cast(wp.z);
 
-  auto const& tile = tmap.data(tp);
+  auto const& tile = tiledata.data(tp);
   if (!tile.is_stair()) {
     return;
   }
-  // lookup stairs in tilemap
+  // lookup stairs in tiledata
   auto const stair_eids = find_stairs(registry);
   assert(!stair_eids.empty());
 
-  auto const move_player_through_stairs = [&state, &tile, &tilemap_state](StairInfo const& stair) {
+  auto const move_player_through_stairs = [&state, &tile, &tiledata_state](StairInfo const& stair) {
     {
       ZoneManager zm{state.zone_states};
       auto &zone_state = zm.active();
@@ -460,7 +461,7 @@ move_betweentilemaps_ifonstairs(GameState &state)
     player.move_to(spos.x, player.world_position().y, spos.y);
     player.rotate_to_match_camera_rotation(camera);
 
-    tilemap_state.recompute = true;
+    tiledata_state.recompute = true;
   };
   for (auto const& eid : stair_eids) {
     auto const& stair = registry.get<StairInfo>(eid);
@@ -474,30 +475,57 @@ move_betweentilemaps_ifonstairs(GameState &state)
 }
 
 void
+update_riverwiggles(GameState &state, FrameTime const& ft)
+{
+  auto const update_river = [&ft](auto &rinfo)
+  {
+    auto const& left = rinfo.left;
+    auto const& right = rinfo.right;
+
+    for (auto &wiggle : rinfo.wiggles) {
+      auto &x = wiggle.position.x;
+
+      x += std::abs(std::cos(ft.delta)) / wiggle.speed;
+      if (x > right.x) {
+        x = left.x;
+      }
+    }
+  };
+
+  ZoneManager zm{state.zone_states};
+  auto &level_data = zm.active().level_data;
+
+  for (auto &rinfo : level_data.rivers_mutref()) {
+    update_river(rinfo);
+  }
+}
+
+void
 game_loop(GameState &state, SDLWindow &window, FrameTime const& ft)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
-  auto &tilemap_state = es.tilemap_state;
-  move_betweentilemaps_ifonstairs(state);
+  auto &tiledata_state = es.tiledata_state;
+  move_betweentiledatas_ifonstairs(state);
+  update_riverwiggles(state, ft);
 
   /////////////////////////
   ZoneManager zm{state.zone_states};
   auto &zone_state = zm.active();
-  auto &tmap = zone_state.tilemap;
+  auto &leveldata = zone_state.level_data;
 
   auto &player = zone_state.player;
   auto &registry = zone_state.registry;
   /////////////////////////
 
-  // compute tilemap
-  if (tilemap_state.recompute) {
-    LOG_INFO("Updating tilemap\n");
+  // compute tiledata
+  if (tiledata_state.recompute) {
+    LOG_INFO("Updating tiledata\n");
 
-    update_visible_tiles(tmap, player, tilemap_state.reveal);
+    update_visible_tiles(leveldata.tiledata_mutref(), player, tiledata_state.reveal);
 
-    // We don't need to recompute the tilemap, we just did.
-    tilemap_state.recompute = false;
+    // We don't need to recompute the tiledata, we just did.
+    tiledata_state.recompute = false;
   }
 
   // action begins here
@@ -511,16 +539,18 @@ game_loop(GameState &state, SDLWindow &window, FrameTime const& ft)
   if (es.draw_terrain) {
     draw_terrain(state, sps);
   }
-  if (tilemap_state.draw_tilemap) {
-    draw_tilemap(state, sps, handles, ft);
+  if (tiledata_state.draw_tiledata) {
+    draw_tiledata(state, sps, handles, ft);
     draw_rivers(state, sps, handles, ft);
   }
-  if (tilemap_state.show_grid_lines) {
+  if (tiledata_state.show_grid_lines) {
     draw_tilegrid(state, sps);
   }
-  if (tilemap_state.show_neighbortile_arrows) {
+  if (tiledata_state.show_neighbortile_arrows) {
     auto const& wp = player.world_position();
-    draw_arrow_abovetile_and_neighbors(state, registry, sps, tmap, TilePosition{static_cast<int>(wp.x), static_cast<int>(wp.z)});
+    auto const& tdata = leveldata.tiledata();
+    auto const tpos = TilePosition{static_cast<int>(wp.x), static_cast<int>(wp.z)};
+    draw_arrow_abovetile_and_neighbors(state, registry, sps, tdata, tpos);
   }
   if (es.show_global_axis) {
     draw_global_axis(state, registry, sps);
@@ -613,16 +643,19 @@ make_init_gamestate(stlw::Logger &logger, ImGuiIO &imgui, ZoneStates &&zs, windo
 void
 bridge_staircases(ZoneState &a, ZoneState &b)
 {
-  auto const stairs_up_a = find_upstairs(a.registry, a.tilemap);
+  auto &tiledata_a = a.level_data.tiledata_mutref();
+  auto &tiledata_b = b.level_data.tiledata_mutref();
+
+  auto const stairs_up_a = find_upstairs(a.registry, tiledata_a);
   assert(!stairs_up_a.empty());
 
-  //auto const stairs_down_a = find_downstairs(a.registry, a.tilemap);
+  //auto const stairs_down_a = find_downstairs(a.registry, a.tiledata);
   //assert(!stairs_down_a.empty());
 
-  //auto const stairs_up_b = find_upstairs(b.registry, b.tilemap);
+  //auto const stairs_up_b = find_upstairs(b.registry, b.tiledata);
   //assert(!stairs_up_b.empty());
 
-  auto const stairs_down_b = find_downstairs(b.registry, b.tilemap);
+  auto const stairs_down_b = find_downstairs(b.registry, tiledata_b);
   assert(!stairs_down_b.empty());
 
   //std::cerr << "stairs_up_a: '" << stairs_up_a.size() << "'\n";
@@ -649,11 +682,11 @@ bridge_staircases(ZoneState &a, ZoneState &b)
     StairInfo &si_b = b_registry.get<StairInfo>(b_downeid);
 
     // find a suitable neighbor tile for each stair
-    auto const a_neighbors = find_immediate_neighbors(a.tilemap, si_a.tile_position, TileType::FLOOR,
+    auto const a_neighbors = find_immediate_neighbors(tiledata_a, si_a.tile_position, TileType::FLOOR,
         behavior);
     assert(!a_neighbors.empty());
 
-    auto const b_neighbors = find_immediate_neighbors(b.tilemap, si_b.tile_position, TileType::FLOOR,
+    auto const b_neighbors = find_immediate_neighbors(tiledata_b, si_b.tile_position, TileType::FLOOR,
         behavior);
     assert(!b_neighbors.empty());
 
@@ -670,13 +703,15 @@ start(stlw::Logger &logger, Engine &engine)
   ImGui_ImplSdlGL3_Init(engine.window.raw());
   ON_SCOPE_EXIT([]() { ImGui_ImplSdlGL3_Shutdown(); });
 
-  // Construct tilemap
+  // Construct tiledata
   stlw::float_generator rng;
-  auto const make_zs = [&](int const floor_number, auto const floor_count, LevelData &&level_data,
+  auto const make_zs = [&](int const floor_number, auto const floor_count, LevelAssets &&level_assets,
       entt::DefaultRegistry &registry)
   {
-    auto const& objcache = level_data.assets.obj_cache;
-    auto &sps = level_data.shader_programs;
+    auto const& assets = level_assets.assets;
+    auto const& objcache = assets.obj_cache;
+
+    auto &sps = level_assets.shader_programs;
 
     LOG_TRACE("Copy assets to GPU.");
     auto handle_result = boomhs::copy_assets_gpu(logger, sps, registry, objcache);
@@ -689,9 +724,11 @@ start(stlw::Logger &logger, Engine &engine)
     int const width = 40, length = 40;
     TilemapConfig tconfig{width, length, sgconfig};
 
-    auto tmap_startingpos = level_generator::make_tilemap(tconfig, rng, registry);
-    auto tmap = MOVE(tmap_startingpos.first);
-    auto &startingpos = tmap_startingpos.second;
+    auto genlevel = level_generator::make_tiledata(tconfig, rng, registry);
+    auto tdata = MOVE(genlevel.first);
+    auto startpos = MOVE(genlevel.second);
+
+    LevelData ldata{MOVE(tdata), MOVE(startpos)};
 
     ////////////////////////////////
     // for now assume only 1 entity has the Light tag
@@ -720,9 +757,8 @@ start(stlw::Logger &logger, Engine &engine)
     camera.set_coordinates(MOVE(sc));
     //////////////////////////
 
-    auto const& assets = level_data.assets;
     return ZoneState{assets.background_color, assets.global_light, MOVE(handlem), MOVE(sps),
-      MOVE(tmap), MOVE(camera), MOVE(player), registry};
+      MOVE(ldata), MOVE(camera), MOVE(player), registry};
   };
 
   auto &registries = engine.registries;

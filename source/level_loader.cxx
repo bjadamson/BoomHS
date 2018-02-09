@@ -408,7 +408,7 @@ load_vas(CppTable const& config)
 namespace boomhs
 {
 
-stlw::result<LevelData, std::string>
+stlw::result<LevelAssets, std::string>
 load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string const& filename)
 {
   CppTable engine_config = cpptoml::parse_file("engine.toml");
@@ -441,7 +441,7 @@ load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string co
   auto const bg_color = Color{get_vec3_or_abort(area_config, "background")};
   Assets assets{MOVE(meshes), MOVE(entities), MOVE(texture_table), MOVE(glight), bg_color};
   std::cerr << "yielding assets\n";
-  return LevelData{MOVE(assets), MOVE(shader_programs)};
+  return LevelAssets{MOVE(assets), MOVE(shader_programs)};
 }
 
 

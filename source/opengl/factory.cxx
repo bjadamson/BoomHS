@@ -9,7 +9,7 @@
 #include <stlw/type_macros.hpp>
 #include <stlw/type_ctors.hpp>
 
-#include <boomhs/tilemap.hpp>
+#include <boomhs/tiledata.hpp>
 #include <boomhs/types.hpp>
 
 #include <glm/gtc/matrix_inverse.hpp>
@@ -385,14 +385,14 @@ create_arrow(stlw::Logger &logger, ShaderProgram const& shader_program, ArrowCre
 }
 
 DrawInfo
-create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, TileMap const& tmap,
+create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, TileData const& tdata,
     bool const show_yaxis_lines, Color const& color)
 {
   std::vector<float> vertices;
-  vertices.reserve(tmap.num_tiles() * 8);
+  vertices.reserve(tdata.num_tiles() * 8);
 
   std::vector<GLuint> indices;
-  indices.reserve(tmap.num_tiles());
+  indices.reserve(tdata.num_tiles());
 
   std::size_t count = 0u;
   auto const add_point = [&indices, &vertices, &count, &color](glm::vec3 const& pos) {
@@ -456,7 +456,7 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, TileM
 #undef P7
   };
 
-  tmap.visit_each(visit_fn);
+  tdata.visit_each(visit_fn);
 
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{GL_LINES, vertices.size(), num_indices, stlw::none};

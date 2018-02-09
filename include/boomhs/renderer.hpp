@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/components.hpp>
+#include <boomhs/tiledata.hpp>
 #include <opengl/colors.hpp>
 #include <opengl/lighting.hpp>
 #include <window/sdl.hpp>
@@ -23,9 +24,10 @@ namespace boomhs
 {
 class Camera;
 struct RenderArgs;
+struct RiverInfo;
 struct Transform;
-class TileMap;
-struct TilemapState;
+class TileData;
+struct TiledataState;
 class WorldObject;
 } // ns boomhs
 
@@ -98,9 +100,9 @@ struct DrawStairsUpArgs
 
 void
 draw_rivers(RenderArgs const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
-    entt::DefaultRegistry &, window::FrameTime const&, uint32_t, RiverInfo &);
+    entt::DefaultRegistry &, window::FrameTime const&, uint32_t, RiverInfo const&);
 
-struct DrawTilemapArgs
+struct DrawTileDataArgs
 {
   DrawPlusArgs plus;
   DrawHashtagArgs hashtag;
@@ -110,7 +112,7 @@ struct DrawTilemapArgs
 };
 
 void
-draw_tilemap(RenderArgs const&, DrawTilemapArgs &, TileMap const&, TilemapState const&,
+draw_tiledata(RenderArgs const&, DrawTileDataArgs &, TileData const&, TiledataState const&,
     entt::DefaultRegistry &, window::FrameTime const&);
 
 void

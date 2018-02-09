@@ -1,9 +1,9 @@
-#include <boomhs/tilemap.hpp>
+#include <boomhs/tiledata.hpp>
 
 namespace boomhs
 {
 
-TileMap::TileMap(std::vector<Tile> &&t, int32_t const width, int32_t const height,
+TileData::TileData(std::vector<Tile> &&t, int32_t const width, int32_t const height,
     entt::DefaultRegistry &registry)
   : dimensions_(stlw::make_array<int32_t>(width, height))
   , registry_(registry)
@@ -15,20 +15,20 @@ TileMap::TileMap(std::vector<Tile> &&t, int32_t const width, int32_t const heigh
   }
 }
 
-TileMap::TileMap(TileMap &&other)
+TileData::TileData(TileData &&other)
   : dimensions_(other.dimensions_)
   , registry_(other.registry_)
   , tiles_(MOVE(other.tiles_))
 {
-  // "This" instance of the tilemap takes over the responsibility of destroying the entities
-  // from the moved-from tilemap.
+  // "This" instance of the tiledata takes over the responsibility of destroying the entities
+  // from the moved-from tiledata.
   //
-  // The moved-from TileMap should no longer destroy the entities during it's destructor.
+  // The moved-from TileData should no longer destroy the entities during it's destructor.
   this->destroy_entities_ = other.destroy_entities_;
   other.destroy_entities_ = false;
 }
 
-TileMap::~TileMap()
+TileData::~TileData()
 {
   if (destroy_entities_) {
     for (auto &tile : tiles_) {
@@ -38,7 +38,7 @@ TileMap::~TileMap()
 }
 
 Tile&
-TileMap::data(size_t const x, size_t const y)
+TileData::data(size_t const x, size_t const y)
 {
   auto const [w, _] = dimensions();
   auto const cell = (w * y) + x;
@@ -46,7 +46,7 @@ TileMap::data(size_t const x, size_t const y)
 }
 
 Tile const&
-TileMap::data(size_t const x, size_t const y) const
+TileData::data(size_t const x, size_t const y) const
 {
   auto const [w, _] = dimensions();
   auto const cell = (w * y) + x;
