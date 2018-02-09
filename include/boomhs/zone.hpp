@@ -47,6 +47,14 @@ public:
   {
     return zstates_.active_zone();
   }
+
+  /*
+  void
+  add_zone(ZoneState &&zone)
+  {
+    zstates_.add_zone(MOVE(zone));
+  }
+  */
 };
 
 } // ns boomhs

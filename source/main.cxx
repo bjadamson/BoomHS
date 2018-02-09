@@ -627,7 +627,8 @@ timed_game_loop(Engine &engine, GameState &state)
 }
 
 auto
-make_init_gamestate(stlw::Logger &logger, ImGuiIO &imgui, ZoneStates &&zs, window::Dimensions const &dimensions)
+make_init_gamestate(stlw::Logger &logger, ImGuiIO &imgui, window::Dimensions const &dimensions,
+    ZoneStates &&zs)
 {
   // Initialize opengl
   render::init(dimensions);
@@ -785,23 +786,24 @@ start(stlw::Logger &logger, Engine &engine)
    MOVE(zs3), MOVE(zs4)};
   ZoneStates zs{MOVE(zstates_arr)};
 
+  auto &imgui = ImGui::GetIO();
+  auto state = make_init_gamestate(logger, imgui, engine.dimensions(), MOVE(zs));
+
   /*
-  std::vector<ZoneState> zstates;
+  auto &zstates = state.zone_states;
+  ZoneManager zm{zstates};
+
   registries.resize(FLOOR_COUNT);
   FOR(i, FLOOR_COUNT) {
     DO_TRY(auto ld, boomhs::load_level(logger, registries[i], "area" + std::to_string(i) + ".toml"));
     auto zs = make_zs(i, FLOOR_COUNT, MOVE(ld), registries[i]);
-    zstates.emplace_back(MOVE(zs));
+    zm.add_zone(MOVE(zs));
   }
   assert(FLOOR_COUNT >= 1);
   for(auto i = 1; i < FLOOR_COUNT; ++i) {
     bridge_staircases(zstates[i - 1], zstates[i]);
   }
-  ZoneStates zs{MOVE(zstates)};
   */
-
-  auto &imgui = ImGui::GetIO();
-  auto state = make_init_gamestate(logger, imgui, MOVE(zs), engine.dimensions());
 
   timed_game_loop(engine, state);
   LOG_TRACE("game loop finished.");

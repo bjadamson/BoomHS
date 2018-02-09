@@ -138,37 +138,32 @@ struct ZoneState
 
 // This class is meant to be used through the ZoneManager class, construct an instance of
 // ZoneManager to work with this data.
+//
+// TODO: pass in active zone to support loading levels
 class ZoneStates
 {
   std::array<ZoneState, 5> zstates_;
   int active_ = 0;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(ZoneStates);
-
-  // TODO: pass in active zone to support loading levels
-  explicit ZoneStates(std::array<ZoneState, 5> &&zstates)
-    : zstates_(MOVE(zstates))
+  explicit ZoneStates(std::array<ZoneState, 5> &&zs)
+    : zstates_(MOVE(zs))
   {
   }
+
+  ZoneState& operator[](size_t);
+  int size() const;
+
 private:
   friend class ZoneManager;
 
-  int active_zone() const
-  {
-    assert(active_ < size());
-    return active_;
-  }
-  int size() const { return zstates_.size(); }
+  int active_zone() const;
 
-  ZoneState& active() { return zstates_[active_zone()]; }
-  ZoneState const& active() const { return zstates_[active_zone()]; }
+  ZoneState& active();
+  ZoneState const& active() const;
 
-  void
-  set_active(int const zone_number)
-  {
-    assert(zone_number < size());
-    active_ = zone_number;
-  }
+  //void add_zone(ZoneState &&);
+  void set_active(int const);
 };
 
 struct EngineState
@@ -214,11 +209,7 @@ struct GameState
   ZoneStates zone_states;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
-  explicit GameState(EngineState &&es, ZoneStates &&zs)
-    : engine_state(MOVE(es))
-    , zone_states(MOVE(zs))
-  {
-  }
+  explicit GameState(EngineState &&, ZoneStates &&);
 
   RenderArgs
   render_args();
