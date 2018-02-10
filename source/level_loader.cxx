@@ -422,7 +422,7 @@ load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string co
 
   auto const mesh_table = get_table_array_or_abort(area_config, "meshes");
   auto loader = opengl::ObjLoader{LOC::WHITE};
-  auto meshes = load_meshes(loader, mesh_table);
+  auto objcache = load_meshes(loader, mesh_table);
 
   std::cerr << "loading textures ...\n";
   auto texture_table = load_textures(logger, area_config);
@@ -438,8 +438,8 @@ load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string co
   DirectionalLight dlight{MOVE(light), directional_light_direction};
   GlobalLight glight{MOVE(dlight)};
 
-  auto const bg_color = Color{get_vec3_or_abort(area_config, "background")};
-  Assets assets{MOVE(meshes), MOVE(entities), MOVE(texture_table), MOVE(glight), bg_color};
+  auto bg_color = Color{get_vec3_or_abort(area_config, "background")};
+  Assets assets{MOVE(objcache), MOVE(entities), MOVE(texture_table), MOVE(glight), MOVE(bg_color)};
   std::cerr << "yielding assets\n";
   return LevelAssets{MOVE(assets), MOVE(shader_programs)};
 }

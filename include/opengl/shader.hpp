@@ -15,20 +15,21 @@ namespace opengl
 {
 
 #define DEFINE_SHADER_FILENAME_TYPE(NAME)                                                          \
-  struct NAME##_shader_filename {                                                                  \
+  struct NAME##ShaderFilename {                                                                    \
     std::string const filename;                                                                    \
-    explicit NAME##_shader_filename(std::string const& fn)                                         \
+    explicit NAME##ShaderFilename(std::string const& fn)                                           \
         : filename(fn)                                                                             \
     {                                                                                              \
     }                                                                                              \
-    explicit NAME##_shader_filename(char const *f)                                                 \
+    explicit NAME##ShaderFilename(char const *f)                                                   \
         : filename(f)                                                                              \
     {                                                                                              \
     }                                                                                              \
+    MOVE_CONSTRUCTIBLE_ONLY(NAME##ShaderFilename)                                                \
   }
 
-DEFINE_SHADER_FILENAME_TYPE(vertex);
-DEFINE_SHADER_FILENAME_TYPE(fragment);
+DEFINE_SHADER_FILENAME_TYPE(Vertex);
+DEFINE_SHADER_FILENAME_TYPE(Fragment);
 #undef DEFINE_SHADER_FILENAME_TYPE
 
 struct program_factory
@@ -36,7 +37,7 @@ struct program_factory
   program_factory() = delete;
 
   static stlw::result<GLuint, std::string>
-  from_files(stlw::Logger &, vertex_shader_filename const, fragment_shader_filename const);
+  from_files(stlw::Logger &, VertexShaderFilename const&, FragmentShaderFilename const&);
 };
 
 class ProgramHandle
@@ -58,6 +59,7 @@ class ShaderProgram
 {
   ProgramHandle program_;
   VertexAttribute va_;
+  bool moved_from = false;
 public:
 
   NO_COPY(ShaderProgram);
@@ -67,6 +69,15 @@ public:
     : program_(MOVE(sp.program_))
     , va_(MOVE(sp.va_))
   {
+    moved_from = sp.moved_from;
+    sp.moved_from = true;
+  }
+
+  ~ShaderProgram()
+  {
+    if (!moved_from) {
+      std::abort();
+    }
   }
 
   //MOVE_CONSTRUCTIBLE_ONLY(ShaderProgram);
@@ -152,6 +163,12 @@ class ShaderPrograms
 
 public:
   ShaderPrograms() = default;
+  ~ShaderPrograms()
+  {
+    if (!shader_programs_.empty()) {
+      std::abort();
+    }
+  }
   MOVE_CONSTRUCTIBLE_ONLY(ShaderPrograms);
 
   void

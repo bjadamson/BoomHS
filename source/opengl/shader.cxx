@@ -211,8 +211,8 @@ namespace opengl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // grogram_factory
 stlw::result<GLuint, std::string>
-program_factory::from_files(stlw::Logger &logger, vertex_shader_filename const v,
-    fragment_shader_filename const f)
+program_factory::from_files(stlw::Logger &logger, VertexShaderFilename const& v,
+    FragmentShaderFilename const& f)
 {
   auto const prefix = [](auto const &path) {
     return std::string{"./build-system/bin/shaders/"} + path;
@@ -452,8 +452,8 @@ print_active_uniforms(std::ostream &stream, GLuint const program)
 stlw::result<ShaderProgram, std::string>
 make_shader_program(stlw::Logger &logger, std::string const& vertex_s, std::string const& fragment_s, VertexAttribute &&va)
 {
-  vertex_shader_filename v{vertex_s};
-  fragment_shader_filename f{fragment_s};
+  VertexShaderFilename const v{vertex_s};
+  FragmentShaderFilename const f{fragment_s};
   DO_TRY(auto sp, program_factory::from_files(logger, v, f));
   return ShaderProgram{ProgramHandle{sp}, MOVE(va)};
 }

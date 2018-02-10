@@ -450,7 +450,6 @@ update_riverwiggles(LevelData &level_data, FrameTime const& ft)
       }
     }
   };
-
   for (auto &rinfo : level_data.rivers_mutref()) {
     update_river(rinfo);
   }
@@ -667,13 +666,12 @@ start(stlw::Logger &logger, Engine &engine)
   auto const make_zs = [&](int const floor_number, auto const floor_count, LevelAssets &&level_assets,
       entt::DefaultRegistry &registry)
   {
-    auto const& assets = level_assets.assets;
+    auto &assets = level_assets.assets;
     auto const& objcache = assets.obj_cache;
 
-    auto &sps = level_assets.shader_programs;
-
     LOG_TRACE("Copy assets to GPU.");
-    auto handle_result = boomhs::copy_assets_gpu(logger, sps, registry, objcache);
+    auto handle_result = boomhs::copy_assets_gpu(logger, level_assets.shader_programs, registry,
+        objcache);
     assert(handle_result);
     HandleManager handlem = MOVE(*handle_result);
 
@@ -706,18 +704,23 @@ start(stlw::Logger &logger, Engine &engine)
 
     EnttLookup player_lookup{player_eid, registry};
     WorldObject player{player_lookup, FORWARD, UP};
-
     Camera camera(player_lookup, FORWARD, UP);
-
-    SphericalCoordinates sc;
-    sc.radius = 3.8f;
-    sc.theta = glm::radians(-0.229f);
-    sc.phi = glm::radians(38.2735f);
-    camera.set_coordinates(MOVE(sc));
-    //////////////////////////
-
-    return ZoneState{assets.background_color, assets.global_light, MOVE(handlem), MOVE(sps),
-      MOVE(ldata), MOVE(camera), MOVE(player), registry};
+    {
+      SphericalCoordinates sc;
+      sc.radius = 3.8f;
+      sc.theta = glm::radians(-0.229f);
+      sc.phi = glm::radians(38.2735f);
+      camera.set_coordinates(MOVE(sc));
+    }
+    return ZoneState{
+      assets.background_color,
+      assets.global_light,
+      MOVE(handlem),
+      MOVE(level_assets.shader_programs),
+      MOVE(ldata),
+      MOVE(camera),
+      MOVE(player),
+      registry};
   };
 
   auto &registries = engine.registries;
@@ -725,9 +728,11 @@ start(stlw::Logger &logger, Engine &engine)
 
   std::vector<ZoneState> zstates;
 
+  {
     DO_TRY(auto ld0, boomhs::load_level(logger, registries[0], "area0.toml"));
     auto zs0 = make_zs(0, FLOOR_COUNT, MOVE(ld0), registries[0]);
     zstates.emplace_back(MOVE(zs0));
+  }
 
   DO_TRY(auto ld1, boomhs::load_level(logger, registries[1], "area1.toml"));
   DO_TRY(auto ld2, boomhs::load_level(logger, registries[2], "area2.toml"));

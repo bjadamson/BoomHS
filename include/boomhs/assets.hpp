@@ -29,38 +29,16 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(ObjCache);
 
   void
-  add_obj(std::string const& name, opengl::obj &&o)
-  {
-    auto pair = std::make_pair(name, MOVE(o));
-    objects_.emplace_back(MOVE(pair));
-  }
+  add_obj(std::string const&, opengl::obj &&);
 
   void
-  add_obj(char const* name, opengl::obj &&o)
-  {
-    add_obj(std::string{name}, MOVE(o));
-  }
+  add_obj(char const*, opengl::obj &&);
 
-  auto const&
-  get_obj(char const* name) const
-  {
-    auto const cmp = [&name](auto const& pair) {
-      return pair.first == name;
-    };
-    auto const it = std::find_if(objects_.cbegin(), objects_.cend(), cmp);
+  opengl::obj const&
+  get_obj(char const*) const;
 
-    // for now, assume all queries are found
-    assert(it != objects_.cend());
-
-    // yield reference to data
-    return it->second;
-  }
-
-  auto const&
-  get_obj(std::string const& s) const
-  {
-    return get_obj(s.c_str());
-  }
+  opengl::obj const&
+  get_obj(std::string const&) const;
 };
 
 enum GeometryType
@@ -86,8 +64,15 @@ struct LoadedEntities
   std::vector<uint32_t> data = {};
 
   LoadedEntities() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(LoadedEntities);
+  //MOVE_CONSTRUCTIBLE_ONLY(LoadedEntities);
+  NO_COPY(LoadedEntities);
+  NO_MOVE_ASSIGN(LoadedEntities);
   BEGIN_END_FORWARD_FNS(data);
+
+  LoadedEntities(LoadedEntities &&);
+  ~LoadedEntities();
+
+  bool empty() const { return data.empty(); }
 };
 
 // TODO: not final by any means..
@@ -100,7 +85,15 @@ struct Assets
   opengl::GlobalLight global_light;
   opengl::Color background_color;
 
-  MOVE_CONSTRUCTIBLE_ONLY(Assets);
+  ~Assets();
+
+  NO_COPY(Assets);
+  NO_MOVE_ASSIGN(Assets);
+
+  Assets(Assets &&);
+  Assets(ObjCache &&, LoadedEntities &&, opengl::TextureTable &&, opengl::GlobalLight &&,
+      opengl::Color &&);
+  //MOVE_CONSTRUCTIBLE_ONLY(Assets);
 };
 
 class GpuHandleList
@@ -112,28 +105,15 @@ public:
   GpuHandleList() = default;
   MOVE_CONSTRUCTIBLE_ONLY(GpuHandleList);
 
-  std::size_t
-  add(uint32_t const entity, opengl::DrawInfo &&di)
-  {
-    auto const pos = drawinfos_.size();
-    drawinfos_.emplace_back(MOVE(di));
-    entities_.emplace_back(entity);
+  ~GpuHandleList();
 
-    // return the index di was stored in.
-    return pos;
-  }
+  size_t
+  add(uint32_t const, opengl::DrawInfo &&);
+
+  bool empty() const { return drawinfos_.empty(); }
 
   opengl::DrawInfo const&
-  get(uint32_t const entity) const
-  {
-    FOR(i, entities_.size()) {
-      if (entities_[i] == entity) {
-        return drawinfos_[i];
-      }
-    }
-    std::cerr << fmt::format("Error could not find gpu handle associated to entity {}'\n", entity);
-    std::abort();
-  }
+  get(uint32_t const entity) const;
 };
 
 class HandleManager
@@ -158,11 +138,10 @@ public:
   {
   }
 
-  auto const&
-  lookup(uint32_t const entity) const
-  {
-    return list_.get(entity);
-  }
+  ~HandleManager();
+
+  opengl::DrawInfo const&
+  lookup(uint32_t const entity) const;
 };
 
 } // ns boomhs
