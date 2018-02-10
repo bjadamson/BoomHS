@@ -142,11 +142,11 @@ struct ZoneState
 // TODO: pass in active zone to support loading levels
 class ZoneStates
 {
-  std::array<ZoneState, 5> zstates_;
+  std::vector<ZoneState> zstates_;
   int active_ = 0;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(ZoneStates);
-  explicit ZoneStates(std::array<ZoneState, 5> &&zs)
+  explicit ZoneStates(std::vector<ZoneState> &&zs)
     : zstates_(MOVE(zs))
   {
   }

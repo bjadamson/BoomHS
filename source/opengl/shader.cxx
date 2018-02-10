@@ -21,18 +21,15 @@ namespace
 using compiled_shader = stlw::ImplicitelyCastableMovableWrapper<GLuint, decltype(glDeleteShader)>;
 using namespace opengl;
 
+auto constexpr INVALID_PROGRAM_ID = 0;
 
-constexpr bool
-is_invalid(GLuint const p) { return p == program_factory::INVALID_PROGRAM_ID(); }
-
-inline bool
+bool
 is_compiled(GLuint const handle)
 {
   GLint is_compiled = GL_FALSE;
   glGetShaderiv(handle, GL_COMPILE_STATUS, &is_compiled);
   return GL_FALSE != is_compiled;
 }
-
 
 stlw::result<compiled_shader, std::string>
 compile_shader(stlw::Logger &logger, GLenum const type, std::string const& data)
@@ -57,7 +54,7 @@ inline stlw::result<GLuint, std::string>
 create_program()
 {
   GLuint const program_id = glCreateProgram();
-  if (0 == program_id) {
+  if (INVALID_PROGRAM_ID == program_id) {
     return stlw::make_error(std::string{"GlCreateProgram returned 0."});
   }
   return program_id;
@@ -240,22 +237,24 @@ program_factory::from_files(stlw::Logger &logger, vertex_shader_filename const v
 ProgramHandle::ProgramHandle(GLuint const p)
   : program_(p)
 {
+  // Initially when a ProgramHandle is constructed from a GLuint, the ProgramHandle "assumes
+  // ownership", or will assume the responsibility of deleting the underlying opengl program.
+  assert(p != INVALID_PROGRAM_ID);
 }
 
-ProgramHandle::ProgramHandle(ProgramHandle &&o)
-  : program_(MOVE(o.program_))
+ProgramHandle::ProgramHandle(ProgramHandle &&other)
+  : program_(MOVE(other.program_))
 {
-  // We don't want to destroy the underlying program, we want to transfer the ownership to this
-  // instance being moved into. This implements "handle-passing" allowing the user to observe
-  // move-semantics for this object.
-  o.program_ = program_factory::make_invalid();
+  // The "moved-from" handle no longer has the responsibility of freeing the underlying opengl
+  // program.
+  other.program_ = INVALID_PROGRAM_ID;
 }
 
 ProgramHandle::~ProgramHandle()
 {
-  if (is_invalid(this->program_)) {
-    glDeleteProgram(this->program_);
-    this->program_ = 0;
+  if (program_ != INVALID_PROGRAM_ID) {
+    glDeleteProgram(program_);
+    program_ = INVALID_PROGRAM_ID;
   }
 }
 
@@ -264,7 +263,7 @@ ProgramHandle::~ProgramHandle()
 void
 ShaderProgram::use(stlw::Logger &logger)
 {
-  glUseProgram(this->program_.handle());
+  glUseProgram(program_.handle());
   LOG_ANY_GL_ERRORS(logger, "Shader use/enable");
 }
 
@@ -272,7 +271,7 @@ GLint
 ShaderProgram::get_uniform_location(stlw::Logger &logger, GLchar const *name)
 {
   LOG_TRACE(fmt::sprintf("getting uniform '%s' location.", name));
-  GLint const loc = glGetUniformLocation(this->program_.handle(), name);
+  GLint const loc = glGetUniformLocation(program_.handle(), name);
   LOG_TRACE(fmt::sprintf("uniform '%s' found at '%d'.", name, loc));
 
   LOG_ANY_GL_ERRORS(logger, "get_uniform_location");

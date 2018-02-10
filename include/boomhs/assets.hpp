@@ -152,7 +152,8 @@ public:
   }
 };
 
-class HandleManager {
+class HandleManager
+{
   GpuHandleList list_;
 public:
   uint32_t plus_eid;
@@ -173,7 +174,7 @@ public:
   {
   }
 
-  auto&
+  auto const&
   lookup(uint32_t const entity) const
   {
     return list_.get(entity);

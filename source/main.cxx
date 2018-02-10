@@ -143,15 +143,16 @@ copy_assets_gpu(stlw::Logger &logger, opengl::ShaderPrograms &sps, entt::Default
 }
 
 void
-draw_entities(GameState &state, opengl::ShaderPrograms &sps, HandleManager &handles)
+draw_entities(GameState &state, opengl::ShaderPrograms &sps)
 {
   ZoneManager zm{state.zone_states};
   auto &active = zm.active();
+  auto &handlem = active.handles;
   auto &registry = active.registry;
 
-  auto const draw_fn = [&handles, &sps, &registry, &state](auto entity, auto &sn, auto &transform) {
+  auto const draw_fn = [&handlem, &sps, &registry, &state](auto entity, auto &sn, auto &transform) {
     auto &shader_ref = sps.ref_sp(sn.value);
-    auto &handle = handles.lookup(entity);
+    auto &handle = handlem.lookup(entity);
     render::draw(state.render_args(), transform, shader_ref, handle, entity, registry);
   };
 
@@ -199,8 +200,7 @@ draw_terrain(GameState &state, opengl::ShaderPrograms &sps)
 }
 
 void
-draw_tiledata(GameState &state, opengl::ShaderPrograms &sps, HandleManager &handles,
-    FrameTime const& ft)
+draw_tiledata(GameState &state, opengl::ShaderPrograms &sps, FrameTime const& ft)
 {
   using namespace render;
   auto &logger = state.engine_state.logger;
@@ -215,20 +215,23 @@ draw_tiledata(GameState &state, opengl::ShaderPrograms &sps, HandleManager &hand
   //    just two tile type's will be necessary, and will have to devise a strategy for quickly
   //    rendering the tiledata using different tile's. Maybe store the different tile type's
   //    together somehow for rendering?
-  DrawPlusArgs plus{sps.ref_sp("3d_pos_normal_color"), handles.lookup(handles.plus_eid),
-    handles.plus_eid};
-  DrawHashtagArgs hashtag{sps.ref_sp("hashtag"), handles.lookup(handles.hashtag_eid),
-                          handles.hashtag_eid};
-  DrawHashtagArgs river{sps.ref_sp("river"), handles.lookup(handles.river_eid),
-                          handles.river_eid};
-
-  auto &stair_sp = sps.ref_sp("stair");
-  DrawStairsDownArgs stairs_down{stair_sp, handles.lookup(handles.stair_down_eid), handles.stair_down_eid};
-  DrawStairsUpArgs stairs_up{stair_sp, handles.lookup(handles.stair_up_eid), handles.stair_up_eid};
-  DrawTileDataArgs dta{MOVE(plus), MOVE(hashtag), MOVE(river), MOVE(stairs_down), MOVE(stairs_up)};
 
   ZoneManager zm{state.zone_states};
   auto &active = zm.active();
+  auto &handlem = active.handles;
+
+  DrawPlusArgs plus{sps.ref_sp("3d_pos_normal_color"), handlem.lookup(handlem.plus_eid),
+    handlem.plus_eid};
+  DrawHashtagArgs hashtag{sps.ref_sp("hashtag"), handlem.lookup(handlem.hashtag_eid),
+                          handlem.hashtag_eid};
+  DrawHashtagArgs river{sps.ref_sp("river"), handlem.lookup(handlem.river_eid),
+                          handlem.river_eid};
+
+  auto &stair_sp = sps.ref_sp("stair");
+  DrawStairsDownArgs stairs_down{stair_sp, handlem.lookup(handlem.stair_down_eid), handlem.stair_down_eid};
+  DrawStairsUpArgs stairs_up{stair_sp, handlem.lookup(handlem.stair_up_eid), handlem.stair_up_eid};
+  DrawTileDataArgs dta{MOVE(plus), MOVE(hashtag), MOVE(river), MOVE(stairs_down), MOVE(stairs_up)};
+
   auto &registry = active.registry;
   auto const& leveldata = active.level_data;
   render::draw_tiledata(state.render_args(), dta, leveldata.tiledata(),
@@ -236,20 +239,20 @@ draw_tiledata(GameState &state, opengl::ShaderPrograms &sps, HandleManager &hand
 }
 
 void
-draw_rivers(GameState &state, opengl::ShaderPrograms &sps, HandleManager &handles,
-    FrameTime const& ft)
+draw_rivers(GameState &state, opengl::ShaderPrograms &sps, FrameTime const& ft)
 {
   auto const rargs = state.render_args();
   ZoneManager zm{state.zone_states};
   auto &active = zm.active();
   auto &registry = active.registry;
+  auto &handlem = active.handles;
 
   auto &sp = sps.ref_sp("river");
-  auto &river_handle = handles.lookup(handles.river_eid);
+  auto &river_handle = handlem.lookup(handlem.river_eid);
 
   auto const& rinfos = active.level_data.rivers();
   for (auto const& rinfo : rinfos) {
-    render::draw_rivers(rargs, sp, river_handle, registry, ft, handles.river_eid, rinfo);
+    render::draw_rivers(rargs, sp, river_handle, registry, ft, handlem.river_eid, rinfo);
   }
 }
 
@@ -531,17 +534,16 @@ game_loop(GameState &state, SDLWindow &window, FrameTime const& ft)
   // action begins here
   render::clear_screen(zone_state.background);
 
-  auto &handles = zone_state.handles;
   auto &sps = zone_state.sps;
   if (es.draw_entities) {
-    draw_entities(state, sps, handles);
+    draw_entities(state, sps);
   }
   if (es.draw_terrain) {
     draw_terrain(state, sps);
   }
   if (tiledata_state.draw_tiledata) {
-    draw_tiledata(state, sps, handles, ft);
-    draw_rivers(state, sps, handles, ft);
+    draw_tiledata(state, sps, ft);
+    draw_rivers(state, sps, ft);
   }
   if (tiledata_state.show_grid_lines) {
     draw_tilegrid(state, sps);
@@ -717,7 +719,7 @@ start(stlw::Logger &logger, Engine &engine)
     LOG_TRACE("Copy assets to GPU.");
     auto handle_result = boomhs::copy_assets_gpu(logger, sps, registry, objcache);
     assert(handle_result);
-    auto handlem = MOVE(*handle_result);
+    HandleManager handlem = MOVE(*handle_result);
 
     auto const stairs_perfloor = 8;
     StairGenConfig const sgconfig{floor_count, floor_number, stairs_perfloor};
@@ -765,6 +767,9 @@ start(stlw::Logger &logger, Engine &engine)
   auto &registries = engine.registries;
   auto const FLOOR_COUNT = 5;
 
+  std::vector<ZoneState> zstates;
+
+
   DO_TRY(auto ld0, boomhs::load_level(logger, registries[0], "area0.toml"));
   DO_TRY(auto ld1, boomhs::load_level(logger, registries[1], "area1.toml"));
   DO_TRY(auto ld2, boomhs::load_level(logger, registries[2], "area2.toml"));
@@ -777,14 +782,26 @@ start(stlw::Logger &logger, Engine &engine)
   auto zs3 = make_zs(3, FLOOR_COUNT, MOVE(ld3), registries[3]);
   auto zs4 = make_zs(4, FLOOR_COUNT, MOVE(ld4), registries[4]);
 
-  bridge_staircases(zs0, zs1);
-  bridge_staircases(zs1, zs2);
-  bridge_staircases(zs2, zs3);
-  bridge_staircases(zs3, zs4);
+  //FOR(i, 5) {
+    //DO_TRY(auto ld, boomhs::load_level(logger, registries[i], "area" + std::to_string(i) + ".toml"));
+    //auto zs = make_zs(i, FLOOR_COUNT, MOVE(ld), registries[i]);
+    //zstates.emplace_back(MOVE(zs));
 
-  std::array<ZoneState, FLOOR_COUNT> zstates_arr{MOVE(zs0), MOVE(zs1), MOVE(zs2),
-   MOVE(zs3), MOVE(zs4)};
-  ZoneStates zs{MOVE(zstates_arr)};
+    //bridge_staircases(zstates[i-1], zstates[i]);
+  //}
+
+  zstates.emplace_back(MOVE(zs0));
+  zstates.emplace_back(MOVE(zs1));
+  zstates.emplace_back(MOVE(zs2));
+  zstates.emplace_back(MOVE(zs3));
+  zstates.emplace_back(MOVE(zs4));
+
+  bridge_staircases(zstates[0], zstates[1]);
+  bridge_staircases(zstates[1], zstates[2]);
+  bridge_staircases(zstates[2], zstates[3]);
+  bridge_staircases(zstates[3], zstates[4]);
+
+  ZoneStates zs{MOVE(zstates)};
 
   auto &imgui = ImGui::GetIO();
   auto state = make_init_gamestate(logger, imgui, engine.dimensions(), MOVE(zs));

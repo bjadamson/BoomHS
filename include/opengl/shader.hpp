@@ -36,15 +36,6 @@ struct program_factory
 
   static stlw::result<GLuint, std::string>
   from_files(stlw::Logger &, vertex_shader_filename const, fragment_shader_filename const);
-
-  static constexpr GLuint
-  INVALID_PROGRAM_ID() { return 0; }
-
-  static GLuint
-  make_invalid()
-  {
-    return INVALID_PROGRAM_ID();
-  }
 };
 
 class ProgramHandle
@@ -59,7 +50,7 @@ public:
   ProgramHandle(ProgramHandle &&);
   ~ProgramHandle();
 
-  auto handle() const { return program_; }
+  auto const& handle() const { return program_; }
 };
 
 class ShaderProgram
@@ -67,6 +58,17 @@ class ShaderProgram
   ProgramHandle program_;
   VertexAttribute va_;
 public:
+
+  NO_COPY(ShaderProgram);
+  NO_MOVE_ASSIGN(ShaderProgram);
+
+  ShaderProgram(ShaderProgram &&sp)
+    : program_(MOVE(sp.program_))
+    , va_(MOVE(sp.va_))
+  {
+  }
+
+  //MOVE_CONSTRUCTIBLE_ONLY(ShaderProgram);
   explicit ShaderProgram(ProgramHandle &&ph, VertexAttribute &&va)
     : program_(MOVE(ph))
     , va_(MOVE(va))
@@ -80,7 +82,7 @@ public:
   bool is_2d = false;
 
   // public member fns
-  auto handle() const { return program_.handle(); }
+  auto const& handle() const { return program_.handle(); }
   auto const& va() const { return this->va_; }
 
   void use(stlw::Logger &);
@@ -149,7 +151,15 @@ class ShaderPrograms
 
 public:
   ShaderPrograms() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(ShaderPrograms);
+
+  NO_COPY(ShaderPrograms);
+  NO_MOVE_ASSIGN(ShaderPrograms);
+
+  ShaderPrograms(ShaderPrograms &&sp)
+    : shader_programs_(MOVE(sp.shader_programs_))
+  {
+  }
+  //MOVE_CONSTRUCTIBLE_ONLY(ShaderPrograms);
 
   void
   add(std::string const& s, ShaderProgram &&sp)
