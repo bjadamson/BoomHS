@@ -7,15 +7,17 @@ namespace boomhs
 
 struct TilePosition
 {
-  using ValueT = int;
+  using ValueT = size_t;
 
   ValueT x = 0, y = 0;
 
   static TilePosition
   from_floats_truncated(float const x, float const y)
   {
-    auto const xx = static_cast<int>(x);
-    auto const yy = static_cast<int>(y);
+    assert(x >= 0.0f);
+    assert(y >= 0.0f);
+    auto const xx = static_cast<size_t>(x);
+    auto const yy = static_cast<size_t>(y);
     return TilePosition{xx, yy};
   }
 };

@@ -3,12 +3,13 @@
 #include <opengl/vertex_attribute.hpp>
 #include <boomhs/types.hpp>
 
+#include <stlw/optional.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <algorithm>
-#include <stlw/optional.hpp>
+#include <iostream>
 
 namespace opengl
 {
@@ -151,15 +152,7 @@ class ShaderPrograms
 
 public:
   ShaderPrograms() = default;
-
-  NO_COPY(ShaderPrograms);
-  NO_MOVE_ASSIGN(ShaderPrograms);
-
-  ShaderPrograms(ShaderPrograms &&sp)
-    : shader_programs_(MOVE(sp.shader_programs_))
-  {
-  }
-  //MOVE_CONSTRUCTIBLE_ONLY(ShaderPrograms);
+  MOVE_CONSTRUCTIBLE_ONLY(ShaderPrograms);
 
   void
   add(std::string const& s, ShaderProgram &&sp)

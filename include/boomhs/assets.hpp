@@ -81,22 +81,6 @@ from_string(std::string &string)
   std::abort();
 }
 
-struct EntityInfo
-{
-  Transform const transform;
-  GeometryType const type;
-
-  // THOUGHT: It doesn't make sense to have a "color" but not a "shader".
-  //
-  // We lost our compile time guarantees, how to compensate?
-  stlw::optional<std::string> const shader;
-  stlw::optional<std::string> const mesh_name;
-  stlw::optional<opengl::Color> const color;
-  stlw::optional<opengl::TextureInfo> const texture;
-
-  MOVE_CONSTRUCTIBLE_ONLY(EntityInfo);
-};
-
 struct LoadedEntities
 {
   std::vector<uint32_t> data = {};

@@ -15,6 +15,8 @@ struct RiverWiggle
   float z_jiggle;
 
   glm::vec3 position;
+
+  MOVE_CONSTRUCTIBLE_ONLY(RiverWiggle);
 };
 
 struct RiverInfo
@@ -22,6 +24,8 @@ struct RiverInfo
   glm::vec3 left, right, top, bottom;
 
   std::vector<RiverWiggle> wiggles;
+
+  MOVE_CONSTRUCTIBLE_ONLY(RiverInfo);
 };
 
 class LevelData

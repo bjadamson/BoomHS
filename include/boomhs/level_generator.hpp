@@ -10,7 +10,7 @@ namespace boomhs
 
 struct TilemapConfig
 {
-  uint32_t const width, length;
+  size_t const width, height;
   StairGenConfig const& stairconfig;
 };
 

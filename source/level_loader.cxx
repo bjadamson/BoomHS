@@ -14,22 +14,22 @@ using namespace opengl;
 using CppTableArray = std::shared_ptr<cpptoml::table_array>;
 using CppTable = std::shared_ptr<cpptoml::table>;
 
-#define TRY_OPTION_GENERAL_EVAL(VAR_DECL, V, expr)                                                 \
+#define TRY_OPTION_GENERAL_EVAL(VAR_NAME, V, expr)                                                 \
   auto V{expr};                                                                                    \
   if (!V) {                                                                                        \
     return cpptoml::option<opengl::AttributePointerInfo>{}; \
   }                                                                                                \
-  VAR_DECL{MOVE(V)};
+  VAR_NAME{MOVE(V)};
 
-#define TRY_OPTION_CONCAT(VAR_DECL, TO_CONCAT, expr)                                               \
-  TRY_OPTION_GENERAL_EVAL(VAR_DECL, _TRY_OPTION_TEMPORARY_##TO_CONCAT, expr)
+#define TRY_OPTION_CONCAT(VAR_NAME, TO_CONCAT, expr)                                               \
+  TRY_OPTION_GENERAL_EVAL(VAR_NAME, _TRY_OPTION_TEMPORARY_##TO_CONCAT, expr)
 
-#define TRY_OPTION_EXPAND_VAR(VAR_DECL, to_concat, expr)                                           \
-  TRY_OPTION_CONCAT(VAR_DECL, to_concat, expr)
+#define TRY_OPTION_EXPAND_VAR(VAR_NAME, to_concat, expr)                                           \
+  TRY_OPTION_CONCAT(VAR_NAME, to_concat, expr)
 
 // TRY_OPTION
-#define TRY_OPTION(VAR_DECL, expr)                                                                 \
-  TRY_OPTION_EXPAND_VAR(VAR_DECL, __COUNTER__, expr)
+#define TRY_OPTION(VAR_NAME, expr)                                                                 \
+  TRY_OPTION_EXPAND_VAR(VAR_NAME, __COUNTER__, expr)
 
 namespace
 {

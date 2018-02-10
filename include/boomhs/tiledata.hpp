@@ -45,7 +45,7 @@ public:
 
 class TileData
 {
-  std::array<int32_t, 2> dimensions_;
+  std::array<size_t, 2> dimensions_;
   entt::DefaultRegistry &registry_;
 
   std::vector<Tile> tiles_;
@@ -56,13 +56,14 @@ public:
   NO_COPY(TileData);
   NO_MOVE_ASSIGN(TileData);
 
-  TileData(std::vector<Tile> &&, int32_t const, int32_t const, entt::DefaultRegistry &);
+  TileData(std::vector<Tile> &&, size_t const, size_t const, entt::DefaultRegistry &);
 
   ~TileData();
 
   TileData(TileData &&);
 
   auto dimensions() const { return dimensions_; }
+  bool empty() const { return tiles_.empty(); }
   auto num_tiles() const { return tiles_.size(); }
 
   Tile&
@@ -81,10 +82,10 @@ public:
   void
   visit_each(FN const& fn) const
   {
-    auto const [w, l] = dimensions();
-    FORI(x, w) {
-      FORI(z, l) {
-        fn(TilePosition{x, z});
+    auto const [w, h] = dimensions();
+    FOR(x, w) {
+      FOR(y, h) {
+        fn(TilePosition{x, y});
       }
     }
   }
@@ -93,15 +94,17 @@ public:
   void
   visit_neighbors(TilePosition const& pos, FN const& fn, TileLookupBehavior const behavior) const
   {
-    auto const [w, l] = dimensions();
-    assert(w == l); // TODO: test if this works if this assumption not true
+    auto const [w, y] = dimensions();
+    assert(w == y); // TODO: test if this works if this assumption not true
+    assert(pos.x < w);
+    assert(pos.y < y);
 
     // clang-format off
     bool const edgeof_left  = pos.x == 0;
-    bool const edgeof_right = pos.x == static_cast<int>(l - 1);
+    bool const edgeof_right = pos.x == (y - 1);
 
     bool const edgeof_below = pos.y == 0;
-    bool const edgeof_above = pos.y == static_cast<int>(w - 1);
+    bool const edgeof_above = pos.y == (w - 1);
 
     auto const leftbelow  = [&]() { fn(pos.x + -1, pos.y + -1); };
     auto const left       = [&]() { fn(pos.x + 0,  pos.y + -1); };

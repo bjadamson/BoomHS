@@ -137,6 +137,7 @@ create_v_tunnel(int const y1, int const y2, int const x, TileType const type, Ti
   }
 }
 
+/*
 bool
 is_blocked(int const x, int const y, TileData const& tdata)
 {
@@ -160,6 +161,7 @@ generate_monster_position(Rect const& room, TileData const& tdata, stlw::float_g
   }
   return TilePosition{x, y};
 }
+*/
 
 void
 place_objects(Rect const& room, TileData const& tdata, stlw::float_generator &rng)
@@ -167,7 +169,7 @@ place_objects(Rect const& room, TileData const& tdata, stlw::float_generator &rn
   auto const num_monsters = rng.gen_int_range(0, MAX_ROOM_MONSTERS + 1);
 
   FORI(i, num_monsters) {
-    auto const pos = generate_monster_position(room, tdata, rng);
+    //auto const pos = generate_monster_position(room, tdata, rng);
     if (rng.gen_bool()) {
       // create orc
     } else {
@@ -281,7 +283,7 @@ place_rooms_and_stairs(TilemapConfig &tconfig, TileData &tdata,
   while(!rooms && !stairs) {
     std::cerr << "creating rooms ...\n";
     while(!rooms) {
-      rooms = create_rooms(tconfig.width, tconfig.length, tdata, rng);
+      rooms = create_rooms(tconfig.width, tconfig.height, tdata, rng);
     }
     while(!stairs) {
       std::cerr << "placing stairs ...\n";
@@ -297,14 +299,14 @@ std::pair<TileData, TilePosition>
 make_tiledata(TilemapConfig &tconfig, stlw::float_generator &rng, entt::DefaultRegistry &registry)
 {
   // clang-format off
-  int const width     = tconfig.width;
-  int const length    = tconfig.length;
-  int const num_tiles = width * length;
+  auto const width     = tconfig.width;
+  auto const height    = tconfig.height;
+  auto const num_tiles = width * height;
   // clang-format on
 
   std::vector<Tile> tiles{static_cast<std::size_t>(num_tiles)};
-  tiles.reserve(width * length);
-  TileData tdata{MOVE(tiles), width, length, registry};
+  tiles.reserve(width * height);
+  TileData tdata{MOVE(tiles), width, height, registry};
 
   std::cerr << "======================================\n";
   auto starting_pos = place_rooms_and_stairs(tconfig, tdata, rng, registry);

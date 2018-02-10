@@ -3,9 +3,9 @@
 namespace boomhs
 {
 
-TileData::TileData(std::vector<Tile> &&t, int32_t const width, int32_t const height,
+TileData::TileData(std::vector<Tile> &&t, size_t const width, size_t const height,
     entt::DefaultRegistry &registry)
-  : dimensions_(stlw::make_array<int32_t>(width, height))
+  : dimensions_(stlw::make_array<size_t>(width, height))
   , registry_(registry)
   , tiles_(MOVE(t))
 {
@@ -40,7 +40,9 @@ TileData::~TileData()
 Tile&
 TileData::data(size_t const x, size_t const y)
 {
-  auto const [w, _] = dimensions();
+  auto const [w, h] = dimensions();
+  assert(x < w);
+  assert(y < h);
   auto const cell = (w * y) + x;
   return tiles_[cell];
 }
@@ -48,7 +50,12 @@ TileData::data(size_t const x, size_t const y)
 Tile const&
 TileData::data(size_t const x, size_t const y) const
 {
-  auto const [w, _] = dimensions();
+  auto const [w, h] = dimensions();
+  if (y >= h) {
+    std::cerr << "x: '" << x << "' y: '" << y << "'\n";
+  }
+  assert(x < w);
+  assert(y < h);
   auto const cell = (w * y) + x;
   return tiles_[cell];
 }

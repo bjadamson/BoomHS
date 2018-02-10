@@ -35,7 +35,7 @@ move_ontiledata(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObj
 
   // TODO: stop doing this when we use double instead of float
   auto const dtf = static_cast<float>(ft.delta);
-  auto const wpos = wo.tiledata_position() + (move_vec * dtf * wo.speed());
+  auto const wpos = wo.tile_position() + (move_vec * dtf * wo.speed());
   bool const x_outofbounds = wpos.x > x || wpos.x < 0;
   bool const z_outofbounds = wpos.z > z || wpos.z < 0;
   bool const out_of_bounds = x_outofbounds || z_outofbounds;

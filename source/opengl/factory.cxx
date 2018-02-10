@@ -415,7 +415,7 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, TileD
   };
 
   auto const visit_fn = [&add_line, &show_yaxis_lines](auto const& pos) {
-    auto const x = pos.x, y = 0, z = pos.y;
+    auto const x = pos.x, y = 0ul, z = pos.y;
 #define P0 glm::vec3{x, y, z}
 #define P1 glm::vec3{x + 1, y, z}
 #define P2 glm::vec3{x + 1, y + 1, z}

@@ -28,12 +28,10 @@ public:
   }
 
   void
-  make_zone_active(int const zone_number, GameState &state)
+  make_zone_active(int const zone_number, TiledataState &tds)
   {
     zstates_.set_active(zone_number);
-
-    auto &tm_state = state.engine_state.tiledata_state;
-    tm_state.recompute = true;
+    tds.recompute = true;
   }
 
   int

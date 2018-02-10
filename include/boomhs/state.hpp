@@ -124,7 +124,7 @@ struct ZoneState
       HandleManager &&hm, opengl::ShaderPrograms &&sp, LevelData &&ldata, Camera &&cam,
       WorldObject &&pl, entt::DefaultRegistry &reg)
     : background(bgcolor)
-    , global_light(MOVE(glight))
+    , global_light(glight)
     , handles(MOVE(hm))
     , sps(MOVE(sp))
     , level_data(MOVE(ldata))

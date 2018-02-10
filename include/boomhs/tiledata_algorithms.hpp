@@ -11,7 +11,7 @@ namespace boomhs
 struct Edges
 {
   TilePosition const position;
-  int32_t const left, top, right, bottom;
+  size_t const left, top, right, bottom;
 };
 
 struct Edges;
@@ -24,7 +24,7 @@ namespace boomhs::detail
 {
 
 Edges
-calculate_edges(TilePosition const& tpos, int const, int const, int const);
+calculate_edges(TilePosition const& tpos, size_t const, size_t const, size_t const);
 
 } // ns boomhs::detail
 
@@ -121,7 +121,7 @@ find_immediate_neighbors(TileData const& tdata, TilePosition const& tpos, TileTy
 }
 
 bool
-any_tiledata_neighbors(TileData const&, TilePosition const&, int32_t const, bool (*)(Tile const&));
+any_tiledata_neighbors(TileData const&, TilePosition const&, size_t const, bool (*)(Tile const&));
 
 class WorldObject;
 void

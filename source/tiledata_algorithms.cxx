@@ -51,18 +51,19 @@ namespace boomhs::detail
 {
 
 Edges
-calculate_edges(TilePosition const& tpos, int const tdata_width, int const tdata_height,
-    int const distance)
+calculate_edges(TilePosition const& tpos, size_t const tdata_width, size_t const tdata_height,
+    size_t const distance)
 {
-  assert(tdata_width > 0);
-  assert(tdata_height > 0);
+  assert(tdata_width > 0ul);
+  assert(tdata_height > 0ul);
 
-  auto const left   = std::max(tpos.x - distance, 0);
+  auto const left   = tpos.x > distance ? std::max(tpos.x - distance, 0ul) : 0ul;
   auto const right  = std::min(tpos.x + distance, tdata_width - 1);
 
   auto const top    = std::min(tpos.y + distance, tdata_height - 1);
-  auto const bottom = std::max(tpos.y - distance, 0);
+  auto const bottom = tpos.y > distance ? std::max(tpos.y - distance, 0ul) : 0ul;
 
+  //std::cerr << "left: '" << left << "' right: '" << right << "'\n";
   assert(left <= right);
   assert(bottom <= top);
 
@@ -90,7 +91,7 @@ operator<<(std::ostream& stream, Edges const& e)
 }
 
 bool
-any_tiledata_neighbors(TileData const& tdata, TilePosition const& pos, int32_t const distance,
+any_tiledata_neighbors(TileData const& tdata, TilePosition const& pos, size_t const distance,
   bool (*fn)(Tile const&))
 {
   auto const [width, length] = tdata.dimensions();
