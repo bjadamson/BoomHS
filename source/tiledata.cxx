@@ -31,7 +31,6 @@ TileData::TileData(TileData &&other)
 TileData::~TileData()
 {
   if (destroy_entities_) {
-    std::abort();
     for (auto &tile : tiles_) {
       registry_.destroy(tile.eid);
     }

@@ -40,14 +40,6 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileData &&, TilePosition const&);
 
-  ~LevelData()
-  {
-    if (!rivers_.empty() || !tilegrid_.empty())
-    {
-      std::abort();
-    }
-  }
-
   void set_floor(TilePosition const&);
   void set_river(TilePosition const&);
   void set_wall(TilePosition const&);

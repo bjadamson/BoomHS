@@ -64,13 +64,8 @@ struct LoadedEntities
   std::vector<uint32_t> data = {};
 
   LoadedEntities() = default;
-  //MOVE_CONSTRUCTIBLE_ONLY(LoadedEntities);
-  NO_COPY(LoadedEntities);
-  NO_MOVE_ASSIGN(LoadedEntities);
+  MOVE_CONSTRUCTIBLE_ONLY(LoadedEntities);
   BEGIN_END_FORWARD_FNS(data);
-
-  LoadedEntities(LoadedEntities &&);
-  ~LoadedEntities();
 
   bool empty() const { return data.empty(); }
 };
@@ -85,15 +80,7 @@ struct Assets
   opengl::GlobalLight global_light;
   opengl::Color background_color;
 
-  ~Assets();
-
-  NO_COPY(Assets);
-  NO_MOVE_ASSIGN(Assets);
-
-  Assets(Assets &&);
-  Assets(ObjCache &&, LoadedEntities &&, opengl::TextureTable &&, opengl::GlobalLight &&,
-      opengl::Color &&);
-  //MOVE_CONSTRUCTIBLE_ONLY(Assets);
+  MOVE_CONSTRUCTIBLE_ONLY(Assets);
 };
 
 class GpuHandleList
@@ -104,8 +91,6 @@ class GpuHandleList
 public:
   GpuHandleList() = default;
   MOVE_CONSTRUCTIBLE_ONLY(GpuHandleList);
-
-  ~GpuHandleList();
 
   size_t
   add(uint32_t const, opengl::DrawInfo &&);
@@ -137,8 +122,6 @@ public:
     , stair_up_eid(stair_up)
   {
   }
-
-  ~HandleManager();
 
   opengl::DrawInfo const&
   lookup(uint32_t const entity) const;

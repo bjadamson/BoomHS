@@ -8,6 +8,7 @@
 #include <opengl/colors.hpp>
 #include <opengl/lighting.hpp>
 #include <opengl/shader.hpp>
+#include <opengl/texture.hpp>
 
 #include <window/mouse.hpp>
 #include <window/sdl_window.hpp>
@@ -114,6 +115,7 @@ struct ZoneState
 
   HandleManager handles;
   opengl::ShaderPrograms sps;
+  opengl::TextureTable texture_table;
   LevelData level_data;
 
   Camera camera;
@@ -121,12 +123,13 @@ struct ZoneState
   entt::DefaultRegistry &registry;
 
   explicit ZoneState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
-      HandleManager &&hm, opengl::ShaderPrograms &&sp, LevelData &&ldata, Camera &&cam,
-      WorldObject &&pl, entt::DefaultRegistry &reg)
+      HandleManager &&hm, opengl::ShaderPrograms &&sp, opengl::TextureTable &&ttable,
+      LevelData &&ldata, Camera &&cam, WorldObject &&pl, entt::DefaultRegistry &reg)
     : background(bgcolor)
     , global_light(glight)
     , handles(MOVE(hm))
     , sps(MOVE(sp))
+    , texture_table(MOVE(ttable))
     , level_data(MOVE(ldata))
     , camera(MOVE(cam))
     , player(MOVE(pl))

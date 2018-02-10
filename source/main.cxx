@@ -717,6 +717,7 @@ start(stlw::Logger &logger, Engine &engine)
       assets.global_light,
       MOVE(handlem),
       MOVE(level_assets.shader_programs),
+      MOVE(level_assets.assets.texture_table),
       MOVE(ldata),
       MOVE(camera),
       MOVE(player),
@@ -727,62 +728,21 @@ start(stlw::Logger &logger, Engine &engine)
   auto const FLOOR_COUNT = 5;
 
   std::vector<ZoneState> zstates;
+  FOR(i, 5) {
+    auto const level_string = [&i]() { return "area" + std::to_string(i) + ".toml"; };
+    DO_TRY(auto ld, boomhs::load_level(logger, registries[i], level_string()));
+    auto zs = make_zs(i, FLOOR_COUNT, MOVE(ld), registries[i]);
+    zstates.emplace_back(MOVE(zs));
 
-  {
-    DO_TRY(auto ld0, boomhs::load_level(logger, registries[0], "area0.toml"));
-    auto zs0 = make_zs(0, FLOOR_COUNT, MOVE(ld0), registries[0]);
-    zstates.emplace_back(MOVE(zs0));
+    if (i == 0) {
+      continue;
+    }
+    bridge_staircases(zstates[i-1], zstates[i]);
   }
-
-  DO_TRY(auto ld1, boomhs::load_level(logger, registries[1], "area1.toml"));
-  DO_TRY(auto ld2, boomhs::load_level(logger, registries[2], "area2.toml"));
-  DO_TRY(auto ld3, boomhs::load_level(logger, registries[3], "area3.toml"));
-  DO_TRY(auto ld4, boomhs::load_level(logger, registries[4], "area4.toml"));
-
-  auto zs1 = make_zs(1, FLOOR_COUNT, MOVE(ld1), registries[1]);
-  auto zs2 = make_zs(2, FLOOR_COUNT, MOVE(ld2), registries[2]);
-  auto zs3 = make_zs(3, FLOOR_COUNT, MOVE(ld3), registries[3]);
-  auto zs4 = make_zs(4, FLOOR_COUNT, MOVE(ld4), registries[4]);
-
-  //FOR(i, 5) {
-    //DO_TRY(auto ld, boomhs::load_level(logger, registries[i], "area" + std::to_string(i) + ".toml"));
-    //auto zs = make_zs(i, FLOOR_COUNT, MOVE(ld), registries[i]);
-    //zstates.emplace_back(MOVE(zs));
-
-    //bridge_staircases(zstates[i-1], zstates[i]);
-  //}
-
-  zstates.emplace_back(MOVE(zs1));
-  zstates.emplace_back(MOVE(zs2));
-  zstates.emplace_back(MOVE(zs3));
-  zstates.emplace_back(MOVE(zs4));
-
-  bridge_staircases(zstates[0], zstates[1]);
-  bridge_staircases(zstates[1], zstates[2]);
-  bridge_staircases(zstates[2], zstates[3]);
-  bridge_staircases(zstates[3], zstates[4]);
-
   ZoneStates zs{MOVE(zstates)};
 
   auto &imgui = ImGui::GetIO();
   auto state = make_init_gamestate(logger, imgui, engine.dimensions(), MOVE(zs));
-
-  /*
-  auto &zstates = zone_states;
-  ZoneManager zm{zstates};
-
-  registries.resize(FLOOR_COUNT);
-  FOR(i, FLOOR_COUNT) {
-    DO_TRY(auto ld, boomhs::load_level(logger, registries[i], "area" + std::to_string(i) + ".toml"));
-    auto zs = make_zs(i, FLOOR_COUNT, MOVE(ld), registries[i]);
-    zm.add_zone(MOVE(zs));
-  }
-  assert(FLOOR_COUNT >= 1);
-  for(auto i = 1; i < FLOOR_COUNT; ++i) {
-    bridge_staircases(zstates[i - 1], zstates[i]);
-  }
-  */
-
   timed_game_loop(engine, state);
   LOG_TRACE("game loop finished.");
   return stlw::empty_type{};

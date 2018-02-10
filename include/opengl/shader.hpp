@@ -61,26 +61,7 @@ class ShaderProgram
   VertexAttribute va_;
   bool moved_from = false;
 public:
-
-  NO_COPY(ShaderProgram);
-  NO_MOVE_ASSIGN(ShaderProgram);
-
-  ShaderProgram(ShaderProgram &&sp)
-    : program_(MOVE(sp.program_))
-    , va_(MOVE(sp.va_))
-  {
-    moved_from = sp.moved_from;
-    sp.moved_from = true;
-  }
-
-  ~ShaderProgram()
-  {
-    if (!moved_from) {
-      std::abort();
-    }
-  }
-
-  //MOVE_CONSTRUCTIBLE_ONLY(ShaderProgram);
+  MOVE_CONSTRUCTIBLE_ONLY(ShaderProgram);
   explicit ShaderProgram(ProgramHandle &&ph, VertexAttribute &&va)
     : program_(MOVE(ph))
     , va_(MOVE(va))
@@ -163,12 +144,6 @@ class ShaderPrograms
 
 public:
   ShaderPrograms() = default;
-  ~ShaderPrograms()
-  {
-    if (!shader_programs_.empty()) {
-      std::abort();
-    }
-  }
   MOVE_CONSTRUCTIBLE_ONLY(ShaderPrograms);
 
   void

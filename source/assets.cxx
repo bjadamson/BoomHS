@@ -3,35 +3,6 @@
 namespace boomhs
 {
 
-Assets::Assets(ObjCache &&o, LoadedEntities &&l, opengl::TextureTable &&tt, opengl::GlobalLight &&gl,
-    opengl::Color &&c)
-  : obj_cache(MOVE(o))
-  , loaded_entities(MOVE(l))
-  , texture_table(MOVE(tt))
-  , global_light(MOVE(gl))
-  , background_color(MOVE(c))
-{
-}
-
-Assets::Assets(Assets &&other)
-  : obj_cache(MOVE(other.obj_cache))
-  , loaded_entities(MOVE(other.loaded_entities))
-  , texture_table(MOVE(other.texture_table))
-  , global_light(MOVE(other.global_light))
-  , background_color(other.background_color)
-{
-  std::cerr << "moving assets\n";
-  assert(!loaded_entities.empty());
-  assert(other.loaded_entities.empty());
-}
-
-Assets::~Assets()
-{
-  if (!loaded_entities.empty()) {
-    std::abort();
-  }
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ObjCache
 void
@@ -69,28 +40,7 @@ ObjCache::get_obj(std::string const& s) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// LoadedEntities
-LoadedEntities::LoadedEntities(LoadedEntities &&other)
-    : data(MOVE(other.data))
-{
-  std::cerr << "MOVING LoadedEntities\n";
-  assert(!data.empty());
-  assert(other.data.empty());
-}
-
-LoadedEntities::~LoadedEntities()
-{
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 // GpuHandleList
-GpuHandleList::~GpuHandleList()
-{
-  if (!drawinfos_.empty() || !entities_.empty()) {
-    std::abort();
-  }
-}
-
 size_t
 GpuHandleList::add(uint32_t const entity, opengl::DrawInfo &&di)
 {
@@ -116,13 +66,6 @@ GpuHandleList::get(uint32_t const entity) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // GpuHandleManager
-HandleManager::~HandleManager()
-{
-  if (!list_.empty()) {
-    std::abort();
-  }
-}
-
 opengl::DrawInfo const&
 HandleManager::lookup(uint32_t const eid) const
 {
