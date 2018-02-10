@@ -54,10 +54,13 @@ Edges
 calculate_edges(TilePosition const& tpos, int const tdata_width, int const tdata_height,
     int const distance)
 {
-  auto const left   = std::max(tpos.x - distance, 0);
-  auto const right  = std::min(tpos.x + distance, tdata_width);
+  assert(tdata_width > 0);
+  assert(tdata_height > 0);
 
-  auto const top    = std::min(tpos.y + distance, tdata_height);
+  auto const left   = std::max(tpos.x - distance, 0);
+  auto const right  = std::min(tpos.x + distance, tdata_width - 1);
+
+  auto const top    = std::min(tpos.y + distance, tdata_height - 1);
   auto const bottom = std::max(tpos.y - distance, 0);
 
   assert(left <= right);
