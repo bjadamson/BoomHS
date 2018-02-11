@@ -210,26 +210,6 @@ place_objects(Rect const& room, TileData const& tdata, stlw::float_generator &rn
   }
 }
 
-Edges
-TEST(TilePosition const& tpos, size_t const tdata_width, size_t const tdata_height,
-    size_t const distance_v, size_t const distance_h)
-{
-  assert(tdata_width > 0ul);
-  assert(tdata_height > 0ul);
-
-  auto const left   = tpos.x > distance_v ? std::max(tpos.x - distance_v, 0ul) : 0ul;
-  auto const right  = std::min(tpos.x + distance_v, tdata_width - 1);
-
-  auto const top    = std::min(tpos.y + distance_h, tdata_height - 1);
-  auto const bottom = tpos.y > distance_h ? std::max(tpos.y - distance_h, 0ul) : 0ul;
-
-  //std::cerr << "left: '" << left << "' right: '" << right << "'\n";
-  assert(left <= right);
-  assert(bottom <= top);
-
-  return Edges{tpos, left, top, right, bottom};
-}
-
 stlw::optional<RiverInfo>
 generate_river(TileData &tdata, stlw::float_generator &rng)
 {
@@ -245,7 +225,7 @@ generate_river(TileData &tdata, stlw::float_generator &rng)
     }
 
     auto constexpr FLOW_DIR = glm::vec2{1.0, 0.0};
-    auto const edges = TEST(tpos, tdwidth, tdheight, tdwidth, RIVER_DISTANCE);
+    auto const edges = calculate_edges(tpos, tdwidth, tdheight, tdwidth, RIVER_DISTANCE);
     float const rotation = 90.0f;
     return RiverInfo{tpos, edges.left, edges.top, edges.right, edges.bottom, FLOW_DIR, rotation};
   }
@@ -255,7 +235,7 @@ generate_river(TileData &tdata, stlw::float_generator &rng)
   }
 
   auto constexpr FLOW_DIR = glm::vec2{0.0, 1.0};
-  auto const edges = TEST(tpos, tdwidth, tdheight, RIVER_DISTANCE, tdheight);
+  auto const edges = calculate_edges(tpos, tdwidth, tdheight, RIVER_DISTANCE, tdheight);
   float const rotation = 0.0f;
   return RiverInfo{tpos, edges.left, edges.top, edges.right, edges.bottom, FLOW_DIR, rotation};
 }

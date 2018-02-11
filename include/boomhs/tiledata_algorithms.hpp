@@ -16,11 +16,12 @@ namespace boomhs
 struct Edges
 {
   TilePosition const position;
-  size_t const left, top, right, bottom;
+  uint64_t const left, top, right, bottom;
 };
 
 Edges
-calculate_edges(TilePosition const& tpos, size_t const, size_t const, size_t const);
+calculate_edges(TilePosition const& tpos, uint64_t const, uint64_t const, uint64_t const,
+    uint64_t);
 
 struct Edges;
 std::ostream&
@@ -58,7 +59,7 @@ find_neighbors(TileData const& tdata, TilePosition const& tpos, FN const& fn,
   assert(height > 0);
   assert(distance > 0);
 
-  auto const edges = calculate_edges(tpos, width, height, distance);
+  auto const edges = calculate_edges(tpos, width, height, distance, distance);
   std::vector<TilePosition> neighbors;
   auto const collect_neighbor_positions = [&](auto const& neighbor_pos)
   {
@@ -101,7 +102,7 @@ TileNeighbors
 find_immediate_neighbors(TileData const& tdata, TilePosition const& tpos,
     TileLookupBehavior const behavior, FN const& fn)
 {
-  size_t static constexpr DISTANCE = 1;
+  uint64_t static constexpr DISTANCE = 1;
   FindNeighborConfig const config{behavior, DISTANCE};
   return find_neighbors(tdata, tpos, fn, config);
 }
@@ -110,7 +111,7 @@ inline TileNeighbors
 find_immediate_neighbors(TileData const& tdata, TilePosition const& tpos, TileType const type,
     TileLookupBehavior const behavior)
 {
-  size_t static constexpr DISTANCE = 1;
+  uint64_t static constexpr DISTANCE = 1;
   FindNeighborConfig const config{behavior, DISTANCE};
   return find_neighbors(tdata, tpos, type, config);
 }
@@ -140,7 +141,7 @@ std::pair<TilePosition, MapEdge>
 random_tileposition_onedgeofmap(TileData const&, stlw::float_generator &);
 
 bool
-any_tiledata_neighbors(TileData const&, TilePosition const&, size_t const, bool (*)(Tile const&));
+any_tiledata_neighbors(TileData const&, TilePosition const&, uint64_t const, bool (*)(Tile const&));
 
 class WorldObject;
 void

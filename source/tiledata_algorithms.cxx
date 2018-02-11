@@ -61,17 +61,17 @@ namespace boomhs
 {
 
 Edges
-calculate_edges(TilePosition const& tpos, size_t const tdata_width, size_t const tdata_height,
-    size_t const distance)
+calculate_edges(TilePosition const& tpos, uint64_t const tdata_width, uint64_t const tdata_height,
+    uint64_t const distance_v, uint64_t const distance_h)
 {
   assert(tdata_width > 0ul);
   assert(tdata_height > 0ul);
 
-  auto const left   = tpos.x > distance ? std::max(tpos.x - distance, 0ul) : 0ul;
-  auto const right  = std::min(tpos.x + distance, tdata_width - 1);
+  auto const left   = tpos.x > distance_v ? std::max(tpos.x - distance_v, 0ul) : 0ul;
+  auto const right  = std::min(tpos.x + distance_v, tdata_width - 1);
 
-  auto const top    = std::min(tpos.y + distance, tdata_height - 1);
-  auto const bottom = tpos.y > distance ? std::max(tpos.y - distance, 0ul) : 0ul;
+  auto const top    = std::min(tpos.y + distance_h, tdata_height - 1);
+  auto const bottom = tpos.y > distance_h ? std::max(tpos.y - distance_h, 0ul) : 0ul;
 
   //std::cerr << "left: '" << left << "' right: '" << right << "'\n";
   assert(left <= right);
@@ -149,7 +149,7 @@ random_tileposition_onedgeofmap(TileData const& tdata, stlw::float_generator &rn
 }
 
 bool
-any_tiledata_neighbors(TileData const& tdata, TilePosition const& pos, size_t const distance,
+any_tiledata_neighbors(TileData const& tdata, TilePosition const& pos, uint64_t const distance,
   bool (*fn)(Tile const&))
 {
   auto const [width, length] = tdata.dimensions();
@@ -158,7 +158,7 @@ any_tiledata_neighbors(TileData const& tdata, TilePosition const& pos, size_t co
   assert(distance > 0);
   assert(length > distance);
   assert(width > distance);
-  auto const edge = calculate_edges(pos, width, length, distance);
+  auto const edge = calculate_edges(pos, width, length, distance, distance);
 
   bool found_one = false;
   auto const any_neighbors = [&](auto const& neighbor_pos) {
