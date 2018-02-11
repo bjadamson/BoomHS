@@ -24,6 +24,7 @@ using namespace opengl;
 using namespace window;
 
 glm::vec3 static constexpr VIEWING_OFFSET{0.5f, 0.0f, 0.5f};
+auto static constexpr WIGGLE_UNDERATH_OFFSET = -0.2f;
 
 namespace
 {
@@ -346,26 +347,32 @@ draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const&
     auto const tr = tile_pos + VIEWING_OFFSET;
     auto &transform = registry.get<Transform>(tile.eid);
     auto const& rotation   = transform.rotation;
-    auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
+    auto const default_modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
     switch(tile.type) {
       case TileType::FLOOR:
         {
-          draw_tile_helper(plus.sp, plus.dinfo, plus.eid, modmatrix, true);
+          draw_tile_helper(plus.sp, plus.dinfo, plus.eid, default_modmatrix, true);
         }
         break;
       case TileType::WALL:
         {
-          draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, modmatrix, true);
+          draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, default_modmatrix, true);
         }
         break;
       case TileType::RIVER:
-        {
-          draw_tile_helper(equal.sp, equal.dinfo, equal.eid, modmatrix, true);
-        }
+        // Do nothing, we handle rendering rivers elsewhere.
         break;
       case TileType::BRIDGE:
         {
-          draw_tile_helper(bridge.sp, bridge.dinfo, bridge.eid, modmatrix, true);
+          // TODo: how to orient bridge (tile) based on RiverInfo (nontile) information?
+          //
+          // Previously we haven't read data stored outside the entt::DefaultRegistry when
+          // rendering tiles.
+          //
+          // thinking ...
+          glm::vec3 const scale{0.5};
+          auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
+          draw_tile_helper(equal.sp, equal.dinfo, equal.eid, default_modmatrix, true);
         }
         break;
       case TileType::STAIR_DOWN:
@@ -375,7 +382,7 @@ draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const&
 
           bool const receives_ambient_light = false;
           glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
-          draw_tile_helper(sp, stairs_down.dinfo, stairs_down.eid, modmatrix, receives_ambient_light);
+          draw_tile_helper(sp, stairs_down.dinfo, stairs_down.eid, default_modmatrix, receives_ambient_light);
         }
         break;
       case TileType::STAIR_UP:
@@ -385,7 +392,7 @@ draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const&
 
           bool const receives_ambient_light = false;
           glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
-          draw_tile_helper(sp, stairs_up.dinfo, stairs_up.eid, modmatrix, receives_ambient_light);
+          draw_tile_helper(sp, stairs_up.dinfo, stairs_up.eid, default_modmatrix, receives_ambient_light);
         }
         break;
       default:
@@ -408,15 +415,16 @@ draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInf
     float const zoffset = std::abs(std::cos(ft.delta * wiggle.z_jiggle));
     auto const u_zoffset = glm::clamp(zoffset, -0.5f, 0.5f);
 
+    sp.set_uniform_vec2(rargs.logger, "u_direction", wiggle.direction);
     sp.set_uniform_float1(rargs.logger, "u_zoffset", 0.0f);
     sp.set_uniform_color(rargs.logger, "u_color", LOC::BLUE);
     opengl::global::vao_bind(dinfo.vao());
     ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
     auto const& wp = wiggle.position;
-    auto const tr = glm::vec3{wp.x, 0.0, wp.y} + VIEWING_OFFSET;
-    auto const rot = glm::quat{};
-    auto const scale = glm::vec3{1.0};
+    auto const tr = glm::vec3{wp.x, WIGGLE_UNDERATH_OFFSET, wp.y} + VIEWING_OFFSET;
+    glm::quat const rot = glm::angleAxis(glm::degrees(rinfo.wiggle_rotation), Y_UNIT_VECTOR);
+    auto const scale = glm::vec3{0.5};
 
     bool const receives_ambient = false;
     auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);

@@ -246,20 +246,18 @@ generate_river(TileData &tdata, stlw::float_generator &rng)
 
     auto constexpr FLOW_DIR = glm::vec2{1.0, 0.0};
     auto const edges = TEST(tpos, tdwidth, tdheight, tdwidth, RIVER_DISTANCE);
-    return RiverInfo{tpos, edges.left, edges.top, edges.right, edges.bottom, FLOW_DIR};
+    float const rotation = 90.0f;
+    return RiverInfo{tpos, edges.left, edges.top, edges.right, edges.bottom, FLOW_DIR, rotation};
   }
-  else {
-    assert(edge.is_yedge());
-    FOR(i, tdheight) {
-      tdata.data(tpos.x, i).type = TileType::RIVER;
-    }
+  assert(edge.is_yedge());
+  FOR(i, tdheight) {
+    tdata.data(tpos.x, i).type = TileType::RIVER;
+  }
 
-    auto constexpr FLOW_DIR = glm::vec2{0.0, 1.0};
-    auto const edges = TEST(tpos, tdwidth, tdheight, RIVER_DISTANCE, tdheight);
-    return RiverInfo{tpos, edges.left, edges.top, edges.right, edges.bottom, FLOW_DIR};
-  }
-  std::abort();
-  return stlw::none;
+  auto constexpr FLOW_DIR = glm::vec2{0.0, 1.0};
+  auto const edges = TEST(tpos, tdwidth, tdheight, RIVER_DISTANCE, tdheight);
+  float const rotation = 0.0f;
+  return RiverInfo{tpos, edges.left, edges.top, edges.right, edges.bottom, FLOW_DIR, rotation};
 }
 
 } // ns anon
@@ -279,21 +277,18 @@ struct Rooms
 void
 place_rivers(TileData &tdata, stlw::float_generator &rng, std::vector<RiverInfo> &rivers)
 {
-  stlw::optional<RiverInfo> river_o = stlw::none;
-  while(!river_o) {
-    river_o = generate_river(tdata, rng);
-  }
-  assert(river_o);
-  auto river = MOVE(*river_o);
-
-  FOR(_, 50) {
-    float const speed    = rng.gen_float_range(50.0, 250.0);
-    float const z_jiggle = rng.gen_float_range(1000.0, 1500.0f);
-    glm::vec2 const wiggle_pos{river.tile_position.x, river.tile_position.y};
-
-    RiverWiggle wiggle{speed, z_jiggle, wiggle_pos, river.flow_direction};
-    river.wiggles.emplace_back(MOVE(wiggle));
+  auto const place = [&]() {
+    stlw::optional<RiverInfo> river_o = stlw::none;
+    while(!river_o) {
+      river_o = generate_river(tdata, rng);
+    }
+    assert(river_o);
+    auto river = MOVE(*river_o);
     rivers.emplace_back(MOVE(river));
+  };
+
+  FOR(i, 5) {
+    place();
   }
 }
 

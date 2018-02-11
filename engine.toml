@@ -84,7 +84,7 @@ name = "river"
 vertex = "river.vert"
 fragment = "stair.frag"
 va = "vertex_normal"
-instance_count = 2
+instance_count = 4
 
 [[shaders]]
 name = "stair"

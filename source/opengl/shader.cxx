@@ -324,11 +324,10 @@ ShaderProgram::set_uniform_matrix_4fv(stlw::Logger &logger, GLchar const *name, 
 }
 
 void
-ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, std::array<float, 4> const &floats)
+ShaderProgram::set_uniform_array_2fv(stlw::Logger &logger, GLchar const* name, std::array<float, 2> const& array)
 {
   use(logger);
 
-  auto const loc = get_uniform_location(logger, name);
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
   //
   // For the vector (glUniform*v) commands, specifies the number of elements that are to be
@@ -337,8 +336,9 @@ ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, s
   // array.
   GLsizei constexpr COUNT = 1;
 
-  glUniform4fv(loc, COUNT, floats.data());
-  LOG_ANY_GL_ERRORS(logger, "set_uniform_array_4fv");
+  auto const loc = get_uniform_location(logger, name);
+  glUniform2fv(loc, COUNT, array.data());
+  LOG_ANY_GL_ERRORS(logger, "set_uniform_array_2fv");
 }
 
 void
@@ -357,6 +357,24 @@ ShaderProgram::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, s
   auto const loc = get_uniform_location(logger, name);
   glUniform3fv(loc, COUNT, array.data());
   LOG_ANY_GL_ERRORS(logger, "set_uniform_array_3fv");
+}
+
+void
+ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, std::array<float, 4> const &floats)
+{
+  use(logger);
+
+  auto const loc = get_uniform_location(logger, name);
+  // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
+  //
+  // For the vector (glUniform*v) commands, specifies the number of elements that are to be
+  // modified.
+  // This should be 1 if the targeted uniform variable is not an array, and 1 or more if it is an
+  // array.
+  GLsizei constexpr COUNT = 1;
+
+  glUniform4fv(loc, COUNT, floats.data());
+  LOG_ANY_GL_ERRORS(logger, "set_uniform_array_4fv");
 }
 
 void

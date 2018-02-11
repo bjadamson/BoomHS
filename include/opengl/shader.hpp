@@ -84,8 +84,16 @@ public:
   void set_uniform_matrix_3fv(stlw::Logger &, GLchar const *, glm::mat3 const &);
   void set_uniform_matrix_4fv(stlw::Logger &, GLchar const *, glm::mat4 const &);
 
+  void set_uniform_array_2fv(stlw::Logger &, GLchar const*, std::array<float, 2> const&);
   void set_uniform_array_3fv(stlw::Logger &, GLchar const*, std::array<float, 3> const&);
-  void set_uniform_array_4fv(stlw::Logger &, GLchar const *, std::array<float, 4> const &);
+  void set_uniform_array_4fv(stlw::Logger &, GLchar const*, std::array<float, 4> const &);
+
+  void
+  set_uniform_vec2(stlw::Logger &logger, GLchar const* name, glm::vec2 const& v)
+  {
+    auto const arr = stlw::make_array<float>(v.x, v.y);
+    set_uniform_array_2fv(logger, name, arr);
+  }
 
   void
   set_uniform_vec3(stlw::Logger &logger, GLchar const* name, glm::vec3 const& v)

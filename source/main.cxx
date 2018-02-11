@@ -440,35 +440,69 @@ move_betweentiledatas_ifonstairs(TiledataState &tds, ZoneManager &zm)
   }
 }
 
+bool
+wiggle_outofbounds(RiverInfo const& rinfo, RiverWiggle const& wiggle)
+{
+  auto const& pos = wiggle.position;
+  return ANYOF(
+      pos.x > rinfo.right,
+      pos.x < rinfo.left,
+      pos.y < rinfo.bottom,
+      pos.y > rinfo.top);
+}
+
+bool
+enough_time_elapsed(RiverInfo const& rinfo, FrameTime const& ft)
+{
+  static uint64_t constexpr THRESHOLD = 5000;
+
+  return rinfo.river_timer > THRESHOLD;
+  //return (ft.ticks - rinfo.river_timer) > THRESHOLD;
+}
+
+void
+reset_timer(RiverInfo &rinfo, FrameTime const& ft)
+{
+  rinfo.river_timer = 0;
+}
+
+void
+spawn_newround_wiggles(RiverInfo &river)
+{
+  float const speed    = 100.0f;
+  glm::vec2 const wiggle_pos{river.origin.x, river.origin.y};
+  RiverWiggle wiggle{speed, 0.0f, wiggle_pos, river.flow_direction};
+
+  river.wiggles.emplace_back(MOVE(wiggle));
+}
+
+void
+reset_position(RiverInfo &rinfo, RiverWiggle &wiggle)
+{
+  auto const& tp = rinfo.origin;
+
+  // reset the wiggle's position, then move it to the hidden cache
+  wiggle.position = glm::vec2{tp.x, tp.y};
+}
+
 void
 update_riverwiggles(LevelData &level_data, FrameTime const& ft)
 {
   auto const update_river = [&ft](auto &rinfo)
   {
-    auto const& left = rinfo.left;
-    auto const& right = rinfo.right;
-    auto const& top = rinfo.top;
-    auto const& bottom = rinfo.bottom;
-
+    if (enough_time_elapsed(rinfo, ft)) {
+      spawn_newround_wiggles(rinfo);
+      reset_timer(rinfo, ft);
+    }
     for (auto &wiggle : rinfo.wiggles) {
-      std::cerr << "wiggle dir: '" << glm::to_string(wiggle.direction) << "'\n";
-
       auto &pos = wiggle.position;
       pos += wiggle.direction * wiggle.speed * ft.delta;
 
-      if (pos.x > right) {
-        pos.x = left;
-      }
-      if (pos.x < left) {
-        pos.x = right;
-      }
-      if (pos.y < bottom) {
-        pos.y = top;
-      }
-      if (pos.y > top) {
-        pos.y = bottom;
+      if (wiggle_outofbounds(rinfo, wiggle)) {
+        reset_position(rinfo, wiggle);
       }
     }
+    rinfo.river_timer += ft.ticks;
   };
   for (auto &rinfo : level_data.rivers_mutref()) {
     update_river(rinfo);

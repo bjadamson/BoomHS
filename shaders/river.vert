@@ -5,6 +5,7 @@ out vec4 v_position;
 out vec3 v_surfacenormal;
 
 uniform float u_zoffset;
+uniform vec2 u_direction;
 uniform mat4 u_mvpmatrix;
 uniform mat4 u_modelmatrix;
 uniform mat3 u_normalmatrix;
@@ -12,9 +13,19 @@ uniform mat3 u_normalmatrix;
 void main()
 {
   const float offset_z = 0.15;
+  const float offset_x = 0.25f;
 
-  const vec3 vertical_offsets[2] = vec3[2]( vec3(0.0, 0.0, -offset_z), vec3(0.0, 0.0, offset_z) );
-  vec3 offset = vertical_offsets[gl_InstanceID];
+  vec3 direction = vec3(u_direction.x, 0.0, u_direction.y);
+  vec3 right = normalize(cross(direction, vec3(0, 1, 0)));
+
+  vec3 a = (direction * -offset_z) + (right * offset_x);
+  vec3 b = (direction * offset_z) + (right * offset_x);
+
+  vec3 c = (direction * -offset_z) + (right * -offset_x);
+  vec3 d = (direction * offset_z) + (right * -offset_x);
+
+  vec3 offsets[4] = vec3[4](a, b, c, d);
+  vec3 offset = offsets[gl_InstanceID];
 
   v_position = a_position;
   v_surfacenormal = normalize(u_normalmatrix * a_normal);

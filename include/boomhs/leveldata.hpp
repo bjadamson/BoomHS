@@ -27,13 +27,18 @@ struct RiverWiggle
 
 struct RiverInfo
 {
-  TilePosition tile_position;
+  TilePosition origin;
   uint64_t left, top, right, bottom;
 
   // normalized
   glm::vec2 flow_direction;
+  float wiggle_rotation;
 
   std::vector<RiverWiggle> wiggles = {};
+
+  // stateful information used by rendering routine. Each frame the renderer compares this value
+  // against the current ticks(), if the amount of time elapsed is sufficient the renderer.
+  uint64_t river_timer = 0ul;
 
   // TODO: try re-enabling once we switch from boost::optional to std::optional (c++17)
   //MOVE_CONSTRUCTIBLE_ONLY(RiverInfo);
