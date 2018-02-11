@@ -14,18 +14,29 @@ struct RiverWiggle
   float speed;
   float z_jiggle;
 
-  glm::vec3 position;
+  // NOT a TilePosition, because we are tracking it's discrete position for rendering (not it's
+  // actual tile position, which is irrelevant for the RiverWiggle
+  glm::vec2 position;
 
-  MOVE_CONSTRUCTIBLE_ONLY(RiverWiggle);
+  // normalized
+  glm::vec2 direction;
+
+  // TODO: try re-enabling once we switch from boost::optional to std::optional (c++17)
+  //MOVE_CONSTRUCTIBLE_ONLY(RiverWiggle);
 };
 
 struct RiverInfo
 {
-  glm::vec3 left, right, top, bottom;
+  TilePosition tile_position;
+  uint64_t left, top, right, bottom;
 
-  std::vector<RiverWiggle> wiggles;
+  // normalized
+  glm::vec2 flow_direction;
 
-  MOVE_CONSTRUCTIBLE_ONLY(RiverInfo);
+  std::vector<RiverWiggle> wiggles = {};
+
+  // TODO: try re-enabling once we switch from boost::optional to std::optional (c++17)
+  //MOVE_CONSTRUCTIBLE_ONLY(RiverInfo);
 };
 
 class LevelData
@@ -38,7 +49,7 @@ class LevelData
   void set_tile(TilePosition const&, TileType const&);
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
-  LevelData(TileData &&, TilePosition const&);
+  LevelData(TileData &&, TilePosition const&, std::vector<RiverInfo> &&);
 
   void set_floor(TilePosition const&);
   void set_river(TilePosition const&);

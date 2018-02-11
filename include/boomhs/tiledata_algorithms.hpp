@@ -5,6 +5,11 @@
 #include <array>
 #include <iostream>
 
+namespace stlw
+{
+class float_generator;
+} // ns stlw
+
 namespace boomhs
 {
 
@@ -14,22 +19,12 @@ struct Edges
   size_t const left, top, right, bottom;
 };
 
-struct Edges;
-std::ostream&
-operator<<(std::ostream &, Edges const&);
-
-} // ns boomhs
-
-namespace boomhs::detail
-{
-
 Edges
 calculate_edges(TilePosition const& tpos, size_t const, size_t const, size_t const);
 
-} // ns boomhs::detail
-
-namespace boomhs
-{
+struct Edges;
+std::ostream&
+operator<<(std::ostream &, Edges const&);
 
 template<typename FN>
 void
@@ -57,13 +52,13 @@ TileNeighbors
 find_neighbors(TileData const& tdata, TilePosition const& tpos, FN const& fn,
     FindNeighborConfig const& config)
 {
-  auto const [width, length] = tdata.dimensions();
+  auto const [width, height] = tdata.dimensions();
   auto const distance = config.distance;
-  assert(length > 0);
   assert(width > 0);
+  assert(height > 0);
   assert(distance > 0);
 
-  auto const edges = detail::calculate_edges(tpos, width, length, distance);
+  auto const edges = calculate_edges(tpos, width, height, distance);
   std::vector<TilePosition> neighbors;
   auto const collect_neighbor_positions = [&](auto const& neighbor_pos)
   {
@@ -119,6 +114,30 @@ find_immediate_neighbors(TileData const& tdata, TilePosition const& tpos, TileTy
   FindNeighborConfig const config{behavior, DISTANCE};
   return find_neighbors(tdata, tpos, type, config);
 }
+
+class MapEdge
+{
+public:
+  enum Side
+  {
+    LEFT = 0, TOP, RIGHT, BOTTOM
+  };
+
+private:
+  Side side_;
+public:
+  explicit MapEdge(Side const);
+  bool is_xedge() const;
+  bool is_yedge() const;
+
+  Side side() const { return side_; }
+
+  static MapEdge
+  random_edge(stlw::float_generator &);
+};
+
+std::pair<TilePosition, MapEdge>
+random_tileposition_onedgeofmap(TileData const&, stlw::float_generator &);
 
 bool
 any_tiledata_neighbors(TileData const&, TilePosition const&, size_t const, bool (*)(Tile const&));

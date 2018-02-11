@@ -30,29 +30,30 @@ move_ontiledata(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObj
 
   ZoneManager zm{state.zone_states};
   LevelData const& leveldata = zm.active().level_data;
-  auto const [x, z] = leveldata.dimensions();
+  auto const [x, y] = leveldata.dimensions();
   glm::vec3 const move_vec = (wo.*fn)();
 
   // TODO: stop doing this when we use double instead of float
   auto const dtf = static_cast<float>(ft.delta);
-  auto const wpos = wo.tile_position() + (move_vec * dtf * wo.speed());
-  bool const x_outofbounds = wpos.x > x || wpos.x < 0;
-  bool const z_outofbounds = wpos.z > z || wpos.z < 0;
-  bool const out_of_bounds = x_outofbounds || z_outofbounds;
 
+  glm::vec2 const wpos = wo.tile_position() + (move_vec * dtf * wo.speed());
+
+  bool const x_outofbounds = wpos.x > x || wpos.x < 0;
+  bool const y_outofbounds = wpos.y > y || wpos.y < 0;
+  bool const out_of_bounds = x_outofbounds || y_outofbounds;
   if (out_of_bounds && es.mariolike_edges) {
     if (x_outofbounds) {
       auto const new_x = wpos.x < 0 ? x : 0;
-      wo.move_to(new_x, wpos.y, wpos.z);
+      wo.move_to(new_x, 0.0, wpos.y);
     }
-    else if (z_outofbounds) {
-      auto const new_z = wpos.z < 0 ? z : 0;
-      wo.move_to(wpos.x, wpos.y, new_z);
+    else if (y_outofbounds) {
+      auto const new_y = wpos.y < 0 ? y : 0;
+      wo.move_to(wpos.x, 0.0, new_y);
     }
   } else if (out_of_bounds) {
     return;
   }
-  auto const tpos = TilePosition::from_floats_truncated(wpos.x, wpos.z);
+  auto const tpos = TilePosition::from_floats_truncated(wpos.x, wpos.y);
   bool const should_move = (!es.player_collision) || !leveldata.is_wall(tpos);
   if (should_move) {
     wo.move(move_vec, ft.delta);

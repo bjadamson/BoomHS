@@ -105,6 +105,8 @@ class HandleManager
 {
   GpuHandleList list_;
 public:
+  uint32_t bridge_eid;
+  uint32_t equal_eid;
   uint32_t plus_eid;
   uint32_t hashtag_eid;
   uint32_t river_eid;
@@ -112,9 +114,12 @@ public:
   uint32_t stair_up_eid;
 
   MOVE_CONSTRUCTIBLE_ONLY(HandleManager);
-  explicit HandleManager(GpuHandleList &&list, uint32_t const plus, uint32_t const hashtag,
-      uint32_t const river, uint32_t const stair_down, uint32_t const stair_up)
+  explicit HandleManager(GpuHandleList &&list, uint32_t const b, uint32_t const equal, uint32_t const plus,
+      uint32_t const hashtag, uint32_t const river, uint32_t const stair_down,
+      uint32_t const stair_up)
     : list_(MOVE(list))
+    , bridge_eid(b)
+    , equal_eid(equal)
     , plus_eid(plus)
     , hashtag_eid(hashtag)
     , river_eid(river)

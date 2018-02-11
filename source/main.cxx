@@ -132,14 +132,17 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, entt::DefaultRegistry
     return eid;
   };
 
+  auto const bridge_eid = make_special("B", "3d_pos_normal_color");
+  auto const equal_eid = make_special("equal", "3d_pos_normal_color");
   auto const plus_eid = make_special("plus", "3d_pos_normal_color");
+
   auto const hashtag_eid = make_special("hashtag", "hashtag");
   auto const river_eid = make_special("tilde", "river");
   auto const stair_down_eid = make_stair("stair", "stair_down");
   auto const stair_up_eid = make_stair("stair", "stair_up");
 
-  return HandleManager{MOVE(handle_list), plus_eid, hashtag_eid, river_eid, stair_down_eid,
-    stair_up_eid};
+  return HandleManager{MOVE(handle_list), MOVE(bridge_eid), MOVE(equal_eid), plus_eid, hashtag_eid,
+    river_eid, stair_down_eid, stair_up_eid};
 }
 
 void
@@ -215,17 +218,21 @@ draw_tiledata(RenderArgs const& rargs, ZoneState &zone_state, TiledataState cons
   auto &sps = zone_state.sps;
 
   using namespace render;
-  DrawPlusArgs plus{sps.ref_sp("3d_pos_normal_color"), handlem.lookup(handlem.plus_eid),
-    handlem.plus_eid};
-  DrawHashtagArgs hashtag{sps.ref_sp("hashtag"), handlem.lookup(handlem.hashtag_eid),
-                          handlem.hashtag_eid};
-  DrawHashtagArgs river{sps.ref_sp("river"), handlem.lookup(handlem.river_eid),
-                          handlem.river_eid};
+  auto &tile_sp = sps.ref_sp("3d_pos_normal_color");
+
+  DrawTileArgs bridge{tile_sp, handlem.lookup(handlem.bridge_eid), handlem.bridge_eid};
+  DrawTileArgs equal{tile_sp, handlem.lookup(handlem.equal_eid), handlem.equal_eid};
+  DrawTileArgs plus{tile_sp, handlem.lookup(handlem.plus_eid), handlem.plus_eid};
+
+  auto &hashtag_sp = sps.ref_sp("hashtag");
+  DrawTileArgs hashtag{hashtag_sp, handlem.lookup(handlem.hashtag_eid), handlem.hashtag_eid};
+  DrawTileArgs river{sps.ref_sp("river"), handlem.lookup(handlem.river_eid), handlem.river_eid};
 
   auto &stair_sp = sps.ref_sp("stair");
-  DrawStairsDownArgs stairs_down{stair_sp, handlem.lookup(handlem.stair_down_eid), handlem.stair_down_eid};
-  DrawStairsUpArgs stairs_up{stair_sp, handlem.lookup(handlem.stair_up_eid), handlem.stair_up_eid};
-  DrawTileDataArgs dta{MOVE(plus), MOVE(hashtag), MOVE(river), MOVE(stairs_down), MOVE(stairs_up)};
+  DrawTileArgs stairs_down{stair_sp, handlem.lookup(handlem.stair_down_eid), handlem.stair_down_eid};
+  DrawTileArgs stairs_up{stair_sp, handlem.lookup(handlem.stair_up_eid), handlem.stair_up_eid};
+  DrawTileDataArgs dta{MOVE(bridge), MOVE(equal), MOVE(plus), MOVE(hashtag), MOVE(river),
+    MOVE(stairs_down), MOVE(stairs_up)};
 
   auto &registry = zone_state.registry;
   auto const& leveldata = zone_state.level_data;
@@ -440,13 +447,26 @@ update_riverwiggles(LevelData &level_data, FrameTime const& ft)
   {
     auto const& left = rinfo.left;
     auto const& right = rinfo.right;
+    auto const& top = rinfo.top;
+    auto const& bottom = rinfo.bottom;
 
     for (auto &wiggle : rinfo.wiggles) {
-      auto &x = wiggle.position.x;
+      std::cerr << "wiggle dir: '" << glm::to_string(wiggle.direction) << "'\n";
 
-      x += std::abs(std::cos(ft.delta)) / wiggle.speed;
-      if (x > right.x) {
-        x = left.x;
+      auto &pos = wiggle.position;
+      pos += wiggle.direction * wiggle.speed * ft.delta;
+
+      if (pos.x > right) {
+        pos.x = left;
+      }
+      if (pos.x < left) {
+        pos.x = right;
+      }
+      if (pos.y < bottom) {
+        pos.y = top;
+      }
+      if (pos.y > top) {
+        pos.y = bottom;
       }
     }
   };
@@ -679,13 +699,8 @@ start(stlw::Logger &logger, Engine &engine)
     StairGenConfig const sgconfig{floor_count, floor_number, stairs_perfloor};
 
     int const width = 40, height = 40;
-    TilemapConfig tconfig{width, height, sgconfig};
-
-    auto genlevel = level_generator::make_tiledata(tconfig, rng, registry);
-    auto tdata = MOVE(genlevel.first);
-    auto startpos = MOVE(genlevel.second);
-
-    LevelData ldata{MOVE(tdata), MOVE(startpos)};
+    TileDataConfig const tdconfig{width, height, sgconfig};
+    auto leveldata = level_generator::make_leveldata(tdconfig, rng, registry);
 
     ////////////////////////////////
     // for now assume only 1 entity has the Light tag
@@ -718,7 +733,7 @@ start(stlw::Logger &logger, Engine &engine)
       MOVE(handlem),
       MOVE(level_assets.shader_programs),
       MOVE(level_assets.assets.texture_table),
-      MOVE(ldata),
+      MOVE(leveldata),
       MOVE(camera),
       MOVE(player),
       registry};

@@ -5,9 +5,22 @@
 namespace boomhs
 {
 
+enum class TileType
+{
+  FLOOR = 0,
+  WALL,
+  RIVER,
+  BRIDGE,
+  STAIR_DOWN,
+  STAIR_UP,
+};
+
+std::ostream&
+operator<<(std::ostream &, TileType const);
+
 struct TilePosition
 {
-  using ValueT = size_t;
+  using ValueT = uint64_t;
 
   ValueT x = 0, y = 0;
 
@@ -16,8 +29,8 @@ struct TilePosition
   {
     assert(x >= 0.0f);
     assert(y >= 0.0f);
-    auto const xx = static_cast<size_t>(x);
-    auto const yy = static_cast<size_t>(y);
+    auto const xx = static_cast<uint64_t>(x);
+    auto const yy = static_cast<uint64_t>(y);
     return TilePosition{xx, yy};
   }
 };
@@ -43,18 +56,6 @@ operator+(TilePosition const&, glm::vec3 const&);
 
 std::ostream&
 operator<<(std::ostream &, TilePosition const&);
-
-enum class TileType
-{
-  FLOOR = 0,
-  WALL,
-  RIVER,
-  STAIR_DOWN,
-  STAIR_UP,
-};
-
-std::ostream&
-operator<<(std::ostream &, TileType const);
 
 struct Tile
 {

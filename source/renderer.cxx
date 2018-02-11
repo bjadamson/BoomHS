@@ -23,6 +23,8 @@ using namespace boomhs;
 using namespace opengl;
 using namespace window;
 
+glm::vec3 static constexpr VIEWING_OFFSET{0.5f, 0.0f, 0.5f};
+
 namespace
 {
 
@@ -333,40 +335,37 @@ draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const&
       return;
     }
     // This offset causes the tile's to appear in the "middle"
-    auto &transform = registry.get<Transform>(tile.eid);
-    glm::vec3 constexpr VIEWING_OFFSET{0.5f, 0.0f, 0.5f};
-
-    auto const mmatrix = [&](auto const& translation, auto const& rotation, auto const& scale)
-    {
-      return stlw::math::calculate_modelmatrix(translation, rotation, scale);
-    };
-
+    auto &bridge = dt_args.bridge;
+    auto &equal = dt_args.equal;
     auto &plus = dt_args.plus;
     auto &hashtag = dt_args.hashtag;
     auto &river = dt_args.river;
     auto &stairs_down = dt_args.stairs_down;
     auto &stairs_up = dt_args.stairs_up;
+
+    auto const tr = tile_pos + VIEWING_OFFSET;
+    auto &transform = registry.get<Transform>(tile.eid);
+    auto const& rotation   = transform.rotation;
+    auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
     switch(tile.type) {
       case TileType::FLOOR:
         {
-          auto const translation = tile_pos + VIEWING_OFFSET;
-          auto const& rotation   = transform.rotation;
-          draw_tile_helper(plus.sp, plus.dinfo, plus.eid, mmatrix(translation, rotation, transform.scale), true);
+          draw_tile_helper(plus.sp, plus.dinfo, plus.eid, modmatrix, true);
         }
         break;
       case TileType::WALL:
         {
-          auto const translation = tile_pos + VIEWING_OFFSET;
-          auto const& rotation   = transform.rotation;
-          draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, mmatrix(translation, rotation, transform.scale), true);
+          draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, modmatrix, true);
         }
         break;
       case TileType::RIVER:
         {
-          // do nothing, explicitely as we handle drawing rivers separately from the rest of the
-          // tiledata.
-          //draw_rivers(args, river.sp, river.dinfo, registry, ft, tile.eid, river.eid);
-          break;
+          draw_tile_helper(equal.sp, equal.dinfo, equal.eid, modmatrix, true);
+        }
+        break;
+      case TileType::BRIDGE:
+        {
+          draw_tile_helper(bridge.sp, bridge.dinfo, bridge.eid, modmatrix, true);
         }
         break;
       case TileType::STAIR_DOWN:
@@ -374,13 +373,9 @@ draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const&
           auto &sp = stairs_down.sp;
           sp.set_uniform_color(logger, "u_color", LOC::GREEN);
 
-          auto const translation = tile_pos + VIEWING_OFFSET;
-          auto const& rotation   = transform.rotation;
-
           bool const receives_ambient_light = false;
           glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
-          auto const model_matrix = mmatrix(translation, rotation, scale);
-          draw_tile_helper(sp, stairs_down.dinfo, stairs_down.eid, model_matrix, receives_ambient_light);
+          draw_tile_helper(sp, stairs_down.dinfo, stairs_down.eid, modmatrix, receives_ambient_light);
         }
         break;
       case TileType::STAIR_UP:
@@ -388,13 +383,9 @@ draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const&
           auto &sp = stairs_up.sp;
           sp.set_uniform_color(logger, "u_color", LOC::RED);
 
-          auto const translation = tile_pos + VIEWING_OFFSET;
-          auto const& rotation   = transform.rotation;
-
           bool const receives_ambient_light = false;
           glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
-          auto const model_matrix = mmatrix(translation, rotation, scale);
-          draw_tile_helper(sp, stairs_up.dinfo, stairs_up.eid, model_matrix, receives_ambient_light);
+          draw_tile_helper(sp, stairs_up.dinfo, stairs_up.eid, modmatrix, receives_ambient_light);
         }
         break;
       default:
@@ -412,17 +403,18 @@ draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInf
   auto const& left = rinfo.left;
   auto const& right = rinfo.right;
 
-  // TODO: unnecessary
-  sp.use(rargs.logger);
   auto const draw_wiggle = [&](auto const& wiggle) {
 
-    auto const u_zoffset = std::abs(std::cos(ft.delta * wiggle.z_jiggle));
-    sp.set_uniform_float1(rargs.logger, "u_zoffset", u_zoffset);
+    float const zoffset = std::abs(std::cos(ft.delta * wiggle.z_jiggle));
+    auto const u_zoffset = glm::clamp(zoffset, -0.5f, 0.5f);
+
+    sp.set_uniform_float1(rargs.logger, "u_zoffset", 0.0f);
     sp.set_uniform_color(rargs.logger, "u_color", LOC::BLUE);
     opengl::global::vao_bind(dinfo.vao());
     ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
-    auto const tr = wiggle.position;
+    auto const& wp = wiggle.position;
+    auto const tr = glm::vec3{wp.x, 0.0, wp.y} + VIEWING_OFFSET;
     auto const rot = glm::quat{};
     auto const scale = glm::vec3{1.0};
 

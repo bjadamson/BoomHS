@@ -1,11 +1,21 @@
 #include <boomhs/tiledata_algorithms.hpp>
 #include <boomhs/world_object.hpp>
+
+#include <stlw/debug.hpp>
+#include <stlw/random.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <algorithm>
+
+using namespace boomhs;
+static auto constexpr SIDES = stlw::make_array<MapEdge::Side>(
+    MapEdge::Side::LEFT,
+    MapEdge::Side::TOP,
+    MapEdge::Side::RIGHT,
+    MapEdge::Side::BOTTOM);
 
 namespace
 {
 
-using namespace boomhs;
 void
 bresenham_3d(int x0, int z0, int x1, int z1, TileData &tdata)
 {
@@ -47,7 +57,7 @@ bresenham_3d(int x0, int z0, int x1, int z1, TileData &tdata)
 
 } // ns anon
 
-namespace boomhs::detail
+namespace boomhs
 {
 
 Edges
@@ -70,11 +80,6 @@ calculate_edges(TilePosition const& tpos, size_t const tdata_width, size_t const
   return Edges{tpos, left, top, right, bottom};
 }
 
-} // ns boomhs::detail
-
-namespace boomhs
-{
-
 std::ostream&
 operator<<(std::ostream& stream, Edges const& e)
 {
@@ -90,6 +95,59 @@ operator<<(std::ostream& stream, Edges const& e)
   return stream;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// MapEdge
+MapEdge::MapEdge(Side const side)
+  : side_(side)
+{
+}
+
+bool
+MapEdge::is_xedge() const
+{
+  return ANYOF(side_ == LEFT, side_ == RIGHT);
+}
+
+bool
+MapEdge::is_yedge() const
+{
+  return ANYOF(side_ == TOP, side_ == BOTTOM);
+}
+
+MapEdge
+MapEdge::random_edge(stlw::float_generator &rng)
+{
+  assert(SIDES.size() > 0);
+
+  auto const rand = rng.gen_uint64_range(0, SIDES.size() - 1);
+  assert(SIDES.size() > rand);
+  auto const side = static_cast<MapEdge::Side>(rand);
+  return MapEdge{side};
+}
+
+std::pair<TilePosition, MapEdge>
+random_tileposition_onedgeofmap(TileData const& tdata, stlw::float_generator &rng)
+{
+  auto const edge = MapEdge::random_edge(rng);
+  auto const xedge = edge.is_xedge();
+  auto const yedge = edge.is_yedge();
+  stlw::assert_exactly_only_one_true(xedge, yedge);
+
+  auto const make_pos = [&edge](uint64_t const x, uint64_t const y) {
+    TilePosition tpos{x, y};
+    return std::make_pair(tpos, edge);
+  };
+  auto const [tdwidth, tdheight] = tdata.dimensions();
+  if (xedge) {
+    return make_pos(0, rng.gen_uint64_range(0, tdwidth - 1));
+  } else {
+    assert(yedge);
+    return make_pos(rng.gen_uint64_range(0, tdheight - 1), 0);
+  }
+  std::abort();
+  return make_pos(0, 0);
+}
+
 bool
 any_tiledata_neighbors(TileData const& tdata, TilePosition const& pos, size_t const distance,
   bool (*fn)(Tile const&))
@@ -100,7 +158,7 @@ any_tiledata_neighbors(TileData const& tdata, TilePosition const& pos, size_t co
   assert(distance > 0);
   assert(length > distance);
   assert(width > distance);
-  auto const edge = detail::calculate_edges(pos, width, length, distance);
+  auto const edge = calculate_edges(pos, width, length, distance);
 
   bool found_one = false;
   auto const any_neighbors = [&](auto const& neighbor_pos) {

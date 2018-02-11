@@ -66,49 +66,27 @@ void
 draw(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
     uint32_t const, entt::DefaultRegistry &);
 
-struct DrawPlusArgs
-{
-  opengl::ShaderProgram &sp;
-  opengl::DrawInfo const& dinfo;
-
-  uint32_t const eid;
-};
-
-struct DrawHashtagArgs
-{
-  opengl::ShaderProgram &sp;
-  opengl::DrawInfo const& dinfo;
-
-  uint32_t const eid;
-};
-
-struct DrawStairsDownArgs
-{
-  opengl::ShaderProgram &sp;
-  opengl::DrawInfo const& dinfo;
-
-  uint32_t const eid;
-};
-
-struct DrawStairsUpArgs
-{
-  opengl::ShaderProgram &sp;
-  opengl::DrawInfo const& dinfo;
-
-  uint32_t const eid;
-};
-
 void
 draw_rivers(RenderArgs const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
     entt::DefaultRegistry &, window::FrameTime const&, uint32_t, RiverInfo const&);
 
+struct DrawTileArgs
+{
+  opengl::ShaderProgram &sp;
+  opengl::DrawInfo const& dinfo;
+
+  uint32_t const eid;
+};
+
 struct DrawTileDataArgs
 {
-  DrawPlusArgs plus;
-  DrawHashtagArgs hashtag;
-  DrawHashtagArgs river;
-  DrawStairsDownArgs stairs_down;
-  DrawStairsUpArgs stairs_up;
+  DrawTileArgs bridge;
+  DrawTileArgs equal;
+  DrawTileArgs plus;
+  DrawTileArgs hashtag;
+  DrawTileArgs river;
+  DrawTileArgs stairs_down;
+  DrawTileArgs stairs_up;
 };
 
 void
