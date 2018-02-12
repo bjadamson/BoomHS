@@ -18,7 +18,7 @@ class Clock
 
   uint64_t ticks_now() const { return SDL_GetPerformanceCounter(); }
 public:
-  uint64_t const starting_ticks = SDL_GetTicks();
+  uint64_t const starting_ticks = ticks_now();
   uint64_t last_tick_time = starting_ticks;
 
   Clock() = default;
@@ -44,9 +44,6 @@ struct FrameCounter
   void
   update(stlw::Logger &logger, Clock const& clock)
   {
-    //int64_t const ticks = clock.ticks_now();
-    //double const fps = frames_counted / (ticks / 1000.0);
-    //LOG_INFO(fmt::format("FPS '{}'", fps));
     ++frames_counted;
   }
 };

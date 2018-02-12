@@ -14,11 +14,10 @@
 #include <window/sdl_window.hpp>
 
 #include <stlw/log.hpp>
+#include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <entt/entt.hpp>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <imgui/imgui.hpp>
 #include <cassert>
 #include <vector>

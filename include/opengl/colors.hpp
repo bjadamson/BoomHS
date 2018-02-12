@@ -1,5 +1,5 @@
 #pragma once
-#include <glm/glm.hpp>
+#include <stlw/math.hpp>
 #include <stlw/type_ctors.hpp>
 #include <array>
 #include <ostream>

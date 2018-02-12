@@ -20,6 +20,7 @@
 #include <boomhs/ui.hpp>
 #include <boomhs/zone.hpp>
 
+#include <stlw/math.hpp>
 #include <stlw/log.hpp>
 #include <stlw/random.hpp>
 #include <stlw/result.hpp>
@@ -27,7 +28,6 @@
 #include <stlw/type_macros.hpp>
 
 #include <entt/entt.hpp>
-#include <glm/gtx/string_cast.hpp>
 
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_sdl_gl3.h>
@@ -400,7 +400,6 @@ move_betweentiledatas_ifonstairs(TiledataState &tds, ZoneManager &zm)
     {
       int const current = zm.active_zone();
       int const newlevel = current + (tile.is_stair_up() ? 1 : -1);
-      //std::cerr << "moving through stair '" << stair.direction << "'\n";
       assert(newlevel < zm.num_zones());
       zm.make_zone_active(newlevel, tds);
     }
@@ -451,31 +450,6 @@ wiggle_outofbounds(RiverInfo const& rinfo, RiverWiggle const& wiggle)
       pos.y > rinfo.top);
 }
 
-bool
-enough_time_elapsed(RiverInfo const& rinfo, FrameTime const& ft)
-{
-  static uint64_t constexpr THRESHOLD = 5000;
-
-  return rinfo.river_timer > THRESHOLD;
-  //return (ft.ticks - rinfo.river_timer) > THRESHOLD;
-}
-
-void
-reset_timer(RiverInfo &rinfo, FrameTime const& ft)
-{
-  rinfo.river_timer = 0;
-}
-
-void
-spawn_newround_wiggles(RiverInfo &river)
-{
-  float const speed    = 100.0f;
-  glm::vec2 const wiggle_pos{river.origin.x, river.origin.y};
-  RiverWiggle wiggle{speed, 0.0f, wiggle_pos, river.flow_direction};
-
-  river.wiggles.emplace_back(MOVE(wiggle));
-}
-
 void
 reset_position(RiverInfo &rinfo, RiverWiggle &wiggle)
 {
@@ -490,10 +464,6 @@ update_riverwiggles(LevelData &level_data, FrameTime const& ft)
 {
   auto const update_river = [&ft](auto &rinfo)
   {
-    if (enough_time_elapsed(rinfo, ft)) {
-      spawn_newround_wiggles(rinfo);
-      reset_timer(rinfo, ft);
-    }
     for (auto &wiggle : rinfo.wiggles) {
       auto &pos = wiggle.position;
       pos += wiggle.direction * wiggle.speed * ft.delta;
@@ -502,7 +472,6 @@ update_riverwiggles(LevelData &level_data, FrameTime const& ft)
         reset_position(rinfo, wiggle);
       }
     }
-    rinfo.river_timer += ft.ticks;
   };
   for (auto &rinfo : level_data.rivers_mutref()) {
     update_river(rinfo);
@@ -661,20 +630,8 @@ bridge_staircases(ZoneState &a, ZoneState &b)
   auto const stairs_up_a = find_upstairs(a.registry, tiledata_a);
   assert(!stairs_up_a.empty());
 
-  //auto const stairs_down_a = find_downstairs(a.registry, a.tiledata);
-  //assert(!stairs_down_a.empty());
-
-  //auto const stairs_up_b = find_upstairs(b.registry, b.tiledata);
-  //assert(!stairs_up_b.empty());
-
   auto const stairs_down_b = find_downstairs(b.registry, tiledata_b);
   assert(!stairs_down_b.empty());
-
-  //std::cerr << "stairs_up_a: '" << stairs_up_a.size() << "'\n";
-  //std::cerr << "stairs_down_a: '" << stairs_down_a.size() << "'\n";
-
-  //std::cerr << "stairs_up_b: '" << stairs_up_b.size() << "'\n";
-  //std::cerr << "stairs_down_b: '" << stairs_down_b.size() << "'\n";
 
   auto &a_registry = a.registry;
   auto &b_registry = b.registry;
@@ -777,7 +734,7 @@ start(stlw::Logger &logger, Engine &engine)
   auto const FLOOR_COUNT = 5;
 
   std::vector<ZoneState> zstates;
-  FOR(i, 5) {
+  FOR(i, 1) {
     auto const level_string = [&i]() { return "area" + std::to_string(i) + ".toml"; };
     DO_TRY(auto ld, boomhs::load_level(logger, registries[i], level_string()));
     auto zs = make_zs(i, FLOOR_COUNT, MOVE(ld), registries[i]);

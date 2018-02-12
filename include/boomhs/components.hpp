@@ -1,5 +1,4 @@
 #pragma once
-#include <glm/glm.hpp>
 #include <opengl/colors.hpp>
 #include <opengl/lighting.hpp>
 #include <opengl/texture.hpp>

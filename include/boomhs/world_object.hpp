@@ -4,6 +4,7 @@
 #include <boomhs/types.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
+#include <stlw/math.hpp>
 #include <string>
 
 namespace boomhs

@@ -2,8 +2,8 @@
 #include <boomhs/world_object.hpp>
 
 #include <stlw/debug.hpp>
+#include <stlw/math.hpp>
 #include <stlw/random.hpp>
-#include <glm/gtx/string_cast.hpp>
 #include <algorithm>
 
 using namespace boomhs;

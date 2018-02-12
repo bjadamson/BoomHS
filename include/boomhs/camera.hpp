@@ -5,8 +5,7 @@
 
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
-
-#include <glm/glm.hpp>
+#include <stlw/math.hpp>
 
 namespace boomhs
 {

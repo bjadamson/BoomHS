@@ -1,6 +1,7 @@
 #include <boomhs/level_generator.hpp>
 #include <boomhs/stairwell_generator.hpp>
 #include <boomhs/leveldata.hpp>
+#include <boomhs/river_generator.hpp>
 #include <boomhs/tiledata.hpp>
 #include <boomhs/tiledata_algorithms.hpp>
 
@@ -210,36 +211,6 @@ place_objects(Rect const& room, TileData const& tdata, stlw::float_generator &rn
   }
 }
 
-stlw::optional<RiverInfo>
-generate_river(TileData &tdata, stlw::float_generator &rng)
-{
-  auto const [tdwidth, tdheight] = tdata.dimensions();
-  auto const tpos_edge = random_tileposition_onedgeofmap(tdata, rng);
-  auto const& tpos = tpos_edge.first;
-  MapEdge const& edge = tpos_edge.second;
-
-  auto const RIVER_DISTANCE = 1;
-  if (edge.is_xedge()) {
-    FOR(i, tdwidth) {
-      tdata.data(i, tpos.y).type = TileType::RIVER;
-    }
-
-    auto constexpr FLOW_DIR = glm::vec2{1.0, 0.0};
-    auto const edges = calculate_edges(tpos, tdwidth, tdheight, tdwidth, RIVER_DISTANCE);
-    float const rotation = 90.0f;
-    return RiverInfo{tpos, edges.left, edges.top, edges.right, edges.bottom, FLOW_DIR, rotation};
-  }
-  assert(edge.is_yedge());
-  FOR(i, tdheight) {
-    tdata.data(tpos.x, i).type = TileType::RIVER;
-  }
-
-  auto constexpr FLOW_DIR = glm::vec2{0.0, 1.0};
-  auto const edges = calculate_edges(tpos, tdwidth, tdheight, RIVER_DISTANCE, tdheight);
-  float const rotation = 0.0f;
-  return RiverInfo{tpos, edges.left, edges.top, edges.right, edges.bottom, FLOW_DIR, rotation};
-}
-
 } // ns anon
 
 namespace boomhs::level_generator
@@ -253,24 +224,6 @@ struct Rooms
   MOVE_DEFAULT(Rooms);
   NO_COPY(Rooms);
 };
-
-void
-place_rivers(TileData &tdata, stlw::float_generator &rng, std::vector<RiverInfo> &rivers)
-{
-  auto const place = [&]() {
-    stlw::optional<RiverInfo> river_o = stlw::none;
-    while(!river_o) {
-      river_o = generate_river(tdata, rng);
-    }
-    assert(river_o);
-    auto river = MOVE(*river_o);
-    rivers.emplace_back(MOVE(river));
-  };
-
-  FOR(i, 5) {
-    place();
-  }
-}
 
 stlw::optional<Rooms>
 create_rooms(TileData &tdata, stlw::float_generator &rng)
@@ -336,7 +289,7 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
   assert(stairs_perfloor > 0);
 
   // 1. Place Rivers
-  place_rivers(tdata, rng, rivers);
+  river_generator::place_rivers(tdata, rng, rivers);
 
   // 2. Place Rooms and Stairs
   stlw::optional<Rooms> rooms = stlw::none;

@@ -5,14 +5,12 @@
 #include <gfx/gl_sdl_log.hpp>
 
 #include <stlw/format.hpp>
-#include <stlw/result.hpp>
+#include <stlw/math.hpp>
 #include <stlw/os.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <glm/gtx/string_cast.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <cstring>
 
 namespace

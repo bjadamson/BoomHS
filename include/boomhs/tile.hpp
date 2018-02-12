@@ -1,5 +1,5 @@
 #pragma once
-#include <glm/glm.hpp>
+#include <stlw/math.hpp>
 #include <ostream>
 
 namespace boomhs
@@ -32,6 +32,15 @@ struct TilePosition
     auto const xx = static_cast<uint64_t>(x);
     auto const yy = static_cast<uint64_t>(y);
     return TilePosition{xx, yy};
+  }
+
+  // Apparently implicit conversion FNS must be a non-static member fns.
+  //
+  // It's OK to do this conversion implicitely as we don't loose any information going from
+  // integers (albeit unsigned) to floating point values.
+  operator glm::vec2() const
+  {
+    return glm::vec2{x, y};
   }
 };
 inline bool

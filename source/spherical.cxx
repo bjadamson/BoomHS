@@ -1,15 +1,5 @@
 #include <boomhs/spherical.hpp>
 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/constants.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/string_cast.hpp>
-#include <glm/gtc/matrix_access.hpp>
-#include <glm/gtx/vector_angle.hpp>
-
-#include <cmath>
-
 namespace boomhs
 {
 

@@ -1,11 +1,12 @@
 #include <boomhs/ui.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/zone.hpp>
-#include <stlw/format.hpp>
+
 #include <window/sdl_window.hpp>
 
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/string_cast.hpp>
+#include <stlw/math.hpp>
+#include <stlw/format.hpp>
+
 #include <imgui/imgui.hpp>
 #include <algorithm>
 

@@ -4,13 +4,11 @@
 #include <boomhs/world_object.hpp>
 #include <boomhs/zone.hpp>
 #include <window/timer.hpp>
+#include <stlw/math.hpp>
 #include <stlw/log.hpp>
 
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_sdl_gl3.h>
-#include <glm/glm.hpp>
-#include <glm/gtx/intersect.hpp>
-#include <glm/gtx/string_cast.hpp>
 #include <iostream>
 
 float constexpr MOVE_DISTANCE = 1.0f;
@@ -217,7 +215,7 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
 
         //glm::vec3 const ray_wor = glm::normalize(glm::vec3{glm::inverse(camera.view_matrix()) * ray_eye});
         //std::cerr << "mouse: '" << std::to_string(mouse_x) << "', '" << std::to_string(mouse_y) << "'\n";
-        //std::cerr << "ray_wor: '" << glm::to_string(ray_wor) << "'\n";
+        //std::cerr << "ray_wor: '" << ray_wor << "'\n";
 
         //glm::vec3 const ray_dir = ray_eye;
         //glm::vec3 const ray_origin = camera.world_position();

@@ -3,12 +3,6 @@
 #include <boomhs/tiledata.hpp>
 #include <boomhs/types.hpp>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/string_cast.hpp>
-
 #include <opengl/draw_info.hpp>
 #include <opengl/global.hpp>
 #include <opengl/draw_info.hpp>
@@ -16,6 +10,7 @@
 
 #include <window/timer.hpp>
 
+#include <stlw/math.hpp>
 #include <stlw/log.hpp>
 #include <iostream>
 

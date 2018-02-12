@@ -6,20 +6,15 @@
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
 
-#include <stlw/type_macros.hpp>
-#include <stlw/type_ctors.hpp>
-
 #include <boomhs/tiledata.hpp>
 #include <boomhs/types.hpp>
 
-#include <glm/gtc/matrix_inverse.hpp>
-#include <glm/gtx/vector_query.hpp>
-#include <glm/gtc/epsilon.hpp>
-#include <glm/gtx/string_cast.hpp>
+#include <stlw/type_macros.hpp>
+#include <stlw/type_ctors.hpp>
 
+#include <stlw/math.hpp>
 #include <stlw/optional.hpp>
 #include <array>
-#include <cmath>
 
 using namespace opengl;
 using namespace opengl::factories;
