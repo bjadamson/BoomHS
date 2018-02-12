@@ -75,8 +75,6 @@ set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
     return varname + "." + fieldname;
   };
 
-  //std::cerr << "pointlight POSITION: '" << glm::to_string(pointlight_position) << "'\n";
-  //std::cerr << "pointlight DIFFUSE: '" << pointlight.light.diffuse << "'\n";
   sp.set_uniform_color_3fv(logger, make_field("diffuse"), pointlight.light.diffuse);
   sp.set_uniform_color_3fv(logger, make_field("specular"), pointlight.light.specular);
   sp.set_uniform_vec3(logger, make_field("position"), pointlight_position);
@@ -88,9 +86,6 @@ set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
   auto const constant = attenuation_field("constant");
   auto const linear = attenuation_field("linear");
   auto const quadratic = attenuation_field("quadratic");
-  //std::cerr << constant << "\n";
-  //std::cerr << linear << "\n";
-  //std::cerr << quadratic << "\n";
   sp.set_uniform_float1(logger, constant,  attenuation.constant);
   sp.set_uniform_float1(logger, linear,    attenuation.linear);
   sp.set_uniform_float1(logger, quadratic, attenuation.quadratic);
@@ -125,7 +120,6 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
   // pointlight
   sp.set_uniform_matrix_4fv(logger, "u_invviewmatrix", glm::inverse(glm::mat3{camera.view_matrix()}));
   auto const pointlights = find_pointlights(registry);
-  //std::cerr << "===============================\n";
   FOR(i, pointlights.size()) {
     auto const& entity = pointlights[i];
     auto &transform = registry.get<Transform>(entity);
@@ -405,7 +399,7 @@ draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInf
   auto const& left = rinfo.left;
   auto const& right = rinfo.right;
 
-  sp.set_uniform_color(rargs.logger, "u_color", LOC::BLUE);
+  sp.set_uniform_color(rargs.logger, "u_color", LOC::WHITE);
   opengl::global::vao_bind(dinfo.vao());
 
   auto const draw_wiggle = [&](auto const& wiggle) {
@@ -417,7 +411,7 @@ draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInf
     glm::quat const rot = glm::angleAxis(glm::degrees(rinfo.wiggle_rotation), Y_UNIT_VECTOR);
     auto const scale = glm::vec3{0.5};
 
-    bool const receives_ambient = false;
+    bool const receives_ambient = true;
     auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
     draw_3dshape(rargs, modelmatrix, sp, dinfo, river_eid, registry, receives_ambient);
   };

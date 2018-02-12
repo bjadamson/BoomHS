@@ -28,8 +28,8 @@ create_river(TilePosition const& tpos, Edges const& edges, glm::vec2 const& flow
     float const rotation, float const length, stlw::float_generator &rng)
 {
   RiverInfo river{tpos, edges.left, edges.top, edges.right, edges.bottom, flow_dir, rotation};
-  FOR(i, length * 2) {
-    auto const offset = (flow_dir * static_cast<float>(i)) / 2.0f;
+  FOR(i, length) {
+    auto const offset = (flow_dir * static_cast<float>(i));
     glm::vec2 const wiggle_pos = static_cast<glm::vec2>(river.origin) + offset;
     spawn_newround_wiggles(river, rng, wiggle_pos);
   }

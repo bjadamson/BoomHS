@@ -3,12 +3,14 @@ in vec3 a_normal;
 
 out vec4 v_position;
 out vec3 v_surfacenormal;
+out vec4 v_color;
 
 uniform vec2 u_offset;
 uniform vec2 u_direction;
 uniform mat4 u_mvpmatrix;
 uniform mat4 u_modelmatrix;
 uniform mat3 u_normalmatrix;
+uniform vec4 u_color;
 
 void main()
 {
@@ -29,6 +31,7 @@ void main()
 
   v_position = a_position;
   v_surfacenormal = normalize(u_normalmatrix * a_normal);
+  v_color = u_color;
 
   // Transform v_position to world-space
   vec4 pos_world = u_modelmatrix * v_position;

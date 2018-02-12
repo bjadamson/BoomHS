@@ -82,7 +82,7 @@ instance_count = 3
 [[shaders]]
 name = "river"
 vertex = "river.vert"
-fragment = "stair.frag"
+fragment = "3d_pos_normal_color.frag"
 va = "vertex_normal"
 instance_count = 4
 
