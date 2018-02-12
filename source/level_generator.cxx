@@ -226,7 +226,7 @@ struct Rooms
 };
 
 stlw::optional<Rooms>
-create_rooms(TileData &tdata, stlw::float_generator &rng)
+place_rooms(TileData &tdata, stlw::float_generator &rng)
 {
   auto constexpr MAX_NUM_CREATE_TRIES = 5000;
   std::vector<Rect> rects;
@@ -289,15 +289,16 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
   assert(stairs_perfloor > 0);
 
   // 1. Place Rivers
+  std::cerr << "placing rivers ...\n";
   river_generator::place_rivers(tdata, rng, rivers);
 
   // 2. Place Rooms and Stairs
   stlw::optional<Rooms> rooms = stlw::none;
   bool stairs = false;
   while(!rooms && !stairs) {
-    std::cerr << "creating rooms ...\n";
+    std::cerr << "placing rooms ...\n";
     while(!rooms) {
-      rooms = create_rooms(tdata, rng);
+      rooms = place_rooms(tdata, rng);
     }
     while(!stairs) {
       std::cerr << "placing stairs ...\n";

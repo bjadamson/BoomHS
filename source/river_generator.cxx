@@ -16,8 +16,6 @@ spawn_newround_wiggles(RiverInfo &river, glm::vec2 const pos)
 {
   float const speed    = 100.0f;
   RiverWiggle wiggle{speed, 0.0f, pos, river.flow_direction};
-  std::cerr << "wigglepos: '" << wiggle.position << "'\n";
-
   river.wiggles.emplace_back(MOVE(wiggle));
 }
 
@@ -89,7 +87,7 @@ place_rivers(TileData &tdata, stlw::float_generator &rng, std::vector<RiverInfo>
     rivers.emplace_back(MOVE(river));
   };
 
-  FOR(i, 1) {
+  FOR(i, 2) {
     place();
   }
 }
