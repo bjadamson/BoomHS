@@ -4,7 +4,7 @@ in vec3 a_normal;
 out vec4 v_position;
 out vec3 v_surfacenormal;
 
-uniform float u_zoffset;
+uniform vec2 u_offset;
 uniform vec2 u_direction;
 uniform mat4 u_mvpmatrix;
 uniform mat4 u_modelmatrix;
@@ -12,7 +12,7 @@ uniform mat3 u_normalmatrix;
 
 void main()
 {
-  const float offset_z = 0.15;
+  const float offset_z = 0.10;
   const float offset_x = 0.25f;
 
   vec3 direction = vec3(u_direction.x, 0.0, u_direction.y);
@@ -32,7 +32,7 @@ void main()
 
   // Transform v_position to world-space
   vec4 pos_world = u_modelmatrix * v_position;
-  pos_world.z += u_zoffset;
+  pos_world += vec4(u_offset.x, pos_world.y, u_offset.y, 0.0);
 
   // Calculate the position of the vertex using the offset array
   pos_world += vec4(offset, 0.0);

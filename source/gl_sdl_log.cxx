@@ -28,7 +28,6 @@ retrieve(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei *, GLchar *))
 
   // Step 2
   int const buffer_size = log_length + 1; // +1 for null terminator character '\0'
-  std::cerr << "buffer size: '" << buffer_size << "'\n";
 
   // explicitely using parenthesis to not trigger initializer_list ctor
   std::vector<char> buffer(buffer_size);

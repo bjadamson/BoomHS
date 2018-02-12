@@ -405,16 +405,12 @@ draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInf
   auto const& left = rinfo.left;
   auto const& right = rinfo.right;
 
+  sp.set_uniform_color(rargs.logger, "u_color", LOC::BLUE);
+  opengl::global::vao_bind(dinfo.vao());
+
   auto const draw_wiggle = [&](auto const& wiggle) {
-
-    float const zoffset = std::abs(std::cos(ft.delta * wiggle.z_jiggle));
-    auto const u_zoffset = glm::clamp(zoffset, -0.5f, 0.5f);
-
     sp.set_uniform_vec2(rargs.logger, "u_direction", wiggle.direction);
-    sp.set_uniform_float1(rargs.logger, "u_zoffset", 0.0f);
-    sp.set_uniform_color(rargs.logger, "u_color", LOC::BLUE);
-    opengl::global::vao_bind(dinfo.vao());
-    ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+    sp.set_uniform_vec2(rargs.logger, "u_offset", wiggle.offset);
 
     auto const& wp = wiggle.position;
     auto const tr = glm::vec3{wp.x, WIGGLE_UNDERATH_OFFSET, wp.y} + VIEWING_OFFSET;

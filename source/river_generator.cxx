@@ -12,21 +12,26 @@ namespace
 {
 
 void
-spawn_newround_wiggles(RiverInfo &river, glm::vec2 const pos)
+spawn_newround_wiggles(RiverInfo &river, stlw::float_generator &rng, glm::vec2 const pos)
 {
   float const speed    = 100.0f;
-  RiverWiggle wiggle{speed, 0.0f, pos, river.flow_direction};
+  float const OFFSET   = 0.10f;
+  float const x_offset  = rng.gen_float_range(-OFFSET, OFFSET);
+  float const z_offset  = rng.gen_float_range(-OFFSET, OFFSET);
+  auto const offset = glm::vec2{x_offset, z_offset};
+  RiverWiggle wiggle{speed, offset, pos, river.flow_direction};
   river.wiggles.emplace_back(MOVE(wiggle));
 }
 
 RiverInfo
 create_river(TilePosition const& tpos, Edges const& edges, glm::vec2 const& flow_dir,
-    float const rotation, float const length)
+    float const rotation, float const length, stlw::float_generator &rng)
 {
   RiverInfo river{tpos, edges.left, edges.top, edges.right, edges.bottom, flow_dir, rotation};
-  FOR(i, length) {
-    glm::vec2 const wiggle_pos = static_cast<glm::vec2>(river.origin) + (flow_dir * static_cast<float>(i));
-    spawn_newround_wiggles(river, wiggle_pos);
+  FOR(i, length * 2) {
+    auto const offset = (flow_dir * static_cast<float>(i)) / 2.0f;
+    glm::vec2 const wiggle_pos = static_cast<glm::vec2>(river.origin) + offset;
+    spawn_newround_wiggles(river, rng, wiggle_pos);
   }
   return river;
 }
@@ -52,7 +57,7 @@ generate_river(TileData &tdata, stlw::float_generator &rng)
     auto const left = glm::vec2{static_cast<float>(edges.left), 0.0f};
     auto const right = glm::vec2{static_cast<float>(edges.right), 0.0f};
     auto const length = glm::distance(left, right);
-    return create_river(tpos, edges, FLOW_DIR, rotation, length);
+    return create_river(tpos, edges, FLOW_DIR, rotation, length, rng);
   }
   assert(edge.is_yedge());
   FOR(i, tdheight) {
@@ -66,7 +71,7 @@ generate_river(TileData &tdata, stlw::float_generator &rng)
   auto const top = glm::vec2{0.0f, static_cast<float>(edges.top)};
   auto const bottom = glm::vec2{0.0f, static_cast<float>(edges.bottom)};
   auto const length = glm::distance(top, bottom);
-  return create_river(tpos, edges, FLOW_DIR, rotation, length);
+  return create_river(tpos, edges, FLOW_DIR, rotation, length, rng);
 }
 
 } // ns anon

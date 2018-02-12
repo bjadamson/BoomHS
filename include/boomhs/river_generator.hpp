@@ -15,7 +15,7 @@ class TileData;
 struct RiverWiggle
 {
   float speed;
-  float z_jiggle;
+  glm::vec2 offset;
 
   // NOT a TilePosition, because we are tracking it's discrete position for rendering (not it's
   // actual tile position, which is irrelevant for the RiverWiggle
