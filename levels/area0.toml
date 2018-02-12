@@ -41,7 +41,50 @@ name = "TextureAtlas"
 type = "texture:2d"
 filename = "TextureAtlas.jpg"
 
-################## MESHES #####################
+###################################################################################################
+[[tile]]
+tile = "FLOOR"
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[tile]]
+tile = "RIVER"
+ambient = [1.0, 0.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[tile]]
+tile = "WALL"
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[tile]]
+tile = "BRIDGE"
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[tile]]
+tile = "STAIR_DOWN"
+ambient = [0.0, 1.0, 0.0]
+diffuse = [0.0, 0.0, 0.0]
+specular = [0.0, 0.0, 0.0]
+shininess = 0.0
+
+[[tile]]
+tile = "STAIR_UP"
+ambient = [1.0, 0.0, 0.0]
+diffuse = [0.0, 0.0, 0.0]
+specular = [0.0, 0.0, 0.0]
+shininess = 0.0
+
+###################################################################################################
 [[meshes]]
 name = "house"
 colors = false
@@ -197,7 +240,7 @@ shader = "light"
 geometry = "cube"
 pointlight = [0.0, 0.0, 1.0]
 
-##################### OTHERS
+###################################################################################################
 [[entity]]
 pos = [-5.0, -2.0, 0.0]
 shader = "3dcube_texture"

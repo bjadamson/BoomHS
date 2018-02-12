@@ -1,7 +1,22 @@
 #include <boomhs/assets.hpp>
+#include <type_traits>
 
 namespace boomhs
 {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// TileInfos
+TileInfo const&
+TileInfos::operator[](TileType const type) const
+{
+  auto const cmp = [&type](auto const& tinfo) {
+    return tinfo.type == type;
+  };
+  auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
+  // assume presence
+  assert(it != data_.cend());
+  return *it;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ObjCache
@@ -26,7 +41,7 @@ ObjCache::get_obj(char const* name) const
   };
   auto const it = std::find_if(objects_.cbegin(), objects_.cend(), cmp);
 
-  // for now, assume all queries are found
+  // assume presence
   assert(it != objects_.cend());
 
   // yield reference to data

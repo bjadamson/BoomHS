@@ -51,6 +51,10 @@ public:
   }
 };
 
+struct TileComponent
+{
+};
+
 struct StairInfo
 {
   TilePosition tile_position;
@@ -106,6 +110,14 @@ find_materials(entt::DefaultRegistry &registry)
   using namespace boomhs;
   using namespace opengl;
   return find_all_entities_with_component<Material, Transform>(registry);
+}
+
+inline auto
+find_material_tiles(entt::DefaultRegistry &registry)
+{
+  using namespace boomhs;
+  using namespace opengl;
+  return find_all_entities_with_component<Material, TileComponent>(registry);
 }
 
 inline auto

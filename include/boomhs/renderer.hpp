@@ -81,7 +81,6 @@ struct DrawTileArgs
 struct DrawTileDataArgs
 {
   DrawTileArgs bridge;
-  DrawTileArgs equal;
   DrawTileArgs plus;
   DrawTileArgs hashtag;
   DrawTileArgs river;

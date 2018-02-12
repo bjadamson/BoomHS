@@ -50,8 +50,8 @@ namespace boomhs
 {
 
 stlw::result<HandleManager, std::string>
-copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, entt::DefaultRegistry &registry,
-                ObjCache const &obj_cache)
+copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile_infos,
+    entt::DefaultRegistry &registry, ObjCache const &obj_cache)
 {
   GpuHandleList handle_list;
   /*
@@ -103,28 +103,46 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, entt::DefaultRegistry
     handle_list.add(entity, MOVE(handle));
   });
 
-  auto const make_special = [&handle_list, &logger, &obj_cache, &sps, &registry](char const *mesh_name, char const*vshader_name) {
+  auto const make_special = [&handle_list, &logger, &obj_cache, &sps, &registry, &tile_infos](
+      char const *mesh_name, char const*vshader_name, TileType const type)
+  {
     auto const &obj = obj_cache.get_obj(mesh_name);
     auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, stlw::none);
-    auto const entity = registry.create();
-    registry.assign<Material>(entity);
-    auto meshc = registry.assign<MeshRenderable>(entity);
+    auto const eid = registry.create();
+
+    registry.assign<TileComponent>(eid);
+    auto &material = registry.assign<Material>(eid);
+    TileInfo const& tinfo = tile_infos[type];
+    material.ambient = tinfo.material.ambient;
+    material.diffuse = tinfo.material.diffuse;
+    material.specular = tinfo.material.specular;
+    material.shininess = tinfo.material.shininess;
+
+    auto meshc = registry.assign<MeshRenderable>(eid);
     meshc.name = mesh_name;
 
-    auto &color = registry.assign<Color>(entity);
+    auto &color = registry.assign<Color>(eid);
     color.set_r(1.0);
     color.set_g(1.0);
     color.set_b(1.0);
     color.set_a(1.0);
 
-    handle_list.add(entity, MOVE(handle));
-    return entity;
+    handle_list.add(eid, MOVE(handle));
+    return eid;
   };
-  auto const make_stair = [&](char const* vshader_name, char const* mesh_name) {
+  auto const make_stair = [&](char const* vshader_name, char const* mesh_name, TileType const type) {
     auto const &obj = obj_cache.get_obj(mesh_name);
     auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, stlw::none);
     auto const eid = registry.create();
-    registry.assign<Material>(eid);
+
+    registry.assign<TileComponent>(eid);
+    auto &material = registry.assign<Material>(eid);
+    TileInfo const& tinfo = tile_infos[type];
+    material.ambient = tinfo.material.ambient;
+    material.diffuse = tinfo.material.diffuse;
+    material.specular = tinfo.material.specular;
+    material.shininess = tinfo.material.shininess;
+
     auto meshc = registry.assign<MeshRenderable>(eid);
     meshc.name = mesh_name;
 
@@ -132,17 +150,16 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, entt::DefaultRegistry
     return eid;
   };
 
-  auto const bridge_eid = make_special("B", "3d_pos_normal_color");
-  auto const equal_eid = make_special("equal", "3d_pos_normal_color");
-  auto const plus_eid = make_special("plus", "3d_pos_normal_color");
+  auto const bridge_eid = make_special("equal", "3d_pos_normal_color", TileType::BRIDGE);
+  auto const plus_eid = make_special("plus", "3d_pos_normal_color", TileType::FLOOR);
 
-  auto const hashtag_eid = make_special("hashtag", "hashtag");
-  auto const river_eid = make_special("tilde", "river");
-  auto const stair_down_eid = make_stair("stair", "stair_down");
-  auto const stair_up_eid = make_stair("stair", "stair_up");
+  auto const hashtag_eid = make_special("hashtag", "hashtag", TileType::WALL);
+  auto const river_eid = make_special("tilde", "river", TileType::RIVER);
+  auto const stair_down_eid = make_stair("stair", "stair_down", TileType::STAIR_DOWN);
+  auto const stair_up_eid = make_stair("stair", "stair_up", TileType::STAIR_UP);
 
-  return HandleManager{MOVE(handle_list), MOVE(bridge_eid), MOVE(equal_eid), plus_eid, hashtag_eid,
-    river_eid, stair_down_eid, stair_up_eid};
+  return HandleManager{MOVE(handle_list), MOVE(bridge_eid), plus_eid, hashtag_eid, river_eid,
+    stair_down_eid, stair_up_eid};
 }
 
 void
@@ -221,7 +238,6 @@ draw_tiledata(RenderArgs const& rargs, ZoneState &zone_state, TiledataState cons
   auto &tile_sp = sps.ref_sp("3d_pos_normal_color");
 
   DrawTileArgs bridge{tile_sp, handlem.lookup(handlem.bridge_eid), handlem.bridge_eid};
-  DrawTileArgs equal{tile_sp, handlem.lookup(handlem.equal_eid), handlem.equal_eid};
   DrawTileArgs plus{tile_sp, handlem.lookup(handlem.plus_eid), handlem.plus_eid};
 
   auto &hashtag_sp = sps.ref_sp("hashtag");
@@ -231,13 +247,12 @@ draw_tiledata(RenderArgs const& rargs, ZoneState &zone_state, TiledataState cons
   auto &stair_sp = sps.ref_sp("stair");
   DrawTileArgs stairs_down{stair_sp, handlem.lookup(handlem.stair_down_eid), handlem.stair_down_eid};
   DrawTileArgs stairs_up{stair_sp, handlem.lookup(handlem.stair_up_eid), handlem.stair_up_eid};
-  DrawTileDataArgs dta{MOVE(bridge), MOVE(equal), MOVE(plus), MOVE(hashtag), MOVE(river),
+  DrawTileDataArgs dta{MOVE(bridge), MOVE(plus), MOVE(hashtag), MOVE(river),
     MOVE(stairs_down), MOVE(stairs_up)};
 
   auto &registry = zone_state.registry;
   auto const& leveldata = zone_state.level_data;
-  render::draw_tiledata(rargs, dta, leveldata.tiledata(),
-                       tds, registry, ft);
+  render::draw_tiledata(rargs, dta, leveldata.tiledata(), tds, registry, ft);
 }
 
 void
@@ -681,8 +696,8 @@ start(stlw::Logger &logger, Engine &engine)
     auto const& objcache = assets.obj_cache;
 
     LOG_TRACE("Copy assets to GPU.");
-    auto handle_result = boomhs::copy_assets_gpu(logger, level_assets.shader_programs, registry,
-        objcache);
+    auto handle_result = boomhs::copy_assets_gpu(logger, level_assets.shader_programs,
+        level_assets.assets.tile_infos, registry, objcache);
     assert(handle_result);
     HandleManager handlem = MOVE(*handle_result);
 
@@ -691,10 +706,9 @@ start(stlw::Logger &logger, Engine &engine)
 
     int const width = 40, height = 40;
     TileDataConfig const tdconfig{width, height, sgconfig};
-    auto leveldata = level_generator::make_leveldata(tdconfig, rng, registry);
+    auto leveldata = level_generator::make_leveldata(tdconfig, rng, level_assets.assets.tile_infos, registry);
 
-    ////////////////////////////////
-    // for now assume only 1 entity has the Light tag
+    // Load point lights
     auto light_view = registry.view<PointLight, Transform>();
     for (auto const entity : light_view) {
       auto &transform = light_view.get<Transform>(entity);
@@ -707,7 +721,6 @@ start(stlw::Logger &logger, Engine &engine)
     auto constexpr UP = Y_UNIT_VECTOR;
 
     auto const player_eid = find_player(registry);
-
     EnttLookup player_lookup{player_eid, registry};
     WorldObject player{player_lookup, FORWARD, UP};
     Camera camera(player_lookup, FORWARD, UP);

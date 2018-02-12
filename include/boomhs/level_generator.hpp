@@ -7,6 +7,7 @@
 
 namespace boomhs
 {
+struct TileInfos;
 
 struct TileDataConfig
 {
@@ -20,6 +21,7 @@ namespace boomhs::level_generator
 {
 
 LevelData
-make_leveldata(TileDataConfig const&, stlw::float_generator &, entt::DefaultRegistry &);
+make_leveldata(TileDataConfig const&, stlw::float_generator &, TileInfos const&,
+    entt::DefaultRegistry &);
 
 } // ns boomhs::level_generator

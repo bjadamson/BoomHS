@@ -70,12 +70,35 @@ struct LoadedEntities
   bool empty() const { return data.empty(); }
 };
 
+struct TileInfo
+{
+  TileType type;
+  opengl::Material material;
+};
+
+struct TileInfos
+{
+  static auto constexpr SIZE = static_cast<size_t>(TileType::MAX);
+  std::array<TileInfo, SIZE> data_;
+
+public:
+  TileInfos() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(TileInfos);
+  BEGIN_END_FORWARD_FNS(data_);
+
+  bool empty() const { return data_.empty(); }
+
+  TileInfo const&
+  operator[](TileType) const;
+};
+
 // TODO: not final by any means..
 struct Assets
 {
   ObjCache obj_cache;
   LoadedEntities loaded_entities;
   opengl::TextureTable texture_table;
+  TileInfos tile_infos;
 
   opengl::GlobalLight global_light;
   opengl::Color background_color;
@@ -106,7 +129,6 @@ class HandleManager
   GpuHandleList list_;
 public:
   uint32_t bridge_eid;
-  uint32_t equal_eid;
   uint32_t plus_eid;
   uint32_t hashtag_eid;
   uint32_t river_eid;
@@ -114,12 +136,11 @@ public:
   uint32_t stair_up_eid;
 
   MOVE_CONSTRUCTIBLE_ONLY(HandleManager);
-  explicit HandleManager(GpuHandleList &&list, uint32_t const b, uint32_t const equal, uint32_t const plus,
+  explicit HandleManager(GpuHandleList &&list, uint32_t const b,  uint32_t const plus,
       uint32_t const hashtag, uint32_t const river, uint32_t const stair_down,
       uint32_t const stair_up)
     : list_(MOVE(list))
     , bridge_eid(b)
-    , equal_eid(equal)
     , plus_eid(plus)
     , hashtag_eid(hashtag)
     , river_eid(river)

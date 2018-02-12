@@ -12,6 +12,7 @@
 
 namespace boomhs
 {
+struct TileInfos;
 
 enum class TileLookupBehavior
 {
@@ -56,7 +57,8 @@ public:
   NO_COPY(TileData);
   NO_MOVE_ASSIGN(TileData);
 
-  TileData(std::vector<Tile> &&, size_t const, size_t const, entt::DefaultRegistry &);
+  TileData(std::vector<Tile> &&, size_t const, size_t const, TileInfos const&,
+      entt::DefaultRegistry &);
 
   ~TileData();
 

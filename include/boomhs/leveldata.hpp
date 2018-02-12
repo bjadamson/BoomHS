@@ -2,6 +2,9 @@
 #include <boomhs/river_generator.hpp>
 #include <boomhs/tile.hpp>
 #include <boomhs/tiledata.hpp>
+
+#include <opengl/lighting.hpp>
+
 #include <stlw/type_macros.hpp>
 #include <vector>
 
@@ -14,6 +17,7 @@ class LevelData
   TilePosition const startpos_;
 
   std::vector<RiverInfo> rivers_;
+  std::array<opengl::Material, static_cast<size_t>(TileType::MAX)> materials;
 
   void set_tile(TilePosition const&, TileType const&);
 public:

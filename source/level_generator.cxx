@@ -312,7 +312,7 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
 
 LevelData
 make_leveldata(TileDataConfig const& tdconfig, stlw::float_generator &rng,
-    entt::DefaultRegistry &registry)
+    TileInfos const& tinfos, entt::DefaultRegistry &registry)
 {
   // clang-format off
   auto const tdwidth = tdconfig.width;
@@ -322,7 +322,7 @@ make_leveldata(TileDataConfig const& tdconfig, stlw::float_generator &rng,
 
   std::vector<Tile> tiles{static_cast<std::size_t>(num_tiles)};
   tiles.reserve(num_tiles);
-  TileData tdata{MOVE(tiles), tdwidth, tdheight, registry};
+  TileData tdata{MOVE(tiles), tdwidth, tdheight, tinfos, registry};
 
   std::cerr << "======================================\n";
   std::vector<RiverInfo> rivers;

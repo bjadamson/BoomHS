@@ -1,17 +1,25 @@
 #include <boomhs/tiledata.hpp>
+#include <boomhs/assets.hpp>
 
 namespace boomhs
 {
 
 TileData::TileData(std::vector<Tile> &&t, size_t const width, size_t const height,
-    entt::DefaultRegistry &registry)
+    TileInfos const& tinfos, entt::DefaultRegistry &registry)
   : dimensions_(stlw::make_array<size_t>(width, height))
   , registry_(registry)
   , tiles_(MOVE(t))
 {
   for (auto &tile : tiles_) {
     tile.eid = registry_.create();
-    auto &transform = registry_.assign<Transform>(tile.eid);
+    registry_.assign<Transform>(tile.eid);
+
+    auto const& m = tinfos[tile.type].material;
+    auto &material = registry_.assign<opengl::Material>(tile.eid);
+    material.ambient = m.ambient;
+    material.diffuse = m.diffuse;
+    material.specular = m.specular;
+    material.shininess = m.shininess;
   }
 }
 

@@ -93,16 +93,13 @@ set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
 
 void
 set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix,
-    ShaderProgram &sp, DrawInfo const& dinfo, std::uint32_t const entity,
+    ShaderProgram &sp, DrawInfo const& dinfo, Material const& material, std::uint32_t const entity,
     entt::DefaultRegistry &registry, bool const receives_ambient_light)
 {
   auto const& camera = args.camera;
   auto const& global_light = args.global_light;
   auto const& player = args.player;
   auto &logger = args.logger;
-
-  bool const receives_light = registry.has<Material>(entity);
-  assert(receives_light);
 
   set_modelmatrix(logger, model_matrix, sp);
   sp.set_uniform_matrix_3fv(logger, "u_normalmatrix", glm::inverseTranspose(glm::mat3{model_matrix}));
@@ -126,9 +123,6 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
     auto &pointlight = registry.get<PointLight>(entity);
     set_pointlight(logger, sp, i, pointlight, transform.translation);
   }
-
-  assert(registry.has<Material>(entity));
-  Material const& material = registry.get<Material>(entity);
 
   sp.set_uniform_vec3(logger, "u_material.ambient",  material.ambient);
   sp.set_uniform_vec3(logger, "u_material.diffuse",  material.diffuse);
@@ -191,7 +185,9 @@ draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, Shad
         (!receives_light && is_lightsource));
 
     if (receives_light) {
-      set_receiveslight_uniforms(args, model_matrix, sp, dinfo, entity, registry,
+      assert(registry.has<Material>(entity));
+      Material const& material = registry.get<Material>(entity);
+      set_receiveslight_uniforms(args, model_matrix, sp, dinfo, material, entity, registry,
           receives_ambient_light);
     } else if (is_lightsource) {
       set_3dlightsource_uniforms(args, model_matrix, sp, dinfo, entity, registry);
@@ -308,7 +304,8 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
 
 void
 draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const& tiledata,
-    TiledataState const& tiledata_state, entt::DefaultRegistry &registry, FrameTime const& ft)
+    TiledataState const& tiledata_state, entt::DefaultRegistry &registry,
+    FrameTime const& ft)
 {
   auto &logger = args.logger;
   auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, std::uint32_t const entity,
@@ -326,7 +323,6 @@ draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const&
     }
     // This offset causes the tile's to appear in the "middle"
     auto &bridge = dt_args.bridge;
-    auto &equal = dt_args.equal;
     auto &plus = dt_args.plus;
     auto &hashtag = dt_args.hashtag;
     auto &river = dt_args.river;
@@ -340,12 +336,12 @@ draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const&
     switch(tile.type) {
       case TileType::FLOOR:
         {
-          draw_tile_helper(plus.sp, plus.dinfo, plus.eid, default_modmatrix, true);
+          draw_tile_helper(plus.sp, plus.dinfo, tile.eid, default_modmatrix, true);
         }
         break;
       case TileType::WALL:
         {
-          draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, default_modmatrix, true);
+          draw_tile_helper(hashtag.sp, hashtag.dinfo, tile.eid, default_modmatrix, true);
         }
         break;
       case TileType::RIVER:
@@ -361,27 +357,27 @@ draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const&
           // thinking ...
           glm::vec3 const scale{0.5};
           auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
-          draw_tile_helper(equal.sp, equal.dinfo, equal.eid, default_modmatrix, true);
+          draw_tile_helper(bridge.sp, bridge.dinfo, tile.eid, default_modmatrix, true);
         }
         break;
       case TileType::STAIR_DOWN:
         {
           auto &sp = stairs_down.sp;
-          sp.set_uniform_color(logger, "u_color", LOC::GREEN);
+          sp.set_uniform_color(logger, "u_color", LOC::WHITE);
 
           bool const receives_ambient_light = false;
           glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
-          draw_tile_helper(sp, stairs_down.dinfo, stairs_down.eid, default_modmatrix, receives_ambient_light);
+          draw_tile_helper(sp, stairs_down.dinfo, tile.eid, default_modmatrix, receives_ambient_light);
         }
         break;
       case TileType::STAIR_UP:
         {
           auto &sp = stairs_up.sp;
-          sp.set_uniform_color(logger, "u_color", LOC::RED);
+          sp.set_uniform_color(logger, "u_color", LOC::WHITE);
 
           bool const receives_ambient_light = false;
           glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
-          draw_tile_helper(sp, stairs_up.dinfo, stairs_up.eid, default_modmatrix, receives_ambient_light);
+          draw_tile_helper(sp, stairs_up.dinfo, tile.eid, default_modmatrix, receives_ambient_light);
         }
         break;
       default:

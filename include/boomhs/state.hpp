@@ -35,31 +35,38 @@ struct UiState
   bool enter_pressed = false;
   bool block_input = false;
 
-  bool show_background_window = false;
+  int selected_entity = 0;
+  int selected_entity_material = 0;
 
   int selected_pointlight = 0;
-  bool show_pointlight_window = false;
 
-  bool show_ambientlight_window = false;
-  bool show_directionallight_window = false;
+  std::array<int, 2> selected_tile = {0};
+  int selected_tiledata = 0;
 
-  int selected_material = 0;
-  bool show_entitymaterial_window = false;
-
-  int selected_entity = 0;
+  int attenuation_current_item = opengl::Light::INIT_ATTENUATION_INDEX;
 
   // primitive buffers
   int eid_buffer = 0;
   glm::vec3 euler_angle_buffer;
   glm::vec3 last_mouse_clicked_pos;
-  int attenuation_current_item = opengl::Light::INIT_ATTENUATION_INDEX;
 
+  // window display state
+  bool show_ambientlight_window = false;
+  bool show_background_window = false;
   bool show_camerawindow = false;
+
   bool show_debugwindow = true;
+  bool show_directionallight_window = false;
+
   bool show_entitywindow = false;
+  bool show_entitymaterial_window = false;
+
+  bool show_tiledata_editor_window = false;
+  bool show_tiledatamaterial_window = false;
+
   bool show_mousewindow = false;
   bool show_playerwindow = false;
-  bool show_tiledatawindow = false;
+  bool show_pointlight_window = false;
 };
 
 struct MouseState
