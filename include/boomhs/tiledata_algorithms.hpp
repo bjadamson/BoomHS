@@ -1,9 +1,14 @@
 #pragma once
 #include <boomhs/tile.hpp>
-#include <boomhs/tilemap.hpp>
+#include <boomhs/tiledata.hpp>
 
 #include <array>
 #include <iostream>
+
+namespace stlw
+{
+class float_generator;
+} // ns stlw
 
 namespace boomhs
 {
@@ -11,25 +16,16 @@ namespace boomhs
 struct Edges
 {
   TilePosition const position;
-  int32_t const left, top, right, bottom;
+  uint64_t const left, top, right, bottom;
 };
+
+Edges
+calculate_edges(TilePosition const& tpos, uint64_t const, uint64_t const, uint64_t const,
+    uint64_t);
 
 struct Edges;
 std::ostream&
 operator<<(std::ostream &, Edges const&);
-
-} // ns boomhs
-
-namespace boomhs::detail
-{
-
-Edges
-calculate_edges(TilePosition const& tpos, int const, int const, int const);
-
-} // ns boomhs::detail
-
-namespace boomhs
-{
 
 template<typename FN>
 void
@@ -38,7 +34,6 @@ flood_visit_skipping_position(Edges const& edge, FN const& fn)
   for(auto x = edge.left; x <= edge.right; ++x) {
     for (auto y = edge.bottom; y <= edge.top; ++y) {
       if (edge.position == std::make_pair(x, y)) {
-      //if (x == edge.position.x || y == edge.position.y) {
         // skip over the tile (only iterating edges), not original tile
         continue;
       }
@@ -55,16 +50,16 @@ struct FindNeighborConfig
 
 template<typename FN>
 TileNeighbors
-find_neighbors(TileMap const& tmap, TilePosition const& tpos, FN const& fn,
+find_neighbors(TileData const& tdata, TilePosition const& tpos, FN const& fn,
     FindNeighborConfig const& config)
 {
-  auto const [width, length] = tmap.dimensions();
+  auto const [width, height] = tdata.dimensions();
   auto const distance = config.distance;
-  assert(length > 0);
   assert(width > 0);
+  assert(height > 0);
   assert(distance > 0);
 
-  auto const edges = detail::calculate_edges(tpos, width, length, distance);
+  auto const edges = calculate_edges(tpos, width, height, distance, distance);
   std::vector<TilePosition> neighbors;
   auto const collect_neighbor_positions = [&](auto const& neighbor_pos)
   {
@@ -79,7 +74,7 @@ find_neighbors(TileMap const& tmap, TilePosition const& tpos, FN const& fn,
         // Explicitely use fallthrough for code reuse
       case TileLookupBehavior::ALL_8_DIRECTIONS:
         {
-          auto const& neighbor_tile = tmap.data(neighbor_pos);
+          auto const& neighbor_tile = tdata.data(neighbor_pos);
           if (fn(neighbor_tile)) {
             neighbors.emplace_back(neighbor_pos);
           }
@@ -95,37 +90,61 @@ find_neighbors(TileMap const& tmap, TilePosition const& tpos, FN const& fn,
 }
 
 inline TileNeighbors
-find_neighbors(TileMap const& tmap, TilePosition const& tpos, TileType const type,
+find_neighbors(TileData const& tdata, TilePosition const& tpos, TileType const type,
     FindNeighborConfig const& config)
 {
   auto const fn = [&](auto const& neighbor_tile) { return neighbor_tile.type == type; };
-  return find_neighbors(tmap, tpos, fn, config);
+  return find_neighbors(tdata, tpos, fn, config);
 }
 
 template<typename FN>
 TileNeighbors
-find_immediate_neighbors(TileMap const& tmap, TilePosition const& tpos,
+find_immediate_neighbors(TileData const& tdata, TilePosition const& tpos,
     TileLookupBehavior const behavior, FN const& fn)
 {
-  size_t static constexpr DISTANCE = 1;
+  uint64_t static constexpr DISTANCE = 1;
   FindNeighborConfig const config{behavior, DISTANCE};
-  return find_neighbors(tmap, tpos, fn, config);
+  return find_neighbors(tdata, tpos, fn, config);
 }
 
 inline TileNeighbors
-find_immediate_neighbors(TileMap const& tmap, TilePosition const& tpos, TileType const type,
+find_immediate_neighbors(TileData const& tdata, TilePosition const& tpos, TileType const type,
     TileLookupBehavior const behavior)
 {
-  size_t static constexpr DISTANCE = 1;
+  uint64_t static constexpr DISTANCE = 1;
   FindNeighborConfig const config{behavior, DISTANCE};
-  return find_neighbors(tmap, tpos, type, config);
+  return find_neighbors(tdata, tpos, type, config);
 }
 
+class MapEdge
+{
+public:
+  enum Side
+  {
+    LEFT = 0, TOP, RIGHT, BOTTOM
+  };
+
+private:
+  Side side_;
+public:
+  explicit MapEdge(Side const);
+  bool is_xedge() const;
+  bool is_yedge() const;
+
+  Side side() const { return side_; }
+
+  static MapEdge
+  random_edge(stlw::float_generator &);
+};
+
+std::pair<TilePosition, MapEdge>
+random_tileposition_onedgeofmap(TileData const&, stlw::float_generator &);
+
 bool
-any_tilemap_neighbors(TileMap const&, TilePosition const&, int32_t const, bool (*)(Tile const&));
+any_tiledata_neighbors(TileData const&, TilePosition const&, uint64_t const, bool (*)(Tile const&));
 
 class WorldObject;
 void
-update_visible_tiles(TileMap &, WorldObject const&, bool const);
+update_visible_tiles(TileData &, WorldObject const&, bool const);
 
 } // ns boomhs

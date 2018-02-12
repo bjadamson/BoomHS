@@ -4,12 +4,7 @@
 
 #include <opengl/constants.hpp>
 #include <window/mouse.hpp>
-
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/string_cast.hpp>
-#include <glm/gtc/matrix_access.hpp>
-#include <glm/gtx/vector_angle.hpp>
+#include <stlw/math.hpp>
 
 #include <cmath>
 #include <limits>
@@ -41,10 +36,10 @@ calculate_mouse_worldpos(Camera const& camera, WorldObject const& player, int co
   //float const Z_PLANE = 0.0;
   //assert(768 == dimensions.h);
   //glm::vec3 screen_pos = glm::vec3(mouse_x, (dimensions.h - mouse_y), Z_PLANE);
-  //std::cerr << "mouse clickpos: xyz: '" << glm::to_string(screen_pos) << "'\n";
+  //std::cerr << "mouse clickpos: xyz: '" << screen_pos << "'\n";
 
   //glm::vec3 const world_pos = glm::unProject(screen_pos, view, projection, viewport);
-  std::cerr << "calculated worldpos: xyz: '" << glm::to_string(world_pos) << "'\n";
+  std::cerr << "calculated worldpos: xyz: '" << glm::world_pos << "'\n";
   return world_pos;
 }
 

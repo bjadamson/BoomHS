@@ -3,7 +3,7 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <boost/optional.hpp>
+#include <stlw/optional.hpp>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -30,15 +30,7 @@ struct TextureAllocation
 
   NO_COPY(TextureAllocation);
   NO_MOVE_ASSIGN(TextureAllocation);
-
-  TextureAllocation(TextureAllocation &&other)
-    : info(MOVE(other.info))
-    , should_destroy(other.should_destroy)
-  {
-    other.info.id = 0;
-    other.info.mode = 0;
-    other.should_destroy = false;
-  }
+  TextureAllocation(TextureAllocation &&);
 };
 
 struct TextureFilenames
@@ -56,15 +48,15 @@ class TextureTable
   using pair_t = std::pair<TextureFilenames, TextureAllocation>;
   std::vector<pair_t> data_;
 
-  boost::optional<TextureInfo>
+  stlw::optional<TextureInfo>
   lookup_texture(char const* name) const
   {
     if (!name) {
-      return boost::none;
+      return stlw::none;
     }
     auto const cmp = [&name](auto const& it) { return it.first.name == name; };
     auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
-    return it == data_.cend() ? boost::none : boost::make_optional(it->second.info);
+    return it == data_.cend() ? stlw::none : boost::make_optional(it->second.info);
   }
 
 public:
@@ -84,10 +76,10 @@ public:
     return lookup_texture(name.c_str());
   }
 
-  boost::optional<TextureInfo>
-  find(boost::optional<std::string> const& name) const
+  stlw::optional<TextureInfo>
+  find(stlw::optional<std::string> const& name) const
   {
-    return name ? find(*name) : boost::none;
+    return name ? find(*name) : stlw::none;
   }
 };
 

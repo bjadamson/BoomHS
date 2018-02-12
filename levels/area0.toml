@@ -47,60 +47,117 @@ name = "house"
 colors = false
 normals = true
 uvs = true
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
 
 [[meshes]]
 name = "hashtag"
 colors = true
 normals = true
 uvs = false
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
 
 [[meshes]]
 name = "at"
 colors = true
 normals = true
 uvs = false
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
 
 [[meshes]]
 name = "plus"
 colors = true
 normals = true
 uvs = false
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
 
 [[meshes]]
 name = "O"
 colors = true
 normals = true
 uvs = false
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
 
 [[meshes]]
 name = "T"
 colors = true
 normals = true
 uvs = false
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
 
 [[meshes]]
 name = "cube"
 colors = true
 normals = true
 uvs = false
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
 
 [[meshes]]
 name = "robot"
 colors = true
 normals = true
 uvs = false
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
 
 [[meshes]]
 name = "stair_down"
 colors = false
 normals = true
 uvs = false
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
 
 [[meshes]]
 name = "stair_up"
 colors = false
 normals = true
 uvs = false
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+
+[[meshes]]
+name = "tilde"
+colors = false
+normals = true
+uvs = false
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+
+[[meshes]]
+name = "equal"
+colors = true
+normals = true
+uvs = false
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+
+[[meshes]]
+name = "B"
+colors = true
+normals = true
+uvs = false
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
 
 ########### ENTITY #############
 [[entity]]

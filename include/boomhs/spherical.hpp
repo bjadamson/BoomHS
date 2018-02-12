@@ -1,5 +1,5 @@
 #pragma once
-#include <glm/glm.hpp>
+#include <stlw/math.hpp>
 #include <string>
 #include <ostream>
 

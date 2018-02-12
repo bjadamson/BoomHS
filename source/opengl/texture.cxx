@@ -68,6 +68,15 @@ TextureAllocation::~TextureAllocation()
   }
 }
 
+TextureAllocation::TextureAllocation(TextureAllocation &&other)
+  : info(MOVE(other.info))
+    , should_destroy(other.should_destroy)
+  {
+    other.info.id = 0;
+    other.info.mode = 0;
+    other.should_destroy = false;
+  }
+
 } // ns opengl
 
 namespace opengl::texture

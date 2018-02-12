@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/components.hpp>
+#include <boomhs/tiledata.hpp>
 #include <opengl/colors.hpp>
 #include <opengl/lighting.hpp>
 #include <window/sdl.hpp>
@@ -14,13 +15,19 @@ class DrawInfo;
 class ShaderProgram;
 } // ns opengl
 
+namespace window
+{
+struct FrameTime;
+} // ns window
+
 namespace boomhs
 {
 class Camera;
 struct RenderArgs;
+struct RiverInfo;
 struct Transform;
-class TileMap;
-struct TilemapState;
+class TileData;
+struct TiledataState;
 class WorldObject;
 } // ns boomhs
 
@@ -59,7 +66,11 @@ void
 draw(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
     uint32_t const, entt::DefaultRegistry &);
 
-struct DrawPlusArgs
+void
+draw_rivers(RenderArgs const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
+    entt::DefaultRegistry &, window::FrameTime const&, uint32_t, RiverInfo const&);
+
+struct DrawTileArgs
 {
   opengl::ShaderProgram &sp;
   opengl::DrawInfo const& dinfo;
@@ -67,41 +78,20 @@ struct DrawPlusArgs
   uint32_t const eid;
 };
 
-struct DrawHashtagArgs
+struct DrawTileDataArgs
 {
-  opengl::ShaderProgram &sp;
-  opengl::DrawInfo const& dinfo;
-
-  uint32_t const eid;
-};
-
-struct DrawStairsDownArgs
-{
-  opengl::ShaderProgram &sp;
-  opengl::DrawInfo const& dinfo;
-
-  uint32_t const eid;
-};
-
-struct DrawStairsUpArgs
-{
-  opengl::ShaderProgram &sp;
-  opengl::DrawInfo const& dinfo;
-
-  uint32_t const eid;
-};
-
-struct DrawTilemapArgs
-{
-  DrawPlusArgs plus;
-  DrawHashtagArgs hashtag;
-  DrawStairsDownArgs stairs_down;
-  DrawStairsUpArgs stairs_up;
+  DrawTileArgs bridge;
+  DrawTileArgs equal;
+  DrawTileArgs plus;
+  DrawTileArgs hashtag;
+  DrawTileArgs river;
+  DrawTileArgs stairs_down;
+  DrawTileArgs stairs_up;
 };
 
 void
-draw_tilemap(RenderArgs const&, DrawTilemapArgs &, TileMap const&, TilemapState const&,
-    entt::DefaultRegistry &);
+draw_tiledata(RenderArgs const&, DrawTileDataArgs &, TileData const&, TiledataState const&,
+    entt::DefaultRegistry &, window::FrameTime const&);
 
 void
 draw_tilegrid(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawInfo const&);

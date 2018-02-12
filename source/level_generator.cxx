@@ -1,36 +1,43 @@
 #include <boomhs/level_generator.hpp>
 #include <boomhs/stairwell_generator.hpp>
-#include <boomhs/tilemap.hpp>
+#include <boomhs/leveldata.hpp>
+#include <boomhs/river_generator.hpp>
+#include <boomhs/tiledata.hpp>
+#include <boomhs/tiledata_algorithms.hpp>
+
+#include <stlw/optional.hpp>
 #include <stlw/random.hpp>
+#include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
+
+#include <entt/entt.hpp>
 #include <algorithm>
-#include <boost/optional.hpp>
-#include <iostream>
 #include <vector>
 #include <utility>
+#include <iostream>
 
 namespace
 {
 
 using namespace boomhs;
 
-static auto constexpr ROOM_MAX_SIZE = 5;
-static auto constexpr ROOM_MIN_SIZE = 3;
+static auto constexpr ROOM_MAX_SIZE = 5ul;
+static auto constexpr ROOM_MIN_SIZE = 3ul;
 static auto constexpr MAX_ROOMS = 30;
 static auto constexpr MAX_ROOM_MONSTERS = 3;
 
 struct RectCenter
 {
-  int x = 0, y = 0;
+  uint64_t x = 0, y = 0;
 };
 
 struct Rect
 {
-  int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+  uint64_t x1 = 0, y1 = 0, x2 = 0, y2 = 0;
   MOVE_DEFAULT(Rect);
   COPY_DEFAULT(Rect);
 
-  Rect(int const x, int const y, int const w, int const h)
+  Rect(uint64_t const x, uint64_t const y, uint64_t const w, uint64_t const h)
     : x1(x)
     , y1(y)
     , x2(x + w)
@@ -55,113 +62,147 @@ struct Rect
   }
 
   bool
-  in_tilemap(TileMap const& tmap) const
+  in_tiledata(TileData const& tdata) const
   {
-    // TODO: dim.l is for our hack, if we start generating in 3D
-    auto const [w, l] = tmap.dimensions();
-    auto const cast = [](auto const v) { return static_cast<int>(v); };
-    return (x1 > 0) && (y1 > 0) && (x2 < cast(w)) && (y2 < cast(l));
+    auto const [w, h] = tdata.dimensions();
+    return (x1 > 0) && (y1 > 0) && (x2 < w) && (y2 < h);
+  }
+
+  bool
+  any_tiles_of_type(TileData const& tdata, TileType const type) const
+  {
+    bool any = false;
+    for(auto x = x1 + 1; x < x2; ++x) {
+      for (auto y = y1 + 1; y < y2; ++y) {
+        any |= (tdata.data(x, y).type == type);
+      }
+      if (any) {
+        break;
+      }
+    }
+    return any;
   }
 };
 
 struct RoomGenConfig
 {
-  int const width;
-  int const height;
+  uint64_t const tilemap_width;
+  uint64_t const tilemap_height;
   std::vector<Rect> const& rooms;
 };
 
-boost::optional<Rect>
-try_create_room(RoomGenConfig const& rgconfig, TileMap &tmap, stlw::float_generator &rng)
+stlw::optional<Rect>
+try_create_room(RoomGenConfig const& rgconfig, TileType const type, TileData &tdata,
+    stlw::float_generator &rng)
 {
   // random width and height
-  auto const w = rng.gen_int_range(ROOM_MIN_SIZE, ROOM_MAX_SIZE + 1);
-  auto const h = rng.gen_int_range(ROOM_MIN_SIZE, ROOM_MAX_SIZE + 1);
+  auto const w = rng.gen_uint64_range(ROOM_MIN_SIZE, ROOM_MAX_SIZE - 1);
+  auto const h = rng.gen_uint64_range(ROOM_MIN_SIZE, ROOM_MAX_SIZE - 1);
 
   // random position without going out of the boundaries of the map
-  auto const xr = rng.gen_int_range(0, rgconfig.width - w);
-  auto const yr = rng.gen_int_range(0, rgconfig.height - h);
+  auto const xr = rng.gen_uint64_range(0, rgconfig.tilemap_width - w);
+  auto const yr = rng.gen_uint64_range(0, rgconfig.tilemap_height - h);
   Rect const new_room{xr, yr, w, h};
 
   // run through the other rooms and see if they intersect with this one
   for(auto const& r : rgconfig.rooms) {
     // bail early
-    if (!new_room.in_tilemap(tmap) || new_room.intersects_with(r)) {
+    if (!new_room.in_tiledata(tdata) || new_room.intersects_with(r)) {
       return {}; // NONE
     }
   }
-  for(int x = new_room.x1 + 1; x < new_room.x2; ++x) {
-    for (int y = new_room.y1 + 1; y < new_room.y2; ++y) {
-      tmap.data(x, y).type = TileType::FLOOR;
+  bool const any_river_tiles = new_room.any_tiles_of_type(tdata, TileType::RIVER);
+  bool const any_bridge_tiles = new_room.any_tiles_of_type(tdata, TileType::BRIDGE);
+  if (any_river_tiles || any_bridge_tiles) {
+    return {}; // NONE
+  }
+
+  for(uint64_t x = new_room.x1 + 1; x < new_room.x2; ++x) {
+    for (uint64_t y = new_room.y1 + 1; y < new_room.y2; ++y) {
+      tdata.data(x, y).type = type;
     }
   }
   return new_room;
 }
 
 auto
-create_room(size_t const max_tries, RoomGenConfig const& rgconfig, TileMap &tmap,
-    stlw::float_generator &rng)
+create_room(size_t const max_tries, RoomGenConfig const& rgconfig, TileData &tdata,
+    stlw::float_generator &rng, TileType const type)
 {
-  assert(rgconfig.height - ROOM_MAX_SIZE > 0);
-  boost::optional<Rect> room;
+  assert(rgconfig.tilemap_height - ROOM_MAX_SIZE > 0);
+  stlw::optional<Rect> room;
 
   std::size_t trials{0u};
   while(!room && (trials < max_tries)) {
-    room = try_create_room(rgconfig, tmap, rng);
+    room = try_create_room(rgconfig, type, tdata, rng);
     ++trials;
   }
   return room;
 }
 
 void
-create_h_tunnel(int const x1, int const x2, int const y, TileMap &tmap)
+create_h_tunnel(uint64_t const x1, uint64_t const x2, uint64_t const y, TileType const type, TileData &tdata)
 {
-  int const min = std::min(x1, x2), max = std::max(x1, x2) + 1;
+  uint64_t const min = std::min(x1, x2), max = std::max(x1, x2) + 1;
   for (auto x = min; x <= max; ++x) {
-    tmap.data(x, y).type = TileType::FLOOR;
+    auto &tile = tdata.data(x, y);
+    if (ANYOF(tile.type == TileType::RIVER, tile.type == TileType::BRIDGE)) {
+      tile.type = TileType::BRIDGE;
+    }
+    else {
+      tile.type = type;
+    }
   }
 }
 
 void
-create_v_tunnel(int const y1, int const y2, int const x, TileMap &tmap)
+create_v_tunnel(uint64_t const y1, uint64_t const y2, uint64_t const x, TileType const type, TileData &tdata)
 {
-  int const min = std::min(y1, y2), max = std::max(y1, y2) + 1;
+  uint64_t const min = std::min(y1, y2), max = std::max(y1, y2) + 1;
   for(auto y = min; y <= max; ++y) {
-    tmap.data(x, y).type = TileType::FLOOR;
+    auto &tile = tdata.data(x, y);
+    if (ANYOF(tile.type == TileType::RIVER, tile.type == TileType::BRIDGE)) {
+      tile.type = TileType::BRIDGE;
+    }
+    else {
+      tile.type = type;
+    }
   }
 }
 
+/*
 bool
-is_blocked(int const x, int const y, TileMap const& tmap)
+is_blocked(uint64_t const x, uint64_t const y, TileData const& tdata)
 {
-  if (tmap.data(x, y).type == TileType::WALL) {
+  if (tdata.data(x, y).type == TileType::WALL) {
     return true;
   }
   return false;
 }
 
 auto
-generate_monster_position(Rect const& room, TileMap const& tmap, stlw::float_generator &rng)
+generate_monster_position(Rect const& room, TileData const& tdata, stlw::float_generator &rng)
 {
-  int x, y;
+  uint64_t x, y;
   while(true) {
     x = rng.gen_int_range(room.x1 + 1, room.x2);
     y = rng.gen_int_range(room.y1 + 1, room.y2);
 
-    if (!is_blocked(x, y, tmap)) {
+    if (!is_blocked(x, y, tdata)) {
       break;
     }
   }
   return TilePosition{x, y};
 }
+*/
 
 void
-place_objects(Rect const& room, TileMap const& tmap, stlw::float_generator &rng)
+place_objects(Rect const& room, TileData const& tdata, stlw::float_generator &rng)
 {
   auto const num_monsters = rng.gen_int_range(0, MAX_ROOM_MONSTERS + 1);
 
   FORI(i, num_monsters) {
-    auto const pos = generate_monster_position(room, tmap, rng);
+    //auto const pos = generate_monster_position(room, tdata, rng);
     if (rng.gen_bool()) {
       // create orc
     } else {
@@ -184,74 +225,84 @@ struct Rooms
   NO_COPY(Rooms);
 };
 
-boost::optional<Rooms>
-create_rooms(int const width, int const height, TileMap &tmap, stlw::float_generator &rng)
+stlw::optional<Rooms>
+place_rooms(TileData &tdata, stlw::float_generator &rng)
 {
   auto constexpr MAX_NUM_CREATE_TRIES = 5000;
   std::vector<Rect> rects;
   TilePosition starting_position;
 
-  FOR(_, MAX_ROOMS) {
-    RoomGenConfig const rgconfig{width, height, rects};
-    auto new_room_o = create_room(MAX_NUM_CREATE_TRIES, rgconfig, tmap, rng);
-    if(!new_room_o) {
-      return boost::none;
-    }
-    auto new_room = *new_room_o;
-    auto const new_center = new_room.center();
-
-    if (rects.empty()) {
-      // beginning room, where player starts at
-      auto const center = new_center;
-
-      starting_position.x = center.x;
-      starting_position.y = center.y;
-    } else {
-      // all rooms after the first:
-      // connect it to the previous room with a tunnel
-
-      // center coordinates of the previous room
-      auto const prev_center = rects[rects.size() - 1].center();
-
-      if (rng.gen_bool()) {
-        // first move horizontally, then vertically
-        create_h_tunnel(prev_center.x, new_center.x, prev_center.y, tmap);
-        create_v_tunnel(prev_center.y, new_center.y, new_center.x, tmap);
-      } else {
-        // first move vertically, then horizontally
-        create_v_tunnel(prev_center.y, new_center.y, prev_center.x, tmap);
-        create_h_tunnel(prev_center.x, new_center.x, new_center.y, tmap);
-      }
-    }
-
-    // add content to the room
-    place_objects(new_room, tmap, rng);
-
-    // finally, append the new room to the list
+  auto const add_room = [&](auto const& new_room) {
+    place_objects(new_room, tdata, rng);
     rects.emplace_back(new_room);
+  };
+  auto const connect_rooms = [&rng, &tdata](auto const prev_center, auto const new_center,
+        TileType const type)
+  {
+    if (rng.gen_bool()) {
+      // first move horizontally, then vertically
+      create_h_tunnel(prev_center.x, new_center.x, prev_center.y, type, tdata);
+      create_v_tunnel(prev_center.y, new_center.y, new_center.x, type, tdata);
+    } else {
+      // first move vertically, then horizontally
+      create_v_tunnel(prev_center.y, new_center.y, prev_center.x, type, tdata);
+      create_h_tunnel(prev_center.x, new_center.x, new_center.y, type, tdata);
+    }
+  };
+
+  auto const [tdwidth, tdheight] = tdata.dimensions();
+  RoomGenConfig const rgconfig{tdwidth, tdheight, rects};
+  {
+    // PRESENLTY: algorithm currently assumes we create atleast one room before entering the main
+    // loop.
+    {
+      MAKEOPT(auto const first_room, create_room(MAX_NUM_CREATE_TRIES, rgconfig, tdata, rng, TileType::FLOOR));
+      auto const first_center = first_room.center();
+      starting_position.x = first_center.x;
+      starting_position.y = first_center.y;
+      add_room(first_room);
+    }
+    assert(rects.size() > 0);
   }
+
+  // Move onto floor tiles.
+  assert(!rects.empty());
+  FOR(_, MAX_ROOMS) {
+    MAKEOPT(auto const new_room, create_room(MAX_NUM_CREATE_TRIES, rgconfig, tdata, rng,
+          TileType::FLOOR));
+    // center coordinates of the new room/previous room
+    auto const new_center = new_room.center();
+    auto const prev_center = rects[rects.size() - 1].center();
+    connect_rooms(prev_center, new_center, TileType::FLOOR);
+    add_room(new_room);
+  }
+
+  assert(!rects.empty());
   return Rooms{MOVE(rects), MOVE(starting_position)};
 }
 
 TilePosition
-place_rooms_and_stairs(TilemapConfig &tconfig, TileMap &tmap,
-    stlw::float_generator &rng, entt::DefaultRegistry &registry)
+place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<RiverInfo> &rivers,
+    TileData &tdata, stlw::float_generator &rng, entt::DefaultRegistry &registry)
 {
-  auto const& sc = tconfig.stairconfig;
-  auto const stairs_perfloor = sc.stairs_perfloor;
+  auto const stairs_perfloor = stairconfig.stairs_perfloor;
   assert(stairs_perfloor > 0);
 
-  boost::optional<Rooms> rooms = boost::none;
-  bool stairs = false;
+  // 1. Place Rivers
+  std::cerr << "placing rivers ...\n";
+  river_generator::place_rivers(tdata, rng, rivers);
 
+  // 2. Place Rooms and Stairs
+  stlw::optional<Rooms> rooms = stlw::none;
+  bool stairs = false;
   while(!rooms && !stairs) {
-    std::cerr << "creating rooms ...\n";
+    std::cerr << "placing rooms ...\n";
     while(!rooms) {
-      rooms = create_rooms(tconfig.width, tconfig.length, tmap, rng);
+      rooms = place_rooms(tdata, rng);
     }
     while(!stairs) {
       std::cerr << "placing stairs ...\n";
-      stairs = stairwell_generator::place_stairs(sc, tmap, rng, registry);
+      stairs = stairwell_generator::place_stairs(stairconfig, tdata, rng, registry);
     }
   }
 
@@ -259,24 +310,26 @@ place_rooms_and_stairs(TilemapConfig &tconfig, TileMap &tmap,
   return (*rooms).starting_position;
 }
 
-std::pair<TileMap, TilePosition>
-make_tilemap(TilemapConfig &tconfig, stlw::float_generator &rng, entt::DefaultRegistry &registry)
+LevelData
+make_leveldata(TileDataConfig const& tdconfig, stlw::float_generator &rng,
+    entt::DefaultRegistry &registry)
 {
   // clang-format off
-  int const width     = tconfig.width;
-  int const length    = tconfig.length;
-  int const num_tiles = width * length;
+  auto const tdwidth = tdconfig.width;
+  auto const tdheight = tdconfig.height;
+  auto const num_tiles = tdwidth * tdheight;
   // clang-format on
 
   std::vector<Tile> tiles{static_cast<std::size_t>(num_tiles)};
-  tiles.reserve(width * length);
-  TileMap tmap{MOVE(tiles), width, length, registry};
+  tiles.reserve(num_tiles);
+  TileData tdata{MOVE(tiles), tdwidth, tdheight, registry};
 
   std::cerr << "======================================\n";
-  auto starting_pos = place_rooms_and_stairs(tconfig, tmap, rng, registry);
+  std::vector<RiverInfo> rivers;
+  auto const starting_pos = place_rivers_rooms_and_stairs(tdconfig.stairconfig, rivers, tdata, rng, registry);
   std::cerr << "======================================\n";
 
-  return std::make_pair(MOVE(tmap), MOVE(starting_pos));
+  return LevelData{MOVE(tdata), starting_pos, MOVE(rivers)};
 }
 
 } // ns boomhs::level_generator

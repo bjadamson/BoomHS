@@ -1,23 +1,23 @@
 #pragma once
 #include <boomhs/assets.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/leveldata.hpp>
 #include <boomhs/renderer.hpp>
-#include <boomhs/tilemap.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <opengl/colors.hpp>
 #include <opengl/lighting.hpp>
 #include <opengl/shader.hpp>
+#include <opengl/texture.hpp>
 
 #include <window/mouse.hpp>
 #include <window/sdl_window.hpp>
 
 #include <stlw/log.hpp>
+#include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <entt/entt.hpp>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <imgui/imgui.hpp>
 #include <cassert>
 #include <vector>
@@ -59,7 +59,7 @@ struct UiState
   bool show_entitywindow = false;
   bool show_mousewindow = false;
   bool show_playerwindow = false;
-  bool show_tilemapwindow = false;
+  bool show_tiledatawindow = false;
 };
 
 struct MouseState
@@ -89,11 +89,11 @@ struct WindowState
   window::SwapIntervalFlag sync = window::SwapIntervalFlag::SYNCHRONIZED;
 };
 
-struct TilemapState
+struct TiledataState
 {
-  MOVE_CONSTRUCTIBLE_ONLY(TilemapState);
+  MOVE_CONSTRUCTIBLE_ONLY(TiledataState);
 
-  bool draw_tilemap = true;
+  bool draw_tiledata = true;
   bool recompute = true;
   bool reveal = false;
 
@@ -114,20 +114,22 @@ struct ZoneState
 
   HandleManager handles;
   opengl::ShaderPrograms sps;
-  TileMap tilemap;
+  opengl::TextureTable texture_table;
+  LevelData level_data;
 
   Camera camera;
   WorldObject player;
   entt::DefaultRegistry &registry;
 
   explicit ZoneState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
-      HandleManager &&hm, opengl::ShaderPrograms &&sp, TileMap &&tmap, Camera &&cam,
-      WorldObject &&pl, entt::DefaultRegistry &reg)
+      HandleManager &&hm, opengl::ShaderPrograms &&sp, opengl::TextureTable &&ttable,
+      LevelData &&ldata, Camera &&cam, WorldObject &&pl, entt::DefaultRegistry &reg)
     : background(bgcolor)
-    , global_light(MOVE(glight))
+    , global_light(glight)
     , handles(MOVE(hm))
     , sps(MOVE(sp))
-    , tilemap(MOVE(tmap))
+    , texture_table(MOVE(ttable))
+    , level_data(MOVE(ldata))
     , camera(MOVE(cam))
     , player(MOVE(pl))
     , registry(reg)
@@ -138,37 +140,32 @@ struct ZoneState
 
 // This class is meant to be used through the ZoneManager class, construct an instance of
 // ZoneManager to work with this data.
+//
+// TODO: pass in active zone to support loading levels
 class ZoneStates
 {
-  std::array<ZoneState, 5> zstates_;
+  std::vector<ZoneState> zstates_;
   int active_ = 0;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(ZoneStates);
-
-  // TODO: pass in active zone to support loading levels
-  explicit ZoneStates(std::array<ZoneState, 5> &&zstates)
-    : zstates_(MOVE(zstates))
+  explicit ZoneStates(std::vector<ZoneState> &&zs)
+    : zstates_(MOVE(zs))
   {
   }
+
+  ZoneState& operator[](size_t);
+  int size() const;
+
 private:
   friend class ZoneManager;
 
-  int active_zone() const
-  {
-    assert(active_ < size());
-    return active_;
-  }
-  int size() const { return zstates_.size(); }
+  int active_zone() const;
 
-  ZoneState& active() { return zstates_[active_zone()]; }
-  ZoneState const& active() const { return zstates_[active_zone()]; }
+  ZoneState& active();
+  ZoneState const& active() const;
 
-  void
-  set_active(int const zone_number)
-  {
-    assert(zone_number < size());
-    active_ = zone_number;
-  }
+  //void add_zone(ZoneState &&);
+  void set_active(int const);
 };
 
 struct EngineState
@@ -191,7 +188,7 @@ struct EngineState
 
   MouseState mouse_state = {};
   WindowState window_state = {};
-  TilemapState tilemap_state = {};
+  TiledataState tiledata_state = {};
   UiState ui_state = {};
 
   Logger &logger;
@@ -214,11 +211,7 @@ struct GameState
   ZoneStates zone_states;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
-  explicit GameState(EngineState &&es, ZoneStates &&zs)
-    : engine_state(MOVE(es))
-    , zone_states(MOVE(zs))
-  {
-  }
+  explicit GameState(EngineState &&, ZoneStates &&);
 
   RenderArgs
   render_args();

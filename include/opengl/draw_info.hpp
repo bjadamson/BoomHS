@@ -3,7 +3,7 @@
 #include <opengl/vao.hpp>
 #include <opengl/vertex_attribute.hpp>
 #include <stlw/type_macros.hpp>
-#include <boost/optional.hpp>
+#include <stlw/optional.hpp>
 
 namespace opengl
 {
@@ -40,11 +40,11 @@ class DrawInfo
   BufferHandles handles_;
   VAO vao_;
 
-  boost::optional<TextureInfo> texture_info_;
+  stlw::optional<TextureInfo> texture_info_;
 
 public:
   NO_COPY(DrawInfo);
-  explicit DrawInfo(GLenum const, std::size_t const, GLuint const, boost::optional<TextureInfo> const&);
+  explicit DrawInfo(GLenum const, std::size_t const, GLuint const, stlw::optional<TextureInfo> const&);
 
   DrawInfo(DrawInfo &&);
   DrawInfo& operator=(DrawInfo &&other);

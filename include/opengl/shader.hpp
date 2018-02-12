@@ -3,31 +3,33 @@
 #include <opengl/vertex_attribute.hpp>
 #include <boomhs/types.hpp>
 
+#include <stlw/optional.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <algorithm>
-#include <boost/optional.hpp>
+#include <iostream>
 
 namespace opengl
 {
 
 #define DEFINE_SHADER_FILENAME_TYPE(NAME)                                                          \
-  struct NAME##_shader_filename {                                                                  \
+  struct NAME##ShaderFilename {                                                                    \
     std::string const filename;                                                                    \
-    explicit NAME##_shader_filename(std::string const& fn)                                         \
+    explicit NAME##ShaderFilename(std::string const& fn)                                           \
         : filename(fn)                                                                             \
     {                                                                                              \
     }                                                                                              \
-    explicit NAME##_shader_filename(char const *f)                                                 \
+    explicit NAME##ShaderFilename(char const *f)                                                   \
         : filename(f)                                                                              \
     {                                                                                              \
     }                                                                                              \
+    MOVE_CONSTRUCTIBLE_ONLY(NAME##ShaderFilename)                                                \
   }
 
-DEFINE_SHADER_FILENAME_TYPE(vertex);
-DEFINE_SHADER_FILENAME_TYPE(fragment);
+DEFINE_SHADER_FILENAME_TYPE(Vertex);
+DEFINE_SHADER_FILENAME_TYPE(Fragment);
 #undef DEFINE_SHADER_FILENAME_TYPE
 
 struct program_factory
@@ -35,16 +37,7 @@ struct program_factory
   program_factory() = delete;
 
   static stlw::result<GLuint, std::string>
-  from_files(stlw::Logger &, vertex_shader_filename const, fragment_shader_filename const);
-
-  static constexpr GLuint
-  INVALID_PROGRAM_ID() { return 0; }
-
-  static GLuint
-  make_invalid()
-  {
-    return INVALID_PROGRAM_ID();
-  }
+  from_files(stlw::Logger &, VertexShaderFilename const&, FragmentShaderFilename const&);
 };
 
 class ProgramHandle
@@ -59,14 +52,16 @@ public:
   ProgramHandle(ProgramHandle &&);
   ~ProgramHandle();
 
-  auto handle() const { return program_; }
+  auto const& handle() const { return program_; }
 };
 
 class ShaderProgram
 {
   ProgramHandle program_;
   VertexAttribute va_;
+  bool moved_from = false;
 public:
+  MOVE_CONSTRUCTIBLE_ONLY(ShaderProgram);
   explicit ShaderProgram(ProgramHandle &&ph, VertexAttribute &&va)
     : program_(MOVE(ph))
     , va_(MOVE(va))
@@ -74,13 +69,13 @@ public:
   }
 
   // public data members
-  boost::optional<GLsizei> instance_count = boost::none;
+  stlw::optional<GLsizei> instance_count = stlw::none;
 
   bool is_skybox = false;
   bool is_2d = false;
 
   // public member fns
-  auto handle() const { return program_.handle(); }
+  auto const& handle() const { return program_.handle(); }
   auto const& va() const { return this->va_; }
 
   void use(stlw::Logger &);
@@ -89,8 +84,16 @@ public:
   void set_uniform_matrix_3fv(stlw::Logger &, GLchar const *, glm::mat3 const &);
   void set_uniform_matrix_4fv(stlw::Logger &, GLchar const *, glm::mat4 const &);
 
+  void set_uniform_array_2fv(stlw::Logger &, GLchar const*, std::array<float, 2> const&);
   void set_uniform_array_3fv(stlw::Logger &, GLchar const*, std::array<float, 3> const&);
-  void set_uniform_array_4fv(stlw::Logger &, GLchar const *, std::array<float, 4> const &);
+  void set_uniform_array_4fv(stlw::Logger &, GLchar const*, std::array<float, 4> const &);
+
+  void
+  set_uniform_vec2(stlw::Logger &logger, GLchar const* name, glm::vec2 const& v)
+  {
+    auto const arr = stlw::make_array<float>(v.x, v.y);
+    set_uniform_array_2fv(logger, name, arr);
+  }
 
   void
   set_uniform_vec3(stlw::Logger &logger, GLchar const* name, glm::vec3 const& v)

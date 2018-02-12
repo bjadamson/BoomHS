@@ -9,12 +9,39 @@
 #define FOR(q,n) for(unsigned int q=0u;q<n;++q)
 #define FORI(q,n) for(int q=0;q<n;++q)
 
+namespace stlw::anyof_detail
+{
+
+inline bool
+orcombo()
+{
+  return false;
+}
+
+template<typename First, typename ...Rest>
+bool
+orcombo(First const& first, Rest &&... rest)
+{
+  return first || orcombo(rest...);
+}
+
+} // ns stlw::anyof_detail
+
+#define ANYOF(a, ...) ::stlw::anyof_detail::orcombo(a, ##__VA_ARGS__)
+
 namespace stlw
 {
 
 inline void
 memzero(void *const dest, size_t const count)
 {
+  // TODO: move these into a proper test... such a hack
+  assert(ANYOF(true, false));
+  assert(!ANYOF(false, false));
+  assert(ANYOF(false, true));
+  assert(!(ANYOF(false)));
+  assert(ANYOF(true));
+
   std::memset(dest, 0, count);
 }
 

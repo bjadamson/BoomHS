@@ -1,5 +1,4 @@
 #pragma once
-#include <glm/glm.hpp>
 #include <opengl/colors.hpp>
 #include <opengl/lighting.hpp>
 #include <opengl/texture.hpp>
@@ -127,20 +126,20 @@ find_stairs(entt::DefaultRegistry &registry)
   return find_all_entities_with_component<StairInfo>(registry);
 }
 
-class TileMap;
+class TileData;
 std::vector<uint32_t>
-find_stairs_withtype(entt::DefaultRegistry &, TileMap const&, TileType const);
+find_stairs_withtype(entt::DefaultRegistry &, TileData const&, TileType const);
 
 inline auto
-find_upstairs(entt::DefaultRegistry &registry, TileMap const& tmap)
+find_upstairs(entt::DefaultRegistry &registry, TileData const& tdata)
 {
-  return find_stairs_withtype(registry, tmap, TileType::STAIR_UP);
+  return find_stairs_withtype(registry, tdata, TileType::STAIR_UP);
 }
 
 inline auto
-find_downstairs(entt::DefaultRegistry &registry, TileMap const& tmap)
+find_downstairs(entt::DefaultRegistry &registry, TileData const& tdata)
 {
-  return find_stairs_withtype(registry, tmap, TileType::STAIR_DOWN);
+  return find_stairs_withtype(registry, tdata, TileType::STAIR_DOWN);
 }
 
 inline uint32_t
@@ -150,13 +149,13 @@ find_player(entt::DefaultRegistry &registry)
   assert(1 == registry.view<Player>().size());
 
   auto view = registry.view<Player, Transform>();
-  boost::optional<uint32_t> entity{boost::none};
+  stlw::optional<uint32_t> entity{stlw::none};
   for (auto const e : view) {
     // This assert ensures this loop only runs once.
-    assert(boost::none == entity);
+    assert(stlw::none == entity);
     entity = e;
   }
-  assert(boost::none != entity);
+  assert(stlw::none != entity);
   return *entity;
 }
 

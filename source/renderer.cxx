@@ -1,24 +1,25 @@
 #include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/tilemap.hpp>
+#include <boomhs/tiledata.hpp>
 #include <boomhs/types.hpp>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/string_cast.hpp>
 
 #include <opengl/draw_info.hpp>
 #include <opengl/global.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/shader.hpp>
 
+#include <window/timer.hpp>
+
+#include <stlw/math.hpp>
 #include <stlw/log.hpp>
 #include <iostream>
 
-using namespace opengl;
 using namespace boomhs;
+using namespace opengl;
+using namespace window;
+
+glm::vec3 static constexpr VIEWING_OFFSET{0.5f, 0.0f, 0.5f};
+auto static constexpr WIGGLE_UNDERATH_OFFSET = -0.2f;
 
 namespace
 {
@@ -74,8 +75,6 @@ set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
     return varname + "." + fieldname;
   };
 
-  //std::cerr << "pointlight POSITION: '" << glm::to_string(pointlight_position) << "'\n";
-  //std::cerr << "pointlight DIFFUSE: '" << pointlight.light.diffuse << "'\n";
   sp.set_uniform_color_3fv(logger, make_field("diffuse"), pointlight.light.diffuse);
   sp.set_uniform_color_3fv(logger, make_field("specular"), pointlight.light.specular);
   sp.set_uniform_vec3(logger, make_field("position"), pointlight_position);
@@ -87,9 +86,6 @@ set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
   auto const constant = attenuation_field("constant");
   auto const linear = attenuation_field("linear");
   auto const quadratic = attenuation_field("quadratic");
-  //std::cerr << constant << "\n";
-  //std::cerr << linear << "\n";
-  //std::cerr << quadratic << "\n";
   sp.set_uniform_float1(logger, constant,  attenuation.constant);
   sp.set_uniform_float1(logger, linear,    attenuation.linear);
   sp.set_uniform_float1(logger, quadratic, attenuation.quadratic);
@@ -124,7 +120,6 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
   // pointlight
   sp.set_uniform_matrix_4fv(logger, "u_invviewmatrix", glm::inverse(glm::mat3{camera.view_matrix()}));
   auto const pointlights = find_pointlights(registry);
-  //std::cerr << "===============================\n";
   FOR(i, pointlights.size()) {
     auto const& entity = pointlights[i];
     auto &transform = registry.get<Transform>(entity);
@@ -312,8 +307,8 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
 }
 
 void
-draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& tilemap,
-    TilemapState const& tilemap_state, entt::DefaultRegistry &registry)
+draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const& tiledata,
+    TiledataState const& tiledata_state, entt::DefaultRegistry &registry, FrameTime const& ft)
 {
   auto &logger = args.logger;
   auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, std::uint32_t const entity,
@@ -324,63 +319,105 @@ draw_tilemap(RenderArgs const& args, DrawTilemapArgs &dt_args, TileMap const& ti
     ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
     draw_3dshape(args, model_mat, sp, dinfo, entity, registry, receives_ambient_light);
   };
-  auto &plus = dt_args.plus;
-  auto &hashtag = dt_args.hashtag;
-  auto &stairs_down = dt_args.stairs_down;
-  auto &stairs_up = dt_args.stairs_up;
   auto const draw_tile = [&](auto const& tile_pos) {
-    auto const& tile = tilemap.data(tile_pos);
-    if (!tilemap_state.reveal && !tile.is_visible) {
+    auto const& tile = tiledata.data(tile_pos);
+    if (!tiledata_state.reveal && !tile.is_visible) {
       return;
     }
     // This offset causes the tile's to appear in the "middle"
-    auto &transform = registry.get<Transform>(tile.eid);
-    glm::vec3 constexpr VIEWING_OFFSET{0.5f, 0.0f, 0.5f};
+    auto &bridge = dt_args.bridge;
+    auto &equal = dt_args.equal;
+    auto &plus = dt_args.plus;
+    auto &hashtag = dt_args.hashtag;
+    auto &river = dt_args.river;
+    auto &stairs_down = dt_args.stairs_down;
+    auto &stairs_up = dt_args.stairs_up;
 
-    auto const translation = tile_pos + VIEWING_OFFSET;
+    auto const tr = tile_pos + VIEWING_OFFSET;
+    auto &transform = registry.get<Transform>(tile.eid);
     auto const& rotation   = transform.rotation;
-    auto const normal_modelmatrix = [&]()
-    {
-      return stlw::math::calculate_modelmatrix(translation, rotation, transform.scale);
-    };
+    auto const default_modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
     switch(tile.type) {
       case TileType::FLOOR:
-        draw_tile_helper(plus.sp, plus.dinfo, plus.eid, normal_modelmatrix(),
-            true);
+        {
+          draw_tile_helper(plus.sp, plus.dinfo, plus.eid, default_modmatrix, true);
+        }
         break;
       case TileType::WALL:
-        draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, normal_modelmatrix(),
-            true);
+        {
+          draw_tile_helper(hashtag.sp, hashtag.dinfo, hashtag.eid, default_modmatrix, true);
+        }
+        break;
+      case TileType::RIVER:
+        // Do nothing, we handle rendering rivers elsewhere.
+        break;
+      case TileType::BRIDGE:
+        {
+          // TODo: how to orient bridge (tile) based on RiverInfo (nontile) information?
+          //
+          // Previously we haven't read data stored outside the entt::DefaultRegistry when
+          // rendering tiles.
+          //
+          // thinking ...
+          glm::vec3 const scale{0.5};
+          auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
+          draw_tile_helper(equal.sp, equal.dinfo, equal.eid, default_modmatrix, true);
+        }
         break;
       case TileType::STAIR_DOWN:
         {
           auto &sp = stairs_down.sp;
-          sp.use(logger);
           sp.set_uniform_color(logger, "u_color", LOC::GREEN);
 
           bool const receives_ambient_light = false;
           glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
-          auto const model_matrix = stlw::math::calculate_modelmatrix(translation, rotation, scale);
-          draw_tile_helper(sp, stairs_down.dinfo, stairs_down.eid, model_matrix, receives_ambient_light);
+          draw_tile_helper(sp, stairs_down.dinfo, stairs_down.eid, default_modmatrix, receives_ambient_light);
         }
         break;
       case TileType::STAIR_UP:
         {
           auto &sp = stairs_up.sp;
-          sp.use(logger);
           sp.set_uniform_color(logger, "u_color", LOC::RED);
 
           bool const receives_ambient_light = false;
           glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
-          auto const model_matrix = stlw::math::calculate_modelmatrix(translation, rotation, scale);
-          draw_tile_helper(sp, stairs_up.dinfo, stairs_up.eid, model_matrix, receives_ambient_light);
+          draw_tile_helper(sp, stairs_up.dinfo, stairs_up.eid, default_modmatrix, receives_ambient_light);
         }
         break;
       default:
         std::exit(1);
     }
   };
-  tilemap.visit_each(draw_tile);
+  tiledata.visit_each(draw_tile);
+}
+
+void
+draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInfo const& dinfo,
+    entt::DefaultRegistry &registry, window::FrameTime const& ft, uint32_t const river_eid,
+    RiverInfo const& rinfo)
+{
+  auto const& left = rinfo.left;
+  auto const& right = rinfo.right;
+
+  sp.set_uniform_color(rargs.logger, "u_color", LOC::WHITE);
+  opengl::global::vao_bind(dinfo.vao());
+
+  auto const draw_wiggle = [&](auto const& wiggle) {
+    sp.set_uniform_vec2(rargs.logger, "u_direction", wiggle.direction);
+    sp.set_uniform_vec2(rargs.logger, "u_offset", wiggle.offset);
+
+    auto const& wp = wiggle.position;
+    auto const tr = glm::vec3{wp.x, WIGGLE_UNDERATH_OFFSET, wp.y} + VIEWING_OFFSET;
+    glm::quat const rot = glm::angleAxis(glm::degrees(rinfo.wiggle_rotation), Y_UNIT_VECTOR);
+    auto const scale = glm::vec3{0.5};
+
+    bool const receives_ambient = true;
+    auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
+    draw_3dshape(rargs, modelmatrix, sp, dinfo, river_eid, registry, receives_ambient);
+  };
+  for (auto const& w : rinfo.wiggles) {
+    draw_wiggle(w);
+  }
 }
 
 void

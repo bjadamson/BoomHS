@@ -4,6 +4,7 @@
 #include <boomhs/types.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
+#include <stlw/math.hpp>
 #include <string>
 
 namespace boomhs
@@ -65,13 +66,12 @@ public:
   void rotate_to_match_camera_rotation(Camera const&);
 
   TilePosition
-  tilemap_position() const
+  tile_position() const
   {
     auto const& pos = transform().translation;
-
-    // Truncate the floating point values to get tilemap position
-    auto const trunc = [](float const v) -> int { return abs(v); };
-    return TilePosition{trunc(pos.x), trunc(pos.z)};
+    assert(pos.x >= 0.0f);
+    assert(pos.z >= 0.0f);
+    return TilePosition::from_floats_truncated(pos.x, pos.z);
   }
 
   void move_to(glm::vec3 const& pos) { transform().translation = pos; }

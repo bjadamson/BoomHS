@@ -64,6 +64,12 @@ vertex = "3d_pos_color.vert"
 fragment = "3d_pos_color.frag"
 va = "vertex_color"
 
+[[shaders]]
+name = "light"
+vertex = "light.vert"
+fragment = "light.frag"
+va = "vertex_only"
+
 ############# letters
 
 [[shaders]]
@@ -74,10 +80,11 @@ va = "vertex_normal_color"
 instance_count = 3
 
 [[shaders]]
-name = "light"
-vertex = "light.vert"
-fragment = "light.frag"
-va = "vertex_only"
+name = "river"
+vertex = "river.vert"
+fragment = "3d_pos_normal_color.frag"
+va = "vertex_normal"
+instance_count = 4
 
 [[shaders]]
 name = "stair"

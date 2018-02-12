@@ -5,14 +5,12 @@
 #include <gfx/gl_sdl_log.hpp>
 
 #include <stlw/format.hpp>
-#include <stlw/result.hpp>
+#include <stlw/math.hpp>
 #include <stlw/os.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <glm/gtx/string_cast.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <cstring>
 
 namespace
@@ -21,18 +19,15 @@ namespace
 using compiled_shader = stlw::ImplicitelyCastableMovableWrapper<GLuint, decltype(glDeleteShader)>;
 using namespace opengl;
 
+auto constexpr INVALID_PROGRAM_ID = 0;
 
-constexpr bool
-is_invalid(GLuint const p) { return p == program_factory::INVALID_PROGRAM_ID(); }
-
-inline bool
+bool
 is_compiled(GLuint const handle)
 {
   GLint is_compiled = GL_FALSE;
   glGetShaderiv(handle, GL_COMPILE_STATUS, &is_compiled);
   return GL_FALSE != is_compiled;
 }
-
 
 stlw::result<compiled_shader, std::string>
 compile_shader(stlw::Logger &logger, GLenum const type, std::string const& data)
@@ -57,7 +52,7 @@ inline stlw::result<GLuint, std::string>
 create_program()
 {
   GLuint const program_id = glCreateProgram();
-  if (0 == program_id) {
+  if (INVALID_PROGRAM_ID == program_id) {
     return stlw::make_error(std::string{"GlCreateProgram returned 0."});
   }
   return program_id;
@@ -214,8 +209,8 @@ namespace opengl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // grogram_factory
 stlw::result<GLuint, std::string>
-program_factory::from_files(stlw::Logger &logger, vertex_shader_filename const v,
-    fragment_shader_filename const f)
+program_factory::from_files(stlw::Logger &logger, VertexShaderFilename const& v,
+    FragmentShaderFilename const& f)
 {
   auto const prefix = [](auto const &path) {
     return std::string{"./build-system/bin/shaders/"} + path;
@@ -240,22 +235,24 @@ program_factory::from_files(stlw::Logger &logger, vertex_shader_filename const v
 ProgramHandle::ProgramHandle(GLuint const p)
   : program_(p)
 {
+  // Initially when a ProgramHandle is constructed from a GLuint, the ProgramHandle "assumes
+  // ownership", or will assume the responsibility of deleting the underlying opengl program.
+  assert(p != INVALID_PROGRAM_ID);
 }
 
-ProgramHandle::ProgramHandle(ProgramHandle &&o)
-  : program_(MOVE(o.program_))
+ProgramHandle::ProgramHandle(ProgramHandle &&other)
+  : program_(MOVE(other.program_))
 {
-  // We don't want to destroy the underlying program, we want to transfer the ownership to this
-  // instance being moved into. This implements "handle-passing" allowing the user to observe
-  // move-semantics for this object.
-  o.program_ = program_factory::make_invalid();
+  // The "moved-from" handle no longer has the responsibility of freeing the underlying opengl
+  // program.
+  other.program_ = INVALID_PROGRAM_ID;
 }
 
 ProgramHandle::~ProgramHandle()
 {
-  if (is_invalid(this->program_)) {
-    glDeleteProgram(this->program_);
-    this->program_ = 0;
+  if (program_ != INVALID_PROGRAM_ID) {
+    glDeleteProgram(program_);
+    program_ = INVALID_PROGRAM_ID;
   }
 }
 
@@ -264,7 +261,7 @@ ProgramHandle::~ProgramHandle()
 void
 ShaderProgram::use(stlw::Logger &logger)
 {
-  glUseProgram(this->program_.handle());
+  glUseProgram(program_.handle());
   LOG_ANY_GL_ERRORS(logger, "Shader use/enable");
 }
 
@@ -272,7 +269,7 @@ GLint
 ShaderProgram::get_uniform_location(stlw::Logger &logger, GLchar const *name)
 {
   LOG_TRACE(fmt::sprintf("getting uniform '%s' location.", name));
-  GLint const loc = glGetUniformLocation(this->program_.handle(), name);
+  GLint const loc = glGetUniformLocation(program_.handle(), name);
   LOG_TRACE(fmt::sprintf("uniform '%s' found at '%d'.", name, loc));
 
   LOG_ANY_GL_ERRORS(logger, "get_uniform_location");
@@ -325,11 +322,10 @@ ShaderProgram::set_uniform_matrix_4fv(stlw::Logger &logger, GLchar const *name, 
 }
 
 void
-ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, std::array<float, 4> const &floats)
+ShaderProgram::set_uniform_array_2fv(stlw::Logger &logger, GLchar const* name, std::array<float, 2> const& array)
 {
   use(logger);
 
-  auto const loc = get_uniform_location(logger, name);
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
   //
   // For the vector (glUniform*v) commands, specifies the number of elements that are to be
@@ -338,8 +334,9 @@ ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, s
   // array.
   GLsizei constexpr COUNT = 1;
 
-  glUniform4fv(loc, COUNT, floats.data());
-  LOG_ANY_GL_ERRORS(logger, "set_uniform_array_4fv");
+  auto const loc = get_uniform_location(logger, name);
+  glUniform2fv(loc, COUNT, array.data());
+  LOG_ANY_GL_ERRORS(logger, "set_uniform_array_2fv");
 }
 
 void
@@ -358,6 +355,24 @@ ShaderProgram::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, s
   auto const loc = get_uniform_location(logger, name);
   glUniform3fv(loc, COUNT, array.data());
   LOG_ANY_GL_ERRORS(logger, "set_uniform_array_3fv");
+}
+
+void
+ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, std::array<float, 4> const &floats)
+{
+  use(logger);
+
+  auto const loc = get_uniform_location(logger, name);
+  // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
+  //
+  // For the vector (glUniform*v) commands, specifies the number of elements that are to be
+  // modified.
+  // This should be 1 if the targeted uniform variable is not an array, and 1 or more if it is an
+  // array.
+  GLsizei constexpr COUNT = 1;
+
+  glUniform4fv(loc, COUNT, floats.data());
+  LOG_ANY_GL_ERRORS(logger, "set_uniform_array_4fv");
 }
 
 void
@@ -453,8 +468,8 @@ print_active_uniforms(std::ostream &stream, GLuint const program)
 stlw::result<ShaderProgram, std::string>
 make_shader_program(stlw::Logger &logger, std::string const& vertex_s, std::string const& fragment_s, VertexAttribute &&va)
 {
-  vertex_shader_filename v{vertex_s};
-  fragment_shader_filename f{fragment_s};
+  VertexShaderFilename const v{vertex_s};
+  FragmentShaderFilename const f{fragment_s};
   DO_TRY(auto sp, program_factory::from_files(logger, v, f));
   return ShaderProgram{ProgramHandle{sp}, MOVE(va)};
 }

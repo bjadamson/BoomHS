@@ -14,22 +14,22 @@ using namespace opengl;
 using CppTableArray = std::shared_ptr<cpptoml::table_array>;
 using CppTable = std::shared_ptr<cpptoml::table>;
 
-#define TRY_OPTION_GENERAL_EVAL(VAR_DECL, V, expr)                                                 \
+#define TRY_OPTION_GENERAL_EVAL(VAR_NAME, V, expr)                                                 \
   auto V{expr};                                                                                    \
   if (!V) {                                                                                        \
     return cpptoml::option<opengl::AttributePointerInfo>{}; \
   }                                                                                                \
-  VAR_DECL{MOVE(V)};
+  VAR_NAME{MOVE(V)};
 
-#define TRY_OPTION_CONCAT(VAR_DECL, TO_CONCAT, expr)                                               \
-  TRY_OPTION_GENERAL_EVAL(VAR_DECL, _TRY_OPTION_TEMPORARY_##TO_CONCAT, expr)
+#define TRY_OPTION_CONCAT(VAR_NAME, TO_CONCAT, expr)                                               \
+  TRY_OPTION_GENERAL_EVAL(VAR_NAME, _TRY_OPTION_TEMPORARY_##TO_CONCAT, expr)
 
-#define TRY_OPTION_EXPAND_VAR(VAR_DECL, to_concat, expr)                                           \
-  TRY_OPTION_CONCAT(VAR_DECL, to_concat, expr)
+#define TRY_OPTION_EXPAND_VAR(VAR_NAME, to_concat, expr)                                           \
+  TRY_OPTION_CONCAT(VAR_NAME, to_concat, expr)
 
 // TRY_OPTION
-#define TRY_OPTION(VAR_DECL, expr)                                                                 \
-  TRY_OPTION_EXPAND_VAR(VAR_DECL, __COUNTER__, expr)
+#define TRY_OPTION(VAR_NAME, expr)                                                                 \
+  TRY_OPTION_EXPAND_VAR(VAR_NAME, __COUNTER__, expr)
 
 namespace
 {
@@ -51,14 +51,14 @@ get_table_array_or_abort(CppTable const& config, char const* name)
 }
 
 template<typename T>
-boost::optional<T>
+stlw::optional<T>
 get_value(CppTable const& table, char const* name)
 {
   auto cpptoml_option = table->get_as<T>(name);
   if (!cpptoml_option) {
-    return boost::none;
+    return stlw::none;
   }
-  // Move value out of cpptoml and into boost::optional
+  // Move value out of cpptoml and into stlw::optional
   auto value = cpptoml_option.move_out();
   return boost::make_optional(MOVE(value));
 }
@@ -75,7 +75,7 @@ get_bool(CppTable const& table, char const* name)
   return get_value<bool>(table, name);
 }
 
-boost::optional<GLsizei>
+stlw::optional<GLsizei>
 get_sizei(CppTable const& table, char const* name)
 {
   return get_value<GLsizei>(table, name);
@@ -104,12 +104,12 @@ get_bool_or_abort(CppTable const& table, char const* name)
   return get_or_abort<bool>(table, name);
 }
 
-boost::optional<opengl::Color>
+stlw::optional<opengl::Color>
 get_color(CppTable const& table, char const* name)
 {
   auto const load_colors = table->template get_array_of<double>(name);
   if (!load_colors) {
-    return boost::none;
+    return stlw::none;
   }
 
   std::vector<double> const& c = *load_colors;
@@ -121,12 +121,12 @@ get_color(CppTable const& table, char const* name)
   return boost::make_optional(color);
 }
 
-boost::optional<glm::vec3>
+stlw::optional<glm::vec3>
 get_vec3(CppTable const& table, char const* name)
 {
   auto const load_data = table->template get_array_of<double>(name);
   if (!load_data) {
-    return boost::none;
+    return stlw::none;
   }
   auto const& ld = *load_data;
   return glm::vec3{ld[0], ld[1], ld[2]};
@@ -148,14 +148,14 @@ load_meshes(opengl::ObjLoader &loader, CppTableArray const& mesh_table)
   auto const load = [&loader](auto const& table) {
     auto const name = get_string_or_abort(table, "name");
 
-    auto const load_colors = get_bool_or_abort(table, "colors");
-    auto const load_normals = get_bool_or_abort(table, "normals");
-    auto const load_uvs = get_bool_or_abort(table, "uvs");
+    auto const colors = get_bool_or_abort(table, "colors");
+    auto const normals = get_bool_or_abort(table, "normals");
+    auto const uvs = get_bool_or_abort(table, "uvs");
 
     auto const obj = "assets/" + name + ".obj";
     auto const mtl = "assets/" + name + ".mtl";
 
-    opengl::LoadMeshConfig const cfg{load_colors, load_normals, load_uvs};
+    opengl::LoadMeshConfig const cfg{colors, normals, uvs};
     auto mesh = loader.load_mesh(obj.c_str(), mtl.c_str(), cfg);
     return std::make_pair(name, MOVE(mesh));
   };
@@ -408,7 +408,7 @@ load_vas(CppTable const& config)
 namespace boomhs
 {
 
-stlw::result<LevelData, std::string>
+stlw::result<LevelAssets, std::string>
 load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string const& filename)
 {
   CppTable engine_config = cpptoml::parse_file("engine.toml");
@@ -422,7 +422,7 @@ load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string co
 
   auto const mesh_table = get_table_array_or_abort(area_config, "meshes");
   auto loader = opengl::ObjLoader{LOC::WHITE};
-  auto meshes = load_meshes(loader, mesh_table);
+  auto objcache = load_meshes(loader, mesh_table);
 
   std::cerr << "loading textures ...\n";
   auto texture_table = load_textures(logger, area_config);
@@ -438,10 +438,10 @@ load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string co
   DirectionalLight dlight{MOVE(light), directional_light_direction};
   GlobalLight glight{MOVE(dlight)};
 
-  auto const bg_color = Color{get_vec3_or_abort(area_config, "background")};
-  Assets assets{MOVE(meshes), MOVE(entities), MOVE(texture_table), MOVE(glight), bg_color};
+  auto bg_color = Color{get_vec3_or_abort(area_config, "background")};
+  Assets assets{MOVE(objcache), MOVE(entities), MOVE(texture_table), MOVE(glight), MOVE(bg_color)};
   std::cerr << "yielding assets\n";
-  return LevelData{MOVE(assets), MOVE(shader_programs)};
+  return LevelAssets{MOVE(assets), MOVE(shader_programs)};
 }
 
 

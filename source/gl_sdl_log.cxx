@@ -28,7 +28,6 @@ retrieve(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei *, GLchar *))
 
   // Step 2
   int const buffer_size = log_length + 1; // +1 for null terminator character '\0'
-  std::cerr << "buffer size: '" << buffer_size << "'\n";
 
   // explicitely using parenthesis to not trigger initializer_list ctor
   std::vector<char> buffer(buffer_size);
@@ -44,7 +43,7 @@ namespace gfx
 {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-boost::optional<GlErrors>
+stlw::optional<GlErrors>
 GlErrors::retrieve()
 {
   std::vector<std::string> gl;
@@ -56,7 +55,7 @@ GlErrors::retrieve()
     gl.emplace_back(MOVE(e));
   }
   if (gl.empty()) {
-    return boost::none;
+    return stlw::none;
   }
   return GlErrors{MOVE(gl)};
 }
@@ -81,13 +80,13 @@ operator<<(std::ostream &stream, GlErrors const& errors)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-boost::optional<SdlErrors>
+stlw::optional<SdlErrors>
 SdlErrors::retrieve()
 {
   auto sdl = SDL_GetError();
   assert(nullptr != sdl);
   if (0 == ::strlen(sdl)) {
-    return boost::none;
+    return stlw::none;
   }
   return SdlErrors{MOVE(sdl)};
 }
@@ -121,7 +120,7 @@ ErrorLog::abort_if_any_errors(std::ostream &stream)
       stream << "none";
     }
     stream << "'\n";
-    bool const found_errors = opt_errors != boost::none;
+    bool const found_errors = opt_errors != stlw::none;
     return found_errors;
   };
   bool const some_glerrors = write_errors("GL errors", GlErrors::retrieve());

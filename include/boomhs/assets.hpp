@@ -29,38 +29,16 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(ObjCache);
 
   void
-  add_obj(std::string const& name, opengl::obj &&o)
-  {
-    auto pair = std::make_pair(name, MOVE(o));
-    objects_.emplace_back(MOVE(pair));
-  }
+  add_obj(std::string const&, opengl::obj &&);
 
   void
-  add_obj(char const* name, opengl::obj &&o)
-  {
-    add_obj(std::string{name}, MOVE(o));
-  }
+  add_obj(char const*, opengl::obj &&);
 
-  auto const&
-  get_obj(char const* name) const
-  {
-    auto const cmp = [&name](auto const& pair) {
-      return pair.first == name;
-    };
-    auto const it = std::find_if(objects_.cbegin(), objects_.cend(), cmp);
+  opengl::obj const&
+  get_obj(char const*) const;
 
-    // for now, assume all queries are found
-    assert(it != objects_.cend());
-
-    // yield reference to data
-    return it->second;
-  }
-
-  auto const&
-  get_obj(std::string const& s) const
-  {
-    return get_obj(s.c_str());
-  }
+  opengl::obj const&
+  get_obj(std::string const&) const;
 };
 
 enum GeometryType
@@ -81,22 +59,6 @@ from_string(std::string &string)
   std::abort();
 }
 
-struct EntityInfo
-{
-  Transform const transform;
-  GeometryType const type;
-
-  // THOUGHT: It doesn't make sense to have a "color" but not a "shader".
-  //
-  // We lost our compile time guarantees, how to compensate?
-  boost::optional<std::string> const shader;
-  boost::optional<std::string> const mesh_name;
-  boost::optional<opengl::Color> const color;
-  boost::optional<opengl::TextureInfo> const texture;
-
-  MOVE_CONSTRUCTIBLE_ONLY(EntityInfo);
-};
-
 struct LoadedEntities
 {
   std::vector<uint32_t> data = {};
@@ -104,6 +66,8 @@ struct LoadedEntities
   LoadedEntities() = default;
   MOVE_CONSTRUCTIBLE_ONLY(LoadedEntities);
   BEGIN_END_FORWARD_FNS(data);
+
+  bool empty() const { return data.empty(); }
 };
 
 // TODO: not final by any means..
@@ -128,54 +92,44 @@ public:
   GpuHandleList() = default;
   MOVE_CONSTRUCTIBLE_ONLY(GpuHandleList);
 
-  std::size_t
-  add(uint32_t const entity, opengl::DrawInfo &&di)
-  {
-    auto const pos = drawinfos_.size();
-    drawinfos_.emplace_back(MOVE(di));
-    entities_.emplace_back(entity);
+  size_t
+  add(uint32_t const, opengl::DrawInfo &&);
 
-    // return the index di was stored in.
-    return pos;
-  }
+  bool empty() const { return drawinfos_.empty(); }
 
   opengl::DrawInfo const&
-  get(uint32_t const entity) const
-  {
-    FOR(i, entities_.size()) {
-      if (entities_[i] == entity) {
-        return drawinfos_[i];
-      }
-    }
-    std::cerr << fmt::format("Error could not find gpu handle associated to entity {}'\n", entity);
-    std::abort();
-  }
+  get(uint32_t const entity) const;
 };
 
-class HandleManager {
+class HandleManager
+{
   GpuHandleList list_;
 public:
+  uint32_t bridge_eid;
+  uint32_t equal_eid;
   uint32_t plus_eid;
   uint32_t hashtag_eid;
+  uint32_t river_eid;
   uint32_t stair_down_eid;
   uint32_t stair_up_eid;
 
   MOVE_CONSTRUCTIBLE_ONLY(HandleManager);
-  explicit HandleManager(GpuHandleList &&list, uint32_t const plus, uint32_t const hashtag,
-      uint32_t const stair_down, uint32_t const stair_up)
+  explicit HandleManager(GpuHandleList &&list, uint32_t const b, uint32_t const equal, uint32_t const plus,
+      uint32_t const hashtag, uint32_t const river, uint32_t const stair_down,
+      uint32_t const stair_up)
     : list_(MOVE(list))
+    , bridge_eid(b)
+    , equal_eid(equal)
     , plus_eid(plus)
     , hashtag_eid(hashtag)
+    , river_eid(river)
     , stair_down_eid(stair_down)
     , stair_up_eid(stair_up)
   {
   }
 
-  auto&
-  lookup(uint32_t const entity) const
-  {
-    return list_.get(entity);
-  }
+  opengl::DrawInfo const&
+  lookup(uint32_t const entity) const;
 };
 
 } // ns boomhs

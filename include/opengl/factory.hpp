@@ -8,10 +8,10 @@
 #include <stlw/type_macros.hpp>
 #include <stlw/type_ctors.hpp>
 
-#include <boomhs/tilemap.hpp>
+#include <boomhs/tiledata.hpp>
 #include <boomhs/types.hpp>
 
-#include <boost/optional.hpp>
+#include <stlw/optional.hpp>
 #include <array>
 #include <cmath>
 
@@ -66,7 +66,7 @@ DrawInfo
 copy_texturecube_gpu(stlw::Logger &, ShaderProgram const&, TextureInfo const&);
 
 DrawInfo
-copy_cube_14indices_gpu(stlw::Logger &, ShaderProgram const&, boost::optional<TextureInfo> const&);
+copy_cube_14indices_gpu(stlw::Logger &, ShaderProgram const&, stlw::optional<TextureInfo> const&);
 
 struct ArrowCreateParams
 {
@@ -91,7 +91,7 @@ DrawInfo
 create_arrow(stlw::Logger &, ShaderProgram const&, ArrowCreateParams &&);
 
 DrawInfo
-create_tilegrid(stlw::Logger &, ShaderProgram const&, boomhs::TileMap const&,
+create_tilegrid(stlw::Logger &, ShaderProgram const&, boomhs::TileData const&,
     bool const show_yaxis_lines, Color const& color = LOC::RED);
 
 DrawInfo
@@ -109,6 +109,6 @@ WorldOriginArrows
 create_axis_arrows(stlw::Logger &, ShaderProgram &);
 
 DrawInfo
-copy_gpu(stlw::Logger &, GLenum const, ShaderProgram &, obj const&, boost::optional<TextureInfo> const&);
+copy_gpu(stlw::Logger &, GLenum const, ShaderProgram &, obj const&, stlw::optional<TextureInfo> const&);
 
 } // ns opengl::factories

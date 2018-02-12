@@ -1,5 +1,6 @@
 #pragma once
-#include <glm/glm.hpp>
+#include <stlw/math.hpp>
+
 namespace opengl
 {
   auto constexpr X_UNIT_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};

@@ -11,15 +11,15 @@
 namespace boomhs
 {
 
-struct LevelData
+struct LevelAssets
 {
   Assets assets;
   opengl::ShaderPrograms shader_programs;
 
-  MOVE_CONSTRUCTIBLE_ONLY(LevelData);
+  MOVE_CONSTRUCTIBLE_ONLY(LevelAssets);
 };
 
-stlw::result<LevelData, std::string>
+stlw::result<LevelAssets, std::string>
 load_level(stlw::Logger &, entt::DefaultRegistry &, std::string const&);
 
 } // ns boomhs

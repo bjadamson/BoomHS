@@ -3,14 +3,14 @@
 #include <entt/entt.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/stairwell_generator.hpp>
-#include <boomhs/tilemap.hpp>
+#include <boomhs/leveldata.hpp>
 
 namespace boomhs
 {
 
-struct TilemapConfig
+struct TileDataConfig
 {
-  uint32_t const width, length;
+  size_t const width, height;
   StairGenConfig const& stairconfig;
 };
 
@@ -19,7 +19,7 @@ struct TilemapConfig
 namespace boomhs::level_generator
 {
 
-std::pair<TileMap, TilePosition>
-make_tilemap(TilemapConfig &, stlw::float_generator &, entt::DefaultRegistry &);
+LevelData
+make_leveldata(TileDataConfig const&, stlw::float_generator &, entt::DefaultRegistry &);
 
 } // ns boomhs::level_generator

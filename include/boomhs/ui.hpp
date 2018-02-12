@@ -9,8 +9,9 @@ class SDLWindow;
 namespace boomhs
 {
 
-struct GameState;
+struct EngineState;
+class ZoneManager;
 void
-draw_ui(GameState &, window::SDLWindow &, entt::DefaultRegistry &);
+draw_ui(EngineState &, ZoneManager &, window::SDLWindow &, entt::DefaultRegistry &);
 
 } // ns boomhs

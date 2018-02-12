@@ -28,12 +28,10 @@ public:
   }
 
   void
-  make_zone_active(int const zone_number, GameState &state)
+  make_zone_active(int const zone_number, TiledataState &tds)
   {
     zstates_.set_active(zone_number);
-
-    auto &tm_state = state.engine_state.tilemap_state;
-    tm_state.recompute = true;
+    tds.recompute = true;
   }
 
   int
@@ -47,6 +45,14 @@ public:
   {
     return zstates_.active_zone();
   }
+
+  /*
+  void
+  add_zone(ZoneState &&zone)
+  {
+    zstates_.add_zone(MOVE(zone));
+  }
+  */
 };
 
 } // ns boomhs
