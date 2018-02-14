@@ -13,6 +13,7 @@ namespace opengl
 {
 class DrawInfo;
 class ShaderProgram;
+class ShaderPrograms;
 } // ns opengl
 
 namespace window
@@ -23,6 +24,7 @@ struct FrameTime;
 namespace boomhs
 {
 class Camera;
+class HandleManager;
 struct RenderArgs;
 struct RiverInfo;
 struct Transform;
@@ -70,27 +72,9 @@ void
 draw_rivers(RenderArgs const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
     entt::DefaultRegistry &, window::FrameTime const&, uint32_t, RiverInfo const&);
 
-struct DrawTileArgs
-{
-  opengl::ShaderProgram &sp;
-  opengl::DrawInfo const& dinfo;
-
-  uint32_t const eid;
-};
-
-struct DrawTileDataArgs
-{
-  DrawTileArgs bridge;
-  DrawTileArgs plus;
-  DrawTileArgs hashtag;
-  DrawTileArgs river;
-  DrawTileArgs stairs_down;
-  DrawTileArgs stairs_up;
-};
-
 void
-draw_tiledata(RenderArgs const&, DrawTileDataArgs &, TileData const&, TiledataState const&,
-    entt::DefaultRegistry &, window::FrameTime const&);
+draw_tiledata(RenderArgs const&, HandleManager &, TileData const&, TiledataState const&,
+    opengl::ShaderPrograms &, entt::DefaultRegistry &, window::FrameTime const&);
 
 void
 draw_tilegrid(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawInfo const&);

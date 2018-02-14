@@ -303,8 +303,8 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
 }
 
 void
-draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const& tiledata,
-    TiledataState const& tiledata_state, entt::DefaultRegistry &registry,
+draw_tiledata(RenderArgs const& args, HandleManager &handlem, TileData const& tiledata,
+    TiledataState const& tiledata_state, ShaderPrograms &sps, entt::DefaultRegistry &registry,
     FrameTime const& ft)
 {
   auto &logger = args.logger;
@@ -322,12 +322,7 @@ draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const&
       return;
     }
     // This offset causes the tile's to appear in the "middle"
-    auto &bridge = dt_args.bridge;
-    auto &plus = dt_args.plus;
-    auto &hashtag = dt_args.hashtag;
-    auto &river = dt_args.river;
-    auto &stairs_down = dt_args.stairs_down;
-    auto &stairs_up = dt_args.stairs_up;
+    auto &tile_sp = sps.ref_sp("3d_pos_normal_color");
 
     auto const tr = tile_pos + VIEWING_OFFSET;
     auto &transform = registry.get<Transform>(tile.eid);
@@ -336,12 +331,15 @@ draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const&
     switch(tile.type) {
       case TileType::FLOOR:
         {
-          draw_tile_helper(plus.sp, plus.dinfo, tile.eid, default_modmatrix, true);
+          auto const& plus_dinfo = handlem.lookup(handlem.plus_eid);
+          draw_tile_helper(tile_sp, plus_dinfo, tile.eid, default_modmatrix, true);
         }
         break;
       case TileType::WALL:
         {
-          draw_tile_helper(hashtag.sp, hashtag.dinfo, tile.eid, default_modmatrix, true);
+          auto &hashtag_sp = sps.ref_sp("hashtag");
+          auto const& hashtag_dinfo = handlem.lookup(handlem.hashtag_eid);
+          draw_tile_helper(hashtag_sp, hashtag_dinfo, tile.eid, default_modmatrix, true);
         }
         break;
       case TileType::RIVER:
@@ -355,29 +353,29 @@ draw_tiledata(RenderArgs const& args, DrawTileDataArgs &dt_args, TileData const&
           // rendering tiles.
           //
           // thinking ...
-          glm::vec3 const scale{0.5};
+          auto const& bridge_dinfo = handlem.lookup(handlem.bridge_eid);
           auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
-          draw_tile_helper(bridge.sp, bridge.dinfo, tile.eid, default_modmatrix, true);
+          draw_tile_helper(tile_sp, bridge_dinfo, tile.eid, default_modmatrix, true);
         }
         break;
       case TileType::STAIR_DOWN:
         {
-          auto &sp = stairs_down.sp;
+          auto &sp = sps.ref_sp("stair");
           sp.set_uniform_color(logger, "u_color", LOC::WHITE);
 
+          auto const& stair_downdinfo = handlem.lookup(handlem.stairdown_eid);
           bool const receives_ambient_light = false;
-          glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
-          draw_tile_helper(sp, stairs_down.dinfo, tile.eid, default_modmatrix, receives_ambient_light);
+          draw_tile_helper(sp, stair_downdinfo, tile.eid, default_modmatrix, receives_ambient_light);
         }
         break;
       case TileType::STAIR_UP:
         {
-          auto &sp = stairs_up.sp;
+          auto &sp = sps.ref_sp("stair");
           sp.set_uniform_color(logger, "u_color", LOC::WHITE);
 
+          auto const& stair_updinfo = handlem.lookup(handlem.stairup_eid);
           bool const receives_ambient_light = false;
-          glm::vec3 constexpr scale{1.0f, 1.0f, 1.0f};
-          draw_tile_helper(sp, stairs_up.dinfo, tile.eid, default_modmatrix, receives_ambient_light);
+          draw_tile_helper(sp, stair_updinfo, tile.eid, default_modmatrix, receives_ambient_light);
         }
         break;
       default:

@@ -132,8 +132,8 @@ public:
   uint32_t plus_eid;
   uint32_t hashtag_eid;
   uint32_t river_eid;
-  uint32_t stair_down_eid;
-  uint32_t stair_up_eid;
+  uint32_t stairdown_eid;
+  uint32_t stairup_eid;
 
   MOVE_CONSTRUCTIBLE_ONLY(HandleManager);
   explicit HandleManager(GpuHandleList &&list, uint32_t const b,  uint32_t const plus,
@@ -144,8 +144,8 @@ public:
     , plus_eid(plus)
     , hashtag_eid(hashtag)
     , river_eid(river)
-    , stair_down_eid(stair_down)
-    , stair_up_eid(stair_up)
+    , stairdown_eid(stair_down)
+    , stairup_eid(stair_up)
   {
   }
 

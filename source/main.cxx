@@ -220,46 +220,18 @@ void
 draw_tiledata(RenderArgs const& rargs, ZoneState &zone_state, TiledataState const& tds,
     FrameTime const& ft)
 {
-  // TODO: How do we "GET" the hashtag and plus shaders under the new entity management system?
-  //
-  // PROBLEM:
-  //    We currently store one draw handle to every entity. For the TileData, we need to store two
-  //    (an array) of DrawInfo instances to the one entity.
-  //
-  // THOUGHT:
-  //    It probably makes sense to render the tiledata differently now. We should assume more than
-  //    just two tile type's will be necessary, and will have to devise a strategy for quickly
-  //    rendering the tiledata using different tile's. Maybe store the different tile type's
-  //    together somehow for rendering?
   auto &handlem = zone_state.handles;
-  auto &sps = zone_state.sps;
-
-  using namespace render;
-  auto &tile_sp = sps.ref_sp("3d_pos_normal_color");
-
-  DrawTileArgs bridge{tile_sp, handlem.lookup(handlem.bridge_eid), handlem.bridge_eid};
-  DrawTileArgs plus{tile_sp, handlem.lookup(handlem.plus_eid), handlem.plus_eid};
-
-  auto &hashtag_sp = sps.ref_sp("hashtag");
-  DrawTileArgs hashtag{hashtag_sp, handlem.lookup(handlem.hashtag_eid), handlem.hashtag_eid};
-  DrawTileArgs river{sps.ref_sp("river"), handlem.lookup(handlem.river_eid), handlem.river_eid};
-
-  auto &stair_sp = sps.ref_sp("stair");
-  DrawTileArgs stairs_down{stair_sp, handlem.lookup(handlem.stair_down_eid), handlem.stair_down_eid};
-  DrawTileArgs stairs_up{stair_sp, handlem.lookup(handlem.stair_up_eid), handlem.stair_up_eid};
-  DrawTileDataArgs dta{MOVE(bridge), MOVE(plus), MOVE(hashtag), MOVE(river),
-    MOVE(stairs_down), MOVE(stairs_up)};
-
   auto &registry = zone_state.registry;
+  auto &sps = zone_state.sps;
   auto const& leveldata = zone_state.level_data;
-  render::draw_tiledata(rargs, dta, leveldata.tiledata(), tds, registry, ft);
+  render::draw_tiledata(rargs, handlem, leveldata.tiledata(), tds, sps, registry, ft);
 }
 
 void
 draw_rivers(RenderArgs const& rargs, ZoneState &zone_state, FrameTime const& ft)
 {
-  auto &registry = zone_state.registry;
   auto &handlem = zone_state.handles;
+  auto &registry = zone_state.registry;
   auto &sps = zone_state.sps;
 
   auto &sp = sps.ref_sp("river");
