@@ -37,34 +37,36 @@ create_river(TilePosition const& tpos, Edges const& edges, glm::vec2 const& flow
 }
 
 stlw::optional<RiverInfo>
-generate_river(TileData &tdata, stlw::float_generator &rng)
+generate_river(TileData &tiledata, stlw::float_generator &rng)
 {
-  auto const [tdwidth, tdheight] = tdata.dimensions();
-  auto const tpos_edge = random_tileposition_onedgeofmap(tdata, rng);
+  auto const [tdwidth, tdheight] = tiledata.dimensions();
+  auto const tpos_edge = random_tileposition_onedgeofmap(tiledata, rng);
   auto const& tpos = tpos_edge.first;
   MapEdge const& edge = tpos_edge.second;
 
   auto const RIVER_DISTANCE = 1;
-  if (edge.is_xedge()) {
-    FOR(i, tdwidth) {
-      tdata.data(i, tpos.y).type = TileType::RIVER;
-    }
-
+  {
     auto constexpr FLOW_DIR = glm::vec2{1.0, 0.0};
-    auto const edges = calculate_edges(tpos, tdwidth, tdheight, tdwidth, RIVER_DISTANCE);
-    float const rotation = 90.0f;
+    if (edge.is_xedge()) {
+      FOR(i, tdwidth) {
+        auto &tile = tiledata.data(i, tpos.y);
+        tiledata.assign_river(tile, FLOW_DIR);
+      }
+      auto const edges = calculate_edges(tpos, tdwidth, tdheight, tdwidth, RIVER_DISTANCE);
+      float const rotation = 90.0f;
 
-    auto const left = glm::vec2{static_cast<float>(edges.left), 0.0f};
-    auto const right = glm::vec2{static_cast<float>(edges.right), 0.0f};
-    auto const length = glm::distance(left, right);
-    return create_river(tpos, edges, FLOW_DIR, rotation, length, rng);
+      auto const left = glm::vec2{static_cast<float>(edges.left), 0.0f};
+      auto const right = glm::vec2{static_cast<float>(edges.right), 0.0f};
+      auto const length = glm::distance(left, right);
+      return create_river(tpos, edges, FLOW_DIR, rotation, length, rng);
+    }
   }
+  auto constexpr FLOW_DIR = glm::vec2{0.0, 1.0};
   assert(edge.is_yedge());
   FOR(i, tdheight) {
-    tdata.data(tpos.x, i).type = TileType::RIVER;
+    auto &tile = tiledata.data(tpos.x, i);
+    tiledata.assign_river(tile, FLOW_DIR);
   }
-
-  auto constexpr FLOW_DIR = glm::vec2{0.0, 1.0};
   auto const edges = calculate_edges(tpos, tdwidth, tdheight, RIVER_DISTANCE, tdheight);
   float const rotation = 0.0f;
 
@@ -80,12 +82,12 @@ namespace boomhs::river_generator
 {
 
 void
-place_rivers(TileData &tdata, stlw::float_generator &rng, std::vector<RiverInfo> &rivers)
+place_rivers(TileData &tiledata, stlw::float_generator &rng, std::vector<RiverInfo> &rivers)
 {
   auto const place = [&]() {
     stlw::optional<RiverInfo> river_o = stlw::none;
     while(!river_o) {
-      river_o = generate_river(tdata, rng);
+      river_o = generate_river(tiledata, rng);
     }
     assert(river_o);
     auto river = MOVE(*river_o);

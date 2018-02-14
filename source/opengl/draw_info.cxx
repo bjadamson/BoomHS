@@ -1,9 +1,12 @@
 #include <opengl/draw_info.hpp>
 #include <iostream>
 
+using namespace boomhs;
 namespace opengl
 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// BufferHandles
 BufferHandles::BufferHandles()
 {
   glGenBuffers(NUM_BUFFERS, &vbo_);
@@ -43,6 +46,8 @@ operator<<(std::ostream &stream, BufferHandles const& buffers)
   return stream;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// DrawInfo
 DrawInfo::DrawInfo(GLenum const dm, std::size_t const num_vertices, GLuint const num_indices,
     stlw::optional<TextureInfo> const& ti)
   : draw_mode_(dm)
@@ -121,6 +126,49 @@ DrawInfo::print_self(std::ostream &stream, VertexAttribute const& va) const
     }
     stream << std::to_string(*(pmem + i));
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// EntityDrawinfos
+size_t
+EntityDrawinfos::add(uint32_t const entity, opengl::DrawInfo &&di)
+{
+  auto const pos = drawinfos_.size();
+  drawinfos_.emplace_back(MOVE(di));
+  entities_.emplace_back(entity);
+
+  // return the index di was stored in.
+  return pos;
+}
+
+opengl::DrawInfo const&
+EntityDrawinfos::get(uint32_t const entity) const
+{
+  FOR(i, entities_.size()) {
+    if (entities_[i] == entity) {
+      return drawinfos_[i];
+    }
+  }
+  std::cerr << fmt::format("Error could not find entity drawinfo associated to entity {}'\n", entity);
+  std::abort();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// EntityDrawHandles
+opengl::DrawInfo const&
+EntityDrawHandles::lookup(uint32_t const eid) const
+{
+  return infos_.get(eid);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// EntityDrawHandles
+opengl::DrawInfo const&
+TileDrawHandles::lookup(TileType const type) const
+{
+  assert(type < TileType::MAX);
+  auto const index = static_cast<size_t>(type);
+  return drawinfos_[index];
 }
 
 } // ns opengl

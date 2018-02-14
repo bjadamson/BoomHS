@@ -6,6 +6,7 @@
 #include <boomhs/world_object.hpp>
 
 #include <opengl/colors.hpp>
+#include <opengl/draw_info.hpp>
 #include <opengl/lighting.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
@@ -35,31 +36,38 @@ struct UiState
   bool enter_pressed = false;
   bool block_input = false;
 
-  bool show_background_window = false;
+  int selected_entity = 0;
+  int selected_entity_material = 0;
 
   int selected_pointlight = 0;
-  bool show_pointlight_window = false;
 
-  bool show_ambientlight_window = false;
-  bool show_directionallight_window = false;
+  std::array<int, 2> selected_tile = {0};
+  int selected_tiledata = 0;
 
-  int selected_material = 0;
-  bool show_entitymaterial_window = false;
-
-  int selected_entity = 0;
+  int attenuation_current_item = opengl::Light::INIT_ATTENUATION_INDEX;
 
   // primitive buffers
   int eid_buffer = 0;
   glm::vec3 euler_angle_buffer;
   glm::vec3 last_mouse_clicked_pos;
-  int attenuation_current_item = opengl::Light::INIT_ATTENUATION_INDEX;
 
+  // window display state
+  bool show_ambientlight_window = false;
+  bool show_background_window = false;
   bool show_camerawindow = false;
+
   bool show_debugwindow = true;
+  bool show_directionallight_window = false;
+
   bool show_entitywindow = false;
+  bool show_entitymaterial_window = false;
+
+  bool show_tiledata_editor_window = false;
+  bool show_tiledatamaterial_window = false;
+
   bool show_mousewindow = false;
   bool show_playerwindow = false;
-  bool show_tiledatawindow = false;
+  bool show_pointlight_window = false;
 };
 
 struct MouseState
@@ -112,7 +120,8 @@ struct ZoneState
   opengl::Color background;
   opengl::GlobalLight global_light;
 
-  HandleManager handles;
+  opengl::EntityDrawHandles entity_handles;
+  opengl::TileDrawHandles tile_handles;
   opengl::ShaderPrograms sps;
   opengl::TextureTable texture_table;
   LevelData level_data;
@@ -122,11 +131,13 @@ struct ZoneState
   entt::DefaultRegistry &registry;
 
   explicit ZoneState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
-      HandleManager &&hm, opengl::ShaderPrograms &&sp, opengl::TextureTable &&ttable,
-      LevelData &&ldata, Camera &&cam, WorldObject &&pl, entt::DefaultRegistry &reg)
+      opengl::EntityDrawHandles &&edh, opengl::TileDrawHandles &&tdh, opengl::ShaderPrograms &&sp,
+      opengl::TextureTable &&ttable, LevelData &&ldata, Camera &&cam, WorldObject &&pl,
+      entt::DefaultRegistry &reg)
     : background(bgcolor)
     , global_light(glight)
-    , handles(MOVE(hm))
+    , entity_handles(MOVE(edh))
+    , tile_handles(MOVE(tdh))
     , sps(MOVE(sp))
     , texture_table(MOVE(ttable))
     , level_data(MOVE(ldata))

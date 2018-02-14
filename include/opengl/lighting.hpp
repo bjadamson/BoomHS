@@ -48,12 +48,14 @@ static auto constexpr ATTENUATION_DISTANCE_STRINGS =
 
 struct Material
 {
-  glm::vec3 ambient = LOC::WHITE.rgb();
-  glm::vec3 diffuse = LOC::WHITE.rgb();
-  glm::vec3 specular = LOC::WHITE.rgb();
-  float shininess = 1.0;
+  glm::vec3 ambient;
+  glm::vec3 diffuse;
+  glm::vec3 specular;
+  float shininess;
 
   Material() = default;
+  MOVE_DEFAULT(Material);
+  COPY_DEFAULT(Material);
 
   Material(glm::vec3 const& amb, glm::vec3 const& diff, glm::vec3 const& spec, float const shiny)
     : ambient(amb)

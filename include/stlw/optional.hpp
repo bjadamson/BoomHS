@@ -10,7 +10,7 @@ using optional = boost::optional<T>;
 
 template<typename ...P>
 auto
-make_opt(P &&... p)
+make_optional(P &&... p)
 {
   return boost::make_optional(std::forward<P>(p)...);
 }

@@ -62,19 +62,19 @@ struct Rect
   }
 
   bool
-  in_tiledata(TileData const& tdata) const
+  in_tiledata(TileData const& tiledata) const
   {
-    auto const [w, h] = tdata.dimensions();
+    auto const [w, h] = tiledata.dimensions();
     return (x1 > 0) && (y1 > 0) && (x2 < w) && (y2 < h);
   }
 
   bool
-  any_tiles_of_type(TileData const& tdata, TileType const type) const
+  any_tiles_of_type(TileData const& tiledata, TileType const type) const
   {
     bool any = false;
     for(auto x = x1 + 1; x < x2; ++x) {
       for (auto y = y1 + 1; y < y2; ++y) {
-        any |= (tdata.data(x, y).type == type);
+        any |= (tiledata.data(x, y).type == type);
       }
       if (any) {
         break;
@@ -92,7 +92,7 @@ struct RoomGenConfig
 };
 
 stlw::optional<Rect>
-try_create_room(RoomGenConfig const& rgconfig, TileType const type, TileData &tdata,
+try_create_room(RoomGenConfig const& rgconfig, TileType const type, TileData &tiledata,
     stlw::float_generator &rng)
 {
   // random width and height
@@ -107,64 +107,66 @@ try_create_room(RoomGenConfig const& rgconfig, TileType const type, TileData &td
   // run through the other rooms and see if they intersect with this one
   for(auto const& r : rgconfig.rooms) {
     // bail early
-    if (!new_room.in_tiledata(tdata) || new_room.intersects_with(r)) {
+    if (!new_room.in_tiledata(tiledata) || new_room.intersects_with(r)) {
       return {}; // NONE
     }
   }
-  bool const any_river_tiles = new_room.any_tiles_of_type(tdata, TileType::RIVER);
-  bool const any_bridge_tiles = new_room.any_tiles_of_type(tdata, TileType::BRIDGE);
+  bool const any_river_tiles = new_room.any_tiles_of_type(tiledata, TileType::RIVER);
+  bool const any_bridge_tiles = new_room.any_tiles_of_type(tiledata, TileType::BRIDGE);
   if (any_river_tiles || any_bridge_tiles) {
     return {}; // NONE
   }
 
   for(uint64_t x = new_room.x1 + 1; x < new_room.x2; ++x) {
     for (uint64_t y = new_room.y1 + 1; y < new_room.y2; ++y) {
-      tdata.data(x, y).type = type;
+      tiledata.data(x, y).type = type;
     }
   }
   return new_room;
 }
 
 auto
-create_room(size_t const max_tries, RoomGenConfig const& rgconfig, TileData &tdata,
+create_room(size_t const max_tries, RoomGenConfig const& rgconfig, TileData &tiledata,
     stlw::float_generator &rng, TileType const type)
 {
   assert(rgconfig.tilemap_height - ROOM_MAX_SIZE > 0);
   stlw::optional<Rect> room;
 
-  std::size_t trials{0u};
+  size_t trials{0u};
   while(!room && (trials < max_tries)) {
-    room = try_create_room(rgconfig, type, tdata, rng);
+    room = try_create_room(rgconfig, type, tiledata, rng);
     ++trials;
   }
   return room;
 }
 
 void
-create_h_tunnel(uint64_t const x1, uint64_t const x2, uint64_t const y, TileType const type, TileData &tdata)
+create_h_tunnel(uint64_t const x1, uint64_t const x2, uint64_t const y, TileType const type,
+    TileData &tiledata)
 {
   uint64_t const min = std::min(x1, x2), max = std::max(x1, x2) + 1;
   for (auto x = min; x <= max; ++x) {
-    auto &tile = tdata.data(x, y);
-    if (ANYOF(tile.type == TileType::RIVER, tile.type == TileType::BRIDGE)) {
-      tile.type = TileType::BRIDGE;
+    auto &tile = tiledata.data(x, y);
+    if (tile.type == TileType::RIVER) {
+      tiledata.assign_bridge(tile);
     }
-    else {
+    else if (tile.type != TileType::BRIDGE) {
       tile.type = type;
     }
   }
 }
 
 void
-create_v_tunnel(uint64_t const y1, uint64_t const y2, uint64_t const x, TileType const type, TileData &tdata)
+create_v_tunnel(uint64_t const y1, uint64_t const y2, uint64_t const x, TileType const type,
+  TileData &tiledata)
 {
   uint64_t const min = std::min(y1, y2), max = std::max(y1, y2) + 1;
   for(auto y = min; y <= max; ++y) {
-    auto &tile = tdata.data(x, y);
-    if (ANYOF(tile.type == TileType::RIVER, tile.type == TileType::BRIDGE)) {
-      tile.type = TileType::BRIDGE;
+    auto &tile = tiledata.data(x, y);
+    if (tile.type == TileType::RIVER) {
+      tiledata.assign_bridge(tile);
     }
-    else {
+    else if (tile.type != TileType::BRIDGE) {
       tile.type = type;
     }
   }
@@ -172,23 +174,23 @@ create_v_tunnel(uint64_t const y1, uint64_t const y2, uint64_t const x, TileType
 
 /*
 bool
-is_blocked(uint64_t const x, uint64_t const y, TileData const& tdata)
+is_blocked(uint64_t const x, uint64_t const y, TileData const& tiledata)
 {
-  if (tdata.data(x, y).type == TileType::WALL) {
+  if (tiledata.data(x, y).type == TileType::WALL) {
     return true;
   }
   return false;
 }
 
 auto
-generate_monster_position(Rect const& room, TileData const& tdata, stlw::float_generator &rng)
+generate_monster_position(Rect const& room, TileData const& tiledata, stlw::float_generator &rng)
 {
   uint64_t x, y;
   while(true) {
     x = rng.gen_int_range(room.x1 + 1, room.x2);
     y = rng.gen_int_range(room.y1 + 1, room.y2);
 
-    if (!is_blocked(x, y, tdata)) {
+    if (!is_blocked(x, y, tiledata)) {
       break;
     }
   }
@@ -197,12 +199,12 @@ generate_monster_position(Rect const& room, TileData const& tdata, stlw::float_g
 */
 
 void
-place_objects(Rect const& room, TileData const& tdata, stlw::float_generator &rng)
+place_objects(Rect const& room, TileData const& tiledata, stlw::float_generator &rng)
 {
   auto const num_monsters = rng.gen_int_range(0, MAX_ROOM_MONSTERS + 1);
 
   FORI(i, num_monsters) {
-    //auto const pos = generate_monster_position(room, tdata, rng);
+    //auto const pos = generate_monster_position(room, tiledata, rng);
     if (rng.gen_bool()) {
       // create orc
     } else {
@@ -226,37 +228,37 @@ struct Rooms
 };
 
 stlw::optional<Rooms>
-place_rooms(TileData &tdata, stlw::float_generator &rng)
+place_rooms(TileData &tiledata, stlw::float_generator &rng)
 {
   auto constexpr MAX_NUM_CREATE_TRIES = 5000;
   std::vector<Rect> rects;
   TilePosition starting_position;
 
   auto const add_room = [&](auto const& new_room) {
-    place_objects(new_room, tdata, rng);
+    place_objects(new_room, tiledata, rng);
     rects.emplace_back(new_room);
   };
-  auto const connect_rooms = [&rng, &tdata](auto const prev_center, auto const new_center,
+  auto const connect_rooms = [&rng, &tiledata](auto const prev_center, auto const new_center,
         TileType const type)
   {
     if (rng.gen_bool()) {
       // first move horizontally, then vertically
-      create_h_tunnel(prev_center.x, new_center.x, prev_center.y, type, tdata);
-      create_v_tunnel(prev_center.y, new_center.y, new_center.x, type, tdata);
+      create_h_tunnel(prev_center.x, new_center.x, prev_center.y, type, tiledata);
+      create_v_tunnel(prev_center.y, new_center.y, new_center.x, type, tiledata);
     } else {
       // first move vertically, then horizontally
-      create_v_tunnel(prev_center.y, new_center.y, prev_center.x, type, tdata);
-      create_h_tunnel(prev_center.x, new_center.x, new_center.y, type, tdata);
+      create_v_tunnel(prev_center.y, new_center.y, prev_center.x, type, tiledata);
+      create_h_tunnel(prev_center.x, new_center.x, new_center.y, type, tiledata);
     }
   };
 
-  auto const [tdwidth, tdheight] = tdata.dimensions();
+  auto const [tdwidth, tdheight] = tiledata.dimensions();
   RoomGenConfig const rgconfig{tdwidth, tdheight, rects};
   {
     // PRESENLTY: algorithm currently assumes we create atleast one room before entering the main
     // loop.
     {
-      MAKEOPT(auto const first_room, create_room(MAX_NUM_CREATE_TRIES, rgconfig, tdata, rng, TileType::FLOOR));
+      MAKEOPT(auto const first_room, create_room(MAX_NUM_CREATE_TRIES, rgconfig, tiledata, rng, TileType::FLOOR));
       auto const first_center = first_room.center();
       starting_position.x = first_center.x;
       starting_position.y = first_center.y;
@@ -268,7 +270,7 @@ place_rooms(TileData &tdata, stlw::float_generator &rng)
   // Move onto floor tiles.
   assert(!rects.empty());
   FOR(_, MAX_ROOMS) {
-    MAKEOPT(auto const new_room, create_room(MAX_NUM_CREATE_TRIES, rgconfig, tdata, rng,
+    MAKEOPT(auto const new_room, create_room(MAX_NUM_CREATE_TRIES, rgconfig, tiledata, rng,
           TileType::FLOOR));
     // center coordinates of the new room/previous room
     auto const new_center = new_room.center();
@@ -283,14 +285,14 @@ place_rooms(TileData &tdata, stlw::float_generator &rng)
 
 TilePosition
 place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<RiverInfo> &rivers,
-    TileData &tdata, stlw::float_generator &rng, entt::DefaultRegistry &registry)
+    TileData &tiledata, stlw::float_generator &rng, entt::DefaultRegistry &registry)
 {
   auto const stairs_perfloor = stairconfig.stairs_perfloor;
   assert(stairs_perfloor > 0);
 
   // 1. Place Rivers
   std::cerr << "placing rivers ...\n";
-  river_generator::place_rivers(tdata, rng, rivers);
+  river_generator::place_rivers(tiledata, rng, rivers);
 
   // 2. Place Rooms and Stairs
   stlw::optional<Rooms> rooms = stlw::none;
@@ -298,11 +300,11 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
   while(!rooms && !stairs) {
     std::cerr << "placing rooms ...\n";
     while(!rooms) {
-      rooms = place_rooms(tdata, rng);
+      rooms = place_rooms(tiledata, rng);
     }
     while(!stairs) {
       std::cerr << "placing stairs ...\n";
-      stairs = stairwell_generator::place_stairs(stairconfig, tdata, rng, registry);
+      stairs = stairwell_generator::place_stairs(stairconfig, tiledata, rng, registry);
     }
   }
 
@@ -311,8 +313,8 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
 }
 
 LevelData
-make_leveldata(TileDataConfig const& tdconfig, stlw::float_generator &rng,
-    entt::DefaultRegistry &registry)
+make_leveldata(TileDataConfig const& tdconfig, entt::DefaultRegistry &registry,
+    TileInfos &&tinfos, stlw::float_generator &rng)
 {
   // clang-format off
   auto const tdwidth = tdconfig.width;
@@ -320,16 +322,17 @@ make_leveldata(TileDataConfig const& tdconfig, stlw::float_generator &rng,
   auto const num_tiles = tdwidth * tdheight;
   // clang-format on
 
-  std::vector<Tile> tiles{static_cast<std::size_t>(num_tiles)};
+  std::vector<Tile> tiles{static_cast<size_t>(num_tiles)};
   tiles.reserve(num_tiles);
-  TileData tdata{MOVE(tiles), tdwidth, tdheight, registry};
+  TileData tiledata{MOVE(tiles), tdwidth, tdheight, tinfos, registry};
 
   std::cerr << "======================================\n";
   std::vector<RiverInfo> rivers;
-  auto const starting_pos = place_rivers_rooms_and_stairs(tdconfig.stairconfig, rivers, tdata, rng, registry);
+  auto const starting_pos = place_rivers_rooms_and_stairs(tdconfig.stairconfig, rivers, tiledata,
+      rng, registry);
   std::cerr << "======================================\n";
 
-  return LevelData{MOVE(tdata), starting_pos, MOVE(rivers)};
+  return LevelData{MOVE(tiledata), MOVE(tinfos), starting_pos, MOVE(rivers)};
 }
 
 } // ns boomhs::level_generator

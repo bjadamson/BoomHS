@@ -13,6 +13,7 @@ namespace opengl
 {
 class DrawInfo;
 class ShaderProgram;
+class ShaderPrograms;
 } // ns opengl
 
 namespace window
@@ -23,12 +24,15 @@ struct FrameTime;
 namespace boomhs
 {
 class Camera;
+class HandleManager;
+struct EngineState;
 struct RenderArgs;
 struct RiverInfo;
 struct Transform;
 class TileData;
 struct TiledataState;
 class WorldObject;
+struct ZoneState;
 } // ns boomhs
 
 namespace boomhs
@@ -51,49 +55,45 @@ namespace boomhs::render
 {
 
 void
-enable_depth_tests();
-
-void
-disable_depth_tests();
-
-void
 init(window::Dimensions const&);
 
 void
 clear_screen(opengl::Color const&);
 
 void
+conditionally_draw_player_vectors(RenderArgs const&, WorldObject const &, EngineState &,
+    ZoneState &);
+
+void
 draw(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
     uint32_t const, entt::DefaultRegistry &);
 
 void
-draw_rivers(RenderArgs const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
-    entt::DefaultRegistry &, window::FrameTime const&, uint32_t, RiverInfo const&);
-
-struct DrawTileArgs
-{
-  opengl::ShaderProgram &sp;
-  opengl::DrawInfo const& dinfo;
-
-  uint32_t const eid;
-};
-
-struct DrawTileDataArgs
-{
-  DrawTileArgs bridge;
-  DrawTileArgs equal;
-  DrawTileArgs plus;
-  DrawTileArgs hashtag;
-  DrawTileArgs river;
-  DrawTileArgs stairs_down;
-  DrawTileArgs stairs_up;
-};
+draw_arrow(RenderArgs const&, ZoneState &, glm::vec3 const&, glm::vec3 const&, opengl::Color const&);
 
 void
-draw_tiledata(RenderArgs const&, DrawTileDataArgs &, TileData const&, TiledataState const&,
-    entt::DefaultRegistry &, window::FrameTime const&);
+draw_arrow_abovetile_and_neighbors(RenderArgs const&, TilePosition const&, ZoneState &);
 
 void
-draw_tilegrid(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawInfo const&);
+draw_global_axis(RenderArgs const&, entt::DefaultRegistry &, opengl::ShaderPrograms &);
+
+void
+draw_local_axis(RenderArgs const& rargs, entt::DefaultRegistry &, opengl::ShaderPrograms &,
+    glm::vec3 const &);
+
+void
+draw_entities(RenderArgs const&, EngineState const&, ZoneState &);
+
+void
+draw_rivers(RenderArgs const&, ZoneState &, window::FrameTime const&);
+
+void
+draw_terrain(RenderArgs const&, ZoneState &);
+
+void
+draw_tiledata(RenderArgs const&, TiledataState const&, ZoneState &, window::FrameTime const&);
+
+void
+draw_tilegrid(RenderArgs const&, TiledataState const&, ZoneState &);
 
 } // ns boomhs::render

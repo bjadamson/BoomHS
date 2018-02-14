@@ -1,11 +1,13 @@
 #pragma once
 #include <stlw/math.hpp>
+#include <stlw/type_macros.hpp>
 #include <ostream>
+#include <string>
 
 namespace boomhs
 {
 
-enum class TileType
+enum class TileType : size_t
 {
   FLOOR = 0,
   WALL,
@@ -13,10 +15,80 @@ enum class TileType
   BRIDGE,
   STAIR_DOWN,
   STAIR_UP,
+  MAX
 };
 
-std::ostream&
-operator<<(std::ostream &, TileType const);
+TileType
+tiletype_from_string(std::string const&);
+
+// No point defining in cxx file, need to update every time we add a new tile anyways.
+inline TileType
+tiletype_from_string(char const* cstring)
+{
+#define CHECK(string, type)                                                                        \
+  if (0 == ::strcmp(string, cstring)) {                                                            \
+    return type;                                                                                   \
+  }
+
+  // clang-format off
+  CHECK("FLOOR",      TileType::FLOOR);
+  CHECK("WALL",       TileType::WALL);
+  CHECK("RIVER",      TileType::RIVER);
+  CHECK("BRIDGE",     TileType::BRIDGE);
+  CHECK("STAIR_DOWN", TileType::STAIR_DOWN);
+  CHECK("STAIR_UP",   TileType::STAIR_UP);
+#undef CHECK
+  // clang-format on
+
+  // Logic error at this point
+  std::abort();
+  return TileType::MAX;
+}
+
+inline char const*
+to_string(TileType const type)
+{
+#define CHECK(string, ttype)                                                                       \
+  if (ttype == type) {                                                                             \
+    return string;                                                                                 \
+  }
+  // clang-format off
+  CHECK("FLOOR",      TileType::FLOOR);
+  CHECK("WALL",       TileType::WALL);
+  CHECK("RIVER",      TileType::RIVER);
+  CHECK("BRIDGE",     TileType::BRIDGE);
+  CHECK("STAIR_DOWN", TileType::STAIR_DOWN);
+  CHECK("STAIR_UP",   TileType::STAIR_UP);
+#undef CHECK
+  // clang-format on
+  // Logic error at this point
+  std::abort();
+  return nullptr;
+}
+
+// No point defining in cxx file, need to update every time we add a new tile anyways.
+inline std::ostream&
+operator<<(std::ostream &stream, TileType const type)
+{
+  switch(type) {
+    case TileType::FLOOR:
+      stream << "FLOOR";
+      break;
+    case TileType::WALL:
+      stream << "WALL";
+      break;
+    case TileType::STAIR_DOWN:
+      stream << "STAIR_DOWN";
+      break;
+    case TileType::STAIR_UP:
+      stream << "STAIR_UP";
+      break;
+    default:
+      std::abort();
+      break;
+  }
+  return stream;
+}
 
 struct TilePosition
 {
@@ -77,5 +149,16 @@ struct Tile
 
   bool is_stair() const;
 };
+
+inline bool
+operator==(Tile const& a, Tile const& b)
+{
+  bool const same_eid = a.eid == b.eid;
+  if (same_eid) {
+    // debug sanity check
+    assert(a.type == b.type);
+  }
+  return same_eid;
+}
 
 } // ns boomhs

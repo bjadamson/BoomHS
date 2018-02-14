@@ -28,25 +28,10 @@ struct LoadMeshConfig
   bool uvs = false;
 };
 
-class ObjLoader
-{
-  Color color_;
-public:
-  explicit ObjLoader(Color const& c)
-    : color_(c)
-  {
-  }
+obj
+load_mesh(char const*, char const*, LoadMeshConfig const&);
 
-  obj
-  load_mesh(char const*, char const*, LoadMeshConfig const&) const;
-
-  obj
-  load_mesh(char const*, LoadMeshConfig const&) const;
-
-  void set_color(Color const& c)
-  {
-    color_ = c;
-  }
-};
+obj
+load_mesh(char const*, LoadMeshConfig const&);
 
 } // ns opengl

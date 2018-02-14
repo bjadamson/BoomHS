@@ -1,7 +1,11 @@
 #pragma once
+#include <boomhs/assets.hpp>
 #include <boomhs/river_generator.hpp>
 #include <boomhs/tile.hpp>
 #include <boomhs/tiledata.hpp>
+
+#include <opengl/lighting.hpp>
+
 #include <stlw/type_macros.hpp>
 #include <vector>
 
@@ -11,6 +15,7 @@ namespace boomhs
 class LevelData
 {
   TileData tilegrid_;
+  TileInfos tileinfos_;
   TilePosition const startpos_;
 
   std::vector<RiverInfo> rivers_;
@@ -18,7 +23,7 @@ class LevelData
   void set_tile(TilePosition const&, TileType const&);
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
-  LevelData(TileData &&, TilePosition const&, std::vector<RiverInfo> &&);
+  LevelData(TileData &&, TileInfos &&, TilePosition const&, std::vector<RiverInfo> &&);
 
   void set_floor(TilePosition const&);
   void set_river(TilePosition const&);
@@ -30,14 +35,20 @@ public:
   auto dimensions() const { return tilegrid_.dimensions(); }
 
   auto&
-  tiledata_mutref() { return tilegrid_; }
+  tiledata() { return tilegrid_; }
 
   // Used for rendering
   auto const&
   tiledata() const { return tilegrid_; }
 
   auto&
-  rivers_mutref() { return rivers_; }
+  tileinfos() { return tileinfos_; }
+
+  auto const&
+  tileinfos() const { return tileinfos_; }
+
+  auto&
+  rivers() { return rivers_; }
 
   auto const&
   rivers() const { return rivers_; }

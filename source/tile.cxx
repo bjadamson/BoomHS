@@ -1,9 +1,16 @@
 #include <boomhs/tile.hpp>
 #include <stlw/debug.hpp>
 #include <string>
+#include <iostream>
 
 namespace boomhs
 {
+
+TileType
+tiletype_from_string(std::string const& string)
+{
+  return tiletype_from_string(string.c_str());
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TilePosition
@@ -26,31 +33,6 @@ operator<<(std::ostream &stream, TilePosition const& tp)
   stream << ", ";
   stream << std::to_string(tp.y);
   stream << "}";
-  return stream;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// TileType
-std::ostream&
-operator<<(std::ostream &stream, TileType const type)
-{
-  switch(type) {
-    case TileType::FLOOR:
-      stream << "FLOOR";
-      break;
-    case TileType::WALL:
-      stream << "WALL";
-      break;
-    case TileType::STAIR_DOWN:
-      stream << "STAIR_DOWN";
-      break;
-    case TileType::STAIR_UP:
-      stream << "STAIR_UP";
-      break;
-    default:
-      std::abort();
-      break;
-  }
   return stream;
 }
 

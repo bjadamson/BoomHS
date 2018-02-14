@@ -309,9 +309,19 @@ show_ambientlight_window(UiState &ui, ZoneState &zone_state)
 }
 
 void
+show_material_editor(char const* text, Material &material)
+{
+  ImGui::Text("%s", text);
+  ImGui::ColorEdit3("ambient:", glm::value_ptr(material.ambient));
+  ImGui::ColorEdit3("diffuse:", glm::value_ptr(material.diffuse));
+  ImGui::ColorEdit3("specular:", glm::value_ptr(material.specular));
+  ImGui::SliderFloat("shininess:", &material.shininess, 0.0f, 1.0f);
+}
+
+void
 show_entitymaterials_window(UiState &ui, entt::DefaultRegistry &registry)
 {
-  auto &selected_material = ui.selected_material;
+  auto &selected_material = ui.selected_entity_material;
 
   if (ImGui::Begin("Entity Materials Editor")) {
     auto pairs = collect_all<Material, Transform>(registry);
@@ -322,14 +332,37 @@ show_entitymaterials_window(UiState &ui, entt::DefaultRegistry &registry)
 
     auto &material = registry.get<Material>(selected_entity);
     ImGui::Separator();
-    ImGui::Text("Entity Material:");
-    ImGui::ColorEdit3("ambient:", glm::value_ptr(material.ambient));
-    ImGui::ColorEdit3("diffuse:", glm::value_ptr(material.diffuse));
-    ImGui::ColorEdit3("specular:", glm::value_ptr(material.specular));
-    ImGui::SliderFloat("shininess:", &material.shininess, 0.0f, 1.0f);
+    show_material_editor("Entity Material:", material);
 
     if (ImGui::Button("Close", ImVec2(120,0))) {
       ui.show_entitymaterial_window = false;
+    }
+    ImGui::End();
+  }
+}
+
+void
+show_tiledata_materials_window(UiState &ui, LevelData &level_data)
+{
+  if (ImGui::Begin("Entity Materials Editor")) {
+
+    // 1. Collect Tile names
+    std::vector<std::string> tile_names;
+    FOR(i, static_cast<size_t>(TileType::MAX)) {
+      auto const type = static_cast<TileType>(i);
+      tile_names.emplace_back(to_string(type));
+    }
+
+    int &selected = ui.selected_tiledata;
+    assert(selected < static_cast<int>(tile_names.size()));
+
+    TileInfo &tileinfo = level_data.tileinfos()[static_cast<TileType>(selected)];
+    auto &material = tileinfo.material;
+    show_material_editor("Tile Material:", material);
+    {
+      void *pdata = reinterpret_cast<void *>(&tile_names);
+      ImGui::Combo("Tile Type:", &selected, callback_from_strings, pdata, tile_names.size());
+      ImGui::Separator();
     }
     ImGui::End();
   }
@@ -405,12 +438,14 @@ lighting_menu(EngineState &es, ZoneState &zone_state, entt::DefaultRegistry &reg
   bool &edit_ambientlight = ui.show_ambientlight_window;
   bool &edit_directionallights = ui.show_directionallight_window;
   bool &edit_entitymaterials = ui.show_entitymaterial_window;
+  bool &edit_tiledatamaterials = ui.show_tiledatamaterial_window;
 
   if (ImGui::BeginMenu("Lighting")) {
     ImGui::MenuItem("Point-Lights", nullptr, &edit_pointlights);
     ImGui::MenuItem("Ambient Lighting", nullptr, &edit_ambientlight);
     ImGui::MenuItem("Directional Lighting", nullptr, &edit_directionallights);
     ImGui::MenuItem("Entity Materials", nullptr, &edit_entitymaterials);
+    ImGui::MenuItem("TileData Materials", nullptr, &edit_tiledatamaterials);
     ImGui::EndMenu();
   }
   if (edit_pointlights) {
@@ -424,6 +459,10 @@ lighting_menu(EngineState &es, ZoneState &zone_state, entt::DefaultRegistry &reg
   }
   if (edit_entitymaterials) {
     show_entitymaterials_window(ui, registry);
+  }
+  if (edit_tiledatamaterials) {
+    auto &level_data = zone_state.level_data;
+    show_tiledata_materials_window(ui, level_data);
   }
 }
 
@@ -452,7 +491,7 @@ draw_ui(EngineState &es, ZoneManager &zm, window::SDLWindow &window, entt::Defau
   if (ui_state.show_playerwindow) {
     draw_player_window(es, zone_state);
   }
-  if (ui_state.show_tiledatawindow) {
+  if (ui_state.show_tiledata_editor_window) {
     draw_tiledata_editor(tiledata_state, zm);
   }
   if (ui_state.show_debugwindow) {
@@ -471,7 +510,7 @@ draw_ui(EngineState &es, ZoneManager &zm, window::SDLWindow &window, entt::Defau
       ImGui::MenuItem("Camera Menu", nullptr, &ui_state.show_camerawindow);
       ImGui::MenuItem("Mouse Menu", nullptr, &ui_state.show_mousewindow);
       ImGui::MenuItem("Player Menu", nullptr, &ui_state.show_playerwindow);
-      ImGui::MenuItem("Tilemap Menu", nullptr, &ui_state.show_tiledatawindow);
+      ImGui::MenuItem("Tilemap Menu", nullptr, &ui_state.show_tiledata_editor_window);
       ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Settings")) {

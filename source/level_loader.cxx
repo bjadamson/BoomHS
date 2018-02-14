@@ -118,7 +118,7 @@ get_color(CppTable const& table, char const* name)
   color.set_g(c[1]);
   color.set_b(c[2]);
   color.set_a(c[3]);
-  return boost::make_optional(color);
+  return stlw::make_optional(color);
 }
 
 stlw::optional<glm::vec3>
@@ -142,10 +142,30 @@ get_vec3_or_abort(CppTable const& table, char const* name)
   return *vec3_data;
 }
 
-auto
-load_meshes(opengl::ObjLoader &loader, CppTableArray const& mesh_table)
+stlw::optional<float>
+get_float(CppTable const& table, char const* name)
 {
-  auto const load = [&loader](auto const& table) {
+  auto const load_data = get_value<double>(table, name);
+  if (!load_data) {
+    return stlw::none;
+  }
+  return stlw::make_optional(static_cast<float>(*load_data));
+}
+
+float
+get_float_or_abort(CppTable const& table, char const* name)
+{
+  auto const float_data = get_float(table, name);
+  if (!float_data) {
+    std::abort();
+  }
+  return *float_data;
+}
+
+auto
+load_meshes(CppTableArray const& mesh_table)
+{
+  auto const load = [](auto const& table) {
     auto const name = get_string_or_abort(table, "name");
 
     auto const colors = get_bool_or_abort(table, "colors");
@@ -156,7 +176,7 @@ load_meshes(opengl::ObjLoader &loader, CppTableArray const& mesh_table)
     auto const mtl = "assets/" + name + ".mtl";
 
     opengl::LoadMeshConfig const cfg{colors, normals, uvs};
-    auto mesh = loader.load_mesh(obj.c_str(), mtl.c_str(), cfg);
+    auto mesh = load_mesh(obj.c_str(), mtl.c_str(), cfg);
     return std::make_pair(name, MOVE(mesh));
   };
   ObjCache cache;
@@ -226,6 +246,38 @@ load_textures(stlw::Logger &logger, CppTable const& config)
   return ttable;
 }
 
+struct ColorMaterialInfo
+{
+  Color const color;
+  Material const material;
+};
+
+boost::optional<ColorMaterialInfo>
+load_material_color(CppTable const& file)
+{
+  // clang-format off
+  MAKEOPT(auto const color,     get_vec3(file,   "color"));
+  MAKEOPT(auto const ambient,   get_vec3(file,   "ambient"));
+  MAKEOPT(auto const diffuse,   get_vec3(file,   "diffuse"));
+  MAKEOPT(auto const specular,  get_vec3(file,   "specular"));
+  MAKEOPT(auto const shininess, get_float(file,  "shininess"));
+  // clang-format on
+
+  Material material{ambient, diffuse, specular, shininess};
+  ColorMaterialInfo const cmi{Color{color}, MOVE(material)};
+  return stlw::make_optional(cmi);
+}
+
+auto
+load_material_color_orabort(CppTable const& file)
+{
+  auto optional = load_material_color(file);
+  if (!optional) {
+    std::abort();
+  }
+  return *optional;
+}
+
 auto
 load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& ttable,
     entt::DefaultRegistry &registry)
@@ -241,7 +293,6 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     auto texture_name =     get_string(file,          "texture");
     auto pointlight_o =     get_vec3(file,            "pointlight");
     auto player =           get_string(file,          "player");
-    auto receives_light_o = get_bool(file,            "receives_light");
     // clang-format on
 
     // texture OR color fields, not both
@@ -301,9 +352,12 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       auto &light_component = registry.assign<PointLight>(entity);
       light_component.light.diffuse = Color{*pointlight_o};
     }
-    if (receives_light_o) {
-      // TODO: fill in fields
-      registry.assign<Material>(entity);
+
+    // An object receives light, if it has ALL ambient/diffuse/specular fields
+    auto const cm_optional = load_material_color(file);
+    if (cm_optional) {
+      auto const& cm = *cm_optional;
+      registry.assign<Material>(entity) = cm.material;
     }
     return entity;
   };
@@ -318,6 +372,35 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     entities.data.emplace_back(MOVE(entity));
   }
   return entities;
+}
+
+auto
+load_tileinfos(stlw::Logger &logger, CppTable const& config, entt::DefaultRegistry &registry)
+{
+  auto const load_tile = [&registry](auto const& file) {
+    auto const tile  =     get_string_or_abort(file, "tile");
+    auto const tiletype = tiletype_from_string(tile);
+    auto const mesh_name = get_string_or_abort(file, "mesh");
+    auto const vshader_name = get_string_or_abort(file, "vshader");
+
+    auto const cm = load_material_color_orabort(file);
+    auto const& material = cm.material;
+    auto const& color = cm.color;
+    return TileInfo{tiletype, mesh_name, vshader_name, color, material};
+  };
+  auto const tile_table = get_table_array(config, "tile");
+  auto const& ttable = tile_table->as_table_array()->get();
+
+  // Ensure we load data for everry tile
+  assert(TileInfos::SIZE == ttable.size());
+
+  std::array<TileInfo, TileInfos::SIZE> tinfos;
+  FOR(i, ttable.size()) {
+    auto const& it = ttable[i];
+    auto tile = load_tile(it);
+    tinfos[i] = MOVE(tile);
+  }
+  return TileInfos{MOVE(tinfos)};
 }
 
 using LoadResult = stlw::result<std::pair<std::string, opengl::ShaderProgram>, std::string>;
@@ -421,13 +504,15 @@ load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string co
   assert(area_config);
 
   auto const mesh_table = get_table_array_or_abort(area_config, "meshes");
-  auto loader = opengl::ObjLoader{LOC::WHITE};
-  auto objcache = load_meshes(loader, mesh_table);
+  auto objcache = load_meshes(mesh_table);
 
   std::cerr << "loading textures ...\n";
   auto texture_table = load_textures(logger, area_config);
   std::cerr << "loading entities ...\n";
   auto entities = load_entities(logger, area_config, texture_table, registry);
+
+  std::cerr << "loading tile materials ...\n";
+  auto tile_infos = load_tileinfos(logger, area_config, registry);
 
   std::cerr << "loading lights ...\n";
   auto const directional_light_diffuse = Color{get_vec3_or_abort(area_config, "directional_light_diffuse")};
@@ -439,10 +524,10 @@ load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string co
   GlobalLight glight{MOVE(dlight)};
 
   auto bg_color = Color{get_vec3_or_abort(area_config, "background")};
-  Assets assets{MOVE(objcache), MOVE(entities), MOVE(texture_table), MOVE(glight), MOVE(bg_color)};
+  Assets assets{MOVE(objcache), MOVE(entities), MOVE(texture_table), MOVE(tile_infos),
+    MOVE(glight), MOVE(bg_color)};
   std::cerr << "yielding assets\n";
   return LevelAssets{MOVE(assets), MOVE(shader_programs)};
 }
-
 
 } // ns boomhs

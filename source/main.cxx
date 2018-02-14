@@ -39,8 +39,6 @@
 #include <cstdlib>
 #include <string>
 
-namespace OF = opengl::factories;
-namespace LOC = opengl::LIST_OF_COLORS;
 using namespace boomhs;
 using namespace opengl;
 using namespace window;
@@ -49,24 +47,25 @@ using stlw::Logger;
 namespace boomhs
 {
 
-stlw::result<HandleManager, std::string>
-copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, entt::DefaultRegistry &registry,
-                ObjCache const &obj_cache)
+using copy_assets_pair_t = std::pair<EntityDrawHandles, TileDrawHandles>;
+stlw::result<copy_assets_pair_t, std::string>
+copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile_infos,
+    entt::DefaultRegistry &registry, ObjCache const &obj_cache)
 {
-  GpuHandleList handle_list;
+  EntityDrawinfos dinfos;
   /*
   registry.view<ShaderName, Color, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_colorcube_gpu(logger, shader_ref, color);
-        handle_list.add(entity, MOVE(handle));
+        dinfos.add(entity, MOVE(handle));
       });
       */
   registry.view<ShaderName, PointLight, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &pointlight, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_vertexonlycube_gpu(logger, shader_ref);
-        handle_list.add(entity, MOVE(handle));
+        dinfos.add(entity, MOVE(handle));
       });
 
   registry.view<ShaderName, Color, MeshRenderable>().each(
@@ -74,306 +73,49 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, entt::DefaultRegistry
         auto const &obj = obj_cache.get_obj(mesh.name);
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, stlw::none);
-        handle_list.add(entity, MOVE(handle));
+        dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &, auto &texture) {
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
-        handle_list.add(entity, MOVE(handle));
+        dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, SkyboxRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &, auto &texture) {
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
-        handle_list.add(entity, MOVE(handle));
+        dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &mesh, auto &texture) {
         auto const &obj = obj_cache.get_obj(mesh.name);
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
-        handle_list.add(entity, MOVE(handle));
+        dinfos.add(entity, MOVE(handle));
       });
 
   registry.view<ShaderName, MeshRenderable>().each([&](auto entity, auto &sn, auto &mesh) {
     auto const &obj = obj_cache.get_obj(mesh.name);
     auto &shader_ref = sps.ref_sp(sn.value);
     auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, stlw::none);
-    handle_list.add(entity, MOVE(handle));
+    dinfos.add(entity, MOVE(handle));
   });
 
-  auto const make_special = [&handle_list, &logger, &obj_cache, &sps, &registry](char const *mesh_name, char const*vshader_name) {
+  std::vector<DrawInfo> tile_dinfos;
+  tile_dinfos.reserve(static_cast<size_t>(TileType::MAX));
+  for (auto const& it : tile_infos) {
+    auto const& mesh_name = it.mesh_name;
+    auto const& vshader_name = it.vshader_name;
     auto const &obj = obj_cache.get_obj(mesh_name);
+
     auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, stlw::none);
-    auto const entity = registry.create();
-    registry.assign<Material>(entity);
-    auto meshc = registry.assign<MeshRenderable>(entity);
-    meshc.name = mesh_name;
-
-    auto &color = registry.assign<Color>(entity);
-    color.set_r(1.0);
-    color.set_g(1.0);
-    color.set_b(1.0);
-    color.set_a(1.0);
-
-    handle_list.add(entity, MOVE(handle));
-    return entity;
-  };
-  auto const make_stair = [&](char const* vshader_name, char const* mesh_name) {
-    auto const &obj = obj_cache.get_obj(mesh_name);
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, stlw::none);
-    auto const eid = registry.create();
-    registry.assign<Material>(eid);
-    auto meshc = registry.assign<MeshRenderable>(eid);
-    meshc.name = mesh_name;
-
-    handle_list.add(eid, MOVE(handle));
-    return eid;
-  };
-
-  auto const bridge_eid = make_special("B", "3d_pos_normal_color");
-  auto const equal_eid = make_special("equal", "3d_pos_normal_color");
-  auto const plus_eid = make_special("plus", "3d_pos_normal_color");
-
-  auto const hashtag_eid = make_special("hashtag", "hashtag");
-  auto const river_eid = make_special("tilde", "river");
-  auto const stair_down_eid = make_stair("stair", "stair_down");
-  auto const stair_up_eid = make_stair("stair", "stair_up");
-
-  return HandleManager{MOVE(handle_list), MOVE(bridge_eid), MOVE(equal_eid), plus_eid, hashtag_eid,
-    river_eid, stair_down_eid, stair_up_eid};
-}
-
-void
-draw_entities(RenderArgs const& rargs, EngineState const& es, ZoneState &zone_state)
-{
-  auto &handlem = zone_state.handles;
-  auto &registry = zone_state.registry;
-  auto &sps = zone_state.sps;
-
-  auto const draw_fn = [&handlem, &sps, &rargs, &registry](auto entity, auto &sn, auto &transform) {
-    auto &shader_ref = sps.ref_sp(sn.value);
-    auto &handle = handlem.lookup(entity);
-    render::draw(rargs, transform, shader_ref, handle, entity, registry);
-  };
-
-  auto const draw_adapter = [&](auto entity, auto &sn, auto &transform, auto &) {
-    draw_fn(entity, sn, transform);
-  };
-
-  //
-  // Actual drawing begins here
-  registry.view<ShaderName, Transform, CubeRenderable>().each(draw_adapter);
-  registry.view<ShaderName, Transform, MeshRenderable>().each(draw_adapter);
-
-  if (es.draw_skybox) {
-    auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {
-      draw_fn(entity, sn, transform);
-    };
-    registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
+    tile_dinfos[static_cast<size_t>(it.type)] = MOVE(handle);
   }
-}
 
-void
-draw_terrain(RenderArgs const& rargs, ZoneState &zone_state)
-{
-  auto &registry = zone_state.registry;
-  auto &sps = zone_state.sps;
-
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-
-  auto &terrain_sp = sps.ref_sp("3d_pos_normal_color");
-  auto terrain = OF::copy_normalcolorcube_gpu(rargs.logger, terrain_sp, LOC::WHITE);
-
-  auto &transform = registry.assign<Transform>(entity);
-  auto &scale = transform.scale;
-  scale.x = 50.0f;
-  scale.y = 0.2f;
-  scale.z = 50.0f;
-  auto &translation = transform.translation;
-  // translation.x = 3.0f;
-  translation.y = -2.0f;
-  // translation.z = 2.0f;
-  render::draw(rargs, transform, terrain_sp, terrain, entity, registry);
-}
-
-void
-draw_tiledata(RenderArgs const& rargs, ZoneState &zone_state, TiledataState const& tds,
-    FrameTime const& ft)
-{
-  // TODO: How do we "GET" the hashtag and plus shaders under the new entity management system?
-  //
-  // PROBLEM:
-  //    We currently store one draw handle to every entity. For the TileData, we need to store two
-  //    (an array) of DrawInfo instances to the one entity.
-  //
-  // THOUGHT:
-  //    It probably makes sense to render the tiledata differently now. We should assume more than
-  //    just two tile type's will be necessary, and will have to devise a strategy for quickly
-  //    rendering the tiledata using different tile's. Maybe store the different tile type's
-  //    together somehow for rendering?
-  auto &handlem = zone_state.handles;
-  auto &sps = zone_state.sps;
-
-  using namespace render;
-  auto &tile_sp = sps.ref_sp("3d_pos_normal_color");
-
-  DrawTileArgs bridge{tile_sp, handlem.lookup(handlem.bridge_eid), handlem.bridge_eid};
-  DrawTileArgs equal{tile_sp, handlem.lookup(handlem.equal_eid), handlem.equal_eid};
-  DrawTileArgs plus{tile_sp, handlem.lookup(handlem.plus_eid), handlem.plus_eid};
-
-  auto &hashtag_sp = sps.ref_sp("hashtag");
-  DrawTileArgs hashtag{hashtag_sp, handlem.lookup(handlem.hashtag_eid), handlem.hashtag_eid};
-  DrawTileArgs river{sps.ref_sp("river"), handlem.lookup(handlem.river_eid), handlem.river_eid};
-
-  auto &stair_sp = sps.ref_sp("stair");
-  DrawTileArgs stairs_down{stair_sp, handlem.lookup(handlem.stair_down_eid), handlem.stair_down_eid};
-  DrawTileArgs stairs_up{stair_sp, handlem.lookup(handlem.stair_up_eid), handlem.stair_up_eid};
-  DrawTileDataArgs dta{MOVE(bridge), MOVE(equal), MOVE(plus), MOVE(hashtag), MOVE(river),
-    MOVE(stairs_down), MOVE(stairs_up)};
-
-  auto &registry = zone_state.registry;
-  auto const& leveldata = zone_state.level_data;
-  render::draw_tiledata(rargs, dta, leveldata.tiledata(),
-                       tds, registry, ft);
-}
-
-void
-draw_rivers(RenderArgs const& rargs, ZoneState &zone_state, FrameTime const& ft)
-{
-  auto &registry = zone_state.registry;
-  auto &handlem = zone_state.handles;
-  auto &sps = zone_state.sps;
-
-  auto &sp = sps.ref_sp("river");
-  auto &river_handle = handlem.lookup(handlem.river_eid);
-
-  auto const& rinfos = zone_state.level_data.rivers();
-  for (auto const& rinfo : rinfos) {
-    render::draw_rivers(rargs, sp, river_handle, registry, ft, handlem.river_eid, rinfo);
-  }
-}
-
-void
-draw_tilegrid(RenderArgs const& rargs, ZoneState &zone_state, TiledataState const& tds)
-{
-  auto &sps = zone_state.sps;
-  auto &sp = sps.ref_sp("3d_pos_color");
-
-  auto const& leveldata = zone_state.level_data;
-  auto const& tiledata = leveldata.tiledata();
-
-  Transform transform;
-  bool const show_y = tds.show_yaxis_lines;
-  auto const tilegrid = OF::create_tilegrid(rargs.logger, sp, tiledata, show_y);
-  render::draw_tilegrid(rargs, transform, sp, tilegrid);
-}
-
-void
-draw_global_axis(RenderArgs const& rargs, entt::DefaultRegistry &registry, ShaderPrograms &sps)
-{
-  auto &logger = rargs.logger;
-  auto &sp = sps.ref_sp("3d_pos_color");
-  auto world_arrows = OF::create_axis_arrows(logger, sp);
-
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-
-  auto &transform = registry.assign<Transform>(entity);
-
-  render::draw(rargs, transform, sp, world_arrows.x_dinfo, entity, registry);
-  render::draw(rargs, transform, sp, world_arrows.y_dinfo, entity, registry);
-  render::draw(rargs, transform, sp, world_arrows.z_dinfo, entity, registry);
-}
-
-void
-draw_local_axis(RenderArgs const& rargs, entt::DefaultRegistry &registry, ShaderPrograms &sps,
-                glm::vec3 const &player_pos)
-{
-  auto &logger = rargs.logger;
-  auto &sp = sps.ref_sp("3d_pos_color");
-  auto const axis_arrows = OF::create_axis_arrows(logger, sp);
-
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-
-  auto &transform = registry.assign<Transform>(entity);
-  transform.translation = player_pos;
-
-  render::draw(rargs, transform, sp, axis_arrows.x_dinfo, entity, registry);
-  render::draw(rargs, transform, sp, axis_arrows.y_dinfo, entity, registry);
-  render::draw(rargs, transform, sp, axis_arrows.z_dinfo, entity, registry);
-}
-
-void
-draw_arrow(RenderArgs const& rargs, entt::DefaultRegistry &registry, ShaderPrograms &sps,
-    glm::vec3 const& start, glm::vec3 const& head, Color const& color)
-{
-  auto &logger = rargs.logger;
-  auto &sp = sps.ref_sp("3d_pos_color");
-
-  auto const handle = OF::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
-
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-  auto &transform = registry.assign<Transform>(entity);
-
-  render::draw(rargs, transform, sp, handle, entity, registry);
-}
-
-void
-draw_arrow_abovetile_and_neighbors(RenderArgs const& rargs, entt::DefaultRegistry &registry,
-    ShaderPrograms &sps, TileData const& tdata, TilePosition const& tpos)
-{
-  glm::vec3 constexpr offset{0.5f, 2.0f, 0.5f};
-
-  auto const draw_the_arrow = [&](auto const& ntpos, auto const& color) {
-    auto const bottom = glm::vec3{ntpos.x + offset.x, offset.y, ntpos.y + offset.y};
-    auto const top = bottom + (Y_UNIT_VECTOR * 2.0f);
-
-    draw_arrow(rargs, registry, sps, top, bottom, color);
-  };
-
-  draw_the_arrow(tpos, LOC::BLUE);
-  auto const neighbors = find_immediate_neighbors(tdata, tpos, TileLookupBehavior::ALL_8_DIRECTIONS,
-      [](auto const& tpos) { return true; });
-  //assert(neighbors.size() <= 8);
-  FOR(i, neighbors.size()) {
-    draw_the_arrow(neighbors[i], LOC::LIME_GREEN);
-  }
-}
-
-void
-conditionally_draw_player_vectors(RenderArgs const& rargs, EngineState &es,
-    entt::DefaultRegistry &registry, ShaderPrograms &sps, WorldObject const &player)
-{
-  auto &logger = es.logger;
-
-  glm::vec3 const pos = player.world_position();
-  if (es.show_player_localspace_vectors) {
-    // local-space
-    //
-    // forward
-    auto const fwd = player.eye_forward();
-    draw_arrow(rargs, registry, sps, pos, pos + fwd, LOC::GREEN);
-
-    // right
-    auto const right = player.eye_right();
-    draw_arrow(rargs, registry, sps, pos, pos + right, LOC::RED);
-  }
-  if (es.show_player_worldspace_vectors) {
-    // world-space
-    //
-    // forward
-    auto const fwd = player.world_forward();
-    draw_arrow(rargs, registry, sps, pos, pos + (2.0f * fwd), LOC::LIGHT_BLUE);
-
-    // backward
-    glm::vec3 const right = player.world_right();
-    draw_arrow(rargs, registry, sps, pos, pos + right, LOC::PINK);
-  }
+  EntityDrawHandles edh{MOVE(dinfos)};
+  TileDrawHandles td{MOVE(tile_dinfos)};
+  return std::make_pair(MOVE(edh), MOVE(td));
 }
 
 void
@@ -473,7 +215,7 @@ update_riverwiggles(LevelData &level_data, FrameTime const& ft)
       }
     }
   };
-  for (auto &rinfo : level_data.rivers_mutref()) {
+  for (auto &rinfo : level_data.rivers()) {
     update_river(rinfo);
   }
 }
@@ -494,13 +236,14 @@ game_loop(RenderArgs const& rargs, EngineState &es, ZoneManager &zm, SDLWindow &
 
   auto &player = zone_state.player;
   auto &registry = zone_state.registry;
+  auto &sps = zone_state.sps;
   /////////////////////////
 
   // compute tiledata
   if (tiledata_state.recompute) {
     LOG_INFO("Updating tiledata\n");
 
-    update_visible_tiles(leveldata.tiledata_mutref(), player, tiledata_state.reveal);
+    update_visible_tiles(leveldata.tiledata(), player, tiledata_state.reveal);
 
     // We don't need to recompute the tiledata, we just did.
     tiledata_state.recompute = false;
@@ -510,38 +253,32 @@ game_loop(RenderArgs const& rargs, EngineState &es, ZoneManager &zm, SDLWindow &
   render::clear_screen(zone_state.background);
 
   if (es.draw_entities) {
-    draw_entities(rargs, es, zone_state);
+    render::draw_entities(rargs, es, zone_state);
   }
   if (es.draw_terrain) {
-    draw_terrain(rargs, zone_state);
+    render::draw_terrain(rargs, zone_state);
   }
   if (tiledata_state.draw_tiledata) {
-    draw_tiledata(rargs, zone_state, tiledata_state, ft);
-    draw_rivers(rargs, zone_state, ft);
+    render::draw_tiledata(rargs, tiledata_state, zone_state, ft);
+    render::draw_rivers(rargs, zone_state, ft);
   }
   if (tiledata_state.show_grid_lines) {
-    draw_tilegrid(rargs, zone_state, tiledata_state);
+    render::draw_tilegrid(rargs, tiledata_state, zone_state);
   }
-
-  auto &sps = zone_state.sps;
   if (tiledata_state.show_neighbortile_arrows) {
     auto const& wp = player.world_position();
-    auto const& tdata = leveldata.tiledata();
     auto const tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
-    draw_arrow_abovetile_and_neighbors(rargs, registry, sps, tdata, tpos);
+    render::draw_arrow_abovetile_and_neighbors(rargs, tpos, zone_state);
   }
   if (es.show_global_axis) {
-    draw_global_axis(rargs, registry, sps);
+    render::draw_global_axis(rargs, registry, sps);
   }
   if (es.show_local_axis) {
-    draw_local_axis(rargs, registry, sps, player.world_position());
-  }
-  if (es.show_player_localspace_vectors) {
-    conditionally_draw_player_vectors(rargs, es, registry, sps, player);
+    render::draw_local_axis(rargs, registry, sps, player.world_position());
   }
 
   // if checks happen inside fn
-  conditionally_draw_player_vectors(rargs, es, registry, sps, player);
+  render::conditionally_draw_player_vectors(rargs, player, es, zone_state);
   if (es.ui_state.draw_ui) {
     draw_ui(es, zm, window, registry);
   }
@@ -624,8 +361,8 @@ make_init_gamestate(stlw::Logger &logger, ImGuiIO &imgui, window::Dimensions con
 void
 bridge_staircases(ZoneState &a, ZoneState &b)
 {
-  auto &tiledata_a = a.level_data.tiledata_mutref();
-  auto &tiledata_b = b.level_data.tiledata_mutref();
+  auto &tiledata_a = a.level_data.tiledata();
+  auto &tiledata_b = b.level_data.tiledata();
 
   auto const stairs_up_a = find_upstairs(a.registry, tiledata_a);
   assert(!stairs_up_a.empty());
@@ -678,23 +415,25 @@ start(stlw::Logger &logger, Engine &engine)
       entt::DefaultRegistry &registry)
   {
     auto &assets = level_assets.assets;
+    auto &sps = level_assets.shader_programs;
     auto const& objcache = assets.obj_cache;
 
     LOG_TRACE("Copy assets to GPU.");
-    auto handle_result = boomhs::copy_assets_gpu(logger, level_assets.shader_programs, registry,
-        objcache);
-    assert(handle_result);
-    HandleManager handlem = MOVE(*handle_result);
+    auto copy_result = boomhs::copy_assets_gpu(logger, sps, assets.tile_infos, registry, objcache);
+    assert(copy_result);
+    auto handles = MOVE(*copy_result);
+    auto edh = MOVE(handles.first);
+    auto tdh = MOVE(handles.second);
 
     auto const stairs_perfloor = 8;
     StairGenConfig const sgconfig{floor_count, floor_number, stairs_perfloor};
 
     int const width = 40, height = 40;
     TileDataConfig const tdconfig{width, height, sgconfig};
-    auto leveldata = level_generator::make_leveldata(tdconfig, rng, registry);
+    auto leveldata = level_generator::make_leveldata(tdconfig, registry, MOVE(assets.tile_infos),
+        rng);
 
-    ////////////////////////////////
-    // for now assume only 1 entity has the Light tag
+    // Load point lights
     auto light_view = registry.view<PointLight, Transform>();
     for (auto const entity : light_view) {
       auto &transform = light_view.get<Transform>(entity);
@@ -707,7 +446,6 @@ start(stlw::Logger &logger, Engine &engine)
     auto constexpr UP = Y_UNIT_VECTOR;
 
     auto const player_eid = find_player(registry);
-
     EnttLookup player_lookup{player_eid, registry};
     WorldObject player{player_lookup, FORWARD, UP};
     Camera camera(player_lookup, FORWARD, UP);
@@ -721,7 +459,8 @@ start(stlw::Logger &logger, Engine &engine)
     return ZoneState{
       assets.background_color,
       assets.global_light,
-      MOVE(handlem),
+      MOVE(edh),
+      MOVE(tdh),
       MOVE(level_assets.shader_programs),
       MOVE(level_assets.assets.texture_table),
       MOVE(leveldata),
@@ -731,10 +470,10 @@ start(stlw::Logger &logger, Engine &engine)
   };
 
   auto &registries = engine.registries;
-  auto const FLOOR_COUNT = 5;
+  auto const FLOOR_COUNT = 2;
 
   std::vector<ZoneState> zstates;
-  FOR(i, 1) {
+  FOR(i, FLOOR_COUNT) {
     auto const level_string = [&i]() { return "area" + std::to_string(i) + ".toml"; };
     DO_TRY(auto ld, boomhs::load_level(logger, registries[i], level_string()));
     auto zs = make_zs(i, FLOOR_COUNT, MOVE(ld), registries[i]);
