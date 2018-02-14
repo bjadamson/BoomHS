@@ -342,7 +342,7 @@ show_entitymaterials_window(UiState &ui, entt::DefaultRegistry &registry)
 }
 
 void
-show_tiledata_materials_window(UiState &ui, TileData &tdata, entt::DefaultRegistry &registry)
+show_tiledata_materials_window(UiState &ui, LevelData &level_data)
 {
   if (ImGui::Begin("Entity Materials Editor")) {
 
@@ -353,46 +353,16 @@ show_tiledata_materials_window(UiState &ui, TileData &tdata, entt::DefaultRegist
       tile_names.emplace_back(to_string(type));
     }
 
-    // 2. Collect entities
-    /*
-    std::vector<Material*> walls;
-    for(auto &it : tdata) {
-      if (it.type == TileType::WALL) {
-        auto const eid = it.eid;
-        assert(registry.has<Material>(eid));
-        Material &material = registry.get<Material>(eid);
-        walls.emplace_back(&material);
-      }
-    }
-    */
-
-    auto *selected_tile = ui.selected_tile.data();
-    ImGui::InputInt2("TilePosition:", selected_tile);
-    assert(selected_tile);
-    auto const st = static_cast<uint64_t>(*selected_tile);
-
-    auto &tile = tdata.data(TilePosition{st});
-    assert(registry.has<Material>(tile.eid));
-    auto &selected_material = registry.get<Material>(tile.eid);
-    show_material_editor("Tile Material:", selected_material);
     int &selected = ui.selected_tiledata;
+    assert(selected < static_cast<int>(tile_names.size()));
 
+    TileInfo &tileinfo = level_data.tileinfos()[static_cast<TileType>(selected)];
+    auto &material = tileinfo.material;
+    show_material_editor("Tile Material:", material);
     {
       void *pdata = reinterpret_cast<void *>(&tile_names);
       ImGui::Combo("Tile Type:", &selected, callback_from_strings, pdata, tile_names.size());
       ImGui::Separator();
-    }
-    if (ImGui::Button("Apply all")) {
-      for(auto const& tile: tdata) {
-        assert(registry.has<Material>(tile.eid));
-        auto const selected_type = tiletype_from_string(tile_names[selected]);
-        if (tile.type == selected_type) {
-          registry.get<Material>(tile.eid) = selected_material;//.ambient = glm::vec3{0.0, 0.0, 0.0};// = selected_material;;
-        }
-        //registry.get<Material>(tile.eid).diffuse = glm::vec3{0.0, 0.0, 0.0};// = selected_material;;
-        //registry.get<Material>(tile.eid).specular = glm::vec3{0.0, 0.0, 0.0};// = selected_material;;
-        std::cerr << "applying ...\n";
-      }
     }
     ImGui::End();
   }
@@ -491,8 +461,8 @@ lighting_menu(EngineState &es, ZoneState &zone_state, entt::DefaultRegistry &reg
     show_entitymaterials_window(ui, registry);
   }
   if (edit_tiledatamaterials) {
-    auto &tiledata = zone_state.level_data.tiledata_mutref();
-    show_tiledata_materials_window(ui, tiledata, registry);
+    auto &level_data = zone_state.level_data;
+    show_tiledata_materials_window(ui, level_data);
   }
 }
 

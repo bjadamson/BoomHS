@@ -257,7 +257,7 @@ update_riverwiggles(LevelData &level_data, FrameTime const& ft)
       }
     }
   };
-  for (auto &rinfo : level_data.rivers_mutref()) {
+  for (auto &rinfo : level_data.rivers()) {
     update_river(rinfo);
   }
 }
@@ -285,7 +285,7 @@ game_loop(RenderArgs const& rargs, EngineState &es, ZoneManager &zm, SDLWindow &
   if (tiledata_state.recompute) {
     LOG_INFO("Updating tiledata\n");
 
-    update_visible_tiles(leveldata.tiledata_mutref(), player, tiledata_state.reveal);
+    update_visible_tiles(leveldata.tiledata(), player, tiledata_state.reveal);
 
     // We don't need to recompute the tiledata, we just did.
     tiledata_state.recompute = false;
@@ -403,8 +403,8 @@ make_init_gamestate(stlw::Logger &logger, ImGuiIO &imgui, window::Dimensions con
 void
 bridge_staircases(ZoneState &a, ZoneState &b)
 {
-  auto &tiledata_a = a.level_data.tiledata_mutref();
-  auto &tiledata_b = b.level_data.tiledata_mutref();
+  auto &tiledata_a = a.level_data.tiledata();
+  auto &tiledata_b = b.level_data.tiledata();
 
   auto const stairs_up_a = find_upstairs(a.registry, tiledata_a);
   assert(!stairs_up_a.empty());

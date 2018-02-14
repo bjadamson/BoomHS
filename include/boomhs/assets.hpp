@@ -91,6 +91,9 @@ public:
 
   TileInfo const&
   operator[](TileType) const;
+
+  TileInfo&
+  operator[](TileType);
 };
 
 // TODO: not final by any means..

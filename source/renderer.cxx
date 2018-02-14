@@ -450,18 +450,19 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
 
   auto const& leveldata = zone_state.level_data;
   auto const& tiledata = leveldata.tiledata();
+  auto const& tileinfos = leveldata.tileinfos();
 
-  auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, std::uint32_t const entity,
+  auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, Tile const& tile,
       glm::mat4 const& model_mat, bool const receives_ambient_light)
   {
+    auto const eid = tile.eid;
+    auto const& tileinfo = tileinfos[tile.type];
+    auto const& material = tileinfo.material;
+
     sp.use(logger);
     opengl::global::vao_bind(dinfo.vao());
     ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
-
-    auto const& level_data = zone_state.level_data;
-    auto const& tileinfo = level_data.tileinfos()[TileType::RIVER];
-    auto const& material = tileinfo.material;
-    draw_3dlit_shape(args, model_mat, sp, dinfo, entity, material, registry, receives_ambient_light);
+    draw_3dlit_shape(args, model_mat, sp, dinfo, eid, material, registry, receives_ambient_light);
   };
   auto const draw_tile = [&](auto const& tile_pos) {
     auto const& tile = tiledata.data(tile_pos);
@@ -479,14 +480,14 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
       case TileType::FLOOR:
         {
           auto const& plus_dinfo = handlem.lookup(handlem.plus_eid);
-          draw_tile_helper(tile_sp, plus_dinfo, tile.eid, default_modmatrix, true);
+          draw_tile_helper(tile_sp, plus_dinfo, tile, default_modmatrix, true);
         }
         break;
       case TileType::WALL:
         {
           auto &hashtag_sp = sps.ref_sp("hashtag");
           auto const& hashtag_dinfo = handlem.lookup(handlem.hashtag_eid);
-          draw_tile_helper(hashtag_sp, hashtag_dinfo, tile.eid, default_modmatrix, true);
+          draw_tile_helper(hashtag_sp, hashtag_dinfo, tile, default_modmatrix, true);
         }
         break;
       case TileType::RIVER:
@@ -502,7 +503,7 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
           // thinking ...
           auto const& bridge_dinfo = handlem.lookup(handlem.bridge_eid);
           auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
-          draw_tile_helper(tile_sp, bridge_dinfo, tile.eid, default_modmatrix, true);
+          draw_tile_helper(tile_sp, bridge_dinfo, tile, default_modmatrix, true);
         }
         break;
       case TileType::STAIR_DOWN:
@@ -512,7 +513,7 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
 
           auto const& stair_downdinfo = handlem.lookup(handlem.stairdown_eid);
           bool const receives_ambient_light = false;
-          draw_tile_helper(sp, stair_downdinfo, tile.eid, default_modmatrix, receives_ambient_light);
+          draw_tile_helper(sp, stair_downdinfo, tile, default_modmatrix, receives_ambient_light);
         }
         break;
       case TileType::STAIR_UP:
@@ -522,7 +523,7 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
 
           auto const& stair_updinfo = handlem.lookup(handlem.stairup_eid);
           bool const receives_ambient_light = false;
-          draw_tile_helper(sp, stair_updinfo, tile.eid, default_modmatrix, receives_ambient_light);
+          draw_tile_helper(sp, stair_updinfo, tile, default_modmatrix, receives_ambient_light);
         }
         break;
       default:

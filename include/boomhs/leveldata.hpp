@@ -35,17 +35,20 @@ public:
   auto dimensions() const { return tilegrid_.dimensions(); }
 
   auto&
-  tiledata_mutref() { return tilegrid_; }
+  tiledata() { return tilegrid_; }
 
   // Used for rendering
   auto const&
   tiledata() const { return tilegrid_; }
 
+  auto&
+  tileinfos() { return tileinfos_; }
+
   auto const&
   tileinfos() const { return tileinfos_; }
 
   auto&
-  rivers_mutref() { return rivers_; }
+  rivers() { return rivers_; }
 
   auto const&
   rivers() const { return rivers_; }

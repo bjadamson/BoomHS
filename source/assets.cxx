@@ -1,6 +1,23 @@
 #include <boomhs/assets.hpp>
 #include <type_traits>
 
+using namespace boomhs;
+
+namespace
+{
+
+// This macro exists to reduce code duplication implementingt he two different implementation of
+// operator[].
+#define SEARCH_FOR(type, begin, end)                                                               \
+  auto const cmp = [&type](auto const& tinfo) {                                                    \
+    return tinfo.type == type;                                                                     \
+  };                                                                                               \
+  auto const it = std::find_if(begin, end, cmp);                                                   \
+  assert(it != end);                                                                               \
+  return *it;
+
+} // ns anon
+
 namespace boomhs
 {
 
@@ -9,14 +26,15 @@ namespace boomhs
 TileInfo const&
 TileInfos::operator[](TileType const type) const
 {
-  auto const cmp = [&type](auto const& tinfo) {
-    return tinfo.type == type;
-  };
-  auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
-  // assume presence
-  assert(it != data_.cend());
-  return *it;
+  SEARCH_FOR(type, data_.cbegin(), data_.cend());
 }
+
+TileInfo&
+TileInfos::operator[](TileType const type)
+{
+  SEARCH_FOR(type, data_.begin(), data_.end());
+}
+#undef SEARCH_FOR
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ObjCache

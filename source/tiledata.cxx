@@ -13,13 +13,6 @@ TileData::TileData(std::vector<Tile> &&t, size_t const width, size_t const heigh
   for (auto &tile : tiles_) {
     tile.eid = registry_.create();
     registry_.assign<Transform>(tile.eid);
-
-    auto const& m = tinfos[tile.type].material;
-    auto &material = registry_.assign<opengl::Material>(tile.eid);
-    material.ambient = m.ambient;
-    material.diffuse = m.diffuse;
-    material.specular = m.specular;
-    material.shininess = m.shininess;
   }
 }
 

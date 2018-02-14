@@ -59,32 +59,32 @@ specular = [1.0, 1.0, 1.0]
 shininess = 1.0
 
 [[tile]]
-color = [1.0, 1.0, 1.0]
 tile = "WALL"
+color = [1.0, 1.0, 1.0]
 ambient = [1.0, 1.0, 1.0]
 diffuse = [1.0, 1.0, 1.0]
 specular = [1.0, 1.0, 1.0]
 shininess = 1.0
 
 [[tile]]
-color = [1.0, 1.0, 1.0]
 tile = "BRIDGE"
+color = [1.0, 1.0, 1.0]
 ambient = [1.0, 1.0, 1.0]
 diffuse = [1.0, 1.0, 1.0]
 specular = [1.0, 1.0, 1.0]
 shininess = 1.0
 
 [[tile]]
-color = [1.0, 1.0, 1.0]
 tile = "STAIR_DOWN"
+color = [1.0, 1.0, 1.0]
 ambient = [0.0, 1.0, 0.0]
 diffuse = [0.0, 0.0, 0.0]
 specular = [0.0, 0.0, 0.0]
 shininess = 0.0
 
 [[tile]]
-color = [1.0, 1.0, 1.0]
 tile = "STAIR_UP"
+color = [1.0, 1.0, 1.0]
 ambient = [1.0, 0.0, 0.0]
 diffuse = [0.0, 0.0, 0.0]
 specular = [0.0, 0.0, 0.0]
