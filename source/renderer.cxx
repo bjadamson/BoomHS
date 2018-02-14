@@ -170,7 +170,7 @@ draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, Shad
   auto const& camera = args.camera;
 
   glm::mat4 const view_matrix = camera.camera_matrix();
-  auto const draw_3d_shape_fn = [&](auto const &dinfo) {
+  auto const draw_3d_shape_fn = [&]() {
 
     // various matrices
     set_mvpmatrix(logger, model_matrix, sp, camera);
@@ -206,9 +206,9 @@ draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, Shad
     auto const ti = *dinfo.texture_info();
     opengl::global::texture_bind(ti);
     ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
-    draw_3d_shape_fn(dinfo);
+    draw_3d_shape_fn();
   } else {
-    draw_3d_shape_fn(dinfo);
+    draw_3d_shape_fn();
   }
 }
 
