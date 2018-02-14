@@ -93,7 +93,7 @@ set_dirlight(stlw::Logger &logger, ShaderProgram &sp, GlobalLight const& global_
 }
 
 void
-set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
+set_pointlight(stlw::Logger &logger, ShaderProgram &sp, size_t const index,
     PointLight const& pointlight, glm::vec3 const& pointlight_position)
 {
   std::string const varname = "u_pointlights[" + std::to_string(index) + "]";
@@ -117,10 +117,16 @@ set_pointlight(stlw::Logger &logger, ShaderProgram &sp, std::size_t const index,
   sp.set_uniform_float1(logger, quadratic, attenuation.quadratic);
 }
 
+struct PointlightTransform
+{
+  Transform const& transform;
+  PointLight const& pointlight;
+};
+
 void
 set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix,
-    ShaderProgram &sp, DrawInfo const& dinfo, Material const& material, std::uint32_t const entity,
-    entt::DefaultRegistry &registry, bool const receives_ambient_light)
+    ShaderProgram &sp, DrawInfo const& dinfo, Material const& material,
+    std::vector<PointlightTransform> const& pointlights, bool const receives_ambient_light)
 {
   auto const& camera = args.camera;
   auto const& global_light = args.global_light;
@@ -142,11 +148,10 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
 
   // pointlight
   sp.set_uniform_matrix_4fv(logger, "u_invviewmatrix", glm::inverse(glm::mat3{camera.view_matrix()}));
-  auto const pointlights = find_pointlights(registry);
+
   FOR(i, pointlights.size()) {
-    auto const& entity = pointlights[i];
-    auto &transform = registry.get<Transform>(entity);
-    auto &pointlight = registry.get<PointLight>(entity);
+    auto const& transform = pointlights[i].transform;
+    auto const& pointlight = pointlights[i].pointlight;
     set_pointlight(logger, sp, i, pointlight, transform.translation);
   }
 
@@ -194,10 +199,21 @@ draw_3dshape(RenderArgs const &args, glm::mat4 const& model_matrix, ShaderProgra
 
 void
 draw_3dlit_shape(RenderArgs const &args, glm::mat4 const& model_matrix, ShaderProgram &sp,
-  DrawInfo const& dinfo, std::uint32_t const entity, Material const& material,
-  entt::DefaultRegistry &registry, bool const receives_ambient_light)
+  DrawInfo const& dinfo, Material const& material, entt::DefaultRegistry &registry,
+  bool const receives_ambient_light)
 {
-  set_receiveslight_uniforms(args, model_matrix, sp, dinfo, material, entity, registry,
+  auto const pointlight_eids = find_pointlights(registry);
+  std::vector<PointlightTransform> pointlights;
+
+  FOR(i, pointlight_eids.size()) {
+    auto const& eid = pointlight_eids[i];
+    auto &transform = registry.get<Transform>(eid);
+    auto &pointlight = registry.get<PointLight>(eid);
+    PointlightTransform const plt{transform, pointlight};
+
+    pointlights.emplace_back(plt);
+  }
+  set_receiveslight_uniforms(args, model_matrix, sp, dinfo, material, pointlights,
       receives_ambient_light);
   draw_3dshape(args, model_matrix, sp, dinfo);
 }
@@ -319,7 +335,7 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
   if (receives_light) {
     assert(registry.has<Material>(entity));
     Material const& material = registry.get<Material>(entity);
-    draw_3dlit_shape(args, model_matrix, sp, dinfo, entity, material, registry,
+    draw_3dlit_shape(args, model_matrix, sp, dinfo, material, registry,
         receives_ambient_light);
     return;
   }
@@ -412,13 +428,13 @@ draw_local_axis(RenderArgs const& rargs, entt::DefaultRegistry &registry, Shader
 void
 draw_entities(RenderArgs const& rargs, EngineState const& es, ZoneState &zone_state)
 {
-  auto &handlem = zone_state.handles;
+  auto &entity_handles = zone_state.entity_handles;
   auto &registry = zone_state.registry;
   auto &sps = zone_state.sps;
 
-  auto const draw_fn = [&handlem, &sps, &rargs, &registry](auto entity, auto &sn, auto &transform) {
+  auto const draw_fn = [&entity_handles, &sps, &rargs, &registry](auto entity, auto &sn, auto &transform) {
     auto &shader_ref = sps.ref_sp(sn.value);
-    auto &handle = handlem.lookup(entity);
+    auto &handle = entity_handles.lookup(entity);
     draw(rargs, transform, shader_ref, handle, entity, registry);
   };
 
@@ -444,7 +460,7 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
     FrameTime const& ft)
 {
   auto &logger = args.logger;
-  auto &handlem = zone_state.handles;
+  auto &tile_handles = zone_state.tile_handles;
   auto &registry = zone_state.registry;
   auto &sps = zone_state.sps;
 
@@ -455,14 +471,13 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
   auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, Tile const& tile,
       glm::mat4 const& model_mat, bool const receives_ambient_light)
   {
-    auto const eid = tile.eid;
     auto const& tileinfo = tileinfos[tile.type];
     auto const& material = tileinfo.material;
 
     sp.use(logger);
     opengl::global::vao_bind(dinfo.vao());
     ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
-    draw_3dlit_shape(args, model_mat, sp, dinfo, eid, material, registry, receives_ambient_light);
+    draw_3dlit_shape(args, model_mat, sp, dinfo, material, registry, receives_ambient_light);
   };
   auto const draw_tile = [&](auto const& tile_pos) {
     auto const& tile = tiledata.data(tile_pos);
@@ -476,18 +491,18 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
     auto &transform = registry.get<Transform>(tile.eid);
     auto const& rotation   = transform.rotation;
     auto const default_modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
+    auto const& dinfo = tile_handles.lookup(tile.type);
+
     switch(tile.type) {
       case TileType::FLOOR:
         {
-          auto const& plus_dinfo = handlem.lookup(handlem.plus_eid);
-          draw_tile_helper(tile_sp, plus_dinfo, tile, default_modmatrix, true);
+          draw_tile_helper(tile_sp, dinfo, tile, default_modmatrix, true);
         }
         break;
       case TileType::WALL:
         {
           auto &hashtag_sp = sps.ref_sp("hashtag");
-          auto const& hashtag_dinfo = handlem.lookup(handlem.hashtag_eid);
-          draw_tile_helper(hashtag_sp, hashtag_dinfo, tile, default_modmatrix, true);
+          draw_tile_helper(hashtag_sp, dinfo, tile, default_modmatrix, true);
         }
         break;
       case TileType::RIVER:
@@ -501,9 +516,8 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
           // rendering tiles.
           //
           // thinking ...
-          auto const& bridge_dinfo = handlem.lookup(handlem.bridge_eid);
           auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
-          draw_tile_helper(tile_sp, bridge_dinfo, tile, default_modmatrix, true);
+          draw_tile_helper(tile_sp, dinfo, tile, default_modmatrix, true);
         }
         break;
       case TileType::STAIR_DOWN:
@@ -511,9 +525,8 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
           auto &sp = sps.ref_sp("stair");
           sp.set_uniform_color(logger, "u_color", LOC::WHITE);
 
-          auto const& stair_downdinfo = handlem.lookup(handlem.stairdown_eid);
           bool const receives_ambient_light = false;
-          draw_tile_helper(sp, stair_downdinfo, tile, default_modmatrix, receives_ambient_light);
+          draw_tile_helper(sp, dinfo, tile, default_modmatrix, receives_ambient_light);
         }
         break;
       case TileType::STAIR_UP:
@@ -521,9 +534,8 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
           auto &sp = sps.ref_sp("stair");
           sp.set_uniform_color(logger, "u_color", LOC::WHITE);
 
-          auto const& stair_updinfo = handlem.lookup(handlem.stairup_eid);
           bool const receives_ambient_light = false;
-          draw_tile_helper(sp, stair_updinfo, tile, default_modmatrix, receives_ambient_light);
+          draw_tile_helper(sp, dinfo, tile, default_modmatrix, receives_ambient_light);
         }
         break;
       default:
@@ -536,14 +548,12 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
 void
 draw_rivers(RenderArgs const& rargs, ZoneState &zone_state, window::FrameTime const& ft)
 {
-
-  auto &handlem = zone_state.handles;
+  auto &tile_handles = zone_state.tile_handles;
   auto &registry = zone_state.registry;
   auto &sps = zone_state.sps;
 
   auto &sp = sps.ref_sp("river");
-  auto const eid = handlem.river_eid;
-  auto const& dinfo = handlem.lookup(eid);
+  auto const& dinfo = tile_handles.lookup(TileType::RIVER);
 
   sp.set_uniform_color(rargs.logger, "u_color", LOC::WHITE);
   opengl::global::vao_bind(dinfo.vao());
@@ -567,7 +577,7 @@ draw_rivers(RenderArgs const& rargs, ZoneState &zone_state, window::FrameTime co
 
       bool const receives_ambient = true;
       auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
-      draw_3dlit_shape(rargs, modelmatrix, sp, dinfo, eid, material, registry, receives_ambient);
+      draw_3dlit_shape(rargs, modelmatrix, sp, dinfo, material, registry, receives_ambient);
     };
     for (auto const& w : rinfo.wiggles) {
       draw_wiggle(w);

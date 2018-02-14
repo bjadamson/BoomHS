@@ -2,6 +2,9 @@
 #include <opengl/texture.hpp>
 #include <opengl/vao.hpp>
 #include <opengl/vertex_attribute.hpp>
+
+#include <boomhs/tile.hpp>
+
 #include <stlw/type_macros.hpp>
 #include <stlw/optional.hpp>
 
@@ -59,6 +62,51 @@ public:
   auto texture_info() const { return texture_info_; }
 
   void print_self(std::ostream&, VertexAttribute const&) const;
+};
+
+class EntityDrawinfos
+{
+  std::vector<opengl::DrawInfo> drawinfos_;
+  std::vector<uint32_t> entities_;
+
+public:
+  EntityDrawinfos() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(EntityDrawinfos);
+
+  size_t
+  add(uint32_t const, opengl::DrawInfo &&);
+
+  bool empty() const { return drawinfos_.empty(); }
+
+  opengl::DrawInfo const&
+  get(uint32_t const entity) const;
+};
+
+class EntityDrawHandles
+{
+  EntityDrawinfos infos_;
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(EntityDrawHandles);
+  explicit EntityDrawHandles(EntityDrawinfos &&list)
+    : infos_(MOVE(list))
+  {
+  }
+
+  opengl::DrawInfo const&
+  lookup(uint32_t const entity) const;
+};
+
+class TileDrawHandles
+{
+public:
+  std::vector<opengl::DrawInfo> drawinfos_;
+public:
+  TileDrawHandles(std::vector<opengl::DrawInfo> &&dh)
+    : drawinfos_(MOVE(dh))
+  {
+  }
+  opengl::DrawInfo const&
+  lookup(boomhs::TileType) const;
 };
 
 } // ns opengl

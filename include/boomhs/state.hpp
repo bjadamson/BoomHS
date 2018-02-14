@@ -6,6 +6,7 @@
 #include <boomhs/world_object.hpp>
 
 #include <opengl/colors.hpp>
+#include <opengl/draw_info.hpp>
 #include <opengl/lighting.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
@@ -119,7 +120,8 @@ struct ZoneState
   opengl::Color background;
   opengl::GlobalLight global_light;
 
-  HandleManager handles;
+  opengl::EntityDrawHandles entity_handles;
+  opengl::TileDrawHandles tile_handles;
   opengl::ShaderPrograms sps;
   opengl::TextureTable texture_table;
   LevelData level_data;
@@ -129,11 +131,13 @@ struct ZoneState
   entt::DefaultRegistry &registry;
 
   explicit ZoneState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
-      HandleManager &&hm, opengl::ShaderPrograms &&sp, opengl::TextureTable &&ttable,
-      LevelData &&ldata, Camera &&cam, WorldObject &&pl, entt::DefaultRegistry &reg)
+      opengl::EntityDrawHandles &&edh, opengl::TileDrawHandles &&tdh, opengl::ShaderPrograms &&sp,
+      opengl::TextureTable &&ttable, LevelData &&ldata, Camera &&cam, WorldObject &&pl,
+      entt::DefaultRegistry &reg)
     : background(bgcolor)
     , global_light(glight)
-    , handles(MOVE(hm))
+    , entity_handles(MOVE(edh))
+    , tile_handles(MOVE(tdh))
     , sps(MOVE(sp))
     , texture_table(MOVE(ttable))
     , level_data(MOVE(ldata))

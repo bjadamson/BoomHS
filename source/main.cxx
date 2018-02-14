@@ -47,24 +47,25 @@ using stlw::Logger;
 namespace boomhs
 {
 
-stlw::result<HandleManager, std::string>
+using copy_assets_pair_t = std::pair<EntityDrawHandles, TileDrawHandles>;
+stlw::result<copy_assets_pair_t, std::string>
 copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile_infos,
     entt::DefaultRegistry &registry, ObjCache const &obj_cache)
 {
-  GpuHandleList handle_list;
+  EntityDrawinfos dinfos;
   /*
   registry.view<ShaderName, Color, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_colorcube_gpu(logger, shader_ref, color);
-        handle_list.add(entity, MOVE(handle));
+        dinfos.add(entity, MOVE(handle));
       });
       */
   registry.view<ShaderName, PointLight, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &pointlight, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_vertexonlycube_gpu(logger, shader_ref);
-        handle_list.add(entity, MOVE(handle));
+        dinfos.add(entity, MOVE(handle));
       });
 
   registry.view<ShaderName, Color, MeshRenderable>().each(
@@ -72,36 +73,39 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
         auto const &obj = obj_cache.get_obj(mesh.name);
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, stlw::none);
-        handle_list.add(entity, MOVE(handle));
+        dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &, auto &texture) {
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
-        handle_list.add(entity, MOVE(handle));
+        dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, SkyboxRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &, auto &texture) {
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
-        handle_list.add(entity, MOVE(handle));
+        dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &mesh, auto &texture) {
         auto const &obj = obj_cache.get_obj(mesh.name);
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
-        handle_list.add(entity, MOVE(handle));
+        dinfos.add(entity, MOVE(handle));
       });
 
   registry.view<ShaderName, MeshRenderable>().each([&](auto entity, auto &sn, auto &mesh) {
     auto const &obj = obj_cache.get_obj(mesh.name);
     auto &shader_ref = sps.ref_sp(sn.value);
     auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, stlw::none);
-    handle_list.add(entity, MOVE(handle));
+    dinfos.add(entity, MOVE(handle));
   });
 
-  auto const make_special = [&handle_list, &logger, &obj_cache, &sps, &registry, &tile_infos](
+
+  std::vector<DrawInfo> tile_dinfos;
+  tile_dinfos.reserve(static_cast<size_t>(TileType::MAX));
+  auto const make_special = [&tile_dinfos, &logger, &obj_cache, &sps, &registry, &tile_infos](
       char const *mesh_name, char const*vshader_name, TileType const type)
   {
     auto const &obj = obj_cache.get_obj(mesh_name);
@@ -119,7 +123,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
     auto meshc = registry.assign<MeshRenderable>(eid);
     meshc.name = mesh_name;
 
-    handle_list.add(eid, MOVE(handle));
+    tile_dinfos[static_cast<size_t>(type)] = MOVE(handle);
     return eid;
   };
   auto const make_stair = [&](char const* vshader_name, char const* mesh_name, TileType const type) {
@@ -138,20 +142,21 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
     auto meshc = registry.assign<MeshRenderable>(eid);
     meshc.name = mesh_name;
 
-    handle_list.add(eid, MOVE(handle));
+    tile_dinfos[static_cast<size_t>(type)] = MOVE(handle);
     return eid;
   };
 
-  auto const bridge_eid = make_special("equal", "3d_pos_normal_color", TileType::BRIDGE);
-  auto const plus_eid = make_special("plus", "3d_pos_normal_color", TileType::FLOOR);
+  make_special("equal", "3d_pos_normal_color", TileType::BRIDGE);
+  make_special("plus", "3d_pos_normal_color", TileType::FLOOR);
 
-  auto const hashtag_eid = make_special("hashtag", "hashtag", TileType::WALL);
-  auto const river_eid = make_special("tilde", "river", TileType::RIVER);
-  auto const stair_down_eid = make_stair("stair", "stair_down", TileType::STAIR_DOWN);
-  auto const stair_up_eid = make_stair("stair", "stair_up", TileType::STAIR_UP);
+  make_special("hashtag", "hashtag", TileType::WALL);
+  make_special("tilde", "river", TileType::RIVER);
+  make_stair("stair", "stair_down", TileType::STAIR_DOWN);
+  make_stair("stair", "stair_up", TileType::STAIR_UP);
 
-  return HandleManager{MOVE(handle_list), MOVE(bridge_eid), plus_eid, hashtag_eid, river_eid,
-    stair_down_eid, stair_up_eid};
+  EntityDrawHandles edh{MOVE(dinfos)};
+  TileDrawHandles td{MOVE(tile_dinfos)};
+  return std::make_pair(MOVE(edh), MOVE(td));
 }
 
 void
@@ -455,9 +460,11 @@ start(stlw::Logger &logger, Engine &engine)
     auto const& objcache = assets.obj_cache;
 
     LOG_TRACE("Copy assets to GPU.");
-    auto handle_result = boomhs::copy_assets_gpu(logger, sps, assets.tile_infos, registry, objcache);
-    assert(handle_result);
-    HandleManager handlem = MOVE(*handle_result);
+    auto copy_result = boomhs::copy_assets_gpu(logger, sps, assets.tile_infos, registry, objcache);
+    assert(copy_result);
+    auto handles = MOVE(*copy_result);
+    auto edh = MOVE(handles.first);
+    auto tdh = MOVE(handles.second);
 
     auto const stairs_perfloor = 8;
     StairGenConfig const sgconfig{floor_count, floor_number, stairs_perfloor};
@@ -493,7 +500,8 @@ start(stlw::Logger &logger, Engine &engine)
     return ZoneState{
       assets.background_color,
       assets.global_light,
-      MOVE(handlem),
+      MOVE(edh),
+      MOVE(tdh),
       MOVE(level_assets.shader_programs),
       MOVE(level_assets.assets.texture_table),
       MOVE(leveldata),
