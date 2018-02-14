@@ -1,4 +1,5 @@
 #pragma once
+#include <boomhs/assets.hpp>
 #include <boomhs/river_generator.hpp>
 #include <boomhs/tile.hpp>
 #include <boomhs/tiledata.hpp>
@@ -14,6 +15,7 @@ namespace boomhs
 class LevelData
 {
   TileData tilegrid_;
+  TileInfos tile_infos_;
   TilePosition const startpos_;
 
   std::vector<RiverInfo> rivers_;
@@ -22,7 +24,7 @@ class LevelData
   void set_tile(TilePosition const&, TileType const&);
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
-  LevelData(TileData &&, TilePosition const&, std::vector<RiverInfo> &&);
+  LevelData(TileData &&, TileInfos &&, TilePosition const&, std::vector<RiverInfo> &&);
 
   void set_floor(TilePosition const&);
   void set_river(TilePosition const&);

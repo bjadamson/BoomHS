@@ -44,6 +44,7 @@ filename = "TextureAtlas.jpg"
 ###################################################################################################
 [[tile]]
 tile = "FLOOR"
+color = [1.0, 1.0, 1.0]
 ambient = [1.0, 1.0, 1.0]
 diffuse = [1.0, 1.0, 1.0]
 specular = [1.0, 1.0, 1.0]
@@ -51,12 +52,14 @@ shininess = 1.0
 
 [[tile]]
 tile = "RIVER"
+color = [1.0, 1.0, 1.0]
 ambient = [1.0, 0.0, 1.0]
 diffuse = [1.0, 1.0, 1.0]
 specular = [1.0, 1.0, 1.0]
 shininess = 1.0
 
 [[tile]]
+color = [1.0, 1.0, 1.0]
 tile = "WALL"
 ambient = [1.0, 1.0, 1.0]
 diffuse = [1.0, 1.0, 1.0]
@@ -64,6 +67,7 @@ specular = [1.0, 1.0, 1.0]
 shininess = 1.0
 
 [[tile]]
+color = [1.0, 1.0, 1.0]
 tile = "BRIDGE"
 ambient = [1.0, 1.0, 1.0]
 diffuse = [1.0, 1.0, 1.0]
@@ -71,6 +75,7 @@ specular = [1.0, 1.0, 1.0]
 shininess = 1.0
 
 [[tile]]
+color = [1.0, 1.0, 1.0]
 tile = "STAIR_DOWN"
 ambient = [0.0, 1.0, 0.0]
 diffuse = [0.0, 0.0, 0.0]
@@ -78,6 +83,7 @@ specular = [0.0, 0.0, 0.0]
 shininess = 0.0
 
 [[tile]]
+color = [1.0, 1.0, 1.0]
 tile = "STAIR_UP"
 ambient = [1.0, 0.0, 0.0]
 diffuse = [0.0, 0.0, 0.0]

@@ -73,6 +73,7 @@ struct LoadedEntities
 struct TileInfo
 {
   TileType type;
+  opengl::Color color;
   opengl::Material material;
 };
 

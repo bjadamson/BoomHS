@@ -347,11 +347,12 @@ load_tileinfos(stlw::Logger &logger, CppTable const& config, entt::DefaultRegist
     auto const tile  =     get_string_or_abort(file, "tile");
     auto const tiletype = tiletype_from_string(tile);
 
-    auto const ambient =   get_vec3_or_abort(file,   "ambient");
-    auto const diffuse =   get_vec3_or_abort(file,   "diffuse");
-    auto const specular =  get_vec3_or_abort(file,   "specular");
+    auto const color     = Color{get_vec3_or_abort(file,   "color")};
+    auto const ambient   = get_vec3_or_abort(file,   "ambient");
+    auto const diffuse   = get_vec3_or_abort(file,   "diffuse");
+    auto const specular  = get_vec3_or_abort(file,   "specular");
     auto const shininess = get_float_or_abort(file,   "shininess");
-    return TileInfo{tiletype, Material{ambient, diffuse, specular, shininess}};
+    return TileInfo{tiletype, color, Material{ambient, diffuse, specular, shininess}};
   };
   auto const tile_table = get_table_array(config, "tile");
   auto const& ttable = tile_table->as_table_array()->get();

@@ -3,8 +3,10 @@
 namespace boomhs
 {
 
-LevelData::LevelData(TileData &&td, TilePosition const& start_pos, std::vector<RiverInfo> &&rivers)
+LevelData::LevelData(TileData &&td, TileInfos &&tinfos, TilePosition const& start_pos,
+    std::vector<RiverInfo> &&rivers)
   : tilegrid_(MOVE(td))
+  , tile_infos_(MOVE(tinfos))
   , startpos_(start_pos)
   , rivers_(MOVE(rivers))
 {

@@ -21,7 +21,7 @@ namespace boomhs::level_generator
 {
 
 LevelData
-make_leveldata(TileDataConfig const&, stlw::float_generator &, TileInfos const&,
-    entt::DefaultRegistry &);
+make_leveldata(TileDataConfig const&, entt::DefaultRegistry &, TileInfos &&,
+    stlw::float_generator &);
 
 } // ns boomhs::level_generator

@@ -457,11 +457,11 @@ start(stlw::Logger &logger, Engine &engine)
       entt::DefaultRegistry &registry)
   {
     auto &assets = level_assets.assets;
+    auto &sps = level_assets.shader_programs;
     auto const& objcache = assets.obj_cache;
 
     LOG_TRACE("Copy assets to GPU.");
-    auto handle_result = boomhs::copy_assets_gpu(logger, level_assets.shader_programs,
-        level_assets.assets.tile_infos, registry, objcache);
+    auto handle_result = boomhs::copy_assets_gpu(logger, sps, assets.tile_infos, registry, objcache);
     assert(handle_result);
     HandleManager handlem = MOVE(*handle_result);
 
@@ -470,7 +470,8 @@ start(stlw::Logger &logger, Engine &engine)
 
     int const width = 40, height = 40;
     TileDataConfig const tdconfig{width, height, sgconfig};
-    auto leveldata = level_generator::make_leveldata(tdconfig, rng, level_assets.assets.tile_infos, registry);
+    auto leveldata = level_generator::make_leveldata(tdconfig, registry, MOVE(assets.tile_infos),
+        rng);
 
     // Load point lights
     auto light_view = registry.view<PointLight, Transform>();
