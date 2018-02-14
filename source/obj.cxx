@@ -84,7 +84,7 @@ namespace opengl
 {
 
 obj
-ObjLoader::load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config) const
+load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config)
 {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
@@ -136,11 +136,12 @@ ObjLoader::load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig co
           load_uvs(index, attrib, &vertices);
         }
         if (config.colors) {
+          //std::abort(); // We haven't implemented this yet ...
           // Optional: vertex colors
           // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
           // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
           // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
-          load_colors(color_, &vertices);
+          load_colors(LOC::WHITE, &vertices);
         }
         indices.push_back(indices.size()); // 0, 1, 2, ...
       }
@@ -160,7 +161,7 @@ ObjLoader::load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig co
 }
 
 obj
-ObjLoader::load_mesh(char const* objpath, LoadMeshConfig const& config) const
+load_mesh(char const* objpath, LoadMeshConfig const& config)
 {
   auto constexpr MTLPATH = nullptr;
   return load_mesh(objpath, MTLPATH, config);

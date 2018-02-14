@@ -163,9 +163,9 @@ get_float_or_abort(CppTable const& table, char const* name)
 }
 
 auto
-load_meshes(opengl::ObjLoader &loader, CppTableArray const& mesh_table)
+load_meshes(CppTableArray const& mesh_table)
 {
-  auto const load = [&loader](auto const& table) {
+  auto const load = [](auto const& table) {
     auto const name = get_string_or_abort(table, "name");
 
     auto const colors = get_bool_or_abort(table, "colors");
@@ -176,7 +176,7 @@ load_meshes(opengl::ObjLoader &loader, CppTableArray const& mesh_table)
     auto const mtl = "assets/" + name + ".mtl";
 
     opengl::LoadMeshConfig const cfg{colors, normals, uvs};
-    auto mesh = loader.load_mesh(obj.c_str(), mtl.c_str(), cfg);
+    auto mesh = load_mesh(obj.c_str(), mtl.c_str(), cfg);
     return std::make_pair(name, MOVE(mesh));
   };
   ObjCache cache;
@@ -246,6 +246,38 @@ load_textures(stlw::Logger &logger, CppTable const& config)
   return ttable;
 }
 
+struct ColorMaterialInfo
+{
+  Color const color;
+  Material const material;
+};
+
+boost::optional<ColorMaterialInfo>
+load_material_color(CppTable const& file)
+{
+  // clang-format off
+  MAKEOPT(auto const color,     get_vec3(file,   "color"));
+  MAKEOPT(auto const ambient,   get_vec3(file,   "ambient"));
+  MAKEOPT(auto const diffuse,   get_vec3(file,   "diffuse"));
+  MAKEOPT(auto const specular,  get_vec3(file,   "specular"));
+  MAKEOPT(auto const shininess, get_float(file,  "shininess"));
+  // clang-format on
+
+  Material material{ambient, diffuse, specular, shininess};
+  ColorMaterialInfo const cmi{Color{color}, MOVE(material)};
+  return stlw::make_optional(cmi);
+}
+
+auto
+load_material_color_orabort(CppTable const& file)
+{
+  auto optional = load_material_color(file);
+  if (!optional) {
+    std::abort();
+  }
+  return *optional;
+}
+
 auto
 load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& ttable,
     entt::DefaultRegistry &registry)
@@ -261,7 +293,6 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     auto texture_name =     get_string(file,          "texture");
     auto pointlight_o =     get_vec3(file,            "pointlight");
     auto player =           get_string(file,          "player");
-    auto receives_light_o = get_bool(file,            "receives_light");
     // clang-format on
 
     // texture OR color fields, not both
@@ -321,9 +352,12 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       auto &light_component = registry.assign<PointLight>(entity);
       light_component.light.diffuse = Color{*pointlight_o};
     }
-    if (receives_light_o) {
-      // TODO: fill in fields
-      registry.assign<Material>(entity);
+
+    // An object receives light, if it has ALL ambient/diffuse/specular fields
+    auto const cm_optional = load_material_color(file);
+    if (cm_optional) {
+      auto const& cm = *cm_optional;
+      registry.assign<Material>(entity) = cm.material;
     }
     return entity;
   };
@@ -347,12 +381,10 @@ load_tileinfos(stlw::Logger &logger, CppTable const& config, entt::DefaultRegist
     auto const tile  =     get_string_or_abort(file, "tile");
     auto const tiletype = tiletype_from_string(tile);
 
-    auto const color     = Color{get_vec3_or_abort(file,   "color")};
-    auto const ambient   = get_vec3_or_abort(file,   "ambient");
-    auto const diffuse   = get_vec3_or_abort(file,   "diffuse");
-    auto const specular  = get_vec3_or_abort(file,   "specular");
-    auto const shininess = get_float_or_abort(file,   "shininess");
-    return TileInfo{tiletype, color, Material{ambient, diffuse, specular, shininess}};
+    auto const cm = load_material_color_orabort(file);
+    auto const& material = cm.material;
+    auto const& color = cm.color;
+    return TileInfo{tiletype, color, material};
   };
   auto const tile_table = get_table_array(config, "tile");
   auto const& ttable = tile_table->as_table_array()->get();
@@ -470,8 +502,7 @@ load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string co
   assert(area_config);
 
   auto const mesh_table = get_table_array_or_abort(area_config, "meshes");
-  auto loader = opengl::ObjLoader{LOC::WHITE};
-  auto objcache = load_meshes(loader, mesh_table);
+  auto objcache = load_meshes(mesh_table);
 
   std::cerr << "loading textures ...\n";
   auto texture_table = load_textures(logger, area_config);
