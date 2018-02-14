@@ -119,12 +119,6 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
     auto meshc = registry.assign<MeshRenderable>(eid);
     meshc.name = mesh_name;
 
-    auto &color = registry.assign<Color>(eid);
-    color.set_r(1.0);
-    color.set_g(1.0);
-    color.set_b(1.0);
-    color.set_a(1.0);
-
     handle_list.add(eid, MOVE(handle));
     return eid;
   };
