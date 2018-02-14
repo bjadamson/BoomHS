@@ -105,29 +105,13 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
 
   std::vector<DrawInfo> tile_dinfos;
   tile_dinfos.reserve(static_cast<size_t>(TileType::MAX));
-  auto const make_special = [&tile_dinfos, &logger, &obj_cache, &sps, &registry, &tile_infos](
+  auto const make_special = [&tile_dinfos, &logger, &obj_cache, &sps, &tile_infos](
       char const *mesh_name, char const*vshader_name, TileType const type)
   {
     auto const &obj = obj_cache.get_obj(mesh_name);
     auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, stlw::none);
-    auto const eid = registry.create();
-
-    auto meshc = registry.assign<MeshRenderable>(eid);
-    meshc.name = mesh_name;
 
     tile_dinfos[static_cast<size_t>(type)] = MOVE(handle);
-    return eid;
-  };
-  auto const make_stair = [&](char const* vshader_name, char const* mesh_name, TileType const type) {
-    auto const &obj = obj_cache.get_obj(mesh_name);
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, stlw::none);
-    auto const eid = registry.create();
-
-    auto meshc = registry.assign<MeshRenderable>(eid);
-    meshc.name = mesh_name;
-
-    tile_dinfos[static_cast<size_t>(type)] = MOVE(handle);
-    return eid;
   };
 
   make_special("equal", "3d_pos_normal_color", TileType::BRIDGE);
@@ -135,8 +119,8 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
 
   make_special("hashtag", "hashtag", TileType::WALL);
   make_special("tilde", "river", TileType::RIVER);
-  make_stair("stair", "stair_down", TileType::STAIR_DOWN);
-  make_stair("stair", "stair_up", TileType::STAIR_UP);
+  make_special("stair_down", "stair", TileType::STAIR_DOWN);
+  make_special("stair_up", "stair", TileType::STAIR_UP);
 
   EntityDrawHandles edh{MOVE(dinfos)};
   TileDrawHandles td{MOVE(tile_dinfos)};
