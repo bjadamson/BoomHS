@@ -15,11 +15,10 @@ namespace boomhs
 class LevelData
 {
   TileData tilegrid_;
-  TileInfos tile_infos_;
+  TileInfos tileinfos_;
   TilePosition const startpos_;
 
   std::vector<RiverInfo> rivers_;
-  std::array<opengl::Material, static_cast<size_t>(TileType::MAX)> materials;
 
   void set_tile(TilePosition const&, TileType const&);
 public:
@@ -41,6 +40,9 @@ public:
   // Used for rendering
   auto const&
   tiledata() const { return tilegrid_; }
+
+  auto const&
+  tileinfos() const { return tileinfos_; }
 
   auto&
   rivers_mutref() { return rivers_; }

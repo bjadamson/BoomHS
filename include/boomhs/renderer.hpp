@@ -55,12 +55,6 @@ namespace boomhs::render
 {
 
 void
-enable_depth_tests();
-
-void
-disable_depth_tests();
-
-void
 init(window::Dimensions const&);
 
 void

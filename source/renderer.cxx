@@ -26,6 +26,20 @@ namespace
 {
 
 void
+enable_depth_tests()
+{
+  glEnable(GL_CULL_FACE);
+  glEnable(GL_DEPTH_TEST);
+}
+
+void
+disable_depth_tests()
+{
+  glDisable(GL_CULL_FACE);
+  glDisable(GL_DEPTH_TEST);
+}
+
+void
 set_modelmatrix(stlw::Logger &logger, glm::mat4 const& model_matrix, ShaderProgram &sp)
 {
   sp.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
@@ -47,6 +61,17 @@ draw_drawinfo(stlw::Logger &logger, ShaderProgram &sp, DrawInfo const& dinfo)
   auto const draw_mode = dinfo.draw_mode();
   auto const num_indices = dinfo.num_indices();
   auto constexpr OFFSET = nullptr;
+
+  /*
+  std::cerr << "---------------------------------------------------------------------------\n";
+  std::cerr << "drawing object!\n";
+  std::cerr << "sp:\n" << sp << "\n";
+
+  std::cerr << "draw_info:\n";
+  dinfo.print_self(std::cerr, sp.va());
+  std::cerr << "\n";
+  std::cerr << "---------------------------------------------------------------------------\n";
+  */
 
   if (sp.instance_count) {
     auto const ic = *sp.instance_count;
@@ -138,16 +163,51 @@ set_receiveslight_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
 }
 
 void
-set_3dlightsource_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix,
-    ShaderProgram &sp, DrawInfo const& dinfo, std::uint32_t const entity,
-    entt::DefaultRegistry &registry)
+draw_3dshape(RenderArgs const &args, glm::mat4 const& model_matrix, ShaderProgram &sp,
+    DrawInfo const& dinfo)
 {
   auto &logger = args.logger;
+  auto const& camera = args.camera;
 
-  bool const is_lightsource = registry.has<PointLight>(entity);
-  assert(is_lightsource);
-  auto const pointlights = find_pointlights(registry);
+  auto const draw_3d_shape_fn = [&]()
+  {
+    // various matrices
+    set_mvpmatrix(logger, model_matrix, sp, camera);
 
+    if (sp.is_skybox) {
+      disable_depth_tests();
+      draw_drawinfo(logger, sp, dinfo);
+      enable_depth_tests();
+    } else {
+      draw_drawinfo(logger, sp, dinfo);
+    }
+  };
+  if (dinfo.texture_info()) {
+    auto const ti = *dinfo.texture_info();
+    opengl::global::texture_bind(ti);
+    ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
+    draw_3d_shape_fn();
+  } else {
+    draw_3d_shape_fn();
+  }
+}
+
+void
+draw_3dlit_shape(RenderArgs const &args, glm::mat4 const& model_matrix, ShaderProgram &sp,
+  DrawInfo const& dinfo, std::uint32_t const entity, Material const& material,
+  entt::DefaultRegistry &registry, bool const receives_ambient_light)
+{
+  set_receiveslight_uniforms(args, model_matrix, sp, dinfo, material, entity, registry,
+      receives_ambient_light);
+  draw_3dshape(args, model_matrix, sp, dinfo);
+}
+
+void
+draw_3dlightsource(RenderArgs const &args, glm::mat4 const& model_matrix, ShaderProgram &sp,
+  DrawInfo const& dinfo, std::uint32_t const entity, entt::DefaultRegistry &registry,
+  std::vector<std::uint32_t> const& pointlights)
+{
+  auto &logger = args.logger;
   PointLight *ptr = nullptr;
   FOR(i, pointlights.size()) {
     auto const e = pointlights[i];
@@ -160,76 +220,13 @@ set_3dlightsource_uniforms(boomhs::RenderArgs const &args, glm::mat4 const& mode
 
   auto const diffuse = ptr->light.diffuse;
   sp.set_uniform_color_3fv(logger, "u_lightcolor", diffuse);
-}
-
-void
-draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, ShaderProgram &sp,
-  DrawInfo const& dinfo, std::uint32_t const entity, entt::DefaultRegistry &registry,
-  bool const receives_ambient_light)
-{
-  auto &logger = args.logger;
-  auto const& camera = args.camera;
-
-  auto const draw_3d_shape_fn = [&]() {
-
-    // various matrices
-    set_mvpmatrix(logger, model_matrix, sp, camera);
-
-    // We do this assert during load time, but still valid here.
-    bool const receives_light = registry.has<Material>(entity);
-    bool const is_lightsource = registry.has<PointLight>(entity);
-
-    assert(
-        (!receives_light && !is_lightsource) ||
-        (receives_light && !is_lightsource) ||
-        (!receives_light && is_lightsource));
-
-    if (receives_light) {
-      assert(registry.has<Material>(entity));
-      Material const& material = registry.get<Material>(entity);
-      set_receiveslight_uniforms(args, model_matrix, sp, dinfo, material, entity, registry,
-          receives_ambient_light);
-    } else if (is_lightsource) {
-      set_3dlightsource_uniforms(args, model_matrix, sp, dinfo, entity, registry);
-    }
-
-    if (sp.is_skybox) {
-      render::disable_depth_tests();
-      draw_drawinfo(logger, sp, dinfo);
-      render::enable_depth_tests();
-    } else {
-      draw_drawinfo(logger, sp, dinfo);
-    }
-  };
-
-  if (dinfo.texture_info()) {
-    auto const ti = *dinfo.texture_info();
-    opengl::global::texture_bind(ti);
-    ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
-    draw_3d_shape_fn();
-  } else {
-    draw_3d_shape_fn();
-  }
+  draw_3dshape(args, model_matrix, sp, dinfo);
 }
 
 } // ns anonymous
 
 namespace boomhs::render
 {
-
-void
-enable_depth_tests()
-{
-  glEnable(GL_CULL_FACE);
-  glEnable(GL_DEPTH_TEST);
-}
-
-void
-disable_depth_tests()
-{
-  glDisable(GL_CULL_FACE);
-  glDisable(GL_DEPTH_TEST);
-}
 
 void
 init(window::Dimensions const& dimensions)
@@ -299,38 +296,37 @@ draw(RenderArgs const& args, Transform const& transform, ShaderProgram &sp,
   opengl::global::vao_bind(dinfo.vao());
   ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
-  /*
-  std::cerr << "---------------------------------------------------------------------------\n";
-  std::cerr << "drawing object!\n";
-  std::cerr << "sp:\n" << sp << "\n";
-
-  std::cerr << "draw_info:\n";
-  dinfo.print_self(std::cerr, sp.va());
-  std::cerr << "\n";
-  std::cerr << "---------------------------------------------------------------------------\n";
-  */
-
-  auto const draw_fn = [&]()
-  {
-    if (sp.is_2d) {
-      disable_depth_tests();
-      set_modelmatrix(logger, transform.model_matrix(), sp);
-      enable_depth_tests();
-    } else {
-      bool constexpr receives_ambient_light = true;
-      draw_3dshape(args, transform.model_matrix(), sp, dinfo, entity, registry,
-          receives_ambient_light);
-    }
-  };
-
-  if (dinfo.texture_info()) {
-    auto const& ti = *dinfo.texture_info();
-    opengl::global::texture_bind(ti);
-    ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
-    draw_fn();
-  } else {
-    draw_fn();
+  if (sp.is_2d) {
+    std::abort(); // We're not using this currently, assert that until no longer true.
+    disable_depth_tests();
+    set_modelmatrix(logger, transform.model_matrix(), sp);
+    enable_depth_tests();
+    return;
   }
+
+  bool const is_lightsource = registry.has<PointLight>(entity);
+  auto const model_matrix = transform.model_matrix();
+  if (is_lightsource) {
+    assert(is_lightsource);
+    auto const pointlights = find_pointlights(registry);
+    draw_3dlightsource(args, model_matrix, sp, dinfo, entity, registry, pointlights);
+    return;
+  }
+  // Only true for now, old code had this set.
+  bool constexpr receives_ambient_light = true;
+
+  bool const receives_light = registry.has<Material>(entity);
+  if (receives_light) {
+    assert(registry.has<Material>(entity));
+    Material const& material = registry.get<Material>(entity);
+    draw_3dlit_shape(args, model_matrix, sp, dinfo, entity, material, registry,
+        receives_ambient_light);
+    return;
+  }
+
+  // Can't receive light
+  assert(!registry.has<Material>());
+  draw_3dshape(args, model_matrix, sp, dinfo);
 }
 
 void
@@ -349,7 +345,7 @@ draw_arrow(RenderArgs const& rargs, ZoneState &zone_state, glm::vec3 const& star
   ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
   auto &transform = registry.assign<Transform>(entity);
 
-  render::draw(rargs, transform, sp, handle, entity, registry);
+  draw(rargs, transform, sp, handle, entity, registry);
 }
 
 void
@@ -389,9 +385,9 @@ draw_global_axis(RenderArgs const& rargs, entt::DefaultRegistry &registry, Shade
 
   auto &transform = registry.assign<Transform>(entity);
 
-  render::draw(rargs, transform, sp, world_arrows.x_dinfo, entity, registry);
-  render::draw(rargs, transform, sp, world_arrows.y_dinfo, entity, registry);
-  render::draw(rargs, transform, sp, world_arrows.z_dinfo, entity, registry);
+  draw(rargs, transform, sp, world_arrows.x_dinfo, entity, registry);
+  draw(rargs, transform, sp, world_arrows.y_dinfo, entity, registry);
+  draw(rargs, transform, sp, world_arrows.z_dinfo, entity, registry);
 }
 
 void
@@ -408,9 +404,9 @@ draw_local_axis(RenderArgs const& rargs, entt::DefaultRegistry &registry, Shader
   auto &transform = registry.assign<Transform>(entity);
   transform.translation = player_pos;
 
-  render::draw(rargs, transform, sp, axis_arrows.x_dinfo, entity, registry);
-  render::draw(rargs, transform, sp, axis_arrows.y_dinfo, entity, registry);
-  render::draw(rargs, transform, sp, axis_arrows.z_dinfo, entity, registry);
+  draw(rargs, transform, sp, axis_arrows.x_dinfo, entity, registry);
+  draw(rargs, transform, sp, axis_arrows.y_dinfo, entity, registry);
+  draw(rargs, transform, sp, axis_arrows.z_dinfo, entity, registry);
 }
 
 void
@@ -423,7 +419,7 @@ draw_entities(RenderArgs const& rargs, EngineState const& es, ZoneState &zone_st
   auto const draw_fn = [&handlem, &sps, &rargs, &registry](auto entity, auto &sn, auto &transform) {
     auto &shader_ref = sps.ref_sp(sn.value);
     auto &handle = handlem.lookup(entity);
-    render::draw(rargs, transform, shader_ref, handle, entity, registry);
+    draw(rargs, transform, shader_ref, handle, entity, registry);
   };
 
   auto const draw_adapter = [&](auto entity, auto &sn, auto &transform, auto &) {
@@ -461,7 +457,11 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
     sp.use(logger);
     opengl::global::vao_bind(dinfo.vao());
     ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
-    draw_3dshape(args, model_mat, sp, dinfo, entity, registry, receives_ambient_light);
+
+    auto const& level_data = zone_state.level_data;
+    auto const& tileinfo = level_data.tileinfos()[TileType::RIVER];
+    auto const& material = tileinfo.material;
+    draw_3dlit_shape(args, model_mat, sp, dinfo, entity, material, registry, receives_ambient_light);
   };
   auto const draw_tile = [&](auto const& tile_pos) {
     auto const& tile = tiledata.data(tile_pos);
@@ -547,6 +547,10 @@ draw_rivers(RenderArgs const& rargs, ZoneState &zone_state, window::FrameTime co
   sp.set_uniform_color(rargs.logger, "u_color", LOC::WHITE);
   opengl::global::vao_bind(dinfo.vao());
 
+  auto const& level_data = zone_state.level_data;
+  auto const& tileinfo = level_data.tileinfos()[TileType::RIVER];
+  auto const& material = tileinfo.material;
+
   auto const draw_river = [&](auto const& rinfo) {
     auto const& left = rinfo.left;
     auto const& right = rinfo.right;
@@ -562,7 +566,7 @@ draw_rivers(RenderArgs const& rargs, ZoneState &zone_state, window::FrameTime co
 
       bool const receives_ambient = true;
       auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
-      draw_3dshape(rargs, modelmatrix, sp, dinfo, eid, registry, receives_ambient);
+      draw_3dlit_shape(rargs, modelmatrix, sp, dinfo, eid, material, registry, receives_ambient);
     };
     for (auto const& w : rinfo.wiggles) {
       draw_wiggle(w);
@@ -595,7 +599,7 @@ draw_terrain(RenderArgs const& rargs, ZoneState &zone_state)
   // translation.x = 3.0f;
   translation.y = -2.0f;
   // translation.z = 2.0f;
-  render::draw(rargs, transform, terrain_sp, terrain, entity, registry);
+  draw(rargs, transform, terrain_sp, terrain, entity, registry);
 }
 
 void
