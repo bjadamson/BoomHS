@@ -112,7 +112,6 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
     auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, stlw::none);
     auto const eid = registry.create();
 
-    registry.assign<TileComponent>(eid);
     auto &material = registry.assign<Material>(eid);
     TileInfo const& tinfo = tile_infos[type];
     material.ambient = tinfo.material.ambient;
@@ -131,7 +130,6 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
     auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, stlw::none);
     auto const eid = registry.create();
 
-    registry.assign<TileComponent>(eid);
     auto &material = registry.assign<Material>(eid);
     TileInfo const& tinfo = tile_infos[type];
     material.ambient = tinfo.material.ambient;
