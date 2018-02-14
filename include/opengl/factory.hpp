@@ -112,3 +112,5 @@ DrawInfo
 copy_gpu(stlw::Logger &, GLenum const, ShaderProgram &, obj const&, stlw::optional<TextureInfo> const&);
 
 } // ns opengl::factories
+
+namespace OF = opengl::factories;

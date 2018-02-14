@@ -39,8 +39,6 @@
 #include <cstdlib>
 #include <string>
 
-namespace OF = opengl::factories;
-namespace LOC = opengl::LIST_OF_COLORS;
 using namespace boomhs;
 using namespace opengl;
 using namespace window;
@@ -163,191 +161,6 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
 }
 
 void
-draw_entities(RenderArgs const& rargs, EngineState const& es, ZoneState &zone_state)
-{
-  auto &handlem = zone_state.handles;
-  auto &registry = zone_state.registry;
-  auto &sps = zone_state.sps;
-
-  auto const draw_fn = [&handlem, &sps, &rargs, &registry](auto entity, auto &sn, auto &transform) {
-    auto &shader_ref = sps.ref_sp(sn.value);
-    auto &handle = handlem.lookup(entity);
-    render::draw(rargs, transform, shader_ref, handle, entity, registry);
-  };
-
-  auto const draw_adapter = [&](auto entity, auto &sn, auto &transform, auto &) {
-    draw_fn(entity, sn, transform);
-  };
-
-  //
-  // Actual drawing begins here
-  registry.view<ShaderName, Transform, CubeRenderable>().each(draw_adapter);
-  registry.view<ShaderName, Transform, MeshRenderable>().each(draw_adapter);
-
-  if (es.draw_skybox) {
-    auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {
-      draw_fn(entity, sn, transform);
-    };
-    registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
-  }
-}
-
-void
-draw_terrain(RenderArgs const& rargs, ZoneState &zone_state)
-{
-  auto &registry = zone_state.registry;
-  auto &sps = zone_state.sps;
-
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-
-  auto &terrain_sp = sps.ref_sp("3d_pos_normal_color");
-  auto terrain = OF::copy_normalcolorcube_gpu(rargs.logger, terrain_sp, LOC::WHITE);
-
-  auto &transform = registry.assign<Transform>(entity);
-  auto &scale = transform.scale;
-  scale.x = 50.0f;
-  scale.y = 0.2f;
-  scale.z = 50.0f;
-  auto &translation = transform.translation;
-  // translation.x = 3.0f;
-  translation.y = -2.0f;
-  // translation.z = 2.0f;
-  render::draw(rargs, transform, terrain_sp, terrain, entity, registry);
-}
-
-void
-draw_tiledata(RenderArgs const& rargs, ZoneState &zone_state, TiledataState const& tds,
-    FrameTime const& ft)
-{
-  auto &handlem = zone_state.handles;
-  auto &registry = zone_state.registry;
-  auto &sps = zone_state.sps;
-  auto const& leveldata = zone_state.level_data;
-  render::draw_tiledata(rargs, handlem, leveldata.tiledata(), tds, sps, registry, ft);
-}
-
-void
-draw_tilegrid(RenderArgs const& rargs, ZoneState &zone_state, TiledataState const& tds)
-{
-  auto &sps = zone_state.sps;
-  auto &sp = sps.ref_sp("3d_pos_color");
-
-  auto const& leveldata = zone_state.level_data;
-  auto const& tiledata = leveldata.tiledata();
-
-  Transform transform;
-  bool const show_y = tds.show_yaxis_lines;
-  auto const tilegrid = OF::create_tilegrid(rargs.logger, sp, tiledata, show_y);
-  render::draw_tilegrid(rargs, transform, sp, tilegrid);
-}
-
-void
-draw_global_axis(RenderArgs const& rargs, entt::DefaultRegistry &registry, ShaderPrograms &sps)
-{
-  auto &logger = rargs.logger;
-  auto &sp = sps.ref_sp("3d_pos_color");
-  auto world_arrows = OF::create_axis_arrows(logger, sp);
-
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-
-  auto &transform = registry.assign<Transform>(entity);
-
-  render::draw(rargs, transform, sp, world_arrows.x_dinfo, entity, registry);
-  render::draw(rargs, transform, sp, world_arrows.y_dinfo, entity, registry);
-  render::draw(rargs, transform, sp, world_arrows.z_dinfo, entity, registry);
-}
-
-void
-draw_local_axis(RenderArgs const& rargs, entt::DefaultRegistry &registry, ShaderPrograms &sps,
-                glm::vec3 const &player_pos)
-{
-  auto &logger = rargs.logger;
-  auto &sp = sps.ref_sp("3d_pos_color");
-  auto const axis_arrows = OF::create_axis_arrows(logger, sp);
-
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-
-  auto &transform = registry.assign<Transform>(entity);
-  transform.translation = player_pos;
-
-  render::draw(rargs, transform, sp, axis_arrows.x_dinfo, entity, registry);
-  render::draw(rargs, transform, sp, axis_arrows.y_dinfo, entity, registry);
-  render::draw(rargs, transform, sp, axis_arrows.z_dinfo, entity, registry);
-}
-
-void
-draw_arrow(RenderArgs const& rargs, entt::DefaultRegistry &registry, ShaderPrograms &sps,
-    glm::vec3 const& start, glm::vec3 const& head, Color const& color)
-{
-  auto &logger = rargs.logger;
-  auto &sp = sps.ref_sp("3d_pos_color");
-
-  auto const handle = OF::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
-
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-  auto &transform = registry.assign<Transform>(entity);
-
-  render::draw(rargs, transform, sp, handle, entity, registry);
-}
-
-void
-draw_arrow_abovetile_and_neighbors(RenderArgs const& rargs, entt::DefaultRegistry &registry,
-    ShaderPrograms &sps, TileData const& tdata, TilePosition const& tpos)
-{
-  glm::vec3 constexpr offset{0.5f, 2.0f, 0.5f};
-
-  auto const draw_the_arrow = [&](auto const& ntpos, auto const& color) {
-    auto const bottom = glm::vec3{ntpos.x + offset.x, offset.y, ntpos.y + offset.y};
-    auto const top = bottom + (Y_UNIT_VECTOR * 2.0f);
-
-    draw_arrow(rargs, registry, sps, top, bottom, color);
-  };
-
-  draw_the_arrow(tpos, LOC::BLUE);
-  auto const neighbors = find_immediate_neighbors(tdata, tpos, TileLookupBehavior::ALL_8_DIRECTIONS,
-      [](auto const& tpos) { return true; });
-  //assert(neighbors.size() <= 8);
-  FOR(i, neighbors.size()) {
-    draw_the_arrow(neighbors[i], LOC::LIME_GREEN);
-  }
-}
-
-void
-conditionally_draw_player_vectors(RenderArgs const& rargs, EngineState &es,
-    entt::DefaultRegistry &registry, ShaderPrograms &sps, WorldObject const &player)
-{
-  auto &logger = es.logger;
-
-  glm::vec3 const pos = player.world_position();
-  if (es.show_player_localspace_vectors) {
-    // local-space
-    //
-    // forward
-    auto const fwd = player.eye_forward();
-    draw_arrow(rargs, registry, sps, pos, pos + fwd, LOC::GREEN);
-
-    // right
-    auto const right = player.eye_right();
-    draw_arrow(rargs, registry, sps, pos, pos + right, LOC::RED);
-  }
-  if (es.show_player_worldspace_vectors) {
-    // world-space
-    //
-    // forward
-    auto const fwd = player.world_forward();
-    draw_arrow(rargs, registry, sps, pos, pos + (2.0f * fwd), LOC::LIGHT_BLUE);
-
-    // backward
-    glm::vec3 const right = player.world_right();
-    draw_arrow(rargs, registry, sps, pos, pos + right, LOC::PINK);
-  }
-}
-
-void
 move_betweentiledatas_ifonstairs(TiledataState &tds, ZoneManager &zm)
 {
   auto &zone_state = zm.active();
@@ -465,6 +278,7 @@ game_loop(RenderArgs const& rargs, EngineState &es, ZoneManager &zm, SDLWindow &
 
   auto &player = zone_state.player;
   auto &registry = zone_state.registry;
+  auto &sps = zone_state.sps;
   /////////////////////////
 
   // compute tiledata
@@ -481,38 +295,32 @@ game_loop(RenderArgs const& rargs, EngineState &es, ZoneManager &zm, SDLWindow &
   render::clear_screen(zone_state.background);
 
   if (es.draw_entities) {
-    draw_entities(rargs, es, zone_state);
+    render::draw_entities(rargs, es, zone_state);
   }
   if (es.draw_terrain) {
-    draw_terrain(rargs, zone_state);
+    render::draw_terrain(rargs, zone_state);
   }
   if (tiledata_state.draw_tiledata) {
-    draw_tiledata(rargs, zone_state, tiledata_state, ft);
+    render::draw_tiledata(rargs, tiledata_state, zone_state, ft);
     render::draw_rivers(rargs, zone_state, ft);
   }
   if (tiledata_state.show_grid_lines) {
-    draw_tilegrid(rargs, zone_state, tiledata_state);
+    render::draw_tilegrid(rargs, tiledata_state, zone_state);
   }
-
-  auto &sps = zone_state.sps;
   if (tiledata_state.show_neighbortile_arrows) {
     auto const& wp = player.world_position();
-    auto const& tdata = leveldata.tiledata();
     auto const tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
-    draw_arrow_abovetile_and_neighbors(rargs, registry, sps, tdata, tpos);
+    render::draw_arrow_abovetile_and_neighbors(rargs, tpos, zone_state);
   }
   if (es.show_global_axis) {
-    draw_global_axis(rargs, registry, sps);
+    render::draw_global_axis(rargs, registry, sps);
   }
   if (es.show_local_axis) {
-    draw_local_axis(rargs, registry, sps, player.world_position());
-  }
-  if (es.show_player_localspace_vectors) {
-    conditionally_draw_player_vectors(rargs, es, registry, sps, player);
+    render::draw_local_axis(rargs, registry, sps, player.world_position());
   }
 
   // if checks happen inside fn
-  conditionally_draw_player_vectors(rargs, es, registry, sps, player);
+  render::conditionally_draw_player_vectors(rargs, player, es, zone_state);
   if (es.ui_state.draw_ui) {
     draw_ui(es, zm, window, registry);
   }

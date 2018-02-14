@@ -25,6 +25,7 @@ namespace boomhs
 {
 class Camera;
 class HandleManager;
+struct EngineState;
 struct RenderArgs;
 struct RiverInfo;
 struct Transform;
@@ -66,17 +67,39 @@ void
 clear_screen(opengl::Color const&);
 
 void
+conditionally_draw_player_vectors(RenderArgs const&, WorldObject const &, EngineState &,
+    ZoneState &);
+
+void
 draw(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
     uint32_t const, entt::DefaultRegistry &);
+
+void
+draw_arrow(RenderArgs const&, ZoneState &, glm::vec3 const&, glm::vec3 const&, opengl::Color const&);
+
+void
+draw_arrow_abovetile_and_neighbors(RenderArgs const&, TilePosition const&, ZoneState &);
+
+void
+draw_global_axis(RenderArgs const&, entt::DefaultRegistry &, opengl::ShaderPrograms &);
+
+void
+draw_local_axis(RenderArgs const& rargs, entt::DefaultRegistry &, opengl::ShaderPrograms &,
+    glm::vec3 const &);
+
+void
+draw_entities(RenderArgs const&, EngineState const&, ZoneState &);
 
 void
 draw_rivers(RenderArgs const&, ZoneState &, window::FrameTime const&);
 
 void
-draw_tiledata(RenderArgs const&, HandleManager &, TileData const&, TiledataState const&,
-    opengl::ShaderPrograms &, entt::DefaultRegistry &, window::FrameTime const&);
+draw_terrain(RenderArgs const&, ZoneState &);
 
 void
-draw_tilegrid(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawInfo const&);
+draw_tiledata(RenderArgs const&, TiledataState const&, ZoneState &, window::FrameTime const&);
+
+void
+draw_tilegrid(RenderArgs const&, TiledataState const&, ZoneState &);
 
 } // ns boomhs::render
