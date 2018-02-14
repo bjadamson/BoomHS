@@ -44,12 +44,22 @@ public:
   auto const& front() const { return neighbors_.front(); }
 };
 
+struct FlowDirection
+{
+  Tile const& tile;
+  glm::vec2 const direction;
+
+  static FlowDirection
+  find_flow(Tile const&, std::vector<FlowDirection> const&);
+};
+
 class TileData
 {
   std::array<size_t, 2> dimensions_;
   entt::DefaultRegistry &registry_;
 
   std::vector<Tile> tiles_;
+  std::vector<FlowDirection> flowdirs_;
 
   bool destroy_entities_ = true;
 
@@ -68,17 +78,15 @@ public:
   bool empty() const { return tiles_.empty(); }
   auto num_tiles() const { return tiles_.size(); }
 
-  Tile&
-  data(size_t const, size_t const);
+  Tile& data(size_t const, size_t const);
+  Tile const& data(size_t const, size_t const) const;
 
-  Tile const&
-  data(size_t const, size_t const) const;
+  Tile& data(TilePosition const& tp) { return data(tp.x, tp.y); }
+  Tile const& data(TilePosition const& tp) const { return data(tp.x, tp.y); }
 
-  Tile&
-  data(TilePosition const& tp) { return data(tp.x, tp.y); }
-
-  Tile const&
-  data(TilePosition const& tp) const { return data(tp.x, tp.y); }
+  void assign_bridge(Tile &);
+  void assign_river(Tile &, glm::vec2 const&);
+  auto const& flows() const { return flowdirs_; }
 
   template<typename FN>
   void

@@ -150,4 +150,15 @@ struct Tile
   bool is_stair() const;
 };
 
+inline bool
+operator==(Tile const& a, Tile const& b)
+{
+  bool const same_eid = a.eid == b.eid;
+  if (same_eid) {
+    // debug sanity check
+    assert(a.type == b.type);
+  }
+  return same_eid;
+}
+
 } // ns boomhs
