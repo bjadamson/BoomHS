@@ -380,11 +380,13 @@ load_tileinfos(stlw::Logger &logger, CppTable const& config, entt::DefaultRegist
   auto const load_tile = [&registry](auto const& file) {
     auto const tile  =     get_string_or_abort(file, "tile");
     auto const tiletype = tiletype_from_string(tile);
+    auto const mesh_name = get_string_or_abort(file, "mesh");
+    auto const vshader_name = get_string_or_abort(file, "vshader");
 
     auto const cm = load_material_color_orabort(file);
     auto const& material = cm.material;
     auto const& color = cm.color;
-    return TileInfo{tiletype, color, material};
+    return TileInfo{tiletype, mesh_name, vshader_name, color, material};
   };
   auto const tile_table = get_table_array(config, "tile");
   auto const& ttable = tile_table->as_table_array()->get();

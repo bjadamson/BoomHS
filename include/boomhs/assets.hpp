@@ -73,6 +73,7 @@ struct LoadedEntities
 struct TileInfo
 {
   TileType type;
+  std::string mesh_name, vshader_name;
   opengl::Color color;
   opengl::Material material;
 };

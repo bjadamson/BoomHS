@@ -102,25 +102,16 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
     dinfos.add(entity, MOVE(handle));
   });
 
-
   std::vector<DrawInfo> tile_dinfos;
   tile_dinfos.reserve(static_cast<size_t>(TileType::MAX));
-  auto const make_special = [&tile_dinfos, &logger, &obj_cache, &sps, &tile_infos](
-      char const *mesh_name, char const*vshader_name, TileType const type)
-  {
+  for (auto const& it : tile_infos) {
+    auto const& mesh_name = it.mesh_name;
+    auto const& vshader_name = it.vshader_name;
     auto const &obj = obj_cache.get_obj(mesh_name);
+
     auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, stlw::none);
-
-    tile_dinfos[static_cast<size_t>(type)] = MOVE(handle);
-  };
-
-  make_special("equal", "3d_pos_normal_color", TileType::BRIDGE);
-  make_special("plus", "3d_pos_normal_color", TileType::FLOOR);
-
-  make_special("hashtag", "hashtag", TileType::WALL);
-  make_special("tilde", "river", TileType::RIVER);
-  make_special("stair_down", "stair", TileType::STAIR_DOWN);
-  make_special("stair_up", "stair", TileType::STAIR_UP);
+    tile_dinfos[static_cast<size_t>(it.type)] = MOVE(handle);
+  }
 
   EntityDrawHandles edh{MOVE(dinfos)};
   TileDrawHandles td{MOVE(tile_dinfos)};
@@ -479,10 +470,10 @@ start(stlw::Logger &logger, Engine &engine)
   };
 
   auto &registries = engine.registries;
-  auto const FLOOR_COUNT = 5;
+  auto const FLOOR_COUNT = 2;
 
   std::vector<ZoneState> zstates;
-  FOR(i, 1) {
+  FOR(i, FLOOR_COUNT) {
     auto const level_string = [&i]() { return "area" + std::to_string(i) + ".toml"; };
     DO_TRY(auto ld, boomhs::load_level(logger, registries[i], level_string()));
     auto zs = make_zs(i, FLOOR_COUNT, MOVE(ld), registries[i]);
