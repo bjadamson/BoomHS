@@ -16,6 +16,12 @@ struct Transform
   {
     return stlw::math::calculate_modelmatrix(translation, rotation, scale);
   }
+
+  void
+  rotate_degrees(float const degrees, glm::vec3 const& axis)
+  {
+    rotation = glm::angleAxis(glm::radians(degrees), axis) * rotation;
+  }
 };
 
 struct WidthHeightLength

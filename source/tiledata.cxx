@@ -89,7 +89,7 @@ TileData::assign_bridge(Tile &tile)
   assert(registry_.has<Transform>(tile.eid));
   auto &transform = registry_.get<Transform>(tile.eid);
   if (float_compare(flow.direction.x, 1.0f)) {
-    transform.rotation = glm::angleAxis(glm::radians(90.0f), opengl::Y_UNIT_VECTOR) * transform.rotation;
+    transform.rotate_degrees(90.0f, opengl::Y_UNIT_VECTOR);
   }
 }
 

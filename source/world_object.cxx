@@ -35,7 +35,7 @@ void
 WorldObject::rotate(float const angle, glm::vec3 const& axis)
 {
   auto &t = transform();
-  t.rotation = glm::angleAxis(glm::radians(angle), axis) * t.rotation;
+  t.rotate_degrees(angle, axis);
 }
 
 void

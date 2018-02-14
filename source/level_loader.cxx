@@ -308,12 +308,9 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     if (rotation_o) {
       // TODO: simplify
       glm::vec3 const rotation = *rotation_o;
-      auto const x_rotation = glm::angleAxis(glm::radians(rotation.x), opengl::X_UNIT_VECTOR);
-      auto const y_rotation = glm::angleAxis(glm::radians(rotation.y), opengl::Y_UNIT_VECTOR);
-      auto const z_rotation = glm::angleAxis(glm::radians(rotation.z), opengl::Z_UNIT_VECTOR);
-      transform.rotation = x_rotation * transform.rotation;
-      transform.rotation = y_rotation * transform.rotation;
-      transform.rotation = z_rotation * transform.rotation;
+      transform.rotate_degrees(rotation.x, opengl::X_UNIT_VECTOR);
+      transform.rotate_degrees(rotation.y, opengl::X_UNIT_VECTOR);
+      transform.rotate_degrees(rotation.z, opengl::X_UNIT_VECTOR);
     }
 
     auto &sn = registry.assign<ShaderName>(entity);
