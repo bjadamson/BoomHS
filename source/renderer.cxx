@@ -386,31 +386,44 @@ draw_tiledata(RenderArgs const& args, HandleManager &handlem, TileData const& ti
 }
 
 void
-draw_rivers(RenderArgs const& rargs, opengl::ShaderProgram & sp, opengl::DrawInfo const& dinfo,
-    entt::DefaultRegistry &registry, window::FrameTime const& ft, uint32_t const river_eid,
-    RiverInfo const& rinfo)
+draw_rivers(RenderArgs const& rargs, ZoneState &zone_state, window::FrameTime const& ft)
 {
-  auto const& left = rinfo.left;
-  auto const& right = rinfo.right;
+
+  auto &handlem = zone_state.handles;
+  auto &registry = zone_state.registry;
+  auto &sps = zone_state.sps;
+
+  auto &sp = sps.ref_sp("river");
+  auto const eid = handlem.river_eid;
+  auto const& dinfo = handlem.lookup(eid);
 
   sp.set_uniform_color(rargs.logger, "u_color", LOC::WHITE);
   opengl::global::vao_bind(dinfo.vao());
 
-  auto const draw_wiggle = [&](auto const& wiggle) {
-    sp.set_uniform_vec2(rargs.logger, "u_direction", wiggle.direction);
-    sp.set_uniform_vec2(rargs.logger, "u_offset", wiggle.offset);
+  auto const draw_river = [&](auto const& rinfo) {
+    auto const& left = rinfo.left;
+    auto const& right = rinfo.right;
 
-    auto const& wp = wiggle.position;
-    auto const tr = glm::vec3{wp.x, WIGGLE_UNDERATH_OFFSET, wp.y} + VIEWING_OFFSET;
-    glm::quat const rot = glm::angleAxis(glm::degrees(rinfo.wiggle_rotation), Y_UNIT_VECTOR);
-    auto const scale = glm::vec3{0.5};
+    auto const draw_wiggle = [&](auto const& wiggle) {
+      sp.set_uniform_vec2(rargs.logger, "u_direction", wiggle.direction);
+      sp.set_uniform_vec2(rargs.logger, "u_offset", wiggle.offset);
 
-    bool const receives_ambient = true;
-    auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
-    draw_3dshape(rargs, modelmatrix, sp, dinfo, river_eid, registry, receives_ambient);
+      auto const& wp = wiggle.position;
+      auto const tr = glm::vec3{wp.x, WIGGLE_UNDERATH_OFFSET, wp.y} + VIEWING_OFFSET;
+      glm::quat const rot = glm::angleAxis(glm::degrees(rinfo.wiggle_rotation), Y_UNIT_VECTOR);
+      auto const scale = glm::vec3{0.5};
+
+      bool const receives_ambient = true;
+      auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
+      draw_3dshape(rargs, modelmatrix, sp, dinfo, eid, registry, receives_ambient);
+    };
+    for (auto const& w : rinfo.wiggles) {
+      draw_wiggle(w);
+    }
   };
-  for (auto const& w : rinfo.wiggles) {
-    draw_wiggle(w);
+  auto const& rinfos = zone_state.level_data.rivers();
+  for (auto const& rinfo : rinfos) {
+    draw_river(rinfo);
   }
 }
 

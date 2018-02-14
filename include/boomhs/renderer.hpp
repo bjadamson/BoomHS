@@ -31,6 +31,7 @@ struct Transform;
 class TileData;
 struct TiledataState;
 class WorldObject;
+struct ZoneState;
 } // ns boomhs
 
 namespace boomhs
@@ -69,8 +70,7 @@ draw(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawI
     uint32_t const, entt::DefaultRegistry &);
 
 void
-draw_rivers(RenderArgs const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
-    entt::DefaultRegistry &, window::FrameTime const&, uint32_t, RiverInfo const&);
+draw_rivers(RenderArgs const&, ZoneState &, window::FrameTime const&);
 
 void
 draw_tiledata(RenderArgs const&, HandleManager &, TileData const&, TiledataState const&,

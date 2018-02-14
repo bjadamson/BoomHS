@@ -228,22 +228,6 @@ draw_tiledata(RenderArgs const& rargs, ZoneState &zone_state, TiledataState cons
 }
 
 void
-draw_rivers(RenderArgs const& rargs, ZoneState &zone_state, FrameTime const& ft)
-{
-  auto &handlem = zone_state.handles;
-  auto &registry = zone_state.registry;
-  auto &sps = zone_state.sps;
-
-  auto &sp = sps.ref_sp("river");
-  auto &river_handle = handlem.lookup(handlem.river_eid);
-
-  auto const& rinfos = zone_state.level_data.rivers();
-  for (auto const& rinfo : rinfos) {
-    render::draw_rivers(rargs, sp, river_handle, registry, ft, handlem.river_eid, rinfo);
-  }
-}
-
-void
 draw_tilegrid(RenderArgs const& rargs, ZoneState &zone_state, TiledataState const& tds)
 {
   auto &sps = zone_state.sps;
@@ -504,7 +488,7 @@ game_loop(RenderArgs const& rargs, EngineState &es, ZoneManager &zm, SDLWindow &
   }
   if (tiledata_state.draw_tiledata) {
     draw_tiledata(rargs, zone_state, tiledata_state, ft);
-    draw_rivers(rargs, zone_state, ft);
+    render::draw_rivers(rargs, zone_state, ft);
   }
   if (tiledata_state.show_grid_lines) {
     draw_tilegrid(rargs, zone_state, tiledata_state);
