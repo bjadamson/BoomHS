@@ -170,7 +170,6 @@ draw_3dshape(boomhs::RenderArgs const &args, glm::mat4 const& model_matrix, Shad
   auto &logger = args.logger;
   auto const& camera = args.camera;
 
-  glm::mat4 const view_matrix = camera.camera_matrix();
   auto const draw_3d_shape_fn = [&]() {
 
     // various matrices
