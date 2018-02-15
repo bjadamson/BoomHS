@@ -12,7 +12,12 @@ struct TileInfos;
 struct TileDataConfig
 {
   size_t const width, height;
+};
+
+struct LevelConfig
+{
   StairGenConfig const& stairconfig;
+  TileDataConfig const& tileconfig;
 };
 
 } // ns boomhs
@@ -21,7 +26,7 @@ namespace boomhs::level_generator
 {
 
 LevelData
-make_leveldata(TileDataConfig const&, entt::DefaultRegistry &, TileInfos &&,
+make_leveldata(LevelConfig const&, entt::DefaultRegistry &, TileInfos &&,
     stlw::float_generator &);
 
 } // ns boomhs::level_generator

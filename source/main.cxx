@@ -10,8 +10,7 @@
 #include <boomhs/assets.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/io.hpp>
-#include <boomhs/level_generator.hpp>
-#include <boomhs/level_loader.hpp>
+#include <boomhs/level_assembler.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
@@ -46,77 +45,6 @@ using stlw::Logger;
 
 namespace boomhs
 {
-
-using copy_assets_pair_t = std::pair<EntityDrawHandles, TileDrawHandles>;
-stlw::result<copy_assets_pair_t, std::string>
-copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile_infos,
-    entt::DefaultRegistry &registry, ObjCache const &obj_cache)
-{
-  EntityDrawinfos dinfos;
-  /*
-  registry.view<ShaderName, Color, CubeRenderable>().each(
-      [&](auto entity, auto &sn, auto &color, auto &) {
-        auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_colorcube_gpu(logger, shader_ref, color);
-        dinfos.add(entity, MOVE(handle));
-      });
-      */
-  registry.view<ShaderName, PointLight, CubeRenderable>().each(
-      [&](auto entity, auto &sn, auto &pointlight, auto &) {
-        auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_vertexonlycube_gpu(logger, shader_ref);
-        dinfos.add(entity, MOVE(handle));
-      });
-
-  registry.view<ShaderName, Color, MeshRenderable>().each(
-      [&](auto entity, auto &sn, auto &color, auto &mesh) {
-        auto const &obj = obj_cache.get_obj(mesh.name);
-        auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, stlw::none);
-        dinfos.add(entity, MOVE(handle));
-      });
-  registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
-      [&](auto entity, auto &sn, auto &, auto &texture) {
-        auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
-        dinfos.add(entity, MOVE(handle));
-      });
-  registry.view<ShaderName, SkyboxRenderable, TextureRenderable>().each(
-      [&](auto entity, auto &sn, auto &, auto &texture) {
-        auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
-        dinfos.add(entity, MOVE(handle));
-      });
-  registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
-      [&](auto entity, auto &sn, auto &mesh, auto &texture) {
-        auto const &obj = obj_cache.get_obj(mesh.name);
-        auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
-        dinfos.add(entity, MOVE(handle));
-      });
-
-  registry.view<ShaderName, MeshRenderable>().each([&](auto entity, auto &sn, auto &mesh) {
-    auto const &obj = obj_cache.get_obj(mesh.name);
-    auto &shader_ref = sps.ref_sp(sn.value);
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, stlw::none);
-    dinfos.add(entity, MOVE(handle));
-  });
-
-  std::vector<DrawInfo> tile_dinfos;
-  tile_dinfos.reserve(static_cast<size_t>(TileType::MAX));
-  for (auto const& it : tile_infos) {
-    auto const& mesh_name = it.mesh_name;
-    auto const& vshader_name = it.vshader_name;
-    auto const &obj = obj_cache.get_obj(mesh_name);
-
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, stlw::none);
-    tile_dinfos[static_cast<size_t>(it.type)] = MOVE(handle);
-  }
-
-  EntityDrawHandles edh{MOVE(dinfos)};
-  TileDrawHandles td{MOVE(tile_dinfos)};
-  return std::make_pair(MOVE(edh), MOVE(td));
-}
 
 void
 move_betweentiledatas_ifonstairs(TiledataState &tds, ZoneManager &zm)
@@ -358,50 +286,6 @@ make_init_gamestate(stlw::Logger &logger, ImGuiIO &imgui, window::Dimensions con
   return GameState{MOVE(es), MOVE(zs)};
 }
 
-void
-bridge_staircases(ZoneState &a, ZoneState &b)
-{
-  auto &tiledata_a = a.level_data.tiledata();
-  auto &tiledata_b = b.level_data.tiledata();
-
-  auto const stairs_up_a = find_upstairs(a.registry, tiledata_a);
-  assert(!stairs_up_a.empty());
-
-  auto const stairs_down_b = find_downstairs(b.registry, tiledata_b);
-  assert(!stairs_down_b.empty());
-
-  auto &a_registry = a.registry;
-  auto &b_registry = b.registry;
-
-  auto const behavior = TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY;
-
-  assert(stairs_up_a.size() == stairs_down_b.size());
-  auto const num_stairs = stairs_up_a.size();
-  FOR(i, num_stairs) {
-    auto const a_updowneid = stairs_up_a[i];
-    auto const b_downeid = stairs_down_b[i];
-
-    assert(a_registry.has<StairInfo>(a_updowneid));
-    StairInfo &si_a = a_registry.get<StairInfo>(a_updowneid);
-
-    assert(b_registry.has<StairInfo>(b_downeid));
-    StairInfo &si_b = b_registry.get<StairInfo>(b_downeid);
-
-    // find a suitable neighbor tile for each stair
-    auto const a_neighbors = find_immediate_neighbors(tiledata_a, si_a.tile_position, TileType::FLOOR,
-        behavior);
-    assert(!a_neighbors.empty());
-
-    auto const b_neighbors = find_immediate_neighbors(tiledata_b, si_b.tile_position, TileType::FLOOR,
-        behavior);
-    assert(!b_neighbors.empty());
-
-    // Set A's exit position to B's neighbor, and visa versa
-    si_a.exit_position = b_neighbors.front();
-    si_b.exit_position = a_neighbors.front();
-  }
-}
-
 stlw::result<stlw::empty_type, std::string>
 start(stlw::Logger &logger, Engine &engine)
 {
@@ -409,89 +293,11 @@ start(stlw::Logger &logger, Engine &engine)
   ImGui_ImplSdlGL3_Init(engine.window.raw());
   ON_SCOPE_EXIT([]() { ImGui_ImplSdlGL3_Shutdown(); });
 
-  // Construct tiledata
-  stlw::float_generator rng;
-  auto const make_zs = [&](int const floor_number, auto const floor_count, LevelAssets &&level_assets,
-      entt::DefaultRegistry &registry)
-  {
-    auto &assets = level_assets.assets;
-    auto const& objcache = assets.obj_cache;
-
-    auto const stairs_perfloor = 8;
-    StairGenConfig const sgconfig{floor_count, floor_number, stairs_perfloor};
-
-    int const width = 40, height = 40;
-    TileDataConfig const tdconfig{width, height, sgconfig};
-    auto leveldata = level_generator::make_leveldata(tdconfig, registry, MOVE(assets.tile_infos),
-        rng);
-
-    // Load point lights
-    auto light_view = registry.view<PointLight, Transform>();
-    for (auto const entity : light_view) {
-      auto &transform = light_view.get<Transform>(entity);
-      transform.scale = glm::vec3{0.2f};
-    }
-
-    // camera-look at origin
-    // cameraspace "up" is === "up" in worldspace.
-    auto const FORWARD = -Z_UNIT_VECTOR;
-    auto constexpr UP = Y_UNIT_VECTOR;
-
-    auto const player_eid = find_player(registry);
-    EnttLookup player_lookup{player_eid, registry};
-    WorldObject player{player_lookup, FORWARD, UP};
-    Camera camera(player_lookup, FORWARD, UP);
-    {
-      SphericalCoordinates sc;
-      sc.radius = 3.8f;
-      sc.theta = glm::radians(-0.229f);
-      sc.phi = glm::radians(38.2735f);
-      camera.set_coordinates(MOVE(sc));
-    }
-
-    ZoneState zone_state{
-      assets.background_color,
-      assets.global_light,
-      MOVE(level_assets.shader_programs),
-      MOVE(level_assets.assets.texture_table),
-      MOVE(leveldata),
-      MOVE(camera),
-      MOVE(player),
-      registry};
-
-    LOG_TRACE("Copy assets to GPU.");
-    auto &sps = zone_state.sps;
-    auto const& tileinfos = zone_state.level_data.tileinfos();
-    auto copy_result = boomhs::copy_assets_gpu(logger, sps, tileinfos, registry,
-        objcache);
-    assert(copy_result);
-    auto handles = MOVE(*copy_result);
-    auto edh = MOVE(handles.first);
-    auto tdh = MOVE(handles.second);
-    zone_state.gpu_state.entities = MOVE(edh);
-    zone_state.gpu_state.tiles = MOVE(tdh);
-    return zone_state;
-  };
-
   auto &registries = engine.registries;
-  auto const FLOOR_COUNT = 2;
-
-  std::vector<ZoneState> zstates;
-  FOR(i, FLOOR_COUNT) {
-    auto const level_string = [&i]() { return "area" + std::to_string(i) + ".toml"; };
-    DO_TRY(auto ld, boomhs::load_level(logger, registries[i], level_string()));
-    auto zs = make_zs(i, FLOOR_COUNT, MOVE(ld), registries[i]);
-    zstates.emplace_back(MOVE(zs));
-
-    if (i == 0) {
-      continue;
-    }
-    bridge_staircases(zstates[i-1], zstates[i]);
-  }
-  ZoneStates zs{MOVE(zstates)};
+  DO_TRY(ZoneStates zone_states, LevelAssembler::assemble_levels(logger, registries));
 
   auto &imgui = ImGui::GetIO();
-  auto state = make_init_gamestate(logger, imgui, engine.dimensions(), MOVE(zs));
+  auto state = make_init_gamestate(logger, imgui, engine.dimensions(), MOVE(zone_states));
   timed_game_loop(engine, state);
   LOG_TRACE("game loop finished.");
   return stlw::empty_type{};

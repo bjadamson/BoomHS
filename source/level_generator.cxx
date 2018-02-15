@@ -313,12 +313,13 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
 }
 
 LevelData
-make_leveldata(TileDataConfig const& tdconfig, entt::DefaultRegistry &registry,
+make_leveldata(LevelConfig const& levelconfig, entt::DefaultRegistry &registry,
     TileInfos &&tinfos, stlw::float_generator &rng)
 {
   // clang-format off
-  auto const tdwidth = tdconfig.width;
-  auto const tdheight = tdconfig.height;
+  TileDataConfig const& tileconfig = levelconfig.tileconfig;
+  auto const tdwidth = tileconfig.width;
+  auto const tdheight = tileconfig.height;
   auto const num_tiles = tdwidth * tdheight;
   // clang-format on
 
@@ -328,7 +329,7 @@ make_leveldata(TileDataConfig const& tdconfig, entt::DefaultRegistry &registry,
 
   std::cerr << "======================================\n";
   std::vector<RiverInfo> rivers;
-  auto const starting_pos = place_rivers_rooms_and_stairs(tdconfig.stairconfig, rivers, tiledata,
+  auto const starting_pos = place_rivers_rooms_and_stairs(levelconfig.stairconfig, rivers, tiledata,
       rng, registry);
   std::cerr << "======================================\n";
 

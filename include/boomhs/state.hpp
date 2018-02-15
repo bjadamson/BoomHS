@@ -132,6 +132,7 @@ struct ZoneState
   GpuState gpu_state = {};
   opengl::ShaderPrograms sps;
   opengl::TextureTable texture_table;
+  ObjCache obj_cache;
   LevelData level_data;
 
   Camera camera;
@@ -139,12 +140,13 @@ struct ZoneState
   entt::DefaultRegistry &registry;
 
   explicit ZoneState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
-      opengl::ShaderPrograms &&sp, opengl::TextureTable &&ttable, LevelData &&ldata, Camera &&cam,
-      WorldObject &&pl, entt::DefaultRegistry &reg)
+      opengl::ShaderPrograms &&sp, opengl::TextureTable &&ttable, ObjCache &&ocache,
+      LevelData &&ldata, Camera &&cam, WorldObject &&pl, entt::DefaultRegistry &reg)
     : background(bgcolor)
     , global_light(glight)
     , sps(MOVE(sp))
     , texture_table(MOVE(ttable))
+    , obj_cache(MOVE(ocache))
     , level_data(MOVE(ldata))
     , camera(MOVE(cam))
     , player(MOVE(pl))

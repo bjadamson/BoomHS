@@ -1,5 +1,4 @@
 #pragma once
-#include <boomhs/components.hpp>
 #include <stlw/type_macros.hpp>
 #include <entt/entt.hpp>
 #include <iostream>
