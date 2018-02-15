@@ -26,7 +26,6 @@ namespace boomhs
 class Camera;
 class HandleManager;
 struct EngineState;
-struct RenderArgs;
 struct RiverInfo;
 struct Transform;
 class TileData;
@@ -38,15 +37,10 @@ struct ZoneState;
 namespace boomhs
 {
 
-struct RenderArgs
+struct RenderState
 {
-  Camera const& camera;
-  WorldObject const& player;
-
-  stlw::Logger &logger;
-  opengl::GlobalLight const& global_light;
-
-  bool const draw_normals;
+  EngineState &es;
+  ZoneState &zs;
 };
 
 } // ns boomhs
@@ -61,39 +55,33 @@ void
 clear_screen(opengl::Color const&);
 
 void
-conditionally_draw_player_vectors(RenderArgs const&, WorldObject const &, EngineState &,
-    ZoneState &);
+conditionally_draw_player_vectors(RenderState &, WorldObject const &);
 
 void
-draw(RenderArgs const&, Transform const&, opengl::ShaderProgram &, opengl::DrawInfo const&,
-    uint32_t const, entt::DefaultRegistry &);
+draw_arrow(RenderState &, glm::vec3 const&, glm::vec3 const&, opengl::Color const&);
 
 void
-draw_arrow(RenderArgs const&, ZoneState &, glm::vec3 const&, glm::vec3 const&, opengl::Color const&);
+draw_arrow_abovetile_and_neighbors(RenderState &, TilePosition const&);
 
 void
-draw_arrow_abovetile_and_neighbors(RenderArgs const&, TilePosition const&, ZoneState &);
+draw_global_axis(RenderState &, entt::DefaultRegistry &);
 
 void
-draw_global_axis(RenderArgs const&, entt::DefaultRegistry &, opengl::ShaderPrograms &);
+draw_local_axis(RenderState &, entt::DefaultRegistry &, glm::vec3 const &);
 
 void
-draw_local_axis(RenderArgs const& rargs, entt::DefaultRegistry &, opengl::ShaderPrograms &,
-    glm::vec3 const &);
+draw_entities(RenderState &);
 
 void
-draw_entities(RenderArgs const&, EngineState const&, ZoneState &);
+draw_rivers(RenderState &, window::FrameTime const&);
 
 void
-draw_rivers(RenderArgs const&, ZoneState &, window::FrameTime const&);
+draw_terrain(RenderState &);
 
 void
-draw_terrain(RenderArgs const&, ZoneState &);
+draw_tiledata(RenderState &, TiledataState const&, window::FrameTime const&);
 
 void
-draw_tiledata(RenderArgs const&, TiledataState const&, ZoneState &, window::FrameTime const&);
-
-void
-draw_tilegrid(RenderArgs const&, TiledataState const&, ZoneState &);
+draw_tilegrid(RenderState &, TiledataState const&);
 
 } // ns boomhs::render

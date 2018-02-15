@@ -51,11 +51,14 @@ assemble(LevelAssets &&level_assets, entt::DefaultRegistry &registry, LevelConfi
     camera.set_coordinates(MOVE(sc));
   }
 
+  GfxState gfx{
+    MOVE(level_assets.shader_programs),
+    MOVE(level_assets.assets.texture_table)
+  };
   return ZoneState{
     assets.background_color,
     assets.global_light,
-    MOVE(level_assets.shader_programs),
-    MOVE(level_assets.assets.texture_table),
+    MOVE(gfx),
     MOVE(level_assets.assets.obj_cache),
     MOVE(leveldata),
     MOVE(camera),
@@ -183,7 +186,8 @@ copy_to_gpu(stlw::Logger &logger, ZoneState &zone_state)
 {
   auto const& tileinfos = zone_state.level_data.tileinfos();
   auto const& objcache = zone_state.obj_cache;
-  auto &sps = zone_state.sps;
+  auto &gfx_state = zone_state.gfx_state;
+  auto &sps = gfx_state.sps;
   auto &registry = zone_state.registry;
 
   auto copy_result = copy_assets_gpu(logger, sps, tileinfos, registry, objcache);
@@ -191,8 +195,8 @@ copy_to_gpu(stlw::Logger &logger, ZoneState &zone_state)
   auto handles = MOVE(*copy_result);
   auto edh = MOVE(handles.first);
   auto tdh = MOVE(handles.second);
-  zone_state.gpu_state.entities = MOVE(edh);
-  zone_state.gpu_state.tiles = MOVE(tdh);
+  gfx_state.gpu_state.entities = MOVE(edh);
+  gfx_state.gpu_state.tiles = MOVE(tdh);
 }
 
 } // ns anon

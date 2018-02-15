@@ -150,22 +150,20 @@ update_riverwiggles(LevelData &level_data, FrameTime const& ft)
 }
 
 void
-game_loop(RenderArgs const& rargs, EngineState &es, ZoneManager &zm, SDLWindow &window,
-    FrameTime const& ft)
+game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& ft)
 {
   auto &logger = es.logger;
   auto &tiledata_state = es.tiledata_state;
-  auto &zone_state = zm.active();
+  auto &zs = zm.active();
 
   move_betweentiledatas_ifonstairs(tiledata_state, zm);
-  update_riverwiggles(zone_state.level_data, ft);
+  update_riverwiggles(zs.level_data, ft);
 
   /////////////////////////
-  auto &leveldata = zone_state.level_data;
+  auto &leveldata = zs.level_data;
 
-  auto &player = zone_state.player;
-  auto &registry = zone_state.registry;
-  auto &sps = zone_state.sps;
+  auto &player = zs.player;
+  auto &registry = zs.registry;
   /////////////////////////
 
   // compute tiledata
@@ -179,35 +177,36 @@ game_loop(RenderArgs const& rargs, EngineState &es, ZoneManager &zm, SDLWindow &
   }
 
   // action begins here
-  render::clear_screen(zone_state.background);
+  render::clear_screen(zs.background);
 
+  RenderState rstate{es, zs};
   if (es.draw_entities) {
-    render::draw_entities(rargs, es, zone_state);
+    render::draw_entities(rstate);
   }
   if (es.draw_terrain) {
-    render::draw_terrain(rargs, zone_state);
+    render::draw_terrain(rstate);
   }
   if (tiledata_state.draw_tiledata) {
-    render::draw_tiledata(rargs, tiledata_state, zone_state, ft);
-    render::draw_rivers(rargs, zone_state, ft);
+    render::draw_tiledata(rstate, tiledata_state, ft);
+    render::draw_rivers(rstate, ft);
   }
   if (tiledata_state.show_grid_lines) {
-    render::draw_tilegrid(rargs, tiledata_state, zone_state);
+    render::draw_tilegrid(rstate, tiledata_state);
   }
   if (tiledata_state.show_neighbortile_arrows) {
     auto const& wp = player.world_position();
     auto const tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
-    render::draw_arrow_abovetile_and_neighbors(rargs, tpos, zone_state);
+    render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
   }
   if (es.show_global_axis) {
-    render::draw_global_axis(rargs, registry, sps);
+    render::draw_global_axis(rstate, registry);
   }
   if (es.show_local_axis) {
-    render::draw_local_axis(rargs, registry, sps, player.world_position());
+    render::draw_local_axis(rstate, registry, player.world_position());
   }
 
   // if checks happen inside fn
-  render::conditionally_draw_player_vectors(rargs, player, es, zone_state);
+  render::conditionally_draw_player_vectors(rstate, player);
   if (es.ui_state.draw_ui) {
     draw_ui(es, zm, window, registry);
   }
@@ -250,7 +249,7 @@ loop(Engine &engine, GameState &state, FrameTime const& ft)
   boomhs::IO::process(state, event, engine.controllers, ft);
 
   ZoneManager zm{state.zone_states};
-  boomhs::game_loop(state.render_args(), state.engine_state, zm, engine.window, ft);
+  boomhs::game_loop(state.engine_state, zm, engine.window, ft);
 
   // Render Imgui UI
   ImGui::Render();

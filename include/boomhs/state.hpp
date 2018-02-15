@@ -122,16 +122,27 @@ struct GpuState
 
   MOVE_CONSTRUCTIBLE_ONLY(GpuState);
 };
+struct GfxState
+{
+  GpuState gpu_state = {};
+  opengl::ShaderPrograms sps;
+  opengl::TextureTable texture_table;
 
+  explicit GfxState(opengl::ShaderPrograms &&sp, opengl::TextureTable &&tt)
+    : sps(MOVE(sp))
+    , texture_table(MOVE(tt))
+  {
+  }
+
+  MOVE_CONSTRUCTIBLE_ONLY(GfxState);
+};
 struct ZoneState
 {
   // singular light in the scene
   opengl::Color background;
   opengl::GlobalLight global_light;
+  GfxState gfx_state;
 
-  GpuState gpu_state = {};
-  opengl::ShaderPrograms sps;
-  opengl::TextureTable texture_table;
   ObjCache obj_cache;
   LevelData level_data;
 
@@ -140,12 +151,11 @@ struct ZoneState
   entt::DefaultRegistry &registry;
 
   explicit ZoneState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
-      opengl::ShaderPrograms &&sp, opengl::TextureTable &&ttable, ObjCache &&ocache,
-      LevelData &&ldata, Camera &&cam, WorldObject &&pl, entt::DefaultRegistry &reg)
+      GfxState &&gfx,  ObjCache &&ocache, LevelData &&ldata, Camera &&cam, WorldObject &&pl,
+      entt::DefaultRegistry &reg)
     : background(bgcolor)
     , global_light(glight)
-    , sps(MOVE(sp))
-    , texture_table(MOVE(ttable))
+    , gfx_state(MOVE(gfx))
     , obj_cache(MOVE(ocache))
     , level_data(MOVE(ldata))
     , camera(MOVE(cam))
@@ -230,9 +240,6 @@ struct GameState
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
   explicit GameState(EngineState &&, ZoneStates &&);
-
-  RenderArgs
-  render_args();
 };
 
 } // ns boomhs
