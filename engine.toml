@@ -91,3 +91,9 @@ name = "stair"
 vertex = "stair.vert"
 fragment = "stair.frag"
 va = "vertex_normal"
+
+[[shaders]]
+name = "floor"
+vertex = "floor.vert"
+fragment = "3d_pos_normal_color.frag"
+va = "vertex_normal_color"

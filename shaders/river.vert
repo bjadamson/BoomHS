@@ -7,8 +7,12 @@ out vec4 v_color;
 
 uniform vec2 u_offset;
 uniform vec2 u_direction;
+
+
 uniform mat4 u_mvpmatrix;
 uniform mat4 u_modelmatrix;
+uniform mat4 u_inversemodelmatrix;
+
 uniform mat3 u_normalmatrix;
 uniform vec4 u_color;
 
@@ -41,7 +45,7 @@ void main()
   pos_world += vec4(offset, 0.0);
 
   // Transform pos_world to it's original space
-  pos_world = inverse(u_modelmatrix) * pos_world;
+  pos_world = u_inversemodelmatrix * pos_world;
 
   // Transform pos_world to ndc
   gl_Position = u_mvpmatrix * pos_world;

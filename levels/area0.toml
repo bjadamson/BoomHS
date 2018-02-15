@@ -45,7 +45,7 @@ filename = "TextureAtlas.jpg"
 [[tile]]
 tile = "FLOOR"
 mesh = "plus"
-vshader = "3d_pos_normal_color"
+vshader = "floor"
 color = [1.0, 1.0, 1.0]
 ambient = [1.0, 1.0, 1.0]
 diffuse = [1.0, 1.0, 1.0]

@@ -498,13 +498,18 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
     switch(tile.type) {
       case TileType::FLOOR:
         {
-          draw_tile_helper(tile_sp, dinfo, tile, default_modmatrix, true);
+          auto &floor_sp = sps.ref_sp("floor");
+          auto const scale = glm::vec3{0.8};
+          auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, scale);
+          draw_tile_helper(floor_sp, dinfo, tile, modmatrix, true);
         }
         break;
       case TileType::WALL:
         {
-          auto &hashtag_sp = sps.ref_sp("hashtag");
-          draw_tile_helper(hashtag_sp, dinfo, tile, default_modmatrix, true);
+          auto const inverse_model = glm::inverse(default_modmatrix);
+          auto &sp = sps.ref_sp("hashtag");
+          sp.set_uniform_matrix_4fv(logger, "u_inversemodelmatrix", inverse_model);
+          draw_tile_helper(sp, dinfo, tile, default_modmatrix, true);
         }
         break;
       case TileType::RIVER:
@@ -518,7 +523,6 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
           // rendering tiles.
           //
           // thinking ...
-          auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
           draw_tile_helper(tile_sp, dinfo, tile, default_modmatrix, true);
         }
         break;
@@ -580,6 +584,10 @@ draw_rivers(RenderArgs const& rargs, ZoneState &zone_state, window::FrameTime co
 
       bool const receives_ambient = true;
       auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
+      auto const inverse_model = glm::inverse(modelmatrix);
+      sp.set_uniform_matrix_4fv(rargs.logger, "u_inversemodelmatrix", inverse_model);
+
+
       draw_3dlit_shape(rargs, modelmatrix, sp, dinfo, material, registry, receives_ambient);
     };
     for (auto const& w : rinfo.wiggles) {
