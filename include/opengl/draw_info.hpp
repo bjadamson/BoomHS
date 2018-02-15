@@ -43,11 +43,11 @@ class DrawInfo
   BufferHandles handles_;
   VAO vao_;
 
-  stlw::optional<TextureInfo> texture_info_;
+  std::optional<TextureInfo> texture_info_;
 
 public:
   NO_COPY(DrawInfo);
-  explicit DrawInfo(GLenum const, std::size_t const, GLuint const, stlw::optional<TextureInfo> const&);
+  explicit DrawInfo(GLenum const, std::size_t const, GLuint const, std::optional<TextureInfo> const&);
 
   DrawInfo(DrawInfo &&);
   DrawInfo& operator=(DrawInfo &&other);

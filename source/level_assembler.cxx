@@ -132,7 +132,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
       [&](auto entity, auto &sn, auto &color, auto &mesh) {
         auto const &obj = obj_cache.get_obj(mesh.name);
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, stlw::none);
+        auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
@@ -158,7 +158,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
   registry.view<ShaderName, MeshRenderable>().each([&](auto entity, auto &sn, auto &mesh) {
     auto const &obj = obj_cache.get_obj(mesh.name);
     auto &shader_ref = sps.ref_sp(sn.value);
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, stlw::none);
+    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
     dinfos.add(entity, MOVE(handle));
   });
 
@@ -169,7 +169,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
     auto const& vshader_name = it.vshader_name;
     auto const &obj = obj_cache.get_obj(mesh_name);
 
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, stlw::none);
+    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, std::nullopt);
     tile_dinfos[static_cast<size_t>(it.type)] = MOVE(handle);
   }
 

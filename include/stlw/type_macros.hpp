@@ -35,6 +35,14 @@
   CLASSNAME(CLASSNAME const &) = default;                                                          \
   CLASSNAME &operator=(CLASSNAME const &) = default;
 
+#define MOVE_ONLY(CLASSNAME)                                                                       \
+  NO_COPY(CLASSNAME)                                                                               \
+  MOVE_DEFAULT(CLASSNAME)
+
+#define COPY_ONLY(CLASSNAME)                                                                       \
+  NO_MOVE(CLASSNAME)                                                                               \
+  COPY_DEFAULT(CLASSNAME)
+
 
 #define BEGIN_END_FORWARD_FNS(CONTAINER)                                                           \
   decltype(auto) begin() { return CONTAINER.begin(); }                                             \

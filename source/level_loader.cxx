@@ -51,16 +51,16 @@ get_table_array_or_abort(CppTable const& config, char const* name)
 }
 
 template<typename T>
-stlw::optional<T>
+std::optional<T>
 get_value(CppTable const& table, char const* name)
 {
   auto cpptoml_option = table->get_as<T>(name);
   if (!cpptoml_option) {
-    return stlw::none;
+    return std::nullopt;
   }
-  // Move value out of cpptoml and into stlw::optional
+  // Move value out of cpptoml and into std::optional
   auto value = cpptoml_option.move_out();
-  return boost::make_optional(MOVE(value));
+  return std::make_optional(MOVE(value));
 }
 
 auto
@@ -75,7 +75,7 @@ get_bool(CppTable const& table, char const* name)
   return get_value<bool>(table, name);
 }
 
-stlw::optional<GLsizei>
+std::optional<GLsizei>
 get_sizei(CppTable const& table, char const* name)
 {
   return get_value<GLsizei>(table, name);
@@ -104,12 +104,12 @@ get_bool_or_abort(CppTable const& table, char const* name)
   return get_or_abort<bool>(table, name);
 }
 
-stlw::optional<opengl::Color>
+std::optional<opengl::Color>
 get_color(CppTable const& table, char const* name)
 {
   auto const load_colors = table->template get_array_of<double>(name);
   if (!load_colors) {
-    return stlw::none;
+    return std::nullopt;
   }
 
   std::vector<double> const& c = *load_colors;
@@ -118,15 +118,15 @@ get_color(CppTable const& table, char const* name)
   color.set_g(c[1]);
   color.set_b(c[2]);
   color.set_a(c[3]);
-  return stlw::make_optional(color);
+  return std::make_optional(color);
 }
 
-stlw::optional<glm::vec3>
+std::optional<glm::vec3>
 get_vec3(CppTable const& table, char const* name)
 {
   auto const load_data = table->template get_array_of<double>(name);
   if (!load_data) {
-    return stlw::none;
+    return std::nullopt;
   }
   auto const& ld = *load_data;
   return glm::vec3{ld[0], ld[1], ld[2]};
@@ -142,14 +142,14 @@ get_vec3_or_abort(CppTable const& table, char const* name)
   return *vec3_data;
 }
 
-stlw::optional<float>
+std::optional<float>
 get_float(CppTable const& table, char const* name)
 {
   auto const load_data = get_value<double>(table, name);
   if (!load_data) {
-    return stlw::none;
+    return std::nullopt;
   }
-  return stlw::make_optional(static_cast<float>(*load_data));
+  return std::make_optional(static_cast<float>(*load_data));
 }
 
 float
@@ -252,7 +252,7 @@ struct ColorMaterialInfo
   Material const material;
 };
 
-boost::optional<ColorMaterialInfo>
+std::optional<ColorMaterialInfo>
 load_material_color(CppTable const& file)
 {
   // clang-format off
@@ -265,7 +265,7 @@ load_material_color(CppTable const& file)
 
   Material material{ambient, diffuse, specular, shininess};
   ColorMaterialInfo const cmi{Color{color}, MOVE(material)};
-  return stlw::make_optional(cmi);
+  return std::make_optional(cmi);
 }
 
 auto
@@ -413,7 +413,7 @@ load_shader(stlw::Logger &logger, ParsedVertexAttributes &pvas, CppTable const& 
   auto va = pvas.get_copy_of_va(va_name);
   DO_TRY(auto program, opengl::make_shader_program(logger, vertex, fragment, MOVE(va)));
 
-  program.is_skybox = get_bool(table, "is_skybox").get_value_or(false);
+  program.is_skybox = get_bool(table, "is_skybox").value_or(false);
   program.instance_count = get_sizei(table, "instance_count");
 
   return std::make_pair(name, MOVE(program));

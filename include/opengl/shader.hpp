@@ -68,7 +68,7 @@ public:
   }
 
   // public data members
-  stlw::optional<GLsizei> instance_count = stlw::none;
+  std::optional<GLsizei> instance_count = std::nullopt;
 
   bool is_skybox = false;
   bool is_2d = false;

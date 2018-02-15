@@ -36,7 +36,7 @@ create_river(TilePosition const& tpos, Edges const& edges, glm::vec2 const& flow
   return river;
 }
 
-stlw::optional<RiverInfo>
+std::optional<RiverInfo>
 generate_river(TileData &tiledata, stlw::float_generator &rng)
 {
   auto const [tdwidth, tdheight] = tiledata.dimensions();
@@ -85,7 +85,7 @@ void
 place_rivers(TileData &tiledata, stlw::float_generator &rng, std::vector<RiverInfo> &rivers)
 {
   auto const place = [&]() {
-    stlw::optional<RiverInfo> river_o = stlw::none;
+    std::optional<RiverInfo> river_o = std::nullopt;
     while(!river_o) {
       river_o = generate_river(tiledata, rng);
     }

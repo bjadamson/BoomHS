@@ -32,7 +32,7 @@ public:
     , component_count(cc)
   {
   }
-  AttributePointerInfo(AttributePointerInfo &&other)
+  AttributePointerInfo(AttributePointerInfo &&other) noexcept
     : AttributePointerInfo(other.index, other.type, other.component_count)
   {
     invalidate(other);

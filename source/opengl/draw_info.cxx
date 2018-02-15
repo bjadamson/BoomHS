@@ -49,7 +49,7 @@ operator<<(std::ostream &stream, BufferHandles const& buffers)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // DrawInfo
 DrawInfo::DrawInfo(GLenum const dm, std::size_t const num_vertices, GLuint const num_indices,
-    stlw::optional<TextureInfo> const& ti)
+    std::optional<TextureInfo> const& ti)
   : draw_mode_(dm)
   , num_vertices_(num_vertices)
   , num_indices_(num_indices)

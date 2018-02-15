@@ -5,7 +5,7 @@
 #include <stlw/os.hpp>
 
 namespace fs = std::experimental::filesystem;
-using OptionalString = stlw::optional<std::string>;
+using OptionalString = std::optional<std::string>;
 
 namespace
 {

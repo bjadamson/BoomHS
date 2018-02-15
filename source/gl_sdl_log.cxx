@@ -43,7 +43,7 @@ namespace gfx
 {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-stlw::optional<GlErrors>
+std::optional<GlErrors>
 GlErrors::retrieve()
 {
   std::vector<std::string> gl;
@@ -55,7 +55,7 @@ GlErrors::retrieve()
     gl.emplace_back(MOVE(e));
   }
   if (gl.empty()) {
-    return stlw::none;
+    return std::nullopt;
   }
   return GlErrors{MOVE(gl)};
 }
@@ -80,13 +80,13 @@ operator<<(std::ostream &stream, GlErrors const& errors)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-stlw::optional<SdlErrors>
+std::optional<SdlErrors>
 SdlErrors::retrieve()
 {
   auto sdl = SDL_GetError();
   assert(nullptr != sdl);
   if (0 == ::strlen(sdl)) {
-    return stlw::none;
+    return std::nullopt;
   }
   return SdlErrors{MOVE(sdl)};
 }
@@ -120,7 +120,7 @@ ErrorLog::abort_if_any_errors(std::ostream &stream)
       stream << "none";
     }
     stream << "'\n";
-    bool const found_errors = opt_errors != stlw::none;
+    bool const found_errors = opt_errors != std::nullopt;
     return found_errors;
   };
   bool const some_glerrors = write_errors("GL errors", GlErrors::retrieve());

@@ -91,7 +91,7 @@ struct RoomGenConfig
   std::vector<Rect> const& rooms;
 };
 
-stlw::optional<Rect>
+std::optional<Rect>
 try_create_room(RoomGenConfig const& rgconfig, TileType const type, TileData &tiledata,
     stlw::float_generator &rng)
 {
@@ -130,7 +130,7 @@ create_room(size_t const max_tries, RoomGenConfig const& rgconfig, TileData &til
     stlw::float_generator &rng, TileType const type)
 {
   assert(rgconfig.tilemap_height - ROOM_MAX_SIZE > 0);
-  stlw::optional<Rect> room;
+  std::optional<Rect> room;
 
   size_t trials{0u};
   while(!room && (trials < max_tries)) {
@@ -227,7 +227,7 @@ struct Rooms
   NO_COPY(Rooms);
 };
 
-stlw::optional<Rooms>
+std::optional<Rooms>
 place_rooms(TileData &tiledata, stlw::float_generator &rng)
 {
   auto constexpr MAX_NUM_CREATE_TRIES = 5000;
@@ -295,7 +295,7 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
   river_generator::place_rivers(tiledata, rng, rivers);
 
   // 2. Place Rooms and Stairs
-  stlw::optional<Rooms> rooms = stlw::none;
+  std::optional<Rooms> rooms = std::nullopt;
   bool stairs = false;
   while(!rooms && !stairs) {
     std::cerr << "placing rooms ...\n";

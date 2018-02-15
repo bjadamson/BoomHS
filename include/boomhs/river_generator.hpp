@@ -24,8 +24,7 @@ struct RiverWiggle
   // normalized
   glm::vec2 direction;
 
-  // TODO: try re-enabling once we switch from boost::optional to std::optional (c++17)
-  //MOVE_CONSTRUCTIBLE_ONLY(RiverWiggle);
+  MOVE_ONLY(RiverWiggle);
 };
 
 struct RiverInfo
@@ -38,8 +37,7 @@ struct RiverInfo
   float wiggle_rotation;
 
   std::vector<RiverWiggle> wiggles = {};
-  // TODO: try re-enabling once we switch from boost::optional to std::optional (c++17)
-  //MOVE_CONSTRUCTIBLE_ONLY(RiverInfo);
+  MOVE_ONLY(RiverInfo);
 };
 
 } // ns boomhs

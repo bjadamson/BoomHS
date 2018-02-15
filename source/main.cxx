@@ -3,6 +3,7 @@
 #include <opengl/shader.hpp>
 #include <opengl/vertex_attribute.hpp>
 
+#include <window/controller.hpp>
 #include <window/mouse.hpp>
 #include <window/sdl_window.hpp>
 #include <window/timer.hpp>
@@ -220,11 +221,13 @@ namespace
 struct Engine
 {
   SDLWindow window;
+  SDLControllers controllers;
   std::vector<entt::DefaultRegistry> registries = {};
 
   Engine() = delete;
-  explicit Engine(SDLWindow &&w)
+  explicit Engine(SDLWindow &&w, SDLControllers &&c)
     : window(MOVE(w))
+    , controllers(MOVE(c))
   {
     registries.resize(50);
   }
@@ -330,7 +333,8 @@ main(int argc, char *argv[])
   bool constexpr FULLSCREEN = false;
   DO_TRY_OR_ELSE_RETURN(auto window, make_window(logger, FULLSCREEN, 1024, 768),
                         on_error);
-  Engine engine{MOVE(window)};
+  DO_TRY_OR_ELSE_RETURN(auto controller, SDLControllers::find_attached_controllers(logger), on_error);
+  Engine engine{MOVE(window), MOVE(controller)};
 
   LOG_DEBUG("Starting game loop");
   DO_TRY_OR_ELSE_RETURN(auto _, start(logger, engine), on_error);

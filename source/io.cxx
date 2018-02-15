@@ -341,6 +341,11 @@ process_mousestate(GameState &state, FrameTime const& ft)
   }
 }
 
+void
+process_joystickstate(GameState &state, FrameTime const& ft)
+{
+}
+
 bool
 process_event(GameState &state, SDL_Event &event, FrameTime const& ft)
 {
@@ -398,6 +403,7 @@ IO::process(GameState &state, SDL_Event &event, FrameTime const& ft)
   }
   process_keystate(state, ft);
   process_mousestate(state, ft);
+  process_joystickstate(state, ft);
 }
 
 } // ns boomhs

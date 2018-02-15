@@ -3,8 +3,8 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <stlw/optional.hpp>
 #include <algorithm>
+#include <optional>
 #include <string>
 #include <vector>
 #include <utility>
@@ -48,15 +48,15 @@ class TextureTable
   using pair_t = std::pair<TextureFilenames, TextureAllocation>;
   std::vector<pair_t> data_;
 
-  stlw::optional<TextureInfo>
+  std::optional<TextureInfo>
   lookup_texture(char const* name) const
   {
     if (!name) {
-      return stlw::none;
+      return std::nullopt;
     }
     auto const cmp = [&name](auto const& it) { return it.first.name == name; };
     auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
-    return it == data_.cend() ? stlw::none : boost::make_optional(it->second.info);
+    return it == data_.cend() ? std::nullopt : std::make_optional(it->second.info);
   }
 
 public:
@@ -76,10 +76,10 @@ public:
     return lookup_texture(name.c_str());
   }
 
-  stlw::optional<TextureInfo>
-  find(stlw::optional<std::string> const& name) const
+  std::optional<TextureInfo>
+  find(std::optional<std::string> const& name) const
   {
-    return name ? find(*name) : stlw::none;
+    return name ? find(*name) : std::nullopt;
   }
 };
 

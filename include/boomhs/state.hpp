@@ -117,8 +117,8 @@ struct TiledataState
 struct GpuState
 {
   // These slots get a value when memory is loaded, set to none when memory is not.
-  stlw::optional<opengl::EntityDrawHandles> entities;
-  stlw::optional<opengl::TileDrawHandles> tiles;
+  std::optional<opengl::EntityDrawHandles> entities;
+  std::optional<opengl::TileDrawHandles> tiles;
 
   MOVE_CONSTRUCTIBLE_ONLY(GpuState);
 };

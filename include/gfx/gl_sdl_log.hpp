@@ -14,7 +14,7 @@ struct GlErrors
 {
   std::vector<std::string> values;
 
-  static stlw::optional<GlErrors>
+  static std::optional<GlErrors>
   retrieve();
 
   static void
@@ -31,7 +31,7 @@ struct SdlErrors
   static constexpr char const* SDL_NO_ERRORS = "none";
   std::string value;
 
-  static stlw::optional<SdlErrors>
+  static std::optional<SdlErrors>
   retrieve();
 
   static void clear();
