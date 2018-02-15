@@ -71,7 +71,8 @@ class EntityDrawinfos
 
 public:
   EntityDrawinfos() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(EntityDrawinfos);
+  NO_COPY(EntityDrawinfos);
+  MOVE_DEFAULT(EntityDrawinfos);
 
   size_t
   add(uint32_t const, opengl::DrawInfo &&);
@@ -86,7 +87,8 @@ class EntityDrawHandles
 {
   EntityDrawinfos infos_;
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(EntityDrawHandles);
+  NO_COPY(EntityDrawHandles);
+  MOVE_DEFAULT(EntityDrawHandles);
   explicit EntityDrawHandles(EntityDrawinfos &&list)
     : infos_(MOVE(list))
   {

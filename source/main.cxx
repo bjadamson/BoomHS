@@ -415,15 +415,7 @@ start(stlw::Logger &logger, Engine &engine)
       entt::DefaultRegistry &registry)
   {
     auto &assets = level_assets.assets;
-    auto &sps = level_assets.shader_programs;
     auto const& objcache = assets.obj_cache;
-
-    LOG_TRACE("Copy assets to GPU.");
-    auto copy_result = boomhs::copy_assets_gpu(logger, sps, assets.tile_infos, registry, objcache);
-    assert(copy_result);
-    auto handles = MOVE(*copy_result);
-    auto edh = MOVE(handles.first);
-    auto tdh = MOVE(handles.second);
 
     auto const stairs_perfloor = 8;
     StairGenConfig const sgconfig{floor_count, floor_number, stairs_perfloor};
@@ -456,17 +448,29 @@ start(stlw::Logger &logger, Engine &engine)
       sc.phi = glm::radians(38.2735f);
       camera.set_coordinates(MOVE(sc));
     }
-    return ZoneState{
+
+    ZoneState zone_state{
       assets.background_color,
       assets.global_light,
-      MOVE(edh),
-      MOVE(tdh),
       MOVE(level_assets.shader_programs),
       MOVE(level_assets.assets.texture_table),
       MOVE(leveldata),
       MOVE(camera),
       MOVE(player),
       registry};
+
+    LOG_TRACE("Copy assets to GPU.");
+    auto &sps = zone_state.sps;
+    auto const& tileinfos = zone_state.level_data.tileinfos();
+    auto copy_result = boomhs::copy_assets_gpu(logger, sps, tileinfos, registry,
+        objcache);
+    assert(copy_result);
+    auto handles = MOVE(*copy_result);
+    auto edh = MOVE(handles.first);
+    auto tdh = MOVE(handles.second);
+    zone_state.gpu_state.entities = MOVE(edh);
+    zone_state.gpu_state.tiles = MOVE(tdh);
+    return zone_state;
   };
 
   auto &registries = engine.registries;

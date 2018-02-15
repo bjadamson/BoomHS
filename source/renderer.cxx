@@ -383,7 +383,7 @@ draw_arrow_abovetile_and_neighbors(RenderArgs const& rargs, TilePosition const& 
   auto const& tdata = leveldata.tiledata();
   auto const neighbors = find_immediate_neighbors(tdata, tpos, TileLookupBehavior::ALL_8_DIRECTIONS,
       [](auto const& tpos) { return true; });
-  //assert(neighbors.size() <= 8);
+  assert(neighbors.size() <= 8);
   FOR(i, neighbors.size()) {
     draw_the_arrow(neighbors[i], LOC::LIME_GREEN);
   }
@@ -428,7 +428,8 @@ draw_local_axis(RenderArgs const& rargs, entt::DefaultRegistry &registry, Shader
 void
 draw_entities(RenderArgs const& rargs, EngineState const& es, ZoneState &zone_state)
 {
-  auto &entity_handles = zone_state.entity_handles;
+  assert(zone_state.gpu_state.entities);
+  auto &entity_handles = *zone_state.gpu_state.entities;
   auto &registry = zone_state.registry;
   auto &sps = zone_state.sps;
 
@@ -460,7 +461,8 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
     FrameTime const& ft)
 {
   auto &logger = args.logger;
-  auto &tile_handles = zone_state.tile_handles;
+  assert(zone_state.gpu_state.tiles);
+  auto &tile_handles = *zone_state.gpu_state.tiles;
   auto &registry = zone_state.registry;
   auto &sps = zone_state.sps;
 
@@ -548,7 +550,8 @@ draw_tiledata(RenderArgs const& args, TiledataState const& tiledata_state, ZoneS
 void
 draw_rivers(RenderArgs const& rargs, ZoneState &zone_state, window::FrameTime const& ft)
 {
-  auto &tile_handles = zone_state.tile_handles;
+  assert(zone_state.gpu_state.tiles);
+  auto &tile_handles = *zone_state.gpu_state.tiles;
   auto &registry = zone_state.registry;
   auto &sps = zone_state.sps;
 

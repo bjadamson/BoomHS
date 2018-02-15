@@ -114,14 +114,22 @@ struct TiledataState
   glm::vec3 tile_scaling = {1.0f, 1.0f, 1.0f};
 };
 
+struct GpuState
+{
+  // These slots get a value when memory is loaded, set to none when memory is not.
+  stlw::optional<opengl::EntityDrawHandles> entities;
+  stlw::optional<opengl::TileDrawHandles> tiles;
+
+  MOVE_CONSTRUCTIBLE_ONLY(GpuState);
+};
+
 struct ZoneState
 {
   // singular light in the scene
   opengl::Color background;
   opengl::GlobalLight global_light;
 
-  opengl::EntityDrawHandles entity_handles;
-  opengl::TileDrawHandles tile_handles;
+  GpuState gpu_state = {};
   opengl::ShaderPrograms sps;
   opengl::TextureTable texture_table;
   LevelData level_data;
@@ -131,13 +139,10 @@ struct ZoneState
   entt::DefaultRegistry &registry;
 
   explicit ZoneState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
-      opengl::EntityDrawHandles &&edh, opengl::TileDrawHandles &&tdh, opengl::ShaderPrograms &&sp,
-      opengl::TextureTable &&ttable, LevelData &&ldata, Camera &&cam, WorldObject &&pl,
-      entt::DefaultRegistry &reg)
+      opengl::ShaderPrograms &&sp, opengl::TextureTable &&ttable, LevelData &&ldata, Camera &&cam,
+      WorldObject &&pl, entt::DefaultRegistry &reg)
     : background(bgcolor)
     , global_light(glight)
-    , entity_handles(MOVE(edh))
-    , tile_handles(MOVE(tdh))
     , sps(MOVE(sp))
     , texture_table(MOVE(ttable))
     , level_data(MOVE(ldata))
