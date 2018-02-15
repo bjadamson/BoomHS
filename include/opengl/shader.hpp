@@ -59,7 +59,6 @@ class ShaderProgram
 {
   ProgramHandle program_;
   VertexAttribute va_;
-  bool moved_from = false;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(ShaderProgram);
   explicit ShaderProgram(ProgramHandle &&ph, VertexAttribute &&va)
@@ -163,7 +162,7 @@ public:
 
 #define LOOKUP_SP(name)                                                                   \
   auto const lookup_sp = [this](char const* s) {                                          \
-      auto const cmp = [&s, this](auto const& it) { return it.first == s; };              \
+      auto const cmp = [&s](auto const& it) { return it.first == s; };                    \
       auto const it = std::find_if(shader_programs_.begin(), shader_programs_.end(), cmp);\
       assert(shader_programs_.end() != it);                                               \
       return it;                                                                          \

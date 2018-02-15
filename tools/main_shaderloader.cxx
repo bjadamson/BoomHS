@@ -73,7 +73,7 @@ main(int argc, char *argv[])
   auto const &CWD = paths.first;
   auto const &path_to_shaders = paths.second;
 
-  auto const on_error = [&log](auto const msg) {
+  auto const on_error = [](auto const msg) {
     log << "Error running shader loader, problem: '" << msg << "'";
     return EXIT_FAILURE;
   };

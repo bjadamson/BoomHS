@@ -374,7 +374,7 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
 auto
 load_tileinfos(stlw::Logger &logger, CppTable const& config, entt::DefaultRegistry &registry)
 {
-  auto const load_tile = [&registry](auto const& file) {
+  auto const load_tile = [](auto const& file) {
     auto const tile  =     get_string_or_abort(file, "tile");
     auto const tiletype = tiletype_from_string(tile);
     auto const mesh_name = get_string_or_abort(file, "mesh");

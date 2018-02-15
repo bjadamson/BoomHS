@@ -116,7 +116,7 @@ EOF
 
 cd ${BUILD}
 echo $(pwd)
-conan install --build missing -s compiler=clang -s arch=x86 -s compiler.version=4.0 -s compiler.libcxx=libc++ -s build_type=Debug
+conan install --build missing -s compiler=clang -s arch=x86 -s compiler.version=7.0 -s compiler.libcxx=libc++ -s build_type=Debug
 cmake .. -G "Unix Makefiles"          \
   -DCMAKE_BUILD_TYPE=Debug            \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
