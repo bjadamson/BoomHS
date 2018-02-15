@@ -3,7 +3,10 @@
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
 #include <boomhs/zone.hpp>
+
+#include <window/controller.hpp>
 #include <window/timer.hpp>
+
 #include <stlw/math.hpp>
 #include <stlw/log.hpp>
 
@@ -294,6 +297,21 @@ process_mousewheel(GameState &state, SDL_MouseWheelEvent const& wheel, FrameTime
 }
 
 void
+process_mousestate(GameState &state, FrameTime const& ft)
+{
+  auto &es = state.engine_state;
+  auto &ms = es.mouse_state;
+  if (ms.both_pressed()) {
+
+    ZoneManager zm{state.zone_states};
+    auto &zone_state = zm.active();
+    auto &player = zone_state.player;
+
+    move_ontiledata(state, &WorldObject::world_forward, player, ft);
+  }
+}
+
+void
 process_keystate(GameState &state, FrameTime const& ft)
 {
   // continual keypress responses procesed here
@@ -327,23 +345,85 @@ process_keystate(GameState &state, FrameTime const& ft)
 }
 
 void
-process_mousestate(GameState &state, FrameTime const& ft)
+process_controllerstate(GameState &state, SDLControllers const& controllers, FrameTime const& ft)
 {
   auto &es = state.engine_state;
-  auto &ms = es.mouse_state;
-  if (ms.both_pressed()) {
+  auto &logger = es.logger;
+  auto &c = controllers.first();
 
-    ZoneManager zm{state.zone_states};
-    auto &zone_state = zm.active();
-    auto &player = zone_state.player;
+  SDL_Joystick *joystick = c.joystick;
+  assert(joystick);
 
+  auto const read_axis = [&c](auto const axis) {
+    return SDL_GameControllerGetAxis(c.controller.get(), axis);
+  };
+
+  // https://wiki.libsdl.org/SDL_GameControllerGetAxis
+  //
+  // using 32bit ints to be sure no overflow (maybe unnecessary?)
+  int32_t constexpr AXIS_MIN = -32768;
+  int32_t constexpr AXIS_MAX = 32767;
+
+  ZoneManager zm{state.zone_states};
+  auto &active = zm.active();
+  auto &camera = active.camera;
+  auto &player = active.player;
+
+  auto constexpr THRESHOLD = 0.4f;
+  auto const less_threshold = [](auto const& v) {
+    return v <= 0 && (v <= AXIS_MIN * THRESHOLD);
+  };
+  auto const greater_threshold = [](auto const& v) {
+    return v >= 0 && (v >= AXIS_MAX * THRESHOLD);
+  };
+
+  auto const left_axis_x = c.left_axis_x();
+  if (less_threshold(left_axis_x)) {
+    player.rotate_to_match_camera_rotation(camera);
+    move_ontiledata(state, &WorldObject::world_left, player, ft);
+  }
+  if (greater_threshold(left_axis_x)) {
+    player.rotate_to_match_camera_rotation(camera);
+    move_ontiledata(state, &WorldObject::world_right, player, ft);
+  }
+  auto const left_axis_y = c.left_axis_y();
+  if (less_threshold(left_axis_y)) {
+    player.rotate_to_match_camera_rotation(camera);
     move_ontiledata(state, &WorldObject::world_forward, player, ft);
   }
-}
+  if (greater_threshold(left_axis_y)) {
+    player.rotate_to_match_camera_rotation(camera);
+    move_ontiledata(state, &WorldObject::world_backward, player, ft);
+  }
 
-void
-process_joystickstate(GameState &state, FrameTime const& ft)
-{
+  //auto const& controller_sensitivity = ???;
+  auto constexpr CONTROLLER_SENSITIVITY = 0.01;
+
+  auto const calc_delta = [&ft](auto const axis) {
+    return axis * ft.delta * 0.01;
+  };
+  {
+    auto const right_axis_x = c.right_axis_x();
+    if (less_threshold(right_axis_x)) {
+      float const dx = calc_delta(right_axis_x);
+      camera.rotate(dx, 0.0);
+    }
+    if (greater_threshold(right_axis_x)) {
+      float const dx = calc_delta(right_axis_x);
+      camera.rotate(dx, 0.0);
+    }
+  }
+  {
+    auto const right_axis_y = c.right_axis_y();
+    if (less_threshold(right_axis_y)) {
+      float const dy = calc_delta(right_axis_y);
+      camera.rotate(0.0, dy);
+    }
+    if (greater_threshold(right_axis_y)) {
+      float const dy = calc_delta(right_axis_y);
+      camera.rotate(0.0, dy);
+    }
+  }
 }
 
 bool
@@ -387,7 +467,8 @@ namespace boomhs
 {
 
 void
-IO::process(GameState &state, SDL_Event &event, FrameTime const& ft)
+IO::process(GameState &state, SDL_Event &event, SDLControllers const& controllers,
+    FrameTime const& ft)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
@@ -401,9 +482,9 @@ IO::process(GameState &state, SDL_Event &event, FrameTime const& ft)
       es.quit = process_event(state, event, ft);
     }
   }
-  process_keystate(state, ft);
   process_mousestate(state, ft);
-  process_joystickstate(state, ft);
+  process_keystate(state, ft);
+  process_controllerstate(state, controllers, ft);
 }
 
 } // ns boomhs

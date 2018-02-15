@@ -4,6 +4,7 @@
 namespace window
 {
 struct FrameTime;
+class SDLControllers;
 } // ns window
 
 namespace boomhs
@@ -12,7 +13,7 @@ namespace boomhs
 struct GameState;
 
 struct IO {
-  static void process(GameState &, SDL_Event &, window::FrameTime const&);
+  static void process(GameState &, SDL_Event &, window::SDLControllers const&, window::FrameTime const&);
 };
 
 } // ns boomhs

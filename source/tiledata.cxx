@@ -22,7 +22,6 @@ TileData::TileData(std::vector<Tile> &&t, size_t const width, size_t const heigh
   for (auto &tile : tiles_) {
     tile.eid = registry_.create();
     registry_.assign<Transform>(tile.eid);
-    std::cerr << "Tile eid: '" << tile.eid << "'\n";
   }
 }
 
@@ -63,9 +62,6 @@ Tile const&
 TileData::data(size_t const x, size_t const y) const
 {
   auto const [w, h] = dimensions();
-  if (y >= h) {
-    std::cerr << "x: '" << x << "' y: '" << y << "'\n";
-  }
   assert(x < w);
   assert(y < h);
   auto const cell = (w * y) + x;

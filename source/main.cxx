@@ -247,7 +247,7 @@ loop(Engine &engine, GameState &state, FrameTime const& ft)
   ImGui_ImplSdlGL3_NewFrame(engine.window.raw());
 
   SDL_Event event;
-  boomhs::IO::process(state, event, ft);
+  boomhs::IO::process(state, event, engine.controllers, ft);
 
   ZoneManager zm{state.zone_states};
   boomhs::game_loop(state.render_args(), state.engine_state, zm, engine.window, ft);
