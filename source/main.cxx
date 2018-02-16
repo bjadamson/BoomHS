@@ -8,7 +8,6 @@
 #include <window/sdl_window.hpp>
 #include <window/timer.hpp>
 
-#include <boomhs/assets.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_assembler.hpp>

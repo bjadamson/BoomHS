@@ -7,6 +7,7 @@
 #include <boomhs/world_object.hpp>
 
 #include <opengl/constants.hpp>
+#include <opengl/factory.hpp>
 #include <opengl/lighting.hpp>
 
 #include <stlw/random.hpp>
@@ -229,7 +230,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<entt::DefaultR
   zstates.reserve(FLOOR_COUNT);
   FORI(i, FLOOR_COUNT) {
     auto &registry = registries[i];
-    DO_TRY(auto level_assets, boomhs::load_level(logger, registry, level_string(i)));
+    DO_TRY(auto level_assets, LevelLoader::load_level(logger, registry, level_string(i)));
     StairGenConfig const stairconfig{FLOOR_COUNT, i, stairs_perfloor};
     LevelConfig const level_config{stairconfig, tdconfig};
 

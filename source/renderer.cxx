@@ -4,6 +4,7 @@
 #include <boomhs/tiledata_algorithms.hpp>
 #include <boomhs/types.hpp>
 
+#include <opengl/factory.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/global.hpp>
 #include <opengl/draw_info.hpp>

@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/assets.hpp>
+#include <boomhs/level_loader.hpp>
 #include <boomhs/river_generator.hpp>
 #include <boomhs/tile.hpp>
 #include <boomhs/tiledata.hpp>

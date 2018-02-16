@@ -1,5 +1,4 @@
 #include <boomhs/tiledata.hpp>
-#include <boomhs/assets.hpp>
 
 namespace boomhs
 {
