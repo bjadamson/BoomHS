@@ -16,7 +16,7 @@ void
 spawn_newround_wiggles(RiverInfo &river, stlw::float_generator &rng, glm::vec2 const pos)
 {
   // clang-format off
-  bool  const is_visible = true;
+  bool  const is_visible = false;
   float const speed      = 100.0f;
   float const OFFSET     = 0.10f;
   float const x_offset   = rng.gen_float_range(-OFFSET, OFFSET);

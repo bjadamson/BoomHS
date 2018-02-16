@@ -118,7 +118,7 @@ reset_position(RiverInfo &rinfo, RiverWiggle &wiggle)
 }
 
 void
-update_riverwiggles(LevelData &level_data, FrameTime const& ft)
+move_riverwiggles(LevelData &level_data, FrameTime const& ft)
 {
   auto const update_river = [&ft](auto &rinfo)
   {
@@ -141,61 +141,67 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& 
 {
   auto &logger = es.logger;
   auto &tilegrid_state = es.tilegrid_state;
+
   auto &zs = zm.active();
-  auto &lstate = zs.level_state;
-
-  move_betweentilegrids_ifonstairs(tilegrid_state, zm);
-  update_riverwiggles(lstate.level_data, ft);
-
-  /////////////////////////
-  auto &leveldata = lstate.level_data;
-
-  auto &player = lstate.player;
   auto &registry = zs.registry;
-  /////////////////////////
 
-  // compute tilegrid
-  LOG_INFO("Updating tilegrid\n");
+  auto &lstate = zs.level_state;
+  auto &leveldata = lstate.level_data;
+  auto &player = lstate.player;
 
-  update_visible_tiles(leveldata.tilegrid(), player, tilegrid_state.reveal);
-  update_visible_riverwiggles(leveldata, player, tilegrid_state.reveal);
+  // Update the world
+  {
+    move_betweentilegrids_ifonstairs(tilegrid_state, zm);
+    move_riverwiggles(lstate.level_data, ft);
 
-    // We don't need to recompute the tilegrid, we just did.
-    tilegrid_state.recompute = false;
+    if (tilegrid_state.recompute) {
+      // compute tilegrid
+      LOG_INFO("Updating tilegrid\n");
 
-  // action begins here
-  render::clear_screen(lstate.background);
+      update_visible_tiles(leveldata.tilegrid(), player, tilegrid_state.reveal);
 
-  RenderState rstate{es, zs};
-  if (es.draw_entities) {
-    render::draw_entities(rstate);
-  }
-  if (es.draw_terrain) {
-    render::draw_terrain(rstate);
-  }
-  if (tilegrid_state.draw_tilegrid) {
-    render::draw_tilegrid(rstate, tilegrid_state, ft);
-    render::draw_rivers(rstate, ft);
-  }
-  if (tilegrid_state.show_grid_lines) {
-    render::draw_tilegrid(rstate, tilegrid_state);
-  }
-  if (tilegrid_state.show_neighbortile_arrows) {
-    auto const& wp = player.world_position();
-    auto const tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
-    render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
-  }
-  if (es.show_global_axis) {
-    render::draw_global_axis(rstate, registry);
-  }
-  if (es.show_local_axis) {
-    render::draw_local_axis(rstate, registry, player.world_position());
-  }
+      // We don't need to recompute the tilegrid, we just did.
+      tilegrid_state.recompute = false;
+    }
 
-  // if checks happen inside fn
-  render::conditionally_draw_player_vectors(rstate, player);
-  if (es.ui_state.draw_ui) {
-    draw_ui(es, zm, window, registry);
+    // river wiggles get updated every frame
+    update_visible_riverwiggles(leveldata, player, tilegrid_state.reveal);
+  }
+  {
+    // rendering code
+    render::clear_screen(lstate.background);
+
+    RenderState rstate{es, zs};
+    if (es.draw_entities) {
+      render::draw_entities(rstate);
+    }
+    if (es.draw_terrain) {
+      render::draw_terrain(rstate);
+    }
+    if (tilegrid_state.draw_tilegrid) {
+      render::draw_tilegrid(rstate, tilegrid_state, ft);
+      render::draw_rivers(rstate, ft);
+    }
+    if (tilegrid_state.show_grid_lines) {
+      render::draw_tilegrid(rstate, tilegrid_state);
+    }
+    if (tilegrid_state.show_neighbortile_arrows) {
+      auto const& wp = player.world_position();
+      auto const tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
+      render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
+    }
+    if (es.show_global_axis) {
+      render::draw_global_axis(rstate, registry);
+    }
+    if (es.show_local_axis) {
+      render::draw_local_axis(rstate, registry, player.world_position());
+    }
+
+    // if checks happen inside fn
+    render::conditionally_draw_player_vectors(rstate, player);
+    if (es.ui_state.draw_ui) {
+      draw_ui(es, zm, window, registry);
+    }
   }
 }
 

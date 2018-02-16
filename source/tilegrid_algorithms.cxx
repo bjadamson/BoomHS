@@ -18,31 +18,36 @@ static auto constexpr SIDES = stlw::make_array<MapEdge::Side>(
 namespace
 {
 
+// I adapted this basic algorithm from:
+// http://playtechs.blogspot.com/2007/03/raytracing-on-grid.html
+//
+// Specifically my adaption was to make callable with a FN and any arguments, allowing this
+// function to be reused with all sort of contexts.
 template<typename FN, typename ...Args>
 void
-bresenham_3d(int const wpx, int const wpz, int x1, int z1, FN const& fn, Args &&... args)
+bresenham_3d(int const x0, int const y0, int const x1, int const y1, FN const& fn, Args &&... args)
 {
-  int const dx = std::abs(x1 - wpx);
-  int const sx = wpx < x1 ? 1 : -1;
+  int dx = abs(x1 - x0);
+  int dy = abs(y1 - y0);
+  int x = x0;
+  int y = y0;
+  int n = 1 + dx + dy;
+  int const x_inc = (x1 > x0) ? 1 : -1;
+  int const y_inc = (y1 > y0) ? 1 : -1;
+  int error = dx - dy;
+  dx *= 2;
+  dy *= 2;
 
-  int const dz = std::abs(z1 - wpz);
-  int const sz = wpz < z1 ? 1 : -1;
-  auto const arr = stlw::make_array<int>(dx, 1, dz);
-
-  auto const it = std::max_element(arr.cbegin(), arr.cend());
-  assert(it);
-  int const dm = *it;
-
-  int i = dm;
-  assert(i >= 0);
-  x1 = z1 = dm / 2;
-
-  int x0 = wpx, z0 = wpz;
-  while(true) {
-    fn(x0, z0, std::forward<Args>(args)...);
-    if (i-- == 0) break;
-    x1 -= dx; if (x1 < 0) { x1 += dm; x0 += sx; }
-    z1 -= dz; if (z1 < 0) { z1 += dm; z0 += sz; }
+  for (; n > 0; --n) {
+    fn(x, y, std::forward<Args>(args)...);
+    if (error > 0) {
+      x += x_inc;
+      error -= dy;
+    }
+    else {
+      y += y_inc;
+      error += dx;
+    }
   }
 }
 
@@ -202,28 +207,21 @@ update_visible_tiles(TileGrid &tilegrid, WorldObject const& player, bool const r
 void
 update_visible_riverwiggles(LevelData &ldata, WorldObject const& player, bool const reveal_tilegrid)
 {
-  auto &tilegrid = ldata.tilegrid();
-  auto const set_tile = [&tilegrid](int const x0, int const z0, auto const& wp, auto &wiggle,
-      bool &found_wall_or_river)
+  auto const set_tile = [&ldata](int const x0, int const z0, auto const& wp, auto &wiggle,
+      bool &found_losblock)
   {
-    if (found_wall_or_river) {
+    if (found_losblock) {
       return;
     }
+    auto &tilegrid = ldata.tilegrid();
     auto &tile = tilegrid.data(x0, z0);
     if (TileType::RIVER == tile.type) {
-      if (((int)wp.x) == x0 && ((int)wp.z) == z0) {
-        // Mark the tile as visible, but don't indicate we've hit a river yet
-        std::abort();
-        wiggle.is_visible = true;
-        return;
-      }
-      // first notable tile we found is a river, mark this wiggle visible
+      // tile is a river, mark visible
       wiggle.is_visible = true;
-      found_wall_or_river = true;
     }
     else if (TileType::WALL == tile.type) {
       wiggle.is_visible = false;
-      found_wall_or_river = true;
+      found_losblock = true;
     }
   };
 
@@ -234,8 +232,8 @@ update_visible_riverwiggles(LevelData &ldata, WorldObject const& player, bool co
       auto const& wp = player.world_position();
       auto const pos = wiggle.as_tileposition();
 
-      bool found_wall_or_river = false;
-      bresenham_3d(wp.x, wp.z, pos.x, pos.y, set_tile, wp, wiggle, found_wall_or_river);
+      bool found_losblock = false;
+      bresenham_3d(wp.x, wp.z, pos.x, pos.y, set_tile, wp, wiggle, found_losblock);
     }
   };
   auto &rinfos = ldata.rivers();
