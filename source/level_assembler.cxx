@@ -3,10 +3,12 @@
 #include <boomhs/components.hpp>
 #include <boomhs/level_generator.hpp>
 #include <boomhs/level_loader.hpp>
-#include <boomhs/tiledata_algorithms.hpp>
+#include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <opengl/constants.hpp>
+#include <opengl/gpu.hpp>
+#include <opengl/obj.hpp>
 #include <opengl/lighting.hpp>
 
 #include <stlw/random.hpp>
@@ -18,14 +20,13 @@ namespace
 {
 
 ZoneState
-assemble(LevelAssets &&level_assets, entt::DefaultRegistry &registry, LevelConfig const& config)
+assemble(LevelAssets &&assets, entt::DefaultRegistry &registry, LevelConfig const& config)
 {
-  auto &assets = level_assets.assets;
   auto const& objcache = assets.obj_cache;
 
   stlw::float_generator rng;
   auto leveldata = level_generator::make_leveldata(config, registry,
-      MOVE(assets.tile_infos), rng);
+      MOVE(assets.tile_table), rng);
 
   // Load point lights
   auto light_view = registry.view<PointLight, Transform>();
@@ -51,28 +52,34 @@ assemble(LevelAssets &&level_assets, entt::DefaultRegistry &registry, LevelConfi
     camera.set_coordinates(MOVE(sc));
   }
 
-  return ZoneState{
+  LevelState level_state{
     assets.background_color,
     assets.global_light,
-    MOVE(level_assets.shader_programs),
-    MOVE(level_assets.assets.texture_table),
-    MOVE(level_assets.assets.obj_cache),
+    MOVE(assets.obj_cache),
     MOVE(leveldata),
     MOVE(camera),
-    MOVE(player),
+    MOVE(player)
+  };
+  GfxState gfx{
+    MOVE(assets.shader_programs),
+    MOVE(assets.texture_table)
+  };
+  return ZoneState{
+    MOVE(level_state),
+    MOVE(gfx),
     registry};
 }
 
 void
 bridge_staircases(ZoneState &a, ZoneState &b)
 {
-  auto &tiledata_a = a.level_data.tiledata();
-  auto &tiledata_b = b.level_data.tiledata();
+  auto &tilegrid_a = a.level_state.level_data.tilegrid();
+  auto &tilegrid_b = b.level_state.level_data.tilegrid();
 
-  auto const stairs_up_a = find_upstairs(a.registry, tiledata_a);
+  auto const stairs_up_a = find_upstairs(a.registry, tilegrid_a);
   assert(!stairs_up_a.empty());
 
-  auto const stairs_down_b = find_downstairs(b.registry, tiledata_b);
+  auto const stairs_down_b = find_downstairs(b.registry, tilegrid_b);
   assert(!stairs_down_b.empty());
 
   auto &a_registry = a.registry;
@@ -93,11 +100,11 @@ bridge_staircases(ZoneState &a, ZoneState &b)
     StairInfo &si_b = b_registry.get<StairInfo>(b_downeid);
 
     // find a suitable neighbor tile for each stair
-    auto const a_neighbors = find_immediate_neighbors(tiledata_a, si_a.tile_position, TileType::FLOOR,
+    auto const a_neighbors = find_immediate_neighbors(tilegrid_a, si_a.tile_position, TileType::FLOOR,
         behavior);
     assert(!a_neighbors.empty());
 
-    auto const b_neighbors = find_immediate_neighbors(tiledata_b, si_b.tile_position, TileType::FLOOR,
+    auto const b_neighbors = find_immediate_neighbors(tilegrid_b, si_b.tile_position, TileType::FLOOR,
         behavior);
     assert(!b_neighbors.empty());
 
@@ -109,7 +116,7 @@ bridge_staircases(ZoneState &a, ZoneState &b)
 
 using copy_assets_pair_t = std::pair<EntityDrawHandles, TileDrawHandles>;
 stlw::result<copy_assets_pair_t, std::string>
-copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile_infos,
+copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable const& ttable,
     entt::DefaultRegistry &registry, ObjCache const &obj_cache)
 {
   EntityDrawinfos dinfos;
@@ -117,14 +124,14 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
   registry.view<ShaderName, Color, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_colorcube_gpu(logger, shader_ref, color);
+        auto handle = opengl::gpu::copy_synchronous(logger, shader_ref, color);
         dinfos.add(entity, MOVE(handle));
       });
       */
   registry.view<ShaderName, PointLight, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &pointlight, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_vertexonlycube_gpu(logger, shader_ref);
+        auto handle = opengl::gpu::copy_vertexonlycube_gpu(logger, shader_ref);
         dinfos.add(entity, MOVE(handle));
       });
 
@@ -132,44 +139,44 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
       [&](auto entity, auto &sn, auto &color, auto &mesh) {
         auto const &obj = obj_cache.get_obj(mesh.name);
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
+        auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &, auto &texture) {
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
+        auto handle = opengl::gpu::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, SkyboxRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &, auto &texture) {
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
+        auto handle = opengl::gpu::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &mesh, auto &texture) {
         auto const &obj = obj_cache.get_obj(mesh.name);
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
+        auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
 
   registry.view<ShaderName, MeshRenderable>().each([&](auto entity, auto &sn, auto &mesh) {
     auto const &obj = obj_cache.get_obj(mesh.name);
     auto &shader_ref = sps.ref_sp(sn.value);
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
+    auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
     dinfos.add(entity, MOVE(handle));
   });
 
   std::vector<DrawInfo> tile_dinfos;
   tile_dinfos.reserve(static_cast<size_t>(TileType::MAX));
-  for (auto const& it : tile_infos) {
+  for (auto const& it : ttable) {
     auto const& mesh_name = it.mesh_name;
     auto const& vshader_name = it.vshader_name;
     auto const &obj = obj_cache.get_obj(mesh_name);
 
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, std::nullopt);
+    auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, std::nullopt);
     tile_dinfos[static_cast<size_t>(it.type)] = MOVE(handle);
   }
 
@@ -179,20 +186,22 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
 }
 
 void
-copy_to_gpu(stlw::Logger &logger, ZoneState &zone_state)
+copy_to_gpu(stlw::Logger &logger, ZoneState &zs)
 {
-  auto const& tileinfos = zone_state.level_data.tileinfos();
-  auto const& objcache = zone_state.obj_cache;
-  auto &sps = zone_state.sps;
-  auto &registry = zone_state.registry;
+  auto &lstate = zs.level_state;
+  auto const& ttable = lstate.level_data.tiletable();
+  auto const& objcache = lstate.obj_cache;
+  auto &gfx_state = zs.gfx_state;
+  auto &sps = gfx_state.sps;
+  auto &registry = zs.registry;
 
-  auto copy_result = copy_assets_gpu(logger, sps, tileinfos, registry, objcache);
+  auto copy_result = copy_assets_gpu(logger, sps, ttable, registry, objcache);
   assert(copy_result);
   auto handles = MOVE(*copy_result);
   auto edh = MOVE(handles.first);
   auto tdh = MOVE(handles.second);
-  zone_state.gpu_state.entities = MOVE(edh);
-  zone_state.gpu_state.tiles = MOVE(tdh);
+  gfx_state.gpu_state.entities = MOVE(edh);
+  gfx_state.gpu_state.tiles = MOVE(tdh);
 }
 
 } // ns anon
@@ -210,7 +219,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<entt::DefaultR
 
   auto const stairs_perfloor = 8;
   int const width = 40, height = 40;
-  TileDataConfig const tdconfig{width, height};
+  TileGridConfig const tdconfig{width, height};
 
   // TODO: it is currently not thread safe to call load_level() from multiple threads.
   //
@@ -222,12 +231,12 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<entt::DefaultR
   zstates.reserve(FLOOR_COUNT);
   FORI(i, FLOOR_COUNT) {
     auto &registry = registries[i];
-    DO_TRY(auto level_assets, boomhs::load_level(logger, registry, level_string(i)));
+    DO_TRY(auto level_assets, LevelLoader::load_level(logger, registry, level_string(i)));
     StairGenConfig const stairconfig{FLOOR_COUNT, i, stairs_perfloor};
     LevelConfig const level_config{stairconfig, tdconfig};
 
-    ZoneState zone_state = assemble(MOVE(level_assets), registry, level_config);
-    zstates.emplace_back(MOVE(zone_state));
+    ZoneState zs = assemble(MOVE(level_assets), registry, level_config);
+    zstates.emplace_back(MOVE(zs));
   }
 
   assert(FLOOR_COUNT > 0);

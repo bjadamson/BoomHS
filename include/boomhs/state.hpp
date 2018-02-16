@@ -1,5 +1,4 @@
 #pragma once
-#include <boomhs/assets.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/leveldata.hpp>
 #include <boomhs/renderer.hpp>
@@ -42,7 +41,7 @@ struct UiState
   int selected_pointlight = 0;
 
   std::array<int, 2> selected_tile = {0};
-  int selected_tiledata = 0;
+  int selected_tilegrid = 0;
 
   int attenuation_current_item = opengl::Light::INIT_ATTENUATION_INDEX;
 
@@ -62,8 +61,8 @@ struct UiState
   bool show_entitywindow = false;
   bool show_entitymaterial_window = false;
 
-  bool show_tiledata_editor_window = false;
-  bool show_tiledatamaterial_window = false;
+  bool show_tilegrid_editor_window = false;
+  bool show_tilegridmaterial_window = false;
 
   bool show_mousewindow = false;
   bool show_playerwindow = false;
@@ -101,7 +100,7 @@ struct TiledataState
 {
   MOVE_CONSTRUCTIBLE_ONLY(TiledataState);
 
-  bool draw_tiledata = true;
+  bool draw_tilegrid = true;
   bool recompute = true;
   bool reveal = false;
 
@@ -122,34 +121,53 @@ struct GpuState
 
   MOVE_CONSTRUCTIBLE_ONLY(GpuState);
 };
+struct GfxState
+{
+  GpuState gpu_state = {};
+  opengl::ShaderPrograms sps;
+  opengl::TextureTable texture_table;
 
-struct ZoneState
+  explicit GfxState(opengl::ShaderPrograms &&sp, opengl::TextureTable &&tt)
+    : sps(MOVE(sp))
+    , texture_table(MOVE(tt))
+  {
+  }
+
+  MOVE_CONSTRUCTIBLE_ONLY(GfxState);
+};
+struct LevelState
 {
   // singular light in the scene
   opengl::Color background;
   opengl::GlobalLight global_light;
 
-  GpuState gpu_state = {};
-  opengl::ShaderPrograms sps;
-  opengl::TextureTable texture_table;
   ObjCache obj_cache;
   LevelData level_data;
 
   Camera camera;
   WorldObject player;
-  entt::DefaultRegistry &registry;
-
-  explicit ZoneState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
-      opengl::ShaderPrograms &&sp, opengl::TextureTable &&ttable, ObjCache &&ocache,
-      LevelData &&ldata, Camera &&cam, WorldObject &&pl, entt::DefaultRegistry &reg)
+  explicit LevelState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
+      ObjCache &&ocache, LevelData &&ldata, Camera &&cam, WorldObject &&pl)
     : background(bgcolor)
     , global_light(glight)
-    , sps(MOVE(sp))
-    , texture_table(MOVE(ttable))
     , obj_cache(MOVE(ocache))
     , level_data(MOVE(ldata))
     , camera(MOVE(cam))
     , player(MOVE(pl))
+  {
+  }
+
+  MOVE_CONSTRUCTIBLE_ONLY(LevelState);
+};
+struct ZoneState
+{
+  LevelState level_state;
+  GfxState gfx_state;
+  entt::DefaultRegistry &registry;
+
+  explicit ZoneState(LevelState &&level, GfxState &&gfx, entt::DefaultRegistry &reg)
+    : level_state(MOVE(level))
+    , gfx_state(MOVE(gfx))
     , registry(reg)
   {
   }
@@ -206,7 +224,7 @@ struct EngineState
 
   MouseState mouse_state = {};
   WindowState window_state = {};
-  TiledataState tiledata_state = {};
+  TiledataState tilegrid_state = {};
   UiState ui_state = {};
 
   Logger &logger;
@@ -230,9 +248,6 @@ struct GameState
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
   explicit GameState(EngineState &&, ZoneStates &&);
-
-  RenderArgs
-  render_args();
 };
 
 } // ns boomhs

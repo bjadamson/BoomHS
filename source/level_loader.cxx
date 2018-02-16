@@ -1,5 +1,4 @@
 #include <boomhs/level_loader.hpp>
-#include <boomhs/assets.hpp>
 #include <boomhs/components.hpp>
 #include <opengl/obj.hpp>
 #include <extlibs/cpptoml.hpp>
@@ -7,6 +6,8 @@
 #include <stlw/result.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
+
+// Test not needing
 
 using namespace boomhs;
 using namespace opengl;
@@ -278,7 +279,7 @@ load_material_color_orabort(CppTable const& file)
   return *optional;
 }
 
-auto
+void
 load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& ttable,
     entt::DefaultRegistry &registry)
 {
@@ -356,19 +357,12 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       auto const& cm = *cm_optional;
       registry.assign<Material>(entity) = cm.material;
     }
-    return entity;
   };
 
-  LoadedEntities entities;
   auto const entity_table = get_table_array(config, "entity");
-  if (!entity_table) {
-    return entities;
-  }
   for (auto const& it : *entity_table) {
-    auto entity = load_entity(it);
-    entities.data.emplace_back(MOVE(entity));
+    load_entity(it);
   }
-  return entities;
 }
 
 auto
@@ -389,15 +383,15 @@ load_tileinfos(stlw::Logger &logger, CppTable const& config, entt::DefaultRegist
   auto const& ttable = tile_table->as_table_array()->get();
 
   // Ensure we load data for everry tile
-  assert(TileInfos::SIZE == ttable.size());
+  assert(TileSharedInfoTable::SIZE == ttable.size());
 
-  std::array<TileInfo, TileInfos::SIZE> tinfos;
+  std::array<TileInfo, TileSharedInfoTable::SIZE> tinfos;
   FOR(i, ttable.size()) {
     auto const& it = ttable[i];
     auto tile = load_tile(it);
     tinfos[i] = MOVE(tile);
   }
-  return TileInfos{MOVE(tinfos)};
+  return TileSharedInfoTable{MOVE(tinfos)};
 }
 
 using LoadResult = stlw::result<std::pair<std::string, opengl::ShaderProgram>, std::string>;
@@ -488,14 +482,77 @@ load_vas(CppTable const& config)
 namespace boomhs
 {
 
+// This macro exists to reduce code duplication implementingt he two different implementation of
+// operator[].
+#define SEARCH_FOR(type, begin, end)                                                               \
+  auto const cmp = [&type](auto const& tinfo) {                                                    \
+    return tinfo.type == type;                                                                     \
+  };                                                                                               \
+  auto const it = std::find_if(begin, end, cmp);                                                   \
+  assert(it != end);                                                                               \
+  return *it;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// TileSharedInfoTable
+TileInfo const&
+TileSharedInfoTable::operator[](TileType const type) const
+{
+  SEARCH_FOR(type, data_.cbegin(), data_.cend());
+}
+
+TileInfo&
+TileSharedInfoTable::operator[](TileType const type)
+{
+  SEARCH_FOR(type, data_.begin(), data_.end());
+}
+#undef SEARCH_FOR
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// ObjCache
+void
+ObjCache::add_obj(std::string const& name, opengl::obj &&o)
+{
+  auto pair = std::make_pair(name, MOVE(o));
+  objects_.emplace_back(MOVE(pair));
+}
+
+void
+ObjCache::add_obj(char const* name, opengl::obj &&o)
+{
+  add_obj(std::string{name}, MOVE(o));
+}
+
+opengl::obj const&
+ObjCache::get_obj(char const* name) const
+{
+  auto const cmp = [&name](auto const& pair) {
+    return pair.first == name;
+  };
+  auto const it = std::find_if(objects_.cbegin(), objects_.cend(), cmp);
+
+  // assume presence
+  assert(it != objects_.cend());
+
+  // yield reference to data
+  return it->second;
+}
+
+opengl::obj const&
+ObjCache::get_obj(std::string const& s) const
+{
+  return get_obj(s.c_str());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 stlw::result<LevelAssets, std::string>
-load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string const& filename)
+LevelLoader::load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string const& filename)
 {
   CppTable engine_config = cpptoml::parse_file("engine.toml");
   assert(engine_config);
 
   ParsedVertexAttributes pvas = load_vas(engine_config);
-  DO_TRY(auto shader_programs, load_shaders(logger, MOVE(pvas), engine_config));
+  DO_TRY(auto sps, load_shaders(logger, MOVE(pvas), engine_config));
 
   CppTable area_config = cpptoml::parse_file("levels/" + filename);
   assert(area_config);
@@ -506,10 +563,10 @@ load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string co
   std::cerr << "loading textures ...\n";
   auto texture_table = load_textures(logger, area_config);
   std::cerr << "loading entities ...\n";
-  auto entities = load_entities(logger, area_config, texture_table, registry);
+  load_entities(logger, area_config, texture_table, registry);
 
   std::cerr << "loading tile materials ...\n";
-  auto tile_infos = load_tileinfos(logger, area_config, registry);
+  auto tile_table = load_tileinfos(logger, area_config, registry);
 
   std::cerr << "loading lights ...\n";
   auto const directional_light_diffuse = Color{get_vec3_or_abort(area_config, "directional_light_diffuse")};
@@ -521,10 +578,17 @@ load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string co
   GlobalLight glight{MOVE(dlight)};
 
   auto bg_color = Color{get_vec3_or_abort(area_config, "background")};
-  Assets assets{MOVE(objcache), MOVE(entities), MOVE(texture_table), MOVE(tile_infos),
-    MOVE(glight), MOVE(bg_color)};
   std::cerr << "yielding assets\n";
-  return LevelAssets{MOVE(assets), MOVE(shader_programs)};
+  return LevelAssets{
+    MOVE(glight),
+    MOVE(bg_color),
+
+    MOVE(tile_table),
+
+    MOVE(objcache),
+    MOVE(texture_table),
+    MOVE(sps)
+  };
 }
 
 } // ns boomhs

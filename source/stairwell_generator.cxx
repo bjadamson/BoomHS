@@ -1,6 +1,6 @@
 #include <boomhs/stairwell_generator.hpp>
 #include <boomhs/level_generator.hpp>
-#include <boomhs/tiledata_algorithms.hpp>
+#include <boomhs/tilegrid_algorithms.hpp>
 #include <stlw/random.hpp>
 
 using namespace boomhs;
@@ -22,7 +22,7 @@ is_floor(Tile const& tile)
 }
 
 bool
-should_skip_tile(int const num_to_place, int const num_placed, TileData const& tdata,
+should_skip_tile(int const num_to_place, int const num_placed, TileGrid const& tgrid,
     TilePosition const& pos, stlw::float_generator &rng)
 {
   if(num_placed >= num_to_place) {
@@ -30,23 +30,23 @@ should_skip_tile(int const num_to_place, int const num_placed, TileData const& t
     // placed too many
     return true;
   }
-  if (tdata.data(pos).is_stair()) {
+  if (tgrid.data(pos).is_stair()) {
     //std::cerr << "tile already stair\n";
     // tile is already a stairwell
     return true;
   }
-  if (tdata.data(pos).type == TileType::RIVER) {
+  if (tgrid.data(pos).type == TileType::RIVER) {
     // HACK, for now
     return true;
   }
-  if(any_tiledata_neighbors(tdata, pos, MIN_DISTANCE_BETWEEN_STAIRS, is_stair)) {
+  if(any_tilegrid_neighbors(tgrid, pos, MIN_DISTANCE_BETWEEN_STAIRS, is_stair)) {
     //std::cerr << "too close stair neighbor\n";
     // nearby neighbor tile is a stairwell
     return true;
   }
   {
     auto const behavior = TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY;
-    auto const neighbors = find_immediate_neighbors(tdata, pos, TileType::WALL, behavior);
+    auto const neighbors = find_immediate_neighbors(tgrid, pos, TileType::WALL, behavior);
     auto const ncount = neighbors.size();
     if (ncount < 3) {
       return true;
@@ -54,7 +54,7 @@ should_skip_tile(int const num_to_place, int const num_placed, TileData const& t
   }
   {
     auto const behavior = TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY;
-    auto const neighbors = find_immediate_neighbors(tdata, pos, TileType::FLOOR, behavior);
+    auto const neighbors = find_immediate_neighbors(tgrid, pos, TileType::FLOOR, behavior);
     auto const ncount = neighbors.size();
     if (ncount < 1) {
       return true;
@@ -76,7 +76,7 @@ namespace boomhs::stairwell_generator
 {
 
 bool
-place_stairs(StairGenConfig const& sc, TileData &tdata, stlw::float_generator &rng,
+place_stairs(StairGenConfig const& sc, TileGrid &tgrid, stlw::float_generator &rng,
     entt::DefaultRegistry &registry)
 {
   // clang-format off
@@ -125,11 +125,11 @@ place_stairs(StairGenConfig const& sc, TileData &tdata, stlw::float_generator &r
   };
   int num_placed = 0;
   auto const find_stairpositions = [&](auto const& tpos) {
-    if (should_skip_tile(num_to_place, num_placed, tdata, tpos, rng)) {
+    if (should_skip_tile(num_to_place, num_placed, tgrid, tpos, rng)) {
       //std::cerr << "(floor '" << floor_number << "/" << (floor_count-1) << "' skipping\n";
       return;
     }
-    auto &tile = tdata.data(tpos);
+    auto &tile = tgrid.data(tpos);
     tile.type = calculate_direction();
 
     auto &si = registry.assign<StairInfo>(tile.eid);
@@ -140,7 +140,7 @@ place_stairs(StairGenConfig const& sc, TileData &tdata, stlw::float_generator &r
   while(num_placed < num_to_place) {
     auto const num_remaining = (upstairs_to_place + downstairs_to_place);
     assert((num_remaining + num_placed) == num_to_place);
-    tdata.visit_each(find_stairpositions);
+    tgrid.visit_each(find_stairpositions);
   }
   if (num_placed < stairs_perfloor) {
     return false;

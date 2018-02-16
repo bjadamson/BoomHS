@@ -7,9 +7,9 @@
 
 namespace boomhs
 {
-struct TileInfos;
+struct TileSharedInfoTable;
 
-struct TileDataConfig
+struct TileGridConfig
 {
   size_t const width, height;
 };
@@ -17,7 +17,7 @@ struct TileDataConfig
 struct LevelConfig
 {
   StairGenConfig const& stairconfig;
-  TileDataConfig const& tileconfig;
+  TileGridConfig const& tileconfig;
 };
 
 } // ns boomhs
@@ -26,7 +26,7 @@ namespace boomhs::level_generator
 {
 
 LevelData
-make_leveldata(LevelConfig const&, entt::DefaultRegistry &, TileInfos &&,
+make_leveldata(LevelConfig const&, entt::DefaultRegistry &, TileSharedInfoTable &&,
     stlw::float_generator &);
 
 } // ns boomhs::level_generator

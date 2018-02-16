@@ -1,4 +1,4 @@
-#include <boomhs/tiledata_algorithms.hpp>
+#include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <stlw/debug.hpp>
@@ -17,7 +17,7 @@ namespace
 {
 
 void
-bresenham_3d(int x0, int z0, int x1, int z1, TileData &tdata)
+bresenham_3d(int x0, int z0, int x1, int z1, TileGrid &tgrid)
 {
   int const dx = abs(x1-x0), sx = x0<x1 ? 1 : -1;
   int const dz = abs(z1-z0), sz = z0<z1 ? 1 : -1;
@@ -47,7 +47,7 @@ bresenham_3d(int x0, int z0, int x1, int z1, TileData &tdata)
     }
   };
   while(true) {
-    auto &tile = tdata.data(x0, z0);
+    auto &tile = tgrid.data(x0, z0);
     set_tile(tile);
     if (i-- == 0) break;
     x1 -= dx; if (x1 < 0) { x1 += dm; x0 += sx; }
@@ -61,16 +61,16 @@ namespace boomhs
 {
 
 Edges
-calculate_edges(TilePosition const& tpos, uint64_t const tdata_width, uint64_t const tdata_height,
+calculate_edges(TilePosition const& tpos, uint64_t const tgrid_width, uint64_t const tgrid_height,
     uint64_t const distance_v, uint64_t const distance_h)
 {
-  assert(tdata_width > 0ul);
-  assert(tdata_height > 0ul);
+  assert(tgrid_width > 0ul);
+  assert(tgrid_height > 0ul);
 
   auto const left   = tpos.x > distance_v ? std::max(tpos.x - distance_v, 0ul) : 0ul;
-  auto const right  = std::min(tpos.x + distance_v, tdata_width - 1);
+  auto const right  = std::min(tpos.x + distance_v, tgrid_width - 1);
 
-  auto const top    = std::min(tpos.y + distance_h, tdata_height - 1);
+  auto const top    = std::min(tpos.y + distance_h, tgrid_height - 1);
   auto const bottom = tpos.y > distance_h ? std::max(tpos.y - distance_h, 0ul) : 0ul;
 
   //std::cerr << "left: '" << left << "' right: '" << right << "'\n";
@@ -126,7 +126,7 @@ MapEdge::random_edge(stlw::float_generator &rng)
 }
 
 std::pair<TilePosition, MapEdge>
-random_tileposition_onedgeofmap(TileData const& tdata, stlw::float_generator &rng)
+random_tileposition_onedgeofmap(TileGrid const& tgrid, stlw::float_generator &rng)
 {
   auto const edge = MapEdge::random_edge(rng);
   auto const xedge = edge.is_xedge();
@@ -137,7 +137,7 @@ random_tileposition_onedgeofmap(TileData const& tdata, stlw::float_generator &rn
     TilePosition tpos{x, y};
     return std::make_pair(tpos, edge);
   };
-  auto const [tdwidth, tdheight] = tdata.dimensions();
+  auto const [tdwidth, tdheight] = tgrid.dimensions();
   if (xedge) {
     return make_pos(0, rng.gen_uint64_range(0, tdwidth - 1));
   } else {
@@ -149,10 +149,10 @@ random_tileposition_onedgeofmap(TileData const& tdata, stlw::float_generator &rn
 }
 
 bool
-any_tiledata_neighbors(TileData const& tdata, TilePosition const& pos, uint64_t const distance,
+any_tilegrid_neighbors(TileGrid const& tgrid, TilePosition const& pos, uint64_t const distance,
   bool (*fn)(Tile const&))
 {
-  auto const [width, length] = tdata.dimensions();
+  auto const [width, length] = tgrid.dimensions();
   assert(width > 0);
   assert(length > 0);
   assert(distance > 0);
@@ -165,7 +165,7 @@ any_tiledata_neighbors(TileData const& tdata, TilePosition const& pos, uint64_t 
     if (found_one) {
       return;
     }
-    if (fn(tdata.data(neighbor_pos))) {
+    if (fn(tgrid.data(neighbor_pos))) {
       found_one = true;
     }
   };
@@ -174,19 +174,19 @@ any_tiledata_neighbors(TileData const& tdata, TilePosition const& pos, uint64_t 
 }
 
 void
-update_visible_tiles(TileData &tdata, WorldObject const& player, bool const reveal_tiledata)
+update_visible_tiles(TileGrid &tgrid, WorldObject const& player, bool const reveal_tilegrid)
 {
   // Collect all the visible tiles for the player
   auto const& wp = player.world_position();
   auto const fn = [&](auto const& pos) {
     auto const x = pos.x, y = pos.y;
-    if (reveal_tiledata) {
-      tdata.data(pos).is_visible = true;
+    if (reveal_tilegrid) {
+      tgrid.data(pos).is_visible = true;
     } else {
-      bresenham_3d(wp.x, wp.z, x, y, tdata);
+      bresenham_3d(wp.x, wp.z, x, y, tgrid);
     }
   };
-  tdata.visit_each(fn);
+  tgrid.visit_each(fn);
 }
 
 } // ns boomhs

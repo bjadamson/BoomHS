@@ -1,7 +1,7 @@
 #include <boomhs/world_object.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/tiledata.hpp>
+#include <boomhs/tilegrid.hpp>
 #include <boomhs/zone.hpp>
 
 #include <stlw/format.hpp>

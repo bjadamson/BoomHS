@@ -8,15 +8,14 @@
 #include <window/sdl_window.hpp>
 #include <window/timer.hpp>
 
-#include <boomhs/assets.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_assembler.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/tiledata.hpp>
-#include <boomhs/tiledata_algorithms.hpp>
+#include <boomhs/tilegrid.hpp>
+#include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/ui.hpp>
 #include <boomhs/zone.hpp>
 
@@ -48,12 +47,12 @@ namespace boomhs
 {
 
 void
-move_betweentiledatas_ifonstairs(TiledataState &tds, ZoneManager &zm)
+move_betweentilegrids_ifonstairs(TiledataState &tds, ZoneManager &zm)
 {
-  auto &zone_state = zm.active();
-  auto const& leveldata = zone_state.level_data;
+  auto &lstate = zm.active().level_state;
+  auto const& leveldata = lstate.level_data;
 
-  auto &player = zone_state.player;
+  auto &player = lstate.player;
   player.transform().translation.y = 0.5f;
   auto const wp = player.world_position();
   {
@@ -61,8 +60,8 @@ move_betweentiledatas_ifonstairs(TiledataState &tds, ZoneManager &zm)
     assert(wp.x < w);
     assert(wp.y < h);
   }
-  auto const& tiledata = leveldata.tiledata();
-  auto const& tile = tiledata.data(wp.x, wp.z);
+  auto const& tilegrid = leveldata.tilegrid();
+  auto const& tile = tilegrid.data(wp.x, wp.z);
   if (!tile.is_stair()) {
     return;
   }
@@ -77,11 +76,12 @@ move_betweentiledatas_ifonstairs(TiledataState &tds, ZoneManager &zm)
 
     // now that the zone has changed, all references through zm are pointing to old level.
     // use active()
-    auto &zone_state = zm.active();
+    auto &zs = zm.active();
+    auto &lstate = zs.level_state;
 
-    auto &camera = zone_state.camera;
-    auto &player = zone_state.player;
-    auto &registry = zone_state.registry;
+    auto &camera = lstate.camera;
+    auto &player = lstate.player;
+    auto &registry = zs.registry;
 
     auto const spos = stair.exit_position;
     player.move_to(spos.x, player.world_position().y, spos.y);
@@ -95,7 +95,7 @@ move_betweentiledatas_ifonstairs(TiledataState &tds, ZoneManager &zm)
   auto const tp = TilePosition::from_floats_truncated(wp.x, wp.z);
 
   // lookup stairs in the registry
-  auto &registry = zone_state.registry;
+  auto &registry = zm.active().registry;
   auto const stair_eids = find_stairs(registry);
   assert(!stair_eids.empty());
 
@@ -150,64 +150,64 @@ update_riverwiggles(LevelData &level_data, FrameTime const& ft)
 }
 
 void
-game_loop(RenderArgs const& rargs, EngineState &es, ZoneManager &zm, SDLWindow &window,
-    FrameTime const& ft)
+game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& ft)
 {
   auto &logger = es.logger;
-  auto &tiledata_state = es.tiledata_state;
-  auto &zone_state = zm.active();
+  auto &tilegrid_state = es.tilegrid_state;
+  auto &zs = zm.active();
+  auto &lstate = zs.level_state;
 
-  move_betweentiledatas_ifonstairs(tiledata_state, zm);
-  update_riverwiggles(zone_state.level_data, ft);
+  move_betweentilegrids_ifonstairs(tilegrid_state, zm);
+  update_riverwiggles(lstate.level_data, ft);
 
   /////////////////////////
-  auto &leveldata = zone_state.level_data;
+  auto &leveldata = lstate.level_data;
 
-  auto &player = zone_state.player;
-  auto &registry = zone_state.registry;
-  auto &sps = zone_state.sps;
+  auto &player = lstate.player;
+  auto &registry = zs.registry;
   /////////////////////////
 
-  // compute tiledata
-  if (tiledata_state.recompute) {
-    LOG_INFO("Updating tiledata\n");
+  // compute tilegrid
+  if (tilegrid_state.recompute) {
+    LOG_INFO("Updating tilegrid\n");
 
-    update_visible_tiles(leveldata.tiledata(), player, tiledata_state.reveal);
+    update_visible_tiles(leveldata.tilegrid(), player, tilegrid_state.reveal);
 
-    // We don't need to recompute the tiledata, we just did.
-    tiledata_state.recompute = false;
+    // We don't need to recompute the tilegrid, we just did.
+    tilegrid_state.recompute = false;
   }
 
   // action begins here
-  render::clear_screen(zone_state.background);
+  render::clear_screen(lstate.background);
 
+  RenderState rstate{es, zs};
   if (es.draw_entities) {
-    render::draw_entities(rargs, es, zone_state);
+    render::draw_entities(rstate);
   }
   if (es.draw_terrain) {
-    render::draw_terrain(rargs, zone_state);
+    render::draw_terrain(rstate);
   }
-  if (tiledata_state.draw_tiledata) {
-    render::draw_tiledata(rargs, tiledata_state, zone_state, ft);
-    render::draw_rivers(rargs, zone_state, ft);
+  if (tilegrid_state.draw_tilegrid) {
+    render::draw_tilegrid(rstate, tilegrid_state, ft);
+    render::draw_rivers(rstate, ft);
   }
-  if (tiledata_state.show_grid_lines) {
-    render::draw_tilegrid(rargs, tiledata_state, zone_state);
+  if (tilegrid_state.show_grid_lines) {
+    render::draw_tilegrid(rstate, tilegrid_state);
   }
-  if (tiledata_state.show_neighbortile_arrows) {
+  if (tilegrid_state.show_neighbortile_arrows) {
     auto const& wp = player.world_position();
     auto const tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
-    render::draw_arrow_abovetile_and_neighbors(rargs, tpos, zone_state);
+    render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
   }
   if (es.show_global_axis) {
-    render::draw_global_axis(rargs, registry, sps);
+    render::draw_global_axis(rstate, registry);
   }
   if (es.show_local_axis) {
-    render::draw_local_axis(rargs, registry, sps, player.world_position());
+    render::draw_local_axis(rstate, registry, player.world_position());
   }
 
   // if checks happen inside fn
-  render::conditionally_draw_player_vectors(rargs, player, es, zone_state);
+  render::conditionally_draw_player_vectors(rstate, player);
   if (es.ui_state.draw_ui) {
     draw_ui(es, zm, window, registry);
   }
@@ -250,7 +250,7 @@ loop(Engine &engine, GameState &state, FrameTime const& ft)
   boomhs::IO::process(state, event, engine.controllers, ft);
 
   ZoneManager zm{state.zone_states};
-  boomhs::game_loop(state.render_args(), state.engine_state, zm, engine.window, ft);
+  boomhs::game_loop(state.engine_state, zm, engine.window, ft);
 
   // Render Imgui UI
   ImGui::Render();
@@ -297,10 +297,10 @@ start(stlw::Logger &logger, Engine &engine)
   ON_SCOPE_EXIT([]() { ImGui_ImplSdlGL3_Shutdown(); });
 
   auto &registries = engine.registries;
-  DO_TRY(ZoneStates zone_states, LevelAssembler::assemble_levels(logger, registries));
+  DO_TRY(ZoneStates zss, LevelAssembler::assemble_levels(logger, registries));
 
   auto &imgui = ImGui::GetIO();
-  auto state = make_init_gamestate(logger, imgui, engine.dimensions(), MOVE(zone_states));
+  auto state = make_init_gamestate(logger, imgui, engine.dimensions(), MOVE(zss));
   timed_game_loop(engine, state);
   LOG_TRACE("game loop finished.");
   return stlw::empty_type{};
