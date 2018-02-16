@@ -45,14 +45,16 @@ struct TileInfo
   opengl::Material material;
 };
 
-struct TileInfos
+// This table holds all the per-type tile information. There will be one entry in this array per
+// TileType. This information is "shared information" between tiles of the same type.
+struct TileSharedInfoTable
 {
   static auto constexpr SIZE = static_cast<size_t>(TileType::MAX);
   std::array<TileInfo, SIZE> data_;
 
 public:
-  TileInfos() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(TileInfos);
+  TileSharedInfoTable() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(TileSharedInfoTable);
   BEGIN_END_FORWARD_FNS(data_);
 
   bool empty() const { return data_.empty(); }
@@ -69,7 +71,7 @@ struct LevelAssets
   opengl::GlobalLight global_light;
   opengl::Color background_color;
 
-  TileInfos tile_infos;
+  TileSharedInfoTable tile_table;
 
   ObjCache obj_cache;
   opengl::TextureTable texture_table;

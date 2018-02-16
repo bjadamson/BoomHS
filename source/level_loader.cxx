@@ -383,15 +383,15 @@ load_tileinfos(stlw::Logger &logger, CppTable const& config, entt::DefaultRegist
   auto const& ttable = tile_table->as_table_array()->get();
 
   // Ensure we load data for everry tile
-  assert(TileInfos::SIZE == ttable.size());
+  assert(TileSharedInfoTable::SIZE == ttable.size());
 
-  std::array<TileInfo, TileInfos::SIZE> tinfos;
+  std::array<TileInfo, TileSharedInfoTable::SIZE> tinfos;
   FOR(i, ttable.size()) {
     auto const& it = ttable[i];
     auto tile = load_tile(it);
     tinfos[i] = MOVE(tile);
   }
-  return TileInfos{MOVE(tinfos)};
+  return TileSharedInfoTable{MOVE(tinfos)};
 }
 
 using LoadResult = stlw::result<std::pair<std::string, opengl::ShaderProgram>, std::string>;
@@ -493,15 +493,15 @@ namespace boomhs
   return *it;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// TileInfos
+// TileSharedInfoTable
 TileInfo const&
-TileInfos::operator[](TileType const type) const
+TileSharedInfoTable::operator[](TileType const type) const
 {
   SEARCH_FOR(type, data_.cbegin(), data_.cend());
 }
 
 TileInfo&
-TileInfos::operator[](TileType const type)
+TileSharedInfoTable::operator[](TileType const type)
 {
   SEARCH_FOR(type, data_.begin(), data_.end());
 }
@@ -566,7 +566,7 @@ LevelLoader::load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, s
   load_entities(logger, area_config, texture_table, registry);
 
   std::cerr << "loading tile materials ...\n";
-  auto tile_infos = load_tileinfos(logger, area_config, registry);
+  auto tile_table = load_tileinfos(logger, area_config, registry);
 
   std::cerr << "loading lights ...\n";
   auto const directional_light_diffuse = Color{get_vec3_or_abort(area_config, "directional_light_diffuse")};
@@ -583,7 +583,7 @@ LevelLoader::load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, s
     MOVE(glight),
     MOVE(bg_color),
 
-    MOVE(tile_infos),
+    MOVE(tile_table),
 
     MOVE(objcache),
     MOVE(texture_table),

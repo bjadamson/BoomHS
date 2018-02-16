@@ -25,7 +25,7 @@ assemble(LevelAssets &&assets, entt::DefaultRegistry &registry, LevelConfig cons
 
   stlw::float_generator rng;
   auto leveldata = level_generator::make_leveldata(config, registry,
-      MOVE(assets.tile_infos), rng);
+      MOVE(assets.tile_table), rng);
 
   // Load point lights
   auto light_view = registry.view<PointLight, Transform>();
@@ -115,7 +115,7 @@ bridge_staircases(ZoneState &a, ZoneState &b)
 
 using copy_assets_pair_t = std::pair<EntityDrawHandles, TileDrawHandles>;
 stlw::result<copy_assets_pair_t, std::string>
-copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile_infos,
+copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable const& ttable,
     entt::DefaultRegistry &registry, ObjCache const &obj_cache)
 {
   EntityDrawinfos dinfos;
@@ -170,7 +170,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
 
   std::vector<DrawInfo> tile_dinfos;
   tile_dinfos.reserve(static_cast<size_t>(TileType::MAX));
-  for (auto const& it : tile_infos) {
+  for (auto const& it : ttable) {
     auto const& mesh_name = it.mesh_name;
     auto const& vshader_name = it.vshader_name;
     auto const &obj = obj_cache.get_obj(mesh_name);
@@ -188,13 +188,13 @@ void
 copy_to_gpu(stlw::Logger &logger, ZoneState &zs)
 {
   auto &lstate = zs.level_state;
-  auto const& tileinfos = lstate.level_data.tileinfos();
+  auto const& ttable = lstate.level_data.tiletable();
   auto const& objcache = lstate.obj_cache;
   auto &gfx_state = zs.gfx_state;
   auto &sps = gfx_state.sps;
   auto &registry = zs.registry;
 
-  auto copy_result = copy_assets_gpu(logger, sps, tileinfos, registry, objcache);
+  auto copy_result = copy_assets_gpu(logger, sps, ttable, registry, objcache);
   assert(copy_result);
   auto handles = MOVE(*copy_result);
   auto edh = MOVE(handles.first);

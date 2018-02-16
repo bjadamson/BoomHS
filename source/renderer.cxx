@@ -507,12 +507,12 @@ draw_tiledata(RenderState &rstate, TiledataState const& tiledata_state, FrameTim
 
   auto const& leveldata = lstate.level_data;
   auto const& tiledata = leveldata.tiledata();
-  auto const& tileinfos = leveldata.tileinfos();
+  auto const& tiletable = leveldata.tiletable();
 
   auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, Tile const& tile,
       glm::mat4 const& model_mat, bool const receives_ambient_light)
   {
-    auto const& tileinfo = tileinfos[tile.type];
+    auto const& tileinfo = tiletable[tile.type];
     auto const& material = tileinfo.material;
 
     sp.use(logger);
@@ -608,8 +608,8 @@ draw_rivers(RenderState &rstate, window::FrameTime const& ft)
   opengl::global::vao_bind(dinfo.vao());
 
   auto const& level_data = zs.level_state.level_data;
-  auto const& tileinfo = level_data.tileinfos()[TileType::RIVER];
-  auto const& material = tileinfo.material;
+  auto const& tile_info = level_data.tiletable()[TileType::RIVER];
+  auto const& material = tile_info.material;
 
   auto const draw_river = [&](auto const& rinfo) {
     auto const& left = rinfo.left;

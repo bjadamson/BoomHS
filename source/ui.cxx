@@ -356,7 +356,7 @@ show_tiledata_materials_window(UiState &ui, LevelData &level_data)
     int &selected = ui.selected_tiledata;
     assert(selected < static_cast<int>(tile_names.size()));
 
-    TileInfo &tileinfo = level_data.tileinfos()[static_cast<TileType>(selected)];
+    TileInfo &tileinfo = level_data.tiletable()[static_cast<TileType>(selected)];
     auto &material = tileinfo.material;
     show_material_editor("Tile Material:", material);
     {
