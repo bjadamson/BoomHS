@@ -325,7 +325,7 @@ make_leveldata(LevelConfig const& levelconfig, entt::DefaultRegistry &registry,
 
   std::vector<Tile> tiles{static_cast<size_t>(num_tiles)};
   tiles.reserve(num_tiles);
-  TileData tiledata{MOVE(tiles), tdwidth, tdheight, tinfos, registry};
+  TileData tiledata{MOVE(tiles), tdwidth, tdheight, registry};
 
   std::cerr << "======================================\n";
   std::vector<RiverInfo> rivers;

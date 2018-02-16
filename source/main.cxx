@@ -50,10 +50,10 @@ namespace boomhs
 void
 move_betweentiledatas_ifonstairs(TiledataState &tds, ZoneManager &zm)
 {
-  auto &zone_state = zm.active();
-  auto const& leveldata = zone_state.level_data;
+  auto &lstate = zm.active().level_state;
+  auto const& leveldata = lstate.level_data;
 
-  auto &player = zone_state.player;
+  auto &player = lstate.player;
   player.transform().translation.y = 0.5f;
   auto const wp = player.world_position();
   {
@@ -77,11 +77,12 @@ move_betweentiledatas_ifonstairs(TiledataState &tds, ZoneManager &zm)
 
     // now that the zone has changed, all references through zm are pointing to old level.
     // use active()
-    auto &zone_state = zm.active();
+    auto &zs = zm.active();
+    auto &lstate = zs.level_state;
 
-    auto &camera = zone_state.camera;
-    auto &player = zone_state.player;
-    auto &registry = zone_state.registry;
+    auto &camera = lstate.camera;
+    auto &player = lstate.player;
+    auto &registry = zs.registry;
 
     auto const spos = stair.exit_position;
     player.move_to(spos.x, player.world_position().y, spos.y);
@@ -95,7 +96,7 @@ move_betweentiledatas_ifonstairs(TiledataState &tds, ZoneManager &zm)
   auto const tp = TilePosition::from_floats_truncated(wp.x, wp.z);
 
   // lookup stairs in the registry
-  auto &registry = zone_state.registry;
+  auto &registry = zm.active().registry;
   auto const stair_eids = find_stairs(registry);
   assert(!stair_eids.empty());
 
@@ -155,14 +156,15 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& 
   auto &logger = es.logger;
   auto &tiledata_state = es.tiledata_state;
   auto &zs = zm.active();
+  auto &lstate = zs.level_state;
 
   move_betweentiledatas_ifonstairs(tiledata_state, zm);
-  update_riverwiggles(zs.level_data, ft);
+  update_riverwiggles(lstate.level_data, ft);
 
   /////////////////////////
-  auto &leveldata = zs.level_data;
+  auto &leveldata = lstate.level_data;
 
-  auto &player = zs.player;
+  auto &player = lstate.player;
   auto &registry = zs.registry;
   /////////////////////////
 
@@ -177,7 +179,7 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& 
   }
 
   // action begins here
-  render::clear_screen(zs.background);
+  render::clear_screen(lstate.background);
 
   RenderState rstate{es, zs};
   if (es.draw_entities) {
@@ -296,10 +298,10 @@ start(stlw::Logger &logger, Engine &engine)
   ON_SCOPE_EXIT([]() { ImGui_ImplSdlGL3_Shutdown(); });
 
   auto &registries = engine.registries;
-  DO_TRY(ZoneStates zone_states, LevelAssembler::assemble_levels(logger, registries));
+  DO_TRY(ZoneStates zss, LevelAssembler::assemble_levels(logger, registries));
 
   auto &imgui = ImGui::GetIO();
-  auto state = make_init_gamestate(logger, imgui, engine.dimensions(), MOVE(zone_states));
+  auto state = make_init_gamestate(logger, imgui, engine.dimensions(), MOVE(zss));
   timed_game_loop(engine, state);
   LOG_TRACE("game loop finished.");
   return stlw::empty_type{};

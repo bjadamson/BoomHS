@@ -130,11 +130,12 @@ set_receiveslight_uniforms(RenderState &rstate, glm::mat4 const& model_matrix,
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
+  auto &lstate = zs.level_state;
 
   auto &logger = es.logger;
-  auto const& camera = zs.camera;
-  auto const& global_light = zs.global_light;
-  auto const& player = zs.player;
+  auto const& camera = lstate.camera;
+  auto const& global_light = lstate.global_light;
+  auto const& player = lstate.player;
 
   set_modelmatrix(logger, model_matrix, sp);
   sp.set_uniform_matrix_3fv(logger, "u_normalmatrix", glm::inverseTranspose(glm::mat3{model_matrix}));
@@ -176,9 +177,10 @@ draw_3dshape(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
+  auto &lstate = zs.level_state;
 
   auto &logger = es.logger;
-  auto const& camera = zs.camera;
+  auto const& camera = lstate.camera;
 
   auto const draw_3d_shape_fn = [&]()
   {
@@ -389,6 +391,7 @@ draw_arrow_abovetile_and_neighbors(RenderState &rstate, TilePosition const& tpos
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
+  auto &lstate = zs.level_state;
 
   glm::vec3 constexpr offset{0.5f, 2.0f, 0.5f};
 
@@ -401,7 +404,7 @@ draw_arrow_abovetile_and_neighbors(RenderState &rstate, TilePosition const& tpos
 
   draw_the_arrow(tpos, LOC::BLUE);
 
-  auto &leveldata = zs.level_data;
+  auto &leveldata = lstate.level_data;
   auto const& tdata = leveldata.tiledata();
   auto const neighbors = find_immediate_neighbors(tdata, tpos, TileLookupBehavior::ALL_8_DIRECTIONS,
       [](auto const& tpos) { return true; });
@@ -493,6 +496,7 @@ draw_tiledata(RenderState &rstate, TiledataState const& tiledata_state, FrameTim
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
+  auto &lstate = zs.level_state;
 
   auto &logger = es.logger;
   assert(zs.gfx_state.gpu_state.tiles);
@@ -500,7 +504,7 @@ draw_tiledata(RenderState &rstate, TiledataState const& tiledata_state, FrameTim
   auto &registry = zs.registry;
   auto &sps = zs.gfx_state.sps;
 
-  auto const& leveldata = zs.level_data;
+  auto const& leveldata = lstate.level_data;
   auto const& tiledata = leveldata.tiledata();
   auto const& tileinfos = leveldata.tileinfos();
 
@@ -602,7 +606,7 @@ draw_rivers(RenderState &rstate, window::FrameTime const& ft)
   sp.set_uniform_color(es.logger, "u_color", LOC::WHITE);
   opengl::global::vao_bind(dinfo.vao());
 
-  auto const& level_data = zs.level_data;
+  auto const& level_data = zs.level_state.level_data;
   auto const& tileinfo = level_data.tileinfos()[TileType::RIVER];
   auto const& material = tileinfo.material;
 
@@ -631,7 +635,7 @@ draw_rivers(RenderState &rstate, window::FrameTime const& ft)
       draw_wiggle(w);
     }
   };
-  auto const& rinfos = zs.level_data.rivers();
+  auto const& rinfos = zs.level_state.level_data.rivers();
   for (auto const& rinfo : rinfos) {
     draw_river(rinfo);
   }
@@ -674,14 +678,15 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tds)
   auto &sps = zs.gfx_state.sps;
   auto &sp = sps.ref_sp("3d_pos_color");
 
-  auto const& leveldata = zs.level_data;
+  auto &lstate = zs.level_state;
+  auto const& leveldata = lstate.level_data;
   auto const& tiledata = leveldata.tiledata();
 
   Transform transform;
   bool const show_y = tds.show_yaxis_lines;
   auto const dinfo = OF::create_tilegrid(es.logger, sp, tiledata, show_y);
 
-  set_mvpmatrix(logger, transform.model_matrix(), sp, zs.camera);
+  set_mvpmatrix(logger, transform.model_matrix(), sp, lstate.camera);
 
   sp.use(logger);
   opengl::global::vao_bind(dinfo.vao());

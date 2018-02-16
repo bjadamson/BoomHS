@@ -136,30 +136,39 @@ struct GfxState
 
   MOVE_CONSTRUCTIBLE_ONLY(GfxState);
 };
-struct ZoneState
+struct LevelState
 {
   // singular light in the scene
   opengl::Color background;
   opengl::GlobalLight global_light;
-  GfxState gfx_state;
 
   ObjCache obj_cache;
   LevelData level_data;
 
   Camera camera;
   WorldObject player;
-  entt::DefaultRegistry &registry;
-
-  explicit ZoneState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
-      GfxState &&gfx,  ObjCache &&ocache, LevelData &&ldata, Camera &&cam, WorldObject &&pl,
-      entt::DefaultRegistry &reg)
+  explicit LevelState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
+      ObjCache &&ocache, LevelData &&ldata, Camera &&cam, WorldObject &&pl)
     : background(bgcolor)
     , global_light(glight)
-    , gfx_state(MOVE(gfx))
     , obj_cache(MOVE(ocache))
     , level_data(MOVE(ldata))
     , camera(MOVE(cam))
     , player(MOVE(pl))
+  {
+  }
+
+  MOVE_CONSTRUCTIBLE_ONLY(LevelState);
+};
+struct ZoneState
+{
+  LevelState level_state;
+  GfxState gfx_state;
+  entt::DefaultRegistry &registry;
+
+  explicit ZoneState(LevelState &&level, GfxState &&gfx, entt::DefaultRegistry &reg)
+    : level_state(MOVE(level))
+    , gfx_state(MOVE(gfx))
     , registry(reg)
   {
   }

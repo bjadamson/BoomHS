@@ -51,26 +51,29 @@ assemble(LevelAssets &&level_assets, entt::DefaultRegistry &registry, LevelConfi
     camera.set_coordinates(MOVE(sc));
   }
 
+  LevelState level_state{
+    assets.background_color,
+    assets.global_light,
+    MOVE(level_assets.assets.obj_cache),
+    MOVE(leveldata),
+    MOVE(camera),
+    MOVE(player)
+  };
   GfxState gfx{
     MOVE(level_assets.shader_programs),
     MOVE(level_assets.assets.texture_table)
   };
   return ZoneState{
-    assets.background_color,
-    assets.global_light,
+    MOVE(level_state),
     MOVE(gfx),
-    MOVE(level_assets.assets.obj_cache),
-    MOVE(leveldata),
-    MOVE(camera),
-    MOVE(player),
     registry};
 }
 
 void
 bridge_staircases(ZoneState &a, ZoneState &b)
 {
-  auto &tiledata_a = a.level_data.tiledata();
-  auto &tiledata_b = b.level_data.tiledata();
+  auto &tiledata_a = a.level_state.level_data.tiledata();
+  auto &tiledata_b = b.level_state.level_data.tiledata();
 
   auto const stairs_up_a = find_upstairs(a.registry, tiledata_a);
   assert(!stairs_up_a.empty());
@@ -182,13 +185,14 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileInfos const& tile
 }
 
 void
-copy_to_gpu(stlw::Logger &logger, ZoneState &zone_state)
+copy_to_gpu(stlw::Logger &logger, ZoneState &zs)
 {
-  auto const& tileinfos = zone_state.level_data.tileinfos();
-  auto const& objcache = zone_state.obj_cache;
-  auto &gfx_state = zone_state.gfx_state;
+  auto &lstate = zs.level_state;
+  auto const& tileinfos = lstate.level_data.tileinfos();
+  auto const& objcache = lstate.obj_cache;
+  auto &gfx_state = zs.gfx_state;
   auto &sps = gfx_state.sps;
-  auto &registry = zone_state.registry;
+  auto &registry = zs.registry;
 
   auto copy_result = copy_assets_gpu(logger, sps, tileinfos, registry, objcache);
   assert(copy_result);
@@ -230,8 +234,8 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<entt::DefaultR
     StairGenConfig const stairconfig{FLOOR_COUNT, i, stairs_perfloor};
     LevelConfig const level_config{stairconfig, tdconfig};
 
-    ZoneState zone_state = assemble(MOVE(level_assets), registry, level_config);
-    zstates.emplace_back(MOVE(zone_state));
+    ZoneState zs = assemble(MOVE(level_assets), registry, level_config);
+    zstates.emplace_back(MOVE(zs));
   }
 
   assert(FLOOR_COUNT > 0);

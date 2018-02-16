@@ -14,7 +14,7 @@ FlowDirection::find_flow(Tile const& tile, std::vector<FlowDirection> const& flo
 }
 
 TileData::TileData(std::vector<Tile> &&t, size_t const width, size_t const height,
-    TileInfos const& tinfos, entt::DefaultRegistry &registry)
+    entt::DefaultRegistry &registry)
   : dimensions_(stlw::make_array<size_t>(width, height))
   , registry_(registry)
   , tiles_(MOVE(t))
