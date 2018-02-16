@@ -76,6 +76,9 @@ void
 draw_rivers(RenderState &, window::FrameTime const&);
 
 void
+draw_stars(RenderState &, window::FrameTime const&);
+
+void
 draw_terrain(RenderState &);
 
 void

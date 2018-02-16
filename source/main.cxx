@@ -182,6 +182,9 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& 
       render::draw_tilegrid(rstate, tilegrid_state, ft);
       render::draw_rivers(rstate, ft);
     }
+
+    render::draw_stars(rstate, ft);
+
     if (tilegrid_state.show_grid_lines) {
       render::draw_tilegrid(rstate, tilegrid_state);
     }

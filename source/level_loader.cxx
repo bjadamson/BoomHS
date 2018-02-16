@@ -370,6 +370,7 @@ load_tileinfos(stlw::Logger &logger, CppTable const& config, entt::DefaultRegist
 {
   auto const load_tile = [](auto const& file) {
     auto const tile  =     get_string_or_abort(file, "tile");
+    std::cerr << "tile: '" << tile << "'\n";
     auto const tiletype = tiletype_from_string(tile);
     auto const mesh_name = get_string_or_abort(file, "mesh");
     auto const vshader_name = get_string_or_abort(file, "vshader");
@@ -531,7 +532,10 @@ ObjCache::get_obj(char const* name) const
   auto const it = std::find_if(objects_.cbegin(), objects_.cend(), cmp);
 
   // assume presence
-  assert(it != objects_.cend());
+  if (it == objects_.cend()) {
+    std::cerr << "could not find sp: '" << name << "'\n";
+    std::abort();
+  }
 
   // yield reference to data
   return it->second;

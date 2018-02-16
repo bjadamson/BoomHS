@@ -137,6 +137,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
 
   registry.view<ShaderName, Color, MeshRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &mesh) {
+        std::cerr << "mesh.name: '" << mesh.name << "'\n";
         auto const &obj = obj_cache.get_obj(mesh.name);
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
@@ -226,7 +227,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<entt::DefaultR
   // The logger isn't thread safe, need to ensure that the logger isn't using "during" level gen,
   // or somehow give it unique access during writing (read/write lock?).
 
-  auto const FLOOR_COUNT = 2;
+  auto const FLOOR_COUNT = 1;
   std::vector<ZoneState> zstates;
   zstates.reserve(FLOOR_COUNT);
   FORI(i, FLOOR_COUNT) {

@@ -302,6 +302,10 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
     while(!rooms) {
       rooms = place_rooms(tilegrid, rng);
     }
+    if (stairconfig.floor_count) {
+      std::cerr << "one floor, skipping placing stairs ...\n";
+      break;
+    }
     while(!stairs) {
       std::cerr << "placing stairs ...\n";
       stairs = stairwell_generator::place_stairs(stairconfig, tilegrid, rng, registry);

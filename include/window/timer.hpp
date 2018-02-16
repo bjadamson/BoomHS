@@ -9,6 +9,7 @@ struct FrameTime
 {
   double const delta;
   uint64_t const ticks;
+  uint64_t const since_start;
 };
 
 class Clock
@@ -29,11 +30,13 @@ public:
     last_tick_time = ticks_now();
   }
 
+  uint64_t ticks_since_start() const { return ticks_now() - starting_ticks; }
+
   FrameTime frame_time() const
   {
     uint64_t const ticks = ticks_now() - last_tick_time;
     double const dt = (ticks * 1000.0 / frequency_);
-    return FrameTime{dt, ticks};
+    return FrameTime{dt, ticks, ticks_since_start()};
   }
 };
 

@@ -3,6 +3,7 @@
 #include <stlw/type_macros.hpp>
 #include <ostream>
 #include <string>
+#include <type_traits>
 
 namespace boomhs
 {
@@ -10,13 +11,21 @@ namespace boomhs
 enum class TileType : size_t
 {
   FLOOR = 0,
-  WALL,
-  RIVER,
+  BAR,
   BRIDGE,
+  AT,
+  RIVER,
   STAIR_DOWN,
   STAIR_UP,
+  STAR,
+  WALL,
   MAX
 };
+
+// We ensure the underlying type is size_t so we can use that assumption around the rest of the
+// program. Very important this invariant does not change.
+static_assert(std::is_same<size_t, std::underlying_type<TileType>::type>::value,
+    "TileType must be size_t");
 
 TileType
 tiletype_from_string(std::string const&);
@@ -31,12 +40,15 @@ tiletype_from_string(char const* cstring)
   }
 
   // clang-format off
-  CHECK("FLOOR",      TileType::FLOOR);
-  CHECK("WALL",       TileType::WALL);
-  CHECK("RIVER",      TileType::RIVER);
+  CHECK("AT",         TileType::AT);
+  CHECK("BAR",        TileType::BAR);
   CHECK("BRIDGE",     TileType::BRIDGE);
+  CHECK("FLOOR",      TileType::FLOOR);
+  CHECK("RIVER",      TileType::RIVER);
   CHECK("STAIR_DOWN", TileType::STAIR_DOWN);
   CHECK("STAIR_UP",   TileType::STAIR_UP);
+  CHECK("STAR",       TileType::STAR);
+  CHECK("WALL",       TileType::WALL);
 #undef CHECK
   // clang-format on
 
@@ -53,12 +65,15 @@ to_string(TileType const type)
     return string;                                                                                 \
   }
   // clang-format off
-  CHECK("FLOOR",      TileType::FLOOR);
-  CHECK("WALL",       TileType::WALL);
-  CHECK("RIVER",      TileType::RIVER);
+  CHECK("AT",         TileType::AT);
+  CHECK("BAR",        TileType::BAR);
   CHECK("BRIDGE",     TileType::BRIDGE);
+  CHECK("FLOOR",      TileType::FLOOR);
+  CHECK("RIVER",      TileType::RIVER);
+  CHECK("STAR",       TileType::STAR);
   CHECK("STAIR_DOWN", TileType::STAIR_DOWN);
   CHECK("STAIR_UP",   TileType::STAIR_UP);
+  CHECK("WALL",       TileType::WALL);
 #undef CHECK
   // clang-format on
   // Logic error at this point
@@ -71,11 +86,26 @@ inline std::ostream&
 operator<<(std::ostream &stream, TileType const type)
 {
   switch(type) {
+    case TileType::AT:
+      stream << "AT";
+      break;
     case TileType::FLOOR:
       stream << "FLOOR";
       break;
+    case TileType::BAR:
+      stream << "BAR";
+      break;
     case TileType::WALL:
       stream << "WALL";
+      break;
+    case TileType::RIVER:
+      stream << "RIVER";
+      break;
+    case TileType::BRIDGE:
+      stream << "BRIDGE";
+      break;
+    case TileType::STAR:
+      stream << "STAR";
       break;
     case TileType::STAIR_DOWN:
       stream << "STAIR_DOWN";

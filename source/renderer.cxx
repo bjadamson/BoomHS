@@ -618,8 +618,8 @@ draw_rivers(RenderState &rstate, window::FrameTime const& ft)
   auto &sp = sps.ref_sp("river");
   auto const& dinfo = tile_handles.lookup(TileType::RIVER);
 
-  sp.set_uniform_color(es.logger, "u_color", LOC::WHITE);
   opengl::global::vao_bind(dinfo.vao());
+  sp.set_uniform_color(es.logger, "u_color", LOC::WHITE);
 
   auto const& level_data = zs.level_state.level_data;
   auto const& tile_info = level_data.tiletable()[TileType::RIVER];
@@ -650,10 +650,51 @@ draw_rivers(RenderState &rstate, window::FrameTime const& ft)
       }
     }
   };
-  auto const& rinfos = zs.level_state.level_data.rivers();
+  auto const& rinfos = level_data.rivers();
   for (auto const& rinfo : rinfos) {
     draw_river(rinfo);
   }
+}
+
+void
+draw_stars(RenderState &rstate, window::FrameTime const& ft)
+{
+  auto &es = rstate.es;
+  auto &zs = rstate.zs;
+
+  assert(zs.gfx_state.gpu_state.tiles);
+  auto &tile_handles = *zs.gfx_state.gpu_state.tiles;
+  auto &registry = zs.registry;
+  auto &sps = zs.gfx_state.sps;
+
+  auto const draw_starletter = [&](int const x, int const y, char const* shader, TileType const type)
+  {
+    auto &sp = sps.ref_sp(shader);
+    sp.set_uniform_color_3fv(es.logger, "u_lightcolor", LOC::YELLOW);
+
+    auto const& dinfo = tile_handles.lookup(type);
+    opengl::global::vao_bind(dinfo.vao());
+
+    auto constexpr Z = 5.0f;
+    auto const tr = glm::vec3{x, y, Z};
+    glm::quat const rot = glm::angleAxis(glm::radians(90.0f), Z_UNIT_VECTOR);
+
+    float const s = std::cos(ft.ticks * .05);
+    std::cerr << "s: '" << s << "'\n";
+    auto const scale = glm::vec3{s} * 3.0;
+
+    auto const& level_data = zs.level_state.level_data;
+    auto const& tile_info = level_data.tiletable()[type];
+    auto const& material = tile_info.material;
+
+    auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
+    draw_3dshape(rstate, modelmatrix, sp, dinfo);
+  };
+
+  auto constexpr X = -15.0;
+  auto constexpr Y = 5.0;
+  draw_starletter(X, Y,   "light", TileType::STAR);
+  draw_starletter(X, Y+1, "light", TileType::BAR);
 }
 
 void
