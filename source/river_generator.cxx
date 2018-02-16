@@ -1,6 +1,6 @@
 #include <boomhs/river_generator.hpp>
-#include <boomhs/tiledata.hpp>
-#include <boomhs/tiledata_algorithms.hpp>
+#include <boomhs/tilegrid.hpp>
+#include <boomhs/tilegrid_algorithms.hpp>
 
 #include <stlw/optional.hpp>
 #include <stlw/random.hpp>
@@ -37,10 +37,10 @@ create_river(TilePosition const& tpos, Edges const& edges, glm::vec2 const& flow
 }
 
 std::optional<RiverInfo>
-generate_river(TileData &tiledata, stlw::float_generator &rng)
+generate_river(TileGrid &tilegrid, stlw::float_generator &rng)
 {
-  auto const [tdwidth, tdheight] = tiledata.dimensions();
-  auto const tpos_edge = random_tileposition_onedgeofmap(tiledata, rng);
+  auto const [tdwidth, tdheight] = tilegrid.dimensions();
+  auto const tpos_edge = random_tileposition_onedgeofmap(tilegrid, rng);
   auto const& tpos = tpos_edge.first;
   MapEdge const& edge = tpos_edge.second;
 
@@ -49,8 +49,8 @@ generate_river(TileData &tiledata, stlw::float_generator &rng)
     auto constexpr FLOW_DIR = glm::vec2{1.0, 0.0};
     if (edge.is_xedge()) {
       FOR(i, tdwidth) {
-        auto &tile = tiledata.data(i, tpos.y);
-        tiledata.assign_river(tile, FLOW_DIR);
+        auto &tile = tilegrid.data(i, tpos.y);
+        tilegrid.assign_river(tile, FLOW_DIR);
       }
       auto const edges = calculate_edges(tpos, tdwidth, tdheight, tdwidth, RIVER_DISTANCE);
       float const rotation = 90.0f;
@@ -64,8 +64,8 @@ generate_river(TileData &tiledata, stlw::float_generator &rng)
   auto constexpr FLOW_DIR = glm::vec2{0.0, 1.0};
   assert(edge.is_yedge());
   FOR(i, tdheight) {
-    auto &tile = tiledata.data(tpos.x, i);
-    tiledata.assign_river(tile, FLOW_DIR);
+    auto &tile = tilegrid.data(tpos.x, i);
+    tilegrid.assign_river(tile, FLOW_DIR);
   }
   auto const edges = calculate_edges(tpos, tdwidth, tdheight, RIVER_DISTANCE, tdheight);
   float const rotation = 0.0f;
@@ -82,12 +82,12 @@ namespace boomhs::river_generator
 {
 
 void
-place_rivers(TileData &tiledata, stlw::float_generator &rng, std::vector<RiverInfo> &rivers)
+place_rivers(TileGrid &tilegrid, stlw::float_generator &rng, std::vector<RiverInfo> &rivers)
 {
   auto const place = [&]() {
     std::optional<RiverInfo> river_o = std::nullopt;
     while(!river_o) {
-      river_o = generate_river(tiledata, rng);
+      river_o = generate_river(tilegrid, rng);
     }
     assert(river_o);
     auto river = MOVE(*river_o);

@@ -9,7 +9,7 @@ namespace boomhs
 {
 struct TileSharedInfoTable;
 
-struct TileDataConfig
+struct TileGridConfig
 {
   size_t const width, height;
 };
@@ -17,7 +17,7 @@ struct TileDataConfig
 struct LevelConfig
 {
   StairGenConfig const& stairconfig;
-  TileDataConfig const& tileconfig;
+  TileGridConfig const& tileconfig;
 };
 
 } // ns boomhs

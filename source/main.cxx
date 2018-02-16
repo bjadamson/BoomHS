@@ -14,8 +14,8 @@
 #include <boomhs/renderer.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/tiledata.hpp>
-#include <boomhs/tiledata_algorithms.hpp>
+#include <boomhs/tilegrid.hpp>
+#include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/ui.hpp>
 #include <boomhs/zone.hpp>
 
@@ -47,7 +47,7 @@ namespace boomhs
 {
 
 void
-move_betweentiledatas_ifonstairs(TiledataState &tds, ZoneManager &zm)
+move_betweentilegrids_ifonstairs(TiledataState &tds, ZoneManager &zm)
 {
   auto &lstate = zm.active().level_state;
   auto const& leveldata = lstate.level_data;
@@ -60,8 +60,8 @@ move_betweentiledatas_ifonstairs(TiledataState &tds, ZoneManager &zm)
     assert(wp.x < w);
     assert(wp.y < h);
   }
-  auto const& tiledata = leveldata.tiledata();
-  auto const& tile = tiledata.data(wp.x, wp.z);
+  auto const& tilegrid = leveldata.tilegrid();
+  auto const& tile = tilegrid.data(wp.x, wp.z);
   if (!tile.is_stair()) {
     return;
   }
@@ -153,11 +153,11 @@ void
 game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& ft)
 {
   auto &logger = es.logger;
-  auto &tiledata_state = es.tiledata_state;
+  auto &tilegrid_state = es.tilegrid_state;
   auto &zs = zm.active();
   auto &lstate = zs.level_state;
 
-  move_betweentiledatas_ifonstairs(tiledata_state, zm);
+  move_betweentilegrids_ifonstairs(tilegrid_state, zm);
   update_riverwiggles(lstate.level_data, ft);
 
   /////////////////////////
@@ -167,14 +167,14 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& 
   auto &registry = zs.registry;
   /////////////////////////
 
-  // compute tiledata
-  if (tiledata_state.recompute) {
-    LOG_INFO("Updating tiledata\n");
+  // compute tilegrid
+  if (tilegrid_state.recompute) {
+    LOG_INFO("Updating tilegrid\n");
 
-    update_visible_tiles(leveldata.tiledata(), player, tiledata_state.reveal);
+    update_visible_tiles(leveldata.tilegrid(), player, tilegrid_state.reveal);
 
-    // We don't need to recompute the tiledata, we just did.
-    tiledata_state.recompute = false;
+    // We don't need to recompute the tilegrid, we just did.
+    tilegrid_state.recompute = false;
   }
 
   // action begins here
@@ -187,14 +187,14 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& 
   if (es.draw_terrain) {
     render::draw_terrain(rstate);
   }
-  if (tiledata_state.draw_tiledata) {
-    render::draw_tiledata(rstate, tiledata_state, ft);
+  if (tilegrid_state.draw_tilegrid) {
+    render::draw_tilegrid(rstate, tilegrid_state, ft);
     render::draw_rivers(rstate, ft);
   }
-  if (tiledata_state.show_grid_lines) {
-    render::draw_tilegrid(rstate, tiledata_state);
+  if (tilegrid_state.show_grid_lines) {
+    render::draw_tilegrid(rstate, tilegrid_state);
   }
-  if (tiledata_state.show_neighbortile_arrows) {
+  if (tilegrid_state.show_neighbortile_arrows) {
     auto const& wp = player.world_position();
     auto const tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
     render::draw_arrow_abovetile_and_neighbors(rstate, tpos);

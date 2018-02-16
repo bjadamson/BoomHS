@@ -1,6 +1,6 @@
 #pragma once
 #include <boomhs/tile.hpp>
-#include <boomhs/tiledata.hpp>
+#include <boomhs/tilegrid.hpp>
 
 #include <array>
 #include <iostream>
@@ -50,10 +50,10 @@ struct FindNeighborConfig
 
 template<typename FN>
 TileNeighbors
-find_neighbors(TileData const& tdata, TilePosition const& tpos, FN const& fn,
+find_neighbors(TileGrid const& tgrid, TilePosition const& tpos, FN const& fn,
     FindNeighborConfig const& config)
 {
-  auto const [width, height] = tdata.dimensions();
+  auto const [width, height] = tgrid.dimensions();
   auto const distance = config.distance;
   assert(width > 0);
   assert(height > 0);
@@ -74,7 +74,7 @@ find_neighbors(TileData const& tdata, TilePosition const& tpos, FN const& fn,
         // Explicitely use fallthrough for code reuse
       case TileLookupBehavior::ALL_8_DIRECTIONS:
         {
-          auto const& neighbor_tile = tdata.data(neighbor_pos);
+          auto const& neighbor_tile = tgrid.data(neighbor_pos);
           if (fn(neighbor_tile)) {
             neighbors.emplace_back(neighbor_pos);
           }
@@ -90,30 +90,30 @@ find_neighbors(TileData const& tdata, TilePosition const& tpos, FN const& fn,
 }
 
 inline TileNeighbors
-find_neighbors(TileData const& tdata, TilePosition const& tpos, TileType const type,
+find_neighbors(TileGrid const& tgrid, TilePosition const& tpos, TileType const type,
     FindNeighborConfig const& config)
 {
   auto const fn = [&](auto const& neighbor_tile) { return neighbor_tile.type == type; };
-  return find_neighbors(tdata, tpos, fn, config);
+  return find_neighbors(tgrid, tpos, fn, config);
 }
 
 template<typename FN>
 TileNeighbors
-find_immediate_neighbors(TileData const& tdata, TilePosition const& tpos,
+find_immediate_neighbors(TileGrid const& tgrid, TilePosition const& tpos,
     TileLookupBehavior const behavior, FN const& fn)
 {
   uint64_t static constexpr DISTANCE = 1;
   FindNeighborConfig const config{behavior, DISTANCE};
-  return find_neighbors(tdata, tpos, fn, config);
+  return find_neighbors(tgrid, tpos, fn, config);
 }
 
 inline TileNeighbors
-find_immediate_neighbors(TileData const& tdata, TilePosition const& tpos, TileType const type,
+find_immediate_neighbors(TileGrid const& tgrid, TilePosition const& tpos, TileType const type,
     TileLookupBehavior const behavior)
 {
   uint64_t static constexpr DISTANCE = 1;
   FindNeighborConfig const config{behavior, DISTANCE};
-  return find_neighbors(tdata, tpos, type, config);
+  return find_neighbors(tgrid, tpos, type, config);
 }
 
 class MapEdge
@@ -138,13 +138,13 @@ public:
 };
 
 std::pair<TilePosition, MapEdge>
-random_tileposition_onedgeofmap(TileData const&, stlw::float_generator &);
+random_tileposition_onedgeofmap(TileGrid const&, stlw::float_generator &);
 
 bool
-any_tiledata_neighbors(TileData const&, TilePosition const&, uint64_t const, bool (*)(Tile const&));
+any_tilegrid_neighbors(TileGrid const&, TilePosition const&, uint64_t const, bool (*)(Tile const&));
 
 class WorldObject;
 void
-update_visible_tiles(TileData &, WorldObject const&, bool const);
+update_visible_tiles(TileGrid &, WorldObject const&, bool const);
 
 } // ns boomhs

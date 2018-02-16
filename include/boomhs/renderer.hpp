@@ -1,6 +1,6 @@
 #pragma once
 #include <boomhs/components.hpp>
-#include <boomhs/tiledata.hpp>
+#include <boomhs/tilegrid.hpp>
 #include <opengl/colors.hpp>
 #include <opengl/lighting.hpp>
 #include <window/sdl.hpp>
@@ -28,7 +28,7 @@ class HandleManager;
 struct EngineState;
 struct RiverInfo;
 struct Transform;
-class TileData;
+class TileGrid;
 struct TiledataState;
 class WorldObject;
 struct ZoneState;
@@ -79,7 +79,7 @@ void
 draw_terrain(RenderState &);
 
 void
-draw_tiledata(RenderState &, TiledataState const&, window::FrameTime const&);
+draw_tilegrid(RenderState &, TiledataState const&, window::FrameTime const&);
 
 void
 draw_tilegrid(RenderState &, TiledataState const&);

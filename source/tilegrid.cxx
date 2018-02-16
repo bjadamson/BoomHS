@@ -1,4 +1,4 @@
-#include <boomhs/tiledata.hpp>
+#include <boomhs/tilegrid.hpp>
 
 namespace boomhs
 {
@@ -12,7 +12,7 @@ FlowDirection::find_flow(Tile const& tile, std::vector<FlowDirection> const& flo
   return *find_it;
 }
 
-TileData::TileData(std::vector<Tile> &&t, size_t const width, size_t const height,
+TileGrid::TileGrid(std::vector<Tile> &&t, size_t const width, size_t const height,
     entt::DefaultRegistry &registry)
   : dimensions_(stlw::make_array<size_t>(width, height))
   , registry_(registry)
@@ -24,21 +24,21 @@ TileData::TileData(std::vector<Tile> &&t, size_t const width, size_t const heigh
   }
 }
 
-TileData::TileData(TileData &&other)
+TileGrid::TileGrid(TileGrid &&other)
   : dimensions_(other.dimensions_)
   , registry_(other.registry_)
   , tiles_(MOVE(other.tiles_))
   , flowdirs_(MOVE(other.flowdirs_))
 {
-  // "This" instance of the tiledata takes over the responsibility of destroying the entities
-  // from the moved-from tiledata.
+  // "This" instance of the tilegrid takes over the responsibility of destroying the entities
+  // from the moved-from tilegrid.
   //
-  // The moved-from TileData should no longer destroy the entities during it's destructor.
+  // The moved-from TileGrid should no longer destroy the entities during it's destructor.
   this->destroy_entities_ = other.destroy_entities_;
   other.destroy_entities_ = false;
 }
 
-TileData::~TileData()
+TileGrid::~TileGrid()
 {
   if (destroy_entities_) {
     for (auto &tile : tiles_) {
@@ -48,7 +48,7 @@ TileData::~TileData()
 }
 
 Tile&
-TileData::data(size_t const x, size_t const y)
+TileGrid::data(size_t const x, size_t const y)
 {
   auto const [w, h] = dimensions();
   assert(x < w);
@@ -58,7 +58,7 @@ TileData::data(size_t const x, size_t const y)
 }
 
 Tile const&
-TileData::data(size_t const x, size_t const y) const
+TileGrid::data(size_t const x, size_t const y) const
 {
   auto const [w, h] = dimensions();
   assert(x < w);
@@ -67,15 +67,8 @@ TileData::data(size_t const x, size_t const y) const
   return tiles_[cell];
 }
 
-
-bool
-float_compare(float const a, float const b)
-{
-  return std::fabs(a - b) < std::numeric_limits<float>::epsilon();
-}
-
 void
-TileData::assign_bridge(Tile &tile)
+TileGrid::assign_bridge(Tile &tile)
 {
   tile.type = TileType::BRIDGE;
 
@@ -83,13 +76,13 @@ TileData::assign_bridge(Tile &tile)
 
   assert(registry_.has<Transform>(tile.eid));
   auto &transform = registry_.get<Transform>(tile.eid);
-  if (float_compare(flow.direction.x, 1.0f)) {
+  if (stlw::math::float_compare(flow.direction.x, 1.0f)) {
     transform.rotate_degrees(90.0f, opengl::Y_UNIT_VECTOR);
   }
 }
 
 void
-TileData::assign_river(Tile &tile, glm::vec2 const& flow_dir)
+TileGrid::assign_river(Tile &tile, glm::vec2 const& flow_dir)
 {
   tile.type = TileType::RIVER;
   flowdirs_.emplace_back(FlowDirection{tile, flow_dir});

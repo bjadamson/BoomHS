@@ -51,7 +51,7 @@ struct FlowDirection
   find_flow(Tile const&, std::vector<FlowDirection> const&);
 };
 
-class TileData
+class TileGrid
 {
   std::array<size_t, 2> dimensions_;
   entt::DefaultRegistry &registry_;
@@ -62,14 +62,14 @@ class TileData
   bool destroy_entities_ = true;
 
 public:
-  NO_COPY(TileData);
-  NO_MOVE_ASSIGN(TileData);
+  NO_COPY(TileGrid);
+  NO_MOVE_ASSIGN(TileGrid);
 
-  TileData(std::vector<Tile> &&, size_t const, size_t const, entt::DefaultRegistry &);
+  TileGrid(std::vector<Tile> &&, size_t const, size_t const, entt::DefaultRegistry &);
 
-  ~TileData();
+  ~TileGrid();
 
-  TileData(TileData &&);
+  TileGrid(TileGrid &&);
 
   auto dimensions() const { return dimensions_; }
   bool empty() const { return tiles_.empty(); }

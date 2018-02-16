@@ -10,7 +10,7 @@ class float_generator;
 
 namespace boomhs
 {
-class TileData;
+class TileGrid;
 
 struct RiverWiggle
 {
@@ -46,6 +46,6 @@ namespace boomhs::river_generator
 {
 
 void
-place_rivers(TileData &, stlw::float_generator &, std::vector<RiverInfo> &);
+place_rivers(TileGrid &, stlw::float_generator &, std::vector<RiverInfo> &);
 
 } // ns boomhs::river_generator

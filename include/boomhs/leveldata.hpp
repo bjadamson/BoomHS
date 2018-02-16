@@ -2,7 +2,7 @@
 #include <boomhs/level_loader.hpp>
 #include <boomhs/river_generator.hpp>
 #include <boomhs/tile.hpp>
-#include <boomhs/tiledata.hpp>
+#include <boomhs/tilegrid.hpp>
 
 #include <opengl/lighting.hpp>
 
@@ -16,7 +16,7 @@ class LevelData
 {
   // The tilegrid stores stores information about the grid, like it's dimensions, and stores all of
   // the tile's that it owns internally.
-  TileData tilegrid_;
+  TileGrid tilegrid_;
 
   // The TileSharedInfoTable "table" stores shared information between the tiles of the same type.
   // For example, the "Material" property for each tile type can be looked up (and manipulated)
@@ -29,7 +29,7 @@ class LevelData
   void set_tile(TilePosition const&, TileType const&);
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
-  LevelData(TileData &&, TileSharedInfoTable &&, TilePosition const&, std::vector<RiverInfo> &&);
+  LevelData(TileGrid &&, TileSharedInfoTable &&, TilePosition const&, std::vector<RiverInfo> &&);
 
   void set_floor(TilePosition const&);
   void set_river(TilePosition const&);
@@ -42,12 +42,12 @@ public:
 
   // TODO: Is this leaky abstraction?
   auto&
-  tiledata() { return tilegrid_; }
+  tilegrid() { return tilegrid_; }
 
   // Used for rendering
   // TODO: Is this leaky abstraction?
   auto const&
-  tiledata() const { return tilegrid_; }
+  tilegrid() const { return tilegrid_; }
 
   // TODO: maybe accept type parameter, and return TileInfo reference instead of leaking
   // the ttable_ reference?

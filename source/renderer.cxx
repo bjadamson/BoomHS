@@ -1,7 +1,7 @@
 #include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/tiledata.hpp>
-#include <boomhs/tiledata_algorithms.hpp>
+#include <boomhs/tilegrid.hpp>
+#include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/types.hpp>
 
 #include <opengl/factory.hpp>
@@ -406,8 +406,8 @@ draw_arrow_abovetile_and_neighbors(RenderState &rstate, TilePosition const& tpos
   draw_the_arrow(tpos, LOC::BLUE);
 
   auto &leveldata = lstate.level_data;
-  auto const& tdata = leveldata.tiledata();
-  auto const neighbors = find_immediate_neighbors(tdata, tpos, TileLookupBehavior::ALL_8_DIRECTIONS,
+  auto const& tgrid = leveldata.tilegrid();
+  auto const neighbors = find_immediate_neighbors(tgrid, tpos, TileLookupBehavior::ALL_8_DIRECTIONS,
       [](auto const& tpos) { return true; });
   assert(neighbors.size() <= 8);
   FOR(i, neighbors.size()) {
@@ -493,7 +493,7 @@ draw_entities(RenderState &rstate)
 }
 
 void
-draw_tiledata(RenderState &rstate, TiledataState const& tiledata_state, FrameTime const& ft)
+draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTime const& ft)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
@@ -506,7 +506,7 @@ draw_tiledata(RenderState &rstate, TiledataState const& tiledata_state, FrameTim
   auto &sps = zs.gfx_state.sps;
 
   auto const& leveldata = lstate.level_data;
-  auto const& tiledata = leveldata.tiledata();
+  auto const& tilegrid = leveldata.tilegrid();
   auto const& tiletable = leveldata.tiletable();
 
   auto const& draw_tile_helper = [&](auto &sp, auto const& dinfo, Tile const& tile,
@@ -521,8 +521,8 @@ draw_tiledata(RenderState &rstate, TiledataState const& tiledata_state, FrameTim
     draw_3dlit_shape(rstate, model_mat, sp, dinfo, material, registry, receives_ambient_light);
   };
   auto const draw_tile = [&](auto const& tile_pos) {
-    auto const& tile = tiledata.data(tile_pos);
-    if (!tiledata_state.reveal && !tile.is_visible) {
+    auto const& tile = tilegrid.data(tile_pos);
+    if (!tilegrid_state.reveal && !tile.is_visible) {
       return;
     }
     // This offset causes the tile's to appear in the "middle"
@@ -587,7 +587,7 @@ draw_tiledata(RenderState &rstate, TiledataState const& tiledata_state, FrameTim
         std::exit(1);
     }
   };
-  tiledata.visit_each(draw_tile);
+  tilegrid.visit_each(draw_tile);
 }
 
 void
@@ -681,11 +681,11 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tds)
 
   auto &lstate = zs.level_state;
   auto const& leveldata = lstate.level_data;
-  auto const& tiledata = leveldata.tiledata();
+  auto const& tilegrid = leveldata.tilegrid();
 
   Transform transform;
   bool const show_y = tds.show_yaxis_lines;
-  auto const dinfo = OF::create_tilegrid(es.logger, sp, tiledata, show_y);
+  auto const dinfo = OF::create_tilegrid(es.logger, sp, tilegrid, show_y);
 
   set_mvpmatrix(logger, transform.model_matrix(), sp, lstate.camera);
 

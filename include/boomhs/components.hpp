@@ -126,20 +126,20 @@ find_stairs(entt::DefaultRegistry &registry)
   return find_all_entities_with_component<StairInfo>(registry);
 }
 
-class TileData;
+class TileGrid;
 std::vector<uint32_t>
-find_stairs_withtype(entt::DefaultRegistry &, TileData const&, TileType const);
+find_stairs_withtype(entt::DefaultRegistry &, TileGrid const&, TileType const);
 
 inline auto
-find_upstairs(entt::DefaultRegistry &registry, TileData const& tdata)
+find_upstairs(entt::DefaultRegistry &registry, TileGrid const& tgrid)
 {
-  return find_stairs_withtype(registry, tdata, TileType::STAIR_UP);
+  return find_stairs_withtype(registry, tgrid, TileType::STAIR_UP);
 }
 
 inline auto
-find_downstairs(entt::DefaultRegistry &registry, TileData const& tdata)
+find_downstairs(entt::DefaultRegistry &registry, TileGrid const& tgrid)
 {
-  return find_stairs_withtype(registry, tdata, TileType::STAIR_DOWN);
+  return find_stairs_withtype(registry, tgrid, TileType::STAIR_DOWN);
 }
 
 inline uint32_t

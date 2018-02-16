@@ -3,7 +3,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/level_generator.hpp>
 #include <boomhs/level_loader.hpp>
-#include <boomhs/tiledata_algorithms.hpp>
+#include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <opengl/constants.hpp>
@@ -72,13 +72,13 @@ assemble(LevelAssets &&assets, entt::DefaultRegistry &registry, LevelConfig cons
 void
 bridge_staircases(ZoneState &a, ZoneState &b)
 {
-  auto &tiledata_a = a.level_state.level_data.tiledata();
-  auto &tiledata_b = b.level_state.level_data.tiledata();
+  auto &tilegrid_a = a.level_state.level_data.tilegrid();
+  auto &tilegrid_b = b.level_state.level_data.tilegrid();
 
-  auto const stairs_up_a = find_upstairs(a.registry, tiledata_a);
+  auto const stairs_up_a = find_upstairs(a.registry, tilegrid_a);
   assert(!stairs_up_a.empty());
 
-  auto const stairs_down_b = find_downstairs(b.registry, tiledata_b);
+  auto const stairs_down_b = find_downstairs(b.registry, tilegrid_b);
   assert(!stairs_down_b.empty());
 
   auto &a_registry = a.registry;
@@ -99,11 +99,11 @@ bridge_staircases(ZoneState &a, ZoneState &b)
     StairInfo &si_b = b_registry.get<StairInfo>(b_downeid);
 
     // find a suitable neighbor tile for each stair
-    auto const a_neighbors = find_immediate_neighbors(tiledata_a, si_a.tile_position, TileType::FLOOR,
+    auto const a_neighbors = find_immediate_neighbors(tilegrid_a, si_a.tile_position, TileType::FLOOR,
         behavior);
     assert(!a_neighbors.empty());
 
-    auto const b_neighbors = find_immediate_neighbors(tiledata_b, si_b.tile_position, TileType::FLOOR,
+    auto const b_neighbors = find_immediate_neighbors(tilegrid_b, si_b.tile_position, TileType::FLOOR,
         behavior);
     assert(!b_neighbors.empty());
 
@@ -218,7 +218,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<entt::DefaultR
 
   auto const stairs_perfloor = 8;
   int const width = 40, height = 40;
-  TileDataConfig const tdconfig{width, height};
+  TileGridConfig const tdconfig{width, height};
 
   // TODO: it is currently not thread safe to call load_level() from multiple threads.
   //

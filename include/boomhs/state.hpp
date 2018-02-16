@@ -41,7 +41,7 @@ struct UiState
   int selected_pointlight = 0;
 
   std::array<int, 2> selected_tile = {0};
-  int selected_tiledata = 0;
+  int selected_tilegrid = 0;
 
   int attenuation_current_item = opengl::Light::INIT_ATTENUATION_INDEX;
 
@@ -61,8 +61,8 @@ struct UiState
   bool show_entitywindow = false;
   bool show_entitymaterial_window = false;
 
-  bool show_tiledata_editor_window = false;
-  bool show_tiledatamaterial_window = false;
+  bool show_tilegrid_editor_window = false;
+  bool show_tilegridmaterial_window = false;
 
   bool show_mousewindow = false;
   bool show_playerwindow = false;
@@ -100,7 +100,7 @@ struct TiledataState
 {
   MOVE_CONSTRUCTIBLE_ONLY(TiledataState);
 
-  bool draw_tiledata = true;
+  bool draw_tilegrid = true;
   bool recompute = true;
   bool reveal = false;
 
@@ -224,7 +224,7 @@ struct EngineState
 
   MouseState mouse_state = {};
   WindowState window_state = {};
-  TiledataState tiledata_state = {};
+  TiledataState tilegrid_state = {};
   UiState ui_state = {};
 
   Logger &logger;

@@ -6,7 +6,7 @@
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
 
-#include <boomhs/tiledata.hpp>
+#include <boomhs/tilegrid.hpp>
 #include <boomhs/types.hpp>
 
 #include <stlw/type_macros.hpp>
@@ -380,14 +380,14 @@ create_arrow(stlw::Logger &logger, ShaderProgram const& shader_program, ArrowCre
 }
 
 DrawInfo
-create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, TileData const& tdata,
+create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, TileGrid const& tgrid,
     bool const show_yaxis_lines, Color const& color)
 {
   std::vector<float> vertices;
-  vertices.reserve(tdata.num_tiles() * 8);
+  vertices.reserve(tgrid.num_tiles() * 8);
 
   std::vector<GLuint> indices;
-  indices.reserve(tdata.num_tiles());
+  indices.reserve(tgrid.num_tiles());
 
   std::size_t count = 0u;
   auto const add_point = [&indices, &vertices, &count, &color](glm::vec3 const& pos) {
@@ -451,7 +451,7 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, TileD
 #undef P7
   };
 
-  tdata.visit_each(visit_fn);
+  tgrid.visit_each(visit_fn);
 
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{GL_LINES, vertices.size(), num_indices, std::nullopt};
