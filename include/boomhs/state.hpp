@@ -1,30 +1,18 @@
 #pragma once
 #include <boomhs/camera.hpp>
-#include <boomhs/leveldata.hpp>
-#include <boomhs/renderer.hpp>
-#include <boomhs/world_object.hpp>
 #include <boomhs/zone.hpp>
 #include <boomhs/zone_state.hpp>
-
-#include <opengl/colors.hpp>
-#include <opengl/draw_info.hpp>
-#include <opengl/lighting.hpp>
-#include <opengl/shader.hpp>
-#include <opengl/texture.hpp>
 
 #include <window/mouse.hpp>
 #include <window/sdl_window.hpp>
 
 #include <stlw/log.hpp>
-#include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <entt/entt.hpp>
 #include <imgui/imgui.hpp>
 #include <cassert>
 #include <vector>
-
-using stlw::Logger;
 
 namespace boomhs
 {
@@ -138,13 +126,13 @@ struct EngineState
   TiledataState tilegrid_state = {};
   UiState ui_state = {};
 
-  Logger &logger;
+  stlw::Logger &logger;
   ImGuiIO &imgui;
   window::Dimensions const dimensions;
 
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);
-  EngineState(Logger &l, ImGuiIO &i, window::Dimensions const &d)
+  EngineState(stlw::Logger &l, ImGuiIO &i, window::Dimensions const &d)
     : logger(l)
     , imgui(i)
     , dimensions(d)

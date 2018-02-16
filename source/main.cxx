@@ -1,38 +1,26 @@
-#include <opengl/factory.hpp>
-#include <opengl/obj.hpp>
-#include <opengl/shader.hpp>
-#include <opengl/vertex_attribute.hpp>
-
-#include <window/controller.hpp>
-#include <window/mouse.hpp>
-#include <window/sdl_window.hpp>
-#include <window/timer.hpp>
-
 #include <boomhs/components.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_assembler.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/ui.hpp>
 #include <boomhs/zone.hpp>
 
+#include <window/controller.hpp>
+#include <window/mouse.hpp>
+#include <window/sdl_window.hpp>
+#include <window/timer.hpp>
+
 #include <stlw/math.hpp>
 #include <stlw/log.hpp>
-#include <stlw/random.hpp>
 #include <stlw/result.hpp>
-#include <stlw/type_ctors.hpp>
-#include <stlw/type_macros.hpp>
 
 #include <entt/entt.hpp>
 
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_sdl_gl3.h>
-
-#include <boost/algorithm/string.hpp>
-#include <stlw/optional.hpp>
 
 #include <cassert>
 #include <cstdlib>
@@ -41,7 +29,6 @@
 using namespace boomhs;
 using namespace opengl;
 using namespace window;
-using stlw::Logger;
 
 namespace boomhs
 {
@@ -242,13 +229,18 @@ struct Engine
 void
 loop(Engine &engine, GameState &state, FrameTime const& ft)
 {
-  auto &logger = state.engine_state.logger;
+  auto &es = state.engine_state;
+  auto &logger = es.logger;
+  auto &zm = state.zone_manager;
+
   // Reset Imgui for next game frame.
   ImGui_ImplSdlGL3_NewFrame(engine.window.raw());
 
-  SDL_Event event;
-  boomhs::IO::process(state, event, engine.controllers, ft);
-  boomhs::game_loop(state.engine_state, state.zone_manager, engine.window, ft);
+  {
+    SDL_Event event;
+    boomhs::IO::process(state, event, engine.controllers, ft);
+  }
+  boomhs::game_loop(es, zm, engine.window, ft);
 
   // Render Imgui UI
   ImGui::Render();
@@ -307,7 +299,7 @@ start(stlw::Logger &logger, Engine &engine)
 
 using WindowResult = stlw::result<SDLWindow, std::string>;
 WindowResult
-make_window(Logger &logger, bool const fullscreen, float const width, float const height)
+make_window(stlw::Logger &logger, bool const fullscreen, float const width, float const height)
 {
   // Select windowing library as SDL.
   LOG_DEBUG("Initializing window library globals");
@@ -320,7 +312,7 @@ make_window(Logger &logger, bool const fullscreen, float const width, float cons
 int
 main(int argc, char *argv[])
 {
-  Logger logger = stlw::log_factory::make_default_logger("main logger");
+  auto logger = stlw::log_factory::make_default_logger("main logger");
   auto const on_error = [&logger](auto const &error) {
     LOG_ERROR(error);
     return EXIT_FAILURE;
