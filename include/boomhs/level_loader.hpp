@@ -13,7 +13,14 @@ namespace boomhs
 
 struct LevelAssets
 {
-  Assets assets;
+  opengl::GlobalLight global_light;
+  opengl::Color background_color;
+
+  LoadedEntities loaded_entities;
+  TileInfos tile_infos;
+
+  ObjCache obj_cache;
+  opengl::TextureTable texture_table;
   opengl::ShaderPrograms shader_programs;
 
   MOVE_CONSTRUCTIBLE_ONLY(LevelAssets);

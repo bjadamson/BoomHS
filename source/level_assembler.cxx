@@ -18,9 +18,8 @@ namespace
 {
 
 ZoneState
-assemble(LevelAssets &&level_assets, entt::DefaultRegistry &registry, LevelConfig const& config)
+assemble(LevelAssets &&assets, entt::DefaultRegistry &registry, LevelConfig const& config)
 {
-  auto &assets = level_assets.assets;
   auto const& objcache = assets.obj_cache;
 
   stlw::float_generator rng;
@@ -54,14 +53,14 @@ assemble(LevelAssets &&level_assets, entt::DefaultRegistry &registry, LevelConfi
   LevelState level_state{
     assets.background_color,
     assets.global_light,
-    MOVE(level_assets.assets.obj_cache),
+    MOVE(assets.obj_cache),
     MOVE(leveldata),
     MOVE(camera),
     MOVE(player)
   };
   GfxState gfx{
-    MOVE(level_assets.shader_programs),
-    MOVE(level_assets.assets.texture_table)
+    MOVE(assets.shader_programs),
+    MOVE(assets.texture_table)
   };
   return ZoneState{
     MOVE(level_state),

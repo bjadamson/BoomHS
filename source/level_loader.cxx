@@ -495,7 +495,7 @@ load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string co
   assert(engine_config);
 
   ParsedVertexAttributes pvas = load_vas(engine_config);
-  DO_TRY(auto shader_programs, load_shaders(logger, MOVE(pvas), engine_config));
+  DO_TRY(auto sps, load_shaders(logger, MOVE(pvas), engine_config));
 
   CppTable area_config = cpptoml::parse_file("levels/" + filename);
   assert(area_config);
@@ -521,10 +521,18 @@ load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string co
   GlobalLight glight{MOVE(dlight)};
 
   auto bg_color = Color{get_vec3_or_abort(area_config, "background")};
-  Assets assets{MOVE(objcache), MOVE(entities), MOVE(texture_table), MOVE(tile_infos),
-    MOVE(glight), MOVE(bg_color)};
   std::cerr << "yielding assets\n";
-  return LevelAssets{MOVE(assets), MOVE(shader_programs)};
+  return LevelAssets{
+    MOVE(glight),
+    MOVE(bg_color),
+
+    MOVE(entities),
+    MOVE(tile_infos),
+
+    MOVE(objcache),
+    MOVE(texture_table),
+    MOVE(sps)
+  };
 }
 
 } // ns boomhs
