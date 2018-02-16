@@ -292,7 +292,7 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
 
   // 1. Place Rivers
   std::cerr << "placing rivers ...\n";
-  river_generator::place_rivers(tilegrid, rng, rivers);
+  RiverGenerator::place_rivers(tilegrid, rng, rivers);
 
   // 2. Place Rooms and Stairs
   std::optional<Rooms> rooms = std::nullopt;

@@ -155,14 +155,15 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& 
   /////////////////////////
 
   // compute tilegrid
-  if (tilegrid_state.recompute) {
+  //if (tilegrid_state.recompute) {
     LOG_INFO("Updating tilegrid\n");
 
     update_visible_tiles(leveldata.tilegrid(), player, tilegrid_state.reveal);
+    update_visible_riverwiggles(leveldata, player, tilegrid_state.reveal);
 
     // We don't need to recompute the tilegrid, we just did.
-    tilegrid_state.recompute = false;
-  }
+    //tilegrid_state.recompute = false;
+  //}
 
   // action begins here
   render::clear_screen(lstate.background);

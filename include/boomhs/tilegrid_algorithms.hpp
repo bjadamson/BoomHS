@@ -12,6 +12,8 @@ class float_generator;
 
 namespace boomhs
 {
+class LevelData;
+struct RiverInfo;
 
 struct Edges
 {
@@ -146,5 +148,8 @@ any_tilegrid_neighbors(TileGrid const&, TilePosition const&, uint64_t const, boo
 class WorldObject;
 void
 update_visible_tiles(TileGrid &, WorldObject const&, bool const);
+
+void
+update_visible_riverwiggles(LevelData &, WorldObject const&, bool const);
 
 } // ns boomhs

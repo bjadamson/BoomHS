@@ -629,12 +629,12 @@ draw_rivers(RenderState &rstate, window::FrameTime const& ft)
       auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
       auto const inverse_model = glm::inverse(modelmatrix);
       sp.set_uniform_matrix_4fv(es.logger, "u_inversemodelmatrix", inverse_model);
-
-
       draw_3dlit_shape(rstate, modelmatrix, sp, dinfo, material, registry, receives_ambient);
     };
     for (auto const& w : rinfo.wiggles) {
-      draw_wiggle(w);
+      if (w.is_visible) {
+        draw_wiggle(w);
+      }
     }
   };
   auto const& rinfos = zs.level_state.level_data.rivers();

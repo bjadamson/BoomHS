@@ -14,12 +14,16 @@ class TileGrid;
 
 struct RiverWiggle
 {
+  bool is_visible;
   float speed;
   glm::vec2 offset;
 
   // NOT a TilePosition, because we are tracking it's discrete position for rendering (not it's
   // actual tile position, which is irrelevant for the RiverWiggle
   glm::vec2 position;
+
+  TilePosition
+  as_tileposition() const;
 
   // normalized
   glm::vec2 direction;
@@ -38,14 +42,23 @@ struct RiverInfo
 
   std::vector<RiverWiggle> wiggles = {};
   MOVE_ONLY(RiverInfo);
+
+  template<typename FN>
+  void
+  visit_each(FN const& fn)
+  {
+    for (auto &w: wiggles) {
+      fn(w);
+    }
+  }
+};
+
+struct RiverGenerator
+{
+  RiverGenerator() = delete;
+
+  static void
+  place_rivers(TileGrid &, stlw::float_generator &, std::vector<RiverInfo> &);
 };
 
 } // ns boomhs
-
-namespace boomhs::river_generator
-{
-
-void
-place_rivers(TileGrid &, stlw::float_generator &, std::vector<RiverInfo> &);
-
-} // ns boomhs::river_generator

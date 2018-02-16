@@ -1,4 +1,5 @@
 #include <boomhs/river_generator.hpp>
+#include <boomhs/tile.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 
@@ -14,12 +15,16 @@ namespace
 void
 spawn_newround_wiggles(RiverInfo &river, stlw::float_generator &rng, glm::vec2 const pos)
 {
-  float const speed    = 100.0f;
-  float const OFFSET   = 0.10f;
-  float const x_offset  = rng.gen_float_range(-OFFSET, OFFSET);
-  float const z_offset  = rng.gen_float_range(-OFFSET, OFFSET);
-  auto const offset = glm::vec2{x_offset, z_offset};
-  RiverWiggle wiggle{speed, offset, pos, river.flow_direction};
+  // clang-format off
+  bool  const is_visible = true;
+  float const speed      = 100.0f;
+  float const OFFSET     = 0.10f;
+  float const x_offset   = rng.gen_float_range(-OFFSET, OFFSET);
+  float const z_offset   = rng.gen_float_range(-OFFSET, OFFSET);
+  auto const offset      = glm::vec2{x_offset, z_offset};
+  // clang-format on
+
+  RiverWiggle wiggle{is_visible, speed, offset, pos, river.flow_direction};
   river.wiggles.emplace_back(MOVE(wiggle));
 }
 
@@ -78,11 +83,17 @@ generate_river(TileGrid &tilegrid, stlw::float_generator &rng)
 
 } // ns anon
 
-namespace boomhs::river_generator
+namespace boomhs
 {
 
+TilePosition
+RiverWiggle::as_tileposition() const
+{
+  return TilePosition::from_floats_truncated(position.x, position.y);
+}
+
 void
-place_rivers(TileGrid &tilegrid, stlw::float_generator &rng, std::vector<RiverInfo> &rivers)
+RiverGenerator::place_rivers(TileGrid &tilegrid, stlw::float_generator &rng, std::vector<RiverInfo> &rivers)
 {
   auto const place = [&]() {
     std::optional<RiverInfo> river_o = std::nullopt;
@@ -99,4 +110,4 @@ place_rivers(TileGrid &tilegrid, stlw::float_generator &rng, std::vector<RiverIn
   }
 }
 
-} // ns boomhs::river_generator
+} // ns boomhs

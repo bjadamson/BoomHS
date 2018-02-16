@@ -1,4 +1,6 @@
 #include <boomhs/tilegrid_algorithms.hpp>
+#include <boomhs/leveldata.hpp>
+#include <boomhs/river_generator.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <stlw/debug.hpp>
@@ -16,39 +18,28 @@ static auto constexpr SIDES = stlw::make_array<MapEdge::Side>(
 namespace
 {
 
+template<typename FN, typename ...Args>
 void
-bresenham_3d(int x0, int z0, int x1, int z1, TileGrid &tgrid)
+bresenham_3d(int const wpx, int const wpz, int x1, int z1, FN const& fn, Args &&... args)
 {
-  int const dx = abs(x1-x0), sx = x0<x1 ? 1 : -1;
-  int const dz = abs(z1-z0), sz = z0<z1 ? 1 : -1;
+  int const dx = std::abs(x1 - wpx);
+  int const sx = wpx < x1 ? 1 : -1;
+
+  int const dz = std::abs(z1 - wpz);
+  int const sz = wpz < z1 ? 1 : -1;
   auto const arr = stlw::make_array<int>(dx, 1, dz);
 
-  //int const dm = std::max(dx,dy,dz); /* maximum difference */
   auto const it = std::max_element(arr.cbegin(), arr.cend());
   assert(it);
   int const dm = *it;
+
   int i = dm;
+  assert(i >= 0);
   x1 = z1 = dm / 2;
 
-  bool found_wall = false;
-  auto const set_tile = [&found_wall](auto &tile) {
-    bool const is_wall = tile.type == TileType::WALL;
-    if (found_wall) {
-      // Can't see tile's behind a wall.
-      tile.is_visible = false;
-    }
-    else if (!is_wall) {
-      tile.is_visible = true;
-    } else if (is_wall) {
-      found_wall = true;
-      tile.is_visible = true;
-    } else {
-      tile.is_visible = false;
-    }
-  };
+  int x0 = wpx, z0 = wpz;
   while(true) {
-    auto &tile = tgrid.data(x0, z0);
-    set_tile(tile);
+    fn(x0, z0, std::forward<Args>(args)...);
     if (i-- == 0) break;
     x1 -= dx; if (x1 < 0) { x1 += dm; x0 += sx; }
     z1 -= dz; if (z1 < 0) { z1 += dm; z0 += sz; }
@@ -126,7 +117,7 @@ MapEdge::random_edge(stlw::float_generator &rng)
 }
 
 std::pair<TilePosition, MapEdge>
-random_tileposition_onedgeofmap(TileGrid const& tgrid, stlw::float_generator &rng)
+random_tileposition_onedgeofmap(TileGrid const& tilegrid, stlw::float_generator &rng)
 {
   auto const edge = MapEdge::random_edge(rng);
   auto const xedge = edge.is_xedge();
@@ -137,7 +128,7 @@ random_tileposition_onedgeofmap(TileGrid const& tgrid, stlw::float_generator &rn
     TilePosition tpos{x, y};
     return std::make_pair(tpos, edge);
   };
-  auto const [tdwidth, tdheight] = tgrid.dimensions();
+  auto const [tdwidth, tdheight] = tilegrid.dimensions();
   if (xedge) {
     return make_pos(0, rng.gen_uint64_range(0, tdwidth - 1));
   } else {
@@ -149,10 +140,10 @@ random_tileposition_onedgeofmap(TileGrid const& tgrid, stlw::float_generator &rn
 }
 
 bool
-any_tilegrid_neighbors(TileGrid const& tgrid, TilePosition const& pos, uint64_t const distance,
+any_tilegrid_neighbors(TileGrid const& tilegrid, TilePosition const& pos, uint64_t const distance,
   bool (*fn)(Tile const&))
 {
-  auto const [width, length] = tgrid.dimensions();
+  auto const [width, length] = tilegrid.dimensions();
   assert(width > 0);
   assert(length > 0);
   assert(distance > 0);
@@ -165,7 +156,7 @@ any_tilegrid_neighbors(TileGrid const& tgrid, TilePosition const& pos, uint64_t 
     if (found_one) {
       return;
     }
-    if (fn(tgrid.data(neighbor_pos))) {
+    if (fn(tilegrid.data(neighbor_pos))) {
       found_one = true;
     }
   };
@@ -174,19 +165,77 @@ any_tilegrid_neighbors(TileGrid const& tgrid, TilePosition const& pos, uint64_t 
 }
 
 void
-update_visible_tiles(TileGrid &tgrid, WorldObject const& player, bool const reveal_tilegrid)
+update_visible_tiles(TileGrid &tilegrid, WorldObject const& player, bool const reveal_tilegrid)
 {
-  // Collect all the visible tiles for the player
-  auto const& wp = player.world_position();
-  auto const fn = [&](auto const& pos) {
-    auto const x = pos.x, y = pos.y;
-    if (reveal_tilegrid) {
-      tgrid.data(pos).is_visible = true;
+  auto const set_tile = [&tilegrid](int const x0, int const z0, bool &found_wall)
+  {
+    auto &tile = tilegrid.data(x0, z0);
+    bool const is_wall = tile.type == TileType::WALL;
+    if (found_wall) {
+      // Can't see tile's behind a wall.
+      tile.is_visible = false;
+    }
+    else if (!is_wall) {
+      tile.is_visible = true;
+    } else if (is_wall) {
+      found_wall = true;
+      tile.is_visible = true;
     } else {
-      bresenham_3d(wp.x, wp.z, x, y, tgrid);
+      tile.is_visible = false;
     }
   };
-  tgrid.visit_each(fn);
+
+  // Collect all the visible tiles for the player
+  auto const fn = [&](TilePosition const& pos) {
+    if (reveal_tilegrid) {
+      tilegrid.data(pos).is_visible = true;
+    } else {
+      auto const& wp = player.world_position();
+
+      bool found_wall = false;
+      bresenham_3d(wp.x, wp.z, pos.x, pos.y, set_tile, found_wall);
+    }
+  };
+  tilegrid.visit_each(fn);
+}
+
+void
+update_visible_riverwiggles(LevelData &ldata, WorldObject const& player, bool const reveal_tilegrid)
+{
+  auto &tilegrid = ldata.tilegrid();
+  auto const set_tile = [&tilegrid](int const x0, int const z0, auto &wiggle,
+      bool &found_river, bool &found_wall)
+  {
+    if (found_river || found_wall) {
+      return;
+    }
+    auto &tile = tilegrid.data(x0, z0);
+    if (TileType::RIVER == tile.type) {
+      // first notable tile we found is a river, mark this wiggle visible
+      wiggle.is_visible = true;
+      found_river = true;
+    }
+    else if (TileType::WALL == tile.type) {
+      wiggle.is_visible = false;
+      found_wall = true;
+    }
+  };
+
+  auto const fn = [&](RiverWiggle &wiggle) {
+    if (reveal_tilegrid) {
+      wiggle.is_visible = true;
+    } else {
+      auto const& wp = player.world_position();
+      auto const pos = wiggle.as_tileposition();
+
+      bool found_river = false, found_wall = false;
+      bresenham_3d(wp.x, wp.z, pos.x, pos.y, set_tile, wiggle, found_river, found_wall);
+    }
+  };
+  auto &rinfos = ldata.rivers();
+  for (auto &rinfo : rinfos) {
+    rinfo.visit_each(fn);
+  }
 }
 
 } // ns boomhs
