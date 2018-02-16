@@ -248,9 +248,7 @@ loop(Engine &engine, GameState &state, FrameTime const& ft)
 
   SDL_Event event;
   boomhs::IO::process(state, event, engine.controllers, ft);
-
-  ZoneManager zm{state.zone_states};
-  boomhs::game_loop(state.engine_state, zm, engine.window, ft);
+  boomhs::game_loop(state.engine_state, state.zone_manager, engine.window, ft);
 
   // Render Imgui UI
   ImGui::Render();
@@ -274,21 +272,6 @@ timed_game_loop(Engine &engine, GameState &state)
   }
 }
 
-auto
-make_init_gamestate(stlw::Logger &logger, ImGuiIO &imgui, window::Dimensions const &dimensions,
-    ZoneStates &&zs)
-{
-  // Initialize opengl
-  render::init(dimensions);
-
-  // Configure Imgui
-  imgui.MouseDrawCursor = true;
-  imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
-
-  EngineState es{logger, imgui, dimensions};
-  return GameState{MOVE(es), MOVE(zs)};
-}
-
 stlw::result<stlw::empty_type, std::string>
 start(stlw::Logger &logger, Engine &engine)
 {
@@ -299,9 +282,23 @@ start(stlw::Logger &logger, Engine &engine)
   auto &registries = engine.registries;
   DO_TRY(ZoneStates zss, LevelAssembler::assemble_levels(logger, registries));
 
+  // Initialize opengl
+  auto const dimensions = engine.dimensions();
+  render::init(dimensions);
+
+  // Configure Imgui
   auto &imgui = ImGui::GetIO();
-  auto state = make_init_gamestate(logger, imgui, engine.dimensions(), MOVE(zss));
+  imgui.MouseDrawCursor = true;
+  imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
+
+  // Construct game state
+  EngineState es{logger, imgui, dimensions};
+  GameState state{MOVE(es), ZoneManager{MOVE(zss)}};
+
+  // Start game in a timed loop
   timed_game_loop(engine, state);
+
+  // Game has finished
   LOG_TRACE("game loop finished.");
   return stlw::empty_type{};
 }

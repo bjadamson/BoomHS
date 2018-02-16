@@ -1,50 +1,26 @@
 #pragma once
-#include <boomhs/state.hpp>
+#include <boomhs/zone_state.hpp>
 #include <stlw/type_macros.hpp>
+#include <vector>
 
 namespace boomhs
 {
+struct TiledataState;
 
 class ZoneManager
 {
-  ZoneStates &zstates_;
+  ZoneStates zstates_;
+  int active_ = 0;
 public:
-  NO_COPY_AND_NO_MOVE(ZoneManager);
-  explicit ZoneManager(ZoneStates &zs)
-    : zstates_(zs)
-  {
-  }
+  MOVE_CONSTRUCTIBLE_ONLY(ZoneManager);
+  explicit ZoneManager(ZoneStates &&);
 
-  ZoneState const&
-  active() const
-  {
-    return zstates_.active();
-  }
+  ZoneState const& active() const;
+  ZoneState& active();
 
-  ZoneState&
-  active()
-  {
-    return zstates_.active();
-  }
-
-  void
-  make_zone_active(int const zone_number, TiledataState &tds)
-  {
-    zstates_.set_active(zone_number);
-    tds.recompute = true;
-  }
-
-  int
-  num_zones() const
-  {
-    return zstates_.size();
-  }
-
-  int
-  active_zone() const
-  {
-    return zstates_.active_zone();
-  }
+  void make_zone_active(int const zone_number, TiledataState &tds);
+  int num_zones() const;
+  int active_zone() const;
 
   /*
   void

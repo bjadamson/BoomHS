@@ -247,7 +247,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<entt::DefaultR
   // copy the first zonestate to GPU
   copy_to_gpu(logger, zstates.front());
 
-  return ZoneStates{MOVE(zstates)};
+  return zstates;
 }
 
 } // ns boomhs

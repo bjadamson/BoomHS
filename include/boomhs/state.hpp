@@ -3,6 +3,8 @@
 #include <boomhs/leveldata.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/world_object.hpp>
+#include <boomhs/zone.hpp>
+#include <boomhs/zone_state.hpp>
 
 #include <opengl/colors.hpp>
 #include <opengl/draw_info.hpp>
@@ -113,97 +115,6 @@ struct TiledataState
   glm::vec3 tile_scaling = {1.0f, 1.0f, 1.0f};
 };
 
-struct GpuState
-{
-  // These slots get a value when memory is loaded, set to none when memory is not.
-  std::optional<opengl::EntityDrawHandles> entities;
-  std::optional<opengl::TileDrawHandles> tiles;
-
-  MOVE_CONSTRUCTIBLE_ONLY(GpuState);
-};
-struct GfxState
-{
-  GpuState gpu_state = {};
-  opengl::ShaderPrograms sps;
-  opengl::TextureTable texture_table;
-
-  explicit GfxState(opengl::ShaderPrograms &&sp, opengl::TextureTable &&tt)
-    : sps(MOVE(sp))
-    , texture_table(MOVE(tt))
-  {
-  }
-
-  MOVE_CONSTRUCTIBLE_ONLY(GfxState);
-};
-struct LevelState
-{
-  // singular light in the scene
-  opengl::Color background;
-  opengl::GlobalLight global_light;
-
-  ObjCache obj_cache;
-  LevelData level_data;
-
-  Camera camera;
-  WorldObject player;
-  explicit LevelState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
-      ObjCache &&ocache, LevelData &&ldata, Camera &&cam, WorldObject &&pl)
-    : background(bgcolor)
-    , global_light(glight)
-    , obj_cache(MOVE(ocache))
-    , level_data(MOVE(ldata))
-    , camera(MOVE(cam))
-    , player(MOVE(pl))
-  {
-  }
-
-  MOVE_CONSTRUCTIBLE_ONLY(LevelState);
-};
-struct ZoneState
-{
-  LevelState level_state;
-  GfxState gfx_state;
-  entt::DefaultRegistry &registry;
-
-  explicit ZoneState(LevelState &&level, GfxState &&gfx, entt::DefaultRegistry &reg)
-    : level_state(MOVE(level))
-    , gfx_state(MOVE(gfx))
-    , registry(reg)
-  {
-  }
-  MOVE_CONSTRUCTIBLE_ONLY(ZoneState);
-};
-
-// This class is meant to be used through the ZoneManager class, construct an instance of
-// ZoneManager to work with this data.
-//
-// TODO: pass in active zone to support loading levels
-class ZoneStates
-{
-  std::vector<ZoneState> zstates_;
-  int active_ = 0;
-public:
-  MOVE_CONSTRUCTIBLE_ONLY(ZoneStates);
-  explicit ZoneStates(std::vector<ZoneState> &&zs)
-    : zstates_(MOVE(zs))
-  {
-  }
-
-  ZoneState& operator[](size_t);
-  int size() const;
-
-private:
-  friend class ZoneManager;
-
-  int active_zone() const;
-
-  ZoneState& active();
-  ZoneState const& active() const;
-
-  //void add_zone(ZoneState &&);
-  void set_active(int const);
-};
-
 struct EngineState
 {
   bool quit = false;
@@ -244,10 +155,11 @@ struct EngineState
 struct GameState
 {
   EngineState engine_state;
-  ZoneStates zone_states;
+  ZoneManager zone_manager;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
-  explicit GameState(EngineState &&, ZoneStates &&);
+
+  explicit GameState(EngineState &&, ZoneManager &&);
 };
 
 } // ns boomhs

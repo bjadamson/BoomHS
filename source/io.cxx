@@ -29,7 +29,7 @@ move_ontilegrid(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObj
   auto &es = state.engine_state;
   auto &ts = es.tilegrid_state;
 
-  ZoneManager zm{state.zone_states};
+  auto &zm = state.zone_manager;
   LevelData const& leveldata = zm.active().level_state.level_data;
   auto const [x, y] = leveldata.dimensions();
   glm::vec3 const move_vec = (wo.*fn)();
@@ -93,7 +93,7 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, FrameT
   auto &ts = es.tilegrid_state;
   auto &ui = es.ui_state;
 
-  ZoneManager zm{state.zone_states};
+  auto &zm = state.zone_manager;
   auto &lstate = zm.active().level_state;
   auto &player = lstate.player;
   auto &camera = lstate.camera;
@@ -139,7 +139,7 @@ process_mousebutton_down(GameState &state, SDL_MouseButtonEvent const& event, Fr
     LOG_ERROR("toggling mouse up/down (pitch) lock");
     ms.pitch_lock ^= true;
 
-    ZoneManager zm{state.zone_states};
+    auto &zm = state.zone_manager;
     auto &lstate = zm.active().level_state;
     auto &player = lstate.player;
     auto &camera = lstate.camera;
@@ -175,7 +175,7 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
   auto &ui = es.ui_state;
   auto &ts = es.tilegrid_state;
 
-  ZoneManager zm{state.zone_states};
+  auto &zm = state.zone_manager;
   auto &lstate= zm.active().level_state;
   auto &player = lstate.player;
   auto const rotate_player = [&](float const angle, glm::vec3 const& axis) {
@@ -286,7 +286,7 @@ process_mousewheel(GameState &state, SDL_MouseWheelEvent const& wheel, FrameTime
   auto &logger = state.engine_state.logger;
   LOG_TRACE("mouse wheel event detected.");
 
-  ZoneManager zm{state.zone_states};
+  auto &zm = state.zone_manager;
   auto &lstate = zm.active().level_state;
   auto &camera = lstate.camera;
   if (wheel.y > 0) {
@@ -303,7 +303,7 @@ process_mousestate(GameState &state, FrameTime const& ft)
   auto &ms = es.mouse_state;
   if (ms.both_pressed()) {
 
-    ZoneManager zm{state.zone_states};
+    auto &zm = state.zone_manager;
     auto &lstate = zm.active().level_state;
     auto &player = lstate.player;
 
@@ -320,7 +320,7 @@ process_keystate(GameState &state, FrameTime const& ft)
 
   auto &es = state.engine_state;
   auto &ts = es.tilegrid_state;
-  ZoneManager zm{state.zone_states};
+  auto &zm = state.zone_manager;
   auto &lstate = zm.active().level_state;
   auto &player = lstate.player;
 
@@ -364,7 +364,7 @@ process_controllerstate(GameState &state, SDLControllers const& controllers, Fra
   int32_t constexpr AXIS_MIN = -32768;
   int32_t constexpr AXIS_MAX = 32767;
 
-  ZoneManager zm{state.zone_states};
+  auto &zm = state.zone_manager;
   auto &lstate = zm.active().level_state;
   auto &camera = lstate.camera;
   auto &player = lstate.player;
