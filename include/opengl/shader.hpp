@@ -160,25 +160,29 @@ public:
     shader_programs_.emplace_back(MOVE(pair));
   }
 
-#define LOOKUP_SP(name)                                                                   \
-  auto const lookup_sp = [this](char const* s) {                                          \
+#define LOOKUP_SP(name, begin, end)                                                       \
+  auto const lookup_sp = [&](char const* s) {                                             \
       auto const cmp = [&s](auto const& it) { return it.first == s; };                    \
-      auto const it = std::find_if(shader_programs_.begin(), shader_programs_.end(), cmp);\
-      assert(shader_programs_.end() != it);                                               \
+      auto const it = std::find_if(begin, end, cmp);                                      \
+      assert(end != it);                                                                  \
       return it;                                                                          \
   }
 
   ShaderProgram const&
   ref_sp(char const* s) const
   {
-    LOOKUP_SP(s);
+    auto begin = shader_programs_.cbegin();
+    auto end = shader_programs_.cend();
+    LOOKUP_SP(s, begin, end);
     return lookup_sp(s)->second;
   }
 
   ShaderProgram&
   ref_sp(char const* s)
   {
-    LOOKUP_SP(s);
+    auto begin = shader_programs_.begin();
+    auto end = shader_programs_.end();
+    LOOKUP_SP(s, begin, end);
     return lookup_sp(s)->second;
   }
 
