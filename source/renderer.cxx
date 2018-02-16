@@ -7,6 +7,7 @@
 #include <opengl/factory.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/global.hpp>
+#include <opengl/gpu.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/shader.hpp>
 
@@ -655,7 +656,7 @@ draw_terrain(RenderState &rstate)
   ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
 
   auto &terrain_sp = sps.ref_sp("3d_pos_normal_color");
-  auto terrain = OF::copy_normalcolorcube_gpu(es.logger, terrain_sp, LOC::WHITE);
+  auto terrain = gpu::copy_normalcolorcube_gpu(es.logger, terrain_sp, LOC::WHITE);
 
   auto &transform = registry.assign<Transform>(entity);
   auto &scale = transform.scale;

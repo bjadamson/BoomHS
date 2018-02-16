@@ -7,7 +7,8 @@
 #include <boomhs/world_object.hpp>
 
 #include <opengl/constants.hpp>
-#include <opengl/factory.hpp>
+#include <opengl/gpu.hpp>
+#include <opengl/obj.hpp>
 #include <opengl/lighting.hpp>
 
 #include <stlw/random.hpp>
@@ -123,14 +124,14 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
   registry.view<ShaderName, Color, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_colorcube_gpu(logger, shader_ref, color);
+        auto handle = opengl::gpu::copy_synchronous(logger, shader_ref, color);
         dinfos.add(entity, MOVE(handle));
       });
       */
   registry.view<ShaderName, PointLight, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &pointlight, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_vertexonlycube_gpu(logger, shader_ref);
+        auto handle = opengl::gpu::copy_vertexonlycube_gpu(logger, shader_ref);
         dinfos.add(entity, MOVE(handle));
       });
 
@@ -138,33 +139,33 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
       [&](auto entity, auto &sn, auto &color, auto &mesh) {
         auto const &obj = obj_cache.get_obj(mesh.name);
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
+        auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &, auto &texture) {
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
+        auto handle = opengl::gpu::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, SkyboxRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &, auto &texture) {
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
+        auto handle = opengl::gpu::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &mesh, auto &texture) {
         auto const &obj = obj_cache.get_obj(mesh.name);
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
+        auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
 
   registry.view<ShaderName, MeshRenderable>().each([&](auto entity, auto &sn, auto &mesh) {
     auto const &obj = obj_cache.get_obj(mesh.name);
     auto &shader_ref = sps.ref_sp(sn.value);
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
+    auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
     dinfos.add(entity, MOVE(handle));
   });
 
@@ -175,7 +176,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
     auto const& vshader_name = it.vshader_name;
     auto const &obj = obj_cache.get_obj(mesh_name);
 
-    auto handle = OF::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, std::nullopt);
+    auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, std::nullopt);
     tile_dinfos[static_cast<size_t>(it.type)] = MOVE(handle);
   }
 
