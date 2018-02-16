@@ -18,9 +18,10 @@ float constexpr MOVE_DISTANCE = 1.0f;
 float constexpr SCALE_FACTOR = 0.20f;
 float constexpr ZOOM_FACTOR = 0.2f;
 
-namespace {
 using namespace boomhs;
 using namespace window;
+
+namespace {
 
 void
 move_ontilegrid(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObject &wo,
@@ -85,6 +86,61 @@ is_quit_event(SDL_Event &event)
 }
 
 void
+move_forward(GameState &state, FrameTime const& ft)
+{
+  auto &zm = state.zone_manager;
+  auto &lstate = zm.active().level_state;
+  auto &player = lstate.player;
+
+  move_ontilegrid(state, &WorldObject::world_forward, player, ft);
+}
+
+void
+move_backward(GameState &state, FrameTime const& ft)
+{
+  auto &zm = state.zone_manager;
+  auto &lstate = zm.active().level_state;
+  auto &player = lstate.player;
+  move_ontilegrid(state, &WorldObject::world_backward, player, ft);
+}
+
+void
+move_left(GameState &state, FrameTime const& ft)
+{
+  auto &zm = state.zone_manager;
+  auto &lstate = zm.active().level_state;
+  auto &player = lstate.player;
+  move_ontilegrid(state, &WorldObject::world_left, player, ft);
+}
+
+void
+move_right(GameState &state, FrameTime const& ft)
+{
+  auto &zm = state.zone_manager;
+  auto &lstate = zm.active().level_state;
+  auto &player = lstate.player;
+  move_ontilegrid(state, &WorldObject::world_right, player, ft);
+}
+
+void
+move_up(GameState &state, FrameTime const& ft)
+{
+  auto &zm = state.zone_manager;
+  auto &lstate = zm.active().level_state;
+  auto &player = lstate.player;
+  move_ontilegrid(state, &WorldObject::world_up, player, ft);
+}
+
+void
+move_down(GameState &state, FrameTime const& ft)
+{
+  auto &zm = state.zone_manager;
+  auto &lstate = zm.active().level_state;
+  auto &player = lstate.player;
+  move_ontilegrid(state, &WorldObject::world_down, player, ft);
+}
+
+void
 process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, FrameTime const& ft)
 {
   auto &es = state.engine_state;
@@ -103,7 +159,7 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, FrameT
 
   if (ms.both_pressed()) {
     player.rotate_to_match_camera_rotation(camera);
-    move_ontilegrid(state, &WorldObject::world_forward, player, ft);
+    move_forward(state, ft);
   }
   if (ms.left_pressed) {
     auto const& sens = ms.sensitivity;
@@ -183,6 +239,25 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
     ts.recompute = true;
   };
   switch (event.key.keysym.sym) {
+    case SDLK_w:
+      move_forward(state, ft);
+      break;
+    case SDLK_s:
+      move_backward(state, ft);
+      break;
+    case SDLK_d:
+      move_right(state, ft);
+      break;
+    case SDLK_a:
+      move_left(state, ft);
+      break;
+    case SDLK_e:
+      move_up(state, ft);
+      break;
+    case SDLK_q:
+      move_down(state, ft);
+      break;
+
     case SDLK_F11:
       ui.draw_ui ^= true;
       break;
@@ -325,22 +400,22 @@ process_keystate(GameState &state, FrameTime const& ft)
   auto &player = lstate.player;
 
   if (keystate[SDL_SCANCODE_W]) {
-    move_ontilegrid(state, &WorldObject::world_forward, player, ft);
+    //move_forward(state, ft);
   }
   if (keystate[SDL_SCANCODE_S]) {
-    move_ontilegrid(state, &WorldObject::world_backward, player, ft);
+    //move_backward(state, ft);
   }
   if (keystate[SDL_SCANCODE_A]) {
-    move_ontilegrid(state, &WorldObject::world_left, player, ft);
+    //move_left(state, ft);
   }
   if (keystate[SDL_SCANCODE_D]) {
-    move_ontilegrid(state, &WorldObject::world_right, player, ft);
+    //move_right(state, ft);
   }
   if (keystate[SDL_SCANCODE_Q]) {
-    move_ontilegrid(state, &WorldObject::world_up, player, ft);
+    //move_up(state, ft);
   }
   if (keystate[SDL_SCANCODE_E]) {
-    move_ontilegrid(state, &WorldObject::world_down, player, ft);
+    //move_down(state, ft);
   }
 }
 
@@ -380,20 +455,20 @@ process_controllerstate(GameState &state, SDLControllers const& controllers, Fra
   auto const left_axis_x = c.left_axis_x();
   if (less_threshold(left_axis_x)) {
     player.rotate_to_match_camera_rotation(camera);
-    move_ontilegrid(state, &WorldObject::world_left, player, ft);
+    move_left(state, ft);
   }
   if (greater_threshold(left_axis_x)) {
     player.rotate_to_match_camera_rotation(camera);
-    move_ontilegrid(state, &WorldObject::world_right, player, ft);
+    move_right(state, ft);
   }
   auto const left_axis_y = c.left_axis_y();
   if (less_threshold(left_axis_y)) {
     player.rotate_to_match_camera_rotation(camera);
-    move_ontilegrid(state, &WorldObject::world_forward, player, ft);
+    move_forward(state, ft);
   }
   if (greater_threshold(left_axis_y)) {
     player.rotate_to_match_camera_rotation(camera);
-    move_ontilegrid(state, &WorldObject::world_backward, player, ft);
+    move_backward(state, ft);
   }
 
   //auto const& controller_sensitivity = ???;

@@ -10,6 +10,13 @@
 namespace boomhs
 {
 
+WorldObject&
+WorldObject::move(glm::vec3 const& dir, double const dt)
+{
+  transform().translation += glm::normalize((speed() * dir) * static_cast<float>(dt));
+  return *this;
+}
+
 std::string
 WorldObject::display() const
 {

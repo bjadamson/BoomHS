@@ -85,14 +85,14 @@ public:
   void assign_river(Tile &, glm::vec2 const&);
   auto const& flows() const { return flowdirs_; }
 
-  template<typename FN>
+  template<typename FN, typename ...Args>
   void
-  visit_each(FN const& fn) const
+  visit_each(FN const& fn, Args &&... args) const
   {
     auto const [w, h] = dimensions();
     FOR(x, w) {
       FOR(y, h) {
-        fn(TilePosition{x, y});
+        fn(TilePosition{x, y}, std::forward<Args>(args)...);
       }
     }
   }

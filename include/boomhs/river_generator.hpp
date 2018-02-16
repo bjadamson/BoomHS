@@ -43,12 +43,12 @@ struct RiverInfo
   std::vector<RiverWiggle> wiggles = {};
   MOVE_ONLY(RiverInfo);
 
-  template<typename FN>
+  template<typename FN, typename ...Args>
   void
-  visit_each(FN const& fn)
+  visit_each(FN const& fn, Args &&... args)
   {
     for (auto &w: wiggles) {
-      fn(w);
+      fn(w, std::forward<Args>(args)...);
     }
   }
 };

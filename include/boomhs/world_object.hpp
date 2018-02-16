@@ -54,12 +54,8 @@ public:
   auto speed() const { return speed_; }
   void set_speed(float const s) { speed_ = s; }
 
-  auto&
-  move(glm::vec3 const& dir, double const dt)
-  {
-    transform().translation += (speed() * dir) * static_cast<float>(dt);
-    return *this;
-  }
+  WorldObject&
+  move(glm::vec3 const&, double);
 
   void rotate(float const, glm::vec3 const&);
 

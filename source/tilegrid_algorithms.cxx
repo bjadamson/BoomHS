@@ -203,21 +203,27 @@ void
 update_visible_riverwiggles(LevelData &ldata, WorldObject const& player, bool const reveal_tilegrid)
 {
   auto &tilegrid = ldata.tilegrid();
-  auto const set_tile = [&tilegrid](int const x0, int const z0, auto &wiggle,
-      bool &found_river, bool &found_wall)
+  auto const set_tile = [&tilegrid](int const x0, int const z0, auto const& wp, auto &wiggle,
+      bool &found_wall_or_river)
   {
-    if (found_river || found_wall) {
+    if (found_wall_or_river) {
       return;
     }
     auto &tile = tilegrid.data(x0, z0);
     if (TileType::RIVER == tile.type) {
+      if (((int)wp.x) == x0 && ((int)wp.z) == z0) {
+        // Mark the tile as visible, but don't indicate we've hit a river yet
+        std::abort();
+        wiggle.is_visible = true;
+        return;
+      }
       // first notable tile we found is a river, mark this wiggle visible
       wiggle.is_visible = true;
-      found_river = true;
+      found_wall_or_river = true;
     }
     else if (TileType::WALL == tile.type) {
       wiggle.is_visible = false;
-      found_wall = true;
+      found_wall_or_river = true;
     }
   };
 
@@ -228,8 +234,8 @@ update_visible_riverwiggles(LevelData &ldata, WorldObject const& player, bool co
       auto const& wp = player.world_position();
       auto const pos = wiggle.as_tileposition();
 
-      bool found_river = false, found_wall = false;
-      bresenham_3d(wp.x, wp.z, pos.x, pos.y, set_tile, wiggle, found_river, found_wall);
+      bool found_wall_or_river = false;
+      bresenham_3d(wp.x, wp.z, pos.x, pos.y, set_tile, wp, wiggle, found_wall_or_river);
     }
   };
   auto &rinfos = ldata.rivers();
