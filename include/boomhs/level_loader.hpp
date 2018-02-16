@@ -16,7 +16,6 @@ struct LevelAssets
   opengl::GlobalLight global_light;
   opengl::Color background_color;
 
-  LoadedEntities loaded_entities;
   TileInfos tile_infos;
 
   ObjCache obj_cache;

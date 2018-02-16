@@ -41,17 +41,6 @@ public:
   get_obj(std::string const&) const;
 };
 
-struct LoadedEntities
-{
-  std::vector<uint32_t> data = {};
-
-  LoadedEntities() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(LoadedEntities);
-  BEGIN_END_FORWARD_FNS(data);
-
-  bool empty() const { return data.empty(); }
-};
-
 struct TileInfo
 {
   TileType type;

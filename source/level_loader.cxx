@@ -278,7 +278,7 @@ load_material_color_orabort(CppTable const& file)
   return *optional;
 }
 
-auto
+void
 load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& ttable,
     entt::DefaultRegistry &registry)
 {
@@ -356,19 +356,12 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       auto const& cm = *cm_optional;
       registry.assign<Material>(entity) = cm.material;
     }
-    return entity;
   };
 
-  LoadedEntities entities;
   auto const entity_table = get_table_array(config, "entity");
-  if (!entity_table) {
-    return entities;
-  }
   for (auto const& it : *entity_table) {
-    auto entity = load_entity(it);
-    entities.data.emplace_back(MOVE(entity));
+    load_entity(it);
   }
-  return entities;
 }
 
 auto
@@ -506,7 +499,7 @@ load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string co
   std::cerr << "loading textures ...\n";
   auto texture_table = load_textures(logger, area_config);
   std::cerr << "loading entities ...\n";
-  auto entities = load_entities(logger, area_config, texture_table, registry);
+  load_entities(logger, area_config, texture_table, registry);
 
   std::cerr << "loading tile materials ...\n";
   auto tile_infos = load_tileinfos(logger, area_config, registry);
@@ -526,7 +519,6 @@ load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string co
     MOVE(glight),
     MOVE(bg_color),
 
-    MOVE(entities),
     MOVE(tile_infos),
 
     MOVE(objcache),
