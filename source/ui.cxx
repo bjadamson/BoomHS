@@ -215,14 +215,16 @@ draw_camera_window(LevelState &lstate)
       camera.set_mode(mode);
     }
     switch(camera.mode()) {
-      case Perspective: {
+      case Perspective:
         draw_perspective_controls();
         break;
-      }
-      case Ortho: {
+      case Ortho:
         draw_ortho_controls();
         break;
-      }
+      case FPS:
+        // TODO: implement this
+        std::abort();
+        break;
       default: {
         break;
       }

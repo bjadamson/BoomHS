@@ -467,23 +467,36 @@ draw_entities(RenderState &rstate)
 
   assert(zs.gfx_state.gpu_state.entities);
   auto &entity_handles = *zs.gfx_state.gpu_state.entities;
+
   auto &registry = zs.registry;
   auto &sps = zs.gfx_state.sps;
 
-  auto const draw_fn = [&entity_handles, &sps, &rstate, &registry](auto entity, auto &sn, auto &transform) {
+  auto &ldata = zs.level_state;
+  auto &camera = ldata.camera;
+
+  auto const draw_fn = [&entity_handles, &sps, &rstate, &registry](auto entity, auto &sn,
+      auto &transform, auto &&...)
+  {
     auto &shader_ref = sps.ref_sp(sn.value);
     auto &handle = entity_handles.lookup(entity);
     draw(rstate, transform, shader_ref, handle, entity, registry);
   };
 
-  auto const draw_adapter = [&](auto entity, auto &sn, auto &transform, auto &) {
-    draw_fn(entity, sn, transform);
+  auto const player_drawfn = [&camera, &draw_fn](auto &&...args)
+  {
+    if (CameraMode::FPS == camera.mode()) {
+      return;
+    }
+    draw_fn(std::forward<decltype(args)>(args)...);
   };
 
   //
-  // Actual drawing begins here
-  registry.view<ShaderName, Transform, CubeRenderable>().each(draw_adapter);
-  registry.view<ShaderName, Transform, MeshRenderable>().each(draw_adapter);
+  // Draw the cubes
+  registry.view<ShaderName, Transform, CubeRenderable>().each(draw_fn);
+  registry.view<ShaderName, Transform, MeshRenderable, Player>().each(player_drawfn);
+
+  // Draw the tiles
+  registry.view<ShaderName, Transform, MeshRenderable, TileComponent>().each(draw_fn);
 
   if (es.draw_skybox) {
     auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {

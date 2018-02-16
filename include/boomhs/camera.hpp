@@ -29,13 +29,15 @@ enum CameraMode
 {
   Perspective = 0,
   Ortho,
+  FPS,
   MAX
 };
 
 using ModeNamePair = std::pair<CameraMode, char const*>;
-std::array<ModeNamePair, 2> constexpr CAMERA_MODES = {{
+std::array<ModeNamePair, 3> constexpr CAMERA_MODES = {{
+  {Ortho, "Ortho"},
   {Perspective, "Perspective"},
-  {Ortho, "Ortho"}
+  {FPS, "FPS"}
 }};
 
 class Camera
@@ -70,6 +72,7 @@ public:
 
   auto mode() const { return mode_; }
   void set_mode(CameraMode const m) { mode_ = m; }
+  void next_mode();
 
   glm::vec3
   world_forward() const

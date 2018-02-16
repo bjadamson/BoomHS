@@ -21,6 +21,7 @@ TileGrid::TileGrid(std::vector<Tile> &&t, size_t const width, size_t const heigh
   for (auto &tile : tiles_) {
     tile.eid = registry_.create();
     registry_.assign<Transform>(tile.eid);
+    registry_.assign<TileComponent>(tile.eid);
   }
 }
 

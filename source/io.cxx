@@ -233,6 +233,7 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
 
   auto &zm = state.zone_manager;
   auto &lstate= zm.active().level_state;
+  auto &camera = lstate.camera;
   auto &player = lstate.player;
   auto const rotate_player = [&](float const angle, glm::vec3 const& axis) {
     player.rotate(angle, axis);
@@ -263,7 +264,7 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
       break;
     case SDLK_t:
       // invert
-      //state.camera.toggle_mode();
+      camera.next_mode();
       break;
     // scaling
     case SDLK_KP_PLUS:

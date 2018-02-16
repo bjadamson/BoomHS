@@ -51,6 +51,8 @@ struct FlowDirection
   find_flow(Tile const&, std::vector<FlowDirection> const&);
 };
 
+struct TileComponent {};
+
 class TileGrid
 {
   std::array<size_t, 2> dimensions_;

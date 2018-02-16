@@ -9,6 +9,8 @@
 #include <cmath>
 #include <limits>
 
+using namespace opengl;
+
 /*
 namespace
 {
@@ -65,16 +67,15 @@ Camera::projection_matrix() const
   auto const& p = perspective_;
   auto const fov = glm::radians(p.field_of_view);
   switch(mode_) {
-    case Perspective: {
+    case Perspective:
+    case FPS:
       return glm::perspective(fov, p.viewport_aspect_ratio, p.near_plane, p.far_plane);
-    }
     case Ortho: {
       auto const& o = ortho_;
       return glm::ortho(o.left, o.right, o.bottom, o.top, o.far, o.near);
     }
-    case MAX: {
+    case MAX:
       break;
-    }
   }
 
   std::abort();
@@ -85,6 +86,18 @@ glm::mat4
 Camera::camera_matrix() const
 {
   return projection_matrix() * view_matrix();
+}
+
+
+void
+Camera::next_mode()
+{
+  CameraMode const m = static_cast<CameraMode>(mode() + 1);
+  if (CameraMode::MAX == m) {
+    set_mode(static_cast<CameraMode>(0));
+  } else {
+    set_mode(m);
+  }
 }
 
 Camera&
@@ -118,9 +131,9 @@ Camera::rotate(float const d_theta, float const d_phi)
   // If phi is between 0 to PI or -PI to -2PI, make 'up' be positive Y, other wise make it negative Y
   auto &up = up_;
   if ((phi > 0 && phi < PI) || (phi < -PI && phi > -TWO_PI)) {
-    up = opengl::Y_UNIT_VECTOR;
+    up = Y_UNIT_VECTOR;
   } else {
-    up = -opengl::Y_UNIT_VECTOR;
+    up = -Y_UNIT_VECTOR;
   }
   return *this;
 }
@@ -132,14 +145,17 @@ Camera::view_matrix() const
   auto const position_xyz = world_position();
 
   switch (mode_) {
-    case Perspective: {
-      return glm::lookAt(position_xyz, target, up_);
-    }
     case Ortho: {
       return glm::lookAt(
         glm::vec3{0, 0, 0},
         target,
-        opengl::Y_UNIT_VECTOR);
+        Y_UNIT_VECTOR);
+    }
+    case FPS: {
+      return glm::lookAt(target, target + world_forward(), Y_UNIT_VECTOR);
+    }
+    case Perspective: {
+      return glm::lookAt(position_xyz, target, up_);
     }
     case MAX: {
       break;
