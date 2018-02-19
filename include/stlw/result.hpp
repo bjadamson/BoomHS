@@ -46,8 +46,25 @@ using result = ::nonstd::expected<T, E>;
 //
 //   * Otherwise immediatly disregards the result (running the values destructor immediatly, if
 //   applicable).
+//
+// HELPER MACRO
+#define DO_EFFECT_EVAL(VAR_NAME, expr)                                                             \
+  EVAL_INTO_VAR_OR(auto VAR_NAME, expr, stlw::lift_error)
+
+//
+// HELPER MACRO
+#define DO_EFFECT_CONCAT(VAR_NAME, expr)                                                           \
+  DO_EFFECT_EVAL(_DO_EFFECT_TEMPORARY_##VAR_NAME, expr)
+
+//
+// HELPER MACRO
+#define DO_EFFECT_EXPAND_VAR(VAR_NAME, expr)                                                       \
+  DO_EFFECT_CONCAT(VAR_NAME, expr)
+
+//
+// DO_EFFECT MACRO
 #define DO_EFFECT(expr)                                                                            \
-  EVAL_INTO_VAR_OR(auto _, expr, stlw::lift_error)                                                 \
+  DO_EFFECT_EXPAND_VAR(__COUNTER__, expr)                                                          \
 
 // DO_TRY
 //
