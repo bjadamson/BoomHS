@@ -679,15 +679,18 @@ draw_stars(RenderState &rstate, window::FrameTime const& ft)
     auto const tr = glm::vec3{x, y, Z};
     glm::quat const rot = glm::angleAxis(glm::radians(90.0f), Z_UNIT_VECTOR);
 
-    float const s = std::cos(ft.ticks * .05);
-    std::cerr << "s: '" << s << "'\n";
-    auto const scale = glm::vec3{s} * 3.0;
+    static constexpr double MIN = 0.3;
+    static constexpr double MAX = 1.0;
+    static constexpr double SPEED = 0.25;
+    auto const a = std::sin(ft.since_start_seconds() * M_PI  * SPEED);
+    float const scale = glm::lerp(MIN, MAX, std::abs(a));
 
     auto const& level_data = zs.level_state.level_data;
     auto const& tile_info = level_data.tiletable()[type];
     auto const& material = tile_info.material;
 
-    auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
+    auto const scalevec = glm::vec3{scale};
+    auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scalevec);
     draw_3dshape(rstate, modelmatrix, sp, dinfo);
   };
 

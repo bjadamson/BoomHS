@@ -18,7 +18,7 @@ class ShaderPrograms;
 
 namespace window
 {
-struct FrameTime;
+class FrameTime;
 } // ns window
 
 namespace boomhs

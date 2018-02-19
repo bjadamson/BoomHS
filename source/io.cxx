@@ -36,7 +36,7 @@ move_ontilegrid(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObj
   glm::vec3 const move_vec = (wo.*fn)();
 
   // TODO: stop doing this when we use double instead of float
-  auto const dtf = static_cast<float>(ft.delta);
+  auto const dtf = static_cast<float>(ft.delta());
 
   glm::vec2 const wpos = wo.tile_position() + (move_vec * dtf * wo.speed());
 
@@ -58,7 +58,7 @@ move_ontilegrid(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObj
   auto const tpos = TilePosition::from_floats_truncated(wpos.x, wpos.y);
   bool const should_move = (!es.player_collision) || !leveldata.is_wall(tpos);
   if (should_move) {
-    wo.move(move_vec, ft.delta);
+    wo.move(move_vec, dtf);
     ts.recompute = true;
   }
 }
@@ -171,7 +171,7 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, FrameT
     float const speed = camera.rotation_speed;
     float const angle = xrel > 0 ? speed : -speed;
 
-    auto const x_dt = angle * ft.delta;
+    auto const x_dt = angle * ft.delta();
     auto constexpr y_dt = 0.0f;
     player.rotate(x_dt, opengl::Y_UNIT_VECTOR);
   }
@@ -476,7 +476,7 @@ process_controllerstate(GameState &state, SDLControllers const& controllers, Fra
   auto constexpr CONTROLLER_SENSITIVITY = 0.01;
 
   auto const calc_delta = [&ft](auto const axis) {
-    return axis * ft.delta * 0.01;
+    return axis * ft.delta() * 0.01;
   };
   {
     auto const right_axis_x = c.right_axis_x();

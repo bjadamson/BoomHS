@@ -3,7 +3,7 @@
 
 namespace window
 {
-struct FrameTime;
+class FrameTime;
 class SDLControllers;
 } // ns window
 

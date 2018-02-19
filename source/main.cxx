@@ -124,7 +124,7 @@ move_riverwiggles(LevelData &level_data, FrameTime const& ft)
   {
     for (auto &wiggle : rinfo.wiggles) {
       auto &pos = wiggle.position;
-      pos += wiggle.direction * wiggle.speed * ft.delta;
+      pos += wiggle.direction * wiggle.speed * ft.delta();
 
       if (wiggle_outofbounds(rinfo, wiggle)) {
         reset_position(rinfo, wiggle);
@@ -267,7 +267,7 @@ timed_game_loop(Engine &engine, GameState &state)
   while (!state.engine_state.quit) {
     auto const ft = clock.frame_time();
     loop(engine, state, ft);
-    clock.update(logger);
+    clock.update();
     counter.update(logger, clock);
   }
 }
