@@ -7,6 +7,13 @@
 namespace stlw
 {
 
+template<typename E, typename ...P>
+auto
+create_error(E &&error)
+{
+  return ::nonstd::unexpected_type<E>(MOVE(error));
+}
+
 template <typename ...P>
 auto
 make_error(P &&... p)
@@ -16,9 +23,10 @@ make_error(P &&... p)
 
 template <typename R>
 auto
-lift_error(R const& result)
+lift_error(R && result)
 {
-  return stlw::make_error(result.error());
+  auto e = MOVE(result.error());
+  return stlw::create_error(MOVE(e));
 }
 
 template <typename T, typename E>
