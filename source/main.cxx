@@ -293,8 +293,16 @@ start(stlw::Logger &logger, Engine &engine)
   imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
 
   auto test = rexpaint::RexImage::load("assets/test.xp");
-  assert(test);
+  if (!test) {
+    std::cerr << test.error() << "\n";
+    std::abort();
+  }
   (*test).flatten();
+  auto save = rexpaint::RexImage::save(*test, "assets/test.xp");
+  if (!save) {
+    std::cerr << save.error() << "\n";
+    std::abort();
+  }
 
   // Construct game state
   EngineState es{logger, imgui, dimensions};

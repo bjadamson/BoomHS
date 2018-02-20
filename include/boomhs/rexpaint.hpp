@@ -3,6 +3,7 @@
 #include <stlw/type_macros.hpp>
 #include <stdint.h>
 #include <array>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -65,6 +66,20 @@ struct RexError
   }
 };
 
+inline std::ostream&
+operator<<(std::ostream &stream, RexError const& error)
+{
+  stream << "{";
+  stream << "code: '";
+  stream << error.code;
+  stream << "', ";
+  stream << "msg: '";
+  stream << error.message;
+  stream << "'";
+  stream << "}";
+  return stream;
+}
+
 class RexImage
 {
   Version version_;
@@ -84,9 +99,9 @@ public:
   save(RexImage const&, std::string const&);
 
   // Image attributes
-  auto version() { return version_; };
-  auto width() { return width_; };
-  auto height() { return height_; };
+  auto version() const { return version_; };
+  auto width() const { return width_; };
+  auto height() const { return height_; };
   LayerNumber num_layers() const { return layers_.size(); };
 
   //Returns a pointer to a single tile specified by layer, x coordinate, y coordinate.

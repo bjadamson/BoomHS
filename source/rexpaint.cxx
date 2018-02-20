@@ -2,6 +2,7 @@
 #include <stlw/algorithm.hpp>
 #include <stlw/types.hpp>
 #include <zlib.h>
+#include <iostream>
 
 using namespace rexpaint;
 using RexIOResult = stlw::result<stlw::empty_type, RexError>;
@@ -27,7 +28,7 @@ s_gzread(gzFile g, void *buf, unsigned int len)
 }
 
 RexIOResult
-s_gzwrite(gzFile g, void *buf, unsigned int len)
+s_gzwrite(gzFile g, void const* buf, unsigned int len)
 {
   if (gzwrite(g, buf, len) > 0) {
     return stlw::empty_type{};
@@ -96,7 +97,6 @@ RexImage::RexImage(Version const v, Width const w, Height const h, std::vector<R
   }
 }
 
-
 RexTile&
 RexImage::get_tile(LayerNumber const layer, int const x, int const y)
 {
@@ -163,6 +163,7 @@ RexImage::load(std::string const& filename)
   for (auto& layer : layers) {
     // The layer and height information is repeated.
     DO_EFFECT(s_gzread(gz, &width, sizeof(width)));
+
     DO_EFFECT(s_gzread(gz, &height, sizeof(height)));
 
     // Read the layer tiles
@@ -180,9 +181,9 @@ RexImage::save(RexImage const& image, std::string const& filename)
   DO_TRY(gzFile gz, s_gzopen(filename.c_str(), "wb"));
   ON_SCOPE_EXIT([&]() { gzclose(gz); });
 
-  auto const cast = [](auto *v) -> void*
+  auto const cast = [](auto *v) -> void const*
   {
-    return (void*)(v);
+    return static_cast<void const*>(v);
   };
 
   auto &version = image.version_;
@@ -191,7 +192,8 @@ RexImage::save(RexImage const& image, std::string const& filename)
   int const num_layers = image.layers_.size();
   DO_EFFECT(s_gzwrite(gz, cast(&num_layers), sizeof(num_layers)));
 
-  int width, height;
+  int const width = image.width();
+  int const height = image.height();
   for (auto& layer : image.layers_) {
     // The layer and height information is repeated.
     s_gzwrite(gz, &width, sizeof(width));
@@ -203,7 +205,7 @@ RexImage::save(RexImage const& image, std::string const& filename)
   }
 
   int const result = gzflush(gz, Z_FULL_FLUSH);
-  if (Z_OK == result) {
+  if (Z_OK != result) {
     return make_rexerror(gz);
   }
   return stlw::empty_type();
