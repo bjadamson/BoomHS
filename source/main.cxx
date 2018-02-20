@@ -2,6 +2,7 @@
 #include <boomhs/io.hpp>
 #include <boomhs/level_assembler.hpp>
 #include <boomhs/renderer.hpp>
+#include <boomhs/rexpaint.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
@@ -290,6 +291,10 @@ start(stlw::Logger &logger, Engine &engine)
   auto &imgui = ImGui::GetIO();
   imgui.MouseDrawCursor = true;
   imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
+
+  auto test = rexpaint::RexImage::load("assets/test.xp");
+  assert(test);
+  (*test).flatten();
 
   // Construct game state
   EngineState es{logger, imgui, dimensions};
