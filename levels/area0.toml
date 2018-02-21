@@ -41,6 +41,11 @@ name = "TextureAtlas"
 type = "texture:2d"
 filename = "TextureAtlas.jpg"
 
+[[resource]]
+name = "TargetReticle"
+type = "texture:2d"
+filename = "circle_reticle.png"
+
 ###################################################################################################
 [[tile]]
 tile = "AT"

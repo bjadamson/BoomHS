@@ -73,6 +73,9 @@ void
 draw_entities(RenderState &);
 
 void
+draw_targetreticle(RenderState &, window::FrameTime const&);
+
+void
 draw_rivers(RenderState &, window::FrameTime const&);
 
 void

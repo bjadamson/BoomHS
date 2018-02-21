@@ -34,6 +34,12 @@ data2 = { type = "float", num = 2 } # uvs
 
 ########### SHADERS #################
 [[shaders]]
+name = "2dtexture"
+vertex = "2dtexture.vert"
+fragment = "2dtexture.frag"
+va = "vertex_uvs"
+
+[[shaders]]
 name = "3dtexture"
 vertex = "3dtexture.vert"
 fragment = "3dtexture.frag"

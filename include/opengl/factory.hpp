@@ -1,19 +1,12 @@
 #pragma once
 #include <opengl/colors.hpp>
 #include <opengl/draw_info.hpp>
-#include <opengl/glew.hpp>
-#include <opengl/global.hpp>
-#include <opengl/texture.hpp>
 
-#include <stlw/type_macros.hpp>
-#include <stlw/type_ctors.hpp>
+namespace boomhs
+{
 
-#include <boomhs/tilegrid.hpp>
-#include <boomhs/types.hpp>
-
-#include <stlw/optional.hpp>
-#include <array>
-#include <cmath>
+class TileGrid;
+} // ns boomhs
 
 namespace opengl
 {
@@ -63,9 +56,6 @@ struct WorldOriginArrows {
 
 WorldOriginArrows
 create_axis_arrows(stlw::Logger &, ShaderProgram &);
-
-DrawInfo
-copy_gpu(stlw::Logger &, GLenum const, ShaderProgram &, obj const&, std::optional<TextureInfo> const&);
 
 } // ns opengl::factories
 

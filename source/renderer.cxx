@@ -233,8 +233,8 @@ draw_3dlit_shape(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgr
 
 void
 draw_3dlightsource(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &sp,
-  DrawInfo const& dinfo, std::uint32_t const entity, entt::DefaultRegistry &registry,
-  std::vector<std::uint32_t> const& pointlights)
+  DrawInfo const& dinfo, uint32_t const entity, entt::DefaultRegistry &registry,
+  std::vector<uint32_t> const& pointlights)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
@@ -257,7 +257,7 @@ draw_3dlightsource(RenderState &rstate, glm::mat4 const& model_matrix, ShaderPro
 
 void
 draw(RenderState &rstate, Transform const& transform, ShaderProgram &sp,
-    DrawInfo const& dinfo, std::uint32_t const entity, entt::DefaultRegistry &registry)
+    DrawInfo const& dinfo, uint32_t const entity, entt::DefaultRegistry &registry)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
@@ -300,8 +300,6 @@ draw(RenderState &rstate, Transform const& transform, ShaderProgram &sp,
   assert(!registry.has<Material>());
   draw_3dshape(rstate, model_matrix, sp, dinfo);
 }
-
-
 
 } // ns anonymous
 
@@ -493,6 +491,7 @@ draw_entities(RenderState &rstate)
   //
   // Draw the cubes
   registry.view<ShaderName, Transform, CubeRenderable>().each(draw_fn);
+  registry.view<ShaderName, Transform, MeshRenderable>().each(draw_fn);
   registry.view<ShaderName, Transform, MeshRenderable, Player>().each(player_drawfn);
 
   // Draw the tiles
@@ -602,6 +601,28 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
     }
   };
   tilegrid.visit_each(draw_tile);
+}
+
+void
+draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
+{
+  auto &zs = rstate.zs;
+  auto &registry = zs.registry;
+  auto eid = registry.create();
+  ON_SCOPE_EXIT([&]() { registry.destroy(eid); });
+
+  auto &sps = zs.gfx_state.sps;
+  auto &sp = sps.ref_sp("2dtexture");
+
+  auto &transform = registry.attach<Transform>(eid);
+  auto &tr = registry.attach<TextureRenderable>(eid);
+  auto texture_o = zs.gfx_state.texture_table.find("TargetReticle");
+  assert(texture_o);
+  tr.texture_info = *texture_o;
+
+  //draw(rstate, transform, sp, ???, eid, registry);
+  //draw(RenderState &rstate, Transform const& transform, ShaderProgram &sp,
+    //DrawInfo const& dinfo, uint32_t const entity, entt::DefaultRegistry &registry)
 }
 
 void

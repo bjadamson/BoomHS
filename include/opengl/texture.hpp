@@ -49,38 +49,17 @@ class TextureTable
   std::vector<pair_t> data_;
 
   std::optional<TextureInfo>
-  lookup_texture(char const* name) const
-  {
-    if (!name) {
-      return std::nullopt;
-    }
-    auto const cmp = [&name](auto const& it) { return it.first.name == name; };
-    auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
-    return it == data_.cend() ? std::nullopt : std::make_optional(it->second.info);
-  }
+  lookup_texture(char const*) const;
 
 public:
   TextureTable() = default;
   MOVE_CONSTRUCTIBLE_ONLY(TextureTable);
 
   void
-  add_texture(TextureFilenames &&tf, TextureAllocation &&ta)
-  {
-    auto pair = std::make_pair(MOVE(tf), MOVE(ta));
-    data_.emplace_back(MOVE(pair));
-  }
-
-  auto
-  find(std::string const& name) const
-  {
-    return lookup_texture(name.c_str());
-  }
+  add_texture(TextureFilenames &&, TextureAllocation &&);
 
   std::optional<TextureInfo>
-  find(std::optional<std::string> const& name) const
-  {
-    return name ? find(*name) : std::nullopt;
-  }
+  find(std::string const&) const;
 };
 
 namespace texture

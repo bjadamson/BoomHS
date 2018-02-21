@@ -71,11 +71,35 @@ TextureAllocation::~TextureAllocation()
 TextureAllocation::TextureAllocation(TextureAllocation &&other)
   : info(MOVE(other.info))
     , should_destroy(other.should_destroy)
-  {
-    other.info.id = 0;
-    other.info.mode = 0;
-    other.should_destroy = false;
+{
+  other.info.id = 0;
+  other.info.mode = 0;
+  other.should_destroy = false;
+}
+
+std::optional<TextureInfo>
+TextureTable::lookup_texture(char const* name) const
+{
+  if (!name) {
+    return std::nullopt;
   }
+  auto const cmp = [&name](auto const& it) { return it.first.name == name; };
+  auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
+  return it == data_.cend() ? std::nullopt : std::make_optional(it->second.info);
+}
+
+void
+TextureTable::add_texture(TextureFilenames &&tf, TextureAllocation &&ta)
+{
+  auto pair = std::make_pair(MOVE(tf), MOVE(ta));
+  data_.emplace_back(MOVE(pair));
+}
+
+std::optional<TextureInfo>
+TextureTable::find(std::string const& name) const
+{
+  return lookup_texture(name.c_str());
+}
 
 } // ns opengl
 
