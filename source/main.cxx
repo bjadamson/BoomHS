@@ -125,7 +125,7 @@ move_riverwiggles(LevelData &level_data, FrameTime const& ft)
   {
     for (auto &wiggle : rinfo.wiggles) {
       auto &pos = wiggle.position;
-      pos += wiggle.direction * wiggle.speed * ft.delta();
+      pos += wiggle.direction * wiggle.speed * ft.delta_millis();
 
       if (wiggle_outofbounds(rinfo, wiggle)) {
         reset_position(rinfo, wiggle);

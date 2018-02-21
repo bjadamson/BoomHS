@@ -36,7 +36,7 @@ move_ontilegrid(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObj
   glm::vec3 const move_vec = (wo.*fn)();
 
   // TODO: stop doing this when we use double instead of float
-  auto const dtf = static_cast<float>(ft.delta());
+  auto const dtf = static_cast<float>(ft.delta_millis());
 
   glm::vec2 const wpos = wo.tile_position() + (move_vec * dtf * wo.speed());
 
