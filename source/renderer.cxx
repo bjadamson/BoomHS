@@ -75,11 +75,22 @@ draw_drawinfo(stlw::Logger &logger, ShaderProgram &sp, DrawInfo const& dinfo)
   std::cerr << "---------------------------------------------------------------------------\n";
   */
 
-  if (sp.instance_count) {
-    auto const ic = *sp.instance_count;
-    glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
+  auto const draw_fn = [&]() {
+    if (sp.instance_count) {
+      auto const ic = *sp.instance_count;
+      glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
+    } else {
+      glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
+    }
+  };
+
+  if (dinfo.texture_info()) {
+    auto const ti = *dinfo.texture_info();
+    opengl::global::texture_bind(ti);
+    ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
+    draw_fn();
   } else {
-    glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
+    draw_fn();
   }
 }
 
@@ -184,26 +195,15 @@ draw_3dshape(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &
   auto &logger = es.logger;
   auto const& camera = lstate.camera;
 
-  auto const draw_3d_shape_fn = [&]()
-  {
-    // various matrices
-    set_mvpmatrix(logger, model_matrix, sp, camera);
+  // various matrices
+  set_mvpmatrix(logger, model_matrix, sp, camera);
 
-    if (sp.is_skybox) {
-      disable_depth_tests();
-      draw_drawinfo(logger, sp, dinfo);
-      enable_depth_tests();
-    } else {
-      draw_drawinfo(logger, sp, dinfo);
-    }
-  };
-  if (dinfo.texture_info()) {
-    auto const ti = *dinfo.texture_info();
-    opengl::global::texture_bind(ti);
-    ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
-    draw_3d_shape_fn();
+  if (sp.is_skybox) {
+    disable_depth_tests();
+    draw_drawinfo(logger, sp, dinfo);
+    enable_depth_tests();
   } else {
-    draw_3d_shape_fn();
+    draw_drawinfo(logger, sp, dinfo);
   }
 }
 
@@ -269,9 +269,14 @@ draw(RenderState &rstate, Transform const& transform, ShaderProgram &sp,
   ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
   if (sp.is_2d) {
-    std::abort(); // We're not using this currently, assert that until no longer true.
     disable_depth_tests();
-    set_modelmatrix(logger, transform.model_matrix(), sp);
+
+    auto &ldata = zs.level_state;
+    auto &camera = ldata.camera;
+    auto const mvp_matrix = camera.camera_matrix() * transform.model_matrix();
+    set_modelmatrix(logger, mvp_matrix, sp);
+
+    draw_drawinfo(logger, sp, dinfo);
     enable_depth_tests();
     return;
   }
@@ -615,14 +620,12 @@ draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
   auto &sp = sps.ref_sp("2dtexture");
 
   auto &transform = registry.attach<Transform>(eid);
-  auto &tr = registry.attach<TextureRenderable>(eid);
+
   auto texture_o = zs.gfx_state.texture_table.find("TargetReticle");
   assert(texture_o);
-  tr.texture_info = *texture_o;
 
-  //draw(rstate, transform, sp, ???, eid, registry);
-  //draw(RenderState &rstate, Transform const& transform, ShaderProgram &sp,
-    //DrawInfo const& dinfo, uint32_t const entity, entt::DefaultRegistry &registry)
+  DrawInfo di = gpu::copy_rectangle_uvs(rstate.es.logger, sp, texture_o);
+  draw(rstate, transform, sp, di, eid, registry);
 }
 
 void

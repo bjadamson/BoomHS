@@ -47,7 +47,6 @@ DrawInfo
 create_modelnormals(stlw::Logger &, ShaderProgram const&, glm::mat4 const&,
     obj const&, Color const&);
 
-
 struct WorldOriginArrows {
   DrawInfo x_dinfo;
   DrawInfo y_dinfo;

@@ -23,7 +23,6 @@ static constexpr std::array<GLuint, 36> CUBE_INDICES_LIGHT = {{
   21, 22, 23, 24, 25, 26, 27,
   28, 29, 30, 31, 32, 33, 34, 35
 }};
-// clang-format on
 
 auto
 cube_vertices()
@@ -45,13 +44,40 @@ cube_vertices()
   return v;
 }
 
-template<size_t N>
-DrawInfo
-make_cube_drawinfo(stlw::Logger &logger, std::array<float, N> const& vertex_data,
-    ShaderProgram const& shader_program, std::optional<TextureInfo> const& ti)
+static constexpr std::array<GLuint, 6> RECTANGLE_INDICES = {{
+  0, 1, 2,
+  2, 3, 0
+}};
+
+auto
+rectangle_vertices()
 {
-  DrawInfo dinfo{GL_TRIANGLES, vertex_data.size(), CUBE_INDICES.size(), ti};
-  gpu::copy_synchronous(logger, shader_program, dinfo, vertex_data, CUBE_INDICES);
+  float constexpr W = 1.0f;
+  float constexpr Z = 0.0f;
+#define zero  -1.0f, -1.0f, Z, W
+#define one    1.0f, -1.0f, Z, W
+#define two    1.0f,  1.0f, Z, W
+#define three -1.0f,  1.0f, Z, W
+  return stlw::make_array<float>(
+      zero, one, two, three
+      );
+#undef zero
+#undef one
+#undef two
+#undef three
+}
+
+// clang-format on
+
+template<size_t N, size_t M>
+DrawInfo
+make_drawinfo(stlw::Logger &logger, ShaderProgram const& sp,
+    std::array<float, N> const& vertex_data, std::array<GLuint, M> const& indices,
+    std::optional<TextureInfo> const& ti)
+{
+  auto const num_indices = static_cast<GLuint>(indices.size());
+  DrawInfo dinfo{GL_TRIANGLES, vertex_data.size(), num_indices, ti};
+  gpu::copy_synchronous(logger, sp, dinfo, vertex_data, indices);
   return dinfo;
 }
 
@@ -61,7 +87,7 @@ namespace opengl::gpu
 {
 
 DrawInfo
-copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program, Color const& color)
+copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color const& color)
 {
   // clang-format off
   std::array<Color, 8> const c{
@@ -84,7 +110,7 @@ copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program, Co
 #undef COLOR
 #undef VERTS
   // clang-format on
-  return make_cube_drawinfo(logger, vertex_data, shader_program, std::nullopt);
+  return make_drawinfo(logger, sp, vertex_data, CUBE_INDICES, std::nullopt);
 }
 
 DrawInfo
@@ -106,17 +132,11 @@ copy_normalcolorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color co
   std::array<glm::vec3, 36> normals{glm::vec3{0.0f}};
   std::array<Color, 36> colors{LOC::BLACK};
 
-
   auto make_face = [&vertices, &normals, &colors](int const a, int const b, int const c, int const d,
       std::array<glm::vec3, 8> const& points, Color const& face_color, int index)
   {
     using namespace glm;
     vec3 const normal = normalize(cross(points[c] - points[b], points[a] - points[b]));
-
-  //#define VERTEX(p) points[p].x,    points[p].y,    points[p].z, 1.0
-  //#define NORMAL(p) normal.x,       normal.y,       normal.z
-  //#define COLOR(p)  face_color.r(), face_color.g(), face_color.b(), face_color.a()
-  //#define FACE(p) VERTEX(p), NORMAL(p), COLOR(p)
 
     vertices[index] = points[a];
     normals[index] = normal;
@@ -155,10 +175,6 @@ copy_normalcolorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color co
   make_face(4, 5, 6, 7, points, color, 6 * 4); // -z
   make_face(5, 4, 0, 1, points, color, 6 * 5); // -x
 
-#define FACE_VERTEX(v) vertices[v], vertices[v+1], vertices[v+2], 1.0f, \
-  normals[v], normals[v+1], normals[v+2], \
-  color.r(), color.g(), color.b(), color.a()
-
   std::vector<float> vertex_data;
   FOR(i, vertices.size()) {
     vertex_data.emplace_back(vertices[i].x);
@@ -183,17 +199,17 @@ copy_normalcolorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color co
 }
 
 DrawInfo
-copy_vertexonlycube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program)
+copy_vertexonlycube_gpu(stlw::Logger &logger, ShaderProgram const& sp)
 {
   auto const vertices = cube_vertices();
-  return make_cube_drawinfo(logger, vertices, shader_program, std::nullopt);
+  return make_drawinfo(logger, sp, vertices, CUBE_INDICES, std::nullopt);
 }
 
 DrawInfo
-copy_texturecube_gpu(stlw::Logger &logger, ShaderProgram const& shader_program, TextureInfo const& ti)
+copy_texturecube_gpu(stlw::Logger &logger, ShaderProgram const& sp, TextureInfo const& ti)
 {
   auto const vertices = cube_vertices();
-  return make_cube_drawinfo(logger, vertices, shader_program, std::make_optional(ti));
+  return make_drawinfo(logger, sp, vertices, CUBE_INDICES, std::make_optional(ti));
 }
 
 DrawInfo
@@ -247,6 +263,30 @@ copy_gpu(stlw::Logger &logger, GLenum const draw_mode, ShaderProgram &sp, obj co
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{draw_mode, vertices.size(), num_indices, ti};
   copy_synchronous(logger, sp, dinfo, vertices, indices);
+  return dinfo;
+}
+
+DrawInfo
+copy_rectangle_uvs(stlw::Logger &logger, ShaderProgram const& sp, std::optional<TextureInfo> const& ti)
+{
+  assert(sp.is_2d);
+  auto const v = rectangle_vertices();
+  static auto constexpr uv = stlw::make_array<float>(
+      0.0f, 0.0f,
+      1.0f, 0.0f,
+      1.0f, 1.0f,
+      0.0f, 1.0f
+      );
+  auto const vuvs = stlw::make_array<float>(
+      v[0],  v[1],  v[2],  v[3],  uv[0], uv[1],
+      v[4],  v[5],  v[6],  v[7],  uv[2], uv[3],
+      v[8],  v[9],  v[10], v[11], uv[4], uv[5],
+      v[12], v[13], v[14], v[15], uv[6], uv[7]
+      );
+  auto const& i = RECTANGLE_INDICES;
+
+  DrawInfo dinfo{GL_TRIANGLES, vuvs.size(), i.size(), ti};
+  copy_synchronous(logger, sp, dinfo, vuvs, i);
   return dinfo;
 }
 

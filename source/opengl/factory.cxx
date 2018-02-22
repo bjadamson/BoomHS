@@ -205,12 +205,6 @@ create_axis_arrows(stlw::Logger &logger, ShaderProgram &sp)
   return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
 }
 
-//DrawInfo
-//create_targetreticle(stlw::Logger &logger, ShaderProgram const& sp, TextureInfo const& tinfo)
-//{
-  //DrawInfo dinfo{GL_LINES, vertices.size(), num_indices, tinfo};
-//}
-
 DrawInfo
 create_modelnormals(stlw::Logger &logger, ShaderProgram const& sp, glm::mat4 const& model_matrix,
     obj const& obj, Color const& color)

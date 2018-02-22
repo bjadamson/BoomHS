@@ -38,6 +38,7 @@ name = "2dtexture"
 vertex = "2dtexture.vert"
 fragment = "2dtexture.frag"
 va = "vertex_uvs"
+is_2d = true
 
 [[shaders]]
 name = "3dtexture"

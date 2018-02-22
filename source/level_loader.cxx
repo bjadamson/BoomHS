@@ -409,6 +409,7 @@ load_shader(stlw::Logger &logger, ParsedVertexAttributes &pvas, CppTable const& 
   DO_TRY(auto program, opengl::make_shader_program(logger, vertex, fragment, MOVE(va)));
 
   program.is_skybox = get_bool(table, "is_skybox").value_or(false);
+  program.is_2d = get_bool(table, "is_2d").value_or(false);
   program.instance_count = get_sizei(table, "instance_count");
 
   return std::make_pair(name, MOVE(program));
