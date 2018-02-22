@@ -75,11 +75,22 @@ draw_drawinfo(stlw::Logger &logger, ShaderProgram &sp, DrawInfo const& dinfo)
   std::cerr << "---------------------------------------------------------------------------\n";
   */
 
-  if (sp.instance_count) {
-    auto const ic = *sp.instance_count;
-    glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
+  auto const draw_fn = [&]() {
+    if (sp.instance_count) {
+      auto const ic = *sp.instance_count;
+      glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
+    } else {
+      glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
+    }
+  };
+
+  if (dinfo.texture_info()) {
+    auto const ti = *dinfo.texture_info();
+    opengl::global::texture_bind(ti);
+    ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
+    draw_fn();
   } else {
-    glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
+    draw_fn();
   }
 }
 
@@ -184,26 +195,15 @@ draw_3dshape(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &
   auto &logger = es.logger;
   auto const& camera = lstate.camera;
 
-  auto const draw_3d_shape_fn = [&]()
-  {
-    // various matrices
-    set_mvpmatrix(logger, model_matrix, sp, camera);
+  // various matrices
+  set_mvpmatrix(logger, model_matrix, sp, camera);
 
-    if (sp.is_skybox) {
-      disable_depth_tests();
-      draw_drawinfo(logger, sp, dinfo);
-      enable_depth_tests();
-    } else {
-      draw_drawinfo(logger, sp, dinfo);
-    }
-  };
-  if (dinfo.texture_info()) {
-    auto const ti = *dinfo.texture_info();
-    opengl::global::texture_bind(ti);
-    ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
-    draw_3d_shape_fn();
+  if (sp.is_skybox) {
+    disable_depth_tests();
+    draw_drawinfo(logger, sp, dinfo);
+    enable_depth_tests();
   } else {
-    draw_3d_shape_fn();
+    draw_drawinfo(logger, sp, dinfo);
   }
 }
 
@@ -233,8 +233,8 @@ draw_3dlit_shape(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgr
 
 void
 draw_3dlightsource(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &sp,
-  DrawInfo const& dinfo, std::uint32_t const entity, entt::DefaultRegistry &registry,
-  std::vector<std::uint32_t> const& pointlights)
+  DrawInfo const& dinfo, uint32_t const entity, entt::DefaultRegistry &registry,
+  std::vector<uint32_t> const& pointlights)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
@@ -257,7 +257,7 @@ draw_3dlightsource(RenderState &rstate, glm::mat4 const& model_matrix, ShaderPro
 
 void
 draw(RenderState &rstate, Transform const& transform, ShaderProgram &sp,
-    DrawInfo const& dinfo, std::uint32_t const entity, entt::DefaultRegistry &registry)
+    DrawInfo const& dinfo, uint32_t const entity, entt::DefaultRegistry &registry)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
@@ -269,9 +269,14 @@ draw(RenderState &rstate, Transform const& transform, ShaderProgram &sp,
   ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
   if (sp.is_2d) {
-    std::abort(); // We're not using this currently, assert that until no longer true.
     disable_depth_tests();
-    set_modelmatrix(logger, transform.model_matrix(), sp);
+
+    auto &ldata = zs.level_state;
+    auto &camera = ldata.camera;
+    auto const mvp_matrix = camera.camera_matrix() * transform.model_matrix();
+    set_modelmatrix(logger, mvp_matrix, sp);
+
+    draw_drawinfo(logger, sp, dinfo);
     enable_depth_tests();
     return;
   }
@@ -300,8 +305,6 @@ draw(RenderState &rstate, Transform const& transform, ShaderProgram &sp,
   assert(!registry.has<Material>());
   draw_3dshape(rstate, model_matrix, sp, dinfo);
 }
-
-
 
 } // ns anonymous
 
@@ -493,6 +496,7 @@ draw_entities(RenderState &rstate)
   //
   // Draw the cubes
   registry.view<ShaderName, Transform, CubeRenderable>().each(draw_fn);
+  registry.view<ShaderName, Transform, MeshRenderable>().each(draw_fn);
   registry.view<ShaderName, Transform, MeshRenderable, Player>().each(player_drawfn);
 
   // Draw the tiles
@@ -605,6 +609,39 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
 }
 
 void
+draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
+{
+  auto &zs = rstate.zs;
+  auto &ldata = zs.level_state;
+
+  auto &registry = zs.registry;
+  auto eid = registry.create();
+  ON_SCOPE_EXIT([&]() { registry.destroy(eid); });
+
+  auto &sps = zs.gfx_state.sps;
+  auto &sp = sps.ref_sp("2dtexture");
+
+  auto const& nearby_targets = ldata.nearby_targets;
+  assert(!nearby_targets.empty());
+  auto const nearest_enemy = nearby_targets.closest();
+
+  auto &transform = registry.attach<Transform>(eid);
+
+  assert(registry.has<Transform>(nearest_enemy));
+  auto &enemy_transform = registry.get<Transform>(nearest_enemy);
+  transform.translation = enemy_transform.translation;
+
+  transform.rotate_degrees(50.0f * ft.since_start_seconds(), Z_UNIT_VECTOR);
+  transform.scale *= glm::vec3{0.75f};
+
+  auto texture_o = zs.gfx_state.texture_table.find("TargetReticle");
+  assert(texture_o);
+
+  DrawInfo di = gpu::copy_rectangle_uvs(rstate.es.logger, sp, texture_o);
+  draw(rstate, transform, sp, di, eid, registry);
+}
+
+void
 draw_rivers(RenderState &rstate, window::FrameTime const& ft)
 {
   auto &es = rstate.es;
@@ -618,8 +655,8 @@ draw_rivers(RenderState &rstate, window::FrameTime const& ft)
   auto &sp = sps.ref_sp("river");
   auto const& dinfo = tile_handles.lookup(TileType::RIVER);
 
-  sp.set_uniform_color(es.logger, "u_color", LOC::WHITE);
   opengl::global::vao_bind(dinfo.vao());
+  sp.set_uniform_color(es.logger, "u_color", LOC::WHITE);
 
   auto const& level_data = zs.level_state.level_data;
   auto const& tile_info = level_data.tiletable()[TileType::RIVER];
@@ -650,10 +687,54 @@ draw_rivers(RenderState &rstate, window::FrameTime const& ft)
       }
     }
   };
-  auto const& rinfos = zs.level_state.level_data.rivers();
+  auto const& rinfos = level_data.rivers();
   for (auto const& rinfo : rinfos) {
     draw_river(rinfo);
   }
+}
+
+void
+draw_stars(RenderState &rstate, window::FrameTime const& ft)
+{
+  auto &es = rstate.es;
+  auto &zs = rstate.zs;
+
+  assert(zs.gfx_state.gpu_state.tiles);
+  auto &tile_handles = *zs.gfx_state.gpu_state.tiles;
+  auto &registry = zs.registry;
+  auto &sps = zs.gfx_state.sps;
+
+  auto const draw_starletter = [&](int const x, int const y, char const* shader, TileType const type)
+  {
+    auto &sp = sps.ref_sp(shader);
+    sp.set_uniform_color_3fv(es.logger, "u_lightcolor", LOC::YELLOW);
+
+    auto const& dinfo = tile_handles.lookup(type);
+    opengl::global::vao_bind(dinfo.vao());
+
+    auto constexpr Z = 5.0f;
+    auto const tr = glm::vec3{x, y, Z};
+    glm::quat const rot = glm::angleAxis(glm::radians(90.0f), Z_UNIT_VECTOR);
+
+    static constexpr double MIN = 0.3;
+    static constexpr double MAX = 1.0;
+    static constexpr double SPEED = 0.25;
+    auto const a = std::sin(ft.since_start_seconds() * M_PI  * SPEED);
+    float const scale = glm::lerp(MIN, MAX, std::abs(a));
+
+    auto const& level_data = zs.level_state.level_data;
+    auto const& tile_info = level_data.tiletable()[type];
+    auto const& material = tile_info.material;
+
+    auto const scalevec = glm::vec3{scale};
+    auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scalevec);
+    draw_3dshape(rstate, modelmatrix, sp, dinfo);
+  };
+
+  auto constexpr X = -15.0;
+  auto constexpr Y = 5.0;
+  draw_starletter(X, Y,   "light", TileType::STAR);
+  draw_starletter(X, Y+1, "light", TileType::BAR);
 }
 
 void

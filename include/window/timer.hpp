@@ -1,39 +1,64 @@
 #pragma once
 #include <window/sdl.hpp>
 #include <stlw/log.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace window
 {
 
-struct FrameTime
+using ticks_t = uint64_t;
+
+class FrameTime
 {
-  double const delta;
-  uint64_t const ticks;
+  ticks_t const delta_, since_start_;
+  double const frequency_;
+
+  auto ticks_to_millis(ticks_t const t) const { return t * 1000.0 / frequency_; }
+  auto millis_to_seconds(double const m) const { return m * 0.001; }
+public:
+  explicit FrameTime(ticks_t const dt, ticks_t const sstart, double const fr)
+    : delta_(dt)
+    , since_start_(sstart)
+    , frequency_(fr)
+  {
+  }
+
+  auto delta() const { return delta_; }
+  double delta_millis() const { return ticks_to_millis(delta()); }
+  double delta_seconds() const { return millis_to_seconds(delta_millis()); }
+
+  auto since_start_millis() const { return ticks_to_millis(since_start_); }
+  auto since_start_seconds() const { return millis_to_seconds(since_start_millis()); }
 };
 
+// The clock time when the timer started
 class Clock
 {
-  // The clock time when the timer started
-  uint64_t const frequency_ = SDL_GetPerformanceFrequency();
+  double const frequency_;
+  ticks_t const start_;
+  ticks_t last_;
 
-  uint64_t ticks_now() const { return SDL_GetPerformanceCounter(); }
+  ticks_t now() const { return SDL_GetPerformanceCounter(); }
+  ticks_t since_start() const { return now() - start_; }
 public:
-  uint64_t const starting_ticks = ticks_now();
-  uint64_t last_tick_time = starting_ticks;
-
-  Clock() = default;
+  NO_COPY_AND_NO_MOVE(Clock);
+  Clock()
+    : frequency_(SDL_GetPerformanceFrequency())
+    , start_(now())
+    , last_(start_)
+  {
+  }
 
   void
-  update(stlw::Logger &logger)
+  update()
   {
-    last_tick_time = ticks_now();
+    last_ = now();
   }
 
   FrameTime frame_time() const
   {
-    uint64_t const ticks = ticks_now() - last_tick_time;
-    double const dt = (ticks * 1000.0 / frequency_);
-    return FrameTime{dt, ticks};
+    ticks_t const delta = now() - last_;
+    return FrameTime{delta, since_start(), frequency_};
   }
 };
 

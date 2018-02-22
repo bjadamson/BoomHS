@@ -48,7 +48,7 @@ operator<<(std::ostream &stream, BufferHandles const& buffers)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // DrawInfo
-DrawInfo::DrawInfo(GLenum const dm, std::size_t const num_vertices, GLuint const num_indices,
+DrawInfo::DrawInfo(GLenum const dm, size_t const num_vertices, GLuint const num_indices,
     std::optional<TextureInfo> const& ti)
   : draw_mode_(dm)
   , num_vertices_(num_vertices)

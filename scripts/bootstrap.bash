@@ -24,7 +24,6 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -g -O0 ${MY_EXTRA_
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O0")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17 -stdlib=libc++")
 set(TOOLS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tools/)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
@@ -73,6 +72,7 @@ find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(SOIL REQUIRED)
 find_package(BFD REQUIRED)
+find_package(ZLIB REQUIRED)
 
 ## Build the application
 include(FindPkgConfig)
@@ -96,6 +96,7 @@ target_link_libraries(boomhs
   ${OPENGL_LIBRARIES}
   ${GLEW_LIBRARIES}
   ${SOIL_LIBRARIES}
+  ${ZLIB_LIBRARIES}
   bfd ## BFD and dl are both needed for linux backtraces.
   dl
   pthread
@@ -116,7 +117,7 @@ EOF
 
 cd ${BUILD}
 echo $(pwd)
-conan install --build missing -s compiler=clang -s arch=x86 -s compiler.version=7.0 -s compiler.libcxx=libc++ -s build_type=Debug
+conan install --build missing -s compiler=clang -s arch=x86_64 -s compiler.version=7.0 -s compiler.libcxx=libc++ -s build_type=Debug
 cmake .. -G "Unix Makefiles"          \
   -DCMAKE_BUILD_TYPE=Debug            \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON

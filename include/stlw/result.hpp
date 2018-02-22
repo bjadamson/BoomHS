@@ -7,6 +7,13 @@
 namespace stlw
 {
 
+template<typename E, typename ...P>
+auto
+create_error(E &&error)
+{
+  return ::nonstd::unexpected_type<E>(MOVE(error));
+}
+
 template <typename ...P>
 auto
 make_error(P &&... p)
@@ -16,9 +23,10 @@ make_error(P &&... p)
 
 template <typename R>
 auto
-lift_error(R const& result)
+lift_error(R && result)
 {
-  return stlw::make_error(result.error());
+  auto e = MOVE(result.error());
+  return stlw::create_error(MOVE(e));
 }
 
 template <typename T, typename E>
@@ -38,8 +46,25 @@ using result = ::nonstd::expected<T, E>;
 //
 //   * Otherwise immediatly disregards the result (running the values destructor immediatly, if
 //   applicable).
+//
+// HELPER MACRO
+#define DO_EFFECT_EVAL(VAR_NAME, expr)                                                             \
+  EVAL_INTO_VAR_OR(auto VAR_NAME, expr, stlw::lift_error)
+
+//
+// HELPER MACRO
+#define DO_EFFECT_CONCAT(VAR_NAME, expr)                                                           \
+  DO_EFFECT_EVAL(_DO_EFFECT_TEMPORARY_##VAR_NAME, expr)
+
+//
+// HELPER MACRO
+#define DO_EFFECT_EXPAND_VAR(VAR_NAME, expr)                                                       \
+  DO_EFFECT_CONCAT(VAR_NAME, expr)
+
+//
+// DO_EFFECT MACRO
 #define DO_EFFECT(expr)                                                                            \
-  EVAL_INTO_VAR_OR(auto _, expr, stlw::lift_error)                                                 \
+  DO_EFFECT_EXPAND_VAR(__COUNTER__, expr)                                                          \
 
 // DO_TRY
 //

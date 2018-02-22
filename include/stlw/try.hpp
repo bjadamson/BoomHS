@@ -38,16 +38,12 @@
   VAR_DECL{*MOVE(V)};
 
 // SUPPORT MACRO
-#define DO_TRY_CONCAT_EVAL(VAR_DECL, V, expr, fn)                                                  \
+#define EVAL_INTO_VAR_OR_CONCAT_EVAL(VAR_DECL, V, expr, fn)                                        \
   EVAL_INTO_VAR_OR_RETURN_EARLY(VAR_DECL, V, expr, fn)
 
 // SUPPORT MACRO
-#define DO_TRY_CONCAT(VAR_DECL, TO_CONCAT, expr, fn)                                               \
-  DO_TRY_CONCAT_EVAL(VAR_DECL, _DO_TRY_TEMPORARY_##TO_CONCAT, expr, fn)
-
-// SUPPORT MACRO
-#define DO_TRY_EXPAND_VAR(VAR_DECL, to_concat, expr, fn)                                           \
-  DO_TRY_CONCAT(VAR_DECL, to_concat, expr, fn)
+#define EVAL_INTO_VAR_OR_CONCAT(VAR_DECL, TO_CONCAT, expr, fn)                                     \
+  EVAL_INTO_VAR_OR_CONCAT_EVAL(VAR_DECL, _EVAL_INTO_TEMPORARY_##TO_CONCAT, expr, fn)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -58,5 +54,10 @@
 //
 // This macro can be used to create more powerful combinators, that all use the variable name macro
 // magic to generate unique variable names.
-#define EVAL_INTO_VAR_OR(VAR_DECL, expr, fn)                                                              \
-  DO_TRY_EXPAND_VAR(VAR_DECL, __COUNTER__, expr, fn)
+//
+// SUPPORT MACRO
+#define EVAL_INTO_VAR_OR_EXPAND_VAR(VAR_DECL, to_concat, expr, fn)                                 \
+  EVAL_INTO_VAR_OR_CONCAT(VAR_DECL, to_concat, expr, fn)
+
+#define EVAL_INTO_VAR_OR(VAR_DECL, expr, fn)                                                       \
+  EVAL_INTO_VAR_OR_EXPAND_VAR(VAR_DECL, __COUNTER__, expr, fn)

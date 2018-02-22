@@ -223,7 +223,15 @@ load_textures(stlw::Logger &logger, CppTable const& config)
     auto const name = get_string_or_abort(resource, "name");
     auto const type = get_string_or_abort(resource, "type");
 
-    if (type == "texture:3dcube") {
+    auto const load_2dtexture = [&](auto const format)
+    {
+      auto const filename = get_string_or_abort(resource, "filename");
+      opengl::TextureFilenames texture_names{name, {filename}};
+      auto ta = opengl::texture::allocate_texture(logger, texture_names.filenames[0], format);
+      ttable.add_texture(MOVE(texture_names), MOVE(ta));
+    };
+    auto const load_3dtexture = [&](auto const format)
+    {
       auto const front = get_string_or_abort(resource, "front");
       auto const right = get_string_or_abort(resource, "right");
       auto const back = get_string_or_abort(resource, "back");
@@ -232,13 +240,25 @@ load_textures(stlw::Logger &logger, CppTable const& config)
       auto const bottom = get_string_or_abort(resource, "bottom");
 
       opengl::TextureFilenames texture_names{name, {front, right, back, left, top, bottom}};
-      auto ta = opengl::texture::upload_3dcube_texture(logger, texture_names.filenames);
+      auto ta = opengl::texture::upload_3dcube_texture(logger, texture_names.filenames, format);
       ttable.add_texture(MOVE(texture_names), MOVE(ta));
-    } else if (type == "texture:2d") {
-      auto const filename = get_string_or_abort(resource, "filename");
-      opengl::TextureFilenames texture_names{name, {filename}};
-      auto ta = opengl::texture::allocate_texture(logger, texture_names.filenames[0]);
-      ttable.add_texture(MOVE(texture_names), MOVE(ta));
+    };
+
+    if (type == "texture:3dcube-RGB") {
+      load_3dtexture(GL_RGB);
+    }
+    else if (type == "texture:3dcube-RGBA") {
+      load_3dtexture(GL_RGBA);
+    }
+    else if (type == "texture:2d-RGBA") {
+      load_2dtexture(GL_RGBA);
+    }
+    else if (type == "texture:2d-RGB") {
+      load_2dtexture(GL_RGB);
+    }
+    else {
+      // TODO: implement more.
+      std::abort();
     }
   };
 
@@ -310,8 +330,8 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       // TODO: simplify
       glm::vec3 const rotation = *rotation_o;
       transform.rotate_degrees(rotation.x, opengl::X_UNIT_VECTOR);
-      transform.rotate_degrees(rotation.y, opengl::X_UNIT_VECTOR);
-      transform.rotate_degrees(rotation.z, opengl::X_UNIT_VECTOR);
+      transform.rotate_degrees(rotation.y, opengl::Y_UNIT_VECTOR);
+      transform.rotate_degrees(rotation.z, opengl::Z_UNIT_VECTOR);
     }
 
     auto &sn = registry.assign<ShaderName>(entity);
@@ -370,6 +390,7 @@ load_tileinfos(stlw::Logger &logger, CppTable const& config, entt::DefaultRegist
 {
   auto const load_tile = [](auto const& file) {
     auto const tile  =     get_string_or_abort(file, "tile");
+    std::cerr << "tile: '" << tile << "'\n";
     auto const tiletype = tiletype_from_string(tile);
     auto const mesh_name = get_string_or_abort(file, "mesh");
     auto const vshader_name = get_string_or_abort(file, "vshader");
@@ -408,6 +429,7 @@ load_shader(stlw::Logger &logger, ParsedVertexAttributes &pvas, CppTable const& 
   DO_TRY(auto program, opengl::make_shader_program(logger, vertex, fragment, MOVE(va)));
 
   program.is_skybox = get_bool(table, "is_skybox").value_or(false);
+  program.is_2d = get_bool(table, "is_2d").value_or(false);
   program.instance_count = get_sizei(table, "instance_count");
 
   return std::make_pair(name, MOVE(program));
@@ -531,7 +553,10 @@ ObjCache::get_obj(char const* name) const
   auto const it = std::find_if(objects_.cbegin(), objects_.cend(), cmp);
 
   // assume presence
-  assert(it != objects_.cend());
+  if (it == objects_.cend()) {
+    std::cerr << "could not find sp: '" << name << "'\n";
+    std::abort();
+  }
 
   // yield reference to data
   return it->second;

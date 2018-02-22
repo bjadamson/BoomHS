@@ -18,7 +18,7 @@ class ShaderPrograms;
 
 namespace window
 {
-struct FrameTime;
+class FrameTime;
 } // ns window
 
 namespace boomhs
@@ -73,7 +73,13 @@ void
 draw_entities(RenderState &);
 
 void
+draw_targetreticle(RenderState &, window::FrameTime const&);
+
+void
 draw_rivers(RenderState &, window::FrameTime const&);
+
+void
+draw_stars(RenderState &, window::FrameTime const&);
 
 void
 draw_terrain(RenderState &);

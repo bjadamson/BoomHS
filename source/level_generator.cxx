@@ -1,4 +1,5 @@
 #include <boomhs/level_generator.hpp>
+#include <boomhs/enemy.hpp>
 #include <boomhs/stairwell_generator.hpp>
 #include <boomhs/leveldata.hpp>
 #include <boomhs/river_generator.hpp>
@@ -24,7 +25,9 @@ using namespace boomhs;
 static auto constexpr ROOM_MAX_SIZE = 5ul;
 static auto constexpr ROOM_MIN_SIZE = 3ul;
 static auto constexpr MAX_ROOMS = 30;
-static auto constexpr MAX_ROOM_MONSTERS = 3;
+
+static auto constexpr MIN_MONSTERS_PER_FLOOR = 15;
+static auto constexpr MAX_MONSTERS_PER_FLOOR = 30;
 
 struct RectCenter
 {
@@ -172,7 +175,6 @@ create_v_tunnel(uint64_t const y1, uint64_t const y2, uint64_t const x, TileType
   }
 }
 
-/*
 bool
 is_blocked(uint64_t const x, uint64_t const y, TileGrid const& tilegrid)
 {
@@ -183,12 +185,16 @@ is_blocked(uint64_t const x, uint64_t const y, TileGrid const& tilegrid)
 }
 
 auto
-generate_monster_position(Rect const& room, TileGrid const& tilegrid, stlw::float_generator &rng)
+generate_monster_position(TileGrid const& tilegrid, stlw::float_generator &rng)
 {
+  auto const dimensions = tilegrid.dimensions();
+  auto const width = dimensions[0];
+  auto const height = dimensions[1];
+  assert(width > 0 && height > 0);
   uint64_t x, y;
   while(true) {
-    x = rng.gen_int_range(room.x1 + 1, room.x2);
-    y = rng.gen_int_range(room.y1 + 1, room.y2);
+    x = rng.gen_int_range(0, width - 1);
+    y = rng.gen_int_range(0, height - 1);
 
     if (!is_blocked(x, y, tilegrid)) {
       break;
@@ -196,19 +202,33 @@ generate_monster_position(Rect const& room, TileGrid const& tilegrid, stlw::floa
   }
   return TilePosition{x, y};
 }
-*/
 
 void
-place_objects(Rect const& room, TileGrid const& tilegrid, stlw::float_generator &rng)
+place_monsters(TileGrid const& tilegrid, entt::DefaultRegistry &registry,
+    stlw::float_generator &rng)
 {
-  auto const num_monsters = rng.gen_int_range(0, MAX_ROOM_MONSTERS + 1);
+  auto const num_monsters = rng.gen_int_range(MIN_MONSTERS_PER_FLOOR, MAX_MONSTERS_PER_FLOOR);
+
+  auto const make_monster = [&](char const* name, TilePosition const& tpos) {
+    auto eid = registry.create();
+    auto &meshc = registry.assign<MeshRenderable>(eid);
+    meshc.name = name;
+    auto &transform = registry.assign<Transform>(eid);
+    transform.translation = glm::vec3{tpos.x, 0.5, tpos.y};
+
+    registry.assign<Enemy>(eid);
+
+    auto &sn = registry.assign<ShaderName>(eid);
+    sn.value = "3d_pos_normal_color";
+    std::cerr << name << "\n";
+  };
 
   FORI(i, num_monsters) {
-    //auto const pos = generate_monster_position(room, tilegrid, rng);
+    auto const pos = generate_monster_position(tilegrid, rng);
     if (rng.gen_bool()) {
-      // create orc
+      make_monster("O", pos);
     } else {
-      // generate troll
+      make_monster("T", pos);
     }
   }
 }
@@ -235,7 +255,6 @@ place_rooms(TileGrid &tilegrid, stlw::float_generator &rng)
   TilePosition starting_position;
 
   auto const add_room = [&](auto const& new_room) {
-    place_objects(new_room, tilegrid, rng);
     rects.emplace_back(new_room);
   };
   auto const connect_rooms = [&rng, &tilegrid](auto const prev_center, auto const new_center,
@@ -302,11 +321,19 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
     while(!rooms) {
       rooms = place_rooms(tilegrid, rng);
     }
+    if (stairconfig.floor_count) {
+      std::cerr << "one floor, skipping placing stairs ...\n";
+      break;
+    }
     while(!stairs) {
       std::cerr << "placing stairs ...\n";
       stairs = stairwell_generator::place_stairs(stairconfig, tilegrid, rng, registry);
     }
   }
+
+  std::cerr << "placing monsters ...\n";
+  place_monsters(tilegrid, registry, rng);
+  std::cerr << "finished!\n";
 
   // This seems hacky?
   return (*rooms).starting_position;

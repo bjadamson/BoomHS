@@ -43,6 +43,16 @@ filename = "TextureAtlas.jpg"
 
 ###################################################################################################
 [[tile]]
+tile = "AT"
+mesh = "at"
+vshader = "3d_pos_normal_color"
+color = [1.0, 1.0, 1.0]
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[tile]]
 tile = "FLOOR"
 mesh = "plus"
 vshader = "3d_pos_normal_color"
@@ -75,6 +85,16 @@ shininess = 1.0
 [[tile]]
 tile = "BRIDGE"
 mesh = "equal"
+vshader = "3d_pos_normal_color"
+color = [1.0, 1.0, 1.0]
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[tile]]
+tile = "STAR"
+mesh = "star"
 vshader = "3d_pos_normal_color"
 color = [1.0, 1.0, 1.0]
 ambient = [1.0, 1.0, 1.0]

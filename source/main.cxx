@@ -1,7 +1,9 @@
 #include <boomhs/components.hpp>
+#include <boomhs/enemy.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_assembler.hpp>
 #include <boomhs/renderer.hpp>
+#include <boomhs/rexpaint.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
@@ -97,6 +99,36 @@ move_betweentilegrids_ifonstairs(TiledataState &tds, ZoneManager &zm)
   }
 }
 
+void
+update_nearbytargets(LevelState &lstate, entt::DefaultRegistry &registry,
+    FrameTime const& ft)
+{
+  lstate.nearby_targets.clear();
+
+  auto const player = find_player(registry);
+  assert(registry.has<Transform>(player));
+  auto const& ptransform = registry.get<Transform>(player);
+
+  auto const enemies = find_enemies(registry);
+  using pair_t = std::pair<float, uint32_t>;
+  std::vector<pair_t> pairs;
+  for (auto const eid : enemies) {
+    assert(registry.has<Transform>(eid));
+    auto const& etransform = registry.get<Transform>(eid);
+    float const distance = glm::distance(ptransform.translation, etransform.translation);
+    pairs.emplace_back(std::make_pair(distance, eid));
+  }
+
+  auto const sort_fn = [](auto const& a, auto const& b) {
+    return a.first < b.first;
+  };
+  std::sort(pairs.begin(), pairs.end(), sort_fn);
+
+  for (auto const& it : pairs) {
+    lstate.nearby_targets.add_target(it.second);
+  }
+}
+
 bool
 wiggle_outofbounds(RiverInfo const& rinfo, RiverWiggle const& wiggle)
 {
@@ -124,7 +156,7 @@ move_riverwiggles(LevelData &level_data, FrameTime const& ft)
   {
     for (auto &wiggle : rinfo.wiggles) {
       auto &pos = wiggle.position;
-      pos += wiggle.direction * wiggle.speed * ft.delta;
+      pos += wiggle.direction * wiggle.speed * ft.delta_millis();
 
       if (wiggle_outofbounds(rinfo, wiggle)) {
         reset_position(rinfo, wiggle);
@@ -152,6 +184,7 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& 
   // Update the world
   {
     move_betweentilegrids_ifonstairs(tilegrid_state, zm);
+    update_nearbytargets(lstate, registry, ft);
     move_riverwiggles(lstate.level_data, ft);
 
     if (tilegrid_state.recompute) {
@@ -182,6 +215,10 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& 
       render::draw_tilegrid(rstate, tilegrid_state, ft);
       render::draw_rivers(rstate, ft);
     }
+
+    render::draw_targetreticle(rstate, ft);
+    render::draw_stars(rstate, ft);
+
     if (tilegrid_state.show_grid_lines) {
       render::draw_tilegrid(rstate, tilegrid_state);
     }
@@ -264,7 +301,7 @@ timed_game_loop(Engine &engine, GameState &state)
   while (!state.engine_state.quit) {
     auto const ft = clock.frame_time();
     loop(engine, state, ft);
-    clock.update(logger);
+    clock.update();
     counter.update(logger, clock);
   }
 }
@@ -287,6 +324,18 @@ start(stlw::Logger &logger, Engine &engine)
   auto &imgui = ImGui::GetIO();
   imgui.MouseDrawCursor = true;
   imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
+
+  auto test = rexpaint::RexImage::load("assets/test.xp");
+  if (!test) {
+    std::cerr << test.error() << "\n";
+    std::abort();
+  }
+  (*test).flatten();
+  auto save = rexpaint::RexImage::save(*test, "assets/test.xp");
+  if (!save) {
+    std::cerr << save.error() << "\n";
+    std::abort();
+  }
 
   // Construct game state
   EngineState es{logger, imgui, dimensions};

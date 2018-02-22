@@ -38,7 +38,7 @@ operator<<(std::ostream &, BufferHandles const&);
 class DrawInfo
 {
   GLenum draw_mode_;
-  std::size_t num_vertices_;
+  size_t num_vertices_;
   GLuint num_indices_;
   BufferHandles handles_;
   VAO vao_;
@@ -47,7 +47,7 @@ class DrawInfo
 
 public:
   NO_COPY(DrawInfo);
-  explicit DrawInfo(GLenum const, std::size_t const, GLuint const, std::optional<TextureInfo> const&);
+  explicit DrawInfo(GLenum const, size_t const, GLuint const, std::optional<TextureInfo> const&);
 
   DrawInfo(DrawInfo &&);
   DrawInfo& operator=(DrawInfo &&other);
