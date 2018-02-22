@@ -1,5 +1,4 @@
 #include <boomhs/nearby_targets.hpp>
-#include <iostream>
 
 namespace boomhs
 {
@@ -43,7 +42,6 @@ NearbyTargets::empty() const
 uint32_t
 NearbyTargets::closest() const
 {
-  std::cerr << "offset: '" << offset_ << "'\n";
   return targets_[offset_];
 }
 
