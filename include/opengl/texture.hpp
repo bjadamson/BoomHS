@@ -66,10 +66,12 @@ namespace texture
 {
 
 TextureAllocation
-allocate_texture(stlw::Logger &logger, std::string const&);
+allocate_texture(stlw::Logger &logger, std::string const&,
+    GLint const format);
 
 TextureAllocation
-upload_3dcube_texture(stlw::Logger &, std::vector<std::string> const&);
+upload_3dcube_texture(stlw::Logger &, std::vector<std::string> const&,
+    GLint const format);
 
 } // ns texture
 } // ns opengl

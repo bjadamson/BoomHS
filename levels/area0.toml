@@ -8,7 +8,7 @@ directional_light_direction = [-1.0, 0.0, -1.0]
 
 [[resource]]
 name = "building_skybox"
-type = "texture:3dcube"
+type = "texture:3dcube-RGB"
 front = "sb_front.jpg"
 right = "sb_right.jpg"
 back = "sb_back.jpg"
@@ -18,7 +18,7 @@ bottom = "sb_bottom.jpg"
 
 [[resource]]
 name = "boring_cube"
-type = "texture:3dcube"
+type = "texture:3dcube-RGB"
 front = "cube_front.jpg"
 right = "cube_right.jpg"
 back = "cube_back.jpg"
@@ -28,22 +28,22 @@ bottom = "cube_bottom.jpg"
 
 [[resource]]
 name = "container"
-type = "texture:2d"
+type = "texture:2d-RGB"
 filename = "container.jpg"
 
 [[resource]]
 name = "wall"
-type = "texture:2d"
+type = "texture:2d-RGB"
 filename = "wall.jpg"
 
 [[resource]]
 name = "TextureAtlas"
-type = "texture:2d"
+type = "texture:2d-RGB"
 filename = "TextureAtlas.jpg"
 
 [[resource]]
 name = "TargetReticle"
-type = "texture:2d"
+type = "texture:2d-RGBA"
 filename = "circle_reticle.png"
 
 ###################################################################################################

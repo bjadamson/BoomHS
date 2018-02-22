@@ -27,6 +27,25 @@ orcombo(First const& first, Rest &&... rest)
 
 } // ns stlw::anyof_detail
 
+namespace stlw::allof_detail
+{
+
+inline bool
+andcombo()
+{
+  return true;
+}
+
+template<typename First, typename ...Rest>
+bool
+andcombo(First const& first, Rest &&... rest)
+{
+  return first && allofcombo(rest...);
+}
+
+} // ns stlw::allof_detail
+
+#define ALLOF(a, ...) ::stlw::allof_detail::andcombo(a, ##__VA_ARGS__)
 #define ANYOF(a, ...) ::stlw::anyof_detail::orcombo(a, ##__VA_ARGS__)
 
 namespace stlw

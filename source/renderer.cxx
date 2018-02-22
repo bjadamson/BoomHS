@@ -620,6 +620,8 @@ draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
   auto &sp = sps.ref_sp("2dtexture");
 
   auto &transform = registry.attach<Transform>(eid);
+  transform.rotate_degrees(50.0f * ft.since_start_seconds(), Z_UNIT_VECTOR);
+  transform.scale *= glm::vec3{0.75f};
 
   auto texture_o = zs.gfx_state.texture_table.find("TargetReticle");
   assert(texture_o);
