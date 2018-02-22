@@ -1,4 +1,5 @@
 #include <boomhs/components.hpp>
+#include <boomhs/enemy.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_assembler.hpp>
 #include <boomhs/renderer.hpp>
@@ -98,6 +99,36 @@ move_betweentilegrids_ifonstairs(TiledataState &tds, ZoneManager &zm)
   }
 }
 
+void
+update_nearbytargets(LevelState &lstate, entt::DefaultRegistry &registry,
+    FrameTime const& ft)
+{
+  lstate.nearby_targets.clear();
+
+  auto const player = find_player(registry);
+  assert(registry.has<Transform>(player));
+  auto const& ptransform = registry.get<Transform>(player);
+
+  auto const enemies = find_enemies(registry);
+  using pair_t = std::pair<float, uint32_t>;
+  std::vector<pair_t> pairs;
+  for (auto const eid : enemies) {
+    assert(registry.has<Transform>(eid));
+    auto const& etransform = registry.get<Transform>(eid);
+    float const distance = glm::distance(ptransform.translation, etransform.translation);
+    pairs.emplace_back(std::make_pair(distance, eid));
+  }
+
+  auto const sort_fn = [](auto const& a, auto const& b) {
+    return a.first < b.first;
+  };
+  std::sort(pairs.begin(), pairs.end(), sort_fn);
+
+  for (auto const& it : pairs) {
+    lstate.nearby_targets.add_target(it.second);
+  }
+}
+
 bool
 wiggle_outofbounds(RiverInfo const& rinfo, RiverWiggle const& wiggle)
 {
@@ -153,6 +184,7 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& 
   // Update the world
   {
     move_betweentilegrids_ifonstairs(tilegrid_state, zm);
+    update_nearbytargets(lstate, registry, ft);
     move_riverwiggles(lstate.level_data, ft);
 
     if (tilegrid_state.recompute) {

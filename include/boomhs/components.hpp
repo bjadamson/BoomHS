@@ -2,6 +2,8 @@
 #include <opengl/colors.hpp>
 #include <opengl/lighting.hpp>
 #include <opengl/texture.hpp>
+
+#include <boomhs/enemy.hpp>
 #include <boomhs/types.hpp>
 #include <boomhs/tile.hpp>
 
@@ -51,6 +53,10 @@ public:
   }
 };
 
+struct TargetSelector
+{
+};
+
 struct StairInfo
 {
   TilePosition tile_position;
@@ -98,6 +104,14 @@ find_all_entities_with_component(entt::DefaultRegistry &registry)
     entities.emplace_back(e);
   }
   return entities;
+}
+
+inline auto
+find_enemies(entt::DefaultRegistry &registry)
+{
+  using namespace boomhs;
+  using namespace opengl;
+  return find_all_entities_with_component<Enemy, Transform>(registry);
 }
 
 inline auto

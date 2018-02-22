@@ -612,6 +612,8 @@ void
 draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
 {
   auto &zs = rstate.zs;
+  auto &ldata = zs.level_state;
+
   auto &registry = zs.registry;
   auto eid = registry.create();
   ON_SCOPE_EXIT([&]() { registry.destroy(eid); });
@@ -619,7 +621,16 @@ draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
   auto &sps = zs.gfx_state.sps;
   auto &sp = sps.ref_sp("2dtexture");
 
+  auto const& nearby_targets = ldata.nearby_targets;
+  assert(!nearby_targets.empty());
+  auto const nearest_enemy = nearby_targets.closest();
+
   auto &transform = registry.attach<Transform>(eid);
+
+  assert(registry.has<Transform>(nearest_enemy));
+  auto &enemy_transform = registry.get<Transform>(nearest_enemy);
+  transform.translation = enemy_transform.translation;
+
   transform.rotate_degrees(50.0f * ft.since_start_seconds(), Z_UNIT_VECTOR);
   transform.scale *= glm::vec3{0.75f};
 

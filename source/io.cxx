@@ -235,6 +235,8 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
   auto &lstate= zm.active().level_state;
   auto &camera = lstate.camera;
   auto &player = lstate.player;
+  auto &nearby_targets = lstate.nearby_targets;
+
   auto const rotate_player = [&](float const angle, glm::vec3 const& axis) {
     player.rotate(angle, axis);
     ts.recompute = true;
@@ -265,6 +267,19 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
     case SDLK_t:
       // invert
       camera.next_mode();
+      break;
+    case SDLK_TAB:
+      {
+        uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
+        assert(keystate);
+
+        if (!keystate[SDL_SCANCODE_LSHIFT]) {
+          nearby_targets.cycle_forward();
+        }
+        else {
+          nearby_targets.cycle_backward();
+        }
+      }
       break;
     // scaling
     case SDLK_KP_PLUS:

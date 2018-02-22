@@ -3,6 +3,7 @@
 #include <boomhs/world_object.hpp>
 #include <boomhs/leveldata.hpp>
 #include <boomhs/level_loader.hpp>
+#include <boomhs/nearby_targets.hpp>
 
 #include <opengl/colors.hpp>
 #include <opengl/draw_info.hpp>
@@ -47,6 +48,9 @@ struct LevelState
 
   ObjCache obj_cache;
   LevelData level_data;
+
+  // nearby targets user can select
+  NearbyTargets nearby_targets;
 
   Camera camera;
   WorldObject player;
