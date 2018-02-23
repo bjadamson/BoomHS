@@ -1,4 +1,5 @@
 #include <boomhs/level_loader.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/components.hpp>
 #include <opengl/obj.hpp>
 #include <extlibs/cpptoml.hpp>
@@ -301,7 +302,7 @@ load_material_color_orabort(CppTable const& file)
 
 void
 load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& ttable,
-    entt::DefaultRegistry &registry)
+    EntityRegistry &registry)
 {
   auto const load_entity = [&registry, &ttable](auto const& file) {
     // clang-format off
@@ -386,7 +387,7 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
 }
 
 auto
-load_tileinfos(stlw::Logger &logger, CppTable const& config, entt::DefaultRegistry &registry)
+load_tileinfos(stlw::Logger &logger, CppTable const& config, EntityRegistry &registry)
 {
   auto const load_tile = [](auto const& file) {
     auto const tile  =     get_string_or_abort(file, "tile");
@@ -571,7 +572,7 @@ ObjCache::get_obj(std::string const& s) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 stlw::result<LevelAssets, std::string>
-LevelLoader::load_level(stlw::Logger &logger, entt::DefaultRegistry &registry, std::string const& filename)
+LevelLoader::load_level(stlw::Logger &logger, EntityRegistry &registry, std::string const& filename)
 {
   CppTable engine_config = cpptoml::parse_file("engine.toml");
   assert(engine_config);

@@ -1,4 +1,5 @@
 #include <boomhs/stairwell_generator.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/level_generator.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <stlw/random.hpp>
@@ -77,7 +78,7 @@ namespace boomhs::stairwell_generator
 
 bool
 place_stairs(StairGenConfig const& sc, TileGrid &tgrid, stlw::float_generator &rng,
-    entt::DefaultRegistry &registry)
+    EntityRegistry &registry)
 {
   // clang-format off
   int const floor_number     = sc.floor_number;

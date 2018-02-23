@@ -1,17 +1,19 @@
 #pragma once
 #include <boomhs/components.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/tile.hpp>
 
 #include <stlw/algorithm.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <entt/entt.hpp>
 #include <array>
 #include <vector>
 
 namespace boomhs
 {
+class EntityRegistry;
+
 enum class TileLookupBehavior
 {
   ALL_8_DIRECTIONS = 0,
@@ -56,7 +58,7 @@ struct TileComponent {};
 class TileGrid
 {
   std::array<size_t, 2> dimensions_;
-  entt::DefaultRegistry &registry_;
+  EntityRegistry &registry_;
 
   std::vector<Tile> tiles_ {};
   std::vector<FlowDirection> flowdirs_ {};
@@ -66,7 +68,7 @@ public:
   NO_COPY(TileGrid);
   NO_MOVE_ASSIGN(TileGrid);
 
-  TileGrid(size_t const, size_t const, entt::DefaultRegistry &);
+  TileGrid(size_t const, size_t const, EntityRegistry &);
 
   ~TileGrid();
 

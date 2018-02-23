@@ -1,5 +1,6 @@
 #include <boomhs/level_generator.hpp>
 #include <boomhs/enemy.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/stairwell_generator.hpp>
 #include <boomhs/leveldata.hpp>
 #include <boomhs/river_generator.hpp>
@@ -11,7 +12,6 @@
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <entt/entt.hpp>
 #include <algorithm>
 #include <vector>
 #include <utility>
@@ -204,8 +204,7 @@ generate_monster_position(TileGrid const& tilegrid, stlw::float_generator &rng)
 }
 
 void
-place_monsters(TileGrid const& tilegrid, entt::DefaultRegistry &registry,
-    stlw::float_generator &rng)
+place_monsters(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng)
 {
   auto const num_monsters = rng.gen_int_range(MIN_MONSTERS_PER_FLOOR, MAX_MONSTERS_PER_FLOOR);
 
@@ -304,7 +303,7 @@ place_rooms(TileGrid &tilegrid, stlw::float_generator &rng)
 
 TilePosition
 place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<RiverInfo> &rivers,
-    TileGrid &tilegrid, stlw::float_generator &rng, entt::DefaultRegistry &registry)
+    TileGrid &tilegrid, stlw::float_generator &rng, EntityRegistry &registry)
 {
   auto const stairs_perfloor = stairconfig.stairs_perfloor;
   assert(stairs_perfloor > 0);
@@ -340,7 +339,7 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
 }
 
 LevelData
-make_leveldata(LevelConfig const& levelconfig, entt::DefaultRegistry &registry,
+make_leveldata(LevelConfig const& levelconfig, EntityRegistry &registry,
     TileSharedInfoTable &&ttable, stlw::float_generator &rng)
 {
   // clang-format off

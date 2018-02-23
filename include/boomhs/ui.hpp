@@ -1,5 +1,4 @@
 #pragma once
-#include <entt/entt.hpp>
 
 namespace window
 {
@@ -8,10 +7,11 @@ class SDLWindow;
 
 namespace boomhs
 {
+class EntityRegistry;
 
 struct EngineState;
 class ZoneManager;
 void
-draw_ui(EngineState &, ZoneManager &, window::SDLWindow &, entt::DefaultRegistry &);
+draw_ui(EngineState &, ZoneManager &, window::SDLWindow &, EntityRegistry &);
 
 } // ns boomhs

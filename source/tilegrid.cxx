@@ -1,4 +1,5 @@
 #include <boomhs/tilegrid.hpp>
+#include <boomhs/entity.hpp>
 
 namespace boomhs
 {
@@ -12,7 +13,7 @@ FlowDirection::find_flow(Tile const& tile, std::vector<FlowDirection> const& flo
   return *find_it;
 }
 
-TileGrid::TileGrid(size_t const width, size_t const height, entt::DefaultRegistry &registry)
+TileGrid::TileGrid(size_t const width, size_t const height, EntityRegistry &registry)
   : dimensions_(stlw::make_array<size_t>(width, height))
   , registry_(registry)
 {

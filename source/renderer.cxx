@@ -1,4 +1,5 @@
 #include <boomhs/renderer.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
@@ -209,7 +210,7 @@ draw_3dshape(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &
 
 void
 draw_3dlit_shape(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &sp,
-  DrawInfo const& dinfo, Material const& material, entt::DefaultRegistry &registry,
+  DrawInfo const& dinfo, Material const& material, EntityRegistry &registry,
   bool const receives_ambient_light)
 {
   auto &es = rstate.es;
@@ -233,7 +234,7 @@ draw_3dlit_shape(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgr
 
 void
 draw_3dlightsource(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &sp,
-  DrawInfo const& dinfo, uint32_t const entity, entt::DefaultRegistry &registry,
+  DrawInfo const& dinfo, uint32_t const entity, EntityRegistry &registry,
   std::vector<uint32_t> const& pointlights)
 {
   auto &es = rstate.es;
@@ -257,7 +258,7 @@ draw_3dlightsource(RenderState &rstate, glm::mat4 const& model_matrix, ShaderPro
 
 void
 draw(RenderState &rstate, Transform const& transform, ShaderProgram &sp,
-    DrawInfo const& dinfo, uint32_t const entity, entt::DefaultRegistry &registry)
+    DrawInfo const& dinfo, uint32_t const entity, EntityRegistry &registry)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
@@ -414,7 +415,7 @@ draw_arrow_abovetile_and_neighbors(RenderState &rstate, TilePosition const& tpos
 }
 
 void
-draw_global_axis(RenderState &rstate, entt::DefaultRegistry &registry)
+draw_global_axis(RenderState &rstate, EntityRegistry &registry)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
@@ -435,7 +436,7 @@ draw_global_axis(RenderState &rstate, entt::DefaultRegistry &registry)
 }
 
 void
-draw_local_axis(RenderState &rstate, entt::DefaultRegistry &registry, glm::vec3 const &player_pos)
+draw_local_axis(RenderState &rstate, EntityRegistry &registry, glm::vec3 const &player_pos)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
@@ -570,7 +571,7 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
         {
           // TODo: how to orient bridge (tile) based on RiverInfo (nontile) information?
           //
-          // Previously we haven't read data stored outside the entt::DefaultRegistry when
+          // Previously we haven't read data stored outside the EntityRegistry when
           // rendering tiles.
           //
           // thinking ...

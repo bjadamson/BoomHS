@@ -20,7 +20,7 @@ namespace
 {
 
 ZoneState
-assemble(LevelAssets &&assets, entt::DefaultRegistry &registry, LevelConfig const& config)
+assemble(LevelAssets &&assets, EntityRegistry &registry, LevelConfig const& config)
 {
   auto const& objcache = assets.obj_cache;
 
@@ -117,7 +117,7 @@ bridge_staircases(ZoneState &a, ZoneState &b)
 using copy_assets_pair_t = std::pair<EntityDrawHandles, TileDrawHandles>;
 stlw::result<copy_assets_pair_t, std::string>
 copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable const& ttable,
-    entt::DefaultRegistry &registry, ObjCache const &obj_cache)
+    EntityRegistry &registry, ObjCache const &obj_cache)
 {
   EntityDrawinfos dinfos;
   /*
@@ -231,7 +231,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry
   std::vector<ZoneState> zstates;
   zstates.reserve(FLOOR_COUNT);
   FORI(i, FLOOR_COUNT) {
-    auto &registry = registries[i].registry;
+    auto &registry = registries[i];
     DO_TRY(auto level_assets, LevelLoader::load_level(logger, registry, level_string(i)));
     StairGenConfig const stairconfig{FLOOR_COUNT, i, stairs_perfloor};
     LevelConfig const level_config{stairconfig, tdconfig};

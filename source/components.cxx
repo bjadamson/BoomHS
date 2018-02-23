@@ -1,12 +1,12 @@
 #include <boomhs/components.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/leveldata.hpp>
 
 namespace boomhs
 {
 
 std::vector<uint32_t>
-find_stairs_withtype(entt::DefaultRegistry &registry, TileGrid const& tgrid,
-    TileType const type)
+find_stairs_withtype(EntityRegistry &registry, TileGrid const& tgrid, TileType const type)
 {
   std::vector<uint32_t> up_stairs;
   auto const visit_fn = [&](auto const& tpos) {

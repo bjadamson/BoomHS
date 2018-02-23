@@ -1,4 +1,5 @@
 #include <boomhs/ui.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/zone.hpp>
 
@@ -19,7 +20,7 @@ using pair_t = std::pair<std::string, std::uint32_t>;
 
 template<typename ...T>
 auto
-collect_all(entt::DefaultRegistry &registry)
+collect_all(EntityRegistry &registry)
 {
   std::vector<pair_t> pairs;
   for(auto const entity : registry.view<T...>())
@@ -61,7 +62,7 @@ callback_from_strings(void *const pvec, int const idx, const char** out_text)
 
 template<typename T>
 bool
-display_combo_for_entities(char const* text, int *selected, entt::DefaultRegistry &registry,
+display_combo_for_entities(char const* text, int *selected, EntityRegistry &registry,
     std::vector<T> &pairs)
 {
   void *pdata = reinterpret_cast<void *>(&pairs);
@@ -80,7 +81,7 @@ comboselected_to_eid(int const selected_index, std::vector<pair_t> const& pairs)
 }
 
 void
-draw_entity_editor(UiState &uistate, LevelState &lstate, entt::DefaultRegistry &registry)
+draw_entity_editor(UiState &uistate, LevelState &lstate, EntityRegistry &registry)
 {
   auto &selected = uistate.selected_entity;
   if (ImGui::Begin("Entity Editor Window")) {
@@ -321,7 +322,7 @@ show_material_editor(char const* text, Material &material)
 }
 
 void
-show_entitymaterials_window(UiState &ui, entt::DefaultRegistry &registry)
+show_entitymaterials_window(UiState &ui, EntityRegistry &registry)
 {
   auto &selected_material = ui.selected_entity_material;
 
@@ -371,7 +372,7 @@ show_tilegrid_materials_window(UiState &ui, LevelData &level_data)
 }
 
 void
-show_pointlight_window(UiState &ui, entt::DefaultRegistry &registry)
+show_pointlight_window(UiState &ui, EntityRegistry &registry)
 {
   auto const display_pointlight = [&registry](std::uint32_t const entity) {
     auto &transform = registry.get<Transform>(entity);
@@ -433,7 +434,7 @@ world_menu(EngineState &es, LevelState &lstate)
 }
 
 void
-lighting_menu(EngineState &es, LevelState &lstate, entt::DefaultRegistry &registry)
+lighting_menu(EngineState &es, LevelState &lstate, EntityRegistry &registry)
 {
   auto &ui = es.ui_state;
   bool &edit_pointlights = ui.show_pointlight_window;
@@ -474,7 +475,7 @@ namespace boomhs
 {
 
 void
-draw_ui(EngineState &es, ZoneManager &zm, window::SDLWindow &window, entt::DefaultRegistry &registry)
+draw_ui(EngineState &es, ZoneManager &zm, window::SDLWindow &window, EntityRegistry &registry)
 {
   auto &ui_state = es.ui_state;
   auto &tilegrid_state = es.tilegrid_state;

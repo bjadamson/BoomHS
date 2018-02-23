@@ -10,11 +10,11 @@
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <entt/entt.hpp>
 #include <string>
 
 namespace boomhs
 {
+class EntityRegistry;
 
 class ObjCache
 {
@@ -85,7 +85,7 @@ struct LevelLoader
   LevelLoader() = delete;
 
   static stlw::result<LevelAssets, std::string>
-  load_level(stlw::Logger &, entt::DefaultRegistry &, std::string const&);
+  load_level(stlw::Logger &, EntityRegistry &, std::string const&);
 };
 
 } // ns boomhs

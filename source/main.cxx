@@ -99,8 +99,7 @@ move_betweentilegrids_ifonstairs(TiledataState &tds, ZoneManager &zm)
 }
 
 void
-update_nearbytargets(LevelState &lstate, entt::DefaultRegistry &registry,
-    FrameTime const& ft)
+update_nearbytargets(LevelState &lstate, EntityRegistry &registry, FrameTime const& ft)
 {
   lstate.nearby_targets.clear();
 

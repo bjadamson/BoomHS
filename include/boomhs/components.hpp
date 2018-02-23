@@ -4,10 +4,10 @@
 #include <opengl/texture.hpp>
 
 #include <boomhs/enemy.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/types.hpp>
 #include <boomhs/tile.hpp>
 
-#include <entt/entt.hpp>
 #include <cassert>
 #include <iostream>
 #include <ostream>
@@ -20,9 +20,9 @@ namespace boomhs
 class EnttLookup
 {
   uint32_t eid_ = UINT32_MAX;
-  entt::DefaultRegistry &registry_;
+  EntityRegistry &registry_;
 public:
-  explicit EnttLookup(uint32_t const eid, entt::DefaultRegistry &registry)
+  explicit EnttLookup(uint32_t const eid, EntityRegistry &registry)
     : eid_(eid)
     , registry_(registry)
   {
@@ -93,7 +93,7 @@ struct TextureRenderable
 
 template<typename ...C>
 auto
-find_all_entities_with_component(entt::DefaultRegistry &registry)
+find_all_entities_with_component(EntityRegistry &registry)
 {
   using namespace boomhs;
   using namespace opengl;
@@ -107,7 +107,7 @@ find_all_entities_with_component(entt::DefaultRegistry &registry)
 }
 
 inline auto
-find_enemies(entt::DefaultRegistry &registry)
+find_enemies(EntityRegistry &registry)
 {
   using namespace boomhs;
   using namespace opengl;
@@ -115,7 +115,7 @@ find_enemies(entt::DefaultRegistry &registry)
 }
 
 inline auto
-find_materials(entt::DefaultRegistry &registry)
+find_materials(EntityRegistry &registry)
 {
   using namespace boomhs;
   using namespace opengl;
@@ -123,7 +123,7 @@ find_materials(entt::DefaultRegistry &registry)
 }
 
 inline auto
-find_pointlights(entt::DefaultRegistry &registry)
+find_pointlights(EntityRegistry &registry)
 {
   using namespace boomhs;
   using namespace opengl;
@@ -132,7 +132,7 @@ find_pointlights(entt::DefaultRegistry &registry)
 }
 
 inline auto
-find_stairs(entt::DefaultRegistry &registry)
+find_stairs(EntityRegistry &registry)
 {
   using namespace boomhs;
   using namespace opengl;
@@ -142,22 +142,22 @@ find_stairs(entt::DefaultRegistry &registry)
 
 class TileGrid;
 std::vector<uint32_t>
-find_stairs_withtype(entt::DefaultRegistry &, TileGrid const&, TileType const);
+find_stairs_withtype(EntityRegistry &, TileGrid const&, TileType const);
 
 inline auto
-find_upstairs(entt::DefaultRegistry &registry, TileGrid const& tgrid)
+find_upstairs(EntityRegistry &registry, TileGrid const& tgrid)
 {
   return find_stairs_withtype(registry, tgrid, TileType::STAIR_UP);
 }
 
 inline auto
-find_downstairs(entt::DefaultRegistry &registry, TileGrid const& tgrid)
+find_downstairs(EntityRegistry &registry, TileGrid const& tgrid)
 {
   return find_stairs_withtype(registry, tgrid, TileType::STAIR_DOWN);
 }
 
 inline uint32_t
-find_player(entt::DefaultRegistry &registry)
+find_player(EntityRegistry &registry)
 {
   // for now assume only 1 entity has the Player tag
   assert(1 == registry.view<Player>().size());

@@ -1,5 +1,4 @@
 #pragma once
-#include <boomhs/camera.hpp>
 #include <boomhs/zone.hpp>
 #include <boomhs/zone_state.hpp>
 
@@ -9,11 +8,7 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <entt/entt.hpp>
-#include <imgui/imgui.hpp>
-#include <cassert>
-#include <vector>
-
+struct ImGuiIO;
 namespace boomhs
 {
 
@@ -131,12 +126,7 @@ struct EngineState
 
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);
-  EngineState(stlw::Logger &l, ImGuiIO &i, window::Dimensions const &d)
-    : logger(l)
-    , imgui(i)
-    , dimensions(d)
-  {
-  }
+  EngineState(stlw::Logger &, ImGuiIO &, window::Dimensions const &);
 };
 
 struct GameState

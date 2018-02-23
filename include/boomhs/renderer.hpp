@@ -6,7 +6,6 @@
 #include <window/sdl.hpp>
 #include <stlw/log.hpp>
 
-#include <entt/entt.hpp>
 #include <vector>
 
 namespace opengl
@@ -23,6 +22,7 @@ class FrameTime;
 
 namespace boomhs
 {
+class EntityRegistry;
 class Camera;
 class HandleManager;
 struct EngineState;
@@ -64,10 +64,10 @@ void
 draw_arrow_abovetile_and_neighbors(RenderState &, TilePosition const&);
 
 void
-draw_global_axis(RenderState &, entt::DefaultRegistry &);
+draw_global_axis(RenderState &, EntityRegistry &);
 
 void
-draw_local_axis(RenderState &, entt::DefaultRegistry &, glm::vec3 const &);
+draw_local_axis(RenderState &, EntityRegistry &, glm::vec3 const &);
 
 void
 draw_entities(RenderState &);

@@ -1,6 +1,5 @@
 #pragma once
 #include <stlw/type_macros.hpp>
-#include <entt/entt.hpp>
 #include <iostream>
 
 namespace stlw
@@ -10,6 +9,7 @@ class float_generator;
 
 namespace boomhs
 {
+class EntityRegistry;
 class TileGrid;
 
 struct StairGenConfig
@@ -27,6 +27,6 @@ namespace boomhs::stairwell_generator
 {
 
 bool
-place_stairs(StairGenConfig const&, TileGrid &, stlw::float_generator &, entt::DefaultRegistry &);
+place_stairs(StairGenConfig const&, TileGrid &, stlw::float_generator &, EntityRegistry &);
 
 } // ns boomhs::stairwell_generator

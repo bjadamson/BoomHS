@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/camera.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/world_object.hpp>
 #include <boomhs/leveldata.hpp>
 #include <boomhs/level_loader.hpp>
@@ -73,9 +74,9 @@ struct ZoneState
 {
   LevelState level_state;
   GfxState gfx_state;
-  entt::DefaultRegistry &registry;
+  EntityRegistry &registry;
 
-  explicit ZoneState(LevelState &&level, GfxState &&gfx, entt::DefaultRegistry &reg)
+  explicit ZoneState(LevelState &&level, GfxState &&gfx, EntityRegistry &reg)
     : level_state(MOVE(level))
     , gfx_state(MOVE(gfx))
     , registry(reg)
