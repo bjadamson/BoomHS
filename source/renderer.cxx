@@ -270,12 +270,6 @@ draw(RenderState &rstate, Transform const& transform, ShaderProgram &sp,
 
   if (sp.is_2d) {
     disable_depth_tests();
-
-    auto &ldata = zs.level_state;
-    auto &camera = ldata.camera;
-    auto const mvp_matrix = camera.camera_matrix() * transform.model_matrix();
-    set_modelmatrix(logger, mvp_matrix, sp);
-
     draw_drawinfo(logger, sp, dinfo);
     enable_depth_tests();
     return;
@@ -625,19 +619,50 @@ draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
   assert(!nearby_targets.empty());
   auto const nearest_enemy = nearby_targets.closest();
 
-  auto &transform = registry.attach<Transform>(eid);
+  auto &transform = registry.assign<Transform>(eid);
+  assert(registry.has<Transform>(eid));
 
   assert(registry.has<Transform>(nearest_enemy));
   auto &enemy_transform = registry.get<Transform>(nearest_enemy);
   transform.translation = enemy_transform.translation;
 
-  transform.rotate_degrees(50.0f * ft.since_start_seconds(), Z_UNIT_VECTOR);
-  transform.scale *= glm::vec3{0.75f};
+  auto &camera = zs.level_state.camera;
+  assert(registry.has<Transform>(eid));
 
   auto texture_o = zs.gfx_state.texture_table.find("TargetReticle");
   assert(texture_o);
 
-  DrawInfo di = gpu::copy_rectangle_uvs(rstate.es.logger, sp, texture_o);
+  auto &logger = rstate.es.logger;
+  DrawInfo di = gpu::copy_rectangle_uvs(logger, sp, texture_o);
+
+  auto model_matrix = transform.model_matrix();
+  auto viewmodel_matrix = camera.view_matrix() * model_matrix;
+
+  // Reset the rotation values in order to achieve a billboard effect.
+  //
+  // http://www.geeks3d.com/20140807/billboarding-vertex-shader-glsl/
+  float *data = glm::value_ptr(viewmodel_matrix);
+  data[1] = 0.0f;
+  data[2] = 0.0f;
+  data[4] = 0.0f;
+  data[6] = 0.0f;
+  data[8] = 0.0f;
+  data[9] = 0.0f;
+
+  // Set the scale values
+  auto constexpr SCALE = 0.60f;
+  data[0] = SCALE;
+  data[5] = SCALE;
+  data[10] = SCALE;
+
+  auto constexpr ROTATE_SPEED = 50.0f;
+  float const angle = ROTATE_SPEED * ft.since_start_seconds();
+  auto const rot = glm::angleAxis(glm::radians(angle), Z_UNIT_VECTOR);
+  auto const rmatrix = glm::toMat4(rot);
+  viewmodel_matrix = viewmodel_matrix * rmatrix;
+
+  auto const mvp_matrix = camera.projection_matrix() * viewmodel_matrix;
+  set_modelmatrix(logger, mvp_matrix, sp);
   draw(rstate, transform, sp, di, eid, registry);
 }
 

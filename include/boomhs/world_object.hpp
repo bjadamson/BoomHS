@@ -58,7 +58,6 @@ public:
   move(glm::vec3 const&, double);
 
   void rotate(float const, glm::vec3 const&);
-
   void rotate_to_match_camera_rotation(Camera const&);
 
   TilePosition

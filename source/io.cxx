@@ -184,6 +184,9 @@ process_mousebutton_down(GameState &state, SDL_MouseButtonEvent const& event, Fr
   auto &logger = es.logger;
   auto &ms = es.mouse_state;
 
+  auto &zs = state.zone_manager.active();
+  auto &camera = zs.level_state.camera;
+
   auto const& button = event.button;
   if (button == SDL_BUTTON_LEFT) {
     ms.left_pressed = true;
@@ -193,7 +196,7 @@ process_mousebutton_down(GameState &state, SDL_MouseButtonEvent const& event, Fr
   }
   if (ms.both_pressed()) {
     LOG_ERROR("toggling mouse up/down (pitch) lock");
-    ms.pitch_lock ^= true;
+    camera.rotate_lock ^= true;
 
     auto &zm = state.zone_manager;
     auto &lstate = zm.active().level_state;

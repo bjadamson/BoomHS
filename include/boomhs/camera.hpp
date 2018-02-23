@@ -62,7 +62,7 @@ public:
 
   // public fields
   bool flip_y = false;
-  bool rotate_lock = false;
+  bool rotate_lock = true;
   float rotation_speed = 300.0f;
 
   glm::mat4 projection_matrix() const;
@@ -73,6 +73,15 @@ public:
   auto mode() const { return mode_; }
   void set_mode(CameraMode const m) { mode_ = m; }
   void next_mode();
+
+  glm::vec3 eye_forward() const { return forward_; }
+  glm::vec3 eye_backward() const { return -eye_forward(); }
+
+  glm::vec3 eye_up() const { return up_; }
+  glm::vec3 eye_down() const { return -eye_up(); }
+
+  glm::vec3 eye_left() const { return -eye_right(); }
+  glm::vec3 eye_right() const { return glm::normalize(glm::cross(eye_forward(), eye_up())); }
 
   glm::vec3
   world_forward() const

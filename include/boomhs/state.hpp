@@ -65,7 +65,6 @@ struct MouseState
 
   bool left_pressed = false;
   bool right_pressed = false;
-  bool pitch_lock = true;
 
   window::MouseSensitivity sensitivity{0.002f, 0.002f};
 
@@ -95,7 +94,7 @@ struct TiledataState
   bool reveal = false;
 
   // Both related to drawing GRID LINES
-  bool show_grid_lines = true;
+  bool show_grid_lines = false;
   bool show_yaxis_lines = false;
   bool show_neighbortile_arrows = false;
 
@@ -118,8 +117,8 @@ struct EngineState
   bool show_global_axis = true;
   bool show_local_axis = false;
 
-  bool show_player_localspace_vectors = true;
-  bool show_player_worldspace_vectors = true;
+  bool show_player_localspace_vectors = false;
+  bool show_player_worldspace_vectors = false;
 
   MouseState mouse_state = {};
   WindowState window_state = {};
