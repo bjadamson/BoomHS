@@ -350,9 +350,7 @@ make_leveldata(LevelConfig const& levelconfig, entt::DefaultRegistry &registry,
   auto const num_tiles = tdwidth * tdheight;
   // clang-format on
 
-  std::vector<Tile> tiles{static_cast<size_t>(num_tiles)};
-  tiles.reserve(num_tiles);
-  TileGrid tilegrid{MOVE(tiles), tdwidth, tdheight, registry};
+  TileGrid tilegrid{tdwidth, tdheight, registry};
 
   std::cerr << "======================================\n";
   std::vector<RiverInfo> rivers;

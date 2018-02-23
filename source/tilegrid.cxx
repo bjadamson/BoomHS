@@ -12,16 +12,16 @@ FlowDirection::find_flow(Tile const& tile, std::vector<FlowDirection> const& flo
   return *find_it;
 }
 
-TileGrid::TileGrid(std::vector<Tile> &&t, size_t const width, size_t const height,
-    entt::DefaultRegistry &registry)
+TileGrid::TileGrid(size_t const width, size_t const height, entt::DefaultRegistry &registry)
   : dimensions_(stlw::make_array<size_t>(width, height))
   , registry_(registry)
-  , tiles_(MOVE(t))
 {
-  for (auto &tile : tiles_) {
+  FOR(i, width * height) {
+    Tile tile;
     tile.eid = registry_.create();
     registry_.assign<Transform>(tile.eid);
     registry_.assign<TileComponent>(tile.eid);
+    tiles_.emplace_back(MOVE(tile));
   }
 }
 

@@ -58,16 +58,15 @@ class TileGrid
   std::array<size_t, 2> dimensions_;
   entt::DefaultRegistry &registry_;
 
-  std::vector<Tile> tiles_;
-  std::vector<FlowDirection> flowdirs_;
-
+  std::vector<Tile> tiles_ {};
+  std::vector<FlowDirection> flowdirs_ {};
   bool destroy_entities_ = true;
 
 public:
   NO_COPY(TileGrid);
   NO_MOVE_ASSIGN(TileGrid);
 
-  TileGrid(std::vector<Tile> &&, size_t const, size_t const, entt::DefaultRegistry &);
+  TileGrid(size_t const, size_t const, entt::DefaultRegistry &);
 
   ~TileGrid();
 
