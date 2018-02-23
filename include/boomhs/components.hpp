@@ -17,6 +17,10 @@
 namespace boomhs
 {
 
+struct EntityFromFILE
+{
+};
+
 struct TargetSelector
 {
 };

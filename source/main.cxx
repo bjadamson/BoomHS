@@ -167,6 +167,28 @@ move_riverwiggles(LevelData &level_data, FrameTime const& ft)
 }
 
 void
+update_visible_entities(ZoneManager &zm, EntityRegistry &registry)
+{
+  auto &zs = zm.active();
+  auto &lstate = zs.level_state;
+  auto &leveldata = lstate.level_data;
+  auto &tilegrid = leveldata.tilegrid();
+  auto &player = lstate.player;
+
+  for (auto const eid : registry.view<Enemy>()) {
+    auto &enemy = registry.get<Enemy>(eid);
+
+    // Convert to tile position, match tile visibility.
+    auto &transform = registry.get<Transform>(eid);
+    auto const& pos = transform.translation;
+    TilePosition const tpos = TilePosition::from_floats_truncated(pos.x, pos.z);
+
+    auto const& tile = tilegrid.data(tpos);
+    enemy.is_visible = tile.is_visible;
+  }
+}
+
+void
 game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& ft)
 {
   auto &logger = es.logger;
@@ -197,6 +219,7 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& 
 
     // river wiggles get updated every frame
     update_visible_riverwiggles(leveldata, player, tilegrid_state.reveal);
+    update_visible_entities(zm, registry);
   }
   {
     // rendering code

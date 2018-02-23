@@ -487,11 +487,20 @@ draw_entities(RenderState &rstate)
     }
     draw_fn(std::forward<decltype(args)>(args)...);
   };
+  auto const enemy_drawfn = [&draw_fn](auto entity, auto &enemy, auto &&...args)
+  {
+    if (!enemy.is_visible) {
+      return;
+    }
+    draw_fn(entity, std::forward<decltype(args)>(args)...);
+  };
 
   //
   // Draw the cubes
   registry.view<ShaderName, Transform, CubeRenderable>().each(draw_fn);
-  registry.view<ShaderName, Transform, MeshRenderable>().each(draw_fn);
+  registry.view<ShaderName, Transform, MeshRenderable, EntityFromFILE>().each(draw_fn);
+
+  registry.view<Enemy, ShaderName, Transform, MeshRenderable>().each(enemy_drawfn);
   registry.view<ShaderName, Transform, MeshRenderable, Player>().each(player_drawfn);
 
   // Draw the tiles

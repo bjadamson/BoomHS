@@ -378,6 +378,8 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       auto const& cm = *cm_optional;
       registry.assign<Material>(entity) = cm.material;
     }
+
+    registry.assign<EntityFromFILE>(entity);
   };
 
   auto const entity_table = get_table_array(config, "entity");
