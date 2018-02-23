@@ -1,5 +1,6 @@
 #include <boomhs/components.hpp>
 #include <boomhs/enemy.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_assembler.hpp>
 #include <boomhs/renderer.hpp>
@@ -18,8 +19,6 @@
 #include <stlw/math.hpp>
 #include <stlw/log.hpp>
 #include <stlw/result.hpp>
-
-#include <entt/entt.hpp>
 
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_sdl_gl3.h>
@@ -251,7 +250,7 @@ struct Engine
 {
   SDLWindow window;
   SDLControllers controllers;
-  std::vector<entt::DefaultRegistry> registries = {};
+  std::vector<EntityRegistry> registries = {};
 
   Engine() = delete;
   explicit Engine(SDLWindow &&w, SDLControllers &&c)

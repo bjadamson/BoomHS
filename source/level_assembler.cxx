@@ -211,7 +211,7 @@ namespace boomhs
 {
 
 stlw::result<ZoneStates, std::string>
-LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<entt::DefaultRegistry> &registries)
+LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry> &registries)
 {
   auto const level_string = [&](int const floor_number)
   {
@@ -231,7 +231,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<entt::DefaultR
   std::vector<ZoneState> zstates;
   zstates.reserve(FLOOR_COUNT);
   FORI(i, FLOOR_COUNT) {
-    auto &registry = registries[i];
+    auto &registry = registries[i].registry;
     DO_TRY(auto level_assets, LevelLoader::load_level(logger, registry, level_string(i)));
     StairGenConfig const stairconfig{FLOOR_COUNT, i, stairs_perfloor};
     LevelConfig const level_config{stairconfig, tdconfig};
