@@ -111,7 +111,9 @@ update_nearbytargets(LevelState &lstate, EntityRegistry &registry, FrameTime con
   using pair_t = std::pair<float, EntityID>;
   std::vector<pair_t> pairs;
   for (auto const eid : enemies) {
-    assert(registry.has<Transform>(eid));
+    if (!registry.get<Enemy>(eid).is_visible) {
+      continue;
+    }
     auto const& etransform = registry.get<Transform>(eid);
     float const distance = glm::distance(ptransform.translation, etransform.translation);
     pairs.emplace_back(std::make_pair(distance, eid));

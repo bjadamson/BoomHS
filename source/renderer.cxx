@@ -618,16 +618,15 @@ draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
   auto &zs = rstate.zs;
   auto &ldata = zs.level_state;
 
+  auto const& nearby_targets = ldata.nearby_targets;
+  if (nearby_targets.empty()) {
+    return;
+  }
+  auto const nearest_enemy = nearby_targets.closest();
+
   auto &registry = zs.registry;
   auto eid = registry.create();
   ON_SCOPE_EXIT([&]() { registry.destroy(eid); });
-
-  auto &sps = zs.gfx_state.sps;
-  auto &sp = sps.ref_sp("2dtexture");
-
-  auto const& nearby_targets = ldata.nearby_targets;
-  assert(!nearby_targets.empty());
-  auto const nearest_enemy = nearby_targets.closest();
 
   auto &transform = registry.assign<Transform>(eid);
   assert(registry.has<Transform>(eid));
@@ -641,6 +640,9 @@ draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
 
   auto texture_o = zs.gfx_state.texture_table.find("TargetReticle");
   assert(texture_o);
+
+  auto &sps = zs.gfx_state.sps;
+  auto &sp = sps.ref_sp("2dtexture");
 
   auto &logger = rstate.es.logger;
   DrawInfo di = gpu::copy_rectangle_uvs(logger, sp, texture_o);
