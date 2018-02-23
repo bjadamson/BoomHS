@@ -122,7 +122,7 @@ public:
   increase_zoom(float);
 
   void
-  set_target(uint32_t const eid)
+  set_target(EntityID const eid)
   {
     player_lookup_.set_eid(eid);
   }

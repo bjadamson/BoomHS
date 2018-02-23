@@ -3,6 +3,7 @@
 #include <opengl/vao.hpp>
 #include <opengl/vertex_attribute.hpp>
 
+#include <boomhs/entity.hpp>
 #include <boomhs/tile.hpp>
 
 #include <stlw/type_macros.hpp>
@@ -67,7 +68,7 @@ public:
 class EntityDrawinfos
 {
   std::vector<opengl::DrawInfo> drawinfos_;
-  std::vector<uint32_t> entities_;
+  std::vector<boomhs::EntityID> entities_;
 
 public:
   EntityDrawinfos() = default;
@@ -75,12 +76,12 @@ public:
   MOVE_DEFAULT(EntityDrawinfos);
 
   size_t
-  add(uint32_t const, opengl::DrawInfo &&);
+  add(boomhs::EntityID const, opengl::DrawInfo &&);
 
   bool empty() const { return drawinfos_.empty(); }
 
   opengl::DrawInfo const&
-  get(uint32_t const entity) const;
+  get(boomhs::EntityID) const;
 };
 
 class EntityDrawHandles
@@ -95,7 +96,7 @@ public:
   }
 
   opengl::DrawInfo const&
-  lookup(uint32_t const entity) const;
+  lookup(boomhs::EntityID) const;
 };
 
 class TileDrawHandles

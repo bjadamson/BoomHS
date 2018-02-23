@@ -131,7 +131,7 @@ DrawInfo::print_self(std::ostream &stream, VertexAttribute const& va) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EntityDrawinfos
 size_t
-EntityDrawinfos::add(uint32_t const entity, opengl::DrawInfo &&di)
+EntityDrawinfos::add(EntityID const entity, opengl::DrawInfo &&di)
 {
   auto const pos = drawinfos_.size();
   drawinfos_.emplace_back(MOVE(di));
@@ -142,7 +142,7 @@ EntityDrawinfos::add(uint32_t const entity, opengl::DrawInfo &&di)
 }
 
 opengl::DrawInfo const&
-EntityDrawinfos::get(uint32_t const entity) const
+EntityDrawinfos::get(EntityID const entity) const
 {
   FOR(i, entities_.size()) {
     if (entities_[i] == entity) {
@@ -156,7 +156,7 @@ EntityDrawinfos::get(uint32_t const entity) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EntityDrawHandles
 opengl::DrawInfo const&
-EntityDrawHandles::lookup(uint32_t const eid) const
+EntityDrawHandles::lookup(EntityID const eid) const
 {
   return infos_.get(eid);
 }

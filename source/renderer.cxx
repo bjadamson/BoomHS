@@ -234,8 +234,8 @@ draw_3dlit_shape(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgr
 
 void
 draw_3dlightsource(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &sp,
-  DrawInfo const& dinfo, uint32_t const entity, EntityRegistry &registry,
-  std::vector<uint32_t> const& pointlights)
+  DrawInfo const& dinfo, EntityID const entity, EntityRegistry &registry,
+  std::vector<EntityID> const& pointlights)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
@@ -258,7 +258,7 @@ draw_3dlightsource(RenderState &rstate, glm::mat4 const& model_matrix, ShaderPro
 
 void
 draw(RenderState &rstate, Transform const& transform, ShaderProgram &sp,
-    DrawInfo const& dinfo, uint32_t const entity, EntityRegistry &registry)
+    DrawInfo const& dinfo, EntityID const entity, EntityRegistry &registry)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;

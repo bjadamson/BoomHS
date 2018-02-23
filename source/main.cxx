@@ -108,7 +108,7 @@ update_nearbytargets(LevelState &lstate, EntityRegistry &registry, FrameTime con
   auto const& ptransform = registry.get<Transform>(player);
 
   auto const enemies = find_enemies(registry);
-  using pair_t = std::pair<float, uint32_t>;
+  using pair_t = std::pair<float, EntityID>;
   std::vector<pair_t> pairs;
   for (auto const eid : enemies) {
     assert(registry.has<Transform>(eid));

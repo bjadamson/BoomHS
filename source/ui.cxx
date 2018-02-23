@@ -16,7 +16,7 @@ namespace
 using namespace boomhs;
 using namespace opengl;
 
-using pair_t = std::pair<std::string, std::uint32_t>;
+using pair_t = std::pair<std::string, EntityID>;
 
 template<typename ...T>
 auto
@@ -69,8 +69,8 @@ display_combo_for_entities(char const* text, int *selected, EntityRegistry &regi
   return ImGui::Combo(text, selected, callback_from_pairs, pdata, pairs.size());
 }
 
-std::uint32_t
-comboselected_to_eid(int const selected_index, std::vector<pair_t> const& pairs)
+EntityID
+comboselected_to_entity(int const selected_index, std::vector<pair_t> const& pairs)
 {
   auto const selected_string = std::to_string(selected_index);
   auto const cmp = [&selected_string](auto const& pair) { return pair.first == selected_string; };
@@ -87,7 +87,7 @@ draw_entity_editor(UiState &uistate, LevelState &lstate, EntityRegistry &registr
   if (ImGui::Begin("Entity Editor Window")) {
     auto pairs = collect_all<Transform>(registry);
     if (display_combo_for_entities("Entity", &selected, registry, pairs)) {
-      auto const eid = comboselected_to_eid(selected, pairs);
+      auto const eid = comboselected_to_entity(selected, pairs);
 
       auto &player = lstate.player;
       auto &camera = lstate.camera;
@@ -95,7 +95,7 @@ draw_entity_editor(UiState &uistate, LevelState &lstate, EntityRegistry &registr
       camera.set_target(eid);
       player.set_eid(eid);
     }
-    auto const eid = comboselected_to_eid(selected, pairs);
+    auto const eid = comboselected_to_entity(selected, pairs);
     auto &transform = registry.get<Transform>(eid);
     ImGui::InputFloat3("pos:", glm::value_ptr(transform.translation));
     {
@@ -374,7 +374,7 @@ show_tilegrid_materials_window(UiState &ui, LevelData &level_data)
 void
 show_pointlight_window(UiState &ui, EntityRegistry &registry)
 {
-  auto const display_pointlight = [&registry](std::uint32_t const entity) {
+  auto const display_pointlight = [&registry](EntityID const entity) {
     auto &transform = registry.get<Transform>(entity);
     auto &pointlight = registry.get<PointLight>(entity);
     auto &light = pointlight.light;

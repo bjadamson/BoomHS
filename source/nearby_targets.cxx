@@ -4,7 +4,7 @@ namespace boomhs
 {
 
 void
-NearbyTargets::add_target(uint32_t const t)
+NearbyTargets::add_target(EntityID const t)
 {
   targets_.emplace_back(t);
 }
@@ -39,7 +39,7 @@ NearbyTargets::empty() const
   return targets_.empty();
 }
 
-uint32_t
+EntityID
 NearbyTargets::closest() const
 {
   return targets_[offset_];

@@ -5,7 +5,7 @@
 namespace boomhs
 {
 
-//using EntityID = uint32_t;
+using EntityID = uint32_t;
 static auto constexpr EntityIDMAX = UINT32_MAX;
 
 class EntityRegistry
@@ -17,17 +17,17 @@ public:
 
   template<typename Component, typename... Args>
   Component&
-  assign(uint32_t const eid, Args&&... args)
+  assign(EntityID const eid, Args&&... args)
   {
     return registry_.assign<Component>(eid, std::forward<Args>(args)...);
   }
 
-  uint32_t create();
-  void destroy(uint32_t);
+  EntityID create();
+  void destroy(EntityID);
 
   template<typename T>
   T&
-  get(uint32_t const eid)
+  get(EntityID const eid)
   {
     assert(has<T>(eid));
     return registry_.get<T>(eid);
@@ -35,7 +35,7 @@ public:
 
   template<typename T>
   T const&
-  get(uint32_t const eid) const
+  get(EntityID const eid) const
   {
     assert(has<T>(eid));
     return registry_.get<T>(eid);
@@ -50,7 +50,7 @@ public:
 
   template<typename T>
   bool
-  has(uint32_t const eid) const
+  has(EntityID const eid) const
   {
     assert(eid != EntityIDMAX);
     return registry_.has<T>(eid);
@@ -61,6 +61,42 @@ public:
   view()
   {
     return registry_.view<Args...>();
+  }
+};
+
+class EnttLookup
+{
+  EntityID eid_ = EntityIDMAX;
+  EntityRegistry &registry_;
+public:
+  explicit EnttLookup(EntityID const eid, EntityRegistry &registry)
+    : eid_(eid)
+    , registry_(registry)
+  {
+  }
+
+  template<typename T>
+  T&
+  lookup()
+  {
+    assert(eid_ != EntityIDMAX);
+    assert(registry_.has<T>(eid_));
+    return registry_.get<T>(eid_);
+  }
+
+  template<typename T>
+  T const&
+  lookup() const
+  {
+    assert(eid_ != EntityIDMAX);
+    assert(registry_.has<T>(eid_));
+    return registry_.get<T>(eid_);
+  }
+
+  void
+  set_eid(EntityID const eid)
+  {
+    eid_ = eid;
   }
 };
 

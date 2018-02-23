@@ -5,14 +5,14 @@ namespace boomhs
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EntityRegistry
-uint32_t
+EntityID
 EntityRegistry::create()
 {
   return registry_.create();
 }
 
 void
-EntityRegistry::destroy(uint32_t const eid)
+EntityRegistry::destroy(EntityID const eid)
 {
   registry_.destroy(eid);
 }

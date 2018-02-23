@@ -5,10 +5,10 @@
 namespace boomhs
 {
 
-std::vector<uint32_t>
+std::vector<EntityID>
 find_stairs_withtype(EntityRegistry &registry, TileGrid const& tgrid, TileType const type)
 {
-  std::vector<uint32_t> up_stairs;
+  std::vector<EntityID> up_stairs;
   auto const visit_fn = [&](auto const& tpos) {
     auto const& tile = tgrid.data(tpos);
     if (tile.type == type) {

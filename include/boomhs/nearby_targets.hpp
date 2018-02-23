@@ -1,4 +1,5 @@
 #pragma once
+#include <boomhs/entity.hpp>
 #include <vector>
 
 namespace boomhs
@@ -7,18 +8,18 @@ namespace boomhs
 class NearbyTargets
 {
   size_t offset_ = 0;
-  std::vector<uint32_t> targets_ = {};
+  std::vector<EntityID> targets_ = {};
 
 public:
   NearbyTargets() = default;
 
-  void add_target(uint32_t);
+  void add_target(EntityID);
   void clear();
   void cycle_forward();
   void cycle_backward();
 
   bool empty() const;
-  uint32_t closest() const;
+  EntityID closest() const;
 };
 
 } // ns boomhs
