@@ -75,6 +75,23 @@ find_all_entities_with_component(EntityRegistry &registry)
 }
 
 inline auto
+all_nearby_entities(glm::vec3 const& pos, float const max_distance, EntityRegistry &registry)
+{
+  using namespace boomhs;
+  using namespace opengl;
+
+  std::vector<EntityID> entities;
+  auto const view = registry.view<Transform>();
+  for (auto const e : view) {
+    auto &transform = registry.get<Transform>(e);
+    if (glm::distance(transform.translation, pos) <= max_distance) {
+      entities.emplace_back(e);
+    }
+  }
+  return entities;
+}
+
+inline auto
 find_enemies(EntityRegistry &registry)
 {
   using namespace boomhs;

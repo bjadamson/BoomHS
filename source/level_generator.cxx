@@ -178,14 +178,16 @@ create_v_tunnel(uint64_t const y1, uint64_t const y2, uint64_t const x, TileType
 bool
 is_blocked(uint64_t const x, uint64_t const y, TileGrid const& tilegrid)
 {
-  if (tilegrid.data(x, y).type == TileType::WALL) {
+  auto const type = tilegrid.data(x, y).type;
+  if (ANYOF(type == TileType::WALL)) {
     return true;
   }
   return false;
 }
 
 auto
-generate_monster_position(TileGrid const& tilegrid, stlw::float_generator &rng)
+generate_monster_position(TileGrid const& tilegrid, EntityRegistry &registry,
+    stlw::float_generator &rng)
 {
   auto const dimensions = tilegrid.dimensions();
   auto const width = dimensions[0];
@@ -196,11 +198,21 @@ generate_monster_position(TileGrid const& tilegrid, stlw::float_generator &rng)
     x = rng.gen_int_range(0, width - 1);
     y = rng.gen_int_range(0, height - 1);
 
-    if (!is_blocked(x, y, tilegrid)) {
-      break;
+    if (is_blocked(x, y, tilegrid)) {
+      continue;
     }
+
+    glm::vec3 const pos{x, 0, y};
+    static auto constexpr MAX_DISTANCE = 2.0f;
+    auto const nearby = all_nearby_entities(pos, MAX_DISTANCE, registry);
+    if (!nearby.empty()) {
+      continue;
+    }
+    return TilePosition{x, y};
   }
-  return TilePosition{x, y};
+
+  std::abort();
+  return TilePosition{0, 0};
 }
 
 void
@@ -223,7 +235,7 @@ place_monsters(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_g
   };
 
   FORI(i, num_monsters) {
-    auto const pos = generate_monster_position(tilegrid, rng);
+    auto const pos = generate_monster_position(tilegrid, registry, rng);
     if (rng.gen_bool()) {
       make_monster("O", pos);
     } else {
