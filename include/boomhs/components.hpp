@@ -17,6 +17,11 @@
 namespace boomhs
 {
 
+struct SubEntity
+{
+  EntityID parent = EntityIDMAX;
+};
+
 struct EntityFromFILE
 {
 };
@@ -96,7 +101,7 @@ find_enemies(EntityRegistry &registry)
 {
   using namespace boomhs;
   using namespace opengl;
-  return find_all_entities_with_component<Enemy, Transform>(registry);
+  return find_all_entities_with_component<Enemy>(registry);
 }
 
 inline auto
@@ -104,7 +109,7 @@ find_materials(EntityRegistry &registry)
 {
   using namespace boomhs;
   using namespace opengl;
-  return find_all_entities_with_component<Material, Transform>(registry);
+  return find_all_entities_with_component<Material>(registry);
 }
 
 inline auto
@@ -113,7 +118,7 @@ find_pointlights(EntityRegistry &registry)
   using namespace boomhs;
   using namespace opengl;
 
-  return find_all_entities_with_component<PointLight, Transform>(registry);
+  return find_all_entities_with_component<PointLight>(registry);
 }
 
 inline auto
@@ -147,6 +152,7 @@ find_player(EntityRegistry &registry)
   // for now assume only 1 entity has the Player tag
   assert(1 == registry.view<Player>().size());
 
+  // Assume Player has a Transform
   auto view = registry.view<Player, Transform>();
   std::optional<EntityID> entity{std::nullopt};
   for (auto const e : view) {

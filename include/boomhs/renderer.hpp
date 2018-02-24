@@ -70,7 +70,7 @@ void
 draw_local_axis(RenderState &, EntityRegistry &, glm::vec3 const &);
 
 void
-draw_entities(RenderState &);
+draw_entities(RenderState &, window::FrameTime const&);
 
 void
 draw_targetreticle(RenderState &, window::FrameTime const&);

@@ -393,7 +393,6 @@ load_tileinfos(stlw::Logger &logger, CppTable const& config, EntityRegistry &reg
 {
   auto const load_tile = [](auto const& file) {
     auto const tile  =     get_string_or_abort(file, "tile");
-    std::cerr << "tile: '" << tile << "'\n";
     auto const tiletype = tiletype_from_string(tile);
     auto const mesh_name = get_string_or_abort(file, "mesh");
     auto const vshader_name = get_string_or_abort(file, "vshader");
@@ -456,7 +455,7 @@ load_vas(CppTable const& config)
   auto vas_table_array = config->get_table_array("vas");
   assert(vas_table_array);
 
-  auto const read_data = [&](auto const& table, std::size_t const index) {
+  auto const read_data = [&](auto const& table, size_t const index) {
     auto const dataname = "data" + std::to_string(index);
 
     // THINKING EXPLAINED:
@@ -477,7 +476,7 @@ load_vas(CppTable const& config)
     return cpptoml::option<opengl::AttributePointerInfo>{MOVE(api)};
   };
 
-  auto const add_next_found = [&read_data](auto &apis, auto const& table, std::size_t const index) {
+  auto const add_next_found = [&read_data](auto &apis, auto const& table, size_t const index) {
     auto data_o = read_data(table, index);
     bool const data_read = !!data_o;
     if (data_read) {
@@ -491,7 +490,7 @@ load_vas(CppTable const& config)
   auto const fn = [&pvas, &add_next_found](auto const& table) {
     auto const name = get_string_or_abort(table, "name");
 
-    std::size_t i = 0u;
+    size_t i = 0u;
     std::vector<opengl::AttributePointerInfo> apis;
     while(add_next_found(apis, table, i++)) {}
     pvas.add(name, make_vertex_attribute(apis));
@@ -500,14 +499,12 @@ load_vas(CppTable const& config)
   return pvas;
 }
 
-
-
 } // ns anon
 
 namespace boomhs
 {
 
-// This macro exists to reduce code duplication implementingt he two different implementation of
+// This macro exists to reduce code duplication implementing the two different implementation of
 // operator[].
 #define SEARCH_FOR(type, begin, end)                                                               \
   auto const cmp = [&type](auto const& tinfo) {                                                    \

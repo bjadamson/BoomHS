@@ -234,24 +234,15 @@ draw_3dlit_shape(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgr
 
 void
 draw_3dlightsource(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &sp,
-  DrawInfo const& dinfo, EntityID const entity, EntityRegistry &registry,
-  std::vector<EntityID> const& pointlights)
+  DrawInfo const& dinfo, EntityID const entity, EntityRegistry &registry)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
 
   auto &logger = es.logger;
-  PointLight *ptr = nullptr;
-  FOR(i, pointlights.size()) {
-    auto const e = pointlights[i];
-    if (entity == e) {
-      ptr = &registry.get<PointLight>(e);
-      break;
-    }
-  }
-  assert(nullptr != ptr);
+  auto &pointlight = registry.get<PointLight>(entity);
 
-  auto const diffuse = ptr->light.diffuse;
+  auto const diffuse = pointlight.light.diffuse;
   sp.set_uniform_color_3fv(logger, "u_lightcolor", diffuse);
   draw_3dshape(rstate, model_matrix, sp, dinfo);
 }
@@ -280,8 +271,7 @@ draw(RenderState &rstate, Transform const& transform, ShaderProgram &sp,
   auto const model_matrix = transform.model_matrix();
   if (is_lightsource) {
     assert(is_lightsource);
-    auto const pointlights = find_pointlights(registry);
-    draw_3dlightsource(rstate, model_matrix, sp, dinfo, entity, registry, pointlights);
+    draw_3dlightsource(rstate, model_matrix, sp, dinfo, entity, registry);
     return;
   }
   // Only true for now, old code had this set.
@@ -458,7 +448,7 @@ draw_local_axis(RenderState &rstate, EntityRegistry &registry, glm::vec3 const &
 }
 
 void
-draw_entities(RenderState &rstate)
+draw_entities(RenderState &rstate, FrameTime const& ft)
 {
   auto const& es = rstate.es;
   auto &zs = rstate.zs;
@@ -471,13 +461,14 @@ draw_entities(RenderState &rstate)
 
   auto &ldata = zs.level_state;
   auto &camera = ldata.camera;
+  auto &player = ldata.player;
 
-  auto const draw_fn = [&entity_handles, &sps, &rstate, &registry](auto entity, auto &sn,
+  auto const draw_fn = [&entity_handles, &sps, &rstate, &registry](auto eid, auto &sn,
       auto &transform, auto &&...)
   {
-    auto &shader_ref = sps.ref_sp(sn.value);
-    auto &handle = entity_handles.lookup(entity);
-    draw(rstate, transform, shader_ref, handle, entity, registry);
+    auto &sp = sps.ref_sp(sn.value);
+    auto &handle = entity_handles.lookup(eid);
+    draw(rstate, transform, sp, handle, eid, registry);
   };
 
   auto const player_drawfn = [&camera, &draw_fn](auto &&...args)
@@ -485,20 +476,51 @@ draw_entities(RenderState &rstate)
     if (CameraMode::FPS == camera.mode()) {
       return;
     }
-    draw_fn(std::forward<decltype(args)>(args)...);
+    draw_fn(FORWARD(args)...);
   };
-  auto const enemy_drawfn = [&draw_fn](auto entity, auto &enemy, auto &&...args)
+  auto const enemy_drawfn = [&draw_fn](auto eid, auto &enemy, auto &&...args)
   {
     if (!enemy.is_visible) {
       return;
     }
-    draw_fn(entity, std::forward<decltype(args)>(args)...);
+    draw_fn(eid, FORWARD(args)...);
   };
+
+  auto const draw_pl = [&](auto eid, auto &sn, auto &transform, auto &&... args)
+  {
+    if (registry.has<SubEntity>(eid)) {
+      // torch
+      auto const player_pos = player.transform().translation;
+      auto const& torch_transform = registry.get<Transform>(eid);
+      auto const torch_offset = torch_transform.translation;
+
+      Transform new_transform;
+      new_transform.translation = player_pos + torch_offset;
+      new_transform.rotation = torch_transform.rotation;
+      new_transform.scale = torch_transform.scale;
+
+      auto constexpr FLICKER_SPEED = 27.5f;
+      float const xxx = FLICKER_SPEED * ft.since_start_seconds();
+      float const yyy = std::cos(xxx);
+
+      auto &pointlight = registry.get<PointLight>(eid);
+      pointlight.light.diffuse = yyy > 0.0f
+        ? (std::abs(yyy) > 0.5f ? LOC::RED : LOC::WHITE)
+        : (std::abs(yyy) > 0.5f ? LOC::ORANGE : LOC::YELLOW);
+
+      draw_fn(eid, sn, new_transform, FORWARD(args)...);
+    }
+    else {
+      // not torch
+      draw_fn(eid, sn, transform, FORWARD(args)...);
+    }
+  };
+
 
   //
   // Draw the cubes
-  registry.view<ShaderName, Transform, CubeRenderable>().each(draw_fn);
-  registry.view<ShaderName, Transform, MeshRenderable, EntityFromFILE>().each(draw_fn);
+  registry.view<ShaderName, Transform, PointLight>().each(draw_pl);
+  //registry.view<ShaderName, Transform, EntityFromFILE>().each(draw_fn);
 
   registry.view<Enemy, ShaderName, Transform, MeshRenderable>().each(enemy_drawfn);
   registry.view<ShaderName, Transform, MeshRenderable, Player>().each(player_drawfn);
@@ -507,8 +529,8 @@ draw_entities(RenderState &rstate)
   registry.view<ShaderName, Transform, MeshRenderable, TileComponent>().each(draw_fn);
 
   if (es.draw_skybox) {
-    auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {
-      draw_fn(entity, sn, transform);
+    auto const draw_skybox = [&](auto eid, auto &sn, auto &transform, auto &) {
+      draw_fn(eid, sn, transform);
     };
     registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
   }

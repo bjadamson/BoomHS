@@ -229,7 +229,7 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& 
 
     RenderState rstate{es, zs};
     if (es.draw_entities) {
-      render::draw_entities(rstate);
+      render::draw_entities(rstate, ft);
     }
     if (es.draw_terrain) {
       render::draw_terrain(rstate);

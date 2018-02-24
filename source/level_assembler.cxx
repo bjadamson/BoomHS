@@ -32,7 +32,6 @@ assemble(LevelAssets &&assets, EntityRegistry &registry, LevelConfig const& conf
   auto light_view = registry.view<PointLight, Transform>();
   for (auto const entity : light_view) {
     auto &transform = light_view.get<Transform>(entity);
-    transform.scale = glm::vec3{0.2f};
   }
 
   // camera-look at origin
@@ -100,12 +99,12 @@ bridge_staircases(ZoneState &a, ZoneState &b)
     StairInfo &si_b = b_registry.get<StairInfo>(b_downeid);
 
     // find a suitable neighbor tile for each stair
-    auto const a_neighbors = find_immediate_neighbors(tilegrid_a, si_a.tile_position, TileType::FLOOR,
-        behavior);
+    auto const a_neighbors = find_immediate_neighbors(tilegrid_a, si_a.tile_position,
+        TileType::FLOOR, behavior);
     assert(!a_neighbors.empty());
 
-    auto const b_neighbors = find_immediate_neighbors(tilegrid_b, si_b.tile_position, TileType::FLOOR,
-        behavior);
+    auto const b_neighbors = find_immediate_neighbors(tilegrid_b, si_b.tile_position,
+        TileType::FLOOR, behavior);
     assert(!b_neighbors.empty());
 
     // Set A's exit position to B's neighbor, and visa versa

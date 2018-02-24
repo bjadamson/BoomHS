@@ -21,6 +21,7 @@ namespace
 {
 
 using namespace boomhs;
+using namespace opengl;
 
 static auto constexpr ROOM_MAX_SIZE = 5ul;
 static auto constexpr ROOM_MIN_SIZE = 3ul;
@@ -244,6 +245,31 @@ place_monsters(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_g
   }
 }
 
+void
+place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng)
+{
+  auto const player_eid = find_player(registry);
+  auto const& ptransform = registry.get<Transform>(player_eid);
+
+  auto torch_eid = registry.create();
+  auto &torch_transform = registry.assign<Transform>(torch_eid);
+  auto &torch_light = registry.assign<PointLight>(torch_eid);
+  torch_light.light.diffuse = LOC::YELLOW;
+
+  registry.assign<EntityFromFILE>(torch_eid);
+  registry.assign<CubeRenderable>(torch_eid);
+
+  // mark the torch as a sub-entity for the player (torch position becomes relative to player)
+  auto &subentity = registry.assign<SubEntity>(torch_eid);
+  subentity.parent = player_eid;
+
+  auto &sn = registry.assign<ShaderName>(torch_eid);
+  sn.value = "light";
+
+  torch_transform.translation += glm::vec3{0, 0.15, -0.15};
+  torch_transform.scale = glm::vec3{0.05f};
+}
+
 } // ns anon
 
 namespace boomhs::level_generator
@@ -344,6 +370,10 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
 
   std::cerr << "placing monsters ...\n";
   place_monsters(tilegrid, registry, rng);
+
+  std::cerr << "placing torch ...\n";
+  place_torch(tilegrid, registry, rng);
+
   std::cerr << "finished!\n";
 
   // This seems hacky?

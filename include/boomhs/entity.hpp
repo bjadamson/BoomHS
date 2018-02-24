@@ -19,6 +19,7 @@ public:
   Component&
   assign(EntityID const eid, Args&&... args)
   {
+    assert(!has<Component>(eid));
     return registry_.assign<Component>(eid, std::forward<Args>(args)...);
   }
 
