@@ -385,7 +385,7 @@ show_pointlight_window(UiState &ui, EntityRegistry &registry)
 
     ImGui::Text("Attenuation");
     auto &attenuation = pointlight.light.attenuation;
-    ImGui::InputFloat("constant:", &attenuation.constant);
+    ImGui::SliderFloat("constant:", &attenuation.constant, 0.0f, 1.0f);
     ImGui::InputFloat("linear:", &attenuation.linear);
     ImGui::InputFloat("quadratic:", &attenuation.quadratic);
   };

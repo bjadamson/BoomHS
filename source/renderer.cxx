@@ -486,19 +486,31 @@ draw_entities(RenderState &rstate, FrameTime const& ft)
     draw_fn(eid, FORWARD(args)...);
   };
 
-  auto const draw_pl = [&](auto eid, auto &sn, auto &transform, auto &&... args)
+  auto const compute_subentity_position = [&registry](EntityID eid)
   {
-    if (registry.has<SubEntity>(eid)) {
+    // copy the transform
+    Transform transform = registry.get<Transform>(eid);
+
+    int count = 0;
+    while (registry.has<SubEntity>(eid)) {
+      auto const& sub_entity = registry.get<SubEntity>(eid);
+      eid = sub_entity.parent;
+      assert(eid != EntityIDMAX);
+
+      transform.translation += registry.get<Transform>(eid).translation;
+      ++count;
+    }
+    return transform.translation;
+  };
+
+  auto const draw_pl = [&](auto eid, auto &sn, auto &transform, auto &subentity)
+  {
+    auto const parent_eid = subentity.parent;
+    assert(parent_eid != EntityIDMAX);
+    auto const player_pos = registry.get<Transform>(parent_eid).translation;
+
+    if (registry.has<PointLight>(eid)) {
       // torch
-      auto const player_pos = player.transform().translation;
-      auto const& torch_transform = registry.get<Transform>(eid);
-      auto const torch_offset = torch_transform.translation;
-
-      Transform new_transform;
-      new_transform.translation = player_pos + torch_offset;
-      new_transform.rotation = torch_transform.rotation;
-      new_transform.scale = torch_transform.scale;
-
       auto constexpr FLICKER_SPEED = 27.5f;
       float const xxx = FLICKER_SPEED * ft.since_start_seconds();
       float const yyy = std::cos(xxx);
@@ -507,20 +519,19 @@ draw_entities(RenderState &rstate, FrameTime const& ft)
       pointlight.light.diffuse = yyy > 0.0f
         ? (std::abs(yyy) > 0.5f ? LOC::RED : LOC::WHITE)
         : (std::abs(yyy) > 0.5f ? LOC::ORANGE : LOC::YELLOW);
+    }
 
-      draw_fn(eid, sn, new_transform, FORWARD(args)...);
-    }
-    else {
-      // not torch
-      draw_fn(eid, sn, transform, FORWARD(args)...);
-    }
+    Transform new_transform;
+    new_transform.translation = compute_subentity_position(eid);
+    new_transform.rotation = transform.rotation;
+    new_transform.scale = transform.scale;
+    draw_fn(eid, sn, new_transform, subentity);
   };
-
 
   //
   // Draw the cubes
-  registry.view<ShaderName, Transform, PointLight>().each(draw_pl);
-  //registry.view<ShaderName, Transform, EntityFromFILE>().each(draw_fn);
+  registry.view<ShaderName, Transform, SubEntity>().each(draw_pl);
+  registry.view<ShaderName, Transform, EntityFromFILE>().each(draw_fn);
 
   registry.view<Enemy, ShaderName, Transform, MeshRenderable>().each(enemy_drawfn);
   registry.view<ShaderName, Transform, MeshRenderable, Player>().each(player_drawfn);

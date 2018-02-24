@@ -594,13 +594,14 @@ LevelLoader::load_level(stlw::Logger &logger, EntityRegistry &registry, std::str
   auto tile_table = load_tileinfos(logger, area_config, registry);
 
   std::cerr << "loading lights ...\n";
+  auto const ambient = Color{get_vec3_or_abort(area_config, "ambient")};
   auto const directional_light_diffuse = Color{get_vec3_or_abort(area_config, "directional_light_diffuse")};
   auto const directional_light_specular = Color{get_vec3_or_abort(area_config, "directional_light_specular")};
   auto const directional_light_direction = get_vec3_or_abort(area_config, "directional_light_direction");
 
   Light light{directional_light_diffuse, directional_light_specular};
   DirectionalLight dlight{MOVE(light), directional_light_direction};
-  GlobalLight glight{MOVE(dlight)};
+  GlobalLight glight{ambient, MOVE(dlight)};
 
   auto bg_color = Color{get_vec3_or_abort(area_config, "background")};
   std::cerr << "yielding assets\n";

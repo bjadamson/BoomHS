@@ -101,13 +101,14 @@ struct DirectionalLight
 
 struct GlobalLight
 {
-  opengl::Color ambient = LOC::BLACK;
+  opengl::Color ambient;
 
   // TODO: could there be more than one instance of "directional light"?
   DirectionalLight directional;
 
-  explicit GlobalLight(DirectionalLight &&dl)
-    : directional(MOVE(dl))
+  explicit GlobalLight(opengl::Color const& amb, DirectionalLight &&dl)
+    : ambient(amb)
+    , directional(MOVE(dl))
   {
   }
 };

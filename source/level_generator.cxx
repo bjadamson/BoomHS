@@ -248,26 +248,57 @@ place_monsters(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_g
 void
 place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng)
 {
+  auto constexpr HAND_OFFSET = glm::vec3{0, 0, 0.15};
+
   auto const player_eid = find_player(registry);
-  auto const& ptransform = registry.get<Transform>(player_eid);
+  auto const handle_eid = registry.create();
+  {
+    auto &handle_transform = registry.assign<Transform>(handle_eid);
+
+    registry.assign<EntityFromFILE>(handle_eid);
+    auto &mesh = registry.assign<MeshRenderable>(handle_eid);
+    mesh.name = "T";
+
+    // mark the torch as a sub-entity for the player (torch position becomes relative to player)
+    auto &subentity = registry.assign<SubEntity>(handle_eid);
+    subentity.parent = player_eid;
+
+    auto &sn = registry.assign<ShaderName>(handle_eid);
+    sn.value = "3d_pos_normal_color";
+
+    auto &material = registry.assign<Material>(handle_eid);
+    material.ambient = glm::vec3{.48, .33, .33};
+    material.diffuse = glm::vec3{.48, .33, .33};
+    material.specular = glm::vec3{.48, .33, .33};
+    material.shininess = 1.0f;
+
+    handle_transform.translation = HAND_OFFSET;
+
+    handle_transform.rotate_degrees(-45.0f, X_UNIT_VECTOR);
+    handle_transform.scale = glm::vec3{0.25f};
+    handle_transform.scale.z = 1.0f;
+  }
 
   auto torch_eid = registry.create();
-  auto &torch_transform = registry.assign<Transform>(torch_eid);
+  registry.assign<EntityFromFILE>(torch_eid);
+
   auto &torch_light = registry.assign<PointLight>(torch_eid);
   torch_light.light.diffuse = LOC::YELLOW;
 
-  registry.assign<EntityFromFILE>(torch_eid);
-  registry.assign<CubeRenderable>(torch_eid);
+  auto &mesh = registry.assign<MeshRenderable>(torch_eid);
+  mesh.name = "O_no_normals";
 
   // mark the torch as a sub-entity for the player (torch position becomes relative to player)
   auto &subentity = registry.assign<SubEntity>(torch_eid);
-  subentity.parent = player_eid;
+  subentity.parent = handle_eid;
 
   auto &sn = registry.assign<ShaderName>(torch_eid);
   sn.value = "light";
 
-  torch_transform.translation += glm::vec3{0, 0.15, -0.15};
-  torch_transform.scale = glm::vec3{0.05f};
+  auto &torch_transform = registry.assign<Transform>(torch_eid);
+  torch_transform.translation += glm::vec3{0, 0.18, 0};;
+  torch_transform.scale = glm::vec3{0.25f};
+  torch_transform.scale.z = 1.0f;
 }
 
 } // ns anon
