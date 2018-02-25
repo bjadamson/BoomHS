@@ -245,60 +245,42 @@ place_monsters(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_g
   }
 }
 
-void
+EntityID
 place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng)
 {
-  auto constexpr HAND_OFFSET = glm::vec3{0, 0, 0.15};
+  auto eid = registry.create();
+  registry.assign<Torch>(eid);
 
-  auto const player_eid = find_player(registry);
-  auto const handle_eid = registry.create();
-  {
-    auto &handle_transform = registry.assign<Transform>(handle_eid);
+  auto &light = registry.assign<PointLight>(eid).light;
+  light.diffuse = LOC::YELLOW;
 
-    registry.assign<EntityFromFILE>(handle_eid);
-    auto &mesh = registry.assign<MeshRenderable>(handle_eid);
-    mesh.name = "T";
+  auto &flicker = registry.assign<LightFlicker>(eid);
+  flicker.base_speed = 1.0f;
+  flicker.current_speed = flicker.base_speed;
 
-    // mark the torch as a sub-entity for the player (torch position becomes relative to player)
-    auto &subentity = registry.assign<SubEntity>(handle_eid);
-    subentity.parent = player_eid;
+  flicker.colors[0] = LOC::RED;
+  flicker.colors[1] = LOC::WHITE;
+  flicker.colors[2] = LOC::ORANGE;
+  flicker.colors[3] = LOC::YELLOW;
 
-    auto &sn = registry.assign<ShaderName>(handle_eid);
-    sn.value = "3d_pos_normal_color";
+  auto &att = light.attenuation;
+  att.constant = 1.0f;
+  att.linear = 0.93f;
+  att.quadratic = 0.46f;
 
-    auto &material = registry.assign<Material>(handle_eid);
-    material.ambient = glm::vec3{.48, .33, .33};
-    material.diffuse = glm::vec3{.48, .33, .33};
-    material.specular = glm::vec3{.48, .33, .33};
-    material.shininess = 1.0f;
+  auto &torch_transform = registry.assign<Transform>(eid);
 
-    handle_transform.translation = HAND_OFFSET;
+  auto const pos = generate_monster_position(tilegrid, registry, rng);
+  torch_transform.translation = glm::vec3{pos.x, 0.5, pos.y};
+  std::cerr << "torchlight pos: '" << torch_transform.translation << "'\n";
 
-    handle_transform.rotate_degrees(-45.0f, X_UNIT_VECTOR);
-    handle_transform.scale = glm::vec3{0.25f};
-    handle_transform.scale.z = 1.0f;
-  }
-
-  auto torch_eid = registry.create();
-  registry.assign<EntityFromFILE>(torch_eid);
-
-  auto &torch_light = registry.assign<PointLight>(torch_eid);
-  torch_light.light.diffuse = LOC::YELLOW;
-
-  auto &mesh = registry.assign<MeshRenderable>(torch_eid);
+  auto &mesh = registry.assign<MeshRenderable>(eid);
   mesh.name = "O_no_normals";
 
-  // mark the torch as a sub-entity for the player (torch position becomes relative to player)
-  auto &subentity = registry.assign<SubEntity>(torch_eid);
-  subentity.parent = handle_eid;
-
-  auto &sn = registry.assign<ShaderName>(torch_eid);
+  auto &sn = registry.assign<ShaderName>(eid);
   sn.value = "light";
 
-  auto &torch_transform = registry.assign<Transform>(torch_eid);
-  torch_transform.translation += glm::vec3{0, 0.18, 0};;
-  torch_transform.scale = glm::vec3{0.25f};
-  torch_transform.scale.z = 1.0f;
+  return eid;
 }
 
 } // ns anon
@@ -402,11 +384,6 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
   std::cerr << "placing monsters ...\n";
   place_monsters(tilegrid, registry, rng);
 
-  std::cerr << "placing torch ...\n";
-  place_torch(tilegrid, registry, rng);
-
-  std::cerr << "finished!\n";
-
   // This seems hacky?
   return (*rooms).starting_position;
 }
@@ -428,9 +405,14 @@ make_leveldata(LevelConfig const& levelconfig, EntityRegistry &registry,
   std::vector<RiverInfo> rivers;
   auto const starting_pos = place_rivers_rooms_and_stairs(levelconfig.stairconfig, rivers, tilegrid,
       rng, registry);
+
+  std::cerr << "placing torch ...\n";
+  auto const torch_eid = place_torch(tilegrid, registry, rng);
+
+  std::cerr << "finished!\n";
   std::cerr << "======================================\n";
 
-  return LevelData{MOVE(tilegrid), MOVE(ttable), starting_pos, MOVE(rivers)};
+  return LevelData{MOVE(tilegrid), MOVE(ttable), starting_pos, MOVE(rivers), torch_eid};
 }
 
 } // ns boomhs::level_generator

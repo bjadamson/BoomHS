@@ -57,6 +57,14 @@ public:
     return registry_.has<T>(eid);
   }
 
+  template<typename T>
+  void
+  remove(EntityID const eid)
+  {
+    assert(eid != EntityIDMAX);
+    registry_.remove<T>(eid);
+  }
+
   template<typename ...Args>
   auto
   view()
@@ -93,6 +101,8 @@ public:
     assert(registry_.has<T>(eid_));
     return registry_.get<T>(eid_);
   }
+
+  auto eid() const { return eid_; }
 
   void
   set_eid(EntityID const eid)

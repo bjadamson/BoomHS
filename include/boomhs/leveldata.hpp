@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/level_loader.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/river_generator.hpp>
 #include <boomhs/tile.hpp>
 #include <boomhs/tilegrid.hpp>
@@ -25,11 +26,13 @@ class LevelData
   TilePosition const startpos_;
 
   std::vector<RiverInfo> rivers_;
+  EntityID const torch_eid_;
 
   void set_tile(TilePosition const&, TileType const&);
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
-  LevelData(TileGrid &&, TileSharedInfoTable &&, TilePosition const&, std::vector<RiverInfo> &&);
+  LevelData(TileGrid &&, TileSharedInfoTable &&, TilePosition const&, std::vector<RiverInfo> &&,
+      EntityID);
 
   void set_floor(TilePosition const&);
   void set_river(TilePosition const&);
@@ -62,6 +65,8 @@ public:
 
   auto const&
   rivers() const { return rivers_; }
+
+  auto torch_eid() const { return torch_eid_; }
 
   template<typename FN>
   void

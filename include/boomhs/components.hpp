@@ -17,16 +17,21 @@
 namespace boomhs
 {
 
-struct SubEntity
+struct Torch
 {
-  EntityID parent = EntityIDMAX;
+  bool is_pickedup = false;
+  opengl::Attenuation default_attenuation{1.0f, 0.93f, 0.46f};
+};
+
+struct LightFlicker
+{
+  float base_speed = 0.0f;
+  float current_speed = 0.0f;
+
+  std::array<opengl::Color, 4> colors;
 };
 
 struct EntityFromFILE
-{
-};
-
-struct TargetSelector
 {
 };
 

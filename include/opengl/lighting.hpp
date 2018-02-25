@@ -1,8 +1,10 @@
 #pragma once
-#include <array>
+#include <opengl/colors.hpp>
 #include <opengl/glew.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
+
+#include <array>
 
 namespace opengl
 {
@@ -14,8 +16,19 @@ struct Attenuation
   float quadratic;
 };
 
+Attenuation
+operator*(Attenuation const&, float);
+
+Attenuation&
+operator*=(Attenuation &, float);
+
+Attenuation
+operator/(Attenuation const&, float);
+
+Attenuation& operator/=(Attenuation &, float const);
+
 // https://learnopengl.com/#!Lighting/Light-casters
-static auto constexpr ATTENUATION_VALUE_TABLE = stlw::make_array<Attenuation>(
+static constexpr auto ATTENUATION_VALUE_TABLE = stlw::make_array<Attenuation>(
     Attenuation{1.0, 0.7, 1.8},
     Attenuation{1.0, 0.35, 0.44},
     Attenuation{1.0, 0.22, 0.20},
@@ -29,9 +42,8 @@ static auto constexpr ATTENUATION_VALUE_TABLE = stlw::make_array<Attenuation>(
     Attenuation{1.0, 0.007, 0.0002},
     Attenuation{1.0, 0.0014, 0.000007}
     );
-
 // https://learnopengl.com/#!Lighting/Light-casters
-static auto constexpr ATTENUATION_DISTANCE_STRINGS =
+static constexpr auto ATTENUATION_DISTANCE_STRINGS =
     "7\0"
     "13\0"
     "20\0"
@@ -57,21 +69,11 @@ struct Material
   MOVE_DEFAULT(Material);
   COPY_DEFAULT(Material);
 
-  Material(glm::vec3 const& amb, glm::vec3 const& diff, glm::vec3 const& spec, float const shiny)
-    : ambient(amb)
-    , diffuse(diff)
-    , specular(spec)
-    , shininess(shiny)
-  {
-  }
+  Material(glm::vec3 const&, glm::vec3 const&, glm::vec3 const&, float);
 
   //
   // The alpha value for the colors is truncated.
-  Material(opengl::Color const& amb, opengl::Color const& diff, opengl::Color const& spec,
-      float const shiny)
-    : Material(amb.rgb(), diff.rgb(), spec.rgb(), shiny)
-  {
-  }
+  Material(opengl::Color const&, opengl::Color const&, opengl::Color const&, float const);
 };
 
 struct Light
@@ -106,11 +108,7 @@ struct GlobalLight
   // TODO: could there be more than one instance of "directional light"?
   DirectionalLight directional;
 
-  explicit GlobalLight(opengl::Color const& amb, DirectionalLight &&dl)
-    : ambient(amb)
-    , directional(MOVE(dl))
-  {
-  }
+  explicit GlobalLight(opengl::Color const&, DirectionalLight &&);
 };
 
 } // ns opengl

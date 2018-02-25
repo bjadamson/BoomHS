@@ -4,11 +4,12 @@ namespace boomhs
 {
 
 LevelData::LevelData(TileGrid &&td, TileSharedInfoTable &&ttable, TilePosition const& start_pos,
-    std::vector<RiverInfo> &&rivers)
+    std::vector<RiverInfo> &&rivers, EntityID const torch_eid)
   : tilegrid_(MOVE(td))
   , ttable_(MOVE(ttable))
   , startpos_(start_pos)
   , rivers_(MOVE(rivers))
+  , torch_eid_(torch_eid)
 {
 }
 

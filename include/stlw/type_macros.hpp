@@ -36,6 +36,10 @@
   CLASSNAME(CLASSNAME const &) = default;                                                          \
   CLASSNAME &operator=(CLASSNAME const &) = default;
 
+#define COPYMOVE_DEFAULT(CLASSNAME)                                                                \
+  COPY_DEFAULT(CLASSNAME)                                                                          \
+  MOVE_DEFAULT(CLASSNAME)
+
 #define MOVE_ONLY(CLASSNAME)                                                                       \
   NO_COPY(CLASSNAME)                                                                               \
   MOVE_DEFAULT(CLASSNAME)

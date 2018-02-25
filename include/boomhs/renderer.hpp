@@ -34,6 +34,11 @@ class WorldObject;
 struct ZoneState;
 } // ns boomhs
 
+namespace stlw
+{
+class float_generator;
+} // ns stlw
+
 namespace boomhs
 {
 
@@ -70,7 +75,7 @@ void
 draw_local_axis(RenderState &, EntityRegistry &, glm::vec3 const &);
 
 void
-draw_entities(RenderState &, window::FrameTime const&);
+draw_entities(RenderState &, stlw::float_generator &, window::FrameTime const&);
 
 void
 draw_targetreticle(RenderState &, window::FrameTime const&);

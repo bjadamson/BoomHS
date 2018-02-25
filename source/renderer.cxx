@@ -15,6 +15,7 @@
 #include <window/timer.hpp>
 
 #include <stlw/math.hpp>
+#include <stlw/random.hpp>
 #include <stlw/log.hpp>
 #include <iostream>
 
@@ -448,7 +449,7 @@ draw_local_axis(RenderState &rstate, EntityRegistry &registry, glm::vec3 const &
 }
 
 void
-draw_entities(RenderState &rstate, FrameTime const& ft)
+draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& ft)
 {
   auto const& es = rstate.es;
   auto &zs = rstate.zs;
@@ -471,7 +472,7 @@ draw_entities(RenderState &rstate, FrameTime const& ft)
     draw(rstate, transform, sp, handle, eid, registry);
   };
 
-  auto const player_drawfn = [&camera, &draw_fn](auto &&...args)
+  auto const player_drawfn = [&camera, &draw_fn](auto &&... args)
   {
     if (CameraMode::FPS == camera.mode()) {
       return;
@@ -486,52 +487,22 @@ draw_entities(RenderState &rstate, FrameTime const& ft)
     draw_fn(eid, FORWARD(args)...);
   };
 
-  auto const compute_subentity_position = [&registry](EntityID eid)
+  auto const draw_torch = [&draw_fn, &rng](auto eid, auto &sn, auto &transform, auto &&... args)
   {
-    // copy the transform
-    Transform transform = registry.get<Transform>(eid);
+    // randomize the position slightly
+    auto static constexpr DISPLACEMENT_MAX = 0.015f;
+    auto copy_transform = transform;
+    copy_transform.translation.x += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
+    copy_transform.translation.y += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
+    copy_transform.translation.z += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
 
-    int count = 0;
-    while (registry.has<SubEntity>(eid)) {
-      auto const& sub_entity = registry.get<SubEntity>(eid);
-      eid = sub_entity.parent;
-      assert(eid != EntityIDMAX);
-
-      transform.translation += registry.get<Transform>(eid).translation;
-      ++count;
-    }
-    return transform.translation;
-  };
-
-  auto const draw_pl = [&](auto eid, auto &sn, auto &transform, auto &subentity)
-  {
-    auto const parent_eid = subentity.parent;
-    assert(parent_eid != EntityIDMAX);
-    auto const player_pos = registry.get<Transform>(parent_eid).translation;
-
-    if (registry.has<PointLight>(eid)) {
-      // torch
-      auto constexpr FLICKER_SPEED = 27.5f;
-      float const xxx = FLICKER_SPEED * ft.since_start_seconds();
-      float const yyy = std::cos(xxx);
-
-      auto &pointlight = registry.get<PointLight>(eid);
-      pointlight.light.diffuse = yyy > 0.0f
-        ? (std::abs(yyy) > 0.5f ? LOC::RED : LOC::WHITE)
-        : (std::abs(yyy) > 0.5f ? LOC::ORANGE : LOC::YELLOW);
-    }
-
-    Transform new_transform;
-    new_transform.translation = compute_subentity_position(eid);
-    new_transform.rotation = transform.rotation;
-    new_transform.scale = transform.scale;
-    draw_fn(eid, sn, new_transform, subentity);
+    draw_fn(eid, sn, transform, FORWARD(args)...);
   };
 
   //
   // Draw the cubes
-  registry.view<ShaderName, Transform, SubEntity>().each(draw_pl);
   registry.view<ShaderName, Transform, EntityFromFILE>().each(draw_fn);
+  registry.view<ShaderName, Transform, PointLight>().each(draw_torch);
 
   registry.view<Enemy, ShaderName, Transform, MeshRenderable>().each(enemy_drawfn);
   registry.view<ShaderName, Transform, MeshRenderable, Player>().each(player_drawfn);
