@@ -178,14 +178,11 @@ update_torchflicker(LevelState &lstate, EntityRegistry &registry, stlw::float_ge
   auto const& ldata = lstate.level_data;
   auto const eid = ldata.torch_eid();
 
-  auto &flicker = registry.get<LightFlicker>(eid);
-  float const xxx = std::fmod((float)flicker.current_speed * ft.since_start_seconds(), 2.0);
-  float const adj = xxx - 1.0f; // get in range [-1, 1]
-
   auto &pointlight = registry.get<PointLight>(eid);
-  pointlight.light.diffuse = adj > 0.0f
-    ? (std::abs(adj) > 0.5f ? flicker.colors[0] : flicker.colors[1])
-    : (std::abs(adj) > 0.5f ? flicker.colors[2] : flicker.colors[3]);
+
+  auto const v = std::sin(ft.since_start_millis() * M_PI);
+  auto &flicker = registry.get<LightFlicker>(eid);
+  pointlight.light.diffuse = Color::lerp(flicker.colors[0], flicker.colors[1], v);
 
   auto &torch = registry.get<Torch>(eid);
   auto &torch_transform = registry.get<Transform>(eid);
@@ -220,8 +217,8 @@ update_torchflicker(LevelState &lstate, EntityRegistry &registry, stlw::float_ge
   //static float constexpr QUADRATIC = LINEAR * LINEAR;
   //attenuate(attenuation.quadratic, QUADRATIC, torch.default_attenuation.quadratic);
 
-  static float constexpr FLICKER = 0.24f;
-  attenuate(flicker.current_speed, FLICKER, flicker.base_speed);
+  static float constexpr SPEED_DELTA = 0.24f;
+  attenuate(flicker.current_speed, SPEED_DELTA, flicker.base_speed);
 }
 
 void
@@ -346,7 +343,7 @@ struct Engine
 
   // We mark this as no-move/copy so the registries data never moves, allowing the rest of the
   // program to store references into the data owned by registries.
-  NO_COPY_AND_NO_MOVE(Engine);
+  NO_COPYMOVE(Engine);
 
   auto dimensions() const { return window.get_dimensions(); }
 };

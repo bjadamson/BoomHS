@@ -18,7 +18,7 @@ struct StairGenConfig
   int const floor_number;
   int const stairs_perfloor;
 
-  NO_COPY_AND_NO_MOVE(StairGenConfig);
+  NO_COPYMOVE(StairGenConfig);
 };
 
 } // ns boomhs

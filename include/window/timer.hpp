@@ -42,7 +42,7 @@ class Clock
   ticks_t now() const { return SDL_GetPerformanceCounter(); }
   ticks_t since_start() const { return now() - start_; }
 public:
-  NO_COPY_AND_NO_MOVE(Clock);
+  NO_COPYMOVE(Clock);
   Clock()
     : frequency_(SDL_GetPerformanceFrequency())
     , start_(now())

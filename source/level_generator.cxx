@@ -252,9 +252,7 @@ place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_gene
   flicker.current_speed = flicker.base_speed;
 
   flicker.colors[0] = LOC::RED;
-  flicker.colors[1] = LOC::WHITE;
-  flicker.colors[2] = LOC::ORANGE;
-  flicker.colors[3] = LOC::YELLOW;
+  flicker.colors[1] = LOC::YELLOW;
 
   auto &att = pointlight.attenuation;
   att.constant = 1.0f;

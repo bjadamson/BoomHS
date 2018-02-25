@@ -14,6 +14,12 @@ class Color
   std::array<float, 4> colors_ = stlw::make_array<float>(1.0f, 1.0f, 1.0f, 1.0f);
 public:
 
+  static Color
+  lerp(Color const& a, Color const& b, float const dt)
+  {
+    return Color{glm::lerp(a.rgba(), b.rgba(), dt)};
+  }
+
   Color() = default;
   explicit constexpr Color(float const r, float const g, float const b, float const a)
     : colors_(stlw::make_array<float>(r, g, b, a))
@@ -67,7 +73,7 @@ public:
     return glm::vec3{r(), g(), b()};
   }
 
-  auto
+  glm::vec4
   rgba() const
   {
     return glm::vec4{r(), g(), b(), a()};

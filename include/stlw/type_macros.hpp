@@ -17,7 +17,7 @@
   CLASSNAME(CLASSNAME &&) = delete;                                                                \
   NO_MOVE_ASSIGN(CLASSNAME);
 
-#define NO_COPY_AND_NO_MOVE(CLASSNAME)                                                             \
+#define NO_COPYMOVE(CLASSNAME)                                                                     \
   NO_COPY(CLASSNAME)                                                                               \
   NO_MOVE(CLASSNAME)
 
@@ -146,7 +146,7 @@ public:
   }
   ~DestroyFN() { this->fn_(); }
 
-  NO_COPY_AND_NO_MOVE(DestroyFN);
+  NO_COPYMOVE(DestroyFN);
 };
 
 } // ns impl
@@ -158,7 +158,7 @@ using ImplicitelyCastableMovableWrapper = impl::ICMW<T, DF>;
 #define ON_SCOPE_EXIT_CONSTRUCT_IN_PLACE(VAR, fn)                                                  \
   ::stlw::impl::DestroyFN<decltype((fn))> const VAR{fn};
 #define ON_SCOPE_EXIT_MOVE_EXPR_INTO_VAR(VAR, expr)                                                \
-  auto TEMPORARY##VAR = expr;                                                                \
+  auto TEMPORARY##VAR = expr;                                                                      \
   ON_SCOPE_EXIT_CONSTRUCT_IN_PLACE(VAR, MOVE(TEMPORARY##VAR))
 
 #define ON_SCOPE_EXIT_CONCAT(pre, VAR, expr) ON_SCOPE_EXIT_MOVE_EXPR_INTO_VAR(pre##VAR, (expr))
