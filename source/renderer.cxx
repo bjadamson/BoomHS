@@ -15,6 +15,7 @@
 #include <window/timer.hpp>
 
 #include <stlw/math.hpp>
+#include <stlw/random.hpp>
 #include <stlw/log.hpp>
 #include <iostream>
 
@@ -234,24 +235,15 @@ draw_3dlit_shape(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgr
 
 void
 draw_3dlightsource(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &sp,
-  DrawInfo const& dinfo, EntityID const entity, EntityRegistry &registry,
-  std::vector<EntityID> const& pointlights)
+  DrawInfo const& dinfo, EntityID const entity, EntityRegistry &registry)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
 
   auto &logger = es.logger;
-  PointLight *ptr = nullptr;
-  FOR(i, pointlights.size()) {
-    auto const e = pointlights[i];
-    if (entity == e) {
-      ptr = &registry.get<PointLight>(e);
-      break;
-    }
-  }
-  assert(nullptr != ptr);
+  auto &pointlight = registry.get<PointLight>(entity);
 
-  auto const diffuse = ptr->light.diffuse;
+  auto const diffuse = pointlight.light.diffuse;
   sp.set_uniform_color_3fv(logger, "u_lightcolor", diffuse);
   draw_3dshape(rstate, model_matrix, sp, dinfo);
 }
@@ -280,8 +272,7 @@ draw(RenderState &rstate, Transform const& transform, ShaderProgram &sp,
   auto const model_matrix = transform.model_matrix();
   if (is_lightsource) {
     assert(is_lightsource);
-    auto const pointlights = find_pointlights(registry);
-    draw_3dlightsource(rstate, model_matrix, sp, dinfo, entity, registry, pointlights);
+    draw_3dlightsource(rstate, model_matrix, sp, dinfo, entity, registry);
     return;
   }
   // Only true for now, old code had this set.
@@ -458,7 +449,7 @@ draw_local_axis(RenderState &rstate, EntityRegistry &registry, glm::vec3 const &
 }
 
 void
-draw_entities(RenderState &rstate)
+draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& ft)
 {
   auto const& es = rstate.es;
   auto &zs = rstate.zs;
@@ -471,46 +462,60 @@ draw_entities(RenderState &rstate)
 
   auto &ldata = zs.level_state;
   auto &camera = ldata.camera;
+  auto &player = ldata.player;
 
-  auto const draw_fn = [&entity_handles, &sps, &rstate, &registry](auto entity, auto &sn,
-      auto &transform, auto &&...)
+  auto const draw_fn = [&entity_handles, &sps, &rstate, &registry](auto eid, auto &sn,
+      auto &transform, auto &is_visible, auto &&...)
   {
-    auto &shader_ref = sps.ref_sp(sn.value);
-    auto &handle = entity_handles.lookup(entity);
-    draw(rstate, transform, shader_ref, handle, entity, registry);
+    if (!is_visible.value) {
+      return;
+    }
+    auto &sp = sps.ref_sp(sn.value);
+    auto &handle = entity_handles.lookup(eid);
+    draw(rstate, transform, sp, handle, eid, registry);
   };
 
-  auto const player_drawfn = [&camera, &draw_fn](auto &&...args)
+  auto const player_drawfn = [&camera, &draw_fn](auto &&... args)
   {
     if (CameraMode::FPS == camera.mode()) {
       return;
     }
-    draw_fn(std::forward<decltype(args)>(args)...);
+    draw_fn(FORWARD(args)...);
   };
-  auto const enemy_drawfn = [&draw_fn](auto entity, auto &enemy, auto &&...args)
+
+  auto const draw_torch = [&draw_fn, &rng](auto eid, auto &sn, auto &transform, auto &&... args)
   {
-    if (!enemy.is_visible) {
-      return;
-    }
-    draw_fn(entity, std::forward<decltype(args)>(args)...);
+    // randomize the position slightly
+    auto static constexpr DISPLACEMENT_MAX = 0.015f;
+    auto copy_transform = transform;
+    copy_transform.translation.x += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
+    copy_transform.translation.y += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
+    copy_transform.translation.z += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
+
+    draw_fn(eid, sn, transform, FORWARD(args)...);
   };
 
   //
-  // Draw the cubes
-  registry.view<ShaderName, Transform, CubeRenderable>().each(draw_fn);
-  registry.view<ShaderName, Transform, MeshRenderable, EntityFromFILE>().each(draw_fn);
+  // Render everything loaded form level file.
+  registry.view<ShaderName, Transform, IsVisible, EntityFromFILE>().each(draw_fn);
 
-  registry.view<Enemy, ShaderName, Transform, MeshRenderable>().each(enemy_drawfn);
-  registry.view<ShaderName, Transform, MeshRenderable, Player>().each(player_drawfn);
+  // torch
+  registry.view<ShaderName, Transform, IsVisible, Torch>().each(draw_torch);
 
-  // Draw the tiles
-  registry.view<ShaderName, Transform, MeshRenderable, TileComponent>().each(draw_fn);
+  // enemies
+  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, EnemyData>().each(draw_fn);
+
+  // player
+  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, Player>().each(player_drawfn);
+
+  // tiles
+  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, TileComponent>().each(draw_fn);
 
   if (es.draw_skybox) {
-    auto const draw_skybox = [&](auto entity, auto &sn, auto &transform, auto &) {
-      draw_fn(entity, sn, transform);
+    auto const draw_skybox = [&](auto eid, auto &sn, auto &transform, auto &&... args) {
+      draw_fn(eid, sn, transform, FORWARD(args)...);
     };
-    registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
+    registry.view<ShaderName, Transform, IsVisible, SkyboxRenderable>().each(draw_skybox);
   }
 }
 
@@ -544,7 +549,7 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
   };
   auto const draw_tile = [&](auto const& tile_pos) {
     auto const& tile = tilegrid.data(tile_pos);
-    if (!tilegrid_state.reveal && !tile.is_visible) {
+    if (!tilegrid_state.reveal && !tile.is_visible(registry)) {
       return;
     }
     // This offset causes the tile's to appear in the "middle"

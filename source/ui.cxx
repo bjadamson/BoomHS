@@ -388,11 +388,26 @@ show_pointlight_window(UiState &ui, EntityRegistry &registry)
     ImGui::InputFloat("constant:", &attenuation.constant);
     ImGui::InputFloat("linear:", &attenuation.linear);
     ImGui::InputFloat("quadratic:", &attenuation.quadratic);
+
+    if (registry.has<LightFlicker>(entity)) {
+      ImGui::Separator();
+      ImGui::Text("Light Flicker");
+
+      auto &flicker = registry.get<LightFlicker>(entity);
+      ImGui::InputFloat("speed:", &flicker.current_speed);
+
+      FOR(i, flicker.colors.size()) {
+        auto &light = flicker.colors[i];
+        ImGui::ColorEdit4("color:", light.data(), ImGuiColorEditFlags_Float);
+        ImGui::Separator();
+      }
+    }
   };
   if (ImGui::Begin("Pointlight Editor")) {
     auto &selected_pointlight = ui.selected_pointlight;
     auto pairs = collect_all<PointLight, Transform>(registry);
     display_combo_for_entities<>("PointLight:", &selected_pointlight, registry, pairs);
+    ImGui::Separator();
 
     auto const pointlights = find_pointlights(registry);
     display_pointlight(pointlights[selected_pointlight]);

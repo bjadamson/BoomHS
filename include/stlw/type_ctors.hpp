@@ -1,6 +1,7 @@
 #pragma once
-#include <array>
+#include <stlw/type_macros.hpp>
 #include <stlw/types.hpp>
+#include <array>
 #include <vector>
 
 namespace stlw
@@ -10,7 +11,7 @@ template <typename T, size_t N, class... Args>
 constexpr auto
 make_array(Args &&... args)
 {
-  return std::array<T, N>{{std::forward<Args>(args)...}};
+  return std::array<T, N>{{FORWARD(args)...}};
 }
 
 template <typename T, class... Args>
@@ -18,7 +19,7 @@ constexpr auto
 make_array(Args &&... args)
 {
   auto constexpr N = sizeof...(args);
-  return make_array<T, N>(std::forward<Args>(args)...);
+  return make_array<T, N>(FORWARD(args)...);
 }
 
 template <typename T>

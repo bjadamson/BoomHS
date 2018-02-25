@@ -1,7 +1,8 @@
 #pragma once
 #include <utility>
 
-#define MOVE std::move
+#define MOVE(a) std::move(a)
+#define FORWARD(a) std::forward<decltype(a)>(a)
 
 // BEGIN Class-building macros
 #define NO_COPY_ASSIGN(CLASSNAME) CLASSNAME &operator=(CLASSNAME const &) = delete;
@@ -35,6 +36,10 @@
   CLASSNAME(CLASSNAME const &) = default;                                                          \
   CLASSNAME &operator=(CLASSNAME const &) = default;
 
+#define COPYMOVE_DEFAULT(CLASSNAME)                                                                \
+  COPY_DEFAULT(CLASSNAME)                                                                          \
+  MOVE_DEFAULT(CLASSNAME)
+
 #define MOVE_ONLY(CLASSNAME)                                                                       \
   NO_COPY(CLASSNAME)                                                                               \
   MOVE_DEFAULT(CLASSNAME)
@@ -61,14 +66,14 @@
   template <typename... P>                                                                         \
   decltype(auto) FN_NAME(P &&... p)                                                                \
   {                                                                                                \
-    return FUNCTION_TO_WRAP(std::forward<P>(p)...);                                                \
+    return FUNCTION_TO_WRAP(FORWARD(p)...);                                                        \
   }
 
 #define DEFINE_STATIC_WRAPPER_FUNCTION(FN_NAME, FUNCTION_TO_WRAP)                                  \
   template <typename... P>                                                                         \
   static decltype(auto) FN_NAME(P &&... p)                                                         \
   {                                                                                                \
-    return FUNCTION_TO_WRAP(std::forward<P>(p)...);                                                \
+    return FUNCTION_TO_WRAP(FORWARD(p)...);                                                        \
   }
 // END Function-defining macros
 
@@ -136,7 +141,7 @@ class DestroyFN
 
 public:
   DestroyFN(FN &&fn)
-      : fn_(std::forward<FN>(fn))
+      : fn_(FORWARD(fn))
   {
   }
   ~DestroyFN() { this->fn_(); }

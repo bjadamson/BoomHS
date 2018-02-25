@@ -32,20 +32,11 @@ set(IMGUI_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/include")
 set(CPPTOML_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/cpptoml/include")
 
 ## DEFINITIONS
-file(GLOB INTERNAL_INCLUDE_DIRS include
-  external/backward/include
-  external/entt/include
-  external/expected/include
-  external/hana/include
-  external/fmt/include
-  external/imgui/include
-  external/spdlog/include
-  external/tinyobj/include)
+file(GLOB INTERNAL_INCLUDE_DIRS include external/**/include)
 
 file(GLOB_RECURSE GLOBBED_SOURCES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/backward/source/*.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/source/*.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/**/*.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cxx
   )
 

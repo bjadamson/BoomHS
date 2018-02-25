@@ -19,6 +19,7 @@ public:
   Component&
   assign(EntityID const eid, Args&&... args)
   {
+    assert(!has<Component>(eid));
     return registry_.assign<Component>(eid, std::forward<Args>(args)...);
   }
 
@@ -54,6 +55,14 @@ public:
   {
     assert(eid != EntityIDMAX);
     return registry_.has<T>(eid);
+  }
+
+  template<typename T>
+  void
+  remove(EntityID const eid)
+  {
+    assert(eid != EntityIDMAX);
+    registry_.remove<T>(eid);
   }
 
   template<typename ...Args>
@@ -92,6 +101,8 @@ public:
     assert(registry_.has<T>(eid_));
     return registry_.get<T>(eid_);
   }
+
+  auto eid() const { return eid_; }
 
   void
   set_eid(EntityID const eid)

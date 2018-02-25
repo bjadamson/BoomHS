@@ -178,22 +178,23 @@ update_visible_tiles(TileGrid &tilegrid, WorldObject const& player, bool const r
     bool const is_wall = tile.type == TileType::WALL;
     if (found_wall) {
       // Can't see tile's behind a wall.
-      tile.is_visible = false;
+      tilegrid.set_isvisible(tile, false);
     }
     else if (!is_wall) {
-      tile.is_visible = true;
+      tilegrid.set_isvisible(tile, true);
     } else if (is_wall) {
       found_wall = true;
-      tile.is_visible = true;
+      tilegrid.set_isvisible(tile, true);
     } else {
-      tile.is_visible = false;
+      tilegrid.set_isvisible(tile, false);
     }
   };
 
   // Collect all the visible tiles for the player
   auto const fn = [&](TilePosition const& pos) {
     if (reveal_tilegrid) {
-      tilegrid.data(pos).is_visible = true;
+      auto &tile = tilegrid.data(pos);
+      tilegrid.set_isvisible(tile, true);
     } else {
       auto const& wp = player.world_position();
 

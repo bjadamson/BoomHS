@@ -19,6 +19,7 @@ float constexpr SCALE_FACTOR = 0.20f;
 float constexpr ZOOM_FACTOR = 0.2f;
 
 using namespace boomhs;
+using namespace opengl;
 using namespace window;
 
 namespace {
@@ -138,6 +139,87 @@ move_down(GameState &state, FrameTime const& ft)
   auto &lstate = zm.active().level_state;
   auto &player = lstate.player;
   move_ontilegrid(state, &WorldObject::world_down, player, ft);
+}
+
+// Picks up the torch, if the player is on the same tile as the torch.
+void
+try_pickup_torch(GameState &state, FrameTime const& ft)
+{
+  auto &zm = state.zone_manager;
+  auto &active = zm.active();
+  auto const& lstate = active.level_state;
+  auto const& ldata = lstate.level_data;
+
+  auto &registry = active.registry;
+  auto const eid = ldata.torch_eid();
+
+  auto const& transform = registry.get<Transform>(eid);
+  auto const torch_pos = transform.translation;
+  auto const torch_tpos = TilePosition::from_floats_truncated(torch_pos.x, torch_pos.z);
+
+  auto const& player = lstate.player;
+  auto const player_pos = player.world_position();
+  auto const player_tpos = TilePosition::from_floats_truncated(player_pos.x, player_pos.z);
+  bool const same_tile = torch_tpos == player_tpos;
+  if (same_tile) {
+
+    Torch &torch = registry.get<Torch>(eid);
+    torch.is_pickedup = true;
+
+    auto &isv = registry.get<IsVisible>(eid);
+    isv.value = false;
+
+    auto &pointlight = registry.get<PointLight>(eid);
+    pointlight.light.attenuation /= 3.0f;
+
+    std::cerr << "You have picked up a torch.\n";
+  }
+}
+
+void
+drop_torch(GameState &state, FrameTime const& ft)
+{
+  auto &zm = state.zone_manager;
+  auto &active = zm.active();
+  auto const& lstate = active.level_state;
+  auto const& ldata = lstate.level_data;
+
+  auto &registry = active.registry;
+  auto const eid = ldata.torch_eid();
+
+  auto &transform = registry.get<Transform>(eid);
+  transform.translation.y = 0.5f;
+
+  Torch &torch = registry.get<Torch>(eid);
+  torch.is_pickedup = false;
+
+  auto &isv = registry.get<IsVisible>(eid);
+  isv.value = true;
+
+  auto &pointlight = registry.get<PointLight>(eid);
+  pointlight.light.attenuation *= 3.0f;
+
+  std::cerr << "You have droppped a torch.\n";
+}
+
+void
+toggle_torch(GameState &state, FrameTime const& ft)
+{
+  auto &zm = state.zone_manager;
+  auto &active = zm.active();
+  auto &registry = active.registry;
+
+  auto const& lstate = active.level_state;
+  auto const& ldata = lstate.level_data;
+  auto const eid = ldata.torch_eid();
+  Torch &torch = registry.get<Torch>(eid);
+
+  if (torch.is_pickedup) {
+    drop_torch(state, ft);
+  }
+  else {
+    try_pickup_torch(state, ft);
+  }
 }
 
 void
@@ -282,6 +364,11 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
         else {
           nearby_targets.cycle_backward();
         }
+      }
+      break;
+    case SDLK_SPACE:
+      {
+        toggle_torch(state, ft);
       }
       break;
     // scaling

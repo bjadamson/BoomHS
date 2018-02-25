@@ -2,6 +2,7 @@ title = "Level 0"
 background = [0.0, 0.0, 0.0]
 camera_spherical_coords = [2.56, 6.6446330, 56.379040]
 
+ambient = [0.0, 0.0, 0.0]
 directional_light_diffuse = [0.0, 0.0, 0.0]
 directional_light_specular = [0.0, 0.0, 0.0]
 directional_light_direction = [-1.0, 0.0, -1.0]
@@ -175,9 +176,21 @@ normals = true
 uvs = false
 
 [[meshes]]
+name = "O_no_normals"
+colors = false
+normals = false
+uvs = false
+
+[[meshes]]
 name = "T"
 colors = true
 normals = true
+uvs = false
+
+[[meshes]]
+name = "T_no_normals"
+colors = false
+normals = false
 uvs = false
 
 [[meshes]]
@@ -246,28 +259,24 @@ shininess = 1.0
 pos = [5.0, 5.0, 5.0]
 shader = "light"
 geometry = "cube"
-pointlight = [0.0, 1.0, 0.0]
+pointlight = [0.0, 0.0, 0.0]
+scale = [0.4, 0.4, 0.4]
 
 # LIGHT #1
 [[entity]]
 pos = [35.0, 5.0, 35.0]
 shader = "light"
 geometry = "cube"
-pointlight = [1.0, 0.0, 0.0]
+pointlight = [0.0, 0.0, 0.0]
+scale = [0.4, 0.4, 0.4]
 
 # LIGHT #2
 [[entity]]
 pos = [5.0, 5.0, 35.0]
 shader = "light"
 geometry = "cube"
-pointlight = [0.5, 0.2, 0.7]
-
-# LIGHT #3
-[[entity]]
-pos = [35.0, 5.0, 5.0]
-shader = "light"
-geometry = "cube"
-pointlight = [0.0, 0.0, 1.0]
+pointlight = [0.0, 0.0, 0.0]
+scale = [0.4, 0.4, 0.4]
 
 ###################################################################################################
 [[entity]]
@@ -287,7 +296,7 @@ pos = [20.0, 0.0, 20.0]
 shader = "3dtexture"
 geometry = "mesh:house"
 texture = "TextureAtlas"
-scale = [0.2, 0.2, 0.2]
+scale = [0.4, 0.4, 0.4]
 
 [[entity]]
 pos = [-3.0, 0.0, -5.0]

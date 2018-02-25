@@ -22,6 +22,8 @@ TileGrid::TileGrid(size_t const width, size_t const height, EntityRegistry &regi
     tile.eid = registry_.create();
     registry_.assign<Transform>(tile.eid);
     registry_.assign<TileComponent>(tile.eid);
+    auto &isv = registry_.assign<IsVisible>(tile.eid);
+    isv.value = true;
     tiles_.emplace_back(MOVE(tile));
   }
 }
@@ -88,6 +90,18 @@ TileGrid::assign_river(Tile &tile, glm::vec2 const& flow_dir)
 {
   tile.type = TileType::RIVER;
   flowdirs_.emplace_back(FlowDirection{tile, flow_dir});
+}
+
+bool
+TileGrid::is_visible(Tile &tile)
+{
+  return tile.is_visible(registry_);
+}
+
+void
+TileGrid::set_isvisible(Tile &tile, bool const v)
+{
+  tile.set_isvisible(v, registry_);
 }
 
 } // ns boomhs

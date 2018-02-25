@@ -21,6 +21,7 @@ namespace
 {
 
 using namespace boomhs;
+using namespace opengl;
 
 static auto constexpr ROOM_MAX_SIZE = 5ul;
 static auto constexpr ROOM_MIN_SIZE = 3ul;
@@ -220,28 +221,59 @@ place_monsters(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_g
 {
   auto const num_monsters = rng.gen_int_range(MIN_MONSTERS_PER_FLOOR, MAX_MONSTERS_PER_FLOOR);
 
-  auto const make_monster = [&](char const* name, TilePosition const& tpos) {
-    auto eid = registry.create();
-    auto &meshc = registry.assign<MeshRenderable>(eid);
-    meshc.name = name;
-    auto &transform = registry.assign<Transform>(eid);
-    transform.translation = glm::vec3{tpos.x, 0.5, tpos.y};
-
-    registry.assign<Enemy>(eid);
-
-    auto &sn = registry.assign<ShaderName>(eid);
-    sn.value = "3d_pos_normal_color";
-    std::cerr << name << "\n";
+  auto const make_monster = [&](char const* name) {
+    auto const tpos = generate_monster_position(tilegrid, registry, rng);
+    Enemy::load_new(registry, name, tpos);
   };
 
   FORI(i, num_monsters) {
-    auto const pos = generate_monster_position(tilegrid, registry, rng);
     if (rng.gen_bool()) {
-      make_monster("O", pos);
+      make_monster("O");
     } else {
-      make_monster("T", pos);
+      make_monster("T");
     }
   }
+}
+
+EntityID
+place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng)
+{
+  auto eid = registry.create();
+  registry.assign<Torch>(eid);
+
+  auto &isv = registry.assign<IsVisible>(eid);
+  isv.value = true;
+
+  auto &light = registry.assign<PointLight>(eid).light;
+  light.diffuse = LOC::YELLOW;
+
+  auto &flicker = registry.assign<LightFlicker>(eid);
+  flicker.base_speed = 1.0f;
+  flicker.current_speed = flicker.base_speed;
+
+  flicker.colors[0] = LOC::RED;
+  flicker.colors[1] = LOC::WHITE;
+  flicker.colors[2] = LOC::ORANGE;
+  flicker.colors[3] = LOC::YELLOW;
+
+  auto &att = light.attenuation;
+  att.constant = 1.0f;
+  att.linear = 0.93f;
+  att.quadratic = 0.46f;
+
+  auto &torch_transform = registry.assign<Transform>(eid);
+
+  auto const pos = generate_monster_position(tilegrid, registry, rng);
+  torch_transform.translation = glm::vec3{pos.x, 0.5, pos.y};
+  std::cerr << "torchlight pos: '" << torch_transform.translation << "'\n";
+
+  auto &mesh = registry.assign<MeshRenderable>(eid);
+  mesh.name = "O_no_normals";
+
+  auto &sn = registry.assign<ShaderName>(eid);
+  sn.value = "light";
+
+  return eid;
 }
 
 } // ns anon
@@ -344,7 +376,6 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
 
   std::cerr << "placing monsters ...\n";
   place_monsters(tilegrid, registry, rng);
-  std::cerr << "finished!\n";
 
   // This seems hacky?
   return (*rooms).starting_position;
@@ -367,9 +398,14 @@ make_leveldata(LevelConfig const& levelconfig, EntityRegistry &registry,
   std::vector<RiverInfo> rivers;
   auto const starting_pos = place_rivers_rooms_and_stairs(levelconfig.stairconfig, rivers, tilegrid,
       rng, registry);
+
+  std::cerr << "placing torch ...\n";
+  auto const torch_eid = place_torch(tilegrid, registry, rng);
+
+  std::cerr << "finished!\n";
   std::cerr << "======================================\n";
 
-  return LevelData{MOVE(tilegrid), MOVE(ttable), starting_pos, MOVE(rivers)};
+  return LevelData{MOVE(tilegrid), MOVE(ttable), starting_pos, MOVE(rivers), torch_eid};
 }
 
 } // ns boomhs::level_generator

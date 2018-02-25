@@ -1,7 +1,7 @@
 #pragma once
-#include <chrono>
 #include <random>
 
+#include <stlw/type_macros.hpp>
 #include <stlw/math.hpp>
 
 namespace stlw
@@ -22,6 +22,7 @@ class float_generator {
     return static_cast<uint32_t>(out);
   }
 public:
+  MOVE_CONSTRUCTIBLE_ONLY(float_generator);
   explicit float_generator()
     : seed_(make_seed())
     , generator_(this->seed_)

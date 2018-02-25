@@ -7,6 +7,7 @@
 
 namespace boomhs
 {
+class EntityRegistry;
 
 enum class TileType : size_t
 {
@@ -170,14 +171,15 @@ operator<<(std::ostream &, TilePosition const&);
 
 struct Tile
 {
-  bool is_visible = false;
   TileType type = TileType::WALL;
   uint32_t eid;
 
   bool is_stair_up() const { return type == TileType::STAIR_UP; }
   bool is_stair_down() const { return type == TileType::STAIR_DOWN; }
-
   bool is_stair() const;
+
+  bool is_visible(EntityRegistry const&) const;
+  void set_isvisible(bool, EntityRegistry &);
 };
 
 inline bool

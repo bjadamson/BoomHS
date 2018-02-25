@@ -18,7 +18,10 @@
 
 #include <stlw/math.hpp>
 #include <stlw/log.hpp>
+#include <stlw/random.hpp>
 #include <stlw/result.hpp>
+
+#include <fastnoise/fastnoise.hpp>
 
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_sdl_gl3.h>
@@ -111,7 +114,7 @@ update_nearbytargets(LevelState &lstate, EntityRegistry &registry, FrameTime con
   using pair_t = std::pair<float, EntityID>;
   std::vector<pair_t> pairs;
   for (auto const eid : enemies) {
-    if (!registry.get<Enemy>(eid).is_visible) {
+    if (!registry.get<IsVisible>(eid).value) {
       continue;
     }
     auto const& etransform = registry.get<Transform>(eid);
@@ -169,6 +172,59 @@ move_riverwiggles(LevelData &level_data, FrameTime const& ft)
 }
 
 void
+update_torchflicker(LevelState &lstate, EntityRegistry &registry, stlw::float_generator &rng,
+    FrameTime const& ft)
+{
+  auto const& ldata = lstate.level_data;
+  auto const eid = ldata.torch_eid();
+
+  auto &flicker = registry.get<LightFlicker>(eid);
+  float const xxx = std::fmod((float)flicker.current_speed * ft.since_start_seconds(), 2.0);
+  float const adj = xxx - 1.0f; // get in range [-1, 1]
+
+  auto &light = registry.get<PointLight>(eid).light;
+  light.diffuse = adj > 0.0f
+    ? (std::abs(adj) > 0.5f ? flicker.colors[0] : flicker.colors[1])
+    : (std::abs(adj) > 0.5f ? flicker.colors[2] : flicker.colors[3]);
+
+  auto &torch = registry.get<Torch>(eid);
+  auto &torch_transform = registry.get<Transform>(eid);
+  if (torch.is_pickedup) {
+    // Player has picked up the torch, make it follow player around
+    auto const& player = lstate.player;
+    auto const& player_pos = player.world_position();
+
+    torch_transform.translation = player_pos;
+
+    // Move the light above the player's head
+    torch_transform.translation.y = 1.0f;
+  }
+
+  auto const torch_pos = torch_transform.translation;
+  auto &attenuation = light.attenuation;
+
+  auto const attenuate = [&rng](float &value, float const gen_range, float const base_value)
+  {
+    value += rng.gen_float_range(-gen_range, gen_range);
+
+    auto const clamp = gen_range * 2.0f;
+    value = glm::clamp(value, base_value - clamp, base_value + clamp);
+  };
+
+  static float constexpr CONSTANT = 0.1f;
+  //attenuate(attenuation.constant, CONSTANT, torch.default_attenuation.constant);
+
+  //static float constexpr LINEAR = 0.015f;
+  //attenuate(attenuation.linear, LINEAR, torch.default_attenuation.linear);
+
+  //static float constexpr QUADRATIC = LINEAR * LINEAR;
+  //attenuate(attenuation.quadratic, QUADRATIC, torch.default_attenuation.quadratic);
+
+  static float constexpr FLICKER = 0.24f;
+  attenuate(flicker.current_speed, FLICKER, flicker.base_speed);
+}
+
+void
 update_visible_entities(ZoneManager &zm, EntityRegistry &registry)
 {
   auto &zs = zm.active();
@@ -177,8 +233,8 @@ update_visible_entities(ZoneManager &zm, EntityRegistry &registry)
   auto &tilegrid = leveldata.tilegrid();
   auto &player = lstate.player;
 
-  for (auto const eid : registry.view<Enemy>()) {
-    auto &enemy = registry.get<Enemy>(eid);
+  for (auto const eid : registry.view<EnemyData>()) {
+    auto &isv = registry.get<IsVisible>(eid);
 
     // Convert to tile position, match tile visibility.
     auto &transform = registry.get<Transform>(eid);
@@ -186,12 +242,13 @@ update_visible_entities(ZoneManager &zm, EntityRegistry &registry)
     TilePosition const tpos = TilePosition::from_floats_truncated(pos.x, pos.z);
 
     auto const& tile = tilegrid.data(tpos);
-    enemy.is_visible = tile.is_visible;
+    isv.value = tile.is_visible(registry);
   }
 }
 
 void
-game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& ft)
+game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, stlw::float_generator &rng,
+    FrameTime const& ft)
 {
   auto &logger = es.logger;
   auto &tilegrid_state = es.tilegrid_state;
@@ -221,7 +278,9 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& 
 
     // river wiggles get updated every frame
     update_visible_riverwiggles(leveldata, player, tilegrid_state.reveal);
+
     update_visible_entities(zm, registry);
+    update_torchflicker(lstate, registry, rng, ft);
   }
   {
     // rendering code
@@ -229,7 +288,7 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, FrameTime const& 
 
     RenderState rstate{es, zs};
     if (es.draw_entities) {
-      render::draw_entities(rstate);
+      render::draw_entities(rstate, rng, ft);
     }
     if (es.draw_terrain) {
       render::draw_terrain(rstate);
@@ -292,7 +351,7 @@ struct Engine
 };
 
 void
-loop(Engine &engine, GameState &state, FrameTime const& ft)
+loop(Engine &engine, GameState &state, stlw::float_generator &rng, FrameTime const& ft)
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
@@ -305,7 +364,7 @@ loop(Engine &engine, GameState &state, FrameTime const& ft)
     SDL_Event event;
     boomhs::IO::process(state, event, engine.controllers, ft);
   }
-  boomhs::game_loop(es, zm, engine.window, ft);
+  boomhs::game_loop(es, zm, engine.window, rng, ft);
 
   // Render Imgui UI
   ImGui::Render();
@@ -319,11 +378,12 @@ timed_game_loop(Engine &engine, GameState &state)
 {
   window::Clock clock;
   window::FrameCounter counter;
+  stlw::float_generator rng;
 
   auto &logger = state.engine_state.logger;
   while (!state.engine_state.quit) {
     auto const ft = clock.frame_time();
-    loop(engine, state, ft);
+    loop(engine, state, rng, ft);
     clock.update();
     counter.update(logger, clock);
   }

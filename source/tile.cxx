@@ -1,4 +1,7 @@
 #include <boomhs/tile.hpp>
+#include <boomhs/components.hpp>
+#include <boomhs/entity.hpp>
+
 #include <stlw/debug.hpp>
 #include <string>
 #include <iostream>
@@ -43,6 +46,18 @@ Tile::is_stair() const
 {
   stlw::assert_exactly_only_one_true(is_stair_up(), is_stair_down());
   return is_stair_up() || is_stair_down();
+}
+
+bool
+Tile::is_visible(EntityRegistry const& registry) const
+{
+  return registry.get<IsVisible>(this->eid).value;
+}
+
+void
+Tile::set_isvisible(bool const v, EntityRegistry &registry)
+{
+  registry.get<IsVisible>(this->eid).value = v;
 }
 
 } // ns boomhs

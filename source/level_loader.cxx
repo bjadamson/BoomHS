@@ -315,6 +315,7 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     auto texture_name =     get_string(file,          "texture");
     auto pointlight_o =     get_vec3(file,            "pointlight");
     auto player =           get_string(file,          "player");
+    auto is_visible  =      get_bool(file,            "is_visible").value_or(true);
     // clang-format on
 
     // texture OR color fields, not both
@@ -334,6 +335,9 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       transform.rotate_degrees(rotation.y, opengl::Y_UNIT_VECTOR);
       transform.rotate_degrees(rotation.z, opengl::Z_UNIT_VECTOR);
     }
+
+    auto &isv = registry.assign<IsVisible>(entity);
+    isv.value = is_visible;
 
     auto &sn = registry.assign<ShaderName>(entity);
     sn.value = shader;
@@ -393,7 +397,6 @@ load_tileinfos(stlw::Logger &logger, CppTable const& config, EntityRegistry &reg
 {
   auto const load_tile = [](auto const& file) {
     auto const tile  =     get_string_or_abort(file, "tile");
-    std::cerr << "tile: '" << tile << "'\n";
     auto const tiletype = tiletype_from_string(tile);
     auto const mesh_name = get_string_or_abort(file, "mesh");
     auto const vshader_name = get_string_or_abort(file, "vshader");
@@ -456,7 +459,7 @@ load_vas(CppTable const& config)
   auto vas_table_array = config->get_table_array("vas");
   assert(vas_table_array);
 
-  auto const read_data = [&](auto const& table, std::size_t const index) {
+  auto const read_data = [&](auto const& table, size_t const index) {
     auto const dataname = "data" + std::to_string(index);
 
     // THINKING EXPLAINED:
@@ -477,7 +480,7 @@ load_vas(CppTable const& config)
     return cpptoml::option<opengl::AttributePointerInfo>{MOVE(api)};
   };
 
-  auto const add_next_found = [&read_data](auto &apis, auto const& table, std::size_t const index) {
+  auto const add_next_found = [&read_data](auto &apis, auto const& table, size_t const index) {
     auto data_o = read_data(table, index);
     bool const data_read = !!data_o;
     if (data_read) {
@@ -491,7 +494,7 @@ load_vas(CppTable const& config)
   auto const fn = [&pvas, &add_next_found](auto const& table) {
     auto const name = get_string_or_abort(table, "name");
 
-    std::size_t i = 0u;
+    size_t i = 0u;
     std::vector<opengl::AttributePointerInfo> apis;
     while(add_next_found(apis, table, i++)) {}
     pvas.add(name, make_vertex_attribute(apis));
@@ -500,14 +503,12 @@ load_vas(CppTable const& config)
   return pvas;
 }
 
-
-
 } // ns anon
 
 namespace boomhs
 {
 
-// This macro exists to reduce code duplication implementingt he two different implementation of
+// This macro exists to reduce code duplication implementing the two different implementation of
 // operator[].
 #define SEARCH_FOR(type, begin, end)                                                               \
   auto const cmp = [&type](auto const& tinfo) {                                                    \
@@ -597,13 +598,14 @@ LevelLoader::load_level(stlw::Logger &logger, EntityRegistry &registry, std::str
   auto tile_table = load_tileinfos(logger, area_config, registry);
 
   std::cerr << "loading lights ...\n";
+  auto const ambient = Color{get_vec3_or_abort(area_config, "ambient")};
   auto const directional_light_diffuse = Color{get_vec3_or_abort(area_config, "directional_light_diffuse")};
   auto const directional_light_specular = Color{get_vec3_or_abort(area_config, "directional_light_specular")};
   auto const directional_light_direction = get_vec3_or_abort(area_config, "directional_light_direction");
 
   Light light{directional_light_diffuse, directional_light_specular};
   DirectionalLight dlight{MOVE(light), directional_light_direction};
-  GlobalLight glight{MOVE(dlight)};
+  GlobalLight glight{ambient, MOVE(dlight)};
 
   auto bg_color = Color{get_vec3_or_abort(area_config, "background")};
   std::cerr << "yielding assets\n";
