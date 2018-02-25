@@ -21,9 +21,13 @@ void main()
   vec3 pointlights = calc_pointlights(u_pointlights, u_modelmatrix, v_position,
       u_invviewmatrix, u_material, u_reflectivity, v_surfacenormal);
 
+  vec3 frag_world_pos = (u_modelmatrix * v_position).xyz;
+  vec3 dirlight = calc_dirlight(u_globallight, u_material, u_reflectivity, frag_world_pos,
+      u_invviewmatrix, v_surfacenormal);
+
   if (u_drawnormals == 1) {
     fragment_color = vec4(v_surfacenormal, 1.0);
   } else {
-    fragment_color = vec4(pointlights, 1.0) * u_color;
+    fragment_color = vec4(dirlight + pointlights, 1.0) * u_color;
   }
 }

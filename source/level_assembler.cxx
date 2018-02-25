@@ -226,7 +226,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry
   // The logger isn't thread safe, need to ensure that the logger isn't using "during" level gen,
   // or somehow give it unique access during writing (read/write lock?).
 
-  auto const FLOOR_COUNT = 1;
+  auto const FLOOR_COUNT = 2;
   std::vector<ZoneState> zstates;
   zstates.reserve(FLOOR_COUNT);
   FORI(i, FLOOR_COUNT) {
@@ -239,13 +239,16 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry
     zstates.emplace_back(MOVE(zs));
   }
 
-  assert(FLOOR_COUNT > 0);
+  // copy the first zonestate to GPU
+  assert(zstates.size() > 0);
+  copy_to_gpu(logger, zstates.front());
+
   for(auto i = 1; i < FLOOR_COUNT; ++i) {
     bridge_staircases(zstates[i-1], zstates[i]);
-  }
 
-  // copy the first zonestate to GPU
-  copy_to_gpu(logger, zstates.front());
+    // TODO: maybe lazily load these?
+    copy_to_gpu(logger, zstates[i]);
+  }
 
   return zstates;
 }

@@ -47,19 +47,29 @@ move_ontilegrid(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObj
     return;
   }
 
+  auto const flip_sides = [](auto const val, auto const min, auto const max) {
+    assert(min < (max - 1));
+    auto value = val < min ? max : min;
+    return value >= max ? (value - 1) : value;
+  };
+
   if (x_outofbounds) {
-    auto const new_x = newpos.x < 0 ? x : 0;
+    auto const new_x = flip_sides(newpos.x, 0ul, x);
     wo.move_to(new_x, 0.0, newpos.z);
+    ts.recompute = true;
   }
   else if (y_outofbounds) {
-    auto const new_z = newpos.z < 0 ? z : 0;
+    auto const new_z = flip_sides(newpos.z, 0ul, z);
     wo.move_to(newpos.x, 0.0, new_z);
-  }
-  auto const tpos = TilePosition::from_floats_truncated(newpos.x, newpos.z);
-  bool const should_move = (!es.player_collision) || !leveldata.is_wall(tpos);
-  if (should_move) {
-    wo.move(delta);
     ts.recompute = true;
+  }
+  else {
+    auto const tpos = TilePosition::from_floats_truncated(newpos.x, newpos.z);
+    bool const should_move = (!es.player_collision) || !leveldata.is_wall(tpos);
+    if (should_move) {
+      wo.move(delta);
+      ts.recompute = true;
+    }
   }
 }
 

@@ -23,7 +23,7 @@ using namespace boomhs;
 using namespace opengl;
 using namespace window;
 
-glm::vec3 static constexpr VIEWING_OFFSET{0.0f, 0.0f, 0.0f};
+glm::vec3 static constexpr VIEWING_OFFSET{0.5f, 0.0f, 0.5f};
 auto static constexpr WIGGLE_UNDERATH_OFFSET = -0.2f;
 
 namespace

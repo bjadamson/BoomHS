@@ -14,7 +14,7 @@ WorldObject::WorldObject(EnttLookup const& plookup, glm::vec3 const& forward, gl
   : ent_lookup_(plookup)
   , forward_(forward)
   , up_(up)
-  , speed_(700)
+  , speed_(460)
 {
 }
 

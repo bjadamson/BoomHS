@@ -180,7 +180,7 @@ bool
 is_blocked(uint64_t const x, uint64_t const y, TileGrid const& tilegrid)
 {
   auto const type = tilegrid.data(x, y).type;
-  if (ANYOF(type == TileType::WALL)) {
+  if (ANYOF(type == TileType::WALL, type == TileType::STAIR_DOWN, type == TileType::STAIR_UP)) {
     return true;
   }
   return false;
@@ -364,7 +364,7 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
     while(!rooms) {
       rooms = place_rooms(tilegrid, rng);
     }
-    if (stairconfig.floor_count) {
+    if (1 == stairconfig.floor_count) {
       std::cerr << "one floor, skipping placing stairs ...\n";
       break;
     }
