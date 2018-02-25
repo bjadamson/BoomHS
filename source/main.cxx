@@ -182,8 +182,8 @@ update_torchflicker(LevelState &lstate, EntityRegistry &registry, stlw::float_ge
   float const xxx = std::fmod((float)flicker.current_speed * ft.since_start_seconds(), 2.0);
   float const adj = xxx - 1.0f; // get in range [-1, 1]
 
-  auto &light = registry.get<PointLight>(eid).light;
-  light.diffuse = adj > 0.0f
+  auto &pointlight = registry.get<PointLight>(eid);
+  pointlight.light.diffuse = adj > 0.0f
     ? (std::abs(adj) > 0.5f ? flicker.colors[0] : flicker.colors[1])
     : (std::abs(adj) > 0.5f ? flicker.colors[2] : flicker.colors[3]);
 
@@ -201,7 +201,7 @@ update_torchflicker(LevelState &lstate, EntityRegistry &registry, stlw::float_ge
   }
 
   auto const torch_pos = torch_transform.translation;
-  auto &attenuation = light.attenuation;
+  auto &attenuation = pointlight.attenuation;
 
   auto const attenuate = [&rng](float &value, float const gen_range, float const base_value)
   {

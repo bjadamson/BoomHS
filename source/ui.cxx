@@ -282,12 +282,6 @@ show_directionallight_window(UiState &ui, LevelState &lstate)
     ImGui::ColorEdit3("Diffuse:", directional_light.diffuse.data());
     ImGui::ColorEdit3("Specular:", directional_light.specular.data());
 
-    ImGui::Text("Attenuation");
-    auto &attenuation = directional_light.attenuation;
-    ImGui::InputFloat("constant:", &attenuation.constant);
-    ImGui::InputFloat("linear:", &attenuation.linear);
-    ImGui::InputFloat("quadratic:", &attenuation.quadratic, 0.0f, 1.0f);
-
     if (ImGui::Button("Close", ImVec2(120,0))) {
       ui.show_directionallight_window = false;
     }
@@ -384,7 +378,7 @@ show_pointlight_window(UiState &ui, EntityRegistry &registry)
     ImGui::Separator();
 
     ImGui::Text("Attenuation");
-    auto &attenuation = pointlight.light.attenuation;
+    auto &attenuation = pointlight.attenuation;
     ImGui::InputFloat("constant:", &attenuation.constant);
     ImGui::InputFloat("linear:", &attenuation.linear);
     ImGui::InputFloat("quadratic:", &attenuation.quadratic);

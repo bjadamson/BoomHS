@@ -3,8 +3,8 @@ background = [0.0, 0.0, 0.0]
 camera_spherical_coords = [2.56, 6.6446330, 56.379040]
 
 ambient = [0.0, 0.0, 0.0]
-directional_light_diffuse = [0.0, 0.0, 0.0]
-directional_light_specular = [0.0, 0.0, 0.0]
+directional_light_diffuse = [0.0, 1.0, 0.0]
+directional_light_specular = [0.0, 1.0, 0.0]
 directional_light_direction = [-1.0, 0.0, -1.0]
 
 [[resource]]

@@ -80,14 +80,14 @@ struct Light
 {
   opengl::Color diffuse = LOC::WHITE;
   opengl::Color specular = LOC::BLACK;
-
-  static constexpr auto INIT_ATTENUATION_INDEX = ATTENUATION_VALUE_TABLE.size() - 1;
-  Attenuation attenuation = opengl::ATTENUATION_VALUE_TABLE[INIT_ATTENUATION_INDEX];
 };
 
 struct PointLight
 {
   Light light;
+
+  static constexpr auto INIT_ATTENUATION_INDEX = ATTENUATION_VALUE_TABLE.size() - 1;
+  Attenuation attenuation = opengl::ATTENUATION_VALUE_TABLE[INIT_ATTENUATION_INDEX];
 };
 
 struct PointLights

@@ -171,7 +171,7 @@ try_pickup_torch(GameState &state, FrameTime const& ft)
     isv.value = false;
 
     auto &pointlight = registry.get<PointLight>(eid);
-    pointlight.light.attenuation /= 3.0f;
+    pointlight.attenuation /= 3.0f;
 
     std::cerr << "You have picked up a torch.\n";
   } else {
@@ -200,7 +200,7 @@ drop_torch(GameState &state, FrameTime const& ft)
   isv.value = true;
 
   auto &pointlight = registry.get<PointLight>(eid);
-  pointlight.light.attenuation *= 3.0f;
+  pointlight.attenuation *= 3.0f;
 
   std::cerr << "You have droppped a torch.\n";
 }

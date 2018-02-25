@@ -22,10 +22,14 @@ void main()
 {
   vec3 ambient = u_globallight.ambient * u_material.ambient;
 
+  vec3 frag_world_pos = (u_modelmatrix * v_position).xyz;
+  vec3 dirlight = calc_dirlight(u_globallight, u_material, u_reflectivity, frag_world_pos,
+      u_invviewmatrix, v_surfacenormal);
+
   vec3 pointlights = calc_pointlights(u_pointlights, u_modelmatrix, v_position,
       u_invviewmatrix, u_material, u_reflectivity, v_surfacenormal);
 
-  vec3 light = ambient + pointlights;
+  vec3 light = ambient + dirlight + pointlights;
   if (u_drawnormals == 1) {
     fragment_color = vec4(v_surfacenormal, 1.0);
   } else {

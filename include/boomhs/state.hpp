@@ -28,8 +28,6 @@ struct UiState
   std::array<int, 2> selected_tile = {0};
   int selected_tilegrid = 0;
 
-  int attenuation_current_item = opengl::Light::INIT_ATTENUATION_INDEX;
-
   // primitive buffers
   int eid_buffer = 0;
   glm::vec3 euler_angle_buffer;

@@ -244,8 +244,8 @@ place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_gene
   auto &isv = registry.assign<IsVisible>(eid);
   isv.value = true;
 
-  auto &light = registry.assign<PointLight>(eid).light;
-  light.diffuse = LOC::YELLOW;
+  auto &pointlight = registry.assign<PointLight>(eid);
+  pointlight.light.diffuse = LOC::YELLOW;
 
   auto &flicker = registry.assign<LightFlicker>(eid);
   flicker.base_speed = 1.0f;
@@ -256,7 +256,7 @@ place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_gene
   flicker.colors[2] = LOC::ORANGE;
   flicker.colors[3] = LOC::YELLOW;
 
-  auto &att = light.attenuation;
+  auto &att = pointlight.attenuation;
   att.constant = 1.0f;
   att.linear = 0.93f;
   att.quadratic = 0.46f;

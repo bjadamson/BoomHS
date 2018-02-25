@@ -100,11 +100,11 @@ void
 set_dirlight(stlw::Logger &logger, ShaderProgram &sp, GlobalLight const& global_light)
 {
   auto const& directional_light = global_light.directional;
-  sp.set_uniform_vec3(logger, "u_dirlight.direction", directional_light.direction);
+  sp.set_uniform_vec3(logger, "u_globallight.direction", directional_light.direction);
 
   auto const& light = directional_light.light;
-  sp.set_uniform_color_3fv(logger, "u_dirlight.diffuse", light.diffuse);
-  sp.set_uniform_color_3fv(logger, "u_dirlight.specular", light.specular);
+  sp.set_uniform_color_3fv(logger, "u_globallight.diffuse", light.diffuse);
+  sp.set_uniform_color_3fv(logger, "u_globallight.specular", light.specular);
 }
 
 void
@@ -120,7 +120,7 @@ set_pointlight(stlw::Logger &logger, ShaderProgram &sp, size_t const index,
   sp.set_uniform_color_3fv(logger, make_field("specular"), pointlight.light.specular);
   sp.set_uniform_vec3(logger, make_field("position"), pointlight_position);
 
-  auto const& attenuation = pointlight.light.attenuation;
+  auto const& attenuation = pointlight.attenuation;
   auto const attenuation_field = [&make_field](char const* fieldname) {
     return make_field("attenuation.") + fieldname;
   };
@@ -155,7 +155,7 @@ set_receiveslight_uniforms(RenderState &rstate, glm::mat4 const& model_matrix,
   set_modelmatrix(logger, model_matrix, sp);
   sp.set_uniform_matrix_3fv(logger, "u_normalmatrix", glm::inverseTranspose(glm::mat3{model_matrix}));
 
-  //set_dirlight(logger, sp, global_light);
+  set_dirlight(logger, sp, global_light);
 
   // ambient
   if (receives_ambient_light) {
