@@ -232,5 +232,4 @@ SDLControllers::find_attached_controllers(stlw::Logger &logger)
   return controllers;
 }
 
-
 } // ns windo

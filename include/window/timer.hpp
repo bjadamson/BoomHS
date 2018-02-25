@@ -13,8 +13,10 @@ class FrameTime
   ticks_t const delta_, since_start_;
   double const frequency_;
 
+  auto delta() const { return delta_; }
   auto ticks_to_millis(ticks_t const t) const { return t * 1000.0 / frequency_; }
   auto millis_to_seconds(double const m) const { return m * 0.001; }
+
 public:
   explicit FrameTime(ticks_t const dt, ticks_t const sstart, double const fr)
     : delta_(dt)
@@ -23,7 +25,6 @@ public:
   {
   }
 
-  auto delta() const { return delta_; }
   double delta_millis() const { return ticks_to_millis(delta()); }
   double delta_seconds() const { return millis_to_seconds(delta_millis()); }
 

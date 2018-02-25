@@ -10,10 +10,18 @@
 namespace boomhs
 {
 
-WorldObject&
-WorldObject::move(glm::vec3 const& dir, double const dt)
+WorldObject::WorldObject(EnttLookup const& plookup, glm::vec3 const& forward, glm::vec3 const& up)
+  : ent_lookup_(plookup)
+  , forward_(forward)
+  , up_(up)
+  , speed_(700)
 {
-  transform().translation += glm::normalize((speed() * dir) * static_cast<float>(dt));
+}
+
+WorldObject&
+WorldObject::move(glm::vec3 const& delta)
+{
+  transform().translation += delta;
   return *this;
 }
 
@@ -39,7 +47,7 @@ WorldObject::world_position() const
 }
 
 void
-WorldObject::rotate(float const angle, glm::vec3 const& axis)
+WorldObject::rotate_degrees(float const angle, glm::vec3 const& axis)
 {
   auto &t = transform();
   t.rotate_degrees(angle, axis);
@@ -72,6 +80,15 @@ WorldObject::rotate_to_match_camera_rotation(Camera const& camera)
 
   auto &t = transform();
   t.rotation = new_rotation * t.rotation;
+}
+
+TilePosition
+WorldObject::tile_position() const
+{
+  auto const& pos = transform().translation;
+  assert(pos.x >= 0.0f);
+  assert(pos.z >= 0.0f);
+  return TilePosition::from_floats_truncated(pos.x, pos.z);
 }
 
 } // ns boomhs

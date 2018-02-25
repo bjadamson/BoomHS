@@ -16,16 +16,11 @@ class WorldObject
 {
   EnttLookup ent_lookup_;
   glm::vec3 forward_, up_;
-  float speed_ = 240.0;
+  float speed_;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(WorldObject);
-  explicit WorldObject(EnttLookup const& plookup, glm::vec3 const& forward, glm::vec3 const& up)
-    : ent_lookup_(plookup)
-    , forward_(forward)
-    , up_(up)
-  {
-  }
+  explicit WorldObject(EnttLookup const& plookup, glm::vec3 const&, glm::vec3 const&);
 
   auto const& transform() const { return ent_lookup_.lookup<Transform>(); }
   auto& transform() { return ent_lookup_.lookup<Transform>(); }
@@ -55,19 +50,12 @@ public:
   void set_speed(float const s) { speed_ = s; }
 
   WorldObject&
-  move(glm::vec3 const&, double);
+  move(glm::vec3 const&);
 
-  void rotate(float const, glm::vec3 const&);
+  void rotate_degrees(float const, glm::vec3 const&);
   void rotate_to_match_camera_rotation(Camera const&);
 
-  TilePosition
-  tile_position() const
-  {
-    auto const& pos = transform().translation;
-    assert(pos.x >= 0.0f);
-    assert(pos.z >= 0.0f);
-    return TilePosition::from_floats_truncated(pos.x, pos.z);
-  }
+  TilePosition tile_position() const;
 
   void move_to(glm::vec3 const& pos) { transform().translation = pos; }
   void move_to(float const x, float const y, float const z) { move_to(glm::vec3{x, y, z}); }

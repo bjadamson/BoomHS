@@ -33,33 +33,32 @@ move_ontilegrid(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObj
 
   auto &zm = state.zone_manager;
   LevelData const& leveldata = zm.active().level_state.level_data;
-  auto const [x, y] = leveldata.dimensions();
+  auto const [x, z] = leveldata.dimensions();
   glm::vec3 const move_vec = (wo.*fn)();
 
-  // TODO: stop doing this when we use double instead of float
-  auto const dtf = static_cast<float>(ft.delta_millis());
+  glm::vec3 const delta = move_vec * ft.delta_millis() * wo.speed();
+  glm::vec3 const newpos = wo.world_position() + delta;
 
-  glm::vec2 const wpos = wo.tile_position() + (move_vec * dtf * wo.speed());
-
-  bool const x_outofbounds = wpos.x > x || wpos.x < 0;
-  bool const y_outofbounds = wpos.y > y || wpos.y < 0;
+  bool const x_outofbounds = newpos.x >= x || newpos.x < 0;
+  bool const y_outofbounds = newpos.z >= z || newpos.z < 0;
   bool const out_of_bounds = x_outofbounds || y_outofbounds;
-  if (out_of_bounds && es.mariolike_edges) {
-    if (x_outofbounds) {
-      auto const new_x = wpos.x < 0 ? x : 0;
-      wo.move_to(new_x, 0.0, wpos.y);
-    }
-    else if (y_outofbounds) {
-      auto const new_y = wpos.y < 0 ? y : 0;
-      wo.move_to(wpos.x, 0.0, new_y);
-    }
-  } else if (out_of_bounds) {
+  if (out_of_bounds && !es.mariolike_edges) {
+    // If the world object *would* be out of bounds, return early (don't move the WO).
     return;
   }
-  auto const tpos = TilePosition::from_floats_truncated(wpos.x, wpos.y);
+
+  if (x_outofbounds) {
+    auto const new_x = newpos.x < 0 ? x : 0;
+    wo.move_to(new_x, 0.0, newpos.z);
+  }
+  else if (y_outofbounds) {
+    auto const new_z = newpos.z < 0 ? z : 0;
+    wo.move_to(newpos.x, 0.0, new_z);
+  }
+  auto const tpos = TilePosition::from_floats_truncated(newpos.x, newpos.z);
   bool const should_move = (!es.player_collision) || !leveldata.is_wall(tpos);
   if (should_move) {
-    wo.move(move_vec, dtf);
+    wo.move(delta);
     ts.recompute = true;
   }
 }
@@ -155,14 +154,16 @@ try_pickup_torch(GameState &state, FrameTime const& ft)
 
   auto const& transform = registry.get<Transform>(eid);
   auto const torch_pos = transform.translation;
-  auto const torch_tpos = TilePosition::from_floats_truncated(torch_pos.x, torch_pos.z);
 
   auto const& player = lstate.player;
   auto const player_pos = player.world_position();
-  auto const player_tpos = TilePosition::from_floats_truncated(player_pos.x, player_pos.z);
-  bool const same_tile = torch_tpos == player_tpos;
-  if (same_tile) {
 
+  auto const distance_to_torch = glm::distance(player_pos, torch_pos);
+
+  static constexpr auto MINIMUM_DISTANCE_TO_PICKUP = 1.0f;
+  std::cerr << "distance_to_torch: '" << distance_to_torch << "'\n";
+  bool const nearby_enough = distance_to_torch <= MINIMUM_DISTANCE_TO_PICKUP;
+  if (nearby_enough) {
     Torch &torch = registry.get<Torch>(eid);
     torch.is_pickedup = true;
 
@@ -173,6 +174,8 @@ try_pickup_torch(GameState &state, FrameTime const& ft)
     pointlight.light.attenuation /= 3.0f;
 
     std::cerr << "You have picked up a torch.\n";
+  } else {
+    std::cerr << "There is nothing nearby to pickup.\n";
   }
 }
 
@@ -253,9 +256,9 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, FrameT
     float const speed = camera.rotation_speed;
     float const angle = xrel > 0 ? speed : -speed;
 
-    auto const x_dt = angle * ft.delta();
+    auto const x_dt = angle * ft.delta_millis();
     auto constexpr y_dt = 0.0f;
-    player.rotate(x_dt, opengl::Y_UNIT_VECTOR);
+    player.rotate_degrees(x_dt, opengl::Y_UNIT_VECTOR);
   }
 }
 
@@ -323,7 +326,7 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
   auto &nearby_targets = lstate.nearby_targets;
 
   auto const rotate_player = [&](float const angle, glm::vec3 const& axis) {
-    player.rotate(angle, axis);
+    player.rotate_degrees(angle, axis);
     ts.recompute = true;
   };
   switch (event.key.keysym.sym) {
@@ -577,11 +580,10 @@ process_controllerstate(GameState &state, SDLControllers const& controllers, Fra
     move_backward(state, ft);
   }
 
-  //auto const& controller_sensitivity = ???;
   auto constexpr CONTROLLER_SENSITIVITY = 0.01;
 
   auto const calc_delta = [&ft](auto const axis) {
-    return axis * ft.delta() * 0.01;
+    return axis * ft.delta_millis() * CONTROLLER_SENSITIVITY;
   };
   {
     auto const right_axis_x = c.right_axis_x();
@@ -604,6 +606,57 @@ process_controllerstate(GameState &state, SDLControllers const& controllers, Fra
       float const dy = calc_delta(right_axis_y);
       camera.rotate(0.0, dy);
     }
+  }
+
+  if (c.button_a()) {
+    std::cerr << "BUTTON A\n";
+    toggle_torch(state, ft);
+  }
+  if (c.button_b()) {
+    std::cerr << "BUTTON B\n";
+  }
+  if (c.button_x()) {
+    std::cerr << "BUTTON X\n";
+  }
+  if (c.button_y()) {
+    std::cerr << "BUTTON Y\n";
+  }
+
+  if (c.button_back()) {
+    std::cerr << "BUTTON BACK\n";
+  }
+  if (c.button_guide()) {
+    std::cerr << "BUTTON GUIDE\n";
+  }
+  if (c.button_start()) {
+    std::cerr << "BUTTON START\n";
+  }
+
+  if (c.button_left_joystick()) {
+    std::cerr << "BUTTON LEFT JOYSTICK\n";
+  }
+  if (c.button_right_joystick()) {
+    std::cerr << "BUTTON RIGHT JOYSTICK\n";
+  }
+
+  if (c.button_left_shoulder()) {
+    std::cerr << "BUTTON LEFT SHOULDER\n";
+  }
+  if (c.button_right_shoulder()) {
+    std::cerr << "BUTTON RIGHT SHOULDER\n";
+  }
+
+  if (c.button_dpad_down()) {
+    std::cerr << "BUTTON DPAD DOWN\n";
+  }
+  if (c.button_dpad_up()) {
+    std::cerr << "BUTTON DPAD UP\n";
+  }
+  if (c.button_dpad_left()) {
+    std::cerr << "BUTTON DPAD LEFT\n";
+  }
+  if (c.button_dpad_right()) {
+    std::cerr << "BUTTON DPAD RIGHT\n";
   }
 }
 

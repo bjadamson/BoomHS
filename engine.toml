@@ -84,7 +84,7 @@ name = "hashtag"
 vertex = "3d_hashtag.vert"
 fragment = "3d_pos_normal_color.frag"
 va = "vertex_normal_color"
-instance_count = 3
+instance_count = 9
 
 [[shaders]]
 name = "river"

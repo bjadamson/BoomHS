@@ -39,6 +39,14 @@ operator<<(std::ostream &stream, TilePosition const& tp)
   return stream;
 }
 
+TilePosition
+TilePosition::from_floats_truncated(float const x, float const y)
+{
+  auto const xx = static_cast<uint64_t>(x);
+  auto const yy = static_cast<uint64_t>(y);
+  return TilePosition{xx, yy};
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Tile
 bool

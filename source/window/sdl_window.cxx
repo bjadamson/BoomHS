@@ -199,9 +199,10 @@ check_errors();
 
     auto const h = dmode.h;
     auto const w = dmode.w;
-    SDL_SetWindowPosition(window_ptr.get(), 0, 0);
-check_errors();
+    SDL_SetWindowPosition(window_ptr.get(), width / 4, height / 4);
+    check_errors();
   }
+
 
   // Third, initialize GLEW.
   glewExperimental = GL_TRUE;

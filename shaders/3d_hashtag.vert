@@ -14,11 +14,19 @@ uniform mat3 u_normalmatrix;
 void main()
 {
   const float offset_y = 0.4;
-  const vec3 vertical_offsets[3] = vec3[3]( vec3(0.0, 0.0, 0.0), vec3(0.0, offset_y, 0.0),
-      vec3(0.0, offset_y * 2.0, 0.0) );
-  const vec3 colors[3] = vec3[3]( vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0) );
+  const vec3 vertical_offsets[9] = vec3[9](
+      vec3(0.0, 0.0, 0.0),
+      vec3(0.0, offset_y, 0.0),
+      vec3(0.0, offset_y * 2.0, 0.0),
+      vec3(0.0, offset_y * 3.0, 0.0),
+      vec3(0.0, offset_y * 4.0, 0.0),
+      vec3(0.0, offset_y * 5.0, 0.0),
+      vec3(0.0, offset_y * 6.0, 0.0),
+      vec3(0.0, offset_y * 7.0, 0.0),
+      vec3(0.0, offset_y * 8.0, 0.0)
+      );
   vec3 offset = vertical_offsets[gl_InstanceID];
-  vec4 color = vec4(colors[gl_InstanceID], 1.0);
+  vec4 color = v_color;
 
   v_position = a_position;
   v_surfacenormal = normalize(u_normalmatrix * a_normal);

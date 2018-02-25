@@ -128,14 +128,7 @@ struct TilePosition
   ValueT x = 0, y = 0;
 
   static TilePosition
-  from_floats_truncated(float const x, float const y)
-  {
-    assert(x >= 0.0f);
-    assert(y >= 0.0f);
-    auto const xx = static_cast<uint64_t>(x);
-    auto const yy = static_cast<uint64_t>(y);
-    return TilePosition{xx, yy};
-  }
+  from_floats_truncated(float, float);
 
   // Apparently implicit conversion FNS must be a non-static member fns.
   //

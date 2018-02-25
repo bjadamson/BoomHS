@@ -49,7 +49,7 @@ move_betweentilegrids_ifonstairs(TiledataState &tds, ZoneManager &zm)
   {
     auto const [w, h] = leveldata.dimensions();
     assert(wp.x < w);
-    assert(wp.y < h);
+    assert(wp.z < h);
   }
   auto const& tilegrid = leveldata.tilegrid();
   auto const& tile = tilegrid.data(wp.x, wp.z);
@@ -322,6 +322,7 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, stlw::float_gener
       draw_ui(es, zm, window, registry);
     }
   }
+  
 }
 
 } // ns boomhs

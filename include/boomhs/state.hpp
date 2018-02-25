@@ -99,30 +99,32 @@ struct TiledataState
 
 struct EngineState
 {
+  stlw::Logger &logger;
+  ImGuiIO &imgui;
+  window::Dimensions const dimensions;
+
   bool quit = false;
-  bool player_collision = false;
-  bool mariolike_edges = false;
+  bool player_collision;
+  bool mariolike_edges;
 
   // rendering state
-  bool draw_entities = true;
-  bool draw_skybox = false;
-  bool draw_terrain = false;
-  bool draw_normals = false;
+  bool draw_entities;
+  bool draw_skybox;
+  bool draw_terrain;
+  bool draw_normals;
 
-  bool show_global_axis = true;
-  bool show_local_axis = false;
+  bool show_global_axis;
+  bool show_local_axis;
 
-  bool show_player_localspace_vectors = false;
-  bool show_player_worldspace_vectors = false;
+  bool show_player_localspace_vectors;
+  bool show_player_worldspace_vectors;
 
   MouseState mouse_state = {};
   WindowState window_state = {};
   TiledataState tilegrid_state = {};
   UiState ui_state = {};
 
-  stlw::Logger &logger;
-  ImGuiIO &imgui;
-  window::Dimensions const dimensions;
+  
 
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);
