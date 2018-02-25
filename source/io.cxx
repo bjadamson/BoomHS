@@ -162,11 +162,12 @@ try_pickup_torch(GameState &state, FrameTime const& ft)
   auto const player_tpos = TilePosition::from_floats_truncated(player_pos.x, player_pos.z);
   bool const same_tile = torch_tpos == player_tpos;
   if (same_tile) {
-    registry.remove<MeshRenderable>(eid);
-    registry.remove<ShaderName>(eid);
 
     Torch &torch = registry.get<Torch>(eid);
     torch.is_pickedup = true;
+
+    auto &isv = registry.get<IsVisible>(eid);
+    isv.value = false;
 
     auto &pointlight = registry.get<PointLight>(eid);
     pointlight.light.attenuation /= 3.0f;
@@ -186,17 +187,14 @@ drop_torch(GameState &state, FrameTime const& ft)
   auto &registry = active.registry;
   auto const eid = ldata.torch_eid();
 
-  auto &mesh = registry.assign<MeshRenderable>(eid);
-  mesh.name = "O_no_normals";
-
-  auto &sn = registry.assign<ShaderName>(eid);
-  sn.value = "light";
-
   auto &transform = registry.get<Transform>(eid);
   transform.translation.y = 0.5f;
 
   Torch &torch = registry.get<Torch>(eid);
   torch.is_pickedup = false;
+
+  auto &isv = registry.get<IsVisible>(eid);
+  isv.value = true;
 
   auto &pointlight = registry.get<PointLight>(eid);
   pointlight.light.attenuation *= 3.0f;

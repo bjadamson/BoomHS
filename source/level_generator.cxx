@@ -221,26 +221,16 @@ place_monsters(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_g
 {
   auto const num_monsters = rng.gen_int_range(MIN_MONSTERS_PER_FLOOR, MAX_MONSTERS_PER_FLOOR);
 
-  auto const make_monster = [&](char const* name, TilePosition const& tpos) {
-    auto eid = registry.create();
-    auto &meshc = registry.assign<MeshRenderable>(eid);
-    meshc.name = name;
-    auto &transform = registry.assign<Transform>(eid);
-    transform.translation = glm::vec3{tpos.x, 0.5, tpos.y};
-
-    registry.assign<Enemy>(eid);
-
-    auto &sn = registry.assign<ShaderName>(eid);
-    sn.value = "3d_pos_normal_color";
-    std::cerr << name << "\n";
+  auto const make_monster = [&](char const* name) {
+    auto const tpos = generate_monster_position(tilegrid, registry, rng);
+    Enemy::load_new(registry, name, tpos);
   };
 
   FORI(i, num_monsters) {
-    auto const pos = generate_monster_position(tilegrid, registry, rng);
     if (rng.gen_bool()) {
-      make_monster("O", pos);
+      make_monster("O");
     } else {
-      make_monster("T", pos);
+      make_monster("T");
     }
   }
 }
@@ -250,6 +240,9 @@ place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_gene
 {
   auto eid = registry.create();
   registry.assign<Torch>(eid);
+
+  auto &isv = registry.assign<IsVisible>(eid);
+  isv.value = true;
 
   auto &light = registry.assign<PointLight>(eid).light;
   light.diffuse = LOC::YELLOW;

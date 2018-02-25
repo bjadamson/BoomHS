@@ -114,7 +114,7 @@ update_nearbytargets(LevelState &lstate, EntityRegistry &registry, FrameTime con
   using pair_t = std::pair<float, EntityID>;
   std::vector<pair_t> pairs;
   for (auto const eid : enemies) {
-    if (!registry.get<Enemy>(eid).is_visible) {
+    if (!registry.get<IsVisible>(eid).value) {
       continue;
     }
     auto const& etransform = registry.get<Transform>(eid);
@@ -233,8 +233,8 @@ update_visible_entities(ZoneManager &zm, EntityRegistry &registry)
   auto &tilegrid = leveldata.tilegrid();
   auto &player = lstate.player;
 
-  for (auto const eid : registry.view<Enemy>()) {
-    auto &enemy = registry.get<Enemy>(eid);
+  for (auto const eid : registry.view<EnemyData>()) {
+    auto &isv = registry.get<IsVisible>(eid);
 
     // Convert to tile position, match tile visibility.
     auto &transform = registry.get<Transform>(eid);
@@ -242,7 +242,7 @@ update_visible_entities(ZoneManager &zm, EntityRegistry &registry)
     TilePosition const tpos = TilePosition::from_floats_truncated(pos.x, pos.z);
 
     auto const& tile = tilegrid.data(tpos);
-    enemy.is_visible = tile.is_visible;
+    isv.value = tile.is_visible(registry);
   }
 }
 

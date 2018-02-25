@@ -465,8 +465,11 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
   auto &player = ldata.player;
 
   auto const draw_fn = [&entity_handles, &sps, &rstate, &registry](auto eid, auto &sn,
-      auto &transform, auto &&...)
+      auto &transform, auto &is_visible, auto &&...)
   {
+    if (!is_visible.value) {
+      return;
+    }
     auto &sp = sps.ref_sp(sn.value);
     auto &handle = entity_handles.lookup(eid);
     draw(rstate, transform, sp, handle, eid, registry);
@@ -478,13 +481,6 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
       return;
     }
     draw_fn(FORWARD(args)...);
-  };
-  auto const enemy_drawfn = [&draw_fn](auto eid, auto &enemy, auto &&...args)
-  {
-    if (!enemy.is_visible) {
-      return;
-    }
-    draw_fn(eid, FORWARD(args)...);
   };
 
   auto const draw_torch = [&draw_fn, &rng](auto eid, auto &sn, auto &transform, auto &&... args)
@@ -500,21 +496,26 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
   };
 
   //
-  // Draw the cubes
-  registry.view<ShaderName, Transform, EntityFromFILE>().each(draw_fn);
-  registry.view<ShaderName, Transform, PointLight>().each(draw_torch);
+  // Render everything loaded form level file.
+  registry.view<ShaderName, Transform, IsVisible, EntityFromFILE>().each(draw_fn);
 
-  registry.view<Enemy, ShaderName, Transform, MeshRenderable>().each(enemy_drawfn);
-  registry.view<ShaderName, Transform, MeshRenderable, Player>().each(player_drawfn);
+  // torch
+  registry.view<ShaderName, Transform, IsVisible, Torch>().each(draw_torch);
 
-  // Draw the tiles
-  registry.view<ShaderName, Transform, MeshRenderable, TileComponent>().each(draw_fn);
+  // enemies
+  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, EnemyData>().each(draw_fn);
+
+  // player
+  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, Player>().each(player_drawfn);
+
+  // tiles
+  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, TileComponent>().each(draw_fn);
 
   if (es.draw_skybox) {
-    auto const draw_skybox = [&](auto eid, auto &sn, auto &transform, auto &) {
-      draw_fn(eid, sn, transform);
+    auto const draw_skybox = [&](auto eid, auto &sn, auto &transform, auto &&... args) {
+      draw_fn(eid, sn, transform, FORWARD(args)...);
     };
-    registry.view<ShaderName, Transform, SkyboxRenderable>().each(draw_skybox);
+    registry.view<ShaderName, Transform, IsVisible, SkyboxRenderable>().each(draw_skybox);
   }
 }
 
@@ -548,7 +549,7 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
   };
   auto const draw_tile = [&](auto const& tile_pos) {
     auto const& tile = tilegrid.data(tile_pos);
-    if (!tilegrid_state.reveal && !tile.is_visible) {
+    if (!tilegrid_state.reveal && !tile.is_visible(registry)) {
       return;
     }
     // This offset causes the tile's to appear in the "middle"

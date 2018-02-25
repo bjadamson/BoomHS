@@ -315,6 +315,7 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     auto texture_name =     get_string(file,          "texture");
     auto pointlight_o =     get_vec3(file,            "pointlight");
     auto player =           get_string(file,          "player");
+    auto is_visible  =      get_bool(file,            "is_visible").value_or(true);
     // clang-format on
 
     // texture OR color fields, not both
@@ -334,6 +335,9 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       transform.rotate_degrees(rotation.y, opengl::Y_UNIT_VECTOR);
       transform.rotate_degrees(rotation.z, opengl::Z_UNIT_VECTOR);
     }
+
+    auto &isv = registry.assign<IsVisible>(entity);
+    isv.value = is_visible;
 
     auto &sn = registry.assign<ShaderName>(entity);
     sn.value = shader;

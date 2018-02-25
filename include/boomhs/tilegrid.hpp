@@ -88,6 +88,9 @@ public:
   void assign_river(Tile &, glm::vec2 const&);
   auto const& flows() const { return flowdirs_; }
 
+  bool is_visible(Tile &);
+  void set_isvisible(Tile &, bool);
+
   template<typename FN, typename ...Args>
   void
   visit_each(FN const& fn, Args &&... args) const

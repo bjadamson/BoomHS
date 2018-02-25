@@ -17,6 +17,11 @@
 namespace boomhs
 {
 
+struct IsVisible
+{
+  bool value = false;
+};
+
 struct Torch
 {
   bool is_pickedup = false;
@@ -106,7 +111,7 @@ find_enemies(EntityRegistry &registry)
 {
   using namespace boomhs;
   using namespace opengl;
-  return find_all_entities_with_component<Enemy>(registry);
+  return find_all_entities_with_component<EnemyData>(registry);
 }
 
 inline auto
