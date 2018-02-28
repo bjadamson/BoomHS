@@ -95,7 +95,7 @@ public:
 
   template<typename FN>
   void
-  visit_tiles(FN const& fn) const { tilegrid_.visit_each(fn); }
+  visit_tiles(FN const& fn) const { visit_each(tilegrid_, fn); }
 };
 
 } // ns boomhs

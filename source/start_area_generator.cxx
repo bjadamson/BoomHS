@@ -72,7 +72,7 @@ StartAreaGenerator::gen_level(EntityRegistry &registry, stlw::float_generator &r
   auto const set_wall = [&tilegrid](TilePosition const& tpos) {
     tilegrid.data(tpos).type = TileType::WALL;
   };
-  tilegrid.visit_edges(set_wall);
+  visit_edges(tilegrid, set_wall);
 
 
   // TODO: turn this into some prefab we can put in both levels (or prefabs that both have teleport

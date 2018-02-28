@@ -607,7 +607,7 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
         }
     }
   };
-  tilegrid.visit_each(draw_tile);
+  visit_each(tilegrid, draw_tile);
 }
 
 void

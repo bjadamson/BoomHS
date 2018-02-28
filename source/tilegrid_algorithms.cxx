@@ -18,11 +18,8 @@ static auto constexpr SIDES = stlw::make_array<MapEdge::Side>(
 namespace
 {
 
-// I adapted this basic algorithm from:
+// Adapted from from:
 // http://playtechs.blogspot.com/2007/03/raytracing-on-grid.html
-//
-// Specifically my adaption was to make callable with a FN and any arguments, allowing this
-// function to be reused with all sort of contexts.
 template<typename FN, typename ...Args>
 void
 bresenham_3d(int const x0, int const y0, int const x1, int const y1, FN const& fn, Args &&... args)
@@ -202,7 +199,7 @@ update_visible_tiles(TileGrid &tilegrid, WorldObject const& player, bool const r
       bresenham_3d(wp.x, wp.z, pos.x, pos.y, set_tile, found_wall);
     }
   };
-  tilegrid.visit_each(fn);
+  visit_each(tilegrid, fn);
 }
 
 void
