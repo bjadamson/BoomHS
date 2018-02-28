@@ -12,7 +12,7 @@ namespace stlw
 {
 
 // TODO: boost::path
-stlw::result<std::string, std::string>
+inline stlw::result<std::string, std::string>
 read_file(char const *path)
 {
   // Read the Vertex Shader code from the file
@@ -25,8 +25,15 @@ read_file(char const *path)
     }
 
     std::string next_line = "";
+    bool first = true;
     while (std::getline(istream, next_line)) {
-      sstream << "\n" << next_line;
+      //sstream << "\n" << next_line;
+      if (!first) {
+        sstream << "\n";
+      } else {
+        first = false;
+      }
+      sstream << next_line;
     }
     // explicit, dtor should do this.
     istream.close();

@@ -63,7 +63,8 @@ make_paths(L &log)
 }
 
 constexpr char const* prefix_contents = R"(#version 300 es
-precision mediump float;)";
+precision mediump float;
+)";
 
 int
 main(int argc, char *argv[])
