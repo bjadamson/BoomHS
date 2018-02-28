@@ -1,4 +1,5 @@
 #include <boomhs/ui.hpp>
+#include <boomhs/ui_state.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/zone.hpp>
