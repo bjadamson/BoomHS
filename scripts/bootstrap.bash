@@ -25,33 +25,27 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O0")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17 -stdlib=libc++")
-set(TOOLS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tools/)
+
+
+set(PROJECT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(EXTERNAL_DIR ${PROJECT_DIR}/external)
+set(TOOLS_DIRECTORY ${PROJECT_DIR}/tools/)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
-set(IMGUI_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/imgui/include")
-set(CPPTOML_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/cpptoml/include")
+set(IMGUI_INCLUDE_DIR "${EXTERNAL_DIR}/imgui/include")
+set(CPPTOML_INCLUDE_DIR "${EXTERNAL_DIR}/cpptoml/include")
 
-## DEFINITIONS
 file(GLOB INTERNAL_INCLUDE_DIRS include external/**/include)
 
 file(GLOB_RECURSE GLOBBED_SOURCES
-  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/**/*.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cxx
+  ${EXTERNAL_DIR}/**/*.cxx
+  ${PROJECT_DIR}/source/*.cxx
   )
 
-## Gather the source files in such a way that we can pass them to clang-format and other clang
-file(GLOB_RECURSE GLOBBED_SOURCES_CLANG_TOOLS *.cxx *.hpp)
-set (EXCLUDE_DIR "expected/")
-foreach (TMP_PATH ${GLOBBED_SOURCES_CLANG_TOOLS})
-    string (FIND ${TMP_PATH} ${EXCLUDE_DIR} EXCLUDE_DIR_FOUND)
-    if (NOT ${EXCLUDE_DIR_FOUND} EQUAL -1)
-        list (REMOVE_ITEM GLOBBED_SOURCES_CLANG_TOOLS ${TMP_PATH})
-    endif ()
-endforeach(TMP_PATH)
-
 ## Additional build targets CMake should generate.
-add_custom_target(cppformat COMMAND clang-format -i ${GLOBBED_SOURCES_CLANG_TOOLS})
+set(BOOMHS_CODE ${PROJECT_DIR}/source/*.cxx ${PROJECT_DIR}/include/**/*.hpp)
+
+add_custom_target(cppformat COMMAND clang-format -i ${BOOMHS_CODE})
 add_custom_target(clangcheck COMMAND clang-check -analyze -p ${BUILD} -s ${GLOBBED_SOURCES_CLANG_TOOLS})
 
 ## Declare our executable and build it.
