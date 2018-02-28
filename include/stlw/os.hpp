@@ -24,16 +24,15 @@ read_file(char const *path)
       return stlw::make_error("Error opening file at path '" + std::string{path} + "'");
     }
 
-    std::string next_line = "";
+    std::string buffer;
     bool first = true;
-    while (std::getline(istream, next_line)) {
-      //sstream << "\n" << next_line;
+    while (std::getline(istream, buffer)) {
       if (!first) {
         sstream << "\n";
       } else {
         first = false;
       }
-      sstream << next_line;
+      sstream << buffer;
     }
     // explicit, dtor should do this.
     istream.close();

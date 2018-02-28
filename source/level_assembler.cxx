@@ -12,7 +12,9 @@
 #include <opengl/obj.hpp>
 #include <opengl/lighting.hpp>
 
+#include <stlw/os.hpp>
 #include <stlw/random.hpp>
+#include <sstream>
 
 using namespace boomhs;
 using namespace opengl;

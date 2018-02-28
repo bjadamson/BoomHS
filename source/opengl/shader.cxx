@@ -220,6 +220,7 @@ program_factory::from_files(stlw::Logger &logger, VertexShaderFilename const& v,
 
   // Read the Vertex/Fragment Shader code from ther file
   DO_TRY(auto const vertex_shader_source, stlw::read_file(vertex_shader_path));
+
   DO_TRY(auto attribute_variable_info, from_vertex_shader(vertex_shader_path, vertex_shader_source));
   DO_TRY(auto const fragment_source, stlw::read_file(fragment_shader_path));
 
