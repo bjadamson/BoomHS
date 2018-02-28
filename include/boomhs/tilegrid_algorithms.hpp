@@ -118,6 +118,17 @@ find_immediate_neighbors(TileGrid const& tgrid, TilePosition const& tpos, TileTy
   return find_neighbors(tgrid, tpos, type, config);
 }
 
+inline void
+floodfill(TileGrid &tgrid, TileType const type)
+{
+  auto const [w, h] = tgrid.dimensions();
+  FOR(x, w) {
+    FOR(y, h) {
+      tgrid.data(x, y).type = type;
+    }
+  }
+}
+
 class MapEdge
 {
 public:

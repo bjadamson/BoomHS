@@ -1,6 +1,6 @@
 #include <boomhs/stairwell_generator.hpp>
 #include <boomhs/entity.hpp>
-#include <boomhs/level_generator.hpp>
+#include <boomhs/dungeon_generator.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <stlw/random.hpp>
 

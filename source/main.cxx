@@ -52,6 +52,25 @@ move_betweentilegrids_ifonstairs(TiledataState &tds, LevelManager &lm)
   }
   auto const& tilegrid = ldata.tilegrid();
   auto const& tile = tilegrid.data(wp.x, wp.z);
+  if (tile.type == TileType::TELEPORTER) {
+    int const current = lm.active_zone();
+    int const newlevel = current == 0 ? 1 : 0;
+    assert(newlevel < lm.num_levels());
+    lm.make_active(newlevel, tds);
+    std::cerr << "setting level to: '" << newlevel << "'\n";
+
+
+    // now that the zone has changed, all references through lm are pointing to old level.
+    // use active()
+    auto &zs = lm.active();
+    auto &ldata = zs.level_data;
+
+    auto &player = ldata.player;
+    auto &registry = zs.registry;
+
+    player.move_to(10, player.world_position().y, 10);
+    return;
+  }
   if (!tile.is_stair()) {
     return;
   }
@@ -247,15 +266,19 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
   auto &logger = es.logger;
   auto &tilegrid_state = es.tilegrid_state;
 
-  auto &zs = lm.active();
-  auto &registry = zs.registry;
-
-  auto &ldata = zs.level_data;
-  auto &player = ldata.player;
-
   // Update the world
   {
+    auto &zs = lm.active();
+    auto &registry = zs.registry;
     move_betweentilegrids_ifonstairs(tilegrid_state, lm);
+  }
+
+  // Must recalculate zs and registry, possibly changed since call to move_between()
+  auto &zs = lm.active();
+  auto &registry = zs.registry;
+  auto &ldata = zs.level_data;
+  auto &player = ldata.player;
+  {
     update_nearbytargets(ldata, registry, ft);
     move_riverwiggles(ldata, ft);
 

@@ -1,10 +1,11 @@
 #include <boomhs/level_assembler.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/components.hpp>
-#include <boomhs/level_generator.hpp>
+#include <boomhs/dungeon_generator.hpp>
 #include <boomhs/level_loader.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/world_object.hpp>
+#include <boomhs/start_area_generator.hpp>
 
 #include <opengl/constants.hpp>
 #include <opengl/gpu.hpp>
@@ -20,13 +21,8 @@ namespace
 {
 
 ZoneState
-assemble(LevelAssets &&assets, EntityRegistry &registry, LevelConfig const& config)
+assemble(LevelGeneredData &&gendata, LevelAssets &&assets, EntityRegistry &registry)
 {
-  auto const& objcache = assets.obj_cache;
-
-  stlw::float_generator rng;
-  auto gendata = level_generator::gen_level(config, registry, MOVE(assets.tile_table), rng);
-
   // Load point lights
   auto light_view = registry.view<PointLight, Transform>();
   for (auto const entity : light_view) {
@@ -52,7 +48,7 @@ assemble(LevelAssets &&assets, EntityRegistry &registry, LevelConfig const& conf
 
   LevelData level_data{
     MOVE(gendata.tilegrid),
-    MOVE(gendata.ttable),
+    MOVE(assets.tile_table),
     MOVE(gendata.startpos),
     MOVE(gendata.rivers),
     MOVE(gendata.torch_eid),
@@ -221,6 +217,21 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry
     return "area" + std::to_string(floor_number) + ".toml";
   };
 
+  auto const DUNGEON_FLOOR_COUNT = 2;
+  std::vector<ZoneState> zstates;
+  zstates.reserve(DUNGEON_FLOOR_COUNT + 1);
+
+  stlw::float_generator rng;
+  {
+    // generate starting area
+    auto &registry = registries[0];
+    auto gendata = StartAreaGenerator::gen_level(registry, rng);
+
+    DO_TRY(auto level_assets, LevelLoader::load_level(logger, registry, level_string(0)));
+    ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
+    zstates.emplace_back(MOVE(zs));
+  }
+
   auto const stairs_perfloor = 8;
   int const width = 40, height = 40;
   TileGridConfig const tdconfig{width, height};
@@ -229,25 +240,27 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry
   //
   // The logger isn't thread safe, need to ensure that the logger isn't using "during" level gen,
   // or somehow give it unique access during writing (read/write lock?).
-
-  auto const FLOOR_COUNT = 2;
-  std::vector<ZoneState> zstates;
-  zstates.reserve(FLOOR_COUNT);
-  FORI(i, FLOOR_COUNT) {
-    auto &registry = registries[i];
+  for (auto i = 0; i < DUNGEON_FLOOR_COUNT; ++i) {
+    auto &registry = registries[i + 1];
     DO_TRY(auto level_assets, LevelLoader::load_level(logger, registry, level_string(i)));
-    StairGenConfig const stairconfig{FLOOR_COUNT, i, stairs_perfloor};
-    LevelConfig const level_config{stairconfig, tdconfig};
+    StairGenConfig const stairconfig{DUNGEON_FLOOR_COUNT, i, stairs_perfloor};
+    LevelConfig const config{stairconfig, tdconfig};
 
-    ZoneState zs = assemble(MOVE(level_assets), registry, level_config);
+    auto gendata = dungeon_generator::gen_level(config, registry, rng);
+
+    ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
     zstates.emplace_back(MOVE(zs));
   }
+
+  // insert a teleport tile on level1 for now (hacky)
+  zstates[1].level_data.tilegrid().data(0, 0).type = TileType::TELEPORTER;
 
   // copy the first zonestate to GPU
   assert(zstates.size() > 0);
   copy_to_gpu(logger, zstates.front());
+  copy_to_gpu(logger, zstates[1]);
 
-  for(auto i = 1; i < FLOOR_COUNT; ++i) {
+  for(auto i = 2; i < DUNGEON_FLOOR_COUNT + 1; ++i) {
     bridge_staircases(zstates[i-1], zstates[i]);
 
     // TODO: maybe lazily load these?

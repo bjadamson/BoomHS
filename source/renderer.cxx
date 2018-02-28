@@ -579,17 +579,6 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
       case TileType::RIVER:
         // Do nothing, we handle rendering rivers elsewhere.
         break;
-      case TileType::BRIDGE:
-        {
-          // TODo: how to orient bridge (tile) based on RiverInfo (nontile) information?
-          //
-          // Previously we haven't read data stored outside the EntityRegistry when
-          // rendering tiles.
-          //
-          // thinking ...
-          draw_tile_helper(tile_sp, dinfo, tile, default_modmatrix, true);
-        }
-        break;
       case TileType::STAIR_DOWN:
         {
           auto &sp = sps.ref_sp("stair");
@@ -608,8 +597,14 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
           draw_tile_helper(sp, dinfo, tile, default_modmatrix, receives_ambient_light);
         }
         break;
-      default:
-        std::exit(1);
+        case TileType::BRIDGE:
+        case TileType::DOOR:
+        case TileType::TELEPORTER:
+        default:
+        {
+          bool const receives_ambient_light = true;
+          draw_tile_helper(tile_sp, dinfo, tile, default_modmatrix, receives_ambient_light);
+        }
     }
   };
   tilegrid.visit_each(draw_tile);

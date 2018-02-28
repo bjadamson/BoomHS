@@ -259,6 +259,7 @@ load_textures(stlw::Logger &logger, CppTable const& config)
     }
     else {
       // TODO: implement more.
+      std::cerr << "error, type is '" << type << "'\n";
       std::abort();
     }
   };
@@ -558,7 +559,7 @@ ObjCache::get_obj(char const* name) const
 
   // assume presence
   if (it == objects_.cend()) {
-    std::cerr << "could not find sp: '" << name << "'\n";
+    std::cerr << "could not find mesh: '" << name << "' (did you load it?)\n";
     std::abort();
   }
 

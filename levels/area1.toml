@@ -79,6 +79,16 @@ specular = [1.0, 1.0, 1.0]
 shininess = 1.0
 
 [[tile]]
+tile = "DOOR"
+mesh = "door"
+vshader = "3d_pos_normal_color"
+color = [1.0, 1.0, 1.0]
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[tile]]
 tile = "FLOOR"
 mesh = "plus"
 vshader = "floor"
@@ -129,6 +139,16 @@ specular = [1.0, 0.0, 0.0]
 shininess = 1.0
 
 [[tile]]
+tile = "TELEPORTER"
+mesh = "teleporter"
+vshader = "3d_pos_normal_color"
+color = [1.0, 1.0, 1.0]
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[tile]]
 tile = "WALL"
 mesh = "hashtag"
 vshader = "hashtag"
@@ -146,7 +166,19 @@ normals = true
 uvs = false
 
 [[meshes]]
+name = "teleporter"
+colors = true
+normals = true
+uvs = false
+
+[[meshes]]
 name = "bar"
+colors = true
+normals = true
+uvs = false
+
+[[meshes]]
+name = "door"
 colors = true
 normals = true
 uvs = false

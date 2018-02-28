@@ -7,7 +7,6 @@
 namespace boomhs
 {
 class EntityRegistry;
-struct TileSharedInfoTable;
 
 struct TileGridConfig
 {
@@ -22,20 +21,10 @@ struct LevelConfig
 
 } // ns boomhs
 
-namespace boomhs::level_generator
+namespace boomhs::dungeon_generator
 {
-
-struct LevelGeneredData
-{
-  TileGrid tilegrid;
-  TileSharedInfoTable ttable;
-  TilePosition startpos;
-  std::vector<RiverInfo> rivers;
-  EntityID torch_eid;
-};
 
 LevelGeneredData
-gen_level(LevelConfig const&, EntityRegistry &, TileSharedInfoTable &&,
-    stlw::float_generator &);
+gen_level(LevelConfig const&, EntityRegistry &, stlw::float_generator &);
 
-} // ns boomhs::level_generator
+} // ns boomhs::dungeon_generator

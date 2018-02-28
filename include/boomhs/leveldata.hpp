@@ -16,6 +16,14 @@
 namespace boomhs
 {
 
+struct LevelGeneredData
+{
+  TileGrid tilegrid;
+  TilePosition startpos;
+  std::vector<RiverInfo> rivers;
+  EntityID torch_eid;
+};
+
 class LevelData
 {
   // The tilegrid stores stores information about the grid, like it's dimensions, and stores all of

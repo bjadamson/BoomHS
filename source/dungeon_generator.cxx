@@ -1,4 +1,4 @@
-#include <boomhs/level_generator.hpp>
+#include <boomhs/dungeon_generator.hpp>
 #include <boomhs/enemy.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/stairwell_generator.hpp>
@@ -276,7 +276,7 @@ place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_gene
 
 } // ns anon
 
-namespace boomhs::level_generator
+namespace boomhs::dungeon_generator
 {
 
 struct Rooms
@@ -380,8 +380,7 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
 }
 
 LevelGeneredData
-gen_level(LevelConfig const& levelconfig, EntityRegistry &registry,
-    TileSharedInfoTable &&ttable, stlw::float_generator &rng)
+gen_level(LevelConfig const& levelconfig, EntityRegistry &registry, stlw::float_generator &rng)
 {
   // clang-format off
   TileGridConfig const& tileconfig = levelconfig.tileconfig;
@@ -391,6 +390,7 @@ gen_level(LevelConfig const& levelconfig, EntityRegistry &registry,
   // clang-format on
 
   TileGrid tilegrid{tdwidth, tdheight, registry};
+  floodfill(tilegrid, TileType::WALL);
 
   std::cerr << "======================================\n";
   std::vector<RiverInfo> rivers;
@@ -403,7 +403,7 @@ gen_level(LevelConfig const& levelconfig, EntityRegistry &registry,
   std::cerr << "finished!\n";
   std::cerr << "======================================\n";
 
-  return LevelGeneredData{MOVE(tilegrid), MOVE(ttable), starting_pos, MOVE(rivers), torch_eid};
+  return LevelGeneredData{MOVE(tilegrid), starting_pos, MOVE(rivers), torch_eid};
 }
 
-} // ns boomhs::level_generator
+} // ns boomhs::dungeon_generator

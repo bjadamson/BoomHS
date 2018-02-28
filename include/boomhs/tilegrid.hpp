@@ -103,6 +103,27 @@ public:
     }
   }
 
+  template<typename FN, typename ...Args>
+  void
+  visit_edges(FN const& fn, Args &&... args) const
+  {
+    auto const [w, h] = dimensions();
+    auto const visit_fn = [&fn, this](TilePosition const& tpos) {
+      if (is_edge_tile(tpos)) {
+        fn(tpos);
+      }
+    };
+    visit_each(visit_fn, FORWARD(args)...);
+  }
+
+  bool
+  is_edge_tile(TilePosition const& tpos) const
+  {
+    auto const [w, h] = dimensions();
+    uint64_t const x = tpos.x, y = tpos.y;
+    return ANYOF(x == 0, x == (w - 1), y == 0, y == (h - 1));
+  }
+
   template<typename FN>
   void
   visit_neighbors(TilePosition const& pos, FN const& fn, TileLookupBehavior const behavior) const
