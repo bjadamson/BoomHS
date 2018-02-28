@@ -379,8 +379,8 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
   return (*rooms).starting_position;
 }
 
-LevelData
-make_leveldata(LevelConfig const& levelconfig, EntityRegistry &registry,
+LevelGeneredData
+gen_level(LevelConfig const& levelconfig, EntityRegistry &registry,
     TileSharedInfoTable &&ttable, stlw::float_generator &rng)
 {
   // clang-format off
@@ -403,7 +403,7 @@ make_leveldata(LevelConfig const& levelconfig, EntityRegistry &registry,
   std::cerr << "finished!\n";
   std::cerr << "======================================\n";
 
-  return LevelData{MOVE(tilegrid), MOVE(ttable), starting_pos, MOVE(rivers), torch_eid};
+  return LevelGeneredData{MOVE(tilegrid), MOVE(ttable), starting_pos, MOVE(rivers), torch_eid};
 }
 
 } // ns boomhs::level_generator

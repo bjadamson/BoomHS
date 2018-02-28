@@ -1,9 +1,12 @@
 #pragma once
 #include <boomhs/level_loader.hpp>
+#include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/nearby_targets.hpp>
 #include <boomhs/river_generator.hpp>
 #include <boomhs/tile.hpp>
 #include <boomhs/tilegrid.hpp>
+#include <boomhs/world_object.hpp>
 
 #include <opengl/lighting.hpp>
 
@@ -32,7 +35,21 @@ class LevelData
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileGrid &&, TileSharedInfoTable &&, TilePosition const&, std::vector<RiverInfo> &&,
-      EntityID);
+      EntityID, opengl::Color const&, opengl::GlobalLight const&, ObjCache &&, Camera &&,
+      WorldObject &&
+      );
+
+  // public fields
+  opengl::Color background;
+  opengl::GlobalLight global_light;
+
+  ObjCache obj_cache;
+
+  // nearby targets user can select
+  NearbyTargets nearby_targets;
+
+  Camera camera;
+  WorldObject player;
 
   void set_floor(TilePosition const&);
   void set_river(TilePosition const&);

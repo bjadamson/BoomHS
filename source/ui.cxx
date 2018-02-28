@@ -2,7 +2,7 @@
 #include <boomhs/ui_state.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/zone.hpp>
+#include <boomhs/level_manager.hpp>
 
 #include <window/sdl_window.hpp>
 
@@ -82,7 +82,7 @@ comboselected_to_entity(int const selected_index, std::vector<pair_t> const& pai
 }
 
 void
-draw_entity_editor(UiState &uistate, LevelState &lstate, EntityRegistry &registry)
+draw_entity_editor(UiState &uistate, LevelData &ldata, EntityRegistry &registry)
 {
   auto &selected = uistate.selected_entity;
   if (ImGui::Begin("Entity Editor Window")) {
@@ -90,8 +90,8 @@ draw_entity_editor(UiState &uistate, LevelState &lstate, EntityRegistry &registr
     if (display_combo_for_entities("Entity", &selected, registry, pairs)) {
       auto const eid = comboselected_to_entity(selected, pairs);
 
-      auto &player = lstate.player;
-      auto &camera = lstate.camera;
+      auto &player = ldata.player;
+      auto &camera = ldata.camera;
 
       camera.set_target(eid);
       player.set_eid(eid);
@@ -111,21 +111,21 @@ draw_entity_editor(UiState &uistate, LevelState &lstate, EntityRegistry &registr
 }
 
 void
-draw_tilegrid_editor(TiledataState &tds, ZoneManager &zm)
+draw_tilegrid_editor(TiledataState &tds, LevelManager &lm)
 {
   if (ImGui::Begin("Tilemap Editor Window")) {
     ImGui::InputFloat3("Floor Offset:", glm::value_ptr(tds.floor_offset));
     ImGui::InputFloat3("Tile Scaling:", glm::value_ptr(tds.tile_scaling));
 
     std::vector<std::string> levels;
-    FORI(i, zm.num_zones()) {
+    FORI(i, lm.num_levels()) {
       levels.emplace_back(std::to_string(i));
     }
     void *pdata = reinterpret_cast<void *>(&levels);
-    int selected = zm.active_zone();
+    int selected = lm.active_zone();
 
-    if (ImGui::Combo("Current Level:", &selected, callback_from_strings, pdata, zm.num_zones())) {
-      zm.make_zone_active(selected, tds);
+    if (ImGui::Combo("Current Level:", &selected, callback_from_strings, pdata, lm.num_levels())) {
+      lm.make_active(selected, tds);
     }
     bool recompute = false;
     recompute |= ImGui::Checkbox("Draw Tilemap", &tds.draw_tilegrid);
@@ -142,10 +142,10 @@ draw_tilegrid_editor(TiledataState &tds, ZoneManager &zm)
 }
 
 void
-draw_camera_window(LevelState &lstate)
+draw_camera_window(LevelData &ldata)
 {
-  auto &player = lstate.player;
-  auto &camera = lstate.camera;
+  auto &player = ldata.player;
+  auto &camera = ldata.camera;
 
   auto const draw_perspective_controls = [&]()
   {
@@ -246,9 +246,9 @@ draw_mouse_window(MouseState &mstate)
 }
 
 void
-draw_player_window(EngineState &es, LevelState &lstate)
+draw_player_window(EngineState &es, LevelData &ldata)
 {
-  auto &player = lstate.player;
+  auto &player = ldata.player;
 
   if (ImGui::Begin("PLAYER INFO WINDOW")) {
     auto const display = player.display();
@@ -271,9 +271,9 @@ draw_player_window(EngineState &es, LevelState &lstate)
 }
 
 void
-show_directionallight_window(UiState &ui, LevelState &lstate)
+show_directionallight_window(UiState &ui, LevelData &ldata)
 {
-  auto &directional = lstate.global_light.directional;
+  auto &directional = ldata.global_light.directional;
 
   if (ImGui::Begin("Directional Light Editor")) {
     ImGui::Text("Directional Light");
@@ -291,12 +291,12 @@ show_directionallight_window(UiState &ui, LevelState &lstate)
 }
 
 void
-show_ambientlight_window(UiState &ui, LevelState &lstate)
+show_ambientlight_window(UiState &ui, LevelData &ldata)
 {
   if (ImGui::Begin("Global Light Editor")) {
     ImGui::Text("Global Light");
 
-    auto &global_light = lstate.global_light;
+    auto &global_light = ldata.global_light;
     ImGui::ColorEdit3("Ambient Light Color:", global_light.ambient.data());
 
     if (ImGui::Button("Close", ImVec2(120,0))) {
@@ -415,10 +415,10 @@ show_pointlight_window(UiState &ui, EntityRegistry &registry)
 }
 
 void
-show_background_window(UiState &ui_state, LevelState &lstate)
+show_background_window(UiState &ui_state, LevelData &ldata)
 {
   if (ImGui::Begin("Background Color")) {
-    ImGui::ColorEdit3("Background Color:", lstate.background.data());
+    ImGui::ColorEdit3("Background Color:", ldata.background.data());
 
     if (ImGui::Button("Close", ImVec2(120,0))) {
       ui_state.show_background_window = false;
@@ -428,7 +428,7 @@ show_background_window(UiState &ui_state, LevelState &lstate)
 }
 
 void
-world_menu(EngineState &es, LevelState &lstate)
+world_menu(EngineState &es, LevelData &ldata)
 {
   auto &ui = es.ui_state;
   if (ImGui::BeginMenu("World")) {
@@ -439,12 +439,12 @@ world_menu(EngineState &es, LevelState &lstate)
   }
 
   if (ui.show_background_window) {
-    show_background_window(ui, lstate);
+    show_background_window(ui, ldata);
   }
 }
 
 void
-lighting_menu(EngineState &es, LevelState &lstate, EntityRegistry &registry)
+lighting_menu(EngineState &es, LevelData &ldata, EntityRegistry &registry)
 {
   auto &ui = es.ui_state;
   bool &edit_pointlights = ui.show_pointlight_window;
@@ -465,17 +465,16 @@ lighting_menu(EngineState &es, LevelState &lstate, EntityRegistry &registry)
     show_pointlight_window(ui, registry);
   }
   if (edit_ambientlight) {
-    show_ambientlight_window(ui, lstate);
+    show_ambientlight_window(ui, ldata);
   }
   if (edit_directionallights) {
-    show_directionallight_window(ui, lstate);
+    show_directionallight_window(ui, ldata);
   }
   if (edit_entitymaterials) {
     show_entitymaterials_window(ui, registry);
   }
   if (edit_tilegridmaterials) {
-    auto &level_data = lstate.level_data;
-    show_tilegrid_materials_window(ui, level_data);
+    show_tilegrid_materials_window(ui, ldata);
   }
 }
 
@@ -485,28 +484,28 @@ namespace boomhs
 {
 
 void
-draw_ui(EngineState &es, ZoneManager &zm, window::SDLWindow &window, EntityRegistry &registry)
+draw_ui(EngineState &es, LevelManager &lm, window::SDLWindow &window, EntityRegistry &registry)
 {
   auto &ui_state = es.ui_state;
   auto &tilegrid_state = es.tilegrid_state;
   auto &window_state = es.window_state;
-  auto &zs = zm.active();
-  auto &lstate = zs.level_state;
+  auto &zs = lm.active();
+  auto &ldata = zs.level_data;
 
   if (ui_state.show_entitywindow) {
-    draw_entity_editor(ui_state, lstate, registry);
+    draw_entity_editor(ui_state, ldata, registry);
   }
   if (ui_state.show_camerawindow) {
-    draw_camera_window(lstate);
+    draw_camera_window(ldata);
   }
   if (ui_state.show_mousewindow) {
     draw_mouse_window(es.mouse_state);
   }
   if (ui_state.show_playerwindow) {
-    draw_player_window(es, lstate);
+    draw_player_window(es, ldata);
   }
   if (ui_state.show_tilegrid_editor_window) {
-    draw_tilegrid_editor(tilegrid_state, zm);
+    draw_tilegrid_editor(tilegrid_state, lm);
   }
   if (ui_state.show_debugwindow) {
     ImGui::Checkbox("Draw Skybox", &es.draw_skybox);
@@ -547,17 +546,17 @@ draw_ui(EngineState &es, ZoneManager &zm, window::SDLWindow &window, EntityRegis
       setsync_row("Late Tearing", window::SwapIntervalFlag::LATE_TEARING);
       ImGui::EndMenu();
     }
-    world_menu(es, lstate);
-    lighting_menu(es, lstate, registry);
+    world_menu(es, ldata);
+    lighting_menu(es, ldata, registry);
 
     auto const framerate = es.imgui.Framerate;
     auto const ms_frame = 1000.0f / framerate;
 
     ImGui::SameLine(ImGui::GetWindowWidth() * 0.25f);
-    ImGui::Text("Player Position: %s", glm::to_string(lstate.player.world_position()).c_str());
+    ImGui::Text("Player Position: %s", glm::to_string(ldata.player.world_position()).c_str());
 
     ImGui::SameLine(ImGui::GetWindowWidth() * 0.60f);
-    ImGui::Text("Current Level: %i", zm.active_zone());
+    ImGui::Text("Current Level: %i", lm.active_zone());
 
     ImGui::SameLine(ImGui::GetWindowWidth() * 0.76f);
     ImGui::Text("FPS(avg): %.1f ms/frame: %.3f", framerate, ms_frame);

@@ -2,7 +2,7 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
-#include <boomhs/zone.hpp>
+#include <boomhs/level_manager.hpp>
 
 #include <window/controller.hpp>
 #include <window/timer.hpp>
@@ -31,8 +31,8 @@ move_ontilegrid(GameState &state, glm::vec3 (WorldObject::*fn)() const, WorldObj
   auto &es = state.engine_state;
   auto &ts = es.tilegrid_state;
 
-  auto &zm = state.zone_manager;
-  LevelData const& leveldata = zm.active().level_state.level_data;
+  auto &lm = state.level_manager;
+  LevelData const& leveldata = lm.active().level_data;
   auto const [x, z] = leveldata.dimensions();
   glm::vec3 const move_vec = (wo.*fn)();
 
@@ -98,9 +98,9 @@ is_quit_event(SDL_Event &event)
 void
 move_forward(GameState &state, FrameTime const& ft)
 {
-  auto &zm = state.zone_manager;
-  auto &lstate = zm.active().level_state;
-  auto &player = lstate.player;
+  auto &lm = state.level_manager;
+  auto &ldata = lm.active().level_data;
+  auto &player = ldata.player;
 
   move_ontilegrid(state, &WorldObject::world_forward, player, ft);
 }
@@ -108,45 +108,45 @@ move_forward(GameState &state, FrameTime const& ft)
 void
 move_backward(GameState &state, FrameTime const& ft)
 {
-  auto &zm = state.zone_manager;
-  auto &lstate = zm.active().level_state;
-  auto &player = lstate.player;
+  auto &lm = state.level_manager;
+  auto &ldata = lm.active().level_data;
+  auto &player = ldata.player;
   move_ontilegrid(state, &WorldObject::world_backward, player, ft);
 }
 
 void
 move_left(GameState &state, FrameTime const& ft)
 {
-  auto &zm = state.zone_manager;
-  auto &lstate = zm.active().level_state;
-  auto &player = lstate.player;
+  auto &lm = state.level_manager;
+  auto &ldata = lm.active().level_data;
+  auto &player = ldata.player;
   move_ontilegrid(state, &WorldObject::world_left, player, ft);
 }
 
 void
 move_right(GameState &state, FrameTime const& ft)
 {
-  auto &zm = state.zone_manager;
-  auto &lstate = zm.active().level_state;
-  auto &player = lstate.player;
+  auto &lm = state.level_manager;
+  auto &ldata = lm.active().level_data;
+  auto &player = ldata.player;
   move_ontilegrid(state, &WorldObject::world_right, player, ft);
 }
 
 void
 move_up(GameState &state, FrameTime const& ft)
 {
-  auto &zm = state.zone_manager;
-  auto &lstate = zm.active().level_state;
-  auto &player = lstate.player;
+  auto &lm = state.level_manager;
+  auto &ldata = lm.active().level_data;
+  auto &player = ldata.player;
   move_ontilegrid(state, &WorldObject::world_up, player, ft);
 }
 
 void
 move_down(GameState &state, FrameTime const& ft)
 {
-  auto &zm = state.zone_manager;
-  auto &lstate = zm.active().level_state;
-  auto &player = lstate.player;
+  auto &lm = state.level_manager;
+  auto &ldata = lm.active().level_data;
+  auto &player = ldata.player;
   move_ontilegrid(state, &WorldObject::world_down, player, ft);
 }
 
@@ -154,10 +154,9 @@ move_down(GameState &state, FrameTime const& ft)
 void
 try_pickup_torch(GameState &state, FrameTime const& ft)
 {
-  auto &zm = state.zone_manager;
-  auto &active = zm.active();
-  auto const& lstate = active.level_state;
-  auto const& ldata = lstate.level_data;
+  auto &lm = state.level_manager;
+  auto &active = lm.active();
+  auto const& ldata = active.level_data;
 
   auto &registry = active.registry;
   auto const eid = ldata.torch_eid();
@@ -165,7 +164,7 @@ try_pickup_torch(GameState &state, FrameTime const& ft)
   auto const& transform = registry.get<Transform>(eid);
   auto const torch_pos = transform.translation;
 
-  auto const& player = lstate.player;
+  auto const& player = ldata.player;
   auto const player_pos = player.world_position();
 
   auto const distance_to_torch = glm::distance(player_pos, torch_pos);
@@ -192,10 +191,9 @@ try_pickup_torch(GameState &state, FrameTime const& ft)
 void
 drop_torch(GameState &state, FrameTime const& ft)
 {
-  auto &zm = state.zone_manager;
-  auto &active = zm.active();
-  auto const& lstate = active.level_state;
-  auto const& ldata = lstate.level_data;
+  auto &lm = state.level_manager;
+  auto &active = lm.active();
+  auto const& ldata = active.level_data;
 
   auto &registry = active.registry;
   auto const eid = ldata.torch_eid();
@@ -218,12 +216,11 @@ drop_torch(GameState &state, FrameTime const& ft)
 void
 toggle_torch(GameState &state, FrameTime const& ft)
 {
-  auto &zm = state.zone_manager;
-  auto &active = zm.active();
+  auto &lm = state.level_manager;
+  auto &active = lm.active();
   auto &registry = active.registry;
 
-  auto const& lstate = active.level_state;
-  auto const& ldata = lstate.level_data;
+  auto const& ldata = active.level_data;
   auto const eid = ldata.torch_eid();
   Torch &torch = registry.get<Torch>(eid);
 
@@ -244,10 +241,10 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, FrameT
   auto &ts = es.tilegrid_state;
   auto &ui = es.ui_state;
 
-  auto &zm = state.zone_manager;
-  auto &lstate = zm.active().level_state;
-  auto &player = lstate.player;
-  auto &camera = lstate.camera;
+  auto &lm = state.level_manager;
+  auto &ldata = lm.active().level_data;
+  auto &player = ldata.player;
+  auto &camera = ldata.camera;
 
   auto const xrel = motion.xrel;
   auto const yrel = motion.yrel;
@@ -279,8 +276,8 @@ process_mousebutton_down(GameState &state, SDL_MouseButtonEvent const& event, Fr
   auto &logger = es.logger;
   auto &ms = es.mouse_state;
 
-  auto &zs = state.zone_manager.active();
-  auto &camera = zs.level_state.camera;
+  auto &zs = state.level_manager.active();
+  auto &camera = zs.level_data.camera;
 
   auto const& button = event.button;
   if (button == SDL_BUTTON_LEFT) {
@@ -293,10 +290,10 @@ process_mousebutton_down(GameState &state, SDL_MouseButtonEvent const& event, Fr
     LOG_ERROR("toggling mouse up/down (pitch) lock");
     camera.rotate_lock ^= true;
 
-    auto &zm = state.zone_manager;
-    auto &lstate = zm.active().level_state;
-    auto &player = lstate.player;
-    auto &camera = lstate.camera;
+    auto &lm = state.level_manager;
+    auto &ldata = lm.active().level_data;
+    auto &player = ldata.player;
+    auto &camera = ldata.camera;
 
     player.rotate_to_match_camera_rotation(camera);
   }
@@ -329,11 +326,11 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
   auto &ui = es.ui_state;
   auto &ts = es.tilegrid_state;
 
-  auto &zm = state.zone_manager;
-  auto &lstate= zm.active().level_state;
-  auto &camera = lstate.camera;
-  auto &player = lstate.player;
-  auto &nearby_targets = lstate.nearby_targets;
+  auto &lm = state.level_manager;
+  auto &ldata= lm.active().level_data;
+  auto &camera = ldata.camera;
+  auto &player = ldata.player;
+  auto &nearby_targets = ldata.nearby_targets;
 
   auto const rotate_player = [&](float const angle, glm::vec3 const& axis) {
     player.rotate_degrees(angle, axis);
@@ -480,9 +477,9 @@ process_mousewheel(GameState &state, SDL_MouseWheelEvent const& wheel, FrameTime
   auto &logger = state.engine_state.logger;
   LOG_TRACE("mouse wheel event detected.");
 
-  auto &zm = state.zone_manager;
-  auto &lstate = zm.active().level_state;
-  auto &camera = lstate.camera;
+  auto &lm = state.level_manager;
+  auto &ldata = lm.active().level_data;
+  auto &camera = ldata.camera;
   if (wheel.y > 0) {
     camera.decrease_zoom(ZOOM_FACTOR);
   } else {
@@ -497,9 +494,9 @@ process_mousestate(GameState &state, FrameTime const& ft)
   auto &ms = es.mouse_state;
   if (ms.both_pressed()) {
 
-    auto &zm = state.zone_manager;
-    auto &lstate = zm.active().level_state;
-    auto &player = lstate.player;
+    auto &lm = state.level_manager;
+    auto &ldata = lm.active().level_data;
+    auto &player = ldata.player;
 
     move_ontilegrid(state, &WorldObject::world_forward, player, ft);
   }
@@ -514,9 +511,9 @@ process_keystate(GameState &state, FrameTime const& ft)
 
   auto &es = state.engine_state;
   auto &ts = es.tilegrid_state;
-  auto &zm = state.zone_manager;
-  auto &lstate = zm.active().level_state;
-  auto &player = lstate.player;
+  auto &lm = state.level_manager;
+  auto &ldata = lm.active().level_data;
+  auto &player = ldata.player;
 
   if (keystate[SDL_SCANCODE_W]) {
     //move_forward(state, ft);
@@ -558,10 +555,10 @@ process_controllerstate(GameState &state, SDLControllers const& controllers, Fra
   int32_t constexpr AXIS_MIN = -32768;
   int32_t constexpr AXIS_MAX = 32767;
 
-  auto &zm = state.zone_manager;
-  auto &lstate = zm.active().level_state;
-  auto &camera = lstate.camera;
-  auto &player = lstate.player;
+  auto &lm = state.level_manager;
+  auto &ldata = lm.active().level_data;
+  auto &camera = ldata.camera;
+  auto &player = ldata.player;
 
   auto constexpr THRESHOLD = 0.4f;
   auto const less_threshold = [](auto const& v) {

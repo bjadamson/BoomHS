@@ -10,8 +10,8 @@ namespace boomhs
 class EntityRegistry;
 
 struct EngineState;
-class ZoneManager;
+class LevelManager;
 void
-draw_ui(EngineState &, ZoneManager &, window::SDLWindow &, EntityRegistry &);
+draw_ui(EngineState &, LevelManager &, window::SDLWindow &, EntityRegistry &);
 
 } // ns boomhs

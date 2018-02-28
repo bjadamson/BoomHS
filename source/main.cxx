@@ -9,7 +9,7 @@
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/ui.hpp>
-#include <boomhs/zone.hpp>
+#include <boomhs/level_manager.hpp>
 
 #include <window/controller.hpp>
 #include <window/mouse.hpp>
@@ -38,40 +38,39 @@ namespace boomhs
 {
 
 void
-move_betweentilegrids_ifonstairs(TiledataState &tds, ZoneManager &zm)
+move_betweentilegrids_ifonstairs(TiledataState &tds, LevelManager &lm)
 {
-  auto &lstate = zm.active().level_state;
-  auto const& leveldata = lstate.level_data;
+  auto &ldata = lm.active().level_data;
 
-  auto &player = lstate.player;
+  auto &player = ldata.player;
   player.transform().translation.y = 0.5f;
   auto const wp = player.world_position();
   {
-    auto const [w, h] = leveldata.dimensions();
+    auto const [w, h] = ldata.dimensions();
     assert(wp.x < w);
     assert(wp.z < h);
   }
-  auto const& tilegrid = leveldata.tilegrid();
+  auto const& tilegrid = ldata.tilegrid();
   auto const& tile = tilegrid.data(wp.x, wp.z);
   if (!tile.is_stair()) {
     return;
   }
 
-  auto const move_player_through_stairs = [&tile, &tds, &zm](StairInfo const& stair) {
+  auto const move_player_through_stairs = [&tile, &tds, &lm](StairInfo const& stair) {
     {
-      int const current = zm.active_zone();
+      int const current = lm.active_zone();
       int const newlevel = current + (tile.is_stair_up() ? 1 : -1);
-      assert(newlevel < zm.num_zones());
-      zm.make_zone_active(newlevel, tds);
+      assert(newlevel < lm.num_levels());
+      lm.make_active(newlevel, tds);
     }
 
-    // now that the zone has changed, all references through zm are pointing to old level.
+    // now that the zone has changed, all references through lm are pointing to old level.
     // use active()
-    auto &zs = zm.active();
-    auto &lstate = zs.level_state;
+    auto &zs = lm.active();
+    auto &ldata = zs.level_data;
 
-    auto &camera = lstate.camera;
-    auto &player = lstate.player;
+    auto &camera = ldata.camera;
+    auto &player = ldata.player;
     auto &registry = zs.registry;
 
     auto const spos = stair.exit_position;
@@ -86,7 +85,7 @@ move_betweentilegrids_ifonstairs(TiledataState &tds, ZoneManager &zm)
   auto const tp = TilePosition::from_floats_truncated(wp.x, wp.z);
 
   // lookup stairs in the registry
-  auto &registry = zm.active().registry;
+  auto &registry = lm.active().registry;
   auto const stair_eids = find_stairs(registry);
   assert(!stair_eids.empty());
 
@@ -102,9 +101,9 @@ move_betweentilegrids_ifonstairs(TiledataState &tds, ZoneManager &zm)
 }
 
 void
-update_nearbytargets(LevelState &lstate, EntityRegistry &registry, FrameTime const& ft)
+update_nearbytargets(LevelData &ldata, EntityRegistry &registry, FrameTime const& ft)
 {
-  lstate.nearby_targets.clear();
+  ldata.nearby_targets.clear();
 
   auto const player = find_player(registry);
   assert(registry.has<Transform>(player));
@@ -128,7 +127,7 @@ update_nearbytargets(LevelState &lstate, EntityRegistry &registry, FrameTime con
   std::sort(pairs.begin(), pairs.end(), sort_fn);
 
   for (auto const& it : pairs) {
-    lstate.nearby_targets.add_target(it.second);
+    ldata.nearby_targets.add_target(it.second);
   }
 }
 
@@ -172,10 +171,9 @@ move_riverwiggles(LevelData &level_data, FrameTime const& ft)
 }
 
 void
-update_torchflicker(LevelState &lstate, EntityRegistry &registry, stlw::float_generator &rng,
+update_torchflicker(LevelData const& ldata, EntityRegistry &registry, stlw::float_generator &rng,
     FrameTime const& ft)
 {
-  auto const& ldata = lstate.level_data;
   auto const eid = ldata.torch_eid();
 
   auto &pointlight = registry.get<PointLight>(eid);
@@ -188,7 +186,7 @@ update_torchflicker(LevelState &lstate, EntityRegistry &registry, stlw::float_ge
   auto &torch_transform = registry.get<Transform>(eid);
   if (torch.is_pickedup) {
     // Player has picked up the torch, make it follow player around
-    auto const& player = lstate.player;
+    auto const& player = ldata.player;
     auto const& player_pos = player.world_position();
 
     torch_transform.translation = player_pos;
@@ -222,13 +220,12 @@ update_torchflicker(LevelState &lstate, EntityRegistry &registry, stlw::float_ge
 }
 
 void
-update_visible_entities(ZoneManager &zm, EntityRegistry &registry)
+update_visible_entities(LevelManager &lm, EntityRegistry &registry)
 {
-  auto &zs = zm.active();
-  auto &lstate = zs.level_state;
-  auto &leveldata = lstate.level_data;
-  auto &tilegrid = leveldata.tilegrid();
-  auto &player = lstate.player;
+  auto &zs = lm.active();
+  auto &ldata = zs.level_data;
+  auto &tilegrid = ldata.tilegrid();
+  auto &player = ldata.player;
 
   for (auto const eid : registry.view<EnemyData>()) {
     auto &isv = registry.get<IsVisible>(eid);
@@ -244,44 +241,43 @@ update_visible_entities(ZoneManager &zm, EntityRegistry &registry)
 }
 
 void
-game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, stlw::float_generator &rng,
+game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_generator &rng,
     FrameTime const& ft)
 {
   auto &logger = es.logger;
   auto &tilegrid_state = es.tilegrid_state;
 
-  auto &zs = zm.active();
+  auto &zs = lm.active();
   auto &registry = zs.registry;
 
-  auto &lstate = zs.level_state;
-  auto &leveldata = lstate.level_data;
-  auto &player = lstate.player;
+  auto &ldata = zs.level_data;
+  auto &player = ldata.player;
 
   // Update the world
   {
-    move_betweentilegrids_ifonstairs(tilegrid_state, zm);
-    update_nearbytargets(lstate, registry, ft);
-    move_riverwiggles(lstate.level_data, ft);
+    move_betweentilegrids_ifonstairs(tilegrid_state, lm);
+    update_nearbytargets(ldata, registry, ft);
+    move_riverwiggles(ldata, ft);
 
     if (tilegrid_state.recompute) {
       // compute tilegrid
       LOG_INFO("Updating tilegrid\n");
 
-      update_visible_tiles(leveldata.tilegrid(), player, tilegrid_state.reveal);
+      update_visible_tiles(ldata.tilegrid(), player, tilegrid_state.reveal);
 
       // We don't need to recompute the tilegrid, we just did.
       tilegrid_state.recompute = false;
     }
 
     // river wiggles get updated every frame
-    update_visible_riverwiggles(leveldata, player, tilegrid_state.reveal);
+    update_visible_riverwiggles(ldata, player, tilegrid_state.reveal);
 
-    update_visible_entities(zm, registry);
-    update_torchflicker(lstate, registry, rng, ft);
+    update_visible_entities(lm, registry);
+    update_torchflicker(ldata, registry, rng, ft);
   }
   {
     // rendering code
-    render::clear_screen(lstate.background);
+    render::clear_screen(ldata.background);
 
     RenderState rstate{es, zs};
     if (es.draw_entities) {
@@ -316,7 +312,7 @@ game_loop(EngineState &es, ZoneManager &zm, SDLWindow &window, stlw::float_gener
     // if checks happen inside fn
     render::conditionally_draw_player_vectors(rstate, player);
     if (es.ui_state.draw_ui) {
-      draw_ui(es, zm, window, registry);
+      draw_ui(es, lm, window, registry);
     }
   }
   
@@ -353,7 +349,7 @@ loop(Engine &engine, GameState &state, stlw::float_generator &rng, FrameTime con
 {
   auto &es = state.engine_state;
   auto &logger = es.logger;
-  auto &zm = state.zone_manager;
+  auto &lm = state.level_manager;
 
   // Reset Imgui for next game frame.
   ImGui_ImplSdlGL3_NewFrame(engine.window.raw());
@@ -362,7 +358,7 @@ loop(Engine &engine, GameState &state, stlw::float_generator &rng, FrameTime con
     SDL_Event event;
     boomhs::IO::process(state, event, engine.controllers, ft);
   }
-  boomhs::game_loop(es, zm, engine.window, rng, ft);
+  boomhs::game_loop(es, lm, engine.window, rng, ft);
 
   // Render Imgui UI
   ImGui::Render();
@@ -420,7 +416,7 @@ start(stlw::Logger &logger, Engine &engine)
 
   // Construct game state
   EngineState es{logger, imgui, dimensions};
-  GameState state{MOVE(es), ZoneManager{MOVE(zss)}};
+  GameState state{MOVE(es), LevelManager{MOVE(zss)}};
 
   // Start game in a timed loop
   timed_game_loop(engine, state);

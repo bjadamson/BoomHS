@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/zone.hpp>
+#include <boomhs/level_manager.hpp>
 #include <boomhs/zone_state.hpp>
 #include <boomhs/ui_state.hpp>
 
@@ -91,11 +91,11 @@ struct EngineState
 struct GameState
 {
   EngineState engine_state;
-  ZoneManager zone_manager;
+  LevelManager level_manager;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
 
-  explicit GameState(EngineState &&, ZoneManager &&);
+  explicit GameState(EngineState &&, LevelManager &&);
 };
 
 } // ns boomhs

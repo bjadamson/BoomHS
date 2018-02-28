@@ -41,43 +41,15 @@ struct GfxState
   MOVE_CONSTRUCTIBLE_ONLY(GfxState);
 };
 
-struct LevelState
-{
-  // singular light in the scene
-  opengl::Color background;
-  opengl::GlobalLight global_light;
-
-  ObjCache obj_cache;
-  LevelData level_data;
-
-  // nearby targets user can select
-  NearbyTargets nearby_targets;
-
-  Camera camera;
-  WorldObject player;
-  explicit LevelState(opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
-      ObjCache &&ocache, LevelData &&ldata, Camera &&cam, WorldObject &&pl)
-    : background(bgcolor)
-    , global_light(glight)
-    , obj_cache(MOVE(ocache))
-    , level_data(MOVE(ldata))
-    , camera(MOVE(cam))
-    , player(MOVE(pl))
-  {
-  }
-
-  MOVE_CONSTRUCTIBLE_ONLY(LevelState);
-};
-
 // This lives here, and not in zone.hpp, to avoid circular include cyle.
 struct ZoneState
 {
-  LevelState level_state;
+  LevelData level_data;
   GfxState gfx_state;
   EntityRegistry &registry;
 
-  explicit ZoneState(LevelState &&level, GfxState &&gfx, EntityRegistry &reg)
-    : level_state(MOVE(level))
+  explicit ZoneState(LevelData &&ldata, GfxState &&gfx, EntityRegistry &reg)
+    : level_data(MOVE(ldata))
     , gfx_state(MOVE(gfx))
     , registry(reg)
   {

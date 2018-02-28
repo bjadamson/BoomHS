@@ -2,7 +2,7 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid.hpp>
-#include <boomhs/zone.hpp>
+#include <boomhs/level_manager.hpp>
 
 #include <stlw/format.hpp>
 #include <stlw/math.hpp>

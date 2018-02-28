@@ -1,5 +1,5 @@
 #include <boomhs/state.hpp>
-#include <boomhs/zone.hpp>
+#include <boomhs/level_manager.hpp>
 
 #include <imgui/imgui.hpp>
 
@@ -23,9 +23,9 @@ EngineState::EngineState(stlw::Logger &l, ImGuiIO &i, window::Dimensions const &
 {
 }
 
-GameState::GameState(EngineState &&es, ZoneManager &&zm)
+GameState::GameState(EngineState &&es, LevelManager &&lm)
   : engine_state(MOVE(es))
-  , zone_manager(MOVE(zm))
+  , level_manager(MOVE(lm))
 {
 }
 

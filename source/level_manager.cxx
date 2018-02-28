@@ -1,43 +1,43 @@
-#include <boomhs/zone.hpp>
+#include <boomhs/level_manager.hpp>
 #include <boomhs/state.hpp>
 
 namespace boomhs
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// ZoneManager
-ZoneManager::ZoneManager(ZoneStates &&zs)
+// LevelManager
+LevelManager::LevelManager(ZoneStates &&zs)
   : zstates_(MOVE(zs))
 {
 }
 
 ZoneState const&
-ZoneManager::active() const
+LevelManager::active() const
 {
   return zstates_[active_];
 }
 
 ZoneState&
-ZoneManager::active()
+LevelManager::active()
 {
   return zstates_[active_];
 }
 
 void
-ZoneManager::make_zone_active(int const zone_number, TiledataState &tds)
+LevelManager::make_active(int const level_number, TiledataState &tds)
 {
-  active_ = zone_number;
+  active_ = level_number;
   tds.recompute = true;
 }
 
 int
-ZoneManager::num_zones() const
+LevelManager::num_levels() const
 {
   return zstates_.size();
 }
 
 int
-ZoneManager::active_zone() const
+LevelManager::active_zone() const
 {
   return active_;
 }

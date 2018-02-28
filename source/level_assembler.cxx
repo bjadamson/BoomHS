@@ -25,8 +25,7 @@ assemble(LevelAssets &&assets, EntityRegistry &registry, LevelConfig const& conf
   auto const& objcache = assets.obj_cache;
 
   stlw::float_generator rng;
-  auto leveldata = level_generator::make_leveldata(config, registry,
-      MOVE(assets.tile_table), rng);
+  auto gendata = level_generator::gen_level(config, registry, MOVE(assets.tile_table), rng);
 
   // Load point lights
   auto light_view = registry.view<PointLight, Transform>();
@@ -51,11 +50,16 @@ assemble(LevelAssets &&assets, EntityRegistry &registry, LevelConfig const& conf
     camera.set_coordinates(MOVE(sc));
   }
 
-  LevelState level_state{
+  LevelData level_data{
+    MOVE(gendata.tilegrid),
+    MOVE(gendata.ttable),
+    MOVE(gendata.startpos),
+    MOVE(gendata.rivers),
+    MOVE(gendata.torch_eid),
+
     assets.background_color,
     assets.global_light,
     MOVE(assets.obj_cache),
-    MOVE(leveldata),
     MOVE(camera),
     MOVE(player)
   };
@@ -64,7 +68,7 @@ assemble(LevelAssets &&assets, EntityRegistry &registry, LevelConfig const& conf
     MOVE(assets.texture_table)
   };
   return ZoneState{
-    MOVE(level_state),
+    MOVE(level_data),
     MOVE(gfx),
     registry};
 }
@@ -72,8 +76,8 @@ assemble(LevelAssets &&assets, EntityRegistry &registry, LevelConfig const& conf
 void
 bridge_staircases(ZoneState &a, ZoneState &b)
 {
-  auto &tilegrid_a = a.level_state.level_data.tilegrid();
-  auto &tilegrid_b = b.level_state.level_data.tilegrid();
+  auto &tilegrid_a = a.level_data.tilegrid();
+  auto &tilegrid_b = b.level_data.tilegrid();
 
   auto const stairs_up_a = find_upstairs(a.registry, tilegrid_a);
   assert(!stairs_up_a.empty());
@@ -188,9 +192,9 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
 void
 copy_to_gpu(stlw::Logger &logger, ZoneState &zs)
 {
-  auto &lstate = zs.level_state;
-  auto const& ttable = lstate.level_data.tiletable();
-  auto const& objcache = lstate.obj_cache;
+  auto &ldata = zs.level_data;
+  auto const& ttable = ldata.tiletable();
+  auto const& objcache = ldata.obj_cache;
   auto &gfx_state = zs.gfx_state;
   auto &sps = gfx_state.sps;
   auto &registry = zs.registry;
