@@ -1,13 +1,10 @@
 #pragma once
+#include <opengl/auto_resource.hpp>
 #include <opengl/glew.hpp>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <algorithm>
 #include <optional>
-#include <string>
-#include <vector>
-#include <utility>
 
 namespace opengl
 {
@@ -16,22 +13,44 @@ struct TextureInfo
 {
   GLenum mode;
   GLuint id;
+
+  void deallocate();
+
+  static size_t constexpr NUM_BUFFERS = 1;
 };
 
-struct TextureAllocation
+// FrameBuffer Info
+struct FBInfo
 {
-  TextureInfo info;
-  bool should_destroy = false;
+  GLuint id;
+  GLuint color_buffer;
 
-  static std::size_t constexpr NUM_BUFFERS = 1;
+  void deallocate();
+  DEFAULT_CONSTRUCTIBLE(FBInfo);
+  COPY_DEFAULT(FBInfo);
+  MOVE_ASSIGNABLE(FBInfo);
+  FBInfo(FBInfo &&);
 
-  TextureAllocation();
-  ~TextureAllocation();
-
-  NO_COPY(TextureAllocation);
-  NO_MOVE_ASSIGN(TextureAllocation);
-  TextureAllocation(TextureAllocation &&);
+  static size_t constexpr NUM_BUFFERS = 1;
 };
+
+// RenderBuffer Info
+struct RBInfo
+{
+  GLuint depth;
+
+  void deallocate();
+  DEFAULT_CONSTRUCTIBLE(RBInfo);
+  COPY_DEFAULT(RBInfo);
+  MOVE_ASSIGNABLE(RBInfo);
+  RBInfo(RBInfo &&);
+
+  static size_t constexpr NUM_BUFFERS = 1;
+};
+
+using Texture = AutoResource<TextureInfo>;
+using FrameBuffer = AutoResource<FBInfo>;
+using ResourceBuffer = AutoResource<RBInfo>;
 
 struct TextureFilenames
 {
@@ -45,7 +64,7 @@ struct TextureFilenames
 
 class TextureTable
 {
-  using pair_t = std::pair<TextureFilenames, TextureAllocation>;
+  using pair_t = std::pair<TextureFilenames, Texture>;
   std::vector<pair_t> data_;
 
   std::optional<TextureInfo>
@@ -56,7 +75,7 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(TextureTable);
 
   void
-  add_texture(TextureFilenames &&, TextureAllocation &&);
+  add_texture(TextureFilenames &&, Texture &&);
 
   std::optional<TextureInfo>
   find(std::string const&) const;
@@ -65,11 +84,11 @@ public:
 namespace texture
 {
 
-TextureAllocation
+Texture
 allocate_texture(stlw::Logger &logger, std::string const&,
     GLint const format);
 
-TextureAllocation
+Texture
 upload_3dcube_texture(stlw::Logger &, std::vector<std::string> const&,
     GLint const format);
 
