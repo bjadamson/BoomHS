@@ -181,12 +181,12 @@ load_meshes(CppTableArray const& mesh_table)
     auto mesh = load_mesh(obj.c_str(), mtl.c_str(), cfg);
     return std::make_pair(ObjQuery{name}, MOVE(mesh));
   };
-  ObjStore cache;
+  ObjStore store;
   for (auto const& table : *mesh_table) {
     auto pair = load(table);
-    cache.add_obj(pair.first, MOVE(pair.second));
+    store.add_obj(pair.first, MOVE(pair.second));
   }
-  return cache;
+  return store;
 }
 
 class ParsedVertexAttributes

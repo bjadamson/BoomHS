@@ -41,27 +41,61 @@ operator!=(ObjQuery const&, ObjQuery const&);
 std::ostream&
 operator<<(std::ostream &, ObjQuery const&);
 
-class ObjStore
+class ObjStore;
+class ObjCache
 {
   using pair_t = std::pair<ObjQuery, ObjBuffer>;
+  using ObjBuffers = std::vector<pair_t>;
+
+  ObjStore *objstore_ = nullptr;
+  mutable ObjBuffers buffers_;
+
+  // ObjCache should only be constructed by the ObjStore.
+  friend class ObjStore;
+  ObjCache() = default;
+
+  void
+  insert_buffer(pair_t &&) const;
+
+  bool
+  has_obj(ObjQuery const&) const;
+
+  ObjBuffer const&
+  get_obj(ObjQuery const&) const;
+
+  void
+  set_objstore(ObjStore &);
+};
+
+class ObjStore
+{
+  using pair_t = std::pair<std::string, ObjData>;
   using datastore_t = std::vector<pair_t>;
 
-  datastore_t pos_;
-  datastore_t pos_color_normal_;
-  datastore_t pos_uv_;
+  // This holds the data
+  datastore_t data_;
 
-  datastore_t&
-  find_ds(ObjQuery const&);
+  // These caches hold cached versions of the data interleaved.
+  ObjCache pos_;
+  ObjCache pos_color_normal_;
+  ObjCache pos_uv_;
 
-  datastore_t const&
-  find_ds(ObjQuery const&) const;
+  ObjData const&
+  data_for(ObjQuery const&) const;
 
+  ObjCache&
+  find_cache(ObjQuery const&);
+
+  ObjCache const&
+  find_cache(ObjQuery const&) const;
+
+  friend class ObjCache;
 public:
-  ObjStore() = default;
+  ObjStore();
   MOVE_CONSTRUCTIBLE_ONLY(ObjStore);
 
   void
-  add_obj(ObjQuery const&, ObjBuffer &&);
+  add_obj(ObjQuery const&, ObjData &&);
 
   ObjBuffer const&
   get_obj(ObjQuery const&) const;

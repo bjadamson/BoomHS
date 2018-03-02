@@ -72,48 +72,163 @@ operator<<(std::ostream & stream, ObjQuery const& query)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// ObjStore
+// ObjCache
 void
-ObjStore::add_obj(ObjQuery const& query, ObjBuffer &&o)
+ObjCache::insert_buffer(ObjCache::pair_t &&pair) const
 {
-  auto pair = std::make_pair(query, MOVE(o));
+  buffers_.emplace_back(MOVE(pair));
+}
 
-  auto &ds = find_ds(query);
-  ds.emplace_back(MOVE(pair));
+#define FIND_OBJ_IN_CACHE(query, buffers)                                                          \
+  [&]()                                                                                            \
+{                                                                                                  \
+  auto const cmp = [&](auto const& pair) { return pair.first.name == query.name; };                \
+  return std::find_if(buffers.cbegin(), buffers.cend(), cmp);                                      \
+}()
+
+bool
+ObjCache::has_obj(ObjQuery const& query) const
+{
+  assert(objstore_);
+  return FIND_OBJ_IN_CACHE(query, buffers_) != buffers_.cend();
+}
+
+ObjBuffer const&
+ObjCache::get_obj(ObjQuery const& query) const
+{
+  {
+    assert(objstore_);
+    auto const it = FIND_OBJ_IN_CACHE(query, buffers_);
+    if (it != buffers_.cend()) {
+      return it->second;
+    }
+  }
+
+  // We need to read data from the ObjStore to construct an instance to put into the cache.
+  auto const& data = objstore_->data_for(query);
+  auto const num_vertices = data.num_vertices;
+
+  ObjBuffer buffer;
+  auto &v = buffer.vertices;
+  {
+    size_t index = 0;
+    FOR(i, num_vertices) {
+      {
+        auto const& p = data.positions;
+        v.emplace_back(p[index++]);
+        v.emplace_back(p[index++]);
+        v.emplace_back(p[index++]);
+        v.emplace_back(p[index++]);
+      }
+      if (!data.colors.empty()) {
+        // encode assumptions for now
+        assert(data.uvs.empty());
+
+        auto const& c = data.colors;
+        v.emplace_back(c[index++]);
+        v.emplace_back(c[index++]);
+        v.emplace_back(c[index++]);
+        v.emplace_back(c[index++]);
+      }
+      if (!data.normals.empty()) {
+        auto const& n = data.normals;
+        v.emplace_back(n[index++]);
+        v.emplace_back(n[index++]);
+        v.emplace_back(n[index++]);
+      }
+      if (!data.uvs.empty()) {
+        // encode assumptions for now
+        assert(data.colors.empty());
+
+        auto const& n = data.uvs;
+        v.emplace_back(n[index++]);
+        v.emplace_back(n[index++]);
+      }
+    }
+  }
+  FOR(i, buffer.indices.size()) {
+    v.emplace_back(buffer.indices[i]);
+  }
+
+  auto pair = std::make_pair(query, MOVE(buffer));
+  insert_buffer(MOVE(pair));
+
+  auto const it = FIND_OBJ_IN_CACHE(query, buffers_);
+  if (it == buffers_.cend()) {
+    std::cerr << "OBJ not in cache immediately after insertion.\n";
+    std::abort();
+  }
+  // We can give a reference away to it now.
+  return it->second;
+}
+#undef FIND_OBJ_IN_CACHE
+
+void
+ObjCache::set_objstore(ObjStore &store)
+{
+  objstore_ = &store;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// ObjStore
+ObjStore::ObjStore()
+{
+  // TODO: somehow automate this ...?
+  pos_.set_objstore(*this);
+  pos_color_normal_.set_objstore(*this);
+  pos_uv_.set_objstore(*this);
+}
+
+void
+ObjStore::add_obj(ObjQuery const& query, ObjData &&o)
+{
+  auto pair = std::make_pair(query.name, MOVE(o));
+
+  auto &cache = find_cache(query);
+  data_.emplace_back(MOVE(pair));
+}
+
+
+ObjData const&
+ObjStore::data_for(ObjQuery const& query) const
+{
+  auto const cmp = [&query](auto const& pair) { return pair.first == query.name; };
+  auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
+
+  // Assume the datastore has the object, somewhere
+  assert(it != data_.cend());
+  return it->second;
 }
 
 ObjBuffer const&
 ObjStore::get_obj(ObjQuery const& query) const
 {
-  auto const& ds = find_ds(query);
+  auto const& cache = find_cache(query);
 
   auto const cmp = [&query](auto const& pair) {
     return pair.first == query;
   };
-  auto const it = std::find_if(ds.cbegin(), ds.cend(), cmp);
-
-  // assume presence
-  if (it == ds.cend()) {
+  if (!cache.has_obj(query)) {
     std::cerr << "Could not find mesh with requested attributes:\n"
       "QueryObject: '" << query << "'\n";
     std::abort();
   }
 
   // yield reference to data
-  return it->second;
+  return cache.get_obj(query);
 }
 
-#define FIND_DS(qo, pds)                                                                           \
+#define FIND_CACHE(query, cache)                                                                   \
   auto const& attr = query.attributes;                                                             \
   if (!attr.positions) {                                                                           \
     std::cerr << "not implemented.\n";                                                             \
     std::abort();                                                                                  \
   }                                                                                                \
   else if (!attr.colors && !attr.normals && !attr.uvs) {                                           \
-    pds = &pos_;                                                                                   \
+    cache = &pos_;                                                                                 \
   }                                                                                                \
   else if (attr.colors && attr.normals) {                                                          \
-    pds = &pos_color_normal_;                                                                      \
+    cache = &pos_color_normal_;                                                                    \
   }                                                                                                \
   else if (attr.colors && attr.uvs) {                                                              \
     std::cerr << "invalid?\n";                                                                     \
@@ -124,31 +239,31 @@ ObjStore::get_obj(ObjQuery const& query) const
     std::abort();                                                                                  \
   }                                                                                                \
   else if (attr.uvs) {                                                                             \
-    pds = &pos_uv_;                                                                                \
+    cache = &pos_uv_;                                                                              \
   }                                                                                                \
   else {                                                                                           \
     std::cerr << "invalid\n";                                                                      \
     std::abort();                                                                                  \
   }                                                                                                \
-  assert(nullptr != pds);                                                                          \
-  return *pds;
+  assert(nullptr != cache);                                                                        \
+  return *cache;
 
-ObjStore::datastore_t&
-ObjStore::find_ds(ObjQuery const& query)
+ObjCache&
+ObjStore::find_cache(ObjQuery const& query)
 {
-  datastore_t *pds = nullptr;
-  FIND_DS(query, pds);
-  return *pds;
+  ObjCache *cache = nullptr;
+  FIND_CACHE(query, cache);
+  return *cache;
 }
 
-ObjStore::datastore_t const&
-ObjStore::find_ds(ObjQuery const& query) const
+ObjCache const&
+ObjStore::find_cache(ObjQuery const& query) const
 {
-  datastore_t const* pds = nullptr;
-  FIND_DS(query, pds);
-  return *pds;
+  ObjCache const* cache = nullptr;
+  FIND_CACHE(query, cache);
+  return *cache;
 }
 
-#undef FIND_DS
+#undef FIND_CACHE
 
 } // ns boomhs

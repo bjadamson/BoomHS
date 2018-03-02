@@ -84,7 +84,7 @@ load_colors(Color const& color, std::vector<float> *pvertices)
 namespace boomhs
 {
 
-ObjBuffer
+ObjData
 load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config)
 {
   tinyobj::attrib_t attrib;
@@ -106,10 +106,9 @@ load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config
   assert(0 == (attrib.normals.size() % 3));
   assert(0 == (attrib.texcoords.size() % 2));
 
-  std::vector<float> vertices;
-  std::vector<uint32_t> indices;
-
-  unsigned int const num_vertices = attrib.vertices.size() / 3;
+  ObjData objdata;
+  auto &indices = objdata.indices;
+  objdata.num_vertices = attrib.vertices.size() / 3;
   /*
   std::cerr << "vertice count '" << num_vertices << "'\n";
   std::cerr << "normal count '" << attrib.normals.size() << "'\n";
@@ -129,12 +128,12 @@ load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config
         // access to vertex
         tinyobj::index_t const index = shapes[s].mesh.indices[index_offset + vi];
 
-        load_positions(index, attrib, &vertices);
+        load_positions(index, attrib, &objdata.positions);
         if (config.normals) {
-          load_normals(index, attrib, &vertices);
+          load_normals(index, attrib, &objdata.normals);
         }
         if (config.uvs) {
-          load_uvs(index, attrib, &vertices);
+          load_uvs(index, attrib, &objdata.uvs);
         }
         if (config.colors) {
           //std::abort(); // We haven't implemented this yet ...
@@ -142,7 +141,7 @@ load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config
           // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
           // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
           // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
-          load_colors(LOC::WHITE, &vertices);
+          load_colors(LOC::WHITE, &objdata.colors);
         }
         indices.push_back(indices.size()); // 0, 1, 2, ...
       }
@@ -158,10 +157,10 @@ load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config
   std::cerr << "return obj, parsed\n" << std::endl;
   std::cerr << "size is: '" << (vertices.size() * sizeof(GLfloat)) << "'\n";
   */
-  return ObjBuffer{num_vertices, MOVE(vertices), MOVE(indices)};
+  return objdata;
 }
 
-ObjBuffer
+ObjData
 load_mesh(char const* objpath, LoadMeshConfig const& config)
 {
   auto constexpr MTLPATH = nullptr;
