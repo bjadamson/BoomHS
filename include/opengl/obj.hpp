@@ -9,8 +9,6 @@ namespace opengl
 
 struct obj
 {
-  GLenum const draw_mode;
-
   using vertices_t = std::vector<float>;
   using indices_t = std::vector<uint32_t>;
 

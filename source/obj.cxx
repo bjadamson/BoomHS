@@ -157,7 +157,7 @@ load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config
   std::cerr << "return obj, parsed\n" << std::endl;
   std::cerr << "size is: '" << (vertices.size() * sizeof(GLfloat)) << "'\n";
   */
-  return obj{GL_TRIANGLES, num_vertices, MOVE(vertices), MOVE(indices)};
+  return obj{num_vertices, MOVE(vertices), MOVE(indices)};
 }
 
 obj
