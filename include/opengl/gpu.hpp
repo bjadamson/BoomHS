@@ -8,10 +8,10 @@
 #include <stlw/log.hpp>
 #include <optional>
 
-namespace opengl
+namespace boomhs
 {
-struct obj;
-} // ns opengl
+struct Obj;
+} // ns boomhs
 
 namespace opengl::gpu
 {
@@ -38,15 +38,16 @@ DrawInfo
 copy_cube_14indices_gpu(stlw::Logger &, ShaderProgram const&, std::optional<TextureInfo> const&);
 
 DrawInfo
-copy_gpu(stlw::Logger &, GLenum const, ShaderProgram &, obj const&, std::optional<TextureInfo> const&);
+copy_gpu(stlw::Logger &, GLenum const, ShaderProgram &, boomhs::Obj const&,
+    std::optional<TextureInfo> const&);
 
 DrawInfo
 copy_rectangle_uvs(stlw::Logger &, ShaderProgram const&, std::optional<TextureInfo> const&);
 
 template<typename INDICES, typename VERTICES>
 void
-copy_synchronous(stlw::Logger &logger, ShaderProgram const& sp, DrawInfo const& dinfo, VERTICES const& vertices,
-    INDICES const& indices)
+copy_synchronous(stlw::Logger &logger, ShaderProgram const& sp, DrawInfo const& dinfo,
+    VERTICES const& vertices, INDICES const& indices)
 {
   // Activate VAO
   global::vao_bind(dinfo.vao());

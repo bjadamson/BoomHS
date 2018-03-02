@@ -4,10 +4,10 @@
 #include <stlw/sized_buffer.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace opengl
+namespace boomhs
 {
 
-struct obj
+struct Obj
 {
   using vertices_t = std::vector<float>;
   using indices_t = std::vector<uint32_t>;
@@ -16,7 +16,7 @@ struct obj
   vertices_t vertices;
   indices_t indices;
 
-  MOVE_CONSTRUCTIBLE_ONLY(obj);
+  MOVE_CONSTRUCTIBLE_ONLY(Obj);
 };
 
 struct LoadMeshConfig
@@ -26,10 +26,10 @@ struct LoadMeshConfig
   bool uvs = false;
 };
 
-obj
+Obj
 load_mesh(char const*, char const*, LoadMeshConfig const&);
 
-obj
+Obj
 load_mesh(char const*, LoadMeshConfig const&);
 
-} // ns opengl
+} // ns boomhs

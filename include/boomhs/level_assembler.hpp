@@ -7,10 +7,6 @@
 #include <string>
 #include <vector>
 
-namespace opengl
-{
-} // ns opengl
-
 namespace boomhs
 {
 

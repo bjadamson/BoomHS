@@ -1,4 +1,4 @@
-#include <opengl/obj.hpp>
+#include <boomhs/obj.hpp>
 
 #include <cassert>
 #include <boomhs/types.hpp>
@@ -6,6 +6,7 @@
 
 #include <extlibs/tinyobj.hpp>
 
+using namespace boomhs;
 using namespace opengl;
 
 namespace
@@ -80,10 +81,10 @@ load_colors(Color const& color, std::vector<float> *pvertices)
 
 } // ns anon
 
-namespace opengl
+namespace boomhs
 {
 
-obj
+Obj
 load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config)
 {
   tinyobj::attrib_t attrib;
@@ -157,14 +158,14 @@ load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config
   std::cerr << "return obj, parsed\n" << std::endl;
   std::cerr << "size is: '" << (vertices.size() * sizeof(GLfloat)) << "'\n";
   */
-  return obj{num_vertices, MOVE(vertices), MOVE(indices)};
+  return Obj{num_vertices, MOVE(vertices), MOVE(indices)};
 }
 
-obj
+Obj
 load_mesh(char const* objpath, LoadMeshConfig const& config)
 {
   auto constexpr MTLPATH = nullptr;
   return load_mesh(objpath, MTLPATH, config);
 }
 
-} // ns opengl
+} // ns boomhs

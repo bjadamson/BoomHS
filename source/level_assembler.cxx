@@ -9,7 +9,7 @@
 
 #include <opengl/constants.hpp>
 #include <opengl/gpu.hpp>
-#include <opengl/obj.hpp>
+#include <boomhs/obj.hpp>
 #include <opengl/lighting.hpp>
 
 #include <stlw/os.hpp>

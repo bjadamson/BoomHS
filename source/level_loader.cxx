@@ -1,7 +1,7 @@
 #include <boomhs/level_loader.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/components.hpp>
-#include <opengl/obj.hpp>
+#include <boomhs/obj.hpp>
 #include <extlibs/cpptoml.hpp>
 
 #include <stlw/result.hpp>
@@ -177,7 +177,7 @@ load_meshes(CppTableArray const& mesh_table)
     auto const obj = "assets/" + name + ".obj";
     auto const mtl = "assets/" + name + ".mtl";
 
-    opengl::LoadMeshConfig const cfg{colors, normals, uvs};
+    LoadMeshConfig const cfg{colors, normals, uvs};
     auto mesh = load_mesh(obj.c_str(), mtl.c_str(), cfg);
     return std::make_pair(name, MOVE(mesh));
   };
@@ -537,19 +537,19 @@ TileSharedInfoTable::operator[](TileType const type)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ObjCache
 void
-ObjCache::add_obj(std::string const& name, opengl::obj &&o)
+ObjCache::add_obj(std::string const& name, Obj &&o)
 {
   auto pair = std::make_pair(name, MOVE(o));
   objects_.emplace_back(MOVE(pair));
 }
 
 void
-ObjCache::add_obj(char const* name, opengl::obj &&o)
+ObjCache::add_obj(char const* name, Obj &&o)
 {
   add_obj(std::string{name}, MOVE(o));
 }
 
-opengl::obj const&
+Obj const&
 ObjCache::get_obj(char const* name) const
 {
   auto const cmp = [&name](auto const& pair) {
@@ -567,7 +567,7 @@ ObjCache::get_obj(char const* name) const
   return it->second;
 }
 
-opengl::obj const&
+Obj const&
 ObjCache::get_obj(std::string const& s) const
 {
   return get_obj(s.c_str());
