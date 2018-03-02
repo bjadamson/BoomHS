@@ -1,4 +1,4 @@
-#include <boomhs/obj_cache.hpp>
+#include <boomhs/obj_store.hpp>
 #include <stlw/algorithm.hpp>
 #include <stlw/format.hpp>
 
@@ -72,9 +72,9 @@ operator<<(std::ostream & stream, ObjQuery const& query)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// ObjCache
+// ObjStore
 void
-ObjCache::add_obj(ObjQuery const& query, Obj &&o)
+ObjStore::add_obj(ObjQuery const& query, Obj &&o)
 {
   auto pair = std::make_pair(query, MOVE(o));
 
@@ -83,7 +83,7 @@ ObjCache::add_obj(ObjQuery const& query, Obj &&o)
 }
 
 Obj const&
-ObjCache::get_obj(ObjQuery const& query) const
+ObjStore::get_obj(ObjQuery const& query) const
 {
   auto const& ds = find_ds(query);
 
@@ -133,16 +133,16 @@ ObjCache::get_obj(ObjQuery const& query) const
   assert(nullptr != pds);                                                                          \
   return *pds;
 
-ObjCache::datastore_t&
-ObjCache::find_ds(ObjQuery const& query)
+ObjStore::datastore_t&
+ObjStore::find_ds(ObjQuery const& query)
 {
   datastore_t *pds = nullptr;
   FIND_DS(query, pds);
   return *pds;
 }
 
-ObjCache::datastore_t const&
-ObjCache::find_ds(ObjQuery const& query) const
+ObjStore::datastore_t const&
+ObjStore::find_ds(ObjQuery const& query) const
 {
   datastore_t const* pds = nullptr;
   FIND_DS(query, pds);

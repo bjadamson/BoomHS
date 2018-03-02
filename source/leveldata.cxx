@@ -7,7 +7,7 @@ LevelData::LevelData(TileGrid &&td, TileSharedInfoTable &&ttable, TilePosition c
     std::vector<RiverInfo> &&rivers, EntityID const torch_eid,
 
     opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
-      ObjCache &&ocache, Camera &&cam, WorldObject &&pl
+      ObjStore &&ocache, Camera &&cam, WorldObject &&pl
     )
   : tilegrid_(MOVE(td))
   , ttable_(MOVE(ttable))
@@ -16,7 +16,7 @@ LevelData::LevelData(TileGrid &&td, TileSharedInfoTable &&ttable, TilePosition c
   , torch_eid_(torch_eid)
   , background(bgcolor)
   , global_light(glight)
-  , obj_cache(MOVE(ocache))
+  , obj_store(MOVE(ocache))
   , camera(MOVE(cam))
   , player(MOVE(pl))
 {

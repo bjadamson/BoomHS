@@ -41,7 +41,7 @@ operator!=(ObjQuery const&, ObjQuery const&);
 std::ostream&
 operator<<(std::ostream &, ObjQuery const&);
 
-class ObjCache
+class ObjStore
 {
   using pair_t = std::pair<ObjQuery, Obj>;
   using datastore_t = std::vector<pair_t>;
@@ -57,8 +57,8 @@ class ObjCache
   find_ds(ObjQuery const&) const;
 
 public:
-  ObjCache() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(ObjCache);
+  ObjStore() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(ObjStore);
 
   void
   add_obj(ObjQuery const&, Obj &&);

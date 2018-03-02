@@ -43,7 +43,7 @@ class LevelData
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileGrid &&, TileSharedInfoTable &&, TilePosition const&, std::vector<RiverInfo> &&,
-      EntityID, opengl::Color const&, opengl::GlobalLight const&, ObjCache &&, Camera &&,
+      EntityID, opengl::Color const&, opengl::GlobalLight const&, ObjStore &&, Camera &&,
       WorldObject &&
       );
 
@@ -51,7 +51,7 @@ public:
   opengl::Color background;
   opengl::GlobalLight global_light;
 
-  ObjCache obj_cache;
+  ObjStore obj_store;
 
   // nearby targets user can select
   NearbyTargets nearby_targets;

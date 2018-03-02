@@ -57,7 +57,7 @@ assemble(LevelGeneredData &&gendata, LevelAssets &&assets, EntityRegistry &regis
 
     assets.background_color,
     assets.global_light,
-    MOVE(assets.obj_cache),
+    MOVE(assets.obj_store),
     MOVE(camera),
     MOVE(player)
   };
@@ -118,7 +118,7 @@ bridge_staircases(ZoneState &a, ZoneState &b)
 using copy_assets_pair_t = std::pair<EntityDrawHandles, TileDrawHandles>;
 stlw::result<copy_assets_pair_t, std::string>
 copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable const& ttable,
-    EntityRegistry &registry, ObjCache const &obj_cache)
+    EntityRegistry &registry, ObjStore const &obj_store)
 {
   EntityDrawinfos dinfos;
   registry.view<ShaderName, PointLight, CubeRenderable>().each(
@@ -130,7 +130,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
 
   registry.view<ShaderName, Color, MeshRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &mesh) {
-        auto const &obj = obj_cache.get_obj(ObjQuery{mesh.name});
+        auto const &obj = obj_store.get_obj(ObjQuery{mesh.name});
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
         dinfos.add(entity, MOVE(handle));
@@ -149,14 +149,14 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
       });
   registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &mesh, auto &texture) {
-        auto const &obj = obj_cache.get_obj(ObjQuery{mesh.name});
+        auto const &obj = obj_store.get_obj(ObjQuery{mesh.name});
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
 
   registry.view<ShaderName, MeshRenderable>().each([&](auto entity, auto &sn, auto &mesh) {
-    auto const &obj = obj_cache.get_obj(ObjQuery{mesh.name});
+    auto const &obj = obj_store.get_obj(ObjQuery{mesh.name});
     auto &shader_ref = sps.ref_sp(sn.value);
     auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
     dinfos.add(entity, MOVE(handle));
@@ -167,7 +167,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
   for (auto const& it : ttable) {
     auto const& mesh_name = it.mesh_name;
     auto const& vshader_name = it.vshader_name;
-    auto const &obj = obj_cache.get_obj(ObjQuery{mesh_name});
+    auto const &obj = obj_store.get_obj(ObjQuery{mesh_name});
 
     auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, std::nullopt);
     tile_dinfos[static_cast<size_t>(it.type)] = MOVE(handle);
@@ -183,7 +183,7 @@ copy_to_gpu(stlw::Logger &logger, ZoneState &zs)
 {
   auto &ldata = zs.level_data;
   auto const& ttable = ldata.tiletable();
-  auto const& objcache = ldata.obj_cache;
+  auto const& objcache = ldata.obj_store;
   auto &gfx_state = zs.gfx_state;
   auto &sps = gfx_state.sps;
   auto &registry = zs.registry;

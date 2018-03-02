@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/obj_cache.hpp>
+#include <boomhs/obj_store.hpp>
 #include <boomhs/tile.hpp>
 
 #include <opengl/colors.hpp>
@@ -53,7 +53,7 @@ struct LevelAssets
 
   TileSharedInfoTable tile_table;
 
-  ObjCache obj_cache;
+  ObjStore obj_store;
   opengl::TextureTable texture_table;
   opengl::ShaderPrograms shader_programs;
 

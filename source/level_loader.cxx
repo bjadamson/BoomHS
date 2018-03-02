@@ -181,7 +181,7 @@ load_meshes(CppTableArray const& mesh_table)
     auto mesh = load_mesh(obj.c_str(), mtl.c_str(), cfg);
     return std::make_pair(ObjQuery{name}, MOVE(mesh));
   };
-  ObjCache cache;
+  ObjStore cache;
   for (auto const& table : *mesh_table) {
     auto pair = load(table);
     cache.add_obj(pair.first, MOVE(pair.second));
