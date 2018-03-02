@@ -451,6 +451,7 @@ void
 draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& ft)
 {
   auto const& es = rstate.es;
+  auto &logger = es.logger;
   auto &zs = rstate.zs;
 
   assert(zs.gfx_state.gpu_state.entities);
@@ -482,16 +483,29 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
     draw_fn(FORWARD(args)...);
   };
 
-  auto const draw_torch = [&draw_fn, &rng](auto eid, auto &sn, auto &transform, auto &&... args)
+  auto const draw_torch = [&](auto eid, auto &sn, auto &transform, auto &&... args)
   {
+    {
+      auto &sp = sps.ref_sp(sn.value);
+
+      // Describe glow
+      static constexpr double MIN = 0.3;
+      static constexpr double MAX = 1.0;
+      static constexpr double SPEED = 0.25;
+      auto const a = std::sin(ft.since_start_seconds() * M_PI  * SPEED);
+      float const glow = glm::lerp(MIN, MAX, std::abs(a));
+      sp.set_uniform_float1(logger, "u_glow", glow);
+    }
+
     // randomize the position slightly
-    auto static constexpr DISPLACEMENT_MAX = 0.015f;
+    static constexpr auto   DISPLACEMENT_MAX = 0.0015f;
+
     auto copy_transform = transform;
     copy_transform.translation.x += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
     copy_transform.translation.y += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
     copy_transform.translation.z += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
 
-    draw_fn(eid, sn, transform, FORWARD(args)...);
+    draw_fn(eid, sn, copy_transform, FORWARD(args)...);
   };
 
   //

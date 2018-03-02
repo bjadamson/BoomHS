@@ -366,10 +366,10 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       *&cc = *color;
     }
     if (texture_name) {
-      auto &tc = registry.assign<TextureRenderable>(entity);
+      auto &tr = registry.assign<TextureRenderable>(entity);
       auto texture_o = ttable.find(*texture_name);
       assert(texture_o);
-      tc.texture_info = *texture_o;
+      tr.texture_info = *texture_o;
     }
 
     if (pointlight_o) {

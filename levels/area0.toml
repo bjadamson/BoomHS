@@ -33,6 +33,11 @@ type = "texture:2d-RGB"
 filename = "container.jpg"
 
 [[resource]]
+name = "Lava"
+type = "texture:2d-RGBA"
+filename = "lava.jpg"
+
+[[resource]]
 name = "wall"
 type = "texture:2d-RGB"
 filename = "wall.jpg"
@@ -212,6 +217,12 @@ name = "O_no_normals"
 colors = false
 normals = false
 uvs = false
+
+[[meshes]]
+name = "O_uvs_no_normals"
+colors = false
+normals = false
+uvs = true
 
 [[meshes]]
 name = "T"

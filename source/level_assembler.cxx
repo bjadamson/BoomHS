@@ -121,14 +121,6 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
     EntityRegistry &registry, ObjCache const &obj_cache)
 {
   EntityDrawinfos dinfos;
-  /*
-  registry.view<ShaderName, Color, CubeRenderable>().each(
-      [&](auto entity, auto &sn, auto &color, auto &) {
-        auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = opengl::gpu::copy_synchronous(logger, shader_ref, color);
-        dinfos.add(entity, MOVE(handle));
-      });
-      */
   registry.view<ShaderName, PointLight, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &pointlight, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
@@ -138,7 +130,6 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
 
   registry.view<ShaderName, Color, MeshRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &mesh) {
-        std::cerr << "mesh.name: '" << mesh.name << "'\n";
         auto const &obj = obj_cache.get_obj(mesh.name);
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
@@ -227,9 +218,10 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry
   {
     // generate starting area
     auto &registry = registries[0];
-    auto gendata = StartAreaGenerator::gen_level(registry, rng);
 
     DO_TRY(auto level_assets, LevelLoader::load_level(logger, registry, level_string(0)));
+    auto gendata = StartAreaGenerator::gen_level(registry, rng, level_assets.texture_table);
+
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
     zstates.emplace_back(MOVE(zs));
   }

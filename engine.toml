@@ -16,7 +16,7 @@ data0 = { type = "float", num = 4 } # vertices
 data1 = { type = "float", num = 4 } # colors
 
 [[vas]]
-name = "vertex_uvs"
+name = "vertex_uv"
 data0 = { type = "float", num = 4 } # vertices
 data1 = { type = "float", num = 2 } # uvs
 
@@ -37,7 +37,7 @@ data2 = { type = "float", num = 2 } # uvs
 name = "2dtexture"
 vertex = "2dtexture.vert"
 fragment = "2dtexture.frag"
-va = "vertex_uvs"
+va = "vertex_uv"
 is_2d = true
 
 [[shaders]]
@@ -76,6 +76,12 @@ name = "light"
 vertex = "light.vert"
 fragment = "light.frag"
 va = "vertex_only"
+
+[[shaders]]
+name = "light_texture"
+vertex = "light_texture.vert"
+fragment = "light_texture.frag"
+va = "vertex_uv"
 
 ############# letters
 

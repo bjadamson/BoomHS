@@ -4,6 +4,7 @@
 #include <boomhs/tilegrid_algorithms.hpp>
 
 #include <opengl/lighting.hpp>
+#include <opengl/texture.hpp>
 #include <stlw/os.hpp>
 #include <stlw/random.hpp>
 #include <algorithm>
@@ -14,14 +15,9 @@ using namespace opengl;
 namespace
 {
 
-void
-create_area(TileGrid &tgrid)
-{
-
-}
-
 EntityID
-place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng)
+place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng,
+    TextureTable const& ttable)
 {
   auto eid = registry.create();
   registry.assign<Torch>(eid);
@@ -51,10 +47,15 @@ place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_gene
   std::cerr << "torchlight pos: '" << torch_transform.translation << "'\n";
 
   auto &mesh = registry.assign<MeshRenderable>(eid);
-  mesh.name = "O_no_normals";
+  mesh.name = "O_uvs_no_normals";
+
+  auto &tr = registry.assign<TextureRenderable>(eid);
+  auto texture_o = ttable.find("Lava");
+  assert(texture_o);
+  tr.texture_info = *texture_o;
 
   auto &sn = registry.assign<ShaderName>(eid);
-  sn.value = "light";
+  sn.value = "light_texture";
 
   return eid;
 }
@@ -115,7 +116,8 @@ namespace boomhs
 {
 
 LevelGeneredData
-StartAreaGenerator::gen_level(EntityRegistry &registry, stlw::float_generator &rng)
+StartAreaGenerator::gen_level(EntityRegistry &registry, stlw::float_generator &rng,
+    TextureTable const& ttable)
 {
   std::cerr << "generating starting area ...\n";
   TileGrid tilegrid{30, 30, registry};
@@ -142,7 +144,7 @@ StartAreaGenerator::gen_level(EntityRegistry &registry, stlw::float_generator &r
   std::vector<RiverInfo> rivers;
 
   auto const starting_pos = TilePosition{10, 10};
-  auto const torch_eid = place_torch(tilegrid, registry, rng);
+  auto const torch_eid = place_torch(tilegrid, registry, rng, ttable);
 
   std::cerr << "finished!\n";
   return LevelGeneredData{MOVE(tilegrid), starting_pos, MOVE(rivers), torch_eid};
