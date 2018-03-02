@@ -1,11 +1,14 @@
 #include <boomhs/dungeon_generator.hpp>
 #include <boomhs/enemy.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/item_factory.hpp>
 #include <boomhs/stairwell_generator.hpp>
 #include <boomhs/leveldata.hpp>
 #include <boomhs/river_generator.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
+
+#include <opengl/texture.hpp>
 
 #include <stlw/optional.hpp>
 #include <stlw/random.hpp>
@@ -239,40 +242,15 @@ place_monsters(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_g
 }
 
 EntityID
-place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng)
+place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng,
+    TextureTable const& ttable)
 {
-  auto eid = registry.create();
-  registry.assign<Torch>(eid);
-
-  auto &isv = registry.assign<IsVisible>(eid);
-  isv.value = true;
-
-  auto &pointlight = registry.assign<PointLight>(eid);
-  pointlight.light.diffuse = LOC::YELLOW;
-
-  auto &flicker = registry.assign<LightFlicker>(eid);
-  flicker.base_speed = 1.0f;
-  flicker.current_speed = flicker.base_speed;
-
-  flicker.colors[0] = LOC::RED;
-  flicker.colors[1] = LOC::YELLOW;
-
-  auto &att = pointlight.attenuation;
-  att.constant = 1.0f;
-  att.linear = 0.93f;
-  att.quadratic = 0.46f;
-
-  auto &torch_transform = registry.assign<Transform>(eid);
+  auto eid = ItemFactory::create_torch(registry, rng, ttable);
+  auto &transform = registry.get<Transform>(eid);
 
   auto const pos = generate_monster_position(tilegrid, registry, rng);
-  torch_transform.translation = glm::vec3{pos.x, 0.5, pos.y};
-  std::cerr << "torchlight pos: '" << torch_transform.translation << "'\n";
-
-  auto &mesh = registry.assign<MeshRenderable>(eid);
-  mesh.name = "O_no_normals";
-
-  auto &sn = registry.assign<ShaderName>(eid);
-  sn.value = "light";
+  transform.translation = glm::vec3{pos.x, 0.5, pos.y};
+  std::cerr << "torchlight pos: '" << transform.translation << "'\n";
 
   return eid;
 }
@@ -383,7 +361,8 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
 }
 
 LevelGeneredData
-gen_level(LevelConfig const& levelconfig, EntityRegistry &registry, stlw::float_generator &rng)
+gen_level(LevelConfig const& levelconfig, EntityRegistry &registry, stlw::float_generator &rng,
+    TextureTable const& ttable)
 {
   // clang-format off
   TileGridConfig const& tileconfig = levelconfig.tileconfig;
@@ -401,7 +380,7 @@ gen_level(LevelConfig const& levelconfig, EntityRegistry &registry, stlw::float_
       rng, registry);
 
   std::cerr << "placing torch ...\n";
-  auto const torch_eid = place_torch(tilegrid, registry, rng);
+  auto const torch_eid = place_torch(tilegrid, registry, rng, ttable);
 
   std::cerr << "finished!\n";
   std::cerr << "======================================\n";

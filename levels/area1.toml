@@ -1,11 +1,11 @@
 title = "Level 0"
-background = [1.0, 1.0, 1.0]
+background = [0.0, 0.0, 0.0]
 camera_spherical_coords = [2.56, 6.6446330, 56.379040]
 
 ambient = [0.0, 0.0, 0.0]
-directional_light_diffuse = [0.0, 1.0, 0.0]
+directional_light_diffuse = [0.0, 0.0, 1.0]
 directional_light_specular = [0.0, 1.0, 0.0]
-directional_light_direction = [-1.0, 0.0, -1.0]
+directional_light_direction = [-0.4, 0.0, 0.1]
 
 [[resource]]
 name = "building_skybox"
@@ -31,6 +31,11 @@ bottom = "cube_bottom.jpg"
 name = "container"
 type = "texture:2d-RGB"
 filename = "container.jpg"
+
+[[resource]]
+name = "Lava"
+type = "texture:2d-RGBA"
+filename = "lava.jpg"
 
 [[resource]]
 name = "wall"
@@ -166,6 +171,12 @@ normals = true
 uvs = false
 
 [[meshes]]
+name = "door"
+colors = true
+normals = true
+uvs = false
+
+[[meshes]]
 name = "teleporter"
 colors = true
 normals = true
@@ -173,12 +184,6 @@ uvs = false
 
 [[meshes]]
 name = "bar"
-colors = true
-normals = true
-uvs = false
-
-[[meshes]]
-name = "door"
 colors = true
 normals = true
 uvs = false
@@ -212,6 +217,12 @@ name = "O_no_normals"
 colors = false
 normals = false
 uvs = false
+
+[[meshes]]
+name = "O_uvs_no_normals"
+colors = false
+normals = false
+uvs = true
 
 [[meshes]]
 name = "T"

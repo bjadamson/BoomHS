@@ -12,5 +12,5 @@ void main()
   float intensity = u_glow;
   vec3 rgb = intensity * u_lightcolor;
 
-  fragment_color = vec4(rgb, 1.0) * texture(u_sampler, v_uv);
+  fragment_color = (vec4(rgb, 1.0) / 2.0) + texture(u_sampler, v_uv);
 }

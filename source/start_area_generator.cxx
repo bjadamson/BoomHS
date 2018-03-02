@@ -1,4 +1,5 @@
 #include <boomhs/start_area_generator.hpp>
+#include <boomhs/item_factory.hpp>
 #include <boomhs/leveldata.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
@@ -19,43 +20,11 @@ EntityID
 place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng,
     TextureTable const& ttable)
 {
-  auto eid = registry.create();
-  registry.assign<Torch>(eid);
+  auto eid = ItemFactory::create_torch(registry, rng, ttable);
+  auto &transform = registry.get<Transform>(eid);
 
-  auto &isv = registry.assign<IsVisible>(eid);
-  isv.value = true;
-
-  auto &pointlight = registry.assign<PointLight>(eid);
-  pointlight.light.diffuse = LOC::YELLOW;
-
-  auto &flicker = registry.assign<LightFlicker>(eid);
-  flicker.base_speed = 1.0f;
-  flicker.current_speed = flicker.base_speed;
-
-  flicker.colors[0] = LOC::RED;
-  flicker.colors[1] = LOC::YELLOW;
-
-  auto &att = pointlight.attenuation;
-  att.constant = 1.0f;
-  att.linear = 0.93f;
-  att.quadratic = 0.46f;
-
-  auto &torch_transform = registry.assign<Transform>(eid);
-
-  auto const pos = TilePosition{2, 2};
-  torch_transform.translation = glm::vec3{pos.x, 0.5, pos.y};
-  std::cerr << "torchlight pos: '" << torch_transform.translation << "'\n";
-
-  auto &mesh = registry.assign<MeshRenderable>(eid);
-  mesh.name = "O_uvs_no_normals";
-
-  auto &tr = registry.assign<TextureRenderable>(eid);
-  auto texture_o = ttable.find("Lava");
-  assert(texture_o);
-  tr.texture_info = *texture_o;
-
-  auto &sn = registry.assign<ShaderName>(eid);
-  sn.value = "light_texture";
+  transform.translation = glm::vec3{2, 0.5, 2};
+  std::cerr << "torchlight pos: '" << transform.translation << "'\n";
 
   return eid;
 }

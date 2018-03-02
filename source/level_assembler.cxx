@@ -240,7 +240,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry
     StairGenConfig const stairconfig{DUNGEON_FLOOR_COUNT, i, stairs_perfloor};
     LevelConfig const config{stairconfig, tdconfig};
 
-    auto gendata = dungeon_generator::gen_level(config, registry, rng);
+    auto gendata = dungeon_generator::gen_level(config, registry, rng, level_assets.texture_table);
 
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
     zstates.emplace_back(MOVE(zs));

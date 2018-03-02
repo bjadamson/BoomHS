@@ -491,8 +491,8 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
       // Describe glow
       static constexpr double MIN = 0.3;
       static constexpr double MAX = 1.0;
-      static constexpr double SPEED = 0.25;
-      auto const a = std::sin(ft.since_start_seconds() * M_PI  * SPEED);
+      static constexpr double SPEED = 0.135;
+      auto const a = std::sin(ft.since_start_millis() * M_PI * SPEED);
       float const glow = glm::lerp(MIN, MAX, std::abs(a));
       sp.set_uniform_float1(logger, "u_glow", glow);
     }
