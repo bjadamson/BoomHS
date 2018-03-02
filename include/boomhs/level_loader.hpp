@@ -1,8 +1,9 @@
 #pragma once
+#include <boomhs/obj_cache.hpp>
 #include <boomhs/tile.hpp>
+
 #include <opengl/colors.hpp>
 #include <opengl/lighting.hpp>
-#include <boomhs/obj.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
 
@@ -15,27 +16,6 @@
 namespace boomhs
 {
 class EntityRegistry;
-
-class ObjCache
-{
-  using pair_t = std::pair<std::string, Obj>;
-  std::vector<pair_t> objects_;
-public:
-  ObjCache() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(ObjCache);
-
-  void
-  add_obj(std::string const&, Obj &&);
-
-  void
-  add_obj(char const*, Obj &&);
-
-  Obj const&
-  get_obj(char const*) const;
-
-  Obj const&
-  get_obj(std::string const&) const;
-};
 
 struct TileInfo
 {

@@ -4,6 +4,7 @@
 #include <cassert>
 #include <vector>
 #include <utility>
+#include <stlw/type_macros.hpp>
 #include <stlw/tuple.hpp>
 
 #define FOR(q,n) for(unsigned int q=0u;q<n;++q)
@@ -22,7 +23,7 @@ template<typename First, typename ...Rest>
 bool
 orcombo(First const& first, Rest &&... rest)
 {
-  return first || orcombo(rest...);
+  return first || orcombo(FORWARD(rest)...);
 }
 
 } // ns stlw::anyof_detail
@@ -31,21 +32,21 @@ namespace stlw::allof_detail
 {
 
 inline bool
-andcombo()
+allcombo()
 {
   return true;
 }
 
 template<typename First, typename ...Rest>
 bool
-andcombo(First const& first, Rest &&... rest)
+allcombo(First const& first, Rest &&... rest)
 {
-  return first && allofcombo(rest...);
+  return first && allcombo(FORWARD(rest)...);
 }
 
 } // ns stlw::allof_detail
 
-#define ALLOF(a, ...) ::stlw::allof_detail::andcombo(a, ##__VA_ARGS__)
+#define ALLOF(a, ...) ::stlw::allof_detail::allcombo(a, ##__VA_ARGS__)
 #define ANYOF(a, ...) ::stlw::anyof_detail::orcombo(a, ##__VA_ARGS__)
 
 namespace stlw

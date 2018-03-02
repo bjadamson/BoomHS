@@ -179,7 +179,7 @@ load_meshes(CppTableArray const& mesh_table)
 
     LoadMeshConfig const cfg{colors, normals, uvs};
     auto mesh = load_mesh(obj.c_str(), mtl.c_str(), cfg);
-    return std::make_pair(name, MOVE(mesh));
+    return std::make_pair(ObjQuery{name}, MOVE(mesh));
   };
   ObjCache cache;
   for (auto const& table : *mesh_table) {
@@ -533,45 +533,6 @@ TileSharedInfoTable::operator[](TileType const type)
   SEARCH_FOR(type, data_.begin(), data_.end());
 }
 #undef SEARCH_FOR
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// ObjCache
-void
-ObjCache::add_obj(std::string const& name, Obj &&o)
-{
-  auto pair = std::make_pair(name, MOVE(o));
-  objects_.emplace_back(MOVE(pair));
-}
-
-void
-ObjCache::add_obj(char const* name, Obj &&o)
-{
-  add_obj(std::string{name}, MOVE(o));
-}
-
-Obj const&
-ObjCache::get_obj(char const* name) const
-{
-  auto const cmp = [&name](auto const& pair) {
-    return pair.first == name;
-  };
-  auto const it = std::find_if(objects_.cbegin(), objects_.cend(), cmp);
-
-  // assume presence
-  if (it == objects_.cend()) {
-    std::cerr << "could not find mesh: '" << name << "' (did you load it?)\n";
-    std::abort();
-  }
-
-  // yield reference to data
-  return it->second;
-}
-
-Obj const&
-ObjCache::get_obj(std::string const& s) const
-{
-  return get_obj(s.c_str());
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
