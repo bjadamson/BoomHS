@@ -7,7 +7,7 @@
 namespace boomhs
 {
 
-struct Obj
+struct ObjBuffer
 {
   using vertices_t = std::vector<float>;
   using indices_t = std::vector<uint32_t>;
@@ -16,7 +16,7 @@ struct Obj
   vertices_t vertices;
   indices_t indices;
 
-  MOVE_CONSTRUCTIBLE_ONLY(Obj);
+  MOVE_CONSTRUCTIBLE_ONLY(ObjBuffer);
 };
 
 struct LoadMeshConfig
@@ -26,10 +26,10 @@ struct LoadMeshConfig
   bool uvs = false;
 };
 
-Obj
+ObjBuffer
 load_mesh(char const*, char const*, LoadMeshConfig const&);
 
-Obj
+ObjBuffer
 load_mesh(char const*, LoadMeshConfig const&);
 
 } // ns boomhs

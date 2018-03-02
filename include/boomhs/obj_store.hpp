@@ -43,7 +43,7 @@ operator<<(std::ostream &, ObjQuery const&);
 
 class ObjStore
 {
-  using pair_t = std::pair<ObjQuery, Obj>;
+  using pair_t = std::pair<ObjQuery, ObjBuffer>;
   using datastore_t = std::vector<pair_t>;
 
   datastore_t pos_;
@@ -61,9 +61,9 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(ObjStore);
 
   void
-  add_obj(ObjQuery const&, Obj &&);
+  add_obj(ObjQuery const&, ObjBuffer &&);
 
-  Obj const&
+  ObjBuffer const&
   get_obj(ObjQuery const&) const;
 };
 

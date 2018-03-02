@@ -84,7 +84,7 @@ load_colors(Color const& color, std::vector<float> *pvertices)
 namespace boomhs
 {
 
-Obj
+ObjBuffer
 load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config)
 {
   tinyobj::attrib_t attrib;
@@ -158,10 +158,10 @@ load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config
   std::cerr << "return obj, parsed\n" << std::endl;
   std::cerr << "size is: '" << (vertices.size() * sizeof(GLfloat)) << "'\n";
   */
-  return Obj{num_vertices, MOVE(vertices), MOVE(indices)};
+  return ObjBuffer{num_vertices, MOVE(vertices), MOVE(indices)};
 }
 
-Obj
+ObjBuffer
 load_mesh(char const* objpath, LoadMeshConfig const& config)
 {
   auto constexpr MTLPATH = nullptr;

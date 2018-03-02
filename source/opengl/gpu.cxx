@@ -255,7 +255,7 @@ copy_cube_14indices_gpu(stlw::Logger &logger, ShaderProgram const& shader_progra
 }
 
 DrawInfo
-copy_gpu(stlw::Logger &logger, GLenum const draw_mode, ShaderProgram &sp, Obj const& object,
+copy_gpu(stlw::Logger &logger, GLenum const draw_mode, ShaderProgram &sp, ObjBuffer const& object,
     std::optional<TextureInfo> const& ti)
 {
   auto const& vertices = object.vertices;

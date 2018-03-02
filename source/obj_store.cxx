@@ -74,7 +74,7 @@ operator<<(std::ostream & stream, ObjQuery const& query)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ObjStore
 void
-ObjStore::add_obj(ObjQuery const& query, Obj &&o)
+ObjStore::add_obj(ObjQuery const& query, ObjBuffer &&o)
 {
   auto pair = std::make_pair(query, MOVE(o));
 
@@ -82,7 +82,7 @@ ObjStore::add_obj(ObjQuery const& query, Obj &&o)
   ds.emplace_back(MOVE(pair));
 }
 
-Obj const&
+ObjBuffer const&
 ObjStore::get_obj(ObjQuery const& query) const
 {
   auto const& ds = find_ds(query);

@@ -10,7 +10,7 @@
 
 namespace boomhs
 {
-struct Obj;
+struct ObjBuffer;
 } // ns boomhs
 
 namespace opengl::gpu
@@ -38,7 +38,7 @@ DrawInfo
 copy_cube_14indices_gpu(stlw::Logger &, ShaderProgram const&, std::optional<TextureInfo> const&);
 
 DrawInfo
-copy_gpu(stlw::Logger &, GLenum const, ShaderProgram &, boomhs::Obj const&,
+copy_gpu(stlw::Logger &, GLenum const, ShaderProgram &, boomhs::ObjBuffer const&,
     std::optional<TextureInfo> const&);
 
 DrawInfo
