@@ -346,7 +346,7 @@ show_tilegrid_materials_window(UiState &ui, LevelData &level_data)
 
     // 1. Collect Tile names
     std::vector<std::string> tile_names;
-    FOR(i, static_cast<size_t>(TileType::MAX)) {
+    FOR(i, static_cast<size_t>(TileType::UNDEFINED)) {
       auto const type = static_cast<TileType>(i);
       tile_names.emplace_back(to_string(type));
     }

@@ -22,7 +22,8 @@ enum class TileType : size_t
   STAR,
   WALL,
   TELEPORTER,
-  MAX
+
+  UNDEFINED
 };
 
 // We ensure the underlying type is size_t so we can use that assumption around the rest of the
@@ -54,12 +55,14 @@ tiletype_from_string(char const* cstring)
   CHECK("STAR",       TileType::STAR);
   CHECK("TELEPORTER", TileType::TELEPORTER);
   CHECK("WALL",       TileType::WALL);
+
+  CHECK("UNDEFINED",  TileType::UNDEFINED);
 #undef CHECK
   // clang-format on
 
   // Logic error at this point
   std::abort();
-  return TileType::MAX;
+  return TileType::UNDEFINED;
 }
 
 inline char const*
@@ -81,6 +84,8 @@ to_string(TileType const type)
   CHECK("STAIR_UP",   TileType::STAIR_UP);
   CHECK("TELEPORT",   TileType::TELEPORTER);
   CHECK("WALL",       TileType::WALL);
+
+  CHECK("UNDEFINED",  TileType::UNDEFINED);
 #undef CHECK
   // clang-format on
   // Logic error at this point
@@ -126,6 +131,9 @@ operator<<(std::ostream &stream, TileType const type)
     case TileType::WALL:
       stream << "WALL";
       break;
+    case TileType::UNDEFINED:
+      stream << "UNDEFINED";
+      // fall-through to abort
     default:
       std::abort();
       break;
@@ -176,7 +184,7 @@ operator<<(std::ostream &, TilePosition const&);
 
 struct Tile
 {
-  TileType type = TileType::FLOOR;
+  TileType type = TileType::UNDEFINED;
   uint32_t eid;
 
   bool is_stair_up() const { return type == TileType::STAIR_UP; }

@@ -166,7 +166,7 @@ EntityDrawHandles::lookup(EntityID const eid) const
 opengl::DrawInfo const&
 TileDrawHandles::lookup(TileType const type) const
 {
-  assert(type < TileType::MAX);
+  assert(type < TileType::UNDEFINED);
   auto const index = static_cast<size_t>(type);
   return drawinfos_[index];
 }

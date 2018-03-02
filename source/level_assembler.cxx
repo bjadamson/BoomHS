@@ -172,7 +172,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
   });
 
   std::vector<DrawInfo> tile_dinfos;
-  tile_dinfos.reserve(static_cast<size_t>(TileType::MAX));
+  tile_dinfos.reserve(static_cast<size_t>(TileType::UNDEFINED));
   for (auto const& it : ttable) {
     auto const& mesh_name = it.mesh_name;
     auto const& vshader_name = it.vshader_name;

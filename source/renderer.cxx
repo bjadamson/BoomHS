@@ -597,14 +597,17 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
           draw_tile_helper(sp, dinfo, tile, default_modmatrix, receives_ambient_light);
         }
         break;
-        case TileType::BRIDGE:
-        case TileType::DOOR:
-        case TileType::TELEPORTER:
-        default:
+      case TileType::BRIDGE:
+      case TileType::DOOR:
+      case TileType::TELEPORTER:
+      default:
         {
           bool const receives_ambient_light = true;
           draw_tile_helper(tile_sp, dinfo, tile, default_modmatrix, receives_ambient_light);
         }
+        break;
+      case TileType::UNDEFINED:
+        std::abort();
     }
   };
   visit_each(tilegrid, draw_tile);

@@ -73,7 +73,7 @@ struct Rect
   }
 
   bool
-  any_tiles_of_type(TileGrid const& tilegrid, TileType const type) const
+  all_tiles_of_type(TileGrid const& tilegrid, TileType const type) const
   {
     bool any = false;
     for(auto x = x1 + 1; x < x2; ++x) {
@@ -110,17 +110,20 @@ try_create_room(RoomGenConfig const& rgconfig, TileType const type, TileGrid &ti
 
   // run through the other rooms and see if they intersect with this one
   for(auto const& r : rgconfig.rooms) {
-    // bail early
-    if (!new_room.in_tilegrid(tilegrid) || new_room.intersects_with(r)) {
-      return {}; // NONE
+    bool const within_tilegrid = new_room.in_tilegrid(tilegrid);
+    bool const intersects_other_room = new_room.intersects_with(r);
+    // The new room should be within bounds of the tilegrid
+    // and the new room should not intersect any of the existing rooms.
+    if (!within_tilegrid || intersects_other_room) {
+      return std::nullopt;
     }
   }
-  bool const any_river_tiles = new_room.any_tiles_of_type(tilegrid, TileType::RIVER);
-  bool const any_bridge_tiles = new_room.any_tiles_of_type(tilegrid, TileType::BRIDGE);
-  if (any_river_tiles || any_bridge_tiles) {
-    return {}; // NONE
+  bool const undefined_tiles_in_room = new_room.all_tiles_of_type(tilegrid, TileType::UNDEFINED);
+  // If any undefined tiles are in the room, we currently just give up. Maybe do more here.
+  if (undefined_tiles_in_room) {
+    return std::nullopt;
   }
-
+  // Assign all the tiles in the room to the requested tile type and return the new room.
   for(uint64_t x = new_room.x1 + 1; x < new_room.x2; ++x) {
     for (uint64_t y = new_room.y1 + 1; y < new_room.y2; ++y) {
       tilegrid.data(x, y).type = type;

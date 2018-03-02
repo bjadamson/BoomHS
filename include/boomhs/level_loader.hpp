@@ -49,7 +49,7 @@ struct TileInfo
 // TileType. This information is "shared information" between tiles of the same type.
 struct TileSharedInfoTable
 {
-  static auto constexpr SIZE = static_cast<size_t>(TileType::MAX);
+  static auto constexpr SIZE = static_cast<size_t>(TileType::UNDEFINED);
   std::array<TileInfo, SIZE> data_;
 
 public:
