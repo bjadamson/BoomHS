@@ -406,7 +406,7 @@ timed_game_loop(Engine &engine, GameState &state)
   }
 }
 
-stlw::result<stlw::empty_type, std::string>
+Result<stlw::empty_type, std::string>
 start(stlw::Logger &logger, Engine &engine)
 {
   // Initialize GUI library
@@ -414,7 +414,7 @@ start(stlw::Logger &logger, Engine &engine)
   ON_SCOPE_EXIT([]() { ImGui_ImplSdlGL3_Shutdown(); });
 
   auto &registries = engine.registries;
-  DO_TRY(ZoneStates zss, LevelAssembler::assemble_levels(logger, registries));
+  ZoneStates zss = TRY(LevelAssembler::assemble_levels(logger, registries));
 
   // Initialize opengl
   auto const dimensions = engine.dimensions();
@@ -425,15 +425,16 @@ start(stlw::Logger &logger, Engine &engine)
   imgui.MouseDrawCursor = true;
   imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
 
-  auto test = rexpaint::RexImage::load("assets/test.xp");
-  if (!test) {
-    std::cerr << test.error() << "\n";
+  auto test_r = rexpaint::RexImage::load("assets/test.xp");
+  if (!test_r) {
+    std::cerr << test_r << "\n";
     std::abort();
   }
-  (*test).flatten();
-  auto save = rexpaint::RexImage::save(*test, "assets/test.xp");
+  auto test = test_r.expect_moveout("loading text.xp");
+  test.flatten();
+  auto save = rexpaint::RexImage::save(test, "assets/test.xp");
   if (!save) {
-    std::cerr << save.error() << "\n";
+    std::cerr << save << "\n";
     std::abort();
   }
 
@@ -446,18 +447,18 @@ start(stlw::Logger &logger, Engine &engine)
 
   // Game has finished
   LOG_TRACE("game loop finished.");
-  return stlw::empty_type{};
+  return Ok(stlw::empty_type{});
 }
 
 } // ns anon
 
-using WindowResult = stlw::result<SDLWindow, std::string>;
+using WindowResult = Result<SDLWindow, std::string>;
 WindowResult
 make_window(stlw::Logger &logger, bool const fullscreen, float const width, float const height)
 {
   // Select windowing library as SDL.
   LOG_DEBUG("Initializing window library globals");
-  DO_TRY(auto _, window::sdl_library::init());
+  auto _ =  window::sdl_library::init();
 
   LOG_DEBUG("Instantiating window instance.");
   return window::sdl_library::make_window(fullscreen, height, width);
@@ -474,13 +475,13 @@ main(int argc, char *argv[])
 
   LOG_DEBUG("Creating window ...");
   bool constexpr FULLSCREEN = false;
-  DO_TRY_OR_ELSE_RETURN(auto window, make_window(logger, FULLSCREEN, 1024, 768),
+  TRY_OR_ELSE_RETURN(auto window, make_window(logger, FULLSCREEN, 1024, 768),
                         on_error);
-  DO_TRY_OR_ELSE_RETURN(auto controller, SDLControllers::find_attached_controllers(logger), on_error);
+  TRY_OR_ELSE_RETURN(auto controller, SDLControllers::find_attached_controllers(logger), on_error);
   Engine engine{MOVE(window), MOVE(controller)};
 
   LOG_DEBUG("Starting game loop");
-  DO_TRY_OR_ELSE_RETURN(auto _, start(logger, engine), on_error);
+  TRY_OR_ELSE_RETURN(auto _, start(logger, engine), on_error);
 
   LOG_DEBUG("Game loop finished successfully! Ending program now.");
   return EXIT_SUCCESS;

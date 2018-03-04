@@ -64,7 +64,7 @@ struct LevelLoader
 {
   LevelLoader() = delete;
 
-  static stlw::result<LevelAssets, std::string>
+  static Result<LevelAssets, std::string>
   load_level(stlw::Logger &, EntityRegistry &, std::string const&);
 };
 

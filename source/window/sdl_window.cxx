@@ -77,47 +77,47 @@ SDLWindow::set_fullscreen(FullscreenFlags const fs)
   }
 }
 
-stlw::result<stlw::empty_type, std::string>
+Result<stlw::empty_type, std::string>
 sdl_library::init()
 {
   // Initialize video subsystem
   if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
     // Display error message
     auto const error = fmt::format("SDL could not initialize! SDL_Error: {}\n", SDL_GetError());
-    return stlw::make_error(error);
+    return Err(error);
   }
 check_errors();
 
   // (from the docs) The requested attributes should be set before creating an
   // OpenGL window
   auto const set_attribute = [](auto const attribute,
-                                auto const value) -> stlw::result<stlw::empty_type, std::string> {
+                                auto const value) -> Result<stlw::empty_type, std::string> {
     int const set_r = SDL_GL_SetAttribute(attribute, value);
 check_errors();
     if (0 != set_r) {
       auto const fmt = fmt::format("Setting attribute '{}' failed, error is '{}'\n",
                                    std::to_string(attribute), SDL_GetError());
       std::abort();
-      return stlw::make_error(fmt);
+      return Err(fmt);
     }
-    return stlw::make_empty();
+    return Ok(stlw::make_empty());
   };
 
   // Use OpenGL 3.1 core
-  DO_TRY(auto _, set_attribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
-  DO_TRY(auto __, set_attribute(SDL_GL_CONTEXT_MINOR_VERSION, 1));
+  TRY(set_attribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
+  TRY(set_attribute(SDL_GL_CONTEXT_MINOR_VERSION, 1));
 
-  DO_TRY(auto ___, set_attribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG));
-  DO_TRY(auto ____, set_attribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
+  TRY(set_attribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG));
+  TRY(set_attribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
 
   // Turn on double buffering with a 24bit Z buffer.
   // You may need to change this to 16 or 32 for your system
-  DO_TRY(auto _____, set_attribute(SDL_GL_DOUBLEBUFFER, 1));
+  TRY(set_attribute(SDL_GL_DOUBLEBUFFER, 1));
 
-  DO_TRY(auto ______, set_attribute(SDL_GL_DEPTH_SIZE, 24));
-  DO_TRY(auto _______, set_attribute(SDL_GL_STENCIL_SIZE, 8));
+  TRY(set_attribute(SDL_GL_DEPTH_SIZE, 24));
+  TRY(set_attribute(SDL_GL_STENCIL_SIZE, 8));
 
-  return stlw::make_empty();
+  return Ok(stlw::make_empty());
 }
 
 void
@@ -128,7 +128,7 @@ sdl_library::destroy()
   }
 }
 
-stlw::result<SDLWindow, std::string>
+Result<SDLWindow, std::string>
 sdl_library::make_window(bool const fullscreen, int const height, int const width)
 {
   // Hidden dependency between the ordering here, so all the logic exists in one
@@ -156,7 +156,7 @@ sdl_library::make_window(bool const fullscreen, int const height, int const widt
 check_errors();
   if (nullptr == raw) {
     auto const error = fmt::format("SDL could not initialize! SDL_Error: {}\n", SDL_GetError());
-    return stlw::make_error(error);
+    return Err(error);
   }
   window_ptr window_ptr{raw, &SDL_DestroyWindow};
 
@@ -167,7 +167,7 @@ check_errors();
     // Display error message
     auto const error =
         fmt::format("OpenGL context could not be created! SDL Error: {}\n", SDL_GetError());
-    return stlw::make_error(error);
+    return Err(error);
   }
 
   // Make the window the current one
@@ -175,7 +175,7 @@ check_errors();
 check_errors();
   if (0 != mc_r) {
     auto const fmt = fmt::format("Error making window current. SDL Error: {}\n", SDL_GetError());
-    return stlw::make_error(fmt);
+    return Err(fmt);
   }
 
   // make sdl capture the input device
@@ -184,10 +184,10 @@ check_errors();
     int const code = SDL_SetRelativeMouseMode(SDL_TRUE);
 check_errors();
     if (code == -1) {
-      return stlw::make_error(std::string{"Mouse relative mode not supported."});
+      return Err(std::string{"Mouse relative mode not supported."});
     }
     else if (code != 0) {
-      return stlw::make_error(fmt::sprintf("Error setting mouse relative mode '%s'", SDL_GetError()));
+      return Err(fmt::sprintf("Error setting mouse relative mode '%s'", SDL_GetError()));
     }
   }
 
@@ -211,7 +211,7 @@ check_errors();
   if (GLEW_OK != glew_status) {
     auto const error =
         fmt::format("GLEW could not initialize! GLEW error: {}\n", glewGetErrorString(glew_status));
-    return stlw::make_error(error);
+    return Err(error);
   }
 
   // Use v-sync
@@ -228,7 +228,7 @@ check_errors();
     }
   }
   check_errors();
-  return window;
+  return OK_MOVE(window);
 }
 
 } // ns window

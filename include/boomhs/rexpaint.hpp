@@ -91,11 +91,11 @@ class RexImage
 public:
   MOVE_CONSTRUCTIBLE_ONLY(RexImage);
 
-  static stlw::result<RexImage, RexError>
+  static Result<RexImage, RexError>
   load(std::string const&);
 
   // Save this RexFile into a valid .xp file that RexPaint can load (if the ".xp" suffix is present).
-  static stlw::result<stlw::empty_type, RexError>
+  static Result<stlw::empty_type, RexError>
   save(RexImage const&, std::string const&);
 
   // Image attributes

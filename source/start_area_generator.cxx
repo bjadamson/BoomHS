@@ -29,10 +29,10 @@ place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_gene
   return eid;
 }
 
-stlw::result<std::string, std::string>
+Result<stlw::empty_type, std::string>
 place_prefabs(TileGrid &tgrid, stlw::float_generator &rng)
 {
-  DO_TRY(auto contents, stlw::read_file("prefabs/test0.prefab"));
+  auto contents = TRY(stlw::read_file("prefabs/test0.prefab"));
   size_t const height = 1 + std::count(contents.begin(), contents.end(), '\n');
   assert(height > 1);
 
@@ -50,7 +50,6 @@ place_prefabs(TileGrid &tgrid, stlw::float_generator &rng)
     auto const& length = buffer.size();
     width = std::max(width, length);
   }
-
 
   // find a location
   auto const [h, w] = tgrid.dimensions();
@@ -76,7 +75,7 @@ place_prefabs(TileGrid &tgrid, stlw::float_generator &rng)
       }
     }
   }
-  return std::string{};
+  return Ok(stlw::empty_type{});
 }
 
 } // ns anon

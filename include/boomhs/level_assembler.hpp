@@ -15,7 +15,7 @@ class LevelAssembler
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelAssembler);
 
-  static stlw::result<ZoneStates, std::string>
+  static Result<ZoneStates, std::string>
   assemble_levels(stlw::Logger &, std::vector<EntityRegistry> &);
 };
 

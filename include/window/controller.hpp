@@ -67,7 +67,7 @@ public:
   void
   add(ControllerPTR &&, SDL_Joystick *);
 
-  static stlw::result<SDLControllers, std::string>
+  static Result<SDLControllers, std::string>
   find_attached_controllers(stlw::Logger &);
 
   auto const&

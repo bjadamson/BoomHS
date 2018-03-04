@@ -279,11 +279,11 @@ std::optional<ColorMaterialInfo>
 load_material_color(CppTable const& file)
 {
   // clang-format off
-  MAKEOPT(auto const color,     get_vec3(file,   "color"));
-  MAKEOPT(auto const ambient,   get_vec3(file,   "ambient"));
-  MAKEOPT(auto const diffuse,   get_vec3(file,   "diffuse"));
-  MAKEOPT(auto const specular,  get_vec3(file,   "specular"));
-  MAKEOPT(auto const shininess, get_float(file,  "shininess"));
+  auto const color = MAKEOPT(get_vec3(file,   "color"));
+  auto const ambient = MAKEOPT(get_vec3(file,   "ambient"));
+  auto const diffuse = MAKEOPT(get_vec3(file,   "diffuse"));
+  auto const specular = MAKEOPT(get_vec3(file,   "specular"));
+  auto const shininess = MAKEOPT(get_float(file,  "shininess"));
   // clang-format on
 
   Material material{ambient, diffuse, specular, shininess};
@@ -422,7 +422,7 @@ load_tileinfos(stlw::Logger &logger, CppTable const& config, EntityRegistry &reg
   return TileSharedInfoTable{MOVE(tinfos)};
 }
 
-using LoadResult = stlw::result<std::pair<std::string, opengl::ShaderProgram>, std::string>;
+using LoadResult = Result<std::pair<std::string, opengl::ShaderProgram>, std::string>;
 LoadResult
 load_shader(stlw::Logger &logger, ParsedVertexAttributes &pvas, CppTable const& table)
 {
@@ -433,25 +433,25 @@ load_shader(stlw::Logger &logger, ParsedVertexAttributes &pvas, CppTable const& 
 
   // TODO: ugly hack, maybe think about...
   auto va = pvas.get_copy_of_va(va_name);
-  DO_TRY(auto program, opengl::make_shader_program(logger, vertex, fragment, MOVE(va)));
+  auto program = TRY(opengl::make_shader_program(logger, vertex, fragment, MOVE(va)));
 
   program.is_skybox = get_bool(table, "is_skybox").value_or(false);
   program.is_2d = get_bool(table, "is_2d").value_or(false);
   program.instance_count = get_sizei(table, "instance_count");
 
-  return std::make_pair(name, MOVE(program));
+  return Ok(std::make_pair(name, MOVE(program)));
 }
 
-stlw::result<opengl::ShaderPrograms, std::string>
+Result<opengl::ShaderPrograms, std::string>
 load_shaders(stlw::Logger &logger, ParsedVertexAttributes &&pvas, CppTable const& config)
 {
   auto const shaders_table = get_table_array_or_abort(config, "shaders");
   opengl::ShaderPrograms sps;
   for (auto const& shader_table : *shaders_table) {
-    DO_TRY(auto pair, load_shader(logger, pvas, shader_table));
+    auto pair = TRY(load_shader(logger, pvas, shader_table));
     sps.add(pair.first, MOVE(pair.second));
   }
-  return sps;
+  return Ok(MOVE(sps));
 }
 
 auto
@@ -536,14 +536,14 @@ TileSharedInfoTable::operator[](TileType const type)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-stlw::result<LevelAssets, std::string>
+Result<LevelAssets, std::string>
 LevelLoader::load_level(stlw::Logger &logger, EntityRegistry &registry, std::string const& filename)
 {
   CppTable engine_config = cpptoml::parse_file("engine.toml");
   assert(engine_config);
 
   ParsedVertexAttributes pvas = load_vas(engine_config);
-  DO_TRY(auto sps, load_shaders(logger, MOVE(pvas), engine_config));
+  auto sps = TRY(load_shaders(logger, MOVE(pvas), engine_config));
 
   CppTable area_config = cpptoml::parse_file("levels/" + filename);
   assert(area_config);
@@ -571,7 +571,7 @@ LevelLoader::load_level(stlw::Logger &logger, EntityRegistry &registry, std::str
 
   auto bg_color = Color{get_vec3_or_abort(area_config, "background")};
   std::cerr << "yielding assets\n";
-  return LevelAssets{
+  return Ok(LevelAssets{
     MOVE(glight),
     MOVE(bg_color),
 
@@ -580,7 +580,7 @@ LevelLoader::load_level(stlw::Logger &logger, EntityRegistry &registry, std::str
     MOVE(objcache),
     MOVE(texture_table),
     MOVE(sps)
-  };
+  });
 }
 
 } // ns boomhs

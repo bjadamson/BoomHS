@@ -116,7 +116,7 @@ bridge_staircases(ZoneState &a, ZoneState &b)
 }
 
 using copy_assets_pair_t = std::pair<EntityDrawHandles, TileDrawHandles>;
-stlw::result<copy_assets_pair_t, std::string>
+Result<copy_assets_pair_t, std::string>
 copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable const& ttable,
     EntityRegistry &registry, ObjStore const &obj_store)
 {
@@ -175,7 +175,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
 
   EntityDrawHandles edh{MOVE(dinfos)};
   TileDrawHandles td{MOVE(tile_dinfos)};
-  return std::make_pair(MOVE(edh), MOVE(td));
+  return Ok(std::make_pair(MOVE(edh), MOVE(td)));
 }
 
 void
@@ -190,7 +190,7 @@ copy_to_gpu(stlw::Logger &logger, ZoneState &zs)
 
   auto copy_result = copy_assets_gpu(logger, sps, ttable, registry, objcache);
   assert(copy_result);
-  auto handles = MOVE(*copy_result);
+  auto handles = copy_result.expect_moveout("Error copying asset to gpu");
   auto edh = MOVE(handles.first);
   auto tdh = MOVE(handles.second);
   gfx_state.gpu_state.entities = MOVE(edh);
@@ -202,7 +202,7 @@ copy_to_gpu(stlw::Logger &logger, ZoneState &zs)
 namespace boomhs
 {
 
-stlw::result<ZoneStates, std::string>
+Result<ZoneStates, std::string>
 LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry> &registries)
 {
   auto const level_string = [&](int const floor_number)
@@ -219,7 +219,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry
     // generate starting area
     auto &registry = registries[0];
 
-    DO_TRY(auto level_assets, LevelLoader::load_level(logger, registry, level_string(0)));
+    auto level_assets = TRY(LevelLoader::load_level(logger, registry, level_string(0)));
     auto gendata = StartAreaGenerator::gen_level(registry, rng, level_assets.texture_table);
 
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
@@ -236,7 +236,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry
   // or somehow give it unique access during writing (read/write lock?).
   for (auto i = 0; i < DUNGEON_FLOOR_COUNT; ++i) {
     auto &registry = registries[i + 1];
-    DO_TRY(auto level_assets, LevelLoader::load_level(logger, registry, level_string(i)));
+    auto level_assets = TRY(LevelLoader::load_level(logger, registry, level_string(i)));
     StairGenConfig const stairconfig{DUNGEON_FLOOR_COUNT, i, stairs_perfloor};
     LevelConfig const config{stairconfig, tdconfig};
 
@@ -261,7 +261,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry
     copy_to_gpu(logger, zstates[i]);
   }
 
-  return zstates;
+  return OK_MOVE(zstates);
 }
 
 } // ns boomhs

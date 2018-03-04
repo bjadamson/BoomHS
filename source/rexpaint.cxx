@@ -5,7 +5,7 @@
 #include <iostream>
 
 using namespace rexpaint;
-using RexIOResult = stlw::result<stlw::empty_type, RexError>;
+using RexIOResult = Result<stlw::empty_type, RexError>;
 
 namespace
 {
@@ -15,14 +15,14 @@ make_rexerror(gzFile g)
 {
   int errnum = 0;
   std::string const msg = gzerror(g, &errnum);
-  return ::nonstd::unexpected_type<RexError>(RexError{errnum, msg});
+  return Err(RexError{errnum, msg});
 }
 
 RexIOResult
 s_gzread(gzFile g, void *buf, unsigned int len)
 {
   if (gzread(g, buf, len) > 0) {
-    return stlw::empty_type{};
+    return Ok(stlw::empty_type{});
   }
   return make_rexerror(g);
 }
@@ -31,18 +31,18 @@ RexIOResult
 s_gzwrite(gzFile g, void const* buf, unsigned int len)
 {
   if (gzwrite(g, buf, len) > 0) {
-    return stlw::empty_type{};
+    return Ok(stlw::empty_type{});
   }
   return make_rexerror(g);
 }
 
-stlw::result<gzFile, RexError>
+Result<gzFile, RexError>
 s_gzopen(std::string const& filename, const char* permissions)
 {
   gzFile g = gzopen(filename.c_str(), permissions);
 
   if (g != Z_NULL) {
-    return g;
+    return Ok(g);
   }
 
   int errcode = 0;
@@ -50,9 +50,9 @@ s_gzopen(std::string const& filename, const char* permissions)
   if (errcode == 0) {
     std::string const msg{"gzerror. Assuming file '" + filename + "' does not exist."};
     RexError re{ERR_FILE_DOES_NOT_EXIST, msg};
-    return stlw::create_error(MOVE(re));
+    return Err(MOVE(re));
   }
-  return stlw::create_error(RexError{errcode, errstr});
+  return Err(RexError{errcode, errstr});
 }
 
 } // ns anon
@@ -66,7 +66,12 @@ bool
 RexTile::is_transparent() const
 {
   //This might be faster than comparing with transparentTile(), despite it being a constexpr
-  return (back_red == 255 && back_green == 0 && back_blue == 255);
+  // clang-format off
+  return ALLOF(
+      back_red == 255,
+      back_green == 0,
+      back_blue == 255);
+  // clang-format on
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,10 +150,10 @@ RexImage::flatten()
   flatten();
 }
 
-stlw::result<RexImage, RexError>
+Result<RexImage, RexError>
 RexImage::load(std::string const& filename)
 {
-  DO_TRY(auto gz, s_gzopen(filename.c_str(), "rb"));
+  auto gz = TRY(s_gzopen(filename.c_str(), "rb"));
   ON_SCOPE_EXIT([&]() { gzclose(gz); });
 
   int version;
@@ -172,13 +177,13 @@ RexImage::load(std::string const& filename)
     DO_EFFECT(s_gzread(gz, layer.tiles.data(), num_bytes));
   }
 
-  return RexImage{version, width, height, MOVE(layers)};
+  return Ok(RexImage{version, width, height, MOVE(layers)});
 }
 
-stlw::result<stlw::empty_type, RexError>
+Result<stlw::empty_type, RexError>
 RexImage::save(RexImage const& image, std::string const& filename)
 {
-  DO_TRY(gzFile gz, s_gzopen(filename.c_str(), "wb"));
+  gzFile gz = TRY(s_gzopen(filename.c_str(), "wb"));
   ON_SCOPE_EXIT([&]() { gzclose(gz); });
 
   auto const cast = [](auto *v) -> void const*
@@ -208,7 +213,7 @@ RexImage::save(RexImage const& image, std::string const& filename)
   if (Z_OK != result) {
     return make_rexerror(gz);
   }
-  return stlw::empty_type();
+  return Ok(stlw::empty_type());
 }
 
 } // ns rexpaint

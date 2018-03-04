@@ -299,7 +299,7 @@ place_rooms(TileGrid &tilegrid, stlw::float_generator &rng)
     // PRESENLTY: algorithm currently assumes we create atleast one room before entering the main
     // loop.
     {
-      MAKEOPT(auto const first_room, create_room(MAX_NUM_CREATE_TRIES, rgconfig, tilegrid, rng, TileType::FLOOR));
+      auto const first_room = MAKEOPT(create_room(MAX_NUM_CREATE_TRIES, rgconfig, tilegrid, rng, TileType::FLOOR));
       auto const first_center = first_room.center();
       starting_position.x = first_center.x;
       starting_position.y = first_center.y;
@@ -311,7 +311,7 @@ place_rooms(TileGrid &tilegrid, stlw::float_generator &rng)
   // Move onto floor tiles.
   assert(!rects.empty());
   FOR(_, MAX_ROOMS) {
-    MAKEOPT(auto const new_room, create_room(MAX_NUM_CREATE_TRIES, rgconfig, tilegrid, rng,
+    auto const new_room = MAKEOPT(create_room(MAX_NUM_CREATE_TRIES, rgconfig, tilegrid, rng,
           TileType::FLOOR));
     // center coordinates of the new room/previous room
     auto const new_center = new_room.center();

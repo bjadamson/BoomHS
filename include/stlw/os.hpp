@@ -12,7 +12,7 @@ namespace stlw
 {
 
 // TODO: boost::path
-inline stlw::result<std::string, std::string>
+inline Result<std::string, std::string>
 read_file(char const *path)
 {
   // Read the Vertex Shader code from the file
@@ -21,7 +21,7 @@ read_file(char const *path)
     std::ifstream istream(path, std::ios::in);
 
     if (!istream.is_open()) {
-      return stlw::make_error("Error opening file at path '" + std::string{path} + "'");
+      return Err("Error opening file at path '" + std::string{path} + "'");
     }
 
     std::string buffer;
@@ -37,7 +37,7 @@ read_file(char const *path)
     // explicit, dtor should do this.
     istream.close();
   }
-  return sstream.str();
+  return Ok(sstream.str());
 }
 
 template <typename T>

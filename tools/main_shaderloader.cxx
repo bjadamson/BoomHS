@@ -25,7 +25,7 @@ copy_to_outdir(std::string const& prefix, fs::path const &shader_path, fs::path 
   if (!shader_read_result) {
     return false;
   }
-  auto const shader_contents = *shader_read_result;
+  auto const shader_contents = shader_read_result.expect("shader contents");
   auto const output_shaderfile_name = outdir.string() + shader_path.filename().string();
 
   // 1) try and create the directory, if it exists already who cares.
@@ -103,7 +103,7 @@ main(int argc, char *argv[])
       if (!read_result) {
         return false;
       }
-      library_code += *read_result;
+      library_code += read_result.expect("file contents");
     }
     return true;
   };
