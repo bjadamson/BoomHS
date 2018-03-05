@@ -334,8 +334,11 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
 
     // if checks happen inside fn
     render::conditionally_draw_player_vectors(rstate, player);
-    if (es.ui_state.draw_ui) {
-      draw_ui(es, lm, window, registry);
+    if (es.ui_state.draw_ingame_ui) {
+      draw_ingame_ui();
+    }
+    if (es.ui_state.draw_debug_ui) {
+      draw_debug_ui(es, lm, window, registry);
     }
   }
 }

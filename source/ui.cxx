@@ -82,7 +82,7 @@ comboselected_to_entity(int const selected_index, std::vector<pair_t> const& pai
 }
 
 void
-draw_entity_editor(UiState &uistate, LevelData &ldata, EntityRegistry &registry)
+draw_entity_editor(UiDebugState &uistate, LevelData &ldata, EntityRegistry &registry)
 {
   auto &selected = uistate.selected_entity;
   if (ImGui::Begin("Entity Editor Window")) {
@@ -271,7 +271,7 @@ draw_player_window(EngineState &es, LevelData &ldata)
 }
 
 void
-show_directionallight_window(UiState &ui, LevelData &ldata)
+show_directionallight_window(UiDebugState &ui, LevelData &ldata)
 {
   auto &directional = ldata.global_light.directional;
 
@@ -291,7 +291,7 @@ show_directionallight_window(UiState &ui, LevelData &ldata)
 }
 
 void
-show_ambientlight_window(UiState &ui, LevelData &ldata)
+show_ambientlight_window(UiDebugState &ui, LevelData &ldata)
 {
   if (ImGui::Begin("Global Light Editor")) {
     ImGui::Text("Global Light");
@@ -317,7 +317,7 @@ show_material_editor(char const* text, Material &material)
 }
 
 void
-show_entitymaterials_window(UiState &ui, EntityRegistry &registry)
+show_entitymaterials_window(UiDebugState &ui, EntityRegistry &registry)
 {
   auto &selected_material = ui.selected_entity_material;
 
@@ -340,7 +340,7 @@ show_entitymaterials_window(UiState &ui, EntityRegistry &registry)
 }
 
 void
-show_tilegrid_materials_window(UiState &ui, LevelData &level_data)
+show_tilegrid_materials_window(UiDebugState &ui, LevelData &level_data)
 {
   if (ImGui::Begin("Entity Materials Editor")) {
 
@@ -367,7 +367,7 @@ show_tilegrid_materials_window(UiState &ui, LevelData &level_data)
 }
 
 void
-show_pointlight_window(UiState &ui, EntityRegistry &registry)
+show_pointlight_window(UiDebugState &ui, EntityRegistry &registry)
 {
   auto const display_pointlight = [&registry](EntityID const entity) {
     auto &transform = registry.get<Transform>(entity);
@@ -415,13 +415,13 @@ show_pointlight_window(UiState &ui, EntityRegistry &registry)
 }
 
 void
-show_background_window(UiState &ui_state, LevelData &ldata)
+show_background_window(UiDebugState &state, LevelData &ldata)
 {
   if (ImGui::Begin("Background Color")) {
     ImGui::ColorEdit3("Background Color:", ldata.background.data());
 
     if (ImGui::Button("Close", ImVec2(120,0))) {
-      ui_state.show_background_window = false;
+      state.show_background_window = false;
     }
     ImGui::End();
   }
@@ -430,7 +430,7 @@ show_background_window(UiState &ui_state, LevelData &ldata)
 void
 world_menu(EngineState &es, LevelData &ldata)
 {
-  auto &ui = es.ui_state;
+  auto &ui = es.ui_state.debug;
   if (ImGui::BeginMenu("World")) {
     ImGui::MenuItem("Background Color", nullptr, &ui.show_background_window);
     ImGui::MenuItem("Local Axis", nullptr, &es.show_local_axis);
@@ -446,7 +446,7 @@ world_menu(EngineState &es, LevelData &ldata)
 void
 lighting_menu(EngineState &es, LevelData &ldata, EntityRegistry &registry)
 {
-  auto &ui = es.ui_state;
+  auto &ui = es.ui_state.debug;
   bool &edit_pointlights = ui.show_pointlight_window;
   bool &edit_ambientlight = ui.show_ambientlight_window;
   bool &edit_directionallights = ui.show_directionallight_window;
@@ -484,33 +484,38 @@ namespace boomhs
 {
 
 void
-draw_ui(EngineState &es, LevelManager &lm, window::SDLWindow &window, EntityRegistry &registry)
+draw_ingame_ui()
 {
-  auto &ui_state = es.ui_state;
+}
+
+void
+draw_debug_ui(EngineState &es, LevelManager &lm, window::SDLWindow &window, EntityRegistry &registry)
+{
+  auto &state = es.ui_state.debug;
   auto &tilegrid_state = es.tilegrid_state;
   auto &window_state = es.window_state;
   auto &zs = lm.active();
   auto &ldata = zs.level_data;
 
-  if (ui_state.show_entitywindow) {
-    draw_entity_editor(ui_state, ldata, registry);
+  if (state.show_entitywindow) {
+    draw_entity_editor(state, ldata, registry);
   }
-  if (ui_state.show_camerawindow) {
+  if (state.show_camerawindow) {
     draw_camera_window(ldata);
   }
-  if (ui_state.show_mousewindow) {
+  if (state.show_mousewindow) {
     draw_mouse_window(es.mouse_state);
   }
-  if (ui_state.show_playerwindow) {
+  if (state.show_playerwindow) {
     draw_player_window(es, ldata);
   }
-  if (ui_state.show_tilegrid_editor_window) {
+  if (state.show_tilegrid_editor_window) {
     draw_tilegrid_editor(tilegrid_state, lm);
   }
-  if (ui_state.show_debugwindow) {
+  if (state.show_debugwindow) {
     ImGui::Checkbox("Draw Skybox", &es.draw_skybox);
     ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
-    ImGui::Checkbox("Enter Pressed", &ui_state.enter_pressed);
+    ImGui::Checkbox("Enter Pressed", &state.enter_pressed);
     ImGui::Checkbox("Draw Entities", &es.draw_entities);
     ImGui::Checkbox("Draw Normals", &es.draw_normals);
     ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
@@ -518,12 +523,12 @@ draw_ui(EngineState &es, LevelManager &lm, window::SDLWindow &window, EntityRegi
 
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("Windows")) {
-      ImGui::MenuItem("Debug Menu", nullptr, &ui_state.show_debugwindow);
-      ImGui::MenuItem("Entity Menu", nullptr, &ui_state.show_entitywindow);
-      ImGui::MenuItem("Camera Menu", nullptr, &ui_state.show_camerawindow);
-      ImGui::MenuItem("Mouse Menu", nullptr, &ui_state.show_mousewindow);
-      ImGui::MenuItem("Player Menu", nullptr, &ui_state.show_playerwindow);
-      ImGui::MenuItem("Tilemap Menu", nullptr, &ui_state.show_tilegrid_editor_window);
+      ImGui::MenuItem("Debug Menu", nullptr, &state.show_debugwindow);
+      ImGui::MenuItem("Entity Menu", nullptr, &state.show_entitywindow);
+      ImGui::MenuItem("Camera Menu", nullptr, &state.show_camerawindow);
+      ImGui::MenuItem("Mouse Menu", nullptr, &state.show_mousewindow);
+      ImGui::MenuItem("Player Menu", nullptr, &state.show_playerwindow);
+      ImGui::MenuItem("Tilemap Menu", nullptr, &state.show_tilegrid_editor_window);
       ImGui::EndMenu();
     }
     if (ImGui::BeginMenu("Settings")) {

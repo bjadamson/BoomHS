@@ -6,11 +6,14 @@
 namespace boomhs
 {
 
-struct UiState
+struct UiInGameState
 {
-  MOVE_CONSTRUCTIBLE_ONLY(UiState);
+};
 
-  bool draw_ui = true;
+struct UiDebugState
+{
+  MOVE_CONSTRUCTIBLE_ONLY(UiDebugState);
+
   bool enter_pressed = false;
   bool block_input = false;
 
@@ -44,6 +47,15 @@ struct UiState
   bool show_mousewindow = false;
   bool show_playerwindow = false;
   bool show_pointlight_window = false;
+};
+
+struct UiState
+{
+  UiDebugState debug;
+  UiInGameState ingame;
+
+  bool draw_ingame_ui = true;
+  bool draw_debug_ui = true;
 };
 
 } // ns boomhs

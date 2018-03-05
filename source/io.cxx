@@ -239,7 +239,7 @@ process_mousemotion(GameState &state, SDL_MouseMotionEvent const& motion, FrameT
   auto &logger = es.logger;
   auto &ms = es.mouse_state;
   auto &ts = es.tilegrid_state;
-  auto &ui = es.ui_state;
+  auto &ui = es.ui_state.debug;
 
   auto &lm = state.level_manager;
   auto &ldata = lm.active().level_data;
@@ -357,7 +357,7 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
       break;
 
     case SDLK_F11:
-      ui.draw_ui ^= true;
+      ui.draw_debug_ui ^= true;
       break;
     case SDLK_t:
       // invert
@@ -460,7 +460,7 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
     }
     case SDLK_RETURN:
       // Toggle state
-      ui.enter_pressed ^= true;
+      ui.debug.enter_pressed ^= true;
       break;
     case SDLK_LEFT:
       rotate_player(90.0f, opengl::Y_UNIT_VECTOR);
@@ -674,7 +674,7 @@ process_event(GameState &state, SDL_Event &event, FrameTime const& ft)
   auto &logger = es.logger;
 
   // If the user pressed enter, don't process mouse events (for the game)
-  auto &ui = es.ui_state;
+  auto &ui = es.ui_state.debug;
   if (ui.block_input || ui.enter_pressed) {
     return is_quit_event(event);
   }

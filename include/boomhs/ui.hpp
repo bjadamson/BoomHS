@@ -11,7 +11,11 @@ class EntityRegistry;
 
 struct EngineState;
 class LevelManager;
+
 void
-draw_ui(EngineState &, LevelManager &, window::SDLWindow &, EntityRegistry &);
+draw_ingame_ui();
+
+void
+draw_debug_ui(EngineState &, LevelManager &, window::SDLWindow &, EntityRegistry &);
 
 } // ns boomhs
