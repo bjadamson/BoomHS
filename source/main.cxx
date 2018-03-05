@@ -314,8 +314,8 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
       render::draw_rivers(rstate, ft);
     }
 
-    render::draw_targetreticle(rstate, ft);
     render::draw_stars(rstate, ft);
+    render::draw_targetreticle(rstate, ft);
 
     if (tilegrid_state.show_grid_lines) {
       render::draw_tilegrid(rstate, tilegrid_state);
@@ -338,7 +338,6 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
       draw_ui(es, lm, window, registry);
     }
   }
-  
 }
 
 } // ns boomhs
