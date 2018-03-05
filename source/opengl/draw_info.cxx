@@ -59,6 +59,7 @@ DrawInfo::DrawInfo(GLenum const dm, size_t const num_vertices, GLuint const num_
 
 DrawInfo::DrawInfo(DrawInfo &&other)
   : draw_mode_(other.draw_mode_)
+  , num_vertices_(other.num_vertices_)
   , num_indices_(other.num_indices_)
   , handles_(MOVE(other.handles_))
   , vao_(MOVE(other.vao_))
@@ -70,8 +71,10 @@ DrawInfo&
 DrawInfo::operator=(DrawInfo &&other)
 {
   draw_mode_ = other.draw_mode_;
+  num_vertices_ = other.num_vertices_;
   num_indices_ = other.num_indices_;
   other.draw_mode_ = -1;
+  other.num_vertices_ = 0;
   other.num_indices_ = 0;
 
   handles_ = MOVE(other.handles_);
