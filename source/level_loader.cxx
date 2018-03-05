@@ -315,6 +315,7 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     auto pointlight_o =     get_vec3(file,            "pointlight");
     auto player =           get_string(file,          "player");
     auto is_visible  =      get_bool(file,            "is_visible").value_or(true);
+    bool is_skybox   =      get_bool(file,            "skybox").value_or(false);
     // clang-format on
 
     // texture OR color fields, not both
@@ -347,8 +348,8 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     if (geometry == "cube") {
       registry.assign<CubeRenderable>(entity);
     }
-    else if (geometry == "skybox") {
-      registry.assign<SkyboxRenderable>(entity);
+    if (is_skybox) {
+      registry.assign<SkyboxTAG>(entity);
     }
     else if (boost::starts_with(geometry, "mesh")) {
       auto const parse_meshname = [](auto const& field) {
@@ -462,7 +463,7 @@ load_vas(CppTable const& config)
     auto const dataname = "data" + std::to_string(index);
 
     // THINKING EXPLAINED:
-    // See if there is a data field, if there isn't no problem return (TRY_OPTION)
+    // If there is a data field, there isn't a problem return (TRY_OPTION)
     //
     // Otherwise if there is a data field, require both the "type" and "num" fields,
     // as otherwise this indicates a malformed-field.

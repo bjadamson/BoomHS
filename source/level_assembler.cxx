@@ -121,19 +121,12 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
     EntityRegistry &registry, ObjStore const &obj_store)
 {
   EntityDrawinfos dinfos;
-  /*
+
+  // Render CUBES
   registry.view<ShaderName, PointLight, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &pointlight, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = opengl::gpu::copy_vertexonlycube_gpu(logger, shader_ref);
-        dinfos.add(entity, MOVE(handle));
-      });
-
-  registry.view<ShaderName, Color, MeshRenderable>().each(
-      [&](auto entity, auto &sn, auto &color, auto &mesh) {
-        auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, true, true, false});
-        auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
@@ -142,12 +135,16 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
         auto handle = opengl::gpu::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
-  registry.view<ShaderName, SkyboxRenderable, TextureRenderable>().each(
-      [&](auto entity, auto &sn, auto &, auto &texture) {
+
+  // Render MESHES
+  registry.view<ShaderName, Color, MeshRenderable>().each(
+      [&](auto entity, auto &sn, auto &color, auto &mesh) {
+        auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, true, true, false});
         auto &shader_ref = sps.ref_sp(sn.value);
-        auto handle = opengl::gpu::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
+        auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
         dinfos.add(entity, MOVE(handle));
       });
+  /*
   registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &mesh, auto &texture) {
         auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, false, true, true});
@@ -156,6 +153,16 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
         dinfos.add(entity, MOVE(handle));
       });
   */
+  registry.view<ShaderName, MeshRenderable, Torch, TextureRenderable>().each(
+      [&](auto entity, auto &sn, auto &mesh, auto &torch, auto &texture)
+  {
+    auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, false, false, true});
+    std::cerr << "obj store AFTER torch 'gotten'\n";
+    std::cerr << obj_store << "\n";
+    auto &shader_ref = sps.ref_sp(sn.value);
+    auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
+    dinfos.add(entity, MOVE(handle));
+  });
 
   /*
   registry.view<ShaderName, MeshRenderable, EntityFromFILE>().each([&](auto entity, auto &sn, auto &mesh, auto &&...) {

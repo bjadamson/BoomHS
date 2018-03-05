@@ -65,7 +65,7 @@ struct MeshRenderable
   std::string name;
 };
 
-struct SkyboxRenderable
+struct SkyboxTAG
 {
 };
 

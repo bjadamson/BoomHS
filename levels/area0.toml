@@ -262,7 +262,8 @@ texture = "boring_cube"
 [[entity]]
 pos = [-5.0, 0.0, -2.0]
 shader = "3dcube_texture"
-geometry = "skybox"
+geometry = "cube"
+skybox = true
 texture = "building_skybox"
 
 [[entity]]

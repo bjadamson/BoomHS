@@ -170,12 +170,6 @@ ObjStore::create_interleaved_buffer(ObjQuery const& query) const
   auto num_colors = data.colors.size();
   auto num_uvs = data.uvs.size();
 
-  std::cerr << "num positions: '" << num_positions << "'\n";
-  std::cerr << "num normals: '" << num_normals << "'\n";
-  std::cerr << "num colors: '" << num_colors << "'\n";
-  std::cerr << "num uvs: '" << num_uvs << "'\n";
-  std::cerr << "num vertices: '" << num_vertices << "'\n";
-
   auto const keep_going = [&]() {
     return ALLOF(num_positions > 0,
         num_normals > 0,

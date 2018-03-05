@@ -475,7 +475,6 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
     draw(rstate, transform, sp, handle, eid, registry);
   };
 
-  /*
   auto const player_drawfn = [&camera, &draw_fn](auto &&... args)
   {
     if (CameraMode::FPS == camera.mode()) {
@@ -508,7 +507,6 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
 
     draw_fn(eid, sn, copy_transform, FORWARD(args)...);
   };
-  */
 
   //
   // Render everything loaded form level file.
@@ -521,19 +519,17 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
   //registry.view<ShaderName, Transform, IsVisible, MeshRenderable, EnemyData>().each(draw_fn);
 
   // player
-  //registry.view<ShaderName, Transform, IsVisible, MeshRenderable, Player>().each(player_drawfn);
+  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, Player>().each(player_drawfn);
 
   // tiles
   registry.view<ShaderName, Transform, IsVisible, MeshRenderable, TileComponent>().each(draw_fn);
 
-  /*
   if (es.draw_skybox) {
     auto const draw_skybox = [&](auto eid, auto &sn, auto &transform, auto &&... args) {
       draw_fn(eid, sn, transform, FORWARD(args)...);
     };
-    registry.view<ShaderName, Transform, IsVisible, SkyboxRenderable>().each(draw_skybox);
+    registry.view<ShaderName, Transform, IsVisible, SkyboxTAG>().each(draw_skybox);
   }
-  */
 }
 
 void
@@ -586,7 +582,6 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
           draw_tile_helper(floor_sp, dinfo, tile, modmatrix, true);
         }
         break;
-        /*
       case TileType::WALL:
         {
           auto const inverse_model = glm::inverse(default_modmatrix);
@@ -625,7 +620,6 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
           draw_tile_helper(tile_sp, dinfo, tile, default_modmatrix, receives_ambient_light);
         }
         break;
-        */
       case TileType::UNDEFINED:
         std::abort();
     }
@@ -754,7 +748,6 @@ draw_rivers(RenderState &rstate, window::FrameTime const& ft)
 void
 draw_stars(RenderState &rstate, window::FrameTime const& ft)
 {
-  /*
   auto &es = rstate.es;
   auto &zs = rstate.zs;
 
@@ -794,7 +787,6 @@ draw_stars(RenderState &rstate, window::FrameTime const& ft)
   auto constexpr Y = 5.0;
   draw_starletter(X, Y,   "light", TileType::STAR);
   draw_starletter(X, Y+1, "light", TileType::BAR);
-  */
 }
 
 void
