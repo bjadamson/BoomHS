@@ -121,6 +121,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
     EntityRegistry &registry, ObjStore const &obj_store)
 {
   EntityDrawinfos dinfos;
+  /*
   registry.view<ShaderName, PointLight, CubeRenderable>().each(
       [&](auto entity, auto &sn, auto &pointlight, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
@@ -154,13 +155,16 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
+  */
 
+  /*
   registry.view<ShaderName, MeshRenderable, EntityFromFILE>().each([&](auto entity, auto &sn, auto &mesh, auto &&...) {
     auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, true, true, false});
     auto &shader_ref = sps.ref_sp(sn.value);
     auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
     dinfos.add(entity, MOVE(handle));
   });
+  */
 
   std::vector<DrawInfo> tile_dinfos;
   tile_dinfos.reserve(static_cast<size_t>(TileType::UNDEFINED));

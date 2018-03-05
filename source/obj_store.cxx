@@ -157,42 +157,63 @@ ObjStore::create_interleaved_buffer(ObjQuery const& query) const
   auto const num_vertices = data.num_vertices;
 
   ObjBuffer buffer;
-  auto &v = buffer.vertices;
-  auto &indices = buffer.indices;
+  auto &vertices = buffer.vertices;
 
-  auto const copy_n = [&v](auto const& buffer, size_t const num, size_t &count) {
+  auto const copy_n = [&vertices](auto const& buffer, size_t const num, size_t &count, size_t &remaining) {
     FOR(i, num) {
-      v.emplace_back(buffer[count++]);
+      vertices.emplace_back(buffer[count++]);
+      --remaining;
     }
   };
-  {
-    auto const& query_attr = query.attributes;
-    size_t a = 0, b = 0, c = 0, d = 0;
-    FOR(i, num_vertices) {
-      assert(!data.positions.empty());
-      copy_n(data.positions, 4, a);
+  auto num_positions = data.positions.size();
+  auto num_normals = data.normals.size();
+  auto num_colors = data.colors.size();
+  auto num_uvs = data.uvs.size();
 
-      if (query_attr.normals) {
-        copy_n(data.normals, 3, b);
-      }
-      if (query_attr.colors) {
-        // encode assumptions for now
-        assert(!query_attr.uvs);
-        copy_n(data.colors, 4, c);
-      }
-      if (query_attr.uvs) {
-        // encode assumptions for now
-        assert(!query_attr.colors);
+  std::cerr << "num positions: '" << num_positions << "'\n";
+  std::cerr << "num normals: '" << num_normals << "'\n";
+  std::cerr << "num colors: '" << num_colors << "'\n";
+  std::cerr << "num uvs: '" << num_uvs << "'\n";
+  std::cerr << "num vertices: '" << num_vertices << "'\n";
 
-        copy_n(data.uvs, 2, d);
-      }
+  auto const keep_going = [&]() {
+    return ALLOF(num_positions > 0,
+        num_normals > 0,
+        num_colors > 0,
+        num_uvs > 0
+        );
+  };
+
+  auto const& query_attr = query.attributes;
+  size_t a = 0, b = 0, c = 0, d = 0;
+  while(keep_going()) {
+    assert(!data.positions.empty());
+    copy_n(data.positions, 4, a, num_positions);
+
+    if (query_attr.normals) {
+      copy_n(data.normals, 3, b, num_normals);
+    }
+
+    if (query_attr.colors) {
+        // encode assumptions for now
+      assert(!query_attr.uvs);
+      copy_n(data.colors, 4, c, num_colors);
+    }
+    if (query_attr.uvs) {
+      // encode assumptions for now
+      assert(!query_attr.colors);
+
+      copy_n(data.uvs, 2, d, num_uvs);
     }
   }
-  FOR(i, data.indices.size()) {
-    assert(i == data.indices[i]);
-    indices.emplace_back(i);
-  }
-  assert(indices.size() == data.indices.size());
+
+  assert(num_positions == 0 || num_positions == data.positions.size());
+  assert(num_normals == 0 || num_normals == data.normals.size());
+  assert(num_colors == 0 || num_colors == data.colors.size());
+  assert(num_uvs == 0 || num_uvs == data.uvs.size());
+
+  buffer.indices = data.indices;
+  assert(buffer.indices.size() == data.indices.size());
 
   return buffer;
 }

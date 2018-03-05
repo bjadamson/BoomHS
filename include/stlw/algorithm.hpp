@@ -46,8 +46,8 @@ allcombo(First const& first, Rest &&... rest)
 
 } // ns stlw::allof_detail
 
-#define ALLOF(a, ...) ::stlw::allof_detail::allcombo(a, ##__VA_ARGS__)
-#define ANYOF(a, ...) ::stlw::anyof_detail::orcombo(a, ##__VA_ARGS__)
+#define ALLOF(a, ...)  ::stlw::allof_detail::allcombo(a, ##__VA_ARGS__)
+#define ANYOF(a, ...)  ::stlw::anyof_detail::orcombo(a, ##__VA_ARGS__)
 
 namespace stlw
 {
