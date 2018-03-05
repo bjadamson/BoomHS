@@ -1,7 +1,7 @@
 #include <boomhs/obj_store.hpp>
 #include <stlw/algorithm.hpp>
-#include <stlw/format.hpp>
 
+#include <extlibs/fmt.hpp>
 #include <algorithm>
 #include <iostream>
 #include <iomanip>

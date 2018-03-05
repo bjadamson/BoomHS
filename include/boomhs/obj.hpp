@@ -1,6 +1,6 @@
 #pragma once
 #include <opengl/colors.hpp>
-#include <opengl/glew.hpp>
+#include <extlibs/glew.hpp>
 #include <stlw/result.hpp>
 #include <stlw/sized_buffer.hpp>
 #include <stlw/type_macros.hpp>

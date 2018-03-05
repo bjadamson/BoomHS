@@ -1,9 +1,9 @@
 #pragma once
-#include <opengl/glew.hpp>
-
 #include <stlw/log.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/optional.hpp>
+
+#include <extlibs/glew.hpp>
 #include <string>
 #include <vector>
 

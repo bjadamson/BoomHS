@@ -3,7 +3,6 @@
 #include <boomhs/tilegrid.hpp>
 #include <opengl/colors.hpp>
 #include <opengl/lighting.hpp>
-#include <window/sdl.hpp>
 #include <stlw/log.hpp>
 
 #include <vector>
@@ -18,6 +17,7 @@ class ShaderPrograms;
 namespace window
 {
 class FrameTime;
+struct Dimensions;
 } // ns window
 
 namespace boomhs

@@ -16,10 +16,9 @@
 #include <imgui/imgui.hpp>
 #include <imgui/imgui_impl_sdl_gl3.h>
 
-// SDL,GL3W
 #include <SDL.h>
 #include <SDL_syswm.h>
-#include <opengl/glew.hpp>
+#include <extlibs/glew.hpp>
 
 #include <iostream>
 

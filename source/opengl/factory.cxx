@@ -1,6 +1,6 @@
 #include <opengl/factory.hpp>
 #include <opengl/draw_info.hpp>
-#include <opengl/glew.hpp>
+#include <extlibs/glew.hpp>
 #include <opengl/global.hpp>
 #include <opengl/gpu.hpp>
 #include <boomhs/obj.hpp>

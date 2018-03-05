@@ -1,5 +1,5 @@
 #pragma once
-#include <window/sdl.hpp>
+#include <extlibs/sdl.hpp>
 
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
@@ -11,6 +11,21 @@
 
 namespace window
 {
+
+struct Dimensions
+{
+  int const x;
+  int const y;
+  int const w;
+  int const h;
+  Dimensions(int const offx, int const offy, int const wp, int const hp)
+      : x(offx)
+      , y(offy)
+      , w(wp)
+      , h(hp)
+  {
+  }
+};
 
 // clang-format off
 enum class FullscreenFlags

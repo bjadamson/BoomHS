@@ -1,10 +1,10 @@
 #include <boomhs/obj.hpp>
 
-#include <cassert>
 #include <boomhs/types.hpp>
 #include <stlw/algorithm.hpp>
 
 #include <extlibs/tinyobj.hpp>
+#include <cassert>
 
 using namespace boomhs;
 using namespace opengl;

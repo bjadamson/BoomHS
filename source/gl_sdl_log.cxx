@@ -1,8 +1,9 @@
 #include <gfx/gl_sdl_log.hpp>
-#include <window/sdl.hpp>
 
-#include <stlw/format.hpp>
+#include <extlibs/fmt.hpp>
 #include <stlw/log.hpp>
+
+#include <extlibs/sdl.hpp>
 #include <iostream>
 #include <string>
 

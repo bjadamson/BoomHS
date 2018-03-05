@@ -10,8 +10,7 @@
 #include <stlw/math.hpp>
 #include <stlw/log.hpp>
 
-#include <imgui/imgui.hpp>
-#include <imgui/imgui_impl_sdl_gl3.h>
+#include <extlibs/imgui.hpp>
 #include <iostream>
 
 float constexpr MOVE_DISTANCE = 1.0f;

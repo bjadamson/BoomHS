@@ -1,11 +1,13 @@
 #pragma once
-#include <opengl/glew.hpp>
 #include <opengl/global.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/vertex_attribute.hpp>
-#include <stlw/format.hpp>
+
+#include <extlibs/fmt.hpp>
 #include <stlw/log.hpp>
+
+#include <extlibs/glew.hpp>
 #include <optional>
 
 namespace boomhs

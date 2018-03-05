@@ -13,7 +13,7 @@
 
 #include <window/controller.hpp>
 #include <window/mouse.hpp>
-#include <window/sdl_window.hpp>
+#include <extlibs/sdl.hpp>
 #include <window/timer.hpp>
 
 #include <stlw/math.hpp>
@@ -21,10 +21,8 @@
 #include <stlw/random.hpp>
 #include <stlw/result.hpp>
 
-#include <fastnoise/fastnoise.hpp>
-
-#include <imgui/imgui.hpp>
-#include <imgui/imgui_impl_sdl_gl3.h>
+#include <extlibs/fastnoise.hpp>
+#include <extlibs/imgui.hpp>
 
 #include <cassert>
 #include <cstdlib>

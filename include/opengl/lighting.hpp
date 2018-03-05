@@ -1,8 +1,9 @@
 #pragma once
 #include <opengl/colors.hpp>
-#include <opengl/glew.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
+
+#include <extlibs/glew.hpp>
 
 #include <array>
 

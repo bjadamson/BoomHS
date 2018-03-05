@@ -1,5 +1,5 @@
 #pragma once
-#include <stlw/math.hpp>
+#include <extlibs/glm.hpp>
 
 namespace opengl
 {

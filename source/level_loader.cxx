@@ -2,10 +2,10 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/obj.hpp>
-#include <extlibs/cpptoml.hpp>
 
 #include <stlw/result.hpp>
 
+#include <extlibs/cpptoml.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 // Test not needing

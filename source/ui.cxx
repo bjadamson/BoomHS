@@ -4,10 +4,10 @@
 #include <boomhs/state.hpp>
 #include <boomhs/level_manager.hpp>
 
-#include <window/sdl_window.hpp>
+#include <extlibs/sdl.hpp>
 
 #include <stlw/math.hpp>
-#include <stlw/format.hpp>
+#include <extlibs/fmt.hpp>
 
 #include <imgui/imgui.hpp>
 #include <algorithm>

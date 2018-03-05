@@ -6,9 +6,6 @@
 #include <window/mouse.hpp>
 #include <stlw/math.hpp>
 
-#include <cmath>
-#include <limits>
-
 using namespace opengl;
 
 /*

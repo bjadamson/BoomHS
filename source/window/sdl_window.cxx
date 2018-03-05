@@ -1,12 +1,16 @@
 #include <window/sdl_window.hpp>
-#include <stlw/format.hpp>
+#include <gfx/gl_sdl_log.hpp>
+
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
-#include <gfx/gl_sdl_log.hpp>
-#include <opengl/glew.hpp>
+
+#include <extlibs/fmt.hpp>
+#include <extlibs/glew.hpp>
 
 #include <iostream>
+
+using namespace window;
 
 namespace {
 void

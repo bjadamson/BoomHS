@@ -1,5 +1,5 @@
 #pragma once
-#include <window/sdl.hpp>
+#include <extlibs/sdl.hpp>
 #include <stlw/log.hpp>
 #include <stlw/result.hpp>
 #include <ostream>

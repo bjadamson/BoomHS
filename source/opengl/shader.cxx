@@ -1,10 +1,10 @@
 #include <opengl/shader.hpp>
 #include <opengl/debug.hpp>
-#include <opengl/glew.hpp>
+#include <extlibs/glew.hpp>
 #include <opengl/global.hpp>
 #include <gfx/gl_sdl_log.hpp>
 
-#include <stlw/format.hpp>
+#include <extlibs/fmt.hpp>
 #include <stlw/math.hpp>
 #include <stlw/os.hpp>
 #include <stlw/result.hpp>

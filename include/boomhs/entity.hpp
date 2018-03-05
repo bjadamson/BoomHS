@@ -1,6 +1,6 @@
 #pragma once
 #include <stlw/type_macros.hpp>
-#include <entt/entt.hpp>
+#include <extlibs/entt.hpp>
 
 namespace boomhs
 {

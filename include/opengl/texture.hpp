@@ -1,6 +1,6 @@
 #pragma once
 #include <opengl/auto_resource.hpp>
-#include <opengl/glew.hpp>
+#include <extlibs/glew.hpp>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 

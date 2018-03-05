@@ -1,5 +1,5 @@
 #pragma once
-#include <opengl/glew.hpp>
+#include <extlibs/glew.hpp>
 #include <stlw/log.hpp>
 #include <string>
 

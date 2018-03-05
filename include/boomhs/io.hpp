@@ -1,5 +1,5 @@
 #pragma once
-#include <window/sdl.hpp>
+#include <extlibs/sdl.hpp>
 
 namespace window
 {

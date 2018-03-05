@@ -4,7 +4,7 @@
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/level_manager.hpp>
 
-#include <stlw/format.hpp>
+#include <extlibs/fmt.hpp>
 #include <stlw/math.hpp>
 
 namespace boomhs

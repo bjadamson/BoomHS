@@ -12,6 +12,7 @@
 #include <opengl/draw_info.hpp>
 #include <opengl/shader.hpp>
 
+#include <extlibs/sdl.hpp>
 #include <window/timer.hpp>
 
 #include <stlw/math.hpp>

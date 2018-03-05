@@ -1,10 +1,10 @@
 #include <opengl/texture.hpp>
 
-#include <opengl/glew.hpp>
+#include <extlibs/glew.hpp>
 #include <opengl/global.hpp>
 #include <gfx/gl_sdl_log.hpp>
 
-#include <stlw/format.hpp>
+#include <extlibs/fmt.hpp>
 #include <stlw/tuple.hpp>
 #include <SOIL.h>
 
