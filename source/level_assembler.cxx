@@ -149,14 +149,14 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
       });
   registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &mesh, auto &texture) {
-        auto const &obj = obj_store.get_obj(ObjQuery{mesh.name});
+        auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, false, true, true});
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
 
   registry.view<ShaderName, MeshRenderable>().each([&](auto entity, auto &sn, auto &mesh) {
-    auto const &obj = obj_store.get_obj(ObjQuery{mesh.name});
+    auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, true, true, false});
     auto &shader_ref = sps.ref_sp(sn.value);
     auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
     dinfos.add(entity, MOVE(handle));
@@ -167,11 +167,14 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
   for (auto const& it : ttable) {
     auto const& mesh_name = it.mesh_name;
     auto const& vshader_name = it.vshader_name;
-    auto const &obj = obj_store.get_obj(ObjQuery{mesh_name});
+    auto const &obj = obj_store.get_obj(ObjQuery{mesh_name, true, true, true, false});
 
     auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, std::nullopt);
     tile_dinfos[static_cast<size_t>(it.type)] = MOVE(handle);
   }
+
+  std::cerr << "PRINTINT OBSTORE\n\n";
+  std::cerr << obj_store;
 
   EntityDrawHandles edh{MOVE(dinfos)};
   TileDrawHandles td{MOVE(tile_dinfos)};

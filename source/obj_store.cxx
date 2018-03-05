@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 
 namespace boomhs
 {
@@ -30,15 +31,29 @@ operator!=(QueryAttributes const& a, QueryAttributes const& b)
 std::ostream&
 operator<<(std::ostream &stream, QueryAttributes const& qa)
 {
-  stream << "{positions: '";
-  stream << std::boolalpha << qa.positions;
-  stream << "', colors: '";
-  stream << std::boolalpha << qa.colors;
-  stream << "', normals: '";
-  stream << std::boolalpha << qa.normals;
-  stream << "', uvs: '";
-  stream << std::boolalpha << qa.uvs;
-  stream << "'}";
+  // 5 == std::strlen("false");
+  static int constexpr MAX_LENGTH = 5;
+
+  auto const print_bool = [&stream](char const* text, bool const v) {
+    stream << text;
+    stream << ": '";
+    stream << std::boolalpha << v;
+    stream << "'";
+  };
+
+  stream << "{";
+  print_bool("positions", qa.positions);
+  stream << ", ";
+
+  print_bool("colors", qa.colors);
+  stream << ", ";
+
+  print_bool("normals", qa.normals);
+  stream << ", ";
+
+  print_bool("uvs", qa.uvs);
+
+  stream << "}";
   return stream;
 }
 
@@ -64,7 +79,7 @@ std::ostream&
 operator<<(std::ostream & stream, ObjQuery const& query)
 {
   stream << "{name: '";
-  stream << query.name;
+  stream << std::setw(10) << query.name;
   stream << "', attributes: '";
   stream << query.attributes;
   stream << "'}";
@@ -110,16 +125,6 @@ ObjStore::add_obj(ObjQuery const& query, ObjData &&o) const
 {
   auto pair = std::make_pair(query.name, MOVE(o));
   data_.emplace_back(MOVE(pair));
-
-  auto const& cache = find_cache(query);
-  if (!cache.has_obj(query)) {
-    auto buffer = create_interleaved_buffer(query);
-    auto pair = std::make_pair(query, MOVE(buffer));
-    cache.insert_buffer(MOVE(pair));
-
-    // yield reference to data
-    assert(cache.has_obj(query));
-  }
 }
 
 ObjData const&
@@ -128,16 +133,18 @@ ObjStore::data_for(ObjQuery const& query) const
   auto const cmp = [&query](auto const& pair) {
     bool const names_match = pair.first == query.name;
     auto const& data = pair.second;
-    bool const positions = data.positions.empty();
-    bool const colors = data.colors.empty();
-    bool const normals = data.normals.empty();
-    bool const uvs = data.uvs.empty();
-    return names_match && positions && colors && normals && uvs;
+    bool const positions_empty = data.positions.empty();
+    bool const colors_empty    = data.colors.empty();
+    bool const normals_empty   = data.normals.empty();
+    bool const uvs_empty       = data.uvs.empty();
+
+    // FOR NOW, we assume all attributes present in .obj file
+    assert(ALLOF(!positions_empty, !colors_empty, !normals_empty, !uvs_empty));
+    return names_match;
   };
   auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
 
   // Assume the datastore has the object, somewhere
-  std::cerr << "Error looking up query:\n" << query << "\n    in objstore:\n    " << *this << "\n";
   assert(it != data_.cend());
   return it->second;
 }
@@ -162,9 +169,10 @@ ObjStore::create_interleaved_buffer(ObjQuery const& query) const
         v.emplace_back(p[a++]);
         v.emplace_back(p[a++]);
       }
-      if (!data.colors.empty()) {
+      auto const& query_attr = query.attributes;
+      if (query_attr.colors) {
         // encode assumptions for now
-        assert(data.uvs.empty());
+        assert(!query_attr.uvs);
 
         auto const& c = data.colors;
         v.emplace_back(c[b++]);
@@ -172,20 +180,20 @@ ObjStore::create_interleaved_buffer(ObjQuery const& query) const
         v.emplace_back(c[b++]);
         v.emplace_back(c[b++]);
       }
-      if (!data.normals.empty()) {
+      if (query_attr.normals) {
         auto const& n = data.normals;
         v.emplace_back(n[c++]);
         v.emplace_back(n[c++]);
         v.emplace_back(n[c++]);
-        }
-        if (!data.uvs.empty()) {
-          // encode assumptions for now
-          assert(data.colors.empty());
+      }
+      if (query_attr.uvs) {
+        // encode assumptions for now
+        assert(!query_attr.colors);
 
-          auto const& n = data.uvs;
-          v.emplace_back(n[d++]);
-          v.emplace_back(n[d++]);
-        }
+        auto const& n = data.uvs;
+        v.emplace_back(n[d++]);
+        v.emplace_back(n[d++]);
+      }
     }
   }
   FOR(i, buffer.indices.size()) {
@@ -203,27 +211,45 @@ ObjStore::get_obj(ObjQuery const& query) const
   if (cache_has_obj) {
     return cache.get_obj(query);
   }
-  std::abort();
+
+  auto buffer = create_interleaved_buffer(query);
+  auto pair = std::make_pair(query, MOVE(buffer));
+  cache.insert_buffer(MOVE(pair));
+
+  // yield reference to data
+  assert(cache.has_obj(query));
+  return cache.get_obj(query);
 }
 
 #define FIND_CACHE(query, cache)                                                                   \
   auto const& attr = query.attributes;                                                             \
-  if (!attr.positions) {                                                                           \
+  bool const pos_only         = ALLOF(attr.positions, !attr.normals, !attr.colors, !attr.uvs);     \
+  bool const pos_normal       = ALLOF(attr.positions, attr.normals, !attr.colors, !attr.uvs);      \
+  bool const pos_color        = ALLOF(attr.positions, !attr.normals, attr.colors, !attr.uvs);      \
+  bool const pos_color_normal = ALLOF(attr.positions, attr.normals, attr.colors, !attr.uvs);       \
+  bool const pos_normal_uvs   = ALLOF(attr.positions, attr.normals, !attr.colors, attr.uvs);       \
+                                                                                                   \
+  /* invalid configurations */                                                                     \
+  bool const no_positions     = ALLOF(!attr.positions);                                            \
+  bool const color_and_uvs    = ALLOF(attr.colors, attr.uvs);                                      \
+                                                                                                   \
+  if (no_positions) {                                                                              \
     std::cerr << "mesh: '" << query.name << "' cant find (no positions) not implemented.\n";       \
     std::abort();                                                                                  \
   }                                                                                                \
-  else if (attr.normals) {                                                                         \
-    cache = &pos_normal_;                                                                          \
-  }                                                                                                \
-  else if (!attr.colors && !attr.normals && !attr.uvs) {                                           \
-    cache = &pos_;                                                                                 \
-  }                                                                                                \
-  else if (attr.colors && attr.normals) {                                                          \
-    cache = &pos_color_normal_;                                                                    \
-  }                                                                                                \
-  else if (attr.colors && attr.uvs) {                                                              \
+  else if (color_and_uvs) {                                                                        \
     std::cerr << "invalid?\n";                                                                     \
     std::abort();                                                                                  \
+  }                                                                                                \
+                                                                                                   \
+  if (pos_only) {                                                                                  \
+    cache = &pos_;                                                                                 \
+  }                                                                                                \
+  else if (pos_normal) {                                                                           \
+    cache = &pos_normal_;                                                                          \
+  }                                                                                                \
+  else if (pos_color_normal) {                                                                     \
+    cache = &pos_color_normal_;                                                                    \
   }                                                                                                \
   else if (attr.normals && attr.uvs) {                                                             \
     cache = &pos_normal_uv_;                                                                       \
@@ -259,12 +285,18 @@ std::ostream&
 operator<<(std::ostream &stream, ObjCache const& cache)
 {
   auto const& buffers = cache.buffers_;
+  auto const WS = "    ";
 
   stream << "{";
   stream << "(cache SIZE: " << cache.size() << ") ";
+  if (!cache.empty()) {
+    stream << "\n";
+    stream << WS;
+  }
   FOR(i, buffers.size()) {
     if (i > 0) {
-      stream << ", ";
+      stream << "\n";
+      stream << WS;
     }
     auto const& it = buffers[i];
     stream << it.first;
@@ -276,13 +308,37 @@ operator<<(std::ostream &stream, ObjCache const& cache)
 std::ostream&
 operator<<(std::ostream &stream, ObjStore const& store)
 {
+  // clang-format off
+  auto const print_cache = [&stream](char const* name, auto const& cache) {
+    stream << name;
+    stream << ":";
+    stream << cache;
+    stream << "\n";
+  };
+
   stream << "{";
-  stream << "pos_: {" << store.pos_ << "}";
-  stream << ", pos_normal_: {" << store.pos_normal_ << "}";
-  stream << ", pos_color_normal_: {" << store.pos_color_normal_ << "}";
-  stream << ", pos_normal_uv_: {" << store.pos_normal_uv_ << "}";
-  stream << ", pos_uv_: {" << store.pos_uv_ << "}";
-  stream << "}";
+  stream << "(size: '" << store.size() << "')\n";
+  stream << "(names: '";
+  {
+    bool print_comma = false;
+    for (auto const& pair : store.data_) {
+      if (!print_comma) {
+        print_comma = true;
+      }
+      else {
+        stream << ", ";
+      }
+      stream << pair.first << "'";
+    }
+    stream << "')\n";
+  }
+  print_cache("pos_", store.pos_);
+  print_cache("pos_normal_", store.pos_normal_);
+  print_cache("pos_color_normal_", store.pos_color_normal_);
+  print_cache("pos_normal_uv_", store.pos_normal_uv_);
+  print_cache("pos_uv_", store.pos_uv_);
+  stream << "}\n";
+  // clang-format on
   return stream;
 }
 

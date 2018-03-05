@@ -65,6 +65,7 @@ class ObjCache
   get_obj(ObjQuery const&) const;
 
   auto size() const { return buffers_.size(); }
+  bool empty() const { return buffers_.empty(); }
 };
 
 std::ostream&
@@ -108,6 +109,9 @@ public:
 
   ObjBuffer const&
   get_obj(ObjQuery const&) const;
+
+  auto size() const { return data_.size(); }
+  bool empty() const { return data_.empty(); }
 };
 
 std::ostream&

@@ -37,7 +37,7 @@ ItemFactory::create_torch(EntityRegistry &registry, stlw::float_generator &rng, 
   registry.assign<Transform>(eid);
 
   auto &mesh = registry.assign<MeshRenderable>(eid);
-  mesh.name = "O_uvs_no_normals";
+  mesh.name = "O";
 
   auto &tr = registry.assign<TextureRenderable>(eid);
   auto texture_o = ttable.find("Lava");
