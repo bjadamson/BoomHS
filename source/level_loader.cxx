@@ -167,21 +167,20 @@ get_float_or_abort(CppTable const& table, char const* name)
 Result<ObjStore, LoadStatus>
 load_objfiles(CppTableArray const& mesh_table)
 {
-  auto const load = [](auto const& table) -> Result<std::pair<ObjQuery, ObjData>, LoadStatus> {
+  auto const load = [](auto const& table) -> Result<std::pair<std::string, ObjData>, LoadStatus> {
     auto const name = get_string_or_abort(table, "name");
-    std::cerr << "Loading name '" << name << "'\n";
+    std::cerr << "Loading objfile '" << name << "'\n";
 
     auto const obj = "assets/" + name + ".obj";
     auto const mtl = "assets/" + name + ".mtl";
 
     ObjData objdata = TRY_MOVEOUT(load_objfile(obj.c_str(), mtl.c_str()));
-    auto query = ObjQuery{name};
-    auto pair = std::make_pair(MOVE(query), MOVE(objdata));
+    auto pair = std::make_pair(name, MOVE(objdata));
     return OK_MOVE(pair);
   };
   ObjStore store;
   for (auto const& table : *mesh_table) {
-    std::pair<ObjQuery, ObjData> pair = TRY_MOVEOUT(load(table));
+    auto pair = TRY_MOVEOUT(load(table));
     store.add_obj(pair.first, MOVE(pair.second));
   }
   return OK_MOVE(store);
@@ -307,7 +306,7 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     // clang-format off
     auto shader =           get_string_or_abort(file, "shader");
     auto geometry =         get_string_or_abort(file, "geometry");
-    auto pos =              get_vec3_or_abort(file,   "pos");
+    auto pos =              get_vec3_or_abort(file,   "position");
     auto scale_o =          get_vec3(file,            "scale");
     auto rotation_o =       get_vec3(file,            "rotation");
     auto color =            get_color(file,           "color");
@@ -459,35 +458,36 @@ load_vas(CppTable const& config)
   auto vas_table_array = config->get_table_array("vas");
   assert(vas_table_array);
 
-  auto const read_data = [&](auto const& table, size_t const index) {
-    auto const dataname = "data" + std::to_string(index);
-
+  auto const read_data = [&](auto const& table, char const* fieldname, size_t &index) {
     // THINKING EXPLAINED:
-    // If there is a data field, there isn't a problem return (TRY_OPTION)
     //
-    // Otherwise if there is a data field, require both the "type" and "num" fields,
-    // as otherwise this indicates a malformed-field.
-    TRY_OPTION(auto data_table, table->get_table(dataname));
-    auto const type_s = get_string_or_abort(data_table, "type");
+    // If there isn't a field, bail early. However, if there IS a field, ensure it has the fields
+    // we expect.
+    TRY_OPTION(auto data_table, table->get_table(fieldname));
+    auto const datatype_s = get_string_or_abort(data_table, "datatype");
 
     // TODO: FOR NOW, only support floats. Easy to implement rest
-    assert("float" == type_s);
-    auto const type = GL_FLOAT;
+    assert("float" == datatype_s);
+    auto const datatype = GL_FLOAT;
     auto const num = get_or_abort<int>(data_table, "num");
 
     auto const uint_index = static_cast<GLuint>(index);
-    auto api = opengl::AttributePointerInfo{uint_index, type, num};
+    auto const attribute_type = attribute_type_from_string(fieldname);
+    auto api = opengl::AttributePointerInfo{uint_index, datatype, attribute_type, num};
+
+    ++index;
     return cpptoml::option<opengl::AttributePointerInfo>{MOVE(api)};
   };
 
-  auto const add_next_found = [&read_data](auto &apis, auto const& table, size_t const index) {
-    auto data_o = read_data(table, index);
+  auto const add_next_found = [&read_data](auto &apis, auto const& table, char const* fieldname,
+      size_t &index)
+  {
+    auto data_o = read_data(table, fieldname, index);
     bool const data_read = !!data_o;
     if (data_read) {
       auto data = MOVE(*data_o);
       apis.emplace_back(MOVE(data));
     }
-    return data_read;
   };
 
   ParsedVertexAttributes pvas;
@@ -496,7 +496,11 @@ load_vas(CppTable const& config)
 
     size_t i = 0u;
     std::vector<opengl::AttributePointerInfo> apis;
-    while(add_next_found(apis, table, i++)) {}
+    add_next_found(apis, table, "position", i);
+    add_next_found(apis, table, "normal", i);
+    add_next_found(apis, table, "color", i);
+    add_next_found(apis, table, "uv", i);
+
     pvas.add(name, make_vertex_attribute(apis));
   };
   std::for_each((*vas_table_array).begin(), (*vas_table_array).end(), fn);

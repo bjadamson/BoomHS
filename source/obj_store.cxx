@@ -121,9 +121,9 @@ ObjCache::get_obj(ObjQuery const& query) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ObjStore
 void
-ObjStore::add_obj(ObjQuery const& query, ObjData &&o) const
+ObjStore::add_obj(std::string const& name, ObjData &&o) const
 {
-  auto pair = std::make_pair(query.name, MOVE(o));
+  auto pair = std::make_pair(name, MOVE(o));
   data_.emplace_back(MOVE(pair));
 }
 

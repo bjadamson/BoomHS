@@ -105,7 +105,7 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(ObjStore);
 
   void
-  add_obj(ObjQuery const&, ObjData &&) const;
+  add_obj(std::string const&, ObjData &&) const;
 
   ObjBuffer const&
   get_obj(ObjQuery const&) const;

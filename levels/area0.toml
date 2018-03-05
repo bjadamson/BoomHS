@@ -217,7 +217,7 @@ name = "B"
 
 ########### ENTITY #############
 [[entity]]
-pos = [8.0, 0.0, 8.0]
+position = [8.0, 0.0, 8.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:at"
 player = "player"
@@ -230,7 +230,7 @@ shininess = 1.0
 ######### POINT LIGHTS
 # LIGHT #0
 [[entity]]
-pos = [5.0, 5.0, 5.0]
+position = [5.0, 5.0, 5.0]
 shader = "light"
 geometry = "cube"
 pointlight = [0.0, 0.0, 0.0]
@@ -238,7 +238,7 @@ scale = [0.4, 0.4, 0.4]
 
 # LIGHT #1
 [[entity]]
-pos = [35.0, 5.0, 35.0]
+position = [35.0, 5.0, 35.0]
 shader = "light"
 geometry = "cube"
 pointlight = [0.0, 0.0, 0.0]
@@ -246,7 +246,7 @@ scale = [0.4, 0.4, 0.4]
 
 # LIGHT #2
 [[entity]]
-pos = [5.0, 5.0, 35.0]
+position = [5.0, 5.0, 35.0]
 shader = "light"
 geometry = "cube"
 pointlight = [0.0, 0.0, 0.0]
@@ -254,27 +254,27 @@ scale = [0.4, 0.4, 0.4]
 
 ###################################################################################################
 [[entity]]
-pos = [-5.0, -2.0, 0.0]
+position = [-5.0, -2.0, 0.0]
 shader = "3dcube_texture"
 geometry = "cube"
 texture = "boring_cube"
 
 [[entity]]
-pos = [-5.0, 0.0, -2.0]
+position = [-5.0, 0.0, -2.0]
 shader = "3dcube_texture"
 geometry = "cube"
 skybox = true
 texture = "building_skybox"
 
 [[entity]]
-pos = [20.0, 0.0, 20.0]
+position = [20.0, 0.0, 20.0]
 shader = "3dtexture"
 geometry = "mesh:house"
 texture = "TextureAtlas"
 scale = [0.4, 0.4, 0.4]
 
 [[entity]]
-pos = [-3.0, 0.0, -5.0]
+position = [-3.0, 0.0, -5.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:T"
 # DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
@@ -282,7 +282,7 @@ geometry = "mesh:T"
 #color = [0.0, 1.0, 0.0, 1.0]
 
 [[entity]]
-pos = [3.0, 0.0, -5.0]
+position = [3.0, 0.0, -5.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:O"
 # DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
@@ -290,7 +290,7 @@ geometry = "mesh:O"
 #color = [0.0, 0.0, 1.0, 1.0]
 
 [[entity]]
-pos = [5.0, 0.0, -5.0]
+position = [5.0, 0.0, -5.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:O"
 # DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
