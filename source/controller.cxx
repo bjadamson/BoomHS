@@ -203,7 +203,7 @@ SDLControllers::add(ControllerPTR &&ptr, SDL_Joystick *joystick)
   controllers_.emplace_back(MOVE(c));
 }
 
-stlw::result<SDLControllers, std::string>
+Result<SDLControllers, std::string>
 SDLControllers::find_attached_controllers(stlw::Logger &logger)
 {
   int const num_controllers = SDL_NumJoysticks();
@@ -220,7 +220,7 @@ SDLControllers::find_attached_controllers(stlw::Logger &logger)
       controller = ci;
       break;
     } else {
-      return stlw::make_error(fmt::sprintf("Could not open gamecontroller %i: %s\n", i, SDL_GetError()));
+      return Err(fmt::sprintf("Could not open gamecontroller %i: %s\n", i, SDL_GetError()));
     }
   }
   SDLControllers controllers;
@@ -229,7 +229,7 @@ SDLControllers::find_attached_controllers(stlw::Logger &logger)
 
   assert(joystick);
   controllers.add(MOVE(ptr), joystick);
-  return controllers;
+  return OK_MOVE(controllers);
 }
 
 } // ns windo

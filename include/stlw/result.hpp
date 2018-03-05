@@ -1,39 +1,9 @@
 #pragma once
-#include <extlibs/expected.hpp>
+#include <extlibs/oktal.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/types.hpp>
 #include <stlw/try.hpp>
 
-namespace stlw
-{
-
-template<typename E, typename ...P>
-auto
-create_error(E &&error)
-{
-  return ::nonstd::unexpected_type<E>(MOVE(error));
-}
-
-template <typename ...P>
-auto
-make_error(P &&... p)
-{
-  return ::nonstd::make_unexpected(std::forward<P>(p)...);
-}
-
-template <typename R>
-auto
-lift_error(R && result)
-{
-  auto e = MOVE(result.error());
-  return stlw::create_error(MOVE(e));
-}
-
-template <typename T, typename E>
-using result = ::nonstd::expected<T, E>;
-} // ns stlw
-
-// These macros are specific for working with stlw::result<T>.
 //
 // They each have separate use cases, and build upon the general purpose macros inside
 // stlw/try.hpp.
@@ -49,7 +19,8 @@ using result = ::nonstd::expected<T, E>;
 //
 // HELPER MACRO
 #define DO_EFFECT_EVAL(VAR_NAME, expr)                                                             \
-  EVAL_INTO_VAR_OR(auto VAR_NAME, expr, stlw::lift_error)
+  EVAL_INTO_VAR_OR(auto VAR_NAME, expr,                                                            \
+      [&](auto &&r) { return Err(r.unwrapErrMove()); })
 
 //
 // HELPER MACRO
@@ -66,14 +37,7 @@ using result = ::nonstd::expected<T, E>;
 #define DO_EFFECT(expr)                                                                            \
   DO_EFFECT_EXPAND_VAR(__COUNTER__, expr)                                                          \
 
-// DO_TRY
-//
-// Tries to evaluate an expression, MOVING the evaluated expression from the "result value" into the
-// variable VAR_NAME.
-#define DO_TRY(VAR_NAME, expr)                                                                     \
-  EVAL_INTO_VAR_OR(VAR_NAME, expr, stlw::lift_error);                                              \
-
-// DO_TRY_OR_ELSE_RETURN
+// TRY_OR_ELSE_RETURN
 //
 // Evaluates the expression, behaves accordingly:
 //   * If evaluating the expression yields an error, invokes the user provided function on the
@@ -82,14 +46,26 @@ using result = ::nonstd::expected<T, E>;
 //   The value returned from the function invocation is returned at the callsite of the
 //   macro.
 //   * Otherwise MOVES the evaluated expression into the variable VAR_NAME.
-#define DO_TRY_OR_ELSE_RETURN(VAR_NAME, expr, fn)                                                  \
+#define TRY_OR_ELSE_RETURN(VAR_NAME, expr, fn)                                                     \
   EVAL_INTO_VAR_OR(VAR_NAME, expr,                                                                 \
-      [&fn](auto const& r) { return fn(r.error()); })
+      [&](auto &&r) { return fn(r.unwrapErr()); })
 
-// DO_TRY_OR_ELSE_RETURN_DEFAULT_T
+// TRY_OR_ELSE_RETURN_DEFAULT_T
 //
 // Evaluates the expression, behaves accordingly.
 //   * If evaluating the expression yields an error, return a default instance of T.
 //   * Otherwise MOVES the evaluated expression into the variable VAR_NAME.
-#define DO_TRY_OR_ELSE_RETURN_DEFAULT_T(VAR_NAME, expr, T)                                         \
+#define TRY_OR_ELSE_RETURN_DEFAULT_T(VAR_NAME, expr, T)                                            \
   EVAL_INTO_VAR_OR(VAR_NAME, expr, [](auto const&) { return T{}; })                                \
+
+// OK_MOVE
+//
+// Shortcut for common idiom:
+//    auto st = ...;
+//    return Ok(MOVE(st));
+//
+// becomes
+//
+//    auto st = ...;
+//    return OK_MOVE(st);
+#define OK_MOVE(...) Ok(MOVE(__VA_ARGS__))

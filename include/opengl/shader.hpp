@@ -36,7 +36,7 @@ struct program_factory
 {
   program_factory() = delete;
 
-  static stlw::result<GLuint, std::string>
+  static Result<GLuint, std::string>
   from_files(stlw::Logger &, VertexShaderFilename const&, FragmentShaderFilename const&);
 };
 
@@ -202,7 +202,7 @@ public:
   BEGIN_END_FORWARD_FNS(shader_programs_);
 };
 
-stlw::result<ShaderProgram, std::string>
+Result<ShaderProgram, std::string>
 make_shader_program(stlw::Logger &, std::string const&, std::string const&, VertexAttribute &&);
 
 std::ostream&

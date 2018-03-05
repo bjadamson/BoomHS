@@ -1,11 +1,11 @@
-title = "Level 0"
+title = "Level 1"
 background = [1.0, 1.0, 1.0]
 camera_spherical_coords = [2.56, 6.6446330, 56.379040]
 
 ambient = [0.0, 0.0, 0.0]
-directional_light_diffuse = [0.0, 1.0, 0.0]
+directional_light_diffuse = [0.0, 0.0, 1.0]
 directional_light_specular = [0.0, 1.0, 0.0]
-directional_light_direction = [-1.0, 0.0, -1.0]
+directional_light_direction = [-0.4, 0.0, 0.1]
 
 [[resource]]
 name = "building_skybox"
@@ -31,6 +31,11 @@ bottom = "cube_bottom.jpg"
 name = "container"
 type = "texture:2d-RGB"
 filename = "container.jpg"
+
+[[resource]]
+name = "Lava"
+type = "texture:2d-RGBA"
+filename = "lava.jpg"
 
 [[resource]]
 name = "wall"
@@ -71,6 +76,16 @@ shininess = 1.0
 [[tile]]
 tile = "BRIDGE"
 mesh = "equal"
+vshader = "3d_pos_normal_color"
+color = [1.0, 1.0, 1.0]
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[tile]]
+tile = "DOOR"
+mesh = "door"
 vshader = "3d_pos_normal_color"
 color = [1.0, 1.0, 1.0]
 ambient = [1.0, 1.0, 1.0]
@@ -129,6 +144,16 @@ specular = [1.0, 0.0, 0.0]
 shininess = 1.0
 
 [[tile]]
+tile = "TELEPORTER"
+mesh = "teleporter"
+vshader = "3d_pos_normal_color"
+color = [1.0, 1.0, 1.0]
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[tile]]
 tile = "WALL"
 mesh = "hashtag"
 vshader = "hashtag"
@@ -141,109 +166,58 @@ shininess = 1.0
 ###################################################################################################
 [[meshes]]
 name = "at"
-colors = true
-normals = true
-uvs = false
+
+[[meshes]]
+name = "door"
+
+[[meshes]]
+name = "teleporter"
 
 [[meshes]]
 name = "bar"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "house"
-colors = false
-normals = true
-uvs = true
 
 [[meshes]]
 name = "hashtag"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "plus"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "O"
-colors = true
-normals = true
-uvs = false
-
-[[meshes]]
-name = "O_no_normals"
-colors = false
-normals = false
-uvs = false
 
 [[meshes]]
 name = "T"
-colors = true
-normals = true
-uvs = false
-
-[[meshes]]
-name = "T_no_normals"
-colors = false
-normals = false
-uvs = false
 
 [[meshes]]
 name = "cube"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "robot"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "stair_down"
-colors = false
-normals = true
-uvs = false
 
 [[meshes]]
 name = "stair_up"
-colors = false
-normals = true
-uvs = false
 
 [[meshes]]
 name = "tilde"
-colors = false
-normals = true
-uvs = false
 
 [[meshes]]
 name = "equal"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "star"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "B"
-colors = true
-normals = true
-uvs = false
 
 ########### ENTITY #############
 [[entity]]
-pos = [8.0, 0.0, 8.0]
+position = [8.0, 0.0, 8.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:at"
 player = "player"
@@ -256,7 +230,7 @@ shininess = 1.0
 ######### POINT LIGHTS
 # LIGHT #0
 [[entity]]
-pos = [5.0, 5.0, 5.0]
+position = [5.0, 5.0, 5.0]
 shader = "light"
 geometry = "cube"
 pointlight = [0.0, 0.0, 0.0]
@@ -264,7 +238,7 @@ scale = [0.4, 0.4, 0.4]
 
 # LIGHT #1
 [[entity]]
-pos = [35.0, 5.0, 35.0]
+position = [35.0, 5.0, 35.0]
 shader = "light"
 geometry = "cube"
 pointlight = [0.0, 0.0, 0.0]
@@ -272,7 +246,7 @@ scale = [0.4, 0.4, 0.4]
 
 # LIGHT #2
 [[entity]]
-pos = [5.0, 5.0, 35.0]
+position = [5.0, 5.0, 35.0]
 shader = "light"
 geometry = "cube"
 pointlight = [0.0, 0.0, 0.0]
@@ -280,44 +254,23 @@ scale = [0.4, 0.4, 0.4]
 
 ###################################################################################################
 [[entity]]
-pos = [-5.0, -2.0, 0.0]
+position = [-5.0, -2.0, 0.0]
 shader = "3dcube_texture"
 geometry = "cube"
 texture = "boring_cube"
+random_junk_from_file = true
 
 [[entity]]
-pos = [-5.0, 0.0, -2.0]
+position = [-5.0, 0.0, -2.0]
 shader = "3dcube_texture"
-geometry = "skybox"
+geometry = "cube"
+skybox = true
 texture = "building_skybox"
 
 [[entity]]
-pos = [20.0, 0.0, 20.0]
+position = [20.0, 0.0, 20.0]
 shader = "3dtexture"
 geometry = "mesh:house"
 texture = "TextureAtlas"
 scale = [0.4, 0.4, 0.4]
-
-[[entity]]
-pos = [-3.0, 0.0, -5.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:T"
-# DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
-# IN THE MESHES TABLE.
-#color = [0.0, 1.0, 0.0, 1.0]
-
-[[entity]]
-pos = [3.0, 0.0, -5.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:O"
-# DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
-# IN THE MESHES TABLE.
-#color = [0.0, 0.0, 1.0, 1.0]
-
-[[entity]]
-pos = [5.0, 0.0, -5.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:O"
-# DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
-# IN THE MESHES TABLE.
-#color = [1.0, 0.0, 0.0, 1.0]
+random_junk_from_file = true

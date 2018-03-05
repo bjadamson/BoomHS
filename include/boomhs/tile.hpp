@@ -12,15 +12,18 @@ class EntityRegistry;
 enum class TileType : size_t
 {
   FLOOR = 0,
+  AT,
   BAR,
   BRIDGE,
-  AT,
+  DOOR,
   RIVER,
   STAIR_DOWN,
   STAIR_UP,
   STAR,
   WALL,
-  MAX
+  TELEPORTER,
+
+  UNDEFINED
 };
 
 // We ensure the underlying type is size_t so we can use that assumption around the rest of the
@@ -44,18 +47,22 @@ tiletype_from_string(char const* cstring)
   CHECK("AT",         TileType::AT);
   CHECK("BAR",        TileType::BAR);
   CHECK("BRIDGE",     TileType::BRIDGE);
+  CHECK("DOOR",       TileType::DOOR);
   CHECK("FLOOR",      TileType::FLOOR);
   CHECK("RIVER",      TileType::RIVER);
   CHECK("STAIR_DOWN", TileType::STAIR_DOWN);
   CHECK("STAIR_UP",   TileType::STAIR_UP);
   CHECK("STAR",       TileType::STAR);
+  CHECK("TELEPORTER", TileType::TELEPORTER);
   CHECK("WALL",       TileType::WALL);
+
+  CHECK("UNDEFINED",  TileType::UNDEFINED);
 #undef CHECK
   // clang-format on
 
   // Logic error at this point
   std::abort();
-  return TileType::MAX;
+  return TileType::UNDEFINED;
 }
 
 inline char const*
@@ -69,12 +76,16 @@ to_string(TileType const type)
   CHECK("AT",         TileType::AT);
   CHECK("BAR",        TileType::BAR);
   CHECK("BRIDGE",     TileType::BRIDGE);
+  CHECK("DOOR",       TileType::DOOR);
   CHECK("FLOOR",      TileType::FLOOR);
   CHECK("RIVER",      TileType::RIVER);
   CHECK("STAR",       TileType::STAR);
   CHECK("STAIR_DOWN", TileType::STAIR_DOWN);
   CHECK("STAIR_UP",   TileType::STAIR_UP);
+  CHECK("TELEPORT",   TileType::TELEPORTER);
   CHECK("WALL",       TileType::WALL);
+
+  CHECK("UNDEFINED",  TileType::UNDEFINED);
 #undef CHECK
   // clang-format on
   // Logic error at this point
@@ -90,20 +101,20 @@ operator<<(std::ostream &stream, TileType const type)
     case TileType::AT:
       stream << "AT";
       break;
+    case TileType::BRIDGE:
+      stream << "BRIDGE";
+      break;
     case TileType::FLOOR:
       stream << "FLOOR";
       break;
     case TileType::BAR:
       stream << "BAR";
       break;
-    case TileType::WALL:
-      stream << "WALL";
+    case TileType::DOOR:
+      stream << "DOOR";
       break;
     case TileType::RIVER:
       stream << "RIVER";
-      break;
-    case TileType::BRIDGE:
-      stream << "BRIDGE";
       break;
     case TileType::STAR:
       stream << "STAR";
@@ -114,6 +125,15 @@ operator<<(std::ostream &stream, TileType const type)
     case TileType::STAIR_UP:
       stream << "STAIR_UP";
       break;
+    case TileType::TELEPORTER:
+      stream << "TELEPORTER";
+      break;
+    case TileType::WALL:
+      stream << "WALL";
+      break;
+    case TileType::UNDEFINED:
+      stream << "UNDEFINED";
+      // fall-through to abort
     default:
       std::abort();
       break;
@@ -164,7 +184,7 @@ operator<<(std::ostream &, TilePosition const&);
 
 struct Tile
 {
-  TileType type = TileType::WALL;
+  TileType type = TileType::UNDEFINED;
   uint32_t eid;
 
   bool is_stair_up() const { return type == TileType::STAIR_UP; }

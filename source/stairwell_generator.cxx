@@ -1,6 +1,6 @@
 #include <boomhs/stairwell_generator.hpp>
 #include <boomhs/entity.hpp>
-#include <boomhs/level_generator.hpp>
+#include <boomhs/dungeon_generator.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <stlw/random.hpp>
 
@@ -141,7 +141,7 @@ place_stairs(StairGenConfig const& sc, TileGrid &tgrid, stlw::float_generator &r
   while(num_placed < num_to_place) {
     auto const num_remaining = (upstairs_to_place + downstairs_to_place);
     assert((num_remaining + num_placed) == num_to_place);
-    tgrid.visit_each(find_stairpositions);
+    visit_each(tgrid, find_stairpositions);
   }
   if (num_placed < stairs_perfloor) {
     return false;

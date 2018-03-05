@@ -91,95 +91,12 @@ public:
   bool is_visible(Tile &);
   void set_isvisible(Tile &, bool);
 
-  template<typename FN, typename ...Args>
-  void
-  visit_each(FN const& fn, Args &&... args) const
+  bool
+  is_edge_tile(TilePosition const& tpos) const
   {
     auto const [w, h] = dimensions();
-    FOR(x, w) {
-      FOR(y, h) {
-        fn(TilePosition{x, y}, std::forward<Args>(args)...);
-      }
-    }
-  }
-
-  template<typename FN>
-  void
-  visit_neighbors(TilePosition const& pos, FN const& fn, TileLookupBehavior const behavior) const
-  {
-    auto const [w, y] = dimensions();
-    assert(w == y); // TODO: test if this works if this assumption not true
-    assert(pos.x < w);
-    assert(pos.y < y);
-
-    // clang-format off
-    bool const edgeof_left  = pos.x == 0;
-    bool const edgeof_right = pos.x == (y - 1);
-
-    bool const edgeof_below = pos.y == 0;
-    bool const edgeof_above = pos.y == (w - 1);
-
-    auto const leftbelow  = [&]() { fn(pos.x + -1, pos.y + -1); };
-    auto const left       = [&]() { fn(pos.x + 0,  pos.y + -1); };
-    auto const leftabove  = [&]() { fn(pos.x + 1,  pos.y + -1); };
-    auto const above      = [&]() { fn(pos.x + 1,  pos.y + 0); };
-    auto const rightabove = [&]() { fn(pos.x + 1,  pos.y + 1); };
-    auto const right      = [&]() { fn(pos.x + 0,  pos.y + 1); };
-    auto const rightbelow = [&]() { fn(pos.x + -1, pos.y + 1); };
-    auto const below      = [&]() { fn(pos.x + -1, pos.y + 0); };
-    // clang-format on
-
-    auto const all8_behavior = [&]()
-    {
-      if (!edgeof_left && !edgeof_below) {
-        leftbelow();
-      }
-      if (!edgeof_left) {
-        left();
-      }
-      if (!edgeof_left && !edgeof_above) {
-        leftabove();
-      }
-      if (!edgeof_above) {
-        above();
-      }
-      if (!edgeof_right && !edgeof_above) {
-        rightabove();
-      }
-      if (!edgeof_right) {
-        right();
-      }
-      if (!edgeof_right && !edgeof_below) {
-        rightbelow();
-      }
-      if (!edgeof_below) {
-        below();
-      }
-    };
-    auto const vh_behavior = [&]() {
-      if (!edgeof_left) {
-        left();
-      }
-      if (!edgeof_above) {
-        above();
-      }
-      if (!edgeof_right) {
-        right();
-      }
-      if (!edgeof_below) {
-        below();
-      }
-    };
-    switch(behavior) {
-      case TileLookupBehavior::ALL_8_DIRECTIONS:
-        all8_behavior();
-        break;
-      case TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY:
-        vh_behavior();
-        break;
-      default:
-        std::exit(1);
-    }
+    uint64_t const x = tpos.x, y = tpos.y;
+    return ANYOF(x == 0, x == (w - 1), y == 0, y == (h - 1));
   }
   BEGIN_END_FORWARD_FNS(tiles_);
 };

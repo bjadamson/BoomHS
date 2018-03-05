@@ -8,8 +8,11 @@
 #include <stlw/tuple.hpp>
 #include <SOIL.h>
 
-#include <iostream>
+#include <algorithm>
 #include <memory>
+#include <string>
+#include <vector>
+#include <utility>
 
 namespace
 {
@@ -58,28 +61,16 @@ upload_image(stlw::Logger &logger, std::string const& filename, GLenum const tar
 namespace opengl
 {
 
-TextureAllocation::TextureAllocation()
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// TextureInfo
+void
+TextureInfo::deallocate()
 {
-  glGenTextures(TextureAllocation::NUM_BUFFERS, &this->info.id);
+  glDeleteTextures(TextureInfo::NUM_BUFFERS, &id);
 }
 
-TextureAllocation::~TextureAllocation()
-{
-  if (this->should_destroy) {
-    glDeleteTextures(TextureAllocation::NUM_BUFFERS, &this->info.id);
-    this->should_destroy = false;
-  }
-}
-
-TextureAllocation::TextureAllocation(TextureAllocation &&other)
-  : info(MOVE(other.info))
-    , should_destroy(other.should_destroy)
-{
-  other.info.id = 0;
-  other.info.mode = 0;
-  other.should_destroy = false;
-}
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// TextureTable
 std::optional<TextureInfo>
 TextureTable::lookup_texture(char const* name) const
 {
@@ -88,11 +79,11 @@ TextureTable::lookup_texture(char const* name) const
   }
   auto const cmp = [&name](auto const& it) { return it.first.name == name; };
   auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
-  return it == data_.cend() ? std::nullopt : std::make_optional(it->second.info);
+  return it == data_.cend() ? std::nullopt : std::make_optional(it->second.resource());
 }
 
 void
-TextureTable::add_texture(TextureFilenames &&tf, TextureAllocation &&ta)
+TextureTable::add_texture(TextureFilenames &&tf, Texture &&ta)
 {
   auto pair = std::make_pair(MOVE(tf), MOVE(ta));
   data_.emplace_back(MOVE(pair));
@@ -109,18 +100,17 @@ TextureTable::find(std::string const& name) const
 namespace opengl::texture
 {
 
-TextureAllocation
+Texture
 allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const format)
 {
   assert(ANYOF(format == GL_RGB, format == GL_RGBA));
 
   GLenum constexpr TEXTURE_MODE = GL_TEXTURE_2D;
 
-  TextureAllocation ta;
-  ta.info.mode = TEXTURE_MODE;
-  glGenTextures(1, &ta.info.id);
+  TextureInfo ti;
+  ti.mode = TEXTURE_MODE;
+  glGenTextures(1, &ti.id);
 
-  auto const ti = ta.info;
   global::texture_bind(ti);
   ON_SCOPE_EXIT([&ti]() { global::texture_unbind(ti); });
 
@@ -133,11 +123,10 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const 
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   upload_image(logger, filename, TEXTURE_MODE, format);
-  ta.should_destroy = true;
-  return ta;
+  return Texture{MOVE(ti)};
 }
 
-TextureAllocation
+Texture
 upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& paths,
     GLint const format)
 {
@@ -154,13 +143,12 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
     GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, // bottom
   };
 
-  TextureAllocation ta;
-  ta.info.mode = TEXTURE_MODE;
-  glGenTextures(1, &ta.info.id);
+  TextureInfo ti;
+  ti.mode = TEXTURE_MODE;
+  glGenTextures(1, &ti.id);
 
   LOG_ANY_GL_ERRORS(logger, "glGenTextures");
 
-  auto const ti = ta.info;
   global::texture_bind(ti);
   ON_SCOPE_EXIT([&ti]() { global::texture_unbind(ti); });
   LOG_ANY_GL_ERRORS(logger, "texture_bind");
@@ -170,7 +158,6 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   };
   auto const paths_tuple = std::make_tuple(paths[0], paths[1], paths[2], paths[3], paths[4], paths[5]);
   stlw::zip(upload_fn, directions.begin(), paths_tuple);
-  ta.should_destroy = true;
 
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -182,7 +169,7 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   glGenerateMipmap(TEXTURE_MODE);
   LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
 
-  return ta;
+  return Texture{MOVE(ti)};
 }
 
 } // ns opengl::texture

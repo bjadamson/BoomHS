@@ -1,4 +1,4 @@
-#include <opengl/obj.hpp>
+#include <boomhs/obj.hpp>
 
 #include <cassert>
 #include <boomhs/types.hpp>
@@ -6,18 +6,19 @@
 
 #include <extlibs/tinyobj.hpp>
 
+using namespace boomhs;
 using namespace opengl;
 
 namespace
 {
 
-void
+LoadStatus
 load_positions(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
     std::vector<float> *pvertices)
 {
   auto const pos_index = 3 * index.vertex_index;
   if (pos_index < 0) {
-    std::abort();
+    return LoadStatus::MISSING_POSITION_ATTRIBUTES;
   }
   auto const x = attrib.vertices[pos_index + 0];
   auto const y = attrib.vertices[pos_index + 1];
@@ -29,9 +30,10 @@ load_positions(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
   vertices.push_back(y);
   vertices.push_back(z);
   vertices.push_back(w);
+  return LoadStatus::SUCCESS;
 }
 
-void
+LoadStatus
 load_normals(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
     std::vector<float> *pvertices)
 {
@@ -45,13 +47,14 @@ load_normals(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
     vertices.emplace_back(xn);
     vertices.emplace_back(yn);
     vertices.emplace_back(zn);
-  } else {
-    std::cerr << "no normals found\n";
-    std::abort();
   }
+  else {
+    return LoadStatus::MISSING_NORMAL_ATTRIBUTES;
+  }
+  return LoadStatus::SUCCESS;
 }
 
-void
+LoadStatus
 load_uvs(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
     std::vector<float> *pvertices)
 {
@@ -63,12 +66,14 @@ load_uvs(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
     auto &vertices = *pvertices;
     vertices.emplace_back(u);
     vertices.emplace_back(v);
-  } else {
-    std::abort();
   }
+  else {
+    return LoadStatus::MISSING_UV_ATTRIBUTES;
+  }
+  return LoadStatus::SUCCESS;
 }
 
-void
+LoadStatus
 load_colors(Color const& color, std::vector<float> *pvertices)
 {
   auto &vertices = *pvertices;
@@ -76,15 +81,50 @@ load_colors(Color const& color, std::vector<float> *pvertices)
   vertices.push_back(color.g());
   vertices.push_back(color.b());
   vertices.push_back(color.a());
+
+  return LoadStatus::SUCCESS;
 }
 
 } // ns anon
 
-namespace opengl
+namespace boomhs
 {
 
-obj
-load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config)
+std::string
+loadstatus_to_string(LoadStatus const ls)
+{
+//
+// TODO: derive second argument from first somehow?
+#define CASE(ATTRIBUTE, ATTRIBUTE_S)                                                               \
+  case LoadStatus::ATTRIBUTE:                                                                      \
+      return ATTRIBUTE_S;
+
+  switch (ls) {
+      CASE(MISSING_POSITION_ATTRIBUTES, "MISSING_POSITION_ATTRIBUTES");
+      CASE(MISSING_COLOR_ATTRIBUTES,    "MISSING_COLOR_ATTRIBUTES");
+      CASE(MISSING_NORMAL_ATTRIBUTES,   "MISSING_NORMAL_ATTRIBUTES");
+      CASE(MISSING_UV_ATTRIBUTES,       "MISSING_UV_ATTRIBUTES");
+
+      CASE(TINYOBJ_ERROR,               "TINYOBJ_ERROR");
+      CASE(SUCCESS,                     "SUCCESS");
+    default:
+      break;
+  }
+#undef CASE
+
+  // terminal error
+  std::abort();
+}
+
+std::ostream&
+operator<<(std::ostream &stream, LoadStatus const& ls)
+{
+  stream << loadstatus_to_string(ls);
+  return stream;
+}
+
+LoadResult
+load_objfile(char const* objpath, char const* mtlpath)
 {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
@@ -105,10 +145,9 @@ load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config
   assert(0 == (attrib.normals.size() % 3));
   assert(0 == (attrib.texcoords.size() % 2));
 
-  std::vector<float> vertices;
-  std::vector<uint32_t> indices;
-
-  unsigned int const num_vertices = attrib.vertices.size() / 3;
+  ObjData objdata;
+  auto &indices = objdata.indices;
+  objdata.num_vertices = attrib.vertices.size() / 3;
   /*
   std::cerr << "vertice count '" << num_vertices << "'\n";
   std::cerr << "normal count '" << attrib.normals.size() << "'\n";
@@ -128,21 +167,27 @@ load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config
         // access to vertex
         tinyobj::index_t const index = shapes[s].mesh.indices[index_offset + vi];
 
-        load_positions(index, attrib, &vertices);
-        if (config.normals) {
-          load_normals(index, attrib, &vertices);
-        }
-        if (config.uvs) {
-          load_uvs(index, attrib, &vertices);
-        }
-        if (config.colors) {
-          //std::abort(); // We haven't implemented this yet ...
-          // Optional: vertex colors
-          // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
-          // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
-          // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
-          load_colors(LOC::WHITE, &vertices);
-        }
+#define LOAD_ATTR(...)                                                                             \
+        ({                                                                                         \
+          auto const load_status = __VA_ARGS__;                                                    \
+          if (load_status != LoadStatus::SUCCESS) {                                                \
+            return Err(load_status);                                                               \
+          }                                                                                        \
+        })
+
+        LOAD_ATTR(load_positions(index, attrib, &objdata.positions));
+
+        // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
+        // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
+        // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
+        //
+
+        LOAD_ATTR(load_normals(index, attrib, &objdata.normals));
+        LOAD_ATTR(load_uvs(index, attrib, &objdata.uvs));
+
+        LOAD_ATTR(load_colors(LOC::WHITE, &objdata.colors));
+
+#undef LOAD_ATTR
         indices.push_back(indices.size()); // 0, 1, 2, ...
       }
       index_offset += fv;
@@ -157,14 +202,14 @@ load_mesh(char const* objpath, char const* mtlpath, LoadMeshConfig const& config
   std::cerr << "return obj, parsed\n" << std::endl;
   std::cerr << "size is: '" << (vertices.size() * sizeof(GLfloat)) << "'\n";
   */
-  return obj{GL_TRIANGLES, num_vertices, MOVE(vertices), MOVE(indices)};
+  return OK_MOVE(objdata);
 }
 
-obj
-load_mesh(char const* objpath, LoadMeshConfig const& config)
+LoadResult
+load_objfile(char const* objpath)
 {
   auto constexpr MTLPATH = nullptr;
-  return load_mesh(objpath, MTLPATH, config);
+  return load_objfile(objpath, MTLPATH);
 }
 
-} // ns opengl
+} // ns boomhs

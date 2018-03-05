@@ -4,14 +4,13 @@
 
 namespace boomhs
 {
-
+struct Obj;
 class TileGrid;
 } // ns boomhs
 
 namespace opengl
 {
 class ShaderProgram;
-struct obj;
 } // ns opengl
 
 namespace opengl::factories
@@ -45,7 +44,7 @@ create_tilegrid(stlw::Logger &, ShaderProgram const&, boomhs::TileGrid const&,
 
 DrawInfo
 create_modelnormals(stlw::Logger &, ShaderProgram const&, glm::mat4 const&,
-    obj const&, Color const&);
+    boomhs::Obj const&, Color const&);
 
 struct WorldOriginArrows {
   DrawInfo x_dinfo;

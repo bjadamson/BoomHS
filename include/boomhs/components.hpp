@@ -36,7 +36,7 @@ struct LightFlicker
   std::array<opengl::Color, 2> colors;
 };
 
-struct EntityFromFILE
+struct JunkEntityFromFILE
 {
 };
 
@@ -65,7 +65,7 @@ struct MeshRenderable
   std::string name;
 };
 
-struct SkyboxRenderable
+struct IsSkybox
 {
 };
 

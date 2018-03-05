@@ -1,54 +1,73 @@
 #pragma once
 #include <utility>
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// MISC
 #define MOVE(a) std::move(a)
 #define FORWARD(a) std::forward<decltype(a)>(a)
+#define DEFAULT_CONSTRUCTIBLE(CLASSNAME) CLASSNAME() = default;
 
-// BEGIN Class-building macros
-#define NO_COPY_ASSIGN(CLASSNAME) CLASSNAME &operator=(CLASSNAME const &) = delete;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// COPY
+#define NO_COPY_ASSIGN(CLASSNAME) CLASSNAME &operator=(CLASSNAME const&) = delete;
+#define NO_COPY_CONSTRUTIBLE(CLASSNAME) CLASSNAME(CLASSNAME const&) = delete;
+
+#define COPY_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME const&) = default;
+#define COPY_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME const&) = default;
+
+#define COPY_DEFAULT(CLASSNAME)                                                                    \
+  COPY_CONSTRUCTIBLE(CLASSNAME)                                                                    \
+  COPY_ASSIGNABLE(CLASSNAME)
+
+#define COPY_CONSTRUCTIBLE_ONLY(CLASSNAME)                                                         \
+  NO_MOVE(CLASSNAME)                                                                               \
+  NO_COPY_ASSIGN(CLASSNAME)                                                                        \
+  COPY_CONSTRUCTIBLE(CLASSNAME)
+
+#define COPY_ONLY(CLASSNAME)                                                                       \
+  NO_MOVE(CLASSNAME)                                                                               \
+  COPY_DEFAULT(CLASSNAME)
 
 #define NO_COPY(CLASSNAME)                                                                         \
-  CLASSNAME(CLASSNAME const &) = delete;                                                           \
-  NO_COPY_ASSIGN(CLASSNAME);
+  NO_COPY_ASSIGN(CLASSNAME)                                                                        \
+  NO_COPY_CONSTRUTIBLE(CLASSNAME)
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// MOVE
 #define NO_MOVE_ASSIGN(CLASSNAME) CLASSNAME &operator=(CLASSNAME &&) = delete;
-
-#define NO_MOVE(CLASSNAME)                                                                         \
-  CLASSNAME(CLASSNAME &&) = delete;                                                                \
-  NO_MOVE_ASSIGN(CLASSNAME);
-
-#define NO_COPYMOVE(CLASSNAME)                                                                     \
-  NO_COPY(CLASSNAME)                                                                               \
-  NO_MOVE(CLASSNAME)
+#define NO_MOVE_CONSTRUTIBLE(CLASSNAME) CLASSNAME(CLASSNAME &&) = delete;
+#define MOVE_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME &&) = default;
+#define MOVE_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME &&) = default;
 
 #define MOVE_DEFAULT(CLASSNAME)                                                                    \
-  CLASSNAME(CLASSNAME &&) = default;                                                               \
-  CLASSNAME &operator=(CLASSNAME &&) = default;
-
-#define MOVE_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME &&) = default;
+  MOVE_CONSTRUCTIBLE(CLASSNAME)                                                                    \
+  MOVE_ASSIGNABLE(CLASSNAME)
 
 #define MOVE_CONSTRUCTIBLE_ONLY(CLASSNAME)                                                         \
   NO_COPY(CLASSNAME)                                                                               \
   NO_MOVE_ASSIGN(CLASSNAME)                                                                        \
   MOVE_CONSTRUCTIBLE(CLASSNAME)
 
-#define COPY_DEFAULT(CLASSNAME)                                                                    \
-  CLASSNAME(CLASSNAME const &) = default;                                                          \
-  CLASSNAME &operator=(CLASSNAME const &) = default;
-
-#define COPYMOVE_DEFAULT(CLASSNAME)                                                                \
-  COPY_DEFAULT(CLASSNAME)                                                                          \
-  MOVE_DEFAULT(CLASSNAME)
-
 #define MOVE_ONLY(CLASSNAME)                                                                       \
   NO_COPY(CLASSNAME)                                                                               \
   MOVE_DEFAULT(CLASSNAME)
 
-#define COPY_ONLY(CLASSNAME)                                                                       \
-  NO_MOVE(CLASSNAME)                                                                               \
-  COPY_DEFAULT(CLASSNAME)
+#define NO_MOVE(CLASSNAME)                                                                         \
+  NO_MOVE_CONSTRUTIBLE(CLASSNAME)                                                                  \
+  NO_MOVE_ASSIGN(CLASSNAME)
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// COPY/MOVE
+#define COPYMOVE_DEFAULT(CLASSNAME)                                                                \
+  COPY_DEFAULT(CLASSNAME)                                                                          \
+  MOVE_DEFAULT(CLASSNAME)
 
+#define NO_COPYMOVE(CLASSNAME)                                                                     \
+  NO_COPY(CLASSNAME)                                                                               \
+  NO_MOVE(CLASSNAME)
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// std iterators
 #define BEGIN_END_FORWARD_FNS(CONTAINER)                                                           \
   decltype(auto) begin() { return CONTAINER.begin(); }                                             \
   decltype(auto) end() { return CONTAINER.end(); }                                                 \
@@ -59,8 +78,7 @@
   decltype(auto) cbegin() const { return CONTAINER.cbegin(); }                                     \
   decltype(auto) cend() const { return CONTAINER.cend(); }
 
-// END class-builing macros
-
+// TODO: document
 // BEGIN Function-defining macros
 #define DEFINE_WRAPPER_FUNCTION(FN_NAME, FUNCTION_TO_WRAP)                                         \
   template <typename... P>                                                                         \

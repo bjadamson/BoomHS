@@ -1,7 +1,7 @@
 #include <boomhs/level_loader.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/components.hpp>
-#include <opengl/obj.hpp>
+#include <boomhs/obj.hpp>
 #include <extlibs/cpptoml.hpp>
 
 #include <stlw/result.hpp>
@@ -19,7 +19,7 @@ using CppTable = std::shared_ptr<cpptoml::table>;
 #define TRY_OPTION_GENERAL_EVAL(VAR_NAME, V, expr)                                                 \
   auto V{expr};                                                                                    \
   if (!V) {                                                                                        \
-    return cpptoml::option<opengl::AttributePointerInfo>{}; \
+    return cpptoml::option<opengl::AttributePointerInfo>{};                                        \
   }                                                                                                \
   VAR_NAME{MOVE(V)};
 
@@ -164,29 +164,26 @@ get_float_or_abort(CppTable const& table, char const* name)
   return *float_data;
 }
 
-auto
-load_meshes(CppTableArray const& mesh_table)
+Result<ObjStore, LoadStatus>
+load_objfiles(CppTableArray const& mesh_table)
 {
-  auto const load = [](auto const& table) {
+  auto const load = [](auto const& table) -> Result<std::pair<std::string, ObjData>, LoadStatus> {
     auto const name = get_string_or_abort(table, "name");
-
-    auto const colors = get_bool_or_abort(table, "colors");
-    auto const normals = get_bool_or_abort(table, "normals");
-    auto const uvs = get_bool_or_abort(table, "uvs");
+    std::cerr << "Loading objfile '" << name << "'\n";
 
     auto const obj = "assets/" + name + ".obj";
     auto const mtl = "assets/" + name + ".mtl";
 
-    opengl::LoadMeshConfig const cfg{colors, normals, uvs};
-    auto mesh = load_mesh(obj.c_str(), mtl.c_str(), cfg);
-    return std::make_pair(name, MOVE(mesh));
+    ObjData objdata = TRY_MOVEOUT(load_objfile(obj.c_str(), mtl.c_str()));
+    auto pair = std::make_pair(name, MOVE(objdata));
+    return OK_MOVE(pair);
   };
-  ObjCache cache;
+  ObjStore store;
   for (auto const& table : *mesh_table) {
-    auto pair = load(table);
-    cache.add_obj(pair.first, MOVE(pair.second));
+    auto pair = TRY_MOVEOUT(load(table));
+    store.add_obj(pair.first, MOVE(pair.second));
   }
-  return cache;
+  return OK_MOVE(store);
 }
 
 class ParsedVertexAttributes
@@ -259,6 +256,7 @@ load_textures(stlw::Logger &logger, CppTable const& config)
     }
     else {
       // TODO: implement more.
+      std::cerr << "error, type is '" << type << "'\n";
       std::abort();
     }
   };
@@ -278,11 +276,11 @@ std::optional<ColorMaterialInfo>
 load_material_color(CppTable const& file)
 {
   // clang-format off
-  MAKEOPT(auto const color,     get_vec3(file,   "color"));
-  MAKEOPT(auto const ambient,   get_vec3(file,   "ambient"));
-  MAKEOPT(auto const diffuse,   get_vec3(file,   "diffuse"));
-  MAKEOPT(auto const specular,  get_vec3(file,   "specular"));
-  MAKEOPT(auto const shininess, get_float(file,  "shininess"));
+  auto const color = MAKEOPT(get_vec3(file,   "color"));
+  auto const ambient = MAKEOPT(get_vec3(file,   "ambient"));
+  auto const diffuse = MAKEOPT(get_vec3(file,   "diffuse"));
+  auto const specular = MAKEOPT(get_vec3(file,   "specular"));
+  auto const shininess = MAKEOPT(get_float(file,  "shininess"));
   // clang-format on
 
   Material material{ambient, diffuse, specular, shininess};
@@ -306,23 +304,25 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
 {
   auto const load_entity = [&registry, &ttable](auto const& file) {
     // clang-format off
-    auto shader =           get_string_or_abort(file, "shader");
-    auto geometry =         get_string_or_abort(file, "geometry");
-    auto pos =              get_vec3_or_abort(file,   "pos");
-    auto scale_o =          get_vec3(file,            "scale");
-    auto rotation_o =       get_vec3(file,            "rotation");
-    auto color =            get_color(file,           "color");
-    auto texture_name =     get_string(file,          "texture");
-    auto pointlight_o =     get_vec3(file,            "pointlight");
-    auto player =           get_string(file,          "player");
-    auto is_visible  =      get_bool(file,            "is_visible").value_or(true);
+    auto shader       = get_string_or_abort(file, "shader");
+    auto geometry     = get_string_or_abort(file, "geometry");
+    auto pos          = get_vec3_or_abort(file,   "position");
+    auto scale_o      = get_vec3(file,            "scale");
+    auto rotation_o   = get_vec3(file,            "rotation");
+    auto color        = get_color(file,           "color");
+    auto texture_name = get_string(file,          "texture");
+    auto pointlight_o = get_vec3(file,            "pointlight");
+    auto player       = get_string(file,          "player");
+    auto is_visible   = get_bool(file,            "is_visible").value_or(true);
+    bool is_skybox    = get_bool(file,            "skybox").value_or(false);
+    bool random_junk  = get_bool(file,            "random_junk_from_file").value_or(false);
     // clang-format on
 
     // texture OR color fields, not both
     assert((!color && !texture_name) || (!color && texture_name) || (color && !texture_name));
 
-    auto entity = registry.create();
-    auto &transform = registry.assign<Transform>(entity);
+    auto eid = registry.create();
+    auto &transform = registry.assign<Transform>(eid);
     transform.translation = pos;
 
     if (scale_o) {
@@ -336,20 +336,24 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       transform.rotate_degrees(rotation.z, opengl::Z_UNIT_VECTOR);
     }
 
-    auto &isv = registry.assign<IsVisible>(entity);
+    auto &isv = registry.assign<IsVisible>(eid);
     isv.value = is_visible;
 
-    auto &sn = registry.assign<ShaderName>(entity);
+    auto &sn = registry.assign<ShaderName>(eid);
     sn.value = shader;
 
+    if (random_junk) {
+      registry.assign<JunkEntityFromFILE>(eid);
+    }
+
     if (player) {
-      registry.assign<Player>(entity);
+      registry.assign<Player>(eid);
     }
     if (geometry == "cube") {
-      registry.assign<CubeRenderable>(entity);
+      registry.assign<CubeRenderable>(eid);
     }
-    else if (geometry == "skybox") {
-      registry.assign<SkyboxRenderable>(entity);
+    if (is_skybox) {
+      registry.assign<IsSkybox>(eid);
     }
     else if (boost::starts_with(geometry, "mesh")) {
       auto const parse_meshname = [](auto const& field) {
@@ -357,22 +361,22 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
         assert(0 < len);
         return field.substr(len, field.length() - len);
       };
-      auto &meshc = registry.assign<MeshRenderable>(entity);
+      auto &meshc = registry.assign<MeshRenderable>(eid);
       meshc.name = parse_meshname(geometry);
     }
     if (color) {
-      auto &cc = registry.assign<Color>(entity);
+      auto &cc = registry.assign<Color>(eid);
       *&cc = *color;
     }
     if (texture_name) {
-      auto &tc = registry.assign<TextureRenderable>(entity);
+      auto &tr = registry.assign<TextureRenderable>(eid);
       auto texture_o = ttable.find(*texture_name);
       assert(texture_o);
-      tc.texture_info = *texture_o;
+      tr.texture_info = *texture_o;
     }
 
     if (pointlight_o) {
-      auto &light_component = registry.assign<PointLight>(entity);
+      auto &light_component = registry.assign<PointLight>(eid);
       light_component.light.diffuse = Color{*pointlight_o};
     }
 
@@ -380,10 +384,8 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     auto const cm_optional = load_material_color(file);
     if (cm_optional) {
       auto const& cm = *cm_optional;
-      registry.assign<Material>(entity) = cm.material;
+      registry.assign<Material>(eid) = cm.material;
     }
-
-    registry.assign<EntityFromFILE>(entity);
   };
 
   auto const entity_table = get_table_array(config, "entity");
@@ -421,7 +423,7 @@ load_tileinfos(stlw::Logger &logger, CppTable const& config, EntityRegistry &reg
   return TileSharedInfoTable{MOVE(tinfos)};
 }
 
-using LoadResult = stlw::result<std::pair<std::string, opengl::ShaderProgram>, std::string>;
+using LoadResult = Result<std::pair<std::string, opengl::ShaderProgram>, std::string>;
 LoadResult
 load_shader(stlw::Logger &logger, ParsedVertexAttributes &pvas, CppTable const& table)
 {
@@ -432,25 +434,25 @@ load_shader(stlw::Logger &logger, ParsedVertexAttributes &pvas, CppTable const& 
 
   // TODO: ugly hack, maybe think about...
   auto va = pvas.get_copy_of_va(va_name);
-  DO_TRY(auto program, opengl::make_shader_program(logger, vertex, fragment, MOVE(va)));
+  auto program = TRY_MOVEOUT(opengl::make_shader_program(logger, vertex, fragment, MOVE(va)));
 
   program.is_skybox = get_bool(table, "is_skybox").value_or(false);
   program.is_2d = get_bool(table, "is_2d").value_or(false);
   program.instance_count = get_sizei(table, "instance_count");
 
-  return std::make_pair(name, MOVE(program));
+  return Ok(std::make_pair(name, MOVE(program)));
 }
 
-stlw::result<opengl::ShaderPrograms, std::string>
+Result<opengl::ShaderPrograms, std::string>
 load_shaders(stlw::Logger &logger, ParsedVertexAttributes &&pvas, CppTable const& config)
 {
   auto const shaders_table = get_table_array_or_abort(config, "shaders");
   opengl::ShaderPrograms sps;
   for (auto const& shader_table : *shaders_table) {
-    DO_TRY(auto pair, load_shader(logger, pvas, shader_table));
+    auto pair = TRY_MOVEOUT(load_shader(logger, pvas, shader_table));
     sps.add(pair.first, MOVE(pair.second));
   }
-  return sps;
+  return Ok(MOVE(sps));
 }
 
 auto
@@ -459,35 +461,36 @@ load_vas(CppTable const& config)
   auto vas_table_array = config->get_table_array("vas");
   assert(vas_table_array);
 
-  auto const read_data = [&](auto const& table, size_t const index) {
-    auto const dataname = "data" + std::to_string(index);
-
+  auto const read_data = [&](auto const& table, char const* fieldname, size_t &index) {
     // THINKING EXPLAINED:
-    // See if there is a data field, if there isn't no problem return (TRY_OPTION)
     //
-    // Otherwise if there is a data field, require both the "type" and "num" fields,
-    // as otherwise this indicates a malformed-field.
-    TRY_OPTION(auto data_table, table->get_table(dataname));
-    auto const type_s = get_string_or_abort(data_table, "type");
+    // If there isn't a field, bail early. However, if there IS a field, ensure it has the fields
+    // we expect.
+    TRY_OPTION(auto data_table, table->get_table(fieldname));
+    auto const datatype_s = get_string_or_abort(data_table, "datatype");
 
     // TODO: FOR NOW, only support floats. Easy to implement rest
-    assert("float" == type_s);
-    auto const type = GL_FLOAT;
+    assert("float" == datatype_s);
+    auto const datatype = GL_FLOAT;
     auto const num = get_or_abort<int>(data_table, "num");
 
     auto const uint_index = static_cast<GLuint>(index);
-    auto api = opengl::AttributePointerInfo{uint_index, type, num};
+    auto const attribute_type = attribute_type_from_string(fieldname);
+    auto api = opengl::AttributePointerInfo{uint_index, datatype, attribute_type, num};
+
+    ++index;
     return cpptoml::option<opengl::AttributePointerInfo>{MOVE(api)};
   };
 
-  auto const add_next_found = [&read_data](auto &apis, auto const& table, size_t const index) {
-    auto data_o = read_data(table, index);
+  auto const add_next_found = [&read_data](auto &apis, auto const& table, char const* fieldname,
+      size_t &index)
+  {
+    auto data_o = read_data(table, fieldname, index);
     bool const data_read = !!data_o;
     if (data_read) {
       auto data = MOVE(*data_o);
       apis.emplace_back(MOVE(data));
     }
-    return data_read;
   };
 
   ParsedVertexAttributes pvas;
@@ -496,7 +499,11 @@ load_vas(CppTable const& config)
 
     size_t i = 0u;
     std::vector<opengl::AttributePointerInfo> apis;
-    while(add_next_found(apis, table, i++)) {}
+    add_next_found(apis, table, "position", i);
+    add_next_found(apis, table, "normal", i);
+    add_next_found(apis, table, "color", i);
+    add_next_found(apis, table, "uv", i);
+
     pvas.add(name, make_vertex_attribute(apis));
   };
   std::for_each((*vas_table_array).begin(), (*vas_table_array).end(), fn);
@@ -533,61 +540,22 @@ TileSharedInfoTable::operator[](TileType const type)
 }
 #undef SEARCH_FOR
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// ObjCache
-void
-ObjCache::add_obj(std::string const& name, opengl::obj &&o)
-{
-  auto pair = std::make_pair(name, MOVE(o));
-  objects_.emplace_back(MOVE(pair));
-}
-
-void
-ObjCache::add_obj(char const* name, opengl::obj &&o)
-{
-  add_obj(std::string{name}, MOVE(o));
-}
-
-opengl::obj const&
-ObjCache::get_obj(char const* name) const
-{
-  auto const cmp = [&name](auto const& pair) {
-    return pair.first == name;
-  };
-  auto const it = std::find_if(objects_.cbegin(), objects_.cend(), cmp);
-
-  // assume presence
-  if (it == objects_.cend()) {
-    std::cerr << "could not find sp: '" << name << "'\n";
-    std::abort();
-  }
-
-  // yield reference to data
-  return it->second;
-}
-
-opengl::obj const&
-ObjCache::get_obj(std::string const& s) const
-{
-  return get_obj(s.c_str());
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-stlw::result<LevelAssets, std::string>
+// LevelLoader
+Result<LevelAssets, std::string>
 LevelLoader::load_level(stlw::Logger &logger, EntityRegistry &registry, std::string const& filename)
 {
   CppTable engine_config = cpptoml::parse_file("engine.toml");
   assert(engine_config);
 
   ParsedVertexAttributes pvas = load_vas(engine_config);
-  DO_TRY(auto sps, load_shaders(logger, MOVE(pvas), engine_config));
+  auto sps = TRY_MOVEOUT(load_shaders(logger, MOVE(pvas), engine_config));
 
   CppTable area_config = cpptoml::parse_file("levels/" + filename);
   assert(area_config);
 
   auto const mesh_table = get_table_array_or_abort(area_config, "meshes");
-  auto objcache = load_meshes(mesh_table);
+  ObjStore objstore = TRY_MOVEOUT(load_objfiles(mesh_table).mapErrorMoveOut(loadstatus_to_string));
 
   std::cerr << "loading textures ...\n";
   auto texture_table = load_textures(logger, area_config);
@@ -609,16 +577,16 @@ LevelLoader::load_level(stlw::Logger &logger, EntityRegistry &registry, std::str
 
   auto bg_color = Color{get_vec3_or_abort(area_config, "background")};
   std::cerr << "yielding assets\n";
-  return LevelAssets{
+  return Ok(LevelAssets{
     MOVE(glight),
     MOVE(bg_color),
 
     MOVE(tile_table),
 
-    MOVE(objcache),
+    MOVE(objstore),
     MOVE(texture_table),
     MOVE(sps)
-  };
+  });
 }
 
 } // ns boomhs

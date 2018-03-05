@@ -2,42 +2,42 @@ title = "Engine Configuration"
 
 ######### VERTEX ATTRIBUTE INFOS ######
 [[vas]]
-name = "vertex_only"
-data0 = { type = "float", num = 4 } # vertices
+name     = "vertex_only"
+position = { datatype = "float", num = 4 }
 
 [[vas]]
-name = "vertex_normal"
-data0 = { type = "float", num = 4 } # vertices
-data1 = { type = "float", num = 3 } # normals
+name     = "vertex_normal"
+position = { datatype = "float", num = 4 }
+normal   = { datatype = "float", num = 3 }
 
 [[vas]]
-name = "vertex_color"
-data0 = { type = "float", num = 4 } # vertices
-data1 = { type = "float", num = 4 } # colors
+name     = "vertex_color"
+position = { datatype = "float", num = 4 }
+color    = { datatype = "float", num = 4 }
 
 [[vas]]
-name = "vertex_uvs"
-data0 = { type = "float", num = 4 } # vertices
-data1 = { type = "float", num = 2 } # uvs
+name     = "vertex_uv"
+position = { datatype = "float", num = 4 }
+uv       = { datatype = "float", num = 2 }
 
 [[vas]]
-name = "vertex_normal_color"
-data0 = { type = "float", num = 4 } # vertices
-data1 = { type = "float", num = 3 } # normals
-data2 = { type = "float", num = 4 } # colors
+name     = "vertex_normal_color"
+position = { datatype = "float", num = 4 }
+normal   = { datatype = "float", num = 3 }
+color    = { datatype = "float", num = 4 }
 
 [[vas]]
-name = "vertex_normal_uvs"
-data0 = { type = "float", num = 4 } # vertices
-data1 = { type = "float", num = 3 } # normals
-data2 = { type = "float", num = 2 } # uvs
+name     = "vertex_normal_uvs"
+position = { datatype = "float", num = 4 }
+normal   = { datatype = "float", num = 3 }
+uv       = { datatype = "float", num = 2 }
 
 ########### SHADERS #################
 [[shaders]]
 name = "2dtexture"
 vertex = "2dtexture.vert"
 fragment = "2dtexture.frag"
-va = "vertex_uvs"
+va = "vertex_uv"
 is_2d = true
 
 [[shaders]]
@@ -77,6 +77,12 @@ vertex = "light.vert"
 fragment = "light.frag"
 va = "vertex_only"
 
+[[shaders]]
+name = "light_texture"
+vertex = "light_texture.vert"
+fragment = "light_texture.frag"
+va = "vertex_uv"
+
 ############# letters
 
 [[shaders]]
@@ -84,7 +90,7 @@ name = "hashtag"
 vertex = "3d_hashtag.vert"
 fragment = "3d_pos_normal_color.frag"
 va = "vertex_normal_color"
-instance_count = 9
+instance_count = 3
 
 [[shaders]]
 name = "river"

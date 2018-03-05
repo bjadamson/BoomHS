@@ -29,7 +29,7 @@ is_compiled(GLuint const handle)
   return GL_FALSE != is_compiled;
 }
 
-stlw::result<compiled_shader, std::string>
+Result<compiled_shader, std::string>
 compile_shader(stlw::Logger &logger, GLenum const type, std::string const& data)
 {
   GLuint const handle = glCreateShader(type);
@@ -43,22 +43,22 @@ compile_shader(stlw::Logger &logger, GLenum const type, std::string const& data)
 
   // Check Vertex Shader
   if (true == is_compiled(handle)) {
-    return compiled_shader{handle, glDeleteShader};
+    return Ok(compiled_shader{handle, glDeleteShader});
   }
-  return stlw::make_error(gfx::get_shader_log(handle));
+  return Err(gfx::get_shader_log(handle));
 }
 
-inline stlw::result<GLuint, std::string>
+inline Result<GLuint, std::string>
 create_program()
 {
   GLuint const program_id = glCreateProgram();
   if (INVALID_PROGRAM_ID == program_id) {
-    return stlw::make_error(std::string{"GlCreateProgram returned 0."});
+    return Err(std::string{"GlCreateProgram returned 0."});
   }
-  return program_id;
+  return Ok(program_id);
 }
 
-inline stlw::result<stlw::empty_type, std::string>
+inline Result<stlw::empty_type, std::string>
 link_program(stlw::Logger &logger, GLuint const program_id)
 {
   // Link the program
@@ -74,9 +74,9 @@ link_program(stlw::Logger &logger, GLuint const program_id)
     auto const shader_log = gfx::get_shader_log(program_id);
     auto const fmt = fmt::sprintf("Linking the shader failed. Progam log '%s'. Shader Log '%s'",
         program_log, shader_log);
-    return stlw::make_error(fmt);
+    return Err(fmt);
   }
-  return stlw::make_empty();
+  return Ok(stlw::make_empty());
 }
 
 struct AttributeVariableInfo {
@@ -95,13 +95,13 @@ struct FragmentShaderInfo {
   std::string const& source;
 };
 
-stlw::result<GLuint, std::string>
+Result<GLuint, std::string>
 compile_sources(stlw::Logger &logger, VertexShaderInfo const &vertex_shader,
     FragmentShaderInfo const &fragment_shader)
 {
-  DO_TRY(auto const vertex_shader_id, compile_shader(logger, GL_VERTEX_SHADER, vertex_shader.source));
-  DO_TRY(auto const frag_shader_id, compile_shader(logger, GL_FRAGMENT_SHADER, fragment_shader.source));
-  DO_TRY(auto const program_id, create_program());
+  auto const vertex_shader_id = TRY_MOVEOUT(compile_shader(logger, GL_VERTEX_SHADER, vertex_shader.source));
+  auto const frag_shader_id = TRY_MOVEOUT(compile_shader(logger, GL_FRAGMENT_SHADER, fragment_shader.source));
+  auto const program_id = TRY_MOVEOUT(create_program());
 
   std::cerr << fmt::format("compiling '{}'/'{}'\n", vertex_shader.filename, fragment_shader.filename);
   auto const& variable_infos = vertex_shader.attribute_infos;
@@ -120,10 +120,10 @@ compile_sources(stlw::Logger &logger, VertexShaderInfo const &vertex_shader,
 
   DO_EFFECT(link_program(logger, program_id));
   std::cerr << "finished compiling\n";
-  return program_id;
+  return Ok(program_id);
 }
 
-stlw::result<std::vector<AttributeVariableInfo>, std::string>
+Result<std::vector<AttributeVariableInfo>, std::string>
 from_vertex_shader(std::string const& filename, std::string const& source)
 {
   int idx = 0;
@@ -133,7 +133,7 @@ from_vertex_shader(std::string const& filename, std::string const& source)
     auto constexpr SUFFIX = "'. Shader filename: '%s', line number: '%s', line string: '%s.";
     auto const error = PREAMBLE + std::string{reason} + SUFFIX;
     auto const fmt = fmt::sprintf(error, filename, std::to_string(idx), buffer);
-    return stlw::make_error(fmt);
+    return Err(fmt);
   };
 
   std::vector<AttributeVariableInfo> infos;
@@ -175,7 +175,7 @@ from_vertex_shader(std::string const& filename, std::string const& source)
       break;
     }
   }
-  return infos;
+  return Ok(MOVE(infos));
 }
 
 std::string
@@ -208,7 +208,7 @@ namespace opengl
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // grogram_factory
-stlw::result<GLuint, std::string>
+Result<GLuint, std::string>
 program_factory::from_files(stlw::Logger &logger, VertexShaderFilename const& v,
     FragmentShaderFilename const& f)
 {
@@ -219,9 +219,10 @@ program_factory::from_files(stlw::Logger &logger, VertexShaderFilename const& v,
   auto const fragment_shader_path = prefix(f.filename);
 
   // Read the Vertex/Fragment Shader code from ther file
-  DO_TRY(auto const vertex_shader_source, stlw::read_file(vertex_shader_path));
-  DO_TRY(auto attribute_variable_info, from_vertex_shader(vertex_shader_path, vertex_shader_source));
-  DO_TRY(auto const fragment_source, stlw::read_file(fragment_shader_path));
+  auto const vertex_shader_source = TRY_MOVEOUT(stlw::read_file(vertex_shader_path));
+
+  auto attribute_variable_info = TRY_MOVEOUT(from_vertex_shader(vertex_shader_path, vertex_shader_source));
+  auto const fragment_source = TRY_MOVEOUT(stlw::read_file(fragment_shader_path));
 
   VertexShaderInfo const vertex_shader{vertex_shader_path, vertex_shader_source,
     MOVE(attribute_variable_info)};
@@ -465,13 +466,13 @@ print_active_uniforms(std::ostream &stream, GLuint const program)
   }
 }
 
-stlw::result<ShaderProgram, std::string>
+Result<ShaderProgram, std::string>
 make_shader_program(stlw::Logger &logger, std::string const& vertex_s, std::string const& fragment_s, VertexAttribute &&va)
 {
   VertexShaderFilename const v{vertex_s};
   FragmentShaderFilename const f{fragment_s};
-  DO_TRY(auto sp, program_factory::from_files(logger, v, f));
-  return ShaderProgram{ProgramHandle{sp}, MOVE(va)};
+  auto sp = TRY_MOVEOUT(program_factory::from_files(logger, v, f));
+  return Ok(ShaderProgram{ProgramHandle{sp}, MOVE(va)});
 }
 
 std::ostream&

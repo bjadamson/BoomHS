@@ -1,6 +1,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/leveldata.hpp>
+#include <boomhs/tilegrid_algorithms.hpp>
 
 namespace boomhs
 {
@@ -15,7 +16,7 @@ find_stairs_withtype(EntityRegistry &registry, TileGrid const& tgrid, TileType c
       up_stairs.emplace_back(tile.eid);
     }
   };
-  tgrid.visit_each(visit_fn);
+  visit_each(tgrid, visit_fn);
   return up_stairs;
 }
 

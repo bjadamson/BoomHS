@@ -1,8 +1,9 @@
 #pragma once
+#include <boomhs/obj_store.hpp>
 #include <boomhs/tile.hpp>
+
 #include <opengl/colors.hpp>
 #include <opengl/lighting.hpp>
-#include <opengl/obj.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
 
@@ -16,27 +17,6 @@ namespace boomhs
 {
 class EntityRegistry;
 
-class ObjCache
-{
-  using pair_t = std::pair<std::string, opengl::obj>;
-  std::vector<pair_t> objects_;
-public:
-  ObjCache() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(ObjCache);
-
-  void
-  add_obj(std::string const&, opengl::obj &&);
-
-  void
-  add_obj(char const*, opengl::obj &&);
-
-  opengl::obj const&
-  get_obj(char const*) const;
-
-  opengl::obj const&
-  get_obj(std::string const&) const;
-};
-
 struct TileInfo
 {
   TileType type;
@@ -49,7 +29,7 @@ struct TileInfo
 // TileType. This information is "shared information" between tiles of the same type.
 struct TileSharedInfoTable
 {
-  static auto constexpr SIZE = static_cast<size_t>(TileType::MAX);
+  static auto constexpr SIZE = static_cast<size_t>(TileType::UNDEFINED);
   std::array<TileInfo, SIZE> data_;
 
 public:
@@ -73,7 +53,7 @@ struct LevelAssets
 
   TileSharedInfoTable tile_table;
 
-  ObjCache obj_cache;
+  ObjStore obj_store;
   opengl::TextureTable texture_table;
   opengl::ShaderPrograms shader_programs;
 
@@ -84,7 +64,7 @@ struct LevelLoader
 {
   LevelLoader() = delete;
 
-  static stlw::result<LevelAssets, std::string>
+  static Result<LevelAssets, std::string>
   load_level(stlw::Logger &, EntityRegistry &, std::string const&);
 };
 

@@ -16,6 +16,14 @@
 namespace boomhs
 {
 
+struct LevelGeneredData
+{
+  TileGrid tilegrid;
+  TilePosition startpos;
+  std::vector<RiverInfo> rivers;
+  EntityID torch_eid;
+};
+
 class LevelData
 {
   // The tilegrid stores stores information about the grid, like it's dimensions, and stores all of
@@ -35,7 +43,7 @@ class LevelData
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileGrid &&, TileSharedInfoTable &&, TilePosition const&, std::vector<RiverInfo> &&,
-      EntityID, opengl::Color const&, opengl::GlobalLight const&, ObjCache &&, Camera &&,
+      EntityID, opengl::Color const&, opengl::GlobalLight const&, ObjStore &&, Camera &&,
       WorldObject &&
       );
 
@@ -43,7 +51,7 @@ public:
   opengl::Color background;
   opengl::GlobalLight global_light;
 
-  ObjCache obj_cache;
+  ObjStore obj_store;
 
   // nearby targets user can select
   NearbyTargets nearby_targets;
@@ -87,7 +95,7 @@ public:
 
   template<typename FN>
   void
-  visit_tiles(FN const& fn) const { tilegrid_.visit_each(fn); }
+  visit_tiles(FN const& fn) const { visit_each(tilegrid_, fn); }
 };
 
 } // ns boomhs

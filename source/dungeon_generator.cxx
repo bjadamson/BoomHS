@@ -1,11 +1,14 @@
-#include <boomhs/level_generator.hpp>
+#include <boomhs/dungeon_generator.hpp>
 #include <boomhs/enemy.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/item_factory.hpp>
 #include <boomhs/stairwell_generator.hpp>
 #include <boomhs/leveldata.hpp>
 #include <boomhs/river_generator.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
+
+#include <opengl/texture.hpp>
 
 #include <stlw/optional.hpp>
 #include <stlw/random.hpp>
@@ -73,7 +76,7 @@ struct Rect
   }
 
   bool
-  any_tiles_of_type(TileGrid const& tilegrid, TileType const type) const
+  all_tiles_of_type(TileGrid const& tilegrid, TileType const type) const
   {
     bool any = false;
     for(auto x = x1 + 1; x < x2; ++x) {
@@ -110,17 +113,20 @@ try_create_room(RoomGenConfig const& rgconfig, TileType const type, TileGrid &ti
 
   // run through the other rooms and see if they intersect with this one
   for(auto const& r : rgconfig.rooms) {
-    // bail early
-    if (!new_room.in_tilegrid(tilegrid) || new_room.intersects_with(r)) {
-      return {}; // NONE
+    bool const within_tilegrid = new_room.in_tilegrid(tilegrid);
+    bool const intersects_other_room = new_room.intersects_with(r);
+    // The new room should be within bounds of the tilegrid
+    // and the new room should not intersect any of the existing rooms.
+    if (!within_tilegrid || intersects_other_room) {
+      return std::nullopt;
     }
   }
-  bool const any_river_tiles = new_room.any_tiles_of_type(tilegrid, TileType::RIVER);
-  bool const any_bridge_tiles = new_room.any_tiles_of_type(tilegrid, TileType::BRIDGE);
-  if (any_river_tiles || any_bridge_tiles) {
-    return {}; // NONE
+  bool const undefined_tiles_in_room = new_room.all_tiles_of_type(tilegrid, TileType::UNDEFINED);
+  // If any undefined tiles are in the room, we currently just give up. Maybe do more here.
+  if (undefined_tiles_in_room) {
+    return std::nullopt;
   }
-
+  // Assign all the tiles in the room to the requested tile type and return the new room.
   for(uint64_t x = new_room.x1 + 1; x < new_room.x2; ++x) {
     for (uint64_t y = new_room.y1 + 1; y < new_room.y2; ++y) {
       tilegrid.data(x, y).type = type;
@@ -236,47 +242,22 @@ place_monsters(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_g
 }
 
 EntityID
-place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng)
+place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng,
+    TextureTable const& ttable)
 {
-  auto eid = registry.create();
-  registry.assign<Torch>(eid);
-
-  auto &isv = registry.assign<IsVisible>(eid);
-  isv.value = true;
-
-  auto &pointlight = registry.assign<PointLight>(eid);
-  pointlight.light.diffuse = LOC::YELLOW;
-
-  auto &flicker = registry.assign<LightFlicker>(eid);
-  flicker.base_speed = 1.0f;
-  flicker.current_speed = flicker.base_speed;
-
-  flicker.colors[0] = LOC::RED;
-  flicker.colors[1] = LOC::YELLOW;
-
-  auto &att = pointlight.attenuation;
-  att.constant = 1.0f;
-  att.linear = 0.93f;
-  att.quadratic = 0.46f;
-
-  auto &torch_transform = registry.assign<Transform>(eid);
+  auto eid = ItemFactory::create_torch(registry, rng, ttable);
+  auto &transform = registry.get<Transform>(eid);
 
   auto const pos = generate_monster_position(tilegrid, registry, rng);
-  torch_transform.translation = glm::vec3{pos.x, 0.5, pos.y};
-  std::cerr << "torchlight pos: '" << torch_transform.translation << "'\n";
-
-  auto &mesh = registry.assign<MeshRenderable>(eid);
-  mesh.name = "O_no_normals";
-
-  auto &sn = registry.assign<ShaderName>(eid);
-  sn.value = "light";
+  transform.translation = glm::vec3{pos.x, 0.5, pos.y};
+  std::cerr << "torchlight pos: '" << transform.translation << "'\n";
 
   return eid;
 }
 
 } // ns anon
 
-namespace boomhs::level_generator
+namespace boomhs::dungeon_generator
 {
 
 struct Rooms
@@ -318,7 +299,7 @@ place_rooms(TileGrid &tilegrid, stlw::float_generator &rng)
     // PRESENLTY: algorithm currently assumes we create atleast one room before entering the main
     // loop.
     {
-      MAKEOPT(auto const first_room, create_room(MAX_NUM_CREATE_TRIES, rgconfig, tilegrid, rng, TileType::FLOOR));
+      auto const first_room = MAKEOPT(create_room(MAX_NUM_CREATE_TRIES, rgconfig, tilegrid, rng, TileType::FLOOR));
       auto const first_center = first_room.center();
       starting_position.x = first_center.x;
       starting_position.y = first_center.y;
@@ -330,7 +311,7 @@ place_rooms(TileGrid &tilegrid, stlw::float_generator &rng)
   // Move onto floor tiles.
   assert(!rects.empty());
   FOR(_, MAX_ROOMS) {
-    MAKEOPT(auto const new_room, create_room(MAX_NUM_CREATE_TRIES, rgconfig, tilegrid, rng,
+    auto const new_room = MAKEOPT(create_room(MAX_NUM_CREATE_TRIES, rgconfig, tilegrid, rng,
           TileType::FLOOR));
     // center coordinates of the new room/previous room
     auto const new_center = new_room.center();
@@ -380,8 +361,8 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
 }
 
 LevelGeneredData
-gen_level(LevelConfig const& levelconfig, EntityRegistry &registry,
-    TileSharedInfoTable &&ttable, stlw::float_generator &rng)
+gen_level(LevelConfig const& levelconfig, EntityRegistry &registry, stlw::float_generator &rng,
+    TextureTable const& ttable)
 {
   // clang-format off
   TileGridConfig const& tileconfig = levelconfig.tileconfig;
@@ -391,6 +372,7 @@ gen_level(LevelConfig const& levelconfig, EntityRegistry &registry,
   // clang-format on
 
   TileGrid tilegrid{tdwidth, tdheight, registry};
+  floodfill(tilegrid, TileType::WALL);
 
   std::cerr << "======================================\n";
   std::vector<RiverInfo> rivers;
@@ -398,12 +380,12 @@ gen_level(LevelConfig const& levelconfig, EntityRegistry &registry,
       rng, registry);
 
   std::cerr << "placing torch ...\n";
-  auto const torch_eid = place_torch(tilegrid, registry, rng);
+  auto const torch_eid = place_torch(tilegrid, registry, rng, ttable);
 
   std::cerr << "finished!\n";
   std::cerr << "======================================\n";
 
-  return LevelGeneredData{MOVE(tilegrid), MOVE(ttable), starting_pos, MOVE(rivers), torch_eid};
+  return LevelGeneredData{MOVE(tilegrid), starting_pos, MOVE(rivers), torch_eid};
 }
 
-} // ns boomhs::level_generator
+} // ns boomhs::dungeon_generator

@@ -451,6 +451,7 @@ void
 draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& ft)
 {
   auto const& es = rstate.es;
+  auto &logger = es.logger;
   auto &zs = rstate.zs;
 
   assert(zs.gfx_state.gpu_state.entities);
@@ -482,21 +483,34 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
     draw_fn(FORWARD(args)...);
   };
 
-  auto const draw_torch = [&draw_fn, &rng](auto eid, auto &sn, auto &transform, auto &&... args)
+  auto const draw_torch = [&](auto eid, auto &sn, auto &transform, auto &&... args)
   {
+    {
+      auto &sp = sps.ref_sp(sn.value);
+
+      // Describe glow
+      static constexpr double MIN = 0.3;
+      static constexpr double MAX = 1.0;
+      static constexpr double SPEED = 0.135;
+      auto const a = std::sin(ft.since_start_millis() * M_PI * SPEED);
+      float const glow = glm::lerp(MIN, MAX, std::abs(a));
+      sp.set_uniform_float1(logger, "u_glow", glow);
+    }
+
     // randomize the position slightly
-    auto static constexpr DISPLACEMENT_MAX = 0.015f;
+    static constexpr auto   DISPLACEMENT_MAX = 0.0015f;
+
     auto copy_transform = transform;
     copy_transform.translation.x += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
     copy_transform.translation.y += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
     copy_transform.translation.z += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
 
-    draw_fn(eid, sn, transform, FORWARD(args)...);
+    draw_fn(eid, sn, copy_transform, FORWARD(args)...);
   };
 
   //
   // Render everything loaded form level file.
-  registry.view<ShaderName, Transform, IsVisible, EntityFromFILE>().each(draw_fn);
+  registry.view<ShaderName, Transform, IsVisible, JunkEntityFromFILE>().each(draw_fn);
 
   // torch
   registry.view<ShaderName, Transform, IsVisible, Torch>().each(draw_torch);
@@ -507,14 +521,11 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
   // player
   registry.view<ShaderName, Transform, IsVisible, MeshRenderable, Player>().each(player_drawfn);
 
-  // tiles
-  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, TileComponent>().each(draw_fn);
-
   if (es.draw_skybox) {
     auto const draw_skybox = [&](auto eid, auto &sn, auto &transform, auto &&... args) {
       draw_fn(eid, sn, transform, FORWARD(args)...);
     };
-    registry.view<ShaderName, Transform, IsVisible, SkyboxRenderable>().each(draw_skybox);
+    registry.view<ShaderName, Transform, IsVisible, IsSkybox>().each(draw_skybox);
   }
 }
 
@@ -579,17 +590,6 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
       case TileType::RIVER:
         // Do nothing, we handle rendering rivers elsewhere.
         break;
-      case TileType::BRIDGE:
-        {
-          // TODo: how to orient bridge (tile) based on RiverInfo (nontile) information?
-          //
-          // Previously we haven't read data stored outside the EntityRegistry when
-          // rendering tiles.
-          //
-          // thinking ...
-          draw_tile_helper(tile_sp, dinfo, tile, default_modmatrix, true);
-        }
-        break;
       case TileType::STAIR_DOWN:
         {
           auto &sp = sps.ref_sp("stair");
@@ -608,11 +608,20 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
           draw_tile_helper(sp, dinfo, tile, default_modmatrix, receives_ambient_light);
         }
         break;
+      case TileType::BRIDGE:
+      case TileType::DOOR:
+      case TileType::TELEPORTER:
       default:
-        std::exit(1);
+        {
+          bool const receives_ambient_light = true;
+          draw_tile_helper(tile_sp, dinfo, tile, default_modmatrix, receives_ambient_light);
+        }
+        break;
+      case TileType::UNDEFINED:
+        std::abort();
     }
   };
-  tilegrid.visit_each(draw_tile);
+  visit_each(tilegrid, draw_tile);
 }
 
 void

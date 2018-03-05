@@ -20,7 +20,7 @@
 #define EVALUATE_OR_RETURN_EARLY(V, expr, or_else_fn)                                              \
   auto V{expr};                                                                                    \
   if (!V) {                                                                                        \
-    return or_else_fn(V);                                                                          \
+    return or_else_fn(MOVE(V));                                                                    \
   }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33,9 +33,9 @@
 //
 // If the expression evaluates to "true" the expression is moved into the variable provided by the
 // macro user.
-#define EVAL_INTO_VAR_OR_RETURN_EARLY(VAR_DECL, V, expr, fn)                                       \
-  EVALUATE_OR_RETURN_EARLY(V, expr, fn);                                                           \
-  VAR_DECL{*MOVE(V)};
+#define EVAL_INTO_VAR_OR_RETURN_EARLY(VAR_DECL, V, expr, error_fn)                                 \
+  EVALUATE_OR_RETURN_EARLY(V, expr, error_fn);                                                     \
+  VAR_DECL{MOVE(V).unwrap_moveout()};
 
 // SUPPORT MACRO
 #define EVAL_INTO_VAR_OR_CONCAT_EVAL(VAR_DECL, V, expr, fn)                                        \

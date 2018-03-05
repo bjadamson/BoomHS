@@ -4,6 +4,7 @@
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
 
+#include <cassert>
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -97,10 +98,10 @@ public:
 struct sdl_library {
   sdl_library() = delete;
 
-  static stlw::result<stlw::empty_type, std::string> init();
+  static Result<stlw::empty_type, std::string> init();
   static void destroy();
 
-  static stlw::result<SDLWindow, std::string> make_window(bool const, int const, int const);
+  static Result<SDLWindow, std::string> make_window(bool const, int const, int const);
 };
 
 } // ns window

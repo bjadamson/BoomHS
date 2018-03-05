@@ -118,6 +118,121 @@ find_immediate_neighbors(TileGrid const& tgrid, TilePosition const& tpos, TileTy
   return find_neighbors(tgrid, tpos, type, config);
 }
 
+inline void
+floodfill(TileGrid &tgrid, TileType const type)
+{
+  auto const [w, h] = tgrid.dimensions();
+  FOR(x, w) {
+    FOR(y, h) {
+      tgrid.data(x, y).type = type;
+    }
+  }
+}
+
+template<typename FN, typename ...Args>
+void
+visit_each(TileGrid const& tgrid, FN const& fn, Args &&... args)
+{
+  auto const [w, h] = tgrid.dimensions();
+  FOR(x, w) {
+    FOR(y, h) {
+      fn(TilePosition{x, y}, std::forward<Args>(args)...);
+    }
+  }
+}
+
+template<typename FN, typename ...Args>
+void
+visit_edges(TileGrid const& tgrid, FN const& fn, Args &&... args)
+{
+  auto const [w, h] = tgrid.dimensions();
+  auto const visit_fn = [&fn, &tgrid](TilePosition const& tpos) {
+    if (tgrid.is_edge_tile(tpos)) {
+      fn(tpos);
+    }
+  };
+  visit_each(tgrid, visit_fn, FORWARD(args)...);
+}
+
+template<typename FN>
+void
+visit_neighbors(TileGrid const& tgrid, TilePosition const& pos, FN const& fn, TileLookupBehavior const behavior)
+{
+  auto const [w, y] = tgrid.dimensions();
+  assert(w == y); // TODO: test if this works if this assumption not true
+  assert(pos.x < w);
+  assert(pos.y < y);
+
+  // clang-format off
+  bool const edgeof_left  = pos.x == 0;
+  bool const edgeof_right = pos.x == (y - 1);
+
+  bool const edgeof_below = pos.y == 0;
+  bool const edgeof_above = pos.y == (w - 1);
+
+  auto const leftbelow  = [&]() { fn(pos.x + -1, pos.y + -1); };
+  auto const left       = [&]() { fn(pos.x + 0,  pos.y + -1); };
+  auto const leftabove  = [&]() { fn(pos.x + 1,  pos.y + -1); };
+  auto const above      = [&]() { fn(pos.x + 1,  pos.y + 0); };
+  auto const rightabove = [&]() { fn(pos.x + 1,  pos.y + 1); };
+  auto const right      = [&]() { fn(pos.x + 0,  pos.y + 1); };
+  auto const rightbelow = [&]() { fn(pos.x + -1, pos.y + 1); };
+  auto const below      = [&]() { fn(pos.x + -1, pos.y + 0); };
+  // clang-format on
+
+  auto const all8_behavior = [&]()
+  {
+    if (!edgeof_left && !edgeof_below) {
+      leftbelow();
+    }
+    if (!edgeof_left) {
+      left();
+    }
+    if (!edgeof_left && !edgeof_above) {
+      leftabove();
+    }
+    if (!edgeof_above) {
+      above();
+    }
+    if (!edgeof_right && !edgeof_above) {
+      rightabove();
+    }
+    if (!edgeof_right) {
+      right();
+    }
+    if (!edgeof_right && !edgeof_below) {
+      rightbelow();
+    }
+    if (!edgeof_below) {
+      below();
+    }
+  };
+  auto const vh_behavior = [&]() {
+    if (!edgeof_left) {
+      left();
+    }
+    if (!edgeof_above) {
+      above();
+    }
+    if (!edgeof_right) {
+      right();
+    }
+    if (!edgeof_below) {
+      below();
+    }
+  };
+  switch(behavior) {
+    case TileLookupBehavior::ALL_8_DIRECTIONS:
+      all8_behavior();
+      break;
+    case TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY:
+      vh_behavior();
+      break;
+    default:
+      std::exit(1);
+  }
+}
+
 class MapEdge
 {
 public:

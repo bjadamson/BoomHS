@@ -3,11 +3,12 @@
 #include <opengl/glew.hpp>
 #include <opengl/global.hpp>
 #include <opengl/gpu.hpp>
-#include <opengl/obj.hpp>
+#include <boomhs/obj.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
 
 #include <boomhs/tilegrid.hpp>
+#include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/types.hpp>
 
 #include <stlw/type_macros.hpp>
@@ -186,7 +187,7 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, TileG
 #undef P7
   };
 
-  tgrid.visit_each(visit_fn);
+  visit_each(tgrid, visit_fn);
 
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{GL_LINES, vertices.size(), num_indices, std::nullopt};
@@ -207,7 +208,7 @@ create_axis_arrows(stlw::Logger &logger, ShaderProgram &sp)
 
 DrawInfo
 create_modelnormals(stlw::Logger &logger, ShaderProgram const& sp, glm::mat4 const& model_matrix,
-    obj const& obj, Color const& color)
+    ObjBuffer const& obj, Color const& color)
 {
   auto const normal_matrix = glm::inverseTranspose(model_matrix);
   std::vector<float> const& vertices = obj.vertices;
