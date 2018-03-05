@@ -19,7 +19,7 @@ using CppTable = std::shared_ptr<cpptoml::table>;
 #define TRY_OPTION_GENERAL_EVAL(VAR_NAME, V, expr)                                                 \
   auto V{expr};                                                                                    \
   if (!V) {                                                                                        \
-    return cpptoml::option<opengl::AttributePointerInfo>{}; \
+    return cpptoml::option<opengl::AttributePointerInfo>{};                                        \
   }                                                                                                \
   VAR_NAME{MOVE(V)};
 
@@ -164,29 +164,27 @@ get_float_or_abort(CppTable const& table, char const* name)
   return *float_data;
 }
 
-auto
-load_meshes(CppTableArray const& mesh_table)
+Result<ObjStore, LoadStatus>
+load_objfiles(CppTableArray const& mesh_table)
 {
-  auto const load = [](auto const& table) {
+  auto const load = [](auto const& table) -> Result<std::pair<ObjQuery, ObjData>, LoadStatus> {
     auto const name = get_string_or_abort(table, "name");
-
-    auto const colors = get_bool_or_abort(table, "colors");
-    auto const normals = get_bool_or_abort(table, "normals");
-    auto const uvs = get_bool_or_abort(table, "uvs");
+    std::cerr << "Loading name '" << name << "'\n";
 
     auto const obj = "assets/" + name + ".obj";
     auto const mtl = "assets/" + name + ".mtl";
 
-    LoadMeshConfig const cfg{colors, normals, uvs};
-    auto mesh = load_mesh(obj.c_str(), mtl.c_str(), cfg);
-    return std::make_pair(ObjQuery{name}, MOVE(mesh));
+    ObjData objdata = TRY_MOVEOUT(load_objfile(obj.c_str(), mtl.c_str()));
+    auto query = ObjQuery{name};
+    auto pair = std::make_pair(MOVE(query), MOVE(objdata));
+    return OK_MOVE(pair);
   };
   ObjStore store;
   for (auto const& table : *mesh_table) {
-    auto pair = load(table);
+    std::pair<ObjQuery, ObjData> pair = TRY_MOVEOUT(load(table));
     store.add_obj(pair.first, MOVE(pair.second));
   }
-  return store;
+  return OK_MOVE(store);
 }
 
 class ParsedVertexAttributes
@@ -433,7 +431,7 @@ load_shader(stlw::Logger &logger, ParsedVertexAttributes &pvas, CppTable const& 
 
   // TODO: ugly hack, maybe think about...
   auto va = pvas.get_copy_of_va(va_name);
-  auto program = TRY(opengl::make_shader_program(logger, vertex, fragment, MOVE(va)));
+  auto program = TRY_MOVEOUT(opengl::make_shader_program(logger, vertex, fragment, MOVE(va)));
 
   program.is_skybox = get_bool(table, "is_skybox").value_or(false);
   program.is_2d = get_bool(table, "is_2d").value_or(false);
@@ -448,7 +446,7 @@ load_shaders(stlw::Logger &logger, ParsedVertexAttributes &&pvas, CppTable const
   auto const shaders_table = get_table_array_or_abort(config, "shaders");
   opengl::ShaderPrograms sps;
   for (auto const& shader_table : *shaders_table) {
-    auto pair = TRY(load_shader(logger, pvas, shader_table));
+    auto pair = TRY_MOVEOUT(load_shader(logger, pvas, shader_table));
     sps.add(pair.first, MOVE(pair.second));
   }
   return Ok(MOVE(sps));
@@ -535,7 +533,7 @@ TileSharedInfoTable::operator[](TileType const type)
 #undef SEARCH_FOR
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-
+// LevelLoader
 Result<LevelAssets, std::string>
 LevelLoader::load_level(stlw::Logger &logger, EntityRegistry &registry, std::string const& filename)
 {
@@ -543,13 +541,13 @@ LevelLoader::load_level(stlw::Logger &logger, EntityRegistry &registry, std::str
   assert(engine_config);
 
   ParsedVertexAttributes pvas = load_vas(engine_config);
-  auto sps = TRY(load_shaders(logger, MOVE(pvas), engine_config));
+  auto sps = TRY_MOVEOUT(load_shaders(logger, MOVE(pvas), engine_config));
 
   CppTable area_config = cpptoml::parse_file("levels/" + filename);
   assert(area_config);
 
   auto const mesh_table = get_table_array_or_abort(area_config, "meshes");
-  auto objcache = load_meshes(mesh_table);
+  ObjStore objstore = TRY_MOVEOUT(load_objfiles(mesh_table).mapErrorMoveOut(loadstatus_to_string));
 
   std::cerr << "loading textures ...\n";
   auto texture_table = load_textures(logger, area_config);
@@ -577,7 +575,7 @@ LevelLoader::load_level(stlw::Logger &logger, EntityRegistry &registry, std::str
 
     MOVE(tile_table),
 
-    MOVE(objcache),
+    MOVE(objstore),
     MOVE(texture_table),
     MOVE(sps)
   });

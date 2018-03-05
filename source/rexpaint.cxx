@@ -153,7 +153,7 @@ RexImage::flatten()
 Result<RexImage, RexError>
 RexImage::load(std::string const& filename)
 {
-  auto gz = TRY(s_gzopen(filename.c_str(), "rb"));
+  auto gz = TRY_MOVEOUT(s_gzopen(filename.c_str(), "rb"));
   ON_SCOPE_EXIT([&]() { gzclose(gz); });
 
   int version;
@@ -183,7 +183,7 @@ RexImage::load(std::string const& filename)
 Result<stlw::empty_type, RexError>
 RexImage::save(RexImage const& image, std::string const& filename)
 {
-  gzFile gz = TRY(s_gzopen(filename.c_str(), "wb"));
+  gzFile gz = TRY_MOVEOUT(s_gzopen(filename.c_str(), "wb"));
   ON_SCOPE_EXIT([&]() { gzclose(gz); });
 
   auto const cast = [](auto *v) -> void const*

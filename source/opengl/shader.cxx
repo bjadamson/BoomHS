@@ -99,9 +99,9 @@ Result<GLuint, std::string>
 compile_sources(stlw::Logger &logger, VertexShaderInfo const &vertex_shader,
     FragmentShaderInfo const &fragment_shader)
 {
-  auto const vertex_shader_id = TRY(compile_shader(logger, GL_VERTEX_SHADER, vertex_shader.source));
-  auto const frag_shader_id = TRY(compile_shader(logger, GL_FRAGMENT_SHADER, fragment_shader.source));
-  auto const program_id = TRY(create_program());
+  auto const vertex_shader_id = TRY_MOVEOUT(compile_shader(logger, GL_VERTEX_SHADER, vertex_shader.source));
+  auto const frag_shader_id = TRY_MOVEOUT(compile_shader(logger, GL_FRAGMENT_SHADER, fragment_shader.source));
+  auto const program_id = TRY_MOVEOUT(create_program());
 
   std::cerr << fmt::format("compiling '{}'/'{}'\n", vertex_shader.filename, fragment_shader.filename);
   auto const& variable_infos = vertex_shader.attribute_infos;
@@ -219,10 +219,10 @@ program_factory::from_files(stlw::Logger &logger, VertexShaderFilename const& v,
   auto const fragment_shader_path = prefix(f.filename);
 
   // Read the Vertex/Fragment Shader code from ther file
-  auto const vertex_shader_source = TRY(stlw::read_file(vertex_shader_path));
+  auto const vertex_shader_source = TRY_MOVEOUT(stlw::read_file(vertex_shader_path));
 
-  auto attribute_variable_info = TRY(from_vertex_shader(vertex_shader_path, vertex_shader_source));
-  auto const fragment_source = TRY(stlw::read_file(fragment_shader_path));
+  auto attribute_variable_info = TRY_MOVEOUT(from_vertex_shader(vertex_shader_path, vertex_shader_source));
+  auto const fragment_source = TRY_MOVEOUT(stlw::read_file(fragment_shader_path));
 
   VertexShaderInfo const vertex_shader{vertex_shader_path, vertex_shader_source,
     MOVE(attribute_variable_info)};
@@ -471,7 +471,7 @@ make_shader_program(stlw::Logger &logger, std::string const& vertex_s, std::stri
 {
   VertexShaderFilename const v{vertex_s};
   FragmentShaderFilename const f{fragment_s};
-  auto sp = TRY(program_factory::from_files(logger, v, f));
+  auto sp = TRY_MOVEOUT(program_factory::from_files(logger, v, f));
   return Ok(ShaderProgram{ProgramHandle{sp}, MOVE(va)});
 }
 

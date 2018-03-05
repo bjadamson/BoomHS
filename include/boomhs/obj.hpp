@@ -1,9 +1,11 @@
 #pragma once
 #include <opengl/colors.hpp>
 #include <opengl/glew.hpp>
+#include <stlw/result.hpp>
 #include <stlw/sized_buffer.hpp>
 #include <stlw/type_macros.hpp>
 #include <optional>
+#include <ostream>
 
 namespace boomhs
 {
@@ -24,6 +26,24 @@ struct ObjData
   MOVE_CONSTRUCTIBLE_ONLY(ObjData);
 };
 
+enum class LoadStatus
+{
+  MISSING_POSITION_ATTRIBUTES = 0,
+  MISSING_COLOR_ATTRIBUTES,
+  MISSING_NORMAL_ATTRIBUTES,
+  MISSING_UV_ATTRIBUTES,
+
+  TINYOBJ_ERROR,
+
+  SUCCESS
+};
+
+std::string
+loadstatus_to_string(LoadStatus const ls);
+
+std::ostream&
+operator<<(std::ostream &, LoadStatus const&);
+
 struct ObjBuffer
 {
   using vertices_t = ObjData::vertices_t;
@@ -37,17 +57,12 @@ struct ObjBuffer
   MOVE_CONSTRUCTIBLE_ONLY(ObjBuffer);
 };
 
-struct LoadMeshConfig
-{
-  bool colors = false;
-  bool normals = false;
-  bool uvs = false;
-};
+using LoadResult = Result<ObjData, LoadStatus>;
 
-ObjData
-load_mesh(char const*, char const*, LoadMeshConfig const&);
+LoadResult
+load_objfile(char const*, char const*);
 
-ObjData
-load_mesh(char const*, LoadMeshConfig const&);
+LoadResult
+load_objfile(char const*);
 
 } // ns boomhs

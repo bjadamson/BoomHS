@@ -414,7 +414,7 @@ start(stlw::Logger &logger, Engine &engine)
   ON_SCOPE_EXIT([]() { ImGui_ImplSdlGL3_Shutdown(); });
 
   auto &registries = engine.registries;
-  ZoneStates zss = TRY(LevelAssembler::assemble_levels(logger, registries));
+  ZoneStates zss = TRY_MOVEOUT(LevelAssembler::assemble_levels(logger, registries));
 
   // Initialize opengl
   auto const dimensions = engine.dimensions();

@@ -12,9 +12,9 @@ namespace boomhs
 struct QueryAttributes
 {
   bool positions = true;
-  bool colors = false;
-  bool normals = false;
-  bool uvs = false;
+  bool colors = true;
+  bool normals = true;
+  bool uvs = true;
 };
 
 bool
@@ -47,11 +47,12 @@ class ObjCache
   using pair_t = std::pair<ObjQuery, ObjBuffer>;
   using ObjBuffers = std::vector<pair_t>;
 
-  ObjStore *objstore_ = nullptr;
   mutable ObjBuffers buffers_;
 
   // ObjCache should only be constructed by the ObjStore.
   friend class ObjStore;
+  friend std::ostream& operator<<(std::ostream &, ObjCache const&);
+
   ObjCache() = default;
 
   void
@@ -63,9 +64,11 @@ class ObjCache
   ObjBuffer const&
   get_obj(ObjQuery const&) const;
 
-  void
-  set_objstore(ObjStore &);
+  auto size() const { return buffers_.size(); }
 };
+
+std::ostream&
+operator<<(std::ostream &, ObjCache const&);
 
 class ObjStore
 {
@@ -73,12 +76,17 @@ class ObjStore
   using datastore_t = std::vector<pair_t>;
 
   // This holds the data
-  datastore_t data_;
+  mutable datastore_t data_;
 
   // These caches hold cached versions of the data interleaved.
   ObjCache pos_;
+  ObjCache pos_normal_;
   ObjCache pos_color_normal_;
+  ObjCache pos_normal_uv_;
   ObjCache pos_uv_;
+
+  ObjBuffer
+  create_interleaved_buffer(ObjQuery const&) const;
 
   ObjData const&
   data_for(ObjQuery const&) const;
@@ -90,15 +98,19 @@ class ObjStore
   find_cache(ObjQuery const&) const;
 
   friend class ObjCache;
+  friend std::ostream& operator<<(std::ostream &, ObjStore const&);
 public:
-  ObjStore();
+  ObjStore() = default;
   MOVE_CONSTRUCTIBLE_ONLY(ObjStore);
 
   void
-  add_obj(ObjQuery const&, ObjData &&);
+  add_obj(ObjQuery const&, ObjData &&) const;
 
   ObjBuffer const&
   get_obj(ObjQuery const&) const;
 };
+
+std::ostream&
+operator<<(std::ostream &, ObjStore const&);
 
 } // ns boomhs

@@ -166,105 +166,54 @@ shininess = 1.0
 ###################################################################################################
 [[meshes]]
 name = "at"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "door"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "teleporter"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "bar"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "house"
-colors = false
-normals = true
-uvs = true
 
 [[meshes]]
 name = "hashtag"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "plus"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "O"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "T"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "cube"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "robot"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "stair_down"
-colors = false
-normals = true
-uvs = false
 
 [[meshes]]
 name = "stair_up"
-colors = false
-normals = true
-uvs = false
 
 [[meshes]]
 name = "tilde"
-colors = false
-normals = true
-uvs = false
 
 [[meshes]]
 name = "equal"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "star"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "B"
-colors = true
-normals = true
-uvs = false
 
 ########### ENTITY #############
 [[entity]]

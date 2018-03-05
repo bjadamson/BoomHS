@@ -4,7 +4,6 @@
 #include <stlw/types.hpp>
 #include <stlw/try.hpp>
 
-// These macros are specific for working with Result<T, E>.
 //
 // They each have separate use cases, and build upon the general purpose macros inside
 // stlw/try.hpp.

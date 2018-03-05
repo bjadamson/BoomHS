@@ -21,8 +21,8 @@
 namespace types {
     template<typename T>
     struct Ok {
-        Ok(const T& val) : val(val) { }
-        Ok(T&& val) : val(std::move(val)) { }
+        Ok(const T& v) : val(v) { }
+        Ok(T&& v) : val(std::move(v)) { }
 
         T val;
     };
@@ -32,8 +32,8 @@ namespace types {
 
     template<typename E>
     struct Err {
-        Err(const E& val) : val(val) { }
-        Err(E&& val) : val(std::move(val)) { }
+        Err(const E& v) : val(v) { }
+        Err(E&& v) : val(std::move(v)) { }
 
         E val;
     };
@@ -110,6 +110,48 @@ namespace impl {
 
 template<typename T> struct Map;
 
+template<typename T> struct Map;
+
+template<typename Ret, typename Cls, typename Arg>
+struct Map<Ret (Cls::*)(Arg) const> {
+
+static_assert(!IsResult<Ret>::value,
+        "Can not map a callback returning a Result, use orElse instead");
+
+template<typename T, typename E, typename Func>
+static Result<T, Ret> map(const Result<T, E>& result, Func func) {
+    if (result.isErr()) {
+        auto res = func(result.storage().template get<E>());
+        return types::Err<Ret>(res);
+    }
+
+    return types::Ok<T>(result.storage().template get<T>());
+}
+
+template<typename E, typename Func>
+static Result<void, Ret> map(const Result<void, E>& result, Func func) {
+    if (result.isErr()) {
+        auto res = func(result.storage().template get<E>());
+        return types::Err<Ret>(res);
+    }
+
+    return types::Ok<void>();
+}
+
+};
+
+} // namespace impl
+
+template<typename Func> struct Map : public impl::Map<decltype(&Func::operator())> { };
+
+} // namespace ok
+
+namespace err {
+
+namespace impl {
+
+template<typename T> struct Map;
+
 template<typename Ret, typename Cls, typename Arg>
 struct Map<Ret (Cls::*)(Arg) const> : public Map<Ret (Arg)> { };
 
@@ -124,110 +166,36 @@ struct Map<Ret (Arg)> {
             "Can not map a callback returning a Result, use andThen instead");
 
     template<typename T, typename E, typename Func>
-    static Result<Ret, E> map(const Result<T, E>& result, Func func) {
+    static Result<T, Ret> map(const Result<T, E>& result, Func func) {
 
         static_assert(
-                std::is_same<T, Arg>::value ||
-                std::is_convertible<T, Arg>::value,
+                std::is_same<E, Arg>::value ||
+                std::is_convertible<E, Arg>::value,
                 "Incompatible types detected");
 
-        if (result.isOk()) {
-            auto res = func(result.storage().template get<T>());
-            return types::Ok<Ret>(std::move(res));
+        if (result.isErr()) {
+          auto res = func(result.storage().template get<E>());
+          return types::Err<Ret>(res);
         }
 
-        return types::Err<E>(result.storage().template get<E>());
+        return types::Ok<T>(result.storage().template get<T>());
     }
-};
-
-// Specialization for callback returning void
-template<typename Arg>
-struct Map<void (Arg)> {
 
     template<typename T, typename E, typename Func>
-    static Result<void, E> map(const Result<T, E>& result, Func func) {
+    static Result<T, Ret> map(Result<T, E>&& result, Func func) {
 
-        if (result.isOk()) {
-            func(result.storage().template get<T>());
-            return types::Ok<void>();
-        }
-
-        return types::Err<E>(result.storage().template get<E>());
-    }
-};
-
-// Specialization for a void Result
-template<typename Ret>
-struct Map<Ret (void)> {
-
-    template<typename T, typename E, typename Func>
-    static Result<Ret, E> map(const Result<T, E>& result, Func func) {
-        static_assert(std::is_same<T, void>::value,
-                "Can not map a void callback on a non-void Result");
-
-        if (result.isOk()) {
-            auto ret = func();
-            return types::Ok<Ret>(std::move(ret));
-        }
-
-        return types::Err<E>(result.storage().template get<E>());
-    }
-};
-
-// Specialization for callback returning void on a void Result
-template<>
-struct Map<void (void)> {
-
-    template<typename T, typename E, typename Func>
-    static Result<void, E> map(const Result<T, E>& result, Func func) {
-        static_assert(std::is_same<T, void>::value,
-                "Can not map a void callback on a non-void Result");
-
-        if (result.isOk()) {
-            func();
-            return types::Ok<void>();
-        }
-
-        return types::Err<E>(result.storage().template get<E>());
-    }
-};
-
-// General specialization for a callback returning a Result
-template<typename U, typename E, typename Arg>
-struct Map<Result<U, E> (Arg)> {
-
-    template<typename T, typename Func>
-    static Result<U, E> map(const Result<T, E>& result, Func func) {
         static_assert(
-                std::is_same<T, Arg>::value ||
-                std::is_convertible<T, Arg>::value,
+                std::is_same<E, Arg>::value ||
+                std::is_convertible<E, Arg>::value,
                 "Incompatible types detected");
 
-        if (result.isOk()) {
-            auto res = func(result.storage().template get<T>());
-            return res;
+        if (result.isErr()) {
+          auto res = func(result.storage().template get_moveout<E>());
+          return types::Err<Ret>(res);
         }
 
-        return types::Err<E>(result.storage().template get<E>());
+        return types::Ok<T>(result.storage().template get_moveout<T>());
     }
-};
-
-// Specialization for a void callback returning a Result
-template<typename U, typename E>
-struct Map<Result<U, E> (void)> {
-
-    template<typename T, typename Func>
-    static Result<U, E> map(const Result<T, E>& result, Func func) {
-        static_assert(std::is_same<T, void>::value, "Can not call a void-callback on a non-void Result");
-
-        if (result.isOk()) {
-            auto res = func();
-            return res;
-        }
-
-        return types::Err<E>(result.storage().template get<E>());
-    }
-
 };
 
 } // namespace impl
@@ -245,48 +213,6 @@ struct Map<Ret (Cls::*) (Args...) const> : public impl::Map<Ret (Args...)> { };
 
 template<typename Ret, typename... Args>
 struct Map<std::function<Ret (Args...)>> : public impl::Map<Ret (Args...)> { };
-
-} // namespace ok
-
-
-namespace err {
-
-namespace impl {
-
-template<typename T> struct Map;
-
-template<typename Ret, typename Cls, typename Arg>
-struct Map<Ret (Cls::*)(Arg) const> {
-
-    static_assert(!IsResult<Ret>::value,
-            "Can not map a callback returning a Result, use orElse instead");
-
-    template<typename T, typename E, typename Func>
-    static Result<T, Ret> map(const Result<T, E>& result, Func func) {
-        if (result.isErr()) {
-            auto res = func(result.storage().template get<E>());
-            return types::Err<Ret>(res);
-        }
-
-        return types::Ok<T>(result.storage().template get<T>());
-    }
-
-    template<typename E, typename Func>
-    static Result<void, Ret> map(const Result<void, E>& result, Func func) {
-        if (result.isErr()) {
-            auto res = func(result.storage().template get<E>());
-            return types::Err<Ret>(res);
-        }
-
-        return types::Ok<void>();
-    }
-
-
-};
-
-} // namespace impl
-
-template<typename Func> struct Map : public impl::Map<decltype(&Func::operator())> { };
 
 } // namespace err;
 
@@ -518,6 +444,18 @@ Ret mapError(const Result<T, E>& result, Func func) {
     return err::Map<Func>::map(result, func);
 }
 
+template<typename T, typename E, typename Func,
+         typename Ret =
+            Result<T,
+                typename details::ResultErrType<
+                    typename details::result_of<Func>::type
+                >::type
+            >
+        >
+Ret mapErrorMoveOut(Result<T, E>&& result, Func func) {
+    return err::Map<Func>::map(std::move(result), func);
+}
+
 template<typename T, typename E, typename Func>
 Result<T, E> then(const Result<T, E>& result, Func func) {
     return And::Then<Func>::then(result, func);
@@ -584,7 +522,7 @@ struct Storage {
     }
 
     template<typename U>
-    U get_movefrom() {
+    U get_moveout() {
         return std::move(*reinterpret_cast<U *>(&storage_));
     }
 
@@ -804,6 +742,18 @@ struct Result {
         return details::mapError(*this, func);
     }
 
+    template<typename Func,
+         typename Ret =
+             Result<T,
+                typename details::ResultErrType<
+                    typename details::result_of<Func>::type
+                >::type
+            >
+    >
+    Ret mapErrorMoveOut(Func func) {
+        return details::mapErrorMoveOut(std::move(*this), func);
+    }
+
     template<typename Func>
     Result<T, E> then(Func func) const {
         return details::then(*this, func);
@@ -867,7 +817,7 @@ struct Result {
     >::type
     unwrap_moveout() {
         if (isOk()) {
-            return storage().template get_movefrom<U>();
+            return storage().template get_moveout<U>();
         }
 
         std::fprintf(stderr, "Attempting to unwrap an error Result\n");
@@ -885,7 +835,7 @@ struct Result {
 
     E unwrapErrMove() {
         if (isErr()) {
-            return storage().template get_movefrom<E>();
+            return storage().template get_moveout<E>();
         }
 
         std::fprintf(stderr, "Attempting to unwrapErr an ok Result\n");
@@ -901,7 +851,7 @@ private:
     T expect_impl(std::true_type) const { }
     T expect_impl(std::false_type) const { return storage_.template get<T>(); }
 
-    T expect_moveout_impl(std::false_type) { return storage_.template get_movefrom<T>(); }
+    T expect_moveout_impl(std::false_type) { return storage_.template get_moveout<T>(); }
 
     bool ok_;
     storage_type storage_;
@@ -942,13 +892,24 @@ bool operator==(const Result<T, E>& lhs, types::Err<E> err) {
     return lhs.storage().template get<E>() == err.val;
 }
 
-#define TRY(...)                                                   \
-    ({                                                             \
-        auto res = __VA_ARGS__;                                    \
-        if (!res.isOk()) {                                         \
-            typedef details::ResultErrType<decltype(res)>::type E; \
-            return types::Err<E>(res.storage().get_movefrom<E>()); \
-        }                                                          \
-        typedef details::ResultOkType<decltype(res)>::type T;      \
-        res.storage().get_movefrom<T>();                                    \
+#define TRY(...)                                                                                   \
+    ({                                                                                             \
+        auto res = __VA_ARGS__;                                                                    \
+        if (!res.isOk()) {                                                                         \
+            typedef details::ResultErrType<decltype(res)>::type E;                                 \
+            return types::Err<E>(res.storage().get<E>());                                          \
+        }                                                                                          \
+        typedef details::ResultOkType<decltype(res)>::type T;                                      \
+        res.storage().get<T>();                                                                    \
+    })
+
+#define TRY_MOVEOUT(...)                                                                           \
+    ({                                                                                             \
+        auto res = __VA_ARGS__;                                                                    \
+        if (!res.isOk()) {                                                                         \
+            typedef typename details::ResultErrType<decltype(res)>::type E;                        \
+            return types::Err<E>(res.storage().template get_moveout<E>());                         \
+        }                                                                                          \
+        typedef typename details::ResultOkType<decltype(res)>::type T;                             \
+        res.storage().template get_moveout<T>();                                                   \
     })

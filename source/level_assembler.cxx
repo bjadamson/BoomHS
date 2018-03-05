@@ -130,7 +130,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
 
   registry.view<ShaderName, Color, MeshRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &mesh) {
-        auto const &obj = obj_store.get_obj(ObjQuery{mesh.name});
+        auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, false, true, false});
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
         dinfos.add(entity, MOVE(handle));
@@ -219,7 +219,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry
     // generate starting area
     auto &registry = registries[0];
 
-    auto level_assets = TRY(LevelLoader::load_level(logger, registry, level_string(0)));
+    auto level_assets = TRY_MOVEOUT(LevelLoader::load_level(logger, registry, level_string(0)));
     auto gendata = StartAreaGenerator::gen_level(registry, rng, level_assets.texture_table);
 
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
@@ -236,7 +236,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry
   // or somehow give it unique access during writing (read/write lock?).
   for (auto i = 0; i < DUNGEON_FLOOR_COUNT; ++i) {
     auto &registry = registries[i + 1];
-    auto level_assets = TRY(LevelLoader::load_level(logger, registry, level_string(i)));
+    auto level_assets = TRY_MOVEOUT(LevelLoader::load_level(logger, registry, level_string(i)));
     StairGenConfig const stairconfig{DUNGEON_FLOOR_COUNT, i, stairs_perfloor};
     LevelConfig const config{stairconfig, tdconfig};
 

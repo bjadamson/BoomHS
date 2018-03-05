@@ -32,7 +32,7 @@ place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_gene
 Result<stlw::empty_type, std::string>
 place_prefabs(TileGrid &tgrid, stlw::float_generator &rng)
 {
-  auto contents = TRY(stlw::read_file("prefabs/test0.prefab"));
+  auto contents = TRY_MOVEOUT(stlw::read_file("prefabs/test0.prefab"));
   size_t const height = 1 + std::count(contents.begin(), contents.end(), '\n');
   assert(height > 1);
 

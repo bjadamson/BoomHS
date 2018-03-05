@@ -104,18 +104,18 @@ check_errors();
   };
 
   // Use OpenGL 3.1 core
-  TRY(set_attribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
-  TRY(set_attribute(SDL_GL_CONTEXT_MINOR_VERSION, 1));
+  DO_EFFECT(set_attribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
+  DO_EFFECT(set_attribute(SDL_GL_CONTEXT_MINOR_VERSION, 1));
 
-  TRY(set_attribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG));
-  TRY(set_attribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
+  DO_EFFECT(set_attribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG));
+  DO_EFFECT(set_attribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
 
   // Turn on double buffering with a 24bit Z buffer.
   // You may need to change this to 16 or 32 for your system
-  TRY(set_attribute(SDL_GL_DOUBLEBUFFER, 1));
+  DO_EFFECT(set_attribute(SDL_GL_DOUBLEBUFFER, 1));
 
-  TRY(set_attribute(SDL_GL_DEPTH_SIZE, 24));
-  TRY(set_attribute(SDL_GL_STENCIL_SIZE, 8));
+  DO_EFFECT(set_attribute(SDL_GL_DEPTH_SIZE, 24));
+  DO_EFFECT(set_attribute(SDL_GL_STENCIL_SIZE, 8));
 
   return Ok(stlw::make_empty());
 }
