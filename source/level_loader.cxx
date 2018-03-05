@@ -304,24 +304,25 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
 {
   auto const load_entity = [&registry, &ttable](auto const& file) {
     // clang-format off
-    auto shader =           get_string_or_abort(file, "shader");
-    auto geometry =         get_string_or_abort(file, "geometry");
-    auto pos =              get_vec3_or_abort(file,   "position");
-    auto scale_o =          get_vec3(file,            "scale");
-    auto rotation_o =       get_vec3(file,            "rotation");
-    auto color =            get_color(file,           "color");
-    auto texture_name =     get_string(file,          "texture");
-    auto pointlight_o =     get_vec3(file,            "pointlight");
-    auto player =           get_string(file,          "player");
-    auto is_visible  =      get_bool(file,            "is_visible").value_or(true);
-    bool is_skybox   =      get_bool(file,            "skybox").value_or(false);
+    auto shader       = get_string_or_abort(file, "shader");
+    auto geometry     = get_string_or_abort(file, "geometry");
+    auto pos          = get_vec3_or_abort(file,   "position");
+    auto scale_o      = get_vec3(file,            "scale");
+    auto rotation_o   = get_vec3(file,            "rotation");
+    auto color        = get_color(file,           "color");
+    auto texture_name = get_string(file,          "texture");
+    auto pointlight_o = get_vec3(file,            "pointlight");
+    auto player       = get_string(file,          "player");
+    auto is_visible   = get_bool(file,            "is_visible").value_or(true);
+    bool is_skybox    = get_bool(file,            "skybox").value_or(false);
+    bool random_junk  = get_bool(file,            "random_junk_from_file").value_or(false);
     // clang-format on
 
     // texture OR color fields, not both
     assert((!color && !texture_name) || (!color && texture_name) || (color && !texture_name));
 
-    auto entity = registry.create();
-    auto &transform = registry.assign<Transform>(entity);
+    auto eid = registry.create();
+    auto &transform = registry.assign<Transform>(eid);
     transform.translation = pos;
 
     if (scale_o) {
@@ -335,20 +336,24 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       transform.rotate_degrees(rotation.z, opengl::Z_UNIT_VECTOR);
     }
 
-    auto &isv = registry.assign<IsVisible>(entity);
+    auto &isv = registry.assign<IsVisible>(eid);
     isv.value = is_visible;
 
-    auto &sn = registry.assign<ShaderName>(entity);
+    auto &sn = registry.assign<ShaderName>(eid);
     sn.value = shader;
 
+    if (random_junk) {
+      registry.assign<JunkEntityFromFILE>(eid);
+    }
+
     if (player) {
-      registry.assign<Player>(entity);
+      registry.assign<Player>(eid);
     }
     if (geometry == "cube") {
-      registry.assign<CubeRenderable>(entity);
+      registry.assign<CubeRenderable>(eid);
     }
     if (is_skybox) {
-      registry.assign<SkyboxTAG>(entity);
+      registry.assign<IsSkybox>(eid);
     }
     else if (boost::starts_with(geometry, "mesh")) {
       auto const parse_meshname = [](auto const& field) {
@@ -356,22 +361,22 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
         assert(0 < len);
         return field.substr(len, field.length() - len);
       };
-      auto &meshc = registry.assign<MeshRenderable>(entity);
+      auto &meshc = registry.assign<MeshRenderable>(eid);
       meshc.name = parse_meshname(geometry);
     }
     if (color) {
-      auto &cc = registry.assign<Color>(entity);
+      auto &cc = registry.assign<Color>(eid);
       *&cc = *color;
     }
     if (texture_name) {
-      auto &tr = registry.assign<TextureRenderable>(entity);
+      auto &tr = registry.assign<TextureRenderable>(eid);
       auto texture_o = ttable.find(*texture_name);
       assert(texture_o);
       tr.texture_info = *texture_o;
     }
 
     if (pointlight_o) {
-      auto &light_component = registry.assign<PointLight>(entity);
+      auto &light_component = registry.assign<PointLight>(eid);
       light_component.light.diffuse = Color{*pointlight_o};
     }
 
@@ -379,10 +384,8 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     auto const cm_optional = load_material_color(file);
     if (cm_optional) {
       auto const& cm = *cm_optional;
-      registry.assign<Material>(entity) = cm.material;
+      registry.assign<Material>(eid) = cm.material;
     }
-
-    registry.assign<EntityFromFILE>(entity);
   };
 
   auto const entity_table = get_table_array(config, "entity");

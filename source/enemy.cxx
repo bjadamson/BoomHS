@@ -10,6 +10,7 @@ void
 Enemy::load_new(EntityRegistry &registry, char const* name, TilePosition const& tpos)
 {
   auto eid = registry.create();
+  registry.assign<opengl::Color>(eid);
 
   // Enemies get a mesh
   auto &meshc = registry.assign<MeshRenderable>(eid);

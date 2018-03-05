@@ -122,9 +122,9 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
 {
   EntityDrawinfos dinfos;
 
-  // Render CUBES
-  registry.view<ShaderName, PointLight, CubeRenderable>().each(
-      [&](auto entity, auto &sn, auto &pointlight, auto &) {
+  // copy CUBES to GPU
+  registry.view<ShaderName, CubeRenderable, PointLight>().each(
+      [&](auto entity, auto &sn, auto &&...) {
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = opengl::gpu::copy_vertexonlycube_gpu(logger, shader_ref);
         dinfos.add(entity, MOVE(handle));
@@ -136,49 +136,53 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
         dinfos.add(entity, MOVE(handle));
       });
 
-  // Render MESHES
-  registry.view<ShaderName, Color, MeshRenderable>().each(
-      [&](auto entity, auto &sn, auto &color, auto &mesh) {
-        auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, true, true, false});
+  // copy MESHES to GPU
+  registry.view<ShaderName, MeshRenderable, Color>().each(
+      [&](auto entity, auto &sn, auto &mesh, auto &) {
         auto &shader_ref = sps.ref_sp(sn.value);
+        auto const va = shader_ref.va();
+        auto const qa = QueryAttributes::from_va(va);
+        auto const qo = ObjQuery{mesh.name, qa};
+        auto const &obj = obj_store.get_obj(qo);
+
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
         dinfos.add(entity, MOVE(handle));
       });
-  /*
   registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
       [&](auto entity, auto &sn, auto &mesh, auto &texture) {
-        auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, false, true, true});
+
         auto &shader_ref = sps.ref_sp(sn.value);
+        auto const va = shader_ref.va();
+        auto const qa = QueryAttributes::from_va(va);
+        auto const qo = ObjQuery{mesh.name, qa};
+        auto const &obj = obj_store.get_obj(qo);
+
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
-  */
-  registry.view<ShaderName, MeshRenderable, Torch, TextureRenderable>().each(
-      [&](auto entity, auto &sn, auto &mesh, auto &torch, auto &texture)
-  {
-    auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, false, false, true});
-    std::cerr << "obj store AFTER torch 'gotten'\n";
-    std::cerr << obj_store << "\n";
+  registry.view<ShaderName, MeshRenderable, JunkEntityFromFILE>().each([&](auto entity, auto &sn, auto &mesh, auto &&...) {
     auto &shader_ref = sps.ref_sp(sn.value);
-    auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
-    dinfos.add(entity, MOVE(handle));
-  });
+    auto const va = shader_ref.va();
+    auto const qa = QueryAttributes::from_va(va);
+    auto const qo = ObjQuery{mesh.name, qa};
+    auto const &obj = obj_store.get_obj(qo);
 
-  /*
-  registry.view<ShaderName, MeshRenderable, EntityFromFILE>().each([&](auto entity, auto &sn, auto &mesh, auto &&...) {
-    auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, true, true, false});
-    auto &shader_ref = sps.ref_sp(sn.value);
     auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
     dinfos.add(entity, MOVE(handle));
   });
-  */
 
+  // copy TILES to GPU
   std::vector<DrawInfo> tile_dinfos;
   tile_dinfos.reserve(static_cast<size_t>(TileType::UNDEFINED));
   for (auto const& it : ttable) {
     auto const& mesh_name = it.mesh_name;
     auto const& vshader_name = it.vshader_name;
-    auto const &obj = obj_store.get_obj(ObjQuery{mesh_name, true, true, true, false});
+
+        auto &shader_ref = sps.ref_sp(vshader_name);
+        auto const va = shader_ref.va();
+        auto const qa = QueryAttributes::from_va(va);
+        auto const qo = ObjQuery{mesh_name, qa};
+        auto const &obj = obj_store.get_obj(qo);
 
     auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, std::nullopt);
     tile_dinfos[static_cast<size_t>(it.type)] = MOVE(handle);

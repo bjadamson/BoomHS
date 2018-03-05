@@ -510,25 +510,22 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
 
   //
   // Render everything loaded form level file.
-  //registry.view<ShaderName, Transform, IsVisible, EntityFromFILE>().each(draw_fn);
+  registry.view<ShaderName, Transform, IsVisible, JunkEntityFromFILE>().each(draw_fn);
 
   // torch
-  //registry.view<ShaderName, Transform, IsVisible, Torch>().each(draw_torch);
+  registry.view<ShaderName, Transform, IsVisible, Torch>().each(draw_torch);
 
   // enemies
-  //registry.view<ShaderName, Transform, IsVisible, MeshRenderable, EnemyData>().each(draw_fn);
+  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, EnemyData>().each(draw_fn);
 
   // player
   registry.view<ShaderName, Transform, IsVisible, MeshRenderable, Player>().each(player_drawfn);
-
-  // tiles
-  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, TileComponent>().each(draw_fn);
 
   if (es.draw_skybox) {
     auto const draw_skybox = [&](auto eid, auto &sn, auto &transform, auto &&... args) {
       draw_fn(eid, sn, transform, FORWARD(args)...);
     };
-    registry.view<ShaderName, Transform, IsVisible, SkyboxTAG>().each(draw_skybox);
+    registry.view<ShaderName, Transform, IsVisible, IsSkybox>().each(draw_skybox);
   }
 }
 

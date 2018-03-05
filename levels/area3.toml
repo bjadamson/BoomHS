@@ -258,6 +258,7 @@ position = [-5.0, -2.0, 0.0]
 shader = "3dcube_texture"
 geometry = "cube"
 texture = "boring_cube"
+random_junk_from_file = true
 
 [[entity]]
 position = [-5.0, 0.0, -2.0]
@@ -272,27 +273,4 @@ shader = "3dtexture"
 geometry = "mesh:house"
 texture = "TextureAtlas"
 scale = [0.4, 0.4, 0.4]
-
-[[entity]]
-position = [-3.0, 0.0, -5.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:T"
-# DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
-# IN THE MESHES TABLE.
-#color = [0.0, 1.0, 0.0, 1.0]
-
-[[entity]]
-position = [3.0, 0.0, -5.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:O"
-# DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
-# IN THE MESHES TABLE.
-#color = [0.0, 0.0, 1.0, 1.0]
-
-[[entity]]
-position = [5.0, 0.0, -5.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:O"
-# DOESN"T WORK UNTIL WE SET TEXTURES AFTER INITIAL MODEL HAS LOADED, UNTIL THEN THIS COLOR IS SET
-# IN THE MESHES TABLE.
-#color = [1.0, 0.0, 0.0, 1.0]
+random_junk_from_file = true

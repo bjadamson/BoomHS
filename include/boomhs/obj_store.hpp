@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/obj.hpp>
+#include <opengl/vertex_attribute.hpp>
 
 #include <ostream>
 #include <string>
@@ -12,9 +13,12 @@ namespace boomhs
 struct QueryAttributes
 {
   bool positions = true;
-  bool colors = true;
   bool normals = true;
+  bool colors = true;
   bool uvs = true;
+
+  static QueryAttributes
+  from_va(opengl::VertexAttribute const&);
 };
 
 bool

@@ -11,12 +11,23 @@ namespace boomhs
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // QueryAttributes
+QueryAttributes
+QueryAttributes::from_va(opengl::VertexAttribute const& va)
+{
+  bool const p = va.has_positions();
+  bool const n = va.has_normals();
+  bool const c = va.has_colors();
+  bool const u = va.has_uvs();
+  return QueryAttributes{p, n, c, u};
+}
+
 bool
 operator==(QueryAttributes const& a, QueryAttributes const& b)
 {
   // clang-format off
   return ALLOF(
     a.positions == b.positions,
+    a.normals == b.normals,
     b.colors == a.colors,
     a.uvs == b.uvs);
   // clang-format on
