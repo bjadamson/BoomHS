@@ -46,6 +46,27 @@ generate_npc_position(TileGrid const& tilegrid, EntityRegistry &registry,
 namespace boomhs
 {
 
+char const*
+alignment_to_string(Alignment const al)
+{
+#define CASE(ATTRIBUTE, ATTRIBUTE_S)                                                               \
+  case Alignment::ATTRIBUTE:                                                                       \
+      return ATTRIBUTE_S;
+
+  switch (al) {
+      CASE(EVIL,    "EVIL");
+      CASE(NEUTRAL, "NEUTRAL");
+      CASE(GOOD,    "GOOD");
+      CASE(NOT_SET, "NOT_SET");
+    default:
+      break;
+  }
+#undef CASE
+
+  // terminal error
+  std::abort();
+}
+
 void
 NPC::create(EntityRegistry &registry, char const* name, TilePosition const& tpos)
 {

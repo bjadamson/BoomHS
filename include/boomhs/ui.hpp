@@ -13,7 +13,7 @@ struct EngineState;
 class LevelManager;
 
 void
-draw_ingame_ui();
+draw_ingame_ui(EngineState &, LevelManager &, EntityRegistry &);
 
 void
 draw_debug_ui(EngineState &, LevelManager &, window::SDLWindow &, EntityRegistry &);

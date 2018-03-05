@@ -484,8 +484,42 @@ namespace boomhs
 {
 
 void
-draw_ingame_ui()
+draw_ingame_ui(EngineState &es, LevelManager &lm, EntityRegistry &registry)
 {
+  auto &ui_state = es.ui_state.ingame;
+
+  auto &zs = lm.active();
+  auto &ldata = zs.level_data;
+
+  auto &nearby_targets = ldata.nearby_targets;
+  if (nearby_targets.empty()) {
+    // nothing to draw
+    return;
+  }
+
+  EntityID const closest = nearby_targets.closest();
+
+  auto const& npcdata = registry.get<NPCData>(closest);
+  if (ImGui::Begin("Target")) {
+    ImGui::Text("Name %s", npcdata.name);
+    ImGui::Text("Health %i", npcdata.health);
+    ImGui::Text("Level %i", npcdata.level);
+    ImGui::Text("Alignment %s", alignment_to_string(npcdata.alignment));
+    ImGui::End();
+  }
+
+  /*
+  ImGuiIO& io = ImGui::GetIO();
+  ImFont* font_current = ImGui::GetFont();
+  if (ImGui::Begin("FONTS")) {
+    if (ImGui::BeginCombo("FONT LABEL", font_current->GetDebugName())) {
+        for (int n = 0; n < io.Fonts->Fonts.Size; n++)
+            if (ImGui::Selectable(io.Fonts->Fonts[n]->GetDebugName(), io.Fonts->Fonts[n] == font_current))
+                io.FontDefault = io.Fonts->Fonts[n];
+        ImGui::EndCombo();
+    }
+  }
+  */
 }
 
 void

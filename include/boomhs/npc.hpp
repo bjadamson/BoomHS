@@ -20,6 +20,9 @@ enum class Alignment
   NOT_SET
 };
 
+char const*
+alignment_to_string(Alignment const);
+
 struct NPCData
 {
   char const* name = "NOT SET. ERROR";
