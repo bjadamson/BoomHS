@@ -3,8 +3,9 @@
 #include <opengl/lighting.hpp>
 #include <opengl/texture.hpp>
 
-#include <boomhs/enemy.hpp>
+#include <boomhs/npc.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/player.hpp>
 #include <boomhs/types.hpp>
 #include <boomhs/tile.hpp>
 
@@ -44,11 +45,6 @@ struct StairInfo
 {
   TilePosition tile_position;
   TilePosition exit_position;
-};
-
-struct Player
-{
-  TilePosition tile_position;
 };
 
 struct ShaderName
@@ -111,7 +107,7 @@ find_enemies(EntityRegistry &registry)
 {
   using namespace boomhs;
   using namespace opengl;
-  return find_all_entities_with_component<EnemyData>(registry);
+  return find_all_entities_with_component<NPCData>(registry);
 }
 
 inline auto

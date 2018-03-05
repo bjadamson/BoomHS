@@ -93,6 +93,22 @@ TileGrid::assign_river(Tile &tile, glm::vec2 const& flow_dir)
 }
 
 bool
+TileGrid::is_blocked(TilePosition::ValueT const x, TilePosition::ValueT const y) const
+{
+  auto const type = data(x, y).type;
+  if (ANYOF(type == TileType::WALL, type == TileType::STAIR_DOWN, type == TileType::STAIR_UP)) {
+    return true;
+  }
+  return false;
+}
+
+bool
+TileGrid::is_blocked(TilePosition const& tpos) const
+{
+  return is_blocked(tpos.x, tpos.y);
+}
+
+bool
 TileGrid::is_visible(Tile &tile)
 {
   return tile.is_visible(registry_);

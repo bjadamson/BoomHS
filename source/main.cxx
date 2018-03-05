@@ -1,5 +1,5 @@
 #include <boomhs/components.hpp>
-#include <boomhs/enemy.hpp>
+#include <boomhs/npc.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_assembler.hpp>
@@ -246,7 +246,7 @@ update_visible_entities(LevelManager &lm, EntityRegistry &registry)
   auto &tilegrid = ldata.tilegrid();
   auto &player = ldata.player;
 
-  for (auto const eid : registry.view<EnemyData>()) {
+  for (auto const eid : registry.view<NPCData>()) {
     auto &isv = registry.get<IsVisible>(eid);
 
     // Convert to tile position, match tile visibility.

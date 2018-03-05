@@ -516,7 +516,7 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
   registry.view<ShaderName, Transform, IsVisible, Torch>().each(draw_torch);
 
   // enemies
-  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, EnemyData>().each(draw_fn);
+  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, NPCData>().each(draw_fn);
 
   // player
   registry.view<ShaderName, Transform, IsVisible, MeshRenderable, Player>().each(player_drawfn);
@@ -634,7 +634,7 @@ draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
   if (nearby_targets.empty()) {
     return;
   }
-  auto const nearest_enemy = nearby_targets.closest();
+  auto const nearest_npc = nearby_targets.closest();
 
   auto &registry = zs.registry;
   auto eid = registry.create();
@@ -643,9 +643,9 @@ draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
   auto &transform = registry.assign<Transform>(eid);
   assert(registry.has<Transform>(eid));
 
-  assert(registry.has<Transform>(nearest_enemy));
-  auto &enemy_transform = registry.get<Transform>(nearest_enemy);
-  transform.translation = enemy_transform.translation;
+  assert(registry.has<Transform>(nearest_npc));
+  auto &npc_transform = registry.get<Transform>(nearest_npc);
+  transform.translation = npc_transform.translation;
 
   auto &camera = zs.level_data.camera;
   assert(registry.has<Transform>(eid));

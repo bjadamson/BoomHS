@@ -1,5 +1,5 @@
 #include <boomhs/dungeon_generator.hpp>
-#include <boomhs/enemy.hpp>
+#include <boomhs/npc.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/item_factory.hpp>
 #include <boomhs/stairwell_generator.hpp>
@@ -182,18 +182,8 @@ create_v_tunnel(uint64_t const y1, uint64_t const y2, uint64_t const x, TileType
   }
 }
 
-bool
-is_blocked(uint64_t const x, uint64_t const y, TileGrid const& tilegrid)
-{
-  auto const type = tilegrid.data(x, y).type;
-  if (ANYOF(type == TileType::WALL, type == TileType::STAIR_DOWN, type == TileType::STAIR_UP)) {
-    return true;
-  }
-  return false;
-}
-
 auto
-generate_monster_position(TileGrid const& tilegrid, EntityRegistry &registry,
+generate_torch_position(TileGrid const& tilegrid, EntityRegistry &registry,
     stlw::float_generator &rng)
 {
   auto const dimensions = tilegrid.dimensions();
@@ -205,7 +195,7 @@ generate_monster_position(TileGrid const& tilegrid, EntityRegistry &registry,
     x = rng.gen_int_range(0, width - 1);
     y = rng.gen_int_range(0, height - 1);
 
-    if (is_blocked(x, y, tilegrid)) {
+    if (tilegrid.is_blocked(x, y)) {
       continue;
     }
 
@@ -226,18 +216,8 @@ void
 place_monsters(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng)
 {
   auto const num_monsters = rng.gen_int_range(MIN_MONSTERS_PER_FLOOR, MAX_MONSTERS_PER_FLOOR);
-
-  auto const make_monster = [&](char const* name) {
-    auto const tpos = generate_monster_position(tilegrid, registry, rng);
-    Enemy::load_new(registry, name, tpos);
-  };
-
   FORI(i, num_monsters) {
-    if (rng.gen_bool()) {
-      make_monster("O");
-    } else {
-      make_monster("T");
-    }
+    NPC::create_random(tilegrid, registry, rng);
   }
 }
 
@@ -248,7 +228,7 @@ place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_gene
   auto eid = ItemFactory::create_torch(registry, rng, ttable);
   auto &transform = registry.get<Transform>(eid);
 
-  auto const pos = generate_monster_position(tilegrid, registry, rng);
+  auto const pos = generate_torch_position(tilegrid, registry, rng);
   transform.translation = glm::vec3{pos.x, 0.5, pos.y};
   std::cerr << "torchlight pos: '" << transform.translation << "'\n";
 
