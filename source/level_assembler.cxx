@@ -130,7 +130,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
 
   registry.view<ShaderName, Color, MeshRenderable>().each(
       [&](auto entity, auto &sn, auto &color, auto &mesh) {
-        auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, false, true, false});
+        auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, true, true, false});
         auto &shader_ref = sps.ref_sp(sn.value);
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
         dinfos.add(entity, MOVE(handle));
@@ -155,7 +155,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
         dinfos.add(entity, MOVE(handle));
       });
 
-  registry.view<ShaderName, MeshRenderable>().each([&](auto entity, auto &sn, auto &mesh) {
+  registry.view<ShaderName, MeshRenderable, EntityFromFILE>().each([&](auto entity, auto &sn, auto &mesh, auto &&...) {
     auto const &obj = obj_store.get_obj(ObjQuery{mesh.name, true, true, true, false});
     auto &shader_ref = sps.ref_sp(sn.value);
     auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);

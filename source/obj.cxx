@@ -176,14 +176,15 @@ load_objfile(char const* objpath, char const* mtlpath)
         })
 
         LOAD_ATTR(load_positions(index, attrib, &objdata.positions));
-        LOAD_ATTR(load_normals(index, attrib, &objdata.normals));
-        LOAD_ATTR(load_uvs(index, attrib, &objdata.uvs));
 
         // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
         // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
         // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
         //
         LOAD_ATTR(load_colors(LOC::WHITE, &objdata.colors));
+
+        LOAD_ATTR(load_normals(index, attrib, &objdata.normals));
+        LOAD_ATTR(load_uvs(index, attrib, &objdata.uvs));
 
 #undef LOAD_ATTR
         indices.push_back(indices.size()); // 0, 1, 2, ...

@@ -1,10 +1,11 @@
 title = "Level 0"
-background = [0.2, 0.7, 1.0]
+background = [0.0, 0.0, 0.0]
 camera_spherical_coords = [2.56, 6.6446330, 56.379040]
 
-directional_light_diffuse = [0.0, 0.0, 0.0]
-directional_light_specular = [0.0, 0.0, 0.0]
-directional_light_direction = [-1.0, 0.0, -1.0]
+ambient = [0.0, 0.0, 0.0]
+directional_light_diffuse = [0.0, 0.0, 1.0]
+directional_light_specular = [0.0, 1.0, 0.0]
+directional_light_direction = [-0.4, 0.0, 0.1]
 
 [[resource]]
 name = "building_skybox"
@@ -28,23 +29,53 @@ bottom = "cube_bottom.jpg"
 
 [[resource]]
 name = "container"
-type = "texture:2d"
+type = "texture:2d-RGB"
 filename = "container.jpg"
 
 [[resource]]
+name = "Lava"
+type = "texture:2d-RGBA"
+filename = "lava.jpg"
+
+[[resource]]
 name = "wall"
-type = "texture:2d"
+type = "texture:2d-RGB"
 filename = "wall.jpg"
 
 [[resource]]
 name = "TextureAtlas"
-type = "texture:2d"
+type = "texture:2d-RGB"
 filename = "TextureAtlas.jpg"
+
+[[resource]]
+name = "TargetReticle"
+type = "texture:2d-RGBA"
+filename = "circle_reticle.png"
 
 ###################################################################################################
 [[tile]]
 tile = "AT"
 mesh = "at"
+vshader = "3d_pos_normal_color"
+color = [1.0, 1.0, 1.0]
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[tile]]
+tile = "BAR"
+mesh = "bar"
+vshader = "3d_pos_normal_color"
+color = [1.0, 1.0, 1.0]
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[tile]]
+tile = "BRIDGE"
+mesh = "equal"
 vshader = "3d_pos_normal_color"
 color = [1.0, 1.0, 1.0]
 ambient = [1.0, 1.0, 1.0]
@@ -63,33 +94,23 @@ specular = [1.0, 1.0, 1.0]
 shininess = 1.0
 
 [[tile]]
+tile = "FLOOR"
+mesh = "plus"
+vshader = "floor"
+color = [1.0, 1.0, 1.0]
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[tile]]
 tile = "RIVER"
 mesh = "tilde"
 vshader = "river"
 color = [1.0, 1.0, 1.0]
-ambient = [1.0, 0.0, 1.0]
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
-shininess = 1.0
-
-[[tile]]
-tile = "WALL"
-mesh = "hashtag"
-vshader = "hashtag"
-color = [1.0, 1.0, 1.0]
-ambient = [1.0, 1.0, 1.0]
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
-shininess = 1.0
-
-[[tile]]
-tile = "BRIDGE"
-mesh = "equal"
-vshader = "3d_pos_normal_color"
-color = [1.0, 1.0, 1.0]
-ambient = [1.0, 1.0, 1.0]
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
+ambient = [0.1, 0.2, 1.0]
+diffuse = [0.1, 0.3, 1.0]
+specular = [0.2, 0.4, 1.0]
 shininess = 1.0
 
 [[tile]]
@@ -122,88 +143,81 @@ diffuse = [1.0, 0.0, 0.0]
 specular = [1.0, 0.0, 0.0]
 shininess = 1.0
 
+[[tile]]
+tile = "TELEPORTER"
+mesh = "teleporter"
+vshader = "3d_pos_normal_color"
+color = [1.0, 1.0, 1.0]
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[tile]]
+tile = "WALL"
+mesh = "hashtag"
+vshader = "hashtag"
+color = [1.0, 1.0, 1.0]
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
 ###################################################################################################
 [[meshes]]
+name = "at"
+
+[[meshes]]
+name = "door"
+
+[[meshes]]
+name = "teleporter"
+
+[[meshes]]
+name = "bar"
+
+[[meshes]]
 name = "house"
-colors = false
-normals = true
-uvs = true
 
 [[meshes]]
 name = "hashtag"
-colors = true
-normals = true
-uvs = false
-
-[[meshes]]
-name = "at"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "plus"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "O"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "T"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "cube"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "robot"
-colors = true
-normals = true
-uvs = false
 
 [[meshes]]
 name = "stair_down"
-colors = false
-normals = true
-uvs = false
 
 [[meshes]]
 name = "stair_up"
-colors = false
-normals = true
-uvs = false
 
 [[meshes]]
 name = "tilde"
-colors = false
-normals = true
-uvs = false
 
 [[meshes]]
 name = "equal"
-colors = true
-normals = true
-uvs = false
+
+[[meshes]]
+name = "star"
 
 [[meshes]]
 name = "B"
-colors = true
-normals = true
-uvs = false
 
 ########### ENTITY #############
 [[entity]]
-pos = [8.5, 0.0, 8.5]
+pos = [8.0, 0.0, 8.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:at"
 player = "player"
@@ -219,28 +233,24 @@ shininess = 1.0
 pos = [5.0, 5.0, 5.0]
 shader = "light"
 geometry = "cube"
-pointlight = [0.0, 1.0, 0.0]
+pointlight = [0.0, 0.0, 0.0]
+scale = [0.4, 0.4, 0.4]
 
 # LIGHT #1
 [[entity]]
 pos = [35.0, 5.0, 35.0]
 shader = "light"
 geometry = "cube"
-pointlight = [1.0, 0.0, 0.0]
+pointlight = [0.0, 0.0, 0.0]
+scale = [0.4, 0.4, 0.4]
 
 # LIGHT #2
 [[entity]]
 pos = [5.0, 5.0, 35.0]
 shader = "light"
 geometry = "cube"
-pointlight = [0.5, 0.2, 0.7]
-
-# LIGHT #3
-[[entity]]
-pos = [35.0, 5.0, 5.0]
-shader = "light"
-geometry = "cube"
-pointlight = [0.0, 0.0, 1.0]
+pointlight = [0.0, 0.0, 0.0]
+scale = [0.4, 0.4, 0.4]
 
 ###################################################################################################
 [[entity]]
@@ -260,7 +270,7 @@ pos = [20.0, 0.0, 20.0]
 shader = "3dtexture"
 geometry = "mesh:house"
 texture = "TextureAtlas"
-scale = [0.2, 0.2, 0.2]
+scale = [0.4, 0.4, 0.4]
 
 [[entity]]
 pos = [-3.0, 0.0, -5.0]

@@ -159,46 +159,40 @@ ObjStore::create_interleaved_buffer(ObjQuery const& query) const
   ObjBuffer buffer;
   auto &v = buffer.vertices;
   auto &indices = buffer.indices;
+
+  auto const copy_n = [&v](auto const& buffer, size_t const num, size_t &count) {
+    FOR(i, num) {
+      v.emplace_back(buffer[count++]);
+    }
+  };
   {
+    auto const& query_attr = query.attributes;
     size_t a = 0, b = 0, c = 0, d = 0;
     FOR(i, num_vertices) {
-      {
-        auto const& p = data.positions;
-        v.emplace_back(p[a++]);
-        v.emplace_back(p[a++]);
-        v.emplace_back(p[a++]);
-        v.emplace_back(p[a++]);
+      assert(!data.positions.empty());
+      copy_n(data.positions, 4, a);
+
+      if (query_attr.normals) {
+        copy_n(data.normals, 3, b);
       }
-      auto const& query_attr = query.attributes;
       if (query_attr.colors) {
         // encode assumptions for now
         assert(!query_attr.uvs);
-
-        auto const& c = data.colors;
-        v.emplace_back(c[b++]);
-        v.emplace_back(c[b++]);
-        v.emplace_back(c[b++]);
-        v.emplace_back(c[b++]);
-      }
-      if (query_attr.normals) {
-        auto const& n = data.normals;
-        v.emplace_back(n[c++]);
-        v.emplace_back(n[c++]);
-        v.emplace_back(n[c++]);
+        copy_n(data.colors, 4, c);
       }
       if (query_attr.uvs) {
         // encode assumptions for now
         assert(!query_attr.colors);
 
-        auto const& n = data.uvs;
-        v.emplace_back(n[d++]);
-        v.emplace_back(n[d++]);
+        copy_n(data.uvs, 2, d);
       }
     }
   }
-  FOR(i, buffer.indices.size()) {
-    indices.emplace_back(buffer.indices[i]);
+  FOR(i, data.indices.size()) {
+    assert(i == data.indices[i]);
+    indices.emplace_back(i);
   }
+  assert(indices.size() == data.indices.size());
 
   return buffer;
 }
