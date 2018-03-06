@@ -65,6 +65,7 @@ struct EngineState
   bool quit = false;
   bool player_collision;
   bool mariolike_edges;
+  bool draw_imguimetrics;
 
   // rendering state
   bool draw_entities;

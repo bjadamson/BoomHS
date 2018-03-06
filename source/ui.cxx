@@ -508,18 +508,17 @@ draw_ingame_ui(EngineState &es, LevelManager &lm, EntityRegistry &registry)
     ImGui::End();
   }
 
-  /*
-  ImGuiIO& io = ImGui::GetIO();
-  ImFont* font_current = ImGui::GetFont();
-  if (ImGui::Begin("FONTS")) {
-    if (ImGui::BeginCombo("FONT LABEL", font_current->GetDebugName())) {
-        for (int n = 0; n < io.Fonts->Fonts.Size; n++)
-            if (ImGui::Selectable(io.Fonts->Fonts[n]->GetDebugName(), io.Fonts->Fonts[n] == font_current))
-                io.FontDefault = io.Fonts->Fonts[n];
-        ImGui::EndCombo();
-    }
-  }
-  */
+  ImGuiIO &io = ImGui::GetIO();
+  assert(io.Fonts);
+  assert(io.Fonts->TexID);
+
+  ImTextureID my_tex_id = io.Fonts->TexID;
+  //float my_tex_w = (float)io.Fonts->TexWidth;
+  //float my_tex_h = (float)io.Fonts->TexHeight;
+
+  //ImGui::Text("%.0fx%.0f", my_tex_w, my_tex_h);
+  //ImVec2 pos = ImGui::GetCursorScreenPos();
+  //ImGui::Image(my_tex_id, ImVec2(my_tex_w, my_tex_h), ImVec2(0,0), ImVec2(1,1), ImColor(255,255,255,255), ImColor(255,255,255,128));
 }
 
 void
@@ -553,6 +552,11 @@ draw_debug_ui(EngineState &es, LevelManager &lm, window::SDLWindow &window, Enti
     ImGui::Checkbox("Draw Entities", &es.draw_entities);
     ImGui::Checkbox("Draw Normals", &es.draw_normals);
     ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
+
+    ImGui::Checkbox("ImGui Metrics", &es.draw_imguimetrics);
+    if (es.draw_imguimetrics) {
+      ImGui::ShowMetricsWindow(&es.draw_imguimetrics);
+    }
   }
 
   if (ImGui::BeginMainMenuBar()) {
