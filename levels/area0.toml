@@ -52,6 +52,11 @@ name = "TargetReticle"
 type = "texture:2d-RGBA"
 filename = "circle_reticle.png"
 
+[[resource]]
+name = "test_icon"
+type = "texture:2d-RGB"
+filename = "test_icon.png"
+
 ###################################################################################################
 [[tile]]
 tile = "AT"

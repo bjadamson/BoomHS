@@ -3,13 +3,14 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/level_manager.hpp>
+#include <opengl/global.hpp>
 
 #include <extlibs/sdl.hpp>
 
 #include <stlw/math.hpp>
 #include <extlibs/fmt.hpp>
 
-#include <imgui/imgui.hpp>
+#include <extlibs/imgui.hpp>
 #include <algorithm>
 
 namespace
@@ -508,17 +509,26 @@ draw_ingame_ui(EngineState &es, LevelManager &lm, EntityRegistry &registry)
     ImGui::End();
   }
 
-  ImGuiIO &io = ImGui::GetIO();
-  assert(io.Fonts);
-  assert(io.Fonts->TexID);
+  auto &ttable = zs.gfx_state.texture_table;
+  assert(ttable.find("test_icon") != std::nullopt);
+  auto const ti = *ttable.find("text_icon");
 
-  ImTextureID my_tex_id = io.Fonts->TexID;
-  //float my_tex_w = (float)io.Fonts->TexWidth;
-  //float my_tex_h = (float)io.Fonts->TexHeight;
+  ImTextureID my_tex_id = reinterpret_cast<void*>(ti.id);
 
-  //ImGui::Text("%.0fx%.0f", my_tex_w, my_tex_h);
-  //ImVec2 pos = ImGui::GetCursorScreenPos();
-  //ImGui::Image(my_tex_id, ImVec2(my_tex_w, my_tex_h), ImVec2(0,0), ImVec2(1,1), ImColor(255,255,255,255), ImColor(255,255,255,128));
+  int w, h;
+  int miplevel = 0;
+  glGetTexLevelParameteriv(GL_TEXTURE_2D, miplevel, GL_TEXTURE_WIDTH, &w);
+  glGetTexLevelParameteriv(GL_TEXTURE_2D, miplevel, GL_TEXTURE_HEIGHT, &h);
+  std::cerr << "texture id: '" << ti.id << "'\n";
+  std::cerr << "w: '" << w << "'\n";
+  std::cerr << "h: '" << h << "'\n";
+
+  if (ImGui::Begin("IMAGE TEST")) {
+    ImGui::Text("%.0ix%.0i", w, h);
+    ImVec2 pos = ImGui::GetCursorScreenPos();
+    ImGui::Image(my_tex_id, ImVec2(32, 32), ImVec2(0,0), ImVec2(1,1), ImColor(255,255,255,255), ImColor(255,255,255,128));
+    ImGui::End();
+  }
 }
 
 void

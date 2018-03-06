@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <iostream>
 
 namespace
 {
@@ -20,7 +21,7 @@ namespace
 using namespace opengl;
 using pimage_t = std::unique_ptr<unsigned char, void (*)(unsigned char*)>;
 
-struct image_data_t
+struct ImageData
 {
   int width, height;
   pimage_t data;
@@ -39,7 +40,7 @@ load_image_into_memory(stlw::Logger &logger, char const* path, bool const alpha)
     std::abort();
   }
   pimage_t image_data{pimage, &SOIL_free_image_data};
-  return image_data_t{w, h, MOVE(image_data)};
+  return ImageData{w, h, MOVE(image_data)};
 }
 
 void
@@ -53,6 +54,8 @@ upload_image(stlw::Logger &logger, std::string const& filename, GLenum const tar
   auto const width = image_data.width;
   auto const height = image_data.height;
   auto const* data = image_data.data.get();
+
+  std::cerr << "uploading '" << path << "' with w: '" << width << "' h: '" << height << "'\n";
   glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 }
 
@@ -71,17 +74,6 @@ TextureInfo::deallocate()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TextureTable
-std::optional<TextureInfo>
-TextureTable::lookup_texture(char const* name) const
-{
-  if (!name) {
-    return std::nullopt;
-  }
-  auto const cmp = [&name](auto const& it) { return it.first.name == name; };
-  auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
-  return it == data_.cend() ? std::nullopt : std::make_optional(it->second.resource());
-}
-
 void
 TextureTable::add_texture(TextureFilenames &&tf, Texture &&ta)
 {
@@ -92,7 +84,19 @@ TextureTable::add_texture(TextureFilenames &&tf, Texture &&ta)
 std::optional<TextureInfo>
 TextureTable::find(std::string const& name) const
 {
-  return lookup_texture(name.c_str());
+  auto const cmp = [&name](auto const& it)
+  {
+    std::cerr << "=====\n";
+    std::cerr << "cmp it.first.name: '" << it.first.name << "'\n";
+    FOR(i, it.first.filenames.size()) {
+      auto const& fn = it.first.filenames[i];
+      std::cerr << "cmp fn[i]: '" << fn << "'\n";
+    }
+    std::cerr << "=====\n";
+    return it.first.name == name;
+  };
+  auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
+  return it == data_.cend() ? std::nullopt : std::make_optional(it->second.resource());
 }
 
 } // ns opengl
@@ -110,6 +114,7 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const 
   TextureInfo ti;
   ti.mode = TEXTURE_MODE;
   glGenTextures(1, &ti.id);
+  std::cerr << "texture '" << filename << "' has TextureID: '" << ti.id << "'\n";
 
   global::texture_bind(ti);
   ON_SCOPE_EXIT([&ti]() { global::texture_unbind(ti); });

@@ -1,4 +1,4 @@
-title = "Level 1"
+title = "Level 0"
 background = [1.0, 1.0, 1.0]
 camera_spherical_coords = [2.56, 6.6446330, 56.379040]
 
@@ -51,6 +51,11 @@ filename = "TextureAtlas.jpg"
 name = "TargetReticle"
 type = "texture:2d-RGBA"
 filename = "circle_reticle.png"
+
+[[resource]]
+name = "test_icon"
+type = "texture:2d-RGB"
+filename = "test_icon.png"
 
 ###################################################################################################
 [[tile]]

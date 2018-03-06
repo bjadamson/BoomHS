@@ -14,6 +14,8 @@ struct TextureInfo
   GLenum mode;
   GLuint id;
 
+  //GLint width, height = 0;
+
   void deallocate();
 
   static size_t constexpr NUM_BUFFERS = 1;
@@ -67,9 +69,6 @@ class TextureTable
   using pair_t = std::pair<TextureFilenames, Texture>;
   std::vector<pair_t> data_;
 
-  std::optional<TextureInfo>
-  lookup_texture(char const*) const;
-
 public:
   TextureTable() = default;
   MOVE_CONSTRUCTIBLE_ONLY(TextureTable);
@@ -85,12 +84,10 @@ namespace texture
 {
 
 Texture
-allocate_texture(stlw::Logger &logger, std::string const&,
-    GLint const format);
+allocate_texture(stlw::Logger &logger, std::string const&, GLint);
 
 Texture
-upload_3dcube_texture(stlw::Logger &, std::vector<std::string> const&,
-    GLint const format);
+upload_3dcube_texture(stlw::Logger &, std::vector<std::string> const&, GLint);
 
 } // ns texture
 } // ns opengl
