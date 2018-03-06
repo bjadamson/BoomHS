@@ -32,7 +32,7 @@ set(EXTERNAL_DIR ${PROJECT_DIR}/external)
 set(TOOLS_DIRECTORY ${PROJECT_DIR}/tools/)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
-set(IMGUI_INCLUDE_DIR "${EXTERNAL_DIR}/imgui/include")
+set(IMGUI_INCLUDE_DIR "${EXTERNAL_DIR}/imgui/include/imgui")
 set(CPPTOML_INCLUDE_DIR "${EXTERNAL_DIR}/cpptoml/include")
 
 file(GLOB INTERNAL_INCLUDE_DIRS include external/**/include)

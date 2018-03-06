@@ -385,6 +385,7 @@ loop(Engine &engine, GameState &state, stlw::float_generator &rng, FrameTime con
 
   // Render Imgui UI
   ImGui::Render();
+  ImGui_ImplSdlGL3_RenderDrawData(ImGui::GetDrawData());
 
   // Update window with OpenGL rendering
   SDL_GL_SwapWindow(engine.window.raw());
@@ -410,6 +411,9 @@ Result<stlw::empty_type, std::string>
 start(stlw::Logger &logger, Engine &engine)
 {
   // Initialize GUI library
+  auto *imgui_context = ImGui::CreateContext();
+  ON_SCOPE_EXIT([&imgui_context]() { ImGui::DestroyContext(imgui_context); });
+
   ImGui_ImplSdlGL3_Init(engine.window.raw());
   ON_SCOPE_EXIT([]() { ImGui_ImplSdlGL3_Shutdown(); });
 

@@ -171,7 +171,7 @@ log_any_gl_errors(stlw::Logger &logger, std::string const &prefix, int const lin
     auto const msg = fmt::sprintf("PREFIX: '%s', GL error detected (line %d), code: '%d', string: '%s'",
         prefix, line, err, gluErrorString(err));
     LOG_ERROR(msg);
-    std::abort();
+    //std::abort();
   }
 }
 
