@@ -417,6 +417,8 @@ start(stlw::Logger &logger, Engine &engine)
   ImGui_ImplSdlGL3_Init(engine.window.raw());
   ON_SCOPE_EXIT([]() { ImGui_ImplSdlGL3_Shutdown(); });
 
+  ImGui::StyleColorsDark();
+
   auto &registries = engine.registries;
   ZoneStates zss = TRY_MOVEOUT(LevelAssembler::assemble_levels(logger, registries));
 
