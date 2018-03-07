@@ -53,6 +53,16 @@ type = "texture:2d-RGBA"
 filename = "circle_reticle.png"
 
 [[resource]]
+name = "gun"
+type = "texture:2d-RGB"
+filename = "gun.png"
+
+[[resource]]
+name = "sword"
+type = "texture:2d-RGB"
+filename = "sword.png"
+
+[[resource]]
 name = "test_icon"
 type = "texture:2d-RGB"
 filename = "test_icon.png"
