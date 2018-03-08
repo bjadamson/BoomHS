@@ -519,14 +519,19 @@ draw_ingame_ui(EngineState &es, LevelManager &lm, EntityRegistry &registry)
   int miplevel = 0;
   glGetTexLevelParameteriv(GL_TEXTURE_2D, miplevel, GL_TEXTURE_WIDTH, &w);
   glGetTexLevelParameteriv(GL_TEXTURE_2D, miplevel, GL_TEXTURE_HEIGHT, &h);
-  std::cerr << "texture id: '" << ti.id << "'\n";
-  std::cerr << "w: '" << w << "'\n";
-  std::cerr << "h: '" << h << "'\n";
+  //std::cerr << "texture id: '" << ti.id << "'\n";
+  //std::cerr << "w: '" << w << "'\n";
+  //std::cerr << "h: '" << h << "'\n";
 
   if (ImGui::Begin("IMAGE TEST")) {
     ImGui::Text("%.0ix%.0i", w, h);
     ImVec2 pos = ImGui::GetCursorScreenPos();
-    ImGui::Image(my_tex_id, ImVec2(32, 32), ImVec2(0,0), ImVec2(1,1), ImColor(255,255,255,255), ImColor(255,255,255,128));
+    ImGui::Image(my_tex_id,
+        ImVec2(32, 32),
+        ImVec2(0,0),
+        ImVec2(1,1),
+        ImColor(255,255,255,255),
+        ImColor(255,255,255,128));
     ImGui::End();
   }
 }

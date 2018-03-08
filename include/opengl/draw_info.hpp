@@ -104,6 +104,8 @@ class TileDrawHandles
 public:
   std::vector<opengl::DrawInfo> drawinfos_;
 public:
+  NO_COPY(TileDrawHandles);
+  MOVE_DEFAULT(TileDrawHandles);
   TileDrawHandles(std::vector<opengl::DrawInfo> &&dh)
     : drawinfos_(MOVE(dh))
   {

@@ -55,7 +55,7 @@ upload_image(stlw::Logger &logger, std::string const& filename, GLenum const tar
   auto const height = image_data.height;
   auto const* data = image_data.data.get();
 
-  std::cerr << "uploading '" << path << "' with w: '" << width << "' h: '" << height << "'\n";
+  //std::cerr << "uploading '" << path << "' with w: '" << width << "' h: '" << height << "'\n";
   glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 }
 
@@ -86,13 +86,13 @@ TextureTable::find(std::string const& name) const
 {
   auto const cmp = [&name](auto const& it)
   {
-    std::cerr << "=====\n";
-    std::cerr << "cmp it.first.name: '" << it.first.name << "'\n";
+    //std::cerr << "=====\n";
+    //std::cerr << "cmp it.first.name: '" << it.first.name << "'\n";
     FOR(i, it.first.filenames.size()) {
       auto const& fn = it.first.filenames[i];
-      std::cerr << "cmp fn[i]: '" << fn << "'\n";
+      //std::cerr << "cmp fn[i]: '" << fn << "'\n";
     }
-    std::cerr << "=====\n";
+    //std::cerr << "=====\n";
     return it.first.name == name;
   };
   auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
@@ -114,7 +114,7 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const 
   TextureInfo ti;
   ti.mode = TEXTURE_MODE;
   glGenTextures(1, &ti.id);
-  std::cerr << "texture '" << filename << "' has TextureID: '" << ti.id << "'\n";
+  //std::cerr << "texture '" << filename << "' has TextureID: '" << ti.id << "'\n";
 
   global::texture_bind(ti);
   ON_SCOPE_EXIT([&ti]() { global::texture_unbind(ti); });
