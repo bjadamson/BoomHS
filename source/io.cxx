@@ -466,10 +466,6 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
       //et.rotate_entities(-ANGLE, ROTATION_VECTOR);
       break;
     }
-    case SDLK_RETURN:
-      // Toggle state
-      ui.debug.enter_pressed ^= true;
-      break;
     case SDLK_LEFT:
       rotate_player(90.0f, opengl::Y_UNIT_VECTOR);
       break;
@@ -683,6 +679,13 @@ process_event(GameState &state, SDL_Event &event, FrameTime const& ft)
 
   // If the user pressed enter, don't process mouse events (for the game)
   auto &ui = es.ui_state.debug;
+
+  auto const type = event.type;
+  bool const enter_pressed = event.key.keysym.sym == SDLK_RETURN;
+  if((type == SDL_KEYDOWN) && enter_pressed) {
+    ui.enter_pressed ^= true;
+  }
+
   if (ui.block_input || ui.enter_pressed) {
     return is_quit_event(event);
   }
