@@ -304,9 +304,6 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
     if (es.draw_entities) {
       render::draw_entities(rstate, rng, ft);
     }
-    if (es.draw_terrain) {
-      render::draw_terrain(rstate);
-    }
     if (tilegrid_state.draw_tilegrid) {
       render::draw_tilegrid(rstate, tilegrid_state, ft);
       render::draw_rivers(rstate, ft);
@@ -324,10 +321,10 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
       render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
     }
     if (es.show_global_axis) {
-      render::draw_global_axis(rstate, registry);
+      render::draw_global_axis(rstate);
     }
     if (es.show_local_axis) {
-      render::draw_local_axis(rstate, registry, player.world_position());
+      render::draw_local_axis(rstate, player.world_position());
     }
 
     {
@@ -343,10 +340,10 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
 
     auto &ui_state = es.ui_state;
     if (ui_state.draw_ingame_ui) {
-      draw_ingame_ui(es, lm, registry);
+      draw_ingame_ui(es, lm);
     }
     if (ui_state.draw_debug_ui) {
-      draw_debug_ui(es, lm, window, registry);
+      draw_debug_ui(es, lm, window);
     }
   }
 }

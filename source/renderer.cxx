@@ -188,25 +188,34 @@ set_receiveslight_uniforms(RenderState &rstate, glm::mat4 const& model_matrix,
 }
 
 void
-draw_3dshape(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &sp,
-    DrawInfo const& dinfo)
+draw(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &sp, DrawInfo const& dinfo)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
-  auto const& ldata = zs.level_data;
-
   auto &logger = es.logger;
-  auto const& camera = ldata.camera;
 
-  // various matrices
-  set_mvpmatrix(logger, model_matrix, sp, camera);
+  // Use the sp's PROGRAM and bind the sp's VAO.
+  sp.use(logger);
+  opengl::global::vao_bind(dinfo.vao());
+  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
-  if (sp.is_skybox) {
+  if (sp.is_2d) {
     disable_depth_tests();
     draw_drawinfo(logger, sp, dinfo);
     enable_depth_tests();
-  } else {
-    draw_drawinfo(logger, sp, dinfo);
+  }
+  else {
+    auto const& ldata = zs.level_data;
+    auto const& camera = ldata.camera;
+    set_mvpmatrix(logger, model_matrix, sp, camera);
+
+    if (sp.is_skybox) {
+      disable_depth_tests();
+      draw_drawinfo(logger, sp, dinfo);
+      enable_depth_tests();
+    } else {
+      draw_drawinfo(logger, sp, dinfo);
+    }
   }
 }
 
@@ -231,7 +240,7 @@ draw_3dlit_shape(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgr
   }
   set_receiveslight_uniforms(rstate, model_matrix, sp, dinfo, material, pointlights,
       receives_ambient_light);
-  draw_3dshape(rstate, model_matrix, sp, dinfo);
+  draw(rstate, model_matrix, sp, dinfo);
 }
 
 void
@@ -246,51 +255,7 @@ draw_3dlightsource(RenderState &rstate, glm::mat4 const& model_matrix, ShaderPro
 
   auto const diffuse = pointlight.light.diffuse;
   sp.set_uniform_color_3fv(logger, "u_lightcolor", diffuse);
-  draw_3dshape(rstate, model_matrix, sp, dinfo);
-}
-
-void
-draw(RenderState &rstate, Transform const& transform, ShaderProgram &sp,
-    DrawInfo const& dinfo, EntityID const entity, EntityRegistry &registry)
-{
-  auto &es = rstate.es;
-  auto &zs = rstate.zs;
-  auto &logger = es.logger;
-
-  // Use the sp's PROGRAM and bind the sp's VAO.
-  sp.use(logger);
-  opengl::global::vao_bind(dinfo.vao());
-  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
-
-  if (sp.is_2d) {
-    disable_depth_tests();
-    draw_drawinfo(logger, sp, dinfo);
-    enable_depth_tests();
-    return;
-  }
-
-  bool const is_lightsource = registry.has<PointLight>(entity);
-  auto const model_matrix = transform.model_matrix();
-  if (is_lightsource) {
-    assert(is_lightsource);
-    draw_3dlightsource(rstate, model_matrix, sp, dinfo, entity, registry);
-    return;
-  }
-  // Only true for now, old code had this set.
-  bool constexpr receives_ambient_light = true;
-
-  bool const receives_light = registry.has<Material>(entity);
-  if (receives_light) {
-    assert(registry.has<Material>(entity));
-    Material const& material = registry.get<Material>(entity);
-    draw_3dlit_shape(rstate, model_matrix, sp, dinfo, material, registry,
-        receives_ambient_light);
-    return;
-  }
-
-  // Can't receive light
-  assert(!registry.has<Material>());
-  draw_3dshape(rstate, model_matrix, sp, dinfo);
+  draw(rstate, model_matrix, sp, dinfo);
 }
 
 } // ns anonymous
@@ -369,13 +334,10 @@ draw_arrow(RenderState &rstate, glm::vec3 const& start, glm::vec3 const& head, C
   auto &sps = zs.gfx_state.sps;
   auto &sp = sps.ref_sp("3d_pos_color");
 
-  auto const handle = OF::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
+  auto const dinfo = OF::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
 
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-  auto &transform = registry.assign<Transform>(entity);
-
-  draw(rstate, transform, sp, handle, entity, registry);
+  Transform transform;
+  draw(rstate, transform.model_matrix(), sp, dinfo);
 }
 
 void
@@ -406,7 +368,7 @@ draw_arrow_abovetile_and_neighbors(RenderState &rstate, TilePosition const& tpos
 }
 
 void
-draw_global_axis(RenderState &rstate, EntityRegistry &registry)
+draw_global_axis(RenderState &rstate)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
@@ -416,18 +378,15 @@ draw_global_axis(RenderState &rstate, EntityRegistry &registry)
   auto &sp = sps.ref_sp("3d_pos_color");
   auto world_arrows = OF::create_axis_arrows(logger, sp);
 
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-
-  auto &transform = registry.assign<Transform>(entity);
-
-  draw(rstate, transform, sp, world_arrows.x_dinfo, entity, registry);
-  draw(rstate, transform, sp, world_arrows.y_dinfo, entity, registry);
-  draw(rstate, transform, sp, world_arrows.z_dinfo, entity, registry);
+  Transform transform;
+  auto const model_matrix = transform.model_matrix();
+  draw(rstate, model_matrix, sp, world_arrows.x_dinfo);
+  draw(rstate, model_matrix, sp, world_arrows.y_dinfo);
+  draw(rstate, model_matrix, sp, world_arrows.z_dinfo);
 }
 
 void
-draw_local_axis(RenderState &rstate, EntityRegistry &registry, glm::vec3 const &player_pos)
+draw_local_axis(RenderState &rstate, glm::vec3 const &player_pos)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
@@ -437,15 +396,13 @@ draw_local_axis(RenderState &rstate, EntityRegistry &registry, glm::vec3 const &
   auto &sp = sps.ref_sp("3d_pos_color");
   auto const axis_arrows = OF::create_axis_arrows(logger, sp);
 
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-
-  auto &transform = registry.assign<Transform>(entity);
+  Transform transform;
   transform.translation = player_pos;
 
-  draw(rstate, transform, sp, axis_arrows.x_dinfo, entity, registry);
-  draw(rstate, transform, sp, axis_arrows.y_dinfo, entity, registry);
-  draw(rstate, transform, sp, axis_arrows.z_dinfo, entity, registry);
+  auto const model_matrix = transform.model_matrix();
+  draw(rstate, model_matrix, sp, axis_arrows.x_dinfo);
+  draw(rstate, model_matrix, sp, axis_arrows.y_dinfo);
+  draw(rstate, model_matrix, sp, axis_arrows.z_dinfo);
 }
 
 void
@@ -465,15 +422,36 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
   auto const& camera = ldata.camera;
   auto const& player = ldata.player;
 
-  auto const draw_fn = [&entity_handles, &sps, &rstate, &registry](auto eid, auto &sn,
-      auto &transform, auto &is_visible, auto &&...)
+  auto const draw_fn = [&](auto eid, auto &sn, auto &transform, auto &is_visible, auto &&...)
   {
     if (!is_visible.value) {
       return;
     }
     auto &sp = sps.ref_sp(sn.value);
-    auto &handle = entity_handles.lookup(eid);
-    draw(rstate, transform, sp, handle, eid, registry);
+    auto &dinfo = entity_handles.lookup(eid);
+
+    bool const is_lightsource = registry.has<PointLight>(eid);
+    auto const model_matrix = transform.model_matrix();
+    if (is_lightsource) {
+      assert(is_lightsource);
+      draw_3dlightsource(rstate, model_matrix, sp, dinfo, eid, registry);
+      return;
+    }
+    // Only true for now, old code had this set.
+    bool constexpr receives_ambient_light = true;
+
+    bool const receives_light = registry.has<Material>(eid);
+    if (receives_light) {
+      assert(registry.has<Material>(eid));
+      Material const& material = registry.get<Material>(eid);
+      draw_3dlit_shape(rstate, model_matrix, sp, dinfo, material, registry,
+          receives_ambient_light);
+      return;
+    }
+
+    // Can't receive light
+    assert(!registry.has<Material>());
+    draw(rstate, transform.model_matrix(), sp, dinfo);
   };
 
   auto const player_drawfn = [&camera, &draw_fn](auto &&... args)
@@ -540,48 +518,22 @@ draw_inventory_overlay(RenderState &rstate)
   auto &sps = zs.gfx_state.sps;
   auto &sp = sps.ref_sp("2dcolor");
 
-  sp.use(logger);
+  auto color = LOC::GRAY;
+  color.set_a(0.25);
+  OF::RectInfo const ri{1.0f, 1.0f, color, std::nullopt, std::nullopt};
+  OF::RectBuffer buffer = OF::create_rectangle(ri);
 
-  auto const draw_overlay = [&]() {
-    auto color = LOC::GRAY;
-    color.set_a(0.25);
-    OF::RectInfo const ri{1.0f, 1.0f, color, std::nullopt, std::nullopt};
-    OF::RectBuffer buffer = OF::create_rectangle(ri);
+  auto const ti = std::nullopt;
+  DrawInfo dinfo = gpu::copy_rectangle(logger, GL_TRIANGLES, sp, buffer, ti);
 
-    auto const ti = std::nullopt;
-    DrawInfo dinfo = gpu::copy_rectangle(logger, GL_TRIANGLES, sp, buffer, ti);
+  opengl::global::vao_bind(dinfo.vao());
+  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
-    opengl::global::vao_bind(dinfo.vao());
-    ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+  Transform transform;
+  auto const model_matrix = transform.model_matrix();
+  set_modelmatrix(logger, model_matrix, sp);
 
-    Transform transform;
-    auto const model_matrix = transform.model_matrix();
-    set_modelmatrix(logger, model_matrix, sp);
-
-    draw_drawinfo(logger, sp, dinfo);
-  };
-
-  auto const draw_items = [&]() {
-    OF::RectInfo const ri{0.25f, 0.25f, LOC::BLUE, std::nullopt, std::nullopt};
-    OF::RectBuffer buffer = OF::create_rectangle(ri);
-
-    auto const ti = std::nullopt;
-    DrawInfo dinfo = gpu::copy_rectangle(logger, GL_TRIANGLES, sp, buffer, ti);
-
-    opengl::global::vao_bind(dinfo.vao());
-    ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
-
-    Transform transform;
-    auto const model_matrix = transform.model_matrix();
-    set_modelmatrix(logger, model_matrix, sp);
-
-    draw_drawinfo(logger, sp, dinfo);
-  };
-
-  disable_depth_tests();
-  draw_overlay();
-  draw_items();
-  enable_depth_tests();
+  draw(rstate, model_matrix, sp, dinfo);
 }
 
 void
@@ -742,7 +694,18 @@ draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
 
   auto const mvp_matrix = camera.projection_matrix() * viewmodel_matrix;
   set_modelmatrix(logger, mvp_matrix, sp);
-  draw(rstate, transform, sp, di, eid, registry);
+
+  // Use the sp's PROGRAM and bind the sp's VAO.
+  sp.use(logger);
+  opengl::global::vao_bind(di.vao());
+  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+
+  if (!sp.is_2d) {
+    std::abort();
+  }
+  disable_depth_tests();
+  draw_drawinfo(logger, sp, di);
+  enable_depth_tests();
 }
 
 void
@@ -832,40 +795,13 @@ draw_stars(RenderState &rstate, window::FrameTime const& ft)
 
     auto const scalevec = glm::vec3{scale};
     auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scalevec);
-    draw_3dshape(rstate, modelmatrix, sp, dinfo);
+    draw(rstate, modelmatrix, sp, dinfo);
   };
 
   auto constexpr X = -15.0;
   auto constexpr Y = 5.0;
   draw_starletter(X, Y,   "light", TileType::STAR);
   draw_starletter(X, Y+1, "light", TileType::BAR);
-}
-
-void
-draw_terrain(RenderState &rstate)
-{
-  auto &es = rstate.es;
-  auto &zs = rstate.zs;
-
-  auto &registry = zs.registry;
-  auto &sps = zs.gfx_state.sps;
-
-  auto entity = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(entity); });
-
-  auto &terrain_sp = sps.ref_sp("3d_pos_normal_color");
-  auto terrain = gpu::copy_normalcolorcube_gpu(es.logger, terrain_sp, LOC::WHITE);
-
-  auto &transform = registry.assign<Transform>(entity);
-  auto &scale = transform.scale;
-  scale.x = 50.0f;
-  scale.y = 0.2f;
-  scale.z = 50.0f;
-  auto &translation = transform.translation;
-  // translation.x = 3.0f;
-  translation.y = -2.0f;
-  // translation.z = 2.0f;
-  draw(rstate, transform, terrain_sp, terrain, entity, registry);
 }
 
 void
@@ -885,12 +821,8 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tds)
   bool const show_y = tds.show_yaxis_lines;
   auto const dinfo = OF::create_tilegrid(es.logger, sp, tilegrid, show_y);
 
-  set_mvpmatrix(logger, transform.model_matrix(), sp, leveldata.camera);
-
-  sp.use(logger);
-  opengl::global::vao_bind(dinfo.vao());
-  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
-  draw_drawinfo(logger, sp, dinfo);
+  auto const model_matrix = transform.model_matrix();
+  draw(rstate, model_matrix, sp, dinfo);
 }
 
 } // ns boomhs::render

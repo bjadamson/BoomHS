@@ -69,13 +69,13 @@ void
 draw_arrow_abovetile_and_neighbors(RenderState &, TilePosition const&);
 
 void
-draw_global_axis(RenderState &, EntityRegistry &);
+draw_global_axis(RenderState &);
 
 void
 draw_inventory_overlay(RenderState &);
 
 void
-draw_local_axis(RenderState &, EntityRegistry &, glm::vec3 const &);
+draw_local_axis(RenderState &, glm::vec3 const &);
 
 void
 draw_entities(RenderState &, stlw::float_generator &, window::FrameTime const&);
@@ -88,9 +88,6 @@ draw_rivers(RenderState &, window::FrameTime const&);
 
 void
 draw_stars(RenderState &, window::FrameTime const&);
-
-void
-draw_terrain(RenderState &);
 
 void
 draw_tilegrid(RenderState &, TiledataState const&, window::FrameTime const&);
