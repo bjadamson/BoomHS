@@ -326,7 +326,8 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
   auto &ts = es.tilegrid_state;
 
   auto &lm = state.level_manager;
-  auto &ldata= lm.active().level_data;
+  auto &active = lm.active();
+  auto &ldata= active.level_data;
   auto &camera = ldata.camera;
   auto &player = ldata.player;
   auto &nearby_targets = ldata.nearby_targets;
@@ -373,6 +374,14 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
         else {
           nearby_targets.cycle_backward();
         }
+      }
+      break;
+    case SDLK_BACKQUOTE:
+      {
+        auto &registry = active.registry;
+        auto const eid = find_player(registry);
+        auto &pc = registry.get<Player>(eid);
+        pc.inventory_open ^= true;
       }
       break;
     case SDLK_SPACE:

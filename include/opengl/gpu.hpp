@@ -1,4 +1,5 @@
 #pragma once
+#include <opengl/factory.hpp>
 #include <opengl/global.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/shader.hpp>
@@ -40,7 +41,11 @@ DrawInfo
 copy_cube_14indices_gpu(stlw::Logger &, ShaderProgram const&, std::optional<TextureInfo> const&);
 
 DrawInfo
-copy_gpu(stlw::Logger &, GLenum const, ShaderProgram &, boomhs::ObjBuffer const&,
+copy_gpu(stlw::Logger &, GLenum, ShaderProgram &, boomhs::ObjBuffer const&,
+    std::optional<TextureInfo> const&);
+
+DrawInfo
+copy_rectangle(stlw::Logger &, GLenum, ShaderProgram &, OF::RectBuffer const&,
     std::optional<TextureInfo> const&);
 
 DrawInfo

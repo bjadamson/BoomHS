@@ -188,9 +188,6 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
     tile_dinfos[static_cast<size_t>(it.type)] = MOVE(handle);
   }
 
-  std::cerr << "PRINTINT OBSTORE\n\n";
-  std::cerr << obj_store;
-
   EntityDrawHandles edh{MOVE(dinfos)};
   TileDrawHandles td{MOVE(tile_dinfos)};
   return Ok(std::make_pair(MOVE(edh), MOVE(td)));

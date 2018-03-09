@@ -24,7 +24,7 @@ make_array(Args &&... args)
 
 template <typename T>
 auto
-vec_with_size(std::size_t const s)
+vec_with_size(size_t const s)
 {
   std::vector<T> buffer;
   buffer.resize(s);

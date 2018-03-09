@@ -49,7 +49,6 @@ struct ObjBuffer
   using vertices_t = ObjData::vertices_t;
   using indices_t = ObjData::indices_t;
 
-  unsigned int num_vertices;
   vertices_t vertices;
   indices_t indices;
 

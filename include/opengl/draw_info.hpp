@@ -76,7 +76,7 @@ public:
   MOVE_DEFAULT(EntityDrawinfos);
 
   size_t
-  add(boomhs::EntityID const, opengl::DrawInfo &&);
+  add(boomhs::EntityID, opengl::DrawInfo &&);
 
   bool empty() const { return drawinfos_.empty(); }
 

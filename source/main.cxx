@@ -330,12 +330,22 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
       render::draw_local_axis(rstate, registry, player.world_position());
     }
 
+    {
+      auto const eid = find_player(registry);
+      auto &pc = registry.get<Player>(eid);
+      if (pc.inventory_open) {
+        render::draw_inventory_overlay(rstate);
+      }
+    }
+
     // if checks happen inside fn
     render::conditionally_draw_player_vectors(rstate, player);
-    if (es.ui_state.draw_ingame_ui) {
+
+    auto &ui_state = es.ui_state;
+    if (ui_state.draw_ingame_ui) {
       draw_ingame_ui(es, lm, registry);
     }
-    if (es.ui_state.draw_debug_ui) {
+    if (ui_state.draw_debug_ui) {
       draw_debug_ui(es, lm, window, registry);
     }
   }

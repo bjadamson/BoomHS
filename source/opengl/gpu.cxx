@@ -82,6 +82,17 @@ make_drawinfo(stlw::Logger &logger, ShaderProgram const& sp,
   return dinfo;
 }
 
+template<typename V, typename I>
+DrawInfo
+copy_gpu_impl(stlw::Logger &logger, GLenum const draw_mode, ShaderProgram &sp, V const& vertices,
+    I const& indices, std::optional<TextureInfo> const& ti)
+{
+  auto const num_indices = static_cast<GLuint>(indices.size());
+  DrawInfo dinfo{draw_mode, vertices.size(), num_indices, ti};
+  gpu::copy_synchronous(logger, sp, dinfo, vertices, indices);
+  return dinfo;
+}
+
 } // ns anon
 
 namespace opengl::gpu
@@ -255,16 +266,21 @@ copy_cube_14indices_gpu(stlw::Logger &logger, ShaderProgram const& shader_progra
 }
 
 DrawInfo
-copy_gpu(stlw::Logger &logger, GLenum const draw_mode, ShaderProgram &sp, ObjBuffer const& object,
+copy_gpu(stlw::Logger &logger, GLenum const dm, ShaderProgram &sp, ObjBuffer const& object,
     std::optional<TextureInfo> const& ti)
 {
-  auto const& vertices = object.vertices;
-  auto const& indices = object.indices;
+  auto const& v = object.vertices;
+  auto const& i = object.indices;
+  return copy_gpu_impl(logger, dm, sp, v, i, ti);
+}
 
-  auto const num_indices = static_cast<GLuint>(indices.size());
-  DrawInfo dinfo{draw_mode, vertices.size(), num_indices, ti};
-  copy_synchronous(logger, sp, dinfo, vertices, indices);
-  return dinfo;
+DrawInfo
+copy_rectangle(stlw::Logger &logger, GLenum const dm, ShaderProgram &sp,
+    OF::RectBuffer const& buffer, std::optional<TextureInfo> const& ti)
+{
+  auto const& v = buffer.vertices;
+  auto const& i = buffer.indices;
+  return copy_gpu_impl(logger, dm, sp, v, i, ti);
 }
 
 DrawInfo
@@ -272,6 +288,7 @@ copy_rectangle_uvs(stlw::Logger &logger, ShaderProgram const& sp, std::optional<
 {
   assert(sp.is_2d);
   auto const v = rectangle_vertices();
+  // clang-format off
   static auto constexpr uv = stlw::make_array<float>(
       0.0f, 0.0f,
       1.0f, 0.0f,
@@ -284,6 +301,7 @@ copy_rectangle_uvs(stlw::Logger &logger, ShaderProgram const& sp, std::optional<
       v[8],  v[9],  v[10], v[11], uv[4], uv[5],
       v[12], v[13], v[14], v[15], uv[6], uv[7]
       );
+  // clang-format on
   auto const& i = RECTANGLE_INDICES;
 
   DrawInfo dinfo{GL_TRIANGLES, vuvs.size(), i.size(), ti};

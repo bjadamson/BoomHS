@@ -23,9 +23,9 @@ template <class T>
 constexpr bool is_member_pointer_v = std::is_member_pointer<T>::value;
 
 template <class T>
-constexpr std::size_t tuple_size_v = std::tuple_size<T>::value;
+constexpr size_t tuple_size_v = std::tuple_size<T>::value;
 
-template <typename Tuple, typename F, std::size_t... Indices>
+template <typename Tuple, typename F, size_t... Indices>
 void
 for_each_impl(Tuple &&tuple, F &&f, std::index_sequence<Indices...>)
 {
@@ -37,7 +37,7 @@ template <typename Tuple, typename F>
 void
 for_each(Tuple &&tuple, F &&f)
 {
-  constexpr std::size_t N = std::tuple_size<std::remove_reference_t<Tuple>>::value;
+  constexpr size_t N = std::tuple_size<std::remove_reference_t<Tuple>>::value;
   for_each_impl(std::forward<Tuple>(tuple), std::forward<F>(f), std::make_index_sequence<N>{});
 }
 
@@ -147,7 +147,7 @@ template <typename F, typename Tuple>
 decltype(auto)
 apply(F &&fn, Tuple &&t)
 {
-  std::size_t constexpr tSize = std::tuple_size<typename std::remove_reference<Tuple>::type>::value;
+  size_t constexpr tSize = std::tuple_size<typename std::remove_reference<Tuple>::type>::value;
   return apply_tuple_impl(std::forward<F>(fn), std::forward<Tuple>(t),
                           std::make_index_sequence<tSize>());
 }
@@ -156,14 +156,14 @@ apply(F &&fn, Tuple &&t)
 // to_tuple
 namespace detail
 {
-template <typename C, std::size_t... Indices>
+template <typename C, size_t... Indices>
 auto to_tuple_helper(C const& c, std::index_sequence<Indices...>) {
   return std::make_tuple(c[Indices]...);
 }
 
 } // ns detail
 
-template <std::size_t N, typename C>
+template <size_t N, typename C>
 auto to_tuple(C const& v)
 {
   assert(v.size() >= N);
@@ -174,7 +174,7 @@ auto to_tuple(C const& v)
 // map_tuple_elements
 namespace detail
 {
-template<typename T, typename F, std::size_t... Is>
+template<typename T, typename F, size_t... Is>
 auto constexpr map_tuple_elements(T&& tup, F& f, std::index_sequence<Is...>)
 {
   return std::make_tuple(f(std::get<Is>(std::forward<T>(tup)))...);
@@ -182,7 +182,7 @@ auto constexpr map_tuple_elements(T&& tup, F& f, std::index_sequence<Is...>)
 
 } // ns detail
 
-template<typename T, typename F, std::size_t TupSize = stlw::tuple_size_v<std::decay_t<T>>>
+template<typename T, typename F, size_t TupSize = stlw::tuple_size_v<std::decay_t<T>>>
 auto constexpr map_tuple_elements(T &&tup, F f)
 {
   return detail::map_tuple_elements(std::forward<T>(tup), f, std::make_index_sequence<TupSize>{});
@@ -191,13 +191,13 @@ auto constexpr map_tuple_elements(T &&tup, F f)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // tuple_from_array
 namespace detail {
-template<typename T, std::size_t... Is>
+template<typename T, size_t... Is>
 auto constexpr tuple_from_array(T const& arr, std::index_sequence<Is...>)
 {
   return std::make_tuple(arr[Is]...);
 }
 
-template<std::size_t N, typename V, typename T, std::size_t ...Is>
+template<size_t N, typename V, typename T, size_t ...Is>
 auto constexpr array_from_container(T const& c, std::index_sequence<Is...>)
 {
   return std::array<V, N>{c[Is]...};
@@ -212,14 +212,14 @@ auto constexpr tuple_from_array(T const& arr)
   return detail::tuple_from_array(arr, std::make_index_sequence<tup_size>{});
 }
 
-template<typename T, std::size_t N>
+template<typename T, size_t N>
 auto constexpr tuple_from_array(T const (&arr)[N])
 {
   return detail::tuple_from_array(arr, std::make_index_sequence<N>{});
 }
 
 // not safe
-template<std::size_t N, typename T>
+template<size_t N, typename T>
 auto constexpr tuple_from_container(T const& c)
 {
   using V = typename T::value_type;

@@ -39,7 +39,7 @@ callback_from_pairs(void *const pvec, int const idx, const char** out_text)
 {
   std::vector<pair_t> const& vec = *reinterpret_cast<std::vector<pair_t>*>(pvec);
 
-  auto const index_size = static_cast<std::size_t>(idx);
+  auto const index_size = static_cast<size_t>(idx);
   if (idx < 0 || index_size >= vec.size()) {
     return false;
   }
@@ -54,7 +54,7 @@ callback_from_strings(void *const pvec, int const idx, const char** out_text)
 {
   auto const& vec = *reinterpret_cast<std::vector<std::string>*>(pvec);
 
-  auto const index_size = static_cast<std::size_t>(idx);
+  auto const index_size = static_cast<size_t>(idx);
   if (idx < 0 || index_size >= vec.size()) {
     return false;
   }

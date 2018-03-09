@@ -31,7 +31,7 @@ struct burrito
   }
 };
 
-template<template<class, std::size_t> typename C, typename T, std::size_t N>
+template<template<class, size_t> typename C, typename T, size_t N>
 auto constexpr
 make_burrito(C<T, N> const& arr)
 {
@@ -39,7 +39,7 @@ make_burrito(C<T, N> const& arr)
   return burrito<std::decay_t<decltype(x)>, tuple_tag>{std::move(x)};
 }
 
-template<template<class, std::size_t> typename C, typename T, std::size_t N>
+template<template<class, size_t> typename C, typename T, size_t N>
 auto constexpr
 make_burrito(C<T, N> &&arr)
 {

@@ -72,6 +72,9 @@ void
 draw_global_axis(RenderState &, EntityRegistry &);
 
 void
+draw_inventory_overlay(RenderState &);
+
+void
 draw_local_axis(RenderState &, EntityRegistry &, glm::vec3 const &);
 
 void

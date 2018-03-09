@@ -531,6 +531,32 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
 }
 
 void
+draw_inventory_overlay(RenderState &rstate)
+{
+  auto &es = rstate.es;
+  auto &logger = es.logger;
+
+  auto &zs = rstate.zs;
+  auto &sps = zs.gfx_state.sps;
+  auto &sp = sps.ref_sp("2dcolor");
+
+  auto color = LOC::GRAY;
+  color.set_a(0.25);
+  OF::RectInfo const ri{1.0f, 1.0f, color, std::nullopt, std::nullopt};
+  OF::RectBuffer buffer = OF::create_rectangle(ri);
+
+  sp.use(logger);
+
+  auto const ti = std::nullopt;
+  DrawInfo dinfo = gpu::copy_rectangle(logger, GL_TRIANGLES, sp, buffer, ti);
+
+  opengl::global::vao_bind(dinfo.vao());
+  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+
+  draw_drawinfo(logger, sp, dinfo);
+}
+
+void
 draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTime const& ft)
 {
   auto &es = rstate.es;
