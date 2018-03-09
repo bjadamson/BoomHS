@@ -332,7 +332,7 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
 
     {
       auto const eid = find_player(registry);
-      auto &pc = registry.get<Player>(eid);
+      auto &pc = registry.get<PlayerData>(eid);
       if (pc.inventory_open) {
         render::draw_inventory_overlay(rstate);
       }

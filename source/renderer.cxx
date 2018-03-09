@@ -520,7 +520,7 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
   registry.view<ShaderName, Transform, IsVisible, MeshRenderable, NPCData>().each(draw_fn);
 
   // player
-  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, Player>().each(player_drawfn);
+  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, PlayerData>().each(player_drawfn);
 
   if (es.draw_skybox) {
     auto const draw_skybox = [&](auto eid, auto &sn, auto &transform, auto &&... args) {
@@ -540,20 +540,48 @@ draw_inventory_overlay(RenderState &rstate)
   auto &sps = zs.gfx_state.sps;
   auto &sp = sps.ref_sp("2dcolor");
 
-  auto color = LOC::GRAY;
-  color.set_a(0.25);
-  OF::RectInfo const ri{1.0f, 1.0f, color, std::nullopt, std::nullopt};
-  OF::RectBuffer buffer = OF::create_rectangle(ri);
-
   sp.use(logger);
 
-  auto const ti = std::nullopt;
-  DrawInfo dinfo = gpu::copy_rectangle(logger, GL_TRIANGLES, sp, buffer, ti);
+  auto const draw_overlay = [&]() {
+    auto color = LOC::GRAY;
+    color.set_a(0.25);
+    OF::RectInfo const ri{1.0f, 1.0f, color, std::nullopt, std::nullopt};
+    OF::RectBuffer buffer = OF::create_rectangle(ri);
 
-  opengl::global::vao_bind(dinfo.vao());
-  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+    auto const ti = std::nullopt;
+    DrawInfo dinfo = gpu::copy_rectangle(logger, GL_TRIANGLES, sp, buffer, ti);
 
-  draw_drawinfo(logger, sp, dinfo);
+    opengl::global::vao_bind(dinfo.vao());
+    ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+
+    Transform transform;
+    auto const model_matrix = transform.model_matrix();
+    set_modelmatrix(logger, model_matrix, sp);
+
+    draw_drawinfo(logger, sp, dinfo);
+  };
+
+  auto const draw_items = [&]() {
+    OF::RectInfo const ri{0.25f, 0.25f, LOC::BLUE, std::nullopt, std::nullopt};
+    OF::RectBuffer buffer = OF::create_rectangle(ri);
+
+    auto const ti = std::nullopt;
+    DrawInfo dinfo = gpu::copy_rectangle(logger, GL_TRIANGLES, sp, buffer, ti);
+
+    opengl::global::vao_bind(dinfo.vao());
+    ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
+
+    Transform transform;
+    auto const model_matrix = transform.model_matrix();
+    set_modelmatrix(logger, model_matrix, sp);
+
+    draw_drawinfo(logger, sp, dinfo);
+  };
+
+  disable_depth_tests();
+  draw_overlay();
+  draw_items();
+  enable_depth_tests();
 }
 
 void

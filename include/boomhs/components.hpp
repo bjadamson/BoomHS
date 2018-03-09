@@ -156,10 +156,10 @@ inline EntityID
 find_player(EntityRegistry &registry)
 {
   // for now assume only 1 entity has the Player tag
-  assert(1 == registry.view<Player>().size());
+  assert(1 == registry.view<PlayerData>().size());
 
   // Assume Player has a Transform
-  auto view = registry.view<Player, Transform>();
+  auto view = registry.view<PlayerData, Transform>();
   std::optional<EntityID> entity{std::nullopt};
   for (auto const e : view) {
     // This assert ensures this loop only runs once.

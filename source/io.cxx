@@ -380,7 +380,7 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
       {
         auto &registry = active.registry;
         auto const eid = find_player(registry);
-        auto &pc = registry.get<Player>(eid);
+        auto &pc = registry.get<PlayerData>(eid);
         pc.inventory_open ^= true;
       }
       break;

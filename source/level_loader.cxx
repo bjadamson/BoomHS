@@ -347,7 +347,7 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     }
 
     if (player) {
-      registry.assign<Player>(eid);
+      registry.assign<PlayerData>(eid);
     }
     if (geometry == "cube") {
       registry.assign<CubeRenderable>(eid);
