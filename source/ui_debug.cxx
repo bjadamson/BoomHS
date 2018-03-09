@@ -87,7 +87,7 @@ void
 draw_entity_editor(UiDebugState &uistate, LevelData &ldata, EntityRegistry &registry)
 {
   auto &selected = uistate.selected_entity;
-  if (ImGui::Begin("Entity Editor Window")) {
+  auto const draw = [&]() {
     auto pairs = collect_all<Transform>(registry);
     if (display_combo_for_entities("Entity", &selected, registry, pairs)) {
       auto const eid = comboselected_to_entity(selected, pairs);
@@ -108,14 +108,14 @@ draw_entity_editor(UiDebugState &uistate, LevelData &ldata, EntityRegistry &regi
       }
     }
     ImGui::InputFloat3("scale:", glm::value_ptr(transform.scale));
-    ImGui::End();
-  }
+  };
+  imgui_cxx::with_window(draw, "Entity Editor Window");
 }
 
 void
 draw_tilegrid_editor(TiledataState &tds, LevelManager &lm)
 {
-  if (ImGui::Begin("Tilemap Editor Window")) {
+  auto const draw = [&]() {
     ImGui::InputFloat3("Floor Offset:", glm::value_ptr(tds.floor_offset));
     ImGui::InputFloat3("Tile Scaling:", glm::value_ptr(tds.tile_scaling));
 
@@ -139,8 +139,8 @@ draw_tilegrid_editor(TiledataState &tds, LevelManager &lm)
     if (recompute) {
       tds.recompute = true;
     }
-    ImGui::End();
-  }
+  };
+  imgui_cxx::with_window(draw, "Tilemap Editor Window");
 }
 
 void
@@ -204,7 +204,7 @@ draw_camera_window(LevelData &ldata)
     ImGui::InputFloat("Far:", &ortho.far);
     ImGui::InputFloat("Near:", &ortho.near);
   };
-  if (ImGui::Begin("CAMERA INFO WINDOW")) {
+  auto const draw_camera_window = [&]() {
     ImGui::Checkbox("Flip Y Sensitivity", &camera.flip_y);
     ImGui::Checkbox("Mouse Rotation Lock", &camera.rotate_lock);
     ImGui::InputFloat("Mouse Rotation Speed", &camera.rotation_speed);
@@ -233,18 +233,18 @@ draw_camera_window(LevelData &ldata)
         break;
       }
     }
-    ImGui::End();
-  }
+  };
+  imgui_cxx::with_window(draw_camera_window, "CAMERA INFO WINDOW");
 }
 
 void
 draw_mouse_window(MouseState &mstate)
 {
-  if (ImGui::Begin("MOUSE INFO WINDOW")) {
+  auto const draw = [&]() {
     ImGui::InputFloat("X sensitivity:", &mstate.sensitivity.x, 0.0f, 1.0f);
     ImGui::InputFloat("Y sensitivity:", &mstate.sensitivity.y, 0.0f, 1.0f);
-    ImGui::End();
-  }
+  };
+  imgui_cxx::with_window(draw, "MOUSE INFO WINDOW");
 }
 
 void
@@ -252,7 +252,7 @@ draw_player_window(EngineState &es, LevelData &ldata)
 {
   auto &player = ldata.player;
 
-  if (ImGui::Begin("PLAYER INFO WINDOW")) {
+  auto const draw = [&]() {
     auto const display = player.display();
     ImGui::Text("%s", display.c_str());
 
@@ -268,8 +268,8 @@ draw_player_window(EngineState &es, LevelData &ldata)
     float const dot = glm::dot(player.orientation(), quat);
     std::string const dots = std::to_string(dot);
     ImGui::Text("dot product: '%s'", dots.c_str());
-    ImGui::End();
-  }
+  };
+  imgui_cxx::with_window(draw, "PLAYER INFO WINDOW");
 }
 
 void
@@ -277,7 +277,7 @@ show_directionallight_window(UiDebugState &ui, LevelData &ldata)
 {
   auto &directional = ldata.global_light.directional;
 
-  if (ImGui::Begin("Directional Light Editor")) {
+  auto const draw = [&]() {
     ImGui::Text("Directional Light");
     ImGui::InputFloat3("direction:", glm::value_ptr(directional.direction));
 
@@ -288,14 +288,14 @@ show_directionallight_window(UiDebugState &ui, LevelData &ldata)
     if (ImGui::Button("Close", ImVec2(120,0))) {
       ui.show_directionallight_window = false;
     }
-    ImGui::End();
-  }
+  };
+  imgui_cxx::with_window(draw, "Directional Light Editor");
 }
 
 void
 show_ambientlight_window(UiDebugState &ui, LevelData &ldata)
 {
-  if (ImGui::Begin("Global Light Editor")) {
+  auto const draw = [&]() {
     ImGui::Text("Global Light");
 
     auto &global_light = ldata.global_light;
@@ -304,8 +304,8 @@ show_ambientlight_window(UiDebugState &ui, LevelData &ldata)
     if (ImGui::Button("Close", ImVec2(120,0))) {
       ui.show_ambientlight_window = false;
     }
-    ImGui::End();
-  }
+  };
+  imgui_cxx::with_window(draw, "Global Light Editor");
 }
 
 void
@@ -323,7 +323,7 @@ show_entitymaterials_window(UiDebugState &ui, EntityRegistry &registry)
 {
   auto &selected_material = ui.selected_entity_material;
 
-  if (ImGui::Begin("Entity Materials Editor")) {
+  auto const draw = [&]() {
     auto pairs = collect_all<Material, Transform>(registry);
     display_combo_for_entities<>("Entity", &selected_material, registry, pairs);
 
@@ -337,15 +337,14 @@ show_entitymaterials_window(UiDebugState &ui, EntityRegistry &registry)
     if (ImGui::Button("Close", ImVec2(120,0))) {
       ui.show_entitymaterial_window = false;
     }
-    ImGui::End();
-  }
+  };
+  imgui_cxx::with_window(draw, "Entity Materials Editor");
 }
 
 void
 show_tilegrid_materials_window(UiDebugState &ui, LevelData &level_data)
 {
-  if (ImGui::Begin("Entity Materials Editor")) {
-
+  auto const draw = [&]() {
     // 1. Collect Tile names
     std::vector<std::string> tile_names;
     FOR(i, static_cast<size_t>(TileType::UNDEFINED)) {
@@ -364,8 +363,8 @@ show_tilegrid_materials_window(UiDebugState &ui, LevelData &level_data)
       ImGui::Combo("Tile Type:", &selected, callback_from_strings, pdata, tile_names.size());
       ImGui::Separator();
     }
-    ImGui::End();
-  }
+  };
+  imgui_cxx::with_window(draw, "Tilegrid Materials Editor");
 }
 
 void
@@ -400,7 +399,7 @@ show_pointlight_window(UiDebugState &ui, EntityRegistry &registry)
       }
     }
   };
-  if (ImGui::Begin("Pointlight Editor")) {
+  auto const draw_pointlight_editor = [&]() {
     auto &selected_pointlight = ui.selected_pointlight;
     auto pairs = collect_all<PointLight, Transform>(registry);
     display_combo_for_entities<>("PointLight:", &selected_pointlight, registry, pairs);
@@ -412,37 +411,37 @@ show_pointlight_window(UiDebugState &ui, EntityRegistry &registry)
     if (ImGui::Button("Close", ImVec2(120,0))) {
       ui.show_pointlight_window = false;
     }
-    ImGui::End();
-  }
+  };
+  imgui_cxx::with_window(draw_pointlight_editor, "Pointlight Editor");
 }
 
 void
 show_background_window(UiDebugState &state, LevelData &ldata)
 {
-  if (ImGui::Begin("Background Color")) {
+  auto const draw = [&]() {
     ImGui::ColorEdit3("Background Color:", ldata.background.data());
 
     if (ImGui::Button("Close", ImVec2(120,0))) {
       state.show_background_window = false;
     }
-    ImGui::End();
-  }
+  };
+  imgui_cxx::with_window(draw, "Background Color");
 }
 
 void
 world_menu(EngineState &es, LevelData &ldata)
 {
   auto &ui = es.ui_state.debug;
-  if (ImGui::BeginMenu("World")) {
+  auto const draw = [&]() {
     ImGui::MenuItem("Background Color", nullptr, &ui.show_background_window);
     ImGui::MenuItem("Local Axis", nullptr, &es.show_local_axis);
     ImGui::MenuItem("Global Axis", nullptr, &es.show_global_axis);
-    ImGui::EndMenu();
-  }
 
-  if (ui.show_background_window) {
-    show_background_window(ui, ldata);
-  }
+    if (ui.show_background_window) {
+      show_background_window(ui, ldata);
+    }
+  };
+  imgui_cxx::with_menu(draw, "World");
 }
 
 void
@@ -455,14 +454,14 @@ lighting_menu(EngineState &es, LevelData &ldata, EntityRegistry &registry)
   bool &edit_entitymaterials = ui.show_entitymaterial_window;
   bool &edit_tilegridmaterials = ui.show_tilegridmaterial_window;
 
-  if (ImGui::BeginMenu("Lighting")) {
+  auto const draw = [&]() {
     ImGui::MenuItem("Point-Lights", nullptr, &edit_pointlights);
     ImGui::MenuItem("Ambient Lighting", nullptr, &edit_ambientlight);
     ImGui::MenuItem("Directional Lighting", nullptr, &edit_directionallights);
     ImGui::MenuItem("Entity Materials", nullptr, &edit_entitymaterials);
     ImGui::MenuItem("TileGrid Materials", nullptr, &edit_tilegridmaterials);
-    ImGui::EndMenu();
-  }
+  };
+  imgui_cxx::with_menu(draw, "Lightning");
   if (edit_pointlights) {
     show_pointlight_window(ui, registry);
   }
@@ -524,36 +523,36 @@ draw(EngineState &es, LevelManager &lm, window::SDLWindow &window)
     }
   }
 
-  if (ImGui::BeginMainMenuBar()) {
-    if (ImGui::BeginMenu("Windows")) {
-      ImGui::MenuItem("Debug Menu", nullptr, &state.show_debugwindow);
-      ImGui::MenuItem("Entity Menu", nullptr, &state.show_entitywindow);
-      ImGui::MenuItem("Camera Menu", nullptr, &state.show_camerawindow);
-      ImGui::MenuItem("Mouse Menu", nullptr, &state.show_mousewindow);
-      ImGui::MenuItem("Player Menu", nullptr, &state.show_playerwindow);
-      ImGui::MenuItem("Tilemap Menu", nullptr, &state.show_tilegrid_editor_window);
-      ImGui::EndMenu();
-    }
-    if (ImGui::BeginMenu("Settings")) {
-      auto const setwindow_row = [&](char const* text, auto const fullscreen) {
-        if (ImGui::MenuItem(text, nullptr, nullptr, window_state.fullscreen != fullscreen)) {
-          window.set_fullscreen(fullscreen);
-          window_state.fullscreen = fullscreen;
-        }
-      };
-      setwindow_row("NOT Fullscreen", window::FullscreenFlags::NOT_FULLSCREEN);
-      setwindow_row("Fullscreen", window::FullscreenFlags::FULLSCREEN);
-      setwindow_row("Fullscreen DESKTOP", window::FullscreenFlags::FULLSCREEN_DESKTOP);
-      auto const setsync_row = [&](char const* text, auto const sync) {
-        if (ImGui::MenuItem(text, nullptr, nullptr, window_state.sync != sync)) {
-          window.set_swapinterval(sync);
-          window_state.sync = sync;
-        }
-      };
-      setsync_row("Synchronized", window::SwapIntervalFlag::SYNCHRONIZED);
-      setsync_row("Late Tearing", window::SwapIntervalFlag::LATE_TEARING);
-      ImGui::EndMenu();
-    }
+  auto const windows_menu = [&]() {
+    ImGui::MenuItem("Debug Menu", nullptr, &state.show_debugwindow);
+    ImGui::MenuItem("Entity Menu", nullptr, &state.show_entitywindow);
+    ImGui::MenuItem("Camera Menu", nullptr, &state.show_camerawindow);
+    ImGui::MenuItem("Mouse Menu", nullptr, &state.show_mousewindow);
+    ImGui::MenuItem("Player Menu", nullptr, &state.show_playerwindow);
+    ImGui::MenuItem("Tilemap Menu", nullptr, &state.show_tilegrid_editor_window);
+  };
+  auto const settings_menu = [&]() {
+    auto const setwindow_row = [&](char const* text, auto const fullscreen) {
+      if (ImGui::MenuItem(text, nullptr, nullptr, window_state.fullscreen != fullscreen)) {
+        window.set_fullscreen(fullscreen);
+        window_state.fullscreen = fullscreen;
+      }
+    };
+    setwindow_row("NOT Fullscreen", window::FullscreenFlags::NOT_FULLSCREEN);
+    setwindow_row("Fullscreen", window::FullscreenFlags::FULLSCREEN);
+    setwindow_row("Fullscreen DESKTOP", window::FullscreenFlags::FULLSCREEN_DESKTOP);
+    auto const setsync_row = [&](char const* text, auto const sync) {
+      if (ImGui::MenuItem(text, nullptr, nullptr, window_state.sync != sync)) {
+        window.set_swapinterval(sync);
+        window_state.sync = sync;
+      }
+    };
+    setsync_row("Synchronized", window::SwapIntervalFlag::SYNCHRONIZED);
+    setsync_row("Late Tearing", window::SwapIntervalFlag::LATE_TEARING);
+  };
+  auto const draw_mainmenu = [&]() {
+    imgui_cxx::with_menu(windows_menu, "Windows");
+    imgui_cxx::with_menu(settings_menu, "Settings");
     world_menu(es, ldata);
     lighting_menu(es, ldata, registry);
 
@@ -568,8 +567,8 @@ draw(EngineState &es, LevelManager &lm, window::SDLWindow &window)
 
     ImGui::SameLine(ImGui::GetWindowWidth() * 0.76f);
     ImGui::Text("FPS(avg): %.1f ms/frame: %.3f", framerate, ms_frame);
-    ImGui::EndMainMenuBar();
-  }
+  };
+  imgui_cxx::with_mainmenubar(draw_mainmenu);
 }
 
 } // ns boomhs::ui_debug
