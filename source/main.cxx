@@ -8,7 +8,8 @@
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
-#include <boomhs/ui.hpp>
+#include <boomhs/ui_debug.hpp>
+#include <boomhs/ui_ingame.hpp>
 #include <boomhs/level_manager.hpp>
 
 #include <window/controller.hpp>
@@ -340,10 +341,10 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
 
     auto &ui_state = es.ui_state;
     if (ui_state.draw_ingame_ui) {
-      draw_ingame_ui(es, lm);
+      ui_ingame::draw(es, lm);
     }
     if (ui_state.draw_debug_ui) {
-      draw_debug_ui(es, lm, window);
+      ui_debug::draw(es, lm, window);
     }
   }
 }

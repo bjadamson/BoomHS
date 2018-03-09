@@ -725,7 +725,6 @@ IO::process(GameState &state, SDL_Event &event, SDLControllers const& controller
   auto &es = state.engine_state;
   auto &logger = es.logger;
 
-  LOG_TRACE("IO::process(data, state)");
   while ((!es.quit) && (0 != SDL_PollEvent(&event))) {
     ImGui_ImplSdlGL3_ProcessEvent(&event);
 
