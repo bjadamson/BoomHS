@@ -4,87 +4,87 @@
 #include <boomhs/ui_state.hpp>
 #include <boomhs/state.hpp>
 
+#include <opengl/texture.hpp>
+
 #include <extlibs/imgui.hpp>
 #include <optional>
+
+using namespace opengl;
 
 namespace boomhs::ui_ingame
 {
 
 void
-draw_player_inventory(EngineState &es, LevelManager &lm)
+draw_player_inventory(Inventory &inventory, TextureTable const& ttable)
 {
-  auto &zs = lm.active();
-  auto &ttable = zs.gfx_state.texture_table;
+  auto const draw_button = [&](TextureInfo const& ti) {
+    ImTextureID im_texid = reinterpret_cast<void*>(ti.id);
 
-  auto constexpr flags = (0
-    | ImGuiWindowFlags_NoResize
-    | ImGuiWindowFlags_NoTitleBar
-    );
+    imgui_cxx::ImageButtonBuilder image_builder;
+    image_builder.frame_padding = 1;
+    image_builder.bg_color      = ImColor{255, 255, 255, 255};
+    image_builder.tint_color    = ImColor{255, 255, 255, 128};
 
-  auto const draw_button = [&](char const* filename) {
-    assert(ttable.find(filename) != std::nullopt);
-    auto const ti = *ttable.find(filename);
-
-    ImTextureID my_tex_id = reinterpret_cast<void*>(ti.id);
-
-    ImGui::ImageButton(my_tex_id,
-        ImVec2(32, 32),
-        ImVec2(0,0),
-        ImVec2(1,1),
-        ImColor(255,255,255,255),
-        ImColor(255,255,255,128));
+    auto const size = ImVec2(32, 32);
+    return image_builder.build(im_texid, size);
   };
-  auto const draw_button_window = [&]() {
-    auto const draw_sword = [&]()
-    {
-      int constexpr TOTAL = 40;
-      int constexpr ROW_COUNT = 8;
-      int constexpr COLUMN_COUNT = TOTAL / ROW_COUNT;
 
-      assert(0 == (TOTAL % ROW_COUNT));
-      assert(0 == (TOTAL % COLUMN_COUNT));
+  auto const draw_icon = [&](size_t const pos) {
+    auto &slot = inventory.slot(pos);
+    auto const& ti = slot ? slot->ui_tinfo : *ttable.find("InventorySlotEmpty");
+    if (draw_button(ti)) {
+      std::cerr << "BUTTON PRESSED\n";
+      if (slot) {
+        std::cerr << "REMOVING ITEM\n";
+        Item &item = slot.get();
+        //Player::remove_item_from_player(??, ??, inventory);
+        //inventory.remove_item(pos);
+      }
+    }
 
-      FOR(i, COLUMN_COUNT) {
-        FOR(i, ROW_COUNT) {
-          draw_button("sword");
-          ImGui::SameLine();
-        }
+    if (slot && ImGui::IsItemHovered()) {
+      ImGui::SetTooltip("%s", slot->tooltip);
+    }
+  };
+
+  auto const draw_inventory = [&]()
+  {
+    int constexpr TOTAL = 40;
+    int constexpr ROW_COUNT = 8;
+    int constexpr COLUMN_COUNT = TOTAL / ROW_COUNT;
+
+    assert(0 == (TOTAL % ROW_COUNT));
+    assert(0 == (TOTAL % COLUMN_COUNT));
+
+    FOR(i, TOTAL) {
+      if (i > 0 && ((i % ROW_COUNT) == 0)) {
         ImGui::NewLine();
       }
-    };
-
-    auto const draw_sword_window = [&]() {
-      imgui_cxx::with_window(draw_sword, "Inventory");
-    };
-    imgui_cxx::with_stylevar(draw_sword_window, ImGuiStyleVar_ChildRounding, 5.0f);
+      draw_icon(i);
+      ImGui::SameLine();
+    }
   };
 
-  auto &registry = zs.registry;
-  auto const eid = find_player(registry);
-  auto &pc = registry.get<PlayerData>(eid);
-  if (pc.inventory_open) {
-    draw_button_window();
-  }
+  auto constexpr flags = (0
+    | ImGuiWindowFlags_AlwaysAutoResize
+  //| ImGuiWindowFlags_NoResize
+  //| ImGuiWindowFlags_NoTitleBar
+  );
+
+  auto const draw_window = [&]() {
+    imgui_cxx::with_window(draw_inventory, "Inventory", nullptr, flags);
+  };
+  imgui_cxx::with_stylevar(draw_window, ImGuiStyleVar_ChildRounding, 5.0f);
 }
 
 void
-draw_nearest_target_info(UiState &ui, LevelManager &lm)
+draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const& ttable,
+    EntityRegistry &registry)
 {
-  auto &zs = lm.active();
-  auto &registry = zs.registry;
-  auto &ldata = zs.level_data;
-
-  auto &nearby_targets = ldata.nearby_targets;
-  if (nearby_targets.empty()) {
-    // nothing to draw
-    return;
-  }
-
   EntityID const closest = nearby_targets.closest();
 
   auto const& npcdata = registry.get<NPCData>(closest);
 
-  auto &ttable = zs.gfx_state.texture_table;
   assert(ttable.find("test_icon") != std::nullopt);
   auto const ti = *ttable.find("text_icon");
   ImTextureID my_tex_id = reinterpret_cast<void*>(ti.id);
@@ -113,8 +113,21 @@ draw_nearest_target_info(UiState &ui, LevelManager &lm)
 void
 draw(EngineState &es, LevelManager &lm)
 {
-  draw_nearest_target_info(es.ui_state, lm);
-  draw_player_inventory(es, lm);
+  auto &zs = lm.active();
+  auto &registry = zs.registry;
+  auto &ttable = zs.gfx_state.texture_table;
+
+  auto &ldata = zs.level_data;
+  auto &nearby_targets = ldata.nearby_targets;
+  if (!nearby_targets.empty()) {
+    draw_nearest_target_info(nearby_targets, ttable, registry);
+  }
+
+  EntityID const player_eid = find_player(registry);
+  auto &inventory = registry.get<PlayerData>(player_eid).inventory;
+  if (inventory.is_open()) {
+    draw_player_inventory(inventory, ttable);
+  }
 }
 
 } // ns boomhs::ui_ingame

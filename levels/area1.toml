@@ -1,5 +1,5 @@
 title = "Level 0"
-background = [1.0, 1.0, 1.0]
+background = [0.0, 0.0, 0.0]
 camera_spherical_coords = [2.56, 6.6446330, 56.379040]
 
 ambient = [0.0, 0.0, 0.0]
@@ -38,6 +38,16 @@ type = "texture:2d-RGBA"
 filename = "lava.jpg"
 
 [[resource]]
+name = "RedX"
+type = "texture:2d-RGBA"
+filename = "redx.png"
+
+[[resource]]
+name = "InventorySlotEmpty"
+type = "texture:2d-RGBA"
+filename = "ui/inventory_slot_empty.png"
+
+[[resource]]
 name = "wall"
 type = "texture:2d-RGB"
 filename = "wall.jpg"
@@ -51,6 +61,21 @@ filename = "TextureAtlas.jpg"
 name = "TargetReticle"
 type = "texture:2d-RGBA"
 filename = "circle_reticle.png"
+
+[[resource]]
+name = "gun"
+type = "texture:2d-RGB"
+filename = "gun.png"
+
+[[resource]]
+name = "sword"
+type = "texture:2d-RGB"
+filename = "sword.png"
+
+[[resource]]
+name = "TorchUI"
+type = "texture:2d-RGBA"
+filename = "ui/torch-icon.png"
 
 [[resource]]
 name = "test_icon"

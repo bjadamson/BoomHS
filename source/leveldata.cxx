@@ -4,7 +4,7 @@ namespace boomhs
 {
 
 LevelData::LevelData(TileGrid &&td, TileSharedInfoTable &&ttable, TilePosition const& start_pos,
-    std::vector<RiverInfo> &&rivers, EntityID const torch_eid,
+    std::vector<RiverInfo> &&rivers,
 
     opengl::Color const& bgcolor, opengl::GlobalLight const& glight,
       ObjStore &&ocache, Camera &&cam, WorldObject &&pl
@@ -13,7 +13,6 @@ LevelData::LevelData(TileGrid &&td, TileSharedInfoTable &&ttable, TilePosition c
   , ttable_(MOVE(ttable))
   , startpos_(start_pos)
   , rivers_(MOVE(rivers))
-  , torch_eid_(torch_eid)
   , background(bgcolor)
   , global_light(glight)
   , obj_store(MOVE(ocache))

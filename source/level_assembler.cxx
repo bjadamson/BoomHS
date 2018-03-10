@@ -53,7 +53,6 @@ assemble(LevelGeneredData &&gendata, LevelAssets &&assets, EntityRegistry &regis
     MOVE(assets.tile_table),
     MOVE(gendata.startpos),
     MOVE(gendata.rivers),
-    MOVE(gendata.torch_eid),
 
     assets.background_color,
     assets.global_light,

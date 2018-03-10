@@ -25,7 +25,6 @@ struct IsVisible
 
 struct Torch
 {
-  bool is_pickedup = false;
   opengl::Attenuation default_attenuation{1.0f, 0.93f, 0.46f};
 };
 
@@ -152,6 +151,17 @@ find_downstairs(EntityRegistry &registry, TileGrid const& tgrid)
   return find_stairs_withtype(registry, tgrid, TileType::STAIR_DOWN);
 }
 
+inline auto
+find_items(EntityRegistry &registry)
+{
+  std::vector<EntityID> items;
+  auto view = registry.view<Item>();
+  for (auto const eid : view) {
+    items.emplace_back(eid);
+  }
+  return items;
+}
+
 inline EntityID
 find_player(EntityRegistry &registry)
 {
@@ -168,6 +178,18 @@ find_player(EntityRegistry &registry)
   }
   assert(std::nullopt != entity);
   return *entity;
+}
+
+inline auto
+find_torches(EntityRegistry &registry)
+{
+  std::vector<EntityID> torches;
+  auto view = registry.view<Torch>();
+  for (auto const eid : view) {
+    assert(registry.has<Transform>(eid));
+    torches.emplace_back(eid);
+  }
+  return torches;
 }
 
 } // ns boomhs

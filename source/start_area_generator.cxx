@@ -16,7 +16,7 @@ using namespace opengl;
 namespace
 {
 
-EntityID
+void
 place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng,
     TextureTable const& ttable)
 {
@@ -24,9 +24,6 @@ place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_gene
   auto &transform = registry.get<Transform>(eid);
 
   transform.translation = glm::vec3{2, 0.5, 2};
-  std::cerr << "torchlight pos: '" << transform.translation << "'\n";
-
-  return eid;
 }
 
 Result<stlw::empty_type, std::string>
@@ -112,10 +109,10 @@ StartAreaGenerator::gen_level(EntityRegistry &registry, stlw::float_generator &r
   std::vector<RiverInfo> rivers;
 
   auto const starting_pos = TilePosition{10, 10};
-  auto const torch_eid = place_torch(tilegrid, registry, rng, ttable);
+  place_torch(tilegrid, registry, rng, ttable);
 
   std::cerr << "finished!\n";
-  return LevelGeneredData{MOVE(tilegrid), starting_pos, MOVE(rivers), torch_eid};
+  return LevelGeneredData{MOVE(tilegrid), starting_pos, MOVE(rivers)};
 }
 
 } // ns boomhs

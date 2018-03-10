@@ -1,5 +1,6 @@
 #include <boomhs/io.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
 #include <boomhs/level_manager.hpp>
@@ -149,85 +150,47 @@ move_down(GameState &state, FrameTime const& ft)
   move_ontilegrid(state, &WorldObject::world_down, player, ft);
 }
 
-// Picks up the torch, if the player is on the same tile as the torch.
 void
-try_pickup_torch(GameState &state, FrameTime const& ft)
+try_pickup_nearby_item(GameState &state, FrameTime const& ft)
 {
   auto &lm = state.level_manager;
   auto &active = lm.active();
-  auto const& ldata = active.level_data;
-
   auto &registry = active.registry;
-  auto const eid = ldata.torch_eid();
 
-  auto const& transform = registry.get<Transform>(eid);
-  auto const torch_pos = transform.translation;
-
-  auto const& player = ldata.player;
-  auto const player_pos = player.world_position();
-
-  auto const distance_to_torch = glm::distance(player_pos, torch_pos);
+  auto const player_eid = find_player(registry);
+  auto &player_transform = registry.get<Transform>(player_eid);
+  auto const& player_pos = player_transform.translation;
+  auto &inventory = registry.get<PlayerData>(player_eid).inventory;
 
   static constexpr auto MINIMUM_DISTANCE_TO_PICKUP = 1.0f;
-  std::cerr << "distance_to_torch: '" << distance_to_torch << "'\n";
-  bool const nearby_enough = distance_to_torch <= MINIMUM_DISTANCE_TO_PICKUP;
-  if (nearby_enough) {
-    Torch &torch = registry.get<Torch>(eid);
-    torch.is_pickedup = true;
+  auto const items = find_items(registry);
+  for(EntityID const eid : items) {
+    Item &item = registry.get<Item>(eid);
+    if (item.is_pickedup) {
+      std::cerr << "item already picked up.\n";
+      continue;
+    }
 
-    auto &isv = registry.get<IsVisible>(eid);
-    isv.value = false;
+    auto &item_transform = registry.get<Transform>(eid);
+    auto const& item_pos = item_transform.translation;
+    auto const distance = glm::distance(item_pos, player_pos);
 
-    auto &pointlight = registry.get<PointLight>(eid);
-    pointlight.attenuation /= 3.0f;
+    if (distance > MINIMUM_DISTANCE_TO_PICKUP) {
+      std::cerr << "There is nothing nearby to pickup.\n";
+      continue;
+    }
 
-    std::cerr << "You have picked up a torch.\n";
-  } else {
-    std::cerr << "There is nothing nearby to pickup.\n";
-  }
-}
+    Player::add_item(eid, item, registry);
 
-void
-drop_torch(GameState &state, FrameTime const& ft)
-{
-  auto &lm = state.level_manager;
-  auto &active = lm.active();
-  auto const& ldata = active.level_data;
+    if (registry.has<Torch>(eid)) {
+      auto &pointlight = registry.get<PointLight>(eid);
+      pointlight.attenuation /= 3.0f;
 
-  auto &registry = active.registry;
-  auto const eid = ldata.torch_eid();
-
-  auto &transform = registry.get<Transform>(eid);
-  transform.translation.y = 0.5f;
-
-  Torch &torch = registry.get<Torch>(eid);
-  torch.is_pickedup = false;
-
-  auto &isv = registry.get<IsVisible>(eid);
-  isv.value = true;
-
-  auto &pointlight = registry.get<PointLight>(eid);
-  pointlight.attenuation *= 3.0f;
-
-  std::cerr << "You have droppped a torch.\n";
-}
-
-void
-toggle_torch(GameState &state, FrameTime const& ft)
-{
-  auto &lm = state.level_manager;
-  auto &active = lm.active();
-  auto &registry = active.registry;
-
-  auto const& ldata = active.level_data;
-  auto const eid = ldata.torch_eid();
-  Torch &torch = registry.get<Torch>(eid);
-
-  if (torch.is_pickedup) {
-    drop_torch(state, ft);
-  }
-  else {
-    try_pickup_torch(state, ft);
+      std::cerr << "You have picked up a torch.\n";
+    }
+    else {
+      std::cerr << "You have picked up an item.\n";
+    }
   }
 }
 
@@ -350,10 +313,11 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
       move_left(state, ft);
       break;
     case SDLK_e:
-      move_up(state, ft);
+      try_pickup_nearby_item(state, ft);
+      //move_up(state, ft);
       break;
     case SDLK_q:
-      move_down(state, ft);
+      //move_down(state, ft);
       break;
 
     case SDLK_F11:
@@ -380,14 +344,11 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
       {
         auto &registry = active.registry;
         auto const eid = find_player(registry);
-        auto &pc = registry.get<PlayerData>(eid);
-        pc.inventory_open ^= true;
+        auto &inventory = registry.get<PlayerData>(eid).inventory;
+        inventory.toggle_open();
       }
       break;
     case SDLK_SPACE:
-      {
-        toggle_torch(state, ft);
-      }
       break;
     // scaling
     case SDLK_KP_PLUS:
@@ -621,7 +582,7 @@ process_controllerstate(GameState &state, SDLControllers const& controllers, Fra
 
   if (c.button_a()) {
     std::cerr << "BUTTON A\n";
-    toggle_torch(state, ft);
+    try_pickup_nearby_item(state, ft);
   }
   if (c.button_b()) {
     std::cerr << "BUTTON B\n";

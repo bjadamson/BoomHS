@@ -221,7 +221,7 @@ place_monsters(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_g
   }
 }
 
-EntityID
+void
 place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_generator &rng,
     TextureTable const& ttable)
 {
@@ -230,9 +230,6 @@ place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_gene
 
   auto const pos = generate_torch_position(tilegrid, registry, rng);
   transform.translation = glm::vec3{pos.x, 0.5, pos.y};
-  std::cerr << "torchlight pos: '" << transform.translation << "'\n";
-
-  return eid;
 }
 
 } // ns anon
@@ -360,12 +357,12 @@ gen_level(LevelConfig const& levelconfig, EntityRegistry &registry, stlw::float_
       rng, registry);
 
   std::cerr << "placing torch ...\n";
-  auto const torch_eid = place_torch(tilegrid, registry, rng, ttable);
+  place_torch(tilegrid, registry, rng, ttable);
 
   std::cerr << "finished!\n";
   std::cerr << "======================================\n";
 
-  return LevelGeneredData{MOVE(tilegrid), starting_pos, MOVE(rivers), torch_eid};
+  return LevelGeneredData{MOVE(tilegrid), starting_pos, MOVE(rivers)};
 }
 
 } // ns boomhs::dungeon_generator

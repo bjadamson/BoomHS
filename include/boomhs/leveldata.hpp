@@ -21,7 +21,6 @@ struct LevelGeneredData
   TileGrid tilegrid;
   TilePosition startpos;
   std::vector<RiverInfo> rivers;
-  EntityID torch_eid;
 };
 
 class LevelData
@@ -37,13 +36,12 @@ class LevelData
   TilePosition const startpos_;
 
   std::vector<RiverInfo> rivers_;
-  EntityID const torch_eid_;
 
   void set_tile(TilePosition const&, TileType const&);
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileGrid &&, TileSharedInfoTable &&, TilePosition const&, std::vector<RiverInfo> &&,
-      EntityID, opengl::Color const&, opengl::GlobalLight const&, ObjStore &&, Camera &&,
+      opengl::Color const&, opengl::GlobalLight const&, ObjStore &&, Camera &&,
       WorldObject &&
       );
 
@@ -90,8 +88,6 @@ public:
 
   auto const&
   rivers() const { return rivers_; }
-
-  auto torch_eid() const { return torch_eid_; }
 
   template<typename FN>
   void

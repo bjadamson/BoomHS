@@ -192,49 +192,54 @@ void
 update_torchflicker(LevelData const& ldata, EntityRegistry &registry, stlw::float_generator &rng,
     FrameTime const& ft)
 {
-  auto const eid = ldata.torch_eid();
-
-  auto &pointlight = registry.get<PointLight>(eid);
-
-  auto const v = std::sin(ft.since_start_millis() * M_PI);
-  auto &flicker = registry.get<LightFlicker>(eid);
-  pointlight.light.diffuse = Color::lerp(flicker.colors[0], flicker.colors[1], v);
-
-  auto &torch = registry.get<Torch>(eid);
-  auto &torch_transform = registry.get<Transform>(eid);
-  if (torch.is_pickedup) {
-    // Player has picked up the torch, make it follow player around
-    auto const& player = ldata.player;
-    auto const& player_pos = player.world_position();
-
-    torch_transform.translation = player_pos;
-
-    // Move the light above the player's head
-    torch_transform.translation.y = 1.0f;
-  }
-
-  auto const torch_pos = torch_transform.translation;
-  auto &attenuation = pointlight.attenuation;
-
-  auto const attenuate = [&rng](float &value, float const gen_range, float const base_value)
+  auto const update_torch = [&](auto const eid)
   {
-    value += rng.gen_float_range(-gen_range, gen_range);
+    auto &pointlight = registry.get<PointLight>(eid);
 
-    auto const clamp = gen_range * 2.0f;
-    value = glm::clamp(value, base_value - clamp, base_value + clamp);
+    auto const v = std::sin(ft.since_start_millis() * M_PI);
+    auto &flicker = registry.get<LightFlicker>(eid);
+    pointlight.light.diffuse = Color::lerp(flicker.colors[0], flicker.colors[1], v);
+
+    auto &item = registry.get<Item>(eid);
+    auto &torch_transform = registry.get<Transform>(eid);
+    if (item.is_pickedup) {
+      // Player has picked up the torch, make it follow player around
+      auto const& player = ldata.player;
+      auto const& player_pos = player.world_position();
+
+      torch_transform.translation = player_pos;
+
+      // Move the light above the player's head
+      torch_transform.translation.y = 1.0f;
+    }
+
+    auto const torch_pos = torch_transform.translation;
+    auto &attenuation = pointlight.attenuation;
+
+    auto const attenuate = [&rng](float &value, float const gen_range, float const base_value)
+    {
+      value += rng.gen_float_range(-gen_range, gen_range);
+
+      auto const clamp = gen_range * 2.0f;
+      value = glm::clamp(value, base_value - clamp, base_value + clamp);
+    };
+
+    static float constexpr CONSTANT = 0.1f;
+    //attenuate(attenuation.constant, CONSTANT, torch.default_attenuation.constant);
+
+    //static float constexpr LINEAR = 0.015f;
+    //attenuate(attenuation.linear, LINEAR, torch.default_attenuation.linear);
+
+    //static float constexpr QUADRATIC = LINEAR * LINEAR;
+    //attenuate(attenuation.quadratic, QUADRATIC, torch.default_attenuation.quadratic);
+
+    static float constexpr SPEED_DELTA = 0.24f;
+    attenuate(flicker.current_speed, SPEED_DELTA, flicker.base_speed);
   };
-
-  static float constexpr CONSTANT = 0.1f;
-  //attenuate(attenuation.constant, CONSTANT, torch.default_attenuation.constant);
-
-  //static float constexpr LINEAR = 0.015f;
-  //attenuate(attenuation.linear, LINEAR, torch.default_attenuation.linear);
-
-  //static float constexpr QUADRATIC = LINEAR * LINEAR;
-  //attenuate(attenuation.quadratic, QUADRATIC, torch.default_attenuation.quadratic);
-
-  static float constexpr SPEED_DELTA = 0.24f;
-  attenuate(flicker.current_speed, SPEED_DELTA, flicker.base_speed);
+  auto const torches = find_torches(registry);
+  for (auto const eid : torches) {
+    update_torch(eid);
+  }
 }
 
 void
@@ -330,8 +335,8 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
 
     {
       auto const eid = find_player(registry);
-      auto &pc = registry.get<PlayerData>(eid);
-      if (pc.inventory_open) {
+      auto const& inv = registry.get<PlayerData>(eid).inventory;
+      if (inv.is_open()) {
         render::draw_inventory_overlay(rstate);
       }
     }

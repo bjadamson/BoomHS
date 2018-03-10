@@ -63,4 +63,20 @@ with_mainmenubar(FN const& fn, Args &&... args)
   }
 }
 
+struct ImageButtonBuilder
+{
+  ImVec2 uv0 = ImVec2{0,0};
+  ImVec2 uv1 = ImVec2{1,1};
+
+  int frame_padding = -1;
+
+  ImVec4 bg_color = ImVec4{0, 0, 0, 0};
+  ImVec4 tint_color = ImVec4{1, 1, 1, 1};
+
+  bool build(ImTextureID id, ImVec2 const& size) const
+  {
+    return ImGui::ImageButton(id, size, uv0, uv1, frame_padding, bg_color, tint_color);
+  }
+};
+
 } // ns imgui_cxx
