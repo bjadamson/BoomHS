@@ -20,13 +20,11 @@ struct Player
   Player() = delete;
 
   static void
-  add_item(EntityID, Item &, EntityRegistry &);
+  pickup_entity(EntityID, EntityRegistry &);
 
+  // Removes entity from the player
   static void
-  remove_item(EntityID, Item &, EntityRegistry &);
-
-  static void
-  remove_item(size_t, Item &, EntityRegistry &);
+  drop_entity(EntityID, EntityRegistry &);
 };
 
 } // ns boomhs

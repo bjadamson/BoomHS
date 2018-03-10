@@ -180,6 +180,13 @@ find_player(EntityRegistry &registry)
   return *entity;
 }
 
+inline auto&
+find_inventory(EntityRegistry &registry)
+{
+  auto const eid = find_player(registry);
+  return registry.get<PlayerData>(eid).inventory;
+}
+
 inline auto
 find_torches(EntityRegistry &registry)
 {

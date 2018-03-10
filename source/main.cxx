@@ -444,17 +444,19 @@ start(stlw::Logger &logger, Engine &engine)
   imgui.MouseDrawCursor = true;
   imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
 
-  auto test_r = rexpaint::RexImage::load("assets/test.xp");
-  if (!test_r) {
-    std::cerr << test_r << "\n";
-    std::abort();
-  }
-  auto test = test_r.expect_moveout("loading text.xp");
-  test.flatten();
-  auto save = rexpaint::RexImage::save(test, "assets/test.xp");
-  if (!save) {
-    std::cerr << save << "\n";
-    std::abort();
+  {
+    auto test_r = rexpaint::RexImage::load("assets/test.xp");
+    if (!test_r) {
+      std::cerr << test_r << "\n";
+      std::abort();
+    }
+    auto test = test_r.expect_moveout("loading text.xp");
+    test.flatten();
+    auto save = rexpaint::RexImage::save(test, "assets/test.xp");
+    if (!save) {
+      std::cerr << save << "\n";
+      std::abort();
+    }
   }
 
   // Construct game state
@@ -477,7 +479,7 @@ make_window(stlw::Logger &logger, bool const fullscreen, float const width, floa
 {
   // Select windowing library as SDL.
   LOG_DEBUG("Initializing window library globals");
-  auto _ =  window::sdl_library::init();
+  DO_EFFECT(window::sdl_library::init());
 
   LOG_DEBUG("Instantiating window instance.");
   return window::sdl_library::make_window(fullscreen, height, width);

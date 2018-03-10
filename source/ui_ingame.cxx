@@ -15,8 +15,10 @@ namespace boomhs::ui_ingame
 {
 
 void
-draw_player_inventory(Inventory &inventory, TextureTable const& ttable)
+draw_player_inventory(EntityRegistry &registry, TextureTable const& ttable)
 {
+  auto &inventory = find_inventory(registry);
+
   auto const draw_button = [&](TextureInfo const& ti) {
     ImTextureID im_texid = reinterpret_cast<void*>(ti.id);
 
@@ -30,20 +32,24 @@ draw_player_inventory(Inventory &inventory, TextureTable const& ttable)
   };
 
   auto const draw_icon = [&](size_t const pos) {
-    auto &slot = inventory.slot(pos);
-    auto const& ti = slot ? slot->ui_tinfo : *ttable.find("InventorySlotEmpty");
-    if (draw_button(ti)) {
-      std::cerr << "BUTTON PRESSED\n";
-      if (slot) {
-        std::cerr << "REMOVING ITEM\n";
-        Item &item = slot.get();
-        //Player::remove_item_from_player(??, ??, inventory);
-        //inventory.remove_item(pos);
+    {
+      auto &slot = inventory.slot(pos);
+      bool const slot_occupied = slot.occupied();
+      auto const& ti = slot_occupied ? slot.item(registry).ui_tinfo : *ttable.find("InventorySlotEmpty");
+      bool const button_pressed = draw_button(ti);
+
+      // If the button is pressed, and the slot is occupied (location clicked) then go ahead and
+      // remove the item from the player, and removing it from the UI.
+      if (button_pressed && slot_occupied) {
+        Player::drop_entity(slot.eid(), registry);
+        slot.reset();
       }
     }
 
-    if (slot && ImGui::IsItemHovered()) {
-      ImGui::SetTooltip("%s", slot->tooltip);
+    // remove_entity() may invalidate slot& reference, find again.
+    auto &slot = inventory.slot(pos);
+    if (slot.occupied() && ImGui::IsItemHovered()) {
+      ImGui::SetTooltip("%s", slot.item(registry).tooltip);
     }
   };
 
@@ -67,8 +73,8 @@ draw_player_inventory(Inventory &inventory, TextureTable const& ttable)
 
   auto constexpr flags = (0
     | ImGuiWindowFlags_AlwaysAutoResize
-  //| ImGuiWindowFlags_NoResize
-  //| ImGuiWindowFlags_NoTitleBar
+    | ImGuiWindowFlags_NoResize
+    | ImGuiWindowFlags_NoTitleBar
   );
 
   auto const draw_window = [&]() {
@@ -124,9 +130,9 @@ draw(EngineState &es, LevelManager &lm)
   }
 
   EntityID const player_eid = find_player(registry);
-  auto &inventory = registry.get<PlayerData>(player_eid).inventory;
+  auto &inventory = find_inventory(registry);
   if (inventory.is_open()) {
-    draw_player_inventory(inventory, ttable);
+    draw_player_inventory(registry, ttable);
   }
 }
 

@@ -1,14 +1,21 @@
 #pragma once
+#include <boomhs/entity.hpp>
 #include <boomhs/item.hpp>
 
 #include <array>
+#include <optional>
+
+namespace opengl
+{
+class TextureTable;
+} // ns opengl
 
 namespace boomhs
 {
 
 class InventorySlot
 {
-  Item *item_ = nullptr;
+  std::optional<EntityID> eid_ = std::nullopt;
 
   void access_assert() const;
 public:
@@ -16,25 +23,19 @@ public:
 
   bool occupied() const;
 
-  Item& get();
-  Item const& get() const;
+  Item& item(EntityRegistry &);
+  Item const& item(EntityRegistry &) const;
+
+  EntityID eid() const;
 
   char const*
-  name() const;
-
-  operator bool() const { return item_ != nullptr; }
-
-  Item*
-  operator->();
-
-  Item const*
-  operator->() const;
+  name(EntityRegistry &) const;
 
   // Resets the slot's state to empty.
   void reset();
 
   // Sets the slot to the item.
-  void set(Item &);
+  void set(EntityID);
 };
 
 class Inventory
@@ -45,7 +46,6 @@ class Inventory
 
 public:
   Inventory() = default;
-
   using ItemIndex = size_t;
 
   // Whether or not the game considers the inventory "open" by the player.
@@ -62,10 +62,10 @@ public:
   // Adds an item to the next available slot, returns false if no slots are available.
   //
   // Returns true in all other cases.
-  bool add_item(Item &);
+  bool add_item(EntityID);
 
   // Sets the item at the given index.
-  void set_item(ItemIndex, Item&);
+  void set_item(ItemIndex, EntityID);
 
   // Remove the item from the slot
   void remove_item(ItemIndex);

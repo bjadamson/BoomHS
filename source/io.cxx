@@ -160,7 +160,7 @@ try_pickup_nearby_item(GameState &state, FrameTime const& ft)
   auto const player_eid = find_player(registry);
   auto &player_transform = registry.get<Transform>(player_eid);
   auto const& player_pos = player_transform.translation;
-  auto &inventory = registry.get<PlayerData>(player_eid).inventory;
+  auto &inventory = find_inventory(registry);
 
   static constexpr auto MINIMUM_DISTANCE_TO_PICKUP = 1.0f;
   auto const items = find_items(registry);
@@ -180,7 +180,7 @@ try_pickup_nearby_item(GameState &state, FrameTime const& ft)
       continue;
     }
 
-    Player::add_item(eid, item, registry);
+    Player::pickup_entity(eid, registry);
 
     if (registry.has<Torch>(eid)) {
       auto &pointlight = registry.get<PointLight>(eid);
@@ -344,7 +344,7 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
       {
         auto &registry = active.registry;
         auto const eid = find_player(registry);
-        auto &inventory = registry.get<PlayerData>(eid).inventory;
+        auto &inventory = find_inventory(registry);
         inventory.toggle_open();
       }
       break;

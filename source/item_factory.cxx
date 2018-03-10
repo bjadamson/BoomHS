@@ -11,18 +11,27 @@ namespace boomhs
 {
 
 EntityID
-ItemFactory::create_item(EntityRegistry &registry, TextureTable const& ttable,
-    char const* mesh_name, char const* texture, char const* shader)
+ItemFactory::create_empty(EntityRegistry &registry, TextureTable const& ttable)
 {
   auto eid = registry.create();
 
   Item &item = registry.assign<Item>(eid);
+  item.is_pickedup = false;
   item.ui_tinfo = *ttable.find("RedX");
   item.name = "RedX";
   item.tooltip = "This is some kind of item";
 
   // leave for caller to assign
   registry.assign<Transform>(eid);
+
+  return eid;
+}
+
+EntityID
+ItemFactory::create_item(EntityRegistry &registry, TextureTable const& ttable,
+    char const* mesh_name, char const* texture, char const* shader)
+{
+  auto eid = create_empty(registry, ttable);
 
   auto &isv = registry.assign<IsVisible>(eid);
   isv.value = true;
@@ -51,8 +60,6 @@ ItemFactory::create_torch(EntityRegistry &registry, stlw::float_generator &rng, 
   item.ui_tinfo = *ttable.find("TorchUI");
   item.name = "Torch";
   item.tooltip = "This is a torch";
-
-  std::cerr << "TORCH CREATED\n\n\n";
 
   auto &pointlight = registry.assign<PointLight>(eid);
   pointlight.light.diffuse = LOC::YELLOW;

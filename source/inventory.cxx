@@ -1,9 +1,7 @@
 #include <boomhs/inventory.hpp>
+#include <boomhs/components.hpp>
+#include <boomhs/item_factory.hpp>
 #include <iostream>
-
-namespace
-{
-} // ns anon
 
 namespace boomhs
 {
@@ -16,42 +14,49 @@ InventorySlot::access_assert() const
   assert(occupied());
 }
 
+EntityID
+InventorySlot::eid() const
+{
+  access_assert();
+  return *eid_;
+}
+
 bool
 InventorySlot::occupied() const
 {
-  return nullptr != item_;
+  return std::nullopt != eid_;
 }
 
 char const*
-InventorySlot::name() const
+InventorySlot::name(EntityRegistry &registry) const
 {
-  return occupied() ? item_->name : "Slot Unoccupied";
+  return occupied() ? item(registry).name : "Slot Unoccupied";
 }
 
 void
 InventorySlot::reset()
 {
-  item_ = nullptr;
+  eid_ = std::nullopt;
 }
 
 void
-InventorySlot::set(Item &item)
+InventorySlot::set(EntityID const eid)
 {
-  item_ = &item;
+  eid_ = std::make_optional(eid);
 }
 
 Item&
-InventorySlot::get()
+InventorySlot::item(EntityRegistry &registry)
 {
   access_assert();
-  return *item_;
+  return registry.get<Item>(*eid_);
 }
 
 Item const&
-InventorySlot::get() const
+InventorySlot::item(EntityRegistry &registry) const
 {
   access_assert();
-  return *item_;
+  return registry.get<Item>(*eid_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,15 +88,15 @@ Inventory::slot(ItemIndex const index) const
 }
 
 bool
-Inventory::add_item(Item &item_adding)
+Inventory::add_item(EntityID const eid)
 {
   FOR(i, MAX_ITEMS) {
     auto const& item_at_index = slot(i);
-    if (item_at_index) {
+    if (item_at_index.occupied()) {
       continue;
     }
     // found an open slot !!
-    set_item(i, item_adding);
+    set_item(i, eid);
     return true;
   }
   // no open slot found.
@@ -99,27 +104,15 @@ Inventory::add_item(Item &item_adding)
 }
 
 void
-Inventory::set_item(ItemIndex const i, Item &it)
+Inventory::set_item(ItemIndex const i, EntityID const eid)
 {
-  slot(i).set(it);
+  slot(i).set(eid);
 }
 
 void
 Inventory::remove_item(ItemIndex const i)
 {
   slot(i).reset();
-}
-
-Item*
-InventorySlot::operator->()
-{
-  return &get();
-}
-
-Item const*
-InventorySlot::operator->() const
-{
-  return &get();
 }
 
 } // ns boomhs

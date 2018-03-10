@@ -5,28 +5,18 @@
 #include <boomhs/inventory.hpp>
 
 using namespace boomhs;
-
-namespace
-{
-
-auto&
-find_inventory(EntityRegistry &registry)
-{
-  auto const eid = find_player(registry);
-  return registry.get<PlayerData>(eid).inventory;
-}
-
-} // ns anon
+using namespace opengl;
 
 namespace boomhs
 {
 
 void
-Player::add_item(EntityID const eid, Item &item, EntityRegistry &registry)
+Player::pickup_entity(EntityID const eid, EntityRegistry &registry)
 {
   auto &inventory = find_inventory(registry);
 
-  assert(inventory.add_item(item));
+  assert(inventory.add_item(eid));
+  auto &item = registry.get<Item>(eid);
   item.is_pickedup = true;
 
   auto &visible = registry.get<IsVisible>(eid);
@@ -34,42 +24,27 @@ Player::add_item(EntityID const eid, Item &item, EntityRegistry &registry)
 }
 
 void
-Player::remove_item(EntityID const eid, Item &item, EntityRegistry &registry)
-{
-  std::abort();
-  /*
-  //inventory.remove_item(item);
-  item.is_pickedup = false;
-
-  auto &visible = registry.get<IsVisible>(eid);
-  visible.value = true;
-
-  if (registry.has<Torch>(eid)) {
-    auto &pointlight = registry.get<PointLight>(eid);
-    pointlight.attenuation *= 3.0f;
-    std::cerr << "You have droppped a torch.\n";
-  }
-  */
-}
-
-void
-Player::remove_item(size_t const index, Item &item, EntityRegistry &registry)
+Player::drop_entity(EntityID const eid, EntityRegistry &registry)
 {
   auto &inventory = find_inventory(registry);
-  inventory.remove_item(index);
-
+  auto &item = registry.get<Item>(eid);
   item.is_pickedup = false;
-  /*
 
   auto &visible = registry.get<IsVisible>(eid);
   visible.value = true;
+
+  // Move the dropped item to the player's position
+  auto const player_eid = find_player(registry);
+  auto const& player_pos = registry.get<Transform>(player_eid).translation;
+
+  auto &transform = registry.get<Transform>(eid);
+  transform.translation = player_pos;
 
   if (registry.has<Torch>(eid)) {
     auto &pointlight = registry.get<PointLight>(eid);
     pointlight.attenuation *= 3.0f;
     std::cerr << "You have droppped a torch.\n";
   }
-  */
 }
 
 } // ns boomhs
