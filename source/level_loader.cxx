@@ -3,6 +3,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/obj.hpp>
 
+#include <stlw/algorithm.hpp>
 #include <stlw/result.hpp>
 
 #include <extlibs/cpptoml.hpp>
@@ -167,11 +168,11 @@ get_float_or_abort(CppTable const& table, char const* name)
 }
 
 Result<ObjStore, LoadStatus>
-load_objfiles(CppTableArray const& mesh_table)
+load_objfiles(stlw::Logger &logger, CppTableArray const& mesh_table)
 {
-  auto const load = [](auto const& table) -> Result<std::pair<std::string, ObjData>, LoadStatus> {
+  auto const load = [&](auto const& table) -> Result<std::pair<std::string, ObjData>, LoadStatus> {
     auto const name = get_string_or_abort(table, "name");
-    std::cerr << "Loading objfile '" << name << "'\n";
+    LOG_TRACE_SPRINTF("Loading objfile 's'", name);
 
     auto const obj = "assets/" + name + ".obj";
     auto const mtl = "assets/" + name + ".mtl";
@@ -557,7 +558,8 @@ LevelLoader::load_level(stlw::Logger &logger, EntityRegistry &registry, std::str
   assert(area_config);
 
   auto const mesh_table = get_table_array_or_abort(area_config, "meshes");
-  ObjStore objstore = TRY_MOVEOUT(load_objfiles(mesh_table).mapErrorMoveOut(loadstatus_to_string));
+  ObjStore objstore = TRY_MOVEOUT(load_objfiles(logger, mesh_table)
+      .mapErrorMoveOut(loadstatus_to_string));
 
   std::cerr << "loading textures ...\n";
   auto texture_table = load_textures(logger, area_config);

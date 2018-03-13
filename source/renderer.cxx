@@ -461,7 +461,7 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
     if (CameraMode::FPS == camera.mode()) {
       return;
     }
-    draw_fn(FORWARD(args)...);
+    draw_fn(FORWARD(args));
   };
 
   auto const draw_torch = [&](auto eid, auto &sn, auto &transform, auto &&... args)
@@ -486,7 +486,7 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
     copy_transform.translation.y += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
     copy_transform.translation.z += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
 
-    draw_fn(eid, sn, copy_transform, FORWARD(args)...);
+    draw_fn(eid, sn, copy_transform, FORWARD(args));
   };
 
   //
@@ -504,7 +504,7 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
 
   if (es.draw_skybox) {
     auto const draw_skybox = [&](auto eid, auto &sn, auto &transform, auto &&... args) {
-      draw_fn(eid, sn, transform, FORWARD(args)...);
+      draw_fn(eid, sn, transform, FORWARD(args));
     };
     registry.view<ShaderName, Transform, IsVisible, IsSkybox>().each(draw_skybox);
   }

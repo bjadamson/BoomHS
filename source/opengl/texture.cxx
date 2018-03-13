@@ -1,12 +1,14 @@
 #include <opengl/texture.hpp>
 
-#include <extlibs/glew.hpp>
 #include <opengl/global.hpp>
 #include <gfx/gl_sdl_log.hpp>
 
-#include <extlibs/fmt.hpp>
+#include <stlw/algorithm.hpp>
 #include <stlw/tuple.hpp>
-#include <SOIL.h>
+
+#include <extlibs/fmt.hpp>
+#include <extlibs/glew.hpp>
+#include <extlibs/soil.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -67,7 +69,7 @@ namespace opengl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TextureInfo
 void
-TextureInfo::deallocate()
+TextureInfo::destroy()
 {
   glDeleteTextures(TextureInfo::NUM_BUFFERS, &id);
 }

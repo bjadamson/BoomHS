@@ -1,6 +1,6 @@
 #pragma once
-#include <opengl/auto_resource.hpp>
 #include <extlibs/glew.hpp>
+#include <stlw/auto_resource.hpp>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
@@ -16,7 +16,7 @@ struct TextureInfo
 
   //GLint width, height = 0;
 
-  void deallocate();
+  void destroy();
 
   static size_t constexpr NUM_BUFFERS = 1;
 };
@@ -27,7 +27,7 @@ struct FBInfo
   GLuint id;
   GLuint color_buffer;
 
-  void deallocate();
+  void destroy();
   DEFAULT_CONSTRUCTIBLE(FBInfo);
   COPY_DEFAULT(FBInfo);
   MOVE_ASSIGNABLE(FBInfo);
@@ -41,7 +41,7 @@ struct RBInfo
 {
   GLuint depth;
 
-  void deallocate();
+  void destroy();
   DEFAULT_CONSTRUCTIBLE(RBInfo);
   COPY_DEFAULT(RBInfo);
   MOVE_ASSIGNABLE(RBInfo);
@@ -50,9 +50,9 @@ struct RBInfo
   static size_t constexpr NUM_BUFFERS = 1;
 };
 
-using Texture = AutoResource<TextureInfo>;
-using FrameBuffer = AutoResource<FBInfo>;
-using ResourceBuffer = AutoResource<RBInfo>;
+using Texture        = stlw::AutoResource<TextureInfo>;
+using FrameBuffer    = stlw::AutoResource<FBInfo>;
+using ResourceBuffer = stlw::AutoResource<RBInfo>;
 
 struct TextureFilenames
 {

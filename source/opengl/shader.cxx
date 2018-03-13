@@ -4,13 +4,14 @@
 #include <opengl/global.hpp>
 #include <gfx/gl_sdl_log.hpp>
 
-#include <extlibs/fmt.hpp>
+#include <stlw/algorithm.hpp>
 #include <stlw/math.hpp>
 #include <stlw/os.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
+#include <extlibs/fmt.hpp>
 #include <cstring>
 
 namespace

@@ -1,5 +1,6 @@
 #include <opengl/gpu.hpp>
 #include <boomhs/obj.hpp>
+#include <stlw/algorithm.hpp>
 
 using namespace boomhs;
 using namespace opengl;

@@ -4,7 +4,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MISC
 #define MOVE(a) std::move(a)
-#define FORWARD(a) std::forward<decltype(a)>(a)
+#define FORWARD(a) std::forward<decltype(a)>(a)...
 #define DEFAULT_CONSTRUCTIBLE(CLASSNAME) CLASSNAME() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,14 +84,14 @@
   template <typename... P>                                                                         \
   decltype(auto) FN_NAME(P &&... p)                                                                \
   {                                                                                                \
-    return FUNCTION_TO_WRAP(FORWARD(p)...);                                                        \
+    return FUNCTION_TO_WRAP(FORWARD(p));                                                           \
   }
 
 #define DEFINE_STATIC_WRAPPER_FUNCTION(FN_NAME, FUNCTION_TO_WRAP)                                  \
   template <typename... P>                                                                         \
   static decltype(auto) FN_NAME(P &&... p)                                                         \
   {                                                                                                \
-    return FUNCTION_TO_WRAP(FORWARD(p)...);                                                        \
+    return FUNCTION_TO_WRAP(FORWARD(p));                                                           \
   }
 // END Function-defining macros
 
@@ -159,7 +159,7 @@ class DestroyFN
 
 public:
   DestroyFN(FN &&fn)
-      : fn_(FORWARD(fn))
+      : fn_(MOVE(fn))
   {
   }
   ~DestroyFN() { this->fn_(); }

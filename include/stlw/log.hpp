@@ -1,10 +1,8 @@
 #pragma once
+#include <extlibs/spdlog.hpp>
 #include <memory>
-#include <stlw/algorithm.hpp>
-#include <stlw/compiler_macros.hpp>
-#include <stlw/impl/log_impl.hpp>
-#include <stlw/type_macros.hpp>
 
+// clang-format off
 #undef LOG_TRACE
 #undef LOG_DEBUG
 #undef LOG_INFO
@@ -12,83 +10,54 @@
 #undef LOG_ERROR
 
 #ifdef NDEBUG
-#define LOG_TRACE(...) logger.log_nothing()
-#define LOG_DEBUG(...) logger.log_nothing()
-#define LOG_INFO(...) logger.log_nothing()
-#define LOG_WARN(...) logger.log_nothing()
-#define LOG_ERROR(...) logger.log_nothing()
+#define LOG_TRACE_IMPL(...) logger.log_nothing()
+#define LOG_DEBUG_IMPL(...) logger.log_nothing()
+#define LOG_INFO_IMPL(...) logger.log_nothing()
+#define LOG_WARN_IMPL(...) logger.log_nothing()
+#define LOG_ERROR_IMPL(...) logger.log_nothing()
 #else
-#define LOG_TRACE(...) logger.trace(__VA_ARGS__)
-#define LOG_DEBUG(...) logger.debug(__VA_ARGS__)
-#define LOG_INFO(...) logger.info(__VA_ARGS__)
-#define LOG_WARN(...) logger.warn(__VA_ARGS__)
-#define LOG_ERROR(...) logger.error(__VA_ARGS__)
+#define LOG_TRACE_IMPL(fmtpolicy, ...) logger.trace(fmtpolicy, __VA_ARGS__)
+#define LOG_DEBUG_IMPL(fmtpolicy, ...) logger.debug(fmtpolicy, __VA_ARGS__)
+#define LOG_INFO_IMPL(fmtpolicy, ...)  logger.info(fmtpolicy, __VA_ARGS__)
+#define LOG_WARN_IMPL(fmtpolicy, ...)  logger.warn(fmtpolicy, __VA_ARGS__)
+#define LOG_ERROR_IMPL(fmtpolicy, ...) logger.error(fmtpolicy, __VA_ARGS__)
 #endif
+
+#define LOG_TRACE(...) LOG_TRACE_IMPL(::stlw::impl::FormatPolicy::none, __VA_ARGS__)
+#define LOG_DEBUG(...) LOG_DEBUG_IMPL(::stlw::impl::FormatPolicy::none, __VA_ARGS__)
+#define LOG_INFO(...)  LOG_INFO_IMPL(::stlw::impl::FormatPolicy::none, __VA_ARGS__)
+#define LOG_WARN(...)  LOG_WARN_IMPL(::stlw::impl::FormatPolicy::none, __VA_ARGS__)
+#define LOG_ERROR(...) LOG_ERROR_IMPL(::stlw::impl::FormatPolicy::none, __VA_ARGS__)
+
+#define LOG_TRACE_SPRINTF(...) LOG_TRACE_IMPL(::stlw::impl::FormatPolicy::sprintf, __VA_ARGS__)
+#define LOG_DEBUG_SPRINTF(...) LOG_DEBUG_IMPL(::stlw::impl::FormatPolicy::sprintf, __VA_ARGS__)
+#define LOG_INFO_SPRINTF(...)  LOG_INFO_IMPL(::stlw::impl::FormatPolicy::sprintf, __VA_ARGS__)
+#define LOG_WARN_SPRINTF(...)  LOG_WARN_IMPL(::stlw::impl::FormatPolicy::sprintf, __VA_ARGS__)
+#define LOG_ERROR_SPRINTF(...) LOG_ERROR_IMPL(::stlw::impl::FormatPolicy::sprintf, __VA_ARGS__)
+
+#define LOG_TRACE_FORMAT(...) LOG_TRACE_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
+#define LOG_DEBUG_FORMAT(...) LOG_DEBUG_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
+#define LOG_INFO_FORMAT(...)  LOG_INFO_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
+#define LOG_WARN_FORMAT(...)  LOG_WARN_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
+#define LOG_ERROR_FORMAT(...) LOG_ERROR_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
+// clang-format on
 
 namespace stlw
 {
+using LoggerPointer = std::unique_ptr<spdlog::logger>;
+} // ns stlw
 
-class log_factory
+#include <stlw/impl/log_impl.hpp>
+
+namespace stlw
 {
-  template <typename... Params>
-  inline static auto
-  make_spdlog_logger(char const *name, impl::log_level const level, Params &&... p)
-  {
-    auto sink = std::make_unique<spdlog::sinks::daily_file_sink_st>(std::forward<Params>(p)...);
-    auto log_pointer = std::make_unique<spdlog::logger>(name, MOVE(sink));
-    {
-      // map abstract log levels to spdlog levels
-      auto const log_level = static_cast<spdlog::level::level_enum>(level);
-      log_pointer->set_level(log_level);
-    }
-    return log_pointer;
-  }
+using Logger = ::stlw::impl::LogWriter;
 
-  template <size_t N, size_t M, typename L>
-  static auto make_adapter(char const (&log_name)[N], char const (&prefix)[M], L const level)
-  {
-    auto const filename = stlw::concat(prefix, log_name, ".log");
-    auto logger = make_spdlog_logger(log_name, level, filename.data(), 23, 59);
-    return impl::log_adapter{MOVE(logger)};
-  }
-
-  template <size_t N>
-  inline static auto make_default_log_group(char const (&prefix)[N])
-  {
-    // clang-format off
-    return impl::log_group{
-      make_adapter("trace", prefix, impl::log_level::trace),
-      make_adapter("debug", prefix, impl::log_level::debug),
-      make_adapter("info", prefix, impl::log_level::info),
-      make_adapter("warn", prefix, impl::log_level::warn),
-      make_adapter("error", prefix, impl::log_level::error)
-    };
-    // clang-format on
-  }
-
-  template <size_t N>
-  inline static auto make_aggregate_logger(char const (&prefix)[N])
-  {
-    static char constexpr LOG_NAME[] = "aggregate";
-    auto const log_file_path = stlw::concat(prefix, LOG_NAME, ".log");
-    std::array<spdlog::sink_ptr, 2> const sinks = {
-        std::make_unique<spdlog::sinks::stderr_sink_st>(),
-        std::make_unique<spdlog::sinks::daily_file_sink_st>(log_file_path.data(), 23, 59)};
-    auto shared_logger = std::make_unique<spdlog::logger>(LOG_NAME, begin(sinks), end(sinks));
-    shared_logger->set_level(spdlog::level::trace);
-    return impl::log_adapter{MOVE(shared_logger)};
-  }
-
+struct LogFactory
+{
+  LogFactory() = delete;
 public:
-  static auto make_default_logger(char const *)
-  {
-    // 1. Construct an instance of the default log group.
-    // 2. Construct an instance of a logger that writes all log levels to a shared file.
-    static char const prefix[] = "build-system/bin/";
-    auto log_group = make_default_log_group(prefix);
-    auto ad = make_aggregate_logger(prefix);
-    return impl::log_writer{MOVE(log_group), MOVE(ad)};
-  }
+  static impl::LogWriter make_default(char const *);
 };
 
 } // ns stlw

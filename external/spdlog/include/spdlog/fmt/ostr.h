@@ -8,10 +8,8 @@
 // include external or bundled copy of fmtlib's ostream support
 //
 #if !defined(SPDLOG_FMT_EXTERNAL)
-#include "spdlog/fmt/fmt.h"
-#include "spdlog/fmt/bundled/ostream.h"
+#include "bundled/ostream.h"
+#include "fmt.h"
 #else
 #include <fmt/ostream.h>
 #endif
-
-

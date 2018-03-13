@@ -1,7 +1,8 @@
 #include <boomhs/inventory.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/item_factory.hpp>
-#include <iostream>
+
+#include <stlw/algorithm.hpp>
 
 namespace boomhs
 {

@@ -11,7 +11,7 @@ template <typename T, size_t N, class... Args>
 constexpr auto
 make_array(Args &&... args)
 {
-  return std::array<T, N>{{FORWARD(args)...}};
+  return std::array<T, N>{{FORWARD(args)}};
 }
 
 template <typename T, class... Args>
@@ -19,7 +19,7 @@ constexpr auto
 make_array(Args &&... args)
 {
   auto constexpr N = sizeof...(args);
-  return make_array<T, N>(FORWARD(args)...);
+  return make_array<T, N>(FORWARD(args));
 }
 
 template <typename T>

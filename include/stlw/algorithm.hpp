@@ -24,7 +24,7 @@ template<typename First, typename ...Rest>
 bool
 orcombo(First const& first, Rest &&... rest)
 {
-  return first || orcombo(FORWARD(rest)...);
+  return first || orcombo(FORWARD(rest));
 }
 
 } // ns stlw::anyof_detail
@@ -42,7 +42,7 @@ template<typename First, typename ...Rest>
 bool
 allcombo(First const& first, Rest &&... rest)
 {
-  return first && allcombo(FORWARD(rest)...);
+  return first && allcombo(FORWARD(rest));
 }
 
 } // ns stlw::allof_detail

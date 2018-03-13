@@ -1,15 +1,15 @@
 #pragma once
 #include <stlw/type_macros.hpp>
 
-namespace opengl
+namespace stlw
 {
 
-// A wrapper around an opengl resource.
+// A wrapper around a resource.
 //
-// Internally tracks when it is time to deallocate the resource.
+// Internally tracks when it is time to destroy the resource.
 //
 // The last non-moved-from instance of this type owns the resource, and will invoke the
-// deallocate() function.
+// destroy() function.
 //
 // It is undefined behavior to reference the internal reference after an AutoResource has been
 // moved-from.
@@ -27,7 +27,7 @@ namespace opengl
 //     // give ownership to a new variable, it is undefined behavior to continue to reference ar.
 //     auto new_ar = std::move(r);
 //
-//     // new_ar will handle calling deallocate() on r, internally, automatically when new_ar is
+//     // new_ar will handle calling destroy() on r, internally, automatically when new_ar is
 //     // destroyed.
 template<typename R>
 class AutoResource
@@ -35,7 +35,7 @@ class AutoResource
   R resource_;
   bool should_destroy_ = true;
 public:
-
+  NO_COPY(AutoResource);
   explicit AutoResource(R &&resource)
     : resource_(MOVE(resource))
   {
@@ -44,20 +44,31 @@ public:
   ~AutoResource()
   {
     if (should_destroy_) {
-      resource_.deallocate();
+      std::abort();
+      resource_.destroy();
     }
   }
 
-  auto const& resource() const { return resource_; }
+  AutoResource& operator=(AutoResource &&other)
+  {
+    should_destroy_ = other.should_destroy_;
+    resource_ = MOVE(other.resource_);
 
-  NO_COPY(AutoResource);
-  NO_MOVE_ASSIGN(AutoResource);
+    // This instance takes ownership of the resource from "other"
+    other.should_destroy_ = false;
+    return *this;
+  }
+
   AutoResource(AutoResource &&other)
     : resource_(MOVE(other.resource_))
     , should_destroy_(other.should_destroy_)
   {
+    // This instance takes ownership of the resource from "other"
     other.should_destroy_ = false;
   }
+
+  auto& resource() { return resource_; }
+  auto const& resource() const { return resource_; }
 };
 
-} // ns opengl
+} // ns stlw

@@ -1,22 +1,13 @@
 #pragma once
-#include <extlibs/spdlog.hpp>
-#include <memory>
+#include <stlw/auto_resource.hpp>
 #include <stlw/compiler_macros.hpp>
 #include <stlw/type_macros.hpp>
+#include <extlibs/fmt.hpp>
 
-namespace stlw
+namespace stlw::impl
 {
 
-namespace impl {
-class log_writer;
-} // ns impl
-using Logger = ::stlw::impl::log_writer;
-using LoggerPointer = std::unique_ptr<spdlog::logger>;
-
-namespace impl
-{
-
-enum class log_level {
+enum class LogLevel {
   trace = 0,
   debug,
   info,
@@ -25,33 +16,47 @@ enum class log_level {
   MAX,
 };
 
+// Flag controlling which fmt policy the logger uses.
+enum class FormatPolicy {
+  none = 0,
+  sprintf,
+  format
+};
+
 // Log adapter class.
 //
 // Adapts an underlying logger to the standard logging interface.
 //
 // It is assumed the value passed in has unique_ptr semantics.
-class log_adapter
+class LogAdapter
 {
-  LoggerPointer p_logger_;
-  NO_COPY(log_adapter)
+  LoggerPointer logger_;
+
 public:
-
-  explicit log_adapter(LoggerPointer &&l)
-      : p_logger_(MOVE(l))
+  MOVE_CONSTRUCTIBLE_ONLY(LogAdapter);
+  explicit LogAdapter(LoggerPointer &&logger)
+      : logger_(MOVE(logger))
   {
   }
-  log_adapter(log_adapter &&other)
-      : p_logger_(MOVE(other.p_logger_))
-  {
-  }
-
-  log_adapter &operator=(log_adapter &&) = delete;
 
 #define DEFINE_LOG_ADAPTER_METHOD(FN_NAME)                                                         \
   template <typename... Params>                                                                    \
-  auto& FN_NAME(Params &&... p)                                                                    \
+  auto& FN_NAME(FormatPolicy const policy, Params &&... p)                                         \
   {                                                                                                \
-    this->p_logger_->FN_NAME(std::forward<Params>(p)...);                                          \
+    switch(policy) {                                                                               \
+      case FormatPolicy::none:                                                                     \
+        this->logger_->FN_NAME(FORWARD(p));                                                        \
+        break;                                                                                     \
+      case FormatPolicy::sprintf:                                                                  \
+        this->logger_->FN_NAME(fmt::sprintf(FORWARD(p)));                                          \
+        break;                                                                                     \
+      case FormatPolicy::format:                                                                   \
+        this->logger_->FN_NAME(fmt::format(FORWARD(p)));                                           \
+        break;                                                                                     \
+      default:                                                                                     \
+        std::abort();                                                                              \
+        break;                                                                                     \
+    }                                                                                              \
     return *this;                                                                                  \
   }
 
@@ -61,107 +66,62 @@ public:
   DEFINE_LOG_ADAPTER_METHOD(warn)
   DEFINE_LOG_ADAPTER_METHOD(error)
 
-  template <typename... Params>
-  auto& log_nothing(Params &&...) const { return *this;}
-
-  friend log_adapter make_log_adapter(LoggerPointer &&);
-};
-
-class log_group
-{
-  NO_COPY(log_group)
-
-  log_adapter trace_;
-  log_adapter debug_;
-  log_adapter info_;
-  log_adapter warn_;
-  log_adapter error_;
-
-public:
-  explicit log_group(log_adapter &&t, log_adapter &&d, log_adapter &&i, log_adapter &&w, log_adapter &&e)
-      : trace_(MOVE(t))
-      , debug_(MOVE(d))
-      , info_(MOVE(i))
-      , warn_(MOVE(w))
-      , error_(MOVE(e))
-  {
-  }
-
-  log_group(log_group &&other)
-      : trace_(MOVE(other.trace_))
-      , debug_(MOVE(other.debug_))
-      , info_(MOVE(other.info_))
-      , warn_(MOVE(other.warn_))
-      , error_(MOVE(other.error_))
-  {
-  }
-
-#define DEFINE_LOG_GROUP_METHOD(FN_NAME)                                                           \
-  template <typename... Params>                                                                    \
-  auto &FN_NAME(Params &&... p)                                                                    \
-  {                                                                                                \
-    this->FN_NAME##_.FN_NAME(std::forward<Params>(p)...);                                          \
-    return *this;                                                                                  \
-  }
-
-  DEFINE_LOG_GROUP_METHOD(trace)
-  DEFINE_LOG_GROUP_METHOD(debug)
-  DEFINE_LOG_GROUP_METHOD(info)
-  DEFINE_LOG_GROUP_METHOD(warn)
-  DEFINE_LOG_GROUP_METHOD(error)
+#undef DEFINE_LOG_ADAPTER_METHOD
 
   template <typename... Params>
-  auto& log_nothing(Params &&...) const { return *this;}
+  auto& log_nothing(Params &&...) const { return *this; }
 
-  log_group &operator=(log_group &&) = delete;
+  void set_level(spdlog::level::level_enum const level)
+  {
+    logger_->set_level(level);
+  }
+
+  void destroy()
+  {
+    flush();
+  }
+
+  void flush()
+  {
+    logger_->flush();
+  }
 };
 
-#define LOG_WRITER_DEFINE_FN(FN_NAME)                                                              \
+using LogFlusher = AutoResource<LogAdapter>;
+
+#define DEFINE_LOGWRITER_FN(FN_NAME)                                                               \
   template <typename... Params>                                                                    \
-  auto &FN_NAME(Params &&... )                                                                     \
+  auto &FN_NAME(FormatPolicy const policy, Params &&... p)                                         \
   {                                                                                                \
+    this->flusher_.resource().FN_NAME(policy, FORWARD(p));                                         \
     return *this;                                                                                  \
   }
 
-#define LOG_WRITER_DEFINE_FN_TEMP(FN_NAME)                                                         \
-  template <typename... Params>                                                                    \
-  auto &FN_NAME(Params &&... p)                                                                    \
-  {                                                                                                \
-    this->group_.FN_NAME(std::forward<Params>(p)...);                                              \
-    this->shared_.FN_NAME(std::forward<Params>(p)...);                                             \
-    return *this;                                                                                  \
-  }
-
-
-class log_writer
+class LogWriter
 {
-  log_group group_;
-  log_adapter shared_;
-
-  NO_COPY(log_writer)
-  log_writer &operator=(log_writer &&) = delete;
+  LogFlusher flusher_;
 
 public:
-  explicit log_writer(log_group &&g, log_adapter &&s)
-      : group_(MOVE(g))
-      , shared_(MOVE(s))
+  MOVE_CONSTRUCTIBLE_ONLY(LogWriter);
+  explicit LogWriter(LogFlusher &&lf)
+      : flusher_(MOVE(lf))
   {
   }
 
-  log_writer(log_writer &&other)
-      : group_(MOVE(other.group_))
-      , shared_(MOVE(other.shared_))
+  DEFINE_LOGWRITER_FN(trace)
+  DEFINE_LOGWRITER_FN(debug)
+  DEFINE_LOGWRITER_FN(info)
+  DEFINE_LOGWRITER_FN(warn)
+  DEFINE_LOGWRITER_FN(error)
+
+  DEFINE_LOGWRITER_FN(log_nothing)
+
+  void flush()
   {
+    flusher_.resource().flush();
   }
-
-  LOG_WRITER_DEFINE_FN(trace)
-  LOG_WRITER_DEFINE_FN(debug)
-  LOG_WRITER_DEFINE_FN(info)
-  LOG_WRITER_DEFINE_FN_TEMP(warn)
-  LOG_WRITER_DEFINE_FN_TEMP(error)
-
-  LOG_WRITER_DEFINE_FN_TEMP(log_nothing)
 };
 
-} // ns impl
-} // ns stlw
+#undef LogWriter_DEFINE_FN
+
+} // ns stlw::impl

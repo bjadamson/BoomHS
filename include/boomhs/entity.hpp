@@ -20,14 +20,14 @@ public:
   assign(EntityID const eid, Args &&... args)
   {
     assert(!has<Component>(eid));
-    return registry_.assign<Component>(eid, FORWARD(args)...);
+    return registry_.assign<Component>(eid, FORWARD(args));
   }
 
   template<typename Tag, typename... Args>
   Tag & attach(EntityID const eid, Args &&... args)
   {
     assert(!has<Tag>(eid));
-    return registry_.attach<Tag>(eid, FORWARD(args)...);
+    return registry_.attach<Tag>(eid, FORWARD(args));
   }
 
   EntityID create();

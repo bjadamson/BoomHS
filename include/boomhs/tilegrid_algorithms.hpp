@@ -151,7 +151,7 @@ visit_edges(TileGrid const& tgrid, FN const& fn, Args &&... args)
       fn(tpos);
     }
   };
-  visit_each(tgrid, visit_fn, FORWARD(args)...);
+  visit_each(tgrid, visit_fn, FORWARD(args));
 }
 
 template<typename FN>

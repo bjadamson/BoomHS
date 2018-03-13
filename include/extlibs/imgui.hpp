@@ -11,7 +11,7 @@ template<typename FN, typename ...Args>
 void
 with_window(FN const& fn, Args &&... args)
 {
-  if (ImGui::Begin(FORWARD(args)...)) {
+  if (ImGui::Begin(FORWARD(args))) {
     fn();
     ImGui::End();
   }
@@ -25,7 +25,7 @@ template<typename FN, typename ...Args>
 void
 with_stylevar(FN const& fn, Args &&... args)
 {
-  ImGui::PushStyleVar(FORWARD(args)...);
+  ImGui::PushStyleVar(FORWARD(args));
   fn();
   ImGui::PopStyleVar();
 }
@@ -34,7 +34,7 @@ template<typename FN, typename ...Args>
 void
 with_childframe(FN const& fn, Args &&... args)
 {
-  if (ImGui::BeginChild(FORWARD(args)...)) {
+  if (ImGui::BeginChild(FORWARD(args))) {
     fn();
     ImGui::EndChild();
   }
@@ -57,7 +57,7 @@ template<typename FN, typename ...Args>
 void
 with_mainmenubar(FN const& fn, Args &&... args)
 {
-  if (ImGui::BeginMainMenuBar(FORWARD(args)...)) {
+  if (ImGui::BeginMainMenuBar(FORWARD(args))) {
     fn();
     ImGui::EndMainMenuBar();
   }

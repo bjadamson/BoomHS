@@ -1,4 +1,6 @@
 #include <opengl/draw_info.hpp>
+#include <stlw/algorithm.hpp>
+
 #include <iostream>
 
 using namespace boomhs;
