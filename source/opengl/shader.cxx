@@ -104,12 +104,10 @@ compile_sources(stlw::Logger &logger, VertexShaderInfo const &vertex_shader,
   auto const frag_shader_id = TRY_MOVEOUT(compile_shader(logger, GL_FRAGMENT_SHADER, fragment_shader.source));
   auto const program_id = TRY_MOVEOUT(create_program());
 
-  std::cerr << fmt::format("compiling '{}'/'{}'\n", vertex_shader.filename, fragment_shader.filename);
   auto const& variable_infos = vertex_shader.attribute_infos;
-  std::cerr << "number of variable infos: '" << variable_infos.size() << "'\n";
   FOR(i, variable_infos.size()) {
     auto const& vinfo = variable_infos[i];
-    std::cerr << fmt::format("binding program_id: {}, name: {}, index: {}\n", program_id, vinfo.variable, i);
+    LOG_TRACE("binding program_id: {}, name: {}, index: {}\n", program_id, vinfo.variable, i);
     glBindAttribLocation(program_id, i, vinfo.variable.c_str());
   }
 
@@ -120,7 +118,7 @@ compile_sources(stlw::Logger &logger, VertexShaderInfo const &vertex_shader,
   ON_SCOPE_EXIT([&]() { glDetachShader(program_id, frag_shader_id); });
 
   DO_EFFECT(link_program(logger, program_id));
-  std::cerr << "finished compiling\n";
+  LOG_TRACE("finished compiling");
   return Ok(program_id);
 }
 
@@ -270,9 +268,9 @@ ShaderProgram::use(stlw::Logger &logger)
 GLint
 ShaderProgram::get_uniform_location(stlw::Logger &logger, GLchar const *name)
 {
-  LOG_TRACE(fmt::sprintf("getting uniform '%s' location.", name));
+  LOG_TRACE_SPRINTF("getting uniform '%s' location.", name);
   GLint const loc = glGetUniformLocation(program_.handle(), name);
-  LOG_TRACE(fmt::sprintf("uniform '%s' found at '%d'.", name, loc));
+  LOG_TRACE_SPRINTF("uniform '%s' found at '%d'.", name, loc);
 
   LOG_ANY_GL_ERRORS(logger, "get_uniform_location");
   assert(-1 != loc);
@@ -295,8 +293,8 @@ ShaderProgram::set_uniform_matrix_3fv(stlw::Logger &logger, GLchar const *name, 
   GLsizei constexpr COUNT = 1;
   GLboolean constexpr TRANSPOSE_MATRICES = GL_FALSE;
 
-  LOG_TRACE(fmt::sprintf("sending uniform mat3 at loc '%d' with data '%s' to GPU", loc,
-        glm::to_string(matrix)));
+  LOG_TRACE_SPRINTF("sending uniform mat3 at loc '%d' with data '%s' to GPU", loc,
+        glm::to_string(matrix));
   glUniformMatrix3fv(loc, COUNT, TRANSPOSE_MATRICES, glm::value_ptr(matrix));
   LOG_ANY_GL_ERRORS(logger, "set_uniform_matrix_3fv");
 }
@@ -317,8 +315,8 @@ ShaderProgram::set_uniform_matrix_4fv(stlw::Logger &logger, GLchar const *name, 
   GLsizei constexpr COUNT = 1;
   GLboolean constexpr TRANSPOSE_MATRICES = GL_FALSE;
 
-  LOG_TRACE(fmt::sprintf("sending uniform matrix at loc '%d' with data '%s' to GPU", loc,
-        glm::to_string(matrix)));
+  LOG_TRACE_SPRINTF("sending uniform matrix at loc '%d' with data '%s' to GPU", loc,
+        glm::to_string(matrix));
   glUniformMatrix4fv(loc, COUNT, TRANSPOSE_MATRICES, glm::value_ptr(matrix));
   LOG_ANY_GL_ERRORS(logger, "set_uniform_matrix_4fv");
 }

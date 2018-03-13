@@ -168,9 +168,8 @@ log_any_gl_errors(stlw::Logger &logger, std::string const &prefix, int const lin
 {
   GLenum const err = glGetError();
   if (err != GL_NO_ERROR) {
-    auto const msg = fmt::sprintf("PREFIX: '%s', GL error detected (line %d), code: '%d', string: '%s'",
+    LOG_ERROR_SPRINTF("PREFIX: '%s', GL error detected (line %d), code: '%d', string: '%s'",
         prefix, line, err, gluErrorString(err));
-    LOG_ERROR(msg);
     std::abort();
   }
 }

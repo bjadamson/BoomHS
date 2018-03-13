@@ -13,12 +13,31 @@ using namespace stlw::impl;
 namespace
 {
 
+auto
+threadunsafe_sink(char const* file_path)
+{
+  // use single-threaded spdlog sink
+  using SinkType = spdlog::sinks::simple_file_sink_st;
+  return std::make_unique<SinkType>(file_path);
+}
+
+auto
+threadsafe_sink(char const* file_path)
+{
+  // use multi-threaded spdlog sink
+  using SinkType = spdlog::sinks::simple_file_sink_mt;
+  return std::make_unique<SinkType>(file_path);
+
+  //using SinkType = spdlog::sinks::daily_file_sink_st;
+  //return std::make_unique<SinkType>(file_path, 23, 50);
+}
+
 LogFlusher
 make_aggregate_logger(char const *file_path, spdlog::level::level_enum const level)
 {
   try {
     auto const sinks = stlw::make_array<spdlog::sink_ptr>(
-        std::make_unique<spdlog::sinks::daily_file_sink_st>(file_path, 23, 59)
+        threadsafe_sink(file_path)
         );
     auto logger = std::make_unique<spdlog::logger>(file_path, sinks.cbegin(), sinks.cend());
     logger->set_level(level);

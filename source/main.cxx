@@ -488,7 +488,7 @@ make_window(stlw::Logger &logger, bool const fullscreen, float const width, floa
 int
 main(int argc, char *argv[])
 {
-  auto logger = stlw::LogFactory::make_default("main logger");
+  auto logger = stlw::LogFactory::make_default("LOG BoomHS");
   auto const on_error = [&logger](auto const &error) {
     LOG_ERROR(error);
     return EXIT_FAILURE;

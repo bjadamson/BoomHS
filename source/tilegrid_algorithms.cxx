@@ -66,10 +66,8 @@ calculate_edges(TilePosition const& tpos, uint64_t const tgrid_width, uint64_t c
   auto const top    = std::min(tpos.y + distance_h, tgrid_height - 1);
   auto const bottom = tpos.y > distance_h ? std::max(tpos.y - distance_h, 0ul) : 0ul;
 
-  //std::cerr << "left: '" << left << "' right: '" << right << "'\n";
   assert(left <= right);
   assert(bottom <= top);
-
   return Edges{tpos, left, top, right, bottom};
 }
 

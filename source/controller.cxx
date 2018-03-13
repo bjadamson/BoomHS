@@ -1,4 +1,5 @@
 #include <window/controller.hpp>
+#include <stlw/algorithm.hpp>
 #include <extlibs/fmt.hpp>
 
 using namespace window;
@@ -207,22 +208,24 @@ Result<SDLControllers, std::string>
 SDLControllers::find_attached_controllers(stlw::Logger &logger)
 {
   int const num_controllers = SDL_NumJoysticks();
-  LOG_INFO("Detected {} controllers plugged into the system");
+  LOG_INFO_SPRINTF("Detected %i controllers plugged into the system", num_controllers);
 
   SDL_GameController *controller = nullptr;
-  for (int i = 0; i < num_controllers; ++i) {
+  FORI(i, num_controllers) {
     if (!SDL_IsGameController(i)) {
       continue;
     }
     SDL_GameController *ci = SDL_GameControllerOpen(i);
-    LOG_INFO(fmt::sprintf("Found controller: '%s'", SDL_GameControllerNameForIndex(i)));
+    LOG_INFO_SPRINTF("Found controller: '%s'", SDL_GameControllerNameForIndex(i));
     if (ci) {
       controller = ci;
       break;
-    } else {
+    }
+    else {
       return Err(fmt::sprintf("Could not open gamecontroller %i: %s\n", i, SDL_GetError()));
     }
   }
+  std::abort();
   SDLControllers controllers;
   auto ptr = ControllerPTR{controller, &destroy_controller};
   SDL_Joystick *joystick = SDL_GameControllerGetJoystick(ptr.get());
