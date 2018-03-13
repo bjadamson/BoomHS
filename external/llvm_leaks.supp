@@ -1,0 +1,4 @@
+leak:*libGL.so*
+leak:*libdrm_intel.so*
+leak:*i965_dri.so*
+leak:*libX11.so*

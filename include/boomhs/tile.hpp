@@ -133,7 +133,7 @@ operator<<(std::ostream &stream, TileType const type)
       break;
     case TileType::UNDEFINED:
       stream << "UNDEFINED";
-      // fall-through to abort
+    break;
     default:
       std::abort();
       break;

@@ -48,10 +48,10 @@ class DrawInfo
 
 public:
   NO_COPY(DrawInfo);
-  explicit DrawInfo(GLenum const, size_t const, GLuint const, std::optional<TextureInfo> const&);
+  explicit DrawInfo(GLenum, size_t, GLuint, std::optional<TextureInfo> const&);
 
   DrawInfo(DrawInfo &&);
-  DrawInfo& operator=(DrawInfo &&other);
+  DrawInfo& operator=(DrawInfo &&);
 
   auto const& vao() const { return vao_; }
   auto draw_mode() const { return draw_mode_; }
@@ -62,7 +62,7 @@ public:
 
   auto texture_info() const { return texture_info_; }
 
-  void print_self(std::ostream&, VertexAttribute const&) const;
+  void print_self(std::ostream &, VertexAttribute const&) const;
 };
 
 class EntityDrawinfos

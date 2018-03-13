@@ -177,14 +177,19 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
     auto const& mesh_name = it.mesh_name;
     auto const& vshader_name = it.vshader_name;
 
-        auto &shader_ref = sps.ref_sp(vshader_name);
-        auto const va = shader_ref.va();
-        auto const qa = QueryAttributes::from_va(va);
-        auto const qo = ObjQuery{mesh_name, qa};
-        auto const &obj = obj_store.get_obj(qo);
+    auto &shader_ref = sps.ref_sp(vshader_name);
+    auto const va = shader_ref.va();
+    auto const qa = QueryAttributes::from_va(va);
+    auto const qo = ObjQuery{mesh_name, qa};
+    auto const &obj = obj_store.get_obj(qo);
 
-    auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, std::nullopt);
-    tile_dinfos[static_cast<size_t>(it.type)] = MOVE(handle);
+    auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj,
+        std::nullopt);
+
+    assert(it.type < TileType::UNDEFINED);
+    auto const index = static_cast<size_t>(it.type);
+    assert(index < tile_dinfos.capacity());
+    tile_dinfos[index] = MOVE(handle);
   }
 
   EntityDrawHandles edh{MOVE(dinfos)};

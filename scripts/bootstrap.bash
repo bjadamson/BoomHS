@@ -18,12 +18,9 @@ set(MY_EXTRA_FLAGS "-Wno-unused-variable -Wno-missing-braces -Wno-unused-paramet
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_CXX_COMPILER "clang++")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -g -O0 ${MY_EXTRA_FLAGS} ")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Wextra -g -O0 ${MY_EXTRA_FLAGS}")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -Wall -Wextra -g -O0 ${MY_EXTRA_FLAGS} ")
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O0")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17 -stdlib=libc++")
 
 
@@ -102,7 +99,7 @@ EOF
 
 cd ${BUILD}
 echo $(pwd)
-conan install --build missing -s compiler=clang -s arch=x86_64 -s compiler.version=7.0 -s compiler.libcxx=libc++ -s build_type=Debug
+conan install --build missing -s compiler=clang -s arch=x86_64 -s compiler.version=6.0 -s compiler.libcxx=libc++ -s build_type=Debug
 cmake .. -G "Unix Makefiles"          \
   -DCMAKE_BUILD_TYPE=Debug            \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
