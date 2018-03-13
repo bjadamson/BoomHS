@@ -275,6 +275,8 @@ init(window::Dimensions const& dimensions)
   //glDisable(GL_BLEND);
 
   enable_depth_tests();
+
+  glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 }
 
 void
