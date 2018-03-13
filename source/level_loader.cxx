@@ -115,6 +115,8 @@ get_color(CppTable const& table, char const* name)
   }
 
   std::vector<double> const& c = *load_colors;
+  assert(4 == c.size());
+
   opengl::Color color;
   color.set_r(c[0]);
   color.set_g(c[1]);
