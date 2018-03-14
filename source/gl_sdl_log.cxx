@@ -111,23 +111,20 @@ ErrorLog::abort_if_any_errors(std::ostream &stream)
 {
   auto const write_errors = [&stream](char const* prefix, auto const& opt_errors) {
     stream << prefix;
-    stream << ": '";
+    stream << ": ";
 
     if (opt_errors) {
-      stream << "WRITING ERRORS\n";
       stream << *opt_errors;
-      stream << "DONE WRITING ERRORS\n";
     } else {
       stream << "none";
     }
-    stream << "'\n";
     bool const found_errors = opt_errors != std::nullopt;
     return found_errors;
   };
   bool const some_glerrors = write_errors("GL errors", GlErrors::retrieve());
-  stream << "a: '" << some_glerrors << "'\n";
+  stream << "'" << some_glerrors << "'\n";
   bool const some_sdlerrors = write_errors("SDL errors errors", SdlErrors::retrieve());
-  stream << "b: '" << some_sdlerrors << "'\n";
+  stream << "'" << some_sdlerrors << "'\n";
 
   if (some_glerrors || some_sdlerrors) {
     std::abort();

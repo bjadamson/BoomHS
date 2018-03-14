@@ -258,13 +258,32 @@ draw_3dlightsource(RenderState &rstate, glm::mat4 const& model_matrix, ShaderPro
   draw(rstate, model_matrix, sp, dinfo);
 }
 
+void
+gl_log_callback(GLenum const source,
+                GLenum const type,
+                     GLuint const id,
+                     GLenum const severity,
+                     GLsizei const length,
+                     GLchar const* message,
+                      void const* user_data)
+{
+  auto *plogger = reinterpret_cast<stlw::Logger const*>(user_data);
+  auto &logger = *const_cast<stlw::Logger*>(plogger);
+  char const* prefix = (type == GL_DEBUG_TYPE_ERROR) ? "** GL ERROR **" : "";
+  LOG_ERROR_SPRINTF("GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+           prefix, type, severity, message);
+
+  std::abort();
+}
+
+
 } // ns anonymous
 
 namespace boomhs::render
 {
 
 void
-init(window::Dimensions const& dimensions)
+init(stlw::Logger &logger, window::Dimensions const& dimensions)
 {
   // Initialize opengl
   glViewport(0, 0, dimensions.w, dimensions.h);
@@ -276,7 +295,11 @@ init(window::Dimensions const& dimensions)
 
   enable_depth_tests();
 
+  glEnable(GL_DEBUG_OUTPUT);
   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+
+  // The logger is thread safe
+  glDebugMessageCallback( (GLDEBUGPROC)gl_log_callback, (void*)(&logger));
 }
 
 void

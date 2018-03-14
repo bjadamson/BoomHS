@@ -225,7 +225,6 @@ SDLControllers::find_attached_controllers(stlw::Logger &logger)
       return Err(fmt::sprintf("Could not open gamecontroller %i: %s\n", i, SDL_GetError()));
     }
   }
-  std::abort();
   SDLControllers controllers;
   auto ptr = ControllerPTR{controller, &destroy_controller};
   SDL_Joystick *joystick = SDL_GameControllerGetJoystick(ptr.get());

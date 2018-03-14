@@ -437,7 +437,7 @@ start(stlw::Logger &logger, Engine &engine)
 
   // Initialize opengl
   auto const dimensions = engine.dimensions();
-  render::init(dimensions);
+  render::init(logger, dimensions);
 
   // Configure Imgui
   auto &imgui = ImGui::GetIO();

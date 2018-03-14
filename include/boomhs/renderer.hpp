@@ -54,7 +54,7 @@ namespace boomhs::render
 {
 
 void
-init(window::Dimensions const&);
+init(stlw::Logger &, window::Dimensions const&);
 
 void
 clear_screen(opengl::Color const&);

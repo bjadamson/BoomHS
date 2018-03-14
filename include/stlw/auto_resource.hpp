@@ -44,7 +44,6 @@ public:
   ~AutoResource()
   {
     if (should_destroy_) {
-      std::abort();
       resource_.destroy();
     }
   }
