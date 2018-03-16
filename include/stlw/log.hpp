@@ -10,11 +10,11 @@
 #undef LOG_ERROR
 
 #ifdef NDEBUG
-#define LOG_TRACE_IMPL(...) logger.log_nothing()
-#define LOG_DEBUG_IMPL(...) logger.log_nothing()
-#define LOG_INFO_IMPL(...) logger.log_nothing()
-#define LOG_WARN_IMPL(...) logger.log_nothing()
-#define LOG_ERROR_IMPL(...) logger.log_nothing()
+#define LOG_TRACE_IMPL(...)
+#define LOG_DEBUG_IMPL(...)
+#define LOG_INFO_IMPL(...)
+#define LOG_WARN_IMPL(...)
+#define LOG_ERROR_IMPL(...)
 #else
 #define LOG_TRACE_IMPL(fmtpolicy, ...) logger.trace(fmtpolicy, __VA_ARGS__)
 #define LOG_DEBUG_IMPL(fmtpolicy, ...) logger.debug(fmtpolicy, __VA_ARGS__)

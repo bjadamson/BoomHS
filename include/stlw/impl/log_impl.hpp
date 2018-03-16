@@ -68,9 +68,6 @@ public:
 
 #undef DEFINE_LOG_ADAPTER_METHOD
 
-  template <typename... Params>
-  auto& log_nothing(Params &&...) const { return *this; }
-
   void set_level(spdlog::level::level_enum const level)
   {
     logger_->set_level(level);
@@ -113,8 +110,6 @@ public:
   DEFINE_LOGWRITER_FN(info)
   DEFINE_LOGWRITER_FN(warn)
   DEFINE_LOGWRITER_FN(error)
-
-  DEFINE_LOGWRITER_FN(log_nothing)
 
   void flush()
   {

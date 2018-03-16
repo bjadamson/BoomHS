@@ -33,7 +33,7 @@ threadsafe_sink(char const* file_path)
 }
 
 LogFlusher
-make_aggregate_logger(char const *file_path, spdlog::level::level_enum const level)
+make_logger(char const *file_path, spdlog::level::level_enum const level)
 {
   try {
     auto const sinks = stlw::make_array<spdlog::sink_ptr>(
@@ -62,8 +62,8 @@ LogFactory::make_default(char const *name)
   // 2. Construct an instance of a logger that writes all log levels to a shared file.
   static char const prefix[] = "build-system/bin/";
   auto const path = prefix + std::string{name} + ".log";
-  auto ad = make_aggregate_logger(path.c_str(), spdlog::level::trace);
-  return impl::LogWriter{MOVE(ad)};
+  auto logger = make_logger(path.c_str(), spdlog::level::trace);
+  return impl::LogWriter{MOVE(logger)};
 }
 
 } // ns stlw

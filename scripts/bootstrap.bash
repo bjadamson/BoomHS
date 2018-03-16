@@ -3,10 +3,43 @@ source "scripts/common.bash"
 
 # Control Begins Here !!
 full_clean
-
-# Now let's rebuild everything.
 mkdir -p ${BUILD}
 
+STATIC_ANALYSIS_FLAGS=""
+DEBUG_OR_RELEASE="Debug"
+
+while getopts ":ahr" opt; do
+  case ${opt} in
+    a )
+      export STATIC_ANALYSIS_FLAGS="-fsanitize=address"
+      ;;
+    r )
+      export DEBUG_OR_RELEASE="Release"
+      ;;
+    \h )
+      echo "Help options for bootstrapping process."
+      echo "[-a] To enable Static Analysis."
+      echo "[-r] To switch from Debug to Release mode."
+
+      echo "[-h] See this message."
+      echo "Please run again without the -h flag."
+      echo "Quitting now."
+      exit
+      ;;
+  esac
+done
+shift $((OPTIND -1))
+
+echo "Configuring project ..."
+echo "DEBUG/RELEASE: $DEBUG_OR_RELEASE"
+printf "Static Analysis: (ON|OFF): "
+if [ -z "$STATIC_ANALYSIS_FLAGS" ]; then
+  echo "OFF"
+else
+  echo "ON"
+fi
+
+# Now let's rebuild everything.
 cat > "${ROOT}/CMakeLists.txt" << "EOF"
 project(BoomHS)
 cmake_minimum_required(VERSION 3.4.3)
@@ -18,7 +51,7 @@ set(MY_EXTRA_FLAGS "-Wno-unused-variable -Wno-missing-braces -Wno-unused-paramet
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_CXX_COMPILER "clang++")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -Wall -Wextra -g -O0 ${MY_EXTRA_FLAGS} ")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} STATIC_ANALYSIS_FLAGS_PLACEHOLDER -fno-omit-frame-pointer -Wall -Wextra -g -O0 ${MY_EXTRA_FLAGS} ")
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17 -stdlib=libc++")
@@ -88,6 +121,9 @@ target_include_directories(shader_loader PUBLIC ${INTERNAL_INCLUDE_DIRS})
 target_link_libraries(shader_loader stdc++ c++experimental)
 EOF
 
+# Overwrite the placeholders in CMakeLists.txt
+sed -i "s|STATIC_ANALYSIS_FLAGS_PLACEHOLDER|${STATIC_ANALYSIS_FLAGS}|g" ${ROOT}/CMakeLists.txt
+
 cat > "${BUILD}/conanfile.txt" << "EOF"
 [requires]
 glm/0.9.8.0@TimSimpson/testing
@@ -99,8 +135,8 @@ EOF
 
 cd ${BUILD}
 echo $(pwd)
-conan install --build missing -s compiler=clang -s arch=x86_64 -s compiler.version=6.0 -s compiler.libcxx=libc++ -s build_type=Debug
-cmake .. -G "Unix Makefiles"          \
-  -DCMAKE_BUILD_TYPE=Debug            \
+conan install --build missing -s compiler=clang -s arch=x86_64 -s compiler.version=6.0 -s compiler.libcxx=libc++ -s build_type=${DEBUG_OR_RELEASE}
+cmake .. -G "Unix Makefiles"              \
+  -DCMAKE_BUILD_TYPE=${DEBUG_OR_RELEASE}  \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cd ..

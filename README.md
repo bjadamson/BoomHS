@@ -10,6 +10,7 @@ active development.
   + [Project Information](#project-information)
     * [Install Dependencies](#install-dependencies)
     * [Bootstrapping](#bootstrap-the-project)
+      + [Command-Line Arguments](#command-line-arguments)
     * [Compiling](#compiling-the-project)
     * [Run the Project](#run-the-project)
     * [Other Information](#other-information)
@@ -51,6 +52,16 @@ defined in the script as well).
 ```bash
 scripts/bootstrap.bash
 ```
+
+##### Command-Line Arguments
+The bootstrapping script supports some command line arguments.
+
+* Static Analysis: The [-a] flag enables static analysis information to be linked with the binary
+  during compilation.
+* Debug/Release: The [-r] flag will instruct CMake to build a release binary (no debugging
+  symbols). The default build type is Debug.
+* List of supported commands: The [-h] flag will display a list of all command line arguments
+  supported by the script, and then immediately exit.
 
 ### Compiling the Project
 Compiling is easy, all the hard work was done during the bootstrapping process. Compiling the
