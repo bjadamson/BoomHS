@@ -27,6 +27,8 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <chrono>
+#include <ctime>
 #include <string>
 
 using namespace boomhs;
@@ -37,7 +39,7 @@ namespace boomhs
 {
 
 void
-move_betweentilegrids_ifonstairs(TiledataState &tds, LevelManager &lm)
+move_betweentilegrids_ifonstairs(stlw::Logger &logger, TiledataState &tds, LevelManager &lm)
 {
   auto &ldata = lm.active().level_data;
 
@@ -56,8 +58,7 @@ move_betweentilegrids_ifonstairs(TiledataState &tds, LevelManager &lm)
     int const newlevel = current == 0 ? 1 : 0;
     assert(newlevel < lm.num_levels());
     lm.make_active(newlevel, tds);
-    std::cerr << "setting level to: '" << newlevel << "'\n";
-
+    LOG_TRACE_SPRINTF("setting level to: '%s'\n");
 
     // now that the zone has changed, all references through lm are pointing to old level.
     // use active()
@@ -274,7 +275,7 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
   {
     auto &zs = lm.active();
     auto &registry = zs.registry;
-    move_betweentilegrids_ifonstairs(tilegrid_state, lm);
+    move_betweentilegrids_ifonstairs(logger, tilegrid_state, lm);
   }
 
   // Must recalculate zs and registry, possibly changed since call to move_between()
@@ -485,17 +486,38 @@ make_window(stlw::Logger &logger, bool const fullscreen, float const width, floa
   return window::sdl_library::make_window(fullscreen, height, width);
 }
 
+Result<std::string, char const*>
+get_time()
+{
+  auto const now = std::chrono::system_clock::now();
+  auto const now_timet = std::chrono::system_clock::to_time_t(now);
+  auto const now_tm = *std::localtime(&now_timet);
+
+  char buff[70];
+  if (!std::strftime(buff, sizeof(buff), "%Y-%m-%dT%H:%M:%S%z", &now_tm)) {
+    return Err("Could not read current time into buffer.");
+  }
+
+  return Ok(std::string{buff});
+}
+
 int
 main(int argc, char *argv[])
 {
-  auto logger = stlw::LogFactory::make_default("LOG BoomHS");
+  auto const time_result = get_time();
+  if (!time_result) {
+    return EXIT_FAILURE;
+  }
+  std::string const log_name = time_result.unwrap() + "-BoomHS.log";
+  auto logger = stlw::LogFactory::make_default(log_name.c_str());
+
+  LOG_DEBUG("Creating window ...");
+  bool constexpr FULLSCREEN = false;
+
   auto const on_error = [&logger](auto const &error) {
     LOG_ERROR(error);
     return EXIT_FAILURE;
   };
-
-  LOG_DEBUG("Creating window ...");
-  bool constexpr FULLSCREEN = false;
   TRY_OR_ELSE_RETURN(auto window, make_window(logger, FULLSCREEN, 1024, 768),
                         on_error);
   TRY_OR_ELSE_RETURN(auto controller, SDLControllers::find_attached_controllers(logger), on_error);

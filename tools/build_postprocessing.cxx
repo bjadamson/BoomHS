@@ -1,8 +1,12 @@
-#include <cstdlib>
 #include <experimental/filesystem>
-#include <iostream>
 #include <stlw/optional.hpp>
 #include <stlw/os.hpp>
+
+#include <boost/algorithm/string/predicate.hpp>
+#include <cstdlib>
+#include <iostream>
+#include <string>
+#include <vector>
 
 namespace fs = std::experimental::filesystem;
 using OptionalString = std::optional<std::string>;
@@ -19,7 +23,7 @@ delete_if_exists(fs::path const &path)
 }
 
 bool
-copy_to_outdir(std::string const& prefix, fs::path const &shader_path, fs::path const &outdir)
+copy_to_outdir(std::string const& contents, fs::path const &shader_path, fs::path const &outdir)
 {
   auto const shader_read_result = stlw::read_file(shader_path.string().c_str());
   if (!shader_read_result) {
@@ -28,19 +32,20 @@ copy_to_outdir(std::string const& prefix, fs::path const &shader_path, fs::path 
   auto const shader_contents = shader_read_result.expect("shader contents");
   auto const output_shaderfile_name = outdir.string() + shader_path.filename().string();
 
-  // 1) try and create the directory, if it exists already who cares.
-  fs::create_directory(outdir);
-
-  // 2) remove the file if it exists already (we don't care about success here, unless
+  // remove the file if it exists already (we don't care about success here, unless
   // failure to delete becomes a problem someday ...)
   delete_if_exists(output_shaderfile_name);
 
-  // 3) now write the modified copy out
-  stlw::write_file(output_shaderfile_name, prefix, shader_contents);
+  // write the modified copy out to the file
+  stlw::write_file(output_shaderfile_name, contents, shader_contents);
   return true;
 }
 
-} // ns anonymous
+struct Paths
+{
+  fs::path const read_shaders_path, write_shaders_path;
+  fs::path const log_path;
+};
 
 template <typename L>
 auto
@@ -54,35 +59,30 @@ make_paths(L &log)
     return CWD;
   };
 
-  auto const CWD = determine_root();
-  fs::path const path_to_shaders{std::string{CWD} + "/shaders/"};
-  log << "CWD: '" << CWD << "'" << std::endl;
-  log << "path_to_shaders: '" << path_to_shaders.string() << "'" << std::endl;
+  auto const root = determine_root();
+  auto const rootdir = root.string();
+  auto const bindir = rootdir + "/build-system/bin";
 
-  return std::make_pair(CWD, path_to_shaders);
+  fs::path const read_shaders_path{rootdir + "/shaders/"};
+  fs::path const write_shaders_path{bindir + "/shaders/"};
+
+  fs::path const log_path{bindir + "/logs/"};
+  return Paths{read_shaders_path, write_shaders_path, log_path};
 }
+
+} // ns anonymous
 
 constexpr char const* prefix_contents = R"(#version 300 es
 precision mediump float;
 )";
 
-int
-main(int argc, char *argv[])
+OptionalString
+copy_shaders_to_outdir(fs::path const& path_to_shaders, std::string const& outdir)
 {
-  auto &log = std::cerr;
-  auto const paths = make_paths(log);
-  auto const &CWD = paths.first;
-  auto const &path_to_shaders = paths.second;
-
-  auto const on_error = [](auto const msg) {
-    log << "Error running shader loader, problem: '" << msg << "'";
-    return EXIT_FAILURE;
-  };
   if (!fs::exists(path_to_shaders)) {
-    auto const msg = "no shader at path '" + path_to_shaders.string() + "' exists.";
-    return on_error(msg);
+    return "no shader at path '" + path_to_shaders.string() + "' exists.";
   } else if (!fs::is_directory(path_to_shaders)) {
-    return on_error("found 'shader' to not be a directory at this path.");
+    return "found 'shader' to not be a directory at this path.";
   }
 
   auto const iter_directories = [&path_to_shaders](auto const& fn) {
@@ -108,8 +108,7 @@ main(int argc, char *argv[])
     return true;
   };
 
-  auto const copy_files = [&CWD, &library_code](auto const& it) {
-    auto const outdir = CWD.string() + "/build-system/bin/shaders/";
+  auto const copy_files = [&outdir, &library_code](auto const& it) {
     auto const path = it->path();
     auto const path_string = path.filename().string();
 
@@ -130,5 +129,34 @@ main(int argc, char *argv[])
 
   bool result = iter_directories(build_library);
   result |= iter_directories(copy_files);
-  return result ? EXIT_SUCCESS : EXIT_FAILURE;
+  return result ? std::nullopt : std::make_optional("Error copying files.");
+}
+
+int
+main(int argc, char *argv[])
+{
+  auto &log = std::cerr;
+  auto const paths = make_paths(log);
+  auto const &read_shaders_path = paths.read_shaders_path;
+  auto const &write_shaders_path = paths.write_shaders_path;
+  auto const &log_path = paths.log_path;
+
+  auto const on_error = [](auto const msg) {
+    log << "Error running post-build program, problem: '" << msg << "'";
+    return EXIT_FAILURE;
+  };
+  {
+    auto const write_dir = write_shaders_path.string();
+    fs::create_directory(write_dir);
+
+    auto const read_dir = read_shaders_path.string();
+    auto const result = copy_shaders_to_outdir(read_dir, write_dir);
+    if (result) {
+      return on_error(*result);
+    }
+    log << "Shaders successfully copied.\n";
+  }
+
+  fs::create_directory(log_path);
+  return EXIT_SUCCESS;
 }

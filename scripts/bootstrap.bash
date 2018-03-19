@@ -79,7 +79,7 @@ add_custom_target(cppformat COMMAND clang-format -i ${BOOMHS_CODE})
 add_custom_target(clangcheck COMMAND clang-check -analyze -p ${BUILD} -s ${GLOBBED_SOURCES_CLANG_TOOLS})
 
 ## Declare our executable and build it.
-add_executable(shader_loader ${TOOLS_DIRECTORY}/main_shaderloader.cxx)
+add_executable(build_postprocessing ${TOOLS_DIRECTORY}/build_postprocessing.cxx)
 add_executable(boomhs ${GLOBBED_SOURCES})
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
@@ -117,8 +117,8 @@ target_link_libraries(boomhs
   pthread
   boost_system)
 
-target_include_directories(shader_loader PUBLIC ${INTERNAL_INCLUDE_DIRS})
-target_link_libraries(shader_loader stdc++ c++experimental)
+target_include_directories(build_postprocessing PUBLIC ${INTERNAL_INCLUDE_DIRS})
+target_link_libraries(build_postprocessing stdc++ c++experimental)
 EOF
 
 # Overwrite the placeholders in CMakeLists.txt

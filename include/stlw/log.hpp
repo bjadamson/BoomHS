@@ -16,11 +16,11 @@
 #define LOG_WARN_IMPL(...)
 #define LOG_ERROR_IMPL(...)
 #else
-#define LOG_TRACE_IMPL(fmtpolicy, ...) logger.trace(fmtpolicy, __VA_ARGS__)
-#define LOG_DEBUG_IMPL(fmtpolicy, ...) logger.debug(fmtpolicy, __VA_ARGS__)
-#define LOG_INFO_IMPL(fmtpolicy, ...)  logger.info(fmtpolicy, __VA_ARGS__)
-#define LOG_WARN_IMPL(fmtpolicy, ...)  logger.warn(fmtpolicy, __VA_ARGS__)
-#define LOG_ERROR_IMPL(fmtpolicy, ...) logger.error(fmtpolicy, __VA_ARGS__)
+#define LOG_TRACE_IMPL(fmtpolicy, ...) logger.macro_callmeonly_trace(fmtpolicy, __VA_ARGS__)
+#define LOG_DEBUG_IMPL(fmtpolicy, ...) logger.macro_callmeonly_debug(fmtpolicy, __VA_ARGS__)
+#define LOG_INFO_IMPL(fmtpolicy, ...)  logger.macro_callmeonly_info(fmtpolicy, __VA_ARGS__)
+#define LOG_WARN_IMPL(fmtpolicy, ...)  logger.macro_callmeonly_warn(fmtpolicy, __VA_ARGS__)
+#define LOG_ERROR_IMPL(fmtpolicy, ...) logger.macro_callmeonly_error(fmtpolicy, __VA_ARGS__)
 #endif
 
 #define LOG_TRACE(...) LOG_TRACE_IMPL(::stlw::impl::FormatPolicy::none, __VA_ARGS__)

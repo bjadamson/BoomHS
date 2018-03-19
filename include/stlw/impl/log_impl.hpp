@@ -41,11 +41,15 @@ public:
 
 #define DEFINE_LOG_ADAPTER_METHOD(FN_NAME)                                                         \
   template <typename... Params>                                                                    \
-  auto& FN_NAME(FormatPolicy const policy, Params &&... p)                                         \
+  auto&                                                                                            \
+  macro_callmeonly_##FN_NAME(FormatPolicy const policy, Params &&... p)                            \
   {                                                                                                \
     switch(policy) {                                                                               \
       case FormatPolicy::none:                                                                     \
-        this->logger_->FN_NAME(FORWARD(p));                                                        \
+        {                                                                                          \
+          auto const passthrough = [](auto const msg, auto &&...) { return msg; };                 \
+          this->logger_->FN_NAME(passthrough(FORWARD(p)));                                         \
+        }                                                                                          \
         break;                                                                                     \
       case FormatPolicy::sprintf:                                                                  \
         this->logger_->FN_NAME(fmt::sprintf(FORWARD(p)));                                          \
@@ -88,9 +92,10 @@ using LogFlusher = AutoResource<LogAdapter>;
 
 #define DEFINE_LOGWRITER_FN(FN_NAME)                                                               \
   template <typename... Params>                                                                    \
-  auto &FN_NAME(FormatPolicy const policy, Params &&... p)                                         \
+  auto&                                                                                            \
+  macro_callmeonly_##FN_NAME(FormatPolicy const policy, Params &&... p)                            \
   {                                                                                                \
-    this->flusher_.resource().FN_NAME(policy, FORWARD(p));                                         \
+    this->flusher_.resource().macro_callmeonly_##FN_NAME(policy, FORWARD(p));                      \
     return *this;                                                                                  \
   }
 

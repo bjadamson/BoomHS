@@ -5,4 +5,4 @@ source "scripts/common.bash"
 cd ${BUILD}
 cmake --build .
 cd ..
-${BUILD}/bin/shader_loader
+${BUILD}/bin/build_postprocessing

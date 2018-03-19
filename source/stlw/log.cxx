@@ -60,8 +60,8 @@ LogFactory::make_default(char const *name)
 {
   // 1. Construct an instance of the default log group.
   // 2. Construct an instance of a logger that writes all log levels to a shared file.
-  static char const prefix[] = "build-system/bin/";
-  auto const path = prefix + std::string{name} + ".log";
+  static char const prefix[] = "build-system/bin/logs/";
+  auto const path = prefix + std::string{name};
   auto logger = make_logger(path.c_str(), spdlog::level::trace);
   return impl::LogWriter{MOVE(logger)};
 }

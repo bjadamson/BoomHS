@@ -36,9 +36,7 @@ load_image_into_memory(stlw::Logger &logger, char const* path, bool const alpha)
   auto const format = alpha ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB;
   unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, format);
   if (nullptr == pimage) {
-    auto const fmt =
-        fmt::sprintf("image at path '%s' failed to load, reason '%s'", path, SOIL_last_result());
-    LOG_ERROR(fmt);
+    LOG_ERROR_SPRINTF("image at path '%s' failed to load, reason '%s'", path, SOIL_last_result());
     std::abort();
   }
   pimage_t image_data{pimage, &SOIL_free_image_data};

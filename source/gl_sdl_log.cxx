@@ -118,6 +118,7 @@ ErrorLog::abort_if_any_errors(std::ostream &stream)
     } else {
       stream << "none";
     }
+    stream << "\n";
     bool const found_errors = opt_errors != std::nullopt;
     return found_errors;
   };
