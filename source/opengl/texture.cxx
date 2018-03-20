@@ -43,13 +43,13 @@ load_image_into_memory(stlw::Logger &logger, char const* path, bool const alpha)
   return ImageData{w, h, MOVE(image_data)};
 }
 
-void
+auto
 upload_image(stlw::Logger &logger, std::string const& filename, GLenum const target,
     GLint const format)
 {
   std::string const path = "assets/" + filename;
   bool const alpha = GL_RGBA == format ? true : false;
-  auto const image_data = load_image_into_memory(logger, path.c_str(), alpha);
+  auto image_data = load_image_into_memory(logger, path.c_str(), alpha);
 
   auto const width = image_data.width;
   auto const height = image_data.height;
@@ -57,6 +57,8 @@ upload_image(stlw::Logger &logger, std::string const& filename, GLenum const tar
 
   LOG_TRACE_SPRINTF("uploading %s with w: %i, h: %i", path, width, height);
   glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+
+  return image_data;
 }
 
 } // ns anonymous
@@ -123,7 +125,9 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const 
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  upload_image(logger, filename, TEXTURE_MODE, format);
+  auto const image_data = upload_image(logger, filename, TEXTURE_MODE, format);
+  ti.height = image_data.height;
+  ti.width = image_data.width;
   return Texture{MOVE(ti)};
 }
 
@@ -154,8 +158,15 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   ON_SCOPE_EXIT([&ti]() { global::texture_unbind(ti); });
   LOG_ANY_GL_ERRORS(logger, "texture_bind");
 
-  auto const upload_fn = [&logger, &format](std::string const& filename, auto const& target) {
-    upload_image(logger, filename, target, format);
+  auto const upload_fn = [&format, &logger, &ti](std::string const& filename, auto const& target) {
+    auto const image_data = upload_image(logger, filename, target, format);
+
+    // Either the height is unset (0) or all height/width are the same.
+    assert(ti.height == 0 || ti.height == image_data.height);
+    assert(ti.width == 0 || ti.width == image_data.width);
+
+    ti.height = image_data.height;
+    ti.width = image_data.width;
   };
   auto const paths_tuple = std::make_tuple(paths[0], paths[1], paths[2], paths[3], paths[4], paths[5]);
   stlw::zip(upload_fn, directions.begin(), paths_tuple);

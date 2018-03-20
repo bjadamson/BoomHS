@@ -58,7 +58,7 @@ move_betweentilegrids_ifonstairs(stlw::Logger &logger, TiledataState &tds, Level
     int const newlevel = current == 0 ? 1 : 0;
     assert(newlevel < lm.num_levels());
     lm.make_active(newlevel, tds);
-    LOG_TRACE_SPRINTF("setting level to: '%s'\n");
+    LOG_TRACE_SPRINTF("setting level to: %i", newlevel);
 
     // now that the zone has changed, all references through lm are pointing to old level.
     // use active()

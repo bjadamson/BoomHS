@@ -13,8 +13,7 @@ struct TextureInfo
 {
   GLenum mode;
   GLuint id;
-
-  //GLint width, height = 0;
+  GLint width = 0, height = 0;
 
   void destroy();
 

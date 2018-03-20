@@ -27,7 +27,7 @@ draw_player_inventory(stlw::Logger &logger, EntityRegistry &registry, TextureTab
     image_builder.bg_color      = ImColor{255, 255, 255, 255};
     image_builder.tint_color    = ImColor{255, 255, 255, 128};
 
-    auto const size = ImVec2(32, 32);
+    auto const size = ImVec2(ti.width, ti.height);
     return image_builder.build(im_texid, size);
   };
 
@@ -96,7 +96,6 @@ draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const
   auto const ti = *ttable.find(name);
   ImTextureID my_tex_id = reinterpret_cast<void*>(ti.id);
 
-  auto const w = 32, h = 32;
   auto const draw = [&]() {
     ImGui::Text("Name %s", npcdata.name);
     ImGui::Text("Health %i", npcdata.health);
@@ -106,7 +105,7 @@ draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const
     auto const draw_icon = [&]()
     {
       ImGui::ImageButton(my_tex_id,
-          ImVec2(w, h),
+          ImVec2(ti.width, ti.height),
           ImVec2(0,0),
           ImVec2(1,1),
           ImColor(255,255,255,255),
