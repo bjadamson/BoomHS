@@ -142,7 +142,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
         auto const va = shader_ref.va();
         auto const qa = QueryAttributes::from_va(va);
         auto const qo = ObjQuery{mesh.name, qa};
-        auto const &obj = obj_store.get_obj(qo);
+        auto const &obj = obj_store.get_obj(logger, qo);
 
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
         dinfos.add(entity, MOVE(handle));
@@ -154,7 +154,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
         auto const va = shader_ref.va();
         auto const qa = QueryAttributes::from_va(va);
         auto const qo = ObjQuery{mesh.name, qa};
-        auto const &obj = obj_store.get_obj(qo);
+        auto const &obj = obj_store.get_obj(logger, qo);
 
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
@@ -164,7 +164,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
     auto const va = shader_ref.va();
     auto const qa = QueryAttributes::from_va(va);
     auto const qo = ObjQuery{mesh.name, qa};
-    auto const &obj = obj_store.get_obj(qo);
+    auto const &obj = obj_store.get_obj(logger, qo);
 
     auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
     dinfos.add(entity, MOVE(handle));
@@ -181,7 +181,7 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
     auto const va = shader_ref.va();
     auto const qa = QueryAttributes::from_va(va);
     auto const qo = ObjQuery{mesh_name, qa};
-    auto const &obj = obj_store.get_obj(qo);
+    auto const &obj = obj_store.get_obj(logger, qo);
 
     auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj,
         std::nullopt);
@@ -239,7 +239,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry
     auto &registry = registries[0];
 
     auto level_assets = TRY_MOVEOUT(LevelLoader::load_level(logger, registry, level_string(0)));
-    auto gendata = StartAreaGenerator::gen_level(registry, rng, level_assets.texture_table);
+    auto gendata = StartAreaGenerator::gen_level(logger, registry, rng, level_assets.texture_table);
 
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
     zstates.emplace_back(MOVE(zs));
@@ -259,7 +259,7 @@ LevelAssembler::assemble_levels(stlw::Logger &logger, std::vector<EntityRegistry
     StairGenConfig const stairconfig{DUNGEON_FLOOR_COUNT, i, stairs_perfloor};
     LevelConfig const config{stairconfig, tdconfig};
 
-    auto gendata = dungeon_generator::gen_level(config, registry, rng, level_assets.texture_table);
+    auto gendata = dungeon_generator::gen_level(logger, config, registry, rng, level_assets.texture_table);
 
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
     zstates.emplace_back(MOVE(zs));

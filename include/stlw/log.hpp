@@ -35,11 +35,11 @@
 #define LOG_WARN_SPRINTF(...)  LOG_WARN_IMPL(::stlw::impl::FormatPolicy::sprintf, __VA_ARGS__)
 #define LOG_ERROR_SPRINTF(...) LOG_ERROR_IMPL(::stlw::impl::FormatPolicy::sprintf, __VA_ARGS__)
 
-#define LOG_TRACE_FORMAT(...) LOG_TRACE_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
-#define LOG_DEBUG_FORMAT(...) LOG_DEBUG_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
-#define LOG_INFO_FORMAT(...)  LOG_INFO_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
-#define LOG_WARN_FORMAT(...)  LOG_WARN_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
-#define LOG_ERROR_FORMAT(...) LOG_ERROR_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
+#define LOG_TRACE_FMT(...) LOG_TRACE_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
+#define LOG_DEBUG_FMT(...) LOG_DEBUG_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
+#define LOG_INFO_FMT(...)  LOG_INFO_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
+#define LOG_WARN_FMT(...)  LOG_WARN_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
+#define LOG_ERROR_FMT(...) LOG_ERROR_IMPL(::stlw::impl::FormatPolicy::format, __VA_ARGS__)
 // clang-format on
 
 namespace stlw

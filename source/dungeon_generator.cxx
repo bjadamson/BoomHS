@@ -302,35 +302,35 @@ place_rooms(TileGrid &tilegrid, stlw::float_generator &rng)
 }
 
 TilePosition
-place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<RiverInfo> &rivers,
-    TileGrid &tilegrid, stlw::float_generator &rng, EntityRegistry &registry)
+place_rivers_rooms_and_stairs(stlw::Logger &logger, StairGenConfig const& stairconfig,
+    std::vector<RiverInfo> &rivers, TileGrid &tilegrid, stlw::float_generator &rng,
+    EntityRegistry &registry)
 {
   auto const stairs_perfloor = stairconfig.stairs_perfloor;
   assert(stairs_perfloor > 0);
 
   // 1. Place Rivers
-  std::cerr << "placing rivers ...\n";
   RiverGenerator::place_rivers(tilegrid, rng, rivers);
 
   // 2. Place Rooms and Stairs
   std::optional<Rooms> rooms = std::nullopt;
   bool stairs = false;
   while(!rooms && !stairs) {
-    std::cerr << "placing rooms ...\n";
+    LOG_TRACE("placing rooms ...\n");
     while(!rooms) {
       rooms = place_rooms(tilegrid, rng);
     }
     if (1 == stairconfig.floor_count) {
-      std::cerr << "one floor, skipping placing stairs ...\n";
+      LOG_TRACE("one floor, skipping placing stairs ...\n");
       break;
     }
     while(!stairs) {
-      std::cerr << "placing stairs ...\n";
-      stairs = stairwell_generator::place_stairs(stairconfig, tilegrid, rng, registry);
+      LOG_TRACE("placing stairs ...\n");
+      stairs = stairwell_generator::place_stairs(logger, stairconfig, tilegrid, rng, registry);
     }
   }
 
-  std::cerr << "placing monsters ...\n";
+  LOG_TRACE("placing monsters ...\n");
   place_monsters(tilegrid, registry, rng);
 
   // This seems hacky?
@@ -338,8 +338,8 @@ place_rivers_rooms_and_stairs(StairGenConfig const& stairconfig, std::vector<Riv
 }
 
 LevelGeneredData
-gen_level(LevelConfig const& levelconfig, EntityRegistry &registry, stlw::float_generator &rng,
-    TextureTable const& ttable)
+gen_level(stlw::Logger &logger, LevelConfig const& levelconfig, EntityRegistry &registry,
+    stlw::float_generator &rng, TextureTable const& ttable)
 {
   // clang-format off
   TileGridConfig const& tileconfig = levelconfig.tileconfig;
@@ -351,17 +351,15 @@ gen_level(LevelConfig const& levelconfig, EntityRegistry &registry, stlw::float_
   TileGrid tilegrid{tdwidth, tdheight, registry};
   floodfill(tilegrid, TileType::WALL);
 
-  std::cerr << "======================================\n";
+  LOG_TRACE("Placing Rivers");
   std::vector<RiverInfo> rivers;
-  auto const starting_pos = place_rivers_rooms_and_stairs(levelconfig.stairconfig, rivers, tilegrid,
-      rng, registry);
+  auto const starting_pos = place_rivers_rooms_and_stairs(logger, levelconfig.stairconfig, rivers,
+      tilegrid, rng, registry);
 
-  std::cerr << "placing torch ...\n";
+  LOG_TRACE("Placing Torch");
   place_torch(tilegrid, registry, rng, ttable);
 
-  std::cerr << "finished!\n";
-  std::cerr << "======================================\n";
-
+  LOG_TRACE("Finished!");
   return LevelGeneredData{MOVE(tilegrid), starting_pos, MOVE(rivers)};
 }
 

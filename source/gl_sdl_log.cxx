@@ -107,28 +107,19 @@ operator<<(std::ostream &stream, SdlErrors const& errors)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void
-ErrorLog::abort_if_any_errors(std::ostream &stream)
+ErrorLog::abort_if_any_errors(stlw::Logger &logger)
 {
-  auto const write_errors = [&stream](char const* prefix, auto const& opt_errors) {
-    stream << prefix;
-    stream << ": ";
-
-    if (opt_errors) {
-      stream << *opt_errors;
-    } else {
-      stream << "none";
-    }
-    stream << "\n";
-    bool const found_errors = opt_errors != std::nullopt;
-    return found_errors;
-  };
-  bool const some_glerrors = write_errors("GL errors", GlErrors::retrieve());
-  stream << "'" << some_glerrors << "'\n";
-  bool const some_sdlerrors = write_errors("SDL errors errors", SdlErrors::retrieve());
-  stream << "'" << some_sdlerrors << "'\n";
-
-  if (some_glerrors || some_sdlerrors) {
+  auto const write_errors = [&logger](char const* prefix, auto const& error) {
+    LOG_ERROR_SPRINTF("%s detected: %s\n", prefix, error);
     std::abort();
+  };
+  auto const gl_errors = GlErrors::retrieve();
+  if (gl_errors) {
+    write_errors("OpenGL Errors", *gl_errors);
+  }
+  auto const sdl_errors = SdlErrors::retrieve();
+  if (sdl_errors) {
+    write_errors("SDL Errors", *sdl_errors);
   }
 }
 

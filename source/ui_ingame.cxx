@@ -15,7 +15,7 @@ namespace boomhs::ui_ingame
 {
 
 void
-draw_player_inventory(EntityRegistry &registry, TextureTable const& ttable)
+draw_player_inventory(stlw::Logger &logger, EntityRegistry &registry, TextureTable const& ttable)
 {
   auto &inventory = find_inventory(registry);
 
@@ -41,7 +41,7 @@ draw_player_inventory(EntityRegistry &registry, TextureTable const& ttable)
       // If the button is pressed, and the slot is occupied (location clicked) then go ahead and
       // remove the item from the player, and removing it from the UI.
       if (button_pressed && slot_occupied) {
-        Player::drop_entity(slot.eid(), registry);
+        Player::drop_entity(logger, slot.eid(), registry);
         slot.reset();
       }
     }
@@ -121,6 +121,7 @@ void
 draw(EngineState &es, LevelManager &lm)
 {
   auto &zs = lm.active();
+  auto &logger = es.logger;
   auto &registry = zs.registry;
   auto &ttable = zs.gfx_state.texture_table;
 
@@ -133,7 +134,7 @@ draw(EngineState &es, LevelManager &lm)
   EntityID const player_eid = find_player(registry);
   auto &inventory = find_inventory(registry);
   if (inventory.is_open()) {
-    draw_player_inventory(registry, ttable);
+    draw_player_inventory(logger, registry, ttable);
   }
 }
 

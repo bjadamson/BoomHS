@@ -154,6 +154,8 @@ void
 try_pickup_nearby_item(GameState &state, FrameTime const& ft)
 {
   auto &lm = state.level_manager;
+  auto &es = state.engine_state;
+  auto &logger = es.logger;
   auto &active = lm.active();
   auto &registry = active.registry;
 
@@ -167,7 +169,7 @@ try_pickup_nearby_item(GameState &state, FrameTime const& ft)
   for(EntityID const eid : items) {
     Item &item = registry.get<Item>(eid);
     if (item.is_pickedup) {
-      std::cerr << "item already picked up.\n";
+      LOG_INFO("item already picked up.\n");
       continue;
     }
 
@@ -176,7 +178,7 @@ try_pickup_nearby_item(GameState &state, FrameTime const& ft)
     auto const distance = glm::distance(item_pos, player_pos);
 
     if (distance > MINIMUM_DISTANCE_TO_PICKUP) {
-      std::cerr << "There is nothing nearby to pickup.\n";
+      LOG_INFO("There is nothing nearby to pickup.");
       continue;
     }
 
@@ -186,10 +188,10 @@ try_pickup_nearby_item(GameState &state, FrameTime const& ft)
       auto &pointlight = registry.get<PointLight>(eid);
       pointlight.attenuation /= 3.0f;
 
-      std::cerr << "You have picked up a torch.\n";
+      LOG_INFO("You have picked up a torch.");
     }
     else {
-      std::cerr << "You have picked up an item.\n";
+      LOG_INFO("You have picked up an item.");
     }
   }
 }
@@ -285,6 +287,7 @@ void
 process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
 {
   auto &es = state.engine_state;
+  auto &logger = es.logger;
   auto &ui = es.ui_state;
   auto &ts = es.tilegrid_state;
 
@@ -377,8 +380,6 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
         //ray_eye.w = 0.0f;
 
         //glm::vec3 const ray_wor = glm::normalize(glm::vec3{glm::inverse(camera.view_matrix()) * ray_eye});
-        //std::cerr << "mouse: '" << std::to_string(mouse_x) << "', '" << std::to_string(mouse_y) << "'\n";
-        //std::cerr << "ray_wor: '" << ray_wor << "'\n";
 
         //glm::vec3 const ray_dir = ray_eye;
         //glm::vec3 const ray_origin = camera.world_position();
@@ -387,7 +388,6 @@ process_keydown(GameState &state, SDL_Event const& event, FrameTime const& ft)
 
         //float distance = 0.0f;
         //bool intersects = glm::intersectRayPlane(ray_origin, ray_dir, plane_origin, plane_normal, distance);
-        //std::cerr << "intersects: '" << intersects << "', distance: '" << distance << "'\n";
 
         auto const ray = calculate_mouse_worldpos(camera, player, mouse_x, mouse_y, es.dimensions);
       }
@@ -581,54 +581,54 @@ process_controllerstate(GameState &state, SDLControllers const& controllers, Fra
   }
 
   if (c.button_a()) {
-    std::cerr << "BUTTON A\n";
+    LOG_INFO("BUTTON A\n");
     try_pickup_nearby_item(state, ft);
   }
   if (c.button_b()) {
-    std::cerr << "BUTTON B\n";
+    LOG_INFO("BUTTON B\n");
   }
   if (c.button_x()) {
-    std::cerr << "BUTTON X\n";
+    LOG_INFO("BUTTON X\n");
   }
   if (c.button_y()) {
-    std::cerr << "BUTTON Y\n";
+    LOG_INFO("BUTTON Y\n");
   }
 
   if (c.button_back()) {
-    std::cerr << "BUTTON BACK\n";
+    LOG_INFO("BUTTON BACK\n");
   }
   if (c.button_guide()) {
-    std::cerr << "BUTTON GUIDE\n";
+    LOG_INFO("BUTTON GUIDE\n");
   }
   if (c.button_start()) {
-    std::cerr << "BUTTON START\n";
+    LOG_INFO("BUTTON START\n");
   }
 
   if (c.button_left_joystick()) {
-    std::cerr << "BUTTON LEFT JOYSTICK\n";
+    LOG_INFO("BUTTON LEFT JOYSTICK\n");
   }
   if (c.button_right_joystick()) {
-    std::cerr << "BUTTON RIGHT JOYSTICK\n";
+    LOG_INFO("BUTTON RIGHT JOYSTICK\n");
   }
 
   if (c.button_left_shoulder()) {
-    std::cerr << "BUTTON LEFT SHOULDER\n";
+    LOG_INFO("BUTTON LEFT SHOULDER\n");
   }
   if (c.button_right_shoulder()) {
-    std::cerr << "BUTTON RIGHT SHOULDER\n";
+    LOG_INFO("BUTTON RIGHT SHOULDER\n");
   }
 
   if (c.button_dpad_down()) {
-    std::cerr << "BUTTON DPAD DOWN\n";
+    LOG_INFO("BUTTON DPAD DOWN\n");
   }
   if (c.button_dpad_up()) {
-    std::cerr << "BUTTON DPAD UP\n";
+    LOG_INFO("BUTTON DPAD UP\n");
   }
   if (c.button_dpad_left()) {
-    std::cerr << "BUTTON DPAD LEFT\n";
+    LOG_INFO("BUTTON DPAD LEFT\n");
   }
   if (c.button_dpad_right()) {
-    std::cerr << "BUTTON DPAD RIGHT\n";
+    LOG_INFO("BUTTON DPAD RIGHT\n");
   }
 }
 

@@ -68,14 +68,14 @@ draw_drawinfo(stlw::Logger &logger, ShaderProgram &sp, DrawInfo const& dinfo)
   auto constexpr OFFSET = nullptr;
 
   /*
-  std::cerr << "---------------------------------------------------------------------------\n";
-  std::cerr << "drawing object!\n";
-  std::cerr << "sp:\n" << sp << "\n";
+  LOG_DEBUG("---------------------------------------------------------------------------");
+  LOG_DEBUG("drawing object!");
+  LOG_DEBUG("sp:\n" << sp << "");
 
-  std::cerr << "draw_info:\n";
-  dinfo.print_self(std::cerr, sp.va());
-  std::cerr << "\n";
-  std::cerr << "---------------------------------------------------------------------------\n";
+  LOG_DEBUG("draw_info:");
+  dinfo.print_self(logger, sp.va()));
+  LOG_DEBUG("");
+  LOG_DEBUG("---------------------------------------------------------------------------");
   */
 
   auto const draw_fn = [&]() {
@@ -453,7 +453,7 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
       return;
     }
     auto &sp = sps.ref_sp(sn.value);
-    auto &dinfo = entity_handles.lookup(eid);
+    auto &dinfo = entity_handles.lookup(logger, eid);
 
     bool const is_lightsource = registry.has<PointLight>(eid);
     auto const model_matrix = transform.model_matrix();
@@ -600,7 +600,7 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
     auto &transform = registry.get<Transform>(tile.eid);
     auto const& rotation   = transform.rotation;
     auto const default_modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
-    auto const& dinfo = tile_handles.lookup(tile.type);
+    auto const& dinfo = tile_handles.lookup(logger, tile.type);
 
     switch(tile.type) {
       case TileType::FLOOR:
@@ -737,6 +737,7 @@ void
 draw_rivers(RenderState &rstate, window::FrameTime const& ft)
 {
   auto &es = rstate.es;
+  auto &logger = es.logger;
   auto &zs = rstate.zs;
 
   assert(zs.gfx_state.gpu_state.tiles);
@@ -745,7 +746,7 @@ draw_rivers(RenderState &rstate, window::FrameTime const& ft)
   auto &sps = zs.gfx_state.sps;
 
   auto &sp = sps.ref_sp("river");
-  auto const& dinfo = tile_handles.lookup(TileType::RIVER);
+  auto const& dinfo = tile_handles.lookup(logger, TileType::RIVER);
 
   opengl::global::vao_bind(dinfo.vao());
   sp.set_uniform_color(es.logger, "u_color", LOC::WHITE);
@@ -789,6 +790,7 @@ void
 draw_stars(RenderState &rstate, window::FrameTime const& ft)
 {
   auto &es = rstate.es;
+  auto &logger = es.logger;
   auto &zs = rstate.zs;
 
   assert(zs.gfx_state.gpu_state.tiles);
@@ -801,7 +803,7 @@ draw_stars(RenderState &rstate, window::FrameTime const& ft)
     auto &sp = sps.ref_sp(shader);
     sp.set_uniform_color_3fv(es.logger, "u_lightcolor", LOC::YELLOW);
 
-    auto const& dinfo = tile_handles.lookup(type);
+    auto const& dinfo = tile_handles.lookup(logger, type);
     opengl::global::vao_bind(dinfo.vao());
 
     auto constexpr Z = 5.0f;

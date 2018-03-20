@@ -1,8 +1,8 @@
 #pragma once
 #include <opengl/colors.hpp>
 #include <extlibs/glew.hpp>
+#include <stlw/log.hpp>
 #include <stlw/result.hpp>
-#include <stlw/sized_buffer.hpp>
 #include <stlw/type_macros.hpp>
 #include <optional>
 #include <ostream>
@@ -59,9 +59,9 @@ struct ObjBuffer
 using LoadResult = Result<ObjData, LoadStatus>;
 
 LoadResult
-load_objfile(char const*, char const*);
+load_objfile(stlw::Logger &, char const*, char const*);
 
 LoadResult
-load_objfile(char const*);
+load_objfile(stlw::Logger &, char const*);
 
 } // ns boomhs

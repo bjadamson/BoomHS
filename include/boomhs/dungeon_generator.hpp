@@ -1,8 +1,9 @@
 #pragma once
-#include <stlw/random.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/stairwell_generator.hpp>
 #include <boomhs/leveldata.hpp>
+#include <stlw/log.hpp>
+#include <stlw/random.hpp>
 
 namespace opengl
 {
@@ -30,7 +31,7 @@ namespace boomhs::dungeon_generator
 {
 
 LevelGeneredData
-gen_level(LevelConfig const&, EntityRegistry &, stlw::float_generator &,
+gen_level(stlw::Logger &, LevelConfig const&, EntityRegistry &, stlw::float_generator &,
     opengl::TextureTable const&);
 
 } // ns boomhs::dungeon_generator

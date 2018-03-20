@@ -43,7 +43,6 @@ to_spherical(glm::vec3 cartesian)
     theta += PI;
   }
   float const phi = atan((x2 + y2) / z);
-  //std::cerr << "r: '" << radius << "', theta: '" << theta << "', phi: '" << phi << "'\n";
 
   return SphericalCoordinates{radius, theta, phi};
 }

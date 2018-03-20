@@ -119,7 +119,7 @@ ObjCache::has_obj(ObjQuery const& query) const
 }
 
 ObjBuffer const&
-ObjCache::get_obj(ObjQuery const& query) const
+ObjCache::get_obj(stlw::Logger &logger, ObjQuery const& query) const
 {
   auto const it = FIND_OBJ_IN_CACHE(query, buffers_);
   if (it != buffers_.cend()) {
@@ -224,12 +224,12 @@ ObjStore::create_interleaved_buffer(ObjQuery const& query) const
 }
 
 ObjBuffer const&
-ObjStore::get_obj(ObjQuery const& query) const
+ObjStore::get_obj(stlw::Logger &logger, ObjQuery const& query) const
 {
-  auto const& cache = find_cache(query);
+  auto const& cache = find_cache(logger, query);
   bool const cache_has_obj = cache.has_obj(query);
   if (cache_has_obj) {
-    return cache.get_obj(query);
+    return cache.get_obj(logger, query);
   }
 
   auto buffer = create_interleaved_buffer(query);
@@ -238,7 +238,7 @@ ObjStore::get_obj(ObjQuery const& query) const
 
   // yield reference to data
   assert(cache.has_obj(query));
-  return cache.get_obj(query);
+  return cache.get_obj(logger, query);
 }
 
 #define FIND_CACHE(query, cache)                                                                   \
@@ -254,11 +254,11 @@ ObjStore::get_obj(ObjQuery const& query) const
   bool const color_and_uvs    = ALLOF(attr.colors, attr.uvs);                                      \
                                                                                                    \
   if (no_positions) {                                                                              \
-    std::cerr << "mesh: '" << query.name << "' cant find (no positions) not implemented.\n";       \
+    LOG_ERROR("mesh: %s cannot be found (no positions) not implemented.", query.name);             \
     std::abort();                                                                                  \
   }                                                                                                \
   else if (color_and_uvs) {                                                                        \
-    std::cerr << "invalid?\n";                                                                     \
+    LOG_ERROR("invalid?");                                                                         \
     std::abort();                                                                                  \
   }                                                                                                \
                                                                                                    \
@@ -278,13 +278,13 @@ ObjStore::get_obj(ObjQuery const& query) const
     cache = &pos_uv_;                                                                              \
   }                                                                                                \
   else {                                                                                           \
-    std::cerr << "invalid query: '" << query << "'\n";                                             \
+    LOG_ERROR("invalid query: %s");                                                                \
     std::abort();                                                                                  \
   }                                                                                                \
   assert(nullptr != cache);
 
 ObjCache&
-ObjStore::find_cache(ObjQuery const& query)
+ObjStore::find_cache(stlw::Logger &logger, ObjQuery const& query)
 {
   ObjCache *cache = nullptr;
   FIND_CACHE(query, cache);
@@ -292,7 +292,7 @@ ObjStore::find_cache(ObjQuery const& query)
 }
 
 ObjCache const&
-ObjStore::find_cache(ObjQuery const& query) const
+ObjStore::find_cache(stlw::Logger &logger, ObjQuery const& query) const
 {
   ObjCache const* cache = nullptr;
   FIND_CACHE(query, cache);

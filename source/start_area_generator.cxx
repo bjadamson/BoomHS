@@ -27,7 +27,7 @@ place_torch(TileGrid const& tilegrid, EntityRegistry &registry, stlw::float_gene
 }
 
 Result<stlw::empty_type, std::string>
-place_prefabs(TileGrid &tgrid, stlw::float_generator &rng)
+place_prefabs(stlw::Logger &logger, TileGrid &tgrid, stlw::float_generator &rng)
 {
   auto contents = TRY_MOVEOUT(stlw::read_file("prefabs/test0.prefab"));
   size_t const height = 1 + std::count(contents.begin(), contents.end(), '\n');
@@ -66,8 +66,8 @@ place_prefabs(TileGrid &tgrid, stlw::float_generator &rng)
       } else if(b == ' ') {
         tile.type = TileType::FLOOR;
       } else {
-        std::cerr << "x: '" << x << "' , y: '" << y << "'\n";
-        std::cerr << "error value: '" << b << "'\n";
+        LOG_ERROR_SPRINTF("x: %i, y: %i", x, y);
+        LOG_ERROR_SPRINTF("error value: %c", b);
         std::abort();
       }
     }
@@ -81,15 +81,15 @@ namespace boomhs
 {
 
 LevelGeneredData
-StartAreaGenerator::gen_level(EntityRegistry &registry, stlw::float_generator &rng,
-    TextureTable const& ttable)
+StartAreaGenerator::gen_level(stlw::Logger &logger, EntityRegistry &registry,
+    stlw::float_generator &rng, TextureTable const& ttable)
 {
-  std::cerr << "generating starting area ...\n";
+  LOG_TRACE("generating starting area ...");
   TileGrid tilegrid{30, 30, registry};
   floodfill(tilegrid, TileType::FLOOR);
 
-  place_prefabs(tilegrid, rng);
-  std::cerr << "done placing prefabs\n";
+  place_prefabs(logger, tilegrid, rng);
+  LOG_TRACE("done placing prefabs");
 
   auto const set_wall = [&tilegrid](TilePosition const& tpos) {
     tilegrid.data(tpos).type = TileType::WALL;
@@ -111,7 +111,7 @@ StartAreaGenerator::gen_level(EntityRegistry &registry, stlw::float_generator &r
   auto const starting_pos = TilePosition{10, 10};
   place_torch(tilegrid, registry, rng, ttable);
 
-  std::cerr << "finished!\n";
+  LOG_TRACE("finished!");
   return LevelGeneredData{MOVE(tilegrid), starting_pos, MOVE(rivers)};
 }
 

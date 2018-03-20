@@ -177,7 +177,7 @@ load_objfiles(stlw::Logger &logger, CppTableArray const& mesh_table)
     auto const obj = "assets/" + name + ".obj";
     auto const mtl = "assets/" + name + ".mtl";
 
-    ObjData objdata = TRY_MOVEOUT(load_objfile(obj.c_str(), mtl.c_str()));
+    ObjData objdata = TRY_MOVEOUT(load_objfile(logger, obj.c_str(), mtl.c_str()));
     auto pair = std::make_pair(name, MOVE(objdata));
     return OK_MOVE(pair);
   };
@@ -259,7 +259,7 @@ load_textures(stlw::Logger &logger, CppTable const& config)
     }
     else {
       // TODO: implement more.
-      std::cerr << "error, type is '" << type << "'\n";
+      LOG_ERROR_SPRINTF("error, type is: %s", type);
       std::abort();
     }
   };
@@ -561,15 +561,15 @@ LevelLoader::load_level(stlw::Logger &logger, EntityRegistry &registry, std::str
   ObjStore objstore = TRY_MOVEOUT(load_objfiles(logger, mesh_table)
       .mapErrorMoveOut(loadstatus_to_string));
 
-  std::cerr << "loading textures ...\n";
+  LOG_TRACE("loading textures ...");
   auto texture_table = load_textures(logger, area_config);
-  std::cerr << "loading entities ...\n";
+  LOG_TRACE("loading entities ...");
   load_entities(logger, area_config, texture_table, registry);
 
-  std::cerr << "loading tile materials ...\n";
+  LOG_TRACE("loading tile materials ...");
   auto tile_table = load_tileinfos(logger, area_config, registry);
 
-  std::cerr << "loading lights ...\n";
+  LOG_TRACE("loading lights ...");
   auto const ambient = Color{get_vec3_or_abort(area_config, "ambient")};
   auto const directional_light_diffuse = Color{get_vec3_or_abort(area_config, "directional_light_diffuse")};
   auto const directional_light_specular = Color{get_vec3_or_abort(area_config, "directional_light_specular")};
@@ -580,7 +580,7 @@ LevelLoader::load_level(stlw::Logger &logger, EntityRegistry &registry, std::str
   GlobalLight glight{ambient, MOVE(dlight)};
 
   auto bg_color = Color{get_vec3_or_abort(area_config, "background")};
-  std::cerr << "yielding assets\n";
+  LOG_TRACE("yielding assets");
   return Ok(LevelAssets{
     MOVE(glight),
     MOVE(bg_color),

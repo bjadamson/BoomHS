@@ -35,10 +35,8 @@ calculate_mouse_worldpos(Camera const& camera, WorldObject const& player, int co
   //float const Z_PLANE = 0.0;
   //assert(768 == dimensions.h);
   //glm::vec3 screen_pos = glm::vec3(mouse_x, (dimensions.h - mouse_y), Z_PLANE);
-  //std::cerr << "mouse clickpos: xyz: '" << screen_pos << "'\n";
 
   //glm::vec3 const world_pos = glm::unProject(screen_pos, view, projection, viewport);
-  std::cerr << "calculated worldpos: xyz: '" << glm::world_pos << "'\n";
   return world_pos;
 }
 

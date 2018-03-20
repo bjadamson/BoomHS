@@ -6,8 +6,9 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/tile.hpp>
 
-#include <stlw/type_macros.hpp>
+#include <stlw/log.hpp>
 #include <stlw/optional.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace opengl
 {
@@ -81,7 +82,7 @@ public:
   bool empty() const { return drawinfos_.empty(); }
 
   opengl::DrawInfo const&
-  get(boomhs::EntityID) const;
+  get(stlw::Logger &, boomhs::EntityID) const;
 };
 
 class EntityDrawHandles
@@ -96,7 +97,7 @@ public:
   }
 
   opengl::DrawInfo const&
-  lookup(boomhs::EntityID) const;
+  lookup(stlw::Logger &, boomhs::EntityID) const;
 };
 
 class TileDrawHandles
@@ -111,7 +112,7 @@ public:
   {
   }
   opengl::DrawInfo const&
-  lookup(boomhs::TileType) const;
+  lookup(stlw::Logger &, boomhs::TileType) const;
 };
 
 } // ns opengl

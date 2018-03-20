@@ -1,6 +1,7 @@
 #pragma once
 #include <extlibs/sdl.hpp>
 
+#include <stlw/log.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
 
@@ -113,10 +114,10 @@ public:
 struct sdl_library {
   sdl_library() = delete;
 
-  static Result<stlw::empty_type, std::string> init();
+  static Result<stlw::empty_type, std::string> init(stlw::Logger &);
   static void destroy();
 
-  static Result<SDLWindow, std::string> make_window(bool const, int const, int const);
+  static Result<SDLWindow, std::string> make_window(stlw::Logger &, bool, int, int);
 };
 
 } // ns window

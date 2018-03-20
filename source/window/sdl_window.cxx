@@ -14,9 +14,9 @@ using namespace window;
 
 namespace {
 void
-check_errors()
+check_errors(stlw::Logger &logger)
 {
-  gfx::ErrorLog::abort_if_any_errors(std::cerr);
+  gfx::ErrorLog::abort_if_any_errors(logger);
 }
 
 } // namespace anonymous
@@ -82,7 +82,7 @@ SDLWindow::set_fullscreen(FullscreenFlags const fs)
 }
 
 Result<stlw::empty_type, std::string>
-sdl_library::init()
+sdl_library::init(stlw::Logger &logger)
 {
   // Initialize video subsystem
   if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
@@ -90,14 +90,14 @@ sdl_library::init()
     auto const error = fmt::format("SDL could not initialize! SDL_Error: {}\n", SDL_GetError());
     return Err(error);
   }
-check_errors();
+  check_errors(logger);
 
   // (from the docs) The requested attributes should be set before creating an
   // OpenGL window
-  auto const set_attribute = [](auto const attribute,
-                                auto const value) -> Result<stlw::empty_type, std::string> {
+  auto const set_attribute = [&logger](auto const attribute,
+                                       auto const value) -> Result<stlw::empty_type, std::string> {
     int const set_r = SDL_GL_SetAttribute(attribute, value);
-check_errors();
+    check_errors(logger);
     if (0 != set_r) {
       auto const fmt = fmt::format("Setting attribute '{}' failed, error is '{}'\n",
                                    std::to_string(attribute), SDL_GetError());
@@ -133,7 +133,7 @@ sdl_library::destroy()
 }
 
 Result<SDLWindow, std::string>
-sdl_library::make_window(bool const fullscreen, int const height, int const width)
+sdl_library::make_window(stlw::Logger &logger, bool const fullscreen, int const height, int const width)
 {
   // Hidden dependency between the ordering here, so all the logic exists in one
   // place.
@@ -157,7 +157,7 @@ sdl_library::make_window(bool const fullscreen, int const height, int const widt
   int const y = SDL_WINDOWPOS_CENTERED;
   auto raw = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width,
                               height, flags);
-check_errors();
+  check_errors(logger);
   if (nullptr == raw) {
     auto const error = fmt::format("SDL could not initialize! SDL_Error: {}\n", SDL_GetError());
     return Err(error);
@@ -166,7 +166,7 @@ check_errors();
 
   // Second, create the graphics context.
   auto gl_context = SDL_GL_CreateContext(window_ptr.get());
-check_errors();
+  check_errors(logger);
   if (nullptr == gl_context) {
     // Display error message
     auto const error =
@@ -176,7 +176,7 @@ check_errors();
 
   // Make the window the current one
   auto const mc_r = SDL_GL_MakeCurrent(window_ptr.get(), gl_context);
-check_errors();
+  check_errors(logger);
   if (0 != mc_r) {
     auto const fmt = fmt::format("Error making window current. SDL Error: {}\n", SDL_GetError());
     return Err(fmt);
@@ -186,7 +186,7 @@ check_errors();
   // http://gamedev.stackexchange.com/questions/33519/trap-mouse-in-sdl
   {
     int const code = SDL_SetRelativeMouseMode(SDL_TRUE);
-check_errors();
+    check_errors(logger);
     if (code == -1) {
       return Err(std::string{"Mouse relative mode not supported."});
     }
@@ -199,18 +199,18 @@ check_errors();
   {
     SDL_DisplayMode dmode;
     SDL_GetDesktopDisplayMode(0, &dmode);
-check_errors();
+    check_errors(logger);
 
     auto const h = dmode.h;
     auto const w = dmode.w;
     SDL_SetWindowPosition(window_ptr.get(), width / 4, height / 4);
-    check_errors();
+    check_errors(logger);
   }
 
 
   // Third, initialize GLEW.
   glewExperimental = GL_TRUE;
-check_errors();
+  check_errors(logger);
   auto const glew_status = glewInit();
   if (GLEW_OK != glew_status) {
     auto const error =
@@ -231,7 +231,7 @@ check_errors();
       std::abort();
     }
   }
-  check_errors();
+  check_errors(logger);
   return OK_MOVE(window);
 }
 

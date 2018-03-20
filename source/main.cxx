@@ -448,14 +448,14 @@ start(stlw::Logger &logger, Engine &engine)
   {
     auto test_r = rexpaint::RexImage::load("assets/test.xp");
     if (!test_r) {
-      std::cerr << test_r << "\n";
+      LOG_ERROR_SPRINTF("%s", test_r.unwrapErrMove());
       std::abort();
     }
     auto test = test_r.expect_moveout("loading text.xp");
     test.flatten();
     auto save = rexpaint::RexImage::save(test, "assets/test.xp");
     if (!save) {
-      std::cerr << save << "\n";
+      LOG_ERROR_SPRINTF("%s", save.unwrapErrMove().to_string());
       std::abort();
     }
   }
@@ -480,10 +480,10 @@ make_window(stlw::Logger &logger, bool const fullscreen, float const width, floa
 {
   // Select windowing library as SDL.
   LOG_DEBUG("Initializing window library globals");
-  DO_EFFECT(window::sdl_library::init());
+  DO_EFFECT(window::sdl_library::init(logger));
 
   LOG_DEBUG("Instantiating window instance.");
-  return window::sdl_library::make_window(fullscreen, height, width);
+  return window::sdl_library::make_window(logger, fullscreen, height, width);
 }
 
 Result<std::string, char const*>

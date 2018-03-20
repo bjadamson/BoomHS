@@ -124,7 +124,7 @@ operator<<(std::ostream &stream, LoadStatus const& ls)
 }
 
 LoadResult
-load_objfile(char const* objpath, char const* mtlpath)
+load_objfile(stlw::Logger &logger, char const* objpath, char const* mtlpath)
 {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
@@ -133,7 +133,7 @@ load_objfile(char const* objpath, char const* mtlpath)
 
   bool const load_success = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, objpath, mtlpath);
   if (!load_success) {
-    std::cerr << "error loading obj, msg: '" << err << "'\n";
+    LOG_ERROR_SPRINTF("error loading obj, msg: %s", err);
     std::abort();
   }
 
@@ -149,10 +149,10 @@ load_objfile(char const* objpath, char const* mtlpath)
   auto &indices = objdata.indices;
   objdata.num_vertices = attrib.vertices.size() / 3;
   /*
-  std::cerr << "vertice count '" << num_vertices << "'\n";
-  std::cerr << "normal count '" << attrib.normals.size() << "'\n";
-  std::cerr << "texcoords count '" << attrib.texcoords.size() << "'\n";
-  std::cerr << "color count '" << attrib.colors.size() << "'\n";
+  LOG_ERROR_SPRINTF("vertice count %u", num_vertices);
+  LOG_ERROR_SPRINTF("normal count %u", attrib.normals.size());
+  LOG_ERROR_SPRINTF("texcoords count %u", attrib.texcoords.size());
+  LOG_ERROR_SPRINTF("color count %u", attrib.colors.size());
   */
 
   // Loop over shapes
@@ -196,20 +196,20 @@ load_objfile(char const* objpath, char const* mtlpath)
       //shapes[s].mesh.material_ids[f];
     }
   }
-  /*
-  std::cerr << "vertices.size() '" << vertices.size() << "'\n";
-  std::cerr << "indices.size() '" << indices.size() << "'\n";
-  std::cerr << "return obj, parsed\n" << std::endl;
-  std::cerr << "size is: '" << (vertices.size() * sizeof(GLfloat)) << "'\n";
-  */
+  LOG_TRACE_SPRINTF("num positions: %u", objdata.num_vertices);
+  LOG_TRACE_SPRINTF("positions.size(): %u", objdata.positions.size());
+  LOG_TRACE_SPRINTF("colors.size(): %u", objdata.colors.size());
+  LOG_TRACE_SPRINTF("normals.size(): %u", objdata.normals.size());
+  LOG_TRACE_SPRINTF("uvs.size(): %u", objdata.uvs.size());
+  LOG_TRACE_SPRINTF("num indices: %u", objdata.indices.size());
   return OK_MOVE(objdata);
 }
 
 LoadResult
-load_objfile(char const* objpath)
+load_objfile(stlw::Logger &logger, char const* objpath)
 {
   auto constexpr MTLPATH = nullptr;
-  return load_objfile(objpath, MTLPATH);
+  return load_objfile(logger, objpath, MTLPATH);
 }
 
 } // ns boomhs

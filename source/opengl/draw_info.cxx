@@ -147,29 +147,29 @@ EntityDrawinfos::add(EntityID const entity, opengl::DrawInfo &&di)
 }
 
 opengl::DrawInfo const&
-EntityDrawinfos::get(EntityID const entity) const
+EntityDrawinfos::get(stlw::Logger &logger, EntityID const entity) const
 {
   FOR(i, entities_.size()) {
     if (entities_[i] == entity) {
       return drawinfos_[i];
     }
   }
-  std::cerr << fmt::format("Error could not find entity drawinfo associated to entity {}'\n", entity);
+  LOG_ERROR_FMT("Error could not find entity drawinfo associated to entity {}", entity);
   std::abort();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EntityDrawHandles
 opengl::DrawInfo const&
-EntityDrawHandles::lookup(EntityID const eid) const
+EntityDrawHandles::lookup(stlw::Logger &logger, EntityID const eid) const
 {
-  return infos_.get(eid);
+  return infos_.get(logger, eid);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EntityDrawHandles
 opengl::DrawInfo const&
-TileDrawHandles::lookup(TileType const type) const
+TileDrawHandles::lookup(stlw::Logger &logger, TileType const type) const
 {
   assert(type < TileType::UNDEFINED);
   auto const index = static_cast<size_t>(type);

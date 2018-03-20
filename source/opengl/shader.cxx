@@ -107,7 +107,7 @@ compile_sources(stlw::Logger &logger, VertexShaderInfo const &vertex_shader,
   auto const& variable_infos = vertex_shader.attribute_infos;
   FOR(i, variable_infos.size()) {
     auto const& vinfo = variable_infos[i];
-    LOG_TRACE_FORMAT("binding program_id: {}, name: {}, index: {}\n", program_id, vinfo.variable, i);
+    LOG_TRACE_FMT("binding program_id: {}, name: {}, index: {}\n", program_id, vinfo.variable, i);
     glBindAttribLocation(program_id, i, vinfo.variable.c_str());
   }
 

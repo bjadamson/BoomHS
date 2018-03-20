@@ -1,6 +1,8 @@
 #pragma once
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
+
+#include <extlibs/fmt.hpp>
 #include <stdint.h>
 #include <array>
 #include <ostream>
@@ -64,19 +66,18 @@ struct RexError
     , message(msg)
   {
   }
+
+  std::string
+  to_string() const
+  {
+    return fmt::format("{code: '%i', msg: '%s'}", code, message);
+  }
 };
 
 inline std::ostream&
 operator<<(std::ostream &stream, RexError const& error)
 {
-  stream << "{";
-  stream << "code: '";
-  stream << error.code;
-  stream << "', ";
-  stream << "msg: '";
-  stream << error.message;
-  stream << "'";
-  stream << "}";
+  stream << error.to_string();
   return stream;
 }
 

@@ -24,7 +24,7 @@ Player::pickup_entity(EntityID const eid, EntityRegistry &registry)
 }
 
 void
-Player::drop_entity(EntityID const eid, EntityRegistry &registry)
+Player::drop_entity(stlw::Logger &logger, EntityID const eid, EntityRegistry &registry)
 {
   auto &inventory = find_inventory(registry);
   auto &item = registry.get<Item>(eid);
@@ -43,7 +43,7 @@ Player::drop_entity(EntityID const eid, EntityRegistry &registry)
   if (registry.has<Torch>(eid)) {
     auto &pointlight = registry.get<PointLight>(eid);
     pointlight.attenuation *= 3.0f;
-    std::cerr << "You have droppped a torch.\n";
+    LOG_INFO("You have droppped a torch.");
   }
 }
 

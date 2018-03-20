@@ -23,26 +23,24 @@ is_floor(Tile const& tile)
 }
 
 bool
-should_skip_tile(int const num_to_place, int const num_placed, TileGrid const& tgrid,
-    TilePosition const& pos, stlw::float_generator &rng)
+should_skip_tile(stlw::Logger &logger, int const num_to_place, int const num_placed,
+    TileGrid const& tgrid, TilePosition const& pos, stlw::float_generator &rng)
 {
   if(num_placed >= num_to_place) {
-    //std::cerr << "placed too many stairs\n";
-    // placed too many
+    LOG_TRACE("placed too many stairs");
     return true;
   }
   if (tgrid.data(pos).is_stair()) {
-    //std::cerr << "tile already stair\n";
-    // tile is already a stairwell
+    LOG_TRACE("tile already stair");
     return true;
   }
   if (tgrid.data(pos).type == TileType::RIVER) {
-    // HACK, for now
+    LOG_TRACE("TODO: Insert reason");
     return true;
   }
   if(any_tilegrid_neighbors(tgrid, pos, MIN_DISTANCE_BETWEEN_STAIRS, is_stair)) {
-    //std::cerr << "too close stair neighbor\n";
     // nearby neighbor tile is a stairwell
+    LOG_TRACE("Nearby tile is a stairwell");
     return true;
   }
   {
@@ -77,8 +75,8 @@ namespace boomhs::stairwell_generator
 {
 
 bool
-place_stairs(StairGenConfig const& sc, TileGrid &tgrid, stlw::float_generator &rng,
-    EntityRegistry &registry)
+place_stairs(stlw::Logger &logger, StairGenConfig const& sc, TileGrid &tgrid,
+    stlw::float_generator &rng, EntityRegistry &registry)
 {
   // clang-format off
   int const floor_number     = sc.floor_number;
@@ -126,8 +124,8 @@ place_stairs(StairGenConfig const& sc, TileGrid &tgrid, stlw::float_generator &r
   };
   int num_placed = 0;
   auto const find_stairpositions = [&](auto const& tpos) {
-    if (should_skip_tile(num_to_place, num_placed, tgrid, tpos, rng)) {
-      //std::cerr << "(floor '" << floor_number << "/" << (floor_count-1) << "' skipping\n";
+    if (should_skip_tile(logger, num_to_place, num_placed, tgrid, tpos, rng)) {
+      LOG_TRACE_SPRINTF("floor %i/%i (skipping)", floor_number, floor_count - 1);
       return;
     }
     auto &tile = tgrid.data(tpos);

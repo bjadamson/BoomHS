@@ -1,6 +1,7 @@
 #pragma once
 #include <boomhs/obj.hpp>
 #include <opengl/vertex_attribute.hpp>
+#include <stlw/log.hpp>
 
 #include <ostream>
 #include <string>
@@ -66,7 +67,7 @@ class ObjCache
   has_obj(ObjQuery const&) const;
 
   ObjBuffer const&
-  get_obj(ObjQuery const&) const;
+  get_obj(stlw::Logger &, ObjQuery const&) const;
 
   auto size() const { return buffers_.size(); }
   bool empty() const { return buffers_.empty(); }
@@ -97,10 +98,10 @@ class ObjStore
   data_for(ObjQuery const&) const;
 
   ObjCache&
-  find_cache(ObjQuery const&);
+  find_cache(stlw::Logger &, ObjQuery const&);
 
   ObjCache const&
-  find_cache(ObjQuery const&) const;
+  find_cache(stlw::Logger &, ObjQuery const&) const;
 
   friend class ObjCache;
   friend std::ostream& operator<<(std::ostream &, ObjStore const&);
@@ -112,7 +113,7 @@ public:
   add_obj(std::string const&, ObjData &&) const;
 
   ObjBuffer const&
-  get_obj(ObjQuery const&) const;
+  get_obj(stlw::Logger &, ObjQuery const&) const;
 
   auto size() const { return data_.size(); }
   bool empty() const { return data_.empty(); }

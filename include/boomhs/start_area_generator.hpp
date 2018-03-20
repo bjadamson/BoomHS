@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/leveldata.hpp>
+#include <stlw/log.hpp>
 
 namespace opengl
 {
@@ -14,7 +15,7 @@ class EntityRegistry;
 struct StartAreaGenerator
 {
   static LevelGeneredData
-  gen_level(EntityRegistry &, stlw::float_generator &, opengl::TextureTable const&);
+  gen_level(stlw::Logger &, EntityRegistry &, stlw::float_generator &, opengl::TextureTable const&);
 
   StartAreaGenerator() = delete;
 };

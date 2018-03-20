@@ -1,6 +1,6 @@
 #pragma once
+#include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
-#include <iostream>
 
 namespace stlw
 {
@@ -27,6 +27,7 @@ namespace boomhs::stairwell_generator
 {
 
 bool
-place_stairs(StairGenConfig const&, TileGrid &, stlw::float_generator &, EntityRegistry &);
+place_stairs(stlw::Logger &, StairGenConfig const&, TileGrid &, stlw::float_generator &,
+    EntityRegistry &);
 
 } // ns boomhs::stairwell_generator

@@ -52,7 +52,7 @@ struct ErrorLog
   clear();
 
   static void
-  abort_if_any_errors(std::ostream &stream);
+  abort_if_any_errors(stlw::Logger &);
 
 private:
   ErrorLog() = default;

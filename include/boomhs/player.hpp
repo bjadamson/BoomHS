@@ -2,6 +2,7 @@
 #include <boomhs/inventory.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/tile.hpp>
+#include <stlw/log.hpp>
 
 namespace boomhs
 {
@@ -24,7 +25,7 @@ struct Player
 
   // Removes entity from the player
   static void
-  drop_entity(EntityID, EntityRegistry &);
+  drop_entity(stlw::Logger &, EntityID, EntityRegistry &);
 };
 
 } // ns boomhs
