@@ -279,24 +279,64 @@ gl_log_callback(GLenum const source,
   std::abort();
 }
 
+enum class BillboardType
+{
+  Spherical = 0,
+  Cylindrical
+};
+
+void
+billboard_spherical(float *data)
+{
+  // Column 0:
+  data[0] = 1.0f;
+  data[1] = 0.0f;
+  data[2] = 0.0f;
+
+  // Column 1:
+  data[4+0] = 0.0f;
+  data[4+1] = 1.0f;
+  data[4+2] = 0.0f;
+
+  // Column 2:
+  data[8+0] = 0.0f;
+  data[8+1] = 0.0f;
+  data[8+2] = 1.0f;
+}
+
+void
+billboard_cylindrical(float *data)
+{
+  // Column 0:
+  data[0] = 1.0f;
+  data[1] = 0.0f;
+  data[2] = 0.0f;
+
+  // Column 2:
+  data[8+0] = 0.0f;
+  data[8+1] = 0.0f;
+  data[8+2] = 1.0f;
+}
+
 glm::mat4
-compute_billboarded_viewmodel(Transform const& transform, Camera const& camera)
+compute_billboarded_viewmodel(Transform const& transform, Camera const& camera,
+    BillboardType const bb_type)
 {
   auto view_model = camera.view_matrix() * transform.model_matrix();
+
   // Reset the rotation values in order to achieve a billboard effect.
   //
   // http://www.geeks3d.com/20140807/billboarding-vertex-shader-glsl/
   float *data = glm::value_ptr(view_model);
-  FOR(i, 3) {
-    FOR(j, 3) {
-      auto const offset = (i * 4) + j;
-      if (i ==j) {
-        data[offset] = 1.0;
-      }
-      else {
-        data[offset] = 0.0;
-      }
-    }
+  switch (bb_type) {
+    case BillboardType::Spherical:
+      billboard_spherical(data);
+      break;
+    case BillboardType::Cylindrical:
+      billboard_cylindrical(data);
+      break;
+    default:
+      std::abort();
   }
 
   auto const& s = transform.scale;
@@ -714,7 +754,7 @@ draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
   auto &logger = rstate.es.logger;
   DrawInfo di = gpu::copy_rectangle_uvs(logger, sp, texture_o);
 
-  glm::mat4 view_model = compute_billboarded_viewmodel(transform, camera);
+  glm::mat4 view_model = compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
 
   auto constexpr ROTATE_SPEED = 50.0f;
   float const angle = ROTATE_SPEED * ft.since_start_seconds();
@@ -850,7 +890,8 @@ draw_sun(RenderState &rstate, window::FrameTime const& ft)
   transform.scale = glm::vec3{400.0f};
 
   auto &camera = zs.level_data.camera;
-  auto const view_model = compute_billboarded_viewmodel(transform, camera);
+  auto const view_model = compute_billboarded_viewmodel(transform, camera,
+      BillboardType::Spherical);
 
   auto const mvp_matrix = camera.projection_matrix() * view_model;
   set_modelmatrix(logger, mvp_matrix, sp);
