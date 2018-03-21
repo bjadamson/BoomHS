@@ -120,6 +120,18 @@ move_betweentilegrids_ifonstairs(stlw::Logger &logger, TiledataState &tds, Level
 }
 
 void
+move_skybox_to_player(stlw::Logger &logger, EntityRegistry &registry)
+{
+  auto const player = find_player(registry);
+  assert(registry.has<Transform>(player));
+  auto const& ptransform = registry.get<Transform>(player);
+
+  auto const skybox_eid = find_skybox(registry);
+  auto &stransform = registry.get<Transform>(skybox_eid);
+  stransform.translation = ptransform.translation;
+}
+
+void
 update_nearbytargets(LevelData &ldata, EntityRegistry &registry, FrameTime const& ft)
 {
   ldata.nearby_targets.clear();
@@ -276,6 +288,7 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
     auto &zs = lm.active();
     auto &registry = zs.registry;
     move_betweentilegrids_ifonstairs(logger, tilegrid_state, lm);
+    move_skybox_to_player(logger, registry);
   }
 
   // Must recalculate zs and registry, possibly changed since call to move_between()

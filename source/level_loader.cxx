@@ -9,8 +9,6 @@
 #include <extlibs/cpptoml.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-// Test not needing
-
 using namespace boomhs;
 using namespace opengl;
 
@@ -33,6 +31,8 @@ using CppTable = std::shared_ptr<cpptoml::table>;
 // TRY_OPTION
 #define TRY_OPTION(VAR_NAME, expr)                                                                 \
   TRY_OPTION_EXPAND_VAR(VAR_NAME, __COUNTER__, expr)
+
+static float constexpr SKYBOX_SCALE_SIZE = 100.0f;
 
 namespace
 {
@@ -357,6 +357,7 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     }
     if (is_skybox) {
       registry.assign<IsSkybox>(eid);
+      transform.scale = glm::vec3{SKYBOX_SCALE_SIZE};
     }
     else if (boost::starts_with(geometry, "mesh")) {
       auto const parse_meshname = [](auto const& field) {
@@ -439,7 +440,6 @@ load_shader(stlw::Logger &logger, ParsedVertexAttributes &pvas, CppTable const& 
   auto va = pvas.get_copy_of_va(va_name);
   auto program = TRY_MOVEOUT(opengl::make_shader_program(logger, vertex, fragment, MOVE(va)));
 
-  program.is_skybox = get_bool(table, "is_skybox").value_or(false);
   program.is_2d = get_bool(table, "is_2d").value_or(false);
   program.instance_count = get_sizei(table, "instance_count");
 

@@ -69,7 +69,6 @@ struct EngineState
 
   // rendering state
   bool draw_entities;
-  bool draw_skybox;
   bool draw_terrain;
   bool draw_normals;
 

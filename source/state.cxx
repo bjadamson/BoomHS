@@ -14,7 +14,6 @@ EngineState::EngineState(stlw::Logger &l, ImGuiIO &i, window::Dimensions const &
   , mariolike_edges(false)
   , draw_imguimetrics(false)
   , draw_entities(true)
-  , draw_skybox(false)
   , draw_terrain(false)
   , draw_normals(false)
   , show_global_axis(true)

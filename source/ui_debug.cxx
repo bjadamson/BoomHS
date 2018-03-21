@@ -510,7 +510,13 @@ draw(EngineState &es, LevelManager &lm, window::SDLWindow &window)
     draw_tilegrid_editor(tilegrid_state, lm);
   }
   if (state.show_debugwindow) {
-    ImGui::Checkbox("Draw Skybox", &es.draw_skybox);
+    {
+      auto const skybox_eid = find_skybox(registry);
+      auto &skybox_visible = registry.get<IsVisible>(skybox_eid);
+      bool &draw_skybox = skybox_visible.value;
+      ImGui::Checkbox("Draw Skybox", &draw_skybox);
+    }
+
     ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
     ImGui::Checkbox("Enter Pressed", &state.enter_pressed);
     ImGui::Checkbox("Draw Entities", &es.draw_entities);

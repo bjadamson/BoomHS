@@ -64,7 +64,6 @@ name = "skybox"
 vertex = "3dcube_texture.vert"
 fragment = "3dcube_texture.frag"
 va = "vertex_only"
-is_skybox = true
 
 [[shaders]]
 name = "3d_pos_normal_color"

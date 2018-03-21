@@ -188,7 +188,8 @@ set_receiveslight_uniforms(RenderState &rstate, glm::mat4 const& model_matrix,
 }
 
 void
-draw(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &sp, DrawInfo const& dinfo)
+draw(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &sp, DrawInfo const& dinfo,
+    bool const is_skybox = false)
 {
   auto &es = rstate.es;
   auto &zs = rstate.zs;
@@ -209,11 +210,12 @@ draw(RenderState &rstate, glm::mat4 const& model_matrix, ShaderProgram &sp, Draw
     auto const& camera = ldata.camera;
     set_mvpmatrix(logger, model_matrix, sp, camera);
 
-    if (sp.is_skybox) {
+    if (is_skybox) {
       disable_depth_tests();
       draw_drawinfo(logger, sp, dinfo);
       enable_depth_tests();
-    } else {
+    }
+    else {
       draw_drawinfo(logger, sp, dinfo);
     }
   }
@@ -476,7 +478,9 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
 
     // Can't receive light
     assert(!registry.has<Material>());
-    draw(rstate, transform.model_matrix(), sp, dinfo);
+
+    bool const is_skybox = registry.has<IsSkybox>(eid);
+    draw(rstate, transform.model_matrix(), sp, dinfo, is_skybox);
   };
 
   auto const player_drawfn = [&camera, &draw_fn](auto &&... args)
@@ -512,6 +516,9 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
     draw_fn(eid, sn, copy_transform, FORWARD(args));
   };
 
+
+  registry.view<ShaderName, Transform, IsVisible, IsSkybox>().each(draw_fn);
+
   //
   // Render everything loaded form level file.
   registry.view<ShaderName, Transform, IsVisible, JunkEntityFromFILE>().each(draw_fn);
@@ -524,13 +531,6 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
 
   // player
   registry.view<ShaderName, Transform, IsVisible, MeshRenderable, PlayerData>().each(player_drawfn);
-
-  if (es.draw_skybox) {
-    auto const draw_skybox = [&](auto eid, auto &sn, auto &transform, auto &&... args) {
-      draw_fn(eid, sn, transform, FORWARD(args));
-    };
-    registry.view<ShaderName, Transform, IsVisible, IsSkybox>().each(draw_skybox);
-  }
 }
 
 void
