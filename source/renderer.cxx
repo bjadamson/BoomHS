@@ -91,6 +91,7 @@ draw_drawinfo(stlw::Logger &logger, ShaderProgram &sp, DrawInfo const& dinfo)
     auto const ti = *dinfo.texture_info();
     opengl::global::texture_bind(ti);
     ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
+    LOG_ERROR("texture info bound");
     draw_fn();
   } else {
     draw_fn();
@@ -278,6 +279,33 @@ gl_log_callback(GLenum const source,
   std::abort();
 }
 
+glm::mat4
+compute_billboarded_viewmodel(Transform const& transform, Camera const& camera)
+{
+  auto view_model = camera.view_matrix() * transform.model_matrix();
+  // Reset the rotation values in order to achieve a billboard effect.
+  //
+  // http://www.geeks3d.com/20140807/billboarding-vertex-shader-glsl/
+  float *data = glm::value_ptr(view_model);
+  FOR(i, 3) {
+    FOR(j, 3) {
+      auto const offset = (i * 4) + j;
+      if (i ==j) {
+        data[offset] = 1.0;
+      }
+      else {
+        data[offset] = 0.0;
+      }
+    }
+  }
+
+  auto const& s = transform.scale;
+  data[0] = s.x;
+  data[5] = s.y;
+  data[10] = s.z;
+
+  return view_model;
+}
 
 } // ns anonymous
 
@@ -660,6 +688,7 @@ void
 draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
 {
   auto &zs = rstate.zs;
+  auto &registry = zs.registry;
   auto const& ldata = zs.level_data;
 
   auto const& nearby_targets = ldata.nearby_targets;
@@ -668,19 +697,13 @@ draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
   }
   auto const nearest_npc = nearby_targets.closest();
 
-  auto &registry = zs.registry;
-  auto eid = registry.create();
-  ON_SCOPE_EXIT([&]() { registry.destroy(eid); });
-
-  auto &transform = registry.assign<Transform>(eid);
-  assert(registry.has<Transform>(eid));
-
   assert(registry.has<Transform>(nearest_npc));
   auto &npc_transform = registry.get<Transform>(nearest_npc);
+
+  Transform transform;
   transform.translation = npc_transform.translation;
 
   auto &camera = zs.level_data.camera;
-  assert(registry.has<Transform>(eid));
 
   auto texture_o = zs.gfx_state.texture_table.find("TargetReticle");
   assert(texture_o);
@@ -691,46 +714,21 @@ draw_targetreticle(RenderState &rstate, window::FrameTime const& ft)
   auto &logger = rstate.es.logger;
   DrawInfo di = gpu::copy_rectangle_uvs(logger, sp, texture_o);
 
-  auto model_matrix = transform.model_matrix();
-  auto viewmodel_matrix = camera.view_matrix() * model_matrix;
-
-  // Reset the rotation values in order to achieve a billboard effect.
-  //
-  // http://www.geeks3d.com/20140807/billboarding-vertex-shader-glsl/
-  float *data = glm::value_ptr(viewmodel_matrix);
-  data[1] = 0.0f;
-  data[2] = 0.0f;
-  data[4] = 0.0f;
-  data[6] = 0.0f;
-  data[8] = 0.0f;
-  data[9] = 0.0f;
-
-  // Set the scale values
-  auto constexpr SCALE = 0.60f;
-  data[0] = SCALE;
-  data[5] = SCALE;
-  data[10] = SCALE;
+  glm::mat4 view_model = compute_billboarded_viewmodel(transform, camera);
 
   auto constexpr ROTATE_SPEED = 50.0f;
   float const angle = ROTATE_SPEED * ft.since_start_seconds();
   auto const rot = glm::angleAxis(glm::radians(angle), Z_UNIT_VECTOR);
   auto const rmatrix = glm::toMat4(rot);
-  viewmodel_matrix = viewmodel_matrix * rmatrix;
+  view_model = view_model * rmatrix;
 
-  auto const mvp_matrix = camera.projection_matrix() * viewmodel_matrix;
+  auto const mvp_matrix = camera.projection_matrix() * view_model;
   set_modelmatrix(logger, mvp_matrix, sp);
-
-  // Use the sp's PROGRAM and bind the sp's VAO.
-  sp.use(logger);
-  opengl::global::vao_bind(di.vao());
-  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
   if (!sp.is_2d) {
     std::abort();
   }
-  disable_depth_tests();
-  draw_drawinfo(logger, sp, di);
-  enable_depth_tests();
+  draw(rstate, transform.model_matrix(), sp, di);
 }
 
 void
@@ -801,6 +799,7 @@ draw_stars(RenderState &rstate, window::FrameTime const& ft)
   auto const draw_starletter = [&](int const x, int const y, char const* shader, TileType const type)
   {
     auto &sp = sps.ref_sp(shader);
+    sp.use(logger);
     sp.set_uniform_color_3fv(es.logger, "u_lightcolor", LOC::YELLOW);
 
     auto const& dinfo = tile_handles.lookup(logger, type);
@@ -816,10 +815,6 @@ draw_stars(RenderState &rstate, window::FrameTime const& ft)
     auto const a = std::sin(ft.since_start_seconds() * M_PI  * SPEED);
     float const scale = glm::lerp(MIN, MAX, std::abs(a));
 
-    auto const& level_data = zs.level_data;
-    auto const& tile_info = level_data.tiletable()[type];
-    auto const& material = tile_info.material;
-
     auto const scalevec = glm::vec3{scale};
     auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scalevec);
     draw(rstate, modelmatrix, sp, dinfo);
@@ -829,6 +824,38 @@ draw_stars(RenderState &rstate, window::FrameTime const& ft)
   auto constexpr Y = 5.0;
   draw_starletter(X, Y,   "light", TileType::STAR);
   draw_starletter(X, Y+1, "light", TileType::BAR);
+}
+
+void
+draw_sun(RenderState &rstate, window::FrameTime const& ft)
+{
+  auto &es = rstate.es;
+  auto &logger = es.logger;
+  auto &zs = rstate.zs;
+
+  auto &sps = zs.gfx_state.sps;
+  auto &sp = sps.ref_sp("2dtexture_copy");
+
+  auto texture_o = zs.gfx_state.texture_table.find("sun");
+  assert(texture_o);
+
+  DrawInfo di = gpu::copy_rectangle_uvs(logger, sp, texture_o);
+
+  auto constexpr X = -20.0;
+  auto constexpr Y = 550.0;
+  auto constexpr Z = 1800.0f;
+
+  Transform transform;
+  transform.translation = glm::vec3{X, Y, Z};
+  transform.scale = glm::vec3{400.0f};
+
+  auto &camera = zs.level_data.camera;
+  auto const view_model = compute_billboarded_viewmodel(transform, camera);
+
+  auto const mvp_matrix = camera.projection_matrix() * view_model;
+  set_modelmatrix(logger, mvp_matrix, sp);
+
+  draw(rstate, transform.model_matrix(), sp, di);
 }
 
 void

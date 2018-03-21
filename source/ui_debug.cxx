@@ -517,6 +517,7 @@ draw(EngineState &es, LevelManager &lm, window::SDLWindow &window)
       ImGui::Checkbox("Draw Skybox", &draw_skybox);
     }
 
+    ImGui::Checkbox("Draw Sun", &es.draw_sun);
     ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
     ImGui::Checkbox("Enter Pressed", &state.enter_pressed);
     ImGui::Checkbox("Draw Entities", &es.draw_entities);

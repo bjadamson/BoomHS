@@ -51,7 +51,7 @@ Camera::Camera(EnttLookup const& player_lookup, glm::vec3 const& forward, glm::v
   , forward_(forward)
   , up_(up)
   , coordinates_(0.0f, 0.0f, 0.0f)
-  , perspective_({90.0f, 4.0f / 3.0f, 0.1f, 200.0f})
+  , perspective_({90.0f, 4.0f / 3.0f, 0.1f, 2000.0f})
   , ortho_({-10, 10, -10, 10, -200, 200})
   , rotation_speed(600.0)
 {

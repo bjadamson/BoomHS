@@ -71,6 +71,7 @@ struct EngineState
   bool draw_entities;
   bool draw_terrain;
   bool draw_normals;
+  bool draw_sun = true;
 
   bool show_global_axis;
   bool show_local_axis;

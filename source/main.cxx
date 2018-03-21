@@ -329,6 +329,7 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
       render::draw_rivers(rstate, ft);
     }
 
+    render::draw_sun(rstate, ft);
     render::draw_stars(rstate, ft);
     render::draw_targetreticle(rstate, ft);
 

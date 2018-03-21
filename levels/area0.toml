@@ -73,6 +73,11 @@ type = "texture:2d-RGB"
 filename = "sword.png"
 
 [[resource]]
+name = "sun"
+type = "texture:2d-RGBA"
+filename = "textures/sun.png"
+
+[[resource]]
 name = "TorchUI"
 type = "texture:2d-RGBA"
 filename = "ui/torch-icon.png"

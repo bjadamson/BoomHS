@@ -46,7 +46,7 @@ ensure_backend_has_enough_vertex_attributes(stlw::Logger &logger, GLint const nu
   auto max_attribs = 0;
   glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &max_attribs);
 
-  LOG_TRACE_FMT("Max number of vertex attributes, found '%d'", max_attribs);
+  LOG_TRACE_FMT("Max number of vertex attributes, found {}", max_attribs);
 
   if (max_attribs <= num_apis) {
     LOG_ERROR_SPRINTF("Error requested '%d' vertex attributes from opengl, only '%d' available",
