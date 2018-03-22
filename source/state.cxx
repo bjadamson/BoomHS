@@ -16,6 +16,7 @@ EngineState::EngineState(stlw::Logger &l, ImGuiIO &i, window::Dimensions const &
   , draw_entities(true)
   , draw_terrain(false)
   , draw_normals(false)
+  , draw_sun(false)
   , show_global_axis(true)
   , show_local_axis(false)
   , show_player_localspace_vectors(false)

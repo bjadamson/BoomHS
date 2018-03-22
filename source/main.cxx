@@ -319,17 +319,24 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
   {
     // rendering code
     render::clear_screen(ldata.background);
-
     RenderState rstate{es, zs};
-    if (es.draw_entities) {
-      render::draw_entities(rstate, rng, ft);
+    {
+      bool const draw_entities = es.draw_entities;
+      if (draw_entities) {
+        render::draw_skybox(rstate, ft);
+      }
+      if (es.draw_sun) {
+        render::draw_sun(rstate, ft);
+      }
+      if (draw_entities) {
+        render::draw_entities(rstate, rng, ft);
+      }
     }
     if (tilegrid_state.draw_tilegrid) {
       render::draw_tilegrid(rstate, tilegrid_state, ft);
       render::draw_rivers(rstate, ft);
     }
 
-    render::draw_sun(rstate, ft);
     render::draw_stars(rstate, ft);
     render::draw_targetreticle(rstate, ft);
 

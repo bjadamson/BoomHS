@@ -519,7 +519,8 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
 
   auto const draw_fn = [&](auto eid, auto &sn, auto &transform, auto &is_visible, auto &&...)
   {
-    if (!is_visible.value) {
+    bool const skip = !is_visible.value;
+    if (skip) {
       return;
     }
     auto &sp = sps.ref_sp(sn.value);
@@ -546,9 +547,7 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
 
     // Can't receive light
     assert(!registry.has<Material>());
-
-    bool const is_skybox = registry.has<IsSkybox>(eid);
-    draw(rstate, transform.model_matrix(), sp, dinfo, is_skybox);
+    draw(rstate, transform.model_matrix(), sp, dinfo);
   };
 
   auto const player_drawfn = [&camera, &draw_fn](auto &&... args)
@@ -584,9 +583,6 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
     draw_fn(eid, sn, copy_transform, FORWARD(args));
   };
 
-
-  registry.view<ShaderName, Transform, IsVisible, IsSkybox>().each(draw_fn);
-
   //
   // Render everything loaded form level file.
   registry.view<ShaderName, Transform, IsVisible, JunkEntityFromFILE>().each(draw_fn);
@@ -619,9 +615,6 @@ draw_inventory_overlay(RenderState &rstate)
   auto const ti = std::nullopt;
   DrawInfo dinfo = gpu::copy_rectangle(logger, GL_TRIANGLES, sp, buffer, ti);
 
-  opengl::global::vao_bind(dinfo.vao());
-  ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
-
   Transform transform;
   auto const model_matrix = transform.model_matrix();
   set_modelmatrix(logger, model_matrix, sp);
@@ -651,9 +644,6 @@ draw_tilegrid(RenderState &rstate, TiledataState const& tilegrid_state, FrameTim
     auto const& tileinfo = tiletable[tile.type];
     auto const& material = tileinfo.material;
 
-    sp.use(logger);
-    opengl::global::vao_bind(dinfo.vao());
-    ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
     draw_3dlit_shape(rstate, model_mat, sp, dinfo, material, registry, receives_ambient_light);
   };
   auto const draw_tile = [&](auto const& tile_pos) {
@@ -786,8 +776,8 @@ draw_rivers(RenderState &rstate, window::FrameTime const& ft)
   auto &sp = sps.ref_sp("river");
   auto const& dinfo = tile_handles.lookup(logger, TileType::RIVER);
 
-  opengl::global::vao_bind(dinfo.vao());
-  sp.set_uniform_color(es.logger, "u_color", LOC::WHITE);
+  sp.use(logger);
+  sp.set_uniform_color(logger, "u_color", LOC::WHITE);
 
   auto const& level_data = zs.level_data;
   auto const& tile_info = level_data.tiletable()[TileType::RIVER];
@@ -798,8 +788,8 @@ draw_rivers(RenderState &rstate, window::FrameTime const& ft)
     auto const& right = rinfo.right;
 
     auto const draw_wiggle = [&](auto const& wiggle) {
-      sp.set_uniform_vec2(es.logger, "u_direction", wiggle.direction);
-      sp.set_uniform_vec2(es.logger, "u_offset", wiggle.offset);
+      sp.set_uniform_vec2(logger, "u_direction", wiggle.direction);
+      sp.set_uniform_vec2(logger, "u_offset", wiggle.offset);
 
       auto const& wp = wiggle.position;
       auto const tr = glm::vec3{wp.x, WIGGLE_UNDERATH_OFFSET, wp.y} + VIEWING_OFFSET;
@@ -809,7 +799,7 @@ draw_rivers(RenderState &rstate, window::FrameTime const& ft)
       bool const receives_ambient = true;
       auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
       auto const inverse_model = glm::inverse(modelmatrix);
-      sp.set_uniform_matrix_4fv(es.logger, "u_inversemodelmatrix", inverse_model);
+      sp.set_uniform_matrix_4fv(logger, "u_inversemodelmatrix", inverse_model);
       draw_3dlit_shape(rstate, modelmatrix, sp, dinfo, material, registry, receives_ambient);
     };
     for (auto const& w : rinfo.wiggles) {
@@ -822,6 +812,36 @@ draw_rivers(RenderState &rstate, window::FrameTime const& ft)
   for (auto const& rinfo : rinfos) {
     draw_river(rinfo);
   }
+}
+
+void
+draw_skybox(RenderState &rstate, window::FrameTime const& ft)
+{
+  auto &zs = rstate.zs;
+  auto &registry = zs.registry;
+  auto &sps = zs.gfx_state.sps;
+
+  auto const draw_fn = [&](auto const eid, auto &sn, auto &transform, IsVisible &is_visible,
+      IsSkybox &, auto &&...)
+  {
+    if (!is_visible.value) {
+      return;
+    }
+    auto &entity_handles = *zs.gfx_state.gpu_state.entities;
+    auto &es = rstate.es;
+    auto &logger = es.logger;
+    auto &dinfo = entity_handles.lookup(logger, eid);
+
+    // Can't receive light
+    assert(!registry.has<Material>());
+
+    auto &sp = sps.ref_sp(sn.value);
+    LOG_ERROR_SPRINTF("drawing skybox with shader: %s", sn.value);
+    bool constexpr IS_SKYBOX = true;
+    draw(rstate, transform.model_matrix(), sp, dinfo, IS_SKYBOX);
+  };
+
+  registry.view<ShaderName, Transform, IsVisible, IsSkybox>().each(draw_fn);
 }
 
 void
@@ -843,7 +863,6 @@ draw_stars(RenderState &rstate, window::FrameTime const& ft)
     sp.set_uniform_color_3fv(es.logger, "u_lightcolor", LOC::YELLOW);
 
     auto const& dinfo = tile_handles.lookup(logger, type);
-    opengl::global::vao_bind(dinfo.vao());
 
     auto constexpr Z = 5.0f;
     auto const tr = glm::vec3{x, y, Z};

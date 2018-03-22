@@ -84,6 +84,9 @@ void
 draw_entities(RenderState &, stlw::float_generator &, window::FrameTime const&);
 
 void
+draw_skybox(RenderState &, window::FrameTime const&);
+
+void
 draw_targetreticle(RenderState &, window::FrameTime const&);
 
 void
