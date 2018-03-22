@@ -1,6 +1,8 @@
 #include <boomhs/renderer.hpp>
+#include <boomhs/billboard.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/state.hpp>
+#include <boomhs/sun.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/types.hpp>
@@ -278,12 +280,6 @@ gl_log_callback(GLenum const source,
 
   std::abort();
 }
-
-enum class BillboardType
-{
-  Spherical = 0,
-  Cylindrical
-};
 
 void
 billboard_spherical(float *data)
@@ -583,8 +579,26 @@ draw_entities(RenderState &rstate, stlw::float_generator &rng, FrameTime const& 
     draw_fn(eid, sn, copy_transform, FORWARD(args));
   };
 
+  auto const draw_sun = [&](auto const eid, auto &sn, auto &transform, auto &isv, auto &bboard,
+      auto &&...args)
+  {
+    auto &camera = zs.level_data.camera;
+
+    auto const bb_type = bboard.value;
+    auto const view_model = compute_billboarded_viewmodel(transform, camera,
+        bb_type);
+
+    auto const mvp_matrix = camera.projection_matrix() * view_model;
+    auto &sp = sps.ref_sp(sn.value);
+    set_modelmatrix(logger, mvp_matrix, sp);
+
+    draw_fn(eid, sn, transform, isv, bboard, FORWARD(args));
+  };
+
   //
   // Render everything loaded form level file.
+  registry.view<ShaderName, Transform, IsVisible, BillboardRenderable, Sun>().each(draw_sun);
+
   registry.view<ShaderName, Transform, IsVisible, JunkEntityFromFILE>().each(draw_fn);
 
   // torch
@@ -883,64 +897,6 @@ draw_stars(RenderState &rstate, window::FrameTime const& ft)
   auto constexpr Y = 5.0;
   draw_starletter(X, Y,   "light", TileType::STAR);
   draw_starletter(X, Y+1, "light", TileType::BAR);
-}
-
-void
-draw_sun(RenderState &rstate, window::FrameTime const& ft)
-{
-  auto &es = rstate.es;
-  auto &logger = es.logger;
-  auto &zs = rstate.zs;
-
-  auto &sps = zs.gfx_state.sps;
-  {
-    auto &sp = sps.ref_sp("2dtexture_copy");
-
-    auto texture_o = zs.gfx_state.texture_table.find("sun");
-    assert(texture_o);
-
-    DrawInfo di = gpu::copy_rectangle_uvs(logger, sp, texture_o);
-
-    auto constexpr X = -20.0;
-    auto constexpr Y = 850.0;
-    auto constexpr Z = 1800.0f;
-
-    Transform transform;
-    transform.translation = glm::vec3{X, Y, Z};
-    transform.scale = glm::vec3{650.0f};
-
-    auto &camera = zs.level_data.camera;
-    auto const view_model = compute_billboarded_viewmodel(transform, camera,
-        BillboardType::Spherical);
-
-    auto const mvp_matrix = camera.projection_matrix() * view_model;
-    set_modelmatrix(logger, mvp_matrix, sp);
-
-    draw(rstate, transform.model_matrix(), sp, di);
-  }
-  auto &sp = sps.ref_sp("2dtexture_copy_copy");
-
-  auto texture_o = zs.gfx_state.texture_table.find("cloud");
-  assert(texture_o);
-
-  DrawInfo di = gpu::copy_rectangle_uvs(logger, sp, texture_o);
-
-  auto constexpr X = 40.0;
-  auto constexpr Y = 500.0;
-  auto constexpr Z = -200.0f;
-
-  Transform transform;
-  transform.translation = glm::vec3{X, Y, Z};
-  transform.scale = glm::vec3{100.0f};
-
-  auto &camera = zs.level_data.camera;
-  auto const view_model = compute_billboarded_viewmodel(transform, camera,
-      BillboardType::Spherical);
-
-  auto const mvp_matrix = camera.projection_matrix() * view_model;
-  set_modelmatrix(logger, mvp_matrix, sp);
-
-  draw(rstate, transform.model_matrix(), sp, di);
 }
 
 void

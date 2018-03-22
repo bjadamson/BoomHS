@@ -1,4 +1,5 @@
 #include <boomhs/level_assembler.hpp>
+#include <boomhs/billboard.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/dungeon_generator.hpp>
@@ -26,10 +27,12 @@ ZoneState
 assemble(LevelGeneredData &&gendata, LevelAssets &&assets, EntityRegistry &registry)
 {
   // Load point lights
+  /*
   auto light_view = registry.view<PointLight, Transform>();
   for (auto const entity : light_view) {
     auto &transform = light_view.get<Transform>(entity);
   }
+  */
 
   // camera-look at origin
   // cameraspace "up" is === "up" in worldspace.
@@ -157,6 +160,13 @@ copy_assets_gpu(stlw::Logger &logger, ShaderPrograms &sps, TileSharedInfoTable c
         auto const &obj = obj_store.get_obj(logger, qo);
 
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
+        dinfos.add(entity, MOVE(handle));
+      });
+  registry.view<ShaderName, BillboardRenderable, TextureRenderable>().each(
+      [&](auto entity, auto &sn, auto &, auto &texture) {
+
+        auto &sp = sps.ref_sp(sn.value);
+        auto handle = opengl::gpu::copy_rectangle_uvs(logger, sp, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, JunkEntityFromFILE>().each([&](auto entity, auto &sn, auto &mesh, auto &&...) {

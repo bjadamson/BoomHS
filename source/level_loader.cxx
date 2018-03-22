@@ -1,7 +1,9 @@
 #include <boomhs/level_loader.hpp>
+#include <boomhs/billboard.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/obj.hpp>
+#include <boomhs/sun.hpp>
 
 #include <stlw/algorithm.hpp>
 #include <stlw/result.hpp>
@@ -319,6 +321,7 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
     auto is_visible   = get_bool(file,            "is_visible").value_or(true);
     bool is_skybox    = get_bool(file,            "skybox").value_or(false);
     bool random_junk  = get_bool(file,            "random_junk_from_file").value_or(false);
+    bool sun          = get_bool(file,            "sun").value_or(false);
     // clang-format on
 
     // texture OR color fields, not both
@@ -349,6 +352,10 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       registry.assign<JunkEntityFromFILE>(eid);
     }
 
+    if (sun) {
+      registry.assign<Sun>(eid);
+    }
+
     if (player) {
       registry.assign<PlayerData>(eid);
     }
@@ -367,6 +374,16 @@ load_entities(stlw::Logger &logger, CppTable const& config, TextureTable const& 
       };
       auto &meshc = registry.assign<MeshRenderable>(eid);
       meshc.name = parse_meshname(geometry);
+    }
+    else if (boost::starts_with(geometry, "billboard")) {
+      auto const parse_billboard = [](auto const& field) {
+        auto const len = ::strlen("billboard:");
+        assert(0 < len);
+        auto const str = field.substr(len, field.length() - len);
+        return Billboard::from_string(str);
+      };
+      auto &billboard = registry.assign<BillboardRenderable>(eid);
+      billboard.value = parse_billboard(geometry);
     }
     if (color) {
       auto &cc = registry.assign<Color>(eid);

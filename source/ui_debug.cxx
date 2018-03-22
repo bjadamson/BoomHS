@@ -1,4 +1,5 @@
 #include <boomhs/ui_debug.hpp>
+#include <boomhs/sun.hpp>
 #include <boomhs/ui_state.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/state.hpp>
@@ -511,13 +512,17 @@ draw(EngineState &es, LevelManager &lm, window::SDLWindow &window)
   }
   if (state.show_debugwindow) {
     {
-      auto const skybox_eid = find_skybox(registry);
-      auto &skybox_visible = registry.get<IsVisible>(skybox_eid);
-      bool &draw_skybox = skybox_visible.value;
-      ImGui::Checkbox("Draw Skybox", &draw_skybox);
+      auto const eid = find_skybox(registry);
+      auto &v = registry.get<IsVisible>(eid);
+      bool &draw = v.value;
+      ImGui::Checkbox("Draw Skybox", &draw);
     }
-
-    ImGui::Checkbox("Draw Sun", &es.draw_sun);
+    {
+      auto const eid = find_sun(registry);
+      auto &v = registry.get<IsVisible>(eid);
+      bool &draw = v.value;
+      ImGui::Checkbox("Draw Sun", &draw);
+    }
     ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
     ImGui::Checkbox("Enter Pressed", &state.enter_pressed);
     ImGui::Checkbox("Draw Entities", &es.draw_entities);

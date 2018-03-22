@@ -162,6 +162,39 @@ update_nearbytargets(LevelData &ldata, EntityRegistry &registry, FrameTime const
   }
 }
 
+void
+update_sun(LevelData &ldata, EntityRegistry &registry, FrameTime const& ft)
+{
+  /*
+  ldata.nearby_targets.clear();
+
+  auto const player = find_player(registry);
+  assert(registry.has<Transform>(player));
+  auto const& ptransform = registry.get<Transform>(player);
+
+  auto const enemies = find_enemies(registry);
+  using pair_t = std::pair<float, EntityID>;
+  std::vector<pair_t> pairs;
+  for (auto const eid : enemies) {
+    if (!registry.get<IsVisible>(eid).value) {
+      continue;
+    }
+    auto const& etransform = registry.get<Transform>(eid);
+    float const distance = glm::distance(ptransform.translation, etransform.translation);
+    pairs.emplace_back(std::make_pair(distance, eid));
+  }
+
+  auto const sort_fn = [](auto const& a, auto const& b) {
+    return a.first < b.first;
+  };
+  std::sort(pairs.begin(), pairs.end(), sort_fn);
+
+  for (auto const& it : pairs) {
+    ldata.nearby_targets.add_target(it.second);
+  }
+  */
+}
+
 bool
 wiggle_outofbounds(RiverInfo const& rinfo, RiverWiggle const& wiggle)
 {
@@ -298,6 +331,7 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
   auto &player = ldata.player;
   {
     update_nearbytargets(ldata, registry, ft);
+    update_sun(ldata, registry, ft);
     move_riverwiggles(ldata, ft);
 
     if (tilegrid_state.recompute) {
@@ -324,9 +358,6 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
       bool const draw_entities = es.draw_entities;
       if (draw_entities) {
         render::draw_skybox(rstate, ft);
-      }
-      if (es.draw_sun) {
-        render::draw_sun(rstate, ft);
       }
       if (draw_entities) {
         render::draw_entities(rstate, rng, ft);
