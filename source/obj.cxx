@@ -3,8 +3,8 @@
 #include <boomhs/types.hpp>
 #include <stlw/algorithm.hpp>
 
-#include <extlibs/tinyobj.hpp>
 #include <cassert>
+#include <extlibs/tinyobj.hpp>
 
 using namespace boomhs;
 using namespace opengl;
@@ -14,10 +14,11 @@ namespace
 
 LoadStatus
 load_positions(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
-    std::vector<float> *pvertices)
+               std::vector<float>* pvertices)
 {
   auto const pos_index = 3 * index.vertex_index;
-  if (pos_index < 0) {
+  if (pos_index < 0)
+  {
     return LoadStatus::MISSING_POSITION_ATTRIBUTES;
   }
   auto const x = attrib.vertices[pos_index + 0];
@@ -25,7 +26,7 @@ load_positions(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
   auto const z = attrib.vertices[pos_index + 2];
   auto const w = 1.0;
 
-  auto &vertices = *pvertices;
+  auto& vertices = *pvertices;
   vertices.push_back(x);
   vertices.push_back(y);
   vertices.push_back(z);
@@ -35,20 +36,22 @@ load_positions(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
 
 LoadStatus
 load_normals(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
-    std::vector<float> *pvertices)
+             std::vector<float>* pvertices)
 {
   auto const ni = 3 * index.normal_index;
-  if (ni >= 0) {
+  if (ni >= 0)
+  {
     auto const xn = attrib.normals[ni + 0];
     auto const yn = attrib.normals[ni + 1];
     auto const zn = attrib.normals[ni + 2];
 
-    auto &vertices = *pvertices;
+    auto& vertices = *pvertices;
     vertices.emplace_back(xn);
     vertices.emplace_back(yn);
     vertices.emplace_back(zn);
   }
-  else {
+  else
+  {
     return LoadStatus::MISSING_NORMAL_ATTRIBUTES;
   }
   return LoadStatus::SUCCESS;
@@ -56,27 +59,29 @@ load_normals(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
 
 LoadStatus
 load_uvs(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
-    std::vector<float> *pvertices)
+         std::vector<float>* pvertices)
 {
   auto const ti = 2 * index.texcoord_index;
-  if (ti >= 0) {
+  if (ti >= 0)
+  {
     auto const u = attrib.texcoords[ti + 0];
     auto const v = 1.0f - attrib.texcoords[ti + 1];
 
-    auto &vertices = *pvertices;
+    auto& vertices = *pvertices;
     vertices.emplace_back(u);
     vertices.emplace_back(v);
   }
-  else {
+  else
+  {
     return LoadStatus::MISSING_UV_ATTRIBUTES;
   }
   return LoadStatus::SUCCESS;
 }
 
 LoadStatus
-load_colors(Color const& color, std::vector<float> *pvertices)
+load_colors(Color const& color, std::vector<float>* pvertices)
 {
-  auto &vertices = *pvertices;
+  auto& vertices = *pvertices;
   vertices.push_back(color.r());
   vertices.push_back(color.g());
   vertices.push_back(color.b());
@@ -85,7 +90,7 @@ load_colors(Color const& color, std::vector<float> *pvertices)
   return LoadStatus::SUCCESS;
 }
 
-} // ns anon
+} // namespace
 
 namespace boomhs
 {
@@ -97,18 +102,19 @@ loadstatus_to_string(LoadStatus const ls)
 // TODO: derive second argument from first somehow?
 #define CASE(ATTRIBUTE, ATTRIBUTE_S)                                                               \
   case LoadStatus::ATTRIBUTE:                                                                      \
-      return ATTRIBUTE_S;
+    return ATTRIBUTE_S;
 
-  switch (ls) {
-      CASE(MISSING_POSITION_ATTRIBUTES, "MISSING_POSITION_ATTRIBUTES");
-      CASE(MISSING_COLOR_ATTRIBUTES,    "MISSING_COLOR_ATTRIBUTES");
-      CASE(MISSING_NORMAL_ATTRIBUTES,   "MISSING_NORMAL_ATTRIBUTES");
-      CASE(MISSING_UV_ATTRIBUTES,       "MISSING_UV_ATTRIBUTES");
+  switch (ls)
+  {
+    CASE(MISSING_POSITION_ATTRIBUTES, "MISSING_POSITION_ATTRIBUTES");
+    CASE(MISSING_COLOR_ATTRIBUTES, "MISSING_COLOR_ATTRIBUTES");
+    CASE(MISSING_NORMAL_ATTRIBUTES, "MISSING_NORMAL_ATTRIBUTES");
+    CASE(MISSING_UV_ATTRIBUTES, "MISSING_UV_ATTRIBUTES");
 
-      CASE(TINYOBJ_ERROR,               "TINYOBJ_ERROR");
-      CASE(SUCCESS,                     "SUCCESS");
-    default:
-      break;
+    CASE(TINYOBJ_ERROR, "TINYOBJ_ERROR");
+    CASE(SUCCESS, "SUCCESS");
+  default:
+    break;
   }
 #undef CASE
 
@@ -117,22 +123,23 @@ loadstatus_to_string(LoadStatus const ls)
 }
 
 std::ostream&
-operator<<(std::ostream &stream, LoadStatus const& ls)
+operator<<(std::ostream& stream, LoadStatus const& ls)
 {
   stream << loadstatus_to_string(ls);
   return stream;
 }
 
 LoadResult
-load_objfile(stlw::Logger &logger, char const* objpath, char const* mtlpath)
+load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
 {
-  tinyobj::attrib_t attrib;
-  std::vector<tinyobj::shape_t> shapes;
+  tinyobj::attrib_t                attrib;
+  std::vector<tinyobj::shape_t>    shapes;
   std::vector<tinyobj::material_t> materials;
-  std::string err;
+  std::string                      err;
 
   bool const load_success = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, objpath, mtlpath);
-  if (!load_success) {
+  if (!load_success)
+  {
     LOG_ERROR_SPRINTF("error loading obj, msg: %s", err);
     std::abort();
   }
@@ -146,7 +153,7 @@ load_objfile(stlw::Logger &logger, char const* objpath, char const* mtlpath)
   assert(0 == (attrib.texcoords.size() % 2));
 
   ObjData objdata;
-  auto &indices = objdata.indices;
+  auto&   indices = objdata.indices;
   objdata.num_vertices = attrib.vertices.size() / 3;
   /*
   LOG_ERROR_SPRINTF("vertice count %u", num_vertices);
@@ -156,24 +163,28 @@ load_objfile(stlw::Logger &logger, char const* objpath, char const* mtlpath)
   */
 
   // Loop over shapes
-  FOR(s, shapes.size()) {
+  FOR(s, shapes.size())
+  {
     // Loop over faces(polygon)
     size_t index_offset = 0;
-    FOR(f, shapes[s].mesh.num_face_vertices.size()) {
+    FOR(f, shapes[s].mesh.num_face_vertices.size())
+    {
       auto const fv = shapes[s].mesh.num_face_vertices[f];
 
       // Loop over vertices in the face.
-      FOR(vi, fv) {
+      FOR(vi, fv)
+      {
         // access to vertex
         tinyobj::index_t const index = shapes[s].mesh.indices[index_offset + vi];
 
 #define LOAD_ATTR(...)                                                                             \
-        ({                                                                                         \
-          auto const load_status = __VA_ARGS__;                                                    \
-          if (load_status != LoadStatus::SUCCESS) {                                                \
-            return Err(load_status);                                                               \
-          }                                                                                        \
-        })
+  ({                                                                                               \
+    auto const load_status = __VA_ARGS__;                                                          \
+    if (load_status != LoadStatus::SUCCESS)                                                        \
+    {                                                                                              \
+      return Err(load_status);                                                                     \
+    }                                                                                              \
+  })
 
         LOAD_ATTR(load_positions(index, attrib, &objdata.positions));
 
@@ -193,7 +204,7 @@ load_objfile(stlw::Logger &logger, char const* objpath, char const* mtlpath)
       index_offset += fv;
 
       // per-face material
-      //shapes[s].mesh.material_ids[f];
+      // shapes[s].mesh.material_ids[f];
     }
   }
   LOG_TRACE_SPRINTF("num positions: %u", objdata.num_vertices);
@@ -206,10 +217,10 @@ load_objfile(stlw::Logger &logger, char const* objpath, char const* mtlpath)
 }
 
 LoadResult
-load_objfile(stlw::Logger &logger, char const* objpath)
+load_objfile(stlw::Logger& logger, char const* objpath)
 {
   auto constexpr MTLPATH = nullptr;
   return load_objfile(logger, objpath, MTLPATH);
 }
 
-} // ns boomhs
+} // namespace boomhs

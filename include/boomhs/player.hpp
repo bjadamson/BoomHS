@@ -1,6 +1,6 @@
 #pragma once
-#include <boomhs/inventory.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/inventory.hpp>
 #include <boomhs/tile.hpp>
 #include <stlw/log.hpp>
 
@@ -20,12 +20,10 @@ struct Player
 {
   Player() = delete;
 
-  static void
-  pickup_entity(EntityID, EntityRegistry &);
+  static void pickup_entity(EntityID, EntityRegistry&);
 
   // Removes entity from the player
-  static void
-  drop_entity(stlw::Logger &, EntityID, EntityRegistry &);
+  static void drop_entity(stlw::Logger&, EntityID, EntityRegistry&);
 };
 
-} // ns boomhs
+} // namespace boomhs

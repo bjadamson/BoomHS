@@ -1,6 +1,6 @@
 #pragma once
-#include <stlw/try.hpp>
 #include <optional>
+#include <stlw/try.hpp>
 
 // MAKEOPT
 //
@@ -10,11 +10,12 @@
 //   the caller.
 //
 
-#define MAKEOPT(...)          \
-  ({                          \
-     auto opt = __VA_ARGS__;  \
-     if (!opt) {              \
-       return std::nullopt;   \
-     }                        \
-     *opt;                    \
+#define MAKEOPT(...)                                                                               \
+  ({                                                                                               \
+    auto opt = __VA_ARGS__;                                                                        \
+    if (!opt)                                                                                      \
+    {                                                                                              \
+      return std::nullopt;                                                                         \
+    }                                                                                              \
+    *opt;                                                                                          \
   })

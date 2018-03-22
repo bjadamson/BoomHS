@@ -1,14 +1,14 @@
 #pragma once
 #include <boomhs/components.hpp>
-#include <boomhs/stairwell_generator.hpp>
 #include <boomhs/leveldata.hpp>
+#include <boomhs/stairwell_generator.hpp>
 #include <stlw/log.hpp>
 #include <stlw/random.hpp>
 
 namespace opengl
 {
 class TextureTable;
-} // ns opengl
+} // namespace opengl
 
 namespace boomhs
 {
@@ -25,13 +25,13 @@ struct LevelConfig
   TileGridConfig const& tileconfig;
 };
 
-} // ns boomhs
+} // namespace boomhs
 
 namespace boomhs::dungeon_generator
 {
 
 LevelGeneredData
-gen_level(stlw::Logger &, LevelConfig const&, EntityRegistry &, stlw::float_generator &,
-    opengl::TextureTable const&);
+gen_level(stlw::Logger&, LevelConfig const&, EntityRegistry&, stlw::float_generator&,
+          opengl::TextureTable const&);
 
-} // ns boomhs::dungeon_generator
+} // namespace boomhs::dungeon_generator

@@ -1,7 +1,7 @@
 #pragma once
 #include <boomhs/level_manager.hpp>
-#include <boomhs/zone_state.hpp>
 #include <boomhs/ui_state.hpp>
+#include <boomhs/zone_state.hpp>
 
 #include <window/mouse.hpp>
 #include <window/sdl_window.hpp>
@@ -35,7 +35,7 @@ struct WindowState
 {
   MOVE_CONSTRUCTIBLE_ONLY(WindowState);
 
-  window::FullscreenFlags fullscreen = window::FullscreenFlags::NOT_FULLSCREEN;
+  window::FullscreenFlags  fullscreen = window::FullscreenFlags::NOT_FULLSCREEN;
   window::SwapIntervalFlag sync = window::SwapIntervalFlag::SYNCHRONIZED;
 };
 
@@ -58,8 +58,8 @@ struct TiledataState
 
 struct EngineState
 {
-  stlw::Logger &logger;
-  ImGuiIO &imgui;
+  stlw::Logger&            logger;
+  ImGuiIO&                 imgui;
   window::Dimensions const dimensions;
 
   bool quit = false;
@@ -79,24 +79,24 @@ struct EngineState
   bool show_player_localspace_vectors;
   bool show_player_worldspace_vectors;
 
-  MouseState mouse_state = {};
-  WindowState window_state = {};
+  MouseState    mouse_state = {};
+  WindowState   window_state = {};
   TiledataState tilegrid_state = {};
-  UiState ui_state = {};
+  UiState       ui_state = {};
 
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);
-  EngineState(stlw::Logger &, ImGuiIO &, window::Dimensions const &);
+  EngineState(stlw::Logger&, ImGuiIO&, window::Dimensions const&);
 };
 
 struct GameState
 {
-  EngineState engine_state;
+  EngineState  engine_state;
   LevelManager level_manager;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
 
-  explicit GameState(EngineState &&, LevelManager &&);
+  explicit GameState(EngineState&&, LevelManager&&);
 };
 
-} // ns boomhs
+} // namespace boomhs

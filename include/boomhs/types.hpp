@@ -1,6 +1,6 @@
 #pragma once
-#include <stlw/math.hpp>
 #include <array>
+#include <stlw/math.hpp>
 
 namespace boomhs
 {
@@ -11,14 +11,12 @@ struct Transform
   glm::quat rotation;
   glm::vec3 scale = glm::vec3{1.0f, 1.0f, 1.0f};
 
-  glm::mat4
-  model_matrix() const
+  glm::mat4 model_matrix() const
   {
     return stlw::math::calculate_modelmatrix(translation, rotation, scale);
   }
 
-  void
-  rotate_degrees(float const degrees, glm::vec3 const& axis)
+  void rotate_degrees(float const degrees, glm::vec3 const& axis)
   {
     rotation = glm::angleAxis(glm::radians(degrees), axis) * rotation;
   }
@@ -31,4 +29,4 @@ struct WidthHeightLength
   float const length;
 };
 
-} // ns opengl
+} // namespace boomhs

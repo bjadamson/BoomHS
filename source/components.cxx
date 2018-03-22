@@ -7,12 +7,13 @@ namespace boomhs
 {
 
 std::vector<EntityID>
-find_stairs_withtype(EntityRegistry &registry, TileGrid const& tgrid, TileType const type)
+find_stairs_withtype(EntityRegistry& registry, TileGrid const& tgrid, TileType const type)
 {
   std::vector<EntityID> up_stairs;
-  auto const visit_fn = [&](auto const& tpos) {
+  auto const            visit_fn = [&](auto const& tpos) {
     auto const& tile = tgrid.data(tpos);
-    if (tile.type == type) {
+    if (tile.type == type)
+    {
       up_stairs.emplace_back(tile.eid);
     }
   };
@@ -20,4 +21,4 @@ find_stairs_withtype(EntityRegistry &registry, TileGrid const& tgrid, TileType c
   return up_stairs;
 }
 
-} // ns boomhs
+} // namespace boomhs

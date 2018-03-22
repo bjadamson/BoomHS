@@ -51,19 +51,20 @@ using window_ptr = std::unique_ptr<window_type, decltype(&SDL_DestroyWindow)>;
 
 class SDLWindow
 {
-  window_ptr window_;
+  window_ptr    window_;
   SDL_GLContext context_;
 
 public:
   // ctors
-  SDLWindow(window_ptr &&w, SDL_GLContext c)
+  SDLWindow(window_ptr&& w, SDL_GLContext c)
       : window_(MOVE(w))
       , context_(c)
   {
   }
   ~SDLWindow()
   {
-    if (nullptr != context_) {
+    if (nullptr != context_)
+    {
       SDL_GL_DeleteContext(context_);
     }
   }
@@ -71,7 +72,7 @@ public:
   NO_COPY(SDLWindow)
 
   // move-constructible
-  SDLWindow(SDLWindow &&other)
+  SDLWindow(SDLWindow&& other)
       : window_(MOVE(other.window_))
       , context_(other.context_)
   {
@@ -80,17 +81,12 @@ public:
   }
 
   // not move assignable
-  SDLWindow &operator=(SDLWindow &&) = delete;
+  SDLWindow& operator=(SDLWindow&&) = delete;
 
   // Allow getting the window's SDL pointer
-  window_type*
-  raw()
-  {
-    return window_.get();
-  }
+  window_type* raw() { return window_.get(); }
 
-  Dimensions
-  get_dimensions() const
+  Dimensions get_dimensions() const
   {
     int w = 0, h = 0;
     assert(nullptr != window_.get());
@@ -101,23 +97,21 @@ public:
     return {x, y, w, h};
   }
 
-  void
-  set_fullscreen(FullscreenFlags const);
+  void set_fullscreen(FullscreenFlags const);
 
-  bool
-  try_set_swapinterval(SwapIntervalFlag const);
+  bool try_set_swapinterval(SwapIntervalFlag const);
 
-  void
-  set_swapinterval(SwapIntervalFlag const);
+  void set_swapinterval(SwapIntervalFlag const);
 };
 
-struct sdl_library {
+struct sdl_library
+{
   sdl_library() = delete;
 
-  static Result<stlw::empty_type, std::string> init(stlw::Logger &);
-  static void destroy();
+  static Result<stlw::empty_type, std::string> init(stlw::Logger&);
+  static void                                  destroy();
 
-  static Result<SDLWindow, std::string> make_window(stlw::Logger &, bool, int, int);
+  static Result<SDLWindow, std::string> make_window(stlw::Logger&, bool, int, int);
 };
 
-} // ns window
+} // namespace window

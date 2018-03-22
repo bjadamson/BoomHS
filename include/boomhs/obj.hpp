@@ -1,11 +1,11 @@
 #pragma once
-#include <opengl/colors.hpp>
 #include <extlibs/glew.hpp>
+#include <opengl/colors.hpp>
+#include <optional>
+#include <ostream>
 #include <stlw/log.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
-#include <optional>
-#include <ostream>
 
 namespace boomhs
 {
@@ -16,11 +16,11 @@ struct ObjData
   using indices_t = std::vector<uint32_t>;
 
   unsigned int num_vertices;
-  vertices_t positions;
-  vertices_t colors;
-  vertices_t normals;
-  vertices_t uvs;
-  indices_t indices;
+  vertices_t   positions;
+  vertices_t   colors;
+  vertices_t   normals;
+  vertices_t   uvs;
+  indices_t    indices;
 
   ObjData() = default;
   MOVE_CONSTRUCTIBLE_ONLY(ObjData);
@@ -42,7 +42,7 @@ std::string
 loadstatus_to_string(LoadStatus const ls);
 
 std::ostream&
-operator<<(std::ostream &, LoadStatus const&);
+operator<<(std::ostream&, LoadStatus const&);
 
 struct ObjBuffer
 {
@@ -50,7 +50,7 @@ struct ObjBuffer
   using indices_t = ObjData::indices_t;
 
   vertices_t vertices;
-  indices_t indices;
+  indices_t  indices;
 
   ObjBuffer() = default;
   MOVE_CONSTRUCTIBLE_ONLY(ObjBuffer);
@@ -59,9 +59,9 @@ struct ObjBuffer
 using LoadResult = Result<ObjData, LoadStatus>;
 
 LoadResult
-load_objfile(stlw::Logger &, char const*, char const*);
+load_objfile(stlw::Logger&, char const*, char const*);
 
 LoadResult
-load_objfile(stlw::Logger &, char const*);
+load_objfile(stlw::Logger&, char const*);
 
-} // ns boomhs
+} // namespace boomhs

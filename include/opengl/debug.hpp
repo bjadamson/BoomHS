@@ -166,4 +166,4 @@ uniform_to_string_table()
   return TABLE;
 }
 
-} // ns opengl::debug
+} // namespace opengl::debug

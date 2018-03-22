@@ -3,11 +3,11 @@
 #include <opengl/lighting.hpp>
 #include <opengl/texture.hpp>
 
-#include <boomhs/npc.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
-#include <boomhs/types.hpp>
 #include <boomhs/tile.hpp>
+#include <boomhs/types.hpp>
 
 #include <cassert>
 #include <iostream>
@@ -69,32 +69,35 @@ struct TextureRenderable
   opengl::TextureInfo texture_info;
 };
 
-template<typename ...C>
+template <typename... C>
 auto
-find_all_entities_with_component(EntityRegistry &registry)
+find_all_entities_with_component(EntityRegistry& registry)
 {
   using namespace boomhs;
   using namespace opengl;
 
   std::vector<EntityID> entities;
-  auto const view = registry.view<C...>();
-  for (auto const e : view) {
+  auto const            view = registry.view<C...>();
+  for (auto const e : view)
+  {
     entities.emplace_back(e);
   }
   return entities;
 }
 
 inline auto
-all_nearby_entities(glm::vec3 const& pos, float const max_distance, EntityRegistry &registry)
+all_nearby_entities(glm::vec3 const& pos, float const max_distance, EntityRegistry& registry)
 {
   using namespace boomhs;
   using namespace opengl;
 
   std::vector<EntityID> entities;
-  auto const view = registry.view<Transform>();
-  for (auto const e : view) {
-    auto &transform = registry.get<Transform>(e);
-    if (glm::distance(transform.translation, pos) <= max_distance) {
+  auto const            view = registry.view<Transform>();
+  for (auto const e : view)
+  {
+    auto& transform = registry.get<Transform>(e);
+    if (glm::distance(transform.translation, pos) <= max_distance)
+    {
       entities.emplace_back(e);
     }
   }
@@ -102,7 +105,7 @@ all_nearby_entities(glm::vec3 const& pos, float const max_distance, EntityRegist
 }
 
 inline auto
-find_enemies(EntityRegistry &registry)
+find_enemies(EntityRegistry& registry)
 {
   using namespace boomhs;
   using namespace opengl;
@@ -110,7 +113,7 @@ find_enemies(EntityRegistry &registry)
 }
 
 inline auto
-find_materials(EntityRegistry &registry)
+find_materials(EntityRegistry& registry)
 {
   using namespace boomhs;
   using namespace opengl;
@@ -118,7 +121,7 @@ find_materials(EntityRegistry &registry)
 }
 
 inline auto
-find_pointlights(EntityRegistry &registry)
+find_pointlights(EntityRegistry& registry)
 {
   using namespace boomhs;
   using namespace opengl;
@@ -127,7 +130,7 @@ find_pointlights(EntityRegistry &registry)
 }
 
 inline auto
-find_stairs(EntityRegistry &registry)
+find_stairs(EntityRegistry& registry)
 {
   using namespace boomhs;
   using namespace opengl;
@@ -137,41 +140,43 @@ find_stairs(EntityRegistry &registry)
 
 class TileGrid;
 std::vector<EntityID>
-find_stairs_withtype(EntityRegistry &, TileGrid const&, TileType const);
+find_stairs_withtype(EntityRegistry&, TileGrid const&, TileType const);
 
 inline auto
-find_upstairs(EntityRegistry &registry, TileGrid const& tgrid)
+find_upstairs(EntityRegistry& registry, TileGrid const& tgrid)
 {
   return find_stairs_withtype(registry, tgrid, TileType::STAIR_UP);
 }
 
 inline auto
-find_downstairs(EntityRegistry &registry, TileGrid const& tgrid)
+find_downstairs(EntityRegistry& registry, TileGrid const& tgrid)
 {
   return find_stairs_withtype(registry, tgrid, TileType::STAIR_DOWN);
 }
 
 inline auto
-find_items(EntityRegistry &registry)
+find_items(EntityRegistry& registry)
 {
   std::vector<EntityID> items;
-  auto view = registry.view<Item>();
-  for (auto const eid : view) {
+  auto                  view = registry.view<Item>();
+  for (auto const eid : view)
+  {
     items.emplace_back(eid);
   }
   return items;
 }
 
 inline EntityID
-find_player(EntityRegistry &registry)
+find_player(EntityRegistry& registry)
 {
   // for now assume only 1 entity has the Player tag
   assert(1 == registry.view<PlayerData>().size());
 
   // Assume Player has a Transform
-  auto view = registry.view<PlayerData, Transform>();
+  auto                    view = registry.view<PlayerData, Transform>();
   std::optional<EntityID> entity{std::nullopt};
-  for (auto const e : view) {
+  for (auto const e : view)
+  {
     // This assert ensures this loop only runs once.
     assert(std::nullopt == entity);
     entity = e;
@@ -181,18 +186,19 @@ find_player(EntityRegistry &registry)
 }
 
 inline auto&
-find_inventory(EntityRegistry &registry)
+find_inventory(EntityRegistry& registry)
 {
   auto const eid = find_player(registry);
   return registry.get<PlayerData>(eid).inventory;
 }
 
 inline auto
-find_torches(EntityRegistry &registry)
+find_torches(EntityRegistry& registry)
 {
   std::vector<EntityID> torches;
-  auto view = registry.view<Torch>();
-  for (auto const eid : view) {
+  auto                  view = registry.view<Torch>();
+  for (auto const eid : view)
+  {
     assert(registry.has<Transform>(eid));
     torches.emplace_back(eid);
   }
@@ -200,15 +206,16 @@ find_torches(EntityRegistry &registry)
 }
 
 inline auto&
-find_skybox(EntityRegistry &registry)
+find_skybox(EntityRegistry& registry)
 {
   // for now assume only 1 entity has the Player tag
   assert(1 == registry.view<IsSkybox>().size());
 
   // Assume Skybox has a Transform
-  auto view = registry.view<IsSkybox, Transform>();
+  auto                    view = registry.view<IsSkybox, Transform>();
   std::optional<EntityID> entity{std::nullopt};
-  for (auto const e : view) {
+  for (auto const e : view)
+  {
     // This assert ensures this loop only runs once.
     assert(std::nullopt == entity);
     entity = e;
@@ -217,4 +224,4 @@ find_skybox(EntityRegistry &registry)
   return *entity;
 }
 
-} // ns boomhs
+} // namespace boomhs

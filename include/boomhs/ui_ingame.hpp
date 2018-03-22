@@ -4,12 +4,12 @@ namespace boomhs
 {
 struct EngineState;
 class LevelManager;
-} // ns boomhs
+} // namespace boomhs
 
 namespace boomhs::ui_ingame
 {
 
 void
-draw(EngineState &, LevelManager &);
+draw(EngineState&, LevelManager&);
 
-} // ns boomhs::ui_ingame
+} // namespace boomhs::ui_ingame

@@ -1,24 +1,25 @@
 #include <boomhs/components.hpp>
-#include <boomhs/npc.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_assembler.hpp>
+#include <boomhs/level_manager.hpp>
+#include <boomhs/npc.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/rexpaint.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
+#include <boomhs/sun.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_ingame.hpp>
-#include <boomhs/level_manager.hpp>
 
+#include <extlibs/sdl.hpp>
 #include <window/controller.hpp>
 #include <window/mouse.hpp>
-#include <extlibs/sdl.hpp>
 #include <window/timer.hpp>
 
-#include <stlw/math.hpp>
 #include <stlw/log.hpp>
+#include <stlw/math.hpp>
 #include <stlw/random.hpp>
 #include <stlw/result.hpp>
 
@@ -26,8 +27,8 @@
 #include <extlibs/imgui.hpp>
 
 #include <cassert>
-#include <cstdlib>
 #include <chrono>
+#include <cstdlib>
 #include <ctime>
 #include <string>
 
@@ -39,11 +40,11 @@ namespace boomhs
 {
 
 void
-move_betweentilegrids_ifonstairs(stlw::Logger &logger, TiledataState &tds, LevelManager &lm)
+move_betweentilegrids_ifonstairs(stlw::Logger& logger, TiledataState& tds, LevelManager& lm)
 {
-  auto &ldata = lm.active().level_data;
+  auto& ldata = lm.active().level_data;
 
-  auto &player = ldata.player;
+  auto& player = ldata.player;
   player.transform().translation.y = 0.5f;
   auto const wp = player.world_position();
   {
@@ -53,7 +54,8 @@ move_betweentilegrids_ifonstairs(stlw::Logger &logger, TiledataState &tds, Level
   }
   auto const& tilegrid = ldata.tilegrid();
   auto const& tile = tilegrid.data(wp.x, wp.z);
-  if (tile.type == TileType::TELEPORTER) {
+  if (tile.type == TileType::TELEPORTER)
+  {
     int const current = lm.active_zone();
     int const newlevel = current == 0 ? 1 : 0;
     assert(newlevel < lm.num_levels());
@@ -62,16 +64,17 @@ move_betweentilegrids_ifonstairs(stlw::Logger &logger, TiledataState &tds, Level
 
     // now that the zone has changed, all references through lm are pointing to old level.
     // use active()
-    auto &zs = lm.active();
-    auto &ldata = zs.level_data;
+    auto& zs = lm.active();
+    auto& ldata = zs.level_data;
 
-    auto &player = ldata.player;
-    auto &registry = zs.registry;
+    auto& player = ldata.player;
+    auto& registry = zs.registry;
 
     player.move_to(10, player.world_position().y, 10);
     return;
   }
-  if (!tile.is_stair()) {
+  if (!tile.is_stair())
+  {
     return;
   }
 
@@ -85,12 +88,12 @@ move_betweentilegrids_ifonstairs(stlw::Logger &logger, TiledataState &tds, Level
 
     // now that the zone has changed, all references through lm are pointing to old level.
     // use active()
-    auto &zs = lm.active();
-    auto &ldata = zs.level_data;
+    auto& zs = lm.active();
+    auto& ldata = zs.level_data;
 
-    auto &camera = ldata.camera;
-    auto &player = ldata.player;
-    auto &registry = zs.registry;
+    auto& camera = ldata.camera;
+    auto& player = ldata.player;
+    auto& registry = zs.registry;
 
     auto const spos = stair.exit_position;
     player.move_to(spos.x, player.world_position().y, spos.y);
@@ -104,13 +107,15 @@ move_betweentilegrids_ifonstairs(stlw::Logger &logger, TiledataState &tds, Level
   auto const tp = TilePosition::from_floats_truncated(wp.x, wp.z);
 
   // lookup stairs in the registry
-  auto &registry = lm.active().registry;
+  auto&      registry = lm.active().registry;
   auto const stair_eids = find_stairs(registry);
   assert(!stair_eids.empty());
 
-  for (auto const& eid : stair_eids) {
+  for (auto const& eid : stair_eids)
+  {
     auto const& stair = registry.get<StairInfo>(eid);
-    if (stair.tile_position == tp) {
+    if (stair.tile_position == tp)
+    {
       move_player_through_stairs(stair);
 
       // TODO: not just jump first stair we find
@@ -120,19 +125,19 @@ move_betweentilegrids_ifonstairs(stlw::Logger &logger, TiledataState &tds, Level
 }
 
 void
-move_skybox_to_player(stlw::Logger &logger, EntityRegistry &registry)
+move_skybox_to_player(stlw::Logger& logger, EntityRegistry& registry)
 {
   auto const player = find_player(registry);
   assert(registry.has<Transform>(player));
   auto const& ptransform = registry.get<Transform>(player);
 
   auto const skybox_eid = find_skybox(registry);
-  auto &stransform = registry.get<Transform>(skybox_eid);
+  auto&      stransform = registry.get<Transform>(skybox_eid);
   stransform.translation = ptransform.translation;
 }
 
 void
-update_nearbytargets(LevelData &ldata, EntityRegistry &registry, FrameTime const& ft)
+update_nearbytargets(LevelData& ldata, EntityRegistry& registry, FrameTime const& ft)
 {
   ldata.nearby_targets.clear();
 
@@ -143,8 +148,10 @@ update_nearbytargets(LevelData &ldata, EntityRegistry &registry, FrameTime const
   auto const enemies = find_enemies(registry);
   using pair_t = std::pair<float, EntityID>;
   std::vector<pair_t> pairs;
-  for (auto const eid : enemies) {
-    if (!registry.get<IsVisible>(eid).value) {
+  for (auto const eid : enemies)
+  {
+    if (!registry.get<IsVisible>(eid).value)
+    {
       continue;
     }
     auto const& etransform = registry.get<Transform>(eid);
@@ -152,62 +159,66 @@ update_nearbytargets(LevelData &ldata, EntityRegistry &registry, FrameTime const
     pairs.emplace_back(std::make_pair(distance, eid));
   }
 
-  auto const sort_fn = [](auto const& a, auto const& b) {
-    return a.first < b.first;
-  };
+  auto const sort_fn = [](auto const& a, auto const& b) { return a.first < b.first; };
   std::sort(pairs.begin(), pairs.end(), sort_fn);
 
-  for (auto const& it : pairs) {
+  for (auto const& it : pairs)
+  {
     ldata.nearby_targets.add_target(it.second);
   }
 }
 
-void
-update_sun(LevelData &ldata, EntityRegistry &registry, FrameTime const& ft)
+auto
+rotate_around(glm::vec3 const& point_to_rotate, glm::vec3 const& rot_center,
+              glm::mat4x4 const& rot_matrix)
 {
-  /*
-  ldata.nearby_targets.clear();
+  glm::mat4x4 const translate = glm::translate(glm::mat4{}, rot_center);
+  glm::mat4x4 const inv_translate = glm::translate(glm::mat4{}, -rot_center);
 
-  auto const player = find_player(registry);
-  assert(registry.has<Transform>(player));
-  auto const& ptransform = registry.get<Transform>(player);
+  // The idea:
+  // 1) Translate the object to the center
+  // 2) Make the rotation
+  // 3) Translate the object back to its original location
+  glm::mat4x4 const transform = translate * rot_matrix * inv_translate;
+  auto const        pos = transform * glm::vec4{point_to_rotate, 1.0f};
+  return glm::vec3{pos.x, pos.y, pos.z};
+}
 
-  auto const enemies = find_enemies(registry);
-  using pair_t = std::pair<float, EntityID>;
-  std::vector<pair_t> pairs;
-  for (auto const eid : enemies) {
-    if (!registry.get<IsVisible>(eid).value) {
-      continue;
-    }
-    auto const& etransform = registry.get<Transform>(eid);
-    float const distance = glm::distance(ptransform.translation, etransform.translation);
-    pairs.emplace_back(std::make_pair(distance, eid));
-  }
+void
+update_sun(LevelData& ldata, EntityRegistry& registry, FrameTime const& ft)
+{
+  auto const eid = find_sun(registry);
+  float constexpr SPEED = 0.01f;
+  float const v = std::sin(ft.since_start_seconds() * M_PI * SPEED);
 
-  auto const sort_fn = [](auto const& a, auto const& b) {
-    return a.first < b.first;
-  };
-  std::sort(pairs.begin(), pairs.end(), sort_fn);
+  auto& transform = registry.get<Transform>(eid);
+  auto& pos = transform.translation;
 
-  for (auto const& it : pairs) {
-    ldata.nearby_targets.add_target(it.second);
-  }
-  */
+  transform.rotate_degrees(0.01f, Y_UNIT_VECTOR);
+  auto const rot = glm::toMat4(transform.rotation);
+  auto const new_pos = rotate_around(pos, glm::zero<glm::vec3>(), rot);
+  transform.translation = new_pos;
+
+  float constexpr HEIGHT = 850.0f;
+  float const new_y = glm::lerp(-HEIGHT, HEIGHT, std::abs(v));
+
+  // TODO: This won't be necessary if there's vertices in the way? (terrain)
+  // if (stlw::math::opposite_signs(pos.y, new_y)) {
+  // auto &isv = registry.get<IsVisible>(eid);
+  // isv.value ^= true;
+  //}
+  transform.translation.y = new_y;
 }
 
 bool
 wiggle_outofbounds(RiverInfo const& rinfo, RiverWiggle const& wiggle)
 {
   auto const& pos = wiggle.position;
-  return ANYOF(
-      pos.x > rinfo.right,
-      pos.x < rinfo.left,
-      pos.y < rinfo.bottom,
-      pos.y > rinfo.top);
+  return ANYOF(pos.x > rinfo.right, pos.x < rinfo.left, pos.y<rinfo.bottom, pos.y> rinfo.top);
 }
 
 void
-reset_position(RiverInfo &rinfo, RiverWiggle &wiggle)
+reset_position(RiverInfo& rinfo, RiverWiggle& wiggle)
 {
   auto const& tp = rinfo.origin;
 
@@ -216,39 +227,41 @@ reset_position(RiverInfo &rinfo, RiverWiggle &wiggle)
 }
 
 void
-move_riverwiggles(LevelData &level_data, FrameTime const& ft)
+move_riverwiggles(LevelData& level_data, FrameTime const& ft)
 {
-  auto const update_river = [&ft](auto &rinfo)
-  {
-    for (auto &wiggle : rinfo.wiggles) {
-      auto &pos = wiggle.position;
+  auto const update_river = [&ft](auto& rinfo) {
+    for (auto& wiggle : rinfo.wiggles)
+    {
+      auto& pos = wiggle.position;
       pos += wiggle.direction * wiggle.speed * ft.delta_millis();
 
-      if (wiggle_outofbounds(rinfo, wiggle)) {
+      if (wiggle_outofbounds(rinfo, wiggle))
+      {
         reset_position(rinfo, wiggle);
       }
     }
   };
-  for (auto &rinfo : level_data.rivers()) {
+  for (auto& rinfo : level_data.rivers())
+  {
     update_river(rinfo);
   }
 }
 
 void
-update_torchflicker(LevelData const& ldata, EntityRegistry &registry, stlw::float_generator &rng,
-    FrameTime const& ft)
+update_torchflicker(LevelData const& ldata, EntityRegistry& registry, stlw::float_generator& rng,
+                    FrameTime const& ft)
 {
-  auto const update_torch = [&](auto const eid)
-  {
-    auto &pointlight = registry.get<PointLight>(eid);
+  auto const update_torch = [&](auto const eid) {
+    auto& pointlight = registry.get<PointLight>(eid);
 
     auto const v = std::sin(ft.since_start_millis() * M_PI);
-    auto &flicker = registry.get<LightFlicker>(eid);
+    auto&      flicker = registry.get<LightFlicker>(eid);
     pointlight.light.diffuse = Color::lerp(flicker.colors[0], flicker.colors[1], v);
 
-    auto &item = registry.get<Item>(eid);
-    auto &torch_transform = registry.get<Transform>(eid);
-    if (item.is_pickedup) {
+    auto& item = registry.get<Item>(eid);
+    auto& torch_transform = registry.get<Transform>(eid);
+    if (item.is_pickedup)
+    {
       // Player has picked up the torch, make it follow player around
       auto const& player = ldata.player;
       auto const& player_pos = player.world_position();
@@ -260,10 +273,9 @@ update_torchflicker(LevelData const& ldata, EntityRegistry &registry, stlw::floa
     }
 
     auto const torch_pos = torch_transform.translation;
-    auto &attenuation = pointlight.attenuation;
+    auto&      attenuation = pointlight.attenuation;
 
-    auto const attenuate = [&rng](float &value, float const gen_range, float const base_value)
-    {
+    auto const attenuate = [&rng](float& value, float const gen_range, float const base_value) {
       value += rng.gen_float_range(-gen_range, gen_range);
 
       auto const clamp = gen_range * 2.0f;
@@ -271,37 +283,39 @@ update_torchflicker(LevelData const& ldata, EntityRegistry &registry, stlw::floa
     };
 
     static float constexpr CONSTANT = 0.1f;
-    //attenuate(attenuation.constant, CONSTANT, torch.default_attenuation.constant);
+    // attenuate(attenuation.constant, CONSTANT, torch.default_attenuation.constant);
 
-    //static float constexpr LINEAR = 0.015f;
-    //attenuate(attenuation.linear, LINEAR, torch.default_attenuation.linear);
+    // static float constexpr LINEAR = 0.015f;
+    // attenuate(attenuation.linear, LINEAR, torch.default_attenuation.linear);
 
-    //static float constexpr QUADRATIC = LINEAR * LINEAR;
-    //attenuate(attenuation.quadratic, QUADRATIC, torch.default_attenuation.quadratic);
+    // static float constexpr QUADRATIC = LINEAR * LINEAR;
+    // attenuate(attenuation.quadratic, QUADRATIC, torch.default_attenuation.quadratic);
 
     static float constexpr SPEED_DELTA = 0.24f;
     attenuate(flicker.current_speed, SPEED_DELTA, flicker.base_speed);
   };
   auto const torches = find_torches(registry);
-  for (auto const eid : torches) {
+  for (auto const eid : torches)
+  {
     update_torch(eid);
   }
 }
 
 void
-update_visible_entities(LevelManager &lm, EntityRegistry &registry)
+update_visible_entities(LevelManager& lm, EntityRegistry& registry)
 {
-  auto &zs = lm.active();
-  auto &ldata = zs.level_data;
-  auto &tilegrid = ldata.tilegrid();
-  auto &player = ldata.player;
+  auto& zs = lm.active();
+  auto& ldata = zs.level_data;
+  auto& tilegrid = ldata.tilegrid();
+  auto& player = ldata.player;
 
-  for (auto const eid : registry.view<NPCData>()) {
-    auto &isv = registry.get<IsVisible>(eid);
+  for (auto const eid : registry.view<NPCData>())
+  {
+    auto& isv = registry.get<IsVisible>(eid);
 
     // Convert to tile position, match tile visibility.
-    auto &transform = registry.get<Transform>(eid);
-    auto const& pos = transform.translation;
+    auto&              transform = registry.get<Transform>(eid);
+    auto const&        pos = transform.translation;
     TilePosition const tpos = TilePosition::from_floats_truncated(pos.x, pos.z);
 
     auto const& tile = tilegrid.data(tpos);
@@ -310,31 +324,32 @@ update_visible_entities(LevelManager &lm, EntityRegistry &registry)
 }
 
 void
-game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_generator &rng,
-    FrameTime const& ft)
+game_loop(EngineState& es, LevelManager& lm, SDLWindow& window, stlw::float_generator& rng,
+          FrameTime const& ft)
 {
-  auto &logger = es.logger;
-  auto &tilegrid_state = es.tilegrid_state;
+  auto& logger = es.logger;
+  auto& tilegrid_state = es.tilegrid_state;
 
   // Update the world
   {
-    auto &zs = lm.active();
-    auto &registry = zs.registry;
+    auto& zs = lm.active();
+    auto& registry = zs.registry;
     move_betweentilegrids_ifonstairs(logger, tilegrid_state, lm);
     move_skybox_to_player(logger, registry);
   }
 
   // Must recalculate zs and registry, possibly changed since call to move_between()
-  auto &zs = lm.active();
-  auto &registry = zs.registry;
-  auto &ldata = zs.level_data;
-  auto &player = ldata.player;
+  auto& zs = lm.active();
+  auto& registry = zs.registry;
+  auto& ldata = zs.level_data;
+  auto& player = ldata.player;
   {
     update_nearbytargets(ldata, registry, ft);
     update_sun(ldata, registry, ft);
     move_riverwiggles(ldata, ft);
 
-    if (tilegrid_state.recompute) {
+    if (tilegrid_state.recompute)
+    {
       // compute tilegrid
       LOG_INFO("Updating tilegrid\n");
 
@@ -356,14 +371,17 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
     RenderState rstate{es, zs};
     {
       bool const draw_entities = es.draw_entities;
-      if (draw_entities) {
+      if (draw_entities)
+      {
         render::draw_skybox(rstate, ft);
       }
-      if (draw_entities) {
+      if (draw_entities)
+      {
         render::draw_entities(rstate, rng, ft);
       }
     }
-    if (tilegrid_state.draw_tilegrid) {
+    if (tilegrid_state.draw_tilegrid)
+    {
       render::draw_tilegrid(rstate, tilegrid_state, ft);
       render::draw_rivers(rstate, ft);
     }
@@ -371,25 +389,30 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
     render::draw_stars(rstate, ft);
     render::draw_targetreticle(rstate, ft);
 
-    if (tilegrid_state.show_grid_lines) {
+    if (tilegrid_state.show_grid_lines)
+    {
       render::draw_tilegrid(rstate, tilegrid_state);
     }
-    if (tilegrid_state.show_neighbortile_arrows) {
+    if (tilegrid_state.show_neighbortile_arrows)
+    {
       auto const& wp = player.world_position();
-      auto const tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
+      auto const  tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
       render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
     }
-    if (es.show_global_axis) {
+    if (es.show_global_axis)
+    {
       render::draw_global_axis(rstate);
     }
-    if (es.show_local_axis) {
+    if (es.show_local_axis)
+    {
       render::draw_local_axis(rstate, player.world_position());
     }
 
     {
-      auto const eid = find_player(registry);
+      auto const  eid = find_player(registry);
       auto const& inv = registry.get<PlayerData>(eid).inventory;
-      if (inv.is_open()) {
+      if (inv.is_open())
+      {
         render::draw_inventory_overlay(rstate);
       }
     }
@@ -397,31 +420,33 @@ game_loop(EngineState &es, LevelManager &lm, SDLWindow &window, stlw::float_gene
     // if checks happen inside fn
     render::conditionally_draw_player_vectors(rstate, player);
 
-    auto &ui_state = es.ui_state;
-    if (ui_state.draw_ingame_ui) {
+    auto& ui_state = es.ui_state;
+    if (ui_state.draw_ingame_ui)
+    {
       ui_ingame::draw(es, lm);
     }
-    if (ui_state.draw_debug_ui) {
+    if (ui_state.draw_debug_ui)
+    {
       ui_debug::draw(es, lm, window);
     }
   }
 }
 
-} // ns boomhs
+} // namespace boomhs
 
 namespace
 {
 
 struct Engine
 {
-  SDLWindow window;
-  SDLControllers controllers;
+  SDLWindow                   window;
+  SDLControllers              controllers;
   std::vector<EntityRegistry> registries = {};
 
   Engine() = delete;
-  explicit Engine(SDLWindow &&w, SDLControllers &&c)
-    : window(MOVE(w))
-    , controllers(MOVE(c))
+  explicit Engine(SDLWindow&& w, SDLControllers&& c)
+      : window(MOVE(w))
+      , controllers(MOVE(c))
   {
     registries.resize(50);
   }
@@ -434,11 +459,11 @@ struct Engine
 };
 
 void
-loop(Engine &engine, GameState &state, stlw::float_generator &rng, FrameTime const& ft)
+loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTime const& ft)
 {
-  auto &es = state.engine_state;
-  auto &logger = es.logger;
-  auto &lm = state.level_manager;
+  auto& es = state.engine_state;
+  auto& logger = es.logger;
+  auto& lm = state.level_manager;
 
   // Reset Imgui for next game frame.
   ImGui_ImplSdlGL3_NewFrame(engine.window.raw());
@@ -458,14 +483,15 @@ loop(Engine &engine, GameState &state, stlw::float_generator &rng, FrameTime con
 }
 
 void
-timed_game_loop(Engine &engine, GameState &state)
+timed_game_loop(Engine& engine, GameState& state)
 {
-  window::Clock clock;
-  window::FrameCounter counter;
+  window::Clock         clock;
+  window::FrameCounter  counter;
   stlw::float_generator rng;
 
-  auto &logger = state.engine_state.logger;
-  while (!state.engine_state.quit) {
+  auto& logger = state.engine_state.logger;
+  while (!state.engine_state.quit)
+  {
     auto const ft = clock.frame_time();
     loop(engine, state, rng, ft);
     clock.update();
@@ -474,10 +500,10 @@ timed_game_loop(Engine &engine, GameState &state)
 }
 
 Result<stlw::empty_type, std::string>
-start(stlw::Logger &logger, Engine &engine)
+start(stlw::Logger& logger, Engine& engine)
 {
   // Initialize GUI library
-  auto *imgui_context = ImGui::CreateContext();
+  auto* imgui_context = ImGui::CreateContext();
   ON_SCOPE_EXIT([&imgui_context]() { ImGui::DestroyContext(imgui_context); });
 
   ImGui_ImplSdlGL3_Init(engine.window.raw());
@@ -485,7 +511,7 @@ start(stlw::Logger &logger, Engine &engine)
 
   ImGui::StyleColorsDark();
 
-  auto &registries = engine.registries;
+  auto&      registries = engine.registries;
   ZoneStates zss = TRY_MOVEOUT(LevelAssembler::assemble_levels(logger, registries));
 
   // Initialize opengl
@@ -493,20 +519,22 @@ start(stlw::Logger &logger, Engine &engine)
   render::init(logger, dimensions);
 
   // Configure Imgui
-  auto &imgui = ImGui::GetIO();
+  auto& imgui = ImGui::GetIO();
   imgui.MouseDrawCursor = true;
   imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
 
   {
     auto test_r = rexpaint::RexImage::load("assets/test.xp");
-    if (!test_r) {
+    if (!test_r)
+    {
       LOG_ERROR_SPRINTF("%s", test_r.unwrapErrMove());
       std::abort();
     }
     auto test = test_r.expect_moveout("loading text.xp");
     test.flatten();
     auto save = rexpaint::RexImage::save(test, "assets/test.xp");
-    if (!save) {
+    if (!save)
+    {
       LOG_ERROR_SPRINTF("%s", save.unwrapErrMove().to_string());
       std::abort();
     }
@@ -514,7 +542,7 @@ start(stlw::Logger &logger, Engine &engine)
 
   // Construct game state
   EngineState es{logger, imgui, dimensions};
-  GameState state{MOVE(es), LevelManager{MOVE(zss)}};
+  GameState   state{MOVE(es), LevelManager{MOVE(zss)}};
 
   // Start game in a timed loop
   timed_game_loop(engine, state);
@@ -524,11 +552,11 @@ start(stlw::Logger &logger, Engine &engine)
   return Ok(stlw::empty_type{});
 }
 
-} // ns anon
+} // namespace
 
 using WindowResult = Result<SDLWindow, std::string>;
 WindowResult
-make_window(stlw::Logger &logger, bool const fullscreen, float const width, float const height)
+make_window(stlw::Logger& logger, bool const fullscreen, float const width, float const height)
 {
   // Select windowing library as SDL.
   LOG_DEBUG("Initializing window library globals");
@@ -546,7 +574,8 @@ get_time()
   auto const now_tm = *std::localtime(&now_timet);
 
   char buff[70];
-  if (!std::strftime(buff, sizeof(buff), "%Y-%m-%dT%H:%M:%S%z", &now_tm)) {
+  if (!std::strftime(buff, sizeof(buff), "%Y-%m-%dT%H:%M:%S%z", &now_tm))
+  {
     return Err("Could not read current time into buffer.");
   }
 
@@ -554,24 +583,24 @@ get_time()
 }
 
 int
-main(int argc, char *argv[])
+main(int argc, char* argv[])
 {
   auto const time_result = get_time();
-  if (!time_result) {
+  if (!time_result)
+  {
     return EXIT_FAILURE;
   }
   std::string const log_name = time_result.unwrap() + "-BoomHS.log";
-  auto logger = stlw::LogFactory::make_default(log_name.c_str());
+  auto              logger = stlw::LogFactory::make_default(log_name.c_str());
 
   LOG_DEBUG("Creating window ...");
   bool constexpr FULLSCREEN = false;
 
-  auto const on_error = [&logger](auto const &error) {
+  auto const on_error = [&logger](auto const& error) {
     LOG_ERROR(error);
     return EXIT_FAILURE;
   };
-  TRY_OR_ELSE_RETURN(auto window, make_window(logger, FULLSCREEN, 1024, 768),
-                        on_error);
+  TRY_OR_ELSE_RETURN(auto window, make_window(logger, FULLSCREEN, 1024, 768), on_error);
   TRY_OR_ELSE_RETURN(auto controller, SDLControllers::find_attached_controllers(logger), on_error);
   Engine engine{MOVE(window), MOVE(controller)};
 

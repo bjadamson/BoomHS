@@ -13,23 +13,28 @@ namespace stlw
 
 // TODO: boost::path
 inline Result<std::string, std::string>
-read_file(char const *path)
+read_file(char const* path)
 {
   // Read the Vertex Shader code from the file
   std::stringstream sstream;
   {
     std::ifstream istream(path, std::ios::in);
 
-    if (!istream.is_open()) {
+    if (!istream.is_open())
+    {
       return Err("Error opening file at path '" + std::string{path} + "'");
     }
 
     std::string buffer;
-    bool first = true;
-    while (std::getline(istream, buffer)) {
-      if (!first) {
+    bool        first = true;
+    while (std::getline(istream, buffer))
+    {
+      if (!first)
+      {
         sstream << "\n";
-      } else {
+      }
+      else
+      {
         first = false;
       }
       sstream << buffer;
@@ -50,17 +55,17 @@ read_file(T const s)
 // TODO: boost::path
 template <typename... Text>
 void
-write_file(std::experimental::filesystem::path const &path, Text const &... text)
+write_file(std::experimental::filesystem::path const& path, Text const&... text)
 {
   std::filebuf fb;
   fb.open(path.string().c_str(), std::ios::out);
   ON_SCOPE_EXIT([&fb]() { fb.close(); });
 
   std::ostream os(&fb);
-  auto const write_line = [&os](auto const &text) { os << text; };
+  auto const   write_line = [&os](auto const& text) { os << text; };
 
   auto const tuple_view = std::make_tuple(text...);
   stlw::for_each(tuple_view, write_line);
 }
 
-} // ns stlw
+} // namespace stlw

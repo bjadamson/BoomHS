@@ -7,8 +7,8 @@ namespace boomhs
 
 struct Skybox
 {
-  Transform &transform;
+  Transform& transform;
   MOVE_CONSTRUCTIBLE_ONLY(Skybox);
 };
 
-} // ns boomhs
+} // namespace boomhs

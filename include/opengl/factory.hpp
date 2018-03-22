@@ -9,12 +9,12 @@ namespace boomhs
 {
 struct Obj;
 class TileGrid;
-} // ns boomhs
+} // namespace boomhs
 
 namespace opengl
 {
 class ShaderProgram;
-} // ns opengl
+} // namespace opengl
 
 namespace opengl::factories
 {
@@ -36,35 +36,36 @@ struct ArrowEndpoints
 };
 
 DrawInfo
-create_arrow_2d(stlw::Logger &, ShaderProgram const&, ArrowCreateParams &&);
+create_arrow_2d(stlw::Logger&, ShaderProgram const&, ArrowCreateParams&&);
 
 DrawInfo
-create_arrow(stlw::Logger &, ShaderProgram const&, ArrowCreateParams &&);
+create_arrow(stlw::Logger&, ShaderProgram const&, ArrowCreateParams&&);
 
 DrawInfo
-create_tilegrid(stlw::Logger &, ShaderProgram const&, boomhs::TileGrid const&,
-    bool const show_yaxis_lines, Color const& color = LOC::RED);
+create_tilegrid(stlw::Logger&, ShaderProgram const&, boomhs::TileGrid const&,
+                bool const show_yaxis_lines, Color const& color = LOC::RED);
 
 DrawInfo
-create_modelnormals(stlw::Logger &, ShaderProgram const&, glm::mat4 const&,
-    boomhs::Obj const&, Color const&);
+create_modelnormals(stlw::Logger&, ShaderProgram const&, glm::mat4 const&, boomhs::Obj const&,
+                    Color const&);
 
-struct WorldOriginArrows {
+struct WorldOriginArrows
+{
   DrawInfo x_dinfo;
   DrawInfo y_dinfo;
   DrawInfo z_dinfo;
 };
 
 WorldOriginArrows
-create_axis_arrows(stlw::Logger &, ShaderProgram &);
+create_axis_arrows(stlw::Logger&, ShaderProgram&);
 
 struct RectInfo
 {
   static constexpr auto NUM_VERTICES = 4;
-  float width, height;
+  float                 width, height;
 
   // use one, not both (checked in debug builds)
-  std::optional<Color> color;
+  std::optional<Color>                           color;
   std::optional<std::array<Color, NUM_VERTICES>> colors;
 
   std::optional<std::array<glm::vec2, NUM_VERTICES>> uvs;
@@ -72,13 +73,13 @@ struct RectInfo
 
 struct RectBuffer
 {
-  std::vector<float> vertices;
+  std::vector<float>    vertices;
   std::array<GLuint, 6> indices;
 };
 
 RectBuffer
 create_rectangle(RectInfo const&);
 
-} // ns opengl::factories
+} // namespace opengl::factories
 
 namespace OF = opengl::factories;

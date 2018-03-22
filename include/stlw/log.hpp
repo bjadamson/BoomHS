@@ -45,7 +45,7 @@
 namespace stlw
 {
 using LoggerPointer = std::unique_ptr<spdlog::logger>;
-} // ns stlw
+} // namespace stlw
 
 #include <stlw/impl/log_impl.hpp>
 
@@ -56,8 +56,9 @@ using Logger = ::stlw::impl::LogWriter;
 struct LogFactory
 {
   LogFactory() = delete;
+
 public:
-  static impl::LogWriter make_default(char const *);
+  static impl::LogWriter make_default(char const*);
 };
 
-} // ns stlw
+} // namespace stlw

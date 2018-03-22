@@ -19,9 +19,9 @@ class EntityRegistry;
 
 struct TileInfo
 {
-  TileType type;
-  std::string mesh_name, vshader_name;
-  opengl::Color color;
+  TileType         type;
+  std::string      mesh_name, vshader_name;
+  opengl::Color    color;
   opengl::Material material;
 };
 
@@ -39,22 +39,20 @@ public:
 
   bool empty() const { return data_.empty(); }
 
-  TileInfo const&
-  operator[](TileType) const;
+  TileInfo const& operator[](TileType) const;
 
-  TileInfo&
-  operator[](TileType);
+  TileInfo& operator[](TileType);
 };
 
 struct LevelAssets
 {
   opengl::GlobalLight global_light;
-  opengl::Color background_color;
+  opengl::Color       background_color;
 
   TileSharedInfoTable tile_table;
 
-  ObjStore obj_store;
-  opengl::TextureTable texture_table;
+  ObjStore               obj_store;
+  opengl::TextureTable   texture_table;
   opengl::ShaderPrograms shader_programs;
 
   MOVE_CONSTRUCTIBLE_ONLY(LevelAssets);
@@ -65,7 +63,7 @@ struct LevelLoader
   LevelLoader() = delete;
 
   static Result<LevelAssets, std::string>
-  load_level(stlw::Logger &, EntityRegistry &, std::string const&);
+  load_level(stlw::Logger&, EntityRegistry&, std::string const&);
 };
 
-} // ns boomhs
+} // namespace boomhs

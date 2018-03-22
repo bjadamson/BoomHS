@@ -1,8 +1,8 @@
 #include <boomhs/rexpaint.hpp>
+#include <iostream>
 #include <stlw/algorithm.hpp>
 #include <stlw/types.hpp>
 #include <zlib.h>
-#include <iostream>
 
 using namespace rexpaint;
 using RexIOResult = Result<stlw::empty_type, RexError>;
@@ -13,15 +13,16 @@ namespace
 RexIOResult
 make_rexerror(gzFile g)
 {
-  int errnum = 0;
+  int               errnum = 0;
   std::string const msg = gzerror(g, &errnum);
   return Err(RexError{errnum, msg});
 }
 
 RexIOResult
-s_gzread(gzFile g, void *buf, unsigned int len)
+s_gzread(gzFile g, void* buf, unsigned int len)
 {
-  if (gzread(g, buf, len) > 0) {
+  if (gzread(g, buf, len) > 0)
+  {
     return Ok(stlw::empty_type{});
   }
   return make_rexerror(g);
@@ -30,7 +31,8 @@ s_gzread(gzFile g, void *buf, unsigned int len)
 RexIOResult
 s_gzwrite(gzFile g, void const* buf, unsigned int len)
 {
-  if (gzwrite(g, buf, len) > 0) {
+  if (gzwrite(g, buf, len) > 0)
+  {
     return Ok(stlw::empty_type{});
   }
   return make_rexerror(g);
@@ -41,21 +43,23 @@ s_gzopen(std::string const& filename, const char* permissions)
 {
   gzFile g = gzopen(filename.c_str(), permissions);
 
-  if (g != Z_NULL) {
+  if (g != Z_NULL)
+  {
     return Ok(g);
   }
 
-  int errcode = 0;
+  int         errcode = 0;
   const char* errstr = gzerror(g, &errcode);
-  if (errcode == 0) {
+  if (errcode == 0)
+  {
     std::string const msg{"gzerror. Assuming file '" + filename + "' does not exist."};
-    RexError re{ERR_FILE_DOES_NOT_EXIST, msg};
+    RexError          re{ERR_FILE_DOES_NOT_EXIST, msg};
     return Err(MOVE(re));
   }
   return Err(RexError{errcode, errstr});
 }
 
-} // ns anon
+} // namespace
 
 namespace rexpaint
 {
@@ -65,7 +69,7 @@ namespace rexpaint
 bool
 RexTile::is_transparent() const
 {
-  //This might be faster than comparing with transparentTile(), despite it being a constexpr
+  // This might be faster than comparing with transparentTile(), despite it being a constexpr
   // clang-format off
   return ALLOF(
       back_red == 255,
@@ -76,29 +80,23 @@ RexTile::is_transparent() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // RexLayer
-RexLayer::RexLayer(Width const width, Height const height)
-{
-  tiles.resize(width * height);
-}
+RexLayer::RexLayer(Width const width, Height const height) { tiles.resize(width * height); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // RexImage
-RexImage::RexImage(Version const v, Width const w, Height const h, std::vector<RexLayer> && layers)
-  : version_(v)
-  , width_(w)
-  , height_(h)
-  , layers_(MOVE(layers))
+RexImage::RexImage(Version const v, Width const w, Height const h, std::vector<RexLayer>&& layers)
+    : version_(v)
+    , width_(w)
+    , height_(h)
+    , layers_(MOVE(layers))
 {
   layers_.resize(num_layers());
-  FORI(i, num_layers()) {
-    layers_[i] = RexLayer{width(), height()};
-  }
+  FORI(i, num_layers()) { layers_[i] = RexLayer{width(), height()}; }
 
   // All layers above the first are set transparent.
-  for (int l = 1; l < num_layers(); ++l) {
-    FORI(i, width() * height()) {
-      set_tile(l, i, TRANSPARENT_TILE);
-    }
+  for (int l = 1; l < num_layers(); ++l)
+  {
+    FORI(i, width() * height()) { set_tile(l, i, TRANSPARENT_TILE); }
   }
 }
 
@@ -107,7 +105,6 @@ RexImage::get_tile(LayerNumber const layer, int const x, int const y)
 {
   return layers_[layer].tiles[y + (x * height_)];
 }
-
 
 RexTile&
 RexImage::get_tile(LayerNumber const layer, int const index)
@@ -130,14 +127,17 @@ RexImage::set_tile(LayerNumber layer, int i, RexTile const& val)
 void
 RexImage::flatten()
 {
-  if (num_layers() == 1) {
+  if (num_layers() == 1)
+  {
     return;
   }
 
   // Paint the last layer onto the second-to-last
-  FORI (i, width() * height()) {
-    RexTile &overlay = get_tile(num_layers() - 1, i);
-    if (!overlay.is_transparent()) {
+  FORI(i, width() * height())
+  {
+    RexTile& overlay = get_tile(num_layers() - 1, i);
+    if (!overlay.is_transparent())
+    {
       auto const layer = num_layers() - 2;
       get_tile(layer, i) = overlay;
     }
@@ -159,13 +159,14 @@ RexImage::load(std::string const& filename)
   int version;
   DO_EFFECT(s_gzread(gz, &version, sizeof(version)));
 
-  int num_layers;
+  int                   num_layers;
   std::vector<RexLayer> layers;
   DO_EFFECT(s_gzread(gz, &num_layers, sizeof(num_layers)));
   layers.resize(num_layers);
 
   int width, height;
-  for (auto& layer : layers) {
+  for (auto& layer : layers)
+  {
     // The layer and height information is repeated.
     DO_EFFECT(s_gzread(gz, &width, sizeof(width)));
 
@@ -186,12 +187,9 @@ RexImage::save(RexImage const& image, std::string const& filename)
   gzFile gz = TRY_MOVEOUT(s_gzopen(filename.c_str(), "wb"));
   ON_SCOPE_EXIT([&]() { gzclose(gz); });
 
-  auto const cast = [](auto *v) -> void const*
-  {
-    return static_cast<void const*>(v);
-  };
+  auto const cast = [](auto* v) -> void const* { return static_cast<void const*>(v); };
 
-  auto &version = image.version_;
+  auto& version = image.version_;
   DO_EFFECT(s_gzwrite(gz, cast(&version), sizeof(version)));
 
   int const num_layers = image.layers_.size();
@@ -199,7 +197,8 @@ RexImage::save(RexImage const& image, std::string const& filename)
 
   int const width = image.width();
   int const height = image.height();
-  for (auto& layer : image.layers_) {
+  for (auto& layer : image.layers_)
+  {
     // The layer and height information is repeated.
     s_gzwrite(gz, &width, sizeof(width));
     s_gzwrite(gz, &height, sizeof(height));
@@ -210,10 +209,11 @@ RexImage::save(RexImage const& image, std::string const& filename)
   }
 
   int const result = gzflush(gz, Z_FULL_FLUSH);
-  if (Z_OK != result) {
+  if (Z_OK != result)
+  {
     return make_rexerror(gz);
   }
   return Ok(stlw::empty_type());
 }
 
-} // ns rexpaint
+} // namespace rexpaint

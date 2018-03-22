@@ -10,15 +10,16 @@ struct Sun
 };
 
 inline auto&
-find_sun(EntityRegistry &registry)
+find_sun(EntityRegistry& registry)
 {
   // for now assume only 1 entity has the Player tag
   assert(1 == registry.view<Sun>().size());
 
   // Assume Skybox has a Transform
-  auto view = registry.view<Sun, Transform>();
+  auto                    view = registry.view<Sun, Transform>();
   std::optional<EntityID> entity{std::nullopt};
-  for (auto const e : view) {
+  for (auto const e : view)
+  {
     // This assert ensures this loop only runs once.
     assert(std::nullopt == entity);
     entity = e;
@@ -27,4 +28,4 @@ find_sun(EntityRegistry &registry)
   return *entity;
 }
 
-} // ns boomhs
+} // namespace boomhs

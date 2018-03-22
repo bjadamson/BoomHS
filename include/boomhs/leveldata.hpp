@@ -1,7 +1,7 @@
 #pragma once
-#include <boomhs/level_loader.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/level_loader.hpp>
 #include <boomhs/nearby_targets.hpp>
 #include <boomhs/river_generator.hpp>
 #include <boomhs/tile.hpp>
@@ -18,8 +18,8 @@ namespace boomhs
 
 struct LevelGeneredData
 {
-  TileGrid tilegrid;
-  TilePosition startpos;
+  TileGrid               tilegrid;
+  TilePosition           startpos;
   std::vector<RiverInfo> rivers;
 };
 
@@ -33,20 +33,19 @@ class LevelData
   // For example, the "Material" property for each tile type can be looked up (and manipulated)
   // through ttable_.
   TileSharedInfoTable ttable_;
-  TilePosition const startpos_;
+  TilePosition const  startpos_;
 
   std::vector<RiverInfo> rivers_;
 
   void set_tile(TilePosition const&, TileType const&);
+
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
-  LevelData(TileGrid &&, TileSharedInfoTable &&, TilePosition const&, std::vector<RiverInfo> &&,
-      opengl::Color const&, opengl::GlobalLight const&, ObjStore &&, Camera &&,
-      WorldObject &&
-      );
+  LevelData(TileGrid&&, TileSharedInfoTable&&, TilePosition const&, std::vector<RiverInfo>&&,
+            opengl::Color const&, opengl::GlobalLight const&, ObjStore&&, Camera&&, WorldObject&&);
 
   // public fields
-  opengl::Color background;
+  opengl::Color       background;
   opengl::GlobalLight global_light;
 
   ObjStore obj_store;
@@ -54,7 +53,7 @@ public:
   // nearby targets user can select
   NearbyTargets nearby_targets;
 
-  Camera camera;
+  Camera      camera;
   WorldObject player;
 
   void set_floor(TilePosition const&);
@@ -67,31 +66,27 @@ public:
   auto dimensions() const { return tilegrid_.dimensions(); }
 
   // TODO: Is this leaky abstraction?
-  auto&
-  tilegrid() { return tilegrid_; }
+  auto& tilegrid() { return tilegrid_; }
 
   // Used for rendering
   // TODO: Is this leaky abstraction?
-  auto const&
-  tilegrid() const { return tilegrid_; }
+  auto const& tilegrid() const { return tilegrid_; }
 
   // TODO: maybe accept type parameter, and return TileInfo reference instead of leaking
   // the ttable_ reference?
-  auto&
-  tiletable() { return ttable_; }
+  auto& tiletable() { return ttable_; }
 
-  auto const&
-  tiletable() const { return ttable_; }
+  auto const& tiletable() const { return ttable_; }
 
-  auto&
-  rivers() { return rivers_; }
+  auto& rivers() { return rivers_; }
 
-  auto const&
-  rivers() const { return rivers_; }
+  auto const& rivers() const { return rivers_; }
 
-  template<typename FN>
-  void
-  visit_tiles(FN const& fn) const { visit_each(tilegrid_, fn); }
+  template <typename FN>
+  void visit_tiles(FN const& fn) const
+  {
+    visit_each(tilegrid_, fn);
+  }
 };
 
-} // ns boomhs
+} // namespace boomhs

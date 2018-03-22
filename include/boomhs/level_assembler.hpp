@@ -16,7 +16,7 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelAssembler);
 
   static Result<ZoneStates, std::string>
-  assemble_levels(stlw::Logger &, std::vector<EntityRegistry> &);
+  assemble_levels(stlw::Logger&, std::vector<EntityRegistry>&);
 };
 
-} // ns boomhs
+} // namespace boomhs

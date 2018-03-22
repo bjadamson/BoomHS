@@ -3,18 +3,18 @@
 namespace window
 {
 class SDLWindow;
-} // ns window
+} // namespace window
 
 namespace boomhs
 {
 struct EngineState;
 class LevelManager;
-} // ns boomhs
+} // namespace boomhs
 
 namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState &, LevelManager &, window::SDLWindow &);
+draw(EngineState&, LevelManager&, window::SDLWindow&);
 
-} // ns boomhs::ui_debug
+} // namespace boomhs::ui_debug

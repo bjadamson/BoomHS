@@ -9,7 +9,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // COPY
-#define NO_COPY_ASSIGN(CLASSNAME) CLASSNAME &operator=(CLASSNAME const&) = delete;
+#define NO_COPY_ASSIGN(CLASSNAME) CLASSNAME& operator=(CLASSNAME const&) = delete;
 #define NO_COPY_CONSTRUTIBLE(CLASSNAME) CLASSNAME(CLASSNAME const&) = delete;
 
 #define COPY_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME const&) = default;
@@ -34,14 +34,16 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MOVE
-#define NO_MOVE_ASSIGN(CLASSNAME) CLASSNAME &operator=(CLASSNAME &&) = delete;                     \
-                                  CLASSNAME &operator=(CLASSNAME const &&) = delete;
+#define NO_MOVE_ASSIGN(CLASSNAME)                                                                  \
+  CLASSNAME& operator=(CLASSNAME&&) = delete;                                                      \
+  CLASSNAME& operator=(CLASSNAME const&&) = delete;
 
-#define NO_MOVE_CONSTRUTIBLE(CLASSNAME) CLASSNAME(CLASSNAME &&) = delete;                          \
-                                        CLASSNAME(CLASSNAME const &&) = delete;
+#define NO_MOVE_CONSTRUTIBLE(CLASSNAME)                                                            \
+  CLASSNAME(CLASSNAME&&) = delete;                                                                 \
+  CLASSNAME(CLASSNAME const&&) = delete;
 
-#define MOVE_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME &&) = default;
-#define MOVE_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME &&) = default;
+#define MOVE_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME&&) = default;
+#define MOVE_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME&&) = default;
 
 #define MOVE_DEFAULT(CLASSNAME)                                                                    \
   MOVE_CONSTRUCTIBLE(CLASSNAME)                                                                    \
@@ -86,14 +88,14 @@
 // BEGIN Function-defining macros
 #define DEFINE_WRAPPER_FUNCTION(FN_NAME, FUNCTION_TO_WRAP)                                         \
   template <typename... P>                                                                         \
-  decltype(auto) FN_NAME(P &&... p)                                                                \
+  decltype(auto) FN_NAME(P&&... p)                                                                 \
   {                                                                                                \
     return FUNCTION_TO_WRAP(FORWARD(p));                                                           \
   }
 
 #define DEFINE_STATIC_WRAPPER_FUNCTION(FN_NAME, FUNCTION_TO_WRAP)                                  \
   template <typename... P>                                                                         \
-  static decltype(auto) FN_NAME(P &&... p)                                                         \
+  static decltype(auto) FN_NAME(P&&... p)                                                          \
   {                                                                                                \
     return FUNCTION_TO_WRAP(FORWARD(p));                                                           \
   }
@@ -108,7 +110,7 @@ namespace impl
 template <typename T, typename DF>
 class ICMW
 {
-  T t_;
+  T  t_;
   DF df_;
 
   NO_COPY(ICMW)
@@ -122,13 +124,14 @@ public:
   // Destructor invokes destroy function.
   ~ICMW()
   {
-    if (this->df_) {
+    if (this->df_)
+    {
       this->df_(this->t_);
     }
   }
 
   // noexcept movable
-  ICMW(ICMW &&other)
+  ICMW(ICMW&& other)
   noexcept
       : t_(MOVE(other.t_))
       , df_(other.df_)
@@ -136,7 +139,7 @@ public:
     other.df_ = nullptr;
   }
 
-  ICMW &operator=(ICMW &&other) noexcept
+  ICMW& operator=(ICMW&& other) noexcept
   {
     this->t_ = MOVE(other.t_);
     this->df_ = other.df_;
@@ -162,7 +165,7 @@ class DestroyFN
   FN fn_;
 
 public:
-  DestroyFN(FN &&fn)
+  DestroyFN(FN&& fn)
       : fn_(MOVE(fn))
   {
   }
@@ -171,7 +174,7 @@ public:
   NO_COPYMOVE(DestroyFN);
 };
 
-} // ns impl
+} // namespace impl
 
 template <typename T, typename DF>
 using ImplicitelyCastableMovableWrapper = impl::ICMW<T, DF>;
@@ -187,4 +190,4 @@ using ImplicitelyCastableMovableWrapper = impl::ICMW<T, DF>;
 #define ON_SCOPE_EXIT_EXPAND(VAR, expr) ON_SCOPE_EXIT_CONCAT(__scopeignoreme__, VAR, expr)
 #define ON_SCOPE_EXIT(expr) ON_SCOPE_EXIT_EXPAND(__COUNTER__, expr)
 
-} // ns stlw
+} // namespace stlw

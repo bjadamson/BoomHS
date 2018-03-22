@@ -13,7 +13,7 @@ struct TextureInfo
 {
   GLenum mode;
   GLuint id;
-  GLint width = 0, height = 0;
+  GLint  width = 0, height = 0;
 
   void destroy();
 
@@ -30,7 +30,7 @@ struct FBInfo
   DEFAULT_CONSTRUCTIBLE(FBInfo);
   COPY_DEFAULT(FBInfo);
   MOVE_ASSIGNABLE(FBInfo);
-  FBInfo(FBInfo &&);
+  FBInfo(FBInfo&&);
 
   static size_t constexpr NUM_BUFFERS = 1;
 };
@@ -44,18 +44,18 @@ struct RBInfo
   DEFAULT_CONSTRUCTIBLE(RBInfo);
   COPY_DEFAULT(RBInfo);
   MOVE_ASSIGNABLE(RBInfo);
-  RBInfo(RBInfo &&);
+  RBInfo(RBInfo&&);
 
   static size_t constexpr NUM_BUFFERS = 1;
 };
 
-using Texture        = stlw::AutoResource<TextureInfo>;
-using FrameBuffer    = stlw::AutoResource<FBInfo>;
+using Texture = stlw::AutoResource<TextureInfo>;
+using FrameBuffer = stlw::AutoResource<FBInfo>;
 using ResourceBuffer = stlw::AutoResource<RBInfo>;
 
 struct TextureFilenames
 {
-  std::string name;
+  std::string              name;
   std::vector<std::string> filenames;
 
   auto num_filenames() const { return filenames.size(); }
@@ -72,21 +72,19 @@ public:
   TextureTable() = default;
   MOVE_CONSTRUCTIBLE_ONLY(TextureTable);
 
-  void
-  add_texture(TextureFilenames &&, Texture &&);
+  void add_texture(TextureFilenames&&, Texture&&);
 
-  std::optional<TextureInfo>
-  find(std::string const&) const;
+  std::optional<TextureInfo> find(std::string const&) const;
 };
 
 namespace texture
 {
 
 Texture
-allocate_texture(stlw::Logger &logger, std::string const&, GLint);
+allocate_texture(stlw::Logger& logger, std::string const&, GLint);
 
 Texture
-upload_3dcube_texture(stlw::Logger &, std::vector<std::string> const&, GLint);
+upload_3dcube_texture(stlw::Logger&, std::vector<std::string> const&, GLint);
 
-} // ns texture
-} // ns opengl
+} // namespace texture
+} // namespace opengl

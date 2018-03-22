@@ -4,7 +4,8 @@ namespace stlw
 {
 
 // Dummy structure used to mean a value is present.
-struct empty_type {
+struct empty_type
+{
 };
 
-} // ns stlw
+} // namespace stlw

@@ -29,26 +29,28 @@ namespace stlw
 //
 //     // new_ar will handle calling destroy() on r, internally, automatically when new_ar is
 //     // destroyed.
-template<typename R>
+template <typename R>
 class AutoResource
 {
-  R resource_;
+  R    resource_;
   bool should_destroy_ = true;
+
 public:
   NO_COPY(AutoResource);
-  explicit AutoResource(R &&resource)
-    : resource_(MOVE(resource))
+  explicit AutoResource(R&& resource)
+      : resource_(MOVE(resource))
   {
   }
 
   ~AutoResource()
   {
-    if (should_destroy_) {
+    if (should_destroy_)
+    {
       resource_.destroy();
     }
   }
 
-  AutoResource& operator=(AutoResource &&other)
+  AutoResource& operator=(AutoResource&& other)
   {
     should_destroy_ = other.should_destroy_;
     resource_ = MOVE(other.resource_);
@@ -58,16 +60,16 @@ public:
     return *this;
   }
 
-  AutoResource(AutoResource &&other)
-    : resource_(MOVE(other.resource_))
-    , should_destroy_(other.should_destroy_)
+  AutoResource(AutoResource&& other)
+      : resource_(MOVE(other.resource_))
+      , should_destroy_(other.should_destroy_)
   {
     // This instance takes ownership of the resource from "other"
     other.should_destroy_ = false;
   }
 
-  auto& resource() { return resource_; }
+  auto&       resource() { return resource_; }
   auto const& resource() const { return resource_; }
 };
 
-} // ns stlw
+} // namespace stlw

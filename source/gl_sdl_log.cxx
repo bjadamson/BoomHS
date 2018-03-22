@@ -12,7 +12,7 @@ namespace
 
 // also, make an abstraction over the source, not just vector<char>
 static std::string
-retrieve(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei *, GLchar *))
+retrieve(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei*, GLchar*))
 {
   // We have to do dance to get the OpenGL shader logs.
   //
@@ -22,7 +22,8 @@ retrieve(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei *, GLchar *))
   // Step 1
   GLint log_length = 0;
   glGetShaderiv(handle, GL_INFO_LOG_LENGTH, &log_length);
-  if (0 > log_length) {
+  if (0 > log_length)
+  {
     // fix this msg
     return "Error retrieving OpenGL Log info for this shader object.";
   }
@@ -38,7 +39,7 @@ retrieve(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei *, GLchar *))
   return std::string{buffer.cbegin(), buffer.cend()};
 }
 
-} // ns anonymous
+} // namespace
 
 namespace gfx
 {
@@ -48,14 +49,17 @@ std::optional<GlErrors>
 GlErrors::retrieve()
 {
   std::vector<std::string> gl;
-  for(GLenum error_code = glGetError();; error_code = glGetError()) {
-    if (error_code == GL_NO_ERROR) {
+  for (GLenum error_code = glGetError();; error_code = glGetError())
+  {
+    if (error_code == GL_NO_ERROR)
+    {
       break;
     }
     std::string e = reinterpret_cast<char const*>(gluErrorString(error_code));
     gl.emplace_back(MOVE(e));
   }
-  if (gl.empty()) {
+  if (gl.empty())
+  {
     return std::nullopt;
   }
   return GlErrors{MOVE(gl)};
@@ -64,16 +68,18 @@ GlErrors::retrieve()
 void
 GlErrors::clear()
 {
-  while (glGetError() != GL_NO_ERROR) {
+  while (glGetError() != GL_NO_ERROR)
+  {
   }
   SDL_ClearError();
 }
 
 std::ostream&
-operator<<(std::ostream &stream, GlErrors const& errors)
+operator<<(std::ostream& stream, GlErrors const& errors)
 {
   stream << "{";
-  for (auto const& e : errors.values) {
+  for (auto const& e : errors.values)
+  {
     stream << e << "\n";
   }
   stream << "}";
@@ -86,7 +92,8 @@ SdlErrors::retrieve()
 {
   auto sdl = SDL_GetError();
   assert(nullptr != sdl);
-  if (0 == ::strlen(sdl)) {
+  if (0 == ::strlen(sdl))
+  {
     return std::nullopt;
   }
   return SdlErrors{MOVE(sdl)};
@@ -99,7 +106,7 @@ SdlErrors::clear()
 }
 
 std::ostream&
-operator<<(std::ostream &stream, SdlErrors const& errors)
+operator<<(std::ostream& stream, SdlErrors const& errors)
 {
   stream << "{" << errors.value << "}";
   return stream;
@@ -107,18 +114,20 @@ operator<<(std::ostream &stream, SdlErrors const& errors)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void
-ErrorLog::abort_if_any_errors(stlw::Logger &logger)
+ErrorLog::abort_if_any_errors(stlw::Logger& logger)
 {
   auto const write_errors = [&logger](char const* prefix, auto const& error) {
     LOG_ERROR_SPRINTF("%s detected: %s\n", prefix, error);
     std::abort();
   };
   auto const gl_errors = GlErrors::retrieve();
-  if (gl_errors) {
+  if (gl_errors)
+  {
     write_errors("OpenGL Errors", *gl_errors);
   }
   auto const sdl_errors = SdlErrors::retrieve();
-  if (sdl_errors) {
+  if (sdl_errors)
+  {
     write_errors("SDL Errors", *sdl_errors);
   }
 }
@@ -131,7 +140,7 @@ ErrorLog::clear()
 }
 
 std::ostream&
-operator<<(std::ostream &stream, ErrorLog const& ge)
+operator<<(std::ostream& stream, ErrorLog const& ge)
 {
   stream << "Graphics errors:\n";
   stream << "    OpenGL errors: '" << ge.gl << "'\n";
@@ -153,14 +162,15 @@ get_program_log(GLuint const handle)
 }
 
 void
-log_any_gl_errors(stlw::Logger &logger, std::string const &prefix, int const line)
+log_any_gl_errors(stlw::Logger& logger, std::string const& prefix, int const line)
 {
   GLenum const err = glGetError();
-  if (err != GL_NO_ERROR) {
-    LOG_ERROR_SPRINTF("PREFIX: '%s', GL error detected (line %d), code: '%d', string: '%s'",
-        prefix, line, err, gluErrorString(err));
+  if (err != GL_NO_ERROR)
+  {
+    LOG_ERROR_SPRINTF("PREFIX: '%s', GL error detected (line %d), code: '%d', string: '%s'", prefix,
+                      line, err, gluErrorString(err));
     std::abort();
   }
 }
 
-} // ns gfx
+} // namespace gfx

@@ -11,7 +11,7 @@ using ticks_t = uint64_t;
 class FrameTime
 {
   ticks_t const delta_, since_start_;
-  double const frequency_;
+  double const  frequency_;
 
   auto delta() const { return delta_; }
   auto ticks_to_millis(ticks_t const t) const { return t * 1000.0 / frequency_; }
@@ -19,9 +19,9 @@ class FrameTime
 
 public:
   explicit FrameTime(ticks_t const dt, ticks_t const sstart, double const fr)
-    : delta_(dt)
-    , since_start_(sstart)
-    , frequency_(fr)
+      : delta_(dt)
+      , since_start_(sstart)
+      , frequency_(fr)
   {
   }
 
@@ -35,26 +35,23 @@ public:
 // The clock time when the timer started
 class Clock
 {
-  double const frequency_;
+  double const  frequency_;
   ticks_t const start_;
-  ticks_t last_;
+  ticks_t       last_;
 
   ticks_t now() const { return SDL_GetPerformanceCounter(); }
   ticks_t since_start() const { return now() - start_; }
+
 public:
   NO_COPYMOVE(Clock);
   Clock()
-    : frequency_(SDL_GetPerformanceFrequency())
-    , start_(now())
-    , last_(start_)
+      : frequency_(SDL_GetPerformanceFrequency())
+      , start_(now())
+      , last_(start_)
   {
   }
 
-  void
-  update()
-  {
-    last_ = now();
-  }
+  void update() { last_ = now(); }
 
   FrameTime frame_time() const
   {
@@ -67,11 +64,7 @@ struct FrameCounter
 {
   int64_t frames_counted = 0u;
 
-  void
-  update(stlw::Logger &logger, Clock const& clock)
-  {
-    ++frames_counted;
-  }
+  void update(stlw::Logger& logger, Clock const& clock) { ++frames_counted; }
 };
 
-} // ns window
+} // namespace window

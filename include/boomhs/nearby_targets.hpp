@@ -7,7 +7,7 @@ namespace boomhs
 
 class NearbyTargets
 {
-  size_t offset_ = 0;
+  size_t                offset_ = 0;
   std::vector<EntityID> targets_ = {};
 
 public:
@@ -18,8 +18,8 @@ public:
   void cycle_forward();
   void cycle_backward();
 
-  bool empty() const;
+  bool     empty() const;
   EntityID closest() const;
 };
 
-} // ns boomhs
+} // namespace boomhs

@@ -5,7 +5,7 @@
 namespace stlw
 {
 class float_generator;
-} // ns stlw
+} // namespace stlw
 
 namespace boomhs
 {
@@ -21,13 +21,13 @@ struct StairGenConfig
   NO_COPYMOVE(StairGenConfig);
 };
 
-} // ns boomhs
+} // namespace boomhs
 
 namespace boomhs::stairwell_generator
 {
 
 bool
-place_stairs(stlw::Logger &, StairGenConfig const&, TileGrid &, stlw::float_generator &,
-    EntityRegistry &);
+place_stairs(stlw::Logger&, StairGenConfig const&, TileGrid&, stlw::float_generator&,
+             EntityRegistry&);
 
-} // ns boomhs::stairwell_generator
+} // namespace boomhs::stairwell_generator

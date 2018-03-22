@@ -10,17 +10,18 @@ struct TiledataState;
 class LevelManager
 {
   ZoneStates zstates_;
-  int active_ = 0;
+  int        active_ = 0;
+
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelManager);
-  explicit LevelManager(ZoneStates &&);
+  explicit LevelManager(ZoneStates&&);
 
   ZoneState const& active() const;
-  ZoneState& active();
+  ZoneState&       active();
 
-  void make_active(int const level_number, TiledataState &tds);
-  int num_levels() const;
-  int active_zone() const;
+  void make_active(int const level_number, TiledataState& tds);
+  int  num_levels() const;
+  int  active_zone() const;
 
   /*
   void
@@ -31,4 +32,4 @@ public:
   */
 };
 
-} // ns boomhs
+} // namespace boomhs

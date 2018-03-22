@@ -1,7 +1,7 @@
 #pragma once
+#include <ostream>
 #include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
-#include <ostream>
 #include <string>
 #include <type_traits>
 
@@ -29,7 +29,7 @@ enum class TileType : size_t
 // We ensure the underlying type is size_t so we can use that assumption around the rest of the
 // program. Very important this invariant does not change.
 static_assert(std::is_same<size_t, std::underlying_type<TileType>::type>::value,
-    "TileType must be size_t");
+              "TileType must be size_t");
 
 TileType
 tiletype_from_string(std::string const&);
@@ -39,7 +39,8 @@ inline TileType
 tiletype_from_string(char const* cstring)
 {
 #define CHECK(string, type)                                                                        \
-  if (0 == ::strcmp(string, cstring)) {                                                            \
+  if (0 == ::strcmp(string, cstring))                                                              \
+  {                                                                                                \
     return type;                                                                                   \
   }
 
@@ -69,7 +70,8 @@ inline char const*
 to_string(TileType const type)
 {
 #define CHECK(string, ttype)                                                                       \
-  if (ttype == type) {                                                                             \
+  if (ttype == type)                                                                               \
+  {                                                                                                \
     return string;                                                                                 \
   }
   // clang-format off
@@ -95,48 +97,49 @@ to_string(TileType const type)
 
 // No point defining in cxx file, need to update every time we add a new tile anyways.
 inline std::ostream&
-operator<<(std::ostream &stream, TileType const type)
+operator<<(std::ostream& stream, TileType const type)
 {
-  switch(type) {
-    case TileType::AT:
-      stream << "AT";
-      break;
-    case TileType::BRIDGE:
-      stream << "BRIDGE";
-      break;
-    case TileType::FLOOR:
-      stream << "FLOOR";
-      break;
-    case TileType::BAR:
-      stream << "BAR";
-      break;
-    case TileType::DOOR:
-      stream << "DOOR";
-      break;
-    case TileType::RIVER:
-      stream << "RIVER";
-      break;
-    case TileType::STAR:
-      stream << "STAR";
-      break;
-    case TileType::STAIR_DOWN:
-      stream << "STAIR_DOWN";
-      break;
-    case TileType::STAIR_UP:
-      stream << "STAIR_UP";
-      break;
-    case TileType::TELEPORTER:
-      stream << "TELEPORTER";
-      break;
-    case TileType::WALL:
-      stream << "WALL";
-      break;
-    case TileType::UNDEFINED:
-      stream << "UNDEFINED";
+  switch (type)
+  {
+  case TileType::AT:
+    stream << "AT";
     break;
-    default:
-      std::abort();
-      break;
+  case TileType::BRIDGE:
+    stream << "BRIDGE";
+    break;
+  case TileType::FLOOR:
+    stream << "FLOOR";
+    break;
+  case TileType::BAR:
+    stream << "BAR";
+    break;
+  case TileType::DOOR:
+    stream << "DOOR";
+    break;
+  case TileType::RIVER:
+    stream << "RIVER";
+    break;
+  case TileType::STAR:
+    stream << "STAR";
+    break;
+  case TileType::STAIR_DOWN:
+    stream << "STAIR_DOWN";
+    break;
+  case TileType::STAIR_UP:
+    stream << "STAIR_UP";
+    break;
+  case TileType::TELEPORTER:
+    stream << "TELEPORTER";
+    break;
+  case TileType::WALL:
+    stream << "WALL";
+    break;
+  case TileType::UNDEFINED:
+    stream << "UNDEFINED";
+    break;
+  default:
+    std::abort();
+    break;
   }
   return stream;
 }
@@ -147,17 +150,13 @@ struct TilePosition
 
   ValueT x = 0, y = 0;
 
-  static TilePosition
-  from_floats_truncated(float, float);
+  static TilePosition from_floats_truncated(float, float);
 
   // Apparently implicit conversion FNS must be a non-static member fns.
   //
   // It's OK to do this conversion implicitely as we don't loose any information going from
   // integers (albeit unsigned) to floating point values.
-  operator glm::vec2() const
-  {
-    return glm::vec2{x, y};
-  }
+  operator glm::vec2() const { return glm::vec2{x, y}; }
 };
 inline bool
 operator==(TilePosition const& a, TilePosition const& b)
@@ -170,17 +169,17 @@ operator!=(TilePosition const& a, TilePosition const& b)
   return !(a == b);
 }
 inline bool
-operator==(TilePosition const& tp, std::pair<TilePosition::ValueT, TilePosition::ValueT> const& pair)
+operator==(TilePosition const&                                          tp,
+           std::pair<TilePosition::ValueT, TilePosition::ValueT> const& pair)
 {
-  return tp.x == pair.first
-    && tp.y == pair.second;
+  return tp.x == pair.first && tp.y == pair.second;
 }
 
 glm::vec3
 operator+(TilePosition const&, glm::vec3 const&);
 
 std::ostream&
-operator<<(std::ostream &, TilePosition const&);
+operator<<(std::ostream&, TilePosition const&);
 
 struct Tile
 {
@@ -192,18 +191,19 @@ struct Tile
   bool is_stair() const;
 
   bool is_visible(EntityRegistry const&) const;
-  void set_isvisible(bool, EntityRegistry &);
+  void set_isvisible(bool, EntityRegistry&);
 };
 
 inline bool
 operator==(Tile const& a, Tile const& b)
 {
   bool const same_eid = a.eid == b.eid;
-  if (same_eid) {
+  if (same_eid)
+  {
     // debug sanity check
     assert(a.type == b.type);
   }
   return same_eid;
 }
 
-} // ns boomhs
+} // namespace boomhs

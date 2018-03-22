@@ -1,6 +1,6 @@
-#include <window/controller.hpp>
-#include <stlw/algorithm.hpp>
 #include <extlibs/fmt.hpp>
+#include <stlw/algorithm.hpp>
+#include <window/controller.hpp>
 
 using namespace window;
 
@@ -19,13 +19,13 @@ is_pressed(SDL_GameControllerButton const button, Controller const& c)
   return (1 == SDL_JoystickGetButton(c.joystick, button));
 }
 
-} // ns anon
+} // namespace
 
 namespace window
 {
 
 void
-destroy_controller(SDL_GameController *controller)
+destroy_controller(SDL_GameController* controller)
 {
   assert(controller);
   SDL_GameControllerClose(controller);
@@ -34,7 +34,7 @@ destroy_controller(SDL_GameController *controller)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Controller
 std::ostream&
-operator<<(std::ostream &stream, Controller const& c)
+operator<<(std::ostream& stream, Controller const& c)
 {
   // clang-format off
 
@@ -196,7 +196,7 @@ Controller::right_bumper() const
 }
 
 void
-SDLControllers::add(ControllerPTR &&ptr, SDL_Joystick *joystick)
+SDLControllers::add(ControllerPTR&& ptr, SDL_Joystick* joystick)
 {
   assert(joystick);
 
@@ -205,33 +205,37 @@ SDLControllers::add(ControllerPTR &&ptr, SDL_Joystick *joystick)
 }
 
 Result<SDLControllers, std::string>
-SDLControllers::find_attached_controllers(stlw::Logger &logger)
+SDLControllers::find_attached_controllers(stlw::Logger& logger)
 {
   int const num_controllers = SDL_NumJoysticks();
   LOG_INFO_SPRINTF("Detected %i controllers plugged into the system", num_controllers);
 
-  SDL_GameController *controller = nullptr;
-  FORI(i, num_controllers) {
-    if (!SDL_IsGameController(i)) {
+  SDL_GameController* controller = nullptr;
+  FORI(i, num_controllers)
+  {
+    if (!SDL_IsGameController(i))
+    {
       continue;
     }
-    SDL_GameController *ci = SDL_GameControllerOpen(i);
+    SDL_GameController* ci = SDL_GameControllerOpen(i);
     LOG_INFO_SPRINTF("Found controller: '%s'", SDL_GameControllerNameForIndex(i));
-    if (ci) {
+    if (ci)
+    {
       controller = ci;
       break;
     }
-    else {
+    else
+    {
       return Err(fmt::sprintf("Could not open gamecontroller %i: %s\n", i, SDL_GetError()));
     }
   }
   SDLControllers controllers;
-  auto ptr = ControllerPTR{controller, &destroy_controller};
-  SDL_Joystick *joystick = SDL_GameControllerGetJoystick(ptr.get());
+  auto           ptr = ControllerPTR{controller, &destroy_controller};
+  SDL_Joystick*  joystick = SDL_GameControllerGetJoystick(ptr.get());
 
   assert(joystick);
   controllers.add(MOVE(ptr), joystick);
   return OK_MOVE(controllers);
 }
 
-} // ns windo
+} // namespace window

@@ -23,9 +23,10 @@ enum class TileLookupBehavior
 class TileNeighbors
 {
   std::vector<TilePosition> neighbors_;
+
 public:
-  explicit TileNeighbors(std::vector<TilePosition> &&n)
-    : neighbors_(MOVE(n))
+  explicit TileNeighbors(std::vector<TilePosition>&& n)
+      : neighbors_(MOVE(n))
   {
   }
 
@@ -34,8 +35,7 @@ public:
   auto size() const { return neighbors_.size(); }
   bool empty() const { return neighbors_.empty(); }
 
-  TilePosition const&
-  operator[](size_t const i) const
+  TilePosition const& operator[](size_t const i) const
   {
     assert(i < size());
     return neighbors_[i];
@@ -46,56 +46,56 @@ public:
 
 struct FlowDirection
 {
-  Tile const& tile;
+  Tile const&     tile;
   glm::vec2 const direction;
 
-  static FlowDirection
-  find_flow(Tile const&, std::vector<FlowDirection> const&);
+  static FlowDirection find_flow(Tile const&, std::vector<FlowDirection> const&);
 };
 
-struct TileComponent {};
+struct TileComponent
+{
+};
 
 class TileGrid
 {
   std::array<size_t, 2> dimensions_;
-  EntityRegistry &registry_;
+  EntityRegistry&       registry_;
 
-  std::vector<Tile> tiles_ {};
-  std::vector<FlowDirection> flowdirs_ {};
-  bool destroy_entities_ = true;
+  std::vector<Tile>          tiles_{};
+  std::vector<FlowDirection> flowdirs_{};
+  bool                       destroy_entities_ = true;
 
 public:
   NO_COPY(TileGrid);
   NO_MOVE_ASSIGN(TileGrid);
 
-  TileGrid(size_t const, size_t const, EntityRegistry &);
+  TileGrid(size_t const, size_t const, EntityRegistry&);
 
   ~TileGrid();
 
-  TileGrid(TileGrid &&);
+  TileGrid(TileGrid&&);
 
   auto dimensions() const { return dimensions_; }
   bool empty() const { return tiles_.empty(); }
   auto num_tiles() const { return tiles_.size(); }
 
-  Tile& data(size_t const, size_t const);
+  Tile&       data(size_t const, size_t const);
   Tile const& data(size_t const, size_t const) const;
 
-  Tile& data(TilePosition const& tp) { return data(tp.x, tp.y); }
+  Tile&       data(TilePosition const& tp) { return data(tp.x, tp.y); }
   Tile const& data(TilePosition const& tp) const { return data(tp.x, tp.y); }
 
-  void assign_bridge(Tile &);
-  void assign_river(Tile &, glm::vec2 const&);
+  void        assign_bridge(Tile&);
+  void        assign_river(Tile&, glm::vec2 const&);
   auto const& flows() const { return flowdirs_; }
 
   bool is_blocked(TilePosition::ValueT, TilePosition::ValueT) const;
   bool is_blocked(TilePosition const&) const;
 
-  bool is_visible(Tile &);
-  void set_isvisible(Tile &, bool);
+  bool is_visible(Tile&);
+  void set_isvisible(Tile&, bool);
 
-  bool
-  is_edge_tile(TilePosition const& tpos) const
+  bool is_edge_tile(TilePosition const& tpos) const
   {
     auto const [w, h] = dimensions();
     uint64_t const x = tpos.x, y = tpos.y;
@@ -104,4 +104,4 @@ public:
   BEGIN_END_FORWARD_FNS(tiles_);
 };
 
-} // ns boomhs
+} // namespace boomhs

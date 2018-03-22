@@ -15,4 +15,4 @@ struct MouseSensitivity
   float x, y;
 };
 
-} // ns window
+} // namespace window

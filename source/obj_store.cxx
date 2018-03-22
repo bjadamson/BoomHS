@@ -1,10 +1,10 @@
 #include <boomhs/obj_store.hpp>
 #include <stlw/algorithm.hpp>
 
-#include <extlibs/fmt.hpp>
 #include <algorithm>
-#include <iostream>
+#include <extlibs/fmt.hpp>
 #include <iomanip>
+#include <iostream>
 
 namespace boomhs
 {
@@ -40,7 +40,7 @@ operator!=(QueryAttributes const& a, QueryAttributes const& b)
 }
 
 std::ostream&
-operator<<(std::ostream &stream, QueryAttributes const& qa)
+operator<<(std::ostream& stream, QueryAttributes const& qa)
 {
   // 5 == std::strlen("false");
   static int constexpr MAX_LENGTH = 5;
@@ -87,7 +87,7 @@ operator!=(ObjQuery const& a, ObjQuery const& b)
 }
 
 std::ostream&
-operator<<(std::ostream & stream, ObjQuery const& query)
+operator<<(std::ostream& stream, ObjQuery const& query)
 {
   stream << "{name: '";
   stream << std::setw(10) << query.name;
@@ -100,17 +100,16 @@ operator<<(std::ostream & stream, ObjQuery const& query)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ObjCache
 void
-ObjCache::insert_buffer(ObjCache::pair_t &&pair) const
+ObjCache::insert_buffer(ObjCache::pair_t&& pair) const
 {
   buffers_.emplace_back(MOVE(pair));
 }
 
 #define FIND_OBJ_IN_CACHE(query, buffers)                                                          \
-  [&]()                                                                                            \
-{                                                                                                  \
-  auto const cmp = [&](auto const& pair) { return pair.first.name == query.name; };                \
-  return std::find_if(buffers.cbegin(), buffers.cend(), cmp);                                      \
-}()
+  [&]() {                                                                                          \
+    auto const cmp = [&](auto const& pair) { return pair.first.name == query.name; };              \
+    return std::find_if(buffers.cbegin(), buffers.cend(), cmp);                                    \
+  }()
 
 bool
 ObjCache::has_obj(ObjQuery const& query) const
@@ -119,10 +118,11 @@ ObjCache::has_obj(ObjQuery const& query) const
 }
 
 ObjBuffer const&
-ObjCache::get_obj(stlw::Logger &logger, ObjQuery const& query) const
+ObjCache::get_obj(stlw::Logger& logger, ObjQuery const& query) const
 {
   auto const it = FIND_OBJ_IN_CACHE(query, buffers_);
-  if (it != buffers_.cend()) {
+  if (it != buffers_.cend())
+  {
     return it->second;
   }
   std::abort();
@@ -132,7 +132,7 @@ ObjCache::get_obj(stlw::Logger &logger, ObjQuery const& query) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ObjStore
 void
-ObjStore::add_obj(std::string const& name, ObjData &&o) const
+ObjStore::add_obj(std::string const& name, ObjData&& o) const
 {
   auto pair = std::make_pair(name, MOVE(o));
   data_.emplace_back(MOVE(pair));
@@ -142,12 +142,12 @@ ObjData const&
 ObjStore::data_for(ObjQuery const& query) const
 {
   auto const cmp = [&query](auto const& pair) {
-    bool const names_match = pair.first == query.name;
+    bool const  names_match = pair.first == query.name;
     auto const& data = pair.second;
-    bool const positions_empty = data.positions.empty();
-    bool const colors_empty    = data.colors.empty();
-    bool const normals_empty   = data.normals.empty();
-    bool const uvs_empty       = data.uvs.empty();
+    bool const  positions_empty = data.positions.empty();
+    bool const  colors_empty = data.colors.empty();
+    bool const  normals_empty = data.normals.empty();
+    bool const  uvs_empty = data.uvs.empty();
 
     // FOR NOW, we assume all attributes present in .obj file
     assert(ALLOF(!positions_empty, !colors_empty, !normals_empty, !uvs_empty));
@@ -165,13 +165,15 @@ ObjStore::create_interleaved_buffer(ObjQuery const& query) const
 {
   // We need to read data from the ObjStore to construct an instance to put into the cache.
   auto const& data = data_for(query);
-  auto const num_vertices = data.num_vertices;
+  auto const  num_vertices = data.num_vertices;
 
   ObjBuffer buffer;
-  auto &vertices = buffer.vertices;
+  auto&     vertices = buffer.vertices;
 
-  auto const copy_n = [&vertices](auto const& buffer, size_t const num, size_t &count, size_t &remaining) {
-    FOR(i, num) {
+  auto const copy_n = [&vertices](auto const& buffer, size_t const num, size_t& count,
+                                  size_t& remaining) {
+    FOR(i, num)
+    {
       vertices.emplace_back(buffer[count++]);
       --remaining;
     }
@@ -182,29 +184,29 @@ ObjStore::create_interleaved_buffer(ObjQuery const& query) const
   auto num_uvs = data.uvs.size();
 
   auto const keep_going = [&]() {
-    return ALLOF(num_positions > 0,
-        num_normals > 0,
-        num_colors > 0,
-        num_uvs > 0
-        );
+    return ALLOF(num_positions > 0, num_normals > 0, num_colors > 0, num_uvs > 0);
   };
 
   auto const& query_attr = query.attributes;
-  size_t a = 0, b = 0, c = 0, d = 0;
-  while(keep_going()) {
+  size_t      a = 0, b = 0, c = 0, d = 0;
+  while (keep_going())
+  {
     assert(!data.positions.empty());
     copy_n(data.positions, 4, a, num_positions);
 
-    if (query_attr.normals) {
+    if (query_attr.normals)
+    {
       copy_n(data.normals, 3, b, num_normals);
     }
 
-    if (query_attr.colors) {
-        // encode assumptions for now
+    if (query_attr.colors)
+    {
+      // encode assumptions for now
       assert(!query_attr.uvs);
       copy_n(data.colors, 4, c, num_colors);
     }
-    if (query_attr.uvs) {
+    if (query_attr.uvs)
+    {
       // encode assumptions for now
       assert(!query_attr.colors);
 
@@ -224,11 +226,12 @@ ObjStore::create_interleaved_buffer(ObjQuery const& query) const
 }
 
 ObjBuffer const&
-ObjStore::get_obj(stlw::Logger &logger, ObjQuery const& query) const
+ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
 {
   auto const& cache = find_cache(logger, query);
-  bool const cache_has_obj = cache.has_obj(query);
-  if (cache_has_obj) {
+  bool const  cache_has_obj = cache.has_obj(query);
+  if (cache_has_obj)
+  {
     return cache.get_obj(logger, query);
   }
 
@@ -243,56 +246,64 @@ ObjStore::get_obj(stlw::Logger &logger, ObjQuery const& query) const
 
 #define FIND_CACHE(query, cache)                                                                   \
   auto const& attr = query.attributes;                                                             \
-  bool const pos_only         = ALLOF(attr.positions, !attr.normals, !attr.colors, !attr.uvs);     \
-  bool const pos_normal       = ALLOF(attr.positions, attr.normals, !attr.colors, !attr.uvs);      \
-  bool const pos_color        = ALLOF(attr.positions, !attr.normals, attr.colors, !attr.uvs);      \
-  bool const pos_color_normal = ALLOF(attr.positions, attr.normals, attr.colors, !attr.uvs);       \
-  bool const pos_normal_uvs   = ALLOF(attr.positions, attr.normals, !attr.colors, attr.uvs);       \
+  bool const  pos_only = ALLOF(attr.positions, !attr.normals, !attr.colors, !attr.uvs);            \
+  bool const  pos_normal = ALLOF(attr.positions, attr.normals, !attr.colors, !attr.uvs);           \
+  bool const  pos_color = ALLOF(attr.positions, !attr.normals, attr.colors, !attr.uvs);            \
+  bool const  pos_color_normal = ALLOF(attr.positions, attr.normals, attr.colors, !attr.uvs);      \
+  bool const  pos_normal_uvs = ALLOF(attr.positions, attr.normals, !attr.colors, attr.uvs);        \
                                                                                                    \
   /* invalid configurations */                                                                     \
-  bool const no_positions     = ALLOF(!attr.positions);                                            \
-  bool const color_and_uvs    = ALLOF(attr.colors, attr.uvs);                                      \
+  bool const no_positions = ALLOF(!attr.positions);                                                \
+  bool const color_and_uvs = ALLOF(attr.colors, attr.uvs);                                         \
                                                                                                    \
-  if (no_positions) {                                                                              \
+  if (no_positions)                                                                                \
+  {                                                                                                \
     LOG_ERROR("mesh: %s cannot be found (no positions) not implemented.", query.name);             \
     std::abort();                                                                                  \
   }                                                                                                \
-  else if (color_and_uvs) {                                                                        \
+  else if (color_and_uvs)                                                                          \
+  {                                                                                                \
     LOG_ERROR("invalid?");                                                                         \
     std::abort();                                                                                  \
   }                                                                                                \
                                                                                                    \
-  if (pos_only) {                                                                                  \
+  if (pos_only)                                                                                    \
+  {                                                                                                \
     cache = &pos_;                                                                                 \
   }                                                                                                \
-  else if (pos_normal) {                                                                           \
+  else if (pos_normal)                                                                             \
+  {                                                                                                \
     cache = &pos_normal_;                                                                          \
   }                                                                                                \
-  else if (pos_color_normal) {                                                                     \
+  else if (pos_color_normal)                                                                       \
+  {                                                                                                \
     cache = &pos_color_normal_;                                                                    \
   }                                                                                                \
-  else if (attr.normals && attr.uvs) {                                                             \
+  else if (attr.normals && attr.uvs)                                                               \
+  {                                                                                                \
     cache = &pos_normal_uv_;                                                                       \
   }                                                                                                \
-  else if (attr.uvs) {                                                                             \
+  else if (attr.uvs)                                                                               \
+  {                                                                                                \
     cache = &pos_uv_;                                                                              \
   }                                                                                                \
-  else {                                                                                           \
+  else                                                                                             \
+  {                                                                                                \
     LOG_ERROR("invalid query: %s");                                                                \
     std::abort();                                                                                  \
   }                                                                                                \
   assert(nullptr != cache);
 
 ObjCache&
-ObjStore::find_cache(stlw::Logger &logger, ObjQuery const& query)
+ObjStore::find_cache(stlw::Logger& logger, ObjQuery const& query)
 {
-  ObjCache *cache = nullptr;
+  ObjCache* cache = nullptr;
   FIND_CACHE(query, cache);
   return *cache;
 }
 
 ObjCache const&
-ObjStore::find_cache(stlw::Logger &logger, ObjQuery const& query) const
+ObjStore::find_cache(stlw::Logger& logger, ObjQuery const& query) const
 {
   ObjCache const* cache = nullptr;
   FIND_CACHE(query, cache);
@@ -302,19 +313,22 @@ ObjStore::find_cache(stlw::Logger &logger, ObjQuery const& query) const
 #undef FIND_CACHE
 
 std::ostream&
-operator<<(std::ostream &stream, ObjCache const& cache)
+operator<<(std::ostream& stream, ObjCache const& cache)
 {
   auto const& buffers = cache.buffers_;
-  auto const WS = "    ";
+  auto const  WS = "    ";
 
   stream << "{";
   stream << "(cache SIZE: " << cache.size() << ") ";
-  if (!cache.empty()) {
+  if (!cache.empty())
+  {
     stream << "\n";
     stream << WS;
   }
-  FOR(i, buffers.size()) {
-    if (i > 0) {
+  FOR(i, buffers.size())
+  {
+    if (i > 0)
+    {
       stream << "\n";
       stream << WS;
     }
@@ -326,7 +340,7 @@ operator<<(std::ostream &stream, ObjCache const& cache)
 }
 
 std::ostream&
-operator<<(std::ostream &stream, ObjStore const& store)
+operator<<(std::ostream& stream, ObjStore const& store)
 {
   // clang-format off
   auto const print_cache = [&stream](char const* name, auto const& cache) {
@@ -362,4 +376,4 @@ operator<<(std::ostream &stream, ObjStore const& store)
   return stream;
 }
 
-} // ns boomhs
+} // namespace boomhs

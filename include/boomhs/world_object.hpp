@@ -2,9 +2,9 @@
 #include <boomhs/components.hpp>
 #include <boomhs/tile.hpp>
 #include <boomhs/types.hpp>
+#include <stlw/math.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
-#include <stlw/math.hpp>
 #include <string>
 
 namespace boomhs
@@ -15,15 +15,15 @@ struct GameState;
 class WorldObject
 {
   EnttLookup ent_lookup_;
-  glm::vec3 forward_, up_;
-  float speed_;
+  glm::vec3  forward_, up_;
+  float      speed_;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(WorldObject);
   explicit WorldObject(EnttLookup const& plookup, glm::vec3 const&, glm::vec3 const&);
 
   auto const& transform() const { return ent_lookup_.lookup<Transform>(); }
-  auto& transform() { return ent_lookup_.lookup<Transform>(); }
+  auto&       transform() { return ent_lookup_.lookup<Transform>(); }
 
   glm::vec3 eye_forward() const { return forward_; }
   glm::vec3 eye_up() const { return up_; }
@@ -49,8 +49,7 @@ public:
   auto speed() const { return speed_; }
   void set_speed(float const s) { speed_ = s; }
 
-  WorldObject&
-  move(glm::vec3 const&);
+  WorldObject& move(glm::vec3 const&);
 
   void rotate_degrees(float const, glm::vec3 const&);
   void rotate_to_match_camera_rotation(Camera const&);
@@ -60,10 +59,10 @@ public:
   void move_to(glm::vec3 const& pos) { transform().translation = pos; }
   void move_to(float const x, float const y, float const z) { move_to(glm::vec3{x, y, z}); }
 
-  //EntityID eid() const { return ent_lookup_.eid(); }
+  // EntityID eid() const { return ent_lookup_.eid(); }
   void set_eid(EntityID const eid) { ent_lookup_.set_eid(eid); }
 
   glm::mat4 model_matrix() const { return transform().model_matrix(); }
 };
 
-} // ns boomhs
+} // namespace boomhs

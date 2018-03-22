@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/entity.hpp>
+#include <boomhs/types.hpp>
 #include <string>
 
 namespace boomhs
@@ -16,16 +17,18 @@ struct Billboard
 {
   Billboard() = delete;
 
-  static BillboardType
-  from_string(std::string const& str)
+  static BillboardType from_string(std::string const& str)
   {
-    if ("spherical" == str) {
+    if ("spherical" == str)
+    {
       return BillboardType::Spherical;
     }
-    else if ("cylindrical" == str) {
+    else if ("cylindrical" == str)
+    {
       return BillboardType::Cylindrical;
     }
-    else {
+    else
+    {
       std::abort();
     }
   }
@@ -37,15 +40,16 @@ struct BillboardRenderable
 };
 
 inline auto
-find_billboards(EntityRegistry &registry)
+find_billboards(EntityRegistry& registry)
 {
   std::vector<EntityID> bboards;
-  auto view = registry.view<BillboardRenderable>();
-  for (auto const eid : view) {
+  auto                  view = registry.view<BillboardRenderable>();
+  for (auto const eid : view)
+  {
     assert(registry.has<Transform>(eid));
     bboards.emplace_back(eid);
   }
   return bboards;
 }
 
-} // ns boomhs
+} // namespace boomhs

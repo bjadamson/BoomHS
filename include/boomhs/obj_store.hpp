@@ -5,8 +5,8 @@
 
 #include <ostream>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace boomhs
 {
@@ -18,8 +18,7 @@ struct QueryAttributes
   bool colors = true;
   bool uvs = true;
 
-  static QueryAttributes
-  from_va(opengl::VertexAttribute const&);
+  static QueryAttributes from_va(opengl::VertexAttribute const&);
 };
 
 bool
@@ -29,11 +28,11 @@ bool
 operator!=(QueryAttributes const&, QueryAttributes const&);
 
 std::ostream&
-operator<<(std::ostream &, QueryAttributes const&);
+operator<<(std::ostream&, QueryAttributes const&);
 
 struct ObjQuery
 {
-  std::string name;
+  std::string     name;
   QueryAttributes attributes = {};
 };
 
@@ -44,7 +43,7 @@ bool
 operator!=(ObjQuery const&, ObjQuery const&);
 
 std::ostream&
-operator<<(std::ostream &, ObjQuery const&);
+operator<<(std::ostream&, ObjQuery const&);
 
 class ObjStore;
 class ObjCache
@@ -56,25 +55,22 @@ class ObjCache
 
   // ObjCache should only be constructed by the ObjStore.
   friend class ObjStore;
-  friend std::ostream& operator<<(std::ostream &, ObjCache const&);
+  friend std::ostream& operator<<(std::ostream&, ObjCache const&);
 
   ObjCache() = default;
 
-  void
-  insert_buffer(pair_t &&) const;
+  void insert_buffer(pair_t&&) const;
 
-  bool
-  has_obj(ObjQuery const&) const;
+  bool has_obj(ObjQuery const&) const;
 
-  ObjBuffer const&
-  get_obj(stlw::Logger &, ObjQuery const&) const;
+  ObjBuffer const& get_obj(stlw::Logger&, ObjQuery const&) const;
 
   auto size() const { return buffers_.size(); }
   bool empty() const { return buffers_.empty(); }
 };
 
 std::ostream&
-operator<<(std::ostream &, ObjCache const&);
+operator<<(std::ostream&, ObjCache const&);
 
 class ObjStore
 {
@@ -91,35 +87,30 @@ class ObjStore
   ObjCache pos_normal_uv_;
   ObjCache pos_uv_;
 
-  ObjBuffer
-  create_interleaved_buffer(ObjQuery const&) const;
+  ObjBuffer create_interleaved_buffer(ObjQuery const&) const;
 
-  ObjData const&
-  data_for(ObjQuery const&) const;
+  ObjData const& data_for(ObjQuery const&) const;
 
-  ObjCache&
-  find_cache(stlw::Logger &, ObjQuery const&);
+  ObjCache& find_cache(stlw::Logger&, ObjQuery const&);
 
-  ObjCache const&
-  find_cache(stlw::Logger &, ObjQuery const&) const;
+  ObjCache const& find_cache(stlw::Logger&, ObjQuery const&) const;
 
   friend class ObjCache;
-  friend std::ostream& operator<<(std::ostream &, ObjStore const&);
+  friend std::ostream& operator<<(std::ostream&, ObjStore const&);
+
 public:
   ObjStore() = default;
   MOVE_CONSTRUCTIBLE_ONLY(ObjStore);
 
-  void
-  add_obj(std::string const&, ObjData &&) const;
+  void add_obj(std::string const&, ObjData&&) const;
 
-  ObjBuffer const&
-  get_obj(stlw::Logger &, ObjQuery const&) const;
+  ObjBuffer const& get_obj(stlw::Logger&, ObjQuery const&) const;
 
   auto size() const { return data_.size(); }
   bool empty() const { return data_.empty(); }
 };
 
 std::ostream&
-operator<<(std::ostream &, ObjStore const&);
+operator<<(std::ostream&, ObjStore const&);
 
-} // ns boomhs
+} // namespace boomhs

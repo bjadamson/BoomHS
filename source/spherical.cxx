@@ -15,10 +15,10 @@ to_cartesian(SphericalCoordinates const& coords)
   float const y = radius * cosf(phi);
   float const z = radius * sin_phi * cosf(theta);
 
-  //Convert spherical coordinates into Cartesian coordinates
-  //float const x = sin(phi) * cos(theta) * radius;
-  //float const y = sin(phi) * sin(theta) * radius;
-  //float const z = cos(phi) * radius;
+  // Convert spherical coordinates into Cartesian coordinates
+  // float const x = sin(phi) * cos(theta) * radius;
+  // float const y = sin(phi) * sin(theta) * radius;
+  // float const z = cos(phi) * radius;
 
   return glm::vec3{x, y, z};
 }
@@ -28,17 +28,19 @@ to_spherical(glm::vec3 cartesian)
 {
   static constexpr float EPSILONF = std::numeric_limits<float>::epsilon();
 
-  if (cartesian.x == 0) {
+  if (cartesian.x == 0)
+  {
     cartesian.x = EPSILONF;
   }
-  float const& x = cartesian.x, y = cartesian.y, z = cartesian.z;
-  float const x2 = x*x;
-  float const y2 = y*y;
-  float const z2 = z*z;
+  float const &x = cartesian.x, y = cartesian.y, z = cartesian.z;
+  float const  x2 = x * x;
+  float const  y2 = y * y;
+  float const  z2 = z * z;
 
   float const radius = sqrt(x2 + y2 + z2);
-  float theta = atan(y / x);
-  if (cartesian.x < 0) {
+  float       theta = atan(y / x);
+  if (cartesian.x < 0)
+  {
     float constexpr PI = glm::pi<float>();
     theta += PI;
   }
@@ -48,7 +50,7 @@ to_spherical(glm::vec3 cartesian)
 }
 
 std::ostream&
-operator<<(std::ostream &stream, SphericalCoordinates const& sc)
+operator<<(std::ostream& stream, SphericalCoordinates const& sc)
 {
   stream << "{";
   stream << sc.radius;
@@ -60,4 +62,4 @@ operator<<(std::ostream &stream, SphericalCoordinates const& sc)
   return stream;
 }
 
-} // ns boomhs
+} // namespace boomhs

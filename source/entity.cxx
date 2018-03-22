@@ -17,4 +17,4 @@ EntityRegistry::destroy(EntityID const eid)
   registry_.destroy(eid);
 }
 
-} // ns boomhs
+} // namespace boomhs

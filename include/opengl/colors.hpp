@@ -1,8 +1,8 @@
 #pragma once
-#include <stlw/math.hpp>
-#include <stlw/type_ctors.hpp>
 #include <array>
 #include <ostream>
+#include <stlw/math.hpp>
+#include <stlw/type_ctors.hpp>
 
 namespace opengl
 {
@@ -12,42 +12,41 @@ class Color
   static constexpr float DEFAULT_ALPHA = 1.0f;
 
   std::array<float, 4> colors_ = stlw::make_array<float>(1.0f, 1.0f, 1.0f, 1.0f);
-public:
 
-  static Color
-  lerp(Color const& a, Color const& b, float const dt)
+public:
+  static Color lerp(Color const& a, Color const& b, float const dt)
   {
     return Color{glm::lerp(a.rgba(), b.rgba(), dt)};
   }
 
   Color() = default;
   explicit constexpr Color(float const r, float const g, float const b, float const a)
-    : colors_(stlw::make_array<float>(r, g, b, a))
+      : colors_(stlw::make_array<float>(r, g, b, a))
   {
   }
 
   constexpr Color(float const r, float const g, float const b)
-    : Color(r, g, b, DEFAULT_ALPHA)
+      : Color(r, g, b, DEFAULT_ALPHA)
   {
   }
 
   explicit constexpr Color(std::array<float, 4> const& array)
-    : Color(array[0], array[1], array[2], array[3])
+      : Color(array[0], array[1], array[2], array[3])
   {
   }
 
   explicit constexpr Color(std::array<float, 3> const& array)
-    : Color(array[0], array[1], array[2], DEFAULT_ALPHA)
+      : Color(array[0], array[1], array[2], DEFAULT_ALPHA)
   {
   }
 
   explicit constexpr Color(glm::vec3 const& vec)
-    : Color(vec[0], vec[1], vec[2], DEFAULT_ALPHA)
+      : Color(vec[0], vec[1], vec[2], DEFAULT_ALPHA)
   {
   }
 
   explicit constexpr Color(glm::vec4 const& vec)
-    : Color(vec[0], vec[1], vec[2], vec[3])
+      : Color(vec[0], vec[1], vec[2], vec[3])
   {
   }
 
@@ -61,35 +60,21 @@ public:
   void set_b(float const v) { this->colors_[2] = v; }
   void set_a(float const v) { this->colors_[3] = v; }
 
-  auto const*
-  data() const { return colors_.data(); }
+  auto const* data() const { return colors_.data(); }
 
-  auto*
-  data() { return colors_.data(); }
+  auto* data() { return colors_.data(); }
 
-  auto
-  rgb() const
-  {
-    return glm::vec3{r(), g(), b()};
-  }
+  auto rgb() const { return glm::vec3{r(), g(), b()}; }
 
-  glm::vec4
-  rgba() const
-  {
-    return glm::vec4{r(), g(), b(), a()};
-  }
+  glm::vec4 rgba() const { return glm::vec4{r(), g(), b(), a()}; }
 };
 
 inline std::ostream&
-operator<<(std::ostream &os, Color const& c)
+operator<<(std::ostream& os, Color const& c)
 {
-  os << "{"
-    << std::to_string(c.r()) << ", "
-    << std::to_string(c.g()) << ", "
-    << std::to_string(c.b()) << ", "
-    << std::to_string(c.a())
-    << "}";
-   return os;
+  os << "{" << std::to_string(c.r()) << ", " << std::to_string(c.g()) << ", "
+     << std::to_string(c.b()) << ", " << std::to_string(c.a()) << "}";
+  return os;
 }
 
 namespace LIST_OF_COLORS
@@ -236,7 +221,7 @@ namespace LIST_OF_COLORS
   constexpr Color DARK_SLATE_GRAY        = {0.184, 0.310, 0.310};
   constexpr Color BLACK                  = {0.000, 0.000, 0.000};
 // clang-format on
-} // ns LIST_OF_COLORS
-} // ns opengl
+} // namespace LIST_OF_COLORS
+} // namespace opengl
 
 namespace LOC = opengl::LIST_OF_COLORS;

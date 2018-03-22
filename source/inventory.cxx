@@ -1,5 +1,5 @@
-#include <boomhs/inventory.hpp>
 #include <boomhs/components.hpp>
+#include <boomhs/inventory.hpp>
 #include <boomhs/item_factory.hpp>
 
 #include <stlw/algorithm.hpp>
@@ -29,7 +29,7 @@ InventorySlot::occupied() const
 }
 
 char const*
-InventorySlot::name(EntityRegistry &registry) const
+InventorySlot::name(EntityRegistry& registry) const
 {
   return occupied() ? item(registry).name : "Slot Unoccupied";
 }
@@ -47,14 +47,14 @@ InventorySlot::set(EntityID const eid)
 }
 
 Item&
-InventorySlot::item(EntityRegistry &registry)
+InventorySlot::item(EntityRegistry& registry)
 {
   access_assert();
   return registry.get<Item>(*eid_);
 }
 
 Item const&
-InventorySlot::item(EntityRegistry &registry) const
+InventorySlot::item(EntityRegistry& registry) const
 {
   access_assert();
   return registry.get<Item>(*eid_);
@@ -91,9 +91,11 @@ Inventory::slot(ItemIndex const index) const
 bool
 Inventory::add_item(EntityID const eid)
 {
-  FOR(i, MAX_ITEMS) {
+  FOR(i, MAX_ITEMS)
+  {
     auto const& item_at_index = slot(i);
-    if (item_at_index.occupied()) {
+    if (item_at_index.occupied())
+    {
       continue;
     }
     // found an open slot !!
@@ -116,4 +118,4 @@ Inventory::remove_item(ItemIndex const i)
   slot(i).reset();
 }
 
-} // ns boomhs
+} // namespace boomhs

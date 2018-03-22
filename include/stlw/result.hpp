@@ -1,8 +1,8 @@
 #pragma once
 #include <extlibs/oktal.hpp>
+#include <stlw/try.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/types.hpp>
-#include <stlw/try.hpp>
 
 //
 // They each have separate use cases, and build upon the general purpose macros inside
@@ -19,23 +19,19 @@
 //
 // HELPER MACRO
 #define DO_EFFECT_EVAL(VAR_NAME, expr)                                                             \
-  EVAL_INTO_VAR_OR(auto VAR_NAME, expr,                                                            \
-      [&](auto &&r) { return Err(r.unwrapErrMove()); })
+  EVAL_INTO_VAR_OR(auto VAR_NAME, expr, [&](auto&& r) { return Err(r.unwrapErrMove()); })
 
 //
 // HELPER MACRO
-#define DO_EFFECT_CONCAT(VAR_NAME, expr)                                                           \
-  DO_EFFECT_EVAL(_DO_EFFECT_TEMPORARY_##VAR_NAME, expr)
+#define DO_EFFECT_CONCAT(VAR_NAME, expr) DO_EFFECT_EVAL(_DO_EFFECT_TEMPORARY_##VAR_NAME, expr)
 
 //
 // HELPER MACRO
-#define DO_EFFECT_EXPAND_VAR(VAR_NAME, expr)                                                       \
-  DO_EFFECT_CONCAT(VAR_NAME, expr)
+#define DO_EFFECT_EXPAND_VAR(VAR_NAME, expr) DO_EFFECT_CONCAT(VAR_NAME, expr)
 
 //
 // DO_EFFECT MACRO
-#define DO_EFFECT(expr)                                                                            \
-  DO_EFFECT_EXPAND_VAR(__COUNTER__, expr)                                                          \
+#define DO_EFFECT(expr) DO_EFFECT_EXPAND_VAR(__COUNTER__, expr)
 
 // TRY_OR_ELSE_RETURN
 //
@@ -47,8 +43,7 @@
 //   macro.
 //   * Otherwise MOVES the evaluated expression into the variable VAR_NAME.
 #define TRY_OR_ELSE_RETURN(VAR_NAME, expr, fn)                                                     \
-  EVAL_INTO_VAR_OR(VAR_NAME, expr,                                                                 \
-      [&](auto &&r) { return fn(r.unwrapErr()); })
+  EVAL_INTO_VAR_OR(VAR_NAME, expr, [&](auto&& r) { return fn(r.unwrapErr()); })
 
 // TRY_OR_ELSE_RETURN_DEFAULT_T
 //
@@ -56,7 +51,7 @@
 //   * If evaluating the expression yields an error, return a default instance of T.
 //   * Otherwise MOVES the evaluated expression into the variable VAR_NAME.
 #define TRY_OR_ELSE_RETURN_DEFAULT_T(VAR_NAME, expr, T)                                            \
-  EVAL_INTO_VAR_OR(VAR_NAME, expr, [](auto const&) { return T{}; })                                \
+  EVAL_INTO_VAR_OR(VAR_NAME, expr, [](auto const&) { return T{}; })
 
 // OK_MOVE
 //

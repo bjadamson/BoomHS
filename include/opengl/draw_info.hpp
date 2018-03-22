@@ -20,30 +20,30 @@ class BufferHandles
 
   explicit BufferHandles();
   NO_COPY(BufferHandles);
+
 public:
   friend class DrawInfo;
   ~BufferHandles();
 
   // move-construction OK.
-  BufferHandles(BufferHandles &&);
+  BufferHandles(BufferHandles&&);
 
-  BufferHandles&
-  operator=(BufferHandles &&);
+  BufferHandles& operator=(BufferHandles&&);
 
   auto vbo() const { return vbo_; }
   auto ebo() const { return ebo_; }
 };
 
 std::ostream&
-operator<<(std::ostream &, BufferHandles const&);
+operator<<(std::ostream&, BufferHandles const&);
 
 class DrawInfo
 {
-  GLenum draw_mode_;
-  size_t num_vertices_;
-  GLuint num_indices_;
+  GLenum        draw_mode_;
+  size_t        num_vertices_;
+  GLuint        num_indices_;
   BufferHandles handles_;
-  VAO vao_;
+  VAO           vao_;
 
   std::optional<TextureInfo> texture_info_;
 
@@ -51,19 +51,19 @@ public:
   NO_COPY(DrawInfo);
   explicit DrawInfo(GLenum, size_t, GLuint, std::optional<TextureInfo> const&);
 
-  DrawInfo(DrawInfo &&);
-  DrawInfo& operator=(DrawInfo &&);
+  DrawInfo(DrawInfo&&);
+  DrawInfo& operator=(DrawInfo&&);
 
   auto const& vao() const { return vao_; }
-  auto draw_mode() const { return draw_mode_; }
-  auto vbo() const { return handles_.vbo(); }
-  auto ebo() const { return handles_.ebo(); }
-  auto num_vertices() const { return num_vertices_; }
-  auto num_indices() const { return num_indices_; }
+  auto        draw_mode() const { return draw_mode_; }
+  auto        vbo() const { return handles_.vbo(); }
+  auto        ebo() const { return handles_.ebo(); }
+  auto        num_vertices() const { return num_vertices_; }
+  auto        num_indices() const { return num_indices_; }
 
   auto texture_info() const { return texture_info_; }
 
-  void print_self(std::ostream &, VertexAttribute const&) const;
+  void print_self(std::ostream&, VertexAttribute const&) const;
 };
 
 class EntityDrawinfos
@@ -76,43 +76,41 @@ public:
   NO_COPY(EntityDrawinfos);
   MOVE_DEFAULT(EntityDrawinfos);
 
-  size_t
-  add(boomhs::EntityID, opengl::DrawInfo &&);
+  size_t add(boomhs::EntityID, opengl::DrawInfo&&);
 
   bool empty() const { return drawinfos_.empty(); }
 
-  opengl::DrawInfo const&
-  get(stlw::Logger &, boomhs::EntityID) const;
+  opengl::DrawInfo const& get(stlw::Logger&, boomhs::EntityID) const;
 };
 
 class EntityDrawHandles
 {
   EntityDrawinfos infos_;
+
 public:
   NO_COPY(EntityDrawHandles);
   MOVE_DEFAULT(EntityDrawHandles);
-  explicit EntityDrawHandles(EntityDrawinfos &&list)
-    : infos_(MOVE(list))
+  explicit EntityDrawHandles(EntityDrawinfos&& list)
+      : infos_(MOVE(list))
   {
   }
 
-  opengl::DrawInfo const&
-  lookup(stlw::Logger &, boomhs::EntityID) const;
+  opengl::DrawInfo const& lookup(stlw::Logger&, boomhs::EntityID) const;
 };
 
 class TileDrawHandles
 {
 public:
   std::vector<opengl::DrawInfo> drawinfos_;
+
 public:
   NO_COPY(TileDrawHandles);
   MOVE_DEFAULT(TileDrawHandles);
-  TileDrawHandles(std::vector<opengl::DrawInfo> &&dh)
-    : drawinfos_(MOVE(dh))
+  TileDrawHandles(std::vector<opengl::DrawInfo>&& dh)
+      : drawinfos_(MOVE(dh))
   {
   }
-  opengl::DrawInfo const&
-  lookup(stlw::Logger &, boomhs::TileType) const;
+  opengl::DrawInfo const& lookup(stlw::Logger&, boomhs::TileType) const;
 };
 
-} // ns opengl
+} // namespace opengl

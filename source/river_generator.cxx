@@ -3,9 +3,9 @@
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 
+#include <stlw/algorithm.hpp>
 #include <stlw/optional.hpp>
 #include <stlw/random.hpp>
-#include <stlw/algorithm.hpp>
 
 using namespace boomhs;
 
@@ -13,7 +13,7 @@ namespace
 {
 
 void
-spawn_newround_wiggles(RiverInfo &river, stlw::float_generator &rng, glm::vec2 const pos)
+spawn_newround_wiggles(RiverInfo& river, stlw::float_generator& rng, glm::vec2 const pos)
 {
   // clang-format off
   bool  const is_visible = false;
@@ -30,11 +30,12 @@ spawn_newround_wiggles(RiverInfo &river, stlw::float_generator &rng, glm::vec2 c
 
 RiverInfo
 create_river(TilePosition const& tpos, Edges const& edges, glm::vec2 const& flow_dir,
-    float const rotation, float const length, stlw::float_generator &rng)
+             float const rotation, float const length, stlw::float_generator& rng)
 {
   RiverInfo river{tpos, edges.left, edges.top, edges.right, edges.bottom, flow_dir, rotation};
-  FOR(i, length) {
-    auto const offset = (flow_dir * static_cast<float>(i));
+  FOR(i, length)
+  {
+    auto const      offset = (flow_dir * static_cast<float>(i));
     glm::vec2 const wiggle_pos = static_cast<glm::vec2>(river.origin) + offset;
     spawn_newround_wiggles(river, rng, wiggle_pos);
   }
@@ -42,22 +43,24 @@ create_river(TilePosition const& tpos, Edges const& edges, glm::vec2 const& flow
 }
 
 std::optional<RiverInfo>
-generate_river(TileGrid &tilegrid, stlw::float_generator &rng)
+generate_river(TileGrid& tilegrid, stlw::float_generator& rng)
 {
   auto const [tdwidth, tdheight] = tilegrid.dimensions();
-  auto const tpos_edge = random_tileposition_onedgeofmap(tilegrid, rng);
-  auto const& tpos = tpos_edge.first;
+  auto const     tpos_edge = random_tileposition_onedgeofmap(tilegrid, rng);
+  auto const&    tpos = tpos_edge.first;
   MapEdge const& edge = tpos_edge.second;
 
   auto const RIVER_DISTANCE = 1;
   {
     auto constexpr FLOW_DIR = glm::vec2{1.0, 0.0};
-    if (edge.is_xedge()) {
-      FOR(i, tdwidth) {
-        auto &tile = tilegrid.data(i, tpos.y);
+    if (edge.is_xedge())
+    {
+      FOR(i, tdwidth)
+      {
+        auto& tile = tilegrid.data(i, tpos.y);
         tilegrid.assign_river(tile, FLOW_DIR);
       }
-      auto const edges = calculate_edges(tpos, tdwidth, tdheight, tdwidth, RIVER_DISTANCE);
+      auto const  edges = calculate_edges(tpos, tdwidth, tdheight, tdwidth, RIVER_DISTANCE);
       float const rotation = 90.0f;
 
       auto const left = glm::vec2{static_cast<float>(edges.left), 0.0f};
@@ -68,11 +71,12 @@ generate_river(TileGrid &tilegrid, stlw::float_generator &rng)
   }
   auto constexpr FLOW_DIR = glm::vec2{0.0, 1.0};
   assert(edge.is_yedge());
-  FOR(i, tdheight) {
-    auto &tile = tilegrid.data(tpos.x, i);
+  FOR(i, tdheight)
+  {
+    auto& tile = tilegrid.data(tpos.x, i);
     tilegrid.assign_river(tile, FLOW_DIR);
   }
-  auto const edges = calculate_edges(tpos, tdwidth, tdheight, RIVER_DISTANCE, tdheight);
+  auto const  edges = calculate_edges(tpos, tdwidth, tdheight, RIVER_DISTANCE, tdheight);
   float const rotation = 0.0f;
 
   auto const top = glm::vec2{0.0f, static_cast<float>(edges.top)};
@@ -81,7 +85,7 @@ generate_river(TileGrid &tilegrid, stlw::float_generator &rng)
   return create_river(tpos, edges, FLOW_DIR, rotation, length, rng);
 }
 
-} // ns anon
+} // namespace
 
 namespace boomhs
 {
@@ -93,11 +97,13 @@ RiverWiggle::as_tileposition() const
 }
 
 void
-RiverGenerator::place_rivers(TileGrid &tilegrid, stlw::float_generator &rng, std::vector<RiverInfo> &rivers)
+RiverGenerator::place_rivers(TileGrid& tilegrid, stlw::float_generator& rng,
+                             std::vector<RiverInfo>& rivers)
 {
   auto const place = [&]() {
     std::optional<RiverInfo> river_o = std::nullopt;
-    while(!river_o) {
+    while (!river_o)
+    {
       river_o = generate_river(tilegrid, rng);
     }
     assert(river_o);
@@ -105,9 +111,7 @@ RiverGenerator::place_rivers(TileGrid &tilegrid, stlw::float_generator &rng, std
     rivers.emplace_back(MOVE(river));
   };
 
-  FOR(i, 2) {
-    place();
-  }
+  FOR(i, 2) { place(); }
 }
 
-} // ns boomhs
+} // namespace boomhs

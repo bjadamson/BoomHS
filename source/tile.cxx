@@ -1,10 +1,10 @@
-#include <boomhs/tile.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/tile.hpp>
 
+#include <iostream>
 #include <stlw/debug.hpp>
 #include <string>
-#include <iostream>
 
 namespace boomhs
 {
@@ -29,7 +29,7 @@ operator+(TilePosition const& tp, glm::vec3 const& pos)
 }
 
 std::ostream&
-operator<<(std::ostream &stream, TilePosition const& tp)
+operator<<(std::ostream& stream, TilePosition const& tp)
 {
   stream << "{";
   stream << std::to_string(tp.x);
@@ -63,9 +63,9 @@ Tile::is_visible(EntityRegistry const& registry) const
 }
 
 void
-Tile::set_isvisible(bool const v, EntityRegistry &registry)
+Tile::set_isvisible(bool const v, EntityRegistry& registry)
 {
   registry.get<IsVisible>(this->eid).value = v;
 }
 
-} // ns boomhs
+} // namespace boomhs

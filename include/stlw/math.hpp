@@ -11,20 +11,26 @@ namespace stlw::math
 {
 
 inline bool
+opposite_signs(int const x, int const y)
+{
+  return ((x ^ y) < 0);
+}
+
+inline bool
 float_compare(float const a, float const b)
 {
   return std::fabs(a - b) < std::numeric_limits<float>::epsilon();
 }
 
-inline
-glm::vec3
+inline glm::vec3
 lerp(glm::vec3 const& a, glm::vec3 const& b, float const f)
 {
   return (a * (1.0 - f)) + (b * f);
 }
 
 inline glm::mat4
-calculate_modelmatrix(glm::vec3 const& translation, glm::quat const& rotation, glm::vec3 const& scale)
+calculate_modelmatrix(glm::vec3 const& translation, glm::quat const& rotation,
+                      glm::vec3 const& scale)
 {
   auto const tmatrix = glm::translate(glm::mat4{}, translation);
   auto const rmatrix = glm::toMat4(rotation);
@@ -54,7 +60,7 @@ normalize(T const value, P1 const& from_range, P2 const& to_range)
   auto const maximum = from_range.second;
   auto const floor = to_range.first;
   auto const ceil = to_range.second;
-  auto const normalized = ((ceil - floor) * (value - minimum))/(maximum - minimum) + floor;
+  auto const normalized = ((ceil - floor) * (value - minimum)) / (maximum - minimum) + floor;
   return static_cast<float>(normalized);
 }
 
@@ -78,13 +84,15 @@ rotation_between_vectors(glm::vec3 start, glm::vec3 dest)
   dest = normalize(dest);
 
   float const cos_theta = dot(start, dest);
-  vec3 axis;
-  if (cos_theta < -1 + 0.001f) {
+  vec3        axis;
+  if (cos_theta < -1 + 0.001f)
+  {
     // special case when vectors in opposite directions:
     // there is no "ideal" rotation axis
     // So guess one; any will do as long as it's perpendicular to start
     axis = cross(vec3(0.0f, 0.0f, 1.0f), start);
-    if (glm::length2(axis) < 0.01 ) {
+    if (glm::length2(axis) < 0.01)
+    {
       // bad luck, they were parallel, try again!
       axis = cross(vec3(1.0f, 0.0f, 0.0f), start);
     }
@@ -94,69 +102,64 @@ rotation_between_vectors(glm::vec3 start, glm::vec3 dest)
   }
   axis = cross(start, dest);
 
-  float const s = sqrt( (1 + cos_theta) * 2 );
+  float const s = sqrt((1 + cos_theta) * 2);
   float const invs = 1 / s;
 
-  return glm::quat{s * 0.5f,
-    axis.x * invs,
-    axis.y * invs,
-    axis.z * invs};
+  return glm::quat{s * 0.5f, axis.x * invs, axis.y * invs, axis.z * invs};
 }
 
-} // ns stlw::math
+} // namespace stlw::math
 
 namespace glm
 {
 
 inline std::ostream&
-operator<<(std::ostream &stream, glm::vec2 const& vec)
+operator<<(std::ostream& stream, glm::vec2 const& vec)
 {
   stream << to_string(vec);
   return stream;
 }
 
 inline std::ostream&
-operator<<(std::ostream &stream, glm::vec3 const& vec)
+operator<<(std::ostream& stream, glm::vec3 const& vec)
 {
   stream << to_string(vec);
   return stream;
 }
 
 inline std::ostream&
-operator<<(std::ostream &stream, glm::vec4 const& vec)
+operator<<(std::ostream& stream, glm::vec4 const& vec)
 {
   stream << to_string(vec);
   return stream;
 }
 
 inline std::ostream&
-operator<<(std::ostream &stream, glm::mat2 const& mat)
+operator<<(std::ostream& stream, glm::mat2 const& mat)
 {
   stream << to_string(mat);
   return stream;
 }
 
 inline std::ostream&
-operator<<(std::ostream &stream, glm::mat3 const& mat)
+operator<<(std::ostream& stream, glm::mat3 const& mat)
 {
   stream << to_string(mat);
   return stream;
 }
 
 inline std::ostream&
-operator<<(std::ostream &stream, glm::mat4 const& mat)
+operator<<(std::ostream& stream, glm::mat4 const& mat)
 {
   stream << to_string(mat);
   return stream;
 }
 
 inline std::ostream&
-operator<<(std::ostream &stream, glm::quat const& quat)
+operator<<(std::ostream& stream, glm::quat const& quat)
 {
   stream << to_string(quat);
   return stream;
 }
 
-} // ns glm
-
-
+} // namespace glm

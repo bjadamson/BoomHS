@@ -1,21 +1,21 @@
 #pragma once
 #include <extlibs/sdl.hpp>
+#include <memory>
+#include <ostream>
 #include <stlw/log.hpp>
 #include <stlw/result.hpp>
-#include <ostream>
-#include <memory>
 
 namespace window
 {
 
 void
-destroy_controller(SDL_GameController *);
+destroy_controller(SDL_GameController*);
 using ControllerPTR = std::unique_ptr<SDL_GameController, decltype(&destroy_controller)>;
 
 struct Controller
 {
   ControllerPTR controller;
-  SDL_Joystick *joystick;
+  SDL_Joystick* joystick;
 
   MOVE_CONSTRUCTIBLE_ONLY(Controller);
   Controller() = delete;
@@ -55,23 +55,21 @@ struct Controller
 };
 
 std::ostream&
-operator<<(std::ostream &, Controller const&);
+operator<<(std::ostream&, Controller const&);
 
 class SDLControllers
 {
   std::vector<Controller> controllers_;
+
 public:
   MOVE_CONSTRUCTIBLE_ONLY(SDLControllers);
   SDLControllers() = default;
 
-  void
-  add(ControllerPTR &&, SDL_Joystick *);
+  void add(ControllerPTR&&, SDL_Joystick*);
 
-  static Result<SDLControllers, std::string>
-  find_attached_controllers(stlw::Logger &);
+  static Result<SDLControllers, std::string> find_attached_controllers(stlw::Logger&);
 
-  auto const&
-  first() const
+  auto const& first() const
   {
     assert(controllers_.size() > 0);
     return controllers_.front();
@@ -80,4 +78,4 @@ public:
   auto size() const { return controllers_.size(); }
 };
 
-} // ns windo
+} // namespace window

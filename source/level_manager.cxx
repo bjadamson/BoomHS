@@ -6,8 +6,8 @@ namespace boomhs
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // LevelManager
-LevelManager::LevelManager(ZoneStates &&zs)
-  : zstates_(MOVE(zs))
+LevelManager::LevelManager(ZoneStates&& zs)
+    : zstates_(MOVE(zs))
 {
 }
 
@@ -24,7 +24,7 @@ LevelManager::active()
 }
 
 void
-LevelManager::make_active(int const level_number, TiledataState &tds)
+LevelManager::make_active(int const level_number, TiledataState& tds)
 {
   active_ = level_number;
   tds.recompute = true;
@@ -42,4 +42,4 @@ LevelManager::active_zone() const
   return active_;
 }
 
-} // ns boomhs
+} // namespace boomhs

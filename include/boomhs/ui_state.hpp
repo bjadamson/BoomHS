@@ -1,7 +1,7 @@
 #pragma once
+#include <array>
 #include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
-#include <array>
 
 namespace boomhs
 {
@@ -23,10 +23,10 @@ struct UiDebugState
   int selected_pointlight = 0;
 
   std::array<int, 2> selected_tile = {0};
-  int selected_tilegrid = 0;
+  int                selected_tilegrid = 0;
 
   // primitive buffers
-  int eid_buffer = 0;
+  int       eid_buffer = 0;
   glm::vec3 euler_angle_buffer;
   glm::vec3 last_mouse_clicked_pos;
 
@@ -51,11 +51,11 @@ struct UiDebugState
 
 struct UiState
 {
-  UiDebugState debug;
+  UiDebugState  debug;
   UiInGameState ingame;
 
   bool draw_ingame_ui = true;
   bool draw_debug_ui = true;
 };
 
-} // ns boomhs
+} // namespace boomhs

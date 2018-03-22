@@ -14,4 +14,4 @@ static auto const texture_bind = [](auto const& texture) {
 };
 static auto const texture_unbind = [](auto const& texture) { glBindTexture(texture.mode, 0); };
 
-} // ns opengl::global
+} // namespace opengl::global
