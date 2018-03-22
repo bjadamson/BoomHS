@@ -893,20 +893,45 @@ draw_sun(RenderState &rstate, window::FrameTime const& ft)
   auto &zs = rstate.zs;
 
   auto &sps = zs.gfx_state.sps;
-  auto &sp = sps.ref_sp("2dtexture_copy");
+  {
+    auto &sp = sps.ref_sp("2dtexture_copy");
 
-  auto texture_o = zs.gfx_state.texture_table.find("sun");
+    auto texture_o = zs.gfx_state.texture_table.find("sun");
+    assert(texture_o);
+
+    DrawInfo di = gpu::copy_rectangle_uvs(logger, sp, texture_o);
+
+    auto constexpr X = -20.0;
+    auto constexpr Y = 850.0;
+    auto constexpr Z = 1800.0f;
+
+    Transform transform;
+    transform.translation = glm::vec3{X, Y, Z};
+    transform.scale = glm::vec3{650.0f};
+
+    auto &camera = zs.level_data.camera;
+    auto const view_model = compute_billboarded_viewmodel(transform, camera,
+        BillboardType::Spherical);
+
+    auto const mvp_matrix = camera.projection_matrix() * view_model;
+    set_modelmatrix(logger, mvp_matrix, sp);
+
+    draw(rstate, transform.model_matrix(), sp, di);
+  }
+  auto &sp = sps.ref_sp("2dtexture_copy_copy");
+
+  auto texture_o = zs.gfx_state.texture_table.find("cloud");
   assert(texture_o);
 
   DrawInfo di = gpu::copy_rectangle_uvs(logger, sp, texture_o);
 
-  auto constexpr X = -20.0;
-  auto constexpr Y = 850.0;
-  auto constexpr Z = 1800.0f;
+  auto constexpr X = 40.0;
+  auto constexpr Y = 500.0;
+  auto constexpr Z = -200.0f;
 
   Transform transform;
   transform.translation = glm::vec3{X, Y, Z};
-  transform.scale = glm::vec3{650.0f};
+  transform.scale = glm::vec3{100.0f};
 
   auto &camera = zs.level_data.camera;
   auto const view_model = compute_billboarded_viewmodel(transform, camera,

@@ -73,6 +73,11 @@ type = "texture:2d-RGB"
 filename = "sword.png"
 
 [[resource]]
+name = "cloud"
+type = "texture:2d-RGBA"
+filename = "textures/cloud_cumulous_large.png"
+
+[[resource]]
 name = "sun"
 type = "texture:2d-RGBA"
 filename = "textures/sun.png"
