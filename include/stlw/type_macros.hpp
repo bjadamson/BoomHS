@@ -34,8 +34,12 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MOVE
-#define NO_MOVE_ASSIGN(CLASSNAME) CLASSNAME &operator=(CLASSNAME &&) = delete;
-#define NO_MOVE_CONSTRUTIBLE(CLASSNAME) CLASSNAME(CLASSNAME &&) = delete;
+#define NO_MOVE_ASSIGN(CLASSNAME) CLASSNAME &operator=(CLASSNAME &&) = delete;                     \
+                                  CLASSNAME &operator=(CLASSNAME const &&) = delete;
+
+#define NO_MOVE_CONSTRUTIBLE(CLASSNAME) CLASSNAME(CLASSNAME &&) = delete;                          \
+                                        CLASSNAME(CLASSNAME const &&) = delete;
+
 #define MOVE_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME &&) = default;
 #define MOVE_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME &&) = default;
 
