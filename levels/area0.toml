@@ -269,12 +269,13 @@ shininess = 1.0
 
 # SUN
 [[entity]]
-position = [-20.0, 850.0, 1800.0]
+position = [0.0, 850.0, 0.0]
 shader = "2dtexture_copy"
 geometry = "billboard:spherical"
 scale = [650.0, 650.0, 650.0]
 texture = "sun"
-sun = true
+orbital = [1800, 1600]
+sun = 850.0
 
 ######### POINT LIGHTS
 # LIGHT #0

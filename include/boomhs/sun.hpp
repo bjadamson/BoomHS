@@ -5,8 +5,15 @@
 namespace boomhs
 {
 
+struct OrbitalBody
+{
+  float x_radius = 0.0f;
+  float z_radius = 0.0f;
+};
+
 struct Sun
 {
+  float max_height;
 };
 
 inline auto&

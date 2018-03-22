@@ -188,26 +188,24 @@ void
 update_sun(LevelData& ldata, EntityRegistry& registry, FrameTime const& ft)
 {
   auto const eid = find_sun(registry);
-  float constexpr SPEED = 0.01f;
-  float const v = std::sin(ft.since_start_seconds() * M_PI * SPEED);
-
   auto& transform = registry.get<Transform>(eid);
+  auto& orbital = registry.get<OrbitalBody>(eid);
   auto& pos = transform.translation;
+  pos.x = orbital.x_radius * std::cos(ft.since_start_seconds());
+  pos.z = orbital.z_radius * std::sin(ft.since_start_seconds());
 
-  transform.rotate_degrees(0.01f, Y_UNIT_VECTOR);
-  auto const rot = glm::toMat4(transform.rotation);
-  auto const new_pos = rotate_around(pos, glm::zero<glm::vec3>(), rot);
-  transform.translation = new_pos;
+  auto& sun = registry.get<Sun>(eid);
+  float const height = sun.max_height;
 
-  float constexpr HEIGHT = 850.0f;
-  float const new_y = glm::lerp(-HEIGHT, HEIGHT, std::abs(v));
+  float constexpr SPEED = 0.01f;
+  float const v = std::sin(ft.since_start_seconds());
+  pos.y = glm::lerp(-height, height, std::abs(v));
 
-  // TODO: This won't be necessary if there's vertices in the way? (terrain)
-  // if (stlw::math::opposite_signs(pos.y, new_y)) {
-  // auto &isv = registry.get<IsVisible>(eid);
-  // isv.value ^= true;
-  //}
-  transform.translation.y = new_y;
+  auto& global = ldata.global_light;
+  auto& directional = global.directional;
+
+  auto const sun_to_origin = glm::normalize(-pos);
+  directional.direction = sun_to_origin;
 }
 
 bool

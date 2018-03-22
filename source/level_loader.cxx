@@ -132,6 +132,18 @@ get_color(CppTable const& table, char const* name)
   return std::make_optional(color);
 }
 
+std::optional<glm::vec2>
+get_vec2(CppTable const& table, char const* name)
+{
+  auto const load_data = table->template get_array_of<double>(name);
+  if (!load_data)
+  {
+    return std::nullopt;
+  }
+  auto const& ld = *load_data;
+  return glm::vec2{ld[0], ld[1]};
+}
+
 std::optional<glm::vec3>
 get_vec3(CppTable const& table, char const* name)
 {
@@ -333,7 +345,8 @@ load_entities(stlw::Logger& logger, CppTable const& config, TextureTable const& 
     auto is_visible   = get_bool(file,            "is_visible").value_or(true);
     bool is_skybox    = get_bool(file,            "skybox").value_or(false);
     bool random_junk  = get_bool(file,            "random_junk_from_file").value_or(false);
-    bool sun          = get_bool(file,            "sun").value_or(false);
+    auto orbital_o    = get_vec2(file,            "orbital");
+    auto sun_o        = get_float(file,           "sun");
     // clang-format on
 
     // texture OR color fields, not both
@@ -367,9 +380,18 @@ load_entities(stlw::Logger& logger, CppTable const& config, TextureTable const& 
       registry.assign<JunkEntityFromFILE>(eid);
     }
 
-    if (sun)
+    if (orbital_o)
     {
-      registry.assign<Sun>(eid);
+      auto const& orbit_data = *orbital_o;
+      auto& orbital = registry.assign<OrbitalBody>(eid);
+      orbital.x_radius = orbit_data.x;
+      orbital.z_radius = orbit_data.y;
+    }
+    if (sun_o) {
+      assert(registry.has<OrbitalBody>(eid));
+      auto const& sun_data = *sun_o;
+      auto& sun = registry.assign<Sun>(eid);
+      sun.max_height = sun_data;
     }
 
     if (player)
