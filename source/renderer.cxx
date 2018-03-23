@@ -436,7 +436,7 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
   auto& sps = zs.gfx_state.sps;
   auto& sp = sps.ref_sp("3d_pos_color");
 
-  auto const dinfo = OF::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
+  auto const dinfo = OG::create_arrow(logger, sp, OG::ArrowCreateParams{color, start, head});
 
   Transform transform;
   draw(rstate, transform.model_matrix(), sp, dinfo);
@@ -476,7 +476,7 @@ draw_global_axis(RenderState& rstate)
 
   auto& logger = es.logger;
   auto& sp = sps.ref_sp("3d_pos_color");
-  auto  world_arrows = OF::create_axis_arrows(logger, sp);
+  auto  world_arrows = OG::create_axis_arrows(logger, sp);
 
   Transform  transform;
   auto const model_matrix = transform.model_matrix();
@@ -494,7 +494,7 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
 
   auto&      logger = es.logger;
   auto&      sp = sps.ref_sp("3d_pos_color");
-  auto const axis_arrows = OF::create_axis_arrows(logger, sp);
+  auto const axis_arrows = OG::create_axis_arrows(logger, sp);
 
   Transform transform;
   transform.translation = player_pos;
@@ -914,6 +914,11 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
 }
 
 void
+draw_terrain(RenderState& rstate, window::FrameTime const& ft)
+{
+}
+
+void
 draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 {
   auto& es = rstate.es;
@@ -928,7 +933,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
   Transform  transform;
   bool const show_y = tds.show_yaxis_lines;
-  auto const dinfo = OF::create_tilegrid(es.logger, sp, tilegrid, show_y);
+  auto const dinfo = OG::create_tilegrid(es.logger, sp, tilegrid, show_y);
 
   auto const model_matrix = transform.model_matrix();
   draw(rstate, model_matrix, sp, dinfo);

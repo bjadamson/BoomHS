@@ -346,7 +346,7 @@ load_entities(stlw::Logger& logger, CppTable const& config, TextureTable const& 
     bool is_skybox    = get_bool(file,            "skybox").value_or(false);
     bool random_junk  = get_bool(file,            "random_junk_from_file").value_or(false);
     auto orbital_o    = get_vec3(file,            "orbital");
-    auto sun_o        = get_vec2(file,           "sun");
+    auto sun_o        = get_vec2(file,            "sun");
     // clang-format on
 
     // texture OR color fields, not both
@@ -355,6 +355,12 @@ load_entities(stlw::Logger& logger, CppTable const& config, TextureTable const& 
     auto  eid = registry.create();
     auto& transform = registry.assign<Transform>(eid);
     transform.translation = pos;
+
+    auto& isv = registry.assign<IsVisible>(eid);
+    isv.value = is_visible;
+
+    auto& sn = registry.assign<ShaderName>(eid);
+    sn.value = shader;
 
     if (scale_o)
     {
@@ -368,12 +374,6 @@ load_entities(stlw::Logger& logger, CppTable const& config, TextureTable const& 
       transform.rotate_degrees(rotation.y, opengl::Y_UNIT_VECTOR);
       transform.rotate_degrees(rotation.z, opengl::Z_UNIT_VECTOR);
     }
-
-    auto& isv = registry.assign<IsVisible>(eid);
-    isv.value = is_visible;
-
-    auto& sn = registry.assign<ShaderName>(eid);
-    sn.value = shader;
 
     if (random_junk)
     {

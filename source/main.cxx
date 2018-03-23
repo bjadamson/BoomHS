@@ -193,7 +193,6 @@ update_sun(LevelData& ldata, EntityRegistry& registry, FrameTime const& ft)
     auto& pos = transform.translation;
 
     auto const time = ft.since_start_seconds();
-    std::cerr << "TIME: '" << time << "'\n";
     float const cos_time = std::cos(time + orbital.offset);
     float const sin_time = std::sin(time + orbital.offset);
     pos.x = orbital.x_radius * cos_time;
@@ -376,17 +375,12 @@ game_loop(EngineState& es, LevelManager& lm, SDLWindow& window, stlw::float_gene
     // rendering code
     render::clear_screen(ldata.background);
     RenderState rstate{es, zs};
+    if (es.draw_entities)
     {
-      bool const draw_entities = es.draw_entities;
-      if (draw_entities)
-      {
-        render::draw_skybox(rstate, ft);
-      }
-      if (draw_entities)
-      {
-        render::draw_entities(rstate, rng, ft);
-      }
+      render::draw_skybox(rstate, ft);
+      render::draw_entities(rstate, rng, ft);
     }
+    render::draw_terrain(rstate, ft);
     if (tilegrid_state.draw_tilegrid)
     {
       render::draw_tilegrid(rstate, tilegrid_state, ft);

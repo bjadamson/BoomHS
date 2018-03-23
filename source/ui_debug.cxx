@@ -548,9 +548,13 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window)
     }
     {
       auto const eids = find_suns(registry);
+      auto num = 1;
       for (auto const eid : eids) {
         auto&      v = registry.get<IsVisible>(eid);
         bool&      draw = v.value;
+
+        auto const text = "Draw Sun" + std::to_string(num++);
+        ImGui::Checkbox(text.c_str(), &draw);
       }
     }
     ImGui::Checkbox("Draw Terrain", &es.draw_terrain);

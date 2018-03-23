@@ -72,6 +72,9 @@ void
 draw_sun(RenderState&, window::FrameTime const&);
 
 void
+draw_terrain(RenderState&, window::FrameTime const&);
+
+void
 draw_global_axis(RenderState&);
 
 void
