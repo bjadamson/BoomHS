@@ -8,8 +8,8 @@
 #include <extlibs/fmt.hpp>
 #include <stlw/log.hpp>
 
-#include <extlibs/glew.hpp>
 #include <array>
+#include <extlibs/glew.hpp>
 #include <optional>
 
 namespace boomhs
@@ -66,11 +66,11 @@ copy_rectangle(stlw::Logger&, GLenum, ShaderProgram&, OF::RectBuffer const&,
 
 DrawInfo
 copy_rectangle_uvs(stlw::Logger&, OF::RectangleVertices const&, ShaderProgram const&,
-    TextureInfo const&);
+                   TextureInfo const&);
 
 DrawInfo
 copy_rectangle_normaluvs(stlw::Logger&, OF::RectangleVertices const&, OF::RectangleNormals const&,
-    ShaderProgram const&, TextureInfo const&);
+                         ShaderProgram const&, TextureInfo const&);
 
 // General
 ///////////////////////////////////////////////////////////////////////////////////////////////////

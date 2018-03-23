@@ -261,13 +261,13 @@ load_textures(stlw::Logger& logger, CppTable const& config)
       auto const               filename = get_string_or_abort(resource, "filename");
       opengl::TextureFilenames texture_names{name, {filename}};
 
-      auto const wrap_s = get_string(resource, "wrap").value_or("clamp");
+      auto const  wrap_s = get_string(resource, "wrap").value_or("clamp");
       GLint const wrap = texture::wrap_mode_from_string(wrap_s.c_str());
 
       auto const uv_max = get_int(resource, "uvs").value_or(1.0);
 
       auto ta = opengl::texture::allocate_texture(logger, texture_names.filenames[0], format, wrap,
-          uv_max);
+                                                  uv_max);
       ttable.add_texture(MOVE(texture_names), MOVE(ta));
     };
     auto const load_3dtexture = [&](auto const format) {
@@ -401,16 +401,17 @@ load_entities(stlw::Logger& logger, CppTable const& config, TextureTable const& 
     if (orbital_o)
     {
       auto const& data = *orbital_o;
-      auto& orbital = registry.assign<OrbitalBody>(eid);
+      auto&       orbital = registry.assign<OrbitalBody>(eid);
       orbital.x_radius = data.x;
       orbital.z_radius = data.y;
 
       orbital.offset = data.z;
     }
-    if (sun_o) {
+    if (sun_o)
+    {
       assert(registry.has<OrbitalBody>(eid));
       auto const& sun_data = *sun_o;
-      auto& sun = registry.assign<Sun>(eid);
+      auto&       sun = registry.assign<Sun>(eid);
       sun.speed = sun_data.x;
       sun.max_height = sun_data.y;
     }

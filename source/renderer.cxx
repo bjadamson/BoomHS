@@ -765,9 +765,9 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
   auto& sps = zs.gfx_state.sps;
   auto& sp = sps.ref_sp("2dtexture");
 
-  auto&    logger = rstate.es.logger;
+  auto& logger = rstate.es.logger;
 
-  auto const v = OF::rectangle_vertices();
+  auto const     v = OF::rectangle_vertices();
   DrawInfo const di = gpu::copy_rectangle_uvs(logger, v, sp, *texture_o);
 
   glm::mat4 view_model = compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
@@ -925,8 +925,8 @@ draw_terrain(RenderState& rstate, window::FrameTime const& ft)
   auto& es = rstate.es;
   auto& logger = es.logger;
 
-  auto &ttable = zs.gfx_state.texture_table;
-  auto texture_o = ttable.find("TerrainFloor");
+  auto& ttable = zs.gfx_state.texture_table;
+  auto  texture_o = ttable.find("TerrainFloor");
   assert(texture_o);
 
   auto const vertices = OF::terrain_vertices();

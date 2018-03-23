@@ -192,28 +192,29 @@ update_sun(LevelData& ldata, EntityRegistry& registry, FrameTime const& ft)
     auto& orbital = registry.get<OrbitalBody>(eid);
     auto& pos = transform.translation;
 
-    auto const time = ft.since_start_seconds();
+    auto const  time = ft.since_start_seconds();
     float const cos_time = std::cos(time + orbital.offset);
     float const sin_time = std::sin(time + orbital.offset);
     pos.x = orbital.x_radius * cos_time;
     pos.z = orbital.z_radius * sin_time;
 
-    auto& sun = registry.get<Sun>(eid);
+    auto&       sun = registry.get<Sun>(eid);
     float const height = sun.max_height;
 
     float const v = std::sin(time * sun.speed);
     pos.y = glm::lerp(-height, height, std::abs(v));
   };
   auto const eids = find_suns(registry);
-  for (auto const eid : eids) {
+  for (auto const eid : eids)
+  {
     update_sun(eid);
   }
 
-  //auto& global = ldata.global_light;
-  //auto& directional = global.directional;
+  // auto& global = ldata.global_light;
+  // auto& directional = global.directional;
 
-  //auto const sun_to_origin = glm::normalize(-pos);
-  //directional.direction = sun_to_origin;
+  // auto const sun_to_origin = glm::normalize(-pos);
+  // directional.direction = sun_to_origin;
 }
 
 bool

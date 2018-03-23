@@ -3,8 +3,8 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <extlibs/glew.hpp>
 #include <array>
+#include <extlibs/glew.hpp>
 #include <optional>
 
 namespace opengl

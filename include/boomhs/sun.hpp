@@ -24,7 +24,7 @@ inline auto
 find_suns(EntityRegistry& registry)
 {
   std::vector<EntityID> suns;
-  auto            const view = registry.view<Sun>();
+  auto const            view = registry.view<Sun>();
   for (auto const eid : view)
   {
     assert(registry.has<Transform>(eid));
