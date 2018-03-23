@@ -83,6 +83,11 @@ type = "texture:2d-RGBA"
 filename = "textures/sun.png"
 
 [[resource]]
+name = "sun_blue"
+type = "texture:2d-RGBA"
+filename = "textures/sun_blue.png"
+
+[[resource]]
 name = "TorchUI"
 type = "texture:2d-RGBA"
 filename = "ui/torch-icon.png"
@@ -274,8 +279,18 @@ shader = "2dtexture_copy"
 geometry = "billboard:spherical"
 scale = [650.0, 650.0, 650.0]
 texture = "sun"
-orbital = [1800, 1600]
-sun = 850.0
+orbital = [1800.0, 1600.0, 0.0]
+sun = [0.15, 1250.0]
+
+# BLUE SUN
+[[entity]]
+position = [0.0, 850.0, 0.0]
+shader = "2dtexture_copy_copy_copy"
+geometry = "billboard:spherical"
+scale = [650.0, 650.0, 650.0]
+texture = "sun_blue"
+orbital = [1800.0, 1600.0, 3.1459]
+sun = [0.15, 1250.0]
 
 ######### POINT LIGHTS
 # LIGHT #0

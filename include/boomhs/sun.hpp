@@ -9,30 +9,28 @@ struct OrbitalBody
 {
   float x_radius = 0.0f;
   float z_radius = 0.0f;
+
+  // Initial orbit offset for the body.
+  float offset = 0.0f;
 };
 
 struct Sun
 {
-  float max_height;
+  float max_height = 0.0f;
+  float speed = 0.0f;
 };
 
-inline auto&
-find_sun(EntityRegistry& registry)
+inline auto
+find_suns(EntityRegistry& registry)
 {
-  // for now assume only 1 entity has the Player tag
-  assert(1 == registry.view<Sun>().size());
-
-  // Assume Skybox has a Transform
-  auto                    view = registry.view<Sun, Transform>();
-  std::optional<EntityID> entity{std::nullopt};
-  for (auto const e : view)
+  std::vector<EntityID> suns;
+  auto            const view = registry.view<Sun>();
+  for (auto const eid : view)
   {
-    // This assert ensures this loop only runs once.
-    assert(std::nullopt == entity);
-    entity = e;
+    assert(registry.has<Transform>(eid));
+    suns.emplace_back(eid);
   }
-  assert(std::nullopt != entity);
-  return *entity;
+  return suns;
 }
 
 } // namespace boomhs

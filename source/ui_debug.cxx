@@ -547,10 +547,11 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window)
       ImGui::Checkbox("Draw Skybox", &draw);
     }
     {
-      auto const eid = find_sun(registry);
-      auto&      v = registry.get<IsVisible>(eid);
-      bool&      draw = v.value;
-      ImGui::Checkbox("Draw Sun", &draw);
+      auto const eids = find_suns(registry);
+      for (auto const eid : eids) {
+        auto&      v = registry.get<IsVisible>(eid);
+        bool&      draw = v.value;
+      }
     }
     ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
     ImGui::Checkbox("Enter Pressed", &state.enter_pressed);

@@ -187,25 +187,34 @@ rotate_around(glm::vec3 const& point_to_rotate, glm::vec3 const& rot_center,
 void
 update_sun(LevelData& ldata, EntityRegistry& registry, FrameTime const& ft)
 {
-  auto const eid = find_sun(registry);
-  auto& transform = registry.get<Transform>(eid);
-  auto& orbital = registry.get<OrbitalBody>(eid);
-  auto& pos = transform.translation;
-  pos.x = orbital.x_radius * std::cos(ft.since_start_seconds());
-  pos.z = orbital.z_radius * std::sin(ft.since_start_seconds());
+  auto const update_sun = [&](auto const eid) {
+    auto& transform = registry.get<Transform>(eid);
+    auto& orbital = registry.get<OrbitalBody>(eid);
+    auto& pos = transform.translation;
 
-  auto& sun = registry.get<Sun>(eid);
-  float const height = sun.max_height;
+    auto const time = ft.since_start_seconds();
+    std::cerr << "TIME: '" << time << "'\n";
+    float const cos_time = std::cos(time + orbital.offset);
+    float const sin_time = std::sin(time + orbital.offset);
+    pos.x = orbital.x_radius * cos_time;
+    pos.z = orbital.z_radius * sin_time;
 
-  float constexpr SPEED = 0.01f;
-  float const v = std::sin(ft.since_start_seconds());
-  pos.y = glm::lerp(-height, height, std::abs(v));
+    auto& sun = registry.get<Sun>(eid);
+    float const height = sun.max_height;
 
-  auto& global = ldata.global_light;
-  auto& directional = global.directional;
+    float const v = std::sin(time * sun.speed);
+    pos.y = glm::lerp(-height, height, std::abs(v));
+  };
+  auto const eids = find_suns(registry);
+  for (auto const eid : eids) {
+    update_sun(eid);
+  }
 
-  auto const sun_to_origin = glm::normalize(-pos);
-  directional.direction = sun_to_origin;
+  //auto& global = ldata.global_light;
+  //auto& directional = global.directional;
+
+  //auto const sun_to_origin = glm::normalize(-pos);
+  //directional.direction = sun_to_origin;
 }
 
 bool

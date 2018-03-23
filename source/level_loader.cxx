@@ -345,8 +345,8 @@ load_entities(stlw::Logger& logger, CppTable const& config, TextureTable const& 
     auto is_visible   = get_bool(file,            "is_visible").value_or(true);
     bool is_skybox    = get_bool(file,            "skybox").value_or(false);
     bool random_junk  = get_bool(file,            "random_junk_from_file").value_or(false);
-    auto orbital_o    = get_vec2(file,            "orbital");
-    auto sun_o        = get_float(file,           "sun");
+    auto orbital_o    = get_vec3(file,            "orbital");
+    auto sun_o        = get_vec2(file,           "sun");
     // clang-format on
 
     // texture OR color fields, not both
@@ -382,16 +382,19 @@ load_entities(stlw::Logger& logger, CppTable const& config, TextureTable const& 
 
     if (orbital_o)
     {
-      auto const& orbit_data = *orbital_o;
+      auto const& data = *orbital_o;
       auto& orbital = registry.assign<OrbitalBody>(eid);
-      orbital.x_radius = orbit_data.x;
-      orbital.z_radius = orbit_data.y;
+      orbital.x_radius = data.x;
+      orbital.z_radius = data.y;
+
+      orbital.offset = data.z;
     }
     if (sun_o) {
       assert(registry.has<OrbitalBody>(eid));
       auto const& sun_data = *sun_o;
       auto& sun = registry.assign<Sun>(eid);
-      sun.max_height = sun_data;
+      sun.speed = sun_data.x;
+      sun.max_height = sun_data.y;
     }
 
     if (player)
