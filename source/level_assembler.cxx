@@ -121,13 +121,13 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
   registry.view<ShaderName, CubeRenderable, PointLight>().each(
       [&](auto entity, auto& sn, auto&&...) {
         auto& shader_ref = sps.ref_sp(sn.value);
-        auto  handle = opengl::gpu::copy_vertexonlycube_gpu(logger, shader_ref);
+        auto  handle = opengl::gpu::copy_cubevertexonly_gpu(logger, shader_ref);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
         auto& shader_ref = sps.ref_sp(sn.value);
-        auto  handle = opengl::gpu::copy_texturecube_gpu(logger, shader_ref, texture.texture_info);
+        auto  handle = opengl::gpu::copy_cubetexture_gpu(logger, shader_ref, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
 
@@ -158,7 +158,8 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
   registry.view<ShaderName, BillboardRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
         auto& sp = sps.ref_sp(sn.value);
-        auto  handle = opengl::gpu::copy_rectangle_uvs(logger, sp, texture.texture_info);
+        auto const v = OF::rectangle_vertices();
+        auto  handle = opengl::gpu::copy_rectangle_uvs(logger, v, sp, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, JunkEntityFromFILE>().each(

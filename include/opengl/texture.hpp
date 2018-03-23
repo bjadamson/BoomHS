@@ -1,9 +1,10 @@
 #pragma once
-#include <extlibs/glew.hpp>
 #include <stlw/auto_resource.hpp>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
+#include <extlibs/glew.hpp>
+#include <array>
 #include <optional>
 
 namespace opengl
@@ -14,6 +15,8 @@ struct TextureInfo
   GLenum mode;
   GLuint id;
   GLint  width = 0, height = 0;
+
+  int uv_max = 0;
 
   void destroy();
 
@@ -80,8 +83,11 @@ public:
 namespace texture
 {
 
+GLint
+wrap_mode_from_string(char const*);
+
 Texture
-allocate_texture(stlw::Logger& logger, std::string const&, GLint);
+allocate_texture(stlw::Logger& logger, std::string const&, GLint, GLint, GLint);
 
 Texture
 upload_3dcube_texture(stlw::Logger&, std::vector<std::string> const&, GLint);

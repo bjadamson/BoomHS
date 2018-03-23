@@ -381,11 +381,13 @@ game_loop(EngineState& es, LevelManager& lm, SDLWindow& window, stlw::float_gene
       render::draw_entities(rstate, rng, ft);
     }
     render::draw_terrain(rstate, ft);
+    /*
     if (tilegrid_state.draw_tilegrid)
     {
       render::draw_tilegrid(rstate, tilegrid_state, ft);
       render::draw_rivers(rstate, ft);
     }
+    */
 
     render::draw_stars(rstate, ft);
     render::draw_targetreticle(rstate, ft);

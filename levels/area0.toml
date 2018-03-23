@@ -63,6 +63,13 @@ type = "texture:2d-RGBA"
 filename = "circle_reticle.png"
 
 [[resource]]
+name = "TerrainFloor"
+type = "texture:2d-RGB"
+filename = "textures/TerrainFloor.jpg"
+wrap = "repeat_mirro"
+uvs = 10000
+
+[[resource]]
 name = "gun"
 type = "texture:2d-RGB"
 filename = "gun.png"

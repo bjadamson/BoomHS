@@ -237,7 +237,7 @@ create_modelnormals(stlw::Logger &logger, ShaderProgram const& sp, glm::mat4 con
 }
 
 DrawInfo
-copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color const& color)
+copy_cubecolor_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color const& color)
 {
   // clang-format off
   std::array<Color, 8> const c{
@@ -264,7 +264,7 @@ copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color const& c
 }
 
 DrawInfo
-copy_normalcolorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color const& color)
+copy_cubenormalcolor_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color const& color)
 {
   // clang-format off
   static std::array<glm::vec3, 8> constexpr points = {{
@@ -349,58 +349,17 @@ copy_normalcolorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color co
 }
 
 DrawInfo
-copy_vertexonlycube_gpu(stlw::Logger &logger, ShaderProgram const& sp)
+copy_cubevertexonly_gpu(stlw::Logger &logger, ShaderProgram const& sp)
 {
   auto const vertices = OF::cube_vertices();
   return make_drawinfo(logger, sp, vertices, OF::CUBE_INDICES, std::nullopt);
 }
 
 DrawInfo
-copy_texturecube_gpu(stlw::Logger &logger, ShaderProgram const& sp, TextureInfo const& ti)
+copy_cubetexture_gpu(stlw::Logger &logger, ShaderProgram const& sp, TextureInfo const& ti)
 {
   auto const vertices = OF::cube_vertices();
   return make_drawinfo(logger, sp, vertices, OF::CUBE_INDICES, std::make_optional(ti));
-}
-
-DrawInfo
-copy_cube_14indices_gpu(stlw::Logger &logger, ShaderProgram const& shader_program,
-    std::optional<TextureInfo> const& ti)
-{
-  // clang-format off
-  static constexpr std::array<GLuint, 14> INDICES = {{
-    3, 2, 6, 7, 4, 2, 0,
-    3, 1, 6, 5, 4, 1, 0
-  }};
-
-  auto const arr = stlw::make_array<float>(
-   -1.0f, -1.0f, 1.0f, 1.0f, // front bottom-left
-    1.0f, -1.0f, 1.0f, 1.0f, // front bottom-right
-    1.0f,  1.0f, 1.0f, 1.0f, // front top-right
-   -1.0f,  1.0f, 1.0f, 1.0f, // front top-left
-
-    -1.0f, -1.0f, -1.0f, 1.0f, // back bottom-left
-     1.0f, -1.0f, -1.0f, 1.0f, // back bottom-right
-     1.0f,  1.0f, -1.0f, 1.0f, // back top-right
-    -1.0f,  1.0f, -1.0f, 1.0f  // back top-left
-  );
-
-  auto const v = stlw::make_array<float>(
-      arr[8], arr[9], arr[10], arr[11],   // CUBE_ROW_2
-      arr[12], arr[13], arr[14], arr[15], // CUBE_ROW_3
-      arr[24], arr[25], arr[26], arr[27], // CUBE_ROW_6
-      arr[28], arr[29], arr[30], arr[31], // CUBE_ROW_7
-
-      arr[4], arr[5], arr[6], arr[7],     // CUBE_ROW_1,
-      arr[0], arr[1], arr[2], arr[3],     // CUBE_ROW_0,
-      arr[16], arr[17], arr[18], arr[19], // CUBE_ROW_4,
-      arr[20], arr[21], arr[22], arr[23]  // CUBE_ROW_5
-      );
-  // clang-format on
-  auto const& vertices = v;
-
-  DrawInfo dinfo{GL_TRIANGLE_STRIP, vertices.size(), INDICES.size(), ti};
-  copy_synchronous(logger, shader_program, dinfo, vertices, INDICES);
-  return dinfo;
 }
 
 DrawInfo
@@ -422,28 +381,42 @@ copy_rectangle(stlw::Logger &logger, GLenum const dm, ShaderProgram &sp,
 }
 
 DrawInfo
-copy_rectangle_uvs(stlw::Logger &logger, ShaderProgram const& sp, std::optional<TextureInfo> const& ti)
+copy_rectangle_uvs(stlw::Logger &logger, OF::RectangleVertices const& v, ShaderProgram const& sp,
+    TextureInfo const& ti)
 {
-  assert(sp.is_2d);
-  auto const v = OF::rectangle_vertices();
   // clang-format off
-  static auto constexpr uv = stlw::make_array<float>(
-      0.0f, 0.0f,
-      1.0f, 0.0f,
-      1.0f, 1.0f,
-      0.0f, 1.0f
-      );
-  auto const vuvs = stlw::make_array<float>(
-      v[0],  v[1],  v[2],  v[3],  uv[0], uv[1],
-      v[4],  v[5],  v[6],  v[7],  uv[2], uv[3],
-      v[8],  v[9],  v[10], v[11], uv[4], uv[5],
-      v[12], v[13], v[14], v[15], uv[6], uv[7]
+  auto const uv = OF::rectangle_uvs(ti.uv_max);
+  auto const v_uvs = stlw::make_array<float>(
+      v[0],  v[1],  v[2],  v[3],  /**/ uv[0], uv[1],
+      v[4],  v[5],  v[6],  v[7],  /**/ uv[2], uv[3],
+      v[8],  v[9],  v[10], v[11], /**/ uv[4], uv[5],
+      v[12], v[13], v[14], v[15], /**/ uv[6], uv[7]
       );
   // clang-format on
   auto const& i = OF::RECTANGLE_INDICES;
 
-  DrawInfo dinfo{GL_TRIANGLES, vuvs.size(), i.size(), ti};
-  copy_synchronous(logger, sp, dinfo, vuvs, i);
+  DrawInfo dinfo{GL_TRIANGLES, v_uvs.size(), i.size(), ti};
+  copy_synchronous(logger, sp, dinfo, v_uvs, i);
+  return dinfo;
+}
+
+DrawInfo
+copy_rectangle_normaluvs(stlw::Logger &logger, OF::RectangleVertices const& v,
+    OF::RectangleNormals const& n, ShaderProgram const& sp, TextureInfo const& ti)
+{
+  // clang-format off
+  auto const uv = OF::rectangle_uvs(ti.uv_max);
+  auto const v_n_uvs = stlw::make_array<float>(
+      v[0],  v[1],  v[2],  v[3],  /**/ n[0], n[1],  n[2],  /**/ uv[0], uv[1],
+      v[4],  v[5],  v[6],  v[7],  /**/ n[3], n[4],  n[5],  /**/ uv[2], uv[3],
+      v[8],  v[9],  v[10], v[11], /**/ n[6], n[7],  n[8],  /**/ uv[4], uv[5],
+      v[12], v[13], v[14], v[15], /**/ n[9], n[10], n[11], /**/ uv[6], uv[7]
+      );
+  // clang-format on
+  auto const& i = OF::RECTANGLE_INDICES;
+
+  DrawInfo dinfo{GL_TRIANGLES, v_n_uvs.size(), i.size(), ti};
+  copy_synchronous(logger, sp, dinfo, v_n_uvs, i);
   return dinfo;
 }
 

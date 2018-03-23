@@ -9,6 +9,7 @@
 #include <stlw/log.hpp>
 
 #include <extlibs/glew.hpp>
+#include <array>
 #include <optional>
 
 namespace boomhs
@@ -19,19 +20,13 @@ struct ObjBuffer;
 namespace opengl::gpu
 {
 
+// Arrows
+///////////////////////////////////////////////////////////////////////////////////////////////////
 DrawInfo
 create_arrow_2d(stlw::Logger&, ShaderProgram const&, OF::ArrowCreateParams&&);
 
 DrawInfo
 create_arrow(stlw::Logger&, ShaderProgram const&, OF::ArrowCreateParams&&);
-
-DrawInfo
-create_tilegrid(stlw::Logger&, ShaderProgram const&, boomhs::TileGrid const&,
-                bool const show_yaxis_lines, Color const& color = LOC::RED);
-
-DrawInfo
-create_modelnormals(stlw::Logger&, ShaderProgram const&, glm::mat4 const&, boomhs::Obj const&,
-                    Color const&);
 
 struct WorldOriginArrows
 {
@@ -43,37 +38,53 @@ struct WorldOriginArrows
 WorldOriginArrows
 create_axis_arrows(stlw::Logger&, ShaderProgram&);
 
+// Cubes
+///////////////////////////////////////////////////////////////////////////////////////////////////
 DrawInfo
-copy_colorcube_gpu(stlw::Logger&, ShaderProgram const&, Color const&);
+copy_cubecolor_gpu(stlw::Logger&, ShaderProgram const&, Color const&);
 
 inline DrawInfo
-copy_colorcube_gpu(stlw::Logger& logger, ShaderProgram const& sp, glm::vec3 const& c)
+copy_cubecolor_gpu(stlw::Logger& logger, ShaderProgram const& sp, glm::vec3 const& c)
 {
-  return copy_colorcube_gpu(logger, sp, Color{c.x, c.y, c.z, 1.0f});
+  return copy_cubecolor_gpu(logger, sp, Color{c.x, c.y, c.z, 1.0f});
 }
 
 DrawInfo
-copy_vertexonlycube_gpu(stlw::Logger&, ShaderProgram const&);
+copy_cubevertexonly_gpu(stlw::Logger&, ShaderProgram const&);
 
 DrawInfo
-copy_normalcolorcube_gpu(stlw::Logger&, ShaderProgram const&, Color const&);
+copy_cubenormalcolor_gpu(stlw::Logger&, ShaderProgram const&, Color const&);
 
 DrawInfo
-copy_texturecube_gpu(stlw::Logger&, ShaderProgram const&, TextureInfo const&);
+copy_cubetexture_gpu(stlw::Logger&, ShaderProgram const&, TextureInfo const&);
 
-DrawInfo
-copy_cube_14indices_gpu(stlw::Logger&, ShaderProgram const&, std::optional<TextureInfo> const&);
-
-DrawInfo
-copy_gpu(stlw::Logger&, GLenum, ShaderProgram&, boomhs::ObjBuffer const&,
-         std::optional<TextureInfo> const&);
-
+// Rectangles
+///////////////////////////////////////////////////////////////////////////////////////////////////
 DrawInfo
 copy_rectangle(stlw::Logger&, GLenum, ShaderProgram&, OF::RectBuffer const&,
                std::optional<TextureInfo> const&);
 
 DrawInfo
-copy_rectangle_uvs(stlw::Logger&, ShaderProgram const&, std::optional<TextureInfo> const&);
+copy_rectangle_uvs(stlw::Logger&, OF::RectangleVertices const&, ShaderProgram const&,
+    TextureInfo const&);
+
+DrawInfo
+copy_rectangle_normaluvs(stlw::Logger&, OF::RectangleVertices const&, OF::RectangleNormals const&,
+    ShaderProgram const&, TextureInfo const&);
+
+// General
+///////////////////////////////////////////////////////////////////////////////////////////////////
+DrawInfo
+create_tilegrid(stlw::Logger&, ShaderProgram const&, boomhs::TileGrid const&,
+                bool const show_yaxis_lines, Color const& color = LOC::RED);
+
+DrawInfo
+create_modelnormals(stlw::Logger&, ShaderProgram const&, glm::mat4 const&, boomhs::Obj const&,
+                    Color const&);
+
+DrawInfo
+copy_gpu(stlw::Logger&, GLenum, ShaderProgram&, boomhs::ObjBuffer const&,
+         std::optional<TextureInfo> const&);
 
 template <typename INDICES, typename VERTICES>
 void

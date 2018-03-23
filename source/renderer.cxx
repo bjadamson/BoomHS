@@ -766,7 +766,9 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
   auto& sp = sps.ref_sp("2dtexture");
 
   auto&    logger = rstate.es.logger;
-  DrawInfo di = gpu::copy_rectangle_uvs(logger, sp, texture_o);
+
+  auto const v = OF::rectangle_vertices();
+  DrawInfo const di = gpu::copy_rectangle_uvs(logger, v, sp, *texture_o);
 
   glm::mat4 view_model = compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
 
@@ -916,6 +918,28 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
 void
 draw_terrain(RenderState& rstate, window::FrameTime const& ft)
 {
+  auto& zs = rstate.zs;
+  auto& sps = zs.gfx_state.sps;
+  auto& sp = sps.ref_sp("terrain");
+
+  auto& es = rstate.es;
+  auto& logger = es.logger;
+
+  auto &ttable = zs.gfx_state.texture_table;
+  auto texture_o = ttable.find("TerrainFloor");
+  assert(texture_o);
+
+  auto const vertices = OF::terrain_vertices();
+  auto const normals = OF::rectangle_normals(vertices);
+  auto const di = OG::copy_rectangle_normaluvs(logger, vertices, normals, sp, *texture_o);
+
+  Transform transform;
+  auto constexpr SCALE = 10000.0f;
+  transform.scale = glm::vec3{SCALE, 1.0f, SCALE};
+  transform.rotate_degrees(180, X_UNIT_VECTOR);
+  auto const model_matrix = transform.model_matrix();
+
+  draw(rstate, model_matrix, sp, di);
 }
 
 void

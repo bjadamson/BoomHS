@@ -167,6 +167,17 @@ get_vec3_or_abort(CppTable const& table, char const* name)
   return *vec3_data;
 }
 
+std::optional<int>
+get_int(CppTable const& table, char const* name)
+{
+  auto const load_data = get_value<int>(table, name);
+  if (!load_data)
+  {
+    return std::nullopt;
+  }
+  return std::make_optional(*load_data);
+}
+
 std::optional<float>
 get_float(CppTable const& table, char const* name)
 {
@@ -249,7 +260,14 @@ load_textures(stlw::Logger& logger, CppTable const& config)
     auto const load_2dtexture = [&](auto const format) {
       auto const               filename = get_string_or_abort(resource, "filename");
       opengl::TextureFilenames texture_names{name, {filename}};
-      auto ta = opengl::texture::allocate_texture(logger, texture_names.filenames[0], format);
+
+      auto const wrap_s = get_string(resource, "wrap").value_or("clamp");
+      GLint const wrap = texture::wrap_mode_from_string(wrap_s.c_str());
+
+      auto const uv_max = get_int(resource, "uvs").value_or(1.0);
+
+      auto ta = opengl::texture::allocate_texture(logger, texture_names.filenames[0], format, wrap,
+          uv_max);
       ttable.add_texture(MOVE(texture_names), MOVE(ta));
     };
     auto const load_3dtexture = [&](auto const format) {

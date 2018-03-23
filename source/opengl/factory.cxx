@@ -57,7 +57,7 @@ namespace opengl::factories
 
 // Arrows
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-std::array<float, 48>
+ArrayVertices
 make_arrow_vertices(ArrowCreateParams const& params)
 {
   auto endpoints = calculate_arrow_endpoints(params);
@@ -89,12 +89,12 @@ make_arrow_vertices(ArrowCreateParams const& params)
 
 // Cubes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-std::array<float, 32>
+CubeVertices
 cube_vertices()
 {
   // Define the 8 vertices of a unit cube
   float constexpr W = 1.0f;
-  static const std::array<float, 32> v = stlw::make_array<float>(
+  static const CubeVertices v = stlw::make_array<float>(
     // front
     -1.0f, -1.0f,  1.0f, W,
      1.0f, -1.0f,  1.0f, W,
@@ -173,15 +173,57 @@ make_rectangle(RectInfo const& info)
   return RectBuffer{MOVE(vertices), MOVE(indices)};
 }
 
-std::array<float, 16>
+RectangleVertices
 rectangle_vertices()
 {
-  float constexpr W = 1.0f;
   float constexpr Z = 0.0f;
+  float constexpr W = 1.0f;
 #define zero  -1.0f, -1.0f, Z, W
 #define one    1.0f, -1.0f, Z, W
 #define two    1.0f,  1.0f, Z, W
 #define three -1.0f,  1.0f, Z, W
+  return stlw::make_array<float>(
+      zero, one, two, three
+      );
+#undef zero
+#undef one
+#undef two
+#undef three
+}
+
+RectangleNormals
+rectangle_normals(RectangleVertices const& v)
+{
+  auto const& v0 = glm::vec3{v[0],  v[1],  v[2]};
+  auto const& v1 = glm::vec3{v[4],  v[5],  v[6]};
+  auto const& v2 = glm::vec3{v[8],  v[9],  v[10]};
+  auto const& v3 = glm::vec3{v[12], v[13], v[14]};
+
+  auto const cross = [](auto const origin, auto const& e0, auto const& e1) {
+    return glm::normalize(glm::cross((e0 - origin), (e1 - origin)));
+  };
+  auto const n0 = cross(v0, v1, v3);
+  auto const n1 = cross(v1, v0, v2);
+  auto const n2 = cross(v2, v1, v3);
+  auto const n3 = cross(v3, v2, v0);
+
+  return stlw::make_array<float>(
+      n0.x, n0.y, n0.z,
+      n1.x, n1.y, n1.z,
+      n2.x, n2.y, n2.z,
+      n3.x, n3.y, n3.z
+      );
+}
+
+RectangleVertices
+terrain_vertices()
+{
+  float constexpr Y = 0.0f;
+  float constexpr W = 1.0f;
+#define zero  -1.0f, Y, -1.0f, W
+#define one    1.0f, Y, -1.0f, W
+#define two    1.0f, Y,  1.0f, W
+#define three -1.0f, Y,  1.0f, W
   return stlw::make_array<float>(
       zero, one, two, three
       );

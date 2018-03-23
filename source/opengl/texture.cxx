@@ -15,7 +15,6 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include <iostream>
 
 namespace
 {
@@ -102,8 +101,30 @@ TextureTable::find(std::string const& name) const
 namespace opengl::texture
 {
 
+GLint
+wrap_mode_from_string(char const* name)
+{
+  auto const cmp = [&name](char const* str) {
+    auto const len = std::strlen(str);
+    return std::strncmp(name, str, len) == 0;
+  };
+  if (cmp("clamp")) {
+    return GL_CLAMP_TO_EDGE;
+  }
+  else if (cmp("repeat")) {
+    return GL_REPEAT;
+  }
+  else if (cmp("mirror_repeat")) {
+    return GL_MIRRORED_REPEAT;
+  }
+
+  // Invalid
+  std::abort();
+}
+
 Texture
-allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const format)
+allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const format,
+    GLint const wrap, GLint const uv_max)
 {
   assert(ANYOF(format == GL_RGB, format == GL_RGBA));
 
@@ -112,14 +133,14 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const 
   TextureInfo ti;
   ti.mode = TEXTURE_MODE;
   glGenTextures(1, &ti.id);
-  LOG_TRACE_SPRINTF("texture %s has TextureID: %u", filename, ti.id);
+  LOG_TRACE_SPRINTF("allocating texture %s TextureID %u", filename, ti.id);
 
   global::texture_bind(ti);
   ON_SCOPE_EXIT([&ti]() { global::texture_unbind(ti); });
 
-  // Set texture wrapping to GL_REPEAT (usually basic wrapping method)
-  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  // Set texture wrapping mode
+  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_WRAP_S, wrap);
+  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_WRAP_T, wrap);
 
   // Set texture filtering parameters
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -128,6 +149,8 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const 
   auto const image_data = upload_image(logger, filename, TEXTURE_MODE, format);
   ti.height = image_data.height;
   ti.width = image_data.width;
+
+  ti.uv_max = uv_max;
   return Texture{MOVE(ti)};
 }
 

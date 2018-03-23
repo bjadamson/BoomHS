@@ -21,6 +21,8 @@ namespace opengl::factories
 
 // Arrows
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+using ArrayVertices = std::array<float, 48>;
+
 struct ArrowCreateParams
 {
   Color const& color;
@@ -31,14 +33,16 @@ struct ArrowCreateParams
   float const tip_length_factor = 4.0f;
 };
 
-std::array<float, 48>
+ArrayVertices
 make_arrow_vertices(ArrowCreateParams const&);
 
 // Cubes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+using CubeVertices = std::array<float, 32>;
+using CubeIndices = std::array<GLuint, 36>;
 
 // clang-format off
-static constexpr std::array<GLuint, 36> CUBE_INDICES = {{
+static constexpr CubeIndices CUBE_INDICES = {{
   0, 1, 2,  2, 3, 0, // front
   1, 5, 6,  6, 2, 1, // top
   7, 6, 5,  5, 4, 7, // back
@@ -47,7 +51,7 @@ static constexpr std::array<GLuint, 36> CUBE_INDICES = {{
   3, 2, 6,  6, 7, 3, // right
 }};
 
-static constexpr std::array<GLuint, 36> CUBE_INDICES_LIGHT = {{
+static constexpr CubeIndices CUBE_INDICES_LIGHT = {{
   0, 1, 2, 3, 4, 5, 6,
   7, 8, 9, 10, 11, 12, 13,
   14, 15, 16, 17, 18, 19, 20,
@@ -55,11 +59,16 @@ static constexpr std::array<GLuint, 36> CUBE_INDICES_LIGHT = {{
   28, 29, 30, 31, 32, 33, 34, 35
 }};
 
-std::array<float, 32>
+CubeVertices
 cube_vertices();
 
 // Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+using RectangleVertices = std::array<float, 16>;
+using RectangleIndices = std::array<GLuint, 6>;
+using RectangleNormals = std::array<float, 12>;
+using RectangleUvs = std::array<float, 8>;
+
 struct RectInfo
 {
   static constexpr auto NUM_VERTICES = 4;
@@ -74,24 +83,42 @@ struct RectInfo
 
 struct RectBuffer
 {
-  std::vector<float>    vertices;
-  std::array<GLuint, 6> indices;
+  std::vector<float> vertices;
+  RectangleIndices   indices;
 };
 
 RectBuffer
 make_rectangle(RectInfo const&);
 
 
-static constexpr std::array<GLuint, 6> RECTANGLE_INDICES = {{
+static constexpr RectangleIndices RECTANGLE_INDICES = {{
   0, 1, 2,
   2, 3, 0
 }};
 
-std::array<float, 16>
+RectangleVertices
 rectangle_vertices();
 
-//
+RectangleNormals
+rectangle_normals(RectangleVertices const&);
+
+constexpr RectangleUvs
+rectangle_uvs(float const max)
+{
+  return stlw::make_array<float>(
+      0.0f, 0.0f,
+      max, 0.0f,
+      max, max,
+      0.0f, max
+      );
+}
+
+// Terrain
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+static constexpr RectangleIndices TERRAIN_INDICES = RECTANGLE_INDICES;
+
+RectangleVertices
+terrain_vertices();
 
 } // namespace opengl::factories
 
