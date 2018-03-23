@@ -1,4 +1,5 @@
 #include <opengl/gpu.hpp>
+#include <opengl/factory.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/global.hpp>
 #include <opengl/shader.hpp>
@@ -22,131 +23,6 @@ using namespace opengl::gpu;
 
 namespace
 {
-
-auto
-calculate_arrow_endpoints(ArrowCreateParams const& params)
-{
-  auto const adjust_if_zero = [=](glm::vec3 const& v) {
-    auto constexpr ZERO_VEC = glm::zero<glm::vec3>();
-    auto constexpr EPSILON = std::numeric_limits<float>::epsilon();
-    auto constexpr EPSILON_VEC = glm::vec3{EPSILON, EPSILON, EPSILON};
-    bool const is_zero = glm::all(glm::epsilonEqual(v, ZERO_VEC, EPSILON));
-    return is_zero ? EPSILON_VEC : v;
-  };
-
-  // Normalizing a zero vector is undefined. Therefore if the user passes us a zero vector, since
-  // we are creating an arrow, pretend the point is EPSILON away from the true origin (so
-  // normalizing the crossproduct doesn't yield vector's with NaN for their components).
-  auto const A = adjust_if_zero(params.start);
-  auto const B = adjust_if_zero(params.end);
-
-  glm::vec3 const v = A - B;
-  glm::vec3 const rev = -v;
-
-  glm::vec3 const cross1 = glm::normalize(glm::cross(A, B));
-  glm::vec3 const cross2 = glm::normalize(glm::cross(B, A));
-
-  glm::vec3 const vp1 = glm::normalize(rev + cross1);
-  glm::vec3 const vp2 = glm::normalize(rev + cross2) ;
-
-  float const factor = params.tip_length_factor;
-  glm::vec3 const p1 = B - (vp1 / factor);
-  glm::vec3 const p2 = B - (vp2 / factor);
-
-  return ArrowEndpoints{p1, p2};
-}
-
-auto
-make_arrow_vertices(ArrowCreateParams const& params, ArrowEndpoints const& endpoints)
-{
-  auto const& p1 = endpoints.p1, p2 = endpoints.p2;
-#define COLOR params.color.r(), params.color.g(), params.color.b(), params.color.a()
-#define START params.start.x, params.start.y, params.start.z, 1.0f
-#define END params.end.x, params.end.y, params.end.z, 1.0f
-#define P1 p1.x, p1.y, p1.z, 1.0f
-#define P2 p2.x, p2.y, p2.z, 1.0f
-  return stlw::make_array<float>(
-      // START -> END
-      START, COLOR,
-      END, COLOR,
-
-      // END -> P1
-      END, COLOR,
-      P1, COLOR,
-
-      // END -> P2
-      END, COLOR,
-      P2, COLOR
-      );
-#undef COLOR
-#undef START
-#undef END
-#undef P1
-#undef P2
-}
-
-// clang-format off
-static constexpr std::array<GLuint, 36> CUBE_INDICES = {{
-  0, 1, 2,  2, 3, 0, // front
-  1, 5, 6,  6, 2, 1, // top
-  7, 6, 5,  5, 4, 7, // back
-  4, 0, 3,  3, 7, 4, // bottom
-  4, 5, 1,  1, 0, 4, // left
-  3, 2, 6,  6, 7, 3, // right
-}};
-
-static constexpr std::array<GLuint, 36> CUBE_INDICES_LIGHT = {{
-  0, 1, 2, 3, 4, 5, 6,
-  7, 8, 9, 10, 11, 12, 13,
-  14, 15, 16, 17, 18, 19, 20,
-  21, 22, 23, 24, 25, 26, 27,
-  28, 29, 30, 31, 32, 33, 34, 35
-}};
-
-auto
-cube_vertices()
-{
-  // Define the 8 vertices of a unit cube
-  float constexpr W = 1.0f;
-  static const std::array<float, 32> v = stlw::make_array<float>(
-    // front
-    -1.0f, -1.0f,  1.0f, W,
-     1.0f, -1.0f,  1.0f, W,
-     1.0f,  1.0f,  1.0f, W,
-    -1.0f,  1.0f,  1.0f, W,
-    // back
-    -1.0f, -1.0f, -1.0f, W,
-     1.0f, -1.0f, -1.0f, W,
-     1.0f,  1.0f, -1.0f, W,
-    -1.0f,  1.0f, -1.0f, W
-  );
-  return v;
-}
-
-static constexpr std::array<GLuint, 6> RECTANGLE_INDICES = {{
-  0, 1, 2,
-  2, 3, 0
-}};
-
-auto
-rectangle_vertices()
-{
-  float constexpr W = 1.0f;
-  float constexpr Z = 0.0f;
-#define zero  -1.0f, -1.0f, Z, W
-#define one    1.0f, -1.0f, Z, W
-#define two    1.0f,  1.0f, Z, W
-#define three -1.0f,  1.0f, Z, W
-  return stlw::make_array<float>(
-      zero, one, two, three
-      );
-#undef zero
-#undef one
-#undef two
-#undef three
-}
-
-// clang-format on
 
 template<size_t N, size_t M>
 DrawInfo
@@ -177,10 +53,10 @@ namespace opengl::gpu
 {
 
 DrawInfo
-create_arrow_2d(stlw::Logger &logger, ShaderProgram const& shader_program, ArrowCreateParams &&params)
+create_arrow_2d(stlw::Logger &logger, ShaderProgram const& shader_program,
+    OF::ArrowCreateParams &&params)
 {
-  auto endpoints = calculate_arrow_endpoints(params);
-  auto const vertices = make_arrow_vertices(params, endpoints);
+  auto const vertices = OF::make_arrow_vertices(params);
 
   static constexpr std::array<GLuint, 6> INDICES = {{
     0, 1, 2, 3, 4, 5
@@ -192,10 +68,10 @@ create_arrow_2d(stlw::Logger &logger, ShaderProgram const& shader_program, Arrow
 }
 
 DrawInfo
-create_arrow(stlw::Logger &logger, ShaderProgram const& shader_program, ArrowCreateParams &&params)
+create_arrow(stlw::Logger &logger, ShaderProgram const& shader_program,
+    OF::ArrowCreateParams &&params)
 {
-  auto const endpoints = calculate_arrow_endpoints(params);
-  auto const vertices = make_arrow_vertices(params, endpoints);
+  auto const vertices = OF::make_arrow_vertices(params);
 
   static constexpr std::array<GLuint, 6> INDICES = {{
     0, 1, 2, 3, 4, 5
@@ -291,9 +167,9 @@ create_axis_arrows(stlw::Logger &logger, ShaderProgram &sp)
 {
   glm::vec3 constexpr ORIGIN = glm::zero<glm::vec3>();
 
-  auto x = create_arrow(logger, sp, ArrowCreateParams{LOC::RED,   ORIGIN, ORIGIN + X_UNIT_VECTOR});
-  auto y = create_arrow(logger, sp, ArrowCreateParams{LOC::GREEN, ORIGIN, ORIGIN + Y_UNIT_VECTOR});
-  auto z = create_arrow(logger, sp, ArrowCreateParams{LOC::BLUE,  ORIGIN, ORIGIN + Z_UNIT_VECTOR});
+  auto x = create_arrow(logger, sp, OF::ArrowCreateParams{LOC::RED,   ORIGIN, ORIGIN + X_UNIT_VECTOR});
+  auto y = create_arrow(logger, sp, OF::ArrowCreateParams{LOC::GREEN, ORIGIN, ORIGIN + Y_UNIT_VECTOR});
+  auto z = create_arrow(logger, sp, OF::ArrowCreateParams{LOC::BLUE,  ORIGIN, ORIGIN + Z_UNIT_VECTOR});
   return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
 }
 
@@ -370,7 +246,7 @@ copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color const& c
   };
 #define COLOR(i) c[i].r(), c[i].g(), c[i].b(), c[i].a()
 #define VERTS(a, b, c, d) v[a], v[b], v[c], v[d]
-  auto const v = cube_vertices();
+  auto const v = OF::cube_vertices();
   auto const vertex_data = std::array<float, (32 * 2)>{
     VERTS(0, 1, 2, 3),     COLOR(0),
     VERTS(4, 5, 6, 7),     COLOR(1),
@@ -384,7 +260,7 @@ copy_colorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color const& c
 #undef COLOR
 #undef VERTS
   // clang-format on
-  return make_drawinfo(logger, sp, vertex_data, CUBE_INDICES, std::nullopt);
+  return make_drawinfo(logger, sp, vertex_data, OF::CUBE_INDICES, std::nullopt);
 }
 
 DrawInfo
@@ -466,7 +342,7 @@ copy_normalcolorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color co
     vertex_data.emplace_back(colors[i].a());
   }
 
-  auto const& indices = CUBE_INDICES_LIGHT;
+  auto const& indices = OF::CUBE_INDICES_LIGHT;
   DrawInfo dinfo{GL_TRIANGLES, vertex_data.size(), indices.size(), std::nullopt};
   copy_synchronous(logger, sp, dinfo, vertex_data, indices);
   return dinfo;
@@ -475,15 +351,15 @@ copy_normalcolorcube_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color co
 DrawInfo
 copy_vertexonlycube_gpu(stlw::Logger &logger, ShaderProgram const& sp)
 {
-  auto const vertices = cube_vertices();
-  return make_drawinfo(logger, sp, vertices, CUBE_INDICES, std::nullopt);
+  auto const vertices = OF::cube_vertices();
+  return make_drawinfo(logger, sp, vertices, OF::CUBE_INDICES, std::nullopt);
 }
 
 DrawInfo
 copy_texturecube_gpu(stlw::Logger &logger, ShaderProgram const& sp, TextureInfo const& ti)
 {
-  auto const vertices = cube_vertices();
-  return make_drawinfo(logger, sp, vertices, CUBE_INDICES, std::make_optional(ti));
+  auto const vertices = OF::cube_vertices();
+  return make_drawinfo(logger, sp, vertices, OF::CUBE_INDICES, std::make_optional(ti));
 }
 
 DrawInfo
@@ -549,7 +425,7 @@ DrawInfo
 copy_rectangle_uvs(stlw::Logger &logger, ShaderProgram const& sp, std::optional<TextureInfo> const& ti)
 {
   assert(sp.is_2d);
-  auto const v = rectangle_vertices();
+  auto const v = OF::rectangle_vertices();
   // clang-format off
   static auto constexpr uv = stlw::make_array<float>(
       0.0f, 0.0f,
@@ -564,7 +440,7 @@ copy_rectangle_uvs(stlw::Logger &logger, ShaderProgram const& sp, std::optional<
       v[12], v[13], v[14], v[15], uv[6], uv[7]
       );
   // clang-format on
-  auto const& i = RECTANGLE_INDICES;
+  auto const& i = OF::RECTANGLE_INDICES;
 
   DrawInfo dinfo{GL_TRIANGLES, vuvs.size(), i.size(), ti};
   copy_synchronous(logger, sp, dinfo, vuvs, i);

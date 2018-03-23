@@ -19,27 +19,11 @@ struct ObjBuffer;
 namespace opengl::gpu
 {
 
-struct ArrowCreateParams
-{
-  Color const& color;
-
-  glm::vec3 start;
-  glm::vec3 end;
-
-  float const tip_length_factor = 4.0f;
-};
-
-struct ArrowEndpoints
-{
-  glm::vec3 p1;
-  glm::vec3 p2;
-};
+DrawInfo
+create_arrow_2d(stlw::Logger&, ShaderProgram const&, OF::ArrowCreateParams&&);
 
 DrawInfo
-create_arrow_2d(stlw::Logger&, ShaderProgram const&, ArrowCreateParams&&);
-
-DrawInfo
-create_arrow(stlw::Logger&, ShaderProgram const&, ArrowCreateParams&&);
+create_arrow(stlw::Logger&, ShaderProgram const&, OF::ArrowCreateParams&&);
 
 DrawInfo
 create_tilegrid(stlw::Logger&, ShaderProgram const&, boomhs::TileGrid const&,
