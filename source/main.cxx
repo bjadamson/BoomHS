@@ -315,7 +315,6 @@ update_visible_entities(LevelManager& lm, EntityRegistry& registry)
   auto& zs = lm.active();
   auto& ldata = zs.level_data;
   auto& tilegrid = ldata.tilegrid();
-  auto& player = ldata.player;
 
   for (auto const eid : registry.view<NPCData>())
   {

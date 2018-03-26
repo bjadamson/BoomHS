@@ -37,7 +37,7 @@ move_ontilegrid(GameState& state, glm::vec3 (WorldObject::*fn)() const, WorldObj
   auto const [x, z] = leveldata.dimensions();
   glm::vec3 const move_vec = (wo.*fn)();
 
-  glm::vec3 const delta = move_vec * ft.delta_millis() * wo.speed();
+  glm::vec3 const delta = move_vec * wo.speed() * ft.delta_millis();
   glm::vec3 const newpos = wo.world_position() + delta;
 
   bool const x_outofbounds = newpos.x >= x || newpos.x < 0;

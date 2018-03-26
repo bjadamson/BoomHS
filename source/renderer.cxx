@@ -96,7 +96,7 @@ draw_drawinfo(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
     auto const ti = *dinfo.texture_info();
     opengl::global::texture_bind(ti);
     ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
-    LOG_ERROR("texture info bound");
+    LOG_TRACE("texture info bound");
     draw_fn();
   }
   else
@@ -867,7 +867,7 @@ draw_skybox(RenderState& rstate, window::FrameTime const& ft)
     assert(!registry.has<Material>());
 
     auto& sp = sps.ref_sp(sn.value);
-    LOG_ERROR_SPRINTF("drawing skybox with shader: %s", sn.value);
+    LOG_TRACE_SPRINTF("drawing skybox with shader: %s", sn.value);
     bool constexpr IS_SKYBOX = true;
     draw(rstate, transform.model_matrix(), sp, dinfo, IS_SKYBOX);
   };

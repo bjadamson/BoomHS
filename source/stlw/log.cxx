@@ -32,15 +32,28 @@ threadsafe_sink(char const* file_path)
   //return std::make_unique<SinkType>(file_path, 23, 50);
 }
 
+auto
+threadsafe_stderr_sink()
+{
+  using SinkType = spdlog::sinks::stderr_sink_st;
+  return std::make_unique<SinkType>();
+}
+
 LogFlusher
 make_logger(char const *file_path, spdlog::level::level_enum const level)
 {
   try {
+    auto file_sink = threadsafe_sink(file_path);
+    auto stderr_sink = threadsafe_stderr_sink();
+    stderr_sink->set_level(spdlog::level::err);
+
     auto const sinks = stlw::make_array<spdlog::sink_ptr>(
-        threadsafe_sink(file_path)
+        MOVE(file_sink),
+        MOVE(stderr_sink)
         );
     auto logger = std::make_unique<spdlog::logger>(file_path, sinks.cbegin(), sinks.cend());
     logger->set_level(level);
+
     auto adapter = impl::LogAdapter{MOVE(logger)};
     return LogFlusher{MOVE(adapter)};
   }
