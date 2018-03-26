@@ -90,9 +90,9 @@ type = "texture:2d-RGBA"
 filename = "textures/sun.png"
 
 [[resource]]
-name = "sun_blue"
+name = "moon"
 type = "texture:2d-RGBA"
-filename = "textures/sun_blue.png"
+filename = "textures/Blendermoon1.png"
 
 [[resource]]
 name = "TorchUI"
@@ -218,54 +218,75 @@ shininess = 1.0
 ###################################################################################################
 [[meshes]]
 name = "at"
+path = "assets/"
 
 [[meshes]]
 name = "door"
+path = "assets/"
 
 [[meshes]]
 name = "teleporter"
+path = "assets/"
 
 [[meshes]]
 name = "bar"
+path = "assets/"
 
 [[meshes]]
 name = "house"
+path = "assets/"
 
 [[meshes]]
 name = "hashtag"
+path = "assets/"
 
 [[meshes]]
 name = "plus"
+path = "assets/"
 
 [[meshes]]
 name = "O"
+path = "assets/"
 
 [[meshes]]
 name = "T"
+path = "assets/"
 
 [[meshes]]
 name = "cube"
+path = "assets/"
 
 [[meshes]]
 name = "robot"
+path = "assets/"
 
 [[meshes]]
 name = "stair_down"
+path = "assets/"
 
 [[meshes]]
 name = "stair_up"
+path = "assets/"
 
 [[meshes]]
 name = "tilde"
+path = "assets/"
 
 [[meshes]]
 name = "equal"
+path = "assets/"
 
 [[meshes]]
 name = "star"
+path = "assets/"
+
+[[meshes]]
+name = "terrain"
+path = "assets/terrain/"
 
 [[meshes]]
 name = "B"
+path = "assets/"
 
 ########### ENTITY #############
 [[entity]]
@@ -289,15 +310,23 @@ texture = "sun"
 orbital = [1800.0, 1600.0, 0.0]
 sun = [0.15, 1250.0]
 
-# BLUE SUN
+# moon
 [[entity]]
 position = [0.0, 850.0, 0.0]
 shader = "2dtexture"
 geometry = "billboard:spherical"
 scale = [650.0, 650.0, 650.0]
-texture = "sun_blue"
+texture = "moon"
 orbital = [1800.0, 1600.0, 3.1459]
 sun = [0.15, 1250.0]
+
+[[entity]]
+position = [0.0, 5.0, 0.0]
+shader = "3dtexture"
+geometry = "mesh:terrain"
+texture = "TerrainFloor"
+scale = [0.4, 0.4, 0.4]
+random_junk_from_file = true
 
 ######### POINT LIGHTS
 # LIGHT #0
@@ -333,7 +362,7 @@ texture = "boring_cube"
 random_junk_from_file = true
 
 [[entity]]
-position = [-5.0, 0.0, -2.0]
+position = [0.0, 0.0, 0.0]
 shader = "3dcube_texture"
 geometry = "cube"
 skybox = true

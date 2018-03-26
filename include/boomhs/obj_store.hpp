@@ -87,9 +87,9 @@ class ObjStore
   ObjCache pos_normal_uv_;
   ObjCache pos_uv_;
 
-  ObjBuffer create_interleaved_buffer(ObjQuery const&) const;
+  ObjBuffer create_interleaved_buffer(stlw::Logger &, ObjQuery const&) const;
 
-  ObjData const& data_for(ObjQuery const&) const;
+  ObjData const& data_for(stlw::Logger &, ObjQuery const&) const;
 
   ObjCache& find_cache(stlw::Logger&, ObjQuery const&);
 

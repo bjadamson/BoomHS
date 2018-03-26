@@ -139,7 +139,7 @@ ObjStore::add_obj(std::string const& name, ObjData&& o) const
 }
 
 ObjData const&
-ObjStore::data_for(ObjQuery const& query) const
+ObjStore::data_for(stlw::Logger &logger, ObjQuery const& query) const
 {
   auto const cmp = [&query](auto const& pair) {
     bool const  names_match = pair.first == query.name;
@@ -156,15 +156,16 @@ ObjStore::data_for(ObjQuery const& query) const
   auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
 
   // Assume the datastore has the object, somewhere
+  LOG_TRACE_SPRINTF("Looking for object '%s'", query.name);
   assert(it != data_.cend());
   return it->second;
 }
 
 ObjBuffer
-ObjStore::create_interleaved_buffer(ObjQuery const& query) const
+ObjStore::create_interleaved_buffer(stlw::Logger &logger, ObjQuery const& query) const
 {
   // We need to read data from the ObjStore to construct an instance to put into the cache.
-  auto const& data = data_for(query);
+  auto const& data = data_for(logger, query);
   auto const  num_vertices = data.num_vertices;
 
   ObjBuffer buffer;
@@ -235,7 +236,7 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
     return cache.get_obj(logger, query);
   }
 
-  auto buffer = create_interleaved_buffer(query);
+  auto buffer = create_interleaved_buffer(logger, query);
   auto pair = std::make_pair(query, MOVE(buffer));
   cache.insert_buffer(MOVE(pair));
 

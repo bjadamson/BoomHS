@@ -187,7 +187,7 @@ rotate_around(glm::vec3 const& point_to_rotate, glm::vec3 const& rot_center,
 void
 update_sun(LevelData& ldata, EntityRegistry& registry, FrameTime const& ft)
 {
-  auto const update_sun = [&](auto const eid) {
+  auto const update_sun = [&](auto const eid, bool &first) {
     auto& transform = registry.get<Transform>(eid);
     auto& orbital = registry.get<OrbitalBody>(eid);
     auto& pos = transform.translation;
@@ -203,18 +203,26 @@ update_sun(LevelData& ldata, EntityRegistry& registry, FrameTime const& ft)
 
     float const v = std::sin(time * sun.speed);
     pos.y = glm::lerp(-height, height, std::abs(v));
+
+
+    if (first) {
+      first = true;
+    auto& global = ldata.global_light;
+    auto& directional = global.directional;
+
+    auto const sun_to_origin = glm::normalize(-pos);
+    directional.direction = sun_to_origin;
+    }
   };
   auto const eids = find_suns(registry);
+
+  bool first = true;
   for (auto const eid : eids)
   {
-    update_sun(eid);
+    update_sun(eid, first);
   }
 
-  // auto& global = ldata.global_light;
-  // auto& directional = global.directional;
-
-  // auto const sun_to_origin = glm::normalize(-pos);
-  // directional.direction = sun_to_origin;
+   
 }
 
 bool

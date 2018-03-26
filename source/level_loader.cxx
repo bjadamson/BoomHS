@@ -204,11 +204,12 @@ Result<ObjStore, LoadStatus>
 load_objfiles(stlw::Logger& logger, CppTableArray const& mesh_table)
 {
   auto const load = [&](auto const& table) -> Result<std::pair<std::string, ObjData>, LoadStatus> {
+    auto const path = get_string_or_abort(table, "path");
     auto const name = get_string_or_abort(table, "name");
-    LOG_TRACE_SPRINTF("Loading objfile 's'", name);
+    LOG_TRACE_SPRINTF("Loading objfile name: '%s' path: '%s'", name, path);
 
-    auto const obj = "assets/" + name + ".obj";
-    auto const mtl = "assets/" + name + ".mtl";
+    auto const obj = path + name + ".obj";
+    auto const mtl = path + name + ".mtl";
 
     ObjData objdata = TRY_MOVEOUT(load_objfile(logger, obj.c_str(), mtl.c_str()));
     auto    pair = std::make_pair(name, MOVE(objdata));

@@ -63,6 +63,13 @@ type = "texture:2d-RGBA"
 filename = "circle_reticle.png"
 
 [[resource]]
+name = "TerrainFloor"
+type = "texture:2d-RGB"
+filename = "textures/TerrainFloor.jpg"
+wrap = "repeat"
+uvs = 10000
+
+[[resource]]
 name = "gun"
 type = "texture:2d-RGB"
 filename = "gun.png"
@@ -73,9 +80,19 @@ type = "texture:2d-RGB"
 filename = "sword.png"
 
 [[resource]]
+name = "cloud"
+type = "texture:2d-RGBA"
+filename = "textures/cloud_cumulous_large.png"
+
+[[resource]]
 name = "sun"
 type = "texture:2d-RGBA"
 filename = "textures/sun.png"
+
+[[resource]]
+name = "moon"
+type = "texture:2d-RGBA"
+filename = "textures/Blendermoon1.png"
 
 [[resource]]
 name = "TorchUI"
@@ -201,54 +218,75 @@ shininess = 1.0
 ###################################################################################################
 [[meshes]]
 name = "at"
+path = "assets/"
 
 [[meshes]]
 name = "door"
+path = "assets/"
 
 [[meshes]]
 name = "teleporter"
+path = "assets/"
 
 [[meshes]]
 name = "bar"
+path = "assets/"
 
 [[meshes]]
 name = "house"
+path = "assets/"
 
 [[meshes]]
 name = "hashtag"
+path = "assets/"
 
 [[meshes]]
 name = "plus"
+path = "assets/"
 
 [[meshes]]
 name = "O"
+path = "assets/"
 
 [[meshes]]
 name = "T"
+path = "assets/"
 
 [[meshes]]
 name = "cube"
+path = "assets/"
 
 [[meshes]]
 name = "robot"
+path = "assets/"
 
 [[meshes]]
 name = "stair_down"
+path = "assets/"
 
 [[meshes]]
 name = "stair_up"
+path = "assets/"
 
 [[meshes]]
 name = "tilde"
+path = "assets/"
 
 [[meshes]]
 name = "equal"
+path = "assets/"
 
 [[meshes]]
 name = "star"
+path = "assets/"
+
+[[meshes]]
+name = "terrain"
+path = "assets/terrain/"
 
 [[meshes]]
 name = "B"
+path = "assets/"
 
 ########### ENTITY #############
 [[entity]]
@@ -261,6 +299,34 @@ ambient = [1.0, 1.0, 1.0]
 diffuse = [1.0, 1.0, 1.0]
 specular = [1.0, 1.0, 1.0]
 shininess = 1.0
+
+# SUN
+[[entity]]
+position = [0.0, 850.0, 0.0]
+shader = "2dtexture"
+geometry = "billboard:spherical"
+scale = [650.0, 650.0, 650.0]
+texture = "sun"
+orbital = [1800.0, 1600.0, 0.0]
+sun = [0.15, 1250.0]
+
+# moon
+[[entity]]
+position = [0.0, 850.0, 0.0]
+shader = "2dtexture"
+geometry = "billboard:spherical"
+scale = [650.0, 650.0, 650.0]
+texture = "moon"
+orbital = [1800.0, 1600.0, 3.1459]
+sun = [0.15, 1250.0]
+
+[[entity]]
+position = [0.0, 5.0, 0.0]
+shader = "3dtexture"
+geometry = "mesh:terrain"
+texture = "TerrainFloor"
+scale = [0.4, 0.4, 0.4]
+random_junk_from_file = true
 
 ######### POINT LIGHTS
 # LIGHT #0
@@ -296,7 +362,7 @@ texture = "boring_cube"
 random_junk_from_file = true
 
 [[entity]]
-position = [-5.0, 0.0, -2.0]
+position = [0.0, 0.0, 0.0]
 shader = "3dcube_texture"
 geometry = "cube"
 skybox = true
