@@ -66,7 +66,7 @@ filename = "circle_reticle.png"
 name = "TerrainFloor"
 type = "texture:2d-RGB"
 filename = "textures/TerrainFloor.jpg"
-wrap = "repeat_mirro"
+wrap = "repeat"
 uvs = 10000
 
 [[resource]]
@@ -282,7 +282,7 @@ shininess = 1.0
 # SUN
 [[entity]]
 position = [0.0, 850.0, 0.0]
-shader = "2dtexture_copy"
+shader = "2dtexture"
 geometry = "billboard:spherical"
 scale = [650.0, 650.0, 650.0]
 texture = "sun"
@@ -292,7 +292,7 @@ sun = [0.15, 1250.0]
 # BLUE SUN
 [[entity]]
 position = [0.0, 850.0, 0.0]
-shader = "2dtexture_copy_copy_copy"
+shader = "2dtexture"
 geometry = "billboard:spherical"
 scale = [650.0, 650.0, 650.0]
 texture = "sun_blue"
