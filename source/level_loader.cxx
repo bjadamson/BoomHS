@@ -3,7 +3,7 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/level_loader.hpp>
 #include <boomhs/obj.hpp>
-#include <boomhs/sun.hpp>
+#include <boomhs/orbital_body.hpp>
 
 #include <stlw/algorithm.hpp>
 #include <stlw/result.hpp>
@@ -346,11 +346,35 @@ load_material_color_orabort(CppTable const& file)
   return *optional;
 }
 
-void
-load_entities(stlw::Logger& logger, CppTable const& config, TextureTable const& ttable,
-              EntityRegistry& registry)
+auto
+load_orbital_bodies(stlw::Logger& logger, CppTable const& config, EntityRegistry& registry)
 {
-  auto const load_entity = [&registry, &ttable](auto const& file) {
+  auto const load = [](auto const& file) {
+    // clang-format off
+    auto const name        = get_string_or_abort(file, "name");
+    float const x_radius   = get_float_or_abort(file,  "x_radius");
+    float const y_radius   = get_float_or_abort(file,  "y_radius");
+    float const z_radius   = get_float_or_abort(file,  "z_radius");
+    float const offset     = get_float(file,           "offset").value_or(0.0f);
+    return OrbitalBody{name, x_radius, y_radius, z_radius, offset};
+    // clang-format on
+  };
+  auto const orbital_body_table = get_table_array(config, "orbital-body");
+
+  std::vector<OrbitalBody> orbitals;
+  for (auto const& it : *orbital_body_table)
+  {
+    orbitals.emplace_back(load(it));
+  }
+  return orbitals;
+}
+
+void
+load_entities(stlw::Logger& logger, CppTable const& config,
+    std::vector<OrbitalBody> const& orbital_bodies, TextureTable const& ttable,
+    EntityRegistry& registry)
+{
+  auto const load_entity = [&](auto const& file) {
     // clang-format off
     auto shader       = get_string_or_abort(file, "shader");
     auto geometry     = get_string_or_abort(file, "geometry");
@@ -364,8 +388,7 @@ load_entities(stlw::Logger& logger, CppTable const& config, TextureTable const& 
     auto is_visible   = get_bool(file,            "is_visible").value_or(true);
     bool is_skybox    = get_bool(file,            "skybox").value_or(false);
     bool random_junk  = get_bool(file,            "random_junk_from_file").value_or(false);
-    auto orbital_o    = get_vec3(file,            "orbital");
-    auto sun_o        = get_vec2(file,            "sun");
+    auto orbital_o    = get_string(file,          "orbital-body");
     // clang-format on
 
     // texture OR color fields, not both
@@ -401,20 +424,11 @@ load_entities(stlw::Logger& logger, CppTable const& config, TextureTable const& 
 
     if (orbital_o)
     {
-      auto const& data = *orbital_o;
-      auto&       orbital = registry.assign<OrbitalBody>(eid);
-      orbital.x_radius = data.x;
-      orbital.z_radius = data.y;
-
-      orbital.offset = data.z;
-    }
-    if (sun_o)
-    {
-      assert(registry.has<OrbitalBody>(eid));
-      auto const& sun_data = *sun_o;
-      auto&       sun = registry.assign<Sun>(eid);
-      sun.speed = sun_data.x;
-      sun.max_height = sun_data.y;
+      auto& orbital = registry.assign<OrbitalBody>(eid);
+      auto const cmp = [&orbital_o](auto const& orbital) { return orbital.name == *orbital_o; };
+      auto const it = std::find_if(orbital_bodies.cbegin(), orbital_bodies.cend(), cmp);
+      assert(it != orbital_bodies.cend());
+      orbital = *it;
     }
 
     if (player)
@@ -640,35 +654,39 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   ParsedVertexAttributes pvas = load_vas(engine_config);
   auto                   sps = TRY_MOVEOUT(load_shaders(logger, MOVE(pvas), engine_config));
 
-  CppTable area_config = cpptoml::parse_file("levels/" + filename);
-  assert(area_config);
+  CppTable file_datatable = cpptoml::parse_file("levels/" + filename);
+  assert(file_datatable);
 
-  auto const mesh_table = get_table_array_or_abort(area_config, "meshes");
+  auto const mesh_table = get_table_array_or_abort(file_datatable, "meshes");
   ObjStore   objstore =
       TRY_MOVEOUT(load_objfiles(logger, mesh_table).mapErrorMoveOut(loadstatus_to_string));
 
   LOG_TRACE("loading textures ...");
-  auto texture_table = load_textures(logger, area_config);
+  auto texture_table = load_textures(logger, file_datatable);
+
+  LOG_TRACE("loading orbital data");
+  auto const orbital_bodies = load_orbital_bodies(logger, file_datatable, registry);
+
   LOG_TRACE("loading entities ...");
-  load_entities(logger, area_config, texture_table, registry);
+  load_entities(logger, file_datatable, orbital_bodies, texture_table, registry);
 
   LOG_TRACE("loading tile materials ...");
-  auto tile_table = load_tileinfos(logger, area_config, registry);
+  auto tile_table = load_tileinfos(logger, file_datatable, registry);
 
   LOG_TRACE("loading lights ...");
-  auto const ambient = Color{get_vec3_or_abort(area_config, "ambient")};
+  auto const ambient = Color{get_vec3_or_abort(file_datatable, "ambient")};
   auto const directional_light_diffuse =
-      Color{get_vec3_or_abort(area_config, "directional_light_diffuse")};
+      Color{get_vec3_or_abort(file_datatable, "directional_light_diffuse")};
   auto const directional_light_specular =
-      Color{get_vec3_or_abort(area_config, "directional_light_specular")};
+      Color{get_vec3_or_abort(file_datatable, "directional_light_specular")};
   auto const directional_light_direction =
-      get_vec3_or_abort(area_config, "directional_light_direction");
+      get_vec3_or_abort(file_datatable, "directional_light_direction");
 
   Light            light{directional_light_diffuse, directional_light_specular};
   DirectionalLight dlight{MOVE(light), directional_light_direction};
   GlobalLight      glight{ambient, MOVE(dlight)};
 
-  auto bg_color = Color{get_vec3_or_abort(area_config, "background")};
+  auto bg_color = Color{get_vec3_or_abort(file_datatable, "background")};
   LOG_TRACE("yielding assets");
   return Ok(LevelAssets{MOVE(glight), MOVE(bg_color),
 

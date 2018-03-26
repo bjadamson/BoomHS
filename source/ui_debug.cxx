@@ -1,7 +1,7 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/level_manager.hpp>
+#include <boomhs/orbital_body.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/sun.hpp>
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_state.hpp>
 #include <opengl/global.hpp>
@@ -547,14 +547,14 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window)
       ImGui::Checkbox("Draw Skybox", &draw);
     }
     {
-      auto const eids = find_suns(registry);
+      auto const eids = find_orbital_bodies(registry);
       auto       num = 1;
       for (auto const eid : eids)
       {
         auto& v = registry.get<IsVisible>(eid);
         bool& draw = v.value;
 
-        auto const text = "Draw Sun" + std::to_string(num++);
+        auto const text = "Draw Orbital Body" + std::to_string(num++);
         ImGui::Checkbox(text.c_str(), &draw);
       }
     }

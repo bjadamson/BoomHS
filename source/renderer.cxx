@@ -1,8 +1,8 @@
 #include <boomhs/billboard.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/orbital_body.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/sun.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/types.hpp>
@@ -588,8 +588,8 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     draw_fn(eid, sn, copy_transform, FORWARD(args));
   };
 
-  auto const draw_sun = [&](auto const eid, auto& sn, auto& transform, auto& isv, auto& bboard,
-                            auto&&... args) {
+  auto const draw_orbital_body = [&](auto const eid, auto& sn, auto& transform, auto& isv,
+      auto& bboard, auto&&... args) {
     auto& camera = zs.level_data.camera;
 
     auto const bb_type = bboard.value;
@@ -604,7 +604,8 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
   //
   // Render everything loaded form level file.
-  registry.view<ShaderName, Transform, IsVisible, BillboardRenderable, Sun>().each(draw_sun);
+  registry.view<ShaderName, Transform, IsVisible, BillboardRenderable, OrbitalBody>()
+    .each(draw_orbital_body);
 
   registry.view<ShaderName, Transform, IsVisible, JunkEntityFromFILE>().each(draw_fn);
 
