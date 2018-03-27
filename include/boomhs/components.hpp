@@ -205,7 +205,7 @@ find_torches(EntityRegistry& registry)
   return torches;
 }
 
-inline auto&
+inline auto
 find_skybox(EntityRegistry& registry)
 {
   // for now assume only 1 entity has the Player tag
