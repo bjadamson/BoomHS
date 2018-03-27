@@ -266,16 +266,21 @@ draw_3dlit_shape(RenderState& rstate, glm::mat4 const& model_matrix, ShaderProgr
 
 void
 draw_3dlightsource(RenderState& rstate, glm::mat4 const& model_matrix, ShaderProgram& sp,
-                   DrawInfo const& dinfo, EntityID const entity, EntityRegistry& registry)
+                   DrawInfo const& dinfo, EntityID const eid, EntityRegistry& registry)
 {
   auto& es = rstate.es;
   auto& zs = rstate.zs;
 
   auto& logger = es.logger;
-  auto& pointlight = registry.get<PointLight>(entity);
+  auto& pointlight = registry.get<PointLight>(eid);
 
-  auto const diffuse = pointlight.light.diffuse;
-  sp.set_uniform_color_3fv(logger, "u_lightcolor", diffuse);
+  bool const has_texture = registry.has<TextureRenderable>(eid);
+  if (!has_texture) {
+    // ASSUMPTION: If the light source has a texture, then DO NOT set u_lightcolor.
+    // Instead, assume the image should be rendered unaffected by the lightsource itself.
+    auto const diffuse = pointlight.light.diffuse;
+    sp.set_uniform_color_3fv(logger, "u_lightcolor", diffuse);
+  }
   draw(rstate, model_matrix, sp, dinfo);
 }
 

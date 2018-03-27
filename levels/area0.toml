@@ -323,6 +323,19 @@ scale = [650.0, 650.0, 650.0]
 texture = "sun"
 
 [[entity]]
+orbital-body = "moon"
+position = [0.0, 750.0, 0.0]
+shader = "2dlight_uv"
+geometry = "billboard:spherical"
+scale = [650.0, 650.0, 650.0]
+texture = "moon"
+pointlight = [0.0, 0.0, 0.0]
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[entity]]
 position = [0.0, 0.0, 0.0]
 shader = "3dtexture"
 geometry = "mesh:terrain"

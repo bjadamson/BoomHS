@@ -84,10 +84,11 @@ fragment = "light.frag"
 va = "vertex_only"
 
 [[shaders]]
-name = "light_uv"
-vertex = "light_uv.vert"
-fragment = "light_uv.frag"
+name = "2dlight_uv"
+vertex = "2dlight_uv.vert"
+fragment = "2dlight_uv.frag"
 va = "vertex_uv"
+is_2d = true
 
 [[shaders]]
 name = "torch"

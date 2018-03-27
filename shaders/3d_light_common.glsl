@@ -1,4 +1,4 @@
-#define MAX_NUM_POINTLIGHTS 4
+#define MAX_NUM_POINTLIGHTS 5
 #define MAX_NUM_DIRECTIONAL_LIGHTS 4
 
 struct Material {
