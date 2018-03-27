@@ -257,6 +257,19 @@ move_riverwiggles(LevelData& level_data, FrameTime const& ft)
   }
 }
 
+inline auto
+find_torches(EntityRegistry& registry)
+{
+  std::vector<EntityID> torches;
+  auto                  view = registry.view<Torch>();
+  for (auto const eid : view)
+  {
+    assert(registry.has<Transform>(eid));
+    torches.emplace_back(eid);
+  }
+  return torches;
+}
+
 void
 update_torchflicker(LevelData const& ldata, EntityRegistry& registry, stlw::float_generator& rng,
                     FrameTime const& ft)

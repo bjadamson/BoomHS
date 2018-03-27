@@ -4,6 +4,7 @@
 #include <boomhs/level_loader.hpp>
 #include <boomhs/obj.hpp>
 #include <boomhs/orbital_body.hpp>
+#include <boomhs/skybox.hpp>
 
 #include <stlw/algorithm.hpp>
 #include <stlw/result.hpp>

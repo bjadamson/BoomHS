@@ -173,7 +173,8 @@ try_pickup_nearby_item(GameState& state, FrameTime const& ft)
   auto const  player_eid = find_player(registry);
   auto&       player_transform = registry.get<Transform>(player_eid);
   auto const& player_pos = player_transform.translation;
-  auto&       inventory = find_inventory(registry);
+  auto &player = registry.get<PlayerData>(player_eid);
+  auto &inventory = player.inventory;
 
   static constexpr auto MINIMUM_DISTANCE_TO_PICKUP = 1.0f;
   auto const            items = find_items(registry);
@@ -374,7 +375,8 @@ process_keydown(GameState& state, SDL_Event const& event, FrameTime const& ft)
   {
     auto&      registry = active.registry;
     auto const eid = find_player(registry);
-    auto&      inventory = find_inventory(registry);
+    auto &player = registry.get<PlayerData>(eid);
+    auto &inventory = player.inventory;
     inventory.toggle_open();
   }
   break;

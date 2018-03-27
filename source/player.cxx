@@ -13,7 +13,8 @@ namespace boomhs
 void
 Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
 {
-  auto& inventory = find_inventory(registry);
+  auto &player = registry.get<PlayerData>(eid);
+  auto &inventory = player.inventory;
 
   assert(inventory.add_item(eid));
   auto& item = registry.get<Item>(eid);
@@ -26,7 +27,9 @@ Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
 void
 Player::drop_entity(stlw::Logger& logger, EntityID const eid, EntityRegistry& registry)
 {
-  auto& inventory = find_inventory(registry);
+  auto &player = registry.get<PlayerData>(eid);
+  auto &inventory = player.inventory;
+
   auto& item = registry.get<Item>(eid);
   item.is_pickedup = false;
 

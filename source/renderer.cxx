@@ -2,6 +2,7 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/renderer.hpp>
+#include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>

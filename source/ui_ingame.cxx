@@ -17,7 +17,9 @@ namespace boomhs::ui_ingame
 void
 draw_player_inventory(stlw::Logger& logger, EntityRegistry& registry, TextureTable const& ttable)
 {
-  auto& inventory = find_inventory(registry);
+  auto const eid = find_player(registry);
+  auto &player = registry.get<PlayerData>(eid);
+  auto &inventory = player.inventory;
 
   auto const draw_button = [&](TextureInfo const& ti) {
     ImTextureID im_texid = reinterpret_cast<void*>(ti.id);
@@ -127,8 +129,9 @@ draw(EngineState& es, LevelManager& lm)
     draw_nearest_target_info(nearby_targets, ttable, registry);
   }
 
-  EntityID const player_eid = find_player(registry);
-  auto&          inventory = find_inventory(registry);
+  auto const eid = find_player(registry);
+  auto &player = registry.get<PlayerData>(eid);
+  auto &inventory = player.inventory;
   if (inventory.is_open())
   {
     draw_player_inventory(logger, registry, ttable);

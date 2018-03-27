@@ -60,10 +60,6 @@ struct MeshRenderable
   std::string name;
 };
 
-struct IsSkybox
-{
-};
-
 struct TextureRenderable
 {
   opengl::TextureInfo texture_info;
@@ -152,76 +148,6 @@ inline auto
 find_downstairs(EntityRegistry& registry, TileGrid const& tgrid)
 {
   return find_stairs_withtype(registry, tgrid, TileType::STAIR_DOWN);
-}
-
-inline auto
-find_items(EntityRegistry& registry)
-{
-  std::vector<EntityID> items;
-  auto                  view = registry.view<Item>();
-  for (auto const eid : view)
-  {
-    items.emplace_back(eid);
-  }
-  return items;
-}
-
-inline EntityID
-find_player(EntityRegistry& registry)
-{
-  // for now assume only 1 entity has the Player tag
-  assert(1 == registry.view<PlayerData>().size());
-
-  // Assume Player has a Transform
-  auto                    view = registry.view<PlayerData, Transform>();
-  std::optional<EntityID> entity{std::nullopt};
-  for (auto const e : view)
-  {
-    // This assert ensures this loop only runs once.
-    assert(std::nullopt == entity);
-    entity = e;
-  }
-  assert(std::nullopt != entity);
-  return *entity;
-}
-
-inline auto&
-find_inventory(EntityRegistry& registry)
-{
-  auto const eid = find_player(registry);
-  return registry.get<PlayerData>(eid).inventory;
-}
-
-inline auto
-find_torches(EntityRegistry& registry)
-{
-  std::vector<EntityID> torches;
-  auto                  view = registry.view<Torch>();
-  for (auto const eid : view)
-  {
-    assert(registry.has<Transform>(eid));
-    torches.emplace_back(eid);
-  }
-  return torches;
-}
-
-inline auto
-find_skybox(EntityRegistry& registry)
-{
-  // for now assume only 1 entity has the Player tag
-  assert(1 == registry.view<IsSkybox>().size());
-
-  // Assume Skybox has a Transform
-  auto                    view = registry.view<IsSkybox, Transform>();
-  std::optional<EntityID> entity{std::nullopt};
-  for (auto const e : view)
-  {
-    // This assert ensures this loop only runs once.
-    assert(std::nullopt == entity);
-    entity = e;
-  }
-  assert(std::nullopt != entity);
-  return *entity;
 }
 
 } // namespace boomhs

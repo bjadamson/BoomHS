@@ -1,6 +1,7 @@
 #pragma once
 #include <boomhs/entity.hpp>
 #include <boomhs/item.hpp>
+#include <boomhs/player.hpp>
 
 #include <array>
 #include <optional>
