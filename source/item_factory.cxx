@@ -54,7 +54,7 @@ EntityID
 ItemFactory::create_torch(EntityRegistry& registry, stlw::float_generator& rng,
                           TextureTable const& ttable)
 {
-  auto eid = create_item(registry, ttable, "O", "Lava", "light_texture");
+  auto eid = create_item(registry, ttable, "O", "Lava", "torch");
   registry.assign<Torch>(eid);
 
   auto& item = registry.get<Item>(eid);

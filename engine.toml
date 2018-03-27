@@ -84,9 +84,15 @@ fragment = "light.frag"
 va = "vertex_only"
 
 [[shaders]]
-name = "light_texture"
-vertex = "light_texture.vert"
-fragment = "light_texture.frag"
+name = "light_uv"
+vertex = "light_uv.vert"
+fragment = "light_uv.frag"
+va = "vertex_uv"
+
+[[shaders]]
+name = "torch"
+vertex = "torch.vert"
+fragment = "torch.frag"
 va = "vertex_uv"
 
 ############# letters
