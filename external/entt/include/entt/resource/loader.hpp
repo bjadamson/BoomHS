@@ -17,7 +17,7 @@ class ResourceCache;
  *
  * Resource loaders must inherit from this class and stay true to the CRTP
  * idiom. Moreover, a resource loader must expose a public, const member
- * function named `load` that accepts a variable number of arguments and return
+ * function named `load` that accepts a variable number of arguments and returns
  * a shared pointer to the resource just created.<br/>
  * As an example:
  *
@@ -50,7 +50,7 @@ class ResourceLoader {
     friend class ResourceCache<Resource>;
 
     template<typename... Args>
-    std::shared_ptr<Resource> get(Args&&... args) const {
+    std::shared_ptr<Resource> get(Args &&... args) const {
         return static_cast<const Loader *>(this)->load(std::forward<Args>(args)...);
     }
 };

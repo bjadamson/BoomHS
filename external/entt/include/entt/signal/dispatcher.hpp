@@ -59,12 +59,12 @@ class Dispatcher final {
         }
 
         template<typename... Args>
-        inline void trigger(Args&&... args) {
+        inline void trigger(Args &&... args) {
             signal.publish({ std::forward<Args>(args)... });
         }
 
         template<typename... Args>
-        inline void enqueue(std::size_t current, Args&&... args) {
+        inline void enqueue(std::size_t current, Args &&... args) {
             events[current].push_back({ std::forward<Args>(args)... });
         }
 
@@ -127,8 +127,9 @@ public:
      * automatically detected and unregistered if available.
      *
      * @warning
-     * Disonnecting a listener during an update may lead to unexpected behavior.
-     * Unregister listeners before or after invoking the update if possible.
+     * Disconnecting a listener during an update may lead to unexpected
+     * behavior. Unregister listeners before or after invoking the update if
+     * possible.
      *
      * @tparam Event Type of event from which to disconnect the function.
      * @tparam Class Type of class to which the member function belongs.
@@ -151,7 +152,7 @@ public:
      * @param args Arguments to use to construct the event.
      */
     template<typename Event, typename... Args>
-    void trigger(Args&&... args) {
+    void trigger(Args &&... args) {
         wrapper<Event>().trigger(std::forward<Args>(args)...);
     }
 
@@ -166,7 +167,7 @@ public:
      * @param args Arguments to use to construct the event.
      */
     template<typename Event, typename... Args>
-    void enqueue(Args&&... args) {
+    void enqueue(Args &&... args) {
         wrapper<Event>().enqueue(buffer(mode), std::forward<Args>(args)...);
     }
 
@@ -181,7 +182,7 @@ public:
         const auto buf = buffer(mode);
         mode = !mode;
 
-        for(auto pos = wrappers.size(); pos > decltype(pos){0}; --pos) {
+        for(auto pos = wrappers.size(); pos; --pos) {
             auto &wrapper = wrappers[pos-1];
 
             if(wrapper) {

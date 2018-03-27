@@ -52,7 +52,7 @@ class Emitter {
         using connection_type = typename container_type::iterator;
 
         bool empty() const noexcept override {
-            auto pred = [](auto &&element){ return element.first; };
+            auto pred = [](auto &&element) { return element.first; };
 
             return std::all_of(onceL.cbegin(), onceL.cend(), pred) &&
                     std::all_of(onL.cbegin(), onL.cend(), pred);
@@ -60,7 +60,7 @@ class Emitter {
 
         void clear() noexcept override {
             if(publishing) {
-                auto func = [](auto &&element){ element.first = true; };
+                auto func = [](auto &&element) { element.first = true; };
                 std::for_each(onceL.begin(), onceL.end(), func);
                 std::for_each(onL.begin(), onL.end(), func);
             } else {
@@ -81,7 +81,7 @@ class Emitter {
             conn->first = true;
 
             if(!publishing) {
-                auto pred = [](auto &&element){ return element.first; };
+                auto pred = [](auto &&element) { return element.first; };
                 onceL.remove_if(pred);
                 onL.remove_if(pred);
             }
@@ -102,7 +102,7 @@ class Emitter {
 
             publishing = false;
 
-            onL.remove_if([](auto &&element){ return element.first; });
+            onL.remove_if([](auto &&element) { return element.first; });
         }
 
     private:
@@ -215,7 +215,7 @@ public:
      * @param args Parameters to use to initialize the event.
      */
     template<typename Event, typename... Args>
-    void publish(Args&&... args) {
+    void publish(Args &&... args) {
         handler<Event>().publish({ std::forward<Args>(args)... }, *static_cast<Derived *>(this));
     }
 
@@ -287,7 +287,7 @@ public:
      * @brief Disconnects all the listeners for the given event type.
      *
      * All the connections previously returned for the given event are
-     * invalidated. Using them results in undefined behaviour.
+     * invalidated. Using them results in undefined behavior.
      *
      * @tparam Event Type of event to reset.
      */
@@ -300,11 +300,11 @@ public:
      * @brief Disconnects all the listeners.
      *
      * All the connections previously returned are invalidated. Using them
-     * results in undefined behaviour.
+     * results in undefined behavior.
      */
     void clear() noexcept {
         std::for_each(handlers.begin(), handlers.end(),
-                      [](auto &&handler){ if(handler) { handler->clear(); } });
+                      [](auto &&handler) { if(handler) { handler->clear(); } });
     }
 
     /**
@@ -327,7 +327,7 @@ public:
      */
     bool empty() const noexcept {
         return std::all_of(handlers.cbegin(), handlers.cend(),
-                           [](auto &&handler){ return !handler || handler->empty(); });
+                           [](auto &&handler) { return !handler || handler->empty(); });
     }
 
 private:

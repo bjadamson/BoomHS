@@ -12,8 +12,8 @@
 #include <algorithm>
 #include <type_traits>
 #include "../core/family.hpp"
+#include "entt_traits.hpp"
 #include "sparse_set.hpp"
-#include "traits.hpp"
 #include "view.hpp"
 
 
@@ -57,7 +57,7 @@ class Registry {
         using test_fn_type = bool(Registry::*)(Entity) const;
 
         template<typename... Args>
-        Component & construct(Registry &registry, Entity entity, Args&&... args) {
+        Component & construct(Registry &registry, Entity entity, Args &&... args) {
             auto &component = SparseSet<Entity, Component>::construct(entity, std::forward<Args>(args)...);
 
             for(auto &&listener: listeners) {
@@ -138,7 +138,6 @@ class Registry {
 
         if(!handlers[vtype]) {
             using accumulator_type = int[];
-
             auto set = std::make_unique<SparseSet<Entity>>();
 
             for(auto entity: view<Component...>()) {
@@ -230,7 +229,7 @@ public:
      * @return Number of entities still in use.
      */
     size_type size() const noexcept {
-        return entities.size() - available.size();
+        return entities.size() - available;
     }
 
     /**
@@ -257,7 +256,6 @@ public:
      */
     void reserve(size_type cap) {
         entities.reserve(cap);
-        available.reserve(cap);
     }
 
     /**
@@ -284,19 +282,41 @@ public:
      * @return True if at least an entity is still in use, false otherwise.
      */
     bool empty() const noexcept {
-        return entities.size() == available.size();
+        return entities.size() == available;
     }
 
     /**
-     * @brief Verifies if an entity identifier still refers to a valid entity.
+     * @brief Checks if an entity identifier refers to a valid entity.
      * @param entity An entity identifier, either valid or not.
-     * @return True if the identifier is still valid, false otherwise.
+     * @return True if the identifier is valid, false otherwise.
      */
     bool valid(entity_type entity) const noexcept {
-        using promotion_type = std::conditional_t<sizeof(size_type) >= sizeof(entity_type), size_type, entity_type>;
-        // explicit promotion to avoid warnings with std::uint16_t
-        const entity_type entt = promotion_type{entity} & traits_type::entity_mask;
-        return (entt < entities.size() && entities[entt] == entity);
+        const auto pos = size_type(entity & traits_type::entity_mask);
+        return (pos < entities.size() && entities[pos] == entity);
+    }
+
+    /**
+     * @brief Checks if an entity identifier refers to a valid entity.
+     *
+     * Alternative version of `valid`. It accesses the internal data structures
+     * without bounds checking and thus it's both unsafe and risky to use.<br/>
+     * You should not invoke directly this function unless you know exactly what
+     * you are doing. Prefer the `valid` member function instead.
+     *
+     * @warning
+     * Attempting to use an entity that doesn't belong to the registry can
+     * result in undefined behavior.<br/>
+     * An assertion will abort the execution at runtime in debug mode in case of
+     * bounds violation.
+     *
+     * @param entity A valid entity identifier.
+     * @return True if the identifier is valid, false otherwise.
+     */
+    bool fast(entity_type entity) const noexcept {
+        const auto pos = size_type(entity & traits_type::entity_mask);
+        assert(pos < entities.size());
+        // the in-use control bit permits to avoid accessing the direct vector
+        return (entities[pos] == entity);
     }
 
     /**
@@ -326,11 +346,9 @@ public:
      * @return Actual version for the given entity identifier.
      */
     version_type current(entity_type entity) const noexcept {
-        using promotion_type = std::conditional_t<sizeof(size_type) >= sizeof(entity_type), size_type, entity_type>;
-        // explicit promotion to avoid warnings with std::uint16_t
-        const auto entt = promotion_type{entity} & traits_type::entity_mask;
-        assert(entt < entities.size());
-        return version_type((entities[entt] >> traits_type::entity_shift) & traits_type::version_mask);
+        const auto pos = size_type(entity & traits_type::entity_mask);
+        assert(pos < entities.size());
+        return version_type((entities[pos] >> traits_type::entity_shift) & traits_type::version_mask);
     }
 
     /**
@@ -353,10 +371,10 @@ public:
      * @return A valid entity identifier.
      */
     template<typename... Component>
-    entity_type create(Component&&... components) noexcept {
+    entity_type create(Component &&... components) noexcept {
         using accumulator_type = int[];
         const auto entity = create();
-        accumulator_type accumulator = { 0, (ensure<Component>().construct(*this, entity, std::forward<Component>(components)), 0)... };
+        accumulator_type accumulator = { 0, (ensure<std::decay_t<Component>>().construct(*this, entity, std::forward<Component>(components)), 0)... };
         (void)accumulator;
         return entity;
     }
@@ -408,14 +426,18 @@ public:
     entity_type create() noexcept {
         entity_type entity;
 
-        if(available.empty()) {
+        if(available) {
+            const auto entt = next;
+            const auto version = entities[entt] & (~traits_type::entity_mask);
+
+            entity = entt | version;
+            next = entities[entt] & traits_type::entity_mask;
+            entities[entt] = entity;
+            --available;
+        } else {
             entity = entity_type(entities.size());
             assert(entity < traits_type::entity_mask);
-            assert((entity >> traits_type::entity_shift) == entity_type{});
             entities.push_back(entity);
-        } else {
-            entity = available.back();
-            available.pop_back();
         }
 
         return entity;
@@ -439,11 +461,12 @@ public:
     void destroy(entity_type entity) {
         assert(valid(entity));
         const auto entt = entity & traits_type::entity_mask;
-        const auto version = version_type{1} + ((entity >> traits_type::entity_shift) & traits_type::version_mask);
-        const auto next = entt | (version << traits_type::entity_shift);
+        const auto version = (((entity >> traits_type::entity_shift) + 1) & traits_type::version_mask) << traits_type::entity_shift;
+        const auto node = (available ? next : ((entt + 1) & traits_type::entity_mask)) | version;
 
-        entities[entt] = next;
-        available.push_back(next);
+        entities[entt] = node;
+        next = entt;
+        ++available;
 
         for(auto &&cpool: pools) {
             if(cpool && cpool->has(entity)) {
@@ -474,7 +497,7 @@ public:
      * @return A reference to the newly created tag.
      */
     template<typename Tag, typename... Args>
-    Tag & attach(entity_type entity, Args&&... args) {
+    Tag & attach(entity_type entity, Args &&... args) {
         assert(valid(entity));
         assert(!has<Tag>());
         const auto ttype = tag_family::type<Tag>();
@@ -483,7 +506,7 @@ public:
             tags.resize(ttype + 1);
         }
 
-        tags[ttype].reset(new Attaching<Tag>{entity, { std::forward<Args>(args)... }});
+        tags[ttype].reset(new Attaching<Tag>{entity, Tag{std::forward<Args>(args)...}});
 
         return static_cast<Attaching<Tag> *>(tags[ttype].get())->tag;
     }
@@ -588,7 +611,7 @@ public:
      * @return A reference to the newly created component.
      */
     template<typename Component, typename... Args>
-    Component & assign(entity_type entity, Args&&... args) {
+    Component & assign(entity_type entity, Args &&... args) {
         assert(valid(entity));
         return ensure<Component>().construct(*this, entity, std::forward<Args>(args)...);
     }
@@ -690,7 +713,7 @@ public:
     template<typename... Component>
     std::enable_if_t<(sizeof...(Component) > 1), std::tuple<const Component &...>>
     get(entity_type entity) const noexcept {
-        return std::tuple<const Component &...>{ get<Component>(entity)... };
+        return std::tuple<const Component &...>{get<Component>(entity)...};
     }
 
     /**
@@ -710,7 +733,7 @@ public:
     template<typename... Component>
     std::enable_if_t<(sizeof...(Component) > 1), std::tuple<Component &...>>
     get(entity_type entity) noexcept {
-        return std::tuple<Component &...>{ get<Component>(entity)... };
+        return std::tuple<Component &...>{get<Component>(entity)...};
     }
 
     /**
@@ -734,7 +757,7 @@ public:
      * @return A reference to the newly created component.
      */
     template<typename Component, typename... Args>
-    Component & replace(entity_type entity, Args&&... args) {
+    Component & replace(entity_type entity, Args &&... args) {
         assert(valid(entity));
         return (pool<Component>().get(entity) = Component{std::forward<Args>(args)...});
     }
@@ -752,7 +775,7 @@ public:
      * }
      * @endcode
      *
-     * Prefer this function anyway because it has slighlty better
+     * Prefer this function anyway because it has slightly better
      * performance.
      *
      * @warning
@@ -767,7 +790,7 @@ public:
      * @return A reference to the newly created component.
      */
     template<typename Component, typename... Args>
-    Component & accomodate(entity_type entity, Args&&... args) {
+    Component & accommodate(entity_type entity, Args &&... args) {
         assert(valid(entity));
         auto &cpool = ensure<Component>();
 
@@ -779,7 +802,7 @@ public:
     /**
      * @brief Sorts the pool of entities for the given component.
      *
-     * The order of the elements in a pool is highly affected by assignements
+     * The order of the elements in a pool is highly affected by assignments
      * of components to entities and deletions. Components are arranged to
      * maximize the performance during iterations and users should not make any
      * assumption on the order.<br/>
@@ -807,7 +830,7 @@ public:
     /**
      * @brief Sorts two pools of components in the same way.
      *
-     * The order of the elements in a pool is highly affected by assignements
+     * The order of the elements in a pool is highly affected by assignments
      * of components to entities and deletions. Components are arranged to
      * maximize the performance during iterations and users should not make any
      * assumption on the order.
@@ -825,9 +848,9 @@ public:
      * the following rules:
      *
      * * All the entities in `A` that are also in `B` are returned first
-     * according to the order they have in `B`.
+     *   according to the order they have in `B`.
      * * All the entities in `A` that are not in `B` are returned in no
-     * particular order after all the other entities.
+     *   particular order after all the other entities.
      *
      * Any subsequent change to `B` won't affect the order in `A`.
      *
@@ -879,11 +902,11 @@ public:
         if(managed<Component>()) {
             auto &cpool = pool<Component>();
 
-            for(auto entity: entities) {
+            each([&cpool](auto entity) {
                 if(cpool.has(entity)) {
                     cpool.destroy(entity);
                 }
-            }
+            });
         }
     }
 
@@ -891,59 +914,103 @@ public:
      * @brief Resets a whole registry.
      *
      * Destroys all the entities. After a call to `reset`, all the entities
-     * previously created are recycled with a new version number. In case entity
+     * still in use are recycled with a new version number. In case entity
      * identifers are stored around, the `current` member function can be used
      * to know if they are still valid.
      */
     void reset() {
-        available.clear();
-
-        for(auto &&entity: entities) {
-            const auto version = version_type{1} + ((entity >> traits_type::entity_shift) & traits_type::version_mask);
-            entity = (entity & traits_type::entity_mask) | (version << traits_type::entity_shift);
-            available.push_back(entity);
-        }
-
-        for(auto &&handler: handlers) {
-            if(handler) {
-                handler->reset();
-            }
-        }
-
-        for(auto &&pool: pools) {
-            if(pool) {
-                pool->reset();
-            }
-        }
-
-        for(auto &&tag: tags) {
-            tag.reset();
-        }
+        each([this](auto entity) {
+            destroy(entity);
+        });
     }
 
     /**
-     * @brief Iterate entities and applies them the given function object.
+     * @brief Iterates all the entities that are still in use.
      *
-     * The function object is invoked for each entity, no matter if it's in use
-     * or not.<br/>
+     * The function object is invoked for each entity that is still in use.<br/>
      * The signature of the function should be equivalent to the following:
      *
      * @code{.cpp}
      * void(entity_type);
      * @endcode
      *
+     * This function is fairly slow and should not be used frequently.<br/>
      * Consider using a view if the goal is to iterate entities that have a
      * determinate set of components. A view is usually faster than combining
-     * this function with a bunch of custom tests.
+     * this function with a bunch of custom tests.<br/>
+     * On the other side, this function can be used to iterate all the entities
+     * that are in use, regardless of their components.
      *
      * @tparam Func Type of the function object to invoke.
      * @param func A valid function object.
      */
     template<typename Func>
     void each(Func func) const {
-        for(auto pos = entities.size(); pos > size_type{0}; --pos) {
-            func(entities[pos-1]);
+        if(available) {
+            for(auto pos = entities.size(); pos; --pos) {
+                const entity_type curr = pos - 1;
+                const auto entt = entities[curr] & traits_type::entity_mask;
+
+                if(curr == entt) {
+                    func(entities[curr]);
+                }
+            }
+        } else {
+            for(auto pos = entities.size(); pos; --pos) {
+                func(entities[pos-1]);
+            }
         }
+    }
+
+    /**
+     * @brief Checks if an entity is an orphan.
+     *
+     * An orphan is an entity that has neither assigned components nor
+     * tags.
+     *
+     * @param entity A valid entity identifier.
+     * @return True if the entity is an orphan, false otherwise.
+     */
+    bool orphan(entity_type entity) const {
+        assert(valid(entity));
+        bool orphan = true;
+
+        for(std::size_t i = 0; i < pools.size() && orphan; ++i) {
+            const auto &pool = pools[i];
+            orphan = !(pool && pool->has(entity));
+        }
+
+        for(std::size_t i = 0; i < tags.size() && orphan; ++i) {
+            const auto &tag = tags[i];
+            orphan = !(tag && (tag->entity == entity));
+        }
+
+        return orphan;
+    }
+
+    /**
+     * @brief Iterates orphans and applies them the given function object.
+     *
+     * The function object is invoked for each entity that is still in use and
+     * has neither assigned components nor tags.<br/>
+     * The signature of the function should be equivalent to the following:
+     *
+     * @code{.cpp}
+     * void(entity_type);
+     * @endcode
+     *
+     * This function can be very slow and should not be used frequently.
+     *
+     * @tparam Func Type of the function object to invoke.
+     * @param func A valid function object.
+     */
+    template<typename Func>
+    void orphans(Func func) const {
+        each([func = std::move(func), this](auto entity) {
+            if(orphan(entity)) {
+                func(entity);
+            }
+        });
     }
 
     /**
@@ -957,13 +1024,13 @@ public:
      * As a rule of thumb, storing a view should never be an option.
      *
      * Standard views do their best to iterate the smallest set of candidate
-     * entites. In particular:
+     * entities. In particular:
      *
      * * Single component views are incredibly fast and iterate a packed array
-     * of entities, all of which has the given component.
+     *   of entities, all of which has the given component.
      * * Multi component views look at the number of entities available for each
-     * component and pick up a reference to the smallest set of candidates to
-     * test for the given components.
+     *   component and pick up a reference to the smallest set of candidates to
+     *   test for the given components.
      *
      * @note
      * Multi component views are pretty fast. However their performance tend to
@@ -974,6 +1041,7 @@ public:
      * @see View
      * @see View<Entity, Component>
      * @see PersistentView
+     * @see RawView
      *
      * @tparam Component Type of components used to construct the view.
      * @return A newly created standard view.
@@ -995,7 +1063,7 @@ public:
      * requested.<br/>
      * To avoid costly operations, internal data structures for persistent views
      * can be prepared with this function. Just use the same set of components
-     * that would have been used otherwise to contruct the view.
+     * that would have been used otherwise to construct the view.
      *
      * @tparam Component Types of components used to prepare the view.
      */
@@ -1054,16 +1122,16 @@ public:
      * initialization.<br/>
      * As a rule of thumb, storing a view should never be an option.
      *
-     * Persistent views are the right choice to iterate entites when the number
+     * Persistent views are the right choice to iterate entities when the number
      * of components grows up and the most of the entities have all the given
      * components.<br/>
      * However they have also drawbacks:
      *
      * * Each kind of persistent view requires a dedicated data structure that
-     * is allocated within the registry and it increases memory pressure.
+     *   is allocated within the registry and it increases memory pressure.
      * * Internal data structures used to construct persistent views must be
-     * kept updated and it affects slightly construction and destruction of
-     * entities and components.
+     *   kept updated and it affects slightly construction and destruction of
+     *   entities and components.
      *
      * That being said, persistent views are an incredibly powerful tool if used
      * with care and offer a boost of performance undoubtedly.
@@ -1077,6 +1145,7 @@ public:
      * @see View
      * @see View<Entity, Component>
      * @see PersistentView
+     * @see RawView
      *
      * @tparam Component Types of components used to construct the view.
      * @return A newly created persistent view.
@@ -1087,12 +1156,41 @@ public:
         return PersistentView<Entity, Component...>{handler<Component...>(), pool<Component>()...};
     }
 
+    /**
+     * @brief Returns a raw view for the given component.
+     *
+     * This kind of views are created on the fly and share with the registry its
+     * internal data structures.<br/>
+     * Feel free to discard a view after the use. Creating and destroying a view
+     * is an incredibly cheap operation because they do not require any type of
+     * initialization.<br/>
+     * As a rule of thumb, storing a view should never be an option.
+     *
+     * Raw views are incredibly fast and must be considered the best tool to
+     * iterate components whenever knowing the entities to which they belong
+     * isn't required.
+     *
+     * @see View
+     * @see View<Entity, Component>
+     * @see PersistentView
+     * @see RawView
+     *
+     * @tparam Component Type of component used to construct the view.
+     * @return A newly created raw view.
+     */
+    template<typename Component>
+    RawView<Entity, Component> raw() {
+        return RawView<Entity, Component>{ensure<Component>()};
+    }
+
+
 private:
     std::vector<std::unique_ptr<SparseSet<Entity>>> handlers;
     std::vector<std::unique_ptr<SparseSet<Entity>>> pools;
     std::vector<std::unique_ptr<Attachee>> tags;
-    std::vector<entity_type> available;
     std::vector<entity_type> entities;
+    size_type available{};
+    entity_type next{};
 };
 
 
