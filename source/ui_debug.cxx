@@ -119,15 +119,15 @@ draw_entity_editor(UiDebugState& uistate, LevelData& ldata, EntityRegistry& regi
 }
 
 void
-draw_time_editor(Time &time, UiDebugState& uistate)
+draw_time_editor(Time& time, UiDebugState& uistate)
 {
-  if (ImGui::Begin("TimeWindow")) {
-    // clang-format off
+  if (ImGui::Begin("TimeWindow"))
+  {
     int speed = 0;
     ImGui::InputInt("Speed Multiplier", &speed);
     ImGui::Separator();
 
-    auto &buffer = uistate.buffers.draw_time_window;
+    auto& buffer = uistate.buffers.draw_time_window;
     ImGui::InputInt("Seconds", &buffer.second);
     ImGui::InputInt("Minutes", &buffer.minute);
     ImGui::InputInt("Hour", &buffer.hour);
@@ -136,7 +136,20 @@ draw_time_editor(Time &time, UiDebugState& uistate)
     ImGui::InputInt("Month", &buffer.month);
     ImGui::InputInt("Year", &buffer.year);
 
-    if (ImGui::Button("Add Time Offset")) {
+    ImGui::Checkbox("Clear Time Fields With Submission", &buffer.clear_fields);
+
+    auto const maybe_clear_fields = [&]() {
+      bool const clear_fields = buffer.clear_fields;
+      if (clear_fields)
+      {
+        stlw::memzero(&buffer, sizeof(DrawTimeBuffer));
+      }
+
+      // restore clear_fields
+      buffer.clear_fields = clear_fields;
+    };
+    if (ImGui::Button("Add Time Offset"))
+    {
       time.add_seconds(buffer.second);
       time.add_minutes(buffer.minute);
       time.add_hours(buffer.hour);
@@ -144,11 +157,12 @@ draw_time_editor(Time &time, UiDebugState& uistate)
       time.add_weeks(buffer.week);
       time.add_months(buffer.month);
       time.add_years(buffer.year);
-
-      stlw::memzero(&buffer, sizeof(DrawTimeBuffer));
+      maybe_clear_fields();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Set Time")) {
+    if (ImGui::Button("Set Time"))
+    {
+      time.reset();
 
       time.set_seconds(buffer.second);
       time.set_minutes(buffer.minute);
@@ -157,21 +171,13 @@ draw_time_editor(Time &time, UiDebugState& uistate)
       time.set_weeks(buffer.week);
       time.set_months(buffer.month);
       time.set_years(buffer.year);
-
-      stlw::memzero(&buffer, sizeof(DrawTimeBuffer));
+      maybe_clear_fields();
     }
-    // clang-format on
 
     ImGui::TextWrapped("Current Time: Year: %d, Month: %d, Week: %d, Day: %d, Hour: %d, "
-        "Minute: %d, Second: %d",
-        time.years(),
-        time.months(),
-        time.weeks(),
-        time.days(),
-        time.hours(),
-        time.minutes(),
-        time.seconds()
-        );
+                       "Minute: %d, Second: %d",
+                       time.years(), time.months(), time.weeks(), time.days(), time.hours(),
+                       time.minutes(), time.seconds());
     ImGui::End();
   }
 }
@@ -568,8 +574,7 @@ namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState& es, LevelManager& lm, window::SDLWindow& window,
-    window::FrameTime const& ft)
+draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::FrameTime const& ft)
 {
   auto& state = es.ui_state.debug;
   auto& tilegrid_state = es.tilegrid_state;

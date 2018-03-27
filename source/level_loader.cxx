@@ -371,8 +371,8 @@ load_orbital_bodies(stlw::Logger& logger, CppTable const& config, EntityRegistry
 
 void
 load_entities(stlw::Logger& logger, CppTable const& config,
-    std::vector<OrbitalBody> const& orbital_bodies, TextureTable const& ttable,
-    EntityRegistry& registry)
+              std::vector<OrbitalBody> const& orbital_bodies, TextureTable const& ttable,
+              EntityRegistry& registry)
 {
   auto const load_entity = [&](auto const& file) {
     // clang-format off
@@ -424,7 +424,7 @@ load_entities(stlw::Logger& logger, CppTable const& config,
 
     if (orbital_o)
     {
-      auto& orbital = registry.assign<OrbitalBody>(eid);
+      auto&      orbital = registry.assign<OrbitalBody>(eid);
       auto const cmp = [&orbital_o](auto const& orbital) { return orbital.name == *orbital_o; };
       auto const it = std::find_if(orbital_bodies.cbegin(), orbital_bodies.cend(), cmp);
       assert(it != orbital_bodies.cend());

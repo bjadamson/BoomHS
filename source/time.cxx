@@ -86,7 +86,7 @@ years_to_seconds(int const years)
   return months_to_seconds(months);
 }
 
-} // ns anon
+} // namespace
 
 namespace boomhs
 {
@@ -94,25 +94,28 @@ namespace boomhs
 int64_t
 Time::elapsed() const
 {
-  return elapsed_;
+  return elapsed_ - elapsed_time_last_reset_;
 }
 
 int64_t
 Time::offset() const
 {
-  return seconds_
-    + minutes_to_seconds(minutes_)
-    + hours_to_seconds(hours_)
-    + days_to_seconds(days_)
-    + weeks_to_seconds(weeks_)
-    + months_to_seconds(months_)
-    + years_to_seconds(years_);
+  return seconds_ + minutes_to_seconds(minutes_) + hours_to_seconds(hours_) +
+         days_to_seconds(days_) + weeks_to_seconds(weeks_) + months_to_seconds(months_) +
+         years_to_seconds(years_);
 }
 
 int64_t
 Time::total_seconds() const
 {
   return elapsed() + offset();
+}
+
+void
+Time::reset()
+{
+  auto const difference = elapsed_ - elapsed_time_last_reset_;
+  elapsed_time_last_reset_ += difference;
 }
 
 int
@@ -239,7 +242,7 @@ Time::years() const
 void
 Time::add_years(int const v)
 {
-  months_ += v;
+  years_ += v;
 }
 
 void
@@ -265,4 +268,4 @@ Time::update(int64_t const since_beginning_seconds)
   elapsed_ = (speed() * since_beginning_seconds) % DIVISOR;
 }
 
-} // ns boomhs
+} // namespace boomhs

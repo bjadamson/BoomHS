@@ -3,8 +3,8 @@
 #include <boomhs/io.hpp>
 #include <boomhs/level_assembler.hpp>
 #include <boomhs/level_manager.hpp>
-#include <boomhs/orbital_body.hpp>
 #include <boomhs/npc.hpp>
+#include <boomhs/orbital_body.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/rexpaint.hpp>
 #include <boomhs/skybox.hpp>
@@ -187,10 +187,10 @@ rotate_around(glm::vec3 const& point_to_rotate, glm::vec3 const& rot_center,
 void
 update_orbital_bodies(LevelData& ldata, EntityRegistry& registry, FrameTime const& ft)
 {
-  auto const update_orbitals = [&](auto const eid, bool &first) {
-    auto& transform = registry.get<Transform>(eid);
+  auto const update_orbitals = [&](auto const eid, bool& first) {
+    auto&       transform = registry.get<Transform>(eid);
     auto const& orbital = registry.get<OrbitalBody>(eid);
-    auto& pos = transform.translation;
+    auto&       pos = transform.translation;
 
     auto const  time = ft.since_start_seconds();
     float const cos_time = std::cos(time + orbital.offset);
@@ -200,7 +200,8 @@ update_orbital_bodies(LevelData& ldata, EntityRegistry& registry, FrameTime cons
     pos.y = orbital.y_radius * sin_time;
     pos.z = orbital.z_radius * sin_time;
 
-    if (first) {
+    if (first)
+    {
       first = true;
       auto& global = ldata.global_light;
       auto& directional = global.directional;
@@ -210,7 +211,7 @@ update_orbital_bodies(LevelData& ldata, EntityRegistry& registry, FrameTime cons
     }
   };
 
-  bool first = true;
+  bool       first = true;
   auto const eids = find_orbital_bodies(registry);
   for (auto const eid : eids)
   {
@@ -384,7 +385,7 @@ game_loop(EngineState& es, LevelManager& lm, SDLWindow& window, stlw::float_gene
       render::draw_skybox(rstate, ft);
       render::draw_entities(rstate, rng, ft);
     }
-    //render::draw_terrain(rstate, ft);
+    // render::draw_terrain(rstate, ft);
     if (tilegrid_state.draw_tilegrid)
     {
       render::draw_tilegrid(rstate, tilegrid_state, ft);

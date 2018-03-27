@@ -19,6 +19,8 @@ struct DrawTimeBuffer
   int week = 0;
   int month = 0;
   int year = 0;
+
+  bool clear_fields = false;
 };
 
 struct Buffers

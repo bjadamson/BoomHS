@@ -139,7 +139,7 @@ ObjStore::add_obj(std::string const& name, ObjData&& o) const
 }
 
 ObjData const&
-ObjStore::data_for(stlw::Logger &logger, ObjQuery const& query) const
+ObjStore::data_for(stlw::Logger& logger, ObjQuery const& query) const
 {
   auto const cmp = [&query](auto const& pair) {
     bool const  names_match = pair.first == query.name;
@@ -162,7 +162,7 @@ ObjStore::data_for(stlw::Logger &logger, ObjQuery const& query) const
 }
 
 ObjBuffer
-ObjStore::create_interleaved_buffer(stlw::Logger &logger, ObjQuery const& query) const
+ObjStore::create_interleaved_buffer(stlw::Logger& logger, ObjQuery const& query) const
 {
   // We need to read data from the ObjStore to construct an instance to put into the cache.
   auto const& data = data_for(logger, query);

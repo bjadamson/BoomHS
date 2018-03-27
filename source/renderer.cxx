@@ -589,7 +589,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   };
 
   auto const draw_orbital_body = [&](auto const eid, auto& sn, auto& transform, auto& isv,
-      auto& bboard, auto&&... args) {
+                                     auto& bboard, auto&&... args) {
     auto& camera = zs.level_data.camera;
 
     auto const bb_type = bboard.value;
@@ -604,8 +604,8 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
   //
   // Render everything loaded form level file.
-  registry.view<ShaderName, Transform, IsVisible, BillboardRenderable, OrbitalBody>()
-    .each(draw_orbital_body);
+  registry.view<ShaderName, Transform, IsVisible, BillboardRenderable, OrbitalBody>().each(
+      draw_orbital_body);
 
   registry.view<ShaderName, Transform, IsVisible, JunkEntityFromFILE>().each(draw_fn);
 
