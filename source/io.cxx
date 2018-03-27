@@ -273,7 +273,7 @@ process_mousebutton_down(GameState& state, SDL_MouseButtonEvent const& event, Fr
   }
   if (ms.both_pressed())
   {
-    LOG_ERROR("toggling mouse up/down (pitch) lock");
+    LOG_INFO("toggling mouse up/down (pitch) lock");
     camera.rotate_lock ^= true;
 
     auto& lm = state.level_manager;

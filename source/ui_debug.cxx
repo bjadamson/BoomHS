@@ -2,6 +2,7 @@
 #include <boomhs/level_manager.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/state.hpp>
+#include <boomhs/time.hpp>
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_state.hpp>
 #include <opengl/global.hpp>
@@ -115,6 +116,64 @@ draw_entity_editor(UiDebugState& uistate, LevelData& ldata, EntityRegistry& regi
     ImGui::InputFloat3("scale:", glm::value_ptr(transform.scale));
   };
   imgui_cxx::with_window(draw, "Entity Editor Window");
+}
+
+void
+draw_time_editor(Time &time, UiDebugState& uistate)
+{
+  if (ImGui::Begin("TimeWindow")) {
+    // clang-format off
+    int speed = 0;
+    ImGui::InputInt("Speed Multiplier", &speed);
+    ImGui::Separator();
+
+    auto &buffer = uistate.buffers.draw_time_window;
+    ImGui::InputInt("Seconds", &buffer.second);
+    ImGui::InputInt("Minutes", &buffer.minute);
+    ImGui::InputInt("Hour", &buffer.hour);
+    ImGui::InputInt("Day", &buffer.day);
+    ImGui::InputInt("Week", &buffer.week);
+    ImGui::InputInt("Month", &buffer.month);
+    ImGui::InputInt("Year", &buffer.year);
+
+    if (ImGui::Button("Add Time Offset")) {
+      time.add_seconds(buffer.second);
+      time.add_minutes(buffer.minute);
+      time.add_hours(buffer.hour);
+      time.add_days(buffer.day);
+      time.add_weeks(buffer.week);
+      time.add_months(buffer.month);
+      time.add_years(buffer.year);
+
+      stlw::memzero(&buffer, sizeof(DrawTimeBuffer));
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Set Time")) {
+
+      time.set_seconds(buffer.second);
+      time.set_minutes(buffer.minute);
+      time.set_hours(buffer.hour);
+      time.set_days(buffer.day);
+      time.set_weeks(buffer.week);
+      time.set_months(buffer.month);
+      time.set_years(buffer.year);
+
+      stlw::memzero(&buffer, sizeof(DrawTimeBuffer));
+    }
+    // clang-format on
+
+    ImGui::TextWrapped("Current Time: Year: %d, Month: %d, Week: %d, Day: %d, Hour: %d, "
+        "Minute: %d, Second: %d",
+        time.years(),
+        time.months(),
+        time.weeks(),
+        time.days(),
+        time.hours(),
+        time.minutes(),
+        time.seconds()
+        );
+    ImGui::End();
+  }
 }
 
 void
@@ -509,7 +568,8 @@ namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState& es, LevelManager& lm, window::SDLWindow& window)
+draw(EngineState& es, LevelManager& lm, window::SDLWindow& window,
+    window::FrameTime const& ft)
 {
   auto& state = es.ui_state.debug;
   auto& tilegrid_state = es.tilegrid_state;
@@ -521,6 +581,10 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window)
   if (state.show_entitywindow)
   {
     draw_entity_editor(state, ldata, registry);
+  }
+  if (state.show_time_window)
+  {
+    draw_time_editor(es.time, state);
   }
   if (state.show_camerawindow)
   {
@@ -578,6 +642,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window)
     ImGui::MenuItem("Mouse Menu", nullptr, &state.show_mousewindow);
     ImGui::MenuItem("Player Menu", nullptr, &state.show_playerwindow);
     ImGui::MenuItem("Tilemap Menu", nullptr, &state.show_tilegrid_editor_window);
+    ImGui::MenuItem("Time Menu", nullptr, &state.show_time_window);
   };
   auto const settings_menu = [&]() {
     auto const setwindow_row = [&](char const* text, auto const fullscreen) {
@@ -608,9 +673,6 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window)
 
     auto const framerate = es.imgui.Framerate;
     auto const ms_frame = 1000.0f / framerate;
-
-    ImGui::SameLine(ImGui::GetWindowWidth() * 0.25f);
-    ImGui::Text("Player Position: %s", glm::to_string(ldata.player.world_position()).c_str());
 
     ImGui::SameLine(ImGui::GetWindowWidth() * 0.60f);
     ImGui::Text("Current Level: %i", lm.active_zone());

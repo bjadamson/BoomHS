@@ -10,12 +10,31 @@ struct UiInGameState
 {
 };
 
+struct DrawTimeBuffer
+{
+  int second = 0;
+  int minute = 0;
+  int hour = 0;
+  int day = 0;
+  int week = 0;
+  int month = 0;
+  int year = 0;
+};
+
+struct Buffers
+{
+  DrawTimeBuffer draw_time_window;
+};
+
 struct UiDebugState
 {
   MOVE_CONSTRUCTIBLE_ONLY(UiDebugState);
 
   bool enter_pressed = false;
   bool block_input = false;
+
+  // Buffers
+  Buffers buffers;
 
   int selected_entity = 0;
   int selected_entity_material = 0;
@@ -39,6 +58,7 @@ struct UiDebugState
   bool show_directionallight_window = false;
 
   bool show_entitywindow = false;
+  bool show_time_window = false;
   bool show_entitymaterial_window = false;
 
   bool show_tilegrid_editor_window = false;

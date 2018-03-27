@@ -1,4 +1,5 @@
 #pragma once
+#include <window/timer.hpp>
 
 namespace window
 {
@@ -15,6 +16,6 @@ namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState&, LevelManager&, window::SDLWindow&);
+draw(EngineState&, LevelManager&, window::SDLWindow&, window::FrameTime const&);
 
 } // namespace boomhs::ui_debug

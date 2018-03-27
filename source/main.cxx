@@ -315,6 +315,7 @@ update_visible_entities(LevelManager& lm, EntityRegistry& registry)
   auto& zs = lm.active();
   auto& ldata = zs.level_data;
   auto& tilegrid = ldata.tilegrid();
+  auto& player = ldata.player;
 
   for (auto const eid : registry.view<NPCData>())
   {
@@ -334,6 +335,8 @@ void
 game_loop(EngineState& es, LevelManager& lm, SDLWindow& window, stlw::float_generator& rng,
           FrameTime const& ft)
 {
+  es.time.update(ft.since_start_seconds());
+
   auto& logger = es.logger;
   auto& tilegrid_state = es.tilegrid_state;
 
@@ -429,7 +432,7 @@ game_loop(EngineState& es, LevelManager& lm, SDLWindow& window, stlw::float_gene
     }
     if (ui_state.draw_debug_ui)
     {
-      ui_debug::draw(es, lm, window);
+      ui_debug::draw(es, lm, window, ft);
     }
   }
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/level_manager.hpp>
+#include <boomhs/time.hpp>
 #include <boomhs/ui_state.hpp>
 #include <boomhs/zone_state.hpp>
 
@@ -61,6 +62,7 @@ struct EngineState
   stlw::Logger&            logger;
   ImGuiIO&                 imgui;
   window::Dimensions const dimensions;
+  Time                     time;
 
   bool quit = false;
   bool player_collision;
