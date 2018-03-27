@@ -188,9 +188,9 @@ void
 update_orbital_bodies(LevelData& ldata, EntityRegistry& registry, FrameTime const& ft)
 {
   auto const update_orbitals = [&](auto const eid, bool& first) {
-    auto&       transform = registry.get<Transform>(eid);
-    auto const& orbital = registry.get<OrbitalBody>(eid);
-    auto&       pos = transform.translation;
+    auto& transform = registry.get<Transform>(eid);
+    auto& orbital = registry.get<OrbitalBody>(eid);
+    auto& pos = transform.translation;
 
     auto const  time = ft.since_start_seconds();
     float const cos_time = std::cos(time + orbital.offset);
@@ -203,11 +203,12 @@ update_orbital_bodies(LevelData& ldata, EntityRegistry& registry, FrameTime cons
     if (first)
     {
       first = true;
-      auto& global = ldata.global_light;
-      auto& directional = global.directional;
-
-      auto const orbital_to_origin = glm::normalize(-pos);
-      directional.direction = orbital_to_origin;
+      auto& directional = ldata.global_light.directional;
+      directional.enabled = pos.y > 0.0f;
+      if (directional.enabled) {
+        auto const orbital_to_origin = glm::normalize(-pos);
+        directional.direction = -orbital_to_origin;
+      }
     }
   };
 
@@ -385,7 +386,6 @@ game_loop(EngineState& es, LevelManager& lm, SDLWindow& window, stlw::float_gene
       render::draw_skybox(rstate, ft);
       render::draw_entities(rstate, rng, ft);
     }
-    // render::draw_terrain(rstate, ft);
     if (tilegrid_state.draw_tilegrid)
     {
       render::draw_tilegrid(rstate, tilegrid_state, ft);

@@ -313,32 +313,41 @@ load_textures(stlw::Logger& logger, CppTable const& config)
   return ttable;
 }
 
-struct ColorMaterialInfo
+std::optional<Color>
+load_color(CppTable const& file)
 {
-  Color const    color;
-  Material const material;
-};
+  return Color{MAKEOPT(get_vec3(file, "color"))};
+}
 
-std::optional<ColorMaterialInfo>
-load_material_color(CppTable const& file)
+Color
+load_color_or_abort(CppTable const& file)
+{
+  auto optional = load_color(file);
+  if (!optional)
+  {
+    std::abort();
+  }
+  return *optional;
+}
+
+std::optional<Material>
+load_material(CppTable const& file)
 {
   // clang-format off
-  auto const color = MAKEOPT(get_vec3(file,   "color"));
   auto const ambient = MAKEOPT(get_vec3(file,   "ambient"));
   auto const diffuse = MAKEOPT(get_vec3(file,   "diffuse"));
   auto const specular = MAKEOPT(get_vec3(file,   "specular"));
   auto const shininess = MAKEOPT(get_float(file,  "shininess"));
   // clang-format on
 
-  Material                material{ambient, diffuse, specular, shininess};
-  ColorMaterialInfo const cmi{Color{color}, MOVE(material)};
-  return std::make_optional(cmi);
+  Material const material{ambient, diffuse, specular, shininess};
+  return std::make_optional(material);
 }
 
 auto
-load_material_color_orabort(CppTable const& file)
+load_material_orabort(CppTable const& file)
 {
-  auto optional = load_material_color(file);
+  auto optional = load_material(file);
   if (!optional)
   {
     std::abort();
@@ -485,11 +494,10 @@ load_entities(stlw::Logger& logger, CppTable const& config,
     }
 
     // An object receives light, if it has ALL ambient/diffuse/specular fields
-    auto const cm_optional = load_material_color(file);
-    if (cm_optional)
+    auto const material_optional = load_material(file);
+    if (material_optional)
     {
-      auto const& cm = *cm_optional;
-      registry.assign<Material>(eid) = cm.material;
+      registry.assign<Material>(eid) = *material_optional;
     }
   };
 
@@ -509,9 +517,8 @@ load_tileinfos(stlw::Logger& logger, CppTable const& config, EntityRegistry& reg
     auto const mesh_name = get_string_or_abort(file, "mesh");
     auto const vshader_name = get_string_or_abort(file, "vshader");
 
-    auto const  cm = load_material_color_orabort(file);
-    auto const& material = cm.material;
-    auto const& color = cm.color;
+    auto const material = load_material_orabort(file);
+    auto const color = load_color_or_abort(file);
     return TileInfo{tiletype, mesh_name, vshader_name, color, material};
   };
   auto const  tile_table = get_table_array(config, "tile");

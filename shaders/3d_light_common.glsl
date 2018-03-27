@@ -1,4 +1,5 @@
 #define MAX_NUM_POINTLIGHTS 4
+#define MAX_NUM_DIRECTIONAL_LIGHTS 4
 
 struct Material {
   vec3 ambient;
@@ -14,16 +15,17 @@ struct LightAttenuation
   float quadratic;
 };
 
-struct GlobalLight {
-  vec3 ambient;
-
-  // directional light
+struct DirectionalLight {
   vec3 direction;
 
   vec3 diffuse;
   vec3 specular;
 
   LightAttenuation attenuation;
+};
+
+struct AmbientLight {
+  vec3 color;
 };
 
 struct PointLight
@@ -51,23 +53,28 @@ calculate_attenuation(PointLight light, vec3 frag_world_pos)
 }
 
 vec3
-calc_dirlight(GlobalLight light, Material material, float reflectivity, vec3 frag_world_pos,
-    mat4 invviewmatrix, vec3 surface_normal)
+calc_dirlight(DirectionalLight[MAX_NUM_DIRECTIONAL_LIGHTS] dir_lights, Material material, float reflectivity,
+    vec3 frag_world_pos, mat4 invviewmatrix, vec3 surface_normal)
 {
-  vec3 light_dir = normalize(-light.direction);
-  float diff = max(dot(surface_normal, light_dir), 0.0);
-  vec3 diffuse = diff * light.diffuse;
+  vec3 color = vec3(0.0);
+  for(int i = 0; i < MAX_NUM_DIRECTIONAL_LIGHTS; i++) {
+    DirectionalLight light = dir_lights[i];
+    vec3 light_dir = normalize(-light.direction);
+    float diff = max(dot(surface_normal, light_dir), 0.0);
+    vec3 diffuse = diff * light.diffuse;
 
-  vec4 camera_position = invviewmatrix * vec4(0.0, 0.0, 0.0, 1.0);
-  vec4 v_cameratofrag = normalize(camera_position - vec4(frag_world_pos, 1.0));
+    vec4 camera_position = invviewmatrix * vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 v_cameratofrag = normalize(camera_position - vec4(frag_world_pos, 1.0));
 
-  vec4 reflected_light_v = vec4(reflect(light_dir, surface_normal), 0.0);
-  float specular_factor = dot(reflected_light_v, v_cameratofrag);
-  specular_factor = max(specular_factor, 0.0);
-  float damped_factor = pow(specular_factor, material.shininess);
-  vec3 specular = damped_factor * reflectivity * light.specular;
+    vec4 reflected_light_v = vec4(reflect(light_dir, surface_normal), 0.0);
+    float specular_factor = dot(reflected_light_v, v_cameratofrag);
+    specular_factor = max(specular_factor, 0.0);
+    float damped_factor = pow(specular_factor, material.shininess);
+    vec3 specular = damped_factor * reflectivity * light.specular;
 
-  return diffuse + specular;
+    color += diffuse + specular;
+  }
+  return color;
 }
 
 vec3

@@ -3,9 +3,9 @@ background = [0.0, 0.0, 0.0]
 camera_spherical_coords = [2.56, 6.6446330, 56.379040]
 
 ambient = [0.0, 0.0, 0.0]
-directional_light_diffuse = [0.0, 0.0, 1.0]
-directional_light_specular = [0.0, 1.0, 0.0]
-directional_light_direction = [-0.4, 0.0, 0.1]
+directional_light_diffuse = [1.0, 1.0, 0.0]
+directional_light_specular = [1.0, 0.8, 0.0]
+directional_light_direction = [1.0, 0.0, 0.1]
 
 [[resource]]
 name = "building_skybox"
@@ -323,20 +323,16 @@ scale = [650.0, 650.0, 650.0]
 texture = "sun"
 
 [[entity]]
-orbital-body = "moon"
-position = [0.0, 850.0, 0.0]
-shader = "2dtexture"
-geometry = "billboard:spherical"
-scale = [650.0, 650.0, 650.0]
-texture = "moon"
-
-[[entity]]
-position = [0.0, 5.0, 0.0]
+position = [0.0, 0.0, 0.0]
 shader = "3dtexture"
 geometry = "mesh:terrain"
 texture = "TerrainFloor"
-scale = [0.4, 0.4, 0.4]
+scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
 
 ######### POINT LIGHTS
 # LIGHT #0

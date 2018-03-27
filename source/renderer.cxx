@@ -109,11 +109,13 @@ void
 set_dirlight(stlw::Logger& logger, ShaderProgram& sp, GlobalLight const& global_light)
 {
   auto const& directional_light = global_light.directional;
-  sp.set_uniform_vec3(logger, "u_globallight.direction", directional_light.direction);
+  sp.set_uniform_vec3(logger, "u_directional_light[0].direction", directional_light.direction);
 
   auto const& light = directional_light.light;
-  sp.set_uniform_color_3fv(logger, "u_globallight.diffuse", light.diffuse);
-  sp.set_uniform_color_3fv(logger, "u_globallight.specular", light.specular);
+  sp.set_uniform_color_3fv(logger, "u_directional_light[0].diffuse", light.diffuse);
+  sp.set_uniform_color_3fv(logger, "u_directional_light[0].specular", light.specular);
+
+  sp.set_uniform_int1(logger, "u_ignore_dirlight", !directional_light.enabled);
 }
 
 void
@@ -169,7 +171,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::mat4 const& model_matrix, S
   // ambient
   if (receives_ambient_light)
   {
-    sp.set_uniform_color_3fv(logger, "u_globallight.ambient", global_light.ambient);
+    sp.set_uniform_color_3fv(logger, "u_ambient.color", global_light.ambient);
   }
 
   // specular
@@ -539,7 +541,6 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
       draw_3dlightsource(rstate, model_matrix, sp, dinfo, eid, registry);
       return;
     }
-    // Only true for now, old code had this set.
     bool constexpr receives_ambient_light = true;
 
     bool const receives_light = registry.has<Material>(eid);
@@ -914,33 +915,6 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
   auto constexpr Y = 5.0;
   draw_starletter(X, Y, "light", TileType::STAR);
   draw_starletter(X, Y + 1, "light", TileType::BAR);
-}
-
-void
-draw_terrain(RenderState& rstate, window::FrameTime const& ft)
-{
-  auto& zs = rstate.zs;
-  auto& sps = zs.gfx_state.sps;
-  auto& sp = sps.ref_sp("terrain");
-
-  auto& es = rstate.es;
-  auto& logger = es.logger;
-
-  auto& ttable = zs.gfx_state.texture_table;
-  auto  texture_o = ttable.find("TerrainFloor");
-  assert(texture_o);
-
-  auto const vertices = OF::terrain_vertices();
-  auto const normals = OF::rectangle_normals(vertices);
-  auto const di = OG::copy_rectangle_normaluvs(logger, vertices, normals, sp, *texture_o);
-
-  Transform transform;
-  auto constexpr SCALE = 10000.0f;
-  transform.scale = glm::vec3{SCALE, 1.0f, SCALE};
-  transform.rotate_degrees(180, X_UNIT_VECTOR);
-  auto const model_matrix = transform.model_matrix();
-
-  draw(rstate, model_matrix, sp, di);
 }
 
 void

@@ -48,12 +48,6 @@ va = "vertex_uv"
 is_2d = true
 
 [[shaders]]
-name = "terrain"
-vertex = "3dtexture.vert"
-fragment = "3dtexture.frag"
-va = "vertex_normal_uvs"
-
-[[shaders]]
 name = "3dtexture"
 vertex = "3dtexture.vert"
 fragment = "3dtexture.frag"

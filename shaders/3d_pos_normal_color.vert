@@ -7,7 +7,6 @@ out vec3 v_surfacenormal;
 out vec4 v_color;
 
 uniform mat4 u_mvpmatrix;
-uniform mat4 u_modelmatrix;
 uniform mat3 u_normalmatrix;
 
 void main()
