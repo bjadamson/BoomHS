@@ -331,22 +331,29 @@ load_color_or_abort(CppTable const& file)
   return *optional;
 }
 
-std::optional<Material>
+struct NameMaterial
+{
+  std::string const name;
+  Material const material;
+};
+
+std::optional<NameMaterial>
 load_material(CppTable const& file)
 {
   // clang-format off
-  auto const ambient = MAKEOPT(get_vec3(file,   "ambient"));
-  auto const diffuse = MAKEOPT(get_vec3(file,   "diffuse"));
-  auto const specular = MAKEOPT(get_vec3(file,   "specular"));
-  auto const shininess = MAKEOPT(get_float(file,  "shininess"));
+  auto const name      = get_string_or_abort(file, "name");
+  auto const ambient   = MAKEOPT(get_vec3(file,  "ambient"));
+  auto const diffuse   = MAKEOPT(get_vec3(file,  "diffuse"));
+  auto const specular  = MAKEOPT(get_vec3(file,  "specular"));
+  auto const shininess = MAKEOPT(get_float(file, "shininess"));
   // clang-format on
 
   Material const material{ambient, diffuse, specular, shininess};
-  return std::make_optional(material);
+  return std::make_optional(NameMaterial{name, material});
 }
 
 auto
-load_material_orabort(CppTable const& file)
+load_material_or_abort(CppTable const& file)
 {
   auto optional = load_material(file);
   if (!optional)
@@ -354,6 +361,48 @@ load_material_orabort(CppTable const& file)
     std::abort();
   }
   return *optional;
+}
+
+struct NameAttenuation
+{
+  std::string const name;
+  Attenuation const attenuation;
+};
+
+auto
+load_attenuation(CppTable const& file)
+{
+  auto const name      = get_string_or_abort(file, "name");
+  auto const constant  = get_float(file,  "constant").value_or(0);
+  auto const linear    = get_float(file,  "linear").value_or(0);
+  auto const quadratic = get_float(file,  "quadratic").value_or(0);
+
+  return NameAttenuation{name, Attenuation{constant, linear, quadratic}};
+}
+
+auto
+load_attenuations(stlw::Logger& logger, CppTable const& config, EntityRegistry& registry)
+{
+  auto const table = get_table_array(config, "attenuation");
+  std::vector<NameAttenuation> result;
+  for (auto const& it : *table)
+  {
+    result.emplace_back(load_attenuation(it));
+  }
+  return result;
+}
+
+auto
+load_materials(stlw::Logger& logger, CppTable const& config, EntityRegistry& registry)
+{
+  auto const table = get_table_array(config, "material");
+  std::vector<NameMaterial> result;
+  for (auto const& it : *table)
+  {
+    auto const material = load_material_or_abort(it);
+    result.emplace_back(material);
+  }
+  return result;
 }
 
 auto
@@ -382,23 +431,26 @@ load_orbital_bodies(stlw::Logger& logger, CppTable const& config, EntityRegistry
 void
 load_entities(stlw::Logger& logger, CppTable const& config,
               std::vector<OrbitalBody> const& orbital_bodies, TextureTable const& ttable,
-              EntityRegistry& registry)
+              std::vector<NameAttenuation> const& attenuations,
+              std::vector<NameMaterial> const& materials, EntityRegistry& registry)
 {
   auto const load_entity = [&](auto const& file) {
     // clang-format off
-    auto shader       = get_string_or_abort(file, "shader");
-    auto geometry     = get_string_or_abort(file, "geometry");
-    auto pos          = get_vec3_or_abort(file,   "position");
-    auto scale_o      = get_vec3(file,            "scale");
-    auto rotation_o   = get_vec3(file,            "rotation");
-    auto color        = get_color(file,           "color");
-    auto texture_name = get_string(file,          "texture");
-    auto pointlight_o = get_vec3(file,            "pointlight");
-    auto player       = get_string(file,          "player");
-    auto is_visible   = get_bool(file,            "is_visible").value_or(true);
-    bool is_skybox    = get_bool(file,            "skybox").value_or(false);
-    bool random_junk  = get_bool(file,            "random_junk_from_file").value_or(false);
-    auto orbital_o    = get_string(file,          "orbital-body");
+    auto shader        = get_string_or_abort(file, "shader");
+    auto geometry      = get_string_or_abort(file, "geometry");
+    auto pos           = get_vec3_or_abort(file,   "position");
+    auto scale_o       = get_vec3(file,            "scale");
+    auto rotation_o    = get_vec3(file,            "rotation");
+    auto color         = get_color(file,           "color");
+    auto material_o    = get_string(file,          "material");
+    auto texture_name  = get_string(file,          "texture");
+    auto pointlight_o  = get_vec3(file,            "pointlight");
+    auto attenuation_o = get_string(file,          "attenuation");
+    auto player        = get_string(file,          "player");
+    auto is_visible    = get_bool(file,            "is_visible").value_or(true);
+    bool is_skybox     = get_bool(file,            "skybox").value_or(false);
+    bool random_junk   = get_bool(file,            "random_junk_from_file").value_or(false);
+    auto orbital_o     = get_string(file,          "orbital-body");
     // clang-format on
 
     // texture OR color fields, not both
@@ -492,13 +544,28 @@ load_entities(stlw::Logger& logger, CppTable const& config,
     {
       auto& light_component = registry.assign<PointLight>(eid);
       light_component.light.diffuse = Color{*pointlight_o};
+
+      if (attenuation_o) {
+        auto const name = *attenuation_o;
+        auto const cmp = [&name](NameAttenuation const& na) {
+          return na.name == name;
+        };
+        auto const it = std::find_if(attenuations.cbegin(), attenuations.cend(), cmp);
+        assert(it != attenuations.cend());
+        light_component.attenuation = it->attenuation;
+      }
     }
 
     // An object receives light, if it has ALL ambient/diffuse/specular fields
-    auto const material_optional = load_material(file);
-    if (material_optional)
+    if (material_o)
     {
-      registry.assign<Material>(eid) = *material_optional;
+      auto const material_name = *material_o;
+      auto const cmp = [&material_name](NameMaterial const& nm) {
+        return nm.name == material_name;
+      };
+      auto const it = std::find_if(materials.cbegin(), materials.cend(), cmp);
+      assert(it != materials.cend());
+      registry.assign<Material>(eid) = it->material;
     }
   };
 
@@ -510,15 +577,22 @@ load_entities(stlw::Logger& logger, CppTable const& config,
 }
 
 auto
-load_tileinfos(stlw::Logger& logger, CppTable const& config, EntityRegistry& registry)
+load_tileinfos(stlw::Logger& logger, CppTable const& config, std::vector<NameMaterial> const& materials,
+    EntityRegistry& registry)
 {
-  auto const load_tile = [](auto const& file) {
+  auto const load_tile = [&materials](auto const& file) {
     auto const tile = get_string_or_abort(file, "tile");
     auto const tiletype = tiletype_from_string(tile);
     auto const mesh_name = get_string_or_abort(file, "mesh");
     auto const vshader_name = get_string_or_abort(file, "vshader");
+    auto const material_name = get_string_or_abort(file, "material");
 
-    auto const material = load_material_orabort(file);
+    auto const cmp = [&material_name](NameMaterial const& nm) {
+      return nm.name == material_name;
+    };
+    auto const it = std::find_if(materials.cbegin(), materials.cend(), cmp);
+    assert(it != materials.cend());
+    auto const material = it->material;
     auto const color = load_color_or_abort(file);
     return TileInfo{tiletype, mesh_name, vshader_name, color, material};
   };
@@ -675,11 +749,18 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   LOG_TRACE("loading orbital data");
   auto const orbital_bodies = load_orbital_bodies(logger, file_datatable, registry);
 
+  LOG_TRACE("loading attenuation data");
+  auto const attenuations = load_attenuations(logger, file_datatable, registry);
+
+  LOG_TRACE("loading material data");
+  auto const materials = load_materials(logger, file_datatable, registry);
+
   LOG_TRACE("loading entities ...");
-  load_entities(logger, file_datatable, orbital_bodies, texture_table, registry);
+  load_entities(logger, file_datatable, orbital_bodies, texture_table, attenuations, materials,
+      registry);
 
   LOG_TRACE("loading tile materials ...");
-  auto tile_table = load_tileinfos(logger, file_datatable, registry);
+  auto tile_table = load_tileinfos(logger, file_datatable, materials, registry);
 
   LOG_TRACE("loading lights ...");
   auto const ambient = Color{get_vec3_or_abort(file_datatable, "ambient")};

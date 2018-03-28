@@ -110,110 +110,77 @@ tile = "AT"
 mesh = "at"
 vshader = "3d_pos_normal_color"
 color = [1.0, 1.0, 1.0, 1.0]
-ambient = [1.0, 1.0, 1.0]
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
-shininess = 1.0
+material = "player"
 
 [[tile]]
 tile = "BAR"
 mesh = "bar"
 vshader = "3d_pos_normal_color"
 color = [1.0, 1.0, 1.0, 1.0]
-ambient = [1.0, 1.0, 1.0]
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
-shininess = 1.0
+material = "player"
 
 [[tile]]
 tile = "BRIDGE"
 mesh = "equal"
 vshader = "3d_pos_normal_color"
 color = [1.0, 1.0, 1.0, 1.0]
-ambient = [1.0, 1.0, 1.0]
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
-shininess = 1.0
+material = "player"
 
 [[tile]]
 tile = "DOOR"
 mesh = "door"
 vshader = "3d_pos_normal_color"
 color = [1.0, 1.0, 1.0, 1.0]
-ambient = [1.0, 1.0, 1.0]
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
-shininess = 1.0
+material = "player"
 
 [[tile]]
 tile = "FLOOR"
 mesh = "plus"
 vshader = "floor"
 color = [1.0, 1.0, 1.0, 1.0]
-ambient = [1.0, 1.0, 1.0]
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
-shininess = 1.0
+material = "player"
 
 [[tile]]
 tile = "RIVER"
 mesh = "tilde"
 vshader = "river"
 color = [1.0, 1.0, 1.0, 1.0]
-ambient = [0.1, 0.2, 1.0]
-diffuse = [0.1, 0.3, 1.0]
-specular = [0.2, 0.4, 1.0]
-shininess = 1.0
+material = "player"
 
 [[tile]]
 tile = "STAR"
 mesh = "star"
 vshader = "3d_pos_normal_color"
 color = [1.0, 1.0, 1.0, 1.0]
-ambient = [1.0, 1.0, 1.0]
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
-shininess = 1.0
+material = "player"
 
 [[tile]]
 tile = "STAIR_DOWN"
 mesh = "stair_down"
 vshader = "stair"
 color = [1.0, 1.0, 1.0, 1.0]
-ambient = [0.0, 1.0, 0.0]
-diffuse = [0.0, 1.0, 0.0]
-specular = [0.0, 1.0, 0.0]
-shininess = 1.0
+material = "player"
 
 [[tile]]
 tile = "STAIR_UP"
 mesh = "stair_up"
 vshader = "stair"
 color = [1.0, 1.0, 1.0, 1.0]
-ambient = [1.0, 0.0, 0.0]
-diffuse = [1.0, 0.0, 0.0]
-specular = [1.0, 0.0, 0.0]
-shininess = 1.0
+material = "player"
 
 [[tile]]
 tile = "TELEPORTER"
 mesh = "teleporter"
 vshader = "3d_pos_normal_color"
 color = [1.0, 1.0, 1.0, 1.0]
-ambient = [1.0, 1.0, 1.0]
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
-shininess = 1.0
+material = "player"
 
 [[tile]]
 tile = "WALL"
 mesh = "hashtag"
 vshader = "hashtag"
 color = [1.0, 1.0, 1.0, 1.0]
-ambient = [1.0, 1.0, 1.0]
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
-shininess = 1.0
+material = "player"
 
 ###################################################################################################
 [[meshes]]
@@ -302,6 +269,28 @@ y_radius = 1200
 z_radius = 1200.0
 offset = 3.1459
 
+########### ATTENUATION #############
+[[attenuation]]
+name = "moon"
+constant = 0.1
+linear = 0.001
+quadratic = 0.000001
+
+########### MATERIAL #############
+[[material]]
+name = "player"
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[material]]
+name = "terrain"
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
 ########### ENTITY #############
 [[entity]]
 position = [8.0, 0.0, 8.0]
@@ -309,10 +298,7 @@ shader = "3d_pos_normal_color"
 geometry = "mesh:at"
 player = "player"
 color = [1.0, 1.0, 1.0, 1.0]
-ambient = [1.0, 1.0, 1.0]
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
-shininess = 1.0
+material = "player"
 
 [[entity]]
 orbital-body = "sun"
@@ -329,11 +315,8 @@ shader = "2dlight_uv"
 geometry = "billboard:spherical"
 scale = [650.0, 650.0, 650.0]
 texture = "moon"
-pointlight = [0.0, 0.0, 0.0]
-ambient = [1.0, 1.0, 1.0]
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
-shininess = 1.0
+pointlight = [1.0, 0.0, 0.0]
+attenuation = "moon"
 
 [[entity]]
 position = [0.0, 0.0, 0.0]
@@ -342,10 +325,7 @@ geometry = "mesh:terrain"
 texture = "TerrainFloor"
 scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true
-ambient = [1.0, 1.0, 1.0]
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
-shininess = 1.0
+material = "terrain"
 
 ######### POINT LIGHTS
 # LIGHT #0
