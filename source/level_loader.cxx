@@ -405,6 +405,51 @@ load_materials(stlw::Logger& logger, CppTable const& config, EntityRegistry& reg
   return result;
 }
 
+struct NamePointlight
+{
+  std::string const name;
+  PointLight const pointlight;
+};
+
+auto
+load_pointlight(CppTable const& file, std::vector<NameAttenuation> const& attenuations)
+{
+  // clang-format off
+  auto const name          = get_string_or_abort(file, "name");
+  auto const attenuation_o = get_string(file,          "attenuation");
+  auto const diffuse       = get_vec3_or_abort(file,   "diffuse");
+  auto const specular      = get_vec3_or_abort(file,   "specular");
+  // clang-format on
+
+  PointLight pl;
+  pl.light = Light{Color{diffuse}, Color{specular}};
+
+  if (attenuation_o) {
+    auto const name = *attenuation_o;
+    auto const cmp = [&name](NameAttenuation const& na) {
+      return na.name == name;
+    };
+    auto const it = std::find_if(attenuations.cbegin(), attenuations.cend(), cmp);
+    assert(it != attenuations.cend());
+    pl.attenuation = it->attenuation;
+  }
+  return NamePointlight{name, pl};
+}
+
+auto
+load_pointlights(stlw::Logger& logger, CppTable const& config,
+    std::vector<NameAttenuation> const& attenuations)
+{
+  auto const table = get_table_array(config, "pointlight");
+  std::vector<NamePointlight> result;
+  for (auto const& it : *table)
+  {
+    auto const pointlight = load_pointlight(it, attenuations);
+    result.emplace_back(pointlight);
+  }
+  return result;
+}
+
 auto
 load_orbital_bodies(stlw::Logger& logger, CppTable const& config, EntityRegistry& registry)
 {
@@ -431,8 +476,8 @@ load_orbital_bodies(stlw::Logger& logger, CppTable const& config, EntityRegistry
 void
 load_entities(stlw::Logger& logger, CppTable const& config,
               std::vector<OrbitalBody> const& orbital_bodies, TextureTable const& ttable,
-              std::vector<NameAttenuation> const& attenuations,
-              std::vector<NameMaterial> const& materials, EntityRegistry& registry)
+              std::vector<NameMaterial> const& materials,
+              std::vector<NamePointlight> const& pointlights, EntityRegistry& registry)
 {
   auto const load_entity = [&](auto const& file) {
     // clang-format off
@@ -444,8 +489,7 @@ load_entities(stlw::Logger& logger, CppTable const& config,
     auto color         = get_color(file,           "color");
     auto material_o    = get_string(file,          "material");
     auto texture_name  = get_string(file,          "texture");
-    auto pointlight_o  = get_vec3(file,            "pointlight");
-    auto attenuation_o = get_string(file,          "attenuation");
+    auto pointlight_o  = get_string(file,          "pointlight");
     auto player        = get_string(file,          "player");
     auto is_visible    = get_bool(file,            "is_visible").value_or(true);
     bool is_skybox     = get_bool(file,            "skybox").value_or(false);
@@ -542,18 +586,12 @@ load_entities(stlw::Logger& logger, CppTable const& config,
 
     if (pointlight_o)
     {
-      auto& light_component = registry.assign<PointLight>(eid);
-      light_component.light.diffuse = Color{*pointlight_o};
-
-      if (attenuation_o) {
-        auto const name = *attenuation_o;
-        auto const cmp = [&name](NameAttenuation const& na) {
-          return na.name == name;
+        auto const cmp = [&pointlight_o](NamePointlight const& np) {
+          return np.name == *pointlight_o;
         };
-        auto const it = std::find_if(attenuations.cbegin(), attenuations.cend(), cmp);
-        assert(it != attenuations.cend());
-        light_component.attenuation = it->attenuation;
-      }
+        auto const it = std::find_if(pointlights.cbegin(), pointlights.cend(), cmp);
+        assert(it != pointlights.cend());
+        registry.assign<PointLight>(eid) = it->pointlight;
     }
 
     // An object receives light, if it has ALL ambient/diffuse/specular fields
@@ -749,15 +787,18 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   LOG_TRACE("loading orbital data");
   auto const orbital_bodies = load_orbital_bodies(logger, file_datatable, registry);
 
-  LOG_TRACE("loading attenuation data");
-  auto const attenuations = load_attenuations(logger, file_datatable, registry);
-
   LOG_TRACE("loading material data");
   auto const materials = load_materials(logger, file_datatable, registry);
 
+  LOG_TRACE("loading attenuation data");
+  auto const attenuations = load_attenuations(logger, file_datatable, registry);
+
+  LOG_TRACE("loading pointlight data");
+  auto const pointlights = load_pointlights(logger, file_datatable, attenuations);
+
   LOG_TRACE("loading entities ...");
-  load_entities(logger, file_datatable, orbital_bodies, texture_table, attenuations, materials,
-      registry);
+  load_entities(logger, file_datatable, orbital_bodies, texture_table, materials,
+      pointlights, registry);
 
   LOG_TRACE("loading tile materials ...");
   auto tile_table = load_tileinfos(logger, file_datatable, materials, registry);

@@ -291,6 +291,18 @@ diffuse = [1.0, 1.0, 1.0]
 specular = [1.0, 1.0, 1.0]
 shininess = 1.0
 
+########### POINTLIGHT #############
+[[pointlight]]
+attenuation = "moon"
+name = "moon"
+diffuse = [0.0, 0.0, 1.0]
+specular = [0.0, 1.0, 0.0]
+
+[[pointlight]]
+name = "white"
+diffuse = [0.0, 0.0, 0.0]
+specular = [0.0, 0.0, 0.0]
+
 ########### ENTITY #############
 [[entity]]
 position = [8.0, 0.0, 8.0]
@@ -315,8 +327,7 @@ shader = "2dlight_uv"
 geometry = "billboard:spherical"
 scale = [650.0, 650.0, 650.0]
 texture = "moon"
-pointlight = [1.0, 0.0, 0.0]
-attenuation = "moon"
+pointlight = "moon"
 
 [[entity]]
 position = [0.0, 0.0, 0.0]
@@ -333,7 +344,7 @@ material = "terrain"
 position = [5.0, 5.0, 5.0]
 shader = "light"
 geometry = "cube"
-pointlight = [0.0, 0.0, 0.0]
+pointlight = "white"
 scale = [0.4, 0.4, 0.4]
 
 # LIGHT #1
@@ -341,7 +352,7 @@ scale = [0.4, 0.4, 0.4]
 position = [35.0, 5.0, 35.0]
 shader = "light"
 geometry = "cube"
-pointlight = [0.0, 0.0, 0.0]
+pointlight = "white"
 scale = [0.4, 0.4, 0.4]
 
 # LIGHT #2
@@ -349,7 +360,7 @@ scale = [0.4, 0.4, 0.4]
 position = [5.0, 5.0, 35.0]
 shader = "light"
 geometry = "cube"
-pointlight = [0.0, 0.0, 0.0]
+pointlight = "white"
 scale = [0.4, 0.4, 0.4]
 
 ###################################################################################################

@@ -4,8 +4,8 @@
 #include <stlw/type_macros.hpp>
 
 #include <extlibs/glew.hpp>
-
 #include <array>
+#include <ostream>
 
 namespace opengl
 {
@@ -27,6 +27,9 @@ operator/(Attenuation const&, float);
 
 Attenuation&
 operator/=(Attenuation&, float const);
+
+std::ostream&
+operator<<(std::ostream&, Attenuation const&);
 
 // https://learnopengl.com/#!Lighting/Light-casters
 static constexpr auto ATTENUATION_VALUE_TABLE = stlw::make_array<Attenuation>(

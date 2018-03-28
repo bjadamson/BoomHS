@@ -37,6 +37,15 @@ operator/=(Attenuation &att, float const v)
   return att;
 }
 
+std::ostream&
+operator<<(std::ostream& stream, Attenuation const& att)
+{
+  stream << "{";
+  stream << att.constant << ", " << att.linear << ", " << att.quadratic;
+  stream << "}";
+  return stream;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Material
 Material::Material(glm::vec3 const& amb, glm::vec3 const& diff, glm::vec3 const& spec, float const shiny)
