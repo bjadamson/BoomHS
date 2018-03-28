@@ -649,6 +649,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::Frame
     ImGui::MenuItem("Player Menu", nullptr, &state.show_playerwindow);
     ImGui::MenuItem("Tilemap Menu", nullptr, &state.show_tilegrid_editor_window);
     ImGui::MenuItem("Time Menu", nullptr, &state.show_time_window);
+    ImGui::MenuItem("Exit", nullptr, &es.quit);
   };
   auto const settings_menu = [&]() {
     auto const setwindow_row = [&](char const* text, auto const fullscreen) {
