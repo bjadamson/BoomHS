@@ -481,6 +481,7 @@ load_entities(stlw::Logger& logger, CppTable const& config,
 {
   auto const load_entity = [&](auto const& file) {
     // clang-format off
+    auto name          = get_string(file,          "name").value_or("FromFileUnnamed");
     auto shader        = get_string_or_abort(file, "shader");
     auto geometry      = get_string_or_abort(file, "geometry");
     auto pos           = get_vec3_or_abort(file,   "position");
@@ -500,7 +501,9 @@ load_entities(stlw::Logger& logger, CppTable const& config,
     // texture OR color fields, not both
     assert((!color && !texture_name) || (!color && texture_name) || (color && !texture_name));
 
-    auto  eid = registry.create();
+    auto eid = registry.create();
+    registry.assign<Name>(eid).value = name;
+
     auto& transform = registry.assign<Transform>(eid);
     transform.translation = pos;
 

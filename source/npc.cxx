@@ -76,6 +76,7 @@ NPC::create(EntityRegistry& registry, char const* name, TilePosition const& tpos
 {
   auto eid = registry.create();
   registry.assign<opengl::Color>(eid);
+  registry.assign<Name>(eid).value = name;
 
   // Enemies get a mesh
   auto& meshc = registry.assign<MeshRenderable>(eid);

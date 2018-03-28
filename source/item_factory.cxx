@@ -14,6 +14,7 @@ EntityID
 ItemFactory::create_empty(EntityRegistry& registry, TextureTable const& ttable)
 {
   auto eid = registry.create();
+  registry.assign<Name>(eid).value = "Empty Item";
 
   Item& item = registry.assign<Item>(eid);
   item.is_pickedup = false;
@@ -29,9 +30,12 @@ ItemFactory::create_empty(EntityRegistry& registry, TextureTable const& ttable)
 
 EntityID
 ItemFactory::create_item(EntityRegistry& registry, TextureTable const& ttable,
-                         char const* mesh_name, char const* texture, char const* shader)
+                         char const* entity_name, char const* mesh_name, char const* texture,
+                         char const* shader)
 {
   auto eid = create_empty(registry, ttable);
+
+  registry.get<Name>(eid).value = entity_name;
 
   auto& isv = registry.assign<IsVisible>(eid);
   isv.value = true;
@@ -54,7 +58,7 @@ EntityID
 ItemFactory::create_torch(EntityRegistry& registry, stlw::float_generator& rng,
                           TextureTable const& ttable)
 {
-  auto eid = create_item(registry, ttable, "O", "Lava", "torch");
+  auto eid = create_item(registry, ttable, "Torch EID", "O", "Lava", "torch");
   registry.assign<Torch>(eid);
 
   auto& item = registry.get<Item>(eid);

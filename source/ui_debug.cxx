@@ -26,15 +26,18 @@ using pair_t = std::pair<std::string, EntityID>;
 
 template <typename... T>
 auto
-collect_all(EntityRegistry& registry)
+collect_all(EntityRegistry& registry, bool const reverse)
 {
   std::vector<pair_t> pairs;
-  for (auto const entity : registry.view<T...>())
+  for (auto const eid : registry.view<T...>())
   {
-    auto pair = std::make_pair(std::to_string(entity), entity);
+    auto const name = registry.get<Name>(eid).value;
+    auto pair = std::make_pair(name, eid);
     pairs.emplace_back(MOVE(pair));
   }
-  std::reverse(pairs.begin(), pairs.end());
+  if (reverse) {
+    std::reverse(pairs.begin(), pairs.end());
+  }
   return pairs;
 }
 
@@ -44,7 +47,7 @@ callback_from_pairs(void* const pvec, int const idx, const char** out_text)
   std::vector<pair_t> const& vec = *reinterpret_cast<std::vector<pair_t>*>(pvec);
 
   auto const index_size = static_cast<size_t>(idx);
-  if (idx < 0 || index_size >= vec.size())
+  if (idx < 0 || index_size > vec.size())
   {
     return false;
   }
@@ -80,8 +83,7 @@ display_combo_for_entities(char const* text, int* selected, EntityRegistry& regi
 EntityID
 comboselected_to_entity(int const selected_index, std::vector<pair_t> const& pairs)
 {
-  auto const selected_string = std::to_string(selected_index);
-  auto const cmp = [&selected_string](auto const& pair) { return pair.first == selected_string; };
+  auto const cmp = [&selected_index](auto const& pair) { return pair.second == selected_index; };
   auto const it = std::find_if(pairs.cbegin(), pairs.cend(), cmp);
   assert(it != pairs.cend());
 
@@ -93,7 +95,7 @@ draw_entity_editor(UiDebugState& uistate, LevelData& ldata, EntityRegistry& regi
 {
   auto&      selected = uistate.selected_entity;
   auto const draw = [&]() {
-    auto pairs = collect_all<Transform>(registry);
+    auto pairs = collect_all<Transform>(registry, false);
     if (display_combo_for_entities("Entity", &selected, registry, pairs))
     {
       auto const eid = comboselected_to_entity(selected, pairs);
@@ -402,7 +404,7 @@ show_entitymaterials_window(UiDebugState& ui, EntityRegistry& registry)
   auto& selected_material = ui.selected_entity_material;
 
   auto const draw = [&]() {
-    auto pairs = collect_all<Material, Transform>(registry);
+    auto pairs = collect_all<Material, Transform>(registry, false);
     display_combo_for_entities<>("Entity", &selected_material, registry, pairs);
 
     auto const  entities_with_materials = find_materials(registry);
@@ -450,9 +452,9 @@ show_tilegrid_materials_window(UiDebugState& ui, LevelData& level_data)
 void
 show_pointlight_window(UiDebugState& ui, EntityRegistry& registry)
 {
-  auto const display_pointlight = [&registry](EntityID const entity) {
-    auto& transform = registry.get<Transform>(entity);
-    auto& pointlight = registry.get<PointLight>(entity);
+  auto const display_pointlight = [&registry](EntityID const eid) {
+    auto& transform = registry.get<Transform>(eid);
+    auto& pointlight = registry.get<PointLight>(eid);
     auto& light = pointlight.light;
     ImGui::InputFloat3("position:", glm::value_ptr(transform.translation));
     ImGui::ColorEdit3("diffuse:", light.diffuse.data());
@@ -465,12 +467,12 @@ show_pointlight_window(UiDebugState& ui, EntityRegistry& registry)
     ImGui::InputFloat("linear:", &attenuation.linear);
     ImGui::InputFloat("quadratic:", &attenuation.quadratic);
 
-    if (registry.has<LightFlicker>(entity))
+    if (registry.has<LightFlicker>(eid))
     {
       ImGui::Separator();
       ImGui::Text("Light Flicker");
 
-      auto& flicker = registry.get<LightFlicker>(entity);
+      auto& flicker = registry.get<LightFlicker>(eid);
       ImGui::InputFloat("speed:", &flicker.current_speed);
 
       FOR(i, flicker.colors.size())
@@ -483,7 +485,7 @@ show_pointlight_window(UiDebugState& ui, EntityRegistry& registry)
   };
   auto const draw_pointlight_editor = [&]() {
     auto& selected_pointlight = ui.selected_pointlight;
-    auto  pairs = collect_all<PointLight, Transform>(registry);
+    auto  pairs = collect_all<PointLight, Transform>(registry, false);
     display_combo_for_entities<>("PointLight:", &selected_pointlight, registry, pairs);
     ImGui::Separator();
 

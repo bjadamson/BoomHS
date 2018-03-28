@@ -13,7 +13,8 @@ namespace boomhs
 void
 Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
 {
-  auto &player = registry.get<PlayerData>(eid);
+  auto const player_eid = find_player(registry);
+  auto &player = registry.get<PlayerData>(player_eid);
   auto &inventory = player.inventory;
 
   assert(inventory.add_item(eid));
@@ -27,7 +28,8 @@ Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
 void
 Player::drop_entity(stlw::Logger& logger, EntityID const eid, EntityRegistry& registry)
 {
-  auto &player = registry.get<PlayerData>(eid);
+  auto const player_eid = find_player(registry);
+  auto &player = registry.get<PlayerData>(player_eid);
   auto &inventory = player.inventory;
 
   auto& item = registry.get<Item>(eid);
@@ -37,7 +39,6 @@ Player::drop_entity(stlw::Logger& logger, EntityID const eid, EntityRegistry& re
   visible.value = true;
 
   // Move the dropped item to the player's position
-  auto const  player_eid = find_player(registry);
   auto const& player_pos = registry.get<Transform>(player_eid).translation;
 
   auto& transform = registry.get<Transform>(eid);

@@ -311,6 +311,7 @@ geometry = "mesh:at"
 player = "player"
 color = [1.0, 1.0, 1.0, 1.0]
 material = "player"
+name = "player"
 
 [[entity]]
 orbital-body = "sun"
@@ -319,6 +320,7 @@ shader = "2dtexture"
 geometry = "billboard:spherical"
 scale = [650.0, 650.0, 650.0]
 texture = "sun"
+name = "sun"
 
 [[entity]]
 orbital-body = "moon"
@@ -328,6 +330,7 @@ geometry = "billboard:spherical"
 scale = [650.0, 650.0, 650.0]
 texture = "moon"
 pointlight = "moon"
+name = "Moon"
 
 [[entity]]
 position = [0.0, 0.0, 0.0]
@@ -337,26 +340,27 @@ texture = "TerrainFloor"
 scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true
 material = "terrain"
+name = "terrain"
 
 ######### POINT LIGHTS
-# LIGHT #0
 [[entity]]
+name = "point light 0"
 position = [5.0, 5.0, 5.0]
 shader = "light"
 geometry = "cube"
 pointlight = "white"
 scale = [0.4, 0.4, 0.4]
 
-# LIGHT #1
 [[entity]]
+name = "point light 1"
 position = [35.0, 5.0, 35.0]
 shader = "light"
 geometry = "cube"
 pointlight = "white"
 scale = [0.4, 0.4, 0.4]
 
-# LIGHT #2
 [[entity]]
+name = "point light 2"
 position = [5.0, 5.0, 35.0]
 shader = "light"
 geometry = "cube"

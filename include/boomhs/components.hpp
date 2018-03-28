@@ -18,6 +18,12 @@
 namespace boomhs
 {
 
+struct Name
+{
+  static constexpr char const* DEFAULT = "unnamed";
+  std::string value = Name::DEFAULT;
+};
+
 struct IsVisible
 {
   bool value = false;

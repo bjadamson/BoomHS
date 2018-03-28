@@ -36,7 +36,8 @@ void main()
   vec4 texture_color = texture(u_sampler, v_uv);
   if (u_drawnormals == 1) {
     fragment_color = vec4(v_surfacenormal, 1.0);
-  } else if (u_ignore_dirlight == 1) {
+  }
+  else if (u_ignore_dirlight == 1) {
     fragment_color = vec4(ambient + pointlights, 1.0) * texture_color;
   }
   else {

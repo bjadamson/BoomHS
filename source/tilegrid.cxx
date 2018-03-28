@@ -21,6 +21,7 @@ TileGrid::TileGrid(size_t const width, size_t const height, EntityRegistry& regi
   {
     Tile tile;
     tile.eid = registry_.create();
+    registry_.assign<Name>(tile.eid).value = "Tile";
     registry_.assign<Transform>(tile.eid);
     registry_.assign<TileComponent>(tile.eid);
     auto& isv = registry_.assign<IsVisible>(tile.eid);
