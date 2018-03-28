@@ -1,0 +1,12 @@
+#version 300 es
+precision mediump float;
+
+struct Fog
+{
+  float density;
+  float gradient;
+
+  vec3 color;
+};
+
+

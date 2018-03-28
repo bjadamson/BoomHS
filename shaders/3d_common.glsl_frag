@@ -1,0 +1,121 @@
+#define MAX_NUM_POINTLIGHTS 5
+#define MAX_NUM_DIRECTIONAL_LIGHTS 4
+
+struct Material {
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+  float shininess;
+};
+
+struct LightAttenuation
+{
+  float constant;
+  float linear;
+  float quadratic;
+};
+
+struct DirectionalLight {
+  vec3 direction;
+
+  vec3 diffuse;
+  vec3 specular;
+
+  LightAttenuation attenuation;
+};
+
+struct AmbientLight {
+  vec3 color;
+};
+
+struct PointLight
+{
+  vec3 position;
+
+  vec3 diffuse;
+  vec3 specular;
+
+  LightAttenuation attenuation;
+};
+
+float
+calculate_attenuation(PointLight light, vec3 frag_world_pos)
+{
+  float distance = length(light.position - frag_world_pos);
+
+  float constant = light.attenuation.constant;
+  float linear = light.attenuation.linear * distance;
+  float quadratic = light.attenuation.quadratic * (distance * distance);
+
+  float denominator = constant + linear + quadratic;
+  float attenuation = 1.0 / denominator;
+  return attenuation;
+}
+
+vec3
+calc_dirlight(DirectionalLight[MAX_NUM_DIRECTIONAL_LIGHTS] dir_lights, Material material, float reflectivity,
+    vec3 frag_world_pos, mat4 invviewmatrix, vec3 surface_normal)
+{
+  vec3 color = vec3(0.0);
+  for(int i = 0; i < MAX_NUM_DIRECTIONAL_LIGHTS; i++) {
+    DirectionalLight light = dir_lights[i];
+    vec3 light_dir = normalize(-light.direction);
+    float diff = max(dot(surface_normal, light_dir), 0.0);
+    vec3 diffuse = diff * light.diffuse;
+
+    vec4 camera_position = invviewmatrix * vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 v_cameratofrag = normalize(camera_position - vec4(frag_world_pos, 1.0));
+
+    vec4 reflected_light_v = vec4(reflect(light_dir, surface_normal), 0.0);
+    float specular_factor = dot(reflected_light_v, v_cameratofrag);
+    specular_factor = max(specular_factor, 0.0);
+    float damped_factor = pow(specular_factor, material.shininess);
+    vec3 specular = damped_factor * reflectivity * light.specular;
+
+    color += diffuse + specular;
+  }
+  return color;
+}
+
+vec3
+calc_pointlight(PointLight light, vec3 v_lighttofrag, vec3 frag_world_pos,
+    mat4 invviewmatrix, Material material, float reflectivity,
+    vec3 surface_normal)
+{
+  float dotp = dot(surface_normal, v_lighttofrag);
+  float brightness = max(dotp, 0.0);
+  vec3 diffuse = brightness * light.diffuse * material.diffuse;
+
+  vec3 light_direction = -v_lighttofrag;
+  vec3 reflected_light_v = reflect(light_direction, surface_normal);
+
+  vec3 camera_position = (invviewmatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+  vec3 v_cameratofrag = normalize(camera_position - frag_world_pos);
+
+  float specular_factor = dot(reflected_light_v, v_cameratofrag);
+  specular_factor = max(specular_factor, 0.0);
+  float damped_factor = pow(specular_factor, material.shininess);
+  vec3 specular = damped_factor * reflectivity * light.specular;
+
+  float attenuation = calculate_attenuation(light, frag_world_pos);
+  diffuse *= attenuation;
+  specular *= attenuation;
+
+  return diffuse + specular;
+}
+
+vec3
+calc_pointlights(PointLight pointlights[MAX_NUM_POINTLIGHTS], mat4 modelmatrix, vec4 position,
+    mat4 invviewmatrix, Material material, float reflectivity,
+    vec3 surface_normal)
+{
+  vec3 frag_world_pos = (modelmatrix * position).xyz;
+  vec3 color = vec3(0.0);
+  for(int i = 0; i < MAX_NUM_POINTLIGHTS; i++) {
+    vec3 light_to_frag = normalize(pointlights[i].position - frag_world_pos);
+    color += calc_pointlight(pointlights[i], light_to_frag, frag_world_pos,
+      invviewmatrix, material, reflectivity, surface_normal);
+  }
+  return color;
+}
+

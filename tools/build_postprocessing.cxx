@@ -1,4 +1,5 @@
 #include <experimental/filesystem>
+#include <stlw/algorithm.hpp>
 #include <stlw/optional.hpp>
 #include <stlw/os.hpp>
 
@@ -72,32 +73,24 @@ make_paths(L &log)
 
 } // ns anonymous
 
-constexpr char const* prefix_contents = R"(#version 300 es
-precision mediump float;
-)";
-
-OptionalString
-copy_shaders_to_outdir(fs::path const& path_to_shaders, std::string const& outdir)
+template<typename FN, typename ...Args>
+auto
+iter_directories(fs::path const& path_to_shaders, FN const& fn, Args &&... args)
 {
-  if (!fs::exists(path_to_shaders)) {
-    return "no shader at path '" + path_to_shaders.string() + "' exists.";
-  } else if (!fs::is_directory(path_to_shaders)) {
-    return "found 'shader' to not be a directory at this path.";
+  bool result = true;
+  for (fs::directory_iterator it{path_to_shaders}; it != fs::directory_iterator{}; ++it) {
+    result &= fn(it, FORWARD(args));
   }
+  return result;
+}
 
-  auto const iter_directories = [&path_to_shaders](auto const& fn) {
-    bool result = true;
-    for (fs::directory_iterator it{path_to_shaders}; it != fs::directory_iterator{}; ++it) {
-      result &= fn(it);
-    }
-    return result;
-  };
-
-  // Make a pass over the directory, building up our "glsl library" code
+auto
+get_library_code(fs::path const& path_to_shaders, char const* file_extension)
+{
   std::string library_code;
-  auto const build_library = [&library_code](auto const& directory_iter) {
+  auto const build_library = [&](auto const& directory_iter) {
     auto const path = directory_iter->path();
-    bool const is_libraryfile = path.filename().string().find(".glsl") != std::string::npos;
+    bool const is_libraryfile = path.filename().string().find(file_extension) != std::string::npos;
     if (is_libraryfile) {
       auto const read_result = stlw::read_file(path.string().c_str());
       if (!read_result) {
@@ -108,7 +101,22 @@ copy_shaders_to_outdir(fs::path const& path_to_shaders, std::string const& outdi
     return true;
   };
 
-  auto const copy_files = [&outdir, &library_code](auto const& it) {
+  bool const result = iter_directories(path_to_shaders, build_library);
+  return PAIR(result, library_code);
+}
+
+OptionalString
+copy_shaders_to_outdir(fs::path const& path_to_shaders, std::string const& outdir)
+{
+  if (!fs::exists(path_to_shaders)) {
+    return "no shader at path '" + path_to_shaders.string() + "' exists.";
+  } else if (!fs::is_directory(path_to_shaders)) {
+    return "found 'shader' to not be a directory at this path.";
+  }
+
+  auto const copy_files = [&outdir](auto const& it, auto const& library_code,
+      char const* extension_to_skip)
+  {
     auto const path = it->path();
     auto const path_string = path.filename().string();
 
@@ -118,17 +126,39 @@ copy_shaders_to_outdir(fs::path const& path_to_shaders, std::string const& outdi
       return true;
     }
 
-    // For now, vertex shaders don't share code
-    bool const is_vertexshader = path_string.find(".vert") != std::string::npos;
-    auto const contents = is_vertexshader ? prefix_contents : prefix_contents + library_code;
-    if (!copy_to_outdir(contents, path, outdir)) {
+    // Don't copy this type also
+    if (std::string::npos != path_string.find(extension_to_skip)) {
+      return true;
+    }
+
+    if (!copy_to_outdir(library_code, path, outdir)) {
       return false;
     }
     return true;
   };
 
-  bool result = iter_directories(build_library);
-  result |= iter_directories(copy_files);
+  // Iterate over the directory
+  //
+  // first, collect all the shared code between vertex and fragment shaders (struct definitions,
+  // version info, etc...)
+  auto const both_libcode_pair = get_library_code(path_to_shaders, ".glsl_both");
+  bool result = both_libcode_pair.first;
+
+  // second collect all the vertex shader shared code.
+  auto const vert_libcode_pair = get_library_code(path_to_shaders, ".glsl_vert");
+  result |= vert_libcode_pair.first;
+
+  // third collect all the fragment shader shared code.
+  auto const frag_libcode_pair = get_library_code(path_to_shaders, ".glsl_frag");
+  result |= frag_libcode_pair.first;
+
+  auto const& both_libcode = both_libcode_pair.second;
+  auto const frag_libcode = both_libcode + frag_libcode_pair.second;
+  auto const vert_libcode = both_libcode + vert_libcode_pair.second;
+
+  // Copy the shaders (prepended with their shared code) to the output directories.
+  result |= iter_directories(path_to_shaders, copy_files, frag_libcode, ".vert");
+  result |= iter_directories(path_to_shaders, copy_files, vert_libcode, ".frag");
   return result ? std::nullopt : std::make_optional("Error copying files.");
 }
 
