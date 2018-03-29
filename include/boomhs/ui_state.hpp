@@ -53,22 +53,22 @@ struct UiDebugState
 
   // window display state
   bool show_ambientlight_window = false;
-  bool show_background_window = false;
   bool show_camerawindow = false;
-
   bool show_debugwindow = true;
   bool show_directionallight_window = false;
 
-  bool show_entitywindow = false;
-  bool show_time_window = false;
   bool show_entitymaterial_window = false;
+  bool show_entitywindow = false;
+
+  bool show_fog_window = false;
+  bool show_mousewindow = false;
+
+  bool show_playerwindow = false;
+  bool show_pointlight_window = false;
+  bool show_time_window = false;
 
   bool show_tilegrid_editor_window = false;
   bool show_tilegridmaterial_window = false;
-
-  bool show_mousewindow = false;
-  bool show_playerwindow = false;
-  bool show_pointlight_window = false;
 };
 
 struct UiState

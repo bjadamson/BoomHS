@@ -192,9 +192,11 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
 
   // FOG uniforms
   sp.set_uniform_matrix_4fv(logger, "u_viewmatrix", camera.view_matrix());
-  sp.set_uniform_float1(logger, "u_fog.density", 0.007f);
-  sp.set_uniform_float1(logger, "u_fog.gradient", 1.5f);
-  sp.set_uniform_color(logger, "u_fog.color", LOC::BLUE);
+
+  auto const& fog = ldata.fog;
+  sp.set_uniform_float1(logger, "u_fog.density", fog.density);
+  sp.set_uniform_float1(logger, "u_fog.gradient", fog.gradient);
+  sp.set_uniform_color(logger, "u_fog.color", fog.color);
 
   // misc
   sp.set_uniform_bool(logger, "u_drawnormals", es.draw_normals);
@@ -613,9 +615,15 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
   //
   // Render everything loaded form level file.
+
+  // billboards
   registry.view<ShaderName, Transform, IsVisible, BillboardRenderable, OrbitalBody>().each(
       draw_orbital_body);
 
+  // terrain
+  registry.view<ShaderName, Transform, IsVisible, IsTerrain>().each(draw_fn);
+
+  // random junk from level file
   registry.view<ShaderName, Transform, IsVisible, JunkEntityFromFILE>().each(draw_fn);
 
   // torch

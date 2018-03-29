@@ -41,15 +41,15 @@ namespace
 {
 
 CppTableArray
-get_table_array(CppTable const& config, char const* name)
+get_table_array(CppTable const& table, char const* name)
 {
-  return config->get_table_array(name);
+  return table->get_table_array(name);
 }
 
 CppTableArray
-get_table_array_or_abort(CppTable const& config, char const* name)
+get_table_array_or_abort(CppTable const& table, char const* name)
 {
-  auto table_o = get_table_array(config, name);
+  auto table_o = get_table_array(table, name);
   if (!table_o)
   {
     std::abort();
@@ -252,7 +252,7 @@ public:
 };
 
 auto
-load_textures(stlw::Logger& logger, CppTable const& config)
+load_textures(stlw::Logger& logger, CppTable const& table)
 {
   opengl::TextureTable ttable;
   auto const           load_texture = [&logger, &ttable](auto const& resource) {
@@ -309,26 +309,46 @@ load_textures(stlw::Logger& logger, CppTable const& config)
     }
   };
 
-  auto const resource_table = get_table_array_or_abort(config, "resource");
+  auto const resource_table = get_table_array_or_abort(table, "resource");
   std::for_each(resource_table->begin(), resource_table->end(), load_texture);
   return ttable;
 }
 
 std::optional<Color>
-load_color(CppTable const& file)
+load_color(CppTable const& file, char const* name)
 {
-  return Color{MAKEOPT(get_vec3(file, "color"))};
+  return Color{MAKEOPT(get_vec3(file, name))};
 }
 
 Color
-load_color_or_abort(CppTable const& file)
+load_color_or_abort(CppTable const& file, char const* name)
 {
-  auto optional = load_color(file);
+  auto optional = load_color(file, name);
   if (!optional)
   {
     std::abort();
   }
   return *optional;
+}
+
+auto
+load_fog(CppTable const& file)
+{
+  auto const table = get_table_array(file, "fog");
+
+  // This is required in order to downcast table to a sized table array.
+  assert(table->is_table_array());
+  auto const& table_array = table->get();
+
+  // For now, assume exactly one fog entry.
+  assert(1 == table_array.size());
+
+  auto const& data = table_array.front();
+  auto const density  = get_float_or_abort(data,  "density");
+  auto const gradient = get_float_or_abort(data,  "gradient");
+  auto const color    = load_color_or_abort(data,  "color");
+
+  return Fog{density, gradient, color};
 }
 
 struct NameMaterial
@@ -381,11 +401,11 @@ load_attenuation(CppTable const& file)
 }
 
 auto
-load_attenuations(stlw::Logger& logger, CppTable const& config, EntityRegistry& registry)
+load_attenuations(stlw::Logger& logger, CppTable const& table, EntityRegistry& registry)
 {
-  auto const table = get_table_array(config, "attenuation");
+  auto const table_array = get_table_array(table, "attenuation");
   std::vector<NameAttenuation> result;
-  for (auto const& it : *table)
+  for (auto const& it : *table_array)
   {
     result.emplace_back(load_attenuation(it));
   }
@@ -393,11 +413,11 @@ load_attenuations(stlw::Logger& logger, CppTable const& config, EntityRegistry& 
 }
 
 auto
-load_materials(stlw::Logger& logger, CppTable const& config, EntityRegistry& registry)
+load_materials(stlw::Logger& logger, CppTable const& table, EntityRegistry& registry)
 {
-  auto const table = get_table_array(config, "material");
+  auto const table_array = get_table_array(table, "material");
   std::vector<NameMaterial> result;
-  for (auto const& it : *table)
+  for (auto const& it : *table_array)
   {
     auto const material = load_material_or_abort(it);
     result.emplace_back(material);
@@ -437,12 +457,12 @@ load_pointlight(CppTable const& file, std::vector<NameAttenuation> const& attenu
 }
 
 auto
-load_pointlights(stlw::Logger& logger, CppTable const& config,
+load_pointlights(stlw::Logger& logger, CppTable const& table,
     std::vector<NameAttenuation> const& attenuations)
 {
-  auto const table = get_table_array(config, "pointlight");
+  auto const table_array = get_table_array(table, "pointlight");
   std::vector<NamePointlight> result;
-  for (auto const& it : *table)
+  for (auto const& it : *table_array)
   {
     auto const pointlight = load_pointlight(it, attenuations);
     result.emplace_back(pointlight);
@@ -451,7 +471,7 @@ load_pointlights(stlw::Logger& logger, CppTable const& config,
 }
 
 auto
-load_orbital_bodies(stlw::Logger& logger, CppTable const& config, EntityRegistry& registry)
+load_orbital_bodies(stlw::Logger& logger, CppTable const& table, EntityRegistry& registry)
 {
   auto const load = [](auto const& file) {
     // clang-format off
@@ -463,7 +483,7 @@ load_orbital_bodies(stlw::Logger& logger, CppTable const& config, EntityRegistry
     return OrbitalBody{name, x_radius, y_radius, z_radius, offset};
     // clang-format on
   };
-  auto const orbital_body_table = get_table_array(config, "orbital-body");
+  auto const orbital_body_table = get_table_array(table, "orbital-body");
 
   std::vector<OrbitalBody> orbitals;
   for (auto const& it : *orbital_body_table)
@@ -474,28 +494,29 @@ load_orbital_bodies(stlw::Logger& logger, CppTable const& config, EntityRegistry
 }
 
 void
-load_entities(stlw::Logger& logger, CppTable const& config,
+load_entities(stlw::Logger& logger, CppTable const& table,
               std::vector<OrbitalBody> const& orbital_bodies, TextureTable const& ttable,
               std::vector<NameMaterial> const& materials,
               std::vector<NamePointlight> const& pointlights, EntityRegistry& registry)
 {
   auto const load_entity = [&](auto const& file) {
     // clang-format off
-    auto name          = get_string(file,          "name").value_or("FromFileUnnamed");
-    auto shader        = get_string_or_abort(file, "shader");
-    auto geometry      = get_string_or_abort(file, "geometry");
-    auto pos           = get_vec3_or_abort(file,   "position");
-    auto scale_o       = get_vec3(file,            "scale");
-    auto rotation_o    = get_vec3(file,            "rotation");
-    auto color         = get_color(file,           "color");
-    auto material_o    = get_string(file,          "material");
-    auto texture_name  = get_string(file,          "texture");
-    auto pointlight_o  = get_string(file,          "pointlight");
-    auto player        = get_string(file,          "player");
-    auto is_visible    = get_bool(file,            "is_visible").value_or(true);
-    bool is_skybox     = get_bool(file,            "skybox").value_or(false);
-    bool random_junk   = get_bool(file,            "random_junk_from_file").value_or(false);
-    auto orbital_o     = get_string(file,          "orbital-body");
+    auto const name          = get_string(file,          "name").value_or("FromFileUnnamed");
+    auto const shader        = get_string_or_abort(file, "shader");
+    auto const geometry      = get_string_or_abort(file, "geometry");
+    auto const pos           = get_vec3_or_abort(file,   "position");
+    auto const scale_o       = get_vec3(file,            "scale");
+    auto const rotation_o    = get_vec3(file,            "rotation");
+    auto const color         = get_color(file,           "color");
+    auto const material_o    = get_string(file,          "material");
+    auto const texture_name  = get_string(file,          "texture");
+    auto const pointlight_o  = get_string(file,          "pointlight");
+    auto const player        = get_string(file,          "player");
+    auto const is_visible    = get_bool(file,            "is_visible").value_or(true);
+    bool const is_skybox     = get_bool(file,            "skybox").value_or(false);
+    bool const random_junk   = get_bool(file,            "random_junk_from_file").value_or(false);
+    bool const is_terrain    = get_bool(file,            "terrain").value_or(false);
+    auto const orbital_o     = get_string(file,          "orbital-body");
     // clang-format on
 
     // texture OR color fields, not both
@@ -608,9 +629,13 @@ load_entities(stlw::Logger& logger, CppTable const& config,
       assert(it != materials.cend());
       registry.assign<Material>(eid) = it->material;
     }
+
+    if (is_terrain) {
+      registry.assign<IsTerrain>(eid);
+    }
   };
 
-  auto const entity_table = get_table_array(config, "entity");
+  auto const entity_table = get_table_array(table, "entity");
   for (auto const& it : *entity_table)
   {
     load_entity(it);
@@ -618,7 +643,7 @@ load_entities(stlw::Logger& logger, CppTable const& config,
 }
 
 auto
-load_tileinfos(stlw::Logger& logger, CppTable const& config, std::vector<NameMaterial> const& materials,
+load_tileinfos(stlw::Logger& logger, CppTable const& table, std::vector<NameMaterial> const& materials,
     EntityRegistry& registry)
 {
   auto const load_tile = [&materials](auto const& file) {
@@ -634,10 +659,10 @@ load_tileinfos(stlw::Logger& logger, CppTable const& config, std::vector<NameMat
     auto const it = std::find_if(materials.cbegin(), materials.cend(), cmp);
     assert(it != materials.cend());
     auto const material = it->material;
-    auto const color = load_color_or_abort(file);
+    auto const color = load_color_or_abort(file, "color");
     return TileInfo{tiletype, mesh_name, vshader_name, color, material};
   };
-  auto const  tile_table = get_table_array(config, "tile");
+  auto const  tile_table = get_table_array(table, "tile");
   auto const& ttable = tile_table->as_table_array()->get();
 
   // Ensure we load data for everry tile
@@ -673,9 +698,9 @@ load_shader(stlw::Logger& logger, ParsedVertexAttributes& pvas, CppTable const& 
 }
 
 Result<opengl::ShaderPrograms, std::string>
-load_shaders(stlw::Logger& logger, ParsedVertexAttributes&& pvas, CppTable const& config)
+load_shaders(stlw::Logger& logger, ParsedVertexAttributes&& pvas, CppTable const& table)
 {
-  auto const             shaders_table = get_table_array_or_abort(config, "shaders");
+  auto const             shaders_table = get_table_array_or_abort(table, "shaders");
   opengl::ShaderPrograms sps;
   for (auto const& shader_table : *shaders_table)
   {
@@ -686,9 +711,9 @@ load_shaders(stlw::Logger& logger, ParsedVertexAttributes&& pvas, CppTable const
 }
 
 auto
-load_vas(CppTable const& config)
+load_vas(CppTable const& table)
 {
-  auto vas_table_array = config->get_table_array("vas");
+  auto vas_table_array = table->get_table_array("vas");
   assert(vas_table_array);
 
   auto const read_data = [&](auto const& table, char const* fieldname, size_t& index) {
@@ -771,11 +796,11 @@ TileInfo& TileSharedInfoTable::operator[](TileType const type)
 Result<LevelAssets, std::string>
 LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::string const& filename)
 {
-  CppTable engine_config = cpptoml::parse_file("engine.toml");
-  assert(engine_config);
+  CppTable engine_table = cpptoml::parse_file("engine.toml");
+  assert(engine_table);
 
-  ParsedVertexAttributes pvas = load_vas(engine_config);
-  auto                   sps = TRY_MOVEOUT(load_shaders(logger, MOVE(pvas), engine_config));
+  ParsedVertexAttributes pvas = load_vas(engine_table);
+  auto                   sps = TRY_MOVEOUT(load_shaders(logger, MOVE(pvas), engine_table));
 
   CppTable file_datatable = cpptoml::parse_file("levels/" + filename);
   assert(file_datatable);
@@ -819,9 +844,9 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   DirectionalLight dlight{MOVE(light), directional_light_direction};
   GlobalLight      glight{ambient, MOVE(dlight)};
 
-  auto bg_color = Color{get_vec3_or_abort(file_datatable, "background")};
+  auto const fog = load_fog(file_datatable);
   LOG_TRACE("yielding assets");
-  return Ok(LevelAssets{MOVE(glight), MOVE(bg_color),
+  return Ok(LevelAssets{MOVE(glight), fog,
 
                         MOVE(tile_table),
 

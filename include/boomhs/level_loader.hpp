@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/obj_store.hpp>
+#include <boomhs/fog.hpp>
 #include <boomhs/tile.hpp>
 
 #include <opengl/colors.hpp>
@@ -47,7 +48,7 @@ public:
 struct LevelAssets
 {
   opengl::GlobalLight global_light;
-  opengl::Color       background_color;
+  Fog                 fog;
 
   TileSharedInfoTable tile_table;
 

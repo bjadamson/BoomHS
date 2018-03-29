@@ -20,5 +20,5 @@ void main()
   gl_Position = u_mvpmatrix * v_position;
 
   v_surfacenormal = normalize(u_normalmatrix * a_normal);
-  v_visibility = calculate_fog_visibility(u_fog, u_modelmatrix, u_viewmatrix, a_position);
+  v_visibility = calculate_fog_visibility(u_fog, u_modelmatrix, u_viewmatrix, v_position);
 }

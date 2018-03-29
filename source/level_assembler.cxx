@@ -26,14 +26,6 @@ namespace
 ZoneState
 assemble(LevelGeneredData&& gendata, LevelAssets&& assets, EntityRegistry& registry)
 {
-  // Load point lights
-  /*
-  auto light_view = registry.view<PointLight, Transform>();
-  for (auto const entity : light_view) {
-    auto &transform = light_view.get<Transform>(entity);
-  }
-  */
-
   // camera-look at origin
   // cameraspace "up" is === "up" in worldspace.
   auto const FORWARD = -Z_UNIT_VECTOR;
@@ -56,7 +48,7 @@ assemble(LevelGeneredData&& gendata, LevelAssets&& assets, EntityRegistry& regis
                        MOVE(gendata.startpos),
                        MOVE(gendata.rivers),
 
-                       assets.background_color,
+                       assets.fog,
                        assets.global_light,
                        MOVE(assets.obj_store),
                        MOVE(camera),

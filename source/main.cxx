@@ -392,7 +392,7 @@ game_loop(EngineState& es, LevelManager& lm, SDLWindow& window, stlw::float_gene
   }
   {
     // rendering code
-    render::clear_screen(ldata.background);
+    render::clear_screen(ldata.fog.color);
     RenderState rstate{es, zs};
     if (es.draw_entities)
     {

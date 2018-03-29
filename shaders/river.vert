@@ -56,5 +56,5 @@ void main()
   // Transform pos_world to ndc
   gl_Position = u_mvpmatrix * pos_world;
 
-  v_visibility = calculate_fog_visibility(u_fog, u_modelmatrix, u_viewmatrix, a_position);
+  v_visibility = calculate_fog_visibility(u_fog, u_modelmatrix, u_viewmatrix, v_position);
 }

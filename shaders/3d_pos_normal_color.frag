@@ -33,14 +33,12 @@ void main()
   vec3 light = ambient_pointlight + dirlight;
   if (u_drawnormals == 1) {
     fragment_color = vec4(v_surfacenormal, 1.0);
-    fragment_color = mix(u_fog.color, fragment_color, v_visibility);
   }
   else if (u_ignore_dirlight == 1) {
     fragment_color = vec4(ambient_pointlight, 1.0) * v_color;
-    fragment_color = mix(u_fog.color, fragment_color, v_visibility);
   }
   else {
     fragment_color = vec4(light, 1.0) * v_color;
-    fragment_color = mix(u_fog.color, fragment_color, v_visibility);
   }
+  fragment_color = mix(u_fog.color, fragment_color, v_visibility);
 }

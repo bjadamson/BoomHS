@@ -1,5 +1,4 @@
 title = "Level 0"
-background = [0.0, 0.0, 0.0]
 camera_spherical_coords = [2.56, 6.6446330, 56.379040]
 
 ambient = [0.0, 0.0, 0.0]
@@ -255,6 +254,12 @@ path = "assets/terrain/"
 name = "B"
 path = "assets/"
 
+########### FOG ################
+[[fog]]
+density = 0.007
+gradient = 1.5
+color = [0.0, 0.0, 0.0, 1.0]
+
 ########### ORBITAL DATA ###########
 [[orbital-body]]
 name = "sun"
@@ -338,7 +343,7 @@ shader = "3dtexture"
 geometry = "mesh:terrain"
 texture = "TerrainFloor"
 scale = [1.0, 1.0, 1.0]
-random_junk_from_file = true
+terrain = true
 material = "terrain"
 name = "terrain"
 

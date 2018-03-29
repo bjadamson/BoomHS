@@ -1,6 +1,7 @@
 #pragma once
 #include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/fog.hpp>
 #include <boomhs/level_loader.hpp>
 #include <boomhs/nearby_targets.hpp>
 #include <boomhs/river_generator.hpp>
@@ -42,10 +43,10 @@ class LevelData
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileGrid&&, TileSharedInfoTable&&, TilePosition const&, std::vector<RiverInfo>&&,
-            opengl::Color const&, opengl::GlobalLight const&, ObjStore&&, Camera&&, WorldObject&&);
+            Fog const&, opengl::GlobalLight const&, ObjStore&&, Camera&&, WorldObject&&);
 
   // public fields
-  opengl::Color       background;
+  Fog                 fog;
   opengl::GlobalLight global_light;
 
   ObjStore obj_store;

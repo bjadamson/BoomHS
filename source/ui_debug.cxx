@@ -501,17 +501,23 @@ show_pointlight_window(UiDebugState& ui, EntityRegistry& registry)
 }
 
 void
-show_background_window(UiDebugState& state, LevelData& ldata)
+show_fog_window(UiDebugState& state, LevelData& ldata)
 {
   auto const draw = [&]() {
-    ImGui::ColorEdit3("Background Color:", ldata.background.data());
+    ImGui::ColorEdit4("Fog Color:", ldata.fog.color.data());
 
-    if (ImGui::Button("Close", ImVec2(120, 0)))
-    {
-      state.show_background_window = false;
-    }
+    ImGui::Separator();
+    ImGui::SliderFloat("Density Slider", &ldata.fog.density, 0.0f, 0.01f);
+    ImGui::SliderFloat("Gradient Slider", &ldata.fog.gradient, 0.0f, 10.0f);
+
+    ImGui::Separator();
+    ImGui::InputFloat("Density", &ldata.fog.density);
+    ImGui::InputFloat("Gradient", &ldata.fog.gradient);
+
+    bool const close_pressed = ImGui::Button("Close", ImVec2(120, 0));;
+    state.show_fog_window = !close_pressed;
   };
-  imgui_cxx::with_window(draw, "Background Color");
+  imgui_cxx::with_window(draw, "Fog Window");
 }
 
 void
@@ -519,16 +525,15 @@ world_menu(EngineState& es, LevelData& ldata)
 {
   auto&      ui = es.ui_state.debug;
   auto const draw = [&]() {
-    ImGui::MenuItem("Background Color", nullptr, &ui.show_background_window);
+    ImGui::MenuItem("Fog Window", nullptr, &ui.show_fog_window);
     ImGui::MenuItem("Local Axis", nullptr, &es.show_local_axis);
     ImGui::MenuItem("Global Axis", nullptr, &es.show_global_axis);
-
-    if (ui.show_background_window)
-    {
-      show_background_window(ui, ldata);
-    }
   };
   imgui_cxx::with_menu(draw, "World");
+
+  if (ui.show_fog_window) {
+    show_fog_window(ui, ldata);
+  }
 }
 
 void
