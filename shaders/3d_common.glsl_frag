@@ -119,3 +119,4 @@ calc_pointlights(PointLight pointlights[MAX_NUM_POINTLIGHTS], mat4 modelmatrix, 
   return color;
 }
 
+

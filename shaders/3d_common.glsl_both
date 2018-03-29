@@ -6,7 +6,7 @@ struct Fog
   float density;
   float gradient;
 
-  vec3 color;
+  vec4 color;
 };
 
 

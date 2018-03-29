@@ -2,13 +2,21 @@ in vec4 a_position;
 in vec3 a_normal;
 in vec4 a_color;
 
+// LIGHTING
+uniform mat4 u_mvpmatrix;
+uniform mat3 u_normalmatrix;
+
+// FOG
+uniform Fog u_fog;
+uniform mat4 u_viewmatrix;
+
+// BOTH
+uniform mat4 u_modelmatrix;
+
 out vec4 v_position;
 out vec3 v_surfacenormal;
 out vec4 v_color;
-
-uniform mat4 u_mvpmatrix;
-uniform mat4 u_modelmatrix;
-uniform mat3 u_normalmatrix;
+out float v_visibility;
 
 void main()
 {
@@ -19,4 +27,6 @@ void main()
 
   v_surfacenormal = normalize(u_normalmatrix * a_normal);
   v_color = a_color;
+
+  v_visibility = calculate_fog_visibility(u_fog, u_modelmatrix, u_viewmatrix, a_position);
 }

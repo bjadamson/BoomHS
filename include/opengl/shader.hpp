@@ -105,6 +105,17 @@ public:
     return set_uniform_vec3(logger, name.c_str(), v);
   }
 
+  void set_uniform_vec4(stlw::Logger& logger, GLchar const* name, glm::vec4 const& v)
+  {
+    auto const arr = stlw::make_array<float>(v.x, v.y, v.z, v.w);
+    set_uniform_array_4fv(logger, name, arr);
+  }
+
+  void set_uniform_vec4(stlw::Logger& logger, std::string const& name, glm::vec4 const& v)
+  {
+    return set_uniform_vec4(logger, name.c_str(), v);
+  }
+
   void set_uniform_color(stlw::Logger& logger, GLchar const* name, Color const& c)
   {
     auto const arr = stlw::make_array<float>(c.r(), c.g(), c.b(), c.a());

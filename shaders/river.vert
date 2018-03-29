@@ -1,20 +1,26 @@
 in vec4 a_position;
 in vec3 a_normal;
 
-out vec4 v_position;
-out vec3 v_surfacenormal;
-out vec4 v_color;
-
 uniform vec2 u_offset;
 uniform vec2 u_direction;
 
-
+// LIGHTING
 uniform mat4 u_mvpmatrix;
-uniform mat4 u_modelmatrix;
 uniform mat4 u_inversemodelmatrix;
-
 uniform mat3 u_normalmatrix;
 uniform vec4 u_color;
+
+// FOG
+uniform Fog u_fog;
+uniform mat4 u_viewmatrix;
+
+// BOTH
+uniform mat4 u_modelmatrix;
+
+out vec4 v_position;
+out vec3 v_surfacenormal;
+out vec4 v_color;
+out float v_visibility;
 
 void main()
 {
@@ -49,4 +55,6 @@ void main()
 
   // Transform pos_world to ndc
   gl_Position = u_mvpmatrix * pos_world;
+
+  v_visibility = calculate_fog_visibility(u_fog, u_modelmatrix, u_viewmatrix, a_position);
 }

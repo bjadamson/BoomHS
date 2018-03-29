@@ -1,10 +1,12 @@
 float
-calculate_fog_visibility(Fog fog, mat4 transform_matrix, mat4 view_matrix, vec4 position)
+calculate_fog_visibility(Fog fog, mat4 model_matrix, mat4 view_matrix, vec4 position)
 {
-  vec4 world_position = transform_matrix * position;
+  vec4 world_position = model_matrix * position;
   vec4 pos_relative_to_camera = view_matrix * world_position;
   float distance = length(pos_relative_to_camera.xyz);
 
   float visibility = exp(-pow((distance * fog.density), fog.gradient));
   return clamp(visibility, 0.0, 1.0);
 }
+
+

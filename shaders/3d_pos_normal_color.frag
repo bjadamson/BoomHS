@@ -1,8 +1,7 @@
-precision mediump float;
-
 in vec4 v_position;
 in vec3 v_surfacenormal;
 in vec4 v_color;
+in float v_visibility;
 
 uniform Material         u_material;
 uniform AmbientLight     u_ambient;
@@ -13,6 +12,7 @@ uniform int   u_drawnormals;
 uniform int   u_ignore_dirlight;
 uniform float u_reflectivity;
 
+uniform Fog u_fog;
 uniform mat4 u_modelmatrix;
 uniform mat4 u_invviewmatrix;
 
@@ -33,10 +33,14 @@ void main()
   vec3 light = ambient_pointlight + dirlight;
   if (u_drawnormals == 1) {
     fragment_color = vec4(v_surfacenormal, 1.0);
-  } else if (u_ignore_dirlight == 1) {
+    fragment_color = mix(u_fog.color, fragment_color, v_visibility);
+  }
+  else if (u_ignore_dirlight == 1) {
     fragment_color = vec4(ambient_pointlight, 1.0) * v_color;
+    fragment_color = mix(u_fog.color, fragment_color, v_visibility);
   }
   else {
     fragment_color = vec4(light, 1.0) * v_color;
+    fragment_color = mix(u_fog.color, fragment_color, v_visibility);
   }
 }

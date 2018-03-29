@@ -53,16 +53,6 @@ set_modelmatrix(stlw::Logger& logger, glm::mat4 const& model_matrix, ShaderProgr
 }
 
 void
-set_mvpmatrix(stlw::Logger& logger, glm::mat4 const& model_matrix, ShaderProgram& sp,
-              Camera const& camera)
-{
-  glm::mat4 const cam_matrix = camera.camera_matrix();
-  auto const      mvp_matrix = cam_matrix * model_matrix;
-
-  sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
-}
-
-void
 draw_drawinfo(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
 {
   auto const draw_mode = dinfo.draw_mode();
@@ -149,7 +139,8 @@ struct PointlightTransform
 };
 
 void
-set_receiveslight_uniforms(RenderState& rstate, glm::mat4 const& model_matrix, ShaderProgram& sp,
+set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
+                           glm::mat4 const& model_matrix, ShaderProgram& sp,
                            DrawInfo const& dinfo, Material const& material,
                            std::vector<PointlightTransform> const& pointlights,
                            bool const                              receives_ambient_light)
@@ -189,16 +180,24 @@ set_receiveslight_uniforms(RenderState& rstate, glm::mat4 const& model_matrix, S
     set_pointlight(logger, sp, i, pointlight, transform.translation);
   }
 
+  // Material uniforms
   sp.set_uniform_vec3(logger, "u_material.ambient", material.ambient);
   sp.set_uniform_vec3(logger, "u_material.diffuse", material.diffuse);
   sp.set_uniform_vec3(logger, "u_material.specular", material.specular);
   sp.set_uniform_float1(logger, "u_material.shininess", material.shininess);
-
-  sp.set_uniform_bool(logger, "u_drawnormals", es.draw_normals);
   // TODO: when re-implementing LOS restrictions
   // sp.set_uniform_vec3(logger, "u_player.position",  player.world_position());
   // sp.set_uniform_vec3(logger, "u_player.direction",  player.forward_vector());
   // sp.set_uniform_float1(logger, "u_player.cutoff",  glm::cos(glm::radians(90.0f)));
+
+  // FOG uniforms
+  sp.set_uniform_matrix_4fv(logger, "u_viewmatrix", camera.view_matrix());
+  sp.set_uniform_float1(logger, "u_fog.density", 0.007f);
+  sp.set_uniform_float1(logger, "u_fog.gradient", 1.5f);
+  sp.set_uniform_color(logger, "u_fog.color", LOC::BLUE);
+
+  // misc
+  sp.set_uniform_bool(logger, "u_drawnormals", es.draw_normals);
 }
 
 void
@@ -224,7 +223,9 @@ draw(RenderState& rstate, glm::mat4 const& model_matrix, ShaderProgram& sp, Draw
   {
     auto const& ldata = zs.level_data;
     auto const& camera = ldata.camera;
-    set_mvpmatrix(logger, model_matrix, sp, camera);
+
+    auto const mvp_matrix = camera.camera_matrix() * model_matrix;
+    sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 
     if (is_skybox)
     {
@@ -240,9 +241,9 @@ draw(RenderState& rstate, glm::mat4 const& model_matrix, ShaderProgram& sp, Draw
 }
 
 void
-draw_3dlit_shape(RenderState& rstate, glm::mat4 const& model_matrix, ShaderProgram& sp,
-                 DrawInfo const& dinfo, Material const& material, EntityRegistry& registry,
-                 bool const receives_ambient_light)
+draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const& model_matrix,
+    ShaderProgram& sp, DrawInfo const& dinfo, Material const& material, EntityRegistry& registry,
+    bool const receives_ambient_light)
 {
   auto& es = rstate.es;
   auto& zs = rstate.zs;
@@ -259,14 +260,15 @@ draw_3dlit_shape(RenderState& rstate, glm::mat4 const& model_matrix, ShaderProgr
 
     pointlights.emplace_back(plt);
   }
-  set_receiveslight_uniforms(rstate, model_matrix, sp, dinfo, material, pointlights,
+  set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
                              receives_ambient_light);
   draw(rstate, model_matrix, sp, dinfo);
 }
 
 void
 draw_3dlightsource(RenderState& rstate, glm::mat4 const& model_matrix, ShaderProgram& sp,
-                   DrawInfo const& dinfo, EntityID const eid, EntityRegistry& registry)
+                   DrawInfo const& dinfo, EntityID const eid,
+                   EntityRegistry& registry)
 {
   auto& es = rstate.es;
   auto& zs = rstate.zs;
@@ -554,7 +556,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     {
       assert(registry.has<Material>(eid));
       Material const& material = registry.get<Material>(eid);
-      draw_3dlit_shape(rstate, model_matrix, sp, dinfo, material, registry, receives_ambient_light);
+      draw_3dlit_shape(rstate, transform.translation, model_matrix, sp, dinfo, material, registry, receives_ambient_light);
       return;
     }
 
@@ -667,13 +669,13 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
   auto const& tilegrid = ldata.tilegrid();
   auto const& tiletable = ldata.tiletable();
 
-  auto const& draw_tile_helper = [&](auto& sp, auto const& dinfo, Tile const& tile,
-                                     glm::mat4 const& model_mat,
+  auto const& draw_tile_helper = [&](auto& sp, glm::vec3 const& position, auto const& dinfo,
+                                     Tile const& tile, glm::mat4 const& model_mat,
                                      bool const       receives_ambient_light) {
     auto const& tileinfo = tiletable[tile.type];
     auto const& material = tileinfo.material;
 
-    draw_3dlit_shape(rstate, model_mat, sp, dinfo, material, registry, receives_ambient_light);
+    draw_3dlit_shape(rstate, position, model_mat, sp, dinfo, material, registry, receives_ambient_light);
   };
   auto const draw_tile = [&](auto const& tile_pos) {
     auto const& tile = tilegrid.data(tile_pos);
@@ -697,7 +699,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
       auto&      floor_sp = sps.ref_sp("floor");
       auto const scale = glm::vec3{0.8};
       auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, scale);
-      draw_tile_helper(floor_sp, dinfo, tile, modmatrix, true);
+      draw_tile_helper(floor_sp, tr, dinfo, tile, modmatrix, true);
     }
     break;
     case TileType::WALL:
@@ -705,7 +707,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
       auto const inverse_model = glm::inverse(default_modmatrix);
       auto&      sp = sps.ref_sp("hashtag");
       sp.set_uniform_matrix_4fv(logger, "u_inversemodelmatrix", inverse_model);
-      draw_tile_helper(sp, dinfo, tile, default_modmatrix, true);
+      draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix, true);
     }
     break;
     case TileType::RIVER:
@@ -717,7 +719,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
       sp.set_uniform_color(logger, "u_color", LOC::WHITE);
 
       bool const receives_ambient_light = false;
-      draw_tile_helper(sp, dinfo, tile, default_modmatrix, receives_ambient_light);
+      draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix, receives_ambient_light);
     }
     break;
     case TileType::STAIR_UP:
@@ -726,7 +728,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
       sp.set_uniform_color(logger, "u_color", LOC::WHITE);
 
       bool const receives_ambient_light = false;
-      draw_tile_helper(sp, dinfo, tile, default_modmatrix, receives_ambient_light);
+      draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix, receives_ambient_light);
     }
     break;
     case TileType::BRIDGE:
@@ -735,7 +737,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
     default:
     {
       bool const receives_ambient_light = true;
-      draw_tile_helper(tile_sp, dinfo, tile, default_modmatrix, receives_ambient_light);
+      draw_tile_helper(tile_sp, tr, dinfo, tile, default_modmatrix, receives_ambient_light);
     }
     break;
     case TileType::UNDEFINED:
@@ -835,7 +837,7 @@ draw_rivers(RenderState& rstate, window::FrameTime const& ft)
       auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scale);
       auto const inverse_model = glm::inverse(modelmatrix);
       sp.set_uniform_matrix_4fv(logger, "u_inversemodelmatrix", inverse_model);
-      draw_3dlit_shape(rstate, modelmatrix, sp, dinfo, material, registry, receives_ambient);
+      draw_3dlit_shape(rstate, tr, modelmatrix, sp, dinfo, material, registry, receives_ambient);
     };
     for (auto const& w : rinfo.wiggles)
     {
