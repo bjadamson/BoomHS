@@ -35,7 +35,7 @@ using CppTable = std::shared_ptr<cpptoml::table>;
 // TRY_OPTION
 #define TRY_OPTION(VAR_NAME, expr) TRY_OPTION_EXPAND_VAR(VAR_NAME, __COUNTER__, expr)
 
-static float constexpr SKYBOX_SCALE_SIZE = 100.0f;
+static float constexpr SKYBOX_SCALE_SIZE = 1000.0f;
 
 namespace
 {
