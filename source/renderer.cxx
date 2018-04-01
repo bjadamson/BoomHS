@@ -7,6 +7,7 @@
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/types.hpp>
+#include <boomhs/water.hpp>
 
 #include <opengl/draw_info.hpp>
 #include <opengl/factory.hpp>
@@ -613,27 +614,19 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     draw_fn(eid, sn, transform, isv, bboard, FORWARD(args));
   };
 
-  //
-  // Render everything loaded form level file.
-
-  // billboards
-  registry.view<ShaderName, Transform, IsVisible, BillboardRenderable, OrbitalBody>().each(
+#define COMMON ShaderName, Transform, IsVisible
+  // define rendering order here
+  // OrbitalBodies always render first.
+  registry.view<COMMON, BillboardRenderable, OrbitalBody>().each(
       draw_orbital_body);
 
-  // terrain
-  registry.view<ShaderName, Transform, IsVisible, IsTerrain>().each(draw_fn);
-
-  // random junk from level file
-  registry.view<ShaderName, Transform, IsVisible, JunkEntityFromFILE>().each(draw_fn);
-
-  // torch
-  registry.view<ShaderName, Transform, IsVisible, Torch>().each(draw_torch);
-
-  // enemies
-  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, NPCData>().each(draw_fn);
-
-  // player
-  registry.view<ShaderName, Transform, IsVisible, MeshRenderable, PlayerData>().each(player_drawfn);
+  registry.view<COMMON, IsTerrain>().each(draw_fn);
+  registry.view<COMMON, Water>().each(draw_fn);
+  registry.view<COMMON, JunkEntityFromFILE>().each(draw_fn);
+  registry.view<COMMON, Torch>().each(draw_torch);
+  registry.view<COMMON, MeshRenderable, NPCData>().each(draw_fn);
+  registry.view<COMMON, MeshRenderable, PlayerData>().each(player_drawfn);
+#undef COMMON
 }
 
 void

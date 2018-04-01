@@ -9,9 +9,9 @@ directional_light_direction = [1.0, 0.0, 0.1]
 [[resource]]
 name = "building_skybox"
 type = "texture:3dcube-RGB"
-front = "skybox/greenhaze_front.png"
+front = "skybox/greenhaze_back.png"
 right = "skybox/greenhaze_right.png"
-back = "skybox/greenhaze_back.png"
+back = "skybox/greenhaze_front.png"
 left = "skybox/greenhaze_left.png"
 top = "skybox/greenhaze_top.png"
 bottom = "skybox/greenhaze_bottom.png"
@@ -251,6 +251,10 @@ name = "terrain"
 path = "assets/terrain/"
 
 [[meshes]]
+name = "water"
+path = "assets/terrain/"
+
+[[meshes]]
 name = "B"
 path = "assets/"
 
@@ -295,6 +299,13 @@ ambient = [1.0, 1.0, 1.0]
 diffuse = [1.0, 1.0, 1.0]
 specular = [1.0, 1.0, 1.0]
 shininess = 1.0
+
+[[material]]
+name = "water"
+ambient = [0.1, 0.3, 1.0]
+diffuse = [0.1, 0.3, 1.0]
+specular = [0.1, 0.3, 1.0]
+shininess = 0.85
 
 ########### POINTLIGHT #############
 [[pointlight]]
@@ -346,6 +357,16 @@ scale = [1.0, 1.0, 1.0]
 terrain = true
 material = "terrain"
 name = "terrain"
+
+[[entity]]
+position = [0.0, 1.0, 0.0]
+shader = "3d_pos_normal_color"
+geometry = "mesh:water"
+color = [0.0, 0.0, 1.0, 1.0]
+scale = [1.0, 1.0, 1.0]
+material = "water"
+name = "water"
+water = true
 
 ######### POINT LIGHTS
 [[entity]]

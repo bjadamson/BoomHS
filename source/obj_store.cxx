@@ -272,6 +272,10 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
   {                                                                                                \
     cache = &pos_;                                                                                 \
   }                                                                                                \
+  else if (pos_color)                                                                       \
+  {                                                                                                \
+    cache = &pos_color_;                                                                    \
+  }                                                                                                \
   else if (pos_normal)                                                                             \
   {                                                                                                \
     cache = &pos_normal_;                                                                          \

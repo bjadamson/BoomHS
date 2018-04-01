@@ -63,8 +63,14 @@ filename = "circle_reticle.png"
 
 [[resource]]
 name = "TerrainFloor"
+type = "texture:2d-RGBA"
+filename = "terrain/terrain-texture.png"
+wrap = "repeat"
+
+[[resource]]
+name = "water"
 type = "texture:2d-RGB"
-filename = "textures/TerrainFloor.jpg"
+filename = "terrain/water-texture.jpg"
 wrap = "repeat"
 uvs = 10000
 
@@ -251,6 +257,10 @@ name = "terrain"
 path = "assets/terrain/"
 
 [[meshes]]
+name = "water"
+path = "assets/terrain/"
+
+[[meshes]]
 name = "B"
 path = "assets/"
 
@@ -295,6 +305,13 @@ ambient = [1.0, 1.0, 1.0]
 diffuse = [1.0, 1.0, 1.0]
 specular = [1.0, 1.0, 1.0]
 shininess = 1.0
+
+[[material]]
+name = "water"
+ambient = [0.0, 0.0, 1.0]
+diffuse = [0.0, 0.0, 1.0]
+specular = [0.0, 0.0, 1.0]
+shininess = 10.00
 
 ########### POINTLIGHT #############
 [[pointlight]]
@@ -346,6 +363,16 @@ scale = [1.0, 1.0, 1.0]
 terrain = true
 material = "terrain"
 name = "terrain"
+
+[[entity]]
+position = [0.0, 88.0, 0.0]
+shader = "3dtexture"
+geometry = "mesh:water"
+material = "water"
+name = "water"
+scale = [1.0, 1.0, 1.0]
+texture = "water"
+water = true
 
 ######### POINT LIGHTS
 [[entity]]

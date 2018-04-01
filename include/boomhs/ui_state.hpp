@@ -65,6 +65,7 @@ struct UiDebugState
 
   bool show_playerwindow = false;
   bool show_pointlight_window = false;
+  bool show_skyboxwindow = false;
   bool show_time_window = false;
 
   bool show_tilegrid_editor_window = false;

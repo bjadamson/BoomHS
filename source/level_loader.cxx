@@ -5,6 +5,7 @@
 #include <boomhs/obj.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/skybox.hpp>
+#include <boomhs/water.hpp>
 
 #include <stlw/algorithm.hpp>
 #include <stlw/result.hpp>
@@ -177,6 +178,17 @@ get_int(CppTable const& table, char const* name)
     return std::nullopt;
   }
   return std::make_optional(*load_data);
+}
+
+int
+get_int_or_abort(CppTable const& table, char const* name)
+{
+  auto const data = get_int(table, name);
+  if (!data)
+  {
+    std::abort();
+  }
+  return *data;
 }
 
 std::optional<float>
@@ -516,6 +528,7 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     bool const is_skybox     = get_bool(file,            "skybox").value_or(false);
     bool const random_junk   = get_bool(file,            "random_junk_from_file").value_or(false);
     bool const is_terrain    = get_bool(file,            "terrain").value_or(false);
+    bool const is_water      = get_bool(file,            "water").value_or(false);
     auto const orbital_o     = get_string(file,          "orbital-body");
     // clang-format on
 
@@ -633,6 +646,9 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     if (is_terrain) {
       registry.assign<IsTerrain>(eid);
     }
+    if (is_water) {
+      registry.assign<Water>(eid);
+    }
   };
 
   auto const entity_table = get_table_array(table, "entity");
@@ -710,11 +726,18 @@ load_shaders(stlw::Logger& logger, ParsedVertexAttributes&& pvas, CppTable const
   return Ok(MOVE(sps));
 }
 
+struct TerrainData
+{
+  std::string mesh_name;
+  int terrain_index;
+  int water_index;
+};
+
 auto
 load_vas(CppTable const& table)
 {
-  auto vas_table_array = table->get_table_array("vas");
-  assert(vas_table_array);
+  auto const table_array = table->get_table_array("vas");
+  assert(table_array);
 
   auto const read_data = [&](auto const& table, char const* fieldname, size_t& index) {
     // THINKING EXPLAINED:
@@ -761,7 +784,7 @@ load_vas(CppTable const& table)
 
     pvas.add(name, make_vertex_attribute(apis));
   };
-  std::for_each((*vas_table_array).begin(), (*vas_table_array).end(), fn);
+  std::for_each((*table_array).begin(), (*table_array).end(), fn);
   return pvas;
 }
 

@@ -351,6 +351,29 @@ draw_player_window(EngineState& es, LevelData& ldata)
 }
 
 void
+draw_skybox_window(EngineState& es, EntityRegistry &registry)
+{
+  auto const eid = find_skybox(registry);
+  auto const& ti = registry.get<TextureRenderable>(eid).texture_info;
+
+  auto const draw = [&]() {
+    auto const draw_button =[&](TextureInfo const& ti) {
+      ImTextureID im_texid = reinterpret_cast<void*>(ti.id);
+
+      imgui_cxx::ImageButtonBuilder image_builder;
+      image_builder.frame_padding = 1;
+      image_builder.bg_color = ImColor{255, 255, 255, 255};
+      image_builder.tint_color = ImColor{255, 255, 255, 128};
+
+      auto const size = ImVec2(32, 32);
+      return image_builder.build(im_texid, size);
+    };
+    bool const button_pressed = draw_button(ti);
+  };
+  imgui_cxx::with_window(draw, "Skybox Window");
+}
+
+void
 show_directionallight_window(UiDebugState& ui, LevelData& ldata)
 {
   auto& directional = ldata.global_light.directional;
@@ -611,6 +634,10 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::Frame
   {
     draw_player_window(es, ldata);
   }
+  if (state.show_skyboxwindow)
+  {
+    draw_skybox_window(es, registry);
+  }
   if (state.show_tilegrid_editor_window)
   {
     draw_tilegrid_editor(tilegrid_state, lm);
@@ -649,13 +676,14 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::Frame
   }
 
   auto const windows_menu = [&]() {
-    ImGui::MenuItem("Debug Menu", nullptr, &state.show_debugwindow);
-    ImGui::MenuItem("Entity Menu", nullptr, &state.show_entitywindow);
-    ImGui::MenuItem("Camera Menu", nullptr, &state.show_camerawindow);
-    ImGui::MenuItem("Mouse Menu", nullptr, &state.show_mousewindow);
-    ImGui::MenuItem("Player Menu", nullptr, &state.show_playerwindow);
-    ImGui::MenuItem("Tilemap Menu", nullptr, &state.show_tilegrid_editor_window);
-    ImGui::MenuItem("Time Menu", nullptr, &state.show_time_window);
+    ImGui::MenuItem("Debug", nullptr, &state.show_debugwindow);
+    ImGui::MenuItem("Entity", nullptr, &state.show_entitywindow);
+    ImGui::MenuItem("Camera", nullptr, &state.show_camerawindow);
+    ImGui::MenuItem("Mouse", nullptr, &state.show_mousewindow);
+    ImGui::MenuItem("Player", nullptr, &state.show_playerwindow);
+    ImGui::MenuItem("Skybox", nullptr, &state.show_skyboxwindow);
+    ImGui::MenuItem("Tilemap", nullptr, &state.show_tilegrid_editor_window);
+    ImGui::MenuItem("Time", nullptr, &state.show_time_window);
     ImGui::MenuItem("Exit", nullptr, &es.quit);
   };
   auto const settings_menu = [&]() {

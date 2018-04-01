@@ -82,6 +82,7 @@ class ObjStore
 
   // These caches hold cached versions of the data interleaved.
   ObjCache pos_;
+  ObjCache pos_color_;
   ObjCache pos_normal_;
   ObjCache pos_color_normal_;
   ObjCache pos_normal_uv_;
