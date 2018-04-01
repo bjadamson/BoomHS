@@ -82,6 +82,7 @@ add_custom_target(clangcheck COMMAND clang-check -analyze -p ${BUILD} -s ${GLOBB
 add_executable(build_postprocessing ${TOOLS_DIRECTORY}/build_postprocessing.cxx)
 add_executable(boomhs ${GLOBBED_SOURCES})
 
+find_package(OpenAL REQUIRED)
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)

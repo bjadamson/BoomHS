@@ -701,8 +701,13 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Fra
   }
 }
 
+} // namespace
+
+namespace boomhs
+{
+
 bool
-process_event(GameState& state, SDL_Event& event, FrameTime const& ft)
+IO::process_event(GameState& state, SDL_Event& event, FrameTime const& ft)
 {
   auto& es = state.engine_state;
   auto& logger = es.logger;
@@ -746,28 +751,10 @@ process_event(GameState& state, SDL_Event& event, FrameTime const& ft)
   return is_quit_event(event);
 }
 
-} // namespace
-
-namespace boomhs
-{
-
 void
-IO::process(GameState& state, SDL_Event& event, SDLControllers const& controllers,
+IO::process(GameState& state, SDLControllers const& controllers,
             FrameTime const& ft)
 {
-  auto& es = state.engine_state;
-  auto& logger = es.logger;
-
-  while ((!es.quit) && (0 != SDL_PollEvent(&event)))
-  {
-    ImGui_ImplSdlGL3_ProcessEvent(&event);
-
-    auto& imgui = es.imgui;
-    if (!imgui.WantCaptureMouse && !imgui.WantCaptureKeyboard)
-    {
-      es.quit = process_event(state, event, ft);
-    }
-  }
   process_mousestate(state, ft);
   process_keystate(state, ft);
   process_controllerstate(state, controllers, ft);

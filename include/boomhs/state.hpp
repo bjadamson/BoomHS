@@ -4,6 +4,7 @@
 #include <boomhs/ui_state.hpp>
 #include <boomhs/zone_state.hpp>
 
+#include <window/controller.hpp>
 #include <window/mouse.hpp>
 #include <window/sdl_window.hpp>
 
@@ -65,6 +66,8 @@ struct EngineState
   Time                     time;
 
   bool quit = false;
+  bool show_main_menu = true;
+
   bool player_collision;
   bool mariolike_edges;
   bool draw_imguimetrics;
@@ -99,6 +102,22 @@ struct GameState
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
 
   explicit GameState(EngineState&&, LevelManager&&);
+};
+
+struct Engine
+{
+  window::SDLWindow                   window;
+  window::SDLControllers              controllers;
+  std::vector<EntityRegistry> registries = {};
+
+  Engine() = delete;
+  explicit Engine(window::SDLWindow&&, window::SDLControllers&&);
+
+  // We mark this as no-move/copy so the registries data never moves, allowing the rest of the
+  // program to store references into the data owned by registries.
+  NO_COPYMOVE(Engine);
+
+  auto dimensions() const { return window.get_dimensions(); }
 };
 
 } // namespace boomhs

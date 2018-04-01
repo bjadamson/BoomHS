@@ -15,7 +15,10 @@ struct GameState;
 struct IO
 {
   static void
-  process(GameState&, SDL_Event&, window::SDLControllers const&, window::FrameTime const&);
+  process(GameState&, window::SDLControllers const&, window::FrameTime const&);
+
+  static bool
+  process_event(GameState&, SDL_Event&, window::FrameTime const&);
 };
 
 } // namespace boomhs

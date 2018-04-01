@@ -1,7 +1,11 @@
 #include <boomhs/level_manager.hpp>
 #include <boomhs/state.hpp>
+#include <window/controller.hpp>
+#include <window/sdl_window.hpp>
 
 #include <imgui/imgui.hpp>
+
+using namespace window;
 
 namespace boomhs
 {
@@ -28,6 +32,13 @@ GameState::GameState(EngineState&& es, LevelManager&& lm)
     : engine_state(MOVE(es))
     , level_manager(MOVE(lm))
 {
+}
+
+Engine::Engine(SDLWindow&& w, SDLControllers&& c)
+    : window(MOVE(w))
+    , controllers(MOVE(c))
+{
+  registries.resize(50);
 }
 
 } // namespace boomhs
