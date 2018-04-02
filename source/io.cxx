@@ -325,7 +325,9 @@ process_keydown(GameState& state, SDL_Event const& event, FrameTime const& ft)
   case SDLK_q:
     // move_down(state, ft);
     break;
-
+  case SDLK_F10:
+    es.quit = true;
+    break;
   case SDLK_F11:
     ui.draw_debug_ui ^= true;
     break;
@@ -683,7 +685,7 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Fra
 namespace boomhs
 {
 
-bool
+void
 IO::process_event(GameState& state, SDL_Event& event, FrameTime const& ft)
 {
   auto& es = state.engine_state;
@@ -691,6 +693,12 @@ IO::process_event(GameState& state, SDL_Event& event, FrameTime const& ft)
 
   // If the user pressed enter, don't process mouse events (for the game)
   auto& ui = es.ui_state.debug;
+
+  auto& imgui = es.imgui;
+  if (imgui.WantCaptureMouse || imgui.WantCaptureKeyboard)
+  {
+    return;
+  }
 
   auto const type = event.type;
   bool const enter_pressed = event.key.keysym.sym == SDLK_RETURN;
@@ -701,7 +709,7 @@ IO::process_event(GameState& state, SDL_Event& event, FrameTime const& ft)
 
   if (ui.block_input || ui.enter_pressed)
   {
-    return window::is_quit_event(event);
+    return;
   }
 
   switch (event.type)
@@ -725,7 +733,6 @@ IO::process_event(GameState& state, SDL_Event& event, FrameTime const& ft)
     process_keyup(state, event, ft);
     break;
   }
-  return window::is_quit_event(event);
 }
 
 void

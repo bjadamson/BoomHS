@@ -45,7 +45,7 @@ draw_menu(EngineState& es, ImVec2 const& size)
       }
     }
     ImGui::Button("Options");
-    es.quit = ImGui::Button("Exit");
+    es.quit |= ImGui::Button("Exit");
   };
   auto const draw_window = [&]() {
 
@@ -74,10 +74,11 @@ draw(EngineState& es, ImVec2 const& size)
   draw_menu(es, size);
 }
 
-bool
-process_event(GameState& state, SDL_Event &event, FrameTime const& ft)
+void
+process_keydown(GameState& state, SDL_Event const& event)
 {
   auto& es = state.engine_state;
+  auto& ui = es.ui_state;
 
   switch (event.key.keysym.sym)
   {
@@ -86,8 +87,27 @@ process_event(GameState& state, SDL_Event &event, FrameTime const& ft)
       es.show_main_menu ^= true;
     }
     break;
+  case SDLK_F10:
+    es.quit = true;
+    break;
+  case SDLK_F11:
+    ui.draw_debug_ui ^= true;
+    break;
   }
-  return window::is_quit_event(event);
+}
+
+void
+process_event(GameState& state, SDL_Event &event, FrameTime const& ft)
+{
+  auto& es = state.engine_state;
+  auto& ui = es.ui_state;
+
+  switch (event.type)
+  {
+    case SDL_KEYDOWN:
+      process_keydown(state, event);
+      break;
+  }
 }
 
 } // ns boomhs::main_menu

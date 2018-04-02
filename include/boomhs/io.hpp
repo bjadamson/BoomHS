@@ -17,7 +17,7 @@ struct IO
   static void
   process(GameState&, window::SDLControllers const&, window::FrameTime const&);
 
-  static bool
+  static void
   process_event(GameState&, SDL_Event&, window::FrameTime const&);
 };
 

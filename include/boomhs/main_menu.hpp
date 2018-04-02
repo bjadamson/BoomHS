@@ -20,7 +20,7 @@ namespace boomhs::main_menu
 void
 draw(EngineState&, ImVec2 const&);
 
-bool
+void
 process_event(GameState&, SDL_Event &, window::FrameTime const&);
 
 } // ns boomhs::main_menu

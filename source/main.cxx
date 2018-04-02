@@ -28,12 +28,7 @@ loop_events(GameState& state, SDL_Event& event, FrameTime const& ft, FN const& f
   while ((!es.quit) && (0 != SDL_PollEvent(&event)))
   {
     ImGui_ImplSdlGL3_ProcessEvent(&event);
-
-    auto& imgui = es.imgui;
-    if (!imgui.WantCaptureMouse && !imgui.WantCaptureKeyboard)
-    {
-      es.quit = fn(state, event, ft);
-    }
+    fn(state, event, ft);
   }
 }
 
@@ -53,6 +48,7 @@ loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTime con
 
   SDL_Event event;
   loop_events(state, event, ft, event_fn);
+  es.quit |= window::is_quit_event(event);
 
   if (es.show_main_menu) {
     auto const& size = engine.dimensions();
