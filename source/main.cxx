@@ -20,6 +20,22 @@ using namespace window;
 namespace
 {
 
+bool
+is_quit_event(SDL_Event& event)
+{
+  bool is_quit = false;
+
+  switch (event.type)
+  {
+  case SDL_QUIT:
+  {
+    is_quit = true;
+    break;
+  }
+  }
+  return is_quit;
+}
+
 template<typename FN>
 void
 loop_events(GameState& state, SDL_Event& event, FrameTime const& ft, FN const& fn)
@@ -48,13 +64,20 @@ loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTime con
 
   SDL_Event event;
   loop_events(state, event, ft, event_fn);
-  es.quit |= window::is_quit_event(event);
+  es.quit |= is_quit_event(event);
 
+  auto &io = es.imgui;
   if (es.show_main_menu) {
+    // Enable keyboard shortcuts
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
     auto const& size = engine.dimensions();
     main_menu::draw(es, ImVec2(size.w, size.h));
   }
   else {
+    // Disable keyboard shortcuts
+    io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
+
     IO::process(state, engine.controllers, ft);
     boomhs::game_loop(engine, state, rng, ft);
   }
@@ -109,12 +132,12 @@ start(stlw::Logger& logger, Engine& engine)
   boomhs::render::init(logger, dimensions);
 
   // Configure Imgui
-  auto& imgui = ImGui::GetIO();
-  imgui.MouseDrawCursor = true;
-  imgui.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
+  auto& io = ImGui::GetIO();
+  io.MouseDrawCursor = true;
+  io.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
 
   // Construct game state
-  EngineState es{logger, imgui, dimensions};
+  EngineState es{logger, io, dimensions};
   GameState gs = TRY_MOVEOUT(boomhs::init(engine, es));
 
   // Start game in a timed loop

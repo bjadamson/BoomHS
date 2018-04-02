@@ -62,18 +62,6 @@ draw_menu(EngineState& es, ImVec2 const& size)
 
 }
 
-} // ns anon
-
-namespace boomhs::main_menu
-{
-
-void
-draw(EngineState& es, ImVec2 const& size)
-{
-  render::clear_screen(LOC::BLACK);
-  draw_menu(es, size);
-}
-
 void
 process_keydown(GameState& state, SDL_Event const& event)
 {
@@ -94,6 +82,18 @@ process_keydown(GameState& state, SDL_Event const& event)
     ui.draw_debug_ui ^= true;
     break;
   }
+}
+
+} // ns anon
+
+namespace boomhs::main_menu
+{
+
+void
+draw(EngineState& es, ImVec2 const& size)
+{
+  render::clear_screen(LOC::BLACK);
+  draw_menu(es, size);
 }
 
 void
