@@ -1,6 +1,8 @@
 #pragma once
 #include <extlibs/sdl.hpp>
 
+struct ImVec2;
+
 namespace window
 {
 class FrameTime;
@@ -16,7 +18,7 @@ namespace boomhs::main_menu
 {
 
 void
-draw(EngineState&);
+draw(EngineState&, ImVec2 const&);
 
 bool
 process_event(GameState&, SDL_Event &, window::FrameTime const&);

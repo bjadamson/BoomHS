@@ -7,6 +7,15 @@
 namespace imgui_cxx
 {
 
+inline auto
+main_menu_bar_size()
+{
+  ImGui::BeginMainMenuBar();
+  auto const main_menu_size = ImGui::GetWindowSize();
+  ImGui::EndMainMenuBar();
+  return main_menu_size;
+}
+
 template <typename FN, typename... Args>
 void
 with_window(FN const& fn, Args&&... args)

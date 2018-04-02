@@ -55,7 +55,8 @@ loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTime con
   loop_events(state, event, ft, event_fn);
 
   if (es.show_main_menu) {
-    main_menu::draw(es);
+    auto const& size = engine.dimensions();
+    main_menu::draw(es, ImVec2(size.w, size.h));
   }
   else {
     IO::process(state, engine.controllers, ft);

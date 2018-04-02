@@ -14,16 +14,20 @@ namespace
 {
 
 auto static constexpr WINDOW_FLAGS = (0
-    | ImGuiWindowFlags_AlwaysAutoResize
     | ImGuiWindowFlags_NoResize
-    | ImGuiWindowFlags_NoTitleBar);
+    | ImGuiWindowFlags_NoTitleBar
+    | ImGuiWindowFlags_NoCollapse
+    | ImGuiWindowFlags_NoMove
+    | ImGuiWindowFlags_NoBringToFrontOnFocus
+    );
 
 auto static constexpr STYLE_VARS = (0
     | ImGuiStyleVar_ChildRounding);
 
 void
-draw_menu(EngineState& es)
+draw_menu(EngineState& es, ImVec2 const& size)
 {
+  bool const draw_debug = es.ui_state.draw_debug_ui;
   auto const fn = [&]() {
     {
       constexpr char const* resume = "Resume Game";
@@ -44,6 +48,14 @@ draw_menu(EngineState& es)
     es.quit = ImGui::Button("Exit");
   };
   auto const draw_window = [&]() {
+
+    auto const y_offset = draw_debug
+      ? imgui_cxx::main_menu_bar_size().y
+      : 0;
+    auto const window_pos = ImVec2(0, y_offset);
+    ImGui::SetNextWindowPos(window_pos);
+
+    ImGui::SetNextWindowSize(size);
     imgui_cxx::with_window(fn, "Main Menu", nullptr, WINDOW_FLAGS);
   };
   imgui_cxx::with_stylevar(draw_window, STYLE_VARS, 5.0f);
@@ -56,10 +68,10 @@ namespace boomhs::main_menu
 {
 
 void
-draw(EngineState& es)
+draw(EngineState& es, ImVec2 const& size)
 {
   render::clear_screen(LOC::BLACK);
-  draw_menu(es);
+  draw_menu(es, size);
 }
 
 bool
