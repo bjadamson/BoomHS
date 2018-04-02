@@ -354,25 +354,35 @@ texture = "moon"
 pointlight = "moon"
 name = "Moon"
 
-[[entity]]
-position = [0.0, 0.0, 0.0]
-shader = "3dtexture"
-geometry = "mesh:terrain"
-texture = "TerrainFloor"
-scale = [1.0, 1.0, 1.0]
-terrain = true
-material = "terrain"
-name = "terrain"
+#[[entity]]
+#position = [0.0, 0.0, 0.0]
+#shader = "3dtexture"
+#geometry = "mesh:terrain"
+#texture = "TerrainFloor"
+#scale = [1.0, 1.0, 1.0]
+#terrain = true
+#material = "terrain"
+#name = "terrain0"
 
-[[entity]]
-position = [0.0, 88.0, 0.0]
-shader = "3dtexture"
-geometry = "mesh:water"
-material = "water"
-name = "water"
-scale = [1.0, 1.0, 1.0]
-texture = "water"
-water = true
+#[[entity]]
+#position = [1.0, 0.0, 1.0]
+#shader = "3dtexture"
+#geometry = "mesh:terrain"
+#texture = "TextureAtlas"
+#scale = [2.0, 2.0, 2.0]
+#terrain = true
+#material = "terrain"
+#name = "terrain1"
+
+#[[entity]]
+#position = [0.0, 88.0, 0.0]
+#shader = "3dtexture"
+#geometry = "mesh:water"
+#material = "water"
+#name = "water"
+#scale = [1.0, 1.0, 1.0]
+#texture = "water"
+#water = true
 
 ######### POINT LIGHTS
 [[entity]]
