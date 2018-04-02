@@ -37,12 +37,6 @@ loop_events(GameState& state, SDL_Event& event, FrameTime const& ft, FN const& f
   }
 }
 
-bool
-test_fn(GameState& state, SDL_Event &event, FrameTime const& ft)
-{
-  return false;
-}
-
 void
 loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTime const& ft)
 {
@@ -53,13 +47,17 @@ loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTime con
   auto &window = engine.window;
   ImGui_ImplSdlGL3_NewFrame(window.raw());
 
+  auto const& event_fn = es.show_main_menu
+    ? &main_menu::process_event
+    : &IO::process_event;
+
   SDL_Event event;
+  loop_events(state, event, ft, event_fn);
+
   if (es.show_main_menu) {
-    loop_events(state, event, ft, &test_fn);
     main_menu::draw(es);
   }
   else {
-    loop_events(state, event, ft, &IO::process_event);
     IO::process(state, engine.controllers, ft);
     boomhs::game_loop(engine, state, rng, ft);
   }

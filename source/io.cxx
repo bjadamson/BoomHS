@@ -6,6 +6,7 @@
 #include <boomhs/world_object.hpp>
 
 #include <window/controller.hpp>
+#include <window/sdl_window.hpp>
 #include <window/timer.hpp>
 
 #include <stlw/log.hpp>
@@ -77,33 +78,6 @@ move_ontilegrid(GameState& state, glm::vec3 (WorldObject::*fn)() const, WorldObj
       ts.recompute = true;
     }
   }
-}
-
-bool
-is_quit_event(SDL_Event& event)
-{
-  bool is_quit = false;
-
-  switch (event.type)
-  {
-  case SDL_QUIT:
-  {
-    is_quit = true;
-    break;
-  }
-  case SDL_KEYDOWN:
-  {
-    switch (event.key.keysym.sym)
-    {
-    case SDLK_ESCAPE:
-    {
-      is_quit = true;
-      break;
-    }
-    }
-  }
-  }
-  return is_quit;
 }
 
 void
@@ -329,6 +303,9 @@ process_keydown(GameState& state, SDL_Event const& event, FrameTime const& ft)
   };
   switch (event.key.keysym.sym)
   {
+  case SDLK_ESCAPE:
+    es.show_main_menu ^= true;
+    break;
   case SDLK_w:
     move_forward(state, ft);
     break;
@@ -724,7 +701,7 @@ IO::process_event(GameState& state, SDL_Event& event, FrameTime const& ft)
 
   if (ui.block_input || ui.enter_pressed)
   {
-    return is_quit_event(event);
+    return window::is_quit_event(event);
   }
 
   switch (event.type)
@@ -748,7 +725,7 @@ IO::process_event(GameState& state, SDL_Event& event, FrameTime const& ft)
     process_keyup(state, event, ft);
     break;
   }
-  return is_quit_event(event);
+  return window::is_quit_event(event);
 }
 
 void

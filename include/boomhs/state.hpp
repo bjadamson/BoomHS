@@ -66,6 +66,7 @@ struct EngineState
   Time                     time;
 
   bool quit = false;
+  bool game_running = false;
   bool show_main_menu = true;
 
   bool player_collision;

@@ -114,4 +114,20 @@ struct sdl_library
   static Result<SDLWindow, std::string> make_window(stlw::Logger&, bool, int, int);
 };
 
+inline bool
+is_quit_event(SDL_Event& event)
+{
+  bool is_quit = false;
+
+  switch (event.type)
+  {
+  case SDL_QUIT:
+  {
+    is_quit = true;
+    break;
+  }
+  }
+  return is_quit;
+}
+
 } // namespace window
