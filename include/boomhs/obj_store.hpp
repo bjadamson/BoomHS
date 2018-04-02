@@ -13,7 +13,7 @@ namespace boomhs
 
 struct QueryAttributes
 {
-  bool positions = true;
+  bool vertices = true;
   bool normals = true;
   bool colors = true;
   bool uvs = true;
@@ -44,6 +44,18 @@ operator!=(ObjQuery const&, ObjQuery const&);
 
 std::ostream&
 operator<<(std::ostream&, ObjQuery const&);
+
+struct ObjBuffer
+{
+  using vertices_t = ObjData::vertices_t;
+  using indices_t = ObjData::indices_t;
+
+  vertices_t vertices;
+  indices_t  indices;
+
+  ObjBuffer() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(ObjBuffer);
+};
 
 class ObjStore;
 class ObjCache
@@ -88,8 +100,6 @@ class ObjStore
   ObjCache pos_normal_uv_;
   ObjCache pos_uv_;
 
-  ObjBuffer create_interleaved_buffer(stlw::Logger&, ObjQuery const&) const;
-
   ObjData const& data_for(stlw::Logger&, ObjQuery const&) const;
 
   ObjCache& find_cache(stlw::Logger&, ObjQuery const&);
@@ -109,6 +119,9 @@ public:
 
   auto size() const { return data_.size(); }
   bool empty() const { return data_.empty(); }
+
+  // static FNs
+  static ObjBuffer create_interleaved_buffer(stlw::Logger&, ObjData const&, QueryAttributes const&);
 };
 
 std::ostream&

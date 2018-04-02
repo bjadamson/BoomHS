@@ -13,7 +13,7 @@ namespace
 {
 
 LoadStatus
-load_positions(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
+load_vertices(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
                std::vector<float>* pvertices)
 {
   auto const pos_index = 3 * index.vertex_index;
@@ -186,7 +186,7 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
     }                                                                                              \
   })
 
-        LOAD_ATTR(load_positions(index, attrib, &objdata.positions));
+        LOAD_ATTR(load_vertices(index, attrib, &objdata.vertices));
 
         // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
         // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
@@ -207,8 +207,8 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
       // shapes[s].mesh.material_ids[f];
     }
   }
-  LOG_TRACE_SPRINTF("num positions: %u", objdata.num_vertices);
-  LOG_TRACE_SPRINTF("positions.size(): %u", objdata.positions.size());
+  LOG_TRACE_SPRINTF("num vertices: %u", objdata.num_vertices);
+  LOG_TRACE_SPRINTF("vertices.size(): %u", objdata.vertices.size());
   LOG_TRACE_SPRINTF("colors.size(): %u", objdata.colors.size());
   LOG_TRACE_SPRINTF("normals.size(): %u", objdata.normals.size());
   LOG_TRACE_SPRINTF("uvs.size(): %u", objdata.uvs.size());

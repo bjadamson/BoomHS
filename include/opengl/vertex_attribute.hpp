@@ -67,7 +67,7 @@ public:
   void upload_vertex_format_to_glbound_vao(stlw::Logger&) const;
   auto stride() const { return stride_; }
 
-  bool has_positions() const;
+  bool has_vertices() const;
   bool has_normals() const;
   bool has_colors() const;
   bool has_uvs() const;

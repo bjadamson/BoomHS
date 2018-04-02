@@ -96,6 +96,9 @@ void
 draw_stars(RenderState&, window::FrameTime const&);
 
 void
+draw_terrain(RenderState&, window::FrameTime const&);
+
+void
 draw_tilegrid(RenderState&, TiledataState const&, window::FrameTime const&);
 
 void

@@ -5,6 +5,7 @@
 #include <boomhs/level_loader.hpp>
 #include <boomhs/nearby_targets.hpp>
 #include <boomhs/river_generator.hpp>
+#include <boomhs/terrain.hpp>
 #include <boomhs/tile.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/world_object.hpp>
@@ -37,6 +38,7 @@ class LevelData
   TilePosition const  startpos_;
 
   std::vector<RiverInfo> rivers_;
+  std::vector<Terrain> terrain_;
 
   void set_tile(TilePosition const&, TileType const&);
 
@@ -57,6 +59,7 @@ public:
   Camera      camera;
   WorldObject player;
 
+  void add_terrain(Terrain &&);
   void set_floor(TilePosition const&);
   void set_river(TilePosition const&);
   void set_wall(TilePosition const&);
@@ -80,8 +83,10 @@ public:
   auto const& tiletable() const { return ttable_; }
 
   auto& rivers() { return rivers_; }
-
   auto const& rivers() const { return rivers_; }
+
+  auto& terrain() { return terrain_; }
+  auto const& terrain() const { return terrain_; }
 
   template <typename FN>
   void visit_tiles(FN const& fn) const

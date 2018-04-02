@@ -14,7 +14,7 @@ namespace boomhs
 QueryAttributes
 QueryAttributes::from_va(opengl::VertexAttribute const& va)
 {
-  bool const p = va.has_positions();
+  bool const p = va.has_vertices();
   bool const n = va.has_normals();
   bool const c = va.has_colors();
   bool const u = va.has_uvs();
@@ -26,7 +26,7 @@ operator==(QueryAttributes const& a, QueryAttributes const& b)
 {
   // clang-format off
   return ALLOF(
-    a.positions == b.positions,
+    a.vertices == b.vertices,
     a.normals == b.normals,
     b.colors == a.colors,
     a.uvs == b.uvs);
@@ -53,7 +53,7 @@ operator<<(std::ostream& stream, QueryAttributes const& qa)
   };
 
   stream << "{";
-  print_bool("positions", qa.positions);
+  print_bool("vertices", qa.vertices);
   stream << ", ";
 
   print_bool("colors", qa.colors);
@@ -144,13 +144,13 @@ ObjStore::data_for(stlw::Logger& logger, ObjQuery const& query) const
   auto const cmp = [&query](auto const& pair) {
     bool const  names_match = pair.first == query.name;
     auto const& data = pair.second;
-    bool const  positions_empty = data.positions.empty();
+    bool const  vertices_empty = data.vertices.empty();
     bool const  colors_empty = data.colors.empty();
     bool const  normals_empty = data.normals.empty();
     bool const  uvs_empty = data.uvs.empty();
 
     // FOR NOW, we assume all attributes present in .obj file
-    assert(ALLOF(!positions_empty, !colors_empty, !normals_empty, !uvs_empty));
+    assert(ALLOF(!vertices_empty, !colors_empty, !normals_empty, !uvs_empty));
     return names_match;
   };
   auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
@@ -162,12 +162,9 @@ ObjStore::data_for(stlw::Logger& logger, ObjQuery const& query) const
 }
 
 ObjBuffer
-ObjStore::create_interleaved_buffer(stlw::Logger& logger, ObjQuery const& query) const
+ObjStore::create_interleaved_buffer(stlw::Logger& logger, ObjData const& data,
+    QueryAttributes const& query_attr)
 {
-  // We need to read data from the ObjStore to construct an instance to put into the cache.
-  auto const& data = data_for(logger, query);
-  auto const  num_vertices = data.num_vertices;
-
   ObjBuffer buffer;
   auto&     vertices = buffer.vertices;
 
@@ -179,21 +176,20 @@ ObjStore::create_interleaved_buffer(stlw::Logger& logger, ObjQuery const& query)
       --remaining;
     }
   };
-  auto num_positions = data.positions.size();
+  auto num_vertices = data.vertices.size();
   auto num_normals = data.normals.size();
   auto num_colors = data.colors.size();
   auto num_uvs = data.uvs.size();
 
   auto const keep_going = [&]() {
-    return ALLOF(num_positions > 0, num_normals > 0, num_colors > 0, num_uvs > 0);
+    return ALLOF(num_vertices > 0, num_normals > 0, num_colors > 0, num_uvs > 0);
   };
 
-  auto const& query_attr = query.attributes;
   size_t      a = 0, b = 0, c = 0, d = 0;
   while (keep_going())
   {
-    assert(!data.positions.empty());
-    copy_n(data.positions, 4, a, num_positions);
+    assert(!data.vertices.empty());
+    copy_n(data.vertices, 4, a, num_vertices);
 
     if (query_attr.normals)
     {
@@ -215,7 +211,7 @@ ObjStore::create_interleaved_buffer(stlw::Logger& logger, ObjQuery const& query)
     }
   }
 
-  assert(num_positions == 0 || num_positions == data.positions.size());
+  assert(num_vertices == 0 || num_vertices == data.vertices.size());
   assert(num_normals == 0 || num_normals == data.normals.size());
   assert(num_colors == 0 || num_colors == data.colors.size());
   assert(num_uvs == 0 || num_uvs == data.uvs.size());
@@ -236,9 +232,15 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
     return cache.get_obj(logger, query);
   }
 
-  auto buffer = create_interleaved_buffer(logger, query);
-  auto pair = std::make_pair(query, MOVE(buffer));
-  cache.insert_buffer(MOVE(pair));
+  {
+    // We need to read data from the ObjStore to construct an instance to put into the cache.
+    auto const& data = data_for(logger, query);
+
+    auto const& query_attr = query.attributes;
+    auto buffer = ObjStore::create_interleaved_buffer(logger, data, query_attr);
+    auto pair = std::make_pair(query, MOVE(buffer));
+    cache.insert_buffer(MOVE(pair));
+  }
 
   // yield reference to data
   assert(cache.has_obj(query));
@@ -247,19 +249,19 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
 
 #define FIND_CACHE(query, cache)                                                                   \
   auto const& attr = query.attributes;                                                             \
-  bool const  pos_only = ALLOF(attr.positions, !attr.normals, !attr.colors, !attr.uvs);            \
-  bool const  pos_normal = ALLOF(attr.positions, attr.normals, !attr.colors, !attr.uvs);           \
-  bool const  pos_color = ALLOF(attr.positions, !attr.normals, attr.colors, !attr.uvs);            \
-  bool const  pos_color_normal = ALLOF(attr.positions, attr.normals, attr.colors, !attr.uvs);      \
-  bool const  pos_normal_uvs = ALLOF(attr.positions, attr.normals, !attr.colors, attr.uvs);        \
+  bool const  pos_only = ALLOF(attr.vertices, !attr.normals, !attr.colors, !attr.uvs);             \
+  bool const  pos_normal = ALLOF(attr.vertices, attr.normals, !attr.colors, !attr.uvs);            \
+  bool const  pos_color = ALLOF(attr.vertices, !attr.normals, attr.colors, !attr.uvs);             \
+  bool const  pos_color_normal = ALLOF(attr.vertices, attr.normals, attr.colors, !attr.uvs);       \
+  bool const  pos_normal_uvs = ALLOF(attr.vertices, attr.normals, !attr.colors, attr.uvs);         \
                                                                                                    \
   /* invalid configurations */                                                                     \
-  bool const no_positions = ALLOF(!attr.positions);                                                \
+  bool const no_vertices = ALLOF(!attr.vertices);                                                  \
   bool const color_and_uvs = ALLOF(attr.colors, attr.uvs);                                         \
                                                                                                    \
-  if (no_positions)                                                                                \
+  if (no_vertices)                                                                                 \
   {                                                                                                \
-    LOG_ERROR("mesh: %s cannot be found (no positions) not implemented.", query.name);             \
+    LOG_ERROR("mesh: %s cannot be found (no vertices) not implemented.", query.name);              \
     std::abort();                                                                                  \
   }                                                                                                \
   else if (color_and_uvs)                                                                          \
@@ -272,9 +274,9 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
   {                                                                                                \
     cache = &pos_;                                                                                 \
   }                                                                                                \
-  else if (pos_color)                                                                       \
+  else if (pos_color)                                                                              \
   {                                                                                                \
-    cache = &pos_color_;                                                                    \
+    cache = &pos_color_;                                                                           \
   }                                                                                                \
   else if (pos_normal)                                                                             \
   {                                                                                                \

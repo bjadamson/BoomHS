@@ -346,14 +346,29 @@ update_visible_entities(LevelManager& lm, EntityRegistry& registry)
 namespace boomhs
 {
 
-
 Result<GameState, std::string>
-init(Engine &engine, EngineState& es)
+init(Engine &engine, EngineState& engine_state)
 {
-  auto& logger = es.logger;
-  ZoneStates zss = TRY_MOVEOUT(LevelAssembler::assemble_levels(logger, engine.registries));
-  GameState state{MOVE(es), LevelManager{MOVE(zss)}};
+  ZoneStates zss = TRY_MOVEOUT(LevelAssembler::assemble_levels(engine_state.logger,
+        engine.registries));
+  GameState state{MOVE(engine_state), LevelManager{MOVE(zss)}};
 
+  auto& es = state.engine_state;
+  auto& logger = es.logger;
+
+  auto& lm = state.level_manager;
+  auto& zs = lm.active();
+  auto& gfx_state = zs.gfx_state;
+
+  {
+    auto &ld = zs.level_data;
+    auto const& ti = *gfx_state.texture_table.find("TerrainFloor");
+
+    auto& sps = gfx_state.sps;
+    auto& sp = sps.ref_sp("terrain");
+    auto terrain = terrain::generate(logger, glm::vec2(0, 0), sp, ti);
+    ld.add_terrain(MOVE(terrain));
+  }
   {
     auto test_r = rexpaint::RexImage::load("assets/test.xp");
     if (!test_r)
@@ -432,6 +447,10 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     {
       render::draw_tilegrid(rstate, tilegrid_state, ft);
       render::draw_rivers(rstate, ft);
+    }
+
+    if (es.draw_terrain) {
+      render::draw_terrain(rstate, ft);
     }
 
     render::draw_stars(rstate, ft);

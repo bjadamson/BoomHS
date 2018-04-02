@@ -6,6 +6,7 @@
 #include <opengl/texture.hpp>
 
 #include <boomhs/obj.hpp>
+#include <boomhs/obj_store.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/types.hpp>
@@ -24,6 +25,33 @@ using namespace opengl::gpu;
 namespace
 {
 
+template <typename INDICES, typename VERTICES>
+void
+copy_synchronous(stlw::Logger& logger, ShaderProgram const& sp, DrawInfo const& dinfo,
+                 VERTICES const& vertices, INDICES const& indices)
+{
+  // Activate VAO
+  global::vao_bind(dinfo.vao());
+
+  glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
+
+  auto const& va = sp.va();
+  va.upload_vertex_format_to_glbound_vao(logger);
+
+  // copy the vertices
+  LOG_TRACE_SPRINTF("inserting '%i' vertices into GL_BUFFER_ARRAY\n", vertices.size());
+  auto const  vertices_size = vertices.size() * sizeof(GLfloat);
+  auto const& vertices_data = vertices.data();
+  glBufferData(GL_ARRAY_BUFFER, vertices_size, vertices_data, GL_STATIC_DRAW);
+
+  // copy the vertice rendering order
+  LOG_TRACE_SPRINTF("inserting '%i' indices into GL_ELEMENT_BUFFER_ARRAY\n", indices.size());
+  auto const  indices_size = sizeof(GLuint) * indices.size();
+  auto const& indices_data = indices.data();
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, indices_data, GL_STATIC_DRAW);
+}
+
 template<size_t N, size_t M>
 DrawInfo
 make_drawinfo(stlw::Logger &logger, ShaderProgram const& sp,
@@ -32,7 +60,7 @@ make_drawinfo(stlw::Logger &logger, ShaderProgram const& sp,
 {
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{GL_TRIANGLES, vertex_data.size(), num_indices, ti};
-  gpu::copy_synchronous(logger, sp, dinfo, vertex_data, indices);
+  copy_synchronous(logger, sp, dinfo, vertex_data, indices);
   return dinfo;
 }
 
@@ -43,7 +71,7 @@ copy_gpu_impl(stlw::Logger &logger, GLenum const draw_mode, ShaderProgram &sp, V
 {
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{draw_mode, vertices.size(), num_indices, ti};
-  gpu::copy_synchronous(logger, sp, dinfo, vertices, indices);
+  copy_synchronous(logger, sp, dinfo, vertices, indices);
   return dinfo;
 }
 
@@ -63,7 +91,7 @@ create_arrow_2d(stlw::Logger &logger, ShaderProgram const& shader_program,
   }};
 
   DrawInfo dinfo{GL_LINES, vertices.size(), INDICES.size(), std::nullopt};
-  gpu::copy_synchronous(logger, shader_program, dinfo, vertices, INDICES);
+  copy_synchronous(logger, shader_program, dinfo, vertices, INDICES);
   return dinfo;
 }
 
@@ -78,7 +106,7 @@ create_arrow(stlw::Logger &logger, ShaderProgram const& shader_program,
   }};
 
   DrawInfo dinfo{GL_LINES, vertices.size(), INDICES.size(), std::nullopt};
-  gpu::copy_synchronous(logger, shader_program, dinfo, vertices, INDICES);
+  copy_synchronous(logger, shader_program, dinfo, vertices, INDICES);
   return dinfo;
 }
 
@@ -158,7 +186,7 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, TileG
 
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{GL_LINES, vertices.size(), num_indices, std::nullopt};
-  gpu::copy_synchronous(logger, shader_program, dinfo, vertices, indices);
+  copy_synchronous(logger, shader_program, dinfo, vertices, indices);
   return dinfo;
 }
 
@@ -232,7 +260,7 @@ create_modelnormals(stlw::Logger &logger, ShaderProgram const& sp, glm::mat4 con
   }
 
   DrawInfo dinfo{GL_LINES, vertices.size(), static_cast<GLuint>(indices.size()), std::nullopt};
-  gpu::copy_synchronous(logger, sp, dinfo, vertices, indices);
+  copy_synchronous(logger, sp, dinfo, vertices, indices);
   return dinfo;
 }
 
@@ -360,6 +388,13 @@ copy_cubetexture_gpu(stlw::Logger &logger, ShaderProgram const& sp, TextureInfo 
 {
   auto const vertices = OF::cube_vertices();
   return make_drawinfo(logger, sp, vertices, OF::CUBE_INDICES, std::make_optional(ti));
+}
+
+DrawInfo
+copy_gpu(stlw::Logger &logger, GLenum const dm, ShaderProgram &sp,
+    ObjData const& data, std::optional<TextureInfo> const& ti)
+{
+  return copy_gpu_impl(logger, dm, sp, data.vertices, data.indices, ti);
 }
 
 DrawInfo

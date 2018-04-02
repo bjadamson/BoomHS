@@ -5,6 +5,8 @@
 #include <opengl/shader.hpp>
 #include <opengl/vertex_attribute.hpp>
 
+#include <boomhs/obj.hpp>
+
 #include <extlibs/fmt.hpp>
 #include <stlw/log.hpp>
 
@@ -83,35 +85,12 @@ create_modelnormals(stlw::Logger&, ShaderProgram const&, glm::mat4 const&, boomh
                     Color const&);
 
 DrawInfo
+copy_gpu(stlw::Logger&, GLenum, ShaderProgram&, boomhs::ObjData const&,
+  std::optional<TextureInfo> const&);
+
+DrawInfo
 copy_gpu(stlw::Logger&, GLenum, ShaderProgram&, boomhs::ObjBuffer const&,
          std::optional<TextureInfo> const&);
-
-template <typename INDICES, typename VERTICES>
-void
-copy_synchronous(stlw::Logger& logger, ShaderProgram const& sp, DrawInfo const& dinfo,
-                 VERTICES const& vertices, INDICES const& indices)
-{
-  // Activate VAO
-  global::vao_bind(dinfo.vao());
-
-  glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
-
-  auto const& va = sp.va();
-  va.upload_vertex_format_to_glbound_vao(logger);
-
-  // copy the vertices
-  LOG_TRACE_SPRINTF("inserting '%i' vertices into GL_BUFFER_ARRAY\n", vertices.size());
-  auto const  vertices_size = vertices.size() * sizeof(GLfloat);
-  auto const& vertices_data = vertices.data();
-  glBufferData(GL_ARRAY_BUFFER, vertices_size, vertices_data, GL_STATIC_DRAW);
-
-  // copy the vertice rendering order
-  LOG_TRACE_SPRINTF("inserting '%i' indices into GL_ELEMENT_BUFFER_ARRAY\n", indices.size());
-  auto const  indices_size = sizeof(GLuint) * indices.size();
-  auto const& indices_data = indices.data();
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, indices_data, GL_STATIC_DRAW);
-}
 
 } // namespace opengl::gpu
 namespace OG = opengl::gpu;

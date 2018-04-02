@@ -16,7 +16,7 @@ struct ObjData
   using indices_t = std::vector<uint32_t>;
 
   unsigned int num_vertices;
-  vertices_t   positions;
+  vertices_t   vertices;
   vertices_t   colors;
   vertices_t   normals;
   vertices_t   uvs;
@@ -43,18 +43,6 @@ loadstatus_to_string(LoadStatus const ls);
 
 std::ostream&
 operator<<(std::ostream&, LoadStatus const&);
-
-struct ObjBuffer
-{
-  using vertices_t = ObjData::vertices_t;
-  using indices_t = ObjData::indices_t;
-
-  vertices_t vertices;
-  indices_t  indices;
-
-  ObjBuffer() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(ObjBuffer);
-};
 
 using LoadResult = Result<ObjData, LoadStatus>;
 

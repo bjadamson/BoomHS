@@ -198,7 +198,7 @@ VertexAttribute::upload_vertex_format_to_glbound_vao(stlw::Logger &logger) const
 }
 
 bool
-VertexAttribute::has_positions() const
+VertexAttribute::has_vertices() const
 {
   return va_has_attribute_type(*this, AttributeType::POSITION);
 }

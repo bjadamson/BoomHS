@@ -927,6 +927,31 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
 }
 
 void
+draw_terrain(RenderState& rstate, FrameTime const& ft)
+{
+  auto& zs = rstate.zs;
+  auto& sps = zs.gfx_state.sps;
+  auto&       sp = sps.ref_sp("terrain");
+
+  auto& es = rstate.es;
+  auto& logger = es.logger;
+  sp.use(logger);
+
+  auto &ld = zs.level_data;
+  auto const& terrain = ld.terrain();
+  bool constexpr IS_SKYBOX = false;
+  for (auto const& t : ld.terrain()) {
+    Transform transform;
+
+    auto const& pos = t.position();
+    transform.translation.x = pos.x;
+    transform.translation.z = pos.y;
+
+    draw(rstate, transform.model_matrix(), sp, t.draw_info(), IS_SKYBOX);
+  }
+}
+
+void
 draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 {
   auto& es = rstate.es;

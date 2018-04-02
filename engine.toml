@@ -32,6 +32,12 @@ position = { datatype = "float", num = 4 }
 normal   = { datatype = "float", num = 3 }
 uv       = { datatype = "float", num = 2 }
 
+[[vas]]
+name     = "terrain"
+position = { datatype = "float", num = 4 }
+normal   = { datatype = "float", num = 3 }
+uv       = { datatype = "float", num = 2 }
+
 ########### SHADERS #################
 [[shaders]]
 name = "2dcolor"
@@ -123,3 +129,9 @@ name = "floor"
 vertex = "floor.vert"
 fragment = "3d_pos_normal_color.frag"
 va = "vertex_normal_color"
+
+[[shaders]]
+name = "terrain"
+vertex = "terrain.vert"
+fragment = "terrain.frag"
+va = "terrain"
