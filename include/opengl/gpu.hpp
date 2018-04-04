@@ -70,10 +70,6 @@ DrawInfo
 copy_rectangle_uvs(stlw::Logger&, OF::RectangleVertices const&, ShaderProgram const&,
                    TextureInfo const&);
 
-DrawInfo
-copy_rectangle_normaluvs(stlw::Logger&, OF::RectangleVertices const&, OF::RectangleNormals const&,
-                         ShaderProgram const&, TextureInfo const&);
-
 // General
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 DrawInfo

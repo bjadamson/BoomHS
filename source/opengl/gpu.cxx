@@ -419,39 +419,23 @@ DrawInfo
 copy_rectangle_uvs(stlw::Logger &logger, OF::RectangleVertices const& v, ShaderProgram const& sp,
     TextureInfo const& ti)
 {
-  // clang-format off
+  auto const& i = OF::RECTANGLE_INDICES;
   auto const uv = OF::rectangle_uvs(ti.uv_max);
-  auto const v_uvs = stlw::make_array<float>(
-      v[0],  v[1],  v[2],  v[3],  /**/ uv[0], uv[1],
-      v[4],  v[5],  v[6],  v[7],  /**/ uv[2], uv[3],
-      v[8],  v[9],  v[10], v[11], /**/ uv[4], uv[5],
-      v[12], v[13], v[14], v[15], /**/ uv[6], uv[7]
+
+  // clang-format off
+  auto const vertices = stlw::concat(
+      v.zero(), uv.zero(),
+      v.one(),  uv.one(),
+      v.two(),  uv.two(),
+
+      v.three(), uv.two(),
+      v.four(),  uv.three(),
+      v.five(),  uv.zero()
       );
   // clang-format on
-  auto const& i = OF::RECTANGLE_INDICES;
 
-  DrawInfo dinfo{GL_TRIANGLES, v_uvs.size(), i.size(), ti};
-  copy_synchronous(logger, sp, dinfo, v_uvs, i);
-  return dinfo;
-}
-
-DrawInfo
-copy_rectangle_normaluvs(stlw::Logger &logger, OF::RectangleVertices const& v,
-    OF::RectangleNormals const& n, ShaderProgram const& sp, TextureInfo const& ti)
-{
-  // clang-format off
-  auto const uv = OF::rectangle_uvs(ti.uv_max);
-  auto const v_n_uvs = stlw::make_array<float>(
-      v[0],  v[1],  v[2],  v[3],  /**/ n[0], n[1],  n[2],  /**/ uv[0], uv[1],
-      v[4],  v[5],  v[6],  v[7],  /**/ n[3], n[4],  n[5],  /**/ uv[2], uv[3],
-      v[8],  v[9],  v[10], v[11], /**/ n[6], n[7],  n[8],  /**/ uv[4], uv[5],
-      v[12], v[13], v[14], v[15], /**/ n[9], n[10], n[11], /**/ uv[6], uv[7]
-      );
-  // clang-format on
-  auto const& i = OF::RECTANGLE_INDICES;
-
-  DrawInfo dinfo{GL_TRIANGLES, v_n_uvs.size(), i.size(), ti};
-  copy_synchronous(logger, sp, dinfo, v_n_uvs, i);
+  DrawInfo dinfo{GL_TRIANGLES, vertices.size(), i.size(), ti};
+  copy_synchronous(logger, sp, dinfo, vertices, i);
   return dinfo;
 }
 

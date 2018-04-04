@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstring>
 #include <stlw/tuple.hpp>
+#include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 #include <utility>
 #include <vector>
@@ -78,52 +79,18 @@ combine_vectors(std::vector<T>&& a, std::vector<T>&& b)
   return MOVE(dest);
 }
 
-namespace concat_array_algortithm
+// Combines tuples/arrays at compile time into a user defined type.
+template <class Target=void, class... TupleLike>
+constexpr auto
+concat(TupleLike&&... tuples)
 {
-
-// http://stackoverflow.com/questions/25068481/c11-constexpr-flatten-list-of-stdarray-into-array
-//
-// I made it more generic than just 'int' for T.
-template <size_t... Is>
-struct seq
-{
-};
-template <size_t N, size_t... Is>
-
-struct gen_seq : gen_seq<N - 1, N - 1, Is...>
-{
-};
-
-template <size_t... Is>
-struct gen_seq<0, Is...> : seq<Is...>
-{
-};
-
-} // namespace concat_array_algortithm
-
-template <typename T, size_t N1, size_t... I1, size_t N2, size_t... I2>
-// Expansion pack
-constexpr std::array<T, N1 + N2>
-concat(std::array<T, N1> const& a1, std::array<T, N2> const& a2,
-       concat_array_algortithm::seq<I1...>, concat_array_algortithm::seq<I2...>)
-{
-  return {a1[I1]..., a2[I2]...};
-}
-
-template <typename T, size_t N1, size_t N2>
-// Initializer for the recursion
-constexpr std::array<T, N1 + N2>
-concat(std::array<T, N1> const& a1, std::array<T, N2> const& a2)
-{
-  return concat(a1, a2, concat_array_algortithm::gen_seq<N1>{},
-                concat_array_algortithm::gen_seq<N2>{});
-}
-
-template <typename T, size_t N1>
-constexpr std::array<T, N1 + 1>
-concat(std::array<T, N1> const& a1, T const& v)
-{
-  return concat(a1, std::array<T, 1>{v});
+  auto constexpr fn = [](auto&& first, auto&&... rest) {
+    using T = std::conditional_t<!std::is_void<Target>::value, Target, std::decay_t<decltype(first)>>;
+    return std::array<T, (sizeof...(rest)+1)>{{
+        decltype(first)(first), decltype(rest)(rest)...
+    }};
+  };
+  return std::apply(fn, std::tuple_cat(std::forward<TupleLike>(tuples)...));
 }
 
 } // namespace stlw

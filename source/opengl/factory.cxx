@@ -1,5 +1,6 @@
 #include <opengl/factory.hpp>
 
+#include <stlw/algorithm.hpp>
 #include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/type_ctors.hpp>
@@ -111,6 +112,107 @@ cube_vertices()
 
 // Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+RectangleVertices::RectangleVertices()
+{
+  stlw::memzero(varray_.data(), sizeof(float) * varray_.size());
+}
+
+RectangleVertices::RectangleVertices(VerticesArray const& va)
+  : varray_(va)
+{
+}
+
+RectangleVertices::RectangleVertices(VerticesArray &&va)
+  : varray_(MOVE(va))
+{
+}
+
+RectangleVertices::PointArray
+RectangleVertices::zero() const
+{
+  auto const& v = varray_;
+  return stlw::make_array<float>(v[0], v[1], v[2], v[3]);
+}
+
+RectangleVertices::PointArray
+RectangleVertices::one() const
+{
+  auto const& v = varray_;
+  return stlw::make_array<float>(v[4], v[5], v[6], v[7]);
+}
+
+RectangleVertices::PointArray
+RectangleVertices::two() const
+{
+  auto const& v = varray_;
+  return stlw::make_array<float>(v[8], v[9], v[10], v[11]);
+}
+
+RectangleVertices::PointArray
+RectangleVertices::three() const
+{
+  auto const& v = varray_;
+  return stlw::make_array<float>(v[12], v[13], v[14], v[15]);
+}
+
+RectangleVertices::PointArray
+RectangleVertices::four() const
+{
+  auto const& v = varray_;
+  return stlw::make_array<float>(v[16], v[17], v[18], v[19]);
+}
+
+RectangleVertices::PointArray
+RectangleVertices::five() const
+{
+  auto const& v = varray_;
+  return stlw::make_array<float>(v[20], v[21], v[22], v[23]);
+}
+
+////////////////////////
+RectangleUvs::RectangleUvs()
+{
+  stlw::memzero(varray_.data(), sizeof(float) * varray_.size());
+}
+
+RectangleUvs::RectangleUvs(VerticesArray const& va)
+  : varray_(va)
+{
+}
+
+RectangleUvs::RectangleUvs(VerticesArray &&va)
+  : varray_(MOVE(va))
+{
+}
+
+RectangleUvs::PointArray
+RectangleUvs::zero() const
+{
+  auto const& v = varray_;
+  return stlw::make_array<float>(v[0], v[1]);
+}
+
+RectangleUvs::PointArray
+RectangleUvs::one() const
+{
+  auto const& v = varray_;
+  return stlw::make_array<float>(v[2], v[3]);
+}
+
+RectangleUvs::PointArray
+RectangleUvs::two() const
+{
+  auto const& v = varray_;
+  return stlw::make_array<float>(v[4], v[5]);
+}
+
+RectangleUvs::PointArray
+RectangleUvs::three() const
+{
+  auto const& v = varray_;
+  return stlw::make_array<float>(v[6], v[7]);
+}
+
 RectBuffer
 make_rectangle(RectInfo const& info)
 {
@@ -183,49 +285,8 @@ rectangle_vertices()
 #define two    1.0f,  1.0f, Z, W
 #define three -1.0f,  1.0f, Z, W
   return stlw::make_array<float>(
-      zero, one, two, three
-      );
-#undef zero
-#undef one
-#undef two
-#undef three
-}
-
-RectangleNormals
-rectangle_normals(RectangleVertices const& v)
-{
-  auto const& v0 = glm::vec3{v[0],  v[1],  v[2]};
-  auto const& v1 = glm::vec3{v[4],  v[5],  v[6]};
-  auto const& v2 = glm::vec3{v[8],  v[9],  v[10]};
-  auto const& v3 = glm::vec3{v[12], v[13], v[14]};
-
-  auto const cross = [](auto const origin, auto const& e0, auto const& e1) {
-    return glm::normalize(glm::cross((e0 - origin), (e1 - origin)));
-  };
-  auto const n0 = cross(v0, v1, v3);
-  auto const n1 = cross(v1, v0, v2);
-  auto const n2 = cross(v2, v1, v3);
-  auto const n3 = cross(v3, v2, v0);
-
-  return stlw::make_array<float>(
-      n0.x, n0.y, n0.z,
-      n1.x, n1.y, n1.z,
-      n2.x, n2.y, n2.z,
-      n3.x, n3.y, n3.z
-      );
-}
-
-RectangleVertices
-terrain_vertices()
-{
-  float constexpr Y = 0.0f;
-  float constexpr W = 1.0f;
-#define zero  -1.0f, Y, -1.0f, W
-#define one    1.0f, Y, -1.0f, W
-#define two    1.0f, Y,  1.0f, W
-#define three -1.0f, Y,  1.0f, W
-  return stlw::make_array<float>(
-      zero, one, two, three
+      zero, one, two,
+      two, three, zero
       );
 #undef zero
 #undef one

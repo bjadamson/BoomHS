@@ -64,10 +64,49 @@ cube_vertices();
 
 // Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-using RectangleVertices = std::array<float, 16>;
 using RectangleIndices = std::array<GLuint, 6>;
-using RectangleNormals = std::array<float, 12>;
-using RectangleUvs = std::array<float, 8>;
+
+class RectangleVertices
+{
+  using VerticesArray = std::array<float, 24>;
+  using PointArray = std::array<float, 4>;
+
+  VerticesArray varray_;
+
+public:
+  RectangleVertices();
+  RectangleVertices(VerticesArray const&);
+  RectangleVertices(VerticesArray &&);
+
+  auto const& operator[](size_t const i) const { return varray_[i]; }
+
+  PointArray zero() const;
+  PointArray one() const;
+  PointArray two() const;
+  PointArray three() const;
+  PointArray four() const;
+  PointArray five() const;
+};
+
+class RectangleUvs
+{
+  using VerticesArray = std::array<float, 8>;
+  using PointArray = std::array<float, 2>;
+
+  VerticesArray varray_;
+
+public:
+  RectangleUvs();
+  RectangleUvs(VerticesArray const&);
+  RectangleUvs(VerticesArray &&);
+
+  auto const& operator[](size_t const i) const { return varray_[i]; }
+
+  PointArray zero() const;
+  PointArray one() const;
+  PointArray two() const;
+  PointArray three() const;
+};
 
 struct RectInfo
 {
@@ -90,19 +129,14 @@ struct RectBuffer
 RectBuffer
 make_rectangle(RectInfo const&);
 
-
 static constexpr RectangleIndices RECTANGLE_INDICES = {{
-  0, 1, 2,
-  2, 3, 0
+  0, 1, 2, 3, 4, 5
 }};
 
 RectangleVertices
 rectangle_vertices();
 
-RectangleNormals
-rectangle_normals(RectangleVertices const&);
-
-constexpr RectangleUvs
+inline RectangleUvs
 rectangle_uvs(float const max)
 {
   return stlw::make_array<float>(
@@ -112,13 +146,6 @@ rectangle_uvs(float const max)
       0.0f, max
       );
 }
-
-// Terrain
-///////////////////////////////////////////////////////////////////////////////////////////////////
-static constexpr RectangleIndices TERRAIN_INDICES = RECTANGLE_INDICES;
-
-RectangleVertices
-terrain_vertices();
 
 } // namespace opengl::factories
 
