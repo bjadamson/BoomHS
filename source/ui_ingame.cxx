@@ -98,17 +98,36 @@ draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const
 
   auto const draw = [&]() {
     ImGui::Text("Name %s", npcdata.name);
-    ImGui::Text("Health %i", npcdata.health);
     ImGui::Text("Level %i", npcdata.level);
     ImGui::Text("Alignment %s", alignment_to_string(npcdata.alignment));
+    ImGui::Text("Health %i", npcdata.health);
 
     auto const draw_icon = [&]() {
-      ImGui::ImageButton(my_tex_id, ImVec2(ti.width, ti.height), ImVec2(0, 0), ImVec2(1, 1),
+      ImGui::Image(my_tex_id, ImVec2(ti.width, ti.height), ImVec2(0, 0), ImVec2(1, 1),
                          ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
     };
+
+    ImGui::SameLine();
     imgui_cxx::with_stylevar(draw_icon, ImGuiStyleVar_ChildRounding, 5.0f);
   };
-  imgui_cxx::with_window(draw, "Target");
+  // clang-format off
+  auto static constexpr WINDOW_FLAGS = (0
+    | ImGuiWindowFlags_NoBringToFrontOnFocus
+    | ImGuiWindowFlags_NoCollapse
+    | ImGuiWindowFlags_NoInputs
+    | ImGuiWindowFlags_NoMove
+    | ImGuiWindowFlags_NoResize
+    | ImGuiWindowFlags_NoScrollbar
+    | ImGuiWindowFlags_NoScrollWithMouse
+    | ImGuiWindowFlags_NoSavedSettings
+    | ImGuiWindowFlags_NoTitleBar
+  );
+  // clang-format on
+  auto constexpr LEFT = 39;
+  auto constexpr TOP = 768 - 125 - 6;
+  ImGui::SetNextWindowPos(ImVec2(LEFT, TOP));
+  ImGui::SetNextWindowSize(ImVec2(200, 105));
+  imgui_cxx::with_window(draw, "Target", nullptr, WINDOW_FLAGS);
 }
 
 void

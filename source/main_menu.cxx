@@ -13,9 +13,15 @@ using namespace window;
 namespace
 {
 
-auto static constexpr WINDOW_FLAGS =
-    (0 | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
-     ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus);
+// clang-format off
+auto static constexpr WINDOW_FLAGS = (0
+    | ImGuiWindowFlags_NoResize
+    | ImGuiWindowFlags_NoTitleBar
+    | ImGuiWindowFlags_NoCollapse
+    | ImGuiWindowFlags_NoMove
+    | ImGuiWindowFlags_NoBringToFrontOnFocus
+    );
+// clang-format on
 
 auto static constexpr STYLE_VARS = (0 | ImGuiStyleVar_ChildRounding);
 
