@@ -47,11 +47,11 @@ cmake_minimum_required(VERSION 3.4.3)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
-set(MY_EXTRA_FLAGS "-Wno-unused-variable -Wno-missing-braces -Wno-unused-parameter")
+set(MY_EXTRA_FLAGS "-Wno-unused-variable -Wno-missing-braces -Wno-unused-parameter -fno-omit-frame-pointer")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_CXX_COMPILER "clang++")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} STATIC_ANALYSIS_FLAGS_PLACEHOLDER -fno-omit-frame-pointer -Wall -Wextra -g -O0 ${MY_EXTRA_FLAGS} ")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} STATIC_ANALYSIS_FLAGS_PLACEHOLDER -MJ -Wall -Wextra -g -O0 ${MY_EXTRA_FLAGS} ")
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17 -stdlib=libc++")
@@ -73,9 +73,12 @@ file(GLOB_RECURSE GLOBBED_SOURCES
   )
 
 ## Additional build targets CMake should generate.
-set(BOOMHS_CODE ${PROJECT_DIR}/source/*.cxx ${PROJECT_DIR}/include/**/*.hpp)
+set(BOOMHS_INCLUDES ${PROJECT_DIR}/include/**/*.hpp)
+set(BOOMHS_SOURCES ${PROJECT_DIR}/source/*.cxx)
+set(BOOMHS_CODE ${BOOMHS_SOURCES} ${BOOMHS_INCLUDES})
 
 add_custom_target(cppformat COMMAND clang-format -i ${BOOMHS_CODE})
+add_custom_target(cpptidy COMMAND clang-tidy ${BOOMHS_SOURCES})
 add_custom_target(clangcheck COMMAND clang-check -analyze -p ${BUILD} -s ${GLOBBED_SOURCES_CLANG_TOOLS})
 
 ## Declare our executable and build it.

@@ -29,5 +29,6 @@
 # core dumps
 core
 
+compile_commands.json
 CMakeLists.txt
 build-system/

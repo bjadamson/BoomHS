@@ -1,0 +1,1 @@
+scripts/tidy-code.bash
