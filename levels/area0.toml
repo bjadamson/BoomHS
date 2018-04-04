@@ -409,6 +409,15 @@ geometry = "cube"
 pointlight = "white"
 scale = [0.4, 0.4, 0.4]
 
+############ SKYBOX
+[[entity]]
+name = "building skybox"
+position = [0.0, 0.0, 0.0]
+shader = "3dcube_texture"
+geometry = "cube"
+skybox = true
+texture = "building_skybox"
+
 ###################################################################################################
 [[entity]]
 name = "boring cube"
@@ -419,15 +428,8 @@ texture = "boring_cube"
 random_junk_from_file = true
 
 [[entity]]
-name = "building skybox"
-position = [0.0, 0.0, 0.0]
-shader = "3dcube_texture"
-geometry = "cube"
-skybox = true
-texture = "building_skybox"
-
-[[entity]]
 name = "house"
+material = "terrain"
 position = [20.0, 0.0, 20.0]
 shader = "3dtexture"
 geometry = "mesh:house"
