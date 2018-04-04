@@ -732,17 +732,6 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
   if (!selected) {
     return;
   }
-  auto const selected_npc = *selected;
-
-  assert(registry.has<Transform>(selected_npc));
-  auto& npc_transform = registry.get<Transform>(selected_npc);
-
-  Transform transform;
-  transform.translation = npc_transform.translation;
-  transform.scale       = glm::vec3{nearby_targets.calculate_scale(ft)};
-
-  auto texture_o = zs.gfx_state.texture_table.find("TargetReticle");
-  assert(texture_o);
 
   auto& sps = zs.gfx_state.sps;
   auto& sp  = sps.ref_sp("2dtexture");
@@ -751,22 +740,56 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
   }
 
   auto& logger = rstate.es.logger;
-  auto const     v  = OF::rectangle_vertices();
-  DrawInfo const di = gpu::copy_rectangle_uvs(logger, v, sp, *texture_o);
+  auto& camera = ldata.camera;
+  auto& ttable = zs.gfx_state.texture_table;
 
-  auto& camera = zs.level_data.camera;
-  glm::mat4 view_model = compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
+  auto const selected_npc = *selected;
+  assert(registry.has<Transform>(selected_npc));
+  auto& npc_transform = registry.get<Transform>(selected_npc);
 
-  auto constexpr ROTATE_SPEED = 80.0f;
-  float const angle           = ROTATE_SPEED * ft.since_start_seconds();
-  auto const  rot             = glm::angleAxis(glm::radians(angle), Z_UNIT_VECTOR);
-  auto const  rmatrix         = glm::toMat4(rot);
-  view_model                  = view_model * rmatrix;
+  Transform transform;
+  transform.translation = npc_transform.translation;
+  auto const scale = nearby_targets.calculate_scale(ft);
 
-  auto const mvp_matrix = camera.projection_matrix() * view_model;
-  set_modelmatrix(logger, mvp_matrix, sp);
+  auto const v  = OF::rectangle_vertices();
+  glm::mat4 const view_model = compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
 
-  draw(rstate, transform.model_matrix(), sp, di);
+  auto const draw_reticle = [&]() {
+    glm::mat4 view_model = compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
+
+    auto constexpr ROTATE_SPEED = 80.0f;
+    float const angle           = ROTATE_SPEED * ft.since_start_seconds();
+    auto const  rot             = glm::angleAxis(glm::radians(angle), Z_UNIT_VECTOR);
+    auto const  rmatrix         = glm::toMat4(rot);
+
+    auto const mvp_matrix = camera.projection_matrix() * (view_model * rmatrix);
+    set_modelmatrix(logger, mvp_matrix, sp);
+
+    auto texture_o = ttable.find("TargetReticle");
+    assert(texture_o);
+    DrawInfo const di = gpu::copy_rectangle_uvs(logger, v, sp, *texture_o);
+
+    transform.scale  = glm::vec3{scale};
+    draw(rstate, transform.model_matrix(), sp, di);
+  };
+
+  auto const draw_glow = [&]() {
+    auto texture_o = ttable.find("NearbyTargetGlow");
+    assert(texture_o);
+
+    auto const mvp_matrix = camera.projection_matrix() * view_model;
+    set_modelmatrix(logger, mvp_matrix, sp);
+
+    DrawInfo const di = gpu::copy_rectangle_uvs(logger, v, sp, *texture_o);
+
+    transform.scale = glm::vec3{scale / 2.0f};
+    draw(rstate, transform.model_matrix(), sp, di);
+  };
+
+  if (scale < 1.0f) {
+    draw_glow();
+  }
+  draw_reticle();
 }
 
 void

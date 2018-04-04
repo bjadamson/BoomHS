@@ -57,11 +57,6 @@ type = "texture:2d-RGB"
 filename = "TextureAtlas.jpg"
 
 [[resource]]
-name = "TargetReticle"
-type = "texture:2d-RGBA"
-filename = "circle_reticle.png"
-
-[[resource]]
 name = "TerrainFloor"
 type = "texture:2d-RGBA"
 filename = "terrain/terrain-texture.png"
@@ -103,6 +98,16 @@ filename = "textures/Blendermoon1.png"
 name = "TorchUI"
 type = "texture:2d-RGBA"
 filename = "ui/torch-icon.png"
+
+[[resource]]
+name = "TargetReticle"
+type = "texture:2d-RGBA"
+filename = "circle_reticle.png"
+
+[[resource]]
+name = "NearbyTargetGlow"
+type = "texture:2d-RGBA"
+filename = "textures/NearbyTargetGlow.png"
 
 [[resource]]
 name = "test_icon"
