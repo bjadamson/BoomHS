@@ -45,8 +45,7 @@ struct RiverInfo
   template <typename FN, typename... Args>
   void visit_each(FN const& fn, Args&&... args)
   {
-    for (auto& w : wiggles)
-    {
+    for (auto& w : wiggles) {
       fn(w, std::forward<Args>(args)...);
     }
   }

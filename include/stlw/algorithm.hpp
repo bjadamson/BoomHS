@@ -80,15 +80,14 @@ combine_vectors(std::vector<T>&& a, std::vector<T>&& b)
 }
 
 // Combines tuples/arrays at compile time into a user defined type.
-template <class Target=void, class... TupleLike>
+template <class Target = void, class... TupleLike>
 constexpr auto
 concat(TupleLike&&... tuples)
 {
   auto constexpr fn = [](auto&& first, auto&&... rest) {
-    using T = std::conditional_t<!std::is_void<Target>::value, Target, std::decay_t<decltype(first)>>;
-    return std::array<T, (sizeof...(rest)+1)>{{
-        decltype(first)(first), decltype(rest)(rest)...
-    }};
+    using T =
+        std::conditional_t<!std::is_void<Target>::value, Target, std::decay_t<decltype(first)>>;
+    return std::array<T, (sizeof...(rest) + 1)>{{decltype(first)(first), decltype(rest)(rest)...}};
   };
   return std::apply(fn, std::tuple_cat(std::forward<TupleLike>(tuples)...));
 }
@@ -205,8 +204,7 @@ zip(FirstBegin fb, FirstEnd fe, SecondBegin sb, FN const& fn)
 {
   // Assumes length(sb) > length(fe - fb)
   auto it = sb;
-  for (auto i{fb}; i < fe; ++i, ++it)
-  {
+  for (auto i{fb}; i < fe; ++i, ++it) {
     fn(*i, *it);
   }
 }
@@ -232,8 +230,7 @@ sub_array(std::array<T, N> const& data, size_t const begin)
   assert(begin <= N);
 
   std::array<T, N> arr;
-  for (auto i{0}; i < N; ++i)
-  {
+  for (auto i{0}; i < N; ++i) {
     arr[i] = data[begin + i];
   }
   return arr;

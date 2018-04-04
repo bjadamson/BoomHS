@@ -38,13 +38,13 @@ struct RexTile
 };
 
 static constexpr int     ERR_FILE_DOES_NOT_EXIST = 20202;
-static constexpr auto    REXPAINT_VERSION = 1.03;
+static constexpr auto    REXPAINT_VERSION        = 1.03;
 static constexpr RexTile TRANSPARENT_TILE{0, {0, 0, 0}, 0, 0, 0, 255, 0, 255};
 
-using Height = int;
-using Width = int;
+using Height      = int;
+using Width       = int;
 using LayerNumber = int;
-using Version = int;
+using Version     = int;
 
 struct RexLayer
 {

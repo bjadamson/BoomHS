@@ -13,7 +13,7 @@ namespace boomhs
 struct ObjData
 {
   using vertices_t = std::vector<float>;
-  using indices_t = std::vector<uint32_t>;
+  using indices_t  = std::vector<uint32_t>;
 
   unsigned int num_vertices;
   vertices_t   vertices;

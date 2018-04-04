@@ -21,7 +21,7 @@ namespace boomhs
 struct Name
 {
   static constexpr char const* DEFAULT = "unnamed";
-  std::string value = Name::DEFAULT;
+  std::string                  value   = Name::DEFAULT;
 };
 
 struct IsVisible
@@ -40,7 +40,7 @@ struct Torch
 
 struct LightFlicker
 {
-  float base_speed = 0.0f;
+  float base_speed    = 0.0f;
   float current_speed = 0.0f;
 
   std::array<opengl::Color, 2> colors;
@@ -84,8 +84,7 @@ find_all_entities_with_component(EntityRegistry& registry)
 
   std::vector<EntityID> entities;
   auto const            view = registry.view<C...>();
-  for (auto const e : view)
-  {
+  for (auto const e : view) {
     entities.emplace_back(e);
   }
   return entities;
@@ -99,11 +98,9 @@ all_nearby_entities(glm::vec3 const& pos, float const max_distance, EntityRegist
 
   std::vector<EntityID> entities;
   auto const            view = registry.view<Transform>();
-  for (auto const e : view)
-  {
+  for (auto const e : view) {
     auto& transform = registry.get<Transform>(e);
-    if (glm::distance(transform.translation, pos) <= max_distance)
-    {
+    if (glm::distance(transform.translation, pos) <= max_distance) {
       entities.emplace_back(e);
     }
   }

@@ -12,7 +12,7 @@ class FrameTime;
 namespace stlw
 {
 class float_generator;
-} // ns stlw
+} // namespace stlw
 
 namespace boomhs
 {
@@ -23,4 +23,4 @@ init(Engine&, EngineState&);
 void
 game_loop(Engine&, GameState&, stlw::float_generator&, window::FrameTime const&);
 
-} // ns boomhs
+} // namespace boomhs

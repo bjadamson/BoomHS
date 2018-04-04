@@ -39,8 +39,7 @@ inline TileType
 tiletype_from_string(char const* cstring)
 {
 #define CHECK(string, type)                                                                        \
-  if (0 == ::strcmp(string, cstring))                                                              \
-  {                                                                                                \
+  if (0 == ::strcmp(string, cstring)) {                                                            \
     return type;                                                                                   \
   }
 
@@ -70,8 +69,7 @@ inline char const*
 to_string(TileType const type)
 {
 #define CHECK(string, ttype)                                                                       \
-  if (ttype == type)                                                                               \
-  {                                                                                                \
+  if (ttype == type) {                                                                             \
     return string;                                                                                 \
   }
   // clang-format off
@@ -99,8 +97,7 @@ to_string(TileType const type)
 inline std::ostream&
 operator<<(std::ostream& stream, TileType const type)
 {
-  switch (type)
-  {
+  switch (type) {
   case TileType::AT:
     stream << "AT";
     break;
@@ -198,8 +195,7 @@ inline bool
 operator==(Tile const& a, Tile const& b)
 {
   bool const same_eid = a.eid == b.eid;
-  if (same_eid)
-  {
+  if (same_eid) {
     // debug sanity check
     assert(a.type == b.type);
   }

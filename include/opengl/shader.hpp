@@ -167,7 +167,7 @@ public:
 #define LOOKUP_SP(name, begin, end)                                                                \
   auto const lookup_sp = [&](char const* s) {                                                      \
     auto const cmp = [&s](auto const& it) { return it.first == s; };                               \
-    auto const it = std::find_if(begin, end, cmp);                                                 \
+    auto const it  = std::find_if(begin, end, cmp);                                                \
     assert(end != it);                                                                             \
     return it;                                                                                     \
   }
@@ -175,7 +175,7 @@ public:
   ShaderProgram const& ref_sp(char const* s) const
   {
     auto begin = shader_programs_.cbegin();
-    auto end = shader_programs_.cend();
+    auto end   = shader_programs_.cend();
     LOOKUP_SP(s, begin, end);
     return lookup_sp(s)->second;
   }
@@ -183,7 +183,7 @@ public:
   ShaderProgram& ref_sp(char const* s)
   {
     auto begin = shader_programs_.begin();
-    auto end = shader_programs_.end();
+    auto end   = shader_programs_.end();
     LOOKUP_SP(s, begin, end);
     return lookup_sp(s)->second;
   }

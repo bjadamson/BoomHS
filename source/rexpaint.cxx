@@ -14,15 +14,14 @@ RexIOResult
 make_rexerror(gzFile g)
 {
   int               errnum = 0;
-  std::string const msg = gzerror(g, &errnum);
+  std::string const msg    = gzerror(g, &errnum);
   return Err(RexError{errnum, msg});
 }
 
 RexIOResult
 s_gzread(gzFile g, void* buf, unsigned int len)
 {
-  if (gzread(g, buf, len) > 0)
-  {
+  if (gzread(g, buf, len) > 0) {
     return Ok(stlw::empty_type{});
   }
   return make_rexerror(g);
@@ -31,8 +30,7 @@ s_gzread(gzFile g, void* buf, unsigned int len)
 RexIOResult
 s_gzwrite(gzFile g, void const* buf, unsigned int len)
 {
-  if (gzwrite(g, buf, len) > 0)
-  {
+  if (gzwrite(g, buf, len) > 0) {
     return Ok(stlw::empty_type{});
   }
   return make_rexerror(g);
@@ -43,15 +41,13 @@ s_gzopen(std::string const& filename, const char* permissions)
 {
   gzFile g = gzopen(filename.c_str(), permissions);
 
-  if (g != Z_NULL)
-  {
+  if (g != Z_NULL) {
     return Ok(g);
   }
 
   int         errcode = 0;
-  const char* errstr = gzerror(g, &errcode);
-  if (errcode == 0)
-  {
+  const char* errstr  = gzerror(g, &errcode);
+  if (errcode == 0) {
     std::string const msg{"gzerror. Assuming file '" + filename + "' does not exist."};
     RexError          re{ERR_FILE_DOES_NOT_EXIST, msg};
     return Err(MOVE(re));
@@ -94,8 +90,7 @@ RexImage::RexImage(Version const v, Width const w, Height const h, std::vector<R
   FORI(i, num_layers()) { layers_[i] = RexLayer{width(), height()}; }
 
   // All layers above the first are set transparent.
-  for (int l = 1; l < num_layers(); ++l)
-  {
+  for (int l = 1; l < num_layers(); ++l) {
     FORI(i, width() * height()) { set_tile(l, i, TRANSPARENT_TILE); }
   }
 }
@@ -127,8 +122,7 @@ RexImage::set_tile(LayerNumber layer, int i, RexTile const& val)
 void
 RexImage::flatten()
 {
-  if (num_layers() == 1)
-  {
+  if (num_layers() == 1) {
     return;
   }
 
@@ -136,9 +130,8 @@ RexImage::flatten()
   FORI(i, width() * height())
   {
     RexTile& overlay = get_tile(num_layers() - 1, i);
-    if (!overlay.is_transparent())
-    {
-      auto const layer = num_layers() - 2;
+    if (!overlay.is_transparent()) {
+      auto const layer   = num_layers() - 2;
       get_tile(layer, i) = overlay;
     }
   }
@@ -165,15 +158,14 @@ RexImage::load(std::string const& filename)
   layers.resize(num_layers);
 
   int width, height;
-  for (auto& layer : layers)
-  {
+  for (auto& layer : layers) {
     // The layer and height information is repeated.
     DO_EFFECT(s_gzread(gz, &width, sizeof(width)));
 
     DO_EFFECT(s_gzread(gz, &height, sizeof(height)));
 
     // Read the layer tiles
-    layer = RexLayer{width, height};
+    layer                = RexLayer{width, height};
     auto const num_bytes = sizeof(RexTile) * width * height;
     DO_EFFECT(s_gzread(gz, layer.tiles.data(), num_bytes));
   }
@@ -195,10 +187,9 @@ RexImage::save(RexImage const& image, std::string const& filename)
   int const num_layers = image.layers_.size();
   DO_EFFECT(s_gzwrite(gz, cast(&num_layers), sizeof(num_layers)));
 
-  int const width = image.width();
+  int const width  = image.width();
   int const height = image.height();
-  for (auto& layer : image.layers_)
-  {
+  for (auto& layer : image.layers_) {
     // The layer and height information is repeated.
     s_gzwrite(gz, &width, sizeof(width));
     s_gzwrite(gz, &height, sizeof(height));
@@ -209,8 +200,7 @@ RexImage::save(RexImage const& image, std::string const& filename)
   }
 
   int const result = gzflush(gz, Z_FULL_FLUSH);
-  if (Z_OK != result)
-  {
+  if (Z_OK != result) {
     return make_rexerror(gz);
   }
   return Ok(stlw::empty_type());

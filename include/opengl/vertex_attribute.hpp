@@ -28,9 +28,9 @@ public:
   static constexpr auto INVALID_TYPE = -1;
 
   // fields
-  GLuint        index = 0;
-  GLint         datatype = INVALID_TYPE;
-  AttributeType typezilla = AttributeType::OTHER;
+  GLuint        index           = 0;
+  GLint         datatype        = INVALID_TYPE;
+  AttributeType typezilla       = AttributeType::OTHER;
   GLsizei       component_count = 0;
 
   // constructors
@@ -91,8 +91,7 @@ make_vertex_attribute(ITB const begin, ITE const end)
   std::copy(begin, end, infos.begin());
 
   GLsizei stride = 0;
-  for (auto it = begin; it != end; std::advance(it, 1))
-  {
+  for (auto it = begin; it != end; std::advance(it, 1)) {
     stride += it->component_count;
   }
 

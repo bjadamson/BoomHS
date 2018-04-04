@@ -52,8 +52,8 @@ struct RBInfo
   static size_t constexpr NUM_BUFFERS = 1;
 };
 
-using Texture = stlw::AutoResource<TextureInfo>;
-using FrameBuffer = stlw::AutoResource<FBInfo>;
+using Texture        = stlw::AutoResource<TextureInfo>;
+using FrameBuffer    = stlw::AutoResource<FBInfo>;
 using ResourceBuffer = stlw::AutoResource<RBInfo>;
 
 struct TextureFilenames

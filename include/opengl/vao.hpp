@@ -18,7 +18,7 @@ public:
 
   VAO& operator=(VAO&& other)
   {
-    vao_ = other.vao_;
+    vao_       = other.vao_;
     other.vao_ = 0;
     return *this;
   }

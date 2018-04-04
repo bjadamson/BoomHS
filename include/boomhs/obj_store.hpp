@@ -14,9 +14,9 @@ namespace boomhs
 struct QueryAttributes
 {
   bool vertices = true;
-  bool normals = true;
-  bool colors = true;
-  bool uvs = true;
+  bool normals  = true;
+  bool colors   = true;
+  bool uvs      = true;
 
   static QueryAttributes from_va(opengl::VertexAttribute const&);
 };
@@ -48,7 +48,7 @@ operator<<(std::ostream&, ObjQuery const&);
 struct ObjBuffer
 {
   using vertices_t = ObjData::vertices_t;
-  using indices_t = ObjData::indices_t;
+  using indices_t  = ObjData::indices_t;
 
   vertices_t vertices;
   indices_t  indices;
@@ -60,7 +60,7 @@ struct ObjBuffer
 class ObjStore;
 class ObjCache
 {
-  using pair_t = std::pair<ObjQuery, ObjBuffer>;
+  using pair_t     = std::pair<ObjQuery, ObjBuffer>;
   using ObjBuffers = std::vector<pair_t>;
 
   mutable ObjBuffers buffers_;
@@ -86,7 +86,7 @@ operator<<(std::ostream&, ObjCache const&);
 
 class ObjStore
 {
-  using pair_t = std::pair<std::string, ObjData>;
+  using pair_t      = std::pair<std::string, ObjData>;
   using datastore_t = std::vector<pair_t>;
 
   // This holds the data

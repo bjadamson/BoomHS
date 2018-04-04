@@ -32,12 +32,9 @@ template <typename FN>
 void
 flood_visit_skipping_position(Edges const& edge, FN const& fn)
 {
-  for (auto x = edge.left; x <= edge.right; ++x)
-  {
-    for (auto y = edge.bottom; y <= edge.top; ++y)
-    {
-      if (edge.position == std::make_pair(x, y))
-      {
+  for (auto x = edge.left; x <= edge.right; ++x) {
+    for (auto y = edge.bottom; y <= edge.top; ++y) {
+      if (edge.position == std::make_pair(x, y)) {
         // skip over the tile (only iterating edges), not original tile
         continue;
       }
@@ -58,7 +55,7 @@ find_neighbors(TileGrid const& tgrid, TilePosition const& tpos, FN const& fn,
                FindNeighborConfig const& config)
 {
   auto const [width, height] = tgrid.dimensions();
-  auto const distance = config.distance;
+  auto const distance        = config.distance;
   assert(width > 0);
   assert(height > 0);
   assert(distance > 0);
@@ -66,26 +63,20 @@ find_neighbors(TileGrid const& tgrid, TilePosition const& tpos, FN const& fn,
   auto const                edges = calculate_edges(tpos, width, height, distance, distance);
   std::vector<TilePosition> neighbors;
   auto const                collect_neighbor_positions = [&](auto const& neighbor_pos) {
-    switch (config.behavior)
-    {
-    case TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY:
-    {
-      if (tpos.x != neighbor_pos.x && tpos.y != neighbor_pos.y)
-      {
+    switch (config.behavior) {
+    case TileLookupBehavior::VERTICAL_HORIZONTAL_ONLY: {
+      if (tpos.x != neighbor_pos.x && tpos.y != neighbor_pos.y) {
         // skip neighbors not on same horiz/vert planes
         return;
       }
     }
-      // Explicitely use fallthrough for code reuse
-    case TileLookupBehavior::ALL_8_DIRECTIONS:
-    {
+    // Explicitely use fallthrough for code reuse
+    case TileLookupBehavior::ALL_8_DIRECTIONS: {
       auto const& neighbor_tile = tgrid.data(neighbor_pos);
-      if (fn(neighbor_tile))
-      {
+      if (fn(neighbor_tile)) {
         neighbors.emplace_back(neighbor_pos);
       }
-    }
-    break;
+    } break;
     default:
       std::abort();
       break;
@@ -147,10 +138,9 @@ template <typename FN, typename... Args>
 void
 visit_edges(TileGrid const& tgrid, FN const& fn, Args&&... args)
 {
-  auto const [w, h] = tgrid.dimensions();
+  auto const [w, h]   = tgrid.dimensions();
   auto const visit_fn = [&fn, &tgrid](TilePosition const& tpos) {
-    if (tgrid.is_edge_tile(tpos))
-    {
+    if (tgrid.is_edge_tile(tpos)) {
       fn(tpos);
     }
   };
@@ -185,59 +175,46 @@ visit_neighbors(TileGrid const& tgrid, TilePosition const& pos, FN const& fn,
   // clang-format on
 
   auto const all8_behavior = [&]() {
-    if (!edgeof_left && !edgeof_below)
-    {
+    if (!edgeof_left && !edgeof_below) {
       leftbelow();
     }
-    if (!edgeof_left)
-    {
+    if (!edgeof_left) {
       left();
     }
-    if (!edgeof_left && !edgeof_above)
-    {
+    if (!edgeof_left && !edgeof_above) {
       leftabove();
     }
-    if (!edgeof_above)
-    {
+    if (!edgeof_above) {
       above();
     }
-    if (!edgeof_right && !edgeof_above)
-    {
+    if (!edgeof_right && !edgeof_above) {
       rightabove();
     }
-    if (!edgeof_right)
-    {
+    if (!edgeof_right) {
       right();
     }
-    if (!edgeof_right && !edgeof_below)
-    {
+    if (!edgeof_right && !edgeof_below) {
       rightbelow();
     }
-    if (!edgeof_below)
-    {
+    if (!edgeof_below) {
       below();
     }
   };
   auto const vh_behavior = [&]() {
-    if (!edgeof_left)
-    {
+    if (!edgeof_left) {
       left();
     }
-    if (!edgeof_above)
-    {
+    if (!edgeof_above) {
       above();
     }
-    if (!edgeof_right)
-    {
+    if (!edgeof_right) {
       right();
     }
-    if (!edgeof_below)
-    {
+    if (!edgeof_below) {
       below();
     }
   };
-  switch (behavior)
-  {
+  switch (behavior) {
   case TileLookupBehavior::ALL_8_DIRECTIONS:
     all8_behavior();
     break;

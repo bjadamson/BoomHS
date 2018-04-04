@@ -12,11 +12,10 @@ template <typename... T>
 inline void
 assert_exactly_only_one_true(T const&... bools)
 {
-  bool       one_true = false;
+  bool       one_true  = false;
   auto const assert_fn = [&one_true](bool const b) {
     // If already found a true value, this value must not be true.
-    if (one_true)
-    {
+    if (one_true) {
       assert(!b);
     }
     one_true |= b;

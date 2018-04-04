@@ -20,21 +20,17 @@ read_file(char const* path)
   {
     std::ifstream istream(path, std::ios::in);
 
-    if (!istream.is_open())
-    {
+    if (!istream.is_open()) {
       return Err("Error opening file at path '" + std::string{path} + "'");
     }
 
     std::string buffer;
     bool        first = true;
-    while (std::getline(istream, buffer))
-    {
-      if (!first)
-      {
+    while (std::getline(istream, buffer)) {
+      if (!first) {
         sstream << "\n";
       }
-      else
-      {
+      else {
         first = false;
       }
       sstream << buffer;

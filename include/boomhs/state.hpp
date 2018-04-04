@@ -19,7 +19,7 @@ struct MouseState
 {
   MOVE_CONSTRUCTIBLE_ONLY(MouseState);
 
-  bool left_pressed = false;
+  bool left_pressed  = false;
   bool right_pressed = false;
 
   window::MouseSensitivity sensitivity{0.002f, 0.002f};
@@ -38,7 +38,7 @@ struct WindowState
   MOVE_CONSTRUCTIBLE_ONLY(WindowState);
 
   window::FullscreenFlags  fullscreen = window::FullscreenFlags::NOT_FULLSCREEN;
-  window::SwapIntervalFlag sync = window::SwapIntervalFlag::SYNCHRONIZED;
+  window::SwapIntervalFlag sync       = window::SwapIntervalFlag::SYNCHRONIZED;
 };
 
 struct TiledataState
@@ -46,12 +46,12 @@ struct TiledataState
   MOVE_CONSTRUCTIBLE_ONLY(TiledataState);
 
   bool draw_tilegrid = true;
-  bool recompute = true;
-  bool reveal = false;
+  bool recompute     = true;
+  bool reveal        = false;
 
   // Both related to drawing GRID LINES
-  bool show_grid_lines = false;
-  bool show_yaxis_lines = false;
+  bool show_grid_lines          = false;
+  bool show_yaxis_lines         = false;
   bool show_neighbortile_arrows = false;
 
   glm::vec3 floor_offset = {0.0f, -0.5f, 0.0f};
@@ -65,8 +65,8 @@ struct EngineState
   window::Dimensions const dimensions;
   Time                     time;
 
-  bool quit = false;
-  bool game_running = false;
+  bool quit           = false;
+  bool game_running   = false;
   bool show_main_menu = true;
 
   bool player_collision;
@@ -85,10 +85,10 @@ struct EngineState
   bool show_player_localspace_vectors;
   bool show_player_worldspace_vectors;
 
-  MouseState    mouse_state = {};
-  WindowState   window_state = {};
+  MouseState    mouse_state    = {};
+  WindowState   window_state   = {};
   TiledataState tilegrid_state = {};
-  UiState       ui_state = {};
+  UiState       ui_state       = {};
 
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);
@@ -107,8 +107,8 @@ struct GameState
 
 struct Engine
 {
-  window::SDLWindow                   window;
-  window::SDLControllers              controllers;
+  window::SDLWindow           window;
+  window::SDLControllers      controllers;
   std::vector<EntityRegistry> registries = {};
 
   Engine() = delete;

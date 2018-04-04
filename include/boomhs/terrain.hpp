@@ -8,15 +8,15 @@
 namespace opengl
 {
 class ShaderProgram;
-} // ns opengl
+} // namespace opengl
 
 namespace boomhs
 {
 
 class Terrain
 {
-  glm::vec2 pos_;
-  opengl::DrawInfo di_;
+  glm::vec2           pos_;
+  opengl::DrawInfo    di_;
   opengl::TextureInfo ti_;
 
 public:
@@ -25,7 +25,7 @@ public:
   // The number of vertices along an edge of the terrain.
   static int const VERTEX_COUNT;
 
-  Terrain(glm::vec2 const&, opengl::DrawInfo &&, opengl::TextureInfo const&);
+  Terrain(glm::vec2 const&, opengl::DrawInfo&&, opengl::TextureInfo const&);
 
   auto const& position() const { return pos_; }
   auto const& draw_info() const { return di_; }
@@ -35,8 +35,8 @@ public:
 namespace terrain
 {
 Terrain
-generate(stlw::Logger &, glm::vec2 const&, opengl::ShaderProgram&, opengl::TextureInfo const&);
+generate(stlw::Logger&, glm::vec2 const&, opengl::ShaderProgram&, opengl::TextureInfo const&);
 
-} // ns terrain
+} // namespace terrain
 
-} // ns boomhs
+} // namespace boomhs

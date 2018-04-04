@@ -19,8 +19,7 @@
 // "returns early" invoking the caller provided function on the contained expression.
 #define EVALUATE_OR_RETURN_EARLY(V, expr, or_else_fn)                                              \
   auto V{expr};                                                                                    \
-  if (!V)                                                                                          \
-  {                                                                                                \
+  if (!V) {                                                                                        \
     return or_else_fn(MOVE(V));                                                                    \
   }
 

@@ -61,15 +61,13 @@ Camera::Camera(EnttLookup const& player_lookup, glm::vec3 const& forward, glm::v
 glm::mat4
 Camera::projection_matrix() const
 {
-  auto const& p = perspective_;
+  auto const& p   = perspective_;
   auto const  fov = glm::radians(p.field_of_view);
-  switch (mode_)
-  {
+  switch (mode_) {
   case Perspective:
   case FPS:
     return glm::perspective(fov, p.viewport_aspect_ratio, p.near_plane, p.far_plane);
-  case Ortho:
-  {
+  case Ortho: {
     auto const& o = ortho_;
     return glm::ortho(o.left, o.right, o.bottom, o.top, o.far, o.near);
   }
@@ -91,12 +89,10 @@ void
 Camera::next_mode()
 {
   CameraMode const m = static_cast<CameraMode>(mode() + 1);
-  if (CameraMode::MAX == m)
-  {
+  if (CameraMode::MAX == m) {
     set_mode(static_cast<CameraMode>(0));
   }
-  else
-  {
+  else {
     set_mode(m);
   }
 }
@@ -104,48 +100,41 @@ Camera::next_mode()
 Camera&
 Camera::rotate(float const d_theta, float const d_phi)
 {
-  float constexpr PI = glm::pi<float>();
+  float constexpr PI     = glm::pi<float>();
   float constexpr TWO_PI = PI * 2.0f;
 
   auto& theta = coordinates_.theta;
-  theta = (up_.y > 0.0f) ? (theta - d_theta) : (theta + d_theta);
-  if (theta > TWO_PI)
-  {
+  theta       = (up_.y > 0.0f) ? (theta - d_theta) : (theta + d_theta);
+  if (theta > TWO_PI) {
     theta -= TWO_PI;
   }
-  else if (theta < -TWO_PI)
-  {
+  else if (theta < -TWO_PI) {
     theta += TWO_PI;
   }
 
-  auto&       phi = coordinates_.phi;
+  auto&       phi     = coordinates_.phi;
   float const new_phi = flip_y ? (phi + d_phi) : (phi - d_phi);
   bool const  top_hemisphere =
       (new_phi > 0 && new_phi < (PI / 2.0f)) || (new_phi < -(PI / 2.0f) && new_phi > -TWO_PI);
-  if (!rotate_lock || top_hemisphere)
-  {
+  if (!rotate_lock || top_hemisphere) {
     phi = new_phi;
   }
 
   // Keep phi within -2PI to +2PI for easy 'up' comparison
-  if (phi > TWO_PI)
-  {
+  if (phi > TWO_PI) {
     phi -= TWO_PI;
   }
-  else if (phi < -TWO_PI)
-  {
+  else if (phi < -TWO_PI) {
     phi += TWO_PI;
   }
 
   // If phi is between 0 to PI or -PI to -2PI, make 'up' be positive Y, other wise make it negative
   // Y
   auto& up = up_;
-  if ((phi > 0 && phi < PI) || (phi < -PI && phi > -TWO_PI))
-  {
+  if ((phi > 0 && phi < PI) || (phi < -PI && phi > -TWO_PI)) {
     up = Y_UNIT_VECTOR;
   }
-  else
-  {
+  else {
     up = -Y_UNIT_VECTOR;
   }
   return *this;
@@ -154,25 +143,20 @@ Camera::rotate(float const d_theta, float const d_phi)
 glm::mat4
 Camera::view_matrix() const
 {
-  auto const& target = get_target().translation;
+  auto const& target       = get_target().translation;
   auto const  position_xyz = world_position();
 
-  switch (mode_)
-  {
-  case Ortho:
-  {
+  switch (mode_) {
+  case Ortho: {
     return glm::lookAt(glm::vec3{0, 0, 0}, target, Y_UNIT_VECTOR);
   }
-  case FPS:
-  {
+  case FPS: {
     return glm::lookAt(target, target + world_forward(), Y_UNIT_VECTOR);
   }
-  case Perspective:
-  {
+  case Perspective: {
     return glm::lookAt(position_xyz, target, up_);
   }
-  case MAX:
-  {
+  case MAX: {
     break;
   }
   }
@@ -184,13 +168,11 @@ void
 Camera::zoom(float const amount)
 {
   float constexpr MIN_RADIUS = 0.01f;
-  float const new_radius = coordinates_.radius + amount;
-  if (new_radius >= MIN_RADIUS)
-  {
+  float const new_radius     = coordinates_.radius + amount;
+  if (new_radius >= MIN_RADIUS) {
     coordinates_.radius = new_radius;
   }
-  else
-  {
+  else {
     coordinates_.radius = MIN_RADIUS;
   }
 }

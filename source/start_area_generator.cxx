@@ -20,7 +20,7 @@ void
 place_torch(TileGrid const& tilegrid, EntityRegistry& registry, stlw::float_generator& rng,
             TextureTable const& ttable)
 {
-  auto  eid = ItemFactory::create_torch(registry, rng, ttable);
+  auto  eid       = ItemFactory::create_torch(registry, rng, ttable);
   auto& transform = registry.get<Transform>(eid);
 
   transform.translation = glm::vec3{2, 0.5, 2};
@@ -30,7 +30,7 @@ Result<stlw::empty_type, std::string>
 place_prefabs(stlw::Logger& logger, TileGrid& tgrid, stlw::float_generator& rng)
 {
   auto         contents = TRY_MOVEOUT(stlw::read_file("prefabs/test0.prefab"));
-  size_t const height = 1 + std::count(contents.begin(), contents.end(), '\n');
+  size_t const height   = 1 + std::count(contents.begin(), contents.end(), '\n');
   assert(height > 1);
 
   std::istringstream reader;
@@ -46,13 +46,13 @@ place_prefabs(stlw::Logger& logger, TileGrid& tgrid, stlw::float_generator& rng)
     std::getline(reader, buffer);
 
     auto const& length = buffer.size();
-    width = std::max(width, length);
+    width              = std::max(width, length);
   }
 
   // find a location
   auto const [h, w] = tgrid.dimensions();
-  auto const xpos = rng.gen_uint64_range(0, w - width);
-  auto const ypos = rng.gen_uint64_range(0, h - height);
+  auto const xpos   = rng.gen_uint64_range(0, w - width);
+  auto const ypos   = rng.gen_uint64_range(0, h - height);
 
   assert(height == buffers.size());
   FOR(x, width)
@@ -64,16 +64,13 @@ place_prefabs(stlw::Logger& logger, TileGrid& tgrid, stlw::float_generator& rng)
       assert(width == buffers[y].size());
 
       auto& tile = tgrid.data(xpos + x, ypos + y);
-      if (b == '#')
-      {
+      if (b == '#') {
         tile.type = TileType::WALL;
       }
-      else if (b == ' ')
-      {
+      else if (b == ' ') {
         tile.type = TileType::FLOOR;
       }
-      else
-      {
+      else {
         LOG_ERROR_SPRINTF("x: %i, y: %i", x, y);
         LOG_ERROR_SPRINTF("error value: %c", b);
         std::abort();

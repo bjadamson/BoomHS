@@ -25,10 +25,8 @@ is_quit_event(SDL_Event& event)
 {
   bool is_quit = false;
 
-  switch (event.type)
-  {
-  case SDL_QUIT:
-  {
+  switch (event.type) {
+  case SDL_QUIT: {
     is_quit = true;
     break;
   }
@@ -36,13 +34,12 @@ is_quit_event(SDL_Event& event)
   return is_quit;
 }
 
-template<typename FN>
+template <typename FN>
 void
 loop_events(GameState& state, SDL_Event& event, FrameTime const& ft, FN const& fn)
 {
-  auto &es = state.engine_state;
-  while ((!es.quit) && (0 != SDL_PollEvent(&event)))
-  {
+  auto& es = state.engine_state;
+  while ((!es.quit) && (0 != SDL_PollEvent(&event))) {
     ImGui_ImplSdlGL3_ProcessEvent(&event);
     fn(state, event, ft);
   }
@@ -51,22 +48,20 @@ loop_events(GameState& state, SDL_Event& event, FrameTime const& ft, FN const& f
 void
 loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTime const& ft)
 {
-  auto& es = state.engine_state;
+  auto& es     = state.engine_state;
   auto& logger = es.logger;
 
   // Reset Imgui for next game frame.
-  auto &window = engine.window;
+  auto& window = engine.window;
   ImGui_ImplSdlGL3_NewFrame(window.raw());
 
-  auto const& event_fn = es.show_main_menu
-    ? &main_menu::process_event
-    : &IO::process_event;
+  auto const& event_fn = es.show_main_menu ? &main_menu::process_event : &IO::process_event;
 
   SDL_Event event;
   loop_events(state, event, ft, event_fn);
   es.quit |= is_quit_event(event);
 
-  auto &io = es.imgui;
+  auto& io = es.imgui;
   if (es.show_main_menu) {
     // Enable keyboard shortcuts
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -82,8 +77,7 @@ loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTime con
     boomhs::game_loop(engine, state, rng, ft);
   }
   auto& ui_state = es.ui_state;
-  if (ui_state.draw_debug_ui)
-  {
+  if (ui_state.draw_debug_ui) {
     auto& lm = state.level_manager;
     ui_debug::draw(es, lm, window, ft);
   }
@@ -104,8 +98,7 @@ timed_game_loop(Engine& engine, GameState& state)
   stlw::float_generator rng;
 
   auto& logger = state.engine_state.logger;
-  while (!state.engine_state.quit)
-  {
+  while (!state.engine_state.quit) {
     auto const ft = clock.frame_time();
     loop(engine, state, rng, ft);
     clock.update();
@@ -125,20 +118,20 @@ start(stlw::Logger& logger, Engine& engine)
 
   ImGui::StyleColorsDark();
 
-  auto&      registries = engine.registries;
+  auto& registries = engine.registries;
 
   // Initialize opengl
   auto const dimensions = engine.dimensions();
   boomhs::render::init(logger, dimensions);
 
   // Configure Imgui
-  auto& io = ImGui::GetIO();
+  auto& io           = ImGui::GetIO();
   io.MouseDrawCursor = true;
-  io.DisplaySize = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
+  io.DisplaySize     = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
 
   // Construct game state
   EngineState es{logger, io, dimensions};
-  GameState gs = TRY_MOVEOUT(boomhs::init(engine, es));
+  GameState   gs = TRY_MOVEOUT(boomhs::init(engine, es));
 
   // Start game in a timed loop
   timed_game_loop(engine, gs);
@@ -165,13 +158,12 @@ make_window(stlw::Logger& logger, bool const fullscreen, float const width, floa
 Result<std::string, char const*>
 get_time()
 {
-  auto const now = std::chrono::system_clock::now();
+  auto const now       = std::chrono::system_clock::now();
   auto const now_timet = std::chrono::system_clock::to_time_t(now);
-  auto const now_tm = *std::localtime(&now_timet);
+  auto const now_tm    = *std::localtime(&now_timet);
 
   char buff[70];
-  if (!std::strftime(buff, sizeof(buff), "%Y-%m-%dT%H:%M:%S%z", &now_tm))
-  {
+  if (!std::strftime(buff, sizeof(buff), "%Y-%m-%dT%H:%M:%S%z", &now_tm)) {
     return Err("Could not read current time into buffer.");
   }
 
@@ -182,12 +174,11 @@ int
 main(int argc, char* argv[])
 {
   auto const time_result = get_time();
-  if (!time_result)
-  {
+  if (!time_result) {
     return EXIT_FAILURE;
   }
   std::string const log_name = time_result.unwrap() + "-BoomHS.log";
-  auto              logger = stlw::LogFactory::make_default(log_name.c_str());
+  auto              logger   = stlw::LogFactory::make_default(log_name.c_str());
 
   LOG_DEBUG("Creating window ...");
   bool constexpr FULLSCREEN = false;

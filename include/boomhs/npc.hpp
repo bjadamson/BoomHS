@@ -25,9 +25,9 @@ alignment_to_string(Alignment const);
 
 struct NPCData
 {
-  char const* name = "NOT SET. ERROR";
-  int         health = -1;
-  int         level = -1;
+  char const* name      = "NOT SET. ERROR";
+  int         health    = -1;
+  int         level     = -1;
   Alignment   alignment = Alignment::NOT_SET;
 };
 

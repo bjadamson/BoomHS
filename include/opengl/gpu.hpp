@@ -82,7 +82,7 @@ create_modelnormals(stlw::Logger&, ShaderProgram const&, glm::mat4 const&, boomh
 
 DrawInfo
 copy_gpu(stlw::Logger&, GLenum, ShaderProgram&, boomhs::ObjData const&,
-  std::optional<TextureInfo> const&);
+         std::optional<TextureInfo> const&);
 
 DrawInfo
 copy_gpu(stlw::Logger&, GLenum, ShaderProgram&, boomhs::ObjBuffer const&,

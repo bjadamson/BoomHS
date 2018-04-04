@@ -121,8 +121,7 @@ ObjBuffer const&
 ObjCache::get_obj(stlw::Logger& logger, ObjQuery const& query) const
 {
   auto const it = FIND_OBJ_IN_CACHE(query, buffers_);
-  if (it != buffers_.cend())
-  {
+  if (it != buffers_.cend()) {
     return it->second;
   }
   std::abort();
@@ -142,12 +141,12 @@ ObjData const&
 ObjStore::data_for(stlw::Logger& logger, ObjQuery const& query) const
 {
   auto const cmp = [&query](auto const& pair) {
-    bool const  names_match = pair.first == query.name;
-    auto const& data = pair.second;
+    bool const  names_match    = pair.first == query.name;
+    auto const& data           = pair.second;
     bool const  vertices_empty = data.vertices.empty();
-    bool const  colors_empty = data.colors.empty();
-    bool const  normals_empty = data.normals.empty();
-    bool const  uvs_empty = data.uvs.empty();
+    bool const  colors_empty   = data.colors.empty();
+    bool const  normals_empty  = data.normals.empty();
+    bool const  uvs_empty      = data.uvs.empty();
 
     // FOR NOW, we assume all attributes present in .obj file
     assert(ALLOF(!vertices_empty, !colors_empty, !normals_empty, !uvs_empty));
@@ -163,7 +162,7 @@ ObjStore::data_for(stlw::Logger& logger, ObjQuery const& query) const
 
 ObjBuffer
 ObjStore::create_interleaved_buffer(stlw::Logger& logger, ObjData const& data,
-    QueryAttributes const& query_attr)
+                                    QueryAttributes const& query_attr)
 {
   ObjBuffer buffer;
   auto&     vertices = buffer.vertices;
@@ -177,33 +176,29 @@ ObjStore::create_interleaved_buffer(stlw::Logger& logger, ObjData const& data,
     }
   };
   auto num_vertices = data.vertices.size();
-  auto num_normals = data.normals.size();
-  auto num_colors = data.colors.size();
-  auto num_uvs = data.uvs.size();
+  auto num_normals  = data.normals.size();
+  auto num_colors   = data.colors.size();
+  auto num_uvs      = data.uvs.size();
 
   auto const keep_going = [&]() {
     return ALLOF(num_vertices > 0, num_normals > 0, num_colors > 0, num_uvs > 0);
   };
 
-  size_t      a = 0, b = 0, c = 0, d = 0;
-  while (keep_going())
-  {
+  size_t a = 0, b = 0, c = 0, d = 0;
+  while (keep_going()) {
     assert(!data.vertices.empty());
     copy_n(data.vertices, 4, a, num_vertices);
 
-    if (query_attr.normals)
-    {
+    if (query_attr.normals) {
       copy_n(data.normals, 3, b, num_normals);
     }
 
-    if (query_attr.colors)
-    {
+    if (query_attr.colors) {
       // encode assumptions for now
       assert(!query_attr.uvs);
       copy_n(data.colors, 4, c, num_colors);
     }
-    if (query_attr.uvs)
-    {
+    if (query_attr.uvs) {
       // encode assumptions for now
       assert(!query_attr.colors);
 
@@ -225,10 +220,9 @@ ObjStore::create_interleaved_buffer(stlw::Logger& logger, ObjData const& data,
 ObjBuffer const&
 ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
 {
-  auto const& cache = find_cache(logger, query);
+  auto const& cache         = find_cache(logger, query);
   bool const  cache_has_obj = cache.has_obj(query);
-  if (cache_has_obj)
-  {
+  if (cache_has_obj) {
     return cache.get_obj(logger, query);
   }
 
@@ -237,8 +231,8 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
     auto const& data = data_for(logger, query);
 
     auto const& query_attr = query.attributes;
-    auto buffer = ObjStore::create_interleaved_buffer(logger, data, query_attr);
-    auto pair = std::make_pair(query, MOVE(buffer));
+    auto        buffer     = ObjStore::create_interleaved_buffer(logger, data, query_attr);
+    auto        pair       = std::make_pair(query, MOVE(buffer));
     cache.insert_buffer(MOVE(pair));
   }
 
@@ -248,54 +242,45 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
 }
 
 #define FIND_CACHE(query, cache)                                                                   \
-  auto const& attr = query.attributes;                                                             \
-  bool const  pos_only = ALLOF(attr.vertices, !attr.normals, !attr.colors, !attr.uvs);             \
-  bool const  pos_normal = ALLOF(attr.vertices, attr.normals, !attr.colors, !attr.uvs);            \
-  bool const  pos_color = ALLOF(attr.vertices, !attr.normals, attr.colors, !attr.uvs);             \
+  auto const& attr             = query.attributes;                                                 \
+  bool const  pos_only         = ALLOF(attr.vertices, !attr.normals, !attr.colors, !attr.uvs);     \
+  bool const  pos_normal       = ALLOF(attr.vertices, attr.normals, !attr.colors, !attr.uvs);      \
+  bool const  pos_color        = ALLOF(attr.vertices, !attr.normals, attr.colors, !attr.uvs);      \
   bool const  pos_color_normal = ALLOF(attr.vertices, attr.normals, attr.colors, !attr.uvs);       \
-  bool const  pos_normal_uvs = ALLOF(attr.vertices, attr.normals, !attr.colors, attr.uvs);         \
+  bool const  pos_normal_uvs   = ALLOF(attr.vertices, attr.normals, !attr.colors, attr.uvs);       \
                                                                                                    \
   /* invalid configurations */                                                                     \
-  bool const no_vertices = ALLOF(!attr.vertices);                                                  \
+  bool const no_vertices   = ALLOF(!attr.vertices);                                                \
   bool const color_and_uvs = ALLOF(attr.colors, attr.uvs);                                         \
                                                                                                    \
-  if (no_vertices)                                                                                 \
-  {                                                                                                \
+  if (no_vertices) {                                                                               \
     LOG_ERROR("mesh: %s cannot be found (no vertices) not implemented.", query.name);              \
     std::abort();                                                                                  \
   }                                                                                                \
-  else if (color_and_uvs)                                                                          \
-  {                                                                                                \
+  else if (color_and_uvs) {                                                                        \
     LOG_ERROR("invalid?");                                                                         \
     std::abort();                                                                                  \
   }                                                                                                \
                                                                                                    \
-  if (pos_only)                                                                                    \
-  {                                                                                                \
+  if (pos_only) {                                                                                  \
     cache = &pos_;                                                                                 \
   }                                                                                                \
-  else if (pos_color)                                                                              \
-  {                                                                                                \
+  else if (pos_color) {                                                                            \
     cache = &pos_color_;                                                                           \
   }                                                                                                \
-  else if (pos_normal)                                                                             \
-  {                                                                                                \
+  else if (pos_normal) {                                                                           \
     cache = &pos_normal_;                                                                          \
   }                                                                                                \
-  else if (pos_color_normal)                                                                       \
-  {                                                                                                \
+  else if (pos_color_normal) {                                                                     \
     cache = &pos_color_normal_;                                                                    \
   }                                                                                                \
-  else if (attr.normals && attr.uvs)                                                               \
-  {                                                                                                \
+  else if (attr.normals && attr.uvs) {                                                             \
     cache = &pos_normal_uv_;                                                                       \
   }                                                                                                \
-  else if (attr.uvs)                                                                               \
-  {                                                                                                \
+  else if (attr.uvs) {                                                                             \
     cache = &pos_uv_;                                                                              \
   }                                                                                                \
-  else                                                                                             \
-  {                                                                                                \
+  else {                                                                                           \
     LOG_ERROR("invalid query: %s");                                                                \
     std::abort();                                                                                  \
   }                                                                                                \
@@ -323,19 +308,17 @@ std::ostream&
 operator<<(std::ostream& stream, ObjCache const& cache)
 {
   auto const& buffers = cache.buffers_;
-  auto const  WS = "    ";
+  auto const  WS      = "    ";
 
   stream << "{";
   stream << "(cache SIZE: " << cache.size() << ") ";
-  if (!cache.empty())
-  {
+  if (!cache.empty()) {
     stream << "\n";
     stream << WS;
   }
   FOR(i, buffers.size())
   {
-    if (i > 0)
-    {
+    if (i > 0) {
       stream << "\n";
       stream << WS;
     }

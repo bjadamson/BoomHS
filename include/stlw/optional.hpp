@@ -13,8 +13,7 @@
 #define MAKEOPT(...)                                                                               \
   ({                                                                                               \
     auto opt = __VA_ARGS__;                                                                        \
-    if (!opt)                                                                                      \
-    {                                                                                              \
+    if (!opt) {                                                                                    \
       return std::nullopt;                                                                         \
     }                                                                                              \
     *opt;                                                                                          \

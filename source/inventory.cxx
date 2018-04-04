@@ -94,8 +94,7 @@ Inventory::add_item(EntityID const eid)
   FOR(i, MAX_ITEMS)
   {
     auto const& item_at_index = slot(i);
-    if (item_at_index.occupied())
-    {
+    if (item_at_index.occupied()) {
       continue;
     }
     // found an open slot !!

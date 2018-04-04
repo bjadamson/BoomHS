@@ -1,8 +1,8 @@
 #pragma once
-#include <boomhs/types.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/inventory.hpp>
 #include <boomhs/tile.hpp>
+#include <boomhs/types.hpp>
 #include <stlw/log.hpp>
 
 namespace boomhs
@@ -36,8 +36,7 @@ find_player(EntityRegistry& registry)
   // Assume Player has a Transform
   auto                    view = registry.view<PlayerData, Transform>();
   std::optional<EntityID> entity{std::nullopt};
-  for (auto const e : view)
-  {
+  for (auto const e : view) {
     // This assert ensures this loop only runs once.
     assert(std::nullopt == entity);
     entity = e;

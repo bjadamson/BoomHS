@@ -33,7 +33,7 @@ enum CameraMode
   MAX
 };
 
-using ModeNamePair = std::pair<CameraMode, char const*>;
+using ModeNamePair                                 = std::pair<CameraMode, char const*>;
 std::array<ModeNamePair, 3> constexpr CAMERA_MODES = {
     {{Ortho, "Ortho"}, {Perspective, "Perspective"}, {FPS, "FPS"}}};
 
@@ -58,7 +58,7 @@ public:
   Camera(EnttLookup const&, glm::vec3 const& f, glm::vec3 const& u);
 
   // public fields
-  bool  flip_y = false;
+  bool  flip_y      = false;
   bool  rotate_lock = true;
   float rotation_speed;
 

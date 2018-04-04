@@ -1,8 +1,8 @@
 #pragma once
 #include <boomhs/entity.hpp>
 #include <boomhs/types.hpp>
-#include <stlw/type_macros.hpp>
 #include <optional>
+#include <stlw/type_macros.hpp>
 
 namespace boomhs
 {
@@ -20,8 +20,7 @@ find_skybox(EntityRegistry& registry)
   // Assume Skybox has a Transform
   auto                    view = registry.view<IsSkybox, Transform>();
   std::optional<EntityID> entity{std::nullopt};
-  for (auto const e : view)
-  {
+  for (auto const e : view) {
     // This assert ensures this loop only runs once.
     assert(std::nullopt == entity);
     entity = e;

@@ -6,8 +6,8 @@ namespace boomhs
 LevelData::LevelData(TileGrid&& td, TileSharedInfoTable&& ttable, TilePosition const& start_pos,
                      std::vector<RiverInfo>&& rivers,
 
-                     Fog const& fog, opengl::GlobalLight const& glight,
-                     ObjStore&& ocache, Camera&& cam, WorldObject&& pl)
+                     Fog const& fog, opengl::GlobalLight const& glight, ObjStore&& ocache,
+                     Camera&& cam, WorldObject&& pl)
     : tilegrid_(MOVE(td))
     , ttable_(MOVE(ttable))
     , startpos_(start_pos)
@@ -21,7 +21,7 @@ LevelData::LevelData(TileGrid&& td, TileSharedInfoTable&& ttable, TilePosition c
 }
 
 void
-LevelData::add_terrain(Terrain &&t)
+LevelData::add_terrain(Terrain&& t)
 {
   terrain_.emplace_back(MOVE(t));
 }

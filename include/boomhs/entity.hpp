@@ -5,7 +5,7 @@
 namespace boomhs
 {
 
-using EntityID = uint32_t;
+using EntityID                    = uint32_t;
 static auto constexpr EntityIDMAX = UINT32_MAX;
 
 class EntityRegistry

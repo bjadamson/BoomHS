@@ -9,8 +9,8 @@ namespace boomhs
 
 struct Item
 {
-  char const*         name = "UNNAMED";
-  char const*         tooltip = "TOOLTIP NOT SET";
+  char const*         name        = "UNNAMED";
+  char const*         tooltip     = "TOOLTIP NOT SET";
   bool                is_pickedup = false;
   opengl::TextureInfo ui_tinfo;
 };
@@ -20,8 +20,7 @@ find_items(EntityRegistry& registry)
 {
   std::vector<EntityID> items;
   auto                  view = registry.view<Item>();
-  for (auto const eid : view)
-  {
+  for (auto const eid : view) {
     items.emplace_back(eid);
   }
   return items;

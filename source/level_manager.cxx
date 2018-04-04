@@ -26,7 +26,7 @@ LevelManager::active()
 void
 LevelManager::make_active(int const level_number, TiledataState& tds)
 {
-  active_ = level_number;
+  active_       = level_number;
   tds.recompute = true;
 }
 

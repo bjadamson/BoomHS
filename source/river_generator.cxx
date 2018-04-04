@@ -35,7 +35,7 @@ create_river(TilePosition const& tpos, Edges const& edges, glm::vec2 const& flow
   RiverInfo river{tpos, edges.left, edges.top, edges.right, edges.bottom, flow_dir, rotation};
   FOR(i, length)
   {
-    auto const      offset = (flow_dir * static_cast<float>(i));
+    auto const      offset     = (flow_dir * static_cast<float>(i));
     glm::vec2 const wiggle_pos = static_cast<glm::vec2>(river.origin) + offset;
     spawn_newround_wiggles(river, rng, wiggle_pos);
   }
@@ -46,25 +46,24 @@ std::optional<RiverInfo>
 generate_river(TileGrid& tilegrid, stlw::float_generator& rng)
 {
   auto const [tdwidth, tdheight] = tilegrid.dimensions();
-  auto const     tpos_edge = random_tileposition_onedgeofmap(tilegrid, rng);
-  auto const&    tpos = tpos_edge.first;
-  MapEdge const& edge = tpos_edge.second;
+  auto const     tpos_edge       = random_tileposition_onedgeofmap(tilegrid, rng);
+  auto const&    tpos            = tpos_edge.first;
+  MapEdge const& edge            = tpos_edge.second;
 
   auto const RIVER_DISTANCE = 1;
   {
     auto constexpr FLOW_DIR = glm::vec2{1.0, 0.0};
-    if (edge.is_xedge())
-    {
+    if (edge.is_xedge()) {
       FOR(i, tdwidth)
       {
         auto& tile = tilegrid.data(i, tpos.y);
         tilegrid.assign_river(tile, FLOW_DIR);
       }
-      auto const  edges = calculate_edges(tpos, tdwidth, tdheight, tdwidth, RIVER_DISTANCE);
+      auto const  edges    = calculate_edges(tpos, tdwidth, tdheight, tdwidth, RIVER_DISTANCE);
       float const rotation = 90.0f;
 
-      auto const left = glm::vec2{static_cast<float>(edges.left), 0.0f};
-      auto const right = glm::vec2{static_cast<float>(edges.right), 0.0f};
+      auto const left   = glm::vec2{static_cast<float>(edges.left), 0.0f};
+      auto const right  = glm::vec2{static_cast<float>(edges.right), 0.0f};
       auto const length = glm::distance(left, right);
       return create_river(tpos, edges, FLOW_DIR, rotation, length, rng);
     }
@@ -76,10 +75,10 @@ generate_river(TileGrid& tilegrid, stlw::float_generator& rng)
     auto& tile = tilegrid.data(tpos.x, i);
     tilegrid.assign_river(tile, FLOW_DIR);
   }
-  auto const  edges = calculate_edges(tpos, tdwidth, tdheight, RIVER_DISTANCE, tdheight);
+  auto const  edges    = calculate_edges(tpos, tdwidth, tdheight, RIVER_DISTANCE, tdheight);
   float const rotation = 0.0f;
 
-  auto const top = glm::vec2{0.0f, static_cast<float>(edges.top)};
+  auto const top    = glm::vec2{0.0f, static_cast<float>(edges.top)};
   auto const bottom = glm::vec2{0.0f, static_cast<float>(edges.bottom)};
   auto const length = glm::distance(top, bottom);
   return create_river(tpos, edges, FLOW_DIR, rotation, length, rng);
@@ -102,8 +101,7 @@ RiverGenerator::place_rivers(TileGrid& tilegrid, stlw::float_generator& rng,
 {
   auto const place = [&]() {
     std::optional<RiverInfo> river_o = std::nullopt;
-    while (!river_o)
-    {
+    while (!river_o) {
       river_o = generate_river(tilegrid, rng);
     }
     assert(river_o);

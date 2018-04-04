@@ -3,8 +3,8 @@
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <extlibs/glew.hpp>
 #include <array>
+#include <extlibs/glew.hpp>
 #include <ostream>
 
 namespace opengl
@@ -73,7 +73,7 @@ struct Material
 
 struct Light
 {
-  opengl::Color diffuse = LOC::WHITE;
+  opengl::Color diffuse  = LOC::WHITE;
   opengl::Color specular = LOC::BLACK;
 };
 

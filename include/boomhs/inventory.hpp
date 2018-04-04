@@ -46,7 +46,7 @@ class Inventory
   bool                                 open_ = false;
 
 public:
-  Inventory() = default;
+  Inventory()     = default;
   using ItemIndex = size_t;
 
   // Whether or not the game considers the inventory "open" by the player.

@@ -14,11 +14,10 @@ namespace
 
 LoadStatus
 load_vertices(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
-               std::vector<float>* pvertices)
+              std::vector<float>* pvertices)
 {
   auto const pos_index = 3 * index.vertex_index;
-  if (pos_index < 0)
-  {
+  if (pos_index < 0) {
     return LoadStatus::MISSING_POSITION_ATTRIBUTES;
   }
   auto const x = attrib.vertices[pos_index + 0];
@@ -39,8 +38,7 @@ load_normals(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
              std::vector<float>* pvertices)
 {
   auto const ni = 3 * index.normal_index;
-  if (ni >= 0)
-  {
+  if (ni >= 0) {
     auto const xn = attrib.normals[ni + 0];
     auto const yn = attrib.normals[ni + 1];
     auto const zn = attrib.normals[ni + 2];
@@ -50,8 +48,7 @@ load_normals(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
     vertices.emplace_back(yn);
     vertices.emplace_back(zn);
   }
-  else
-  {
+  else {
     return LoadStatus::MISSING_NORMAL_ATTRIBUTES;
   }
   return LoadStatus::SUCCESS;
@@ -62,8 +59,7 @@ load_uvs(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
          std::vector<float>* pvertices)
 {
   auto const ti = 2 * index.texcoord_index;
-  if (ti >= 0)
-  {
+  if (ti >= 0) {
     auto const u = attrib.texcoords[ti + 0];
     auto const v = 1.0f - attrib.texcoords[ti + 1];
 
@@ -71,8 +67,7 @@ load_uvs(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
     vertices.emplace_back(u);
     vertices.emplace_back(v);
   }
-  else
-  {
+  else {
     return LoadStatus::MISSING_UV_ATTRIBUTES;
   }
   return LoadStatus::SUCCESS;
@@ -104,8 +99,7 @@ loadstatus_to_string(LoadStatus const ls)
   case LoadStatus::ATTRIBUTE:                                                                      \
     return ATTRIBUTE_S;
 
-  switch (ls)
-  {
+  switch (ls) {
     CASE(MISSING_POSITION_ATTRIBUTES, "MISSING_POSITION_ATTRIBUTES");
     CASE(MISSING_COLOR_ATTRIBUTES, "MISSING_COLOR_ATTRIBUTES");
     CASE(MISSING_NORMAL_ATTRIBUTES, "MISSING_NORMAL_ATTRIBUTES");
@@ -138,8 +132,7 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
   std::string                      err;
 
   bool const load_success = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, objpath, mtlpath);
-  if (!load_success)
-  {
+  if (!load_success) {
     LOG_ERROR_SPRINTF("error loading obj, msg: %s", err);
     std::abort();
   }
@@ -153,7 +146,7 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
   assert(0 == (attrib.texcoords.size() % 2));
 
   ObjData objdata;
-  auto&   indices = objdata.indices;
+  auto&   indices      = objdata.indices;
   objdata.num_vertices = attrib.vertices.size() / 3;
   /*
   LOG_ERROR_SPRINTF("vertice count %u", num_vertices);
@@ -180,8 +173,7 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
 #define LOAD_ATTR(...)                                                                             \
   ({                                                                                               \
     auto const load_status = __VA_ARGS__;                                                          \
-    if (load_status != LoadStatus::SUCCESS)                                                        \
-    {                                                                                              \
+    if (load_status != LoadStatus::SUCCESS) {                                                      \
       return Err(load_status);                                                                     \
     }                                                                                              \
   })

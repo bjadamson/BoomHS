@@ -9,8 +9,8 @@ namespace boomhs
 struct SphericalCoordinates
 {
   float radius = 0.0f;
-  float theta = 0.0f;
-  float phi = 0.0f;
+  float theta  = 0.0f;
+  float phi    = 0.0f;
 
   SphericalCoordinates() = default;
   SphericalCoordinates(float const r, float const t, float const p)

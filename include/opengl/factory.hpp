@@ -39,7 +39,7 @@ make_arrow_vertices(ArrowCreateParams const&);
 // Cubes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 using CubeVertices = std::array<float, 32>;
-using CubeIndices = std::array<GLuint, 36>;
+using CubeIndices  = std::array<GLuint, 36>;
 
 // clang-format off
 static constexpr CubeIndices CUBE_INDICES = {{

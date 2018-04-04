@@ -7,7 +7,7 @@ namespace boomhs
 FlowDirection
 FlowDirection::find_flow(Tile const& tile, std::vector<FlowDirection> const& flows)
 {
-  auto const cmp = [&tile](auto const& flow) { return flow.tile == tile; };
+  auto const cmp     = [&tile](auto const& flow) { return flow.tile == tile; };
   auto const find_it = std::find_if(flows.cbegin(), flows.cend(), cmp);
   assert(find_it != flows.cend());
   return *find_it;
@@ -20,7 +20,7 @@ TileGrid::TileGrid(size_t const width, size_t const height, EntityRegistry& regi
   FOR(i, width * height)
   {
     Tile tile;
-    tile.eid = registry_.create();
+    tile.eid                               = registry_.create();
     registry_.assign<Name>(tile.eid).value = "Tile";
     registry_.assign<Transform>(tile.eid);
     registry_.assign<TileComponent>(tile.eid);
@@ -46,10 +46,8 @@ TileGrid::TileGrid(TileGrid&& other)
 
 TileGrid::~TileGrid()
 {
-  if (destroy_entities_)
-  {
-    for (auto& tile : tiles_)
-    {
+  if (destroy_entities_) {
+    for (auto& tile : tiles_) {
       registry_.destroy(tile.eid);
     }
   }
@@ -84,8 +82,7 @@ TileGrid::assign_bridge(Tile& tile)
 
   assert(registry_.has<Transform>(tile.eid));
   auto& transform = registry_.get<Transform>(tile.eid);
-  if (stlw::math::float_compare(flow.direction.x, 1.0f))
-  {
+  if (stlw::math::float_compare(flow.direction.x, 1.0f)) {
     transform.rotate_degrees(90.0f, opengl::Y_UNIT_VECTOR);
   }
 }
@@ -101,8 +98,7 @@ bool
 TileGrid::is_blocked(TilePosition::ValueT const x, TilePosition::ValueT const y) const
 {
   auto const type = data(x, y).type;
-  if (ANYOF(type == TileType::WALL, type == TileType::STAIR_DOWN, type == TileType::STAIR_UP))
-  {
+  if (ANYOF(type == TileType::WALL, type == TileType::STAIR_DOWN, type == TileType::STAIR_UP)) {
     return true;
   }
   return false;

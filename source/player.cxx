@@ -14,11 +14,11 @@ void
 Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
 {
   auto const player_eid = find_player(registry);
-  auto &player = registry.get<PlayerData>(player_eid);
-  auto &inventory = player.inventory;
+  auto&      player     = registry.get<PlayerData>(player_eid);
+  auto&      inventory  = player.inventory;
 
   assert(inventory.add_item(eid));
-  auto& item = registry.get<Item>(eid);
+  auto& item       = registry.get<Item>(eid);
   item.is_pickedup = true;
 
   auto& visible = registry.get<IsVisible>(eid);
@@ -29,10 +29,10 @@ void
 Player::drop_entity(stlw::Logger& logger, EntityID const eid, EntityRegistry& registry)
 {
   auto const player_eid = find_player(registry);
-  auto &player = registry.get<PlayerData>(player_eid);
-  auto &inventory = player.inventory;
+  auto&      player     = registry.get<PlayerData>(player_eid);
+  auto&      inventory  = player.inventory;
 
-  auto& item = registry.get<Item>(eid);
+  auto& item       = registry.get<Item>(eid);
   item.is_pickedup = false;
 
   auto& visible = registry.get<IsVisible>(eid);
@@ -41,11 +41,10 @@ Player::drop_entity(stlw::Logger& logger, EntityID const eid, EntityRegistry& re
   // Move the dropped item to the player's position
   auto const& player_pos = registry.get<Transform>(player_eid).translation;
 
-  auto& transform = registry.get<Transform>(eid);
+  auto& transform       = registry.get<Transform>(eid);
   transform.translation = player_pos;
 
-  if (registry.has<Torch>(eid))
-  {
+  if (registry.has<Torch>(eid)) {
     auto& pointlight = registry.get<PointLight>(eid);
     pointlight.attenuation *= 3.0f;
     LOG_INFO("You have droppped a torch.");

@@ -213,24 +213,21 @@ SDLControllers::find_attached_controllers(stlw::Logger& logger)
   SDL_GameController* controller = nullptr;
   FORI(i, num_controllers)
   {
-    if (!SDL_IsGameController(i))
-    {
+    if (!SDL_IsGameController(i)) {
       continue;
     }
     SDL_GameController* ci = SDL_GameControllerOpen(i);
     LOG_INFO_SPRINTF("Found controller: '%s'", SDL_GameControllerNameForIndex(i));
-    if (ci)
-    {
+    if (ci) {
       controller = ci;
       break;
     }
-    else
-    {
+    else {
       return Err(fmt::sprintf("Could not open gamecontroller %i: %s\n", i, SDL_GetError()));
     }
   }
   SDLControllers controllers;
-  auto           ptr = ControllerPTR{controller, &destroy_controller};
+  auto           ptr      = ControllerPTR{controller, &destroy_controller};
   SDL_Joystick*  joystick = SDL_GameControllerGetJoystick(ptr.get());
 
   assert(joystick);

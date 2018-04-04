@@ -29,10 +29,9 @@ auto
 collect_all(EntityRegistry& registry, bool const reverse)
 {
   std::vector<pair_t> pairs;
-  for (auto const eid : registry.view<T...>())
-  {
+  for (auto const eid : registry.view<T...>()) {
     auto const name = registry.get<Name>(eid).value;
-    auto pair = std::make_pair(name, eid);
+    auto       pair = std::make_pair(name, eid);
     pairs.emplace_back(MOVE(pair));
   }
   if (reverse) {
@@ -47,13 +46,12 @@ callback_from_pairs(void* const pvec, int const idx, const char** out_text)
   std::vector<pair_t> const& vec = *reinterpret_cast<std::vector<pair_t>*>(pvec);
 
   auto const index_size = static_cast<size_t>(idx);
-  if (idx < 0 || index_size > vec.size())
-  {
+  if (idx < 0 || index_size > vec.size()) {
     return false;
   }
   auto const& pair = vec[idx];
   auto const& name = pair.first;
-  *out_text = name.c_str();
+  *out_text        = name.c_str();
   return true;
 };
 
@@ -63,8 +61,7 @@ callback_from_strings(void* const pvec, int const idx, const char** out_text)
   auto const& vec = *reinterpret_cast<std::vector<std::string>*>(pvec);
 
   auto const index_size = static_cast<size_t>(idx);
-  if (idx < 0 || index_size >= vec.size())
-  {
+  if (idx < 0 || index_size >= vec.size()) {
     return false;
   }
   *out_text = vec[idx].c_str();
@@ -84,7 +81,7 @@ EntityID
 comboselected_to_entity(int const selected_index, std::vector<pair_t> const& pairs)
 {
   auto const cmp = [&selected_index](auto const& pair) { return pair.second == selected_index; };
-  auto const it = std::find_if(pairs.cbegin(), pairs.cend(), cmp);
+  auto const it  = std::find_if(pairs.cbegin(), pairs.cend(), cmp);
   assert(it != pairs.cend());
 
   return it->second;
@@ -94,10 +91,9 @@ void
 draw_entity_editor(UiDebugState& uistate, LevelData& ldata, EntityRegistry& registry)
 {
   auto&      selected = uistate.selected_entity;
-  auto const draw = [&]() {
+  auto const draw     = [&]() {
     auto pairs = collect_all<Transform>(registry, false);
-    if (display_combo_for_entities("Entity", &selected, registry, pairs))
-    {
+    if (display_combo_for_entities("Entity", &selected, registry, pairs)) {
       auto const eid = comboselected_to_entity(selected, pairs);
 
       auto& player = ldata.player;
@@ -106,13 +102,12 @@ draw_entity_editor(UiDebugState& uistate, LevelData& ldata, EntityRegistry& regi
       camera.set_target(eid);
       player.set_eid(eid);
     }
-    auto const eid = comboselected_to_entity(selected, pairs);
+    auto const eid       = comboselected_to_entity(selected, pairs);
     auto&      transform = registry.get<Transform>(eid);
     ImGui::InputFloat3("pos:", glm::value_ptr(transform.translation));
     {
       auto buffer = glm::degrees(glm::eulerAngles(transform.rotation));
-      if (ImGui::InputFloat3("rot:", glm::value_ptr(buffer)))
-      {
+      if (ImGui::InputFloat3("rot:", glm::value_ptr(buffer))) {
         transform.rotation = glm::quat(buffer * (3.14159f / 180.f));
       }
     }
@@ -124,8 +119,7 @@ draw_entity_editor(UiDebugState& uistate, LevelData& ldata, EntityRegistry& regi
 void
 draw_time_editor(Time& time, UiDebugState& uistate)
 {
-  if (ImGui::Begin("TimeWindow"))
-  {
+  if (ImGui::Begin("TimeWindow")) {
     int speed = 0;
     ImGui::InputInt("Speed Multiplier", &speed);
     ImGui::Separator();
@@ -143,16 +137,14 @@ draw_time_editor(Time& time, UiDebugState& uistate)
 
     auto const maybe_clear_fields = [&]() {
       bool const clear_fields = buffer.clear_fields;
-      if (clear_fields)
-      {
+      if (clear_fields) {
         stlw::memzero(&buffer, sizeof(DrawTimeBuffer));
       }
 
       // restore clear_fields
       buffer.clear_fields = clear_fields;
     };
-    if (ImGui::Button("Add Time Offset"))
-    {
+    if (ImGui::Button("Add Time Offset")) {
       time.add_seconds(buffer.second);
       time.add_minutes(buffer.minute);
       time.add_hours(buffer.hour);
@@ -163,8 +155,7 @@ draw_time_editor(Time& time, UiDebugState& uistate)
       maybe_clear_fields();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Set Time"))
-    {
+    if (ImGui::Button("Set Time")) {
       time.reset();
 
       time.set_seconds(buffer.second);
@@ -194,11 +185,10 @@ draw_tilegrid_editor(TiledataState& tds, LevelManager& lm)
 
     std::vector<std::string> levels;
     FORI(i, lm.num_levels()) { levels.emplace_back(std::to_string(i)); }
-    void* pdata = reinterpret_cast<void*>(&levels);
+    void* pdata    = reinterpret_cast<void*>(&levels);
     int   selected = lm.active_zone();
 
-    if (ImGui::Combo("Current Level:", &selected, callback_from_strings, pdata, lm.num_levels()))
-    {
+    if (ImGui::Combo("Current Level:", &selected, callback_from_strings, pdata, lm.num_levels())) {
       lm.make_active(selected, tds);
     }
     bool recompute = false;
@@ -208,8 +198,7 @@ draw_tilegrid_editor(TiledataState& tds, LevelManager& lm)
     recompute |= ImGui::Checkbox("Show y-axis Lines ", &tds.show_yaxis_lines);
     ImGui::Checkbox("Draw Neighbor Arrows", &tds.show_neighbortile_arrows);
 
-    if (recompute)
-    {
+    if (recompute) {
       tds.recompute = true;
     }
   };
@@ -227,9 +216,9 @@ draw_camera_window(LevelData& ldata)
     ImGui::Separator();
     {
       auto const coords = camera.spherical_coordinates();
-      auto const r = coords.radius_display_string();
-      auto const t = coords.theta_display_string();
-      auto const p = coords.phi_display_string();
+      auto const r      = coords.radius_display_string();
+      auto const t      = coords.theta_display_string();
+      auto const p      = coords.phi_display_string();
       ImGui::Text("Spherical Coordinates:\nr: '%s', t: '%s', p: '%s'", r.c_str(), t.c_str(),
                   p.c_str());
     }
@@ -239,17 +228,17 @@ draw_camera_window(LevelData& ldata)
     }
     {
       auto const coords = to_cartesian(camera.spherical_coordinates());
-      auto const x = std::to_string(coords.x);
-      auto const y = std::to_string(coords.y);
-      auto const z = std::to_string(coords.z);
+      auto const x      = std::to_string(coords.x);
+      auto const y      = std::to_string(coords.y);
+      auto const z      = std::to_string(coords.z);
       ImGui::Text("Cartesian Coordinates (should match world position):\nx: '%s', y: '%s', z: '%s'",
                   x.c_str(), y.c_str(), z.c_str());
     }
     {
       glm::vec3 const target_coords = camera.target_position();
-      auto const      x = std::to_string(target_coords.x);
-      auto const      y = std::to_string(target_coords.y);
-      auto const      z = std::to_string(target_coords.z);
+      auto const      x             = std::to_string(target_coords.x);
+      auto const      y             = std::to_string(target_coords.y);
+      auto const      z             = std::to_string(target_coords.z);
       ImGui::Text("Follow Target position:\nx: '%s', y: '%s', z: '%s'", x.c_str(), y.c_str(),
                   z.c_str());
     }
@@ -281,20 +270,17 @@ draw_camera_window(LevelData& ldata)
     ImGui::Checkbox("Mouse Rotation Lock", &camera.rotate_lock);
     ImGui::InputFloat("Mouse Rotation Speed", &camera.rotation_speed);
     std::vector<std::string> mode_strings;
-    for (auto const& it : CAMERA_MODES)
-    {
+    for (auto const& it : CAMERA_MODES) {
       mode_strings.emplace_back(it.second);
     }
     int selected = static_cast<int>(camera.mode());
     ;
     void* pdata = reinterpret_cast<void*>(&mode_strings);
-    if (ImGui::Combo("Mode:", &selected, callback_from_strings, pdata, mode_strings.size()))
-    {
+    if (ImGui::Combo("Mode:", &selected, callback_from_strings, pdata, mode_strings.size())) {
       auto const mode = static_cast<CameraMode>(selected);
       camera.set_mode(mode);
     }
-    switch (camera.mode())
-    {
+    switch (camera.mode()) {
     case Perspective:
       draw_perspective_controls();
       break;
@@ -305,8 +291,7 @@ draw_camera_window(LevelData& ldata)
       // TODO: implement this
       std::abort();
       break;
-    default:
-    {
+    default: {
       break;
     }
     }
@@ -337,13 +322,12 @@ draw_player_window(EngineState& es, LevelData& ldata)
     ImGui::Checkbox("Localspace Vectors Vectors", &es.show_player_localspace_vectors);
     ImGui::Checkbox("Worldspace Vectors Vectors", &es.show_player_worldspace_vectors);
     float speed = player.speed();
-    if (ImGui::InputFloat("Player Speed", &speed))
-    {
+    if (ImGui::InputFloat("Player Speed", &speed)) {
       player.set_speed(speed);
     }
 
     glm::quat const   quat = glm::angleAxis(glm::radians(0.0f), Y_UNIT_VECTOR);
-    float const       dot = glm::dot(player.orientation(), quat);
+    float const       dot  = glm::dot(player.orientation(), quat);
     std::string const dots = std::to_string(dot);
     ImGui::Text("dot product: '%s'", dots.c_str());
   };
@@ -351,19 +335,19 @@ draw_player_window(EngineState& es, LevelData& ldata)
 }
 
 void
-draw_skybox_window(EngineState& es, EntityRegistry &registry)
+draw_skybox_window(EngineState& es, EntityRegistry& registry)
 {
-  auto const eid = find_skybox(registry);
-  auto const& ti = registry.get<TextureRenderable>(eid).texture_info;
+  auto const  eid = find_skybox(registry);
+  auto const& ti  = registry.get<TextureRenderable>(eid).texture_info;
 
   auto const draw = [&]() {
-    auto const draw_button =[&](TextureInfo const& ti) {
+    auto const draw_button = [&](TextureInfo const& ti) {
       ImTextureID im_texid = reinterpret_cast<void*>(ti.id);
 
       imgui_cxx::ImageButtonBuilder image_builder;
       image_builder.frame_padding = 1;
-      image_builder.bg_color = ImColor{255, 255, 255, 255};
-      image_builder.tint_color = ImColor{255, 255, 255, 128};
+      image_builder.bg_color      = ImColor{255, 255, 255, 255};
+      image_builder.tint_color    = ImColor{255, 255, 255, 128};
 
       auto const size = ImVec2(32, 32);
       return image_builder.build(im_texid, size);
@@ -386,8 +370,7 @@ show_directionallight_window(UiDebugState& ui, LevelData& ldata)
     ImGui::ColorEdit3("Diffuse:", directional_light.diffuse.data());
     ImGui::ColorEdit3("Specular:", directional_light.specular.data());
 
-    if (ImGui::Button("Close", ImVec2(120, 0)))
-    {
+    if (ImGui::Button("Close", ImVec2(120, 0))) {
       ui.show_directionallight_window = false;
     }
   };
@@ -403,8 +386,7 @@ show_ambientlight_window(UiDebugState& ui, LevelData& ldata)
     auto& global_light = ldata.global_light;
     ImGui::ColorEdit3("Ambient Light Color:", global_light.ambient.data());
 
-    if (ImGui::Button("Close", ImVec2(120, 0)))
-    {
+    if (ImGui::Button("Close", ImVec2(120, 0))) {
       ui.show_ambientlight_window = false;
     }
   };
@@ -431,14 +413,13 @@ show_entitymaterials_window(UiDebugState& ui, EntityRegistry& registry)
     display_combo_for_entities<>("Entity", &selected_material, registry, pairs);
 
     auto const  entities_with_materials = find_materials(registry);
-    auto const& selected_entity = entities_with_materials[selected_material];
+    auto const& selected_entity         = entities_with_materials[selected_material];
 
     auto& material = registry.get<Material>(selected_entity);
     ImGui::Separator();
     show_material_editor("Entity Material:", material);
 
-    if (ImGui::Button("Close", ImVec2(120, 0)))
-    {
+    if (ImGui::Button("Close", ImVec2(120, 0))) {
       ui.show_entitymaterial_window = false;
     }
   };
@@ -476,9 +457,9 @@ void
 show_pointlight_window(UiDebugState& ui, EntityRegistry& registry)
 {
   auto const display_pointlight = [&registry](EntityID const eid) {
-    auto& transform = registry.get<Transform>(eid);
+    auto& transform  = registry.get<Transform>(eid);
     auto& pointlight = registry.get<PointLight>(eid);
-    auto& light = pointlight.light;
+    auto& light      = pointlight.light;
     ImGui::InputFloat3("position:", glm::value_ptr(transform.translation));
     ImGui::ColorEdit3("diffuse:", light.diffuse.data());
     ImGui::ColorEdit3("specular:", light.specular.data());
@@ -490,8 +471,7 @@ show_pointlight_window(UiDebugState& ui, EntityRegistry& registry)
     ImGui::InputFloat("linear:", &attenuation.linear);
     ImGui::InputFloat("quadratic:", &attenuation.quadratic);
 
-    if (registry.has<LightFlicker>(eid))
-    {
+    if (registry.has<LightFlicker>(eid)) {
       ImGui::Separator();
       ImGui::Text("Light Flicker");
 
@@ -508,15 +488,14 @@ show_pointlight_window(UiDebugState& ui, EntityRegistry& registry)
   };
   auto const draw_pointlight_editor = [&]() {
     auto& selected_pointlight = ui.selected_pointlight;
-    auto  pairs = collect_all<PointLight, Transform>(registry, false);
+    auto  pairs               = collect_all<PointLight, Transform>(registry, false);
     display_combo_for_entities<>("PointLight:", &selected_pointlight, registry, pairs);
     ImGui::Separator();
 
     auto const pointlights = find_pointlights(registry);
     display_pointlight(pointlights[selected_pointlight]);
 
-    if (ImGui::Button("Close", ImVec2(120, 0)))
-    {
+    if (ImGui::Button("Close", ImVec2(120, 0))) {
       ui.show_pointlight_window = false;
     }
   };
@@ -537,7 +516,8 @@ show_fog_window(UiDebugState& state, LevelData& ldata)
     ImGui::InputFloat("Density", &ldata.fog.density);
     ImGui::InputFloat("Gradient", &ldata.fog.gradient);
 
-    bool const close_pressed = ImGui::Button("Close", ImVec2(120, 0));;
+    bool const close_pressed = ImGui::Button("Close", ImVec2(120, 0));
+    ;
     state.show_fog_window = !close_pressed;
   };
   imgui_cxx::with_window(draw, "Fog Window");
@@ -546,7 +526,7 @@ show_fog_window(UiDebugState& state, LevelData& ldata)
 void
 world_menu(EngineState& es, LevelData& ldata)
 {
-  auto&      ui = es.ui_state.debug;
+  auto&      ui   = es.ui_state.debug;
   auto const draw = [&]() {
     ImGui::MenuItem("Fog Window", nullptr, &ui.show_fog_window);
     ImGui::MenuItem("Local Axis", nullptr, &es.show_local_axis);
@@ -562,11 +542,11 @@ world_menu(EngineState& es, LevelData& ldata)
 void
 lighting_menu(EngineState& es, LevelData& ldata, EntityRegistry& registry)
 {
-  auto& ui = es.ui_state.debug;
-  bool& edit_pointlights = ui.show_pointlight_window;
-  bool& edit_ambientlight = ui.show_ambientlight_window;
+  auto& ui                     = es.ui_state.debug;
+  bool& edit_pointlights       = ui.show_pointlight_window;
+  bool& edit_ambientlight      = ui.show_ambientlight_window;
   bool& edit_directionallights = ui.show_directionallight_window;
-  bool& edit_entitymaterials = ui.show_entitymaterial_window;
+  bool& edit_entitymaterials   = ui.show_entitymaterial_window;
   bool& edit_tilegridmaterials = ui.show_tilegridmaterial_window;
 
   auto const draw = [&]() {
@@ -577,24 +557,19 @@ lighting_menu(EngineState& es, LevelData& ldata, EntityRegistry& registry)
     ImGui::MenuItem("TileGrid Materials", nullptr, &edit_tilegridmaterials);
   };
   imgui_cxx::with_menu(draw, "Lightning");
-  if (edit_pointlights)
-  {
+  if (edit_pointlights) {
     show_pointlight_window(ui, registry);
   }
-  if (edit_ambientlight)
-  {
+  if (edit_ambientlight) {
     show_ambientlight_window(ui, ldata);
   }
-  if (edit_directionallights)
-  {
+  if (edit_directionallights) {
     show_directionallight_window(ui, ldata);
   }
-  if (edit_entitymaterials)
-  {
+  if (edit_entitymaterials) {
     show_entitymaterials_window(ui, registry);
   }
-  if (edit_tilegridmaterials)
-  {
+  if (edit_tilegridmaterials) {
     show_tilegrid_materials_window(ui, ldata);
   }
 }
@@ -607,55 +582,46 @@ namespace boomhs::ui_debug
 void
 draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::FrameTime const& ft)
 {
-  auto& state = es.ui_state.debug;
+  auto& state          = es.ui_state.debug;
   auto& tilegrid_state = es.tilegrid_state;
-  auto& window_state = es.window_state;
-  auto& zs = lm.active();
-  auto& registry = zs.registry;
-  auto& ldata = zs.level_data;
+  auto& window_state   = es.window_state;
+  auto& zs             = lm.active();
+  auto& registry       = zs.registry;
+  auto& ldata          = zs.level_data;
 
-  if (state.show_entitywindow)
-  {
+  if (state.show_entitywindow) {
     draw_entity_editor(state, ldata, registry);
   }
-  if (state.show_time_window)
-  {
+  if (state.show_time_window) {
     draw_time_editor(es.time, state);
   }
-  if (state.show_camerawindow)
-  {
+  if (state.show_camerawindow) {
     draw_camera_window(ldata);
   }
-  if (state.show_mousewindow)
-  {
+  if (state.show_mousewindow) {
     draw_mouse_window(es.mouse_state);
   }
-  if (state.show_playerwindow)
-  {
+  if (state.show_playerwindow) {
     draw_player_window(es, ldata);
   }
-  if (state.show_skyboxwindow)
-  {
+  if (state.show_skyboxwindow) {
     draw_skybox_window(es, registry);
   }
-  if (state.show_tilegrid_editor_window)
-  {
+  if (state.show_tilegrid_editor_window) {
     draw_tilegrid_editor(tilegrid_state, lm);
   }
-  if (state.show_debugwindow)
-  {
+  if (state.show_debugwindow) {
     {
-      auto const eid = find_skybox(registry);
-      auto&      v = registry.get<IsVisible>(eid);
+      auto const eid  = find_skybox(registry);
+      auto&      v    = registry.get<IsVisible>(eid);
       bool&      draw = v.value;
       ImGui::Checkbox("Draw Skybox", &draw);
     }
     {
       auto const eids = find_orbital_bodies(registry);
-      auto       num = 1;
-      for (auto const eid : eids)
-      {
-        auto& v = registry.get<IsVisible>(eid);
+      auto       num  = 1;
+      for (auto const eid : eids) {
+        auto& v    = registry.get<IsVisible>(eid);
         bool& draw = v.value;
 
         auto const text = "Draw Orbital Body" + std::to_string(num++);
@@ -669,8 +635,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::Frame
     ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
 
     ImGui::Checkbox("ImGui Metrics", &es.draw_imguimetrics);
-    if (es.draw_imguimetrics)
-    {
+    if (es.draw_imguimetrics) {
       ImGui::ShowMetricsWindow(&es.draw_imguimetrics);
     }
   }
@@ -688,8 +653,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::Frame
   };
   auto const settings_menu = [&]() {
     auto const setwindow_row = [&](char const* text, auto const fullscreen) {
-      if (ImGui::MenuItem(text, nullptr, nullptr, window_state.fullscreen != fullscreen))
-      {
+      if (ImGui::MenuItem(text, nullptr, nullptr, window_state.fullscreen != fullscreen)) {
         window.set_fullscreen(fullscreen);
         window_state.fullscreen = fullscreen;
       }
@@ -698,8 +662,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::Frame
     setwindow_row("Fullscreen", window::FullscreenFlags::FULLSCREEN);
     setwindow_row("Fullscreen DESKTOP", window::FullscreenFlags::FULLSCREEN_DESKTOP);
     auto const setsync_row = [&](char const* text, auto const sync) {
-      if (ImGui::MenuItem(text, nullptr, nullptr, window_state.sync != sync))
-      {
+      if (ImGui::MenuItem(text, nullptr, nullptr, window_state.sync != sync)) {
         window.set_swapinterval(sync);
         window_state.sync = sync;
       }
@@ -714,7 +677,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::Frame
     lighting_menu(es, ldata, registry);
 
     auto const framerate = es.imgui.Framerate;
-    auto const ms_frame = 1000.0f / framerate;
+    auto const ms_frame  = 1000.0f / framerate;
 
     ImGui::SameLine(ImGui::GetWindowWidth() * 0.60f);
     ImGui::Text("Current Level: %i", lm.active_zone());

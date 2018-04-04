@@ -68,7 +68,6 @@ log_any_gl_errors(stlw::Logger&, std::string const&, int const);
 } // namespace gfx
 
 #define LOG_ANY_GL_ERRORS(logger, msg)                                                             \
-  do                                                                                               \
-  {                                                                                                \
+  do {                                                                                             \
     ::gfx::log_any_gl_errors(logger, msg, __LINE__);                                               \
   } while (0)

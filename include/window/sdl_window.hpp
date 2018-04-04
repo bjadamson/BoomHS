@@ -47,7 +47,7 @@ enum class SwapIntervalFlag
 // clang-format on
 
 using window_type = SDL_Window;
-using window_ptr = std::unique_ptr<window_type, decltype(&SDL_DestroyWindow)>;
+using window_ptr  = std::unique_ptr<window_type, decltype(&SDL_DestroyWindow)>;
 
 class SDLWindow
 {
@@ -63,8 +63,7 @@ public:
   }
   ~SDLWindow()
   {
-    if (nullptr != context_)
-    {
+    if (nullptr != context_) {
       SDL_GL_DeleteContext(context_);
     }
   }
@@ -77,7 +76,7 @@ public:
       , context_(other.context_)
   {
     other.context_ = nullptr;
-    other.window_ = nullptr;
+    other.window_  = nullptr;
   }
 
   // not move assignable

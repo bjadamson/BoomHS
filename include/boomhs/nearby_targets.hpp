@@ -7,7 +7,7 @@ namespace boomhs
 
 class NearbyTargets
 {
-  size_t                offset_ = 0;
+  size_t                offset_  = 0;
   std::vector<EntityID> targets_ = {};
 
 public:

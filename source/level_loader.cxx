@@ -17,12 +17,11 @@ using namespace boomhs;
 using namespace opengl;
 
 using CppTableArray = std::shared_ptr<cpptoml::table_array>;
-using CppTable = std::shared_ptr<cpptoml::table>;
+using CppTable      = std::shared_ptr<cpptoml::table>;
 
 #define TRY_OPTION_GENERAL_EVAL(VAR_NAME, V, expr)                                                 \
   auto V{expr};                                                                                    \
-  if (!V)                                                                                          \
-  {                                                                                                \
+  if (!V) {                                                                                        \
     return cpptoml::option<opengl::AttributePointerInfo>{};                                        \
   }                                                                                                \
   VAR_NAME{MOVE(V)};
@@ -51,8 +50,7 @@ CppTableArray
 get_table_array_or_abort(CppTable const& table, char const* name)
 {
   auto table_o = get_table_array(table, name);
-  if (!table_o)
-  {
+  if (!table_o) {
     std::abort();
   }
   return table_o;
@@ -63,8 +61,7 @@ std::optional<T>
 get_value(CppTable const& table, char const* name)
 {
   auto cpptoml_option = table->get_as<T>(name);
-  if (!cpptoml_option)
-  {
+  if (!cpptoml_option) {
     return std::nullopt;
   }
   // Move value out of cpptoml and into std::optional
@@ -95,8 +92,7 @@ auto
 get_or_abort(CppTable const& table, char const* name)
 {
   auto o = table->get_as<T>(name);
-  if (!o)
-  {
+  if (!o) {
     std::abort();
   }
   return *o;
@@ -118,8 +114,7 @@ std::optional<opengl::Color>
 get_color(CppTable const& table, char const* name)
 {
   auto const load_colors = table->template get_array_of<double>(name);
-  if (!load_colors)
-  {
+  if (!load_colors) {
     return std::nullopt;
   }
 
@@ -138,8 +133,7 @@ std::optional<glm::vec2>
 get_vec2(CppTable const& table, char const* name)
 {
   auto const load_data = table->template get_array_of<double>(name);
-  if (!load_data)
-  {
+  if (!load_data) {
     return std::nullopt;
   }
   auto const& ld = *load_data;
@@ -150,8 +144,7 @@ std::optional<glm::vec3>
 get_vec3(CppTable const& table, char const* name)
 {
   auto const load_data = table->template get_array_of<double>(name);
-  if (!load_data)
-  {
+  if (!load_data) {
     return std::nullopt;
   }
   auto const& ld = *load_data;
@@ -162,8 +155,7 @@ glm::vec3
 get_vec3_or_abort(CppTable const& table, char const* name)
 {
   auto const vec3_data = get_vec3(table, name);
-  if (!vec3_data)
-  {
+  if (!vec3_data) {
     std::abort();
   }
   return *vec3_data;
@@ -173,8 +165,7 @@ std::optional<int>
 get_int(CppTable const& table, char const* name)
 {
   auto const load_data = get_value<int>(table, name);
-  if (!load_data)
-  {
+  if (!load_data) {
     return std::nullopt;
   }
   return std::make_optional(*load_data);
@@ -184,8 +175,7 @@ int
 get_int_or_abort(CppTable const& table, char const* name)
 {
   auto const data = get_int(table, name);
-  if (!data)
-  {
+  if (!data) {
     std::abort();
   }
   return *data;
@@ -195,8 +185,7 @@ std::optional<float>
 get_float(CppTable const& table, char const* name)
 {
   auto const load_data = get_value<double>(table, name);
-  if (!load_data)
-  {
+  if (!load_data) {
     return std::nullopt;
   }
   return std::make_optional(static_cast<float>(*load_data));
@@ -206,8 +195,7 @@ float
 get_float_or_abort(CppTable const& table, char const* name)
 {
   auto const float_data = get_float(table, name);
-  if (!float_data)
-  {
+  if (!float_data) {
     std::abort();
   }
   return *float_data;
@@ -225,12 +213,11 @@ load_objfiles(stlw::Logger& logger, CppTableArray const& mesh_table)
     auto const mtl = path + name + ".mtl";
 
     ObjData objdata = TRY_MOVEOUT(load_objfile(logger, obj.c_str(), mtl.c_str()));
-    auto    pair = std::make_pair(name, MOVE(objdata));
+    auto    pair    = std::make_pair(name, MOVE(objdata));
     return OK_MOVE(pair);
   };
   ObjStore store;
-  for (auto const& table : *mesh_table)
-  {
+  for (auto const& table : *mesh_table) {
     auto pair = TRY_MOVEOUT(load(table));
     store.add_obj(pair.first, MOVE(pair.second));
   }
@@ -254,7 +241,7 @@ public:
 
   opengl::VertexAttribute get_copy_of_va(std::string const& va_name)
   {
-    auto const cmp = [&va_name](auto const& it) { return it.first == va_name; };
+    auto const cmp     = [&va_name](auto const& it) { return it.first == va_name; };
     auto       find_it = std::find_if(pair_.cbegin(), pair_.cend(), cmp);
 
     // TODO: for now assume we always find requested VA.
@@ -276,7 +263,7 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       opengl::TextureFilenames texture_names{name, {filename}};
 
       auto const  wrap_s = get_string(resource, "wrap").value_or("clamp");
-      GLint const wrap = texture::wrap_mode_from_string(wrap_s.c_str());
+      GLint const wrap   = texture::wrap_mode_from_string(wrap_s.c_str());
 
       auto const uv_max = get_int(resource, "uvs").value_or(1.0);
 
@@ -285,11 +272,11 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       ttable.add_texture(MOVE(texture_names), MOVE(ta));
     };
     auto const load_3dtexture = [&](auto const format) {
-      auto const front = get_string_or_abort(resource, "front");
-      auto const right = get_string_or_abort(resource, "right");
-      auto const back = get_string_or_abort(resource, "back");
-      auto const left = get_string_or_abort(resource, "left");
-      auto const top = get_string_or_abort(resource, "top");
+      auto const front  = get_string_or_abort(resource, "front");
+      auto const right  = get_string_or_abort(resource, "right");
+      auto const back   = get_string_or_abort(resource, "back");
+      auto const left   = get_string_or_abort(resource, "left");
+      auto const top    = get_string_or_abort(resource, "top");
       auto const bottom = get_string_or_abort(resource, "bottom");
 
       opengl::TextureFilenames texture_names{name, {front, right, back, left, top, bottom}};
@@ -297,24 +284,19 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       ttable.add_texture(MOVE(texture_names), MOVE(ta));
     };
 
-    if (type == "texture:3dcube-RGB")
-    {
+    if (type == "texture:3dcube-RGB") {
       load_3dtexture(GL_RGB);
     }
-    else if (type == "texture:3dcube-RGBA")
-    {
+    else if (type == "texture:3dcube-RGBA") {
       load_3dtexture(GL_RGBA);
     }
-    else if (type == "texture:2d-RGBA")
-    {
+    else if (type == "texture:2d-RGBA") {
       load_2dtexture(GL_RGBA);
     }
-    else if (type == "texture:2d-RGB")
-    {
+    else if (type == "texture:2d-RGB") {
       load_2dtexture(GL_RGB);
     }
-    else
-    {
+    else {
       // TODO: implement more.
       LOG_ERROR_SPRINTF("error, type is: %s", type);
       std::abort();
@@ -336,8 +318,7 @@ Color
 load_color_or_abort(CppTable const& file, char const* name)
 {
   auto optional = load_color(file, name);
-  if (!optional)
-  {
+  if (!optional) {
     std::abort();
   }
   return *optional;
@@ -355,10 +336,10 @@ load_fog(CppTable const& file)
   // For now, assume exactly one fog entry.
   assert(1 == table_array.size());
 
-  auto const& data = table_array.front();
-  auto const density  = get_float_or_abort(data,  "density");
-  auto const gradient = get_float_or_abort(data,  "gradient");
-  auto const color    = load_color_or_abort(data,  "color");
+  auto const& data     = table_array.front();
+  auto const  density  = get_float_or_abort(data, "density");
+  auto const  gradient = get_float_or_abort(data, "gradient");
+  auto const  color    = load_color_or_abort(data, "color");
 
   return Fog{density, gradient, color};
 }
@@ -366,7 +347,7 @@ load_fog(CppTable const& file)
 struct NameMaterial
 {
   std::string const name;
-  Material const material;
+  Material const    material;
 };
 
 std::optional<NameMaterial>
@@ -388,8 +369,7 @@ auto
 load_material_or_abort(CppTable const& file)
 {
   auto optional = load_material(file);
-  if (!optional)
-  {
+  if (!optional) {
     std::abort();
   }
   return *optional;
@@ -405,9 +385,9 @@ auto
 load_attenuation(CppTable const& file)
 {
   auto const name      = get_string_or_abort(file, "name");
-  auto const constant  = get_float(file,  "constant").value_or(0);
-  auto const linear    = get_float(file,  "linear").value_or(0);
-  auto const quadratic = get_float(file,  "quadratic").value_or(0);
+  auto const constant  = get_float(file, "constant").value_or(0);
+  auto const linear    = get_float(file, "linear").value_or(0);
+  auto const quadratic = get_float(file, "quadratic").value_or(0);
 
   return NameAttenuation{name, Attenuation{constant, linear, quadratic}};
 }
@@ -415,10 +395,9 @@ load_attenuation(CppTable const& file)
 auto
 load_attenuations(stlw::Logger& logger, CppTable const& table, EntityRegistry& registry)
 {
-  auto const table_array = get_table_array(table, "attenuation");
+  auto const                   table_array = get_table_array(table, "attenuation");
   std::vector<NameAttenuation> result;
-  for (auto const& it : *table_array)
-  {
+  for (auto const& it : *table_array) {
     result.emplace_back(load_attenuation(it));
   }
   return result;
@@ -427,10 +406,9 @@ load_attenuations(stlw::Logger& logger, CppTable const& table, EntityRegistry& r
 auto
 load_materials(stlw::Logger& logger, CppTable const& table, EntityRegistry& registry)
 {
-  auto const table_array = get_table_array(table, "material");
+  auto const                table_array = get_table_array(table, "material");
   std::vector<NameMaterial> result;
-  for (auto const& it : *table_array)
-  {
+  for (auto const& it : *table_array) {
     auto const material = load_material_or_abort(it);
     result.emplace_back(material);
   }
@@ -440,7 +418,7 @@ load_materials(stlw::Logger& logger, CppTable const& table, EntityRegistry& regi
 struct NamePointlight
 {
   std::string const name;
-  PointLight const pointlight;
+  PointLight const  pointlight;
 };
 
 auto
@@ -458,10 +436,8 @@ load_pointlight(CppTable const& file, std::vector<NameAttenuation> const& attenu
 
   if (attenuation_o) {
     auto const name = *attenuation_o;
-    auto const cmp = [&name](NameAttenuation const& na) {
-      return na.name == name;
-    };
-    auto const it = std::find_if(attenuations.cbegin(), attenuations.cend(), cmp);
+    auto const cmp  = [&name](NameAttenuation const& na) { return na.name == name; };
+    auto const it   = std::find_if(attenuations.cbegin(), attenuations.cend(), cmp);
     assert(it != attenuations.cend());
     pl.attenuation = it->attenuation;
   }
@@ -470,12 +446,11 @@ load_pointlight(CppTable const& file, std::vector<NameAttenuation> const& attenu
 
 auto
 load_pointlights(stlw::Logger& logger, CppTable const& table,
-    std::vector<NameAttenuation> const& attenuations)
+                 std::vector<NameAttenuation> const& attenuations)
 {
-  auto const table_array = get_table_array(table, "pointlight");
+  auto const                  table_array = get_table_array(table, "pointlight");
   std::vector<NamePointlight> result;
-  for (auto const& it : *table_array)
-  {
+  for (auto const& it : *table_array) {
     auto const pointlight = load_pointlight(it, attenuations);
     result.emplace_back(pointlight);
   }
@@ -498,8 +473,7 @@ load_orbital_bodies(stlw::Logger& logger, CppTable const& table, EntityRegistry&
   auto const orbital_body_table = get_table_array(table, "orbital-body");
 
   std::vector<OrbitalBody> orbitals;
-  for (auto const& it : *orbital_body_table)
-  {
+  for (auto const& it : *orbital_body_table) {
     orbitals.emplace_back(load(it));
   }
   return orbitals;
@@ -508,7 +482,7 @@ load_orbital_bodies(stlw::Logger& logger, CppTable const& table, EntityRegistry&
 void
 load_entities(stlw::Logger& logger, CppTable const& table,
               std::vector<OrbitalBody> const& orbital_bodies, TextureTable const& ttable,
-              std::vector<NameMaterial> const& materials,
+              std::vector<NameMaterial> const&   materials,
               std::vector<NamePointlight> const& pointlights, EntityRegistry& registry)
 {
   auto const load_entity = [&](auto const& file) {
@@ -535,10 +509,10 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     // texture OR color fields, not both
     assert((!color && !texture_name) || (!color && texture_name) || (color && !texture_name));
 
-    auto eid = registry.create();
+    auto eid                         = registry.create();
     registry.assign<Name>(eid).value = name;
 
-    auto& transform = registry.assign<Transform>(eid);
+    auto& transform       = registry.assign<Transform>(eid);
     transform.translation = pos;
 
     auto& isv = registry.assign<IsVisible>(eid);
@@ -547,12 +521,10 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     auto& sn = registry.assign<ShaderName>(eid);
     sn.value = shader;
 
-    if (scale_o)
-    {
+    if (scale_o) {
       transform.scale = *scale_o;
     }
-    if (rotation_o)
-    {
+    if (rotation_o) {
       // TODO: simplify
       glm::vec3 const rotation = *rotation_o;
       transform.rotate_degrees(rotation.x, opengl::X_UNIT_VECTOR);
@@ -560,45 +532,38 @@ load_entities(stlw::Logger& logger, CppTable const& table,
       transform.rotate_degrees(rotation.z, opengl::Z_UNIT_VECTOR);
     }
 
-    if (random_junk)
-    {
+    if (random_junk) {
       registry.assign<JunkEntityFromFILE>(eid);
     }
 
-    if (orbital_o)
-    {
+    if (orbital_o) {
       auto&      orbital = registry.assign<OrbitalBody>(eid);
-      auto const cmp = [&orbital_o](auto const& orbital) { return orbital.name == *orbital_o; };
-      auto const it = std::find_if(orbital_bodies.cbegin(), orbital_bodies.cend(), cmp);
+      auto const cmp     = [&orbital_o](auto const& orbital) { return orbital.name == *orbital_o; };
+      auto const it      = std::find_if(orbital_bodies.cbegin(), orbital_bodies.cend(), cmp);
       assert(it != orbital_bodies.cend());
       orbital = *it;
     }
 
-    if (player)
-    {
+    if (player) {
       registry.assign<PlayerData>(eid);
     }
-    if (geometry == "cube")
-    {
+    if (geometry == "cube") {
       registry.assign<CubeRenderable>(eid);
     }
-    if (is_skybox)
-    {
+    if (is_skybox) {
       registry.assign<IsSkybox>(eid);
       transform.scale = glm::vec3{SKYBOX_SCALE_SIZE};
     }
-    else if (boost::starts_with(geometry, "mesh"))
-    {
+    else if (boost::starts_with(geometry, "mesh")) {
       auto const parse_meshname = [](auto const& field) {
         auto const len = ::strlen("mesh:");
         assert(0 < len);
         return field.substr(len, field.length() - len);
       };
       auto& meshc = registry.assign<MeshRenderable>(eid);
-      meshc.name = parse_meshname(geometry);
+      meshc.name  = parse_meshname(geometry);
     }
-    else if (boost::starts_with(geometry, "billboard"))
-    {
+    else if (boost::starts_with(geometry, "billboard")) {
       auto const parse_billboard = [](auto const& field) {
         auto const len = ::strlen("billboard:");
         assert(0 < len);
@@ -608,34 +573,30 @@ load_entities(stlw::Logger& logger, CppTable const& table,
       auto& billboard = registry.assign<BillboardRenderable>(eid);
       billboard.value = parse_billboard(geometry);
     }
-    if (color)
-    {
+    if (color) {
       auto& cc = registry.assign<Color>(eid);
-      *&cc = *color;
+      *&cc     = *color;
     }
-    if (texture_name)
-    {
-      auto& tr = registry.assign<TextureRenderable>(eid);
+    if (texture_name) {
+      auto& tr        = registry.assign<TextureRenderable>(eid);
       auto  texture_o = ttable.find(*texture_name);
       assert(texture_o);
       tr.texture_info = *texture_o;
     }
 
-    if (pointlight_o)
-    {
-        auto const cmp = [&pointlight_o](NamePointlight const& np) {
-          return np.name == *pointlight_o;
-        };
-        auto const it = std::find_if(pointlights.cbegin(), pointlights.cend(), cmp);
-        assert(it != pointlights.cend());
-        registry.assign<PointLight>(eid) = it->pointlight;
+    if (pointlight_o) {
+      auto const cmp = [&pointlight_o](NamePointlight const& np) {
+        return np.name == *pointlight_o;
+      };
+      auto const it = std::find_if(pointlights.cbegin(), pointlights.cend(), cmp);
+      assert(it != pointlights.cend());
+      registry.assign<PointLight>(eid) = it->pointlight;
     }
 
     // An object receives light, if it has ALL ambient/diffuse/specular fields
-    if (material_o)
-    {
+    if (material_o) {
       auto const material_name = *material_o;
-      auto const cmp = [&material_name](NameMaterial const& nm) {
+      auto const cmp           = [&material_name](NameMaterial const& nm) {
         return nm.name == material_name;
       };
       auto const it = std::find_if(materials.cbegin(), materials.cend(), cmp);
@@ -652,34 +613,31 @@ load_entities(stlw::Logger& logger, CppTable const& table,
   };
 
   auto const entity_table = get_table_array(table, "entity");
-  for (auto const& it : *entity_table)
-  {
+  for (auto const& it : *entity_table) {
     load_entity(it);
   }
 }
 
 auto
-load_tileinfos(stlw::Logger& logger, CppTable const& table, std::vector<NameMaterial> const& materials,
-    EntityRegistry& registry)
+load_tileinfos(stlw::Logger& logger, CppTable const& table,
+               std::vector<NameMaterial> const& materials, EntityRegistry& registry)
 {
   auto const load_tile = [&materials](auto const& file) {
-    auto const tile = get_string_or_abort(file, "tile");
-    auto const tiletype = tiletype_from_string(tile);
-    auto const mesh_name = get_string_or_abort(file, "mesh");
-    auto const vshader_name = get_string_or_abort(file, "vshader");
+    auto const tile          = get_string_or_abort(file, "tile");
+    auto const tiletype      = tiletype_from_string(tile);
+    auto const mesh_name     = get_string_or_abort(file, "mesh");
+    auto const vshader_name  = get_string_or_abort(file, "vshader");
     auto const material_name = get_string_or_abort(file, "material");
 
-    auto const cmp = [&material_name](NameMaterial const& nm) {
-      return nm.name == material_name;
-    };
-    auto const it = std::find_if(materials.cbegin(), materials.cend(), cmp);
+    auto const cmp = [&material_name](NameMaterial const& nm) { return nm.name == material_name; };
+    auto const it  = std::find_if(materials.cbegin(), materials.cend(), cmp);
     assert(it != materials.cend());
     auto const material = it->material;
-    auto const color = load_color_or_abort(file, "color");
+    auto const color    = load_color_or_abort(file, "color");
     return TileInfo{tiletype, mesh_name, vshader_name, color, material};
   };
   auto const  tile_table = get_table_array(table, "tile");
-  auto const& ttable = tile_table->as_table_array()->get();
+  auto const& ttable     = tile_table->as_table_array()->get();
 
   // Ensure we load data for everry tile
   assert(TileSharedInfoTable::SIZE == ttable.size());
@@ -687,9 +645,9 @@ load_tileinfos(stlw::Logger& logger, CppTable const& table, std::vector<NameMate
   std::array<TileInfo, TileSharedInfoTable::SIZE> tinfos;
   FOR(i, ttable.size())
   {
-    auto const& it = ttable[i];
+    auto const& it   = ttable[i];
     auto        tile = load_tile(it);
-    tinfos[i] = MOVE(tile);
+    tinfos[i]        = MOVE(tile);
   }
   return TileSharedInfoTable{MOVE(tinfos)};
 }
@@ -698,16 +656,16 @@ using LoadResult = Result<std::pair<std::string, opengl::ShaderProgram>, std::st
 LoadResult
 load_shader(stlw::Logger& logger, ParsedVertexAttributes& pvas, CppTable const& table)
 {
-  auto const name = get_string_or_abort(table, "name");
-  auto const vertex = get_string_or_abort(table, "vertex");
+  auto const name     = get_string_or_abort(table, "name");
+  auto const vertex   = get_string_or_abort(table, "vertex");
   auto const fragment = get_string_or_abort(table, "fragment");
-  auto const va_name = get_string_or_abort(table, "va");
+  auto const va_name  = get_string_or_abort(table, "va");
 
   // TODO: ugly hack, maybe think about...
-  auto va = pvas.get_copy_of_va(va_name);
+  auto va      = pvas.get_copy_of_va(va_name);
   auto program = TRY_MOVEOUT(opengl::make_shader_program(logger, vertex, fragment, MOVE(va)));
 
-  program.is_2d = get_bool(table, "is_2d").value_or(false);
+  program.is_2d          = get_bool(table, "is_2d").value_or(false);
   program.instance_count = get_sizei(table, "instance_count");
 
   return Ok(std::make_pair(name, MOVE(program)));
@@ -718,8 +676,7 @@ load_shaders(stlw::Logger& logger, ParsedVertexAttributes&& pvas, CppTable const
 {
   auto const             shaders_table = get_table_array_or_abort(table, "shaders");
   opengl::ShaderPrograms sps;
-  for (auto const& shader_table : *shaders_table)
-  {
+  for (auto const& shader_table : *shaders_table) {
     auto pair = TRY_MOVEOUT(load_shader(logger, pvas, shader_table));
     sps.add(pair.first, MOVE(pair.second));
   }
@@ -729,8 +686,8 @@ load_shaders(stlw::Logger& logger, ParsedVertexAttributes&& pvas, CppTable const
 struct TerrainData
 {
   std::string mesh_name;
-  int terrain_index;
-  int water_index;
+  int         terrain_index;
+  int         water_index;
 };
 
 auto
@@ -750,9 +707,9 @@ load_vas(CppTable const& table)
     // TODO: FOR NOW, only support floats. Easy to implement rest
     assert("float" == datatype_s);
     auto const datatype = GL_FLOAT;
-    auto const num = get_or_abort<int>(data_table, "num");
+    auto const num      = get_or_abort<int>(data_table, "num");
 
-    auto const uint_index = static_cast<GLuint>(index);
+    auto const uint_index     = static_cast<GLuint>(index);
     auto const attribute_type = attribute_type_from_string(fieldname);
     auto       api = opengl::AttributePointerInfo{uint_index, datatype, attribute_type, num};
 
@@ -762,10 +719,9 @@ load_vas(CppTable const& table)
 
   auto const add_next_found = [&read_data](auto& apis, auto const& table, char const* fieldname,
                                            size_t& index) {
-    auto       data_o = read_data(table, fieldname, index);
+    auto       data_o    = read_data(table, fieldname, index);
     bool const data_read = !!data_o;
-    if (data_read)
-    {
+    if (data_read) {
       auto data = MOVE(*data_o);
       apis.emplace_back(MOVE(data));
     }
@@ -797,7 +753,7 @@ namespace boomhs
 // operator[].
 #define SEARCH_FOR(type, begin, end)                                                               \
   auto const cmp = [&type](auto const& tinfo) { return tinfo.type == type; };                      \
-  auto const it = std::find_if(begin, end, cmp);                                                   \
+  auto const it  = std::find_if(begin, end, cmp);                                                  \
   assert(it != end);                                                                               \
   return *it;
 
@@ -823,7 +779,7 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   assert(engine_table);
 
   ParsedVertexAttributes pvas = load_vas(engine_table);
-  auto                   sps = TRY_MOVEOUT(load_shaders(logger, MOVE(pvas), engine_table));
+  auto                   sps  = TRY_MOVEOUT(load_shaders(logger, MOVE(pvas), engine_table));
 
   CppTable file_datatable = cpptoml::parse_file("levels/" + filename);
   assert(file_datatable);
@@ -848,8 +804,8 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   auto const pointlights = load_pointlights(logger, file_datatable, attenuations);
 
   LOG_TRACE("loading entities ...");
-  load_entities(logger, file_datatable, orbital_bodies, texture_table, materials,
-      pointlights, registry);
+  load_entities(logger, file_datatable, orbital_bodies, texture_table, materials, pointlights,
+                registry);
 
   LOG_TRACE("loading tile materials ...");
   auto tile_table = load_tileinfos(logger, file_datatable, materials, registry);

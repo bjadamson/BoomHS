@@ -7,4 +7,4 @@ struct Water
 {
 };
 
-} // ns boomhs
+} // namespace boomhs

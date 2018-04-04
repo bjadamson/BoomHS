@@ -12,8 +12,7 @@ find_stairs_withtype(EntityRegistry& registry, TileGrid const& tgrid, TileType c
   std::vector<EntityID> up_stairs;
   auto const            visit_fn = [&](auto const& tpos) {
     auto const& tile = tgrid.data(tpos);
-    if (tile.type == type)
-    {
+    if (tile.type == type) {
       up_stairs.emplace_back(tile.eid);
     }
   };

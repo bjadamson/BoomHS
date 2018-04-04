@@ -17,7 +17,7 @@ template <typename U, typename TAG>
 struct burrito
 {
   U value;
-  using TAG_TYPE = TAG;
+  using TAG_TYPE   = TAG;
   using VALUE_TYPE = U;
 
   MOVE_CONSTRUCTIBLE_ONLY(burrito);
@@ -30,12 +30,10 @@ struct burrito
 
   auto constexpr size() const
   {
-    if constexpr (std::is_same<TAG_TYPE, tuple_tag>())
-    {
+    if constexpr (std::is_same<TAG_TYPE, tuple_tag>()) {
       return std::tuple_size<U>::value;
     }
-    else
-    {
+    else {
       return value.size();
     }
   }
@@ -94,8 +92,7 @@ map_impl(C<T, std::allocator<T>> const& c, FN const& fn)
   using FN_RT = typename std::decay_t<decltype(fn(*c.cbegin()))>;
 
   C<FN_RT, std::allocator<FN_RT>> container;
-  for (auto const& it : c)
-  {
+  for (auto const& it : c) {
     container.emplace_back(fn(it));
   }
   return stlw::make_burrito(std::move(container));
@@ -123,8 +120,7 @@ template <typename U, typename FN>
 void
 for_each(burrito<U, container_tag> const& b, FN const& fn)
 {
-  for (auto const& it : b.value)
-  {
+  for (auto const& it : b.value) {
     fn(it);
   }
 }

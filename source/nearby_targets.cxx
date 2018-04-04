@@ -19,8 +19,7 @@ void
 NearbyTargets::cycle_forward()
 {
   offset_ += 1;
-  if (offset_ >= targets_.size())
-  {
+  if (offset_ >= targets_.size()) {
     offset_ = 0;
   }
 }
@@ -28,8 +27,7 @@ NearbyTargets::cycle_forward()
 void
 NearbyTargets::cycle_backward()
 {
-  if (offset_ == 0)
-  {
+  if (offset_ == 0) {
     offset_ = targets_.size();
   }
   offset_ -= 1;

@@ -7,13 +7,13 @@ glm::vec3
 to_cartesian(SphericalCoordinates const& coords)
 {
   float const radius = coords.radius;
-  float const theta = coords.theta;
-  float const phi = coords.phi;
+  float const theta  = coords.theta;
+  float const phi    = coords.phi;
 
   float const sin_phi = sinf(phi);
-  float const x = radius * sin_phi * sinf(theta);
-  float const y = radius * cosf(phi);
-  float const z = radius * sin_phi * cosf(theta);
+  float const x       = radius * sin_phi * sinf(theta);
+  float const y       = radius * cosf(phi);
+  float const z       = radius * sin_phi * cosf(theta);
 
   // Convert spherical coordinates into Cartesian coordinates
   // float const x = sin(phi) * cos(theta) * radius;
@@ -28,8 +28,7 @@ to_spherical(glm::vec3 cartesian)
 {
   static constexpr float EPSILONF = std::numeric_limits<float>::epsilon();
 
-  if (cartesian.x == 0)
-  {
+  if (cartesian.x == 0) {
     cartesian.x = EPSILONF;
   }
   float const &x = cartesian.x, y = cartesian.y, z = cartesian.z;
@@ -38,9 +37,8 @@ to_spherical(glm::vec3 cartesian)
   float const  z2 = z * z;
 
   float const radius = sqrt(x2 + y2 + z2);
-  float       theta = atan(y / x);
-  if (cartesian.x < 0)
-  {
+  float       theta  = atan(y / x);
+  if (cartesian.x < 0) {
     float constexpr PI = glm::pi<float>();
     theta += PI;
   }

@@ -22,8 +22,7 @@ retrieve(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei*, GLchar*))
   // Step 1
   GLint log_length = 0;
   glGetShaderiv(handle, GL_INFO_LOG_LENGTH, &log_length);
-  if (0 > log_length)
-  {
+  if (0 > log_length) {
     // fix this msg
     return "Error retrieving OpenGL Log info for this shader object.";
   }
@@ -49,17 +48,14 @@ std::optional<GlErrors>
 GlErrors::retrieve()
 {
   std::vector<std::string> gl;
-  for (GLenum error_code = glGetError();; error_code = glGetError())
-  {
-    if (error_code == GL_NO_ERROR)
-    {
+  for (GLenum error_code = glGetError();; error_code = glGetError()) {
+    if (error_code == GL_NO_ERROR) {
       break;
     }
     std::string e = reinterpret_cast<char const*>(gluErrorString(error_code));
     gl.emplace_back(MOVE(e));
   }
-  if (gl.empty())
-  {
+  if (gl.empty()) {
     return std::nullopt;
   }
   return GlErrors{MOVE(gl)};
@@ -68,8 +64,7 @@ GlErrors::retrieve()
 void
 GlErrors::clear()
 {
-  while (glGetError() != GL_NO_ERROR)
-  {
+  while (glGetError() != GL_NO_ERROR) {
   }
   SDL_ClearError();
 }
@@ -78,8 +73,7 @@ std::ostream&
 operator<<(std::ostream& stream, GlErrors const& errors)
 {
   stream << "{";
-  for (auto const& e : errors.values)
-  {
+  for (auto const& e : errors.values) {
     stream << e << "\n";
   }
   stream << "}";
@@ -92,8 +86,7 @@ SdlErrors::retrieve()
 {
   auto sdl = SDL_GetError();
   assert(nullptr != sdl);
-  if (0 == ::strlen(sdl))
-  {
+  if (0 == ::strlen(sdl)) {
     return std::nullopt;
   }
   return SdlErrors{MOVE(sdl)};
@@ -121,13 +114,11 @@ ErrorLog::abort_if_any_errors(stlw::Logger& logger)
     std::abort();
   };
   auto const gl_errors = GlErrors::retrieve();
-  if (gl_errors)
-  {
+  if (gl_errors) {
     write_errors("OpenGL Errors", *gl_errors);
   }
   auto const sdl_errors = SdlErrors::retrieve();
-  if (sdl_errors)
-  {
+  if (sdl_errors) {
     write_errors("SDL Errors", *sdl_errors);
   }
 }
@@ -165,8 +156,7 @@ void
 log_any_gl_errors(stlw::Logger& logger, std::string const& prefix, int const line)
 {
   GLenum const err = glGetError();
-  if (err != GL_NO_ERROR)
-  {
+  if (err != GL_NO_ERROR) {
     LOG_ERROR_SPRINTF("PREFIX: '%s', GL error detected (line %d), code: '%d', string: '%s'", prefix,
                       line, err, gluErrorString(err));
     std::abort();

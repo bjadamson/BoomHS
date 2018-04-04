@@ -39,7 +39,7 @@
   CLASSNAME& operator=(CLASSNAME const&&) = delete;
 
 #define NO_MOVE_CONSTRUTIBLE(CLASSNAME)                                                            \
-  CLASSNAME(CLASSNAME&&) = delete;                                                                 \
+  CLASSNAME(CLASSNAME&&)       = delete;                                                           \
   CLASSNAME(CLASSNAME const&&) = delete;
 
 #define MOVE_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME&&) = default;
@@ -124,8 +124,7 @@ public:
   // Destructor invokes destroy function.
   ~ICMW()
   {
-    if (this->df_)
-    {
+    if (this->df_) {
       this->df_(this->t_);
     }
   }
@@ -141,7 +140,7 @@ public:
 
   ICMW& operator=(ICMW&& other) noexcept
   {
-    this->t_ = MOVE(other.t_);
+    this->t_  = MOVE(other.t_);
     this->df_ = other.df_;
 
     // moved-from doesn't call destroy function

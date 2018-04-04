@@ -28,7 +28,7 @@ using namespace opengl;
 
 static auto constexpr ROOM_MAX_SIZE = 5ul;
 static auto constexpr ROOM_MIN_SIZE = 3ul;
-static auto constexpr MAX_ROOMS = 30;
+static auto constexpr MAX_ROOMS     = 30;
 
 static auto constexpr MIN_MONSTERS_PER_FLOOR = 15;
 static auto constexpr MAX_MONSTERS_PER_FLOOR = 30;
@@ -74,14 +74,11 @@ struct Rect
   bool all_tiles_of_type(TileGrid const& tilegrid, TileType const type) const
   {
     bool any = false;
-    for (auto x = x1 + 1; x < x2; ++x)
-    {
-      for (auto y = y1 + 1; y < y2; ++y)
-      {
+    for (auto x = x1 + 1; x < x2; ++x) {
+      for (auto y = y1 + 1; y < y2; ++y) {
         any |= (tilegrid.data(x, y).type == type);
       }
-      if (any)
-      {
+      if (any) {
         break;
       }
     }
@@ -110,28 +107,23 @@ try_create_room(RoomGenConfig const& rgconfig, TileType const type, TileGrid& ti
   Rect const new_room{xr, yr, w, h};
 
   // run through the other rooms and see if they intersect with this one
-  for (auto const& r : rgconfig.rooms)
-  {
-    bool const within_tilegrid = new_room.in_tilegrid(tilegrid);
+  for (auto const& r : rgconfig.rooms) {
+    bool const within_tilegrid       = new_room.in_tilegrid(tilegrid);
     bool const intersects_other_room = new_room.intersects_with(r);
     // The new room should be within bounds of the tilegrid
     // and the new room should not intersect any of the existing rooms.
-    if (!within_tilegrid || intersects_other_room)
-    {
+    if (!within_tilegrid || intersects_other_room) {
       return std::nullopt;
     }
   }
   bool const undefined_tiles_in_room = new_room.all_tiles_of_type(tilegrid, TileType::UNDEFINED);
   // If any undefined tiles are in the room, we currently just give up. Maybe do more here.
-  if (undefined_tiles_in_room)
-  {
+  if (undefined_tiles_in_room) {
     return std::nullopt;
   }
   // Assign all the tiles in the room to the requested tile type and return the new room.
-  for (uint64_t x = new_room.x1 + 1; x < new_room.x2; ++x)
-  {
-    for (uint64_t y = new_room.y1 + 1; y < new_room.y2; ++y)
-    {
+  for (uint64_t x = new_room.x1 + 1; x < new_room.x2; ++x) {
+    for (uint64_t y = new_room.y1 + 1; y < new_room.y2; ++y) {
       tilegrid.data(x, y).type = type;
     }
   }
@@ -146,8 +138,7 @@ create_room(size_t const max_tries, RoomGenConfig const& rgconfig, TileGrid& til
   std::optional<Rect> room;
 
   size_t trials{0u};
-  while (!room && (trials < max_tries))
-  {
+  while (!room && (trials < max_tries)) {
     room = try_create_room(rgconfig, type, tilegrid, rng);
     ++trials;
   }
@@ -159,15 +150,12 @@ create_h_tunnel(uint64_t const x1, uint64_t const x2, uint64_t const y, TileType
                 TileGrid& tilegrid)
 {
   uint64_t const min = std::min(x1, x2), max = std::max(x1, x2) + 1;
-  for (auto x = min; x <= max; ++x)
-  {
+  for (auto x = min; x <= max; ++x) {
     auto& tile = tilegrid.data(x, y);
-    if (tile.type == TileType::RIVER)
-    {
+    if (tile.type == TileType::RIVER) {
       tilegrid.assign_bridge(tile);
     }
-    else if (tile.type != TileType::BRIDGE)
-    {
+    else if (tile.type != TileType::BRIDGE) {
       tile.type = type;
     }
   }
@@ -178,15 +166,12 @@ create_v_tunnel(uint64_t const y1, uint64_t const y2, uint64_t const x, TileType
                 TileGrid& tilegrid)
 {
   uint64_t const min = std::min(y1, y2), max = std::max(y1, y2) + 1;
-  for (auto y = min; y <= max; ++y)
-  {
+  for (auto y = min; y <= max; ++y) {
     auto& tile = tilegrid.data(x, y);
-    if (tile.type == TileType::RIVER)
-    {
+    if (tile.type == TileType::RIVER) {
       tilegrid.assign_bridge(tile);
     }
-    else if (tile.type != TileType::BRIDGE)
-    {
+    else if (tile.type != TileType::BRIDGE) {
       tile.type = type;
     }
   }
@@ -197,25 +182,22 @@ generate_torch_position(TileGrid const& tilegrid, EntityRegistry& registry,
                         stlw::float_generator& rng)
 {
   auto const dimensions = tilegrid.dimensions();
-  auto const width = dimensions[0];
-  auto const height = dimensions[1];
+  auto const width      = dimensions[0];
+  auto const height     = dimensions[1];
   assert(width > 0 && height > 0);
   uint64_t x, y;
-  while (true)
-  {
+  while (true) {
     x = rng.gen_int_range(0, width - 1);
     y = rng.gen_int_range(0, height - 1);
 
-    if (tilegrid.is_blocked(x, y))
-    {
+    if (tilegrid.is_blocked(x, y)) {
       continue;
     }
 
     glm::vec3 const pos{x, 0, y};
     static auto constexpr MAX_DISTANCE = 2.0f;
-    auto const nearby = all_nearby_entities(pos, MAX_DISTANCE, registry);
-    if (!nearby.empty())
-    {
+    auto const nearby                  = all_nearby_entities(pos, MAX_DISTANCE, registry);
+    if (!nearby.empty()) {
       continue;
     }
     return TilePosition{x, y};
@@ -236,10 +218,10 @@ void
 place_torch(TileGrid const& tilegrid, EntityRegistry& registry, stlw::float_generator& rng,
             TextureTable const& ttable)
 {
-  auto  eid = ItemFactory::create_torch(registry, rng, ttable);
+  auto  eid       = ItemFactory::create_torch(registry, rng, ttable);
   auto& transform = registry.get<Transform>(eid);
 
-  auto const pos = generate_torch_position(tilegrid, registry, rng);
+  auto const pos        = generate_torch_position(tilegrid, registry, rng);
   transform.translation = glm::vec3{pos.x, 0.5, pos.y};
 }
 
@@ -264,17 +246,15 @@ place_rooms(TileGrid& tilegrid, stlw::float_generator& rng)
   std::vector<Rect> rects;
   TilePosition      starting_position;
 
-  auto const add_room = [&](auto const& new_room) { rects.emplace_back(new_room); };
+  auto const add_room      = [&](auto const& new_room) { rects.emplace_back(new_room); };
   auto const connect_rooms = [&rng, &tilegrid](auto const prev_center, auto const new_center,
                                                TileType const type) {
-    if (rng.gen_bool())
-    {
+    if (rng.gen_bool()) {
       // first move horizontally, then vertically
       create_h_tunnel(prev_center.x, new_center.x, prev_center.y, type, tilegrid);
       create_v_tunnel(prev_center.y, new_center.y, new_center.x, type, tilegrid);
     }
-    else
-    {
+    else {
       // first move vertically, then horizontally
       create_v_tunnel(prev_center.y, new_center.y, prev_center.x, type, tilegrid);
       create_h_tunnel(prev_center.x, new_center.x, new_center.y, type, tilegrid);
@@ -290,8 +270,8 @@ place_rooms(TileGrid& tilegrid, stlw::float_generator& rng)
       auto const first_room =
           MAKEOPT(create_room(MAX_NUM_CREATE_TRIES, rgconfig, tilegrid, rng, TileType::FLOOR));
       auto const first_center = first_room.center();
-      starting_position.x = first_center.x;
-      starting_position.y = first_center.y;
+      starting_position.x     = first_center.x;
+      starting_position.y     = first_center.y;
       add_room(first_room);
     }
     assert(rects.size() > 0);
@@ -304,7 +284,7 @@ place_rooms(TileGrid& tilegrid, stlw::float_generator& rng)
     auto const new_room =
         MAKEOPT(create_room(MAX_NUM_CREATE_TRIES, rgconfig, tilegrid, rng, TileType::FLOOR));
     // center coordinates of the new room/previous room
-    auto const new_center = new_room.center();
+    auto const new_center  = new_room.center();
     auto const prev_center = rects[rects.size() - 1].center();
     connect_rooms(prev_center, new_center, TileType::FLOOR);
     add_room(new_room);
@@ -326,22 +306,18 @@ place_rivers_rooms_and_stairs(stlw::Logger& logger, StairGenConfig const& stairc
   RiverGenerator::place_rivers(tilegrid, rng, rivers);
 
   // 2. Place Rooms and Stairs
-  std::optional<Rooms> rooms = std::nullopt;
+  std::optional<Rooms> rooms  = std::nullopt;
   bool                 stairs = false;
-  while (!rooms && !stairs)
-  {
+  while (!rooms && !stairs) {
     LOG_TRACE("placing rooms ...\n");
-    while (!rooms)
-    {
+    while (!rooms) {
       rooms = place_rooms(tilegrid, rng);
     }
-    if (1 == stairconfig.floor_count)
-    {
+    if (1 == stairconfig.floor_count) {
       LOG_TRACE("one floor, skipping placing stairs ...\n");
       break;
     }
-    while (!stairs)
-    {
+    while (!stairs) {
       LOG_TRACE("placing stairs ...\n");
       stairs = stairwell_generator::place_stairs(logger, stairconfig, tilegrid, rng, registry);
     }

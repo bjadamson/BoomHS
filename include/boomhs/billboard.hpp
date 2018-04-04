@@ -19,16 +19,13 @@ struct Billboard
 
   static BillboardType from_string(std::string const& str)
   {
-    if ("spherical" == str)
-    {
+    if ("spherical" == str) {
       return BillboardType::Spherical;
     }
-    else if ("cylindrical" == str)
-    {
+    else if ("cylindrical" == str) {
       return BillboardType::Cylindrical;
     }
-    else
-    {
+    else {
       std::abort();
     }
   }
@@ -44,8 +41,7 @@ find_billboards(EntityRegistry& registry)
 {
   std::vector<EntityID> bboards;
   auto                  view = registry.view<BillboardRenderable>();
-  for (auto const eid : view)
-  {
+  for (auto const eid : view) {
     assert(registry.has<Transform>(eid));
     bboards.emplace_back(eid);
   }

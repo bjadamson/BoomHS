@@ -29,7 +29,7 @@ assemble(LevelGeneredData&& gendata, LevelAssets&& assets, EntityRegistry& regis
   // camera-look at origin
   // cameraspace "up" is === "up" in worldspace.
   auto const FORWARD = -Z_UNIT_VECTOR;
-  auto constexpr UP = Y_UNIT_VECTOR;
+  auto constexpr UP  = Y_UNIT_VECTOR;
 
   auto const  player_eid = find_player(registry);
   EnttLookup  player_lookup{player_eid, registry};
@@ -38,8 +38,8 @@ assemble(LevelGeneredData&& gendata, LevelAssets&& assets, EntityRegistry& regis
   {
     SphericalCoordinates sc;
     sc.radius = 3.8f;
-    sc.theta = glm::radians(-0.229f);
-    sc.phi = glm::radians(38.2735f);
+    sc.theta  = glm::radians(-0.229f);
+    sc.phi    = glm::radians(38.2735f);
     camera.set_coordinates(MOVE(sc));
   }
 
@@ -79,7 +79,7 @@ bridge_staircases(ZoneState& a, ZoneState& b)
   FOR(i, num_stairs)
   {
     auto const a_updowneid = stairs_up_a[i];
-    auto const b_downeid = stairs_down_b[i];
+    auto const b_downeid   = stairs_down_b[i];
 
     assert(a_registry.has<StairInfo>(a_updowneid));
     StairInfo& si_a = a_registry.get<StairInfo>(a_updowneid);
@@ -113,7 +113,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
   registry.view<ShaderName, CubeRenderable, PointLight>().each(
       [&](auto entity, auto& sn, auto&&...) {
         auto& shader_ref = sps.ref_sp(sn.value);
-        auto  handle = opengl::gpu::copy_cubevertexonly_gpu(logger, shader_ref);
+        auto  handle     = opengl::gpu::copy_cubevertexonly_gpu(logger, shader_ref);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
@@ -127,10 +127,10 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
   registry.view<ShaderName, MeshRenderable, Color>().each(
       [&](auto entity, auto& sn, auto& mesh, auto&) {
         auto&       shader_ref = sps.ref_sp(sn.value);
-        auto const  va = shader_ref.va();
-        auto const  qa = QueryAttributes::from_va(va);
-        auto const  qo = ObjQuery{mesh.name, qa};
-        auto const& obj = obj_store.get_obj(logger, qo);
+        auto const  va         = shader_ref.va();
+        auto const  qa         = QueryAttributes::from_va(va);
+        auto const  qo         = ObjQuery{mesh.name, qa};
+        auto const& obj        = obj_store.get_obj(logger, qo);
 
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
         dinfos.add(entity, MOVE(handle));
@@ -138,10 +138,10 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
   registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto& mesh, auto& texture) {
         auto&       shader_ref = sps.ref_sp(sn.value);
-        auto const  va = shader_ref.va();
-        auto const  qa = QueryAttributes::from_va(va);
-        auto const  qo = ObjQuery{mesh.name, qa};
-        auto const& obj = obj_store.get_obj(logger, qo);
+        auto const  va         = shader_ref.va();
+        auto const  qa         = QueryAttributes::from_va(va);
+        auto const  qo         = ObjQuery{mesh.name, qa};
+        auto const& obj        = obj_store.get_obj(logger, qo);
 
         auto handle =
             opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, texture.texture_info);
@@ -149,18 +149,18 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
       });
   registry.view<ShaderName, BillboardRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
-        auto&      sp = sps.ref_sp(sn.value);
-        auto const v = OF::rectangle_vertices();
+        auto&      sp     = sps.ref_sp(sn.value);
+        auto const v      = OF::rectangle_vertices();
         auto       handle = opengl::gpu::copy_rectangle_uvs(logger, v, sp, texture.texture_info);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, JunkEntityFromFILE>().each(
       [&](auto entity, auto& sn, auto& mesh, auto&&...) {
         auto&       shader_ref = sps.ref_sp(sn.value);
-        auto const  va = shader_ref.va();
-        auto const  qa = QueryAttributes::from_va(va);
-        auto const  qo = ObjQuery{mesh.name, qa};
-        auto const& obj = obj_store.get_obj(logger, qo);
+        auto const  va         = shader_ref.va();
+        auto const  qa         = QueryAttributes::from_va(va);
+        auto const  qo         = ObjQuery{mesh.name, qa};
+        auto const& obj        = obj_store.get_obj(logger, qo);
 
         auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj, std::nullopt);
         dinfos.add(entity, MOVE(handle));
@@ -169,16 +169,15 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
   // copy TILES to GPU
   std::vector<DrawInfo> tile_dinfos;
   tile_dinfos.reserve(static_cast<size_t>(TileType::UNDEFINED));
-  for (auto const& it : ttable)
-  {
-    auto const& mesh_name = it.mesh_name;
+  for (auto const& it : ttable) {
+    auto const& mesh_name    = it.mesh_name;
     auto const& vshader_name = it.vshader_name;
 
     auto&       shader_ref = sps.ref_sp(vshader_name);
-    auto const  va = shader_ref.va();
-    auto const  qa = QueryAttributes::from_va(va);
-    auto const  qo = ObjQuery{mesh_name, qa};
-    auto const& obj = obj_store.get_obj(logger, qo);
+    auto const  va         = shader_ref.va();
+    auto const  qa         = QueryAttributes::from_va(va);
+    auto const  qo         = ObjQuery{mesh_name, qa};
+    auto const& obj        = obj_store.get_obj(logger, qo);
 
     auto handle =
         opengl::gpu::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj, std::nullopt);
@@ -197,20 +196,20 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
 void
 copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
 {
-  auto&       ldata = zs.level_data;
-  auto const& ttable = ldata.tiletable();
-  auto const& objcache = ldata.obj_store;
+  auto&       ldata     = zs.level_data;
+  auto const& ttable    = ldata.tiletable();
+  auto const& objcache  = ldata.obj_store;
   auto&       gfx_state = zs.gfx_state;
-  auto&       sps = gfx_state.sps;
-  auto&       registry = zs.registry;
+  auto&       sps       = gfx_state.sps;
+  auto&       registry  = zs.registry;
 
   auto copy_result = copy_assets_gpu(logger, sps, ttable, registry, objcache);
   assert(copy_result);
-  auto handles = copy_result.expect_moveout("Error copying asset to gpu");
-  auto edh = MOVE(handles.first);
-  auto tdh = MOVE(handles.second);
+  auto handles                 = copy_result.expect_moveout("Error copying asset to gpu");
+  auto edh                     = MOVE(handles.first);
+  auto tdh                     = MOVE(handles.second);
   gfx_state.gpu_state.entities = MOVE(edh);
-  gfx_state.gpu_state.tiles = MOVE(tdh);
+  gfx_state.gpu_state.tiles    = MOVE(tdh);
 }
 
 } // namespace
@@ -249,9 +248,8 @@ LevelAssembler::assemble_levels(stlw::Logger& logger, std::vector<EntityRegistry
   //
   // The logger isn't thread safe, need to ensure that the logger isn't using "during" level gen,
   // or somehow give it unique access during writing (read/write lock?).
-  for (auto i = 0; i < DUNGEON_FLOOR_COUNT; ++i)
-  {
-    auto& registry = registries[i + 1];
+  for (auto i = 0; i < DUNGEON_FLOOR_COUNT; ++i) {
+    auto& registry     = registries[i + 1];
     auto  level_assets = TRY_MOVEOUT(LevelLoader::load_level(logger, registry, level_string(i)));
     StairGenConfig const stairconfig{DUNGEON_FLOOR_COUNT, i, stairs_perfloor};
     LevelConfig const    config{stairconfig, tdconfig};
@@ -271,8 +269,7 @@ LevelAssembler::assemble_levels(stlw::Logger& logger, std::vector<EntityRegistry
   copy_to_gpu(logger, zstates.front());
   copy_to_gpu(logger, zstates[1]);
 
-  for (auto i = 2; i < DUNGEON_FLOOR_COUNT + 1; ++i)
-  {
+  for (auto i = 2; i < DUNGEON_FLOOR_COUNT + 1; ++i) {
     bridge_staircases(zstates[i - 1], zstates[i]);
 
     // TODO: maybe lazily load these?

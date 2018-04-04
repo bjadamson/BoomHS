@@ -7,7 +7,7 @@ namespace boomhs
 class Time
 {
   // seconds
-  int64_t elapsed_ = 0;
+  int64_t elapsed_                 = 0;
   int64_t elapsed_time_last_reset_ = 0;
 
   int seconds_ = 0, minutes_ = 0, hours_ = 0;

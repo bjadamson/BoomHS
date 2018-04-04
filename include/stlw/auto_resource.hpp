@@ -44,8 +44,7 @@ public:
 
   ~AutoResource()
   {
-    if (should_destroy_)
-    {
+    if (should_destroy_) {
       resource_.destroy();
     }
   }
@@ -53,7 +52,7 @@ public:
   AutoResource& operator=(AutoResource&& other)
   {
     should_destroy_ = other.should_destroy_;
-    resource_ = MOVE(other.resource_);
+    resource_       = MOVE(other.resource_);
 
     // This instance takes ownership of the resource from "other"
     other.should_destroy_ = false;

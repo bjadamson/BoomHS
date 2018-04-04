@@ -16,25 +16,22 @@ generate_npc_position(TileGrid const& tilegrid, EntityRegistry& registry,
                       stlw::float_generator& rng)
 {
   auto const dimensions = tilegrid.dimensions();
-  auto const width = dimensions[0];
-  auto const height = dimensions[1];
+  auto const width      = dimensions[0];
+  auto const height     = dimensions[1];
   assert(width > 0 && height > 0);
   uint64_t x, y;
-  while (true)
-  {
+  while (true) {
     x = rng.gen_int_range(0, width - 1);
     y = rng.gen_int_range(0, height - 1);
 
-    if (tilegrid.is_blocked(x, y))
-    {
+    if (tilegrid.is_blocked(x, y)) {
       continue;
     }
 
     glm::vec3 const pos{x, 0, y};
     static auto constexpr MAX_DISTANCE = 2.0f;
-    auto const nearby = all_nearby_entities(pos, MAX_DISTANCE, registry);
-    if (!nearby.empty())
-    {
+    auto const nearby                  = all_nearby_entities(pos, MAX_DISTANCE, registry);
+    if (!nearby.empty()) {
       continue;
     }
     return TilePosition{x, y};
@@ -56,8 +53,7 @@ alignment_to_string(Alignment const al)
   case Alignment::ATTRIBUTE:                                                                       \
     return ATTRIBUTE_S;
 
-  switch (al)
-  {
+  switch (al) {
     CASE(EVIL, "EVIL");
     CASE(NEUTRAL, "NEUTRAL");
     CASE(GOOD, "GOOD");
@@ -80,21 +76,21 @@ NPC::create(EntityRegistry& registry, char const* name, TilePosition const& tpos
 
   // Enemies get a mesh
   auto& meshc = registry.assign<MeshRenderable>(eid);
-  meshc.name = name;
+  meshc.name  = name;
 
   // shader
   auto& sn = registry.assign<ShaderName>(eid);
   sn.value = "3d_pos_normal_color";
 
   // transform
-  auto& transform = registry.assign<Transform>(eid);
+  auto& transform       = registry.assign<Transform>(eid);
   transform.translation = glm::vec3{tpos.x, 0.5, tpos.y};
 
   // npc TAG
-  auto& npcdata = registry.assign<NPCData>(eid);
-  npcdata.name = name;
-  npcdata.health = 10;
-  npcdata.level = 3;
+  auto& npcdata     = registry.assign<NPCData>(eid);
+  npcdata.name      = name;
+  npcdata.health    = 10;
+  npcdata.level     = 3;
   npcdata.alignment = Alignment::EVIL;
 
   // visible
@@ -109,12 +105,10 @@ NPC::create_random(TileGrid const& tilegrid, EntityRegistry& registry, stlw::flo
     auto const tpos = generate_npc_position(tilegrid, registry, rng);
     NPC::create(registry, name, tpos);
   };
-  if (rng.gen_bool())
-  {
+  if (rng.gen_bool()) {
     make_monster("O");
   }
-  else
-  {
+  else {
     make_monster("T");
   }
 }

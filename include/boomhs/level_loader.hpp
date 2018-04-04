@@ -1,6 +1,6 @@
 #pragma once
-#include <boomhs/obj_store.hpp>
 #include <boomhs/fog.hpp>
+#include <boomhs/obj_store.hpp>
 #include <boomhs/tile.hpp>
 
 #include <opengl/colors.hpp>
