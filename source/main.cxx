@@ -155,25 +155,10 @@ make_window(stlw::Logger& logger, bool const fullscreen, float const width, floa
   return window::sdl_library::make_window(logger, fullscreen, height, width);
 }
 
-Result<std::string, char const*>
-get_time()
-{
-  auto const now       = std::chrono::system_clock::now();
-  auto const now_timet = std::chrono::system_clock::to_time_t(now);
-  auto const now_tm    = *std::localtime(&now_timet);
-
-  char buff[70];
-  if (!std::strftime(buff, sizeof(buff), "%Y-%m-%dT%H:%M:%S%z", &now_tm)) {
-    return Err("Could not read current time into buffer.");
-  }
-
-  return Ok(std::string{buff});
-}
-
 int
 main(int argc, char* argv[])
 {
-  auto const time_result = get_time();
+  auto const time_result = Time::get_time_now();
   if (!time_result) {
     return EXIT_FAILURE;
   }

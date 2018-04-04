@@ -130,8 +130,6 @@ move_skybox_to_camera(stlw::Logger& logger, Camera& camera, EntityRegistry& regi
 void
 update_nearbytargets(LevelData& ldata, EntityRegistry& registry, FrameTime const& ft)
 {
-  ldata.nearby_targets.clear();
-
   auto const player = find_player(registry);
   assert(registry.has<Transform>(player));
   auto const& ptransform = registry.get<Transform>(player);
@@ -151,8 +149,16 @@ update_nearbytargets(LevelData& ldata, EntityRegistry& registry, FrameTime const
   auto const sort_fn = [](auto const& a, auto const& b) { return a.first < b.first; };
   std::sort(pairs.begin(), pairs.end(), sort_fn);
 
+  auto& nbt = ldata.nearby_targets;
+  auto const selected_o = nbt.selected();
+
+  nbt.clear();
   for (auto const& it : pairs) {
-    ldata.nearby_targets.add_target(it.second);
+    nbt.add_target(it.second);
+  }
+
+  if (selected_o) {
+    nbt.set_selected(*selected_o);
   }
 }
 

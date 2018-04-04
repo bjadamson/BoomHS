@@ -268,4 +268,19 @@ Time::update(int64_t const since_beginning_seconds)
   elapsed_ = (speed() * since_beginning_seconds) % DIVISOR;
 }
 
+Result<std::string, char const*>
+Time::get_time_now()
+{
+  auto const now       = std::chrono::system_clock::now();
+  auto const now_timet = std::chrono::system_clock::to_time_t(now);
+  auto const now_tm    = *std::localtime(&now_timet);
+
+  char buff[70];
+  if (!std::strftime(buff, sizeof(buff), "%Y-%m-%dT%H:%M:%S%z", &now_tm)) {
+    return Err("Could not read current time into buffer.");
+  }
+
+  return Ok(std::string{buff});
+}
+
 } // namespace boomhs

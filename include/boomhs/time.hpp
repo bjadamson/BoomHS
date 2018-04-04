@@ -1,5 +1,7 @@
 #pragma once
+#include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
+#include <string>
 
 namespace boomhs
 {
@@ -56,6 +58,8 @@ public:
 
   void update(int64_t);
   MOVE_CONSTRUCTIBLE_ONLY(Time);
+
+  static Result<std::string, char const*> get_time_now();
 };
 
 } // namespace boomhs

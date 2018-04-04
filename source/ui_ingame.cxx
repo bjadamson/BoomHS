@@ -87,9 +87,35 @@ void
 draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const& ttable,
                          EntityRegistry& registry)
 {
-  EntityID const closest = nearby_targets.closest();
+  auto constexpr LEFT = 39;
+  auto constexpr TOP  = 768 - 125 - 6;
+  ImGui::SetNextWindowPos(ImVec2(LEFT, TOP));
+  ImGui::SetNextWindowSize(ImVec2(200, 105));
 
-  auto const& npcdata = registry.get<NPCData>(closest);
+  // clang-format off
+  auto static constexpr WINDOW_FLAGS = (0
+    | ImGuiWindowFlags_NoBringToFrontOnFocus
+    | ImGuiWindowFlags_NoCollapse
+    | ImGuiWindowFlags_NoInputs
+    | ImGuiWindowFlags_NoMove
+    | ImGuiWindowFlags_NoResize
+    | ImGuiWindowFlags_NoScrollbar
+    | ImGuiWindowFlags_NoScrollWithMouse
+    | ImGuiWindowFlags_NoSavedSettings
+    | ImGuiWindowFlags_NoTitleBar
+  );
+  // clang-format on
+
+  auto const selected_o = nearby_targets.selected();
+  if (!selected_o) {
+    auto const draw = [&]() { ImGui::Text("NO TARGET"); };
+
+    imgui_cxx::with_window(draw, "Target", nullptr, WINDOW_FLAGS);
+    return;
+  }
+
+  EntityID const selected = *selected_o;
+  auto const&    npcdata  = registry.get<NPCData>(selected);
 
   char const* name = "test_icon";
   assert(ttable.find(name) != std::nullopt);
@@ -104,29 +130,12 @@ draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const
 
     auto const draw_icon = [&]() {
       ImGui::Image(my_tex_id, ImVec2(ti.width, ti.height), ImVec2(0, 0), ImVec2(1, 1),
-                         ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+                   ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
     };
 
     ImGui::SameLine();
     imgui_cxx::with_stylevar(draw_icon, ImGuiStyleVar_ChildRounding, 5.0f);
   };
-  // clang-format off
-  auto static constexpr WINDOW_FLAGS = (0
-    | ImGuiWindowFlags_NoBringToFrontOnFocus
-    | ImGuiWindowFlags_NoCollapse
-    | ImGuiWindowFlags_NoInputs
-    | ImGuiWindowFlags_NoMove
-    | ImGuiWindowFlags_NoResize
-    | ImGuiWindowFlags_NoScrollbar
-    | ImGuiWindowFlags_NoScrollWithMouse
-    | ImGuiWindowFlags_NoSavedSettings
-    | ImGuiWindowFlags_NoTitleBar
-  );
-  // clang-format on
-  auto constexpr LEFT = 39;
-  auto constexpr TOP = 768 - 125 - 6;
-  ImGui::SetNextWindowPos(ImVec2(LEFT, TOP));
-  ImGui::SetNextWindowSize(ImVec2(200, 105));
   imgui_cxx::with_window(draw, "Target", nullptr, WINDOW_FLAGS);
 }
 
@@ -140,9 +149,7 @@ draw(EngineState& es, LevelManager& lm)
 
   auto& ldata          = zs.level_data;
   auto& nearby_targets = ldata.nearby_targets;
-  if (!nearby_targets.empty()) {
-    draw_nearest_target_info(nearby_targets, ttable, registry);
-  }
+  draw_nearest_target_info(nearby_targets, ttable, registry);
 
   auto const eid       = find_player(registry);
   auto&      player    = registry.get<PlayerData>(eid);

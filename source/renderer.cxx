@@ -728,33 +728,36 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
   auto const& ldata    = zs.level_data;
 
   auto const& nearby_targets = ldata.nearby_targets;
-  if (nearby_targets.empty()) {
+  auto const  selected       = nearby_targets.selected();
+  if (!selected) {
     return;
   }
-  auto const nearest_npc = nearby_targets.closest();
+  auto const selected_npc = *selected;
 
-  assert(registry.has<Transform>(nearest_npc));
-  auto& npc_transform = registry.get<Transform>(nearest_npc);
+  assert(registry.has<Transform>(selected_npc));
+  auto& npc_transform = registry.get<Transform>(selected_npc);
 
   Transform transform;
   transform.translation = npc_transform.translation;
-
-  auto& camera = zs.level_data.camera;
+  transform.scale       = glm::vec3{nearby_targets.calculate_scale(ft)};
 
   auto texture_o = zs.gfx_state.texture_table.find("TargetReticle");
   assert(texture_o);
 
   auto& sps = zs.gfx_state.sps;
   auto& sp  = sps.ref_sp("2dtexture");
+  if (!sp.is_2d) {
+    std::abort();
+  }
 
   auto& logger = rstate.es.logger;
-
   auto const     v  = OF::rectangle_vertices();
   DrawInfo const di = gpu::copy_rectangle_uvs(logger, v, sp, *texture_o);
 
+  auto& camera = zs.level_data.camera;
   glm::mat4 view_model = compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
 
-  auto constexpr ROTATE_SPEED = 50.0f;
+  auto constexpr ROTATE_SPEED = 80.0f;
   float const angle           = ROTATE_SPEED * ft.since_start_seconds();
   auto const  rot             = glm::angleAxis(glm::radians(angle), Z_UNIT_VECTOR);
   auto const  rmatrix         = glm::toMat4(rot);
@@ -763,9 +766,6 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
   auto const mvp_matrix = camera.projection_matrix() * view_model;
   set_modelmatrix(logger, mvp_matrix, sp);
 
-  if (!sp.is_2d) {
-    std::abort();
-  }
   draw(rstate, transform.model_matrix(), sp, di);
 }
 

@@ -321,10 +321,10 @@ process_keydown(GameState& state, SDL_Event const& event, FrameTime const& ft)
     assert(keystate);
 
     if (!keystate[SDL_SCANCODE_LSHIFT]) {
-      nearby_targets.cycle_forward();
+      nearby_targets.cycle_forward(ft);
     }
     else {
-      nearby_targets.cycle_backward();
+      nearby_targets.cycle_backward(ft);
     }
   } break;
   case SDLK_BACKQUOTE: {
