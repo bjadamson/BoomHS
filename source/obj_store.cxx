@@ -4,69 +4,11 @@
 #include <algorithm>
 #include <extlibs/fmt.hpp>
 #include <iomanip>
-#include <iostream>
+
+using namespace opengl;
 
 namespace boomhs
 {
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// QueryAttributes
-QueryAttributes
-QueryAttributes::from_va(opengl::VertexAttribute const& va)
-{
-  bool const p = va.has_vertices();
-  bool const n = va.has_normals();
-  bool const c = va.has_colors();
-  bool const u = va.has_uvs();
-  return QueryAttributes{p, n, c, u};
-}
-
-bool
-operator==(QueryAttributes const& a, QueryAttributes const& b)
-{
-  // clang-format off
-  return ALLOF(
-    a.vertices == b.vertices,
-    a.normals == b.normals,
-    b.colors == a.colors,
-    a.uvs == b.uvs);
-  // clang-format on
-}
-
-bool
-operator!=(QueryAttributes const& a, QueryAttributes const& b)
-{
-  return !(a == b);
-}
-
-std::ostream&
-operator<<(std::ostream& stream, QueryAttributes const& qa)
-{
-  // 5 == std::strlen("false");
-  static int constexpr MAX_LENGTH = 5;
-
-  auto const print_bool = [&stream](char const* text, bool const v) {
-    stream << text;
-    stream << ": '";
-    stream << std::boolalpha << v;
-    stream << "'";
-  };
-
-  stream << "{";
-  print_bool("vertices", qa.vertices);
-  stream << ", ";
-
-  print_bool("colors", qa.colors);
-  stream << ", ";
-
-  print_bool("normals", qa.normals);
-  stream << ", ";
-
-  print_bool("uvs", qa.uvs);
-
-  stream << "}";
-  return stream;
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ObjQuery
@@ -76,7 +18,7 @@ operator==(ObjQuery const& a, ObjQuery const& b)
   // clang-format off
   return ALLOF(
       a.name == b.name,
-      a.attributes == b.attributes);
+      a.flags == b.flags);
   // clang-format on
 }
 
@@ -91,8 +33,8 @@ operator<<(std::ostream& stream, ObjQuery const& query)
 {
   stream << "{name: '";
   stream << std::setw(10) << query.name;
-  stream << "', attributes: '";
-  stream << query.attributes;
+  stream << "', flags: '";
+  stream << query.flags;
   stream << "'}";
   return stream;
 }
@@ -117,7 +59,7 @@ ObjCache::has_obj(ObjQuery const& query) const
   return FIND_OBJ_IN_CACHE(query, buffers_) != buffers_.cend();
 }
 
-ObjBuffer const&
+VertexBuffer const&
 ObjCache::get_obj(stlw::Logger& logger, ObjQuery const& query) const
 {
   auto const it = FIND_OBJ_IN_CACHE(query, buffers_);
@@ -148,7 +90,7 @@ ObjStore::data_for(stlw::Logger& logger, ObjQuery const& query) const
     bool const  normals_empty  = data.normals.empty();
     bool const  uvs_empty      = data.uvs.empty();
 
-    // FOR NOW, we assume all attributes present in .obj file
+    // FOR NOW, we assume all flags present in .obj file
     assert(ALLOF(!vertices_empty, !colors_empty, !normals_empty, !uvs_empty));
     return names_match;
   };
@@ -160,64 +102,7 @@ ObjStore::data_for(stlw::Logger& logger, ObjQuery const& query) const
   return it->second;
 }
 
-ObjBuffer
-ObjStore::create_interleaved_buffer(stlw::Logger& logger, ObjData const& data,
-                                    QueryAttributes const& query_attr)
-{
-  ObjBuffer buffer;
-  auto&     vertices = buffer.vertices;
-
-  auto const copy_n = [&vertices](auto const& buffer, size_t const num, size_t& count,
-                                  size_t& remaining) {
-    FOR(i, num)
-    {
-      vertices.emplace_back(buffer[count++]);
-      --remaining;
-    }
-  };
-  auto num_vertices = data.vertices.size();
-  auto num_normals  = data.normals.size();
-  auto num_colors   = data.colors.size();
-  auto num_uvs      = data.uvs.size();
-
-  auto const keep_going = [&]() {
-    return ALLOF(num_vertices > 0, num_normals > 0, num_colors > 0, num_uvs > 0);
-  };
-
-  size_t a = 0, b = 0, c = 0, d = 0;
-  while (keep_going()) {
-    assert(!data.vertices.empty());
-    copy_n(data.vertices, 4, a, num_vertices);
-
-    if (query_attr.normals) {
-      copy_n(data.normals, 3, b, num_normals);
-    }
-
-    if (query_attr.colors) {
-      // encode assumptions for now
-      assert(!query_attr.uvs);
-      copy_n(data.colors, 4, c, num_colors);
-    }
-    if (query_attr.uvs) {
-      // encode assumptions for now
-      assert(!query_attr.colors);
-
-      copy_n(data.uvs, 2, d, num_uvs);
-    }
-  }
-
-  assert(num_vertices == 0 || num_vertices == data.vertices.size());
-  assert(num_normals == 0 || num_normals == data.normals.size());
-  assert(num_colors == 0 || num_colors == data.colors.size());
-  assert(num_uvs == 0 || num_uvs == data.uvs.size());
-
-  buffer.indices = data.indices;
-  assert(buffer.indices.size() == data.indices.size());
-
-  return buffer;
-}
-
-ObjBuffer const&
+VertexBuffer const&
 ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
 {
   auto const& cache         = find_cache(logger, query);
@@ -230,8 +115,8 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
     // We need to read data from the ObjStore to construct an instance to put into the cache.
     auto const& data = data_for(logger, query);
 
-    auto const& query_attr = query.attributes;
-    auto        buffer     = ObjStore::create_interleaved_buffer(logger, data, query_attr);
+    auto const& query_attr = query.flags;
+    auto        buffer     = VertexBuffer::create_interleaved(logger, data, query_attr);
     auto        pair       = std::make_pair(query, MOVE(buffer));
     cache.insert_buffer(MOVE(pair));
   }
@@ -242,16 +127,16 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
 }
 
 #define FIND_CACHE(query, cache)                                                                   \
-  auto const& attr             = query.attributes;                                                 \
-  bool const  pos_only         = ALLOF(attr.vertices, !attr.normals, !attr.colors, !attr.uvs);     \
-  bool const  pos_normal       = ALLOF(attr.vertices, attr.normals, !attr.colors, !attr.uvs);      \
-  bool const  pos_color        = ALLOF(attr.vertices, !attr.normals, attr.colors, !attr.uvs);      \
-  bool const  pos_color_normal = ALLOF(attr.vertices, attr.normals, attr.colors, !attr.uvs);       \
-  bool const  pos_normal_uvs   = ALLOF(attr.vertices, attr.normals, !attr.colors, attr.uvs);       \
+  auto const& flags            = query.flags;                                                      \
+  bool const  pos_only         = ALLOF(flags.vertices, !flags.normals, !flags.colors, !flags.uvs); \
+  bool const  pos_normal       = ALLOF(flags.vertices, flags.normals, !flags.colors, !flags.uvs);  \
+  bool const  pos_color        = ALLOF(flags.vertices, !flags.normals, flags.colors, !flags.uvs);  \
+  bool const  pos_color_normal = ALLOF(flags.vertices, flags.normals, flags.colors, !flags.uvs);   \
+  bool const  pos_normal_uvs   = ALLOF(flags.vertices, flags.normals, !flags.colors, flags.uvs);   \
                                                                                                    \
   /* invalid configurations */                                                                     \
-  bool const no_vertices   = ALLOF(!attr.vertices);                                                \
-  bool const color_and_uvs = ALLOF(attr.colors, attr.uvs);                                         \
+  bool const no_vertices   = ALLOF(!flags.vertices);                                               \
+  bool const color_and_uvs = ALLOF(flags.colors, flags.uvs);                                       \
                                                                                                    \
   if (no_vertices) {                                                                               \
     LOG_ERROR("mesh: %s cannot be found (no vertices) not implemented.", query.name);              \
@@ -274,10 +159,10 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
   else if (pos_color_normal) {                                                                     \
     cache = &pos_color_normal_;                                                                    \
   }                                                                                                \
-  else if (attr.normals && attr.uvs) {                                                             \
+  else if (flags.normals && flags.uvs) {                                                           \
     cache = &pos_normal_uv_;                                                                       \
   }                                                                                                \
-  else if (attr.uvs) {                                                                             \
+  else if (flags.uvs) {                                                                            \
     cache = &pos_uv_;                                                                              \
   }                                                                                                \
   else {                                                                                           \

@@ -1,7 +1,7 @@
 #include <boomhs/obj.hpp>
-#include <boomhs/obj_store.hpp>
 #include <boomhs/terrain.hpp>
 
+#include <opengl/buffer.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/shader.hpp>
 
@@ -115,9 +115,9 @@ namespace boomhs::terrain
 Terrain
 generate(stlw::Logger& logger, glm::vec2 const& pos, ShaderProgram& sp, TextureInfo const& ti)
 {
-  QueryAttributes const qa{true, true, false, true};
-  auto const            data   = generate_terrain_data();
-  auto const            buffer = ObjStore::create_interleaved_buffer(logger, data, qa);
+  auto const        data = generate_terrain_data();
+  BufferFlags const flags{true, true, false, true};
+  auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
 
   auto di = gpu::copy_gpu(logger, GL_TRIANGLES, sp, buffer, ti);
   return Terrain{pos, MOVE(di), ti};

@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/obj.hpp>
+#include <opengl/buffer.hpp>
 #include <opengl/vertex_attribute.hpp>
 #include <stlw/log.hpp>
 
@@ -11,29 +12,10 @@
 namespace boomhs
 {
 
-struct QueryAttributes
-{
-  bool vertices = true;
-  bool normals  = true;
-  bool colors   = true;
-  bool uvs      = true;
-
-  static QueryAttributes from_va(opengl::VertexAttribute const&);
-};
-
-bool
-operator==(QueryAttributes const&, QueryAttributes const&);
-
-bool
-operator!=(QueryAttributes const&, QueryAttributes const&);
-
-std::ostream&
-operator<<(std::ostream&, QueryAttributes const&);
-
 struct ObjQuery
 {
-  std::string     name;
-  QueryAttributes attributes = {};
+  std::string               name;
+  opengl::BufferFlags const flags;
 };
 
 bool
@@ -45,25 +27,13 @@ operator!=(ObjQuery const&, ObjQuery const&);
 std::ostream&
 operator<<(std::ostream&, ObjQuery const&);
 
-struct ObjBuffer
-{
-  using vertices_t = ObjData::vertices_t;
-  using indices_t  = ObjData::indices_t;
-
-  vertices_t vertices;
-  indices_t  indices;
-
-  ObjBuffer() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(ObjBuffer);
-};
-
 class ObjStore;
 class ObjCache
 {
-  using pair_t     = std::pair<ObjQuery, ObjBuffer>;
-  using ObjBuffers = std::vector<pair_t>;
+  using pair_t        = std::pair<ObjQuery, opengl::VertexBuffer>;
+  using VertexBuffers = std::vector<pair_t>;
 
-  mutable ObjBuffers buffers_;
+  mutable VertexBuffers buffers_;
 
   // ObjCache should only be constructed by the ObjStore.
   friend class ObjStore;
@@ -75,7 +45,7 @@ class ObjCache
 
   bool has_obj(ObjQuery const&) const;
 
-  ObjBuffer const& get_obj(stlw::Logger&, ObjQuery const&) const;
+  opengl::VertexBuffer const& get_obj(stlw::Logger&, ObjQuery const&) const;
 
   auto size() const { return buffers_.size(); }
   bool empty() const { return buffers_.empty(); }
@@ -115,13 +85,10 @@ public:
 
   void add_obj(std::string const&, ObjData&&) const;
 
-  ObjBuffer const& get_obj(stlw::Logger&, ObjQuery const&) const;
+  opengl::VertexBuffer const& get_obj(stlw::Logger&, ObjQuery const&) const;
 
   auto size() const { return data_.size(); }
   bool empty() const { return data_.empty(); }
-
-  // static FNs
-  static ObjBuffer create_interleaved_buffer(stlw::Logger&, ObjData const&, QueryAttributes const&);
 };
 
 std::ostream&

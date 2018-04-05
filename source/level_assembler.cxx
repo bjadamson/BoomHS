@@ -128,7 +128,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
       [&](auto entity, auto& sn, auto& mesh, auto&) {
         auto&       shader_ref = sps.ref_sp(sn.value);
         auto const  va         = shader_ref.va();
-        auto const  qa         = QueryAttributes::from_va(va);
+        auto const  qa         = BufferFlags::from_va(va);
         auto const  qo         = ObjQuery{mesh.name, qa};
         auto const& obj        = obj_store.get_obj(logger, qo);
 
@@ -139,7 +139,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
       [&](auto entity, auto& sn, auto& mesh, auto& texture) {
         auto&       shader_ref = sps.ref_sp(sn.value);
         auto const  va         = shader_ref.va();
-        auto const  qa         = QueryAttributes::from_va(va);
+        auto const  qa         = BufferFlags::from_va(va);
         auto const  qo         = ObjQuery{mesh.name, qa};
         auto const& obj        = obj_store.get_obj(logger, qo);
 
@@ -158,7 +158,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
       [&](auto entity, auto& sn, auto& mesh, auto&&...) {
         auto&       shader_ref = sps.ref_sp(sn.value);
         auto const  va         = shader_ref.va();
-        auto const  qa         = QueryAttributes::from_va(va);
+        auto const  qa         = BufferFlags::from_va(va);
         auto const  qo         = ObjQuery{mesh.name, qa};
         auto const& obj        = obj_store.get_obj(logger, qo);
 
@@ -175,7 +175,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
 
     auto&       shader_ref = sps.ref_sp(vshader_name);
     auto const  va         = shader_ref.va();
-    auto const  qa         = QueryAttributes::from_va(va);
+    auto const  qa         = BufferFlags::from_va(va);
     auto const  qo         = ObjQuery{mesh_name, qa};
     auto const& obj        = obj_store.get_obj(logger, qo);
 

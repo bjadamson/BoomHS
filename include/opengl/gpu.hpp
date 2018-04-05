@@ -14,10 +14,10 @@
 #include <extlibs/glew.hpp>
 #include <optional>
 
-namespace boomhs
+namespace opengl
 {
-struct ObjBuffer;
-} // namespace boomhs
+struct VertexBuffer;
+} // namespace opengl
 
 namespace opengl::gpu
 {
@@ -85,7 +85,7 @@ copy_gpu(stlw::Logger&, GLenum, ShaderProgram&, boomhs::ObjData const&,
          std::optional<TextureInfo> const&);
 
 DrawInfo
-copy_gpu(stlw::Logger&, GLenum, ShaderProgram&, boomhs::ObjBuffer const&,
+copy_gpu(stlw::Logger&, GLenum, ShaderProgram&, VertexBuffer const&,
          std::optional<TextureInfo> const&);
 
 } // namespace opengl::gpu

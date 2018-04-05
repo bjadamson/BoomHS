@@ -203,7 +203,7 @@ create_axis_arrows(stlw::Logger &logger, ShaderProgram &sp)
 
 DrawInfo
 create_modelnormals(stlw::Logger &logger, ShaderProgram const& sp, glm::mat4 const& model_matrix,
-    ObjBuffer const& obj, Color const& color)
+    VertexBuffer const& obj, Color const& color)
 {
   auto const normal_matrix = glm::inverseTranspose(model_matrix);
   std::vector<float> const& vertices = obj.vertices;
@@ -398,7 +398,7 @@ copy_gpu(stlw::Logger &logger, GLenum const dm, ShaderProgram &sp,
 }
 
 DrawInfo
-copy_gpu(stlw::Logger &logger, GLenum const dm, ShaderProgram &sp, ObjBuffer const& object,
+copy_gpu(stlw::Logger &logger, GLenum const dm, ShaderProgram &sp, VertexBuffer const& object,
     std::optional<TextureInfo> const& ti)
 {
   auto const& v = object.vertices;
