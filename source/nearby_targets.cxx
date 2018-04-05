@@ -12,12 +12,12 @@ namespace
 
 bool
 should_change_offset(std::optional<SelectedTarget> const& selected,
-    std::vector<EntityID> const& targets)
+                     std::vector<EntityID> const&         targets)
 {
   return selected && (targets.size() > 1);
 }
 
-} // ns anon
+} // namespace
 
 namespace boomhs
 {
@@ -46,10 +46,10 @@ NearbyTargets::calculate_scale(FrameTime const& ft) const
 
   float constexpr MIN = 0.0f, MAX = 1.0f;
   float const difference = static_cast<float>(future - now);
-  float const lerp = glm::lerp(MIN, MAX, difference);
-  float const inverse = 1 - (lerp / GROW_TIME_MS);
-  float const rate = std::abs(inverse);
-  float const clamped = glm::clamp(rate, MIN, MAX);
+  float const lerp       = glm::lerp(MIN, MAX, difference);
+  float const inverse    = 1 - (lerp / GROW_TIME_MS);
+  float const rate       = std::abs(inverse);
+  float const clamped    = glm::clamp(rate, MIN, MAX);
   return clamped;
 }
 
@@ -123,15 +123,15 @@ void
 NearbyTargets::set_selected(EntityID const selected)
 {
   auto const cmp = [&selected](EntityID const eid) { return selected == eid; };
-  auto const it = std::find_if(targets_.cbegin(), targets_.cend(), cmp);
+  auto const it  = std::find_if(targets_.cbegin(), targets_.cend(), cmp);
   if (it == targets_.cend()) {
     // entity must no longer be in LOS
     return;
   }
   assert(it != targets_.cend());
 
-  auto const index = std::distance(targets_.cbegin(), it);
-  selected_ = SelectedTarget{};
+  auto const index  = std::distance(targets_.cbegin(), it);
+  selected_         = SelectedTarget{};
   selected_->offset = index;
 }
 

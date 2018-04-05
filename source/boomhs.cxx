@@ -149,7 +149,7 @@ update_nearbytargets(LevelData& ldata, EntityRegistry& registry, FrameTime const
   auto const sort_fn = [](auto const& a, auto const& b) { return a.first < b.first; };
   std::sort(pairs.begin(), pairs.end(), sort_fn);
 
-  auto& nbt = ldata.nearby_targets;
+  auto&      nbt        = ldata.nearby_targets;
   auto const selected_o = nbt.selected();
 
   nbt.clear();

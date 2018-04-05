@@ -749,13 +749,15 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
   Transform transform;
   transform.translation = npc_transform.translation;
-  auto const scale = nearby_targets.calculate_scale(ft);
+  auto const scale      = nearby_targets.calculate_scale(ft);
 
-  auto const v  = OF::rectangle_vertices();
-  glm::mat4 const view_model = compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
+  auto const      v = OF::rectangle_vertices();
+  glm::mat4 const view_model =
+      compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
 
   auto const draw_reticle = [&]() {
-    glm::mat4 view_model = compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
+    glm::mat4 view_model =
+        compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
 
     auto constexpr ROTATE_SPEED = 80.0f;
     float const angle           = ROTATE_SPEED * ft.since_start_seconds();
@@ -769,7 +771,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     assert(texture_o);
     DrawInfo const di = gpu::copy_rectangle_uvs(logger, v, sp, *texture_o);
 
-    transform.scale  = glm::vec3{scale};
+    transform.scale = glm::vec3{scale};
     draw(rstate, transform.model_matrix(), sp, di);
   };
 

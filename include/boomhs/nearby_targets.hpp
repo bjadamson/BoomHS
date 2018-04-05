@@ -19,10 +19,10 @@ struct SelectedTarget
 
 class NearbyTargets
 {
-  std::vector<EntityID>         targets_   = {};
+  std::vector<EntityID> targets_ = {};
 
-  uint64_t millis_when_last_target_changed = 0;
-  std::optional<SelectedTarget> selected_  = std::nullopt;
+  uint64_t                      millis_when_last_target_changed = 0;
+  std::optional<SelectedTarget> selected_                       = std::nullopt;
 
   bool empty() const;
   void update_time(window::FrameTime const&);
@@ -38,7 +38,7 @@ public:
   void cycle_backward(window::FrameTime const&);
 
   std::optional<EntityID> selected() const;
-  void set_selected(EntityID);
+  void                    set_selected(EntityID);
 };
 
 } // namespace boomhs
