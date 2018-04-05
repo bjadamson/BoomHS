@@ -189,28 +189,28 @@ RectangleUvs::PointArray
 RectangleUvs::zero() const
 {
   auto const& v = varray_;
-  return stlw::make_array<float>(v[0], v[1]);
+  return stlw::make_array<float>(v[0], 1.0f - v[1]);
 }
 
 RectangleUvs::PointArray
 RectangleUvs::one() const
 {
   auto const& v = varray_;
-  return stlw::make_array<float>(v[2], v[3]);
+  return stlw::make_array<float>(v[2], 1.0f - v[3]);
 }
 
 RectangleUvs::PointArray
 RectangleUvs::two() const
 {
   auto const& v = varray_;
-  return stlw::make_array<float>(v[4], v[5]);
+  return stlw::make_array<float>(v[4], 1.0f - v[5]);
 }
 
 RectangleUvs::PointArray
 RectangleUvs::three() const
 {
   auto const& v = varray_;
-  return stlw::make_array<float>(v[6], v[7]);
+  return stlw::make_array<float>(v[6], 1.0f - v[7]);
 }
 
 RectBuffer

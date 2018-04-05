@@ -37,7 +37,7 @@ NearbyTargets::calculate_scale(FrameTime const& ft) const
   //
   // Between the time the target is last changed and some other time after then, this function will
   // return a value in the range [0, 1].
-  ticks_t constexpr GROW_TIME_MS = 90;
+  ticks_t constexpr GROW_TIME_MS = 70;
 
   assert(selected_);
   ticks_t const lc     = millis_when_last_target_changed;
