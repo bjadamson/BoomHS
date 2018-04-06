@@ -86,11 +86,11 @@ VertexBuffer::create_interleaved(stlw::Logger& logger, ObjData const& data,
   size_t a = 0, b = 0, c = 0, d = 0;
   while (keep_going()) {
     assert(!data.vertices.empty());
-    assert(num_vertexes > 0);
+    assert(num_vertexes >= 4);
     copy_n(data.vertices, 4, a, num_vertexes);
 
     if (flags.normals) {
-      assert(num_normals > 0);
+      assert(num_normals >= 3);
       copy_n(data.normals, 3, b, num_normals);
     }
 
@@ -98,14 +98,14 @@ VertexBuffer::create_interleaved(stlw::Logger& logger, ObjData const& data,
       // encode assumptions for now
       assert(!flags.uvs);
 
-      assert(num_colors > 0);
+      assert(num_colors >= 4);
       copy_n(data.colors, 4, c, num_colors);
     }
     if (flags.uvs) {
       // encode assumptions for now
       assert(!flags.colors);
 
-      assert(num_uvs > 0);
+      assert(num_uvs >= 2);
       copy_n(data.uvs, 2, d, num_uvs);
     }
   }

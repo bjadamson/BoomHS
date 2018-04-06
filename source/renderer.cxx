@@ -36,14 +36,14 @@ namespace
 void
 enable_depth_tests()
 {
-  glEnable(GL_CULL_FACE);
+  //glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
 }
 
 void
 disable_depth_tests()
 {
-  glDisable(GL_CULL_FACE);
+  //glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
 }
 
@@ -473,6 +473,8 @@ draw_global_axis(RenderState& rstate)
   auto& sps = zs.gfx_state.sps;
 
   auto& logger       = es.logger;
+  LOG_TRACE("Drawing Global Axis");
+
   auto& sp           = sps.ref_sp("3d_pos_color");
   auto  world_arrows = OG::create_axis_arrows(logger, sp);
 
@@ -481,6 +483,8 @@ draw_global_axis(RenderState& rstate)
   draw(rstate, model_matrix, sp, world_arrows.x_dinfo);
   draw(rstate, model_matrix, sp, world_arrows.y_dinfo);
   draw(rstate, model_matrix, sp, world_arrows.z_dinfo);
+
+  LOG_TRACE("Finished Drawing Global Axis");
 }
 
 void
@@ -491,6 +495,8 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
   auto& sps = zs.gfx_state.sps;
 
   auto&      logger      = es.logger;
+  LOG_TRACE("Drawing Local Axis");
+
   auto&      sp          = sps.ref_sp("3d_pos_color");
   auto const axis_arrows = OG::create_axis_arrows(logger, sp);
 
@@ -501,6 +507,8 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
   draw(rstate, model_matrix, sp, axis_arrows.x_dinfo);
   draw(rstate, model_matrix, sp, axis_arrows.y_dinfo);
   draw(rstate, model_matrix, sp, axis_arrows.z_dinfo);
+
+  LOG_TRACE("Finished Drawing Local Axis");
 }
 
 void
