@@ -243,7 +243,7 @@ namespace boomhs
 {
 
 int const Terrain::SIZE         = 800;
-int const Terrain::VERTEX_COUNT = 2;
+int const Terrain::VERTEX_COUNT = 5;
 
 Terrain::Terrain(glm::vec2 const& pos, DrawInfo&& di, TextureInfo const& ti)
     : pos_(pos)
@@ -261,7 +261,7 @@ namespace boomhs::terrain
 Terrain
 generate(stlw::Logger& logger, glm::vec2 const& pos, ShaderProgram& sp, TextureInfo const& ti)
 {
-  BufferFlags const flags{true, true, true, false};
+  BufferFlags const flags{true, true, false, true};
   auto const        data   = generate_terrain_data(flags);
   auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
 

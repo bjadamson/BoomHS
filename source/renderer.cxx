@@ -916,7 +916,7 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
 }
 
 void
-draw_terrain(RenderState& rstate, FrameTime const& ft)
+draw_terrain(RenderState& rstate, EntityRegistry &registry, FrameTime const& ft)
 {
   auto& zs  = rstate.zs;
   auto& sps = zs.gfx_state.sps;
@@ -929,6 +929,7 @@ draw_terrain(RenderState& rstate, FrameTime const& ft)
   auto&       ld           = zs.level_data;
   auto const& terrain      = ld.terrain();
   bool constexpr IS_SKYBOX = false;
+  bool constexpr RECEIVES_AMBIENT_LIGHT = true;
   for (auto const& t : ld.terrain()) {
     Transform transform;
 
@@ -936,7 +937,9 @@ draw_terrain(RenderState& rstate, FrameTime const& ft)
     //transform.translation.x = pos.x;
     //transform.translation.z = pos.y;
 
-    draw(rstate, transform.model_matrix(), sp, t.draw_info(), IS_SKYBOX);
+    auto const& dinfo = t.draw_info();
+    draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo, Material{},
+        registry, RECEIVES_AMBIENT_LIGHT);
   }
 }
 

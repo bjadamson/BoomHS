@@ -437,7 +437,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     */
 
     if (es.draw_terrain) {
-      render::draw_terrain(rstate, ft);
+      render::draw_terrain(rstate, registry, ft);
     }
 
     /*
