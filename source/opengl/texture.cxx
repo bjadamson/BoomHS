@@ -73,6 +73,29 @@ TextureInfo::destroy()
   glDeleteTextures(TextureInfo::NUM_BUFFERS, &id);
 }
 
+std::string
+TextureInfo::to_string() const
+{
+  return fmt::sprintf("id: %u, mode: %i, (w, h) : (%i, %i), uv_max: %i",
+      id, mode, width, height, uv_max);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// FBInfo
+std::string
+FBInfo::to_string() const
+{
+  return fmt::sprintf("id: %u, color_buffer: %u", id, color_buffer);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// RBInfo
+std::string
+RBInfo::to_string() const
+{
+  return fmt::sprintf("depth: %u", depth);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TextureTable
 void

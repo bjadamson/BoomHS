@@ -33,11 +33,11 @@ ObjData::vertices_t
 generate_vertices(int const x_length, int const z_length)
 {
   int constexpr NUM_COMPONENTS     = 4; // x, y, z, w
-  auto const          num_vertices = calculate_number_vertices(NUM_COMPONENTS, x_length, z_length);
+  auto const          num_vertexes = calculate_number_vertices(NUM_COMPONENTS, x_length, z_length);
   ObjData::vertices_t buffer;
-  buffer.resize(num_vertices);
+  buffer.resize(num_vertexes);
   std::cerr << "buffer size: '"     << buffer.size() << "'\n";
-  std::cerr << "numv: '" << num_vertices << "'\n";
+  std::cerr << "numv: '" << num_vertexes << "'\n";
   std::cerr << "rows: '" << x_length << "'\n";
   std::cerr << "columns: '" << z_length << "'\n";
   std::cerr << "START\n";
@@ -55,7 +55,7 @@ generate_vertices(int const x_length, int const z_length)
     std::cerr << "===========================================\n";
     FORI(x, x_length)
     {
-      assert(offset < static_cast<size_t>(num_vertices));
+      assert(offset < static_cast<size_t>(num_vertexes));
 
       float const xRatio = x / (float) (x_length - 1);
 
@@ -109,46 +109,46 @@ generate_vertices(int const x_length, int const z_length)
   }
   std::cerr << "\n================================\n";
   std::cerr << "FINISH\n";
-  assert(offset == static_cast<size_t>(num_vertices));
+  assert(offset == static_cast<size_t>(num_vertexes));
   return buffer;
 }
 
 ObjData::vertices_t
 generate_normals(int const rows, int const columns)
 {
-  auto const          num_vertices = calculate_number_vertices(3, rows, columns);
+  auto const          num_vertexes = calculate_number_vertices(3, rows, columns);
   ObjData::vertices_t buffer;
-  buffer.resize(num_vertices);
+  buffer.resize(num_vertexes);
 
   int counter = 0;
   FORI(r, rows)
   {
     FORI(c, columns)
     {
-      assert(counter < num_vertices);
+      assert(counter < num_vertexes);
 
       buffer[counter++] = 0.0f;
       buffer[counter++] = 1.0f;
       buffer[counter++] = 0.0f;
     }
   }
-  assert(counter == num_vertices);
+  assert(counter == num_vertexes);
   return buffer;
 }
 
 ObjData::vertices_t
 generate_uvs(int const rows, int const columns)
 {
-  auto const          num_vertices = calculate_number_vertices(2, rows, columns);
+  auto const          num_vertexes = calculate_number_vertices(2, rows, columns);
   ObjData::vertices_t buffer;
-  buffer.resize(num_vertices);
+  buffer.resize(num_vertexes);
 
   int counter = 0;
   FORI(r, rows)
   {
     FORI(c, columns)
     {
-      assert(counter < num_vertices);
+      assert(counter < num_vertexes);
 
       float const u     = (float)c / ((float)columns - 1);
       float const v     = (float)r / ((float)rows - 1);
@@ -156,7 +156,7 @@ generate_uvs(int const rows, int const columns)
       buffer[counter++] = v;
     }
   }
-  assert(counter == num_vertices);
+  assert(counter == num_vertexes);
   return buffer;
 }
 
@@ -227,7 +227,7 @@ generate_terrain_data(BufferFlags const& flags)
   int const  count = rows * columns;
 
   ObjData data;
-  data.num_vertices = count;
+  data.num_vertexes = count;
 
   data.vertices = generate_vertices(rows, columns);
   data.normals  = generate_normals(rows, columns);
@@ -243,7 +243,7 @@ namespace boomhs
 {
 
 int const Terrain::SIZE         = 800;
-int const Terrain::VERTEX_COUNT = 5;
+int const Terrain::VERTEX_COUNT = 8;
 
 Terrain::Terrain(glm::vec2 const& pos, DrawInfo&& di, TextureInfo const& ti)
     : pos_(pos)
@@ -261,11 +261,16 @@ namespace boomhs::terrain
 Terrain
 generate(stlw::Logger& logger, glm::vec2 const& pos, ShaderProgram& sp, TextureInfo const& ti)
 {
+  LOG_TRACE("Generating Terrain");
+
   BufferFlags const flags{true, true, false, true};
   auto const        data   = generate_terrain_data(flags);
-  auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
+  LOG_DEBUG_SPRINTF("Generated terrain data: %s", data.to_string());
 
+  auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
   auto di = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer, ti);
+
+  LOG_TRACE("Finished Generating Terrain");
   return Terrain{pos, MOVE(di), ti};
 }
 

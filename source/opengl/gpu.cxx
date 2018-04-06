@@ -30,6 +30,8 @@ void
 copy_synchronous(stlw::Logger& logger, ShaderProgram const& sp, DrawInfo const& dinfo,
                  VERTICES const& vertices, INDICES const& indices)
 {
+  LOG_TRACE("Starting synchronous cpu -> gpu copy");
+
   // Activate VAO
   global::vao_bind(dinfo.vao());
 
@@ -40,16 +42,18 @@ copy_synchronous(stlw::Logger& logger, ShaderProgram const& sp, DrawInfo const& 
   va.upload_vertex_format_to_glbound_vao(logger);
 
   // copy the vertices
-  LOG_TRACE_SPRINTF("inserting '%i' vertices into GL_BUFFER_ARRAY\n", vertices.size());
+  LOG_DEBUG_SPRINTF("inserting '%i' vertices into GL_BUFFER_ARRAY\n", vertices.size());
   auto const  vertices_size = vertices.size() * sizeof(GLfloat);
   auto const& vertices_data = vertices.data();
   glBufferData(GL_ARRAY_BUFFER, vertices_size, vertices_data, GL_STATIC_DRAW);
 
   // copy the vertice rendering order
-  LOG_TRACE_SPRINTF("inserting '%i' indices into GL_ELEMENT_BUFFER_ARRAY\n", indices.size());
+  LOG_DEBUG_SPRINTF("inserting '%i' indices into GL_ELEMENT_BUFFER_ARRAY\n", indices.size());
   auto const  indices_size = sizeof(GLuint) * indices.size();
   auto const& indices_data = indices.data();
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, indices_data, GL_STATIC_DRAW);
+
+  LOG_TRACE("cpu -> gpu copy complete");
 }
 
 template<size_t N, size_t M>

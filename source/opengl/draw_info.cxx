@@ -56,10 +56,10 @@ operator<<(std::ostream &stream, BufferHandles const& buffers)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // DrawInfo
-DrawInfo::DrawInfo(GLenum const dm, size_t const num_vertices, GLuint const num_indices,
+DrawInfo::DrawInfo(GLenum const dm, size_t const num_vertexes, GLuint const num_indices,
     std::optional<TextureInfo> const& ti)
   : draw_mode_(dm)
-  , num_vertices_(num_vertices)
+  , num_vertexes_(num_vertexes)
   , num_indices_(num_indices)
   , texture_info_(ti)
 {
@@ -67,7 +67,7 @@ DrawInfo::DrawInfo(GLenum const dm, size_t const num_vertices, GLuint const num_
 
 DrawInfo::DrawInfo(DrawInfo &&other)
   : draw_mode_(other.draw_mode_)
-  , num_vertices_(other.num_vertices_)
+  , num_vertexes_(other.num_vertexes_)
   , num_indices_(other.num_indices_)
   , handles_(MOVE(other.handles_))
   , vao_(MOVE(other.vao_))
@@ -79,10 +79,10 @@ DrawInfo&
 DrawInfo::operator=(DrawInfo &&other)
 {
   draw_mode_ = other.draw_mode_;
-  num_vertices_ = other.num_vertices_;
+  num_vertexes_ = other.num_vertexes_;
   num_indices_ = other.num_indices_;
   other.draw_mode_ = -1;
-  other.num_vertices_ = 0;
+  other.num_vertexes_ = 0;
   other.num_indices_ = 0;
 
   handles_ = MOVE(other.handles_);
@@ -117,7 +117,7 @@ DrawInfo::to_string(VertexAttribute const& va) const
   }
 
   auto const stride = va.stride();
-  auto const num_vertices = dinfo.num_vertices();
+  auto const num_vertexes = dinfo.num_vertexes();
 
   auto const target = GL_ARRAY_BUFFER;
   GLfloat *pmem = static_cast<GLfloat *>(glMapBuffer(target, GL_READ_ONLY));
@@ -126,11 +126,11 @@ DrawInfo::to_string(VertexAttribute const& va) const
 
   result += fmt::format("vbo id: {} VBO contents:\n", dinfo.vbo());
   result += "VBO stride: '" + std::to_string(stride) + "'\n";
-  result += "VBO num_vertices: '" + std::to_string(num_vertices) + "'\n";
+  result += "VBO num_vertexes: '" + std::to_string(num_vertexes) + "'\n";
   result += "VBO contents:\n";
 
   auto count{0};
-  for(auto i = 0u; i < num_vertices; ++i, ++count) {
+  for(auto i = 0u; i < num_vertexes; ++i, ++count) {
     if (count == stride) {
       count = 0;
       result += "\n";

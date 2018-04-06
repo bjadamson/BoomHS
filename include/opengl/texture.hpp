@@ -6,6 +6,7 @@
 #include <array>
 #include <extlibs/glew.hpp>
 #include <optional>
+#include <string>
 
 namespace opengl
 {
@@ -19,6 +20,9 @@ struct TextureInfo
   int uv_max = 0;
 
   void destroy();
+
+  std::string
+  to_string() const;
 
   static size_t constexpr NUM_BUFFERS = 1;
 };
@@ -35,6 +39,9 @@ struct FBInfo
   MOVE_ASSIGNABLE(FBInfo);
   FBInfo(FBInfo&&);
 
+  std::string
+  to_string() const;
+
   static size_t constexpr NUM_BUFFERS = 1;
 };
 
@@ -48,6 +55,9 @@ struct RBInfo
   COPY_DEFAULT(RBInfo);
   MOVE_ASSIGNABLE(RBInfo);
   RBInfo(RBInfo&&);
+
+  std::string
+  to_string() const;
 
   static size_t constexpr NUM_BUFFERS = 1;
 };

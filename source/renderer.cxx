@@ -61,11 +61,11 @@ draw_drawinfo(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
   auto constexpr OFFSET  = nullptr;
 
   /*
-  LOG_TRACE("---------------------------------------------------------------------------");
-  LOG_TRACE("drawing object!");
-  LOG_TRACE_SPRINTF("sp: %s", sp.to_string());
-  LOG_TRACE_SPRINTF("draw_info: %s", dinfo.to_string(sp.va()));
-  LOG_TRACE("---------------------------------------------------------------------------");
+  LOG_DEBUG("---------------------------------------------------------------------------");
+  LOG_DEBUG("drawing object!");
+  LOG_DEBUG_SPRINTF("sp: %s", sp.to_string());
+  LOG_DEBUG_SPRINTF("draw_info: %s", dinfo.to_string(sp.va()));
+  LOG_DEBUG("---------------------------------------------------------------------------");
   */
 
   auto const draw_fn = [&]() {
@@ -74,7 +74,7 @@ draw_drawinfo(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
       glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
     }
     else {
-      std::cerr << "DRAWING '" << num_indices << "'\n";
+      LOG_DEBUG_SPRINTF("Drawing %i indices", num_indices);
       glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
     }
   };
@@ -83,7 +83,7 @@ draw_drawinfo(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
     auto const ti = *dinfo.texture_info();
     opengl::global::texture_bind(ti);
     ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
-    LOG_TRACE("texture info bound");
+    LOG_DEBUG_SPRINTF("Binding TextureInfo '%s'", ti.to_string());
     draw_fn();
   }
   else {
@@ -924,6 +924,7 @@ draw_terrain(RenderState& rstate, EntityRegistry &registry, FrameTime const& ft)
 
   auto& es     = rstate.es;
   auto& logger = es.logger;
+  LOG_TRACE("------------------------- Starting To Draw Terrain!!!---------------------------");
   sp.use(logger);
 
   auto&       ld           = zs.level_data;
@@ -941,6 +942,8 @@ draw_terrain(RenderState& rstate, EntityRegistry &registry, FrameTime const& ft)
     draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo, Material{},
         registry, RECEIVES_AMBIENT_LIGHT);
   }
+
+  LOG_TRACE("-------------------------Finished Drawing Terrain!!!---------------------------");
 }
 
 void

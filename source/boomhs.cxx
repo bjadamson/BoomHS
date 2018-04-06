@@ -425,6 +425,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     // rendering code
     render::clear_screen(ldata.fog.color);
     RenderState rstate{es, zs};
+
     /*
     if (es.draw_entities) {
       render::draw_skybox(rstate, ft);
@@ -452,14 +453,16 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
       auto const  tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
       render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
     }
+
     */
     if (es.show_global_axis) {
       render::draw_global_axis(rstate);
     }
+
+    /*
     if (es.show_local_axis) {
       render::draw_local_axis(rstate, player.world_position());
     }
-    /*
 
     {
       auto const  eid = find_player(registry);
@@ -471,6 +474,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
 
     // if checks happen inside fn
     render::conditionally_draw_player_vectors(rstate, player);
+
     */
 
     auto& ui_state = es.ui_state;
