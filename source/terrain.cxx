@@ -36,11 +36,6 @@ generate_vertices(int const x_length, int const z_length)
   auto const          num_vertexes = calculate_number_vertices(NUM_COMPONENTS, x_length, z_length);
   ObjData::vertices_t buffer;
   buffer.resize(num_vertexes);
-  std::cerr << "buffer size: '"     << buffer.size() << "'\n";
-  std::cerr << "numv: '" << num_vertexes << "'\n";
-  std::cerr << "rows: '" << x_length << "'\n";
-  std::cerr << "columns: '" << z_length << "'\n";
-  std::cerr << "START\n";
 
   static constexpr float Y = 0.0f, W = 1.0f;
 
@@ -52,7 +47,6 @@ generate_vertices(int const x_length, int const z_length)
   assert(offset < buffer.size());
   FORI(z, z_length)
   {
-    std::cerr << "===========================================\n";
     FORI(x, x_length)
     {
       assert(offset < static_cast<size_t>(num_vertexes));
@@ -61,7 +55,6 @@ generate_vertices(int const x_length, int const z_length)
 
       // Build our heightmap from the top down, so that our triangles are 
       // counter-clockwise.
-      std::cerr << "z: '" << z << "'\n";
       float const zRatio = 1.0f - (z / (float) (z_length - 1));
 
       static constexpr float MIN_POSITION   = 0.0f;
@@ -70,45 +63,21 @@ generate_vertices(int const x_length, int const z_length)
       float const xPosition = MIN_POSITION + (xRatio * POSITION_RANGE);
       float const zPosition = MIN_POSITION + (zRatio * POSITION_RANGE);
 
+      assert(offset < buffer.size());
       buffer[offset++] = xPosition;
-      std::cerr << "offset: '" << (offset - 1) << "'\n";
-      assert((offset - 1) < buffer.size());
 
+      assert(offset < buffer.size());
       buffer[offset++] = Y;
-      std::cerr << "offset: '" << (offset - 1) << "'\n";
-      assert((offset - 1) < buffer.size());
 
+      assert(offset < buffer.size());
       buffer[offset++] = zPosition;
-      std::cerr << "offset: '" << (offset - 1) << "'\n";
-      assert((offset - 1) < buffer.size());
 
+      assert(offset < buffer.size());
       buffer[offset++] = W;
-      std::cerr << "offset: '" << (offset - 1) << "'\n";
-      assert((offset - 1) < buffer.size());
     }
-    std::cerr << "NEW ROW\n";
   }
 
-  std::cerr << "vertices report:\n";
-  std::cerr << "buffer capacity: '" << buffer.capacity() << "'\n";
-  std::cerr << "buffer size: '"     << buffer.size() << "'\n";
-  std::cerr << "offset: '"          << offset << "'\n";
-  assert(static_cast<size_t>(offset) == buffer.size());
-
-  std::cerr << "BUFFER CONTENTS\n";
-  int count = 0;
-  FOR(i, buffer.size()) {
-    int const i_mod4 = i % 4;
-    if (i_mod4 == 0) {
-      if (i > 0) {
-        std::cerr << "\n";
-      }
-      std::cerr << "p" << std::to_string(count++) << ": ";
-    }
-    std::cerr << "'" << buffer[i] << "' ";
-  }
-  std::cerr << "\n================================\n";
-  std::cerr << "FINISH\n";
+  assert(offset == buffer.size());
   assert(offset == static_cast<size_t>(num_vertexes));
   return buffer;
 }
@@ -168,7 +137,6 @@ generate_indices(int const x_length, int const z_length)
   int const vertices_perstrip        = 2 * x_length;
   size_t const num_indices = (vertices_perstrip * strips_required) + degen_triangles_required;
 
-  std::cerr << "num_indices: '" << num_indices << "'\n";
   ObjData::indices_t buffer;
   buffer.resize(num_indices);
 
@@ -193,27 +161,6 @@ generate_indices(int const x_length, int const z_length)
     }
   }
 
-  std::cerr << "indices report:\n";
-  std::cerr << "buffer capacity: '" << buffer.capacity() << "'\n";
-  std::cerr << "buffer size: '" << buffer.size() << "'\n";
-  std::cerr << "offset: '" << (offset - 1) << "'\n";
-  assert(static_cast<size_t>(offset - 1) < buffer.size());
-
-  int triangle_count = 0;
-  FOR(i, buffer.size()) {
-
-    int const i_mod3 = i % 3;
-    if (i_mod3 == 0) {
-      if (i > 0) {
-        std::cerr << "\n";
-      }
-      std::cerr << "triangle #" << std::to_string(triangle_count++) << ": ";
-    }
-
-    std::cerr << "'" << buffer[i] << "' ";
-  }
-  std::cerr << "\n================================\n";
-  std::cerr << "FINISH\n";
   return buffer;
 }
 
@@ -258,8 +205,7 @@ Terrain::Terrain(glm::vec2 const& pos, DrawInfo&& di, TextureInfo const& ti)
 namespace boomhs::terrain
 {
 
-Terrain
-generate(stlw::Logger& logger, glm::vec2 const& pos, ShaderProgram& sp, TextureInfo const& ti)
+Terrain generate(stlw::Logger& logger, glm::vec2 const& pos, ShaderProgram& sp, TextureInfo const& ti)
 {
   LOG_TRACE("Generating Terrain");
 

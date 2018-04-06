@@ -36,14 +36,14 @@ namespace
 void
 enable_depth_tests()
 {
-  //glEnable(GL_CULL_FACE);
+  glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
 }
 
 void
 disable_depth_tests()
 {
-  //glDisable(GL_CULL_FACE);
+  glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
 }
 
@@ -935,6 +935,8 @@ draw_terrain(RenderState& rstate, EntityRegistry &registry, FrameTime const& ft)
   LOG_TRACE("------------------------- Starting To Draw Terrain!!!---------------------------");
   sp.use(logger);
 
+  glFrontFace(GL_CW);
+
   auto&       ld           = zs.level_data;
   auto const& terrain      = ld.terrain();
   bool constexpr IS_SKYBOX = false;
@@ -952,6 +954,7 @@ draw_terrain(RenderState& rstate, EntityRegistry &registry, FrameTime const& ft)
   }
 
   LOG_TRACE("-------------------------Finished Drawing Terrain!!!---------------------------");
+  glFrontFace(GL_CCW);
 }
 
 void
