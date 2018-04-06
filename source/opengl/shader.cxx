@@ -200,6 +200,71 @@ uniform_type_to_string(GLenum const type)
   return string;
 }
 
+std::string
+glchar_ptr_to_string(GLchar const* ptr)
+{
+  char const* cstring = static_cast<char const*>(ptr);
+  return std::string{cstring};
+}
+
+auto
+active_attributes_string(GLuint const program)
+{
+  GLint buffer_size{0};
+  glGetProgramiv(program, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &buffer_size);
+
+  GLint count{0};
+  glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &count);
+
+  GLsizei length{0};
+  GLint size{0};
+  GLenum type{0};
+
+  GLchar name[buffer_size];
+  stlw::memzero(name, buffer_size);
+
+  std::string result;
+  result += "Active Attributes: " + std::to_string(count) + "\n";
+  FORI(i, count) {
+    glGetActiveAttrib(program, static_cast<GLuint>(i), buffer_size, &length, &size, &type, name);
+
+    auto const type_string = attrib_type_to_string(type);
+    auto const name_string = glchar_ptr_to_string(name);
+    result += fmt::format("Attribute #{} Type: {} Name: {}\n", i, type_string, name_string);
+  }
+
+  return result;
+}
+
+std::string
+active_uniforms_string(GLuint const program)
+{
+  GLint buffer_size{0};
+  glGetProgramiv(program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &buffer_size);
+
+  GLint count{0};
+  glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
+
+  GLsizei length{0};
+  GLint size{0};
+  GLenum type{0};
+
+  GLchar name[buffer_size];
+  stlw::memzero(name, buffer_size);
+
+  std::string result;
+  result += "Active Uniforms: '" + std::to_string(count) + "'\n";
+  FORI(i, count) {
+    glGetActiveUniform(program, static_cast<GLuint>(i), buffer_size, &length, &size, &type, name);
+
+    auto const type_string = uniform_type_to_string(type);
+    auto const name_string = glchar_ptr_to_string(name);
+
+    result += fmt::format("Uniform #{} Type: {} Name: {}\n", i, type_string, name_string);
+  }
+  return result;
+}
+
 } // ns anonymous
 
 namespace opengl
@@ -406,63 +471,12 @@ ShaderProgram::set_uniform_bool(stlw::Logger &logger, GLchar const* name, bool c
 }
 
 std::string
-glchar_ptr_to_string(GLchar const* ptr)
+ShaderProgram::to_string() const
 {
-  char const* cstring = static_cast<char const*>(ptr);
-  return std::string{cstring};
-}
-
-void
-print_active_attributes(std::ostream &stream, GLuint const program)
-{
-  GLint buffer_size{0};
-  glGetProgramiv(program, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &buffer_size);
-
-  GLint count{0};
-  glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &count);
-
-  GLsizei length{0};
-  GLint size{0};
-  GLenum type{0};
-
-  GLchar name[buffer_size];
-  stlw::memzero(name, buffer_size);
-
-  stream << "Active Attributes: " << std::to_string(count) << "\n";
-  FORI(i, count) {
-    glGetActiveAttrib(program, static_cast<GLuint>(i), buffer_size, &length, &size, &type, name);
-
-    auto const type_string = attrib_type_to_string(type);
-    auto const name_string = glchar_ptr_to_string(name);
-    stream << fmt::format("Attribute #{} Type: {} Name: {}\n", i, type_string, name_string);
-  }
-}
-
-void
-print_active_uniforms(std::ostream &stream, GLuint const program)
-{
-  GLint buffer_size{0};
-  glGetProgramiv(program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &buffer_size);
-
-  GLint count{0};
-  glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
-
-  GLsizei length{0};
-  GLint size{0};
-  GLenum type{0};
-
-  GLchar name[buffer_size];
-  stlw::memzero(name, buffer_size);
-
-  stream << "Active Uniforms: '" << std::to_string(count) << "'\n";
-  FORI(i, count) {
-    glGetActiveUniform(program, static_cast<GLuint>(i), buffer_size, &length, &size, &type, name);
-
-    auto const type_string = uniform_type_to_string(type);
-    auto const name_string = glchar_ptr_to_string(name);
-
-    stream << fmt::format("Uniform #{} Type: {} Name: {}\n", i, type_string, name_string);
-  }
+  auto const& handle = this->handle();
+  auto const attributes = active_attributes_string(handle);
+  auto const uniforms = active_uniforms_string(handle);
+  return attributes + uniforms;
 }
 
 Result<ShaderProgram, std::string>
@@ -477,9 +491,7 @@ make_shader_program(stlw::Logger &logger, std::string const& vertex_s, std::stri
 std::ostream&
 operator<<(std::ostream &stream, ShaderProgram const& sp)
 {
-  auto const& program = sp.handle();
-  print_active_attributes(stream, program);
-  print_active_uniforms(stream, program);
+  stream << sp.to_string();
   return stream;
 }
 

@@ -88,6 +88,8 @@ public:
   void set_uniform_array_3fv(stlw::Logger&, GLchar const*, std::array<float, 3> const&);
   void set_uniform_array_4fv(stlw::Logger&, GLchar const*, std::array<float, 4> const&);
 
+  std::string to_string() const;
+
   void set_uniform_vec2(stlw::Logger& logger, GLchar const* name, glm::vec2 const& v)
   {
     auto const arr = stlw::make_array<float>(v.x, v.y);

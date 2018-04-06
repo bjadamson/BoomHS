@@ -36,17 +36,10 @@ public:
 
   inline auto gl_raw_value() const { return vao_; }
 
-  friend std::ostream& operator<<(std::ostream&, VAO const&);
+  std::string to_string() const;
 };
 
-inline std::ostream&
-operator<<(std::ostream& stream, VAO const& vao)
-{
-  stream << "NUM_BUFFERS: '";
-  stream << VAO::NUM_BUFFERS;
-  stream << "' vao_: '";
-  stream << std::to_string(vao.gl_raw_value()) << "'";
-  return stream;
-}
+std::ostream&
+operator<<(std::ostream&, VAO const&);
 
 } // namespace opengl

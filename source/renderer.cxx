@@ -61,14 +61,11 @@ draw_drawinfo(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
   auto constexpr OFFSET  = nullptr;
 
   /*
-  LOG_DEBUG("---------------------------------------------------------------------------");
-  LOG_DEBUG("drawing object!");
-  LOG_DEBUG("sp:\n" << sp << "");
-
-  LOG_DEBUG("draw_info:");
-  dinfo.print_self(logger, sp.va()));
-  LOG_DEBUG("");
-  LOG_DEBUG("---------------------------------------------------------------------------");
+  LOG_TRACE("---------------------------------------------------------------------------");
+  LOG_TRACE("drawing object!");
+  LOG_TRACE_SPRINTF("sp: %s", sp.to_string());
+  LOG_TRACE_SPRINTF("draw_info: %s", dinfo.to_string(sp.va()));
+  LOG_TRACE("---------------------------------------------------------------------------");
   */
 
   auto const draw_fn = [&]() {
@@ -77,6 +74,7 @@ draw_drawinfo(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
       glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
     }
     else {
+      std::cerr << "DRAWING '" << num_indices << "'\n";
       glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
     }
   };
