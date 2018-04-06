@@ -454,7 +454,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     }
     */
     if (es.show_global_axis) {
-      //render::draw_global_axis(rstate);
+      render::draw_global_axis(rstate);
     }
     if (es.show_local_axis) {
       render::draw_local_axis(rstate, player.world_position());

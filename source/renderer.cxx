@@ -932,9 +932,9 @@ draw_terrain(RenderState& rstate, FrameTime const& ft)
   for (auto const& t : ld.terrain()) {
     Transform transform;
 
-    auto const& pos         = t.position();
-    transform.translation.x = pos.x;
-    transform.translation.z = pos.y;
+    //auto const& pos         = t.position();
+    //transform.translation.x = pos.x;
+    //transform.translation.z = pos.y;
 
     draw(rstate, transform.model_matrix(), sp, t.draw_info(), IS_SKYBOX);
   }

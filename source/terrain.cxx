@@ -29,56 +29,73 @@ calculate_number_vertices(int const num_components, int const rows, int const co
   return num_components * columns * rows;
 }
 
-int
-calculate_number_indices(int const rows, int const columns)
-{
-  return (rows * columns) + (rows - 1) * (columns - 2);
-}
-
 ObjData::vertices_t
-generate_vertices(int const rows, int const columns)
+generate_vertices(int const x_length, int const z_length)
 {
   int constexpr NUM_COMPONENTS     = 4; // x, y, z, w
-  auto const          num_vertices = calculate_number_vertices(NUM_COMPONENTS, rows, columns);
+  auto const          num_vertices = calculate_number_vertices(NUM_COMPONENTS, x_length, z_length);
   ObjData::vertices_t buffer;
   buffer.resize(num_vertices);
+  std::cerr << "buffer size: '"     << buffer.size() << "'\n";
   std::cerr << "numv: '" << num_vertices << "'\n";
-  std::cerr << "rows: '" << rows << "'\n";
-  std::cerr << "columns: '" << columns << "'\n";
+  std::cerr << "rows: '" << x_length << "'\n";
+  std::cerr << "columns: '" << z_length << "'\n";
   std::cerr << "START\n";
 
   static constexpr float Y = 0.0f, W = 1.0f;
 
-  int counter = 0;
-  FORI(r, rows)
+  // For calculating ratio's inside the loop
+  assert(0 != (x_length - 1));
+  assert(0 != (z_length - 1));
+
+  size_t offset = 0;
+  assert(offset < buffer.size());
+  FORI(z, z_length)
   {
     std::cerr << "===========================================\n";
-    FORI(c, columns)
+    FORI(x, x_length)
     {
-      assert(counter < num_vertices);
+      assert(offset < static_cast<size_t>(num_vertices));
 
-      int const index    = r * columns + c;
-      int const offset   = NUM_COMPONENTS * index;
-      buffer[offset + 0] = (float)r / (float)(rows - 1);
-      ++counter;
+      float const xRatio = x / (float) (x_length - 1);
 
-      buffer[offset + 1] = Y;
-      ++counter;
+      // Build our heightmap from the top down, so that our triangles are 
+      // counter-clockwise.
+      std::cerr << "z: '" << z << "'\n";
+      float const zRatio = 1.0f - (z / (float) (z_length - 1));
 
-      buffer[offset + 2] = (float)c / (float)(columns - 1);
-      ++counter;
+      static constexpr float MIN_POSITION   = 0.0f;
+      static constexpr float POSITION_RANGE = 1.0f;
 
-      buffer[offset + 3] = W;
-      ++counter;
+      float const xPosition = MIN_POSITION + (xRatio * POSITION_RANGE);
+      float const zPosition = MIN_POSITION + (zRatio * POSITION_RANGE);
+
+      buffer[offset++] = xPosition;
+      std::cerr << "offset: '" << (offset - 1) << "'\n";
+      assert((offset - 1) < buffer.size());
+
+      buffer[offset++] = Y;
+      std::cerr << "offset: '" << (offset - 1) << "'\n";
+      assert((offset - 1) < buffer.size());
+
+      buffer[offset++] = zPosition;
+      std::cerr << "offset: '" << (offset - 1) << "'\n";
+      assert((offset - 1) < buffer.size());
+
+      buffer[offset++] = W;
+      std::cerr << "offset: '" << (offset - 1) << "'\n";
+      assert((offset - 1) < buffer.size());
     }
+    std::cerr << "NEW ROW\n";
   }
 
   std::cerr << "vertices report:\n";
   std::cerr << "buffer capacity: '" << buffer.capacity() << "'\n";
-  std::cerr << "buffer size: '" << buffer.size() << "'\n";
-  std::cerr << "BUFFER CONTENTS\n";
-  assert(static_cast<size_t>(counter) == buffer.size());
+  std::cerr << "buffer size: '"     << buffer.size() << "'\n";
+  std::cerr << "offset: '"          << offset << "'\n";
+  assert(static_cast<size_t>(offset) == buffer.size());
 
+  std::cerr << "BUFFER CONTENTS\n";
   int count = 0;
   FOR(i, buffer.size()) {
     int const i_mod4 = i % 4;
@@ -92,7 +109,7 @@ generate_vertices(int const rows, int const columns)
   }
   std::cerr << "\n================================\n";
   std::cerr << "FINISH\n";
-  assert(counter == num_vertices);
+  assert(offset == static_cast<size_t>(num_vertices));
   return buffer;
 }
 
@@ -144,44 +161,43 @@ generate_uvs(int const rows, int const columns)
 }
 
 ObjData::indices_t
-generate_indices(int const rows, int const columns)
+generate_indices(int const x_length, int const z_length)
 {
-  int const strips_required          = rows - 1;
+  int const strips_required          = z_length - 1;
   int const degen_triangles_required = 2 * (strips_required - 1);
-  int const vertices_perstrip        = 2 * columns;
-  int const num_indices = (vertices_perstrip * strips_required) + degen_triangles_required;
+  int const vertices_perstrip        = 2 * x_length;
+  size_t const num_indices = (vertices_perstrip * strips_required) + degen_triangles_required;
 
-  // int const num_indices = calculate_number_indices(rows, columns);
   std::cerr << "num_indices: '" << num_indices << "'\n";
   ObjData::indices_t buffer;
   buffer.resize(num_indices);
 
-  int offset = 0;
-  FORI(y, rows - 1)
+  size_t offset = 0;
+  FORI(z, z_length - 1)
   {
-    if (y < 0) {
+    if (z > 0) {
       // Degenerate begin: repeat first vertex
-      buffer[offset++] = y * rows;
+      buffer[offset++] = z * z_length;
     }
 
-    FORI(x, columns)
+    FORI(x, x_length)
     {
       // One part of the strip
-      buffer[offset++] = (y * rows) + x;
-      buffer[offset++] = ((y + 1) * rows) + x;
+      buffer[offset++] = (z * z_length) + x;
+      buffer[offset++] = ((z + 1) * z_length) + x;
     }
 
-    if (y < rows - 2) {
+    if (z < (z_length - 2)) {
       // Degenerate end: repeat last vertex
-      buffer[offset++] = ((y + 1) * rows) + (columns - 1);
+      buffer[offset++] = ((z + 1) * z_length) + (x_length - 1);
     }
   }
-
 
   std::cerr << "indices report:\n";
   std::cerr << "buffer capacity: '" << buffer.capacity() << "'\n";
   std::cerr << "buffer size: '" << buffer.size() << "'\n";
-  assert(static_cast<size_t>(offset) < buffer.size());
+  std::cerr << "offset: '" << (offset - 1) << "'\n";
+  assert(static_cast<size_t>(offset - 1) < buffer.size());
 
   int triangle_count = 0;
   FOR(i, buffer.size()) {
@@ -198,8 +214,6 @@ generate_indices(int const rows, int const columns)
   }
   std::cerr << "\n================================\n";
   std::cerr << "FINISH\n";
-  std::cerr << "offset: '" << offset << "'\n";
-  assert(offset < num_indices);
   return buffer;
 }
 
@@ -229,7 +243,7 @@ namespace boomhs
 {
 
 int const Terrain::SIZE         = 800;
-int const Terrain::VERTEX_COUNT = 4;
+int const Terrain::VERTEX_COUNT = 2;
 
 Terrain::Terrain(glm::vec2 const& pos, DrawInfo&& di, TextureInfo const& ti)
     : pos_(pos)
