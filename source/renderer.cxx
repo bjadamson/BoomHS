@@ -36,14 +36,14 @@ namespace
 void
 enable_depth_tests()
 {
-  glEnable(GL_CULL_FACE);
+  //glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
 }
 
 void
 disable_depth_tests()
 {
-  glDisable(GL_CULL_FACE);
+  //glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
 }
 

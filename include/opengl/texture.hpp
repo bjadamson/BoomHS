@@ -7,6 +7,7 @@
 #include <extlibs/glew.hpp>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace opengl
 {
@@ -93,11 +94,14 @@ public:
 namespace texture
 {
 
+std::vector<uint8_t>
+load_pixels(stlw::Logger&, char const*, GLint);
+
 GLint
 wrap_mode_from_string(char const*);
 
 Texture
-allocate_texture(stlw::Logger& logger, std::string const&, GLint, GLint, GLint);
+allocate_texture(stlw::Logger&, std::string const&, GLint, GLint, GLint);
 
 Texture
 upload_3dcube_texture(stlw::Logger&, std::vector<std::string> const&, GLint);

@@ -11,6 +11,7 @@
 #include <extlibs/soil.hpp>
 
 #include <algorithm>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -29,11 +30,12 @@ struct ImageData
 };
 
 auto
-load_image_into_memory(stlw::Logger &logger, char const* path, bool const alpha)
+load_image_into_memory(stlw::Logger &logger, char const* path, GLint const format)
 {
   int w = 0, h = 0;
-  auto const format = alpha ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB;
-  unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, format);
+
+  int const soil_format = format == GL_RGBA ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB;
+  unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, soil_format);
   if (nullptr == pimage) {
     LOG_ERROR_SPRINTF("image at path '%s' failed to load, reason '%s'", path, SOIL_last_result());
     std::abort();
@@ -47,8 +49,7 @@ upload_image(stlw::Logger &logger, std::string const& filename, GLenum const tar
     GLint const format)
 {
   std::string const path = "assets/" + filename;
-  bool const alpha = GL_RGBA == format ? true : false;
-  auto image_data = load_image_into_memory(logger, path.c_str(), alpha);
+  auto image_data = load_image_into_memory(logger, path.c_str(), format);
 
   auto const width = image_data.width;
   auto const height = image_data.height;
@@ -143,6 +144,38 @@ wrap_mode_from_string(char const* name)
 
   // Invalid
   std::abort();
+}
+
+std::vector<uint8_t>
+load_pixels(stlw::Logger &logger, char const* path, GLint const format)
+{
+  std::vector<uint8_t> result;
+
+  auto const image_data = load_image_into_memory(logger, path, format);
+  int const w = image_data.width, h = image_data.height;
+  int const num_pixels = w * h;
+
+  assert(GL_RGBA == format || GL_RGB == format);
+  int const num_components = GL_RGBA == format ? 4 : 3;
+
+  result.resize(num_pixels * num_components);
+
+  size_t count = 0;
+  FORI(i, num_pixels) {
+    auto const& data = image_data.data.get();
+    result.emplace_back(data[count++]);
+    result.emplace_back(data[count++]);
+    result.emplace_back(data[count++]);
+
+    if (GL_RGBA == format) {
+      result.emplace_back(data[count++]);
+    }
+  }
+
+  std::cerr << "count: '" << count << "'\n";
+  std::cerr << "result.size(): '" << result.size() << "'\n";
+  assert(result.size() == count);
+  return result;
 }
 
 Texture

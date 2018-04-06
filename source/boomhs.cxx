@@ -356,7 +356,9 @@ init(Engine& engine, EngineState& engine_state)
 
     auto& sps     = gfx_state.sps;
     auto& sp      = sps.ref_sp("terrain");
-    auto  terrain = terrain::generate(logger, glm::vec2(0, 0), sp, ti);
+
+    auto const heightmap_data = texture::load_pixels(logger, "assets/terrain/heightmap.png", GL_RGBA);
+    auto  terrain = terrain::generate(logger, glm::vec2(0, 0), heightmap_data, sp, ti);
     ld.add_terrain(MOVE(terrain));
   }
   {
