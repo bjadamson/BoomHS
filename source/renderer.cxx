@@ -932,28 +932,28 @@ draw_terrain(RenderState& rstate, EntityRegistry &registry, FrameTime const& ft)
 
   auto& es     = rstate.es;
   auto& logger = es.logger;
-  LOG_TRACE("------------------------- Starting To Draw Terrain!!!---------------------------");
+  LOG_TRACE("------------------------- Starting To Draw All Terrain(s) ---------------------------");
   sp.use(logger);
 
   glFrontFace(GL_CW);
 
   auto&       ld           = zs.level_data;
   auto const& terrain      = ld.terrain();
-  bool constexpr IS_SKYBOX = false;
   bool constexpr RECEIVES_AMBIENT_LIGHT = true;
   for (auto const& t : ld.terrain()) {
     Transform transform;
 
-    //auto const& pos         = t.position();
-    //transform.translation.x = pos.x;
-    //transform.translation.z = pos.y;
+    auto const& pos = t.position();
+    auto &tr        = transform.translation;
+    tr.x            = pos.x;
+    tr.z            = pos.y;
 
     auto const& dinfo = t.draw_info();
     draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo, Material{},
         registry, RECEIVES_AMBIENT_LIGHT);
   }
 
-  LOG_TRACE("-------------------------Finished Drawing Terrain!!!---------------------------");
+  LOG_TRACE("-------------------------Finished Drawing All Terrain(s) ---------------------------");
   glFrontFace(GL_CCW);
 }
 

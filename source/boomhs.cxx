@@ -364,8 +364,13 @@ init(Engine& engine, EngineState& engine_state)
 
     char const* heightmap_filepath = "assets/terrain/heightmap.png";
     auto const heightmap = TRY(opengl::heightmap::parse(logger, heightmap_filepath));
-    auto terrain = terrain::generate(logger, glm::vec2(0, 0), heightmap, sp, ti);
-    ld.add_terrain(MOVE(terrain));
+
+    FOR(i, 10) {
+      FOR(j, 10) {
+        auto t = terrain::generate(logger, glm::vec2(i, j), heightmap, sp, ti);
+        ld.add_terrain(MOVE(t));
+      }
+    }
   }
   {
     auto test_r = rexpaint::RexImage::load("assets/test.xp");

@@ -20,8 +20,6 @@ class Terrain
   opengl::TextureInfo ti_;
 
 public:
-  static int const SIZE;
-
   // The number of vertices along an edge of the terrain.
   static int const VERTEX_COUNT;
 

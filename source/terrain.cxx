@@ -172,7 +172,6 @@ generate_terrain_data(stlw::Logger &logger, BufferFlags const& flags,
 namespace boomhs
 {
 
-int const Terrain::SIZE         = 800;
 int const Terrain::VERTEX_COUNT = 128;
 
 Terrain::Terrain(glm::vec2 const& pos, DrawInfo&& di, TextureInfo const& ti)
@@ -180,7 +179,7 @@ Terrain::Terrain(glm::vec2 const& pos, DrawInfo&& di, TextureInfo const& ti)
     , di_(MOVE(di))
     , ti_(ti)
 {
-  pos_ = glm::vec2{0.0f};//pos * Terrain::SIZE;
+  pos_ = pos;
 }
 
 } // namespace boomhs
