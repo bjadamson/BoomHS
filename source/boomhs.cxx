@@ -13,6 +13,7 @@
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/ui_ingame.hpp>
 
+#include <opengl/heightmap.hpp>
 #include <opengl/texture.hpp>
 
 #include <extlibs/sdl.hpp>
@@ -362,7 +363,7 @@ init(Engine& engine, EngineState& engine_state)
     auto& sp      = sps.ref_sp("terrain");
 
     char const* heightmap_filepath = "assets/terrain/heightmap.png";
-    auto const heightmap = TRY(texture::parse_heightmap(logger, heightmap_filepath));
+    auto const heightmap = TRY(opengl::heightmap::parse(logger, heightmap_filepath));
     auto terrain = terrain::generate(logger, glm::vec2(0, 0), heightmap, sp, ti);
     ld.add_terrain(MOVE(terrain));
   }

@@ -223,44 +223,4 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   return Texture{MOVE(ti)};
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Heightmap
-HeightmapResult
-parse_heightmap(ImageData const& image)
-{
-  auto const num_pixels = image.width * image.height;
-  bool const evenly_divides_by4 = (num_pixels % 4) != 0;
-  if (!evenly_divides_by4) {
-    return Err(std::string{"Number of pixel fields in heightmap does not divide evenly into 4."});
-  }
-
-  HeightmapData heightmap;
-  heightmap.reserve(num_pixels);
-  auto const num_bytes = num_pixels * 4;
-  for(auto i = 0; i < num_bytes; i += 4)
-  {
-    auto const& data = image.data.get();
-    auto const red   = data[i+0];
-    auto const green = data[i+1];
-    auto const blue  = data[i+2];
-    auto const alpha = data[i+3];
-    assert(red == green);
-    assert(red == blue);
-    assert(255 == alpha);
-    heightmap.emplace_back(red);
-  }
-  assert(heightmap.size() == num_pixels);
-
-  return Ok(heightmap);
-}
-
-HeightmapResult
-parse_heightmap(stlw::Logger &logger, char const* path)
-{
-  LOG_TRACE_SPRINTF("Loading Heightmap Data from file %s", path);
-  auto const pixel_data = texture::load_image(logger, path, GL_RGBA);
-  LOG_TRACE("Finished Loading Heightmap");
-  return parse_heightmap(pixel_data);
-}
-
 } // ns opengl::texture

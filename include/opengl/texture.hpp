@@ -100,9 +100,6 @@ public:
   std::optional<TextureInfo> find(std::string const&) const;
 };
 
-using HeightmapData = std::vector<uint8_t>;
-using HeightmapResult = Result<HeightmapData, std::string>;
-
 } // namespace opengl
 
 namespace opengl::texture
@@ -119,13 +116,5 @@ allocate_texture(stlw::Logger&, std::string const&, GLint, GLint, GLint);
 
 Texture
 upload_3dcube_texture(stlw::Logger&, std::vector<std::string> const&, GLint);
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Heightmap
-HeightmapResult
-parse_heightmap(ImageData const&);
-
-HeightmapResult
-parse_heightmap(stlw::Logger &, char const*);
 
 } // namespace opengl::texture

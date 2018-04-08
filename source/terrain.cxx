@@ -3,6 +3,7 @@
 
 #include <opengl/buffer.hpp>
 #include <opengl/gpu.hpp>
+#include <opengl/heightmap.hpp>
 #include <opengl/shader.hpp>
 
 #include <cassert>
@@ -23,7 +24,7 @@ namespace
 //     uvs                  "2" for (u, v)
 //
 // etc...
-int
+size_t
 calculate_number_vertices(int const num_components, int const rows, int const columns)
 {
   return num_components * columns * rows;
@@ -52,7 +53,7 @@ generate_vertices(stlw::Logger &logger, int const x_length, int const z_length,
     {
       assert(offset < static_cast<size_t>(num_vertexes));
 
-      float const xRatio = x / (float) (x_length - 1);
+      float const xRatio = (float) x / (float) (x_length - 1);
 
       // Build our heightmap from the top down, so that our triangles are 
       // counter-clockwise.
@@ -88,36 +89,13 @@ generate_vertices(stlw::Logger &logger, int const x_length, int const z_length,
 }
 
 ObjData::vertices_t
-generate_normals(int const rows, int const columns)
-{
-  auto const          num_vertexes = calculate_number_vertices(3, rows, columns);
-  ObjData::vertices_t buffer;
-  buffer.resize(num_vertexes);
-
-  int counter = 0;
-  FORI(r, rows)
-  {
-    FORI(c, columns)
-    {
-      assert(counter < num_vertexes);
-
-      buffer[counter++] = 0.0f;
-      buffer[counter++] = 1.0f;
-      buffer[counter++] = 0.0f;
-    }
-  }
-  assert(counter == num_vertexes);
-  return buffer;
-}
-
-ObjData::vertices_t
 generate_uvs(int const rows, int const columns)
 {
   auto const          num_vertexes = calculate_number_vertices(2, rows, columns);
   ObjData::vertices_t buffer;
   buffer.resize(num_vertexes);
 
-  int counter = 0;
+  size_t counter = 0;
   FORI(r, rows)
   {
     FORI(c, columns)
@@ -183,10 +161,9 @@ generate_terrain_data(stlw::Logger &logger, BufferFlags const& flags,
   data.num_vertexes = count;
 
   data.vertices = generate_vertices(logger, rows, columns, heightmap_data);
-  data.normals  = generate_normals(rows, columns);
+  data.normals  = heightmap::generate_normals(rows, columns, heightmap_data);
   data.uvs      = generate_uvs(rows, columns);
   data.indices  = generate_indices(rows, columns);
-
   return data;
 }
 
@@ -196,7 +173,7 @@ namespace boomhs
 {
 
 int const Terrain::SIZE         = 800;
-int const Terrain::VERTEX_COUNT = 512;
+int const Terrain::VERTEX_COUNT = 128;
 
 Terrain::Terrain(glm::vec2 const& pos, DrawInfo&& di, TextureInfo const& ti)
     : pos_(pos)

@@ -1,7 +1,7 @@
 #pragma once
 #include <extlibs/glm.hpp>
 #include <opengl/draw_info.hpp>
-#include <opengl/texture.hpp>
+#include <opengl/heightmap.hpp>
 
 #include <stlw/log.hpp>
 
