@@ -36,7 +36,7 @@ namespace terrain
 {
 
 Terrain
-generate(stlw::Logger&, glm::vec2 const&, std::vector<uint8_t> const&, opengl::ShaderProgram&,
+generate(stlw::Logger&, glm::vec2 const&, opengl::HeightmapData const&, opengl::ShaderProgram&,
     opengl::TextureInfo const&);
 
 } // namespace terrain

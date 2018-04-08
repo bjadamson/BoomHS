@@ -12,7 +12,6 @@
 
 #include <algorithm>
 #include <iostream>
-#include <memory>
 #include <string>
 #include <vector>
 #include <utility>
@@ -21,35 +20,13 @@ namespace
 {
 
 using namespace opengl;
-using pimage_t = std::unique_ptr<unsigned char, void (*)(unsigned char*)>;
-
-struct ImageData
-{
-  int width, height;
-  pimage_t data;
-};
-
-auto
-load_image_into_memory(stlw::Logger &logger, char const* path, GLint const format)
-{
-  int w = 0, h = 0;
-
-  int const soil_format = format == GL_RGBA ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB;
-  unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, soil_format);
-  if (nullptr == pimage) {
-    LOG_ERROR_SPRINTF("image at path '%s' failed to load, reason '%s'", path, SOIL_last_result());
-    std::abort();
-  }
-  pimage_t image_data{pimage, &SOIL_free_image_data};
-  return ImageData{w, h, MOVE(image_data)};
-}
 
 auto
 upload_image(stlw::Logger &logger, std::string const& filename, GLenum const target,
     GLint const format)
 {
   std::string const path = "assets/" + filename;
-  auto image_data = load_image_into_memory(logger, path.c_str(), format);
+  auto image_data = texture::load_image(logger, path.c_str(), format);
 
   auto const width = image_data.width;
   auto const height = image_data.height;
@@ -125,6 +102,21 @@ TextureTable::find(std::string const& name) const
 namespace opengl::texture
 {
 
+ImageData
+load_image(stlw::Logger &logger, char const* path, GLint const format)
+{
+  int w = 0, h = 0;
+
+  int const soil_format = format == GL_RGBA ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB;
+  unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, soil_format);
+  if (nullptr == pimage) {
+    LOG_ERROR_SPRINTF("image at path '%s' failed to load, reason '%s'", path, SOIL_last_result());
+    std::abort();
+  }
+  pimage_t image_data{pimage, &SOIL_free_image_data};
+  return ImageData{w, h, MOVE(image_data)};
+}
+
 GLint
 wrap_mode_from_string(char const* name)
 {
@@ -144,38 +136,6 @@ wrap_mode_from_string(char const* name)
 
   // Invalid
   std::abort();
-}
-
-std::vector<uint8_t>
-load_pixels(stlw::Logger &logger, char const* path, GLint const format)
-{
-  std::vector<uint8_t> result;
-
-  auto const image_data = load_image_into_memory(logger, path, format);
-  int const w = image_data.width, h = image_data.height;
-  int const num_pixels = w * h;
-
-  assert(GL_RGBA == format || GL_RGB == format);
-  int const num_components = GL_RGBA == format ? 4 : 3;
-
-  result.resize(num_pixels * num_components);
-
-  size_t count = 0;
-  FORI(i, num_pixels) {
-    auto const& data = image_data.data.get();
-    result.emplace_back(data[count++]);
-    result.emplace_back(data[count++]);
-    result.emplace_back(data[count++]);
-
-    if (GL_RGBA == format) {
-      result.emplace_back(data[count++]);
-    }
-  }
-
-  std::cerr << "count: '" << count << "'\n";
-  std::cerr << "result.size(): '" << result.size() << "'\n";
-  assert(result.size() == count);
-  return result;
 }
 
 Texture
@@ -261,6 +221,46 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
 
   return Texture{MOVE(ti)};
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Heightmap
+HeightmapResult
+parse_heightmap(ImageData const& image)
+{
+  auto const num_pixels = image.width * image.height;
+  bool const evenly_divides_by4 = (num_pixels % 4) != 0;
+  if (!evenly_divides_by4) {
+    return Err(std::string{"Number of pixel fields in heightmap does not divide evenly into 4."});
+  }
+
+  HeightmapData heightmap;
+  heightmap.reserve(num_pixels);
+  auto const num_bytes = num_pixels * 4;
+  for(auto i = 0; i < num_bytes; i += 4)
+  {
+    auto const& data = image.data.get();
+    auto const red   = data[i+0];
+    auto const green = data[i+1];
+    auto const blue  = data[i+2];
+    auto const alpha = data[i+3];
+    assert(red == green);
+    assert(red == blue);
+    assert(255 == alpha);
+    heightmap.emplace_back(red);
+  }
+  assert(heightmap.size() == num_pixels);
+
+  return Ok(heightmap);
+}
+
+HeightmapResult
+parse_heightmap(stlw::Logger &logger, char const* path)
+{
+  LOG_TRACE_SPRINTF("Loading Heightmap Data from file %s", path);
+  auto const pixel_data = texture::load_image(logger, path, GL_RGBA);
+  LOG_TRACE("Finished Loading Heightmap");
+  return parse_heightmap(pixel_data);
 }
 
 } // ns opengl::texture
