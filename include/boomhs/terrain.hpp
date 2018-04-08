@@ -4,6 +4,7 @@
 #include <opengl/heightmap.hpp>
 
 #include <stlw/log.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace opengl
 {
@@ -20,9 +21,6 @@ class Terrain
   opengl::TextureInfo ti_;
 
 public:
-  // The number of vertices along an edge of the terrain.
-  static int const VERTEX_COUNT;
-
   Terrain(glm::vec2 const&, opengl::DrawInfo&&, opengl::TextureInfo const&);
 
   auto const& position() const { return pos_; }
@@ -30,12 +28,30 @@ public:
   auto const& texture_info() const { return ti_; }
 };
 
+class TerrainGrid
+{
+  float const grid_size_;
+  std::vector<Terrain> terrains_;
+public:
+  explicit TerrainGrid(float);
+
+  void add(Terrain &&);
+
+  MOVE_CONSTRUCTIBLE_ONLY(TerrainGrid);
+  BEGIN_END_FORWARD_FNS(terrains_);
+
+  auto height() const { return grid_size_; }
+  auto width() const { return grid_size_; }
+
+  auto count() const { return terrains_.size(); }
+};
+
 namespace terrain
 {
 
 Terrain
-generate(stlw::Logger&, glm::vec2 const&, opengl::HeightmapData const&, opengl::ShaderProgram&,
-    opengl::TextureInfo const&);
+generate(stlw::Logger&, glm::vec2 const&, float, opengl::HeightmapData const&,
+    opengl::ShaderProgram&, opengl::TextureInfo const&);
 
 } // namespace terrain
 

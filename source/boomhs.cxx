@@ -365,10 +365,16 @@ init(Engine& engine, EngineState& engine_state)
     char const* heightmap_filepath = "assets/terrain/heightmap.png";
     auto const heightmap = TRY(opengl::heightmap::parse(logger, heightmap_filepath));
 
-    FOR(i, 10) {
-      FOR(j, 10) {
-        auto t = terrain::generate(logger, glm::vec2(i, j), heightmap, sp, ti);
-        ld.add_terrain(MOVE(t));
+    auto &tgrid = ld.terrain_grid();
+    auto const NUM_ROWS = 2, NUM_COLS = 2;
+    FORI(i, NUM_ROWS) {
+      FORI(j, NUM_COLS) {
+        //if (0 == (j % 2)) {
+          //continue;
+        //}
+        auto const pos = glm::vec2{i * tgrid.width(), j * tgrid.height()};
+        auto t = terrain::generate(logger, pos, tgrid.width(), heightmap, sp, ti);
+        tgrid.add(MOVE(t));
       }
     }
   }

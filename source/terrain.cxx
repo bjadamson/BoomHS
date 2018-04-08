@@ -32,14 +32,14 @@ calculate_number_vertices(int const num_components, int const rows, int const co
 
 ObjData::vertices_t
 generate_vertices(stlw::Logger &logger, int const x_length, int const z_length,
-    HeightmapData const& heightmap_data)
+    float const terrain_range, HeightmapData const& heightmap_data)
 {
   int constexpr NUM_COMPONENTS     = 4; // x, y, z, w
   auto const          num_vertexes = calculate_number_vertices(NUM_COMPONENTS, x_length, z_length);
   ObjData::vertices_t buffer;
   buffer.resize(num_vertexes);
 
-  static constexpr float Y = 0.0f, W = 1.0f;
+  static constexpr float W = 1.0f;
 
   // For calculating ratio's inside the loop
   assert(0 != (x_length - 1));
@@ -60,10 +60,10 @@ generate_vertices(stlw::Logger &logger, int const x_length, int const z_length,
       float const zRatio = 1.0f - (z / (float) (z_length - 1));
 
       static constexpr float MIN_POSITION   = 0.0f;
-      static constexpr float POSITION_RANGE = 1.0f;
+      static constexpr float POSITION_RANGE = 10.0f;
 
-      float const xPosition = MIN_POSITION + (xRatio * POSITION_RANGE);
-      float const zPosition = MIN_POSITION + (zRatio * POSITION_RANGE);
+      float const xPosition = MIN_POSITION + (xRatio * terrain_range);
+      float const zPosition = MIN_POSITION + (zRatio * terrain_range);
 
       assert(offset < buffer.size());
       buffer[offset++] = xPosition;
@@ -151,16 +151,16 @@ generate_indices(int const x_length, int const z_length)
 // https://www.youtube.com/watch?v=yNYwZMmgTJk&list=PLRIWtICgwaX0u7Rf9zkZhLoLuZVfUksDP&index=14
 ObjData
 generate_terrain_data(stlw::Logger &logger, BufferFlags const& flags,
-    HeightmapData const& heightmap_data)
+    float const terrain_range, HeightmapData const& heightmap_data)
 {
-  auto const VC   = Terrain::VERTEX_COUNT;
-  int const  rows = VC, columns = VC;
-  int const  count = rows * columns;
+  int const vertex_count = 128;
+  int const  rows        = vertex_count, columns = vertex_count;
+  int const  count       = rows * columns;
 
   ObjData data;
   data.num_vertexes = count;
 
-  data.vertices = generate_vertices(logger, rows, columns, heightmap_data);
+  data.vertices = generate_vertices(logger, rows, columns, terrain_range, heightmap_data);
   data.normals  = heightmap::generate_normals(rows, columns, heightmap_data);
   data.uvs      = generate_uvs(rows, columns);
   data.indices  = generate_indices(rows, columns);
@@ -172,8 +172,9 @@ generate_terrain_data(stlw::Logger &logger, BufferFlags const& flags,
 namespace boomhs
 {
 
-int const Terrain::VERTEX_COUNT = 128;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Terrain
 Terrain::Terrain(glm::vec2 const& pos, DrawInfo&& di, TextureInfo const& ti)
     : pos_(pos)
     , di_(MOVE(di))
@@ -182,18 +183,32 @@ Terrain::Terrain(glm::vec2 const& pos, DrawInfo&& di, TextureInfo const& ti)
   pos_ = pos;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// TerrainGrid
+TerrainGrid::TerrainGrid(float const grid_size)
+  : grid_size_(grid_size)
+{
+}
+
+void
+TerrainGrid::add(Terrain &&t)
+{
+  terrains_.emplace_back(MOVE(t));
+}
+
 } // namespace boomhs
 
 namespace boomhs::terrain
 {
 
-Terrain generate(stlw::Logger& logger, glm::vec2 const& pos, HeightmapData const& heightmap_data,
-    ShaderProgram& sp, TextureInfo const& ti)
+Terrain
+generate(stlw::Logger& logger, glm::vec2 const& pos, float const terrain_range,
+    HeightmapData const& heightmap_data, ShaderProgram& sp, TextureInfo const& ti)
 {
   LOG_TRACE("Generating Terrain");
 
   BufferFlags const flags{true, true, false, true};
-  auto const        data   = generate_terrain_data(logger, flags, heightmap_data);
+  auto const        data   = generate_terrain_data(logger, flags, terrain_range,  heightmap_data);
   LOG_DEBUG_SPRINTF("Generated terrain data: %s", data.to_string());
 
   auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);

@@ -43,11 +43,15 @@ assemble(LevelGeneredData&& gendata, LevelAssets&& assets, EntityRegistry& regis
     camera.set_coordinates(MOVE(sc));
   }
 
+  float constexpr TERRAIN_SIZE = 2.0f;
+  TerrainGrid terrain_grid{TERRAIN_SIZE};
+
   LevelData level_data{MOVE(gendata.tilegrid),
                        MOVE(assets.tile_table),
                        MOVE(gendata.startpos),
                        MOVE(gendata.rivers),
 
+                       MOVE(terrain_grid),
                        assets.fog,
                        assets.global_light,
                        MOVE(assets.obj_store),

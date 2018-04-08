@@ -938,9 +938,8 @@ draw_terrain(RenderState& rstate, EntityRegistry &registry, FrameTime const& ft)
   glFrontFace(GL_CW);
 
   auto&       ld           = zs.level_data;
-  auto const& terrain      = ld.terrain();
   bool constexpr RECEIVES_AMBIENT_LIGHT = true;
-  for (auto const& t : ld.terrain()) {
+  for (auto const& t : ld.terrain_grid()) {
     Transform transform;
 
     auto const& pos = t.position();
