@@ -97,12 +97,12 @@ struct EngineState
 
 struct GameState
 {
-  EngineState  engine_state;
+  EngineState  &engine_state;
   LevelManager level_manager;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);
 
-  explicit GameState(EngineState&&, LevelManager&&);
+  explicit GameState(EngineState&, LevelManager&&);
 };
 
 struct Engine

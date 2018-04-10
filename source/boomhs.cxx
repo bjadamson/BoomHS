@@ -346,7 +346,7 @@ init(Engine& engine, EngineState& engine_state)
 {
   ZoneStates zss =
       TRY_MOVEOUT(LevelAssembler::assemble_levels(engine_state.logger, engine.registries));
-  GameState state{MOVE(engine_state), LevelManager{MOVE(zss)}};
+  GameState state{engine_state, LevelManager{MOVE(zss)}};
 
   auto& es     = state.engine_state;
   auto& logger = es.logger;

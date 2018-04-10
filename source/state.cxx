@@ -28,8 +28,8 @@ EngineState::EngineState(stlw::Logger& l, ImGuiIO& i, window::Dimensions const& 
 {
 }
 
-GameState::GameState(EngineState&& es, LevelManager&& lm)
-    : engine_state(MOVE(es))
+GameState::GameState(EngineState& es, LevelManager&& lm)
+    : engine_state(es)
     , level_manager(MOVE(lm))
 {
 }
