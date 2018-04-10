@@ -28,8 +28,7 @@ struct ObjData
   ObjData() = default;
   MOVE_CONSTRUCTIBLE_ONLY(ObjData);
 
-  std::string
-  to_string() const;
+  std::string to_string() const;
 };
 
 enum class LoadStatus

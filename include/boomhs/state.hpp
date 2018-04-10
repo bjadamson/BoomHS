@@ -97,7 +97,7 @@ struct EngineState
 
 struct GameState
 {
-  EngineState  &engine_state;
+  EngineState& engine_state;
   LevelManager level_manager;
 
   MOVE_CONSTRUCTIBLE_ONLY(GameState);

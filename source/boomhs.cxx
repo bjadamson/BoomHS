@@ -33,8 +33,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <iomanip>
-#include <string>
 #include <sstream>
+#include <string>
 
 using namespace boomhs;
 using namespace opengl;
@@ -359,21 +359,23 @@ init(Engine& engine, EngineState& engine_state)
     auto&       ld = zs.level_data;
     auto const& ti = *gfx_state.texture_table.find("TerrainFloor");
 
-    auto& sps     = gfx_state.sps;
-    auto& sp      = sps.ref_sp("terrain");
+    auto& sps = gfx_state.sps;
+    auto& sp  = sps.ref_sp("terrain");
 
     char const* heightmap_filepath = "assets/terrain/heightmap.png";
-    auto const heightmap = TRY(opengl::heightmap::parse(logger, heightmap_filepath));
+    auto const  heightmap          = TRY(opengl::heightmap::parse(logger, heightmap_filepath));
 
-    auto &tgrid = ld.terrain_grid();
+    auto&      tgrid    = ld.terrain_grid();
     auto const NUM_ROWS = 2, NUM_COLS = 2;
-    FORI(i, NUM_ROWS) {
-      FORI(j, NUM_COLS) {
-        //if (0 == (j % 2)) {
-          //continue;
+    FORI(i, NUM_ROWS)
+    {
+      FORI(j, NUM_COLS)
+      {
+        // if (0 == (j % 2)) {
+        // continue;
         //}
         auto const pos = glm::vec2{i * tgrid.width(), j * tgrid.height()};
-        auto t = terrain::generate(logger, pos, tgrid.width(), heightmap, sp, ti);
+        auto       t   = terrain::generate(logger, pos, tgrid.width(), heightmap, sp, ti);
         tgrid.add(MOVE(t));
       }
     }
@@ -492,6 +494,5 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     }
   }
 }
-
 
 } // namespace boomhs

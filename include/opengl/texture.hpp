@@ -4,8 +4,8 @@
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <extlibs/glew.hpp>
 #include <array>
+#include <extlibs/glew.hpp>
 #include <memory>
 #include <optional>
 #include <string>
@@ -24,8 +24,7 @@ struct TextureInfo
 
   void destroy();
 
-  std::string
-  to_string() const;
+  std::string to_string() const;
 
   static size_t constexpr NUM_BUFFERS = 1;
 };
@@ -33,7 +32,7 @@ struct TextureInfo
 using pimage_t = std::unique_ptr<unsigned char, void (*)(unsigned char*)>;
 struct ImageData
 {
-  int width, height;
+  int      width, height;
   pimage_t data;
 };
 
@@ -49,8 +48,7 @@ struct FBInfo
   MOVE_ASSIGNABLE(FBInfo);
   FBInfo(FBInfo&&);
 
-  std::string
-  to_string() const;
+  std::string to_string() const;
 
   static size_t constexpr NUM_BUFFERS = 1;
 };
@@ -66,8 +64,7 @@ struct RBInfo
   MOVE_ASSIGNABLE(RBInfo);
   RBInfo(RBInfo&&);
 
-  std::string
-  to_string() const;
+  std::string to_string() const;
 
   static size_t constexpr NUM_BUFFERS = 1;
 };
@@ -106,7 +103,7 @@ namespace opengl::texture
 {
 
 ImageData
-load_image(stlw::Logger &, char const*, GLint const);
+load_image(stlw::Logger&, char const*, GLint const);
 
 GLint
 wrap_mode_from_string(char const*);

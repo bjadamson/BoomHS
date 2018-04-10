@@ -100,7 +100,6 @@ ObjData::to_string() const
       num_vertexes, vertices.size(), colors.size(), normals.size(), uvs.size(), indices.size());
 }
 
-
 // LoadStatus
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -142,7 +141,8 @@ operator<<(std::ostream& stream, LoadStatus const& ls)
 LoadResult
 load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
 {
-  LOG_TRACE_SPRINTF("Loading objfile: %s mtl: %s", objpath, mtlpath == nullptr ? "nullptr" : mtlpath);
+  LOG_TRACE_SPRINTF("Loading objfile: %s mtl: %s", objpath,
+                    mtlpath == nullptr ? "nullptr" : mtlpath);
 
   tinyobj::attrib_t                attrib;
   std::vector<tinyobj::shape_t>    shapes;

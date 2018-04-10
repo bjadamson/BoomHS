@@ -13,10 +13,10 @@ namespace opengl
 {
 struct ImageData;
 
-using HeightmapData = std::vector<uint8_t>;
+using HeightmapData   = std::vector<uint8_t>;
 using HeightmapResult = Result<HeightmapData, std::string>;
 
-} // ns opengl
+} // namespace opengl
 
 namespace opengl::heightmap
 {
@@ -28,6 +28,6 @@ HeightmapResult
 parse(ImageData const&);
 
 HeightmapResult
-parse(stlw::Logger &, char const*);
+parse(stlw::Logger&, char const*);
 
-} // ns opengl::heightmap
+} // namespace opengl::heightmap

@@ -45,7 +45,8 @@ class LevelData
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileGrid&&, TileSharedInfoTable&&, TilePosition const&, std::vector<RiverInfo>&&,
-            TerrainGrid &&, Fog const&, opengl::GlobalLight const&, ObjStore&&, Camera&&, WorldObject&&);
+            TerrainGrid&&, Fog const&, opengl::GlobalLight const&, ObjStore&&, Camera&&,
+            WorldObject&&);
 
   // public fields
   Fog                 fog;

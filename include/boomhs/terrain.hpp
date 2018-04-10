@@ -30,12 +30,13 @@ public:
 
 class TerrainGrid
 {
-  float const grid_size_;
+  float const          grid_size_;
   std::vector<Terrain> terrains_;
+
 public:
   explicit TerrainGrid(float);
 
-  void add(Terrain &&);
+  void add(Terrain&&);
 
   MOVE_CONSTRUCTIBLE_ONLY(TerrainGrid);
   BEGIN_END_FORWARD_FNS(terrains_);
@@ -51,7 +52,7 @@ namespace terrain
 
 Terrain
 generate(stlw::Logger&, glm::vec2 const&, float, opengl::HeightmapData const&,
-    opengl::ShaderProgram&, opengl::TextureInfo const&);
+         opengl::ShaderProgram&, opengl::TextureInfo const&);
 
 } // namespace terrain
 

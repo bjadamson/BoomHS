@@ -36,14 +36,14 @@ namespace
 void
 enable_depth_tests()
 {
-  //glEnable(GL_CULL_FACE);
+  // glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
 }
 
 void
 disable_depth_tests()
 {
-  //glDisable(GL_CULL_FACE);
+  // glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
 }
 
@@ -472,7 +472,7 @@ draw_global_axis(RenderState& rstate)
   auto& zs  = rstate.zs;
   auto& sps = zs.gfx_state.sps;
 
-  auto& logger       = es.logger;
+  auto& logger = es.logger;
   LOG_TRACE("Drawing Global Axis");
 
   auto& sp           = sps.ref_sp("3d_pos_color");
@@ -494,7 +494,7 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
   auto& zs  = rstate.zs;
   auto& sps = zs.gfx_state.sps;
 
-  auto&      logger      = es.logger;
+  auto& logger = es.logger;
   LOG_TRACE("Drawing Local Axis");
 
   auto&      sp          = sps.ref_sp("3d_pos_color");
@@ -924,7 +924,7 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
 }
 
 void
-draw_terrain(RenderState& rstate, EntityRegistry &registry, FrameTime const& ft)
+draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
 {
   auto& zs  = rstate.zs;
   auto& sps = zs.gfx_state.sps;
@@ -932,24 +932,25 @@ draw_terrain(RenderState& rstate, EntityRegistry &registry, FrameTime const& ft)
 
   auto& es     = rstate.es;
   auto& logger = es.logger;
-  LOG_TRACE("------------------------- Starting To Draw All Terrain(s) ---------------------------");
+  LOG_TRACE(
+      "------------------------- Starting To Draw All Terrain(s) ---------------------------");
   sp.use(logger);
 
   glFrontFace(GL_CW);
 
-  auto&       ld           = zs.level_data;
+  auto& ld                              = zs.level_data;
   bool constexpr RECEIVES_AMBIENT_LIGHT = true;
   for (auto const& t : ld.terrain_grid()) {
     Transform transform;
 
     auto const& pos = t.position();
-    auto &tr        = transform.translation;
+    auto&       tr  = transform.translation;
     tr.x            = pos.x;
     tr.z            = pos.y;
 
     auto const& dinfo = t.draw_info();
     draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo, Material{},
-        registry, RECEIVES_AMBIENT_LIGHT);
+                     registry, RECEIVES_AMBIENT_LIGHT);
   }
 
   LOG_TRACE("-------------------------Finished Drawing All Terrain(s) ---------------------------");

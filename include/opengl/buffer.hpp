@@ -18,8 +18,7 @@ struct BufferFlags
   {
   }
 
-  std::string
-  to_string() const;
+  std::string to_string() const;
 
   static BufferFlags from_va(VertexAttribute const&);
 };
@@ -44,8 +43,7 @@ struct VertexBuffer
   VertexBuffer() = default;
   MOVE_CONSTRUCTIBLE_ONLY(VertexBuffer);
 
-  std::string
-  to_string() const;
+  std::string to_string() const;
 
   static VertexBuffer create_interleaved(stlw::Logger&, boomhs::ObjData const&, BufferFlags const&);
 };
