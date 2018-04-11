@@ -28,30 +28,62 @@ public:
   auto const& texture_info() const { return ti_; }
 };
 
-class TerrainGrid
+class TerrainArray
 {
-  float const          grid_size_;
-  std::vector<Terrain> terrains_;
+  std::vector<Terrain> data_;
+  size_t               num_inserted_ = 0;
 
 public:
-  explicit TerrainGrid(float);
+  decltype(auto) begin() { return data_.begin(); }
+  decltype(auto) end() { return std::next(begin(), num_inserted_); }
 
-  void add(Terrain&&);
+  decltype(auto) begin() const { return data_.begin(); }
+  decltype(auto) end() const { return std::next(begin(), num_inserted_); }
 
-  MOVE_CONSTRUCTIBLE_ONLY(TerrainGrid);
-  BEGIN_END_FORWARD_FNS(terrains_);
+  decltype(auto) cbegin() const { return data_.cbegin(); }
+  decltype(auto) cend() const { return std::next(begin(), num_inserted_); }
 
-  auto height() const { return grid_size_; }
-  auto width() const { return grid_size_; }
+  void set(size_t, Terrain&&);
+  void reserve(size_t);
+  auto capacity() const { return data_.capacity(); }
+  auto size() const { return num_inserted_; }
+};
 
-  auto count() const { return terrains_.size(); }
+class TerrainGrid
+{
+  size_t       num_rows_, num_cols_;
+  TerrainArray terrain_;
+
+public:
+  explicit TerrainGrid(size_t, size_t);
+  TerrainGrid();
+
+  NO_COPY(TerrainGrid);
+  MOVE_DEFAULT(TerrainGrid);
+  BEGIN_END_FORWARD_FNS(terrain_);
+
+  auto height() const { return num_cols_; }
+  auto width() const { return num_rows_; }
+
+  auto count() const { return terrain_.size(); }
+  void set(size_t, Terrain&&);
+};
+
+struct TerrainConfiguration
+{
+  int width = 1, height = 1;
+  int num_rows = 1, num_cols = 1;
+
+  std::string shader_name    = "terrain";
+  std::string texture_name   = "TerrainFloor";
+  std::string heightmap_path = "assets/terrain/heightmap.png";
 };
 
 namespace terrain
 {
 
-Terrain
-generate(stlw::Logger&, glm::vec2 const&, float, opengl::HeightmapData const&,
+TerrainGrid
+generate(stlw::Logger&, TerrainConfiguration const&, opengl::HeightmapData const&,
          opengl::ShaderProgram&, opengl::TextureInfo const&);
 
 } // namespace terrain

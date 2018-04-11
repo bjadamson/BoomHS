@@ -38,15 +38,14 @@ class LevelData
   TilePosition const  startpos_;
 
   std::vector<RiverInfo> rivers_;
-  TerrainGrid            terrain_;
+  TerrainGrid            terrain_grid_;
 
   void set_tile(TilePosition const&, TileType const&);
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileGrid&&, TileSharedInfoTable&&, TilePosition const&, std::vector<RiverInfo>&&,
-            TerrainGrid&&, Fog const&, opengl::GlobalLight const&, ObjStore&&, Camera&&,
-            WorldObject&&);
+            Fog const&, opengl::GlobalLight const&, ObjStore&&, Camera&&, WorldObject&&);
 
   // public fields
   Fog                 fog;
@@ -60,7 +59,6 @@ public:
   Camera      camera;
   WorldObject player;
 
-  void add_terrain(Terrain&&);
   void set_floor(TilePosition const&);
   void set_river(TilePosition const&);
   void set_wall(TilePosition const&);
@@ -86,8 +84,10 @@ public:
   auto&       rivers() { return rivers_; }
   auto const& rivers() const { return rivers_; }
 
-  auto&       terrain_grid() { return terrain_; }
-  auto const& terrain_grid() const { return terrain_; }
+  void set_terrain_grid(TerrainGrid&& tg) { terrain_grid_ = MOVE(tg); }
+
+  auto&       terrain_grid() { return terrain_grid_; }
+  auto const& terrain_grid() const { return terrain_grid_; }
 
   template <typename FN>
   void visit_tiles(FN const& fn) const

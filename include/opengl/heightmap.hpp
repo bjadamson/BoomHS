@@ -30,4 +30,7 @@ parse(ImageData const&);
 HeightmapResult
 parse(stlw::Logger&, char const*);
 
+HeightmapResult
+parse(stlw::Logger&, std::string const&);
+
 } // namespace opengl::heightmap

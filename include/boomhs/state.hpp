@@ -45,7 +45,7 @@ struct TiledataState
 {
   MOVE_CONSTRUCTIBLE_ONLY(TiledataState);
 
-  bool draw_tilegrid = true;
+  bool draw_tilegrid = false;
   bool recompute     = true;
   bool reveal        = false;
 

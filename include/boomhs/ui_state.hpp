@@ -1,4 +1,6 @@
 #pragma once
+#include <boomhs/terrain.hpp>
+
 #include <array>
 #include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
@@ -25,7 +27,8 @@ struct DrawTimeBuffer
 
 struct Buffers
 {
-  DrawTimeBuffer draw_time_window;
+  DrawTimeBuffer       draw_time_window;
+  TerrainConfiguration terrain_state;
 };
 
 struct UiDebugState
@@ -70,6 +73,7 @@ struct UiDebugState
 
   bool show_tilegrid_editor_window  = false;
   bool show_tilegridmaterial_window = false;
+  bool show_terrain_editor_window   = false;
 };
 
 struct UiState

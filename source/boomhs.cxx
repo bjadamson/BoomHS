@@ -356,29 +356,16 @@ init(Engine& engine, EngineState& engine_state)
   auto& gfx_state = zs.gfx_state;
 
   {
-    auto&       ld = zs.level_data;
-    auto const& ti = *gfx_state.texture_table.find("TerrainFloor");
-
     auto& sps = gfx_state.sps;
     auto& sp  = sps.ref_sp("terrain");
 
-    char const* heightmap_filepath = "assets/terrain/heightmap.png";
-    auto const  heightmap          = TRY(opengl::heightmap::parse(logger, heightmap_filepath));
+    TerrainConfiguration const tc;
+    auto const                 heightmap = TRY(opengl::heightmap::parse(logger, tc.heightmap_path));
+    auto const&                ti        = *gfx_state.texture_table.find(tc.texture_name);
 
-    auto&      tgrid    = ld.terrain_grid();
-    auto const NUM_ROWS = 2, NUM_COLS = 2;
-    FORI(i, NUM_ROWS)
-    {
-      FORI(j, NUM_COLS)
-      {
-        // if (0 == (j % 2)) {
-        // continue;
-        //}
-        auto const pos = glm::vec2{i * tgrid.width(), j * tgrid.height()};
-        auto       t   = terrain::generate(logger, pos, tgrid.width(), heightmap, sp, ti);
-        tgrid.add(MOVE(t));
-      }
-    }
+    auto  tg = terrain::generate(logger, tc, heightmap, sp, ti);
+    auto& ld = zs.level_data;
+    ld.set_terrain_grid(MOVE(tg));
   }
   {
     auto test_r = rexpaint::RexImage::load("assets/test.xp");

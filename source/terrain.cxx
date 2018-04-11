@@ -167,6 +167,21 @@ generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags, float cons
   return data;
 }
 
+auto
+generate_terrain_tile(stlw::Logger& logger, glm::vec2 const& pos, float const terrain_range,
+                      HeightmapData const& heightmap_data, ShaderProgram& sp, TextureInfo const& ti)
+{
+  BufferFlags const flags{true, true, false, true};
+  auto const        data = generate_terrain_data(logger, flags, terrain_range, heightmap_data);
+  LOG_DEBUG_SPRINTF("Generated terrain data: %s", data.to_string());
+
+  auto const buffer = VertexBuffer::create_interleaved(logger, data, flags);
+  auto       di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer, ti);
+
+  LOG_TRACE("Finished Generating Terrain");
+  return Terrain{pos, MOVE(di), ti};
+}
+
 } // namespace
 
 namespace boomhs
@@ -183,16 +198,42 @@ Terrain::Terrain(glm::vec2 const& pos, DrawInfo&& di, TextureInfo const& ti)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// TerrainArray
+void
+TerrainArray::reserve(size_t const c)
+{
+  data_.reserve(c);
+}
+
+void
+TerrainArray::set(size_t const i, Terrain&& t)
+{
+  auto const c = data_.capacity();
+  assert(i < c);
+
+  data_[i] = MOVE(t);
+  ++num_inserted_;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // TerrainGrid
-TerrainGrid::TerrainGrid(float const grid_size)
-    : grid_size_(grid_size)
+TerrainGrid::TerrainGrid(size_t const nr, size_t const nc)
+    : num_rows_(nr)
+    , num_cols_(nc)
+{
+  terrain_.reserve(num_rows_ * num_cols_);
+}
+
+TerrainGrid::TerrainGrid()
+    : TerrainGrid(0, 0)
 {
 }
 
 void
-TerrainGrid::add(Terrain&& t)
+TerrainGrid::set(size_t const i, Terrain&& t)
 {
-  terrains_.emplace_back(MOVE(t));
+  assert(i < terrain_.capacity());
+  terrain_.set(i, MOVE(t));
 }
 
 } // namespace boomhs
@@ -200,21 +241,32 @@ TerrainGrid::add(Terrain&& t)
 namespace boomhs::terrain
 {
 
-Terrain
-generate(stlw::Logger& logger, glm::vec2 const& pos, float const terrain_range,
-         HeightmapData const& heightmap_data, ShaderProgram& sp, TextureInfo const& ti)
+TerrainGrid
+generate(stlw::Logger& logger, TerrainConfiguration const& tc, HeightmapData const& heightmap_data,
+         ShaderProgram& sp, TextureInfo const& ti)
 {
   LOG_TRACE("Generating Terrain");
+  float const  terrain_range = 1.0f;
+  size_t const rows = tc.num_rows, cols = tc.num_cols;
+  TerrainGrid  tgrid{rows, cols};
 
-  BufferFlags const flags{true, true, false, true};
-  auto const        data = generate_terrain_data(logger, flags, terrain_range, heightmap_data);
-  LOG_DEBUG_SPRINTF("Generated terrain data: %s", data.to_string());
+  FOR(i, rows)
+  {
+    FOR(j, cols)
+    {
+      // if (0 == (j % 2)) {
+      // continue;
+      //}
+      auto const pos = glm::vec2{i, j};
+      auto       t   = generate_terrain_tile(logger, pos, terrain_range, heightmap_data, sp, ti);
 
-  auto const buffer = VertexBuffer::create_interleaved(logger, data, flags);
-  auto       di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer, ti);
+      auto const index = (j * rows) + i;
+      tgrid.set(index, MOVE(t));
+    }
+  }
 
   LOG_TRACE("Finished Generating Terrain");
-  return Terrain{pos, MOVE(di), ti};
+  return tgrid;
 }
 
 } // namespace boomhs::terrain

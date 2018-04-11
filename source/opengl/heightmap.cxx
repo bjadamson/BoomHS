@@ -114,4 +114,10 @@ parse(stlw::Logger &logger, char const* path)
   return parse(data);
 }
 
+HeightmapResult
+parse(stlw::Logger &logger, std::string const& path)
+{
+  return parse(logger, path.c_str());
+}
+
 } // ns opengl::heightmap
