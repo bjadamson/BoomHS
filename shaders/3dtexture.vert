@@ -1,4 +1,4 @@
-in vec4 a_position;
+in vec3 a_position;
 in vec3 a_normal;
 in vec2 a_uv;
 
@@ -16,7 +16,7 @@ uniform mat3 u_normalmatrix;
 
 void main()
 {
-  v_position = a_position;
+  v_position = vec4(a_position, 1.0);
   gl_Position = u_mvpmatrix * v_position;
 
   v_surfacenormal = normalize(u_normalmatrix * a_normal);

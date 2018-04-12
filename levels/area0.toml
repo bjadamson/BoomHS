@@ -330,6 +330,21 @@ name = "white"
 diffuse = [1.0, 1.0, 1.0]
 specular = [1.0, 1.0, 1.0]
 
+[[pointlight]]
+name = "red"
+diffuse = [1.0, 0.0, 0.0]
+specular = [1.0, 0.0, 0.0]
+
+[[pointlight]]
+name = "green"
+diffuse = [0.0, 1.0, 0.0]
+specular = [0.0, 1.0, 0.0]
+
+[[pointlight]]
+name = "blue"
+diffuse = [0.0, 0.0, 1.0]
+specular = [0.0, 0.0, 1.0]
+
 ########### ENTITY #############
 [[entity]]
 position = [8.0, 0.0, 8.0]
@@ -392,23 +407,31 @@ name = "Moon"
 ######### POINT LIGHTS
 [[entity]]
 name = "point light 0"
-position = [5.0, 5.0, 5.0]
+position = [0.0, 5.0, 0.0]
 shader = "light"
 geometry = "cube"
-pointlight = "white"
+pointlight = "red"
 scale = [0.4, 0.4, 0.4]
 
 [[entity]]
 name = "point light 1"
-position = [35.0, 5.0, 35.0]
+position = [5.0, 5.0, 0.0]
 shader = "light"
 geometry = "cube"
-pointlight = "white"
+pointlight = "green"
 scale = [0.4, 0.4, 0.4]
 
 [[entity]]
 name = "point light 2"
-position = [5.0, 5.0, 35.0]
+position = [5.0, 5.0, 5.0]
+shader = "light"
+geometry = "cube"
+pointlight = "blue"
+scale = [0.4, 0.4, 0.4]
+
+[[entity]]
+name = "point light 3"
+position = [0.0, 5.0, 5.0]
 shader = "light"
 geometry = "cube"
 pointlight = "white"

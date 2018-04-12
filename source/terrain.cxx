@@ -46,13 +46,11 @@ ObjData::vertices_t
 generate_vertices(stlw::Logger& logger, TerrainConfiguration const& tc,
                   HeightmapData const& heightmap_data)
 {
-  int constexpr NUM_COMPONENTS = 4; // x, y, z, w
+  int constexpr NUM_COMPONENTS = 3; // x, y, z
   auto const          x_length = tc.num_vertexes, z_length = tc.num_vertexes;
   auto const          num_vertexes = calculate_number_vertices(NUM_COMPONENTS, tc);
   ObjData::vertices_t buffer;
   buffer.resize(num_vertexes);
-
-  static constexpr float W = 1.0f;
 
   size_t offset = 0;
   assert(offset < buffer.size());
@@ -77,9 +75,6 @@ generate_vertices(stlw::Logger& logger, TerrainConfiguration const& tc,
 
       assert(offset < buffer.size());
       buffer[offset++] = z_position;
-
-      assert(offset < buffer.size());
-      buffer[offset++] = W;
     }
   }
 

@@ -1,4 +1,4 @@
-in vec4 a_position;
+in vec3 a_position;
 in vec3 a_normal;
 
 uniform vec2 u_offset;
@@ -39,7 +39,7 @@ void main()
   vec3 offsets[4] = vec3[4](a, b, c, d);
   vec3 offset = offsets[gl_InstanceID];
 
-  v_position = a_position;
+  v_position = vec4(a_position, 1.0);
   v_surfacenormal = normalize(u_normalmatrix * a_normal);
   v_color = u_color;
 

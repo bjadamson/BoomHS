@@ -23,13 +23,11 @@ load_vertices(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
   auto const x = attrib.vertices[pos_index + 0];
   auto const y = attrib.vertices[pos_index + 1];
   auto const z = attrib.vertices[pos_index + 2];
-  auto const w = 1.0;
 
   auto& vertices = *pvertices;
   vertices.push_back(x);
   vertices.push_back(y);
   vertices.push_back(z);
-  vertices.push_back(w);
   return LoadStatus::SUCCESS;
 }
 

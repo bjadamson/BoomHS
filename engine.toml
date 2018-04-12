@@ -3,38 +3,38 @@ title = "Engine Configuration"
 ######### VERTEX ATTRIBUTE INFOS ######
 [[vas]]
 name     = "vertex_only"
-position = { datatype = "float", num = 4 }
+position = { datatype = "float", num = 3 }
 
 [[vas]]
 name     = "vertex_normal"
-position = { datatype = "float", num = 4 }
+position = { datatype = "float", num = 3 }
 normal   = { datatype = "float", num = 3 }
 
 [[vas]]
 name     = "vertex_color"
-position = { datatype = "float", num = 4 }
+position = { datatype = "float", num = 3 }
 color    = { datatype = "float", num = 4 }
 
 [[vas]]
 name     = "vertex_uv"
-position = { datatype = "float", num = 4 }
+position = { datatype = "float", num = 3 }
 uv       = { datatype = "float", num = 2 }
 
 [[vas]]
 name     = "vertex_normal_color"
-position = { datatype = "float", num = 4 }
+position = { datatype = "float", num = 3 }
 normal   = { datatype = "float", num = 3 }
 color    = { datatype = "float", num = 4 }
 
 [[vas]]
 name     = "vertex_normal_uvs"
-position = { datatype = "float", num = 4 }
+position = { datatype = "float", num = 3 }
 normal   = { datatype = "float", num = 3 }
 uv       = { datatype = "float", num = 2 }
 
 [[vas]]
 name     = "terrain"
-position = { datatype = "float", num = 4 }
+position = { datatype = "float", num = 3 }
 normal   = { datatype = "float", num = 3 }
 uv       = { datatype = "float", num = 2 }
 

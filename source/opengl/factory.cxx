@@ -64,10 +64,10 @@ make_arrow_vertices(ArrowCreateParams const& params)
   auto endpoints = calculate_arrow_endpoints(params);
   auto const& p1 = endpoints.p1, p2 = endpoints.p2;
 #define COLOR params.color.r(), params.color.g(), params.color.b(), params.color.a()
-#define START params.start.x, params.start.y, params.start.z, 1.0f
-#define END params.end.x, params.end.y, params.end.z, 1.0f
-#define P1 p1.x, p1.y, p1.z, 1.0f
-#define P2 p2.x, p2.y, p2.z, 1.0f
+#define START params.start.x, params.start.y, params.start.z
+#define END params.end.x, params.end.y, params.end.z
+#define P1 p1.x, p1.y, p1.z
+#define P2 p2.x, p2.y, p2.z
   return stlw::make_array<float>(
       // START -> END
       START, COLOR,
@@ -94,18 +94,17 @@ CubeVertices
 cube_vertices()
 {
   // Define the 8 vertices of a unit cube
-  float constexpr W = 1.0f;
   static const CubeVertices v = stlw::make_array<float>(
     // front
-    -1.0f, -1.0f,  1.0f, W,
-     1.0f, -1.0f,  1.0f, W,
-     1.0f,  1.0f,  1.0f, W,
-    -1.0f,  1.0f,  1.0f, W,
+    -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
     // back
-    -1.0f, -1.0f, -1.0f, W,
-     1.0f, -1.0f, -1.0f, W,
-     1.0f,  1.0f, -1.0f, W,
-    -1.0f,  1.0f, -1.0f, W
+    -1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f
   );
   return v;
 }
@@ -131,42 +130,42 @@ RectangleVertices::PointArray
 RectangleVertices::zero() const
 {
   auto const& v = varray_;
-  return stlw::make_array<float>(v[0], v[1], v[2], v[3]);
+  return stlw::make_array<float>(v[0], v[1], v[2]);
 }
 
 RectangleVertices::PointArray
 RectangleVertices::one() const
 {
   auto const& v = varray_;
-  return stlw::make_array<float>(v[4], v[5], v[6], v[7]);
+  return stlw::make_array<float>(v[3], v[4], v[5]);
 }
 
 RectangleVertices::PointArray
 RectangleVertices::two() const
 {
   auto const& v = varray_;
-  return stlw::make_array<float>(v[8], v[9], v[10], v[11]);
+  return stlw::make_array<float>(v[6], v[7], v[8]);
 }
 
 RectangleVertices::PointArray
 RectangleVertices::three() const
 {
   auto const& v = varray_;
-  return stlw::make_array<float>(v[12], v[13], v[14], v[15]);
+  return stlw::make_array<float>(v[9], v[10], v[11]);
 }
 
 RectangleVertices::PointArray
 RectangleVertices::four() const
 {
   auto const& v = varray_;
-  return stlw::make_array<float>(v[16], v[17], v[18], v[19]);
+  return stlw::make_array<float>(v[12], v[13], v[14]);
 }
 
 RectangleVertices::PointArray
 RectangleVertices::five() const
 {
   auto const& v = varray_;
-  return stlw::make_array<float>(v[20], v[21], v[22], v[23]);
+  return stlw::make_array<float>(v[15], v[16], v[17]);
 }
 
 ////////////////////////
@@ -230,8 +229,9 @@ make_rectangle(RectInfo const& info)
     assert(index < RectInfo::NUM_VERTICES);
     vertices.emplace_back(point.x);
     vertices.emplace_back(point.y);
-    vertices.emplace_back(0.0);
-    vertices.emplace_back(1.0);
+
+    static constexpr float Z = 0.0f;
+    vertices.emplace_back(Z);
 
     if (color_o) {
       assert(!colors_o);
@@ -279,11 +279,10 @@ RectangleVertices
 rectangle_vertices()
 {
   float constexpr Z = 0.0f;
-  float constexpr W = 1.0f;
-#define zero  -1.0f, -1.0f, Z, W
-#define one    1.0f, -1.0f, Z, W
-#define two    1.0f,  1.0f, Z, W
-#define three -1.0f,  1.0f, Z, W
+#define zero  -1.0f, -1.0f, Z
+#define one    1.0f, -1.0f, Z
+#define two    1.0f,  1.0f, Z
+#define three -1.0f,  1.0f, Z
   return stlw::make_array<float>(
       zero, one, two,
       two, three, zero

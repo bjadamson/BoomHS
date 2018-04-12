@@ -1,4 +1,4 @@
-in vec4 a_position;
+in vec3 a_position;
 in vec3 a_normal;
 in vec4 a_color;
 
@@ -30,7 +30,7 @@ void main()
   vec3 offset = vertical_offsets[gl_InstanceID];
   vec4 color = v_color;
 
-  v_position = a_position;
+  v_position = vec4(a_position, 1.0);
   v_surfacenormal = normalize(u_normalmatrix * a_normal);
   v_color = a_color;
 
@@ -46,5 +46,5 @@ void main()
   // Transform pos_world to ndc
   gl_Position = u_mvpmatrix * pos_world;
 
-  v_visibility = calculate_fog_visibility(u_fog, u_modelmatrix, u_viewmatrix, a_position);
+  v_visibility = calculate_fog_visibility(u_fog, u_modelmatrix, u_viewmatrix, v_position);
 }

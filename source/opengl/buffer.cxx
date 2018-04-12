@@ -86,8 +86,8 @@ VertexBuffer::create_interleaved(stlw::Logger& logger, ObjData const& data,
   size_t a = 0, b = 0, c = 0, d = 0;
   while (keep_going()) {
     assert(!data.vertices.empty());
-    assert(num_vertexes >= 4);
-    copy_n(data.vertices, 4, a, num_vertexes);
+    assert(num_vertexes >= 3);
+    copy_n(data.vertices, 3, a, num_vertexes);
 
     if (flags.normals) {
       assert(num_normals >= 3);

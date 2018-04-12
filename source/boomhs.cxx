@@ -195,6 +195,14 @@ update_orbital_bodies(LevelData& ldata, EntityRegistry& registry, FrameTime cons
   for (auto const eid : eids) {
     update_orbitals(eid);
   }
+
+  // TODO: HACK
+  auto& directional   = ldata.global_light.directional;
+  if (directional.enabled) {
+    auto const pos = registry.get<Transform>(eids.front()).translation;
+    auto const orbital_to_origin = glm::normalize(-pos);
+    directional.direction        = -orbital_to_origin;
+  }
 }
 
 bool

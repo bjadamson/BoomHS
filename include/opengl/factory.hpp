@@ -21,7 +21,7 @@ namespace opengl::factories
 
 // Arrows
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-using ArrayVertices = std::array<float, 48>;
+using ArrayVertices = std::array<float, 42>;
 
 struct ArrowCreateParams
 {
@@ -38,7 +38,7 @@ make_arrow_vertices(ArrowCreateParams const&);
 
 // Cubes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-using CubeVertices = std::array<float, 32>;
+using CubeVertices = std::array<float, 24>;
 using CubeIndices  = std::array<GLuint, 36>;
 
 // clang-format off
@@ -68,8 +68,8 @@ using RectangleIndices = std::array<GLuint, 6>;
 
 class RectangleVertices
 {
-  using VerticesArray = std::array<float, 24>;
-  using PointArray = std::array<float, 4>;
+  using VerticesArray = std::array<float, 18>;
+  using PointArray = std::array<float, 3>;
 
   VerticesArray varray_;
 
