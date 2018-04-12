@@ -425,14 +425,6 @@ texture = "building_skybox"
 
 ###################################################################################################
 [[entity]]
-name = "boring cube"
-position = [-5.0, -2.0, 0.0]
-shader = "3dcube_texture"
-geometry = "cube"
-texture = "boring_cube"
-random_junk_from_file = true
-
-[[entity]]
 name = "house"
 material = "terrain"
 position = [20.0, 0.0, 20.0]

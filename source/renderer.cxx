@@ -54,44 +54,6 @@ set_modelmatrix(stlw::Logger& logger, glm::mat4 const& model_matrix, ShaderProgr
 }
 
 void
-draw_drawinfo(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
-{
-  auto const draw_mode   = dinfo.draw_mode();
-  auto const num_indices = dinfo.num_indices();
-  auto constexpr OFFSET  = nullptr;
-
-  /*
-  LOG_DEBUG("---------------------------------------------------------------------------");
-  LOG_DEBUG("drawing object!");
-  LOG_DEBUG_SPRINTF("sp: %s", sp.to_string());
-  LOG_DEBUG_SPRINTF("draw_info: %s", dinfo.to_string(sp.va()));
-  LOG_DEBUG("---------------------------------------------------------------------------");
-  */
-
-  auto const draw_fn = [&]() {
-    if (sp.instance_count) {
-      auto const ic = *sp.instance_count;
-      glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
-    }
-    else {
-      LOG_DEBUG_SPRINTF("Drawing %i indices", num_indices);
-      glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
-    }
-  };
-
-  if (dinfo.texture_info()) {
-    auto const ti = *dinfo.texture_info();
-    opengl::global::texture_bind(ti);
-    ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
-    LOG_DEBUG_SPRINTF("Binding TextureInfo '%s'", ti.to_string());
-    draw_fn();
-  }
-  else {
-    draw_fn();
-  }
-}
-
-void
 set_dirlight(stlw::Logger& logger, ShaderProgram& sp, GlobalLight const& global_light)
 {
   auto const& directional_light = global_light.directional;
@@ -197,39 +159,62 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
 }
 
 void
-draw(RenderState& rstate, glm::mat4 const& model_matrix, ShaderProgram& sp, DrawInfo const& dinfo,
-     bool const is_skybox = false)
+set_3dmvpmatrix(stlw::Logger &logger, Camera const& camera, glm::mat4 const& model_matrix,
+    ShaderProgram& sp)
 {
-  auto& es     = rstate.es;
-  auto& zs     = rstate.zs;
-  auto& logger = es.logger;
+  auto const mvp_matrix = camera.camera_matrix() * model_matrix;
+  sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
+}
+
+void
+draw(stlw::Logger &logger, ShaderProgram& sp, DrawInfo const& dinfo)
+{
+  auto const draw_mode   = dinfo.draw_mode();
+  auto const num_indices = dinfo.num_indices();
+  auto constexpr OFFSET  = nullptr;
 
   // Use the sp's PROGRAM and bind the sp's VAO.
   sp.use(logger);
   opengl::global::vao_bind(dinfo.vao());
   ON_SCOPE_EXIT([]() { opengl::global::vao_unbind(); });
 
-  if (sp.is_2d) {
-    disable_depth_tests();
-    draw_drawinfo(logger, sp, dinfo);
-    enable_depth_tests();
-  }
-  else {
-    auto const& ldata  = zs.level_data;
-    auto const& camera = ldata.camera;
+  /*
+  LOG_DEBUG("---------------------------------------------------------------------------");
+  LOG_DEBUG("drawing object!");
+  LOG_DEBUG_SPRINTF("sp: %s", sp.to_string());
+  LOG_DEBUG_SPRINTF("draw_info: %s", dinfo.to_string(sp.va()));
+  LOG_DEBUG("---------------------------------------------------------------------------");
+  */
 
-    auto const mvp_matrix = camera.camera_matrix() * model_matrix;
-    sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
-
-    if (is_skybox) {
-      disable_depth_tests();
-      draw_drawinfo(logger, sp, dinfo);
-      enable_depth_tests();
+  auto const draw_fn = [&]() {
+    if (sp.instance_count) {
+      auto const ic = *sp.instance_count;
+      glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
     }
     else {
-      draw_drawinfo(logger, sp, dinfo);
+      LOG_DEBUG_SPRINTF("Drawing %i indices", num_indices);
+      glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
     }
+  };
+
+  if (dinfo.texture_info()) {
+    auto const ti = *dinfo.texture_info();
+    opengl::global::texture_bind(ti);
+    ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
+    LOG_DEBUG_SPRINTF("Binding TextureInfo '%s'", ti.to_string());
+    draw_fn();
   }
+  else {
+    draw_fn();
+  }
+}
+
+void
+draw_2d(stlw::Logger &logger, ShaderProgram& sp, DrawInfo const& dinfo)
+{
+  disable_depth_tests();
+  draw(logger, sp, dinfo);
+  enable_depth_tests();
 }
 
 void
@@ -238,6 +223,7 @@ draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const
                  EntityRegistry& registry, bool const receives_ambient_light)
 {
   auto& es = rstate.es;
+  auto& logger = es.logger;
   auto& zs = rstate.zs;
 
   auto const                       pointlight_eids = find_pointlights(registry);
@@ -254,7 +240,10 @@ draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const
   }
   set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
                              receives_ambient_light);
-  draw(rstate, model_matrix, sp, dinfo);
+  auto const& ldata  = zs.level_data;
+  auto const& camera = ldata.camera;
+  set_3dmvpmatrix(logger, camera, model_matrix, sp);
+  draw(logger, sp, dinfo);
 }
 
 void
@@ -274,7 +263,14 @@ draw_3dlightsource(RenderState& rstate, glm::mat4 const& model_matrix, ShaderPro
     auto const diffuse = pointlight.light.diffuse;
     sp.set_uniform_color_3fv(logger, "u_lightcolor", diffuse);
   }
-  draw(rstate, model_matrix, sp, dinfo);
+
+  if (!sp.is_2d) {
+    auto const& ldata  = zs.level_data;
+    auto const& camera = ldata.camera;
+    set_3dmvpmatrix(logger, camera, model_matrix, sp);
+  }
+
+  draw(logger, sp, dinfo);
 }
 
 void
@@ -436,8 +432,13 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
 
   auto const dinfo = OG::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
 
+  auto const& ldata  = zs.level_data;
+  auto const& camera = ldata.camera;
+
   Transform transform;
-  draw(rstate, transform.model_matrix(), sp, dinfo);
+  set_3dmvpmatrix(logger, camera, transform.model_matrix(), sp);
+
+  draw(logger, sp, dinfo);
 }
 
 void
@@ -478,11 +479,15 @@ draw_global_axis(RenderState& rstate)
   auto& sp           = sps.ref_sp("3d_pos_color");
   auto  world_arrows = OG::create_axis_arrows(logger, sp);
 
+
+  auto const& ldata  = zs.level_data;
+  auto const& camera = ldata.camera;
   Transform  transform;
-  auto const model_matrix = transform.model_matrix();
-  draw(rstate, model_matrix, sp, world_arrows.x_dinfo);
-  draw(rstate, model_matrix, sp, world_arrows.y_dinfo);
-  draw(rstate, model_matrix, sp, world_arrows.z_dinfo);
+  set_3dmvpmatrix(logger, camera, transform.model_matrix(), sp);
+
+  draw(logger, sp, world_arrows.x_dinfo);
+  draw(logger, sp, world_arrows.y_dinfo);
+  draw(logger, sp, world_arrows.z_dinfo);
 
   LOG_TRACE("Finished Drawing Global Axis");
 }
@@ -503,10 +508,13 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
   Transform transform;
   transform.translation = player_pos;
 
-  auto const model_matrix = transform.model_matrix();
-  draw(rstate, model_matrix, sp, axis_arrows.x_dinfo);
-  draw(rstate, model_matrix, sp, axis_arrows.y_dinfo);
-  draw(rstate, model_matrix, sp, axis_arrows.z_dinfo);
+  auto const& ldata  = zs.level_data;
+  auto const& camera = ldata.camera;
+  set_3dmvpmatrix(logger, camera, transform.model_matrix(), sp);
+
+  draw(logger, sp, axis_arrows.x_dinfo);
+  draw(logger, sp, axis_arrows.y_dinfo);
+  draw(logger, sp, axis_arrows.z_dinfo);
 
   LOG_TRACE("Finished Drawing Local Axis");
 }
@@ -556,7 +564,12 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
     // Can't receive light
     assert(!registry.has<Material>());
-    draw(rstate, transform.model_matrix(), sp, dinfo);
+
+    if (!sp.is_2d) {
+      set_3dmvpmatrix(logger, camera, model_matrix, sp);
+    }
+
+    draw(logger, sp, dinfo);
   };
 
   auto const player_drawfn = [&camera, &draw_fn](auto&&... args) {
@@ -639,8 +652,7 @@ draw_inventory_overlay(RenderState& rstate)
   Transform  transform;
   auto const model_matrix = transform.model_matrix();
   set_modelmatrix(logger, model_matrix, sp);
-
-  draw(rstate, model_matrix, sp, dinfo);
+  draw_2d(logger, sp, dinfo);
 }
 
 void
@@ -775,10 +787,10 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
     auto texture_o = ttable.find("TargetReticle");
     assert(texture_o);
-    DrawInfo const di = gpu::copy_rectangle_uvs(logger, v, sp, *texture_o);
+    DrawInfo const dinfo = gpu::copy_rectangle_uvs(logger, v, sp, *texture_o);
 
     transform.scale = glm::vec3{scale};
-    draw(rstate, transform.model_matrix(), sp, di);
+    draw_2d(logger, sp, dinfo);
   };
 
   auto const draw_glow = [&]() {
@@ -788,10 +800,10 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     auto const mvp_matrix = camera.projection_matrix() * view_model;
     set_modelmatrix(logger, mvp_matrix, sp);
 
-    DrawInfo const di = gpu::copy_rectangle_uvs(logger, v, sp, *texture_o);
+    DrawInfo const dinfo = gpu::copy_rectangle_uvs(logger, v, sp, *texture_o);
 
-    transform.scale = glm::vec3{scale / 2.0f};
-    draw(rstate, transform.model_matrix(), sp, di);
+    transform.scale = glm::vec3{scale};
+    draw_2d(logger, sp, dinfo);
   };
 
   if (scale < 1.0f) {
@@ -875,8 +887,24 @@ draw_skybox(RenderState& rstate, window::FrameTime const& ft)
 
     auto& sp = sps.ref_sp(sn.value);
     LOG_TRACE_SPRINTF("drawing skybox with shader: %s", sn.value);
-    bool constexpr IS_SKYBOX = true;
-    draw(rstate, transform.model_matrix(), sp, dinfo, IS_SKYBOX);
+
+    auto const& ldata = zs.level_data;
+    auto const& camera = ldata.camera;
+
+    // Create a view matrix that has it's translation components zero'd out.
+    //
+    // The effect of this is the view matrix contains just the rotation, which is what's desired
+    // for rendering the skybox.
+    auto view_matrix = camera.view_matrix();
+    view_matrix[3][0] = 0.0f;
+    view_matrix[3][1] = 0.0f;
+    view_matrix[3][2] = 0.0f;
+
+    auto const camera_matrix = camera.projection_matrix() * view_matrix;
+    auto const mvp_matrix = camera_matrix * transform.model_matrix();
+    sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
+
+    draw_2d(logger, sp, dinfo);
   };
 
   registry.view<ShaderName, Transform, IsVisible, IsSkybox>().each(draw_fn);
@@ -912,9 +940,14 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
     auto const              a     = std::sin(ft.since_start_seconds() * M_PI * SPEED);
     float const             scale = glm::lerp(MIN, MAX, std::abs(a));
 
-    auto const scalevec    = glm::vec3{scale};
-    auto const modelmatrix = stlw::math::calculate_modelmatrix(tr, rot, scalevec);
-    draw(rstate, modelmatrix, sp, dinfo);
+    auto const scalevec     = glm::vec3{scale};
+    auto const model_matrix = stlw::math::calculate_modelmatrix(tr, rot, scalevec);
+
+    auto const& ldata  = zs.level_data;
+    auto const& camera = ldata.camera;
+    set_3dmvpmatrix(logger, camera, model_matrix, sp);
+
+    draw(logger, sp, dinfo);
   };
 
   auto constexpr X = -15.0;
@@ -975,7 +1008,12 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
   auto const dinfo  = OG::create_tilegrid(es.logger, sp, tilegrid, show_y);
 
   auto const model_matrix = transform.model_matrix();
-  draw(rstate, model_matrix, sp, dinfo);
+
+  auto const& ldata  = zs.level_data;
+  auto const& camera = ldata.camera;
+  set_3dmvpmatrix(logger, camera, model_matrix, sp);
+
+  draw(logger, sp, dinfo);
 }
 
 } // namespace boomhs::render

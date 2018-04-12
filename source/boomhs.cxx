@@ -8,7 +8,6 @@
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/rexpaint.hpp>
-#include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/ui_ingame.hpp>
@@ -122,14 +121,6 @@ move_betweentilegrids_ifonstairs(stlw::Logger& logger, TiledataState& tds, Level
       break;
     }
   }
-}
-
-void
-move_skybox_to_camera(stlw::Logger& logger, Camera& camera, EntityRegistry& registry)
-{
-  auto const skybox_eid  = find_skybox(registry);
-  auto&      stransform  = registry.get<Transform>(skybox_eid);
-  stransform.translation = camera.world_position();
 }
 
 void
@@ -400,7 +391,6 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     auto& zs       = lm.active();
     auto& registry = zs.registry;
     move_betweentilegrids_ifonstairs(logger, tilegrid_state, lm);
-    move_skybox_to_camera(logger, lm.active().level_data.camera, registry);
   }
 
   // Must recalculate zs and registry, possibly changed since call to move_between()
