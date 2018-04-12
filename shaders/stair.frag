@@ -4,7 +4,7 @@ in float v_visibility;
 
 uniform Material    u_material;
 uniform PointLight  u_pointlights[MAX_NUM_POINTLIGHTS];
-uniform DirectionalLight u_directional_light[MAX_NUM_DIRECTIONAL_LIGHTS];
+uniform DirectionalLight u_directional_light;
 
 uniform int   u_drawnormals;
 uniform int   u_ignore_dirlight;

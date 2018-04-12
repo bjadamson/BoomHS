@@ -71,12 +71,15 @@ public:
 
 struct TerrainConfiguration
 {
-  int width = 1, height = 1;
-  int num_rows = 1, num_cols = 1;
+  size_t num_vertexes;
+  size_t x_length, z_length;
+  size_t num_rows, num_cols;
 
-  std::string shader_name    = "terrain";
-  std::string texture_name   = "TerrainFloor";
-  std::string heightmap_path = "assets/terrain/heightmap.png";
+  std::string shader_name;
+  std::string texture_name;
+  std::string heightmap_path;
+
+  TerrainConfiguration();
 };
 
 namespace terrain

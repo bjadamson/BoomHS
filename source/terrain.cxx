@@ -25,54 +25,58 @@ namespace
 //
 // etc...
 size_t
-calculate_number_vertices(int const num_components, int const rows, int const columns)
+calculate_number_vertices(int const num_components, TerrainConfiguration const& tc)
 {
-  return num_components * columns * rows;
+  return num_components * (tc.num_vertexes * tc.num_vertexes);
+}
+
+float
+x_ratio(float const x, TerrainConfiguration const& tc)
+{
+  return (x / (tc.num_vertexes - 1)) * tc.x_length;
+}
+
+float
+z_ratio(float const z, TerrainConfiguration const& tc)
+{
+  return (1.0f - (z / (tc.num_vertexes - 1))) * tc.z_length;
 }
 
 ObjData::vertices_t
-generate_vertices(stlw::Logger& logger, int const x_length, int const z_length,
-                  TerrainConfiguration const& tc, HeightmapData const& heightmap_data)
+generate_vertices(stlw::Logger& logger, TerrainConfiguration const& tc,
+                  HeightmapData const& heightmap_data)
 {
   int constexpr NUM_COMPONENTS     = 4; // x, y, z, w
-  auto const          num_vertexes = calculate_number_vertices(NUM_COMPONENTS, x_length, z_length);
+  auto const              x_length = tc.num_vertexes, z_length = tc.num_vertexes;
+  auto const          num_vertexes = calculate_number_vertices(NUM_COMPONENTS, tc);
   ObjData::vertices_t buffer;
   buffer.resize(num_vertexes);
 
   static constexpr float W = 1.0f;
 
-  // For calculating ratio's inside the loop
-  assert(0 != (x_length - 1));
-  assert(0 != (z_length - 1));
-
   size_t offset = 0;
   assert(offset < buffer.size());
-  FORI(z, z_length)
+  FOR(z, z_length)
   {
-    FORI(x, x_length)
+    FOR(x, x_length)
     {
       assert(offset < static_cast<size_t>(num_vertexes));
 
-      // Build our heightmap from the top down, so that our triangles are
-      // counter-clockwise.
-      float const xRatio = (float)x / (float)(x_length - 1);
-      float const zRatio = 1.0f - (z / (float)(z_length - 1));
-
-      float const xPosition = 0.0f + (xRatio * tc.width);
-      float const zPosition = 0.0f + (zRatio * tc.height);
+      float const x_position = 0.0f + (x_ratio(x, tc));
+      float const z_position = 0.0f + (z_ratio(z, tc));
 
       assert(offset < buffer.size());
-      buffer[offset++] = xPosition;
+      buffer[offset++] = x_position;
 
       assert(offset < buffer.size());
 
       uint8_t const height   = heightmap_data.data()[(x_length * z) + x];
       float const   height_f = height / 255.0f;
-      LOG_TRACE_SPRINTF("TERRAIN HEIGHT: %f", height_f);
+      LOG_TRACE_SPRINTF("TERRAIN HEIGHT: %f (raw: %u)", height_f, height);
       buffer[offset++] = height_f;
 
       assert(offset < buffer.size());
-      buffer[offset++] = zPosition;
+      buffer[offset++] = z_position;
 
       assert(offset < buffer.size());
       buffer[offset++] = W;
@@ -85,21 +89,22 @@ generate_vertices(stlw::Logger& logger, int const x_length, int const z_length,
 }
 
 ObjData::vertices_t
-generate_uvs(int const rows, int const columns)
+generate_uvs(TerrainConfiguration const& tc)
 {
-  auto const          num_vertexes = calculate_number_vertices(2, rows, columns);
+  auto const          num_vertexes = calculate_number_vertices(2, tc);
   ObjData::vertices_t buffer;
   buffer.resize(num_vertexes);
 
   size_t counter = 0;
-  FORI(r, rows)
+  FOR(x, tc.num_vertexes)
   {
-    FORI(c, columns)
+    FOR(z, tc.num_vertexes)
     {
       assert(counter < num_vertexes);
 
-      float const u     = (float)c / ((float)columns - 1);
-      float const v     = (float)r / ((float)rows - 1);
+      float const u = 0.0f + x_ratio(x, tc);
+      float const v = 0.0f + z_ratio(z, tc);
+
       buffer[counter++] = u;
       buffer[counter++] = v;
     }
@@ -109,25 +114,28 @@ generate_uvs(int const rows, int const columns)
 }
 
 ObjData::indices_t
-generate_indices(int const x_length, int const z_length)
+generate_indices(TerrainConfiguration const& tc)
 {
-  int const    strips_required          = z_length - 1;
-  int const    degen_triangles_required = 2 * (strips_required - 1);
-  int const    vertices_perstrip        = 2 * x_length;
+  auto const x_length = tc.num_vertexes, z_length = tc.num_vertexes;
+
+  auto const    strips_required          = z_length - 1;
+  auto const    degen_triangles_required = 2 * (strips_required - 1);
+  auto const    vertices_perstrip        = 2 * x_length;
+
   size_t const num_indices = (vertices_perstrip * strips_required) + degen_triangles_required;
 
   ObjData::indices_t buffer;
   buffer.resize(num_indices);
 
   size_t offset = 0;
-  FORI(z, z_length - 1)
+  FOR(z, z_length - 1)
   {
     if (z > 0) {
       // Degenerate begin: repeat first vertex
       buffer[offset++] = z * z_length;
     }
 
-    FORI(x, x_length)
+    FOR(x, x_length)
     {
       // One part of the strip
       buffer[offset++] = (z * z_length) + x;
@@ -149,17 +157,15 @@ ObjData
 generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags,
                       TerrainConfiguration const& tc, HeightmapData const& heightmap_data)
 {
-  int const vertex_count = 128;
-  int const rows = vertex_count, columns = vertex_count;
-  int const count = rows * columns;
+  auto const count = tc.num_vertexes * tc.num_vertexes;
 
   ObjData data;
   data.num_vertexes = count;
 
-  data.vertices = generate_vertices(logger, rows, columns, tc, heightmap_data);
-  data.normals  = heightmap::generate_normals(rows, columns, heightmap_data);
-  data.uvs      = generate_uvs(rows, columns);
-  data.indices  = generate_indices(rows, columns);
+  data.vertices = generate_vertices(logger, tc, heightmap_data);
+  data.normals  = heightmap::generate_normals(tc.num_vertexes, tc.num_vertexes, heightmap_data);
+  data.uvs      = generate_uvs(tc);
+  data.indices  = generate_indices(tc);
   return data;
 }
 
@@ -182,6 +188,20 @@ generate_terrain_tile(stlw::Logger& logger, glm::vec2 const& pos, TerrainConfigu
 
 namespace boomhs
 {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// TerrainConfiguration
+TerrainConfiguration::TerrainConfiguration()
+  : num_vertexes(256)
+  , x_length(1)
+  , z_length(1)
+  , num_rows(1)
+  , num_cols(1)
+  , shader_name("terrain")
+  , texture_name("TerrainFloor")
+  , heightmap_path("assets/terrain/heightmap.png")
+{
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Terrain
@@ -249,9 +269,6 @@ generate(stlw::Logger& logger, TerrainConfiguration const& tc, HeightmapData con
   {
     FOR(j, cols)
     {
-      // if (0 == (j % 2)) {
-      // continue;
-      //}
       auto const pos = glm::vec2{i, j};
       auto       t   = generate_terrain_tile(logger, pos, tc, heightmap_data, sp, ti);
 

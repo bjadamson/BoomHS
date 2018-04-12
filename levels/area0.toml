@@ -327,8 +327,8 @@ specular = [0.0, 1.0, 0.0]
 
 [[pointlight]]
 name = "white"
-diffuse = [0.0, 0.0, 0.0]
-specular = [0.0, 0.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
 
 ########### ENTITY #############
 [[entity]]

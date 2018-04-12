@@ -177,7 +177,7 @@ rotate_around(glm::vec3 const& point_to_rotate, glm::vec3 const& rot_center,
 void
 update_orbital_bodies(LevelData& ldata, EntityRegistry& registry, FrameTime const& ft)
 {
-  auto const update_orbitals = [&](auto const eid, bool& first) {
+  auto const update_orbitals = [&](auto const eid) {
     auto& transform = registry.get<Transform>(eid);
     auto& orbital   = registry.get<OrbitalBody>(eid);
     auto& pos       = transform.translation;
@@ -189,22 +189,11 @@ update_orbital_bodies(LevelData& ldata, EntityRegistry& registry, FrameTime cons
     pos.x = orbital.x_radius * cos_time;
     pos.y = orbital.y_radius * sin_time;
     pos.z = orbital.z_radius * sin_time;
-
-    if (first) {
-      first               = true;
-      auto& directional   = ldata.global_light.directional;
-      directional.enabled = pos.y > 0.0f;
-      if (directional.enabled) {
-        auto const orbital_to_origin = glm::normalize(-pos);
-        directional.direction        = -orbital_to_origin;
-      }
-    }
   };
 
-  bool       first = true;
   auto const eids  = find_orbital_bodies(registry);
   for (auto const eid : eids) {
-    update_orbitals(eid, first);
+    update_orbitals(eid);
   }
 }
 

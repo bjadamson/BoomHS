@@ -57,11 +57,11 @@ void
 set_dirlight(stlw::Logger& logger, ShaderProgram& sp, GlobalLight const& global_light)
 {
   auto const& directional_light = global_light.directional;
-  sp.set_uniform_vec3(logger, "u_directional_light[0].direction", directional_light.direction);
+  sp.set_uniform_vec3(logger, "u_directional_light.direction", directional_light.direction);
 
   auto const& light = directional_light.light;
-  sp.set_uniform_color_3fv(logger, "u_directional_light[0].diffuse", light.diffuse);
-  sp.set_uniform_color_3fv(logger, "u_directional_light[0].specular", light.specular);
+  sp.set_uniform_color_3fv(logger, "u_directional_light.diffuse", light.diffuse);
+  sp.set_uniform_color_3fv(logger, "u_directional_light.specular", light.specular);
 
   sp.set_uniform_int1(logger, "u_ignore_dirlight", !directional_light.enabled);
 }

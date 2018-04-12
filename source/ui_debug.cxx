@@ -212,20 +212,23 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 
   auto& zs        = lm.active();
   auto& gfx_state = zs.gfx_state;
+  auto& tstate = es.ui_state.debug.buffers.terrain_state;
 
   auto const draw = [&]() {
-    ImGui::Text("Settings for terrain generation");
+    ImGui::Text("terrain Generation");
 
-    auto& tstate = es.ui_state.debug.buffers.terrain_state;
-    ImGui::InputInt("w", &tstate.width);
-    ImGui::InputInt("h", &tstate.height);
-
-    ImGui::InputInt("rows", &tstate.num_rows);
-    ImGui::InputInt("cols", &tstate.num_cols);
+    imgui_cxx::input_sizet("Vertex Count", &tstate.num_vertexes);
+    imgui_cxx::input_sizet("x width", &tstate.x_length);
+    imgui_cxx::input_sizet("z length", &tstate.z_length);
 
     imgui_cxx::input_string("Heightmap File Path", tstate.heightmap_path);
     imgui_cxx::input_string("Shader Name", tstate.shader_name);
     imgui_cxx::input_string("Texture Name", tstate.texture_name);
+
+    ImGui::Separator();
+    ImGui::Text("Grid Configuration");
+    imgui_cxx::input_sizet("num rows", &tstate.num_rows);
+    imgui_cxx::input_sizet("num cols", &tstate.num_cols);
 
     if (ImGui::Button("Generate Terrain")) {
       auto& ldata = zs.level_data;
@@ -411,9 +414,10 @@ show_directionallight_window(UiDebugState& ui, LevelData& ldata)
     ImGui::Text("Directional Light");
     ImGui::InputFloat3("direction:", glm::value_ptr(directional.direction));
 
-    auto& directional_light = directional.light;
-    ImGui::ColorEdit3("Diffuse:", directional_light.diffuse.data());
-    ImGui::ColorEdit3("Specular:", directional_light.specular.data());
+    auto& colors = directional.light;
+    ImGui::Checkbox("Enabled", &directional.enabled);
+    ImGui::ColorEdit3("Diffuse:", colors.diffuse.data());
+    ImGui::ColorEdit3("Specular:", colors.specular.data());
 
     if (ImGui::Button("Close", ImVec2(120, 0))) {
       ui.show_directionallight_window = false;
