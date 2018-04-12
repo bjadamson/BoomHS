@@ -201,7 +201,7 @@ update_orbital_bodies(LevelData& ldata, EntityRegistry& registry, FrameTime cons
   if (directional.enabled) {
     auto const pos = registry.get<Transform>(eids.front()).translation;
     auto const orbital_to_origin = glm::normalize(-pos);
-    directional.direction        = -orbital_to_origin;
+    directional.direction        = orbital_to_origin;
   }
 }
 

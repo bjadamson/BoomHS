@@ -291,10 +291,16 @@ offset = 3.1459
 
 ########### ATTENUATION #############
 [[attenuation]]
-name = "moon"
+name = "default"
 constant = 0.1
 linear = 0.001
 quadratic = 0.000001
+
+[[attenuation]]
+name = "moon"
+constant = 0.1
+linear = 0.001
+quadratic = 9999.0
 
 ########### MATERIAL #############
 [[material]]
@@ -320,28 +326,32 @@ shininess = 10.00
 
 ########### POINTLIGHT #############
 [[pointlight]]
-attenuation = "moon"
 name = "moon"
+attenuation = "moon"
 diffuse = [0.0, 0.0, 1.0]
 specular = [0.0, 1.0, 0.0]
 
 [[pointlight]]
 name = "white"
+attenuation = "default"
 diffuse = [1.0, 1.0, 1.0]
 specular = [1.0, 1.0, 1.0]
 
 [[pointlight]]
 name = "red"
+attenuation = "default"
 diffuse = [1.0, 0.0, 0.0]
 specular = [1.0, 0.0, 0.0]
 
 [[pointlight]]
 name = "green"
+attenuation = "default"
 diffuse = [0.0, 1.0, 0.0]
 specular = [0.0, 1.0, 0.0]
 
 [[pointlight]]
 name = "blue"
+attenuation = "default"
 diffuse = [0.0, 0.0, 1.0]
 specular = [0.0, 0.0, 1.0]
 
