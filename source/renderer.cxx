@@ -159,15 +159,15 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
 }
 
 void
-set_3dmvpmatrix(stlw::Logger &logger, Camera const& camera, glm::mat4 const& model_matrix,
-    ShaderProgram& sp)
+set_3dmvpmatrix(stlw::Logger& logger, Camera const& camera, glm::mat4 const& model_matrix,
+                ShaderProgram& sp)
 {
   auto const mvp_matrix = camera.camera_matrix() * model_matrix;
   sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 }
 
 void
-draw(stlw::Logger &logger, ShaderProgram& sp, DrawInfo const& dinfo)
+draw(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
 {
   auto const draw_mode   = dinfo.draw_mode();
   auto const num_indices = dinfo.num_indices();
@@ -210,7 +210,7 @@ draw(stlw::Logger &logger, ShaderProgram& sp, DrawInfo const& dinfo)
 }
 
 void
-draw_2d(stlw::Logger &logger, ShaderProgram& sp, DrawInfo const& dinfo)
+draw_2d(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
 {
   disable_depth_tests();
   draw(logger, sp, dinfo);
@@ -222,9 +222,9 @@ draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const
                  ShaderProgram& sp, DrawInfo const& dinfo, Material const& material,
                  EntityRegistry& registry, bool const receives_ambient_light)
 {
-  auto& es = rstate.es;
+  auto& es     = rstate.es;
   auto& logger = es.logger;
-  auto& zs = rstate.zs;
+  auto& zs     = rstate.zs;
 
   auto const                       pointlight_eids = find_pointlights(registry);
   std::vector<PointlightTransform> pointlights;
@@ -479,10 +479,9 @@ draw_global_axis(RenderState& rstate)
   auto& sp           = sps.ref_sp("3d_pos_color");
   auto  world_arrows = OG::create_axis_arrows(logger, sp);
 
-
   auto const& ldata  = zs.level_data;
   auto const& camera = ldata.camera;
-  Transform  transform;
+  Transform   transform;
   set_3dmvpmatrix(logger, camera, transform.model_matrix(), sp);
 
   draw(logger, sp, world_arrows.x_dinfo);
@@ -889,20 +888,20 @@ draw_skybox(RenderState& rstate, window::FrameTime const& ft)
     auto& sp = sps.ref_sp(sn.value);
     LOG_TRACE_SPRINTF("drawing skybox with shader: %s", sn.value);
 
-    auto const& ldata = zs.level_data;
+    auto const& ldata  = zs.level_data;
     auto const& camera = ldata.camera;
 
     // Create a view matrix that has it's translation components zero'd out.
     //
     // The effect of this is the view matrix contains just the rotation, which is what's desired
     // for rendering the skybox.
-    auto view_matrix = camera.view_matrix();
+    auto view_matrix  = camera.view_matrix();
     view_matrix[3][0] = 0.0f;
     view_matrix[3][1] = 0.0f;
     view_matrix[3][2] = 0.0f;
 
     auto const camera_matrix = camera.projection_matrix() * view_matrix;
-    auto const mvp_matrix = camera_matrix * transform.model_matrix();
+    auto const mvp_matrix    = camera_matrix * transform.model_matrix();
     sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 
     draw_2d(logger, sp, dinfo);

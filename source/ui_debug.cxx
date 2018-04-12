@@ -212,7 +212,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 
   auto& zs        = lm.active();
   auto& gfx_state = zs.gfx_state;
-  auto& tstate = es.ui_state.debug.buffers.terrain_state;
+  auto& tstate    = es.ui_state.debug.buffers.terrain_state;
 
   auto const draw = [&]() {
     ImGui::Text("terrain Generation");

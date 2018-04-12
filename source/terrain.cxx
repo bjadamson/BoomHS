@@ -46,8 +46,8 @@ ObjData::vertices_t
 generate_vertices(stlw::Logger& logger, TerrainConfiguration const& tc,
                   HeightmapData const& heightmap_data)
 {
-  int constexpr NUM_COMPONENTS     = 4; // x, y, z, w
-  auto const              x_length = tc.num_vertexes, z_length = tc.num_vertexes;
+  int constexpr NUM_COMPONENTS = 4; // x, y, z, w
+  auto const          x_length = tc.num_vertexes, z_length = tc.num_vertexes;
   auto const          num_vertexes = calculate_number_vertices(NUM_COMPONENTS, tc);
   ObjData::vertices_t buffer;
   buffer.resize(num_vertexes);
@@ -118,9 +118,9 @@ generate_indices(TerrainConfiguration const& tc)
 {
   auto const x_length = tc.num_vertexes, z_length = tc.num_vertexes;
 
-  auto const    strips_required          = z_length - 1;
-  auto const    degen_triangles_required = 2 * (strips_required - 1);
-  auto const    vertices_perstrip        = 2 * x_length;
+  auto const strips_required          = z_length - 1;
+  auto const degen_triangles_required = 2 * (strips_required - 1);
+  auto const vertices_perstrip        = 2 * x_length;
 
   size_t const num_indices = (vertices_perstrip * strips_required) + degen_triangles_required;
 
@@ -192,14 +192,14 @@ namespace boomhs
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TerrainConfiguration
 TerrainConfiguration::TerrainConfiguration()
-  : num_vertexes(256)
-  , x_length(1)
-  , z_length(1)
-  , num_rows(1)
-  , num_cols(1)
-  , shader_name("terrain")
-  , texture_name("TerrainFloor")
-  , heightmap_path("assets/terrain/heightmap.png")
+    : num_vertexes(256)
+    , x_length(1)
+    , z_length(1)
+    , num_rows(1)
+    , num_cols(1)
+    , shader_name("terrain")
+    , texture_name("TerrainFloor")
+    , heightmap_path("assets/terrain/heightmap.png")
 {
 }
 

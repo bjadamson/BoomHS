@@ -4,8 +4,8 @@
 #include <boomhs/dungeon_generator.hpp>
 #include <boomhs/level_assembler.hpp>
 #include <boomhs/level_loader.hpp>
-#include <boomhs/start_area_generator.hpp>
 #include <boomhs/skybox.hpp>
+#include <boomhs/start_area_generator.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/world_object.hpp>
 

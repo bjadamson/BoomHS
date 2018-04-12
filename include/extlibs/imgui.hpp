@@ -22,7 +22,7 @@ input_string(char const* text, std::string& val)
   return result;
 }
 
-template<typename ...Args>
+template <typename... Args>
 inline auto
 input_sizet(char const* label, size_t* data, Args&&... args)
 {

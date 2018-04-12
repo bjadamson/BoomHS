@@ -191,7 +191,7 @@ update_orbital_bodies(LevelData& ldata, EntityRegistry& registry, FrameTime cons
     pos.z = orbital.z_radius * sin_time;
   };
 
-  auto const eids  = find_orbital_bodies(registry);
+  auto const eids = find_orbital_bodies(registry);
   for (auto const eid : eids) {
     update_orbitals(eid);
   }
