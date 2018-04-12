@@ -32,7 +32,7 @@ calculate_number_vertices(int const num_components, int const rows, int const co
 
 ObjData::vertices_t
 generate_vertices(stlw::Logger& logger, int const x_length, int const z_length,
-                  float const terrain_range, HeightmapData const& heightmap_data)
+                  TerrainConfiguration const& tc, HeightmapData const& heightmap_data)
 {
   int constexpr NUM_COMPONENTS     = 4; // x, y, z, w
   auto const          num_vertexes = calculate_number_vertices(NUM_COMPONENTS, x_length, z_length);
@@ -53,17 +53,13 @@ generate_vertices(stlw::Logger& logger, int const x_length, int const z_length,
     {
       assert(offset < static_cast<size_t>(num_vertexes));
 
-      float const xRatio = (float)x / (float)(x_length - 1);
-
       // Build our heightmap from the top down, so that our triangles are
       // counter-clockwise.
+      float const xRatio = (float)x / (float)(x_length - 1);
       float const zRatio = 1.0f - (z / (float)(z_length - 1));
 
-      static constexpr float MIN_POSITION   = 0.0f;
-      static constexpr float POSITION_RANGE = 10.0f;
-
-      float const xPosition = MIN_POSITION + (xRatio * terrain_range);
-      float const zPosition = MIN_POSITION + (zRatio * terrain_range);
+      float const xPosition = 0.0f + (xRatio * tc.width);
+      float const zPosition = 0.0f + (zRatio * tc.height);
 
       assert(offset < buffer.size());
       buffer[offset++] = xPosition;
@@ -150,8 +146,8 @@ generate_indices(int const x_length, int const z_length)
 // Algorithm modified from:
 // https://www.youtube.com/watch?v=yNYwZMmgTJk&list=PLRIWtICgwaX0u7Rf9zkZhLoLuZVfUksDP&index=14
 ObjData
-generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags, float const terrain_range,
-                      HeightmapData const& heightmap_data)
+generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags,
+                      TerrainConfiguration const& tc, HeightmapData const& heightmap_data)
 {
   int const vertex_count = 128;
   int const rows = vertex_count, columns = vertex_count;
@@ -160,7 +156,7 @@ generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags, float cons
   ObjData data;
   data.num_vertexes = count;
 
-  data.vertices = generate_vertices(logger, rows, columns, terrain_range, heightmap_data);
+  data.vertices = generate_vertices(logger, rows, columns, tc, heightmap_data);
   data.normals  = heightmap::generate_normals(rows, columns, heightmap_data);
   data.uvs      = generate_uvs(rows, columns);
   data.indices  = generate_indices(rows, columns);
@@ -168,11 +164,11 @@ generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags, float cons
 }
 
 auto
-generate_terrain_tile(stlw::Logger& logger, glm::vec2 const& pos, float const terrain_range,
+generate_terrain_tile(stlw::Logger& logger, glm::vec2 const& pos, TerrainConfiguration const& tc,
                       HeightmapData const& heightmap_data, ShaderProgram& sp, TextureInfo const& ti)
 {
   BufferFlags const flags{true, true, false, true};
-  auto const        data = generate_terrain_data(logger, flags, terrain_range, heightmap_data);
+  auto const        data = generate_terrain_data(logger, flags, tc, heightmap_data);
   LOG_DEBUG_SPRINTF("Generated terrain data: %s", data.to_string());
 
   auto const buffer = VertexBuffer::create_interleaved(logger, data, flags);
@@ -246,7 +242,6 @@ generate(stlw::Logger& logger, TerrainConfiguration const& tc, HeightmapData con
          ShaderProgram& sp, TextureInfo const& ti)
 {
   LOG_TRACE("Generating Terrain");
-  float const  terrain_range = 1.0f;
   size_t const rows = tc.num_rows, cols = tc.num_cols;
   TerrainGrid  tgrid{rows, cols};
 
@@ -258,7 +253,7 @@ generate(stlw::Logger& logger, TerrainConfiguration const& tc, HeightmapData con
       // continue;
       //}
       auto const pos = glm::vec2{i, j};
-      auto       t   = generate_terrain_tile(logger, pos, terrain_range, heightmap_data, sp, ti);
+      auto       t   = generate_terrain_tile(logger, pos, tc, heightmap_data, sp, ti);
 
       auto const index = (j * rows) + i;
       tgrid.set(index, MOVE(t));

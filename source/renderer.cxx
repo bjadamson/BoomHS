@@ -626,6 +626,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   registry.view<COMMON, Water>().each(draw_fn);
   registry.view<COMMON, JunkEntityFromFILE>().each(draw_fn);
   registry.view<COMMON, Torch>().each(draw_torch);
+  registry.view<COMMON, CubeRenderable>().each(draw_fn);
   registry.view<COMMON, MeshRenderable, NPCData>().each(draw_fn);
   registry.view<COMMON, MeshRenderable, PlayerData>().each(player_drawfn);
 #undef COMMON

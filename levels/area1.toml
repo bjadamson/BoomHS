@@ -57,11 +57,6 @@ type = "texture:2d-RGB"
 filename = "TextureAtlas.jpg"
 
 [[resource]]
-name = "TargetReticle"
-type = "texture:2d-RGBA"
-filename = "circle_reticle.png"
-
-[[resource]]
 name = "TerrainFloor"
 type = "texture:2d-RGBA"
 filename = "terrain/terrain-texture.png"
@@ -103,6 +98,11 @@ filename = "textures/Blendermoon1.png"
 name = "TorchUI"
 type = "texture:2d-RGBA"
 filename = "ui/torch-icon.png"
+
+[[resource]]
+name = "TargetReticle"
+type = "texture:2d-RGBA"
+filename = "circle_reticle.png"
 
 [[resource]]
 name = "NearbyTargetGlow"
@@ -328,7 +328,7 @@ specular = [0.0, 1.0, 0.0]
 [[pointlight]]
 name = "white"
 diffuse = [0.0, 0.0, 0.0]
-specular = [0.0, 0.0, 0.0]
+specular = [0.0, 0.0, 1.0]
 
 ########### ENTITY #############
 [[entity]]
@@ -419,19 +419,10 @@ scale = [0.4, 0.4, 0.4]
 name = "building skybox"
 position = [0.0, 0.0, 0.0]
 shader = "3dcube_texture"
-geometry = "cube"
-skybox = true
+geometry = "skybox"
 texture = "building_skybox"
 
 ###################################################################################################
-[[entity]]
-name = "boring cube"
-position = [-5.0, -2.0, 0.0]
-shader = "3dcube_texture"
-geometry = "cube"
-texture = "boring_cube"
-random_junk_from_file = true
-
 [[entity]]
 name = "house"
 material = "terrain"

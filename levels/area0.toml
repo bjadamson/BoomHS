@@ -328,7 +328,7 @@ specular = [0.0, 1.0, 0.0]
 [[pointlight]]
 name = "white"
 diffuse = [0.0, 0.0, 0.0]
-specular = [0.0, 0.0, 0.0]
+specular = [0.0, 0.0, 1.0]
 
 ########### ENTITY #############
 [[entity]]
@@ -419,8 +419,7 @@ scale = [0.4, 0.4, 0.4]
 name = "building skybox"
 position = [0.0, 0.0, 0.0]
 shader = "3dcube_texture"
-geometry = "cube"
-skybox = true
+geometry = "skybox"
 texture = "building_skybox"
 
 ###################################################################################################

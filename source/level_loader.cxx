@@ -499,7 +499,6 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     auto const pointlight_o  = get_string(file,          "pointlight");
     auto const player        = get_string(file,          "player");
     auto const is_visible    = get_bool(file,            "is_visible").value_or(true);
-    bool const is_skybox     = get_bool(file,            "skybox").value_or(false);
     bool const random_junk   = get_bool(file,            "random_junk_from_file").value_or(false);
     bool const is_terrain    = get_bool(file,            "terrain").value_or(false);
     bool const is_water      = get_bool(file,            "water").value_or(false);
@@ -550,7 +549,7 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     if (geometry == "cube") {
       registry.assign<CubeRenderable>(eid);
     }
-    if (is_skybox) {
+    else if (geometry == "skybox") {
       registry.assign<IsSkybox>(eid);
       transform.scale = glm::vec3{SKYBOX_SCALE_SIZE};
     }
