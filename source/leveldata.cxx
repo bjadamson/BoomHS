@@ -21,12 +21,6 @@ LevelData::LevelData(TileGrid&& td, TileSharedInfoTable&& ttable, TilePosition c
 }
 
 void
-LevelData::add_terrain(Terrain&& t)
-{
-  terrain_.emplace_back(MOVE(t));
-}
-
-void
 LevelData::set_tile(TilePosition const& tpos, TileType const& type)
 {
   tilegrid_.data(tpos).type = type;

@@ -5,6 +5,7 @@
 #include <boomhs/level_assembler.hpp>
 #include <boomhs/level_loader.hpp>
 #include <boomhs/start_area_generator.hpp>
+#include <boomhs/skybox.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/world_object.hpp>
 
@@ -117,6 +118,12 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
+      [&](auto entity, auto& sn, auto&, auto& texture) {
+        auto& shader_ref = sps.ref_sp(sn.value);
+        auto  handle = opengl::gpu::copy_cubetexture_gpu(logger, shader_ref, texture.texture_info);
+        dinfos.add(entity, MOVE(handle));
+      });
+  registry.view<ShaderName, IsSkybox, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
         auto& shader_ref = sps.ref_sp(sn.value);
         auto  handle = opengl::gpu::copy_cubetexture_gpu(logger, shader_ref, texture.texture_info);

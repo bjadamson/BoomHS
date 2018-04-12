@@ -46,7 +46,7 @@ ensure_backend_has_enough_vertex_attributes(stlw::Logger &logger, GLint const nu
   auto max_attribs = 0;
   glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &max_attribs);
 
-  LOG_TRACE_FMT("Max number of vertex attributes, found {}", max_attribs);
+  LOG_DEBUG_FMT("Max number of vertex attributes, found {}", max_attribs);
 
   if (max_attribs <= num_apis) {
     LOG_ERROR_SPRINTF("Error requested '%d' vertex attributes from opengl, only '%d' available",
@@ -221,14 +221,35 @@ VertexAttribute::has_uvs() const
   return va_has_attribute_type(*this, AttributeType::UV);
 }
 
+std::string
+AttributePointerInfo::to_string() const
+{
+  return fmt::format("(API) -- '{}' datatype: {}' component_count: '{}'",
+      this->index,
+      this->datatype,
+      this->component_count);
+}
+
 std::ostream&
 operator<<(std::ostream& stream, AttributePointerInfo const& api)
 {
-  stream << fmt::format("(API) -- '{}' datatype: {}' component_count: '{}'",
-      api.index,
-      api.datatype,
-      api.component_count);
+  stream << api.to_string();
   return stream;
+}
+
+std::string
+VertexAttribute::to_string() const
+{
+  std::string result;
+  result += fmt::format("(VA) -- num_apis: '{}' stride: '{}'\n",
+      num_apis_,
+      stride_);
+  for(auto const& api : apis_) {
+    result += "    ";
+    result += api.to_string();
+    result += "\n";
+  }
+  return result;
 }
 
 std::ostream&
@@ -236,14 +257,8 @@ operator<<(std::ostream& stream, VertexAttribute const& va)
 {
   auto const print_delim = [&stream]() { stream << "-----------\n"; };
   print_delim();
-  stream << fmt::format("(VA) -- num_apis: '{}' stride: '{}'\n",
-      va.num_apis_,
-      va.stride_);
-  for(auto const& api : va.apis_) {
-    stream << "    ";
-    stream << api;
-    stream << "\n";
-  }
+
+  stream << va.to_string();
   print_delim();
   return stream;
 }

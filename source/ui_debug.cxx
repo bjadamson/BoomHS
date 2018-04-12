@@ -206,6 +206,51 @@ draw_tilegrid_editor(TiledataState& tds, LevelManager& lm)
 }
 
 void
+draw_terrain_editor(EngineState& es, LevelManager& lm)
+{
+  auto& logger = es.logger;
+
+  auto& zs        = lm.active();
+  auto& gfx_state = zs.gfx_state;
+
+  auto const draw = [&]() {
+    ImGui::Text("Settings for terrain generation");
+
+    auto& tstate = es.ui_state.debug.buffers.terrain_state;
+    ImGui::InputInt("w", &tstate.width);
+    ImGui::InputInt("h", &tstate.height);
+
+    ImGui::InputInt("rows", &tstate.num_rows);
+    ImGui::InputInt("cols", &tstate.num_cols);
+
+    imgui_cxx::input_string("Heightmap File Path", tstate.heightmap_path);
+    imgui_cxx::input_string("Shader Name", tstate.shader_name);
+    imgui_cxx::input_string("Texture Name", tstate.texture_name);
+
+    if (ImGui::Button("Generate Terrain")) {
+      auto& ldata = zs.level_data;
+      auto& tgrid = ldata.terrain_grid();
+
+      {
+        auto& sps = gfx_state.sps;
+        auto& sp  = sps.ref_sp(tstate.shader_name);
+
+        auto heightmap_r = opengl::heightmap::parse(logger, tstate.heightmap_path);
+        assert(heightmap_r.isOk());
+
+        auto const  heightmap = heightmap_r.unwrap_moveout();
+        auto const& ti        = *gfx_state.texture_table.find(tstate.texture_name);
+
+        auto& ld = zs.level_data;
+        auto  tg = terrain::generate(logger, tstate, heightmap, sp, ti);
+        ld.set_terrain_grid(MOVE(tg));
+      }
+    }
+  };
+  imgui_cxx::with_window(draw, "Terrain Editor Window");
+}
+
+void
 draw_camera_window(LevelData& ldata)
 {
   auto& player = ldata.player;
@@ -610,6 +655,9 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::Frame
   if (state.show_tilegrid_editor_window) {
     draw_tilegrid_editor(tilegrid_state, lm);
   }
+  if (state.show_terrain_editor_window) {
+    draw_terrain_editor(es, lm);
+  }
   if (state.show_debugwindow) {
     {
       auto const eid  = find_skybox(registry);
@@ -647,6 +695,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::Frame
     ImGui::MenuItem("Mouse", nullptr, &state.show_mousewindow);
     ImGui::MenuItem("Player", nullptr, &state.show_playerwindow);
     ImGui::MenuItem("Skybox", nullptr, &state.show_skyboxwindow);
+    ImGui::MenuItem("Terrain", nullptr, &state.show_terrain_editor_window);
     ImGui::MenuItem("Tilemap", nullptr, &state.show_tilegrid_editor_window);
     ImGui::MenuItem("Time", nullptr, &state.show_time_window);
     ImGui::MenuItem("Exit", nullptr, &es.quit);

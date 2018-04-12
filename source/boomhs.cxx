@@ -8,10 +8,12 @@
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/rexpaint.hpp>
-#include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/ui_ingame.hpp>
+
+#include <opengl/heightmap.hpp>
+#include <opengl/texture.hpp>
 
 #include <extlibs/sdl.hpp>
 #include <window/controller.hpp>
@@ -29,6 +31,8 @@
 #include <chrono>
 #include <cstdlib>
 #include <ctime>
+#include <iomanip>
+#include <sstream>
 #include <string>
 
 using namespace boomhs;
@@ -117,14 +121,6 @@ move_betweentilegrids_ifonstairs(stlw::Logger& logger, TiledataState& tds, Level
       break;
     }
   }
-}
-
-void
-move_skybox_to_camera(stlw::Logger& logger, Camera& camera, EntityRegistry& registry)
-{
-  auto const skybox_eid  = find_skybox(registry);
-  auto&      stransform  = registry.get<Transform>(skybox_eid);
-  stransform.translation = camera.world_position();
 }
 
 void
@@ -341,7 +337,7 @@ init(Engine& engine, EngineState& engine_state)
 {
   ZoneStates zss =
       TRY_MOVEOUT(LevelAssembler::assemble_levels(engine_state.logger, engine.registries));
-  GameState state{MOVE(engine_state), LevelManager{MOVE(zss)}};
+  GameState state{engine_state, LevelManager{MOVE(zss)}};
 
   auto& es     = state.engine_state;
   auto& logger = es.logger;
@@ -351,13 +347,16 @@ init(Engine& engine, EngineState& engine_state)
   auto& gfx_state = zs.gfx_state;
 
   {
-    auto&       ld = zs.level_data;
-    auto const& ti = *gfx_state.texture_table.find("TerrainFloor");
+    auto& sps = gfx_state.sps;
+    auto& sp  = sps.ref_sp("terrain");
 
-    auto& sps     = gfx_state.sps;
-    auto& sp      = sps.ref_sp("terrain");
-    auto  terrain = terrain::generate(logger, glm::vec2(0, 0), sp, ti);
-    ld.add_terrain(MOVE(terrain));
+    TerrainConfiguration const tc;
+    auto const                 heightmap = TRY(opengl::heightmap::parse(logger, tc.heightmap_path));
+    auto const&                ti        = *gfx_state.texture_table.find(tc.texture_name);
+
+    auto  tg = terrain::generate(logger, tc, heightmap, sp, ti);
+    auto& ld = zs.level_data;
+    ld.set_terrain_grid(MOVE(tg));
   }
   {
     auto test_r = rexpaint::RexImage::load("assets/test.xp");
@@ -392,7 +391,6 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     auto& zs       = lm.active();
     auto& registry = zs.registry;
     move_betweentilegrids_ifonstairs(logger, tilegrid_state, lm);
-    move_skybox_to_camera(logger, lm.active().level_data.camera, registry);
   }
 
   // Must recalculate zs and registry, possibly changed since call to move_between()
@@ -435,7 +433,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     }
 
     if (es.draw_terrain) {
-      render::draw_terrain(rstate, ft);
+      render::draw_terrain(rstate, registry, ft);
     }
 
     render::draw_stars(rstate, ft);

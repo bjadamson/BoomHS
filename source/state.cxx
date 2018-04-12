@@ -18,7 +18,7 @@ EngineState::EngineState(stlw::Logger& l, ImGuiIO& i, window::Dimensions const& 
     , mariolike_edges(false)
     , draw_imguimetrics(false)
     , draw_entities(true)
-    , draw_terrain(false)
+    , draw_terrain(true)
     , draw_normals(false)
     , draw_sun(false)
     , show_global_axis(true)
@@ -28,8 +28,8 @@ EngineState::EngineState(stlw::Logger& l, ImGuiIO& i, window::Dimensions const& 
 {
 }
 
-GameState::GameState(EngineState&& es, LevelManager&& lm)
-    : engine_state(MOVE(es))
+GameState::GameState(EngineState& es, LevelManager&& lm)
+    : engine_state(es)
     , level_manager(MOVE(lm))
 {
 }

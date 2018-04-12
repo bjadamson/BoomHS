@@ -41,19 +41,25 @@ BufferHandles::operator=(BufferHandles &&other)
   return *this;
 }
 
+std::string
+BufferHandles::to_string() const
+{
+  return fmt::format("vbo: {}, ebo: {}", vbo(), ebo());
+}
+
 std::ostream&
 operator<<(std::ostream &stream, BufferHandles const& buffers)
 {
-  stream << fmt::format("vbo: {}, ebo: {}", buffers.vbo(), buffers.ebo());;
+  stream << buffers.to_string();
   return stream;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // DrawInfo
-DrawInfo::DrawInfo(GLenum const dm, size_t const num_vertices, GLuint const num_indices,
+DrawInfo::DrawInfo(GLenum const dm, size_t const num_vertexes, GLuint const num_indices,
     std::optional<TextureInfo> const& ti)
   : draw_mode_(dm)
-  , num_vertices_(num_vertices)
+  , num_vertexes_(num_vertexes)
   , num_indices_(num_indices)
   , texture_info_(ti)
 {
@@ -61,7 +67,7 @@ DrawInfo::DrawInfo(GLenum const dm, size_t const num_vertices, GLuint const num_
 
 DrawInfo::DrawInfo(DrawInfo &&other)
   : draw_mode_(other.draw_mode_)
-  , num_vertices_(other.num_vertices_)
+  , num_vertexes_(other.num_vertexes_)
   , num_indices_(other.num_indices_)
   , handles_(MOVE(other.handles_))
   , vao_(MOVE(other.vao_))
@@ -73,10 +79,10 @@ DrawInfo&
 DrawInfo::operator=(DrawInfo &&other)
 {
   draw_mode_ = other.draw_mode_;
-  num_vertices_ = other.num_vertices_;
+  num_vertexes_ = other.num_vertexes_;
   num_indices_ = other.num_indices_;
   other.draw_mode_ = -1;
-  other.num_vertices_ = 0;
+  other.num_vertexes_ = 0;
   other.num_indices_ = 0;
 
   handles_ = MOVE(other.handles_);
@@ -85,52 +91,55 @@ DrawInfo::operator=(DrawInfo &&other)
   return *this;
 }
 
-void
-DrawInfo::print_self(std::ostream &stream, VertexAttribute const& va) const
+std::string
+DrawInfo::to_string(VertexAttribute const& va) const
 {
   auto const& dinfo = *this;
-  stream << fmt::format("DrawMode: {} NumIndices: {}\n", dinfo.draw_mode(), dinfo.num_indices());
-  stream << "VAO:\n" << dinfo.vao_ << "\n";
-  stream << "BufferHandles:\n" << dinfo.handles_ << "\n";
-  stream << "EBO contents:\n";
+
+  std::string result;
+  result += fmt::format("DrawMode: {} NumIndices: {}\n", dinfo.draw_mode(), dinfo.num_indices());
+  result += "VAO:\n" + dinfo.vao_.to_string() + "\n";
+  result += "BufferHandles:\n" + dinfo.handles_.to_string() + "\n";
+  result += "EBO contents:\n";
   auto const num_indices = dinfo.num_indices();
   {
     auto const target = GL_ELEMENT_ARRAY_BUFFER;
     GLuint const*const pmem = static_cast<GLuint const*const>(glMapBuffer(target, GL_READ_ONLY));
     assert(pmem);
-    ON_SCOPE_EXIT([]() { glUnmapBuffer((target)); });
+    ON_SCOPE_EXIT([]() { assert(true == glUnmapBuffer((target))); });
 
     FOR(i, num_indices) {
       // (void* + GLuint) -> GLuint*
       GLuint const* p_element = pmem + i;
-      stream << std::to_string(*p_element) << " ";
+      result += std::to_string(*p_element) + " ";
     }
-    stream << "\n";
+    result += "\n";
   }
 
   auto const stride = va.stride();
-  auto const num_vertices = dinfo.num_vertices();
+  auto const num_vertexes = dinfo.num_vertexes();
 
   auto const target = GL_ARRAY_BUFFER;
   GLfloat *pmem = static_cast<GLfloat *>(glMapBuffer(target, GL_READ_ONLY));
   assert(pmem);
   ON_SCOPE_EXIT([]() { assert(glUnmapBuffer(target)); });
 
-  stream << fmt::format("vbo id: {} VBO contents:\n", dinfo.vbo());
-  stream << "VBO stride: '" << stride << "'\n";
-  stream << "VBO num_vertices: '" << num_vertices << "'\n";
-  stream << "VBO contents:\n";
+  result += fmt::format("vbo id: {} VBO contents:\n", dinfo.vbo());
+  result += "VBO stride: '" + std::to_string(stride) + "'\n";
+  result += "VBO num_vertexes: '" + std::to_string(num_vertexes) + "'\n";
+  result += "VBO contents:\n";
 
   auto count{0};
-  for(auto i = 0u; i < num_vertices; ++i, ++count) {
+  for(auto i = 0u; i < num_vertexes; ++i, ++count) {
     if (count == stride) {
       count = 0;
-      stream << "\n";
+      result += "\n";
     } else if (i > 0) {
-      stream << " ";
+      result += " ";
     }
-    stream << std::to_string(*(pmem + i));
+    result += std::to_string(*(pmem + i));
   }
+  return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

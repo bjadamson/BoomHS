@@ -8,6 +8,21 @@ namespace imgui_cxx
 {
 
 inline auto
+input_string(char const* text, std::string& val)
+{
+  static constexpr auto SIZE = 32;
+  assert(val.size() < SIZE);
+
+  char buffer[SIZE] = {'\0'};
+  FOR(i, val.size()) { buffer[i] = val[i]; }
+  auto const result = ImGui::InputText(text, buffer, IM_ARRAYSIZE(buffer));
+  if (result) {
+    val = buffer;
+  }
+  return result;
+}
+
+inline auto
 main_menu_bar_size()
 {
   ImGui::BeginMainMenuBar();

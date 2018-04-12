@@ -30,6 +30,8 @@ void
 copy_synchronous(stlw::Logger& logger, ShaderProgram const& sp, DrawInfo const& dinfo,
                  VERTICES const& vertices, INDICES const& indices)
 {
+  LOG_TRACE("Starting synchronous cpu -> gpu copy");
+
   // Activate VAO
   global::vao_bind(dinfo.vao());
 
@@ -40,16 +42,18 @@ copy_synchronous(stlw::Logger& logger, ShaderProgram const& sp, DrawInfo const& 
   va.upload_vertex_format_to_glbound_vao(logger);
 
   // copy the vertices
-  LOG_TRACE_SPRINTF("inserting '%i' vertices into GL_BUFFER_ARRAY\n", vertices.size());
+  LOG_DEBUG_SPRINTF("inserting '%i' vertices into GL_BUFFER_ARRAY\n", vertices.size());
   auto const  vertices_size = vertices.size() * sizeof(GLfloat);
   auto const& vertices_data = vertices.data();
   glBufferData(GL_ARRAY_BUFFER, vertices_size, vertices_data, GL_STATIC_DRAW);
 
   // copy the vertice rendering order
-  LOG_TRACE_SPRINTF("inserting '%i' indices into GL_ELEMENT_BUFFER_ARRAY\n", indices.size());
+  LOG_DEBUG_SPRINTF("inserting '%i' indices into GL_ELEMENT_BUFFER_ARRAY\n", indices.size());
   auto const  indices_size = sizeof(GLuint) * indices.size();
   auto const& indices_data = indices.data();
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, indices_data, GL_STATIC_DRAW);
+
+  LOG_TRACE("cpu -> gpu copy complete");
 }
 
 template<size_t N, size_t M>
@@ -199,69 +203,6 @@ create_axis_arrows(stlw::Logger &logger, ShaderProgram &sp)
   auto y = create_arrow(logger, sp, OF::ArrowCreateParams{LOC::GREEN, ORIGIN, ORIGIN + Y_UNIT_VECTOR});
   auto z = create_arrow(logger, sp, OF::ArrowCreateParams{LOC::BLUE,  ORIGIN, ORIGIN + Z_UNIT_VECTOR});
   return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
-}
-
-DrawInfo
-create_modelnormals(stlw::Logger &logger, ShaderProgram const& sp, glm::mat4 const& model_matrix,
-    VertexBuffer const& obj, Color const& color)
-{
-  auto const normal_matrix = glm::inverseTranspose(model_matrix);
-  std::vector<float> const& vertices = obj.vertices;
-
-  assert((vertices.size() % 11) == 0);
-  std::vector<glm::vec4> positions;
-  std::vector<glm::vec3> normals;
-  for(auto i = 0u; i < vertices.size(); i += 11) {
-    auto const x = vertices[i + 0];
-    auto const y = vertices[i + 1];
-    auto const z = vertices[i + 2];
-    auto const w = 1.0f;
-
-    positions.emplace_back(glm::vec4{x, y, z, w});
-
-    auto const xn = vertices[i + 4];
-    auto const yn = vertices[i + 5];
-    auto const zn = vertices[i + 6];
-
-    normals.emplace_back(glm::vec3{xn, yn, zn});
-  }
-  assert(normals.size() == positions.size());
-
-  auto const compute_surfacenormal = [&normal_matrix, &model_matrix](auto const& a_normal) {
-    auto const v_normal = normal_matrix * glm::vec4{a_normal, 0.0};
-    return glm::normalize(model_matrix * v_normal);
-  };
-
-  std::vector<float> line_vertices;
-  std::vector<uint32_t> indices;
-  FOR(i, normals.size()) {
-    line_vertices.emplace_back(positions[i].x);
-    line_vertices.emplace_back(positions[i].y);
-    line_vertices.emplace_back(positions[i].z);
-    line_vertices.emplace_back(positions[i].w);
-
-    line_vertices.emplace_back(LOC::PINK.r());
-    line_vertices.emplace_back(LOC::PINK.g());
-    line_vertices.emplace_back(LOC::PINK.b());
-    line_vertices.emplace_back(LOC::PINK.a());
-
-    auto const surfacenormal = compute_surfacenormal(normals[i]);
-    line_vertices.emplace_back(positions[i].x + surfacenormal.x);
-    line_vertices.emplace_back(positions[i].y + surfacenormal.y);
-    line_vertices.emplace_back(positions[i].z + surfacenormal.z);
-    line_vertices.emplace_back(1.0f);
-
-    line_vertices.emplace_back(LOC::PURPLE.r());
-    line_vertices.emplace_back(LOC::PURPLE.g());
-    line_vertices.emplace_back(LOC::PURPLE.b());
-    line_vertices.emplace_back(LOC::PURPLE.a());
-
-    indices.push_back(i);
-  }
-
-  DrawInfo dinfo{GL_LINES, vertices.size(), static_cast<GLuint>(indices.size()), std::nullopt};
-  copy_synchronous(logger, sp, dinfo, vertices, indices);
-  return dinfo;
 }
 
 DrawInfo

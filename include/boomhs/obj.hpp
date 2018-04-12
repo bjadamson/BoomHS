@@ -1,11 +1,14 @@
 #pragma once
-#include <extlibs/glew.hpp>
 #include <opengl/colors.hpp>
-#include <optional>
-#include <ostream>
+
 #include <stlw/log.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
+
+#include <extlibs/glew.hpp>
+#include <optional>
+#include <ostream>
+#include <string>
 
 namespace boomhs
 {
@@ -15,7 +18,7 @@ struct ObjData
   using vertices_t = std::vector<float>;
   using indices_t  = std::vector<uint32_t>;
 
-  unsigned int num_vertices;
+  unsigned int num_vertexes;
   vertices_t   vertices;
   vertices_t   colors;
   vertices_t   normals;
@@ -24,6 +27,8 @@ struct ObjData
 
   ObjData() = default;
   MOVE_CONSTRUCTIBLE_ONLY(ObjData);
+
+  std::string to_string() const;
 };
 
 enum class LoadStatus

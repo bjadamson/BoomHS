@@ -4,6 +4,7 @@
 #include <stlw/algorithm.hpp>
 #include <stlw/log.hpp>
 
+#include <extlibs/fmt.hpp>
 #include <ostream>
 
 using namespace boomhs;
@@ -21,6 +22,13 @@ BufferFlags::from_va(VertexAttribute const& va)
   bool const c = va.has_colors();
   bool const u = va.has_uvs();
   return BufferFlags{p, n, c, u};
+}
+
+std::string
+BufferFlags::to_string() const
+{
+  return fmt::sprintf("{vertices: %i, normals: %i, colors: %i, uvs: %i}", vertices, normals,
+      colors, uvs);
 }
 
 bool
@@ -44,29 +52,7 @@ operator!=(BufferFlags const& a, BufferFlags const& b)
 std::ostream&
 operator<<(std::ostream& stream, BufferFlags const& qa)
 {
-  // 5 == std::strlen("false");
-  static int constexpr MAX_LENGTH = 5;
-
-  auto const print_bool = [&stream](char const* text, bool const v) {
-    stream << text;
-    stream << ": '";
-    stream << std::boolalpha << v;
-    stream << "'";
-  };
-
-  stream << "{";
-  print_bool("vertices", qa.vertices);
-  stream << ", ";
-
-  print_bool("colors", qa.colors);
-  stream << ", ";
-
-  print_bool("normals", qa.normals);
-  stream << ", ";
-
-  print_bool("uvs", qa.uvs);
-
-  stream << "}";
+  stream << qa.to_string();
   return stream;
 }
 
@@ -74,8 +60,9 @@ operator<<(std::ostream& stream, BufferFlags const& qa)
 // VertexBuffer
 VertexBuffer
 VertexBuffer::create_interleaved(stlw::Logger& logger, ObjData const& data,
-                                        BufferFlags const& query_attr)
+                                        BufferFlags const& flags)
 {
+  LOG_TRACE_SPRINTF("Creating interleaved buffer with flags: %s", flags.to_string());
   VertexBuffer buffer;
   auto&        vertices = buffer.vertices;
 
@@ -87,38 +74,43 @@ VertexBuffer::create_interleaved(stlw::Logger& logger, ObjData const& data,
       --remaining;
     }
   };
-  auto num_vertices = data.vertices.size();
+  auto num_vertexes = data.vertices.size();
   auto num_normals  = data.normals.size();
   auto num_colors   = data.colors.size();
   auto num_uvs      = data.uvs.size();
 
   auto const keep_going = [&]() {
-    return ALLOF(num_vertices > 0, num_normals > 0, num_colors > 0, num_uvs > 0);
+    return num_vertexes > 0;
   };
 
   size_t a = 0, b = 0, c = 0, d = 0;
   while (keep_going()) {
     assert(!data.vertices.empty());
-    copy_n(data.vertices, 4, a, num_vertices);
+    assert(num_vertexes >= 4);
+    copy_n(data.vertices, 4, a, num_vertexes);
 
-    if (query_attr.normals) {
+    if (flags.normals) {
+      assert(num_normals >= 3);
       copy_n(data.normals, 3, b, num_normals);
     }
 
-    if (query_attr.colors) {
+    if (flags.colors) {
       // encode assumptions for now
-      assert(!query_attr.uvs);
+      assert(!flags.uvs);
+
+      assert(num_colors >= 4);
       copy_n(data.colors, 4, c, num_colors);
     }
-    if (query_attr.uvs) {
+    if (flags.uvs) {
       // encode assumptions for now
-      assert(!query_attr.colors);
+      assert(!flags.colors);
 
+      assert(num_uvs >= 2);
       copy_n(data.uvs, 2, d, num_uvs);
     }
   }
 
-  assert(num_vertices == 0 || num_vertices == data.vertices.size());
+  assert(num_vertexes == 0 || num_vertexes == data.vertices.size());
   assert(num_normals == 0 || num_normals == data.normals.size());
   assert(num_colors == 0 || num_colors == data.colors.size());
   assert(num_uvs == 0 || num_uvs == data.uvs.size());
@@ -126,7 +118,14 @@ VertexBuffer::create_interleaved(stlw::Logger& logger, ObjData const& data,
   buffer.indices = data.indices;
   assert(buffer.indices.size() == data.indices.size());
 
+  LOG_TRACE_SPRINTF("Finished creating interleaved buffer: %s", buffer.to_string());
   return buffer;
+}
+
+std::string
+VertexBuffer::to_string() const
+{
+  return fmt::sprintf("{vertices size: %u, indices size: %u}", vertices.size(), indices.size());
 }
 
 } // ns opengl

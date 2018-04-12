@@ -90,6 +90,19 @@ load_colors(Color const& color, std::vector<float>* pvertices)
 namespace boomhs
 {
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// ObjData
+std::string
+ObjData::to_string() const
+{
+  return fmt::sprintf(
+      "{num_vertexes: %u, num vertices: %u, num colors: %u, num uvs: %u, num indices: %u}",
+      num_vertexes, vertices.size(), colors.size(), normals.size(), uvs.size(), indices.size());
+}
+
+// LoadStatus
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::string
 loadstatus_to_string(LoadStatus const ls)
 {
@@ -99,17 +112,19 @@ loadstatus_to_string(LoadStatus const ls)
   case LoadStatus::ATTRIBUTE:                                                                      \
     return ATTRIBUTE_S;
 
+  // clang-format off
   switch (ls) {
     CASE(MISSING_POSITION_ATTRIBUTES, "MISSING_POSITION_ATTRIBUTES");
-    CASE(MISSING_COLOR_ATTRIBUTES, "MISSING_COLOR_ATTRIBUTES");
-    CASE(MISSING_NORMAL_ATTRIBUTES, "MISSING_NORMAL_ATTRIBUTES");
-    CASE(MISSING_UV_ATTRIBUTES, "MISSING_UV_ATTRIBUTES");
+    CASE(MISSING_COLOR_ATTRIBUTES,    "MISSING_COLOR_ATTRIBUTES");
+    CASE(MISSING_NORMAL_ATTRIBUTES,   "MISSING_NORMAL_ATTRIBUTES");
+    CASE(MISSING_UV_ATTRIBUTES,       "MISSING_UV_ATTRIBUTES");
 
-    CASE(TINYOBJ_ERROR, "TINYOBJ_ERROR");
-    CASE(SUCCESS, "SUCCESS");
+    CASE(TINYOBJ_ERROR,               "TINYOBJ_ERROR");
+    CASE(SUCCESS,                     "SUCCESS");
   default:
     break;
   }
+  // clang-format on
 #undef CASE
 
   // terminal error
@@ -126,6 +141,9 @@ operator<<(std::ostream& stream, LoadStatus const& ls)
 LoadResult
 load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
 {
+  LOG_TRACE_SPRINTF("Loading objfile: %s mtl: %s", objpath,
+                    mtlpath == nullptr ? "nullptr" : mtlpath);
+
   tinyobj::attrib_t                attrib;
   std::vector<tinyobj::shape_t>    shapes;
   std::vector<tinyobj::material_t> materials;
@@ -147,9 +165,9 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
 
   ObjData objdata;
   auto&   indices      = objdata.indices;
-  objdata.num_vertices = attrib.vertices.size() / 3;
+  objdata.num_vertexes = attrib.vertices.size() / 3;
   /*
-  LOG_ERROR_SPRINTF("vertice count %u", num_vertices);
+  LOG_ERROR_SPRINTF("vertice count %u", num_vertexes);
   LOG_ERROR_SPRINTF("normal count %u", attrib.normals.size());
   LOG_ERROR_SPRINTF("texcoords count %u", attrib.texcoords.size());
   LOG_ERROR_SPRINTF("color count %u", attrib.colors.size());
@@ -199,12 +217,12 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
       // shapes[s].mesh.material_ids[f];
     }
   }
-  LOG_TRACE_SPRINTF("num vertices: %u", objdata.num_vertices);
-  LOG_TRACE_SPRINTF("vertices.size(): %u", objdata.vertices.size());
-  LOG_TRACE_SPRINTF("colors.size(): %u", objdata.colors.size());
-  LOG_TRACE_SPRINTF("normals.size(): %u", objdata.normals.size());
-  LOG_TRACE_SPRINTF("uvs.size(): %u", objdata.uvs.size());
-  LOG_TRACE_SPRINTF("num indices: %u", objdata.indices.size());
+  LOG_DEBUG_SPRINTF("num vertices: %u", objdata.num_vertexes);
+  LOG_DEBUG_SPRINTF("vertices.size(): %u", objdata.vertices.size());
+  LOG_DEBUG_SPRINTF("colors.size(): %u", objdata.colors.size());
+  LOG_DEBUG_SPRINTF("normals.size(): %u", objdata.normals.size());
+  LOG_DEBUG_SPRINTF("uvs.size(): %u", objdata.uvs.size());
+  LOG_DEBUG_SPRINTF("num indices: %u", objdata.indices.size());
   return OK_MOVE(objdata);
 }
 

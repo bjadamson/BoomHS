@@ -39,10 +39,10 @@ public:
   AttributePointerInfo(GLuint const, GLint const, AttributeType const, GLsizei const);
   AttributePointerInfo(AttributePointerInfo&&) noexcept;
 
+  std::string to_string() const;
+
   // methods
   AttributePointerInfo& operator=(AttributePointerInfo&&) noexcept;
-
-  friend std::ostream& operator<<(std::ostream&, AttributePointerInfo const&);
 };
 
 std::ostream&
@@ -72,8 +72,9 @@ public:
   bool has_colors() const;
   bool has_uvs() const;
 
+  std::string to_string() const;
+
   BEGIN_END_FORWARD_FNS(apis_);
-  friend std::ostream& operator<<(std::ostream&, VertexAttribute const&);
 };
 
 std::ostream&

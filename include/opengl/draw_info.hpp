@@ -10,6 +10,8 @@
 #include <stlw/optional.hpp>
 #include <stlw/type_macros.hpp>
 
+#include <string>
+
 namespace opengl
 {
 
@@ -32,6 +34,8 @@ public:
 
   auto vbo() const { return vbo_; }
   auto ebo() const { return ebo_; }
+
+  std::string to_string() const;
 };
 
 std::ostream&
@@ -40,7 +44,7 @@ operator<<(std::ostream&, BufferHandles const&);
 class DrawInfo
 {
   GLenum        draw_mode_;
-  size_t        num_vertices_;
+  size_t        num_vertexes_;
   GLuint        num_indices_;
   BufferHandles handles_;
   VAO           vao_;
@@ -58,12 +62,12 @@ public:
   auto        draw_mode() const { return draw_mode_; }
   auto        vbo() const { return handles_.vbo(); }
   auto        ebo() const { return handles_.ebo(); }
-  auto        num_vertices() const { return num_vertices_; }
+  auto        num_vertexes() const { return num_vertexes_; }
   auto        num_indices() const { return num_indices_; }
 
   auto texture_info() const { return texture_info_; }
 
-  void print_self(std::ostream&, VertexAttribute const&) const;
+  std::string to_string(VertexAttribute const&) const;
 };
 
 class EntityDrawinfos

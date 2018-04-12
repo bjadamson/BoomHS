@@ -1,11 +1,15 @@
 #pragma once
 #include <stlw/auto_resource.hpp>
 #include <stlw/log.hpp>
+#include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <array>
 #include <extlibs/glew.hpp>
+#include <memory>
 #include <optional>
+#include <string>
+#include <vector>
 
 namespace opengl
 {
@@ -20,7 +24,16 @@ struct TextureInfo
 
   void destroy();
 
+  std::string to_string() const;
+
   static size_t constexpr NUM_BUFFERS = 1;
+};
+
+using pimage_t = std::unique_ptr<unsigned char, void (*)(unsigned char*)>;
+struct ImageData
+{
+  int      width, height;
+  pimage_t data;
 };
 
 // FrameBuffer Info
@@ -35,6 +48,8 @@ struct FBInfo
   MOVE_ASSIGNABLE(FBInfo);
   FBInfo(FBInfo&&);
 
+  std::string to_string() const;
+
   static size_t constexpr NUM_BUFFERS = 1;
 };
 
@@ -48,6 +63,8 @@ struct RBInfo
   COPY_DEFAULT(RBInfo);
   MOVE_ASSIGNABLE(RBInfo);
   RBInfo(RBInfo&&);
+
+  std::string to_string() const;
 
   static size_t constexpr NUM_BUFFERS = 1;
 };
@@ -80,17 +97,21 @@ public:
   std::optional<TextureInfo> find(std::string const&) const;
 };
 
-namespace texture
+} // namespace opengl
+
+namespace opengl::texture
 {
+
+ImageData
+load_image(stlw::Logger&, char const*, GLint const);
 
 GLint
 wrap_mode_from_string(char const*);
 
 Texture
-allocate_texture(stlw::Logger& logger, std::string const&, GLint, GLint, GLint);
+allocate_texture(stlw::Logger&, std::string const&, GLint, GLint, GLint);
 
 Texture
 upload_3dcube_texture(stlw::Logger&, std::vector<std::string> const&, GLint);
 
-} // namespace texture
-} // namespace opengl
+} // namespace opengl::texture

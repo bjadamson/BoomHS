@@ -11,7 +11,7 @@
 #include <extlibs/soil.hpp>
 
 #include <algorithm>
-#include <memory>
+#include <iostream>
 #include <string>
 #include <vector>
 #include <utility>
@@ -20,35 +20,13 @@ namespace
 {
 
 using namespace opengl;
-using pimage_t = std::unique_ptr<unsigned char, void (*)(unsigned char*)>;
-
-struct ImageData
-{
-  int width, height;
-  pimage_t data;
-};
-
-auto
-load_image_into_memory(stlw::Logger &logger, char const* path, bool const alpha)
-{
-  int w = 0, h = 0;
-  auto const format = alpha ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB;
-  unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, format);
-  if (nullptr == pimage) {
-    LOG_ERROR_SPRINTF("image at path '%s' failed to load, reason '%s'", path, SOIL_last_result());
-    std::abort();
-  }
-  pimage_t image_data{pimage, &SOIL_free_image_data};
-  return ImageData{w, h, MOVE(image_data)};
-}
 
 auto
 upload_image(stlw::Logger &logger, std::string const& filename, GLenum const target,
     GLint const format)
 {
   std::string const path = "assets/" + filename;
-  bool const alpha = GL_RGBA == format ? true : false;
-  auto image_data = load_image_into_memory(logger, path.c_str(), alpha);
+  auto image_data = texture::load_image(logger, path.c_str(), format);
 
   auto const width = image_data.width;
   auto const height = image_data.height;
@@ -71,6 +49,29 @@ void
 TextureInfo::destroy()
 {
   glDeleteTextures(TextureInfo::NUM_BUFFERS, &id);
+}
+
+std::string
+TextureInfo::to_string() const
+{
+  return fmt::sprintf("id: %u, mode: %i, (w, h) : (%i, %i), uv_max: %i",
+      id, mode, width, height, uv_max);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// FBInfo
+std::string
+FBInfo::to_string() const
+{
+  return fmt::sprintf("id: %u, color_buffer: %u", id, color_buffer);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// RBInfo
+std::string
+RBInfo::to_string() const
+{
+  return fmt::sprintf("depth: %u", depth);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,6 +101,21 @@ TextureTable::find(std::string const& name) const
 
 namespace opengl::texture
 {
+
+ImageData
+load_image(stlw::Logger &logger, char const* path, GLint const format)
+{
+  int w = 0, h = 0;
+
+  int const soil_format = format == GL_RGBA ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB;
+  unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, soil_format);
+  if (nullptr == pimage) {
+    LOG_ERROR_SPRINTF("image at path '%s' failed to load, reason '%s'", path, SOIL_last_result());
+    std::abort();
+  }
+  pimage_t image_data{pimage, &SOIL_free_image_data};
+  return ImageData{w, h, MOVE(image_data)};
+}
 
 GLint
 wrap_mode_from_string(char const* name)
