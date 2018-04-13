@@ -175,9 +175,12 @@ rotate_around(glm::vec3 const& point_to_rotate, glm::vec3 const& rot_center,
 }
 
 void
-update_orbital_bodies(stlw::Logger &logger, LevelData& ldata, EntityRegistry& registry,
+update_orbital_bodies(EngineState &es, LevelData &ldata, EntityRegistry& registry,
     FrameTime const& ft)
 {
+  auto &logger = es.logger;
+
+  // Must recalculate zs and registry, possibly changed since call to move_between()
   auto const update_orbitals = [&](auto const eid) {
     auto& transform = registry.get<Transform>(eid);
     auto& orbital   = registry.get<OrbitalBody>(eid);
@@ -192,17 +195,19 @@ update_orbital_bodies(stlw::Logger &logger, LevelData& ldata, EntityRegistry& re
     pos.z = orbital.z_radius * sin_time;
   };
 
-  auto const eids = find_orbital_bodies(registry);
-  for (auto const eid : eids) {
-    update_orbitals(eid);
-  }
+  if (es.ui_state.debug.update_orbital_bodies) {
+    auto const eids = find_orbital_bodies(registry);
+    for (auto const eid : eids) {
+      update_orbitals(eid);
+    }
 
-  // TODO: HACK
-  auto& directional   = ldata.global_light.directional;
-  if (directional.enabled) {
+    auto& directional = ldata.global_light.directional;
+    if (!directional.enabled) {
+      return;
+    }
+
+    // TODO: HACK
     auto const pos = registry.get<Transform>(eids.front()).translation;
-    LOG_INFO_SPRINTF("DIR LIGHT POS: %s", glm::to_string(pos));;
-
     auto const orbital_to_origin = glm::normalize(-pos);
     directional.direction        = orbital_to_origin;
   }
@@ -400,7 +405,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
   auto& player   = ldata.player;
   {
     update_nearbytargets(ldata, registry, ft);
-    update_orbital_bodies(logger, ldata, registry, ft);
+    update_orbital_bodies(es, ldata, registry, ft);
     move_riverwiggles(ldata, ft);
 
     if (tilegrid_state.recompute) {

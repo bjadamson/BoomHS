@@ -39,7 +39,7 @@ x_ratio(float const x, TerrainConfiguration const& tc)
 float
 z_ratio(float const z, TerrainConfiguration const& tc)
 {
-  return (1.0f - (z / (tc.num_vertexes - 1))) * tc.z_length;
+  return (z / (tc.num_vertexes - 1)) * tc.z_length;
 }
 
 ObjData::vertices_t

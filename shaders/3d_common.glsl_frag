@@ -72,12 +72,12 @@ calc_dirlight(DirectionalLight dir_light, Material material, float reflectivity,
 }
 
 vec3
-calc_pointlight(PointLight light, vec3 v_lighttofrag, vec3 frag_world_pos,
-    mat4 invviewmatrix, Material material, float reflectivity,
-    vec3 surface_normal)
+calc_pointlight(PointLight light, vec3 frag_world_pos, mat4 invviewmatrix, Material material,
+    float reflectivity, vec3 surface_normal)
 {
+  vec3 v_lighttofrag = normalize(light.position - frag_world_pos);
   float dotp = dot(surface_normal, v_lighttofrag);
-  float brightness = max(dotp, 0.0);
+  float brightness = max(0.0, dotp);
   vec3 diffuse = brightness * light.diffuse * material.diffuse;
 
   vec3 light_direction = -v_lighttofrag;
@@ -104,11 +104,11 @@ calc_pointlights(PointLight pointlights[MAX_NUM_POINTLIGHTS], mat4 modelmatrix, 
     vec3 surface_normal)
 {
   vec3 frag_world_pos = (modelmatrix * position).xyz;
+
   vec3 color = vec3(0.0);
   for(int i = 0; i < MAX_NUM_POINTLIGHTS; i++) {
-    vec3 light_to_frag = normalize(pointlights[i].position - frag_world_pos);
-    color += calc_pointlight(pointlights[i], light_to_frag, frag_world_pos,
-      invviewmatrix, material, reflectivity, surface_normal);
+    color += calc_pointlight(pointlights[i], frag_world_pos, invviewmatrix, material, reflectivity,
+                             surface_normal);
   }
   return color;
 }

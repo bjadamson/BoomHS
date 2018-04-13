@@ -578,6 +578,8 @@ world_menu(EngineState& es, LevelData& ldata)
   auto&      ui   = es.ui_state.debug;
   auto const draw = [&]() {
     ImGui::MenuItem("Fog Window", nullptr, &ui.show_fog_window);
+    ImGui::MenuItem("Update Orbital", nullptr, &ui.update_orbital_bodies);
+
     ImGui::MenuItem("Local Axis", nullptr, &es.show_local_axis);
     ImGui::MenuItem("Global Axis", nullptr, &es.show_global_axis);
   };

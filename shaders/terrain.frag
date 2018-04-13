@@ -32,7 +32,6 @@ void main()
       u_invviewmatrix, u_material, u_reflectivity, v_surfacenormal);
 
   vec3 ambient_pointlight = ambient + pointlights;
-  vec3 light = ambient_pointlight + dirlight;
   vec4 texture_color = texture(u_sampler, v_uv);
   if (u_drawnormals == 1) {
     fragment_color = vec4(v_surfacenormal, 1.0);
@@ -41,6 +40,7 @@ void main()
     fragment_color = vec4(ambient_pointlight, 1.0) * texture_color;
   }
   else {
+    vec3 light = ambient_pointlight + dirlight;
     fragment_color = vec4(light, 1.0) * texture_color;
   }
   fragment_color = mix(u_fog.color, fragment_color, v_visibility);

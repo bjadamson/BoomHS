@@ -67,13 +67,18 @@ public:
   auto rgb() const { return glm::vec3{r(), g(), b()}; }
 
   glm::vec4 rgba() const { return glm::vec4{r(), g(), b(), a()}; }
+
+  std::string
+  to_string() const
+  {
+    return glm::to_string(rgba());
+  }
 };
 
 inline std::ostream&
 operator<<(std::ostream& os, Color const& c)
 {
-  os << "{" << std::to_string(c.r()) << ", " << std::to_string(c.g()) << ", "
-     << std::to_string(c.b()) << ", " << std::to_string(c.a()) << "}";
+  os << c.to_string();
   return os;
 }
 
