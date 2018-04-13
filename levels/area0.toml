@@ -297,6 +297,12 @@ linear = 0.001
 quadratic = 0.000001
 
 [[attenuation]]
+name = "nolight"
+constant = 9999.0
+linear = 9999.0
+quadratic = 9999.0
+
+[[attenuation]]
 name = "moon"
 constant = 0.1
 linear = 0.001
@@ -327,31 +333,31 @@ shininess = 10.00
 ########### POINTLIGHT #############
 [[pointlight]]
 name = "moon"
-attenuation = "moon"
+attenuation = "nolight"
 diffuse = [0.0, 0.0, 1.0]
 specular = [0.0, 1.0, 0.0]
 
 [[pointlight]]
 name = "white"
-attenuation = "default"
+attenuation = "nolight"
 diffuse = [1.0, 1.0, 1.0]
 specular = [1.0, 1.0, 1.0]
 
 [[pointlight]]
 name = "red"
-attenuation = "default"
+attenuation = "nolight"
 diffuse = [1.0, 0.0, 0.0]
 specular = [1.0, 0.0, 0.0]
 
 [[pointlight]]
 name = "green"
-attenuation = "default"
+attenuation = "nolight"
 diffuse = [0.0, 1.0, 0.0]
 specular = [0.0, 1.0, 0.0]
 
 [[pointlight]]
 name = "blue"
-attenuation = "default"
+attenuation = "nolight"
 diffuse = [0.0, 0.0, 1.0]
 specular = [0.0, 0.0, 1.0]
 

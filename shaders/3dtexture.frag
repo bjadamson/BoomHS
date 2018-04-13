@@ -38,7 +38,7 @@ void main()
     fragment_color = vec4(v_surfacenormal, 1.0);
   }
   else if (u_ignore_dirlight == 1) {
-    fragment_color = vec4(ambient + pointlights, 1.0) * texture_color;
+    fragment_color = vec4(ambient_pointlight, 1.0) * texture_color;
   }
   else {
     fragment_color = vec4(light, 1.0) * texture_color;

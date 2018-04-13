@@ -36,14 +36,13 @@ namespace
 void
 enable_depth_tests()
 {
-  // glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
 }
 
 void
 disable_depth_tests()
 {
-  // glDisable(GL_CULL_FACE);
+  glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
 }
 
@@ -119,7 +118,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
 
   // ambient
   if (receives_ambient_light) {
-    sp.set_uniform_color_3fv(logger, "u_ambient.color", global_light.ambient);
+    sp.set_uniform_color_3fv(logger, "u_ambient.color", LOC::RED);
   }
 
   // specular
@@ -970,10 +969,10 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
   sp.use(logger);
 
   glFrontFace(GL_CW);
+  glEnable(GL_CULL_FACE);
 
-  auto& ld                              = zs.level_data;
   bool constexpr RECEIVES_AMBIENT_LIGHT = true;
-  for (auto const& t : ld.terrain_grid()) {
+  for (auto const& t : zs.level_data.terrain_grid()) {
     Transform transform;
 
     auto const& pos = t.position();
@@ -987,6 +986,7 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
   }
 
   LOG_TRACE("-------------------------Finished Drawing All Terrain(s) ---------------------------");
+  glDisable(GL_CULL_FACE);
   glFrontFace(GL_CCW);
 }
 
