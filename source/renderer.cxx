@@ -46,6 +46,36 @@ disable_depth_tests()
   glDisable(GL_DEPTH_TEST);
 }
 
+struct CWState
+{
+  GLint winding;
+
+  GLboolean culling_enabled;
+  GLint culling_mode;
+};
+
+CWState
+read_cwstate()
+{
+  CWState cwstate;
+  glGetIntegerv(GL_FRONT_FACE, &cwstate.winding);
+  glGetBooleanv(GL_CULL_FACE, &cwstate.culling_enabled);
+  glGetIntegerv(GL_CULL_FACE_MODE, &cwstate.culling_mode);
+  return cwstate;
+}
+
+void
+set_cwstate(CWState const& cw_state)
+{
+  if (cw_state.culling_enabled) {
+    glEnable(GL_CULL_FACE);
+    glCullFace(cw_state.culling_mode);
+  }
+  else {
+    glDisable(GL_CULL_FACE);
+  }
+}
+
 void
 set_modelmatrix(stlw::Logger& logger, glm::mat4 const& model_matrix, ShaderProgram& sp)
 {
@@ -970,14 +1000,8 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
   sp.use(logger);
 
   // backup state to restore
-  GLint prev_winding;
-  glGetIntegerv(GL_FRONT_FACE, &prev_winding);
-
-  GLboolean culling_enabled_prev;
-  glGetBooleanv(GL_CULL_FACE, &culling_enabled_prev);
-
-  GLint culling_mode_prev;
-  glGetIntegerv(GL_CULL_FACE_MODE, &culling_mode_prev);
+  auto const cw_state = read_cwstate();
+  ON_SCOPE_EXIT([&]() { set_cwstate(cw_state); });
 
   bool constexpr RECEIVES_AMBIENT_LIGHT = true;
   auto const& tgrid = zs.level_data.terrain_grid();
@@ -991,7 +1015,7 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
   }
 
   glFrontFace(tgrid.winding);
-  ON_SCOPE_EXIT([&]() { glFrontFace(prev_winding); });
+  ON_SCOPE_EXIT([&]() { glFrontFace(cw_state.winding); });
 
   for (auto const& t : tgrid) {
     Transform transform;
@@ -1007,15 +1031,6 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
   }
 
   LOG_TRACE("-------------------------Finished Drawing All Terrain(s) ---------------------------");
-
-  // restore OpenGL state
-  if (culling_enabled_prev) {
-    glEnable(GL_CULL_FACE);
-    glCullFace(culling_enabled_prev);
-  }
-  else {
-    glDisable(GL_CULL_FACE);
-  }
 }
 
 void
