@@ -7,6 +7,16 @@
 namespace imgui_cxx
 {
 
+template <typename FN, typename ...Args>
+auto
+with_combo(FN const& fn, Args&& ... args)
+{
+  if (ImGui::BeginCombo(FORWARD(args))) {
+    fn();
+    ImGui::EndCombo();
+  }
+}
+
 inline auto
 input_string(char const* text, std::string& val)
 {
@@ -23,7 +33,7 @@ input_string(char const* text, std::string& val)
 }
 
 template <typename... Args>
-inline auto
+auto
 input_sizet(char const* label, size_t* data, Args&&... args)
 {
   int* casted = reinterpret_cast<int*>(data);

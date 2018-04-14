@@ -8,7 +8,8 @@ namespace opengl::heightmap
 {
 
 ObjData::vertices_t
-generate_normals(int const x_length, int const z_length, HeightmapData const& heightmap_data)
+generate_normals(int const x_length, int const z_length, bool const invert_normals,
+    HeightmapData const& heightmap_data)
 {
   int constexpr NUM_COMPONENTS     = 3; // xn, yn, zn
   size_t const        num_vertices = NUM_COMPONENTS * x_length * z_length;
@@ -65,9 +66,14 @@ generate_normals(int const x_length, int const z_length, HeightmapData const& he
       auto const yn = index + 1;
       auto const zn = index + 2;
       assert(zn < num_vertices);
-      normals[xn] = normal.x;
-      normals[yn] = normal.y;
-      normals[zn] = normal.z;
+
+      auto const set = [&](auto &component, float const value)
+      {
+        component = invert_normals ? -value : value;
+      };
+      set(normals[xn], normal.x);
+      set(normals[yn], normal.y);
+      set(normals[zn], normal.z);
     }
   }
   assert(num_vertices == normals.size());

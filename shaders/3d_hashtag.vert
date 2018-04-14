@@ -31,7 +31,7 @@ void main()
   vec4 color = v_color;
 
   v_position = vec4(a_position, 1.0);
-  v_surfacenormal = normalize(u_normalmatrix * a_normal);
+  v_surfacenormal = normalize(u_normalmatrix * -a_normal);
   v_color = a_color;
 
   // Transform v_position to world-space

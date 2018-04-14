@@ -25,10 +25,18 @@ struct DrawTimeBuffer
   bool clear_fields = false;
 };
 
+struct TerrainBuffer
+{
+  TerrainConfiguration state;
+
+  int selected_winding = 0;
+  int selected_culling = 0;
+};
+
 struct Buffers
 {
   DrawTimeBuffer       draw_time_window;
-  TerrainConfiguration terrain_state;
+  TerrainBuffer terrain;
 };
 
 struct UiDebugState

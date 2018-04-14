@@ -41,9 +41,9 @@ collect_all(EntityRegistry& registry, bool const reverse)
 }
 
 auto
-callback_from_pairs(void* const pvec, int const idx, const char** out_text)
+callback_from_pairs(void* const pdata, int const idx, const char** out_text)
 {
-  std::vector<pair_t> const& vec = *reinterpret_cast<std::vector<pair_t>*>(pvec);
+  auto const& vec = *reinterpret_cast<std::vector<pair_t>*>(pdata);
 
   auto const index_size = static_cast<size_t>(idx);
   if (idx < 0 || index_size > vec.size()) {
@@ -212,7 +212,8 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 
   auto& zs        = lm.active();
   auto& gfx_state = zs.gfx_state;
-  auto& tstate    = es.ui_state.debug.buffers.terrain_state;
+  auto& tbuffers   = es.ui_state.debug.buffers.terrain;
+  auto& tstate    = tbuffers.state;
 
   auto const draw = [&]() {
     ImGui::Text("terrain Generation");
@@ -221,6 +222,46 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
     imgui_cxx::input_sizet("x width", &tstate.x_length);
     imgui_cxx::input_sizet("z length", &tstate.z_length);
 
+    auto& ldata = zs.level_data;
+    auto& tgrid = ldata.terrain_grid();
+
+    auto &winding = tbuffers.selected_winding;
+    if (ImGui::Combo("Winding Order", &winding, "CCW\0CW\0\0"))
+    {
+      if (winding == 0) {
+        tgrid.winding = GL_CCW;
+      }
+      else if (winding == 1) {
+        tgrid.winding = GL_CW;
+      }
+      else {
+        std::abort();
+      }
+    }
+
+    ImGui::Checkbox("Culling Enabled", &tgrid.culling_enabled);
+
+    auto &culling_mode = tbuffers.selected_culling;
+    if (ImGui::Combo("Culling Face", &culling_mode, "Front\0Back\0Front And Back\0\0"))
+    {
+      if (culling_mode == 0) {
+        tgrid.culling_mode = GL_FRONT;
+        LOG_ERROR("Terrain Culling GL_FRONT");
+      }
+      else if (culling_mode == 1) {
+        tgrid.culling_mode = GL_BACK;
+        LOG_ERROR("Terrain Culling GL_BACK");
+      }
+      else if (culling_mode == 2) {
+        LOG_ERROR("Terrain Culling GL_FRONT_AND_BACK");
+        tgrid.culling_mode = GL_FRONT_AND_BACK;
+      }
+      else {
+        std::abort();
+      }
+    }
+
+    ImGui::Checkbox("Invert Normals", &tstate.invert_normals);
     imgui_cxx::input_string("Heightmap File Path", tstate.heightmap_path);
     imgui_cxx::input_string("Shader Name", tstate.shader_name);
     imgui_cxx::input_string("Texture Name", tstate.texture_name);
@@ -231,9 +272,6 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
     imgui_cxx::input_sizet("num cols", &tstate.num_cols);
 
     if (ImGui::Button("Generate Terrain")) {
-      auto& ldata = zs.level_data;
-      auto& tgrid = ldata.terrain_grid();
-
       {
         auto& sps = gfx_state.sps;
         auto& sp  = sps.ref_sp(tstate.shader_name);

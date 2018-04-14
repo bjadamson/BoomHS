@@ -291,10 +291,22 @@ offset = 3.1459
 
 ########### ATTENUATION #############
 [[attenuation]]
-name = "moon"
+name = "default"
 constant = 0.1
 linear = 0.001
 quadratic = 0.000001
+
+[[attenuation]]
+name = "nolight"
+constant = 9999.0
+linear = 9999.0
+quadratic = 9999.0
+
+[[attenuation]]
+name = "moon"
+constant = 0.1
+linear = 0.001
+quadratic = 9999.0
 
 ########### MATERIAL #############
 [[material]]
@@ -320,14 +332,33 @@ shininess = 10.00
 
 ########### POINTLIGHT #############
 [[pointlight]]
-attenuation = "moon"
 name = "moon"
+attenuation = "nolight"
 diffuse = [0.0, 0.0, 1.0]
 specular = [0.0, 1.0, 0.0]
 
 [[pointlight]]
 name = "white"
-diffuse = [0.0, 0.0, 0.0]
+attenuation = "nolight"
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+
+[[pointlight]]
+name = "red"
+attenuation = "nolight"
+diffuse = [1.0, 0.0, 0.0]
+specular = [1.0, 0.0, 0.0]
+
+[[pointlight]]
+name = "green"
+attenuation = "nolight"
+diffuse = [0.0, 1.0, 0.0]
+specular = [0.0, 1.0, 0.0]
+
+[[pointlight]]
+name = "blue"
+attenuation = "nolight"
+diffuse = [0.0, 0.0, 1.0]
 specular = [0.0, 0.0, 1.0]
 
 ########### ENTITY #############
@@ -349,15 +380,15 @@ scale = [650.0, 650.0, 650.0]
 texture = "sun"
 name = "sun"
 
-[[entity]]
-orbital-body = "moon"
-position = [0.0, 750.0, 0.0]
-shader = "2dlight_uv"
-geometry = "billboard:spherical"
-scale = [650.0, 650.0, 650.0]
-texture = "moon"
-pointlight = "moon"
-name = "Moon"
+#[[entity]]
+#orbital-body = "moon"
+#position = [0.0, 750.0, 0.0]
+#shader = "2dlight_uv"
+#geometry = "billboard:spherical"
+#scale = [650.0, 650.0, 650.0]
+#texture = "moon"
+#pointlight = "moon"
+#name = "Moon"
 
 #[[entity]]
 #position = [0.0, 0.0, 0.0]
@@ -392,23 +423,31 @@ name = "Moon"
 ######### POINT LIGHTS
 [[entity]]
 name = "point light 0"
-position = [5.0, 5.0, 5.0]
+position = [0.0, 5.0, 0.0]
 shader = "light"
 geometry = "cube"
-pointlight = "white"
+pointlight = "red"
 scale = [0.4, 0.4, 0.4]
 
 [[entity]]
 name = "point light 1"
-position = [35.0, 5.0, 35.0]
+position = [5.0, 5.0, 0.0]
 shader = "light"
 geometry = "cube"
-pointlight = "white"
+pointlight = "green"
 scale = [0.4, 0.4, 0.4]
 
 [[entity]]
 name = "point light 2"
-position = [5.0, 5.0, 35.0]
+position = [5.0, 5.0, 5.0]
+shader = "light"
+geometry = "cube"
+pointlight = "blue"
+scale = [0.4, 0.4, 0.4]
+
+[[entity]]
+name = "point light 3"
+position = [0.0, 5.0, 5.0]
 shader = "light"
 geometry = "cube"
 pointlight = "white"

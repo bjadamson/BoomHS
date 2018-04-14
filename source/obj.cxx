@@ -42,9 +42,9 @@ load_normals(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
     auto const zn = attrib.normals[ni + 2];
 
     auto& vertices = *pvertices;
-    vertices.emplace_back(xn);
-    vertices.emplace_back(yn);
-    vertices.emplace_back(zn);
+    vertices.emplace_back(-xn);
+    vertices.emplace_back(-yn);
+    vertices.emplace_back(-zn);
   }
   else {
     return LoadStatus::MISSING_NORMAL_ATTRIBUTES;

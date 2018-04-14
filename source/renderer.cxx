@@ -969,11 +969,31 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
       "------------------------- Starting To Draw All Terrain(s) ---------------------------");
   sp.use(logger);
 
-  //glFrontFace(GL_CW);
-  //glEnable(GL_CULL_FACE);
+  // backup state to restore
+  GLint prev_winding;
+  glGetIntegerv(GL_FRONT_FACE, &prev_winding);
+
+  GLboolean culling_enabled_prev;
+  glGetBooleanv(GL_CULL_FACE, &culling_enabled_prev);
+
+  GLint culling_mode_prev;
+  glGetIntegerv(GL_CULL_FACE_MODE, &culling_mode_prev);
 
   bool constexpr RECEIVES_AMBIENT_LIGHT = true;
-  for (auto const& t : zs.level_data.terrain_grid()) {
+  auto const& tgrid = zs.level_data.terrain_grid();
+
+  if (tgrid.culling_enabled) {
+    glEnable(GL_CULL_FACE);
+    glCullFace(tgrid.culling_mode);
+  }
+  else {
+    glDisable(GL_CULL_FACE);
+  }
+
+  glFrontFace(tgrid.winding);
+  ON_SCOPE_EXIT([&]() { glFrontFace(prev_winding); });
+
+  for (auto const& t : tgrid) {
     Transform transform;
 
     auto const& pos = t.position();
@@ -987,8 +1007,15 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
   }
 
   LOG_TRACE("-------------------------Finished Drawing All Terrain(s) ---------------------------");
-  //glDisable(GL_CULL_FACE);
-  //glFrontFace(GL_CCW);
+
+  // restore OpenGL state
+  if (culling_enabled_prev) {
+    glEnable(GL_CULL_FACE);
+    glCullFace(culling_enabled_prev);
+  }
+  else {
+    glDisable(GL_CULL_FACE);
+  }
 }
 
 void

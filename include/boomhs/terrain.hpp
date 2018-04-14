@@ -55,6 +55,11 @@ class TerrainGrid
   TerrainArray terrain_;
 
 public:
+  GLenum winding = GL_CCW;
+
+  bool   culling_enabled = true;
+  GLenum culling_mode    = GL_BACK;
+
   explicit TerrainGrid(size_t, size_t);
   TerrainGrid();
 
@@ -74,6 +79,7 @@ struct TerrainConfiguration
   size_t num_vertexes;
   size_t x_length, z_length;
   size_t num_rows, num_cols;
+  bool invert_normals;
 
   std::string shader_name;
   std::string texture_name;

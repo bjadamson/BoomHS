@@ -22,7 +22,7 @@ namespace opengl::heightmap
 {
 
 boomhs::ObjData::vertices_t
-generate_normals(int, int, HeightmapData const&);
+generate_normals(int, int, bool, HeightmapData const&);
 
 HeightmapResult
 parse(ImageData const&);

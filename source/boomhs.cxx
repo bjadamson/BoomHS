@@ -181,7 +181,7 @@ update_orbital_bodies(EngineState &es, LevelData &ldata, EntityRegistry& registr
   auto &logger = es.logger;
 
   // Must recalculate zs and registry, possibly changed since call to move_between()
-  auto const update_orbitals = [&](auto const eid) {
+  auto const update_orbitals = [&](auto const eid, bool const first) {
     auto& transform = registry.get<Transform>(eid);
     auto& orbital   = registry.get<OrbitalBody>(eid);
     auto& pos       = transform.translation;
@@ -193,23 +193,26 @@ update_orbital_bodies(EngineState &es, LevelData &ldata, EntityRegistry& registr
     pos.x = orbital.x_radius * cos_time;
     pos.y = orbital.y_radius * sin_time;
     pos.z = orbital.z_radius * sin_time;
+
+    // TODO: HACK
+    if (first) {
+      auto& directional = ldata.global_light.directional;
+      if (!directional.enabled) {
+        return;
+      }
+
+      auto const orbital_to_origin = glm::normalize(-pos);
+      directional.direction        = orbital_to_origin;
+    }
   };
 
   if (es.ui_state.debug.update_orbital_bodies) {
     auto const eids = find_orbital_bodies(registry);
+    bool first = true;
     for (auto const eid : eids) {
-      update_orbitals(eid);
+      update_orbitals(eid, first);
+      first = false;
     }
-
-    auto& directional = ldata.global_light.directional;
-    if (!directional.enabled) {
-      return;
-    }
-
-    // TODO: HACK
-    auto const pos = registry.get<Transform>(eids.front()).translation;
-    auto const orbital_to_origin = glm::normalize(-pos);
-    directional.direction        = orbital_to_origin;
   }
 }
 
