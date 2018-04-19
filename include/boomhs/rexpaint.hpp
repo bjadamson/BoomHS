@@ -93,7 +93,7 @@ public:
 
   // Save this RexFile into a valid .xp file that RexPaint can load (if the ".xp" suffix is
   // present).
-  static Result<stlw::empty_type, RexError> save(RexImage const&, std::string const&);
+  static Result<stlw::none_t, RexError> save(RexImage const&, std::string const&);
 
   // Image attributes
   auto        version() const { return version_; };

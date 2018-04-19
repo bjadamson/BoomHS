@@ -2,7 +2,6 @@
 #include <extlibs/oktal.hpp>
 #include <stlw/try.hpp>
 #include <stlw/type_macros.hpp>
-#include <stlw/types.hpp>
 
 //
 // They each have separate use cases, and build upon the general purpose macros inside
@@ -64,3 +63,19 @@
 //    auto st = ...;
 //    return OK_MOVE(st);
 #define OK_MOVE(...) Ok(MOVE(__VA_ARGS__))
+
+//
+// A dummy structure.
+namespace stlw
+{
+
+struct Nothing
+{
+};
+
+using none_t = Nothing;
+
+} // namespace stlw
+
+#define OK_NONE Ok(stlw::Nothing{})
+#define ERR_NONE Err(stlw::Nothing{})

@@ -1,5 +1,5 @@
 #pragma once
-#include <stlw/types.hpp>
+#include <ostream>
 #include <vector>
 
 namespace stlw

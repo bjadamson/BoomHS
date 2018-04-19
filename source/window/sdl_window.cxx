@@ -81,7 +81,7 @@ SDLWindow::set_fullscreen(FullscreenFlags const fs)
   }
 }
 
-Result<stlw::empty_type, std::string>
+Result<stlw::none_t, std::string>
 sdl_library::init(stlw::Logger &logger)
 {
   // Initialize video subsystem
@@ -95,7 +95,7 @@ sdl_library::init(stlw::Logger &logger)
   // (from the docs) The requested attributes should be set before creating an
   // OpenGL window
   auto const set_attribute = [&logger](auto const attribute,
-                                       auto const value) -> Result<stlw::empty_type, std::string> {
+                                       auto const value) -> Result<stlw::none_t, std::string> {
     int const set_r = SDL_GL_SetAttribute(attribute, value);
     check_errors(logger);
     if (0 != set_r) {
@@ -104,7 +104,7 @@ sdl_library::init(stlw::Logger &logger)
       std::abort();
       return Err(fmt);
     }
-    return Ok(stlw::make_empty());
+    return OK_NONE;
   };
 
   // Use OpenGL 3.1 core
@@ -121,7 +121,7 @@ sdl_library::init(stlw::Logger &logger)
   DO_EFFECT(set_attribute(SDL_GL_DEPTH_SIZE, 24));
   DO_EFFECT(set_attribute(SDL_GL_STENCIL_SIZE, 8));
 
-  return Ok(stlw::make_empty());
+  return OK_NONE;
 }
 
 void

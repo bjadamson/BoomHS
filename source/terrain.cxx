@@ -69,9 +69,11 @@ generate_vertices(stlw::Logger& logger, TerrainConfiguration const& tc,
       assert(offset < buffer.size());
 
       uint8_t const height            = heightmap_data.data()[(x_length * z) + x];
-      float const   height_normalized = height / 127.0f - 1.0f;
+      float const   height_normalized = height / 255.0f;
+      assert(height > 0.0f);
+
       LOG_TRACE_SPRINTF("TERRAIN HEIGHT: %f (raw: %u)", height_normalized, height);
-      buffer[offset++] = height_normalized;
+      buffer[offset++] = height_normalized * tc.height_multiplier;
 
       assert(offset < buffer.size());
       buffer[offset++] = z_position;
@@ -159,10 +161,10 @@ generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags,
 
   data.vertices = generate_vertices(logger, tc, heightmap_data);
   data.normals  = heightmap::generate_normals(tc.num_vertexes, tc.num_vertexes, tc.invert_normals,
-      heightmap_data);
+                                             heightmap_data);
 
-  data.uvs      = generate_uvs(tc);
-  data.indices  = generate_indices(tc);
+  data.uvs     = generate_uvs(tc);
+  data.indices = generate_indices(tc);
   return data;
 }
 
@@ -194,6 +196,7 @@ TerrainConfiguration::TerrainConfiguration()
     , z_length(1)
     , num_rows(1)
     , num_cols(1)
+    , height_multiplier(1)
     , invert_normals(false)
     , shader_name("terrain")
     , texture_name("TerrainFloor")

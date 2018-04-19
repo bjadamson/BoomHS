@@ -35,8 +35,8 @@ struct TerrainBuffer
 
 struct Buffers
 {
-  DrawTimeBuffer       draw_time_window;
-  TerrainBuffer terrain;
+  DrawTimeBuffer draw_time_window;
+  TerrainBuffer  terrain;
 };
 
 struct UiDebugState

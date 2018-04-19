@@ -51,7 +51,7 @@ struct CWState
   GLint winding;
 
   GLboolean culling_enabled;
-  GLint culling_mode;
+  GLint     culling_mode;
 };
 
 CWState
@@ -1004,7 +1004,7 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
   ON_SCOPE_EXIT([&]() { set_cwstate(cw_state); });
 
   bool constexpr RECEIVES_AMBIENT_LIGHT = true;
-  auto const& tgrid = zs.level_data.terrain_grid();
+  auto const& tgrid                     = zs.level_data.terrain_grid();
 
   if (tgrid.culling_enabled) {
     glEnable(GL_CULL_FACE);

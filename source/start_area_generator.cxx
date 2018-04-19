@@ -26,7 +26,7 @@ place_torch(TileGrid const& tilegrid, EntityRegistry& registry, stlw::float_gene
   transform.translation = glm::vec3{2, 0.5, 2};
 }
 
-Result<stlw::empty_type, std::string>
+Result<stlw::none_t, std::string>
 place_prefabs(stlw::Logger& logger, TileGrid& tgrid, stlw::float_generator& rng)
 {
   auto         contents = TRY_MOVEOUT(stlw::read_file("prefabs/test0.prefab"));
@@ -77,7 +77,7 @@ place_prefabs(stlw::Logger& logger, TileGrid& tgrid, stlw::float_generator& rng)
       }
     }
   }
-  return Ok(stlw::empty_type{});
+  return OK_NONE;
 }
 
 } // namespace

@@ -60,7 +60,7 @@ filename = "TextureAtlas.jpg"
 name = "TerrainFloor"
 type = "texture:2d-RGBA"
 filename = "terrain/terrain-texture.png"
-wrap = "repeat"
+wrap = "clamp"
 
 [[resource]]
 name = "water"

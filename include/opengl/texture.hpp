@@ -102,16 +102,19 @@ public:
 namespace opengl::texture
 {
 
-ImageData
+using ImageResult   = Result<ImageData, std::string>;
+using TextureResult = Result<Texture, std::string>;
+
+ImageResult
 load_image(stlw::Logger&, char const*, GLint const);
 
 GLint
 wrap_mode_from_string(char const*);
 
-Texture
+TextureResult
 allocate_texture(stlw::Logger&, std::string const&, GLint, GLint, GLint);
 
-Texture
+TextureResult
 upload_3dcube_texture(stlw::Logger&, std::vector<std::string> const&, GLint);
 
 } // namespace opengl::texture

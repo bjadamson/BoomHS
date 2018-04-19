@@ -21,12 +21,12 @@ namespace
 
 using namespace opengl;
 
-auto
+Result<ImageData, std::string>
 upload_image(stlw::Logger &logger, std::string const& filename, GLenum const target,
     GLint const format)
 {
   std::string const path = "assets/" + filename;
-  auto image_data = texture::load_image(logger, path.c_str(), format);
+  auto image_data = TRY_MOVEOUT(texture::load_image(logger, path.c_str(), format));
 
   auto const width = image_data.width;
   auto const height = image_data.height;
@@ -35,7 +35,7 @@ upload_image(stlw::Logger &logger, std::string const& filename, GLenum const tar
   LOG_TRACE_SPRINTF("uploading %s with w: %i, h: %i", path, width, height);
   glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 
-  return image_data;
+  return OK_MOVE(image_data);
 }
 
 } // ns anonymous
@@ -102,7 +102,7 @@ TextureTable::find(std::string const& name) const
 namespace opengl::texture
 {
 
-ImageData
+ImageResult
 load_image(stlw::Logger &logger, char const* path, GLint const format)
 {
   int w = 0, h = 0;
@@ -110,11 +110,12 @@ load_image(stlw::Logger &logger, char const* path, GLint const format)
   int const soil_format = format == GL_RGBA ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB;
   unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, soil_format);
   if (nullptr == pimage) {
-    LOG_ERROR_SPRINTF("image at path '%s' failed to load, reason '%s'", path, SOIL_last_result());
-    std::abort();
+    auto const fmt = fmt::sprintf("image at path '%s' failed to load, reason '%s'", path,
+        SOIL_last_result());
+    return Err(fmt);
   }
   pimage_t image_data{pimage, &SOIL_free_image_data};
-  return ImageData{w, h, MOVE(image_data)};
+  return Ok(ImageData{w, h, MOVE(image_data)});
 }
 
 GLint
@@ -138,7 +139,7 @@ wrap_mode_from_string(char const* name)
   std::abort();
 }
 
-Texture
+TextureResult
 allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const format,
     GLint const wrap, GLint const uv_max)
 {
@@ -162,15 +163,15 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const 
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  auto const image_data = upload_image(logger, filename, TEXTURE_MODE, format);
+  auto const image_data = TRY_MOVEOUT(upload_image(logger, filename, TEXTURE_MODE, format));
   ti.height = image_data.height;
   ti.width = image_data.width;
 
   ti.uv_max = uv_max;
-  return Texture{MOVE(ti)};
+  return Ok(Texture{MOVE(ti)});
 }
 
-Texture
+TextureResult
 upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& paths,
     GLint const format)
 {
@@ -197,8 +198,10 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   ON_SCOPE_EXIT([&ti]() { global::texture_unbind(ti); });
   LOG_ANY_GL_ERRORS(logger, "texture_bind");
 
-  auto const upload_fn = [&format, &logger, &ti](std::string const& filename, auto const& target) {
-    auto const image_data = upload_image(logger, filename, target, format);
+  auto const upload_fn = [&format, &logger, &ti](std::string const& filename, auto const& target)
+    -> Result<stlw::none_t, std::string>
+  {
+    auto const image_data = TRY_MOVEOUT(upload_image(logger, filename, target, format));
 
     // Either the height is unset (0) or all height/width are the same.
     assert(ti.height == 0 || ti.height == image_data.height);
@@ -206,6 +209,8 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
 
     ti.height = image_data.height;
     ti.width = image_data.width;
+
+    return OK_NONE;
   };
   auto const paths_tuple = std::make_tuple(paths[0], paths[1], paths[2], paths[3], paths[4], paths[5]);
   stlw::zip(upload_fn, directions.begin(), paths_tuple);
@@ -220,7 +225,7 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   glGenerateMipmap(TEXTURE_MODE);
   LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
 
-  return Texture{MOVE(ti)};
+  return Ok(Texture{MOVE(ti)});
 }
 
 } // ns opengl::texture

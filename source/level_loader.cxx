@@ -250,15 +250,16 @@ public:
   }
 };
 
-auto
+Result<opengl::TextureTable, std::string>
 load_textures(stlw::Logger& logger, CppTable const& table)
 {
   opengl::TextureTable ttable;
-  auto const           load_texture = [&logger, &ttable](auto const& resource) {
+  auto const           load_texture = [&logger,
+                             &ttable](auto const& resource) -> Result<stlw::none_t, std::string> {
     auto const name = get_string_or_abort(resource, "name");
     auto const type = get_string_or_abort(resource, "type");
 
-    auto const load_2dtexture = [&](auto const format) {
+    auto const load_2dtexture = [&](auto const format) -> Result<stlw::none_t, std::string> {
       auto const               filename = get_string_or_abort(resource, "filename");
       opengl::TextureFilenames texture_names{name, {filename}};
 
@@ -267,11 +268,13 @@ load_textures(stlw::Logger& logger, CppTable const& table)
 
       auto const uv_max = get_int(resource, "uvs").value_or(1.0);
 
-      auto ta = opengl::texture::allocate_texture(logger, texture_names.filenames[0], format, wrap,
-                                                  uv_max);
-      ttable.add_texture(MOVE(texture_names), MOVE(ta));
+      Texture t = TRY_MOVEOUT(opengl::texture::allocate_texture(logger, texture_names.filenames[0],
+                                                                format, wrap, uv_max));
+      ttable.add_texture(MOVE(texture_names), MOVE(t));
+
+      return OK_NONE;
     };
-    auto const load_3dtexture = [&](auto const format) {
+    auto const load_3dtexture = [&](auto const format) -> Result<stlw::none_t, std::string> {
       auto const front  = get_string_or_abort(resource, "front");
       auto const right  = get_string_or_abort(resource, "right");
       auto const back   = get_string_or_abort(resource, "back");
@@ -280,32 +283,37 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       auto const bottom = get_string_or_abort(resource, "bottom");
 
       opengl::TextureFilenames texture_names{name, {front, right, back, left, top, bottom}};
-      auto ta = opengl::texture::upload_3dcube_texture(logger, texture_names.filenames, format);
+      auto                     ta = TRY_MOVEOUT(
+          opengl::texture::upload_3dcube_texture(logger, texture_names.filenames, format));
       ttable.add_texture(MOVE(texture_names), MOVE(ta));
+
+      return OK_NONE;
     };
 
     if (type == "texture:3dcube-RGB") {
-      load_3dtexture(GL_RGB);
+      TRY_MOVEOUT(load_3dtexture(GL_RGB));
     }
     else if (type == "texture:3dcube-RGBA") {
-      load_3dtexture(GL_RGBA);
+      TRY_MOVEOUT(load_3dtexture(GL_RGBA));
     }
     else if (type == "texture:2d-RGBA") {
-      load_2dtexture(GL_RGBA);
+      TRY_MOVEOUT(load_2dtexture(GL_RGBA));
     }
     else if (type == "texture:2d-RGB") {
-      load_2dtexture(GL_RGB);
+      TRY_MOVEOUT(load_2dtexture(GL_RGB));
     }
     else {
       // TODO: implement more.
       LOG_ERROR_SPRINTF("error, type is: %s", type);
       std::abort();
     }
+
+    return OK_NONE;
   };
 
   auto const resource_table = get_table_array_or_abort(table, "resource");
   std::for_each(resource_table->begin(), resource_table->end(), load_texture);
-  return ttable;
+  return OK_MOVE(ttable);
 }
 
 std::optional<Color>
@@ -788,7 +796,7 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
       TRY_MOVEOUT(load_objfiles(logger, mesh_table).mapErrorMoveOut(loadstatus_to_string));
 
   LOG_TRACE("loading textures ...");
-  auto texture_table = load_textures(logger, file_datatable);
+  auto texture_table = TRY_MOVEOUT(load_textures(logger, file_datatable));
 
   LOG_TRACE("loading orbital data");
   auto const orbital_bodies = load_orbital_bodies(logger, file_datatable, registry);

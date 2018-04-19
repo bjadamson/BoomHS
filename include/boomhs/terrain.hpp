@@ -14,6 +14,21 @@ class ShaderProgram;
 namespace boomhs
 {
 
+struct TerrainConfiguration
+{
+  size_t num_vertexes;
+  size_t x_length, z_length;
+  size_t num_rows, num_cols;
+  size_t height_multiplier;
+  bool   invert_normals;
+
+  std::string shader_name;
+  std::string texture_name;
+  std::string heightmap_path;
+
+  TerrainConfiguration();
+};
+
 class Terrain
 {
   glm::vec2           pos_;
@@ -72,20 +87,6 @@ public:
 
   auto count() const { return terrain_.size(); }
   void set(size_t, Terrain&&);
-};
-
-struct TerrainConfiguration
-{
-  size_t num_vertexes;
-  size_t x_length, z_length;
-  size_t num_rows, num_cols;
-  bool invert_normals;
-
-  std::string shader_name;
-  std::string texture_name;
-  std::string heightmap_path;
-
-  TerrainConfiguration();
 };
 
 namespace terrain

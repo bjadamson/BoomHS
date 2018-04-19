@@ -175,10 +175,10 @@ rotate_around(glm::vec3 const& point_to_rotate, glm::vec3 const& rot_center,
 }
 
 void
-update_orbital_bodies(EngineState &es, LevelData &ldata, EntityRegistry& registry,
-    FrameTime const& ft)
+update_orbital_bodies(EngineState& es, LevelData& ldata, EntityRegistry& registry,
+                      FrameTime const& ft)
 {
-  auto &logger = es.logger;
+  auto& logger = es.logger;
 
   // Must recalculate zs and registry, possibly changed since call to move_between()
   auto const update_orbitals = [&](auto const eid, bool const first) {
@@ -207,8 +207,8 @@ update_orbital_bodies(EngineState &es, LevelData &ldata, EntityRegistry& registr
   };
 
   if (es.ui_state.debug.update_orbital_bodies) {
-    auto const eids = find_orbital_bodies(registry);
-    bool first = true;
+    auto const eids  = find_orbital_bodies(registry);
+    bool       first = true;
     for (auto const eid : eids) {
       update_orbitals(eid, first);
       first = false;

@@ -86,7 +86,9 @@ parse(ImageData const& image)
   auto const num_pixels_in_image = image.width * image.height;
   bool const evenly_divides_by4 = (num_pixels_in_image % 4) != 0;
   if (!evenly_divides_by4) {
-    return Err(std::string{"Number of pixel fields in heightmap does not divide evenly into 4."});
+    auto const fmt = fmt::sprintf("Number of pixels %i (w: %i, h: %i) does not divide evenly "
+        "into 4.", num_pixels_in_image, image.width, image.height);
+    return Err(fmt);
   }
 
   HeightmapData heightmap;
@@ -115,7 +117,7 @@ HeightmapResult
 parse(stlw::Logger &logger, char const* path)
 {
   LOG_TRACE_SPRINTF("Loading Heightmap Data from file %s", path);
-  auto const data = texture::load_image(logger, path, GL_RGBA);
+  auto const data = TRY_MOVEOUT(texture::load_image(logger, path, GL_RGBA));
   LOG_TRACE("Finished Loading Heightmap");
   return parse(data);
 }

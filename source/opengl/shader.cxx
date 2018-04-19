@@ -74,7 +74,7 @@ create_program()
   return Ok(program_id);
 }
 
-inline Result<stlw::empty_type, std::string>
+inline Result<stlw::none_t, std::string>
 link_program(stlw::Logger &logger, GLuint const program_id)
 {
   // Link the program
@@ -92,7 +92,7 @@ link_program(stlw::Logger &logger, GLuint const program_id)
         program_log, shader_log);
     return Err(fmt);
   }
-  return Ok(stlw::make_empty());
+  return OK_NONE;
 }
 
 struct AttributeVariableInfo {

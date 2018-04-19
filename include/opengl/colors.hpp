@@ -68,11 +68,7 @@ public:
 
   glm::vec4 rgba() const { return glm::vec4{r(), g(), b(), a()}; }
 
-  std::string
-  to_string() const
-  {
-    return glm::to_string(rgba());
-  }
+  std::string to_string() const { return glm::to_string(rgba()); }
 };
 
 inline std::ostream&

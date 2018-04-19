@@ -107,8 +107,8 @@ struct sdl_library
 {
   sdl_library() = delete;
 
-  static Result<stlw::empty_type, std::string> init(stlw::Logger&);
-  static void                                  destroy();
+  static Result<stlw::none_t, std::string> init(stlw::Logger&);
+  static void                              destroy();
 
   static Result<SDLWindow, std::string> make_window(stlw::Logger&, bool, int, int);
 };

@@ -7,9 +7,9 @@
 namespace imgui_cxx
 {
 
-template <typename FN, typename ...Args>
+template <typename FN, typename... Args>
 auto
-with_combo(FN const& fn, Args&& ... args)
+with_combo(FN const& fn, Args&&... args)
 {
   if (ImGui::BeginCombo(FORWARD(args))) {
     fn();

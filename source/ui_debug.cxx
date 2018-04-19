@@ -212,22 +212,21 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 
   auto& zs        = lm.active();
   auto& gfx_state = zs.gfx_state;
-  auto& tbuffers   = es.ui_state.debug.buffers.terrain;
+  auto& tbuffers  = es.ui_state.debug.buffers.terrain;
   auto& tstate    = tbuffers.state;
 
   auto const draw = [&]() {
     ImGui::Text("terrain Generation");
-
     imgui_cxx::input_sizet("Vertex Count", &tstate.num_vertexes);
+    imgui_cxx::input_sizet("height multiplier", &tstate.height_multiplier);
     imgui_cxx::input_sizet("x width", &tstate.x_length);
     imgui_cxx::input_sizet("z length", &tstate.z_length);
 
     auto& ldata = zs.level_data;
     auto& tgrid = ldata.terrain_grid();
 
-    auto &winding = tbuffers.selected_winding;
-    if (ImGui::Combo("Winding Order", &winding, "CCW\0CW\0\0"))
-    {
+    auto& winding = tbuffers.selected_winding;
+    if (ImGui::Combo("Winding Order", &winding, "CCW\0CW\0\0")) {
       if (winding == 0) {
         tgrid.winding = GL_CCW;
       }
@@ -241,9 +240,8 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 
     ImGui::Checkbox("Culling Enabled", &tgrid.culling_enabled);
 
-    auto &culling_mode = tbuffers.selected_culling;
-    if (ImGui::Combo("Culling Face", &culling_mode, "Front\0Back\0Front And Back\0\0"))
-    {
+    auto& culling_mode = tbuffers.selected_culling;
+    if (ImGui::Combo("Culling Face", &culling_mode, "Front\0Back\0Front And Back\0\0")) {
       if (culling_mode == 0) {
         tgrid.culling_mode = GL_FRONT;
         LOG_ERROR("Terrain Culling GL_FRONT");
@@ -276,15 +274,26 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
         auto& sps = gfx_state.sps;
         auto& sp  = sps.ref_sp(tstate.shader_name);
 
-        auto heightmap_r = opengl::heightmap::parse(logger, tstate.heightmap_path);
-        assert(heightmap_r.isOk());
+        auto const& path        = tstate.heightmap_path;
+        auto        heightmap_r = opengl::heightmap::parse(logger, path);
+        if (!heightmap_r) {
+          LOG_ERROR("ERROR PARSING HEIGHTMAP");
+          ImGui::OpenPopup("TextureLoadError");
+          bool close = false;
+          if (ImGui::BeginPopup("TextureLoadError")) {
+            ImGui::Text("Error loading file: %s reason: %s", path.c_str(),
+                        heightmap_r.unwrapErr().c_str());
+            ImGui::EndPopup();
+          }
+        }
+        else {
+          auto const  heightmap = heightmap_r.unwrap_moveout();
+          auto const& ti        = *gfx_state.texture_table.find(tstate.texture_name);
 
-        auto const  heightmap = heightmap_r.unwrap_moveout();
-        auto const& ti        = *gfx_state.texture_table.find(tstate.texture_name);
-
-        auto& ld = zs.level_data;
-        auto  tg = terrain::generate(logger, tstate, heightmap, sp, ti);
-        ld.set_terrain_grid(MOVE(tg));
+          auto& ld = zs.level_data;
+          auto  tg = terrain::generate(logger, tstate, heightmap, sp, ti);
+          ld.set_terrain_grid(MOVE(tg));
+        }
       }
     }
   };

@@ -1,7 +1,7 @@
 #pragma once
-#include <array>
 #include <stlw/type_macros.hpp>
-#include <stlw/types.hpp>
+
+#include <array>
 #include <vector>
 
 namespace stlw
@@ -29,13 +29,6 @@ vec_with_size(size_t const s)
   std::vector<T> buffer;
   buffer.resize(s);
   return buffer;
-}
-
-// factory FN
-constexpr auto
-make_empty()
-{
-  return stlw::empty_type{};
 }
 
 } // namespace stlw

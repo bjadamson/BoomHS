@@ -1,11 +1,12 @@
 #include <boomhs/rexpaint.hpp>
-#include <iostream>
 #include <stlw/algorithm.hpp>
-#include <stlw/types.hpp>
+#include <stlw/result.hpp>
+
+#include <iostream>
 #include <zlib.h>
 
 using namespace rexpaint;
-using RexIOResult = Result<stlw::empty_type, RexError>;
+using RexIOResult = Result<stlw::none_t, RexError>;
 
 namespace
 {
@@ -22,7 +23,7 @@ RexIOResult
 s_gzread(gzFile g, void* buf, unsigned int len)
 {
   if (gzread(g, buf, len) > 0) {
-    return Ok(stlw::empty_type{});
+    return OK_NONE;
   }
   return make_rexerror(g);
 }
@@ -31,7 +32,7 @@ RexIOResult
 s_gzwrite(gzFile g, void const* buf, unsigned int len)
 {
   if (gzwrite(g, buf, len) > 0) {
-    return Ok(stlw::empty_type{});
+    return OK_NONE;
   }
   return make_rexerror(g);
 }
@@ -173,7 +174,7 @@ RexImage::load(std::string const& filename)
   return Ok(RexImage{version, width, height, MOVE(layers)});
 }
 
-Result<stlw::empty_type, RexError>
+Result<stlw::none_t, RexError>
 RexImage::save(RexImage const& image, std::string const& filename)
 {
   gzFile gz = TRY_MOVEOUT(s_gzopen(filename.c_str(), "wb"));
@@ -203,7 +204,7 @@ RexImage::save(RexImage const& image, std::string const& filename)
   if (Z_OK != result) {
     return make_rexerror(gz);
   }
-  return Ok(stlw::empty_type());
+  return OK_NONE;
 }
 
 } // namespace rexpaint

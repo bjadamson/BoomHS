@@ -106,7 +106,7 @@ timed_game_loop(Engine& engine, GameState& state)
   }
 }
 
-Result<stlw::empty_type, std::string>
+Result<stlw::none_t, std::string>
 start(stlw::Logger& logger, Engine& engine)
 {
   // Initialize GUI library
@@ -138,7 +138,7 @@ start(stlw::Logger& logger, Engine& engine)
 
   // Game has finished
   LOG_TRACE("game loop finished.");
-  return Ok(stlw::empty_type{});
+  return OK_NONE;
 }
 
 } // namespace
