@@ -82,19 +82,33 @@ TextureTable::add_texture(TextureFilenames &&tf, Texture &&ta)
   data_.emplace_back(MOVE(pair));
 }
 
+#define FIND_TF(name)                                                                              \
+  [&]() {                                                                                          \
+    auto const cmp = [&name](auto const& it)                                                       \
+    {                                                                                              \
+      FOR(i, it.first.filenames.size()) {                                                          \
+        auto const& fn = it.first.filenames[i];                                                    \
+      }                                                                                            \
+      return it.first.name == name;                                                                \
+    };                                                                                             \
+    return std::find_if(data_.cbegin(), data_.cend(), cmp);                                        \
+    }()
+
+std::optional<TextureFilenames>
+TextureTable::lookup_nickname(std::string const& name) const
+{
+  auto const it = FIND_TF(name);
+  return it == data_.cend() ? std::nullopt : std::make_optional(it->first);
+}
+
 std::optional<TextureInfo>
 TextureTable::find(std::string const& name) const
 {
-  auto const cmp = [&name](auto const& it)
-  {
-    FOR(i, it.first.filenames.size()) {
-      auto const& fn = it.first.filenames[i];
-    }
-    return it.first.name == name;
-  };
-  auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
+  auto const it = FIND_TF(name);
   return it == data_.cend() ? std::nullopt : std::make_optional(it->second.resource());
 }
+
+#undef FIND_TF
 
 } // ns opengl
 

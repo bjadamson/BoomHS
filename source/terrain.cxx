@@ -200,8 +200,8 @@ TerrainConfiguration::TerrainConfiguration()
     , height_multiplier(1)
     , invert_normals(false)
     , shader_name("terrain")
-    , texture_name("TerrainFloor")
-    , heightmap_path("assets/terrain/heightmap.png")
+    , texture_name("TerrainFloor0")
+    , heightmap_path("TerrainHeightmap0")
 {
 }
 

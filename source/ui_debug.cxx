@@ -260,8 +260,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
     }
 
     ImGui::Checkbox("Invert Normals", &tstate.invert_normals);
-    imgui_cxx::input_string("Heightmap File Path", tstate.heightmap_path);
-    imgui_cxx::input_string("Texture File Path", tstate.texture_name);
+    imgui_cxx::input_string("Heightmap Name", tstate.heightmap_path);
     imgui_cxx::input_string("Shader Name", tstate.shader_name);
     imgui_cxx::input_string("Texture Name", tstate.texture_name);
 
@@ -275,34 +274,44 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
         auto& sps = gfx_state.sps;
         auto& sp  = sps.ref_sp(tstate.shader_name);
 
-        auto const& path        = tstate.heightmap_path;
-        auto        heightmap_r = opengl::heightmap::parse(logger, path);
-        if (!heightmap_r) {
-          LOG_ERROR_SPRINTF("ERROR PARSING HEIGHTMAP path: %s error: %s", path,
-              heightmap_r.unwrapErr());
-
-          static bool opened = false;
-          if (!opened) {
-            ImGui::OpenPopup("TextureLoadError");
-            opened = true;
-          }
-
-          if (ImGui::BeginPopup("TextureLoadError")) {
-            LOG_ERROR("POPUP OPENED\n");
-            LOG_ERROR_SPRINTF("ERROR REASON: %s", heightmap_r.unwrapErr().c_str());
-
-            ImGui::Text("Error loading file: %s reason: %s", path.c_str(),
-                        heightmap_r.unwrapErr().c_str());
-            ImGui::EndPopup();
-          }
+        auto const& ttable    = gfx_state.texture_table;
+        auto const heightmap_o = ttable.lookup_nickname(tstate.heightmap_path);
+        if (!heightmap_o) {
+          LOG_ERROR_SPRINTF("ERROR Looking up: %s", tstate.heightmap_path);
         }
         else {
-          auto const  heightmap = heightmap_r.unwrap_moveout();
-          auto const& ti        = *gfx_state.texture_table.find(tstate.texture_name);
+          auto const& hm        = *heightmap_o;
+          assert(1 == hm.num_filenames());
+          auto const& path        = hm.filenames[0];
 
-          auto& ld = zs.level_data;
-          auto  tg = terrain::generate(logger, tstate, heightmap, sp, ti);
-          ld.set_terrain_grid(MOVE(tg));
+          auto        heightmap_r = opengl::heightmap::parse(logger, path);
+          if (!heightmap_r) {
+            LOG_ERROR_SPRINTF("ERROR PARSING HEIGHTMAP path: %s error: %s", path,
+                heightmap_r.unwrapErr());
+
+            static bool opened = false;
+            if (!opened) {
+              ImGui::OpenPopup("TextureLoadError");
+              opened = true;
+            }
+
+            if (ImGui::BeginPopup("TextureLoadError")) {
+              LOG_ERROR("POPUP OPENED\n");
+              LOG_ERROR_SPRINTF("ERROR REASON: %s", heightmap_r.unwrapErr().c_str());
+
+              ImGui::Text("Error loading file: %s reason: %s", path.c_str(),
+                          heightmap_r.unwrapErr().c_str());
+              ImGui::EndPopup();
+            }
+          }
+          else {
+            auto const  heightmap = heightmap_r.unwrap_moveout();
+            auto const& ti        = *gfx_state.texture_table.find(tstate.texture_name);
+
+            auto& ld = zs.level_data;
+            auto  tg = terrain::generate(logger, tstate, heightmap, sp, ti);
+            ld.set_terrain_grid(MOVE(tg));
+          }
         }
       }
     }

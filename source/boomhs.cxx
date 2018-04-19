@@ -355,17 +355,23 @@ init(Engine& engine, EngineState& engine_state)
   auto& lm        = state.level_manager;
   auto& zs        = lm.active();
   auto& gfx_state = zs.gfx_state;
+  auto& sps = gfx_state.sps;
 
   {
-    auto& sps = gfx_state.sps;
-    auto& sp  = sps.ref_sp("terrain");
-
     TerrainConfiguration const tc;
-    auto const                 heightmap = TRY(opengl::heightmap::parse(logger, tc.heightmap_path));
-    auto const&                ti        = *gfx_state.texture_table.find(tc.texture_name);
+    auto& sp              = sps.ref_sp(tc.shader_name);
+    auto const& ttable    = gfx_state.texture_table;
 
-    //auto tp = TRY_MOVEOUT(opengl::texture::allocate_texture(logger, "assets/terrain/TerrainFloor.jpg",
-          //GL_RGB, GL_CLAMP_TO_EDGE, 1.0f));
+    char const* HEIGHTMAP_NAME = "TerrainHeightmap0";
+    auto const  heightmap_o = ttable.lookup_nickname(HEIGHTMAP_NAME);
+    if (!heightmap_o) {
+      auto const fmt = fmt::sprintf("Error cannot find terrain heightmap with nickname %s",
+          HEIGHTMAP_NAME);
+      return Err(fmt);
+    }
+    assert(1 == heightmap_o->num_filenames());
+    auto const  heightmap   = TRY(opengl::heightmap::parse(logger, heightmap_o->filenames[0]));
+    auto const& ti          = *ttable.find(tc.texture_name);
 
     auto  tg = terrain::generate(logger, tc, heightmap, sp, ti);
     auto& ld = zs.level_data;

@@ -79,8 +79,6 @@ struct TextureFilenames
   std::vector<std::string> filenames;
 
   auto num_filenames() const { return filenames.size(); }
-
-  MOVE_CONSTRUCTIBLE_ONLY(TextureFilenames);
 };
 
 class TextureTable
@@ -94,6 +92,7 @@ public:
 
   void add_texture(TextureFilenames&&, Texture&&);
 
+  std::optional<TextureFilenames> lookup_nickname(std::string const&) const;
   std::optional<TextureInfo> find(std::string const&) const;
 };
 
