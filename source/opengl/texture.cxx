@@ -22,10 +22,9 @@ namespace
 using namespace opengl;
 
 Result<ImageData, std::string>
-upload_image(stlw::Logger &logger, std::string const& filename, GLenum const target,
+upload_image(stlw::Logger &logger, std::string const& path, GLenum const target,
     GLint const format)
 {
-  std::string const path = "assets/" + filename;
   auto image_data = TRY_MOVEOUT(texture::load_image(logger, path.c_str(), format));
 
   auto const width = image_data.width;

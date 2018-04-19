@@ -84,7 +84,7 @@ HeightmapResult
 parse(ImageData const& image)
 {
   auto const num_pixels_in_image = image.width * image.height;
-  bool const evenly_divides_by4 = (num_pixels_in_image % 4) != 0;
+  bool const evenly_divides_by4 = (num_pixels_in_image % 4) == 0;
   if (!evenly_divides_by4) {
     auto const fmt = fmt::sprintf("Number of pixels %i (w: %i, h: %i) does not divide evenly "
         "into 4.", num_pixels_in_image, image.width, image.height);

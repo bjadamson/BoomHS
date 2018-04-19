@@ -261,6 +261,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 
     ImGui::Checkbox("Invert Normals", &tstate.invert_normals);
     imgui_cxx::input_string("Heightmap File Path", tstate.heightmap_path);
+    imgui_cxx::input_string("Texture File Path", tstate.texture_name);
     imgui_cxx::input_string("Shader Name", tstate.shader_name);
     imgui_cxx::input_string("Texture Name", tstate.texture_name);
 
@@ -277,10 +278,19 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
         auto const& path        = tstate.heightmap_path;
         auto        heightmap_r = opengl::heightmap::parse(logger, path);
         if (!heightmap_r) {
-          LOG_ERROR("ERROR PARSING HEIGHTMAP");
-          ImGui::OpenPopup("TextureLoadError");
-          bool close = false;
+          LOG_ERROR_SPRINTF("ERROR PARSING HEIGHTMAP path: %s error: %s", path,
+              heightmap_r.unwrapErr());
+
+          static bool opened = false;
+          if (!opened) {
+            ImGui::OpenPopup("TextureLoadError");
+            opened = true;
+          }
+
           if (ImGui::BeginPopup("TextureLoadError")) {
+            LOG_ERROR("POPUP OPENED\n");
+            LOG_ERROR_SPRINTF("ERROR REASON: %s", heightmap_r.unwrapErr().c_str());
+
             ImGui::Text("Error loading file: %s reason: %s", path.c_str(),
                         heightmap_r.unwrapErr().c_str());
             ImGui::EndPopup();

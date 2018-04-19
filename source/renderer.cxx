@@ -651,7 +651,6 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   // OrbitalBodies always render first.
   registry.view<COMMON, BillboardRenderable, OrbitalBody>().each(draw_orbital_body);
 
-  registry.view<COMMON, IsTerrain>().each(draw_fn);
   registry.view<COMMON, Water>().each(draw_fn);
   registry.view<COMMON, JunkEntityFromFILE>().each(draw_fn);
   registry.view<COMMON, Torch>().each(draw_torch);

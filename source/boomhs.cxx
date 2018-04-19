@@ -364,6 +364,9 @@ init(Engine& engine, EngineState& engine_state)
     auto const                 heightmap = TRY(opengl::heightmap::parse(logger, tc.heightmap_path));
     auto const&                ti        = *gfx_state.texture_table.find(tc.texture_name);
 
+    //auto tp = TRY_MOVEOUT(opengl::texture::allocate_texture(logger, "assets/terrain/TerrainFloor.jpg",
+          //GL_RGB, GL_CLAMP_TO_EDGE, 1.0f));
+
     auto  tg = terrain::generate(logger, tc, heightmap, sp, ti);
     auto& ld = zs.level_data;
     ld.set_terrain_grid(MOVE(tg));

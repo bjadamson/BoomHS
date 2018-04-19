@@ -70,9 +70,10 @@ generate_vertices(stlw::Logger& logger, TerrainConfiguration const& tc,
 
       uint8_t const height            = heightmap_data.data()[(x_length * z) + x];
       float const   height_normalized = height / 255.0f;
-      assert(height > 0.0f);
 
       LOG_TRACE_SPRINTF("TERRAIN HEIGHT: %f (raw: %u)", height_normalized, height);
+      assert(height >= 0.0f);
+
       buffer[offset++] = height_normalized * tc.height_multiplier;
 
       assert(offset < buffer.size());

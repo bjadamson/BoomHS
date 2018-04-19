@@ -508,7 +508,6 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     auto const player        = get_string(file,          "player");
     auto const is_visible    = get_bool(file,            "is_visible").value_or(true);
     bool const random_junk   = get_bool(file,            "random_junk_from_file").value_or(false);
-    bool const is_terrain    = get_bool(file,            "terrain").value_or(false);
     bool const is_water      = get_bool(file,            "water").value_or(false);
     auto const orbital_o     = get_string(file,          "orbital-body");
     // clang-format on
@@ -611,9 +610,6 @@ load_entities(stlw::Logger& logger, CppTable const& table,
       registry.assign<Material>(eid) = it->material;
     }
 
-    if (is_terrain) {
-      registry.assign<IsTerrain>(eid);
-    }
     if (is_water) {
       registry.assign<Water>(eid);
     }

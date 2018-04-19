@@ -29,10 +29,6 @@ struct IsVisible
   bool value = false;
 };
 
-struct IsTerrain
-{
-};
-
 struct Torch
 {
   opengl::Attenuation default_attenuation{1.0f, 0.93f, 0.46f};
