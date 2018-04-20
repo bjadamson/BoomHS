@@ -170,7 +170,7 @@ concat_impl(Lhs const& lhs, Rhs const& rhs, seq<I1...>, seq<I2...>)
 
 template <class Lhs, class Rhs>
 constexpr const concat_string_impl::combined_string<Lhs, Rhs>
-concat(Lhs const& lhs, Rhs const& rhs)
+concat_string(Lhs const& lhs, Rhs const& rhs)
 {
   using namespace concat_string_impl;
   return concat_impl(lhs, rhs, gen_seq<string_length<Lhs>{}>{}, gen_seq<string_length<Rhs>{}>{});
@@ -178,22 +178,22 @@ concat(Lhs const& lhs, Rhs const& rhs)
 
 template <class T0, class T1, class... Ts>
 constexpr const concat_string_impl::combined_string<T0, T1, Ts...>
-concat(T0 const& t0, T1 const& t1, Ts const&... ts)
+concat_string(T0 const& t0, T1 const& t1, Ts const&... ts)
 {
-  return concat(t0, concat(t1, ts...));
+  return concat_string(t0, concat_string(t1, ts...));
 }
 
 template <class T>
 constexpr const concat_string_impl::combined_string<T>
-concat(T const& t)
+concat_string(T const& t)
 {
-  return concat(t, "");
+  return concat_string(t, "");
 }
 
 constexpr const concat_string_impl::combined_string<>
-concat()
+concat_string()
 {
-  return concat("");
+  return concat_string("");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
