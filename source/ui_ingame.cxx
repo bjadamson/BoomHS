@@ -118,7 +118,7 @@ draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const
   auto const&    npcdata  = registry.get<NPCData>(selected);
 
   char const* name = "test_icon";
-  assert(ttable.find(name) != std::nullopt);
+  assert(ttable.find(name) != nullptr);
   auto const  ti        = *ttable.find(name);
   ImTextureID my_tex_id = reinterpret_cast<void*>(ti.id);
 

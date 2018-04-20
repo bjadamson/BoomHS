@@ -44,16 +44,59 @@ namespace opengl
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TextureInfo
+TextureInfo::TextureInfo()
+  : mode(0)
+  , id(0)
+  , bound(false)
+{
+}
+
+void
+TextureInfo::bind() const
+{
+  FOR_DEBUG_ONLY([&]() { assert(bound == false); });
+
+  global::texture_bind(*this);
+  FOR_DEBUG_ONLY([&]() { bound = true; });
+}
+
+void
+TextureInfo::unbind() const
+{
+  FOR_DEBUG_ONLY([&]() { assert(bound == true); });
+
+  global::texture_unbind(*this);
+  FOR_DEBUG_ONLY([&]() { bound = false; });
+}
+
 void
 TextureInfo::destroy()
 {
   glDeleteTextures(TextureInfo::NUM_BUFFERS, &id);
 }
 
+GLint
+TextureInfo::get_fieldi(GLenum const name)
+{
+  FOR_DEBUG_ONLY([&]() { assert(bound == true); });
+
+  GLint value;
+  glGetTexParameteriv(this->mode, name, &value);
+  return value;
+}
+
+void
+TextureInfo::set_fieldi(GLenum const name, GLint const value)
+{
+  FOR_DEBUG_ONLY([&]() { if (!this->bound) { std::abort(); }});
+
+  glTexParameteri(this->mode, name, value);
+}
+
 std::string
 TextureInfo::to_string() const
 {
-  return fmt::sprintf("id: %u, mode: %i, (w, h) : (%i, %i), uv_max: %i",
+  return fmt::sprintf("id: %u, mode: %i, (w, h) : (%i, %i), uv_max: %f",
       id, mode, width, height, uv_max);
 }
 
@@ -91,21 +134,28 @@ TextureTable::add_texture(TextureFilenames &&tf, Texture &&ta)
       }                                                                                            \
       return it.first.name == name;                                                                \
     };                                                                                             \
-    return std::find_if(data_.cbegin(), data_.cend(), cmp);                                        \
-    }()
+    return std::find_if(data_.begin(), data_.end(), cmp);                                          \
+  }()
 
-std::optional<TextureFilenames>
+TextureFilenames const*
 TextureTable::lookup_nickname(std::string const& name) const
 {
   auto const it = FIND_TF(name);
-  return it == data_.cend() ? std::nullopt : std::make_optional(it->first);
+  return it == data_.cend() ? nullptr : &it->first;
 }
 
-std::optional<TextureInfo>
+TextureInfo*
+TextureTable::find(std::string const& name)
+{
+  auto it = FIND_TF(name);
+  return it == data_.end() ? nullptr : &it->second.resource();
+}
+
+TextureInfo const*
 TextureTable::find(std::string const& name) const
 {
   auto const it = FIND_TF(name);
-  return it == data_.cend() ? std::nullopt : std::make_optional(it->second.resource());
+  return it == data_.cend() ? nullptr : &it->second.resource();
 }
 
 #undef FIND_TF
@@ -154,33 +204,38 @@ wrap_mode_from_string(char const* name)
 
 TextureResult
 allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const format,
-    GLint const wrap, GLint const uv_max)
+    GLint const uv_max)
 {
   assert(ANYOF(format == GL_RGB, format == GL_RGBA));
 
-  GLenum constexpr TEXTURE_MODE = GL_TEXTURE_2D;
-
   TextureInfo ti;
-  ti.mode = TEXTURE_MODE;
+  ti.mode = GL_TEXTURE_2D;
   glGenTextures(1, &ti.id);
   LOG_TRACE_SPRINTF("allocating texture %s TextureID %u", filename, ti.id);
 
-  global::texture_bind(ti);
-  ON_SCOPE_EXIT([&ti]() { global::texture_unbind(ti); });
+  // This next bit comes from tracking down a weird bug. Without this extra scope, the texture info
+  // does not get unbound because the move constructor for the AutoResource(Texture) moves the
+  // TextureInfo instance inside the TextureResult. This zeroes out the id value inside the local
+  // variable "ti", where at this point the ON_SCOP_EXIT lambda executes using this moved-from
+  // instance of "ti".
+  //
+  // Using the explicit scope guarantees the texture is unbound when the stack frame unwinds.
+  //
+  // note: Using while_bound() doesn't work here because TRY_MOVEOUT returns a value.
+  {
+    ti.bind();
+    ON_SCOPE_EXIT([&ti]() { ti.unbind(); });
 
-  // Set texture wrapping mode
-  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_WRAP_S, wrap);
-  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_WRAP_T, wrap);
+    auto const image_data = TRY_MOVEOUT(upload_image(logger, filename, ti.mode, format));
+    ti.height = image_data.height;
+    ti.width = image_data.width;
 
-  // Set texture filtering parameters
-  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    ti.uv_max = uv_max;
 
-  auto const image_data = TRY_MOVEOUT(upload_image(logger, filename, TEXTURE_MODE, format));
-  ti.height = image_data.height;
-  ti.width = image_data.width;
+    glGenerateMipmap(ti.mode);
+    LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
+  }
 
-  ti.uv_max = uv_max;
   return Ok(Texture{MOVE(ti)});
 }
 
@@ -190,7 +245,6 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
 {
   assert(paths.size() == 6);
   assert(ANYOF(format == GL_RGB, format == GL_RGBA));
-  GLenum constexpr TEXTURE_MODE = GL_TEXTURE_CUBE_MAP;
 
   static constexpr auto directions = {
     GL_TEXTURE_CUBE_MAP_POSITIVE_Z, // back
@@ -202,14 +256,9 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   };
 
   TextureInfo ti;
-  ti.mode = TEXTURE_MODE;
+  ti.mode = GL_TEXTURE_CUBE_MAP;
   glGenTextures(1, &ti.id);
-
   LOG_ANY_GL_ERRORS(logger, "glGenTextures");
-
-  global::texture_bind(ti);
-  ON_SCOPE_EXIT([&ti]() { global::texture_unbind(ti); });
-  LOG_ANY_GL_ERRORS(logger, "texture_bind");
 
   auto const upload_fn = [&format, &logger, &ti](std::string const& filename, auto const& target)
     -> Result<stlw::none_t, std::string>
@@ -226,17 +275,14 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
     return OK_NONE;
   };
   auto const paths_tuple = std::make_tuple(paths[0], paths[1], paths[2], paths[3], paths[4], paths[5]);
-  stlw::zip(upload_fn, directions.begin(), paths_tuple);
 
-  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  auto const fn = [&]() {
+    stlw::zip(upload_fn, directions.begin(), paths_tuple);
 
-  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(TEXTURE_MODE, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-  glGenerateMipmap(TEXTURE_MODE);
-  LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
+    LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
+    glGenerateMipmap(ti.mode);
+  };
+  ti.while_bound(fn);
 
   return Ok(Texture{MOVE(ti)});
 }

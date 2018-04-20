@@ -355,23 +355,23 @@ init(Engine& engine, EngineState& engine_state)
   auto& lm        = state.level_manager;
   auto& zs        = lm.active();
   auto& gfx_state = zs.gfx_state;
-  auto& sps = gfx_state.sps;
+  auto& sps       = gfx_state.sps;
 
   {
     TerrainConfiguration const tc;
-    auto& sp              = sps.ref_sp(tc.shader_name);
-    auto const& ttable    = gfx_state.texture_table;
+    auto&                      sp     = sps.ref_sp("terrain");
+    auto const&                ttable = gfx_state.texture_table;
 
     char const* HEIGHTMAP_NAME = "TerrainHeightmap0";
-    auto const  heightmap_o = ttable.lookup_nickname(HEIGHTMAP_NAME);
+    auto const  heightmap_o    = ttable.lookup_nickname(HEIGHTMAP_NAME);
     if (!heightmap_o) {
-      auto const fmt = fmt::sprintf("Error cannot find terrain heightmap with nickname %s",
-          HEIGHTMAP_NAME);
+      auto const fmt =
+          fmt::sprintf("Error cannot find terrain heightmap with nickname %s", HEIGHTMAP_NAME);
       return Err(fmt);
     }
     assert(1 == heightmap_o->num_filenames());
-    auto const  heightmap   = TRY(opengl::heightmap::parse(logger, heightmap_o->filenames[0]));
-    auto const& ti          = *ttable.find(tc.texture_name);
+    auto const  heightmap = TRY(opengl::heightmap::parse(logger, heightmap_o->filenames[0]));
+    auto const& ti        = *ttable.find("TerrainFloor0");
 
     auto  tg = terrain::generate(logger, tc, heightmap, sp, ti);
     auto& ld = zs.level_data;

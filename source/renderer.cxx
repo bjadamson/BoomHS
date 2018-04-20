@@ -67,6 +67,8 @@ read_cwstate()
 void
 set_cwstate(CWState const& cw_state)
 {
+  glFrontFace(cw_state.winding);
+
   if (cw_state.culling_enabled) {
     glEnable(GL_CULL_FACE);
     glCullFace(cw_state.culling_mode);
@@ -229,8 +231,8 @@ draw(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
 
   if (dinfo.texture_info()) {
     auto const ti = *dinfo.texture_info();
-    opengl::global::texture_bind(ti);
-    ON_SCOPE_EXIT([&ti]() { opengl::global::texture_unbind(ti); });
+    ti.bind();
+    ON_SCOPE_EXIT([&ti]() { ti.unbind(); });
     LOG_DEBUG_SPRINTF("Binding TextureInfo '%s'", ti.to_string());
     draw_fn();
   }
@@ -1004,18 +1006,6 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
 
   bool constexpr RECEIVES_AMBIENT_LIGHT = true;
   auto const& tgrid                     = zs.level_data.terrain_grid();
-
-  if (tgrid.culling_enabled) {
-    glEnable(GL_CULL_FACE);
-    glCullFace(tgrid.culling_mode);
-  }
-  else {
-    glDisable(GL_CULL_FACE);
-  }
-
-  glFrontFace(tgrid.winding);
-  ON_SCOPE_EXIT([&]() { glFrontFace(cw_state.winding); });
-
   for (auto const& t : tgrid) {
     Transform transform;
 
@@ -1024,6 +1014,15 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
     tr.x            = pos.x;
     tr.z            = pos.y;
 
+    glFrontFace(t.winding);
+    if (t.culling_enabled) {
+      glEnable(GL_CULL_FACE);
+      glCullFace(t.culling_mode);
+    }
+    else {
+      glDisable(GL_CULL_FACE);
+    }
+    sp.set_uniform_float1(logger, "u_uvmodifier", t.uv_modifier);
     auto const& dinfo = t.draw_info();
     draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo, Material{},
                      registry, RECEIVES_AMBIENT_LIGHT);

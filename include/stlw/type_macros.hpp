@@ -84,6 +84,10 @@
   decltype(auto) cbegin() const { return CONTAINER.cbegin(); }                                     \
   decltype(auto) cend() const { return CONTAINER.cend(); }
 
+#define INDEX_OPERATOR_FNS(CONTAINER)                                                              \
+  auto const& operator[](size_t const i) const { return CONTAINER[i]; }                            \
+  auto&       operator[](size_t const i) { return CONTAINER[i]; }
+
 // TODO: document
 // BEGIN Function-defining macros
 #define DEFINE_WRAPPER_FUNCTION(FN_NAME, FUNCTION_TO_WRAP)                                         \

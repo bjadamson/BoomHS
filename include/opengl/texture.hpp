@@ -1,13 +1,12 @@
 #pragma once
 #include <stlw/auto_resource.hpp>
+#include <stlw/compiler.hpp>
 #include <stlw/log.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <array>
 #include <extlibs/glew.hpp>
 #include <memory>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -16,16 +15,37 @@ namespace opengl
 
 struct TextureInfo
 {
+#ifdef DEBUG_BUILD
+  mutable bool bound = false;
+#endif
+
   GLenum mode;
   GLuint id;
   GLint  width = 0, height = 0;
 
-  int uv_max = 0;
+  float uv_max = 0;
+
+  // constructors
+  TextureInfo();
+
+  // methods
+  void bind() const;
+  void unbind() const;
+
+  template <typename FN>
+  void while_bound(FN const& fn)
+  {
+    bind();
+    ON_SCOPE_EXIT([&]() { unbind(); });
+    fn();
+  }
 
   void destroy();
 
-  std::string to_string() const;
+  GLint get_fieldi(GLenum);
+  void  set_fieldi(GLenum, GLint);
 
+  std::string to_string() const;
   static size_t constexpr NUM_BUFFERS = 1;
 };
 
@@ -92,8 +112,9 @@ public:
 
   void add_texture(TextureFilenames&&, Texture&&);
 
-  std::optional<TextureFilenames> lookup_nickname(std::string const&) const;
-  std::optional<TextureInfo> find(std::string const&) const;
+  TextureFilenames const* lookup_nickname(std::string const&) const;
+  TextureInfo*            find(std::string const&);
+  TextureInfo const*      find(std::string const&) const;
 };
 
 } // namespace opengl
@@ -111,7 +132,7 @@ GLint
 wrap_mode_from_string(char const*);
 
 TextureResult
-allocate_texture(stlw::Logger&, std::string const&, GLint, GLint, GLint);
+allocate_texture(stlw::Logger&, std::string const&, GLint, GLint);
 
 TextureResult
 upload_3dcube_texture(stlw::Logger&, std::vector<std::string> const&, GLint);

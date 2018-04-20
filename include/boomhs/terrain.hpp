@@ -22,10 +22,6 @@ struct TerrainConfiguration
   size_t height_multiplier;
   bool   invert_normals;
 
-  std::string shader_name;
-  std::string texture_name;
-  std::string heightmap_path;
-
   TerrainConfiguration();
 };
 
@@ -36,6 +32,20 @@ class Terrain
   opengl::TextureInfo ti_;
 
 public:
+  GLenum winding   = GL_CCW;
+  GLint  wrap_mode = GL_REPEAT;
+
+  bool   culling_enabled = true;
+  GLenum culling_mode    = GL_BACK;
+  float  uv_max          = 1.0f;
+  float  uv_modifier     = 1.0f;
+
+  std::string shader_name;
+  std::string texture_name;
+  std::string heightmap_path;
+
+  NO_COPY(Terrain);
+  MOVE_DEFAULT(Terrain);
   Terrain(glm::vec2 const&, opengl::DrawInfo&&, opengl::TextureInfo const&);
 
   auto const& position() const { return pos_; }
@@ -49,6 +59,10 @@ class TerrainArray
   size_t               num_inserted_ = 0;
 
 public:
+  TerrainArray() = default;
+  NO_COPY(TerrainArray);
+  MOVE_DEFAULT(TerrainArray);
+
   decltype(auto) begin() { return data_.begin(); }
   decltype(auto) end() { return std::next(begin(), num_inserted_); }
 
@@ -57,6 +71,8 @@ public:
 
   decltype(auto) cbegin() const { return data_.cbegin(); }
   decltype(auto) cend() const { return std::next(begin(), num_inserted_); }
+
+  INDEX_OPERATOR_FNS(data_);
 
   void set(size_t, Terrain&&);
   void reserve(size_t);
@@ -70,22 +86,19 @@ class TerrainGrid
   TerrainArray terrain_;
 
 public:
-  GLenum winding = GL_CCW;
-
-  bool   culling_enabled = true;
-  GLenum culling_mode    = GL_BACK;
-
   explicit TerrainGrid(size_t, size_t);
   TerrainGrid();
 
   NO_COPY(TerrainGrid);
   MOVE_DEFAULT(TerrainGrid);
   BEGIN_END_FORWARD_FNS(terrain_);
+  INDEX_OPERATOR_FNS(terrain_);
 
   auto height() const { return num_cols_; }
   auto width() const { return num_rows_; }
 
   auto count() const { return terrain_.size(); }
+  auto size() const { return count(); }
   void set(size_t, Terrain&&);
 };
 

@@ -51,10 +51,32 @@ name = "wall"
 type = "texture:2d-RGB"
 filename = "assets/wall.jpg"
 
+###################################################################################################
+# HEIGHTMAPS
 [[resource]]
-name = "TerrainFloor"
+name = "TerrainHeightmap0"
+type = "texture:2d-RGBA"
+filename = "assets/terrain/heightmap.png"
+wrap = "clamp"
+
+[[resource]]
+name = "TerrainHeightmap1"
+type = "texture:2d-RGBA"
+filename = "assets/terrain/heightmap-2.png"
+wrap = "clamp"
+
+###################################################################################################
+# TERRAIN TEXTURES
+[[resource]]
+name = "TerrainFloor0"
 type = "texture:2d-RGB"
 filename = "assets/terrain/TerrainFloor.jpg"
+wrap = "repeat"
+
+[[resource]]
+name = "TerrainFloor1"
+type = "texture:2d-RGB"
+filename = "assets/terrain/TerrainGrass.png"
 wrap = "clamp"
 
 [[resource]]
@@ -68,7 +90,7 @@ name = "water"
 type = "texture:2d-RGB"
 filename = "assets/terrain/water-texture.jpg"
 wrap = "repeat"
-uvs = 10000
+uvs = 10000.0
 
 [[resource]]
 name = "gun"

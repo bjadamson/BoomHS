@@ -69,6 +69,9 @@ public:
 
   auto&       resource() { return resource_; }
   auto const& resource() const { return resource_; }
+
+  auto const* operator-> () const { return &resource_; }
+  auto*       operator-> () { return &resource_; }
 };
 
 } // namespace stlw

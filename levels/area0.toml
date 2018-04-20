@@ -71,7 +71,7 @@ wrap = "clamp"
 name = "TerrainFloor0"
 type = "texture:2d-RGB"
 filename = "assets/terrain/TerrainFloor.jpg"
-wrap = "clamp"
+wrap = "repeat"
 
 [[resource]]
 name = "TerrainFloor1"
@@ -90,7 +90,7 @@ name = "water"
 type = "texture:2d-RGB"
 filename = "assets/terrain/water-texture.jpg"
 wrap = "repeat"
-uvs = 10000
+uvs = 10000.0
 
 [[resource]]
 name = "gun"

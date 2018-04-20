@@ -263,15 +263,23 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       auto const               filename = get_string_or_abort(resource, "filename");
       opengl::TextureFilenames texture_names{name, {filename}};
 
+      auto const uv_max = get_float(resource, "uvs").value_or(1.0f);
+      Texture    t      = TRY_MOVEOUT(
+          opengl::texture::allocate_texture(logger, texture_names.filenames[0], format, uv_max));
+
       auto const  wrap_s = get_string(resource, "wrap").value_or("clamp");
       GLint const wrap   = texture::wrap_mode_from_string(wrap_s.c_str());
 
-      auto const uv_max = get_int(resource, "uvs").value_or(1.0);
+      t->while_bound([&]() {
+        t->set_fieldi(GL_TEXTURE_WRAP_S, wrap);
+        t->set_fieldi(GL_TEXTURE_WRAP_T, wrap);
 
-      Texture t = TRY_MOVEOUT(opengl::texture::allocate_texture(logger, texture_names.filenames[0],
-                                                                format, wrap, uv_max));
+        // Set texture filtering parameters
+        t->set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        t->set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      });
+
       ttable.add_texture(MOVE(texture_names), MOVE(t));
-
       return OK_NONE;
     };
     auto const load_3dtexture = [&](auto const format) -> Result<stlw::none_t, std::string> {
@@ -283,10 +291,18 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       auto const bottom = get_string_or_abort(resource, "bottom");
 
       opengl::TextureFilenames texture_names{name, {front, right, back, left, top, bottom}};
-      auto                     ta = TRY_MOVEOUT(
+      Texture                  t = TRY_MOVEOUT(
           opengl::texture::upload_3dcube_texture(logger, texture_names.filenames, format));
-      ttable.add_texture(MOVE(texture_names), MOVE(ta));
 
+      t->while_bound([&]() {
+        t->set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        t->set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+        t->set_fieldi(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        t->set_fieldi(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        t->set_fieldi(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+      });
+      ttable.add_texture(MOVE(texture_names), MOVE(t));
       return OK_NONE;
     };
 

@@ -1,6 +1,6 @@
 #pragma once
 #include <stlw/auto_resource.hpp>
-#include <stlw/compiler_macros.hpp>
+#include <stlw/compiler.hpp>
 #include <stlw/type_macros.hpp>
 #include <extlibs/fmt.hpp>
 

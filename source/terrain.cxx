@@ -199,9 +199,6 @@ TerrainConfiguration::TerrainConfiguration()
     , num_cols(1)
     , height_multiplier(1)
     , invert_normals(false)
-    , shader_name("terrain")
-    , texture_name("TerrainFloor0")
-    , heightmap_path("TerrainHeightmap0")
 {
 }
 
@@ -211,6 +208,9 @@ Terrain::Terrain(glm::vec2 const& pos, DrawInfo&& di, TextureInfo const& ti)
     : pos_(pos)
     , di_(MOVE(di))
     , ti_(ti)
+    , shader_name("terrain")
+    , texture_name("TerrainFloor0")
+    , heightmap_path("TerrainHeightmap0")
 {
   pos_ = pos;
 }

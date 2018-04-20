@@ -8,14 +8,15 @@
 #include <boomhs/ui_state.hpp>
 #include <opengl/global.hpp>
 
-#include <extlibs/sdl.hpp>
-
-#include <extlibs/fmt.hpp>
 #include <stlw/math.hpp>
 
 #include <algorithm>
-#include <extlibs/imgui.hpp>
 #include <optional>
+#include <sstream>
+
+#include <extlibs/fmt.hpp>
+#include <extlibs/imgui.hpp>
+#include <extlibs/sdl.hpp>
 
 namespace
 {
@@ -86,6 +87,32 @@ comboselected_to_entity(int const selected_index, std::vector<pair_t> const& pai
 
   return it->second;
 }
+
+template <size_t N>
+using GLOptionMap = std::array<std::pair<int, GLint>, N>;
+
+template <size_t N>
+auto
+gl_option_combo(char const* init_text, char const* list_text, int* buffer,
+                GLOptionMap<N> const& map)
+{
+  ImGui::Combo(init_text, buffer, list_text);
+  auto const v = static_cast<uint64_t>(*buffer);
+
+  FOR(i, map.size())
+  {
+    if (v == i) {
+      return map[i].second;
+    }
+  }
+
+  std::abort();
+}
+
+} // namespace
+
+namespace
+{
 
 void
 draw_entity_editor(UiDebugState& uistate, LevelData& ldata, EntityRegistry& registry)
@@ -216,78 +243,110 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
   auto& tstate    = tbuffers.state;
 
   auto const draw = [&]() {
-    ImGui::Text("terrain Generation");
+    ImGui::Text("Generation Options");
     imgui_cxx::input_sizet("Vertex Count", &tstate.num_vertexes);
     imgui_cxx::input_sizet("height multiplier", &tstate.height_multiplier);
     imgui_cxx::input_sizet("x width", &tstate.x_length);
     imgui_cxx::input_sizet("z length", &tstate.z_length);
 
-    auto& ldata = zs.level_data;
-    auto& tgrid = ldata.terrain_grid();
-
-    auto& winding = tbuffers.selected_winding;
-    if (ImGui::Combo("Winding Order", &winding, "CCW\0CW\0\0")) {
-      if (winding == 0) {
-        tgrid.winding = GL_CCW;
-      }
-      else if (winding == 1) {
-        tgrid.winding = GL_CW;
-      }
-      else {
-        std::abort();
-      }
-    }
-
-    ImGui::Checkbox("Culling Enabled", &tgrid.culling_enabled);
-
-    auto& culling_mode = tbuffers.selected_culling;
-    if (ImGui::Combo("Culling Face", &culling_mode, "Front\0Back\0Front And Back\0\0")) {
-      if (culling_mode == 0) {
-        tgrid.culling_mode = GL_FRONT;
-        LOG_ERROR("Terrain Culling GL_FRONT");
-      }
-      else if (culling_mode == 1) {
-        tgrid.culling_mode = GL_BACK;
-        LOG_ERROR("Terrain Culling GL_BACK");
-      }
-      else if (culling_mode == 2) {
-        LOG_ERROR("Terrain Culling GL_FRONT_AND_BACK");
-        tgrid.culling_mode = GL_FRONT_AND_BACK;
-      }
-      else {
-        std::abort();
-      }
-    }
-
-    ImGui::Checkbox("Invert Normals", &tstate.invert_normals);
-    imgui_cxx::input_string("Heightmap Name", tstate.heightmap_path);
-    imgui_cxx::input_string("Shader Name", tstate.shader_name);
-    imgui_cxx::input_string("Texture Name", tstate.texture_name);
-
     ImGui::Separator();
-    ImGui::Text("Grid Configuration");
+    ImGui::Separator();
+    ImGui::Text("Grid Options");
     imgui_cxx::input_sizet("num rows", &tstate.num_rows);
     imgui_cxx::input_sizet("num cols", &tstate.num_cols);
 
-    if (ImGui::Button("Generate Terrain")) {
-      {
-        auto& sps = gfx_state.sps;
-        auto& sp  = sps.ref_sp(tstate.shader_name);
+    ImGui::Separator();
+    ImGui::Separator();
+    ImGui::Text("Rendering Options");
+    ImGui::Checkbox("Invert Normals", &tstate.invert_normals);
+    
 
-        auto const& ttable    = gfx_state.texture_table;
-        auto const heightmap_o = ttable.lookup_nickname(tstate.heightmap_path);
-        if (!heightmap_o) {
-          LOG_ERROR_SPRINTF("ERROR Looking up: %s", tstate.heightmap_path);
+    auto& ldata = zs.level_data;
+    auto& tgrid = ldata.terrain_grid();
+
+    std::stringstream buffer;
+    FOR(i, tgrid.size())
+    {
+      buffer << std::to_string(i);
+      buffer << '\0';
+    }
+    buffer << '\0';
+    auto const s = buffer.str();
+
+    ImGui::Separator();
+    ImGui::Separator();
+    auto& sb = tbuffers.selected_terrain;
+    ImGui::Combo("Select Terrain", &sb, s.c_str());
+
+    ImGui::Separator();
+    ImGui::Separator();
+    ImGui::Text("Terrain Grid Options");
+    auto& t = tgrid[sb];
+    imgui_cxx::input_string("Heightmap Name", t.heightmap_path);
+    imgui_cxx::input_string("Shader Name", t.shader_name);
+    if (imgui_cxx::input_string("Texture Name", t.texture_name)) {
+    }
+
+    {
+      GLOptionMap<2> constexpr WINDING_MAP = {{
+          {0, GL_CCW},
+          {1, GL_CW},
+      }};
+      t.winding = gl_option_combo("Winding Order", "CCW\0CW\0\0", &tbuffers.selected_winding,
+          WINDING_MAP);
+    }
+    ImGui::Checkbox("Culling Enabled", &t.culling_enabled);
+    {
+      GLOptionMap<3> constexpr CULLING_MAP = {{
+          {0, GL_BACK},
+          {1, GL_FRONT},
+          {2, GL_FRONT_AND_BACK},
+      }};
+      t.culling_mode = gl_option_combo("Culling Face", "Front\0Back\0Front And Back\0\0",
+                                      &tbuffers.selected_culling, CULLING_MAP);
+    }
+    {
+      GLOptionMap<3> constexpr WRAP_MAP    = {{
+          {0, GL_REPEAT},
+          {1, GL_MIRRORED_REPEAT},
+          {2, GL_CLAMP_TO_EDGE},
+      }};
+      t.wrap_mode    = gl_option_combo("UV Wrap Mode", "Repeat\0Mirrored Repeat\0Clamp\0\0",
+                                    &tbuffers.selected_wrapmode, WRAP_MAP);
+    }
+
+    auto& ttable = gfx_state.texture_table;
+    auto const* p_texture = ttable.lookup_nickname(t.texture_name);
+    if (!p_texture) {
+      LOG_ERROR_SPRINTF("ERROR Looking up texture: %s", t.texture_name);
+    }
+    else {
+      auto& ti     = *ttable.find(t.texture_name);
+      ImGui::InputFloat("UV Modifier", &t.uv_modifier);
+
+      auto const ti_fn = [&]() {
+        ti.set_fieldi(GL_TEXTURE_WRAP_S, t.wrap_mode);
+        ti.set_fieldi(GL_TEXTURE_WRAP_T, t.wrap_mode);
+      };
+      ti.while_bound(ti_fn);
+
+      if (ImGui::Button("Generate Terrain")) {
+        auto& sps = gfx_state.sps;
+        auto& sp  = sps.ref_sp(t.shader_name);
+
+        auto const* p_heightmap = ttable.lookup_nickname(t.heightmap_path);
+        if (!p_heightmap) {
+          LOG_ERROR_SPRINTF("ERROR Looking up heightmap: %s", t.heightmap_path);
         }
         else {
-          auto const& hm        = *heightmap_o;
+          auto const& hm = *p_heightmap;
           assert(1 == hm.num_filenames());
-          auto const& path        = hm.filenames[0];
+          auto const& path = hm.filenames[0];
 
-          auto        heightmap_r = opengl::heightmap::parse(logger, path);
+          auto heightmap_r = opengl::heightmap::parse(logger, path);
           if (!heightmap_r) {
             LOG_ERROR_SPRINTF("ERROR PARSING HEIGHTMAP path: %s error: %s", path,
-                heightmap_r.unwrapErr());
+                              heightmap_r.unwrapErr());
 
             static bool opened = false;
             if (!opened) {
@@ -306,7 +365,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
           }
           else {
             auto const  heightmap = heightmap_r.unwrap_moveout();
-            auto const& ti        = *gfx_state.texture_table.find(tstate.texture_name);
+            auto const& ti        = *ttable.find(t.texture_name);
 
             auto& ld = zs.level_data;
             auto  tg = terrain::generate(logger, tstate, heightmap, sp, ti);
