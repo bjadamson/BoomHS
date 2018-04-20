@@ -181,7 +181,7 @@ generate_terrain_tile(stlw::Logger& logger, glm::vec2 const& pos, TerrainConfigu
   auto       di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer, ti);
 
   LOG_TRACE("Finished Generating Terrain");
-  return Terrain{pos, MOVE(di), ti};
+  return Terrain{tc, pos, MOVE(di), ti};
 }
 
 } // namespace
@@ -199,18 +199,20 @@ TerrainConfiguration::TerrainConfiguration()
     , num_cols(1)
     , height_multiplier(1)
     , invert_normals(false)
+    , shader_name("terrain")
+    , texture_name("TerrainFloor0")
+    , heightmap_path("TerrainHeightmap0")
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Terrain
-Terrain::Terrain(glm::vec2 const& pos, DrawInfo&& di, TextureInfo const& ti)
+Terrain::Terrain(TerrainConfiguration const& tc, glm::vec2 const& pos, DrawInfo&& di,
+                 TextureInfo const& ti)
     : pos_(pos)
     , di_(MOVE(di))
     , ti_(ti)
-    , shader_name("terrain")
-    , texture_name("TerrainFloor0")
-    , heightmap_path("TerrainHeightmap0")
+    , config(tc)
 {
   pos_ = pos;
 }

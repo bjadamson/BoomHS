@@ -17,24 +17,14 @@ namespace boomhs
 
 struct TerrainConfiguration
 {
+  TerrainConfiguration();
+
   size_t num_vertexes;
   size_t x_length, z_length;
   size_t num_rows, num_cols;
   size_t height_multiplier;
   bool   invert_normals;
 
-  TerrainConfiguration();
-};
-
-class Terrain
-{
-  glm::vec2           pos_;
-  opengl::DrawInfo    di_;
-  opengl::TextureInfo ti_;
-
-public:
-  //
-  // mutable fields
   GLenum winding   = GL_CCW;
   GLint  wrap_mode = GL_REPEAT;
 
@@ -46,12 +36,25 @@ public:
   std::string shader_name;
   std::string texture_name;
   std::string heightmap_path;
+};
+
+class Terrain
+{
+  glm::vec2           pos_;
+  opengl::DrawInfo    di_;
+  opengl::TextureInfo ti_;
+
+public:
+  //
+  // mutable fields
+  TerrainConfiguration config;
 
   //
   // constructors
   NO_COPY(Terrain);
   MOVE_DEFAULT(Terrain);
-  Terrain(glm::vec2 const&, opengl::DrawInfo&&, opengl::TextureInfo const&);
+  Terrain(TerrainConfiguration const&, glm::vec2 const&, opengl::DrawInfo&&,
+          opengl::TextureInfo const&);
 
   auto const& position() const { return pos_; }
   auto const& draw_info() const { return di_; }

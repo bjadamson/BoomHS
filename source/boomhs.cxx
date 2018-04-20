@@ -359,7 +359,7 @@ init(Engine& engine, EngineState& engine_state)
 
   {
     TerrainConfiguration const tc;
-    auto&                      sp     = sps.ref_sp("terrain");
+    auto&                      sp     = sps.ref_sp(tc.shader_name);
     auto const&                ttable = gfx_state.texture_table;
 
     char const* HEIGHTMAP_NAME = "TerrainHeightmap0";
@@ -371,7 +371,7 @@ init(Engine& engine, EngineState& engine_state)
     }
     assert(1 == heightmap_o->num_filenames());
     auto const  heightmap = TRY(opengl::heightmap::parse(logger, heightmap_o->filenames[0]));
-    auto const& ti        = *ttable.find("TerrainFloor0");
+    auto const& ti        = *ttable.find(tc.texture_name);
 
     auto  tg = terrain::generate(logger, tc, heightmap, sp, ti);
     auto& ld = zs.level_data;

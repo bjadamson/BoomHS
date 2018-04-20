@@ -1014,15 +1014,18 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
     tr.x            = pos.x;
     tr.z            = pos.y;
 
-    glFrontFace(t.winding);
-    if (t.culling_enabled) {
-      glEnable(GL_CULL_FACE);
-      glCullFace(t.culling_mode);
+    {
+      auto const& config = t.config;
+      glFrontFace(config.winding);
+      if (config.culling_enabled) {
+        glEnable(GL_CULL_FACE);
+        glCullFace(config.culling_mode);
+      }
+      else {
+        glDisable(GL_CULL_FACE);
+      }
+      sp.set_uniform_float1(logger, "u_uvmodifier", config.uv_modifier);
     }
-    else {
-      glDisable(GL_CULL_FACE);
-    }
-    sp.set_uniform_float1(logger, "u_uvmodifier", t.uv_modifier);
     auto const& dinfo = t.draw_info();
     draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo, Material{},
                      registry, RECEIVES_AMBIENT_LIGHT);
