@@ -259,7 +259,6 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
     ImGui::Separator();
     ImGui::Text("Rendering Options");
     ImGui::Checkbox("Invert Normals", &tstate.invert_normals);
-    
 
     auto& ldata = zs.level_data;
     auto& tgrid = ldata.terrain_grid();
@@ -286,14 +285,13 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
     imgui_cxx::input_string("Shader Name", t.shader_name);
     if (imgui_cxx::input_string("Texture Name", t.texture_name)) {
     }
-
     {
       GLOptionMap<2> constexpr WINDING_MAP = {{
           {0, GL_CCW},
           {1, GL_CW},
       }};
-      t.winding = gl_option_combo("Winding Order", "CCW\0CW\0\0", &tbuffers.selected_winding,
-          WINDING_MAP);
+      t.winding =
+          gl_option_combo("Winding Order", "CCW\0CW\0\0", &tbuffers.selected_winding, WINDING_MAP);
     }
     ImGui::Checkbox("Culling Enabled", &t.culling_enabled);
     {
@@ -303,25 +301,25 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
           {2, GL_FRONT_AND_BACK},
       }};
       t.culling_mode = gl_option_combo("Culling Face", "Front\0Back\0Front And Back\0\0",
-                                      &tbuffers.selected_culling, CULLING_MAP);
+                                       &tbuffers.selected_culling, CULLING_MAP);
     }
     {
-      GLOptionMap<3> constexpr WRAP_MAP    = {{
+      GLOptionMap<3> constexpr WRAP_MAP = {{
           {0, GL_REPEAT},
           {1, GL_MIRRORED_REPEAT},
           {2, GL_CLAMP_TO_EDGE},
       }};
-      t.wrap_mode    = gl_option_combo("UV Wrap Mode", "Repeat\0Mirrored Repeat\0Clamp\0\0",
+      t.wrap_mode = gl_option_combo("UV Wrap Mode", "Repeat\0Mirrored Repeat\0Clamp\0\0",
                                     &tbuffers.selected_wrapmode, WRAP_MAP);
     }
 
-    auto& ttable = gfx_state.texture_table;
+    auto&       ttable    = gfx_state.texture_table;
     auto const* p_texture = ttable.lookup_nickname(t.texture_name);
     if (!p_texture) {
       LOG_ERROR_SPRINTF("ERROR Looking up texture: %s", t.texture_name);
     }
     else {
-      auto& ti     = *ttable.find(t.texture_name);
+      auto& ti = *ttable.find(t.texture_name);
       ImGui::InputFloat("UV Modifier", &t.uv_modifier);
 
       auto const ti_fn = [&]() {

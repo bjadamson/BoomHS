@@ -224,13 +224,9 @@ TerrainArray::reserve(size_t const c)
 }
 
 void
-TerrainArray::set(size_t const i, Terrain&& t)
+TerrainArray::add(Terrain&& t)
 {
-  auto const c = data_.capacity();
-  assert(i < c);
-
-  data_[i] = MOVE(t);
-  ++num_inserted_;
+  data_.emplace_back(MOVE(t));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -248,10 +244,9 @@ TerrainGrid::TerrainGrid()
 }
 
 void
-TerrainGrid::set(size_t const i, Terrain&& t)
+TerrainGrid::add(Terrain&& t)
 {
-  assert(i < terrain_.capacity());
-  terrain_.set(i, MOVE(t));
+  terrain_.add(MOVE(t));
 }
 
 } // namespace boomhs
@@ -275,7 +270,9 @@ generate(stlw::Logger& logger, TerrainConfiguration const& tc, HeightmapData con
       auto       t   = generate_terrain_tile(logger, pos, tc, heightmap_data, sp, ti);
 
       auto const index = (j * rows) + i;
-      tgrid.set(index, MOVE(t));
+
+      // TODO: use index here?
+      tgrid.add(MOVE(t));
     }
   }
 

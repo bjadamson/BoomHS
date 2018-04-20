@@ -3,6 +3,7 @@
 #include <opengl/draw_info.hpp>
 #include <opengl/heightmap.hpp>
 
+#include <ostream>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
@@ -32,6 +33,8 @@ class Terrain
   opengl::TextureInfo ti_;
 
 public:
+  //
+  // mutable fields
   GLenum winding   = GL_CCW;
   GLint  wrap_mode = GL_REPEAT;
 
@@ -44,6 +47,8 @@ public:
   std::string texture_name;
   std::string heightmap_path;
 
+  //
+  // constructors
   NO_COPY(Terrain);
   MOVE_DEFAULT(Terrain);
   Terrain(glm::vec2 const&, opengl::DrawInfo&&, opengl::TextureInfo const&);
@@ -56,28 +61,19 @@ public:
 class TerrainArray
 {
   std::vector<Terrain> data_;
-  size_t               num_inserted_ = 0;
 
 public:
   TerrainArray() = default;
   NO_COPY(TerrainArray);
   MOVE_DEFAULT(TerrainArray);
 
-  decltype(auto) begin() { return data_.begin(); }
-  decltype(auto) end() { return std::next(begin(), num_inserted_); }
-
-  decltype(auto) begin() const { return data_.begin(); }
-  decltype(auto) end() const { return std::next(begin(), num_inserted_); }
-
-  decltype(auto) cbegin() const { return data_.cbegin(); }
-  decltype(auto) cend() const { return std::next(begin(), num_inserted_); }
-
+  BEGIN_END_FORWARD_FNS(data_);
   INDEX_OPERATOR_FNS(data_);
 
-  void set(size_t, Terrain&&);
+  void add(Terrain&&);
   void reserve(size_t);
   auto capacity() const { return data_.capacity(); }
-  auto size() const { return num_inserted_; }
+  auto size() const { return data_.size(); }
 };
 
 class TerrainGrid
@@ -99,7 +95,7 @@ public:
 
   auto count() const { return terrain_.size(); }
   auto size() const { return count(); }
-  void set(size_t, Terrain&&);
+  void add(Terrain&&);
 };
 
 namespace terrain

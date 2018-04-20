@@ -1,4 +1,5 @@
 #pragma once
+#include <ostream>
 #include <stlw/type_macros.hpp>
 
 namespace stlw
@@ -73,5 +74,13 @@ public:
   auto const* operator-> () const { return &resource_; }
   auto*       operator-> () { return &resource_; }
 };
+
+template <typename R>
+std::ostream&
+operator<<(std::ostream& ostream, AutoResource<R> const& r)
+{
+  ostream << r.resource();
+  return ostream;
+}
 
 } // namespace stlw
