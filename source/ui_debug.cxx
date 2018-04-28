@@ -269,6 +269,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
     if (ImGui::CollapsingHeader("Update Existing Terrain")) {
       imgui_cxx::input_sizet("Vertex Count", &tstate.num_vertexes);
       imgui_cxx::input_sizet("height multiplier", &tstate.height_multiplier);
+      ImGui::Separator();
       imgui_cxx::input_sizet("x width", &tstate.x_length);
       imgui_cxx::input_sizet("z length", &tstate.z_length);
 

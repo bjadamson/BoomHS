@@ -3,6 +3,7 @@
 #include <opengl/colors.hpp>
 #include <opengl/vertex_attribute.hpp>
 
+#include <stlw/compiler.hpp>
 #include <stlw/optional.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_ctors.hpp>
@@ -43,6 +44,10 @@ struct program_factory
 
 class ProgramHandle
 {
+
+#ifdef DEBUG_BUILD
+  bool active_;
+#endif
   GLuint program_;
 
 public:
@@ -53,6 +58,8 @@ public:
   ProgramHandle(ProgramHandle&&);
   ~ProgramHandle();
 
+  bool is_active() const;
+  void set_active(bool);
   auto const& handle() const { return program_; }
 };
 
@@ -78,7 +85,17 @@ public:
   auto const& handle() const { return program_.handle(); }
   auto const& va() const { return this->va_; }
 
-  void  use(stlw::Logger&);
+  void bind(stlw::Logger&);
+  void unbind(stlw::Logger&);
+
+  template <typename FN>
+  void while_bound(stlw::Logger &logger, FN const& fn)
+  {
+    bind(logger);
+    ON_SCOPE_EXIT([&]() { unbind(logger); });
+    fn();
+  }
+
   GLint get_uniform_location(stlw::Logger&, GLchar const*);
 
   void set_uniform_matrix_3fv(stlw::Logger&, GLchar const*, glm::mat3 const&);
