@@ -33,7 +33,7 @@ struct TextureInfo
   void unbind() const;
 
   template <typename FN>
-  void while_bound(FN const& fn)
+  void while_bound(FN const& fn) const
   {
     bind();
     ON_SCOPE_EXIT([&]() { unbind(); });

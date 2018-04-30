@@ -14,7 +14,7 @@ class EntityRegistry;
 
 struct StartAreaGenerator
 {
-  static LevelGeneredData
+  static LevelGeneratedData
   gen_level(stlw::Logger&, EntityRegistry&, stlw::float_generator&, opengl::TextureTable const&);
 
   StartAreaGenerator() = delete;

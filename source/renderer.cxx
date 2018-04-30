@@ -230,10 +230,11 @@ draw(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
 
   if (dinfo.texture_info()) {
     auto const ti = *dinfo.texture_info();
-    ti.bind();
-    ON_SCOPE_EXIT([&ti]() { ti.unbind(); });
     LOG_DEBUG_SPRINTF("Binding TextureInfo '%s'", ti.to_string());
-    draw_fn();
+
+    ti.while_bound([&]() {
+        draw_fn();
+        });
   }
   else {
     draw_fn();
@@ -1035,7 +1036,10 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
     ON_SCOPE_EXIT([&]() { set_cwstate(cw_state); });
 
     bool constexpr RECEIVES_AMBIENT_LIGHT = true;
-    auto const& tgrid                     = zs.level_data.terrain_grid();
+    auto const& ldata                     = zs.level_data;
+    auto const& terrain                   = ldata.terrain();
+    auto const& tgrid                     = terrain.grid;
+    auto const& trstate                   = terrain.render_state;
     for (auto const& t : tgrid) {
       Transform transform;
 
@@ -1046,10 +1050,10 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
 
       {
         auto const& config = t.config;
-        glFrontFace(config.winding);
-        if (config.culling_enabled) {
+        glFrontFace(trstate.winding);
+        if (trstate.culling_enabled) {
           glEnable(GL_CULL_FACE);
-          glCullFace(config.culling_mode);
+          glCullFace(trstate.culling_mode);
         }
         else {
           glDisable(GL_CULL_FACE);

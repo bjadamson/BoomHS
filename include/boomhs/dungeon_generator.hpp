@@ -30,7 +30,7 @@ struct LevelConfig
 namespace boomhs::dungeon_generator
 {
 
-LevelGeneredData
+LevelGeneratedData
 gen_level(stlw::Logger&, LevelConfig const&, EntityRegistry&, stlw::float_generator&,
           opengl::TextureTable const&);
 

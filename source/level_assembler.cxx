@@ -25,7 +25,7 @@ namespace
 {
 
 ZoneState
-assemble(LevelGeneredData&& gendata, LevelAssets&& assets, EntityRegistry& registry)
+assemble(LevelGeneratedData&& gendata, LevelAssets&& assets, EntityRegistry& registry)
 {
   // camera-look at origin
   // cameraspace "up" is === "up" in worldspace.
@@ -48,6 +48,7 @@ assemble(LevelGeneredData&& gendata, LevelAssets&& assets, EntityRegistry& regis
                        MOVE(assets.tile_table),
                        MOVE(gendata.startpos),
                        MOVE(gendata.rivers),
+                       MOVE(gendata.terrain),
 
                        assets.fog,
                        assets.global_light,

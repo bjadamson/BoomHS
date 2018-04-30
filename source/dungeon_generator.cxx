@@ -330,7 +330,7 @@ place_rivers_rooms_and_stairs(stlw::Logger& logger, StairGenConfig const& stairc
   return (*rooms).starting_position;
 }
 
-LevelGeneredData
+LevelGeneratedData
 gen_level(stlw::Logger& logger, LevelConfig const& levelconfig, EntityRegistry& registry,
           stlw::float_generator& rng, TextureTable const& ttable)
 {
@@ -341,8 +341,13 @@ gen_level(stlw::Logger& logger, LevelConfig const& levelconfig, EntityRegistry& 
   auto const num_tiles = tdwidth * tdheight;
   // clang-format on
 
+  LOG_TRACE("Generating tilegrid");
   TileGrid tilegrid{tdwidth, tdheight, registry};
   floodfill(tilegrid, TileType::WALL);
+
+  TerrainGridConfig tgc;
+  TerrainGrid tgrid(MOVE(tgc));
+  Terrain terrain(MOVE(tgrid));
 
   LOG_TRACE("Placing Rivers");
   std::vector<RiverInfo> rivers;
@@ -353,7 +358,7 @@ gen_level(stlw::Logger& logger, LevelConfig const& levelconfig, EntityRegistry& 
   place_torch(tilegrid, registry, rng, ttable);
 
   LOG_TRACE("Finished!");
-  return LevelGeneredData{MOVE(tilegrid), starting_pos, MOVE(rivers)};
+  return LevelGeneratedData{MOVE(tilegrid), starting_pos, MOVE(rivers), MOVE(terrain)};
 }
 
 } // namespace boomhs::dungeon_generator

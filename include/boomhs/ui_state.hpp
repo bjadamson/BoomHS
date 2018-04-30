@@ -27,12 +27,12 @@ struct DrawTimeBuffer
 
 struct TerrainBuffer
 {
-  TerrainConfiguration state;
-
   int selected_winding  = 0;
   int selected_culling  = 0;
   int selected_wrapmode = 0;
   int selected_terrain  = 0;
+
+  TerrainPieceConfig config;
 };
 
 struct Buffers

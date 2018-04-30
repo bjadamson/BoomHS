@@ -85,7 +85,7 @@ place_prefabs(stlw::Logger& logger, TileGrid& tgrid, stlw::float_generator& rng)
 namespace boomhs
 {
 
-LevelGeneredData
+LevelGeneratedData
 StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
                               stlw::float_generator& rng, TextureTable const& ttable)
 {
@@ -115,8 +115,12 @@ StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
   auto const starting_pos = TilePosition{10, 10};
   place_torch(tilegrid, registry, rng, ttable);
 
+  TerrainGridConfig tgc;
+  TerrainGrid tgrid(MOVE(tgc));
+  Terrain terrain(MOVE(tgrid));
+
   LOG_TRACE("finished!");
-  return LevelGeneredData{MOVE(tilegrid), starting_pos, MOVE(rivers)};
+  return LevelGeneratedData{MOVE(tilegrid), starting_pos, MOVE(rivers), MOVE(terrain)};
 }
 
 } // namespace boomhs

@@ -18,11 +18,12 @@
 namespace boomhs
 {
 
-struct LevelGeneredData
+struct LevelGeneratedData
 {
   TileGrid               tilegrid;
   TilePosition           startpos;
   std::vector<RiverInfo> rivers;
+  Terrain                terrain;
 };
 
 class LevelData
@@ -38,14 +39,15 @@ class LevelData
   TilePosition const  startpos_;
 
   std::vector<RiverInfo> rivers_;
-  TerrainGrid            terrain_grid_;
 
+  Terrain terrain_;
   void set_tile(TilePosition const&, TileType const&);
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileGrid&&, TileSharedInfoTable&&, TilePosition const&, std::vector<RiverInfo>&&,
-            Fog const&, opengl::GlobalLight const&, ObjStore&&, Camera&&, WorldObject&&);
+            Terrain &&, Fog const&, opengl::GlobalLight const&, ObjStore&&, Camera&&,
+            WorldObject&&);
 
   // public fields
   Fog                 fog;
@@ -84,10 +86,8 @@ public:
   auto&       rivers() { return rivers_; }
   auto const& rivers() const { return rivers_; }
 
-  void set_terrain_grid(TerrainGrid&& tg) { terrain_grid_ = MOVE(tg); }
-
-  auto&       terrain_grid() { return terrain_grid_; }
-  auto const& terrain_grid() const { return terrain_grid_; }
+  auto&       terrain() { return terrain_; }
+  auto const& terrain() const { return terrain_; }
 
   template <typename FN>
   void visit_tiles(FN const& fn) const
