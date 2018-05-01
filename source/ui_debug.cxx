@@ -264,7 +264,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
     return buffer.str();
   };
 
-  auto&      ttable                   = gfx_state.texture_table;
+  auto& ttable      = gfx_state.texture_table;
   auto& sb          = tbuffers.selected_terrain;
   auto& t           = tbuffers.config;
   auto& ld          = zs.level_data;

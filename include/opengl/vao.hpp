@@ -1,7 +1,7 @@
 #pragma once
+#include <extlibs/glew.hpp>
 #include <opengl/global.hpp>
 #include <stlw/type_macros.hpp>
-#include <extlibs/glew.hpp>
 
 #include <ostream>
 #include <string>

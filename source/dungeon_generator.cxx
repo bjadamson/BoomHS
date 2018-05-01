@@ -335,9 +335,9 @@ gen_level(stlw::Logger& logger, LevelConfig const& levelconfig, EntityRegistry& 
           stlw::float_generator& rng, TextureTable const& ttable)
 {
   TileGridConfig const& tileconfig = levelconfig.tileconfig;
-  auto const tdwidth = tileconfig.width;
-  auto const tdheight = tileconfig.height;
-  auto const num_tiles = tdwidth * tdheight;
+  auto const            tdwidth    = tileconfig.width;
+  auto const            tdheight   = tileconfig.height;
+  auto const            num_tiles  = tdwidth * tdheight;
 
   LOG_TRACE("Generating tilegrid");
   TileGrid tilegrid{tdwidth, tdheight, registry};
