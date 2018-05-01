@@ -336,7 +336,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
       }
       ImGui::Separator();
       imgui_cxx::input_sizet("Vertex Count", &tconfig.num_vertexes);
-      imgui_cxx::input_sizet("height multiplier", &tconfig.height_multiplier);
+      ImGui::InputFloat("height multiplier", &tconfig.height_multiplier);
       ImGui::Checkbox("Invert Normals", &tconfig.invert_normals);
 
       imgui_cxx::input_string("Heightmap Name", t.heightmap_path);

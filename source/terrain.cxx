@@ -65,7 +65,6 @@ generate_vertices(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainPie
 
       assert(offset < buffer.size());
       buffer[offset++] = x_position;
-
       assert(offset < buffer.size());
 
       uint8_t const height            = heightmap_data.data()[(x_length * z) + x];

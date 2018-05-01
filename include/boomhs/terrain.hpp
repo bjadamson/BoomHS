@@ -20,7 +20,7 @@ struct TerrainPieceConfig
   TerrainPieceConfig();
 
   size_t num_vertexes;
-  size_t height_multiplier;
+  float height_multiplier;
   bool   invert_normals;
 
   GLint  wrap_mode = GL_REPEAT;
