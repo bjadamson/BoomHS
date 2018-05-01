@@ -244,12 +244,14 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
   auto& ldata   = zs.level_data;
   auto& terrain = zs.level_data.terrain();
   auto& tgrid   = terrain.grid;
-  auto &tconfig = tbuffers.config;
+  auto& tconfig = tbuffers.config;
 
   auto const tgrid_slots_string = [&]() {
     std::stringstream buffer;
-    FOR(i, tgrid.width()) {
-      FOR(j, tgrid.height()) {
+    FOR(i, tgrid.width())
+    {
+      FOR(j, tgrid.height())
+      {
         buffer << "(";
         buffer << std::to_string(i);
         buffer << ", ";
@@ -262,11 +264,11 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
     return buffer.str();
   };
 
-  auto& sb     = tbuffers.selected_terrain;
-  auto& t      = tbuffers.config;
-  auto& ttable = gfx_state.texture_table;
-  auto& ld = zs.level_data;
-  auto &grid_config = tgrid.config();
+  auto&      ttable                   = gfx_state.texture_table;
+  auto& sb          = tbuffers.selected_terrain;
+  auto& t           = tbuffers.config;
+  auto& ld          = zs.level_data;
+  auto& grid_config = tgrid.config();
 
   auto& sps = gfx_state.sps;
   auto& sp  = sps.ref_sp(t.shader_name);
@@ -304,7 +306,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
         auto const  heightmap = load_heightmap();
         auto const& ti        = *ttable.find(t.texture_name);
 
-        auto  tg = terrain::generate_grid(logger, grid_config, tbuffers.config, heightmap, sp, ti);
+        auto tg = terrain::generate_grid(logger, grid_config, tbuffers.config, heightmap, sp, ti);
         terrain.grid = MOVE(tg);
       }
     }
@@ -315,8 +317,8 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
             {0, GL_CCW},
             {1, GL_CW},
         }};
-        trstate.winding = gl_option_combo("Winding Order", "CCW\0CW\0\0", &tbuffers.selected_winding,
-                                    WINDING_MAP);
+        trstate.winding                      = gl_option_combo("Winding Order", "CCW\0CW\0\0",
+                                          &tbuffers.selected_winding, WINDING_MAP);
       }
       ImGui::Checkbox("Culling Enabled", &trstate.culling_enabled);
       {
@@ -326,7 +328,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
             {2, GL_FRONT_AND_BACK},
         }};
         trstate.culling_mode = gl_option_combo("Culling Face", "Front\0Back\0Front And Back\0\0",
-                                         &tbuffers.selected_culling, CULLING_MAP);
+                                               &tbuffers.selected_culling, CULLING_MAP);
       }
     }
     if (ImGui::CollapsingHeader("Update Existing Terrain")) {
@@ -338,11 +340,19 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
       imgui_cxx::input_sizet("Vertex Count", &tconfig.num_vertexes);
       ImGui::InputFloat("height multiplier", &tconfig.height_multiplier);
       ImGui::Checkbox("Invert Normals", &tconfig.invert_normals);
+      {
+        std::stringstream buffer;
+        for (auto const& it : ttable) {
+          buffer << it.first.name;
+          buffer << '\0';
+        }
+        buffer << '\0';
+        auto const nicknames = buffer.str();
 
-      imgui_cxx::input_string("Heightmap Name", t.heightmap_path);
-      imgui_cxx::input_string("Shader Name", t.shader_name);
-      if (imgui_cxx::input_string("Texture Name", t.texture_name)) {
+        imgui_cxx::combo("Heightmap", &tbuffers.selected_heightmap, nicknames);
+        imgui_cxx::combo("Texture", &tbuffers.selected_texture, nicknames);
       }
+      imgui_cxx::input_string("Shader Name", t.shader_name);
       {
         GLOptionMap<3> constexpr WRAP_MAP = {{
             {0, GL_REPEAT},
@@ -371,8 +381,8 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 
         int const row = sb / tgrid.width();
         int const col = sb % tgrid.width();
-        auto tp = terrain::generate_piece(logger, glm::vec2{row, col}, grid_config,
-            tbuffers.config, heightmap, sp, ti);
+        auto tp = terrain::generate_piece(logger, glm::vec2{row, col}, grid_config, tbuffers.config,
+                                          heightmap, sp, ti);
         terrain.grid[sb] = MOVE(tp);
       }
     }

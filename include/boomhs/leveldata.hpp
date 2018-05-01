@@ -41,13 +41,12 @@ class LevelData
   std::vector<RiverInfo> rivers_;
 
   Terrain terrain_;
-  void set_tile(TilePosition const&, TileType const&);
+  void    set_tile(TilePosition const&, TileType const&);
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileGrid&&, TileSharedInfoTable&&, TilePosition const&, std::vector<RiverInfo>&&,
-            Terrain &&, Fog const&, opengl::GlobalLight const&, ObjStore&&, Camera&&,
-            WorldObject&&);
+            Terrain&&, Fog const&, opengl::GlobalLight const&, ObjStore&&, Camera&&, WorldObject&&);
 
   // public fields
   Fog                 fog;

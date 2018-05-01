@@ -116,8 +116,8 @@ StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
   place_torch(tilegrid, registry, rng, ttable);
 
   TerrainGridConfig tgc;
-  TerrainGrid tgrid(MOVE(tgc));
-  Terrain terrain(MOVE(tgrid));
+  TerrainGrid       tgrid(MOVE(tgc));
+  Terrain           terrain(MOVE(tgrid));
 
   LOG_TRACE("finished!");
   return LevelGeneratedData{MOVE(tilegrid), starting_pos, MOVE(rivers), MOVE(terrain)};

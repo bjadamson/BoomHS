@@ -151,9 +151,8 @@ generate_indices(TerrainPieceConfig const& tc)
 // Algorithm modified from:
 // https://www.youtube.com/watch?v=yNYwZMmgTJk&list=PLRIWtICgwaX0u7Rf9zkZhLoLuZVfUksDP&index=14
 ObjData
-generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags,
-                      TerrainGridConfig const& tgc, TerrainPieceConfig const& tc,
-                      HeightmapData const& heightmap_data)
+generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags, TerrainGridConfig const& tgc,
+                      TerrainPieceConfig const& tc, HeightmapData const& heightmap_data)
 {
   auto const count = tc.num_vertexes * tc.num_vertexes;
 
@@ -169,8 +168,6 @@ generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags,
   return data;
 }
 
-
-
 } // namespace
 
 namespace boomhs
@@ -179,7 +176,7 @@ namespace boomhs
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TerrainPieceConfig
 TerrainPieceConfig::TerrainPieceConfig()
-    : num_vertexes(64)
+    : num_vertexes(128)
     , height_multiplier(1)
     , invert_normals(false)
     , shader_name("terrain")
@@ -191,7 +188,7 @@ TerrainPieceConfig::TerrainPieceConfig()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TerrainPiece
 TerrainPiece::TerrainPiece(TerrainPieceConfig const& tc, glm::vec2 const& pos, DrawInfo&& di,
-                 TextureInfo const& ti)
+                           TextureInfo const& ti)
     : pos_(pos)
     , di_(MOVE(di))
     , ti_(ti)
@@ -242,7 +239,7 @@ TerrainGrid::add(TerrainPiece&& t)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Terrain
-Terrain::Terrain(TerrainGrid &&tgrid)
+Terrain::Terrain(TerrainGrid&& tgrid)
     : grid(MOVE(tgrid))
 {
 }
@@ -270,7 +267,7 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
 
 TerrainGrid
 generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainPieceConfig const& tc,
-    HeightmapData const& heightmap_data, ShaderProgram& sp, TextureInfo const& ti)
+              HeightmapData const& heightmap_data, ShaderProgram& sp, TextureInfo const& ti)
 {
   LOG_TRACE("Generating Terrain");
   size_t const rows = tgc.num_rows, cols = tgc.num_cols;

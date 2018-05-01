@@ -232,9 +232,7 @@ draw(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
     auto const ti = *dinfo.texture_info();
     LOG_DEBUG_SPRINTF("Binding TextureInfo '%s'", ti.to_string());
 
-    ti.while_bound([&]() {
-        draw_fn();
-        });
+    ti.while_bound([&]() { draw_fn(); });
   }
   else {
     draw_fn();
@@ -471,7 +469,7 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
   sp.while_bound(logger, [&]() {
     set_3dmvpmatrix(logger, camera, transform.model_matrix(), sp);
     draw(logger, sp, dinfo);
-    });
+  });
 }
 
 void
@@ -522,7 +520,7 @@ draw_global_axis(RenderState& rstate)
     draw(logger, sp, world_arrows.x_dinfo);
     draw(logger, sp, world_arrows.y_dinfo);
     draw(logger, sp, world_arrows.z_dinfo);
-    });
+  });
 
   LOG_TRACE("Finished Drawing Global Axis");
 }
@@ -546,7 +544,6 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
   auto const& ldata  = zs.level_data;
   auto const& camera = ldata.camera;
 
-
   sp.while_bound(logger, [&]() {
     set_3dmvpmatrix(logger, camera, transform.model_matrix(), sp);
     set_3dmvpmatrix(logger, camera, transform.model_matrix(), sp);
@@ -554,7 +551,7 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
     draw(logger, sp, axis_arrows.x_dinfo);
     draw(logger, sp, axis_arrows.y_dinfo);
     draw(logger, sp, axis_arrows.z_dinfo);
-    });
+  });
 
   LOG_TRACE("Finished Drawing Local Axis");
 }
@@ -599,7 +596,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
         assert(registry.has<Material>(eid));
         Material const& material = registry.get<Material>(eid);
         draw_3dlit_shape(rstate, transform.translation, model_matrix, sp, dinfo, material, registry,
-                        receives_ambient_light);
+                         receives_ambient_light);
         return;
       }
 
@@ -631,9 +628,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
       static constexpr double SPEED = 0.135;
       auto const              a     = std::sin(ft.since_start_millis() * M_PI * SPEED);
       float const             glow  = glm::lerp(MIN, MAX, std::abs(a));
-      sp.while_bound(logger, [&]() {
-        sp.set_uniform_float1(logger, "u_glow", glow);
-        });
+      sp.while_bound(logger, [&]() { sp.set_uniform_float1(logger, "u_glow", glow); });
     }
 
     // randomize the position slightly
@@ -656,9 +651,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
     auto const mvp_matrix = camera.projection_matrix() * view_model;
     auto&      sp         = sps.ref_sp(sn.value);
-    sp.while_bound(logger, [&]() {
-      set_modelmatrix(logger, mvp_matrix, sp);
-      });
+    sp.while_bound(logger, [&]() { set_modelmatrix(logger, mvp_matrix, sp); });
     draw_fn(eid, sn, transform, isv, bboard, FORWARD(args));
   };
 
@@ -700,7 +693,7 @@ draw_inventory_overlay(RenderState& rstate)
   sp.while_bound(logger, [&]() {
     set_modelmatrix(logger, model_matrix, sp);
     draw_2d(logger, sp, dinfo);
-    });
+  });
 }
 
 void
@@ -744,9 +737,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
       auto&      sp        = sps.ref_sp("floor");
       auto const scale     = glm::vec3{0.8};
       auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, scale);
-      sp.while_bound(logger, [&]() {
-        draw_tile_helper(sp, tr, dinfo, tile, modmatrix, true);
-        });
+      sp.while_bound(logger, [&]() { draw_tile_helper(sp, tr, dinfo, tile, modmatrix, true); });
     } break;
     case TileType::WALL: {
       auto const inverse_model = glm::inverse(default_modmatrix);
@@ -754,7 +745,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
       sp.while_bound(logger, [&]() {
         sp.set_uniform_matrix_4fv(logger, "u_inversemodelmatrix", inverse_model);
         draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix, true);
-        });
+      });
     } break;
     case TileType::RIVER:
       // Do nothing, we handle rendering rivers elsewhere.
@@ -766,7 +757,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
 
         bool const receives_ambient_light = false;
         draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix, receives_ambient_light);
-        });
+      });
     } break;
     case TileType::STAIR_UP: {
       auto& sp = sps.ref_sp("stair");
@@ -775,17 +766,17 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
 
         bool const receives_ambient_light = false;
         draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix, receives_ambient_light);
-        });
+      });
     } break;
     case TileType::BRIDGE:
     case TileType::DOOR:
     case TileType::TELEPORTER:
     default: {
       bool const receives_ambient_light = true;
-      auto& sp = sps.ref_sp("3d_pos_normal_color");
+      auto&      sp                     = sps.ref_sp("3d_pos_normal_color");
       sp.while_bound(logger, [&]() {
         draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix, receives_ambient_light);
-        });
+      });
     } break;
     case TileType::UNDEFINED:
       std::abort();
@@ -867,7 +858,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
       draw_glow();
     }
     draw_reticle();
-    });
+  });
 }
 
 void
@@ -965,7 +956,7 @@ draw_skybox(RenderState& rstate, window::FrameTime const& ft)
     sp.while_bound(logger, [&]() {
       sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
       draw_2d(logger, sp, dinfo);
-        });
+    });
   };
 
   registry.view<ShaderName, Transform, IsVisible, IsSkybox>().each(draw_fn);
@@ -1061,8 +1052,8 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
         sp.set_uniform_float1(logger, "u_uvmodifier", config.uv_modifier);
       }
       auto const& dinfo = t.draw_info();
-      draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo, Material{},
-                      registry, RECEIVES_AMBIENT_LIGHT);
+      draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
+                       Material{}, registry, RECEIVES_AMBIENT_LIGHT);
     }
   });
 
@@ -1094,7 +1085,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
   sp.while_bound(logger, [&]() {
     set_3dmvpmatrix(logger, camera, model_matrix, sp);
     draw(logger, sp, dinfo);
-    });
+  });
 }
 
 } // namespace boomhs::render

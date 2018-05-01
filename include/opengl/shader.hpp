@@ -58,8 +58,8 @@ public:
   ProgramHandle(ProgramHandle&&);
   ~ProgramHandle();
 
-  bool is_active() const;
-  void set_active(bool);
+  bool        is_active() const;
+  void        set_active(bool);
   auto const& handle() const { return program_; }
 };
 
@@ -89,7 +89,7 @@ public:
   void unbind(stlw::Logger&);
 
   template <typename FN>
-  void while_bound(stlw::Logger &logger, FN const& fn)
+  void while_bound(stlw::Logger& logger, FN const& fn)
   {
     bind(logger);
     ON_SCOPE_EXIT([&]() { unbind(logger); });

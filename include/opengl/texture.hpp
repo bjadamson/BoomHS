@@ -6,6 +6,7 @@
 #include <stlw/type_macros.hpp>
 
 #include <extlibs/glew.hpp>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -101,14 +102,21 @@ struct TextureFilenames
   auto num_filenames() const { return filenames.size(); }
 };
 
+inline bool
+operator<(TextureFilenames const& a, TextureFilenames const& b)
+{
+  return a.name < b.name;
+}
+
 class TextureTable
 {
   using pair_t = std::pair<TextureFilenames, Texture>;
-  std::vector<pair_t> data_;
+  std::map<TextureFilenames, Texture> data_;
 
 public:
   TextureTable() = default;
   MOVE_CONSTRUCTIBLE_ONLY(TextureTable);
+  BEGIN_END_FORWARD_FNS(data_);
 
   void add_texture(TextureFilenames&&, Texture&&);
 

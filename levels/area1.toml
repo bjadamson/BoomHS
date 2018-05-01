@@ -69,8 +69,8 @@ wrap = "clamp"
 # TERRAIN TEXTURES
 [[resource]]
 name = "Floor0"
-type = "texture:2d-RGB"
-filename = "assets/terrain/Floor0.jpg"
+type = "texture:2d-RGBA"
+filename = "assets/terrain/Floor0.png"
 wrap = "repeat"
 
 [[resource]]

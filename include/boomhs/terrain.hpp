@@ -20,12 +20,12 @@ struct TerrainPieceConfig
   TerrainPieceConfig();
 
   size_t num_vertexes;
-  float height_multiplier;
+  float  height_multiplier;
   bool   invert_normals;
 
-  GLint  wrap_mode = GL_REPEAT;
-  float  uv_max          = 1.0f;
-  float  uv_modifier     = 1.0f;
+  GLint wrap_mode   = GL_REPEAT;
+  float uv_max      = 1.0f;
+  float uv_modifier = 1.0f;
 
   std::string shader_name;
   std::string texture_name;
@@ -35,8 +35,8 @@ struct TerrainPieceConfig
 struct TerrainRenderState
 {
   bool   culling_enabled = true;
-  GLenum winding      = GL_CCW;
-  GLenum culling_mode = GL_BACK;
+  GLenum winding         = GL_CCW;
+  GLenum culling_mode    = GL_BACK;
 };
 
 class TerrainPiece
@@ -55,7 +55,7 @@ public:
   NO_COPY(TerrainPiece);
   MOVE_DEFAULT(TerrainPiece);
   TerrainPiece(TerrainPieceConfig const&, glm::vec2 const&, opengl::DrawInfo&&,
-          opengl::TextureInfo const&);
+               opengl::TextureInfo const&);
 
   auto const& position() const { return pos_; }
   auto const& draw_info() const { return di_; }
@@ -92,6 +92,7 @@ class TerrainGrid
 {
   TerrainGridConfig config_;
   TerrainArray      terrain_;
+
 public:
   explicit TerrainGrid(TerrainGridConfig const&);
 
@@ -123,12 +124,11 @@ namespace terrain
 
 TerrainPiece
 generate_piece(stlw::Logger&, glm::vec2 const&, TerrainGridConfig const&, TerrainPieceConfig const&,
-                      opengl::HeightmapData const&, opengl::ShaderProgram&,
-                      opengl::TextureInfo const&);
+               opengl::HeightmapData const&, opengl::ShaderProgram&, opengl::TextureInfo const&);
 
 TerrainGrid
 generate_grid(stlw::Logger&, TerrainGridConfig const&, TerrainPieceConfig const&,
-         opengl::HeightmapData const&, opengl::ShaderProgram&, opengl::TextureInfo const&);
+              opengl::HeightmapData const&, opengl::ShaderProgram&, opengl::TextureInfo const&);
 
 } // namespace terrain
 

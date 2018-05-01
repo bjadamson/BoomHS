@@ -122,7 +122,7 @@ void
 TextureTable::add_texture(TextureFilenames &&tf, Texture &&ta)
 {
   auto pair = std::make_pair(MOVE(tf), MOVE(ta));
-  data_.emplace_back(MOVE(pair));
+  data_.emplace(MOVE(pair));
 }
 
 #define FIND_TF(name)                                                                              \

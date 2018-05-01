@@ -334,20 +334,18 @@ LevelGeneratedData
 gen_level(stlw::Logger& logger, LevelConfig const& levelconfig, EntityRegistry& registry,
           stlw::float_generator& rng, TextureTable const& ttable)
 {
-  // clang-format off
   TileGridConfig const& tileconfig = levelconfig.tileconfig;
   auto const tdwidth = tileconfig.width;
   auto const tdheight = tileconfig.height;
   auto const num_tiles = tdwidth * tdheight;
-  // clang-format on
 
   LOG_TRACE("Generating tilegrid");
   TileGrid tilegrid{tdwidth, tdheight, registry};
   floodfill(tilegrid, TileType::WALL);
 
   TerrainGridConfig tgc;
-  TerrainGrid tgrid(MOVE(tgc));
-  Terrain terrain(MOVE(tgrid));
+  TerrainGrid       tgrid(MOVE(tgc));
+  Terrain           terrain(MOVE(tgrid));
 
   LOG_TRACE("Placing Rivers");
   std::vector<RiverInfo> rivers;

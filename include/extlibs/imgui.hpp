@@ -1,11 +1,20 @@
 #pragma once
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl_gl3.h>
+
 #include <initializer_list>
+#include <string>
 #include <utility>
 
 namespace imgui_cxx
 {
+
+template <typename T>
+auto
+combo(std::string const& init, T* buffer, std::string const& list)
+{
+  return ImGui::Combo(init.c_str(), buffer, list.c_str());
+}
 
 template <typename FN, typename... Args>
 auto

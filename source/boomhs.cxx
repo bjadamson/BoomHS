@@ -359,8 +359,8 @@ init(Engine& engine, EngineState& engine_state)
 
   {
     TerrainPieceConfig const tc;
-    auto&               sp     = sps.ref_sp(tc.shader_name);
-    auto const&         ttable = gfx_state.texture_table;
+    auto&                    sp     = sps.ref_sp(tc.shader_name);
+    auto const&              ttable = gfx_state.texture_table;
 
     char const* HEIGHTMAP_NAME = "Area0-HM";
     auto const  heightmap_o    = ttable.lookup_nickname(HEIGHTMAP_NAME);
@@ -374,9 +374,9 @@ init(Engine& engine, EngineState& engine_state)
     auto const& ti        = *ttable.find(tc.texture_name);
 
     TerrainGridConfig const tgc;
-    auto  tg = terrain::generate_grid(logger, tgc, tc, heightmap, sp, ti);
-    auto& ld = zs.level_data;
-    ld.terrain().grid = MOVE(tg);
+    auto                    tg = terrain::generate_grid(logger, tgc, tc, heightmap, sp, ti);
+    auto&                   ld = zs.level_data;
+    ld.terrain().grid          = MOVE(tg);
   }
   {
     auto test_r = rexpaint::RexImage::load("assets/test.xp");

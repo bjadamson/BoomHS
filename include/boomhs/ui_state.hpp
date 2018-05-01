@@ -32,6 +32,10 @@ struct TerrainBuffer
   int selected_wrapmode = 0;
   int selected_terrain  = 0;
 
+  int selected_heightmap = 0;
+  int selected_texture   = 0;
+  int selected_shader    = 0;
+
   TerrainPieceConfig config;
 };
 
