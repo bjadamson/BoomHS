@@ -199,10 +199,10 @@ set_3dmvpmatrix(stlw::Logger& logger, Camera const& camera, glm::mat4 const& mod
 }
 
 void
-draw(RenderState &rstate, ShaderProgram& sp, DrawInfo const& dinfo)
+draw(RenderState& rstate, ShaderProgram& sp, DrawInfo const& dinfo)
 {
-  auto &es = rstate.es;
-  auto &logger = es.logger;
+  auto&      es          = rstate.es;
+  auto&      logger      = es.logger;
   auto const draw_mode   = es.wireframe_override ? GL_LINE_LOOP : dinfo.draw_mode();
   auto const num_indices = dinfo.num_indices();
   auto constexpr OFFSET  = nullptr;
@@ -238,7 +238,7 @@ draw(RenderState &rstate, ShaderProgram& sp, DrawInfo const& dinfo)
 }
 
 void
-draw_2d(RenderState &rstate, ShaderProgram& sp, DrawInfo const& dinfo)
+draw_2d(RenderState& rstate, ShaderProgram& sp, DrawInfo const& dinfo)
 {
   disable_depth_tests();
   draw(rstate, sp, dinfo);

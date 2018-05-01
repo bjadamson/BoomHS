@@ -89,21 +89,18 @@ comboselected_to_entity(int const selected_index, std::vector<pair_t> const& pai
   return it->second;
 }
 
-template <size_t N>
-using GLOptionMap = std::array<std::pair<int, GLint>, N>;
-
-template <size_t N>
+template <typename T, size_t N>
 auto
 gl_option_combo(char const* init_text, char const* list_text, int* buffer,
-                GLOptionMap<N> const& map)
+                std::array<T, N> const& list)
 {
   ImGui::Combo(init_text, buffer, list_text);
   auto const v = static_cast<uint64_t>(*buffer);
 
-  FOR(i, map.size())
+  FOR(i, list.size())
   {
     if (v == i) {
-      return map[i].second;
+      return list[i];
     }
   }
 
@@ -314,22 +311,16 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
     if (ImGui::CollapsingHeader("Rendering Options")) {
       auto& trstate = terrain.render_state;
       {
-        GLOptionMap<2> constexpr WINDING_MAP = {{
-            {0, GL_CCW},
-            {1, GL_CW},
-        }};
-        trstate.winding                      = gl_option_combo("Winding Order", "CCW\0CW\0\0",
-                                          &tbuffers.selected_winding, WINDING_MAP);
+        auto constexpr WINDING_OPTIONS = stlw::make_array<GLint>(GL_CCW, GL_CW);
+        trstate.winding                = gl_option_combo("Winding Order", "CCW\0CW\0\0",
+                                          &tbuffers.selected_winding, WINDING_OPTIONS);
       }
       ImGui::Checkbox("Culling Enabled", &trstate.culling_enabled);
       {
-        GLOptionMap<3> constexpr CULLING_MAP = {{
-            {0, GL_BACK},
-            {1, GL_FRONT},
-            {2, GL_FRONT_AND_BACK},
-        }};
+        auto constexpr CULLING_OPTIONS =
+            stlw::make_array<GLint>(GL_BACK, GL_FRONT, GL_FRONT_AND_BACK);
         trstate.culling_mode = gl_option_combo("Culling Face", "Front\0Back\0Front And Back\0\0",
-                                               &tbuffers.selected_culling, CULLING_MAP);
+                                               &tbuffers.selected_culling, CULLING_OPTIONS);
       }
     }
     if (ImGui::CollapsingHeader("Update Existing Terrain")) {
@@ -355,13 +346,10 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
       }
       imgui_cxx::input_string("Shader Name", t.shader_name);
       {
-        GLOptionMap<3> constexpr WRAP_MAP = {{
-            {0, GL_REPEAT},
-            {1, GL_MIRRORED_REPEAT},
-            {2, GL_CLAMP_TO_EDGE},
-        }};
+        auto constexpr WRAP_OPTIONS =
+            stlw::make_array<GLint>(GL_REPEAT, GL_MIRRORED_REPEAT, GL_CLAMP_TO_EDGE);
         t.wrap_mode = gl_option_combo("UV Wrap Mode", "Repeat\0Mirrored Repeat\0Clamp\0\0",
-                                      &tbuffers.selected_wrapmode, WRAP_MAP);
+                                      &tbuffers.selected_wrapmode, WRAP_OPTIONS);
       }
       if (ImGui::Button("Regenerate Piece")) {
         auto const* p_texture = ttable.lookup_nickname(t.texture_name);
