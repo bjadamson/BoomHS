@@ -84,6 +84,7 @@ struct EngineState
 
   bool show_player_localspace_vectors;
   bool show_player_worldspace_vectors;
+  bool wireframe_override = false;
 
   MouseState    mouse_state    = {};
   WindowState   window_state   = {};

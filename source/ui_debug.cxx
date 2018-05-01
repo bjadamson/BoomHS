@@ -1,6 +1,7 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/orbital_body.hpp>
+#include <boomhs/renderer.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/time.hpp>
@@ -824,6 +825,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::Frame
     ImGui::Checkbox("Draw Entities", &es.draw_entities);
     ImGui::Checkbox("Draw Normals", &es.draw_normals);
     ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
+    ImGui::Checkbox("Wireframe Rendering", &es.wireframe_override);
 
     ImGui::Checkbox("ImGui Metrics", &es.draw_imguimetrics);
     if (es.draw_imguimetrics) {

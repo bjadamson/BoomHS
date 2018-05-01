@@ -199,9 +199,11 @@ set_3dmvpmatrix(stlw::Logger& logger, Camera const& camera, glm::mat4 const& mod
 }
 
 void
-draw(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
+draw(RenderState &rstate, ShaderProgram& sp, DrawInfo const& dinfo)
 {
-  auto const draw_mode   = dinfo.draw_mode();
+  auto &es = rstate.es;
+  auto &logger = es.logger;
+  auto const draw_mode   = es.wireframe_override ? GL_LINE_LOOP : dinfo.draw_mode();
   auto const num_indices = dinfo.num_indices();
   auto constexpr OFFSET  = nullptr;
 
@@ -236,10 +238,10 @@ draw(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
 }
 
 void
-draw_2d(stlw::Logger& logger, ShaderProgram& sp, DrawInfo const& dinfo)
+draw_2d(RenderState &rstate, ShaderProgram& sp, DrawInfo const& dinfo)
 {
   disable_depth_tests();
-  draw(logger, sp, dinfo);
+  draw(rstate, sp, dinfo);
   enable_depth_tests();
 }
 
@@ -269,7 +271,7 @@ draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const
   auto const& ldata  = zs.level_data;
   auto const& camera = ldata.camera;
   set_3dmvpmatrix(logger, camera, model_matrix, sp);
-  draw(logger, sp, dinfo);
+  draw(rstate, sp, dinfo);
 }
 
 void
@@ -296,7 +298,7 @@ draw_3dlightsource(RenderState& rstate, glm::mat4 const& model_matrix, ShaderPro
     set_3dmvpmatrix(logger, camera, model_matrix, sp);
   }
 
-  draw(logger, sp, dinfo);
+  draw(rstate, sp, dinfo);
 }
 
 void
@@ -465,7 +467,7 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
   sp.while_bound(logger, [&]() {
     set_3dmvpmatrix(logger, camera, transform.model_matrix(), sp);
 
-    dinfo.vao().while_bound([&]() { draw(logger, sp, dinfo); });
+    dinfo.vao().while_bound([&]() { draw(rstate, sp, dinfo); });
   });
 }
 
@@ -512,7 +514,7 @@ draw_global_axis(RenderState& rstate)
   Transform   transform;
 
   auto const draw_axis_arrow = [&](auto const& dinfo) {
-    dinfo.vao().while_bound([&]() { draw(logger, sp, dinfo); });
+    dinfo.vao().while_bound([&]() { draw(rstate, sp, dinfo); });
   };
 
   sp.while_bound(logger, [&]() {
@@ -553,9 +555,9 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
     // assume for now they all share the same VAO layout
     auto const& vao = axis_arrows.x_dinfo.vao();
     vao.while_bound([&]() {
-      draw(logger, sp, axis_arrows.x_dinfo);
-      draw(logger, sp, axis_arrows.y_dinfo);
-      draw(logger, sp, axis_arrows.z_dinfo);
+      draw(rstate, sp, axis_arrows.x_dinfo);
+      draw(rstate, sp, axis_arrows.y_dinfo);
+      draw(rstate, sp, axis_arrows.z_dinfo);
     });
   });
 
@@ -613,7 +615,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
         if (!sp.is_2d) {
           set_3dmvpmatrix(logger, camera, model_matrix, sp);
         }
-        draw(logger, sp, dinfo);
+        draw(rstate, sp, dinfo);
       });
     });
   };
@@ -699,7 +701,7 @@ draw_inventory_overlay(RenderState& rstate)
 
   sp.while_bound(logger, [&]() {
     set_modelmatrix(logger, model_matrix, sp);
-    dinfo.vao().while_bound([&]() { draw_2d(logger, sp, dinfo); });
+    dinfo.vao().while_bound([&]() { draw_2d(rstate, sp, dinfo); });
   });
 }
 
@@ -846,7 +848,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     DrawInfo const dinfo = gpu::copy_rectangle_uvs(logger, v, sp, *texture_o);
 
     transform.scale = glm::vec3{scale};
-    dinfo.vao().while_bound([&]() { draw_2d(logger, sp, dinfo); });
+    dinfo.vao().while_bound([&]() { draw_2d(rstate, sp, dinfo); });
   };
 
   auto const draw_glow = [&]() {
@@ -859,7 +861,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     DrawInfo const dinfo = gpu::copy_rectangle_uvs(logger, v, sp, *texture_o);
 
     transform.scale = glm::vec3{scale};
-    dinfo.vao().while_bound([&]() { draw_2d(logger, sp, dinfo); });
+    dinfo.vao().while_bound([&]() { draw_2d(rstate, sp, dinfo); });
   };
 
   sp.while_bound(logger, [&]() {
@@ -964,7 +966,7 @@ draw_skybox(RenderState& rstate, window::FrameTime const& ft)
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
-      dinfo.vao().while_bound([&]() { draw_2d(logger, sp, dinfo); });
+      dinfo.vao().while_bound([&]() { draw_2d(rstate, sp, dinfo); });
     });
   };
 
@@ -1008,7 +1010,7 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
       auto const& camera = ldata.camera;
       set_3dmvpmatrix(logger, camera, model_matrix, sp);
 
-      dinfo.vao().while_bound([&]() { draw(logger, sp, dinfo); });
+      dinfo.vao().while_bound([&]() { draw(rstate, sp, dinfo); });
     });
   };
 
@@ -1095,7 +1097,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
   sp.while_bound(logger, [&]() {
     set_3dmvpmatrix(logger, camera, model_matrix, sp);
-    dinfo.vao().while_bound([&]() { draw(logger, sp, dinfo); });
+    dinfo.vao().while_bound([&]() { draw(rstate, sp, dinfo); });
   });
 }
 
