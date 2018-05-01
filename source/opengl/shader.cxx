@@ -523,8 +523,8 @@ ShaderProgram::set_uniform_float1(stlw::Logger &logger, GLchar const* name, floa
   FOR_DEBUG_ONLY([&]() { assert(program_.is_active()); });
 
   auto const loc = get_uniform_location(logger, name);
-  glUniform1f(loc, value);
   LOG_DEBUG_SPRINTF("sending uniform float at loc '%d' with data '%f' to GPU", loc, value);
+  glUniform1f(loc, value);
   LOG_ANY_GL_ERRORS(logger, "glUniform1f");
 }
 

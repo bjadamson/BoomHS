@@ -1,7 +1,9 @@
 #pragma once
-#include <extlibs/glew.hpp>
-#include <ostream>
+#include <opengl/global.hpp>
 #include <stlw/type_macros.hpp>
+#include <extlibs/glew.hpp>
+
+#include <ostream>
 #include <string>
 
 namespace opengl
@@ -37,6 +39,14 @@ public:
   inline auto gl_raw_value() const { return vao_; }
 
   std::string to_string() const;
+
+  template <typename FN>
+  void while_bound(FN const& fn) const
+  {
+    global::vao_bind(*this);
+    ON_SCOPE_EXIT([&]() { global::vao_unbind(); });
+    fn();
+  }
 };
 
 std::ostream&
