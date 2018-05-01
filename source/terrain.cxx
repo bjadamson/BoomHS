@@ -31,19 +31,19 @@ calculate_number_vertices(int const num_components, TerrainPieceConfig const& tc
 }
 
 float
-x_ratio(float const x, TerrainPieceConfig const& tc)
+x_ratio(float const x, TerrainGridConfig const& tgc, TerrainPieceConfig const& tc)
 {
-  return (x / (tc.num_vertexes - 1)) * tc.x_length;
+  return (x / (tc.num_vertexes - 1)) * tgc.x_length;
 }
 
 float
-z_ratio(float const z, TerrainPieceConfig const& tc)
+z_ratio(float const z, TerrainGridConfig const& tgc, TerrainPieceConfig const& tc)
 {
-  return (z / (tc.num_vertexes - 1)) * tc.z_length;
+  return (z / (tc.num_vertexes - 1)) * tgc.z_length;
 }
 
 ObjData::vertices_t
-generate_vertices(stlw::Logger& logger, TerrainPieceConfig const& tc,
+generate_vertices(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainPieceConfig const& tc,
                   HeightmapData const& heightmap_data)
 {
   int constexpr NUM_COMPONENTS = 3; // x, y, z
@@ -60,8 +60,8 @@ generate_vertices(stlw::Logger& logger, TerrainPieceConfig const& tc,
     {
       assert(offset < static_cast<size_t>(num_vertexes));
 
-      float const x_position = 0.0f + (x_ratio(x, tc));
-      float const z_position = 0.0f + (z_ratio(z, tc));
+      float const x_position = 0.0f + (x_ratio(x, tgc, tc));
+      float const z_position = 0.0f + (z_ratio(z, tgc, tc));
 
       assert(offset < buffer.size());
       buffer[offset++] = x_position;
@@ -87,7 +87,7 @@ generate_vertices(stlw::Logger& logger, TerrainPieceConfig const& tc,
 }
 
 ObjData::vertices_t
-generate_uvs(TerrainPieceConfig const& tc)
+generate_uvs(TerrainGridConfig const& tgc, TerrainPieceConfig const& tc)
 {
   auto const          num_vertexes = calculate_number_vertices(2, tc);
   ObjData::vertices_t buffer;
@@ -100,8 +100,8 @@ generate_uvs(TerrainPieceConfig const& tc)
     {
       assert(counter < num_vertexes);
 
-      float const u = 0.0f + x_ratio(x, tc);
-      float const v = 0.0f + z_ratio(z, tc);
+      float const u = 0.0f + x_ratio(x, tgc, tc);
+      float const v = 0.0f + z_ratio(z, tgc, tc);
 
       buffer[counter++] = u;
       buffer[counter++] = v;
@@ -153,18 +153,19 @@ generate_indices(TerrainPieceConfig const& tc)
 // https://www.youtube.com/watch?v=yNYwZMmgTJk&list=PLRIWtICgwaX0u7Rf9zkZhLoLuZVfUksDP&index=14
 ObjData
 generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags,
-                      TerrainPieceConfig const& tc, HeightmapData const& heightmap_data)
+                      TerrainGridConfig const& tgc, TerrainPieceConfig const& tc,
+                      HeightmapData const& heightmap_data)
 {
   auto const count = tc.num_vertexes * tc.num_vertexes;
 
   ObjData data;
   data.num_vertexes = count;
 
-  data.vertices = generate_vertices(logger, tc, heightmap_data);
+  data.vertices = generate_vertices(logger, tgc, tc, heightmap_data);
   data.normals  = heightmap::generate_normals(tc.num_vertexes, tc.num_vertexes, tc.invert_normals,
                                              heightmap_data);
 
-  data.uvs     = generate_uvs(tc);
+  data.uvs     = generate_uvs(tgc, tc);
   data.indices = generate_indices(tc);
   return data;
 }
@@ -179,14 +180,12 @@ namespace boomhs
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TerrainPieceConfig
 TerrainPieceConfig::TerrainPieceConfig()
-    : num_vertexes(256)
-    , x_length(1)
-    , z_length(1)
+    : num_vertexes(64)
     , height_multiplier(1)
     , invert_normals(false)
     , shader_name("terrain")
-    , texture_name("TerrainFloor0")
-    , heightmap_path("TerrainHeightmap0")
+    , texture_name("Floor0")
+    , heightmap_path("Area0-HM")
 {
 }
 
@@ -221,6 +220,8 @@ TerrainArray::add(TerrainPiece&& t)
 TerrainGridConfig::TerrainGridConfig()
     : num_rows(1)
     , num_cols(1)
+    , x_length(1)
+    , z_length(1)
 {
 }
 
@@ -253,11 +254,12 @@ namespace boomhs::terrain
 {
 
 TerrainPiece
-generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainPieceConfig const& tc,
-                      HeightmapData const& heightmap_data, ShaderProgram& sp, TextureInfo const& ti)
+generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig const& tgc,
+               TerrainPieceConfig const& tc, HeightmapData const& heightmap_data, ShaderProgram& sp,
+               TextureInfo const& ti)
 {
   BufferFlags const flags{true, true, false, true};
-  auto const        data = generate_terrain_data(logger, flags, tc, heightmap_data);
+  auto const        data = generate_terrain_data(logger, flags, tgc, tc, heightmap_data);
   LOG_DEBUG_SPRINTF("Generated terrain data: %s", data.to_string());
 
   auto const buffer = VertexBuffer::create_interleaved(logger, data, flags);
@@ -280,7 +282,7 @@ generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainPieceCo
     FOR(j, cols)
     {
       auto const pos = glm::vec2{i, j};
-      auto       t   = generate_piece(logger, pos, tc, heightmap_data, sp, ti);
+      auto       t   = generate_piece(logger, pos, tgc, tc, heightmap_data, sp, ti);
 
       auto const index = (j * rows) + i;
 

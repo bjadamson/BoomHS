@@ -362,7 +362,7 @@ init(Engine& engine, EngineState& engine_state)
     auto&               sp     = sps.ref_sp(tc.shader_name);
     auto const&         ttable = gfx_state.texture_table;
 
-    char const* HEIGHTMAP_NAME = "TerrainHeightmap0";
+    char const* HEIGHTMAP_NAME = "Area0-HM";
     auto const  heightmap_o    = ttable.lookup_nickname(HEIGHTMAP_NAME);
     if (!heightmap_o) {
       auto const fmt =

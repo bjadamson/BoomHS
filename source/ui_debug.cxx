@@ -263,11 +263,10 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
   };
 
   auto& sb     = tbuffers.selected_terrain;
-
-  // Copy the settings into the temporary copy
   auto& t      = tbuffers.config;
   auto& ttable = gfx_state.texture_table;
   auto& ld = zs.level_data;
+  auto &grid_config = tgrid.config();
 
   auto& sps = gfx_state.sps;
   auto& sp  = sps.ref_sp(t.shader_name);
@@ -297,13 +296,15 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
   };
   auto const draw = [&]() {
     if (ImGui::CollapsingHeader("Regenerate Grid")) {
-      imgui_cxx::input_sizet("num rows", &terrain.grid.config().num_rows);
-      imgui_cxx::input_sizet("num cols", &terrain.grid.config().num_cols);
+      imgui_cxx::input_sizet("num rows", &grid_config.num_rows);
+      imgui_cxx::input_sizet("num cols", &grid_config.num_cols);
+      imgui_cxx::input_sizet("x width", &grid_config.x_length);
+      imgui_cxx::input_sizet("z length", &grid_config.z_length);
       if (ImGui::Button("Generate Terrain")) {
         auto const  heightmap = load_heightmap();
         auto const& ti        = *ttable.find(t.texture_name);
 
-        auto  tg = terrain::generate_grid(logger, tgrid.config(), tbuffers.config, heightmap, sp, ti);
+        auto  tg = terrain::generate_grid(logger, grid_config, tbuffers.config, heightmap, sp, ti);
         terrain.grid = MOVE(tg);
       }
     }
@@ -336,8 +337,6 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
       ImGui::Separator();
       imgui_cxx::input_sizet("Vertex Count", &tconfig.num_vertexes);
       imgui_cxx::input_sizet("height multiplier", &tconfig.height_multiplier);
-      imgui_cxx::input_sizet("x width", &tconfig.x_length);
-      imgui_cxx::input_sizet("z length", &tconfig.z_length);
       ImGui::Checkbox("Invert Normals", &tconfig.invert_normals);
 
       imgui_cxx::input_string("Heightmap Name", t.heightmap_path);
@@ -372,7 +371,8 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 
         int const row = sb / tgrid.width();
         int const col = sb % tgrid.width();
-        auto tp = terrain::generate_piece(logger, glm::vec2{row, col}, tbuffers.config, heightmap, sp, ti);
+        auto tp = terrain::generate_piece(logger, glm::vec2{row, col}, grid_config,
+            tbuffers.config, heightmap, sp, ti);
         terrain.grid[sb] = MOVE(tp);
       }
     }

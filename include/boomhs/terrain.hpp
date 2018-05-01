@@ -20,7 +20,6 @@ struct TerrainPieceConfig
   TerrainPieceConfig();
 
   size_t num_vertexes;
-  size_t x_length, z_length;
   size_t height_multiplier;
   bool   invert_normals;
 
@@ -84,6 +83,7 @@ public:
 struct TerrainGridConfig
 {
   size_t num_rows, num_cols;
+  size_t x_length, z_length;
 
   TerrainGridConfig();
 };
@@ -122,7 +122,7 @@ namespace terrain
 {
 
 TerrainPiece
-generate_piece(stlw::Logger&, glm::vec2 const&, TerrainPieceConfig const&,
+generate_piece(stlw::Logger&, glm::vec2 const&, TerrainGridConfig const&, TerrainPieceConfig const&,
                       opengl::HeightmapData const&, opengl::ShaderProgram&,
                       opengl::TextureInfo const&);
 
