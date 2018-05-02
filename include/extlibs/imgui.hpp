@@ -58,6 +58,31 @@ main_menu_bar_size()
   return main_menu_size;
 }
 
+template <typename R, typename FN, typename... Args>
+R
+with_window(FN const& fn, Args&&... args)
+{
+  if (ImGui::Begin(FORWARD(args))) {
+    auto r = fn();
+    ImGui::End();
+    return MOVE(r);
+  }
+  else {
+    // not sure why this would ever happen, look it up..
+    std::abort();
+  }
+}
+
+template <typename FN, typename... Args>
+void
+with_window_logerrors(stlw::Logger& logger, FN const& fn, Args&&... args)
+{
+  auto r = with_window<decltype(fn())>(fn, FORWARD(args));
+  if (r.isErr()) {
+    LOG_ERROR(r.unwrapErr());
+  }
+}
+
 template <typename FN, typename... Args>
 void
 with_window(FN const& fn, Args&&... args)

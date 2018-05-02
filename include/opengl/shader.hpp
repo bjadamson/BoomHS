@@ -183,6 +183,14 @@ public:
     shader_programs_.emplace_back(MOVE(pair));
   }
 
+  std::vector<std::string> all_shader_names() const;
+
+  std::string all_shader_names_flattened(char) const;
+
+  std::optional<size_t> index_of_nickname(std::string const&) const;
+
+  std::optional<std::string> nickname_at_index(size_t) const;
+
 #define LOOKUP_SP(name, begin, end)                                                                \
   auto const lookup_sp = [&](char const* s) {                                                      \
     auto const cmp = [&s](auto const& it) { return it.first == s; };                               \

@@ -21,6 +21,9 @@ using HeightmapResult = Result<HeightmapData, std::string>;
 namespace opengl::heightmap
 {
 
+HeightmapResult
+load_fromtable(stlw::Logger&, TextureTable const&, std::string const&);
+
 boomhs::ObjData::vertices_t
 generate_normals(int, int, bool, HeightmapData const&);
 

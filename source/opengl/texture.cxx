@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <utility>
 
@@ -123,6 +124,42 @@ TextureTable::add_texture(TextureFilenames &&tf, Texture &&ta)
 {
   auto pair = std::make_pair(MOVE(tf), MOVE(ta));
   data_.emplace(MOVE(pair));
+}
+
+std::string
+TextureTable::list_of_all_names(char const delim) const
+{
+  std::stringstream buffer;
+  for (auto const& it : *this) {
+    buffer << it.first.name;
+    buffer << delim;
+  }
+  return buffer.str();
+}
+
+std::optional<size_t>
+TextureTable::index_of_nickname(std::string const& name) const
+{
+  size_t i = 0;
+  for (auto const& it : *this) {
+    if (it.first.name == name) {
+      return std::make_optional(i);
+    }
+    ++i;
+  }
+  return std::nullopt;
+}
+
+std::optional<std::string>
+TextureTable::nickname_at_index(size_t const index) const
+{
+  size_t i = 0;
+  for (auto const& it : *this) {
+    if (i++ == index) {
+      return std::make_optional(it.first.name);
+    }
+  }
+  return std::nullopt;
 }
 
 #define FIND_TF(name)                                                                              \

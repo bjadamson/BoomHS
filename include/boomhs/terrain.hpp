@@ -4,6 +4,7 @@
 #include <opengl/heightmap.hpp>
 
 #include <ostream>
+#include <stlw/algorithm.hpp>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
@@ -103,6 +104,7 @@ public:
 
   auto height() const { return config_.num_cols; }
   auto width() const { return config_.num_rows; }
+  auto dimensions() const { return stlw::make_array<size_t>(width(), height()); }
 
   auto count() const { return terrain_.size(); }
   auto size() const { return count(); }
@@ -110,6 +112,17 @@ public:
 
   auto& config() { return config_; }
 };
+
+template <typename FN, typename... Args>
+void
+visit_each(TerrainGrid const& tgrid, FN const& fn, Args&&... args)
+{
+  auto const [w, h] = tgrid.dimensions();
+  FOR(x, w)
+  {
+    FOR(y, h) { fn(x, y, FORWARD(args)); }
+  }
+}
 
 struct Terrain
 {

@@ -558,6 +558,57 @@ ShaderProgram::to_string() const
   return attributes + uniforms;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// ShaderPrograms
+std::vector<std::string>
+ShaderPrograms::all_shader_names() const
+{
+  std::vector<std::string> result;
+  for (auto const& it : shader_programs_) {
+    result.emplace_back(it.first);
+  }
+  return result;
+}
+
+std::string
+ShaderPrograms::all_shader_names_flattened(char const delim) const
+{
+  auto const sn = all_shader_names();
+  std::stringstream buffer;
+
+  for (auto const& it : sn) {
+    buffer << it;
+    buffer << delim;
+  }
+  return buffer.str();
+}
+
+std::optional<size_t>
+ShaderPrograms::index_of_nickname(std::string const& name) const
+{
+  auto const sn = all_shader_names();
+  size_t i = 0;
+  for (auto const& it : sn) {
+    if (it == name) {
+      return std::make_optional(i);
+    }
+    ++i;
+  }
+  return std::nullopt;
+}
+
+std::optional<std::string>
+ShaderPrograms::nickname_at_index(size_t const index) const
+{
+  auto const sn = all_shader_names();
+  if (index >= sn.size()) {
+    return std::nullopt;
+  }
+  return sn[index];
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Free Functions
 Result<ShaderProgram, std::string>
 make_shader_program(stlw::Logger &logger, std::string const& vertex_s, std::string const& fragment_s, VertexAttribute &&va)
 {

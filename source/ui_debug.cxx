@@ -244,20 +244,17 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
   auto& tgrid   = terrain.grid;
   auto& tconfig = tbuffers.config;
 
+  auto const fn = [&](auto const i, auto const j, auto& buffer) {
+    buffer << "(";
+    buffer << std::to_string(i);
+    buffer << ", ";
+    buffer << std::to_string(j);
+    buffer << ")";
+    buffer << '\0';
+  };
   auto const tgrid_slots_string = [&]() {
     std::stringstream buffer;
-    FOR(i, tgrid.width())
-    {
-      FOR(j, tgrid.height())
-      {
-        buffer << "(";
-        buffer << std::to_string(i);
-        buffer << ", ";
-        buffer << std::to_string(j);
-        buffer << ")";
-        buffer << '\0';
-      }
-    }
+    visit_each(tgrid, fn, buffer);
     buffer << '\0';
     return buffer.str();
   };
@@ -271,37 +268,14 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
   auto& sps = gfx_state.sps;
   auto& sp  = sps.ref_sp(t.shader_name);
 
-  auto const load_heightmap = [&]() {
-    auto const* p_heightmap = ttable.lookup_nickname(t.heightmap_path);
-    if (!p_heightmap) {
-      LOG_ERROR_SPRINTF("ERROR Looking up heightmap: %s", t.heightmap_path);
-      std::abort();
-    }
-    auto const& hm = *p_heightmap;
-    assert(1 == hm.num_filenames());
-    auto const& path = hm.filenames[0];
-
-    auto heightmap_r = opengl::heightmap::parse(logger, path);
-    if (!heightmap_r) {
-      LOG_ERROR_SPRINTF("ERROR PARSING HEIGHTMAP path: %s error: %s", path,
-                        heightmap_r.unwrapErr());
-
-      LOG_ERROR_SPRINTF("ERROR REASON: %s", heightmap_r.unwrapErr().c_str());
-
-      ImGui::Text("Error loading file: %s reason: %s", path.c_str(),
-                  heightmap_r.unwrapErr().c_str());
-      std::abort();
-    }
-    return heightmap_r.unwrap_moveout();
-  };
-  auto const draw = [&]() {
+  auto const draw = [&]() -> Result<stlw::none_t, std::string> {
     if (ImGui::CollapsingHeader("Regenerate Grid")) {
       imgui_cxx::input_sizet("num rows", &grid_config.num_rows);
       imgui_cxx::input_sizet("num cols", &grid_config.num_cols);
       imgui_cxx::input_sizet("x width", &grid_config.x_length);
       imgui_cxx::input_sizet("z length", &grid_config.z_length);
       if (ImGui::Button("Generate Terrain")) {
-        auto const  heightmap = load_heightmap();
+        auto const  heightmap = TRY(heightmap::load_fromtable(logger, ttable, t.heightmap_path));
         auto const& ti        = *ttable.find(t.texture_name);
 
         auto tg = terrain::generate_grid(logger, grid_config, tbuffers.config, heightmap, sp, ti);
@@ -333,40 +307,51 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
       ImGui::InputFloat("height multiplier", &tconfig.height_multiplier);
       ImGui::Checkbox("Invert Normals", &tconfig.invert_normals);
       {
-        std::stringstream buffer;
-        for (auto const& it : ttable) {
-          buffer << it.first.name;
-          buffer << '\0';
-        }
-        buffer << '\0';
-        auto const nicknames = buffer.str();
-
+        auto const nicknames     = ttable.list_of_all_names('\0') + "\0";
+        auto const set_initially = [&](auto const& value, auto const& table, auto& buffer) {
+          if (buffer == -1) {
+            *(&buffer) = table.index_of_nickname(value).value_or(0);
+          }
+        };
+        set_initially(t.heightmap_path, ttable, tbuffers.selected_heightmap);
         imgui_cxx::combo("Heightmap", &tbuffers.selected_heightmap, nicknames);
+
+        set_initially(t.texture_name, ttable, tbuffers.selected_texture);
         imgui_cxx::combo("Texture", &tbuffers.selected_texture, nicknames);
+
+        set_initially(t.shader_name, sps, tbuffers.selected_shader);
+        auto const shader_names = sps.all_shader_names_flattened('\0') + "\0";
+        imgui_cxx::combo("Shader", &tbuffers.selected_shader, shader_names);
       }
-      imgui_cxx::input_string("Shader Name", t.shader_name);
       {
         auto constexpr WRAP_OPTIONS =
             stlw::make_array<GLint>(GL_REPEAT, GL_MIRRORED_REPEAT, GL_CLAMP_TO_EDGE);
         t.wrap_mode = gl_option_combo("UV Wrap Mode", "Repeat\0Mirrored Repeat\0Clamp\0\0",
                                       &tbuffers.selected_wrapmode, WRAP_OPTIONS);
       }
+      ImGui::InputFloat("UV Modifier", &t.uv_modifier);
       if (ImGui::Button("Regenerate Piece")) {
-        auto const* p_texture = ttable.lookup_nickname(t.texture_name);
+        auto const selected_texture =
+            ttable.nickname_at_index(tbuffers.selected_texture).value_or(t.texture_name);
+        auto const* p_texture = ttable.lookup_nickname(selected_texture);
         if (!p_texture) {
-          LOG_ERROR_SPRINTF("ERROR Looking up texture: %s", t.texture_name);
+          auto const fmt = fmt::sprintf("ERROR Looking up texture: %s", selected_texture);
+          return Err(fmt);
         }
         else {
-          ImGui::InputFloat("UV Modifier", &t.uv_modifier);
-
-          auto& ti = *ttable.find(t.texture_name);
+          auto& ti = *ttable.find(selected_texture);
           ti.while_bound([&]() {
             ti.set_fieldi(GL_TEXTURE_WRAP_S, t.wrap_mode);
             ti.set_fieldi(GL_TEXTURE_WRAP_T, t.wrap_mode);
           });
         }
-        auto const  heightmap = load_heightmap();
-        auto const& ti        = *ttable.find(t.texture_name);
+        auto const selected_hm =
+            ttable.nickname_at_index(tbuffers.selected_heightmap).value_or(t.heightmap_path);
+
+        t.shader_name = sps.nickname_at_index(tbuffers.selected_shader).value_or(t.shader_name);
+
+        auto const  heightmap = TRY(heightmap::load_fromtable(logger, ttable, selected_hm));
+        auto const& ti        = *ttable.find(selected_texture);
 
         int const row = sb / tgrid.width();
         int const col = sb % tgrid.width();
@@ -375,8 +360,10 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
         terrain.grid[sb] = MOVE(tp);
       }
     }
+
+    return OK_NONE;
   };
-  imgui_cxx::with_window(draw, "Terrain Editor Window");
+  imgui_cxx::with_window_logerrors(logger, draw, "Terrain Editor Window");
 }
 
 void

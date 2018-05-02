@@ -8,6 +8,7 @@
 #include <extlibs/glew.hpp>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -96,8 +97,10 @@ using ResourceBuffer = stlw::AutoResource<RBInfo>;
 
 struct TextureFilenames
 {
-  std::string              name;
-  std::vector<std::string> filenames;
+  using StringList = std::vector<std::string>;
+
+  std::string name;
+  StringList  filenames;
 
   auto num_filenames() const { return filenames.size(); }
 };
@@ -119,6 +122,14 @@ public:
   BEGIN_END_FORWARD_FNS(data_);
 
   void add_texture(TextureFilenames&&, Texture&&);
+
+  // Get a concatenated list of all texture names as a single string.
+  //
+  // Pass in a delimeter character to seperate the names.
+  std::string list_of_all_names(char const delim = ' ') const;
+
+  std::optional<size_t>      index_of_nickname(std::string const&) const;
+  std::optional<std::string> nickname_at_index(size_t) const;
 
   TextureFilenames const* lookup_nickname(std::string const&) const;
   TextureInfo*            find(std::string const&);

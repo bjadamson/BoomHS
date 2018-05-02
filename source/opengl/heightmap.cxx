@@ -7,6 +7,22 @@ using namespace boomhs;
 namespace opengl::heightmap
 {
 
+HeightmapResult
+load_fromtable(stlw::Logger &logger, TextureTable const& ttable, std::string const& heightmap_path)
+{
+  auto const* p_heightmap = ttable.lookup_nickname(heightmap_path);
+  if (!p_heightmap) {
+    auto const fmt = fmt::sprintf("ERROR Looking up heightmap: %s (not found)", heightmap_path);
+    LOG_ERROR(fmt);
+    return Err(fmt);
+  }
+  auto const& hm = *p_heightmap;
+  assert(1 == hm.num_filenames());
+  auto const& path = hm.filenames[0];
+
+  return opengl::heightmap::parse(logger, path);
+}
+
 ObjData::vertices_t
 generate_normals(int const x_length, int const z_length, bool const invert_normals,
     HeightmapData const& heightmap_data)
