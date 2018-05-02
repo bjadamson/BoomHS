@@ -363,14 +363,7 @@ init(Engine& engine, EngineState& engine_state)
     auto const&              ttable = gfx_state.texture_table;
 
     char const* HEIGHTMAP_NAME = "Area0-HM";
-    auto const  heightmap_o    = ttable.lookup_nickname(HEIGHTMAP_NAME);
-    if (!heightmap_o) {
-      auto const fmt =
-          fmt::sprintf("Error cannot find terrain heightmap with nickname %s", HEIGHTMAP_NAME);
-      return Err(fmt);
-    }
-    assert(1 == heightmap_o->num_filenames());
-    auto const  heightmap = TRY(opengl::heightmap::parse(logger, heightmap_o->filenames[0]));
+    auto const heightmap = TRY(opengl::heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
     auto const& ti        = *ttable.find(tc.texture_name);
 
     TerrainGridConfig const tgc;

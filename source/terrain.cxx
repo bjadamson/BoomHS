@@ -256,12 +256,11 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
 {
   BufferFlags const flags{true, true, false, true};
   auto const        data = generate_terrain_data(logger, flags, tgc, tc, heightmap_data);
-  LOG_DEBUG_SPRINTF("Generated terrain data: %s", data.to_string());
+  LOG_TRACE_SPRINTF("Generated terrain piece: %s", data.to_string());
 
   auto const buffer = VertexBuffer::create_interleaved(logger, data, flags);
   auto       di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer, ti);
 
-  LOG_TRACE("Finished Generating Terrain");
   return TerrainPiece{tc, pos, MOVE(di), ti};
 }
 
