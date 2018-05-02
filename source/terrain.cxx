@@ -1,5 +1,5 @@
-#include <boomhs/obj.hpp>
 #include <boomhs/mesh.hpp>
+#include <boomhs/obj.hpp>
 #include <boomhs/terrain.hpp>
 
 #include <opengl/buffer.hpp>
@@ -18,7 +18,7 @@ namespace
 {
 
 ObjData
-generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags, TerrainGridConfig const& tgc,
+generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc,
                       TerrainPieceConfig const& tc, HeightmapData const& heightmap_data)
 {
   auto const count = tc.num_vertexes * tc.num_vertexes;
@@ -30,7 +30,7 @@ generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags, TerrainGri
   heightmap::update_vertices_from_heightmap(logger, tc, heightmap_data, data.vertices);
 
   {
-    glm::vec2 const dimensions{static_cast<float>(tc.num_vertexes)};
+    glm::vec2 const          dimensions{static_cast<float>(tc.num_vertexes)};
     GenerateNormalData const gnd{tc.invert_normals, heightmap_data};
     data.normals = MeshFactory::generate_normals(dimensions, gnd);
   }
@@ -125,12 +125,12 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
                TerrainPieceConfig const& tc, HeightmapData const& heightmap_data, ShaderProgram& sp,
                TextureInfo const& ti)
 {
-  BufferFlags const flags{true, true, false, true};
-  auto const        data = generate_terrain_data(logger, flags, tgc, tc, heightmap_data);
+  auto const data = generate_terrain_data(logger, tgc, tc, heightmap_data);
   LOG_TRACE_SPRINTF("Generated terrain piece: %s", data.to_string());
 
-  auto const buffer = VertexBuffer::create_interleaved(logger, data, flags);
-  auto       di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer, ti);
+  BufferFlags const flags{true, true, false, true};
+  auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
+  auto              di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer, ti);
 
   return TerrainPiece{tc, pos, MOVE(di), ti};
 }

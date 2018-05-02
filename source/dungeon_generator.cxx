@@ -7,6 +7,7 @@
 #include <boomhs/stairwell_generator.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
+#include <boomhs/water.hpp>
 
 #include <opengl/texture.hpp>
 
@@ -332,7 +333,7 @@ place_rivers_rooms_and_stairs(stlw::Logger& logger, StairGenConfig const& stairc
 
 LevelGeneratedData
 gen_level(stlw::Logger& logger, LevelConfig const& levelconfig, EntityRegistry& registry,
-          stlw::float_generator& rng, TextureTable const& ttable)
+          stlw::float_generator& rng, ShaderPrograms const& sps, TextureTable const& ttable)
 {
   TileGridConfig const& tileconfig = levelconfig.tileconfig;
   auto const            tdwidth    = tileconfig.width;
@@ -351,12 +352,14 @@ gen_level(stlw::Logger& logger, LevelConfig const& levelconfig, EntityRegistry& 
   std::vector<RiverInfo> rivers;
   auto const starting_pos = place_rivers_rooms_and_stairs(logger, levelconfig.stairconfig, rivers,
                                                           tilegrid, rng, registry);
-
   LOG_TRACE("Placing Torch");
   place_torch(tilegrid, registry, rng, ttable);
 
+  LOG_TRACE("Placing Water");
+  auto water = WaterFactory::make_default(logger, sps, ttable);
+
   LOG_TRACE("Finished!");
-  return LevelGeneratedData{MOVE(tilegrid), starting_pos, MOVE(rivers), MOVE(terrain)};
+  return LevelGeneratedData{MOVE(tilegrid), starting_pos, MOVE(rivers), MOVE(terrain), MOVE(water)};
 }
 
 } // namespace boomhs::dungeon_generator

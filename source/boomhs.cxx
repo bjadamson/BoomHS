@@ -356,6 +356,7 @@ init(Engine& engine, EngineState& engine_state)
   auto& zs        = lm.active();
   auto& gfx_state = zs.gfx_state;
   auto& sps       = gfx_state.sps;
+  auto& ttable    = gfx_state.texture_table;
 
   {
     TerrainPieceConfig const tc;
@@ -443,6 +444,10 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     if (tilegrid_state.draw_tilegrid) {
       render::draw_tilegrid(rstate, tilegrid_state, ft);
       render::draw_rivers(rstate, ft);
+    }
+
+    if (es.draw_water) {
+      render::draw_water(rstate, registry, ft);
     }
 
     if (es.draw_terrain) {

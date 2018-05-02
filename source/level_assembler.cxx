@@ -44,11 +44,13 @@ assemble(LevelGeneratedData&& gendata, LevelAssets&& assets, EntityRegistry& reg
     camera.set_coordinates(MOVE(sc));
   }
 
+  // Combine the generated data with the asset data, creating the LevelData instance.
   LevelData level_data{MOVE(gendata.tilegrid),
                        MOVE(assets.tile_table),
                        MOVE(gendata.startpos),
                        MOVE(gendata.rivers),
                        MOVE(gendata.terrain),
+                       MOVE(gendata.water),
 
                        assets.fog,
                        assets.global_light,
@@ -241,8 +243,10 @@ LevelAssembler::assemble_levels(stlw::Logger& logger, std::vector<EntityRegistry
     // generate starting area
     auto& registry = registries[0];
 
-    auto level_assets = TRY_MOVEOUT(LevelLoader::load_level(logger, registry, level_string(0)));
-    auto gendata = StartAreaGenerator::gen_level(logger, registry, rng, level_assets.texture_table);
+    auto level_assets   = TRY_MOVEOUT(LevelLoader::load_level(logger, registry, level_string(0)));
+    auto const& ttable  = level_assets.texture_table;
+    auto const& sps     = level_assets.shader_programs;
+    auto        gendata = StartAreaGenerator::gen_level(logger, registry, rng, sps, ttable);
 
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
     zstates.emplace_back(MOVE(zs));
@@ -262,8 +266,9 @@ LevelAssembler::assemble_levels(stlw::Logger& logger, std::vector<EntityRegistry
     StairGenConfig const stairconfig{DUNGEON_FLOOR_COUNT, i, stairs_perfloor};
     LevelConfig const    config{stairconfig, tdconfig};
 
-    auto gendata =
-        dungeon_generator::gen_level(logger, config, registry, rng, level_assets.texture_table);
+    auto const& ttable  = level_assets.texture_table;
+    auto const& sps     = level_assets.shader_programs;
+    auto        gendata = dungeon_generator::gen_level(logger, config, registry, rng, sps, ttable);
 
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
     zstates.emplace_back(MOVE(zs));

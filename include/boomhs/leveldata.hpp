@@ -8,6 +8,7 @@
 #include <boomhs/terrain.hpp>
 #include <boomhs/tile.hpp>
 #include <boomhs/tilegrid.hpp>
+#include <boomhs/water.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <opengl/lighting.hpp>
@@ -24,6 +25,7 @@ struct LevelGeneratedData
   TilePosition           startpos;
   std::vector<RiverInfo> rivers;
   Terrain                terrain;
+  WaterInfo              water;
 };
 
 class LevelData
@@ -40,13 +42,16 @@ class LevelData
 
   std::vector<RiverInfo> rivers_;
 
-  Terrain terrain_;
-  void    set_tile(TilePosition const&, TileType const&);
+  Terrain   terrain_;
+  WaterInfo water_;
+
+  void set_tile(TilePosition const&, TileType const&);
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileGrid&&, TileSharedInfoTable&&, TilePosition const&, std::vector<RiverInfo>&&,
-            Terrain&&, Fog const&, opengl::GlobalLight const&, ObjStore&&, Camera&&, WorldObject&&);
+            Terrain&&, WaterInfo&&, Fog const&, opengl::GlobalLight const&, ObjStore&&, Camera&&,
+            WorldObject&&);
 
   // public fields
   Fog                 fog;
@@ -87,6 +92,9 @@ public:
 
   auto&       terrain() { return terrain_; }
   auto const& terrain() const { return terrain_; }
+
+  auto&       water() { return water_; }
+  auto const& water() const { return water_; }
 
   template <typename FN>
   void visit_tiles(FN const& fn) const

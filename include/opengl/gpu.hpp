@@ -38,7 +38,7 @@ struct WorldOriginArrows
 };
 
 WorldOriginArrows
-create_axis_arrows(stlw::Logger&, ShaderProgram&);
+create_axis_arrows(stlw::Logger&, ShaderProgram const&);
 
 // Cubes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -63,7 +63,7 @@ copy_cubetexture_gpu(stlw::Logger&, ShaderProgram const&, TextureInfo const&);
 // Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 DrawInfo
-copy_rectangle(stlw::Logger&, GLenum, ShaderProgram&, OF::RectBuffer const&,
+copy_rectangle(stlw::Logger&, GLenum, ShaderProgram const&, OF::RectBuffer const&,
                std::optional<TextureInfo> const&);
 
 DrawInfo
@@ -81,11 +81,11 @@ create_modelnormals(stlw::Logger&, ShaderProgram const&, glm::mat4 const&, boomh
                     Color const&);
 
 DrawInfo
-copy_gpu(stlw::Logger&, GLenum, ShaderProgram&, boomhs::ObjData const&,
+copy_gpu(stlw::Logger&, GLenum, ShaderProgram const&, boomhs::ObjData const&,
          std::optional<TextureInfo> const&);
 
 DrawInfo
-copy_gpu(stlw::Logger&, GLenum, ShaderProgram&, VertexBuffer const&,
+copy_gpu(stlw::Logger&, GLenum, ShaderProgram const&, VertexBuffer const&,
          std::optional<TextureInfo> const&);
 
 } // namespace opengl::gpu

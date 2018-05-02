@@ -84,7 +84,7 @@ public:
 
 struct TerrainGridConfig
 {
-  size_t num_rows, num_cols;
+  size_t    num_rows, num_cols;
   glm::vec2 dimensions;
 
   TerrainGridConfig();

@@ -3,6 +3,7 @@
 #include <boomhs/start_area_generator.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
+#include <boomhs/water.hpp>
 
 #include <algorithm>
 #include <opengl/lighting.hpp>
@@ -87,7 +88,8 @@ namespace boomhs
 
 LevelGeneratedData
 StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
-                              stlw::float_generator& rng, TextureTable const& ttable)
+                              stlw::float_generator& rng, ShaderPrograms const& sps,
+                              TextureTable const& ttable)
 {
   LOG_TRACE("generating starting area ...");
   TileGrid tilegrid{30, 30, registry};
@@ -119,8 +121,11 @@ StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
   TerrainGrid       tgrid(MOVE(tgc));
   Terrain           terrain(MOVE(tgrid));
 
+  LOG_TRACE("Placing Water");
+  auto water = WaterFactory::make_default(logger, sps, ttable);
+
   LOG_TRACE("finished!");
-  return LevelGeneratedData{MOVE(tilegrid), starting_pos, MOVE(rivers), MOVE(terrain)};
+  return LevelGeneratedData{MOVE(tilegrid), starting_pos, MOVE(rivers), MOVE(terrain), MOVE(water)};
 }
 
 } // namespace boomhs

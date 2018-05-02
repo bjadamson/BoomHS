@@ -8,6 +8,7 @@
 namespace opengl
 {
 class TextureTable;
+class ShaderPrograms;
 } // namespace opengl
 
 namespace boomhs
@@ -32,6 +33,6 @@ namespace boomhs::dungeon_generator
 
 LevelGeneratedData
 gen_level(stlw::Logger&, LevelConfig const&, EntityRegistry&, stlw::float_generator&,
-          opengl::TextureTable const&);
+          opengl::ShaderPrograms const&, opengl::TextureTable const&);
 
 } // namespace boomhs::dungeon_generator

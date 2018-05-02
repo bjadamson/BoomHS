@@ -669,7 +669,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   // OrbitalBodies always render first.
   registry.view<COMMON, BillboardRenderable, OrbitalBody>().each(draw_orbital_body);
 
-  registry.view<COMMON, Water>().each(draw_fn);
+  registry.view<COMMON, WaterTileThing>().each(draw_fn);
   registry.view<COMMON, JunkEntityFromFILE>().each(draw_fn);
   registry.view<COMMON, Torch>().each(draw_torch);
   registry.view<COMMON, CubeRenderable>().each(draw_fn);
@@ -1074,6 +1074,41 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
 }
 
 void
+draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
+{
+  auto& es     = rstate.es;
+  auto& logger = es.logger;
+
+  auto& zs  = rstate.zs;
+  auto& sps = zs.gfx_state.sps;
+  auto& sp  = sps.ref_sp("terrain");
+
+  auto const render = [&](WaterInfo const& winfo) {
+    Transform transform;
+    auto&     tr = transform.translation;
+
+    auto const& pos = winfo.position;
+    tr.x            = pos.x;
+    tr.z            = pos.y;
+
+    sp.while_bound(logger, [&]() {
+      auto const& dinfo = winfo.dinfo;
+      dinfo.vao().while_bound([&]() {
+        bool constexpr RECEIVES_AMBIENT_LIGHT = true;
+        draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
+                         Material{}, registry, RECEIVES_AMBIENT_LIGHT);
+      });
+    });
+  };
+
+  LOG_TRACE("Rendering water");
+
+  auto const& ldata = zs.level_data;
+  render(ldata.water());
+  LOG_TRACE("Finished rendering water");
+}
+
+void
 draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 {
   auto& es = rstate.es;
@@ -1088,7 +1123,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
   Transform  transform;
   bool const show_y = tds.show_yaxis_lines;
-  auto const dinfo  = OG::create_tilegrid(es.logger, sp, tilegrid, show_y);
+  auto const dinfo  = OG::create_tilegrid(logger, sp, tilegrid, show_y);
 
   auto const model_matrix = transform.model_matrix();
 

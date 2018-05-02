@@ -101,4 +101,7 @@ draw_tilegrid(RenderState&, TiledataState const&, window::FrameTime const&);
 void
 draw_tilegrid(RenderState&, TiledataState const&);
 
+void
+draw_water(RenderState&, EntityRegistry&, window::FrameTime const&);
+
 } // namespace boomhs::render

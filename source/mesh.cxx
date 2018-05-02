@@ -1,9 +1,13 @@
 #include <boomhs/mesh.hpp>
-#include <stlw/algorithm.hpp>
 #include <cassert>
+#include <stlw/algorithm.hpp>
+
+using namespace boomhs;
 
 namespace
 {
+
+int constexpr NORMAL_NUM_COMPONENTS = 3; // xn, yn, zn
 
 // num_components => number elements per vertex
 //
@@ -14,7 +18,8 @@ namespace
 //
 // etc...
 size_t
-calculate_number_vertices(size_t const num_components, size_t const num_vertexes) {
+calculate_number_vertices(size_t const num_components, size_t const num_vertexes)
+{
   return num_components * (num_vertexes * num_vertexes);
 }
 
@@ -24,7 +29,17 @@ calculate_ratio(float const x, size_t const num_vertexes, float const length)
   return (x / (num_vertexes - 1)) * length;
 }
 
-} // ns anon
+ObjData::vertices_t
+create_normal_buffer(glm::vec2 const& dimensions)
+{
+  size_t const        num_vertices = NORMAL_NUM_COMPONENTS * dimensions.x * dimensions.y;
+  ObjData::vertices_t normals;
+  normals.resize(num_vertices);
+
+  return normals;
+}
+
+} // namespace
 
 namespace boomhs
 {
@@ -33,13 +48,13 @@ namespace boomhs
 // https://www.youtube.com/watch?v=yNYwZMmgTJk&list=PLRIWtICgwaX0u7Rf9zkZhLoLuZVfUksDP&index=14
 ObjData::vertices_t
 MeshFactory::generate_rectangle_mesh(stlw::Logger& logger, glm::vec2 const& dimensions,
-    size_t const num_vertexes)
+                                     size_t const num_vertexes)
 {
   LOG_TRACE("Generating rectangle mesh");
 
   size_t constexpr NUM_COMPONENTS = 3; // x, y, z
-  auto const             x_length = num_vertexes, z_length = num_vertexes;
-  auto const         num_vertices = calculate_number_vertices(NUM_COMPONENTS, num_vertexes);
+  auto const x_length = num_vertexes, z_length = num_vertexes;
+  auto const num_vertices = calculate_number_vertices(NUM_COMPONENTS, num_vertexes);
 
   ObjData::vertices_t buffer;
   buffer.resize(num_vertices);
@@ -80,7 +95,7 @@ ObjData::vertices_t
 MeshFactory::generate_uvs(glm::vec2 const& dimensions, size_t const num_vertexes)
 {
   size_t constexpr NUM_COMPONENTS = 2; // u, v
-  auto const          num_vertices = calculate_number_vertices(NUM_COMPONENTS, num_vertexes);
+  auto const num_vertices         = calculate_number_vertices(NUM_COMPONENTS, num_vertexes);
   auto const x_length = num_vertexes, z_length = num_vertexes;
 
   ObjData::vertices_t buffer;
@@ -139,17 +154,14 @@ MeshFactory::generate_indices(size_t const num_vertexes)
       buffer[offset++] = ((z + 1) * z_length) + (x_length - 1);
     }
   }
-
   return buffer;
 }
 
 ObjData::vertices_t
 MeshFactory::generate_normals(glm::vec2 const& dimensions, GenerateNormalData const& normal_data)
 {
-  int constexpr NUM_COMPONENTS     = 3; // xn, yn, zn
-  size_t const        num_vertices = NUM_COMPONENTS * dimensions.x * dimensions.y;
-  ObjData::vertices_t normals;
-  normals.resize(num_vertices);
+  auto       normals = create_normal_buffer(dimensions);
+  auto const width = dimensions.x, height = dimensions.y;
 
   //
   // Algorithm adapted from:
@@ -169,13 +181,11 @@ MeshFactory::generate_normals(glm::vec2 const& dimensions, GenerateNormalData co
   // xzScale denotes the same for the x, z axes. If you have different scale factors
   // for x, z then the formula becomes
   // normal[y*width+x].set(-sx*yScale, 2*xScale, xScalesy*xScale*yScale/zScale);
-  float constexpr yScale = 0.1f;
+  float constexpr yScale  = 0.1f;
   float constexpr xzScale = yScale;
   float constexpr x0 = 0.0f, y0 = 0.0f;
 
-  auto const width = dimensions.x, height = dimensions.y;
-  auto const& h = [&](auto const x, auto const y)
-  {
+  auto const& h = [&](auto const x, auto const y) {
     return normal_data.height_data[(width * y) + x];
   };
   FORI(y, height)
@@ -183,27 +193,24 @@ MeshFactory::generate_normals(glm::vec2 const& dimensions, GenerateNormalData co
     FORI(x, width)
     {
       // The ? : and ifs are necessary for the border cases.
-      float sx = h(x<width-1 ? x+1 : x, y) - h(x0 ? x-1 : x, y);
-      if (x == 0 || x == width-1)
-      {
+      float sx = h(x < width - 1 ? x + 1 : x, y) - h(x0 ? x - 1 : x, y);
+      if (x == 0 || x == width - 1) {
         sx *= 2;
       }
 
-      float sy = h(x, y<height-1 ? y+1 : y) - h(x, y0 ?  y-1 : y);
-      if (y == 0 || y == height -1)
-      {
+      float sy = h(x, y < height - 1 ? y + 1 : y) - h(x, y0 ? y - 1 : y);
+      if (y == 0 || y == height - 1) {
         sy *= 2;
       }
 
-      auto const normal = glm::normalize(glm::vec3{-sx*yScale, 2*xzScale, sy*yScale});
-      size_t const index = 3 * ((y * width) + x);
-      auto const xn = index + 0;
-      auto const yn = index + 1;
-      auto const zn = index + 2;
-      assert(zn < num_vertices);
+      auto const   normal = glm::normalize(glm::vec3{-sx * yScale, 2 * xzScale, sy * yScale});
+      size_t const index  = NORMAL_NUM_COMPONENTS * ((y * width) + x);
+      auto const   xn     = index + 0;
+      auto const   yn     = index + 1;
+      auto const   zn     = index + 2;
+      assert(zn < normals.size());
 
-      auto const set = [&](auto &component, float const value)
-      {
+      auto const set = [&](auto& component, float const value) {
         component = normal_data.invert_normals ? -value : value;
       };
       set(normals[xn], normal.x);
@@ -211,8 +218,30 @@ MeshFactory::generate_normals(glm::vec2 const& dimensions, GenerateNormalData co
       set(normals[zn], normal.z);
     }
   }
-  assert(num_vertices == normals.size());
   return normals;
 }
 
-} // ns boomhs
+ObjData::vertices_t
+MeshFactory::generate_flat_normals(glm::vec2 const& dimensions)
+{
+  auto       normals = create_normal_buffer(dimensions);
+  auto const width = dimensions.x, height = dimensions.y;
+
+  FORI(y, height)
+  {
+    FORI(x, width)
+    {
+      size_t const index = NORMAL_NUM_COMPONENTS * ((y * width) + x);
+      auto const   xn    = index + 0;
+      auto const   yn    = index + 1;
+      auto const   zn    = index + 2;
+
+      normals[xn] = 0.0f;
+      normals[yn] = 1.0f;
+      normals[zn] = 0.0f;
+    }
+  }
+  return normals;
+}
+
+} // namespace boomhs

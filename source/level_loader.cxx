@@ -627,7 +627,7 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     }
 
     if (is_water) {
-      registry.assign<Water>(eid);
+      registry.assign<WaterTileThing>(eid);
     }
   };
 

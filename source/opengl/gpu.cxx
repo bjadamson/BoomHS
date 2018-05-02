@@ -70,8 +70,8 @@ make_drawinfo(stlw::Logger &logger, ShaderProgram const& sp,
 
 template<typename V, typename I>
 DrawInfo
-copy_gpu_impl(stlw::Logger &logger, GLenum const draw_mode, ShaderProgram &sp, V const& vertices,
-    I const& indices, std::optional<TextureInfo> const& ti)
+copy_gpu_impl(stlw::Logger &logger, GLenum const draw_mode, ShaderProgram const& sp,
+    V const& vertices, I const& indices, std::optional<TextureInfo> const& ti)
 {
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{draw_mode, vertices.size(), num_indices, ti};
@@ -195,7 +195,7 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, TileG
 }
 
 WorldOriginArrows
-create_axis_arrows(stlw::Logger &logger, ShaderProgram &sp)
+create_axis_arrows(stlw::Logger &logger, ShaderProgram const& sp)
 {
   glm::vec3 constexpr ORIGIN = glm::zero<glm::vec3>();
 
@@ -332,14 +332,14 @@ copy_cubetexture_gpu(stlw::Logger &logger, ShaderProgram const& sp, TextureInfo 
 }
 
 DrawInfo
-copy_gpu(stlw::Logger &logger, GLenum const dm, ShaderProgram &sp,
+copy_gpu(stlw::Logger &logger, GLenum const dm, ShaderProgram const& sp,
     ObjData const& data, std::optional<TextureInfo> const& ti)
 {
   return copy_gpu_impl(logger, dm, sp, data.vertices, data.indices, ti);
 }
 
 DrawInfo
-copy_gpu(stlw::Logger &logger, GLenum const dm, ShaderProgram &sp, VertexBuffer const& object,
+copy_gpu(stlw::Logger &logger, GLenum const dm, ShaderProgram const& sp, VertexBuffer const& object,
     std::optional<TextureInfo> const& ti)
 {
   auto const& v = object.vertices;
@@ -348,7 +348,7 @@ copy_gpu(stlw::Logger &logger, GLenum const dm, ShaderProgram &sp, VertexBuffer 
 }
 
 DrawInfo
-copy_rectangle(stlw::Logger &logger, GLenum const dm, ShaderProgram &sp,
+copy_rectangle(stlw::Logger &logger, GLenum const dm, ShaderProgram const& sp,
     OF::RectBuffer const& buffer, std::optional<TextureInfo> const& ti)
 {
   auto const& v = buffer.vertices;

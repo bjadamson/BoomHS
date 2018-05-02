@@ -796,6 +796,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::Frame
       }
     }
     ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
+    ImGui::Checkbox("Draw Water", &es.draw_water);
     ImGui::Checkbox("Enter Pressed", &state.enter_pressed);
     ImGui::Checkbox("Draw Entities", &es.draw_entities);
     ImGui::Checkbox("Draw Normals", &es.draw_normals);

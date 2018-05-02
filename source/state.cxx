@@ -19,6 +19,7 @@ EngineState::EngineState(stlw::Logger& l, ImGuiIO& i, window::Dimensions const& 
     , draw_imguimetrics(false)
     , draw_entities(true)
     , draw_terrain(true)
+    , draw_water(true)
     , draw_normals(false)
     , draw_sun(false)
     , show_global_axis(true)
