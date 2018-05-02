@@ -52,6 +52,7 @@ generate_vertices(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainPie
   ObjData::vertices_t buffer;
   buffer.resize(num_vertexes);
 
+  LOG_TRACE("Generating vertices");
   size_t offset = 0;
   assert(offset < buffer.size());
   FOR(z, z_length)
@@ -66,6 +67,7 @@ generate_vertices(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainPie
       assert(offset < buffer.size());
       buffer[offset++] = x_position;
       assert(offset < buffer.size());
+      LOG_TRACE_SPRINTF("xpos: %f, zpos: %f", x_position, z_position);
 
       uint8_t const height            = heightmap_data.data()[(x_length * z) + x];
       float const   height_normalized = height / 255.0f;
@@ -82,6 +84,8 @@ generate_vertices(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainPie
 
   assert(offset == buffer.size());
   assert(offset == static_cast<size_t>(num_vertexes));
+
+  LOG_TRACE("Finished generating vertices");
   return buffer;
 }
 

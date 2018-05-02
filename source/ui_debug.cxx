@@ -272,8 +272,8 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
     if (ImGui::CollapsingHeader("Regenerate Grid")) {
       imgui_cxx::input_sizet("num rows", &grid_config.num_rows);
       imgui_cxx::input_sizet("num cols", &grid_config.num_cols);
-      imgui_cxx::input_sizet("x width", &grid_config.x_length);
-      imgui_cxx::input_sizet("z length", &grid_config.z_length);
+      ImGui::InputFloat("x width", &grid_config.x_length);
+      ImGui::InputFloat("z length", &grid_config.z_length);
       if (ImGui::Button("Generate Terrain")) {
         auto const  heightmap = TRY(heightmap::load_fromtable(logger, ttable, t.heightmap_path));
         auto const& ti        = *ttable.find(t.texture_name);

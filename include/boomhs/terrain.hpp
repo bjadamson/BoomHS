@@ -84,7 +84,7 @@ public:
 struct TerrainGridConfig
 {
   size_t num_rows, num_cols;
-  size_t x_length, z_length;
+  float x_length, z_length;
 
   TerrainGridConfig();
 };
