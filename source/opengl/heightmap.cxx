@@ -1,5 +1,6 @@
 #include <opengl/heightmap.hpp>
 #include <opengl/texture.hpp>
+#include <boomhs/terrain.hpp>
 #include <stlw/algorithm.hpp>
 
 using namespace boomhs;
@@ -142,6 +143,43 @@ HeightmapResult
 parse(stlw::Logger &logger, std::string const& path)
 {
   return parse(logger, path.c_str());
+}
+
+size_t
+calculate_number_vertices(int const num_components, TerrainPieceConfig const& tc)
+{
+  return num_components * (tc.num_vertexes * tc.num_vertexes);
+}
+
+void
+update_vertices_from_heightmap(stlw::Logger& logger, TerrainPieceConfig const& tc,
+                               HeightmapData const& heightmap_data, ObjData::vertices_t &buffer)
+{
+  LOG_TRACE("Updating vertices from heightmap");
+
+  auto const x_length = tc.num_vertexes, z_length = tc.num_vertexes;
+  size_t offset = 0;
+  FOR(z, z_length)
+  {
+    FOR(x, x_length)
+    {
+      ++offset; // skip x
+
+      uint8_t const height = heightmap_data.data()[(x_length * z) + x];
+      assert(height >= 0.0f);
+
+      float const height_normalized = height / 255.0f;
+      auto const ypos = height_normalized * tc.height_multiplier;
+
+      LOG_TRACE_SPRINTF("TERRAIN HEIGHT: %f (raw: %u), ypos: %f", height_normalized, height, ypos);
+      buffer[offset++] = ypos;
+
+      assert(offset < buffer.size());
+      ++offset; // skip z
+    }
+  }
+
+  LOG_TRACE("Finished updating vertices from heightmap");
 }
 
 } // ns opengl::heightmap

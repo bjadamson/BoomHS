@@ -1,4 +1,5 @@
 #include <boomhs/obj.hpp>
+#include <boomhs/mesh.hpp>
 #include <boomhs/terrain.hpp>
 
 #include <opengl/buffer.hpp>
@@ -16,144 +17,6 @@ using namespace opengl;
 namespace
 {
 
-// num_components => number elements per vertex
-//
-// ie: positions would have "3" for (x, y, z)
-//
-//     normals              "3" for (xn, yn, zn)
-//     uvs                  "2" for (u, v)
-//
-// etc...
-size_t
-calculate_number_vertices(int const num_components, TerrainPieceConfig const& tc)
-{
-  return num_components * (tc.num_vertexes * tc.num_vertexes);
-}
-
-float
-x_ratio(float const x, TerrainGridConfig const& tgc, TerrainPieceConfig const& tc)
-{
-  return (x / (tc.num_vertexes - 1)) * tgc.x_length;
-}
-
-float
-z_ratio(float const z, TerrainGridConfig const& tgc, TerrainPieceConfig const& tc)
-{
-  return (z / (tc.num_vertexes - 1)) * tgc.z_length;
-}
-
-ObjData::vertices_t
-generate_vertices(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainPieceConfig const& tc,
-                  HeightmapData const& heightmap_data)
-{
-  int constexpr NUM_COMPONENTS = 3; // x, y, z
-  auto const          x_length = tc.num_vertexes, z_length = tc.num_vertexes;
-  auto const          num_vertexes = calculate_number_vertices(NUM_COMPONENTS, tc);
-  ObjData::vertices_t buffer;
-  buffer.resize(num_vertexes);
-
-  LOG_TRACE("Generating vertices");
-  size_t offset = 0;
-  assert(offset < buffer.size());
-  FOR(z, z_length)
-  {
-    FOR(x, x_length)
-    {
-      assert(offset < static_cast<size_t>(num_vertexes));
-
-      float const x_position = 0.0f + (x_ratio(x, tgc, tc));
-      float const z_position = 0.0f + (z_ratio(z, tgc, tc));
-
-      assert(offset < buffer.size());
-      buffer[offset++] = x_position;
-      assert(offset < buffer.size());
-      LOG_TRACE_SPRINTF("xpos: %f, zpos: %f", x_position, z_position);
-
-      uint8_t const height            = heightmap_data.data()[(x_length * z) + x];
-      float const   height_normalized = height / 255.0f;
-
-      LOG_TRACE_SPRINTF("TERRAIN HEIGHT: %f (raw: %u)", height_normalized, height);
-      assert(height >= 0.0f);
-
-      buffer[offset++] = height_normalized * tc.height_multiplier;
-
-      assert(offset < buffer.size());
-      buffer[offset++] = z_position;
-    }
-  }
-
-  assert(offset == buffer.size());
-  assert(offset == static_cast<size_t>(num_vertexes));
-
-  LOG_TRACE("Finished generating vertices");
-  return buffer;
-}
-
-ObjData::vertices_t
-generate_uvs(TerrainGridConfig const& tgc, TerrainPieceConfig const& tc)
-{
-  auto const          num_vertexes = calculate_number_vertices(2, tc);
-  ObjData::vertices_t buffer;
-  buffer.resize(num_vertexes);
-
-  size_t counter = 0;
-  FOR(x, tc.num_vertexes)
-  {
-    FOR(z, tc.num_vertexes)
-    {
-      assert(counter < num_vertexes);
-
-      float const u = 0.0f + x_ratio(x, tgc, tc);
-      float const v = 0.0f + z_ratio(z, tgc, tc);
-
-      buffer[counter++] = u;
-      buffer[counter++] = v;
-    }
-  }
-  assert(counter == num_vertexes);
-  return buffer;
-}
-
-ObjData::indices_t
-generate_indices(TerrainPieceConfig const& tc)
-{
-  auto const x_length = tc.num_vertexes, z_length = tc.num_vertexes;
-
-  auto const strips_required          = z_length - 1;
-  auto const degen_triangles_required = 2 * (strips_required - 1);
-  auto const vertices_perstrip        = 2 * x_length;
-
-  size_t const num_indices = (vertices_perstrip * strips_required) + degen_triangles_required;
-
-  ObjData::indices_t buffer;
-  buffer.resize(num_indices);
-
-  size_t offset = 0;
-  FOR(z, z_length - 1)
-  {
-    if (z > 0) {
-      // Degenerate begin: repeat first vertex
-      buffer[offset++] = z * z_length;
-    }
-
-    FOR(x, x_length)
-    {
-      // One part of the strip
-      buffer[offset++] = (z * z_length) + x;
-      buffer[offset++] = ((z + 1) * z_length) + x;
-    }
-
-    if (z < (z_length - 2)) {
-      // Degenerate end: repeat last vertex
-      buffer[offset++] = ((z + 1) * z_length) + (x_length - 1);
-    }
-  }
-
-  return buffer;
-}
-
-// Algorithm modified from:
-// https://www.youtube.com/watch?v=yNYwZMmgTJk&list=PLRIWtICgwaX0u7Rf9zkZhLoLuZVfUksDP&index=14
 ObjData
 generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags, TerrainGridConfig const& tgc,
                       TerrainPieceConfig const& tc, HeightmapData const& heightmap_data)
@@ -163,12 +26,17 @@ generate_terrain_data(stlw::Logger& logger, BufferFlags const& flags, TerrainGri
   ObjData data;
   data.num_vertexes = count;
 
-  data.vertices = generate_vertices(logger, tgc, tc, heightmap_data);
-  data.normals  = heightmap::generate_normals(tc.num_vertexes, tc.num_vertexes, tc.invert_normals,
-                                             heightmap_data);
+  data.vertices = MeshFactory::generate_rectangle_mesh(logger, tgc.dimensions, tc.num_vertexes);
+  heightmap::update_vertices_from_heightmap(logger, tc, heightmap_data, data.vertices);
 
-  data.uvs     = generate_uvs(tgc, tc);
-  data.indices = generate_indices(tc);
+  {
+    glm::vec2 const dimensions{static_cast<float>(tc.num_vertexes)};
+    GenerateNormalData const gnd{tc.invert_normals, heightmap_data};
+    data.normals = MeshFactory::generate_normals(dimensions, gnd);
+  }
+
+  data.uvs     = MeshFactory::generate_uvs(tgc.dimensions, tc.num_vertexes);
+  data.indices = MeshFactory::generate_indices(tc.num_vertexes);
   return data;
 }
 
@@ -220,8 +88,7 @@ TerrainArray::add(TerrainPiece&& t)
 TerrainGridConfig::TerrainGridConfig()
     : num_rows(1)
     , num_cols(1)
-    , x_length(1)
-    , z_length(1)
+    , dimensions(1, 1)
 {
 }
 

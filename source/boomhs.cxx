@@ -363,7 +363,7 @@ init(Engine& engine, EngineState& engine_state)
     auto const&              ttable = gfx_state.texture_table;
 
     char const* HEIGHTMAP_NAME = "Area0-HM";
-    auto const heightmap = TRY(opengl::heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
+    auto const  heightmap = TRY(opengl::heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
     auto const& ti        = *ttable.find(tc.texture_name);
 
     TerrainGridConfig const tgc;

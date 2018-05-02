@@ -1,12 +1,13 @@
 #pragma once
-#include <extlibs/glm.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/heightmap.hpp>
 
-#include <ostream>
 #include <stlw/algorithm.hpp>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
+
+#include <extlibs/glm.hpp>
+#include <ostream>
 
 namespace opengl
 {
@@ -24,7 +25,7 @@ struct TerrainPieceConfig
   float  height_multiplier;
   bool   invert_normals;
 
-  GLint wrap_mode   = GL_REPEAT;
+  GLint wrap_mode   = GL_MIRRORED_REPEAT;
   float uv_max      = 1.0f;
   float uv_modifier = 1.0f;
 
@@ -84,7 +85,7 @@ public:
 struct TerrainGridConfig
 {
   size_t num_rows, num_cols;
-  float x_length, z_length;
+  glm::vec2 dimensions;
 
   TerrainGridConfig();
 };
