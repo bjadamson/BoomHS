@@ -325,8 +325,8 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
       }
       {
         auto constexpr WRAP_OPTIONS =
-            stlw::make_array<GLint>(GL_REPEAT, GL_MIRRORED_REPEAT, GL_CLAMP_TO_EDGE);
-        t.wrap_mode = gl_option_combo("UV Wrap Mode", "Repeat\0Mirrored Repeat\0Clamp\0\0",
+            stlw::make_array<GLint>(GL_MIRRORED_REPEAT, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        t.wrap_mode = gl_option_combo("UV Wrap Mode", "Mirrored Repeat\0Repeat\0Clamp\0\0",
                                       &tbuffers.selected_wrapmode, WRAP_OPTIONS);
       }
       ImGui::InputFloat("UV Modifier", &t.uv_modifier);
