@@ -7,6 +7,7 @@
 #include <stlw/type_macros.hpp>
 
 #include <extlibs/glm.hpp>
+#include <functional>
 #include <ostream>
 
 namespace opengl
@@ -43,9 +44,10 @@ struct TerrainRenderState
 
 class TerrainPiece
 {
-  glm::vec2           pos_;
-  opengl::DrawInfo    di_;
-  opengl::TextureInfo ti_;
+  glm::vec2                                     pos_;
+  opengl::DrawInfo                              di_;
+  std::reference_wrapper<opengl::ShaderProgram> sp_;
+  opengl::TextureInfo                           ti_;
 
 public:
   //
@@ -57,11 +59,13 @@ public:
   NO_COPY(TerrainPiece);
   MOVE_DEFAULT(TerrainPiece);
   TerrainPiece(TerrainPieceConfig const&, glm::vec2 const&, opengl::DrawInfo&&,
-               opengl::TextureInfo const&);
+               opengl::ShaderProgram& sp, opengl::TextureInfo const&);
 
-  auto const& position() const { return pos_; }
   auto const& draw_info() const { return di_; }
+  auto const& position() const { return pos_; }
   auto const& texture_info() const { return ti_; }
+
+  auto& shader() { return sp_; }
 };
 
 class TerrainArray

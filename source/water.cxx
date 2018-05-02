@@ -10,9 +10,10 @@ using namespace opengl;
 namespace boomhs
 {
 
-WaterInfo::WaterInfo(glm::vec2 const& p, DrawInfo&& d, TextureInfo const& t)
+WaterInfo::WaterInfo(glm::vec2 const& p, DrawInfo&& d, ShaderProgram& s, TextureInfo const& t)
     : position(p)
     , dinfo(MOVE(d))
+    , shader(s)
     , tinfo(t)
 {
 }
@@ -37,22 +38,21 @@ WaterFactory::generate_water_data(stlw::Logger& logger, glm::vec2 const& dimensi
 }
 
 WaterInfo
-WaterFactory::generate_info(stlw::Logger& logger, WaterInfoConfig const& wic,
-                            ShaderProgram const& sp, TextureInfo const& ti)
+WaterFactory::generate_info(stlw::Logger& logger, WaterInfoConfig const& wic, ShaderProgram& sp,
+                            TextureInfo const& tinfo)
 {
   auto const data = generate_water_data(logger, wic.dimensions, wic.num_vertexes);
   LOG_TRACE_SPRINTF("Generated water piece: %s", data.to_string());
 
   BufferFlags const flags{true, true, false, true};
   auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
-  auto              di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer, ti);
+  auto              di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer, tinfo);
 
-  return WaterInfo{wic.position, MOVE(di), ti};
+  return WaterInfo{wic.position, MOVE(di), sp, tinfo};
 }
 
 WaterInfo
-WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms const& sps,
-                           TextureTable const& ttable)
+WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTable const& ttable)
 {
   LOG_TRACE("Generating water");
   glm::vec2 const       pos{0, 0};
@@ -62,12 +62,20 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms const& sps,
 
   auto texture_o = ttable.find("water");
   assert(texture_o);
-  auto const& tinfo = *texture_o;
+  auto& ti = *texture_o;
 
+  // TODO: why does using the "water" shader... not behave the same as using the terrain shader?
+  // auto& sp = sps.ref_sp("water");
   auto& sp = sps.ref_sp("terrain");
-  auto  wi = WaterFactory::generate_info(logger, wic, sp, tinfo);
-  LOG_TRACE("Finished generating water");
 
+  auto wi = generate_info(logger, wic, sp, ti);
+
+  auto& tinfo = wi.tinfo;
+  tinfo.while_bound([&]() {
+    tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+  });
+  LOG_TRACE("Finished generating water");
   return wi;
 }
 

@@ -88,7 +88,7 @@ namespace boomhs
 
 LevelGeneratedData
 StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
-                              stlw::float_generator& rng, ShaderPrograms const& sps,
+                              stlw::float_generator& rng, ShaderPrograms& sps,
                               TextureTable const& ttable)
 {
   LOG_TRACE("generating starting area ...");

@@ -333,7 +333,7 @@ place_rivers_rooms_and_stairs(stlw::Logger& logger, StairGenConfig const& stairc
 
 LevelGeneratedData
 gen_level(stlw::Logger& logger, LevelConfig const& levelconfig, EntityRegistry& registry,
-          stlw::float_generator& rng, ShaderPrograms const& sps, TextureTable const& ttable)
+          stlw::float_generator& rng, ShaderPrograms& sps, TextureTable const& ttable)
 {
   TileGridConfig const& tileconfig = levelconfig.tileconfig;
   auto const            tdwidth    = tileconfig.width;

@@ -60,10 +60,11 @@ TerrainPieceConfig::TerrainPieceConfig()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TerrainPiece
 TerrainPiece::TerrainPiece(TerrainPieceConfig const& tc, glm::vec2 const& pos, DrawInfo&& di,
-                           TextureInfo const& ti)
+                           ShaderProgram& sp, TextureInfo const& ti)
     : pos_(pos)
     , di_(MOVE(di))
     , ti_(ti)
+    , sp_(sp)
     , config(tc)
 {
   pos_ = pos;
@@ -132,7 +133,7 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
   auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
   auto              di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer, ti);
 
-  return TerrainPiece{tc, pos, MOVE(di), ti};
+  return TerrainPiece{tc, pos, MOVE(di), sp, ti};
 }
 
 TerrainGrid

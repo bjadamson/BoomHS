@@ -1025,74 +1025,43 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
 {
   auto& zs  = rstate.zs;
   auto& sps = zs.gfx_state.sps;
-  auto& sp  = sps.ref_sp("terrain");
 
   auto& es     = rstate.es;
   auto& logger = es.logger;
-  LOG_TRACE(
-      "------------------------- Starting To Draw All Terrain(s) ---------------------------");
 
-  sp.while_bound(logger, [&]() {
-    // backup state to restore
-    auto const cw_state = read_cwstate();
-    ON_SCOPE_EXIT([&]() { set_cwstate(cw_state); });
+  auto&       ldata   = zs.level_data;
+  auto&       terrain = ldata.terrain();
+  auto&       tgrid   = terrain.grid;
+  auto const& trstate = terrain.render_state;
 
-    bool constexpr RECEIVES_AMBIENT_LIGHT = true;
-    auto const& ldata                     = zs.level_data;
-    auto const& terrain                   = ldata.terrain();
-    auto const& tgrid                     = terrain.grid;
-    auto const& trstate                   = terrain.render_state;
-    for (auto const& t : tgrid) {
-      Transform transform;
+  // backup state to restore after drawing terrain
+  auto const cw_state = read_cwstate();
+  ON_SCOPE_EXIT([&]() { set_cwstate(cw_state); });
 
-      auto const& pos = t.position();
-      auto&       tr  = transform.translation;
-      tr.x            = pos.x;
-      tr.z            = pos.y;
+  Transform transform;
+  auto&     tr = transform.translation;
 
-      {
-        auto const& config = t.config;
-        glFrontFace(trstate.winding);
-        if (trstate.culling_enabled) {
-          glEnable(GL_CULL_FACE);
-          glCullFace(trstate.culling_mode);
-        }
-        else {
-          glDisable(GL_CULL_FACE);
-        }
-        sp.set_uniform_float1(logger, "u_uvmodifier", config.uv_modifier);
-      }
-      auto const& dinfo = t.draw_info();
-      dinfo.vao().while_bound([&]() {
-        draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
-                         Material{}, registry, RECEIVES_AMBIENT_LIGHT);
-      });
-    }
-  });
-
-  LOG_TRACE("-------------------------Finished Drawing All Terrain(s) ---------------------------");
-}
-
-void
-draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
-{
-  auto& es     = rstate.es;
-  auto& logger = es.logger;
-
-  auto& zs  = rstate.zs;
-  auto& sps = zs.gfx_state.sps;
-  auto& sp  = sps.ref_sp("terrain");
-
-  auto const render = [&](WaterInfo const& winfo) {
-    Transform transform;
-    auto&     tr = transform.translation;
-
-    auto const& pos = winfo.position;
+  auto const draw_piece = [&](auto& t) {
+    auto const& pos = t.position();
     tr.x            = pos.x;
     tr.z            = pos.y;
 
+    auto const& config = t.config;
+    glFrontFace(trstate.winding);
+    if (trstate.culling_enabled) {
+      glEnable(GL_CULL_FACE);
+      glCullFace(trstate.culling_mode);
+    }
+    else {
+      glDisable(GL_CULL_FACE);
+    }
+
+    // reach through the reference wrapper
+    auto& sp = t.shader().get();
     sp.while_bound(logger, [&]() {
-      auto const& dinfo = winfo.dinfo;
+      sp.set_uniform_float1(logger, "u_uvmodifier", config.uv_modifier);
+
+      auto const& dinfo = t.draw_info();
       dinfo.vao().while_bound([&]() {
         bool constexpr RECEIVES_AMBIENT_LIGHT = true;
         draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
@@ -1101,11 +1070,11 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
     });
   };
 
-  LOG_TRACE("Rendering water");
-
-  auto const& ldata = zs.level_data;
-  render(ldata.water());
-  LOG_TRACE("Finished rendering water");
+  LOG_TRACE("-------------------- Starting To Draw All Terrain(s) ----------------------");
+  for (auto& t : tgrid) {
+    draw_piece(t);
+  }
+  LOG_TRACE("-------------------------Finished Drawing All Terrain(s) ---------------------------");
 }
 
 void
@@ -1134,6 +1103,38 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
     set_3dmvpmatrix(logger, camera, model_matrix, sp);
     dinfo.vao().while_bound([&]() { draw(rstate, sp, dinfo); });
   });
+}
+
+void
+draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
+{
+  auto& es     = rstate.es;
+  auto& logger = es.logger;
+
+  Transform  transform;
+  auto const render = [&](WaterInfo const& winfo) {
+    auto const& pos = winfo.position;
+
+    auto& tr = transform.translation;
+    tr.x     = pos.x;
+    tr.z     = pos.y;
+
+    auto& sp = winfo.shader;
+    sp.while_bound(logger, [&]() {
+      auto const& dinfo = winfo.dinfo;
+      dinfo.vao().while_bound([&]() {
+        bool constexpr RECEIVES_AMBIENT_LIGHT = true;
+        draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
+                         Material{}, registry, RECEIVES_AMBIENT_LIGHT);
+      });
+    });
+  };
+
+  auto&       zs    = rstate.zs;
+  auto const& ldata = zs.level_data;
+  LOG_TRACE("Rendering water");
+  render(ldata.water());
+  LOG_TRACE("Finished rendering water");
 }
 
 } // namespace boomhs::render
