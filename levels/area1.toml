@@ -65,6 +65,12 @@ type = "texture:2d-RGBA"
 filename = "assets/terrain/Area1-HM.png"
 wrap = "clamp"
 
+[[resource]]
+name = "Water-HM"
+type = "texture:2d-RGBA"
+filename = "assets/water/heightmap.png"
+wrap = "clamp"
+
 ###################################################################################################
 # TERRAIN TEXTURES
 [[resource]]
