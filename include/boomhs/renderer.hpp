@@ -12,6 +12,7 @@ namespace opengl
 class DrawInfo;
 class ShaderProgram;
 class ShaderPrograms;
+struct TextureInfo;
 } // namespace opengl
 
 namespace window
@@ -69,7 +70,7 @@ void
 draw_arrow_abovetile_and_neighbors(RenderState&, TilePosition const&);
 
 void
-draw_fbo_testwindow(RenderState&);
+draw_fbo_testwindow(RenderState&, opengl::TextureInfo const&);
 
 void
 draw_global_axis(RenderState&);

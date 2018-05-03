@@ -11,6 +11,7 @@
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/ui_ingame.hpp>
+#include <boomhs/water_fbos.hpp>
 
 #include <opengl/heightmap.hpp>
 #include <opengl/texture.hpp>
@@ -393,10 +394,10 @@ init(Engine& engine, EngineState& engine_state)
 void
 render_scene(EngineState &es, LevelManager &lm, stlw::float_generator& rng, FrameTime const& ft)
 {
-  auto& ldata = lm.active().level_data;
+  auto& zs = lm.active();
+  auto& ldata = zs.level_data;
   render::clear_screen(ldata.fog.color);
 
-  auto& zs = lm.active();
   RenderState rstate{es, zs};
 
   if (es.draw_entities) {
@@ -432,9 +433,9 @@ render_scene(EngineState &es, LevelManager &lm, stlw::float_generator& rng, Fram
     auto const  tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
     render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
   }
-  if (es.draw_fbo_testwindow) {
-    render::draw_fbo_testwindow(rstate);
-  }
+  //if (es.draw_fbo_testwindow) {
+    //render::draw_fbo_testwindow(rstate, );
+  //}
   if (es.show_global_axis) {
     render::draw_global_axis(rstate);
   }
@@ -502,7 +503,20 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     update_visible_entities(lm, registry);
     update_torchflicker(ldata, registry, rng, ft);
   }
+
+  WaterFrameBuffers waterfbos;
+
+  // Render the scene to the reflection FBO
+  waterfbos.bind_reflection_fbo();
   render_scene(es, lm, rng, ft);
+  waterfbos.unbind_all_fbos();
+
+
+  render_scene(es, lm, rng, ft);
+  RenderState rstate{es, zs};
+
+  auto const TESTID = waterfbos.reflection_ti();
+  render::draw_fbo_testwindow(rstate, TESTID);
 }
 
 } // namespace boomhs

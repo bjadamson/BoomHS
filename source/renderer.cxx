@@ -679,7 +679,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 }
 
 void
-draw_fbo_testwindow(RenderState& rstate)
+draw_fbo_testwindow(RenderState& rstate, TextureInfo const& ti)
 {
   auto& es     = rstate.es;
   auto& logger = es.logger;
@@ -691,60 +691,12 @@ draw_fbo_testwindow(RenderState& rstate)
   auto& sp  = sps.ref_sp("2dtexture");
 
   auto const uvs = opengl::factories::rectangle_uvs(1.0f);
-  OF::RectInfo const ri{1.0f, 1.0f, std::nullopt, std::nullopt, uvs};
 
-  auto const texture_o = ttable.find("TargetReticle");
-  assert(texture_o);
-  auto const& ti = *texture_o;
-
-  unsigned int tbo;
-  glGenTextures(1, &tbo);
-  glBindTexture(GL_TEXTURE_2D, tbo);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 768, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  // The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
-  {
-    // allocate
-    GLuint fbo = 0;
-    glGenFramebuffers(1, &fbo);
-    ON_SCOPE_EXIT([&]() { glDeleteFramebuffers(1, &fbo); });
-
-    // bind
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    ON_SCOPE_EXIT([]() { glBindFramebuffer(GL_FRAMEBUFFER, 0); });
-
-    // attach texture to FBO
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tbo, 0);
-
-    // allocate render buffer object
-    unsigned int rbo;
-    glGenRenderbuffers(1, &rbo);
-    ON_SCOPE_EXIT([&]() { glDeleteRenderbuffers(1, &rbo); });
-
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo); 
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 1024, 768);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-    // attach the renderbuffer object to the depth and stencil attachment of the framebuffer
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
-    // ensure no problems
-    assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
-    glEnable(GL_DEPTH_TEST);
-
-    draw_inventory_overlay(rstate);
-  }
-
-  auto const v      = OF::rectangle_vertices();
+  auto const v     = OF::rectangle_vertices();
   DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, ti);
 
   Transform  transform;
-  transform.scale = glm::vec3{0.2f};
+  transform.scale = glm::vec3{0.8f};
 
   auto const model_matrix = transform.model_matrix();
 

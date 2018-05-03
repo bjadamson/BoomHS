@@ -17,30 +17,6 @@
 #include <vector>
 #include <utility>
 
-namespace
-{
-
-using namespace opengl;
-
-Result<ImageData, std::string>
-upload_image(stlw::Logger &logger, std::string const& path, GLenum const target,
-    GLint const format)
-{
-  auto image_data = TRY_MOVEOUT(texture::load_image(logger, path.c_str(), format));
-
-  auto const width = image_data.width;
-  auto const height = image_data.height;
-  auto const* data = image_data.data.get();
-
-  LOG_TRACE_SPRINTF("uploading %s with w: %i, h: %i", path, width, height);
-  glActiveTexture(GL_TEXTURE0);
-  glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-
-  return OK_MOVE(image_data);
-}
-
-} // ns anonymous
-
 namespace opengl
 {
 
@@ -241,7 +217,7 @@ wrap_mode_from_string(char const* name)
 }
 
 TextureResult
-allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const format,
+allocate_texture(stlw::Logger &logger, std::string const& filename, GLenum const format,
     GLint const uv_max)
 {
   assert(ANYOF(format == GL_RGB, format == GL_RGBA));
@@ -264,7 +240,8 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const 
     ti.bind();
     ON_SCOPE_EXIT([&ti]() { ti.unbind(); });
 
-    auto const image_data = TRY_MOVEOUT(upload_image(logger, filename, ti.mode, format));
+    GpuUploadConfig const guc{ti.mode, format};
+    auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, guc));
     ti.height = image_data.height;
     ti.width = image_data.width;
 
@@ -279,12 +256,12 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLint const 
 
 TextureResult
 upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& paths,
-    GLint const format)
+    GLenum const format)
 {
   assert(paths.size() == 6);
   assert(ANYOF(format == GL_RGB, format == GL_RGBA));
 
-  static constexpr auto directions = {
+  static constexpr auto targets = {
     GL_TEXTURE_CUBE_MAP_POSITIVE_Z, // back
     GL_TEXTURE_CUBE_MAP_POSITIVE_X, // right
     GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, // front
@@ -298,10 +275,11 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   glGenTextures(1, &ti.id);
   LOG_ANY_GL_ERRORS(logger, "glGenTextures");
 
-  auto const upload_fn = [&format, &logger, &ti](std::string const& filename, auto const& target)
+  auto const upload_fn = [&format, &logger, &ti](std::string const& filename, GLenum const target)
     -> Result<stlw::none_t, std::string>
   {
-    auto const image_data = TRY_MOVEOUT(upload_image(logger, filename, target, format));
+    GpuUploadConfig const guc{target, format};
+    auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, guc));
 
     // Either the height is unset (0) or all height/width are the same.
     assert(ti.height == 0 || ti.height == image_data.height);
@@ -315,7 +293,7 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   auto const paths_tuple = std::make_tuple(paths[0], paths[1], paths[2], paths[3], paths[4], paths[5]);
 
   auto const fn = [&]() {
-    stlw::zip(upload_fn, directions.begin(), paths_tuple);
+    stlw::zip(upload_fn, targets.begin(), paths_tuple);
 
     LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
     glGenerateMipmap(ti.mode);
@@ -323,6 +301,25 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   ti.while_bound(fn);
 
   return Ok(Texture{MOVE(ti)});
+}
+
+Result<ImageData, std::string>
+upload_image_gpu(stlw::Logger &logger, std::string const& path, GpuUploadConfig const& guc)
+{
+  auto image_data = TRY_MOVEOUT(texture::load_image(logger, path.c_str(), guc.format));
+
+  auto const width = image_data.width;
+  auto const height = image_data.height;
+  auto const* data = image_data.data.get();
+
+  LOG_TRACE_SPRINTF("uploading %s with w: %i, h: %i", path, width, height);
+  glActiveTexture(GL_TEXTURE0);
+
+  auto const format = guc.format;
+  auto const target = guc.target;
+  glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+
+  return OK_MOVE(image_data);
 }
 
 } // ns opengl::texture

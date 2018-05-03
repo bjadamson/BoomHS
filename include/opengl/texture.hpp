@@ -147,13 +147,21 @@ using TextureResult = Result<Texture, std::string>;
 ImageResult
 load_image(stlw::Logger&, char const*, GLint const);
 
+struct GpuUploadConfig
+{
+  GLenum const target;
+  GLenum const format;
+};
+Result<ImageData, std::string>
+upload_image_gpu(stlw::Logger &logger, std::string const& path, GpuUploadConfig const&);
+
 GLint
 wrap_mode_from_string(char const*);
 
 TextureResult
-allocate_texture(stlw::Logger&, std::string const&, GLint, GLint);
+allocate_texture(stlw::Logger&, std::string const&, GLenum, GLint);
 
 TextureResult
-upload_3dcube_texture(stlw::Logger&, std::vector<std::string> const&, GLint);
+upload_3dcube_texture(stlw::Logger&, std::vector<std::string> const&, GLenum);
 
 } // namespace opengl::texture
