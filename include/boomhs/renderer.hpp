@@ -69,6 +69,9 @@ void
 draw_arrow_abovetile_and_neighbors(RenderState&, TilePosition const&);
 
 void
+draw_fbo_testwindow(RenderState&);
+
+void
 draw_global_axis(RenderState&);
 
 void

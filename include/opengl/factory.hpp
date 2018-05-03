@@ -88,11 +88,10 @@ public:
   PointArray five() const;
 };
 
+using PointArray = std::array<float, 2>;
 class RectangleUvs
 {
-  using VerticesArray = std::array<float, 8>;
-  using PointArray = std::array<float, 2>;
-
+  using VerticesArray = std::array<PointArray, 4>;
   VerticesArray varray_;
 
 public:
@@ -117,7 +116,7 @@ struct RectInfo
   std::optional<Color>                           color;
   std::optional<std::array<Color, NUM_VERTICES>> colors;
 
-  std::optional<std::array<glm::vec2, NUM_VERTICES>> uvs;
+  std::optional<RectangleUvs> uvs;
 };
 
 struct RectBuffer
@@ -139,11 +138,11 @@ rectangle_vertices();
 inline RectangleUvs
 rectangle_uvs(float const max)
 {
-  return stlw::make_array<float>(
-      0.0f, 0.0f,
-      max, 0.0f,
-      max, max,
-      0.0f, max
+  return stlw::make_array<PointArray>(
+      PointArray{0.0f, 0.0f},
+      PointArray{max, 0.0f},
+      PointArray{max, max},
+      PointArray{0.0f, max}
       );
 }
 

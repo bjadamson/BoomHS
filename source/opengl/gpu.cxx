@@ -356,8 +356,8 @@ copy_rectangle(stlw::Logger &logger, GLenum const dm, ShaderProgram const& sp,
 }
 
 DrawInfo
-copy_rectangle_uvs(stlw::Logger &logger, OF::RectangleVertices const& v, ShaderProgram const& sp,
-    TextureInfo const& ti)
+copy_rectangle_uvs(stlw::Logger &logger, GLenum const dm, ShaderProgram const& sp,
+                   OF::RectangleVertices const& v, TextureInfo const& ti)
 {
   auto const& i = OF::RECTANGLE_INDICES;
   auto const uv = OF::rectangle_uvs(ti.uv_max);
@@ -374,7 +374,7 @@ copy_rectangle_uvs(stlw::Logger &logger, OF::RectangleVertices const& v, ShaderP
       );
   // clang-format on
 
-  DrawInfo dinfo{GL_TRIANGLES, vertices.size(), i.size(), ti};
+  DrawInfo dinfo{dm, vertices.size(), i.size(), ti};
   copy_synchronous(logger, sp, dinfo, vertices, i);
   return dinfo;
 }

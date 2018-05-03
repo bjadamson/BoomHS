@@ -465,6 +465,9 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
       auto const  tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
       render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
     }
+    if (es.draw_fbo_testwindow) {
+      render::draw_fbo_testwindow(rstate);
+    }
     if (es.show_global_axis) {
       render::draw_global_axis(rstate);
     }

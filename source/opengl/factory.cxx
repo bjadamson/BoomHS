@@ -184,32 +184,32 @@ RectangleUvs::RectangleUvs(VerticesArray &&va)
 {
 }
 
-RectangleUvs::PointArray
+PointArray
 RectangleUvs::zero() const
 {
-  auto const& v = varray_;
-  return stlw::make_array<float>(v[0], 1.0f - v[1]);
+  auto const& v = varray_[0];
+  return PointArray{stlw::make_array<float>(v[0], 1.0f - v[1])};
 }
 
-RectangleUvs::PointArray
+PointArray
 RectangleUvs::one() const
 {
-  auto const& v = varray_;
-  return stlw::make_array<float>(v[2], 1.0f - v[3]);
+  auto const& v = varray_[1];
+  return PointArray{stlw::make_array<float>(v[0], 1.0f - v[1])};
 }
 
-RectangleUvs::PointArray
+PointArray
 RectangleUvs::two() const
 {
-  auto const& v = varray_;
-  return stlw::make_array<float>(v[4], 1.0f - v[5]);
+  auto const& v = varray_[2];
+  return PointArray{stlw::make_array<float>(v[0], 1.0f - v[1])};
 }
 
-RectangleUvs::PointArray
+PointArray
 RectangleUvs::three() const
 {
-  auto const& v = varray_;
-  return stlw::make_array<float>(v[6], 1.0f - v[7]);
+  auto const& v = varray_[3];
+  return PointArray{stlw::make_array<float>(v[0], 1.0f - v[1])};
 }
 
 RectBuffer
@@ -251,8 +251,8 @@ make_rectangle(RectInfo const& info)
     }
     if (uvs_o) {
       auto const& uv = (*uvs_o)[index];
-      vertices.emplace_back(uv.x);
-      vertices.emplace_back(uv.y);
+      vertices.emplace_back(uv[0]);
+      vertices.emplace_back(uv[1]);
     }
   };
 

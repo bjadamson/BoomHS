@@ -161,7 +161,8 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
       [&](auto entity, auto& sn, auto&, auto& texture) {
         auto&      sp     = sps.ref_sp(sn.value);
         auto const v      = OF::rectangle_vertices();
-        auto       handle = opengl::gpu::copy_rectangle_uvs(logger, v, sp, texture.texture_info);
+        auto const& ti    = texture.texture_info;
+        auto       handle = opengl::gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, ti);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, JunkEntityFromFILE>().each(

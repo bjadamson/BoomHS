@@ -75,6 +75,7 @@ struct EngineState
 
   // rendering state
   bool draw_entities;
+  bool draw_fbo_testwindow;
   bool draw_terrain;
   bool draw_water;
   bool draw_normals;

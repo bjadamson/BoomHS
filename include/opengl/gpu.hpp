@@ -67,7 +67,7 @@ copy_rectangle(stlw::Logger&, GLenum, ShaderProgram const&, OF::RectBuffer const
                std::optional<TextureInfo> const&);
 
 DrawInfo
-copy_rectangle_uvs(stlw::Logger&, OF::RectangleVertices const&, ShaderProgram const&,
+copy_rectangle_uvs(stlw::Logger&, GLenum, ShaderProgram const&, OF::RectangleVertices const&,
                    TextureInfo const&);
 
 // General

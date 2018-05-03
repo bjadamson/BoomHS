@@ -18,6 +18,7 @@ EngineState::EngineState(stlw::Logger& l, ImGuiIO& i, window::Dimensions const& 
     , mariolike_edges(false)
     , draw_imguimetrics(false)
     , draw_entities(true)
+    , draw_fbo_testwindow(true)
     , draw_terrain(true)
     , draw_water(true)
     , draw_normals(false)
