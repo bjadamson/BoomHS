@@ -1117,11 +1117,13 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
     tr.x     = pos.x;
     tr.z     = pos.y;
 
-    auto& sp = winfo.shader;
+    auto&       sp    = winfo.shader;
+    auto const& dinfo = winfo.dinfo;
+    auto const& vao   = dinfo.vao();
+
+    bool constexpr RECEIVES_AMBIENT_LIGHT = true;
     sp.while_bound(logger, [&]() {
-      auto const& dinfo = winfo.dinfo;
-      dinfo.vao().while_bound([&]() {
-        bool constexpr RECEIVES_AMBIENT_LIGHT = true;
+      vao.while_bound([&]() {
         draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
                          Material{}, registry, RECEIVES_AMBIENT_LIGHT);
       });

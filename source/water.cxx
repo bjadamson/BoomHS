@@ -64,14 +64,9 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
   assert(texture_o);
   auto& ti = *texture_o;
 
-  // TODO: why does using the "water" shader... not behave the same as using the terrain shader?
-  //auto& sp = sps.ref_sp("water");
-  auto& sp = sps.ref_sp("terrain");
-
-  // texture sampler location
-  sp.while_bound(logger, [&]() {
-    sp.set_uniform_int1(logger, "u_sampler", 0);
-    });
+  // These uniforms only need to be set once.
+  auto& sp = sps.ref_sp("water");
+  sp.while_bound(logger, [&]() { sp.set_uniform_int1(logger, "u_sampler", 0); });
 
   auto wi = generate_info(logger, wic, sp, ti);
 
