@@ -21,6 +21,7 @@
 using namespace boomhs;
 using namespace opengl;
 using namespace opengl::gpu;
+using namespace glm;
 
 namespace
 {
@@ -30,29 +31,28 @@ void
 copy_synchronous(stlw::Logger& logger, ShaderProgram const& sp, DrawInfo const& dinfo,
                  VERTICES const& vertices, INDICES const& indices)
 {
+  auto const bind_and_copy = [&]() {
+    glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
+
+    auto const& va = sp.va();
+    va.upload_vertex_format_to_glbound_vao(logger);
+
+    // copy the vertices
+    LOG_DEBUG_SPRINTF("inserting '%i' vertices into GL_BUFFER_ARRAY\n", vertices.size());
+    auto const  vertices_size = vertices.size() * sizeof(GLfloat);
+    auto const& vertices_data = vertices.data();
+    glBufferData(GL_ARRAY_BUFFER, vertices_size, vertices_data, GL_STATIC_DRAW);
+
+    // copy the vertice rendering order
+    LOG_DEBUG_SPRINTF("inserting '%i' indices into GL_ELEMENT_BUFFER_ARRAY\n", indices.size());
+    auto const  indices_size = sizeof(GLuint) * indices.size();
+    auto const& indices_data = indices.data();
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, indices_data, GL_STATIC_DRAW);
+  };
+
   LOG_TRACE("Starting synchronous cpu -> gpu copy");
-
-  // Activate VAO
-  global::vao_bind(dinfo.vao());
-
-  glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
-
-  auto const& va = sp.va();
-  va.upload_vertex_format_to_glbound_vao(logger);
-
-  // copy the vertices
-  LOG_DEBUG_SPRINTF("inserting '%i' vertices into GL_BUFFER_ARRAY\n", vertices.size());
-  auto const  vertices_size = vertices.size() * sizeof(GLfloat);
-  auto const& vertices_data = vertices.data();
-  glBufferData(GL_ARRAY_BUFFER, vertices_size, vertices_data, GL_STATIC_DRAW);
-
-  // copy the vertice rendering order
-  LOG_DEBUG_SPRINTF("inserting '%i' indices into GL_ELEMENT_BUFFER_ARRAY\n", indices.size());
-  auto const  indices_size = sizeof(GLuint) * indices.size();
-  auto const& indices_data = indices.data();
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, indices_data, GL_STATIC_DRAW);
-
+  dinfo.vao().while_bound(bind_and_copy);
   LOG_TRACE("cpu -> gpu copy complete");
 }
 
@@ -254,7 +254,6 @@ copy_cubenormalcolor_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color co
   auto make_face = [&vertices, &normals, &colors](int const a, int const b, int const c, int const d,
       std::array<glm::vec3, 8> const& points, Color const& face_color, int index)
   {
-    using namespace glm;
     vec3 const normal = normalize(cross(points[c] - points[b], points[a] - points[b]));
 
     vertices[index] = points[a];

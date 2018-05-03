@@ -24,17 +24,19 @@ calculate_number_vertices(size_t const num_components, size_t const num_vertexes
 }
 
 float
-calculate_ratio(float const x, size_t const num_vertexes, float const length)
+calculate_ratio(float const v, size_t const num_vertexes, float const length)
 {
-  return (x / (num_vertexes - 1)) * length;
+  return (v / (num_vertexes - 1)) * length;
 }
 
 ObjData::vertices_t
 create_normal_buffer(glm::vec2 const& dimensions)
 {
-  size_t const        num_vertices = NORMAL_NUM_COMPONENTS * dimensions.x * dimensions.y;
+  size_t const num_vertices = NORMAL_NUM_COMPONENTS * dimensions.x * dimensions.y;
+
   ObjData::vertices_t normals;
   normals.resize(num_vertices);
+  assert(0 == (normals.size() % NORMAL_NUM_COMPONENTS));
 
   return normals;
 }
@@ -188,6 +190,7 @@ MeshFactory::generate_normals(glm::vec2 const& dimensions, GenerateNormalData co
   auto const& h = [&](auto const x, auto const y) {
     return normal_data.height_data[(width * y) + x];
   };
+
   FORI(y, height)
   {
     FORI(x, width)
@@ -224,22 +227,18 @@ MeshFactory::generate_normals(glm::vec2 const& dimensions, GenerateNormalData co
 ObjData::vertices_t
 MeshFactory::generate_flat_normals(glm::vec2 const& dimensions)
 {
-  auto       normals = create_normal_buffer(dimensions);
-  auto const width = dimensions.x, height = dimensions.y;
+  auto normals = create_normal_buffer(dimensions);
 
-  FORI(y, height)
+  FOR(i, normals.size() / NORMAL_NUM_COMPONENTS)
   {
-    FORI(x, width)
-    {
-      size_t const index = NORMAL_NUM_COMPONENTS * ((y * width) + x);
-      auto const   xn    = index + 0;
-      auto const   yn    = index + 1;
-      auto const   zn    = index + 2;
+    size_t const index = NORMAL_NUM_COMPONENTS * i;
+    auto const   xn    = index + 0;
+    auto const   yn    = index + 1;
+    auto const   zn    = index + 2;
 
-      normals[xn] = 0.0f;
-      normals[yn] = 1.0f;
-      normals[zn] = 0.0f;
-    }
+    normals[xn] = 0.0f;
+    normals[yn] = 1.0f;
+    normals[zn] = 0.0f;
   }
   return normals;
 }

@@ -1023,12 +1023,10 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
 void
 draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
 {
-  auto& zs  = rstate.zs;
-  auto& sps = zs.gfx_state.sps;
-
   auto& es     = rstate.es;
   auto& logger = es.logger;
 
+  auto&       zs      = rstate.zs;
   auto&       ldata   = zs.level_data;
   auto&       terrain = ldata.terrain();
   auto&       tgrid   = terrain.grid;

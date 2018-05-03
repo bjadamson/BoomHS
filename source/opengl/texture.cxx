@@ -33,6 +33,7 @@ upload_image(stlw::Logger &logger, std::string const& path, GLenum const target,
   auto const* data = image_data.data.get();
 
   LOG_TRACE_SPRINTF("uploading %s with w: %i, h: %i", path, width, height);
+  glActiveTexture(GL_TEXTURE0);
   glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 
   return OK_MOVE(image_data);

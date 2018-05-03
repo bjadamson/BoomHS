@@ -10,6 +10,7 @@ struct GenerateNormalData
 {
   bool const                  invert_normals;
   std::vector<uint8_t> const& height_data;
+  size_t const                num_vertexes;
 };
 
 struct MeshFactory

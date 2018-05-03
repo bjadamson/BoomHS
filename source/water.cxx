@@ -60,13 +60,18 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
   glm::vec2 const       dimensions{static_cast<float>(num_vertexes)};
   WaterInfoConfig const wic{pos, dimensions, num_vertexes};
 
-  auto texture_o = ttable.find("water");
+  auto texture_o = ttable.find("water-texture");
   assert(texture_o);
   auto& ti = *texture_o;
 
   // TODO: why does using the "water" shader... not behave the same as using the terrain shader?
-  // auto& sp = sps.ref_sp("water");
+  //auto& sp = sps.ref_sp("water");
   auto& sp = sps.ref_sp("terrain");
+
+  // texture sampler location
+  sp.while_bound(logger, [&]() {
+    sp.set_uniform_int1(logger, "u_sampler", 0);
+    });
 
   auto wi = generate_info(logger, wic, sp, ti);
 
@@ -74,6 +79,8 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
   tinfo.while_bound([&]() {
     tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
     tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    tinfo.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    tinfo.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   });
   LOG_TRACE("Finished generating water");
   return wi;

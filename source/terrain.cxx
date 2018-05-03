@@ -21,17 +21,17 @@ ObjData
 generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc,
                       TerrainPieceConfig const& tc, HeightmapData const& heightmap_data)
 {
-  auto const count = tc.num_vertexes * tc.num_vertexes;
+  auto const num_vertexes = tc.num_vertexes * tc.num_vertexes;
 
   ObjData data;
-  data.num_vertexes = count;
+  data.num_vertexes = num_vertexes;
 
   data.vertices = MeshFactory::generate_rectangle_mesh(logger, tgc.dimensions, tc.num_vertexes);
   heightmap::update_vertices_from_heightmap(logger, tc, heightmap_data, data.vertices);
 
   {
     glm::vec2 const          dimensions{static_cast<float>(tc.num_vertexes)};
-    GenerateNormalData const gnd{tc.invert_normals, heightmap_data};
+    GenerateNormalData const gnd{tc.invert_normals, heightmap_data, num_vertexes};
     data.normals = MeshFactory::generate_normals(dimensions, gnd);
   }
 
@@ -132,6 +132,10 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
   BufferFlags const flags{true, true, false, true};
   auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
   auto              di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer, ti);
+
+  sp.while_bound(logger, [&]() {
+    sp.set_uniform_int1(logger, "u_sampler", 0);
+    });
 
   return TerrainPiece{tc, pos, MOVE(di), sp, ti};
 }

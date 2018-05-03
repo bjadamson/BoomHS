@@ -65,12 +65,6 @@ type = "texture:2d-RGBA"
 filename = "assets/terrain/Area1-HM.png"
 wrap = "clamp"
 
-[[resource]]
-name = "Water-HM"
-type = "texture:2d-RGBA"
-filename = "assets/water/heightmap.png"
-wrap = "clamp"
-
 ###################################################################################################
 # TERRAIN TEXTURES
 [[resource]]
@@ -91,13 +85,28 @@ type = "texture:2d-RGB"
 filename = "assets/TextureAtlas.jpg"
 wrap = "clamp"
 
+###########################
+# WATER
 [[resource]]
-name = "water"
-type = "texture:2d-RGB"
-filename = "assets/water/water-texture.jpg"
-wrap = "repeat"
-uvs = 10000.0
+name = "Water-HM"
+type = "texture:2d-RGBA"
+filename = "assets/water/heightmap.png"
+wrap = "clamp"
 
+[[resource]]
+name = "water-texture"
+type = "texture:2d-RGBA"
+filename = "assets/water/texture.png"
+wrap = "mirror_repeat"
+
+[[resource]]
+name = "water-normal"
+type = "texture:2d-RGBA"
+filename = "assets/water/normal.png"
+wrap = "mirror_repeat"
+
+#############################'
+# OTHER
 [[resource]]
 name = "gun"
 type = "texture:2d-RGB"
