@@ -391,6 +391,75 @@ init(Engine& engine, EngineState& engine_state)
 }
 
 void
+render_scene(EngineState &es, LevelManager &lm, stlw::float_generator& rng, FrameTime const& ft)
+{
+  auto& ldata = lm.active().level_data;
+  render::clear_screen(ldata.fog.color);
+
+  auto& zs = lm.active();
+  RenderState rstate{es, zs};
+
+  if (es.draw_entities) {
+    render::draw_skybox(rstate, ft);
+    render::draw_entities(rstate, rng, ft);
+  }
+
+  auto& tilegrid_state = es.tilegrid_state;
+  if (tilegrid_state.draw_tilegrid) {
+    render::draw_tilegrid(rstate, tilegrid_state, ft);
+    render::draw_rivers(rstate, ft);
+  }
+
+  auto& registry = zs.registry;
+  if (es.draw_water) {
+    render::draw_water(rstate, registry, ft);
+  }
+
+  if (es.draw_terrain) {
+    render::draw_terrain(rstate, registry, ft);
+  }
+
+  render::draw_stars(rstate, ft);
+  render::draw_targetreticle(rstate, ft);
+
+  if (tilegrid_state.show_grid_lines) {
+    render::draw_tilegrid(rstate, tilegrid_state);
+  }
+
+  auto& player = ldata.player;
+  if (tilegrid_state.show_neighbortile_arrows) {
+    auto const& wp   = player.world_position();
+    auto const  tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
+    render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
+  }
+  if (es.draw_fbo_testwindow) {
+    render::draw_fbo_testwindow(rstate);
+  }
+  if (es.show_global_axis) {
+    render::draw_global_axis(rstate);
+  }
+  if (es.show_local_axis) {
+    render::draw_local_axis(rstate, player.world_position());
+  }
+
+  {
+    auto const  eid = find_player(registry);
+    auto const& inv = registry.get<PlayerData>(eid).inventory;
+    if (inv.is_open()) {
+      render::draw_inventory_overlay(rstate);
+    }
+  }
+
+  // if checks happen inside fn
+  render::conditionally_draw_player_vectors(rstate, player);
+
+  auto& ui_state = es.ui_state;
+  if (ui_state.draw_ingame_ui) {
+    ui_ingame::draw(es, lm);
+  }
+}
+
+void
 game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTime const& ft)
 {
   auto& es = state.engine_state;
@@ -433,64 +502,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     update_visible_entities(lm, registry);
     update_torchflicker(ldata, registry, rng, ft);
   }
-  {
-    // rendering code
-    render::clear_screen(ldata.fog.color);
-    RenderState rstate{es, zs};
-    if (es.draw_entities) {
-      render::draw_skybox(rstate, ft);
-      render::draw_entities(rstate, rng, ft);
-    }
-    if (tilegrid_state.draw_tilegrid) {
-      render::draw_tilegrid(rstate, tilegrid_state, ft);
-      render::draw_rivers(rstate, ft);
-    }
-
-    if (es.draw_water) {
-      render::draw_water(rstate, registry, ft);
-    }
-
-    if (es.draw_terrain) {
-      render::draw_terrain(rstate, registry, ft);
-    }
-
-    render::draw_stars(rstate, ft);
-    render::draw_targetreticle(rstate, ft);
-
-    if (tilegrid_state.show_grid_lines) {
-      render::draw_tilegrid(rstate, tilegrid_state);
-    }
-    if (tilegrid_state.show_neighbortile_arrows) {
-      auto const& wp   = player.world_position();
-      auto const  tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
-      render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
-    }
-    if (es.draw_fbo_testwindow) {
-      render::draw_fbo_testwindow(rstate);
-    }
-    if (es.show_global_axis) {
-      render::draw_global_axis(rstate);
-    }
-    if (es.show_local_axis) {
-      render::draw_local_axis(rstate, player.world_position());
-    }
-
-    {
-      auto const  eid = find_player(registry);
-      auto const& inv = registry.get<PlayerData>(eid).inventory;
-      if (inv.is_open()) {
-        render::draw_inventory_overlay(rstate);
-      }
-    }
-
-    // if checks happen inside fn
-    render::conditionally_draw_player_vectors(rstate, player);
-
-    auto& ui_state = es.ui_state;
-    if (ui_state.draw_ingame_ui) {
-      ui_ingame::draw(es, lm);
-    }
-  }
+  render_scene(es, lm, rng, ft);
 }
 
 } // namespace boomhs
