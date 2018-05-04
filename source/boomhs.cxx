@@ -44,7 +44,8 @@ namespace
 {
 
 void
-move_betweentilegrids_ifonstairs(stlw::Logger& logger, TiledataState& tds, LevelManager& lm)
+move_betweentilegrids_ifonstairs(stlw::Logger& logger, Camera& camera, TiledataState& tds,
+                                 LevelManager& lm)
 {
   auto& ldata = lm.active().level_data;
 
@@ -59,11 +60,13 @@ move_betweentilegrids_ifonstairs(stlw::Logger& logger, TiledataState& tds, Level
   auto const& tilegrid = ldata.tilegrid();
   auto const& tile     = tilegrid.data(wp.x, wp.z);
   if (tile.type == TileType::TELEPORTER) {
-    int const current  = lm.active_zone();
-    int const newlevel = current == 0 ? 1 : 0;
-    assert(newlevel < lm.num_levels());
-    lm.make_active(newlevel, tds);
-    LOG_TRACE_SPRINTF("setting level to: %i", newlevel);
+    {
+      int const current  = lm.active_zone();
+      int const newlevel = current == 0 ? 1 : 0;
+      assert(newlevel < lm.num_levels());
+      LOG_TRACE_SPRINTF("setting level to: %i", newlevel);
+      lm.make_active(newlevel, tds);
+    }
 
     // now that the zone has changed, all references through lm are pointing to old level.
     // use active()
@@ -74,13 +77,14 @@ move_betweentilegrids_ifonstairs(stlw::Logger& logger, TiledataState& tds, Level
     auto& registry = zs.registry;
 
     player.move_to(10, player.world_position().y, 10);
+    camera.set_target(player.transform());
     return;
   }
   if (!tile.is_stair()) {
     return;
   }
 
-  auto const move_player_through_stairs = [&tile, &tds, &lm](StairInfo const& stair) {
+  auto const move_player_through_stairs = [&](StairInfo const& stair) {
     {
       int const current  = lm.active_zone();
       int const newlevel = current + (tile.is_stair_up() ? 1 : -1);
@@ -93,12 +97,12 @@ move_betweentilegrids_ifonstairs(stlw::Logger& logger, TiledataState& tds, Level
     auto& zs    = lm.active();
     auto& ldata = zs.level_data;
 
-    auto& camera   = ldata.camera;
     auto& player   = ldata.player;
     auto& registry = zs.registry;
 
     auto const spos = stair.exit_position;
     player.move_to(spos.x, player.world_position().y, spos.y);
+    camera.set_target(player.transform());
     player.rotate_to_match_camera_rotation(camera);
 
     tds.recompute = true;
@@ -355,6 +359,10 @@ init(Engine& engine, EngineState& engine_state)
   auto& es     = state.engine_state;
   auto& logger = es.logger;
 
+  auto const player_eid = find_player(engine.registries[0]);
+  auto&      transform  = engine.registries[0].get<Transform>(player_eid);
+  es.camera.set_target(transform);
+
   auto& lm        = state.level_manager;
   auto& zs        = lm.active();
   auto& gfx_state = zs.gfx_state;
@@ -474,7 +482,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
   {
     auto& zs       = lm.active();
     auto& registry = zs.registry;
-    move_betweentilegrids_ifonstairs(logger, tilegrid_state, lm);
+    move_betweentilegrids_ifonstairs(logger, es.camera, tilegrid_state, lm);
   }
 
   // Must recalculate zs and registry, possibly changed since call to move_between()

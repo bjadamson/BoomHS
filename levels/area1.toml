@@ -95,8 +95,8 @@ wrap = "clamp"
 
 [[resource]]
 name = "water-texture"
-type = "texture:2d-RGBA"
-filename = "assets/water/texture.png"
+type = "texture:2d-RGB"
+filename = "assets/lava.jpg"
 wrap = "mirror_repeat"
 
 [[resource]]

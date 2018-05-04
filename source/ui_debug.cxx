@@ -113,8 +113,9 @@ namespace
 {
 
 void
-draw_entity_editor(UiDebugState& uistate, LevelData& ldata, EntityRegistry& registry)
+draw_entity_editor(EngineState& es, LevelData& ldata, EntityRegistry& registry)
 {
+  auto&      uistate  = es.ui_state.debug;
   auto&      selected = uistate.selected_entity;
   auto const draw     = [&]() {
     auto pairs = collect_all<Transform>(registry, false);
@@ -122,9 +123,9 @@ draw_entity_editor(UiDebugState& uistate, LevelData& ldata, EntityRegistry& regi
       auto const eid = comboselected_to_entity(selected, pairs);
 
       auto& player = ldata.player;
-      auto& camera = ldata.camera;
+      auto& camera = es.camera;
 
-      auto &transform = registry.get<Transform>(eid);
+      auto& transform = registry.get<Transform>(eid);
       camera.set_target(transform);
       player.set_eid(eid);
     }
@@ -368,10 +369,9 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 }
 
 void
-draw_camera_window(LevelData& ldata)
+draw_camera_window(Camera& camera, LevelData& ldata)
 {
   auto& player = ldata.player;
-  auto& camera = ldata.camera;
 
   auto const draw_perspective_controls = [&]() {
     ImGui::Text("Perspective Projection");
@@ -747,38 +747,38 @@ namespace boomhs::ui_debug
 void
 draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::FrameTime const& ft)
 {
-  auto& state          = es.ui_state.debug;
+  auto& uistate        = es.ui_state.debug;
   auto& tilegrid_state = es.tilegrid_state;
   auto& window_state   = es.window_state;
   auto& zs             = lm.active();
   auto& registry       = zs.registry;
   auto& ldata          = zs.level_data;
 
-  if (state.show_entitywindow) {
-    draw_entity_editor(state, ldata, registry);
+  if (uistate.show_entitywindow) {
+    draw_entity_editor(es, ldata, registry);
   }
-  if (state.show_time_window) {
-    draw_time_editor(es.time, state);
+  if (uistate.show_time_window) {
+    draw_time_editor(es.time, uistate);
   }
-  if (state.show_camerawindow) {
-    draw_camera_window(ldata);
+  if (uistate.show_camerawindow) {
+    draw_camera_window(es.camera, ldata);
   }
-  if (state.show_mousewindow) {
+  if (uistate.show_mousewindow) {
     draw_mouse_window(es.mouse_state);
   }
-  if (state.show_playerwindow) {
+  if (uistate.show_playerwindow) {
     draw_player_window(es, ldata);
   }
-  if (state.show_skyboxwindow) {
+  if (uistate.show_skyboxwindow) {
     draw_skybox_window(es, registry);
   }
-  if (state.show_tilegrid_editor_window) {
+  if (uistate.show_tilegrid_editor_window) {
     draw_tilegrid_editor(tilegrid_state, lm);
   }
-  if (state.show_terrain_editor_window) {
+  if (uistate.show_terrain_editor_window) {
     draw_terrain_editor(es, lm);
   }
-  if (state.show_debugwindow) {
+  if (uistate.show_debugwindow) {
     {
       auto const eid  = find_skybox(registry);
       auto&      v    = registry.get<IsVisible>(eid);
@@ -798,7 +798,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::Frame
     }
     ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
     ImGui::Checkbox("Draw Water", &es.draw_water);
-    ImGui::Checkbox("Enter Pressed", &state.enter_pressed);
+    ImGui::Checkbox("Enter Pressed", &uistate.enter_pressed);
     ImGui::Checkbox("Draw Entities", &es.draw_entities);
     ImGui::Checkbox("Draw Normals", &es.draw_normals);
     ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
@@ -811,15 +811,15 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::Frame
   }
 
   auto const windows_menu = [&]() {
-    ImGui::MenuItem("Debug", nullptr, &state.show_debugwindow);
-    ImGui::MenuItem("Entity", nullptr, &state.show_entitywindow);
-    ImGui::MenuItem("Camera", nullptr, &state.show_camerawindow);
-    ImGui::MenuItem("Mouse", nullptr, &state.show_mousewindow);
-    ImGui::MenuItem("Player", nullptr, &state.show_playerwindow);
-    ImGui::MenuItem("Skybox", nullptr, &state.show_skyboxwindow);
-    ImGui::MenuItem("Terrain", nullptr, &state.show_terrain_editor_window);
-    ImGui::MenuItem("Tilemap", nullptr, &state.show_tilegrid_editor_window);
-    ImGui::MenuItem("Time", nullptr, &state.show_time_window);
+    ImGui::MenuItem("Debug", nullptr, &uistate.show_debugwindow);
+    ImGui::MenuItem("Entity", nullptr, &uistate.show_entitywindow);
+    ImGui::MenuItem("Camera", nullptr, &uistate.show_camerawindow);
+    ImGui::MenuItem("Mouse", nullptr, &uistate.show_mousewindow);
+    ImGui::MenuItem("Player", nullptr, &uistate.show_playerwindow);
+    ImGui::MenuItem("Skybox", nullptr, &uistate.show_skyboxwindow);
+    ImGui::MenuItem("Terrain", nullptr, &uistate.show_terrain_editor_window);
+    ImGui::MenuItem("Tilemap", nullptr, &uistate.show_tilegrid_editor_window);
+    ImGui::MenuItem("Time", nullptr, &uistate.show_time_window);
     ImGui::MenuItem("Exit", nullptr, &es.quit);
   };
   auto const settings_menu = [&]() {

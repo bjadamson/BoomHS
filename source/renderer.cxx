@@ -138,7 +138,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
   auto const& ldata = zs.level_data;
 
   auto&       logger       = es.logger;
-  auto const& camera       = ldata.camera;
+  auto const& camera       = es.camera;
   auto const& global_light = ldata.global_light;
   auto const& player       = ldata.player;
 
@@ -273,7 +273,7 @@ draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const
   set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
                              receives_ambient_light);
   auto const& ldata  = zs.level_data;
-  auto const& camera = ldata.camera;
+  auto const& camera = es.camera;
   set_3dmvpmatrix(logger, camera, model_matrix, sp);
   draw(rstate, sp, dinfo);
 }
@@ -298,7 +298,7 @@ draw_3dlightsource(RenderState& rstate, glm::mat4 const& model_matrix, ShaderPro
 
   if (!sp.is_2d) {
     auto const& ldata  = zs.level_data;
-    auto const& camera = ldata.camera;
+    auto const& camera = es.camera;
     set_3dmvpmatrix(logger, camera, model_matrix, sp);
   }
 
@@ -466,7 +466,7 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
   auto const dinfo = OG::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
 
   auto const& ldata  = zs.level_data;
-  auto const& camera = ldata.camera;
+  auto const& camera = es.camera;
 
   Transform transform;
   sp.while_bound(logger, [&]() {
@@ -515,7 +515,7 @@ draw_global_axis(RenderState& rstate)
   auto  world_arrows = OG::create_axis_arrows(logger, sp);
 
   auto const& ldata  = zs.level_data;
-  auto const& camera = ldata.camera;
+  auto const& camera = es.camera;
   Transform   transform;
 
   auto const draw_axis_arrow = [&](auto const& dinfo) {
@@ -551,7 +551,7 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
   transform.translation = player_pos;
 
   auto const& ldata  = zs.level_data;
-  auto const& camera = ldata.camera;
+  auto const& camera = es.camera;
 
   sp.while_bound(logger, [&]() {
     set_3dmvpmatrix(logger, camera, transform.model_matrix(), sp);
@@ -583,7 +583,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   auto& sps      = zs.gfx_state.sps;
 
   auto const& ldata  = zs.level_data;
-  auto const& camera = ldata.camera;
+  auto const& camera = es.camera;
   auto const& player = ldata.player;
 
   auto const draw_fn = [&](auto eid, auto& sn, auto& transform, auto& is_visible, auto&&...) {
@@ -658,7 +658,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
   auto const draw_orbital_body = [&](auto const eid, auto& sn, auto& transform, auto& isv,
                                      auto& bboard, auto&&... args) {
-    auto& camera = zs.level_data.camera;
+    auto& camera = es.camera;
 
     auto const bb_type    = bboard.value;
     auto const view_model = compute_billboarded_viewmodel(transform, camera, bb_type);
@@ -835,6 +835,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
 void
 draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 {
+  auto&       es       = rstate.es;
   auto&       zs       = rstate.zs;
   auto&       registry = zs.registry;
   auto const& ldata    = zs.level_data;
@@ -852,7 +853,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
   }
 
   auto& logger = rstate.es.logger;
-  auto& camera = ldata.camera;
+  auto& camera = es.camera;
   auto& ttable = zs.gfx_state.texture_table;
 
   auto const selected_npc = *selected;
@@ -988,7 +989,7 @@ draw_skybox(RenderState& rstate, window::FrameTime const& ft)
     LOG_TRACE_SPRINTF("drawing skybox with shader: %s", sn.value);
 
     auto const& ldata  = zs.level_data;
-    auto const& camera = ldata.camera;
+    auto const& camera = es.camera;
 
     // Create a view matrix that has it's translation components zero'd out.
     //
@@ -1046,7 +1047,7 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
       auto const model_matrix = stlw::math::calculate_modelmatrix(tr, rot, scalevec);
 
       auto const& ldata  = zs.level_data;
-      auto const& camera = ldata.camera;
+      auto const& camera = es.camera;
       set_3dmvpmatrix(logger, camera, model_matrix, sp);
 
       dinfo.vao().while_bound([&]() { draw(rstate, sp, dinfo); });
@@ -1136,7 +1137,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
   auto const model_matrix = transform.model_matrix();
 
   auto const& ldata  = zs.level_data;
-  auto const& camera = ldata.camera;
+  auto const& camera = es.camera;
 
   sp.while_bound(logger, [&]() {
     set_3dmvpmatrix(logger, camera, model_matrix, sp);

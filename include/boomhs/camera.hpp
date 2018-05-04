@@ -39,7 +39,7 @@ std::array<ModeNamePair, 3> constexpr CAMERA_MODES = {
 
 class Camera
 {
-  Transform *target_;
+  Transform* target_;
   glm::vec3  forward_, up_;
 
   SphericalCoordinates coordinates_;
@@ -52,7 +52,7 @@ class Camera
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(Transform&, glm::vec3 const& f, glm::vec3 const& u);
+  Camera(Transform*, glm::vec3 const& f, glm::vec3 const& u);
 
   // public fields
   bool  flip_y      = false;
@@ -83,8 +83,8 @@ public:
   SphericalCoordinates spherical_coordinates() const { return coordinates_; }
   void                 set_coordinates(SphericalCoordinates const& sc) { coordinates_ = sc; }
 
-  glm::vec3 local_position() const { return to_cartesian(coordinates_); }
-  glm::vec3 world_position() const { return target_position() + local_position(); }
+  glm::vec3 local_position() const;
+  glm::vec3 world_position() const;
 
   glm::vec3 target_position() const;
 
@@ -96,8 +96,11 @@ public:
   auto&       ortho_ref() { return ortho_; }
 
   Camera& rotate(float, float);
-  void    set_target(Transform &);
+  void    set_target(Transform&);
 };
+
+Camera
+make_defaultcamera();
 
 glm::mat4
 compute_cameramatrix(Camera const&);

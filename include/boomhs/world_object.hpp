@@ -59,7 +59,6 @@ public:
   void move_to(glm::vec3 const& pos) { transform().translation = pos; }
   void move_to(float const x, float const y, float const z) { move_to(glm::vec3{x, y, z}); }
 
-  // EntityID eid() const { return ent_lookup_.eid(); }
   void set_eid(EntityID const eid) { ent_lookup_.set_eid(eid); }
 
   glm::mat4 model_matrix() const { return transform().model_matrix(); }

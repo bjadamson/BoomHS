@@ -1,5 +1,4 @@
 #pragma once
-#include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/fog.hpp>
 #include <boomhs/level_loader.hpp>
@@ -50,7 +49,7 @@ class LevelData
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileGrid&&, TileSharedInfoTable&&, TilePosition const&, std::vector<RiverInfo>&&,
-            Terrain&&, WaterInfo&&, Fog const&, opengl::GlobalLight const&, ObjStore&&, Camera&&,
+            Terrain&&, WaterInfo&&, Fog const&, opengl::GlobalLight const&, ObjStore&&,
             WorldObject&&);
 
   // public fields
@@ -62,7 +61,6 @@ public:
   // nearby targets user can select
   NearbyTargets nearby_targets;
 
-  Camera      camera;
   WorldObject player;
 
   void set_floor(TilePosition const&);

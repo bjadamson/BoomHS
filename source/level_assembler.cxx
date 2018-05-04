@@ -1,5 +1,4 @@
 #include <boomhs/billboard.hpp>
-#include <boomhs/camera.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/dungeon_generator.hpp>
 #include <boomhs/level_assembler.hpp>
@@ -27,24 +26,12 @@ namespace
 ZoneState
 assemble(LevelGeneratedData&& gendata, LevelAssets&& assets, EntityRegistry& registry)
 {
-  // camera-look at origin
-  // cameraspace "up" is === "up" in worldspace.
+  auto const player_eid = find_player(registry);
+  EnttLookup player_lookup{player_eid, registry};
+
   auto const FORWARD = -Z_UNIT_VECTOR;
   auto constexpr UP  = Y_UNIT_VECTOR;
-
-  auto const  player_eid = find_player(registry);
-  EnttLookup  player_lookup{player_eid, registry};
   WorldObject player{player_lookup, FORWARD, UP};
-
-  auto &transform = registry.get<Transform>(player_eid);
-  Camera      camera(transform, FORWARD, UP);
-  {
-    SphericalCoordinates sc;
-    sc.radius = 3.8f;
-    sc.theta  = glm::radians(-0.229f);
-    sc.phi    = glm::radians(38.2735f);
-    camera.set_coordinates(MOVE(sc));
-  }
 
   // Combine the generated data with the asset data, creating the LevelData instance.
   LevelData level_data{MOVE(gendata.tilegrid),
@@ -57,7 +44,6 @@ assemble(LevelGeneratedData&& gendata, LevelAssets&& assets, EntityRegistry& reg
                        assets.fog,
                        assets.global_light,
                        MOVE(assets.obj_store),
-                       MOVE(camera),
                        MOVE(player)};
   GfxState  gfx{MOVE(assets.shader_programs), MOVE(assets.texture_table)};
   return ZoneState{MOVE(level_data), MOVE(gfx), registry};

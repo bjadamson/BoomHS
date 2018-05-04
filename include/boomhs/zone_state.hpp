@@ -1,5 +1,4 @@
 #pragma once
-#include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/level_loader.hpp>
 #include <boomhs/leveldata.hpp>

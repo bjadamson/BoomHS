@@ -189,7 +189,7 @@ process_mousemotion(GameState& state, SDL_MouseMotionEvent const& motion, FrameT
   auto& lm     = state.level_manager;
   auto& ldata  = lm.active().level_data;
   auto& player = ldata.player;
-  auto& camera = ldata.camera;
+  auto& camera = es.camera;
 
   auto const xrel = motion.xrel;
   auto const yrel = motion.yrel;
@@ -222,7 +222,7 @@ process_mousebutton_down(GameState& state, SDL_MouseButtonEvent const& event, Fr
   auto& ms     = es.mouse_state;
 
   auto& zs     = state.level_manager.active();
-  auto& camera = zs.level_data.camera;
+  auto& camera = es.camera;
 
   auto const& button = event.button;
   if (button == SDL_BUTTON_LEFT) {
@@ -238,7 +238,6 @@ process_mousebutton_down(GameState& state, SDL_MouseButtonEvent const& event, Fr
     auto& lm     = state.level_manager;
     auto& ldata  = lm.active().level_data;
     auto& player = ldata.player;
-    auto& camera = ldata.camera;
 
     player.rotate_to_match_camera_rotation(camera);
   }
@@ -271,11 +270,11 @@ process_keydown(GameState& state, SDL_Event const& event, FrameTime const& ft)
   auto& logger = es.logger;
   auto& ui     = es.ui_state;
   auto& ts     = es.tilegrid_state;
+  auto& camera = es.camera;
 
   auto& lm             = state.level_manager;
   auto& active         = lm.active();
   auto& ldata          = active.level_data;
-  auto& camera         = ldata.camera;
   auto& player         = ldata.player;
   auto& nearby_targets = ldata.nearby_targets;
 
@@ -393,7 +392,7 @@ process_mousewheel(GameState& state, SDL_MouseWheelEvent const& wheel, FrameTime
 
   auto& lm     = state.level_manager;
   auto& ldata  = lm.active().level_data;
-  auto& camera = ldata.camera;
+  auto& camera = state.engine_state.camera;
   if (wheel.y > 0) {
     camera.decrease_zoom(ZOOM_FACTOR);
   }
@@ -472,7 +471,7 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Fra
 
   auto& lm     = state.level_manager;
   auto& ldata  = lm.active().level_data;
-  auto& camera = ldata.camera;
+  auto& camera = es.camera;
   auto& player = ldata.player;
 
   auto constexpr THRESHOLD  = 0.4f;
