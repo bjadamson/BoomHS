@@ -124,7 +124,8 @@ draw_entity_editor(UiDebugState& uistate, LevelData& ldata, EntityRegistry& regi
       auto& player = ldata.player;
       auto& camera = ldata.camera;
 
-      camera.set_target(eid);
+      auto &transform = registry.get<Transform>(eid);
+      camera.set_target(transform);
       player.set_eid(eid);
     }
     auto const eid       = comboselected_to_entity(selected, pairs);

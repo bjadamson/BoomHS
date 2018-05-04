@@ -39,7 +39,7 @@ std::array<ModeNamePair, 3> constexpr CAMERA_MODES = {
 
 class Camera
 {
-  EnttLookup player_lookup_;
+  Transform *target_;
   glm::vec3  forward_, up_;
 
   SphericalCoordinates coordinates_;
@@ -52,15 +52,15 @@ class Camera
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(EnttLookup const&, glm::vec3 const& f, glm::vec3 const& u);
+  Camera(Transform&, glm::vec3 const& f, glm::vec3 const& u);
 
   // public fields
   bool  flip_y      = false;
   bool  rotate_lock = true;
   float rotation_speed;
 
-  Transform&       get_target() { return player_lookup_.lookup<Transform>(); }
-  Transform const& get_target() const { return player_lookup_.lookup<Transform>(); }
+  Transform&       get_target() { return *target_; }
+  Transform const& get_target() const { return *target_; }
 
   auto mode() const { return mode_; }
   void set_mode(CameraMode const m) { mode_ = m; }
@@ -96,7 +96,7 @@ public:
   auto&       ortho_ref() { return ortho_; }
 
   Camera& rotate(float, float);
-  void    set_target(EntityID const eid) { player_lookup_.set_eid(eid); }
+  void    set_target(Transform &);
 };
 
 glm::mat4

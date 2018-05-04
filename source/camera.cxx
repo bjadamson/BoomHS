@@ -47,8 +47,8 @@ mouse_y, 1}, glm::mat4(), transform, viewport);
 namespace boomhs
 {
 
-Camera::Camera(EnttLookup const& player_lookup, glm::vec3 const& forward, glm::vec3 const& up)
-    : player_lookup_(player_lookup)
+Camera::Camera(Transform &target, glm::vec3 const& forward, glm::vec3 const& up)
+    : target_(&target)
     , forward_(forward)
     , up_(up)
     , coordinates_(0.0f, 0.0f, 0.0f)
@@ -56,6 +56,7 @@ Camera::Camera(EnttLookup const& player_lookup, glm::vec3 const& forward, glm::v
     , ortho_({-10, 10, -10, 10, -200, 200})
     , rotation_speed(600.0)
 {
+  assert(nullptr != target_);
 }
 
 void
@@ -111,6 +112,12 @@ Camera::rotate(float const d_theta, float const d_phi)
     up = -Y_UNIT_VECTOR;
   }
   return *this;
+}
+
+void
+Camera::set_target(Transform &target)
+{
+  target_ = &target;
 }
 
 void

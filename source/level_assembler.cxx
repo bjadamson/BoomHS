@@ -35,7 +35,9 @@ assemble(LevelGeneratedData&& gendata, LevelAssets&& assets, EntityRegistry& reg
   auto const  player_eid = find_player(registry);
   EnttLookup  player_lookup{player_eid, registry};
   WorldObject player{player_lookup, FORWARD, UP};
-  Camera      camera(player_lookup, FORWARD, UP);
+
+  auto &transform = registry.get<Transform>(player_eid);
+  Camera      camera(transform, FORWARD, UP);
   {
     SphericalCoordinates sc;
     sc.radius = 3.8f;
