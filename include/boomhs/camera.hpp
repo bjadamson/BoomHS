@@ -37,6 +37,14 @@ using ModeNamePair                                 = std::pair<CameraMode, char 
 std::array<ModeNamePair, 3> constexpr CAMERA_MODES = {
     {{Ortho, "Ortho"}, {Perspective, "Perspective"}, {FPS, "FPS"}}};
 
+glm::mat4
+compute_projectionmatrix(CameraMode, PerspectiveViewport const&,
+    OrthoProjection const&);
+
+glm::mat4
+compute_viewmatrix(CameraMode, glm::vec3 const&, glm::vec3 const&,
+    glm::vec3 const&, glm::vec3 const&);
+
 class Camera
 {
   EnttLookup player_lookup_;
@@ -48,9 +56,6 @@ class Camera
   PerspectiveViewport perspective_;
   OrthoProjection     ortho_;
 
-  Transform&       get_target() { return player_lookup_.lookup<Transform>(); }
-  Transform const& get_target() const { return player_lookup_.lookup<Transform>(); }
-
   void zoom(float);
 
 public:
@@ -61,6 +66,9 @@ public:
   bool  flip_y      = false;
   bool  rotate_lock = true;
   float rotation_speed;
+
+  Transform&       get_target() { return player_lookup_.lookup<Transform>(); }
+  Transform const& get_target() const { return player_lookup_.lookup<Transform>(); }
 
   glm::mat4   projection_matrix() const;
   glm::mat4   view_matrix() const;
