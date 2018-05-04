@@ -176,7 +176,7 @@ Camera::target_position() const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // free functions
 Camera
-make_defaultcamera()
+Camera::make_defaultcamera()
 {
   // camera-look at origin
   // cameraspace "up" is === "up" in worldspace.
@@ -195,8 +195,8 @@ make_defaultcamera()
 }
 
 glm::mat4
-compute_projectionmatrix(CameraMode const mode, PerspectiveViewport const& p,
-                         OrthoProjection const& o)
+Camera::compute_projectionmatrix(CameraMode const mode, PerspectiveViewport const& p,
+                                 OrthoProjection const& o)
 {
   auto const fov = glm::radians(p.field_of_view);
   switch (mode) {
@@ -215,17 +215,8 @@ compute_projectionmatrix(CameraMode const mode, PerspectiveViewport const& p,
 }
 
 glm::mat4
-compute_projectionmatrix(Camera const& camera)
-{
-  auto const  mode        = camera.mode();
-  auto const& perspective = camera.perspective();
-  auto const& ortho       = camera.ortho();
-  return compute_projectionmatrix(mode, perspective, ortho);
-}
-
-glm::mat4
-compute_viewmatrix(CameraMode const mode, glm::vec3 const& eye, glm::vec3 const& center,
-                   glm::vec3 const& up, glm::vec3 const& fps_center)
+Camera::compute_viewmatrix(CameraMode const mode, glm::vec3 const& eye, glm::vec3 const& center,
+                           glm::vec3 const& up, glm::vec3 const& fps_center)
 {
   auto constexpr ZERO = glm::vec3{0, 0, 0};
 
@@ -245,24 +236,6 @@ compute_viewmatrix(CameraMode const mode, glm::vec3 const& eye, glm::vec3 const&
   }
   std::abort();
   return glm::mat4{}; // appease compiler
-}
-
-glm::mat4
-compute_viewmatrix(Camera const& camera)
-{
-  auto const  mode         = camera.mode();
-  auto const& target       = camera.get_target().translation;
-  auto const  position_xyz = camera.world_position();
-  auto const& up           = camera.eye_up();
-  auto const& fps_center   = camera.world_forward() + target;
-
-  return compute_viewmatrix(mode, position_xyz, target, up, fps_center);
-}
-
-glm::mat4
-compute_cameramatrix(Camera const& camera)
-{
-  return compute_projectionmatrix(camera) * compute_viewmatrix(camera);
 }
 
 } // namespace boomhs

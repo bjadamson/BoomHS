@@ -97,25 +97,15 @@ public:
 
   Camera& rotate(float, float);
   void    set_target(Transform&);
+
+  // static fns
+  static Camera make_defaultcamera();
+
+  static glm::mat4
+  compute_projectionmatrix(CameraMode, PerspectiveViewport const&, OrthoProjection const&);
+
+  static glm::mat4 compute_viewmatrix(CameraMode, glm::vec3 const&, glm::vec3 const&,
+                                      glm::vec3 const&, glm::vec3 const&);
 };
-
-Camera
-make_defaultcamera();
-
-glm::mat4
-compute_cameramatrix(Camera const&);
-
-glm::mat4
-compute_projectionmatrix(CameraMode, PerspectiveViewport const&, OrthoProjection const&);
-
-glm::mat4
-compute_projectionmatrix(Camera const&);
-
-glm::mat4
-compute_viewmatrix(Camera const&);
-
-glm::mat4
-compute_viewmatrix(CameraMode, glm::vec3 const&, glm::vec3 const&, glm::vec3 const&,
-                   glm::vec3 const&);
 
 } // namespace boomhs

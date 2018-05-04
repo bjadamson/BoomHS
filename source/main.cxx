@@ -130,7 +130,7 @@ start(stlw::Logger& logger, Engine& engine)
   io.DisplaySize     = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
 
   // Construct game state
-  auto        camera = make_defaultcamera();
+  auto        camera = Camera::make_defaultcamera();
   EngineState es{logger, io, MOVE(camera), dimensions};
   GameState   gs = TRY_MOVEOUT(boomhs::init(engine, es));
 

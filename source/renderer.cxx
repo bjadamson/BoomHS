@@ -1,4 +1,5 @@
 #include <boomhs/billboard.hpp>
+#include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/renderer.hpp>
@@ -138,7 +139,6 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
   auto const& ldata = zs.level_data;
 
   auto&       logger       = es.logger;
-  auto const& camera       = es.camera;
   auto const& global_light = ldata.global_light;
   auto const& player       = ldata.player;
 
@@ -158,7 +158,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
   sp.set_uniform_float1(logger, "u_reflectivity", 1.0f);
 
   // pointlight
-  auto const view_matrix = compute_viewmatrix(camera);
+  auto const view_matrix = rstate.view_matrix();
   {
     auto const inv_viewmatrix = glm::inverse(glm::mat3{view_matrix});
     sp.set_uniform_matrix_4fv(logger, "u_invviewmatrix", inv_viewmatrix);
@@ -194,11 +194,10 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
 }
 
 void
-set_3dmvpmatrix(stlw::Logger& logger, Camera const& camera, glm::mat4 const& model_matrix,
+set_3dmvpmatrix(stlw::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 const& model_matrix,
                 ShaderProgram& sp)
 {
-  auto const camera_matrix = compute_cameramatrix(camera);
-  auto const mvp_matrix    = camera_matrix * model_matrix;
+  auto const mvp_matrix = camera_matrix * model_matrix;
   sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 }
 
@@ -272,9 +271,9 @@ draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const
   }
   set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
                              receives_ambient_light);
-  auto const& ldata  = zs.level_data;
-  auto const& camera = es.camera;
-  set_3dmvpmatrix(logger, camera, model_matrix, sp);
+  auto const& ldata         = zs.level_data;
+  auto const  camera_matrix = rstate.camera_matrix();
+  set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
   draw(rstate, sp, dinfo);
 }
 
@@ -297,9 +296,9 @@ draw_3dlightsource(RenderState& rstate, glm::mat4 const& model_matrix, ShaderPro
   }
 
   if (!sp.is_2d) {
-    auto const& ldata  = zs.level_data;
-    auto const& camera = es.camera;
-    set_3dmvpmatrix(logger, camera, model_matrix, sp);
+    auto const& ldata         = zs.level_data;
+    auto const  camera_matrix = rstate.camera_matrix();
+    set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
   }
 
   draw(rstate, sp, dinfo);
@@ -352,11 +351,10 @@ billboard_cylindrical(float* data)
 }
 
 glm::mat4
-compute_billboarded_viewmodel(Transform const& transform, Camera const& camera,
+compute_billboarded_viewmodel(Transform const& transform, glm::mat4 const& view_matrix,
                               BillboardType const bb_type)
 {
-  auto const viewmatrix = compute_viewmatrix(camera);
-  auto       view_model = viewmatrix * transform.model_matrix();
+  auto view_model = view_matrix * transform.model_matrix();
 
   // Reset the rotation values in order to achieve a billboard effect.
   //
@@ -382,6 +380,48 @@ compute_billboarded_viewmodel(Transform const& transform, Camera const& camera,
 }
 
 } // namespace
+
+namespace boomhs
+{
+
+RenderState::RenderState(Camera const& camera, EngineState& e, ZoneState& z)
+    : camera_(camera)
+    , es(e)
+    , zs(z)
+{
+}
+
+glm::mat4
+RenderState::camera_matrix() const
+{
+  auto const proj = projection_matrix();
+  auto const view = view_matrix();
+  return proj * view;
+}
+
+glm::mat4
+RenderState::projection_matrix() const
+{
+  auto const  mode        = camera_.mode();
+  auto const& perspective = camera_.perspective();
+  auto const& ortho       = camera_.ortho();
+
+  return Camera::compute_projectionmatrix(mode, perspective, ortho);
+}
+
+glm::mat4
+RenderState::view_matrix() const
+{
+  auto const  mode         = camera_.mode();
+  auto const& target       = camera_.get_target().translation;
+  auto const  position_xyz = camera_.world_position();
+  auto const& up           = camera_.eye_up();
+  auto const& fps_center   = camera_.world_forward() + target;
+
+  return Camera::compute_viewmatrix(mode, position_xyz, target, up, fps_center);
+}
+
+} // namespace boomhs
 
 namespace boomhs::render
 {
@@ -465,12 +505,12 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
 
   auto const dinfo = OG::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
 
-  auto const& ldata  = zs.level_data;
-  auto const& camera = es.camera;
+  auto const& ldata = zs.level_data;
 
   Transform transform;
   sp.while_bound(logger, [&]() {
-    set_3dmvpmatrix(logger, camera, transform.model_matrix(), sp);
+    auto const camera_matrix = rstate.camera_matrix();
+    set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
     dinfo.vao().while_bound([&]() { draw(rstate, sp, dinfo); });
   });
@@ -514,8 +554,7 @@ draw_global_axis(RenderState& rstate)
   auto& sp           = sps.ref_sp("3d_pos_color");
   auto  world_arrows = OG::create_axis_arrows(logger, sp);
 
-  auto const& ldata  = zs.level_data;
-  auto const& camera = es.camera;
+  auto const& ldata = zs.level_data;
   Transform   transform;
 
   auto const draw_axis_arrow = [&](auto const& dinfo) {
@@ -523,7 +562,8 @@ draw_global_axis(RenderState& rstate)
   };
 
   sp.while_bound(logger, [&]() {
-    set_3dmvpmatrix(logger, camera, transform.model_matrix(), sp);
+    auto const camera_matrix = rstate.camera_matrix();
+    set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
     // assume for now they all share the same VAO layout
     draw_axis_arrow(world_arrows.x_dinfo);
@@ -550,12 +590,11 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
   Transform transform;
   transform.translation = player_pos;
 
-  auto const& ldata  = zs.level_data;
-  auto const& camera = es.camera;
+  auto const& ldata = zs.level_data;
 
   sp.while_bound(logger, [&]() {
-    set_3dmvpmatrix(logger, camera, transform.model_matrix(), sp);
-    set_3dmvpmatrix(logger, camera, transform.model_matrix(), sp);
+    auto const camera_matrix = rstate.camera_matrix();
+    set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
     // assume for now they all share the same VAO layout
     auto const& vao = axis_arrows.x_dinfo.vao();
@@ -583,7 +622,6 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   auto& sps      = zs.gfx_state.sps;
 
   auto const& ldata  = zs.level_data;
-  auto const& camera = es.camera;
   auto const& player = ldata.player;
 
   auto const draw_fn = [&](auto eid, auto& sn, auto& transform, auto& is_visible, auto&&...) {
@@ -618,18 +656,12 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
         assert(!registry.has<Material>());
 
         if (!sp.is_2d) {
-          set_3dmvpmatrix(logger, camera, model_matrix, sp);
+          auto const camera_matrix = rstate.camera_matrix();
+          set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
         }
         draw(rstate, sp, dinfo);
       });
     });
-  };
-
-  auto const player_drawfn = [&camera, &draw_fn](auto&&... args) {
-    if (CameraMode::FPS == camera.mode()) {
-      return;
-    }
-    draw_fn(FORWARD(args));
   };
 
   auto const draw_torch = [&](auto eid, auto& sn, auto& transform, auto&&... args) {
@@ -658,12 +690,10 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
   auto const draw_orbital_body = [&](auto const eid, auto& sn, auto& transform, auto& isv,
                                      auto& bboard, auto&&... args) {
-    auto& camera = es.camera;
-
     auto const bb_type    = bboard.value;
-    auto const view_model = compute_billboarded_viewmodel(transform, camera, bb_type);
+    auto const view_model = compute_billboarded_viewmodel(transform, rstate.view_matrix(), bb_type);
 
-    auto const proj_matrix = compute_projectionmatrix(camera);
+    auto const proj_matrix = rstate.projection_matrix();
     auto const mvp_matrix  = proj_matrix * view_model;
     auto&      sp          = sps.ref_sp(sn.value);
     sp.while_bound(logger, [&]() { set_modelmatrix(logger, mvp_matrix, sp); });
@@ -680,7 +710,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   registry.view<COMMON, Torch>().each(draw_torch);
   registry.view<COMMON, CubeRenderable>().each(draw_fn);
   registry.view<COMMON, MeshRenderable, NPCData>().each(draw_fn);
-  registry.view<COMMON, MeshRenderable, PlayerData>().each(player_drawfn);
+  registry.view<COMMON, MeshRenderable, PlayerData>().each(draw_fn);
 #undef COMMON
 }
 
@@ -853,7 +883,6 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
   }
 
   auto& logger = rstate.es.logger;
-  auto& camera = es.camera;
   auto& ttable = zs.gfx_state.texture_table;
 
   auto const selected_npc = *selected;
@@ -866,14 +895,11 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
   auto const      v = OF::rectangle_vertices();
   glm::mat4 const view_model =
-      compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
+      compute_billboarded_viewmodel(transform, rstate.view_matrix(), BillboardType::Spherical);
 
-  auto const proj_matrix = compute_projectionmatrix(camera);
+  auto const proj_matrix = rstate.projection_matrix();
 
   auto const draw_reticle = [&]() {
-    glm::mat4 view_model =
-        compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
-
     auto constexpr ROTATE_SPEED = 80.0f;
     float const angle           = ROTATE_SPEED * ft.since_start_seconds();
     auto const  rot             = glm::angleAxis(glm::radians(angle), Z_UNIT_VECTOR);
@@ -988,20 +1014,19 @@ draw_skybox(RenderState& rstate, window::FrameTime const& ft)
     auto& sp = sps.ref_sp(sn.value);
     LOG_TRACE_SPRINTF("drawing skybox with shader: %s", sn.value);
 
-    auto const& ldata  = zs.level_data;
-    auto const& camera = es.camera;
+    auto const& ldata = zs.level_data;
 
     // Create a view matrix that has it's translation components zero'd out.
     //
     // The effect of this is the view matrix contains just the rotation, which is what's desired
     // for rendering the skybox.
-    auto view_matrix  = compute_viewmatrix(camera);
+    auto view_matrix  = rstate.view_matrix();
     view_matrix[3][0] = 0.0f;
     view_matrix[3][1] = 0.0f;
     view_matrix[3][2] = 0.0f;
 
-    auto const proj_matrix   = compute_projectionmatrix(camera);
-    auto const camera_matrix = compute_cameramatrix(camera);
+    auto const proj_matrix   = rstate.projection_matrix();
+    auto const camera_matrix = rstate.camera_matrix();
     auto const mvp_matrix    = camera_matrix * transform.model_matrix();
 
     sp.while_bound(logger, [&]() {
@@ -1046,9 +1071,9 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
       auto const scalevec     = glm::vec3{scale};
       auto const model_matrix = stlw::math::calculate_modelmatrix(tr, rot, scalevec);
 
-      auto const& ldata  = zs.level_data;
-      auto const& camera = es.camera;
-      set_3dmvpmatrix(logger, camera, model_matrix, sp);
+      auto const& ldata         = zs.level_data;
+      auto const  camera_matrix = rstate.camera_matrix();
+      set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
 
       dinfo.vao().while_bound([&]() { draw(rstate, sp, dinfo); });
     });
@@ -1136,11 +1161,11 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
   auto const model_matrix = transform.model_matrix();
 
-  auto const& ldata  = zs.level_data;
-  auto const& camera = es.camera;
+  auto const& ldata = zs.level_data;
 
   sp.while_bound(logger, [&]() {
-    set_3dmvpmatrix(logger, camera, model_matrix, sp);
+    auto const camera_matrix = rstate.camera_matrix();
+    set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
 
     dinfo.vao().while_bound([&]() { draw(rstate, sp, dinfo); });
   });

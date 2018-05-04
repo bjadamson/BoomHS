@@ -409,7 +409,7 @@ render_scene(EngineState& es, LevelManager& lm, stlw::float_generator& rng, Fram
   auto& ldata = zs.level_data;
   render::clear_screen(ldata.fog.color);
 
-  RenderState rstate{es, zs};
+  RenderState rstate{es.camera, es, zs};
 
   if (es.draw_entities) {
     render::draw_skybox(rstate, ft);
@@ -519,7 +519,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
   {
     waterfbos.bind_reflection_fbo();
 
-    RenderState rstate{es, zs};
+    RenderState rstate{es.camera, es, zs};
     render::clear_screen(ldata.fog.color);
 
     // render::draw_water(rstate, registry, ft);
@@ -531,7 +531,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
   {
     waterfbos.bind_refraction_fbo();
 
-    RenderState rstate{es, zs};
+    RenderState rstate{es.camera, es, zs};
     render::clear_screen(ldata.fog.color);
 
     // render::draw_water(rstate, registry, ft);
@@ -542,7 +542,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
   }
 
   render_scene(es, lm, rng, ft, glm::vec4{0, 1, 0, 0.0});
-  RenderState rstate{es, zs};
+  RenderState rstate{es.camera, es, zs};
 
   {
     // Move the rectangle to the top-left corner

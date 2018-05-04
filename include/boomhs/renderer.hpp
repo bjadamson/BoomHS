@@ -24,8 +24,8 @@ struct Dimensions;
 
 namespace boomhs
 {
-class EntityRegistry;
 class Camera;
+class EntityRegistry;
 class HandleManager;
 struct EngineState;
 struct RiverInfo;
@@ -44,10 +44,20 @@ class float_generator;
 namespace boomhs
 {
 
-struct RenderState
+class RenderState
 {
+  Camera const& camera_;
+
+public:
+  NO_COPYMOVE(RenderState);
+  RenderState(Camera const&, EngineState&, ZoneState&);
+
   EngineState& es;
   ZoneState&   zs;
+
+  glm::mat4 camera_matrix() const;
+  glm::mat4 projection_matrix() const;
+  glm::mat4 view_matrix() const;
 };
 
 } // namespace boomhs
