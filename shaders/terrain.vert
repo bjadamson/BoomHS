@@ -16,8 +16,7 @@ uniform mat4 u_mvpmatrix;
 uniform mat3 u_normalmatrix;
 
 uniform float u_uvmodifier;
-
-const vec4 u_clipPlane = vec4(0.0, -1.0, 0.0, 0.2);
+uniform vec4 u_clipPlane;
 
 void main()
 {

@@ -142,7 +142,7 @@ WaterFrameBuffers::reflection_ti() const
 }
 
 TextureInfo const&
-WaterFrameBuffers::refraction_tid() const
+WaterFrameBuffers::refraction_ti() const
 {
   return refraction_tbo_;
 }

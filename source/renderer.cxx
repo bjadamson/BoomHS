@@ -679,7 +679,8 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 }
 
 void
-draw_fbo_testwindow(RenderState& rstate, TextureInfo const& ti)
+draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& scale,
+                    TextureInfo const& ti)
 {
   auto& es     = rstate.es;
   auto& logger = es.logger;
@@ -696,10 +697,8 @@ draw_fbo_testwindow(RenderState& rstate, TextureInfo const& ti)
   DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, ti);
 
   Transform  transform;
-
-  // Move the rectangle to the top-left corner
-  transform.translation = glm::vec3{-0.5f, 0.5f, 0.0f};
-  transform.scale = glm::vec3{0.4f};
+  transform.translation = glm::vec3{pos.x, pos.y, 0.0f};
+  transform.scale       = glm::vec3{scale.x, scale.y, 1.0};
 
   auto const model_matrix = transform.model_matrix();
 
@@ -1052,7 +1051,8 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
 }
 
 void
-draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
+draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
+             glm::vec4 const& cull_plane)
 {
   auto& es     = rstate.es;
   auto& logger = es.logger;
@@ -1089,6 +1089,7 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
     auto& sp = t.shader().get();
     sp.while_bound(logger, [&]() {
       sp.set_uniform_float1(logger, "u_uvmodifier", config.uv_modifier);
+      sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
 
       auto const& dinfo = t.draw_info();
       dinfo.vao().while_bound([&]() {
@@ -1130,12 +1131,14 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
   sp.while_bound(logger, [&]() {
     set_3dmvpmatrix(logger, camera, model_matrix, sp);
+
     dinfo.vao().while_bound([&]() { draw(rstate, sp, dinfo); });
   });
 }
 
 void
-draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
+draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
+           glm::vec4 const& cull_plane)
 {
   auto& es     = rstate.es;
   auto& logger = es.logger;
@@ -1154,6 +1157,7 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
 
     bool constexpr RECEIVES_AMBIENT_LIGHT = true;
     sp.while_bound(logger, [&]() {
+      sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
       vao.while_bound([&]() {
         draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
                          Material{}, registry, RECEIVES_AMBIENT_LIGHT);

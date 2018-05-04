@@ -5,6 +5,7 @@
 #include <opengl/lighting.hpp>
 #include <stlw/log.hpp>
 
+#include <extlibs/glm.hpp>
 #include <vector>
 
 namespace opengl
@@ -70,7 +71,7 @@ void
 draw_arrow_abovetile_and_neighbors(RenderState&, TilePosition const&);
 
 void
-draw_fbo_testwindow(RenderState&, opengl::TextureInfo const&);
+draw_fbo_testwindow(RenderState&, glm::vec2 const&, glm::vec2 const&, opengl::TextureInfo const&);
 
 void
 draw_global_axis(RenderState&);
@@ -97,7 +98,7 @@ void
 draw_stars(RenderState&, window::FrameTime const&);
 
 void
-draw_terrain(RenderState&, EntityRegistry& registry, window::FrameTime const&);
+draw_terrain(RenderState&, EntityRegistry& registry, window::FrameTime const&, glm::vec4 const&);
 
 void
 draw_tilegrid(RenderState&, TiledataState const&, window::FrameTime const&);
@@ -106,6 +107,6 @@ void
 draw_tilegrid(RenderState&, TiledataState const&);
 
 void
-draw_water(RenderState&, EntityRegistry&, window::FrameTime const&);
+draw_water(RenderState&, EntityRegistry&, window::FrameTime const&, glm::vec4 const&);
 
 } // namespace boomhs::render

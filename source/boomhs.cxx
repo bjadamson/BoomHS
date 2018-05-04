@@ -394,7 +394,8 @@ init(Engine& engine, EngineState& engine_state)
 }
 
 void
-render_scene(EngineState &es, LevelManager &lm, stlw::float_generator& rng, FrameTime const& ft)
+render_scene(EngineState &es, LevelManager &lm, stlw::float_generator& rng, FrameTime const& ft,
+    glm::vec4 const& cull_plane)
 {
   auto& zs = lm.active();
   auto& ldata = zs.level_data;
@@ -415,11 +416,11 @@ render_scene(EngineState &es, LevelManager &lm, stlw::float_generator& rng, Fram
 
   auto& registry = zs.registry;
   if (es.draw_water) {
-    render::draw_water(rstate, registry, ft);
+    render::draw_water(rstate, registry, ft, cull_plane);
   }
 
   if (es.draw_terrain) {
-    render::draw_terrain(rstate, registry, ft);
+    render::draw_terrain(rstate, registry, ft, cull_plane);
   }
 
   render::draw_stars(rstate, ft);
@@ -514,18 +515,44 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     render::clear_screen(ldata.fog.color);
 
     //render::draw_water(rstate, registry, ft);
-    render_scene(es, lm, rng, ft);
+    // cull everything ABOVE 0.2
+    render_scene(es, lm, rng, ft, glm::vec4{0, -1, 0, 0.2});
+
+    waterfbos.unbind_all_fbos();
+  }
+  {
+    waterfbos.bind_refraction_fbo();
+
+    RenderState rstate{es, zs};
+    render::clear_screen(ldata.fog.color);
+
+    //render::draw_water(rstate, registry, ft);
+    // omit everything UNDER 0.2
+    render_scene(es, lm, rng, ft, glm::vec4{0, 1, 0, -0.2});
 
     waterfbos.unbind_all_fbos();
   }
 
 
-  render_scene(es, lm, rng, ft);
-
-  auto const TESTID = waterfbos.reflection_ti();
-
+  render_scene(es, lm, rng, ft, glm::vec4{0, 1, 0, 0.0});
   RenderState rstate{es, zs};
-  render::draw_fbo_testwindow(rstate, TESTID);
+
+  {
+    // Move the rectangle to the top-left corner
+    glm::vec2 const pos  {-0.5f, 0.5f};
+    glm::vec2 const scale{0.25f, 0.25f};
+
+    auto const tid = waterfbos.reflection_ti();
+    render::draw_fbo_testwindow(rstate, pos, scale, tid);
+  }
+
+  {
+    glm::vec2 const pos  {0.5f, 0.5f};
+    glm::vec2 const scale{0.25f, 0.25f};
+
+    auto const tid = waterfbos.refraction_ti();
+    render::draw_fbo_testwindow(rstate, pos, scale, tid);
+  }
 }
 
 } // namespace boomhs

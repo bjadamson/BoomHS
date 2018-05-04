@@ -30,7 +30,7 @@ public:
   void unbind_all_fbos();
 
   opengl::TextureInfo const& reflection_ti() const;
-  opengl::TextureInfo const& refraction_tid() const;
+  opengl::TextureInfo const& refraction_ti() const;
   int refraction_depth_tid() const;
 };
 
