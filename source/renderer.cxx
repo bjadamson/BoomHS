@@ -1,5 +1,4 @@
 #include <boomhs/billboard.hpp>
-#include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/renderer.hpp>
@@ -384,8 +383,39 @@ compute_billboarded_viewmodel(Transform const& transform, glm::mat4 const& view_
 namespace boomhs
 {
 
-RenderState::RenderState(Camera const& camera, EngineState& e, ZoneState& z)
-    : camera_(camera)
+///////////////////////////////////////////////////////////////////////////////////////////////
+// RenderMatrices
+
+
+RenderMatrices
+RenderMatrices::from_camera_withposition(Camera const& camera, glm::vec3 const& custom_camera_pos)
+{
+  auto const  mode        = camera.mode();
+  auto const& perspective = camera.perspective();
+  auto const& ortho       = camera.ortho();
+
+  auto const proj = Camera::compute_projectionmatrix(mode, perspective, ortho);
+
+  auto const& target       = camera.get_target().translation;
+  auto const  position_xyz = custom_camera_pos;
+  auto const& up           = camera.eye_up();
+  auto const& fps_center   = camera.world_forward() + target;
+
+  auto const view = Camera::compute_viewmatrix(mode, position_xyz, target, up, fps_center);
+
+  return RenderMatrices{proj, view};
+}
+
+RenderMatrices
+RenderMatrices::from_camera(Camera const& camera)
+{
+  return from_camera_withposition(camera, camera.world_position());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// RenderState
+RenderState::RenderState(RenderMatrices const& rmatrices, EngineState& e, ZoneState& z)
+    : rmatrices_(rmatrices)
     , es(e)
     , zs(z)
 {
@@ -402,23 +432,13 @@ RenderState::camera_matrix() const
 glm::mat4
 RenderState::projection_matrix() const
 {
-  auto const  mode        = camera_.mode();
-  auto const& perspective = camera_.perspective();
-  auto const& ortho       = camera_.ortho();
-
-  return Camera::compute_projectionmatrix(mode, perspective, ortho);
+  return rmatrices_.projection;
 }
 
 glm::mat4
 RenderState::view_matrix() const
 {
-  auto const  mode         = camera_.mode();
-  auto const& target       = camera_.get_target().translation;
-  auto const  position_xyz = camera_.world_position();
-  auto const& up           = camera_.eye_up();
-  auto const& fps_center   = camera_.world_forward() + target;
-
-  return Camera::compute_viewmatrix(mode, position_xyz, target, up, fps_center);
+  return rmatrices_.view;
 }
 
 } // namespace boomhs

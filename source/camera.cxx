@@ -218,7 +218,7 @@ glm::mat4
 Camera::compute_viewmatrix(CameraMode const mode, glm::vec3 const& eye, glm::vec3 const& center,
                            glm::vec3 const& up, glm::vec3 const& fps_center)
 {
-  auto constexpr ZERO = glm::vec3{0, 0, 0};
+  auto constexpr ZERO = glm::vec3{0};
 
   switch (mode) {
   case Ortho: {

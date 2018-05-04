@@ -44,13 +44,25 @@ class float_generator;
 namespace boomhs
 {
 
+struct RenderMatrices
+{
+  glm::mat4 const projection;
+  glm::mat4 const view;
+
+  static RenderMatrices
+  from_camera_withposition(Camera const&, glm::vec3 const&);
+
+  static RenderMatrices
+  from_camera(Camera const&);
+};
+
 class RenderState
 {
-  Camera const& camera_;
+  RenderMatrices const rmatrices_;
 
 public:
   NO_COPYMOVE(RenderState);
-  RenderState(Camera const&, EngineState&, ZoneState&);
+  RenderState(RenderMatrices const&, EngineState&, ZoneState&);
 
   EngineState& es;
   ZoneState&   zs;

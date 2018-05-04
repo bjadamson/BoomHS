@@ -402,14 +402,13 @@ init(Engine& engine, EngineState& engine_state)
 }
 
 void
-render_scene(EngineState& es, LevelManager& lm, stlw::float_generator& rng, FrameTime const& ft,
+render_scene(RenderState &rstate, LevelManager &lm, stlw::float_generator& rng, FrameTime const& ft,
              glm::vec4 const& cull_plane)
 {
-  auto& zs    = lm.active();
+  auto &es = rstate.es;
+  auto &zs = rstate.zs;
   auto& ldata = zs.level_data;
   render::clear_screen(ldata.fog.color);
-
-  RenderState rstate{es.camera, es, zs};
 
   if (es.draw_entities) {
     render::draw_skybox(rstate, ft);
@@ -516,34 +515,51 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
   static WaterFrameBuffers waterfbos;
 
   // Render the scene to the reflection FBO
+  float constexpr CULL_CUTOFF_HEIGHT = 0.4f;
+  glm::vec4 const ABOVE_VECTOR{0, -1, 0, CULL_CUTOFF_HEIGHT};
+  glm::vec4 const BENEATH_VECTOR{0, 1, 0, -CULL_CUTOFF_HEIGHT};
+
+  // Render the scene with no culling (setting it zero disables culling mathematically)
+  glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
+
+  auto const& fog_color = ldata.fog.color;
+  auto &camera = es.camera;
   {
     waterfbos.bind_reflection_fbo();
 
-    RenderState rstate{es.camera, es, zs};
-    render::clear_screen(ldata.fog.color);
+    // Compute the camera position beneath the water for capturing the reflective image the camera
+    // will see.
+    //
+    // By inverting the camera's Y position before computing the view matrices, we can render the
+    // world as if the camera was beneath the water's surfac. This is how computing the reflection
+    // texture works.
+    glm::vec3 camera_pos = camera.world_position();
+    camera_pos.y = -camera_pos.y;
 
-    // render::draw_water(rstate, registry, ft);
-    // cull everything ABOVE 0.2
-    render_scene(es, lm, rng, ft, glm::vec4{0, -1, 0, 0.2});
+    auto const reflect_rmatrices = RenderMatrices::from_camera_withposition(camera, camera_pos);
+    RenderState rstate{reflect_rmatrices, es, zs};
+    render::clear_screen(fog_color);
+
+    //render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
+    render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
 
     waterfbos.unbind_all_fbos();
   }
+
+  auto const rmatrices = RenderMatrices::from_camera(camera);
+  RenderState rstate{rmatrices, es, zs};
   {
     waterfbos.bind_refraction_fbo();
 
-    RenderState rstate{es.camera, es, zs};
-    render::clear_screen(ldata.fog.color);
+    render::clear_screen(fog_color);
 
     // render::draw_water(rstate, registry, ft);
-    // omit everything UNDER 0.2
-    render_scene(es, lm, rng, ft, glm::vec4{0, 1, 0, -0.2});
+    render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
 
     waterfbos.unbind_all_fbos();
   }
 
-  render_scene(es, lm, rng, ft, glm::vec4{0, 1, 0, 0.0});
-  RenderState rstate{es.camera, es, zs};
-
+  render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
   {
     // Move the rectangle to the top-left corner
     glm::vec2 const pos{-0.5f, 0.5f};
