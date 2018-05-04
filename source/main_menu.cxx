@@ -1,3 +1,4 @@
+#include <boomhs/camera.hpp>
 #include <boomhs/main_menu.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
@@ -92,7 +93,7 @@ draw(EngineState& es, ImVec2 const& size)
 }
 
 void
-process_event(GameState& state, SDL_Event& event, FrameTime const& ft)
+process_event(GameState& state, SDL_Event& event, Camera& camera, FrameTime const& ft)
 {
   auto& es = state.engine_state;
   auto& ui = es.ui_state;

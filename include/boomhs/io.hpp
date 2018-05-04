@@ -9,14 +9,14 @@ class SDLControllers;
 
 namespace boomhs
 {
-
+class Camera;
 struct GameState;
 
 struct IO
 {
-  static void process(GameState&, window::SDLControllers const&, window::FrameTime const&);
+  static void process(GameState&, window::SDLControllers const&, Camera&, window::FrameTime const&);
 
-  static void process_event(GameState&, SDL_Event&, window::FrameTime const&);
+  static void process_event(GameState&, SDL_Event&, Camera&, window::FrameTime const&);
 };
 
 } // namespace boomhs

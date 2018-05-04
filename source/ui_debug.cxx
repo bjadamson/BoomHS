@@ -1,3 +1,4 @@
+#include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/orbital_body.hpp>
@@ -113,7 +114,7 @@ namespace
 {
 
 void
-draw_entity_editor(EngineState& es, LevelData& ldata, EntityRegistry& registry)
+draw_entity_editor(EngineState& es, LevelData& ldata, EntityRegistry& registry, Camera& camera)
 {
   auto&      uistate  = es.ui_state.debug;
   auto&      selected = uistate.selected_entity;
@@ -123,7 +124,6 @@ draw_entity_editor(EngineState& es, LevelData& ldata, EntityRegistry& registry)
       auto const eid = comboselected_to_entity(selected, pairs);
 
       auto& player = ldata.player;
-      auto& camera = es.camera;
 
       auto& transform = registry.get<Transform>(eid);
       camera.set_target(transform);
@@ -745,7 +745,8 @@ namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::FrameTime const& ft)
+draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camera,
+     window::FrameTime const& ft)
 {
   auto& uistate        = es.ui_state.debug;
   auto& tilegrid_state = es.tilegrid_state;
@@ -755,13 +756,13 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, window::Frame
   auto& ldata          = zs.level_data;
 
   if (uistate.show_entitywindow) {
-    draw_entity_editor(es, ldata, registry);
+    draw_entity_editor(es, ldata, registry, camera);
   }
   if (uistate.show_time_window) {
     draw_time_editor(es.time, uistate);
   }
   if (uistate.show_camerawindow) {
-    draw_camera_window(es.camera, ldata);
+    draw_camera_window(camera, ldata);
   }
   if (uistate.show_mousewindow) {
     draw_mouse_window(es.mouse_state);

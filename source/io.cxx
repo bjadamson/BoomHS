@@ -178,7 +178,8 @@ try_pickup_nearby_item(GameState& state, FrameTime const& ft)
 }
 
 void
-process_mousemotion(GameState& state, SDL_MouseMotionEvent const& motion, FrameTime const& ft)
+process_mousemotion(GameState& state, SDL_MouseMotionEvent const& motion, Camera& camera,
+                    FrameTime const& ft)
 {
   auto& es     = state.engine_state;
   auto& logger = es.logger;
@@ -189,7 +190,6 @@ process_mousemotion(GameState& state, SDL_MouseMotionEvent const& motion, FrameT
   auto& lm     = state.level_manager;
   auto& ldata  = lm.active().level_data;
   auto& player = ldata.player;
-  auto& camera = es.camera;
 
   auto const xrel = motion.xrel;
   auto const yrel = motion.yrel;
@@ -215,14 +215,14 @@ process_mousemotion(GameState& state, SDL_MouseMotionEvent const& motion, FrameT
 }
 
 void
-process_mousebutton_down(GameState& state, SDL_MouseButtonEvent const& event, FrameTime const& ft)
+process_mousebutton_down(GameState& state, SDL_MouseButtonEvent const& event, Camera& camera,
+                         FrameTime const& ft)
 {
   auto& es     = state.engine_state;
   auto& logger = es.logger;
   auto& ms     = es.mouse_state;
 
-  auto& zs     = state.level_manager.active();
-  auto& camera = es.camera;
+  auto& zs = state.level_manager.active();
 
   auto const& button = event.button;
   if (button == SDL_BUTTON_LEFT) {
@@ -244,7 +244,8 @@ process_mousebutton_down(GameState& state, SDL_MouseButtonEvent const& event, Fr
 }
 
 void
-process_mousebutton_up(GameState& state, SDL_MouseButtonEvent const& event, FrameTime const& ft)
+process_mousebutton_up(GameState& state, SDL_MouseButtonEvent const& event, Camera& camera,
+                       FrameTime const& ft)
 {
   auto& es = state.engine_state;
   auto& ms = es.mouse_state;
@@ -259,18 +260,17 @@ process_mousebutton_up(GameState& state, SDL_MouseButtonEvent const& event, Fram
 }
 
 void
-process_keyup(GameState& state, SDL_Event const& event, FrameTime const& ft)
+process_keyup(GameState& state, SDL_Event const& event, Camera& camera, FrameTime const& ft)
 {
 }
 
 void
-process_keydown(GameState& state, SDL_Event const& event, FrameTime const& ft)
+process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameTime const& ft)
 {
   auto& es     = state.engine_state;
   auto& logger = es.logger;
   auto& ui     = es.ui_state;
   auto& ts     = es.tilegrid_state;
-  auto& camera = es.camera;
 
   auto& lm             = state.level_manager;
   auto& active         = lm.active();
@@ -385,14 +385,14 @@ process_keydown(GameState& state, SDL_Event const& event, FrameTime const& ft)
 }
 
 void
-process_mousewheel(GameState& state, SDL_MouseWheelEvent const& wheel, FrameTime const& ft)
+process_mousewheel(GameState& state, SDL_MouseWheelEvent const& wheel, Camera& camera,
+                   FrameTime const& ft)
 {
   auto& logger = state.engine_state.logger;
   LOG_TRACE("mouse wheel event detected.");
 
-  auto& lm     = state.level_manager;
-  auto& ldata  = lm.active().level_data;
-  auto& camera = state.engine_state.camera;
+  auto& lm    = state.level_manager;
+  auto& ldata = lm.active().level_data;
   if (wheel.y > 0) {
     camera.decrease_zoom(ZOOM_FACTOR);
   }
@@ -402,7 +402,7 @@ process_mousewheel(GameState& state, SDL_MouseWheelEvent const& wheel, FrameTime
 }
 
 void
-process_mousestate(GameState& state, FrameTime const& ft)
+process_mousestate(GameState& state, Camera& camera, FrameTime const& ft)
 {
   auto& es = state.engine_state;
   auto& ms = es.mouse_state;
@@ -417,7 +417,7 @@ process_mousestate(GameState& state, FrameTime const& ft)
 }
 
 void
-process_keystate(GameState& state, FrameTime const& ft)
+process_keystate(GameState& state, Camera& camera, FrameTime const& ft)
 {
   // continual keypress responses procesed here
   uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
@@ -450,7 +450,8 @@ process_keystate(GameState& state, FrameTime const& ft)
 }
 
 void
-process_controllerstate(GameState& state, SDLControllers const& controllers, FrameTime const& ft)
+process_controllerstate(GameState& state, SDLControllers const& controllers, Camera& camera,
+                        FrameTime const& ft)
 {
   auto& es     = state.engine_state;
   auto& logger = es.logger;
@@ -471,7 +472,6 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Fra
 
   auto& lm     = state.level_manager;
   auto& ldata  = lm.active().level_data;
-  auto& camera = es.camera;
   auto& player = ldata.player;
 
   auto constexpr THRESHOLD  = 0.4f;
@@ -585,7 +585,7 @@ namespace boomhs
 {
 
 void
-IO::process_event(GameState& state, SDL_Event& event, FrameTime const& ft)
+IO::process_event(GameState& state, SDL_Event& event, Camera& camera, FrameTime const& ft)
 {
   auto& es     = state.engine_state;
   auto& logger = es.logger;
@@ -610,32 +610,33 @@ IO::process_event(GameState& state, SDL_Event& event, FrameTime const& ft)
 
   switch (event.type) {
   case SDL_MOUSEBUTTONDOWN:
-    process_mousebutton_down(state, event.button, ft);
+    process_mousebutton_down(state, event.button, camera, ft);
     break;
   case SDL_MOUSEBUTTONUP:
-    process_mousebutton_up(state, event.button, ft);
+    process_mousebutton_up(state, event.button, camera, ft);
     break;
   case SDL_MOUSEMOTION:
-    process_mousemotion(state, event.motion, ft);
+    process_mousemotion(state, event.motion, camera, ft);
     break;
   case SDL_MOUSEWHEEL:
-    process_mousewheel(state, event.wheel, ft);
+    process_mousewheel(state, event.wheel, camera, ft);
     break;
   case SDL_KEYDOWN:
-    process_keydown(state, event, ft);
+    process_keydown(state, event, camera, ft);
     break;
   case SDL_KEYUP:
-    process_keyup(state, event, ft);
+    process_keyup(state, event, camera, ft);
     break;
   }
 }
 
 void
-IO::process(GameState& state, SDLControllers const& controllers, FrameTime const& ft)
+IO::process(GameState& state, SDLControllers const& controllers, Camera& camera,
+            FrameTime const& ft)
 {
-  process_mousestate(state, ft);
-  process_keystate(state, ft);
-  process_controllerstate(state, controllers, ft);
+  process_mousestate(state, camera, ft);
+  process_keystate(state, camera, ft);
+  process_controllerstate(state, controllers, camera, ft);
 }
 
 } // namespace boomhs

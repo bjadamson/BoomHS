@@ -10,11 +10,10 @@ using namespace window;
 namespace boomhs
 {
 
-EngineState::EngineState(stlw::Logger& l, ImGuiIO& i, Camera&& cam, window::Dimensions const& d)
+EngineState::EngineState(stlw::Logger& l, ImGuiIO& i, window::Dimensions const& d)
     : logger(l)
     , imgui(i)
     , dimensions(d)
-    , camera(MOVE(cam))
     , player_collision(false)
     , mariolike_edges(false)
     , draw_imguimetrics(false)

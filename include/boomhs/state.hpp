@@ -1,5 +1,4 @@
 #pragma once
-#include <boomhs/camera.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/time.hpp>
 #include <boomhs/ui_state.hpp>
@@ -65,7 +64,6 @@ struct EngineState
   ImGuiIO&                 imgui;
   window::Dimensions const dimensions;
   Time                     time;
-  Camera                   camera;
 
   bool quit           = false;
   bool game_running   = false;
@@ -97,7 +95,7 @@ struct EngineState
 
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);
-  EngineState(stlw::Logger&, ImGuiIO&, Camera&&, window::Dimensions const&);
+  EngineState(stlw::Logger&, ImGuiIO&, window::Dimensions const&);
 };
 
 struct GameState

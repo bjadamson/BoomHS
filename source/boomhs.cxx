@@ -1,4 +1,5 @@
 #include <boomhs/boomhs.hpp>
+#include <boomhs/camera.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/io.hpp>
@@ -348,7 +349,7 @@ namespace boomhs
 {
 
 Result<GameState, std::string>
-init(Engine& engine, EngineState& engine_state)
+init(Engine& engine, EngineState& engine_state, Camera& camera)
 {
   glEnable(GL_CLIP_DISTANCE0);
 
@@ -361,7 +362,7 @@ init(Engine& engine, EngineState& engine_state)
 
   auto const player_eid = find_player(engine.registries[0]);
   auto&      transform  = engine.registries[0].get<Transform>(player_eid);
-  es.camera.set_target(transform);
+  camera.set_target(transform);
 
   auto& lm        = state.level_manager;
   auto& zs        = lm.active();
@@ -402,11 +403,11 @@ init(Engine& engine, EngineState& engine_state)
 }
 
 void
-render_scene(RenderState &rstate, LevelManager &lm, stlw::float_generator& rng, FrameTime const& ft,
+render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, FrameTime const& ft,
              glm::vec4 const& cull_plane)
 {
-  auto &es = rstate.es;
-  auto &zs = rstate.zs;
+  auto& es    = rstate.es;
+  auto& zs    = rstate.zs;
   auto& ldata = zs.level_data;
   render::clear_screen(ldata.fog.color);
 
@@ -468,7 +469,8 @@ render_scene(RenderState &rstate, LevelManager &lm, stlw::float_generator& rng, 
 }
 
 void
-game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTime const& ft)
+game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
+          FrameTime const& ft)
 {
   auto& es = state.engine_state;
   es.time.update(ft.since_start_seconds());
@@ -481,7 +483,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
   {
     auto& zs       = lm.active();
     auto& registry = zs.registry;
-    move_betweentilegrids_ifonstairs(logger, es.camera, tilegrid_state, lm);
+    move_betweentilegrids_ifonstairs(logger, camera, tilegrid_state, lm);
   }
 
   // Must recalculate zs and registry, possibly changed since call to move_between()
@@ -523,7 +525,6 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
   glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
 
   auto const& fog_color = ldata.fog.color;
-  auto &camera = es.camera;
   {
     waterfbos.bind_reflection_fbo();
 
@@ -534,19 +535,19 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     // world as if the camera was beneath the water's surfac. This is how computing the reflection
     // texture works.
     glm::vec3 camera_pos = camera.world_position();
-    camera_pos.y = -camera_pos.y;
+    camera_pos.y         = -camera_pos.y;
 
-    auto const reflect_rmatrices = RenderMatrices::from_camera_withposition(camera, camera_pos);
+    auto const  reflect_rmatrices = RenderMatrices::from_camera_withposition(camera, camera_pos);
     RenderState rstate{reflect_rmatrices, es, zs};
     render::clear_screen(fog_color);
 
-    //render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
+    // render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
     render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
 
     waterfbos.unbind_all_fbos();
   }
 
-  auto const rmatrices = RenderMatrices::from_camera(camera);
+  auto const  rmatrices = RenderMatrices::from_camera(camera);
   RenderState rstate{rmatrices, es, zs};
   {
     waterfbos.bind_refraction_fbo();

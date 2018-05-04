@@ -49,11 +49,9 @@ struct RenderMatrices
   glm::mat4 const projection;
   glm::mat4 const view;
 
-  static RenderMatrices
-  from_camera_withposition(Camera const&, glm::vec3 const&);
+  static RenderMatrices from_camera_withposition(Camera const&, glm::vec3 const&);
 
-  static RenderMatrices
-  from_camera(Camera const&);
+  static RenderMatrices from_camera(Camera const&);
 };
 
 class RenderState

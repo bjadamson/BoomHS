@@ -1,4 +1,5 @@
 #include <boomhs/billboard.hpp>
+#include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/renderer.hpp>
@@ -385,7 +386,6 @@ namespace boomhs
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // RenderMatrices
-
 
 RenderMatrices
 RenderMatrices::from_camera_withposition(Camera const& camera, glm::vec3 const& custom_camera_pos)

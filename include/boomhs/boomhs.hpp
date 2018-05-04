@@ -16,11 +16,12 @@ class float_generator;
 
 namespace boomhs
 {
+class Camera;
 
 Result<GameState, std::string>
-init(Engine&, EngineState&);
+init(Engine&, EngineState&, Camera&);
 
 void
-game_loop(Engine&, GameState&, stlw::float_generator&, window::FrameTime const&);
+game_loop(Engine&, GameState&, stlw::float_generator&, Camera&, window::FrameTime const&);
 
 } // namespace boomhs

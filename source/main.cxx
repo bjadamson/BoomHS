@@ -1,4 +1,5 @@
 #include <boomhs/boomhs.hpp>
+#include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/main_menu.hpp>
@@ -36,17 +37,18 @@ is_quit_event(SDL_Event& event)
 
 template <typename FN>
 void
-loop_events(GameState& state, SDL_Event& event, FrameTime const& ft, FN const& fn)
+loop_events(GameState& state, SDL_Event& event, Camera& camera, FrameTime const& ft, FN const& fn)
 {
   auto& es = state.engine_state;
   while ((!es.quit) && (0 != SDL_PollEvent(&event))) {
     ImGui_ImplSdlGL3_ProcessEvent(&event);
-    fn(state, event, ft);
+    fn(state, event, camera, ft);
   }
 }
 
 void
-loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTime const& ft)
+loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
+     FrameTime const& ft)
 {
   auto& es     = state.engine_state;
   auto& logger = es.logger;
@@ -58,7 +60,7 @@ loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTime con
   auto const& event_fn = es.show_main_menu ? &main_menu::process_event : &IO::process_event;
 
   SDL_Event event;
-  loop_events(state, event, ft, event_fn);
+  loop_events(state, event, camera, ft, event_fn);
   es.quit |= is_quit_event(event);
 
   auto& io = es.imgui;
@@ -73,13 +75,13 @@ loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTime con
     // Disable keyboard shortcuts
     io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
 
-    IO::process(state, engine.controllers, ft);
-    boomhs::game_loop(engine, state, rng, ft);
+    IO::process(state, engine.controllers, camera, ft);
+    boomhs::game_loop(engine, state, rng, camera, ft);
   }
   auto& ui_state = es.ui_state;
   if (ui_state.draw_debug_ui) {
     auto& lm = state.level_manager;
-    ui_debug::draw(es, lm, window, ft);
+    ui_debug::draw(es, lm, window, camera, ft);
   }
 
   // Render Imgui UI
@@ -91,7 +93,7 @@ loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTime con
 }
 
 void
-timed_game_loop(Engine& engine, GameState& state)
+timed_game_loop(Engine& engine, GameState& state, Camera& camera)
 {
   window::Clock         clock;
   window::FrameCounter  counter;
@@ -100,7 +102,7 @@ timed_game_loop(Engine& engine, GameState& state)
   auto& logger = state.engine_state.logger;
   while (!state.engine_state.quit) {
     auto const ft = clock.frame_time();
-    loop(engine, state, rng, ft);
+    loop(engine, state, rng, camera, ft);
     clock.update();
     counter.update(logger, clock);
   }
@@ -131,11 +133,11 @@ start(stlw::Logger& logger, Engine& engine)
 
   // Construct game state
   auto        camera = Camera::make_defaultcamera();
-  EngineState es{logger, io, MOVE(camera), dimensions};
-  GameState   gs = TRY_MOVEOUT(boomhs::init(engine, es));
+  EngineState es{logger, io, dimensions};
+  GameState   gs = TRY_MOVEOUT(boomhs::init(engine, es, camera));
 
   // Start game in a timed loop
-  timed_game_loop(engine, gs);
+  timed_game_loop(engine, gs, camera);
 
   // Game has finished
   LOG_TRACE("game loop finished.");
