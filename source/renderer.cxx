@@ -1151,6 +1151,10 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     tr.x     = pos.x;
     tr.z     = pos.y;
 
+    // hack
+    tr.y = 0.19999f;//pos.y;
+    assert(tr.y < 2.0f);
+
     auto&       sp    = winfo.shader;
     auto const& dinfo = winfo.dinfo;
     auto const& vao   = dinfo.vao();
