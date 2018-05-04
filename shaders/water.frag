@@ -2,6 +2,7 @@ in vec4 v_position;
 in vec3 v_surfacenormal;
 in vec2 v_uv;
 in float v_visibility;
+in float clip_distance;
 
 uniform sampler2D u_sampler;
 
@@ -22,6 +23,8 @@ out vec4 fragment_color;
 
 void main()
 {
+  clip_check(clip_distance);
+
   vec3 ambient = u_ambient.color * u_material.ambient;
 
   vec3 frag_world_pos = (u_modelmatrix * v_position).xyz;

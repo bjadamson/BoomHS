@@ -346,6 +346,8 @@ namespace boomhs
 Result<GameState, std::string>
 init(Engine& engine, EngineState& engine_state)
 {
+  glEnable(GL_CLIP_DISTANCE0);
+
   ZoneStates zss =
       TRY_MOVEOUT(LevelAssembler::assemble_levels(engine_state.logger, engine.registries));
   GameState state{engine_state, LevelManager{MOVE(zss)}};
@@ -433,9 +435,6 @@ render_scene(EngineState &es, LevelManager &lm, stlw::float_generator& rng, Fram
     auto const  tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
     render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
   }
-  //if (es.draw_fbo_testwindow) {
-    //render::draw_fbo_testwindow(rstate, );
-  //}
   if (es.show_global_axis) {
     render::draw_global_axis(rstate);
   }
@@ -504,18 +503,28 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     update_torchflicker(ldata, registry, rng, ft);
   }
 
-  WaterFrameBuffers waterfbos;
+  // TODO: Move out into state somewhere.
+  static WaterFrameBuffers waterfbos;
 
   // Render the scene to the reflection FBO
-  waterfbos.bind_reflection_fbo();
-  render_scene(es, lm, rng, ft);
-  waterfbos.unbind_all_fbos();
+  {
+    waterfbos.bind_reflection_fbo();
+
+    RenderState rstate{es, zs};
+    render::clear_screen(ldata.fog.color);
+
+    //render::draw_water(rstate, registry, ft);
+    render_scene(es, lm, rng, ft);
+
+    waterfbos.unbind_all_fbos();
+  }
 
 
   render_scene(es, lm, rng, ft);
-  RenderState rstate{es, zs};
 
   auto const TESTID = waterfbos.reflection_ti();
+
+  RenderState rstate{es, zs};
   render::draw_fbo_testwindow(rstate, TESTID);
 }
 

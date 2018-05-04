@@ -135,24 +135,22 @@ WaterFrameBuffers::unbind_all_fbos()
   glViewport(0, 0, 1024, 768);
 }
 
-TextureInfo
+TextureInfo const&
 WaterFrameBuffers::reflection_ti() const
 {
   return reflection_tbo_;
 }
 
-/*
-int
-WaterFrameBuffers::getRefractionTexture()
+TextureInfo const&
+WaterFrameBuffers::refraction_tid() const
 {
   return refraction_tbo_;
 }
 
 int
-WaterFrameBuffers::getRefractionDepthTexture()
+WaterFrameBuffers::refraction_depth_tid() const
 {
   return refraction_dbo_;
 }
-*/
 
 } // ns boomhs

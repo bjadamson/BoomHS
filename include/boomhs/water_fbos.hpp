@@ -29,9 +29,9 @@ public:
   void bind_refraction_fbo();
   void unbind_all_fbos();
 
-  opengl::TextureInfo reflection_ti() const;
-  //int refraction_tid() const;
-  //int refraction_depth_tid() const;
+  opengl::TextureInfo const& reflection_ti() const;
+  opengl::TextureInfo const& refraction_tid() const;
+  int refraction_depth_tid() const;
 };
 
 } // ns boomhs

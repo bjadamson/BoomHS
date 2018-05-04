@@ -113,4 +113,12 @@ calc_pointlights(PointLight pointlights[MAX_NUM_POINTLIGHTS], mat4 modelmatrix, 
   return color;
 }
 
+void
+clip_check(float clip_distance)
+{
+  if (clip_distance < 0.0) {
+    discard;
+  }
+}
+
 

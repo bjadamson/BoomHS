@@ -696,7 +696,10 @@ draw_fbo_testwindow(RenderState& rstate, TextureInfo const& ti)
   DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, ti);
 
   Transform  transform;
-  transform.scale = glm::vec3{0.8f};
+
+  // Move the rectangle to the top-left corner
+  transform.translation = glm::vec3{-0.5f, 0.5f, 0.0f};
+  transform.scale = glm::vec3{0.4f};
 
   auto const model_matrix = transform.model_matrix();
 
@@ -1161,6 +1164,7 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft)
   auto&       zs    = rstate.zs;
   auto const& ldata = zs.level_data;
   LOG_TRACE("Rendering water");
+
   render(ldata.water());
   LOG_TRACE("Finished rendering water");
 }
