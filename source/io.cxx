@@ -342,44 +342,6 @@ process_keydown(GameState& state, SDL_Event const& event, FrameTime const& ft)
     // et.scale_entities(sf(SCALE_FACTOR));
     break;
   case SDLK_KP_MINUS:
-    /*
-    case SDLK_p:
-      {
-        // 1) Convert mouse location to
-        // 3d normalised device coordinates
-        int const mouse_x = es.mouse_data.current.x, mouse_y = es.mouse_data.current.y;
-        auto const width = es.dimensions.w, height = es.dimensions.h;
-        float const x = (2.0f * mouse_x) / width - 1.0f;
-        float const y = 1.0f - (2.0f * mouse_y) / height;
-        float const z = 1.0f;
-        glm::vec3 const ray_nds{x, y, z};
-
-        // homongonize coordinates
-        glm::vec4 const ray_clip{ray_nds.x, ray_nds.y, -1.0, 1.0};
-
-        //auto &a = camera.perspective_ref();
-        //glm::vec4 ray_eye = perspectiveInverse(a.field_of_view, a.viewport_aspect_ratio,
-    a.near_plane, a.far_plane) * ray_clip;
-        //ray_eye.z = -1.0f;
-        //ray_eye.w = 0.0f;
-
-        //glm::vec3 const ray_wor = glm::normalize(glm::vec3{glm::inverse(camera.view_matrix()) *
-    ray_eye});
-
-        //glm::vec3 const ray_dir = ray_eye;
-        //glm::vec3 const ray_origin = camera.world_position();
-        //glm::vec3 const plane_origin{0, 0, 0};
-        //glm::vec3 const plane_normal{0, -1, 0};
-
-        //float distance = 0.0f;
-        //bool intersects = glm::intersectRayPlane(ray_origin, ray_dir, plane_origin,
-    plane_normal, distance);
-
-        auto const ray = calculate_mouse_worldpos(camera, player, mouse_x, mouse_y,
-    es.dimensions);
-      }
-      break;
-    */
     // z-rotation
     break;
   case SDLK_j: {

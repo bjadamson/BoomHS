@@ -394,10 +394,10 @@ init(Engine& engine, EngineState& engine_state)
 }
 
 void
-render_scene(EngineState &es, LevelManager &lm, stlw::float_generator& rng, FrameTime const& ft,
-    glm::vec4 const& cull_plane)
+render_scene(EngineState& es, LevelManager& lm, stlw::float_generator& rng, FrameTime const& ft,
+             glm::vec4 const& cull_plane)
 {
-  auto& zs = lm.active();
+  auto& zs    = lm.active();
   auto& ldata = zs.level_data;
   render::clear_screen(ldata.fog.color);
 
@@ -514,7 +514,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     RenderState rstate{es, zs};
     render::clear_screen(ldata.fog.color);
 
-    //render::draw_water(rstate, registry, ft);
+    // render::draw_water(rstate, registry, ft);
     // cull everything ABOVE 0.2
     render_scene(es, lm, rng, ft, glm::vec4{0, -1, 0, 0.2});
 
@@ -526,20 +526,19 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
     RenderState rstate{es, zs};
     render::clear_screen(ldata.fog.color);
 
-    //render::draw_water(rstate, registry, ft);
+    // render::draw_water(rstate, registry, ft);
     // omit everything UNDER 0.2
     render_scene(es, lm, rng, ft, glm::vec4{0, 1, 0, -0.2});
 
     waterfbos.unbind_all_fbos();
   }
 
-
   render_scene(es, lm, rng, ft, glm::vec4{0, 1, 0, 0.0});
   RenderState rstate{es, zs};
 
   {
     // Move the rectangle to the top-left corner
-    glm::vec2 const pos  {-0.5f, 0.5f};
+    glm::vec2 const pos{-0.5f, 0.5f};
     glm::vec2 const scale{0.25f, 0.25f};
 
     auto const tid = waterfbos.reflection_ti();
@@ -547,7 +546,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, FrameTim
   }
 
   {
-    glm::vec2 const pos  {0.5f, 0.5f};
+    glm::vec2 const pos{0.5f, 0.5f};
     glm::vec2 const scale{0.25f, 0.25f};
 
     auto const tid = waterfbos.refraction_ti();

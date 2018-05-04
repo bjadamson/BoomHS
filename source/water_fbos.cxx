@@ -1,6 +1,6 @@
 #include <boomhs/water_fbos.hpp>
-#include <extlibs/glew.hpp>
 #include <cassert>
+#include <extlibs/glew.hpp>
 
 using namespace opengl;
 
@@ -49,9 +49,8 @@ create_texture_attachment(int const width, int const height)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ti.id, 0);
   });
 
-
   ti.height = height;
-  ti.width = width;
+  ti.width  = width;
 
   ti.uv_max = 1.0f;
   return ti;
@@ -67,7 +66,7 @@ create_depth_texture_attachment(int width, int height)
   glBindTexture(GL_TEXTURE_2D, tbo);
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT,
-      GL_FLOAT, nullptr);
+               GL_FLOAT, nullptr);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -77,15 +76,15 @@ create_depth_texture_attachment(int width, int height)
   return tbo;
 }
 
-} // ns anon
+} // namespace
 
 namespace boomhs
 {
 
-int const WaterFrameBuffers::REFLECTION_WIDTH = 640;
+int const WaterFrameBuffers::REFLECTION_WIDTH  = 640;
 int const WaterFrameBuffers::REFLECTION_HEIGHT = 360;
 
-int const WaterFrameBuffers::REFRACTION_WIDTH = 1280;
+int const WaterFrameBuffers::REFRACTION_WIDTH  = 1280;
 int const WaterFrameBuffers::REFRACTION_HEIGHT = 720;
 
 WaterFrameBuffers::WaterFrameBuffers()
@@ -106,14 +105,14 @@ WaterFrameBuffers::WaterFrameBuffers()
 
 WaterFrameBuffers::~WaterFrameBuffers()
 {
-  //glDeleteFramebuffers(1, &fbo); };
+  // glDeleteFramebuffers(1, &fbo); };
 
-  //GL30.glDeleteFramebuffers(reflection_fbo);
-  //GL11.glDeleteTextures(reflection_tbo_);
-  //GL30.glDeleteRenderbuffers(reflection_dbo_);
-  //GL30.glDeleteFramebuffers(refraction_fbo_);
-  //GL11.glDeleteTextures(refraction_tbo_);
-  //GL11.glDeleteTextures(refraction_dbo_);
+  // GL30.glDeleteFramebuffers(reflection_fbo);
+  // GL11.glDeleteTextures(reflection_tbo_);
+  // GL30.glDeleteRenderbuffers(reflection_dbo_);
+  // GL30.glDeleteFramebuffers(refraction_fbo_);
+  // GL11.glDeleteTextures(refraction_tbo_);
+  // GL11.glDeleteTextures(refraction_dbo_);
 }
 
 void
@@ -153,4 +152,4 @@ WaterFrameBuffers::refraction_depth_tid() const
   return refraction_dbo_;
 }
 
-} // ns boomhs
+} // namespace boomhs

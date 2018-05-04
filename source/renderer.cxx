@@ -158,8 +158,11 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
   sp.set_uniform_float1(logger, "u_reflectivity", 1.0f);
 
   // pointlight
-  sp.set_uniform_matrix_4fv(logger, "u_invviewmatrix",
-                            glm::inverse(glm::mat3{camera.view_matrix()}));
+  auto const view_matrix = compute_viewmatrix(camera);
+  {
+    auto const inv_viewmatrix = glm::inverse(glm::mat3{view_matrix});
+    sp.set_uniform_matrix_4fv(logger, "u_invviewmatrix", inv_viewmatrix);
+  }
 
   FOR(i, pointlights.size())
   {
@@ -179,7 +182,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
   // sp.set_uniform_float1(logger, "u_player.cutoff",  glm::cos(glm::radians(90.0f)));
 
   // FOG uniforms
-  sp.set_uniform_matrix_4fv(logger, "u_viewmatrix", camera.view_matrix());
+  sp.set_uniform_matrix_4fv(logger, "u_viewmatrix", view_matrix);
 
   auto const& fog = ldata.fog;
   sp.set_uniform_float1(logger, "u_fog.density", fog.density);
@@ -194,7 +197,8 @@ void
 set_3dmvpmatrix(stlw::Logger& logger, Camera const& camera, glm::mat4 const& model_matrix,
                 ShaderProgram& sp)
 {
-  auto const mvp_matrix = camera.camera_matrix() * model_matrix;
+  auto const camera_matrix = compute_cameramatrix(camera);
+  auto const mvp_matrix    = camera_matrix * model_matrix;
   sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 }
 
@@ -351,7 +355,8 @@ glm::mat4
 compute_billboarded_viewmodel(Transform const& transform, Camera const& camera,
                               BillboardType const bb_type)
 {
-  auto view_model = camera.view_matrix() * transform.model_matrix();
+  auto const viewmatrix = compute_viewmatrix(camera);
+  auto       view_model = viewmatrix * transform.model_matrix();
 
   // Reset the rotation values in order to achieve a billboard effect.
   //
@@ -658,8 +663,9 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     auto const bb_type    = bboard.value;
     auto const view_model = compute_billboarded_viewmodel(transform, camera, bb_type);
 
-    auto const mvp_matrix = camera.projection_matrix() * view_model;
-    auto&      sp         = sps.ref_sp(sn.value);
+    auto const proj_matrix = compute_projectionmatrix(camera);
+    auto const mvp_matrix  = proj_matrix * view_model;
+    auto&      sp          = sps.ref_sp(sn.value);
     sp.while_bound(logger, [&]() { set_modelmatrix(logger, mvp_matrix, sp); });
     draw_fn(eid, sn, transform, isv, bboard, FORWARD(args));
   };
@@ -685,7 +691,7 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
   auto& es     = rstate.es;
   auto& logger = es.logger;
 
-  auto& zs  = rstate.zs;
+  auto& zs     = rstate.zs;
   auto& ttable = zs.gfx_state.texture_table;
 
   auto& sps = zs.gfx_state.sps;
@@ -696,7 +702,7 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
   auto const v     = OF::rectangle_vertices();
   DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, ti);
 
-  Transform  transform;
+  Transform transform;
   transform.translation = glm::vec3{pos.x, pos.y, 0.0f};
   transform.scale       = glm::vec3{scale.x, scale.y, 1.0};
 
@@ -861,6 +867,8 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
   glm::mat4 const view_model =
       compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
 
+  auto const proj_matrix = compute_projectionmatrix(camera);
+
   auto const draw_reticle = [&]() {
     glm::mat4 view_model =
         compute_billboarded_viewmodel(transform, camera, BillboardType::Spherical);
@@ -870,7 +878,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     auto const  rot             = glm::angleAxis(glm::radians(angle), Z_UNIT_VECTOR);
     auto const  rmatrix         = glm::toMat4(rot);
 
-    auto const mvp_matrix = camera.projection_matrix() * (view_model * rmatrix);
+    auto const mvp_matrix = proj_matrix * (view_model * rmatrix);
     set_modelmatrix(logger, mvp_matrix, sp);
 
     auto texture_o = ttable.find("TargetReticle");
@@ -885,7 +893,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     auto texture_o = ttable.find("NearbyTargetGlow");
     assert(texture_o);
 
-    auto const mvp_matrix = camera.projection_matrix() * view_model;
+    auto const mvp_matrix = proj_matrix * view_model;
     set_modelmatrix(logger, mvp_matrix, sp);
 
     DrawInfo const dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, *texture_o);
@@ -986,12 +994,13 @@ draw_skybox(RenderState& rstate, window::FrameTime const& ft)
     //
     // The effect of this is the view matrix contains just the rotation, which is what's desired
     // for rendering the skybox.
-    auto view_matrix  = camera.view_matrix();
+    auto view_matrix  = compute_viewmatrix(camera);
     view_matrix[3][0] = 0.0f;
     view_matrix[3][1] = 0.0f;
     view_matrix[3][2] = 0.0f;
 
-    auto const camera_matrix = camera.projection_matrix() * view_matrix;
+    auto const proj_matrix   = compute_projectionmatrix(camera);
+    auto const camera_matrix = compute_cameramatrix(camera);
     auto const mvp_matrix    = camera_matrix * transform.model_matrix();
 
     sp.while_bound(logger, [&]() {
@@ -1152,7 +1161,7 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     tr.z     = pos.y;
 
     // hack
-    tr.y = 0.19999f;//pos.y;
+    tr.y = 0.19999f; // pos.y;
     assert(tr.y < 2.0f);
 
     auto&       sp    = winfo.shader;

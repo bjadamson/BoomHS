@@ -58,18 +58,6 @@ Camera::Camera(EnttLookup const& player_lookup, glm::vec3 const& forward, glm::v
 {
 }
 
-glm::mat4
-Camera::projection_matrix() const
-{
-  return compute_projectionmatrix(mode_, perspective_, ortho_);
-}
-
-glm::mat4
-Camera::camera_matrix() const
-{
-  return projection_matrix() * view_matrix();
-}
-
 void
 Camera::next_mode()
 {
@@ -125,15 +113,6 @@ Camera::rotate(float const d_theta, float const d_phi)
   return *this;
 }
 
-glm::mat4
-Camera::view_matrix() const
-{
-  auto const& target       = get_target().translation;
-  auto const  position_xyz = world_position();
-  auto const& fps_center   = target + world_forward();
-  return compute_viewmatrix(mode_, position_xyz, target, up_, fps_center);
-}
-
 void
 Camera::zoom(float const amount)
 {
@@ -145,6 +124,13 @@ Camera::zoom(float const amount)
   else {
     coordinates_.radius = MIN_RADIUS;
   }
+}
+
+glm::vec3
+Camera::target_position() const
+{
+  auto& target = get_target();
+  return target.translation;
 }
 
 void
@@ -163,9 +149,9 @@ Camera::increase_zoom(float const amount)
 // free functions
 glm::mat4
 compute_projectionmatrix(CameraMode const mode, PerspectiveViewport const& p,
-    OrthoProjection const& o)
+                         OrthoProjection const& o)
 {
-  auto const  fov = glm::radians(p.field_of_view);
+  auto const fov = glm::radians(p.field_of_view);
   switch (mode) {
   case Perspective:
   case FPS:
@@ -182,8 +168,17 @@ compute_projectionmatrix(CameraMode const mode, PerspectiveViewport const& p,
 }
 
 glm::mat4
+compute_projectionmatrix(Camera const& camera)
+{
+  auto const  mode        = camera.mode();
+  auto const& perspective = camera.perspective();
+  auto const& ortho       = camera.ortho();
+  return compute_projectionmatrix(mode, perspective, ortho);
+}
+
+glm::mat4
 compute_viewmatrix(CameraMode const mode, glm::vec3 const& eye, glm::vec3 const& center,
-    glm::vec3 const& up, glm::vec3 const& fps_center)
+                   glm::vec3 const& up, glm::vec3 const& fps_center)
 {
   auto constexpr ZERO = glm::vec3{0, 0, 0};
 
@@ -203,6 +198,24 @@ compute_viewmatrix(CameraMode const mode, glm::vec3 const& eye, glm::vec3 const&
   }
   std::abort();
   return glm::mat4{}; // appease compiler
+}
+
+glm::mat4
+compute_viewmatrix(Camera const& camera)
+{
+  auto const  mode         = camera.mode();
+  auto const& target       = camera.get_target().translation;
+  auto const  position_xyz = camera.world_position();
+  auto const& up           = camera.eye_up();
+  auto const& fps_center   = camera.world_forward() + target;
+
+  return compute_viewmatrix(mode, position_xyz, target, up, fps_center);
+}
+
+glm::mat4
+compute_cameramatrix(Camera const& camera)
+{
+  return compute_projectionmatrix(camera) * compute_viewmatrix(camera);
 }
 
 } // namespace boomhs

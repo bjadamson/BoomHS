@@ -37,14 +37,6 @@ using ModeNamePair                                 = std::pair<CameraMode, char 
 std::array<ModeNamePair, 3> constexpr CAMERA_MODES = {
     {{Ortho, "Ortho"}, {Perspective, "Perspective"}, {FPS, "FPS"}}};
 
-glm::mat4
-compute_projectionmatrix(CameraMode, PerspectiveViewport const&,
-    OrthoProjection const&);
-
-glm::mat4
-compute_viewmatrix(CameraMode, glm::vec3 const&, glm::vec3 const&,
-    glm::vec3 const&, glm::vec3 const&);
-
 class Camera
 {
   EnttLookup player_lookup_;
@@ -70,11 +62,6 @@ public:
   Transform&       get_target() { return player_lookup_.lookup<Transform>(); }
   Transform const& get_target() const { return player_lookup_.lookup<Transform>(); }
 
-  glm::mat4   projection_matrix() const;
-  glm::mat4   view_matrix() const;
-  glm::mat4   camera_matrix() const;
-  auto const& perspective() const { return perspective_; }
-
   auto mode() const { return mode_; }
   void set_mode(CameraMode const m) { mode_ = m; }
   void next_mode();
@@ -88,34 +75,44 @@ public:
   glm::vec3 eye_left() const { return -eye_right(); }
   glm::vec3 eye_right() const { return glm::normalize(glm::cross(eye_forward(), eye_up())); }
 
+  auto const& ortho() const { return ortho_; }
+  auto const& perspective() const { return perspective_; }
+
   glm::vec3 world_forward() const { return glm::normalize(world_position() - target_position()); }
 
   SphericalCoordinates spherical_coordinates() const { return coordinates_; }
   void                 set_coordinates(SphericalCoordinates const& sc) { coordinates_ = sc; }
 
   glm::vec3 local_position() const { return to_cartesian(coordinates_); }
-
   glm::vec3 world_position() const { return target_position() + local_position(); }
 
-  glm::vec3 target_position() const
-  {
-    auto& target = get_target();
-    return target.translation;
-  }
-
-  Camera& rotate(float, float);
+  glm::vec3 target_position() const;
 
   void decrease_zoom(float);
-
   void increase_zoom(float);
 
-  void set_target(EntityID const eid) { player_lookup_.set_eid(eid); }
-
   auto const& perspective_ref() const { return perspective_; }
+  auto&       perspective_ref() { return perspective_; }
+  auto&       ortho_ref() { return ortho_; }
 
-  auto& perspective_ref() { return perspective_; }
-
-  auto& ortho_ref() { return ortho_; }
+  Camera& rotate(float, float);
+  void    set_target(EntityID const eid) { player_lookup_.set_eid(eid); }
 };
+
+glm::mat4
+compute_cameramatrix(Camera const&);
+
+glm::mat4
+compute_projectionmatrix(CameraMode, PerspectiveViewport const&, OrthoProjection const&);
+
+glm::mat4
+compute_projectionmatrix(Camera const&);
+
+glm::mat4
+compute_viewmatrix(Camera const&);
+
+glm::mat4
+compute_viewmatrix(CameraMode, glm::vec3 const&, glm::vec3 const&, glm::vec3 const&,
+                   glm::vec3 const&);
 
 } // namespace boomhs

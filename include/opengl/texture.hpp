@@ -153,7 +153,7 @@ struct GpuUploadConfig
   GLenum const format;
 };
 Result<ImageData, std::string>
-upload_image_gpu(stlw::Logger &logger, std::string const& path, GpuUploadConfig const&);
+upload_image_gpu(stlw::Logger& logger, std::string const& path, GpuUploadConfig const&);
 
 GLint
 wrap_mode_from_string(char const*);
