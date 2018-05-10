@@ -29,6 +29,8 @@
 #define DEBUG_UNBIND()                                                                             \
   FOR_DEBUG_ONLY([&]() { this->bound = false; });
 
+using namespace boomhs;
+
 namespace opengl
 {
 
@@ -72,7 +74,7 @@ TextureInfo::destroy()
 GLint
 TextureInfo::get_fieldi(GLenum const name)
 {
-  FOR_DEBUG_ONLY([&]() { assert(bound == true); });
+  DEBUG_ASSERT_BOUND();
 
   GLint value;
   glGetTexParameteriv(this->mode, name, &value);
@@ -82,7 +84,7 @@ TextureInfo::get_fieldi(GLenum const name)
 void
 TextureInfo::set_fieldi(GLenum const name, GLint const value)
 {
-  FOR_DEBUG_ONLY([&]() { if (!this->bound) { std::abort(); }});
+  DEBUG_ASSERT_BOUND();
 
   glTexParameteri(this->mode, name, value);
 }
@@ -96,9 +98,8 @@ TextureInfo::to_string() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // FBInfo
-FBInfo::FBInfo(GLsizei const w, GLsizei const h)
-  : width(w)
-  , height(h)
+FBInfo::FBInfo(Dimensions const& d)
+  : dimensions(d)
 {
   glGenFramebuffers(1, &id);
 }
@@ -111,7 +112,7 @@ FBInfo::bind(stlw::Logger& logger)
   glBindFramebuffer(GL_FRAMEBUFFER, id);
   glBindTexture(GL_TEXTURE_2D, 0);
 
-  glViewport(0, 0, width, height);
+  glViewport(dimensions.x, dimensions.y, dimensions.w, dimensions.h);
 
   DEBUG_BIND();
 }
@@ -122,7 +123,7 @@ FBInfo::unbind(stlw::Logger& logger)
   DEBUG_ASSERT_BOUND();
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, 1024, 768);
+  glViewport(0, 0, dimensions.w, dimensions.h);
 
   DEBUG_UNBIND();
 }
@@ -194,13 +195,7 @@ TextureTable::nickname_at_index(size_t const index) const
 
 #define FIND_TF(name)                                                                              \
   [&]() {                                                                                          \
-    auto const cmp = [&name](auto const& it)                                                       \
-    {                                                                                              \
-      FOR(i, it.first.filenames.size()) {                                                          \
-        auto const& fn = it.first.filenames[i];                                                    \
-      }                                                                                            \
-      return it.first.name == name;                                                                \
-    };                                                                                             \
+    auto const cmp = [&name](auto const& it) { return it.first.name == name; };                    \
     return std::find_if(data_.begin(), data_.end(), cmp);                                          \
   }()
 

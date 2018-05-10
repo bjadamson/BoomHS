@@ -447,7 +447,7 @@ namespace boomhs::render
 {
 
 void
-init(stlw::Logger& logger, window::Dimensions const& dimensions)
+init(stlw::Logger& logger, Dimensions const& dimensions)
 {
   // Initialize opengl
   glViewport(0, 0, dimensions.w, dimensions.h);

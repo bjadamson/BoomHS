@@ -1,5 +1,6 @@
 #pragma once
 #include <opengl/bind.hpp>
+#include <boomhs/dimensions.hpp>
 #include <stlw/auto_resource.hpp>
 #include <stlw/compiler.hpp>
 #include <stlw/log.hpp>
@@ -58,9 +59,9 @@ struct FBInfo
   mutable bool bound = false;
 #endif
   GLuint        id;
-  GLsizei const width, height;
+  boomhs::Dimensions const dimensions;
 
-  FBInfo(GLsizei, GLsizei);
+  FBInfo(boomhs::Dimensions const&);
   COPY_DEFAULT(FBInfo);
   MOVE_DEFAULT(FBInfo);
 

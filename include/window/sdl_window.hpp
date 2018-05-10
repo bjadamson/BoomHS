@@ -1,10 +1,11 @@
 #pragma once
-#include <extlibs/sdl.hpp>
+#include <boomhs/dimensions.hpp>
 
 #include <stlw/log.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
 
+#include <extlibs/sdl.hpp>
 #include <cassert>
 #include <memory>
 #include <string>
@@ -12,21 +13,6 @@
 
 namespace window
 {
-
-struct Dimensions
-{
-  int const x;
-  int const y;
-  int const w;
-  int const h;
-  Dimensions(int const offx, int const offy, int const wp, int const hp)
-      : x(offx)
-      , y(offy)
-      , w(wp)
-      , h(hp)
-  {
-  }
-};
 
 // clang-format off
 enum class FullscreenFlags
@@ -85,7 +71,7 @@ public:
   // Allow getting the window's SDL pointer
   window_type* raw() { return window_.get(); }
 
-  Dimensions get_dimensions() const
+  auto get_dimensions() const
   {
     int w = 0, h = 0;
     assert(nullptr != window_.get());
@@ -93,7 +79,7 @@ public:
 
     int x, y;
     SDL_GetWindowPosition(window_.get(), &x, &y);
-    return {x, y, w, h};
+    return boomhs::Dimensions{x, y, w, h};
   }
 
   void set_fullscreen(FullscreenFlags const);

@@ -10,7 +10,7 @@ using namespace window;
 namespace boomhs
 {
 
-EngineState::EngineState(stlw::Logger& l, ImGuiIO& i, window::Dimensions const& d)
+EngineState::EngineState(stlw::Logger& l, ImGuiIO& i, Dimensions const& d)
     : logger(l)
     , imgui(i)
     , dimensions(d)

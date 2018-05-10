@@ -16,13 +16,13 @@ make_reflection_fbo()
 {
   int constexpr REFLECTION_WIDTH  = 640;
   int constexpr REFLECTION_HEIGHT = 360;
-  return FBInfo{640, 360};
+  return FBInfo{{0, 0, 640, 360}};
 }
 
 auto
 make_refraction_fbo()
 {
-  return FBInfo{1270, 720};
+  return FBInfo{{0, 0, 1270, 720}};
 }
 
 TextureInfo
@@ -83,7 +83,8 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ShaderProgram& sp)
     , refraction_fbo_(FrameBuffer{make_refraction_fbo()})
 {
   auto const create = [&](auto const& fbo) {
-    auto const width = fbo->width, height = fbo->height;
+    auto const& dimensions = fbo->dimensions;
+    auto const width = dimensions.w, height = dimensions.h;
     auto const tbo = create_texture_attachment(logger, width, height);
     auto const dbo = create_depth_texture_attachment(width, height);
     return std::make_pair(tbo, dbo);

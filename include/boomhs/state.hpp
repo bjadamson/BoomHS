@@ -62,7 +62,7 @@ struct EngineState
 {
   stlw::Logger&            logger;
   ImGuiIO&                 imgui;
-  window::Dimensions const dimensions;
+  Dimensions const dimensions;
   Time                     time;
 
   bool quit           = false;
@@ -95,7 +95,7 @@ struct EngineState
 
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);
-  EngineState(stlw::Logger&, ImGuiIO&, window::Dimensions const&);
+  EngineState(stlw::Logger&, ImGuiIO&, Dimensions const&);
 };
 
 struct GameState
