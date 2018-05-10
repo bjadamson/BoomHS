@@ -57,14 +57,12 @@ struct FBInfo
 #ifdef DEBUG_BUILD
   mutable bool bound = false;
 #endif
+  GLuint        id;
+  GLsizei const width, height;
 
-  GLuint id;
-  GLuint color_buffer;
-
-  FBInfo();
+  FBInfo(GLsizei, GLsizei);
   COPY_DEFAULT(FBInfo);
-  MOVE_ASSIGNABLE(FBInfo);
-  FBInfo(FBInfo&&);
+  MOVE_DEFAULT(FBInfo);
 
   // methods
   void bind(stlw::Logger&);

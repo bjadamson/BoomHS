@@ -90,13 +90,15 @@ TextureInfo::set_fieldi(GLenum const name, GLint const value)
 std::string
 TextureInfo::to_string() const
 {
-  return fmt::sprintf("id: %u, mode: %i, (w, h) : (%i, %i), uv_max: %f",
+  return fmt::sprintf("(TextureInfo) id: %u, mode: %i, (w, h) : (%i, %i), uv_max: %f",
       id, mode, width, height, uv_max);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // FBInfo
-FBInfo::FBInfo()
+FBInfo::FBInfo(GLsizei const w, GLsizei const h)
+  : width(w)
+  , height(h)
 {
   glGenFramebuffers(1, &id);
 }
@@ -106,6 +108,11 @@ FBInfo::bind(stlw::Logger& logger)
 {
   DEBUG_ASSERT_NOT_BOUND();
 
+  glBindFramebuffer(GL_FRAMEBUFFER, id);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  glViewport(0, 0, width, height);
+
   DEBUG_BIND();
 }
 
@@ -113,6 +120,9 @@ void
 FBInfo::unbind(stlw::Logger& logger)
 {
   DEBUG_ASSERT_BOUND();
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glViewport(0, 0, 1024, 768);
 
   DEBUG_UNBIND();
 }
@@ -126,7 +136,7 @@ FBInfo::destroy()
 std::string
 FBInfo::to_string() const
 {
-  return fmt::sprintf("id: %u, color_buffer: %u", id, color_buffer);
+  return fmt::sprintf("(FBInfo) id: %u", id);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,7 +144,7 @@ FBInfo::to_string() const
 std::string
 RBInfo::to_string() const
 {
-  return fmt::sprintf("depth: %u", depth);
+  return fmt::sprintf("(RBInfo) depth: %u", depth);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

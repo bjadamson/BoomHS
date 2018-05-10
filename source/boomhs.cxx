@@ -523,9 +523,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
 
   auto const& fog_color = ldata.fog.color;
-  {
-    waterfbos.bind_reflection_fbo();
-
+  waterfbos.with_reflection(logger, [&]() {
     // Compute the camera position beneath the water for capturing the reflective image the camera
     // will see.
     //
@@ -540,23 +538,17 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     render::clear_screen(fog_color);
 
     render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
-    // render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
-
-    waterfbos.unbind_all_fbos();
-  }
+    render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
+  });
 
   auto const  rmatrices = RenderMatrices::from_camera(camera);
   RenderState rstate{rmatrices, es, zs};
-  {
-    waterfbos.bind_refraction_fbo();
-
+  waterfbos.with_refraction(logger, [&]() {
     render::clear_screen(fog_color);
 
     render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
     // render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
-
-    waterfbos.unbind_all_fbos();
-  }
+  });
 
   render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
   // render::draw_water(rstate, registry, ft, ABOVE_VECTOR);

@@ -16,7 +16,7 @@ class VAO
 {
   GLuint vao_ = 0;
 
-  static constexpr auto NUM_BUFFERS = 1;
+  static constexpr GLsizei NUM_BUFFERS = 1;
 
 public:
   NO_COPY(VAO);

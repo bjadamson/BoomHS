@@ -5,37 +5,24 @@
 #include <cassert>
 #include <extlibs/glew.hpp>
 
+using namespace boomhs;
 using namespace opengl;
 
 namespace
 {
 
-int constexpr REFLECTION_WIDTH  = 640;
-int constexpr REFLECTION_HEIGHT = 360;
-
-int constexpr REFRACTION_WIDTH  = 1280;
-int constexpr REFRACTION_HEIGHT = 720;
-
-int
-create_fbo()
+auto
+make_reflection_fbo()
 {
-  GLuint fbo = 0;
-  glGenFramebuffers(1, &fbo);
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-  // render to color attachment 0
-  glDrawBuffer(GL_COLOR_ATTACHMENT0);
-  return fbo;
+  int constexpr REFLECTION_WIDTH  = 640;
+  int constexpr REFLECTION_HEIGHT = 360;
+  return FBInfo{640, 360};
 }
 
-void
-bind_fbo(int const fbo, int const width, int const height)
+auto
+make_refraction_fbo()
 {
-  assert(width > 0 && height > 0);
-
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-  glViewport(0, 0, width, height);
+  return FBInfo{1270, 720};
 }
 
 TextureInfo
@@ -92,19 +79,29 @@ namespace boomhs
 
 WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ShaderProgram& sp)
     : sp_(sp)
+    , reflection_fbo_(FrameBuffer{make_reflection_fbo()})
+    , refraction_fbo_(FrameBuffer{make_refraction_fbo()})
 {
-  {
-    reflection_fbo_ = create_fbo();
-    reflection_tbo_ = create_texture_attachment(logger, REFLECTION_WIDTH, REFLECTION_HEIGHT);
-    reflection_dbo_ = create_depth_texture_attachment(REFLECTION_WIDTH, REFLECTION_HEIGHT);
-    unbind_all_fbos();
-  }
-  {
-    refraction_fbo_ = create_fbo();
-    refraction_tbo_ = create_texture_attachment(logger, REFRACTION_WIDTH, REFRACTION_HEIGHT);
-    refraction_dbo_ = create_depth_texture_attachment(REFRACTION_WIDTH, REFRACTION_HEIGHT);
-    unbind_all_fbos();
-  }
+  auto const create = [&](auto const& fbo) {
+    auto const width = fbo->width, height = fbo->height;
+    auto const tbo = create_texture_attachment(logger, width, height);
+    auto const dbo = create_depth_texture_attachment(width, height);
+    return std::make_pair(tbo, dbo);
+  };
+  auto const reflection_fn = [&]() {
+    auto const reflection = create(reflection_fbo_);
+    reflection_tbo_       = reflection.first;
+    reflection_dbo_       = reflection.second;
+  };
+  auto const refraction_fn = [&]() {
+    auto const refraction = create(refraction_fbo_);
+    refraction_tbo_       = refraction.first;
+    refraction_dbo_       = refraction.second;
+  };
+
+  // logic starts here
+  while_bound(logger, reflection_fbo_, reflection_fn);
+  while_bound(logger, refraction_fbo_, refraction_fn);
 
   // connect texture units to shader program
   while_bound(logger, sp_, [&]() {
@@ -113,36 +110,7 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ShaderProgram& sp)
   });
 }
 
-WaterFrameBuffers::~WaterFrameBuffers()
-{
-  // glDeleteFramebuffers(1, &fbo); };
-
-  // GL30.glDeleteFramebuffers(reflection_fbo);
-  // GL11.glDeleteTextures(reflection_tbo_);
-  // GL30.glDeleteRenderbuffers(reflection_dbo_);
-  // GL30.glDeleteFramebuffers(refraction_fbo_);
-  // GL11.glDeleteTextures(refraction_tbo_);
-  // GL11.glDeleteTextures(refraction_dbo_);
-}
-
-void
-WaterFrameBuffers::bind_reflection_fbo()
-{
-  bind_fbo(reflection_fbo_, REFLECTION_WIDTH, REFLECTION_HEIGHT);
-}
-
-void
-WaterFrameBuffers::bind_refraction_fbo()
-{
-  bind_fbo(refraction_fbo_, REFRACTION_WIDTH, REFRACTION_HEIGHT);
-}
-
-void
-WaterFrameBuffers::unbind_all_fbos()
-{
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, 1024, 768);
-}
+WaterFrameBuffers::~WaterFrameBuffers() {}
 
 TextureInfo const&
 WaterFrameBuffers::reflection_ti() const

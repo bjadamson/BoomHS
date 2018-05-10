@@ -1,4 +1,5 @@
 #include <opengl/vao.hpp>
+#include <extlibs/fmt.hpp>
 
 namespace opengl
 {
@@ -6,13 +7,9 @@ namespace opengl
 std::string
 VAO::to_string() const
 {
-  std::string result;
-  result += "NUM_BUFFERS: '";
-  result += VAO::NUM_BUFFERS;
-  result += "' vao_: '";
-  result += "' raw_value_:' " + std::to_string(gl_raw_value()) + "'";
-
-  return result;
+  return fmt::sprintf("(VAO) NUM_BUFFERS: %li, raw: %u",
+      VAO::NUM_BUFFERS,
+      gl_raw_value());
 }
 
 std::ostream&
