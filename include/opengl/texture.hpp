@@ -54,14 +54,22 @@ struct ImageData
 // FrameBuffer Info
 struct FBInfo
 {
+#ifdef DEBUG_BUILD
+  mutable bool bound = false;
+#endif
+
   GLuint id;
   GLuint color_buffer;
 
-  void destroy();
   FBInfo();
   COPY_DEFAULT(FBInfo);
   MOVE_ASSIGNABLE(FBInfo);
   FBInfo(FBInfo&&);
+
+  // methods
+  void bind(stlw::Logger&);
+  void unbind(stlw::Logger&);
+  void destroy();
 
   std::string to_string() const;
 

@@ -17,6 +17,18 @@
 #include <vector>
 #include <utility>
 
+#define DEBUG_ASSERT_BOUND()                                                                       \
+  FOR_DEBUG_ONLY([&]() { assert(this->bound == true); });
+
+#define DEBUG_ASSERT_NOT_BOUND()                                                                   \
+  FOR_DEBUG_ONLY([&]() { assert(this->bound == false); });
+
+#define DEBUG_BIND()                                                                               \
+  FOR_DEBUG_ONLY([&]() { this->bound = true; });
+
+#define DEBUG_UNBIND()                                                                             \
+  FOR_DEBUG_ONLY([&]() { this->bound = false; });
+
 namespace opengl
 {
 
@@ -32,23 +44,23 @@ TextureInfo::TextureInfo()
 void
 TextureInfo::bind(stlw::Logger& logger)
 {
-  FOR_DEBUG_ONLY([&]() { assert(bound == false); });
+  DEBUG_ASSERT_NOT_BOUND();
 
   FOR(i, num_texture_units) {
     glActiveTexture(GL_TEXTURE0 + i);
     global::texture_bind(*this);
   }
 
-  FOR_DEBUG_ONLY([&]() { bound = true; });
+  DEBUG_BIND();
 }
 
 void
 TextureInfo::unbind(stlw::Logger& logger)
 {
-  FOR_DEBUG_ONLY([&]() { assert(bound == true); });
+  DEBUG_ASSERT_BOUND();
 
   global::texture_unbind(*this);
-  FOR_DEBUG_ONLY([&]() { bound = false; });
+  DEBUG_UNBIND();
 }
 
 void
@@ -87,6 +99,22 @@ TextureInfo::to_string() const
 FBInfo::FBInfo()
 {
   glGenFramebuffers(1, &id);
+}
+
+void
+FBInfo::bind(stlw::Logger& logger)
+{
+  DEBUG_ASSERT_NOT_BOUND();
+
+  DEBUG_BIND();
+}
+
+void
+FBInfo::unbind(stlw::Logger& logger)
+{
+  DEBUG_ASSERT_BOUND();
+
+  DEBUG_UNBIND();
 }
 
 void
