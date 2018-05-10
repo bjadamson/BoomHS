@@ -1,4 +1,5 @@
 #pragma once
+#include <opengl/bind.hpp>
 #include <stlw/auto_resource.hpp>
 #include <stlw/compiler.hpp>
 #include <stlw/log.hpp>
@@ -24,6 +25,7 @@ struct TextureInfo
   GLenum mode;
   GLuint id;
   GLint  width = 0, height = 0;
+  GLuint num_texture_units = 1;
 
   float uv_max = 0;
 
@@ -31,17 +33,8 @@ struct TextureInfo
   TextureInfo();
 
   // methods
-  void bind() const;
-  void unbind() const;
-
-  template <typename FN>
-  void while_bound(FN const& fn) const
-  {
-    bind();
-    ON_SCOPE_EXIT([&]() { unbind(); });
-    fn();
-  }
-
+  void bind(stlw::Logger&);
+  void unbind(stlw::Logger&);
   void destroy();
 
   GLint get_fieldi(GLenum);
@@ -65,7 +58,7 @@ struct FBInfo
   GLuint color_buffer;
 
   void destroy();
-  DEFAULT_CONSTRUCTIBLE(FBInfo);
+  FBInfo();
   COPY_DEFAULT(FBInfo);
   MOVE_ASSIGNABLE(FBInfo);
   FBInfo(FBInfo&&);

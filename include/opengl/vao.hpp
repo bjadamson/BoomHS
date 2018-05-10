@@ -1,8 +1,11 @@
 #pragma once
-#include <extlibs/glew.hpp>
+#include <opengl/bind.hpp>
 #include <opengl/global.hpp>
+
+#include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
+#include <extlibs/glew.hpp>
 #include <ostream>
 #include <string>
 
@@ -36,17 +39,13 @@ public:
     other.vao_ = 0;
   }
 
-  inline auto gl_raw_value() const { return vao_; }
+  auto gl_raw_value() { return vao_; }
+  auto gl_raw_value() const { return vao_; }
+
+  void bind(stlw::Logger&) { global::vao_bind(*this); }
+  void unbind(stlw::Logger&) { global::vao_unbind(); }
 
   std::string to_string() const;
-
-  template <typename FN>
-  void while_bound(FN const& fn) const
-  {
-    global::vao_bind(*this);
-    ON_SCOPE_EXIT([&]() { global::vao_unbind(); });
-    fn();
-  }
 };
 
 std::ostream&

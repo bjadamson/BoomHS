@@ -1,27 +1,28 @@
 #pragma once
 #include <opengl/texture.hpp>
+#include <stlw/log.hpp>
+
+namespace opengl
+{
+class ShaderProgram;
+} // namespace opengl
 
 namespace boomhs
 {
 
 class WaterFrameBuffers
 {
-  static int const REFLECTION_WIDTH;
-  static int const REFLECTION_HEIGHT;
-
-  static int const REFRACTION_WIDTH;
-  static int const REFRACTION_HEIGHT;
-
-  int                 reflection_fbo_;
-  opengl::TextureInfo reflection_tbo_;
-  int                 reflection_dbo_;
+  opengl::ShaderProgram& sp_;
+  int                    reflection_fbo_;
+  opengl::TextureInfo    reflection_tbo_;
+  int                    reflection_dbo_;
 
   int                 refraction_fbo_;
   opengl::TextureInfo refraction_tbo_;
   int                 refraction_dbo_;
 
 public:
-  WaterFrameBuffers();
+  WaterFrameBuffers(stlw::Logger&, opengl::ShaderProgram&);
 
   ~WaterFrameBuffers();
 

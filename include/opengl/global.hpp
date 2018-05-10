@@ -6,7 +6,7 @@
 // Here be dragons.
 namespace opengl::global
 {
-static auto const vao_bind   = [](auto const& vao) { glBindVertexArray(vao.gl_raw_value()); };
+static auto const vao_bind   = [](auto& vao) { glBindVertexArray(vao.gl_raw_value()); };
 static auto const vao_unbind = []() { glBindVertexArray(0); };
 
 static auto const texture_bind = [](auto const& texture) {

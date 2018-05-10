@@ -30,16 +30,20 @@ TextureInfo::TextureInfo()
 }
 
 void
-TextureInfo::bind() const
+TextureInfo::bind(stlw::Logger& logger)
 {
   FOR_DEBUG_ONLY([&]() { assert(bound == false); });
 
-  global::texture_bind(*this);
+  FOR(i, num_texture_units) {
+    glActiveTexture(GL_TEXTURE0 + i);
+    global::texture_bind(*this);
+  }
+
   FOR_DEBUG_ONLY([&]() { bound = true; });
 }
 
 void
-TextureInfo::unbind() const
+TextureInfo::unbind(stlw::Logger& logger)
 {
   FOR_DEBUG_ONLY([&]() { assert(bound == true); });
 
@@ -80,6 +84,17 @@ TextureInfo::to_string() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // FBInfo
+FBInfo::FBInfo()
+{
+  glGenFramebuffers(1, &id);
+}
+
+void
+FBInfo::destroy()
+{
+  glDeleteFramebuffers(1, &id);
+}
+
 std::string
 FBInfo::to_string() const
 {
@@ -237,8 +252,8 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLenum const
   //
   // note: Using while_bound() doesn't work here because TRY_MOVEOUT returns a value.
   {
-    ti.bind();
-    ON_SCOPE_EXIT([&ti]() { ti.unbind(); });
+    ti.bind(logger);
+    ON_SCOPE_EXIT([&]() { ti.unbind(logger); });
 
     GpuUploadConfig const guc{ti.mode, format};
     auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, guc));
@@ -298,7 +313,7 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
     LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
     glGenerateMipmap(ti.mode);
   };
-  ti.while_bound(fn);
+  while_bound(logger, ti, fn);
 
   return Ok(Texture{MOVE(ti)});
 }

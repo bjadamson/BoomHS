@@ -66,12 +66,12 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
 
   // These uniforms only need to be set once.
   auto& sp = sps.ref_sp("water");
-  sp.while_bound(logger, [&]() { sp.set_uniform_int1(logger, "u_sampler", 0); });
+  while_bound(logger, sp, [&]() { sp.set_uniform_int1(logger, "u_sampler", 0); });
 
   auto wi = generate_info(logger, wic, sp, ti);
 
   auto& tinfo = wi.tinfo;
-  tinfo.while_bound([&]() {
+  while_bound(logger, tinfo, [&]() {
     tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
     tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
     tinfo.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);

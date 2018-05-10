@@ -1,4 +1,7 @@
 #include <boomhs/water_fbos.hpp>
+#include <opengl/shader.hpp>
+#include <stlw/log.hpp>
+
 #include <cassert>
 #include <extlibs/glew.hpp>
 
@@ -6,6 +9,12 @@ using namespace opengl;
 
 namespace
 {
+
+int constexpr REFLECTION_WIDTH  = 640;
+int constexpr REFLECTION_HEIGHT = 360;
+
+int constexpr REFRACTION_WIDTH  = 1280;
+int constexpr REFRACTION_HEIGHT = 720;
 
 int
 create_fbo()
@@ -30,7 +39,7 @@ bind_fbo(int const fbo, int const width, int const height)
 }
 
 TextureInfo
-create_texture_attachment(int const width, int const height)
+create_texture_attachment(stlw::Logger& logger, int const width, int const height)
 {
   assert(width > 0 && height > 0);
 
@@ -38,7 +47,7 @@ create_texture_attachment(int const width, int const height)
   ti.mode = GL_TEXTURE_2D;
   glGenTextures(1, &ti.id);
 
-  ti.while_bound([&]() {
+  while_bound(logger, ti, [&]() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -81,26 +90,27 @@ create_depth_texture_attachment(int width, int height)
 namespace boomhs
 {
 
-int const WaterFrameBuffers::REFLECTION_WIDTH  = 640;
-int const WaterFrameBuffers::REFLECTION_HEIGHT = 360;
-
-int const WaterFrameBuffers::REFRACTION_WIDTH  = 1280;
-int const WaterFrameBuffers::REFRACTION_HEIGHT = 720;
-
-WaterFrameBuffers::WaterFrameBuffers()
+WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ShaderProgram& sp)
+    : sp_(sp)
 {
   {
     reflection_fbo_ = create_fbo();
-    reflection_tbo_ = create_texture_attachment(REFLECTION_WIDTH, REFLECTION_HEIGHT);
+    reflection_tbo_ = create_texture_attachment(logger, REFLECTION_WIDTH, REFLECTION_HEIGHT);
     reflection_dbo_ = create_depth_texture_attachment(REFLECTION_WIDTH, REFLECTION_HEIGHT);
     unbind_all_fbos();
   }
   {
     refraction_fbo_ = create_fbo();
-    refraction_tbo_ = create_texture_attachment(REFRACTION_WIDTH, REFRACTION_HEIGHT);
+    refraction_tbo_ = create_texture_attachment(logger, REFRACTION_WIDTH, REFRACTION_HEIGHT);
     refraction_dbo_ = create_depth_texture_attachment(REFRACTION_WIDTH, REFRACTION_HEIGHT);
     unbind_all_fbos();
   }
+
+  // connect texture units to shader program
+  while_bound(logger, sp_, [&]() {
+    sp_.set_uniform_int1(logger, "u_reflect_sampler", 0);
+    sp_.set_uniform_int1(logger, "u_refract_sampler", 1);
+  });
 }
 
 WaterFrameBuffers::~WaterFrameBuffers()

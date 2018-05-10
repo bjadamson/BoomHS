@@ -58,14 +58,16 @@ public:
   DrawInfo(DrawInfo&&);
   DrawInfo& operator=(DrawInfo&&);
 
-  auto const& vao() const { return vao_; }
-  auto        draw_mode() const { return draw_mode_; }
-  auto        vbo() const { return handles_.vbo(); }
-  auto        ebo() const { return handles_.ebo(); }
-  auto        num_vertexes() const { return num_vertexes_; }
-  auto        num_indices() const { return num_indices_; }
+  auto  draw_mode() const { return draw_mode_; }
+  auto  vbo() const { return handles_.vbo(); }
+  auto  ebo() const { return handles_.ebo(); }
+  auto  num_vertexes() const { return num_vertexes_; }
+  auto  num_indices() const { return num_indices_; }
+  auto& vao() { return vao_; }
 
-  auto texture_info() const { return texture_info_; }
+  void        set_ti(TextureInfo&& ti) { texture_info_ = MOVE(ti); }
+  auto&       texture_info() { return texture_info_; }
+  auto const& texture_info() const { return texture_info_; }
 
   std::string to_string(VertexAttribute const&) const;
 };
@@ -84,6 +86,7 @@ public:
 
   bool empty() const { return drawinfos_.empty(); }
 
+  opengl::DrawInfo&       get(stlw::Logger&, boomhs::EntityID);
   opengl::DrawInfo const& get(stlw::Logger&, boomhs::EntityID) const;
 };
 
@@ -99,6 +102,7 @@ public:
   {
   }
 
+  opengl::DrawInfo&       lookup(stlw::Logger&, boomhs::EntityID);
   opengl::DrawInfo const& lookup(stlw::Logger&, boomhs::EntityID) const;
 };
 
@@ -114,6 +118,7 @@ public:
       : drawinfos_(MOVE(dh))
   {
   }
+  opengl::DrawInfo&       lookup(stlw::Logger&, boomhs::TileType);
   opengl::DrawInfo const& lookup(stlw::Logger&, boomhs::TileType) const;
 };
 

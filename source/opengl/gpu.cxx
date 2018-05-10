@@ -28,7 +28,7 @@ namespace
 
 template <typename INDICES, typename VERTICES>
 void
-copy_synchronous(stlw::Logger& logger, ShaderProgram const& sp, DrawInfo const& dinfo,
+copy_synchronous(stlw::Logger& logger, ShaderProgram const& sp, DrawInfo &dinfo,
                  VERTICES const& vertices, INDICES const& indices)
 {
   auto const bind_and_copy = [&]() {
@@ -52,7 +52,7 @@ copy_synchronous(stlw::Logger& logger, ShaderProgram const& sp, DrawInfo const& 
   };
 
   LOG_TRACE("Starting synchronous cpu -> gpu copy");
-  dinfo.vao().while_bound(bind_and_copy);
+  while_bound(logger, dinfo.vao(), bind_and_copy);
   LOG_TRACE("cpu -> gpu copy complete");
 }
 

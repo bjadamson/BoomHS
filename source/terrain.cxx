@@ -134,7 +134,7 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
   auto              di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer, ti);
 
   // These uniforms only need to be set once.
-  sp.while_bound(logger, [&]() { sp.set_uniform_int1(logger, "u_sampler", 0); });
+  while_bound(logger, sp, [&]() { sp.set_uniform_int1(logger, "u_sampler", 0); });
 
   return TerrainPiece{tc, pos, MOVE(di), sp, ti};
 }

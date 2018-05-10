@@ -129,7 +129,7 @@ struct PointlightTransform
 
 void
 set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
-                           glm::mat4 const& model_matrix, ShaderProgram& sp, DrawInfo const& dinfo,
+                           glm::mat4 const& model_matrix, ShaderProgram& sp, DrawInfo& dinfo,
                            Material const&                         material,
                            std::vector<PointlightTransform> const& pointlights,
                            bool const                              receives_ambient_light)
@@ -202,7 +202,7 @@ set_3dmvpmatrix(stlw::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 
 }
 
 void
-draw(RenderState& rstate, ShaderProgram& sp, DrawInfo const& dinfo)
+draw(RenderState& rstate, ShaderProgram& sp, DrawInfo& dinfo)
 {
   auto&      es          = rstate.es;
   auto&      logger      = es.logger;
@@ -230,10 +230,10 @@ draw(RenderState& rstate, ShaderProgram& sp, DrawInfo const& dinfo)
   };
 
   if (dinfo.texture_info()) {
-    auto const ti = *dinfo.texture_info();
+    auto& ti = *dinfo.texture_info();
     LOG_DEBUG_SPRINTF("Binding TextureInfo '%s'", ti.to_string());
 
-    ti.while_bound([&]() { draw_fn(); });
+    while_bound(logger, ti, [&]() { draw_fn(); });
   }
   else {
     draw_fn();
@@ -241,7 +241,7 @@ draw(RenderState& rstate, ShaderProgram& sp, DrawInfo const& dinfo)
 }
 
 void
-draw_2d(RenderState& rstate, ShaderProgram& sp, DrawInfo const& dinfo)
+draw_2d(RenderState& rstate, ShaderProgram& sp, DrawInfo& dinfo)
 {
   disable_depth_tests();
   draw(rstate, sp, dinfo);
@@ -250,7 +250,7 @@ draw_2d(RenderState& rstate, ShaderProgram& sp, DrawInfo const& dinfo)
 
 void
 draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const& model_matrix,
-                 ShaderProgram& sp, DrawInfo const& dinfo, Material const& material,
+                 ShaderProgram& sp, DrawInfo& dinfo, Material const& material,
                  EntityRegistry& registry, bool const receives_ambient_light)
 {
   auto& es     = rstate.es;
@@ -279,7 +279,7 @@ draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const
 
 void
 draw_3dlightsource(RenderState& rstate, glm::mat4 const& model_matrix, ShaderProgram& sp,
-                   DrawInfo const& dinfo, EntityID const eid, EntityRegistry& registry)
+                   DrawInfo& dinfo, EntityID const eid, EntityRegistry& registry)
 {
   auto& es = rstate.es;
   auto& zs = rstate.zs;
@@ -471,7 +471,7 @@ clear_screen(Color const& color)
 {
   // https://stackoverflow.com/a/23944124/562174
   glDisable(GL_DEPTH_TEST);
-  ON_SCOPE_EXIT([]() { glEnable(GL_DEPTH_TEST); });
+  ON_SCOPE_EXIT([]() { enable_depth_tests(); });
 
   // Render
   glClearColor(color.r(), color.g(), color.b(), color.a());
@@ -523,16 +523,15 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
   auto& sps = zs.gfx_state.sps;
   auto& sp  = sps.ref_sp("3d_pos_color");
 
-  auto const dinfo = OG::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
-
+  auto        dinfo = OG::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
   auto const& ldata = zs.level_data;
 
   Transform transform;
-  sp.while_bound(logger, [&]() {
+  while_bound(logger, sp, [&]() {
     auto const camera_matrix = rstate.camera_matrix();
     set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
-    dinfo.vao().while_bound([&]() { draw(rstate, sp, dinfo); });
+    while_bound(logger, dinfo.vao(), [&]() { draw(rstate, sp, dinfo); });
   });
 }
 
@@ -577,11 +576,11 @@ draw_global_axis(RenderState& rstate)
   auto const& ldata = zs.level_data;
   Transform   transform;
 
-  auto const draw_axis_arrow = [&](auto const& dinfo) {
-    dinfo.vao().while_bound([&]() { draw(rstate, sp, dinfo); });
+  auto const draw_axis_arrow = [&](DrawInfo& dinfo) {
+    while_bound(logger, dinfo.vao(), [&]() { draw(rstate, sp, dinfo); });
   };
 
-  sp.while_bound(logger, [&]() {
+  while_bound(logger, sp, [&]() {
     auto const camera_matrix = rstate.camera_matrix();
     set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
@@ -604,21 +603,21 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
   auto& logger = es.logger;
   LOG_TRACE("Drawing Local Axis");
 
-  auto&      sp          = sps.ref_sp("3d_pos_color");
-  auto const axis_arrows = OG::create_axis_arrows(logger, sp);
+  auto& sp          = sps.ref_sp("3d_pos_color");
+  auto  axis_arrows = OG::create_axis_arrows(logger, sp);
 
   Transform transform;
   transform.translation = player_pos;
 
   auto const& ldata = zs.level_data;
 
-  sp.while_bound(logger, [&]() {
+  while_bound(logger, sp, [&]() {
     auto const camera_matrix = rstate.camera_matrix();
     set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
     // assume for now they all share the same VAO layout
-    auto const& vao = axis_arrows.x_dinfo.vao();
-    vao.while_bound([&]() {
+    auto& vao = axis_arrows.x_dinfo.vao();
+    while_bound(logger, vao, [&]() {
       draw(rstate, sp, axis_arrows.x_dinfo);
       draw(rstate, sp, axis_arrows.y_dinfo);
       draw(rstate, sp, axis_arrows.z_dinfo);
@@ -654,8 +653,8 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
     bool const is_lightsource = registry.has<PointLight>(eid);
     auto const model_matrix   = transform.model_matrix();
-    sp.while_bound(logger, [&]() {
-      dinfo.vao().while_bound([&]() {
+    while_bound(logger, sp, [&]() {
+      while_bound(logger, dinfo.vao(), [&]() {
         if (is_lightsource) {
           assert(is_lightsource);
           draw_3dlightsource(rstate, model_matrix, sp, dinfo, eid, registry);
@@ -694,7 +693,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
       static constexpr double SPEED = 0.135;
       auto const              a     = std::sin(ft.since_start_millis() * M_PI * SPEED);
       float const             glow  = glm::lerp(MIN, MAX, std::abs(a));
-      sp.while_bound(logger, [&]() { sp.set_uniform_float1(logger, "u_glow", glow); });
+      while_bound(logger, sp, [&]() { sp.set_uniform_float1(logger, "u_glow", glow); });
     }
 
     // randomize the position slightly
@@ -716,7 +715,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     auto const proj_matrix = rstate.projection_matrix();
     auto const mvp_matrix  = proj_matrix * view_model;
     auto&      sp          = sps.ref_sp(sn.value);
-    sp.while_bound(logger, [&]() { set_modelmatrix(logger, mvp_matrix, sp); });
+    while_bound(logger, sp, [&]() { set_modelmatrix(logger, mvp_matrix, sp); });
     draw_fn(eid, sn, transform, isv, bboard, FORWARD(args));
   };
 
@@ -758,9 +757,9 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
 
   auto const model_matrix = transform.model_matrix();
 
-  sp.while_bound(logger, [&]() {
+  while_bound(logger, sp, [&]() {
     set_modelmatrix(logger, model_matrix, sp);
-    dinfo.vao().while_bound([&]() { draw_2d(rstate, sp, dinfo); });
+    while_bound(logger, dinfo.vao(), [&]() { draw_2d(rstate, sp, dinfo); });
   });
 }
 
@@ -785,9 +784,9 @@ draw_inventory_overlay(RenderState& rstate)
   Transform  transform;
   auto const model_matrix = transform.model_matrix();
 
-  sp.while_bound(logger, [&]() {
+  while_bound(logger, sp, [&]() {
     set_modelmatrix(logger, model_matrix, sp);
-    dinfo.vao().while_bound([&]() { draw_2d(rstate, sp, dinfo); });
+    while_bound(logger, dinfo.vao(), [&]() { draw_2d(rstate, sp, dinfo); });
   });
 }
 
@@ -807,13 +806,13 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
   auto const& tilegrid  = ldata.tilegrid();
   auto const& tiletable = ldata.tiletable();
 
-  auto const& draw_tile_helper = [&](auto& sp, glm::vec3 const& position, auto const& dinfo,
+  auto const& draw_tile_helper = [&](auto& sp, glm::vec3 const& position, DrawInfo& dinfo,
                                      Tile const& tile, glm::mat4 const& model_mat,
                                      bool const receives_ambient_light) {
     auto const& tileinfo = tiletable[tile.type];
     auto const& material = tileinfo.material;
 
-    dinfo.vao().while_bound([&]() {
+    while_bound(logger, dinfo.vao(), [&]() {
       draw_3dlit_shape(rstate, position, model_mat, sp, dinfo, material, registry,
                        receives_ambient_light);
     });
@@ -827,19 +826,19 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
     auto&       transform        = registry.get<Transform>(tile.eid);
     auto const& rotation         = transform.rotation;
     auto const default_modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
-    auto const& dinfo            = tile_handles.lookup(logger, tile.type);
+    auto&      dinfo             = tile_handles.lookup(logger, tile.type);
 
     switch (tile.type) {
     case TileType::FLOOR: {
       auto&      sp        = sps.ref_sp("floor");
       auto const scale     = glm::vec3{0.8};
       auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, scale);
-      sp.while_bound(logger, [&]() { draw_tile_helper(sp, tr, dinfo, tile, modmatrix, true); });
+      while_bound(logger, sp, [&]() { draw_tile_helper(sp, tr, dinfo, tile, modmatrix, true); });
     } break;
     case TileType::WALL: {
       auto const inverse_model = glm::inverse(default_modmatrix);
       auto&      sp            = sps.ref_sp("hashtag");
-      sp.while_bound(logger, [&]() {
+      while_bound(logger, sp, [&]() {
         sp.set_uniform_matrix_4fv(logger, "u_inversemodelmatrix", inverse_model);
         draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix, true);
       });
@@ -849,7 +848,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
       break;
     case TileType::STAIR_DOWN: {
       auto& sp = sps.ref_sp("stair");
-      sp.while_bound(logger, [&]() {
+      while_bound(logger, sp, [&]() {
         sp.set_uniform_color(logger, "u_color", LOC::WHITE);
 
         bool const receives_ambient_light = false;
@@ -858,7 +857,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
     } break;
     case TileType::STAIR_UP: {
       auto& sp = sps.ref_sp("stair");
-      sp.while_bound(logger, [&]() {
+      while_bound(logger, sp, [&]() {
         sp.set_uniform_color(logger, "u_color", LOC::WHITE);
 
         bool const receives_ambient_light = false;
@@ -871,7 +870,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
     default: {
       bool const receives_ambient_light = true;
       auto&      sp                     = sps.ref_sp("3d_pos_normal_color");
-      sp.while_bound(logger, [&]() {
+      while_bound(logger, sp, [&]() {
         draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix, receives_ambient_light);
       });
     } break;
@@ -930,10 +929,10 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
     auto texture_o = ttable.find("TargetReticle");
     assert(texture_o);
-    DrawInfo const dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, *texture_o);
+    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, *texture_o);
 
     transform.scale = glm::vec3{scale};
-    dinfo.vao().while_bound([&]() { draw_2d(rstate, sp, dinfo); });
+    while_bound(logger, dinfo.vao(), [&]() { draw_2d(rstate, sp, dinfo); });
   };
 
   auto const draw_glow = [&]() {
@@ -943,13 +942,13 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     auto const mvp_matrix = proj_matrix * view_model;
     set_modelmatrix(logger, mvp_matrix, sp);
 
-    DrawInfo const dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, *texture_o);
+    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, *texture_o);
 
     transform.scale = glm::vec3{scale};
-    dinfo.vao().while_bound([&]() { draw_2d(rstate, sp, dinfo); });
+    while_bound(logger, dinfo.vao(), [&]() { draw_2d(rstate, sp, dinfo); });
   };
 
-  sp.while_bound(logger, [&]() {
+  while_bound(logger, sp, [&]() {
     if (scale < 1.0f) {
       draw_glow();
     }
@@ -969,10 +968,10 @@ draw_rivers(RenderState& rstate, window::FrameTime const& ft)
   auto& registry     = zs.registry;
   auto& sps          = zs.gfx_state.sps;
 
-  auto&       sp    = sps.ref_sp("river");
-  auto const& dinfo = tile_handles.lookup(logger, TileType::RIVER);
+  auto& sp    = sps.ref_sp("river");
+  auto& dinfo = tile_handles.lookup(logger, TileType::RIVER);
 
-  sp.while_bound(logger, [&]() {
+  while_bound(logger, sp, [&]() {
     sp.set_uniform_color(logger, "u_color", LOC::WHITE);
 
     auto const& level_data = zs.level_data;
@@ -1049,9 +1048,9 @@ draw_skybox(RenderState& rstate, window::FrameTime const& ft)
     auto const camera_matrix = rstate.camera_matrix();
     auto const mvp_matrix    = camera_matrix * transform.model_matrix();
 
-    sp.while_bound(logger, [&]() {
+    while_bound(logger, sp, [&]() {
       sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
-      dinfo.vao().while_bound([&]() { draw_2d(rstate, sp, dinfo); });
+      while_bound(logger, dinfo.vao(), [&]() { draw_2d(rstate, sp, dinfo); });
     });
   };
 
@@ -1073,10 +1072,10 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
   auto const draw_starletter = [&](int const x, int const y, char const* shader,
                                    TileType const type) {
     auto& sp = sps.ref_sp(shader);
-    sp.while_bound(logger, [&]() {
+    while_bound(logger, sp, [&]() {
       sp.set_uniform_color_3fv(es.logger, "u_lightcolor", LOC::YELLOW);
 
-      auto const& dinfo = tile_handles.lookup(logger, type);
+      auto& dinfo = tile_handles.lookup(logger, type);
 
       auto constexpr Z    = 5.0f;
       auto const      tr  = glm::vec3{x, y, Z};
@@ -1095,7 +1094,7 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
       auto const  camera_matrix = rstate.camera_matrix();
       set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
 
-      dinfo.vao().while_bound([&]() { draw(rstate, sp, dinfo); });
+      while_bound(logger, dinfo.vao(), [&]() { draw(rstate, sp, dinfo); });
     });
   };
 
@@ -1142,12 +1141,12 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
 
     // reach through the reference wrapper
     auto& sp = t.shader().get();
-    sp.while_bound(logger, [&]() {
+    while_bound(logger, sp, [&]() {
       sp.set_uniform_float1(logger, "u_uvmodifier", config.uv_modifier);
       sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
 
-      auto const& dinfo = t.draw_info();
-      dinfo.vao().while_bound([&]() {
+      auto& dinfo = t.draw_info();
+      while_bound(logger, dinfo.vao(), [&]() {
         bool constexpr RECEIVES_AMBIENT_LIGHT = true;
         draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
                          Material{}, registry, RECEIVES_AMBIENT_LIGHT);
@@ -1177,17 +1176,17 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
   Transform  transform;
   bool const show_y = tds.show_yaxis_lines;
-  auto const dinfo  = OG::create_tilegrid(logger, sp, tilegrid, show_y);
+  auto       dinfo  = OG::create_tilegrid(logger, sp, tilegrid, show_y);
 
   auto const model_matrix = transform.model_matrix();
 
   auto const& ldata = zs.level_data;
 
-  sp.while_bound(logger, [&]() {
+  while_bound(logger, sp, [&]() {
     auto const camera_matrix = rstate.camera_matrix();
     set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
 
-    dinfo.vao().while_bound([&]() { draw(rstate, sp, dinfo); });
+    while_bound(logger, dinfo.vao(), [&]() { draw(rstate, sp, dinfo); });
   });
 }
 
@@ -1199,7 +1198,7 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
   auto& logger = es.logger;
 
   Transform  transform;
-  auto const render = [&](WaterInfo const& winfo) {
+  auto const render = [&](WaterInfo& winfo) {
     auto const& pos = winfo.position;
 
     auto& tr = transform.translation;
@@ -1210,24 +1209,24 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     tr.y = 0.19999f; // pos.y;
     assert(tr.y < 2.0f);
 
-    auto&       sp    = winfo.shader;
-    auto const& dinfo = winfo.dinfo;
-    auto const& vao   = dinfo.vao();
+    auto& sp    = winfo.shader;
+    auto& dinfo = winfo.dinfo;
+    auto& vao   = dinfo.vao();
 
     bool constexpr RECEIVES_AMBIENT_LIGHT = true;
-    sp.while_bound(logger, [&]() {
+    while_bound(logger, sp, [&]() {
       sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
-      vao.while_bound([&]() {
+      while_bound(logger, vao, [&]() {
         draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
                          Material{}, registry, RECEIVES_AMBIENT_LIGHT);
       });
     });
   };
 
-  auto&       zs    = rstate.zs;
-  auto const& ldata = zs.level_data;
+  auto& zs = rstate.zs;
   LOG_TRACE("Rendering water");
 
+  auto& ldata = zs.level_data;
   render(ldata.water());
   LOG_TRACE("Finished rendering water");
 }

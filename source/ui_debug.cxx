@@ -342,7 +342,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
         }
         else {
           auto& ti = *ttable.find(selected_texture);
-          ti.while_bound([&]() {
+          while_bound(logger, ti, [&]() {
             ti.set_fieldi(GL_TEXTURE_WRAP_S, t.wrap_mode);
             ti.set_fieldi(GL_TEXTURE_WRAP_T, t.wrap_mode);
           });

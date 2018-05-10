@@ -5,6 +5,8 @@ in float v_visibility;
 in float clip_distance;
 
 uniform sampler2D u_sampler;
+uniform sampler2D u_reflect_sampler;
+uniform sampler2D u_refract_sampler;
 
 uniform Material         u_material;
 uniform PointLight       u_pointlights[MAX_NUM_POINTLIGHTS];
@@ -47,4 +49,10 @@ void main()
     fragment_color = vec4(light, 1.0) * texture_color;
   }
   fragment_color = mix(u_fog.color, fragment_color, v_visibility);
+
+  vec4 reflect = texture(u_reflect_sampler, v_uv);
+  vec4 refract = texture(u_refract_sampler, v_uv);
+
+  fragment_color = mix(reflect, fragment_color, 0.5);
+  fragment_color = mix(refract, fragment_color, 0.5);
 }

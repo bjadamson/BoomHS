@@ -61,7 +61,7 @@ public:
   TerrainPiece(TerrainPieceConfig const&, glm::vec2 const&, opengl::DrawInfo&&,
                opengl::ShaderProgram& sp, opengl::TextureInfo const&);
 
-  auto const& draw_info() const { return di_; }
+  auto&       draw_info() { return di_; }
   auto const& position() const { return pos_; }
   auto const& texture_info() const { return ti_; }
 

@@ -423,10 +423,6 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
   }
 
   auto& registry = zs.registry;
-  if (es.draw_water) {
-    render::draw_water(rstate, registry, ft, cull_plane);
-  }
-
   if (es.draw_terrain) {
     render::draw_terrain(rstate, registry, ft, cull_plane);
   }
@@ -514,7 +510,9 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   }
 
   // TODO: Move out into state somewhere.
-  static WaterFrameBuffers waterfbos;
+  auto&                    gfx_state = zs.gfx_state;
+  auto&                    sps       = gfx_state.sps;
+  static WaterFrameBuffers waterfbos{logger, sps.ref_sp("water")};
 
   // Render the scene to the reflection FBO
   float constexpr CULL_CUTOFF_HEIGHT = 0.4f;
@@ -541,8 +539,8 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     RenderState rstate{reflect_rmatrices, es, zs};
     render::clear_screen(fog_color);
 
-    // render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
     render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
+    // render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
 
     waterfbos.unbind_all_fbos();
   }
@@ -554,13 +552,14 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
 
     render::clear_screen(fog_color);
 
-    // render::draw_water(rstate, registry, ft);
     render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
+    // render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
 
     waterfbos.unbind_all_fbos();
   }
 
   render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
+  // render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
   {
     // Move the rectangle to the top-left corner
     glm::vec2 const pos{-0.5f, 0.5f};

@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/types.hpp>
+#include <opengl/bind.hpp>
 #include <opengl/colors.hpp>
 #include <opengl/vertex_attribute.hpp>
 
@@ -87,14 +88,6 @@ public:
 
   void bind(stlw::Logger&);
   void unbind(stlw::Logger&);
-
-  template <typename FN>
-  void while_bound(stlw::Logger& logger, FN const& fn)
-  {
-    bind(logger);
-    ON_SCOPE_EXIT([&]() { unbind(logger); });
-    fn();
-  }
 
   GLint get_uniform_location(stlw::Logger&, GLchar const*);
 

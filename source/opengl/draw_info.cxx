@@ -155,20 +155,35 @@ EntityDrawinfos::add(EntityID const entity, opengl::DrawInfo &&di)
   return pos;
 }
 
+#define GET_IMPLEMENTATION                                                                         \
+  FOR(i, entities_.size()) {                                                                       \
+    if (entities_[i] == entity) {                                                                  \
+      return drawinfos_[i];                                                                        \
+    }                                                                                              \
+  }                                                                                                \
+  LOG_ERROR_FMT("Error could not find entity drawinfo associated to entity {}", entity);           \
+  std::abort();
+
+opengl::DrawInfo&
+EntityDrawinfos::get(stlw::Logger &logger, EntityID const entity)
+{
+  GET_IMPLEMENTATION
+}
+
 opengl::DrawInfo const&
 EntityDrawinfos::get(stlw::Logger &logger, EntityID const entity) const
 {
-  FOR(i, entities_.size()) {
-    if (entities_[i] == entity) {
-      return drawinfos_[i];
-    }
-  }
-  LOG_ERROR_FMT("Error could not find entity drawinfo associated to entity {}", entity);
-  std::abort();
+  GET_IMPLEMENTATION
+}
+#undef GET_IMPLEMENTATION
+
+
+opengl::DrawInfo&
+EntityDrawHandles::lookup(stlw::Logger &logger, EntityID const eid)
+{
+  return infos_.get(logger, eid);
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// EntityDrawHandles
 opengl::DrawInfo const&
 EntityDrawHandles::lookup(stlw::Logger &logger, EntityID const eid) const
 {
@@ -176,13 +191,23 @@ EntityDrawHandles::lookup(stlw::Logger &logger, EntityID const eid) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// EntityDrawHandles
+// TileDrawHandles
+#define GET_IMPLEMENTATION                                                                         \
+  assert(type < TileType::UNDEFINED);                                                              \
+  auto const index = static_cast<size_t>(type);                                                    \
+  return drawinfos_[index];
+
+opengl::DrawInfo&
+TileDrawHandles::lookup(stlw::Logger &logger, TileType const type)
+{
+  GET_IMPLEMENTATION
+}
+
 opengl::DrawInfo const&
 TileDrawHandles::lookup(stlw::Logger &logger, TileType const type) const
 {
-  assert(type < TileType::UNDEFINED);
-  auto const index = static_cast<size_t>(type);
-  return drawinfos_[index];
+  GET_IMPLEMENTATION
 }
+#undef GET_IMPLEMENTATION
 
 } // ns opengl

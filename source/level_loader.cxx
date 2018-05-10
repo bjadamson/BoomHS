@@ -270,7 +270,7 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       auto const  wrap_s = get_string(resource, "wrap").value_or("clamp");
       GLint const wrap   = texture::wrap_mode_from_string(wrap_s.c_str());
 
-      t->while_bound([&]() {
+      while_bound(logger, t.resource(), [&]() {
         t->set_fieldi(GL_TEXTURE_WRAP_S, wrap);
         t->set_fieldi(GL_TEXTURE_WRAP_T, wrap);
 
@@ -294,7 +294,7 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       Texture                  t = TRY_MOVEOUT(
           opengl::texture::upload_3dcube_texture(logger, texture_names.filenames, format));
 
-      t->while_bound([&]() {
+      while_bound(logger, t.resource(), [&]() {
         t->set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         t->set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
