@@ -106,8 +106,7 @@ void
 draw_entities(RenderState&, stlw::float_generator&, window::FrameTime const&);
 
 void
-draw_skybox(RenderState&, opengl::TextureInfo&,
-    window::FrameTime const&);
+draw_skybox(RenderState&, opengl::TextureInfo&, window::FrameTime const&);
 
 void
 draw_targetreticle(RenderState&, window::FrameTime const&);
@@ -129,6 +128,6 @@ draw_tilegrid(RenderState&, TiledataState const&);
 
 void
 draw_water(RenderState&, EntityRegistry&, window::FrameTime const&, glm::vec4 const&,
-    opengl::TextureInfo&);
+           opengl::TextureInfo&);
 
 } // namespace boomhs::render

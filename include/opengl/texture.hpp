@@ -29,6 +29,7 @@ struct IdTextureUnit
 class IdTextureUnits
 {
   size_t num_active_;
+
 public:
   static constexpr auto DEBUG_HACK_MAX_NUM_TEXTURE_UNITS = 4;
 
@@ -47,10 +48,10 @@ struct TextureInfo
   mutable bool bound = false;
 #endif
 
-  GLenum target;
+  GLenum         target;
   IdTextureUnits ids_units;
 
-  GLint  width = 0, height = 0;
+  GLint width = 0, height = 0;
 
   float uv_max = -1.0;
 
@@ -62,7 +63,7 @@ struct TextureInfo
   void unbind(stlw::Logger&);
   void destroy();
 
-  auto& id() { return ids_units.data[0].id; }
+  auto&       id() { return ids_units.data[0].id; }
   auto const& id() const { return ids_units.data[0].id; }
 
   void gen_texture(stlw::Logger&, GLsizei);

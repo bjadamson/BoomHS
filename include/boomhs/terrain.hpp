@@ -63,7 +63,7 @@ public:
 
   auto&       draw_info() { return di_; }
   auto const& position() const { return pos_; }
-  auto& texture_info() { return ti_; }
+  auto&       texture_info() { return ti_; }
   auto const& texture_info() const { return ti_; }
 
   auto& shader() { return sp_; }

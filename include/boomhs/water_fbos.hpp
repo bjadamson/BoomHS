@@ -41,7 +41,7 @@ public:
 
   opengl::TextureInfo& reflection_ti();
   opengl::TextureInfo& refraction_ti();
-  int                        refraction_depth_tid() const;
+  int                  refraction_depth_tid() const;
 };
 
 } // namespace boomhs

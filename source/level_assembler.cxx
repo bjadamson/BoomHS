@@ -111,13 +111,13 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
   registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
         auto& shader_ref = sps.ref_sp(sn.value);
-        auto  handle = opengl::gpu::copy_cubetexture_gpu(logger, shader_ref);
+        auto  handle     = opengl::gpu::copy_cubetexture_gpu(logger, shader_ref);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, IsSkybox, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
         auto& shader_ref = sps.ref_sp(sn.value);
-        auto  handle = opengl::gpu::copy_cubetexture_gpu(logger, shader_ref);
+        auto  handle     = opengl::gpu::copy_cubetexture_gpu(logger, shader_ref);
         dinfos.add(entity, MOVE(handle));
       });
 
