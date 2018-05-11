@@ -67,14 +67,36 @@ upload_image_gpu(stlw::Logger &logger, std::string const& path, GpuUploadConfig 
 
 namespace opengl
 {
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// IdTextureUnit
+IdTextureUnit::IdTextureUnit()
+  : id(0)
+  , texture_unit(GL_TEXTURE0)
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// IdTextureUnits
+IdTextureUnits::IdTextureUnits(size_t const num)
+  : num_active_(num)
+{
+  assert(num < DEBUG_HACK_MAX_NUM_TEXTURE_UNITS);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TextureInfo
 TextureInfo::TextureInfo()
   : target(GL_TEXTURE_2D)
-  , id(0)
+  , ids_units(1)
   , bound(false)
 {
+}
+
+void
+TextureInfo::gen_texture(stlw::Logger &logger, GLsizei const num)
+{
+  glGenTextures(num, &id());
+  LOG_ANY_GL_ERRORS(logger, "glGenTextures");
 }
 
 void
@@ -82,7 +104,10 @@ TextureInfo::bind(stlw::Logger& logger)
 {
   DEBUG_ASSERT_NOT_BOUND();
 
-  global::texture_bind(*this);
+  FOR(i, ids_units.size()) {
+    glActiveTexture(GL_TEXTURE0 + i);
+    global::texture_bind(*this);
+  }
   DEBUG_BIND();
 }
 
@@ -90,6 +115,11 @@ void
 TextureInfo::unbind(stlw::Logger& logger)
 {
   DEBUG_ASSERT_BOUND();
+
+  // This is an expected no-op operation.
+  //
+  // Make sure this isn't masking any problems, try commenting out and see if rendering changes.
+  glActiveTexture(GL_TEXTURE0);
 
   global::texture_unbind(*this);
   DEBUG_UNBIND();
@@ -100,7 +130,7 @@ TextureInfo::destroy()
 {
   DEBUG_ASSERT_NOT_BOUND();
 
-  glDeleteTextures(TextureInfo::NUM_BUFFERS, &id);
+  glDeleteTextures(TextureInfo::NUM_BUFFERS, &id());
 }
 
 GLint
@@ -125,7 +155,7 @@ std::string
 TextureInfo::to_string() const
 {
   return fmt::sprintf("(TextureInfo) id: %u, target: %i, (w, h) : (%i, %i), uv_max: %f",
-      id, target, width, height, uv_max);
+      id(), target, width, height, uv_max);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -304,9 +334,9 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLenum const
   assert(ANYOF(format == GL_RGB, format == GL_RGBA));
 
   TextureInfo ti;
-  glGenTextures(1, &ti.id);
+  ti.gen_texture(logger, 1);
   ti.target = GL_TEXTURE_2D;
-  LOG_TRACE_SPRINTF("allocating texture %s TextureID %u", filename, ti.id);
+  LOG_TRACE_SPRINTF("allocating texture info %s TextureID %u", filename, ti.id());
 
   // This next bit comes from tracking down a weird bug. Without this extra scope, the texture info
   // does not get unbound because the move constructor for the AutoResource(Texture) moves the
@@ -352,9 +382,8 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   };
 
   TextureInfo ti;
+  ti.gen_texture(logger, 1);
   ti.target = GL_TEXTURE_CUBE_MAP;
-  glGenTextures(1, &ti.id);
-  LOG_ANY_GL_ERRORS(logger, "glGenTextures");
 
   auto const upload_fn = [&format, &logger, &ti](std::string const& filename, GLenum const target)
     -> Result<stlw::none_t, std::string>

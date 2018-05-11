@@ -95,8 +95,8 @@ wrap = "clamp"
 
 [[resource]]
 name = "water-texture"
-type = "texture:2d-RGB"
-filename = "assets/lava.jpg"
+type = "texture:2d-RGBA"
+filename = "assets/water/texture.png"
 wrap = "mirror_repeat"
 
 [[resource]]
@@ -423,7 +423,7 @@ name = "Moon"
 ######### POINT LIGHTS
 [[entity]]
 name = "point light 0"
-position = [0.0, 5.0, 0.0]
+position = [2.0, 2.0, 2.0]
 shader = "light"
 geometry = "cube"
 pointlight = "red"
@@ -431,7 +431,7 @@ scale = [0.4, 0.4, 0.4]
 
 [[entity]]
 name = "point light 1"
-position = [5.0, 5.0, 0.0]
+position = [4.0, 2.0, 2.0]
 shader = "light"
 geometry = "cube"
 pointlight = "green"
@@ -439,7 +439,7 @@ scale = [0.4, 0.4, 0.4]
 
 [[entity]]
 name = "point light 2"
-position = [5.0, 5.0, 5.0]
+position = [4.0, 2.0, 4.0]
 shader = "light"
 geometry = "cube"
 pointlight = "blue"
@@ -447,7 +447,7 @@ scale = [0.4, 0.4, 0.4]
 
 [[entity]]
 name = "point light 3"
-position = [0.0, 5.0, 5.0]
+position = [2.0, 2.0, 4.0]
 shader = "light"
 geometry = "cube"
 pointlight = "white"

@@ -32,7 +32,7 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
 
   TextureInfo ti;
   ti.target = GL_TEXTURE_2D;
-  glGenTextures(1, &ti.id);
+  ti.gen_texture(logger, 1);
 
   while_bound(logger, ti, [&]() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
@@ -42,7 +42,7 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
     // attach texture to FBO
     //
     // TODO: I think this code assumes that the FBO is currently bound?
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ti.id, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ti.id(), 0);
   });
 
   ti.height = height;

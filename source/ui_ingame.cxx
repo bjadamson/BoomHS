@@ -22,7 +22,7 @@ draw_player_inventory(stlw::Logger& logger, EntityRegistry& registry, TextureTab
   auto&      inventory = player.inventory;
 
   auto const draw_button = [&](TextureInfo const& ti) {
-    ImTextureID im_texid = reinterpret_cast<void*>(ti.id);
+    ImTextureID im_texid = reinterpret_cast<void*>(ti.id());
 
     imgui_cxx::ImageButtonBuilder image_builder;
     image_builder.frame_padding = 1;
@@ -120,7 +120,7 @@ draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const
   char const* name = "test_icon";
   assert(ttable.find(name) != nullptr);
   auto const  ti        = *ttable.find(name);
-  ImTextureID my_tex_id = reinterpret_cast<void*>(ti.id);
+  ImTextureID my_tex_id = reinterpret_cast<void*>(ti.id());
 
   auto const draw = [&]() {
     ImGui::Text("Name %s", npcdata.name);

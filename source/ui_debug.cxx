@@ -504,7 +504,7 @@ draw_skybox_window(EngineState& es, EntityRegistry& registry)
 
   auto const draw = [&]() {
     auto const draw_button = [&](TextureInfo const& ti) {
-      ImTextureID im_texid = reinterpret_cast<void*>(ti.id);
+      ImTextureID im_texid = reinterpret_cast<void*>(ti.id());
 
       imgui_cxx::ImageButtonBuilder image_builder;
       image_builder.frame_padding = 1;
