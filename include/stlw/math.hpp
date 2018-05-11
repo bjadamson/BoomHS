@@ -10,7 +10,7 @@
 namespace stlw::math
 {
 
-template<typename T>
+template <typename T>
 inline auto
 squared(T const& value)
 {

@@ -23,8 +23,8 @@ struct MeshFactory
 
   static ObjData::indices_t generate_indices(size_t);
 
-  static ObjData::vertices_t generate_normals(glm::vec2 const&, GenerateNormalData const&);
-  static ObjData::vertices_t generate_flat_normals(glm::vec2 const&);
+  static ObjData::vertices_t generate_normals(GenerateNormalData const&);
+  static ObjData::vertices_t generate_flat_normals(size_t);
 };
 
 } // namespace boomhs

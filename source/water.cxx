@@ -29,7 +29,7 @@ WaterFactory::generate_water_data(stlw::Logger& logger, glm::vec2 const& dimensi
 
   data.vertices = MeshFactory::generate_rectangle_mesh(logger, dimensions, num_vertexes);
 
-  data.normals = MeshFactory::generate_flat_normals(dimensions);
+  data.normals = MeshFactory::generate_flat_normals(num_vertexes);
   data.uvs     = MeshFactory::generate_uvs(dimensions, num_vertexes);
 
   data.indices = MeshFactory::generate_indices(num_vertexes);
@@ -57,7 +57,7 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
   LOG_TRACE("Generating water");
   glm::vec2 const       pos{0, 0};
   size_t const          num_vertexes = 128;
-  glm::vec2 const       dimensions{static_cast<float>(num_vertexes)};
+  glm::vec2 const       dimensions{10};
   WaterInfoConfig const wic{pos, dimensions, num_vertexes};
 
   auto texture_o = ttable.find("water-texture");
@@ -72,8 +72,8 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
 
   auto& tinfo = wi.tinfo;
   tinfo.while_bound(logger, [&]() {
-    tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-    tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     tinfo.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     tinfo.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   });

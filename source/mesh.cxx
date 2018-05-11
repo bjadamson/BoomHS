@@ -30,9 +30,9 @@ calculate_ratio(float const v, size_t const num_vertexes, float const length)
 }
 
 ObjData::vertices_t
-create_normal_buffer(glm::vec2 const& dimensions)
+create_normal_buffer(size_t const num_vertexes)
 {
-  size_t const num_vertices = NORMAL_NUM_COMPONENTS * dimensions.x * dimensions.y;
+  size_t const num_vertices = NORMAL_NUM_COMPONENTS * stlw::math::squared(num_vertexes);
 
   ObjData::vertices_t normals;
   normals.resize(num_vertices);
@@ -52,9 +52,9 @@ ObjData::vertices_t
 MeshFactory::generate_rectangle_mesh(stlw::Logger& logger, glm::vec2 const& dimensions,
                                      size_t const num_vertexes)
 {
-  LOG_TRACE("Generating rectangle mesh");
-
+  LOG_TRACE("Generating rectangle mesh begin");
   size_t constexpr NUM_COMPONENTS = 3; // x, y, z
+
   auto const x_length = num_vertexes, z_length = num_vertexes;
   auto const num_vertices = calculate_number_vertices(NUM_COMPONENTS, num_vertexes);
 
@@ -76,7 +76,7 @@ MeshFactory::generate_rectangle_mesh(stlw::Logger& logger, glm::vec2 const& dime
       assert(offset < buffer.size());
       buffer[offset++] = xpos;
       assert(offset < buffer.size());
-      LOG_TRACE_SPRINTF("xpos: %f, ypos: %f, zpos: %f", xpos, ypos, zpos);
+      LOG_DEBUG_SPRINTF("xpos: %f, ypos: %f, zpos: %f", xpos, ypos, zpos);
 
       assert(offset < buffer.size());
       buffer[offset++] = ypos;
@@ -160,10 +160,11 @@ MeshFactory::generate_indices(size_t const num_vertexes)
 }
 
 ObjData::vertices_t
-MeshFactory::generate_normals(glm::vec2 const& dimensions, GenerateNormalData const& normal_data)
+MeshFactory::generate_normals(GenerateNormalData const& normal_data)
 {
-  auto       normals = create_normal_buffer(dimensions);
-  auto const width = dimensions.x, height = dimensions.y;
+  auto const num_vertexes = normal_data.num_vertexes;
+  auto       normals      = create_normal_buffer(num_vertexes);
+  auto const width = num_vertexes, height = num_vertexes;
 
   //
   // Algorithm adapted from:
@@ -191,9 +192,9 @@ MeshFactory::generate_normals(glm::vec2 const& dimensions, GenerateNormalData co
     return normal_data.height_data[(width * y) + x];
   };
 
-  FORI(y, height)
+  FOR(y, height)
   {
-    FORI(x, width)
+    FOR(x, width)
     {
       // The ? : and ifs are necessary for the border cases.
       float sx = h(x < width - 1 ? x + 1 : x, y) - h(x0 ? x - 1 : x, y);
@@ -225,9 +226,9 @@ MeshFactory::generate_normals(glm::vec2 const& dimensions, GenerateNormalData co
 }
 
 ObjData::vertices_t
-MeshFactory::generate_flat_normals(glm::vec2 const& dimensions)
+MeshFactory::generate_flat_normals(size_t const num_vertexes)
 {
-  auto normals = create_normal_buffer(dimensions);
+  auto normals = create_normal_buffer(num_vertexes);
 
   FOR(i, normals.size() / NORMAL_NUM_COMPONENTS)
   {

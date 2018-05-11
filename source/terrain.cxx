@@ -31,9 +31,9 @@ generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc,
   heightmap::update_vertices_from_heightmap(logger, tc, heightmap_data, data.vertices);
 
   {
-    glm::vec2 const          dimensions{static_cast<float>(numv_oneside)};
-    GenerateNormalData const gnd{tc.invert_normals, heightmap_data, num_vertexes};
-    data.normals = MeshFactory::generate_normals(dimensions, gnd);
+    glm::vec2 const          dimensions{1};
+    GenerateNormalData const gnd{tc.invert_normals, heightmap_data, numv_oneside};
+    data.normals = MeshFactory::generate_normals(gnd);
   }
 
   data.uvs     = MeshFactory::generate_uvs(tgc.dimensions, numv_oneside);
