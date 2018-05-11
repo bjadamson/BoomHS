@@ -24,12 +24,11 @@ struct TextureInfo
   mutable bool bound = false;
 #endif
 
-  GLenum mode;
+  GLenum target;
   GLuint id;
   GLint  width = 0, height = 0;
-  GLuint num_texture_units = 1;
 
-  float uv_max = 0;
+  float uv_max = -1.0;
 
   // constructors
   TextureInfo();
@@ -44,13 +43,6 @@ struct TextureInfo
 
   std::string to_string() const;
   static size_t constexpr NUM_BUFFERS = 1;
-};
-
-using pimage_t = std::unique_ptr<unsigned char, void (*)(unsigned char*)>;
-struct ImageData
-{
-  int      width, height;
-  pimage_t data;
 };
 
 // FrameBuffer Info
@@ -138,6 +130,13 @@ public:
   TextureInfo const*      find(std::string const&) const;
 };
 
+using ImageDataPointer = std::unique_ptr<unsigned char, void (*)(unsigned char*)>;
+struct ImageData
+{
+  int              width, height;
+  ImageDataPointer data;
+};
+
 } // namespace opengl
 
 namespace opengl::texture
@@ -148,14 +147,6 @@ using TextureResult = Result<Texture, std::string>;
 
 ImageResult
 load_image(stlw::Logger&, char const*, GLint const);
-
-struct GpuUploadConfig
-{
-  GLenum const target;
-  GLenum const format;
-};
-Result<ImageData, std::string>
-upload_image_gpu(stlw::Logger& logger, std::string const& path, GpuUploadConfig const&);
 
 GLint
 wrap_mode_from_string(char const*);

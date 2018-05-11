@@ -89,7 +89,7 @@ TerrainArray::add(TerrainPiece&& t)
 TerrainGridConfig::TerrainGridConfig()
     : num_rows(1)
     , num_cols(1)
-    , dimensions(1, 1)
+    , dimensions(8, 8)
 {
 }
 

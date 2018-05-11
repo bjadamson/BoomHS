@@ -31,7 +31,7 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
   assert(width > 0 && height > 0);
 
   TextureInfo ti;
-  ti.mode = GL_TEXTURE_2D;
+  ti.target = GL_TEXTURE_2D;
   glGenTextures(1, &ti.id);
 
   while_bound(logger, ti, [&]() {
@@ -108,6 +108,8 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
 
   // connect texture units to shader program
   while_bound(logger, sp_, [&]() {
+
+    // Bind texture units to shader uniforms
     sp_.set_uniform_int1(logger, "u_reflect_sampler", 0);
     sp_.set_uniform_int1(logger, "u_refract_sampler", 1);
   });

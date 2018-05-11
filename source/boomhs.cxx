@@ -409,10 +409,8 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
   auto& es    = rstate.es;
   auto& zs    = rstate.zs;
   auto& ldata = zs.level_data;
-  render::clear_screen(ldata.fog.color);
 
   if (es.draw_entities) {
-    render::draw_skybox(rstate, ft);
     render::draw_entities(rstate, rng, ft);
   }
 
@@ -535,6 +533,8 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     RenderState rstate{reflect_rmatrices, es, zs};
     render::clear_screen(fog_color);
 
+    render::clear_screen(ldata.fog.color);
+    render::draw_skybox(rstate, ft);
     render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
     render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
   });
@@ -543,21 +543,20 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   RenderState rstate{rmatrices, es, zs};
   waterfbos.with_refraction(logger, [&]() {
     render::clear_screen(fog_color);
-
+    render::draw_skybox(rstate, ft);
     render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
     render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
   });
 
-  render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
-  auto& ui_state = es.ui_state;
-  if (ui_state.draw_ingame_ui) {
-    ui_ingame::draw(es, lm);
-  }
+  render::clear_screen(ldata.fog.color);
+  render::draw_skybox(rstate, ft);
 
-  // render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
+  render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
+  render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
+
   {
     // Move the rectangle to the top-left corner
-    glm::vec2 const pos{-0.5f, 0.5f};
+    glm::vec2 const pos{-0.5f, -0.5f};
     glm::vec2 const scale{0.25f, 0.25f};
 
     auto const tid = waterfbos.reflection_ti();
@@ -565,11 +564,16 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   }
 
   {
-    glm::vec2 const pos{0.5f, 0.5f};
+    glm::vec2 const pos{0.5f, -0.5f};
     glm::vec2 const scale{0.25f, 0.25f};
 
     auto const tid = waterfbos.refraction_ti();
     render::draw_fbo_testwindow(rstate, pos, scale, tid);
+  }
+
+  auto& ui_state = es.ui_state;
+  if (ui_state.draw_ingame_ui) {
+    ui_ingame::draw(es, lm);
   }
 }
 

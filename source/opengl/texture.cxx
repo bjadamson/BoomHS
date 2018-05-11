@@ -30,6 +30,40 @@
   FOR_DEBUG_ONLY([&]() { this->bound = false; });
 
 using namespace boomhs;
+using namespace opengl;
+
+namespace
+{
+
+struct GpuUploadConfig
+{
+  GLenum const format;
+  GLenum const target;
+  GLenum const texture_unit;
+};
+
+Result<ImageData, std::string>
+upload_image_gpu(stlw::Logger &logger, std::string const& path, GpuUploadConfig const& guc)
+{
+  auto image_data = TRY_MOVEOUT(texture::load_image(logger, path.c_str(), guc.format));
+
+  auto const width = image_data.width;
+  auto const height = image_data.height;
+  auto const* data = image_data.data.get();
+
+  LOG_TRACE_SPRINTF("uploading %s with w: %i, h: %i", path, width, height);
+
+  auto const format       = guc.format;
+  auto const target       = guc.target;
+  auto const texture_unit = guc.texture_unit;
+
+  glActiveTexture(texture_unit);
+  glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+
+  return OK_MOVE(image_data);
+}
+
+} // ns anon
 
 namespace opengl
 {
@@ -37,7 +71,7 @@ namespace opengl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TextureInfo
 TextureInfo::TextureInfo()
-  : mode(0)
+  : target(GL_TEXTURE_2D)
   , id(0)
   , bound(false)
 {
@@ -48,11 +82,7 @@ TextureInfo::bind(stlw::Logger& logger)
 {
   DEBUG_ASSERT_NOT_BOUND();
 
-  FOR(i, num_texture_units) {
-    glActiveTexture(GL_TEXTURE0 + i);
-    global::texture_bind(*this);
-  }
-
+  global::texture_bind(*this);
   DEBUG_BIND();
 }
 
@@ -68,6 +98,8 @@ TextureInfo::unbind(stlw::Logger& logger)
 void
 TextureInfo::destroy()
 {
+  DEBUG_ASSERT_NOT_BOUND();
+
   glDeleteTextures(TextureInfo::NUM_BUFFERS, &id);
 }
 
@@ -77,7 +109,7 @@ TextureInfo::get_fieldi(GLenum const name)
   DEBUG_ASSERT_BOUND();
 
   GLint value;
-  glGetTexParameteriv(this->mode, name, &value);
+  glGetTexParameteriv(this->target, name, &value);
   return value;
 }
 
@@ -86,14 +118,14 @@ TextureInfo::set_fieldi(GLenum const name, GLint const value)
 {
   DEBUG_ASSERT_BOUND();
 
-  glTexParameteri(this->mode, name, value);
+  glTexParameteri(this->target, name, value);
 }
 
 std::string
 TextureInfo::to_string() const
 {
-  return fmt::sprintf("(TextureInfo) id: %u, mode: %i, (w, h) : (%i, %i), uv_max: %f",
-      id, mode, width, height, uv_max);
+  return fmt::sprintf("(TextureInfo) id: %u, target: %i, (w, h) : (%i, %i), uv_max: %f",
+      id, target, width, height, uv_max);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,6 +162,8 @@ FBInfo::unbind(stlw::Logger& logger)
 void
 FBInfo::destroy()
 {
+  DEBUG_ASSERT_NOT_BOUND();
+
   glDeleteFramebuffers(1, &id);
 }
 
@@ -238,7 +272,7 @@ load_image(stlw::Logger &logger, char const* path, GLint const format)
         SOIL_last_result());
     return Err(fmt);
   }
-  pimage_t image_data{pimage, &SOIL_free_image_data};
+  ImageDataPointer image_data{pimage, &SOIL_free_image_data};
   return Ok(ImageData{w, h, MOVE(image_data)});
 }
 
@@ -270,8 +304,8 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLenum const
   assert(ANYOF(format == GL_RGB, format == GL_RGBA));
 
   TextureInfo ti;
-  ti.mode = GL_TEXTURE_2D;
   glGenTextures(1, &ti.id);
+  ti.target = GL_TEXTURE_2D;
   LOG_TRACE_SPRINTF("allocating texture %s TextureID %u", filename, ti.id);
 
   // This next bit comes from tracking down a weird bug. Without this extra scope, the texture info
@@ -287,14 +321,14 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLenum const
     ti.bind(logger);
     ON_SCOPE_EXIT([&]() { ti.unbind(logger); });
 
-    GpuUploadConfig const guc{ti.mode, format};
+    GpuUploadConfig const guc{format, ti.target, GL_TEXTURE0};
     auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, guc));
     ti.height = image_data.height;
     ti.width = image_data.width;
 
     ti.uv_max = uv_max;
 
-    glGenerateMipmap(ti.mode);
+    glGenerateMipmap(ti.target);
     LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
   }
 
@@ -318,14 +352,14 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   };
 
   TextureInfo ti;
-  ti.mode = GL_TEXTURE_CUBE_MAP;
+  ti.target = GL_TEXTURE_CUBE_MAP;
   glGenTextures(1, &ti.id);
   LOG_ANY_GL_ERRORS(logger, "glGenTextures");
 
   auto const upload_fn = [&format, &logger, &ti](std::string const& filename, GLenum const target)
     -> Result<stlw::none_t, std::string>
   {
-    GpuUploadConfig const guc{target, format};
+    GpuUploadConfig const guc{format, target, GL_TEXTURE0};
     auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, guc));
 
     // Either the height is unset (0) or all height/width are the same.
@@ -343,30 +377,11 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
     stlw::zip(upload_fn, targets.begin(), paths_tuple);
 
     LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
-    glGenerateMipmap(ti.mode);
+    glGenerateMipmap(ti.target);
   };
   while_bound(logger, ti, fn);
 
   return Ok(Texture{MOVE(ti)});
-}
-
-Result<ImageData, std::string>
-upload_image_gpu(stlw::Logger &logger, std::string const& path, GpuUploadConfig const& guc)
-{
-  auto image_data = TRY_MOVEOUT(texture::load_image(logger, path.c_str(), guc.format));
-
-  auto const width = image_data.width;
-  auto const height = image_data.height;
-  auto const* data = image_data.data.get();
-
-  LOG_TRACE_SPRINTF("uploading %s with w: %i, h: %i", path, width, height);
-  glActiveTexture(GL_TEXTURE0);
-
-  auto const format = guc.format;
-  auto const target = guc.target;
-  glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-
-  return OK_MOVE(image_data);
 }
 
 } // ns opengl::texture
