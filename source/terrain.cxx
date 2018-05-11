@@ -33,11 +33,11 @@ generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc,
   {
     glm::vec2 const          dimensions{1};
     GenerateNormalData const gnd{tc.invert_normals, heightmap_data, numv_oneside};
-    data.normals = MeshFactory::generate_normals(gnd);
+    data.normals = MeshFactory::generate_normals(logger, gnd);
   }
 
-  data.uvs     = MeshFactory::generate_uvs(tgc.dimensions, numv_oneside);
-  data.indices = MeshFactory::generate_indices(numv_oneside);
+  data.uvs     = MeshFactory::generate_uvs(logger, tgc.dimensions, numv_oneside, false);
+  data.indices = MeshFactory::generate_indices(logger, numv_oneside);
   return data;
 }
 

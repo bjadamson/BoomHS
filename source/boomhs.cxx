@@ -541,8 +541,6 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     render::clear_screen(ldata.fog.color);
     render::draw_skybox(rstate, skybox_ti, ft);
     render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
-
-    render::draw_water(rstate, registry, ft, ABOVE_VECTOR, default_water_ti);
   });
 
   auto const  rmatrices = RenderMatrices::from_camera(camera);
@@ -551,14 +549,14 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     render::clear_screen(fog_color);
     render::draw_skybox(rstate, skybox_ti, ft);
     render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
-    render::draw_water(rstate, registry, ft, ABOVE_VECTOR, default_water_ti);
   });
 
   render::clear_screen(ldata.fog.color);
   render::draw_skybox(rstate, skybox_ti, ft);
 
-  render::draw_water(rstate, registry, ft, ABOVE_VECTOR, waterfbos.refraction_ti());
   render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
+  render::draw_water(rstate, registry, ft, ABOVE_VECTOR, waterfbos.reflection_ti(),
+                     waterfbos.refraction_ti());
 
   {
     // Move the rectangle to the top-left corner

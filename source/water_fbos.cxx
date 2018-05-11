@@ -14,15 +14,13 @@ namespace
 auto
 make_reflection_fbo(ScreenSize const& screen_size)
 {
-  int constexpr REFLECTION_WIDTH  = 640;
-  int constexpr REFLECTION_HEIGHT = 360;
-  return FBInfo{{0, 0, 640, 360}, screen_size};
+  return FBInfo{{0, 0, 1024, 768}, screen_size};
 }
 
 auto
 make_refraction_fbo(ScreenSize const& screen_size)
 {
-  return FBInfo{{0, 0, 1270, 720}, screen_size};
+  return FBInfo{{0, 0, 1024, 768}, screen_size};
 }
 
 TextureInfo
@@ -35,10 +33,13 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
   ti.gen_texture(logger, 1);
 
   ti.while_bound(logger, [&]() {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    ti.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    ti.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    ti.set_fieldi(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    ti.set_fieldi(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     // attach texture to FBO
     //
     // TODO: I think this code assumes that the FBO is currently bound?

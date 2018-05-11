@@ -146,7 +146,7 @@ TextureInfo::get_fieldi(GLenum const name)
 void
 TextureInfo::set_fieldi(GLenum const name, GLint const value)
 {
-  DEBUG_ASSERT_BOUND();
+  //DEBUG_ASSERT_BOUND();
 
   glTexParameteri(this->target, name, value);
 }

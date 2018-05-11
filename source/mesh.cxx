@@ -94,7 +94,8 @@ MeshFactory::generate_rectangle_mesh(stlw::Logger& logger, glm::vec2 const& dime
 }
 
 ObjData::vertices_t
-MeshFactory::generate_uvs(glm::vec2 const& dimensions, size_t const num_vertexes)
+MeshFactory::generate_uvs(stlw::Logger& logger, glm::vec2 const& dimensions,
+                          size_t const num_vertexes, bool const clamp)
 {
   size_t constexpr NUM_COMPONENTS = 2; // u, v
   auto const num_vertices         = calculate_number_vertices(NUM_COMPONENTS, num_vertexes);
@@ -110,8 +111,12 @@ MeshFactory::generate_uvs(glm::vec2 const& dimensions, size_t const num_vertexes
     {
       assert(counter < num_vertices);
 
-      float const u = 0.0f + calculate_ratio(x, num_vertexes, dimensions.x);
-      float const v = 0.0f + calculate_ratio(z, num_vertexes, dimensions.y);
+      float u = calculate_ratio(x, num_vertexes, dimensions.x);
+      float v = calculate_ratio(z, num_vertexes, dimensions.y);
+      if (clamp) {
+        u = u / dimensions.x;
+        v = v / dimensions.y;
+      }
 
       buffer[counter++] = u;
       buffer[counter++] = v;
@@ -124,7 +129,7 @@ MeshFactory::generate_uvs(glm::vec2 const& dimensions, size_t const num_vertexes
 // Algorithm modified from:
 // https://www.youtube.com/watch?v=yNYwZMmgTJk&list=PLRIWtICgwaX0u7Rf9zkZhLoLuZVfUksDP&index=14
 ObjData::indices_t
-MeshFactory::generate_indices(size_t const num_vertexes)
+MeshFactory::generate_indices(stlw::Logger& logger, size_t const num_vertexes)
 {
   auto const x_length = num_vertexes, z_length = num_vertexes;
   auto const strips_required          = z_length - 1;
@@ -160,7 +165,7 @@ MeshFactory::generate_indices(size_t const num_vertexes)
 }
 
 ObjData::vertices_t
-MeshFactory::generate_normals(GenerateNormalData const& normal_data)
+MeshFactory::generate_normals(stlw::Logger& logger, GenerateNormalData const& normal_data)
 {
   auto const num_vertexes = normal_data.num_vertexes;
   auto       normals      = create_normal_buffer(num_vertexes);
@@ -226,7 +231,7 @@ MeshFactory::generate_normals(GenerateNormalData const& normal_data)
 }
 
 ObjData::vertices_t
-MeshFactory::generate_flat_normals(size_t const num_vertexes)
+MeshFactory::generate_flat_normals(stlw::Logger& logger, size_t const num_vertexes)
 {
   auto normals = create_normal_buffer(num_vertexes);
 

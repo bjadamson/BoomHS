@@ -682,6 +682,13 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     });
   };
 
+  auto const draw_texture_fn = [&](auto const eid, auto& sn, auto& transform, auto& is_visible,
+                                   auto& texture_renderable, auto&&... args) {
+    texture_renderable.texture_info.while_bound(logger, [&]() {
+      draw_fn(eid, sn, transform, is_visible, texture_renderable, FORWARD(args));
+    });
+  };
+
   auto const draw_torch = [&](auto const eid, auto& sn, auto& transform, auto& isv, Torch& torch,
                               TextureRenderable& trenderable) {
     {
@@ -729,7 +736,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
       draw_orbital_body);
 
   registry.view<COMMON, WaterTileThing>().each(draw_fn);
-  registry.view<COMMON, JunkEntityFromFILE>().each(draw_fn);
+  registry.view<COMMON, TextureRenderable, JunkEntityFromFILE>().each(draw_texture_fn);
   registry.view<COMMON, Torch, TextureRenderable>().each(draw_torch);
   registry.view<COMMON, CubeRenderable>().each(draw_fn);
   registry.view<COMMON, MeshRenderable, NPCData>().each(draw_fn);
@@ -1167,6 +1174,8 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
       auto& vao = dinfo.vao();
       vao.while_bound(logger, [&]() {
         auto const draw_fn = [&]() {
+          tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+          tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
           draw_3dlit_shape(rstate, tr, model_matrix, sp, dinfo, mat, registry, ambient);
         };
         tinfo.while_bound(logger, draw_fn);
@@ -1213,7 +1222,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
 void
 draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
-           glm::vec4 const& cull_plane, TextureInfo& tinfo)
+           glm::vec4 const& cull_plane, TextureInfo& reflection, TextureInfo& refraction)
 {
   auto& es     = rstate.es;
   auto& logger = es.logger;
@@ -1238,10 +1247,21 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     sp.while_bound(logger, [&]() {
       sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
       vao.while_bound(logger, [&]() {
-        tinfo.while_bound(logger, [&]() {
-          draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
-                           Material{}, registry, RECEIVES_AMBIENT_LIGHT);
-        });
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(reflection.target, reflection.id());
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(refraction.target, refraction.id());
+
+        // draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
+        // Material{}, registry, RECEIVES_AMBIENT_LIGHT);
+
+        {
+          auto const camera_matrix = rstate.camera_matrix();
+          set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
+          draw(rstate, sp, dinfo);
+        }
+        glActiveTexture(GL_TEXTURE0);
       });
     });
   };

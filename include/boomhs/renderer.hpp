@@ -128,6 +128,6 @@ draw_tilegrid(RenderState&, TiledataState const&);
 
 void
 draw_water(RenderState&, EntityRegistry&, window::FrameTime const&, glm::vec4 const&,
-           opengl::TextureInfo&);
+           opengl::TextureInfo&, opengl::TextureInfo&);
 
 } // namespace boomhs::render

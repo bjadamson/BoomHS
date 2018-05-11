@@ -19,12 +19,12 @@ struct MeshFactory
 
   static ObjData::vertices_t generate_rectangle_mesh(stlw::Logger&, glm::vec2 const&, size_t);
 
-  static ObjData::vertices_t generate_uvs(glm::vec2 const&, size_t);
+  static ObjData::vertices_t generate_uvs(stlw::Logger&, glm::vec2 const&, size_t, bool);
 
-  static ObjData::indices_t generate_indices(size_t);
+  static ObjData::indices_t generate_indices(stlw::Logger&, size_t);
 
-  static ObjData::vertices_t generate_normals(GenerateNormalData const&);
-  static ObjData::vertices_t generate_flat_normals(size_t);
+  static ObjData::vertices_t generate_normals(stlw::Logger&, GenerateNormalData const&);
+  static ObjData::vertices_t generate_flat_normals(stlw::Logger&, size_t);
 };
 
 } // namespace boomhs

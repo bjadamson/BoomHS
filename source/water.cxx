@@ -29,10 +29,10 @@ WaterFactory::generate_water_data(stlw::Logger& logger, glm::vec2 const& dimensi
 
   data.vertices = MeshFactory::generate_rectangle_mesh(logger, dimensions, num_vertexes);
 
-  data.normals = MeshFactory::generate_flat_normals(num_vertexes);
-  data.uvs     = MeshFactory::generate_uvs(dimensions, num_vertexes);
+  data.normals = MeshFactory::generate_flat_normals(logger, num_vertexes);
+  data.uvs     = MeshFactory::generate_uvs(logger, dimensions, num_vertexes, true);
 
-  data.indices = MeshFactory::generate_indices(num_vertexes);
+  data.indices = MeshFactory::generate_indices(logger, num_vertexes);
 
   return data;
 }
@@ -66,14 +66,13 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
 
   // These uniforms only need to be set once.
   auto& sp = sps.ref_sp("water");
-  sp.while_bound(logger, [&]() { sp.set_uniform_int1(logger, "u_sampler", 0); });
 
   auto wi = generate_info(logger, wic, sp, ti);
 
   auto& tinfo = wi.tinfo;
   tinfo.while_bound(logger, [&]() {
-    tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_REPEAT);
+    tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_REPEAT);
     tinfo.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     tinfo.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   });
