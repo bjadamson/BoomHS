@@ -39,8 +39,8 @@ public:
     while_bound(logger, refraction_fbo_, fn);
   }
 
-  opengl::TextureInfo const& reflection_ti() const;
-  opengl::TextureInfo const& refraction_ti() const;
+  opengl::TextureInfo& reflection_ti();
+  opengl::TextureInfo& refraction_ti();
   int                        refraction_depth_tid() const;
 };
 

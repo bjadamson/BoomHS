@@ -46,7 +46,7 @@ WaterFactory::generate_info(stlw::Logger& logger, WaterInfoConfig const& wic, Sh
 
   BufferFlags const flags{true, true, false, true};
   auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
-  auto              di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer, tinfo);
+  auto              di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer);
 
   return WaterInfo{wic.position, MOVE(di), sp, tinfo};
 }

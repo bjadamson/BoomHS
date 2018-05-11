@@ -3,6 +3,7 @@
 #include <opengl/draw_info.hpp>
 
 #include <array>
+#include <optional>
 #include <vector>
 
 namespace boomhs

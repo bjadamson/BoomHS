@@ -56,12 +56,10 @@ operator<<(std::ostream &stream, BufferHandles const& buffers)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // DrawInfo
-DrawInfo::DrawInfo(GLenum const dm, size_t const num_vertexes, GLuint const num_indices,
-    std::optional<TextureInfo> const& ti)
+DrawInfo::DrawInfo(GLenum const dm, size_t const num_vertexes, GLuint const num_indices)
   : draw_mode_(dm)
   , num_vertexes_(num_vertexes)
   , num_indices_(num_indices)
-  , texture_info_(ti)
 {
 }
 
@@ -71,7 +69,6 @@ DrawInfo::DrawInfo(DrawInfo &&other)
   , num_indices_(other.num_indices_)
   , handles_(MOVE(other.handles_))
   , vao_(MOVE(other.vao_))
-  , texture_info_(MOVE(other.texture_info_))
 {
 }
 
@@ -87,7 +84,6 @@ DrawInfo::operator=(DrawInfo &&other)
 
   handles_ = MOVE(other.handles_);
   vao_ = MOVE(other.vao_);
-  texture_info_ = MOVE(other.texture_info_);
   return *this;
 }
 

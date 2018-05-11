@@ -117,14 +117,14 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
 
 WaterFrameBuffers::~WaterFrameBuffers() {}
 
-TextureInfo const&
-WaterFrameBuffers::reflection_ti() const
+TextureInfo&
+WaterFrameBuffers::reflection_ti()
 {
   return reflection_tbo_;
 }
 
-TextureInfo const&
-WaterFrameBuffers::refraction_ti() const
+TextureInfo&
+WaterFrameBuffers::refraction_ti()
 {
   return refraction_tbo_;
 }

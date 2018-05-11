@@ -1,5 +1,4 @@
 #pragma once
-#include <opengl/texture.hpp>
 #include <opengl/vao.hpp>
 #include <opengl/vertex_attribute.hpp>
 
@@ -7,7 +6,6 @@
 #include <boomhs/tile.hpp>
 
 #include <stlw/log.hpp>
-#include <stlw/optional.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <string>
@@ -49,11 +47,9 @@ class DrawInfo
   BufferHandles handles_;
   VAO           vao_;
 
-  std::optional<TextureInfo> texture_info_;
-
 public:
   NO_COPY(DrawInfo);
-  explicit DrawInfo(GLenum, size_t, GLuint, std::optional<TextureInfo> const&);
+  explicit DrawInfo(GLenum, size_t, GLuint);
 
   DrawInfo(DrawInfo&&);
   DrawInfo& operator=(DrawInfo&&);
@@ -64,10 +60,6 @@ public:
   auto  num_vertexes() const { return num_vertexes_; }
   auto  num_indices() const { return num_indices_; }
   auto& vao() { return vao_; }
-
-  void        set_ti(TextureInfo&& ti) { texture_info_ = MOVE(ti); }
-  auto&       texture_info() { return texture_info_; }
-  auto const& texture_info() const { return texture_info_; }
 
   std::string to_string(VertexAttribute const&) const;
 };

@@ -154,8 +154,9 @@ TextureInfo::set_fieldi(GLenum const name, GLint const value)
 std::string
 TextureInfo::to_string() const
 {
+  GLuint const id = this->id();
   return fmt::sprintf("(TextureInfo) id: %u, target: %i, (w, h) : (%i, %i), uv_max: %f",
-      id(), target, width, height, uv_max);
+      id, target, width, height, uv_max);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

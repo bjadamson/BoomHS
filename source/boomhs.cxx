@@ -518,7 +518,13 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   // Render the scene with no culling (setting it zero disables culling mathematically)
   glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
 
+
+  auto &         ttable   = gfx_state.texture_table;
+
+  auto &default_water_ti = *ttable.find("water-texture");
   auto const& fog_color = ldata.fog.color;
+
+  auto &skybox_ti = *ttable.find("building_skybox");
   waterfbos.with_reflection(logger, [&]() {
     // Compute the camera position beneath the water for capturing the reflective image the camera
     // will see.
@@ -534,24 +540,25 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     render::clear_screen(fog_color);
 
     render::clear_screen(ldata.fog.color);
-    render::draw_skybox(rstate, ft);
+    render::draw_skybox(rstate, skybox_ti, ft);
     render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
-    render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
+
+    render::draw_water(rstate, registry, ft, ABOVE_VECTOR, default_water_ti);
   });
 
   auto const  rmatrices = RenderMatrices::from_camera(camera);
   RenderState rstate{rmatrices, es, zs};
   waterfbos.with_refraction(logger, [&]() {
     render::clear_screen(fog_color);
-    render::draw_skybox(rstate, ft);
+    render::draw_skybox(rstate, skybox_ti, ft);
     render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
-    render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
+    render::draw_water(rstate, registry, ft, ABOVE_VECTOR, default_water_ti);
   });
 
   render::clear_screen(ldata.fog.color);
-  render::draw_skybox(rstate, ft);
+  render::draw_skybox(rstate, skybox_ti, ft);
 
-  render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
+  render::draw_water(rstate, registry, ft, ABOVE_VECTOR, waterfbos.refraction_ti());
   render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
 
   {
@@ -559,7 +566,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     glm::vec2 const pos{-0.5f, -0.5f};
     glm::vec2 const scale{0.25f, 0.25f};
 
-    auto const tid = waterfbos.reflection_ti();
+    auto &tid = waterfbos.reflection_ti();
     render::draw_fbo_testwindow(rstate, pos, scale, tid);
   }
 
@@ -567,7 +574,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     glm::vec2 const pos{0.5f, -0.5f};
     glm::vec2 const scale{0.25f, 0.25f};
 
-    auto const tid = waterfbos.refraction_ti();
+    auto &tid = waterfbos.refraction_ti();
     render::draw_fbo_testwindow(rstate, pos, scale, tid);
   }
 

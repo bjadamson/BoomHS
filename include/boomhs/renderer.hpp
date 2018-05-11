@@ -91,7 +91,7 @@ void
 draw_arrow_abovetile_and_neighbors(RenderState&, TilePosition const&);
 
 void
-draw_fbo_testwindow(RenderState&, glm::vec2 const&, glm::vec2 const&, opengl::TextureInfo const&);
+draw_fbo_testwindow(RenderState&, glm::vec2 const&, glm::vec2 const&, opengl::TextureInfo&);
 
 void
 draw_global_axis(RenderState&);
@@ -106,7 +106,8 @@ void
 draw_entities(RenderState&, stlw::float_generator&, window::FrameTime const&);
 
 void
-draw_skybox(RenderState&, window::FrameTime const&);
+draw_skybox(RenderState&, opengl::TextureInfo&,
+    window::FrameTime const&);
 
 void
 draw_targetreticle(RenderState&, window::FrameTime const&);
@@ -127,6 +128,7 @@ void
 draw_tilegrid(RenderState&, TiledataState const&);
 
 void
-draw_water(RenderState&, EntityRegistry&, window::FrameTime const&, glm::vec4 const&);
+draw_water(RenderState&, EntityRegistry&, window::FrameTime const&, glm::vec4 const&,
+    opengl::TextureInfo&);
 
 } // namespace boomhs::render

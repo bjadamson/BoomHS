@@ -131,7 +131,7 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
 
   BufferFlags const flags{true, true, false, true};
   auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
-  auto              di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer, ti);
+  auto              di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer);
 
   // These uniforms only need to be set once.
   while_bound(logger, sp, [&]() { sp.set_uniform_int1(logger, "u_sampler", 0); });

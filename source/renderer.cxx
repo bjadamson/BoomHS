@@ -218,25 +218,13 @@ draw(RenderState& rstate, ShaderProgram& sp, DrawInfo& dinfo)
   LOG_DEBUG("---------------------------------------------------------------------------");
   */
 
-  auto const draw_fn = [&]() {
-    if (sp.instance_count) {
-      auto const ic = *sp.instance_count;
-      glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
-    }
-    else {
-      LOG_DEBUG_SPRINTF("Drawing %i indices", num_indices);
-      glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
-    }
-  };
-
-  if (dinfo.texture_info()) {
-    auto& ti = *dinfo.texture_info();
-    LOG_DEBUG_SPRINTF("Binding TextureInfo '%s'", ti.to_string());
-
-    while_bound(logger, ti, [&]() { draw_fn(); });
+  if (sp.instance_count) {
+    auto const ic = *sp.instance_count;
+    glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
   }
   else {
-    draw_fn();
+    LOG_DEBUG_SPRINTF("Drawing %i indices", num_indices);
+    glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
   }
 }
 
@@ -244,8 +232,16 @@ void
 draw_2d(RenderState& rstate, ShaderProgram& sp, DrawInfo& dinfo)
 {
   disable_depth_tests();
+  ON_SCOPE_EXIT([]() { enable_depth_tests(); });
+
   draw(rstate, sp, dinfo);
-  enable_depth_tests();
+}
+
+void
+draw_2d(RenderState& rstate, ShaderProgram& sp, TextureInfo &ti, DrawInfo& dinfo)
+{
+  auto &logger = rstate.es.logger;
+  while_bound(logger, ti, [&]() { draw_2d(rstate, sp, dinfo); });
 }
 
 void
@@ -274,7 +270,8 @@ draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const
   auto const& ldata         = zs.level_data;
   auto const  camera_matrix = rstate.camera_matrix();
   set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
-  draw(rstate, sp, dinfo);
+
+  auto const draw_fn = [&]() { draw(rstate, sp, dinfo); };
 }
 
 void
@@ -683,7 +680,8 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     });
   };
 
-  auto const draw_torch = [&](auto eid, auto& sn, auto& transform, auto&&... args) {
+  auto const draw_torch = [&](auto const eid, auto& sn, auto& transform, auto& isv,
+                                     Torch& torch, TextureRenderable &trenderable) {
     {
       auto& sp = sps.ref_sp(sn.value);
 
@@ -704,11 +702,13 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     copy_transform.translation.y += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
     copy_transform.translation.z += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
 
-    draw_fn(eid, sn, copy_transform, FORWARD(args));
+    while_bound(logger, trenderable.texture_info, [&]() {
+      draw_fn(eid, sn, copy_transform, isv, torch);
+    });
   };
 
   auto const draw_orbital_body = [&](auto const eid, auto& sn, auto& transform, auto& isv,
-                                     auto& bboard, auto&&... args) {
+                                     auto& bboard, OrbitalBody&, TextureRenderable &trenderable) {
     auto const bb_type    = bboard.value;
     auto const view_model = compute_billboarded_viewmodel(transform, rstate.view_matrix(), bb_type);
 
@@ -716,17 +716,20 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     auto const mvp_matrix  = proj_matrix * view_model;
     auto&      sp          = sps.ref_sp(sn.value);
     while_bound(logger, sp, [&]() { set_modelmatrix(logger, mvp_matrix, sp); });
-    draw_fn(eid, sn, transform, isv, bboard, FORWARD(args));
+
+    while_bound(logger, trenderable.texture_info, [&]() {
+      draw_fn(eid, sn, transform, isv, bboard);
+        });
   };
 
 #define COMMON ShaderName, Transform, IsVisible
   // define rendering order here
   // OrbitalBodies always render first.
-  registry.view<COMMON, BillboardRenderable, OrbitalBody>().each(draw_orbital_body);
+  registry.view<COMMON, BillboardRenderable, OrbitalBody, TextureRenderable>().each(draw_orbital_body);
 
   registry.view<COMMON, WaterTileThing>().each(draw_fn);
   registry.view<COMMON, JunkEntityFromFILE>().each(draw_fn);
-  registry.view<COMMON, Torch>().each(draw_torch);
+  registry.view<COMMON, Torch, TextureRenderable>().each(draw_torch);
   registry.view<COMMON, CubeRenderable>().each(draw_fn);
   registry.view<COMMON, MeshRenderable, NPCData>().each(draw_fn);
   registry.view<COMMON, MeshRenderable, PlayerData>().each(draw_fn);
@@ -735,7 +738,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
 void
 draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& scale,
-                    TextureInfo const& ti)
+                    TextureInfo &ti)
 {
   auto& es     = rstate.es;
   auto& logger = es.logger;
@@ -757,7 +760,7 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
 
   while_bound(logger, sp, [&]() {
     set_modelmatrix(logger, model_matrix, sp);
-    while_bound(logger, dinfo.vao(), [&]() { draw_2d(rstate, sp, dinfo); });
+    while_bound(logger, dinfo.vao(), [&]() { draw_2d(rstate, sp, ti, dinfo); });
   });
 }
 
@@ -776,8 +779,9 @@ draw_inventory_overlay(RenderState& rstate)
   OF::RectInfo const ri{1.0f, 1.0f, color, std::nullopt, std::nullopt};
   OF::RectBuffer     buffer = OF::make_rectangle(ri);
 
-  auto const ti    = std::nullopt;
-  DrawInfo   dinfo = gpu::copy_rectangle(logger, GL_TRIANGLES, sp, buffer, ti);
+  DrawInfo   dinfo = gpu::copy_rectangle(logger, GL_TRIANGLES, sp, buffer);
+
+  auto& ttable = zs.gfx_state.texture_table;
 
   Transform  transform;
   auto const model_matrix = transform.model_matrix();
@@ -930,7 +934,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, *texture_o);
 
     transform.scale = glm::vec3{scale};
-    while_bound(logger, dinfo.vao(), [&]() { draw_2d(rstate, sp, dinfo); });
+    while_bound(logger, dinfo.vao(), [&]() { draw_2d(rstate, sp, *texture_o, dinfo); });
   };
 
   auto const draw_glow = [&]() {
@@ -943,7 +947,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, *texture_o);
 
     transform.scale = glm::vec3{scale};
-    while_bound(logger, dinfo.vao(), [&]() { draw_2d(rstate, sp, dinfo); });
+    while_bound(logger, dinfo.vao(), [&]() { draw_2d(rstate, sp, *texture_o, dinfo); });
   };
 
   while_bound(logger, sp, [&]() {
@@ -1009,14 +1013,14 @@ draw_rivers(RenderState& rstate, window::FrameTime const& ft)
 }
 
 void
-draw_skybox(RenderState& rstate, window::FrameTime const& ft)
+draw_skybox(RenderState& rstate, TextureInfo &tinfo, window::FrameTime const& ft)
 {
   auto& zs       = rstate.zs;
   auto& registry = zs.registry;
   auto& sps      = zs.gfx_state.sps;
 
   auto const draw_fn = [&](auto const eid, auto& sn, auto& transform, IsVisible& is_visible,
-                           IsSkybox&, auto&&...) {
+                           IsSkybox&, TextureRenderable) {
     if (!is_visible.value) {
       return;
     }
@@ -1048,11 +1052,11 @@ draw_skybox(RenderState& rstate, window::FrameTime const& ft)
 
     while_bound(logger, sp, [&]() {
       sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
-      while_bound(logger, dinfo.vao(), [&]() { draw_2d(rstate, sp, dinfo); });
+      while_bound(logger, dinfo.vao(), [&]() { draw_2d(rstate, sp, tinfo, dinfo); });
     });
   };
 
-  registry.view<ShaderName, Transform, IsVisible, IsSkybox>().each(draw_fn);
+  registry.view<ShaderName, Transform, IsVisible, IsSkybox, TextureRenderable>().each(draw_fn);
 }
 
 void
@@ -1120,8 +1124,11 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
   ON_SCOPE_EXIT([&]() { set_cwstate(cw_state); });
 
   Transform transform;
-  auto&     tr = transform.translation;
+  auto&     tr             = transform.translation;
+  auto const& model_matrix = transform.model_matrix();
+  Material mat;
 
+  bool constexpr ambient = true;
   auto const draw_piece = [&](auto& t) {
     auto const& pos = t.position();
     tr.x            = pos.x;
@@ -1144,10 +1151,14 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
       sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
 
       auto& dinfo = t.draw_info();
+      auto& tinfo = t.texture_info();
+
       while_bound(logger, dinfo.vao(), [&]() {
-        bool constexpr RECEIVES_AMBIENT_LIGHT = true;
-        draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
-                         Material{}, registry, RECEIVES_AMBIENT_LIGHT);
+
+        auto const draw_fn = [&]() {
+          draw_3dlit_shape(rstate, tr, model_matrix, sp, dinfo, mat, registry, ambient);
+        };
+        while_bound(logger, tinfo, draw_fn);
       });
     });
   };
@@ -1190,7 +1201,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
 void
 draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
-           glm::vec4 const& cull_plane)
+           glm::vec4 const& cull_plane, TextureInfo& tinfo)
 {
   auto& es     = rstate.es;
   auto& logger = es.logger;
@@ -1215,8 +1226,10 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     while_bound(logger, sp, [&]() {
       sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
       while_bound(logger, vao, [&]() {
-        draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
-                         Material{}, registry, RECEIVES_AMBIENT_LIGHT);
+        while_bound(logger, tinfo, [&]() {
+          draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
+                          Material{}, registry, RECEIVES_AMBIENT_LIGHT);
+          });
       });
     });
   };

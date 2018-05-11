@@ -3,7 +3,6 @@
 #include <opengl/draw_info.hpp>
 #include <opengl/global.hpp>
 #include <opengl/shader.hpp>
-#include <opengl/texture.hpp>
 
 #include <boomhs/obj.hpp>
 #include <boomhs/obj_store.hpp>
@@ -13,7 +12,6 @@
 
 #include <stlw/algorithm.hpp>
 #include <stlw/math.hpp>
-#include <stlw/optional.hpp>
 #include <stlw/type_macros.hpp>
 #include <stlw/type_ctors.hpp>
 #include <array>
@@ -59,11 +57,10 @@ copy_synchronous(stlw::Logger& logger, ShaderProgram const& sp, DrawInfo &dinfo,
 template<size_t N, size_t M>
 DrawInfo
 make_drawinfo(stlw::Logger &logger, ShaderProgram const& sp,
-    std::array<float, N> const& vertex_data, std::array<GLuint, M> const& indices,
-    std::optional<TextureInfo> const& ti)
+    std::array<float, N> const& vertex_data, std::array<GLuint, M> const& indices)
 {
   auto const num_indices = static_cast<GLuint>(indices.size());
-  DrawInfo dinfo{GL_TRIANGLES, vertex_data.size(), num_indices, ti};
+  DrawInfo dinfo{GL_TRIANGLES, vertex_data.size(), num_indices};
   copy_synchronous(logger, sp, dinfo, vertex_data, indices);
   return dinfo;
 }
@@ -71,10 +68,10 @@ make_drawinfo(stlw::Logger &logger, ShaderProgram const& sp,
 template<typename V, typename I>
 DrawInfo
 copy_gpu_impl(stlw::Logger &logger, GLenum const draw_mode, ShaderProgram const& sp,
-    V const& vertices, I const& indices, std::optional<TextureInfo> const& ti)
+    V const& vertices, I const& indices)
 {
   auto const num_indices = static_cast<GLuint>(indices.size());
-  DrawInfo dinfo{draw_mode, vertices.size(), num_indices, ti};
+  DrawInfo dinfo{draw_mode, vertices.size(), num_indices};
   copy_synchronous(logger, sp, dinfo, vertices, indices);
   return dinfo;
 }
@@ -94,7 +91,7 @@ create_arrow_2d(stlw::Logger &logger, ShaderProgram const& shader_program,
     0, 1, 2, 3, 4, 5
   }};
 
-  DrawInfo dinfo{GL_LINES, vertices.size(), INDICES.size(), std::nullopt};
+  DrawInfo dinfo{GL_LINES, vertices.size(), INDICES.size()};
   copy_synchronous(logger, shader_program, dinfo, vertices, INDICES);
   return dinfo;
 }
@@ -109,7 +106,7 @@ create_arrow(stlw::Logger &logger, ShaderProgram const& shader_program,
     0, 1, 2, 3, 4, 5
   }};
 
-  DrawInfo dinfo{GL_LINES, vertices.size(), INDICES.size(), std::nullopt};
+  DrawInfo dinfo{GL_LINES, vertices.size(), INDICES.size()};
   copy_synchronous(logger, shader_program, dinfo, vertices, INDICES);
   return dinfo;
 }
@@ -189,7 +186,7 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, TileG
   visit_each(tgrid, visit_fn);
 
   auto const num_indices = static_cast<GLuint>(indices.size());
-  DrawInfo dinfo{GL_LINES, vertices.size(), num_indices, std::nullopt};
+  DrawInfo dinfo{GL_LINES, vertices.size(), num_indices};
   copy_synchronous(logger, shader_program, dinfo, vertices, indices);
   return dinfo;
 }
@@ -229,7 +226,7 @@ copy_cubecolor_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color const& c
 #undef COLOR
 #undef VERTS
   // clang-format on
-  return make_drawinfo(logger, sp, vertex_data, OF::CUBE_INDICES, std::nullopt);
+  return make_drawinfo(logger, sp, vertex_data, OF::CUBE_INDICES);
 }
 
 DrawInfo
@@ -311,7 +308,7 @@ copy_cubenormalcolor_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color co
   }
 
   auto const& indices = OF::CUBE_INDICES_LIGHT;
-  DrawInfo dinfo{GL_TRIANGLES, vertex_data.size(), indices.size(), std::nullopt};
+  DrawInfo dinfo{GL_TRIANGLES, vertex_data.size(), indices.size()};
   copy_synchronous(logger, sp, dinfo, vertex_data, indices);
   return dinfo;
 }
@@ -320,47 +317,46 @@ DrawInfo
 copy_cubevertexonly_gpu(stlw::Logger &logger, ShaderProgram const& sp)
 {
   auto const vertices = OF::cube_vertices();
-  return make_drawinfo(logger, sp, vertices, OF::CUBE_INDICES, std::nullopt);
+  return make_drawinfo(logger, sp, vertices, OF::CUBE_INDICES);
 }
 
 DrawInfo
-copy_cubetexture_gpu(stlw::Logger &logger, ShaderProgram const& sp, TextureInfo const& ti)
+copy_cubetexture_gpu(stlw::Logger &logger, ShaderProgram const& sp)
 {
   auto const vertices = OF::cube_vertices();
-  return make_drawinfo(logger, sp, vertices, OF::CUBE_INDICES, std::make_optional(ti));
+  return make_drawinfo(logger, sp, vertices, OF::CUBE_INDICES);
 }
 
 DrawInfo
 copy_gpu(stlw::Logger &logger, GLenum const dm, ShaderProgram const& sp,
-    ObjData const& data, std::optional<TextureInfo> const& ti)
+    ObjData const& data)
 {
-  return copy_gpu_impl(logger, dm, sp, data.vertices, data.indices, ti);
+  return copy_gpu_impl(logger, dm, sp, data.vertices, data.indices);
 }
 
 DrawInfo
-copy_gpu(stlw::Logger &logger, GLenum const dm, ShaderProgram const& sp, VertexBuffer const& object,
-    std::optional<TextureInfo> const& ti)
+copy_gpu(stlw::Logger &logger, GLenum const dm, ShaderProgram const& sp, VertexBuffer const& object)
 {
   auto const& v = object.vertices;
   auto const& i = object.indices;
-  return copy_gpu_impl(logger, dm, sp, v, i, ti);
+  return copy_gpu_impl(logger, dm, sp, v, i);
 }
 
 DrawInfo
 copy_rectangle(stlw::Logger &logger, GLenum const dm, ShaderProgram const& sp,
-    OF::RectBuffer const& buffer, std::optional<TextureInfo> const& ti)
+    OF::RectBuffer const& buffer)
 {
   auto const& v = buffer.vertices;
   auto const& i = buffer.indices;
-  return copy_gpu_impl(logger, dm, sp, v, i, ti);
+  return copy_gpu_impl(logger, dm, sp, v, i);
 }
 
 DrawInfo
 copy_rectangle_uvs(stlw::Logger &logger, GLenum const dm, ShaderProgram const& sp,
-                   OF::RectangleVertices const& v, TextureInfo const& ti)
+                   OF::RectangleVertices const& v, TextureInfo const& tinfo)
 {
   auto const& i = OF::RECTANGLE_INDICES;
-  auto const uv = OF::rectangle_uvs(ti.uv_max);
+  auto const uv = OF::rectangle_uvs(tinfo.uv_max);
 
   // clang-format off
   auto const vertices = stlw::concat(
@@ -374,7 +370,7 @@ copy_rectangle_uvs(stlw::Logger &logger, GLenum const dm, ShaderProgram const& s
       );
   // clang-format on
 
-  DrawInfo dinfo{dm, vertices.size(), i.size(), ti};
+  DrawInfo dinfo{dm, vertices.size(), i.size()};
   copy_synchronous(logger, sp, dinfo, vertices, i);
   return dinfo;
 }
