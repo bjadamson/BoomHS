@@ -409,7 +409,7 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
     LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
     glGenerateMipmap(ti.target);
   };
-  while_bound(logger, ti, fn);
+  ti.while_bound(logger, fn);
 
   return Ok(Texture{MOVE(ti)});
 }

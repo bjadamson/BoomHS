@@ -34,7 +34,7 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
   ti.target = GL_TEXTURE_2D;
   ti.gen_texture(logger, 1);
 
-  while_bound(logger, ti, [&]() {
+  ti.while_bound(logger, [&]() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -103,11 +103,11 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
   };
 
   // logic starts here
-  while_bound(logger, reflection_fbo_, reflection_fn);
-  while_bound(logger, refraction_fbo_, refraction_fn);
+  with_reflection(logger, reflection_fn);
+  with_refraction(logger, refraction_fn);
 
   // connect texture units to shader program
-  while_bound(logger, sp_, [&]() {
+  sp_.while_bound(logger, [&]() {
     // Bind texture units to shader uniforms
     sp_.set_uniform_int1(logger, "u_reflect_sampler", 0);
     sp_.set_uniform_int1(logger, "u_refract_sampler", 1);

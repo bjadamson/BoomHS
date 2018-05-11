@@ -44,6 +44,7 @@ public:
 
   void bind(stlw::Logger&) { global::vao_bind(*this); }
   void unbind(stlw::Logger&) { global::vao_unbind(); }
+  DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
 
   std::string to_string() const;
 };

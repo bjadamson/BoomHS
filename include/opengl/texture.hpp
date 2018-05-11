@@ -61,6 +61,8 @@ struct TextureInfo
   // methods
   void bind(stlw::Logger&);
   void unbind(stlw::Logger&);
+  DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
+
   void destroy();
 
   auto&       id() { return ids_units.data[0].id; }
@@ -92,6 +94,7 @@ struct FBInfo
   // methods
   void bind(stlw::Logger&);
   void unbind(stlw::Logger&);
+  DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
   void destroy();
 
   std::string to_string() const;

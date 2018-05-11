@@ -50,7 +50,8 @@ copy_synchronous(stlw::Logger& logger, ShaderProgram const& sp, DrawInfo &dinfo,
   };
 
   LOG_TRACE("Starting synchronous cpu -> gpu copy");
-  while_bound(logger, dinfo.vao(), bind_and_copy);
+  auto &vao = dinfo.vao();
+  vao.while_bound(logger, bind_and_copy);
   LOG_TRACE("cpu -> gpu copy complete");
 }
 

@@ -88,6 +88,7 @@ public:
 
   void bind(stlw::Logger&);
   void unbind(stlw::Logger&);
+  DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
 
   GLint get_uniform_location(stlw::Logger&, GLchar const*);
 

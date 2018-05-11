@@ -30,13 +30,13 @@ public:
   template <typename FN>
   void with_reflection(stlw::Logger& logger, FN const& fn)
   {
-    while_bound(logger, reflection_fbo_, fn);
+    reflection_fbo_->while_bound(logger, fn);
   }
 
   template <typename FN>
   void with_refraction(stlw::Logger& logger, FN const& fn)
   {
-    while_bound(logger, refraction_fbo_, fn);
+    refraction_fbo_->while_bound(logger, fn);
   }
 
   opengl::TextureInfo& reflection_ti();
