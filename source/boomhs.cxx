@@ -457,11 +457,6 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
 
   // if checks happen inside fn
   render::conditionally_draw_player_vectors(rstate, player);
-
-  auto& ui_state = es.ui_state;
-  if (ui_state.draw_ingame_ui) {
-    ui_ingame::draw(es, lm);
-  }
 }
 
 void
@@ -550,10 +545,15 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     render::clear_screen(fog_color);
 
     render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
-    // render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
+    render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
   });
 
   render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
+  auto& ui_state = es.ui_state;
+  if (ui_state.draw_ingame_ui) {
+    ui_ingame::draw(es, lm);
+  }
+
   // render::draw_water(rstate, registry, ft, ABOVE_VECTOR);
   {
     // Move the rectangle to the top-left corner
