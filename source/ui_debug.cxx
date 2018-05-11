@@ -305,7 +305,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
         tbuffers.config = tgrid[sb].config;
       }
       ImGui::Separator();
-      imgui_cxx::input_sizet("Vertex Count", &tconfig.num_vertexes);
+      imgui_cxx::input_sizet("Vertex Count", &tconfig.num_vertexes_along_one_side);
       ImGui::InputFloat("height multiplier", &tconfig.height_multiplier);
       ImGui::Checkbox("Invert Normals", &tconfig.invert_normals);
       {

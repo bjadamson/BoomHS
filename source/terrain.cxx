@@ -21,22 +21,23 @@ ObjData
 generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc,
                       TerrainPieceConfig const& tc, HeightmapData const& heightmap_data)
 {
-  auto const num_vertexes = tc.num_vertexes * tc.num_vertexes;
+  auto const numv_oneside = tc.num_vertexes_along_one_side;
+  auto const num_vertexes = stlw::math::squared(numv_oneside);
 
   ObjData data;
   data.num_vertexes = num_vertexes;
 
-  data.vertices = MeshFactory::generate_rectangle_mesh(logger, tgc.dimensions, tc.num_vertexes);
+  data.vertices = MeshFactory::generate_rectangle_mesh(logger, tgc.dimensions, numv_oneside);
   heightmap::update_vertices_from_heightmap(logger, tc, heightmap_data, data.vertices);
 
   {
-    glm::vec2 const          dimensions{static_cast<float>(tc.num_vertexes)};
+    glm::vec2 const          dimensions{static_cast<float>(numv_oneside)};
     GenerateNormalData const gnd{tc.invert_normals, heightmap_data, num_vertexes};
     data.normals = MeshFactory::generate_normals(dimensions, gnd);
   }
 
-  data.uvs     = MeshFactory::generate_uvs(tgc.dimensions, tc.num_vertexes);
-  data.indices = MeshFactory::generate_indices(tc.num_vertexes);
+  data.uvs     = MeshFactory::generate_uvs(tgc.dimensions, numv_oneside);
+  data.indices = MeshFactory::generate_indices(numv_oneside);
   return data;
 }
 
@@ -48,7 +49,7 @@ namespace boomhs
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TerrainPieceConfig
 TerrainPieceConfig::TerrainPieceConfig()
-    : num_vertexes(128)
+    : num_vertexes_along_one_side(128)
     , height_multiplier(1)
     , invert_normals(false)
     , shader_name("terrain")

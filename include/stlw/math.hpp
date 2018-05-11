@@ -10,6 +10,13 @@
 namespace stlw::math
 {
 
+template<typename T>
+inline auto
+squared(T const& value)
+{
+  return value * value;
+}
+
 inline bool
 opposite_signs(int const x, int const y)
 {

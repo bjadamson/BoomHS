@@ -22,7 +22,7 @@ struct TerrainPieceConfig
 {
   TerrainPieceConfig();
 
-  size_t num_vertexes;
+  size_t num_vertexes_along_one_side;
   float  height_multiplier;
   bool   invert_normals;
 
