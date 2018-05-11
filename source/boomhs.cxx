@@ -510,9 +510,12 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   }
 
   // TODO: Move out into state somewhere.
-  auto&                    gfx_state = zs.gfx_state;
-  auto&                    sps       = gfx_state.sps;
-  static WaterFrameBuffers waterfbos{logger, sps.ref_sp("water")};
+  auto& gfx_state = zs.gfx_state;
+  auto& sps       = gfx_state.sps;
+
+  auto const&              dim = es.dimensions;
+  ScreenSize const         screen_size{dim.w, dim.h};
+  static WaterFrameBuffers waterfbos{logger, screen_size, sps.ref_sp("water")};
 
   // Render the scene to the reflection FBO
   float constexpr CULL_CUTOFF_HEIGHT = 0.4f;

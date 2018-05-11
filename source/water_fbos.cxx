@@ -12,17 +12,17 @@ namespace
 {
 
 auto
-make_reflection_fbo()
+make_reflection_fbo(ScreenSize const& screen_size)
 {
   int constexpr REFLECTION_WIDTH  = 640;
   int constexpr REFLECTION_HEIGHT = 360;
-  return FBInfo{{0, 0, 640, 360}};
+  return FBInfo{{0, 0, 640, 360}, screen_size};
 }
 
 auto
-make_refraction_fbo()
+make_refraction_fbo(ScreenSize const& screen_size)
 {
-  return FBInfo{{0, 0, 1270, 720}};
+  return FBInfo{{0, 0, 1270, 720}, screen_size};
 }
 
 TextureInfo
@@ -53,13 +53,14 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
 }
 
 int
-create_depth_texture_attachment(int width, int height)
+create_depth_texture_attachment(int const width, int const height)
 {
   assert(width > 0 && height > 0);
 
   GLuint tbo;
   glGenTextures(1, &tbo);
   glBindTexture(GL_TEXTURE_2D, tbo);
+  ON_SCOPE_EXIT([]() { glBindTexture(GL_TEXTURE_2D, 0); });
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT,
                GL_FLOAT, nullptr);
@@ -77,16 +78,17 @@ create_depth_texture_attachment(int width, int height)
 namespace boomhs
 {
 
-WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ShaderProgram& sp)
+WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& screen_size,
+                                     ShaderProgram& sp)
     : sp_(sp)
-    , reflection_fbo_(FrameBuffer{make_reflection_fbo()})
-    , refraction_fbo_(FrameBuffer{make_refraction_fbo()})
+    , reflection_fbo_(FrameBuffer{make_reflection_fbo(screen_size)})
+    , refraction_fbo_(FrameBuffer{make_refraction_fbo(screen_size)})
 {
   auto const create = [&](auto const& fbo) {
     auto const& dimensions = fbo->dimensions;
-    auto const width = dimensions.w, height = dimensions.h;
-    auto const tbo = create_texture_attachment(logger, width, height);
-    auto const dbo = create_depth_texture_attachment(width, height);
+    auto const  width = dimensions.w, height = dimensions.h;
+    auto const  tbo = create_texture_attachment(logger, width, height);
+    auto const  dbo = create_depth_texture_attachment(width, height);
     return std::make_pair(tbo, dbo);
   };
   auto const reflection_fn = [&]() {

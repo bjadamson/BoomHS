@@ -5,8 +5,8 @@
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <extlibs/sdl.hpp>
 #include <cassert>
+#include <extlibs/sdl.hpp>
 #include <memory>
 #include <string>
 #include <type_traits>

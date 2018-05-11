@@ -746,8 +746,6 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
   auto& sps = zs.gfx_state.sps;
   auto& sp  = sps.ref_sp("2dtexture");
 
-  auto const uvs = opengl::factories::rectangle_uvs(1.0f);
-
   auto const v     = OF::rectangle_vertices();
   DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, ti);
 

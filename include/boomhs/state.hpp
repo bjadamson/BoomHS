@@ -60,10 +60,10 @@ struct TiledataState
 
 struct EngineState
 {
-  stlw::Logger&            logger;
-  ImGuiIO&                 imgui;
+  stlw::Logger&    logger;
+  ImGuiIO&         imgui;
   Dimensions const dimensions;
-  Time                     time;
+  Time             time;
 
   bool quit           = false;
   bool game_running   = false;
@@ -121,7 +121,8 @@ struct Engine
   // program to store references into the data owned by registries.
   NO_COPYMOVE(Engine);
 
-  auto dimensions() const { return window.get_dimensions(); }
+  Dimensions dimensions() const;
+  ScreenSize screen_size() const;
 };
 
 } // namespace boomhs

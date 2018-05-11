@@ -98,8 +98,9 @@ TextureInfo::to_string() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // FBInfo
-FBInfo::FBInfo(Dimensions const& d)
+FBInfo::FBInfo(Dimensions const& d, ScreenSize const& ss)
   : dimensions(d)
+  , screen_size(ss)
 {
   glGenFramebuffers(1, &id);
 }
@@ -110,8 +111,6 @@ FBInfo::bind(stlw::Logger& logger)
   DEBUG_ASSERT_NOT_BOUND();
 
   glBindFramebuffer(GL_FRAMEBUFFER, id);
-  glBindTexture(GL_TEXTURE_2D, 0);
-
   glViewport(dimensions.x, dimensions.y, dimensions.w, dimensions.h);
 
   DEBUG_BIND();
@@ -123,7 +122,7 @@ FBInfo::unbind(stlw::Logger& logger)
   DEBUG_ASSERT_BOUND();
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, dimensions.w, dimensions.h);
+  glViewport(0, 0, screen_size.width, screen_size.height);
 
   DEBUG_UNBIND();
 }

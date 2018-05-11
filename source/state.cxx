@@ -43,4 +43,17 @@ Engine::Engine(SDLWindow&& w, SDLControllers&& c)
   registries.resize(50);
 }
 
+Dimensions
+Engine::dimensions() const
+{
+  return window.get_dimensions();
+}
+
+ScreenSize
+Engine::screen_size() const
+{
+  auto const d = dimensions();
+  return ScreenSize{d.w, d.h};
+}
+
 } // namespace boomhs

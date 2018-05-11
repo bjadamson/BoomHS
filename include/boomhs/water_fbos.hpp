@@ -1,4 +1,5 @@
 #pragma once
+#include <boomhs/dimensions.hpp>
 #include <opengl/texture.hpp>
 #include <stlw/log.hpp>
 
@@ -23,7 +24,7 @@ class WaterFrameBuffers
   int                 refraction_dbo_;
 
 public:
-  WaterFrameBuffers(stlw::Logger&, opengl::ShaderProgram&);
+  WaterFrameBuffers(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&);
   ~WaterFrameBuffers();
 
   template <typename FN>

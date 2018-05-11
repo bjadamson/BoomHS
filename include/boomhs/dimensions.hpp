@@ -1,4 +1,5 @@
 #pragma once
+#include <extlibs/glew.hpp>
 
 namespace boomhs
 {
@@ -18,4 +19,10 @@ struct Dimensions
   }
 };
 
-} // ns boomhs
+struct ScreenSize
+{
+  GLsizei const width;
+  GLsizei const height;
+};
+
+} // namespace boomhs
