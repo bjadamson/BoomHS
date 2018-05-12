@@ -55,4 +55,7 @@ void main()
   vec4 mixture = mix(reflect, refract, 0.5);
 
   fragment_color = mixture;//mix(mixture, fragment_color, 0.5);
+
+  const vec4 BLUE_MIX = vec4(0.0, 0.1, 0.6, 1.0);
+  fragment_color = mix(fragment_color, BLUE_MIX, 0.4);
 }
