@@ -30,7 +30,7 @@ WaterFactory::generate_water_data(stlw::Logger& logger, glm::vec2 const& dimensi
   data.vertices = MeshFactory::generate_rectangle_mesh(logger, dimensions, num_vertexes);
 
   data.normals = MeshFactory::generate_flat_normals(logger, num_vertexes);
-  data.uvs     = MeshFactory::generate_uvs(logger, dimensions, num_vertexes, true);
+  //data.uvs     = MeshFactory::generate_uvs(logger, dimensions, num_vertexes, true);
 
   data.indices = MeshFactory::generate_indices(logger, num_vertexes);
 
@@ -44,7 +44,7 @@ WaterFactory::generate_info(stlw::Logger& logger, WaterInfoConfig const& wic, Sh
   auto const data = generate_water_data(logger, wic.dimensions, wic.num_vertexes);
   LOG_TRACE_SPRINTF("Generated water piece: %s", data.to_string());
 
-  BufferFlags const flags{true, true, false, true};
+  BufferFlags const flags{true, true, false, false};
   auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
   auto              di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer);
 
@@ -57,7 +57,7 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
   LOG_TRACE("Generating water");
   glm::vec2 const       pos{0, 0};
   size_t const          num_vertexes = 128;
-  glm::vec2 const       dimensions{10};
+  glm::vec2 const       dimensions{4};
   WaterInfoConfig const wic{pos, dimensions, num_vertexes};
 
   auto texture_o = ttable.find("water-texture");

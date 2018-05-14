@@ -267,7 +267,6 @@ draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const
   }
   set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
                              receives_ambient_light);
-  auto const& ldata         = zs.level_data;
   auto const  camera_matrix = rstate.camera_matrix();
   set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
 
@@ -646,27 +645,28 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     if (skip) {
       return;
     }
-    auto& sp    = sps.ref_sp(sn.value);
     auto& dinfo = entity_handles.lookup(logger, eid);
+    auto& sp    = sps.ref_sp(sn.value);
+    auto& vao   = dinfo.vao();
 
     bool const is_lightsource = registry.has<PointLight>(eid);
     auto const model_matrix   = transform.model_matrix();
+
     sp.while_bound(logger, [&]() {
-      auto& vao = dinfo.vao();
       vao.while_bound(logger, [&]() {
         if (is_lightsource) {
           assert(is_lightsource);
           draw_3dlightsource(rstate, model_matrix, sp, dinfo, eid, registry);
           return;
         }
-        bool constexpr receives_ambient_light = true;
+        bool constexpr RECEIVES_AMBIENT_LIGHT = true;
 
         bool const receives_light = registry.has<Material>(eid);
         if (receives_light) {
           assert(registry.has<Material>(eid));
           Material const& material = registry.get<Material>(eid);
           draw_3dlit_shape(rstate, transform.translation, model_matrix, sp, dinfo, material,
-                           registry, receives_ambient_light);
+                           registry, RECEIVES_AMBIENT_LIGHT);
           return;
         }
 
@@ -1244,6 +1244,8 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     auto& vao   = dinfo.vao();
 
     bool constexpr RECEIVES_AMBIENT_LIGHT = true;
+    auto const model_matrix = transform.model_matrix();
+
     sp.while_bound(logger, [&]() {
       sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
       vao.while_bound(logger, [&]() {
@@ -1253,14 +1255,19 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(refraction.target, refraction.id());
 
-        // draw_3dlit_shape(rstate, transform.translation, transform.model_matrix(), sp, dinfo,
-        // Material{}, registry, RECEIVES_AMBIENT_LIGHT);
+         draw_3dlit_shape(rstate, tr, model_matrix, sp, dinfo, Material{}, registry,
+             RECEIVES_AMBIENT_LIGHT);
 
+        /*
         {
           auto const camera_matrix = rstate.camera_matrix();
-          set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
+
+
+          set_modelmatrix(logger, model_matrix, sp);
+          set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
           draw(rstate, sp, dinfo);
         }
+        */
         glActiveTexture(GL_TEXTURE0);
       });
     });
