@@ -53,7 +53,7 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
   return ti;
 }
 
-int
+auto
 create_depth_texture_attachment(int const width, int const height)
 {
   assert(width > 0 && height > 0);
@@ -74,6 +74,19 @@ create_depth_texture_attachment(int const width, int const height)
   return tbo;
 }
 
+auto
+create_depth_buffer_attachment(int const width, int const height)
+{
+  GLuint depth_buffer;
+  glGenRenderbuffers(1, &depth_buffer);
+  glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width,
+          height);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+          GL_RENDERBUFFER, depth_buffer);
+  return depth_buffer;
+}
+
 } // namespace
 
 namespace boomhs
@@ -85,20 +98,20 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
     , reflection_fbo_(FrameBuffer{make_reflection_fbo(screen_size)})
     , refraction_fbo_(FrameBuffer{make_refraction_fbo(screen_size)})
 {
-  auto const create = [&](auto const& fbo) {
+  auto const create = [&](auto const& fbo, auto const& depth_function) {
     auto const& dimensions = fbo->dimensions;
     auto const  width = dimensions.w, height = dimensions.h;
     auto const  tbo = create_texture_attachment(logger, width, height);
-    auto const  dbo = create_depth_texture_attachment(width, height);
+    auto const  dbo = depth_function(width, height);
     return std::make_pair(tbo, dbo);
   };
   auto const reflection_fn = [&]() {
-    auto const reflection = create(reflection_fbo_);
+    auto const reflection = create(reflection_fbo_, create_depth_buffer_attachment);
     reflection_tbo_       = reflection.first;
     reflection_dbo_       = reflection.second;
   };
   auto const refraction_fn = [&]() {
-    auto const refraction = create(refraction_fbo_);
+    auto const refraction = create(refraction_fbo_, create_depth_texture_attachment);
     refraction_tbo_       = refraction.first;
     refraction_dbo_       = refraction.second;
   };
