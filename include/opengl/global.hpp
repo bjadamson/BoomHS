@@ -10,7 +10,7 @@ static auto const vao_bind   = [](auto& vao) { glBindVertexArray(vao.gl_raw_valu
 static auto const vao_unbind = []() { glBindVertexArray(0); };
 
 static auto const texture_bind = [](auto const& texture) {
-  glBindTexture(texture.target, texture.id());
+  glBindTexture(texture.target, texture.id);
 };
 static auto const texture_unbind = [](auto const& texture) { glBindTexture(texture.target, 0); };
 

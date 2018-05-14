@@ -2,6 +2,7 @@
 #include <extlibs/fmt.hpp>
 #include <stlw/auto_resource.hpp>
 #include <stlw/log.hpp>
+#include <stlw/tuple.hpp>
 #include <stlw/type_macros.hpp>
 
 #define WHILE_BOUND_IMPL                                                                           \

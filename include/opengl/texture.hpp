@@ -18,38 +18,14 @@
 namespace opengl
 {
 
-struct IdTextureUnit
-{
-  GLuint id;
-  GLenum texture_unit;
-
-  IdTextureUnit();
-};
-
-class IdTextureUnits
-{
-  size_t num_active_;
-
-public:
-  static constexpr auto DEBUG_HACK_MAX_NUM_TEXTURE_UNITS = 4;
-
-  IdTextureUnit data[DEBUG_HACK_MAX_NUM_TEXTURE_UNITS];
-
-  explicit IdTextureUnits(size_t);
-  COPY_DEFAULT(IdTextureUnits);
-  MOVE_DEFAULT(IdTextureUnits);
-
-  auto size() const { return num_active_; }
-};
-
 struct TextureInfo
 {
 #ifdef DEBUG_BUILD
   mutable bool bound = false;
 #endif
 
-  GLenum         target;
-  IdTextureUnits ids_units;
+  GLenum target;
+  GLuint id;
 
   GLint width = 0, height = 0;
 
@@ -64,9 +40,6 @@ struct TextureInfo
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
 
   void destroy();
-
-  auto&       id() { return ids_units.data[0].id; }
-  auto const& id() const { return ids_units.data[0].id; }
 
   void gen_texture(stlw::Logger&, GLsizei);
 

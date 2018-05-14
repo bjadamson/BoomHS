@@ -3,6 +3,7 @@
 #include <stlw/log.hpp>
 
 #include <cassert>
+#include <extlibs/fmt.hpp>
 #include <extlibs/glew.hpp>
 
 using namespace boomhs;
@@ -11,18 +12,12 @@ using namespace opengl;
 namespace
 {
 
-auto
-make_reflection_fbo(stlw::Logger& logger, ScreenSize const& screen_size)
-{
-  FBInfo fb{{0, 0, 1024, 768}, screen_size};
-  fb.while_bound(logger, []() { glDrawBuffer(GL_COLOR_ATTACHMENT0); });
-  return fb;
-}
+auto constexpr TEXTURE_RESOLUTION_FACTOR = 4;
 
 auto
-make_refraction_fbo(stlw::Logger& logger, ScreenSize const& screen_size)
+make_fbo(stlw::Logger& logger, ScreenSize const& ss)
 {
-  FBInfo fb{{0, 0, 1024, 768}, screen_size};
+  FBInfo fb{{0, 0, ss.width, ss.height}, ss};
   fb.while_bound(logger, []() { glDrawBuffer(GL_COLOR_ATTACHMENT0); });
   return fb;
 }
@@ -40,14 +35,11 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
     ti.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     ti.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    //ti.set_fieldi(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //ti.set_fieldi(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     // attach texture to FBO
     //
     // TODO: I think this code assumes that the FBO is currently bound?
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ti.id(), 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ti.id, 0);
   });
 
   ti.height = height;
@@ -84,10 +76,8 @@ create_depth_buffer_attachment(int const width, int const height)
   GLuint depth_buffer;
   glGenRenderbuffers(1, &depth_buffer);
   glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width,
-          height);
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-          GL_RENDERBUFFER, depth_buffer);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
   return depth_buffer;
 }
 
@@ -97,10 +87,11 @@ namespace boomhs
 {
 
 WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& screen_size,
-                                     ShaderProgram& sp)
+                                     ShaderProgram& sp, TextureInfo &texture)
     : sp_(sp)
-    , reflection_fbo_(FrameBuffer{make_reflection_fbo(logger, screen_size)})
-    , refraction_fbo_(FrameBuffer{make_refraction_fbo(logger, screen_size)})
+    , texture_(texture)
+    , reflection_fbo_(FrameBuffer{make_fbo(logger, screen_size)})
+    , refraction_fbo_(FrameBuffer{make_fbo(logger, screen_size)})
 {
   auto const create = [&](auto const& fbo, auto const& depth_function) {
     auto const& dimensions = fbo->dimensions;
@@ -121,35 +112,53 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
   };
 
   // logic starts here
-  with_reflection(logger, reflection_fn);
-  with_refraction(logger, refraction_fn);
+  with_reflection_fbo(logger, reflection_fn);
+  with_refraction_fbo(logger, refraction_fn);
 
   // connect texture units to shader program
   sp_.while_bound(logger, [&]() {
     // Bind texture units to shader uniforms
-    sp_.set_uniform_int1(logger, "u_reflect_sampler", 0);
-    sp_.set_uniform_int1(logger, "u_refract_sampler", 1);
+    sp_.set_uniform_int1(logger, "u_texture_sampler", 0);
+    sp_.set_uniform_int1(logger, "u_reflect_sampler", 1);
+    sp_.set_uniform_int1(logger, "u_refract_sampler", 2);
   });
 }
 
 WaterFrameBuffers::~WaterFrameBuffers() {}
 
-TextureInfo&
-WaterFrameBuffers::reflection_ti()
+void
+WaterFrameBuffers::bind(stlw::Logger& logger)
 {
-  return reflection_tbo_;
+  glActiveTexture(GL_TEXTURE0);
+  texture_.bind(logger);
+
+  glActiveTexture(GL_TEXTURE1);
+  reflection_tbo_.bind(logger);
+
+  glActiveTexture(GL_TEXTURE2);
+  refraction_tbo_.bind(logger);
 }
 
-TextureInfo&
-WaterFrameBuffers::refraction_ti()
+void
+WaterFrameBuffers::unbind(stlw::Logger& logger)
 {
-  return refraction_tbo_;
+  texture_.unbind(logger);
+  reflection_tbo_.unbind(logger);
+  refraction_tbo_.unbind(logger);
+
+  glActiveTexture(GL_TEXTURE0);
 }
 
-int
-WaterFrameBuffers::refraction_depth_tid() const
+std::string
+WaterFrameBuffers::to_string() const
 {
-  return refraction_dbo_;
+  return fmt::sprintf("WaterFrameBuffer "
+                      "{"
+                      "{reflection: (fbo) %s, (tbo) %s, dbo(%u)}, "
+                      "{refraction: (fbo) %s, (tbo) %s, dbo(%u)}"
+                      "}",
+                      reflection_fbo_->to_string(), reflection_tbo_.to_string(), reflection_dbo_,
+                      refraction_fbo_->to_string(), refraction_tbo_.to_string(), refraction_dbo_);
 }
 
 } // namespace boomhs

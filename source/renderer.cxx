@@ -9,6 +9,7 @@
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/types.hpp>
 #include <boomhs/water.hpp>
+#include <boomhs/water_fbos.hpp>
 
 #include <opengl/draw_info.hpp>
 #include <opengl/factory.hpp>
@@ -267,7 +268,7 @@ draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const
   }
   set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
                              receives_ambient_light);
-  auto const  camera_matrix = rstate.camera_matrix();
+  auto const camera_matrix = rstate.camera_matrix();
   set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
 
   draw(rstate, sp, dinfo);
@@ -1222,7 +1223,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
 void
 draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
-           glm::vec4 const& cull_plane, TextureInfo& reflection, TextureInfo& refraction)
+           glm::vec4 const& cull_plane, WaterFrameBuffers& water_fbos)
 {
   auto& es     = rstate.es;
   auto& logger = es.logger;
@@ -1244,31 +1245,16 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     auto& vao   = dinfo.vao();
 
     bool constexpr RECEIVES_AMBIENT_LIGHT = true;
-    auto const model_matrix = transform.model_matrix();
+    auto const model_matrix               = transform.model_matrix();
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
+
       vao.while_bound(logger, [&]() {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(reflection.target, reflection.id());
-
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(refraction.target, refraction.id());
-
-         draw_3dlit_shape(rstate, tr, model_matrix, sp, dinfo, Material{}, registry,
-             RECEIVES_AMBIENT_LIGHT);
-
-        /*
-        {
-          auto const camera_matrix = rstate.camera_matrix();
-
-
-          set_modelmatrix(logger, model_matrix, sp);
-          set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
-          draw(rstate, sp, dinfo);
-        }
-        */
-        glActiveTexture(GL_TEXTURE0);
+        water_fbos.while_bound(logger, [&]() {
+          draw_3dlit_shape(rstate, tr, model_matrix, sp, dinfo, Material{}, registry,
+                           RECEIVES_AMBIENT_LIGHT);
+        });
       });
     });
   };

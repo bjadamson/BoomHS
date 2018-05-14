@@ -30,7 +30,7 @@ WaterFactory::generate_water_data(stlw::Logger& logger, glm::vec2 const& dimensi
   data.vertices = MeshFactory::generate_rectangle_mesh(logger, dimensions, num_vertexes);
 
   data.normals = MeshFactory::generate_flat_normals(logger, num_vertexes);
-  //data.uvs     = MeshFactory::generate_uvs(logger, dimensions, num_vertexes, true);
+  // data.uvs     = MeshFactory::generate_uvs(logger, dimensions, num_vertexes, true);
 
   data.indices = MeshFactory::generate_indices(logger, num_vertexes);
 
@@ -57,7 +57,7 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
   LOG_TRACE("Generating water");
   glm::vec2 const       pos{0, 0};
   size_t const          num_vertexes = 128;
-  glm::vec2 const       dimensions{4};
+  glm::vec2 const       dimensions{8};
   WaterInfoConfig const wic{pos, dimensions, num_vertexes};
 
   auto texture_o = ttable.find("water-texture");

@@ -32,6 +32,7 @@ struct RiverInfo;
 struct Transform;
 class TileGrid;
 struct TiledataState;
+class WaterFrameBuffers;
 class WorldObject;
 struct ZoneState;
 } // namespace boomhs
@@ -128,6 +129,6 @@ draw_tilegrid(RenderState&, TiledataState const&);
 
 void
 draw_water(RenderState&, EntityRegistry&, window::FrameTime const&, glm::vec4 const&,
-           opengl::TextureInfo&, opengl::TextureInfo&);
+           WaterFrameBuffers&);
 
 } // namespace boomhs::render

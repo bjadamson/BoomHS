@@ -14,6 +14,7 @@ namespace boomhs
 class WaterFrameBuffers
 {
   opengl::ShaderProgram& sp_;
+  opengl::TextureInfo&   texture_;
 
   opengl::FrameBuffer reflection_fbo_;
   opengl::TextureInfo reflection_tbo_;
@@ -24,24 +25,26 @@ class WaterFrameBuffers
   GLuint              refraction_dbo_;
 
 public:
-  WaterFrameBuffers(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&);
+  WaterFrameBuffers(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&, opengl::TextureInfo&);
   ~WaterFrameBuffers();
 
+  void bind(stlw::Logger&);
+  void unbind(stlw::Logger&);
+  DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
+
   template <typename FN>
-  void with_reflection(stlw::Logger& logger, FN const& fn)
+  void with_reflection_fbo(stlw::Logger& logger, FN const& fn)
   {
     reflection_fbo_->while_bound(logger, fn);
   }
 
   template <typename FN>
-  void with_refraction(stlw::Logger& logger, FN const& fn)
+  void with_refraction_fbo(stlw::Logger& logger, FN const& fn)
   {
     refraction_fbo_->while_bound(logger, fn);
   }
 
-  opengl::TextureInfo& reflection_ti();
-  opengl::TextureInfo& refraction_ti();
-  int                  refraction_depth_tid() const;
+  std::string to_string() const;
 };
 
 } // namespace boomhs

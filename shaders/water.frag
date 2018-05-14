@@ -3,6 +3,7 @@ in vec3 v_surfacenormal;
 in float v_visibility;
 in float v_clipdistance;
 
+uniform sampler2D u_texture_sampler;
 uniform sampler2D u_reflect_sampler;
 uniform sampler2D u_refract_sampler;
 
@@ -52,16 +53,23 @@ void main()
 
   vec4 clipspace = u_mvpmatrix * v_position;
   vec2 ndc         = ((clipspace.xy/clipspace.w)/2.0) + 0.5;
+  vec2 texture_uv  = ndc;
   vec2 reflect_uv  = vec2(ndc.x, -ndc.y);
   vec2 refract_uv  = vec2(ndc.x, ndc.y);
 
-  vec4 reflect     = texture(u_reflect_sampler, reflect_uv);
-  vec4 refract     = texture(u_refract_sampler, refract_uv);
-  vec4 texture_mix = mix(reflect, refract, 0.5);
+  vec4 reflect        = texture(u_reflect_sampler, reflect_uv);
+  vec4 refract        = texture(u_refract_sampler, refract_uv);
 
-  // The output color is a mixture of the blended textures and the calculated light.
-  fragment_color = mix(texture_mix, light_color, 0.1);
+  const float weight_light   = 0.2;
+  const float weight_texture = 0.5;
+  const float weight_effects = 0.8;
 
-  const vec4 BLUE_MIX = vec4(0.0, 0.1, 0.6, 1.0);
-  fragment_color = mix(fragment_color, BLUE_MIX, 0.4);
+  vec4 effect_color  = mix(reflect, refract, 0.5) * weight_effects;
+  vec4 texture_color = texture(u_texture_sampler, texture_uv) * weight_texture;
+  light_color        = light_color * weight_light;
+
+  fragment_color = effect_color + texture_color + light_color;
+
+  const vec4 BLUE_MIX = vec4(0.0, 0.3, 0.8, 1.0);
+  fragment_color = mix(fragment_color, BLUE_MIX, 0.2);
 }
