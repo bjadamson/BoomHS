@@ -353,6 +353,7 @@ ProgramHandle::~ProgramHandle()
 #endif
 }
 
+#ifdef DEBUG_BUILD
 bool
 ProgramHandle::is_active() const
 {
@@ -364,6 +365,7 @@ ProgramHandle::set_active(bool const v)
 {
   active_ = v;
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // ShaderProgram

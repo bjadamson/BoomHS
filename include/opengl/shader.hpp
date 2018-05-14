@@ -59,8 +59,11 @@ public:
   ProgramHandle(ProgramHandle&&);
   ~ProgramHandle();
 
+#ifdef DEBUG_BUILD
   bool        is_active() const;
   void        set_active(bool);
+#endif
+
   auto const& handle() const { return program_; }
 };
 

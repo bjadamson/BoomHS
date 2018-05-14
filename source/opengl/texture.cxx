@@ -88,7 +88,9 @@ IdTextureUnits::IdTextureUnits(size_t const num)
 TextureInfo::TextureInfo()
   : target(GL_TEXTURE_2D)
   , ids_units(1)
+#ifdef DEBUG_BUILD
   , bound(false)
+#endif
 {
 }
 
