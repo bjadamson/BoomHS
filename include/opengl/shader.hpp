@@ -45,10 +45,6 @@ struct program_factory
 
 class ProgramHandle
 {
-
-#ifdef DEBUG_BUILD
-  bool active_;
-#endif
   GLuint program_;
 
 public:
@@ -60,8 +56,7 @@ public:
   ~ProgramHandle();
 
 #ifdef DEBUG_BUILD
-  bool is_active() const;
-  void set_active(bool);
+  mutable bool debug_bound = false;
 #endif
 
   auto const& handle() const { return program_; }
@@ -81,6 +76,9 @@ public:
   }
 
   // public data members
+#ifdef DEBUG_BUILD
+  mutable bool debug_bound = false;
+#endif
   std::optional<GLsizei> instance_count = std::nullopt;
 
   bool is_2d = false;
@@ -89,8 +87,8 @@ public:
   auto const& handle() const { return program_.handle(); }
   auto const& va() const { return this->va_; }
 
-  void bind(stlw::Logger&);
-  void unbind(stlw::Logger&);
+  void bind_impl(stlw::Logger&);
+  void unbind_impl(stlw::Logger&);
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
 
   GLint get_uniform_location(stlw::Logger&, GLchar const*);

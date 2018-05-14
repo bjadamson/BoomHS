@@ -19,12 +19,19 @@ class VAO
   static constexpr GLsizei NUM_BUFFERS = 1;
 
 public:
+#ifdef DEBUG_BUILD
+  mutable bool debug_bound = false;
+#endif
+
   NO_COPY(VAO);
 
   VAO& operator=(VAO&& other)
   {
     vao_       = other.vao_;
+    debug_bound = other.debug_bound;
+
     other.vao_ = 0;
+    other.debug_bound = false;
     return *this;
   }
 
@@ -42,8 +49,8 @@ public:
   auto gl_raw_value() { return vao_; }
   auto gl_raw_value() const { return vao_; }
 
-  void bind(stlw::Logger&) { global::vao_bind(*this); }
-  void unbind(stlw::Logger&) { global::vao_unbind(); }
+  void bind_impl(stlw::Logger&) { global::vao_bind(*this); }
+  void unbind_impl(stlw::Logger&) { global::vao_unbind(); }
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
 
   std::string to_string() const;

@@ -90,20 +90,22 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
                                      ShaderProgram& sp, TextureInfo& diffuse)
     : sp_(sp)
     , diffuse_(diffuse)
-
     , reflection_fbo_(FrameBuffer{make_fbo(logger, screen_size)})
     , reflection_rbo_(RenderBuffer{RBInfo{}})
     , refraction_fbo_(FrameBuffer{make_fbo(logger, screen_size)})
 {
 
   with_reflection_fbo(logger, [&]() {
-    reflection_tbo_ = create_texture_attachment(logger, reflection_fbo_->dimensions.w, reflection_fbo_->dimensions.h);
-      });
+    reflection_tbo_ = create_texture_attachment(logger, reflection_fbo_->dimensions.w,
+                                                reflection_fbo_->dimensions.h);
+  });
 
   with_refraction_fbo(logger, [&]() {
-    refraction_tbo_ = create_texture_attachment(logger, refraction_fbo_->dimensions.w, refraction_fbo_->dimensions.h);
-    refraction_dbo_ = create_depth_texture_attachment(logger, refraction_fbo_->dimensions.w, refraction_fbo_->dimensions.h);
-      });
+    refraction_tbo_ = create_texture_attachment(logger, refraction_fbo_->dimensions.w,
+                                                refraction_fbo_->dimensions.h);
+    refraction_dbo_ = create_depth_texture_attachment(logger, refraction_fbo_->dimensions.w,
+                                                      refraction_fbo_->dimensions.h);
+  });
 
   // connect texture units to shader program
   sp_.while_bound(logger, [&]() {
@@ -117,27 +119,26 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
 WaterFrameBuffers::~WaterFrameBuffers() {}
 
 void
-WaterFrameBuffers::bind(stlw::Logger& logger)
+WaterFrameBuffers::bind_impl(stlw::Logger& logger)
 {
   glActiveTexture(GL_TEXTURE0);
-  diffuse_.bind(logger);
+  bind::global_bind(logger, diffuse_);
 
   glActiveTexture(GL_TEXTURE1);
-  reflection_tbo_.bind(logger);
-  reflection_rbo_->bind(logger);
+  bind::global_bind(logger, reflection_tbo_);
+  bind::global_bind(logger, reflection_rbo_.resource());
 
   glActiveTexture(GL_TEXTURE2);
-  refraction_tbo_.bind(logger);
+  bind::global_bind(logger, refraction_tbo_);
 }
 
 void
-WaterFrameBuffers::unbind(stlw::Logger& logger)
+WaterFrameBuffers::unbind_impl(stlw::Logger& logger)
 {
-  diffuse_.unbind(logger);
-  reflection_tbo_.unbind(logger);
-  reflection_rbo_->unbind(logger);
-
-  refraction_tbo_.unbind(logger);
+  bind::global_unbind(logger, diffuse_);
+  bind::global_unbind(logger, reflection_tbo_);
+  bind::global_unbind(logger, reflection_rbo_.resource());
+  bind::global_unbind(logger, refraction_tbo_);
 
   glActiveTexture(GL_TEXTURE0);
 }
@@ -157,8 +158,7 @@ WaterFrameBuffers::to_string() const
                       reflection_fbo_->to_string(), reflection_tbo_.to_string(),
                       reflection_rbo_->to_string(),
 
-                      refraction_fbo_->to_string(), refraction_tbo_.to_string(),
-                      refraction_dbo_);
+                      refraction_fbo_->to_string(), refraction_tbo_.to_string(), refraction_dbo_);
   // clang format-on
 }
 

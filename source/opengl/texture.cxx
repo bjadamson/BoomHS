@@ -17,18 +17,6 @@
 #include <vector>
 #include <utility>
 
-#define DEBUG_ASSERT_BOUND()                                                                       \
-  FOR_DEBUG_ONLY([&]() { assert(this->bound == true); });
-
-#define DEBUG_ASSERT_NOT_BOUND()                                                                   \
-  FOR_DEBUG_ONLY([&]() { assert(this->bound == false); });
-
-#define DEBUG_BIND()                                                                               \
-  FOR_DEBUG_ONLY([&]() { this->bound = true; });
-
-#define DEBUG_UNBIND()                                                                             \
-  FOR_DEBUG_ONLY([&]() { this->bound = false; });
-
 using namespace boomhs;
 using namespace opengl;
 
@@ -72,9 +60,6 @@ namespace opengl
 // TextureInfo
 TextureInfo::TextureInfo()
   : target(GL_TEXTURE_2D)
-#ifdef DEBUG_BUILD
-  , bound(false)
-#endif
 {
 }
 
@@ -86,40 +71,32 @@ TextureInfo::gen_texture(stlw::Logger &logger, GLsizei const num)
 }
 
 void
-TextureInfo::bind(stlw::Logger& logger)
+TextureInfo::bind_impl(stlw::Logger& logger)
 {
-  DEBUG_ASSERT_NOT_BOUND();
-
   global::texture_bind(*this);
-  DEBUG_BIND();
 }
 
 void
-TextureInfo::unbind(stlw::Logger& logger)
+TextureInfo::unbind_impl(stlw::Logger& logger)
 {
-  DEBUG_ASSERT_BOUND();
-
   // This is an expected no-op operation.
   //
   // Make sure this isn't masking any problems, try commenting out and see if rendering changes.
   glActiveTexture(GL_TEXTURE0);
 
   global::texture_unbind(*this);
-  DEBUG_UNBIND();
 }
 
 void
-TextureInfo::destroy()
+TextureInfo::destroy_impl()
 {
-  DEBUG_ASSERT_NOT_BOUND();
-
   glDeleteTextures(TextureInfo::NUM_BUFFERS, &id);
 }
 
 GLint
 TextureInfo::get_fieldi(GLenum const name)
 {
-  DEBUG_ASSERT_BOUND();
+  DEBUG_ASSERT_BOUND(*this);
 
   GLint value;
   glGetTexParameteriv(this->target, name, &value);
@@ -129,7 +106,8 @@ TextureInfo::get_fieldi(GLenum const name)
 void
 TextureInfo::set_fieldi(GLenum const name, GLint const value)
 {
-  //DEBUG_ASSERT_BOUND();
+  // TODO: uncomment
+  DEBUG_ASSERT_BOUND(*this);
 
   glTexParameteri(this->target, name, value);
 }
@@ -151,32 +129,22 @@ FBInfo::FBInfo(Dimensions const& d, ScreenSize const& ss)
 }
 
 void
-FBInfo::bind(stlw::Logger& logger)
+FBInfo::bind_impl(stlw::Logger& logger)
 {
-  DEBUG_ASSERT_NOT_BOUND();
-
   glBindFramebuffer(GL_FRAMEBUFFER, id);
   glViewport(dimensions.x, dimensions.y, dimensions.w, dimensions.h);
-
-  DEBUG_BIND();
 }
 
 void
-FBInfo::unbind(stlw::Logger& logger)
+FBInfo::unbind_impl(stlw::Logger& logger)
 {
-  DEBUG_ASSERT_BOUND();
-
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glViewport(0, 0, screen_size.width, screen_size.height);
-
-  DEBUG_UNBIND();
 }
 
 void
-FBInfo::destroy()
+FBInfo::destroy_impl()
 {
-  DEBUG_ASSERT_NOT_BOUND();
-
   glDeleteFramebuffers(1, &id);
 }
 
@@ -194,28 +162,22 @@ RBInfo::RBInfo()
 }
 
 void
-RBInfo::destroy()
+RBInfo::destroy_impl()
 {
-  DEBUG_ASSERT_NOT_BOUND();
+  DEBUG_ASSERT_NOT_BOUND(*this);
   glDeleteRenderbuffers(1, &id);
 }
 
 void
-RBInfo::bind(stlw::Logger &logger)
+RBInfo::bind_impl(stlw::Logger &logger)
 {
-  DEBUG_ASSERT_NOT_BOUND();
   glBindRenderbuffer(GL_RENDERBUFFER, id);
-
-  DEBUG_BIND();
 }
 
 void
-RBInfo::unbind(stlw::Logger &logger)
+RBInfo::unbind_impl(stlw::Logger &logger)
 {
-  DEBUG_ASSERT_BOUND();
   glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-  DEBUG_UNBIND();
 }
 
 std::string
@@ -361,8 +323,8 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLenum const
   //
   // note: Using while_bound() doesn't work here because TRY_MOVEOUT returns a value.
   {
-    ti.bind(logger);
-    ON_SCOPE_EXIT([&]() { ti.unbind(logger); });
+    bind::global_bind(logger, ti);
+    ON_SCOPE_EXIT([&]() { bind::global_unbind(logger, ti); });
 
     GpuUploadConfig const guc{format, ti.target, GL_TEXTURE0};
     auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, guc));

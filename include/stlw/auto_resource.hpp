@@ -46,7 +46,7 @@ public:
   ~AutoResource()
   {
     if (should_destroy_) {
-      resource_.destroy();
+      resource_.destroy_impl();
     }
   }
 

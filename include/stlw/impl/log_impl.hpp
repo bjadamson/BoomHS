@@ -77,7 +77,7 @@ public:
     logger_->set_level(level);
   }
 
-  void destroy()
+  void destroy_impl()
   {
     flush();
   }

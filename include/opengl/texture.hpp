@@ -21,7 +21,7 @@ namespace opengl
 struct TextureInfo
 {
 #ifdef DEBUG_BUILD
-  mutable bool bound = false;
+  mutable bool debug_bound = false;
 #endif
 
   GLenum target;
@@ -35,11 +35,11 @@ struct TextureInfo
   TextureInfo();
 
   // methods
-  void bind(stlw::Logger&);
-  void unbind(stlw::Logger&);
+  void bind_impl(stlw::Logger&);
+  void unbind_impl(stlw::Logger&);
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
 
-  void destroy();
+  void destroy_impl();
 
   void gen_texture(stlw::Logger&, GLsizei);
 
@@ -54,7 +54,7 @@ struct TextureInfo
 struct FBInfo
 {
 #ifdef DEBUG_BUILD
-  mutable bool bound = false;
+  mutable bool debug_bound = false;
 #endif
   GLuint                   id;
   boomhs::Dimensions const dimensions;
@@ -65,10 +65,10 @@ struct FBInfo
   MOVE_DEFAULT(FBInfo);
 
   // methods
-  void bind(stlw::Logger&);
-  void unbind(stlw::Logger&);
+  void bind_impl(stlw::Logger&);
+  void unbind_impl(stlw::Logger&);
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
-  void destroy();
+  void destroy_impl();
 
   std::string to_string() const;
 
@@ -79,7 +79,7 @@ struct FBInfo
 struct RBInfo
 {
 #ifdef DEBUG_BUILD
-  mutable bool bound = false;
+  mutable bool debug_bound = false;
 #endif
   GLuint id;
 
@@ -88,10 +88,10 @@ struct RBInfo
   MOVE_DEFAULT(RBInfo);
 
   // methods
-  void bind(stlw::Logger&);
-  void unbind(stlw::Logger&);
+  void bind_impl(stlw::Logger&);
+  void unbind_impl(stlw::Logger&);
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
-  void destroy();
+  void destroy_impl();
 
   std::string to_string() const;
 

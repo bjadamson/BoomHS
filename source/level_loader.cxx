@@ -294,7 +294,7 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       Texture                  t = TRY_MOVEOUT(
           opengl::texture::upload_3dcube_texture(logger, texture_names.filenames, format));
 
-      t.resource().while_bound(logger, [&]() {
+      t->while_bound(logger, [&]() {
         t->set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         t->set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 

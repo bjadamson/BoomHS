@@ -321,9 +321,6 @@ ProgramHandle::ProgramHandle(GLuint const p)
   // ownership", or will assume the responsibility of deleting the underlying opengl program.
   assert(p != INVALID_PROGRAM_ID);
 
-#ifdef DEBUG_BUILD
-  active_ = false;
-#endif
 }
 
 ProgramHandle::ProgramHandle(ProgramHandle &&other)
@@ -334,65 +331,34 @@ ProgramHandle::ProgramHandle(ProgramHandle &&other)
   other.program_ = INVALID_PROGRAM_ID;
 
 #ifdef DEBUG_BUILD
-  active_ = other.active_;
-  other.active_ = false;
+  debug_bound = other.debug_bound;
+  other.debug_bound = false;
 #endif
 }
 
 ProgramHandle::~ProgramHandle()
 {
+  DEBUG_ASSERT_NOT_BOUND(*this);
+
   if (program_ != INVALID_PROGRAM_ID) {
     glDeleteProgram(program_);
     program_ = INVALID_PROGRAM_ID;
   }
-
-  // No shader program should be destroyed while bound.
-  // That would indicate unpredicted behavior.
-#ifdef DEBUG_BUILD
-  assert(!is_active());
-#endif
 }
-
-#ifdef DEBUG_BUILD
-bool
-ProgramHandle::is_active() const
-{
-  return active_;
-}
-
-void
-ProgramHandle::set_active(bool const v)
-{
-  active_ = v;
-}
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // ShaderProgram
 void
-ShaderProgram::bind(stlw::Logger &logger)
+ShaderProgram::bind_impl(stlw::Logger &logger)
 {
-#ifdef DEBUG_BUILD
-  // Assume initially the program is not bound.
-  assert(!program_.is_active());
-#endif
-
   glUseProgram(program_.handle());
   LOG_ANY_GL_ERRORS(logger, "Shader use/enable");
-
-#ifdef DEBUG_BUILD
-  program_.set_active(true);
-#endif
 }
 
 void
-ShaderProgram::unbind(stlw::Logger &logger)
+ShaderProgram::unbind_impl(stlw::Logger &logger)
 {
 #ifdef DEBUG_BUILD
-  // Should only be unbinding bound programs.
-  assert(program_.is_active());
-  program_.set_active(false);
-
   glUseProgram(0);
 #endif
 }
@@ -400,8 +366,7 @@ ShaderProgram::unbind(stlw::Logger &logger)
 GLint
 ShaderProgram::get_uniform_location(stlw::Logger &logger, GLchar const *name)
 {
-  FOR_DEBUG_ONLY([&]() { assert(program_.is_active()); });
-
+  DEBUG_ASSERT_BOUND(*this);
   LOG_DEBUG_SPRINTF("getting uniform '%s' location.", name);
   GLint const loc = glGetUniformLocation(program_.handle(), name);
   LOG_DEBUG_SPRINTF("uniform '%s' found at '%d'.", name, loc);
@@ -414,7 +379,7 @@ ShaderProgram::get_uniform_location(stlw::Logger &logger, GLchar const *name)
 void
 ShaderProgram::set_uniform_matrix_3fv(stlw::Logger &logger, GLchar const *name, glm::mat3 const &matrix)
 {
-  FOR_DEBUG_ONLY([&]() { assert(program_.is_active()); });
+  DEBUG_ASSERT_BOUND(*this);
 
   auto const loc = get_uniform_location(logger, name);
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
@@ -436,7 +401,7 @@ ShaderProgram::set_uniform_matrix_3fv(stlw::Logger &logger, GLchar const *name, 
 void
 ShaderProgram::set_uniform_matrix_4fv(stlw::Logger &logger, GLchar const *name, glm::mat4 const &matrix)
 {
-  FOR_DEBUG_ONLY([&]() { assert(program_.is_active()); });
+  DEBUG_ASSERT_BOUND(*this);
 
   auto const loc = get_uniform_location(logger, name);
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
@@ -458,7 +423,7 @@ ShaderProgram::set_uniform_matrix_4fv(stlw::Logger &logger, GLchar const *name, 
 void
 ShaderProgram::set_uniform_array_2fv(stlw::Logger &logger, GLchar const* name, std::array<float, 2> const& array)
 {
-  FOR_DEBUG_ONLY([&]() { assert(program_.is_active()); });
+  DEBUG_ASSERT_BOUND(*this);
 
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
   //
@@ -479,7 +444,7 @@ ShaderProgram::set_uniform_array_2fv(stlw::Logger &logger, GLchar const* name, s
 void
 ShaderProgram::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, std::array<float, 3> const& array)
 {
-  FOR_DEBUG_ONLY([&]() { assert(program_.is_active()); });
+  DEBUG_ASSERT_BOUND(*this);
 
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
   //
@@ -501,7 +466,7 @@ ShaderProgram::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, s
 void
 ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, std::array<float, 4> const &floats)
 {
-  FOR_DEBUG_ONLY([&]() { assert(program_.is_active()); });
+  DEBUG_ASSERT_BOUND(*this);
 
   auto const loc = get_uniform_location(logger, name);
   LOG_DEBUG_SPRINTF("sending uniform array 4fv loc '%d' with data '%s' to GPU", loc,
@@ -522,7 +487,7 @@ ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, s
 void
 ShaderProgram::set_uniform_float1(stlw::Logger &logger, GLchar const* name, float const value)
 {
-  FOR_DEBUG_ONLY([&]() { assert(program_.is_active()); });
+  DEBUG_ASSERT_BOUND(*this);
 
   auto const loc = get_uniform_location(logger, name);
   LOG_DEBUG_SPRINTF("sending uniform float at loc '%d' with data '%f' to GPU", loc, value);
@@ -543,7 +508,7 @@ ShaderProgram::set_uniform_int1(stlw::Logger &logger, GLchar const* name, int co
 void
 ShaderProgram::set_uniform_bool(stlw::Logger &logger, GLchar const* name, bool const value)
 {
-  FOR_DEBUG_ONLY([&]() { assert(program_.is_active()); });
+  DEBUG_ASSERT_BOUND(*this);
 
   auto const loc = get_uniform_location(logger, name);
   LOG_DEBUG_SPRINTF("sending uniform bool at loc '%d' with data '%i' to GPU", loc, value);

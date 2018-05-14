@@ -28,8 +28,12 @@ public:
   WaterFrameBuffers(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&, opengl::TextureInfo&);
   ~WaterFrameBuffers();
 
-  void bind(stlw::Logger&);
-  void unbind(stlw::Logger&);
+#ifdef DEBUG_BUILD
+  mutable bool debug_bound = false;
+#endif
+
+  void bind_impl(stlw::Logger&);
+  void unbind_impl(stlw::Logger&);
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
 
   template <typename FN>
