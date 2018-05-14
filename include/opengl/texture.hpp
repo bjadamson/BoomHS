@@ -78,22 +78,29 @@ struct FBInfo
 // RenderBuffer Info
 struct RBInfo
 {
-  GLuint depth;
+#ifdef DEBUG_BUILD
+  mutable bool bound = false;
+#endif
+  GLuint id;
 
+  RBInfo();
+  NO_COPY(RBInfo);
+  MOVE_DEFAULT(RBInfo);
+
+  // methods
+  void bind(stlw::Logger&);
+  void unbind(stlw::Logger&);
+  DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
   void destroy();
-  DEFAULT_CONSTRUCTIBLE(RBInfo);
-  COPY_DEFAULT(RBInfo);
-  MOVE_ASSIGNABLE(RBInfo);
-  RBInfo(RBInfo&&);
 
   std::string to_string() const;
 
   static size_t constexpr NUM_BUFFERS = 1;
 };
 
-using Texture        = stlw::AutoResource<TextureInfo>;
-using FrameBuffer    = stlw::AutoResource<FBInfo>;
-using ResourceBuffer = stlw::AutoResource<RBInfo>;
+using Texture      = stlw::AutoResource<TextureInfo>;
+using FrameBuffer  = stlw::AutoResource<FBInfo>;
+using RenderBuffer = stlw::AutoResource<RBInfo>;
 
 struct TextureFilenames
 {

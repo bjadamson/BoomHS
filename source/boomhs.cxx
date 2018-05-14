@@ -508,8 +508,8 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
 
   auto const&              dim = es.dimensions;
   ScreenSize const         screen_size{dim.w, dim.h};
-  auto& ttable = gfx_state.texture_table;
-  auto&       default_water_ti = *ttable.find("water-texture");
+  auto&                    ttable           = gfx_state.texture_table;
+  auto&                    default_water_ti = *ttable.find("water-texture");
   static WaterFrameBuffers waterfbos{logger, screen_size, sps.ref_sp("water"), default_water_ti};
 
   // Render the scene to the reflection FBO
@@ -520,8 +520,8 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   // Render the scene with no culling (setting it zero disables culling mathematically)
   glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
 
-  auto const& fog_color        = ldata.fog.color;
-  auto& skybox_ti = *ttable.find("building_skybox");
+  auto const& fog_color = ldata.fog.color;
+  auto&       skybox_ti = *ttable.find("building_skybox");
   waterfbos.with_reflection_fbo(logger, [&]() {
     // Compute the camera position beneath the water for capturing the reflective image the camera
     // will see.

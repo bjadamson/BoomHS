@@ -14,11 +14,11 @@ namespace boomhs
 class WaterFrameBuffers
 {
   opengl::ShaderProgram& sp_;
-  opengl::TextureInfo&   texture_;
+  opengl::TextureInfo&   diffuse_;
 
-  opengl::FrameBuffer reflection_fbo_;
-  opengl::TextureInfo reflection_tbo_;
-  GLuint              reflection_dbo_;
+  opengl::FrameBuffer  reflection_fbo_;
+  opengl::TextureInfo  reflection_tbo_;
+  opengl::RenderBuffer reflection_rbo_;
 
   opengl::FrameBuffer refraction_fbo_;
   opengl::TextureInfo refraction_tbo_;

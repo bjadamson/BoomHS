@@ -188,10 +188,40 @@ FBInfo::to_string() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // RBInfo
+RBInfo::RBInfo()
+{
+  glGenRenderbuffers(1, &id);
+}
+
+void
+RBInfo::destroy()
+{
+  DEBUG_ASSERT_NOT_BOUND();
+  glDeleteRenderbuffers(1, &id);
+}
+
+void
+RBInfo::bind(stlw::Logger &logger)
+{
+  DEBUG_ASSERT_NOT_BOUND();
+  glBindRenderbuffer(GL_RENDERBUFFER, id);
+
+  DEBUG_BIND();
+}
+
+void
+RBInfo::unbind(stlw::Logger &logger)
+{
+  DEBUG_ASSERT_BOUND();
+  glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+  DEBUG_UNBIND();
+}
+
 std::string
 RBInfo::to_string() const
 {
-  return fmt::sprintf("(RBInfo) depth: %u", depth);
+  return fmt::sprintf("(RBInfo) id: %u", id);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

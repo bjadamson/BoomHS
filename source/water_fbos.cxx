@@ -50,7 +50,7 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
 }
 
 auto
-create_depth_texture_attachment(int const width, int const height)
+create_depth_texture_attachment(stlw::Logger& logger, int const width, int const height)
 {
   assert(width > 0 && height > 0);
 
@@ -71,14 +71,14 @@ create_depth_texture_attachment(int const width, int const height)
 }
 
 auto
-create_depth_buffer_attachment(int const width, int const height)
+create_depth_buffer_attachment(stlw::Logger& logger, int const width, int const height)
 {
-  GLuint depth_buffer;
-  glGenRenderbuffers(1, &depth_buffer);
-  glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
-  return depth_buffer;
+  RBInfo rbinfo;
+  rbinfo.while_bound(logger, [&]() {
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbinfo.id);
+  });
+  return RenderBuffer{MOVE(rbinfo)};
 }
 
 } // namespace
@@ -87,33 +87,23 @@ namespace boomhs
 {
 
 WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& screen_size,
-                                     ShaderProgram& sp, TextureInfo &texture)
+                                     ShaderProgram& sp, TextureInfo& diffuse)
     : sp_(sp)
-    , texture_(texture)
+    , diffuse_(diffuse)
+
     , reflection_fbo_(FrameBuffer{make_fbo(logger, screen_size)})
+    , reflection_rbo_(RenderBuffer{RBInfo{}})
     , refraction_fbo_(FrameBuffer{make_fbo(logger, screen_size)})
 {
-  auto const create = [&](auto const& fbo, auto const& depth_function) {
-    auto const& dimensions = fbo->dimensions;
-    auto const  width = dimensions.w, height = dimensions.h;
-    auto const  tbo = create_texture_attachment(logger, width, height);
-    auto const  dbo = depth_function(width, height);
-    return std::make_pair(tbo, dbo);
-  };
-  auto const reflection_fn = [&]() {
-    auto const reflection = create(reflection_fbo_, create_depth_buffer_attachment);
-    reflection_tbo_       = reflection.first;
-    reflection_dbo_       = reflection.second;
-  };
-  auto const refraction_fn = [&]() {
-    auto const refraction = create(refraction_fbo_, create_depth_texture_attachment);
-    refraction_tbo_       = refraction.first;
-    refraction_dbo_       = refraction.second;
-  };
 
-  // logic starts here
-  with_reflection_fbo(logger, reflection_fn);
-  with_refraction_fbo(logger, refraction_fn);
+  with_reflection_fbo(logger, [&]() {
+    reflection_tbo_ = create_texture_attachment(logger, reflection_fbo_->dimensions.w, reflection_fbo_->dimensions.h);
+      });
+
+  with_refraction_fbo(logger, [&]() {
+    refraction_tbo_ = create_texture_attachment(logger, refraction_fbo_->dimensions.w, refraction_fbo_->dimensions.h);
+    refraction_dbo_ = create_depth_texture_attachment(logger, refraction_fbo_->dimensions.w, refraction_fbo_->dimensions.h);
+      });
 
   // connect texture units to shader program
   sp_.while_bound(logger, [&]() {
@@ -130,10 +120,11 @@ void
 WaterFrameBuffers::bind(stlw::Logger& logger)
 {
   glActiveTexture(GL_TEXTURE0);
-  texture_.bind(logger);
+  diffuse_.bind(logger);
 
   glActiveTexture(GL_TEXTURE1);
   reflection_tbo_.bind(logger);
+  reflection_rbo_->bind(logger);
 
   glActiveTexture(GL_TEXTURE2);
   refraction_tbo_.bind(logger);
@@ -142,8 +133,10 @@ WaterFrameBuffers::bind(stlw::Logger& logger)
 void
 WaterFrameBuffers::unbind(stlw::Logger& logger)
 {
-  texture_.unbind(logger);
+  diffuse_.unbind(logger);
   reflection_tbo_.unbind(logger);
+  reflection_rbo_->unbind(logger);
+
   refraction_tbo_.unbind(logger);
 
   glActiveTexture(GL_TEXTURE0);
@@ -152,13 +145,21 @@ WaterFrameBuffers::unbind(stlw::Logger& logger)
 std::string
 WaterFrameBuffers::to_string() const
 {
+  // clang format-off
   return fmt::sprintf("WaterFrameBuffer "
                       "{"
-                      "{reflection: (fbo) %s, (tbo) %s, dbo(%u)}, "
+                      "{diffuse: (tbo) %s}, "
+                      "{reflection: (fbo) %s, (tbo) %s, rbo(%s)}, "
                       "{refraction: (fbo) %s, (tbo) %s, dbo(%u)}"
                       "}",
-                      reflection_fbo_->to_string(), reflection_tbo_.to_string(), reflection_dbo_,
-                      refraction_fbo_->to_string(), refraction_tbo_.to_string(), refraction_dbo_);
+                      diffuse_.to_string(),
+
+                      reflection_fbo_->to_string(), reflection_tbo_.to_string(),
+                      reflection_rbo_->to_string(),
+
+                      refraction_fbo_->to_string(), refraction_tbo_.to_string(),
+                      refraction_dbo_);
+  // clang format-on
 }
 
 } // namespace boomhs
