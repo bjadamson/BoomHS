@@ -12,15 +12,19 @@ namespace
 {
 
 auto
-make_reflection_fbo(ScreenSize const& screen_size)
+make_reflection_fbo(stlw::Logger& logger, ScreenSize const& screen_size)
 {
-  return FBInfo{{0, 0, 1024, 768}, screen_size};
+  FBInfo fb{{0, 0, 1024, 768}, screen_size};
+  fb.while_bound(logger, []() { glDrawBuffer(GL_COLOR_ATTACHMENT0); });
+  return fb;
 }
 
 auto
-make_refraction_fbo(ScreenSize const& screen_size)
+make_refraction_fbo(stlw::Logger& logger, ScreenSize const& screen_size)
 {
-  return FBInfo{{0, 0, 1024, 768}, screen_size};
+  FBInfo fb{{0, 0, 1024, 768}, screen_size};
+  fb.while_bound(logger, []() { glDrawBuffer(GL_COLOR_ATTACHMENT0); });
+  return fb;
 }
 
 TextureInfo
@@ -95,8 +99,8 @@ namespace boomhs
 WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& screen_size,
                                      ShaderProgram& sp)
     : sp_(sp)
-    , reflection_fbo_(FrameBuffer{make_reflection_fbo(screen_size)})
-    , refraction_fbo_(FrameBuffer{make_refraction_fbo(screen_size)})
+    , reflection_fbo_(FrameBuffer{make_reflection_fbo(logger, screen_size)})
+    , refraction_fbo_(FrameBuffer{make_refraction_fbo(logger, screen_size)})
 {
   auto const create = [&](auto const& fbo, auto const& depth_function) {
     auto const& dimensions = fbo->dimensions;
