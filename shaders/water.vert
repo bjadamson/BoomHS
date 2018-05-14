@@ -6,7 +6,6 @@ out vec4 v_position;
 out vec3 v_surfacenormal;
 out float v_visibility;
 out float v_clipdistance;
-out vec2 v_uv;
 
 uniform Fog u_fog;
 uniform mat4 u_viewmatrix;
@@ -20,7 +19,6 @@ void main()
 {
   v_position = vec4(a_position, 1.0);
   gl_Position = u_mvpmatrix * v_position;
-  v_uv = a_uv;
 
   v_surfacenormal = normalize(u_normalmatrix * a_normal);
 
