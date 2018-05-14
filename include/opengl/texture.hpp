@@ -20,12 +20,9 @@ namespace opengl
 
 struct TextureInfo
 {
-#ifdef DEBUG_BUILD
-  mutable bool debug_bound = false;
-#endif
-
-  GLenum target;
-  GLuint id;
+  DebugBoundCheck debug_check;
+  GLenum          target;
+  GLuint          id;
 
   GLint width = 0, height = 0;
 
@@ -53,9 +50,7 @@ struct TextureInfo
 // FrameBuffer Info
 struct FBInfo
 {
-#ifdef DEBUG_BUILD
-  mutable bool debug_bound = false;
-#endif
+  DebugBoundCheck          debug_check;
   GLuint                   id;
   boomhs::Dimensions const dimensions;
   boomhs::ScreenSize const screen_size;
@@ -78,10 +73,8 @@ struct FBInfo
 // RenderBuffer Info
 struct RBInfo
 {
-#ifdef DEBUG_BUILD
-  mutable bool debug_bound = false;
-#endif
-  GLuint id;
+  DebugBoundCheck debug_check;
+  GLuint          id;
 
   RBInfo();
   NO_COPY(RBInfo);

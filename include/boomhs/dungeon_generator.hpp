@@ -33,6 +33,6 @@ namespace boomhs::dungeon_generator
 
 LevelGeneratedData
 gen_level(stlw::Logger&, LevelConfig const&, EntityRegistry&, stlw::float_generator&,
-          opengl::ShaderPrograms&, opengl::TextureTable const&);
+          opengl::ShaderPrograms&, opengl::TextureTable&);
 
 } // namespace boomhs::dungeon_generator

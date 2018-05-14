@@ -685,7 +685,9 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
   auto const draw_texture_fn = [&](auto const eid, auto& sn, auto& transform, auto& is_visible,
                                    auto& texture_renderable, auto&&... args) {
-    texture_renderable.texture_info.while_bound(logger, [&]() {
+    auto* ti = texture_renderable.texture_info;
+    assert(ti);
+    ti->while_bound(logger, [&]() {
       draw_fn(eid, sn, transform, is_visible, texture_renderable, FORWARD(args));
     });
   };
@@ -712,8 +714,9 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     copy_transform.translation.y += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
     copy_transform.translation.z += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
 
-    trenderable.texture_info.while_bound(logger,
-                                         [&]() { draw_fn(eid, sn, copy_transform, isv, torch); });
+    auto* ti = trenderable.texture_info;
+    assert(ti);
+    ti->while_bound(logger, [&]() { draw_fn(eid, sn, copy_transform, isv, torch); });
   };
 
   auto const draw_orbital_body = [&](auto const eid, auto& sn, auto& transform, auto& isv,
@@ -726,8 +729,9 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     auto&      sp          = sps.ref_sp(sn.value);
     sp.while_bound(logger, [&]() { set_modelmatrix(logger, mvp_matrix, sp); });
 
-    trenderable.texture_info.while_bound(logger,
-                                         [&]() { draw_fn(eid, sn, transform, isv, bboard); });
+    auto* ti = trenderable.texture_info;
+    assert(ti);
+    ti->while_bound(logger, [&]() { draw_fn(eid, sn, transform, isv, bboard); });
   };
 
 #define COMMON ShaderName, Transform, IsVisible

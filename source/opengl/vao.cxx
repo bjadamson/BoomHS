@@ -4,6 +4,16 @@
 namespace opengl
 {
 
+VAO&
+VAO::operator=(VAO&& other)
+{
+  vao_       = other.vao_;
+  debug_check = MOVE(other.debug_check);
+
+  other.vao_ = 0;
+  return *this;
+}
+
 std::string
 VAO::to_string() const
 {

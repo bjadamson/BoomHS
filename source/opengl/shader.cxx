@@ -331,8 +331,7 @@ ProgramHandle::ProgramHandle(ProgramHandle &&other)
   other.program_ = INVALID_PROGRAM_ID;
 
 #ifdef DEBUG_BUILD
-  debug_bound = other.debug_bound;
-  other.debug_bound = false;
+  debug_check = MOVE(other.debug_check);
 #endif
 }
 

@@ -7,17 +7,47 @@
 
 // clang-format off
 #define DEBUG_BIND(obj)                                                                            \
-  FOR_DEBUG_ONLY([&]() { (obj).debug_bound = true; });
+  FOR_DEBUG_ONLY([&]() { (obj).debug_check.is_bound = true; });
 
 #define DEBUG_UNBIND(obj)                                                                          \
-  FOR_DEBUG_ONLY([&]() { (obj).debug_bound = false; });
+  FOR_DEBUG_ONLY([&]() { (obj).debug_check.is_bound = false; });
 
 #define DEBUG_ASSERT_BOUND(obj)                                                                    \
-  FOR_DEBUG_ONLY([&]() { assert((obj).debug_bound == true); });
+  FOR_DEBUG_ONLY([&]() { assert((obj).debug_check.is_bound == true); });
 
 #define DEBUG_ASSERT_NOT_BOUND(obj)                                                                \
-  FOR_DEBUG_ONLY([&]() { assert((obj).debug_bound == false); });
+  FOR_DEBUG_ONLY([&]() { assert((obj).debug_check.is_bound == false); });
 // clang-format on
+
+namespace opengl
+{
+
+struct DebugBoundCheck
+{
+#ifdef DEBUG_BUILD
+  mutable bool is_bound = false;
+
+  DebugBoundCheck() {}
+  NO_COPY(DebugBoundCheck);
+
+  DebugBoundCheck(DebugBoundCheck&& other)
+      : is_bound(other.is_bound)
+  {
+    other.is_bound = false;
+  }
+
+  DebugBoundCheck& operator=(DebugBoundCheck&& other)
+  {
+    is_bound       = other.is_bound;
+    other.is_bound = false;
+    return *this;
+  }
+#else
+  // This compiles to nothing outside debug builds.
+#endif
+};
+
+} // namespace opengl
 
 namespace opengl::bind
 {

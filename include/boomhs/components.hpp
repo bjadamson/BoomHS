@@ -68,7 +68,7 @@ struct MeshRenderable
 
 struct TextureRenderable
 {
-  opengl::TextureInfo texture_info;
+  opengl::TextureInfo* texture_info = nullptr;
 };
 
 template <typename... C>

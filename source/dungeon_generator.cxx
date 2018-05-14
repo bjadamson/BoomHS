@@ -217,7 +217,7 @@ place_monsters(TileGrid const& tilegrid, EntityRegistry& registry, stlw::float_g
 
 void
 place_torch(TileGrid const& tilegrid, EntityRegistry& registry, stlw::float_generator& rng,
-            TextureTable const& ttable)
+            TextureTable& ttable)
 {
   auto  eid       = ItemFactory::create_torch(registry, rng, ttable);
   auto& transform = registry.get<Transform>(eid);
@@ -333,7 +333,7 @@ place_rivers_rooms_and_stairs(stlw::Logger& logger, StairGenConfig const& stairc
 
 LevelGeneratedData
 gen_level(stlw::Logger& logger, LevelConfig const& levelconfig, EntityRegistry& registry,
-          stlw::float_generator& rng, ShaderPrograms& sps, TextureTable const& ttable)
+          stlw::float_generator& rng, ShaderPrograms& sps, TextureTable& ttable)
 {
   TileGridConfig const& tileconfig = levelconfig.tileconfig;
   auto const            tdwidth    = tileconfig.width;

@@ -35,11 +35,11 @@ draw_player_inventory(stlw::Logger& logger, EntityRegistry& registry, TextureTab
 
   auto const draw_icon = [&](size_t const pos) {
     {
-      auto&       slot          = inventory.slot(pos);
-      bool const  slot_occupied = slot.occupied();
-      auto const& ti =
-          slot_occupied ? slot.item(registry).ui_tinfo : *ttable.find("InventorySlotEmpty");
-      bool const button_pressed = draw_button(ti);
+      auto&      slot          = inventory.slot(pos);
+      bool const slot_occupied = slot.occupied();
+      auto* ti = slot_occupied ? slot.item(registry).ui_tinfo : ttable.find("InventorySlotEmpty");
+      assert(ti);
+      bool const button_pressed = draw_button(*ti);
 
       // If the button is pressed, and the slot is occupied (location clicked) then go ahead and
       // remove the item from the player, and removing it from the UI.
@@ -119,8 +119,10 @@ draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const
 
   char const* name = "test_icon";
   assert(ttable.find(name) != nullptr);
-  auto const  ti        = *ttable.find(name);
-  ImTextureID my_tex_id = reinterpret_cast<void*>(ti.id);
+  auto* ti = ttable.find(name);
+  assert(ti);
+
+  ImTextureID my_tex_id = reinterpret_cast<void*>(ti->id);
 
   auto const draw = [&]() {
     ImGui::Text("Name %s", npcdata.name);
@@ -129,7 +131,7 @@ draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const
     ImGui::Text("Health %i", npcdata.health);
 
     auto const draw_icon = [&]() {
-      ImGui::Image(my_tex_id, ImVec2(ti.width, ti.height), ImVec2(0, 0), ImVec2(1, 1),
+      ImGui::Image(my_tex_id, ImVec2(ti->width, ti->height), ImVec2(0, 0), ImVec2(1, 1),
                    ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
     };
 

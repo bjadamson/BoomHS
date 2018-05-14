@@ -61,10 +61,10 @@ TerrainPieceConfig::TerrainPieceConfig()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TerrainPiece
 TerrainPiece::TerrainPiece(TerrainPieceConfig const& tc, glm::vec2 const& pos, DrawInfo&& di,
-                           ShaderProgram& sp, TextureInfo const& ti)
+                           ShaderProgram& sp, TextureInfo& ti)
     : pos_(pos)
     , di_(MOVE(di))
-    , ti_(ti)
+    , ti_(&ti)
     , sp_(sp)
     , config(tc)
 {
@@ -125,7 +125,7 @@ namespace boomhs::terrain
 TerrainPiece
 generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig const& tgc,
                TerrainPieceConfig const& tc, HeightmapData const& heightmap_data, ShaderProgram& sp,
-               TextureInfo const& ti)
+               TextureInfo& ti)
 {
   auto const data = generate_terrain_data(logger, tgc, tc, heightmap_data);
   LOG_TRACE_SPRINTF("Generated terrain piece: %s", data.to_string());
@@ -142,7 +142,7 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
 
 TerrainGrid
 generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainPieceConfig const& tc,
-              HeightmapData const& heightmap_data, ShaderProgram& sp, TextureInfo const& ti)
+              HeightmapData const& heightmap_data, ShaderProgram& sp, TextureInfo& ti)
 {
   LOG_TRACE("Generating Terrain");
   size_t const rows = tgc.num_rows, cols = tgc.num_cols;

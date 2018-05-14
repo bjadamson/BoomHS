@@ -2,7 +2,7 @@
 This repository contains the source code for the <b>BoomHS</b> project. BoomHS is a project in
 active development.
 
-![Alt text](/screenshots/28.png?raw=true "02/25/2018")
+![Alt text](/screenshots/31.png?raw=true "05/14/2018 - direction change.")
 
 ## Table of contents
 
@@ -192,6 +192,7 @@ surface.
   * Consumables.
 
 ## Screenshots
+![Alt text](/screenshots/28.png?raw=true "02/25/2018")
 ![Alt text](/screenshots/27.png?raw=true "02/24/2018")
 ![Alt text](/screenshots/26.png?raw=true "02/23/2018")
 ![Alt text](/screenshots/25.png?raw=true "02/22/2018")

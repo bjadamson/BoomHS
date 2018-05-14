@@ -19,21 +19,10 @@ class VAO
   static constexpr GLsizei NUM_BUFFERS = 1;
 
 public:
-#ifdef DEBUG_BUILD
-  mutable bool debug_bound = false;
-#endif
+  DebugBoundCheck debug_check;
 
   NO_COPY(VAO);
-
-  VAO& operator=(VAO&& other)
-  {
-    vao_       = other.vao_;
-    debug_bound = other.debug_bound;
-
-    other.vao_ = 0;
-    other.debug_bound = false;
-    return *this;
-  }
+  VAO& operator=(VAO&&);
 
   explicit VAO() { glGenVertexArrays(NUM_BUFFERS, &vao_); }
 

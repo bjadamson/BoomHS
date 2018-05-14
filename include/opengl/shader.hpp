@@ -55,9 +55,8 @@ public:
   ProgramHandle(ProgramHandle&&);
   ~ProgramHandle();
 
-#ifdef DEBUG_BUILD
-  mutable bool debug_bound = false;
-#endif
+  // public fields
+  DebugBoundCheck debug_check;
 
   auto const& handle() const { return program_; }
 };
@@ -76,9 +75,8 @@ public:
   }
 
   // public data members
-#ifdef DEBUG_BUILD
-  mutable bool debug_bound = false;
-#endif
+  DebugBoundCheck debug_check;
+
   std::optional<GLsizei> instance_count = std::nullopt;
 
   bool is_2d = false;

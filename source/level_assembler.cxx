@@ -146,10 +146,11 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
       });
   registry.view<ShaderName, BillboardRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
-        auto&       sp     = sps.ref_sp(sn.value);
-        auto const  v      = OF::rectangle_vertices();
-        auto const& ti     = texture.texture_info;
-        auto        handle = opengl::gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, ti);
+        auto&      sp = sps.ref_sp(sn.value);
+        auto const v  = OF::rectangle_vertices();
+        auto*      ti = texture.texture_info;
+        assert(ti);
+        auto handle = opengl::gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, *ti);
         dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, JunkEntityFromFILE>().each(
@@ -230,10 +231,10 @@ LevelAssembler::assemble_levels(stlw::Logger& logger, std::vector<EntityRegistry
     // generate starting area
     auto& registry = registries[0];
 
-    auto level_assets   = TRY_MOVEOUT(LevelLoader::load_level(logger, registry, level_string(0)));
-    auto const& ttable  = level_assets.texture_table;
-    auto&       sps     = level_assets.shader_programs;
-    auto        gendata = StartAreaGenerator::gen_level(logger, registry, rng, sps, ttable);
+    auto  level_assets = TRY_MOVEOUT(LevelLoader::load_level(logger, registry, level_string(0)));
+    auto& ttable       = level_assets.texture_table;
+    auto& sps          = level_assets.shader_programs;
+    auto  gendata      = StartAreaGenerator::gen_level(logger, registry, rng, sps, ttable);
 
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
     zstates.emplace_back(MOVE(zs));
@@ -253,9 +254,9 @@ LevelAssembler::assemble_levels(stlw::Logger& logger, std::vector<EntityRegistry
     StairGenConfig const stairconfig{DUNGEON_FLOOR_COUNT, i, stairs_perfloor};
     LevelConfig const    config{stairconfig, tdconfig};
 
-    auto const& ttable  = level_assets.texture_table;
-    auto&       sps     = level_assets.shader_programs;
-    auto        gendata = dungeon_generator::gen_level(logger, config, registry, rng, sps, ttable);
+    auto& ttable  = level_assets.texture_table;
+    auto& sps     = level_assets.shader_programs;
+    auto  gendata = dungeon_generator::gen_level(logger, config, registry, rng, sps, ttable);
 
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
     zstates.emplace_back(MOVE(zs));

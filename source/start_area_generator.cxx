@@ -19,7 +19,7 @@ namespace
 
 void
 place_torch(TileGrid const& tilegrid, EntityRegistry& registry, stlw::float_generator& rng,
-            TextureTable const& ttable)
+            TextureTable& ttable)
 {
   auto  eid       = ItemFactory::create_torch(registry, rng, ttable);
   auto& transform = registry.get<Transform>(eid);
@@ -88,8 +88,7 @@ namespace boomhs
 
 LevelGeneratedData
 StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
-                              stlw::float_generator& rng, ShaderPrograms& sps,
-                              TextureTable const& ttable)
+                              stlw::float_generator& rng, ShaderPrograms& sps, TextureTable& ttable)
 {
   LOG_TRACE("generating starting area ...");
   TileGrid tilegrid{30, 30, registry};

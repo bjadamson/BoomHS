@@ -10,11 +10,11 @@ using namespace opengl;
 namespace boomhs
 {
 
-WaterInfo::WaterInfo(glm::vec2 const& p, DrawInfo&& d, ShaderProgram& s, TextureInfo const& t)
+WaterInfo::WaterInfo(glm::vec2 const& p, DrawInfo&& d, ShaderProgram& s, TextureInfo& t)
     : position(p)
     , dinfo(MOVE(d))
     , shader(s)
-    , tinfo(t)
+    , tinfo(&t)
 {
 }
 
@@ -39,7 +39,7 @@ WaterFactory::generate_water_data(stlw::Logger& logger, glm::vec2 const& dimensi
 
 WaterInfo
 WaterFactory::generate_info(stlw::Logger& logger, WaterInfoConfig const& wic, ShaderProgram& sp,
-                            TextureInfo const& tinfo)
+                            TextureInfo& tinfo)
 {
   auto const data = generate_water_data(logger, wic.dimensions, wic.num_vertexes);
   LOG_TRACE_SPRINTF("Generated water piece: %s", data.to_string());
@@ -52,7 +52,7 @@ WaterFactory::generate_info(stlw::Logger& logger, WaterInfoConfig const& wic, Sh
 }
 
 WaterInfo
-WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTable const& ttable)
+WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTable& ttable)
 {
   LOG_TRACE("Generating water");
   glm::vec2 const       pos{0, 0};
@@ -70,11 +70,11 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
   auto wi = generate_info(logger, wic, sp, ti);
 
   auto& tinfo = wi.tinfo;
-  tinfo.while_bound(logger, [&]() {
-    tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_REPEAT);
-    tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_REPEAT);
-    tinfo.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    tinfo.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  tinfo->while_bound(logger, [&]() {
+    tinfo->set_fieldi(GL_TEXTURE_WRAP_S, GL_REPEAT);
+    tinfo->set_fieldi(GL_TEXTURE_WRAP_T, GL_REPEAT);
+    tinfo->set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    tinfo->set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   });
   LOG_TRACE("Finished generating water");
   return wi;

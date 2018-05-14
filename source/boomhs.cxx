@@ -373,14 +373,15 @@ init(Engine& engine, EngineState& engine_state, Camera& camera)
   {
     TerrainPieceConfig const tc;
     auto&                    sp     = sps.ref_sp(tc.shader_name);
-    auto const&              ttable = gfx_state.texture_table;
+    auto&                    ttable = gfx_state.texture_table;
 
     char const* HEIGHTMAP_NAME = "Area0-HM";
     auto const  heightmap = TRY(opengl::heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
-    auto const& ti        = *ttable.find(tc.texture_name);
+    auto*       ti        = ttable.find(tc.texture_name);
+    assert(ti);
 
     TerrainGridConfig const tgc;
-    auto                    tg = terrain::generate_grid(logger, tgc, tc, heightmap, sp, ti);
+    auto                    tg = terrain::generate_grid(logger, tgc, tc, heightmap, sp, *ti);
     auto&                   ld = zs.level_data;
     ld.terrain().grid          = MOVE(tg);
   }

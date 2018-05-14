@@ -47,7 +47,7 @@ class TerrainPiece
   glm::vec2                                     pos_;
   opengl::DrawInfo                              di_;
   std::reference_wrapper<opengl::ShaderProgram> sp_;
-  opengl::TextureInfo                           ti_;
+  opengl::TextureInfo*                          ti_;
 
 public:
   //
@@ -59,12 +59,12 @@ public:
   NO_COPY(TerrainPiece);
   MOVE_DEFAULT(TerrainPiece);
   TerrainPiece(TerrainPieceConfig const&, glm::vec2 const&, opengl::DrawInfo&&,
-               opengl::ShaderProgram& sp, opengl::TextureInfo const&);
+               opengl::ShaderProgram& sp, opengl::TextureInfo&);
 
   auto&       draw_info() { return di_; }
   auto const& position() const { return pos_; }
-  auto&       texture_info() { return ti_; }
-  auto const& texture_info() const { return ti_; }
+  auto&       texture_info() { return *ti_; }
+  auto const& texture_info() const { return *ti_; }
 
   auto& shader() { return sp_; }
 };
@@ -143,11 +143,11 @@ namespace terrain
 
 TerrainPiece
 generate_piece(stlw::Logger&, glm::vec2 const&, TerrainGridConfig const&, TerrainPieceConfig const&,
-               opengl::HeightmapData const&, opengl::ShaderProgram&, opengl::TextureInfo const&);
+               opengl::HeightmapData const&, opengl::ShaderProgram&, opengl::TextureInfo&);
 
 TerrainGrid
 generate_grid(stlw::Logger&, TerrainGridConfig const&, TerrainPieceConfig const&,
-              opengl::HeightmapData const&, opengl::ShaderProgram&, opengl::TextureInfo const&);
+              opengl::HeightmapData const&, opengl::ShaderProgram&, opengl::TextureInfo&);
 
 } // namespace terrain
 

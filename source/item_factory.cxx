@@ -11,16 +11,18 @@ namespace boomhs
 {
 
 EntityID
-ItemFactory::create_empty(EntityRegistry& registry, TextureTable const& ttable)
+ItemFactory::create_empty(EntityRegistry& registry, TextureTable& ttable)
 {
   auto eid                         = registry.create();
   registry.assign<Name>(eid).value = "Empty Item";
 
   Item& item       = registry.assign<Item>(eid);
   item.is_pickedup = false;
-  item.ui_tinfo    = *ttable.find("RedX");
-  item.name        = "RedX";
-  item.tooltip     = "This is some kind of item";
+  item.ui_tinfo    = &*ttable.find("RedX");
+  assert(item.ui_tinfo);
+
+  item.name    = "RedX";
+  item.tooltip = "This is some kind of item";
 
   // leave for caller to assign
   registry.assign<Transform>(eid);
@@ -29,9 +31,8 @@ ItemFactory::create_empty(EntityRegistry& registry, TextureTable const& ttable)
 }
 
 EntityID
-ItemFactory::create_item(EntityRegistry& registry, TextureTable const& ttable,
-                         char const* entity_name, char const* mesh_name, char const* texture,
-                         char const* shader)
+ItemFactory::create_item(EntityRegistry& registry, TextureTable& ttable, char const* entity_name,
+                         char const* mesh_name, char const* texture, char const* shader)
 {
   auto eid = create_empty(registry, ttable);
 
@@ -46,7 +47,7 @@ ItemFactory::create_item(EntityRegistry& registry, TextureTable const& ttable,
   auto& tr        = registry.assign<TextureRenderable>(eid);
   auto  texture_o = ttable.find(texture);
   assert(texture_o);
-  tr.texture_info = *texture_o;
+  tr.texture_info = &*texture_o;
 
   auto& sn = registry.assign<ShaderName>(eid);
   sn.value = shader;
@@ -56,15 +57,17 @@ ItemFactory::create_item(EntityRegistry& registry, TextureTable const& ttable,
 
 EntityID
 ItemFactory::create_torch(EntityRegistry& registry, stlw::float_generator& rng,
-                          TextureTable const& ttable)
+                          TextureTable& ttable)
 {
   auto eid = create_item(registry, ttable, "Torch EID", "O", "Lava", "torch");
   registry.assign<Torch>(eid);
 
   auto& item    = registry.get<Item>(eid);
-  item.ui_tinfo = *ttable.find("TorchUI");
-  item.name     = "Torch";
-  item.tooltip  = "This is a torch";
+  item.ui_tinfo = &*ttable.find("TorchUI");
+  assert(item.ui_tinfo);
+
+  item.name    = "Torch";
+  item.tooltip = "This is a torch";
 
   auto& pointlight         = registry.assign<PointLight>(eid);
   pointlight.light.diffuse = LOC::YELLOW;

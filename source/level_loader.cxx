@@ -505,7 +505,7 @@ load_orbital_bodies(stlw::Logger& logger, CppTable const& table, EntityRegistry&
 
 void
 load_entities(stlw::Logger& logger, CppTable const& table,
-              std::vector<OrbitalBody> const& orbital_bodies, TextureTable const& ttable,
+              std::vector<OrbitalBody> const& orbital_bodies, TextureTable& ttable,
               std::vector<NameMaterial> const&   materials,
               std::vector<NamePointlight> const& pointlights, EntityRegistry& registry)
 {
@@ -603,7 +603,7 @@ load_entities(stlw::Logger& logger, CppTable const& table,
       auto& tr        = registry.assign<TextureRenderable>(eid);
       auto  texture_o = ttable.find(*texture_name);
       assert(texture_o);
-      tr.texture_info = *texture_o;
+      tr.texture_info = &*texture_o;
     }
 
     if (pointlight_o) {

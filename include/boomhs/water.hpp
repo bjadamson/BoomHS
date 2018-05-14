@@ -20,14 +20,13 @@ struct WaterInfo
   glm::vec2              position;
   opengl::DrawInfo       dinfo;
   opengl::ShaderProgram& shader;
-  opengl::TextureInfo    tinfo;
+  opengl::TextureInfo*   tinfo;
 
   //
   // constructors
   NO_COPY(WaterInfo);
   MOVE_DEFAULT(WaterInfo);
-  WaterInfo(glm::vec2 const&, opengl::DrawInfo&&, opengl::ShaderProgram&,
-            opengl::TextureInfo const&);
+  WaterInfo(glm::vec2 const&, opengl::DrawInfo&&, opengl::ShaderProgram&, opengl::TextureInfo&);
 };
 
 struct WaterInfoConfig
@@ -42,10 +41,9 @@ struct WaterFactory
   static ObjData generate_water_data(stlw::Logger&, glm::vec2 const&, size_t);
 
   static WaterInfo generate_info(stlw::Logger&, WaterInfoConfig const&, opengl::ShaderProgram&,
-                                 opengl::TextureInfo const&);
+                                 opengl::TextureInfo&);
 
-  static WaterInfo
-  make_default(stlw::Logger&, opengl::ShaderPrograms&, opengl::TextureTable const&);
+  static WaterInfo make_default(stlw::Logger&, opengl::ShaderPrograms&, opengl::TextureTable&);
 };
 
 } // namespace boomhs

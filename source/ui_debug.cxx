@@ -277,10 +277,11 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
       ImGui::InputFloat("x width", &grid_config.dimensions.x);
       ImGui::InputFloat("z length", &grid_config.dimensions.y);
       if (ImGui::Button("Generate Terrain")) {
-        auto const  heightmap = TRY(heightmap::load_fromtable(logger, ttable, t.heightmap_path));
-        auto const& ti        = *ttable.find(t.texture_name);
+        auto const heightmap = TRY(heightmap::load_fromtable(logger, ttable, t.heightmap_path));
+        auto*      ti        = ttable.find(t.texture_name);
+        assert(ti);
 
-        auto tg = terrain::generate_grid(logger, grid_config, tbuffers.config, heightmap, sp, ti);
+        auto tg = terrain::generate_grid(logger, grid_config, tbuffers.config, heightmap, sp, *ti);
         terrain.grid = MOVE(tg);
       }
     }
@@ -341,10 +342,11 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
           return Err(fmt);
         }
         else {
-          auto& ti = *ttable.find(selected_texture);
-          ti.while_bound(logger, [&]() {
-            ti.set_fieldi(GL_TEXTURE_WRAP_S, t.wrap_mode);
-            ti.set_fieldi(GL_TEXTURE_WRAP_T, t.wrap_mode);
+          auto* ti = ttable.find(selected_texture);
+          assert(ti);
+          ti->while_bound(logger, [&]() {
+            ti->set_fieldi(GL_TEXTURE_WRAP_S, t.wrap_mode);
+            ti->set_fieldi(GL_TEXTURE_WRAP_T, t.wrap_mode);
           });
         }
         auto const selected_hm =
@@ -352,13 +354,14 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 
         t.shader_name = sps.nickname_at_index(tbuffers.selected_shader).value_or(t.shader_name);
 
-        auto const  heightmap = TRY(heightmap::load_fromtable(logger, ttable, selected_hm));
-        auto const& ti        = *ttable.find(selected_texture);
+        auto const heightmap = TRY(heightmap::load_fromtable(logger, ttable, selected_hm));
+        auto*      ti        = ttable.find(selected_texture);
+        assert(ti);
 
         int const row = sb / tgrid.width();
         int const col = sb % tgrid.width();
         auto tp = terrain::generate_piece(logger, glm::vec2{row, col}, grid_config, tbuffers.config,
-                                          heightmap, sp, ti);
+                                          heightmap, sp, *ti);
         terrain.grid[sb] = MOVE(tp);
       }
     }
@@ -499,8 +502,9 @@ draw_player_window(EngineState& es, LevelData& ldata)
 void
 draw_skybox_window(EngineState& es, EntityRegistry& registry)
 {
-  auto const  eid = find_skybox(registry);
-  auto const& ti  = registry.get<TextureRenderable>(eid).texture_info;
+  auto const eid = find_skybox(registry);
+  auto*      ti  = registry.get<TextureRenderable>(eid).texture_info;
+  assert(ti);
 
   auto const draw = [&]() {
     auto const draw_button = [&](TextureInfo const& ti) {
@@ -514,7 +518,7 @@ draw_skybox_window(EngineState& es, EntityRegistry& registry)
       auto const size = ImVec2(32, 32);
       return image_builder.build(im_texid, size);
     };
-    bool const button_pressed = draw_button(ti);
+    bool const button_pressed = draw_button(*ti);
   };
   imgui_cxx::with_window(draw, "Skybox Window");
 }
