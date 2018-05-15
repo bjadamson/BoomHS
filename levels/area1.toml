@@ -252,6 +252,10 @@ name = "house"
 path = "assets/"
 
 [[meshes]]
+name = "tree_lowpoly"
+path = "assets/"
+
+[[meshes]]
 name = "hashtag"
 path = "assets/"
 
@@ -352,6 +356,13 @@ ambient = [1.0, 1.0, 1.0]
 diffuse = [1.0, 1.0, 1.0]
 specular = [1.0, 1.0, 1.0]
 shininess = 1.0
+
+[[material]]
+name = "tree"
+ambient = [0.0, 0.0, 1.0]
+diffuse = [0.0, 0.0, 1.0]
+specular = [0.0, 0.0, 1.0]
+shininess = 10.00
 
 [[material]]
 name = "water"
@@ -465,9 +476,19 @@ texture = "building_skybox"
 [[entity]]
 name = "house"
 material = "terrain"
-position = [20.0, 0.0, 20.0]
+position = [6.0, 1.0, 6.0]
 shader = "3dtexture"
 geometry = "mesh:house"
 texture = "TextureAtlas"
 scale = [0.4, 0.4, 0.4]
+random_junk_from_file = true
+
+[[entity]]
+name = "tree"
+material = "terrain"
+position = [4.0, 1.0, 4.0]
+shader = "3d_pos_normal_color"
+geometry = "mesh:tree_lowpoly"
+color = [1.0, 1.0, 1.0, 1.0]
+scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true

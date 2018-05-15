@@ -1,6 +1,5 @@
 in vec3 a_position;
 in vec3 a_normal;
-in vec2 a_uv;
 
 out vec4 v_position;
 out vec3 v_surfacenormal;

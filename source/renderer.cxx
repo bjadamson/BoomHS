@@ -742,6 +742,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
   registry.view<COMMON, WaterTileThing>().each(draw_fn);
   registry.view<COMMON, TextureRenderable, JunkEntityFromFILE>().each(draw_texture_fn);
+  registry.view<COMMON, Color, JunkEntityFromFILE>().each(draw_fn);
   registry.view<COMMON, Torch, TextureRenderable>().each(draw_torch);
   registry.view<COMMON, CubeRenderable>().each(draw_fn);
   registry.view<COMMON, MeshRenderable, NPCData>().each(draw_fn);
