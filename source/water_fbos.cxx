@@ -35,6 +35,9 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
     ti.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     ti.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    ti.set_fieldi(GL_TEXTURE_WRAP_S, GL_REPEAT);
+    ti.set_fieldi(GL_TEXTURE_WRAP_T, GL_REPEAT);
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     // attach texture to FBO
     //
@@ -64,6 +67,9 @@ create_depth_texture_attachment(stlw::Logger& logger, int const width, int const
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
   // TODO: I think this code assumes that the FBO is currently bound?
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, tbo, 0);
@@ -114,7 +120,7 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
     sp_.set_uniform_int1(logger, "u_texture_sampler", 0);
     sp_.set_uniform_int1(logger, "u_reflect_sampler", 1);
     sp_.set_uniform_int1(logger, "u_refract_sampler", 2);
-    // sp_.set_uniform_int1(logger, "u_dudv_sampler", 3);
+    sp_.set_uniform_int1(logger, "u_dudv_sampler", 3);
   });
 }
 
@@ -133,8 +139,8 @@ WaterFrameBuffers::bind_impl(stlw::Logger& logger)
   glActiveTexture(GL_TEXTURE2);
   bind::global_bind(logger, refraction_tbo_);
 
-  // glActiveTexture(GL_TEXTURE3);
-  // bind::global_bind(logger, dudv_);
+  glActiveTexture(GL_TEXTURE3);
+  bind::global_bind(logger, dudv_);
 }
 
 void
@@ -144,7 +150,7 @@ WaterFrameBuffers::unbind_impl(stlw::Logger& logger)
   bind::global_unbind(logger, reflection_tbo_);
   bind::global_unbind(logger, reflection_rbo_.resource());
   bind::global_unbind(logger, refraction_tbo_);
-  // bind::global_unbind(logger, dudv_);
+  bind::global_unbind(logger, dudv_);
 
   glActiveTexture(GL_TEXTURE0);
 }
@@ -160,7 +166,8 @@ WaterFrameBuffers::to_string() const
                       "{reflection: (fbo) %s, (tbo) %s, rbo(%s)}, "
                       "{refraction: (fbo) %s, (tbo) %s, dbo(%u)}"
                       "}",
-                      diffuse_.to_string(), dudv_.to_string(),
+                      diffuse_.to_string(),
+                      dudv_.to_string(),
 
                       reflection_fbo_->to_string(), reflection_tbo_.to_string(),
                       reflection_rbo_->to_string(),
