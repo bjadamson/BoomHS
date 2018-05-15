@@ -13,9 +13,9 @@ class FrameTime
   ticks_t const delta_, since_start_;
   double const  frequency_;
 
-  auto delta() const { return delta_; }
-  auto ticks_to_millis(ticks_t const t) const { return t * 1000.0 / frequency_; }
-  auto millis_to_seconds(double const m) const { return m * 0.001; }
+  double delta() const { return delta_; }
+  double ticks_to_millis(ticks_t const t) const { return t * 1000.0 / frequency_; }
+  double millis_to_seconds(double const m) const { return m * 0.001; }
 
 public:
   explicit FrameTime(ticks_t const dt, ticks_t const sstart, double const fr)
@@ -28,8 +28,8 @@ public:
   double delta_millis() const { return ticks_to_millis(delta()); }
   double delta_seconds() const { return millis_to_seconds(delta_millis()); }
 
-  auto since_start_millis() const { return ticks_to_millis(since_start_); }
-  auto since_start_seconds() const { return millis_to_seconds(since_start_millis()); }
+  double since_start_millis() const { return ticks_to_millis(since_start_); }
+  double since_start_seconds() const { return millis_to_seconds(since_start_millis()); }
 };
 
 // The clock time when the timer started

@@ -22,6 +22,8 @@ struct WaterInfo
   opengl::ShaderProgram& shader;
   opengl::TextureInfo*   tinfo;
 
+  float dudv_offset = 0.0f;
+
   //
   // constructors
   NO_COPY(WaterInfo);

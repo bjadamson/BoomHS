@@ -16,6 +16,7 @@ class WaterFrameBuffers
 {
   opengl::ShaderProgram& sp_;
   opengl::TextureInfo&   diffuse_;
+  opengl::TextureInfo&   dudv_;
 
   opengl::FrameBuffer  reflection_fbo_;
   opengl::TextureInfo  reflection_tbo_;
@@ -26,7 +27,8 @@ class WaterFrameBuffers
   GLuint              refraction_dbo_;
 
 public:
-  WaterFrameBuffers(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&, opengl::TextureInfo&);
+  WaterFrameBuffers(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&, opengl::TextureInfo&,
+                    opengl::TextureInfo&);
   ~WaterFrameBuffers();
 
   // public members

@@ -351,8 +351,6 @@ namespace boomhs
 Result<GameState, std::string>
 init(Engine& engine, EngineState& engine_state, Camera& camera)
 {
-  glEnable(GL_CLIP_DISTANCE0);
-
   ZoneStates zss =
       TRY_MOVEOUT(LevelAssembler::assemble_levels(engine_state.logger, engine.registries));
   GameState state{engine_state, LevelManager{MOVE(zss)}};
@@ -509,9 +507,11 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
 
   auto const&              dim = es.dimensions;
   ScreenSize const         screen_size{dim.w, dim.h};
-  auto&                    ttable           = gfx_state.texture_table;
-  auto&                    default_water_ti = *ttable.find("water-texture");
-  static WaterFrameBuffers waterfbos{logger, screen_size, sps.ref_sp("water"), default_water_ti};
+  auto&                    ttable = gfx_state.texture_table;
+  auto&                    ti     = *ttable.find("water-texture");
+  auto&                    dudv   = *ttable.find("water-dudv");
+  auto&                    sp     = sps.ref_sp("water");
+  static WaterFrameBuffers waterfbos{logger, screen_size, sp, ti, dudv};
 
   // Render the scene to the reflection FBO
   float constexpr CULL_CUTOFF_HEIGHT = 0.4f;
