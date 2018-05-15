@@ -2,6 +2,7 @@ in vec4 v_position;
 in vec3 v_surfacenormal;
 in float v_visibility;
 in float v_clipdistance;
+in vec4 v_clipspace;
 
 uniform sampler2D u_texture_sampler;
 uniform sampler2D u_reflect_sampler;
@@ -15,7 +16,6 @@ uniform DirectionalLight u_directional_light;
 uniform int   u_drawnormals;
 uniform int   u_ignore_dirlight;
 uniform float u_reflectivity;
-uniform mat4 u_mvpmatrix;
 
 uniform Fog u_fog;
 uniform mat4 u_modelmatrix;
@@ -51,8 +51,7 @@ void main()
   }
   light_color = mix(u_fog.color, light_color, v_visibility);
 
-  vec4 clipspace = u_mvpmatrix * v_position;
-  vec2 ndc         = ((clipspace.xy/clipspace.w)/2.0) + 0.5;
+  vec2 ndc         = ((v_clipspace.xy/v_clipspace.w)/2.0) + 0.5;
   vec2 texture_uv  = ndc;
   vec2 reflect_uv  = vec2(ndc.x, -ndc.y);
   vec2 refract_uv  = vec2(ndc.x, ndc.y);

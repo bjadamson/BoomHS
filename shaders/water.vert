@@ -3,6 +3,7 @@ in vec3 a_normal;
 
 out vec4 v_position;
 out vec3 v_surfacenormal;
+out vec4 v_clipspace;
 out float v_visibility;
 out float v_clipdistance;
 
@@ -17,7 +18,8 @@ uniform vec4 u_clipPlane;
 void main()
 {
   v_position = vec4(a_position, 1.0);
-  gl_Position = u_mvpmatrix * v_position;
+  v_clipspace = u_mvpmatrix * v_position;
+  gl_Position = v_clipspace;
 
   v_surfacenormal = normalize(u_normalmatrix * a_normal);
 
