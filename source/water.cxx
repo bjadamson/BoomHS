@@ -57,7 +57,7 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
   LOG_TRACE("Generating water");
   glm::vec2 const       pos{0, 0};
   size_t const          num_vertexes = 128;
-  glm::vec2 const       dimensions{8};
+  glm::vec2 const       dimensions{80};
   WaterInfoConfig const wic{pos, dimensions, num_vertexes};
 
   auto texture_o = ttable.find("water-texture");
