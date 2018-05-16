@@ -24,7 +24,7 @@ class WaterFrameBuffers
 
   opengl::FrameBuffer refraction_fbo_;
   opengl::TextureInfo refraction_tbo_;
-  GLuint              refraction_dbo_;
+  opengl::TextureInfo refraction_dbo_;
 
 public:
   WaterFrameBuffers(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&, opengl::TextureInfo&,

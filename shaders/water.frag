@@ -60,11 +60,11 @@ void main()
   vec2 reflect_uv  = vec2(ndc.x, -ndc.y);
   vec2 refract_uv  = vec2(ndc.x, ndc.y);
 
-  vec2 distortion1 = texture(u_dudv_sampler, vec2(v_dudv.x + u_dudv_offset, v_dudv.y)).rg * 2.0 - 1.0;
+  vec2 distortion1 = (texture(u_dudv_sampler, vec2(v_dudv.x + u_dudv_offset, v_dudv.y)).rg * 2.0 - 1.0) * 0.02;
   vec2 distortion = distortion1;// + distortion2;
 
-  //const float WAVE_STRENGTH = 0.02;
-  reflect_uv += distortion;// * WAVE_STRENGTH;
+  const float WAVE_STRENGTH = 1.00;
+  reflect_uv += distortion * WAVE_STRENGTH;
   refract_uv += distortion;
 
   const float CLAMP         = 0.001;
@@ -89,5 +89,5 @@ void main()
   fragment_color = effect_color + texture_color + light_color;
 
   const vec4 BLUE_MIX = vec4(0.0, 0.3, 0.8, 1.0);
-  fragment_color = mix(fragment_color, BLUE_MIX, 0.2);
+  fragment_color = mix(fragment_color, BLUE_MIX, 0.6);
 }

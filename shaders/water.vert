@@ -16,7 +16,7 @@ uniform mat4 u_mvpmatrix;
 uniform mat3 u_normalmatrix;
 uniform vec4 u_clipPlane;
 
-const float TILING = 6.0;
+const float TILING = 1.0;
 
 void main()
 {

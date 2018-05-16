@@ -38,11 +38,11 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
     ti.set_fieldi(GL_TEXTURE_WRAP_S, GL_REPEAT);
     ti.set_fieldi(GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    // allocate memory for texture
+    glTexImage2D(ti.target, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+
     // attach texture to FBO
-    //
-    // TODO: I think this code assumes that the FBO is currently bound?
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ti.id, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, ti.target, ti.id, 0);
   });
 
   ti.height = height;
@@ -57,23 +57,29 @@ create_depth_texture_attachment(stlw::Logger& logger, int const width, int const
 {
   assert(width > 0 && height > 0);
 
-  GLuint tbo;
-  glGenTextures(1, &tbo);
-  glBindTexture(GL_TEXTURE_2D, tbo);
-  ON_SCOPE_EXIT([]() { glBindTexture(GL_TEXTURE_2D, 0); });
+  TextureInfo ti;
+  ti.target = GL_TEXTURE_2D;
+  ti.gen_texture(logger, 1);
 
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT,
-               GL_FLOAT, nullptr);
+  ti.while_bound(logger, [&]() {
+    ti.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    ti.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    ti.set_fieldi(GL_TEXTURE_WRAP_S, GL_REPEAT);
+    ti.set_fieldi(GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexImage2D(ti.target, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT,
+                GL_FLOAT, nullptr);
 
-  // TODO: I think this code assumes that the FBO is currently bound?
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, tbo, 0);
-  return tbo;
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, ti.target, ti.id, 0);
+    });
+
+
+  ti.height = height;
+  ti.width  = width;
+
+  ti.uv_max = 1.0f;
+  return ti;
 }
 
 auto
@@ -138,6 +144,7 @@ WaterFrameBuffers::bind_impl(stlw::Logger& logger)
 
   glActiveTexture(GL_TEXTURE2);
   bind::global_bind(logger, refraction_tbo_);
+  bind::global_bind(logger, refraction_dbo_);
 
   glActiveTexture(GL_TEXTURE3);
   bind::global_bind(logger, dudv_);
@@ -150,6 +157,7 @@ WaterFrameBuffers::unbind_impl(stlw::Logger& logger)
   bind::global_unbind(logger, reflection_tbo_);
   bind::global_unbind(logger, reflection_rbo_.resource());
   bind::global_unbind(logger, refraction_tbo_);
+  bind::global_unbind(logger, refraction_dbo_);
   bind::global_unbind(logger, dudv_);
 
   glActiveTexture(GL_TEXTURE0);
@@ -164,7 +172,7 @@ WaterFrameBuffers::to_string() const
                       "{diffuse: (tbo) %s}, "
                       "{dudv: (tbo) %s}, "
                       "{reflection: (fbo) %s, (tbo) %s, rbo(%s)}, "
-                      "{refraction: (fbo) %s, (tbo) %s, dbo(%u)}"
+                      "{refraction: (fbo) %s, (tbo) %s, dbo(%s)}"
                       "}",
                       diffuse_.to_string(),
                       dudv_.to_string(),
@@ -172,7 +180,7 @@ WaterFrameBuffers::to_string() const
                       reflection_fbo_->to_string(), reflection_tbo_.to_string(),
                       reflection_rbo_->to_string(),
 
-                      refraction_fbo_->to_string(), refraction_tbo_.to_string(), refraction_dbo_);
+                      refraction_fbo_->to_string(), refraction_tbo_.to_string(), refraction_dbo_.to_string());
   // clang format-on
 }
 
