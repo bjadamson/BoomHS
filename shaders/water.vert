@@ -18,7 +18,7 @@ uniform mat3 u_normalmatrix;
 uniform vec4 u_clipPlane;
 uniform vec3 u_camera_position;
 
-const float TILING = 6.0;
+const float TILING = 16.0;
 
 void main()
 {
@@ -33,6 +33,6 @@ void main()
   vec4 model_pos = u_modelmatrix * vec4(a_position, 1.0);
   v_clipdistance = dot(model_pos, u_clipPlane);
 
-  v_dudv = vec2(v_position.xy) * TILING;
+  v_dudv = vec2(v_position.xy/2.0 + 0.5) * TILING;
   v_tocamera = u_camera_position - model_pos.xyz;
 }

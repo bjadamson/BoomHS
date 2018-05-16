@@ -1253,7 +1253,7 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     bool constexpr RECEIVES_AMBIENT_LIGHT = true;
     auto const model_matrix               = transform.model_matrix();
 
-    winfo.dudv_offset += ft.delta_millis() * 1000.0f;
+    winfo.dudv_offset += ft.delta_millis() * 1.0f;
     winfo.dudv_offset = ::fmodf(winfo.dudv_offset, 1.00f);
     LOG_ERROR_SPRINTF("winfo dudv offset %f, dt %f", winfo.dudv_offset, ft.delta_millis());
 

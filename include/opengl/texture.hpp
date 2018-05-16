@@ -109,8 +109,15 @@ load_image(stlw::Logger&, char const*, GLint const);
 GLint
 wrap_mode_from_string(char const*);
 
+struct TextureAllocationArgs
+{
+  GLint const format;
+  float  const uv_max;
+  GLenum const texture_unit;
+};
+
 TextureResult
-allocate_texture(stlw::Logger&, std::string const&, GLenum, GLint);
+allocate_texture(stlw::Logger&, std::string const&, TextureAllocationArgs const&);
 
 TextureResult
 upload_3dcube_texture(stlw::Logger&, std::vector<std::string> const&, GLenum);

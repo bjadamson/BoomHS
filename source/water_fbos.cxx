@@ -23,13 +23,17 @@ make_fbo(stlw::Logger& logger, ScreenSize const& ss)
 }
 
 TextureInfo
-create_texture_attachment(stlw::Logger& logger, int const width, int const height)
+create_texture_attachment(stlw::Logger& logger, int const width, int const height,
+    GLenum const texture_unit)
 {
   assert(width > 0 && height > 0);
 
   TextureInfo ti;
   ti.target = GL_TEXTURE_2D;
   ti.gen_texture(logger, 1);
+
+  glActiveTexture(texture_unit);
+  ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
 
   ti.while_bound(logger, [&]() {
 
@@ -112,15 +116,39 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
 
   with_reflection_fbo(logger, [&]() {
     reflection_tbo_ = create_texture_attachment(logger, reflection_fbo_->dimensions.w,
-                                                reflection_fbo_->dimensions.h);
+                                                reflection_fbo_->dimensions.h, GL_TEXTURE1);
   });
 
   with_refraction_fbo(logger, [&]() {
     refraction_tbo_ = create_texture_attachment(logger, refraction_fbo_->dimensions.w,
-                                                refraction_fbo_->dimensions.h);
+                                                refraction_fbo_->dimensions.h, GL_TEXTURE2);
     refraction_dbo_ = create_depth_texture_attachment(logger, refraction_fbo_->dimensions.w,
                                                       refraction_fbo_->dimensions.h);
   });
+
+
+  {
+    glActiveTexture(GL_TEXTURE0);
+    ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
+    diffuse_.while_bound(logger, [&]() {
+        diffuse_.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+        diffuse_.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+
+        diffuse_.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        diffuse_.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        });
+  }
+  {
+    glActiveTexture(GL_TEXTURE3);
+    ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
+    dudv_.while_bound(logger, [&]() {
+        dudv_.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+        dudv_.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+
+        dudv_.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        dudv_.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        });
+  }
 
   // connect texture units to shader program
   sp_.while_bound(logger, [&]() {

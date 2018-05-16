@@ -90,6 +90,8 @@ LevelGeneratedData
 StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
                               stlw::float_generator& rng, ShaderPrograms& sps, TextureTable& ttable)
 {
+  LOG_ERROR("Generating Starting Area");
+
   LOG_TRACE("generating starting area ...");
   TileGrid tilegrid{30, 30, registry};
   floodfill(tilegrid, TileType::FLOOR);

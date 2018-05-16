@@ -335,6 +335,8 @@ LevelGeneratedData
 gen_level(stlw::Logger& logger, LevelConfig const& levelconfig, EntityRegistry& registry,
           stlw::float_generator& rng, ShaderPrograms& sps, TextureTable& ttable)
 {
+  LOG_ERROR("Generating Dungeon Area");
+
   TileGridConfig const& tileconfig = levelconfig.tileconfig;
   auto const            tdwidth    = tileconfig.width;
   auto const            tdheight   = tileconfig.height;

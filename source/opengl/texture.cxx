@@ -26,7 +26,6 @@ struct GpuUploadConfig
 {
   GLenum const format;
   GLenum const target;
-  GLenum const texture_unit;
 };
 
 Result<ImageData, std::string>
@@ -42,9 +41,7 @@ upload_image_gpu(stlw::Logger &logger, std::string const& path, GpuUploadConfig 
 
   auto const format       = guc.format;
   auto const target       = guc.target;
-  auto const texture_unit = guc.texture_unit;
 
-  glActiveTexture(texture_unit);
   glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 
   return OK_MOVE(image_data);
@@ -234,9 +231,13 @@ wrap_mode_from_string(char const* name)
 }
 
 TextureResult
-allocate_texture(stlw::Logger &logger, std::string const& filename, GLenum const format,
-    GLint const uv_max)
+allocate_texture(stlw::Logger &logger, std::string const& filename,
+    TextureAllocationArgs const& taa)
 {
+  GLenum const format = taa.format;
+  GLint const uv_max = taa.uv_max;
+  GLenum const texture_unit = taa.texture_unit;
+
   assert(ANYOF(format == GL_RGB, format == GL_RGBA));
 
   TextureInfo ti;
@@ -254,10 +255,13 @@ allocate_texture(stlw::Logger &logger, std::string const& filename, GLenum const
   //
   // note: Using while_bound() doesn't work here because TRY_MOVEOUT returns a value.
   {
+    glActiveTexture(GL_TEXTURE0 + texture_unit);
+    ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
+
     bind::global_bind(logger, ti);
     ON_SCOPE_EXIT([&]() { bind::global_unbind(logger, ti); });
 
-    GpuUploadConfig const guc{format, ti.target, GL_TEXTURE0};
+    GpuUploadConfig const guc{format, ti.target};
     auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, guc));
     ti.height = image_data.height;
     ti.width = image_data.width;
@@ -294,7 +298,11 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   auto const upload_fn = [&format, &logger, &ti](std::string const& filename, GLenum const target)
     -> Result<stlw::none_t, std::string>
   {
-    GpuUploadConfig const guc{format, target, GL_TEXTURE0};
+    GLenum const TEXTURE_UNIT = GL_TEXTURE0;
+    glActiveTexture(TEXTURE_UNIT);
+    ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
+
+    GpuUploadConfig const guc{format, target};
     auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, guc));
 
     // Either the height is unset (0) or all height/width are the same.

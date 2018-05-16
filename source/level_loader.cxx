@@ -181,6 +181,26 @@ get_int_or_abort(CppTable const& table, char const* name)
   return *data;
 }
 
+std::optional<unsigned int>
+get_unsignedint(CppTable const& table, char const* name)
+{
+  auto const load_data = get_value<unsigned int>(table, name);
+  if (!load_data) {
+    return std::nullopt;
+  }
+  return std::make_optional(*load_data);
+}
+
+unsigned int
+get_unsignedint_or_abort(CppTable const& table, char const* name)
+{
+  auto const data = get_unsignedint(table, name);
+  if (!data) {
+    std::abort();
+  }
+  return *data;
+}
+
 std::optional<float>
 get_float(CppTable const& table, char const* name)
 {
@@ -263,14 +283,23 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       auto const               filename = get_string_or_abort(resource, "filename");
       opengl::TextureFilenames texture_names{name, {filename}};
 
-      auto const uv_max = get_float(resource, "uvs").value_or(1.0f);
-      Texture    t      = TRY_MOVEOUT(
-          opengl::texture::allocate_texture(logger, texture_names.filenames[0], format, uv_max));
-
       auto const  wrap_s = get_string(resource, "wrap").value_or("clamp");
       GLint const wrap   = texture::wrap_mode_from_string(wrap_s.c_str());
 
-      t.resource().while_bound(logger, [&]() {
+      auto const uv_max       = get_float(resource, "uvs").value_or(1.0f);
+
+      unsigned int const texture_unit = get_unsignedint(resource, "texture_unit").value_or(0);
+      LOG_ERROR_SPRINTF("tu_raw: %u", texture_unit);
+
+      opengl::texture::TextureAllocationArgs const taa{format, uv_max, texture_unit};
+
+      Texture    t      = TRY_MOVEOUT(
+          opengl::texture::allocate_texture(logger, texture_names.filenames[0], taa));
+
+      glActiveTexture(GL_TEXTURE0 + texture_unit);
+      ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
+
+      t->while_bound(logger, [&]() {
         t->set_fieldi(GL_TEXTURE_WRAP_S, wrap);
         t->set_fieldi(GL_TEXTURE_WRAP_T, wrap);
 
