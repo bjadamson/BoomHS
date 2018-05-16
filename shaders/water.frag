@@ -4,6 +4,7 @@ in float v_visibility;
 in float v_clipdistance;
 in vec4 v_clipspace;
 in vec2 v_dudv;
+in vec3 v_tocamera;
 
 uniform sampler2D u_texture_sampler;
 uniform sampler2D u_reflect_sampler;
@@ -60,11 +61,11 @@ void main()
   vec2 reflect_uv  = vec2(ndc.x, -ndc.y);
   vec2 refract_uv  = vec2(ndc.x, ndc.y);
 
-  vec2 distortion1 = texture(u_dudv_sampler, vec2(v_dudv.x + u_dudv_offset, v_dudv.y)).rg * 2.0 - 1.0;
-  vec2 distortion2 = texture(u_dudv_sampler, vec2(-v_dudv.x + u_dudv_offset, v_dudv.y + u_dudv_offset)).rg * 2.0 - 1.0;
+  vec2 distortion1 = texture(u_dudv_sampler, vec2(v_dudv.x + u_dudv_offset, v_dudv.y - u_dudv_offset)).rg;
+  vec2 distortion2 = texture(u_dudv_sampler, vec2(-v_dudv.x + u_dudv_offset, v_dudv.y + u_dudv_offset)).rg;
   vec2 distortion = distortion1 + distortion2;
 
-  const float WAVE_STRENGTH = (0.01 / 8.0);
+  const float WAVE_STRENGTH = (0.21 / 8.0);
   reflect_uv += distortion * WAVE_STRENGTH;
   refract_uv += distortion * WAVE_STRENGTH;
 
@@ -79,11 +80,17 @@ void main()
   vec4 reflect_color = texture(u_reflect_sampler, reflect_uv);
   vec4 refract_color = texture(u_refract_sampler, refract_uv);
 
+  vec3 view_vector = normalize(v_tocamera);
+  float refractive_factor = dot(view_vector, vec3(0.0, 1.0, 0.0));
+
+  const float FRESNEL_REFLECTIVE_FACTOR = 2.0;
+  refractive_factor = pow(refractive_factor, FRESNEL_REFLECTIVE_FACTOR);
+
   const float weight_light   = 0.2;
   const float weight_texture = 0.5;
   const float weight_effects = 1.0;
 
-  vec4 effect_color  = mix(reflect_color, refract_color, 0.5) * weight_effects;
+  vec4 effect_color  = mix(reflect_color, refract_color, refractive_factor) * weight_effects;
   vec4 texture_color = texture(u_texture_sampler, texture_uv) * weight_texture;
   light_color        = light_color * weight_light;
 

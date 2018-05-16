@@ -554,7 +554,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   render::draw_skybox(rstate, skybox_ti, ft);
 
   render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
-  render::draw_water(rstate, registry, ft, ABOVE_VECTOR, waterfbos);
+  render::draw_water(rstate, registry, ft, ABOVE_VECTOR, waterfbos, camera.world_position());
 
   auto& ui_state = es.ui_state;
   if (ui_state.draw_ingame_ui) {

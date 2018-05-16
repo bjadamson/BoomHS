@@ -144,7 +144,7 @@ WaterFrameBuffers::bind_impl(stlw::Logger& logger)
 
   glActiveTexture(GL_TEXTURE2);
   bind::global_bind(logger, refraction_tbo_);
-  bind::global_bind(logger, refraction_dbo_);
+  //bind::global_bind(logger, refraction_dbo_);
 
   glActiveTexture(GL_TEXTURE3);
   bind::global_bind(logger, dudv_);
@@ -157,7 +157,7 @@ WaterFrameBuffers::unbind_impl(stlw::Logger& logger)
   bind::global_unbind(logger, reflection_tbo_);
   bind::global_unbind(logger, reflection_rbo_.resource());
   bind::global_unbind(logger, refraction_tbo_);
-  bind::global_unbind(logger, refraction_dbo_);
+  //bind::global_unbind(logger, refraction_dbo_);
   bind::global_unbind(logger, dudv_);
 
   glActiveTexture(GL_TEXTURE0);

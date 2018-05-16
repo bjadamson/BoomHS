@@ -129,6 +129,6 @@ draw_tilegrid(RenderState&, TiledataState const&);
 
 void
 draw_water(RenderState&, EntityRegistry&, window::FrameTime const&, glm::vec4 const&,
-           WaterFrameBuffers&);
+           WaterFrameBuffers&, glm::vec3 const&);
 
 } // namespace boomhs::render

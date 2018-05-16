@@ -1228,7 +1228,8 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
 void
 draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
-           glm::vec4 const& cull_plane, WaterFrameBuffers& water_fbos)
+           glm::vec4 const& cull_plane, WaterFrameBuffers& water_fbos,
+           glm::vec3 const& camera_position)
 {
   auto& es     = rstate.es;
   auto& logger = es.logger;
@@ -1259,6 +1260,7 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     sp.while_bound(logger, [&]() {
       sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
       sp.set_uniform_float1(logger, "u_dudv_offset", winfo.dudv_offset);
+      sp.set_uniform_vec3(logger, "u_camera_position", camera_position);
 
       vao.while_bound(logger, [&]() {
         water_fbos.while_bound(logger, [&]() {

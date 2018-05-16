@@ -7,6 +7,7 @@ out vec4 v_clipspace;
 out float v_visibility;
 out float v_clipdistance;
 out vec2 v_dudv;
+out vec3 v_tocamera;
 
 uniform Fog u_fog;
 uniform mat4 u_viewmatrix;
@@ -15,6 +16,7 @@ uniform mat4 u_modelmatrix;
 uniform mat4 u_mvpmatrix;
 uniform mat3 u_normalmatrix;
 uniform vec4 u_clipPlane;
+uniform vec3 u_camera_position;
 
 const float TILING = 6.0;
 
@@ -32,4 +34,5 @@ void main()
   v_clipdistance = dot(model_pos, u_clipPlane);
 
   v_dudv = vec2(v_position.xy) * TILING;
+  v_tocamera = u_camera_position - model_pos.xyz;
 }
