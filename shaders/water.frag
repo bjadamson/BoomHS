@@ -60,12 +60,13 @@ void main()
   vec2 reflect_uv  = vec2(ndc.x, -ndc.y);
   vec2 refract_uv  = vec2(ndc.x, ndc.y);
 
-  vec2 distortion1 = (texture(u_dudv_sampler, vec2(v_dudv.x + u_dudv_offset, v_dudv.y)).rg * 2.0 - 1.0) * 0.02;
-  vec2 distortion = distortion1;// + distortion2;
+  vec2 distortion1 = texture(u_dudv_sampler, vec2(v_dudv.x + u_dudv_offset, v_dudv.y)).rg * 2.0 - 1.0;
+  vec2 distortion2 = texture(u_dudv_sampler, vec2(-v_dudv.x + u_dudv_offset, v_dudv.y + u_dudv_offset)).rg * 2.0 - 1.0;
+  vec2 distortion = distortion1 + distortion2;
 
-  const float WAVE_STRENGTH = 1.00;
+  const float WAVE_STRENGTH = 0.02;
   reflect_uv += distortion * WAVE_STRENGTH;
-  refract_uv += distortion;
+  refract_uv += distortion * WAVE_STRENGTH;
 
   const float CLAMP         = 0.001;
   const float INVERSE_CLAMP = (1.0 - CLAMP);

@@ -103,7 +103,7 @@ wrap = "mirror_repeat"
 name = "water-dudv"
 type = "texture:2d-RGBA"
 filename = "assets/water/dudv.png"
-wrap = "mirror_repeat"
+wrap = "clamp"
 
 [[resource]]
 name = "water-normal"
