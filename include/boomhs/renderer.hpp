@@ -19,7 +19,6 @@ struct TextureInfo;
 namespace window
 {
 class FrameTime;
-struct Dimensions;
 } // namespace window
 
 namespace boomhs
@@ -44,6 +43,7 @@ class float_generator;
 
 namespace boomhs
 {
+struct Dimensions;
 
 struct RenderMatrices
 {
@@ -77,7 +77,7 @@ namespace boomhs::render
 {
 
 void
-init(stlw::Logger&, Dimensions const&);
+init(stlw::Logger&, boomhs::Dimensions const&);
 
 void
 clear_screen(opengl::Color const&);

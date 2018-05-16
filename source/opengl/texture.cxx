@@ -17,7 +17,6 @@
 #include <vector>
 #include <utility>
 
-using namespace boomhs;
 using namespace opengl;
 
 namespace
@@ -116,73 +115,6 @@ TextureInfo::to_string() const
 {
   return fmt::sprintf("(TextureInfo) id: %u, target: %i, (w, h) : (%i, %i), uv_max: %f",
       id, target, width, height, uv_max);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// FBInfo
-FBInfo::FBInfo(Dimensions const& d, ScreenSize const& ss)
-  : dimensions(d)
-  , screen_size(ss)
-{
-  glGenFramebuffers(1, &id);
-}
-
-void
-FBInfo::bind_impl(stlw::Logger& logger)
-{
-  glBindFramebuffer(GL_FRAMEBUFFER, id);
-  glViewport(dimensions.x, dimensions.y, dimensions.w, dimensions.h);
-}
-
-void
-FBInfo::unbind_impl(stlw::Logger& logger)
-{
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, screen_size.width, screen_size.height);
-}
-
-void
-FBInfo::destroy_impl()
-{
-  glDeleteFramebuffers(1, &id);
-}
-
-std::string
-FBInfo::to_string() const
-{
-  return fmt::sprintf("(FBInfo) id: %u", id);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// RBInfo
-RBInfo::RBInfo()
-{
-  glGenRenderbuffers(1, &id);
-}
-
-void
-RBInfo::destroy_impl()
-{
-  DEBUG_ASSERT_NOT_BOUND(*this);
-  glDeleteRenderbuffers(1, &id);
-}
-
-void
-RBInfo::bind_impl(stlw::Logger &logger)
-{
-  glBindRenderbuffer(GL_RENDERBUFFER, id);
-}
-
-void
-RBInfo::unbind_impl(stlw::Logger &logger)
-{
-  glBindRenderbuffer(GL_RENDERBUFFER, 0);
-}
-
-std::string
-RBInfo::to_string() const
-{
-  return fmt::sprintf("(RBInfo) id: %u", id);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -379,8 +311,8 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   auto const fn = [&]() {
     stlw::zip(upload_fn, targets.begin(), paths_tuple);
 
-    LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
     glGenerateMipmap(ti.target);
+    LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
   };
   ti.while_bound(logger, fn);
 

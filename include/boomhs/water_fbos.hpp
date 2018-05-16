@@ -1,6 +1,8 @@
 #pragma once
 #include <boomhs/dimensions.hpp>
 #include <opengl/bind.hpp>
+#include <opengl/framebuffer.hpp>
+#include <opengl/renderbuffer.hpp>
 #include <opengl/texture.hpp>
 #include <stlw/log.hpp>
 
