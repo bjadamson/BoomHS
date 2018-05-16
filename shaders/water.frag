@@ -86,7 +86,7 @@ void main()
   const float FRESNEL_REFLECTIVE_FACTOR = 2.0;
   refractive_factor = pow(refractive_factor, FRESNEL_REFLECTIVE_FACTOR);
 
-  const float weight_light   = 0.2;
+  const float weight_light   = 0.8;
   const float weight_texture = 0.5;
   const float weight_effects = 1.0;
 
