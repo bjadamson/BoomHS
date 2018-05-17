@@ -38,7 +38,7 @@ void main()
 
   // nc === normal color
   vec4 nc = texture(u_normal_sampler, v_textureuv + u_time_offset);
-  vec3 surface_normal = vec3(nc.r, -nc.g, nc.b);
+  vec3 surface_normal = vec3(nc.r, -(nc.g / 2.0), nc.b);
   surface_normal = normalize(surface_normal);
 
   vec3 ambient = u_ambient.color * u_material.ambient;
@@ -94,8 +94,8 @@ void main()
     const float FRESNEL_REFLECTIVE_FACTOR = 2.0;
     refractive_factor = pow(refractive_factor, FRESNEL_REFLECTIVE_FACTOR);
 
-    const float weight_light   = 0.8;
-    const float weight_texture = 0.5;
+    const float weight_light   = 1.0;
+    const float weight_texture = 1.0;
     const float weight_effects = 1.0;
 
     vec4 effect_color  = mix(reflect_color, refract_color, refractive_factor) * weight_effects;
