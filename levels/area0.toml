@@ -97,20 +97,22 @@ wrap = "mirror_repeat"
 name = "water-diffuse"
 type = "texture:2d-RGBA"
 filename = "assets/water/diffuse.png"
-wrap = "mirror_repeat"
+texture_unit = 0
+wrap = "repeat"
 
 [[resource]]
 name = "water-dudv"
 type = "texture:2d-RGBA"
 filename = "assets/water/dudv.png"
 texture_unit = 3
-wrap = "mirror_repeat"
+wrap = "repeat"
 
 [[resource]]
 name = "water-normal"
 type = "texture:2d-RGBA"
 filename = "assets/water/normal.png"
-wrap = "mirror_repeat"
+texture_unit = 4
+wrap = "repeat"
 
 #############################'
 # OTHER

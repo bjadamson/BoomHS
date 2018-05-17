@@ -122,30 +122,21 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
                                                       refraction_fbo_->dimensions.h);
   });
 
-  {
-    glActiveTexture(GL_TEXTURE0);
-    ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
-    diffuse_.while_bound(logger, [&]() {
+  auto const setup = [&](auto &ti, auto const v) {
+    glActiveTexture(v);
+    ti.while_bound(logger, [&]() {
+        ti.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        ti.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        });
+  };
 
-        diffuse_.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        diffuse_.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        });
-  }
   {
-    glActiveTexture(GL_TEXTURE3);
     ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
-    dudv_.while_bound(logger, [&]() {
-        dudv_.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        dudv_.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        });
-  }
-  {
-    glActiveTexture(GL_TEXTURE4);
-    ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
-    normal_.while_bound(logger, [&]() {
-        normal_.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        normal_.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        });
+    setup(diffuse_, GL_TEXTURE0);
+    setup(reflection_tbo_, GL_TEXTURE1);
+    setup(refraction_tbo_, GL_TEXTURE2);
+    setup(dudv_, GL_TEXTURE3);
+    setup(normal_, GL_TEXTURE4);
   }
 
   // connect texture units to shader program

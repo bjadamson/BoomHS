@@ -66,7 +66,7 @@ public:
   // local
   float wind_speed;
   float wave_strength;
-  float water_diffuse_offset;
+  float time_offset;
 
   void set_floor(TilePosition const&);
   void set_river(TilePosition const&);

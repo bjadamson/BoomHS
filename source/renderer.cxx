@@ -1256,20 +1256,19 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     bool constexpr RECEIVES_AMBIENT_LIGHT = true;
     auto const model_matrix               = transform.model_matrix();
 
-    winfo.dudv_offset += ft.delta_millis() * ldata.wind_speed;
-    winfo.dudv_offset = ::fmodf(winfo.dudv_offset, 1.00f);
+    winfo.wave_offset += ft.delta_millis() * ldata.wind_speed;
+    winfo.wave_offset = ::fmodf(winfo.wave_offset, 1.00f);
 
-    auto& diffuse_offset = ldata.water_diffuse_offset;
-    diffuse_offset += ft.delta_millis() * ldata.wind_speed;
-    diffuse_offset = ::fmodf(diffuse_offset, 1.00f);
-    LOG_ERROR_SPRINTF("diffuse offset %f", diffuse_offset);
+    auto& time_offset = ldata.time_offset;
+    time_offset += ft.delta_millis() * ldata.wind_speed;
+    time_offset = ::fmodf(time_offset, 1.00f);
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
       sp.set_uniform_vec3(logger, "u_camera_position", camera_position);
-      sp.set_uniform_float1(logger, "u_dudv_offset", winfo.dudv_offset);
+      sp.set_uniform_float1(logger, "u_wave_offset", winfo.wave_offset);
       sp.set_uniform_float1(logger, "u_wavestrength", ldata.wave_strength);
-      sp.set_uniform_float1(logger, "u_diffuse_offset", ldata.water_diffuse_offset);
+      sp.set_uniform_float1(logger, "u_time_offset", time_offset);
 
       vao.while_bound(logger, [&]() {
         water_fbos.while_bound(logger, [&]() {
