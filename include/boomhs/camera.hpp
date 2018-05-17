@@ -55,8 +55,8 @@ public:
   Camera(Transform*, glm::vec3 const& f, glm::vec3 const& u);
 
   // public fields
-  bool  flip_y      = false;
-  bool  rotate_lock = true;
+  bool  flip_y;
+  bool  rotate_lock;
   float rotation_speed;
 
   Transform&       get_target() { return *target_; }
