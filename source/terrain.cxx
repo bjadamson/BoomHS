@@ -31,12 +31,11 @@ generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc,
   heightmap::update_vertices_from_heightmap(logger, tc, heightmap_data, data.vertices);
 
   {
-    glm::vec2 const          dimensions{1};
     GenerateNormalData const gnd{tc.invert_normals, heightmap_data, numv_oneside};
     data.normals = MeshFactory::generate_normals(logger, gnd);
   }
 
-  bool constexpr TILE = false;
+  bool constexpr TILE = true;
   data.uvs     = MeshFactory::generate_uvs(logger, tgc.dimensions, numv_oneside, TILE);
   data.indices = MeshFactory::generate_indices(logger, numv_oneside);
   return data;

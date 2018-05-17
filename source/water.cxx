@@ -29,9 +29,7 @@ WaterFactory::generate_water_data(stlw::Logger& logger, glm::vec2 const& dimensi
 
   data.vertices = MeshFactory::generate_rectangle_mesh(logger, dimensions, num_vertexes);
 
-  data.normals = MeshFactory::generate_flat_normals(logger, num_vertexes);
-
-  bool constexpr TILE = false;
+  bool constexpr TILE = true;
   data.uvs            = MeshFactory::generate_uvs(logger, dimensions, num_vertexes, TILE);
 
   data.indices = MeshFactory::generate_indices(logger, num_vertexes);
@@ -46,7 +44,7 @@ WaterFactory::generate_info(stlw::Logger& logger, WaterInfoConfig const& wic, Sh
   auto const data = generate_water_data(logger, wic.dimensions, wic.num_vertexes);
   LOG_TRACE_SPRINTF("Generated water piece: %s", data.to_string());
 
-  BufferFlags const flags{true, true, false, true};
+  BufferFlags const flags{true, false, false, true};
   auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
   auto              di     = gpu::copy_gpu(logger, GL_TRIANGLE_STRIP, sp, buffer);
 

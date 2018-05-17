@@ -113,7 +113,7 @@ MeshFactory::generate_uvs(stlw::Logger& logger, glm::vec2 const& dimensions,
 
       float u = calculate_ratio(x, num_vertexes, dimensions.x);
       float v = calculate_ratio(z, num_vertexes, dimensions.y);
-      if (tile) {
+      if (!tile) {
         u = u / dimensions.x;
         v = v / dimensions.y;
       }

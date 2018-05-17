@@ -41,7 +41,6 @@ uv       = { datatype = "float", num = 2 }
 [[vas]]
 name     = "water"
 position = { datatype = "float", num = 3 }
-normal   = { datatype = "float", num = 3 }
 uv       = { datatype = "float", num = 2 }
 
 ########### SHADERS #################
