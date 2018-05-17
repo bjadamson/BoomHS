@@ -44,9 +44,6 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
     ti.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     ti.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    ti.set_fieldi(GL_TEXTURE_WRAP_S, GL_REPEAT);
-    ti.set_fieldi(GL_TEXTURE_WRAP_T, GL_REPEAT);
-
     // attach texture to FBO
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, ti.target, ti.id, 0);
   });
@@ -70,9 +67,6 @@ create_depth_texture_attachment(stlw::Logger& logger, int const width, int const
   ti.while_bound(logger, [&]() {
     ti.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     ti.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    ti.set_fieldi(GL_TEXTURE_WRAP_S, GL_REPEAT);
-    ti.set_fieldi(GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glTexImage2D(ti.target, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT,
                 GL_FLOAT, nullptr);
@@ -126,13 +120,10 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
                                                       refraction_fbo_->dimensions.h);
   });
 
-
   {
     glActiveTexture(GL_TEXTURE0);
     ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
     diffuse_.while_bound(logger, [&]() {
-        diffuse_.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-        diffuse_.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 
         diffuse_.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         diffuse_.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -142,9 +133,6 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
     glActiveTexture(GL_TEXTURE3);
     ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
     dudv_.while_bound(logger, [&]() {
-        dudv_.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-        dudv_.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-
         dudv_.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         dudv_.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         });
@@ -174,7 +162,6 @@ WaterFrameBuffers::bind_impl(stlw::Logger& logger)
 
   glActiveTexture(GL_TEXTURE2);
   bind::global_bind(logger, refraction_tbo_);
-  //bind::global_bind(logger, refraction_dbo_);
 
   glActiveTexture(GL_TEXTURE3);
   bind::global_bind(logger, dudv_);

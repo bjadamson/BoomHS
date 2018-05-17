@@ -1,8 +1,10 @@
 in vec3 a_position;
 in vec3 a_normal;
+in vec2 a_diffuseuv;
 
 out vec4 v_position;
 out vec3 v_surfacenormal;
+out vec2 v_diffuseuv;
 out vec4 v_clipspace;
 out float v_visibility;
 out float v_clipdistance;
@@ -25,6 +27,7 @@ void main()
   v_position = vec4(a_position, 1.0);
   v_clipspace = u_mvpmatrix * v_position;
   gl_Position = v_clipspace;
+  v_diffuseuv = a_diffuseuv;
 
   v_surfacenormal = normalize(u_normalmatrix * a_normal);
 

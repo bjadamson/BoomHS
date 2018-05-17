@@ -508,7 +508,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   auto const&              dim = es.dimensions;
   ScreenSize const         screen_size{dim.w, dim.h};
   auto&                    ttable = gfx_state.texture_table;
-  auto&                    ti     = *ttable.find("water-texture");
+  auto&                    ti     = *ttable.find("water-diffuse");
   auto&                    dudv   = *ttable.find("water-dudv");
   auto&                    sp     = sps.ref_sp("water");
   static WaterFrameBuffers waterfbos{logger, screen_size, sp, ti, dudv};

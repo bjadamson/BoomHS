@@ -95,7 +95,7 @@ MeshFactory::generate_rectangle_mesh(stlw::Logger& logger, glm::vec2 const& dime
 
 ObjData::vertices_t
 MeshFactory::generate_uvs(stlw::Logger& logger, glm::vec2 const& dimensions,
-                          size_t const num_vertexes, bool const clamp)
+                          size_t const num_vertexes, bool const tile)
 {
   size_t constexpr NUM_COMPONENTS = 2; // u, v
   auto const num_vertices         = calculate_number_vertices(NUM_COMPONENTS, num_vertexes);
@@ -113,7 +113,7 @@ MeshFactory::generate_uvs(stlw::Logger& logger, glm::vec2 const& dimensions,
 
       float u = calculate_ratio(x, num_vertexes, dimensions.x);
       float v = calculate_ratio(z, num_vertexes, dimensions.y);
-      if (clamp) {
+      if (tile) {
         u = u / dimensions.x;
         v = v / dimensions.y;
       }

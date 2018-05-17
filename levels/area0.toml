@@ -91,12 +91,12 @@ wrap = "clamp"
 name = "Water-HM"
 type = "texture:2d-RGBA"
 filename = "assets/water/heightmap.png"
-wrap = "clamp"
+wrap = "mirror_repeat"
 
 [[resource]]
-name = "water-texture"
+name = "water-diffuse"
 type = "texture:2d-RGBA"
-filename = "assets/water/texture.png"
+filename = "assets/water/diffuse.png"
 wrap = "mirror_repeat"
 
 [[resource]]
@@ -104,12 +104,13 @@ name = "water-dudv"
 type = "texture:2d-RGBA"
 filename = "assets/water/dudv.png"
 texture_unit = 3
+wrap = "mirror_repeat"
 
 [[resource]]
 name = "water-normal"
 type = "texture:2d-RGBA"
 filename = "assets/water/normal.png"
-wrap = "clamp"
+wrap = "mirror_repeat"
 
 #############################'
 # OTHER
