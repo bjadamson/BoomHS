@@ -233,6 +233,20 @@ draw_tilegrid_editor(TiledataState& tds, LevelManager& lm)
 }
 
 void
+draw_environment_editor(EngineState& es, LevelManager& lm)
+{
+  auto& zs    = lm.active();
+  auto& ldata = zs.level_data;
+
+  auto const draw = [&]() {
+    ImGui::InputFloat("Wind Speed", &ldata.wind_speed);
+    ImGui::InputFloat("Wave Strength", &ldata.wave_strength);
+  };
+
+  imgui_cxx::with_window(draw, "Environment Editor Window");
+}
+
+void
 draw_terrain_editor(EngineState& es, LevelManager& lm)
 {
   auto& logger = es.logger;
@@ -743,6 +757,104 @@ lighting_menu(EngineState& es, LevelData& ldata, EntityRegistry& registry)
   }
 }
 
+void
+draw_debugwindow(EngineState& es, LevelManager& lm)
+{
+  auto& zs             = lm.active();
+  auto& registry       = zs.registry;
+  {
+    auto const eid  = find_skybox(registry);
+    auto&      v    = registry.get<IsVisible>(eid);
+    bool&      draw = v.value;
+    ImGui::Checkbox("Draw Skybox", &draw);
+  }
+  {
+    auto const eids = find_orbital_bodies(registry);
+    auto       num  = 1;
+    for (auto const eid : eids) {
+      auto& v    = registry.get<IsVisible>(eid);
+      bool& draw = v.value;
+
+      auto const text = "Draw Orbital Body" + std::to_string(num++);
+      ImGui::Checkbox(text.c_str(), &draw);
+    }
+  }
+
+  auto& uistate        = es.ui_state.debug;
+  ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
+  ImGui::Checkbox("Draw Water", &es.draw_water);
+  ImGui::Checkbox("Enter Pressed", &uistate.enter_pressed);
+  ImGui::Checkbox("Draw Entities", &es.draw_entities);
+  ImGui::Checkbox("Draw Normals", &es.draw_normals);
+  ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
+  ImGui::Checkbox("Wireframe Rendering", &es.wireframe_override);
+
+  ImGui::Checkbox("ImGui Metrics", &es.draw_imguimetrics);
+  if (es.draw_imguimetrics) {
+    ImGui::ShowMetricsWindow(&es.draw_imguimetrics);
+  }
+}
+
+void
+draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window)
+{
+  auto& uistate        = es.ui_state.debug;
+  auto const windows_menu = [&]() {
+    ImGui::MenuItem("Debug", nullptr, &uistate.show_debugwindow);
+    ImGui::MenuItem("Entity", nullptr, &uistate.show_entitywindow);
+    ImGui::MenuItem("Environment", nullptr, &uistate.show_environment_editor_window);
+    ImGui::MenuItem("Camera", nullptr, &uistate.show_camerawindow);
+    ImGui::MenuItem("Mouse", nullptr, &uistate.show_mousewindow);
+    ImGui::MenuItem("Player", nullptr, &uistate.show_playerwindow);
+    ImGui::MenuItem("Skybox", nullptr, &uistate.show_skyboxwindow);
+    ImGui::MenuItem("Terrain", nullptr, &uistate.show_terrain_editor_window);
+    ImGui::MenuItem("Tilemap", nullptr, &uistate.show_tilegrid_editor_window);
+    ImGui::MenuItem("Time", nullptr, &uistate.show_time_window);
+    ImGui::MenuItem("Exit", nullptr, &es.quit);
+  };
+
+  auto& window_state   = es.window_state;
+  auto const settings_menu = [&]() {
+    auto const setwindow_row = [&](char const* text, auto const fullscreen) {
+      if (ImGui::MenuItem(text, nullptr, nullptr, window_state.fullscreen != fullscreen)) {
+        window.set_fullscreen(fullscreen);
+        window_state.fullscreen = fullscreen;
+      }
+    };
+    setwindow_row("NOT Fullscreen", window::FullscreenFlags::NOT_FULLSCREEN);
+    setwindow_row("Fullscreen", window::FullscreenFlags::FULLSCREEN);
+    setwindow_row("Fullscreen DESKTOP", window::FullscreenFlags::FULLSCREEN_DESKTOP);
+    auto const setsync_row = [&](char const* text, auto const sync) {
+      if (ImGui::MenuItem(text, nullptr, nullptr, window_state.sync != sync)) {
+        window.set_swapinterval(sync);
+        window_state.sync = sync;
+      }
+    };
+    setsync_row("Synchronized", window::SwapIntervalFlag::SYNCHRONIZED);
+    setsync_row("Late Tearing", window::SwapIntervalFlag::LATE_TEARING);
+  };
+
+  auto& zs       = lm.active();
+  auto& ldata    = zs.level_data;
+  auto& registry = zs.registry;
+  auto const draw_mainmenu = [&]() {
+    imgui_cxx::with_menu(windows_menu, "Windows");
+    imgui_cxx::with_menu(settings_menu, "Settings");
+    world_menu(es, ldata);
+    lighting_menu(es, ldata, registry);
+
+    auto const framerate = es.imgui.Framerate;
+    auto const ms_frame  = 1000.0f / framerate;
+
+    ImGui::SameLine(ImGui::GetWindowWidth() * 0.60f);
+    ImGui::Text("Current Level: %i", lm.active_zone());
+
+    ImGui::SameLine(ImGui::GetWindowWidth() * 0.76f);
+    ImGui::Text("FPS(avg): %.1f ms/frame: %.3f", framerate, ms_frame);
+  };
+  imgui_cxx::with_mainmenubar(draw_mainmenu);
+}
+
 } // namespace
 
 namespace boomhs::ui_debug
@@ -754,7 +866,6 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camer
 {
   auto& uistate        = es.ui_state.debug;
   auto& tilegrid_state = es.tilegrid_state;
-  auto& window_state   = es.window_state;
   auto& zs             = lm.active();
   auto& registry       = zs.registry;
   auto& ldata          = zs.level_data;
@@ -783,85 +894,13 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camer
   if (uistate.show_terrain_editor_window) {
     draw_terrain_editor(es, lm);
   }
-  if (uistate.show_debugwindow) {
-    {
-      auto const eid  = find_skybox(registry);
-      auto&      v    = registry.get<IsVisible>(eid);
-      bool&      draw = v.value;
-      ImGui::Checkbox("Draw Skybox", &draw);
-    }
-    {
-      auto const eids = find_orbital_bodies(registry);
-      auto       num  = 1;
-      for (auto const eid : eids) {
-        auto& v    = registry.get<IsVisible>(eid);
-        bool& draw = v.value;
-
-        auto const text = "Draw Orbital Body" + std::to_string(num++);
-        ImGui::Checkbox(text.c_str(), &draw);
-      }
-    }
-    ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
-    ImGui::Checkbox("Draw Water", &es.draw_water);
-    ImGui::Checkbox("Enter Pressed", &uistate.enter_pressed);
-    ImGui::Checkbox("Draw Entities", &es.draw_entities);
-    ImGui::Checkbox("Draw Normals", &es.draw_normals);
-    ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
-    ImGui::Checkbox("Wireframe Rendering", &es.wireframe_override);
-
-    ImGui::Checkbox("ImGui Metrics", &es.draw_imguimetrics);
-    if (es.draw_imguimetrics) {
-      ImGui::ShowMetricsWindow(&es.draw_imguimetrics);
-    }
+  if (uistate.show_environment_editor_window) {
+    draw_environment_editor(es, lm);
   }
-
-  auto const windows_menu = [&]() {
-    ImGui::MenuItem("Debug", nullptr, &uistate.show_debugwindow);
-    ImGui::MenuItem("Entity", nullptr, &uistate.show_entitywindow);
-    ImGui::MenuItem("Camera", nullptr, &uistate.show_camerawindow);
-    ImGui::MenuItem("Mouse", nullptr, &uistate.show_mousewindow);
-    ImGui::MenuItem("Player", nullptr, &uistate.show_playerwindow);
-    ImGui::MenuItem("Skybox", nullptr, &uistate.show_skyboxwindow);
-    ImGui::MenuItem("Terrain", nullptr, &uistate.show_terrain_editor_window);
-    ImGui::MenuItem("Tilemap", nullptr, &uistate.show_tilegrid_editor_window);
-    ImGui::MenuItem("Time", nullptr, &uistate.show_time_window);
-    ImGui::MenuItem("Exit", nullptr, &es.quit);
-  };
-  auto const settings_menu = [&]() {
-    auto const setwindow_row = [&](char const* text, auto const fullscreen) {
-      if (ImGui::MenuItem(text, nullptr, nullptr, window_state.fullscreen != fullscreen)) {
-        window.set_fullscreen(fullscreen);
-        window_state.fullscreen = fullscreen;
-      }
-    };
-    setwindow_row("NOT Fullscreen", window::FullscreenFlags::NOT_FULLSCREEN);
-    setwindow_row("Fullscreen", window::FullscreenFlags::FULLSCREEN);
-    setwindow_row("Fullscreen DESKTOP", window::FullscreenFlags::FULLSCREEN_DESKTOP);
-    auto const setsync_row = [&](char const* text, auto const sync) {
-      if (ImGui::MenuItem(text, nullptr, nullptr, window_state.sync != sync)) {
-        window.set_swapinterval(sync);
-        window_state.sync = sync;
-      }
-    };
-    setsync_row("Synchronized", window::SwapIntervalFlag::SYNCHRONIZED);
-    setsync_row("Late Tearing", window::SwapIntervalFlag::LATE_TEARING);
-  };
-  auto const draw_mainmenu = [&]() {
-    imgui_cxx::with_menu(windows_menu, "Windows");
-    imgui_cxx::with_menu(settings_menu, "Settings");
-    world_menu(es, ldata);
-    lighting_menu(es, ldata, registry);
-
-    auto const framerate = es.imgui.Framerate;
-    auto const ms_frame  = 1000.0f / framerate;
-
-    ImGui::SameLine(ImGui::GetWindowWidth() * 0.60f);
-    ImGui::Text("Current Level: %i", lm.active_zone());
-
-    ImGui::SameLine(ImGui::GetWindowWidth() * 0.76f);
-    ImGui::Text("FPS(avg): %.1f ms/frame: %.3f", framerate, ms_frame);
-  };
-  imgui_cxx::with_mainmenubar(draw_mainmenu);
+  if (uistate.show_debugwindow) {
+    draw_debugwindow(es, lm);
+  }
+  draw_mainmenu(es, lm, window);
 }
 
 } // namespace boomhs::ui_debug

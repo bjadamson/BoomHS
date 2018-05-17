@@ -86,9 +86,10 @@ struct UiDebugState
   bool show_skyboxwindow      = false;
   bool show_time_window       = false;
 
-  bool show_tilegrid_editor_window  = false;
-  bool show_tilegridmaterial_window = false;
-  bool show_terrain_editor_window   = false;
+  bool show_environment_editor_window = false;
+  bool show_tilegrid_editor_window    = false;
+  bool show_tilegridmaterial_window   = false;
+  bool show_terrain_editor_window     = false;
 };
 
 struct UiState

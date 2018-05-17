@@ -17,6 +17,9 @@ LevelData::LevelData(TileGrid&& td, TileSharedInfoTable&& ttable, TilePosition c
     , global_light(glight)
     , obj_store(MOVE(ocache))
     , player(MOVE(pl))
+    , wind_speed(50.0f)
+    , wave_strength(0.01f)
+    , water_diffuse_offset(0.0)
 {
 }
 

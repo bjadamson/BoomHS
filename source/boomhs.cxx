@@ -510,8 +510,9 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   auto&                    ttable = gfx_state.texture_table;
   auto&                    ti     = *ttable.find("water-diffuse");
   auto&                    dudv   = *ttable.find("water-dudv");
+  auto&                    normal = *ttable.find("water-normal");
   auto&                    sp     = sps.ref_sp("water");
-  static WaterFrameBuffers waterfbos{logger, screen_size, sp, ti, dudv};
+  static WaterFrameBuffers waterfbos{logger, screen_size, sp, ti, dudv, normal};
 
   // Render the scene to the reflection FBO
   float constexpr CULL_CUTOFF_HEIGHT = 0.4f;
@@ -560,7 +561,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     glm::vec2 const pos{0.5f, -0.5f};
     glm::vec2 const scale{0.25f, 0.25f};
 
-    render::draw_fbo_testwindow(rstate, pos, scale, ti);
+    render::draw_fbo_testwindow(rstate, pos, scale, normal);
   }
   /*
   {

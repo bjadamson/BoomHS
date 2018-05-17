@@ -99,10 +99,12 @@ namespace boomhs
 {
 
 WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& screen_size,
-                                     ShaderProgram& sp, TextureInfo& diffuse, TextureInfo& dudv)
+                                     ShaderProgram& sp, TextureInfo& diffuse, TextureInfo& dudv,
+                                     TextureInfo& normal)
     : sp_(sp)
     , diffuse_(diffuse)
     , dudv_(dudv)
+    , normal_(normal)
     , reflection_fbo_(FrameBuffer{make_fbo(logger, screen_size)})
     , reflection_rbo_(RenderBuffer{RBInfo{}})
     , refraction_fbo_(FrameBuffer{make_fbo(logger, screen_size)})
@@ -137,6 +139,14 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
         dudv_.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         });
   }
+  {
+    glActiveTexture(GL_TEXTURE4);
+    ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
+    normal_.while_bound(logger, [&]() {
+        normal_.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        normal_.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        });
+  }
 
   // connect texture units to shader program
   sp_.while_bound(logger, [&]() {
@@ -145,6 +155,7 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
     sp_.set_uniform_int1(logger, "u_reflect_sampler", 1);
     sp_.set_uniform_int1(logger, "u_refract_sampler", 2);
     sp_.set_uniform_int1(logger, "u_dudv_sampler", 3);
+    sp_.set_uniform_int1(logger, "u_normal_sampler", 4);
   });
 }
 
@@ -165,6 +176,9 @@ WaterFrameBuffers::bind_impl(stlw::Logger& logger)
 
   glActiveTexture(GL_TEXTURE3);
   bind::global_bind(logger, dudv_);
+
+  glActiveTexture(GL_TEXTURE4);
+  bind::global_bind(logger, normal_);
 }
 
 void
@@ -174,8 +188,8 @@ WaterFrameBuffers::unbind_impl(stlw::Logger& logger)
   bind::global_unbind(logger, reflection_tbo_);
   bind::global_unbind(logger, reflection_rbo_.resource());
   bind::global_unbind(logger, refraction_tbo_);
-  //bind::global_unbind(logger, refraction_dbo_);
   bind::global_unbind(logger, dudv_);
+  bind::global_unbind(logger, normal_);
 
   glActiveTexture(GL_TEXTURE0);
 }
@@ -188,11 +202,13 @@ WaterFrameBuffers::to_string() const
                       "{"
                       "{diffuse: (tbo) %s}, "
                       "{dudv: (tbo) %s}, "
+                      "{normal: (tbo) %s}, "
                       "{reflection: (fbo) %s, (tbo) %s, rbo(%s)}, "
                       "{refraction: (fbo) %s, (tbo) %s, dbo(%s)}"
                       "}",
                       diffuse_.to_string(),
                       dudv_.to_string(),
+                      normal_.to_string(),
 
                       reflection_fbo_->to_string(), reflection_tbo_.to_string(),
                       reflection_rbo_->to_string(),

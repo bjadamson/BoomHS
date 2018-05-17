@@ -289,7 +289,6 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       auto const uv_max       = get_float(resource, "uvs").value_or(1.0f);
 
       unsigned int const texture_unit = get_unsignedint(resource, "texture_unit").value_or(0);
-      LOG_ERROR_SPRINTF("tu_raw: %u", texture_unit);
 
       opengl::texture::TextureAllocationArgs const taa{format, uv_max, texture_unit};
 
