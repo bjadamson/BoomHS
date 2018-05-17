@@ -18,7 +18,7 @@ uniform mat3 u_normalmatrix;
 uniform vec4 u_clipPlane;
 uniform vec3 u_camera_position;
 
-const float TILING = 16.0;
+const float TILING = 6.0;
 
 void main()
 {

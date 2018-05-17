@@ -57,15 +57,16 @@ void main()
   light_color = mix(u_fog.color, light_color, v_visibility);
 
   vec2 ndc         = ((v_clipspace.xy/v_clipspace.w)/2.0) + 0.5;
+  ndc.y = 1.0 - ndc.y;
   vec2 texture_uv  = ndc;
-  vec2 reflect_uv  = vec2(ndc.x, -ndc.y);
-  vec2 refract_uv  = vec2(ndc.x, ndc.y);
+  vec2 reflect_uv  = vec2(ndc.x, -1.0 +ndc.y);
+  vec2 refract_uv  = vec2(ndc.x, 1.0 - ndc.y);
 
   vec2 distortion1 = texture(u_dudv_sampler, vec2(v_dudv.x + u_dudv_offset, v_dudv.y)).rg * 2.0 - 1.0;
   vec2 distortion2 = texture(u_dudv_sampler, vec2(-v_dudv.x + u_dudv_offset, v_dudv.y + u_dudv_offset)).rg * 2.0 - 1.0;
   vec2 distortion = distortion1 + distortion2;
 
-  const float WAVE_STRENGTH = 0.02;
+  const float WAVE_STRENGTH = 0.00;
   reflect_uv += distortion * WAVE_STRENGTH;
   refract_uv += distortion * WAVE_STRENGTH;
 
@@ -94,7 +95,7 @@ void main()
   vec4 texture_color = texture(u_texture_sampler, texture_uv) * weight_texture;
   light_color        = light_color * weight_light;
 
-  fragment_color = effect_color + texture_color + light_color;
+  fragment_color = texture_color;//effect_color + texture_color + light_color;
 
   const vec4 BLUE_MIX = vec4(0.0, 0.3, 0.8, 1.0);
   fragment_color = mix(fragment_color, BLUE_MIX, 0.6);
