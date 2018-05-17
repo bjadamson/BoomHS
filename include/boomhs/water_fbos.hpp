@@ -14,6 +14,24 @@ class ShaderProgram;
 namespace boomhs
 {
 
+struct ReflectionBuffers
+{
+  opengl::FrameBuffer  fbo;
+  opengl::TextureInfo  tbo;
+  opengl::RenderBuffer rbo;
+
+  ReflectionBuffers(stlw::Logger&, ScreenSize const&);
+};
+
+struct RefractionBuffers
+{
+  opengl::FrameBuffer fbo;
+  opengl::TextureInfo tbo;
+  opengl::TextureInfo dbo;
+
+  RefractionBuffers(stlw::Logger&, ScreenSize const&);
+};
+
 class WaterFrameBuffers
 {
   opengl::ShaderProgram& sp_;
@@ -21,13 +39,8 @@ class WaterFrameBuffers
   opengl::TextureInfo&   dudv_;
   opengl::TextureInfo&   normal_;
 
-  opengl::FrameBuffer  reflection_fbo_;
-  opengl::TextureInfo  reflection_tbo_;
-  opengl::RenderBuffer reflection_rbo_;
-
-  opengl::FrameBuffer refraction_fbo_;
-  opengl::TextureInfo refraction_tbo_;
-  opengl::TextureInfo refraction_dbo_;
+  ReflectionBuffers reflection_;
+  RefractionBuffers refraction_;
 
 public:
   WaterFrameBuffers(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&, opengl::TextureInfo&,
@@ -41,16 +54,18 @@ public:
   void unbind_impl(stlw::Logger&);
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
 
+  auto& refr() { return refraction_.dbo; }
+
   template <typename FN>
   void with_reflection_fbo(stlw::Logger& logger, FN const& fn)
   {
-    reflection_fbo_->while_bound(logger, fn);
+    reflection_.fbo->while_bound(logger, fn);
   }
 
   template <typename FN>
   void with_refraction_fbo(stlw::Logger& logger, FN const& fn)
   {
-    refraction_fbo_->while_bound(logger, fn);
+    refraction_.fbo->while_bound(logger, fn);
   }
 
   std::string to_string() const;

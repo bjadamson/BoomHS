@@ -557,13 +557,13 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
   render::draw_water(rstate, registry, ft, ABOVE_VECTOR, waterfbos, camera.world_position());
 
-  /*
   {
     glm::vec2 const pos{0.5f, -0.5f};
     glm::vec2 const scale{0.25f, 0.25f};
 
-    render::draw_fbo_testwindow(rstate, pos, scale, normal);
+    render::draw_fbo_testwindow(rstate, pos, scale, waterfbos.refr());
   }
+  /*
   {
     glm::vec2 const pos{-0.5f, -0.5f};
     glm::vec2 const scale{0.25f, 0.25f};

@@ -32,6 +32,11 @@ using namespace window;
 glm::vec3 static constexpr VIEWING_OFFSET{0.5f, 0.0f, 0.5f};
 auto static constexpr WIGGLE_UNDERATH_OFFSET = -0.2f;
 
+#define ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT()                                                   \
+  glEnable(GL_BLEND);                                                                              \
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);                                               \
+  ON_SCOPE_EXIT([]() { glDisable(GL_BLEND); });
+
 namespace
 {
 
@@ -230,7 +235,7 @@ draw(RenderState& rstate, ShaderProgram& sp, DrawInfo& dinfo)
 }
 
 void
-draw_2d(RenderState& rstate, ShaderProgram& sp, DrawInfo& dinfo)
+draw_2d(RenderState& rstate, ShaderProgram& sp, DrawInfo& dinfo, bool const alpha_blend)
 {
   disable_depth_tests();
   ON_SCOPE_EXIT([]() { enable_depth_tests(); });
@@ -239,10 +244,11 @@ draw_2d(RenderState& rstate, ShaderProgram& sp, DrawInfo& dinfo)
 }
 
 void
-draw_2d(RenderState& rstate, ShaderProgram& sp, TextureInfo& ti, DrawInfo& dinfo)
+draw_2d(RenderState& rstate, ShaderProgram& sp, TextureInfo& ti, DrawInfo& dinfo,
+    bool const alpha_blend)
 {
   auto& logger = rstate.es.logger;
-  ti.while_bound(logger, [&]() { draw_2d(rstate, sp, dinfo); });
+  ti.while_bound(logger, [&]() { draw_2d(rstate, sp, dinfo, alpha_blend); });
 }
 
 void
@@ -449,10 +455,8 @@ init(stlw::Logger& logger, Dimensions const& dimensions)
   // Initialize opengl
   glViewport(0, 0, dimensions.w, dimensions.h);
 
+  glDisable(GL_BLEND);
   glDisable(GL_CULL_FACE);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  // glDisable(GL_BLEND);
 
   enable_depth_tests();
 
@@ -731,6 +735,8 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
     auto* ti = trenderable.texture_info;
     assert(ti);
+
+    ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
     ti->while_bound(logger, [&]() { draw_fn(eid, sn, transform, isv, bboard); });
   };
 
@@ -776,7 +782,7 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
     set_modelmatrix(logger, model_matrix, sp);
 
     auto& vao = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, sp, ti, dinfo); });
+    vao.while_bound(logger, [&]() { draw_2d(rstate, sp, ti, dinfo, false); });
   });
 }
 
@@ -802,11 +808,12 @@ draw_inventory_overlay(RenderState& rstate)
   Transform  transform;
   auto const model_matrix = transform.model_matrix();
 
+  ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
   sp.while_bound(logger, [&]() {
     set_modelmatrix(logger, model_matrix, sp);
 
     auto& vao = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, sp, dinfo); });
+    vao.while_bound(logger, [&]() { draw_2d(rstate, sp, dinfo, true); });
   });
 }
 
@@ -954,7 +961,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
     transform.scale = glm::vec3{scale};
     auto& vao       = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, sp, *texture_o, dinfo); });
+    vao.while_bound(logger, [&]() { draw_2d(rstate, sp, *texture_o, dinfo, true); });
   };
 
   auto const draw_glow = [&]() {
@@ -968,7 +975,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
     transform.scale = glm::vec3{scale};
     auto& vao       = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, sp, *texture_o, dinfo); });
+    vao.while_bound(logger, [&]() { draw_2d(rstate, sp, *texture_o, dinfo, true); });
   };
 
   sp.while_bound(logger, [&]() {
@@ -1075,7 +1082,7 @@ draw_skybox(RenderState& rstate, TextureInfo& tinfo, window::FrameTime const& ft
       sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 
       auto& vao = dinfo.vao();
-      vao.while_bound(logger, [&]() { draw_2d(rstate, sp, tinfo, dinfo); });
+      vao.while_bound(logger, [&]() { draw_2d(rstate, sp, tinfo, dinfo, false); });
     });
   };
 

@@ -11,6 +11,7 @@ uniform sampler2D u_reflect_sampler;
 uniform sampler2D u_refract_sampler;
 uniform sampler2D u_dudv_sampler;
 uniform sampler2D u_normal_sampler;
+uniform sampler2D u_depth_sampler;
 
 uniform Material         u_material;
 uniform PointLight       u_pointlights[MAX_NUM_POINTLIGHTS];
@@ -69,6 +70,16 @@ void main()
     vec2 reflect_uv  = vec2(ndc.x, -1.0 +ndc.y);
     vec2 refract_uv  = vec2(ndc.x, 1.0 - ndc.y);
 
+    // depth info is stored in r component
+    // TODO: uniform variables
+    const float near = 0.1;
+    const float far = 2000.0;
+    float depth = texture(u_depth_sampler, refract_uv).r;
+    float ground_distance = 2.0 * near * far / (far + near - (2.0 * depth - 1.0) * (far - near));
+    depth = gl_FragCoord.z;
+    float water_distance = 2.0 * near * far / (far + near - (2.0 * depth - 1.0) * (far - near));
+    float water_depth = ground_distance - water_distance;
+
     vec2 distortion = texture(u_dudv_sampler, vec2(v_fbouv.x + u_wave_offset, v_fbouv.y)).rg * 0.1;
     distortion = v_fbouv + vec2(distortion.x, distortion.y + u_wave_offset);
     distortion = (texture(u_dudv_sampler, distortion).rg * 2.0 - 1.0);
@@ -106,5 +117,7 @@ void main()
 
     const vec4 BLUE_MIX = vec4(0.0, 0.3, 0.8, 1.0);
     fragment_color = mix(fragment_color, BLUE_MIX, 0.6);
+
+    fragment_color = vec4(water_depth/255.0);
   }
 }
