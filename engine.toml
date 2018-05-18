@@ -65,9 +65,9 @@ fragment = "3dtexture.frag"
 va = "vertex_normal_uvs"
 
 [[shaders]]
-name = "3dcube_texture"
-vertex = "3dcube_texture.vert"
-fragment = "3dcube_texture.frag"
+name = "skybox"
+vertex = "skybox.vert"
+fragment = "skybox.frag"
 va = "vertex_only"
 
 [[shaders]]
