@@ -173,7 +173,6 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
 
   // connect texture units to shader program
   sp_.while_bound(logger, [&]() {
-    // Bind texture units to shader uniforms
     sp_.set_uniform_int1(logger, "u_diffuse_sampler", 0);
     sp_.set_uniform_int1(logger, "u_reflect_sampler", 1);
     sp_.set_uniform_int1(logger, "u_refract_sampler", 2);

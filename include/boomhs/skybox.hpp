@@ -1,6 +1,7 @@
 #pragma once
 #include <boomhs/types.hpp>
 #include <opengl/draw_info.hpp>
+#include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
 namespace opengl
@@ -36,12 +37,14 @@ class SkyboxRenderer
 {
   opengl::DrawInfo dinfo_;
 
-  opengl::TextureInfo &tinfo_;
+  opengl::TextureInfo &day_;
+  opengl::TextureInfo &night_;
   opengl::ShaderProgram& sp_;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(SkyboxRenderer);
-  SkyboxRenderer(opengl::DrawInfo &&, opengl::TextureInfo&, opengl::ShaderProgram&);
+  SkyboxRenderer(stlw::Logger&, opengl::DrawInfo&&, opengl::TextureInfo&, opengl::TextureInfo&,
+      opengl::ShaderProgram&);
 
   void render(RenderState&, window::FrameTime const&);
 };

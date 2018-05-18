@@ -33,11 +33,17 @@ Skybox::update(FrameTime const& ft)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // SkyboxRenderer
-SkyboxRenderer::SkyboxRenderer(DrawInfo &&dinfo, TextureInfo &ti, ShaderProgram &sp)
+SkyboxRenderer::SkyboxRenderer(stlw::Logger& logger, DrawInfo &&dinfo, TextureInfo& day,
+    TextureInfo& night, ShaderProgram &sp)
     : dinfo_(MOVE(dinfo))
-    , tinfo_(ti)
+    , day_(day)
+    , night_(night)
     , sp_(sp)
 {
+  sp_.while_bound(logger, [&]() {
+    sp_.set_uniform_int1(logger, "u_cube_sampler1", 0);
+    sp_.set_uniform_int1(logger, "u_cube_sampler1", 1);
+    });
 }
 
 void
@@ -66,14 +72,25 @@ SkyboxRenderer::render(RenderState& rstate, FrameTime const& ft)
   auto const mvp_matrix = camera_matrix * transform.model_matrix();
 
   bool constexpr ENABLE_ALPHABLEND = false;
-  auto const draw_fn = [&]() { render::draw_2d(rstate, sp_, tinfo_, dinfo_, ENABLE_ALPHABLEND); };
+  auto const draw_fn = [&]() { render::draw_2d(rstate, sp_, dinfo_, ENABLE_ALPHABLEND); };
 
   auto const& fog = ldata.fog;
   auto& vao = dinfo_.vao();
 
+  glActiveTexture(GL_TEXTURE0);
+  ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
+
+  bind::global_bind(logger, day_);
+  ON_SCOPE_EXIT([&]() { bind::global_unbind(logger, day_); });
+
+  glActiveTexture(GL_TEXTURE1);
+  bind::global_bind(logger, night_);
+  ON_SCOPE_EXIT([&]() { bind::global_unbind(logger, night_); });
+
   sp_.while_bound(logger, [&]() {
     sp_.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
     sp_.set_uniform_color(logger, "u_fog.color", fog.color);
+    sp_.set_uniform_float1(logger, "u_blend_factor", 0.5);
     vao.while_bound(logger, draw_fn);
   });
 }

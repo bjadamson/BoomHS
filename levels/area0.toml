@@ -7,14 +7,24 @@ directional_light_specular = [1.0, 1.0, 1.0]
 directional_light_direction = [1.0, 1.0, 1.0]
 
 [[resource]]
-name = "building_skybox"
-type = "texture:3dcube-RGB"
-front = "assets/skybox/greenhaze_back.png"
-right = "assets/skybox/greenhaze_right.png"
-back = "assets/skybox/greenhaze_front.png"
-left = "assets/skybox/greenhaze_left.png"
-top = "assets/skybox/greenhaze_top.png"
+name   = "building_skybox"
+type   = "texture:3dcube-RGB"
+front  = "assets/skybox/greenhaze_back.png"
+right  = "assets/skybox/greenhaze_right.png"
+back   = "assets/skybox/greenhaze_front.png"
+left   = "assets/skybox/greenhaze_left.png"
+top    = "assets/skybox/greenhaze_top.png"
 bottom = "assets/skybox/greenhaze_bottom.png"
+
+[[resource]]
+name   = "night_skybox"
+type   = "texture:3dcube-RGBA"
+front  = "assets/skybox/night_front.png"
+right  = "assets/skybox/night_right.png"
+back   = "assets/skybox/night_back.png"
+left   = "assets/skybox/night_left.png"
+top    = "assets/skybox/night_top.png"
+bottom = "assets/skybox/night_bottom.png"
 
 [[resource]]
 name = "boring_cube"

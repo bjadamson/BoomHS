@@ -84,7 +84,7 @@ clear_screen(opengl::Color const&);
 
 // TODO: keep these extract rest to sub-renderers
 void
-draw_2d(RenderState&, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&, bool);
+draw_2d(RenderState&, opengl::ShaderProgram&, opengl::DrawInfo&, bool);
 
 void
 draw_2d(RenderState&, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&);
