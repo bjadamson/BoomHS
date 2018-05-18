@@ -107,7 +107,8 @@ void
 draw_entities(RenderState&, stlw::float_generator&, window::FrameTime const&);
 
 void
-draw_skybox(RenderState&, opengl::TextureInfo&, window::FrameTime const&);
+draw_skybox(RenderState&, Transform&, opengl::DrawInfo&, opengl::TextureInfo&,
+    opengl::ShaderProgram&, window::FrameTime const&);
 
 void
 draw_targetreticle(RenderState&, window::FrameTime const&);

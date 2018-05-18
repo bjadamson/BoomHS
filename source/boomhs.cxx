@@ -14,6 +14,7 @@
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/water_fbos.hpp>
 
+#include <opengl/gpu.hpp>
 #include <opengl/heightmap.hpp>
 #include <opengl/texture.hpp>
 
@@ -479,9 +480,11 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   auto& registry = zs.registry;
   auto& ldata    = zs.level_data;
   auto& player   = ldata.player;
+  auto& skybox   = ldata.skybox;
   {
     update_nearbytargets(ldata, registry, ft);
     update_orbital_bodies(es, ldata, registry, ft);
+    skybox.update(ft);
     move_riverwiggles(ldata, ft);
 
     if (tilegrid_state.recompute) {
@@ -524,6 +527,9 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
 
   auto const& fog_color = ldata.fog.color;
   auto&       skybox_ti = *ttable.find("building_skybox");
+  auto&       skybox_sp = sps.ref_sp("skybox");
+
+  static DrawInfo skybox_dinfo = opengl::gpu::copy_cubetexture_gpu(logger, skybox_sp);
   waterfbos.with_reflection_fbo(logger, [&]() {
     // Compute the camera position beneath the water for capturing the reflective image the camera
     // will see.
@@ -539,7 +545,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     render::clear_screen(fog_color);
 
     render::clear_screen(ldata.fog.color);
-    render::draw_skybox(rstate, skybox_ti, ft);
+    render::draw_skybox(rstate, skybox.transform(), skybox_dinfo, skybox_ti, skybox_sp, ft);
     render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
   });
 
@@ -547,12 +553,12 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   RenderState rstate{rmatrices, es, zs};
   waterfbos.with_refraction_fbo(logger, [&]() {
     render::clear_screen(fog_color);
-    render::draw_skybox(rstate, skybox_ti, ft);
+    render::draw_skybox(rstate, skybox.transform(), skybox_dinfo, skybox_ti, skybox_sp, ft);
     render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
   });
 
   render::clear_screen(ldata.fog.color);
-  render::draw_skybox(rstate, skybox_ti, ft);
+  render::draw_skybox(rstate, skybox.transform(), skybox_dinfo, skybox_ti, skybox_sp, ft);
 
   render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
   render::draw_water(rstate, registry, ft, ABOVE_VECTOR, waterfbos, camera.world_position());

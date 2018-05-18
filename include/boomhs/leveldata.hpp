@@ -4,6 +4,7 @@
 #include <boomhs/level_loader.hpp>
 #include <boomhs/nearby_targets.hpp>
 #include <boomhs/river_generator.hpp>
+#include <boomhs/skybox.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/tile.hpp>
 #include <boomhs/tilegrid.hpp>
@@ -41,6 +42,7 @@ class LevelData
 
   std::vector<RiverInfo> rivers_;
 
+  Skybox    skybox_;
   Terrain   terrain_;
   WaterInfo water_;
 
@@ -53,6 +55,7 @@ public:
             WorldObject&&);
 
   // public fields
+  Skybox              skybox;
   Fog                 fog;
   opengl::GlobalLight global_light;
 

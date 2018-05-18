@@ -79,7 +79,7 @@ struct EngineState
   bool draw_terrain;
   bool draw_water;
   bool draw_normals;
-  bool draw_sun;
+  bool draw_skybox;
 
   bool show_global_axis;
   bool show_local_axis;

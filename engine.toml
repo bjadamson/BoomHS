@@ -71,12 +71,6 @@ fragment = "skybox.frag"
 va = "vertex_only"
 
 [[shaders]]
-name = "skybox"
-vertex = "3dcube_texture.vert"
-fragment = "3dcube_texture.frag"
-va = "vertex_only"
-
-[[shaders]]
 name = "3d_pos_normal_color"
 vertex = "3d_pos_normal_color.vert"
 fragment = "3d_pos_normal_color.frag"

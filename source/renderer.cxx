@@ -134,6 +134,16 @@ struct PointlightTransform
 };
 
 void
+set_fog(stlw::Logger& logger, Fog const& fog, glm::mat4 const& view_matrix, ShaderProgram &sp)
+{
+  sp.set_uniform_matrix_4fv(logger, "u_viewmatrix", view_matrix);
+
+  sp.set_uniform_float1(logger, "u_fog.density", fog.density);
+  sp.set_uniform_float1(logger, "u_fog.gradient", fog.gradient);
+  sp.set_uniform_color(logger, "u_fog.color", fog.color);
+}
+
+void
 set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
                            glm::mat4 const& model_matrix, ShaderProgram& sp, DrawInfo& dinfo,
                            Material const&                         material,
@@ -187,13 +197,8 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
   // sp.set_uniform_vec3(logger, "u_player.direction",  player.forward_vector());
   // sp.set_uniform_float1(logger, "u_player.cutoff",  glm::cos(glm::radians(90.0f)));
 
-  // FOG uniforms
-  sp.set_uniform_matrix_4fv(logger, "u_viewmatrix", view_matrix);
-
   auto const& fog = ldata.fog;
-  sp.set_uniform_float1(logger, "u_fog.density", fog.density);
-  sp.set_uniform_float1(logger, "u_fog.gradient", fog.gradient);
-  sp.set_uniform_color(logger, "u_fog.color", fog.color);
+  set_fog(logger, fog, view_matrix, sp);
 
   // misc
   sp.set_uniform_bool(logger, "u_drawnormals", es.draw_normals);
@@ -1041,52 +1046,37 @@ draw_rivers(RenderState& rstate, window::FrameTime const& ft)
 }
 
 void
-draw_skybox(RenderState& rstate, TextureInfo& tinfo, window::FrameTime const& ft)
+draw_skybox(RenderState& rstate, Transform &transform, DrawInfo &dinfo, TextureInfo& tinfo, ShaderProgram &sp,
+    window::FrameTime const& ft)
 {
-  auto& zs       = rstate.zs;
-  auto& registry = zs.registry;
-  auto& sps      = zs.gfx_state.sps;
+  auto& zs     = rstate.zs;
+  auto& es     = rstate.es;
+  auto& logger = es.logger;
 
-  auto const draw_fn = [&](auto const eid, auto& sn, auto& transform, IsVisible& is_visible,
-                           IsSkybox&, TextureRenderable) {
-    if (!is_visible.value) {
-      return;
-    }
-    auto& entity_handles = *zs.gfx_state.gpu_state.entities;
-    auto& es             = rstate.es;
-    auto& logger         = es.logger;
-    auto& dinfo          = entity_handles.lookup(logger, eid);
+  auto const& ldata = zs.level_data;
 
-    // Can't receive light
-    assert(!registry.has<Material>());
+  // Create a view matrix that has it's translation components zero'd out.
+  //
+  // The effect of this is the view matrix contains just the rotation, which is what's desired
+  // for rendering the skybox.
+  auto view_matrix  = rstate.view_matrix();
+  view_matrix[3][0] = 0.0f;
+  view_matrix[3][1] = 0.0f;
+  view_matrix[3][2] = 0.0f;
 
-    auto& sp = sps.ref_sp(sn.value);
-    LOG_TRACE_SPRINTF("drawing skybox with shader: %s", sn.value);
+  auto const proj_matrix   = rstate.projection_matrix();
+  auto const camera_matrix = rstate.camera_matrix();
+  auto const mvp_matrix    = camera_matrix * transform.model_matrix();
 
-    auto const& ldata = zs.level_data;
+  sp.while_bound(logger, [&]() {
+    sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 
-    // Create a view matrix that has it's translation components zero'd out.
-    //
-    // The effect of this is the view matrix contains just the rotation, which is what's desired
-    // for rendering the skybox.
-    auto view_matrix  = rstate.view_matrix();
-    view_matrix[3][0] = 0.0f;
-    view_matrix[3][1] = 0.0f;
-    view_matrix[3][2] = 0.0f;
+    auto const& fog = ldata.fog;
+    set_fog(logger, fog, view_matrix, sp);
 
-    auto const proj_matrix   = rstate.projection_matrix();
-    auto const camera_matrix = rstate.camera_matrix();
-    auto const mvp_matrix    = camera_matrix * transform.model_matrix();
-
-    sp.while_bound(logger, [&]() {
-      sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
-
-      auto& vao = dinfo.vao();
-      vao.while_bound(logger, [&]() { draw_2d(rstate, sp, tinfo, dinfo, false); });
-    });
-  };
-
-  registry.view<ShaderName, Transform, IsVisible, IsSkybox, TextureRenderable>().each(draw_fn);
+    auto& vao = dinfo.vao();
+    vao.while_bound(logger, [&]() { draw_2d(rstate, sp, tinfo, dinfo, false); });
+  });
 }
 
 void

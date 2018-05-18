@@ -35,8 +35,6 @@ using CppTable      = std::shared_ptr<cpptoml::table>;
 // TRY_OPTION
 #define TRY_OPTION(VAR_NAME, expr) TRY_OPTION_EXPAND_VAR(VAR_NAME, __COUNTER__, expr)
 
-static float constexpr SKYBOX_SCALE_SIZE = 1000.0f;
-
 namespace
 {
 
@@ -599,10 +597,6 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     }
     if (geometry == "cube") {
       registry.assign<CubeRenderable>(eid);
-    }
-    else if (geometry == "skybox") {
-      registry.assign<IsSkybox>(eid);
-      transform.scale = glm::vec3{SKYBOX_SCALE_SIZE};
     }
     else if (boost::starts_with(geometry, "mesh")) {
       auto const parse_meshname = [](auto const& field) {

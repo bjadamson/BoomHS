@@ -514,14 +514,20 @@ draw_player_window(EngineState& es, LevelData& ldata)
 }
 
 void
-draw_skybox_window(EngineState& es, EntityRegistry& registry)
+draw_skybox_window(LevelManager& lm)
 {
-  auto const eid = find_skybox(registry);
-  auto*      ti  = registry.get<TextureRenderable>(eid).texture_info;
-  assert(ti);
+  auto& zs        = lm.active();
+  auto& ldata     = zs.level_data;
+  auto& skybox    = ldata.skybox;
+
+  auto& gfx_state = zs.gfx_state;
+  auto& ttable    = gfx_state.texture_table;
+  auto* pti        = ttable.find("skybox");
+  assert(pti);
+  auto& ti = *pti;
 
   auto const draw = [&]() {
-    auto const draw_button = [&](TextureInfo const& ti) {
+    auto const draw_button = [&]() {
       ImTextureID im_texid = reinterpret_cast<void*>(ti.id);
 
       imgui_cxx::ImageButtonBuilder image_builder;
@@ -532,7 +538,7 @@ draw_skybox_window(EngineState& es, EntityRegistry& registry)
       auto const size = ImVec2(32, 32);
       return image_builder.build(im_texid, size);
     };
-    bool const button_pressed = draw_button(*ti);
+    bool const button_pressed = draw_button();
   };
   imgui_cxx::with_window(draw, "Skybox Window");
 }
@@ -762,12 +768,7 @@ draw_debugwindow(EngineState& es, LevelManager& lm)
 {
   auto& zs             = lm.active();
   auto& registry       = zs.registry;
-  {
-    auto const eid  = find_skybox(registry);
-    auto&      v    = registry.get<IsVisible>(eid);
-    bool&      draw = v.value;
-    ImGui::Checkbox("Draw Skybox", &draw);
-  }
+  ImGui::Checkbox("Draw Skybox", &es.draw_skybox);
   {
     auto const eids = find_orbital_bodies(registry);
     auto       num  = 1;
@@ -886,7 +887,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camer
     draw_player_window(es, ldata);
   }
   if (uistate.show_skyboxwindow) {
-    draw_skybox_window(es, registry);
+    draw_skybox_window(lm);
   }
   if (uistate.show_tilegrid_editor_window) {
     draw_tilegrid_editor(tilegrid_state, lm);
