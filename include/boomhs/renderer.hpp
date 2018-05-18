@@ -82,6 +82,14 @@ init(stlw::Logger&, boomhs::Dimensions const&);
 void
 clear_screen(opengl::Color const&);
 
+// TODO: keep these extract rest to sub-renderers
+void
+draw_2d(RenderState&, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&, bool);
+
+void
+draw_2d(RenderState&, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&);
+
+// TODO: move rest to sub-renderers or something
 void
 conditionally_draw_player_vectors(RenderState&, WorldObject const&);
 
@@ -107,10 +115,6 @@ void
 draw_entities(RenderState&, stlw::float_generator&, window::FrameTime const&);
 
 void
-draw_skybox(RenderState&, Transform&, opengl::DrawInfo&, opengl::TextureInfo&,
-    opengl::ShaderProgram&, window::FrameTime const&);
-
-void
 draw_targetreticle(RenderState&, window::FrameTime const&);
 
 void
@@ -131,5 +135,7 @@ draw_tilegrid(RenderState&, TiledataState const&);
 void
 draw_water(RenderState&, EntityRegistry&, window::FrameTime const&, glm::vec4 const&,
            WaterFrameBuffers&, glm::vec3 const&);
+
+
 
 } // namespace boomhs::render

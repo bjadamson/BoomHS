@@ -240,23 +240,6 @@ draw(RenderState& rstate, ShaderProgram& sp, DrawInfo& dinfo)
 }
 
 void
-draw_2d(RenderState& rstate, ShaderProgram& sp, DrawInfo& dinfo, bool const alpha_blend)
-{
-  disable_depth_tests();
-  ON_SCOPE_EXIT([]() { enable_depth_tests(); });
-
-  draw(rstate, sp, dinfo);
-}
-
-void
-draw_2d(RenderState& rstate, ShaderProgram& sp, TextureInfo& ti, DrawInfo& dinfo,
-    bool const alpha_blend)
-{
-  auto& logger = rstate.es.logger;
-  ti.while_bound(logger, [&]() { draw_2d(rstate, sp, dinfo, alpha_blend); });
-}
-
-void
 draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const& model_matrix,
                  ShaderProgram& sp, DrawInfo& dinfo, Material const& material,
                  EntityRegistry& registry, bool const receives_ambient_light)
@@ -482,6 +465,23 @@ clear_screen(Color const& color)
   // Render
   glClearColor(color.r(), color.g(), color.b(), color.a());
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void
+draw_2d(RenderState& rstate, ShaderProgram& sp, DrawInfo& dinfo, bool const alpha_blend)
+{
+  disable_depth_tests();
+  ON_SCOPE_EXIT([]() { enable_depth_tests(); });
+
+  draw(rstate, sp, dinfo);
+}
+
+void
+draw_2d(RenderState& rstate, ShaderProgram& sp, TextureInfo& ti, DrawInfo& dinfo,
+    bool const alpha_blend)
+{
+  auto& logger = rstate.es.logger;
+  ti.while_bound(logger, [&]() { draw_2d(rstate, sp, dinfo, alpha_blend); });
 }
 
 void
@@ -1042,40 +1042,6 @@ draw_rivers(RenderState& rstate, window::FrameTime const& ft)
     for (auto const& rinfo : rinfos) {
       draw_river(rinfo);
     }
-  });
-}
-
-void
-draw_skybox(RenderState& rstate, Transform &transform, DrawInfo &dinfo, TextureInfo& tinfo, ShaderProgram &sp,
-    window::FrameTime const& ft)
-{
-  auto& zs     = rstate.zs;
-  auto& es     = rstate.es;
-  auto& logger = es.logger;
-
-  auto const& ldata = zs.level_data;
-
-  // Create a view matrix that has it's translation components zero'd out.
-  //
-  // The effect of this is the view matrix contains just the rotation, which is what's desired
-  // for rendering the skybox.
-  auto view_matrix  = rstate.view_matrix();
-  view_matrix[3][0] = 0.0f;
-  view_matrix[3][1] = 0.0f;
-  view_matrix[3][2] = 0.0f;
-
-  auto const proj_matrix   = rstate.projection_matrix();
-  auto const camera_matrix = rstate.camera_matrix();
-  auto const mvp_matrix    = camera_matrix * transform.model_matrix();
-
-  sp.while_bound(logger, [&]() {
-    sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
-
-    auto const& fog = ldata.fog;
-    set_fog(logger, fog, view_matrix, sp);
-
-    auto& vao = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, sp, tinfo, dinfo, false); });
   });
 }
 
