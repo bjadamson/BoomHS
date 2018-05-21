@@ -212,9 +212,16 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
       index_offset += fv;
 
       // per-face material
-      // shapes[s].mesh.material_ids[f];
+      int const face_jaterialid = shapes[s].mesh.material_ids[f];
     }
   }
+
+  LOG_ERROR_SPRINTF("materials size: %lu", materials.size());
+  FOR(i, materials.size()) {
+    auto const& material = materials[i];
+    LOG_ERROR_SPRINTF("Material name: %s", material.name);
+  }
+
   LOG_DEBUG_SPRINTF("num vertices: %u", objdata.num_vertexes);
   LOG_DEBUG_SPRINTF("vertices.size(): %u", objdata.vertices.size());
   LOG_DEBUG_SPRINTF("colors.size(): %u", objdata.colors.size());
@@ -225,10 +232,9 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
 }
 
 LoadResult
-load_objfile(stlw::Logger& logger, char const* objpath)
+load_objfile(stlw::Logger& logger, std::string const& objpath)
 {
-  auto constexpr MTLPATH = nullptr;
-  return load_objfile(logger, objpath, MTLPATH);
+  return load_objfile(logger, objpath.c_str());
 }
 
 } // namespace boomhs
