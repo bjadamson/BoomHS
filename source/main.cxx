@@ -103,6 +103,10 @@ timed_game_loop(Engine& engine, GameState& state, Camera& camera)
   while (!state.engine_state.quit) {
     auto const ft = clock.frame_time();
     loop(engine, state, rng, camera, ft);
+
+    if ((counter.frames_counted % 60 == 0)) {
+      state.engine_state.time.add_hours(1);
+    }
     clock.update();
     counter.update(logger, clock);
   }
