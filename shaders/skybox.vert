@@ -1,8 +1,10 @@
 in vec3 a_position;
 
 out vec3 v_uv;
+out float v_visibility;
 
 uniform mat4 u_mvpmatrix;
+uniform Fog u_fog;
 
 void main()
 {

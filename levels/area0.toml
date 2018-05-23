@@ -326,7 +326,7 @@ path = "assets/"
 [[fog]]
 density = 0.007
 gradient = 1.5
-color = [0.0, 0.0, 0.0, 1.0]
+color = [0.0, 0.0, 1.0, 1.0]
 
 ########### ORBITAL DATA ###########
 [[orbital-body]]
