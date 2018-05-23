@@ -22,7 +22,7 @@ struct DrawTimeBuffer
   int month  = 0;
   int year   = 0;
 
-  bool clear_fields = false;
+  bool clear_fields = true;
 };
 
 struct TerrainBuffer

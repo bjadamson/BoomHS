@@ -234,7 +234,7 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
 LoadResult
 load_objfile(stlw::Logger& logger, std::string const& objpath)
 {
-  return load_objfile(logger, objpath.c_str());
+  return load_objfile(logger, objpath.c_str(), nullptr);
 }
 
 } // namespace boomhs

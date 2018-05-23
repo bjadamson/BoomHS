@@ -144,7 +144,7 @@ draw_entity_editor(EngineState& es, LevelData& ldata, EntityRegistry& registry, 
 }
 
 void
-draw_time_editor(Time& time, UiDebugState& uistate)
+draw_time_editor(stlw::Logger& logger, Time& time, UiDebugState& uistate)
 {
   if (ImGui::Begin("TimeWindow")) {
     int speed = 0;
@@ -875,7 +875,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camer
     draw_entity_editor(es, ldata, registry, camera);
   }
   if (uistate.show_time_window) {
-    draw_time_editor(es.time, uistate);
+    draw_time_editor(es.logger, es.time, uistate);
   }
   if (uistate.show_camerawindow) {
     draw_camera_window(camera, ldata);

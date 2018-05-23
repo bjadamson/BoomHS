@@ -52,7 +52,7 @@ operator<<(std::ostream&, LoadStatus const&);
 using LoadResult = Result<ObjData, LoadStatus>;
 
 LoadResult
-load_objfile(stlw::Logger&, char const*);
+load_objfile(stlw::Logger&, char const*, char const*);
 
 LoadResult
 load_objfile(stlw::Logger&, std::string const&);

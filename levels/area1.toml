@@ -483,13 +483,6 @@ geometry = "cube"
 pointlight = "white"
 scale = [0.4, 0.4, 0.4]
 
-############ SKYBOX
-[[entity]]
-name = "building skybox"
-position = [0.0, 0.0, 0.0]
-shader = "skybox"
-geometry = "cube"
-texture = "building_skybox"
 
 ###################################################################################################
 [[entity]]

@@ -3,7 +3,6 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/renderer.hpp>
-#include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
@@ -166,7 +165,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
 
   // ambient
   if (receives_ambient_light) {
-    LOG_INFO_SPRINTF("AMBIENT COLOR: %s", global_light.ambient.to_string());
+    LOG_TRACE_SPRINTF("AMBIENT COLOR: %s", global_light.ambient.to_string());
     sp.set_uniform_color_3fv(logger, "u_ambient.color", global_light.ambient);
   }
 
@@ -983,6 +982,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     vao.while_bound(logger, [&]() { draw_2d(rstate, sp, *texture_o, dinfo, true); });
   };
 
+  ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
   sp.while_bound(logger, [&]() {
     if (scale < 1.0f) {
       draw_glow();

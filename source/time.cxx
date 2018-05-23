@@ -129,6 +129,10 @@ void
 Time::add_seconds(int const v)
 {
   seconds_ += v;
+  if (seconds_ > 59) {
+    add_minutes(1);
+    seconds_ = 0;
+  }
 }
 
 void
@@ -148,6 +152,10 @@ void
 Time::add_minutes(int const v)
 {
   minutes_ += v;
+  if (minutes_ > 59) {
+    add_hours(1);
+    minutes_ = 0;
+  }
 }
 
 void
@@ -167,6 +175,10 @@ void
 Time::add_hours(int const v)
 {
   hours_ += v;
+  if (hours_ > 23) {
+    add_days(1);
+    hours_ = 0;
+  }
 }
 
 void
@@ -192,6 +204,10 @@ void
 Time::add_days(int const v)
 {
   days_ += v;
+  if (days_ > 30) {
+    add_weeks(1);
+    days_ = 0;
+  }
 }
 
 int
@@ -205,6 +221,10 @@ void
 Time::add_weeks(int const v)
 {
   weeks_ += v;
+  if (weeks_ > 4) {
+    add_months(1);
+    weeks_ = 0;
+  }
 }
 
 void
@@ -224,6 +244,10 @@ void
 Time::add_months(int const v)
 {
   months_ += v;
+  if (months_ > 12) {
+    add_years(1);
+    months_ = 0;
+  }
 }
 
 void

@@ -5,6 +5,7 @@
 #include <opengl/constants.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
+#include <stlw/math.hpp>
 
 #include <window/timer.hpp>
 #include <cassert>
@@ -87,10 +88,23 @@ SkyboxRenderer::render(RenderState& rstate, FrameTime const& ft)
   bind::global_bind(logger, night_);
   ON_SCOPE_EXIT([&]() { bind::global_unbind(logger, night_); });
 
+  // Converting the "current hour" to a value in [0.0, 1.0]
+  auto const calculate_blend = [&]() {
+    auto const& hour_of_day = static_cast<float>(es.time.hours());
+    auto const frac         = hour_of_day / 24.0f;
+    auto blend              = 1.0f - std::abs(stlw::math::squared(-frac) + frac);
+    if (blend < 0.0f) {
+      blend = -blend;
+    }
+    return blend;
+  };
+
   sp_.while_bound(logger, [&]() {
     sp_.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
     sp_.set_uniform_color(logger, "u_fog.color", fog.color);
-    sp_.set_uniform_float1(logger, "u_blend_factor", 0.5);
+
+    auto const blend = calculate_blend();
+    sp_.set_uniform_float1(logger, "u_blend_factor", blend);
     vao.while_bound(logger, draw_fn);
   });
 }
