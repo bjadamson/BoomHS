@@ -893,7 +893,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
       sp.while_bound(logger, [&]() { draw_tile_helper(sp, tr, dinfo, tile, modmatrix, true); });
     } break;
     case TileType::WALL: {
-      auto const inverse_model = glm::inverse(default_modmatrix);
+      auto const inverse_model = glm::inverse(glm::mat3{default_modmatrix});
       auto&      sp            = sps.ref_sp("hashtag");
       sp.while_bound(logger, [&]() {
         sp.set_uniform_matrix_4fv(logger, "u_inversemodelmatrix", inverse_model);
@@ -1051,9 +1051,9 @@ draw_rivers(RenderState& rstate, window::FrameTime const& ft)
         glm::quat const rot   = glm::angleAxis(glm::degrees(rinfo.wiggle_rotation), Y_UNIT_VECTOR);
         auto const      scale = glm::vec3{0.5};
 
-        bool const receives_ambient = true;
-        auto const modelmatrix      = stlw::math::calculate_modelmatrix(tr, rot, scale);
-        auto const inverse_model    = glm::inverse(modelmatrix);
+        bool const      receives_ambient = true;
+        glm::mat3 const modelmatrix      = stlw::math::calculate_modelmatrix(tr, rot, scale);
+        auto const      inverse_model    = glm::inverse(glm::mat3{modelmatrix});
         sp.set_uniform_matrix_4fv(logger, "u_inversemodelmatrix", inverse_model);
         draw_3dlit_shape(rstate, GL_TRIANGLES, tr, modelmatrix, sp, dinfo, material, registry,
                          receives_ambient);

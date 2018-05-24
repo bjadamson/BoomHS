@@ -66,6 +66,10 @@ SkyboxRenderer::render(RenderState& rstate, FrameTime const& ft)
   auto& es     = rstate.es;
   auto& logger = es.logger;
 
+  if (!es.draw_skybox) {
+    return;
+  }
+
   auto const& ldata = zs.level_data;
   auto const& fog   = ldata.fog;
 

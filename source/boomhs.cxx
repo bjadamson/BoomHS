@@ -686,7 +686,10 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
 
   // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up ontop
   // of the ingame UI nearby target indicators.
-  render::draw_water(rstate, registry, ft, ABOVE_VECTOR, waterfbos, camera.world_position());
+
+  if (es.draw_water) {
+    render::draw_water(rstate, registry, ft, ABOVE_VECTOR, waterfbos, camera.world_position());
+  }
   render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
 
   /*
