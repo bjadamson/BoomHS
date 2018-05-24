@@ -123,7 +123,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
         auto const  qo         = ObjQuery{mesh.name, qa};
         auto const& obj        = obj_store.get_obj(logger, qo);
 
-        auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj);
+        auto handle = opengl::gpu::copy_gpu(logger, shader_ref, obj);
         entity_dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
@@ -134,7 +134,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
         auto const  qo         = ObjQuery{mesh.name, qa};
         auto const& obj        = obj_store.get_obj(logger, qo);
 
-        auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj);
+        auto handle = opengl::gpu::copy_gpu(logger, shader_ref, obj);
         entity_dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, BillboardRenderable, TextureRenderable>().each(
@@ -143,7 +143,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
         auto const v  = OF::rectangle_vertices();
         auto*      ti = texture.texture_info;
         assert(ti);
-        auto handle = opengl::gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, *ti);
+        auto handle = opengl::gpu::copy_rectangle_uvs(logger, sp, v, *ti);
         entity_dinfos.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, JunkEntityFromFILE>().each(
@@ -154,7 +154,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
         auto const  qo         = ObjQuery{mesh.name, qa};
         auto const& obj        = obj_store.get_obj(logger, qo);
 
-        auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, shader_ref, obj);
+        auto handle = opengl::gpu::copy_gpu(logger, shader_ref, obj);
         entity_dinfos.add(entity, MOVE(handle));
       });
 
@@ -171,7 +171,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
     auto const  qo         = ObjQuery{mesh_name, qa};
     auto const& obj        = obj_store.get_obj(logger, qo);
 
-    auto handle = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, sps.ref_sp(vshader_name), obj);
+    auto handle = opengl::gpu::copy_gpu(logger, sps.ref_sp(vshader_name), obj);
 
     assert(it.type < TileType::UNDEFINED);
     auto const index = static_cast<size_t>(it.type);
@@ -179,7 +179,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
     tile_dinfos[index] = MOVE(handle);
   }
 
-  TileDrawHandles   td{MOVE(tile_dinfos)};
+  TileDrawHandles td{MOVE(tile_dinfos)};
   return Ok(std::make_pair(MOVE(entity_dinfos), MOVE(td)));
 }
 

@@ -18,6 +18,11 @@
 namespace boomhs
 {
 
+struct BoundingBox
+{
+  float radius = 0.0f;
+};
+
 struct Name
 {
   static constexpr char const* DEFAULT = "unnamed";
@@ -44,6 +49,7 @@ struct LightFlicker
 
 struct JunkEntityFromFILE
 {
+  GLenum draw_mode = GL_TRIANGLES;
 };
 
 struct StairInfo
@@ -59,6 +65,7 @@ struct ShaderName
 
 struct CubeRenderable
 {
+  GLenum mode = GL_TRIANGLES;
 };
 
 struct MeshRenderable

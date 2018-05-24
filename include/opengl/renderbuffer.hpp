@@ -1,9 +1,9 @@
 #pragma once
+#include <opengl/bind.hpp>
 #include <stlw/auto_resource.hpp>
 #include <stlw/log.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
-#include <opengl/bind.hpp>
 
 #include <extlibs/glew.hpp>
 #include <string>
@@ -32,4 +32,4 @@ struct RBInfo
 };
 using RenderBuffer = stlw::AutoResource<RBInfo>;
 
-} // ns opengl
+} // namespace opengl

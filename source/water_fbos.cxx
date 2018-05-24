@@ -24,7 +24,7 @@ make_fbo(stlw::Logger& logger, ScreenSize const& ss)
 
 TextureInfo
 create_texture_attachment(stlw::Logger& logger, int const width, int const height,
-    GLenum const texture_unit)
+                          GLenum const texture_unit)
 {
   assert(width > 0 && height > 0);
 
@@ -36,7 +36,6 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
   ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
 
   ti.while_bound(logger, [&]() {
-
     // allocate memory for texture
     glTexImage2D(ti.target, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 
@@ -57,7 +56,7 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
 
 auto
 create_depth_texture_attachment(stlw::Logger& logger, int const width, int const height,
-    GLenum const texture_unit)
+                                GLenum const texture_unit)
 {
   assert(width > 0 && height > 0);
 
@@ -72,12 +71,11 @@ create_depth_texture_attachment(stlw::Logger& logger, int const width, int const
     ti.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     ti.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(ti.target, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT,
-                GL_FLOAT, nullptr);
+    glTexImage2D(ti.target, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
+                 nullptr);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, ti.target, ti.id, 0);
-    });
-
+  });
 
   ti.height = height;
   ti.width  = width;
@@ -147,18 +145,18 @@ WaterFrameBuffers::WaterFrameBuffers(stlw::Logger& logger, ScreenSize const& scr
     auto const w = size.first, h = size.second;
 
     with_refraction_fbo(logger, [&]() {
-        GLenum const tu = GL_TEXTURE2;
-        refraction_.tbo = create_texture_attachment(logger, w, h, tu);
-        refraction_.dbo = create_depth_texture_attachment(logger, w, h, tu);
+      GLenum const tu = GL_TEXTURE2;
+      refraction_.tbo = create_texture_attachment(logger, w, h, tu);
+      refraction_.dbo = create_depth_texture_attachment(logger, w, h, tu);
     });
   }
 
-  auto const setup = [&](auto &ti, auto const v) {
+  auto const setup = [&](auto& ti, auto const v) {
     glActiveTexture(v);
     ti.while_bound(logger, [&]() {
-        ti.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        ti.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        });
+      ti.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      ti.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    });
   };
 
   {
@@ -230,24 +228,21 @@ std::string
 WaterFrameBuffers::to_string() const
 {
   // clang format-off
-  return fmt::sprintf("WaterFrameBuffer "
-                      "{"
-                      "{diffuse: (tbo) %s}, "
-                      "{dudv: (tbo) %s}, "
-                      "{normal: (tbo) %s}, "
-                      //"{depth: (tbo) %s}, "
-                      "{reflection: (fbo) %s, (tbo) %s, rbo(%s)}, "
-                      "{refraction: (fbo) %s, (tbo) %s, dbo(%s)}"
-                      "}",
-                      diffuse_.to_string(),
-                      dudv_.to_string(),
-                      normal_.to_string(),
+  return fmt::sprintf(
+      "WaterFrameBuffer "
+      "{"
+      "{diffuse: (tbo) %s}, "
+      "{dudv: (tbo) %s}, "
+      "{normal: (tbo) %s}, "
+      //"{depth: (tbo) %s}, "
+      "{reflection: (fbo) %s, (tbo) %s, rbo(%s)}, "
+      "{refraction: (fbo) %s, (tbo) %s, dbo(%s)}"
+      "}",
+      diffuse_.to_string(), dudv_.to_string(), normal_.to_string(),
 
-                      reflection_.fbo->to_string(), reflection_.tbo.to_string(),
-                      reflection_.rbo->to_string(),
+      reflection_.fbo->to_string(), reflection_.tbo.to_string(), reflection_.rbo->to_string(),
 
-                      refraction_.fbo->to_string(), refraction_.tbo.to_string(),
-                      refraction_.dbo.to_string());
+      refraction_.fbo->to_string(), refraction_.tbo.to_string(), refraction_.dbo.to_string());
   // clang format-on
 }
 

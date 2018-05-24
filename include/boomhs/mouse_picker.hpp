@@ -12,4 +12,4 @@ public:
   glm::vec3 calculate_ray(RenderState&) const;
 };
 
-} // ns boomhs
+} // namespace boomhs

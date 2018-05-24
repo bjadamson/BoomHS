@@ -516,13 +516,13 @@ draw_player_window(EngineState& es, LevelData& ldata)
 void
 draw_skybox_window(LevelManager& lm)
 {
-  auto& zs        = lm.active();
-  auto& ldata     = zs.level_data;
-  auto& skybox    = ldata.skybox;
+  auto& zs     = lm.active();
+  auto& ldata  = zs.level_data;
+  auto& skybox = ldata.skybox;
 
   auto& gfx_state = zs.gfx_state;
   auto& ttable    = gfx_state.texture_table;
-  auto* pti        = ttable.find("skybox");
+  auto* pti       = ttable.find("skybox");
   assert(pti);
   auto& ti = *pti;
 
@@ -766,8 +766,8 @@ lighting_menu(EngineState& es, LevelData& ldata, EntityRegistry& registry)
 void
 draw_debugwindow(EngineState& es, LevelManager& lm)
 {
-  auto& zs             = lm.active();
-  auto& registry       = zs.registry;
+  auto& zs       = lm.active();
+  auto& registry = zs.registry;
   ImGui::Checkbox("Draw Skybox", &es.draw_skybox);
   {
     auto const eids = find_orbital_bodies(registry);
@@ -781,7 +781,7 @@ draw_debugwindow(EngineState& es, LevelManager& lm)
     }
   }
 
-  auto& uistate        = es.ui_state.debug;
+  auto& uistate = es.ui_state.debug;
   ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
   ImGui::Checkbox("Draw Water", &es.draw_water);
   ImGui::Checkbox("Enter Pressed", &uistate.enter_pressed);
@@ -799,7 +799,7 @@ draw_debugwindow(EngineState& es, LevelManager& lm)
 void
 draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window)
 {
-  auto& uistate        = es.ui_state.debug;
+  auto&      uistate      = es.ui_state.debug;
   auto const windows_menu = [&]() {
     ImGui::MenuItem("Debug", nullptr, &uistate.show_debugwindow);
     ImGui::MenuItem("Entity", nullptr, &uistate.show_entitywindow);
@@ -814,7 +814,7 @@ draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window)
     ImGui::MenuItem("Exit", nullptr, &es.quit);
   };
 
-  auto& window_state   = es.window_state;
+  auto&      window_state  = es.window_state;
   auto const settings_menu = [&]() {
     auto const setwindow_row = [&](char const* text, auto const fullscreen) {
       if (ImGui::MenuItem(text, nullptr, nullptr, window_state.fullscreen != fullscreen)) {
@@ -835,9 +835,9 @@ draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window)
     setsync_row("Late Tearing", window::SwapIntervalFlag::LATE_TEARING);
   };
 
-  auto& zs       = lm.active();
-  auto& ldata    = zs.level_data;
-  auto& registry = zs.registry;
+  auto&      zs            = lm.active();
+  auto&      ldata         = zs.level_data;
+  auto&      registry      = zs.registry;
   auto const draw_mainmenu = [&]() {
     imgui_cxx::with_menu(windows_menu, "Windows");
     imgui_cxx::with_menu(settings_menu, "Settings");

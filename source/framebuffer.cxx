@@ -6,8 +6,8 @@ namespace opengl
 {
 
 FBInfo::FBInfo(Dimensions const& d, ScreenSize const& ss)
-  : dimensions(d)
-  , screen_size(ss)
+    : dimensions(d)
+    , screen_size(ss)
 {
   glGenFramebuffers(1, &id);
 }
@@ -38,4 +38,4 @@ FBInfo::to_string() const
   return fmt::sprintf("(FBInfo) id: %u", id);
 }
 
-} // ns opengl
+} // namespace opengl

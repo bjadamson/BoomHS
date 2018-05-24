@@ -133,7 +133,7 @@ struct PointlightTransform
 };
 
 void
-set_fog(stlw::Logger& logger, Fog const& fog, glm::mat4 const& view_matrix, ShaderProgram &sp)
+set_fog(stlw::Logger& logger, Fog const& fog, glm::mat4 const& view_matrix, ShaderProgram& sp)
 {
   sp.set_uniform_matrix_4fv(logger, "u_viewmatrix", view_matrix);
 
@@ -212,11 +212,11 @@ set_3dmvpmatrix(stlw::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 
 }
 
 void
-draw(RenderState& rstate, ShaderProgram& sp, DrawInfo& dinfo)
+draw(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
 {
   auto&      es          = rstate.es;
   auto&      logger      = es.logger;
-  auto const draw_mode   = es.wireframe_override ? GL_LINE_LOOP : dinfo.draw_mode();
+  auto const draw_mode   = es.wireframe_override ? GL_LINE_LOOP : dm;
   auto const num_indices = dinfo.num_indices();
   auto constexpr OFFSET  = nullptr;
 
@@ -239,9 +239,10 @@ draw(RenderState& rstate, ShaderProgram& sp, DrawInfo& dinfo)
 }
 
 void
-draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const& model_matrix,
-                 ShaderProgram& sp, DrawInfo& dinfo, Material const& material,
-                 EntityRegistry& registry, bool const receives_ambient_light)
+draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position,
+                 glm::mat4 const& model_matrix, ShaderProgram& sp, DrawInfo& dinfo,
+                 Material const& material, EntityRegistry& registry,
+                 bool const receives_ambient_light)
 {
   auto& es     = rstate.es;
   auto& logger = es.logger;
@@ -264,12 +265,12 @@ draw_3dlit_shape(RenderState& rstate, glm::vec3 const& position, glm::mat4 const
   auto const camera_matrix = rstate.camera_matrix();
   set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
 
-  draw(rstate, sp, dinfo);
+  draw(rstate, dm, sp, dinfo);
 }
 
 void
-draw_3dlightsource(RenderState& rstate, glm::mat4 const& model_matrix, ShaderProgram& sp,
-                   DrawInfo& dinfo, EntityID const eid, EntityRegistry& registry)
+draw_3dlightsource(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix,
+                   ShaderProgram& sp, DrawInfo& dinfo, EntityID const eid, EntityRegistry& registry)
 {
   auto& es = rstate.es;
   auto& zs = rstate.zs;
@@ -291,7 +292,7 @@ draw_3dlightsource(RenderState& rstate, glm::mat4 const& model_matrix, ShaderPro
     set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
   }
 
-  draw(rstate, sp, dinfo);
+  draw(rstate, dm, sp, dinfo);
 }
 
 void
@@ -393,7 +394,7 @@ RenderMatrices::from_camera_withposition(Camera const& camera, glm::vec3 const& 
 
   auto const view = Camera::compute_viewmatrix(mode, position_xyz, target, up, fps_center);
 
-  return RenderMatrices{proj, view};
+  return RenderMatrices{custom_camera_pos, proj, view};
 }
 
 RenderMatrices
@@ -409,6 +410,12 @@ RenderState::RenderState(RenderMatrices const& rmatrices, EngineState& e, ZoneSt
     , es(e)
     , zs(z)
 {
+}
+
+glm::vec3
+RenderState::camera_world_position() const
+{
+  return rmatrices_.camera_world_position;
 }
 
 glm::mat4
@@ -467,20 +474,21 @@ clear_screen(Color const& color)
 }
 
 void
-draw_2d(RenderState& rstate, ShaderProgram& sp, DrawInfo& dinfo, bool const alpha_blend)
+draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo,
+        bool const alpha_blend)
 {
   disable_depth_tests();
   ON_SCOPE_EXIT([]() { enable_depth_tests(); });
 
-  draw(rstate, sp, dinfo);
+  draw(rstate, dm, sp, dinfo);
 }
 
 void
-draw_2d(RenderState& rstate, ShaderProgram& sp, TextureInfo& ti, DrawInfo& dinfo,
-    bool const alpha_blend)
+draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, TextureInfo& ti, DrawInfo& dinfo,
+        bool const alpha_blend)
 {
   auto& logger = rstate.es.logger;
-  ti.while_bound(logger, [&]() { draw_2d(rstate, sp, dinfo, alpha_blend); });
+  ti.while_bound(logger, [&]() { draw_2d(rstate, dm, sp, dinfo, alpha_blend); });
 }
 
 void
@@ -536,7 +544,7 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
     auto const camera_matrix = rstate.camera_matrix();
     set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
-    dinfo.vao().while_bound(logger, [&]() { draw(rstate, sp, dinfo); });
+    dinfo.vao().while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
   });
 }
 
@@ -583,7 +591,7 @@ draw_global_axis(RenderState& rstate)
 
   auto const draw_axis_arrow = [&](DrawInfo& dinfo) {
     auto& vao = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw(rstate, sp, dinfo); });
+    vao.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
   };
 
   sp.while_bound(logger, [&]() {
@@ -624,9 +632,9 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
     // assume for now they all share the same VAO layout
     auto& vao = axis_arrows.x_dinfo.vao();
     vao.while_bound(logger, [&]() {
-      draw(rstate, sp, axis_arrows.x_dinfo);
-      draw(rstate, sp, axis_arrows.y_dinfo);
-      draw(rstate, sp, axis_arrows.z_dinfo);
+      draw(rstate, GL_LINES, sp, axis_arrows.x_dinfo);
+      draw(rstate, GL_LINES, sp, axis_arrows.y_dinfo);
+      draw(rstate, GL_LINES, sp, axis_arrows.z_dinfo);
     });
   });
 
@@ -649,8 +657,11 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   auto const& ldata  = zs.level_data;
   auto const& player = ldata.player;
 
-  auto const draw_fn = [&](auto eid, auto& sn, auto& transform, auto& is_visible, auto&&...) {
-    bool const skip = !is_visible.value;
+#define COMMON ShaderName, Transform, IsVisible
+#define COMMON_ARGS auto const eid, auto &sn, auto &transform, auto &is_v
+
+  auto const draw_fn = [&](GLenum const dm, COMMON_ARGS, auto&&...) {
+    bool const skip = !is_v.value;
     if (skip) {
       return;
     }
@@ -665,7 +676,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
       vao.while_bound(logger, [&]() {
         if (is_lightsource) {
           assert(is_lightsource);
-          draw_3dlightsource(rstate, model_matrix, sp, dinfo, eid, registry);
+          draw_3dlightsource(rstate, dm, model_matrix, sp, dinfo, eid, registry);
           return;
         }
         bool constexpr RECEIVES_AMBIENT_LIGHT = true;
@@ -674,7 +685,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
         if (receives_light) {
           assert(registry.has<Material>(eid));
           Material const& material = registry.get<Material>(eid);
-          draw_3dlit_shape(rstate, transform.translation, model_matrix, sp, dinfo, material,
+          draw_3dlit_shape(rstate, dm, transform.translation, model_matrix, sp, dinfo, material,
                            registry, RECEIVES_AMBIENT_LIGHT);
           return;
         }
@@ -686,22 +697,40 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
           auto const camera_matrix = rstate.camera_matrix();
           set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
         }
-        draw(rstate, sp, dinfo);
+        draw(rstate, dm, sp, dinfo);
       });
     });
   };
 
-  auto const draw_texture_fn = [&](auto const eid, auto& sn, auto& transform, auto& is_visible,
-                                   auto& texture_renderable, auto&&... args) {
+  auto const draw_textured_junk_fn = [&](COMMON_ARGS, auto& texture_renderable, auto&&... args) {
     auto* ti = texture_renderable.texture_info;
     assert(ti);
     ti->while_bound(logger, [&]() {
-      draw_fn(eid, sn, transform, is_visible, texture_renderable, FORWARD(args));
+      draw_fn(GL_TRIANGLES, eid, sn, transform, is_v, texture_renderable, FORWARD(args));
     });
   };
 
-  auto const draw_torch = [&](auto const eid, auto& sn, auto& transform, auto& isv, Torch& torch,
-                              TextureRenderable& trenderable) {
+  auto const draw_orbital_body = [&](COMMON_ARGS, auto& bboard, OrbitalBody&,
+                                     TextureRenderable& trenderable) {
+    auto const bb_type    = bboard.value;
+    auto const view_model = compute_billboarded_viewmodel(transform, rstate.view_matrix(), bb_type);
+
+    auto const proj_matrix = rstate.projection_matrix();
+    auto const mvp_matrix  = proj_matrix * view_model;
+    auto&      sp          = sps.ref_sp(sn.value);
+    sp.while_bound(logger, [&]() { set_modelmatrix(logger, mvp_matrix, sp); });
+
+    auto* ti = trenderable.texture_info;
+    assert(ti);
+
+    ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
+    ti->while_bound(logger, [&]() { draw_fn(GL_TRIANGLES, eid, sn, transform, is_v, bboard); });
+  };
+
+  auto const draw_junk = [&](COMMON_ARGS, Color&, JunkEntityFromFILE& je) {
+    draw_fn(je.draw_mode, eid, sn, transform, is_v);
+  };
+  auto const draw_torch = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
     {
       auto& sp = sps.ref_sp(sn.value);
 
@@ -724,39 +753,30 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
     auto* ti = trenderable.texture_info;
     assert(ti);
-    ti->while_bound(logger, [&]() { draw_fn(eid, sn, copy_transform, isv, torch); });
+    ti->while_bound(logger, [&]() { draw_fn(GL_TRIANGLES, eid, sn, copy_transform, is_v, torch); });
   };
-
-  auto const draw_orbital_body = [&](auto const eid, auto& sn, auto& transform, auto& isv,
-                                     auto& bboard, OrbitalBody&, TextureRenderable& trenderable) {
-    auto const bb_type    = bboard.value;
-    auto const view_model = compute_billboarded_viewmodel(transform, rstate.view_matrix(), bb_type);
-
-    auto const proj_matrix = rstate.projection_matrix();
-    auto const mvp_matrix  = proj_matrix * view_model;
-    auto&      sp          = sps.ref_sp(sn.value);
-    sp.while_bound(logger, [&]() { set_modelmatrix(logger, mvp_matrix, sp); });
-
-    auto* ti = trenderable.texture_info;
-    assert(ti);
-
-    ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
-    ti->while_bound(logger, [&]() { draw_fn(eid, sn, transform, isv, bboard); });
+  auto const draw_cube = [&](COMMON_ARGS, CubeRenderable& cr) {
+    draw_fn(cr.mode, eid, sn, transform, is_v, cr);
   };
+#undef COMMON_ARGS
 
-#define COMMON ShaderName, Transform, IsVisible
   // define rendering order here
   // OrbitalBodies always render first.
   registry.view<COMMON, BillboardRenderable, OrbitalBody, TextureRenderable>().each(
       draw_orbital_body);
 
-  registry.view<COMMON, WaterTileThing>().each(draw_fn);
-  registry.view<COMMON, TextureRenderable, JunkEntityFromFILE>().each(draw_texture_fn);
-  registry.view<COMMON, Color, JunkEntityFromFILE>().each(draw_fn);
+  // registry.view<COMMON, WaterTileThing>().each(draw_fn);
+  registry.view<COMMON, TextureRenderable, JunkEntityFromFILE>().each(draw_textured_junk_fn);
+  registry.view<COMMON, Color, JunkEntityFromFILE>().each(draw_junk);
+
   registry.view<COMMON, Torch, TextureRenderable>().each(draw_torch);
-  registry.view<COMMON, CubeRenderable>().each(draw_fn);
-  registry.view<COMMON, MeshRenderable, NPCData>().each(draw_fn);
-  registry.view<COMMON, MeshRenderable, PlayerData>().each(draw_fn);
+  registry.view<COMMON, CubeRenderable>().each(draw_cube);
+
+  // registry.view<COMMON, CubeRenderable, BoundingBox>().each(draw_boundingbox);
+  registry.view<COMMON, MeshRenderable, NPCData>().each(
+      [&](auto&&... args) { draw_fn(GL_TRIANGLES, FORWARD(args)); });
+  registry.view<COMMON, MeshRenderable, PlayerData>().each(
+      [&](auto&&... args) { draw_fn(GL_TRIANGLES, FORWARD(args)); });
 #undef COMMON
 }
 
@@ -774,19 +794,18 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
   auto& sp  = sps.ref_sp("2dtexture");
 
   auto const v     = OF::rectangle_vertices();
-  DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, ti);
+  DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, sp, v, ti);
 
   Transform transform;
   transform.translation = glm::vec3{pos.x, pos.y, 0.0f};
   transform.scale       = glm::vec3{scale.x, scale.y, 1.0};
 
   auto const model_matrix = transform.model_matrix();
-
   sp.while_bound(logger, [&]() {
     set_modelmatrix(logger, model_matrix, sp);
 
     auto& vao = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, sp, ti, dinfo, false); });
+    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo, false); });
   });
 }
 
@@ -805,7 +824,7 @@ draw_inventory_overlay(RenderState& rstate)
   OF::RectInfo const ri{1.0f, 1.0f, color, std::nullopt, std::nullopt};
   OF::RectBuffer     buffer = OF::make_rectangle(ri);
 
-  DrawInfo dinfo = gpu::copy_rectangle(logger, GL_TRIANGLES, sp, buffer);
+  DrawInfo dinfo = gpu::copy_rectangle(logger, sp, buffer);
 
   auto& ttable = zs.gfx_state.texture_table;
 
@@ -817,7 +836,7 @@ draw_inventory_overlay(RenderState& rstate)
     set_modelmatrix(logger, model_matrix, sp);
 
     auto& vao = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, sp, dinfo, true); });
+    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, dinfo, true); });
   });
 }
 
@@ -845,7 +864,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
 
     auto& vao = dinfo.vao();
     vao.while_bound(logger, [&]() {
-      draw_3dlit_shape(rstate, position, model_mat, sp, dinfo, material, registry,
+      draw_3dlit_shape(rstate, GL_TRIANGLES, position, model_mat, sp, dinfo, material, registry,
                        receives_ambient_light);
     });
   };
@@ -961,11 +980,11 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
     auto texture_o = ttable.find("TargetReticle");
     assert(texture_o);
-    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, *texture_o);
+    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp, v, *texture_o);
 
     transform.scale = glm::vec3{scale};
     auto& vao       = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, sp, *texture_o, dinfo, true); });
+    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, *texture_o, dinfo, true); });
   };
 
   auto const draw_glow = [&]() {
@@ -975,11 +994,11 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     auto const mvp_matrix = proj_matrix * view_model;
     set_modelmatrix(logger, mvp_matrix, sp);
 
-    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, GL_TRIANGLES, sp, v, *texture_o);
+    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp, v, *texture_o);
 
     transform.scale = glm::vec3{scale};
     auto& vao       = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, sp, *texture_o, dinfo, true); });
+    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, *texture_o, dinfo, true); });
   };
 
   ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
@@ -1030,7 +1049,8 @@ draw_rivers(RenderState& rstate, window::FrameTime const& ft)
         auto const modelmatrix      = stlw::math::calculate_modelmatrix(tr, rot, scale);
         auto const inverse_model    = glm::inverse(modelmatrix);
         sp.set_uniform_matrix_4fv(logger, "u_inversemodelmatrix", inverse_model);
-        draw_3dlit_shape(rstate, tr, modelmatrix, sp, dinfo, material, registry, receives_ambient);
+        draw_3dlit_shape(rstate, GL_TRIANGLES, tr, modelmatrix, sp, dinfo, material, registry,
+                         receives_ambient);
       };
       for (auto const& w : rinfo.wiggles) {
         if (w.is_visible) {
@@ -1083,7 +1103,7 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
       set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
 
       auto& vao = dinfo.vao();
-      vao.while_bound(logger, [&]() { draw(rstate, sp, dinfo); });
+      vao.while_bound(logger, [&]() { draw(rstate, GL_TRIANGLES, sp, dinfo); });
     });
   };
 
@@ -1145,7 +1165,8 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
         auto const draw_fn = [&]() {
           tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
           tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-          draw_3dlit_shape(rstate, tr, model_matrix, sp, dinfo, mat, registry, ambient);
+          draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, tr, model_matrix, sp, dinfo, mat, registry,
+                           ambient);
         };
         tinfo.while_bound(logger, draw_fn);
       });
@@ -1185,7 +1206,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
     set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
 
     auto& vao = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw(rstate, sp, dinfo); });
+    vao.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
   });
 }
 
@@ -1235,8 +1256,8 @@ draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
 
       vao.while_bound(logger, [&]() {
         water_fbos.while_bound(logger, [&]() {
-          draw_3dlit_shape(rstate, tr, model_matrix, sp, dinfo, Material{}, registry,
-                           RECEIVES_AMBIENT_LIGHT);
+          draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, tr, model_matrix, sp, dinfo, Material{},
+                           registry, RECEIVES_AMBIENT_LIGHT);
         });
       });
     });

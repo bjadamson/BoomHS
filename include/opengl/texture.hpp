@@ -45,7 +45,7 @@ struct TextureInfo
   static size_t constexpr NUM_BUFFERS = 1;
 };
 
-using Texture      = stlw::AutoResource<TextureInfo>;
+using Texture = stlw::AutoResource<TextureInfo>;
 
 struct TextureFilenames
 {
@@ -111,8 +111,8 @@ wrap_mode_from_string(char const*);
 
 struct TextureAllocationArgs
 {
-  GLint const format;
-  float  const uv_max;
+  GLint const  format;
+  float const  uv_max;
   GLenum const texture_unit;
 };
 

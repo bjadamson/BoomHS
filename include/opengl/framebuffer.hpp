@@ -1,6 +1,6 @@
 #pragma once
-#include <opengl/bind.hpp>
 #include <boomhs/dimensions.hpp>
+#include <opengl/bind.hpp>
 #include <stlw/auto_resource.hpp>
 #include <stlw/log.hpp>
 #include <stlw/result.hpp>
@@ -33,6 +33,6 @@ struct FBInfo
 
   static size_t constexpr NUM_BUFFERS = 1;
 };
-using FrameBuffer  = stlw::AutoResource<FBInfo>;
+using FrameBuffer = stlw::AutoResource<FBInfo>;
 
-} // ns opengl
+} // namespace opengl

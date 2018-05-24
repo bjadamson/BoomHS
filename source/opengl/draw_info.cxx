@@ -56,16 +56,14 @@ operator<<(std::ostream &stream, BufferHandles const& buffers)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // DrawInfo
-DrawInfo::DrawInfo(GLenum const dm, size_t const num_vertexes, GLuint const num_indices)
-  : draw_mode_(dm)
-  , num_vertexes_(num_vertexes)
+DrawInfo::DrawInfo(size_t const num_vertexes, GLuint const num_indices)
+  : num_vertexes_(num_vertexes)
   , num_indices_(num_indices)
 {
 }
 
 DrawInfo::DrawInfo(DrawInfo &&other)
-  : draw_mode_(other.draw_mode_)
-  , num_vertexes_(other.num_vertexes_)
+  : num_vertexes_(other.num_vertexes_)
   , num_indices_(other.num_indices_)
   , handles_(MOVE(other.handles_))
   , vao_(MOVE(other.vao_))
@@ -75,10 +73,8 @@ DrawInfo::DrawInfo(DrawInfo &&other)
 DrawInfo&
 DrawInfo::operator=(DrawInfo &&other)
 {
-  draw_mode_ = other.draw_mode_;
   num_vertexes_ = other.num_vertexes_;
   num_indices_ = other.num_indices_;
-  other.draw_mode_ = -1;
   other.num_vertexes_ = 0;
   other.num_indices_ = 0;
 
@@ -93,7 +89,7 @@ DrawInfo::to_string(VertexAttribute const& va) const
   auto const& dinfo = *this;
 
   std::string result;
-  result += fmt::format("DrawMode: {} NumIndices: {}\n", dinfo.draw_mode(), dinfo.num_indices());
+  result += fmt::format("NumIndices: {}\n", dinfo.num_indices());
   result += "VAO:\n" + dinfo.vao_.to_string() + "\n";
   result += "BufferHandles:\n" + dinfo.handles_.to_string() + "\n";
   result += "EBO contents:\n";

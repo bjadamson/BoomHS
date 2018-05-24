@@ -47,6 +47,7 @@ struct Dimensions;
 
 struct RenderMatrices
 {
+  glm::vec3 const camera_world_position;
   glm::mat4 const projection;
   glm::mat4 const view;
 
@@ -66,6 +67,7 @@ public:
   EngineState& es;
   ZoneState&   zs;
 
+  glm::vec3 camera_world_position() const;
   glm::mat4 camera_matrix() const;
   glm::mat4 projection_matrix() const;
   glm::mat4 view_matrix() const;
@@ -84,10 +86,10 @@ clear_screen(opengl::Color const&);
 
 // TODO: keep these extract rest to sub-renderers
 void
-draw_2d(RenderState&, opengl::ShaderProgram&, opengl::DrawInfo&, bool);
+draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::DrawInfo&, bool);
 
 void
-draw_2d(RenderState&, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&);
+draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&);
 
 // TODO: move rest to sub-renderers or something
 void
@@ -135,7 +137,5 @@ draw_tilegrid(RenderState&, TiledataState const&);
 void
 draw_water(RenderState&, EntityRegistry&, window::FrameTime const&, glm::vec4 const&,
            WaterFrameBuffers&, glm::vec3 const&);
-
-
 
 } // namespace boomhs::render

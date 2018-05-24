@@ -63,10 +63,10 @@ copy_cubetexture_gpu(stlw::Logger&, ShaderProgram const&);
 // Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 DrawInfo
-copy_rectangle(stlw::Logger&, GLenum, ShaderProgram const&, OF::RectBuffer const&);
+copy_rectangle(stlw::Logger&, ShaderProgram const&, OF::RectBuffer const&);
 
 DrawInfo
-copy_rectangle_uvs(stlw::Logger&, GLenum, ShaderProgram const&, OF::RectangleVertices const&,
+copy_rectangle_uvs(stlw::Logger&, ShaderProgram const&, OF::RectangleVertices const&,
                    TextureInfo const&);
 
 // General
@@ -80,10 +80,10 @@ create_modelnormals(stlw::Logger&, ShaderProgram const&, glm::mat4 const&, boomh
                     Color const&);
 
 DrawInfo
-copy_gpu(stlw::Logger&, GLenum, ShaderProgram const&, boomhs::ObjData const&);
+copy_gpu(stlw::Logger&, ShaderProgram const&, boomhs::ObjData const&);
 
 DrawInfo
-copy_gpu(stlw::Logger&, GLenum, ShaderProgram const&, VertexBuffer const&);
+copy_gpu(stlw::Logger&, ShaderProgram const&, VertexBuffer const&);
 
 } // namespace opengl::gpu
 namespace OG = opengl::gpu;

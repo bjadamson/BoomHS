@@ -403,12 +403,6 @@ init(Engine& engine, EngineState& engine_state, Camera& camera)
   return OK_MOVE(state);
 }
 
-/////////////////
-struct BoundingSelectionSphere
-{
-  float radius = 0.0f;
-};
-
 void
 render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, FrameTime const& ft,
              glm::vec4 const& cull_plane)
@@ -424,60 +418,91 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
   if (!doonce) {
     doonce = true;
 
-    auto tree_eid = registry.create();
-    auto& mr = registry.assign<MeshRenderable>(tree_eid);
-    mr.name = "tree_lowpoly";
-
-    registry.assign<Transform>(tree_eid);
-    registry.assign<Material>(tree_eid);
-    registry.assign<JunkEntityFromFILE>(tree_eid);
-    {
-      auto& isv = registry.assign<IsVisible>(tree_eid);
-      isv.value = true;
-    }
-    registry.assign<Name>(tree_eid).value = "custom tree";
-
-    auto& sn = registry.assign<ShaderName>(tree_eid);
-    sn.value = "3d_pos_normal_color";
-    {
-      auto& cc = registry.assign<Color>(tree_eid);
-      *&cc     = LOC::WHITE;
-    }
-    {
-      auto& bss = registry.assign<BoundingSelectionSphere>(tree_eid);
-      bss.radius = 0.25f;
-    }
-
     auto& gfx_state = zs.gfx_state;
+    auto& sps       = gfx_state.sps;
+
+    auto&       ldata     = zs.level_data;
+    auto const& obj_store = ldata.obj_store;
+
     auto& entity_dh_o = gfx_state.gpu_state.entities;
     assert(entity_dh_o);
     auto& entity_dh = *entity_dh_o;
+    {
+      auto  tree_eid = registry.create();
+      auto& mr       = registry.assign<MeshRenderable>(tree_eid);
+      mr.name        = "tree_lowpoly";
 
-    auto& sps       = gfx_state.sps;
-    auto& sp   = sps.ref_sp(sn.value);
+      auto& tree_transform = registry.assign<Transform>(tree_eid);
+      registry.assign<Material>(tree_eid);
+      registry.assign<JunkEntityFromFILE>(tree_eid);
+      {
+        auto& isv = registry.assign<IsVisible>(tree_eid);
+        isv.value = true;
+      }
+      registry.assign<Name>(tree_eid).value = "custom tree";
 
-    ObjQuery const query{mr.name, BufferFlags{true, true, true, false}};
+      auto& sn = registry.assign<ShaderName>(tree_eid);
+      sn.value = "3d_pos_normal_color";
+      {
+        auto& cc = registry.assign<Color>(tree_eid);
+        *&cc     = LOC::WHITE;
+      }
+      {
+        auto& bss  = registry.assign<BoundingBox>(tree_eid);
+        bss.radius = 1.00f;
+      }
 
-    auto& ldata           = zs.level_data;
-    auto const& obj_store = ldata.obj_store;
+      auto&          sp = sps.ref_sp(sn.value);
+      ObjQuery const query{mr.name, BufferFlags{true, true, true, false}};
 
-    auto& obj    = obj_store.get_obj(logger, query);
-    auto dinfo   = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, sp, obj);
+      auto&       ldata     = zs.level_data;
+      auto const& obj_store = ldata.obj_store;
 
-    entity_dh.add(tree_eid, MOVE(dinfo));
+      auto& obj   = obj_store.get_obj(logger, query);
+      auto  dinfo = opengl::gpu::copy_gpu(logger, sp, obj);
+
+      entity_dh.add(tree_eid, MOVE(dinfo));
+    }
+    {
+      auto  eid = registry.create();
+      auto& mr  = registry.assign<CubeRenderable>(eid);
+
+      registry.assign<Transform>(eid);
+      registry.assign<Material>(eid);
+      registry.assign<JunkEntityFromFILE>(eid);
+      registry.assign<IsVisible>(eid).value = true;
+      ;
+      registry.assign<Name>(eid).value = "collider rect";
+      auto& sn                         = registry.assign<ShaderName>(eid);
+      sn.value                         = "3d_pos_color";
+      {
+        auto& cc = registry.assign<Color>(eid);
+        *&cc     = LOC::WHITE;
+      }
+      auto& sp    = sps.ref_sp(sn.value);
+      auto  dinfo = opengl::gpu::copy_cubevertexonly_gpu(logger, sp);
+      entity_dh.add(eid, MOVE(dinfo));
+    }
   }
-
-  auto const components_bss = find_all_entities_with_component<BoundingSelectionSphere>(registry);
-  for (auto const eid : components_bss) {
-    auto const& bss = registry.get<BoundingSelectionSphere>(eid);
-  }
-
   {
-    MousePicker mouse_picker;
-    auto world_pos = mouse_picker.calculate_ray(rstate);
-    LOG_ERROR_SPRINTF("World pos %s", glm::to_string(world_pos));
-  }
+    MousePicker     mouse_picker;
+    glm::vec3 const ray_dir = mouse_picker.calculate_ray(rstate);
+    LOG_ERROR_SPRINTF("ray_dir %s", glm::to_string(ray_dir));
 
+    auto const components_bss = find_all_entities_with_component<BoundingBox>(registry);
+    for (auto const eid : components_bss) {
+      auto const&      bss            = registry.get<BoundingBox>(eid);
+      glm::vec3 const& ray_start      = rstate.camera_world_position();
+      auto&            tree_transform = registry.get<Transform>(eid);
+      glm::vec3 const& sphere_center  = tree_transform.translation;
+      float const      rad_squared    = stlw::math::squared(bss.radius);
+
+      float      distance = 0.0f;
+      bool const intersects =
+          glm::intersectRaySphere(ray_start, ray_dir, sphere_center, rad_squared, distance);
+      LOG_ERROR_SPRINTF("Comparing components_bss intersects %i, %f", intersects, distance);
+    }
+  }
 
   if (es.draw_entities) {
     render::draw_entities(rstate, rng, ft);
@@ -593,12 +618,12 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   // Render the scene with no culling (setting it zero disables culling mathematically)
   glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
 
-  auto const& fog_color = ldata.fog.color;
-  auto const make_skybox_renderer = [&]() {
-    auto& skybox_sp = sps.ref_sp("skybox");
-    DrawInfo dinfo  = opengl::gpu::copy_cubetexture_gpu(logger, skybox_sp);
-    auto&  day_ti   = *ttable.find("building_skybox");
-    auto&  night_ti = *ttable.find("night_skybox");
+  auto const& fog_color            = ldata.fog.color;
+  auto const  make_skybox_renderer = [&]() {
+    auto&    skybox_sp = sps.ref_sp("skybox");
+    DrawInfo dinfo     = opengl::gpu::copy_cubetexture_gpu(logger, skybox_sp);
+    auto&    day_ti    = *ttable.find("building_skybox");
+    auto&    night_ti  = *ttable.find("night_skybox");
     return SkyboxRenderer{logger, MOVE(dinfo), day_ti, night_ti, skybox_sp};
   };
 

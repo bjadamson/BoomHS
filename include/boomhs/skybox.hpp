@@ -8,12 +8,12 @@ namespace opengl
 {
 class ShaderProgram;
 struct TextureInfo;
-} // ns opengl
+} // namespace opengl
 
 namespace window
 {
 class FrameTime;
-} // ns window
+} // namespace window
 
 namespace boomhs
 {
@@ -22,7 +22,7 @@ class RenderState;
 class Skybox
 {
   Transform transform_;
-  float speed_;
+  float     speed_;
 
 public:
   Skybox();
@@ -30,21 +30,21 @@ public:
   void update(window::FrameTime const&);
 
   auto const& transform() const { return transform_; }
-  auto& transform() { return transform_; }
+  auto&       transform() { return transform_; }
 };
 
 class SkyboxRenderer
 {
   opengl::DrawInfo dinfo_;
 
-  opengl::TextureInfo &day_;
-  opengl::TextureInfo &night_;
+  opengl::TextureInfo&   day_;
+  opengl::TextureInfo&   night_;
   opengl::ShaderProgram& sp_;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(SkyboxRenderer);
   SkyboxRenderer(stlw::Logger&, opengl::DrawInfo&&, opengl::TextureInfo&, opengl::TextureInfo&,
-      opengl::ShaderProgram&);
+                 opengl::ShaderProgram&);
 
   void render(RenderState&, window::FrameTime const&);
 };

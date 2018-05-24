@@ -41,7 +41,6 @@ operator<<(std::ostream&, BufferHandles const&);
 
 class DrawInfo
 {
-  GLenum        draw_mode_;
   size_t        num_vertexes_;
   GLuint        num_indices_;
   BufferHandles handles_;
@@ -49,12 +48,11 @@ class DrawInfo
 
 public:
   NO_COPY(DrawInfo);
-  explicit DrawInfo(GLenum, size_t, GLuint);
+  explicit DrawInfo(size_t, GLuint);
 
   DrawInfo(DrawInfo&&);
   DrawInfo& operator=(DrawInfo&&);
 
-  auto  draw_mode() const { return draw_mode_; }
   auto  vbo() const { return handles_.vbo(); }
   auto  ebo() const { return handles_.ebo(); }
   auto  num_vertexes() const { return num_vertexes_; }

@@ -1,5 +1,5 @@
-#include <boomhs/skybox.hpp>
 #include <boomhs/renderer.hpp>
+#include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
 
 #include <opengl/constants.hpp>
@@ -7,8 +7,8 @@
 #include <opengl/texture.hpp>
 #include <stlw/math.hpp>
 
-#include <window/timer.hpp>
 #include <cassert>
+#include <window/timer.hpp>
 
 using namespace opengl;
 using namespace window;
@@ -34,8 +34,8 @@ Skybox::update(FrameTime const& ft)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // SkyboxRenderer
-SkyboxRenderer::SkyboxRenderer(stlw::Logger& logger, DrawInfo &&dinfo, TextureInfo& day,
-    TextureInfo& night, ShaderProgram &sp)
+SkyboxRenderer::SkyboxRenderer(stlw::Logger& logger, DrawInfo&& dinfo, TextureInfo& day,
+                               TextureInfo& night, ShaderProgram& sp)
     : dinfo_(MOVE(dinfo))
     , day_(day)
     , night_(night)
@@ -44,16 +44,16 @@ SkyboxRenderer::SkyboxRenderer(stlw::Logger& logger, DrawInfo &&dinfo, TextureIn
   sp_.while_bound(logger, [&]() {
     sp_.set_uniform_int1(logger, "u_cube_sampler1", 0);
     sp_.set_uniform_int1(logger, "u_cube_sampler1", 1);
-    });
+  });
 
-  auto const set_fields = [&](auto &ti, GLenum const tunit) {
+  auto const set_fields = [&](auto& ti, GLenum const tunit) {
     glActiveTexture(tunit);
     ON_SCOPE_EXIT([&]() { glActiveTexture(tunit); });
     ti.while_bound(logger, [&]() {
-        ti.set_fieldi(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        ti.set_fieldi(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        ti.set_fieldi(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        });
+      ti.set_fieldi(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      ti.set_fieldi(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+      ti.set_fieldi(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    });
   };
   set_fields(day_, GL_TEXTURE0);
   set_fields(night_, GL_TEXTURE1);
@@ -67,7 +67,7 @@ SkyboxRenderer::render(RenderState& rstate, FrameTime const& ft)
   auto& logger = es.logger;
 
   auto const& ldata = zs.level_data;
-  auto const& fog = ldata.fog;
+  auto const& fog   = ldata.fog;
 
   glActiveTexture(GL_TEXTURE0);
   ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
@@ -82,8 +82,8 @@ SkyboxRenderer::render(RenderState& rstate, FrameTime const& ft)
   // Converting the "current hour" to a value in [0.0, 1.0]
   auto const calculate_blend = [&]() {
     auto const& hour_of_day = static_cast<float>(es.time.hours());
-    auto const frac         = hour_of_day / 24.0f;
-    auto blend              = 1.0f - std::abs(stlw::math::squared(-frac) + frac);
+    auto const  frac        = hour_of_day / 24.0f;
+    auto        blend       = 1.0f - std::abs(stlw::math::squared(-frac) + frac);
     if (blend < 0.0f) {
       blend = -blend;
     }
@@ -103,13 +103,15 @@ SkyboxRenderer::render(RenderState& rstate, FrameTime const& ft)
   auto const camera_matrix = proj_matrix * view_matrix;
 
   bool constexpr ENABLE_ALPHABLEND = false;
-  auto const draw_fn = [&]() { render::draw_2d(rstate, sp_, dinfo_, ENABLE_ALPHABLEND); };
+  auto const draw_fn               = [&]() {
+    render::draw_2d(rstate, GL_TRIANGLES, sp_, dinfo_, ENABLE_ALPHABLEND);
+  };
 
   sp_.while_bound(logger, [&]() {
     {
-      auto const& skybox = ldata.skybox;
-      auto const& transform = skybox.transform();
-      auto const mvp_matrix = camera_matrix * transform.model_matrix();
+      auto const& skybox     = ldata.skybox;
+      auto const& transform  = skybox.transform();
+      auto const  mvp_matrix = camera_matrix * transform.model_matrix();
       sp_.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
     }
     sp_.set_uniform_color(logger, "u_fog.color", fog.color);
@@ -122,4 +124,4 @@ SkyboxRenderer::render(RenderState& rstate, FrameTime const& ft)
   });
 }
 
-} // ns boomhs
+} // namespace boomhs

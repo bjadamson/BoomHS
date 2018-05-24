@@ -217,7 +217,8 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
   }
 
   LOG_ERROR_SPRINTF("materials size: %lu", materials.size());
-  FOR(i, materials.size()) {
+  FOR(i, materials.size())
+  {
     auto const& material = materials[i];
     LOG_ERROR_SPRINTF("Material name: %s", material.name);
   }

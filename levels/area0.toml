@@ -322,6 +322,10 @@ path = "assets/"
 name = "B"
 path = "assets/"
 
+[[meshes]]
+name = "sphere"
+path = "assets/"
+
 ########### FOG ################
 [[fog]]
 density = 0.007

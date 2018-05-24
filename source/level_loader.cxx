@@ -283,14 +283,14 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       auto const  wrap_s = get_string(resource, "wrap").value_or("clamp");
       GLint const wrap   = texture::wrap_mode_from_string(wrap_s.c_str());
 
-      auto const uv_max       = get_float(resource, "uvs").value_or(1.0f);
+      auto const uv_max = get_float(resource, "uvs").value_or(1.0f);
 
       unsigned int const texture_unit = get_unsignedint(resource, "texture_unit").value_or(0);
 
       opengl::texture::TextureAllocationArgs const taa{format, uv_max, texture_unit};
 
-      Texture    t      = TRY_MOVEOUT(
-          opengl::texture::allocate_texture(logger, texture_names.filenames[0], taa));
+      Texture t =
+          TRY_MOVEOUT(opengl::texture::allocate_texture(logger, texture_names.filenames[0], taa));
 
       glActiveTexture(GL_TEXTURE0 + texture_unit);
       ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
