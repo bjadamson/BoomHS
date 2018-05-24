@@ -139,9 +139,9 @@ DrawInfo::to_string(VertexAttribute const& va) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// EntityDrawinfos
+// EntityDrawInfos
 size_t
-EntityDrawinfos::add(EntityID const entity, opengl::DrawInfo &&di)
+EntityDrawInfos::add(EntityID const entity, opengl::DrawInfo &&di)
 {
   auto const pos = drawinfos_.size();
   drawinfos_.emplace_back(MOVE(di));
@@ -151,7 +151,7 @@ EntityDrawinfos::add(EntityID const entity, opengl::DrawInfo &&di)
   return pos;
 }
 
-#define GET_IMPLEMENTATION                                                                         \
+#define LOOKUP_IMPLEMENTATION                                                                      \
   FOR(i, entities_.size()) {                                                                       \
     if (entities_[i] == entity) {                                                                  \
       return drawinfos_[i];                                                                        \
@@ -161,34 +161,22 @@ EntityDrawinfos::add(EntityID const entity, opengl::DrawInfo &&di)
   std::abort();
 
 opengl::DrawInfo&
-EntityDrawinfos::get(stlw::Logger &logger, EntityID const entity)
+EntityDrawInfos::lookup(stlw::Logger &logger, EntityID const entity)
 {
-  GET_IMPLEMENTATION
+  LOOKUP_IMPLEMENTATION
 }
 
 opengl::DrawInfo const&
-EntityDrawinfos::get(stlw::Logger &logger, EntityID const entity) const
+EntityDrawInfos::lookup(stlw::Logger &logger, EntityID const entity) const
 {
-  GET_IMPLEMENTATION
+  LOOKUP_IMPLEMENTATION
 }
-#undef GET_IMPLEMENTATION
+#undef LOOKUP_IMPLEMENTATION
 
-
-opengl::DrawInfo&
-EntityDrawHandles::lookup(stlw::Logger &logger, EntityID const eid)
-{
-  return infos_.get(logger, eid);
-}
-
-opengl::DrawInfo const&
-EntityDrawHandles::lookup(stlw::Logger &logger, EntityID const eid) const
-{
-  return infos_.get(logger, eid);
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TileDrawHandles
-#define GET_IMPLEMENTATION                                                                         \
+#define LOOKUP_IMPLEMENTATION                                                                      \
   assert(type < TileType::UNDEFINED);                                                              \
   auto const index = static_cast<size_t>(type);                                                    \
   return drawinfos_[index];
@@ -196,14 +184,14 @@ EntityDrawHandles::lookup(stlw::Logger &logger, EntityID const eid) const
 opengl::DrawInfo&
 TileDrawHandles::lookup(stlw::Logger &logger, TileType const type)
 {
-  GET_IMPLEMENTATION
+  LOOKUP_IMPLEMENTATION
 }
 
 opengl::DrawInfo const&
 TileDrawHandles::lookup(stlw::Logger &logger, TileType const type) const
 {
-  GET_IMPLEMENTATION
+  LOOKUP_IMPLEMENTATION
 }
-#undef GET_IMPLEMENTATION
+#undef LOOKUP_IMPLEMENTATION
 
 } // ns opengl

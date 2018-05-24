@@ -191,8 +191,14 @@ process_mousemotion(GameState& state, SDL_MouseMotionEvent const& motion, Camera
   auto& ldata  = lm.active().level_data;
   auto& player = ldata.player;
 
-  auto const xrel = motion.xrel;
-  auto const yrel = motion.yrel;
+  {
+    // update the mouse relative and current positions
+    ms.relative.x = motion.xrel;
+    ms.relative.y = motion.yrel;
+
+    ms.coords.x = motion.x;
+    ms.coords.y = motion.y;
+  }
 
   if (ms.both_pressed()) {
     player.rotate_to_match_camera_rotation(camera);
@@ -200,13 +206,13 @@ process_mousemotion(GameState& state, SDL_MouseMotionEvent const& motion, Camera
   }
   if (ms.left_pressed) {
     auto const& sens = ms.sensitivity;
-    float const dx   = sens.x * xrel;
-    float const dy   = sens.y * yrel;
+    float const dx   = sens.x * ms.relative.x;
+    float const dy   = sens.y * ms.relative.y;
     camera.rotate(dx, dy);
   }
   if (ms.right_pressed) {
     float const speed = camera.rotation_speed;
-    float const angle = xrel > 0 ? speed : -speed;
+    float const angle = ms.relative.x > 0 ? speed : -speed;
 
     auto const x_dt     = angle * ft.delta_millis();
     auto constexpr y_dt = 0.0f;

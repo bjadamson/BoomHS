@@ -64,35 +64,19 @@ public:
   std::string to_string(VertexAttribute const&) const;
 };
 
-class EntityDrawinfos
+class EntityDrawInfos
 {
   std::vector<opengl::DrawInfo> drawinfos_;
   std::vector<boomhs::EntityID> entities_;
 
 public:
-  EntityDrawinfos() = default;
-  NO_COPY(EntityDrawinfos);
-  MOVE_DEFAULT(EntityDrawinfos);
+  EntityDrawInfos() = default;
+  NO_COPY(EntityDrawInfos);
+  MOVE_DEFAULT(EntityDrawInfos);
 
   size_t add(boomhs::EntityID, opengl::DrawInfo&&);
 
   bool empty() const { return drawinfos_.empty(); }
-
-  opengl::DrawInfo&       get(stlw::Logger&, boomhs::EntityID);
-  opengl::DrawInfo const& get(stlw::Logger&, boomhs::EntityID) const;
-};
-
-class EntityDrawHandles
-{
-  EntityDrawinfos infos_;
-
-public:
-  NO_COPY(EntityDrawHandles);
-  MOVE_DEFAULT(EntityDrawHandles);
-  explicit EntityDrawHandles(EntityDrawinfos&& list)
-      : infos_(MOVE(list))
-  {
-  }
 
   opengl::DrawInfo&       lookup(stlw::Logger&, boomhs::EntityID);
   opengl::DrawInfo const& lookup(stlw::Logger&, boomhs::EntityID) const;

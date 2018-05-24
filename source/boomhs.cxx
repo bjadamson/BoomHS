@@ -5,6 +5,7 @@
 #include <boomhs/io.hpp>
 #include <boomhs/level_assembler.hpp>
 #include <boomhs/level_manager.hpp>
+#include <boomhs/mouse_picker.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/renderer.hpp>
@@ -402,13 +403,81 @@ init(Engine& engine, EngineState& engine_state, Camera& camera)
   return OK_MOVE(state);
 }
 
+/////////////////
+struct BoundingSelectionSphere
+{
+  float radius = 0.0f;
+};
+
 void
 render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, FrameTime const& ft,
              glm::vec4 const& cull_plane)
 {
-  auto& es    = rstate.es;
-  auto& zs    = rstate.zs;
-  auto& ldata = zs.level_data;
+  auto& es     = rstate.es;
+  auto& logger = es.logger;
+
+  auto& zs       = rstate.zs;
+  auto& registry = zs.registry;
+  auto& ldata    = zs.level_data;
+
+  static bool doonce = false;
+  if (!doonce) {
+    doonce = true;
+
+    auto tree_eid = registry.create();
+    auto& mr = registry.assign<MeshRenderable>(tree_eid);
+    mr.name = "tree_lowpoly";
+
+    registry.assign<Transform>(tree_eid);
+    registry.assign<Material>(tree_eid);
+    registry.assign<JunkEntityFromFILE>(tree_eid);
+    {
+      auto& isv = registry.assign<IsVisible>(tree_eid);
+      isv.value = true;
+    }
+    registry.assign<Name>(tree_eid).value = "custom tree";
+
+    auto& sn = registry.assign<ShaderName>(tree_eid);
+    sn.value = "3d_pos_normal_color";
+    {
+      auto& cc = registry.assign<Color>(tree_eid);
+      *&cc     = LOC::WHITE;
+    }
+    {
+      auto& bss = registry.assign<BoundingSelectionSphere>(tree_eid);
+      bss.radius = 0.25f;
+    }
+
+    auto& gfx_state = zs.gfx_state;
+    auto& entity_dh_o = gfx_state.gpu_state.entities;
+    assert(entity_dh_o);
+    auto& entity_dh = *entity_dh_o;
+
+    auto& sps       = gfx_state.sps;
+    auto& sp   = sps.ref_sp(sn.value);
+
+    ObjQuery const query{mr.name, BufferFlags{true, true, true, false}};
+
+    auto& ldata           = zs.level_data;
+    auto const& obj_store = ldata.obj_store;
+
+    auto& obj    = obj_store.get_obj(logger, query);
+    auto dinfo   = opengl::gpu::copy_gpu(logger, GL_TRIANGLES, sp, obj);
+
+    entity_dh.add(tree_eid, MOVE(dinfo));
+  }
+
+  auto const components_bss = find_all_entities_with_component<BoundingSelectionSphere>(registry);
+  for (auto const eid : components_bss) {
+    auto const& bss = registry.get<BoundingSelectionSphere>(eid);
+  }
+
+  {
+    MousePicker mouse_picker;
+    auto world_pos = mouse_picker.calculate_ray(rstate);
+    LOG_ERROR_SPRINTF("World pos %s", glm::to_string(world_pos));
+  }
+
 
   if (es.draw_entities) {
     render::draw_entities(rstate, rng, ft);
@@ -420,7 +489,6 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
     render::draw_rivers(rstate, ft);
   }
 
-  auto& registry = zs.registry;
   if (es.draw_terrain) {
     render::draw_terrain(rstate, registry, ft, cull_plane);
   }
