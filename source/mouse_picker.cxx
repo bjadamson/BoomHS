@@ -25,7 +25,7 @@ MousePicker::calculate_ray(RenderState& rstate) const
     };
     assert_fn(x);
     assert_fn(y);
-    return glm::vec2{x, y};
+    return glm::vec2{x, -y};
   };
 
   // When doing mouse picking, we want our ray to be pointed "into" the screen
@@ -46,8 +46,10 @@ MousePicker::calculate_ray(RenderState& rstate) const
   auto&           es           = rstate.es;
   auto const&     coords       = es.mouse_state.coords;
   auto const      mouse_coords = glm::vec2{coords.x, coords.y};
-  auto&           logger       = es.logger;
   glm::vec2 const ndc          = calc_ndc(mouse_coords, es.dimensions);
+
+  auto& logger = es.logger;
+  LOG_ERROR_SPRINTF("NDC %s", glm::to_string(ndc));
 
   glm::vec4 const clip       = glm::vec4{ndc.x, ndc.y, Z, 1.0f};
   glm::vec4 const eyespace   = calc_eyespace(clip);

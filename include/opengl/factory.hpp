@@ -53,11 +53,29 @@ static constexpr CubeIndices CUBE_INDICES = {{
 }};
 
 static constexpr CubeIndices CUBE_INDICES_LIGHT = {{
-  0, 1, 2, 3, 4, 5, 6,
-  7, 8, 9, 10, 11, 12, 13,
-  14, 15, 16, 17, 18, 19, 20,
-  21, 22, 23, 24, 25, 26, 27,
-  28, 29, 30, 31, 32, 33, 34, 35
+  0,  1,  2,    3,  4,  5,
+  6,  7,  8,    9,  10, 11,
+  12, 13, 14,   15, 16, 17,
+  18, 19, 20,   21, 22, 23,
+  24, 25, 26,   27, 28, 29,
+  30, 31, 32,   33, 34, 35
+}};
+
+static constexpr std::array<GLuint, 24> CUBE_WIREFRAME_INDICES = {{
+  0, 1, // front
+  1, 2,
+  2, 3,
+  3, 0,
+
+  4, 5, // back
+  5, 6,
+  6, 7,
+  7, 4,
+
+  0, 4, // connect front/back
+  1, 5,
+  2, 6,
+  3, 7
 }};
 
 CubeVertices

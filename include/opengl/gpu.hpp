@@ -55,6 +55,9 @@ DrawInfo
 copy_cubevertexonly_gpu(stlw::Logger&, ShaderProgram const&);
 
 DrawInfo
+copy_cube_wireframevertexonly_gpu(stlw::Logger&, ShaderProgram const&);
+
+DrawInfo
 copy_cubenormalcolor_gpu(stlw::Logger&, ShaderProgram const&, Color const&);
 
 DrawInfo

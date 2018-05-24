@@ -140,3 +140,9 @@ name = "water"
 vertex = "water.vert"
 fragment = "water.frag"
 va = "water"
+
+[[shaders]]
+name = "wireframe"
+vertex = "wireframe.vert"
+fragment = "wireframe.frag"
+va = "vertex_only"

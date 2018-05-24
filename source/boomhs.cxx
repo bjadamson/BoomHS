@@ -403,6 +403,96 @@ init(Engine& engine, EngineState& engine_state, Camera& camera)
   return OK_MOVE(state);
 }
 
+struct Ray
+{
+  glm::vec3 const& orig;
+  glm::vec3 const& dir;
+};
+
+// TODO: MOVE
+bool box_intersect(Ray const& ray, AABoundingBox const& box)
+{ 
+  auto const& min = box.bounds[0];
+  auto const& max = box.bounds[1];
+
+    float tmin = (min.x - ray.orig.x) / ray.dir.x; 
+    float tmax = (max.x - ray.orig.x) / ray.dir.x; 
+ 
+    if (tmin > tmax) std::swap(tmin, tmax); 
+ 
+    float tymin = (min.y - ray.orig.y) / ray.dir.y; 
+    float tymax = (max.y - ray.orig.y) / ray.dir.y; 
+ 
+    if (tymin > tymax) std::swap(tymin, tymax); 
+ 
+    if ((tmin > tymax) || (tymin > tmax)) 
+        return false; 
+ 
+    if (tymin > tmin) 
+        tmin = tymin; 
+ 
+    if (tymax < tmax) 
+        tmax = tymax; 
+ 
+    float tzmin = (min.z - ray.orig.z) / ray.dir.z; 
+    float tzmax = (max.z - ray.orig.z) / ray.dir.z; 
+ 
+    if (tzmin > tzmax) std::swap(tzmin, tzmax); 
+ 
+    if ((tmin > tzmax) || (tzmin > tmax)) 
+        return false; 
+ 
+    if (tzmin > tmin) 
+        tmin = tzmin; 
+ 
+    if (tzmax < tmax) 
+        tmax = tzmax; 
+ 
+    return true; 
+} 
+
+void
+update_mouse_selection_fortesting(RenderState& rstate)
+{
+  auto& es       = rstate.es;
+  auto& logger   = es.logger;
+
+  auto& zs       = rstate.zs;
+  auto& registry = zs.registry;
+
+  MousePicker     mouse_picker;
+  glm::vec3 const ray_dir = mouse_picker.calculate_ray(rstate);
+  LOG_ERROR_SPRINTF("ray_dir %s", glm::to_string(ray_dir));
+
+  glm::vec3 const& ray_start      = rstate.camera_world_position();
+
+  auto const components_bbox = find_all_entities_with_component<AABoundingBox, Selectable>(registry);
+  for (auto const eid : components_bbox) {
+    auto& bbox       = registry.get<AABoundingBox>(eid);
+    auto& selectable = registry.get<Selectable>(eid);
+
+    auto constexpr BOX_SIZE = 1.0f;
+    bbox.bounds[0].x = -BOX_SIZE;
+    bbox.bounds[0].y = -BOX_SIZE;
+    bbox.bounds[0].z = -BOX_SIZE;
+
+    bbox.bounds[1].x = BOX_SIZE;
+    bbox.bounds[1].y = BOX_SIZE;
+    bbox.bounds[1].z = BOX_SIZE;
+    bool const intersects = box_intersect(Ray{ray_start, ray_dir}, bbox);
+    selectable.selected = intersects;
+
+    //auto&            tree_transform = registry.get<Transform>(eid);
+    //glm::vec3 const& sphere_center  = tree_transform.translation;
+    //float const      rad_squared    = stlw::math::squared(bbox.radius);
+
+    //float      distance = 0.0f;
+    //bool const intersects =
+        //glm::intersectRaySphere(ray_start, ray_dir, sphere_center, rad_squared, distance);
+    LOG_ERROR_SPRINTF("intersects %i", intersects);
+  }
+}
+
 void
 render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, FrameTime const& ft,
              glm::vec4 const& cull_plane)
@@ -447,10 +537,6 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
         auto& cc = registry.assign<Color>(tree_eid);
         *&cc     = LOC::WHITE;
       }
-      {
-        auto& bss  = registry.assign<BoundingBox>(tree_eid);
-        bss.radius = 1.00f;
-      }
 
       auto&          sp = sps.ref_sp(sn.value);
       ObjQuery const query{mr.name, BufferFlags{true, true, true, false}};
@@ -466,41 +552,21 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
     {
       auto  eid = registry.create();
       auto& mr  = registry.assign<CubeRenderable>(eid);
+      mr.mode = GL_LINES;
 
       registry.assign<Transform>(eid);
       registry.assign<Material>(eid);
       registry.assign<JunkEntityFromFILE>(eid);
       registry.assign<IsVisible>(eid).value = true;
-      ;
+      registry.assign<Selectable>(eid);
+      registry.assign<AABoundingBox>(eid);
       registry.assign<Name>(eid).value = "collider rect";
       auto& sn                         = registry.assign<ShaderName>(eid);
-      sn.value                         = "3d_pos_color";
-      {
-        auto& cc = registry.assign<Color>(eid);
-        *&cc     = LOC::WHITE;
-      }
+      sn.value                         = "wireframe";
+
       auto& sp    = sps.ref_sp(sn.value);
-      auto  dinfo = opengl::gpu::copy_cubevertexonly_gpu(logger, sp);
+      auto  dinfo = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, sp);
       entity_dh.add(eid, MOVE(dinfo));
-    }
-  }
-  {
-    MousePicker     mouse_picker;
-    glm::vec3 const ray_dir = mouse_picker.calculate_ray(rstate);
-    LOG_ERROR_SPRINTF("ray_dir %s", glm::to_string(ray_dir));
-
-    auto const components_bss = find_all_entities_with_component<BoundingBox>(registry);
-    for (auto const eid : components_bss) {
-      auto const&      bss            = registry.get<BoundingBox>(eid);
-      glm::vec3 const& ray_start      = rstate.camera_world_position();
-      auto&            tree_transform = registry.get<Transform>(eid);
-      glm::vec3 const& sphere_center  = tree_transform.translation;
-      float const      rad_squared    = stlw::math::squared(bss.radius);
-
-      float      distance = 0.0f;
-      bool const intersects =
-          glm::intersectRaySphere(ray_start, ray_dir, sphere_center, rad_squared, distance);
-      LOG_ERROR_SPRINTF("Comparing components_bss intersects %i, %f", intersects, distance);
     }
   }
 
@@ -595,6 +661,12 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
 
     update_visible_entities(lm, registry);
     update_torchflicker(ldata, registry, rng, ft);
+
+    {
+      auto const  rmatrices = RenderMatrices::from_camera(camera);
+      RenderState rstate{rmatrices, es, zs};
+      update_mouse_selection_fortesting(rstate);
+    }
   }
 
   // TODO: Move out into state somewhere.

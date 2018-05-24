@@ -18,15 +18,22 @@
 namespace boomhs
 {
 
-struct BoundingBox
+struct AxisAlignedBoundingBox
 {
-  float radius = 0.0f;
+  glm::vec3 bounds[2];
 };
+
+using AABoundingBox = AxisAlignedBoundingBox;
 
 struct Name
 {
   static constexpr char const* DEFAULT = "unnamed";
   std::string                  value   = Name::DEFAULT;
+};
+
+struct Selectable
+{
+  bool selected = false;
 };
 
 struct IsVisible

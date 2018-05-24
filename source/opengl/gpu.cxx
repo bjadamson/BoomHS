@@ -321,6 +321,13 @@ copy_cubevertexonly_gpu(stlw::Logger &logger, ShaderProgram const& sp)
 }
 
 DrawInfo
+copy_cube_wireframevertexonly_gpu(stlw::Logger& logger, ShaderProgram const& sp)
+{
+  auto const vertices = OF::cube_vertices();
+  return make_drawinfo(logger, sp, vertices, OF::CUBE_WIREFRAME_INDICES);
+}
+
+DrawInfo
 copy_cubetexture_gpu(stlw::Logger &logger, ShaderProgram const& sp)
 {
   auto const vertices = OF::cube_vertices();
