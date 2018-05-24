@@ -4,11 +4,11 @@
 #include <opengl/global.hpp>
 #include <opengl/shader.hpp>
 
+#include <boomhs/components.hpp>
 #include <boomhs/obj.hpp>
 #include <boomhs/obj_store.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
-#include <boomhs/types.hpp>
 
 #include <stlw/algorithm.hpp>
 #include <stlw/math.hpp>

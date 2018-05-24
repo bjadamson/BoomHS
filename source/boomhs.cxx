@@ -1,5 +1,6 @@
 #include <boomhs/boomhs.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/io.hpp>
@@ -8,6 +9,7 @@
 #include <boomhs/mouse_picker.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/orbital_body.hpp>
+#include <boomhs/player.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/rexpaint.hpp>
 #include <boomhs/state.hpp>
@@ -403,59 +405,11 @@ init(Engine& engine, EngineState& engine_state, Camera& camera)
   return OK_MOVE(state);
 }
 
-struct Ray
-{
-  glm::vec3 const& orig;
-  glm::vec3 const& dir;
-};
-
-// TODO: MOVE
-bool box_intersect(Ray const& ray, AABoundingBox const& box)
-{ 
-  auto const& min = box.bounds[0];
-  auto const& max = box.bounds[1];
-
-    float tmin = (min.x - ray.orig.x) / ray.dir.x; 
-    float tmax = (max.x - ray.orig.x) / ray.dir.x; 
- 
-    if (tmin > tmax) std::swap(tmin, tmax); 
- 
-    float tymin = (min.y - ray.orig.y) / ray.dir.y; 
-    float tymax = (max.y - ray.orig.y) / ray.dir.y; 
- 
-    if (tymin > tymax) std::swap(tymin, tymax); 
- 
-    if ((tmin > tymax) || (tymin > tmax)) 
-        return false; 
- 
-    if (tymin > tmin) 
-        tmin = tymin; 
- 
-    if (tymax < tmax) 
-        tmax = tymax; 
- 
-    float tzmin = (min.z - ray.orig.z) / ray.dir.z; 
-    float tzmax = (max.z - ray.orig.z) / ray.dir.z; 
- 
-    if (tzmin > tzmax) std::swap(tzmin, tzmax); 
- 
-    if ((tmin > tzmax) || (tzmin > tmax)) 
-        return false; 
- 
-    if (tzmin > tmin) 
-        tmin = tzmin; 
- 
-    if (tzmax < tmax) 
-        tmax = tzmax; 
- 
-    return true; 
-} 
-
 void
 update_mouse_selection_fortesting(RenderState& rstate)
 {
-  auto& es       = rstate.es;
-  auto& logger   = es.logger;
+  auto& es     = rstate.es;
+  auto& logger = es.logger;
 
   auto& zs       = rstate.zs;
   auto& registry = zs.registry;
@@ -464,31 +418,26 @@ update_mouse_selection_fortesting(RenderState& rstate)
   glm::vec3 const ray_dir = mouse_picker.calculate_ray(rstate);
   LOG_ERROR_SPRINTF("ray_dir %s", glm::to_string(ray_dir));
 
-  glm::vec3 const& ray_start      = rstate.camera_world_position();
+  glm::vec3 const& ray_start = rstate.camera_world_position();
 
-  auto const components_bbox = find_all_entities_with_component<AABoundingBox, Selectable>(registry);
+  auto const components_bbox =
+      find_all_entities_with_component<AABoundingBox, Selectable, Transform>(registry);
   for (auto const eid : components_bbox) {
     auto& bbox       = registry.get<AABoundingBox>(eid);
     auto& selectable = registry.get<Selectable>(eid);
+    auto& transform  = registry.get<Transform>(eid);
 
-    auto constexpr BOX_SIZE = 1.0f;
-    bbox.bounds[0].x = -BOX_SIZE;
-    bbox.bounds[0].y = -BOX_SIZE;
-    bbox.bounds[0].z = -BOX_SIZE;
+    Ray const  ray{ray_start, ray_dir};
+    bool const intersects = collision::box_intersect(ray, transform, bbox);
+    selectable.selected   = intersects;
 
-    bbox.bounds[1].x = BOX_SIZE;
-    bbox.bounds[1].y = BOX_SIZE;
-    bbox.bounds[1].z = BOX_SIZE;
-    bool const intersects = box_intersect(Ray{ray_start, ray_dir}, bbox);
-    selectable.selected = intersects;
+    // auto&            tree_transform = registry.get<Transform>(eid);
+    // glm::vec3 const& sphere_center  = tree_transform.translation;
+    // float const      rad_squared    = stlw::math::squared(bbox.radius);
 
-    //auto&            tree_transform = registry.get<Transform>(eid);
-    //glm::vec3 const& sphere_center  = tree_transform.translation;
-    //float const      rad_squared    = stlw::math::squared(bbox.radius);
-
-    //float      distance = 0.0f;
-    //bool const intersects =
-        //glm::intersectRaySphere(ray_start, ray_dir, sphere_center, rad_squared, distance);
+    // float      distance = 0.0f;
+    // bool const intersects =
+    // glm::intersectRaySphere(ray_start, ray_dir, sphere_center, rad_squared, distance);
     LOG_ERROR_SPRINTF("intersects %i", intersects);
   }
 }
@@ -549,17 +498,20 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
 
       entity_dh.add(tree_eid, MOVE(dinfo));
     }
-    {
+    auto const add_wireframe_cube = [&](glm::vec3 const& world_pos) {
       auto  eid = registry.create();
       auto& mr  = registry.assign<CubeRenderable>(eid);
-      mr.mode = GL_LINES;
+      mr.mode   = GL_LINES;
 
-      registry.assign<Transform>(eid);
+      auto& tr       = registry.assign<Transform>(eid);
+      tr.translation = world_pos;
+
       registry.assign<Material>(eid);
       registry.assign<JunkEntityFromFILE>(eid);
       registry.assign<IsVisible>(eid).value = true;
       registry.assign<Selectable>(eid);
       registry.assign<AABoundingBox>(eid);
+
       registry.assign<Name>(eid).value = "collider rect";
       auto& sn                         = registry.assign<ShaderName>(eid);
       sn.value                         = "wireframe";
@@ -567,8 +519,10 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
       auto& sp    = sps.ref_sp(sn.value);
       auto  dinfo = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, sp);
       entity_dh.add(eid, MOVE(dinfo));
-    }
-  }
+    };
+    add_wireframe_cube(glm::vec3{0.0f});
+    add_wireframe_cube(glm::vec3{5.0, 0.0f, 5.0f});
+  } // end static "doonce" if block
 
   if (es.draw_entities) {
     render::draw_entities(rstate, rng, ft);

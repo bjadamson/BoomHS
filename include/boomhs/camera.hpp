@@ -1,7 +1,6 @@
 #pragma once
 #include <boomhs/components.hpp>
 #include <boomhs/spherical.hpp>
-#include <boomhs/types.hpp>
 
 #include <stlw/log.hpp>
 #include <stlw/math.hpp>

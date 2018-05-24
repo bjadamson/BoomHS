@@ -1,5 +1,7 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/level_manager.hpp>
+#include <boomhs/npc.hpp>
+#include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/ui_state.hpp>

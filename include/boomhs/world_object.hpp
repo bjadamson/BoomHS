@@ -1,7 +1,6 @@
 #pragma once
 #include <boomhs/components.hpp>
 #include <boomhs/tile.hpp>
-#include <boomhs/types.hpp>
 #include <stlw/math.hpp>
 #include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>

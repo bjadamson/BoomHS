@@ -1,14 +1,13 @@
 #pragma once
+#include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/inventory.hpp>
 #include <boomhs/tile.hpp>
-#include <boomhs/types.hpp>
 #include <stlw/log.hpp>
 
 namespace boomhs
 {
 struct Item;
-class Inventory;
 
 struct PlayerData
 {

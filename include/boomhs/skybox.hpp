@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/types.hpp>
+#include <boomhs/components.hpp>
 #include <opengl/draw_info.hpp>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>

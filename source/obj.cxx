@@ -1,6 +1,6 @@
+#include <boomhs/components.hpp>
 #include <boomhs/obj.hpp>
 
-#include <boomhs/types.hpp>
 #include <stlw/algorithm.hpp>
 
 #include <cassert>

@@ -1,6 +1,6 @@
 #pragma once
+#include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
-#include <boomhs/types.hpp>
 #include <string>
 
 namespace boomhs

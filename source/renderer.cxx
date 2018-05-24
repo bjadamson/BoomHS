@@ -1,12 +1,14 @@
 #include <boomhs/billboard.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/npc.hpp>
 #include <boomhs/orbital_body.hpp>
+#include <boomhs/player.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
-#include <boomhs/types.hpp>
 #include <boomhs/water.hpp>
 #include <boomhs/water_fbos.hpp>
 
@@ -759,9 +761,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     Color const wire_color = sel.selected ? LOC::GREEN : LOC::RED;
 
     auto& sp = sps.ref_sp(sn.value);
-    sp.while_bound(logger, [&]() {
-        sp.set_uniform_color(logger, "u_wirecolor", wire_color);
-        });
+    sp.while_bound(logger, [&]() { sp.set_uniform_color(logger, "u_wirecolor", wire_color); });
 
     draw_fn(cr.mode, eid, sn, transform, is_v, cr, box);
   };

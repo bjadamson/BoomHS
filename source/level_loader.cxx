@@ -4,6 +4,7 @@
 #include <boomhs/level_loader.hpp>
 #include <boomhs/obj.hpp>
 #include <boomhs/orbital_body.hpp>
+#include <boomhs/player.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/water.hpp>
 

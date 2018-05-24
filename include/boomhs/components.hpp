@@ -4,10 +4,7 @@
 #include <opengl/texture.hpp>
 
 #include <boomhs/entity.hpp>
-#include <boomhs/npc.hpp>
-#include <boomhs/player.hpp>
 #include <boomhs/tile.hpp>
-#include <boomhs/types.hpp>
 
 #include <cassert>
 #include <iostream>
@@ -18,9 +15,36 @@
 namespace boomhs
 {
 
+struct Transform
+{
+  glm::vec3 translation{0.0f, 0.0f, 0.0f};
+  glm::quat rotation;
+  glm::vec3 scale = glm::vec3{1.0f, 1.0f, 1.0f};
+
+  glm::mat4 model_matrix() const
+  {
+    return stlw::math::calculate_modelmatrix(translation, rotation, scale);
+  }
+
+  void rotate_degrees(float const degrees, glm::vec3 const& axis)
+  {
+    rotation = glm::angleAxis(glm::radians(degrees), axis) * rotation;
+  }
+};
+
+struct WidthHeightLength
+{
+  float const width;
+  float const height;
+  float const length;
+};
+
 struct AxisAlignedBoundingBox
 {
-  glm::vec3 bounds[2];
+  std::array<glm::vec3, 2> bounds;
+
+  // ctor
+  AxisAlignedBoundingBox();
 };
 
 using AABoundingBox = AxisAlignedBoundingBox;
@@ -115,14 +139,6 @@ all_nearby_entities(glm::vec3 const& pos, float const max_distance, EntityRegist
     }
   }
   return entities;
-}
-
-inline auto
-find_enemies(EntityRegistry& registry)
-{
-  using namespace boomhs;
-  using namespace opengl;
-  return find_all_entities_with_component<NPCData>(registry);
 }
 
 inline auto

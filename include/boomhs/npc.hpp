@@ -1,4 +1,5 @@
 #pragma once
+#include <boomhs/entity.hpp>
 #include <stlw/type_macros.hpp>
 
 namespace stlw
@@ -41,5 +42,13 @@ public:
 
   static void create_random(TileGrid const&, EntityRegistry&, stlw::float_generator&);
 };
+
+inline auto
+find_enemies(EntityRegistry& registry)
+{
+  using namespace boomhs;
+  using namespace opengl;
+  return find_all_entities_with_component<NPCData>(registry);
+}
 
 } // namespace boomhs

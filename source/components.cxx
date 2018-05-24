@@ -6,6 +6,18 @@
 namespace boomhs
 {
 
+AxisAlignedBoundingBox::AxisAlignedBoundingBox()
+{
+  auto constexpr DEFAULT_SIZE = 1.0f;
+  bounds[0].x                 = -DEFAULT_SIZE;
+  bounds[0].y                 = -DEFAULT_SIZE;
+  bounds[0].z                 = -DEFAULT_SIZE;
+
+  bounds[1].x = DEFAULT_SIZE;
+  bounds[1].y = DEFAULT_SIZE;
+  bounds[1].z = DEFAULT_SIZE;
+}
+
 std::vector<EntityID>
 find_stairs_withtype(EntityRegistry& registry, TileGrid const& tgrid, TileType const type)
 {
