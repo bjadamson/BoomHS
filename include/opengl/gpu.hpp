@@ -2,7 +2,6 @@
 #include <opengl/draw_info.hpp>
 #include <opengl/factory.hpp>
 #include <opengl/global.hpp>
-#include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
 #include <opengl/vertex_attribute.hpp>
 
@@ -25,10 +24,10 @@ namespace opengl::gpu
 // Arrows
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 DrawInfo
-create_arrow_2d(stlw::Logger&, ShaderProgram const&, OF::ArrowCreateParams&&);
+create_arrow_2d(stlw::Logger&, VertexAttribute const&, OF::ArrowCreateParams&&);
 
 DrawInfo
-create_arrow(stlw::Logger&, ShaderProgram const&, OF::ArrowCreateParams&&);
+create_arrow(stlw::Logger&, VertexAttribute const&, OF::ArrowCreateParams&&);
 
 struct WorldOriginArrows
 {
@@ -38,55 +37,55 @@ struct WorldOriginArrows
 };
 
 WorldOriginArrows
-create_axis_arrows(stlw::Logger&, ShaderProgram const&);
+create_axis_arrows(stlw::Logger&, VertexAttribute const&);
 
 // Cubes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 DrawInfo
-copy_cubecolor_gpu(stlw::Logger&, ShaderProgram const&, Color const&);
+copy_cubecolor_gpu(stlw::Logger&, VertexAttribute const&, Color const&);
 
 inline DrawInfo
-copy_cubecolor_gpu(stlw::Logger& logger, ShaderProgram const& sp, glm::vec3 const& c)
+copy_cubecolor_gpu(stlw::Logger& logger, VertexAttribute const& sp, glm::vec3 const& c)
 {
   return copy_cubecolor_gpu(logger, sp, Color{c.x, c.y, c.z, 1.0f});
 }
 
 DrawInfo
-copy_cubevertexonly_gpu(stlw::Logger&, ShaderProgram const&);
+copy_cubevertexonly_gpu(stlw::Logger&, VertexAttribute const&);
 
 DrawInfo
-copy_cube_wireframevertexonly_gpu(stlw::Logger&, ShaderProgram const&);
+copy_cube_wireframevertexonly_gpu(stlw::Logger&, VertexAttribute const&);
 
 DrawInfo
-copy_cubenormalcolor_gpu(stlw::Logger&, ShaderProgram const&, Color const&);
+copy_cubenormalcolor_gpu(stlw::Logger&, VertexAttribute const&, Color const&);
 
 DrawInfo
-copy_cubetexture_gpu(stlw::Logger&, ShaderProgram const&);
+copy_cubetexture_gpu(stlw::Logger&, VertexAttribute const&);
 
 // Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 DrawInfo
-copy_rectangle(stlw::Logger&, ShaderProgram const&, OF::RectBuffer const&);
+copy_rectangle(stlw::Logger&, VertexAttribute const&, OF::RectBuffer const&);
 
 DrawInfo
-copy_rectangle_uvs(stlw::Logger&, ShaderProgram const&, OF::RectangleVertices const&,
+copy_rectangle_uvs(stlw::Logger&, VertexAttribute const&, OF::RectangleVertices const&,
                    TextureInfo const&);
 
 // General
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 DrawInfo
-create_tilegrid(stlw::Logger&, ShaderProgram const&, boomhs::TileGrid const&,
+create_tilegrid(stlw::Logger&, VertexAttribute const&, boomhs::TileGrid const&,
                 bool const show_yaxis_lines, Color const& color = LOC::RED);
 
 DrawInfo
-create_modelnormals(stlw::Logger&, ShaderProgram const&, glm::mat4 const&, boomhs::Obj const&,
+create_modelnormals(stlw::Logger&, VertexAttribute const&, glm::mat4 const&, boomhs::Obj const&,
                     Color const&);
 
 DrawInfo
-copy_gpu(stlw::Logger&, ShaderProgram const&, boomhs::ObjData const&);
+copy_gpu(stlw::Logger&, VertexAttribute const&, boomhs::ObjData const&);
 
 DrawInfo
-copy_gpu(stlw::Logger&, ShaderProgram const&, VertexBuffer const&);
+copy_gpu(stlw::Logger&, VertexAttribute const&, VertexBuffer const&);
 
 } // namespace opengl::gpu
 namespace OG = opengl::gpu;

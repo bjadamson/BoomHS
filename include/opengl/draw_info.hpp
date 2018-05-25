@@ -62,15 +62,15 @@ public:
   std::string to_string(VertexAttribute const&) const;
 };
 
-class EntityDrawInfos
+class EntityDrawHandleMap
 {
   std::vector<opengl::DrawInfo> drawinfos_;
   std::vector<boomhs::EntityID> entities_;
 
 public:
-  EntityDrawInfos() = default;
-  NO_COPY(EntityDrawInfos);
-  MOVE_DEFAULT(EntityDrawInfos);
+  EntityDrawHandleMap() = default;
+  NO_COPY(EntityDrawHandleMap);
+  MOVE_DEFAULT(EntityDrawHandleMap);
 
   size_t add(boomhs::EntityID, opengl::DrawInfo&&);
 

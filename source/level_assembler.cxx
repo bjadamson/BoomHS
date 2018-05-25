@@ -94,69 +94,66 @@ bridge_staircases(ZoneState& a, ZoneState& b)
   }
 }
 
-using copy_assets_pair_t = std::pair<EntityDrawInfos, TileDrawHandles>;
+using copy_assets_pair_t = std::pair<EntityDrawHandleMap, TileDrawHandles>;
 Result<copy_assets_pair_t, std::string>
 copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable const& ttable,
                 EntityRegistry& registry, ObjStore const& obj_store)
 {
-  EntityDrawInfos entity_dinfos;
+  EntityDrawHandleMap entity_drawmap;
 
   // copy CUBES to GPU
   registry.view<ShaderName, CubeRenderable, PointLight>().each(
       [&](auto entity, auto& sn, auto&&...) {
-        auto& shader_ref = sps.ref_sp(sn.value);
-        auto  handle     = opengl::gpu::copy_cubevertexonly_gpu(logger, shader_ref);
-        entity_dinfos.add(entity, MOVE(handle));
+        auto& va     = sps.ref_sp(sn.value).va();
+        auto  handle = opengl::gpu::copy_cubevertexonly_gpu(logger, va);
+        entity_drawmap.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
-        auto& shader_ref = sps.ref_sp(sn.value);
-        auto  handle     = opengl::gpu::copy_cubetexture_gpu(logger, shader_ref);
-        entity_dinfos.add(entity, MOVE(handle));
+        auto& va     = sps.ref_sp(sn.value).va();
+        auto  handle = opengl::gpu::copy_cubetexture_gpu(logger, va);
+        entity_drawmap.add(entity, MOVE(handle));
       });
 
   // copy MESHES to GPU
   registry.view<ShaderName, MeshRenderable, Color>().each(
       [&](auto entity, auto& sn, auto& mesh, auto&) {
-        auto&       shader_ref = sps.ref_sp(sn.value);
-        auto const  va         = shader_ref.va();
-        auto const  qa         = BufferFlags::from_va(va);
-        auto const  qo         = ObjQuery{mesh.name, qa};
-        auto const& obj        = obj_store.get_obj(logger, qo);
+        auto&       va  = sps.ref_sp(sn.value).va();
+        auto const  qa  = BufferFlags::from_va(va);
+        auto const  qo  = ObjQuery{mesh.name, qa};
+        auto const& obj = obj_store.get_obj(logger, qo);
 
-        auto handle = opengl::gpu::copy_gpu(logger, shader_ref, obj);
-        entity_dinfos.add(entity, MOVE(handle));
+        auto handle = opengl::gpu::copy_gpu(logger, va, obj);
+        entity_drawmap.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto& mesh, auto& texture) {
-        auto&       shader_ref = sps.ref_sp(sn.value);
-        auto const  va         = shader_ref.va();
-        auto const  qa         = BufferFlags::from_va(va);
-        auto const  qo         = ObjQuery{mesh.name, qa};
-        auto const& obj        = obj_store.get_obj(logger, qo);
+        auto&       va  = sps.ref_sp(sn.value).va();
+        auto const  qa  = BufferFlags::from_va(va);
+        auto const  qo  = ObjQuery{mesh.name, qa};
+        auto const& obj = obj_store.get_obj(logger, qo);
 
-        auto handle = opengl::gpu::copy_gpu(logger, shader_ref, obj);
-        entity_dinfos.add(entity, MOVE(handle));
+        auto handle = opengl::gpu::copy_gpu(logger, va, obj);
+        entity_drawmap.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, BillboardRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
-        auto&      sp = sps.ref_sp(sn.value);
+        auto&      va = sps.ref_sp(sn.value).va();
         auto const v  = OF::rectangle_vertices();
         auto*      ti = texture.texture_info;
         assert(ti);
-        auto handle = opengl::gpu::copy_rectangle_uvs(logger, sp, v, *ti);
-        entity_dinfos.add(entity, MOVE(handle));
+        auto handle = opengl::gpu::copy_rectangle_uvs(logger, va, v, *ti);
+        entity_drawmap.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, JunkEntityFromFILE>().each(
       [&](auto entity, auto& sn, auto& mesh, auto&&...) {
-        auto&       shader_ref = sps.ref_sp(sn.value);
-        auto const  va         = shader_ref.va();
-        auto const  qa         = BufferFlags::from_va(va);
-        auto const  qo         = ObjQuery{mesh.name, qa};
-        auto const& obj        = obj_store.get_obj(logger, qo);
+        auto&       va  = sps.ref_sp(sn.value).va();
+        auto const  qa  = BufferFlags::from_va(va);
+        auto const  qo  = ObjQuery{mesh.name, qa};
+        auto const& obj = obj_store.get_obj(logger, qo);
 
-        auto handle = opengl::gpu::copy_gpu(logger, shader_ref, obj);
-        entity_dinfos.add(entity, MOVE(handle));
+        auto handle = opengl::gpu::copy_gpu(logger, va, obj);
+        entity_drawmap.add(entity, MOVE(handle));
       });
 
   // copy TILES to GPU
@@ -166,13 +163,12 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
     auto const& mesh_name    = it.mesh_name;
     auto const& vshader_name = it.vshader_name;
 
-    auto&       shader_ref = sps.ref_sp(vshader_name);
-    auto const  va         = shader_ref.va();
-    auto const  qa         = BufferFlags::from_va(va);
-    auto const  qo         = ObjQuery{mesh_name, qa};
-    auto const& obj        = obj_store.get_obj(logger, qo);
+    auto&       va  = sps.ref_sp(vshader_name).va();
+    auto const  qa  = BufferFlags::from_va(va);
+    auto const  qo  = ObjQuery{mesh_name, qa};
+    auto const& obj = obj_store.get_obj(logger, qo);
 
-    auto handle = opengl::gpu::copy_gpu(logger, sps.ref_sp(vshader_name), obj);
+    auto handle = opengl::gpu::copy_gpu(logger, sps.ref_sp(vshader_name).va(), obj);
 
     assert(it.type < TileType::UNDEFINED);
     auto const index = static_cast<size_t>(it.type);
@@ -181,7 +177,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
   }
 
   TileDrawHandles td{MOVE(tile_dinfos)};
-  return Ok(std::make_pair(MOVE(entity_dinfos), MOVE(td)));
+  return Ok(std::make_pair(MOVE(entity_drawmap), MOVE(td)));
 }
 
 void
@@ -196,11 +192,85 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
 
   auto copy_result = copy_assets_gpu(logger, sps, ttable, registry, objcache);
   assert(copy_result);
-  auto handles                 = copy_result.expect_moveout("Error copying asset to gpu");
-  auto edh                     = MOVE(handles.first);
-  auto tdh                     = MOVE(handles.second);
-  gfx_state.gpu_state.entities = MOVE(edh);
-  gfx_state.gpu_state.tiles    = MOVE(tdh);
+  auto handles = copy_result.expect_moveout("Error copying asset to gpu");
+  auto edh     = MOVE(handles.first);
+  auto tdh     = MOVE(handles.second);
+
+  EntityDrawHandleMap bbox_dh;
+
+  {
+    auto  eid = registry.create();
+    auto& mr  = registry.assign<MeshRenderable>(eid);
+    mr.name   = "tree_lowpoly";
+
+    auto& tree_transform = registry.assign<Transform>(eid);
+    registry.assign<Material>(eid);
+    registry.assign<JunkEntityFromFILE>(eid);
+    {
+      auto& isv = registry.assign<IsVisible>(eid);
+      isv.value = true;
+    }
+    registry.assign<Name>(eid).value = "custom tree";
+    {
+      registry.assign<AABoundingBox>(eid);
+      registry.assign<Selectable>(eid);
+
+      auto constexpr WIREFRAME_SHADER = "wireframe";
+      auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
+      auto  dinfo                     = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, va);
+      bbox_dh.add(eid, MOVE(dinfo));
+    }
+
+    auto& sn = registry.assign<ShaderName>(eid);
+    sn.value = "3d_pos_normal_color";
+    {
+      auto& cc = registry.assign<Color>(eid);
+      *&cc     = LOC::WHITE;
+    }
+
+    auto&          va = sps.ref_sp(sn.value).va();
+    ObjQuery const query{mr.name, BufferFlags{true, true, true, false}};
+
+    auto&       ldata     = zs.level_data;
+    auto const& obj_store = ldata.obj_store;
+
+    auto& obj   = obj_store.get_obj(logger, query);
+    auto  dinfo = opengl::gpu::copy_gpu(logger, va, obj);
+
+    edh.add(eid, MOVE(dinfo));
+  }
+  {
+    /*
+    auto const add_wireframe_cube = [&](glm::vec3 const& world_pos) {
+      auto  eid = registry.create();
+
+      auto& tr       = registry.assign<Transform>(eid);
+      tr.translation = world_pos;
+
+      registry.assign<Material>(eid);
+      registry.assign<JunkEntityFromFILE>(eid);
+      registry.assign<IsVisible>(eid).value = true;
+      registry.assign<Selectable>(eid);
+
+
+      registry.assign<AABoundingBox>(eid);
+      registry.assign<CubeRenderable>(eid);
+
+      registry.assign<Name>(eid).value = "collider rect";
+      auto& sn                         = registry.assign<ShaderName>(eid);
+      sn.value                         = WIREFRAME_SHADER;
+
+
+    };
+    add_wireframe_cube(glm::vec3{0.0f});
+    add_wireframe_cube(glm::vec3{5.0, 0.0f, 5.0f});
+    */
+  }
+
+  auto& gpu_state                = gfx_state.gpu_state;
+  gpu_state.entities             = MOVE(edh);
+  gpu_state.entity_boundingboxes = MOVE(bbox_dh);
+  gpu_state.tiles                = MOVE(tdh);
 }
 
 } // namespace

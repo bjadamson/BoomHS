@@ -135,9 +135,9 @@ DrawInfo::to_string(VertexAttribute const& va) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// EntityDrawInfos
+// EntityDrawHandleMap
 size_t
-EntityDrawInfos::add(EntityID const entity, opengl::DrawInfo &&di)
+EntityDrawHandleMap::add(EntityID const entity, opengl::DrawInfo &&di)
 {
   auto const pos = drawinfos_.size();
   drawinfos_.emplace_back(MOVE(di));
@@ -157,13 +157,13 @@ EntityDrawInfos::add(EntityID const entity, opengl::DrawInfo &&di)
   std::abort();
 
 opengl::DrawInfo&
-EntityDrawInfos::lookup(stlw::Logger &logger, EntityID const entity)
+EntityDrawHandleMap::lookup(stlw::Logger &logger, EntityID const entity)
 {
   LOOKUP_IMPLEMENTATION
 }
 
 opengl::DrawInfo const&
-EntityDrawInfos::lookup(stlw::Logger &logger, EntityID const entity) const
+EntityDrawHandleMap::lookup(stlw::Logger &logger, EntityID const entity) const
 {
   LOOKUP_IMPLEMENTATION
 }

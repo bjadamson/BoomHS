@@ -2,7 +2,7 @@
 #include <opengl/factory.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/global.hpp>
-#include <opengl/shader.hpp>
+#include <opengl/vertex_attribute.hpp>
 
 #include <boomhs/components.hpp>
 #include <boomhs/obj.hpp>
@@ -26,14 +26,13 @@ namespace
 
 template <typename INDICES, typename VERTICES>
 void
-copy_synchronous(stlw::Logger& logger, ShaderProgram const& sp, DrawInfo &dinfo,
+copy_synchronous(stlw::Logger& logger, VertexAttribute const& va, DrawInfo &dinfo,
                  VERTICES const& vertices, INDICES const& indices)
 {
   auto const bind_and_copy = [&]() {
     glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
 
-    auto const& va = sp.va();
     va.upload_vertex_format_to_glbound_vao(logger);
 
     // copy the vertices
@@ -57,23 +56,23 @@ copy_synchronous(stlw::Logger& logger, ShaderProgram const& sp, DrawInfo &dinfo,
 
 template<typename V, typename I>
 DrawInfo
-copy_gpu_impl(stlw::Logger &logger, ShaderProgram const& sp,
+copy_gpu_impl(stlw::Logger &logger, VertexAttribute const& va,
     V const& vertices, I const& indices)
 {
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{vertices.size(), num_indices};
-  copy_synchronous(logger, sp, dinfo, vertices, indices);
+  copy_synchronous(logger, va, dinfo, vertices, indices);
   return dinfo;
 }
 
 template <size_t N, size_t M>
 DrawInfo
-make_drawinfo(stlw::Logger &logger, ShaderProgram const& sp,
+make_drawinfo(stlw::Logger &logger, VertexAttribute const& va,
     std::array<float, N> const& vertex_data, std::array<GLuint, M> const& indices)
 {
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{vertex_data.size(), num_indices};
-  copy_synchronous(logger, sp, dinfo, vertex_data, indices);
+  copy_synchronous(logger, va, dinfo, vertex_data, indices);
   return dinfo;
 }
 
@@ -83,7 +82,7 @@ namespace opengl::gpu
 {
 
 DrawInfo
-create_arrow_2d(stlw::Logger &logger, ShaderProgram const& shader_program,
+create_arrow_2d(stlw::Logger &logger, VertexAttribute const& va,
     OF::ArrowCreateParams &&params)
 {
   auto const vertices = OF::make_arrow_vertices(params);
@@ -93,12 +92,12 @@ create_arrow_2d(stlw::Logger &logger, ShaderProgram const& shader_program,
   }};
 
   DrawInfo dinfo{vertices.size(), INDICES.size()};
-  copy_synchronous(logger, shader_program, dinfo, vertices, INDICES);
+  copy_synchronous(logger, va, dinfo, vertices, INDICES);
   return dinfo;
 }
 
 DrawInfo
-create_arrow(stlw::Logger &logger, ShaderProgram const& shader_program,
+create_arrow(stlw::Logger &logger, VertexAttribute const& va,
     OF::ArrowCreateParams &&params)
 {
   auto const vertices = OF::make_arrow_vertices(params);
@@ -108,12 +107,12 @@ create_arrow(stlw::Logger &logger, ShaderProgram const& shader_program,
   }};
 
   DrawInfo dinfo{vertices.size(), INDICES.size()};
-  copy_synchronous(logger, shader_program, dinfo, vertices, INDICES);
+  copy_synchronous(logger, va, dinfo, vertices, INDICES);
   return dinfo;
 }
 
 DrawInfo
-create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, TileGrid const& tgrid,
+create_tilegrid(stlw::Logger &logger, VertexAttribute const& va, TileGrid const& tgrid,
     bool const show_yaxis_lines, Color const& color)
 {
   std::vector<float> vertices;
@@ -187,23 +186,23 @@ create_tilegrid(stlw::Logger &logger, ShaderProgram const& shader_program, TileG
 
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{vertices.size(), num_indices};
-  copy_synchronous(logger, shader_program, dinfo, vertices, indices);
+  copy_synchronous(logger, va, dinfo, vertices, indices);
   return dinfo;
 }
 
 WorldOriginArrows
-create_axis_arrows(stlw::Logger &logger, ShaderProgram const& sp)
+create_axis_arrows(stlw::Logger &logger, VertexAttribute const& va)
 {
   glm::vec3 constexpr ORIGIN = glm::zero<glm::vec3>();
 
-  auto x = create_arrow(logger, sp, OF::ArrowCreateParams{LOC::RED,   ORIGIN, ORIGIN + X_UNIT_VECTOR});
-  auto y = create_arrow(logger, sp, OF::ArrowCreateParams{LOC::GREEN, ORIGIN, ORIGIN + Y_UNIT_VECTOR});
-  auto z = create_arrow(logger, sp, OF::ArrowCreateParams{LOC::BLUE,  ORIGIN, ORIGIN + Z_UNIT_VECTOR});
+  auto x = create_arrow(logger, va, OF::ArrowCreateParams{LOC::RED,   ORIGIN, ORIGIN + X_UNIT_VECTOR});
+  auto y = create_arrow(logger, va, OF::ArrowCreateParams{LOC::GREEN, ORIGIN, ORIGIN + Y_UNIT_VECTOR});
+  auto z = create_arrow(logger, va, OF::ArrowCreateParams{LOC::BLUE,  ORIGIN, ORIGIN + Z_UNIT_VECTOR});
   return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
 }
 
 DrawInfo
-copy_cubecolor_gpu(stlw::Logger &logger, ShaderProgram const& sp,
+copy_cubecolor_gpu(stlw::Logger &logger, VertexAttribute const& va,
     Color const& color)
 {
   // clang-format off
@@ -227,11 +226,11 @@ copy_cubecolor_gpu(stlw::Logger &logger, ShaderProgram const& sp,
 #undef COLOR
 #undef VERTS
   // clang-format on
-  return make_drawinfo(logger, sp, vertex_data, OF::CUBE_INDICES);
+  return make_drawinfo(logger, va, vertex_data, OF::CUBE_INDICES);
 }
 
 DrawInfo
-copy_cubenormalcolor_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color const& color)
+copy_cubenormalcolor_gpu(stlw::Logger &logger, VertexAttribute const& va, Color const& color)
 {
   // clang-format off
   static std::array<glm::vec3, 8> constexpr points = {{
@@ -309,57 +308,57 @@ copy_cubenormalcolor_gpu(stlw::Logger &logger, ShaderProgram const& sp, Color co
 
   auto const& indices = OF::CUBE_INDICES_LIGHT;
   DrawInfo dinfo{vertex_data.size(), indices.size()};
-  copy_synchronous(logger, sp, dinfo, vertex_data, indices);
+  copy_synchronous(logger, va, dinfo, vertex_data, indices);
   return dinfo;
 }
 
 DrawInfo
-copy_cubevertexonly_gpu(stlw::Logger &logger, ShaderProgram const& sp)
+copy_cubevertexonly_gpu(stlw::Logger &logger, VertexAttribute const& va)
 {
   auto const vertices = OF::cube_vertices();
-  return make_drawinfo(logger, sp, vertices, OF::CUBE_INDICES);
+  return make_drawinfo(logger, va, vertices, OF::CUBE_INDICES);
 }
 
 DrawInfo
-copy_cube_wireframevertexonly_gpu(stlw::Logger& logger, ShaderProgram const& sp)
+copy_cube_wireframevertexonly_gpu(stlw::Logger& logger, VertexAttribute const& va)
 {
   auto const vertices = OF::cube_vertices();
-  return make_drawinfo(logger, sp, vertices, OF::CUBE_WIREFRAME_INDICES);
+  return make_drawinfo(logger, va, vertices, OF::CUBE_WIREFRAME_INDICES);
 }
 
 DrawInfo
-copy_cubetexture_gpu(stlw::Logger &logger, ShaderProgram const& sp)
+copy_cubetexture_gpu(stlw::Logger &logger, VertexAttribute const& va)
 {
   auto const vertices = OF::cube_vertices();
-  return make_drawinfo(logger, sp, vertices, OF::CUBE_INDICES);
+  return make_drawinfo(logger, va, vertices, OF::CUBE_INDICES);
 }
 
 DrawInfo
-copy_gpu(stlw::Logger &logger, ShaderProgram const& sp,
+copy_gpu(stlw::Logger &logger, VertexAttribute const& va,
     ObjData const& data)
 {
-  return copy_gpu_impl(logger, sp, data.vertices, data.indices);
+  return copy_gpu_impl(logger, va, data.vertices, data.indices);
 }
 
 DrawInfo
-copy_gpu(stlw::Logger &logger, ShaderProgram const& sp, VertexBuffer const& object)
+copy_gpu(stlw::Logger &logger, VertexAttribute const& va, VertexBuffer const& object)
 {
   auto const& v = object.vertices;
   auto const& i = object.indices;
-  return copy_gpu_impl(logger, sp, v, i);
+  return copy_gpu_impl(logger, va, v, i);
 }
 
 DrawInfo
-copy_rectangle(stlw::Logger &logger, ShaderProgram const& sp,
+copy_rectangle(stlw::Logger &logger, VertexAttribute const& va,
     OF::RectBuffer const& buffer)
 {
   auto const& v = buffer.vertices;
   auto const& i = buffer.indices;
-  return copy_gpu_impl(logger, sp, v, i);
+  return copy_gpu_impl(logger, va, v, i);
 }
 
 DrawInfo
-copy_rectangle_uvs(stlw::Logger &logger, ShaderProgram const& sp,
+copy_rectangle_uvs(stlw::Logger &logger, VertexAttribute const& va,
                    OF::RectangleVertices const& v, TextureInfo const& tinfo)
 {
   auto const& i = OF::RECTANGLE_INDICES;
@@ -378,7 +377,7 @@ copy_rectangle_uvs(stlw::Logger &logger, ShaderProgram const& sp,
   // clang-format on
 
   DrawInfo dinfo{vertices.size(), i.size()};
-  copy_synchronous(logger, sp, dinfo, vertices, i);
+  copy_synchronous(logger, va, dinfo, vertices, i);
   return dinfo;
 }
 

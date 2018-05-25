@@ -538,7 +538,7 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
   auto& sps = zs.gfx_state.sps;
   auto& sp  = sps.ref_sp("3d_pos_color");
 
-  auto        dinfo = OG::create_arrow(logger, sp, OF::ArrowCreateParams{color, start, head});
+  auto        dinfo = OG::create_arrow(logger, sp.va(), OF::ArrowCreateParams{color, start, head});
   auto const& ldata = zs.level_data;
 
   Transform transform;
@@ -586,7 +586,7 @@ draw_global_axis(RenderState& rstate)
   LOG_TRACE("Drawing Global Axis");
 
   auto& sp           = sps.ref_sp("3d_pos_color");
-  auto  world_arrows = OG::create_axis_arrows(logger, sp);
+  auto  world_arrows = OG::create_axis_arrows(logger, sp.va());
 
   auto const& ldata = zs.level_data;
   Transform   transform;
@@ -620,7 +620,7 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
   LOG_TRACE("Drawing Local Axis");
 
   auto& sp          = sps.ref_sp("3d_pos_color");
-  auto  axis_arrows = OG::create_axis_arrows(logger, sp);
+  auto  axis_arrows = OG::create_axis_arrows(logger, sp.va());
 
   Transform transform;
   transform.translation = player_pos;
@@ -651,7 +651,8 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   auto&       zs     = rstate.zs;
 
   assert(zs.gfx_state.gpu_state.entities);
-  auto& entity_handles = *zs.gfx_state.gpu_state.entities;
+  auto& eh   = *zs.gfx_state.gpu_state.entities;
+  auto& ebbh = *zs.gfx_state.gpu_state.entity_boundingboxes;
 
   auto& registry = zs.registry;
   auto& sps      = zs.gfx_state.sps;
@@ -662,45 +663,49 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 #define COMMON ShaderName, Transform, IsVisible
 #define COMMON_ARGS auto const eid, auto &sn, auto &transform, auto &is_v
 
-  auto const draw_fn = [&](GLenum const dm, COMMON_ARGS, auto&&...) {
+  auto const draw_fn = [&](GLenum const dm, auto& sp, auto& dinfo, COMMON_ARGS, auto&&...) {
     bool const skip = !is_v.value;
     if (skip) {
       return;
     }
-    auto& dinfo = entity_handles.lookup(logger, eid);
-    auto& sp    = sps.ref_sp(sn.value);
-    auto& vao   = dinfo.vao();
+    auto& vao = dinfo.vao();
 
     bool const is_lightsource = registry.has<PointLight>(eid);
     auto const model_matrix   = transform.model_matrix();
 
+    vao.while_bound(logger, [&]() {
+      if (is_lightsource) {
+        assert(is_lightsource);
+        draw_3dlightsource(rstate, dm, model_matrix, sp, dinfo, eid, registry);
+        return;
+      }
+      bool constexpr RECEIVES_AMBIENT_LIGHT = true;
+
+      bool const receives_light = registry.has<Material>(eid);
+      if (receives_light) {
+        assert(registry.has<Material>(eid));
+        Material const& material = registry.get<Material>(eid);
+        draw_3dlit_shape(rstate, dm, transform.translation, model_matrix, sp, dinfo, material,
+                         registry, RECEIVES_AMBIENT_LIGHT);
+        return;
+      }
+
+      // Can't receive light
+      assert(!registry.has<Material>());
+
+      if (!sp.is_2d) {
+        auto const camera_matrix = rstate.camera_matrix();
+        set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
+      }
+      draw(rstate, dm, sp, dinfo);
+    });
+  };
+  auto const draw_entity = [&](COMMON_ARGS, auto&&... args) {
+    auto& dinfo = eh.lookup(logger, eid);
+    auto& sp    = sps.ref_sp(sn.value);
+
     sp.while_bound(logger, [&]() {
-      vao.while_bound(logger, [&]() {
-        if (is_lightsource) {
-          assert(is_lightsource);
-          draw_3dlightsource(rstate, dm, model_matrix, sp, dinfo, eid, registry);
-          return;
-        }
-        bool constexpr RECEIVES_AMBIENT_LIGHT = true;
-
-        bool const receives_light = registry.has<Material>(eid);
-        if (receives_light) {
-          assert(registry.has<Material>(eid));
-          Material const& material = registry.get<Material>(eid);
-          draw_3dlit_shape(rstate, dm, transform.translation, model_matrix, sp, dinfo, material,
-                           registry, RECEIVES_AMBIENT_LIGHT);
-          return;
-        }
-
-        // Can't receive light
-        assert(!registry.has<Material>());
-
-        if (!sp.is_2d) {
-          auto const camera_matrix = rstate.camera_matrix();
-          set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
-        }
-        draw(rstate, dm, sp, dinfo);
-      });
+      draw_fn(GL_TRIANGLES, sp, dinfo, eid, sn, transform, is_v, FORWARD(args));
     });
   };
 
@@ -708,7 +713,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     auto* ti = texture_renderable.texture_info;
     assert(ti);
     ti->while_bound(logger, [&]() {
-      draw_fn(GL_TRIANGLES, eid, sn, transform, is_v, texture_renderable, FORWARD(args));
+      draw_entity(eid, sn, transform, is_v, texture_renderable, FORWARD(args));
     });
   };
 
@@ -726,11 +731,13 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     assert(ti);
 
     ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
-    ti->while_bound(logger, [&]() { draw_fn(GL_TRIANGLES, eid, sn, transform, is_v, bboard); });
+    ti->while_bound(logger, [&]() { draw_entity(eid, sn, transform, is_v, bboard); });
   };
 
   auto const draw_junk = [&](COMMON_ARGS, Color&, JunkEntityFromFILE& je) {
-    draw_fn(je.draw_mode, eid, sn, transform, is_v);
+    auto& dinfo = eh.lookup(logger, eid);
+    auto& sp    = sps.ref_sp(sn.value);
+    sp.while_bound(logger, [&]() { draw_fn(je.draw_mode, sp, dinfo, eid, sn, transform, is_v); });
   };
   auto const draw_torch = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
     {
@@ -755,24 +762,25 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
     auto* ti = trenderable.texture_info;
     assert(ti);
-    ti->while_bound(logger, [&]() { draw_fn(GL_TRIANGLES, eid, sn, copy_transform, is_v, torch); });
+    ti->while_bound(logger, [&]() { draw_entity(eid, sn, copy_transform, is_v, torch); });
   };
-  auto const draw_boundingboxes = [&](COMMON_ARGS, CubeRenderable& cr, AABoundingBox& box,
-                                       Selectable& sel) {
+  auto const draw_boundingboxes = [&](COMMON_ARGS, AABoundingBox& box, Selectable& sel) {
     if (!es.draw_bounding_boxes) {
       return;
     }
 
     Color const wire_color = sel.selected ? LOC::GREEN : LOC::RED;
 
-    auto& sp = sps.ref_sp(sn.value);
-    sp.while_bound(logger, [&]() { sp.set_uniform_color(logger, "u_wirecolor", wire_color); });
-
-    draw_fn(cr.mode, eid, sn, transform, is_v, cr, box);
+    auto& sp = sps.ref_sp("wireframe");
+    sp.while_bound(logger, [&]() {
+      sp.set_uniform_color(logger, "u_wirecolor", wire_color);
+      auto& dinfo = ebbh.lookup(logger, eid);
+      draw_fn(GL_LINES, sp, dinfo, eid, sn, transform, is_v, box);
+    });
   };
 
   auto const draw_plain_cube = [&](COMMON_ARGS, CubeRenderable& cr, auto&&... args) {
-    draw_fn(cr.mode, eid, sn, transform, is_v, cr, FORWARD(args));
+    draw_entity(eid, sn, transform, is_v, cr, FORWARD(args));
   };
 #undef COMMON_ARGS
 
@@ -789,12 +797,12 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
   // CUBES
   registry.view<COMMON, CubeRenderable, PointLight>().each(draw_plain_cube);
-  registry.view<COMMON, CubeRenderable, AABoundingBox, Selectable>().each(draw_boundingboxes);
+  registry.view<COMMON, AABoundingBox, Selectable>().each(draw_boundingboxes);
 
   registry.view<COMMON, MeshRenderable, NPCData>().each(
-      [&](auto&&... args) { draw_fn(GL_TRIANGLES, FORWARD(args)); });
+      [&](auto&&... args) { draw_entity(FORWARD(args)); });
   registry.view<COMMON, MeshRenderable, PlayerData>().each(
-      [&](auto&&... args) { draw_fn(GL_TRIANGLES, FORWARD(args)); });
+      [&](auto&&... args) { draw_entity(FORWARD(args)); });
 #undef COMMON
 }
 
@@ -812,7 +820,7 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
   auto& sp  = sps.ref_sp("2dtexture");
 
   auto const v     = OF::rectangle_vertices();
-  DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, sp, v, ti);
+  DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), v, ti);
 
   Transform transform;
   transform.translation = glm::vec3{pos.x, pos.y, 0.0f};
@@ -842,7 +850,7 @@ draw_inventory_overlay(RenderState& rstate)
   OF::RectInfo const ri{1.0f, 1.0f, color, std::nullopt, std::nullopt};
   OF::RectBuffer     buffer = OF::make_rectangle(ri);
 
-  DrawInfo dinfo = gpu::copy_rectangle(logger, sp, buffer);
+  DrawInfo dinfo = gpu::copy_rectangle(logger, sp.va(), buffer);
 
   auto& ttable = zs.gfx_state.texture_table;
 
@@ -998,7 +1006,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
     auto texture_o = ttable.find("TargetReticle");
     assert(texture_o);
-    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp, v, *texture_o);
+    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), v, *texture_o);
 
     transform.scale = glm::vec3{scale};
     auto& vao       = dinfo.vao();
@@ -1012,7 +1020,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     auto const mvp_matrix = proj_matrix * view_model;
     set_modelmatrix(logger, mvp_matrix, sp);
 
-    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp, v, *texture_o);
+    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), v, *texture_o);
 
     transform.scale = glm::vec3{scale};
     auto& vao       = dinfo.vao();
@@ -1213,7 +1221,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
   Transform  transform;
   bool const show_y = tds.show_yaxis_lines;
-  auto       dinfo  = OG::create_tilegrid(logger, sp, tilegrid, show_y);
+  auto       dinfo  = OG::create_tilegrid(logger, sp.va(), tilegrid, show_y);
 
   auto const model_matrix = transform.model_matrix();
 
@@ -1238,77 +1246,6 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
   auto& zs       = rstate.zs;
   auto& registry = zs.registry;
   auto& ldata    = zs.level_data;
-
-  static bool doonce = false;
-  if (!doonce) {
-    doonce = true;
-
-    auto& gfx_state = zs.gfx_state;
-    auto& sps       = gfx_state.sps;
-
-    auto&       ldata     = zs.level_data;
-    auto const& obj_store = ldata.obj_store;
-
-    auto& entity_dh_o = gfx_state.gpu_state.entities;
-    assert(entity_dh_o);
-    auto& entity_dh = *entity_dh_o;
-    {
-      auto  tree_eid = registry.create();
-      auto& mr       = registry.assign<MeshRenderable>(tree_eid);
-      mr.name        = "tree_lowpoly";
-
-      auto& tree_transform = registry.assign<Transform>(tree_eid);
-      registry.assign<Material>(tree_eid);
-      registry.assign<JunkEntityFromFILE>(tree_eid);
-      {
-        auto& isv = registry.assign<IsVisible>(tree_eid);
-        isv.value = true;
-      }
-      registry.assign<Name>(tree_eid).value = "custom tree";
-
-      auto& sn = registry.assign<ShaderName>(tree_eid);
-      sn.value = "3d_pos_normal_color";
-      {
-        auto& cc = registry.assign<Color>(tree_eid);
-        *&cc     = LOC::WHITE;
-      }
-
-      auto&          sp = sps.ref_sp(sn.value);
-      ObjQuery const query{mr.name, BufferFlags{true, true, true, false}};
-
-      auto&       ldata     = zs.level_data;
-      auto const& obj_store = ldata.obj_store;
-
-      auto& obj   = obj_store.get_obj(logger, query);
-      auto  dinfo = opengl::gpu::copy_gpu(logger, sp, obj);
-
-      entity_dh.add(tree_eid, MOVE(dinfo));
-    }
-    auto const add_wireframe_cube = [&](glm::vec3 const& world_pos) {
-      auto  eid = registry.create();
-      auto& mr  = registry.assign<CubeRenderable>(eid);
-      mr.mode   = GL_LINES;
-
-      auto& tr       = registry.assign<Transform>(eid);
-      tr.translation = world_pos;
-
-      registry.assign<Material>(eid);
-      registry.assign<JunkEntityFromFILE>(eid);
-      registry.assign<IsVisible>(eid).value = true;
-      registry.assign<Selectable>(eid);
-      registry.assign<AABoundingBox>(eid);
-
-      registry.assign<Name>(eid).value = "collider rect";
-      auto& sn                         = registry.assign<ShaderName>(eid);
-      sn.value                         = "wireframe";
-
-      auto& sp    = sps.ref_sp(sn.value);
-      auto  dinfo = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, sp);
-      entity_dh.add(eid, MOVE(dinfo));
-    };
-    add_wireframe_cube(glm::vec3{0.0f});
-    add_wireframe_cube(glm::vec3{5.0, 0.0f, 5.0f});
-  } // end static "doonce" if block
 
   if (es.draw_entities) {
     render::draw_entities(rstate, rng, ft);

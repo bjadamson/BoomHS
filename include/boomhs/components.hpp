@@ -8,6 +8,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -96,7 +97,6 @@ struct ShaderName
 
 struct CubeRenderable
 {
-  GLenum mode = GL_TRIANGLES;
 };
 
 struct MeshRenderable
