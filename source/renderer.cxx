@@ -241,36 +241,6 @@ draw(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
 }
 
 void
-draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position,
-                 glm::mat4 const& model_matrix, ShaderProgram& sp, DrawInfo& dinfo,
-                 Material const& material, EntityRegistry& registry,
-                 bool const receives_ambient_light)
-{
-  auto& es     = rstate.es;
-  auto& logger = es.logger;
-  auto& zs     = rstate.zs;
-
-  auto const                       pointlight_eids = find_pointlights(registry);
-  std::vector<PointlightTransform> pointlights;
-
-  FOR(i, pointlight_eids.size())
-  {
-    auto const&               eid        = pointlight_eids[i];
-    auto&                     transform  = registry.get<Transform>(eid);
-    auto&                     pointlight = registry.get<PointLight>(eid);
-    PointlightTransform const plt{transform, pointlight};
-
-    pointlights.emplace_back(plt);
-  }
-  set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
-                             receives_ambient_light);
-  auto const camera_matrix = rstate.camera_matrix();
-  set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
-
-  draw(rstate, dm, sp, dinfo);
-}
-
-void
 draw_3dlightsource(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix,
                    ShaderProgram& sp, DrawInfo& dinfo, EntityID const eid, EntityRegistry& registry)
 {
@@ -491,6 +461,36 @@ draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, TextureInfo& ti
 {
   auto& logger = rstate.es.logger;
   ti.while_bound(logger, [&]() { draw_2d(rstate, dm, sp, dinfo, alpha_blend); });
+}
+
+void
+draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position,
+                 glm::mat4 const& model_matrix, ShaderProgram& sp, DrawInfo& dinfo,
+                 Material const& material, EntityRegistry& registry,
+                 bool const receives_ambient_light)
+{
+  auto& es     = rstate.es;
+  auto& logger = es.logger;
+  auto& zs     = rstate.zs;
+
+  auto const                       pointlight_eids = find_pointlights(registry);
+  std::vector<PointlightTransform> pointlights;
+
+  FOR(i, pointlight_eids.size())
+  {
+    auto const&               eid        = pointlight_eids[i];
+    auto&                     transform  = registry.get<Transform>(eid);
+    auto&                     pointlight = registry.get<PointLight>(eid);
+    PointlightTransform const plt{transform, pointlight};
+
+    pointlights.emplace_back(plt);
+  }
+  set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
+                             receives_ambient_light);
+  auto const camera_matrix = rstate.camera_matrix();
+  set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
+
+  draw(rstate, dm, sp, dinfo);
 }
 
 void
@@ -757,13 +757,18 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     assert(ti);
     ti->while_bound(logger, [&]() { draw_fn(GL_TRIANGLES, eid, sn, copy_transform, is_v, torch); });
   };
-  auto const draw_cube = [&](COMMON_ARGS, CubeRenderable& cr, AABoundingBox& box, Selectable& sel) {
+  auto const draw_wireframe_cube = [&](COMMON_ARGS, CubeRenderable& cr, AABoundingBox& box,
+                                       Selectable& sel) {
     Color const wire_color = sel.selected ? LOC::GREEN : LOC::RED;
 
     auto& sp = sps.ref_sp(sn.value);
     sp.while_bound(logger, [&]() { sp.set_uniform_color(logger, "u_wirecolor", wire_color); });
 
     draw_fn(cr.mode, eid, sn, transform, is_v, cr, box);
+  };
+
+  auto const draw_plain_cube = [&](COMMON_ARGS, CubeRenderable& cr, auto&&... args) {
+    draw_fn(cr.mode, eid, sn, transform, is_v, cr, FORWARD(args));
   };
 #undef COMMON_ARGS
 
@@ -777,7 +782,10 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   registry.view<COMMON, Color, JunkEntityFromFILE>().each(draw_junk);
 
   registry.view<COMMON, Torch, TextureRenderable>().each(draw_torch);
-  registry.view<COMMON, CubeRenderable, AABoundingBox, Selectable>().each(draw_cube);
+
+  // CUBES
+  registry.view<COMMON, CubeRenderable, PointLight>().each(draw_plain_cube);
+  registry.view<COMMON, CubeRenderable, AABoundingBox, Selectable>().each(draw_wireframe_cube);
 
   registry.view<COMMON, MeshRenderable, NPCData>().each(
       [&](auto&&... args) { draw_fn(GL_TRIANGLES, FORWARD(args)); });
@@ -1217,62 +1225,131 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 }
 
 void
-draw_water(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
-           glm::vec4 const& cull_plane, WaterFrameBuffers& water_fbos,
-           glm::vec3 const& camera_position)
+render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, FrameTime const& ft,
+             glm::vec4 const& cull_plane)
 {
   auto& es     = rstate.es;
   auto& logger = es.logger;
 
-  auto& zs    = rstate.zs;
-  auto& ldata = zs.level_data;
+  auto& zs       = rstate.zs;
+  auto& registry = zs.registry;
+  auto& ldata    = zs.level_data;
 
-  Transform  transform;
-  auto const render = [&](WaterInfo& winfo) {
-    auto const& pos = winfo.position;
+  static bool doonce = false;
+  if (!doonce) {
+    doonce = true;
 
-    auto& tr = transform.translation;
-    tr.x     = pos.x;
-    tr.z     = pos.y;
+    auto& gfx_state = zs.gfx_state;
+    auto& sps       = gfx_state.sps;
 
-    // hack
-    tr.y = 0.19999f; // pos.y;
-    assert(tr.y < 2.0f);
+    auto&       ldata     = zs.level_data;
+    auto const& obj_store = ldata.obj_store;
 
-    auto& sp    = winfo.shader;
-    auto& dinfo = winfo.dinfo;
-    auto& vao   = dinfo.vao();
+    auto& entity_dh_o = gfx_state.gpu_state.entities;
+    assert(entity_dh_o);
+    auto& entity_dh = *entity_dh_o;
+    {
+      auto  tree_eid = registry.create();
+      auto& mr       = registry.assign<MeshRenderable>(tree_eid);
+      mr.name        = "tree_lowpoly";
 
-    bool constexpr RECEIVES_AMBIENT_LIGHT = true;
-    auto const model_matrix               = transform.model_matrix();
+      auto& tree_transform = registry.assign<Transform>(tree_eid);
+      registry.assign<Material>(tree_eid);
+      registry.assign<JunkEntityFromFILE>(tree_eid);
+      {
+        auto& isv = registry.assign<IsVisible>(tree_eid);
+        isv.value = true;
+      }
+      registry.assign<Name>(tree_eid).value = "custom tree";
 
-    winfo.wave_offset += ft.delta_millis() * ldata.wind_speed;
-    winfo.wave_offset = ::fmodf(winfo.wave_offset, 1.00f);
+      auto& sn = registry.assign<ShaderName>(tree_eid);
+      sn.value = "3d_pos_normal_color";
+      {
+        auto& cc = registry.assign<Color>(tree_eid);
+        *&cc     = LOC::WHITE;
+      }
 
-    auto& time_offset = ldata.time_offset;
-    time_offset += ft.delta_millis() * ldata.wind_speed;
-    time_offset = ::fmodf(time_offset, 1.00f);
+      auto&          sp = sps.ref_sp(sn.value);
+      ObjQuery const query{mr.name, BufferFlags{true, true, true, false}};
 
-    sp.while_bound(logger, [&]() {
-      sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
-      sp.set_uniform_vec3(logger, "u_camera_position", camera_position);
-      sp.set_uniform_float1(logger, "u_wave_offset", winfo.wave_offset);
-      sp.set_uniform_float1(logger, "u_wavestrength", ldata.wave_strength);
-      sp.set_uniform_float1(logger, "u_time_offset", time_offset);
+      auto&       ldata     = zs.level_data;
+      auto const& obj_store = ldata.obj_store;
 
-      vao.while_bound(logger, [&]() {
-        water_fbos.while_bound(logger, [&]() {
-          draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, tr, model_matrix, sp, dinfo, Material{},
-                           registry, RECEIVES_AMBIENT_LIGHT);
-        });
-      });
-    });
-  };
+      auto& obj   = obj_store.get_obj(logger, query);
+      auto  dinfo = opengl::gpu::copy_gpu(logger, sp, obj);
 
-  LOG_TRACE("Rendering water");
+      entity_dh.add(tree_eid, MOVE(dinfo));
+    }
+    auto const add_wireframe_cube = [&](glm::vec3 const& world_pos) {
+      auto  eid = registry.create();
+      auto& mr  = registry.assign<CubeRenderable>(eid);
+      mr.mode   = GL_LINES;
 
-  render(ldata.water());
-  LOG_TRACE("Finished rendering water");
+      auto& tr       = registry.assign<Transform>(eid);
+      tr.translation = world_pos;
+
+      registry.assign<Material>(eid);
+      registry.assign<JunkEntityFromFILE>(eid);
+      registry.assign<IsVisible>(eid).value = true;
+      registry.assign<Selectable>(eid);
+      registry.assign<AABoundingBox>(eid);
+
+      registry.assign<Name>(eid).value = "collider rect";
+      auto& sn                         = registry.assign<ShaderName>(eid);
+      sn.value                         = "wireframe";
+
+      auto& sp    = sps.ref_sp(sn.value);
+      auto  dinfo = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, sp);
+      entity_dh.add(eid, MOVE(dinfo));
+    };
+    add_wireframe_cube(glm::vec3{0.0f});
+    add_wireframe_cube(glm::vec3{5.0, 0.0f, 5.0f});
+  } // end static "doonce" if block
+
+  if (es.draw_entities) {
+    render::draw_entities(rstate, rng, ft);
+  }
+
+  auto& tilegrid_state = es.tilegrid_state;
+  if (tilegrid_state.draw_tilegrid) {
+    render::draw_tilegrid(rstate, tilegrid_state, ft);
+    render::draw_rivers(rstate, ft);
+  }
+
+  if (es.draw_terrain) {
+    render::draw_terrain(rstate, registry, ft, cull_plane);
+  }
+
+  render::draw_stars(rstate, ft);
+  render::draw_targetreticle(rstate, ft);
+
+  if (tilegrid_state.show_grid_lines) {
+    render::draw_tilegrid(rstate, tilegrid_state);
+  }
+
+  auto& player = ldata.player;
+  if (tilegrid_state.show_neighbortile_arrows) {
+    auto const& wp   = player.world_position();
+    auto const  tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
+    render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
+  }
+  if (es.show_global_axis) {
+    render::draw_global_axis(rstate);
+  }
+  if (es.show_local_axis) {
+    render::draw_local_axis(rstate, player.world_position());
+  }
+
+  {
+    auto const  eid = find_player(registry);
+    auto const& inv = registry.get<PlayerData>(eid).inventory;
+    if (inv.is_open()) {
+      render::draw_inventory_overlay(rstate);
+    }
+  }
+
+  // if checks happen inside fn
+  render::conditionally_draw_player_vectors(rstate, player);
 }
 
 } // namespace boomhs::render

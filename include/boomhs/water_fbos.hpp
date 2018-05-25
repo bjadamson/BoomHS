@@ -5,6 +5,7 @@
 #include <opengl/renderbuffer.hpp>
 #include <opengl/texture.hpp>
 #include <stlw/log.hpp>
+#include <stlw/type_macros.hpp>
 
 namespace opengl
 {
@@ -43,6 +44,7 @@ class WaterFrameBuffers
   RefractionBuffers refraction_;
 
 public:
+  MOVE_CONSTRUCTIBLE_ONLY(WaterFrameBuffers);
   WaterFrameBuffers(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&, opengl::TextureInfo&,
                     opengl::TextureInfo&, opengl::TextureInfo&);
   ~WaterFrameBuffers();

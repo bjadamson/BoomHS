@@ -443,134 +443,6 @@ update_mouse_selection_fortesting(RenderState& rstate)
 }
 
 void
-render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, FrameTime const& ft,
-             glm::vec4 const& cull_plane)
-{
-  auto& es     = rstate.es;
-  auto& logger = es.logger;
-
-  auto& zs       = rstate.zs;
-  auto& registry = zs.registry;
-  auto& ldata    = zs.level_data;
-
-  static bool doonce = false;
-  if (!doonce) {
-    doonce = true;
-
-    auto& gfx_state = zs.gfx_state;
-    auto& sps       = gfx_state.sps;
-
-    auto&       ldata     = zs.level_data;
-    auto const& obj_store = ldata.obj_store;
-
-    auto& entity_dh_o = gfx_state.gpu_state.entities;
-    assert(entity_dh_o);
-    auto& entity_dh = *entity_dh_o;
-    {
-      auto  tree_eid = registry.create();
-      auto& mr       = registry.assign<MeshRenderable>(tree_eid);
-      mr.name        = "tree_lowpoly";
-
-      auto& tree_transform = registry.assign<Transform>(tree_eid);
-      registry.assign<Material>(tree_eid);
-      registry.assign<JunkEntityFromFILE>(tree_eid);
-      {
-        auto& isv = registry.assign<IsVisible>(tree_eid);
-        isv.value = true;
-      }
-      registry.assign<Name>(tree_eid).value = "custom tree";
-
-      auto& sn = registry.assign<ShaderName>(tree_eid);
-      sn.value = "3d_pos_normal_color";
-      {
-        auto& cc = registry.assign<Color>(tree_eid);
-        *&cc     = LOC::WHITE;
-      }
-
-      auto&          sp = sps.ref_sp(sn.value);
-      ObjQuery const query{mr.name, BufferFlags{true, true, true, false}};
-
-      auto&       ldata     = zs.level_data;
-      auto const& obj_store = ldata.obj_store;
-
-      auto& obj   = obj_store.get_obj(logger, query);
-      auto  dinfo = opengl::gpu::copy_gpu(logger, sp, obj);
-
-      entity_dh.add(tree_eid, MOVE(dinfo));
-    }
-    auto const add_wireframe_cube = [&](glm::vec3 const& world_pos) {
-      auto  eid = registry.create();
-      auto& mr  = registry.assign<CubeRenderable>(eid);
-      mr.mode   = GL_LINES;
-
-      auto& tr       = registry.assign<Transform>(eid);
-      tr.translation = world_pos;
-
-      registry.assign<Material>(eid);
-      registry.assign<JunkEntityFromFILE>(eid);
-      registry.assign<IsVisible>(eid).value = true;
-      registry.assign<Selectable>(eid);
-      registry.assign<AABoundingBox>(eid);
-
-      registry.assign<Name>(eid).value = "collider rect";
-      auto& sn                         = registry.assign<ShaderName>(eid);
-      sn.value                         = "wireframe";
-
-      auto& sp    = sps.ref_sp(sn.value);
-      auto  dinfo = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, sp);
-      entity_dh.add(eid, MOVE(dinfo));
-    };
-    add_wireframe_cube(glm::vec3{0.0f});
-    add_wireframe_cube(glm::vec3{5.0, 0.0f, 5.0f});
-  } // end static "doonce" if block
-
-  if (es.draw_entities) {
-    render::draw_entities(rstate, rng, ft);
-  }
-
-  auto& tilegrid_state = es.tilegrid_state;
-  if (tilegrid_state.draw_tilegrid) {
-    render::draw_tilegrid(rstate, tilegrid_state, ft);
-    render::draw_rivers(rstate, ft);
-  }
-
-  if (es.draw_terrain) {
-    render::draw_terrain(rstate, registry, ft, cull_plane);
-  }
-
-  render::draw_stars(rstate, ft);
-  render::draw_targetreticle(rstate, ft);
-
-  if (tilegrid_state.show_grid_lines) {
-    render::draw_tilegrid(rstate, tilegrid_state);
-  }
-
-  auto& player = ldata.player;
-  if (tilegrid_state.show_neighbortile_arrows) {
-    auto const& wp   = player.world_position();
-    auto const  tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
-    render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
-  }
-  if (es.show_global_axis) {
-    render::draw_global_axis(rstate);
-  }
-  if (es.show_local_axis) {
-    render::draw_local_axis(rstate, player.world_position());
-  }
-
-  {
-    auto const  eid = find_player(registry);
-    auto const& inv = registry.get<PlayerData>(eid).inventory;
-    if (inv.is_open()) {
-      render::draw_inventory_overlay(rstate);
-    }
-  }
-
-  // if checks happen inside fn
-  render::conditionally_draw_player_vectors(rstate, player);
-}
-
-void
 game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
           FrameTime const& ft)
 {
@@ -627,25 +499,16 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   auto& gfx_state = zs.gfx_state;
   auto& sps       = gfx_state.sps;
 
-  auto const&              dim = es.dimensions;
-  ScreenSize const         screen_size{dim.w, dim.h};
-  auto&                    ttable = gfx_state.texture_table;
-  auto&                    ti     = *ttable.find("water-diffuse");
-  auto&                    dudv   = *ttable.find("water-dudv");
-  auto&                    normal = *ttable.find("water-normal");
-  auto&                    sp     = sps.ref_sp("water");
-  static WaterFrameBuffers waterfbos{logger, screen_size, sp, ti, dudv, normal};
+  auto const&      dim = es.dimensions;
+  ScreenSize const screen_size{dim.w, dim.h};
+  auto&            ttable    = gfx_state.texture_table;
+  auto&            ti        = *ttable.find("water-diffuse");
+  auto&            dudv      = *ttable.find("water-dudv");
+  auto&            normal    = *ttable.find("water-normal");
+  auto&            sp        = sps.ref_sp("water");
+  auto const&      fog_color = ldata.fog.color;
 
-  // Render the scene to the reflection FBO
-  float constexpr CULL_CUTOFF_HEIGHT = 0.4f;
-  glm::vec4 const ABOVE_VECTOR{0, -1, 0, CULL_CUTOFF_HEIGHT};
-  glm::vec4 const BENEATH_VECTOR{0, 1, 0, -CULL_CUTOFF_HEIGHT};
-
-  // Render the scene with no culling (setting it zero disables culling mathematically)
-  glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
-
-  auto const& fog_color            = ldata.fog.color;
-  auto const  make_skybox_renderer = [&]() {
+  auto const make_skybox_renderer = [&]() {
     auto&    skybox_sp = sps.ref_sp("skybox");
     DrawInfo dinfo     = opengl::gpu::copy_cubetexture_gpu(logger, skybox_sp);
     auto&    day_ti    = *ttable.find("building_skybox");
@@ -653,44 +516,33 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     return SkyboxRenderer{logger, MOVE(dinfo), day_ti, night_ti, skybox_sp};
   };
 
+  auto const make_water_renderer = [&]() {
+    WaterFrameBuffers fbos{logger, screen_size, sp, ti, dudv, normal};
+    return WaterRenderer{MOVE(fbos)};
+  };
+
+  // TODO: move these (they are static for convenience testing)
   static SkyboxRenderer skybox_renderer = make_skybox_renderer();
-  waterfbos.with_reflection_fbo(logger, [&]() {
-    // Compute the camera position beneath the water for capturing the reflective image the camera
-    // will see.
-    //
-    // By inverting the camera's Y position before computing the view matrices, we can render the
-    // world as if the camera was beneath the water's surfac. This is how computing the reflection
-    // texture works.
-    glm::vec3 camera_pos = camera.world_position();
-    camera_pos.y         = -camera_pos.y;
+  static WaterRenderer  water_renderer  = make_water_renderer();
 
-    auto const  reflect_rmatrices = RenderMatrices::from_camera_withposition(camera, camera_pos);
-    RenderState rstate{reflect_rmatrices, es, zs};
-    render::clear_screen(fog_color);
-
-    render::clear_screen(ldata.fog.color);
-    skybox_renderer.render(rstate, ft);
-    render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
-  });
+  // Render the scene to the refraction and reflection FBOs
+  water_renderer.render_reflection(es, lm, camera, skybox_renderer, rng, ft);
+  water_renderer.render_refraction(es, lm, camera, skybox_renderer, rng, ft);
 
   auto const  rmatrices = RenderMatrices::from_camera(camera);
   RenderState rstate{rmatrices, es, zs};
-  waterfbos.with_refraction_fbo(logger, [&]() {
-    render::clear_screen(fog_color);
-    skybox_renderer.render(rstate, ft);
-    render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
-  });
 
+  // render scene
   render::clear_screen(ldata.fog.color);
   skybox_renderer.render(rstate, ft);
 
   // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up ontop
   // of the ingame UI nearby target indicators.
+  water_renderer.render_water(rstate, lm, camera, ft);
 
-  if (es.draw_water) {
-    render::draw_water(rstate, registry, ft, ABOVE_VECTOR, waterfbos, camera.world_position());
-  }
-  render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
+  // Render the scene with no culling (setting it zero disables culling mathematically)
+  glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
+  render::render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
 
   /*
   {

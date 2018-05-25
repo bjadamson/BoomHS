@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/obj.hpp>
+#include <boomhs/water_fbos.hpp>
 
 #include <opengl/draw_info.hpp>
 #include <opengl/shader.hpp>
@@ -8,8 +9,23 @@
 #include <extlibs/glm.hpp>
 #include <stlw/log.hpp>
 
+namespace window
+{
+class FrameTime;
+} // namespace window
+
+namespace stlw
+{
+class float_generator;
+} // namespace stlw
+
 namespace boomhs
 {
+class Camera;
+struct EngineState;
+class LevelManager;
+class RenderState;
+class SkyboxRenderer;
 
 struct WaterTileThing
 {
@@ -46,6 +62,21 @@ struct WaterFactory
                                  opengl::TextureInfo&);
 
   static WaterInfo make_default(stlw::Logger&, opengl::ShaderPrograms&, opengl::TextureTable&);
+};
+
+class WaterRenderer
+{
+  WaterFrameBuffers fbos_;
+
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(WaterRenderer);
+
+  explicit WaterRenderer(WaterFrameBuffers&&);
+  void render_refraction(EngineState&, LevelManager&, Camera&, SkyboxRenderer&,
+                         stlw::float_generator&, window::FrameTime const&);
+  void render_reflection(EngineState&, LevelManager&, Camera&, SkyboxRenderer&,
+                         stlw::float_generator&, window::FrameTime const&);
+  void render_water(RenderState&, LevelManager&, Camera&, window::FrameTime const&);
 };
 
 } // namespace boomhs

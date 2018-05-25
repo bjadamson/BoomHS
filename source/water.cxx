@@ -1,15 +1,30 @@
+#include <boomhs/camera.hpp>
+#include <boomhs/level_manager.hpp>
 #include <boomhs/mesh.hpp>
+#include <boomhs/renderer.hpp>
+#include <boomhs/state.hpp>
 #include <boomhs/water.hpp>
 
 #include <opengl/buffer.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/shader.hpp>
 
+#include <window/timer.hpp>
+
+#include <stlw/random.hpp>
+
 using namespace opengl;
+using namespace window;
+
+float constexpr CUTOFF_HEIGHT      = 0.4f;
+glm::vec4 constexpr ABOVE_VECTOR   = {0, -1, 0, CUTOFF_HEIGHT};
+glm::vec4 constexpr BENEATH_VECTOR = {0, 1, 0, -CUTOFF_HEIGHT};
 
 namespace boomhs
 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// WaterInfo
 WaterInfo::WaterInfo(glm::vec2 const& p, DrawInfo&& d, ShaderProgram& s, TextureInfo& t)
     : position(p)
     , dinfo(MOVE(d))
@@ -18,6 +33,8 @@ WaterInfo::WaterInfo(glm::vec2 const& p, DrawInfo&& d, ShaderProgram& s, Texture
 {
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// WaterFactory
 ObjData
 WaterFactory::generate_water_data(stlw::Logger& logger, glm::vec2 const& dimensions,
                                   size_t const num_vertexes)
@@ -78,6 +95,123 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
   });
   LOG_TRACE("Finished generating water");
   return wi;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// WaterRenderer
+WaterRenderer::WaterRenderer(WaterFrameBuffers&& wfb)
+    : fbos_(MOVE(wfb))
+{
+}
+
+void
+WaterRenderer::render_reflection(EngineState& es, LevelManager& lm, Camera& camera,
+                                 SkyboxRenderer& skybox_renderer, stlw::float_generator& rng,
+                                 FrameTime const& ft)
+{
+  auto&       zs        = lm.active();
+  auto&       logger    = es.logger;
+  auto&       ldata     = zs.level_data;
+  auto const& fog_color = ldata.fog.color;
+
+  fbos_.with_reflection_fbo(logger, [&]() {
+    // Compute the camera position beneath the water for capturing the reflective image the camera
+    // will see.
+    //
+    // By inverting the camera's Y position before computing the view matrices, we can render the
+    // world as if the camera was beneath the water's surfac. This is how computing the reflection
+    // texture works.
+    glm::vec3 camera_pos         = camera.world_position();
+    camera_pos.y                 = -camera_pos.y;
+    auto const reflect_rmatrices = RenderMatrices::from_camera_withposition(camera, camera_pos);
+
+    RenderState rstate{reflect_rmatrices, es, zs};
+    render::clear_screen(fog_color);
+
+    skybox_renderer.render(rstate, ft);
+    render::render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
+  });
+}
+
+void
+WaterRenderer::render_refraction(EngineState& es, LevelManager& lm, Camera& camera,
+                                 SkyboxRenderer& skybox_renderer, stlw::float_generator& rng,
+                                 FrameTime const& ft)
+{
+  auto&       zs        = lm.active();
+  auto&       logger    = es.logger;
+  auto&       ldata     = zs.level_data;
+  auto const& fog_color = ldata.fog.color;
+
+  auto const  rmatrices = RenderMatrices::from_camera(camera);
+  RenderState rstate{rmatrices, es, zs};
+  fbos_.with_refraction_fbo(logger, [&]() {
+    render::clear_screen(fog_color);
+    skybox_renderer.render(rstate, ft);
+    render::render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
+  });
+}
+
+void
+WaterRenderer::render_water(RenderState& rstate, LevelManager& lm, Camera& camera,
+                            FrameTime const& ft)
+{
+  auto& es = rstate.es;
+  if (!es.draw_water) {
+    return;
+  }
+
+  auto& logger   = es.logger;
+  auto& zs       = lm.active();
+  auto& registry = zs.registry;
+  auto& ldata    = zs.level_data;
+
+  Transform  transform;
+  auto const render = [&](WaterInfo& winfo) {
+    auto const& pos = winfo.position;
+
+    auto& tr = transform.translation;
+    tr.x     = pos.x;
+    tr.z     = pos.y;
+
+    // hack
+    tr.y = 0.19999f; // pos.y;
+    assert(tr.y < 2.0f);
+
+    auto& sp    = winfo.shader;
+    auto& dinfo = winfo.dinfo;
+    auto& vao   = dinfo.vao();
+
+    bool constexpr RECEIVES_AMBIENT_LIGHT = true;
+    auto const model_matrix               = transform.model_matrix();
+
+    winfo.wave_offset += ft.delta_millis() * ldata.wind_speed;
+    winfo.wave_offset = ::fmodf(winfo.wave_offset, 1.00f);
+
+    auto& time_offset = ldata.time_offset;
+    time_offset += ft.delta_millis() * ldata.wind_speed;
+    time_offset = ::fmodf(time_offset, 1.00f);
+
+    sp.while_bound(logger, [&]() {
+      sp.set_uniform_vec4(logger, "u_clipPlane", ABOVE_VECTOR);
+      sp.set_uniform_vec3(logger, "u_camera_position", camera.world_position());
+      sp.set_uniform_float1(logger, "u_wave_offset", winfo.wave_offset);
+      sp.set_uniform_float1(logger, "u_wavestrength", ldata.wave_strength);
+      sp.set_uniform_float1(logger, "u_time_offset", time_offset);
+
+      Material const water_material{};
+      vao.while_bound(logger, [&]() {
+        fbos_.while_bound(logger, [&]() {
+          render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, tr, model_matrix, sp, dinfo,
+                                   water_material, registry, RECEIVES_AMBIENT_LIGHT);
+        });
+      });
+    });
+  };
+
+  LOG_TRACE("Rendering water");
+  render(ldata.water());
+  LOG_TRACE("Finished rendering water");
 }
 
 } // namespace boomhs

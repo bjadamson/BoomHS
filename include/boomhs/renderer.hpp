@@ -26,6 +26,7 @@ namespace boomhs
 class Camera;
 class EntityRegistry;
 class HandleManager;
+class LevelManager;
 struct EngineState;
 struct RiverInfo;
 struct Transform;
@@ -91,6 +92,10 @@ draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::DrawInfo&, bool);
 void
 draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&);
 
+void
+draw_3dlit_shape(RenderState&, GLenum, glm::vec3 const&, glm::mat4 const&, opengl::ShaderProgram&,
+                 opengl::DrawInfo&, opengl::Material const&, EntityRegistry&, bool);
+
 // TODO: move rest to sub-renderers or something
 void
 conditionally_draw_player_vectors(RenderState&, WorldObject const&);
@@ -135,7 +140,7 @@ void
 draw_tilegrid(RenderState&, TiledataState const&);
 
 void
-draw_water(RenderState&, EntityRegistry&, window::FrameTime const&, glm::vec4 const&,
-           WaterFrameBuffers&, glm::vec3 const&);
+render_scene(RenderState&, LevelManager&, stlw::float_generator&, window::FrameTime const&,
+             glm::vec4 const&);
 
 } // namespace boomhs::render
