@@ -74,6 +74,7 @@ struct EngineState
   bool draw_imguimetrics;
 
   // rendering state
+  bool draw_bounding_boxes;
   bool draw_entities;
   bool draw_fbo_testwindow;
   bool draw_terrain;

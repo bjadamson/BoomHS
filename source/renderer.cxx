@@ -757,8 +757,12 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     assert(ti);
     ti->while_bound(logger, [&]() { draw_fn(GL_TRIANGLES, eid, sn, copy_transform, is_v, torch); });
   };
-  auto const draw_wireframe_cube = [&](COMMON_ARGS, CubeRenderable& cr, AABoundingBox& box,
+  auto const draw_boundingboxes = [&](COMMON_ARGS, CubeRenderable& cr, AABoundingBox& box,
                                        Selectable& sel) {
+    if (!es.draw_bounding_boxes) {
+      return;
+    }
+
     Color const wire_color = sel.selected ? LOC::GREEN : LOC::RED;
 
     auto& sp = sps.ref_sp(sn.value);
@@ -785,7 +789,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
   // CUBES
   registry.view<COMMON, CubeRenderable, PointLight>().each(draw_plain_cube);
-  registry.view<COMMON, CubeRenderable, AABoundingBox, Selectable>().each(draw_wireframe_cube);
+  registry.view<COMMON, CubeRenderable, AABoundingBox, Selectable>().each(draw_boundingboxes);
 
   registry.view<COMMON, MeshRenderable, NPCData>().each(
       [&](auto&&... args) { draw_fn(GL_TRIANGLES, FORWARD(args)); });

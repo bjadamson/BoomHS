@@ -782,12 +782,17 @@ draw_debugwindow(EngineState& es, LevelManager& lm)
   }
 
   auto& uistate = es.ui_state.debug;
+  ImGui::Checkbox("Enter Pressed", &uistate.enter_pressed);
+  ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
+
+  ImGui::Separator();
+  ImGui::Checkbox("Draw Entities", &es.draw_entities);
   ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
   ImGui::Checkbox("Draw Water", &es.draw_water);
-  ImGui::Checkbox("Enter Pressed", &uistate.enter_pressed);
-  ImGui::Checkbox("Draw Entities", &es.draw_entities);
+
+  ImGui::Separator();
+  ImGui::Checkbox("Draw Bounding Boxes", &es.draw_bounding_boxes);
   ImGui::Checkbox("Draw Normals", &es.draw_normals);
-  ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
   ImGui::Checkbox("Wireframe Rendering", &es.wireframe_override);
 
   ImGui::Checkbox("ImGui Metrics", &es.draw_imguimetrics);
