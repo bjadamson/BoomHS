@@ -8,6 +8,10 @@
 #include <ostream>
 
 using namespace boomhs;
+using namespace opengl;
+
+using indices_t  = VertexBuffer::indices_t;
+using vertices_t = VertexBuffer::vertices_t;
 
 namespace opengl
 {
@@ -58,12 +62,17 @@ operator<<(std::ostream& stream, BufferFlags const& qa)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // VertexBuffer
+VertexBuffer::VertexBuffer(BufferFlags const& f)
+    : flags(f)
+{
+}
+
 VertexBuffer
 VertexBuffer::create_interleaved(stlw::Logger& logger, ObjData const& data,
                                         BufferFlags const& flags)
 {
   LOG_TRACE_SPRINTF("Creating interleaved buffer with flags: %s", flags.to_string());
-  VertexBuffer buffer;
+  VertexBuffer buffer{flags};
   auto&        vertices = buffer.vertices;
 
   auto const copy_n = [&vertices](auto const& buffer, size_t const num, size_t& count,
@@ -120,6 +129,43 @@ VertexBuffer::create_interleaved(stlw::Logger& logger, ObjData const& data,
 
   LOG_TRACE_SPRINTF("Finished creating interleaved buffer: %s", buffer.to_string());
   return buffer;
+}
+
+vertices_t
+VertexBuffer::positions() const
+{
+  vertices_t values;
+
+  size_t i = 0;
+  while (i <= vertices.size()) {
+    assert(flags.vertices);
+    values.emplace_back(vertices[i++]);
+
+    auto const assert_i = [&]() {
+      assert(i < vertices.size());
+    };
+
+    values.emplace_back(vertices[i++]);
+    assert_i();
+
+    values.emplace_back(vertices[i++]);
+    assert_i();
+
+    // skip over other attributes
+    if (flags.normals) {
+      i += 3;
+      assert_i();
+    }
+    if (flags.colors) {
+      i += 4;
+      assert_i();
+    }
+    if (flags.uvs) {
+      i += 2;
+      assert_i();
+    }
+  }
+  return values;
 }
 
 std::string
