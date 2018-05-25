@@ -196,30 +196,19 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
   auto edh     = MOVE(handles.first);
   auto tdh     = MOVE(handles.second);
 
-  EntityDrawHandleMap bbox_dh;
-
-  {
+  auto const add_tree = [&](auto const& world_pos) {
     auto  eid = registry.create();
     auto& mr  = registry.assign<MeshRenderable>(eid);
     mr.name   = "tree_lowpoly";
 
     auto& tree_transform = registry.assign<Transform>(eid);
+    tree_transform.translation = world_pos;
     registry.assign<Material>(eid);
-    registry.assign<JunkEntityFromFILE>(eid);
     {
       auto& isv = registry.assign<IsVisible>(eid);
       isv.value = true;
     }
     registry.assign<Name>(eid).value = "custom tree";
-    {
-      registry.assign<AABoundingBox>(eid);
-      registry.assign<Selectable>(eid);
-
-      auto constexpr WIREFRAME_SHADER = "wireframe";
-      auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
-      auto  dinfo                     = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, va);
-      bbox_dh.add(eid, MOVE(dinfo));
-    }
 
     auto& sn = registry.assign<ShaderName>(eid);
     sn.value = "3d_pos_normal_color";
@@ -238,33 +227,23 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
     auto  dinfo = opengl::gpu::copy_gpu(logger, va, obj);
 
     edh.add(eid, MOVE(dinfo));
-  }
-  {
-    /*
-    auto const add_wireframe_cube = [&](glm::vec3 const& world_pos) {
-      auto  eid = registry.create();
+  };
+  add_tree(glm::vec3{0});
+  add_tree(glm::vec3{1});
+  add_tree(glm::vec3{2});
+  add_tree(glm::vec3{3});
 
-      auto& tr       = registry.assign<Transform>(eid);
-      tr.translation = world_pos;
-
-      registry.assign<Material>(eid);
-      registry.assign<JunkEntityFromFILE>(eid);
-      registry.assign<IsVisible>(eid).value = true;
+  EntityDrawHandleMap bbox_dh;
+  for (auto const eid : registry.view<MeshRenderable>()) {
+    {
+      registry.assign<AABoundingBox>(eid);
       registry.assign<Selectable>(eid);
 
-
-      registry.assign<AABoundingBox>(eid);
-      registry.assign<CubeRenderable>(eid);
-
-      registry.assign<Name>(eid).value = "collider rect";
-      auto& sn                         = registry.assign<ShaderName>(eid);
-      sn.value                         = WIREFRAME_SHADER;
-
-
-    };
-    add_wireframe_cube(glm::vec3{0.0f});
-    add_wireframe_cube(glm::vec3{5.0, 0.0f, 5.0f});
-    */
+      auto constexpr WIREFRAME_SHADER = "wireframe";
+      auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
+      auto  dinfo                     = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, va);
+      bbox_dh.add(eid, MOVE(dinfo));
+    }
   }
 
   auto& gpu_state                = gfx_state.gpu_state;
