@@ -1,7 +1,10 @@
 #include <boomhs/camera.hpp>
+#include <boomhs/collision.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_manager.hpp>
+#include <boomhs/mouse_picker.hpp>
 #include <boomhs/player.hpp>
+#include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
 
@@ -221,6 +224,45 @@ process_mousemotion(GameState& state, SDL_MouseMotionEvent const& motion, Camera
 }
 
 void
+select_mouse_under_cursor(RenderState& rstate)
+{
+  auto& es      = rstate.es;
+  auto& logger  = es.logger;
+  auto& uistate = es.ui_state.debug;
+
+  auto& zs       = rstate.zs;
+  auto& registry = zs.registry;
+
+  MousePicker      mouse_picker;
+  glm::vec3 const  ray_dir   = mouse_picker.calculate_ray(rstate);
+  glm::vec3 const& ray_start = rstate.camera_world_position();
+
+  auto const components_bbox =
+      find_all_entities_with_component<AABoundingBox, Transform, Selectable>(registry);
+  for (auto const eid : components_bbox) {
+    auto const& bbox       = registry.get<AABoundingBox>(eid);
+    auto const& transform  = registry.get<Transform>(eid);
+    auto&       selectable = registry.get<Selectable>(eid);
+
+    Ray const  ray{ray_start, ray_dir};
+    bool const intersects = collision::box_intersect(ray, transform, bbox);
+    selectable.selected   = intersects;
+
+    // auto&            tree_transform = registry.get<Transform>(eid);
+    // glm::vec3 const& sphere_center  = tree_transform.translation;
+    // float const      rad_squared    = stlw::math::squared(bbox.radius);
+
+    // float      distance = 0.0f;
+    // bool const intersects =
+    // glm::intersectRaySphere(ray_start, ray_dir, sphere_center, rad_squared, distance);
+    if (intersects) {
+      LOG_ERROR_SPRINTF("intersects (YES) %i", intersects);
+      uistate.selected_entity = static_cast<int>(eid);
+    }
+  }
+}
+
+void
 process_mousebutton_down(GameState& state, SDL_MouseButtonEvent const& event, Camera& camera,
                          FrameTime const& ft)
 {
@@ -233,6 +275,10 @@ process_mousebutton_down(GameState& state, SDL_MouseButtonEvent const& event, Ca
   auto const& button = event.button;
   if (button == SDL_BUTTON_LEFT) {
     ms.left_pressed = true;
+
+    auto const  rmatrices = RenderMatrices::from_camera(camera);
+    RenderState rstate{rmatrices, es, zs};
+    select_mouse_under_cursor(rstate);
   }
   else if (button == SDL_BUTTON_RIGHT) {
     ms.right_pressed = true;

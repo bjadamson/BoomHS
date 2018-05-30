@@ -13,7 +13,7 @@ Ray::Ray(glm::vec3 const& o, glm::vec3 const& d)
 {
 }
 
-} // ns boomhs
+} // namespace boomhs
 
 namespace boomhs::collision
 {
@@ -25,8 +25,8 @@ box_intersect(Ray const& r, Transform const& transform, AABoundingBox const& box
 {
   auto const& boxpos = transform.translation;
 
-  glm::vec3 const minpos = box.min * transform.scale;
-  glm::vec3 const maxpos = box.max * transform.scale;
+  glm::vec3 const                minpos = box.min * transform.scale;
+  glm::vec3 const                maxpos = box.max * transform.scale;
   std::array<glm::vec3, 2> const bounds{{minpos + boxpos, maxpos + boxpos}};
 
   // clang-format off

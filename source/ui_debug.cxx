@@ -83,8 +83,10 @@ display_combo_for_entities(char const* text, int* selected, EntityRegistry& regi
 EntityID
 comboselected_to_entity(int const selected_index, std::vector<pair_t> const& pairs)
 {
-  auto const cmp = [&selected_index](auto const& pair) { return pair.second == selected_index; };
-  auto const it  = std::find_if(pairs.cbegin(), pairs.cend(), cmp);
+  auto const cmp = [&selected_index](auto const& pair) {
+    return pair.second == static_cast<size_t>(selected_index);
+  };
+  auto const it = std::find_if(pairs.cbegin(), pairs.cend(), cmp);
   assert(it != pairs.cend());
 
   return it->second;
@@ -116,20 +118,10 @@ namespace
 void
 draw_entity_editor(EngineState& es, LevelData& ldata, EntityRegistry& registry, Camera& camera)
 {
-  auto&      uistate  = es.ui_state.debug;
-  auto&      selected = uistate.selected_entity;
-  auto const draw     = [&]() {
+  auto& uistate = es.ui_state.debug;
+  auto const draw = [&]() {
     auto pairs = collect_all<Transform>(registry, false);
-    if (display_combo_for_entities("Entity", &selected, registry, pairs)) {
-      auto const eid = comboselected_to_entity(selected, pairs);
-
-      auto& player = ldata.player;
-
-      auto& transform = registry.get<Transform>(eid);
-      camera.set_target(transform);
-      player.set_eid(eid);
-    }
-    auto const eid       = comboselected_to_entity(selected, pairs);
+    auto const eid       = uistate.selected_entity;
     auto&      transform = registry.get<Transform>(eid);
     ImGui::InputFloat3("pos:", glm::value_ptr(transform.translation));
     {

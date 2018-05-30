@@ -211,7 +211,7 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
     transform.translation = world_pos;
     registry.assign<Material>(eid);
     registry.assign<JunkEntityFromFILE>(eid);
-    //registry.assign<TreeComponent>(eid);
+    // registry.assign<TreeComponent>(eid);
     {
       auto& isv = registry.assign<IsVisible>(eid);
       isv.value = true;
@@ -234,13 +234,12 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
 
     return transform;
   };
-             add_tree(glm::vec3{2.0f, 0.0f, 0.0f});
-             add_tree(glm::vec3{0.0f, 0.0f, 2.0f});
-  auto* tr = &add_tree(glm::vec3{4.0f, 4.0f, 0.0f});
+  add_tree(glm::vec3{2.0f, 0.0f, 0.0f});
+  add_tree(glm::vec3{0.0f, 0.0f, 2.0f});
+  auto* tr  = &add_tree(glm::vec3{4.0f, 4.0f, 0.0f});
   tr->scale = glm::vec3{2.0f};
 
-
-  tr = &add_tree(glm::vec3{100.0f, 10.0f, 100.0f});
+  tr        = &add_tree(glm::vec3{100.0f, 10.0f, 100.0f});
   tr->scale = glm::vec3{60.0f};
 
   EntityDrawHandleMap bbox_dh;

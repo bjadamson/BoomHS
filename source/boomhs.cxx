@@ -406,41 +406,6 @@ init(Engine& engine, EngineState& engine_state, Camera& camera)
 }
 
 void
-update_mouse_selection_fortesting(RenderState& rstate)
-{
-  auto& es     = rstate.es;
-  auto& logger = es.logger;
-
-  auto& zs       = rstate.zs;
-  auto& registry = zs.registry;
-
-  MousePicker      mouse_picker;
-  glm::vec3 const  ray_dir   = mouse_picker.calculate_ray(rstate);
-  glm::vec3 const& ray_start = rstate.camera_world_position();
-
-  auto const components_bbox =
-      find_all_entities_with_component<AABoundingBox, Selectable, Transform>(registry);
-  for (auto const eid : components_bbox) {
-    auto& bbox       = registry.get<AABoundingBox>(eid);
-    auto& selectable = registry.get<Selectable>(eid);
-    auto& transform  = registry.get<Transform>(eid);
-
-    Ray const  ray{ray_start, ray_dir};
-    bool const intersects = collision::box_intersect(ray, transform, bbox);
-    selectable.selected   = intersects;
-
-    // auto&            tree_transform = registry.get<Transform>(eid);
-    // glm::vec3 const& sphere_center  = tree_transform.translation;
-    // float const      rad_squared    = stlw::math::squared(bbox.radius);
-
-    // float      distance = 0.0f;
-    // bool const intersects =
-    // glm::intersectRaySphere(ray_start, ray_dir, sphere_center, rad_squared, distance);
-    LOG_ERROR_SPRINTF("intersects %i", intersects);
-  }
-}
-
-void
 game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
           FrameTime const& ft)
 {
@@ -485,12 +450,6 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
 
     update_visible_entities(lm, registry);
     update_torchflicker(ldata, registry, rng, ft);
-
-    {
-      auto const  rmatrices = RenderMatrices::from_camera(camera);
-      RenderState rstate{rmatrices, es, zs};
-      update_mouse_selection_fortesting(rstate);
-    }
   }
 
   // TODO: Move out into state somewhere.

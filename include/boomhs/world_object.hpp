@@ -1,8 +1,8 @@
 #pragma once
 #include <boomhs/components.hpp>
 #include <boomhs/tile.hpp>
-#include <stlw/math.hpp>
 #include <stlw/algorithm.hpp>
+#include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
 #include <string>
 
