@@ -1,7 +1,6 @@
 #include <stlw/log.hpp>
 #include <stlw/algorithm.hpp>
 #include <stlw/compiler.hpp>
-#include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <iostream>

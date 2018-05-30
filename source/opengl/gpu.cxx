@@ -13,7 +13,6 @@
 #include <stlw/algorithm.hpp>
 #include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
-#include <stlw/type_ctors.hpp>
 #include <array>
 
 using namespace boomhs;
@@ -320,9 +319,10 @@ copy_cubevertexonly_gpu(stlw::Logger &logger, VertexAttribute const& va)
 }
 
 DrawInfo
-copy_cube_wireframevertexonly_gpu(stlw::Logger& logger, VertexAttribute const& va)
+copy_cube_wireframevertexonly_gpu(stlw::Logger& logger, VertexAttribute const& va,
+    glm::vec3 const& min, glm::vec3 const& max)
 {
-  auto const vertices = OF::cube_vertices();
+  auto const vertices = OF::cube_vertices(min, max);
   return make_drawinfo(logger, va, vertices, OF::CUBE_WIREFRAME_INDICES);
 }
 

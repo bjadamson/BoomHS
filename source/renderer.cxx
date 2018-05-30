@@ -791,7 +791,10 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
   // registry.view<COMMON, WaterTileThing>().each(draw_fn);
   registry.view<COMMON, TextureRenderable, JunkEntityFromFILE>().each(draw_textured_junk_fn);
+
   registry.view<COMMON, Color, JunkEntityFromFILE>().each(draw_junk);
+  // registry.view<COMMON, MeshRenderable, JunkEntityFromFILE>().each(
+  //[&](auto&&... args) { draw_entity(FORWARD(args)); });
 
   registry.view<COMMON, Torch, TextureRenderable>().each(draw_torch);
 

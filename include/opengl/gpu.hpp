@@ -7,11 +7,12 @@
 
 #include <boomhs/obj.hpp>
 
-#include <extlibs/fmt.hpp>
 #include <stlw/log.hpp>
 
-#include <array>
+#include <extlibs/fmt.hpp>
 #include <extlibs/glew.hpp>
+
+#include <array>
 
 namespace opengl
 {
@@ -54,7 +55,8 @@ DrawInfo
 copy_cubevertexonly_gpu(stlw::Logger&, VertexAttribute const&);
 
 DrawInfo
-copy_cube_wireframevertexonly_gpu(stlw::Logger&, VertexAttribute const&);
+copy_cube_wireframevertexonly_gpu(stlw::Logger&, VertexAttribute const&, glm::vec3 const&,
+                                  glm::vec3 const&);
 
 DrawInfo
 copy_cubenormalcolor_gpu(stlw::Logger&, VertexAttribute const&, Color const&);

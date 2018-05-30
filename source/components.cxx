@@ -9,13 +9,14 @@ namespace boomhs
 AxisAlignedBoundingBox::AxisAlignedBoundingBox()
 {
   auto constexpr DEFAULT_SIZE = 1.0f;
-  bounds[0].x                 = -DEFAULT_SIZE;
-  bounds[0].y                 = -DEFAULT_SIZE;
-  bounds[0].z                 = -DEFAULT_SIZE;
 
-  bounds[1].x = DEFAULT_SIZE;
-  bounds[1].y = DEFAULT_SIZE;
-  bounds[1].z = DEFAULT_SIZE;
+  min.x = -DEFAULT_SIZE;
+  min.y = -DEFAULT_SIZE;
+  min.z = -DEFAULT_SIZE;
+
+  max.x = DEFAULT_SIZE;
+  max.y = DEFAULT_SIZE;
+  max.z = DEFAULT_SIZE;
 }
 
 std::vector<EntityID>

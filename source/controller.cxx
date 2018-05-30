@@ -230,7 +230,11 @@ SDLControllers::find_attached_controllers(stlw::Logger& logger)
   auto           ptr      = ControllerPTR{controller, &destroy_controller};
   SDL_Joystick*  joystick = SDL_GameControllerGetJoystick(ptr.get());
 
-  assert(joystick);
+  if (nullptr == joystick) {
+    LOG_ERROR("No controllers detected");
+    return OK_MOVE(controllers);
+  }
+
   controllers.add(MOVE(ptr), joystick);
   return OK_MOVE(controllers);
 }

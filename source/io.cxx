@@ -459,6 +459,9 @@ void
 process_controllerstate(GameState& state, SDLControllers const& controllers, Camera& camera,
                         FrameTime const& ft)
 {
+  if (controllers.empty()) {
+    return;
+  }
   auto& es     = state.engine_state;
   auto& logger = es.logger;
   auto& c      = controllers.first();

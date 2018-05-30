@@ -1,6 +1,6 @@
 #pragma once
 #include <opengl/colors.hpp>
-#include <stlw/type_ctors.hpp>
+#include <stlw/algorithm.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <array>

@@ -1,8 +1,8 @@
 #include <window/sdl_window.hpp>
 #include <gfx/gl_sdl_log.hpp>
 
+#include <stlw/algorithm.hpp>
 #include <stlw/result.hpp>
-#include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <extlibs/fmt.hpp>

@@ -1,7 +1,7 @@
 #pragma once
+#include <stlw/algorithm.hpp>
 #include <stlw/log.hpp>
 #include <stlw/optional.hpp>
-#include <stlw/type_ctors.hpp>
 
 #include <extlibs/glew.hpp>
 #include <string>

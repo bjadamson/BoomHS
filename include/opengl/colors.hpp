@@ -1,8 +1,8 @@
 #pragma once
 #include <array>
 #include <ostream>
+#include <stlw/algorithm.hpp>
 #include <stlw/math.hpp>
-#include <stlw/type_ctors.hpp>
 
 namespace opengl
 {

@@ -3,8 +3,8 @@
 #include <stlw/algorithm.hpp>
 #include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
-#include <stlw/type_ctors.hpp>
 #include <array>
+#include <iostream>
 
 using namespace boomhs;
 using namespace opengl::factories;
@@ -91,22 +91,43 @@ make_arrow_vertices(ArrowCreateParams const& params)
 // Cubes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 CubeVertices
-cube_vertices()
+cube_vertices(glm::vec3 const& min, glm::vec3 const& max)
 {
+  glm::vec3 const midp = glm::vec3{
+    glm::distance(min.x, max.x),
+    glm::distance(min.y, max.y),
+    glm::distance(min.z, max.z)
+  }
+  / glm::vec3{2.0f};
+
+  assert(min.x < max.x);
+  assert(min.y < max.y);
+  assert(min.z < max.z);
+
   // Define the 8 vertices of a unit cube
   static const CubeVertices v = stlw::make_array<float>(
     // front
-    -1.0f, -1.0f,  1.0f,
-     1.0f, -1.0f,  1.0f,
-     1.0f,  1.0f,  1.0f,
-    -1.0f,  1.0f,  1.0f,
+    -midp.x, -midp.y,  midp.z,
+     midp.x, -midp.y,  midp.z,
+     midp.x,  midp.y,  midp.z,
+    -midp.x,  midp.y,  midp.z,
+
     // back
-    -1.0f, -1.0f, -1.0f,
-     1.0f, -1.0f, -1.0f,
-     1.0f,  1.0f, -1.0f,
-    -1.0f,  1.0f, -1.0f
+    -midp.x, -midp.y, -midp.z,
+     midp.x, -midp.y, -midp.z,
+     midp.x,  midp.y, -midp.z,
+    -midp.x,  midp.y, -midp.z
   );
   return v;
+}
+
+CubeVertices
+cube_vertices()
+{
+  float constexpr DEFAULT_SIZE = 0.5f;
+  glm::vec3 constexpr MIN = glm::vec3{-DEFAULT_SIZE};
+  glm::vec3 constexpr MAX = glm::vec3{+DEFAULT_SIZE};
+  return cube_vertices(MIN, MAX);
 }
 
 // Rectangles

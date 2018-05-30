@@ -42,7 +42,8 @@ struct WidthHeightLength
 
 struct AxisAlignedBoundingBox
 {
-  std::array<glm::vec3, 2> bounds;
+  glm::vec3 min;
+  glm::vec3 max;
 
   // ctor
   AxisAlignedBoundingBox();

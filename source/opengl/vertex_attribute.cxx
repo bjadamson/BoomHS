@@ -1,7 +1,6 @@
 #include <opengl/vertex_attribute.hpp>
 #include <extlibs/fmt.hpp>
 #include <stlw/algorithm.hpp>
-#include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
 namespace

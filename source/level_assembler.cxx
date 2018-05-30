@@ -180,6 +180,10 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
   return Ok(std::make_pair(MOVE(entity_drawmap), MOVE(td)));
 }
 
+struct TreeComponent
+{
+};
+
 void
 copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
 {
@@ -196,14 +200,18 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
   auto edh     = MOVE(handles.first);
   auto tdh     = MOVE(handles.second);
 
-  auto const add_tree = [&](auto const& world_pos) {
+  auto const& obj_store = ldata.obj_store;
+
+  auto const add_tree = [&](auto const& world_pos) -> Transform& {
     auto  eid = registry.create();
     auto& mr  = registry.assign<MeshRenderable>(eid);
-    mr.name   = "tree_lowpoly";
+    mr.name   = "sphere";
 
-    auto& tree_transform = registry.assign<Transform>(eid);
-    tree_transform.translation = world_pos;
+    auto& transform       = registry.assign<Transform>(eid);
+    transform.translation = world_pos;
     registry.assign<Material>(eid);
+    registry.assign<JunkEntityFromFILE>(eid);
+    //registry.assign<TreeComponent>(eid);
     {
       auto& isv = registry.assign<IsVisible>(eid);
       isv.value = true;
@@ -217,32 +225,48 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
       *&cc     = LOC::WHITE;
     }
 
-    auto&          va = sps.ref_sp(sn.value).va();
-    ObjQuery const query{mr.name, BufferFlags{true, true, true, false}};
-
-    auto&       ldata     = zs.level_data;
-    auto const& obj_store = ldata.obj_store;
-
-    auto& obj   = obj_store.get_obj(logger, query);
-    auto  dinfo = opengl::gpu::copy_gpu(logger, va, obj);
-
+    auto&          va    = sps.ref_sp(sn.value).va();
+    auto const     flags = BufferFlags::from_va(va);
+    ObjQuery const query{mr.name, flags};
+    auto&          obj   = obj_store.get_obj(logger, query);
+    auto           dinfo = opengl::gpu::copy_gpu(logger, va, obj);
     edh.add(eid, MOVE(dinfo));
+
+    return transform;
   };
-  add_tree(glm::vec3{0});
-  add_tree(glm::vec3{1});
-  add_tree(glm::vec3{2});
-  add_tree(glm::vec3{3});
+             add_tree(glm::vec3{2.0f, 0.0f, 0.0f});
+             add_tree(glm::vec3{0.0f, 0.0f, 2.0f});
+  auto* tr = &add_tree(glm::vec3{4.0f, 4.0f, 0.0f});
+  tr->scale = glm::vec3{2.0f};
+
+
+  tr = &add_tree(glm::vec3{100.0f, 10.0f, 100.0f});
+  tr->scale = glm::vec3{60.0f};
 
   EntityDrawHandleMap bbox_dh;
   for (auto const eid : registry.view<MeshRenderable>()) {
     {
-      registry.assign<AABoundingBox>(eid);
       registry.assign<Selectable>(eid);
+      auto& name = registry.get<MeshRenderable>(eid).name;
 
       auto constexpr WIREFRAME_SHADER = "wireframe";
       auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
-      auto  dinfo                     = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, va);
-      bbox_dh.add(eid, MOVE(dinfo));
+      {
+        auto const     flags = BufferFlags::from_va(va);
+        ObjQuery const query{name, flags};
+        auto&          obj  = obj_store.get_obj(logger, query);
+        auto&          bbox = registry.assign<AABoundingBox>(eid);
+
+        auto const posbuffer = obj.positions();
+        bbox.min             = posbuffer.min();
+        bbox.max             = posbuffer.max();
+
+        // LOG_ERROR_SPRINTF("box: [min: %s, max: %s, midp: %s], ", glm::to_string(bbox.min),
+        // glm::to_string(bbox.max), glm::to_string(bbox.max - bbox.min));
+
+        auto dinfo = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, va, bbox.min, bbox.max);
+        bbox_dh.add(eid, MOVE(dinfo));
+      }
     }
   }
 

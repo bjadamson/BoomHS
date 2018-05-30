@@ -32,6 +32,17 @@ operator!=(BufferFlags const&, BufferFlags const&);
 std::ostream&
 operator<<(std::ostream&, BufferFlags const&);
 
+struct PositionsBuffer
+{
+  using vertices_t = boomhs::ObjData::vertices_t;
+  vertices_t vertices;
+
+  PositionsBuffer(vertices_t&&);
+
+  glm::vec3 min() const;
+  glm::vec3 max() const;
+};
+
 struct VertexBuffer
 {
   using vertices_t = boomhs::ObjData::vertices_t;
@@ -43,6 +54,7 @@ struct VertexBuffer
 
 private:
   VertexBuffer(BufferFlags const&);
+
 public:
   MOVE_CONSTRUCTIBLE_ONLY(VertexBuffer);
 
@@ -50,7 +62,7 @@ public:
 
   // Returns all position values as a contiguos array following the pattern:
   // [x, y, z], [x, y, z], etc...
-  vertices_t positions() const;
+  PositionsBuffer positions() const;
 
   static VertexBuffer create_interleaved(stlw::Logger&, boomhs::ObjData const&, BufferFlags const&);
 };

@@ -75,6 +75,8 @@ public:
     return controllers_.front();
   }
 
+  bool empty() const { return controllers_.empty(); }
+
   auto size() const { return controllers_.size(); }
 };
 

@@ -8,7 +8,6 @@
 #include <stlw/math.hpp>
 #include <stlw/os.hpp>
 #include <stlw/result.hpp>
-#include <stlw/type_ctors.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <extlibs/fmt.hpp>

@@ -426,8 +426,6 @@ update_mouse_selection_fortesting(RenderState& rstate)
     auto& transform  = registry.get<Transform>(eid);
 
     Ray const  ray{ray_start, ray_dir};
-    auto const& bb = bbox.bounds;
-    LOG_ERROR_SPRINTF("translation: %s, box: [%s,%s]", glm::to_string(transform.translation), glm::to_string(bb[0]), glm::to_string(bb[1]));
     bool const intersects = collision::box_intersect(ray, transform, bbox);
     selectable.selected   = intersects;
 

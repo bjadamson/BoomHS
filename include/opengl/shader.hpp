@@ -6,7 +6,7 @@
 #include <stlw/compiler.hpp>
 #include <stlw/optional.hpp>
 #include <stlw/result.hpp>
-#include <stlw/type_ctors.hpp>
+#include <stlw/algorithm.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <algorithm>

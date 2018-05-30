@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/components.hpp>
+#include <extlibs/glm.hpp>
 
 namespace boomhs
 {
@@ -13,13 +14,7 @@ struct Ray
 
   std::array<int, 3> const sign;
 
-  explicit Ray(glm::vec3 const& o, glm::vec3 const& d)
-      : orig(o)
-      , dir(d)
-      , invdir(1.0f / dir)
-      , sign(stlw::make_array<int>(invdir.x < 0, invdir.y < 0, invdir.z < 0))
-  {
-  }
+  explicit Ray(glm::vec3 const&, glm::vec3 const&);
 };
 
 } // namespace boomhs
