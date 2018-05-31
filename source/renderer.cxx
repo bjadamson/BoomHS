@@ -2,6 +2,7 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/frustum.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/player.hpp>
@@ -237,11 +238,11 @@ draw(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
     glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
   }
   else {
-    LOG_DEBUG_SPRINTF("Drawing %i indices", num_indices);
     glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
   }
 
   rstate.ds.num_vertices += num_indices;
+  ++rstate.ds.num_drawcalls;
 }
 
 void
@@ -709,9 +710,22 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     assert(ti);
     ti->while_bound(logger, [&]() { draw_entity(eid, sn, copy_transform, is_v, torch); });
   };
-  auto const draw_boundingboxes = [&](COMMON_ARGS, AABoundingBox& box, Selectable& sel) {
+  auto const draw_boundingboxes = [&](COMMON_ARGS, AABoundingBox& bbox, Selectable& sel) {
     if (!es.draw_bounding_boxes) {
       return;
+    }
+
+    {
+      // TODO: only call recalulate when the camera moves
+      Frustum view_frust;
+      view_frust.recalculate(fstate);
+
+      float const halfsize        = glm::length(bbox.max - bbox.min) / 2.0f;
+      bool const  bbox_in_frustum = view_frust.cube_in_frustum(transform.translation, halfsize);
+
+      if (!bbox_in_frustum) {
+        return;
+      }
     }
 
     Color const wire_color = sel.selected ? LOC::GREEN : LOC::RED;
@@ -720,7 +734,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_color(logger, "u_wirecolor", wire_color);
       auto& dinfo = ebbh.lookup(logger, eid);
-      draw_fn(GL_LINES, sp, dinfo, eid, sn, transform, is_v, box);
+      draw_fn(GL_LINES, sp, dinfo, eid, sn, transform, is_v, bbox);
     });
   };
 

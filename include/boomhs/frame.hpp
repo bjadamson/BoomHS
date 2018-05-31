@@ -23,6 +23,7 @@ struct FrameMatrices
 struct DrawState
 {
   size_t num_vertices;
+  size_t num_drawcalls;
 
   DrawState();
 

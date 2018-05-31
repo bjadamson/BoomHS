@@ -35,14 +35,17 @@ FrameMatrices::from_camera(Camera const& camera)
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // DrawState
 DrawState::DrawState()
-    : num_vertices(0)
 {
+  stlw::memzero(this, sizeof(DrawState));
+
+  assert(0 == num_vertices);
+  assert(0 == num_drawcalls);
 }
 
 std::string
 DrawState::to_string() const
 {
-  return fmt::sprintf("{vertices: %lu}", num_vertices);
+  return fmt::sprintf("{vertices: %lu, drawcalls: %lu}", num_vertices, num_drawcalls);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////

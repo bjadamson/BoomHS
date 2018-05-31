@@ -8,42 +8,6 @@
 
 using namespace opengl;
 
-/*
-namespace
-{
-
-glm::vec3
-calculate_mouse_worldpos(Camera const& camera, WorldObject const& player, int const mouse_x,
-    int const mouse_y, Dimensions const& dimensions)
-{
-  auto const& a = camera.perspective_ref();
-  glm::vec4 const viewport = glm::vec4(0, 0, 1024, 768);
-  glm::mat4 const view = camera.view_matrix();
-  glm::mat4 const projection = camera.projection_matrix();
-  float const height = dimensions.h;
-
-  // Calculate the view-projection matrix.
-  glm::mat4 const transform = projection * view;
-
-  // Calculate the intersection of the mouse ray with the near (z=0) and far (z=1) planes.
-  glm::vec3 const near = glm::unProject(glm::vec3{mouse_x, dimensions.h - mouse_y, 0}, glm::mat4(),
-transform, viewport); glm::vec3 const far = glm::unProject(glm::vec3{mouse_x, dimensions.h -
-mouse_y, 1}, glm::mat4(), transform, viewport);
-
-  auto const z = 0.0f;
-  glm::vec3 const world_pos = glm::mix(near, far, ((z - near.z) / (far.z - near.z)));
-
-  //float const Z_PLANE = 0.0;
-  //assert(768 == dimensions.h);
-  //glm::vec3 screen_pos = glm::vec3(mouse_x, (dimensions.h - mouse_y), Z_PLANE);
-
-  //glm::vec3 const world_pos = glm::unProject(screen_pos, view, projection, viewport);
-  return world_pos;
-}
-
-} // ns anon
-*/
-
 namespace boomhs
 {
 
