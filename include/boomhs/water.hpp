@@ -24,6 +24,7 @@ namespace boomhs
 class Camera;
 struct EngineState;
 class LevelManager;
+class DrawState;
 class RenderState;
 class SkyboxRenderer;
 
@@ -72,11 +73,11 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(WaterRenderer);
 
   explicit WaterRenderer(WaterFrameBuffers&&);
-  void render_refraction(EngineState&, LevelManager&, Camera&, SkyboxRenderer&,
+  void render_refraction(EngineState&, DrawState&, LevelManager&, Camera&, SkyboxRenderer&,
                          stlw::float_generator&, window::FrameTime const&);
-  void render_reflection(EngineState&, LevelManager&, Camera&, SkyboxRenderer&,
+  void render_reflection(EngineState&, DrawState&, LevelManager&, Camera&, SkyboxRenderer&,
                          stlw::float_generator&, window::FrameTime const&);
-  void render_water(RenderState&, LevelManager&, Camera&, window::FrameTime const&);
+  void render_water(RenderState&, DrawState&, LevelManager&, Camera&, window::FrameTime const&);
 };
 
 } // namespace boomhs

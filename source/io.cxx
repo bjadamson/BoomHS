@@ -224,18 +224,18 @@ process_mousemotion(GameState& state, SDL_MouseMotionEvent const& motion, Camera
 }
 
 void
-select_mouse_under_cursor(RenderState& rstate)
+select_mouse_under_cursor(FrameState& fstate)
 {
-  auto& es      = rstate.es;
+  auto& es      = fstate.es;
   auto& logger  = es.logger;
   auto& uistate = es.ui_state.debug;
 
-  auto& zs       = rstate.zs;
+  auto& zs       = fstate.zs;
   auto& registry = zs.registry;
 
   MousePicker      mouse_picker;
-  glm::vec3 const  ray_dir   = mouse_picker.calculate_ray(rstate);
-  glm::vec3 const& ray_start = rstate.camera_world_position();
+  glm::vec3 const  ray_dir   = mouse_picker.calculate_ray(fstate);
+  glm::vec3 const& ray_start = fstate.camera_world_position();
 
   auto const components_bbox =
       find_all_entities_with_component<AABoundingBox, Transform, Selectable>(registry);
@@ -276,9 +276,9 @@ process_mousebutton_down(GameState& state, SDL_MouseButtonEvent const& event, Ca
   if (button == SDL_BUTTON_LEFT) {
     ms.left_pressed = true;
 
-    auto const  rmatrices = RenderMatrices::from_camera(camera);
-    RenderState rstate{rmatrices, es, zs};
-    select_mouse_under_cursor(rstate);
+    auto const fmatrices = FrameMatrices::from_camera(camera);
+    FrameState fstate{fmatrices, es, zs};
+    select_mouse_under_cursor(fstate);
   }
   else if (button == SDL_BUTTON_RIGHT) {
     ms.right_pressed = true;
@@ -502,7 +502,7 @@ process_keystate(GameState& state, Camera& camera, FrameTime const& ft)
 }
 
 void
-process_controllerstate(GameState& state, SDLControllers const& controllers, Camera& camera,
+process_controllefstate(GameState& state, SDLControllers const& controllers, Camera& camera,
                         FrameTime const& ft)
 {
   if (controllers.empty()) {
@@ -691,7 +691,7 @@ IO::process(GameState& state, SDLControllers const& controllers, Camera& camera,
 {
   process_mousestate(state, camera, ft);
   process_keystate(state, camera, ft);
-  process_controllerstate(state, controllers, camera, ft);
+  process_controllefstate(state, controllers, camera, ft);
 }
 
 } // namespace boomhs

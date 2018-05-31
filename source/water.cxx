@@ -105,7 +105,7 @@ WaterRenderer::WaterRenderer(WaterFrameBuffers&& wfb)
 }
 
 void
-WaterRenderer::render_reflection(EngineState& es, LevelManager& lm, Camera& camera,
+WaterRenderer::render_reflection(EngineState& es, DrawState& ds, LevelManager& lm, Camera& camera,
                                  SkyboxRenderer& skybox_renderer, stlw::float_generator& rng,
                                  FrameTime const& ft)
 {
@@ -114,27 +114,28 @@ WaterRenderer::render_reflection(EngineState& es, LevelManager& lm, Camera& came
   auto&       ldata     = zs.level_data;
   auto const& fog_color = ldata.fog.color;
 
+  // Compute the camera position beneath the water for capturing the reflective image the camera
+  // will see.
+  //
+  // By inverting the camera's Y position before computing the view matrices, we can render the
+  // world as if the camera was beneath the water's surface. This is how computing the reflection
+  // texture works.
+  glm::vec3 camera_pos = camera.world_position();
+  camera_pos.y         = -camera_pos.y;
+
+  auto const  fmatrices = FrameMatrices::from_camera_withposition(camera, camera_pos);
+  FrameState  fstate{fmatrices, es, zs};
+  RenderState rstate{fstate, ds};
+
   fbos_.with_reflection_fbo(logger, [&]() {
-    // Compute the camera position beneath the water for capturing the reflective image the camera
-    // will see.
-    //
-    // By inverting the camera's Y position before computing the view matrices, we can render the
-    // world as if the camera was beneath the water's surfac. This is how computing the reflection
-    // texture works.
-    glm::vec3 camera_pos         = camera.world_position();
-    camera_pos.y                 = -camera_pos.y;
-    auto const reflect_rmatrices = RenderMatrices::from_camera_withposition(camera, camera_pos);
-
-    RenderState rstate{reflect_rmatrices, es, zs};
     render::clear_screen(fog_color);
-
-    skybox_renderer.render(rstate, ft);
+    skybox_renderer.render(rstate, ds, ft);
     render::render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
   });
 }
 
 void
-WaterRenderer::render_refraction(EngineState& es, LevelManager& lm, Camera& camera,
+WaterRenderer::render_refraction(EngineState& es, DrawState& ds, LevelManager& lm, Camera& camera,
                                  SkyboxRenderer& skybox_renderer, stlw::float_generator& rng,
                                  FrameTime const& ft)
 {
@@ -143,20 +144,24 @@ WaterRenderer::render_refraction(EngineState& es, LevelManager& lm, Camera& came
   auto&       ldata     = zs.level_data;
   auto const& fog_color = ldata.fog.color;
 
-  auto const  rmatrices = RenderMatrices::from_camera(camera);
-  RenderState rstate{rmatrices, es, zs};
+  auto const  fmatrices = FrameMatrices::from_camera(camera);
+  FrameState  fstate{fmatrices, es, zs};
+  RenderState rstate{fstate, ds};
+
   fbos_.with_refraction_fbo(logger, [&]() {
     render::clear_screen(fog_color);
-    skybox_renderer.render(rstate, ft);
+
+    skybox_renderer.render(rstate, ds, ft);
     render::render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
   });
 }
 
 void
-WaterRenderer::render_water(RenderState& rstate, LevelManager& lm, Camera& camera,
+WaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm, Camera& camera,
                             FrameTime const& ft)
 {
-  auto& es = rstate.es;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
   if (!es.draw_water) {
     return;
   }

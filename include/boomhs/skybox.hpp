@@ -17,6 +17,7 @@ class FrameTime;
 
 namespace boomhs
 {
+class DrawState;
 class RenderState;
 
 class Skybox
@@ -46,7 +47,7 @@ public:
   SkyboxRenderer(stlw::Logger&, opengl::DrawInfo&&, opengl::TextureInfo&, opengl::TextureInfo&,
                  opengl::ShaderProgram&);
 
-  void render(RenderState&, window::FrameTime const&);
+  void render(RenderState&, DrawState&, window::FrameTime const&);
 };
 
 } // namespace boomhs

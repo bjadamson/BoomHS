@@ -482,37 +482,43 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   static SkyboxRenderer skybox_renderer = make_skybox_renderer();
   static WaterRenderer  water_renderer  = make_water_renderer();
 
-  // Render the scene to the refraction and reflection FBOs
-  water_renderer.render_reflection(es, lm, camera, skybox_renderer, rng, ft);
-  water_renderer.render_refraction(es, lm, camera, skybox_renderer, rng, ft);
+  DrawState ds;
 
-  auto const  rmatrices = RenderMatrices::from_camera(camera);
-  RenderState rstate{rmatrices, es, zs};
+  // Render the scene to the refraction and reflection FBOs
+  water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer, rng, ft);
+  water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer, rng, ft);
 
   // render scene
   render::clear_screen(ldata.fog.color);
-  skybox_renderer.render(rstate, ft);
 
-  // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up ontop
-  // of the ingame UI nearby target indicators.
-  water_renderer.render_water(rstate, lm, camera, ft);
+  {
+    auto const fmatrices = FrameMatrices::from_camera(camera);
+    FrameState fstate{fmatrices, es, zs};
 
-  // Render the scene with no culling (setting it zero disables culling mathematically)
-  glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
-  render::render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
+    RenderState rstate{fstate, ds};
+    skybox_renderer.render(rstate, ds, ft);
+
+    // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up ontop
+    // of the ingame UI nearby target indicators.
+    water_renderer.render_water(rstate, ds, lm, camera, ft);
+
+    // Render the scene with no culling (setting it zero disables culling mathematically)
+    glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
+    render::render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
+  }
 
   /*
   {
     glm::vec2 const pos{0.5f, -0.5f};
     glm::vec2 const scale{0.25f, 0.25f};
 
-    render::draw_fbo_testwindow(rstate, pos, scale, waterfbos.refr());
+    render::draw_fbo_testwindow(fstate, pos, scale, waterfbos.refr());
   }
   {
     glm::vec2 const pos{-0.5f, -0.5f};
     glm::vec2 const scale{0.25f, 0.25f};
 
-    render::draw_fbo_testwindow(rstate, pos, scale, dudv);
+    render::draw_fbo_testwindow(fstate, pos, scale, dudv);
   }
   */
 
@@ -520,6 +526,8 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   if (ui_state.draw_ingame_ui) {
     ui_ingame::draw(es, lm);
   }
+
+  LOG_ERROR_SPRINTF("num vertices rendered: %s", ds.to_string());
 }
 
 } // namespace boomhs

@@ -3,13 +3,13 @@
 
 namespace boomhs
 {
-class RenderState;
+class FrameState;
 
 class MousePicker
 {
 public:
   explicit MousePicker();
-  glm::vec3 calculate_ray(RenderState&) const;
+  glm::vec3 calculate_ray(FrameState&) const;
 };
 
 } // namespace boomhs

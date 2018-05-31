@@ -60,10 +60,11 @@ SkyboxRenderer::SkyboxRenderer(stlw::Logger& logger, DrawInfo&& dinfo, TextureIn
 }
 
 void
-SkyboxRenderer::render(RenderState& rstate, FrameTime const& ft)
+SkyboxRenderer::render(RenderState& rstate, DrawState& ds, FrameTime const& ft)
 {
-  auto& zs     = rstate.zs;
-  auto& es     = rstate.es;
+  auto& fstate = rstate.fs;
+  auto& zs     = fstate.zs;
+  auto& es     = fstate.es;
   auto& logger = es.logger;
 
   if (!es.draw_skybox) {
@@ -98,12 +99,12 @@ SkyboxRenderer::render(RenderState& rstate, FrameTime const& ft)
   //
   // The effect of this is the view matrix contains just the rotation, which is what's desired
   // for rendering the skybox.
-  auto view_matrix  = rstate.view_matrix();
+  auto view_matrix  = fstate.view_matrix();
   view_matrix[3][0] = 0.0f;
   view_matrix[3][1] = 0.0f;
   view_matrix[3][2] = 0.0f;
 
-  auto const proj_matrix   = rstate.projection_matrix();
+  auto const proj_matrix   = fstate.projection_matrix();
   auto const camera_matrix = proj_matrix * view_matrix;
 
   bool constexpr ENABLE_ALPHABLEND = false;

@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/components.hpp>
+#include <boomhs/frame.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <opengl/colors.hpp>
 #include <opengl/lighting.hpp>
@@ -46,32 +47,16 @@ namespace boomhs
 {
 struct Dimensions;
 
-struct RenderMatrices
+struct RenderState
 {
-  glm::vec3 const camera_world_position;
-  glm::mat4 const projection;
-  glm::mat4 const view;
+  FrameState& fs;
+  DrawState&  ds;
 
-  static RenderMatrices from_camera_withposition(Camera const&, glm::vec3 const&);
-
-  static RenderMatrices from_camera(Camera const&);
-};
-
-class RenderState
-{
-  RenderMatrices const rmatrices_;
-
-public:
-  NO_COPYMOVE(RenderState);
-  RenderState(RenderMatrices const&, EngineState&, ZoneState&);
-
-  EngineState& es;
-  ZoneState&   zs;
-
-  glm::vec3 camera_world_position() const;
-  glm::mat4 camera_matrix() const;
-  glm::mat4 projection_matrix() const;
-  glm::mat4 view_matrix() const;
+  explicit RenderState(FrameState& f, DrawState& d)
+      : fs(f)
+      , ds(d)
+  {
+  }
 };
 
 } // namespace boomhs

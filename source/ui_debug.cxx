@@ -118,9 +118,9 @@ namespace
 void
 draw_entity_editor(EngineState& es, LevelData& ldata, EntityRegistry& registry, Camera& camera)
 {
-  auto& uistate = es.ui_state.debug;
-  auto const draw = [&]() {
-    auto pairs = collect_all<Transform>(registry, false);
+  auto&      uistate = es.ui_state.debug;
+  auto const draw    = [&]() {
+    auto       pairs     = collect_all<Transform>(registry, false);
     auto const eid       = uistate.selected_entity;
     auto&      transform = registry.get<Transform>(eid);
     ImGui::InputFloat3("pos:", glm::value_ptr(transform.translation));
@@ -292,17 +292,17 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
       }
     }
     if (ImGui::CollapsingHeader("Rendering Options")) {
-      auto& trstate = terrain.render_state;
+      auto& tfstate = terrain.render_state;
       {
         auto constexpr WINDING_OPTIONS = stlw::make_array<GLint>(GL_CCW, GL_CW);
-        trstate.winding                = gl_option_combo("Winding Order", "CCW\0CW\0\0",
+        tfstate.winding                = gl_option_combo("Winding Order", "CCW\0CW\0\0",
                                           &tbuffers.selected_winding, WINDING_OPTIONS);
       }
-      ImGui::Checkbox("Culling Enabled", &trstate.culling_enabled);
+      ImGui::Checkbox("Culling Enabled", &tfstate.culling_enabled);
       {
         auto constexpr CULLING_OPTIONS =
             stlw::make_array<GLint>(GL_BACK, GL_FRONT, GL_FRONT_AND_BACK);
-        trstate.culling_mode = gl_option_combo("Culling Face", "Front\0Back\0Front And Back\0\0",
+        tfstate.culling_mode = gl_option_combo("Culling Face", "Front\0Back\0Front And Back\0\0",
                                                &tbuffers.selected_culling, CULLING_OPTIONS);
       }
     }

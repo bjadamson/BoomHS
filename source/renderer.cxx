@@ -151,9 +151,10 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
                            std::vector<PointlightTransform> const& pointlights,
                            bool const                              receives_ambient_light)
 {
-  auto&       es    = rstate.es;
-  auto&       zs    = rstate.zs;
-  auto const& ldata = zs.level_data;
+  auto&       fstate = rstate.fs;
+  auto&       es     = fstate.es;
+  auto&       zs     = fstate.zs;
+  auto const& ldata  = zs.level_data;
 
   auto&       logger       = es.logger;
   auto const& global_light = ldata.global_light;
@@ -175,7 +176,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
   sp.set_uniform_float1(logger, "u_reflectivity", 1.0f);
 
   // pointlight
-  auto const view_matrix = rstate.view_matrix();
+  auto const view_matrix = fstate.view_matrix();
   {
     auto const inv_viewmatrix = glm::inverse(glm::mat3{view_matrix});
     sp.set_uniform_matrix_4fv(logger, "u_invviewmatrix", inv_viewmatrix);
@@ -216,7 +217,8 @@ set_3dmvpmatrix(stlw::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 
 void
 draw(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
 {
-  auto&      es          = rstate.es;
+  auto&      fstate      = rstate.fs;
+  auto&      es          = fstate.es;
   auto&      logger      = es.logger;
   auto const draw_mode   = es.wireframe_override ? GL_LINE_LOOP : dm;
   auto const num_indices = dinfo.num_indices();
@@ -238,14 +240,17 @@ draw(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
     LOG_DEBUG_SPRINTF("Drawing %i indices", num_indices);
     glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
   }
+
+  rstate.ds.num_vertices += num_indices;
 }
 
 void
 draw_3dlightsource(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix,
                    ShaderProgram& sp, DrawInfo& dinfo, EntityID const eid, EntityRegistry& registry)
 {
-  auto& es = rstate.es;
-  auto& zs = rstate.zs;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& zs     = fstate.zs;
 
   auto& logger     = es.logger;
   auto& pointlight = registry.get<PointLight>(eid);
@@ -260,7 +265,7 @@ draw_3dlightsource(RenderState& rstate, GLenum const dm, glm::mat4 const& model_
 
   if (!sp.is_2d) {
     auto const& ldata         = zs.level_data;
-    auto const  camera_matrix = rstate.camera_matrix();
+    auto const  camera_matrix = fstate.camera_matrix();
     set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
   }
 
@@ -344,74 +349,6 @@ compute_billboarded_viewmodel(Transform const& transform, glm::mat4 const& view_
 
 } // namespace
 
-namespace boomhs
-{
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-// RenderMatrices
-
-RenderMatrices
-RenderMatrices::from_camera_withposition(Camera const& camera, glm::vec3 const& custom_camera_pos)
-{
-  auto const  mode        = camera.mode();
-  auto const& perspective = camera.perspective();
-  auto const& ortho       = camera.ortho();
-
-  auto const proj = Camera::compute_projectionmatrix(mode, perspective, ortho);
-
-  auto const& target       = camera.get_target().translation;
-  auto const  position_xyz = custom_camera_pos;
-  auto const& up           = camera.eye_up();
-  auto const& fps_center   = camera.world_forward() + target;
-
-  auto const view = Camera::compute_viewmatrix(mode, position_xyz, target, up, fps_center);
-
-  return RenderMatrices{custom_camera_pos, proj, view};
-}
-
-RenderMatrices
-RenderMatrices::from_camera(Camera const& camera)
-{
-  return from_camera_withposition(camera, camera.world_position());
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-// RenderState
-RenderState::RenderState(RenderMatrices const& rmatrices, EngineState& e, ZoneState& z)
-    : rmatrices_(rmatrices)
-    , es(e)
-    , zs(z)
-{
-}
-
-glm::vec3
-RenderState::camera_world_position() const
-{
-  return rmatrices_.camera_world_position;
-}
-
-glm::mat4
-RenderState::camera_matrix() const
-{
-  auto const proj = projection_matrix();
-  auto const view = view_matrix();
-  return proj * view;
-}
-
-glm::mat4
-RenderState::projection_matrix() const
-{
-  return rmatrices_.projection;
-}
-
-glm::mat4
-RenderState::view_matrix() const
-{
-  return rmatrices_.view;
-}
-
-} // namespace boomhs
-
 namespace boomhs::render
 {
 
@@ -459,7 +396,8 @@ void
 draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, TextureInfo& ti, DrawInfo& dinfo,
         bool const alpha_blend)
 {
-  auto& logger = rstate.es.logger;
+  auto& fstate = rstate.fs;
+  auto& logger = fstate.es.logger;
   ti.while_bound(logger, [&]() { draw_2d(rstate, dm, sp, dinfo, alpha_blend); });
 }
 
@@ -469,9 +407,10 @@ draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position
                  Material const& material, EntityRegistry& registry,
                  bool const receives_ambient_light)
 {
-  auto& es     = rstate.es;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
   auto& logger = es.logger;
-  auto& zs     = rstate.zs;
+  auto& zs     = fstate.zs;
 
   auto const                       pointlight_eids = find_pointlights(registry);
   std::vector<PointlightTransform> pointlights;
@@ -487,7 +426,7 @@ draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position
   }
   set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
                              receives_ambient_light);
-  auto const camera_matrix = rstate.camera_matrix();
+  auto const camera_matrix = fstate.camera_matrix();
   set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
 
   draw(rstate, dm, sp, dinfo);
@@ -496,8 +435,9 @@ draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position
 void
 conditionally_draw_player_vectors(RenderState& rstate, WorldObject const& player)
 {
-  auto& es = rstate.es;
-  auto& zs = rstate.zs;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& zs     = fstate.zs;
 
   auto& logger = es.logger;
 
@@ -529,8 +469,9 @@ conditionally_draw_player_vectors(RenderState& rstate, WorldObject const& player
 void
 draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, Color const& color)
 {
-  auto& es = rstate.es;
-  auto& zs = rstate.zs;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& zs     = fstate.zs;
 
   auto& logger   = es.logger;
   auto& registry = zs.registry;
@@ -543,7 +484,7 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
 
   Transform transform;
   sp.while_bound(logger, [&]() {
-    auto const camera_matrix = rstate.camera_matrix();
+    auto const camera_matrix = fstate.camera_matrix();
     set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
     dinfo.vao().while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
@@ -553,9 +494,10 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
 void
 draw_arrow_abovetile_and_neighbors(RenderState& rstate, TilePosition const& tpos)
 {
-  auto&       es    = rstate.es;
-  auto&       zs    = rstate.zs;
-  auto const& ldata = zs.level_data;
+  auto&       fstate = rstate.fs;
+  auto&       es     = fstate.es;
+  auto&       zs     = fstate.zs;
+  auto const& ldata  = zs.level_data;
 
   glm::vec3 constexpr offset{0.5f, 2.0f, 0.5f};
 
@@ -578,9 +520,10 @@ draw_arrow_abovetile_and_neighbors(RenderState& rstate, TilePosition const& tpos
 void
 draw_global_axis(RenderState& rstate)
 {
-  auto& es  = rstate.es;
-  auto& zs  = rstate.zs;
-  auto& sps = zs.gfx_state.sps;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& zs     = fstate.zs;
+  auto& sps    = zs.gfx_state.sps;
 
   auto& logger = es.logger;
   LOG_TRACE("Drawing Global Axis");
@@ -597,7 +540,7 @@ draw_global_axis(RenderState& rstate)
   };
 
   sp.while_bound(logger, [&]() {
-    auto const camera_matrix = rstate.camera_matrix();
+    auto const camera_matrix = fstate.camera_matrix();
     set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
     // assume for now they all share the same VAO layout
@@ -612,9 +555,10 @@ draw_global_axis(RenderState& rstate)
 void
 draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
 {
-  auto& es  = rstate.es;
-  auto& zs  = rstate.zs;
-  auto& sps = zs.gfx_state.sps;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& zs     = fstate.zs;
+  auto& sps    = zs.gfx_state.sps;
 
   auto& logger = es.logger;
   LOG_TRACE("Drawing Local Axis");
@@ -628,7 +572,7 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
   auto const& ldata = zs.level_data;
 
   sp.while_bound(logger, [&]() {
-    auto const camera_matrix = rstate.camera_matrix();
+    auto const camera_matrix = fstate.camera_matrix();
     set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
     // assume for now they all share the same VAO layout
@@ -646,9 +590,10 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
 void
 draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
 {
-  auto const& es     = rstate.es;
+  auto&       fstate = rstate.fs;
+  auto const& es     = fstate.es;
   auto&       logger = es.logger;
-  auto&       zs     = rstate.zs;
+  auto&       zs     = fstate.zs;
 
   assert(zs.gfx_state.gpu_state.entities);
   auto& eh   = *zs.gfx_state.gpu_state.entities;
@@ -694,7 +639,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
       assert(!registry.has<Material>());
 
       if (!sp.is_2d) {
-        auto const camera_matrix = rstate.camera_matrix();
+        auto const camera_matrix = fstate.camera_matrix();
         set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
       }
       draw(rstate, dm, sp, dinfo);
@@ -720,9 +665,9 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   auto const draw_orbital_body = [&](COMMON_ARGS, auto& bboard, OrbitalBody&,
                                      TextureRenderable& trenderable) {
     auto const bb_type    = bboard.value;
-    auto const view_model = compute_billboarded_viewmodel(transform, rstate.view_matrix(), bb_type);
+    auto const view_model = compute_billboarded_viewmodel(transform, fstate.view_matrix(), bb_type);
 
-    auto const proj_matrix = rstate.projection_matrix();
+    auto const proj_matrix = fstate.projection_matrix();
     auto const mvp_matrix  = proj_matrix * view_model;
     auto&      sp          = sps.ref_sp(sn.value);
     sp.while_bound(logger, [&]() { set_modelmatrix(logger, mvp_matrix, sp); });
@@ -813,10 +758,11 @@ void
 draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& scale,
                     TextureInfo& ti)
 {
-  auto& es     = rstate.es;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
   auto& logger = es.logger;
 
-  auto& zs     = rstate.zs;
+  auto& zs     = fstate.zs;
   auto& ttable = zs.gfx_state.texture_table;
 
   auto& sps = zs.gfx_state.sps;
@@ -841,10 +787,11 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
 void
 draw_inventory_overlay(RenderState& rstate)
 {
-  auto& es     = rstate.es;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
   auto& logger = es.logger;
 
-  auto& zs  = rstate.zs;
+  auto& zs  = fstate.zs;
   auto& sps = zs.gfx_state.sps;
   auto& sp  = sps.ref_sp("2dcolor");
 
@@ -872,9 +819,10 @@ draw_inventory_overlay(RenderState& rstate)
 void
 draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTime const& ft)
 {
-  auto&       es    = rstate.es;
-  auto&       zs    = rstate.zs;
-  auto const& ldata = zs.level_data;
+  auto&       fstate = rstate.fs;
+  auto&       es     = fstate.es;
+  auto&       zs     = fstate.zs;
+  auto const& ldata  = zs.level_data;
 
   auto& logger = es.logger;
   assert(zs.gfx_state.gpu_state.tiles);
@@ -964,8 +912,9 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
 void
 draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 {
-  auto&       es       = rstate.es;
-  auto&       zs       = rstate.zs;
+  auto&       fstate   = rstate.fs;
+  auto&       es       = fstate.es;
+  auto&       zs       = fstate.zs;
   auto&       registry = zs.registry;
   auto const& ldata    = zs.level_data;
 
@@ -981,7 +930,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     std::abort();
   }
 
-  auto& logger = rstate.es.logger;
+  auto& logger = fstate.es.logger;
   auto& ttable = zs.gfx_state.texture_table;
 
   auto const selected_npc = *selected;
@@ -994,9 +943,9 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
   auto const      v = OF::rectangle_vertices();
   glm::mat4 const view_model =
-      compute_billboarded_viewmodel(transform, rstate.view_matrix(), BillboardType::Spherical);
+      compute_billboarded_viewmodel(transform, fstate.view_matrix(), BillboardType::Spherical);
 
-  auto const proj_matrix = rstate.projection_matrix();
+  auto const proj_matrix = fstate.projection_matrix();
 
   auto const draw_reticle = [&]() {
     auto constexpr ROTATE_SPEED = 80.0f;
@@ -1042,9 +991,10 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 void
 draw_rivers(RenderState& rstate, window::FrameTime const& ft)
 {
-  auto& es     = rstate.es;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
   auto& logger = es.logger;
-  auto& zs     = rstate.zs;
+  auto& zs     = fstate.zs;
 
   assert(zs.gfx_state.gpu_state.tiles);
   auto& tile_handles = *zs.gfx_state.gpu_state.tiles;
@@ -1097,9 +1047,10 @@ draw_rivers(RenderState& rstate, window::FrameTime const& ft)
 void
 draw_stars(RenderState& rstate, window::FrameTime const& ft)
 {
-  auto& es     = rstate.es;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
   auto& logger = es.logger;
-  auto& zs     = rstate.zs;
+  auto& zs     = fstate.zs;
 
   assert(zs.gfx_state.gpu_state.tiles);
   auto& tile_handles = *zs.gfx_state.gpu_state.tiles;
@@ -1128,7 +1079,7 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
       auto const model_matrix = stlw::math::calculate_modelmatrix(tr, rot, scalevec);
 
       auto const& ldata         = zs.level_data;
-      auto const  camera_matrix = rstate.camera_matrix();
+      auto const  camera_matrix = fstate.camera_matrix();
       set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
 
       auto& vao = dinfo.vao();
@@ -1146,14 +1097,15 @@ void
 draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
              glm::vec4 const& cull_plane)
 {
-  auto& es     = rstate.es;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
   auto& logger = es.logger;
 
-  auto&       zs      = rstate.zs;
+  auto&       zs      = fstate.zs;
   auto&       ldata   = zs.level_data;
   auto&       terrain = ldata.terrain();
   auto&       tgrid   = terrain.grid;
-  auto const& trstate = terrain.render_state;
+  auto const& tfstate = terrain.render_state;
 
   // backup state to restore after drawing terrain
   auto const cw_state = read_cwstate();
@@ -1171,10 +1123,10 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     tr.z            = pos.y;
 
     auto const& config = t.config;
-    glFrontFace(trstate.winding);
-    if (trstate.culling_enabled) {
+    glFrontFace(tfstate.winding);
+    if (tfstate.culling_enabled) {
       glEnable(GL_CULL_FACE);
-      glCullFace(trstate.culling_mode);
+      glCullFace(tfstate.culling_mode);
     }
     else {
       glDisable(GL_CULL_FACE);
@@ -1212,8 +1164,9 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
 void
 draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 {
-  auto& es = rstate.es;
-  auto& zs = rstate.zs;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& zs     = fstate.zs;
 
   auto& logger = es.logger;
   auto& sps    = zs.gfx_state.sps;
@@ -1231,7 +1184,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
   auto const& ldata = zs.level_data;
 
   sp.while_bound(logger, [&]() {
-    auto const camera_matrix = rstate.camera_matrix();
+    auto const camera_matrix = fstate.camera_matrix();
     set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
 
     auto& vao = dinfo.vao();
@@ -1243,10 +1196,11 @@ void
 render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, FrameTime const& ft,
              glm::vec4 const& cull_plane)
 {
-  auto& es     = rstate.es;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
   auto& logger = es.logger;
 
-  auto& zs       = rstate.zs;
+  auto& zs       = fstate.zs;
   auto& registry = zs.registry;
   auto& ldata    = zs.level_data;
 

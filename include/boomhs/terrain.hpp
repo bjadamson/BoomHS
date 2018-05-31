@@ -35,7 +35,7 @@ struct TerrainPieceConfig
   std::string heightmap_path;
 };
 
-struct TerrainRenderState
+struct TerrainFrameState
 {
   bool   culling_enabled = true;
   GLenum winding         = GL_CCW;
@@ -132,8 +132,8 @@ visit_each(TerrainGrid const& tgrid, FN const& fn, Args&&... args)
 
 struct Terrain
 {
-  TerrainGrid        grid;
-  TerrainRenderState render_state;
+  TerrainGrid       grid;
+  TerrainFrameState render_state;
 
   Terrain(TerrainGrid&&);
 };
