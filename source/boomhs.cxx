@@ -485,8 +485,11 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   DrawState ds;
 
   // Render the scene to the refraction and reflection FBOs
-  water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer, rng, ft);
-  water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer, rng, ft);
+  bool const draw_water = es.draw_water;
+  if (draw_water) {
+    water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer, rng, ft);
+    water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer, rng, ft);
+  }
 
   // render scene
   render::clear_screen(ldata.fog.color);
@@ -500,7 +503,9 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
 
     // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up ontop
     // of the ingame UI nearby target indicators.
-    water_renderer.render_water(rstate, ds, lm, camera, ft);
+    if (draw_water) {
+      water_renderer.render_water(rstate, ds, lm, camera, ft);
+    }
 
     // Render the scene with no culling (setting it zero disables culling mathematically)
     glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};

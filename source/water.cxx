@@ -162,9 +162,6 @@ WaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
-  if (!es.draw_water) {
-    return;
-  }
 
   auto& logger   = es.logger;
   auto& zs       = lm.active();
