@@ -26,7 +26,7 @@ make_tree(glm::vec3 const& world_pos, char const* shader_name, char const* tree_
   registry.assign<Material>(eid);
   // registry.assign<JunkEntityFromFILE>(eid);
 
-  registry.assign<TreeComponent>(eid);
+  auto& tc = registry.assign<TreeComponent>(eid);
   {
     auto& isv = registry.assign<IsVisible>(eid);
     isv.value = true;
@@ -60,9 +60,49 @@ Tree::add_toregistry(stlw::Logger& logger, glm::vec3 const& world_pos, ObjStore 
   auto const     flags = BufferFlags::from_va(va);
   ObjQuery const query{TN, flags};
 
-  auto& obj   = obj_store.get(logger, TN);
-  auto  dinfo = opengl::gpu::copy_gpu(logger, va, obj);
+  auto& obj = obj_store.get(logger, TN);
+  {
+    auto& tc = registry.get<TreeComponent>(eid);
+    tc.pobj  = &obj;
+  }
+
+  auto dinfo = opengl::gpu::copy_gpu(logger, va, obj);
   return std::make_pair(eid, MOVE(dinfo));
+}
+
+std::vector<float>
+Tree::generate_tree_colors(stlw::Logger& logger, ObjData const& obj)
+{
+  auto const& materials     = obj.materials;
+  auto const  get_facecolor = [&logger, &materials](auto const& shape,
+                                                   auto const  f) { // per-face material
+    int const face_materialid= shape.mesh.material_ids[f];
+    // auto const& diffuse         = materials[face_materialid].diffuse;
+
+    auto constdiffuse =
+        face_materialid == 1 ? glm::vec3{0.5, 0.35, 0.05} : glm::vec3{0.0, 1.0, 0.3};
+    return Color{diffuse[0], diffuse[1], diffuse[2], 1.0};
+  };
+
+  std::vector<float> colors;
+  auto const         update_branchcolors = [&](auto const& shape, auto const& face) {
+    auto const face_color = get_facecolor(shape, face);
+
+    auto const fv = shape.mesh.num_face_vertices[face];
+    FOR(vi, fv)
+    {
+      colors.emplace_back(face_color.r());
+      colors.emplace_back(face_color.g());
+      colors.emplace_back(face_color.b());
+      colors.emplace_back(face_color.a());
+    }
+  };
+  obj.foreach_face(update_branchcolors);
+
+  assert((obj.colors.size() % 4) == 0);
+  assert(obj.colors.size() == colors.size());
+
+  return colors;
 }
 
 } // namespace boomhs

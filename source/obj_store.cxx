@@ -137,7 +137,7 @@ ObjData const&
 ObjStore::get(stlw::Logger& logger, std::string const& name) const
 {
   auto const cmp = [&](auto const& pair) { return pair.first == name; };
-  auto const it = std::find_if(data_.cbegin(), data_.cend(), cmp);
+  auto const it  = std::find_if(data_.cbegin(), data_.cend(), cmp);
   assert(it != data_.cend());
   return it->second;
 }

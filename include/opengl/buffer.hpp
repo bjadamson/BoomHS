@@ -33,12 +33,11 @@ operator!=(BufferFlags const&, BufferFlags const&);
 std::ostream&
 operator<<(std::ostream&, BufferFlags const&);
 
-
 struct VertexBuffer
 {
-  boomhs::ObjVertices        vertices;
-  boomhs::ObjIndices         indices;
-  BufferFlags const flags;
+  boomhs::ObjVertices vertices;
+  boomhs::ObjIndices  indices;
+  BufferFlags const   flags;
 
 private:
   VertexBuffer(BufferFlags const&);
@@ -52,7 +51,7 @@ public:
   // Public copy method
   VertexBuffer copy() const;
 
-  void set_colors(Color const&);
+  void                set_colors(Color const&);
   static VertexBuffer create_interleaved(stlw::Logger&, boomhs::ObjData const&, BufferFlags const&);
 };
 

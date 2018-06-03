@@ -12,8 +12,8 @@ namespace
 {
 
 LoadStatus
-load_vertices(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
-              std::vector<float>* pvertices)
+load_positions(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
+               std::vector<float>* pvertices)
 {
   auto const pos_index = 3 * index.vertex_index;
   if (pos_index < 0) {
@@ -89,7 +89,7 @@ namespace boomhs
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // PositionsBuffer
-PositionsBuffer::PositionsBuffer(ObjVertices &&v)
+PositionsBuffer::PositionsBuffer(ObjVertices&& v)
     : vertices(MOVE(v))
 {
 }
@@ -100,9 +100,9 @@ PositionsBuffer::min() const
   glm::vec3 r;
 
   size_t i = 0;
-  r.x = vertices[i++];
-  r.y = vertices[i++];
-  r.z = vertices[i++];
+  r.x      = vertices[i++];
+  r.y      = vertices[i++];
+  r.z      = vertices[i++];
 
   while (i < vertices.size()) {
     r.x = std::min(r.x, vertices[i++]);
@@ -120,9 +120,9 @@ PositionsBuffer::max() const
   glm::vec3 r;
 
   size_t i = 0;
-  r.x = vertices[i++];
-  r.y = vertices[i++];
-  r.z = vertices[i++];
+  r.x      = vertices[i++];
+  r.y      = vertices[i++];
+  r.z      = vertices[i++];
 
   while (i < vertices.size()) {
     r.x = std::max(r.x, vertices[i++]);
@@ -134,8 +134,6 @@ PositionsBuffer::max() const
 
   return r;
 }
-
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // ObjData
@@ -246,48 +244,46 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
     LOG_ERROR_SPRINTF("Material name %s, diffuse %s", material.name, color.to_string());
   }
 
-  auto const get_facecolor = [&materials, &shapes](auto const s, auto const f) {
+  auto const get_facecolor = [&materials](auto const& shape, auto const f) {
     // per-face material
-    int const   face_materialid = shapes[s].mesh.material_ids[f];
+    int const   face_materialid = shape.mesh.material_ids[f];
     auto const& diffuse         = materials[face_materialid].diffuse;
     return Color{diffuse[0], diffuse[1], diffuse[2], 1.0};
   };
 
-  // Loop over shapes
-  FOR(s, shapes.size())
-  {
-    // Loop over faces(polygon)
-    size_t index_offset = 0;
-    FOR(f, shapes[s].mesh.num_face_vertices.size())
-    {
-      auto const fv         = shapes[s].mesh.num_face_vertices[f];
-      auto const face_color = get_facecolor(s, f);
+  size_t     index_offset           = 0;
+  auto const load_vertex_attributes = [&](auto const& shape, auto const& face) -> LoadStatus {
+    auto const face_color = get_facecolor(shape, face);
 
-      // Loop over vertices in the face.
-      FOR(vi, fv)
-      {
-        // access to vertex
-        tinyobj::index_t const index = shapes[s].mesh.indices[index_offset + vi];
+    auto const fv = shape.mesh.num_face_vertices[face];
+    // Loop over vertices in the face.
+    FOR(vi, fv)
+    {
+      // access to vertex
+      tinyobj::index_t const index = shape.mesh.indices[index_offset + vi];
 
 #define LOAD_ATTR(...)                                                                             \
   ({                                                                                               \
     auto const load_status = __VA_ARGS__;                                                          \
     if (load_status != LoadStatus::SUCCESS) {                                                      \
-      return Err(load_status);                                                                     \
+      return load_status;                                                                          \
     }                                                                                              \
   })
 
-        LOAD_ATTR(load_vertices(index, attrib, &objdata.vertices));
-        LOAD_ATTR(load_normals(index, attrib, &objdata.normals));
-        LOAD_ATTR(load_uvs(index, attrib, &objdata.uvs));
-        LOAD_ATTR(load_colors(face_color, &objdata.colors));
+      LOAD_ATTR(load_positions(index, attrib, &objdata.vertices));
+      LOAD_ATTR(load_normals(index, attrib, &objdata.normals));
+      LOAD_ATTR(load_uvs(index, attrib, &objdata.uvs));
+      LOAD_ATTR(load_colors(face_color, &objdata.colors));
 
 #undef LOAD_ATTR
-        indices.push_back(indices.size()); // 0, 1, 2, ...
-      }
-      index_offset += fv;
+      indices.push_back(indices.size()); // 0, 1, 2, ...
     }
-  }
+    index_offset += fv;
+
+    return LoadStatus::SUCCESS;
+  };
+
+  objdata.foreach_face(load_vertex_attributes);
 
   LOG_DEBUG_SPRINTF("num vertices: %u", objdata.num_vertexes);
   LOG_DEBUG_SPRINTF("vertices.size(): %u", objdata.vertices.size());

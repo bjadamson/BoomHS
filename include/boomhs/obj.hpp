@@ -31,16 +31,17 @@ struct PositionsBuffer
 class ObjData
 {
   COPY_DEFAULT(ObjData);
+
 public:
   using ObjVertices = ObjVertices;
   using ObjIndices  = ObjIndices;
 
   unsigned int num_vertexes;
-  ObjVertices   vertices;
-  ObjVertices   colors;
-  ObjVertices   normals;
-  ObjVertices   uvs;
-  ObjIndices    indices;
+  ObjVertices  vertices;
+  ObjVertices  colors;
+  ObjVertices  normals;
+  ObjVertices  uvs;
+  ObjIndices   indices;
 
   std::vector<tinyobj::shape_t>    shapes;
   std::vector<tinyobj::material_t> materials;
@@ -55,6 +56,28 @@ public:
   PositionsBuffer positions() const;
 
   std::string to_string() const;
+
+#define FOREACH_FACE_IMPL(fn)                                                                      \
+  FOR(s, shapes.size())                                                                            \
+  {                                                                                                \
+    size_t      index_offset = 0;                                                                  \
+    auto const& shape        = shapes[s];                                                          \
+    auto const& mesh         = shape.mesh;                                                         \
+    FOR(f, mesh.num_face_vertices.size()) { fn(shape, f); }                                        \
+  }
+
+  template <typename FN>
+  void foreach_face(FN const& fn)
+  {
+    FOREACH_FACE_IMPL(fn);
+  }
+
+  template <typename FN>
+  void foreach_face(FN const& fn) const
+  {
+    FOREACH_FACE_IMPL(fn);
+  }
+#undef FOREACH_FACE_IMPL
 };
 
 enum class LoadStatus
