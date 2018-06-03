@@ -141,6 +141,7 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
 {
   LOG_TRACE_SPRINTF("Loading objfile: %s mtl: %s", objpath,
                     mtlpath == nullptr ? "nullptr" : mtlpath);
+  assert(mtlpath);
 
   tinyobj::attrib_t                attrib;
   std::vector<tinyobj::shape_t>    shapes;
@@ -152,6 +153,8 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
     LOG_ERROR_SPRINTF("error loading obj, msg: %s", err);
     std::abort();
   }
+
+  assert(!materials.empty());
 
   // TODO: for now only loading one mesh exactly
   assert(1 == shapes.size());
@@ -171,6 +174,22 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
   LOG_ERROR_SPRINTF("color count %u", attrib.colors.size());
   */
 
+  LOG_DEBUG_SPRINTF("materials size: %lu", materials.size());
+  FOR(i, materials.size())
+  {
+    auto const& material = materials[i];
+    auto const& diffuse = material.diffuse;
+    auto const color = Color{diffuse[0], diffuse[1], diffuse[2], 1.0};
+    LOG_ERROR_SPRINTF("Material name %s, diffuse %s", material.name, color.to_string());
+  }
+
+  auto const get_facecolor = [&materials, &shapes](auto const s, auto const f) {
+      // per-face material
+      int const face_materialid = shapes[s].mesh.material_ids[f];
+      auto const& diffuse = materials[face_materialid].diffuse;
+      return Color{diffuse[0], diffuse[1], diffuse[2], 1.0};
+  };
+
   // Loop over shapes
   FOR(s, shapes.size())
   {
@@ -179,6 +198,7 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
     FOR(f, shapes[s].mesh.num_face_vertices.size())
     {
       auto const fv = shapes[s].mesh.num_face_vertices[f];
+      auto const face_color = get_facecolor(s, f);
 
       // Loop over vertices in the face.
       FOR(vi, fv)
@@ -203,24 +223,13 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
 
         LOAD_ATTR(load_normals(index, attrib, &objdata.normals));
         LOAD_ATTR(load_uvs(index, attrib, &objdata.uvs));
-
-        LOAD_ATTR(load_colors(LOC::WHITE, &objdata.colors));
+        LOAD_ATTR(load_colors(face_color, &objdata.colors));
 
 #undef LOAD_ATTR
         indices.push_back(indices.size()); // 0, 1, 2, ...
       }
       index_offset += fv;
-
-      // per-face material
-      int const face_jaterialid = shapes[s].mesh.material_ids[f];
     }
-  }
-
-  LOG_DEBUG_SPRINTF("materials size: %lu", materials.size());
-  FOR(i, materials.size())
-  {
-    auto const& material = materials[i];
-    LOG_DEBUG_SPRINTF("Material name: %s", material.name);
   }
 
   LOG_DEBUG_SPRINTF("num vertices: %u", objdata.num_vertexes);
@@ -233,9 +242,10 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
 }
 
 LoadResult
-load_objfile(stlw::Logger& logger, std::string const& objpath)
+load_objfile(stlw::Logger& logger, std::string const& path, std::string const& name)
 {
-  return load_objfile(logger, objpath.c_str(), nullptr);
+  auto const objpath = path + name;
+  return load_objfile(logger, objpath.c_str(), path.c_str());
 }
 
 } // namespace boomhs

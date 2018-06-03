@@ -179,6 +179,12 @@ VertexBuffer::create_interleaved(stlw::Logger& logger, ObjData const& data,
   return buffer;
 }
 
+VertexBuffer
+VertexBuffer::copy() const
+{
+  return *this;
+}
+
 PositionsBuffer
 VertexBuffer::positions() const
 {
@@ -214,6 +220,37 @@ VertexBuffer::positions() const
     }
   }
   return PositionsBuffer{MOVE(values)};
+}
+
+void
+VertexBuffer::set_colors(Color const& color)
+{
+  size_t i = 0;
+  while (i < vertices.size()) {
+    assert(flags.vertices);
+    i += 3; // x, y, z
+
+    auto const assert_i = [&]() {
+      assert(i <= vertices.size());
+    };
+
+    // skip over other attributes
+    if (flags.normals) {
+      i += 3;
+      assert_i();
+    }
+
+    assert(flags.colors);
+    vertices[i++] = color.r();
+    vertices[i++] = color.g();
+    vertices[i++] = color.b();
+    vertices[i++] = color.a();
+
+    if (flags.uvs) {
+      i += 2;
+      assert_i();
+    }
+  }
 }
 
 std::string

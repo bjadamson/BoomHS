@@ -14,6 +14,7 @@
 #include <boomhs/rexpaint.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
+#include <boomhs/tree.hpp>
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/water_fbos.hpp>
 
@@ -450,6 +451,27 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
 
     update_visible_entities(lm, registry);
     update_torchflicker(ldata, registry, rng, ft);
+
+    registry.view<ShaderName, MeshRenderable, TreeComponent>().each(
+      [&](auto entity, auto& sn, auto& mesh, auto&) {
+        auto& gfx_state = zs.gfx_state;
+        auto& sps       = gfx_state.sps;
+        auto&       va  = sps.ref_sp(sn.value).va();
+        auto const  qa  = BufferFlags::from_va(va);
+        auto const  qo  = ObjQuery{mesh.name, qa};
+
+
+        auto& entities_o = gfx_state.gpu_state.entities;
+        assert(entities_o);
+        auto& entity_map = *entities_o;
+        auto& dinfo = entity_map.lookup(logger, entity);
+
+        auto& obj_store = ldata.obj_store;
+        auto obj = obj_store.get_copy(logger, qo);
+        obj.set_colors(LOC::RED);
+
+        gpu::overwrite_vertex_buffer(logger, va, dinfo, obj.vertices);
+      });
   }
 
   // TODO: Move out into state somewhere.

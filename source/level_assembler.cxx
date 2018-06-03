@@ -6,6 +6,7 @@
 #include <boomhs/player.hpp>
 #include <boomhs/start_area_generator.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
+#include <boomhs/tree.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <boomhs/obj.hpp>
@@ -182,10 +183,6 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
   return Ok(std::make_pair(MOVE(entity_drawmap), MOVE(td)));
 }
 
-struct TreeComponent
-{
-};
-
 void
 copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
 {
@@ -204,45 +201,8 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
 
   auto const& obj_store = ldata.obj_store;
 
-  auto const add_tree = [&](auto const& world_pos) -> Transform& {
-    auto  eid = registry.create();
-    auto& mr  = registry.assign<MeshRenderable>(eid);
-    mr.name   = "sphere";
-
-    auto& transform       = registry.assign<Transform>(eid);
-    transform.translation = world_pos;
-    registry.assign<Material>(eid);
-    registry.assign<JunkEntityFromFILE>(eid);
-    // registry.assign<TreeComponent>(eid);
-    {
-      auto& isv = registry.assign<IsVisible>(eid);
-      isv.value = true;
-    }
-    registry.assign<Name>(eid).value = "custom tree";
-
-    auto& sn = registry.assign<ShaderName>(eid);
-    sn.value = "3d_pos_normal_color";
-    {
-      auto& cc = registry.assign<Color>(eid);
-      *&cc     = LOC::WHITE;
-    }
-
-    auto&          va    = sps.ref_sp(sn.value).va();
-    auto const     flags = BufferFlags::from_va(va);
-    ObjQuery const query{mr.name, flags};
-    auto&          obj   = obj_store.get_obj(logger, query);
-    auto           dinfo = opengl::gpu::copy_gpu(logger, va, obj);
-    edh.add(eid, MOVE(dinfo));
-
-    return transform;
-  };
-  add_tree(glm::vec3{2.0f, 0.0f, 0.0f});
-  add_tree(glm::vec3{0.0f, 0.0f, 2.0f});
-  auto* tr  = &add_tree(glm::vec3{4.0f, 4.0f, 0.0f});
-  tr->scale = glm::vec3{2.0f};
-
-  tr        = &add_tree(glm::vec3{100.0f, 10.0f, 100.0f});
-  tr->scale = glm::vec3{60.0f};
+  auto pair = Tree::add_toregistry(logger, glm::vec3{0.0f}, obj_store, sps, registry);
+  edh.add(pair.first, MOVE(pair.second));
 
   auto constexpr WIREFRAME_SHADER = "wireframe";
   auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();

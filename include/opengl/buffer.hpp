@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/obj.hpp>
+#include <opengl/colors.hpp>
 #include <string>
 
 namespace opengl
@@ -54,15 +55,21 @@ struct VertexBuffer
 
 private:
   VertexBuffer(BufferFlags const&);
+  COPY_DEFAULT(VertexBuffer);
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(VertexBuffer);
+  MOVE_DEFAULT(VertexBuffer);
 
   std::string to_string() const;
+
+  // Public copy method
+  VertexBuffer copy() const;
 
   // Returns all position values as a contiguos array following the pattern:
   // [x, y, z], [x, y, z], etc...
   PositionsBuffer positions() const;
+
+  void set_colors(Color const&);
 
   static VertexBuffer create_interleaved(stlw::Logger&, boomhs::ObjData const&, BufferFlags const&);
 };

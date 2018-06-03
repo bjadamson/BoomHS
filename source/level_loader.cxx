@@ -228,9 +228,8 @@ load_objfiles(stlw::Logger& logger, CppTableArray const& mesh_table)
     auto const name = get_string_or_abort(table, "name");
     LOG_TRACE_SPRINTF("Loading objfile name: '%s' path: '%s'", name, path);
 
-    auto const obj = path + name + ".obj";
-
-    ObjData objdata = TRY_MOVEOUT(load_objfile(logger, obj));
+    auto const objname = name + ".obj";
+    ObjData objdata = TRY_MOVEOUT(load_objfile(logger, path, objname));
     auto    pair    = std::make_pair(name, MOVE(objdata));
     return OK_MOVE(pair);
   };

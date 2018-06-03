@@ -22,7 +22,7 @@ using namespace glm;
 namespace
 {
 
-template <typename INDICES, typename VERTICES>
+template <typename VERTICES, typename INDICES>
 void
 copy_synchronous(stlw::Logger& logger, VertexAttribute const& va, DrawInfo &dinfo,
                  VERTICES const& vertices, INDICES const& indices)
@@ -381,6 +381,25 @@ copy_rectangle_uvs(stlw::Logger &logger, VertexAttribute const& va,
   DrawInfo dinfo{vertices.size(), i.size()};
   copy_synchronous(logger, va, dinfo, vertices, i);
   return dinfo;
+}
+
+void
+overwrite_vertex_buffer(stlw::Logger& logger, VertexAttribute const& va, DrawInfo &dinfo,
+                 ObjData::vertices_t const& vertices)
+{
+  auto const upload = [&]() {
+    glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
+
+    va.upload_vertex_format_to_glbound_vao(logger);
+
+    auto const  vertices_size = vertices.size() * sizeof(GLfloat);
+    auto const& vertices_data = vertices.data();
+    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices_size, vertices_data);
+  };
+
+  auto &vao = dinfo.vao();
+  vao.while_bound(logger, upload);
 }
 
 } // ns opengl::gpu

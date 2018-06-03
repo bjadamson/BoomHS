@@ -55,6 +55,6 @@ LoadResult
 load_objfile(stlw::Logger&, char const*, char const*);
 
 LoadResult
-load_objfile(stlw::Logger&, std::string const&);
+load_objfile(stlw::Logger&, std::string const&, std::string const&);
 
 } // namespace boomhs

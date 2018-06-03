@@ -10,6 +10,7 @@
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
+#include <boomhs/tree.hpp>
 #include <boomhs/water.hpp>
 #include <boomhs/water_fbos.hpp>
 
@@ -742,6 +743,10 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   auto const draw_plain_cube = [&](COMMON_ARGS, CubeRenderable& cr, auto&&... args) {
     draw_entity(eid, sn, transform, is_v, bbox, cr, FORWARD(args));
   };
+
+  auto const draw_tree = [&](COMMON_ARGS, TreeComponent& tree, auto&&... args) {
+    draw_entity(eid, sn, transform, is_v, bbox, tree, FORWARD(args));
+  };
 #undef COMMON_ARGS
 
   // define rendering order here
@@ -752,11 +757,9 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   // registry.view<COMMON, WaterTileThing>().each(draw_fn);
   registry.view<COMMON, TextureRenderable, JunkEntityFromFILE>().each(draw_textured_junk_fn);
 
-  registry.view<COMMON, Color, JunkEntityFromFILE>().each(draw_junk);
-  // registry.view<COMMON, MeshRenderable, JunkEntityFromFILE>().each(
-  //[&](auto&&... args) { draw_entity(FORWARD(args)); });
-
   registry.view<COMMON, Torch, TextureRenderable>().each(draw_torch);
+  registry.view<COMMON, Color, JunkEntityFromFILE>().each(draw_junk);
+  registry.view<COMMON, TreeComponent>().each(draw_tree);
 
   // CUBES
   registry.view<COMMON, CubeRenderable, PointLight>().each(draw_plain_cube);

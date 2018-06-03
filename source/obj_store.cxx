@@ -68,6 +68,7 @@ ObjCache::get_obj(stlw::Logger& logger, ObjQuery const& query) const
   }
   std::abort();
 }
+
 #undef FIND_OBJ_IN_CACHE
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,6 +125,12 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
   // yield reference to data
   assert(cache.has_obj(query));
   return cache.get_obj(logger, query);
+}
+
+VertexBuffer
+ObjStore::get_copy(stlw::Logger& logger, ObjQuery const& query) const
+{
+  return get_obj(logger, query).copy();
 }
 
 #define FIND_CACHE(query, cache)                                                                   \
