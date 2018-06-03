@@ -6,6 +6,8 @@
 #include <stlw/type_macros.hpp>
 
 #include <extlibs/glew.hpp>
+#include <extlibs/tinyobj.hpp>
+
 #include <optional>
 #include <ostream>
 #include <string>
@@ -24,6 +26,9 @@ struct ObjData
   vertices_t   normals;
   vertices_t   uvs;
   indices_t    indices;
+
+  std::vector<tinyobj::shape_t>    shapes;
+  std::vector<tinyobj::material_t> materials;
 
   ObjData() = default;
   MOVE_CONSTRUCTIBLE_ONLY(ObjData);

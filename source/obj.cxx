@@ -4,7 +4,6 @@
 #include <stlw/algorithm.hpp>
 
 #include <cassert>
-#include <extlibs/tinyobj.hpp>
 
 using namespace boomhs;
 using namespace opengl;
@@ -143,10 +142,12 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
                     mtlpath == nullptr ? "nullptr" : mtlpath);
   assert(mtlpath);
 
-  tinyobj::attrib_t                attrib;
-  std::vector<tinyobj::shape_t>    shapes;
-  std::vector<tinyobj::material_t> materials;
-  std::string                      err;
+  tinyobj::attrib_t attrib;
+  std::string       err;
+
+  ObjData objdata;
+  auto&   materials = objdata.materials;
+  auto&   shapes    = objdata.shapes;
 
   bool const load_success = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, objpath, mtlpath);
   if (!load_success) {
@@ -154,7 +155,7 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
     std::abort();
   }
 
-  assert(!materials.empty());
+  assert(!objdata.materials.empty());
 
   // TODO: for now only loading one mesh exactly
   assert(1 == shapes.size());
@@ -164,8 +165,7 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
   assert(0 == (attrib.normals.size() % 3));
   assert(0 == (attrib.texcoords.size() % 2));
 
-  ObjData objdata;
-  auto&   indices      = objdata.indices;
+  auto& indices        = objdata.indices;
   objdata.num_vertexes = attrib.vertices.size() / 3;
   /*
   LOG_ERROR_SPRINTF("vertice count %u", num_vertexes);
@@ -215,12 +215,6 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
   })
 
         LOAD_ATTR(load_vertices(index, attrib, &objdata.vertices));
-
-        // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
-        // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
-        // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
-        //
-
         LOAD_ATTR(load_normals(index, attrib, &objdata.normals));
         LOAD_ATTR(load_uvs(index, attrib, &objdata.uvs));
         LOAD_ATTR(load_colors(face_color, &objdata.colors));
