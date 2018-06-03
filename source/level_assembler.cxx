@@ -103,15 +103,17 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
 
   // copy CUBES to GPU
   registry.view<ShaderName, CubeRenderable, PointLight>().each(
-      [&](auto entity, auto& sn, auto&&...) {
-        auto& va     = sps.ref_sp(sn.value).va();
-        auto  handle = opengl::gpu::copy_cubevertexonly_gpu(logger, va);
+      [&](auto entity, auto& sn, auto& cr, auto&&...) {
+        auto&              va = sps.ref_sp(sn.value).va();
+        CubeVertices const cv{cr.min, cr.max};
+        auto               handle = opengl::gpu::copy_cubevertexonly_gpu(logger, cv, va);
         entity_drawmap.add(entity, MOVE(handle));
       });
   registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
-      [&](auto entity, auto& sn, auto&, auto& texture) {
-        auto& va     = sps.ref_sp(sn.value).va();
-        auto  handle = opengl::gpu::copy_cubetexture_gpu(logger, va);
+      [&](auto entity, auto& sn, auto& cr, auto& texture) {
+        auto&              va = sps.ref_sp(sn.value).va();
+        CubeVertices const cv{cr.min, cr.max};
+        auto               handle = opengl::gpu::copy_cubetexture_gpu(logger, cv, va);
         entity_drawmap.add(entity, MOVE(handle));
       });
 
@@ -242,31 +244,41 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
   tr        = &add_tree(glm::vec3{100.0f, 10.0f, 100.0f});
   tr->scale = glm::vec3{60.0f};
 
+  auto constexpr WIREFRAME_SHADER = "wireframe";
+  auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
+
   EntityDrawHandleMap bbox_dh;
-  for (auto const eid : registry.view<MeshRenderable>()) {
+  auto const          add_wireframe = [&](auto const eid, auto const& min, auto const& max) {
+    registry.assign<Selectable>(eid);
     {
-      registry.assign<Selectable>(eid);
-      auto& name = registry.get<MeshRenderable>(eid).name;
+      auto& bbox = registry.assign<AABoundingBox>(eid);
+      bbox.min   = min;
+      bbox.max   = max;
 
-      auto constexpr WIREFRAME_SHADER = "wireframe";
-      auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
-      {
-        auto const     flags = BufferFlags::from_va(va);
-        ObjQuery const query{name, flags};
-        auto&          obj  = obj_store.get_obj(logger, query);
-        auto&          bbox = registry.assign<AABoundingBox>(eid);
+      // LOG_ERROR_SPRINTF("box: [min: %s, max: %s, midp: %s], ", glm::to_string(bbox.min),
+      // glm::to_string(bbox.max), glm::to_string(bbox.max - bbox.min));
 
-        auto const posbuffer = obj.positions();
-        bbox.min             = posbuffer.min();
-        bbox.max             = posbuffer.max();
-
-        // LOG_ERROR_SPRINTF("box: [min: %s, max: %s, midp: %s], ", glm::to_string(bbox.min),
-        // glm::to_string(bbox.max), glm::to_string(bbox.max - bbox.min));
-
-        auto dinfo = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, va, bbox.min, bbox.max);
-        bbox_dh.add(eid, MOVE(dinfo));
-      }
+      CubeVertices const cv{bbox.min, bbox.max};
+      auto               dinfo = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, cv, va);
+      bbox_dh.add(eid, MOVE(dinfo));
     }
+  };
+  for (auto const eid : registry.view<MeshRenderable>()) {
+    auto& name = registry.get<MeshRenderable>(eid).name;
+
+    auto const     flags = BufferFlags::from_va(va);
+    ObjQuery const query{name, flags};
+    auto&          obj       = obj_store.get_obj(logger, query);
+    auto const     posbuffer = obj.positions();
+    auto const&    min       = posbuffer.min();
+    auto const&    max       = posbuffer.max();
+
+    add_wireframe(eid, min, max);
+  }
+  for (auto const eid : registry.view<CubeRenderable>()) {
+    auto const& cr = registry.get<CubeRenderable>(eid);
+
+    add_wireframe(eid, cr.min, cr.max);
   }
 
   auto& gpu_state                = gfx_state.gpu_state;

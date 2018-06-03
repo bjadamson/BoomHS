@@ -47,6 +47,7 @@ struct AxisAlignedBoundingBox
 
   // ctor
   AxisAlignedBoundingBox();
+  AxisAlignedBoundingBox(glm::vec3 const&, glm::vec3 const&);
 };
 
 using AABoundingBox = AxisAlignedBoundingBox;
@@ -98,6 +99,7 @@ struct ShaderName
 
 struct CubeRenderable
 {
+  glm::vec3 min, max;
 };
 
 struct MeshRenderable

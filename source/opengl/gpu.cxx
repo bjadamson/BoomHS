@@ -4,7 +4,6 @@
 #include <opengl/global.hpp>
 #include <opengl/vertex_attribute.hpp>
 
-#include <boomhs/components.hpp>
 #include <boomhs/obj.hpp>
 #include <boomhs/obj_store.hpp>
 #include <boomhs/tilegrid.hpp>
@@ -200,8 +199,9 @@ create_axis_arrows(stlw::Logger &logger, VertexAttribute const& va)
   return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
 }
 
+/*
 DrawInfo
-copy_cubecolor_gpu(stlw::Logger &logger, VertexAttribute const& va,
+copy_cubecolor_gpu(stlw::Logger &logger, CubeVertices const& cr, VertexAttribute const& va,
     Color const& color)
 {
   // clang-format off
@@ -211,7 +211,7 @@ copy_cubecolor_gpu(stlw::Logger &logger, VertexAttribute const& va,
   };
 #define COLOR(i) c[i].r(), c[i].g(), c[i].b(), c[i].a()
 #define VERTS(a, b, c, d) v[a], v[b], v[c], v[d]
-  auto const v = OF::cube_vertices();
+  auto const v = OF::cube_vertices(cr.min, cr.max);
   auto const vertex_data = std::array<float, (32 * 2)>{
     VERTS(0, 1, 2, 3),     COLOR(0),
     VERTS(4, 5, 6, 7),     COLOR(1),
@@ -227,9 +227,11 @@ copy_cubecolor_gpu(stlw::Logger &logger, VertexAttribute const& va,
   // clang-format on
   return make_drawinfo(logger, va, vertex_data, OF::CUBE_INDICES);
 }
+*/
 
 DrawInfo
-copy_cubenormalcolor_gpu(stlw::Logger &logger, VertexAttribute const& va, Color const& color)
+copy_cubenormalcolor_gpu(stlw::Logger &logger, CubeVertices const& cr, VertexAttribute const& va,
+    Color const& color)
 {
   // clang-format off
   static std::array<glm::vec3, 8> constexpr points = {{
@@ -312,24 +314,24 @@ copy_cubenormalcolor_gpu(stlw::Logger &logger, VertexAttribute const& va, Color 
 }
 
 DrawInfo
-copy_cubevertexonly_gpu(stlw::Logger &logger, VertexAttribute const& va)
+copy_cubevertexonly_gpu(stlw::Logger &logger, CubeVertices const& cv, VertexAttribute const& va)
 {
-  auto const vertices = OF::cube_vertices();
+  auto const vertices = OF::cube_vertices(cv.min, cv.max);
   return make_drawinfo(logger, va, vertices, OF::CUBE_INDICES);
 }
 
 DrawInfo
-copy_cube_wireframevertexonly_gpu(stlw::Logger& logger, VertexAttribute const& va,
-    glm::vec3 const& min, glm::vec3 const& max)
+copy_cube_wireframevertexonly_gpu(stlw::Logger& logger, CubeVertices const& cv,
+    VertexAttribute const& va)
 {
-  auto const vertices = OF::cube_vertices(min, max);
+  auto const vertices = OF::cube_vertices(cv.min, cv.max);
   return make_drawinfo(logger, va, vertices, OF::CUBE_WIREFRAME_INDICES);
 }
 
 DrawInfo
-copy_cubetexture_gpu(stlw::Logger &logger, VertexAttribute const& va)
+copy_cubetexture_gpu(stlw::Logger &logger, CubeVertices const& cv, VertexAttribute const& va)
 {
-  auto const vertices = OF::cube_vertices();
+  auto const vertices = OF::cube_vertices(cv.min, cv.max);
   return make_drawinfo(logger, va, vertices, OF::CUBE_INDICES);
 }
 

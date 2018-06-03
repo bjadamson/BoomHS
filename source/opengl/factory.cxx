@@ -121,15 +121,6 @@ cube_vertices(glm::vec3 const& min, glm::vec3 const& max)
   return v;
 }
 
-CubeVertices
-cube_vertices()
-{
-  float constexpr DEFAULT_SIZE = 0.5f;
-  glm::vec3 constexpr MIN = glm::vec3{-DEFAULT_SIZE};
-  glm::vec3 constexpr MAX = glm::vec3{+DEFAULT_SIZE};
-  return cube_vertices(MIN, MAX);
-}
-
 // Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 RectangleVertices::RectangleVertices()

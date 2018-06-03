@@ -596,7 +596,9 @@ load_entities(stlw::Logger& logger, CppTable const& table,
       registry.assign<PlayerData>(eid);
     }
     if (geometry == "cube") {
-      registry.assign<CubeRenderable>(eid);
+      auto& cr = registry.assign<CubeRenderable>(eid);
+      cr.min   = glm::vec3{-0.5f};
+      cr.max   = glm::vec3{0.5f};
     }
     else if (boost::starts_with(geometry, "mesh")) {
       auto const parse_meshname = [](auto const& field) {

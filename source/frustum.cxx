@@ -43,7 +43,7 @@ Frustum::recalculate(FrameState const& fstate)
 
   // Now that we have our modelview and projection matrix, if we combine these 2 matrices,
   // it will give us our clipping planes.  To combine 2 matrices, we multiply them.
-  float   clip[16];
+  float clip[16];
   clip[0] = view[0] * proj[0] + view[1] * proj[4] + view[2] * proj[8] + view[3] * proj[12];
   clip[1] = view[0] * proj[1] + view[1] * proj[5] + view[2] * proj[9] + view[3] * proj[13];
   clip[2] = view[0] * proj[2] + view[1] * proj[6] + view[2] * proj[10] + view[3] * proj[14];

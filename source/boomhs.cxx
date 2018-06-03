@@ -466,10 +466,13 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   auto const&      fog_color = ldata.fog.color;
 
   auto const make_skybox_renderer = [&]() {
-    auto&    skybox_sp = sps.ref_sp("skybox");
-    DrawInfo dinfo     = opengl::gpu::copy_cubetexture_gpu(logger, skybox_sp.va());
-    auto&    day_ti    = *ttable.find("building_skybox");
-    auto&    night_ti  = *ttable.find("night_skybox");
+    auto&              skybox_sp = sps.ref_sp("skybox");
+    glm::vec3 const    vmin{-0.5f};
+    glm::vec3 const    vmax{0.5f};
+    CubeVertices const cv{vmin, vmax};
+    DrawInfo           dinfo    = opengl::gpu::copy_cubetexture_gpu(logger, cv, skybox_sp.va());
+    auto&              day_ti   = *ttable.find("building_skybox");
+    auto&              night_ti = *ttable.find("night_skybox");
     return SkyboxRenderer{logger, MOVE(dinfo), day_ti, night_ti, skybox_sp};
   };
 

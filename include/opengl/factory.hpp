@@ -81,9 +81,6 @@ static constexpr std::array<GLuint, 24> CUBE_WIREFRAME_INDICES = {{
 CubeVertices
 cube_vertices(glm::vec3 const&, glm::vec3 const&);
 
-CubeVertices
-cube_vertices();
-
 // Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 using RectangleIndices = std::array<GLuint, 6>;

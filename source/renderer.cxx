@@ -606,14 +606,28 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   auto const& ldata  = zs.level_data;
   auto const& player = ldata.player;
 
-#define COMMON ShaderName, Transform, IsVisible
-#define COMMON_ARGS auto const eid, auto &sn, auto &transform, auto &is_v
+#define COMMON ShaderName, Transform, IsVisible, AABoundingBox
+#define COMMON_ARGS auto const eid, auto &sn, auto &transform, auto &is_v, auto &bbox
 
   auto const draw_fn = [&](GLenum const dm, auto& sp, auto& dinfo, COMMON_ARGS, auto&&...) {
     bool const skip = !is_v.value;
     if (skip) {
       return;
     }
+
+    {
+      // TODO: only call recalulate when the camera moves
+      Frustum view_frust;
+      view_frust.recalculate(fstate);
+
+      float const halfsize        = glm::length(bbox.max - bbox.min) / 2.0f;
+      bool const  bbox_in_frustum = view_frust.cube_in_frustum(transform.translation, halfsize);
+
+      if (!bbox_in_frustum) {
+        return;
+      }
+    }
+
     auto& vao = dinfo.vao();
 
     bool const is_lightsource = registry.has<PointLight>(eid);
@@ -651,7 +665,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     auto& sp    = sps.ref_sp(sn.value);
 
     sp.while_bound(logger, [&]() {
-      draw_fn(GL_TRIANGLES, sp, dinfo, eid, sn, transform, is_v, FORWARD(args));
+      draw_fn(GL_TRIANGLES, sp, dinfo, eid, sn, transform, is_v, bbox, FORWARD(args));
     });
   };
 
@@ -659,7 +673,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     auto* ti = texture_renderable.texture_info;
     assert(ti);
     ti->while_bound(logger, [&]() {
-      draw_entity(eid, sn, transform, is_v, texture_renderable, FORWARD(args));
+      draw_entity(eid, sn, transform, is_v, bbox, texture_renderable, FORWARD(args));
     });
   };
 
@@ -677,13 +691,14 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     assert(ti);
 
     ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
-    ti->while_bound(logger, [&]() { draw_entity(eid, sn, transform, is_v, bboard); });
+    ti->while_bound(logger, [&]() { draw_entity(eid, sn, transform, is_v, bbox, bboard); });
   };
 
   auto const draw_junk = [&](COMMON_ARGS, Color&, JunkEntityFromFILE& je) {
     auto& dinfo = eh.lookup(logger, eid);
     auto& sp    = sps.ref_sp(sn.value);
-    sp.while_bound(logger, [&]() { draw_fn(je.draw_mode, sp, dinfo, eid, sn, transform, is_v); });
+    sp.while_bound(logger,
+                   [&]() { draw_fn(je.draw_mode, sp, dinfo, eid, sn, transform, is_v, bbox); });
   };
   auto const draw_torch = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
     {
@@ -708,26 +723,12 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
     auto* ti = trenderable.texture_info;
     assert(ti);
-    ti->while_bound(logger, [&]() { draw_entity(eid, sn, copy_transform, is_v, torch); });
+    ti->while_bound(logger, [&]() { draw_entity(eid, sn, copy_transform, is_v, bbox, torch); });
   };
-  auto const draw_boundingboxes = [&](COMMON_ARGS, AABoundingBox& bbox, Selectable& sel) {
+  auto const draw_boundingboxes = [&](COMMON_ARGS, Selectable& sel) {
     if (!es.draw_bounding_boxes) {
       return;
     }
-
-    {
-      // TODO: only call recalulate when the camera moves
-      Frustum view_frust;
-      view_frust.recalculate(fstate);
-
-      float const halfsize        = glm::length(bbox.max - bbox.min) / 2.0f;
-      bool const  bbox_in_frustum = view_frust.cube_in_frustum(transform.translation, halfsize);
-
-      if (!bbox_in_frustum) {
-        return;
-      }
-    }
-
     Color const wire_color = sel.selected ? LOC::GREEN : LOC::RED;
 
     auto& sp = sps.ref_sp("wireframe");
@@ -739,7 +740,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   };
 
   auto const draw_plain_cube = [&](COMMON_ARGS, CubeRenderable& cr, auto&&... args) {
-    draw_entity(eid, sn, transform, is_v, cr, FORWARD(args));
+    draw_entity(eid, sn, transform, is_v, bbox, cr, FORWARD(args));
   };
 #undef COMMON_ARGS
 
@@ -759,7 +760,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
   // CUBES
   registry.view<COMMON, CubeRenderable, PointLight>().each(draw_plain_cube);
-  registry.view<COMMON, AABoundingBox, Selectable>().each(draw_boundingboxes);
+  registry.view<COMMON, Selectable>().each(draw_boundingboxes);
 
   registry.view<COMMON, MeshRenderable, NPCData>().each(
       [&](auto&&... args) { draw_entity(FORWARD(args)); });

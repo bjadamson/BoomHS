@@ -19,6 +19,12 @@ AxisAlignedBoundingBox::AxisAlignedBoundingBox()
   max.z = DEFAULT_SIZE;
 }
 
+AxisAlignedBoundingBox::AxisAlignedBoundingBox(glm::vec3 const& minp, glm::vec3 const& maxp)
+    : min(minp)
+    , max(maxp)
+{
+}
+
 std::vector<EntityID>
 find_stairs_withtype(EntityRegistry& registry, TileGrid const& tgrid, TileType const type)
 {
