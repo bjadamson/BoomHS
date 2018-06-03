@@ -8,7 +8,7 @@
 namespace opengl
 {
 class ShaderPrograms;
-} // ns opengl
+} // namespace opengl
 
 namespace boomhs
 {
@@ -23,8 +23,8 @@ class Tree
 {
 public:
   static std::pair<EntityID, opengl::DrawInfo>
-  add_toregistry(stlw::Logger&, glm::vec3 const&, ObjStore const&,
-      opengl::ShaderPrograms&, EntityRegistry&);
+  add_toregistry(stlw::Logger&, glm::vec3 const&, ObjStore const&, opengl::ShaderPrograms&,
+                 EntityRegistry&);
 };
 
-} // ns boomhs
+} // namespace boomhs

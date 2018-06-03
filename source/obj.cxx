@@ -178,16 +178,16 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
   FOR(i, materials.size())
   {
     auto const& material = materials[i];
-    auto const& diffuse = material.diffuse;
-    auto const color = Color{diffuse[0], diffuse[1], diffuse[2], 1.0};
+    auto const& diffuse  = material.diffuse;
+    auto const  color    = Color{diffuse[0], diffuse[1], diffuse[2], 1.0};
     LOG_ERROR_SPRINTF("Material name %s, diffuse %s", material.name, color.to_string());
   }
 
   auto const get_facecolor = [&materials, &shapes](auto const s, auto const f) {
-      // per-face material
-      int const face_materialid = shapes[s].mesh.material_ids[f];
-      auto const& diffuse = materials[face_materialid].diffuse;
-      return Color{diffuse[0], diffuse[1], diffuse[2], 1.0};
+    // per-face material
+    int const   face_materialid = shapes[s].mesh.material_ids[f];
+    auto const& diffuse         = materials[face_materialid].diffuse;
+    return Color{diffuse[0], diffuse[1], diffuse[2], 1.0};
   };
 
   // Loop over shapes
@@ -197,7 +197,7 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
     size_t index_offset = 0;
     FOR(f, shapes[s].mesh.num_face_vertices.size())
     {
-      auto const fv = shapes[s].mesh.num_face_vertices[f];
+      auto const fv         = shapes[s].mesh.num_face_vertices[f];
       auto const face_color = get_facecolor(s, f);
 
       // Loop over vertices in the face.

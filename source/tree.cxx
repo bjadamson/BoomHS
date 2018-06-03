@@ -1,7 +1,7 @@
-#include <boomhs/tree.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/obj_store.hpp>
+#include <boomhs/tree.hpp>
 
 #include <opengl/buffer.hpp>
 #include <opengl/gpu.hpp>
@@ -15,7 +15,7 @@ namespace
 
 auto
 make_tree(glm::vec3 const& world_pos, char const* shader_name, char const* tree_name,
-    EntityRegistry &registry)
+          EntityRegistry& registry)
 {
   auto  eid = registry.create();
   auto& mr  = registry.assign<MeshRenderable>(eid);
@@ -24,7 +24,7 @@ make_tree(glm::vec3 const& world_pos, char const* shader_name, char const* tree_
   auto& transform       = registry.assign<Transform>(eid);
   transform.translation = world_pos;
   registry.assign<Material>(eid);
-  //registry.assign<JunkEntityFromFILE>(eid);
+  // registry.assign<JunkEntityFromFILE>(eid);
 
   registry.assign<TreeComponent>(eid);
   {
@@ -43,26 +43,26 @@ make_tree(glm::vec3 const& world_pos, char const* shader_name, char const* tree_
   return eid;
 }
 
-} // ns anon
+} // namespace
 
 namespace boomhs
 {
 
 std::pair<EntityID, DrawInfo>
 Tree::add_toregistry(stlw::Logger& logger, glm::vec3 const& world_pos, ObjStore const& obj_store,
-    ShaderPrograms& sps, EntityRegistry &registry)
+                     ShaderPrograms& sps, EntityRegistry& registry)
 {
   auto constexpr SN = "3d_pos_normal_color";
   auto constexpr TN = "tree_lowpoly";
-  auto eid = make_tree(world_pos, SN, TN, registry);
+  auto eid          = make_tree(world_pos, SN, TN, registry);
 
   auto&          va    = sps.ref_sp(SN).va();
   auto const     flags = BufferFlags::from_va(va);
   ObjQuery const query{TN, flags};
 
-  auto&          obj   = obj_store.get_obj(logger, query);
-  auto           dinfo = opengl::gpu::copy_gpu(logger, va, obj);
+  auto& obj   = obj_store.get_obj(logger, query);
+  auto  dinfo = opengl::gpu::copy_gpu(logger, va, obj);
   return std::make_pair(eid, MOVE(dinfo));
 }
 
-} // ns boomhs
+} // namespace boomhs

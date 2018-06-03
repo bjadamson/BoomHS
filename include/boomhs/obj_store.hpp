@@ -86,7 +86,7 @@ public:
   void add_obj(std::string const&, ObjData&&) const;
 
   opengl::VertexBuffer const& get_obj(stlw::Logger&, ObjQuery const&) const;
-  opengl::VertexBuffer get_copy(stlw::Logger&, ObjQuery const&) const;
+  opengl::VertexBuffer        get_copy(stlw::Logger&, ObjQuery const&) const;
 
   auto size() const { return data_.size(); }
   bool empty() const { return data_.empty(); }
