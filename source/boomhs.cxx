@@ -466,10 +466,24 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
           auto& dinfo      = entity_map.lookup(logger, entity);
 
           auto& obj_store = ldata.obj_store;
-          auto  obj       = obj_store.get_copy(logger, qo);
-          obj.set_colors(Color::random());
+          auto  obj       = obj_store.get(logger, mesh.name).clone();
 
-          gpu::overwrite_vertex_buffer(logger, va, dinfo, obj.vertices);
+          auto const color = Color::random();
+          std::vector<float> colors;
+          for (size_t i = 0; i < obj.colors.size(); ) {
+            colors.emplace_back(color.r());
+            colors.emplace_back(color.g());
+            colors.emplace_back(color.b());
+            colors.emplace_back(color.a());
+
+            i += 4;
+          }
+
+          assert((obj.colors.size() % 4) == 0);
+          assert(obj.colors.size() == colors.size());
+          obj.colors = MOVE(colors);
+          LOG_ERROR_SPRINTF("OBJ COLORS SIZE: %lu", obj.colors.size());
+          gpu::overwrite_vertex_buffer(logger, va, dinfo, obj);
         });
   }
 

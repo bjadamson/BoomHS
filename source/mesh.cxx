@@ -29,12 +29,12 @@ calculate_ratio(float const v, size_t const num_vertexes, float const length)
   return (v / (num_vertexes - 1)) * length;
 }
 
-ObjData::vertices_t
+ObjVertices
 create_normal_buffer(size_t const num_vertexes)
 {
   size_t const num_vertices = NORMAL_NUM_COMPONENTS * stlw::math::squared(num_vertexes);
 
-  ObjData::vertices_t normals;
+  ObjVertices normals;
   normals.resize(num_vertices);
   assert(0 == (normals.size() % NORMAL_NUM_COMPONENTS));
 
@@ -48,7 +48,7 @@ namespace boomhs
 
 // Algorithm modified from:
 // https://www.youtube.com/watch?v=yNYwZMmgTJk&list=PLRIWtICgwaX0u7Rf9zkZhLoLuZVfUksDP&index=14
-ObjData::vertices_t
+ObjVertices
 MeshFactory::generate_rectangle_mesh(stlw::Logger& logger, glm::vec2 const& dimensions,
                                      size_t const num_vertexes)
 {
@@ -58,7 +58,7 @@ MeshFactory::generate_rectangle_mesh(stlw::Logger& logger, glm::vec2 const& dime
   auto const x_length = num_vertexes, z_length = num_vertexes;
   auto const num_vertices = calculate_number_vertices(NUM_COMPONENTS, num_vertexes);
 
-  ObjData::vertices_t buffer;
+  ObjVertices buffer;
   buffer.resize(num_vertices);
 
   size_t offset = 0;
@@ -93,7 +93,7 @@ MeshFactory::generate_rectangle_mesh(stlw::Logger& logger, glm::vec2 const& dime
   return buffer;
 }
 
-ObjData::vertices_t
+ObjVertices
 MeshFactory::generate_uvs(stlw::Logger& logger, glm::vec2 const& dimensions,
                           size_t const num_vertexes, bool const tile)
 {
@@ -101,7 +101,7 @@ MeshFactory::generate_uvs(stlw::Logger& logger, glm::vec2 const& dimensions,
   auto const num_vertices         = calculate_number_vertices(NUM_COMPONENTS, num_vertexes);
   auto const x_length = num_vertexes, z_length = num_vertexes;
 
-  ObjData::vertices_t buffer;
+  ObjVertices buffer;
   buffer.resize(num_vertices);
 
   size_t counter = 0;
@@ -128,7 +128,7 @@ MeshFactory::generate_uvs(stlw::Logger& logger, glm::vec2 const& dimensions,
 
 // Algorithm modified from:
 // https://www.youtube.com/watch?v=yNYwZMmgTJk&list=PLRIWtICgwaX0u7Rf9zkZhLoLuZVfUksDP&index=14
-ObjData::indices_t
+ObjIndices
 MeshFactory::generate_indices(stlw::Logger& logger, size_t const num_vertexes)
 {
   auto const x_length = num_vertexes, z_length = num_vertexes;
@@ -138,7 +138,7 @@ MeshFactory::generate_indices(stlw::Logger& logger, size_t const num_vertexes)
 
   size_t const num_indices = (vertices_perstrip * strips_required) + degen_triangles_required;
 
-  ObjData::indices_t buffer;
+  ObjIndices buffer;
   buffer.resize(num_indices);
 
   size_t offset = 0;
@@ -164,7 +164,7 @@ MeshFactory::generate_indices(stlw::Logger& logger, size_t const num_vertexes)
   return buffer;
 }
 
-ObjData::vertices_t
+ObjVertices
 MeshFactory::generate_normals(stlw::Logger& logger, GenerateNormalData const& normal_data)
 {
   auto const num_vertexes = normal_data.num_vertexes;
@@ -230,7 +230,7 @@ MeshFactory::generate_normals(stlw::Logger& logger, GenerateNormalData const& no
   return normals;
 }
 
-ObjData::vertices_t
+ObjVertices
 MeshFactory::generate_flat_normals(stlw::Logger& logger, size_t const num_vertexes)
 {
   auto normals = create_normal_buffer(num_vertexes);

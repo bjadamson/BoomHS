@@ -98,7 +98,7 @@ copy_gpu(stlw::Logger&, VertexAttribute const&, VertexBuffer const&);
 
 void
 overwrite_vertex_buffer(stlw::Logger&, VertexAttribute const&, DrawInfo&,
-                        boomhs::ObjData::vertices_t const&);
+                        boomhs::ObjData const&);
 
 } // namespace opengl::gpu
 namespace OG = opengl::gpu;

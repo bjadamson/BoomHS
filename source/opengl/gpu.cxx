@@ -339,7 +339,10 @@ DrawInfo
 copy_gpu(stlw::Logger &logger, VertexAttribute const& va,
     ObjData const& data)
 {
-  return copy_gpu_impl(logger, va, data.vertices, data.indices);
+  auto const qa    = BufferFlags::from_va(va);
+  auto interleaved = VertexBuffer::create_interleaved(logger, data, qa);
+
+  return copy_gpu_impl(logger, va, interleaved.vertices, interleaved.indices);
 }
 
 DrawInfo
@@ -385,7 +388,7 @@ copy_rectangle_uvs(stlw::Logger &logger, VertexAttribute const& va,
 
 void
 overwrite_vertex_buffer(stlw::Logger& logger, VertexAttribute const& va, DrawInfo &dinfo,
-                 ObjData::vertices_t const& vertices)
+                 ObjData const& objdata)
 {
   auto const upload = [&]() {
     glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
@@ -393,6 +396,10 @@ overwrite_vertex_buffer(stlw::Logger& logger, VertexAttribute const& va, DrawInf
 
     va.upload_vertex_format_to_glbound_vao(logger);
 
+    auto const qa    = BufferFlags::from_va(va);
+    auto interleaved = VertexBuffer::create_interleaved(logger, objdata, qa);
+
+    auto const& vertices      = interleaved.vertices;
     auto const  vertices_size = vertices.size() * sizeof(GLfloat);
     auto const& vertices_data = vertices.data();
     glBufferSubData(GL_ARRAY_BUFFER, 0, vertices_size, vertices_data);

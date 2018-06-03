@@ -124,7 +124,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
         auto&       va  = sps.ref_sp(sn.value).va();
         auto const  qa  = BufferFlags::from_va(va);
         auto const  qo  = ObjQuery{mesh.name, qa};
-        auto const& obj = obj_store.get_obj(logger, qo);
+        auto const& obj = obj_store.get(logger, mesh.name);
 
         auto handle = opengl::gpu::copy_gpu(logger, va, obj);
         entity_drawmap.add(entity, MOVE(handle));
@@ -134,7 +134,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
         auto&       va  = sps.ref_sp(sn.value).va();
         auto const  qa  = BufferFlags::from_va(va);
         auto const  qo  = ObjQuery{mesh.name, qa};
-        auto const& obj = obj_store.get_obj(logger, qo);
+        auto const& obj = obj_store.get(logger, mesh.name);
 
         auto handle = opengl::gpu::copy_gpu(logger, va, obj);
         entity_drawmap.add(entity, MOVE(handle));
@@ -153,7 +153,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
         auto&       va  = sps.ref_sp(sn.value).va();
         auto const  qa  = BufferFlags::from_va(va);
         auto const  qo  = ObjQuery{mesh.name, qa};
-        auto const& obj = obj_store.get_obj(logger, qo);
+        auto const& obj = obj_store.get(logger, mesh.name);
 
         auto handle = opengl::gpu::copy_gpu(logger, va, obj);
         entity_drawmap.add(entity, MOVE(handle));
@@ -169,7 +169,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
     auto&       va  = sps.ref_sp(vshader_name).va();
     auto const  qa  = BufferFlags::from_va(va);
     auto const  qo  = ObjQuery{mesh_name, qa};
-    auto const& obj = obj_store.get_obj(logger, qo);
+    auto const& obj = obj_store.get(logger, mesh_name);
 
     auto handle = opengl::gpu::copy_gpu(logger, sps.ref_sp(vshader_name).va(), obj);
 
@@ -228,7 +228,7 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
 
     auto const     flags = BufferFlags::from_va(va);
     ObjQuery const query{name, flags};
-    auto&          obj       = obj_store.get_obj(logger, query);
+    auto&          obj       = obj_store.get(logger, name);
     auto const     posbuffer = obj.positions();
     auto const&    min       = posbuffer.min();
     auto const&    max       = posbuffer.max();

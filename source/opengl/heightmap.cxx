@@ -24,13 +24,13 @@ load_fromtable(stlw::Logger &logger, TextureTable const& ttable, std::string con
   return opengl::heightmap::parse(logger, path);
 }
 
-ObjData::vertices_t
+ObjVertices
 generate_normals(int const x_length, int const z_length, bool const invert_normals,
     HeightmapData const& heightmap_data)
 {
   int constexpr NUM_COMPONENTS     = 3; // xn, yn, zn
   size_t const        num_vertices = NUM_COMPONENTS * x_length * z_length;
-  ObjData::vertices_t normals;
+  ObjVertices normals;
   normals.resize(num_vertices);
 
   //
@@ -154,7 +154,7 @@ calculate_number_vertices(int const num_components, TerrainPieceConfig const& tc
 
 void
 update_vertices_from_heightmap(stlw::Logger& logger, TerrainPieceConfig const& tc,
-                               HeightmapData const& heightmap_data, ObjData::vertices_t &buffer)
+                               HeightmapData const& heightmap_data, ObjVertices &buffer)
 {
   LOG_TRACE("Updating vertices from heightmap");
 

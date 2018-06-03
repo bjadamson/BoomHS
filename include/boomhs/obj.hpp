@@ -15,23 +15,44 @@
 namespace boomhs
 {
 
-struct ObjData
+using ObjVertices = std::vector<float>;
+using ObjIndices  = std::vector<uint32_t>;
+
+struct PositionsBuffer
 {
-  using vertices_t = std::vector<float>;
-  using indices_t  = std::vector<uint32_t>;
+  ObjVertices vertices;
+
+  PositionsBuffer(ObjVertices&&);
+
+  glm::vec3 min() const;
+  glm::vec3 max() const;
+};
+
+class ObjData
+{
+  COPY_DEFAULT(ObjData);
+public:
+  using ObjVertices = ObjVertices;
+  using ObjIndices  = ObjIndices;
 
   unsigned int num_vertexes;
-  vertices_t   vertices;
-  vertices_t   colors;
-  vertices_t   normals;
-  vertices_t   uvs;
-  indices_t    indices;
+  ObjVertices   vertices;
+  ObjVertices   colors;
+  ObjVertices   normals;
+  ObjVertices   uvs;
+  ObjIndices    indices;
 
   std::vector<tinyobj::shape_t>    shapes;
   std::vector<tinyobj::material_t> materials;
 
   ObjData() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(ObjData);
+  MOVE_DEFAULT(ObjData);
+
+  ObjData clone() const;
+
+  // Returns all position values as a contiguos array following the pattern:
+  // [x, y, z], [x, y, z], etc...
+  PositionsBuffer positions() const;
 
   std::string to_string() const;
 };

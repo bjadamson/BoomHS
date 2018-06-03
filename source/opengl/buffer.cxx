@@ -10,9 +10,6 @@
 using namespace boomhs;
 using namespace opengl;
 
-using indices_t  = VertexBuffer::indices_t;
-using vertices_t = VertexBuffer::vertices_t;
-
 namespace opengl
 {
 
@@ -58,54 +55,6 @@ operator<<(std::ostream& stream, BufferFlags const& qa)
 {
   stream << qa.to_string();
   return stream;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// PositionsBuffer
-PositionsBuffer::PositionsBuffer(vertices_t &&v)
-    : vertices(MOVE(v))
-{
-}
-
-glm::vec3
-PositionsBuffer::min() const
-{
-  glm::vec3 r;
-
-  size_t i = 0;
-  r.x = vertices[i++];
-  r.y = vertices[i++];
-  r.z = vertices[i++];
-
-  while (i < vertices.size()) {
-    r.x = std::min(r.x, vertices[i++]);
-    r.y = std::min(r.y, vertices[i++]);
-    r.z = std::min(r.z, vertices[i++]);
-    assert(i <= vertices.size());
-  }
-
-  return r;
-}
-
-glm::vec3
-PositionsBuffer::max() const
-{
-  glm::vec3 r;
-
-  size_t i = 0;
-  r.x = vertices[i++];
-  r.y = vertices[i++];
-  r.z = vertices[i++];
-
-  while (i < vertices.size()) {
-    r.x = std::max(r.x, vertices[i++]);
-    r.y = std::max(r.y, vertices[i++]);
-    r.z = std::max(r.z, vertices[i++]);
-
-    assert(i <= vertices.size());
-  }
-
-  return r;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -183,43 +132,6 @@ VertexBuffer
 VertexBuffer::copy() const
 {
   return *this;
-}
-
-PositionsBuffer
-VertexBuffer::positions() const
-{
-  vertices_t values;
-
-  size_t i = 0;
-  while (i < vertices.size()) {
-    assert(flags.vertices);
-    values.emplace_back(vertices[i++]);
-
-    auto const assert_i = [&]() {
-      assert(i <= vertices.size());
-    };
-
-    values.emplace_back(vertices[i++]);
-    assert_i();
-
-    values.emplace_back(vertices[i++]);
-    assert_i();
-
-    // skip over other attributes
-    if (flags.normals) {
-      i += 3;
-      assert_i();
-    }
-    if (flags.colors) {
-      i += 4;
-      assert_i();
-    }
-    if (flags.uvs) {
-      i += 2;
-      assert_i();
-    }
-  }
-  return PositionsBuffer{MOVE(values)};
 }
 
 void

@@ -60,7 +60,7 @@ Tree::add_toregistry(stlw::Logger& logger, glm::vec3 const& world_pos, ObjStore 
   auto const     flags = BufferFlags::from_va(va);
   ObjQuery const query{TN, flags};
 
-  auto& obj   = obj_store.get_obj(logger, query);
+  auto& obj   = obj_store.get(logger, TN);
   auto  dinfo = opengl::gpu::copy_gpu(logger, va, obj);
   return std::make_pair(eid, MOVE(dinfo));
 }

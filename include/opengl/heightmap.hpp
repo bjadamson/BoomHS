@@ -29,7 +29,7 @@ namespace opengl::heightmap
 HeightmapResult
 load_fromtable(stlw::Logger&, TextureTable const&, std::string const&);
 
-boomhs::ObjData::vertices_t
+boomhs::ObjVertices
 generate_normals(int, int, bool, HeightmapData const&);
 
 HeightmapResult
@@ -43,6 +43,6 @@ parse(stlw::Logger&, std::string const&);
 
 void
 update_vertices_from_heightmap(stlw::Logger&, boomhs::TerrainPieceConfig const&,
-                               HeightmapData const&, boomhs::ObjData::vertices_t&);
+                               HeightmapData const&, boomhs::ObjVertices&);
 
 } // namespace opengl::heightmap

@@ -27,6 +27,7 @@ operator!=(ObjQuery const&, ObjQuery const&);
 std::ostream&
 operator<<(std::ostream&, ObjQuery const&);
 
+/*
 class ObjStore;
 class ObjCache
 {
@@ -53,6 +54,7 @@ class ObjCache
 
 std::ostream&
 operator<<(std::ostream&, ObjCache const&);
+*/
 
 class ObjStore
 {
@@ -62,7 +64,24 @@ class ObjStore
   // This holds the data
   mutable datastore_t data_;
 
-  // These caches hold cached versions of the data interleaved.
+public:
+  ObjStore() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(ObjStore);
+
+  void add_obj(std::string const&, ObjData&&) const;
+
+  ObjData const& get(stlw::Logger&, std::string const&) const;
+
+  auto size() const { return data_.size(); }
+  bool empty() const { return data_.empty(); }
+};
+
+std::ostream&
+operator<<(std::ostream&, ObjStore const&);
+
+/*
+class InterleaveCache
+{
   ObjCache pos_;
   ObjCache pos_color_;
   ObjCache pos_normal_;
@@ -70,20 +89,12 @@ class ObjStore
   ObjCache pos_normal_uv_;
   ObjCache pos_uv_;
 
-  ObjData const& data_for(stlw::Logger&, ObjQuery const&) const;
-
   ObjCache& find_cache(stlw::Logger&, ObjQuery const&);
-
   ObjCache const& find_cache(stlw::Logger&, ObjQuery const&) const;
 
-  friend class ObjCache;
-  friend std::ostream& operator<<(std::ostream&, ObjStore const&);
-
 public:
-  ObjStore() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(ObjStore);
-
   void add_obj(std::string const&, ObjData&&) const;
+  ObjData const& data_for(stlw::Logger&, ObjQuery const&) const;
 
   opengl::VertexBuffer const& get_obj(stlw::Logger&, ObjQuery const&) const;
   opengl::VertexBuffer        get_copy(stlw::Logger&, ObjQuery const&) const;
@@ -93,6 +104,7 @@ public:
 };
 
 std::ostream&
-operator<<(std::ostream&, ObjStore const&);
+operator<<(std::ostream&, InterleaveCache const&);
+*/
 
 } // namespace boomhs

@@ -87,8 +87,71 @@ load_colors(Color const& color, std::vector<float>* pvertices)
 namespace boomhs
 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// PositionsBuffer
+PositionsBuffer::PositionsBuffer(ObjVertices &&v)
+    : vertices(MOVE(v))
+{
+}
+
+glm::vec3
+PositionsBuffer::min() const
+{
+  glm::vec3 r;
+
+  size_t i = 0;
+  r.x = vertices[i++];
+  r.y = vertices[i++];
+  r.z = vertices[i++];
+
+  while (i < vertices.size()) {
+    r.x = std::min(r.x, vertices[i++]);
+    r.y = std::min(r.y, vertices[i++]);
+    r.z = std::min(r.z, vertices[i++]);
+    assert(i <= vertices.size());
+  }
+
+  return r;
+}
+
+glm::vec3
+PositionsBuffer::max() const
+{
+  glm::vec3 r;
+
+  size_t i = 0;
+  r.x = vertices[i++];
+  r.y = vertices[i++];
+  r.z = vertices[i++];
+
+  while (i < vertices.size()) {
+    r.x = std::max(r.x, vertices[i++]);
+    r.y = std::max(r.y, vertices[i++]);
+    r.z = std::max(r.z, vertices[i++]);
+
+    assert(i <= vertices.size());
+  }
+
+  return r;
+}
+
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // ObjData
+ObjData
+ObjData::clone() const
+{
+  return *this;
+}
+
+PositionsBuffer
+ObjData::positions() const
+{
+  auto copy = vertices;
+  return PositionsBuffer{MOVE(copy)};
+}
+
 std::string
 ObjData::to_string() const
 {
