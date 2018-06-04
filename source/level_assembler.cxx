@@ -98,7 +98,7 @@ bridge_staircases(ZoneState& a, ZoneState& b)
 using copy_assets_pair_t = std::pair<EntityDrawHandleMap, TileDrawHandles>;
 Result<copy_assets_pair_t, std::string>
 copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable const& ttable,
-                EntityRegistry& registry, ObjStore const& obj_store)
+                EntityRegistry& registry, ObjStore& obj_store)
 {
   EntityDrawHandleMap entity_drawmap;
 
@@ -158,6 +158,21 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
         auto handle = opengl::gpu::copy_gpu(logger, va, obj);
         entity_drawmap.add(entity, MOVE(handle));
       });
+  registry.view<ShaderName, MeshRenderable, TreeComponent>().each(
+      [&](auto entity, auto& sn, auto& mesh, auto& tree) {
+        auto& name = registry.get<MeshRenderable>(entity).name;
+
+        auto&          va    = sps.ref_sp(sn.value).va();
+        auto const     flags = BufferFlags::from_va(va);
+        ObjQuery const query{name, flags};
+        auto&          obj = obj_store.get(logger, name);
+
+        auto& tc = registry.get<TreeComponent>(entity);
+        tc.pobj  = &obj;
+
+        auto&       dinfo = entity_drawmap.lookup(logger, entity);
+        Tree::update_colors(logger, va, dinfo, tc);
+      });
 
   // copy TILES to GPU
   std::vector<DrawInfo> tile_dinfos;
@@ -188,21 +203,18 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
 {
   auto&       ldata     = zs.level_data;
   auto const& ttable    = ldata.tiletable();
-  auto const& objcache  = ldata.obj_store;
+  auto&       objstore  = ldata.obj_store;
   auto&       gfx_state = zs.gfx_state;
   auto&       sps       = gfx_state.sps;
   auto&       registry  = zs.registry;
 
-  auto copy_result = copy_assets_gpu(logger, sps, ttable, registry, objcache);
+  auto copy_result = copy_assets_gpu(logger, sps, ttable, registry, objstore);
   assert(copy_result);
   auto handles = copy_result.expect_moveout("Error copying asset to gpu");
   auto edh     = MOVE(handles.first);
   auto tdh     = MOVE(handles.second);
 
-  auto& obj_store = ldata.obj_store;
-  //auto  pair      = Tree::add_toregistry(logger, glm::vec3{0.0f}, obj_store, sps, registry);
-  //edh.add(pair.first, MOVE(pair.second));
-
+  auto& obj_store                 = ldata.obj_store;
   auto constexpr WIREFRAME_SHADER = "wireframe";
   auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
 
@@ -238,16 +250,6 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
     auto const& cr = registry.get<CubeRenderable>(eid);
 
     add_wireframe(eid, cr.min, cr.max);
-  }
-  for (auto const eid : registry.view<TreeComponent, MeshRenderable>()) {
-    auto& name = registry.get<MeshRenderable>(eid).name;
-
-    auto const     flags = BufferFlags::from_va(va);
-    ObjQuery const query{name, flags};
-    auto&          obj       = obj_store.get(logger, name);
-
-    auto& tc = registry.get<TreeComponent>(eid);
-    tc.pobj = &obj;
   }
 
   auto& gpu_state                = gfx_state.gpu_state;

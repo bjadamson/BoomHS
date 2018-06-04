@@ -392,8 +392,6 @@ overwrite_vertex_buffer(stlw::Logger& logger, VertexAttribute const& va, DrawInf
 {
   auto const upload = [&]() {
     glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
-
     va.upload_vertex_format_to_glbound_vao(logger);
 
     auto const qa    = BufferFlags::from_va(va);

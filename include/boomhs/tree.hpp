@@ -3,6 +3,7 @@
 #include <stlw/log.hpp>
 
 #include <extlibs/glm.hpp>
+#include <array>
 #include <utility>
 
 namespace opengl
@@ -18,8 +19,8 @@ class EntityRegistry;
 
 struct TreeComponent
 {
-  ObjData*      pobj;
-  opengl::Color colors[3];
+  ObjData*                     pobj;
+  std::array<opengl::Color, 4> colors;
 
   TreeComponent();
   COPYMOVE_DEFAULT(TreeComponent);
@@ -34,8 +35,7 @@ public:
   update_colors(stlw::Logger&, opengl::VertexAttribute const&, opengl::DrawInfo&, TreeComponent&);
 
   static std::pair<EntityID, opengl::DrawInfo>
-  add_toregistry(stlw::Logger&, EntityID, ObjStore&, opengl::ShaderPrograms&,
-                 EntityRegistry&);
+  add_toregistry(stlw::Logger&, EntityID, ObjStore&, opengl::ShaderPrograms&, EntityRegistry&);
 };
 
 } // namespace boomhs

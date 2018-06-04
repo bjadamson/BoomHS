@@ -49,6 +49,7 @@ generate_tree_colors(stlw::Logger& logger, TreeComponent const& tc)
   std::vector<float> colors;
   auto const         update_branchcolors = [&](auto const& shape, int const face) {
     int const   face_materialid = shape.mesh.material_ids[face];
+    assert(static_cast<size_t>(face_materialid) < tc.colors.size());
     auto const& face_color      = tc.colors[face_materialid];
 
     auto const fv = shape.mesh.num_face_vertices[face];
@@ -80,7 +81,7 @@ namespace boomhs
 // TreeComponent
 TreeComponent::TreeComponent()
     : pobj(nullptr)
-    , colors{LOC::GREEN, LOC::YELLOW, LOC::BROWN}
+    , colors{LOC::GREEN, LOC::YELLOW, LOC::BROWN, LOC::SANDY_BROWN}
 {
 }
 
@@ -100,11 +101,11 @@ std::pair<EntityID, DrawInfo>
 Tree::add_toregistry(stlw::Logger& logger, EntityID const eid, ObjStore& obj_store,
                      ShaderPrograms& sps, EntityRegistry& registry)
 {
-  auto& sn     = registry.get<ShaderName>(eid).value;
-  auto&  va    = sps.ref_sp(sn).va();
+  auto& sn = registry.get<ShaderName>(eid).value;
+  auto& va = sps.ref_sp(sn).va();
 
-  auto& mesh   = registry.get<MeshRenderable>(eid);
-  ObjData& obj = obj_store.get(logger, mesh.name);
+  auto&    mesh = registry.get<MeshRenderable>(eid);
+  ObjData& obj  = obj_store.get(logger, mesh.name);
 
   auto dinfo = opengl::gpu::copy_gpu(logger, va, obj);
   return std::make_pair(eid, MOVE(dinfo));

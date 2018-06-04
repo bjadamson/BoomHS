@@ -453,6 +453,9 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     update_torchflicker(ldata, registry, rng, ft);
 
     /*
+    static bool once = false;
+    if (!once) {
+      once = true;
     registry.view<ShaderName, MeshRenderable, TreeComponent>().each(
         [&](auto eid, auto& sn, auto& mesh, auto& tree_component) {
           auto&      gfx_state = zs.gfx_state;
@@ -466,8 +469,9 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
           auto& entity_map = *entities_o;
           auto& dinfo      = entity_map.lookup(logger, eid);
 
-          Tree::update_colors(logger, va, dinfo, tree_component);
+          //Tree::update_colors(logger, va, dinfo, tree_component);
         });
+    }
     */
   }
 

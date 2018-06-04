@@ -1,5 +1,6 @@
 #pragma once
 #include <ostream>
+#include <stlw/algorithm.hpp>
 #include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
 #include <string>
@@ -39,7 +40,7 @@ inline TileType
 tiletype_from_string(char const* cstring)
 {
 #define CHECK(string, type)                                                                        \
-  if (0 == ::strcmp(string, cstring)) {                                                            \
+  if (stlw::cstrcmp(string, cstring)) {                                                            \
     return type;                                                                                   \
   }
 

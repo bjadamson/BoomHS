@@ -639,7 +639,7 @@ load_entities(stlw::Logger& logger, CppTable const& table,
       registry.assign<PointLight>(eid) = it->pointlight;
     }
 
-    if (name == "tree") {
+    if (stlw::cstrcmp(name.c_str(), "tree")) {
       registry.assign<TreeComponent>(eid);
     }
 
