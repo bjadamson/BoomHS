@@ -70,6 +70,7 @@ public:
 
   void add_obj(std::string const&, ObjData&&) const;
 
+  ObjData&       get(stlw::Logger&, std::string const&);
   ObjData const& get(stlw::Logger&, std::string const&) const;
 
   auto size() const { return data_.size(); }

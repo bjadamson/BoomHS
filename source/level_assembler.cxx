@@ -199,10 +199,9 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
   auto edh     = MOVE(handles.first);
   auto tdh     = MOVE(handles.second);
 
-  auto const& obj_store = ldata.obj_store;
-
-  auto pair = Tree::add_toregistry(logger, glm::vec3{0.0f}, obj_store, sps, registry);
-  edh.add(pair.first, MOVE(pair.second));
+  auto& obj_store = ldata.obj_store;
+  //auto  pair      = Tree::add_toregistry(logger, glm::vec3{0.0f}, obj_store, sps, registry);
+  //edh.add(pair.first, MOVE(pair.second));
 
   auto constexpr WIREFRAME_SHADER = "wireframe";
   auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
@@ -239,6 +238,16 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
     auto const& cr = registry.get<CubeRenderable>(eid);
 
     add_wireframe(eid, cr.min, cr.max);
+  }
+  for (auto const eid : registry.view<TreeComponent, MeshRenderable>()) {
+    auto& name = registry.get<MeshRenderable>(eid).name;
+
+    auto const     flags = BufferFlags::from_va(va);
+    ObjQuery const query{name, flags};
+    auto&          obj       = obj_store.get(logger, name);
+
+    auto& tc = registry.get<TreeComponent>(eid);
+    tc.pobj = &obj;
   }
 
   auto& gpu_state                = gfx_state.gpu_state;

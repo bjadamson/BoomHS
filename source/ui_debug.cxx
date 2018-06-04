@@ -6,6 +6,7 @@
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/time.hpp>
+#include <boomhs/tree.hpp>
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_state.hpp>
 #include <opengl/global.hpp>
@@ -116,22 +117,48 @@ namespace
 {
 
 void
-draw_entity_editor(EngineState& es, LevelData& ldata, EntityRegistry& registry, Camera& camera)
+draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, Camera& camera)
 {
   auto&      uistate = es.ui_state.debug;
-  auto const draw    = [&]() {
-    auto       pairs     = collect_all<Transform>(registry, false);
-    auto const eid       = uistate.selected_entity;
-    auto&      transform = registry.get<Transform>(eid);
-    ImGui::InputFloat3("pos:", glm::value_ptr(transform.translation));
-    {
-      auto buffer = glm::degrees(glm::eulerAngles(transform.rotation));
-      if (ImGui::InputFloat3("rot:", glm::value_ptr(buffer))) {
-        transform.rotation = glm::quat(buffer * (3.14159f / 180.f));
+  auto const eid     = uistate.selected_entity;
+
+  auto const draw = [&]() {
+    if (ImGui::CollapsingHeader("Transform Editor")) {
+      auto& transform = registry.get<Transform>(eid);
+      ImGui::InputFloat3("pos:", glm::value_ptr(transform.translation));
+      {
+        auto buffer = glm::degrees(glm::eulerAngles(transform.rotation));
+        if (ImGui::InputFloat3("rot:", glm::value_ptr(buffer))) {
+          transform.rotation = glm::quat(buffer * (3.14159f / 180.f));
+        }
       }
+      ImGui::InputFloat3("scale:", glm::value_ptr(transform.scale));
     }
-    ImGui::InputFloat3("scale:", glm::value_ptr(transform.scale));
+    if (registry.has<TreeComponent>(eid) && ImGui::CollapsingHeader("Tree Editor")) {
+      auto& tc = registry.get<TreeComponent>(eid);
+      ImGui::ColorEdit4("leaf0:", tc.colors[0].data(), ImGuiColorEditFlags_Float);
+      ImGui::ColorEdit4("leaf1:", tc.colors[1].data(), ImGuiColorEditFlags_Float);
+      ImGui::ColorEdit4("trunk:", tc.colors[2].data(), ImGuiColorEditFlags_Float);
+
+      auto& zs        = lm.active();
+      auto& gfx_state = zs.gfx_state;
+      auto& gpu_state = gfx_state.gpu_state;
+      auto& sps       = gfx_state.sps;
+
+      auto& sn = registry.get<ShaderName>(eid);
+      auto& va = sps.ref_sp(sn.value).va();
+
+      auto& entities_o = gfx_state.gpu_state.entities;
+      assert(entities_o);
+      auto& entity_map = *entities_o;
+
+      auto& logger = es.logger;
+      auto& dinfo  = entity_map.lookup(logger, eid);
+
+      Tree::update_colors(logger, va, dinfo, tc);
+    }
   };
+
   imgui_cxx::with_window(draw, "Entity Editor Window");
 }
 
@@ -588,8 +615,7 @@ show_entitymaterials_window(UiDebugState& ui, EntityRegistry& registry)
   auto& selected_material = ui.selected_entity_material;
 
   auto const draw = [&]() {
-    auto pairs = collect_all<Material, Transform>(registry, false);
-    display_combo_for_entities<>("Entity", &selected_material, registry, pairs);
+    // display_combo_for_entities<>("Entity", &selected_material, registry, pairs);
 
     auto const  entities_with_materials = find_materials(registry);
     auto const& selected_entity         = entities_with_materials[selected_material];
@@ -869,7 +895,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camer
   auto& ldata          = zs.level_data;
 
   if (uistate.show_entitywindow) {
-    draw_entity_editor(es, ldata, registry, camera);
+    draw_entity_editor(es, lm, registry, camera);
   }
   if (uistate.show_time_window) {
     draw_time_editor(es.logger, es.time, uistate);

@@ -133,14 +133,25 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
 }
 */
 
+#define OBJSTORE_FIND(BEGIN, END)                                                                  \
+  auto const cmp = [&](auto const& pair) { return pair.first == name; };                           \
+  auto const it  = std::find_if(BEGIN, END, cmp);                                                  \
+  assert(it != END);                                                                               \
+  return it->second;
+
+ObjData&
+ObjStore::get(stlw::Logger& logger, std::string const& name)
+{
+  OBJSTORE_FIND(data_.begin(), data_.end());
+}
+
 ObjData const&
 ObjStore::get(stlw::Logger& logger, std::string const& name) const
 {
-  auto const cmp = [&](auto const& pair) { return pair.first == name; };
-  auto const it  = std::find_if(data_.cbegin(), data_.cend(), cmp);
-  assert(it != data_.cend());
-  return it->second;
+  OBJSTORE_FIND(data_.cbegin(), data_.cend());
 }
+
+#undef OBJSTORE_FIND
 
 /*
 VertexBuffer

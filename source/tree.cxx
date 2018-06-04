@@ -43,50 +43,13 @@ make_tree(glm::vec3 const& world_pos, char const* shader_name, char const* tree_
   return eid;
 }
 
-} // namespace
-
-namespace boomhs
-{
-
-std::pair<EntityID, DrawInfo>
-Tree::add_toregistry(stlw::Logger& logger, glm::vec3 const& world_pos, ObjStore const& obj_store,
-                     ShaderPrograms& sps, EntityRegistry& registry)
-{
-  auto constexpr SN = "3d_pos_normal_color";
-  auto constexpr TN = "tree_lowpoly";
-  auto eid          = make_tree(world_pos, SN, TN, registry);
-
-  auto&          va    = sps.ref_sp(SN).va();
-  auto const     flags = BufferFlags::from_va(va);
-  ObjQuery const query{TN, flags};
-
-  auto& obj = obj_store.get(logger, TN);
-  {
-    auto& tc = registry.get<TreeComponent>(eid);
-    tc.pobj  = &obj;
-  }
-
-  auto dinfo = opengl::gpu::copy_gpu(logger, va, obj);
-  return std::make_pair(eid, MOVE(dinfo));
-}
-
 std::vector<float>
-Tree::generate_tree_colors(stlw::Logger& logger, ObjData const& obj)
+generate_tree_colors(stlw::Logger& logger, TreeComponent const& tc)
 {
-  auto const& materials     = obj.materials;
-  auto const  get_facecolor = [&logger, &materials](auto const& shape,
-                                                   auto const  f) { // per-face material
-    int const face_materialid= shape.mesh.material_ids[f];
-    // auto const& diffuse         = materials[face_materialid].diffuse;
-
-    auto constdiffuse =
-        face_materialid == 1 ? glm::vec3{0.5, 0.35, 0.05} : glm::vec3{0.0, 1.0, 0.3};
-    return Color{diffuse[0], diffuse[1], diffuse[2], 1.0};
-  };
-
   std::vector<float> colors;
-  auto const         update_branchcolors = [&](auto const& shape, auto const& face) {
-    auto const face_color = get_facecolor(shape, face);
+  auto const         update_branchcolors = [&](auto const& shape, int const face) {
+    int const   face_materialid = shape.mesh.material_ids[face];
+    auto const& face_color      = tc.colors[face_materialid];
 
     auto const fv = shape.mesh.num_face_vertices[face];
     FOR(vi, fv)
@@ -97,12 +60,53 @@ Tree::generate_tree_colors(stlw::Logger& logger, ObjData const& obj)
       colors.emplace_back(face_color.a());
     }
   };
+
+  assert(tc.pobj);
+  auto const& obj = *tc.pobj;
   obj.foreach_face(update_branchcolors);
 
   assert((obj.colors.size() % 4) == 0);
   assert(obj.colors.size() == colors.size());
 
   return colors;
+}
+
+} // namespace
+
+namespace boomhs
+{
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// TreeComponent
+TreeComponent::TreeComponent()
+    : colors{LOC::GREEN, LOC::YELLOW, LOC::BROWN}
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Tree
+void
+Tree::update_colors(stlw::Logger& logger, VertexAttribute const& va, DrawInfo& dinfo,
+                    TreeComponent& tc)
+{
+  assert(nullptr != tc.pobj);
+  auto& objdata  = *tc.pobj;
+  objdata.colors = generate_tree_colors(logger, tc);
+  gpu::overwrite_vertex_buffer(logger, va, dinfo, objdata);
+}
+
+std::pair<EntityID, DrawInfo>
+Tree::add_toregistry(stlw::Logger& logger, EntityID const eid, ObjStore& obj_store,
+                     ShaderPrograms& sps, EntityRegistry& registry)
+{
+  auto& sn     = registry.get<ShaderName>(eid).value;
+  auto&  va    = sps.ref_sp(sn).va();
+
+  auto& mesh   = registry.get<MeshRenderable>(eid);
+  ObjData& obj = obj_store.get(logger, mesh.name);
+
+  auto dinfo = opengl::gpu::copy_gpu(logger, va, obj);
+  return std::make_pair(eid, MOVE(dinfo));
 }
 
 } // namespace boomhs

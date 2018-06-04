@@ -6,6 +6,7 @@
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/skybox.hpp>
+#include <boomhs/tree.hpp>
 #include <boomhs/water.hpp>
 
 #include <stlw/algorithm.hpp>
@@ -636,6 +637,10 @@ load_entities(stlw::Logger& logger, CppTable const& table,
       auto const it = std::find_if(pointlights.cbegin(), pointlights.cend(), cmp);
       assert(it != pointlights.cend());
       registry.assign<PointLight>(eid) = it->pointlight;
+    }
+
+    if (name == "tree") {
+      registry.assign<TreeComponent>(eid);
     }
 
     // An object receives light, if it has ALL ambient/diffuse/specular fields

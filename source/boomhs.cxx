@@ -453,7 +453,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     update_torchflicker(ldata, registry, rng, ft);
 
     registry.view<ShaderName, MeshRenderable, TreeComponent>().each(
-        [&](auto entity, auto& sn, auto& mesh, auto&) {
+        [&](auto eid, auto& sn, auto& mesh, auto& tree_component) {
           auto&      gfx_state = zs.gfx_state;
           auto&      sps       = gfx_state.sps;
           auto&      va        = sps.ref_sp(sn.value).va();
@@ -463,14 +463,9 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
           auto& entities_o = gfx_state.gpu_state.entities;
           assert(entities_o);
           auto& entity_map = *entities_o;
-          auto& dinfo      = entity_map.lookup(logger, entity);
+          auto& dinfo      = entity_map.lookup(logger, eid);
 
-          auto& obj_store = ldata.obj_store;
-          auto  obj       = obj_store.get(logger, mesh.name).clone();
-
-          obj.colors = Tree::generate_tree_colors(logger, obj);
-          LOG_ERROR_SPRINTF("OBJ COLORS SIZE: %lu", obj.colors.size());
-          gpu::overwrite_vertex_buffer(logger, va, dinfo, obj);
+          Tree::update_colors(logger, va, dinfo, tree_component);
         });
   }
 

@@ -18,17 +18,24 @@ class EntityRegistry;
 
 struct TreeComponent
 {
-  ObjData const* pobj = nullptr;
+  ObjData*      pobj      = nullptr;
+  opengl::Color colors[3] = {LOC::GREEN, LOC::YELLOW, LOC::BROWN};
+
+  TreeComponent();
+  COPYMOVE_DEFAULT(TreeComponent);
 };
 
 class Tree
 {
-public:
-  static std::pair<EntityID, opengl::DrawInfo>
-  add_toregistry(stlw::Logger&, glm::vec3 const&, ObjStore const&, opengl::ShaderPrograms&,
-                 EntityRegistry&);
+  Tree() = delete;
 
-  static std::vector<float> generate_tree_colors(stlw::Logger&, ObjData const&);
+public:
+  static void
+  update_colors(stlw::Logger&, opengl::VertexAttribute const&, opengl::DrawInfo&, TreeComponent&);
+
+  static std::pair<EntityID, opengl::DrawInfo>
+  add_toregistry(stlw::Logger&, EntityID, ObjStore&, opengl::ShaderPrograms&,
+                 EntityRegistry&);
 };
 
 } // namespace boomhs
