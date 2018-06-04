@@ -18,8 +18,8 @@ class EntityRegistry;
 
 struct TreeComponent
 {
-  ObjData*      pobj      = nullptr;
-  opengl::Color colors[3] = {LOC::GREEN, LOC::YELLOW, LOC::BROWN};
+  ObjData*      pobj;
+  opengl::Color colors[3];
 
   TreeComponent();
   COPYMOVE_DEFAULT(TreeComponent);

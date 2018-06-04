@@ -79,7 +79,8 @@ namespace boomhs
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // TreeComponent
 TreeComponent::TreeComponent()
-    : colors{LOC::GREEN, LOC::YELLOW, LOC::BROWN}
+    : pobj(nullptr)
+    , colors{LOC::GREEN, LOC::YELLOW, LOC::BROWN}
 {
 }
 
