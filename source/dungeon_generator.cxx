@@ -347,8 +347,7 @@ gen_level(stlw::Logger& logger, LevelConfig const& levelconfig, EntityRegistry& 
   floodfill(tilegrid, TileType::WALL);
 
   TerrainGridConfig tgc;
-  TerrainGrid       tgrid(MOVE(tgc));
-  Terrain           terrain(MOVE(tgrid));
+  TerrainGrid       terrain(MOVE(tgc));
 
   LOG_TRACE("Placing Rivers");
   std::vector<RiverInfo> rivers;

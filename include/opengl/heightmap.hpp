@@ -20,7 +20,7 @@ using HeightmapResult = Result<HeightmapData, std::string>;
 
 namespace boomhs
 {
-struct TerrainPieceConfig;
+struct TerrainConfig;
 } // namespace boomhs
 
 namespace opengl::heightmap
@@ -42,7 +42,7 @@ HeightmapResult
 parse(stlw::Logger&, std::string const&);
 
 void
-update_vertices_from_heightmap(stlw::Logger&, boomhs::TerrainPieceConfig const&,
-                               HeightmapData const&, boomhs::ObjVertices&);
+update_vertices_from_heightmap(stlw::Logger&, boomhs::TerrainConfig const&, HeightmapData const&,
+                               boomhs::ObjVertices&);
 
 } // namespace opengl::heightmap

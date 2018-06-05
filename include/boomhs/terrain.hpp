@@ -17,9 +17,9 @@ class ShaderProgram;
 namespace boomhs
 {
 
-struct TerrainPieceConfig
+struct TerrainConfig
 {
-  TerrainPieceConfig();
+  TerrainConfig();
 
   size_t num_vertexes_along_one_side;
   float  height_multiplier;
@@ -34,14 +34,7 @@ struct TerrainPieceConfig
   std::string heightmap_path;
 };
 
-struct TerrainFrameState
-{
-  bool   culling_enabled = true;
-  GLenum winding         = GL_CCW;
-  GLenum culling_mode    = GL_BACK;
-};
-
-class TerrainPiece
+class Terrain
 {
   glm::vec2              pos_;
   opengl::DrawInfo       di_;
@@ -51,14 +44,14 @@ class TerrainPiece
 public:
   //
   // mutable fields
-  TerrainPieceConfig config;
+  TerrainConfig config;
 
   //
   // constructors
-  NO_COPY(TerrainPiece);
-  MOVE_DEFAULT(TerrainPiece);
-  TerrainPiece(TerrainPieceConfig const&, glm::vec2 const&, opengl::DrawInfo&&,
-               opengl::ShaderProgram& sp, opengl::TextureInfo&);
+  NO_COPY(Terrain);
+  MOVE_DEFAULT(Terrain);
+  Terrain(TerrainConfig const&, glm::vec2 const&, opengl::DrawInfo&&, opengl::ShaderProgram& sp,
+          opengl::TextureInfo&);
 
   auto&       draw_info() { return di_; }
   auto const& position() const { return pos_; }
@@ -70,7 +63,7 @@ public:
 
 class TerrainArray
 {
-  std::vector<TerrainPiece> data_;
+  std::vector<Terrain> data_;
 
 public:
   TerrainArray() = default;
@@ -80,7 +73,7 @@ public:
   BEGIN_END_FORWARD_FNS(data_);
   INDEX_OPERATOR_FNS(data_);
 
-  void add(TerrainPiece&&);
+  void add(Terrain&&);
   void reserve(size_t);
   auto capacity() const { return data_.capacity(); }
   auto size() const { return data_.size(); }
@@ -107,13 +100,19 @@ public:
   BEGIN_END_FORWARD_FNS(terrain_);
   INDEX_OPERATOR_FNS(terrain_);
 
+  // fields
+  bool   culling_enabled = true;
+  GLenum winding         = GL_CCW;
+  GLenum culling_mode    = GL_BACK;
+
+  // methods
   auto height() const { return config_.num_cols; }
   auto width() const { return config_.num_rows; }
   auto dimensions() const { return stlw::make_array<size_t>(width(), height()); }
 
   auto count() const { return terrain_.size(); }
   auto size() const { return count(); }
-  void add(TerrainPiece&&);
+  void add(Terrain&&);
 
   auto& config() { return config_; }
 };
@@ -129,23 +128,15 @@ visit_each(TerrainGrid const& tgrid, FN const& fn, Args&&... args)
   }
 }
 
-struct Terrain
-{
-  TerrainGrid       grid;
-  TerrainFrameState render_state;
-
-  Terrain(TerrainGrid&&);
-};
-
 namespace terrain
 {
 
-TerrainPiece
-generate_piece(stlw::Logger&, glm::vec2 const&, TerrainGridConfig const&, TerrainPieceConfig const&,
+Terrain
+generate_piece(stlw::Logger&, glm::vec2 const&, TerrainGridConfig const&, TerrainConfig const&,
                opengl::HeightmapData const&, opengl::ShaderProgram&, opengl::TextureInfo&);
 
 TerrainGrid
-generate_grid(stlw::Logger&, TerrainGridConfig const&, TerrainPieceConfig const&,
+generate_grid(stlw::Logger&, TerrainGridConfig const&, TerrainConfig const&,
               opengl::HeightmapData const&, opengl::ShaderProgram&, opengl::TextureInfo&);
 
 } // namespace terrain

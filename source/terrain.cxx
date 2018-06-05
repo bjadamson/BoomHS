@@ -18,8 +18,8 @@ namespace
 {
 
 ObjData
-generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc,
-                      TerrainPieceConfig const& tc, HeightmapData const& heightmap_data)
+generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
+                      HeightmapData const& heightmap_data)
 {
   auto const numv_oneside = tc.num_vertexes_along_one_side;
   auto const num_vertexes = stlw::math::squared(numv_oneside);
@@ -47,8 +47,8 @@ namespace boomhs
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// TerrainPieceConfig
-TerrainPieceConfig::TerrainPieceConfig()
+// TerrainConfig
+TerrainConfig::TerrainConfig()
     : num_vertexes_along_one_side(128)
     , height_multiplier(1)
     , invert_normals(false)
@@ -59,9 +59,9 @@ TerrainPieceConfig::TerrainPieceConfig()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// TerrainPiece
-TerrainPiece::TerrainPiece(TerrainPieceConfig const& tc, glm::vec2 const& pos, DrawInfo&& di,
-                           ShaderProgram& sp, TextureInfo& ti)
+// Terrain
+Terrain::Terrain(TerrainConfig const& tc, glm::vec2 const& pos, DrawInfo&& di, ShaderProgram& sp,
+                 TextureInfo& ti)
     : pos_(pos)
     , di_(MOVE(di))
     , ti_(&ti)
@@ -80,7 +80,7 @@ TerrainArray::reserve(size_t const c)
 }
 
 void
-TerrainArray::add(TerrainPiece&& t)
+TerrainArray::add(Terrain&& t)
 {
   data_.emplace_back(MOVE(t));
 }
@@ -105,16 +105,9 @@ TerrainGrid::TerrainGrid(TerrainGridConfig const& tgc)
 }
 
 void
-TerrainGrid::add(TerrainPiece&& t)
+TerrainGrid::add(Terrain&& t)
 {
   terrain_.add(MOVE(t));
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Terrain
-Terrain::Terrain(TerrainGrid&& tgrid)
-    : grid(MOVE(tgrid))
-{
 }
 
 } // namespace boomhs
@@ -122,9 +115,9 @@ Terrain::Terrain(TerrainGrid&& tgrid)
 namespace boomhs::terrain
 {
 
-TerrainPiece
+Terrain
 generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig const& tgc,
-               TerrainPieceConfig const& tc, HeightmapData const& heightmap_data, ShaderProgram& sp,
+               TerrainConfig const& tc, HeightmapData const& heightmap_data, ShaderProgram& sp,
                TextureInfo& ti)
 {
   auto const data = generate_terrain_data(logger, tgc, tc, heightmap_data);
@@ -137,11 +130,11 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
   // These uniforms only need to be set once.
   sp.while_bound(logger, [&]() { sp.set_uniform_int1(logger, "u_sampler", 0); });
 
-  return TerrainPiece{tc, pos, MOVE(di), sp, ti};
+  return Terrain{tc, pos, MOVE(di), sp, ti};
 }
 
 TerrainGrid
-generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainPieceConfig const& tc,
+generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
               HeightmapData const& heightmap_data, ShaderProgram& sp, TextureInfo& ti)
 {
   LOG_TRACE("Generating Terrain");

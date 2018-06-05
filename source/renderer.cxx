@@ -1119,11 +1119,9 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
   auto& es     = fstate.es;
   auto& logger = es.logger;
 
-  auto&       zs      = fstate.zs;
-  auto&       ldata   = zs.level_data;
-  auto&       terrain = ldata.terrain();
-  auto&       tgrid   = terrain.grid;
-  auto const& tfstate = terrain.render_state;
+  auto& zs           = fstate.zs;
+  auto& ldata        = zs.level_data;
+  auto& terrain_grid = ldata.terrain;
 
   // backup state to restore after drawing terrain
   auto const cw_state = read_cwstate();
@@ -1141,10 +1139,10 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     tr.z            = pos.y;
 
     auto const& config = t.config;
-    glFrontFace(tfstate.winding);
-    if (tfstate.culling_enabled) {
+    glFrontFace(terrain_grid.winding);
+    if (terrain_grid.culling_enabled) {
       glEnable(GL_CULL_FACE);
-      glCullFace(tfstate.culling_mode);
+      glCullFace(terrain_grid.culling_mode);
     }
     else {
       glDisable(GL_CULL_FACE);
@@ -1173,7 +1171,7 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
   };
 
   LOG_TRACE("-------------------- Starting To Draw All Terrain(s) ----------------------");
-  for (auto& t : tgrid) {
+  for (auto& t : terrain_grid) {
     draw_piece(t);
   }
   LOG_TRACE("-------------------------Finished Drawing All Terrain(s) ---------------------------");

@@ -146,14 +146,14 @@ parse(stlw::Logger &logger, std::string const& path)
 }
 
 size_t
-calculate_number_vertices(int const num_components, TerrainPieceConfig const& tc)
+calculate_number_vertices(int const num_components, TerrainConfig const& tc)
 {
   auto const num_vertexes = tc.num_vertexes_along_one_side;
   return num_components * (num_vertexes * num_vertexes);
 }
 
 void
-update_vertices_from_heightmap(stlw::Logger& logger, TerrainPieceConfig const& tc,
+update_vertices_from_heightmap(stlw::Logger& logger, TerrainConfig const& tc,
                                HeightmapData const& heightmap_data, ObjVertices &buffer)
 {
   LOG_TRACE("Updating vertices from heightmap");

@@ -212,7 +212,7 @@ WaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm
   };
 
   LOG_TRACE("Rendering water");
-  render(ldata.water());
+  render(ldata.water);
   LOG_TRACE("Finished rendering water");
 }
 

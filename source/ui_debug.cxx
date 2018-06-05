@@ -290,10 +290,9 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
   auto& gfx_state = zs.gfx_state;
   auto& tbuffers  = es.ui_state.debug.buffers.terrain;
 
-  auto& ldata   = zs.level_data;
-  auto& terrain = zs.level_data.terrain();
-  auto& tgrid   = terrain.grid;
-  auto& tconfig = tbuffers.config;
+  auto& ldata        = zs.level_data;
+  auto& terrain_grid = ldata.terrain;
+  auto& tconfig      = tbuffers.config;
 
   auto const fn = [&](auto const i, auto const j, auto& buffer) {
     buffer << "(";
@@ -305,7 +304,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
   };
   auto const tgrid_slots_string = [&]() {
     std::stringstream buffer;
-    visit_each(tgrid, fn, buffer);
+    visit_each(terrain_grid, fn, buffer);
     buffer << '\0';
     return buffer.str();
   };
@@ -314,7 +313,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
   auto& sb          = tbuffers.selected_terrain;
   auto& t           = tbuffers.config;
   auto& ld          = zs.level_data;
-  auto& grid_config = tgrid.config();
+  auto& grid_config = terrain_grid.config();
 
   auto& sps = gfx_state.sps;
   auto& sp  = sps.ref_sp(t.shader_name);
@@ -330,29 +329,29 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
         auto*      ti        = ttable.find(t.texture_name);
         assert(ti);
 
-        auto tg = terrain::generate_grid(logger, grid_config, tbuffers.config, heightmap, sp, *ti);
-        terrain.grid = MOVE(tg);
+        ldata.terrain =
+            terrain::generate_grid(logger, grid_config, tbuffers.config, heightmap, sp, *ti);
       }
     }
     if (ImGui::CollapsingHeader("Rendering Options")) {
-      auto& tfstate = terrain.render_state;
       {
         auto constexpr WINDING_OPTIONS = stlw::make_array<GLint>(GL_CCW, GL_CW);
-        tfstate.winding                = gl_option_combo("Winding Order", "CCW\0CW\0\0",
-                                          &tbuffers.selected_winding, WINDING_OPTIONS);
+        terrain_grid.winding           = gl_option_combo("Winding Order", "CCW\0CW\0\0",
+                                               &tbuffers.selected_winding, WINDING_OPTIONS);
       }
-      ImGui::Checkbox("Culling Enabled", &tfstate.culling_enabled);
+      ImGui::Checkbox("Culling Enabled", &terrain_grid.culling_enabled);
       {
         auto constexpr CULLING_OPTIONS =
             stlw::make_array<GLint>(GL_BACK, GL_FRONT, GL_FRONT_AND_BACK);
-        tfstate.culling_mode = gl_option_combo("Culling Face", "Front\0Back\0Front And Back\0\0",
-                                               &tbuffers.selected_culling, CULLING_OPTIONS);
+        terrain_grid.culling_mode =
+            gl_option_combo("Culling Face", "Front\0Back\0Front And Back\0\0",
+                            &tbuffers.selected_culling, CULLING_OPTIONS);
       }
     }
     if (ImGui::CollapsingHeader("Update Existing Terrain")) {
       auto const tgrid_slot_names = tgrid_slots_string();
       if (ImGui::Combo("Select Terrain", &sb, tgrid_slot_names.c_str())) {
-        tbuffers.config = tgrid[sb].config;
+        tbuffers.config = terrain_grid[sb].config;
       }
       ImGui::Separator();
       imgui_cxx::input_sizet("Vertex Count", &tconfig.num_vertexes_along_one_side);
@@ -407,11 +406,11 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
         auto*      ti        = ttable.find(selected_texture);
         assert(ti);
 
-        int const row = sb / tgrid.width();
-        int const col = sb % tgrid.width();
+        int const row = sb / terrain_grid.width();
+        int const col = sb % terrain_grid.width();
         auto tp = terrain::generate_piece(logger, glm::vec2{row, col}, grid_config, tbuffers.config,
                                           heightmap, sp, *ti);
-        terrain.grid[sb] = MOVE(tp);
+        terrain_grid[sb] = MOVE(tp);
       }
     }
 

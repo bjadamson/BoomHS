@@ -119,8 +119,7 @@ StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
   place_torch(tilegrid, registry, rng, ttable);
 
   TerrainGridConfig tgc;
-  TerrainGrid       tgrid(MOVE(tgc));
-  Terrain           terrain(MOVE(tgrid));
+  TerrainGrid       terrain(MOVE(tgc));
 
   LOG_TRACE("Placing Water");
   auto water = WaterFactory::make_default(logger, sps, ttable);

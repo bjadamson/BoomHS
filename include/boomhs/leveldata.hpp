@@ -24,7 +24,7 @@ struct LevelGeneratedData
   TileGrid               tilegrid;
   TilePosition           startpos;
   std::vector<RiverInfo> rivers;
-  Terrain                terrain;
+  TerrainGrid            terrain;
   WaterInfo              water;
 };
 
@@ -42,21 +42,20 @@ class LevelData
 
   std::vector<RiverInfo> rivers_;
 
-  Skybox    skybox_;
-  Terrain   terrain_;
-  WaterInfo water_;
-
   void set_tile(TilePosition const&, TileType const&);
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileGrid&&, TileSharedInfoTable&&, TilePosition const&, std::vector<RiverInfo>&&,
-            Terrain&&, WaterInfo&&, Fog const&, opengl::GlobalLight const&, ObjStore&&,
+            TerrainGrid&&, WaterInfo&&, Fog const&, opengl::GlobalLight const&, ObjStore&&,
             WorldObject&&);
 
   // public fields
-  Skybox              skybox;
-  Fog                 fog;
+  Skybox      skybox;
+  Fog         fog;
+  TerrainGrid terrain;
+  WaterInfo   water;
+
   opengl::GlobalLight global_light;
 
   ObjStore obj_store;
@@ -95,12 +94,6 @@ public:
 
   auto&       rivers() { return rivers_; }
   auto const& rivers() const { return rivers_; }
-
-  auto&       terrain() { return terrain_; }
-  auto const& terrain() const { return terrain_; }
-
-  auto&       water() { return water_; }
-  auto const& water() const { return water_; }
 
   template <typename FN>
   void visit_tiles(FN const& fn) const
