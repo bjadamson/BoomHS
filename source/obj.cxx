@@ -241,7 +241,7 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
     auto const& material = materials[i];
     auto const& diffuse  = material.diffuse;
     auto const  color    = Color{diffuse[0], diffuse[1], diffuse[2], 1.0};
-    LOG_ERROR_SPRINTF("Material name %s, diffuse %s", material.name, color.to_string());
+    LOG_TRACE_SPRINTF("Material name %s, diffuse %s", material.name, color.to_string());
   }
 
   auto const get_facecolor = [&materials](auto const& shape, auto const f) {

@@ -1,5 +1,6 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/frame.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/renderer.hpp>
@@ -835,7 +836,7 @@ draw_debugwindow(EngineState& es, LevelManager& lm)
 }
 
 void
-draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window)
+draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window, DrawState& ds)
 {
   auto&      uistate      = es.ui_state.debug;
   auto const windows_menu = [&]() {
@@ -885,6 +886,9 @@ draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window)
     auto const framerate = es.imgui.Framerate;
     auto const ms_frame  = 1000.0f / framerate;
 
+    ImGui::SameLine(ImGui::GetWindowWidth() * 0.30f);
+    ImGui::Text("#verts: %s", ds.to_string().c_str());
+
     ImGui::SameLine(ImGui::GetWindowWidth() * 0.60f);
     ImGui::Text("Current Level: %i", lm.active_zone());
 
@@ -900,7 +904,7 @@ namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camera,
+draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camera, DrawState& ds,
      window::FrameTime const& ft)
 {
   auto& uistate        = es.ui_state.debug;
@@ -939,7 +943,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camer
   if (uistate.show_debugwindow) {
     draw_debugwindow(es, lm);
   }
-  draw_mainmenu(es, lm, window);
+  draw_mainmenu(es, lm, window, ds);
 }
 
 } // namespace boomhs::ui_debug

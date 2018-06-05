@@ -5,13 +5,13 @@
 #include <boomhs/main_menu.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/ui_debug.hpp>
 
 #include <stlw/log.hpp>
 #include <stlw/random.hpp>
 
 #include <window/controller.hpp>
 #include <window/sdl_window.hpp>
+#include <window/timer.hpp>
 
 #include <extlibs/imgui.hpp>
 
@@ -77,11 +77,6 @@ loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camer
 
     IO::process(state, engine.controllers, camera, ft);
     boomhs::game_loop(engine, state, rng, camera, ft);
-  }
-  auto& ui_state = es.ui_state;
-  if (ui_state.draw_debug_ui) {
-    auto& lm = state.level_manager;
-    ui_debug::draw(es, lm, window, camera, ft);
   }
 
   // Render Imgui UI

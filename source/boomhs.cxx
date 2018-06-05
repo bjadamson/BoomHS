@@ -15,6 +15,7 @@
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/tree.hpp>
+#include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/water_fbos.hpp>
 
@@ -558,7 +559,10 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     ui_ingame::draw(es, lm);
   }
 
-  LOG_ERROR_SPRINTF("num vertices rendered: %s", ds.to_string());
+  if (ui_state.draw_debug_ui) {
+    auto& lm = state.level_manager;
+    ui_debug::draw(es, lm, engine.window, camera, ds, ft);
+  }
 }
 
 } // namespace boomhs
