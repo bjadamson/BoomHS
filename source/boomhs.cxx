@@ -437,6 +437,13 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     skybox.update(ft);
     move_riverwiggles(ldata, ft);
 
+    {
+      auto const player_eid = find_player(registry);
+      auto const wp         = Player::world_position(player_eid, registry);
+      auto const tp         = wp;
+      // LOG_ERROR_SPRINTF("Player WP: %s TP: %s", glm::to_string(wp), glm::to_string(tp));
+    }
+
     if (tilegrid_state.recompute) {
       // compute tilegrid
       LOG_INFO("Updating tilegrid\n");

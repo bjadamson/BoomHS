@@ -97,10 +97,10 @@ TerrainGridConfig::TerrainGridConfig()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TerrainGrid
 TerrainGrid::TerrainGrid(TerrainGridConfig const& tgc)
-    : config_(tgc)
+    : config(tgc)
 {
-  auto const nr = config_.num_rows;
-  auto const nc = config_.num_cols;
+  auto const nr = config.num_rows;
+  auto const nc = config.num_cols;
   terrain_.reserve(nr * nc);
 }
 

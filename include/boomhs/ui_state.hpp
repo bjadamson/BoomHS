@@ -36,7 +36,8 @@ struct TerrainBuffer
   int selected_texture   = -1;
   int selected_shader    = -1;
 
-  TerrainConfig config;
+  TerrainConfig     terrain_config;
+  TerrainGridConfig grid_config;
 };
 
 struct Buffers

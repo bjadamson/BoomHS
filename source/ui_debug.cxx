@@ -293,7 +293,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 
   auto& ldata        = zs.level_data;
   auto& terrain_grid = ldata.terrain;
-  auto& tconfig      = tbuffers.config;
+  auto& tconfig      = tbuffers.terrain_config;
 
   auto const fn = [&](auto const i, auto const j, auto& buffer) {
     buffer << "(";
@@ -312,26 +312,31 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 
   auto& ttable      = gfx_state.texture_table;
   auto& sb          = tbuffers.selected_terrain;
-  auto& t           = tbuffers.config;
+  auto& t           = tbuffers.terrain_config;
   auto& ld          = zs.level_data;
-  auto& grid_config = terrain_grid.config();
+  auto& grid_config = terrain_grid.config;
 
   auto& sps = gfx_state.sps;
   auto& sp  = sps.ref_sp(t.shader_name);
 
   auto const draw = [&]() -> Result<stlw::none_t, std::string> {
     if (ImGui::CollapsingHeader("Regenerate Grid")) {
-      imgui_cxx::input_sizet("num rows", &grid_config.num_rows);
-      imgui_cxx::input_sizet("num cols", &grid_config.num_cols);
-      ImGui::InputFloat("x width", &grid_config.dimensions.x);
-      ImGui::InputFloat("z length", &grid_config.dimensions.y);
+
+      auto& tbuffer_gridconfig = tbuffers.grid_config;
+      imgui_cxx::input_sizet("num rows", &tbuffer_gridconfig.num_rows);
+      imgui_cxx::input_sizet("num cols", &tbuffer_gridconfig.num_cols);
+      ImGui::InputFloat("x width", &tbuffer_gridconfig.dimensions.x);
+      ImGui::InputFloat("z length", &tbuffer_gridconfig.dimensions.y);
+
       if (ImGui::Button("Generate Terrain")) {
         auto const heightmap = TRY(heightmap::load_fromtable(logger, ttable, t.heightmap_path));
         auto*      ti        = ttable.find(t.texture_name);
         assert(ti);
 
-        ldata.terrain =
-            terrain::generate_grid(logger, grid_config, tbuffers.config, heightmap, sp, *ti);
+        // copy the grid config from the tempory buffer to the leveldata instance.
+        terrain_grid.config = tbuffer_gridconfig;
+        ldata.terrain       = terrain::generate_grid(logger, grid_config, tbuffers.terrain_config,
+                                               heightmap, sp, *ti);
       }
     }
     if (ImGui::CollapsingHeader("Rendering Options")) {
@@ -352,7 +357,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
     if (ImGui::CollapsingHeader("Update Existing Terrain")) {
       auto const tgrid_slot_names = tgrid_slots_string();
       if (ImGui::Combo("Select Terrain", &sb, tgrid_slot_names.c_str())) {
-        tbuffers.config = terrain_grid[sb].config;
+        tbuffers.terrain_config = terrain_grid[sb].config;
       }
       ImGui::Separator();
       imgui_cxx::input_sizet("Vertex Count", &tconfig.num_vertexes_along_one_side);
@@ -407,10 +412,10 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
         auto*      ti        = ttable.find(selected_texture);
         assert(ti);
 
-        int const row = sb / terrain_grid.width();
-        int const col = sb % terrain_grid.width();
-        auto tp = terrain::generate_piece(logger, glm::vec2{row, col}, grid_config, tbuffers.config,
-                                          heightmap, sp, *ti);
+        int const row    = sb / terrain_grid.num_rows();
+        int const col    = sb % terrain_grid.num_cols();
+        auto      tp     = terrain::generate_piece(logger, glm::vec2{row, col}, grid_config,
+                                          tbuffers.terrain_config, heightmap, sp, *ti);
         terrain_grid[sb] = MOVE(tp);
       }
     }

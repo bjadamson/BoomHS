@@ -1127,18 +1127,27 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
   auto const cw_state = read_cwstate();
   ON_SCOPE_EXIT([&]() { set_cwstate(cw_state); });
 
-  Transform   transform;
-  auto&       tr           = transform.translation;
-  auto const& model_matrix = transform.model_matrix();
-  Material    mat;
+  Transform transform;
+  auto&     tr = transform.translation;
+  Material  mat;
+
+  auto const& dimensions = terrain_grid.config.dimensions;
 
   bool constexpr ambient = true;
-  auto const draw_piece  = [&](auto& t) {
-    auto const& pos = t.position();
-    tr.x            = pos.x;
-    tr.z            = pos.y;
+  auto const draw_piece  = [&](auto& terrain) {
+    {
+      auto const& terrain_pos = terrain.position();
+      auto const  width       = dimensions.x;
+      auto const  length      = dimensions.y;
 
-    auto const& config = t.config;
+      tr.x = terrain_pos.x * width;
+      tr.z = terrain_pos.y * length;
+      LOG_ERROR_SPRINTF("DRAW PIECE %s dimensions (%f, %f)", glm::to_string(glm::vec2{tr.x, tr.z}),
+                        width, length);
+    }
+    auto const& model_matrix = transform.model_matrix();
+
+    auto const& config = terrain.config;
     glFrontFace(terrain_grid.winding);
     if (terrain_grid.culling_enabled) {
       glEnable(GL_CULL_FACE);
@@ -1148,14 +1157,13 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
       glDisable(GL_CULL_FACE);
     }
 
-    // reach through the reference wrapper
-    auto& sp = t.shader();
+    auto& sp = terrain.shader();
     sp.while_bound(logger, [&]() {
       sp.set_uniform_float1(logger, "u_uvmodifier", config.uv_modifier);
       sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
 
-      auto& dinfo = t.draw_info();
-      auto& tinfo = t.texture_info();
+      auto& dinfo = terrain.draw_info();
+      auto& tinfo = terrain.texture_info();
 
       auto& vao = dinfo.vao();
       vao.while_bound(logger, [&]() {
@@ -1170,11 +1178,11 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     });
   };
 
-  LOG_TRACE("-------------------- Starting To Draw All Terrain(s) ----------------------");
+  LOG_ERROR("-------------------- Starting To Draw All Terrain(s) ----------------------");
   for (auto& t : terrain_grid) {
     draw_piece(t);
   }
-  LOG_TRACE("-------------------------Finished Drawing All Terrain(s) ---------------------------");
+  LOG_ERROR("-------------------------Finished Drawing All Terrain(s) ---------------------------");
 }
 
 void

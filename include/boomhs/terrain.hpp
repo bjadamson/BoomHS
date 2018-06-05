@@ -89,8 +89,7 @@ struct TerrainGridConfig
 
 class TerrainGrid
 {
-  TerrainGridConfig config_;
-  TerrainArray      terrain_;
+  TerrainArray terrain_;
 
 public:
   explicit TerrainGrid(TerrainGridConfig const&);
@@ -101,30 +100,31 @@ public:
   INDEX_OPERATOR_FNS(terrain_);
 
   // fields
-  bool   culling_enabled = true;
-  GLenum winding         = GL_CCW;
-  GLenum culling_mode    = GL_BACK;
+  TerrainGridConfig config;
+  bool              culling_enabled = true;
+  GLenum            winding         = GL_CCW;
+  GLenum            culling_mode    = GL_BACK;
 
   // methods
-  auto height() const { return config_.num_cols; }
-  auto width() const { return config_.num_rows; }
-  auto dimensions() const { return stlw::make_array<size_t>(width(), height()); }
+  auto num_cols() const { return config.num_cols; }
+  auto num_rows() const { return config.num_rows; }
+  auto dimensions() const { return config.dimensions; }
+
+  auto rows_and_columns() const { return stlw::make_array<size_t>(num_rows(), num_cols()); }
 
   auto count() const { return terrain_.size(); }
   auto size() const { return count(); }
   void add(Terrain&&);
-
-  auto& config() { return config_; }
 };
 
 template <typename FN, typename... Args>
 void
 visit_each(TerrainGrid const& tgrid, FN const& fn, Args&&... args)
 {
-  auto const [w, h] = tgrid.dimensions();
-  FOR(x, w)
+  auto const [row, col] = tgrid.rows_and_columns();
+  FOR(x, row)
   {
-    FOR(y, h) { fn(x, y, FORWARD(args)); }
+    FOR(y, col) { fn(x, y, FORWARD(args)); }
   }
 }
 
