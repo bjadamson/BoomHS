@@ -134,27 +134,43 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
       }
       ImGui::InputFloat3("scale:", glm::value_ptr(transform.scale));
     }
-    if (registry.has<TreeComponent>(eid) && ImGui::CollapsingHeader("Tree Editor")) {
-      auto& tc = registry.get<TreeComponent>(eid);
-      ImGui::ColorEdit4("leaf0:", tc.colors[0].data(), ImGuiColorEditFlags_Float);
-      ImGui::ColorEdit4("leaf1:", tc.colors[1].data(), ImGuiColorEditFlags_Float);
-      ImGui::ColorEdit4("trunk:", tc.colors[2].data(), ImGuiColorEditFlags_Float);
 
-      auto& zs        = lm.active();
-      auto& gfx_state = zs.gfx_state;
-      auto& gpu_state = gfx_state.gpu_state;
-      auto& sps       = gfx_state.sps;
+    auto& logger    = es.logger;
+    auto& zs        = lm.active();
+    auto& gfx_state = zs.gfx_state;
+    auto& gpu_state = gfx_state.gpu_state;
+    auto& sps       = gfx_state.sps;
+
+    auto& entities_o = gfx_state.gpu_state.entities;
+    assert(entities_o);
+    auto& entity_map = *entities_o;
+
+    if (registry.has<TreeComponent>(eid) && ImGui::CollapsingHeader("Tree Editor")) {
+      auto const make_str = [](char const* text, auto const num) {
+        return text + std::to_string(num);
+      };
+      auto& tc = registry.get<TreeComponent>(eid);
+
+      auto const edit_treecolor = [&](char const* name, auto const num_colors,
+                                      auto const& get_color) {
+        FOR(i, num_colors)
+        {
+          auto const text = make_str(name, i);
+          ImGui::ColorEdit4(text.c_str(), get_color(i), ImGuiColorEditFlags_Float);
+        }
+      };
+
+      edit_treecolor("Trunk", tc.num_trunks(),
+                     [&tc](auto const i) { return tc.trunk_color(i).data(); });
+      edit_treecolor("Stem", tc.num_stems(),
+                     [&tc](auto const i) { return tc.stem_color(i).data(); });
+      edit_treecolor("Leaves", tc.num_leaves(),
+                     [&tc](auto const i) { return tc.leaf_color(i).data(); });
 
       auto& sn = registry.get<ShaderName>(eid);
       auto& va = sps.ref_sp(sn.value).va();
 
-      auto& entities_o = gfx_state.gpu_state.entities;
-      assert(entities_o);
-      auto& entity_map = *entities_o;
-
-      auto& logger = es.logger;
-      auto& dinfo  = entity_map.lookup(logger, eid);
-
+      auto& dinfo = entity_map.lookup(logger, eid);
       Tree::update_colors(logger, va, dinfo, tc);
     }
   };

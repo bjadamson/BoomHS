@@ -351,7 +351,13 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
     move_left(state, ft);
     break;
   case SDLK_e:
-    try_pickup_nearby_item(state, ft);
+    if (event.key.keysym.mod & KMOD_CTRL) {
+      auto& uistate = es.ui_state.debug;
+      uistate.show_entitywindow ^= true;
+    }
+    else {
+      try_pickup_nearby_item(state, ft);
+    }
     // move_up(state, ft);
     break;
   case SDLK_q:

@@ -744,7 +744,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     draw_entity(eid, sn, transform, is_v, bbox, cr, FORWARD(args));
   };
 
-  auto const draw_tree = [&](COMMON_ARGS, TreeComponent& tree, auto&&... args) {
+  auto const draw_tree = [&](COMMON_ARGS, auto& tree, auto&&... args) {
     draw_entity(eid, sn, transform, is_v, bbox, tree, FORWARD(args));
   };
 #undef COMMON_ARGS

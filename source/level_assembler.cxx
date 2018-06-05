@@ -158,6 +158,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
         auto handle = opengl::gpu::copy_gpu(logger, va, obj);
         entity_drawmap.add(entity, MOVE(handle));
       });
+
   registry.view<ShaderName, MeshRenderable, TreeComponent>().each(
       [&](auto entity, auto& sn, auto& mesh, auto& tree) {
         auto& name = registry.get<MeshRenderable>(entity).name;
@@ -167,10 +168,10 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
         ObjQuery const query{name, flags};
         auto&          obj = obj_store.get(logger, name);
 
-        auto& tc = registry.get<TreeComponent>(entity);
-        tc.pobj  = &obj;
+        auto& tc = registry.get<typename std::remove_reference<decltype(tree)>::type>(entity);
+        tc.set_obj(&obj);
 
-        auto&       dinfo = entity_drawmap.lookup(logger, entity);
+        auto& dinfo = entity_drawmap.lookup(logger, entity);
         Tree::update_colors(logger, va, dinfo, tc);
       });
 

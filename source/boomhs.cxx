@@ -456,7 +456,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     static bool once = false;
     if (!once) {
       once = true;
-    registry.view<ShaderName, MeshRenderable, TreeComponent>().each(
+    registry.view<ShaderName, MeshRenderable, TreeLowpoly>().each(
         [&](auto eid, auto& sn, auto& mesh, auto& tree_component) {
           auto&      gfx_state = zs.gfx_state;
           auto&      sps       = gfx_state.sps;

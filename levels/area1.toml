@@ -275,6 +275,10 @@ name = "tree_lowpoly"
 path = "assets/"
 
 [[meshes]]
+name = "tree2"
+path = "assets/"
+
+[[meshes]]
 name = "hashtag"
 path = "assets/"
 
@@ -382,9 +386,9 @@ shininess = 1.0
 
 [[material]]
 name = "tree"
-ambient = [0.0, 0.0, 1.0]
-diffuse = [0.0, 0.0, 1.0]
-specular = [0.0, 0.0, 1.0]
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
 shininess = 10.00
 
 [[material]]
@@ -500,81 +504,19 @@ scale = [0.4, 0.4, 0.4]
 random_junk_from_file = true
 
 [[entity]]
-name = "tree"
-material = "terrain"
-position = [5.8, 0.5, 2.0]
+name = "TreeLowpoly"
+material = "tree"
+position = [0.0, 0.0, 0.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [3.0, 5.0, 3.0]
+scale = [8.0, 6.0, 8.0]
 random_junk_from_file = true
 
 [[entity]]
-name = "tree"
-material = "terrain"
-position = [0.8, 0.5, 29.0]
+name = "Tree2"
+material = "tree"
+position = [1.0, 1.0, 8.0]
 shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [3.0, 5.0, 3.0]
-random_junk_from_file = true
-
-[[entity]]
-name = "tree"
-material = "terrain"
-position = [29.0, 0.5, 29.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [3.0, 5.0, 3.0]
-random_junk_from_file = true
-
-[[entity]]
-name = "tree"
-material = "terrain"
-position = [28.0, 0.5, 28.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [3.0, 5.0, 3.0]
-random_junk_from_file = true
-
-[[entity]]
-name = "tree"
-material = "terrain"
-position = [15.0, 0.5, 15.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [3.0, 5.0, 3.0]
-random_junk_from_file = true
-
-[[entity]]
-name = "tree"
-material = "terrain"
-position = [20.0, 0.5, 20.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [3.0, 5.0, 3.0]
-random_junk_from_file = true
-
-[[entity]]
-name = "tree"
-material = "terrain"
-position = [29.0, 0.5, 0.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [3.0, 5.0, 3.0]
-random_junk_from_file = true
-
-[[entity]]
-name = "tree"
-material = "terrain"
-position = [60.0, 0.5, 60.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [60.0, 60.0, 60.0]
+geometry = "mesh:tree2"
+scale = [2.0, 4.0, 2.0]
 random_junk_from_file = true

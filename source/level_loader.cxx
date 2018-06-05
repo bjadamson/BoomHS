@@ -639,8 +639,18 @@ load_entities(stlw::Logger& logger, CppTable const& table,
       registry.assign<PointLight>(eid) = it->pointlight;
     }
 
-    if (stlw::cstrcmp(name.c_str(), "tree")) {
-      registry.assign<TreeComponent>(eid);
+    if (stlw::cstrcmp(name.c_str(), "TreeLowpoly")) {
+      auto& tc = registry.assign<TreeComponent>(eid);
+      tc.add_color(TreeColorType::Leaf, LOC::GREEN);
+      tc.add_color(TreeColorType::Leaf, LOC::PINK);
+      tc.add_color(TreeColorType::Trunk, LOC::BROWN);
+    }
+    if (stlw::cstrcmp(name.c_str(), "Tree2")) {
+      auto& tc = registry.assign<TreeComponent>(eid);
+      tc.add_color(TreeColorType::Leaf, LOC::YELLOW);
+      tc.add_color(TreeColorType::Stem, LOC::RED);
+      tc.add_color(TreeColorType::Stem, LOC::BLUE);
+      tc.add_color(TreeColorType::Trunk, LOC::GREEN);
     }
 
     // An object receives light, if it has ALL ambient/diffuse/specular fields
