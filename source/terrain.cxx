@@ -65,7 +65,7 @@ TerrainPiece::TerrainPiece(TerrainPieceConfig const& tc, glm::vec2 const& pos, D
     : pos_(pos)
     , di_(MOVE(di))
     , ti_(&ti)
-    , sp_(sp)
+    , sp_(&sp)
     , config(tc)
 {
   pos_ = pos;

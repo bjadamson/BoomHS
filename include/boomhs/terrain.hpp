@@ -8,7 +8,6 @@
 
 #include <extlibs/glm.hpp>
 #include <functional>
-#include <ostream>
 
 namespace opengl
 {
@@ -44,10 +43,10 @@ struct TerrainFrameState
 
 class TerrainPiece
 {
-  glm::vec2                                     pos_;
-  opengl::DrawInfo                              di_;
-  std::reference_wrapper<opengl::ShaderProgram> sp_;
-  opengl::TextureInfo*                          ti_;
+  glm::vec2              pos_;
+  opengl::DrawInfo       di_;
+  opengl::ShaderProgram* sp_;
+  opengl::TextureInfo*   ti_;
 
 public:
   //
@@ -66,7 +65,7 @@ public:
   auto&       texture_info() { return *ti_; }
   auto const& texture_info() const { return *ti_; }
 
-  auto& shader() { return sp_; }
+  auto& shader() { return *sp_; }
 };
 
 class TerrainArray

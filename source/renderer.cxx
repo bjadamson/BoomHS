@@ -1151,7 +1151,7 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     }
 
     // reach through the reference wrapper
-    auto& sp = t.shader().get();
+    auto& sp = t.shader();
     sp.while_bound(logger, [&]() {
       sp.set_uniform_float1(logger, "u_uvmodifier", config.uv_modifier);
       sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
