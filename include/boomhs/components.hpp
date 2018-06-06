@@ -48,6 +48,9 @@ struct AxisAlignedBoundingBox
   // ctor
   AxisAlignedBoundingBox();
   AxisAlignedBoundingBox(glm::vec3 const&, glm::vec3 const&);
+
+  // methods
+  glm::vec3 dimensions() const;
 };
 
 using AABoundingBox = AxisAlignedBoundingBox;

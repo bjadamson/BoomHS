@@ -3,14 +3,19 @@
 #include <extlibs/glm.hpp>
 #include <stlw/log.hpp>
 
+namespace opengl
+{
+class Heightmap;
+} // namespace opengl
+
 namespace boomhs
 {
 
 struct GenerateNormalData
 {
-  bool const                  invert_normals;
-  std::vector<uint8_t> const& height_data;
-  size_t const                num_vertexes;
+  bool const               invert_normals;
+  opengl::Heightmap const& heightmap;
+  size_t const             num_vertexes;
 };
 
 struct MeshFactory

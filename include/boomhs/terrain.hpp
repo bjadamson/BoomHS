@@ -44,14 +44,15 @@ class Terrain
 public:
   //
   // mutable fields
-  TerrainConfig config;
+  TerrainConfig     config;
+  opengl::Heightmap heightmap;
 
   //
   // constructors
   NO_COPY(Terrain);
   MOVE_DEFAULT(Terrain);
   Terrain(TerrainConfig const&, glm::vec2 const&, opengl::DrawInfo&&, opengl::ShaderProgram& sp,
-          opengl::TextureInfo&);
+          opengl::TextureInfo&, opengl::Heightmap&&);
 
   auto&       draw_info() { return di_; }
   auto const& position() const { return pos_; }
@@ -115,6 +116,8 @@ public:
   auto count() const { return terrain_.size(); }
   auto size() const { return count(); }
   void add(Terrain&&);
+
+  float get_height(stlw::Logger&, float, float) const;
 };
 
 template <typename FN, typename... Args>
@@ -133,11 +136,11 @@ namespace terrain
 
 Terrain
 generate_piece(stlw::Logger&, glm::vec2 const&, TerrainGridConfig const&, TerrainConfig const&,
-               opengl::HeightmapData const&, opengl::ShaderProgram&, opengl::TextureInfo&);
+               opengl::Heightmap const&, opengl::ShaderProgram&, opengl::TextureInfo&);
 
 TerrainGrid
 generate_grid(stlw::Logger&, TerrainGridConfig const&, TerrainConfig const&,
-              opengl::HeightmapData const&, opengl::ShaderProgram&, opengl::TextureInfo&);
+              opengl::Heightmap const&, opengl::ShaderProgram&, opengl::TextureInfo&);
 
 } // namespace terrain
 

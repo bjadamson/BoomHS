@@ -1,5 +1,6 @@
 #include <boomhs/mesh.hpp>
 #include <cassert>
+#include <opengl/heightmap.hpp>
 #include <stlw/algorithm.hpp>
 
 using namespace boomhs;
@@ -193,9 +194,7 @@ MeshFactory::generate_normals(stlw::Logger& logger, GenerateNormalData const& no
   float constexpr xzScale = yScale;
   float constexpr x0 = 0.0f, y0 = 0.0f;
 
-  auto const& h = [&](auto const x, auto const y) {
-    return normal_data.height_data[(width * y) + x];
-  };
+  auto const& h = [&](auto const x, auto const y) { return normal_data.heightmap.data(x, y); };
 
   FOR(y, height)
   {

@@ -329,8 +329,9 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
       ImGui::InputFloat("z length", &tbuffer_gridconfig.dimensions.y);
 
       if (ImGui::Button("Generate Terrain")) {
-        auto const heightmap = TRY(heightmap::load_fromtable(logger, ttable, t.heightmap_path));
-        auto*      ti        = ttable.find(t.texture_name);
+        auto const heightmap =
+            TRY_MOVEOUT(heightmap::load_fromtable(logger, ttable, t.heightmap_path));
+        auto* ti = ttable.find(t.texture_name);
         assert(ti);
 
         // copy the grid config from the tempory buffer to the leveldata instance.
@@ -408,7 +409,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 
         t.shader_name = sps.nickname_at_index(tbuffers.selected_shader).value_or(t.shader_name);
 
-        auto const heightmap = TRY(heightmap::load_fromtable(logger, ttable, selected_hm));
+        auto const heightmap = TRY_MOVEOUT(heightmap::load_fromtable(logger, ttable, selected_hm));
         auto*      ti        = ttable.find(selected_texture);
         assert(ti);
 

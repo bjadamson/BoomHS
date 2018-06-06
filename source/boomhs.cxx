@@ -56,9 +56,8 @@ move_betweentilegrids_ifonstairs(stlw::Logger& logger, Camera& camera, TiledataS
 {
   auto& ldata = lm.active().level_data;
 
-  auto& player                     = ldata.player;
-  player.transform().translation.y = 0.5f;
-  auto const wp                    = player.world_position();
+  auto&      player = ldata.player;
+  auto const wp     = player.world_position();
   {
     auto const [w, h] = ldata.dimensions();
     assert(wp.x < w);
@@ -380,8 +379,9 @@ init(Engine& engine, EngineState& engine_state, Camera& camera)
     auto&               ttable = gfx_state.texture_table;
 
     char const* HEIGHTMAP_NAME = "Area0-HM";
-    auto const  heightmap = TRY(opengl::heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
-    auto*       ti        = ttable.find(tc.texture_name);
+    auto const  heightmap =
+        TRY_MOVEOUT(opengl::heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
+    auto* ti = ttable.find(tc.texture_name);
     assert(ti);
 
     TerrainGridConfig const tgc;
@@ -422,6 +422,21 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   {
     auto& zs       = lm.active();
     auto& registry = zs.registry;
+
+    auto& ldata  = zs.level_data;
+    auto& player = ldata.player;
+
+    // Lookup the player height from the terrain at the player's X, Z world-coordinates.
+    auto&       player_pos    = player.transform().translation;
+    float const player_height = ldata.terrain.get_height(logger, player_pos.x, player_pos.z);
+    auto const& bbox          = player.bounding_box();
+    player_pos.y              = player_height + (bbox.dimensions().y / 2.0f);
+
+    auto const& dimensions = ldata.terrain.dimensions();
+    auto const  tp         = glm::vec3{::fmodf(player_pos.x, dimensions.x), player_pos.y,
+                              ::fmodf(player_pos.z, dimensions.y)};
+    // LOG_ERROR_SPRINTF("player pos WP: %s TP: %s", glm::to_string(player_pos),
+    // glm::to_string(tp));
     move_betweentilegrids_ifonstairs(logger, camera, tilegrid_state, lm);
   }
 

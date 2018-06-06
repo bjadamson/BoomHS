@@ -1137,13 +1137,8 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
   auto const draw_piece  = [&](auto& terrain) {
     {
       auto const& terrain_pos = terrain.position();
-      auto const  width       = dimensions.x;
-      auto const  length      = dimensions.y;
-
-      tr.x = terrain_pos.x * width;
-      tr.z = terrain_pos.y * length;
-      LOG_ERROR_SPRINTF("DRAW PIECE %s dimensions (%f, %f)", glm::to_string(glm::vec2{tr.x, tr.z}),
-                        width, length);
+      tr.x                    = terrain_pos.x * dimensions.x;
+      tr.z                    = terrain_pos.y * dimensions.y;
     }
     auto const& model_matrix = transform.model_matrix();
 
@@ -1178,11 +1173,11 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
     });
   };
 
-  LOG_ERROR("-------------------- Starting To Draw All Terrain(s) ----------------------");
+  LOG_TRACE("-------------------- Starting To Draw All Terrain(s) ----------------------");
   for (auto& t : terrain_grid) {
     draw_piece(t);
   }
-  LOG_ERROR("-------------------------Finished Drawing All Terrain(s) ---------------------------");
+  LOG_TRACE("-------------------------Finished Drawing All Terrain(s) ---------------------------");
 }
 
 void
