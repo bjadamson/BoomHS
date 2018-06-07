@@ -59,10 +59,11 @@ move_betweentilegrids_ifonstairs(stlw::Logger& logger, Camera& camera, TiledataS
   auto&      player = ldata.player;
   auto const wp     = player.world_position();
   {
-    auto const [w, h] = ldata.dimensions();
-    assert(wp.x < w);
-    assert(wp.z < h);
+    auto const dim = ldata.dimensions();
+    assert(wp.x < dim.x);
+    assert(wp.z < dim.y);
   }
+  /*
   auto const& tilegrid = ldata.tilegrid();
   auto const& tile     = tilegrid.data(wp.x, wp.z);
   if (tile.type == TileType::TELEPORTER) {
@@ -132,6 +133,7 @@ move_betweentilegrids_ifonstairs(stlw::Logger& logger, Camera& camera, TiledataS
       break;
     }
   }
+*/
 }
 
 void
@@ -415,7 +417,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   es.time.update(ft.since_start_seconds());
 
   auto& logger         = es.logger;
-  auto& tilegrid_state = es.tilegrid_state;
+  //auto& tilegrid_state = es.tilegrid_state;
   auto& lm             = state.level_manager;
 
   // Update the world
@@ -432,12 +434,12 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     auto const& bbox          = player.bounding_box();
     player_pos.y              = player_height + (bbox.dimensions().y / 2.0f);
 
-    auto const& dimensions = ldata.terrain.dimensions();
-    auto const  tp         = glm::vec3{::fmodf(player_pos.x, dimensions.x), player_pos.y,
-                              ::fmodf(player_pos.z, dimensions.y)};
+    //auto const& dimensions = ldata.terrain.dimensions();
+    //auto const  tp         = glm::vec3{::fmodf(player_pos.x, dimensions.x), player_pos.y,
+                              //::fmodf(player_pos.z, dimensions.y)};
     // LOG_ERROR_SPRINTF("player pos WP: %s TP: %s", glm::to_string(player_pos),
     // glm::to_string(tp));
-    move_betweentilegrids_ifonstairs(logger, camera, tilegrid_state, lm);
+    //move_betweentilegrids_ifonstairs(logger, camera, tilegrid_state, lm);
   }
 
   // Must recalculate zs and registry, possibly changed since call to move_between()
@@ -459,7 +461,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
       // LOG_ERROR_SPRINTF("Player WP: %s TP: %s", glm::to_string(wp), glm::to_string(tp));
     }
 
-    if (tilegrid_state.recompute) {
+    /*if (tilegrid_state.recompute) {
       // compute tilegrid
       LOG_INFO("Updating tilegrid\n");
 
@@ -468,9 +470,10 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
       // We don't need to recompute the tilegrid, we just did.
       tilegrid_state.recompute = false;
     }
+    */
 
     // river wiggles get updated every frame
-    update_visible_riverwiggles(ldata, player, tilegrid_state.reveal);
+    //update_visible_riverwiggles(ldata, player, tilegrid_state.reveal);
 
     update_visible_entities(lm, registry);
     update_torchflicker(ldata, registry, rng, ft);

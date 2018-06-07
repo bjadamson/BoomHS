@@ -77,7 +77,7 @@ public:
   bool is_tile(TilePosition const&, TileType const&) const;
   bool is_wall(TilePosition const&) const;
 
-  auto dimensions() const { return tilegrid_.dimensions(); }
+  auto dimensions() const { return terrain.max_worldpositions(); }
 
   // TODO: Is this leaky abstraction?
   auto& tilegrid() { return tilegrid_; }

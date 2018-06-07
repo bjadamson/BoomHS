@@ -78,6 +78,9 @@ public:
   void reserve(size_t);
   auto capacity() const { return data_.capacity(); }
   auto size() const { return data_.size(); }
+
+  bool empty() const { return data_.empty(); }
+  auto const& back() const { return data_.back(); }
 };
 
 struct TerrainGridConfig
@@ -109,8 +112,8 @@ public:
   // methods
   auto num_cols() const { return config.num_cols; }
   auto num_rows() const { return config.num_rows; }
-  auto dimensions() const { return config.dimensions; }
 
+  glm::vec2 max_worldpositions() const;
   auto rows_and_columns() const { return stlw::make_array<size_t>(num_rows(), num_cols()); }
 
   auto count() const { return terrain_.size(); }

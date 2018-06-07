@@ -105,6 +105,18 @@ TerrainGrid::TerrainGrid(TerrainGridConfig const& tgc)
   terrain_.reserve(nr * nc);
 }
 
+glm::vec2
+TerrainGrid::max_worldpositions() const
+{
+  // The last Terrain in our array will be the further "away" (x,z) coordinates of all the
+  // terrains.
+  assert(!terrain_.empty());
+  auto const& last = terrain_.back();
+
+  auto const tile_dimensions = config.dimensions;
+  return (last.position() * tile_dimensions) + tile_dimensions;
+}
+
 void
 TerrainGrid::add(Terrain&& t)
 {
@@ -124,7 +136,7 @@ barry_centric(glm::vec3 const& p1, glm::vec3 const& p2, glm::vec3 const& p3, glm
 float
 TerrainGrid::get_height(stlw::Logger& logger, float const x, float const z) const
 {
-  auto const& d = dimensions();
+  auto const& d = config.dimensions;
 
   auto const get_terrain_under_coords = [&]() -> Terrain const& {
     // Determine which Terrain instance the world coordinates (x, z) fall into.
@@ -136,8 +148,8 @@ TerrainGrid::get_height(stlw::Logger& logger, float const x, float const z) cons
   };
 
   auto const& t       = get_terrain_under_coords();
-  float const local_x = x - t.position().x;
-  float const local_z = z - t.position().y;
+  float const local_x = x - (t.position().x * d.x);
+  float const local_z = z - (t.position().y * d.y);
 
   float const num_vertexes_minus1 = t.config.num_vertexes_along_one_side - 1;
 
@@ -146,6 +158,7 @@ TerrainGrid::get_height(stlw::Logger& logger, float const x, float const z) cons
 
   size_t const grid_x = glm::floor(local_x / grid_squaresize);
   size_t const grid_z = glm::floor(local_z / grid_squaresize);
+
   if (grid_x >= num_vertexes_minus1 || grid_z >= num_vertexes_minus1 || grid_x < 0 || grid_z < 0) {
     LOG_ERROR_SPRINTF("Player out of bounds");
     return 0.0f;
