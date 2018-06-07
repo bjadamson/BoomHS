@@ -438,6 +438,7 @@ player = "player"
 color = [1.0, 1.0, 1.0, 1.0]
 material = "player"
 name = "player"
+scale = [1.0, 1.0, 1.0]
 
 [[entity]]
 orbital-body = "sun"

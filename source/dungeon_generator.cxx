@@ -7,7 +7,6 @@
 #include <boomhs/stairwell_generator.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
-#include <boomhs/water.hpp>
 
 #include <opengl/texture.hpp>
 
@@ -356,11 +355,8 @@ gen_level(stlw::Logger& logger, LevelConfig const& levelconfig, EntityRegistry& 
   LOG_TRACE("Placing Torch");
   place_torch(tilegrid, registry, rng, ttable);
 
-  LOG_TRACE("Placing Water");
-  auto water = WaterFactory::make_default(logger, sps, ttable);
-
   LOG_TRACE("Finished!");
-  return LevelGeneratedData{MOVE(tilegrid), starting_pos, MOVE(rivers), MOVE(terrain), MOVE(water)};
+  return LevelGeneratedData{MOVE(tilegrid), starting_pos, MOVE(rivers), MOVE(terrain)};
 }
 
 } // namespace boomhs::dungeon_generator

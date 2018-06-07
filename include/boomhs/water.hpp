@@ -34,10 +34,13 @@ struct WaterTileThing
 
 struct WaterInfo
 {
-  glm::vec2              position;
-  opengl::DrawInfo       dinfo;
-  opengl::ShaderProgram& shader;
-  opengl::TextureInfo*   tinfo;
+  glm::vec2         position;
+  opengl::DrawInfo* dinfo = nullptr;
+  ;
+  opengl::ShaderProgram* shader = nullptr;
+  ;
+  opengl::TextureInfo* tinfo = nullptr;
+  ;
 
   float wave_offset = 0.0f;
 
@@ -45,22 +48,15 @@ struct WaterInfo
   // constructors
   NO_COPY(WaterInfo);
   MOVE_DEFAULT(WaterInfo);
-  WaterInfo(glm::vec2 const&, opengl::DrawInfo&&, opengl::ShaderProgram&, opengl::TextureInfo&);
-};
-
-struct WaterInfoConfig
-{
-  glm::vec2 const& position;
-  glm::vec2 const& dimensions;
-  size_t const     num_vertexes;
+  WaterInfo() = default;
+  // WaterInfo(glm::vec2 const&, opengl::DrawInfo&, opengl::ShaderProgram&, opengl::TextureInfo&);
 };
 
 struct WaterFactory
 {
   static ObjData generate_water_data(stlw::Logger&, glm::vec2 const&, size_t);
 
-  static WaterInfo generate_info(stlw::Logger&, WaterInfoConfig const&, opengl::ShaderProgram&,
-                                 opengl::TextureInfo&);
+  static WaterInfo generate_info(stlw::Logger&, opengl::ShaderProgram&, opengl::TextureInfo&);
 
   static WaterInfo make_default(stlw::Logger&, opengl::ShaderPrograms&, opengl::TextureTable&);
 };

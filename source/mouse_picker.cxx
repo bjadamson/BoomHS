@@ -48,8 +48,6 @@ MousePicker::calculate_ray(FrameState& fstate) const
   auto const      mouse_coords = glm::vec2{coords.x, coords.y};
   glm::vec2 const ndc          = calc_ndc(mouse_coords, es.dimensions);
 
-  auto& logger = es.logger;
-
   glm::vec4 const clip       = glm::vec4{ndc.x, ndc.y, Z, 1.0f};
   glm::vec4 const eyespace   = calc_eyespace(clip);
   glm::vec3 const worldspace = calc_worldspace(eyespace);

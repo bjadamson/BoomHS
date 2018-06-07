@@ -34,6 +34,18 @@ AxisAlignedBoundingBox::dimensions() const
   return glm::vec3{w, h, l};
 }
 
+glm::vec3
+AxisAlignedBoundingBox::center() const
+{
+  return half_widths();
+}
+
+glm::vec3
+AxisAlignedBoundingBox::half_widths() const
+{
+  return dimensions() / glm::vec3{2.0f};
+}
+
 std::vector<EntityID>
 find_stairs_withtype(EntityRegistry& registry, TileGrid const& tgrid, TileType const type)
 {

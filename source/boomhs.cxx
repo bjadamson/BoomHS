@@ -410,15 +410,76 @@ init(Engine& engine, EngineState& engine_state, Camera& camera)
 }
 
 void
+init_entities(stlw::Logger& logger, EntityRegistry& registry, ShaderPrograms& sps,
+              TextureTable& ttable, GpuState& gpu_state)
+{
+  LOG_TRACE("Placing Water");
+  auto const eid = registry.create();
+  auto*      p   = &registry.assign<WaterInfo>(eid);
+  *p             = WaterFactory::make_default(logger, sps, ttable);
+
+  auto& wi = registry.get<WaterInfo>(eid);
+
+  glm::vec2 const position{0, 0};
+  size_t const    num_vertexes = 64;
+  glm::vec2 const dimensions{20};
+  auto const      data = WaterFactory::generate_water_data(logger, dimensions, num_vertexes);
+
+  {
+    BufferFlags const flags{true, false, false, true};
+    auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
+    auto&             sp     = sps.ref_sp("water");
+    auto              dinfo  = gpu::copy_gpu(logger, sp.va(), buffer);
+
+    auto& entities_o = gpu_state.entities;
+    assert(entities_o);
+    auto& entities = *entities_o;
+
+    entities.add(eid, MOVE(dinfo));
+    wi.dinfo = &entities.lookup(logger, eid);
+  }
+  {
+    wi.position = position;
+  }
+  {
+    auto& bbox_entities_o = gpu_state.entity_boundingboxes;
+    assert(bbox_entities_o);
+    auto& bbox_entities = *bbox_entities_o;
+
+    auto& bbox = registry.assign<AABoundingBox>(eid);
+    bbox.min   = glm::vec3{-0.5, -0.5, -0.5};
+    bbox.max   = glm::vec3{0.5f, 0.5, 0.5};
+
+    CubeVertices const cv{bbox.min, bbox.max};
+
+    auto& sp    = sps.ref_sp("wireframe");
+    auto  dinfo = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, cv, sp.va());
+    bbox_entities.add(eid, MOVE(dinfo));
+  }
+
+  registry.assign<Selectable>(eid);
+  registry.assign<ShaderName>(eid);
+  registry.assign<IsVisible>(eid).value = true;
+  registry.assign<Name>(eid).value      = "Water";
+
+  auto& tr         = registry.assign<Transform>(eid);
+  tr.translation.x = dimensions.x / 2.0f;
+  tr.translation.z = dimensions.y / 2.0f;
+  // tr.translation.y = -0.5f;
+
+  tr.scale.x = dimensions.x;
+  tr.scale.z = dimensions.y;
+}
+
+void
 game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
           FrameTime const& ft)
 {
   auto& es = state.engine_state;
   es.time.update(ft.since_start_seconds());
 
-  auto& logger         = es.logger;
-  //auto& tilegrid_state = es.tilegrid_state;
-  auto& lm             = state.level_manager;
+  auto& logger = es.logger;
+  auto& lm     = state.level_manager;
 
   // Update the world
   {
@@ -431,15 +492,47 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     // Lookup the player height from the terrain at the player's X, Z world-coordinates.
     auto&       player_pos    = player.transform().translation;
     float const player_height = ldata.terrain.get_height(logger, player_pos.x, player_pos.z);
-    auto const& bbox          = player.bounding_box();
-    player_pos.y              = player_height + (bbox.dimensions().y / 2.0f);
+    auto const& player_bbox   = player.bounding_box();
+    player_pos.y              = player_height + (player_bbox.dimensions().y / 2.0f);
 
-    //auto const& dimensions = ldata.terrain.dimensions();
-    //auto const  tp         = glm::vec3{::fmodf(player_pos.x, dimensions.x), player_pos.y,
-                              //::fmodf(player_pos.z, dimensions.y)};
+    auto const testAABBAABB_SIMD = [&logger](Transform const& at, AABoundingBox const& ab,
+                                             Transform const& bt, AABoundingBox const& bb) {
+      // SIMD optimized AABB-AABB test
+      // Optimized by removing conditional branches
+      auto const& ac = at.translation;
+      auto const& bc = bt.translation;
+      LOG_ERROR_SPRINTF("ac %s bc %s", glm::to_string(ac), glm::to_string(bc));
+
+      auto const ah = ab.half_widths() * at.scale;
+      auto const bh = bb.half_widths() * bt.scale;
+      LOG_ERROR_SPRINTF("ah %s bh %s", glm::to_string(ah), glm::to_string(bh));
+
+      bool x = std::fabs(ac.x - bc.x) <= (ah.x + bh.x);
+      bool y = std::fabs(ac.y - bc.y) <= (ah.y + bh.y);
+      bool z = std::fabs(ac.z - bc.z) <= (ah.z + bh.z);
+      LOG_ERROR_SPRINTF("x %i y %i z %i", x, y, z);
+
+      return x && y && z;
+    };
+
+    auto const weids =
+        find_all_entities_with_component<WaterInfo, Transform, AABoundingBox>(registry);
+    for (auto const eid : weids) {
+      auto&      water_bbox = registry.get<AABoundingBox>(eid);
+      auto&      w_tr       = registry.get<Transform>(eid);
+      auto&      p_tr       = player.transform();
+      bool const collides   = testAABBAABB_SIMD(p_tr, player_bbox, w_tr, water_bbox);
+      if (collides) {
+        LOG_ERROR_SPRINTF("PLAYER IN WATER");
+      }
+    }
+
+    // auto const& dimensions = ldata.terrain.dimensions();
+    // auto const  tp         = glm::vec3{::fmodf(player_pos.x, dimensions.x), player_pos.y,
+    //::fmodf(player_pos.z, dimensions.y)};
     // LOG_ERROR_SPRINTF("player pos WP: %s TP: %s", glm::to_string(player_pos),
     // glm::to_string(tp));
-    //move_betweentilegrids_ifonstairs(logger, camera, tilegrid_state, lm);
+    // move_betweentilegrids_ifonstairs(logger, camera, tilegrid_state, lm);
   }
 
   // Must recalculate zs and registry, possibly changed since call to move_between()
@@ -448,6 +541,17 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   auto& ldata    = zs.level_data;
   auto& player   = ldata.player;
   auto& skybox   = ldata.skybox;
+
+  auto& gfx_state = zs.gfx_state;
+  auto& sps       = gfx_state.sps;
+  auto& ttable    = gfx_state.texture_table;
+
+  static bool once = false;
+  if (!once) {
+    once = true;
+    init_entities(logger, registry, sps, ttable, gfx_state.gpu_state);
+  }
+
   {
     update_nearbytargets(ldata, registry, ft);
     update_orbital_bodies(es, ldata, registry, ft);
@@ -473,7 +577,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     */
 
     // river wiggles get updated every frame
-    //update_visible_riverwiggles(ldata, player, tilegrid_state.reveal);
+    // update_visible_riverwiggles(ldata, player, tilegrid_state.reveal);
 
     update_visible_entities(lm, registry);
     update_torchflicker(ldata, registry, rng, ft);
@@ -502,12 +606,9 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   }
 
   // TODO: Move out into state somewhere.
-  auto& gfx_state = zs.gfx_state;
-  auto& sps       = gfx_state.sps;
 
   auto const&      dim = es.dimensions;
   ScreenSize const screen_size{dim.w, dim.h};
-  auto&            ttable    = gfx_state.texture_table;
   auto&            ti        = *ttable.find("water-diffuse");
   auto&            dudv      = *ttable.find("water-dudv");
   auto&            normal    = *ttable.find("water-normal");

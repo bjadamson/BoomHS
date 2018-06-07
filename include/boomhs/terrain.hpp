@@ -79,7 +79,7 @@ public:
   auto capacity() const { return data_.capacity(); }
   auto size() const { return data_.size(); }
 
-  bool empty() const { return data_.empty(); }
+  bool        empty() const { return data_.empty(); }
   auto const& back() const { return data_.back(); }
 };
 
@@ -114,7 +114,7 @@ public:
   auto num_rows() const { return config.num_rows; }
 
   glm::vec2 max_worldpositions() const;
-  auto rows_and_columns() const { return stlw::make_array<size_t>(num_rows(), num_cols()); }
+  auto      rows_and_columns() const { return stlw::make_array<size_t>(num_rows(), num_cols()); }
 
   auto count() const { return terrain_.size(); }
   auto size() const { return count(); }

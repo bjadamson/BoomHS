@@ -40,7 +40,6 @@ assemble(LevelGeneratedData&& gendata, LevelAssets&& assets, EntityRegistry& reg
                        MOVE(gendata.startpos),
                        MOVE(gendata.rivers),
                        MOVE(gendata.terrain),
-                       MOVE(gendata.water),
 
                        assets.fog,
                        assets.global_light,

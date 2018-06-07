@@ -25,7 +25,6 @@ struct LevelGeneratedData
   TilePosition           startpos;
   std::vector<RiverInfo> rivers;
   TerrainGrid            terrain;
-  WaterInfo              water;
 };
 
 class LevelData
@@ -47,14 +46,12 @@ class LevelData
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileGrid&&, TileSharedInfoTable&&, TilePosition const&, std::vector<RiverInfo>&&,
-            TerrainGrid&&, WaterInfo&&, Fog const&, opengl::GlobalLight const&, ObjStore&&,
-            WorldObject&&);
+            TerrainGrid&&, Fog const&, opengl::GlobalLight const&, ObjStore&&, WorldObject&&);
 
   // public fields
   Skybox      skybox;
   Fog         fog;
   TerrainGrid terrain;
-  WaterInfo   water;
 
   opengl::GlobalLight global_light;
 

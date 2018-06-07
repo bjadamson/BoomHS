@@ -124,6 +124,19 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
   auto const eid     = uistate.selected_entity;
 
   auto const draw = [&]() {
+    if (registry.has<Name>(eid)) {
+      auto& name        = registry.get<Name>(eid).value;
+      char  buffer[128] = {'0'};
+      FOR(i, name.size()) { buffer[i] = name[i]; }
+      ImGui::InputText(name.c_str(), buffer, IM_ARRAYSIZE(buffer));
+    }
+    if (registry.has<AABoundingBox>(eid)) {
+      if (ImGui::CollapsingHeader("BoundingBox Editor")) {
+        auto const& bbox = registry.get<AABoundingBox>(eid);
+        ImGui::Text("min: %s", glm::to_string(bbox.min).c_str());
+        ImGui::Text("max: %s", glm::to_string(bbox.max).c_str());
+      }
+    }
     if (ImGui::CollapsingHeader("Transform Editor")) {
       auto& transform = registry.get<Transform>(eid);
       ImGui::InputFloat3("pos:", glm::value_ptr(transform.translation));

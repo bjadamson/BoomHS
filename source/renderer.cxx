@@ -589,6 +589,76 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
   LOG_TRACE("Finished Drawing Local Axis");
 }
 
+template <typename... Args>
+void
+draw_entity_fn(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo,
+               EntityID const eid, ShaderName& sn, Transform const& transform, IsVisible& is_v,
+               AABoundingBox& bbox, Args&&...)
+{
+  auto&       fstate = rstate.fs;
+  auto const& es     = fstate.es;
+  auto&       logger = es.logger;
+  auto&       zs     = fstate.zs;
+
+  auto& registry = zs.registry;
+  auto& sps      = zs.gfx_state.sps;
+
+  auto const& ldata  = zs.level_data;
+  auto const& player = ldata.player;
+
+  bool const skip = !is_v.value;
+  if (skip) {
+    return;
+  }
+
+  auto const& tr = transform.translation;
+  {
+    /*
+    // TODO: only call recalulate when the camera moves
+    Frustum view_frust;
+    view_frust.recalculate(fstate);
+
+    float const halfsize        = glm::length(bbox.max - bbox.min) / 2.0f;
+    bool const  bbox_in_frustum = view_frust.cube_in_frustum(tr, halfsize);
+
+    if (!bbox_in_frustum) {
+      return;
+    }
+    */
+  }
+
+  bool const is_lightsource = registry.has<PointLight>(eid);
+  auto const model_matrix   = transform.model_matrix();
+
+  auto& vao = dinfo.vao();
+  vao.while_bound(logger, [&]() {
+    if (is_lightsource) {
+      assert(is_lightsource);
+      draw_3dlightsource(rstate, dm, model_matrix, sp, dinfo, eid, registry);
+      return;
+    }
+    bool constexpr RECEIVES_AMBIENT_LIGHT = true;
+
+    bool const receives_light = registry.has<Material>(eid);
+    if (receives_light) {
+      assert(registry.has<Material>(eid));
+      Material const& material = registry.get<Material>(eid);
+      draw_3dlit_shape(rstate, dm, tr, model_matrix, sp, dinfo, material, registry,
+                       RECEIVES_AMBIENT_LIGHT);
+      return;
+    }
+
+    // Can't receive light
+    assert(!registry.has<Material>());
+
+    if (!sp.is_2d) {
+      auto const camera_matrix = fstate.camera_matrix();
+      set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
+    }
+    draw(rstate, dm, sp, dinfo);
+  });
+}
+
 void
 draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
 {
@@ -610,63 +680,13 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 #define COMMON ShaderName, Transform, IsVisible, AABoundingBox
 #define COMMON_ARGS auto const eid, auto &sn, auto &transform, auto &is_v, auto &bbox
 
-  auto const draw_fn = [&](GLenum const dm, auto& sp, auto& dinfo, COMMON_ARGS, auto&&...) {
-    bool const skip = !is_v.value;
-    if (skip) {
-      return;
-    }
-
-    {
-      // TODO: only call recalulate when the camera moves
-      Frustum view_frust;
-      view_frust.recalculate(fstate);
-
-      float const halfsize        = glm::length(bbox.max - bbox.min) / 2.0f;
-      bool const  bbox_in_frustum = view_frust.cube_in_frustum(transform.translation, halfsize);
-
-      if (!bbox_in_frustum) {
-        return;
-      }
-    }
-
-    auto& vao = dinfo.vao();
-
-    bool const is_lightsource = registry.has<PointLight>(eid);
-    auto const model_matrix   = transform.model_matrix();
-
-    vao.while_bound(logger, [&]() {
-      if (is_lightsource) {
-        assert(is_lightsource);
-        draw_3dlightsource(rstate, dm, model_matrix, sp, dinfo, eid, registry);
-        return;
-      }
-      bool constexpr RECEIVES_AMBIENT_LIGHT = true;
-
-      bool const receives_light = registry.has<Material>(eid);
-      if (receives_light) {
-        assert(registry.has<Material>(eid));
-        Material const& material = registry.get<Material>(eid);
-        draw_3dlit_shape(rstate, dm, transform.translation, model_matrix, sp, dinfo, material,
-                         registry, RECEIVES_AMBIENT_LIGHT);
-        return;
-      }
-
-      // Can't receive light
-      assert(!registry.has<Material>());
-
-      if (!sp.is_2d) {
-        auto const camera_matrix = fstate.camera_matrix();
-        set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
-      }
-      draw(rstate, dm, sp, dinfo);
-    });
-  };
   auto const draw_entity = [&](COMMON_ARGS, auto&&... args) {
     auto& dinfo = eh.lookup(logger, eid);
     auto& sp    = sps.ref_sp(sn.value);
 
     sp.while_bound(logger, [&]() {
-      draw_fn(GL_TRIANGLES, sp, dinfo, eid, sn, transform, is_v, bbox, FORWARD(args));
+      draw_entity_fn(rstate, GL_TRIANGLES, sp, dinfo, eid, sn, transform, is_v, bbox,
+                     FORWARD(args));
     });
   };
 
@@ -698,8 +718,9 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   auto const draw_junk = [&](COMMON_ARGS, Color&, JunkEntityFromFILE& je) {
     auto& dinfo = eh.lookup(logger, eid);
     auto& sp    = sps.ref_sp(sn.value);
-    sp.while_bound(logger,
-                   [&]() { draw_fn(je.draw_mode, sp, dinfo, eid, sn, transform, is_v, bbox); });
+    sp.while_bound(logger, [&]() {
+      draw_entity_fn(rstate, je.draw_mode, sp, dinfo, eid, sn, transform, is_v, bbox);
+    });
   };
   auto const draw_torch = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
     {
@@ -726,7 +747,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     assert(ti);
     ti->while_bound(logger, [&]() { draw_entity(eid, sn, copy_transform, is_v, bbox, torch); });
   };
-  auto const draw_boundingboxes = [&](COMMON_ARGS, Selectable& sel) {
+  auto const draw_boundingboxes = [&](COMMON_ARGS, Selectable& sel, auto&&...) {
     if (!es.draw_bounding_boxes) {
       return;
     }
@@ -736,7 +757,9 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_color(logger, "u_wirecolor", wire_color);
       auto& dinfo = ebbh.lookup(logger, eid);
-      draw_fn(GL_LINES, sp, dinfo, eid, sn, transform, is_v, bbox);
+
+      auto tr = transform;
+      draw_entity_fn(rstate, GL_LINES, sp, dinfo, eid, sn, tr, is_v, bbox);
     });
   };
 
@@ -754,7 +777,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   registry.view<COMMON, BillboardRenderable, OrbitalBody, TextureRenderable>().each(
       draw_orbital_body);
 
-  // registry.view<COMMON, WaterTileThing>().each(draw_fn);
+  // registry.view<COMMON, WaterTileThing>().each(draw_entity_fn);
   registry.view<COMMON, TextureRenderable, JunkEntityFromFILE>().each(draw_textured_junk_fn);
 
   registry.view<COMMON, Torch, TextureRenderable>().each(draw_torch);
@@ -764,6 +787,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   // CUBES
   registry.view<COMMON, CubeRenderable, PointLight>().each(draw_plain_cube);
   registry.view<COMMON, Selectable>().each(draw_boundingboxes);
+  // registry.view<COMMON, Selectable, JunkEntityFromFILE>().each(draw_boundingboxes);
 
   registry.view<COMMON, MeshRenderable, NPCData>().each(
       [&](auto&&... args) { draw_entity(FORWARD(args)); });

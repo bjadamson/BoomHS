@@ -31,22 +31,22 @@ namespace
 
 void
 move_worldobject(GameState& state, glm::vec3 (WorldObject::*fn)() const, WorldObject& wo,
-                FrameTime const& ft)
+                 FrameTime const& ft)
 {
   auto& es = state.engine_state;
   auto& ts = es.tilegrid_state;
 
-  auto&            lm        = state.level_manager;
-  auto &zs                   = lm.active();
-  LevelData const& ldata = zs.level_data;
-  auto const& terrain_grid   = ldata.terrain;
+  auto&            lm           = state.level_manager;
+  auto&            zs           = lm.active();
+  LevelData const& ldata        = zs.level_data;
+  auto const&      terrain_grid = ldata.terrain;
 
   auto const max_pos = terrain_grid.max_worldpositions();
   auto const max_x   = max_pos.x;
   auto const max_z   = max_pos.y;
 
-  auto& logger   = es.logger;
-  glm::vec3 const move_vec   = (wo.*fn)();
+  auto&           logger   = es.logger;
+  glm::vec3 const move_vec = (wo.*fn)();
 
   glm::vec3 const delta  = move_vec * wo.speed() * ft.delta_millis();
   glm::vec3 const newpos = wo.world_position() + delta;
@@ -76,11 +76,11 @@ move_worldobject(GameState& state, glm::vec3 (WorldObject::*fn)() const, WorldOb
     ts.recompute = true;
   }
   else {
-    //auto const tpos        = TilePosition::from_floats_truncated(newpos.x, newpos.z);
-    //bool const should_move = (!es.player_collision) || !leveldata.is_wall(tpos);
-    //if (should_move) {
-      wo.move(delta);
-      ts.recompute = true;
+    // auto const tpos        = TilePosition::from_floats_truncated(newpos.x, newpos.z);
+    // bool const should_move = (!es.player_collision) || !leveldata.is_wall(tpos);
+    // if (should_move) {
+    wo.move(delta);
+    ts.recompute = true;
     //}
   }
 }

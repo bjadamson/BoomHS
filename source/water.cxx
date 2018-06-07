@@ -24,16 +24,6 @@ namespace boomhs
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// WaterInfo
-WaterInfo::WaterInfo(glm::vec2 const& p, DrawInfo&& d, ShaderProgram& s, TextureInfo& t)
-    : position(p)
-    , dinfo(MOVE(d))
-    , shader(s)
-    , tinfo(&t)
-{
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 // WaterFactory
 ObjData
 WaterFactory::generate_water_data(stlw::Logger& logger, glm::vec2 const& dimensions,
@@ -55,27 +45,19 @@ WaterFactory::generate_water_data(stlw::Logger& logger, glm::vec2 const& dimensi
 }
 
 WaterInfo
-WaterFactory::generate_info(stlw::Logger& logger, WaterInfoConfig const& wic, ShaderProgram& sp,
-                            TextureInfo& tinfo)
+WaterFactory::generate_info(stlw::Logger& logger, ShaderProgram& sp, TextureInfo& tinfo)
 {
-  auto const data = generate_water_data(logger, wic.dimensions, wic.num_vertexes);
-  LOG_TRACE_SPRINTF("Generated water piece: %s", data.to_string());
+  WaterInfo wi{};
+  wi.shader = &sp;
+  wi.tinfo  = &tinfo;
 
-  BufferFlags const flags{true, false, false, true};
-  auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
-  auto              di     = gpu::copy_gpu(logger, sp.va(), buffer);
-
-  return WaterInfo{wic.position, MOVE(di), sp, tinfo};
+  return wi;
 }
 
 WaterInfo
 WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTable& ttable)
 {
   LOG_TRACE("Generating water");
-  glm::vec2 const       pos{0, 0};
-  size_t const          num_vertexes = 64;
-  glm::vec2 const       dimensions{20};
-  WaterInfoConfig const wic{pos, dimensions, num_vertexes};
 
   auto texture_o = ttable.find("water-diffuse");
   assert(texture_o);
@@ -84,7 +66,7 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
   // These uniforms only need to be set once.
   auto& sp = sps.ref_sp("water");
 
-  auto wi = generate_info(logger, wic, sp, ti);
+  auto wi = generate_info(logger, sp, ti);
 
   auto& tinfo = wi.tinfo;
   tinfo->while_bound(logger, [&]() {
@@ -180,8 +162,11 @@ WaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm
     tr.y = 0.19999f; // pos.y;
     assert(tr.y < 2.0f);
 
-    auto& sp    = winfo.shader;
-    auto& dinfo = winfo.dinfo;
+    assert(winfo.shader);
+    auto& sp = *winfo.shader;
+
+    assert(winfo.dinfo);
+    auto& dinfo = *winfo.dinfo;
     auto& vao   = dinfo.vao();
 
     bool constexpr RECEIVES_AMBIENT_LIGHT = true;
@@ -212,7 +197,11 @@ WaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm
   };
 
   LOG_TRACE("Rendering water");
-  render(ldata.water);
+  auto const winfos = find_all_entities_with_component<WaterInfo>(registry);
+  for (auto const weid : winfos) {
+    auto& wi = registry.get<WaterInfo>(weid);
+    render(wi);
+  }
   LOG_TRACE("Finished rendering water");
 }
 
