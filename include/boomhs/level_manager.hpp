@@ -23,6 +23,8 @@ public:
   int  num_levels() const;
   int  active_zone() const;
 
+  BEGIN_END_FORWARD_FNS(zstates_);
+
   /*
   void
   add_zone(ZoneState &&zone)

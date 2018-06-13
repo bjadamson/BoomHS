@@ -22,7 +22,7 @@ Result<GameState, std::string>
 create_gamestate(Engine&, EngineState&, Camera&);
 
 void
-init(Engine&, GameState&);
+init(GameState&);
 
 void
 game_loop(Engine&, GameState&, stlw::float_generator&, Camera&, window::FrameTime const&);

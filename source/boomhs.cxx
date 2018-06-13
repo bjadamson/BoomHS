@@ -377,22 +377,22 @@ create_gamestate(Engine& engine, EngineState& engine_state, Camera& camera)
 }
 
 void
-init(Engine& engine, GameState& state)
+init(GameState& state)
 {
   auto& logger = state.engine_state.logger;
-  auto& lm     = state.level_manager;
 
-  auto& zs        = lm.active();
-  auto& gfx_state = zs.gfx_state;
-  auto& gpu_state = gfx_state.gpu_state;
-  auto& sps       = gfx_state.sps;
-  auto& ttable    = gfx_state.texture_table;
+  auto const init_fn = [&](ZoneState& zs) {
+    auto& registry  = zs.registry;
+    auto& gfx_state = zs.gfx_state;
+    auto& gpu_state = gfx_state.gpu_state;
+    auto& sps       = gfx_state.sps;
+    auto& ttable    = gfx_state.texture_table;
 
-  auto const init_fn = [&](EntityRegistry& registry) {
-    LOG_TRACE("Placing Water");
     auto const eid = registry.create();
-    auto*      p   = &registry.assign<WaterInfo>(eid);
-    *p             = WaterFactory::make_default(logger, sps, ttable);
+
+    LOG_TRACE("Placing Water");
+    auto* p = &registry.assign<WaterInfo>(eid);
+    *p      = WaterFactory::make_default(logger, sps, ttable);
 
     auto& wi = registry.get<WaterInfo>(eid);
 
@@ -445,13 +445,8 @@ init(Engine& engine, GameState& state)
     tr.scale.z = dimensions.y;
   };
 
-  auto& registries = engine.registries;
-  for (auto& r : registries) {
-    init_fn(r);
-
-    // TODO: some bug with water (maybe statics) preventing us from initializing more than one
-    // registry
-    break;
+  for (auto& zs : state.level_manager) {
+    init_fn(zs);
   }
 }
 
@@ -464,12 +459,6 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
 
   auto& logger = es.logger;
   auto& lm     = state.level_manager;
-
-  static bool once = false;
-  if (!once) {
-    once = true;
-    init(engine, state);
-  }
 
   // Update the world
   {

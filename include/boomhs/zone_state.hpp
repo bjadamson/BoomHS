@@ -23,7 +23,8 @@ struct GpuState
   std::optional<opengl::EntityDrawHandleMap> entity_boundingboxes;
   std::optional<opengl::TileDrawHandles>     tiles;
 
-  MOVE_CONSTRUCTIBLE_ONLY(GpuState);
+  NO_COPY(GpuState);
+  MOVE_DEFAULT(GpuState);
 };
 
 struct GfxState
@@ -38,7 +39,8 @@ struct GfxState
   {
   }
 
-  MOVE_CONSTRUCTIBLE_ONLY(GfxState);
+  NO_COPY(GfxState);
+  MOVE_DEFAULT(GfxState);
 };
 
 // This lives here, and not in zone.hpp, to avoid circular include cyle.
@@ -54,7 +56,8 @@ struct ZoneState
       , registry(reg)
   {
   }
-  MOVE_CONSTRUCTIBLE_ONLY(ZoneState);
+  NO_COPY(ZoneState);
+  MOVE_DEFAULT(ZoneState);
 };
 // This lives here, and not in zone.hpp, to avoid circular include cyle.
 using ZoneStates = std::vector<ZoneState>;
