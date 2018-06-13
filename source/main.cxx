@@ -149,7 +149,9 @@ start(stlw::Logger& logger, Engine& engine)
   // Construct game state
   auto        camera = Camera::make_defaultcamera();
   EngineState es{logger, *al_device, io, dimensions};
-  GameState   gs = TRY_MOVEOUT(boomhs::init(engine, es, camera));
+  GameState   gs = TRY_MOVEOUT(boomhs::create_gamestate(engine, es, camera));
+
+  boomhs::init(engine, gs);
 
   // Start game in a timed loop
   timed_game_loop(engine, gs, camera);

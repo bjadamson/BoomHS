@@ -26,6 +26,7 @@ bool
 ray_box_intersect(Ray const&, Transform const&, AABoundingBox const&);
 
 bool
-bbox_intersects(Transform const&, AABoundingBox const&, Transform const&, AABoundingBox const&);
+bbox_intersects(stlw::Logger&, Transform const&, AABoundingBox const&, Transform const&,
+                AABoundingBox const&);
 
 } // namespace boomhs::collision

@@ -112,11 +112,14 @@ struct GameState
   explicit GameState(EngineState&, LevelManager&&);
 };
 
+using EntityRegistries = std::vector<EntityRegistry>;
+
 struct Engine
 {
-  window::SDLWindow           window;
-  window::SDLControllers      controllers;
-  std::vector<EntityRegistry> registries = {};
+  window::SDLWindow      window;
+  window::SDLControllers controllers;
+
+  EntityRegistries registries = {};
 
   Engine() = delete;
   explicit Engine(window::SDLWindow&&, window::SDLControllers&&);
