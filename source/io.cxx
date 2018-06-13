@@ -252,7 +252,7 @@ select_mouse_under_cursor(FrameState& fstate)
     auto&       selectable = registry.get<Selectable>(eid);
 
     Ray const  ray{ray_start, ray_dir};
-    bool const intersects = collision::box_intersect(ray, transform, bbox);
+    bool const intersects = collision::ray_box_intersect(ray, transform, bbox);
     selectable.selected   = intersects;
 
     // auto&            tree_transform = registry.get<Transform>(eid);
