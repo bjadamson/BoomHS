@@ -20,7 +20,7 @@ struct FBInfo
   boomhs::ScreenSize const screen_size;
 
   FBInfo(boomhs::Dimensions const&, boomhs::ScreenSize const&);
-  COPY_DEFAULT(FBInfo);
+  NO_COPY(FBInfo);
   MOVE_DEFAULT(FBInfo);
 
   // methods

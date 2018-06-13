@@ -10,8 +10,9 @@ using namespace window;
 namespace boomhs
 {
 
-EngineState::EngineState(stlw::Logger& l, ImGuiIO& i, Dimensions const& d)
+EngineState::EngineState(stlw::Logger& l, ALCdevice& al, ImGuiIO& i, Dimensions const& d)
     : logger(l)
+    , al_device(al)
     , imgui(i)
     , dimensions(d)
     , player_collision(false)

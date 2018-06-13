@@ -1,3 +1,4 @@
+#include <boomhs/audio.hpp>
 #include <boomhs/boomhs.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/collision.hpp>
@@ -447,8 +448,8 @@ init_entities(stlw::Logger& logger, EntityRegistry& registry, ShaderPrograms& sp
     auto& bbox_entities = *bbox_entities_o;
 
     auto& bbox = registry.assign<AABoundingBox>(eid);
-    bbox.min   = glm::vec3{-0.5, -0.5, -0.5};
-    bbox.max   = glm::vec3{0.5f, 0.5, 0.5};
+    bbox.min   = glm::vec3{-0.5, -0.2, -0.5};
+    bbox.max   = glm::vec3{0.5f, 0.2, 0.5};
 
     CubeVertices const cv{bbox.min, bbox.max};
 
@@ -465,7 +466,6 @@ init_entities(stlw::Logger& logger, EntityRegistry& registry, ShaderPrograms& sp
   auto& tr         = registry.assign<Transform>(eid);
   tr.translation.x = dimensions.x / 2.0f;
   tr.translation.z = dimensions.y / 2.0f;
-  // tr.translation.y = -0.5f;
 
   tr.scale.x = dimensions.x;
   tr.scale.z = dimensions.y;
@@ -522,8 +522,19 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
       auto&      w_tr       = registry.get<Transform>(eid);
       auto&      p_tr       = player.transform();
       bool const collides   = testAABBAABB_SIMD(p_tr, player_bbox, w_tr, water_bbox);
+
+      static auto audio_r = WaterAudioSystem::create();
+      static auto audio   = audio_r.expect_moveout("WAS");
+
       if (collides) {
-        LOG_ERROR_SPRINTF("PLAYER IN WATER");
+        audio.play_inwater_sound(logger);
+
+        if (audio.is_playing_watersound()) {
+          LOG_ERROR("PLAYING SOUND");
+        }
+      }
+      else {
+        audio.stop_inwater_sound(logger);
       }
     }
 

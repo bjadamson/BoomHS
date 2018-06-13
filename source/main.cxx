@@ -125,6 +125,22 @@ start(stlw::Logger& logger, Engine& engine)
   auto const dimensions = engine.dimensions();
   boomhs::render::init(logger, dimensions);
 
+  // Initialize openAL
+  ALCdevice* al_device = alcOpenDevice(nullptr);
+  if (!al_device) {
+    return Err(fmt::sprintf("Error opening openal device"));
+  }
+  ON_SCOPE_EXIT([&al_device]() { alcCloseDevice(al_device); });
+  ALCcontext* ctx = alcCreateContext(al_device, NULL);
+  if (!ctx) {
+    return Err(fmt::sprintf("Error making openal context current"));
+  }
+  ON_SCOPE_EXIT([&ctx]() {
+    alcMakeContextCurrent(NULL);
+    alcDestroyContext(ctx);
+  });
+  alcMakeContextCurrent(ctx);
+
   // Configure Imgui
   auto& io           = ImGui::GetIO();
   io.MouseDrawCursor = true;
@@ -132,7 +148,7 @@ start(stlw::Logger& logger, Engine& engine)
 
   // Construct game state
   auto        camera = Camera::make_defaultcamera();
-  EngineState es{logger, io, dimensions};
+  EngineState es{logger, *al_device, io, dimensions};
   GameState   gs = TRY_MOVEOUT(boomhs::init(engine, es, camera));
 
   // Start game in a timed loop

@@ -11,6 +11,8 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
+#include <extlibs/openal.hpp>
+
 struct ImGuiIO;
 namespace boomhs
 {
@@ -61,6 +63,7 @@ struct TiledataState
 struct EngineState
 {
   stlw::Logger&    logger;
+  ALCdevice&       al_device;
   ImGuiIO&         imgui;
   Dimensions const dimensions;
   Time             time;
@@ -96,7 +99,7 @@ struct EngineState
 
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);
-  EngineState(stlw::Logger&, ImGuiIO&, Dimensions const&);
+  EngineState(stlw::Logger&, ALCdevice&, ImGuiIO&, Dimensions const&);
 };
 
 struct GameState
