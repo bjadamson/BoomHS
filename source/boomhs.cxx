@@ -315,72 +315,70 @@ create_gamestate(Engine& engine, EngineState& engine_state, Camera& camera)
 }
 
 void
+place_water(stlw::Logger& logger, ZoneState& zs)
+{
+  auto& registry  = zs.registry;
+  auto& gfx_state = zs.gfx_state;
+  auto& gpu_state = gfx_state.gpu_state;
+  auto& sps       = gfx_state.sps;
+  auto& ttable    = gfx_state.texture_table;
+
+  auto const eid = registry.create();
+
+  LOG_TRACE("Placing Water");
+  auto* p = &registry.assign<WaterInfo>(eid);
+  *p      = WaterFactory::make_default(logger, sps, ttable);
+
+  auto& wi = registry.get<WaterInfo>(eid);
+  wi.position = glm::vec2{0, 0};
+
+  size_t constexpr    num_vertexes = 64;
+  glm::vec2 constexpr dimensions{20};
+  auto const      data = WaterFactory::generate_water_data(logger, dimensions, num_vertexes);
+  {
+    BufferFlags const flags{true, false, false, true};
+    auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
+    auto&             sp     = sps.ref_sp("water");
+    auto              dinfo  = gpu::copy_gpu(logger, sp.va(), buffer);
+
+    auto& entities = gpu_state.entities;
+
+    entities.add(eid, MOVE(dinfo));
+    wi.dinfo = &entities.lookup(logger, eid);
+  }
+  {
+    auto& bbox_entities = gpu_state.entity_boundingboxes;
+
+    auto& bbox = registry.assign<AABoundingBox>(eid);
+    bbox.min   = glm::vec3{-0.5, -0.2, -0.5};
+    bbox.max   = glm::vec3{0.5f, 0.2, 0.5};
+
+    CubeVertices const cv{bbox.min, bbox.max};
+
+    auto& sp    = sps.ref_sp("wireframe");
+    auto  dinfo = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, cv, sp.va());
+    bbox_entities.add(eid, MOVE(dinfo));
+  }
+
+  registry.assign<Selectable>(eid);
+  registry.assign<ShaderName>(eid);
+  registry.assign<IsVisible>(eid).value = true;
+  registry.assign<Name>(eid).value      = "Water";
+
+  auto& tr         = registry.assign<Transform>(eid);
+  tr.translation.x = dimensions.x / 2.0f;
+  tr.translation.z = dimensions.y / 2.0f;
+
+  tr.scale.x = dimensions.x;
+  tr.scale.z = dimensions.y;
+}
+
+void
 init(GameState& state)
 {
   auto& logger = state.engine_state.logger;
-
-  auto const init_fn = [&](ZoneState& zs) {
-    auto& registry  = zs.registry;
-    auto& gfx_state = zs.gfx_state;
-    auto& gpu_state = gfx_state.gpu_state;
-    auto& sps       = gfx_state.sps;
-    auto& ttable    = gfx_state.texture_table;
-
-    auto const eid = registry.create();
-
-    LOG_TRACE("Placing Water");
-    auto* p = &registry.assign<WaterInfo>(eid);
-    *p      = WaterFactory::make_default(logger, sps, ttable);
-
-    auto& wi = registry.get<WaterInfo>(eid);
-
-    glm::vec2 const position{0, 0};
-    size_t const    num_vertexes = 64;
-    glm::vec2 const dimensions{20};
-    auto const      data = WaterFactory::generate_water_data(logger, dimensions, num_vertexes);
-    {
-      BufferFlags const flags{true, false, false, true};
-      auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
-      auto&             sp     = sps.ref_sp("water");
-      auto              dinfo  = gpu::copy_gpu(logger, sp.va(), buffer);
-
-      auto& entities = gpu_state.entities;
-
-      entities.add(eid, MOVE(dinfo));
-      wi.dinfo = &entities.lookup(logger, eid);
-    }
-    {
-      wi.position = position;
-    }
-    {
-      auto& bbox_entities = gpu_state.entity_boundingboxes;
-
-      auto& bbox = registry.assign<AABoundingBox>(eid);
-      bbox.min   = glm::vec3{-0.5, -0.2, -0.5};
-      bbox.max   = glm::vec3{0.5f, 0.2, 0.5};
-
-      CubeVertices const cv{bbox.min, bbox.max};
-
-      auto& sp    = sps.ref_sp("wireframe");
-      auto  dinfo = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, cv, sp.va());
-      bbox_entities.add(eid, MOVE(dinfo));
-    }
-
-    registry.assign<Selectable>(eid);
-    registry.assign<ShaderName>(eid);
-    registry.assign<IsVisible>(eid).value = true;
-    registry.assign<Name>(eid).value      = "Water";
-
-    auto& tr         = registry.assign<Transform>(eid);
-    tr.translation.x = dimensions.x / 2.0f;
-    tr.translation.z = dimensions.y / 2.0f;
-
-    tr.scale.x = dimensions.x;
-    tr.scale.z = dimensions.y;
-  };
-
   for (auto& zs : state.level_manager) {
-    init_fn(zs);
+    place_water(logger, zs);
   }
 }
 
