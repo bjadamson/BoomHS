@@ -52,89 +52,43 @@ namespace
 {
 
 void
-move_betweentilegrids_ifonstairs(stlw::Logger& logger, Camera& camera, TiledataState& tds,
-                                 LevelManager& lm)
+update_playaudio(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registry)
 {
-  auto& ldata = lm.active().level_data;
-
   auto&      player = ldata.player;
-  auto const wp     = player.world_position();
-  {
-    auto const dim = ldata.dimensions();
-    assert(wp.x < dim.x);
-    assert(wp.z < dim.y);
-  }
-  /*
-  auto const& tilegrid = ldata.tilegrid();
-  auto const& tile     = tilegrid.data(wp.x, wp.z);
-  if (tile.type == TileType::TELEPORTER) {
-    {
-      int const current  = lm.active_zone();
-      int const newlevel = current == 0 ? 1 : 0;
-      assert(newlevel < lm.num_levels());
-      LOG_TRACE_SPRINTF("setting level to: %i", newlevel);
-      lm.make_active(newlevel, tds);
+  auto const eids = find_all_entities_with_component<WaterInfo, Transform, AABoundingBox>(registry);
+  for (auto const eid : eids) {
+    auto& water_bbox = registry.get<AABoundingBox>(eid);
+    auto& w_tr       = registry.get<Transform>(eid);
+    auto& p_tr       = player.transform();
+
+    auto const& player_bbox = player.bounding_box();
+    bool const  collides = collision::bbox_intersects(logger, p_tr, player_bbox, w_tr, water_bbox);
+
+    static auto audio_r = WaterAudioSystem::create();
+    static auto audio   = audio_r.expect_moveout("WAS");
+
+    if (collides) {
+      audio.play_inwater_sound(logger);
+
+      if (audio.is_playing_watersound()) {
+        LOG_ERROR("PLAYING SOUND");
+      }
     }
-
-    // now that the zone has changed, all references through lm are pointing to old level.
-    // use active()
-    auto& zs    = lm.active();
-    auto& ldata = zs.level_data;
-
-    auto& player   = ldata.player;
-    auto& registry = zs.registry;
-
-    player.move_to(10, player.world_position().y, 10);
-    camera.set_target(player.transform());
-    return;
-  }
-  if (!tile.is_stair()) {
-    return;
-  }
-
-  auto const move_player_through_stairs = [&](StairInfo const& stair) {
-    {
-      int const current  = lm.active_zone();
-      int const newlevel = current + (tile.is_stair_up() ? 1 : -1);
-      assert(newlevel < lm.num_levels());
-      lm.make_active(newlevel, tds);
-    }
-
-    // now that the zone has changed, all references through lm are pointing to old level.
-    // use active()
-    auto& zs    = lm.active();
-    auto& ldata = zs.level_data;
-
-    auto& player   = ldata.player;
-    auto& registry = zs.registry;
-
-    auto const spos = stair.exit_position;
-    player.move_to(spos.x, player.world_position().y, spos.y);
-    camera.set_target(player.transform());
-    player.rotate_to_match_camera_rotation(camera);
-
-    tds.recompute = true;
-  };
-
-  // BEGIN
-  player.move_to(wp.x, wp.y, wp.z);
-  auto const tp = TilePosition::from_floats_truncated(wp.x, wp.z);
-
-  // lookup stairs in the registry
-  auto&      registry   = lm.active().registry;
-  auto const stair_eids = find_stairs(registry);
-  assert(!stair_eids.empty());
-
-  for (auto const& eid : stair_eids) {
-    auto const& stair = registry.get<StairInfo>(eid);
-    if (stair.tile_position == tp) {
-      move_player_through_stairs(stair);
-
-      // TODO: not just jump first stair we find
-      break;
+    else {
+      audio.stop_inwater_sound(logger);
     }
   }
-*/
+}
+
+void
+update_playerpos(stlw::Logger& logger, LevelData& ldata, FrameTime const& ft)
+{
+  // Lookup the player height from the terrain at the player's X, Z world-coordinates.
+  auto&       player        = ldata.player;
+  auto&       player_pos    = player.transform().translation;
+  float const player_height = ldata.terrain.get_height(logger, player_pos.x, player_pos.z);
+  auto const& player_bbox   = player.bounding_box();
+  player_pos.y              = player_height + (player_bbox.dimensions().y / 2.0f);
 }
 
 void
@@ -170,22 +124,6 @@ update_nearbytargets(LevelData& ldata, EntityRegistry& registry, FrameTime const
   if (selected_o) {
     nbt.set_selected(*selected_o);
   }
-}
-
-auto
-rotate_around(glm::vec3 const& point_to_rotate, glm::vec3 const& rot_center,
-              glm::mat4x4 const& rot_matrix)
-{
-  glm::mat4x4 const translate     = glm::translate(glm::mat4{}, rot_center);
-  glm::mat4x4 const inv_translate = glm::translate(glm::mat4{}, -rot_center);
-
-  // The idea:
-  // 1) Translate the object to the center
-  // 2) Make the rotation
-  // 3) Translate the object back to its original location
-  glm::mat4x4 const transform = translate * rot_matrix * inv_translate;
-  auto const        pos       = transform * glm::vec4{point_to_rotate, 1.0f};
-  return glm::vec3{pos.x, pos.y, pos.z};
 }
 
 void
@@ -457,59 +395,22 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   auto& es = state.engine_state;
   es.time.update(ft.since_start_seconds());
 
-  auto& logger = es.logger;
-  auto& lm     = state.level_manager;
-
-  // Update the world
-  {
-    auto& zs       = lm.active();
-    auto& registry = zs.registry;
-
-    auto& ldata  = zs.level_data;
-    auto& player = ldata.player;
-
-    // Lookup the player height from the terrain at the player's X, Z world-coordinates.
-    auto&       player_pos    = player.transform().translation;
-    float const player_height = ldata.terrain.get_height(logger, player_pos.x, player_pos.z);
-    auto const& player_bbox   = player.bounding_box();
-    player_pos.y              = player_height + (player_bbox.dimensions().y / 2.0f);
-
-    auto const weids =
-        find_all_entities_with_component<WaterInfo, Transform, AABoundingBox>(registry);
-    for (auto const eid : weids) {
-      auto&      water_bbox = registry.get<AABoundingBox>(eid);
-      auto&      w_tr       = registry.get<Transform>(eid);
-      auto&      p_tr       = player.transform();
-      bool const collides = collision::bbox_intersects(logger, p_tr, player_bbox, w_tr, water_bbox);
-
-      static auto audio_r = WaterAudioSystem::create();
-      static auto audio   = audio_r.expect_moveout("WAS");
-
-      if (collides) {
-        audio.play_inwater_sound(logger);
-
-        if (audio.is_playing_watersound()) {
-          LOG_ERROR("PLAYING SOUND");
-        }
-      }
-      else {
-        audio.stop_inwater_sound(logger);
-      }
-    }
-  }
-
-  // Must recalculate zs and registry, possibly changed since call to move_between()
+  auto& logger   = es.logger;
+  auto& lm       = state.level_manager;
   auto& zs       = lm.active();
   auto& registry = zs.registry;
-  auto& ldata    = zs.level_data;
-  auto& player   = ldata.player;
-  auto& skybox   = ldata.skybox;
+
+  auto& ldata  = zs.level_data;
+  auto& skybox = ldata.skybox;
 
   auto& gfx_state = zs.gfx_state;
   auto& sps       = gfx_state.sps;
   auto& ttable    = gfx_state.texture_table;
 
+  // Update the world
   {
+    update_playaudio(logger, ldata, registry);
+    update_playerpos(logger, ldata, ft);
     update_nearbytargets(ldata, registry, ft);
     update_orbital_bodies(es, ldata, registry, ft);
     skybox.update(ft);

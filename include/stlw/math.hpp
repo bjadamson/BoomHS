@@ -81,6 +81,22 @@ angle_between_vectors(glm::vec3 const& a, glm::vec3 const& b, glm::vec3 const& o
   return acos(dot(da, db));
 }
 
+inline glm::vec3
+rotate_around(glm::vec3 const& point_to_rotate, glm::vec3 const& rot_center,
+              glm::mat4x4 const& rot_matrix)
+{
+  glm::mat4x4 const translate     = glm::translate(glm::mat4{}, rot_center);
+  glm::mat4x4 const inv_translate = glm::translate(glm::mat4{}, -rot_center);
+
+  // The idea:
+  // 1) Translate the object to the center
+  // 2) Make the rotation
+  // 3) Translate the object back to its original location
+  glm::mat4x4 const transform = translate * rot_matrix * inv_translate;
+  auto const        pos       = transform * glm::vec4{point_to_rotate, 1.0f};
+  return glm::vec3{pos.x, pos.y, pos.z};
+}
+
 // Original source for algorithm.
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
 inline glm::quat
