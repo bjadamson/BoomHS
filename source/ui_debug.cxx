@@ -155,10 +155,7 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
     auto& gpu_state = gfx_state.gpu_state;
     auto& sps       = gfx_state.sps;
 
-    auto& entities_o = gfx_state.gpu_state.entities;
-    assert(entities_o);
-    auto& entity_map = *entities_o;
-
+    auto& entity_map = gfx_state.gpu_state.entities;
     if (registry.has<TreeComponent>(eid) && ImGui::CollapsingHeader("Tree Editor")) {
       auto const make_str = [](char const* text, auto const num) {
         return text + std::to_string(num);

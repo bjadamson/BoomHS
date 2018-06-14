@@ -19,9 +19,9 @@ namespace boomhs
 struct GpuState
 {
   // These slots get a value when memory is loaded, set to none when memory is not.
-  std::optional<opengl::EntityDrawHandleMap> entities;
-  std::optional<opengl::EntityDrawHandleMap> entity_boundingboxes;
-  std::optional<opengl::TileDrawHandles>     tiles;
+  opengl::EntityDrawHandleMap            entities;
+  opengl::EntityDrawHandleMap            entity_boundingboxes;
+  std::optional<opengl::TileDrawHandles> tiles;
 
   NO_COPY(GpuState);
   MOVE_DEFAULT(GpuState);

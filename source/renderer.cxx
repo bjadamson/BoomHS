@@ -662,14 +662,14 @@ draw_entity_fn(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo
 void
 draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
 {
-  auto&       fstate = rstate.fs;
-  auto const& es     = fstate.es;
-  auto&       logger = es.logger;
-  auto&       zs     = fstate.zs;
+  auto&       fstate    = rstate.fs;
+  auto const& es        = fstate.es;
+  auto&       logger    = es.logger;
+  auto&       zs        = fstate.zs;
+  auto&       gpu_state = zs.gfx_state.gpu_state;
 
-  assert(zs.gfx_state.gpu_state.entities);
-  auto& eh   = *zs.gfx_state.gpu_state.entities;
-  auto& ebbh = *zs.gfx_state.gpu_state.entity_boundingboxes;
+  auto& eh   = gpu_state.entities;
+  auto& ebbh = gpu_state.entity_boundingboxes;
 
   auto& registry = zs.registry;
   auto& sps      = zs.gfx_state.sps;

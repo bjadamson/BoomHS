@@ -344,9 +344,7 @@ init(GameState& state)
       auto&             sp     = sps.ref_sp("water");
       auto              dinfo  = gpu::copy_gpu(logger, sp.va(), buffer);
 
-      auto& entities_o = gpu_state.entities;
-      assert(entities_o);
-      auto& entities = *entities_o;
+      auto& entities = gpu_state.entities;
 
       entities.add(eid, MOVE(dinfo));
       wi.dinfo = &entities.lookup(logger, eid);
@@ -355,9 +353,7 @@ init(GameState& state)
       wi.position = position;
     }
     {
-      auto& bbox_entities_o = gpu_state.entity_boundingboxes;
-      assert(bbox_entities_o);
-      auto& bbox_entities = *bbox_entities_o;
+      auto& bbox_entities = gpu_state.entity_boundingboxes;
 
       auto& bbox = registry.assign<AABoundingBox>(eid);
       bbox.min   = glm::vec3{-0.5, -0.2, -0.5};
