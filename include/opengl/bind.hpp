@@ -78,11 +78,11 @@ global_unbind(stlw::Logger& logger, Obj& obj, Args&&... args)
                                                                                                    \
     auto const unbind_fn = [&]() {                                                                 \
       LOG_TRACE_SPRINTF("unbind %s", thing_s);                                                     \
-      ::opengl::bind::global_unbind(logger, obj);                                                  \
+      ::opengl::bind::global_unbind(logger, obj, FORWARD(args));                                   \
     };                                                                                             \
                                                                                                    \
     LOG_TRACE_SPRINTF("bind %s", thing_s);                                                         \
-    ::opengl::bind::global_bind(logger, obj);                                                      \
+    ::opengl::bind::global_bind(logger, obj, FORWARD(args));                                       \
                                                                                                    \
     ON_SCOPE_EXIT([&]() { unbind_fn(); });                                                         \
     fn();                                                                                          \
@@ -91,16 +91,16 @@ global_unbind(stlw::Logger& logger, Obj& obj, Args&&... args)
 namespace opengl::bind
 {
 
-template <typename T, typename FN>
+template <typename T, typename FN, typename... Args>
 void
-global_while(stlw::Logger& logger, T& obj, FN const& fn)
+global_while(stlw::Logger& logger, T& obj, FN const& fn, Args&&... args)
 {
   WHILE_BOUND_IMPL
 }
 
-template <typename R, typename FN>
+template <typename R, typename FN, typename... Args>
 void
-global_while(stlw::Logger& logger, stlw::AutoResource<R>& ar, FN const& fn)
+global_while(stlw::Logger& logger, stlw::AutoResource<R>& ar, FN const& fn, Args&&... args)
 {
   auto& obj = ar.resource();
   WHILE_BOUND_IMPL
@@ -122,8 +122,13 @@ global_destroy(stlw::Logger& logger, T& obj)
 #undef DEBUG_UNBIND
 
 #define DEFAULT_WHILEBOUND_MEMBERFN_DECLATION()                                                    \
-  template <typename FN>                                                                           \
-  void while_bound(stlw::Logger& logger, FN const& fn)                                             \
+  template <typename FN, typename... Args>                                                         \
+  void while_bound(stlw::Logger& logger, FN const& fn, Args&&... args)                             \
   {                                                                                                \
-    ::opengl::bind::global_while(logger, *this, fn);                                               \
+    ::opengl::bind::global_while(logger, *this, fn, FORWARD(args));                                \
+  }                                                                                                \
+  template <typename FN, typename... Args>                                                         \
+  void while_bound(FN const& fn, stlw::Logger& logger, Args&&... args)                             \
+  {                                                                                                \
+    ::opengl::bind::global_while(logger, *this, fn, FORWARD(args));                                \
   }

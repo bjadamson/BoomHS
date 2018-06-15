@@ -1,4 +1,5 @@
 #pragma once
+#include <opengl/bind.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/heightmap.hpp>
 
@@ -15,10 +16,18 @@
 namespace opengl
 {
 class ShaderProgram;
+class TextureTable;
 } // namespace opengl
+
+namespace window
+{
+class FrameTime;
+} // namespace window
 
 namespace boomhs
 {
+class EntityRegistry;
+struct RenderState;
 
 struct TerrainTextureNames
 {
@@ -65,6 +74,13 @@ public:
   Terrain(TerrainConfig const&, glm::vec2 const&, opengl::DrawInfo&&, opengl::ShaderProgram&,
           opengl::Heightmap&&);
 
+  // public members
+  opengl::DebugBoundCheck debug_check;
+
+  void bind_impl(stlw::Logger&, opengl::TextureTable&);
+  void unbind_impl(stlw::Logger&, opengl::TextureTable&);
+  DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
+
   auto&       draw_info() { return di_; }
   auto const& position() const { return pos_; }
 
@@ -72,6 +88,7 @@ public:
   std::string const& texture_name(size_t) const;
 
   auto& shader() { return *sp_; }
+  std::string to_string() const;
 };
 
 class TerrainArray
@@ -146,7 +163,9 @@ visit_each(TerrainGrid const& tgrid, FN const& fn, Args&&... args)
   }
 }
 
-namespace terrain
+} // namespace boomhs
+
+namespace boomhs::terrain
 {
 
 Terrain
@@ -157,6 +176,4 @@ TerrainGrid
 generate_grid(stlw::Logger&, TerrainGridConfig const&, TerrainConfig const&,
               opengl::Heightmap const&, opengl::ShaderProgram&);
 
-} // namespace terrain
-
-} // namespace boomhs
+} // namespace boomhs::terrain

@@ -1184,21 +1184,20 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
 
       auto& dinfo = terrain.draw_info();
 
-      auto& tinfo = *ttable.find(terrain.texture_name(0));
-      LOG_ERROR_SPRINTF("texture name %s", terrain.texture_name(0));
-      glActiveTexture(GL_TEXTURE0);
+      auto const draw_fn = [&]() {
+        {
+          auto& tinfo = *ttable.find(terrain.texture_name(0));
 
-      bind::global_bind(logger, tinfo);
-      ON_SCOPE_EXIT([&]() { bind::global_unbind(logger, tinfo); });
-
-      tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-      tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-
-      auto& vao = dinfo.vao();
-      vao.while_bound(logger, [&]() {
-        draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, tr, model_matrix, sp, dinfo, mat, registry,
-                         ambient);
-      });
+          tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+          tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+        }
+        auto& vao = dinfo.vao();
+        vao.while_bound(logger, [&]() {
+          draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, tr, model_matrix, sp, dinfo, mat, registry,
+                           ambient);
+        });
+      };
+      terrain.while_bound(draw_fn, logger, ttable);
     });
   };
 

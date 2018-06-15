@@ -88,6 +88,40 @@ Terrain::Terrain(TerrainConfig const& tc, glm::vec2 const& pos, DrawInfo&& di, S
   pos_ = pos;
 }
 
+void
+Terrain::bind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
+{
+  auto const bind = [&](size_t const tunit) {
+    glActiveTexture(GL_TEXTURE0 + tunit);
+    auto& tinfo = *ttable.find(texture_name(tunit));
+    bind::global_bind(logger, tinfo);
+  };
+
+  FOR(i, config.texture_names.textures.size()) {
+    bind(i);
+  }
+}
+
+void
+Terrain::unbind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
+{
+  auto const unbind = [&](size_t const tunit) {
+    auto& tinfo = *ttable.find(texture_name(tunit));
+    bind::global_unbind(logger, tinfo);
+  };
+
+  FOR(i, config.texture_names.textures.size()) {
+    unbind(i);
+  }
+  glActiveTexture(GL_TEXTURE0);
+}
+
+std::string
+Terrain::to_string() const
+{
+  return "";
+}
+
 std::string&
 Terrain::texture_name(size_t const index)
 {
