@@ -1186,10 +1186,12 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
 
       auto const draw_fn = [&]() {
         {
-          auto& tinfo = *ttable.find(terrain.texture_name(0));
+          FOR(i, terrain.config.texture_names.textures.size()) {
+            auto& tinfo = *ttable.find(terrain.texture_name(i));
 
-          tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-          tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+            tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+            tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+          }
         }
         auto& vao = dinfo.vao();
         vao.while_bound(logger, [&]() {

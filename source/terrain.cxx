@@ -60,8 +60,7 @@ namespace boomhs
 // TerrainTextureNames
 TerrainTextureNames::TerrainTextureNames()
     : heightmap_path("Area0-HM")
-    , blendmap_name("blendmap")
-    , textures({{"floor0", "grass", "brick_path", "mud"}})
+    , textures({{"floor0", "grass", "mud", "brick_path", "blendmap"}})
 {
 }
 
@@ -95,11 +94,10 @@ Terrain::bind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
     glActiveTexture(GL_TEXTURE0 + tunit);
     auto& tinfo = *ttable.find(texture_name(tunit));
     bind::global_bind(logger, tinfo);
+    LOG_ERROR_SPRINTF("TERRAIN binding %s to tu %lu", texture_name(tunit), tunit);
   };
 
-  FOR(i, config.texture_names.textures.size()) {
-    bind(i);
-  }
+  FOR(i, config.texture_names.textures.size()) { bind(i); }
 }
 
 void
@@ -110,9 +108,7 @@ Terrain::unbind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
     bind::global_unbind(logger, tinfo);
   };
 
-  FOR(i, config.texture_names.textures.size()) {
-    unbind(i);
-  }
+  FOR(i, config.texture_names.textures.size()) { unbind(i); }
   glActiveTexture(GL_TEXTURE0);
 }
 
@@ -256,7 +252,13 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
   auto              di     = gpu::copy_gpu(logger, sp.va(), buffer);
 
   // These uniforms only need to be set once.
-  sp.while_bound(logger, [&]() { sp.set_uniform_int1(logger, "u_sampler", 0); });
+  sp.while_bound(logger, [&]() {
+    sp.set_uniform_int1(logger, "u_bgsampler", 0);
+    sp.set_uniform_int1(logger, "u_rsampler", 1);
+    sp.set_uniform_int1(logger, "u_gsampler", 2);
+    sp.set_uniform_int1(logger, "u_bsampler", 3);
+    sp.set_uniform_int1(logger, "u_blendsampler", 4);
+  });
 
   return Terrain{tc, pos, MOVE(di), sp, heightmap.clone()};
 }

@@ -34,7 +34,7 @@ struct TerrainBuffer
 
   int selected_heightmap = -1;
 
-  std::array<int, 4> selected_textures = {-1, -1, -1, -1};
+  std::array<int, 5> selected_textures = {-1, -1, -1, -1, -1};
   int                selected_shader   = -1;
 
   TerrainConfig     terrain_config;

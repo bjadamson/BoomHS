@@ -32,7 +32,6 @@ struct RenderState;
 struct TerrainTextureNames
 {
   std::string heightmap_path;
-  std::string blendmap_name;
 
   std::vector<std::string> textures;
 
@@ -87,7 +86,7 @@ public:
   std::string&       texture_name(size_t);
   std::string const& texture_name(size_t) const;
 
-  auto& shader() { return *sp_; }
+  auto&       shader() { return *sp_; }
   std::string to_string() const;
 };
 

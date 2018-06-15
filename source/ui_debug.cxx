@@ -391,8 +391,15 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
           auto& st = tbuffers.selected_textures[i];
           set_initially(terrain_texturenames.textures[i], ttable, st);
 
-          std::string const label = "Texture" + std::to_string(i);
-          imgui_cxx::combo(label.c_str(), &st, nicknames);
+          // clang-format off
+          auto constexpr SAMPLER_NAMES = stlw::make_array<char const*>(
+              "u_bgsampler",
+              "u_rsampler",
+              "u_gsampler",
+              "u_bsampler",
+              "u_blendsampler");
+          // clang-format on
+          imgui_cxx::combo(SAMPLER_NAMES[i], &st, nicknames);
         }
       }
       {

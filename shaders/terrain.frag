@@ -22,7 +22,6 @@ uniform float u_reflectivity;
 uniform Fog u_fog;
 uniform mat4 u_modelmatrix;
 uniform mat4 u_invviewmatrix;
-
 uniform float u_uvmodifier;
 
 out vec4 fragment_color;
