@@ -1145,6 +1145,7 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
 
   auto& zs           = fstate.zs;
   auto& ldata        = zs.level_data;
+  auto& ttable       = zs.gfx_state.texture_table;
   auto& terrain_grid = ldata.terrain;
 
   // backup state to restore after drawing terrain
@@ -1182,27 +1183,31 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
       sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
 
       auto& dinfo = terrain.draw_info();
-      auto& tinfo = terrain.texture_info();
+
+      auto& tinfo = *ttable.find(terrain.texture_name(0));
+      LOG_ERROR_SPRINTF("texture name %s", terrain.texture_name(0));
+      glActiveTexture(GL_TEXTURE0);
+
+      bind::global_bind(logger, tinfo);
+      ON_SCOPE_EXIT([&]() { bind::global_unbind(logger, tinfo); });
+
+      tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+      tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 
       auto& vao = dinfo.vao();
       vao.while_bound(logger, [&]() {
-        auto const draw_fn = [&]() {
-          tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-          tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-          draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, tr, model_matrix, sp, dinfo, mat, registry,
-                           ambient);
-        };
-        tinfo.while_bound(logger, draw_fn);
+        draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, tr, model_matrix, sp, dinfo, mat, registry,
+                         ambient);
       });
     });
   };
 
-  LOG_TRACE("-------------------- Starting To Draw All Terrain(s) ----------------------");
+  LOG_ERROR("-------------------- Starting To Draw All Terrain(s) ----------------------");
   for (auto& t : terrain_grid) {
     draw_piece(t);
   }
-  LOG_TRACE("-------------------------Finished Drawing All Terrain(s) ---------------------------");
-}
+  LOG_ERROR("-------------------------Finished Drawing All Terrain(s) ---------------------------");
+} // namespace boomhs::render
 
 void
 draw_tilegrid(RenderState& rstate, TiledataState const& tds)

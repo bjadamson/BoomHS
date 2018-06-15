@@ -71,7 +71,7 @@ update_playaudio(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registr
       audio.play_inwater_sound(logger);
 
       if (audio.is_playing_watersound()) {
-        LOG_ERROR("PLAYING SOUND");
+        LOG_TRACE("PLAYING IN-WATER SOUND");
       }
     }
     else {
@@ -288,11 +288,9 @@ create_gamestate(Engine& engine, EngineState& engine_state, Camera& camera)
     char const* HEIGHTMAP_NAME = "Area0-HM";
     auto const  heightmap =
         TRY_MOVEOUT(opengl::heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
-    auto* ti = ttable.find(tc.texture_name);
-    assert(ti);
 
     TerrainGridConfig const tgc;
-    auto                    tg = terrain::generate_grid(logger, tgc, tc, heightmap, sp, *ti);
+    auto                    tg = terrain::generate_grid(logger, tgc, tc, heightmap, sp);
     auto&                   ld = zs.level_data;
     ld.terrain                 = MOVE(tg);
   }
@@ -329,12 +327,12 @@ place_water(stlw::Logger& logger, ZoneState& zs)
   auto* p = &registry.assign<WaterInfo>(eid);
   *p      = WaterFactory::make_default(logger, sps, ttable);
 
-  auto& wi = registry.get<WaterInfo>(eid);
+  auto& wi    = registry.get<WaterInfo>(eid);
   wi.position = glm::vec2{0, 0};
 
-  size_t constexpr    num_vertexes = 64;
+  size_t constexpr num_vertexes = 64;
   glm::vec2 constexpr dimensions{20};
-  auto const      data = WaterFactory::generate_water_data(logger, dimensions, num_vertexes);
+  auto const data = WaterFactory::generate_water_data(logger, dimensions, num_vertexes);
   {
     BufferFlags const flags{true, false, false, true};
     auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);

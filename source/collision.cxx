@@ -67,16 +67,13 @@ bbox_intersects(stlw::Logger& logger, Transform const& at, AABoundingBox const& 
 {
   auto const& ac = at.translation;
   auto const& bc = bt.translation;
-  LOG_ERROR_SPRINTF("ac %s bc %s", glm::to_string(ac), glm::to_string(bc));
 
   auto const ah = ab.half_widths() * at.scale;
   auto const bh = bb.half_widths() * bt.scale;
-  LOG_ERROR_SPRINTF("ah %s bh %s", glm::to_string(ah), glm::to_string(bh));
 
   bool x = std::fabs(ac.x - bc.x) <= (ah.x + bh.x);
   bool y = std::fabs(ac.y - bc.y) <= (ah.y + bh.y);
   bool z = std::fabs(ac.z - bc.z) <= (ah.z + bh.z);
-  LOG_ERROR_SPRINTF("x %i y %i z %i", x, y, z);
 
   return x && y && z;
 }

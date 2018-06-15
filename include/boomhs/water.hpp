@@ -34,10 +34,10 @@ struct WaterTileThing
 
 struct WaterInfo
 {
-  glm::vec2         position;
-  opengl::DrawInfo* dinfo = nullptr;
+  glm::vec2              position;
+  opengl::DrawInfo*      dinfo  = nullptr;
   opengl::ShaderProgram* shader = nullptr;
-  opengl::TextureInfo* tinfo = nullptr;
+  opengl::TextureInfo*   tinfo  = nullptr;
 
   float wave_offset = 0.0f;
 

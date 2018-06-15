@@ -7,7 +7,10 @@
 #include <stlw/type_macros.hpp>
 
 #include <extlibs/glm.hpp>
+
+#include <array>
 #include <functional>
+#include <vector>
 
 namespace opengl
 {
@@ -16,6 +19,16 @@ class ShaderProgram;
 
 namespace boomhs
 {
+
+struct TerrainTextureNames
+{
+  std::string heightmap_path;
+  std::string blendmap_name;
+
+  std::vector<std::string> textures;
+
+  TerrainTextureNames();
+};
 
 struct TerrainConfig
 {
@@ -29,9 +42,8 @@ struct TerrainConfig
   float uv_max      = 1.0f;
   float uv_modifier = 1.0f;
 
-  std::string shader_name;
-  std::string texture_name;
-  std::string heightmap_path;
+  std::string         shader_name;
+  TerrainTextureNames texture_names;
 };
 
 class Terrain
@@ -39,7 +51,6 @@ class Terrain
   glm::vec2              pos_;
   opengl::DrawInfo       di_;
   opengl::ShaderProgram* sp_;
-  opengl::TextureInfo*   ti_;
 
 public:
   //
@@ -51,13 +62,14 @@ public:
   // constructors
   NO_COPY(Terrain);
   MOVE_DEFAULT(Terrain);
-  Terrain(TerrainConfig const&, glm::vec2 const&, opengl::DrawInfo&&, opengl::ShaderProgram& sp,
-          opengl::TextureInfo&, opengl::Heightmap&&);
+  Terrain(TerrainConfig const&, glm::vec2 const&, opengl::DrawInfo&&, opengl::ShaderProgram&,
+          opengl::Heightmap&&);
 
   auto&       draw_info() { return di_; }
   auto const& position() const { return pos_; }
-  auto&       texture_info() { return *ti_; }
-  auto const& texture_info() const { return *ti_; }
+
+  std::string&       texture_name(size_t);
+  std::string const& texture_name(size_t) const;
 
   auto& shader() { return *sp_; }
 };
@@ -139,11 +151,11 @@ namespace terrain
 
 Terrain
 generate_piece(stlw::Logger&, glm::vec2 const&, TerrainGridConfig const&, TerrainConfig const&,
-               opengl::Heightmap const&, opengl::ShaderProgram&, opengl::TextureInfo&);
+               opengl::Heightmap const&, opengl::ShaderProgram&);
 
 TerrainGrid
 generate_grid(stlw::Logger&, TerrainGridConfig const&, TerrainConfig const&,
-              opengl::Heightmap const&, opengl::ShaderProgram&, opengl::TextureInfo&);
+              opengl::Heightmap const&, opengl::ShaderProgram&);
 
 } // namespace terrain
 

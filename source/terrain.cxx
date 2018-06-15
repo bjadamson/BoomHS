@@ -41,10 +41,29 @@ generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc, Terrai
   return data;
 }
 
+float
+barry_centric(glm::vec3 const& p1, glm::vec3 const& p2, glm::vec3 const& p3, glm::vec2 const& pos)
+{
+  float const det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
+  float const l1  = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
+  float const l2  = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
+  float const l3  = 1.0f - l1 - l2;
+  return l1 * p1.y + l2 * p2.y + l3 * p3.y;
+}
+
 } // namespace
 
 namespace boomhs
 {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// TerrainTextureNames
+TerrainTextureNames::TerrainTextureNames()
+    : heightmap_path("Area0-HM")
+    , blendmap_name("blendmap")
+    , textures({{"floor0", "grass", "brick_path", "mud"}})
+{
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TerrainConfig
@@ -53,23 +72,34 @@ TerrainConfig::TerrainConfig()
     , height_multiplier(1)
     , invert_normals(false)
     , shader_name("terrain")
-    , texture_name("Floor0")
-    , heightmap_path("Area0-HM")
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Terrain
 Terrain::Terrain(TerrainConfig const& tc, glm::vec2 const& pos, DrawInfo&& di, ShaderProgram& sp,
-                 TextureInfo& ti, Heightmap&& hmap)
+                 Heightmap&& hmap)
     : pos_(pos)
     , di_(MOVE(di))
-    , ti_(&ti)
     , sp_(&sp)
     , config(tc)
     , heightmap(MOVE(hmap))
 {
   pos_ = pos;
+}
+
+std::string&
+Terrain::texture_name(size_t const index)
+{
+  assert(index < config.texture_names.textures.size());
+  return config.texture_names.textures[index];
+}
+
+std::string const&
+Terrain::texture_name(size_t const index) const
+{
+  assert(index < config.texture_names.textures.size());
+  return config.texture_names.textures[index];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -121,16 +151,6 @@ void
 TerrainGrid::add(Terrain&& t)
 {
   terrain_.add(MOVE(t));
-}
-
-float
-barry_centric(glm::vec3 const& p1, glm::vec3 const& p2, glm::vec3 const& p3, glm::vec2 const& pos)
-{
-  float const det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
-  float const l1  = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
-  float const l2  = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
-  float const l3  = 1.0f - l1 - l2;
-  return l1 * p1.y + l2 * p2.y + l3 * p3.y;
 }
 
 float
@@ -192,8 +212,7 @@ namespace boomhs::terrain
 
 Terrain
 generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig const& tgc,
-               TerrainConfig const& tc, Heightmap const& heightmap, ShaderProgram& sp,
-               TextureInfo& ti)
+               TerrainConfig const& tc, Heightmap const& heightmap, ShaderProgram& sp)
 {
   auto const data = generate_terrain_data(logger, tgc, tc, heightmap);
   LOG_TRACE_SPRINTF("Generated terrain piece: %s", data.to_string());
@@ -205,12 +224,12 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
   // These uniforms only need to be set once.
   sp.while_bound(logger, [&]() { sp.set_uniform_int1(logger, "u_sampler", 0); });
 
-  return Terrain{tc, pos, MOVE(di), sp, ti, heightmap.clone()};
+  return Terrain{tc, pos, MOVE(di), sp, heightmap.clone()};
 }
 
 TerrainGrid
 generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
-              Heightmap const& heightmap, ShaderProgram& sp, TextureInfo& ti)
+              Heightmap const& heightmap, ShaderProgram& sp)
 {
   LOG_TRACE("Generating Terrain");
   size_t const rows = tgc.num_rows, cols = tgc.num_cols;
@@ -221,7 +240,7 @@ generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig 
     FOR(i, cols)
     {
       auto const pos = glm::vec2{i, j};
-      auto       t   = generate_piece(logger, pos, tgc, tc, heightmap, sp, ti);
+      auto       t   = generate_piece(logger, pos, tgc, tc, heightmap, sp);
 
       auto const index = (j * rows) + i;
 

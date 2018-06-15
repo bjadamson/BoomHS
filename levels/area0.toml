@@ -78,21 +78,39 @@ wrap = "clamp"
 ###################################################################################################
 # TERRAIN TEXTURES
 [[resource]]
-name = "Floor0"
+name = "blendmap"
+type = "texture:2d-RGB"
+filename = "assets/terrain/blendmap.png"
+wrap = "clamp"
+
+[[resource]]
+name = "floor0"
 type = "texture:2d-RGBA"
 filename = "assets/terrain/Floor0.png"
 wrap = "repeat"
 
 [[resource]]
-name = "Grass0"
+name = "grass"
 type = "texture:2d-RGB"
 filename = "assets/terrain/Grass0.png"
 wrap = "clamp"
 
 [[resource]]
-name = "TextureAtlas"
+name = "brick_path"
 type = "texture:2d-RGB"
-filename = "assets/TextureAtlas.jpg"
+filename = "assets/terrain/brick_path.png"
+wrap = "clamp"
+
+[[resource]]
+name = "dirt"
+type = "texture:2d-RGB"
+filename = "assets/terrain/dirt.png"
+wrap = "clamp"
+
+[[resource]]
+name = "mud"
+type = "texture:2d-RGB"
+filename = "assets/terrain/mud.png"
 wrap = "clamp"
 
 ###########################
@@ -500,7 +518,7 @@ material = "terrain"
 position = [6.0, 1.0, 6.0]
 shader = "3dtexture"
 geometry = "mesh:house"
-texture = "TextureAtlas"
+texture = "grass"
 scale = [0.4, 0.4, 0.4]
 random_junk_from_file = true
 

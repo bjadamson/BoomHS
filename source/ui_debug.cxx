@@ -303,7 +303,6 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 
   auto& ldata        = zs.level_data;
   auto& terrain_grid = ldata.terrain;
-  auto& tconfig      = tbuffers.terrain_config;
 
   auto const fn = [&](auto const i, auto const j, auto& buffer) {
     buffer << "(";
@@ -321,17 +320,12 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
   };
 
   auto& ttable      = gfx_state.texture_table;
-  auto& sb          = tbuffers.selected_terrain;
-  auto& t           = tbuffers.terrain_config;
   auto& ld          = zs.level_data;
   auto& grid_config = terrain_grid.config;
-
-  auto& sps = gfx_state.sps;
-  auto& sp  = sps.ref_sp(t.shader_name);
+  auto& sps         = gfx_state.sps;
 
   auto const draw = [&]() -> Result<stlw::none_t, std::string> {
     if (ImGui::CollapsingHeader("Regenerate Grid")) {
-
       auto& tbuffer_gridconfig = tbuffers.grid_config;
       imgui_cxx::input_sizet("num rows", &tbuffer_gridconfig.num_rows);
       imgui_cxx::input_sizet("num cols", &tbuffer_gridconfig.num_cols);
@@ -339,15 +333,14 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
       ImGui::InputFloat("z length", &tbuffer_gridconfig.dimensions.y);
 
       if (ImGui::Button("Generate Terrain")) {
-        auto const heightmap =
-            TRY_MOVEOUT(heightmap::load_fromtable(logger, ttable, t.heightmap_path));
-        auto* ti = ttable.find(t.texture_name);
-        assert(ti);
+        auto&      terrain_config = tbuffers.terrain_config;
+        auto const heightmap      = TRY_MOVEOUT(
+            heightmap::load_fromtable(logger, ttable, terrain_config.texture_names.heightmap_path));
 
         // copy the grid config from the tempory buffer to the leveldata instance.
         terrain_grid.config = tbuffer_gridconfig;
-        ldata.terrain       = terrain::generate_grid(logger, grid_config, tbuffers.terrain_config,
-                                               heightmap, sp, *ti);
+        auto& sp            = sps.ref_sp(terrain_config.shader_name);
+        ldata.terrain = terrain::generate_grid(logger, grid_config, terrain_config, heightmap, sp);
       }
     }
     if (ImGui::CollapsingHeader("Rendering Options")) {
@@ -367,67 +360,99 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
     }
     if (ImGui::CollapsingHeader("Update Existing Terrain")) {
       auto const tgrid_slot_names = tgrid_slots_string();
-      if (ImGui::Combo("Select Terrain", &sb, tgrid_slot_names.c_str())) {
-        tbuffers.terrain_config = terrain_grid[sb].config;
+      if (ImGui::Combo("Select Terrain", &tbuffers.selected_terrain, tgrid_slot_names.c_str())) {
+        tbuffers.terrain_config = terrain_grid[tbuffers.selected_terrain].config;
       }
       ImGui::Separator();
-      imgui_cxx::input_sizet("Vertex Count", &tconfig.num_vertexes_along_one_side);
-      ImGui::InputFloat("height multiplier", &tconfig.height_multiplier);
-      ImGui::Checkbox("Invert Normals", &tconfig.invert_normals);
+
+      auto& terrain_config = tbuffers.terrain_config;
+      imgui_cxx::input_sizet("Vertex Count", &terrain_config.num_vertexes_along_one_side);
+      ImGui::InputFloat("height multiplier", &terrain_config.height_multiplier);
+      ImGui::Checkbox("Invert Normals", &terrain_config.invert_normals);
       {
         auto const nicknames     = ttable.list_of_all_names('\0') + "\0";
         auto const set_initially = [&](auto const& value, auto const& table, auto& buffer) {
           if (buffer == -1) {
-            *(&buffer) = table.index_of_nickname(value).value_or(0);
+            auto lookup = table.index_of_nickname(value);
+            *(&buffer)  = lookup.value_or(0);
           }
         };
-        set_initially(t.heightmap_path, ttable, tbuffers.selected_heightmap);
+
+        auto& terrain_texturenames = terrain_config.texture_names;
+        set_initially(terrain_texturenames.heightmap_path, ttable, tbuffers.selected_heightmap);
         imgui_cxx::combo("Heightmap", &tbuffers.selected_heightmap, nicknames);
 
-        set_initially(t.texture_name, ttable, tbuffers.selected_texture);
-        imgui_cxx::combo("Texture", &tbuffers.selected_texture, nicknames);
-
-        set_initially(t.shader_name, sps, tbuffers.selected_shader);
+        set_initially(terrain_config.shader_name, sps, tbuffers.selected_shader);
         auto const shader_names = sps.all_shader_names_flattened('\0') + "\0";
         imgui_cxx::combo("Shader", &tbuffers.selected_shader, shader_names);
+
+        FOR(i, tbuffers.selected_textures.size())
+        {
+          auto& st = tbuffers.selected_textures[i];
+          set_initially(terrain_texturenames.textures[i], ttable, st);
+
+          std::string const label = "Texture" + std::to_string(i);
+          imgui_cxx::combo(label.c_str(), &st, nicknames);
+        }
       }
       {
         auto constexpr WRAP_OPTIONS =
             stlw::make_array<GLint>(GL_MIRRORED_REPEAT, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        t.wrap_mode = gl_option_combo("UV Wrap Mode", "Mirrored Repeat\0Repeat\0Clamp\0\0",
-                                      &tbuffers.selected_wrapmode, WRAP_OPTIONS);
+        terrain_config.wrap_mode =
+            gl_option_combo("UV Wrap Mode", "Mirrored Repeat\0Repeat\0Clamp\0\0",
+                            &tbuffers.selected_wrapmode, WRAP_OPTIONS);
       }
-      ImGui::InputFloat("UV Modifier", &t.uv_modifier);
+      ImGui::InputFloat("UV Modifier", &terrain_config.uv_modifier);
       if (ImGui::Button("Regenerate Piece")) {
-        auto const selected_texture =
-            ttable.nickname_at_index(tbuffers.selected_texture).value_or(t.texture_name);
-        auto const* p_texture = ttable.lookup_nickname(selected_texture);
-        if (!p_texture) {
-          auto const fmt = fmt::sprintf("ERROR Looking up texture: %s", selected_texture);
-          return Err(fmt);
-        }
-        else {
-          auto* ti = ttable.find(selected_texture);
-          assert(ti);
-          ti->while_bound(logger, [&]() {
-            ti->set_fieldi(GL_TEXTURE_WRAP_S, t.wrap_mode);
-            ti->set_fieldi(GL_TEXTURE_WRAP_T, t.wrap_mode);
-          });
-        }
-        auto const selected_hm =
-            ttable.nickname_at_index(tbuffers.selected_heightmap).value_or(t.heightmap_path);
 
-        t.shader_name = sps.nickname_at_index(tbuffers.selected_shader).value_or(t.shader_name);
+        auto& terrain_texturenames = terrain_config.texture_names;
+        assert(terrain_texturenames.textures.size() > 0);
+
+        auto const update_selectedtexture =
+            [&](size_t const index) -> Result<stlw::Nothing, std::string> {
+          int const tbuf_index = tbuffers.selected_textures[index];
+
+          // Lookup texture in the texture table
+          auto tn_o = ttable.nickname_at_index(tbuf_index);
+          assert(tn_o);
+          std::string const tn = *tn_o;
+
+          auto const* p_texture = ttable.lookup_nickname(tn);
+          if (!p_texture) {
+            auto const fmt = fmt::sprintf("ERROR Looking up texture: %s", tn);
+            return Err(fmt);
+          }
+          else {
+            auto* ti = ttable.find(tn);
+            assert(ti);
+            ti->while_bound(logger, [&]() {
+              ti->set_fieldi(GL_TEXTURE_WRAP_S, terrain_config.wrap_mode);
+              ti->set_fieldi(GL_TEXTURE_WRAP_T, terrain_config.wrap_mode);
+            });
+          }
+          terrain_texturenames.textures[index] = tn;
+          return OK_NONE;
+        };
+
+        DO_EFFECT(update_selectedtexture(0));
+        auto const selected_hm = ttable.nickname_at_index(tbuffers.selected_heightmap)
+                                     .value_or(terrain_texturenames.heightmap_path);
+
+        terrain_config.shader_name =
+            sps.nickname_at_index(tbuffers.selected_shader).value_or(terrain_config.shader_name);
 
         auto const heightmap = TRY_MOVEOUT(heightmap::load_fromtable(logger, ttable, selected_hm));
-        auto*      ti        = ttable.find(selected_texture);
-        assert(ti);
 
-        int const row    = sb / terrain_grid.num_rows();
-        int const col    = sb % terrain_grid.num_cols();
-        auto      tp     = terrain::generate_piece(logger, glm::vec2{row, col}, grid_config,
-                                          tbuffers.terrain_config, heightmap, sp, *ti);
-        terrain_grid[sb] = MOVE(tp);
+        auto const selected_terrain = tbuffers.selected_terrain;
+        int const  row              = selected_terrain / terrain_grid.num_rows();
+        int const  col              = selected_terrain % terrain_grid.num_cols();
+
+        auto& sp = sps.ref_sp(terrain_config.shader_name);
+        auto  tp = terrain::generate_piece(logger, glm::vec2{row, col}, grid_config, terrain_config,
+                                          heightmap, sp);
+
+        LOG_ERROR_SPRINTF("SELECTED TERRAIN %i row %i col %i", selected_terrain, row, col);
+        terrain_grid[selected_terrain] = MOVE(tp);
       }
     }
 

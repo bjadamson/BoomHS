@@ -624,6 +624,7 @@ load_entities(stlw::Logger& logger, CppTable const& table,
       *&cc     = *color;
     }
     if (texture_name) {
+      LOG_DEBUG_SPRINTF("Looking up texture %s", *texture_name);
       auto& tr        = registry.assign<TextureRenderable>(eid);
       auto  texture_o = ttable.find(*texture_name);
       assert(texture_o);
