@@ -45,6 +45,7 @@ struct TerrainConfig
   size_t num_vertexes_along_one_side;
   float  height_multiplier;
   bool   invert_normals;
+  bool   tile_textures;
 
   GLint wrap_mode   = GL_MIRRORED_REPEAT;
   float uv_max      = 1.0f;

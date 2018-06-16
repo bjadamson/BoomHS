@@ -170,6 +170,7 @@ WaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm
     auto& vao   = dinfo.vao();
 
     bool constexpr RECEIVES_AMBIENT_LIGHT = true;
+    bool constexpr SET_NORMALMATRIX       = false;
     auto const model_matrix               = transform.model_matrix();
 
     winfo.wave_offset += ft.delta_millis() * ldata.wind_speed;
@@ -190,7 +191,8 @@ WaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm
       vao.while_bound(logger, [&]() {
         fbos_.while_bound(logger, [&]() {
           render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, tr, model_matrix, sp, dinfo,
-                                   water_material, registry, RECEIVES_AMBIENT_LIGHT);
+                                   water_material, registry, RECEIVES_AMBIENT_LIGHT,
+                                   SET_NORMALMATRIX);
         });
       });
     });

@@ -151,7 +151,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
                            glm::mat4 const& model_matrix, ShaderProgram& sp, DrawInfo& dinfo,
                            Material const&                         material,
                            std::vector<PointlightTransform> const& pointlights,
-                           bool const                              receives_ambient_light)
+                           bool const receives_ambient_light, bool const set_normalmatrix)
 {
   auto&       fstate = rstate.fs;
   auto&       es     = fstate.es;
@@ -163,8 +163,10 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
   auto const& player       = ldata.player;
 
   set_modelmatrix(logger, model_matrix, sp);
-  sp.set_uniform_matrix_3fv(logger, "u_normalmatrix",
-                            glm::inverseTranspose(glm::mat3{model_matrix}));
+  if (set_normalmatrix) {
+    sp.set_uniform_matrix_3fv(logger, "u_normalmatrix",
+                              glm::inverseTranspose(glm::mat3{model_matrix}));
+  }
 
   set_dirlight(logger, sp, global_light);
 
@@ -370,6 +372,12 @@ init(stlw::Logger& logger, Dimensions const& dimensions)
 
   // The logger is thread safe
   glDebugMessageCallback((GLDEBUGPROC)gl_log_callback, (void*)(&logger));
+
+  int max_texunits_infragshader;
+  glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_texunits_infragshader);
+  LOG_TRACE_SPRINTF("GL_MAX_TEXTURE_IMAGE_UNITS (maximum number of texture units available in "
+                    "fragment shader: %i",
+                    max_texunits_infragshader);
 }
 
 void
@@ -407,7 +415,7 @@ void
 draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position,
                  glm::mat4 const& model_matrix, ShaderProgram& sp, DrawInfo& dinfo,
                  Material const& material, EntityRegistry& registry,
-                 bool const receives_ambient_light)
+                 bool const receives_ambient_light, bool const set_normalmatrix)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -427,7 +435,7 @@ draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position
     pointlights.emplace_back(plt);
   }
   set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
-                             receives_ambient_light);
+                             receives_ambient_light, set_normalmatrix);
   auto const camera_matrix = fstate.camera_matrix();
   set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
 
@@ -638,13 +646,14 @@ draw_entity_fn(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo
       return;
     }
     bool constexpr RECEIVES_AMBIENT_LIGHT = true;
+    bool constexpr SET_NORMALMATRIX       = true;
 
     bool const receives_light = registry.has<Material>(eid);
     if (receives_light) {
       assert(registry.has<Material>(eid));
       Material const& material = registry.get<Material>(eid);
       draw_3dlit_shape(rstate, dm, tr, model_matrix, sp, dinfo, material, registry,
-                       RECEIVES_AMBIENT_LIGHT);
+                       RECEIVES_AMBIENT_LIGHT, SET_NORMALMATRIX);
       return;
     }
 
@@ -883,8 +892,9 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
 
     auto& vao = dinfo.vao();
     vao.while_bound(logger, [&]() {
+      bool constexpr SET_NORMALMATRIX = true;
       draw_3dlit_shape(rstate, GL_TRIANGLES, position, model_mat, sp, dinfo, material, registry,
-                       receives_ambient_light);
+                       receives_ambient_light, SET_NORMALMATRIX);
     });
   };
   auto const draw_tile = [&](auto const& tile_pos) {
@@ -1070,8 +1080,10 @@ draw_rivers(RenderState& rstate, window::FrameTime const& ft)
         glm::mat3 const modelmatrix      = stlw::math::calculate_modelmatrix(tr, rot, scale);
         auto const      inverse_model    = glm::inverse(glm::mat3{modelmatrix});
         sp.set_uniform_matrix_4fv(logger, "u_inversemodelmatrix", inverse_model);
+
+        bool constexpr SET_NORMALMATRIX = true;
         draw_3dlit_shape(rstate, GL_TRIANGLES, tr, modelmatrix, sp, dinfo, material, registry,
-                         receives_ambient);
+                         receives_ambient, SET_NORMALMATRIX);
       };
       for (auto const& w : rinfo.wiggles) {
         if (w.is_visible) {
@@ -1185,18 +1197,11 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
       auto& dinfo = terrain.draw_info();
 
       auto const draw_fn = [&]() {
-        {
-          FOR(i, terrain.config.texture_names.textures.size()) {
-            auto& tinfo = *ttable.find(terrain.texture_name(i));
-
-            tinfo.set_fieldi(GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-            tinfo.set_fieldi(GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-          }
-        }
         auto& vao = dinfo.vao();
         vao.while_bound(logger, [&]() {
+          bool constexpr SET_NORMALMATRIX = true;
           draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, tr, model_matrix, sp, dinfo, mat, registry,
-                           ambient);
+                           ambient, SET_NORMALMATRIX);
         });
       };
       terrain.while_bound(draw_fn, logger, ttable);

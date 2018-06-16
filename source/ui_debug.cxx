@@ -369,6 +369,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
       imgui_cxx::input_sizet("Vertex Count", &terrain_config.num_vertexes_along_one_side);
       ImGui::InputFloat("height multiplier", &terrain_config.height_multiplier);
       ImGui::Checkbox("Invert Normals", &terrain_config.invert_normals);
+      ImGui::Checkbox("Tile Textures", &terrain_config.tile_textures);
       {
         auto const nicknames     = ttable.list_of_all_names('\0') + "\0";
         auto const set_initially = [&](auto const& value, auto const& table, auto& buffer) {
@@ -378,6 +379,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
           }
         };
 
+        ImGui::Separator();
         auto& terrain_texturenames = terrain_config.texture_names;
         set_initially(terrain_texturenames.heightmap_path, ttable, tbuffers.selected_heightmap);
         imgui_cxx::combo("Heightmap", &tbuffers.selected_heightmap, nicknames);

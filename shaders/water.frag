@@ -116,8 +116,6 @@ void main()
     fragment_color = effect_color + texture_color + light_color;
 
     const vec4 BLUE_MIX = vec4(0.0, 0.3, 0.8, 1.0);
-    fragment_color = mix(fragment_color, BLUE_MIX, 0.6);
-
-    //fragment_color = vec4(water_depth/255.0);
+    fragment_color = mix(fragment_color, BLUE_MIX, 0.6);// * water_depth;
   }
 }

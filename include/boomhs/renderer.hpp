@@ -79,7 +79,7 @@ draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::TextureInfo&, open
 
 void
 draw_3dlit_shape(RenderState&, GLenum, glm::vec3 const&, glm::mat4 const&, opengl::ShaderProgram&,
-                 opengl::DrawInfo&, opengl::Material const&, EntityRegistry&, bool);
+                 opengl::DrawInfo&, opengl::Material const&, EntityRegistry&, bool, bool);
 
 // TODO: move rest to sub-renderers or something
 void

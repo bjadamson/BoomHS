@@ -35,9 +35,8 @@ generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc, Terrai
     data.normals = MeshFactory::generate_normals(logger, gnd);
   }
 
-  bool constexpr TILE = true;
-  data.uvs            = MeshFactory::generate_uvs(logger, tgc.dimensions, numv_oneside, TILE);
-  data.indices        = MeshFactory::generate_indices(logger, numv_oneside);
+  data.uvs     = MeshFactory::generate_uvs(logger, tgc.dimensions, numv_oneside, tc.tile_textures);
+  data.indices = MeshFactory::generate_indices(logger, numv_oneside);
   return data;
 }
 
@@ -70,6 +69,7 @@ TerrainConfig::TerrainConfig()
     : num_vertexes_along_one_side(128)
     , height_multiplier(1)
     , invert_normals(false)
+    , tile_textures(false)
     , shader_name("terrain")
 {
 }
@@ -94,7 +94,6 @@ Terrain::bind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
     glActiveTexture(GL_TEXTURE0 + tunit);
     auto& tinfo = *ttable.find(texture_name(tunit));
     bind::global_bind(logger, tinfo);
-    LOG_ERROR_SPRINTF("TERRAIN binding %s to tu %lu", texture_name(tunit), tunit);
   };
 
   FOR(i, config.texture_names.textures.size()) { bind(i); }
