@@ -24,6 +24,8 @@ struct Player
 
   // Removes entity from the player
   static void drop_entity(stlw::Logger&, EntityID, EntityRegistry&);
+
+  static glm::vec3 world_position(EntityID, EntityRegistry&);
 };
 
 inline EntityID

@@ -9,6 +9,7 @@ class SDLWindow;
 namespace boomhs
 {
 class Camera;
+struct DrawState;
 struct EngineState;
 class LevelManager;
 } // namespace boomhs
@@ -17,6 +18,7 @@ namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState&, LevelManager&, window::SDLWindow&, Camera&, window::FrameTime const&);
+draw(EngineState&, LevelManager&, window::SDLWindow&, Camera&, DrawState&,
+     window::FrameTime const&);
 
 } // namespace boomhs::ui_debug

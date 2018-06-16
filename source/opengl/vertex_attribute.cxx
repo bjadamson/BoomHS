@@ -118,7 +118,7 @@ attribute_type_from_string(char const* str)
 //
 // TODO: derive second argument from first somehow?
 #define ATTR_STRING_TO_TYPE(STRING, ATTR_TYPE)                                                     \
-  if (::strcmp(str, STRING) == 0) {                                                                \
+  if (stlw::cstrcmp(str, STRING)) {                                                                \
       return AttributeType::ATTR_TYPE;                                                             \
   }
 

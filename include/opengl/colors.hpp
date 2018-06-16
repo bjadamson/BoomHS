@@ -3,6 +3,7 @@
 #include <ostream>
 #include <stlw/algorithm.hpp>
 #include <stlw/math.hpp>
+#include <stlw/random.hpp>
 
 namespace opengl
 {
@@ -11,9 +12,21 @@ class Color
 {
   static constexpr float DEFAULT_ALPHA = 1.0f;
 
-  std::array<float, 4> colors_ = stlw::make_array<float>(1.0f, 1.0f, 1.0f, 1.0f);
+  std::array<float, 4> colors_ = stlw::make_array<float>(1.0f, 1.0f, 1.0f, DEFAULT_ALPHA);
 
 public:
+  static Color random(stlw::float_generator& rng, float const alpha = DEFAULT_ALPHA)
+  {
+    auto const gen = [&rng]() { return rng.gen_0to1(); };
+    return Color{gen(), gen(), gen(), alpha};
+  }
+
+  static Color random(float const alpha = DEFAULT_ALPHA)
+  {
+    stlw::float_generator rng;
+    return random(rng);
+  }
+
   static Color lerp(Color const& a, Color const& b, float const dt)
   {
     return Color{glm::lerp(a.rgba(), b.rgba(), dt)};

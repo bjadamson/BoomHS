@@ -74,7 +74,7 @@ LogFactory::make_default(char const *name)
   // 2. Construct an instance of a logger that writes all log levels to a shared file.
   static char const prefix[] = "build-system/bin/logs/";
   auto const path = prefix + std::string{name};
-  auto logger = make_logger(path.c_str(), spdlog::level::info);
+  auto logger = make_logger(path.c_str(), spdlog::level::trace);
   return impl::LogWriter{MOVE(logger)};
 }
 

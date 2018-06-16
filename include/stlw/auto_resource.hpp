@@ -73,6 +73,9 @@ public:
 
   auto const* operator-> () const { return &resource_; }
   auto*       operator-> () { return &resource_; }
+
+  auto&       operator*() { return resource(); }
+  auto const& operator*() const { return resource(); }
 };
 
 template <typename R>

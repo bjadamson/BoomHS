@@ -30,22 +30,29 @@ namespace
 {
 
 void
-move_ontilegrid(GameState& state, glm::vec3 (WorldObject::*fn)() const, WorldObject& wo,
-                FrameTime const& ft)
+move_worldobject(GameState& state, glm::vec3 (WorldObject::*fn)() const, WorldObject& wo,
+                 FrameTime const& ft)
 {
   auto& es = state.engine_state;
   auto& ts = es.tilegrid_state;
 
-  auto&            lm        = state.level_manager;
-  LevelData const& leveldata = lm.active().level_data;
-  auto const [x, z]          = leveldata.dimensions();
-  glm::vec3 const move_vec   = (wo.*fn)();
+  auto&            lm           = state.level_manager;
+  auto&            zs           = lm.active();
+  LevelData const& ldata        = zs.level_data;
+  auto const&      terrain_grid = ldata.terrain;
+
+  auto const max_pos = terrain_grid.max_worldpositions();
+  auto const max_x   = max_pos.x;
+  auto const max_z   = max_pos.y;
+
+  auto&           logger   = es.logger;
+  glm::vec3 const move_vec = (wo.*fn)();
 
   glm::vec3 const delta  = move_vec * wo.speed() * ft.delta_millis();
   glm::vec3 const newpos = wo.world_position() + delta;
 
-  bool const x_outofbounds = newpos.x >= x || newpos.x < 0;
-  bool const y_outofbounds = newpos.z >= z || newpos.z < 0;
+  bool const x_outofbounds = newpos.x >= max_x || newpos.x < 0;
+  bool const y_outofbounds = newpos.z >= max_z || newpos.z < 0;
   bool const out_of_bounds = x_outofbounds || y_outofbounds;
   if (out_of_bounds && !es.mariolike_edges) {
     // If the world object *would* be out of bounds, return early (don't move the WO).
@@ -59,22 +66,22 @@ move_ontilegrid(GameState& state, glm::vec3 (WorldObject::*fn)() const, WorldObj
   };
 
   if (x_outofbounds) {
-    auto const new_x = flip_sides(newpos.x, 0ul, x);
+    auto const new_x = flip_sides(newpos.x, 0ul, max_x);
     wo.move_to(new_x, 0.0, newpos.z);
     ts.recompute = true;
   }
   else if (y_outofbounds) {
-    auto const new_z = flip_sides(newpos.z, 0ul, z);
+    auto const new_z = flip_sides(newpos.z, 0ul, max_z);
     wo.move_to(newpos.x, 0.0, new_z);
     ts.recompute = true;
   }
   else {
-    auto const tpos        = TilePosition::from_floats_truncated(newpos.x, newpos.z);
-    bool const should_move = (!es.player_collision) || !leveldata.is_wall(tpos);
-    if (should_move) {
-      wo.move(delta);
-      ts.recompute = true;
-    }
+    // auto const tpos        = TilePosition::from_floats_truncated(newpos.x, newpos.z);
+    // bool const should_move = (!es.player_collision) || !leveldata.is_wall(tpos);
+    // if (should_move) {
+    wo.move(delta);
+    ts.recompute = true;
+    //}
   }
 }
 
@@ -85,7 +92,7 @@ move_forward(GameState& state, FrameTime const& ft)
   auto& ldata  = lm.active().level_data;
   auto& player = ldata.player;
 
-  move_ontilegrid(state, &WorldObject::world_forward, player, ft);
+  move_worldobject(state, &WorldObject::world_forward, player, ft);
 }
 
 void
@@ -94,7 +101,7 @@ move_backward(GameState& state, FrameTime const& ft)
   auto& lm     = state.level_manager;
   auto& ldata  = lm.active().level_data;
   auto& player = ldata.player;
-  move_ontilegrid(state, &WorldObject::world_backward, player, ft);
+  move_worldobject(state, &WorldObject::world_backward, player, ft);
 }
 
 void
@@ -103,7 +110,7 @@ move_left(GameState& state, FrameTime const& ft)
   auto& lm     = state.level_manager;
   auto& ldata  = lm.active().level_data;
   auto& player = ldata.player;
-  move_ontilegrid(state, &WorldObject::world_left, player, ft);
+  move_worldobject(state, &WorldObject::world_left, player, ft);
 }
 
 void
@@ -112,7 +119,7 @@ move_right(GameState& state, FrameTime const& ft)
   auto& lm     = state.level_manager;
   auto& ldata  = lm.active().level_data;
   auto& player = ldata.player;
-  move_ontilegrid(state, &WorldObject::world_right, player, ft);
+  move_worldobject(state, &WorldObject::world_right, player, ft);
 }
 
 void
@@ -121,7 +128,7 @@ move_up(GameState& state, FrameTime const& ft)
   auto& lm     = state.level_manager;
   auto& ldata  = lm.active().level_data;
   auto& player = ldata.player;
-  move_ontilegrid(state, &WorldObject::world_up, player, ft);
+  move_worldobject(state, &WorldObject::world_up, player, ft);
 }
 
 void
@@ -130,7 +137,7 @@ move_down(GameState& state, FrameTime const& ft)
   auto& lm     = state.level_manager;
   auto& ldata  = lm.active().level_data;
   auto& player = ldata.player;
-  move_ontilegrid(state, &WorldObject::world_down, player, ft);
+  move_worldobject(state, &WorldObject::world_down, player, ft);
 }
 
 void
@@ -245,7 +252,7 @@ select_mouse_under_cursor(FrameState& fstate)
     auto&       selectable = registry.get<Selectable>(eid);
 
     Ray const  ray{ray_start, ray_dir};
-    bool const intersects = collision::box_intersect(ray, transform, bbox);
+    bool const intersects = collision::ray_box_intersect(ray, transform, bbox);
     selectable.selected   = intersects;
 
     // auto&            tree_transform = registry.get<Transform>(eid);
@@ -351,7 +358,13 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
     move_left(state, ft);
     break;
   case SDLK_e:
-    try_pickup_nearby_item(state, ft);
+    if (event.key.keysym.mod & KMOD_CTRL) {
+      auto& uistate = es.ui_state.debug;
+      uistate.show_entitywindow ^= true;
+    }
+    else {
+      try_pickup_nearby_item(state, ft);
+    }
     // move_up(state, ft);
     break;
   case SDLK_q:
@@ -464,7 +477,7 @@ process_mousestate(GameState& state, Camera& camera, FrameTime const& ft)
     auto& ldata  = lm.active().level_data;
     auto& player = ldata.player;
 
-    move_ontilegrid(state, &WorldObject::world_forward, player, ft);
+    move_worldobject(state, &WorldObject::world_forward, player, ft);
   }
 }
 

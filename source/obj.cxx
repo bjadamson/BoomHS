@@ -4,7 +4,6 @@
 #include <stlw/algorithm.hpp>
 
 #include <cassert>
-#include <extlibs/tinyobj.hpp>
 
 using namespace boomhs;
 using namespace opengl;
@@ -13,8 +12,8 @@ namespace
 {
 
 LoadStatus
-load_vertices(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
-              std::vector<float>* pvertices)
+load_positions(tinyobj::index_t const& index, tinyobj::attrib_t const& attrib,
+               std::vector<float>* pvertices)
 {
   auto const pos_index = 3 * index.vertex_index;
   if (pos_index < 0) {
@@ -88,8 +87,69 @@ load_colors(Color const& color, std::vector<float>* pvertices)
 namespace boomhs
 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// PositionsBuffer
+PositionsBuffer::PositionsBuffer(ObjVertices&& v)
+    : vertices(MOVE(v))
+{
+}
+
+glm::vec3
+PositionsBuffer::min() const
+{
+  glm::vec3 r;
+
+  size_t i = 0;
+  r.x      = vertices[i++];
+  r.y      = vertices[i++];
+  r.z      = vertices[i++];
+
+  while (i < vertices.size()) {
+    r.x = std::min(r.x, vertices[i++]);
+    r.y = std::min(r.y, vertices[i++]);
+    r.z = std::min(r.z, vertices[i++]);
+    assert(i <= vertices.size());
+  }
+
+  return r;
+}
+
+glm::vec3
+PositionsBuffer::max() const
+{
+  glm::vec3 r;
+
+  size_t i = 0;
+  r.x      = vertices[i++];
+  r.y      = vertices[i++];
+  r.z      = vertices[i++];
+
+  while (i < vertices.size()) {
+    r.x = std::max(r.x, vertices[i++]);
+    r.y = std::max(r.y, vertices[i++]);
+    r.z = std::max(r.z, vertices[i++]);
+
+    assert(i <= vertices.size());
+  }
+
+  return r;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // ObjData
+ObjData
+ObjData::clone() const
+{
+  return *this;
+}
+
+PositionsBuffer
+ObjData::positions() const
+{
+  auto copy = vertices;
+  return PositionsBuffer{MOVE(copy)};
+}
+
 std::string
 ObjData::to_string() const
 {
@@ -141,17 +201,22 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
 {
   LOG_TRACE_SPRINTF("Loading objfile: %s mtl: %s", objpath,
                     mtlpath == nullptr ? "nullptr" : mtlpath);
+  assert(mtlpath);
 
-  tinyobj::attrib_t                attrib;
-  std::vector<tinyobj::shape_t>    shapes;
-  std::vector<tinyobj::material_t> materials;
-  std::string                      err;
+  tinyobj::attrib_t attrib;
+  std::string       err;
+
+  ObjData objdata;
+  auto&   materials = objdata.materials;
+  auto&   shapes    = objdata.shapes;
 
   bool const load_success = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, objpath, mtlpath);
   if (!load_success) {
     LOG_ERROR_SPRINTF("error loading obj, msg: %s", err);
     std::abort();
   }
+
+  assert(!objdata.materials.empty());
 
   // TODO: for now only loading one mesh exactly
   assert(1 == shapes.size());
@@ -161,8 +226,7 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
   assert(0 == (attrib.normals.size() % 3));
   assert(0 == (attrib.texcoords.size() % 2));
 
-  ObjData objdata;
-  auto&   indices      = objdata.indices;
+  auto& indices        = objdata.indices;
   objdata.num_vertexes = attrib.vertices.size() / 3;
   /*
   LOG_ERROR_SPRINTF("vertice count %u", num_vertexes);
@@ -171,57 +235,55 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
   LOG_ERROR_SPRINTF("color count %u", attrib.colors.size());
   */
 
-  // Loop over shapes
-  FOR(s, shapes.size())
+  LOG_DEBUG_SPRINTF("materials size: %lu", materials.size());
+  FOR(i, materials.size())
   {
-    // Loop over faces(polygon)
-    size_t index_offset = 0;
-    FOR(f, shapes[s].mesh.num_face_vertices.size())
-    {
-      auto const fv = shapes[s].mesh.num_face_vertices[f];
+    auto const& material = materials[i];
+    auto const& diffuse  = material.diffuse;
+    auto const  color    = Color{diffuse[0], diffuse[1], diffuse[2], 1.0};
+    LOG_TRACE_SPRINTF("Material name %s, diffuse %s", material.name, color.to_string());
+  }
 
-      // Loop over vertices in the face.
-      FOR(vi, fv)
-      {
-        // access to vertex
-        tinyobj::index_t const index = shapes[s].mesh.indices[index_offset + vi];
+  auto const get_facecolor = [&materials](auto const& shape, auto const f) {
+    // per-face material
+    int const   face_materialid = shape.mesh.material_ids[f];
+    auto const& diffuse         = materials[face_materialid].diffuse;
+    return Color{diffuse[0], diffuse[1], diffuse[2], 1.0};
+  };
+
+  size_t     index_offset           = 0;
+  auto const load_vertex_attributes = [&](auto const& shape, auto const& face) -> LoadStatus {
+    auto const face_color = get_facecolor(shape, face);
+
+    auto const fv = shape.mesh.num_face_vertices[face];
+    // Loop over vertices in the face.
+    FOR(vi, fv)
+    {
+      // access to vertex
+      tinyobj::index_t const index = shape.mesh.indices[index_offset + vi];
 
 #define LOAD_ATTR(...)                                                                             \
   ({                                                                                               \
     auto const load_status = __VA_ARGS__;                                                          \
     if (load_status != LoadStatus::SUCCESS) {                                                      \
-      return Err(load_status);                                                                     \
+      return load_status;                                                                          \
     }                                                                                              \
   })
 
-        LOAD_ATTR(load_vertices(index, attrib, &objdata.vertices));
-
-        // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
-        // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
-        // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
-        //
-
-        LOAD_ATTR(load_normals(index, attrib, &objdata.normals));
-        LOAD_ATTR(load_uvs(index, attrib, &objdata.uvs));
-
-        LOAD_ATTR(load_colors(LOC::WHITE, &objdata.colors));
+      LOAD_ATTR(load_positions(index, attrib, &objdata.vertices));
+      LOAD_ATTR(load_normals(index, attrib, &objdata.normals));
+      LOAD_ATTR(load_uvs(index, attrib, &objdata.uvs));
+      LOAD_ATTR(load_colors(face_color, &objdata.colors));
 
 #undef LOAD_ATTR
-        indices.push_back(indices.size()); // 0, 1, 2, ...
-      }
-      index_offset += fv;
-
-      // per-face material
-      int const face_jaterialid = shapes[s].mesh.material_ids[f];
+      indices.push_back(indices.size()); // 0, 1, 2, ...
     }
-  }
+    index_offset += fv;
 
-  LOG_DEBUG_SPRINTF("materials size: %lu", materials.size());
-  FOR(i, materials.size())
-  {
-    auto const& material = materials[i];
-    LOG_DEBUG_SPRINTF("Material name: %s", material.name);
-  }
+    return LoadStatus::SUCCESS;
+  };
+
+  objdata.foreach_face(load_vertex_attributes);
 
   LOG_DEBUG_SPRINTF("num vertices: %u", objdata.num_vertexes);
   LOG_DEBUG_SPRINTF("vertices.size(): %u", objdata.vertices.size());
@@ -233,9 +295,10 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
 }
 
 LoadResult
-load_objfile(stlw::Logger& logger, std::string const& objpath)
+load_objfile(stlw::Logger& logger, std::string const& path, std::string const& name)
 {
-  return load_objfile(logger, objpath.c_str(), nullptr);
+  auto const objpath = path + name;
+  return load_objfile(logger, objpath.c_str(), path.c_str());
 }
 
 } // namespace boomhs

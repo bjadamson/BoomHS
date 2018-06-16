@@ -1,11 +1,13 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/frame.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/time.hpp>
+#include <boomhs/tree.hpp>
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_state.hpp>
 #include <opengl/global.hpp>
@@ -116,22 +118,74 @@ namespace
 {
 
 void
-draw_entity_editor(EngineState& es, LevelData& ldata, EntityRegistry& registry, Camera& camera)
+draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, Camera& camera)
 {
   auto&      uistate = es.ui_state.debug;
-  auto const draw    = [&]() {
-    auto       pairs     = collect_all<Transform>(registry, false);
-    auto const eid       = uistate.selected_entity;
-    auto&      transform = registry.get<Transform>(eid);
-    ImGui::InputFloat3("pos:", glm::value_ptr(transform.translation));
-    {
-      auto buffer = glm::degrees(glm::eulerAngles(transform.rotation));
-      if (ImGui::InputFloat3("rot:", glm::value_ptr(buffer))) {
-        transform.rotation = glm::quat(buffer * (3.14159f / 180.f));
+  auto const eid     = uistate.selected_entity;
+
+  auto const draw = [&]() {
+    if (registry.has<Name>(eid)) {
+      auto& name        = registry.get<Name>(eid).value;
+      char  buffer[128] = {'0'};
+      FOR(i, name.size()) { buffer[i] = name[i]; }
+      ImGui::InputText(name.c_str(), buffer, IM_ARRAYSIZE(buffer));
+    }
+    if (registry.has<AABoundingBox>(eid)) {
+      if (ImGui::CollapsingHeader("BoundingBox Editor")) {
+        auto const& bbox = registry.get<AABoundingBox>(eid);
+        ImGui::Text("min: %s", glm::to_string(bbox.min).c_str());
+        ImGui::Text("max: %s", glm::to_string(bbox.max).c_str());
       }
     }
-    ImGui::InputFloat3("scale:", glm::value_ptr(transform.scale));
+    if (ImGui::CollapsingHeader("Transform Editor")) {
+      auto& transform = registry.get<Transform>(eid);
+      ImGui::InputFloat3("pos:", glm::value_ptr(transform.translation));
+      {
+        auto buffer = glm::degrees(glm::eulerAngles(transform.rotation));
+        if (ImGui::InputFloat3("rot:", glm::value_ptr(buffer))) {
+          transform.rotation = glm::quat(buffer * (3.14159f / 180.f));
+        }
+      }
+      ImGui::InputFloat3("scale:", glm::value_ptr(transform.scale));
+    }
+
+    auto& logger    = es.logger;
+    auto& zs        = lm.active();
+    auto& gfx_state = zs.gfx_state;
+    auto& gpu_state = gfx_state.gpu_state;
+    auto& sps       = gfx_state.sps;
+
+    auto& entity_map = gfx_state.gpu_state.entities;
+    if (registry.has<TreeComponent>(eid) && ImGui::CollapsingHeader("Tree Editor")) {
+      auto const make_str = [](char const* text, auto const num) {
+        return text + std::to_string(num);
+      };
+      auto& tc = registry.get<TreeComponent>(eid);
+
+      auto const edit_treecolor = [&](char const* name, auto const num_colors,
+                                      auto const& get_color) {
+        FOR(i, num_colors)
+        {
+          auto const text = make_str(name, i);
+          ImGui::ColorEdit4(text.c_str(), get_color(i), ImGuiColorEditFlags_Float);
+        }
+      };
+
+      edit_treecolor("Trunk", tc.num_trunks(),
+                     [&tc](auto const i) { return tc.trunk_color(i).data(); });
+      edit_treecolor("Stem", tc.num_stems(),
+                     [&tc](auto const i) { return tc.stem_color(i).data(); });
+      edit_treecolor("Leaves", tc.num_leaves(),
+                     [&tc](auto const i) { return tc.leaf_color(i).data(); });
+
+      auto& sn = registry.get<ShaderName>(eid);
+      auto& va = sps.ref_sp(sn.value).va();
+
+      auto& dinfo = entity_map.lookup(logger, eid);
+      Tree::update_colors(logger, va, dinfo, tc);
+    }
   };
+
   imgui_cxx::with_window(draw, "Entity Editor Window");
 }
 
@@ -247,10 +301,8 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
   auto& gfx_state = zs.gfx_state;
   auto& tbuffers  = es.ui_state.debug.buffers.terrain;
 
-  auto& ldata   = zs.level_data;
-  auto& terrain = zs.level_data.terrain();
-  auto& tgrid   = terrain.grid;
-  auto& tconfig = tbuffers.config;
+  auto& ldata        = zs.level_data;
+  auto& terrain_grid = ldata.terrain;
 
   auto const fn = [&](auto const i, auto const j, auto& buffer) {
     buffer << "(";
@@ -262,113 +314,154 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
   };
   auto const tgrid_slots_string = [&]() {
     std::stringstream buffer;
-    visit_each(tgrid, fn, buffer);
+    visit_each(terrain_grid, fn, buffer);
     buffer << '\0';
     return buffer.str();
   };
 
   auto& ttable      = gfx_state.texture_table;
-  auto& sb          = tbuffers.selected_terrain;
-  auto& t           = tbuffers.config;
   auto& ld          = zs.level_data;
-  auto& grid_config = tgrid.config();
-
-  auto& sps = gfx_state.sps;
-  auto& sp  = sps.ref_sp(t.shader_name);
+  auto& grid_config = terrain_grid.config;
+  auto& sps         = gfx_state.sps;
 
   auto const draw = [&]() -> Result<stlw::none_t, std::string> {
     if (ImGui::CollapsingHeader("Regenerate Grid")) {
-      imgui_cxx::input_sizet("num rows", &grid_config.num_rows);
-      imgui_cxx::input_sizet("num cols", &grid_config.num_cols);
-      ImGui::InputFloat("x width", &grid_config.dimensions.x);
-      ImGui::InputFloat("z length", &grid_config.dimensions.y);
-      if (ImGui::Button("Generate Terrain")) {
-        auto const heightmap = TRY(heightmap::load_fromtable(logger, ttable, t.heightmap_path));
-        auto*      ti        = ttable.find(t.texture_name);
-        assert(ti);
+      auto& tbuffer_gridconfig = tbuffers.grid_config;
+      imgui_cxx::input_sizet("num rows", &tbuffer_gridconfig.num_rows);
+      imgui_cxx::input_sizet("num cols", &tbuffer_gridconfig.num_cols);
+      ImGui::InputFloat("x width", &tbuffer_gridconfig.dimensions.x);
+      ImGui::InputFloat("z length", &tbuffer_gridconfig.dimensions.y);
 
-        auto tg = terrain::generate_grid(logger, grid_config, tbuffers.config, heightmap, sp, *ti);
-        terrain.grid = MOVE(tg);
+      if (ImGui::Button("Generate Terrain")) {
+        auto&      terrain_config = tbuffers.terrain_config;
+        auto const heightmap      = TRY_MOVEOUT(
+            heightmap::load_fromtable(logger, ttable, terrain_config.texture_names.heightmap_path));
+
+        // copy the grid config from the tempory buffer to the leveldata instance.
+        terrain_grid.config = tbuffer_gridconfig;
+        auto& sp            = sps.ref_sp(terrain_config.shader_name);
+        ldata.terrain = terrain::generate_grid(logger, grid_config, terrain_config, heightmap, sp);
       }
     }
     if (ImGui::CollapsingHeader("Rendering Options")) {
-      auto& tfstate = terrain.render_state;
       {
         auto constexpr WINDING_OPTIONS = stlw::make_array<GLint>(GL_CCW, GL_CW);
-        tfstate.winding                = gl_option_combo("Winding Order", "CCW\0CW\0\0",
-                                          &tbuffers.selected_winding, WINDING_OPTIONS);
+        terrain_grid.winding           = gl_option_combo("Winding Order", "CCW\0CW\0\0",
+                                               &tbuffers.selected_winding, WINDING_OPTIONS);
       }
-      ImGui::Checkbox("Culling Enabled", &tfstate.culling_enabled);
+      ImGui::Checkbox("Culling Enabled", &terrain_grid.culling_enabled);
       {
         auto constexpr CULLING_OPTIONS =
             stlw::make_array<GLint>(GL_BACK, GL_FRONT, GL_FRONT_AND_BACK);
-        tfstate.culling_mode = gl_option_combo("Culling Face", "Front\0Back\0Front And Back\0\0",
-                                               &tbuffers.selected_culling, CULLING_OPTIONS);
+        terrain_grid.culling_mode =
+            gl_option_combo("Culling Face", "Front\0Back\0Front And Back\0\0",
+                            &tbuffers.selected_culling, CULLING_OPTIONS);
       }
     }
     if (ImGui::CollapsingHeader("Update Existing Terrain")) {
       auto const tgrid_slot_names = tgrid_slots_string();
-      if (ImGui::Combo("Select Terrain", &sb, tgrid_slot_names.c_str())) {
-        tbuffers.config = tgrid[sb].config;
+      if (ImGui::Combo("Select Terrain", &tbuffers.selected_terrain, tgrid_slot_names.c_str())) {
+        tbuffers.terrain_config = terrain_grid[tbuffers.selected_terrain].config;
       }
       ImGui::Separator();
-      imgui_cxx::input_sizet("Vertex Count", &tconfig.num_vertexes_along_one_side);
-      ImGui::InputFloat("height multiplier", &tconfig.height_multiplier);
-      ImGui::Checkbox("Invert Normals", &tconfig.invert_normals);
+
+      auto& terrain_config = tbuffers.terrain_config;
+      imgui_cxx::input_sizet("Vertex Count", &terrain_config.num_vertexes_along_one_side);
+      ImGui::InputFloat("height multiplier", &terrain_config.height_multiplier);
+      ImGui::Checkbox("Invert Normals", &terrain_config.invert_normals);
+      ImGui::Checkbox("Tile Textures", &terrain_config.tile_textures);
       {
         auto const nicknames     = ttable.list_of_all_names('\0') + "\0";
         auto const set_initially = [&](auto const& value, auto const& table, auto& buffer) {
           if (buffer == -1) {
-            *(&buffer) = table.index_of_nickname(value).value_or(0);
+            auto lookup = table.index_of_nickname(value);
+            *(&buffer)  = lookup.value_or(0);
           }
         };
-        set_initially(t.heightmap_path, ttable, tbuffers.selected_heightmap);
+
+        ImGui::Separator();
+        auto& terrain_texturenames = terrain_config.texture_names;
+        set_initially(terrain_texturenames.heightmap_path, ttable, tbuffers.selected_heightmap);
         imgui_cxx::combo("Heightmap", &tbuffers.selected_heightmap, nicknames);
 
-        set_initially(t.texture_name, ttable, tbuffers.selected_texture);
-        imgui_cxx::combo("Texture", &tbuffers.selected_texture, nicknames);
-
-        set_initially(t.shader_name, sps, tbuffers.selected_shader);
+        set_initially(terrain_config.shader_name, sps, tbuffers.selected_shader);
         auto const shader_names = sps.all_shader_names_flattened('\0') + "\0";
         imgui_cxx::combo("Shader", &tbuffers.selected_shader, shader_names);
+
+        FOR(i, tbuffers.selected_textures.size())
+        {
+          auto& st = tbuffers.selected_textures[i];
+          set_initially(terrain_texturenames.textures[i], ttable, st);
+
+          // clang-format off
+          auto constexpr SAMPLER_NAMES = stlw::make_array<char const*>(
+              "u_bgsampler",
+              "u_rsampler",
+              "u_gsampler",
+              "u_bsampler",
+              "u_blendsampler");
+          // clang-format on
+          imgui_cxx::combo(SAMPLER_NAMES[i], &st, nicknames);
+        }
       }
       {
         auto constexpr WRAP_OPTIONS =
             stlw::make_array<GLint>(GL_MIRRORED_REPEAT, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        t.wrap_mode = gl_option_combo("UV Wrap Mode", "Mirrored Repeat\0Repeat\0Clamp\0\0",
-                                      &tbuffers.selected_wrapmode, WRAP_OPTIONS);
+        terrain_config.wrap_mode =
+            gl_option_combo("UV Wrap Mode", "Mirrored Repeat\0Repeat\0Clamp\0\0",
+                            &tbuffers.selected_wrapmode, WRAP_OPTIONS);
       }
-      ImGui::InputFloat("UV Modifier", &t.uv_modifier);
+      ImGui::InputFloat("UV Modifier", &terrain_config.uv_modifier);
       if (ImGui::Button("Regenerate Piece")) {
-        auto const selected_texture =
-            ttable.nickname_at_index(tbuffers.selected_texture).value_or(t.texture_name);
-        auto const* p_texture = ttable.lookup_nickname(selected_texture);
-        if (!p_texture) {
-          auto const fmt = fmt::sprintf("ERROR Looking up texture: %s", selected_texture);
-          return Err(fmt);
-        }
-        else {
-          auto* ti = ttable.find(selected_texture);
-          assert(ti);
-          ti->while_bound(logger, [&]() {
-            ti->set_fieldi(GL_TEXTURE_WRAP_S, t.wrap_mode);
-            ti->set_fieldi(GL_TEXTURE_WRAP_T, t.wrap_mode);
-          });
-        }
-        auto const selected_hm =
-            ttable.nickname_at_index(tbuffers.selected_heightmap).value_or(t.heightmap_path);
 
-        t.shader_name = sps.nickname_at_index(tbuffers.selected_shader).value_or(t.shader_name);
+        auto& terrain_texturenames = terrain_config.texture_names;
+        assert(terrain_texturenames.textures.size() > 0);
 
-        auto const heightmap = TRY(heightmap::load_fromtable(logger, ttable, selected_hm));
-        auto*      ti        = ttable.find(selected_texture);
-        assert(ti);
+        auto const update_selectedtexture =
+            [&](size_t const index) -> Result<stlw::Nothing, std::string> {
+          int const tbuf_index = tbuffers.selected_textures[index];
 
-        int const row = sb / tgrid.width();
-        int const col = sb % tgrid.width();
-        auto tp = terrain::generate_piece(logger, glm::vec2{row, col}, grid_config, tbuffers.config,
-                                          heightmap, sp, *ti);
-        terrain.grid[sb] = MOVE(tp);
+          // Lookup texture in the texture table
+          auto tn_o = ttable.nickname_at_index(tbuf_index);
+          assert(tn_o);
+          std::string const tn = *tn_o;
+
+          auto const* p_texture = ttable.lookup_nickname(tn);
+          if (!p_texture) {
+            auto const fmt = fmt::sprintf("ERROR Looking up texture: %s", tn);
+            return Err(fmt);
+          }
+          else {
+            auto* ti = ttable.find(tn);
+            assert(ti);
+            ti->while_bound(logger, [&]() {
+              ti->set_fieldi(GL_TEXTURE_WRAP_S, terrain_config.wrap_mode);
+              ti->set_fieldi(GL_TEXTURE_WRAP_T, terrain_config.wrap_mode);
+            });
+          }
+          terrain_texturenames.textures[index] = tn;
+          return OK_NONE;
+        };
+
+        DO_EFFECT(update_selectedtexture(0));
+        auto const selected_hm = ttable.nickname_at_index(tbuffers.selected_heightmap)
+                                     .value_or(terrain_texturenames.heightmap_path);
+
+        terrain_config.shader_name =
+            sps.nickname_at_index(tbuffers.selected_shader).value_or(terrain_config.shader_name);
+
+        auto const heightmap = TRY_MOVEOUT(heightmap::load_fromtable(logger, ttable, selected_hm));
+
+        auto const selected_terrain = tbuffers.selected_terrain;
+        int const  row              = selected_terrain / terrain_grid.num_rows();
+        int const  col              = selected_terrain % terrain_grid.num_cols();
+
+        auto& sp = sps.ref_sp(terrain_config.shader_name);
+        auto  tp = terrain::generate_piece(logger, glm::vec2{row, col}, grid_config, terrain_config,
+                                          heightmap, sp);
+
+        LOG_ERROR_SPRINTF("SELECTED TERRAIN %i row %i col %i", selected_terrain, row, col);
+        terrain_grid[selected_terrain] = MOVE(tp);
       }
     }
 
@@ -588,8 +681,7 @@ show_entitymaterials_window(UiDebugState& ui, EntityRegistry& registry)
   auto& selected_material = ui.selected_entity_material;
 
   auto const draw = [&]() {
-    auto pairs = collect_all<Material, Transform>(registry, false);
-    display_combo_for_entities<>("Entity", &selected_material, registry, pairs);
+    // display_combo_for_entities<>("Entity", &selected_material, registry, pairs);
 
     auto const  entities_with_materials = find_materials(registry);
     auto const& selected_entity         = entities_with_materials[selected_material];
@@ -794,7 +886,7 @@ draw_debugwindow(EngineState& es, LevelManager& lm)
 }
 
 void
-draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window)
+draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window, DrawState& ds)
 {
   auto&      uistate      = es.ui_state.debug;
   auto const windows_menu = [&]() {
@@ -844,6 +936,9 @@ draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window)
     auto const framerate = es.imgui.Framerate;
     auto const ms_frame  = 1000.0f / framerate;
 
+    ImGui::SameLine(ImGui::GetWindowWidth() * 0.30f);
+    ImGui::Text("#verts: %s", ds.to_string().c_str());
+
     ImGui::SameLine(ImGui::GetWindowWidth() * 0.60f);
     ImGui::Text("Current Level: %i", lm.active_zone());
 
@@ -859,7 +954,7 @@ namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camera,
+draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camera, DrawState& ds,
      window::FrameTime const& ft)
 {
   auto& uistate        = es.ui_state.debug;
@@ -869,7 +964,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camer
   auto& ldata          = zs.level_data;
 
   if (uistate.show_entitywindow) {
-    draw_entity_editor(es, ldata, registry, camera);
+    draw_entity_editor(es, lm, registry, camera);
   }
   if (uistate.show_time_window) {
     draw_time_editor(es.logger, es.time, uistate);
@@ -898,7 +993,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camer
   if (uistate.show_debugwindow) {
     draw_debugwindow(es, lm);
   }
-  draw_mainmenu(es, lm, window);
+  draw_mainmenu(es, lm, window, ds);
 }
 
 } // namespace boomhs::ui_debug

@@ -24,8 +24,7 @@ struct LevelGeneratedData
   TileGrid               tilegrid;
   TilePosition           startpos;
   std::vector<RiverInfo> rivers;
-  Terrain                terrain;
-  WaterInfo              water;
+  TerrainGrid            terrain;
 };
 
 class LevelData
@@ -42,21 +41,18 @@ class LevelData
 
   std::vector<RiverInfo> rivers_;
 
-  Skybox    skybox_;
-  Terrain   terrain_;
-  WaterInfo water_;
-
   void set_tile(TilePosition const&, TileType const&);
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
   LevelData(TileGrid&&, TileSharedInfoTable&&, TilePosition const&, std::vector<RiverInfo>&&,
-            Terrain&&, WaterInfo&&, Fog const&, opengl::GlobalLight const&, ObjStore&&,
-            WorldObject&&);
+            TerrainGrid&&, Fog const&, opengl::GlobalLight const&, ObjStore&&, WorldObject&&);
 
   // public fields
-  Skybox              skybox;
-  Fog                 fog;
+  Skybox      skybox;
+  Fog         fog;
+  TerrainGrid terrain;
+
   opengl::GlobalLight global_light;
 
   ObjStore obj_store;
@@ -78,7 +74,7 @@ public:
   bool is_tile(TilePosition const&, TileType const&) const;
   bool is_wall(TilePosition const&) const;
 
-  auto dimensions() const { return tilegrid_.dimensions(); }
+  auto dimensions() const { return terrain.max_worldpositions(); }
 
   // TODO: Is this leaky abstraction?
   auto& tilegrid() { return tilegrid_; }
@@ -95,12 +91,6 @@ public:
 
   auto&       rivers() { return rivers_; }
   auto const& rivers() const { return rivers_; }
-
-  auto&       terrain() { return terrain_; }
-  auto const& terrain() const { return terrain_; }
-
-  auto&       water() { return water_; }
-  auto const& water() const { return water_; }
 
   template <typename FN>
   void visit_tiles(FN const& fn) const

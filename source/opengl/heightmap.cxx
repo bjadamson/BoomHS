@@ -5,6 +5,42 @@
 
 using namespace boomhs;
 
+namespace opengl
+{
+
+Heightmap::Heightmap(int const w)
+    : width_(w)
+{
+}
+
+uint8_t&
+Heightmap::data(size_t const x, size_t const z)
+{
+  // TODO: maybe flip this around??
+  return data_[(width_ * z) + x];
+}
+
+uint8_t const&
+Heightmap::data(size_t const x, size_t const z) const
+{
+  // TODO: maybe flip this around??
+  return data_[(width_ * z) + x];
+}
+
+void
+Heightmap::reserve(size_t const v)
+{
+  data_.reserve(v);
+}
+
+void
+Heightmap::add(uint8_t const v)
+{
+  data_.emplace_back(v);
+}
+
+} // ns opengl
+
 namespace opengl::heightmap
 {
 
@@ -24,13 +60,13 @@ load_fromtable(stlw::Logger &logger, TextureTable const& ttable, std::string con
   return opengl::heightmap::parse(logger, path);
 }
 
-ObjData::vertices_t
+ObjVertices
 generate_normals(int const x_length, int const z_length, bool const invert_normals,
-    HeightmapData const& heightmap_data)
+    Heightmap const& heightmap)
 {
   int constexpr NUM_COMPONENTS     = 3; // xn, yn, zn
   size_t const        num_vertices = NUM_COMPONENTS * x_length * z_length;
-  ObjData::vertices_t normals;
+  ObjVertices normals;
   normals.resize(num_vertices);
 
   //
@@ -58,7 +94,7 @@ generate_normals(int const x_length, int const z_length, bool const invert_norma
   auto const width = x_length, height = z_length;
   auto const& h = [&](auto const x, auto const y)
   {
-    return heightmap_data.data()[(width * y) + x];
+    return heightmap.data(y, x);
   };
   FORI(y, height)
   {
@@ -108,7 +144,8 @@ parse(ImageData const& image)
     return Err(fmt);
   }
 
-  HeightmapData heightmap;
+  // The heightmap's width comes directly from the image data.
+  Heightmap heightmap{image.width};
 
   size_t const num_pixels = num_pixels_in_image;
   heightmap.reserve(num_pixels);
@@ -123,11 +160,11 @@ parse(ImageData const& image)
     assert(red == green);
     assert(red == blue);
     assert(255 == alpha);
-    heightmap.emplace_back(red);
+    heightmap.add(red);
   }
   assert(heightmap.size() == num_pixels);
 
-  return Ok(heightmap);
+  return Ok(MOVE(heightmap));
 }
 
 HeightmapResult
@@ -146,15 +183,15 @@ parse(stlw::Logger &logger, std::string const& path)
 }
 
 size_t
-calculate_number_vertices(int const num_components, TerrainPieceConfig const& tc)
+calculate_number_vertices(int const num_components, TerrainConfig const& tc)
 {
   auto const num_vertexes = tc.num_vertexes_along_one_side;
   return num_components * (num_vertexes * num_vertexes);
 }
 
 void
-update_vertices_from_heightmap(stlw::Logger& logger, TerrainPieceConfig const& tc,
-                               HeightmapData const& heightmap_data, ObjData::vertices_t &buffer)
+update_vertices_from_heightmap(stlw::Logger& logger, TerrainConfig const& tc,
+                               Heightmap const& heightmap, ObjVertices &buffer)
 {
   LOG_TRACE("Updating vertices from heightmap");
 
@@ -167,7 +204,7 @@ update_vertices_from_heightmap(stlw::Logger& logger, TerrainPieceConfig const& t
     {
       ++offset; // skip x
 
-      uint8_t const height = heightmap_data.data()[(x_length * z) + x];
+      uint8_t const height = heightmap.data(x, z);
       assert(height >= 0.0f);
 
       float const height_normalized = height / 255.0f;

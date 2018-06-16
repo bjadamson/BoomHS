@@ -104,6 +104,7 @@ target_include_directories(boomhs PUBLIC
   ${SDL2IMAGE_INCLUDE_DIRS}
   ${IMGUI_INCLUDE_DIR}
   ${INTERNAL_INCLUDE_DIRS}
+  ${LIBAUDIO_INCLUDE_DIRS}
   ${OPENGL_INDLUDE_DIRS}
   ${GLEW_INCLUDE_DIRS}
   ${SOIL_INCLUDE_DIR})
@@ -116,10 +117,12 @@ target_link_libraries(boomhs
   ${GLEW_LIBRARIES}
   ${SOIL_LIBRARIES}
   ${ZLIB_LIBRARIES}
+  audio
   bfd ## BFD and dl are both needed for linux backtraces.
   dl
   pthread
-  boost_system)
+  boost_system
+  openal)
 
 target_include_directories(build_postprocessing PUBLIC ${INTERNAL_INCLUDE_DIRS})
 target_link_libraries(build_postprocessing stdc++ c++experimental)

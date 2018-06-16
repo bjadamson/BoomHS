@@ -23,6 +23,7 @@ public:
 
   auto const& transform() const { return ent_lookup_.lookup<Transform>(); }
   auto&       transform() { return ent_lookup_.lookup<Transform>(); }
+  auto const& bounding_box() const { return ent_lookup_.lookup<AABoundingBox>(); }
 
   glm::vec3 eye_forward() const { return forward_; }
   glm::vec3 eye_up() const { return up_; }

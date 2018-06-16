@@ -6,6 +6,7 @@
 #include <boomhs/player.hpp>
 #include <boomhs/start_area_generator.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
+#include <boomhs/tree.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <boomhs/obj.hpp>
@@ -39,7 +40,6 @@ assemble(LevelGeneratedData&& gendata, LevelAssets&& assets, EntityRegistry& reg
                        MOVE(gendata.startpos),
                        MOVE(gendata.rivers),
                        MOVE(gendata.terrain),
-                       MOVE(gendata.water),
 
                        assets.fog,
                        assets.global_light,
@@ -97,7 +97,7 @@ bridge_staircases(ZoneState& a, ZoneState& b)
 using copy_assets_pair_t = std::pair<EntityDrawHandleMap, TileDrawHandles>;
 Result<copy_assets_pair_t, std::string>
 copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable const& ttable,
-                EntityRegistry& registry, ObjStore const& obj_store)
+                EntityRegistry& registry, ObjStore& obj_store)
 {
   EntityDrawHandleMap entity_drawmap;
 
@@ -123,7 +123,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
         auto&       va  = sps.ref_sp(sn.value).va();
         auto const  qa  = BufferFlags::from_va(va);
         auto const  qo  = ObjQuery{mesh.name, qa};
-        auto const& obj = obj_store.get_obj(logger, qo);
+        auto const& obj = obj_store.get(logger, mesh.name);
 
         auto handle = opengl::gpu::copy_gpu(logger, va, obj);
         entity_drawmap.add(entity, MOVE(handle));
@@ -133,7 +133,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
         auto&       va  = sps.ref_sp(sn.value).va();
         auto const  qa  = BufferFlags::from_va(va);
         auto const  qo  = ObjQuery{mesh.name, qa};
-        auto const& obj = obj_store.get_obj(logger, qo);
+        auto const& obj = obj_store.get(logger, mesh.name);
 
         auto handle = opengl::gpu::copy_gpu(logger, va, obj);
         entity_drawmap.add(entity, MOVE(handle));
@@ -152,10 +152,26 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
         auto&       va  = sps.ref_sp(sn.value).va();
         auto const  qa  = BufferFlags::from_va(va);
         auto const  qo  = ObjQuery{mesh.name, qa};
-        auto const& obj = obj_store.get_obj(logger, qo);
+        auto const& obj = obj_store.get(logger, mesh.name);
 
         auto handle = opengl::gpu::copy_gpu(logger, va, obj);
         entity_drawmap.add(entity, MOVE(handle));
+      });
+
+  registry.view<ShaderName, MeshRenderable, TreeComponent>().each(
+      [&](auto entity, auto& sn, auto& mesh, auto& tree) {
+        auto& name = registry.get<MeshRenderable>(entity).name;
+
+        auto&          va    = sps.ref_sp(sn.value).va();
+        auto const     flags = BufferFlags::from_va(va);
+        ObjQuery const query{name, flags};
+        auto&          obj = obj_store.get(logger, name);
+
+        auto& tc = registry.get<typename std::remove_reference<decltype(tree)>::type>(entity);
+        tc.set_obj(&obj);
+
+        auto& dinfo = entity_drawmap.lookup(logger, entity);
+        Tree::update_colors(logger, va, dinfo, tc);
       });
 
   // copy TILES to GPU
@@ -168,7 +184,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
     auto&       va  = sps.ref_sp(vshader_name).va();
     auto const  qa  = BufferFlags::from_va(va);
     auto const  qo  = ObjQuery{mesh_name, qa};
-    auto const& obj = obj_store.get_obj(logger, qo);
+    auto const& obj = obj_store.get(logger, mesh_name);
 
     auto handle = opengl::gpu::copy_gpu(logger, sps.ref_sp(vshader_name).va(), obj);
 
@@ -182,68 +198,23 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps, TileSharedInfoTable c
   return Ok(std::make_pair(MOVE(entity_drawmap), MOVE(td)));
 }
 
-struct TreeComponent
-{
-};
-
 void
 copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
 {
   auto&       ldata     = zs.level_data;
   auto const& ttable    = ldata.tiletable();
-  auto const& objcache  = ldata.obj_store;
+  auto&       objstore  = ldata.obj_store;
   auto&       gfx_state = zs.gfx_state;
   auto&       sps       = gfx_state.sps;
   auto&       registry  = zs.registry;
 
-  auto copy_result = copy_assets_gpu(logger, sps, ttable, registry, objcache);
+  auto copy_result = copy_assets_gpu(logger, sps, ttable, registry, objstore);
   assert(copy_result);
   auto handles = copy_result.expect_moveout("Error copying asset to gpu");
   auto edh     = MOVE(handles.first);
   auto tdh     = MOVE(handles.second);
 
-  auto const& obj_store = ldata.obj_store;
-
-  auto const add_tree = [&](auto const& world_pos) -> Transform& {
-    auto  eid = registry.create();
-    auto& mr  = registry.assign<MeshRenderable>(eid);
-    mr.name   = "sphere";
-
-    auto& transform       = registry.assign<Transform>(eid);
-    transform.translation = world_pos;
-    registry.assign<Material>(eid);
-    registry.assign<JunkEntityFromFILE>(eid);
-    // registry.assign<TreeComponent>(eid);
-    {
-      auto& isv = registry.assign<IsVisible>(eid);
-      isv.value = true;
-    }
-    registry.assign<Name>(eid).value = "custom tree";
-
-    auto& sn = registry.assign<ShaderName>(eid);
-    sn.value = "3d_pos_normal_color";
-    {
-      auto& cc = registry.assign<Color>(eid);
-      *&cc     = LOC::WHITE;
-    }
-
-    auto&          va    = sps.ref_sp(sn.value).va();
-    auto const     flags = BufferFlags::from_va(va);
-    ObjQuery const query{mr.name, flags};
-    auto&          obj   = obj_store.get_obj(logger, query);
-    auto           dinfo = opengl::gpu::copy_gpu(logger, va, obj);
-    edh.add(eid, MOVE(dinfo));
-
-    return transform;
-  };
-  add_tree(glm::vec3{2.0f, 0.0f, 0.0f});
-  add_tree(glm::vec3{0.0f, 0.0f, 2.0f});
-  auto* tr  = &add_tree(glm::vec3{4.0f, 4.0f, 0.0f});
-  tr->scale = glm::vec3{2.0f};
-
-  tr        = &add_tree(glm::vec3{100.0f, 10.0f, 100.0f});
-  tr->scale = glm::vec3{60.0f};
-
+  auto& obj_store                 = ldata.obj_store;
   auto constexpr WIREFRAME_SHADER = "wireframe";
   auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
 
@@ -268,7 +239,7 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
 
     auto const     flags = BufferFlags::from_va(va);
     ObjQuery const query{name, flags};
-    auto&          obj       = obj_store.get_obj(logger, query);
+    auto&          obj       = obj_store.get(logger, name);
     auto const     posbuffer = obj.positions();
     auto const&    min       = posbuffer.min();
     auto const&    max       = posbuffer.max();

@@ -51,4 +51,11 @@ Player::drop_entity(stlw::Logger& logger, EntityID const eid, EntityRegistry& re
   }
 }
 
+glm::vec3
+Player::world_position(EntityID const eid, EntityRegistry& registry)
+{
+  auto& tr = registry.get<Transform>(eid);
+  return tr.translation;
+}
+
 } // namespace boomhs

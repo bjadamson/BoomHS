@@ -21,7 +21,7 @@ namespace boomhs::collision
 // algorithm adopted from:
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
 bool
-box_intersect(Ray const& r, Transform const& transform, AABoundingBox const& box)
+ray_box_intersect(Ray const& r, Transform const& transform, AABoundingBox const& box)
 {
   auto const& boxpos = transform.translation;
 
@@ -59,6 +59,23 @@ box_intersect(Ray const& r, Transform const& transform, AABoundingBox const& box
   // txmax = tzmax;
   //}
   return true;
+}
+
+bool
+bbox_intersects(stlw::Logger& logger, Transform const& at, AABoundingBox const& ab,
+                Transform const& bt, AABoundingBox const& bb)
+{
+  auto const& ac = at.translation;
+  auto const& bc = bt.translation;
+
+  auto const ah = ab.half_widths() * at.scale;
+  auto const bh = bb.half_widths() * bt.scale;
+
+  bool x = std::fabs(ac.x - bc.x) <= (ah.x + bh.x);
+  bool y = std::fabs(ac.y - bc.y) <= (ah.y + bh.y);
+  bool z = std::fabs(ac.z - bc.z) <= (ah.z + bh.z);
+
+  return x && y && z;
 }
 
 } // namespace boomhs::collision

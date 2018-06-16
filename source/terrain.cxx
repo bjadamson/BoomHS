@@ -18,8 +18,8 @@ namespace
 {
 
 ObjData
-generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc,
-                      TerrainPieceConfig const& tc, HeightmapData const& heightmap_data)
+generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
+                      Heightmap const& heightmap)
 {
   auto const numv_oneside = tc.num_vertexes_along_one_side;
   auto const num_vertexes = stlw::math::squared(numv_oneside);
@@ -28,17 +28,26 @@ generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc,
   data.num_vertexes = num_vertexes;
 
   data.vertices = MeshFactory::generate_rectangle_mesh(logger, tgc.dimensions, numv_oneside);
-  heightmap::update_vertices_from_heightmap(logger, tc, heightmap_data, data.vertices);
+  heightmap::update_vertices_from_heightmap(logger, tc, heightmap, data.vertices);
 
   {
-    GenerateNormalData const gnd{tc.invert_normals, heightmap_data, numv_oneside};
+    GenerateNormalData const gnd{tc.invert_normals, heightmap, numv_oneside};
     data.normals = MeshFactory::generate_normals(logger, gnd);
   }
 
-  bool constexpr TILE = true;
-  data.uvs            = MeshFactory::generate_uvs(logger, tgc.dimensions, numv_oneside, TILE);
-  data.indices        = MeshFactory::generate_indices(logger, numv_oneside);
+  data.uvs     = MeshFactory::generate_uvs(logger, tgc.dimensions, numv_oneside, tc.tile_textures);
+  data.indices = MeshFactory::generate_indices(logger, numv_oneside);
   return data;
+}
+
+float
+barry_centric(glm::vec3 const& p1, glm::vec3 const& p2, glm::vec3 const& p3, glm::vec2 const& pos)
+{
+  float const det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
+  float const l1  = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
+  float const l2  = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
+  float const l3  = 1.0f - l1 - l2;
+  return l1 * p1.y + l2 * p2.y + l3 * p3.y;
 }
 
 } // namespace
@@ -47,28 +56,79 @@ namespace boomhs
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// TerrainPieceConfig
-TerrainPieceConfig::TerrainPieceConfig()
-    : num_vertexes_along_one_side(128)
-    , height_multiplier(1)
-    , invert_normals(false)
-    , shader_name("terrain")
-    , texture_name("Floor0")
-    , heightmap_path("Area0-HM")
+// TerrainTextureNames
+TerrainTextureNames::TerrainTextureNames()
+    : heightmap_path("Area0-HM")
+    , textures({{"floor0", "grass", "mud", "brick_path", "blendmap"}})
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// TerrainPiece
-TerrainPiece::TerrainPiece(TerrainPieceConfig const& tc, glm::vec2 const& pos, DrawInfo&& di,
-                           ShaderProgram& sp, TextureInfo& ti)
+// TerrainConfig
+TerrainConfig::TerrainConfig()
+    : num_vertexes_along_one_side(128)
+    , height_multiplier(1)
+    , invert_normals(false)
+    , tile_textures(false)
+    , shader_name("terrain")
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Terrain
+Terrain::Terrain(TerrainConfig const& tc, glm::vec2 const& pos, DrawInfo&& di, ShaderProgram& sp,
+                 Heightmap&& hmap)
     : pos_(pos)
     , di_(MOVE(di))
-    , ti_(&ti)
-    , sp_(sp)
+    , sp_(&sp)
     , config(tc)
+    , heightmap(MOVE(hmap))
 {
   pos_ = pos;
+}
+
+void
+Terrain::bind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
+{
+  auto const bind = [&](size_t const tunit) {
+    glActiveTexture(GL_TEXTURE0 + tunit);
+    auto& tinfo = *ttable.find(texture_name(tunit));
+    bind::global_bind(logger, tinfo);
+  };
+
+  FOR(i, config.texture_names.textures.size()) { bind(i); }
+}
+
+void
+Terrain::unbind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
+{
+  auto const unbind = [&](size_t const tunit) {
+    auto& tinfo = *ttable.find(texture_name(tunit));
+    bind::global_unbind(logger, tinfo);
+  };
+
+  FOR(i, config.texture_names.textures.size()) { unbind(i); }
+  glActiveTexture(GL_TEXTURE0);
+}
+
+std::string
+Terrain::to_string() const
+{
+  return "";
+}
+
+std::string&
+Terrain::texture_name(size_t const index)
+{
+  assert(index < config.texture_names.textures.size());
+  return config.texture_names.textures[index];
+}
+
+std::string const&
+Terrain::texture_name(size_t const index) const
+{
+  assert(index < config.texture_names.textures.size());
+  return config.texture_names.textures[index];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,7 +140,7 @@ TerrainArray::reserve(size_t const c)
 }
 
 void
-TerrainArray::add(TerrainPiece&& t)
+TerrainArray::add(Terrain&& t)
 {
   data_.emplace_back(MOVE(t));
 }
@@ -90,31 +150,88 @@ TerrainArray::add(TerrainPiece&& t)
 TerrainGridConfig::TerrainGridConfig()
     : num_rows(1)
     , num_cols(1)
-    , dimensions(8, 8)
+    , dimensions(20, 20)
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TerrainGrid
 TerrainGrid::TerrainGrid(TerrainGridConfig const& tgc)
-    : config_(tgc)
+    : config(tgc)
 {
-  auto const nr = config_.num_rows;
-  auto const nc = config_.num_cols;
+  auto const nr = config.num_rows;
+  auto const nc = config.num_cols;
   terrain_.reserve(nr * nc);
 }
 
+glm::vec2
+TerrainGrid::max_worldpositions() const
+{
+  // The last Terrain in our array will be the further "away" (x,z) coordinates of all the
+  // terrains.
+  assert(!terrain_.empty());
+  auto const& last = terrain_.back();
+
+  auto const tile_dimensions = config.dimensions;
+  return (last.position() * tile_dimensions) + tile_dimensions;
+}
+
 void
-TerrainGrid::add(TerrainPiece&& t)
+TerrainGrid::add(Terrain&& t)
 {
   terrain_.add(MOVE(t));
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Terrain
-Terrain::Terrain(TerrainGrid&& tgrid)
-    : grid(MOVE(tgrid))
+float
+TerrainGrid::get_height(stlw::Logger& logger, float const x, float const z) const
 {
+  auto const& d = config.dimensions;
+
+  auto const get_terrain_under_coords = [&]() -> Terrain const& {
+    // Determine which Terrain instance the world coordinates (x, z) fall into.
+    size_t const xcoord = x / d.x;
+    size_t const zcoord = z / d.y;
+
+    size_t const terrain_index = (num_rows() * zcoord) + xcoord;
+    return terrain_[terrain_index];
+  };
+
+  auto const& t       = get_terrain_under_coords();
+  float const local_x = x - (t.position().x * d.x);
+  float const local_z = z - (t.position().y * d.y);
+
+  float const num_vertexes_minus1 = t.config.num_vertexes_along_one_side - 1;
+
+  assert(d.x == d.y);
+  float const grid_squaresize = d.x / num_vertexes_minus1;
+
+  size_t const grid_x = glm::floor(local_x / grid_squaresize);
+  size_t const grid_z = glm::floor(local_z / grid_squaresize);
+
+  if (grid_x >= num_vertexes_minus1 || grid_z >= num_vertexes_minus1 || grid_x < 0 || grid_z < 0) {
+    LOG_ERROR_SPRINTF("Player out of bounds");
+    return 0.0f;
+  }
+
+  float const x_coord = ::fmodf(local_x, grid_squaresize) / grid_squaresize;
+  float const z_coord = ::fmodf(local_z, grid_squaresize) / grid_squaresize;
+
+  glm::vec3       p1, p2, p3;
+  glm::vec2 const p4 = glm::vec2{x_coord, z_coord};
+
+  auto const& hmap = t.heightmap;
+  if (x_coord <= (1.0f - z_coord)) {
+    p1 = glm::vec3{0, hmap.data(grid_x, grid_z), 0};
+    p2 = glm::vec3{1, hmap.data(grid_x + 1, grid_z), 0};
+    p3 = glm::vec3{0, hmap.data(grid_x, grid_z + 1), 1};
+  }
+  else {
+    p1 = glm::vec3{1, hmap.data(grid_x + 1, grid_z), 0};
+    p2 = glm::vec3{1, hmap.data(grid_x + 1, grid_z + 1), 1};
+    p3 = glm::vec3{0, hmap.data(grid_x, grid_z + 1), 1};
+  }
+  float const theight = barry_centric(p1, p2, p3, p4);
+  return theight / 255.0f;
 }
 
 } // namespace boomhs
@@ -122,12 +239,11 @@ Terrain::Terrain(TerrainGrid&& tgrid)
 namespace boomhs::terrain
 {
 
-TerrainPiece
+Terrain
 generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig const& tgc,
-               TerrainPieceConfig const& tc, HeightmapData const& heightmap_data, ShaderProgram& sp,
-               TextureInfo& ti)
+               TerrainConfig const& tc, Heightmap const& heightmap, ShaderProgram& sp)
 {
-  auto const data = generate_terrain_data(logger, tgc, tc, heightmap_data);
+  auto const data = generate_terrain_data(logger, tgc, tc, heightmap);
   LOG_TRACE_SPRINTF("Generated terrain piece: %s", data.to_string());
 
   BufferFlags const flags{true, true, false, true};
@@ -135,25 +251,31 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
   auto              di     = gpu::copy_gpu(logger, sp.va(), buffer);
 
   // These uniforms only need to be set once.
-  sp.while_bound(logger, [&]() { sp.set_uniform_int1(logger, "u_sampler", 0); });
+  sp.while_bound(logger, [&]() {
+    sp.set_uniform_int1(logger, "u_bgsampler", 0);
+    sp.set_uniform_int1(logger, "u_rsampler", 1);
+    sp.set_uniform_int1(logger, "u_gsampler", 2);
+    sp.set_uniform_int1(logger, "u_bsampler", 3);
+    sp.set_uniform_int1(logger, "u_blendsampler", 4);
+  });
 
-  return TerrainPiece{tc, pos, MOVE(di), sp, ti};
+  return Terrain{tc, pos, MOVE(di), sp, heightmap.clone()};
 }
 
 TerrainGrid
-generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainPieceConfig const& tc,
-              HeightmapData const& heightmap_data, ShaderProgram& sp, TextureInfo& ti)
+generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
+              Heightmap const& heightmap, ShaderProgram& sp)
 {
   LOG_TRACE("Generating Terrain");
   size_t const rows = tgc.num_rows, cols = tgc.num_cols;
   TerrainGrid  tgrid{tgc};
 
-  FOR(i, rows)
+  FOR(j, rows)
   {
-    FOR(j, cols)
+    FOR(i, cols)
     {
       auto const pos = glm::vec2{i, j};
-      auto       t   = generate_piece(logger, pos, tgc, tc, heightmap_data, sp, ti);
+      auto       t   = generate_piece(logger, pos, tgc, tc, heightmap, sp);
 
       auto const index = (j * rows) + i;
 

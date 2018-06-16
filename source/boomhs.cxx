@@ -1,3 +1,4 @@
+#include <boomhs/audio.hpp>
 #include <boomhs/boomhs.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/collision.hpp>
@@ -14,6 +15,8 @@
 #include <boomhs/rexpaint.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
+#include <boomhs/tree.hpp>
+#include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/water_fbos.hpp>
 
@@ -49,88 +52,43 @@ namespace
 {
 
 void
-move_betweentilegrids_ifonstairs(stlw::Logger& logger, Camera& camera, TiledataState& tds,
-                                 LevelManager& lm)
+update_playaudio(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registry)
 {
-  auto& ldata = lm.active().level_data;
+  auto&      player = ldata.player;
+  auto const eids = find_all_entities_with_component<WaterInfo, Transform, AABoundingBox>(registry);
+  for (auto const eid : eids) {
+    auto& water_bbox = registry.get<AABoundingBox>(eid);
+    auto& w_tr       = registry.get<Transform>(eid);
+    auto& p_tr       = player.transform();
 
-  auto& player                     = ldata.player;
-  player.transform().translation.y = 0.5f;
-  auto const wp                    = player.world_position();
-  {
-    auto const [w, h] = ldata.dimensions();
-    assert(wp.x < w);
-    assert(wp.z < h);
-  }
-  auto const& tilegrid = ldata.tilegrid();
-  auto const& tile     = tilegrid.data(wp.x, wp.z);
-  if (tile.type == TileType::TELEPORTER) {
-    {
-      int const current  = lm.active_zone();
-      int const newlevel = current == 0 ? 1 : 0;
-      assert(newlevel < lm.num_levels());
-      LOG_TRACE_SPRINTF("setting level to: %i", newlevel);
-      lm.make_active(newlevel, tds);
+    auto const& player_bbox = player.bounding_box();
+    bool const  collides = collision::bbox_intersects(logger, p_tr, player_bbox, w_tr, water_bbox);
+
+    static auto audio_r = WaterAudioSystem::create();
+    static auto audio   = audio_r.expect_moveout("WAS");
+
+    if (collides) {
+      audio.play_inwater_sound(logger);
+
+      if (audio.is_playing_watersound()) {
+        LOG_TRACE("PLAYING IN-WATER SOUND");
+      }
     }
-
-    // now that the zone has changed, all references through lm are pointing to old level.
-    // use active()
-    auto& zs    = lm.active();
-    auto& ldata = zs.level_data;
-
-    auto& player   = ldata.player;
-    auto& registry = zs.registry;
-
-    player.move_to(10, player.world_position().y, 10);
-    camera.set_target(player.transform());
-    return;
-  }
-  if (!tile.is_stair()) {
-    return;
-  }
-
-  auto const move_player_through_stairs = [&](StairInfo const& stair) {
-    {
-      int const current  = lm.active_zone();
-      int const newlevel = current + (tile.is_stair_up() ? 1 : -1);
-      assert(newlevel < lm.num_levels());
-      lm.make_active(newlevel, tds);
-    }
-
-    // now that the zone has changed, all references through lm are pointing to old level.
-    // use active()
-    auto& zs    = lm.active();
-    auto& ldata = zs.level_data;
-
-    auto& player   = ldata.player;
-    auto& registry = zs.registry;
-
-    auto const spos = stair.exit_position;
-    player.move_to(spos.x, player.world_position().y, spos.y);
-    camera.set_target(player.transform());
-    player.rotate_to_match_camera_rotation(camera);
-
-    tds.recompute = true;
-  };
-
-  // BEGIN
-  player.move_to(wp.x, wp.y, wp.z);
-  auto const tp = TilePosition::from_floats_truncated(wp.x, wp.z);
-
-  // lookup stairs in the registry
-  auto&      registry   = lm.active().registry;
-  auto const stair_eids = find_stairs(registry);
-  assert(!stair_eids.empty());
-
-  for (auto const& eid : stair_eids) {
-    auto const& stair = registry.get<StairInfo>(eid);
-    if (stair.tile_position == tp) {
-      move_player_through_stairs(stair);
-
-      // TODO: not just jump first stair we find
-      break;
+    else {
+      audio.stop_inwater_sound(logger);
     }
   }
+}
+
+void
+update_playerpos(stlw::Logger& logger, LevelData& ldata, FrameTime const& ft)
+{
+  // Lookup the player height from the terrain at the player's X, Z world-coordinates.
+  auto&       player        = ldata.player;
+  auto&       player_pos    = player.transform().translation;
+  float const player_height = ldata.terrain.get_height(logger, player_pos.x, player_pos.z);
+  auto const& player_bbox   = player.bounding_box();
+  player_pos.y              = player_height + (player_bbox.dimensions().y / 2.0f);
 }
 
 void
@@ -166,22 +124,6 @@ update_nearbytargets(LevelData& ldata, EntityRegistry& registry, FrameTime const
   if (selected_o) {
     nbt.set_selected(*selected_o);
   }
-}
-
-auto
-rotate_around(glm::vec3 const& point_to_rotate, glm::vec3 const& rot_center,
-              glm::mat4x4 const& rot_matrix)
-{
-  glm::mat4x4 const translate     = glm::translate(glm::mat4{}, rot_center);
-  glm::mat4x4 const inv_translate = glm::translate(glm::mat4{}, -rot_center);
-
-  // The idea:
-  // 1) Translate the object to the center
-  // 2) Make the rotation
-  // 3) Translate the object back to its original location
-  glm::mat4x4 const transform = translate * rot_matrix * inv_translate;
-  auto const        pos       = transform * glm::vec4{point_to_rotate, 1.0f};
-  return glm::vec3{pos.x, pos.y, pos.z};
 }
 
 void
@@ -223,40 +165,6 @@ update_orbital_bodies(EngineState& es, LevelData& ldata, EntityRegistry& registr
       update_orbitals(eid, first);
       first = false;
     }
-  }
-}
-
-bool
-wiggle_outofbounds(RiverInfo const& rinfo, RiverWiggle const& wiggle)
-{
-  auto const& pos = wiggle.position;
-  return ANYOF(pos.x > rinfo.right, pos.x < rinfo.left, pos.y<rinfo.bottom, pos.y> rinfo.top);
-}
-
-void
-reset_position(RiverInfo& rinfo, RiverWiggle& wiggle)
-{
-  auto const& tp = rinfo.origin;
-
-  // reset the wiggle's position, then move it to the hidden cache
-  wiggle.position = glm::vec2{tp.x, tp.y};
-}
-
-void
-move_riverwiggles(LevelData& level_data, FrameTime const& ft)
-{
-  auto const update_river = [&ft](auto& rinfo) {
-    for (auto& wiggle : rinfo.wiggles) {
-      auto& pos = wiggle.position;
-      pos += wiggle.direction * wiggle.speed * ft.delta_millis();
-
-      if (wiggle_outofbounds(rinfo, wiggle)) {
-        reset_position(rinfo, wiggle);
-      }
-    }
-  };
-  for (auto& rinfo : level_data.rivers()) {
-    update_river(rinfo);
   }
 }
 
@@ -353,7 +261,7 @@ namespace boomhs
 {
 
 Result<GameState, std::string>
-init(Engine& engine, EngineState& engine_state, Camera& camera)
+create_gamestate(Engine& engine, EngineState& engine_state, Camera& camera)
 {
   ZoneStates zss =
       TRY_MOVEOUT(LevelAssembler::assemble_levels(engine_state.logger, engine.registries));
@@ -373,19 +281,18 @@ init(Engine& engine, EngineState& engine_state, Camera& camera)
   auto& ttable    = gfx_state.texture_table;
 
   {
-    TerrainPieceConfig const tc;
-    auto&                    sp     = sps.ref_sp(tc.shader_name);
-    auto&                    ttable = gfx_state.texture_table;
+    TerrainConfig const tc;
+    auto&               sp     = sps.ref_sp(tc.shader_name);
+    auto&               ttable = gfx_state.texture_table;
 
     char const* HEIGHTMAP_NAME = "Area0-HM";
-    auto const  heightmap = TRY(opengl::heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
-    auto*       ti        = ttable.find(tc.texture_name);
-    assert(ti);
+    auto const  heightmap =
+        TRY_MOVEOUT(opengl::heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
 
     TerrainGridConfig const tgc;
-    auto                    tg = terrain::generate_grid(logger, tgc, tc, heightmap, sp, *ti);
+    auto                    tg = terrain::generate_grid(logger, tgc, tc, heightmap, sp);
     auto&                   ld = zs.level_data;
-    ld.terrain().grid          = MOVE(tg);
+    ld.terrain                 = MOVE(tg);
   }
   {
     auto test_r = rexpaint::RexImage::load("assets/test.xp");
@@ -406,65 +313,105 @@ init(Engine& engine, EngineState& engine_state, Camera& camera)
 }
 
 void
+place_water(stlw::Logger& logger, ZoneState& zs)
+{
+  auto& registry  = zs.registry;
+  auto& gfx_state = zs.gfx_state;
+  auto& gpu_state = gfx_state.gpu_state;
+  auto& sps       = gfx_state.sps;
+  auto& ttable    = gfx_state.texture_table;
+
+  auto const eid = registry.create();
+
+  LOG_TRACE("Placing Water");
+  auto* p = &registry.assign<WaterInfo>(eid);
+  *p      = WaterFactory::make_default(logger, sps, ttable);
+
+  auto& wi    = registry.get<WaterInfo>(eid);
+  wi.position = glm::vec2{0, 0};
+
+  size_t constexpr num_vertexes = 64;
+  glm::vec2 constexpr dimensions{20};
+  auto const data = WaterFactory::generate_water_data(logger, dimensions, num_vertexes);
+  {
+    BufferFlags const flags{true, false, false, true};
+    auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
+    auto&             sp     = sps.ref_sp("water");
+    auto              dinfo  = gpu::copy_gpu(logger, sp.va(), buffer);
+
+    auto& entities = gpu_state.entities;
+
+    entities.add(eid, MOVE(dinfo));
+    wi.dinfo = &entities.lookup(logger, eid);
+  }
+  {
+    auto& bbox_entities = gpu_state.entity_boundingboxes;
+
+    auto& bbox = registry.assign<AABoundingBox>(eid);
+    bbox.min   = glm::vec3{-0.5, -0.2, -0.5};
+    bbox.max   = glm::vec3{0.5f, 0.2, 0.5};
+
+    CubeVertices const cv{bbox.min, bbox.max};
+
+    auto& sp    = sps.ref_sp("wireframe");
+    auto  dinfo = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, cv, sp.va());
+    bbox_entities.add(eid, MOVE(dinfo));
+  }
+
+  registry.assign<Selectable>(eid);
+  registry.assign<ShaderName>(eid);
+  registry.assign<IsVisible>(eid).value = true;
+  registry.assign<Name>(eid).value      = "Water";
+
+  auto& tr         = registry.assign<Transform>(eid);
+  tr.translation.x = dimensions.x / 2.0f;
+  tr.translation.z = dimensions.y / 2.0f;
+
+  tr.scale.x = dimensions.x;
+  tr.scale.z = dimensions.y;
+}
+
+void
+init(GameState& state)
+{
+  auto& logger = state.engine_state.logger;
+  for (auto& zs : state.level_manager) {
+    place_water(logger, zs);
+  }
+}
+
+void
 game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
           FrameTime const& ft)
 {
   auto& es = state.engine_state;
   es.time.update(ft.since_start_seconds());
 
-  auto& logger         = es.logger;
-  auto& tilegrid_state = es.tilegrid_state;
-  auto& lm             = state.level_manager;
+  auto& logger   = es.logger;
+  auto& lm       = state.level_manager;
+  auto& zs       = lm.active();
+  auto& registry = zs.registry;
+
+  auto& ldata  = zs.level_data;
+  auto& skybox = ldata.skybox;
+
+  auto& gfx_state = zs.gfx_state;
+  auto& sps       = gfx_state.sps;
+  auto& ttable    = gfx_state.texture_table;
 
   // Update the world
   {
-    auto& zs       = lm.active();
-    auto& registry = zs.registry;
-    move_betweentilegrids_ifonstairs(logger, camera, tilegrid_state, lm);
-  }
-
-  // Must recalculate zs and registry, possibly changed since call to move_between()
-  auto& zs       = lm.active();
-  auto& registry = zs.registry;
-  auto& ldata    = zs.level_data;
-  auto& player   = ldata.player;
-  auto& skybox   = ldata.skybox;
-  {
+    update_playaudio(logger, ldata, registry);
+    update_playerpos(logger, ldata, ft);
     update_nearbytargets(ldata, registry, ft);
     update_orbital_bodies(es, ldata, registry, ft);
     skybox.update(ft);
-    move_riverwiggles(ldata, ft);
-
-    if (tilegrid_state.recompute) {
-      // compute tilegrid
-      LOG_INFO("Updating tilegrid\n");
-
-      update_visible_tiles(ldata.tilegrid(), player, tilegrid_state.reveal);
-
-      // We don't need to recompute the tilegrid, we just did.
-      tilegrid_state.recompute = false;
-    }
-
-    // river wiggles get updated every frame
-    update_visible_riverwiggles(ldata, player, tilegrid_state.reveal);
 
     update_visible_entities(lm, registry);
     update_torchflicker(ldata, registry, rng, ft);
   }
 
   // TODO: Move out into state somewhere.
-  auto& gfx_state = zs.gfx_state;
-  auto& sps       = gfx_state.sps;
-
-  auto const&      dim = es.dimensions;
-  ScreenSize const screen_size{dim.w, dim.h};
-  auto&            ttable    = gfx_state.texture_table;
-  auto&            ti        = *ttable.find("water-diffuse");
-  auto&            dudv      = *ttable.find("water-dudv");
-  auto&            normal    = *ttable.find("water-normal");
-  auto&            sp        = sps.ref_sp("water");
-  auto const&      fog_color = ldata.fog.color;
-
   auto const make_skybox_renderer = [&]() {
     auto&              skybox_sp = sps.ref_sp("skybox");
     glm::vec3 const    vmin{-0.5f};
@@ -477,6 +424,12 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   };
 
   auto const make_water_renderer = [&]() {
+    auto const&       dim = es.dimensions;
+    ScreenSize const  screen_size{dim.w, dim.h};
+    auto&             ti     = *ttable.find("water-diffuse");
+    auto&             dudv   = *ttable.find("water-dudv");
+    auto&             normal = *ttable.find("water-normal");
+    auto&             sp     = sps.ref_sp("water");
     WaterFrameBuffers fbos{logger, screen_size, sp, ti, dudv, normal};
     return WaterRenderer{MOVE(fbos)};
   };
@@ -535,7 +488,10 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     ui_ingame::draw(es, lm);
   }
 
-  LOG_ERROR_SPRINTF("num vertices rendered: %s", ds.to_string());
+  if (ui_state.draw_debug_ui) {
+    auto& lm = state.level_manager;
+    ui_debug::draw(es, lm, engine.window, camera, ds, ft);
+  }
 }
 
 } // namespace boomhs

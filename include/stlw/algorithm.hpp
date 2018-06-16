@@ -54,6 +54,12 @@ allcombo(First const& first, Rest&&... rest)
 namespace stlw
 {
 
+inline bool
+cstrcmp(char const* a, char const* b)
+{
+  return 0 == ::strcmp(a, b);
+}
+
 inline void
 memzero(void* const dest, size_t const count)
 {

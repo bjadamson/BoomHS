@@ -39,6 +39,7 @@ operator<<(std::ostream& stream, ObjQuery const& query)
   return stream;
 }
 
+/*
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ObjCache
 void
@@ -68,7 +69,9 @@ ObjCache::get_obj(stlw::Logger& logger, ObjQuery const& query) const
   }
   std::abort();
 }
+
 #undef FIND_OBJ_IN_CACHE
+*/
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ObjStore
@@ -79,6 +82,7 @@ ObjStore::add_obj(std::string const& name, ObjData&& o) const
   data_.emplace_back(MOVE(pair));
 }
 
+/*
 ObjData const&
 ObjStore::data_for(stlw::Logger& logger, ObjQuery const& query) const
 {
@@ -101,7 +105,9 @@ ObjStore::data_for(stlw::Logger& logger, ObjQuery const& query) const
   assert(it != data_.cend());
   return it->second;
 }
+*/
 
+/*
 VertexBuffer const&
 ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
 {
@@ -125,7 +131,37 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
   assert(cache.has_obj(query));
   return cache.get_obj(logger, query);
 }
+*/
 
+#define OBJSTORE_FIND(BEGIN, END)                                                                  \
+  auto const cmp = [&](auto const& pair) { return pair.first == name; };                           \
+  auto const it  = std::find_if(BEGIN, END, cmp);                                                  \
+  assert(it != END);                                                                               \
+  return it->second;
+
+ObjData&
+ObjStore::get(stlw::Logger& logger, std::string const& name)
+{
+  OBJSTORE_FIND(data_.begin(), data_.end());
+}
+
+ObjData const&
+ObjStore::get(stlw::Logger& logger, std::string const& name) const
+{
+  OBJSTORE_FIND(data_.cbegin(), data_.cend());
+}
+
+#undef OBJSTORE_FIND
+
+/*
+VertexBuffer
+ObjStore::get_copy(stlw::Logger& logger, ObjQuery const& query) const
+{
+  return get_obj(logger, query).copy();
+}
+*/
+
+/*
 #define FIND_CACHE(query, cache)                                                                   \
   auto const& flags            = query.flags;                                                      \
   bool const  pos_only         = ALLOF(flags.vertices, !flags.normals, !flags.colors, !flags.uvs); \
@@ -134,7 +170,7 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
   bool const  pos_color_normal = ALLOF(flags.vertices, flags.normals, flags.colors, !flags.uvs);   \
   bool const  pos_normal_uvs   = ALLOF(flags.vertices, flags.normals, !flags.colors, flags.uvs);   \
                                                                                                    \
-  /* invalid configurations */                                                                     \
+  // invalid configurations                                                                        \
   bool const no_vertices   = ALLOF(!flags.vertices);                                               \
   bool const color_and_uvs = ALLOF(flags.colors, flags.uvs);                                       \
                                                                                                    \
@@ -188,7 +224,9 @@ ObjStore::find_cache(stlw::Logger& logger, ObjQuery const& query) const
 }
 
 #undef FIND_CACHE
+*/
 
+/*
 std::ostream&
 operator<<(std::ostream& stream, ObjCache const& cache)
 {
@@ -213,9 +251,11 @@ operator<<(std::ostream& stream, ObjCache const& cache)
   stream << "}";
   return stream;
 }
+*/
 
+/*
 std::ostream&
-operator<<(std::ostream& stream, ObjStore const& store)
+operator<<(std::ostream& stream, InterleaveCache const& store)
 {
   // clang-format off
   auto const print_cache = [&stream](char const* name, auto const& cache) {
@@ -250,5 +290,6 @@ operator<<(std::ostream& stream, ObjStore const& store)
   // clang-format on
   return stream;
 }
+*/
 
 } // namespace boomhs

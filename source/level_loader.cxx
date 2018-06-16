@@ -6,6 +6,7 @@
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/skybox.hpp>
+#include <boomhs/tree.hpp>
 #include <boomhs/water.hpp>
 
 #include <stlw/algorithm.hpp>
@@ -228,10 +229,9 @@ load_objfiles(stlw::Logger& logger, CppTableArray const& mesh_table)
     auto const name = get_string_or_abort(table, "name");
     LOG_TRACE_SPRINTF("Loading objfile name: '%s' path: '%s'", name, path);
 
-    auto const obj = path + name + ".obj";
-
-    ObjData objdata = TRY_MOVEOUT(load_objfile(logger, obj));
-    auto    pair    = std::make_pair(name, MOVE(objdata));
+    auto const objname = name + ".obj";
+    ObjData    objdata = TRY_MOVEOUT(load_objfile(logger, path, objname));
+    auto       pair    = std::make_pair(name, MOVE(objdata));
     return OK_MOVE(pair);
   };
   ObjStore store;
@@ -624,6 +624,7 @@ load_entities(stlw::Logger& logger, CppTable const& table,
       *&cc     = *color;
     }
     if (texture_name) {
+      LOG_DEBUG_SPRINTF("Looking up texture %s", *texture_name);
       auto& tr        = registry.assign<TextureRenderable>(eid);
       auto  texture_o = ttable.find(*texture_name);
       assert(texture_o);
@@ -637,6 +638,20 @@ load_entities(stlw::Logger& logger, CppTable const& table,
       auto const it = std::find_if(pointlights.cbegin(), pointlights.cend(), cmp);
       assert(it != pointlights.cend());
       registry.assign<PointLight>(eid) = it->pointlight;
+    }
+
+    if (stlw::cstrcmp(name.c_str(), "TreeLowpoly")) {
+      auto& tc = registry.assign<TreeComponent>(eid);
+      tc.add_color(TreeColorType::Leaf, LOC::GREEN);
+      tc.add_color(TreeColorType::Leaf, LOC::PINK);
+      tc.add_color(TreeColorType::Trunk, LOC::BROWN);
+    }
+    if (stlw::cstrcmp(name.c_str(), "Tree2")) {
+      auto& tc = registry.assign<TreeComponent>(eid);
+      tc.add_color(TreeColorType::Leaf, LOC::YELLOW);
+      tc.add_color(TreeColorType::Stem, LOC::RED);
+      tc.add_color(TreeColorType::Stem, LOC::BLUE);
+      tc.add_color(TreeColorType::Trunk, LOC::GREEN);
     }
 
     // An object receives light, if it has ALL ambient/diffuse/specular fields

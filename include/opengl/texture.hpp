@@ -28,6 +28,8 @@ struct TextureInfo
 
   // constructors
   TextureInfo();
+  NO_COPY(TextureInfo);
+  MOVE_DEFAULT(TextureInfo);
 
   // methods
   void bind_impl(stlw::Logger&);

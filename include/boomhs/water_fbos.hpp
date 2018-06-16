@@ -22,6 +22,9 @@ struct ReflectionBuffers
   opengl::RenderBuffer rbo;
 
   ReflectionBuffers(stlw::Logger&, ScreenSize const&);
+
+  NO_COPY(ReflectionBuffers);
+  MOVE_DEFAULT(ReflectionBuffers);
 };
 
 struct RefractionBuffers
@@ -31,6 +34,9 @@ struct RefractionBuffers
   opengl::TextureInfo dbo;
 
   RefractionBuffers(stlw::Logger&, ScreenSize const&);
+
+  NO_COPY(RefractionBuffers);
+  MOVE_DEFAULT(RefractionBuffers);
 };
 
 class WaterFrameBuffers

@@ -6,6 +6,8 @@
 #include <stlw/type_macros.hpp>
 
 #include <extlibs/glew.hpp>
+#include <extlibs/tinyobj.hpp>
+
 #include <optional>
 #include <ostream>
 #include <string>
@@ -13,22 +15,69 @@
 namespace boomhs
 {
 
-struct ObjData
+using ObjVertices = std::vector<float>;
+using ObjIndices  = std::vector<uint32_t>;
+
+struct PositionsBuffer
 {
-  using vertices_t = std::vector<float>;
-  using indices_t  = std::vector<uint32_t>;
+  ObjVertices vertices;
+
+  PositionsBuffer(ObjVertices&&);
+
+  glm::vec3 min() const;
+  glm::vec3 max() const;
+};
+
+class ObjData
+{
+  COPY_DEFAULT(ObjData);
+
+public:
+  using ObjVertices = ObjVertices;
+  using ObjIndices  = ObjIndices;
 
   unsigned int num_vertexes;
-  vertices_t   vertices;
-  vertices_t   colors;
-  vertices_t   normals;
-  vertices_t   uvs;
-  indices_t    indices;
+  ObjVertices  vertices;
+  ObjVertices  colors;
+  ObjVertices  normals;
+  ObjVertices  uvs;
+  ObjIndices   indices;
+
+  std::vector<tinyobj::shape_t>    shapes;
+  std::vector<tinyobj::material_t> materials;
 
   ObjData() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(ObjData);
+  MOVE_DEFAULT(ObjData);
+
+  ObjData clone() const;
+
+  // Returns all position values as a contiguos array following the pattern:
+  // [x, y, z], [x, y, z], etc...
+  PositionsBuffer positions() const;
 
   std::string to_string() const;
+
+#define FOREACH_FACE_IMPL(fn)                                                                      \
+  FOR(s, shapes.size())                                                                            \
+  {                                                                                                \
+    size_t      index_offset = 0;                                                                  \
+    auto const& shape        = shapes[s];                                                          \
+    auto const& mesh         = shape.mesh;                                                         \
+    FOR(f, mesh.num_face_vertices.size()) { fn(shape, f); }                                        \
+  }
+
+  template <typename FN>
+  void foreach_face(FN const& fn)
+  {
+    FOREACH_FACE_IMPL(fn);
+  }
+
+  template <typename FN>
+  void foreach_face(FN const& fn) const
+  {
+    FOREACH_FACE_IMPL(fn);
+  }
+#undef FOREACH_FACE_IMPL
 };
 
 enum class LoadStatus
@@ -55,6 +104,6 @@ LoadResult
 load_objfile(stlw::Logger&, char const*, char const*);
 
 LoadResult
-load_objfile(stlw::Logger&, std::string const&);
+load_objfile(stlw::Logger&, std::string const&, std::string const&);
 
 } // namespace boomhs

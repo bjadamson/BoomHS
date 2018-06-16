@@ -892,6 +892,8 @@ bool operator==(const Result<T, E>& lhs, types::Err<E> err) {
     return lhs.storage().template get<E>() == err.val;
 }
 
+#define ErrCString(CSTR) Err(std::string{CSTR})
+
 #define TRY(...)                                                                                   \
     ({                                                                                             \
         auto res = __VA_ARGS__;                                                                    \
