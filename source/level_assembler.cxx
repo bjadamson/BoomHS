@@ -3,6 +3,7 @@
 #include <boomhs/dungeon_generator.hpp>
 #include <boomhs/level_assembler.hpp>
 #include <boomhs/level_loader.hpp>
+#include <boomhs/orbital_body.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/start_area_generator.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
@@ -220,7 +221,6 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
 
   EntityDrawHandleMap bbox_dh;
   auto const          add_wireframe = [&](auto const eid, auto const& min, auto const& max) {
-    registry.assign<Selectable>(eid);
     {
       auto& bbox = registry.assign<AABoundingBox>(eid);
       bbox.min   = min;
@@ -245,11 +245,18 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
     auto const&    max       = posbuffer.max();
 
     add_wireframe(eid, min, max);
+    registry.assign<Selectable>(eid);
   }
   for (auto const eid : registry.view<CubeRenderable>()) {
     auto const& cr = registry.get<CubeRenderable>(eid);
 
     add_wireframe(eid, cr.min, cr.max);
+    registry.assign<Selectable>(eid);
+  }
+  for (auto const eid : registry.view<OrbitalBody>()) {
+    glm::vec3 constexpr min = glm::vec3{0.0};
+    glm::vec3 constexpr max = glm::vec3{0.0};
+    add_wireframe(eid, min, max);
   }
 
   auto& gpu_state                = gfx_state.gpu_state;

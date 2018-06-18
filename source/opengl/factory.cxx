@@ -100,9 +100,9 @@ cube_vertices(glm::vec3 const& min, glm::vec3 const& max)
   }
   / glm::vec3{2.0f};
 
-  assert(min.x < max.x);
-  assert(min.y < max.y);
-  assert(min.z < max.z);
+  assert(min.x <= max.x);
+  assert(min.y <= max.y);
+  assert(min.z <= max.z);
 
   // Define the 8 vertices of a unit cube
   static const CubeVertices v = stlw::make_array<float>(
