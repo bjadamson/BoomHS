@@ -35,6 +35,8 @@ public:
   void   reserve(size_t);
   void   add(uint8_t);
   size_t size() const { return data_.size(); }
+
+  std::string to_string() const;
 };
 
 using HeightmapResult = Result<Heightmap, std::string>;

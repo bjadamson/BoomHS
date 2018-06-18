@@ -59,7 +59,7 @@ public:
   auto  num_indices() const { return num_indices_; }
   auto& vao() { return vao_; }
 
-  std::string to_string(VertexAttribute const&) const;
+  std::string to_string() const;
 };
 
 class EntityDrawHandleMap

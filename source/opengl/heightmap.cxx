@@ -39,6 +39,12 @@ Heightmap::add(uint8_t const v)
   data_.emplace_back(v);
 }
 
+std::string
+Heightmap::to_string() const
+{
+  return fmt::sprintf("width: %i", width_);
+}
+
 } // ns opengl
 
 namespace opengl::heightmap

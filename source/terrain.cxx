@@ -11,6 +11,8 @@
 #include <stlw/algorithm.hpp>
 #include <stlw/log.hpp>
 
+#include <sstream>
+
 using namespace boomhs;
 using namespace opengl;
 
@@ -63,6 +65,33 @@ TerrainTextureNames::TerrainTextureNames()
 {
 }
 
+#define APPEND_COMMA_SEPERATED_LIST(sstr, list, fn) \
+  { \
+    bool first = true; \
+    sstr << "{"; \
+    for (auto const& tn : list) { \
+      if (!first) { \
+        sstr << ", "; \
+      } \
+      else { \
+        first = false; \
+      }\
+      sstr << fn(tn); \
+    } \
+    sstr << "}"; \
+  }
+
+std::string
+TerrainTextureNames::to_string() const
+{
+  std::stringstream sstr;
+  sstr << "heightmap_path: " << heightmap_path;
+  sstr << ", textures: ";
+
+  APPEND_COMMA_SEPERATED_LIST(sstr, textures, [](auto const& t) { return t; });
+  return sstr.str();
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TerrainConfig
 TerrainConfig::TerrainConfig()
@@ -72,6 +101,22 @@ TerrainConfig::TerrainConfig()
     , tile_textures(false)
     , shader_name("terrain")
 {
+}
+
+std::string
+TerrainConfig::to_string() const
+{
+  return fmt::sprintf("\n  TerrainConfig: {numv: %lu, height_multiplier %f, invert_normals %i, tile_textures %i, "
+      "wrap_mode: %i, uv_max: %f, uv_modifier: %f, shader_name: %s, texture_names: %s}",
+      num_vertexes_along_one_side,
+      height_multiplier,
+      invert_normals,
+      tile_textures,
+      wrap_mode,
+      uv_max,
+      uv_modifier,
+      shader_name,
+      texture_names.to_string());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -87,6 +132,30 @@ Terrain::Terrain(TerrainConfig const& tc, glm::vec2 const& pos, DrawInfo&& di, S
   pos_ = pos;
 }
 
+Terrain::Terrain(Terrain&& other)
+    : pos_(other.pos_)
+    , di_(MOVE(other.di_))
+    , sp_(other.sp_)
+    , config(MOVE(other.config))
+    , heightmap(MOVE(other.heightmap))
+    , debug_check(MOVE(other.debug_check))
+    , bound_textures(MOVE(other.bound_textures))
+{
+}
+
+Terrain&
+Terrain::operator=(Terrain&& other)
+{
+  this->pos_ = other.pos_;
+  this->di_ = MOVE(other.di_);
+  this->sp_ = MOVE(other.sp_);
+  this->config = MOVE(other.config);
+  this->heightmap = MOVE(other.heightmap);
+  this->debug_check = MOVE(other.debug_check);
+  this->bound_textures = MOVE(other.bound_textures);
+  return *this;
+}
+
 void
 Terrain::bind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
 {
@@ -96,7 +165,8 @@ Terrain::bind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
     bind::global_bind(logger, tinfo);
   };
 
-  FOR(i, config.texture_names.textures.size()) { bind(i); }
+  bound_textures.names = config.texture_names;
+  FOR(i, bound_textures.names.textures.size()) { bind(i); }
 }
 
 void
@@ -107,28 +177,35 @@ Terrain::unbind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
     bind::global_unbind(logger, tinfo);
   };
 
-  FOR(i, config.texture_names.textures.size()) { unbind(i); }
+  FOR(i, bound_textures.names.textures.size()) { unbind(i); }
   glActiveTexture(GL_TEXTURE0);
 }
 
 std::string
 Terrain::to_string() const
 {
-  return "";
+  return fmt::sprintf("\n  Terrain: {pos: %s, di: %s, sp: %s, config: %s, heightmap: %s}",
+      glm::to_string(pos_),
+      di_.to_string(),
+      sp_->to_string(),
+      config.to_string(),
+      heightmap.to_string());
 }
 
 std::string&
 Terrain::texture_name(size_t const index)
 {
-  assert(index < config.texture_names.textures.size());
-  return config.texture_names.textures[index];
+  auto& names = bound_textures.names;
+  assert(index < names.textures.size());
+  return names.textures[index];
 }
 
 std::string const&
 Terrain::texture_name(size_t const index) const
 {
-  assert(index < config.texture_names.textures.size());
-  return config.texture_names.textures[index];
+  auto const& names = bound_textures.names;
+  assert(index < names.textures.size());
+  return names.textures[index];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -143,6 +220,15 @@ void
 TerrainArray::add(Terrain&& t)
 {
   data_.emplace_back(MOVE(t));
+}
+
+std::string
+TerrainArray::to_string() const
+{
+  std::stringstream sstr;
+  sstr << "TerrainArray: \n";
+  APPEND_COMMA_SEPERATED_LIST(sstr, *this, [](auto const& t) { return t.to_string(); });
+  return sstr.str();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -234,6 +320,17 @@ TerrainGrid::get_height(stlw::Logger& logger, float const x, float const z) cons
   return theight / 255.0f;
 }
 
+std::string
+TerrainGrid::to_string() const
+{
+  std::stringstream sstr;
+  sstr << "TerrainGrid: ";
+  sstr << fmt::sprintf("culling_enabled: %i, winding: %i, culling_mode: %i\n",
+      culling_enabled, winding, culling_mode);
+  APPEND_COMMA_SEPERATED_LIST(sstr, *this, [](auto const& t) { return t.to_string(); });
+  return sstr.str();
+}
+
 } // namespace boomhs
 
 namespace boomhs::terrain
@@ -264,7 +361,7 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
 
 TerrainGrid
 generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
-              Heightmap const& heightmap, ShaderProgram& sp)
+              Heightmap const& heightmap, ShaderProgram& sp, TerrainGrid* prevgrid)
 {
   LOG_TRACE("Generating Terrain");
   size_t const rows = tgc.num_rows, cols = tgc.num_cols;
@@ -274,18 +371,30 @@ generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig 
   {
     FOR(i, cols)
     {
-      auto const pos = glm::vec2{i, j};
+      auto const pos = glm::vec2{j, i};
       auto       t   = generate_piece(logger, pos, tgc, tc, heightmap, sp);
 
-      auto const index = (j * rows) + i;
+      // If the user provided a previous grid, and the previous grid has enough rows/columns for
+      // how far along we are generating a new grid, then copy the previous terrain's config to the
+      // new terrain.
+      if (prevgrid && prevgrid->num_rows() >= j && prevgrid->num_cols() >= i) {
+        //auto const index = (j * rows) + i;
+        //t.config = (*prevgrid)[index].config;
+      }
 
-      // TODO: use index here?
       tgrid.add(MOVE(t));
     }
   }
 
   LOG_TRACE("Finished Generating Terrain");
   return tgrid;
+}
+
+TerrainGrid
+generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
+              Heightmap const& heightmap, ShaderProgram& sp)
+{
+  return generate_grid(logger, tgc, tc, heightmap, sp, nullptr);
 }
 
 } // namespace boomhs::terrain

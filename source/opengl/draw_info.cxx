@@ -84,7 +84,7 @@ DrawInfo::operator=(DrawInfo &&other)
 }
 
 std::string
-DrawInfo::to_string(VertexAttribute const& va) const
+DrawInfo::to_string() const
 {
   auto const& dinfo = *this;
 
@@ -94,6 +94,9 @@ DrawInfo::to_string(VertexAttribute const& va) const
   result += "BufferHandles:\n" + dinfo.handles_.to_string() + "\n";
   result += "EBO contents:\n";
   auto const num_indices = dinfo.num_indices();
+
+  // TODO: maybe need to bind the element buffer before calling glMapBuffer?
+  /*
   {
     auto const target = GL_ELEMENT_ARRAY_BUFFER;
     GLuint const*const pmem = static_cast<GLuint const*const>(glMapBuffer(target, GL_READ_ONLY));
@@ -107,7 +110,9 @@ DrawInfo::to_string(VertexAttribute const& va) const
     }
     result += "\n";
   }
+  */
 
+  /*
   auto const stride = va.stride();
   auto const num_vertexes = dinfo.num_vertexes();
 
@@ -131,6 +136,7 @@ DrawInfo::to_string(VertexAttribute const& va) const
     }
     result += std::to_string(*(pmem + i));
   }
+  */
   return result;
 }
 

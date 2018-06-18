@@ -520,7 +520,7 @@ ShaderProgram::to_string() const
   auto const& handle = this->handle();
   auto const attributes = active_attributes_string(handle);
   auto const uniforms = active_uniforms_string(handle);
-  return fmt::sprintf("ShaderProgram: %s", attributes + uniforms);
+  return fmt::sprintf("ShaderProgram: %s", attributes);// + uniforms);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

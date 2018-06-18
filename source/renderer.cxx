@@ -1209,6 +1209,7 @@ draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
   };
 
   LOG_ERROR("-------------------- Starting To Draw All Terrain(s) ----------------------");
+  LOG_ERROR_SPRINTF("TerrainGrid: %s", terrain_grid.to_string());
   for (auto& t : terrain_grid) {
     draw_piece(t);
   }

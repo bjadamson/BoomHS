@@ -36,6 +36,10 @@ struct TerrainTextureNames
   std::vector<std::string> textures;
 
   TerrainTextureNames();
+  COPY_DEFAULT(TerrainTextureNames);
+  NO_MOVE(TerrainTextureNames);
+
+  std::string to_string() const;
 };
 
 struct TerrainConfig
@@ -53,6 +57,18 @@ struct TerrainConfig
 
   std::string         shader_name;
   TerrainTextureNames texture_names;
+
+  std::string to_string() const;
+};
+
+// TextureNames that have been bound. This struct is used by other classes who need to remember
+// which textures they bound, so they can be properly unbound.
+//
+// This is useful for allowing textures to be swapped out at runtime, but ensuring that the
+// original texture that was bound gets properly unbound.
+struct BoundTextureNames
+{
+  TerrainTextureNames names;
 };
 
 class Terrain
@@ -70,12 +86,15 @@ public:
   //
   // constructors
   NO_COPY(Terrain);
-  MOVE_DEFAULT(Terrain);
+  //MOVE_DEFAULT(Terrain);
+  Terrain(Terrain&&);
+  Terrain& operator=(Terrain&&);
   Terrain(TerrainConfig const&, glm::vec2 const&, opengl::DrawInfo&&, opengl::ShaderProgram&,
           opengl::Heightmap&&);
 
   // public members
   opengl::DebugBoundCheck debug_check;
+  BoundTextureNames bound_textures;
 
   void bind_impl(stlw::Logger&, opengl::TextureTable&);
   void unbind_impl(stlw::Logger&, opengl::TextureTable&);
@@ -110,6 +129,8 @@ public:
 
   bool        empty() const { return data_.empty(); }
   auto const& back() const { return data_.back(); }
+
+  std::string to_string() const;
 };
 
 struct TerrainGridConfig
@@ -145,11 +166,13 @@ public:
   glm::vec2 max_worldpositions() const;
   auto      rows_and_columns() const { return stlw::make_array<size_t>(num_rows(), num_cols()); }
 
-  auto count() const { return terrain_.size(); }
-  auto size() const { return count(); }
   void add(Terrain&&);
 
-  float get_height(stlw::Logger&, float, float) const;
+  auto        count() const { return terrain_.size(); }
+  auto        size() const { return count(); }
+
+  float       get_height(stlw::Logger&, float, float) const;
+  std::string to_string() const;
 };
 
 template <typename FN, typename... Args>
@@ -171,6 +194,9 @@ namespace boomhs::terrain
 Terrain
 generate_piece(stlw::Logger&, glm::vec2 const&, TerrainGridConfig const&, TerrainConfig const&,
                opengl::Heightmap const&, opengl::ShaderProgram&);
+TerrainGrid
+generate_grid(stlw::Logger&, TerrainGridConfig const&, TerrainConfig const&,
+              opengl::Heightmap const&, opengl::ShaderProgram&, TerrainGrid*);
 
 TerrainGrid
 generate_grid(stlw::Logger&, TerrainGridConfig const&, TerrainConfig const&,
