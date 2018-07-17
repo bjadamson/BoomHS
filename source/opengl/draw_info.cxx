@@ -89,11 +89,10 @@ DrawInfo::to_string() const
   auto const& dinfo = *this;
 
   std::string result;
-  result += fmt::format("NumIndices: {}\n", dinfo.num_indices());
-  result += "VAO:\n" + dinfo.vao_.to_string() + "\n";
-  result += "BufferHandles:\n" + dinfo.handles_.to_string() + "\n";
-  result += "EBO contents:\n";
-  auto const num_indices = dinfo.num_indices();
+  result += fmt::format("NumIndices: {} ", dinfo.num_indices());
+  result += "VAO: " + dinfo.vao_.to_string() + " ";
+  result += "BufferHandles: {" + dinfo.handles_.to_string() + "} ";
+  //auto const num_indices = dinfo.num_indices();
 
   // TODO: maybe need to bind the element buffer before calling glMapBuffer?
   /*

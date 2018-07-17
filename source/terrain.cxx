@@ -65,20 +65,20 @@ TerrainTextureNames::TerrainTextureNames()
 {
 }
 
-#define APPEND_COMMA_SEPERATED_LIST(sstr, list, fn) \
-  { \
-    bool first = true; \
-    sstr << "{"; \
-    for (auto const& tn : list) { \
-      if (!first) { \
-        sstr << ", "; \
-      } \
-      else { \
-        first = false; \
-      }\
-      sstr << fn(tn); \
-    } \
-    sstr << "}"; \
+#define APPEND_COMMA_SEPERATED_LIST(sstr, list, fn)                                                \
+  {                                                                                                \
+    bool first = true;                                                                             \
+    sstr << "{";                                                                                   \
+    for (auto const& tn : list) {                                                                  \
+      if (!first) {                                                                                \
+        sstr << ", ";                                                                              \
+      }                                                                                            \
+      else {                                                                                       \
+        first = false;                                                                             \
+      }                                                                                            \
+      sstr << fn(tn);                                                                              \
+    }                                                                                              \
+    sstr << "}";                                                                                   \
   }
 
 std::string
@@ -106,17 +106,11 @@ TerrainConfig::TerrainConfig()
 std::string
 TerrainConfig::to_string() const
 {
-  return fmt::sprintf("\n  TerrainConfig: {numv: %lu, height_multiplier %f, invert_normals %i, tile_textures %i, "
+  return fmt::sprintf(
+      "{numv: %lu, height_multiplier %f, invert_normals %i, tile_textures %i, "
       "wrap_mode: %i, uv_max: %f, uv_modifier: %f, shader_name: %s, texture_names: %s}",
-      num_vertexes_along_one_side,
-      height_multiplier,
-      invert_normals,
-      tile_textures,
-      wrap_mode,
-      uv_max,
-      uv_modifier,
-      shader_name,
-      texture_names.to_string());
+      num_vertexes_along_one_side, height_multiplier, invert_normals, tile_textures, wrap_mode,
+      uv_max, uv_modifier, shader_name, texture_names.to_string());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -146,13 +140,13 @@ Terrain::Terrain(Terrain&& other)
 Terrain&
 Terrain::operator=(Terrain&& other)
 {
-  this->pos_ = other.pos_;
-  this->di_ = MOVE(other.di_);
-  this->sp_ = MOVE(other.sp_);
-  this->config = MOVE(other.config);
-  this->heightmap = MOVE(other.heightmap);
-  this->debug_check = MOVE(other.debug_check);
-  this->bound_textures = MOVE(other.bound_textures);
+  pos_           = other.pos_;
+  di_            = MOVE(other.di_);
+  sp_            = MOVE(other.sp_);
+  config         = MOVE(other.config);
+  heightmap      = MOVE(other.heightmap);
+  debug_check    = MOVE(other.debug_check);
+  bound_textures = MOVE(other.bound_textures);
   return *this;
 }
 
@@ -184,12 +178,9 @@ Terrain::unbind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
 std::string
 Terrain::to_string() const
 {
-  return fmt::sprintf("\n  Terrain: {pos: %s, di: %s, sp: %s, config: %s, heightmap: %s}",
-      glm::to_string(pos_),
-      di_.to_string(),
-      sp_->to_string(),
-      config.to_string(),
-      heightmap.to_string());
+  return fmt::sprintf("Terrain: {pos: %s, di: %s, sp: %s, terrain config: %s, heightmap: {%s}}",
+                      glm::to_string(pos_), di_.to_string(), sp_->to_string(), config.to_string(),
+                      heightmap.to_string());
 }
 
 std::string&
@@ -226,7 +217,7 @@ std::string
 TerrainArray::to_string() const
 {
   std::stringstream sstr;
-  sstr << "TerrainArray: \n";
+  sstr << "size: " << data_.size() << " ";
   APPEND_COMMA_SEPERATED_LIST(sstr, *this, [](auto const& t) { return t.to_string(); });
   return sstr.str();
 }
@@ -324,10 +315,10 @@ std::string
 TerrainGrid::to_string() const
 {
   std::stringstream sstr;
-  sstr << "TerrainGrid: ";
-  sstr << fmt::sprintf("culling_enabled: %i, winding: %i, culling_mode: %i\n",
-      culling_enabled, winding, culling_mode);
-  APPEND_COMMA_SEPERATED_LIST(sstr, *this, [](auto const& t) { return t.to_string(); });
+  sstr << fmt::sprintf("{culling_enabled: %i, winding: %i, culling_mode: %i, TerrainArray: %s}",
+                       culling_enabled, winding, culling_mode, terrain_.to_string());
+  // APPEND_COMMA_SEPERATED_LIST(sstr, *this, [](auto const& t) { return t.to_string(); });
+  sstr << " ";
   return sstr.str();
 }
 
@@ -378,8 +369,9 @@ generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig 
       // how far along we are generating a new grid, then copy the previous terrain's config to the
       // new terrain.
       if (prevgrid && prevgrid->num_rows() >= j && prevgrid->num_cols() >= i) {
-        //auto const index = (j * rows) + i;
-        //t.config = (*prevgrid)[index].config;
+        // auto const index = (j * rows) + i;
+        // t.config = (*prevgrid)[index].config;
+        std::abort();
       }
 
       tgrid.add(MOVE(t));

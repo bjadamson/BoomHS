@@ -86,7 +86,7 @@ public:
   //
   // constructors
   NO_COPY(Terrain);
-  //MOVE_DEFAULT(Terrain);
+  // MOVE_DEFAULT(Terrain);
   Terrain(Terrain&&);
   Terrain& operator=(Terrain&&);
   Terrain(TerrainConfig const&, glm::vec2 const&, opengl::DrawInfo&&, opengl::ShaderProgram&,
@@ -94,7 +94,7 @@ public:
 
   // public members
   opengl::DebugBoundCheck debug_check;
-  BoundTextureNames bound_textures;
+  BoundTextureNames       bound_textures;
 
   void bind_impl(stlw::Logger&, opengl::TextureTable&);
   void unbind_impl(stlw::Logger&, opengl::TextureTable&);
@@ -168,8 +168,8 @@ public:
 
   void add(Terrain&&);
 
-  auto        count() const { return terrain_.size(); }
-  auto        size() const { return count(); }
+  auto count() const { return terrain_.size(); }
+  auto size() const { return count(); }
 
   float       get_height(stlw::Logger&, float, float) const;
   std::string to_string() const;

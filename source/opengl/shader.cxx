@@ -123,7 +123,7 @@ compile_sources(stlw::Logger &logger, VertexShaderInfo const &vertex_shader,
   auto const& variable_infos = vertex_shader.attribute_infos;
   FOR(i, variable_infos.size()) {
     auto const& vinfo = variable_infos[i];
-    LOG_DEBUG_FMT("binding program_id: {}, name: {}, index: {}\n", program_id, vinfo.variable, i);
+    LOG_DEBUG_FMT("binding program_id: {}, name: {}, index: {}", program_id, vinfo.variable, i);
     glBindAttribLocation(program_id, i, vinfo.variable.c_str());
   }
 
@@ -240,15 +240,18 @@ active_attributes_string(GLuint const program)
   stlw::memzero(name, buffer_size);
 
   std::string result;
-  result += "Active Attributes: " + std::to_string(count) + "\n";
+  result += "Active Attributes: {" + std::to_string(count) + "}(";
   FORI(i, count) {
+    if (i > 0) {
+      result += ", ";
+    }
     glGetActiveAttrib(program, static_cast<GLuint>(i), buffer_size, &length, &size, &type, name);
 
     auto const type_string = attrib_type_to_string(type);
     auto const name_string = glchar_ptr_to_string(name);
-    result += fmt::format("Attribute #{} Type: {} Name: {}\n", i, type_string, name_string);
+    result += fmt::sprintf("[attr: %i, name: %s, type: %s]", i, name_string, type_string);
   }
-
+  result += ")";
   return result;
 }
 
@@ -269,15 +272,19 @@ active_uniforms_string(GLuint const program)
   stlw::memzero(name, buffer_size);
 
   std::string result;
-  result += "Active Uniforms: '" + std::to_string(count) + "'\n";
+  result += "Number Active Uniforms: {" + std::to_string(count) + "}(";
   FORI(i, count) {
+    if (i > 0) {
+      result += ", ";
+    }
     glGetActiveUniform(program, static_cast<GLuint>(i), buffer_size, &length, &size, &type, name);
 
     auto const type_string = uniform_type_to_string(type);
     auto const name_string = glchar_ptr_to_string(name);
 
-    result += fmt::format("Uniform #{} Type: {} Name: {}\n", i, type_string, name_string);
+    result += fmt::sprintf("[uniform: %i name: %s, type: %s]", i, name_string, type_string);
   }
+  result += ")";
   return result;
 }
 
