@@ -498,25 +498,17 @@ draw_camera_window(Camera& camera, LevelData& ldata)
     }
     {
       auto const coords = to_cartesian(camera.spherical_coordinates());
-      auto const x      = std::to_string(coords.x);
-      auto const y      = std::to_string(coords.y);
-      auto const z      = std::to_string(coords.z);
-      ImGui::Text("Cartesian Coordinates (should match world position):\nx: '%s', y: '%s', z: '%s'",
-                  x.c_str(), y.c_str(), z.c_str());
+      ImGui::Text("Cartesian Coordinates (should match world position):\nx: %f, y: %f, z: %f",
+                  coords.x, coords.y, coords.z);
     }
     {
-      glm::vec3 const target_coords = camera.target_position();
-      auto const      x             = std::to_string(target_coords.x);
-      auto const      y             = std::to_string(target_coords.y);
-      auto const      z             = std::to_string(target_coords.z);
-      ImGui::Text("Follow Target position:\nx: '%s', y: '%s', z: '%s'", x.c_str(), y.c_str(),
-                  z.c_str());
+      glm::vec3 const tfp = camera.target_position();
+      ImGui::Text("Follow Target position:\nx: %f, y: %f, z: %f", tfp.x, tfp.y, tfp.z);
     }
     ImGui::Separator();
-    ImGui::Text("camera xyz: '%s', camera phi: '%s', camera theta: '%s'\n",
-                glm::to_string(camera.world_position()).c_str(),
-                std::to_string(camera.spherical_coordinates().phi).c_str(),
-                std::to_string(camera.spherical_coordinates().theta).c_str());
+    ImGui::Text("camera xyz: '%s', camera phi: %f, camera theta: %f\n",
+                glm::to_string(camera.world_position()).c_str(), camera.spherical_coordinates().phi,
+                camera.spherical_coordinates().theta);
     ImGui::Separator();
     ImGui::Separator();
     auto& perspective = camera.perspective_ref();
@@ -596,18 +588,17 @@ draw_player_window(EngineState& es, LevelData& ldata)
       player.set_speed(speed);
     }
 
-    glm::quat const   quat = glm::angleAxis(glm::radians(0.0f), Y_UNIT_VECTOR);
-    float const       dot  = glm::dot(player.orientation(), quat);
-    std::string const dots = std::to_string(dot);
-    ImGui::Text("dot product: '%s'", dots.c_str());
+    glm::quat const quat = glm::angleAxis(glm::radians(0.0f), Y_UNIT_VECTOR);
+    float const     dot  = glm::dot(player.orientation(), quat);
+    ImGui::Text("dot product: %f", dot);
   };
   imgui_cxx::with_window(draw, "PLAYER INFO WINDOW");
 }
 
 void
-draw_skybox_window(EngineState& es, LevelManager& lm, SkyboxRenderer &skyboxr)
+draw_skybox_window(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr)
 {
-  auto& logger    = es.logger;
+  auto& logger = es.logger;
   auto& zs     = lm.active();
   auto& ldata  = zs.level_data;
   auto& skybox = ldata.skybox;
@@ -630,10 +621,11 @@ draw_skybox_window(EngineState& es, LevelManager& lm, SkyboxRenderer &skyboxr)
     // auto const size = ImVec2(32, 32);
     // return image_builder.build(im_texid, size);
     //};
-    auto const skybox_combo = [&](char const* text, char const* init, auto* buffer, auto const& fn) {
+    auto const skybox_combo = [&](char const* text, char const* init, auto* buffer,
+                                  auto const& fn) {
       auto const nicknames = ttable.list_of_all_names('\0') + "\0";
       if (table_combo(text, init, buffer, nicknames, ttable)) {
-        auto *ti = ttable.find(init);
+        auto* ti = ttable.find(init);
         assert(ti);
         (skyboxr.*fn)(ti);
       }
@@ -972,8 +964,8 @@ namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, window::SDLWindow& window, Camera& camera,
-     DrawState& ds, window::FrameTime const& ft)
+draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, window::SDLWindow& window,
+     Camera& camera, DrawState& ds, window::FrameTime const& ft)
 {
   auto& uistate        = es.ui_state.debug;
   auto& tilegrid_state = es.tilegrid_state;

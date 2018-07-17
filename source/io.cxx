@@ -290,7 +290,7 @@ process_mousebutton_down(GameState& state, SDL_MouseButtonEvent const& event, Ca
   else if (button == SDL_BUTTON_RIGHT) {
     ms.right_pressed = true;
   }
-  if (ms.both_pressed()) {
+  if (button == SDL_BUTTON_MIDDLE) {
     LOG_INFO("toggling mouse up/down (pitch) lock");
     camera.rotate_lock ^= true;
 
