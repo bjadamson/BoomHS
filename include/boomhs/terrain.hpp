@@ -31,14 +31,10 @@ struct RenderState;
 
 struct TerrainTextureNames
 {
-  std::string heightmap_path;
-
+  std::string              heightmap_path;
   std::vector<std::string> textures;
 
   TerrainTextureNames();
-  COPY_DEFAULT(TerrainTextureNames);
-  NO_MOVE(TerrainTextureNames);
-
   std::string to_string() const;
 };
 
@@ -61,16 +57,6 @@ struct TerrainConfig
   std::string to_string() const;
 };
 
-// TextureNames that have been bound. This struct is used by other classes who need to remember
-// which textures they bound, so they can be properly unbound.
-//
-// This is useful for allowing textures to be swapped out at runtime, but ensuring that the
-// original texture that was bound gets properly unbound.
-struct BoundTextureNames
-{
-  TerrainTextureNames names;
-};
-
 class Terrain
 {
   glm::vec2              pos_;
@@ -78,23 +64,17 @@ class Terrain
   opengl::ShaderProgram* sp_;
 
 public:
-  //
-  // mutable fields
-  TerrainConfig     config;
-  opengl::Heightmap heightmap;
-
-  //
-  // constructors
   NO_COPY(Terrain);
-  // MOVE_DEFAULT(Terrain);
-  Terrain(Terrain&&);
-  Terrain& operator=(Terrain&&);
+  MOVE_DEFAULT(Terrain);
+
   Terrain(TerrainConfig const&, glm::vec2 const&, opengl::DrawInfo&&, opengl::ShaderProgram&,
           opengl::Heightmap&&);
 
   // public members
+  TerrainConfig           config;
+  opengl::Heightmap       heightmap;
   opengl::DebugBoundCheck debug_check;
-  BoundTextureNames       bound_textures;
+  TerrainTextureNames     bound_textures;
 
   void bind_impl(stlw::Logger&, opengl::TextureTable&);
   void unbind_impl(stlw::Logger&, opengl::TextureTable&);
@@ -195,8 +175,8 @@ Terrain
 generate_piece(stlw::Logger&, glm::vec2 const&, TerrainGridConfig const&, TerrainConfig const&,
                opengl::Heightmap const&, opengl::ShaderProgram&);
 TerrainGrid
-generate_grid(stlw::Logger&, TerrainGridConfig const&, TerrainConfig const&,
-              opengl::Heightmap const&, opengl::ShaderProgram&, TerrainGrid*);
+generate_grid(stlw::Logger&, TerrainConfig const&, opengl::Heightmap const&, opengl::ShaderProgram&,
+              TerrainGrid const&);
 
 TerrainGrid
 generate_grid(stlw::Logger&, TerrainGridConfig const&, TerrainConfig const&,

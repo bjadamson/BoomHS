@@ -42,8 +42,8 @@
   CLASSNAME(CLASSNAME&&)       = delete;                                                           \
   CLASSNAME(CLASSNAME const&&) = delete;
 
-#define MOVE_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME&&) = default;
 #define MOVE_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME&&) = default;
+#define MOVE_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME&&) = default;
 
 #define MOVE_DEFAULT(CLASSNAME)                                                                    \
   MOVE_CONSTRUCTIBLE(CLASSNAME)                                                                    \
@@ -85,8 +85,16 @@
   decltype(auto) cend() const { return CONTAINER.cend(); }
 
 #define INDEX_OPERATOR_FNS(CONTAINER)                                                              \
-  auto const& operator[](size_t const i) const { return CONTAINER[i]; }                            \
-  auto&       operator[](size_t const i) { return CONTAINER[i]; }
+  auto const& operator[](size_t const i) const                                                     \
+  {                                                                                                \
+    assert(i < CONTAINER.size());                                                                  \
+    return CONTAINER[i];                                                                           \
+  }                                                                                                \
+  auto& operator[](size_t const i)                                                                 \
+  {                                                                                                \
+    assert(i < CONTAINER.size());                                                                  \
+    return CONTAINER[i];                                                                           \
+  }
 
 // TODO: document
 // BEGIN Function-defining macros

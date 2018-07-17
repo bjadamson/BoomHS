@@ -42,6 +42,28 @@ generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc, Terrai
   return data;
 }
 
+TerrainGrid
+generate_grid_data(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
+                   Heightmap const& heightmap, ShaderProgram& sp)
+{
+  LOG_TRACE("Generating Terrain");
+  size_t const rows = tgc.num_rows, cols = tgc.num_cols;
+  TerrainGrid  tgrid{tgc};
+
+  FOR(j, rows)
+  {
+    FOR(i, cols)
+    {
+      auto const pos = glm::vec2{j, i};
+      auto       t   = terrain::generate_piece(logger, pos, tgc, tc, heightmap, sp);
+      tgrid.add(MOVE(t));
+    }
+  }
+
+  LOG_TRACE("Finished Generating Terrain");
+  return tgrid;
+}
+
 float
 barry_centric(glm::vec3 const& p1, glm::vec3 const& p2, glm::vec3 const& p3, glm::vec2 const& pos)
 {
@@ -123,31 +145,6 @@ Terrain::Terrain(TerrainConfig const& tc, glm::vec2 const& pos, DrawInfo&& di, S
     , config(tc)
     , heightmap(MOVE(hmap))
 {
-  pos_ = pos;
-}
-
-Terrain::Terrain(Terrain&& other)
-    : pos_(other.pos_)
-    , di_(MOVE(other.di_))
-    , sp_(other.sp_)
-    , config(MOVE(other.config))
-    , heightmap(MOVE(other.heightmap))
-    , debug_check(MOVE(other.debug_check))
-    , bound_textures(MOVE(other.bound_textures))
-{
-}
-
-Terrain&
-Terrain::operator=(Terrain&& other)
-{
-  pos_           = other.pos_;
-  di_            = MOVE(other.di_);
-  sp_            = MOVE(other.sp_);
-  config         = MOVE(other.config);
-  heightmap      = MOVE(other.heightmap);
-  debug_check    = MOVE(other.debug_check);
-  bound_textures = MOVE(other.bound_textures);
-  return *this;
 }
 
 void
@@ -159,8 +156,8 @@ Terrain::bind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
     bind::global_bind(logger, tinfo);
   };
 
-  bound_textures.names = config.texture_names;
-  FOR(i, bound_textures.names.textures.size()) { bind(i); }
+  bound_textures = config.texture_names;
+  FOR(i, bound_textures.textures.size()) { bind(i); }
 }
 
 void
@@ -171,7 +168,7 @@ Terrain::unbind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
     bind::global_unbind(logger, tinfo);
   };
 
-  FOR(i, bound_textures.names.textures.size()) { unbind(i); }
+  FOR(i, bound_textures.textures.size()) { unbind(i); }
   glActiveTexture(GL_TEXTURE0);
 }
 
@@ -186,7 +183,7 @@ Terrain::to_string() const
 std::string&
 Terrain::texture_name(size_t const index)
 {
-  auto& names = bound_textures.names;
+  auto& names = this->bound_textures;
   assert(index < names.textures.size());
   return names.textures[index];
 }
@@ -194,7 +191,7 @@ Terrain::texture_name(size_t const index)
 std::string const&
 Terrain::texture_name(size_t const index) const
 {
-  auto const& names = bound_textures.names;
+  auto const& names = this->bound_textures;
   assert(index < names.textures.size());
   return names.textures[index];
 }
@@ -351,34 +348,26 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
 }
 
 TerrainGrid
-generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
-              Heightmap const& heightmap, ShaderProgram& sp, TerrainGrid* prevgrid)
+generate_grid(stlw::Logger& logger, TerrainConfig const& tc, Heightmap const& heightmap,
+              ShaderProgram& sp, TerrainGrid const& prevgrid)
 {
-  LOG_TRACE("Generating Terrain");
-  size_t const rows = tgc.num_rows, cols = tgc.num_cols;
-  TerrainGrid  tgrid{tgc};
+  auto tgrid = generate_grid_data(logger, prevgrid.config, tc, heightmap, sp);
 
+  // If the previous grid has enough rows/columns for how far along we are generating a new grid,
+  // then copy the previous terrain's config to the new terrain.
+  size_t const rows = tgrid.config.num_rows, cols = tgrid.config.num_cols;
   FOR(j, rows)
   {
     FOR(i, cols)
     {
-      auto const pos = glm::vec2{j, i};
-      auto       t   = generate_piece(logger, pos, tgc, tc, heightmap, sp);
-
-      // If the user provided a previous grid, and the previous grid has enough rows/columns for
-      // how far along we are generating a new grid, then copy the previous terrain's config to the
-      // new terrain.
-      if (prevgrid && prevgrid->num_rows() >= j && prevgrid->num_cols() >= i) {
-        // auto const index = (j * rows) + i;
-        // t.config = (*prevgrid)[index].config;
-        std::abort();
+      bool const prevgrid_grid_enough_elements = (rows * cols) < prevgrid.size();
+      bool const within_rows_and_columns       = j < rows && i < cols;
+      if (prevgrid_grid_enough_elements && within_rows_and_columns) {
+        auto const index    = (j * rows) + i;
+        tgrid[index].config = prevgrid[index].config;
       }
-
-      tgrid.add(MOVE(t));
     }
   }
-
-  LOG_TRACE("Finished Generating Terrain");
   return tgrid;
 }
 
@@ -386,7 +375,7 @@ TerrainGrid
 generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
               Heightmap const& heightmap, ShaderProgram& sp)
 {
-  return generate_grid(logger, tgc, tc, heightmap, sp, nullptr);
+  return generate_grid_data(logger, tgc, tc, heightmap, sp);
 }
 
 } // namespace boomhs::terrain

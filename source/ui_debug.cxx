@@ -339,8 +339,8 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 
         terrain_grid.config = tbuffer_gridconfig;
         auto& sp            = sps.ref_sp(terrain_config.shader_name);
-        ldata.terrain = terrain::generate_grid(logger, grid_config, terrain_config, heightmap, sp,
-                                               &ldata.terrain);
+        ldata.terrain =
+            terrain::generate_grid(logger, terrain_config, heightmap, sp, ldata.terrain);
       }
     }
     if (ImGui::CollapsingHeader("Rendering Options")) {
