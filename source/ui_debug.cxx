@@ -112,6 +112,19 @@ gl_option_combo(char const* init_text, char const* list_text, int* buffer,
   std::abort();
 }
 
+template <typename T, typename Table>
+bool
+table_combo(char const* text, T const& init, int* selected, std::string const& options,
+            Table const& ttable)
+{
+  assert(selected);
+  if (-1 == (*selected)) {
+    auto lookup = ttable.index_of_nickname(init);
+    *selected   = lookup.value_or(0);
+  }
+  return imgui_cxx::combo(text, selected, options);
+}
+
 } // namespace
 
 namespace
@@ -371,27 +384,20 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
       ImGui::Checkbox("Invert Normals", &terrain_config.invert_normals);
       ImGui::Checkbox("Tile Textures", &terrain_config.tile_textures);
       {
-        auto const nicknames     = ttable.list_of_all_names('\0') + "\0";
-        auto const set_initially = [&](auto const& value, auto const& table, auto& buffer) {
-          if (buffer == -1) {
-            auto lookup = table.index_of_nickname(value);
-            *(&buffer)  = lookup.value_or(0);
-          }
-        };
+        auto const nicknames = ttable.list_of_all_names('\0') + "\0";
 
         ImGui::Separator();
         auto& terrain_texturenames = terrain_config.texture_names;
-        set_initially(terrain_texturenames.heightmap_path, ttable, tbuffers.selected_heightmap);
-        imgui_cxx::combo("Heightmap", &tbuffers.selected_heightmap, nicknames);
+        table_combo("Heightmap", terrain_texturenames.heightmap_path, &tbuffers.selected_heightmap,
+                    nicknames, ttable);
 
-        set_initially(terrain_config.shader_name, sps, tbuffers.selected_shader);
         auto const shader_names = sps.all_shader_names_flattened('\0') + "\0";
-        imgui_cxx::combo("Shader", &tbuffers.selected_shader, shader_names);
+        table_combo("Shader", terrain_config.shader_name, &tbuffers.selected_shader, shader_names,
+                    sps);
 
         FOR(i, tbuffers.selected_textures.size())
         {
           auto& st = tbuffers.selected_textures[i];
-          set_initially(terrain_texturenames.textures[i], ttable, st);
 
           // clang-format off
           auto constexpr SAMPLER_NAMES = stlw::make_array<char const*>(
@@ -401,7 +407,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
               "u_bsampler",
               "u_blendsampler");
           // clang-format on
-          imgui_cxx::combo(SAMPLER_NAMES[i], &st, nicknames);
+          table_combo(SAMPLER_NAMES[i], terrain_texturenames.textures[i], &st, nicknames, ttable);
         }
       }
       {
@@ -599,31 +605,43 @@ draw_player_window(EngineState& es, LevelData& ldata)
 }
 
 void
-draw_skybox_window(LevelManager& lm)
+draw_skybox_window(EngineState& es, LevelManager& lm, SkyboxRenderer &skyboxr)
 {
+  auto& logger    = es.logger;
   auto& zs     = lm.active();
   auto& ldata  = zs.level_data;
   auto& skybox = ldata.skybox;
 
   auto& gfx_state = zs.gfx_state;
   auto& ttable    = gfx_state.texture_table;
-  auto* pti       = ttable.find("skybox");
+  auto* pti       = ttable.find("night_skybox");
   assert(pti);
   auto& ti = *pti;
 
   auto const draw = [&]() {
-    auto const draw_button = [&]() {
-      ImTextureID im_texid = reinterpret_cast<void*>(ti.id);
+    // auto const draw_button = [&]() {
+    // ImTextureID im_texid = reinterpret_cast<void*>(ti.id);
 
-      imgui_cxx::ImageButtonBuilder image_builder;
-      image_builder.frame_padding = 1;
-      image_builder.bg_color      = ImColor{255, 255, 255, 255};
-      image_builder.tint_color    = ImColor{255, 255, 255, 128};
+    // imgui_cxx::ImageButtonBuilder image_builder;
+    // image_builder.frame_padding = 1;
+    // image_builder.bg_color      = ImColor{255, 255, 255, 255};
+    // image_builder.tint_color    = ImColor{255, 255, 255, 128};
 
-      auto const size = ImVec2(32, 32);
-      return image_builder.build(im_texid, size);
+    // auto const size = ImVec2(32, 32);
+    // return image_builder.build(im_texid, size);
+    //};
+    auto const skybox_combo = [&](char const* text, char const* init, auto* buffer, auto const& fn) {
+      auto const nicknames = ttable.list_of_all_names('\0') + "\0";
+      if (table_combo(text, init, buffer, nicknames, ttable)) {
+        auto *ti = ttable.find(init);
+        assert(ti);
+        (skyboxr.*fn)(ti);
+      }
     };
-    bool const button_pressed = draw_button();
+
+    auto& sbuffers = es.ui_state.debug.buffers.skybox;
+    skybox_combo("day", "building_skybox", &sbuffers.selected_day, &SkyboxRenderer::set_day);
+    skybox_combo("night", "night_skybox", &sbuffers.selected_night, &SkyboxRenderer::set_night);
   };
   imgui_cxx::with_window(draw, "Skybox Window");
 }
@@ -954,8 +972,8 @@ namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camera, DrawState& ds,
-     window::FrameTime const& ft)
+draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, window::SDLWindow& window, Camera& camera,
+     DrawState& ds, window::FrameTime const& ft)
 {
   auto& uistate        = es.ui_state.debug;
   auto& tilegrid_state = es.tilegrid_state;
@@ -979,7 +997,7 @@ draw(EngineState& es, LevelManager& lm, window::SDLWindow& window, Camera& camer
     draw_player_window(es, ldata);
   }
   if (uistate.show_skyboxwindow) {
-    draw_skybox_window(lm);
+    draw_skybox_window(es, lm, skyboxr);
   }
   if (uistate.show_tilegrid_editor_window) {
     draw_tilegrid_editor(tilegrid_state, lm);

@@ -490,7 +490,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
 
   if (ui_state.draw_debug_ui) {
     auto& lm = state.level_manager;
-    ui_debug::draw(es, lm, engine.window, camera, ds, ft);
+    ui_debug::draw(es, lm, skybox_renderer, engine.window, camera, ds, ft);
   }
 }
 

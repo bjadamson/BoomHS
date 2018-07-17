@@ -25,6 +25,12 @@ struct DrawTimeBuffer
   bool clear_fields = true;
 };
 
+struct SkyboxBuffer
+{
+  int selected_day   = -1;
+  int selected_night = -1;
+};
+
 struct TerrainBuffer
 {
   int selected_winding  = 0;
@@ -44,6 +50,7 @@ struct TerrainBuffer
 struct Buffers
 {
   DrawTimeBuffer draw_time_window;
+  SkyboxBuffer   skybox;
   TerrainBuffer  terrain;
 };
 

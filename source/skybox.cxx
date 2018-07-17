@@ -37,8 +37,8 @@ Skybox::update(FrameTime const& ft)
 SkyboxRenderer::SkyboxRenderer(stlw::Logger& logger, DrawInfo&& dinfo, TextureInfo& day,
                                TextureInfo& night, ShaderProgram& sp)
     : dinfo_(MOVE(dinfo))
-    , day_(day)
-    , night_(night)
+    , day_(&day)
+    , night_(&night)
     , sp_(sp)
 {
   sp_.while_bound(logger, [&]() {
@@ -55,8 +55,8 @@ SkyboxRenderer::SkyboxRenderer(stlw::Logger& logger, DrawInfo&& dinfo, TextureIn
       ti.set_fieldi(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     });
   };
-  set_fields(day_, GL_TEXTURE0);
-  set_fields(night_, GL_TEXTURE1);
+  set_fields(*day_, GL_TEXTURE0);
+  set_fields(*night_, GL_TEXTURE1);
 }
 
 void
@@ -77,12 +77,12 @@ SkyboxRenderer::render(RenderState& rstate, DrawState& ds, FrameTime const& ft)
   glActiveTexture(GL_TEXTURE0);
   ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
 
-  bind::global_bind(logger, day_);
-  ON_SCOPE_EXIT([&]() { bind::global_unbind(logger, day_); });
+  bind::global_bind(logger, *day_);
+  ON_SCOPE_EXIT([&]() { bind::global_unbind(logger, *day_); });
 
   glActiveTexture(GL_TEXTURE1);
-  bind::global_bind(logger, night_);
-  ON_SCOPE_EXIT([&]() { bind::global_unbind(logger, night_); });
+  bind::global_bind(logger, *night_);
+  ON_SCOPE_EXIT([&]() { bind::global_unbind(logger, *night_); });
 
   // Converting the "current hour" to a value in [0.0, 1.0]
   auto const calculate_blend = [&]() {
@@ -127,6 +127,20 @@ SkyboxRenderer::render(RenderState& rstate, DrawState& ds, FrameTime const& ft)
     auto& vao = dinfo_.vao();
     vao.while_bound(logger, draw_fn);
   });
+}
+
+void
+SkyboxRenderer::set_day(opengl::TextureInfo* ti)
+{
+  assert(ti);
+  day_ = ti;
+}
+
+void
+SkyboxRenderer::set_night(opengl::TextureInfo* ti)
+{
+  assert(ti);
+  day_ = ti;
 }
 
 } // namespace boomhs

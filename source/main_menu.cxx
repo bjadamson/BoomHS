@@ -30,9 +30,9 @@ void
 draw_menu(EngineState& es, ImVec2 const& size)
 {
   bool const draw_debug = es.ui_state.draw_debug_ui;
-  auto& main_menu = es.main_menu;
+  auto&      main_menu  = es.main_menu;
 
-  auto const fn         = [&]() {
+  auto const fn = [&]() {
     {
       constexpr char const* resume = "Resume Game";
       constexpr char const* start  = "Start Game";
@@ -41,7 +41,7 @@ draw_menu(EngineState& es, ImVec2 const& size)
       char const* text         = game_running ? resume : start;
 
       bool const button_pressed = ImGui::Button(text);
-      main_menu.show         = !button_pressed;
+      main_menu.show            = !button_pressed;
 
       if (button_pressed) {
         game_running = true;
@@ -49,7 +49,7 @@ draw_menu(EngineState& es, ImVec2 const& size)
     }
     main_menu.show_options |= ImGui::Button("Options");
     if (main_menu.show_options) {
-      auto const fn = [&](){
+      auto const fn = [&]() {
         ImGui::Text("Options");
         ImGui::Separator();
         ImGui::Separator();

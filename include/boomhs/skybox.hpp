@@ -38,8 +38,8 @@ class SkyboxRenderer
 {
   opengl::DrawInfo dinfo_;
 
-  opengl::TextureInfo&   day_;
-  opengl::TextureInfo&   night_;
+  opengl::TextureInfo*   day_;
+  opengl::TextureInfo*   night_;
   opengl::ShaderProgram& sp_;
 
 public:
@@ -48,6 +48,8 @@ public:
                  opengl::ShaderProgram&);
 
   void render(RenderState&, DrawState&, window::FrameTime const&);
+  void set_day(opengl::TextureInfo*);
+  void set_night(opengl::TextureInfo*);
 };
 
 } // namespace boomhs

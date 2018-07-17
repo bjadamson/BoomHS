@@ -70,8 +70,8 @@ struct EngineState
   MainMenuState    main_menu;
   Time             time;
 
-  bool quit           = false;
-  bool game_running   = false;
+  bool quit         = false;
+  bool game_running = false;
 
   bool player_collision;
   bool mariolike_edges;
