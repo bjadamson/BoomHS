@@ -18,6 +18,7 @@ EngineState::EngineState(stlw::Logger& l, ALCdevice& al, ImGuiIO& i, Dimensions 
     , player_collision(false)
     , mariolike_edges(false)
     , draw_imguimetrics(false)
+    , advanced_water(false)
     , draw_bounding_boxes(false)
     , draw_entities(true)
     , draw_fbo_testwindow(true)

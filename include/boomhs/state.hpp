@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/level_manager.hpp>
+#include <boomhs/main_menu.hpp>
 #include <boomhs/time.hpp>
 #include <boomhs/ui_state.hpp>
 #include <boomhs/zone_state.hpp>
@@ -66,17 +67,18 @@ struct EngineState
   ALCdevice&       al_device;
   ImGuiIO&         imgui;
   Dimensions const dimensions;
+  MainMenuState    main_menu;
   Time             time;
 
   bool quit           = false;
   bool game_running   = false;
-  bool show_main_menu = true;
 
   bool player_collision;
   bool mariolike_edges;
   bool draw_imguimetrics;
 
   // rendering state
+  bool advanced_water;
   bool draw_bounding_boxes;
   bool draw_entities;
   bool draw_fbo_testwindow;

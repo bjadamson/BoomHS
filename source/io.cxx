@@ -343,7 +343,7 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
   };
   switch (event.key.keysym.sym) {
   case SDLK_ESCAPE:
-    es.show_main_menu ^= true;
+    es.main_menu.show ^= true;
     break;
   case SDLK_w:
     move_forward(state, ft);

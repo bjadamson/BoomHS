@@ -13,6 +13,13 @@ namespace boomhs
 class Camera;
 struct EngineState;
 struct GameState;
+
+struct MainMenuState
+{
+  bool show         = true;
+  bool show_options = false;
+};
+
 } // namespace boomhs
 
 namespace boomhs::main_menu

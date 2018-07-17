@@ -30,6 +30,8 @@ void
 draw_menu(EngineState& es, ImVec2 const& size)
 {
   bool const draw_debug = es.ui_state.draw_debug_ui;
+  auto& main_menu = es.main_menu;
+
   auto const fn         = [&]() {
     {
       constexpr char const* resume = "Resume Game";
@@ -39,13 +41,28 @@ draw_menu(EngineState& es, ImVec2 const& size)
       char const* text         = game_running ? resume : start;
 
       bool const button_pressed = ImGui::Button(text);
-      es.show_main_menu         = !button_pressed;
+      main_menu.show         = !button_pressed;
 
       if (button_pressed) {
         game_running = true;
       }
     }
-    ImGui::Button("Options");
+    main_menu.show_options |= ImGui::Button("Options");
+    if (main_menu.show_options) {
+      auto const fn = [&](){
+        ImGui::Text("Options");
+        ImGui::Separator();
+        ImGui::Separator();
+        ImGui::Text("Audio");
+        ImGui::Separator();
+        ImGui::Text("Gameplay");
+        ImGui::Separator();
+        ImGui::Text("Graphics");
+        ImGui::Separator();
+        ImGui::Checkbox("Advanced Water Rendering", &es.advanced_water);
+      };
+      imgui_cxx::with_window(fn, "Options Window");
+    }
     es.quit |= ImGui::Button("Exit");
   };
   auto const draw_window = [&]() {
@@ -68,7 +85,7 @@ process_keydown(GameState& state, SDL_Event const& event)
   switch (event.key.keysym.sym) {
   case SDLK_ESCAPE:
     if (es.game_running) {
-      es.show_main_menu ^= true;
+      es.main_menu.show ^= true;
     }
     break;
   case SDLK_F10:

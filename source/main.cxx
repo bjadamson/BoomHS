@@ -57,14 +57,14 @@ loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camer
   auto& window = engine.window;
   ImGui_ImplSdlGL3_NewFrame(window.raw());
 
-  auto const& event_fn = es.show_main_menu ? &main_menu::process_event : &IO::process_event;
+  auto const& event_fn = es.main_menu.show ? &main_menu::process_event : &IO::process_event;
 
   SDL_Event event;
   loop_events(state, event, camera, ft, event_fn);
   es.quit |= is_quit_event(event);
 
   auto& io = es.imgui;
-  if (es.show_main_menu) {
+  if (es.main_menu.show) {
     // Enable keyboard shortcuts
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
