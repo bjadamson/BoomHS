@@ -63,21 +63,7 @@ loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camer
   loop_events(state, event, camera, ft, event_fn);
   es.quit |= is_quit_event(event);
 
-  auto& io = es.imgui;
-  if (es.main_menu.show) {
-    // Enable keyboard shortcuts
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-
-    auto const& size = engine.dimensions();
-    main_menu::draw(es, ImVec2(size.w, size.h));
-  }
-  else {
-    // Disable keyboard shortcuts
-    io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
-
-    IO::process(state, engine.controllers, camera, ft);
-    boomhs::game_loop(engine, state, rng, camera, ft);
-  }
+  boomhs::game_loop(engine, state, rng, camera, ft);
 
   // Render Imgui UI
   ImGui::Render();

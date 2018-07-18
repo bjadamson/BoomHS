@@ -11,6 +11,7 @@ class FrameTime;
 namespace boomhs
 {
 class Camera;
+class WaterAudioSystem;
 struct EngineState;
 struct GameState;
 
@@ -26,7 +27,7 @@ namespace boomhs::main_menu
 {
 
 void
-draw(EngineState&, ImVec2 const&);
+draw(EngineState&, ImVec2 const&, WaterAudioSystem&);
 
 void
 process_event(GameState&, SDL_Event&, Camera&, window::FrameTime const&);

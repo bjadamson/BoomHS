@@ -13,13 +13,14 @@ struct DrawState;
 struct EngineState;
 class LevelManager;
 class SkyboxRenderer;
+class WaterAudioSystem;
 } // namespace boomhs
 
 namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState&, LevelManager&, SkyboxRenderer&, window::SDLWindow&, Camera&, DrawState&,
-     window::FrameTime const&);
+draw(EngineState&, LevelManager&, SkyboxRenderer&, WaterAudioSystem&, window::SDLWindow&, Camera&,
+     DrawState&, window::FrameTime const&);
 
 } // namespace boomhs::ui_debug

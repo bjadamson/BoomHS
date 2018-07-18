@@ -47,8 +47,14 @@ struct TerrainBuffer
   TerrainGridConfig grid_config;
 };
 
+struct AudioUiBuffer
+{
+  float ambient = 1.0f;
+};
+
 struct Buffers
 {
+  AudioUiBuffer  audio;
   DrawTimeBuffer draw_time_window;
   SkyboxBuffer   skybox;
   TerrainBuffer  terrain;

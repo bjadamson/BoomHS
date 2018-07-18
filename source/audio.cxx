@@ -218,6 +218,13 @@ WaterAudioSystem::stop_inwater_sound(stlw::Logger&)
   source.stop();
 }
 
+void
+WaterAudioSystem::set_volume(float const v)
+{
+  auto& source = water_audio.source;
+  source.set_volume(v);
+}
+
 } // namespace boomhs
 
 namespace boomhs::audio

@@ -1,3 +1,4 @@
+#include <boomhs/audio.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/frame.hpp>
@@ -964,8 +965,8 @@ namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, window::SDLWindow& window,
-     Camera& camera, DrawState& ds, window::FrameTime const& ft)
+draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, WaterAudioSystem& water_audio,
+     window::SDLWindow& window, Camera& camera, DrawState& ds, window::FrameTime const& ft)
 {
   auto& uistate        = es.ui_state.debug;
   auto& tilegrid_state = es.tilegrid_state;

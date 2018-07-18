@@ -35,6 +35,7 @@
 #include <stlw/result.hpp>
 
 #include <extlibs/fastnoise.hpp>
+#include <extlibs/imgui.hpp>
 
 #include <cassert>
 #include <chrono>
@@ -52,7 +53,8 @@ namespace
 {
 
 void
-update_playaudio(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registry)
+update_playaudio(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registry,
+                 WaterAudioSystem& audio)
 {
   auto&      player = ldata.player;
   auto const eids = find_all_entities_with_component<WaterInfo, Transform, AABoundingBox>(registry);
@@ -63,9 +65,6 @@ update_playaudio(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registr
 
     auto const& player_bbox = player.bounding_box();
     bool const  collides = collision::bbox_intersects(logger, p_tr, player_bbox, w_tr, water_bbox);
-
-    static auto audio_r = WaterAudioSystem::create();
-    static auto audio   = audio_r.expect_moveout("WAS");
 
     if (collides) {
       audio.play_inwater_sound(logger);
@@ -381,8 +380,8 @@ init(GameState& state)
 }
 
 void
-game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
-          FrameTime const& ft)
+ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
+            WaterAudioSystem& water_audio, FrameTime const& ft)
 {
   auto& es = state.engine_state;
   es.time.update(ft.since_start_seconds());
@@ -399,9 +398,9 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   auto& sps       = gfx_state.sps;
   auto& ttable    = gfx_state.texture_table;
 
-  // Update the world
   {
-    update_playaudio(logger, ldata, registry);
+    // Update the world
+    update_playaudio(logger, ldata, registry, water_audio);
     update_playerpos(logger, ldata, ft);
     update_nearbytargets(ldata, registry, ft);
     update_orbital_bodies(es, ldata, registry, ft);
@@ -490,7 +489,33 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
 
   if (ui_state.draw_debug_ui) {
     auto& lm = state.level_manager;
-    ui_debug::draw(es, lm, skybox_renderer, engine.window, camera, ds, ft);
+    ui_debug::draw(es, lm, skybox_renderer, water_audio, engine.window, camera, ds, ft);
+  }
+}
+
+void
+game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
+          FrameTime const& ft)
+{
+  auto& es = state.engine_state;
+  auto& io = es.imgui;
+
+  static auto audio_r     = WaterAudioSystem::create();
+  static auto water_audio = audio_r.expect_moveout("WAS");
+
+  if (es.main_menu.show) {
+    // Enable keyboard shortcuts
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    auto const& size = engine.dimensions();
+    main_menu::draw(es, ImVec2(size.w, size.h), water_audio);
+  }
+  else {
+    // Disable keyboard shortcuts
+    io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
+
+    IO::process(state, engine.controllers, camera, ft);
+    ingame_loop(engine, state, rng, camera, water_audio, ft);
   }
 }
 

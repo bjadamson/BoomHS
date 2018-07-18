@@ -1,3 +1,4 @@
+#include <boomhs/audio.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/main_menu.hpp>
 #include <boomhs/renderer.hpp>
@@ -27,7 +28,7 @@ auto static constexpr WINDOW_FLAGS = (0
 auto static constexpr STYLE_VARS = (0 | ImGuiStyleVar_ChildRounding);
 
 void
-draw_menu(EngineState& es, ImVec2 const& size)
+draw_menu(EngineState& es, ImVec2 const& size, WaterAudioSystem& water_audio)
 {
   bool const draw_debug = es.ui_state.draw_debug_ui;
   auto&      main_menu  = es.main_menu;
@@ -54,6 +55,12 @@ draw_menu(EngineState& es, ImVec2 const& size)
         ImGui::Separator();
         ImGui::Separator();
         ImGui::Text("Audio");
+
+        auto& uistate = es.ui_state.debug;
+        auto& audio   = uistate.buffers.audio;
+        if (ImGui::SliderFloat("Ambient Volume", &audio.ambient, 0.0f, 1.0f)) {
+          water_audio.set_volume(audio.ambient);
+        }
         ImGui::Separator();
         ImGui::Text("Gameplay");
         ImGui::Separator();
@@ -103,10 +110,10 @@ namespace boomhs::main_menu
 {
 
 void
-draw(EngineState& es, ImVec2 const& size)
+draw(EngineState& es, ImVec2 const& size, WaterAudioSystem& water_audio)
 {
   render::clear_screen(LOC::BLACK);
-  draw_menu(es, size);
+  draw_menu(es, size, water_audio);
 }
 
 void

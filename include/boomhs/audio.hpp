@@ -93,14 +93,17 @@ struct WaterAudioSystem
 {
   AudioObject water_audio;
 
+  // ctors
+  MOVE_DEFAULT(WaterAudioSystem);
+  NO_COPY(WaterAudioSystem);
+  WaterAudioSystem(AudioObject&&);
+
+  // methods
   void play_inwater_sound(stlw::Logger&);
   void stop_inwater_sound(stlw::Logger&);
 
   bool is_playing_watersound() const;
-
-  MOVE_DEFAULT(WaterAudioSystem);
-  NO_COPY(WaterAudioSystem);
-  WaterAudioSystem(AudioObject&&);
+  void set_volume(float);
 
   static Result<WaterAudioSystem, std::string> create();
 };
