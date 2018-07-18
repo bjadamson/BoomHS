@@ -33,7 +33,6 @@ struct RiverInfo;
 struct Transform;
 class TileGrid;
 struct TiledataState;
-class WaterFrameBuffers;
 class WorldObject;
 struct ZoneState;
 } // namespace boomhs

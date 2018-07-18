@@ -52,12 +52,18 @@ struct AudioUiBuffer
   float ambient = 1.0f;
 };
 
+struct WaterBuffer
+{
+  int selected_water = 0;
+};
+
 struct Buffers
 {
   AudioUiBuffer  audio;
   DrawTimeBuffer draw_time_window;
   SkyboxBuffer   skybox;
   TerrainBuffer  terrain;
+  WaterBuffer    water;
 };
 
 struct UiDebugState

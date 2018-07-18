@@ -11,8 +11,6 @@
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/tree.hpp>
-#include <boomhs/water.hpp>
-#include <boomhs/water_fbos.hpp>
 
 #include <opengl/draw_info.hpp>
 #include <opengl/factory.hpp>

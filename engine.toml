@@ -136,9 +136,15 @@ fragment = "terrain.frag"
 va = "terrain"
 
 [[shaders]]
-name = "water"
-vertex = "water.vert"
-fragment = "water.frag"
+name = "water_basic"
+vertex = "water_basic.vert"
+fragment = "water_basic.frag"
+va = "water"
+
+[[shaders]]
+name = "water_advanced"
+vertex = "water_advanced.vert"
+fragment = "water_advanced.frag"
 va = "water"
 
 [[shaders]]

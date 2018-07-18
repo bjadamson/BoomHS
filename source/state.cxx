@@ -23,7 +23,6 @@ EngineState::EngineState(stlw::Logger& l, ALCdevice& al, ImGuiIO& i, Dimensions 
     , draw_entities(true)
     , draw_fbo_testwindow(true)
     , draw_terrain(true)
-    , draw_water(true)
     , draw_normals(false)
     , draw_skybox(true)
     , show_global_axis(true)

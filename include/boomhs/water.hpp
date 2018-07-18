@@ -1,13 +1,18 @@
 #pragma once
+#include <boomhs/dimensions.hpp>
 #include <boomhs/obj.hpp>
-#include <boomhs/water_fbos.hpp>
 
+#include <opengl/bind.hpp>
 #include <opengl/draw_info.hpp>
+#include <opengl/framebuffer.hpp>
+#include <opengl/renderbuffer.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
 
-#include <extlibs/glm.hpp>
 #include <stlw/log.hpp>
+#include <stlw/type_macros.hpp>
+
+#include <extlibs/glm.hpp>
 
 namespace window
 {
@@ -34,10 +39,9 @@ struct WaterTileThing
 
 struct WaterInfo
 {
-  glm::vec2              position;
-  opengl::DrawInfo*      dinfo  = nullptr;
-  opengl::ShaderProgram* shader = nullptr;
-  opengl::TextureInfo*   tinfo  = nullptr;
+  glm::vec2            position;
+  opengl::DrawInfo*    dinfo = nullptr;
+  opengl::TextureInfo* tinfo = nullptr;
 
   float wave_offset = 0.0f;
 
@@ -46,26 +50,83 @@ struct WaterInfo
   NO_COPY(WaterInfo);
   MOVE_DEFAULT(WaterInfo);
   WaterInfo() = default;
-  // WaterInfo(glm::vec2 const&, opengl::DrawInfo&, opengl::ShaderProgram&, opengl::TextureInfo&);
 };
 
 struct WaterFactory
 {
   static ObjData generate_water_data(stlw::Logger&, glm::vec2 const&, size_t);
 
-  static WaterInfo generate_info(stlw::Logger&, opengl::ShaderProgram&, opengl::TextureInfo&);
+  static WaterInfo generate_info(stlw::Logger&, opengl::TextureInfo&);
 
   static WaterInfo make_default(stlw::Logger&, opengl::ShaderPrograms&, opengl::TextureTable&);
 };
 
-class WaterRenderer
+class BasicWaterRenderer
 {
-  WaterFrameBuffers fbos_;
+  stlw::Logger&          logger_;
+  opengl::ShaderProgram& sp_;
+  opengl::TextureInfo&   diffuse_;
+  opengl::TextureInfo&   normal_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(WaterRenderer);
+  BasicWaterRenderer(stlw::Logger&, opengl::TextureInfo&, opengl::TextureInfo&,
+                     opengl::ShaderProgram&);
+  MOVE_CONSTRUCTIBLE_ONLY(BasicWaterRenderer);
 
-  explicit WaterRenderer(WaterFrameBuffers&&);
+  void render_water(RenderState&, DrawState&, LevelManager&, Camera&, window::FrameTime const&);
+};
+
+struct ReflectionBuffers
+{
+  opengl::FrameBuffer  fbo;
+  opengl::TextureInfo  tbo;
+  opengl::RenderBuffer rbo;
+
+  ReflectionBuffers(stlw::Logger&, ScreenSize const&);
+
+  NO_COPY(ReflectionBuffers);
+  MOVE_DEFAULT(ReflectionBuffers);
+};
+
+struct RefractionBuffers
+{
+  opengl::FrameBuffer fbo;
+  opengl::TextureInfo tbo;
+  opengl::TextureInfo dbo;
+
+  RefractionBuffers(stlw::Logger&, ScreenSize const&);
+
+  NO_COPY(RefractionBuffers);
+  MOVE_DEFAULT(RefractionBuffers);
+};
+
+class AdvancedWaterRenderer
+{
+  opengl::ShaderProgram& sp_;
+  opengl::TextureInfo&   diffuse_;
+  opengl::TextureInfo&   dudv_;
+  opengl::TextureInfo&   normal_;
+
+  ReflectionBuffers reflection_;
+  RefractionBuffers refraction_;
+
+  template <typename FN>
+  void with_reflection_fbo(stlw::Logger& logger, FN const& fn)
+  {
+    reflection_.fbo->while_bound(logger, fn);
+  }
+
+  template <typename FN>
+  void with_refraction_fbo(stlw::Logger& logger, FN const& fn)
+  {
+    refraction_.fbo->while_bound(logger, fn);
+  }
+
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(AdvancedWaterRenderer);
+
+  explicit AdvancedWaterRenderer(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&,
+                                 opengl::TextureInfo&, opengl::TextureInfo&, opengl::TextureInfo&);
   void render_refraction(EngineState&, DrawState&, LevelManager&, Camera&, SkyboxRenderer&,
                          stlw::float_generator&, window::FrameTime const&);
   void render_reflection(EngineState&, DrawState&, LevelManager&, Camera&, SkyboxRenderer&,

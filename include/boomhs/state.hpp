@@ -61,6 +61,13 @@ struct TiledataState
   glm::vec3 tile_scaling = {1.0f, 1.0f, 1.0f};
 };
 
+enum class DrawWaterOptions
+{
+  None = 0,
+  Basic,
+  Advanced
+};
+
 struct EngineState
 {
   stlw::Logger&    logger;
@@ -70,8 +77,9 @@ struct EngineState
   MainMenuState    main_menu;
   Time             time;
 
-  bool quit         = false;
-  bool game_running = false;
+  bool             quit         = false;
+  bool             game_running = false;
+  DrawWaterOptions draw_water   = DrawWaterOptions::Basic;
 
   bool player_collision;
   bool mariolike_edges;
@@ -83,7 +91,6 @@ struct EngineState
   bool draw_entities;
   bool draw_fbo_testwindow;
   bool draw_terrain;
-  bool draw_water;
   bool draw_normals;
   bool draw_skybox;
 

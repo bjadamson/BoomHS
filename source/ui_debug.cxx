@@ -883,7 +883,12 @@ draw_debugwindow(EngineState& es, LevelManager& lm)
   ImGui::Separator();
   ImGui::Checkbox("Draw Entities", &es.draw_entities);
   ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
-  ImGui::Checkbox("Draw Water", &es.draw_water);
+
+  auto constexpr WATER_OPTIONS = stlw::make_array<DrawWaterOptions>(
+      DrawWaterOptions::None, DrawWaterOptions::Basic, DrawWaterOptions::Advanced);
+
+  es.draw_water = gl_option_combo("Draw Water", "None\0Basic\0Advanced\0\0",
+                                  &uistate.buffers.water.selected_water, WATER_OPTIONS);
 
   ImGui::Separator();
   ImGui::Checkbox("Draw Bounding Boxes", &es.draw_bounding_boxes);

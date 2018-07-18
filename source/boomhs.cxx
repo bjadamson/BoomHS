@@ -18,7 +18,7 @@
 #include <boomhs/tree.hpp>
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_ingame.hpp>
-#include <boomhs/water_fbos.hpp>
+#include <boomhs/water.hpp>
 
 #include <opengl/gpu.hpp>
 #include <opengl/heightmap.hpp>
@@ -312,7 +312,7 @@ create_gamestate(Engine& engine, EngineState& engine_state, Camera& camera)
 }
 
 void
-place_water(stlw::Logger& logger, ZoneState& zs)
+place_water(stlw::Logger& logger, ZoneState& zs, ShaderProgram& sp)
 {
   auto& registry  = zs.registry;
   auto& gfx_state = zs.gfx_state;
@@ -335,7 +335,6 @@ place_water(stlw::Logger& logger, ZoneState& zs)
   {
     BufferFlags const flags{true, false, false, true};
     auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
-    auto&             sp     = sps.ref_sp("water");
     auto              dinfo  = gpu::copy_gpu(logger, sp.va(), buffer);
 
     auto& entities = gpu_state.entities;
@@ -374,8 +373,12 @@ void
 init(GameState& state)
 {
   auto& logger = state.engine_state.logger;
+
   for (auto& zs : state.level_manager) {
-    place_water(logger, zs);
+    auto& sps = zs.gfx_state.sps;
+
+    auto& water_sp = sps.ref_sp("water_basic");
+    place_water(logger, zs, water_sp);
   }
 }
 
@@ -422,28 +425,35 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     return SkyboxRenderer{logger, MOVE(dinfo), day_ti, night_ti, skybox_sp};
   };
 
-  auto const make_water_renderer = [&]() {
-    auto const&       dim = es.dimensions;
-    ScreenSize const  screen_size{dim.w, dim.h};
-    auto&             ti     = *ttable.find("water-diffuse");
-    auto&             dudv   = *ttable.find("water-dudv");
-    auto&             normal = *ttable.find("water-normal");
-    auto&             sp     = sps.ref_sp("water");
-    WaterFrameBuffers fbos{logger, screen_size, sp, ti, dudv, normal};
-    return WaterRenderer{MOVE(fbos)};
+  auto const make_advanced_water_renderer = [&]() {
+    auto const&      dim = es.dimensions;
+    ScreenSize const screen_size{dim.w, dim.h};
+    auto&            ti     = *ttable.find("water-diffuse");
+    auto&            dudv   = *ttable.find("water-dudv");
+    auto&            normal = *ttable.find("water-normal");
+    auto&            sp     = sps.ref_sp("water_advanced");
+    return AdvancedWaterRenderer{logger, screen_size, sp, ti, dudv, normal};
   };
 
   // TODO: move these (they are static for convenience testing)
-  static SkyboxRenderer skybox_renderer = make_skybox_renderer();
-  static WaterRenderer  water_renderer  = make_water_renderer();
+  static SkyboxRenderer skybox_renderer         = make_skybox_renderer();
+  static auto           advanced_water_renderer = make_advanced_water_renderer();
+
+  auto const make_basic_water_renderer = [&]() {
+    auto& diff   = *ttable.find("water-diffuse");
+    auto& normal = *ttable.find("water-normal");
+    auto& sp     = sps.ref_sp("water_basic");
+    return BasicWaterRenderer{logger, diff, normal, sp};
+  };
+
+  static auto basic_water_renderer = make_basic_water_renderer();
 
   DrawState ds;
 
   // Render the scene to the refraction and reflection FBOs
-  bool const draw_water = es.draw_water;
-  if (draw_water) {
-    water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer, rng, ft);
-    water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer, rng, ft);
+  if (DrawWaterOptions::Advanced == es.draw_water) {
+    advanced_water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer, rng, ft);
+    advanced_water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer, rng, ft);
   }
 
   // render scene
@@ -458,8 +468,16 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
 
     // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up ontop
     // of the ingame UI nearby target indicators.
-    if (draw_water) {
-      water_renderer.render_water(rstate, ds, lm, camera, ft);
+    if (DrawWaterOptions::None != es.draw_water) {
+      if (DrawWaterOptions::Basic == es.draw_water) {
+        basic_water_renderer.render_water(rstate, ds, lm, camera, ft);
+      }
+      else if (DrawWaterOptions::Advanced == es.draw_water) {
+        advanced_water_renderer.render_water(rstate, ds, lm, camera, ft);
+      }
+      else {
+        std::abort();
+      }
     }
 
     // Render the scene with no culling (setting it zero disables culling mathematically)
