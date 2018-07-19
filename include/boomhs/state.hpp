@@ -3,6 +3,7 @@
 #include <boomhs/main_menu.hpp>
 #include <boomhs/time.hpp>
 #include <boomhs/ui_state.hpp>
+#include <boomhs/water.hpp>
 #include <boomhs/zone_state.hpp>
 
 #include <window/controller.hpp>
@@ -59,13 +60,6 @@ struct TiledataState
 
   glm::vec3 floor_offset = {0.0f, -0.5f, 0.0f};
   glm::vec3 tile_scaling = {1.0f, 1.0f, 1.0f};
-};
-
-enum class DrawWaterOptions
-{
-  None = 0,
-  Basic,
-  Advanced
 };
 
 struct EngineState

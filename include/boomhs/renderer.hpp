@@ -77,6 +77,9 @@ void
 draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&);
 
 void
+draw_3dshape(RenderState&, GLenum, glm::mat4 const&, opengl::ShaderProgram&, opengl::DrawInfo&);
+
+void
 draw_3dlit_shape(RenderState&, GLenum, glm::vec3 const&, glm::mat4 const&, opengl::ShaderProgram&,
                  opengl::DrawInfo&, opengl::Material const&, EntityRegistry&, bool, bool);
 

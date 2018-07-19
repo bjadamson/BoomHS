@@ -63,7 +63,6 @@ void main()
   }
   else {
     light_color = vec4(light, 1.0) * light_color;
-    light_color = mix(u_fog.color, light_color, v_visibility);
 
     vec2 ndc         = ((v_clipspace.xy/v_clipspace.w)/2.0) + 0.5;
     ndc.y = 1.0 - ndc.y;
@@ -117,5 +116,7 @@ void main()
 
     const vec4 BLUE_MIX = vec4(0.0, 0.3, 0.8, 1.0);
     fragment_color = mix(fragment_color, BLUE_MIX, 0.6);// * water_depth;
+
+    fragment_color = mix(u_fog.color, light_color, v_visibility);
   }
 }

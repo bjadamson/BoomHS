@@ -377,7 +377,7 @@ init(GameState& state)
   for (auto& zs : state.level_manager) {
     auto& sps = zs.gfx_state.sps;
 
-    auto& water_sp = sps.ref_sp("water_basic");
+    auto& water_sp = draw_water_options_to_shader(DrawWaterOptions::Basic, sps);
     place_water(logger, zs, water_sp);
   }
 }
@@ -425,28 +425,35 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     return SkyboxRenderer{logger, MOVE(dinfo), day_ti, night_ti, skybox_sp};
   };
 
+  auto const make_basic_water_renderer = [&]() {
+    auto& diff   = *ttable.find("water-diffuse");
+    auto& normal = *ttable.find("water-normal");
+    auto& sp     = draw_water_options_to_shader(DrawWaterOptions::Basic, sps);
+    return BasicWaterRenderer{logger, diff, normal, sp};
+  };
+
+  auto const make_medium_water_renderer = [&]() {
+    auto& diff   = *ttable.find("water-diffuse");
+    auto& normal = *ttable.find("water-normal");
+    auto& sp     = draw_water_options_to_shader(DrawWaterOptions::Medium, sps);
+    return MediumWaterRenderer{logger, diff, normal, sp};
+  };
+
   auto const make_advanced_water_renderer = [&]() {
     auto const&      dim = es.dimensions;
     ScreenSize const screen_size{dim.w, dim.h};
     auto&            ti     = *ttable.find("water-diffuse");
     auto&            dudv   = *ttable.find("water-dudv");
     auto&            normal = *ttable.find("water-normal");
-    auto&            sp     = sps.ref_sp("water_advanced");
+    auto&            sp     = draw_water_options_to_shader(DrawWaterOptions::Advanced, sps);
     return AdvancedWaterRenderer{logger, screen_size, sp, ti, dudv, normal};
   };
 
   // TODO: move these (they are static for convenience testing)
   static SkyboxRenderer skybox_renderer         = make_skybox_renderer();
+  static auto           basic_water_renderer    = make_basic_water_renderer();
+  static auto           medium_water_renderer   = make_medium_water_renderer();
   static auto           advanced_water_renderer = make_advanced_water_renderer();
-
-  auto const make_basic_water_renderer = [&]() {
-    auto& diff   = *ttable.find("water-diffuse");
-    auto& normal = *ttable.find("water-normal");
-    auto& sp     = sps.ref_sp("water_basic");
-    return BasicWaterRenderer{logger, diff, normal, sp};
-  };
-
-  static auto basic_water_renderer = make_basic_water_renderer();
 
   DrawState ds;
 
@@ -471,6 +478,9 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     if (DrawWaterOptions::None != es.draw_water) {
       if (DrawWaterOptions::Basic == es.draw_water) {
         basic_water_renderer.render_water(rstate, ds, lm, camera, ft);
+      }
+      else if (DrawWaterOptions::Medium == es.draw_water) {
+        medium_water_renderer.render_water(rstate, ds, lm, camera, ft);
       }
       else if (DrawWaterOptions::Advanced == es.draw_water) {
         advanced_water_renderer.render_water(rstate, ds, lm, camera, ft);

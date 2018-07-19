@@ -61,6 +61,17 @@ struct WaterFactory
   static WaterInfo make_default(stlw::Logger&, opengl::ShaderPrograms&, opengl::TextureTable&);
 };
 
+enum class DrawWaterOptions
+{
+  None = 0,
+  Basic,
+  Medium,
+  Advanced
+};
+
+opengl::ShaderProgram&
+draw_water_options_to_shader(DrawWaterOptions, opengl::ShaderPrograms&);
+
 class BasicWaterRenderer
 {
   stlw::Logger&          logger_;
@@ -72,6 +83,21 @@ public:
   BasicWaterRenderer(stlw::Logger&, opengl::TextureInfo&, opengl::TextureInfo&,
                      opengl::ShaderProgram&);
   MOVE_CONSTRUCTIBLE_ONLY(BasicWaterRenderer);
+
+  void render_water(RenderState&, DrawState&, LevelManager&, Camera&, window::FrameTime const&);
+};
+
+class MediumWaterRenderer
+{
+  stlw::Logger&          logger_;
+  opengl::ShaderProgram& sp_;
+  opengl::TextureInfo&   diffuse_;
+  opengl::TextureInfo&   normal_;
+
+public:
+  MediumWaterRenderer(stlw::Logger&, opengl::TextureInfo&, opengl::TextureInfo&,
+                      opengl::ShaderProgram&);
+  MOVE_CONSTRUCTIBLE_ONLY(MediumWaterRenderer);
 
   void render_water(RenderState&, DrawState&, LevelManager&, Camera&, window::FrameTime const&);
 };

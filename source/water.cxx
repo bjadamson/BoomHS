@@ -110,6 +110,16 @@ create_depth_buffer_attachment(stlw::Logger& logger, int const width, int const 
   return RenderBuffer{MOVE(rbinfo)};
 }
 
+void
+setup(stlw::Logger& logger, TextureInfo& ti, GLint const v)
+{
+  glActiveTexture(v);
+  ti.while_bound(logger, [&]() {
+    ti.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    ti.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  });
+}
+
 } // namespace
 
 namespace boomhs
@@ -217,22 +227,14 @@ AdvancedWaterRenderer::AdvancedWaterRenderer(stlw::Logger& logger, ScreenSize co
     });
   }
 
-  auto const setup = [&](auto& ti, auto const v) {
-    glActiveTexture(v);
-    ti.while_bound(logger, [&]() {
-      ti.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      ti.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    });
-  };
-
   {
     ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
-    setup(diffuse_, GL_TEXTURE0);
-    setup(reflection_.tbo, GL_TEXTURE1);
-    setup(refraction_.tbo, GL_TEXTURE2);
-    setup(dudv_, GL_TEXTURE3);
-    setup(normal_, GL_TEXTURE4);
-    setup(refraction_.dbo, GL_TEXTURE5);
+    setup(logger, diffuse_, GL_TEXTURE0);
+    setup(logger, reflection_.tbo, GL_TEXTURE1);
+    setup(logger, refraction_.tbo, GL_TEXTURE2);
+    setup(logger, dudv_, GL_TEXTURE3);
+    setup(logger, normal_, GL_TEXTURE4);
+    setup(logger, refraction_.dbo, GL_TEXTURE5);
   }
 
   // connect texture units to shader program
@@ -396,6 +398,32 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
   LOG_TRACE("Finished rendering water");
 }
 
+ShaderProgram&
+draw_water_options_to_shader(DrawWaterOptions const dwo, opengl::ShaderPrograms& sps)
+{
+  ShaderProgram* sp = nullptr;
+
+  switch (dwo) {
+  case DrawWaterOptions::None:
+    std::abort();
+    break;
+  case DrawWaterOptions::Basic:
+    sp = &sps.ref_sp("water_basic");
+    break;
+  case DrawWaterOptions::Medium:
+    sp = &sps.ref_sp("water_medium");
+    break;
+  case DrawWaterOptions::Advanced:
+    sp = &sps.ref_sp("water_advanced");
+    break;
+  default:
+    std::abort();
+  }
+
+  assert(sp);
+  return *sp;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BasicWaterRenderer
 BasicWaterRenderer::BasicWaterRenderer(stlw::Logger& logger, TextureInfo& diff, TextureInfo& norm,
@@ -405,19 +433,9 @@ BasicWaterRenderer::BasicWaterRenderer(stlw::Logger& logger, TextureInfo& diff, 
     , diffuse_(diff)
     , normal_(norm)
 {
-  auto const setup = [&](auto& ti, auto const v) {
-    glActiveTexture(v);
-    ti.while_bound(logger, [&]() {
-      ti.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      ti.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    });
-  };
-
-  {
-    ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
-    setup(diffuse_, GL_TEXTURE0);
-    setup(normal_, GL_TEXTURE1);
-  }
+  ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
+  setup(logger, diffuse_, GL_TEXTURE0);
+  setup(logger, normal_, GL_TEXTURE1);
 
   // connect texture units to shader program
   sp_.while_bound(logger, [&]() {
@@ -429,6 +447,95 @@ BasicWaterRenderer::BasicWaterRenderer(stlw::Logger& logger, TextureInfo& diff, 
 void
 BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm,
                                  Camera& camera, FrameTime const& ft)
+{
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+
+  auto& logger   = es.logger;
+  auto& zs       = lm.active();
+  auto& registry = zs.registry;
+  auto& ldata    = zs.level_data;
+
+  Transform  transform;
+  auto const render = [&](WaterInfo& winfo) {
+    auto const& pos = winfo.position;
+
+    auto& tr = transform.translation;
+    tr.x     = pos.x;
+    tr.z     = pos.y;
+
+    // hack
+    tr.y = 0.19999f; // pos.y;
+    assert(tr.y < 2.0f);
+
+    assert(winfo.dinfo);
+    auto& dinfo = *winfo.dinfo;
+    auto& vao   = dinfo.vao();
+
+    auto const model_matrix = transform.model_matrix();
+
+    winfo.wave_offset += ft.delta_millis() * ldata.wind_speed;
+    winfo.wave_offset = ::fmodf(winfo.wave_offset, 1.00f);
+
+    auto& time_offset = ldata.time_offset;
+    time_offset += ft.delta_millis() * ldata.wind_speed;
+    time_offset = ::fmodf(time_offset, 1.00f);
+
+    sp_.while_bound(logger, [&]() {
+      sp_.set_uniform_vec4(logger, "u_clipPlane", ABOVE_VECTOR);
+      sp_.set_uniform_float1(logger, "u_time_offset", time_offset);
+
+      Material const water_material{};
+      vao.while_bound(logger, [&]() {
+        glActiveTexture(GL_TEXTURE0);
+        bind::global_bind(logger, diffuse_);
+
+        glActiveTexture(GL_TEXTURE1);
+        bind::global_bind(logger, normal_);
+
+        render::draw_3dshape(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
+
+        bind::global_unbind(logger, diffuse_);
+        bind::global_unbind(logger, normal_);
+        glActiveTexture(GL_TEXTURE0);
+      });
+    });
+  };
+
+  LOG_TRACE("Rendering water");
+  auto const winfos = find_all_entities_with_component<WaterInfo>(registry);
+  for (auto const weid : winfos) {
+    auto& wi = registry.get<WaterInfo>(weid);
+    render(wi);
+  }
+  LOG_TRACE("Finished rendering water");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// MediumWaterRenderer
+MediumWaterRenderer::MediumWaterRenderer(stlw::Logger& logger, TextureInfo& diff, TextureInfo& norm,
+                                         ShaderProgram& sp)
+    : logger_(logger)
+    , sp_(sp)
+    , diffuse_(diff)
+    , normal_(norm)
+{
+  {
+    ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
+    setup(logger, diffuse_, GL_TEXTURE0);
+    setup(logger, normal_, GL_TEXTURE1);
+  }
+
+  // connect texture units to shader program
+  sp_.while_bound(logger, [&]() {
+    sp_.set_uniform_int1(logger, "u_diffuse_sampler", 0);
+    sp_.set_uniform_int1(logger, "u_normal_sampler", 1);
+  });
+}
+
+void
+MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm,
+                                  Camera& camera, FrameTime const& ft)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;

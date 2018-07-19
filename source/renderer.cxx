@@ -200,12 +200,6 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
   // sp.set_uniform_vec3(logger, "u_player.position",  player.world_position());
   // sp.set_uniform_vec3(logger, "u_player.direction",  player.forward_vector());
   // sp.set_uniform_float1(logger, "u_player.cutoff",  glm::cos(glm::radians(90.0f)));
-
-  auto const& fog = ldata.fog;
-  set_fog(logger, fog, view_matrix, sp);
-
-  // misc
-  sp.set_uniform_bool(logger, "u_drawnormals", es.draw_normals);
 }
 
 void
@@ -410,6 +404,33 @@ draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, TextureInfo& ti
 }
 
 void
+draw_3dshape(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix, ShaderProgram& sp,
+             DrawInfo& dinfo)
+{
+  auto& fstate = rstate.fs;
+
+  auto& es     = fstate.es;
+  auto& logger = es.logger;
+
+  set_modelmatrix(logger, model_matrix, sp);
+
+  auto const camera_matrix = fstate.camera_matrix();
+  set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
+
+  {
+    auto const& zs          = fstate.zs;
+    auto const& ldata       = zs.level_data;
+    auto const& fog         = ldata.fog;
+    auto const  view_matrix = fstate.view_matrix();
+    set_fog(logger, fog, view_matrix, sp);
+  }
+
+  // misc
+  sp.set_uniform_bool(logger, "u_drawnormals", es.draw_normals);
+  draw(rstate, dm, sp, dinfo);
+}
+
+void
 draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position,
                  glm::mat4 const& model_matrix, ShaderProgram& sp, DrawInfo& dinfo,
                  Material const& material, EntityRegistry& registry,
@@ -434,10 +455,8 @@ draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position
   }
   set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
                              receives_ambient_light, set_normalmatrix);
-  auto const camera_matrix = fstate.camera_matrix();
-  set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
 
-  draw(rstate, dm, sp, dinfo);
+  draw_3dshape(rstate, dm, model_matrix, sp, dinfo);
 }
 
 void
