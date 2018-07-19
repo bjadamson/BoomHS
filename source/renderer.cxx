@@ -101,8 +101,6 @@ set_dirlight(stlw::Logger& logger, ShaderProgram& sp, GlobalLight const& global_
   auto const& light = directional_light.light;
   sp.set_uniform_color_3fv(logger, "u_directional_light.diffuse", light.diffuse);
   sp.set_uniform_color_3fv(logger, "u_directional_light.specular", light.specular);
-
-  sp.set_uniform_int1(logger, "u_ignore_dirlight", !directional_light.enabled);
 }
 
 void

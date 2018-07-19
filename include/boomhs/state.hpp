@@ -1,4 +1,5 @@
 #pragma once
+#include <boomhs/game_config.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/main_menu.hpp>
 #include <boomhs/time.hpp>
@@ -71,16 +72,15 @@ struct EngineState
   MainMenuState    main_menu;
   Time             time;
 
-  bool             quit         = false;
-  bool             game_running = false;
-  DrawWaterOptions draw_water   = DrawWaterOptions::Basic;
+  bool                 quit              = false;
+  bool                 game_running      = false;
+  GameGraphicsSettings graphics_settings = GameGraphicsSettings::Basic;
 
   bool player_collision;
   bool mariolike_edges;
   bool draw_imguimetrics;
 
   // rendering state
-  bool advanced_water;
   bool draw_bounding_boxes;
   bool draw_entities;
   bool draw_fbo_testwindow;

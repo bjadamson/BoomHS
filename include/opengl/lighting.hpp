@@ -94,8 +94,6 @@ struct DirectionalLight
 {
   Light     light;
   glm::vec3 direction{0.0f, 0.0f, 0.0f};
-
-  bool enabled = true;
 };
 
 struct GlobalLight

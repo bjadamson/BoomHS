@@ -119,6 +119,24 @@ calc_pointlights(PointLight pointlights[MAX_NUM_POINTLIGHTS], mat4 modelmatrix, 
   return color;
 }
 
+vec4
+calculate_ambient_dirlight_pointlight_color(AmbientLight ambient, DirectionalLight directional,
+    PointLight[MAX_NUM_POINTLIGHTS] pointlights,  Material material, mat4 modelmatrix,
+    mat4 invviewmatrix, vec4 position, float reflectivity, vec3 surface_normal)
+{
+  vec3 ambient_light = ambient.color * material.ambient;
+
+  vec3 frag_world_pos = (modelmatrix * position).xyz;
+  vec3 dirlight = calc_dirlight(directional, material, reflectivity, frag_world_pos, invviewmatrix,
+      surface_normal);
+
+  vec3 pointlight_light = calc_pointlights(pointlights, modelmatrix, position,
+      invviewmatrix, material, reflectivity, surface_normal);
+
+  vec3 combined = ambient_light + pointlight_light + dirlight;
+  return vec4(combined, 1.0);
+}
+
 void
 clip_check(float clip_distance)
 {

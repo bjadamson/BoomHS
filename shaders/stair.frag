@@ -7,7 +7,6 @@ uniform PointLight  u_pointlights[MAX_NUM_POINTLIGHTS];
 uniform DirectionalLight u_directional_light;
 
 uniform int   u_drawnormals;
-uniform int   u_ignore_dirlight;
 uniform float u_reflectivity;
 
 uniform Fog u_fog;
@@ -28,9 +27,6 @@ void main()
 
   if (u_drawnormals == 1) {
     fragment_color = vec4(v_surfacenormal, 1.0);
-  }
-  else if (u_ignore_dirlight == 1) {
-    fragment_color = vec4(pointlights, 1.0) * u_color;
   }
   else {
     fragment_color = vec4(dirlight + pointlights, 1.0) * u_color;

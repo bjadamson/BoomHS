@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/dimensions.hpp>
+#include <boomhs/game_config.hpp>
 #include <boomhs/obj.hpp>
 
 #include <opengl/bind.hpp>
@@ -66,16 +67,8 @@ struct WaterFactory
   static WaterInfo make_default(stlw::Logger&, opengl::ShaderPrograms&, opengl::TextureTable&);
 };
 
-enum class DrawWaterOptions
-{
-  None = 0,
-  Basic,
-  Medium,
-  Advanced
-};
-
 opengl::ShaderProgram&
-draw_water_options_to_shader(DrawWaterOptions, opengl::ShaderPrograms&);
+draw_water_options_to_shader(GameGraphicsSettings, opengl::ShaderPrograms&);
 
 class BasicWaterRenderer
 {

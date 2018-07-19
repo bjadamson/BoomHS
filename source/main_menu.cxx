@@ -1,5 +1,6 @@
 #include <boomhs/audio.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/game_config.hpp>
 #include <boomhs/main_menu.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
@@ -66,16 +67,15 @@ draw_menu(EngineState& es, ImVec2 const& size, WaterAudioSystem& water_audio)
         ImGui::Separator();
         ImGui::Text("Graphics");
         {
-          auto constexpr WATER_OPTIONS = stlw::make_array<DrawWaterOptions>(
-              DrawWaterOptions::None, DrawWaterOptions::Basic, DrawWaterOptions::Medium,
-              DrawWaterOptions::Advanced);
+          auto constexpr GRAPHICS_OPTIONS = stlw::make_array<GameGraphicsSettings>(
+              GameGraphicsSettings::Basic, GameGraphicsSettings::Medium,
+              GameGraphicsSettings::Advanced);
 
-          es.draw_water = imgui_cxx::combo_from_array(
-              "Draw Water", "None\0Basic\0Medium\0Advanced\0\0",
-              &uistate.buffers.water.selected_water_graphicsmode, WATER_OPTIONS);
+          es.graphics_settings = imgui_cxx::combo_from_array(
+              "Graphics Settings", "Basic\0Medium\0Advanced\0\0",
+              &uistate.buffers.water.selected_water_graphicsmode, GRAPHICS_OPTIONS);
         }
         ImGui::Separator();
-        ImGui::Checkbox("Advanced Water Rendering", &es.advanced_water);
       };
       imgui_cxx::with_window(fn, "Options Window");
     }

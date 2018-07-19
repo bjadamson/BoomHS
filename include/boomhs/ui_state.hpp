@@ -54,8 +54,9 @@ struct AudioUiBuffer
 
 struct WaterBuffer
 {
-  int selected_water_graphicsmode = 1;
-  int selected_waterinfo          = -1;
+  bool draw                        = true;
+  int  selected_water_graphicsmode = 0;
+  int  selected_waterinfo          = -1;
 };
 
 struct Buffers

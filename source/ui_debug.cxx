@@ -300,6 +300,8 @@ show_water_window(EngineState& es, LevelManager& lm)
 
   auto const draw = [&]() {
     ImGui::Text("Water Info");
+    ImGui::Separator();
+    ImGui::Separator();
 
     auto const eid_names_str = collect_water_eids(winfos, registry);
     auto&      buffer        = uistate.buffers.water.selected_waterinfo;
@@ -664,7 +666,6 @@ show_directionallight_window(UiDebugState& ui, LevelData& ldata)
     ImGui::InputFloat3("direction:", glm::value_ptr(directional.direction));
 
     auto& colors = directional.light;
-    ImGui::Checkbox("Enabled", &directional.enabled);
     ImGui::ColorEdit3("Diffuse:", colors.diffuse.data());
     ImGui::ColorEdit3("Specular:", colors.specular.data());
 
