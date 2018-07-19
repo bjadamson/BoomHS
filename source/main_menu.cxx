@@ -66,16 +66,18 @@ draw_menu(EngineState& es, ImVec2 const& size, WaterAudioSystem& water_audio)
         ImGui::Text("Gameplay");
         ImGui::Separator();
         ImGui::Text("Graphics");
+        auto& gs = es.graphics_settings;
         {
-          auto constexpr GRAPHICS_OPTIONS = stlw::make_array<GameGraphicsSettings>(
-              GameGraphicsSettings::Basic, GameGraphicsSettings::Medium,
-              GameGraphicsSettings::Advanced);
+          auto constexpr GRAPHICS_MODE = stlw::make_array<GameGraphicsMode>(
+              GameGraphicsMode::Basic, GameGraphicsMode::Medium,
+              GameGraphicsMode::Advanced);
 
-          es.graphics_settings = imgui_cxx::combo_from_array(
+          gs.mode = imgui_cxx::combo_from_array(
               "Graphics Settings", "Basic\0Medium\0Advanced\0\0",
-              &uistate.buffers.water.selected_water_graphicsmode, GRAPHICS_OPTIONS);
+              &uistate.buffers.water.selected_water_graphicsmode, GRAPHICS_MODE);
         }
         ImGui::Separator();
+        ImGui::Checkbox("Sun Shafts", &gs.disable_sunshafts);
       };
       imgui_cxx::with_window(fn, "Options Window");
     }

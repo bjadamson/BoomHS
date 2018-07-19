@@ -3,11 +3,17 @@
 namespace boomhs
 {
 
-enum class GameGraphicsSettings
+enum class GameGraphicsMode
 {
   Basic = 0,
   Medium,
   Advanced
+};
+
+struct GameGraphicsSettings
+{
+  GameGraphicsMode mode = GameGraphicsMode::Basic;
+  bool disable_sunshafts = false;
 };
 
 } // namespace boomhs

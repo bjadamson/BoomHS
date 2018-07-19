@@ -68,7 +68,7 @@ struct WaterFactory
 };
 
 opengl::ShaderProgram&
-draw_water_options_to_shader(GameGraphicsSettings, opengl::ShaderPrograms&);
+draw_water_options_to_shader(GameGraphicsMode, opengl::ShaderPrograms&);
 
 class BasicWaterRenderer
 {

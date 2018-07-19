@@ -439,20 +439,22 @@ draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position
   auto& logger = es.logger;
   auto& zs     = fstate.zs;
 
-  auto const                       pointlight_eids = find_pointlights(registry);
-  std::vector<PointlightTransform> pointlights;
+  if (!es.draw_normals) {
+    auto const                       pointlight_eids = find_pointlights(registry);
+    std::vector<PointlightTransform> pointlights;
 
-  FOR(i, pointlight_eids.size())
-  {
-    auto const&               eid        = pointlight_eids[i];
-    auto&                     transform  = registry.get<Transform>(eid);
-    auto&                     pointlight = registry.get<PointLight>(eid);
-    PointlightTransform const plt{transform, pointlight};
+    FOR(i, pointlight_eids.size())
+    {
+      auto const&               eid        = pointlight_eids[i];
+      auto&                     transform  = registry.get<Transform>(eid);
+      auto&                     pointlight = registry.get<PointLight>(eid);
+      PointlightTransform const plt{transform, pointlight};
 
-    pointlights.emplace_back(plt);
+      pointlights.emplace_back(plt);
+    }
+    set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
+                              receives_ambient_light, set_normalmatrix);
   }
-  set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
-                             receives_ambient_light, set_normalmatrix);
 
   draw_3dshape(rstate, dm, model_matrix, sp, dinfo);
 }

@@ -402,18 +402,18 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
 }
 
 ShaderProgram&
-draw_water_options_to_shader(GameGraphicsSettings const dwo, opengl::ShaderPrograms& sps)
+draw_water_options_to_shader(GameGraphicsMode const dwo, opengl::ShaderPrograms& sps)
 {
   ShaderProgram* sp = nullptr;
 
   switch (dwo) {
-  case GameGraphicsSettings::Basic:
+  case GameGraphicsMode::Basic:
     sp = &sps.ref_sp("water_basic");
     break;
-  case GameGraphicsSettings::Medium:
+  case GameGraphicsMode::Medium:
     sp = &sps.ref_sp("water_medium");
     break;
-  case GameGraphicsSettings::Advanced:
+  case GameGraphicsMode::Advanced:
     sp = &sps.ref_sp("water_advanced");
     break;
   default:

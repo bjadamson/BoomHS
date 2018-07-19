@@ -74,7 +74,7 @@ struct EngineState
 
   bool                 quit              = false;
   bool                 game_running      = false;
-  GameGraphicsSettings graphics_settings = GameGraphicsSettings::Basic;
+  GameGraphicsSettings graphics_settings = {};
 
   bool player_collision;
   bool mariolike_edges;

@@ -373,7 +373,7 @@ init(GameState& state)
   for (auto& zs : state.level_manager) {
     auto& sps = zs.gfx_state.sps;
 
-    auto& water_sp = draw_water_options_to_shader(GameGraphicsSettings::Basic, sps);
+    auto& water_sp = draw_water_options_to_shader(GameGraphicsMode::Basic, sps);
     place_water(logger, zs, water_sp, glm::vec2{0.0f, 0.0f});
     place_water(logger, zs, water_sp, glm::vec2{20.0f, 20.0f});
   }
@@ -425,14 +425,14 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   auto const make_basic_water_renderer = [&]() {
     auto& diff   = *ttable.find("water-diffuse");
     auto& normal = *ttable.find("water-normal");
-    auto& sp     = draw_water_options_to_shader(GameGraphicsSettings::Basic, sps);
+    auto& sp     = draw_water_options_to_shader(GameGraphicsMode::Basic, sps);
     return BasicWaterRenderer{logger, diff, normal, sp};
   };
 
   auto const make_medium_water_renderer = [&]() {
     auto& diff   = *ttable.find("water-diffuse");
     auto& normal = *ttable.find("water-normal");
-    auto& sp     = draw_water_options_to_shader(GameGraphicsSettings::Medium, sps);
+    auto& sp     = draw_water_options_to_shader(GameGraphicsMode::Medium, sps);
     return MediumWaterRenderer{logger, diff, normal, sp};
   };
 
@@ -442,7 +442,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     auto&            ti     = *ttable.find("water-diffuse");
     auto&            dudv   = *ttable.find("water-dudv");
     auto&            normal = *ttable.find("water-normal");
-    auto&            sp     = draw_water_options_to_shader(GameGraphicsSettings::Advanced, sps);
+    auto&            sp     = draw_water_options_to_shader(GameGraphicsMode::Advanced, sps);
     return AdvancedWaterRenderer{logger, screen_size, sp, ti, dudv, normal};
   };
 
@@ -455,7 +455,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   DrawState ds;
 
   // Render the scene to the refraction and reflection FBOs
-  if (GameGraphicsSettings::Advanced == es.graphics_settings) {
+  if (GameGraphicsMode::Advanced == es.graphics_settings.mode) {
     advanced_water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer, rng, ft);
     advanced_water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer, rng, ft);
   }
@@ -475,14 +475,14 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     auto const& water_buffer = es.ui_state.debug.buffers.water;
     if (water_buffer.draw) {
       auto const water_type =
-          static_cast<GameGraphicsSettings>(water_buffer.selected_water_graphicsmode);
-      if (GameGraphicsSettings::Basic == water_type) {
+          static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
+      if (GameGraphicsMode::Basic == water_type) {
         basic_water_renderer.render_water(rstate, ds, lm, camera, ft);
       }
-      else if (GameGraphicsSettings::Medium == water_type) {
+      else if (GameGraphicsMode::Medium == water_type) {
         medium_water_renderer.render_water(rstate, ds, lm, camera, ft);
       }
-      else if (GameGraphicsSettings::Advanced == water_type) {
+      else if (GameGraphicsMode::Advanced == water_type) {
         advanced_water_renderer.render_water(rstate, ds, lm, camera, ft);
       }
       else {
