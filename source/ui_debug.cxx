@@ -898,6 +898,11 @@ draw_debugwindow(EngineState& es, LevelManager& lm)
   ImGui::Checkbox("Draw Entities", &es.draw_entities);
   ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
 
+  {
+    auto& water_buffer = es.ui_state.debug.buffers.water;
+    ImGui::Checkbox("Draw Water", &water_buffer.draw);
+  }
+
   ImGui::Separator();
   ImGui::Checkbox("Draw Bounding Boxes", &es.draw_bounding_boxes);
   ImGui::Checkbox("Draw Normals", &es.draw_normals);

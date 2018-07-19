@@ -455,7 +455,12 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   DrawState ds;
 
   // Render the scene to the refraction and reflection FBOs
-  if (GameGraphicsMode::Advanced == es.graphics_settings.mode) {
+  auto const& water_buffer = es.ui_state.debug.buffers.water;
+  auto const water_type = static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
+  bool const draw_water = water_buffer.draw;
+
+  bool const draw_water_advanced = draw_water && (GameGraphicsMode::Advanced == es.graphics_settings.mode);
+  if (draw_water_advanced) {
     advanced_water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer, rng, ft);
     advanced_water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer, rng, ft);
   }
@@ -472,10 +477,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
 
     // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up ontop
     // of the ingame UI nearby target indicators.
-    auto const& water_buffer = es.ui_state.debug.buffers.water;
-    if (water_buffer.draw) {
-      auto const water_type =
-          static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
+    if (draw_water) {
       if (GameGraphicsMode::Basic == water_type) {
         basic_water_renderer.render_water(rstate, ds, lm, camera, ft);
       }
