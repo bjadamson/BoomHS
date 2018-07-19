@@ -15,6 +15,7 @@
 #include <boomhs/renderer.hpp>
 #include <boomhs/rexpaint.hpp>
 #include <boomhs/state.hpp>
+#include <boomhs/sun.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/tree.hpp>
 #include <boomhs/ui_debug.hpp>
@@ -439,13 +440,13 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     return MediumWaterRenderer{logger, diff, normal, sp};
   };
 
-  auto const make_advanced_water_renderer = [&]() {
-    auto const&      dim = es.dimensions;
-    ScreenSize const screen_size{dim.w, dim.h};
-    auto&            ti     = *ttable.find("water-diffuse");
-    auto&            dudv   = *ttable.find("water-dudv");
-    auto&            normal = *ttable.find("water-normal");
-    auto&            sp     = draw_water_options_to_shader(GameGraphicsMode::Advanced, sps);
+  auto const&      dim = es.dimensions;
+  ScreenSize const screen_size{dim.w, dim.h};
+  auto const       make_advanced_water_renderer = [&]() {
+    auto& ti     = *ttable.find("water-diffuse");
+    auto& dudv   = *ttable.find("water-dudv");
+    auto& normal = *ttable.find("water-normal");
+    auto& sp     = draw_water_options_to_shader(GameGraphicsMode::Advanced, sps);
     return AdvancedWaterRenderer{logger, screen_size, sp, ti, dudv, normal};
   };
 
@@ -464,55 +465,69 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   bool const  draw_water_advanced    = draw_water && graphics_mode_advanced;
 
   DrawState ds;
-  if (draw_water_advanced) {
-    // Render the scene to the refraction and reflection FBOs
-    advanced_water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer, rng, ft);
-    advanced_water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer, rng, ft);
-  }
 
-  // render scene
-  render::clear_screen(ldata.fog.color);
+  auto&                   sunshaft_sp = sps.ref_sp("sunshaft");
+  static SunshaftRenderer sunshaft_renderer{logger, screen_size, sunshaft_sp};
 
-  {
-    auto const fmatrices = FrameMatrices::from_camera(camera);
-    FrameState fstate{fmatrices, es, zs};
+  auto const  fmatrices = FrameMatrices::from_camera(camera);
+  FrameState  fstate{fmatrices, es, zs};
+  RenderState rstate{fstate, ds};
 
-    RenderState rstate{fstate, ds};
-    skybox_renderer.render(rstate, ds, ft);
-
-    // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up ontop
-    // of the ingame UI nearby target indicators.
-    if (draw_water) {
-      if (GameGraphicsMode::Basic == water_type) {
-        basic_water_renderer.render_water(rstate, ds, lm, camera, ft);
-      }
-      else if (GameGraphicsMode::Medium == water_type) {
-        medium_water_renderer.render_water(rstate, ds, lm, camera, ft);
-      }
-      else if (GameGraphicsMode::Advanced == water_type) {
-        advanced_water_renderer.render_water(rstate, ds, lm, camera, ft);
-      }
-      else {
-        std::abort();
-      }
+  auto const draw_scene = [&]() {
+    if (draw_water_advanced) {
+      // Render the scene to the refraction and reflection FBOs
+      advanced_water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer, rng, ft);
+      advanced_water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer, rng, ft);
     }
 
-    // Render the scene with no culling (setting it zero disables culling mathematically)
-    glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
-    render::render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
-  }
+    // render scene
+    render::clear_screen(ldata.fog.color);
 
-  if (graphics_mode_advanced && !graphics_settings.disable_sunshafts) {
-    std::abort();
-  }
+    {
+      skybox_renderer.render(rstate, ds, ft);
+
+      // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up
+      // ontop of the ingame UI nearby target indicators.
+      if (draw_water) {
+        if (GameGraphicsMode::Basic == water_type) {
+          basic_water_renderer.render_water(rstate, ds, lm, camera, ft);
+        }
+        else if (GameGraphicsMode::Medium == water_type) {
+          medium_water_renderer.render_water(rstate, ds, lm, camera, ft);
+        }
+        else if (GameGraphicsMode::Advanced == water_type) {
+          advanced_water_renderer.render_water(rstate, ds, lm, camera, ft);
+        }
+        else {
+          std::abort();
+        }
+      }
+
+      // Render the scene with no culling (setting it zero disables culling mathematically)
+      glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
+      render::render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
+    }
+  };
+
+  sunshaft_renderer.with_sunshaft_fbo(logger, [&]() { draw_scene(); });
+
+  draw_scene();
+
+  sunshaft_renderer.render(rstate, ds, lm, camera, ft);
+
+  // if (graphics_mode_advanced && !graphics_settings.disable_sunshafts) {
+  // std::abort();
+  //}
 
   /*
   {
-    glm::vec2 const pos{0.5f, -0.5f};
-    glm::vec2 const scale{0.25f, 0.25f};
+    glm::vec2 const pos{0.15f, -0.5f};
+    glm::vec2 const scale{0.50f, 0.50f};
 
-    render::draw_fbo_testwindow(fstate, pos, scale, waterfbos.refr());
+    render::draw_fbo_testwindow(rstate, pos, scale, sunshaft_renderer.ti());
   }
+  */
+  /*
   {
     glm::vec2 const pos{-0.5f, -0.5f};
     glm::vec2 const scale{0.25f, 0.25f};

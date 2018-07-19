@@ -33,6 +33,11 @@ normal   = { datatype = "float", num = 3 }
 uv       = { datatype = "float", num = 2 }
 
 [[vas]]
+name     = "sunshaft"
+position = { datatype = "float", num = 3 }
+uv       = { datatype = "float", num = 2 }
+
+[[vas]]
 name     = "terrain"
 position = { datatype = "float", num = 3 }
 normal   = { datatype = "float", num = 3 }
@@ -134,6 +139,12 @@ name = "terrain"
 vertex = "terrain.vert"
 fragment = "terrain.frag"
 va = "terrain"
+
+[[shaders]]
+name = "sunshaft"
+vertex = "sunshaft.vert"
+fragment = "sunshaft.frag"
+va = "sunshaft"
 
 [[shaders]]
 name = "water_basic"

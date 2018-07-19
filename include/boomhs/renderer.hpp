@@ -74,7 +74,7 @@ void
 draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::DrawInfo&, bool);
 
 void
-draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&);
+draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&, bool);
 
 void
 draw_3dshape(RenderState&, GLenum, glm::mat4 const&, opengl::ShaderProgram&, opengl::DrawInfo&);
@@ -129,5 +129,8 @@ draw_tilegrid(RenderState&, TiledataState const&);
 void
 render_scene(RenderState&, LevelManager&, stlw::float_generator&, window::FrameTime const&,
              glm::vec4 const&);
+
+void
+set_modelmatrix(stlw::Logger&, glm::mat4 const&, opengl::ShaderProgram&);
 
 } // namespace boomhs::render

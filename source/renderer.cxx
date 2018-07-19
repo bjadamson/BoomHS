@@ -87,12 +87,6 @@ set_cwstate(CWState const& cw_state)
 }
 
 void
-set_modelmatrix(stlw::Logger& logger, glm::mat4 const& model_matrix, ShaderProgram& sp)
-{
-  sp.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
-}
-
-void
 set_dirlight(stlw::Logger& logger, ShaderProgram& sp, GlobalLight const& global_light)
 {
   auto const& directional_light = global_light.directional;
@@ -158,7 +152,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
   auto const& global_light = ldata.global_light;
   auto const& player       = ldata.player;
 
-  set_modelmatrix(logger, model_matrix, sp);
+  render::set_modelmatrix(logger, model_matrix, sp);
   if (set_normalmatrix) {
     sp.set_uniform_matrix_3fv(logger, "u_normalmatrix",
                               glm::inverseTranspose(glm::mat3{model_matrix}));
@@ -713,7 +707,6 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     sp.while_bound(logger, [&]() {
       auto const& global_light      = ldata.global_light;
       auto const& directional_light = global_light.directional;
-      sp.set_uniform_vec3(logger, "u_dirlight.screenspace_pos", directional_light.screenspace_pos);
       draw_entity_fn(rstate, GL_TRIANGLES, sp, dinfo, eid, sn, transform, is_v, bbox,
                      FORWARD(args));
     });
@@ -850,8 +843,12 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
   sp.while_bound(logger, [&]() {
     set_modelmatrix(logger, model_matrix, sp);
 
+    glActiveTexture(GL_TEXTURE0);
+
     auto& vao = dinfo.vao();
     vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo, false); });
+
+    glActiveTexture(GL_TEXTURE0);
   });
 }
 
@@ -1323,6 +1320,12 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
 
   // if checks happen inside fn
   render::conditionally_draw_player_vectors(rstate, player);
+}
+
+void
+set_modelmatrix(stlw::Logger& logger, glm::mat4 const& model_matrix, ShaderProgram& sp)
+{
+  sp.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
 }
 
 } // namespace boomhs::render
