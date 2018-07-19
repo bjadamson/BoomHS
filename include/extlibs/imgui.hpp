@@ -16,6 +16,24 @@ combo(std::string const& init, T* buffer, std::string const& list)
   return ImGui::Combo(init.c_str(), buffer, list.c_str());
 }
 
+template <typename T, size_t N>
+auto
+combo_from_array(char const* init_text, char const* list_text, int* buffer,
+                 std::array<T, N> const& list)
+{
+  ImGui::Combo(init_text, buffer, list_text);
+  auto const v = static_cast<uint64_t>(*buffer);
+
+  FOR(i, list.size())
+  {
+    if (v == i) {
+      return list[i];
+    }
+  }
+
+  std::abort();
+}
+
 template <typename FN, typename... Args>
 auto
 with_combo(FN const& fn, Args&&... args)

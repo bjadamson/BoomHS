@@ -353,6 +353,7 @@ path = "assets/"
 density = 0.007
 gradient = 1.5
 color = [0.0, 0.0, 1.0, 1.0]
+mix-intensity = 0.6
 
 ########### ORBITAL DATA ###########
 [[orbital-body]]

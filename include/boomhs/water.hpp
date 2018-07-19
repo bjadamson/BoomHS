@@ -43,7 +43,12 @@ struct WaterInfo
   opengl::DrawInfo*    dinfo = nullptr;
   opengl::TextureInfo* tinfo = nullptr;
 
-  float wave_offset = 0.0f;
+  opengl::Color mix_color     = LOC::SLATE_BLUE;
+  float         mix_intensity = 0.25f;
+
+  float wave_offset   = 0.0f;
+  float wind_speed    = 50.0f;
+  float wave_strength = 0.01f;
 
   //
   // constructors

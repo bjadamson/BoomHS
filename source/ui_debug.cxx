@@ -11,6 +11,7 @@
 #include <boomhs/tree.hpp>
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_state.hpp>
+#include <boomhs/water.hpp>
 #include <opengl/global.hpp>
 
 #include <stlw/math.hpp>
@@ -93,24 +94,6 @@ comboselected_to_entity(int const selected_index, std::vector<pair_t> const& pai
   assert(it != pairs.cend());
 
   return it->second;
-}
-
-template <typename T, size_t N>
-auto
-gl_option_combo(char const* init_text, char const* list_text, int* buffer,
-                std::array<T, N> const& list)
-{
-  ImGui::Combo(init_text, buffer, list_text);
-  auto const v = static_cast<uint64_t>(*buffer);
-
-  FOR(i, list.size())
-  {
-    if (v == i) {
-      return list[i];
-    }
-  }
-
-  std::abort();
 }
 
 template <typename T, typename Table>
@@ -292,18 +275,50 @@ draw_tilegrid_editor(TiledataState& tds, LevelManager& lm)
   imgui_cxx::with_window(draw, "Tilemap Editor Window");
 }
 
-void
-draw_environment_editor(EngineState& es, LevelManager& lm)
+std::string
+collect_water_eids(std::vector<EntityID> const& winfos, EntityRegistry& registry)
 {
-  auto& zs    = lm.active();
-  auto& ldata = zs.level_data;
+  std::stringstream eid_names;
+
+  for (auto const weid : winfos) {
+    auto& wi = registry.get<WaterInfo>(weid);
+    eid_names << std::to_string(weid) << '\0';
+  }
+  eid_names << '\0';
+  return eid_names.str();
+}
+
+void
+show_water_window(EngineState& es, LevelManager& lm)
+{
+  auto& zs      = lm.active();
+  auto& ldata   = zs.level_data;
+  auto& uistate = es.ui_state.debug;
+
+  auto&      registry = zs.registry;
+  auto const winfos   = find_all_entities_with_component<WaterInfo>(registry);
 
   auto const draw = [&]() {
-    ImGui::InputFloat("Wind Speed", &ldata.wind_speed);
-    ImGui::InputFloat("Wave Strength", &ldata.wave_strength);
+    ImGui::Text("Water Info");
+
+    auto const eid_names_str = collect_water_eids(winfos, registry);
+    auto&      buffer        = uistate.buffers.water.selected_waterinfo;
+    ImGui::Combo("eid", &buffer, eid_names_str.c_str());
+
+    if (-1 != buffer) {
+      assert(buffer >= 0);
+      assert(static_cast<size_t>(buffer) < winfos.size());
+      auto const weid = winfos[buffer];
+      auto&      wi   = registry.get<WaterInfo>(weid);
+      ImGui::ColorEdit4("Mix Color", wi.mix_color.data());
+      ImGui::InputFloat("Mix-Intensity", &wi.mix_intensity);
+
+      ImGui::InputFloat("Wind Speed", &wi.wind_speed);
+      ImGui::InputFloat("Wave Strength", &wi.wave_strength);
+    }
   };
 
-  imgui_cxx::with_window(draw, "Environment Editor Window");
+  imgui_cxx::with_window(draw, "Water Window");
 }
 
 void
@@ -360,16 +375,16 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
     if (ImGui::CollapsingHeader("Rendering Options")) {
       {
         auto constexpr WINDING_OPTIONS = stlw::make_array<GLint>(GL_CCW, GL_CW);
-        terrain_grid.winding           = gl_option_combo("Winding Order", "CCW\0CW\0\0",
-                                               &tbuffers.selected_winding, WINDING_OPTIONS);
+        terrain_grid.winding           = imgui_cxx::combo_from_array(
+            "Winding Order", "CCW\0CW\0\0", &tbuffers.selected_winding, WINDING_OPTIONS);
       }
       ImGui::Checkbox("Culling Enabled", &terrain_grid.culling_enabled);
       {
         auto constexpr CULLING_OPTIONS =
             stlw::make_array<GLint>(GL_BACK, GL_FRONT, GL_FRONT_AND_BACK);
         terrain_grid.culling_mode =
-            gl_option_combo("Culling Face", "Front\0Back\0Front And Back\0\0",
-                            &tbuffers.selected_culling, CULLING_OPTIONS);
+            imgui_cxx::combo_from_array("Culling Face", "Front\0Back\0Front And Back\0\0",
+                                        &tbuffers.selected_culling, CULLING_OPTIONS);
       }
     }
     if (ImGui::CollapsingHeader("Update Existing Terrain")) {
@@ -415,8 +430,8 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
         auto constexpr WRAP_OPTIONS =
             stlw::make_array<GLint>(GL_MIRRORED_REPEAT, GL_REPEAT, GL_CLAMP_TO_EDGE);
         terrain_config.wrap_mode =
-            gl_option_combo("UV Wrap Mode", "Mirrored Repeat\0Repeat\0Clamp\0\0",
-                            &tbuffers.selected_wrapmode, WRAP_OPTIONS);
+            imgui_cxx::combo_from_array("UV Wrap Mode", "Mirrored Repeat\0Repeat\0Clamp\0\0",
+                                        &tbuffers.selected_wrapmode, WRAP_OPTIONS);
       }
       ImGui::InputFloat("UV Modifier", &terrain_config.uv_modifier);
       if (ImGui::Button("Regenerate Piece")) {
@@ -787,20 +802,23 @@ show_pointlight_window(UiDebugState& ui, EntityRegistry& registry)
 void
 show_fog_window(UiDebugState& state, LevelData& ldata)
 {
+  auto&      fog  = ldata.fog;
   auto const draw = [&]() {
-    ImGui::ColorEdit4("Fog Color:", ldata.fog.color.data());
+    ImGui::ColorEdit4("Fog Color:", fog.color.data());
+    ImGui::Separator();
 
     ImGui::Separator();
-    ImGui::SliderFloat("Density Slider", &ldata.fog.density, 0.0f, 0.01f);
-    ImGui::SliderFloat("Gradient Slider", &ldata.fog.gradient, 0.0f, 10.0f);
+    ImGui::Separator();
+    ImGui::SliderFloat("Density", &ldata.fog.density, 0.0f, 0.01f);
+    ImGui::SliderFloat("Gradient", &ldata.fog.gradient, 0.0f, 10.0f);
 
+    ImGui::Separator();
     ImGui::Separator();
     ImGui::InputFloat("Density", &ldata.fog.density);
     ImGui::InputFloat("Gradient", &ldata.fog.gradient);
 
     bool const close_pressed = ImGui::Button("Close", ImVec2(120, 0));
-    ;
-    state.show_fog_window = !close_pressed;
+    state.show_fog_window    = !close_pressed;
   };
   imgui_cxx::with_window(draw, "Fog Window");
 }
@@ -810,17 +828,12 @@ world_menu(EngineState& es, LevelData& ldata)
 {
   auto&      ui   = es.ui_state.debug;
   auto const draw = [&]() {
-    ImGui::MenuItem("Fog Window", nullptr, &ui.show_fog_window);
     ImGui::MenuItem("Update Orbital", nullptr, &ui.update_orbital_bodies);
 
     ImGui::MenuItem("Local Axis", nullptr, &es.show_local_axis);
     ImGui::MenuItem("Global Axis", nullptr, &es.show_global_axis);
   };
   imgui_cxx::with_menu(draw, "World");
-
-  if (ui.show_fog_window) {
-    show_fog_window(ui, ldata);
-  }
 }
 
 void
@@ -884,13 +897,6 @@ draw_debugwindow(EngineState& es, LevelManager& lm)
   ImGui::Checkbox("Draw Entities", &es.draw_entities);
   ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
 
-  auto constexpr WATER_OPTIONS =
-      stlw::make_array<DrawWaterOptions>(DrawWaterOptions::None, DrawWaterOptions::Basic,
-                                         DrawWaterOptions::Medium, DrawWaterOptions::Advanced);
-
-  es.draw_water = gl_option_combo("Draw Water", "None\0Basic\0Medium\0Advanced\0\0",
-                                  &uistate.buffers.water.selected_water, WATER_OPTIONS);
-
   ImGui::Separator();
   ImGui::Checkbox("Draw Bounding Boxes", &es.draw_bounding_boxes);
   ImGui::Checkbox("Draw Normals", &es.draw_normals);
@@ -909,7 +915,7 @@ draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window, Draw
   auto const windows_menu = [&]() {
     ImGui::MenuItem("Debug", nullptr, &uistate.show_debugwindow);
     ImGui::MenuItem("Entity", nullptr, &uistate.show_entitywindow);
-    ImGui::MenuItem("Environment", nullptr, &uistate.show_environment_editor_window);
+    ImGui::MenuItem("Fog Window", nullptr, &uistate.show_fog_window);
     ImGui::MenuItem("Camera", nullptr, &uistate.show_camerawindow);
     ImGui::MenuItem("Mouse", nullptr, &uistate.show_mousewindow);
     ImGui::MenuItem("Player", nullptr, &uistate.show_playerwindow);
@@ -917,6 +923,7 @@ draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window, Draw
     ImGui::MenuItem("Terrain", nullptr, &uistate.show_terrain_editor_window);
     ImGui::MenuItem("Tilemap", nullptr, &uistate.show_tilegrid_editor_window);
     ImGui::MenuItem("Time", nullptr, &uistate.show_time_window);
+    ImGui::MenuItem("Water", nullptr, &uistate.show_water_window);
     ImGui::MenuItem("Exit", nullptr, &es.quit);
   };
 
@@ -1004,8 +1011,11 @@ draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, WaterAudioSyste
   if (uistate.show_terrain_editor_window) {
     draw_terrain_editor(es, lm);
   }
-  if (uistate.show_environment_editor_window) {
-    draw_environment_editor(es, lm);
+  if (uistate.show_fog_window) {
+    show_fog_window(uistate, ldata);
+  }
+  if (uistate.show_water_window) {
+    show_water_window(es, lm);
   }
   if (uistate.show_debugwindow) {
     draw_debugwindow(es, lm);

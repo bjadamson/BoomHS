@@ -5,8 +5,8 @@ namespace boomhs
 {
 struct Fog
 {
-  float density  = 0.0f;
-  float gradient = 0.0f;
+  float density;
+  float gradient;
 
   opengl::Color color;
 };

@@ -10,6 +10,7 @@ uniform sampler2D u_normal_sampler;
 uniform int   u_drawnormals;
 
 uniform Fog u_fog;
+uniform Water u_water;
 uniform mat4 u_modelmatrix;
 uniform float u_time_offset;
 
@@ -29,12 +30,9 @@ void main()
   }
   else {
     const float weight_texture = 1.0;
-    fragment_color = texture(u_diffuse_sampler, v_textureuv + u_time_offset) * weight_texture;
+    fragment_color = weighted_texture_sample(u_diffuse_sampler, v_textureuv, u_time_offset, weight_texture);
 
-    const vec4 BLUE_MIX = vec4(0.0, 0.3, 0.8, 1.0);
-    fragment_color = mix(fragment_color, BLUE_MIX, 0.6);
-
-    // mix the fog into the fragment color
-    fragment_color = mix(u_fog.color, fragment_color, v_visibility);
+    // add additional color to the water texture
+    fragment_color = mix_in_water_and_fog(fragment_color, u_water, u_fog, v_visibility);
   }
 }

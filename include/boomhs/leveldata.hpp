@@ -63,8 +63,6 @@ public:
   WorldObject player;
 
   // local
-  float wind_speed;
-  float wave_strength;
   float time_offset;
 
   void set_floor(TilePosition const&);

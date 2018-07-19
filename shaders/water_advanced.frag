@@ -23,6 +23,7 @@ uniform int   u_ignore_dirlight;
 uniform float u_reflectivity;
 
 uniform Fog u_fog;
+uniform Water u_water;
 uniform mat4 u_modelmatrix;
 uniform mat4 u_invviewmatrix;
 
@@ -109,14 +110,12 @@ void main()
     const float weight_effects = 1.0;
 
     vec4 effect_color  = mix(reflect_color, refract_color, refractive_factor) * weight_effects;
-    vec4 texture_color = texture(u_diffuse_sampler, v_textureuv + u_time_offset) * weight_texture;
+    vec4 texture_color = weighted_texture_sample(u_diffuse_sampler, v_textureuv, u_time_offset, weight_texture);
     light_color        = light_color * weight_light;
 
     fragment_color = effect_color + texture_color + light_color;
 
-    const vec4 BLUE_MIX = vec4(0.0, 0.3, 0.8, 1.0);
-    fragment_color = mix(fragment_color, BLUE_MIX, 0.6);// * water_depth;
-
-    fragment_color = mix(u_fog.color, light_color, v_visibility);
+    // add additional color to the water texture
+    fragment_color = mix_in_water_and_fog(fragment_color, u_water, u_fog, v_visibility);
   }
 }

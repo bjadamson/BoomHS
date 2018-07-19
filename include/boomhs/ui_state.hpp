@@ -54,7 +54,8 @@ struct AudioUiBuffer
 
 struct WaterBuffer
 {
-  int selected_water = 0;
+  int selected_water_graphicsmode = 1;
+  int selected_waterinfo          = -1;
 };
 
 struct Buffers
@@ -107,10 +108,10 @@ struct UiDebugState
   bool show_skyboxwindow      = false;
   bool show_time_window       = false;
 
-  bool show_environment_editor_window = false;
-  bool show_tilegrid_editor_window    = false;
-  bool show_tilegridmaterial_window   = false;
-  bool show_terrain_editor_window     = false;
+  bool show_tilegrid_editor_window  = false;
+  bool show_tilegridmaterial_window = false;
+  bool show_terrain_editor_window   = false;
+  bool show_water_window            = false;
 };
 
 struct UiState

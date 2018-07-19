@@ -332,19 +332,22 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
     bool constexpr SET_NORMALMATRIX       = false;
     auto const model_matrix               = transform.model_matrix();
 
-    winfo.wave_offset += ft.delta_millis() * ldata.wind_speed;
+    winfo.wave_offset += ft.delta_millis() * winfo.wind_speed;
     winfo.wave_offset = ::fmodf(winfo.wave_offset, 1.00f);
 
     auto& time_offset = ldata.time_offset;
-    time_offset += ft.delta_millis() * ldata.wind_speed;
+    time_offset += ft.delta_millis() * winfo.wind_speed;
     time_offset = ::fmodf(time_offset, 1.00f);
 
     sp_.while_bound(logger, [&]() {
       sp_.set_uniform_vec4(logger, "u_clipPlane", ABOVE_VECTOR);
       sp_.set_uniform_vec3(logger, "u_camera_position", camera.world_position());
       sp_.set_uniform_float1(logger, "u_wave_offset", winfo.wave_offset);
-      sp_.set_uniform_float1(logger, "u_wavestrength", ldata.wave_strength);
+      sp_.set_uniform_float1(logger, "u_wavestrength", winfo.wave_strength);
       sp_.set_uniform_float1(logger, "u_time_offset", time_offset);
+
+      sp_.set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
+      sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
       Material const water_material{};
       vao.while_bound(logger, [&]() {
@@ -474,16 +477,19 @@ BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
 
     auto const model_matrix = transform.model_matrix();
 
-    winfo.wave_offset += ft.delta_millis() * ldata.wind_speed;
+    winfo.wave_offset += ft.delta_millis() * winfo.wind_speed;
     winfo.wave_offset = ::fmodf(winfo.wave_offset, 1.00f);
 
     auto& time_offset = ldata.time_offset;
-    time_offset += ft.delta_millis() * ldata.wind_speed;
+    time_offset += ft.delta_millis() * winfo.wind_speed;
     time_offset = ::fmodf(time_offset, 1.00f);
 
     sp_.while_bound(logger, [&]() {
       sp_.set_uniform_vec4(logger, "u_clipPlane", ABOVE_VECTOR);
       sp_.set_uniform_float1(logger, "u_time_offset", time_offset);
+
+      sp_.set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
+      sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
       Material const water_material{};
       vao.while_bound(logger, [&]() {
@@ -565,16 +571,19 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
     bool constexpr SET_NORMALMATRIX       = false;
     auto const model_matrix               = transform.model_matrix();
 
-    winfo.wave_offset += ft.delta_millis() * ldata.wind_speed;
+    winfo.wave_offset += ft.delta_millis() * winfo.wind_speed;
     winfo.wave_offset = ::fmodf(winfo.wave_offset, 1.00f);
 
     auto& time_offset = ldata.time_offset;
-    time_offset += ft.delta_millis() * ldata.wind_speed;
+    time_offset += ft.delta_millis() * winfo.wind_speed;
     time_offset = ::fmodf(time_offset, 1.00f);
 
     sp_.while_bound(logger, [&]() {
       sp_.set_uniform_vec4(logger, "u_clipPlane", ABOVE_VECTOR);
       sp_.set_uniform_float1(logger, "u_time_offset", time_offset);
+
+      sp_.set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
+      sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
       Material const water_material{};
       vao.while_bound(logger, [&]() {

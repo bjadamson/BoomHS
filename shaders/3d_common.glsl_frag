@@ -37,6 +37,12 @@ struct PointLight
   LightAttenuation attenuation;
 };
 
+struct Water
+{
+  vec4 mix_color;
+  float mix_intensity;
+};
+
 float
 calculate_attenuation(PointLight light, vec3 frag_world_pos)
 {
@@ -119,6 +125,24 @@ clip_check(float clip_distance)
   if (clip_distance < 0.0) {
     discard;
   }
+}
+
+vec4
+mix_in_water_and_fog(vec4 frag_color, Water water, Fog fog, float visibility)
+{
+  // add an additional mix-color
+  frag_color = mix(frag_color, water.mix_color, water.mix_intensity);
+
+  // mix the fog into the fragment color
+  frag_color = mix(fog.color, frag_color, visibility);
+
+  return frag_color;
+}
+
+vec4
+weighted_texture_sample(sampler2D sampler, vec2 uv, float time_offset, float weight)
+{
+  return texture(sampler, uv + time_offset) * weight;
 }
 
 

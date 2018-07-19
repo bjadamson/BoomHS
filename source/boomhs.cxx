@@ -312,7 +312,7 @@ create_gamestate(Engine& engine, EngineState& engine_state, Camera& camera)
 }
 
 void
-place_water(stlw::Logger& logger, ZoneState& zs, ShaderProgram& sp)
+place_water(stlw::Logger& logger, ZoneState& zs, ShaderProgram& sp, glm::vec2 const& pos)
 {
   auto& registry  = zs.registry;
   auto& gfx_state = zs.gfx_state;
@@ -327,7 +327,7 @@ place_water(stlw::Logger& logger, ZoneState& zs, ShaderProgram& sp)
   *p      = WaterFactory::make_default(logger, sps, ttable);
 
   auto& wi    = registry.get<WaterInfo>(eid);
-  wi.position = glm::vec2{0, 0};
+  wi.position = pos;
 
   size_t constexpr num_vertexes = 64;
   glm::vec2 constexpr dimensions{20};
@@ -359,7 +359,6 @@ place_water(stlw::Logger& logger, ZoneState& zs, ShaderProgram& sp)
   registry.assign<Selectable>(eid);
   registry.assign<ShaderName>(eid);
   registry.assign<IsVisible>(eid).value = true;
-  registry.assign<Name>(eid).value      = "Water";
 
   auto& tr         = registry.assign<Transform>(eid);
   tr.translation.x = dimensions.x / 2.0f;
@@ -378,7 +377,8 @@ init(GameState& state)
     auto& sps = zs.gfx_state.sps;
 
     auto& water_sp = draw_water_options_to_shader(DrawWaterOptions::Basic, sps);
-    place_water(logger, zs, water_sp);
+    place_water(logger, zs, water_sp, glm::vec2{0.0f, 0.0f});
+    place_water(logger, zs, water_sp, glm::vec2{20.0f, 20.0f});
   }
 }
 
