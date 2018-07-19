@@ -4,7 +4,7 @@ in float v_visibility;
 
 uniform Material    u_material;
 uniform PointLight  u_pointlights[MAX_NUM_POINTLIGHTS];
-uniform DirectionalLight u_directional_light;
+uniform DirectionalLight u_dirlight;
 
 uniform int   u_drawnormals;
 uniform float u_reflectivity;
@@ -22,7 +22,7 @@ void main()
       u_invviewmatrix, u_material, u_reflectivity, v_surfacenormal);
 
   vec3 frag_world_pos = (u_modelmatrix * v_position).xyz;
-  vec3 dirlight = calc_dirlight(u_directional_light, u_material, u_reflectivity, frag_world_pos,
+  vec3 dirlight = calc_dirlight(u_dirlight, u_material, u_reflectivity, frag_world_pos,
       u_invviewmatrix, v_surfacenormal);
 
   if (u_drawnormals == 1) {

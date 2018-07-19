@@ -77,6 +77,24 @@ struct Light
   opengl::Color specular = LOC::BLACK;
 };
 
+struct DirectionalLight
+{
+  Light light;
+
+  glm::vec3 direction       = {};
+  glm::vec3 screenspace_pos = {};
+};
+
+struct GlobalLight
+{
+  opengl::Color ambient;
+
+  // TODO: could there be more than one instance of "directional light"?
+  DirectionalLight directional;
+
+  explicit GlobalLight(opengl::Color const&, DirectionalLight&&);
+};
+
 struct PointLight
 {
   Light light;
@@ -88,22 +106,6 @@ struct PointLight
 struct PointLights
 {
   std::vector<Light> pointlights;
-};
-
-struct DirectionalLight
-{
-  Light     light;
-  glm::vec3 direction{0.0f, 0.0f, 0.0f};
-};
-
-struct GlobalLight
-{
-  opengl::Color ambient;
-
-  // TODO: could there be more than one instance of "directional light"?
-  DirectionalLight directional;
-
-  explicit GlobalLight(opengl::Color const&, DirectionalLight&&);
 };
 
 } // namespace opengl

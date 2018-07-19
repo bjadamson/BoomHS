@@ -151,6 +151,9 @@ update_orbital_bodies(EngineState& es, LevelData& ldata, EntityRegistry& registr
       auto&      directional       = ldata.global_light.directional;
       auto const orbital_to_origin = glm::normalize(-pos);
       directional.direction        = orbital_to_origin;
+
+      auto& screen_pos = directional.screenspace_pos;
+      screen_pos       = glm::vec3{0};
     }
   };
 
@@ -452,15 +455,17 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   static auto           medium_water_renderer   = make_medium_water_renderer();
   static auto           advanced_water_renderer = make_advanced_water_renderer();
 
-  DrawState ds;
-
-  // Render the scene to the refraction and reflection FBOs
   auto const& water_buffer = es.ui_state.debug.buffers.water;
-  auto const water_type = static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
-  bool const draw_water = water_buffer.draw;
+  auto const  water_type = static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
+  bool const  draw_water = water_buffer.draw;
 
-  bool const draw_water_advanced = draw_water && (GameGraphicsMode::Advanced == es.graphics_settings.mode);
+  auto const& graphics_settings      = es.graphics_settings;
+  bool const  graphics_mode_advanced = GameGraphicsMode::Advanced == graphics_settings.mode;
+  bool const  draw_water_advanced    = draw_water && graphics_mode_advanced;
+
+  DrawState ds;
   if (draw_water_advanced) {
+    // Render the scene to the refraction and reflection FBOs
     advanced_water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer, rng, ft);
     advanced_water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer, rng, ft);
   }
@@ -495,6 +500,10 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     // Render the scene with no culling (setting it zero disables culling mathematically)
     glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
     render::render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
+  }
+
+  if (graphics_mode_advanced && !graphics_settings.disable_sunshafts) {
+    std::abort();
   }
 
   /*

@@ -20,6 +20,8 @@ struct DirectionalLight {
   vec3 diffuse;
   vec3 specular;
 
+  vec3 screenspace_pos;
+
   LightAttenuation attenuation;
 };
 

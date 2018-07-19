@@ -13,7 +13,7 @@ uniform sampler2D u_blendsampler;
 uniform Material         u_material;
 uniform PointLight       u_pointlights[MAX_NUM_POINTLIGHTS];
 uniform AmbientLight     u_ambient;
-uniform DirectionalLight u_directional_light;
+uniform DirectionalLight u_dirlight;
 
 uniform int   u_drawnormals;
 uniform float u_reflectivity;
@@ -38,7 +38,7 @@ void main()
   vec4 b_texcolor    = texture(u_bsampler, tiled_coords) * blendmap_color.b;
   vec4 texture_color = background_texcolor + r_texcolor + g_texcolor + b_texcolor;
 
-  vec4 light_color = calculate_ambient_dirlight_pointlight_color(u_ambient, u_directional_light,
+  vec4 light_color = calculate_ambient_dirlight_pointlight_color(u_ambient, u_dirlight,
      u_pointlights, u_material, u_modelmatrix, u_invviewmatrix, v_position, u_reflectivity,
      v_surfacenormal);
   if (u_drawnormals == 1) {

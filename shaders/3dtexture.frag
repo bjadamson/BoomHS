@@ -8,7 +8,7 @@ uniform sampler2D u_sampler;
 uniform Material         u_material;
 uniform PointLight       u_pointlights[MAX_NUM_POINTLIGHTS];
 uniform AmbientLight     u_ambient;
-uniform DirectionalLight u_directional_light;
+uniform DirectionalLight u_dirlight;
 
 uniform int   u_drawnormals;
 uniform float u_reflectivity;
@@ -21,7 +21,7 @@ out vec4 fragment_color;
 
 void main()
 {
-  vec4 light_color = calculate_ambient_dirlight_pointlight_color(u_ambient, u_directional_light,
+  vec4 light_color = calculate_ambient_dirlight_pointlight_color(u_ambient, u_dirlight,
      u_pointlights, u_material, u_modelmatrix, u_invviewmatrix, v_position, u_reflectivity,
      v_surfacenormal);
 

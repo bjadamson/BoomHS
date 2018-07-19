@@ -16,7 +16,7 @@ uniform sampler2D u_depth_sampler;
 uniform Material         u_material;
 uniform PointLight       u_pointlights[MAX_NUM_POINTLIGHTS];
 uniform AmbientLight     u_ambient;
-uniform DirectionalLight u_directional_light;
+uniform DirectionalLight u_dirlight;
 
 uniform int   u_drawnormals;
 uniform float u_reflectivity;
@@ -42,7 +42,7 @@ void main()
   vec3 surface_normal = vec3(nc.r, -(nc.g / 2.0), nc.b);
   surface_normal = normalize(surface_normal);
 
-  vec4 light_color = calculate_ambient_dirlight_pointlight_color(u_ambient, u_directional_light,
+  vec4 light_color = calculate_ambient_dirlight_pointlight_color(u_ambient, u_dirlight,
      u_pointlights, u_material, u_modelmatrix, u_invviewmatrix, v_position, u_reflectivity,
      surface_normal);
 

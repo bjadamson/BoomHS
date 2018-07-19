@@ -96,11 +96,11 @@ void
 set_dirlight(stlw::Logger& logger, ShaderProgram& sp, GlobalLight const& global_light)
 {
   auto const& directional_light = global_light.directional;
-  sp.set_uniform_vec3(logger, "u_directional_light.direction", directional_light.direction);
+  sp.set_uniform_vec3(logger, "u_dirlight.direction", directional_light.direction);
 
   auto const& light = directional_light.light;
-  sp.set_uniform_color_3fv(logger, "u_directional_light.diffuse", light.diffuse);
-  sp.set_uniform_color_3fv(logger, "u_directional_light.specular", light.specular);
+  sp.set_uniform_color_3fv(logger, "u_dirlight.diffuse", light.diffuse);
+  sp.set_uniform_color_3fv(logger, "u_dirlight.specular", light.specular);
 }
 
 void
@@ -453,7 +453,7 @@ draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position
       pointlights.emplace_back(plt);
     }
     set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
-                              receives_ambient_light, set_normalmatrix);
+                               receives_ambient_light, set_normalmatrix);
   }
 
   draw_3dshape(rstate, dm, model_matrix, sp, dinfo);
@@ -711,6 +711,9 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     auto& sp    = sps.ref_sp(sn.value);
 
     sp.while_bound(logger, [&]() {
+      auto const& global_light      = ldata.global_light;
+      auto const& directional_light = global_light.directional;
+      sp.set_uniform_vec3(logger, "u_dirlight.screenspace_pos", directional_light.screenspace_pos);
       draw_entity_fn(rstate, GL_TRIANGLES, sp, dinfo, eid, sn, transform, is_v, bbox,
                      FORWARD(args));
     });
