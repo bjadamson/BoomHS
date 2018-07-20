@@ -68,10 +68,10 @@ SunshaftRenderer::render(RenderState& rstate, DrawState& ds, LevelManager& lm, C
   auto const& global_light      = ldata.global_light;
   auto const& directional_light = global_light.directional;
 
-  auto const v     = OF::rectangle_vertices();
+  auto const v = OF::rectangle_vertices();
 
-  auto& ti = texture_info();
-  DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, sp_.va(), v, ti);
+  auto&    ti    = texture_info();
+  DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp_.va(), v, ti);
 
   glm::vec2 const pos{0.00f, 0.00f};
   glm::vec2 const scale{1.00f, 1.00f};
@@ -87,7 +87,8 @@ SunshaftRenderer::render(RenderState& rstate, DrawState& ds, LevelManager& lm, C
 
     auto& vao = dinfo.vao();
     glActiveTexture(GL_TEXTURE0);
-    vao.while_bound(logger, [&]() { render::draw_2d(rstate, GL_TRIANGLES, sp_, ti, dinfo, false); });
+    vao.while_bound(logger,
+                    [&]() { render::draw_2d(rstate, GL_TRIANGLES, sp_, ti, dinfo, false); });
     glActiveTexture(GL_TEXTURE0);
   });
 }

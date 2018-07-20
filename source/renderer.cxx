@@ -54,38 +54,6 @@ disable_depth_tests()
   glDisable(GL_DEPTH_TEST);
 }
 
-struct CWState
-{
-  GLint winding;
-
-  GLboolean culling_enabled;
-  GLint     culling_mode;
-};
-
-CWState
-read_cwstate()
-{
-  CWState cwstate;
-  glGetIntegerv(GL_FRONT_FACE, &cwstate.winding);
-  glGetBooleanv(GL_CULL_FACE, &cwstate.culling_enabled);
-  glGetIntegerv(GL_CULL_FACE_MODE, &cwstate.culling_mode);
-  return cwstate;
-}
-
-void
-set_cwstate(CWState const& cw_state)
-{
-  glFrontFace(cw_state.winding);
-
-  if (cw_state.culling_enabled) {
-    glEnable(GL_CULL_FACE);
-    glCullFace(cw_state.culling_mode);
-  }
-  else {
-    glDisable(GL_CULL_FACE);
-  }
-}
-
 void
 set_dirlight(stlw::Logger& logger, ShaderProgram& sp, GlobalLight const& global_light)
 {
@@ -141,7 +109,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
                            glm::mat4 const& model_matrix, ShaderProgram& sp, DrawInfo& dinfo,
                            Material const&                         material,
                            std::vector<PointlightTransform> const& pointlights,
-                           bool const receives_ambient_light, bool const set_normalmatrix)
+                           bool const                              set_normalmatrix)
 {
   auto&       fstate = rstate.fs;
   auto&       es     = fstate.es;
@@ -161,10 +129,8 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
   set_dirlight(logger, sp, global_light);
 
   // ambient
-  if (receives_ambient_light) {
-    LOG_TRACE_SPRINTF("AMBIENT COLOR: %s", global_light.ambient.to_string());
-    sp.set_uniform_color_3fv(logger, "u_ambient.color", global_light.ambient);
-  }
+  LOG_TRACE_SPRINTF("AMBIENT COLOR: %s", global_light.ambient.to_string());
+  sp.set_uniform_color_3fv(logger, "u_ambient.color", global_light.ambient);
 
   // specular
   sp.set_uniform_float1(logger, "u_reflectivity", 1.0f);
@@ -338,9 +304,8 @@ compute_billboarded_viewmodel(Transform const& transform, glm::mat4 const& view_
 template <typename... Args>
 void
 draw_entity_fn(RenderState& rstate, GLenum const dm, bool const black_silhoutte, ShaderProgram& spp,
-               DrawInfo& dinfo,
-               EntityID const eid, ShaderName& sn, Transform const& transform, IsVisible& is_v,
-               AABoundingBox& bbox, Args&&...)
+               DrawInfo& dinfo, EntityID const eid, ShaderName& sn, Transform const& transform,
+               IsVisible& is_v, AABoundingBox& bbox, Args&&...)
 {
   auto&       fstate = rstate.fs;
   auto const& es     = fstate.es;
@@ -374,8 +339,7 @@ draw_entity_fn(RenderState& rstate, GLenum const dm, bool const black_silhoutte,
     */
   }
 
-  bool constexpr RECEIVES_AMBIENT_LIGHT = true;
-  bool constexpr SET_NORMALMATRIX       = true;
+  bool constexpr SET_NORMALMATRIX = true;
 
   bool const is_lightsource = registry.has<PointLight>(eid);
   auto const model_matrix   = transform.model_matrix();
@@ -401,7 +365,7 @@ draw_entity_fn(RenderState& rstate, GLenum const dm, bool const black_silhoutte,
     if (receives_light) {
       Material const& material = registry.get<Material>(eid);
       render::draw_3dlit_shape(rstate, dm, tr, model_matrix, sp, dinfo, material, registry,
-                       RECEIVES_AMBIENT_LIGHT, SET_NORMALMATRIX);
+                               SET_NORMALMATRIX);
       return;
     }
 
@@ -419,12 +383,34 @@ draw_entity_fn(RenderState& rstate, GLenum const dm, bool const black_silhoutte,
   }
 }
 
-
-
 } // namespace
 
 namespace boomhs::render
 {
+
+CWState
+read_cwstate()
+{
+  CWState cwstate;
+  glGetIntegerv(GL_FRONT_FACE, &cwstate.winding);
+  glGetBooleanv(GL_CULL_FACE, &cwstate.culling_enabled);
+  glGetIntegerv(GL_CULL_FACE_MODE, &cwstate.culling_mode);
+  return cwstate;
+}
+
+void
+set_cwstate(CWState const& cw_state)
+{
+  glFrontFace(cw_state.winding);
+
+  if (cw_state.culling_enabled) {
+    glEnable(GL_CULL_FACE);
+    glCullFace(cw_state.culling_mode);
+  }
+  else {
+    glDisable(GL_CULL_FACE);
+  }
+}
 
 void
 init(stlw::Logger& logger, Dimensions const& dimensions)
@@ -509,8 +495,8 @@ draw_3dshape(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix
 }
 
 void
-draw_3dblack_water(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix, ShaderProgram& sp,
-             DrawInfo& dinfo)
+draw_3dblack_water(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix,
+                   ShaderProgram& sp, DrawInfo& dinfo)
 {
   auto& fstate = rstate.fs;
 
@@ -526,8 +512,7 @@ draw_3dblack_water(RenderState& rstate, GLenum const dm, glm::mat4 const& model_
 void
 draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position,
                  glm::mat4 const& model_matrix, ShaderProgram& sp, DrawInfo& dinfo,
-                 Material const& material, EntityRegistry& registry,
-                 bool const receives_ambient_light, bool const set_normalmatrix)
+                 Material const& material, EntityRegistry& registry, bool const set_normalmatrix)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -548,7 +533,7 @@ draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position
       pointlights.emplace_back(plt);
     }
     set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
-                               receives_ambient_light, set_normalmatrix);
+                               set_normalmatrix);
   }
 
   draw_3dshape(rstate, dm, model_matrix, sp, dinfo);
@@ -711,7 +696,7 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
 
 void
 draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft,
-    bool const black_silhoutte)
+              bool const black_silhoutte)
 {
   auto&       fstate    = rstate.fs;
   auto const& es        = fstate.es;
@@ -732,14 +717,14 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 #define COMMON_ARGS auto const eid, auto &sn, auto &transform, auto &is_v, auto &bbox
 
   auto const draw_entity = [&](COMMON_ARGS, auto&&... args) {
-    auto& dinfo = eh.lookup(logger, eid);
+    auto&       dinfo             = eh.lookup(logger, eid);
     auto const& global_light      = ldata.global_light;
     auto const& directional_light = global_light.directional;
 
-    auto& sp    = sps.ref_sp(sn.value);
+    auto& sp = sps.ref_sp(sn.value);
     sp.while_bound(logger, [&]() {
-      draw_entity_fn(rstate, GL_TRIANGLES, black_silhoutte, sp, dinfo, eid, sn, transform, is_v, bbox,
-                     FORWARD(args));
+      draw_entity_fn(rstate, GL_TRIANGLES, black_silhoutte, sp, dinfo, eid, sn, transform, is_v,
+                     bbox, FORWARD(args));
     });
   };
 
@@ -772,7 +757,8 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     auto& dinfo = eh.lookup(logger, eid);
     auto& sp    = sps.ref_sp(sn.value);
     sp.while_bound(logger, [&]() {
-      draw_entity_fn(rstate, je.draw_mode, black_silhoutte, sp, dinfo, eid, sn, transform, is_v, bbox);
+      draw_entity_fn(rstate, je.draw_mode, black_silhoutte, sp, dinfo, eid, sn, transform, is_v,
+                     bbox);
     });
   };
   auto const draw_torch = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
@@ -806,9 +792,9 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     }
     Color const wire_color = sel.selected ? LOC::GREEN : LOC::RED;
 
-    auto& sp = sps.ref_sp("wireframe");
+    auto& sp    = sps.ref_sp("wireframe");
     auto& dinfo = ebbh.lookup(logger, eid);
-    auto tr = transform;
+    auto  tr    = transform;
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_color(logger, "u_wirecolor", wire_color);
@@ -932,8 +918,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
   auto const& tiletable = ldata.tiletable();
 
   auto const& draw_tile_helper = [&](auto& sp, glm::vec3 const& position, DrawInfo& dinfo,
-                                     Tile const& tile, glm::mat4 const& model_mat,
-                                     bool const receives_ambient_light) {
+                                     Tile const& tile, glm::mat4 const& model_mat) {
     auto const& tileinfo = tiletable[tile.type];
     auto const& material = tileinfo.material;
 
@@ -941,7 +926,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
     vao.while_bound(logger, [&]() {
       bool constexpr SET_NORMALMATRIX = true;
       draw_3dlit_shape(rstate, GL_TRIANGLES, position, model_mat, sp, dinfo, material, registry,
-                       receives_ambient_light, SET_NORMALMATRIX);
+                       SET_NORMALMATRIX);
     });
   };
   auto const draw_tile = [&](auto const& tile_pos) {
@@ -960,14 +945,14 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
       auto&      sp        = sps.ref_sp("floor");
       auto const scale     = glm::vec3{0.8};
       auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, scale);
-      sp.while_bound(logger, [&]() { draw_tile_helper(sp, tr, dinfo, tile, modmatrix, true); });
+      sp.while_bound(logger, [&]() { draw_tile_helper(sp, tr, dinfo, tile, modmatrix); });
     } break;
     case TileType::WALL: {
       auto const inverse_model = glm::inverse(glm::mat3{default_modmatrix});
       auto&      sp            = sps.ref_sp("hashtag");
       sp.while_bound(logger, [&]() {
         sp.set_uniform_matrix_4fv(logger, "u_inversemodelmatrix", inverse_model);
-        draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix, true);
+        draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix);
       });
     } break;
     case TileType::RIVER:
@@ -978,8 +963,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
       sp.while_bound(logger, [&]() {
         sp.set_uniform_color(logger, "u_color", LOC::WHITE);
 
-        bool const receives_ambient_light = false;
-        draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix, receives_ambient_light);
+        draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix);
       });
     } break;
     case TileType::STAIR_UP: {
@@ -987,19 +971,15 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTim
       sp.while_bound(logger, [&]() {
         sp.set_uniform_color(logger, "u_color", LOC::WHITE);
 
-        bool const receives_ambient_light = false;
-        draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix, receives_ambient_light);
+        draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix);
       });
     } break;
     case TileType::BRIDGE:
     case TileType::DOOR:
     case TileType::TELEPORTER:
     default: {
-      bool const receives_ambient_light = true;
-      auto&      sp                     = sps.ref_sp("3d_pos_normal_color");
-      sp.while_bound(logger, [&]() {
-        draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix, receives_ambient_light);
-      });
+      auto& sp = sps.ref_sp("3d_pos_normal_color");
+      sp.while_bound(logger, [&]() { draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix); });
     } break;
     case TileType::UNDEFINED:
       std::abort();
@@ -1123,14 +1103,13 @@ draw_rivers(RenderState& rstate, window::FrameTime const& ft)
         glm::quat const rot   = glm::angleAxis(glm::degrees(rinfo.wiggle_rotation), Y_UNIT_VECTOR);
         auto const      scale = glm::vec3{0.5};
 
-        bool const      receives_ambient = true;
-        glm::mat3 const modelmatrix      = stlw::math::calculate_modelmatrix(tr, rot, scale);
-        auto const      inverse_model    = glm::inverse(glm::mat3{modelmatrix});
+        glm::mat3 const modelmatrix   = stlw::math::calculate_modelmatrix(tr, rot, scale);
+        auto const      inverse_model = glm::inverse(glm::mat3{modelmatrix});
         sp.set_uniform_matrix_4fv(logger, "u_inversemodelmatrix", inverse_model);
 
         bool constexpr SET_NORMALMATRIX = true;
         draw_3dlit_shape(rstate, GL_TRIANGLES, tr, modelmatrix, sp, dinfo, material, registry,
-                         receives_ambient, SET_NORMALMATRIX);
+                         SET_NORMALMATRIX);
       };
       for (auto const& w : rinfo.wiggles) {
         if (w.is_visible) {
@@ -1195,75 +1174,6 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
 }
 
 void
-draw_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
-             glm::vec4 const& cull_plane)
-{
-  auto& fstate = rstate.fs;
-  auto& es     = fstate.es;
-  auto& logger = es.logger;
-
-  auto& zs           = fstate.zs;
-  auto& ldata        = zs.level_data;
-  auto& ttable       = zs.gfx_state.texture_table;
-  auto& terrain_grid = ldata.terrain;
-
-  // backup state to restore after drawing terrain
-  auto const cw_state = read_cwstate();
-  ON_SCOPE_EXIT([&]() { set_cwstate(cw_state); });
-
-  Transform transform;
-  auto&     tr = transform.translation;
-  Material  mat;
-
-  auto const& dimensions = terrain_grid.config.dimensions;
-
-  bool constexpr ambient = true;
-  auto const draw_piece  = [&](auto& terrain) {
-    {
-      auto const& terrain_pos = terrain.position();
-      tr.x                    = terrain_pos.x * dimensions.x;
-      tr.z                    = terrain_pos.y * dimensions.y;
-    }
-    auto const& model_matrix = transform.model_matrix();
-
-    auto const& config = terrain.config;
-    glFrontFace(terrain_grid.winding);
-    if (terrain_grid.culling_enabled) {
-      glEnable(GL_CULL_FACE);
-      glCullFace(terrain_grid.culling_mode);
-    }
-    else {
-      glDisable(GL_CULL_FACE);
-    }
-
-    auto& sp = terrain.shader();
-    sp.while_bound(logger, [&]() {
-      sp.set_uniform_float1(logger, "u_uvmodifier", config.uv_modifier);
-      sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
-
-      auto& dinfo = terrain.draw_info();
-
-      auto const draw_fn = [&]() {
-        auto& vao = dinfo.vao();
-        vao.while_bound(logger, [&]() {
-          bool constexpr SET_NORMALMATRIX = true;
-          draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, tr, model_matrix, sp, dinfo, mat, registry,
-                           ambient, SET_NORMALMATRIX);
-        });
-      };
-      terrain.while_bound(draw_fn, logger, ttable);
-    });
-  };
-
-  LOG_ERROR("-------------------- Starting To Draw All Terrain(s) ----------------------");
-  LOG_ERROR_SPRINTF("TerrainGrid: %s", terrain_grid.to_string());
-  for (auto& t : terrain_grid) {
-    draw_piece(t);
-  }
-  LOG_ERROR("-------------------------Finished Drawing All Terrain(s) ---------------------------");
-} // namespace boomhs::render
-
-void
 draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 {
   auto& fstate = rstate.fs;
@@ -1314,10 +1224,6 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
   if (tilegrid_state.draw_tilegrid) {
     render::draw_tilegrid(rstate, tilegrid_state, ft);
     render::draw_rivers(rstate, ft);
-  }
-
-  if (es.draw_terrain) {
-    render::draw_terrain(rstate, registry, ft, cull_plane);
   }
 
   render::draw_stars(rstate, ft);

@@ -58,10 +58,28 @@ struct RenderState
   }
 };
 
+struct CWState
+{
+  GLint winding;
+
+  GLboolean culling_enabled;
+  GLint     culling_mode;
+};
+
 } // namespace boomhs
+
+#define PUSH_CW_STATE_UNTIL_END_OF_SCOPE()                                                         \
+  auto const cw_state = render::read_cwstate();                                                    \
+  ON_SCOPE_EXIT([&]() { render::set_cwstate(cw_state); });
 
 namespace boomhs::render
 {
+
+CWState
+read_cwstate();
+
+void
+set_cwstate(CWState const&);
 
 void
 init(stlw::Logger&, boomhs::Dimensions const&);
@@ -74,17 +92,19 @@ void
 draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::DrawInfo&, bool);
 
 void
-draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&, bool);
+draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&,
+        bool);
 
 void
 draw_3dshape(RenderState&, GLenum, glm::mat4 const&, opengl::ShaderProgram&, opengl::DrawInfo&);
 
 void
-draw_3dblack_water(RenderState&, GLenum, glm::mat4 const&, opengl::ShaderProgram&, opengl::DrawInfo&);
+draw_3dblack_water(RenderState&, GLenum, glm::mat4 const&, opengl::ShaderProgram&,
+                   opengl::DrawInfo&);
 
 void
 draw_3dlit_shape(RenderState&, GLenum, glm::vec3 const&, glm::mat4 const&, opengl::ShaderProgram&,
-                 opengl::DrawInfo&, opengl::Material const&, EntityRegistry&, bool, bool);
+                 opengl::DrawInfo&, opengl::Material const&, EntityRegistry&, bool);
 
 // TODO: move rest to sub-renderers or something
 void
@@ -119,9 +139,6 @@ draw_rivers(RenderState&, window::FrameTime const&);
 
 void
 draw_stars(RenderState&, window::FrameTime const&);
-
-void
-draw_terrain(RenderState&, EntityRegistry& registry, window::FrameTime const&, glm::vec4 const&);
 
 void
 draw_tilegrid(RenderState&, TiledataState const&, window::FrameTime const&);

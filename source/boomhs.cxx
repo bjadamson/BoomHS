@@ -21,6 +21,7 @@
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/water.hpp>
+#include <boomhs/water_renderer.hpp>
 
 #include <opengl/gpu.hpp>
 #include <opengl/heightmap.hpp>
@@ -451,7 +452,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   };
 
   auto const make_black_water_renderer = [&]() {
-    auto& sp     = sps.ref_sp("water_black");
+    auto& sp = sps.ref_sp("water_black");
     return BlackWaterRenderer{logger, sp};
   };
 
@@ -461,6 +462,9 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   static auto           medium_water_renderer   = make_medium_water_renderer();
   static auto           advanced_water_renderer = make_advanced_water_renderer();
   static auto           black_water_renderer    = make_black_water_renderer();
+
+  static auto basic_terrain_renderer = BasicTerrainRenderer{};
+  static auto black_terrain_renderer = BlackTerrainRenderer{};
 
   auto const& water_buffer = es.ui_state.debug.buffers.water;
   auto const  water_type = static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
@@ -480,17 +484,29 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   RenderState rstate{fstate, ds};
 
   auto const draw_scene = [&](bool const black_silhoutte) {
+    auto const draw_advanced = [&](auto& terrain_renderer) {
+      advanced_water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer,
+                                                terrain_renderer, rng, ft, black_silhoutte);
+      advanced_water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer,
+                                                terrain_renderer, rng, ft, black_silhoutte);
+    };
     if (draw_water_advanced) {
       // Render the scene to the refraction and reflection FBOs
-      advanced_water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer, rng, ft, black_silhoutte);
-      advanced_water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer, rng, ft, black_silhoutte);
+      if (black_silhoutte) {
+        draw_advanced(black_terrain_renderer);
+      }
+      else {
+        draw_advanced(basic_terrain_renderer);
+      }
     }
 
     // render scene
     render::clear_screen(ldata.fog.color);
 
     {
-      skybox_renderer.render(rstate, ds, ft);
+      if (es.draw_skybox) {
+        skybox_renderer.render(rstate, ds, ft);
+      }
 
       // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up
       // ontop of the ingame UI nearby target indicators.
@@ -516,17 +532,28 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
 
       // Render the scene with no culling (setting it zero disables culling mathematically)
       glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
+      if (es.draw_terrain) {
+        auto const draw_basic = [&](auto& terrain_renderer) {
+          terrain_renderer.render(rstate, registry, ft, NOCULL_VECTOR);
+        };
+        if (black_silhoutte) {
+          draw_basic(black_terrain_renderer);
+        }
+        else {
+          draw_basic(basic_terrain_renderer);
+        }
+      }
       render::render_scene(rstate, lm, rng, ft, NOCULL_VECTOR, black_silhoutte);
     }
   };
 
   // First draw scene with black silhoutte shader
   // Second draw scene with normal shaders
-  //sunshaft_renderer.with_sunshaft_fbo(logger, [&]() { draw_scene(true); });
+  // sunshaft_renderer.with_sunshaft_fbo(logger, [&]() { draw_scene(true); });
   draw_scene(true);
 
   // This next call renders the scene as a quad
-  //sunshaft_renderer.render(rstate, ds, lm, camera, ft);
+  // sunshaft_renderer.render(rstate, ds, lm, camera, ft);
 
   // if (graphics_mode_advanced && !graphics_settings.disable_sunshafts) {
   // std::abort();

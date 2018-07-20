@@ -1,5 +1,7 @@
 #include <boomhs/mesh.hpp>
 #include <boomhs/obj.hpp>
+#include <boomhs/renderer.hpp>
+#include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 
 #include <opengl/buffer.hpp>
@@ -15,6 +17,7 @@
 
 using namespace boomhs;
 using namespace opengl;
+using namespace window;
 
 namespace
 {
@@ -72,6 +75,59 @@ barry_centric(glm::vec3 const& p1, glm::vec3 const& p2, glm::vec3 const& p3, glm
   float const l2  = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
   float const l3  = 1.0f - l1 - l2;
   return l1 * p1.y + l2 * p2.y + l3 * p3.y;
+}
+
+template <typename FN>
+void
+render_terrain(Transform& transform, RenderState& rstate, EntityRegistry& registry,
+               FrameTime const& ft, glm::vec4 const& cull_plane, FN const& fn)
+{
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& logger = es.logger;
+
+  auto& zs        = fstate.zs;
+  auto& gfx_state = zs.gfx_state;
+  auto& sps       = gfx_state.sps;
+  auto& ttable    = gfx_state.texture_table;
+
+  auto& ldata        = zs.level_data;
+  auto& terrain_grid = ldata.terrain;
+
+  // backup state to restore after drawing terrain
+  PUSH_CW_STATE_UNTIL_END_OF_SCOPE();
+
+  auto const& dimensions = terrain_grid.config.dimensions;
+  auto&       tr         = transform.translation;
+
+  auto const draw_piece = [&](auto& terrain) {
+    {
+      auto const& terrain_pos = terrain.position();
+      tr.x                    = terrain_pos.x * dimensions.x;
+      tr.z                    = terrain_pos.y * dimensions.y;
+    }
+
+    auto const& config = terrain.config;
+    glFrontFace(terrain_grid.winding);
+    if (terrain_grid.culling_enabled) {
+      glEnable(GL_CULL_FACE);
+      glCullFace(terrain_grid.culling_mode);
+    }
+    else {
+      glDisable(GL_CULL_FACE);
+    }
+
+    fn(terrain);
+  };
+
+  LOG_ERROR("-------------------- Starting To Draw All Terrain (BLACK)(s) ----------------------");
+  LOG_ERROR_SPRINTF("TerrainGrid: %s", terrain_grid.to_string());
+
+  for (auto& t : terrain_grid) {
+    draw_piece(t);
+  }
+  LOG_ERROR("-------------------------Finished Drawing All Terrain (BLACK)(s) "
+            "---------------------------");
 }
 
 } // namespace
@@ -147,31 +203,6 @@ Terrain::Terrain(TerrainConfig const& tc, glm::vec2 const& pos, DrawInfo&& di, S
 {
 }
 
-void
-Terrain::bind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
-{
-  auto const bind = [&](size_t const tunit) {
-    glActiveTexture(GL_TEXTURE0 + tunit);
-    auto& tinfo = *ttable.find(texture_name(tunit));
-    bind::global_bind(logger, tinfo);
-  };
-
-  bound_textures = config.texture_names;
-  FOR(i, bound_textures.textures.size()) { bind(i); }
-}
-
-void
-Terrain::unbind_impl(stlw::Logger& logger, opengl::TextureTable& ttable)
-{
-  auto const unbind = [&](size_t const tunit) {
-    auto& tinfo = *ttable.find(texture_name(tunit));
-    bind::global_unbind(logger, tinfo);
-  };
-
-  FOR(i, bound_textures.textures.size()) { unbind(i); }
-  glActiveTexture(GL_TEXTURE0);
-}
-
 std::string
 Terrain::to_string() const
 {
@@ -194,6 +225,121 @@ Terrain::texture_name(size_t const index) const
   auto const& names = this->bound_textures;
   assert(index < names.textures.size());
   return names.textures[index];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// BasicTerrainRenderer
+void
+BasicTerrainRenderer::render(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
+                             glm::vec4 const& cull_plane)
+{
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& logger = es.logger;
+
+  auto& zs           = fstate.zs;
+  auto& ldata        = zs.level_data;
+  auto& ttable       = zs.gfx_state.texture_table;
+  auto& terrain_grid = ldata.terrain;
+
+  Transform transform;
+  Material  mat;
+
+  auto const& dimensions   = terrain_grid.config.dimensions;
+  auto const& model_matrix = transform.model_matrix();
+
+  auto const fn = [&](auto& terrain) {
+    auto& sp = terrain.shader();
+    sp.while_bound(logger, [&]() {
+      auto const& config = terrain.config;
+      sp.set_uniform_float1(logger, "u_uvmodifier", config.uv_modifier);
+      sp.set_uniform_vec4(logger, "u_clipPlane", cull_plane);
+
+      auto& dinfo = terrain.draw_info();
+
+      auto const draw_fn = [&]() {
+        auto& vao = dinfo.vao();
+        vao.while_bound(logger, [&]() {
+          bool constexpr SET_NORMALMATRIX = true;
+          render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, transform.translation, model_matrix,
+                                   sp, dinfo, mat, registry, SET_NORMALMATRIX);
+        });
+      };
+      this->while_bound(draw_fn, logger, terrain, ttable);
+    });
+  };
+
+  render_terrain(transform, rstate, registry, ft, cull_plane, fn);
+}
+
+void
+BasicTerrainRenderer::bind_impl(stlw::Logger& logger, Terrain const& terrain,
+                                opengl::TextureTable& ttable)
+{
+  auto const bind = [&](size_t const tunit) {
+    glActiveTexture(GL_TEXTURE0 + tunit);
+    auto& tinfo = *ttable.find(terrain.texture_name(tunit));
+    bind::global_bind(logger, tinfo);
+  };
+
+  auto const& config         = terrain.config;
+  auto const& bound_textures = config.texture_names;
+  FOR(i, bound_textures.textures.size()) { bind(i); }
+}
+
+void
+BasicTerrainRenderer::unbind_impl(stlw::Logger& logger, Terrain const& terrain,
+                                  opengl::TextureTable& ttable)
+{
+  auto const unbind = [&](size_t const tunit) {
+    auto& tinfo = *ttable.find(terrain.texture_name(tunit));
+    bind::global_unbind(logger, tinfo);
+  };
+
+  auto const& config         = terrain.config;
+  auto const& bound_textures = config.texture_names;
+  FOR(i, bound_textures.textures.size()) { unbind(i); }
+  glActiveTexture(GL_TEXTURE0);
+}
+
+std::string
+BasicTerrainRenderer::to_string() const
+{
+  return "BasicTerrainRenderer";
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// BlackTerrainRenderer
+void
+BlackTerrainRenderer::render(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
+                             glm::vec4 const& cull_plane)
+{
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& logger = es.logger;
+
+  auto& zs        = fstate.zs;
+  auto& gfx_state = zs.gfx_state;
+  auto& sps       = gfx_state.sps;
+  auto& sp        = sps.ref_sp("water_black");
+
+  Transform   transform;
+  auto const& model_matrix = transform.model_matrix();
+
+  auto const fn = [&](auto& terrain) {
+    auto const& config = terrain.config;
+
+    auto& dinfo = terrain.draw_info();
+    auto& vao   = dinfo.vao();
+
+    sp.while_bound(logger, [&]() {
+      vao.while_bound(logger, [&]() {
+        render::draw_3dblack_water(rstate, GL_TRIANGLE_STRIP, model_matrix, sp, dinfo);
+      });
+    });
+  };
+
+  render_terrain(transform, rstate, registry, ft, cull_plane, fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
