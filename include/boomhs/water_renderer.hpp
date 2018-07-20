@@ -132,9 +132,32 @@ public:
                                  opengl::TextureInfo&, opengl::TextureInfo&, opengl::TextureInfo&);
 
   template <typename TerrainRenderer, typename EntityRenderer>
+  void render_reflection_common(RenderState& rstate, EngineState& es, LevelManager& lm,
+                                DrawState& ds, EntityRenderer& er, SkyboxRenderer& sr,
+                                TerrainRenderer& tr, stlw::float_generator& rng,
+                                window::FrameTime const& ft, bool const black_silhoutte)
+  {
+    auto&       zs        = lm.active();
+    auto&       ldata     = zs.level_data;
+    auto&       registry  = zs.registry;
+    auto const& fog_color = ldata.fog.color;
+
+    render::clear_screen(fog_color);
+
+    if (es.draw_skybox) {
+      sr.render(rstate, ds, ft);
+    }
+    if (es.draw_terrain) {
+      tr.render(rstate, registry, ft, ABOVE_VECTOR);
+    }
+    if (es.draw_entities) {
+      er.render(rstate, rng, ft, black_silhoutte);
+    }
+  }
+
+  template <typename TerrainRenderer, typename EntityRenderer>
   void render_reflection(EngineState& es, DrawState& ds, LevelManager& lm, Camera& camera,
-                         EntityRenderer& entity_renderer, SkyboxRenderer& skybox_renderer,
-                         TerrainRenderer& terrain_renderer,
+                         EntityRenderer& er, SkyboxRenderer& sr, TerrainRenderer& tr,
                          stlw::float_generator& rng, window::FrameTime const& ft,
                          bool const black_silhoutte)
   {
@@ -158,26 +181,16 @@ public:
     RenderState rstate{fstate, ds};
 
     with_reflection_fbo(logger, [&]() {
-      render::clear_screen(fog_color);
-
-      if (es.draw_skybox) {
-        skybox_renderer.render(rstate, ds, ft);
-      }
-      if (es.draw_terrain) {
-        terrain_renderer.render(rstate, registry, ft, ABOVE_VECTOR);
-      }
-      if (es.draw_entities) {
-        entity_renderer.render(rstate, rng, ft, black_silhoutte);
-      }
+      render_reflection_common(rstate, es, lm, ds, er, sr, tr, rng, ft, black_silhoutte);
       render::render_scene(rstate, lm, rng, ft, ABOVE_VECTOR, black_silhoutte);
     });
   }
 
   template <typename TerrainRenderer, typename EntityRenderer>
   void render_refraction(EngineState& es, DrawState& ds, LevelManager& lm, Camera& camera,
-                         EntityRenderer& entity_renderer, SkyboxRenderer& skybox_renderer,
-                         TerrainRenderer& terrain_renderer, stlw::float_generator& rng,
-                         window::FrameTime const& ft, bool const black_silhoutte)
+                         EntityRenderer& er, SkyboxRenderer& sr, TerrainRenderer& tr,
+                         stlw::float_generator& rng, window::FrameTime const& ft,
+                         bool const black_silhoutte)
   {
     auto&       zs        = lm.active();
     auto&       logger    = es.logger;
@@ -190,17 +203,7 @@ public:
     RenderState rstate{fstate, ds};
 
     with_refraction_fbo(logger, [&]() {
-      render::clear_screen(fog_color);
-
-      if (es.draw_skybox) {
-        skybox_renderer.render(rstate, ds, ft);
-      }
-      if (es.draw_terrain) {
-        terrain_renderer.render(rstate, registry, ft, BENEATH_VECTOR);
-      }
-      if (es.draw_entities) {
-        entity_renderer.render(rstate, rng, ft, black_silhoutte);
-      }
+      render_reflection_common(rstate, es, lm, ds, er, sr, tr, rng, ft, black_silhoutte);
       render::render_scene(rstate, lm, rng, ft, BENEATH_VECTOR, black_silhoutte);
     });
   }

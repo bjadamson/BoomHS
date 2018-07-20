@@ -464,8 +464,8 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   static auto           advanced_water_renderer = make_advanced_water_renderer();
   static auto           black_water_renderer    = make_black_water_renderer();
 
-  static auto basic_terrain_renderer   = BasicTerrainRenderer{};
-  static auto black_terrain_renderer   = BlackTerrainRenderer{};
+  static auto basic_terrain_renderer  = BasicTerrainRenderer{};
+  static auto black_terrain_renderer  = BlackTerrainRenderer{};
   static auto default_entity_renderer = EntityRenderer{};
 
   auto const& water_buffer = es.ui_state.debug.buffers.water;
@@ -487,10 +487,12 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
 
   auto const draw_scene = [&](bool const black_silhoutte) {
     auto const draw_advanced = [&](auto& terrain_renderer, auto& entity_renderer) {
-      advanced_water_renderer.render_reflection(es, ds, lm, camera, entity_renderer, skybox_renderer,
-                                                terrain_renderer, rng, ft, black_silhoutte);
-      advanced_water_renderer.render_refraction(es, ds, lm, camera, entity_renderer, skybox_renderer,
-                                                terrain_renderer, rng, ft, black_silhoutte);
+      advanced_water_renderer.render_reflection(es, ds, lm, camera, entity_renderer,
+                                                skybox_renderer, terrain_renderer, rng, ft,
+                                                black_silhoutte);
+      advanced_water_renderer.render_refraction(es, ds, lm, camera, entity_renderer,
+                                                skybox_renderer, terrain_renderer, rng, ft,
+                                                black_silhoutte);
     };
     if (draw_water_advanced) {
       // Render the scene to the refraction and reflection FBOs

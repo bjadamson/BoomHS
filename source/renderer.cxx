@@ -412,8 +412,6 @@ draw(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
   ++rstate.ds.num_drawcalls;
 }
 
-
-
 void
 draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, Color const& color)
 {
@@ -917,10 +915,6 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
   auto& registry = zs.registry;
   auto& ldata    = zs.level_data;
 
-  //if (es.draw_entities) {
-    //render::draw_entities(rstate, rng, ft, draw_blacksilhoutte);
-  //}
-
   auto& tilegrid_state = es.tilegrid_state;
   if (tilegrid_state.draw_tilegrid) {
     render::draw_tilegrid(rstate, tilegrid_state, ft);
@@ -967,7 +961,7 @@ set_modelmatrix(stlw::Logger& logger, glm::mat4 const& model_matrix, ShaderProgr
 
 void
 set_mvpmatrix(stlw::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 const& model_matrix,
-                ShaderProgram& sp)
+              ShaderProgram& sp)
 {
   auto const mvp_matrix = camera_matrix * model_matrix;
   sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);

@@ -386,11 +386,10 @@ BlackWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
 
-  auto& logger   = es.logger;
+  auto& logger = es.logger;
 
   Transform  transform;
   auto const fn = [&](WaterInfo& winfo) {
-
     assert(winfo.dinfo);
     auto& dinfo = *winfo.dinfo;
 

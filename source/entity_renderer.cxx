@@ -1,5 +1,5 @@
-#include <boomhs/entity_renderer.hpp>
 #include <boomhs/billboard.hpp>
+#include <boomhs/entity_renderer.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/player.hpp>
@@ -105,7 +105,8 @@ namespace boomhs
 {
 
 void
-EntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft, bool const black_silhoutte)
+EntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft,
+                       bool const black_silhoutte)
 {
   auto&       fstate    = rstate.fs;
   auto const& es        = fstate.es;

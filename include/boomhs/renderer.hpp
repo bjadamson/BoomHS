@@ -101,8 +101,8 @@ draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::TextureInfo&, open
         bool);
 
 void
-draw_3dlightsource(RenderState&, GLenum, glm::mat4 const&,
-                   opengl::ShaderProgram&, opengl::DrawInfo&, EntityID, EntityRegistry&);
+draw_3dlightsource(RenderState&, GLenum, glm::mat4 const&, opengl::ShaderProgram&,
+                   opengl::DrawInfo&, EntityID, EntityRegistry&);
 
 void
 draw_3dshape(RenderState&, GLenum, glm::mat4 const&, opengl::ShaderProgram&, opengl::DrawInfo&);
