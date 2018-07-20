@@ -73,8 +73,8 @@ SunshaftRenderer::render(RenderState& rstate, DrawState& ds, LevelManager& lm, C
   auto& ti = texture_info();
   DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, sp_.va(), v, ti);
 
-  glm::vec2 const pos{0.25f, 0.25f};
-  glm::vec2 const scale{0.25f, 0.25f};
+  glm::vec2 const pos{0.00f, 0.00f};
+  glm::vec2 const scale{1.00f, 1.00f};
 
   Transform transform;
   transform.translation = glm::vec3{pos.x, pos.y, 0.0f};

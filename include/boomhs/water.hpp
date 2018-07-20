@@ -70,6 +70,18 @@ struct WaterFactory
 opengl::ShaderProgram&
 draw_water_options_to_shader(GameGraphicsMode, opengl::ShaderPrograms&);
 
+class BlackWaterRenderer
+{
+  stlw::Logger&          logger_;
+  opengl::ShaderProgram& sp_;
+
+public:
+  BlackWaterRenderer(stlw::Logger&, opengl::ShaderProgram&);
+  MOVE_CONSTRUCTIBLE_ONLY(BlackWaterRenderer);
+
+  void render_water(RenderState&, DrawState&, LevelManager&, Camera&, window::FrameTime const&);
+};
+
 class BasicWaterRenderer
 {
   stlw::Logger&          logger_;
@@ -152,9 +164,9 @@ public:
   explicit AdvancedWaterRenderer(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&,
                                  opengl::TextureInfo&, opengl::TextureInfo&, opengl::TextureInfo&);
   void render_refraction(EngineState&, DrawState&, LevelManager&, Camera&, SkyboxRenderer&,
-                         stlw::float_generator&, window::FrameTime const&);
+                         stlw::float_generator&, window::FrameTime const&, bool);
   void render_reflection(EngineState&, DrawState&, LevelManager&, Camera&, SkyboxRenderer&,
-                         stlw::float_generator&, window::FrameTime const&);
+                         stlw::float_generator&, window::FrameTime const&, bool);
   void render_water(RenderState&, DrawState&, LevelManager&, Camera&, window::FrameTime const&);
 };
 

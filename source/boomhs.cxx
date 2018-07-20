@@ -450,11 +450,17 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     return AdvancedWaterRenderer{logger, screen_size, sp, ti, dudv, normal};
   };
 
+  auto const make_black_water_renderer = [&]() {
+    auto& sp     = sps.ref_sp("water_black");
+    return BlackWaterRenderer{logger, sp};
+  };
+
   // TODO: move these (they are static for convenience testing)
   static SkyboxRenderer skybox_renderer         = make_skybox_renderer();
   static auto           basic_water_renderer    = make_basic_water_renderer();
   static auto           medium_water_renderer   = make_medium_water_renderer();
   static auto           advanced_water_renderer = make_advanced_water_renderer();
+  static auto           black_water_renderer    = make_black_water_renderer();
 
   auto const& water_buffer = es.ui_state.debug.buffers.water;
   auto const  water_type = static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
@@ -473,11 +479,11 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   FrameState  fstate{fmatrices, es, zs};
   RenderState rstate{fstate, ds};
 
-  auto const draw_scene = [&]() {
+  auto const draw_scene = [&](bool const black_silhoutte) {
     if (draw_water_advanced) {
       // Render the scene to the refraction and reflection FBOs
-      advanced_water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer, rng, ft);
-      advanced_water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer, rng, ft);
+      advanced_water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer, rng, ft, black_silhoutte);
+      advanced_water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer, rng, ft, black_silhoutte);
     }
 
     // render scene
@@ -489,31 +495,38 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
       // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up
       // ontop of the ingame UI nearby target indicators.
       if (draw_water) {
-        if (GameGraphicsMode::Basic == water_type) {
-          basic_water_renderer.render_water(rstate, ds, lm, camera, ft);
-        }
-        else if (GameGraphicsMode::Medium == water_type) {
-          medium_water_renderer.render_water(rstate, ds, lm, camera, ft);
-        }
-        else if (GameGraphicsMode::Advanced == water_type) {
-          advanced_water_renderer.render_water(rstate, ds, lm, camera, ft);
+        if (black_silhoutte) {
+          black_water_renderer.render_water(rstate, ds, lm, camera, ft);
         }
         else {
-          std::abort();
+          if (GameGraphicsMode::Basic == water_type) {
+            basic_water_renderer.render_water(rstate, ds, lm, camera, ft);
+          }
+          else if (GameGraphicsMode::Medium == water_type) {
+            medium_water_renderer.render_water(rstate, ds, lm, camera, ft);
+          }
+          else if (GameGraphicsMode::Advanced == water_type) {
+            advanced_water_renderer.render_water(rstate, ds, lm, camera, ft);
+          }
+          else {
+            std::abort();
+          }
         }
       }
 
       // Render the scene with no culling (setting it zero disables culling mathematically)
       glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
-      render::render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
+      render::render_scene(rstate, lm, rng, ft, NOCULL_VECTOR, black_silhoutte);
     }
   };
 
-  sunshaft_renderer.with_sunshaft_fbo(logger, [&]() { draw_scene(); });
+  // First draw scene with black silhoutte shader
+  // Second draw scene with normal shaders
+  //sunshaft_renderer.with_sunshaft_fbo(logger, [&]() { draw_scene(true); });
+  draw_scene(true);
 
-  draw_scene();
-
-  sunshaft_renderer.render(rstate, ds, lm, camera, ft);
+  // This next call renders the scene as a quad
+  //sunshaft_renderer.render(rstate, ds, lm, camera, ft);
 
   // if (graphics_mode_advanced && !graphics_settings.disable_sunshafts) {
   // std::abort();

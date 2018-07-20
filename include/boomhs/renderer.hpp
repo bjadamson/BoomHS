@@ -80,6 +80,9 @@ void
 draw_3dshape(RenderState&, GLenum, glm::mat4 const&, opengl::ShaderProgram&, opengl::DrawInfo&);
 
 void
+draw_3dblack_water(RenderState&, GLenum, glm::mat4 const&, opengl::ShaderProgram&, opengl::DrawInfo&);
+
+void
 draw_3dlit_shape(RenderState&, GLenum, glm::vec3 const&, glm::mat4 const&, opengl::ShaderProgram&,
                  opengl::DrawInfo&, opengl::Material const&, EntityRegistry&, bool, bool);
 
@@ -106,7 +109,7 @@ void
 draw_local_axis(RenderState&, glm::vec3 const&);
 
 void
-draw_entities(RenderState&, stlw::float_generator&, window::FrameTime const&);
+draw_entities(RenderState&, stlw::float_generator&, window::FrameTime const&, bool);
 
 void
 draw_targetreticle(RenderState&, window::FrameTime const&);
@@ -128,7 +131,7 @@ draw_tilegrid(RenderState&, TiledataState const&);
 
 void
 render_scene(RenderState&, LevelManager&, stlw::float_generator&, window::FrameTime const&,
-             glm::vec4 const&);
+             glm::vec4 const&, bool);
 
 void
 set_modelmatrix(stlw::Logger&, glm::mat4 const&, opengl::ShaderProgram&);

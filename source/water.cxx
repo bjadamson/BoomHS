@@ -170,7 +170,8 @@ AdvancedWaterRenderer::AdvancedWaterRenderer(stlw::Logger& logger, ScreenSize co
 void
 AdvancedWaterRenderer::render_reflection(EngineState& es, DrawState& ds, LevelManager& lm,
                                          Camera& camera, SkyboxRenderer& skybox_renderer,
-                                         stlw::float_generator& rng, FrameTime const& ft)
+                                         stlw::float_generator& rng, FrameTime const& ft,
+                                         bool const black_silhoutte)
 {
   auto&       zs        = lm.active();
   auto&       logger    = es.logger;
@@ -193,14 +194,15 @@ AdvancedWaterRenderer::render_reflection(EngineState& es, DrawState& ds, LevelMa
   with_reflection_fbo(logger, [&]() {
     render::clear_screen(fog_color);
     skybox_renderer.render(rstate, ds, ft);
-    render::render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
+    render::render_scene(rstate, lm, rng, ft, ABOVE_VECTOR, black_silhoutte);
   });
 }
 
 void
 AdvancedWaterRenderer::render_refraction(EngineState& es, DrawState& ds, LevelManager& lm,
                                          Camera& camera, SkyboxRenderer& skybox_renderer,
-                                         stlw::float_generator& rng, FrameTime const& ft)
+                                         stlw::float_generator& rng, FrameTime const& ft,
+                                         bool const black_silhoutte)
 {
   auto&       zs        = lm.active();
   auto&       logger    = es.logger;
@@ -215,7 +217,7 @@ AdvancedWaterRenderer::render_refraction(EngineState& es, DrawState& ds, LevelMa
     render::clear_screen(fog_color);
 
     skybox_renderer.render(rstate, ds, ft);
-    render::render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
+    render::render_scene(rstate, lm, rng, ft, BENEATH_VECTOR, black_silhoutte);
   });
 }
 
@@ -516,6 +518,60 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
         bind::global_unbind(logger, diffuse_);
         bind::global_unbind(logger, normal_);
         glActiveTexture(GL_TEXTURE0);
+      });
+    });
+  };
+
+  LOG_TRACE("Rendering water");
+  auto const winfos = find_all_entities_with_component<WaterInfo>(registry);
+  for (auto const weid : winfos) {
+    auto& wi = registry.get<WaterInfo>(weid);
+    render(wi);
+  }
+  LOG_TRACE("Finished rendering water");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// BlackWaterRenderer
+BlackWaterRenderer::BlackWaterRenderer(stlw::Logger& logger, ShaderProgram& sp)
+    : logger_(logger)
+    , sp_(sp)
+{
+}
+
+void
+BlackWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm,
+                                 Camera& camera, FrameTime const& ft)
+{
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+
+  auto& logger   = es.logger;
+  auto& zs       = lm.active();
+  auto& registry = zs.registry;
+  auto& ldata    = zs.level_data;
+
+  Transform  transform;
+  auto const render = [&](WaterInfo& winfo) {
+    auto const& pos = winfo.position;
+
+    auto& tr = transform.translation;
+    tr.x     = pos.x;
+    tr.z     = pos.y;
+
+    // hack
+    tr.y = 0.19999f; // pos.y;
+    assert(tr.y < 2.0f);
+
+    assert(winfo.dinfo);
+    auto& dinfo = *winfo.dinfo;
+    auto& vao   = dinfo.vao();
+
+    auto const model_matrix = transform.model_matrix();
+
+    sp_.while_bound(logger, [&]() {
+      vao.while_bound(logger, [&]() {
+        render::draw_3dblack_water(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
       });
     });
   };

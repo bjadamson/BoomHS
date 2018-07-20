@@ -335,6 +335,92 @@ compute_billboarded_viewmodel(Transform const& transform, glm::mat4 const& view_
   return view_model;
 }
 
+template <typename... Args>
+void
+draw_entity_fn(RenderState& rstate, GLenum const dm, bool const black_silhoutte, ShaderProgram& spp,
+               DrawInfo& dinfo,
+               EntityID const eid, ShaderName& sn, Transform const& transform, IsVisible& is_v,
+               AABoundingBox& bbox, Args&&...)
+{
+  auto&       fstate = rstate.fs;
+  auto const& es     = fstate.es;
+  auto&       logger = es.logger;
+  auto&       zs     = fstate.zs;
+
+  auto& registry = zs.registry;
+  auto& sps      = zs.gfx_state.sps;
+
+  auto const& ldata  = zs.level_data;
+  auto const& player = ldata.player;
+
+  bool const skip = !is_v.value;
+  if (skip) {
+    return;
+  }
+
+  auto const& tr = transform.translation;
+  {
+    /*
+    // TODO: only call recalulate when the camera moves
+    Frustum view_frust;
+    view_frust.recalculate(fstate);
+
+    float const halfsize        = glm::length(bbox.max - bbox.min) / 2.0f;
+    bool const  bbox_in_frustum = view_frust.cube_in_frustum(tr, halfsize);
+
+    if (!bbox_in_frustum) {
+      return;
+    }
+    */
+  }
+
+  bool constexpr RECEIVES_AMBIENT_LIGHT = true;
+  bool constexpr SET_NORMALMATRIX       = true;
+
+  bool const is_lightsource = registry.has<PointLight>(eid);
+  auto const model_matrix   = transform.model_matrix();
+
+  auto& vao = dinfo.vao();
+
+  auto& sp = black_silhoutte ? sps.ref_sp("blacksilhoutte") : spp;
+  if (black_silhoutte) {
+    bind::global_bind(logger, sp);
+  }
+  if (black_silhoutte) {
+    sp.set_uniform_int1(logger, "u_sampler", 0);
+    glActiveTexture(GL_TEXTURE0);
+  }
+  vao.while_bound(logger, [&]() {
+    if (is_lightsource) {
+      assert(is_lightsource);
+      draw_3dlightsource(rstate, dm, model_matrix, sp, dinfo, eid, registry);
+      return;
+    }
+
+    bool const receives_light = registry.has<Material>(eid);
+    if (receives_light) {
+      Material const& material = registry.get<Material>(eid);
+      render::draw_3dlit_shape(rstate, dm, tr, model_matrix, sp, dinfo, material, registry,
+                       RECEIVES_AMBIENT_LIGHT, SET_NORMALMATRIX);
+      return;
+    }
+
+    // Can't receive light
+    assert(!registry.has<Material>());
+
+    if (!sp.is_2d) {
+      auto const camera_matrix = fstate.camera_matrix();
+      set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
+    }
+    draw(rstate, dm, sp, dinfo);
+  });
+  if (black_silhoutte) {
+    bind::global_unbind(logger, sp);
+  }
+}
+
+
+
 } // namespace
 
 namespace boomhs::render
@@ -419,6 +505,21 @@ draw_3dshape(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix
 
   // misc
   sp.set_uniform_bool(logger, "u_drawnormals", es.draw_normals);
+  draw(rstate, dm, sp, dinfo);
+}
+
+void
+draw_3dblack_water(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix, ShaderProgram& sp,
+             DrawInfo& dinfo)
+{
+  auto& fstate = rstate.fs;
+
+  auto& es     = fstate.es;
+  auto& logger = es.logger;
+
+  auto const camera_matrix = fstate.camera_matrix();
+  set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
+
   draw(rstate, dm, sp, dinfo);
 }
 
@@ -608,79 +709,9 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
   LOG_TRACE("Finished Drawing Local Axis");
 }
 
-template <typename... Args>
 void
-draw_entity_fn(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo,
-               EntityID const eid, ShaderName& sn, Transform const& transform, IsVisible& is_v,
-               AABoundingBox& bbox, Args&&...)
-{
-  auto&       fstate = rstate.fs;
-  auto const& es     = fstate.es;
-  auto&       logger = es.logger;
-  auto&       zs     = fstate.zs;
-
-  auto& registry = zs.registry;
-  auto& sps      = zs.gfx_state.sps;
-
-  auto const& ldata  = zs.level_data;
-  auto const& player = ldata.player;
-
-  bool const skip = !is_v.value;
-  if (skip) {
-    return;
-  }
-
-  auto const& tr = transform.translation;
-  {
-    /*
-    // TODO: only call recalulate when the camera moves
-    Frustum view_frust;
-    view_frust.recalculate(fstate);
-
-    float const halfsize        = glm::length(bbox.max - bbox.min) / 2.0f;
-    bool const  bbox_in_frustum = view_frust.cube_in_frustum(tr, halfsize);
-
-    if (!bbox_in_frustum) {
-      return;
-    }
-    */
-  }
-
-  bool const is_lightsource = registry.has<PointLight>(eid);
-  auto const model_matrix   = transform.model_matrix();
-
-  auto& vao = dinfo.vao();
-  vao.while_bound(logger, [&]() {
-    if (is_lightsource) {
-      assert(is_lightsource);
-      draw_3dlightsource(rstate, dm, model_matrix, sp, dinfo, eid, registry);
-      return;
-    }
-    bool constexpr RECEIVES_AMBIENT_LIGHT = true;
-    bool constexpr SET_NORMALMATRIX       = true;
-
-    bool const receives_light = registry.has<Material>(eid);
-    if (receives_light) {
-      assert(registry.has<Material>(eid));
-      Material const& material = registry.get<Material>(eid);
-      draw_3dlit_shape(rstate, dm, tr, model_matrix, sp, dinfo, material, registry,
-                       RECEIVES_AMBIENT_LIGHT, SET_NORMALMATRIX);
-      return;
-    }
-
-    // Can't receive light
-    assert(!registry.has<Material>());
-
-    if (!sp.is_2d) {
-      auto const camera_matrix = fstate.camera_matrix();
-      set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
-    }
-    draw(rstate, dm, sp, dinfo);
-  });
-}
-
-void
-draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft,
+    bool const black_silhoutte)
 {
   auto&       fstate    = rstate.fs;
   auto const& es        = fstate.es;
@@ -702,12 +733,12 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
 
   auto const draw_entity = [&](COMMON_ARGS, auto&&... args) {
     auto& dinfo = eh.lookup(logger, eid);
-    auto& sp    = sps.ref_sp(sn.value);
+    auto const& global_light      = ldata.global_light;
+    auto const& directional_light = global_light.directional;
 
+    auto& sp    = sps.ref_sp(sn.value);
     sp.while_bound(logger, [&]() {
-      auto const& global_light      = ldata.global_light;
-      auto const& directional_light = global_light.directional;
-      draw_entity_fn(rstate, GL_TRIANGLES, sp, dinfo, eid, sn, transform, is_v, bbox,
+      draw_entity_fn(rstate, GL_TRIANGLES, black_silhoutte, sp, dinfo, eid, sn, transform, is_v, bbox,
                      FORWARD(args));
     });
   };
@@ -741,7 +772,7 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     auto& dinfo = eh.lookup(logger, eid);
     auto& sp    = sps.ref_sp(sn.value);
     sp.while_bound(logger, [&]() {
-      draw_entity_fn(rstate, je.draw_mode, sp, dinfo, eid, sn, transform, is_v, bbox);
+      draw_entity_fn(rstate, je.draw_mode, black_silhoutte, sp, dinfo, eid, sn, transform, is_v, bbox);
     });
   };
   auto const draw_torch = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
@@ -776,12 +807,12 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
     Color const wire_color = sel.selected ? LOC::GREEN : LOC::RED;
 
     auto& sp = sps.ref_sp("wireframe");
+    auto& dinfo = ebbh.lookup(logger, eid);
+    auto tr = transform;
+
     sp.while_bound(logger, [&]() {
       sp.set_uniform_color(logger, "u_wirecolor", wire_color);
-      auto& dinfo = ebbh.lookup(logger, eid);
-
-      auto tr = transform;
-      draw_entity_fn(rstate, GL_LINES, sp, dinfo, eid, sn, tr, is_v, bbox);
+      draw_entity_fn(rstate, GL_LINES, black_silhoutte, sp, dinfo, eid, sn, tr, is_v, bbox);
     });
   };
 
@@ -799,7 +830,6 @@ draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& 
   registry.view<COMMON, BillboardRenderable, OrbitalBody, TextureRenderable>().each(
       draw_orbital_body);
 
-  // registry.view<COMMON, WaterTileThing>().each(draw_entity_fn);
   registry.view<COMMON, TextureRenderable, JunkEntityFromFILE>().each(draw_textured_junk_fn);
 
   registry.view<COMMON, Torch, TextureRenderable>().each(draw_torch);
@@ -1266,7 +1296,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
 void
 render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, FrameTime const& ft,
-             glm::vec4 const& cull_plane)
+             glm::vec4 const& cull_plane, bool const draw_blacksilhoutte)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -1277,7 +1307,7 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
   auto& ldata    = zs.level_data;
 
   if (es.draw_entities) {
-    render::draw_entities(rstate, rng, ft);
+    render::draw_entities(rstate, rng, ft, draw_blacksilhoutte);
   }
 
   auto& tilegrid_state = es.tilegrid_state;
