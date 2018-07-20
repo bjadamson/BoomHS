@@ -3,14 +3,11 @@
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/frustum.hpp>
-#include <boomhs/npc.hpp>
-#include <boomhs/orbital_body.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
-#include <boomhs/tree.hpp>
 
 #include <opengl/draw_info.hpp>
 #include <opengl/factory.hpp>
@@ -21,7 +18,6 @@
 #include <extlibs/sdl.hpp>
 #include <window/timer.hpp>
 
-#include <iostream>
 #include <stlw/log.hpp>
 #include <stlw/math.hpp>
 #include <stlw/random.hpp>
@@ -32,11 +28,6 @@ using namespace window;
 
 glm::vec3 static constexpr VIEWING_OFFSET{0.5f, 0.0f, 0.5f};
 auto static constexpr WIGGLE_UNDERATH_OFFSET = -0.2f;
-
-#define ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT()                                                   \
-  glEnable(GL_BLEND);                                                                              \
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);                                               \
-  ON_SCOPE_EXIT([]() { glDisable(GL_BLEND); });
 
 namespace
 {
@@ -161,72 +152,6 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
 }
 
 void
-set_3dmvpmatrix(stlw::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 const& model_matrix,
-                ShaderProgram& sp)
-{
-  auto const mvp_matrix = camera_matrix * model_matrix;
-  sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
-}
-
-void
-draw(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
-{
-  auto&      fstate      = rstate.fs;
-  auto&      es          = fstate.es;
-  auto&      logger      = es.logger;
-  auto const draw_mode   = es.wireframe_override ? GL_LINE_LOOP : dm;
-  auto const num_indices = dinfo.num_indices();
-  auto constexpr OFFSET  = nullptr;
-
-  /*
-  LOG_DEBUG("---------------------------------------------------------------------------");
-  LOG_DEBUG("drawing object!");
-  LOG_DEBUG_SPRINTF("sp: %s", sp.to_string());
-  LOG_DEBUG_SPRINTF("draw_info: %s", dinfo.to_string(sp.va()));
-  LOG_DEBUG("---------------------------------------------------------------------------");
-  */
-
-  if (sp.instance_count) {
-    auto const ic = *sp.instance_count;
-    glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
-  }
-  else {
-    glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
-  }
-
-  rstate.ds.num_vertices += num_indices;
-  ++rstate.ds.num_drawcalls;
-}
-
-void
-draw_3dlightsource(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix,
-                   ShaderProgram& sp, DrawInfo& dinfo, EntityID const eid, EntityRegistry& registry)
-{
-  auto& fstate = rstate.fs;
-  auto& es     = fstate.es;
-  auto& zs     = fstate.zs;
-
-  auto& logger     = es.logger;
-  auto& pointlight = registry.get<PointLight>(eid);
-
-  bool const has_texture = registry.has<TextureRenderable>(eid);
-  if (!has_texture) {
-    // ASSUMPTION: If the light source has a texture, then DO NOT set u_lightcolor.
-    // Instead, assume the image should be rendered unaffected by the lightsource itself.
-    auto const diffuse = pointlight.light.diffuse;
-    sp.set_uniform_color_3fv(logger, "u_lightcolor", diffuse);
-  }
-
-  if (!sp.is_2d) {
-    auto const& ldata         = zs.level_data;
-    auto const  camera_matrix = fstate.camera_matrix();
-    set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
-  }
-
-  draw(rstate, dm, sp, dinfo);
-}
-
-void
 gl_log_callback(GLenum const source, GLenum const type, GLuint const id, GLenum const severity,
                 GLsizei const length, GLchar const* message, void const* user_data)
 {
@@ -237,150 +162,6 @@ gl_log_callback(GLenum const source, GLenum const type, GLuint const id, GLenum 
                     severity, message);
 
   std::abort();
-}
-
-void
-billboard_spherical(float* data)
-{
-  // Column 0:
-  data[0] = 1.0f;
-  data[1] = 0.0f;
-  data[2] = 0.0f;
-
-  // Column 1:
-  data[4 + 0] = 0.0f;
-  data[4 + 1] = 1.0f;
-  data[4 + 2] = 0.0f;
-
-  // Column 2:
-  data[8 + 0] = 0.0f;
-  data[8 + 1] = 0.0f;
-  data[8 + 2] = 1.0f;
-}
-
-void
-billboard_cylindrical(float* data)
-{
-  // Column 0:
-  data[0] = 1.0f;
-  data[1] = 0.0f;
-  data[2] = 0.0f;
-
-  // Column 2:
-  data[8 + 0] = 0.0f;
-  data[8 + 1] = 0.0f;
-  data[8 + 2] = 1.0f;
-}
-
-glm::mat4
-compute_billboarded_viewmodel(Transform const& transform, glm::mat4 const& view_matrix,
-                              BillboardType const bb_type)
-{
-  auto view_model = view_matrix * transform.model_matrix();
-
-  // Reset the rotation values in order to achieve a billboard effect.
-  //
-  // http://www.geeks3d.com/20140807/billboarding-vertex-shader-glsl/
-  float* data = glm::value_ptr(view_model);
-  switch (bb_type) {
-  case BillboardType::Spherical:
-    billboard_spherical(data);
-    break;
-  case BillboardType::Cylindrical:
-    billboard_cylindrical(data);
-    break;
-  default:
-    std::abort();
-  }
-
-  auto const& s = transform.scale;
-  data[0]       = s.x;
-  data[5]       = s.y;
-  data[10]      = s.z;
-
-  return view_model;
-}
-
-template <typename... Args>
-void
-draw_entity_fn(RenderState& rstate, GLenum const dm, bool const black_silhoutte, ShaderProgram& spp,
-               DrawInfo& dinfo, EntityID const eid, ShaderName& sn, Transform const& transform,
-               IsVisible& is_v, AABoundingBox& bbox, Args&&...)
-{
-  auto&       fstate = rstate.fs;
-  auto const& es     = fstate.es;
-  auto&       logger = es.logger;
-  auto&       zs     = fstate.zs;
-
-  auto& registry = zs.registry;
-  auto& sps      = zs.gfx_state.sps;
-
-  auto const& ldata  = zs.level_data;
-  auto const& player = ldata.player;
-
-  bool const skip = !is_v.value;
-  if (skip) {
-    return;
-  }
-
-  auto const& tr = transform.translation;
-  {
-    /*
-    // TODO: only call recalulate when the camera moves
-    Frustum view_frust;
-    view_frust.recalculate(fstate);
-
-    float const halfsize        = glm::length(bbox.max - bbox.min) / 2.0f;
-    bool const  bbox_in_frustum = view_frust.cube_in_frustum(tr, halfsize);
-
-    if (!bbox_in_frustum) {
-      return;
-    }
-    */
-  }
-
-  bool constexpr SET_NORMALMATRIX = true;
-
-  bool const is_lightsource = registry.has<PointLight>(eid);
-  auto const model_matrix   = transform.model_matrix();
-
-  auto& vao = dinfo.vao();
-
-  auto& sp = black_silhoutte ? sps.ref_sp("blacksilhoutte") : spp;
-  if (black_silhoutte) {
-    bind::global_bind(logger, sp);
-  }
-  if (black_silhoutte) {
-    sp.set_uniform_int1(logger, "u_sampler", 0);
-    glActiveTexture(GL_TEXTURE0);
-  }
-  vao.while_bound(logger, [&]() {
-    if (is_lightsource) {
-      assert(is_lightsource);
-      draw_3dlightsource(rstate, dm, model_matrix, sp, dinfo, eid, registry);
-      return;
-    }
-
-    bool const receives_light = registry.has<Material>(eid);
-    if (receives_light) {
-      Material const& material = registry.get<Material>(eid);
-      render::draw_3dlit_shape(rstate, dm, tr, model_matrix, sp, dinfo, material, registry,
-                               SET_NORMALMATRIX);
-      return;
-    }
-
-    // Can't receive light
-    assert(!registry.has<Material>());
-
-    if (!sp.is_2d) {
-      auto const camera_matrix = fstate.camera_matrix();
-      set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
-    }
-    draw(rstate, dm, sp, dinfo);
-  });
-  if (black_silhoutte) {
-    bind::global_unbind(logger, sp);
-  }
 }
 
 } // namespace
@@ -468,6 +249,34 @@ draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, TextureInfo& ti
 }
 
 void
+draw_3dlightsource(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix,
+                   ShaderProgram& sp, DrawInfo& dinfo, EntityID const eid, EntityRegistry& registry)
+{
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& zs     = fstate.zs;
+
+  auto& logger     = es.logger;
+  auto& pointlight = registry.get<PointLight>(eid);
+
+  bool const has_texture = registry.has<TextureRenderable>(eid);
+  if (!has_texture) {
+    // ASSUMPTION: If the light source has a texture, then DO NOT set u_lightcolor.
+    // Instead, assume the image should be rendered unaffected by the lightsource itself.
+    auto const diffuse = pointlight.light.diffuse;
+    sp.set_uniform_color_3fv(logger, "u_lightcolor", diffuse);
+  }
+
+  if (!sp.is_2d) {
+    auto const& ldata         = zs.level_data;
+    auto const  camera_matrix = fstate.camera_matrix();
+    set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
+  }
+
+  draw(rstate, dm, sp, dinfo);
+}
+
+void
 draw_3dshape(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix, ShaderProgram& sp,
              DrawInfo& dinfo)
 {
@@ -479,7 +288,7 @@ draw_3dshape(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix
   set_modelmatrix(logger, model_matrix, sp);
 
   auto const camera_matrix = fstate.camera_matrix();
-  set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
+  set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
 
   {
     auto const& zs          = fstate.zs;
@@ -504,7 +313,7 @@ draw_3dblack_water(RenderState& rstate, GLenum const dm, glm::mat4 const& model_
   auto& logger = es.logger;
 
   auto const camera_matrix = fstate.camera_matrix();
-  set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
+  set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
 
   draw(rstate, dm, sp, dinfo);
 }
@@ -574,6 +383,38 @@ conditionally_draw_player_vectors(RenderState& rstate, WorldObject const& player
 }
 
 void
+draw(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
+{
+  auto&      fstate      = rstate.fs;
+  auto&      es          = fstate.es;
+  auto&      logger      = es.logger;
+  auto const draw_mode   = es.wireframe_override ? GL_LINE_LOOP : dm;
+  auto const num_indices = dinfo.num_indices();
+  auto constexpr OFFSET  = nullptr;
+
+  /*
+  LOG_DEBUG("---------------------------------------------------------------------------");
+  LOG_DEBUG("drawing object!");
+  LOG_DEBUG_SPRINTF("sp: %s", sp.to_string());
+  LOG_DEBUG_SPRINTF("draw_info: %s", dinfo.to_string(sp.va()));
+  LOG_DEBUG("---------------------------------------------------------------------------");
+  */
+
+  if (sp.instance_count) {
+    auto const ic = *sp.instance_count;
+    glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
+  }
+  else {
+    glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
+  }
+
+  rstate.ds.num_vertices += num_indices;
+  ++rstate.ds.num_drawcalls;
+}
+
+
+
+void
 draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, Color const& color)
 {
   auto& fstate = rstate.fs;
@@ -592,7 +433,7 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
   Transform transform;
   sp.while_bound(logger, [&]() {
     auto const camera_matrix = fstate.camera_matrix();
-    set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
+    set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
     dinfo.vao().while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
   });
@@ -648,7 +489,7 @@ draw_global_axis(RenderState& rstate)
 
   sp.while_bound(logger, [&]() {
     auto const camera_matrix = fstate.camera_matrix();
-    set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
+    set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
     // assume for now they all share the same VAO layout
     draw_axis_arrow(world_arrows.x_dinfo);
@@ -680,7 +521,7 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
 
   sp.while_bound(logger, [&]() {
     auto const camera_matrix = fstate.camera_matrix();
-    set_3dmvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
+    set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
     // assume for now they all share the same VAO layout
     auto& vao = axis_arrows.x_dinfo.vao();
@@ -692,146 +533,6 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
   });
 
   LOG_TRACE("Finished Drawing Local Axis");
-}
-
-void
-draw_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft,
-              bool const black_silhoutte)
-{
-  auto&       fstate    = rstate.fs;
-  auto const& es        = fstate.es;
-  auto&       logger    = es.logger;
-  auto&       zs        = fstate.zs;
-  auto&       gpu_state = zs.gfx_state.gpu_state;
-
-  auto& eh   = gpu_state.entities;
-  auto& ebbh = gpu_state.entity_boundingboxes;
-
-  auto& registry = zs.registry;
-  auto& sps      = zs.gfx_state.sps;
-
-  auto const& ldata  = zs.level_data;
-  auto const& player = ldata.player;
-
-#define COMMON ShaderName, Transform, IsVisible, AABoundingBox
-#define COMMON_ARGS auto const eid, auto &sn, auto &transform, auto &is_v, auto &bbox
-
-  auto const draw_entity = [&](COMMON_ARGS, auto&&... args) {
-    auto&       dinfo             = eh.lookup(logger, eid);
-    auto const& global_light      = ldata.global_light;
-    auto const& directional_light = global_light.directional;
-
-    auto& sp = sps.ref_sp(sn.value);
-    sp.while_bound(logger, [&]() {
-      draw_entity_fn(rstate, GL_TRIANGLES, black_silhoutte, sp, dinfo, eid, sn, transform, is_v,
-                     bbox, FORWARD(args));
-    });
-  };
-
-  auto const draw_textured_junk_fn = [&](COMMON_ARGS, auto& texture_renderable, auto&&... args) {
-    auto* ti = texture_renderable.texture_info;
-    assert(ti);
-    ti->while_bound(logger, [&]() {
-      draw_entity(eid, sn, transform, is_v, bbox, texture_renderable, FORWARD(args));
-    });
-  };
-
-  auto const draw_orbital_body = [&](COMMON_ARGS, auto& bboard, OrbitalBody&,
-                                     TextureRenderable& trenderable) {
-    auto const bb_type    = bboard.value;
-    auto const view_model = compute_billboarded_viewmodel(transform, fstate.view_matrix(), bb_type);
-
-    auto const proj_matrix = fstate.projection_matrix();
-    auto const mvp_matrix  = proj_matrix * view_model;
-    auto&      sp          = sps.ref_sp(sn.value);
-    sp.while_bound(logger, [&]() { set_modelmatrix(logger, mvp_matrix, sp); });
-
-    auto* ti = trenderable.texture_info;
-    assert(ti);
-
-    ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
-    ti->while_bound(logger, [&]() { draw_entity(eid, sn, transform, is_v, bbox, bboard); });
-  };
-
-  auto const draw_junk = [&](COMMON_ARGS, Color&, JunkEntityFromFILE& je) {
-    auto& dinfo = eh.lookup(logger, eid);
-    auto& sp    = sps.ref_sp(sn.value);
-    sp.while_bound(logger, [&]() {
-      draw_entity_fn(rstate, je.draw_mode, black_silhoutte, sp, dinfo, eid, sn, transform, is_v,
-                     bbox);
-    });
-  };
-  auto const draw_torch = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
-    {
-      auto& sp = sps.ref_sp(sn.value);
-
-      // Describe glow
-      static constexpr double MIN   = 0.3;
-      static constexpr double MAX   = 1.0;
-      static constexpr double SPEED = 0.135;
-      auto const              a     = std::sin(ft.since_start_millis() * M_PI * SPEED);
-      float const             glow  = glm::lerp(MIN, MAX, std::abs(a));
-      sp.while_bound(logger, [&]() { sp.set_uniform_float1(logger, "u_glow", glow); });
-    }
-
-    // randomize the position slightly
-    static constexpr auto DISPLACEMENT_MAX = 0.0015f;
-
-    auto copy_transform = transform;
-    copy_transform.translation.x += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
-    copy_transform.translation.y += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
-    copy_transform.translation.z += rng.gen_float_range(-DISPLACEMENT_MAX, DISPLACEMENT_MAX);
-
-    auto* ti = trenderable.texture_info;
-    assert(ti);
-    ti->while_bound(logger, [&]() { draw_entity(eid, sn, copy_transform, is_v, bbox, torch); });
-  };
-  auto const draw_boundingboxes = [&](COMMON_ARGS, Selectable& sel, auto&&...) {
-    if (!es.draw_bounding_boxes) {
-      return;
-    }
-    Color const wire_color = sel.selected ? LOC::GREEN : LOC::RED;
-
-    auto& sp    = sps.ref_sp("wireframe");
-    auto& dinfo = ebbh.lookup(logger, eid);
-    auto  tr    = transform;
-
-    sp.while_bound(logger, [&]() {
-      sp.set_uniform_color(logger, "u_wirecolor", wire_color);
-      draw_entity_fn(rstate, GL_LINES, black_silhoutte, sp, dinfo, eid, sn, tr, is_v, bbox);
-    });
-  };
-
-  auto const draw_plain_cube = [&](COMMON_ARGS, CubeRenderable& cr, auto&&... args) {
-    draw_entity(eid, sn, transform, is_v, bbox, cr, FORWARD(args));
-  };
-
-  auto const draw_tree = [&](COMMON_ARGS, auto& tree, auto&&... args) {
-    draw_entity(eid, sn, transform, is_v, bbox, tree, FORWARD(args));
-  };
-#undef COMMON_ARGS
-
-  // define rendering order here
-  // OrbitalBodies always render first.
-  registry.view<COMMON, BillboardRenderable, OrbitalBody, TextureRenderable>().each(
-      draw_orbital_body);
-
-  registry.view<COMMON, TextureRenderable, JunkEntityFromFILE>().each(draw_textured_junk_fn);
-
-  registry.view<COMMON, Torch, TextureRenderable>().each(draw_torch);
-  registry.view<COMMON, Color, JunkEntityFromFILE>().each(draw_junk);
-  registry.view<COMMON, TreeComponent>().each(draw_tree);
-
-  // CUBES
-  registry.view<COMMON, CubeRenderable, PointLight>().each(draw_plain_cube);
-  registry.view<COMMON, Selectable>().each(draw_boundingboxes);
-  // registry.view<COMMON, Selectable, JunkEntityFromFILE>().each(draw_boundingboxes);
-
-  registry.view<COMMON, MeshRenderable, NPCData>().each(
-      [&](auto&&... args) { draw_entity(FORWARD(args)); });
-  registry.view<COMMON, MeshRenderable, PlayerData>().each(
-      [&](auto&&... args) { draw_entity(FORWARD(args)); });
-#undef COMMON
 }
 
 void
@@ -1022,7 +723,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
   auto const      v = OF::rectangle_vertices();
   glm::mat4 const view_model =
-      compute_billboarded_viewmodel(transform, fstate.view_matrix(), BillboardType::Spherical);
+      Billboard::compute_viewmodel(transform, fstate.view_matrix(), BillboardType::Spherical);
 
   auto const proj_matrix = fstate.projection_matrix();
 
@@ -1160,7 +861,7 @@ draw_stars(RenderState& rstate, window::FrameTime const& ft)
 
       auto const& ldata         = zs.level_data;
       auto const  camera_matrix = fstate.camera_matrix();
-      set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
+      set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
 
       auto& vao = dinfo.vao();
       vao.while_bound(logger, [&]() { draw(rstate, GL_TRIANGLES, sp, dinfo); });
@@ -1197,7 +898,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
   sp.while_bound(logger, [&]() {
     auto const camera_matrix = fstate.camera_matrix();
-    set_3dmvpmatrix(logger, camera_matrix, model_matrix, sp);
+    set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
 
     auto& vao = dinfo.vao();
     vao.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
@@ -1216,9 +917,9 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
   auto& registry = zs.registry;
   auto& ldata    = zs.level_data;
 
-  if (es.draw_entities) {
-    render::draw_entities(rstate, rng, ft, draw_blacksilhoutte);
-  }
+  //if (es.draw_entities) {
+    //render::draw_entities(rstate, rng, ft, draw_blacksilhoutte);
+  //}
 
   auto& tilegrid_state = es.tilegrid_state;
   if (tilegrid_state.draw_tilegrid) {
@@ -1262,6 +963,14 @@ void
 set_modelmatrix(stlw::Logger& logger, glm::mat4 const& model_matrix, ShaderProgram& sp)
 {
   sp.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
+}
+
+void
+set_mvpmatrix(stlw::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 const& model_matrix,
+                ShaderProgram& sp)
+{
+  auto const mvp_matrix = camera_matrix * model_matrix;
+  sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 }
 
 } // namespace boomhs::render

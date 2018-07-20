@@ -4,6 +4,7 @@
 #include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/entity_renderer.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_assembler.hpp>
@@ -463,8 +464,9 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   static auto           advanced_water_renderer = make_advanced_water_renderer();
   static auto           black_water_renderer    = make_black_water_renderer();
 
-  static auto basic_terrain_renderer = BasicTerrainRenderer{};
-  static auto black_terrain_renderer = BlackTerrainRenderer{};
+  static auto basic_terrain_renderer   = BasicTerrainRenderer{};
+  static auto black_terrain_renderer   = BlackTerrainRenderer{};
+  static auto default_entity_renderer = EntityRenderer{};
 
   auto const& water_buffer = es.ui_state.debug.buffers.water;
   auto const  water_type = static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
@@ -484,19 +486,19 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   RenderState rstate{fstate, ds};
 
   auto const draw_scene = [&](bool const black_silhoutte) {
-    auto const draw_advanced = [&](auto& terrain_renderer) {
-      advanced_water_renderer.render_reflection(es, ds, lm, camera, skybox_renderer,
+    auto const draw_advanced = [&](auto& terrain_renderer, auto& entity_renderer) {
+      advanced_water_renderer.render_reflection(es, ds, lm, camera, entity_renderer, skybox_renderer,
                                                 terrain_renderer, rng, ft, black_silhoutte);
-      advanced_water_renderer.render_refraction(es, ds, lm, camera, skybox_renderer,
+      advanced_water_renderer.render_refraction(es, ds, lm, camera, entity_renderer, skybox_renderer,
                                                 terrain_renderer, rng, ft, black_silhoutte);
     };
     if (draw_water_advanced) {
       // Render the scene to the refraction and reflection FBOs
       if (black_silhoutte) {
-        draw_advanced(black_terrain_renderer);
+        draw_advanced(black_terrain_renderer, default_entity_renderer);
       }
       else {
-        draw_advanced(basic_terrain_renderer);
+        draw_advanced(basic_terrain_renderer, default_entity_renderer);
       }
     }
 
@@ -533,14 +535,15 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
       // Render the scene with no culling (setting it zero disables culling mathematically)
       glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
       if (es.draw_terrain) {
-        auto const draw_basic = [&](auto& terrain_renderer) {
+        auto const draw_basic = [&](auto& terrain_renderer, auto& entity_renderer) {
           terrain_renderer.render(rstate, registry, ft, NOCULL_VECTOR);
+          entity_renderer.render(rstate, rng, ft, black_silhoutte);
         };
         if (black_silhoutte) {
-          draw_basic(black_terrain_renderer);
+          draw_basic(black_terrain_renderer, default_entity_renderer);
         }
         else {
-          draw_basic(basic_terrain_renderer);
+          draw_basic(basic_terrain_renderer, default_entity_renderer);
         }
       }
       render::render_scene(rstate, lm, rng, ft, NOCULL_VECTOR, black_silhoutte);
@@ -550,7 +553,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   // First draw scene with black silhoutte shader
   // Second draw scene with normal shaders
   // sunshaft_renderer.with_sunshaft_fbo(logger, [&]() { draw_scene(true); });
-  draw_scene(true);
+  draw_scene(false);
 
   // This next call renders the scene as a quad
   // sunshaft_renderer.render(rstate, ds, lm, camera, ft);

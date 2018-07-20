@@ -72,6 +72,11 @@ struct CWState
   auto const cw_state = render::read_cwstate();                                                    \
   ON_SCOPE_EXIT([&]() { render::set_cwstate(cw_state); });
 
+#define ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT()                                                   \
+  glEnable(GL_BLEND);                                                                              \
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);                                               \
+  ON_SCOPE_EXIT([]() { glDisable(GL_BLEND); });
+
 namespace boomhs::render
 {
 
@@ -96,6 +101,10 @@ draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::TextureInfo&, open
         bool);
 
 void
+draw_3dlightsource(RenderState&, GLenum, glm::mat4 const&,
+                   opengl::ShaderProgram&, opengl::DrawInfo&, EntityID, EntityRegistry&);
+
+void
 draw_3dshape(RenderState&, GLenum, glm::mat4 const&, opengl::ShaderProgram&, opengl::DrawInfo&);
 
 void
@@ -109,6 +118,9 @@ draw_3dlit_shape(RenderState&, GLenum, glm::vec3 const&, glm::mat4 const&, openg
 // TODO: move rest to sub-renderers or something
 void
 conditionally_draw_player_vectors(RenderState&, WorldObject const&);
+
+void
+draw(RenderState&, GLenum, opengl::ShaderProgram&, opengl::DrawInfo&);
 
 void
 draw_arrow(RenderState&, glm::vec3 const&, glm::vec3 const&, opengl::Color const&);
@@ -127,9 +139,6 @@ draw_inventory_overlay(RenderState&);
 
 void
 draw_local_axis(RenderState&, glm::vec3 const&);
-
-void
-draw_entities(RenderState&, stlw::float_generator&, window::FrameTime const&, bool);
 
 void
 draw_targetreticle(RenderState&, window::FrameTime const&);
@@ -152,5 +161,8 @@ render_scene(RenderState&, LevelManager&, stlw::float_generator&, window::FrameT
 
 void
 set_modelmatrix(stlw::Logger&, glm::mat4 const&, opengl::ShaderProgram&);
+
+void
+set_mvpmatrix(stlw::Logger&, glm::mat4 const&, glm::mat4 const&, opengl::ShaderProgram&);
 
 } // namespace boomhs::render

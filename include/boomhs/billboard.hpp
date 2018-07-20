@@ -17,18 +17,11 @@ struct Billboard
 {
   Billboard() = delete;
 
-  static BillboardType from_string(std::string const& str)
-  {
-    if ("spherical" == str) {
-      return BillboardType::Spherical;
-    }
-    else if ("cylindrical" == str) {
-      return BillboardType::Cylindrical;
-    }
-    else {
-      std::abort();
-    }
-  }
+  static BillboardType from_string(std::string const&);
+
+  // Compute the viewmodel for a transform that appears as billboard.
+  static glm::mat4
+  compute_viewmodel(Transform const&, glm::mat4 const&, BillboardType);
 };
 
 struct BillboardRenderable

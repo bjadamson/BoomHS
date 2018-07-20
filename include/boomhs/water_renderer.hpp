@@ -131,9 +131,10 @@ public:
   explicit AdvancedWaterRenderer(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&,
                                  opengl::TextureInfo&, opengl::TextureInfo&, opengl::TextureInfo&);
 
-  template <typename TerrainRenderer>
+  template <typename TerrainRenderer, typename EntityRenderer>
   void render_reflection(EngineState& es, DrawState& ds, LevelManager& lm, Camera& camera,
-                         SkyboxRenderer& skybox_renderer, TerrainRenderer& terrain_renderer,
+                         EntityRenderer& entity_renderer, SkyboxRenderer& skybox_renderer,
+                         TerrainRenderer& terrain_renderer,
                          stlw::float_generator& rng, window::FrameTime const& ft,
                          bool const black_silhoutte)
   {
@@ -165,15 +166,18 @@ public:
       if (es.draw_terrain) {
         terrain_renderer.render(rstate, registry, ft, ABOVE_VECTOR);
       }
+      if (es.draw_entities) {
+        entity_renderer.render(rstate, rng, ft, black_silhoutte);
+      }
       render::render_scene(rstate, lm, rng, ft, ABOVE_VECTOR, black_silhoutte);
     });
   }
 
-  template <typename TerrainRenderer>
+  template <typename TerrainRenderer, typename EntityRenderer>
   void render_refraction(EngineState& es, DrawState& ds, LevelManager& lm, Camera& camera,
-                         SkyboxRenderer& skybox_renderer, TerrainRenderer& terrain_renderer,
-                         stlw::float_generator& rng, window::FrameTime const& ft,
-                         bool const black_silhoutte)
+                         EntityRenderer& entity_renderer, SkyboxRenderer& skybox_renderer,
+                         TerrainRenderer& terrain_renderer, stlw::float_generator& rng,
+                         window::FrameTime const& ft, bool const black_silhoutte)
   {
     auto&       zs        = lm.active();
     auto&       logger    = es.logger;
@@ -193,6 +197,9 @@ public:
       }
       if (es.draw_terrain) {
         terrain_renderer.render(rstate, registry, ft, BENEATH_VECTOR);
+      }
+      if (es.draw_entities) {
+        entity_renderer.render(rstate, rng, ft, black_silhoutte);
       }
       render::render_scene(rstate, lm, rng, ft, BENEATH_VECTOR, black_silhoutte);
     });
