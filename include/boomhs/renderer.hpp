@@ -157,7 +157,7 @@ draw_tilegrid(RenderState&, TiledataState const&);
 
 void
 render_scene(RenderState&, LevelManager&, stlw::float_generator&, window::FrameTime const&,
-             glm::vec4 const&, bool);
+             glm::vec4 const&);
 
 void
 set_modelmatrix(stlw::Logger&, glm::mat4 const&, opengl::ShaderProgram&);

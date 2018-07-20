@@ -21,7 +21,16 @@ public:
   EntityRenderer() = default;
   MOVE_CONSTRUCTIBLE_ONLY(EntityRenderer);
 
-  void render(RenderState&, stlw::float_generator&, window::FrameTime const&, bool);
+  void render(RenderState&, stlw::float_generator&, window::FrameTime const&);
+};
+
+class BlackEntityRenderer
+{
+public:
+  BlackEntityRenderer() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(BlackEntityRenderer);
+
+  void render(RenderState&, stlw::float_generator&, window::FrameTime const&);
 };
 
 } // namespace boomhs

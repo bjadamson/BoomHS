@@ -104,9 +104,10 @@ draw_entity_fn(RenderState& rstate, GLenum const dm, bool const black_silhoutte,
 namespace boomhs
 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// EntityRenderer
 void
-EntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft,
-                       bool const black_silhoutte)
+EntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
 {
   auto&       fstate    = rstate.fs;
   auto const& es        = fstate.es;
@@ -123,6 +124,8 @@ EntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTim
   auto const& ldata  = zs.level_data;
   auto const& player = ldata.player;
 
+  bool constexpr BLACK_SILHOUTTE = false;
+
 #define COMMON ShaderName, Transform, IsVisible, AABoundingBox
 #define COMMON_ARGS auto const eid, auto &sn, auto &transform, auto &is_v, auto &bbox
 
@@ -133,7 +136,7 @@ EntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTim
 
     auto& sp = sps.ref_sp(sn.value);
     sp.while_bound(logger, [&]() {
-      draw_entity_fn(rstate, GL_TRIANGLES, black_silhoutte, sp, dinfo, eid, sn, transform, is_v,
+      draw_entity_fn(rstate, GL_TRIANGLES, BLACK_SILHOUTTE, sp, dinfo, eid, sn, transform, is_v,
                      bbox, FORWARD(args));
     });
   };
@@ -167,7 +170,7 @@ EntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTim
     auto& dinfo = eh.lookup(logger, eid);
     auto& sp    = sps.ref_sp(sn.value);
     sp.while_bound(logger, [&]() {
-      draw_entity_fn(rstate, je.draw_mode, black_silhoutte, sp, dinfo, eid, sn, transform, is_v,
+      draw_entity_fn(rstate, je.draw_mode, BLACK_SILHOUTTE, sp, dinfo, eid, sn, transform, is_v,
                      bbox);
     });
   };
@@ -208,7 +211,7 @@ EntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTim
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_color(logger, "u_wirecolor", wire_color);
-      draw_entity_fn(rstate, GL_LINES, black_silhoutte, sp, dinfo, eid, sn, tr, is_v, bbox);
+      draw_entity_fn(rstate, GL_LINES, BLACK_SILHOUTTE, sp, dinfo, eid, sn, tr, is_v, bbox);
     });
   };
 
@@ -242,6 +245,13 @@ EntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTim
   registry.view<COMMON, MeshRenderable, PlayerData>().each(
       [&](auto&&... args) { draw_entity(FORWARD(args)); });
 #undef COMMON
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// BlackEntityRenderer
+void
+BlackEntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+{
 }
 
 } // namespace boomhs

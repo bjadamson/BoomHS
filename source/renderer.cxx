@@ -905,7 +905,7 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
 void
 render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, FrameTime const& ft,
-             glm::vec4 const& cull_plane, bool const draw_blacksilhoutte)
+             glm::vec4 const& cull_plane)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
