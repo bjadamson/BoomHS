@@ -310,6 +310,11 @@ BasicTerrainRenderer::to_string() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BlackTerrainRenderer
+BlackTerrainRenderer::BlackTerrainRenderer(ShaderProgram& sp)
+    : sp_(sp)
+{
+}
+
 void
 BlackTerrainRenderer::render(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
                              glm::vec4 const& cull_plane)
@@ -320,8 +325,6 @@ BlackTerrainRenderer::render(RenderState& rstate, EntityRegistry& registry, Fram
 
   auto& zs        = fstate.zs;
   auto& gfx_state = zs.gfx_state;
-  auto& sps       = gfx_state.sps;
-  auto& sp        = sps.ref_sp("water_black");
 
   Transform   transform;
   auto const& model_matrix = transform.model_matrix();
@@ -332,9 +335,9 @@ BlackTerrainRenderer::render(RenderState& rstate, EntityRegistry& registry, Fram
     auto& dinfo = terrain.draw_info();
     auto& vao   = dinfo.vao();
 
-    sp.while_bound(logger, [&]() {
+    sp_.while_bound(logger, [&]() {
       vao.while_bound(logger, [&]() {
-        render::draw_3dblack_water(rstate, GL_TRIANGLE_STRIP, model_matrix, sp, dinfo);
+        render::draw_3dblack_water(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
       });
     });
   };

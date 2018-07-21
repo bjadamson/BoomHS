@@ -48,10 +48,6 @@ name     = "water"
 position = { datatype = "float", num = 3 }
 uv       = { datatype = "float", num = 2 }
 
-[[vas]]
-name     = "water_black"
-position = { datatype = "float", num = 3 }
-
 ########### SHADERS #################
 [[shaders]]
 name = "2dcolor"
@@ -86,10 +82,16 @@ fragment = "3d_pos_normal_color.frag"
 va = "vertex_normal_color"
 
 [[shaders]]
-name = "blacksilhoutte"
-vertex = "blacksilhoutte.vert"
-fragment = "blacksilhoutte.frag"
+name = "silhoutte_black"
+vertex = "silhoutte_black.vert"
+fragment = "silhoutte_black.frag"
 va = "vertex_normal_color"
+
+[[shaders]]
+name = "2dsilhoutte_black_uv"
+vertex = "2dsilhoutte_black_uv.vert"
+fragment = "2dsilhoutte_black_uv.frag"
+va = "vertex_uv"
 
 [[shaders]]
 name = "3d_pos_color"
@@ -173,12 +175,6 @@ name = "water_advanced"
 vertex = "water_advanced.vert"
 fragment = "water_advanced.frag"
 va = "water"
-
-[[shaders]]
-name = "water_black"
-vertex = "water_black.vert"
-fragment = "water_black.frag"
-va = "water_black"
 
 [[shaders]]
 name = "wireframe"

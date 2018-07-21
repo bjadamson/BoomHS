@@ -453,8 +453,13 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   };
 
   auto const make_black_water_renderer = [&]() {
-    auto& sp = sps.ref_sp("water_black");
+    auto& sp = sps.ref_sp("silhoutte_black");
     return BlackWaterRenderer{logger, sp};
+  };
+
+  auto const make_black_terrain_renderer = [&]() {
+    auto& sp = sps.ref_sp("silhoutte_black");
+    return BlackTerrainRenderer{sp};
   };
 
   // TODO: move these (they are static for convenience testing)
@@ -465,7 +470,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   static auto           black_water_renderer    = make_black_water_renderer();
 
   static auto basic_terrain_renderer  = BasicTerrainRenderer{};
-  static auto black_terrain_renderer  = BlackTerrainRenderer{};
+  static auto black_terrain_renderer  = make_black_terrain_renderer();
   static auto default_entity_renderer = EntityRenderer{};
   static auto black_entity_renderer   = BlackEntityRenderer{};
 

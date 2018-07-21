@@ -1,4 +1,6 @@
 in vec3 a_position;
+in vec3 a_normal;
+in vec4 a_color;
 
 uniform mat4 u_mvpmatrix;
 

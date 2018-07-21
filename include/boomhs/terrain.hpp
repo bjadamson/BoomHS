@@ -106,9 +106,11 @@ public:
 
 class BlackTerrainRenderer
 {
+  opengl::ShaderProgram& sp_;
+
 public:
   MOVE_CONSTRUCTIBLE_ONLY(BlackTerrainRenderer);
-  BlackTerrainRenderer() = default;
+  BlackTerrainRenderer(opengl::ShaderProgram&);
 
   // methods
   void render(RenderState&, EntityRegistry& registry, window::FrameTime const&, glm::vec4 const&);
