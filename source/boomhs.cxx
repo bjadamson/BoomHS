@@ -509,51 +509,61 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     }
 
     // render scene
-    render::clear_screen(ldata.fog.color);
+    if (es.draw_skybox) {
+      auto const clear_color = black_silhoutte ? LOC::BLACK : ldata.fog.color;
+      render::clear_screen(clear_color);
+    }
 
-    {
-      if (es.draw_skybox) {
+    if (es.draw_skybox) {
+      if (!black_silhoutte) {
         skybox_renderer.render(rstate, ds, ft);
       }
-
-      // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up
-      // ontop of the ingame UI nearby target indicators.
-      if (draw_water) {
-        if (black_silhoutte) {
-          black_water_renderer.render_water(rstate, ds, lm, camera, ft);
-        }
-        else {
-          if (GameGraphicsMode::Basic == water_type) {
-            basic_water_renderer.render_water(rstate, ds, lm, camera, ft);
-          }
-          else if (GameGraphicsMode::Medium == water_type) {
-            medium_water_renderer.render_water(rstate, ds, lm, camera, ft);
-          }
-          else if (GameGraphicsMode::Advanced == water_type) {
-            advanced_water_renderer.render_water(rstate, ds, lm, camera, ft);
-          }
-          else {
-            std::abort();
-          }
-        }
-      }
-
-      // Render the scene with no culling (setting it zero disables culling mathematically)
-      glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
-      if (es.draw_terrain) {
-        auto const draw_basic = [&](auto& terrain_renderer, auto& entity_renderer) {
-          terrain_renderer.render(rstate, registry, ft, NOCULL_VECTOR);
-          entity_renderer.render(rstate, rng, ft);
-        };
-        if (black_silhoutte) {
-          draw_basic(black_terrain_renderer, black_entity_renderer);
-        }
-        else {
-          draw_basic(basic_terrain_renderer, default_entity_renderer);
-        }
-      }
-      render::render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
     }
+
+    // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up
+    // ontop of the ingame UI nearby target indicators.
+    if (draw_water) {
+      if (black_silhoutte) {
+        black_water_renderer.render_water(rstate, ds, lm, camera, ft);
+      }
+      else {
+        if (GameGraphicsMode::Basic == water_type) {
+          basic_water_renderer.render_water(rstate, ds, lm, camera, ft);
+        }
+        else if (GameGraphicsMode::Medium == water_type) {
+          medium_water_renderer.render_water(rstate, ds, lm, camera, ft);
+        }
+        else if (GameGraphicsMode::Advanced == water_type) {
+          advanced_water_renderer.render_water(rstate, ds, lm, camera, ft);
+        }
+        else {
+          std::abort();
+        }
+      }
+    }
+
+    // Render the scene with no culling (setting it zero disables culling mathematically)
+    glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
+    if (es.draw_terrain) {
+      auto const draw_basic = [&](auto& terrain_renderer, auto& entity_renderer) {
+        terrain_renderer.render(rstate, registry, ft, NOCULL_VECTOR);
+      };
+      if (black_silhoutte) {
+        draw_basic(black_terrain_renderer, black_entity_renderer);
+      }
+      else {
+        draw_basic(basic_terrain_renderer, default_entity_renderer);
+      }
+    }
+    if (es.draw_entities) {
+      if (black_silhoutte) {
+        black_entity_renderer.render(rstate, rng, ft);
+      }
+      else {
+        default_entity_renderer.render(rstate, rng, ft);
+      }
+    }
+    render::render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
   };
 
   // First draw scene with black silhoutte shader
