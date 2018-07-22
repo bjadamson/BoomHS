@@ -289,7 +289,8 @@ BlackEntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, Fra
   };
 
   auto const draw_orbital_body_helper = [&](COMMON_ARGS, auto&&... args) {
-    auto& sp = sps.ref_sp("2dsilhoutte_black_uv");
+    auto& sp = sps.ref_sp("2dsilhoutte_uv");
+    sp.while_bound(logger, [&]() { sp.set_uniform_color_3fv(logger, "u_color", LOC::WHITE); });
     draw_orbital_body(rstate, sp, eid, transform, is_v, bbox, FORWARD(args));
   };
 

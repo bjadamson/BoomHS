@@ -88,9 +88,9 @@ fragment = "silhoutte_black.frag"
 va = "vertex_normal_color"
 
 [[shaders]]
-name = "2dsilhoutte_black_uv"
-vertex = "2dsilhoutte_black_uv.vert"
-fragment = "2dsilhoutte_black_uv.frag"
+name = "2dsilhoutte_uv"
+vertex = "2dsilhoutte_uv.vert"
+fragment = "2dsilhoutte_uv.frag"
 va = "vertex_uv"
 
 [[shaders]]
