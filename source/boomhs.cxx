@@ -130,10 +130,11 @@ update_nearbytargets(LevelData& ldata, EntityRegistry& registry, FrameTime const
 }
 
 void
-update_orbital_bodies(EngineState& es, LevelData& ldata, EntityRegistry& registry,
-                      FrameTime const& ft)
+update_orbital_bodies(EngineState& es, LevelData& ldata, glm::mat4 const& view_matrix,
+                      glm::mat4 const& proj_matrix, EntityRegistry& registry, FrameTime const& ft)
 {
   auto& logger = es.logger;
+  auto& directional = ldata.global_light.directional;
 
   // Must recalculate zs and registry, possibly changed since call to move_between()
   auto const update_orbitals = [&](auto const eid, bool const first) {
@@ -151,23 +152,37 @@ update_orbital_bodies(EngineState& es, LevelData& ldata, EntityRegistry& registr
 
     // TODO: HACK
     if (first) {
-      auto&      directional       = ldata.global_light.directional;
       auto const orbital_to_origin = glm::normalize(-pos);
       directional.direction        = orbital_to_origin;
 
-      auto& screen_pos = directional.screenspace_pos;
-      screen_pos       = glm::vec3{0};
+      auto const mvp        = (proj_matrix * view_matrix) * transform.model_matrix();
+      auto const clip       = mvp * glm::vec4{pos, 1.0f};
+      auto const ndc        = glm::vec3{clip.x, clip.y, clip.z} / clip.w;
+      auto const wx         = ((ndc.x + 1.0f) / 2.0f);// + 256.0;
+      auto const wy         = ((1.0f - ndc.y) / 2.0f);// + 192.0;
+
+      glm::vec2 const wpos{wx, wy};
+      directional.screenspace_pos = wpos;
+
+      LOG_ERROR_SPRINTF("player (world) pos: %s, clip: %s, ndc pos: %s, wpos: %s",
+          glm::to_string(pos),
+          glm::to_string(clip),
+          glm::to_string(ndc),
+          glm::to_string(wpos));
     }
   };
 
+  auto const eids  = find_orbital_bodies(registry);
   if (es.ui_state.debug.update_orbital_bodies) {
-    auto const eids  = find_orbital_bodies(registry);
     bool       first = true;
     for (auto const eid : eids) {
       update_orbitals(eid, first);
       first = false;
     }
   }
+
+  
+
 }
 
 inline auto
@@ -404,17 +419,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   auto& sps       = gfx_state.sps;
   auto& ttable    = gfx_state.texture_table;
 
-  {
-    // Update the world
-    update_playaudio(logger, ldata, registry, water_audio);
-    update_playerpos(logger, ldata, ft);
-    update_nearbytargets(ldata, registry, ft);
-    update_orbital_bodies(es, ldata, registry, ft);
-    skybox.update(ft);
-
-    update_visible_entities(lm, registry);
-    update_torchflicker(ldata, registry, rng, ft);
-  }
+  
 
   // TODO: Move out into state somewhere.
   auto const make_skybox_renderer = [&]() {
@@ -474,6 +479,27 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   static auto default_entity_renderer = EntityRenderer{};
   static auto black_entity_renderer   = BlackEntityRenderer{};
 
+  auto const  fmatrices = FrameMatrices::from_camera(camera);
+  FrameState  fstate{fmatrices, es, zs};
+
+  DrawState ds;
+  RenderState rstate{fstate, ds};
+
+  {
+    // Update the world
+    update_playaudio(logger, ldata, registry, water_audio);
+    update_playerpos(logger, ldata, ft);
+    update_nearbytargets(ldata, registry, ft);
+
+
+    update_orbital_bodies(es, ldata, fstate.view_matrix(), fstate.projection_matrix(), registry,
+        ft);
+    skybox.update(ft);
+
+    update_visible_entities(lm, registry);
+    update_torchflicker(ldata, registry, rng, ft);
+  }
+
   auto const& water_buffer = es.ui_state.debug.buffers.water;
   auto const  water_type = static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
   bool const  draw_water = water_buffer.draw;
@@ -482,19 +508,18 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   bool const  graphics_mode_advanced = GameGraphicsMode::Advanced == graphics_settings.mode;
   bool const  draw_water_advanced    = draw_water && graphics_mode_advanced;
 
-  DrawState ds;
 
   auto&                   sunshaft_sp = sps.ref_sp("sunshaft");
   static SunshaftRenderer sunshaft_renderer{logger, screen_size, sunshaft_sp};
 
-  auto const  fmatrices = FrameMatrices::from_camera(camera);
-  FrameState  fstate{fmatrices, es, zs};
-  RenderState rstate{fstate, ds};
-
   auto const draw_scene = [&](bool const black_silhoutte) {
     auto const draw_advanced = [&](auto& terrain_renderer, auto& entity_renderer) {
+      auto const& fog_color = ldata.fog.color;
+
+      render::clear_screen(fog_color);
       advanced_water_renderer.render_reflection(es, ds, lm, camera, entity_renderer,
                                                 skybox_renderer, terrain_renderer, rng, ft);
+      render::clear_screen(fog_color);
       advanced_water_renderer.render_refraction(es, ds, lm, camera, entity_renderer,
                                                 skybox_renderer, terrain_renderer, rng, ft);
     };
@@ -512,9 +537,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     if (es.draw_skybox) {
       auto const clear_color = black_silhoutte ? LOC::BLACK : ldata.fog.color;
       render::clear_screen(clear_color);
-    }
 
-    if (es.draw_skybox) {
       if (!black_silhoutte) {
         skybox_renderer.render(rstate, ds, ft);
       }
@@ -566,17 +589,27 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     render::render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
   };
 
-  // First draw scene with black silhoutte shader
-  // Second draw scene with normal shaders
-  // sunshaft_renderer.with_sunshaft_fbo(logger, [&]() { draw_scene(true); });
-  draw_scene(true);
+  auto const draw_scene_normal_render = [&]() { draw_scene(false); };
 
-  // This next call renders the scene as a quad
-  // sunshaft_renderer.render(rstate, ds, lm, camera, ft);
+  auto const render_scene_with_sunshafts = [&]() {
+    // draw scene with black silhouttes into the sunshaft FBO.
+    sunshaft_renderer.with_sunshaft_fbo(logger, [&]() { draw_scene(true); });
 
-  // if (graphics_mode_advanced && !graphics_settings.disable_sunshafts) {
-  // std::abort();
-  //}
+    // draw the scene (normal render) to the screen
+    draw_scene_normal_render();
+
+    // With additive blending enabled, render the FBO ontop of the previously rendered scene to
+    // obtain the sunglare effect.
+    ENABLE_ADDITIVE_BLENDING_UNTIL_SCOPE_EXIT();
+    sunshaft_renderer.render(rstate, ds, lm, camera, ft);
+  };
+
+  if (!graphics_settings.disable_sunshafts) {
+    render_scene_with_sunshafts();
+  }
+  else {
+    draw_scene_normal_render();
+  }
 
   /*
   {
@@ -619,6 +652,9 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
   if (es.main_menu.show) {
     // Enable keyboard shortcuts
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    // clear the screen before rending the main menu1
+    render::clear_screen(LOC::BLACK);
 
     auto const& size = engine.dimensions();
     main_menu::draw(es, ImVec2(size.w, size.h), water_audio);

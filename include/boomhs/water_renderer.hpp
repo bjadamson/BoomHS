@@ -125,24 +125,15 @@ class AdvancedWaterRenderer
     refraction_.fbo->while_bound(logger, fn);
   }
 
-public:
-  MOVE_CONSTRUCTIBLE_ONLY(AdvancedWaterRenderer);
-
-  explicit AdvancedWaterRenderer(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&,
-                                 opengl::TextureInfo&, opengl::TextureInfo&, opengl::TextureInfo&);
-
   template <typename TerrainRenderer, typename EntityRenderer>
   void
-  render_reflection_common(RenderState& rstate, EngineState& es, LevelManager& lm, DrawState& ds,
+  advanced_common(RenderState& rstate, EngineState& es, LevelManager& lm, DrawState& ds,
                            EntityRenderer& er, SkyboxRenderer& sr, TerrainRenderer& tr,
                            stlw::float_generator& rng, window::FrameTime const& ft)
   {
     auto&       zs        = lm.active();
     auto&       ldata     = zs.level_data;
     auto&       registry  = zs.registry;
-    auto const& fog_color = ldata.fog.color;
-
-    render::clear_screen(fog_color);
 
     if (es.draw_skybox) {
       sr.render(rstate, ds, ft);
@@ -154,6 +145,12 @@ public:
       er.render(rstate, rng, ft);
     }
   }
+
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(AdvancedWaterRenderer);
+
+  explicit AdvancedWaterRenderer(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&,
+                                 opengl::TextureInfo&, opengl::TextureInfo&, opengl::TextureInfo&);
 
   template <typename TerrainRenderer, typename EntityRenderer>
   void render_reflection(EngineState& es, DrawState& ds, LevelManager& lm, Camera& camera,
@@ -180,7 +177,7 @@ public:
     RenderState rstate{fstate, ds};
 
     with_reflection_fbo(logger, [&]() {
-      render_reflection_common(rstate, es, lm, ds, er, sr, tr, rng, ft);
+      advanced_common(rstate, es, lm, ds, er, sr, tr, rng, ft);
       render::render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
     });
   }
@@ -201,7 +198,7 @@ public:
     RenderState rstate{fstate, ds};
 
     with_refraction_fbo(logger, [&]() {
-      render_reflection_common(rstate, es, lm, ds, er, sr, tr, rng, ft);
+      advanced_common(rstate, es, lm, ds, er, sr, tr, rng, ft);
       render::render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
     });
   }

@@ -120,14 +120,12 @@ render_terrain(Transform& transform, RenderState& rstate, EntityRegistry& regist
     fn(terrain);
   };
 
-  LOG_ERROR("-------------------- Starting To Draw All Terrain (BLACK)(s) ----------------------");
-  LOG_ERROR_SPRINTF("TerrainGrid: %s", terrain_grid.to_string());
+  LOG_ERROR("-------------------- Draw Terrain BEGIN ----------------------");
 
   for (auto& t : terrain_grid) {
     draw_piece(t);
   }
-  LOG_ERROR("-------------------------Finished Drawing All Terrain (BLACK)(s) "
-            "---------------------------");
+  LOG_ERROR("-------------------- Draw Terrain END  ----------------------");
 }
 
 } // namespace

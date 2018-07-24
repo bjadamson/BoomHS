@@ -77,6 +77,11 @@ struct CWState
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);                                               \
   ON_SCOPE_EXIT([]() { glDisable(GL_BLEND); });
 
+#define ENABLE_ADDITIVE_BLENDING_UNTIL_SCOPE_EXIT()                                                \
+  glEnable(GL_BLEND);                                                                              \
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE);                                                               \
+  ON_SCOPE_EXIT([]() { glDisable(GL_BLEND); });
+
 namespace boomhs::render
 {
 

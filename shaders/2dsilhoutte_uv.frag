@@ -7,7 +7,7 @@ out vec4 fragment_color;
 
 void main()
 {
-  vec4 sample_value = texture(u_sampler, vec2(v_uv.x, 1.0 - v_uv.y));
+  vec4 sample_value = texture(u_sampler, vec2(v_uv.x, v_uv.y));
 
   fragment_color = vec4(u_color, sample_value.a) * sample_value;
 }
