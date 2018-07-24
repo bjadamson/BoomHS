@@ -58,12 +58,27 @@ struct RenderState
   }
 };
 
+struct WindingState
+{
+  GLint state;
+};
+struct CullingState
+{
+  GLboolean enabled;
+  GLint     mode;
+};
+
+// CW => CullingWinding
 struct CWState
 {
-  GLint winding;
+  WindingState winding;
+  CullingState culling;
+};
 
-  GLboolean culling_enabled;
-  GLint     culling_mode;
+struct BlendState
+{
+  GLboolean enabled;
+  GLint     source, dest;
 };
 
 } // namespace boomhs
@@ -71,6 +86,10 @@ struct CWState
 #define PUSH_CW_STATE_UNTIL_END_OF_SCOPE()                                                         \
   auto const cw_state = render::read_cwstate();                                                    \
   ON_SCOPE_EXIT([&]() { render::set_cwstate(cw_state); });
+
+#define PUSH_BLEND_STATE_UNTIL_END_OF_SCOPE()                                                      \
+  auto const blend_state = render::read_blendstate();                                              \
+  ON_SCOPE_EXIT([&]() { render::set_blendstate(blend_state); });
 
 #define ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT()                                                   \
   glEnable(GL_BLEND);                                                                              \
@@ -90,6 +109,12 @@ read_cwstate();
 
 void
 set_cwstate(CWState const&);
+
+BlendState
+read_blendstate();
+
+void
+set_blendstate(BlendState const&);
 
 void
 init(stlw::Logger&, boomhs::Dimensions const&);

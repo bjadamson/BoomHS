@@ -330,8 +330,7 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
     sp_.set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
     sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
 
     glActiveTexture(GL_TEXTURE0);
     bind::global_bind(logger, diffuse_);
@@ -356,7 +355,7 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
     render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, transform.translation, model_matrix, sp_,
                              dinfo, water_material, registry, SET_NORMALMATRIX);
 
-    glDisable(GL_BLEND);
+    // glDisable(GL_BLEND);
 
     bind::global_unbind(logger, diffuse_);
     bind::global_unbind(logger, reflection_.tbo);

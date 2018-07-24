@@ -173,23 +173,50 @@ CWState
 read_cwstate()
 {
   CWState cwstate;
-  glGetIntegerv(GL_FRONT_FACE, &cwstate.winding);
-  glGetBooleanv(GL_CULL_FACE, &cwstate.culling_enabled);
-  glGetIntegerv(GL_CULL_FACE_MODE, &cwstate.culling_mode);
+  glGetIntegerv(GL_FRONT_FACE, &cwstate.winding.state);
+
+  auto& culling = cwstate.culling;
+  glGetBooleanv(GL_CULL_FACE, &culling.enabled);
+  glGetIntegerv(GL_CULL_FACE_MODE, &culling.mode);
   return cwstate;
 }
 
 void
 set_cwstate(CWState const& cw_state)
 {
-  glFrontFace(cw_state.winding);
+  glFrontFace(cw_state.winding.state);
 
-  if (cw_state.culling_enabled) {
+  auto& culling = cw_state.culling;
+  if (culling.enabled) {
     glEnable(GL_CULL_FACE);
-    glCullFace(cw_state.culling_mode);
+    glCullFace(culling.mode);
   }
   else {
     glDisable(GL_CULL_FACE);
+  }
+}
+
+BlendState
+read_blendstate()
+{
+  BlendState bstate;
+  glGetBooleanv(GL_BLEND, &bstate.enabled);
+
+  glGetIntegerv(GL_BLEND_SRC_ALPHA, &bstate.source);
+  glGetIntegerv(GL_BLEND_DST_ALPHA, &bstate.dest);
+
+  return bstate;
+}
+
+void
+set_blendstate(BlendState const& state)
+{
+  if (state.enabled) {
+    glEnable(GL_BLEND);
+    glBlendFunc(state.source, state.dest);
+  }
+  else {
+    glDisable(GL_BLEND);
   }
 }
 
@@ -230,8 +257,7 @@ clear_screen(Color const& color)
 }
 
 void
-draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo,
-        bool const alpha_blend)
+draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo, bool)
 {
   disable_depth_tests();
   ON_SCOPE_EXIT([]() { enable_depth_tests(); });

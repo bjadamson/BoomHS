@@ -133,7 +133,7 @@ void
 update_orbital_bodies(EngineState& es, LevelData& ldata, glm::mat4 const& view_matrix,
                       glm::mat4 const& proj_matrix, EntityRegistry& registry, FrameTime const& ft)
 {
-  auto& logger = es.logger;
+  auto& logger      = es.logger;
   auto& directional = ldata.global_light.directional;
 
   // Must recalculate zs and registry, possibly changed since call to move_between()
@@ -142,9 +142,10 @@ update_orbital_bodies(EngineState& es, LevelData& ldata, glm::mat4 const& view_m
     auto& orbital   = registry.get<OrbitalBody>(eid);
     auto& pos       = transform.translation;
 
-    auto const  time     = ft.since_start_seconds();
-    float const cos_time = std::cos(time + orbital.offset);
-    float const sin_time = std::sin(time + orbital.offset);
+    auto constexpr SLOWDOWN_FACTOR = 5.0f;
+    auto const  time               = ft.since_start_seconds() / SLOWDOWN_FACTOR;
+    float const cos_time           = std::cos(time + orbital.offset);
+    float const sin_time           = std::sin(time + orbital.offset);
 
     pos.x = orbital.x_radius * cos_time;
     pos.y = orbital.y_radius * sin_time;
@@ -155,34 +156,34 @@ update_orbital_bodies(EngineState& es, LevelData& ldata, glm::mat4 const& view_m
       auto const orbital_to_origin = glm::normalize(-pos);
       directional.direction        = orbital_to_origin;
 
-      auto const mvp        = (proj_matrix * view_matrix) * transform.model_matrix();
-      auto const clip       = mvp * glm::vec4{pos, 1.0f};
-      auto const ndc        = glm::vec3{clip.x, clip.y, clip.z} / clip.w;
-      auto const wx         = ((ndc.x + 1.0f) / 2.0f);// + 256.0;
-      auto const wy         = ((1.0f - ndc.y) / 2.0f);// + 192.0;
+      auto const mvp  = (proj_matrix * view_matrix) * transform.model_matrix();
+      auto const clip = mvp * glm::vec4{pos, 1.0f};
+      auto const ndc  = glm::vec3{clip.x, clip.y, clip.z} / clip.w;
+
+      auto const wx = ((ndc.x + 1.0f) / 2.0f); // + 256.0;
+      auto const wy = ((ndc.y + 1.0f) / 2.0f); // + 192.0;
 
       glm::vec2 const wpos{wx, wy};
       directional.screenspace_pos = wpos;
 
       LOG_ERROR_SPRINTF("player (world) pos: %s, clip: %s, ndc pos: %s, wpos: %s",
-          glm::to_string(pos),
-          glm::to_string(clip),
-          glm::to_string(ndc),
-          glm::to_string(wpos));
+                        glm::to_string(pos), glm::to_string(clip), glm::to_string(ndc),
+                        glm::to_string(wpos));
+
+      // assert(ndc.x <= 1.0f && ndc.x >= -1.0f);
+      // assert(ndc.y <= 1.0f && ndc.y >= -1.0f);
+      // assert(ndc.z <= 1.0f && ndc.z >= -1.0f);
     }
   };
 
-  auto const eids  = find_orbital_bodies(registry);
+  auto const eids = find_orbital_bodies(registry);
   if (es.ui_state.debug.update_orbital_bodies) {
-    bool       first = true;
+    bool first = true;
     for (auto const eid : eids) {
       update_orbitals(eid, first);
       first = false;
     }
   }
-
-  
-
 }
 
 inline auto
@@ -419,8 +420,6 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   auto& sps       = gfx_state.sps;
   auto& ttable    = gfx_state.texture_table;
 
-  
-
   // TODO: Move out into state somewhere.
   auto const make_skybox_renderer = [&]() {
     auto&              skybox_sp = sps.ref_sp("skybox");
@@ -479,10 +478,10 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   static auto default_entity_renderer = EntityRenderer{};
   static auto black_entity_renderer   = BlackEntityRenderer{};
 
-  auto const  fmatrices = FrameMatrices::from_camera(camera);
-  FrameState  fstate{fmatrices, es, zs};
+  auto const fmatrices = FrameMatrices::from_camera(camera);
+  FrameState fstate{fmatrices, es, zs};
 
-  DrawState ds;
+  DrawState   ds;
   RenderState rstate{fstate, ds};
 
   {
@@ -491,9 +490,8 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     update_playerpos(logger, ldata, ft);
     update_nearbytargets(ldata, registry, ft);
 
-
     update_orbital_bodies(es, ldata, fstate.view_matrix(), fstate.projection_matrix(), registry,
-        ft);
+                          ft);
     skybox.update(ft);
 
     update_visible_entities(lm, registry);
@@ -508,18 +506,13 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   bool const  graphics_mode_advanced = GameGraphicsMode::Advanced == graphics_settings.mode;
   bool const  draw_water_advanced    = draw_water && graphics_mode_advanced;
 
-
   auto&                   sunshaft_sp = sps.ref_sp("sunshaft");
   static SunshaftRenderer sunshaft_renderer{logger, screen_size, sunshaft_sp};
 
   auto const draw_scene = [&](bool const black_silhoutte) {
     auto const draw_advanced = [&](auto& terrain_renderer, auto& entity_renderer) {
-      auto const& fog_color = ldata.fog.color;
-
-      render::clear_screen(fog_color);
       advanced_water_renderer.render_reflection(es, ds, lm, camera, entity_renderer,
                                                 skybox_renderer, terrain_renderer, rng, ft);
-      render::clear_screen(fog_color);
       advanced_water_renderer.render_refraction(es, ds, lm, camera, entity_renderer,
                                                 skybox_renderer, terrain_renderer, rng, ft);
     };

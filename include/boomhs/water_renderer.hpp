@@ -126,14 +126,16 @@ class AdvancedWaterRenderer
   }
 
   template <typename TerrainRenderer, typename EntityRenderer>
-  void
-  advanced_common(RenderState& rstate, EngineState& es, LevelManager& lm, DrawState& ds,
-                           EntityRenderer& er, SkyboxRenderer& sr, TerrainRenderer& tr,
-                           stlw::float_generator& rng, window::FrameTime const& ft)
+  void advanced_common(RenderState& rstate, EngineState& es, LevelManager& lm, DrawState& ds,
+                       EntityRenderer& er, SkyboxRenderer& sr, TerrainRenderer& tr,
+                       stlw::float_generator& rng, window::FrameTime const& ft)
   {
-    auto&       zs        = lm.active();
-    auto&       ldata     = zs.level_data;
-    auto&       registry  = zs.registry;
+    auto&       zs       = lm.active();
+    auto const& ldata    = zs.level_data;
+    auto&       registry = zs.registry;
+
+    auto const& fog_color = ldata.fog.color;
+    render::clear_screen(fog_color);
 
     if (es.draw_skybox) {
       sr.render(rstate, ds, ft);
