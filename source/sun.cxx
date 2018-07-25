@@ -87,8 +87,7 @@ SunshaftRenderer::render(RenderState& rstate, DrawState& ds, LevelManager& lm, C
 
     auto& vao = dinfo.vao();
     glActiveTexture(GL_TEXTURE0);
-    vao.while_bound(logger,
-                    [&]() { render::draw_2d(rstate, GL_TRIANGLES, sp_, ti, dinfo, false); });
+    vao.while_bound(logger, [&]() { render::draw_2d(rstate, GL_TRIANGLES, sp_, ti, dinfo); });
     // glActiveTexture(GL_TEXTURE0);
   });
 }

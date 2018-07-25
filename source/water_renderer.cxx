@@ -321,16 +321,12 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
     assert(winfo.dinfo);
     auto& dinfo = *winfo.dinfo;
 
-    bool constexpr SET_NORMALMATRIX = false;
-
     sp_.set_uniform_vec3(logger, "u_camera_position", camera.world_position());
     sp_.set_uniform_float1(logger, "u_wave_offset", winfo.wave_offset);
     sp_.set_uniform_float1(logger, "u_wavestrength", winfo.wave_strength);
 
     sp_.set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
     sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
-
-    ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
 
     glActiveTexture(GL_TEXTURE0);
     bind::global_bind(logger, diffuse_);
@@ -351,12 +347,11 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
     glActiveTexture(GL_TEXTURE5);
     bind::global_bind(logger, refraction_.dbo);
 
-    auto const model_matrix = transform.model_matrix();
+    ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
+    bool constexpr SET_NORMALMATRIX = false;
+    auto const model_matrix         = transform.model_matrix();
     render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, transform.translation, model_matrix, sp_,
                              dinfo, water_material, registry, SET_NORMALMATRIX);
-
-    // glDisable(GL_BLEND);
-
     bind::global_unbind(logger, diffuse_);
     bind::global_unbind(logger, reflection_.tbo);
     bind::global_unbind(logger, reflection_.rbo.resource());

@@ -78,7 +78,8 @@ struct CWState
 struct BlendState
 {
   GLboolean enabled;
-  GLint     source, dest;
+  GLint     source_alpha, dest_alpha;
+  GLint     source_rgb, dest_rgb;
 };
 
 } // namespace boomhs
@@ -92,14 +93,14 @@ struct BlendState
   ON_SCOPE_EXIT([&]() { render::set_blendstate(blend_state); });
 
 #define ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT()                                                   \
+  PUSH_BLEND_STATE_UNTIL_END_OF_SCOPE();                                                           \
   glEnable(GL_BLEND);                                                                              \
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);                                               \
-  ON_SCOPE_EXIT([]() { glDisable(GL_BLEND); });
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 #define ENABLE_ADDITIVE_BLENDING_UNTIL_SCOPE_EXIT()                                                \
+  PUSH_BLEND_STATE_UNTIL_END_OF_SCOPE();                                                           \
   glEnable(GL_BLEND);                                                                              \
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE);                                                               \
-  ON_SCOPE_EXIT([]() { glDisable(GL_BLEND); });
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 namespace boomhs::render
 {
@@ -124,11 +125,10 @@ clear_screen(opengl::Color const&);
 
 // TODO: keep these extract rest to sub-renderers
 void
-draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::DrawInfo&, bool);
+draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::DrawInfo&);
 
 void
-draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&,
-        bool);
+draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&);
 
 void
 draw_3dlightsource(RenderState&, GLenum, glm::mat4 const&, opengl::ShaderProgram&,

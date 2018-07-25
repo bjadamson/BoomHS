@@ -2,7 +2,7 @@
 This repository contains the source code for the <b>BoomHS</b> project. BoomHS is a project in
 active development.
 
-![Alt text](/screenshots/35.png?raw=true "06/24/2018")
+![Alt text](/screenshots/33.png?raw=true "06/24/2018")
 ![Alt text](/screenshots/32.png?raw=true "05/18/2018.")
 
 ## Table of contents

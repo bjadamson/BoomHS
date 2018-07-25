@@ -200,10 +200,13 @@ BlendState
 read_blendstate()
 {
   BlendState bstate;
-  glGetBooleanv(GL_BLEND, &bstate.enabled);
+  bstate.enabled = glIsEnabled(GL_BLEND);
 
-  glGetIntegerv(GL_BLEND_SRC_ALPHA, &bstate.source);
-  glGetIntegerv(GL_BLEND_DST_ALPHA, &bstate.dest);
+  glGetIntegerv(GL_BLEND_SRC_ALPHA, &bstate.source_alpha);
+  glGetIntegerv(GL_BLEND_DST_ALPHA, &bstate.dest_alpha);
+
+  glGetIntegerv(GL_BLEND_SRC_RGB, &bstate.source_rgb);
+  glGetIntegerv(GL_BLEND_DST_RGB, &bstate.dest_rgb);
 
   return bstate;
 }
@@ -211,9 +214,10 @@ read_blendstate()
 void
 set_blendstate(BlendState const& state)
 {
+  glBlendFuncSeparate(state.source_rgb, state.dest_rgb, state.source_alpha, state.dest_alpha);
+
   if (state.enabled) {
     glEnable(GL_BLEND);
-    glBlendFunc(state.source, state.dest);
   }
   else {
     glDisable(GL_BLEND);
@@ -257,7 +261,7 @@ clear_screen(Color const& color)
 }
 
 void
-draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo, bool)
+draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
 {
   disable_depth_tests();
   ON_SCOPE_EXIT([]() { enable_depth_tests(); });
@@ -266,12 +270,11 @@ draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo
 }
 
 void
-draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, TextureInfo& ti, DrawInfo& dinfo,
-        bool const alpha_blend)
+draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, TextureInfo& ti, DrawInfo& dinfo)
 {
   auto& fstate = rstate.fs;
   auto& logger = fstate.es.logger;
-  ti.while_bound(logger, [&]() { draw_2d(rstate, dm, sp, dinfo, alpha_blend); });
+  ti.while_bound(logger, [&]() { draw_2d(rstate, dm, sp, dinfo); });
 }
 
 void
@@ -587,7 +590,7 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
     glActiveTexture(GL_TEXTURE0);
 
     auto& vao = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo, false); });
+    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
 
     glActiveTexture(GL_TEXTURE0);
   });
@@ -621,7 +624,7 @@ draw_inventory_overlay(RenderState& rstate)
     set_modelmatrix(logger, model_matrix, sp);
 
     auto& vao = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, dinfo, true); });
+    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, dinfo); });
   });
 }
 
@@ -766,7 +769,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
     transform.scale = glm::vec3{scale};
     auto& vao       = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, *texture_o, dinfo, true); });
+    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, *texture_o, dinfo); });
   };
 
   auto const draw_glow = [&]() {
@@ -780,7 +783,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
     transform.scale = glm::vec3{scale};
     auto& vao       = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, *texture_o, dinfo, true); });
+    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, *texture_o, dinfo); });
   };
 
   ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();

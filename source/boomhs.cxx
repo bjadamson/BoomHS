@@ -516,14 +516,9 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
       advanced_water_renderer.render_refraction(es, ds, lm, camera, entity_renderer,
                                                 skybox_renderer, terrain_renderer, rng, ft);
     };
-    if (draw_water_advanced) {
+    if (draw_water && draw_water_advanced && !black_silhoutte) {
       // Render the scene to the refraction and reflection FBOs
-      if (black_silhoutte) {
-        draw_advanced(black_terrain_renderer, black_entity_renderer);
-      }
-      else {
-        draw_advanced(basic_terrain_renderer, default_entity_renderer);
-      }
+      draw_advanced(basic_terrain_renderer, default_entity_renderer);
     }
 
     // render scene
