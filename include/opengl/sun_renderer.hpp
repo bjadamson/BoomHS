@@ -9,16 +9,20 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
+namespace boomhs
+{
+class Camera;
+class LevelManager;
+} // namespace boomhs
+
 namespace window
 {
 class FrameTime;
 } // namespace window
 
-namespace boomhs
+namespace opengl
 {
-class Camera;
 class DrawState;
-class LevelManager;
 class RenderState;
 
 struct SunshaftBuffers
@@ -27,7 +31,7 @@ struct SunshaftBuffers
   opengl::TextureInfo  tbo;
   opengl::RenderBuffer rbo;
 
-  SunshaftBuffers(stlw::Logger&, ScreenSize const&);
+  SunshaftBuffers(stlw::Logger&, boomhs::ScreenSize const&);
 
   NO_COPY(SunshaftBuffers);
   MOVE_DEFAULT(SunshaftBuffers);
@@ -41,7 +45,7 @@ class SunshaftRenderer
 public:
   MOVE_CONSTRUCTIBLE_ONLY(SunshaftRenderer);
 
-  explicit SunshaftRenderer(stlw::Logger&, ScreenSize const&, opengl::ShaderProgram&);
+  explicit SunshaftRenderer(stlw::Logger&, boomhs::ScreenSize const&, opengl::ShaderProgram&);
 
   auto& texture_info() { return buffers_.tbo; }
 
@@ -51,7 +55,8 @@ public:
     buffers_.fbo->while_bound(logger, fn);
   }
 
-  void render(RenderState&, DrawState&, LevelManager&, Camera&, window::FrameTime const&);
+  void render(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&,
+              window::FrameTime const&);
 };
 
-} // namespace boomhs
+} // namespace opengl

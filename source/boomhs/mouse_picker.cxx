@@ -1,11 +1,10 @@
 #include <boomhs/dimensions.hpp>
 #include <boomhs/mouse_picker.hpp>
-#include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
 
-namespace
-{
-} // namespace
+#include <opengl/frame.hpp>
+
+using namespace opengl;
 
 namespace boomhs
 {

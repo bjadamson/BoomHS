@@ -1,15 +1,15 @@
 #pragma once
 #include <boomhs/camera.hpp>
 #include <boomhs/dimensions.hpp>
-#include <boomhs/frame.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/level_manager.hpp>
-#include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
 
 #include <opengl/bind.hpp>
+#include <opengl/frame.hpp>
 #include <opengl/framebuffer.hpp>
 #include <opengl/renderbuffer.hpp>
+#include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/skybox_renderer.hpp>
 #include <opengl/texture.hpp>
@@ -46,8 +46,8 @@ public:
   BlackWaterRenderer(stlw::Logger&, opengl::ShaderProgram&);
   MOVE_CONSTRUCTIBLE_ONLY(BlackWaterRenderer);
 
-  void render_water(boomhs::RenderState&, boomhs::DrawState&, boomhs::LevelManager&,
-                    boomhs::Camera&, window::FrameTime const&);
+  void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&,
+                    window::FrameTime const&);
 };
 
 class BasicWaterRenderer
@@ -62,8 +62,8 @@ public:
                      opengl::ShaderProgram&);
   MOVE_CONSTRUCTIBLE_ONLY(BasicWaterRenderer);
 
-  void render_water(boomhs::RenderState&, boomhs::DrawState&, boomhs::LevelManager&,
-                    boomhs::Camera&, window::FrameTime const&);
+  void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&,
+                    window::FrameTime const&);
 };
 
 class MediumWaterRenderer
@@ -78,8 +78,8 @@ public:
                       opengl::ShaderProgram&);
   MOVE_CONSTRUCTIBLE_ONLY(MediumWaterRenderer);
 
-  void render_water(boomhs::RenderState&, boomhs::DrawState&, boomhs::LevelManager&,
-                    boomhs::Camera&, window::FrameTime const&);
+  void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&,
+                    window::FrameTime const&);
 };
 
 struct ReflectionBuffers
@@ -129,17 +129,16 @@ class AdvancedWaterRenderer
   }
 
   template <typename TerrainRenderer, typename EntityRenderer>
-  void
-  advanced_common(boomhs::RenderState& rstate, boomhs::EngineState& es, boomhs::LevelManager& lm,
-                  boomhs::DrawState& ds, EntityRenderer& er, SkyboxRenderer& sr,
-                  TerrainRenderer& tr, stlw::float_generator& rng, window::FrameTime const& ft)
+  void advanced_common(RenderState& rstate, boomhs::EngineState& es, boomhs::LevelManager& lm,
+                       DrawState& ds, EntityRenderer& er, SkyboxRenderer& sr, TerrainRenderer& tr,
+                       stlw::float_generator& rng, window::FrameTime const& ft)
   {
     auto&       zs       = lm.active();
     auto const& ldata    = zs.level_data;
     auto&       registry = zs.registry;
 
     auto const& fog_color = ldata.fog.color;
-    boomhs::render::clear_screen(fog_color);
+    render::clear_screen(fog_color);
 
     if (es.draw_skybox) {
       sr.render(rstate, ds, ft);
@@ -160,7 +159,7 @@ public:
 
   template <typename TerrainRenderer, typename EntityRenderer>
   void
-  render_reflection(boomhs::EngineState& es, boomhs::DrawState& ds, boomhs::LevelManager& lm,
+  render_reflection(boomhs::EngineState& es, DrawState& ds, boomhs::LevelManager& lm,
                     boomhs::Camera& camera, EntityRenderer& er, SkyboxRenderer& sr,
                     TerrainRenderer& tr, stlw::float_generator& rng, window::FrameTime const& ft)
   {
@@ -179,19 +178,19 @@ public:
     glm::vec3 camera_pos = camera.world_position();
     camera_pos.y         = -camera_pos.y;
 
-    auto const fmatrices = boomhs::FrameMatrices::from_camera_withposition(camera, camera_pos);
-    boomhs::FrameState  fstate{fmatrices, es, zs};
-    boomhs::RenderState rstate{fstate, ds};
+    auto const  fmatrices = FrameMatrices::from_camera_withposition(camera, camera_pos);
+    FrameState  fstate{fmatrices, es, zs};
+    RenderState rstate{fstate, ds};
 
     with_reflection_fbo(logger, [&]() {
       advanced_common(rstate, es, lm, ds, er, sr, tr, rng, ft);
-      boomhs::render::render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
+      render::render_scene(rstate, lm, rng, ft, ABOVE_VECTOR);
     });
   }
 
   template <typename TerrainRenderer, typename EntityRenderer>
   void
-  render_refraction(boomhs::EngineState& es, boomhs::DrawState& ds, boomhs::LevelManager& lm,
+  render_refraction(boomhs::EngineState& es, DrawState& ds, boomhs::LevelManager& lm,
                     boomhs::Camera& camera, EntityRenderer& er, SkyboxRenderer& sr,
                     TerrainRenderer& tr, stlw::float_generator& rng, window::FrameTime const& ft)
   {
@@ -201,18 +200,18 @@ public:
     auto&       registry  = zs.registry;
     auto const& fog_color = ldata.fog.color;
 
-    auto const          fmatrices = boomhs::FrameMatrices::from_camera(camera);
-    boomhs::FrameState  fstate{fmatrices, es, zs};
-    boomhs::RenderState rstate{fstate, ds};
+    auto const  fmatrices = FrameMatrices::from_camera(camera);
+    FrameState  fstate{fmatrices, es, zs};
+    RenderState rstate{fstate, ds};
 
     with_refraction_fbo(logger, [&]() {
       advanced_common(rstate, es, lm, ds, er, sr, tr, rng, ft);
-      boomhs::render::render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
+      render::render_scene(rstate, lm, rng, ft, BENEATH_VECTOR);
     });
   }
 
-  void render_water(boomhs::RenderState&, boomhs::DrawState&, boomhs::LevelManager&,
-                    boomhs::Camera&, window::FrameTime const&);
+  void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&,
+                    window::FrameTime const&);
 };
 
 } // namespace opengl

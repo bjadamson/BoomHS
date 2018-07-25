@@ -1,12 +1,12 @@
 #include <opengl/water_renderer.hpp>
 #include <opengl/buffer.hpp>
 #include <opengl/gpu.hpp>
+#include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
 
 #include <boomhs/camera.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mesh.hpp>
-#include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/water.hpp>

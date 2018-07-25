@@ -3,12 +3,6 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace boomhs
-{
-struct RenderState;
-struct DrawState;
-} // namespace boomhs
-
 namespace window
 {
 class FrameTime;
@@ -16,6 +10,8 @@ class FrameTime;
 
 namespace opengl
 {
+struct RenderState;
+struct DrawState;
 class ShaderProgram;
 struct TextureInfo;
 
@@ -32,7 +28,7 @@ public:
   SkyboxRenderer(stlw::Logger&, opengl::DrawInfo&&, opengl::TextureInfo&, opengl::TextureInfo&,
                  opengl::ShaderProgram&);
 
-  void render(boomhs::RenderState&, boomhs::DrawState&, window::FrameTime const&);
+  void render(RenderState&, DrawState&, window::FrameTime const&);
   void set_day(opengl::TextureInfo*);
   void set_night(opengl::TextureInfo*);
 };

@@ -11,7 +11,6 @@
 namespace boomhs
 {
 class EntityRegistry;
-struct RenderState;
 class Terrain;
 } // namespace boomhs
 
@@ -22,6 +21,7 @@ class FrameTime;
 
 namespace opengl
 {
+struct RenderState;
 class ShaderProgram;
 class TextureTable;
 
@@ -35,7 +35,7 @@ public:
   opengl::DebugBoundCheck debug_check;
 
   // methods
-  void render(boomhs::RenderState&, boomhs::EntityRegistry& registry, window::FrameTime const&,
+  void render(RenderState&, boomhs::EntityRegistry& registry, window::FrameTime const&,
               glm::vec4 const&);
 
   void bind_impl(stlw::Logger&, boomhs::Terrain const&, opengl::TextureTable&);
@@ -54,8 +54,7 @@ public:
   BlackTerrainRenderer(opengl::ShaderProgram&);
 
   // methods
-  void
-  render(boomhs::RenderState&, boomhs::EntityRegistry&, window::FrameTime const&, glm::vec4 const&);
+  void render(RenderState&, boomhs::EntityRegistry&, window::FrameTime const&, glm::vec4 const&);
 };
 
 } // namespace opengl

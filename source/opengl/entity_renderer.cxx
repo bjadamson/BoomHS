@@ -4,10 +4,12 @@
 #include <boomhs/npc.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/player.hpp>
-#include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tree.hpp>
 
+#include <opengl/renderer.hpp>
+
+#include <stlw/log.hpp>
 #include <stlw/random.hpp>
 #include <window/timer.hpp>
 

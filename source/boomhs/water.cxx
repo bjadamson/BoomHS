@@ -1,7 +1,6 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mesh.hpp>
-#include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/water.hpp>

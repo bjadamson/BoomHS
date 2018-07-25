@@ -1,7 +1,8 @@
-#include <boomhs/frame.hpp>
 #include <boomhs/frustum.hpp>
+#include <opengl/frame.hpp>
 
 using namespace boomhs;
+using namespace opengl;
 
 // Algorithm(s) adopted/modified from:
 // https://github.com/gametutorials/tutorials/blob/master/OpenGL/Frustum%20Culling/Frustum.cpp

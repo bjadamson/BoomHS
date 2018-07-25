@@ -3,8 +3,9 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/main_menu.hpp>
-#include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
+
+#include <opengl/renderer.hpp>
 
 #include <stlw/log.hpp>
 #include <stlw/random.hpp>
@@ -109,7 +110,7 @@ start(stlw::Logger& logger, Engine& engine)
 
   // Initialize opengl
   auto const dimensions = engine.dimensions();
-  boomhs::render::init(logger, dimensions);
+  opengl::render::init(logger, dimensions);
 
   // Initialize openAL
   ALCdevice* al_device = alcOpenDevice(nullptr);

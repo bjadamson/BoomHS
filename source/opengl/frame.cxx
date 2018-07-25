@@ -1,8 +1,11 @@
+#include <opengl/frame.hpp>
+
 #include <boomhs/camera.hpp>
-#include <boomhs/frame.hpp>
 #include <boomhs/state.hpp>
 
-namespace boomhs
+using namespace boomhs;
+
+namespace opengl
 {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,4 +86,4 @@ FrameState::view_matrix() const
   return fmatrices_.view;
 }
 
-} // namespace boomhs
+} // namespace opengl

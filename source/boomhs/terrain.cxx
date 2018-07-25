@@ -1,10 +1,10 @@
 #include <boomhs/mesh.hpp>
-#include <opengl/gpu.hpp>
 #include <boomhs/obj.hpp>
-#include <boomhs/renderer.hpp>
-#include <opengl/shader.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
+
+#include <opengl/gpu.hpp>
+#include <opengl/shader.hpp>
 
 #include <cassert>
 #include <stlw/algorithm.hpp>

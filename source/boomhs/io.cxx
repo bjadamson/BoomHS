@@ -4,9 +4,10 @@
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mouse_picker.hpp>
 #include <boomhs/player.hpp>
-#include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
+
+#include <opengl/frame.hpp>
 
 #include <window/controller.hpp>
 #include <window/sdl_window.hpp>

@@ -1,10 +1,8 @@
 #include <boomhs/audio.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
-#include <boomhs/frame.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/orbital_body.hpp>
-#include <boomhs/renderer.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/time.hpp>
@@ -13,6 +11,7 @@
 #include <boomhs/ui_state.hpp>
 #include <boomhs/water.hpp>
 
+#include <opengl/frame.hpp>
 #include <opengl/global.hpp>
 #include <opengl/skybox_renderer.hpp>
 

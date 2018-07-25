@@ -8,6 +8,10 @@ namespace boomhs
 class Camera;
 class EngineState;
 class ZoneState;
+} // namespace boomhs
+
+namespace opengl
+{
 
 struct FrameMatrices
 {
@@ -15,9 +19,8 @@ struct FrameMatrices
   glm::mat4 const projection;
   glm::mat4 const view;
 
-  static FrameMatrices from_camera_withposition(Camera const&, glm::vec3 const&);
-
-  static FrameMatrices from_camera(Camera const&);
+  static FrameMatrices from_camera_withposition(boomhs::Camera const&, glm::vec3 const&);
+  static FrameMatrices from_camera(boomhs::Camera const&);
 };
 
 struct DrawState
@@ -36,10 +39,10 @@ class FrameState
 
 public:
   NO_COPYMOVE(FrameState);
-  FrameState(FrameMatrices const&, EngineState&, ZoneState&);
+  FrameState(FrameMatrices const&, boomhs::EngineState&, boomhs::ZoneState&);
 
-  EngineState& es;
-  ZoneState&   zs;
+  boomhs::EngineState& es;
+  boomhs::ZoneState&   zs;
 
   glm::vec3 camera_world_position() const;
   glm::mat4 camera_matrix() const;
@@ -47,4 +50,4 @@ public:
   glm::mat4 view_matrix() const;
 };
 
-} // namespace boomhs
+} // namespace opengl

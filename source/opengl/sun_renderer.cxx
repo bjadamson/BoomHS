@@ -2,10 +2,11 @@
 #include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderbuffer.hpp>
+#include <opengl/renderer.hpp>
 
-#include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
 
+using namespace boomhs;
 using namespace opengl;
 using namespace window;
 
@@ -24,7 +25,7 @@ setup(stlw::Logger& logger, TextureInfo& ti, GLint const v)
 
 } // namespace
 
-namespace boomhs
+namespace opengl
 {
 
 SunshaftBuffers::SunshaftBuffers(stlw::Logger& logger, ScreenSize const& ss)
@@ -93,4 +94,4 @@ SunshaftRenderer::render(RenderState& rstate, DrawState& ds, LevelManager& lm, C
   });
 }
 
-} // namespace boomhs
+} // namespace opengl

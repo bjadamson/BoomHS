@@ -13,7 +13,6 @@
 #include <boomhs/npc.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/player.hpp>
-#include <boomhs/renderer.hpp>
 #include <boomhs/rexpaint.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/skybox.hpp>
@@ -25,11 +24,13 @@
 #include <boomhs/water.hpp>
 
 #include <opengl/entity_renderer.hpp>
+#include <opengl/frame.hpp>
 #include <opengl/gpu.hpp>
-#include <opengl/texture.hpp>
+#include <opengl/renderer.hpp>
 #include <opengl/skybox_renderer.hpp>
 #include <opengl/sun_renderer.hpp>
 #include <opengl/terrain_renderer.hpp>
+#include <opengl/texture.hpp>
 #include <opengl/water_renderer.hpp>
 
 #include <extlibs/sdl.hpp>

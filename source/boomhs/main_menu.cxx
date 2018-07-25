@@ -2,7 +2,6 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/main_menu.hpp>
-#include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
 #include <opengl/colors.hpp>
 #include <window/sdl_window.hpp>

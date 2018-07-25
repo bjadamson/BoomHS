@@ -1,10 +1,10 @@
 #include <opengl/terrain_renderer.hpp>
 #include <opengl/buffer.hpp>
 #include <opengl/gpu.hpp>
+#include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
 
 #include <boomhs/heightmap.hpp>
-#include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 
@@ -14,6 +14,7 @@
 #include <cassert>
 
 using namespace boomhs;
+using namespace opengl;
 using namespace window;
 
 namespace

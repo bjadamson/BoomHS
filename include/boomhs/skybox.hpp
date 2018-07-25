@@ -9,9 +9,6 @@ class FrameTime;
 
 namespace boomhs
 {
-class DrawState;
-class RenderState;
-
 class Skybox
 {
   Transform transform_;

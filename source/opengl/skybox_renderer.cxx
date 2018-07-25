@@ -1,8 +1,8 @@
 #include <opengl/skybox_renderer.hpp>
-#include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
 
 #include <opengl/constants.hpp>
+#include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
 #include <stlw/math.hpp>

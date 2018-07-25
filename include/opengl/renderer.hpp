@@ -1,21 +1,14 @@
 #pragma once
 #include <boomhs/components.hpp>
-#include <boomhs/frame.hpp>
 #include <boomhs/tilegrid.hpp>
+
 #include <opengl/colors.hpp>
+#include <opengl/frame.hpp>
 #include <opengl/lighting.hpp>
 #include <stlw/log.hpp>
 
 #include <extlibs/glm.hpp>
 #include <vector>
-
-namespace opengl
-{
-class DrawInfo;
-class ShaderProgram;
-class ShaderPrograms;
-struct TextureInfo;
-} // namespace opengl
 
 namespace window
 {
@@ -25,6 +18,7 @@ class FrameTime;
 namespace boomhs
 {
 class Camera;
+struct Dimensions;
 class EntityRegistry;
 class HandleManager;
 class LevelManager;
@@ -42,9 +36,12 @@ namespace stlw
 class float_generator;
 } // namespace stlw
 
-namespace boomhs
+namespace opengl
 {
-struct Dimensions;
+class DrawInfo;
+class ShaderProgram;
+class ShaderPrograms;
+struct TextureInfo;
 
 struct RenderState
 {
@@ -82,7 +79,7 @@ struct BlendState
   GLint     source_rgb, dest_rgb;
 };
 
-} // namespace boomhs
+} // namespace opengl
 
 #define PUSH_CW_STATE_UNTIL_END_OF_SCOPE()                                                         \
   auto const cw_state = render::read_cwstate();                                                    \
@@ -102,7 +99,7 @@ struct BlendState
   glEnable(GL_BLEND);                                                                              \
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-namespace boomhs::render
+namespace opengl::render
 {
 
 CWState
@@ -121,45 +118,44 @@ void
 init(stlw::Logger&, boomhs::Dimensions const&);
 
 void
-clear_screen(opengl::Color const&);
+clear_screen(Color const&);
 
 // TODO: keep these extract rest to sub-renderers
 void
-draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::DrawInfo&);
+draw_2d(RenderState&, GLenum, ShaderProgram&, DrawInfo&);
 
 void
-draw_2d(RenderState&, GLenum, opengl::ShaderProgram&, opengl::TextureInfo&, opengl::DrawInfo&);
+draw_2d(RenderState&, GLenum, ShaderProgram&, TextureInfo&, DrawInfo&);
 
 void
-draw_3dlightsource(RenderState&, GLenum, glm::mat4 const&, opengl::ShaderProgram&,
-                   opengl::DrawInfo&, EntityID, EntityRegistry&);
+draw_3dlightsource(RenderState&, GLenum, glm::mat4 const&, ShaderProgram&, DrawInfo&,
+                   boomhs::EntityID, boomhs::EntityRegistry&);
 
 void
-draw_3dshape(RenderState&, GLenum, glm::mat4 const&, opengl::ShaderProgram&, opengl::DrawInfo&);
+draw_3dshape(RenderState&, GLenum, glm::mat4 const&, ShaderProgram&, DrawInfo&);
 
 void
-draw_3dblack_water(RenderState&, GLenum, glm::mat4 const&, opengl::ShaderProgram&,
-                   opengl::DrawInfo&);
+draw_3dblack_water(RenderState&, GLenum, glm::mat4 const&, ShaderProgram&, DrawInfo&);
 
 void
-draw_3dlit_shape(RenderState&, GLenum, glm::vec3 const&, glm::mat4 const&, opengl::ShaderProgram&,
-                 opengl::DrawInfo&, opengl::Material const&, EntityRegistry&, bool);
+draw_3dlit_shape(RenderState&, GLenum, glm::vec3 const&, glm::mat4 const&, ShaderProgram&,
+                 DrawInfo&, Material const&, boomhs::EntityRegistry&, bool);
 
 // TODO: move rest to sub-renderers or something
 void
-conditionally_draw_player_vectors(RenderState&, WorldObject const&);
+conditionally_draw_player_vectors(RenderState&, boomhs::WorldObject const&);
 
 void
-draw(RenderState&, GLenum, opengl::ShaderProgram&, opengl::DrawInfo&);
+draw(RenderState&, GLenum, ShaderProgram&, DrawInfo&);
 
 void
-draw_arrow(RenderState&, glm::vec3 const&, glm::vec3 const&, opengl::Color const&);
+draw_arrow(RenderState&, glm::vec3 const&, glm::vec3 const&, Color const&);
 
 void
-draw_arrow_abovetile_and_neighbors(RenderState&, TilePosition const&);
+draw_arrow_abovetile_and_neighbors(RenderState&, boomhs::TilePosition const&);
 
 void
-draw_fbo_testwindow(RenderState&, glm::vec2 const&, glm::vec2 const&, opengl::TextureInfo&);
+draw_fbo_testwindow(RenderState&, glm::vec2 const&, glm::vec2 const&, TextureInfo&);
 
 void
 draw_global_axis(RenderState&);
@@ -180,19 +176,19 @@ void
 draw_stars(RenderState&, window::FrameTime const&);
 
 void
-draw_tilegrid(RenderState&, TiledataState const&, window::FrameTime const&);
+draw_tilegrid(RenderState&, boomhs::TiledataState const&, window::FrameTime const&);
 
 void
-draw_tilegrid(RenderState&, TiledataState const&);
+draw_tilegrid(RenderState&, boomhs::TiledataState const&);
 
 void
-render_scene(RenderState&, LevelManager&, stlw::float_generator&, window::FrameTime const&,
+render_scene(RenderState&, boomhs::LevelManager&, stlw::float_generator&, window::FrameTime const&,
              glm::vec4 const&);
 
 void
-set_modelmatrix(stlw::Logger&, glm::mat4 const&, opengl::ShaderProgram&);
+set_modelmatrix(stlw::Logger&, glm::mat4 const&, ShaderProgram&);
 
 void
-set_mvpmatrix(stlw::Logger&, glm::mat4 const&, glm::mat4 const&, opengl::ShaderProgram&);
+set_mvpmatrix(stlw::Logger&, glm::mat4 const&, glm::mat4 const&, ShaderProgram&);
 
-} // namespace boomhs::render
+} // namespace opengl::render

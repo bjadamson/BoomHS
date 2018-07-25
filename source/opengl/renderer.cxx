@@ -4,11 +4,11 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/frustum.hpp>
 #include <boomhs/player.hpp>
-#include <boomhs/renderer.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tilegrid.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 
+#include <opengl/renderer.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/factory.hpp>
 #include <opengl/global.hpp>
@@ -166,7 +166,7 @@ gl_log_callback(GLenum const source, GLenum const type, GLuint const id, GLenum 
 
 } // namespace
 
-namespace boomhs::render
+namespace opengl::render
 {
 
 CWState
@@ -1024,4 +1024,4 @@ set_mvpmatrix(stlw::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 co
   sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 }
 
-} // namespace boomhs::render
+} // namespace opengl::render
