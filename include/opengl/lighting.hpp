@@ -82,7 +82,7 @@ struct DirectionalLight
   Light light;
 
   glm::vec3 direction       = {};
-  glm::vec3 screenspace_pos = {};
+  glm::vec2 screenspace_pos = {};
 };
 
 struct GlobalLight

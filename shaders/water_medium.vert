@@ -14,8 +14,6 @@ uniform mat4 u_modelmatrix;
 uniform mat4 u_mvpmatrix;
 uniform vec4 u_clipPlane;
 
-const float TILING = 4.0;
-
 void main()
 {
   v_position = vec4(a_position, 1.0);

@@ -76,7 +76,7 @@ draw_menu(EngineState& es, ImVec2 const& size, WaterAudioSystem& water_audio)
                                                 GRAPHICS_MODE);
         }
         ImGui::Separator();
-        ImGui::Checkbox("Sun Shafts", &gs.disable_sunshafts);
+        ImGui::Checkbox("Disable Sun Shafts", &gs.disable_sunshafts);
       };
       imgui_cxx::with_window(fn, "Options Window");
     }
@@ -122,16 +122,12 @@ namespace boomhs::main_menu
 void
 draw(EngineState& es, ImVec2 const& size, WaterAudioSystem& water_audio)
 {
-  render::clear_screen(LOC::BLACK);
   draw_menu(es, size, water_audio);
 }
 
 void
 process_event(GameState& state, SDL_Event& event, Camera& camera, FrameTime const& ft)
 {
-  auto& es = state.engine_state;
-  auto& ui = es.ui_state;
-
   switch (event.type) {
   case SDL_KEYDOWN:
     process_keydown(state, event);

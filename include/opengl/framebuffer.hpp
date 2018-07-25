@@ -35,4 +35,12 @@ struct FBInfo
 };
 using FrameBuffer = stlw::AutoResource<FBInfo>;
 
+inline auto
+make_fbo(stlw::Logger& logger, boomhs::ScreenSize const& ss)
+{
+  FBInfo fb{{0, 0, ss.width, ss.height}, ss};
+  fb.while_bound(logger, []() { glDrawBuffer(GL_COLOR_ATTACHMENT0); });
+  return fb;
+}
+
 } // namespace opengl

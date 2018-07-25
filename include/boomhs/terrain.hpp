@@ -71,14 +71,9 @@ public:
           opengl::Heightmap&&);
 
   // public members
-  TerrainConfig           config;
-  opengl::Heightmap       heightmap;
-  opengl::DebugBoundCheck debug_check;
-  TerrainTextureNames     bound_textures;
-
-  void bind_impl(stlw::Logger&, opengl::TextureTable&);
-  void unbind_impl(stlw::Logger&, opengl::TextureTable&);
-  DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
+  TerrainConfig       config;
+  opengl::Heightmap   heightmap;
+  TerrainTextureNames bound_textures;
 
   auto&       draw_info() { return di_; }
   auto const& position() const { return pos_; }
@@ -88,6 +83,37 @@ public:
 
   auto&       shader() { return *sp_; }
   std::string to_string() const;
+};
+
+class BasicTerrainRenderer
+{
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(BasicTerrainRenderer);
+  BasicTerrainRenderer() = default;
+
+  // fields
+  opengl::DebugBoundCheck debug_check;
+
+  // methods
+  void render(RenderState&, EntityRegistry& registry, window::FrameTime const&, glm::vec4 const&);
+
+  void bind_impl(stlw::Logger&, Terrain const&, opengl::TextureTable&);
+  void unbind_impl(stlw::Logger&, Terrain const&, opengl::TextureTable&);
+  DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
+
+  std::string to_string() const;
+};
+
+class BlackTerrainRenderer
+{
+  opengl::ShaderProgram& sp_;
+
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(BlackTerrainRenderer);
+  BlackTerrainRenderer(opengl::ShaderProgram&);
+
+  // methods
+  void render(RenderState&, EntityRegistry& registry, window::FrameTime const&, glm::vec4 const&);
 };
 
 class TerrainArray

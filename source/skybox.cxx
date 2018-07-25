@@ -107,10 +107,7 @@ SkyboxRenderer::render(RenderState& rstate, DrawState& ds, FrameTime const& ft)
   auto const proj_matrix   = fstate.projection_matrix();
   auto const camera_matrix = proj_matrix * view_matrix;
 
-  bool constexpr ENABLE_ALPHABLEND = false;
-  auto const draw_fn               = [&]() {
-    render::draw_2d(rstate, GL_TRIANGLES, sp_, dinfo_, ENABLE_ALPHABLEND);
-  };
+  auto const draw_fn = [&]() { render::draw_2d(rstate, GL_TRIANGLES, sp_, dinfo_); };
 
   sp_.while_bound(logger, [&]() {
     {

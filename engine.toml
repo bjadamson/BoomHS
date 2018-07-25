@@ -33,6 +33,11 @@ normal   = { datatype = "float", num = 3 }
 uv       = { datatype = "float", num = 2 }
 
 [[vas]]
+name     = "sunshaft"
+position = { datatype = "float", num = 3 }
+uv       = { datatype = "float", num = 2 }
+
+[[vas]]
 name     = "terrain"
 position = { datatype = "float", num = 3 }
 normal   = { datatype = "float", num = 3 }
@@ -75,6 +80,18 @@ name = "3d_pos_normal_color"
 vertex = "3d_pos_normal_color.vert"
 fragment = "3d_pos_normal_color.frag"
 va = "vertex_normal_color"
+
+[[shaders]]
+name = "silhoutte_black"
+vertex = "silhoutte_black.vert"
+fragment = "silhoutte_black.frag"
+va = "vertex_normal_color"
+
+[[shaders]]
+name = "2dsilhoutte_uv"
+vertex = "2dsilhoutte_uv.vert"
+fragment = "2dsilhoutte_uv.frag"
+va = "vertex_uv"
 
 [[shaders]]
 name = "3d_pos_color"
@@ -134,6 +151,12 @@ name = "terrain"
 vertex = "terrain.vert"
 fragment = "terrain.frag"
 va = "terrain"
+
+[[shaders]]
+name = "sunshaft"
+vertex = "sunshaft.vert"
+fragment = "sunshaft.frag"
+va = "sunshaft"
 
 [[shaders]]
 name = "water_basic"

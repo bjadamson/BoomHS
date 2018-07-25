@@ -2,8 +2,8 @@
 This repository contains the source code for the <b>BoomHS</b> project. BoomHS is a project in
 active development.
 
+![Alt text](/screenshots/33.png?raw=true "06/24/2018")
 ![Alt text](/screenshots/32.png?raw=true "05/18/2018.")
-![Alt text](/screenshots/31.png?raw=true "05/14/2018 - direction change.")
 
 ## Table of contents
 
@@ -193,6 +193,7 @@ surface.
   * Consumables.
 
 ## Screenshots
+![Alt text](/screenshots/31.png?raw=true "05/14/2018 - direction change.")
 ![Alt text](/screenshots/28.png?raw=true "02/25/2018")
 ![Alt text](/screenshots/27.png?raw=true "02/24/2018")
 ![Alt text](/screenshots/26.png?raw=true "02/23/2018")
@@ -208,7 +209,6 @@ surface.
 ![Alt text](/screenshots/15.png?raw=true "01/10/2018")
 ![Alt text](/screenshots/14.png?raw=true "01/02/2018")
 ![Alt text](/screenshots/13.png?raw=true "01/02/2018")
-![Alt text](/screenshots/12.png?raw=true "12/29/2017")
 
 #### links
 * https://github.com/cbaggers/cepl
