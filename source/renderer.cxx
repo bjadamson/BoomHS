@@ -913,23 +913,51 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
   auto& sp     = sps.ref_sp("3d_pos_color");
 
   auto const& leveldata = zs.level_data;
-  auto const& tilegrid  = leveldata.tilegrid();
 
-  Transform  transform;
   bool const show_y = tds.show_yaxis_lines;
-  auto       dinfo  = OG::create_tilegrid(logger, sp.va(), tilegrid, show_y);
 
-  auto const model_matrix = transform.model_matrix();
+  glm::vec3 constexpr GRID_SIZE{20.0f, 0.0f, 20.0f};
+  glm::vec2 constexpr GRID_DIMENSIONS{GRID_SIZE.x, GRID_SIZE.z};
 
-  auto const& ldata = zs.level_data;
+  auto const draw_the_tilegrid = [&](glm::mat4 const& model_matrix, auto const& color) {
+    auto dinfo = OG::create_tilegrid(logger, sp.va(), GRID_DIMENSIONS, show_y, color);
 
-  sp.while_bound(logger, [&]() {
-    auto const camera_matrix = fstate.camera_matrix();
-    set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
+    sp.while_bound(logger, [&]() {
+      auto const camera_matrix = fstate.camera_matrix();
+      set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
 
-    auto& vao = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
-  });
+      auto& vao = dinfo.vao();
+      vao.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
+    });
+  };
+
+
+  Transform transform;
+  draw_the_tilegrid(transform.model_matrix(), LOC::RED);
+
+  transform.translation = glm::vec3{-GRID_SIZE.x, 0.0f, 0};
+  draw_the_tilegrid(transform.model_matrix(), LOC::BLUE);
+
+  transform.translation = glm::vec3{-GRID_SIZE.x, 0.0f, -GRID_SIZE.z};
+  draw_the_tilegrid(transform.model_matrix(), LOC::GREEN);
+
+  transform.translation = glm::vec3{-GRID_SIZE.x, 0.0f, GRID_SIZE.z};
+  draw_the_tilegrid(transform.model_matrix(), LOC::ORANGE);
+
+  transform.translation = glm::vec3{GRID_SIZE.x, 0.0f, 0};
+  draw_the_tilegrid(transform.model_matrix(), LOC::PURPLE);
+
+  transform.translation = glm::vec3{GRID_SIZE.x, 0.0f, -GRID_SIZE.z};
+  draw_the_tilegrid(transform.model_matrix(), LOC::BROWN);
+
+  transform.translation = glm::vec3{GRID_SIZE.x, 0.0f, GRID_SIZE.z};
+  draw_the_tilegrid(transform.model_matrix(), LOC::NAVY);
+
+  transform.translation = glm::vec3{-GRID_SIZE.x, 0.0f, -GRID_SIZE.z};
+  draw_the_tilegrid(transform.model_matrix(), LOC::YELLOW);
+
+  transform.translation = glm::vec3{GRID_SIZE.x, 0.0f, GRID_SIZE.z};
+  draw_the_tilegrid(transform.model_matrix(), LOC::GRAY);
 }
 
 void

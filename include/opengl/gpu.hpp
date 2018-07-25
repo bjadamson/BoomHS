@@ -83,8 +83,7 @@ copy_rectangle_uvs(stlw::Logger&, VertexAttribute const&, OF::RectangleVertices 
 // General
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 DrawInfo
-create_tilegrid(stlw::Logger&, VertexAttribute const&, boomhs::TileGrid const&,
-                bool const show_yaxis_lines, Color const& color = LOC::RED);
+create_tilegrid(stlw::Logger&, VertexAttribute const&, glm::vec2 const&, bool, Color const&);
 
 DrawInfo
 create_modelnormals(stlw::Logger&, VertexAttribute const&, glm::mat4 const&, boomhs::Obj const&,

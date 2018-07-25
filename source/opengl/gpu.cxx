@@ -110,14 +110,12 @@ create_arrow(stlw::Logger &logger, VertexAttribute const& va,
 }
 
 DrawInfo
-create_tilegrid(stlw::Logger &logger, VertexAttribute const& va, TileGrid const& tgrid,
-    bool const show_yaxis_lines, Color const& color)
+create_tilegrid(stlw::Logger &logger, VertexAttribute const& va, glm::vec2 const& dimensions,
+                bool const show_yaxis_lines, Color const& color)
 {
   std::vector<float> vertices;
-  vertices.reserve(tgrid.num_tiles() * 8);
 
   std::vector<GLuint> indices;
-  indices.reserve(tgrid.num_tiles());
 
   size_t count = 0u;
   auto const add_point = [&indices, &vertices, &count, &color](glm::vec3 const& pos) {
@@ -139,7 +137,7 @@ create_tilegrid(stlw::Logger &logger, VertexAttribute const& va, TileGrid const&
   };
 
   auto const visit_fn = [&add_line, &show_yaxis_lines](auto const& pos) {
-    auto const x = pos.x, y = 0ul, z = pos.y;
+    auto const x = pos.x, y = 0.0f, z = pos.y;
 #define P0 glm::vec3{x, y, z}
 #define P1 glm::vec3{x + 1, y, z}
 #define P2 glm::vec3{x + 1, y + 1, z}
@@ -180,7 +178,11 @@ create_tilegrid(stlw::Logger &logger, VertexAttribute const& va, TileGrid const&
 #undef P7
   };
 
-  visit_each(tgrid, visit_fn);
+  FOR(x, dimensions.x) {
+    FOR(y, dimensions.y) {
+      visit_fn(glm::vec2{x, y});
+    }
+  }
 
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{vertices.size(), num_indices};
