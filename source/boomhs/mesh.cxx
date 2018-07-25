@@ -1,6 +1,6 @@
 #include <boomhs/mesh.hpp>
+#include <boomhs/heightmap.hpp>
 #include <cassert>
-#include <opengl/heightmap.hpp>
 #include <stlw/algorithm.hpp>
 
 using namespace boomhs;

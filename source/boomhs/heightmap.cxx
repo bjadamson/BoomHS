@@ -1,11 +1,13 @@
-#include <opengl/heightmap.hpp>
-#include <opengl/texture.hpp>
+#include <boomhs/heightmap.hpp>
 #include <boomhs/terrain.hpp>
+
+#include <opengl/texture.hpp>
+
 #include <stlw/algorithm.hpp>
 
-using namespace boomhs;
+using namespace opengl;
 
-namespace opengl
+namespace boomhs
 {
 
 Heightmap::Heightmap(int const w)
@@ -45,9 +47,9 @@ Heightmap::to_string() const
   return fmt::sprintf("width: %i", width_);
 }
 
-} // ns opengl
+} // ns boomhs
 
-namespace opengl::heightmap
+namespace boomhs::heightmap
 {
 
 HeightmapResult
@@ -63,7 +65,7 @@ load_fromtable(stlw::Logger &logger, TextureTable const& ttable, std::string con
   assert(1 == hm.num_filenames());
   auto const& path = hm.filenames[0];
 
-  return opengl::heightmap::parse(logger, path);
+  return heightmap::parse(logger, path);
 }
 
 ObjVertices
@@ -227,4 +229,4 @@ update_vertices_from_heightmap(stlw::Logger& logger, TerrainConfig const& tc,
   LOG_TRACE("Finished updating vertices from heightmap");
 }
 
-} // ns opengl::heightmap
+} // ns boomhs::heightmap

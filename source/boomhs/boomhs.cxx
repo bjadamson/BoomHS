@@ -4,8 +4,8 @@
 #include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
-#include <boomhs/entity_renderer.hpp>
 #include <boomhs/game_config.hpp>
+#include <boomhs/heightmap.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_assembler.hpp>
 #include <boomhs/level_manager.hpp>
@@ -16,17 +16,21 @@
 #include <boomhs/renderer.hpp>
 #include <boomhs/rexpaint.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/sun.hpp>
+#include <boomhs/skybox.hpp>
+#include <boomhs/terrain.hpp>
 #include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/tree.hpp>
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/water.hpp>
-#include <boomhs/water_renderer.hpp>
 
+#include <opengl/entity_renderer.hpp>
 #include <opengl/gpu.hpp>
-#include <opengl/heightmap.hpp>
 #include <opengl/texture.hpp>
+#include <opengl/skybox_renderer.hpp>
+#include <opengl/sun_renderer.hpp>
+#include <opengl/terrain_renderer.hpp>
+#include <opengl/water_renderer.hpp>
 
 #include <extlibs/sdl.hpp>
 #include <window/controller.hpp>
@@ -304,8 +308,7 @@ create_gamestate(Engine& engine, EngineState& engine_state, Camera& camera)
     auto&               ttable = gfx_state.texture_table;
 
     char const* HEIGHTMAP_NAME = "Area0-HM";
-    auto const  heightmap =
-        TRY_MOVEOUT(opengl::heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
+    auto const  heightmap = TRY_MOVEOUT(heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
 
     TerrainGridConfig const tgc;
     auto                    tg = terrain::generate_grid(logger, tgc, tc, heightmap, sp);

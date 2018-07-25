@@ -1,6 +1,4 @@
 #pragma once
-#include <opengl/texture.hpp>
-
 #include <boomhs/obj.hpp>
 
 #include <stlw/log.hpp>
@@ -13,6 +11,11 @@
 namespace opengl
 {
 struct ImageData;
+class TextureTable;
+} // namespace opengl
+
+namespace boomhs
+{
 
 class Heightmap
 {
@@ -41,24 +44,24 @@ public:
 
 using HeightmapResult = Result<Heightmap, std::string>;
 
-} // namespace opengl
+} // namespace boomhs
 
 namespace boomhs
 {
 struct TerrainConfig;
 } // namespace boomhs
 
-namespace opengl::heightmap
+namespace boomhs::heightmap
 {
 
 HeightmapResult
-load_fromtable(stlw::Logger&, TextureTable const&, std::string const&);
+load_fromtable(stlw::Logger&, opengl::TextureTable const&, std::string const&);
 
 boomhs::ObjVertices
 generate_normals(int, int, bool, Heightmap const&);
 
 HeightmapResult
-parse(ImageData const&);
+parse(opengl::ImageData const&);
 
 HeightmapResult
 parse(stlw::Logger&, char const*);
@@ -70,4 +73,4 @@ void
 update_vertices_from_heightmap(stlw::Logger&, boomhs::TerrainConfig const&, Heightmap const&,
                                boomhs::ObjVertices&);
 
-} // namespace opengl::heightmap
+} // namespace boomhs::heightmap

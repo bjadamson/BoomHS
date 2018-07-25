@@ -1,5 +1,6 @@
+#include <opengl/entity_renderer.hpp>
+
 #include <boomhs/billboard.hpp>
-#include <boomhs/entity_renderer.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/player.hpp>
@@ -164,7 +165,7 @@ render_common_entities(RenderState& rstate, stlw::float_generator& rng, FrameTim
 
 } // namespace
 
-namespace boomhs
+namespace opengl
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -305,4 +306,4 @@ BlackEntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, Fra
 #undef COMMON_FNS
 }
 
-} // namespace boomhs
+} // namespace opengl

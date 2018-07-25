@@ -1,7 +1,6 @@
 #pragma once
-#include <opengl/bind.hpp>
+#include <boomhs/heightmap.hpp>
 #include <opengl/draw_info.hpp>
-#include <opengl/heightmap.hpp>
 
 #include <stlw/algorithm.hpp>
 #include <stlw/log.hpp>
@@ -26,8 +25,6 @@ class FrameTime;
 
 namespace boomhs
 {
-class EntityRegistry;
-struct RenderState;
 
 struct TerrainTextureNames
 {
@@ -68,11 +65,11 @@ public:
   MOVE_DEFAULT(Terrain);
 
   Terrain(TerrainConfig const&, glm::vec2 const&, opengl::DrawInfo&&, opengl::ShaderProgram&,
-          opengl::Heightmap&&);
+          Heightmap&&);
 
   // public members
   TerrainConfig       config;
-  opengl::Heightmap   heightmap;
+  Heightmap           heightmap;
   TerrainTextureNames bound_textures;
 
   auto&       draw_info() { return di_; }
@@ -83,37 +80,6 @@ public:
 
   auto&       shader() { return *sp_; }
   std::string to_string() const;
-};
-
-class BasicTerrainRenderer
-{
-public:
-  MOVE_CONSTRUCTIBLE_ONLY(BasicTerrainRenderer);
-  BasicTerrainRenderer() = default;
-
-  // fields
-  opengl::DebugBoundCheck debug_check;
-
-  // methods
-  void render(RenderState&, EntityRegistry& registry, window::FrameTime const&, glm::vec4 const&);
-
-  void bind_impl(stlw::Logger&, Terrain const&, opengl::TextureTable&);
-  void unbind_impl(stlw::Logger&, Terrain const&, opengl::TextureTable&);
-  DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
-
-  std::string to_string() const;
-};
-
-class BlackTerrainRenderer
-{
-  opengl::ShaderProgram& sp_;
-
-public:
-  MOVE_CONSTRUCTIBLE_ONLY(BlackTerrainRenderer);
-  BlackTerrainRenderer(opengl::ShaderProgram&);
-
-  // methods
-  void render(RenderState&, EntityRegistry& registry, window::FrameTime const&, glm::vec4 const&);
 };
 
 class TerrainArray
@@ -199,13 +165,13 @@ namespace boomhs::terrain
 
 Terrain
 generate_piece(stlw::Logger&, glm::vec2 const&, TerrainGridConfig const&, TerrainConfig const&,
-               opengl::Heightmap const&, opengl::ShaderProgram&);
+               Heightmap const&, opengl::ShaderProgram&);
 TerrainGrid
-generate_grid(stlw::Logger&, TerrainConfig const&, opengl::Heightmap const&, opengl::ShaderProgram&,
+generate_grid(stlw::Logger&, TerrainConfig const&, Heightmap const&, opengl::ShaderProgram&,
               TerrainGrid const&);
 
 TerrainGrid
-generate_grid(stlw::Logger&, TerrainGridConfig const&, TerrainConfig const&,
-              opengl::Heightmap const&, opengl::ShaderProgram&);
+generate_grid(stlw::Logger&, TerrainGridConfig const&, TerrainConfig const&, Heightmap const&,
+              opengl::ShaderProgram&);
 
 } // namespace boomhs::terrain

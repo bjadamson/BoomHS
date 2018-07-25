@@ -12,7 +12,9 @@
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_state.hpp>
 #include <boomhs/water.hpp>
+
 #include <opengl/global.hpp>
+#include <opengl/skybox_renderer.hpp>
 
 #include <stlw/math.hpp>
 

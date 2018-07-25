@@ -12,15 +12,19 @@ class Camera;
 struct DrawState;
 struct EngineState;
 class LevelManager;
-class SkyboxRenderer;
 class WaterAudioSystem;
 } // namespace boomhs
+
+namespace opengl
+{
+class SkyboxRenderer;
+} // namespace opengl
 
 namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState&, LevelManager&, SkyboxRenderer&, WaterAudioSystem&, window::SDLWindow&, Camera&,
-     DrawState&, window::FrameTime const&);
+draw(EngineState&, LevelManager&, opengl::SkyboxRenderer&, WaterAudioSystem&, window::SDLWindow&,
+     Camera&, DrawState&, window::FrameTime const&);
 
 } // namespace boomhs::ui_debug

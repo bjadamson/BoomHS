@@ -1,9 +1,10 @@
-#include <boomhs/renderer.hpp>
-#include <boomhs/state.hpp>
-#include <boomhs/sun.hpp>
+#include <opengl/sun_renderer.hpp>
 #include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderbuffer.hpp>
+
+#include <boomhs/renderer.hpp>
+#include <boomhs/state.hpp>
 
 using namespace opengl;
 using namespace window;

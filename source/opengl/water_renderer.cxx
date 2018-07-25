@@ -1,3 +1,8 @@
+#include <opengl/water_renderer.hpp>
+#include <opengl/buffer.hpp>
+#include <opengl/gpu.hpp>
+#include <opengl/shader.hpp>
+
 #include <boomhs/camera.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mesh.hpp>
@@ -5,11 +10,6 @@
 #include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/water.hpp>
-#include <boomhs/water_renderer.hpp>
-
-#include <opengl/buffer.hpp>
-#include <opengl/gpu.hpp>
-#include <opengl/shader.hpp>
 
 #include <window/timer.hpp>
 
@@ -91,7 +91,7 @@ render_water_common(Transform& transform, ShaderProgram& sp, RenderState& rstate
 
 } // namespace
 
-namespace boomhs
+namespace opengl
 {
 
 ShaderProgram&
@@ -394,4 +394,4 @@ BlackWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
   render_water_common(transform, sp_, rstate, ds, lm, camera, ft, fn);
 }
 
-} // namespace boomhs
+} // namespace opengl
