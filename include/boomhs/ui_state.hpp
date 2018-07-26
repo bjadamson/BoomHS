@@ -84,9 +84,6 @@ struct UiDebugState
 
   int selected_pointlight = 0;
 
-  std::array<int, 2> selected_tile     = {0};
-  int                selected_tilegrid = 0;
-
   // primitive buffers
   int       eid_buffer = 0;
   glm::vec3 euler_angle_buffer;
@@ -109,10 +106,9 @@ struct UiDebugState
   bool show_skyboxwindow      = false;
   bool show_time_window       = false;
 
-  bool show_tilegrid_editor_window  = false;
-  bool show_tilegridmaterial_window = false;
-  bool show_terrain_editor_window   = false;
-  bool show_water_window            = false;
+  bool show_terrain_gridmaterial_window = false;
+  bool show_terrain_editor_window       = false;
+  bool show_water_window                = false;
 };
 
 struct UiState

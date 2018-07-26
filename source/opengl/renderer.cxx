@@ -5,8 +5,7 @@
 #include <boomhs/frustum.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/tilegrid.hpp>
-#include <boomhs/tilegrid_algorithms.hpp>
+#include <boomhs/terrain.hpp>
 
 #include <opengl/renderer.hpp>
 #include <opengl/draw_info.hpp>
@@ -467,32 +466,6 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
 }
 
 void
-draw_arrow_abovetile_and_neighbors(RenderState& rstate, TilePosition const& tpos)
-{
-  auto&       fstate = rstate.fs;
-  auto&       es     = fstate.es;
-  auto&       zs     = fstate.zs;
-  auto const& ldata  = zs.level_data;
-
-  glm::vec3 constexpr offset{0.5f, 2.0f, 0.5f};
-
-  auto const draw_the_arrow = [&](auto const& ntpos, auto const& color) {
-    auto const bottom = glm::vec3{ntpos.x + offset.x, offset.y, ntpos.y + offset.y};
-    auto const top    = bottom + (Y_UNIT_VECTOR * 2.0f);
-
-    draw_arrow(rstate, top, bottom, color);
-  };
-
-  auto const& tgrid    = ldata.tilegrid();
-  auto const neighbors = find_immediate_neighbors(tgrid, tpos, TileLookupBehavior::ALL_8_DIRECTIONS,
-                                                  [](auto const& tpos) { return true; });
-  assert(neighbors.size() <= 8);
-
-  draw_the_arrow(tpos, LOC::BLUE);
-  FOR(i, neighbors.size()) { draw_the_arrow(neighbors[i], LOC::LIME_GREEN); }
-}
-
-void
 draw_global_axis(RenderState& rstate)
 {
   auto& fstate = rstate.fs;
@@ -629,94 +602,6 @@ draw_inventory_overlay(RenderState& rstate)
 }
 
 void
-draw_tilegrid(RenderState& rstate, TiledataState const& tilegrid_state, FrameTime const& ft)
-{
-  auto&       fstate = rstate.fs;
-  auto&       es     = fstate.es;
-  auto&       zs     = fstate.zs;
-  auto const& ldata  = zs.level_data;
-
-  auto& logger = es.logger;
-  assert(zs.gfx_state.gpu_state.tiles);
-  auto& tile_handles = *zs.gfx_state.gpu_state.tiles;
-  auto& registry     = zs.registry;
-  auto& sps          = zs.gfx_state.sps;
-
-  auto const& tilegrid  = ldata.tilegrid();
-  auto const& tiletable = ldata.tiletable();
-
-  auto const& draw_tile_helper = [&](auto& sp, glm::vec3 const& position, DrawInfo& dinfo,
-                                     Tile const& tile, glm::mat4 const& model_mat) {
-    auto const& tileinfo = tiletable[tile.type];
-    auto const& material = tileinfo.material;
-
-    auto& vao = dinfo.vao();
-    vao.while_bound(logger, [&]() {
-      bool constexpr SET_NORMALMATRIX = true;
-      draw_3dlit_shape(rstate, GL_TRIANGLES, position, model_mat, sp, dinfo, material, registry,
-                       SET_NORMALMATRIX);
-    });
-  };
-  auto const draw_tile = [&](auto const& tile_pos) {
-    auto const& tile = tilegrid.data(tile_pos);
-    if (!tilegrid_state.reveal && !tile.is_visible(registry)) {
-      return;
-    }
-    auto const  tr               = tile_pos + VIEWING_OFFSET;
-    auto&       transform        = registry.get<Transform>(tile.eid);
-    auto const& rotation         = transform.rotation;
-    auto const default_modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, transform.scale);
-    auto&      dinfo             = tile_handles.lookup(logger, tile.type);
-
-    switch (tile.type) {
-    case TileType::FLOOR: {
-      auto&      sp        = sps.ref_sp("floor");
-      auto const scale     = glm::vec3{0.8};
-      auto const modmatrix = stlw::math::calculate_modelmatrix(tr, rotation, scale);
-      sp.while_bound(logger, [&]() { draw_tile_helper(sp, tr, dinfo, tile, modmatrix); });
-    } break;
-    case TileType::WALL: {
-      auto const inverse_model = glm::inverse(glm::mat3{default_modmatrix});
-      auto&      sp            = sps.ref_sp("hashtag");
-      sp.while_bound(logger, [&]() {
-        sp.set_uniform_matrix_4fv(logger, "u_inversemodelmatrix", inverse_model);
-        draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix);
-      });
-    } break;
-    case TileType::RIVER:
-      // Do nothing, we handle rendering rivers elsewhere.
-      break;
-    case TileType::STAIR_DOWN: {
-      auto& sp = sps.ref_sp("stair");
-      sp.while_bound(logger, [&]() {
-        sp.set_uniform_color(logger, "u_color", LOC::WHITE);
-
-        draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix);
-      });
-    } break;
-    case TileType::STAIR_UP: {
-      auto& sp = sps.ref_sp("stair");
-      sp.while_bound(logger, [&]() {
-        sp.set_uniform_color(logger, "u_color", LOC::WHITE);
-
-        draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix);
-      });
-    } break;
-    case TileType::BRIDGE:
-    case TileType::DOOR:
-    case TileType::TELEPORTER:
-    default: {
-      auto& sp = sps.ref_sp("3d_pos_normal_color");
-      sp.while_bound(logger, [&]() { draw_tile_helper(sp, tr, dinfo, tile, default_modmatrix); });
-    } break;
-    case TileType::UNDEFINED:
-      std::abort();
-    }
-  };
-  visit_each(tilegrid, draw_tile);
-}
-
-void
 draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 {
   auto&       fstate   = rstate.fs;
@@ -796,113 +681,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 }
 
 void
-draw_rivers(RenderState& rstate, window::FrameTime const& ft)
-{
-  auto& fstate = rstate.fs;
-  auto& es     = fstate.es;
-  auto& logger = es.logger;
-  auto& zs     = fstate.zs;
-
-  assert(zs.gfx_state.gpu_state.tiles);
-  auto& tile_handles = *zs.gfx_state.gpu_state.tiles;
-  auto& registry     = zs.registry;
-  auto& sps          = zs.gfx_state.sps;
-
-  auto& sp    = sps.ref_sp("river");
-  auto& dinfo = tile_handles.lookup(logger, TileType::RIVER);
-
-  sp.while_bound(logger, [&]() {
-    sp.set_uniform_color(logger, "u_color", LOC::WHITE);
-
-    auto const& level_data = zs.level_data;
-    auto const& tile_info  = level_data.tiletable()[TileType::RIVER];
-    auto const& material   = tile_info.material;
-
-    auto const draw_river = [&](auto const& rinfo) {
-      auto const& left  = rinfo.left;
-      auto const& right = rinfo.right;
-
-      auto const draw_wiggle = [&](auto const& wiggle) {
-        sp.set_uniform_vec2(logger, "u_direction", wiggle.direction);
-        sp.set_uniform_vec2(logger, "u_offset", wiggle.offset);
-
-        auto const&     wp    = wiggle.position;
-        auto const      tr    = glm::vec3{wp.x, WIGGLE_UNDERATH_OFFSET, wp.y} + VIEWING_OFFSET;
-        glm::quat const rot   = glm::angleAxis(glm::degrees(rinfo.wiggle_rotation), Y_UNIT_VECTOR);
-        auto const      scale = glm::vec3{0.5};
-
-        glm::mat3 const modelmatrix   = stlw::math::calculate_modelmatrix(tr, rot, scale);
-        auto const      inverse_model = glm::inverse(glm::mat3{modelmatrix});
-        sp.set_uniform_matrix_4fv(logger, "u_inversemodelmatrix", inverse_model);
-
-        bool constexpr SET_NORMALMATRIX = true;
-        draw_3dlit_shape(rstate, GL_TRIANGLES, tr, modelmatrix, sp, dinfo, material, registry,
-                         SET_NORMALMATRIX);
-      };
-      for (auto const& w : rinfo.wiggles) {
-        if (w.is_visible) {
-          draw_wiggle(w);
-        }
-      }
-    };
-    auto const& rinfos = level_data.rivers();
-    for (auto const& rinfo : rinfos) {
-      draw_river(rinfo);
-    }
-  });
-}
-
-void
-draw_stars(RenderState& rstate, window::FrameTime const& ft)
-{
-  auto& fstate = rstate.fs;
-  auto& es     = fstate.es;
-  auto& logger = es.logger;
-  auto& zs     = fstate.zs;
-
-  assert(zs.gfx_state.gpu_state.tiles);
-  auto& tile_handles = *zs.gfx_state.gpu_state.tiles;
-  auto& registry     = zs.registry;
-  auto& sps          = zs.gfx_state.sps;
-
-  auto const draw_starletter = [&](int const x, int const y, char const* shader,
-                                   TileType const type) {
-    auto& sp = sps.ref_sp(shader);
-    sp.while_bound(logger, [&]() {
-      sp.set_uniform_color_3fv(es.logger, "u_lightcolor", LOC::YELLOW);
-
-      auto& dinfo = tile_handles.lookup(logger, type);
-
-      auto constexpr Z    = 5.0f;
-      auto const      tr  = glm::vec3{x, y, Z};
-      glm::quat const rot = glm::angleAxis(glm::radians(90.0f), Z_UNIT_VECTOR);
-
-      static constexpr double MIN   = 0.3;
-      static constexpr double MAX   = 1.0;
-      static constexpr double SPEED = 0.25;
-      auto const              a     = std::sin(ft.since_start_seconds() * M_PI * SPEED);
-      float const             scale = glm::lerp(MIN, MAX, std::abs(a));
-
-      auto const scalevec     = glm::vec3{scale};
-      auto const model_matrix = stlw::math::calculate_modelmatrix(tr, rot, scalevec);
-
-      auto const& ldata         = zs.level_data;
-      auto const  camera_matrix = fstate.camera_matrix();
-      set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
-
-      auto& vao = dinfo.vao();
-      vao.while_bound(logger, [&]() { draw(rstate, GL_TRIANGLES, sp, dinfo); });
-    });
-  };
-
-  auto constexpr X = -15.0;
-  auto constexpr Y = 5.0;
-  draw_starletter(X, Y, "light", TileType::STAR);
-  draw_starletter(X, Y + 1, "light", TileType::BAR);
-}
-
-void
-draw_tilegrid(RenderState& rstate, TiledataState const& tds)
+draw_grid_lines(RenderState& rstate)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -914,13 +693,12 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
   auto const& leveldata = zs.level_data;
 
-  bool const show_y = tds.show_yaxis_lines;
+  bool const show_y = es.show_yaxis_lines;
 
-  glm::vec3 constexpr GRID_SIZE{20.0f, 0.0f, 20.0f};
-  glm::vec2 constexpr GRID_DIMENSIONS{GRID_SIZE.x, GRID_SIZE.z};
+  glm::vec2 constexpr GRID_DIMENSIONS{20, 20};
 
-  auto const draw_the_tilegrid = [&](glm::mat4 const& model_matrix, auto const& color) {
-    auto dinfo = OG::create_tilegrid(logger, sp.va(), GRID_DIMENSIONS, show_y, color);
+  auto const draw_the_terrain_grid = [&](glm::mat4 const& model_matrix, auto const& color) {
+    auto dinfo = OG::create_terrain_grid(logger, sp.va(), GRID_DIMENSIONS, show_y, color);
 
     sp.while_bound(logger, [&]() {
       auto const camera_matrix = fstate.camera_matrix();
@@ -933,31 +711,31 @@ draw_tilegrid(RenderState& rstate, TiledataState const& tds)
 
 
   Transform transform;
-  draw_the_tilegrid(transform.model_matrix(), LOC::RED);
+  draw_the_terrain_grid(transform.model_matrix(), LOC::RED);
 
-  transform.translation = glm::vec3{-GRID_SIZE.x, 0.0f, 0};
-  draw_the_tilegrid(transform.model_matrix(), LOC::BLUE);
+  transform.translation = glm::vec3{-GRID_DIMENSIONS.x, 0.0f, 0};
+  draw_the_terrain_grid(transform.model_matrix(), LOC::BLUE);
 
-  transform.translation = glm::vec3{-GRID_SIZE.x, 0.0f, -GRID_SIZE.z};
-  draw_the_tilegrid(transform.model_matrix(), LOC::GREEN);
+  transform.translation = glm::vec3{-GRID_DIMENSIONS.x, 0.0f, -GRID_DIMENSIONS.y};
+  draw_the_terrain_grid(transform.model_matrix(), LOC::GREEN);
 
-  transform.translation = glm::vec3{-GRID_SIZE.x, 0.0f, GRID_SIZE.z};
-  draw_the_tilegrid(transform.model_matrix(), LOC::ORANGE);
+  transform.translation = glm::vec3{-GRID_DIMENSIONS.x, 0.0f, GRID_DIMENSIONS.y};
+  draw_the_terrain_grid(transform.model_matrix(), LOC::ORANGE);
 
-  transform.translation = glm::vec3{GRID_SIZE.x, 0.0f, 0};
-  draw_the_tilegrid(transform.model_matrix(), LOC::PURPLE);
+  transform.translation = glm::vec3{GRID_DIMENSIONS.x, 0.0f, 0};
+  draw_the_terrain_grid(transform.model_matrix(), LOC::PURPLE);
 
-  transform.translation = glm::vec3{GRID_SIZE.x, 0.0f, -GRID_SIZE.z};
-  draw_the_tilegrid(transform.model_matrix(), LOC::BROWN);
+  transform.translation = glm::vec3{GRID_DIMENSIONS.x, 0.0f, -GRID_DIMENSIONS.y};
+  draw_the_terrain_grid(transform.model_matrix(), LOC::BROWN);
 
-  transform.translation = glm::vec3{GRID_SIZE.x, 0.0f, GRID_SIZE.z};
-  draw_the_tilegrid(transform.model_matrix(), LOC::NAVY);
+  transform.translation = glm::vec3{GRID_DIMENSIONS.x, 0.0f, GRID_DIMENSIONS.y};
+  draw_the_terrain_grid(transform.model_matrix(), LOC::NAVY);
 
-  transform.translation = glm::vec3{-GRID_SIZE.x, 0.0f, -GRID_SIZE.z};
-  draw_the_tilegrid(transform.model_matrix(), LOC::YELLOW);
+  transform.translation = glm::vec3{-GRID_DIMENSIONS.x, 0.0f, -GRID_DIMENSIONS.y};
+  draw_the_terrain_grid(transform.model_matrix(), LOC::YELLOW);
 
-  transform.translation = glm::vec3{GRID_SIZE.x, 0.0f, GRID_SIZE.z};
-  draw_the_tilegrid(transform.model_matrix(), LOC::GRAY);
+  transform.translation = glm::vec3{GRID_DIMENSIONS.x, 0.0f, GRID_DIMENSIONS.y};
+  draw_the_terrain_grid(transform.model_matrix(), LOC::GRAY);
 }
 
 void
@@ -972,25 +750,13 @@ render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, 
   auto& registry = zs.registry;
   auto& ldata    = zs.level_data;
 
-  auto& tilegrid_state = es.tilegrid_state;
-  if (tilegrid_state.draw_tilegrid) {
-    render::draw_tilegrid(rstate, tilegrid_state, ft);
-    render::draw_rivers(rstate, ft);
-  }
-
-  render::draw_stars(rstate, ft);
   render::draw_targetreticle(rstate, ft);
 
-  if (tilegrid_state.show_grid_lines) {
-    render::draw_tilegrid(rstate, tilegrid_state);
+  if (es.show_grid_lines) {
+    render::draw_grid_lines(rstate);
   }
 
-  auto& player = ldata.player;
-  if (tilegrid_state.show_neighbortile_arrows) {
-    auto const& wp   = player.world_position();
-    auto const  tpos = TilePosition::from_floats_truncated(wp.x, wp.z);
-    render::draw_arrow_abovetile_and_neighbors(rstate, tpos);
-  }
+  auto const& player = ldata.player;
   if (es.show_global_axis) {
     render::draw_global_axis(rstate);
   }

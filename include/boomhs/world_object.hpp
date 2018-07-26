@@ -1,6 +1,5 @@
 #pragma once
 #include <boomhs/components.hpp>
-#include <boomhs/tile.hpp>
 #include <stlw/algorithm.hpp>
 #include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
@@ -53,8 +52,6 @@ public:
 
   void rotate_degrees(float const, glm::vec3 const&);
   void rotate_to_match_camera_rotation(Camera const&);
-
-  TilePosition tile_position() const;
 
   void move_to(glm::vec3 const& pos) { transform().translation = pos; }
   void move_to(float const x, float const y, float const z) { move_to(glm::vec3{x, y, z}); }

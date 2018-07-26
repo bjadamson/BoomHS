@@ -1,7 +1,7 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/tilegrid.hpp>
+#include <boomhs/terrain.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <extlibs/fmt.hpp>
@@ -76,15 +76,6 @@ WorldObject::rotate_to_match_camera_rotation(Camera const& camera)
 
   auto& t    = transform();
   t.rotation = new_rotation * t.rotation;
-}
-
-TilePosition
-WorldObject::tile_position() const
-{
-  auto const& pos = transform().translation;
-  assert(pos.x >= 0.0f);
-  assert(pos.z >= 0.0f);
-  return TilePosition::from_floats_truncated(pos.x, pos.z);
 }
 
 } // namespace boomhs

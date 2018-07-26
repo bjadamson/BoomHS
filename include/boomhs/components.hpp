@@ -4,12 +4,8 @@
 #include <opengl/texture.hpp>
 
 #include <boomhs/entity.hpp>
-#include <boomhs/tile.hpp>
 
 #include <cassert>
-#include <iostream>
-#include <optional>
-#include <ostream>
 #include <string>
 #include <vector>
 
@@ -91,12 +87,6 @@ struct JunkEntityFromFILE
   GLenum draw_mode = GL_TRIANGLES;
 };
 
-struct StairInfo
-{
-  TilePosition tile_position;
-  TilePosition exit_position;
-};
-
 struct ShaderName
 {
   std::string value;
@@ -164,31 +154,6 @@ find_pointlights(EntityRegistry& registry)
   using namespace opengl;
 
   return find_all_entities_with_component<PointLight>(registry);
-}
-
-inline auto
-find_stairs(EntityRegistry& registry)
-{
-  using namespace boomhs;
-  using namespace opengl;
-
-  return find_all_entities_with_component<StairInfo>(registry);
-}
-
-class TileGrid;
-std::vector<EntityID>
-find_stairs_withtype(EntityRegistry&, TileGrid const&, TileType const);
-
-inline auto
-find_upstairs(EntityRegistry& registry, TileGrid const& tgrid)
-{
-  return find_stairs_withtype(registry, tgrid, TileType::STAIR_UP);
-}
-
-inline auto
-find_downstairs(EntityRegistry& registry, TileGrid const& tgrid)
-{
-  return find_stairs_withtype(registry, tgrid, TileType::STAIR_DOWN);
 }
 
 } // namespace boomhs

@@ -3,7 +3,6 @@
 #include <opengl/vertex_attribute.hpp>
 
 #include <boomhs/entity.hpp>
-#include <boomhs/tile.hpp>
 
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
@@ -78,22 +77,6 @@ public:
 
   opengl::DrawInfo&       lookup(stlw::Logger&, boomhs::EntityID);
   opengl::DrawInfo const& lookup(stlw::Logger&, boomhs::EntityID) const;
-};
-
-class TileDrawHandles
-{
-public:
-  std::vector<opengl::DrawInfo> drawinfos_;
-
-public:
-  NO_COPY(TileDrawHandles);
-  MOVE_DEFAULT(TileDrawHandles);
-  TileDrawHandles(std::vector<opengl::DrawInfo>&& dh)
-      : drawinfos_(MOVE(dh))
-  {
-  }
-  opengl::DrawInfo&       lookup(stlw::Logger&, boomhs::TileType);
-  opengl::DrawInfo const& lookup(stlw::Logger&, boomhs::TileType) const;
 };
 
 } // namespace opengl

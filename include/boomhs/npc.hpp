@@ -10,8 +10,7 @@ class float_generator;
 namespace boomhs
 {
 class EntityRegistry;
-class TileGrid;
-struct TilePosition;
+class TerrainGrid;
 
 enum class Alignment
 {
@@ -38,9 +37,9 @@ class NPC
 
 public:
   // Loads a new NPC into the EntityRegistry.
-  static void create(EntityRegistry&, char const*, TilePosition const&);
+  static void create(EntityRegistry&, char const*, glm::vec3 const&);
 
-  static void create_random(TileGrid const&, EntityRegistry&, stlw::float_generator&);
+  static void create_random(TerrainGrid const&, EntityRegistry&, stlw::float_generator&);
 };
 
 inline auto

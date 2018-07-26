@@ -24,10 +24,13 @@ EngineState::EngineState(stlw::Logger& l, ALCdevice& al, ImGuiIO& i, Dimensions 
     , draw_terrain(true)
     , draw_normals(false)
     , draw_skybox(true)
-    , show_global_axis(true)
+    , show_global_axis(false)
     , show_local_axis(false)
     , show_player_localspace_vectors(false)
-    , show_player_worldspace_vectors(true)
+    , show_player_worldspace_vectors(false)
+    , show_grid_lines(false)
+    , show_yaxis_lines(false)
+    , wireframe_override(false)
 {
 }
 

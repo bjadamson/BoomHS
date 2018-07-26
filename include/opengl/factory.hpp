@@ -9,7 +9,6 @@
 namespace boomhs
 {
 struct Obj;
-class TileGrid;
 } // namespace boomhs
 
 namespace opengl

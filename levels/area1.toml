@@ -190,84 +190,6 @@ type = "texture:2d-RGB"
 filename = "assets/test_icon.png"
 
 ###################################################################################################
-[[tile]]
-tile = "AT"
-mesh = "at"
-vshader = "3d_pos_normal_color"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "BAR"
-mesh = "bar"
-vshader = "3d_pos_normal_color"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "BRIDGE"
-mesh = "equal"
-vshader = "3d_pos_normal_color"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "DOOR"
-mesh = "door"
-vshader = "3d_pos_normal_color"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "FLOOR"
-mesh = "plus"
-vshader = "floor"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "RIVER"
-mesh = "tilde"
-vshader = "river"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "STAR"
-mesh = "star"
-vshader = "3d_pos_normal_color"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "STAIR_DOWN"
-mesh = "stair_down"
-vshader = "stair"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "STAIR_UP"
-mesh = "stair_up"
-vshader = "stair"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "TELEPORTER"
-mesh = "teleporter"
-vshader = "3d_pos_normal_color"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "WALL"
-mesh = "hashtag"
-vshader = "hashtag"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-###################################################################################################
 [[meshes]]
 name = "at"
 path = "assets/"
@@ -352,8 +274,7 @@ path = "assets/"
 [[fog]]
 density = 0.007
 gradient = 1.5
-color = [0.0, 0.0, 1.0, 1.0]
-mix-intensity = 0.6
+color = [1.0, 1.0, 1.0, 1.0]
 
 ########### ORBITAL DATA ###########
 [[orbital-body]]

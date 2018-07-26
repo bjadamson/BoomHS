@@ -46,23 +46,6 @@ struct WindowState
   window::SwapIntervalFlag sync       = window::SwapIntervalFlag::SYNCHRONIZED;
 };
 
-struct TiledataState
-{
-  MOVE_CONSTRUCTIBLE_ONLY(TiledataState);
-
-  bool draw_tilegrid = false;
-  bool recompute     = true;
-  bool reveal        = false;
-
-  // Both related to drawing GRID LINES
-  bool show_grid_lines          = false;
-  bool show_yaxis_lines         = false;
-  bool show_neighbortile_arrows = false;
-
-  glm::vec3 floor_offset = {0.0f, -0.5f, 0.0f};
-  glm::vec3 tile_scaling = {1.0f, 1.0f, 1.0f};
-};
-
 struct EngineState
 {
   stlw::Logger&    logger;
@@ -93,12 +76,14 @@ struct EngineState
 
   bool show_player_localspace_vectors;
   bool show_player_worldspace_vectors;
-  bool wireframe_override = false;
 
-  MouseState    mouse_state    = {};
-  WindowState   window_state   = {};
-  TiledataState tilegrid_state = {};
-  UiState       ui_state       = {};
+  bool show_grid_lines;
+  bool show_yaxis_lines;
+  bool wireframe_override;
+
+  MouseState  mouse_state  = {};
+  WindowState window_state = {};
+  UiState     ui_state     = {};
 
   // Constructors
   MOVE_CONSTRUCTIBLE_ONLY(EngineState);

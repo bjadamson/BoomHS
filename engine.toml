@@ -121,32 +121,6 @@ va = "vertex_uv"
 ############# letters
 
 [[shaders]]
-name = "hashtag"
-vertex = "3d_hashtag.vert"
-fragment = "3d_pos_normal_color.frag"
-va = "vertex_normal_color"
-instance_count = 3
-
-[[shaders]]
-name = "river"
-vertex = "river.vert"
-fragment = "3d_pos_normal_color.frag"
-va = "vertex_normal"
-instance_count = 4
-
-[[shaders]]
-name = "stair"
-vertex = "stair.vert"
-fragment = "stair.frag"
-va = "vertex_normal"
-
-[[shaders]]
-name = "floor"
-vertex = "floor.vert"
-fragment = "3d_pos_normal_color.frag"
-va = "vertex_normal_color"
-
-[[shaders]]
 name = "terrain"
 vertex = "terrain.vert"
 fragment = "terrain.frag"

@@ -35,7 +35,6 @@ move_worldobject(GameState& state, glm::vec3 (WorldObject::*fn)() const, WorldOb
                  FrameTime const& ft)
 {
   auto& es = state.engine_state;
-  auto& ts = es.tilegrid_state;
 
   auto&            lm           = state.level_manager;
   auto&            zs           = lm.active();
@@ -69,20 +68,13 @@ move_worldobject(GameState& state, glm::vec3 (WorldObject::*fn)() const, WorldOb
   if (x_outofbounds) {
     auto const new_x = flip_sides(newpos.x, 0ul, max_x);
     wo.move_to(new_x, 0.0, newpos.z);
-    ts.recompute = true;
   }
   else if (y_outofbounds) {
     auto const new_z = flip_sides(newpos.z, 0ul, max_z);
     wo.move_to(newpos.x, 0.0, new_z);
-    ts.recompute = true;
   }
   else {
-    // auto const tpos        = TilePosition::from_floats_truncated(newpos.x, newpos.z);
-    // bool const should_move = (!es.player_collision) || !leveldata.is_wall(tpos);
-    // if (should_move) {
     wo.move(delta);
-    ts.recompute = true;
-    //}
   }
 }
 
@@ -195,7 +187,6 @@ process_mousemotion(GameState& state, SDL_MouseMotionEvent const& motion, Camera
   auto& es     = state.engine_state;
   auto& logger = es.logger;
   auto& ms     = es.mouse_state;
-  auto& ts     = es.tilegrid_state;
   auto& ui     = es.ui_state.debug;
 
   auto& lm     = state.level_manager;
@@ -330,7 +321,6 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
   auto& es     = state.engine_state;
   auto& logger = es.logger;
   auto& ui     = es.ui_state;
-  auto& ts     = es.tilegrid_state;
 
   auto& lm             = state.level_manager;
   auto& active         = lm.active();
@@ -340,7 +330,6 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
 
   auto const rotate_player = [&](float const angle, glm::vec3 const& axis) {
     player.rotate_degrees(angle, axis);
-    ts.recompute = true;
   };
   switch (event.key.keysym.sym) {
   case SDLK_ESCAPE:
@@ -490,7 +479,6 @@ process_keystate(GameState& state, Camera& camera, FrameTime const& ft)
   assert(keystate);
 
   auto& es     = state.engine_state;
-  auto& ts     = es.tilegrid_state;
   auto& lm     = state.level_manager;
   auto& ldata  = lm.active().level_data;
   auto& player = ldata.player;

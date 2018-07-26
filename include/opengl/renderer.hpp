@@ -1,6 +1,6 @@
 #pragma once
 #include <boomhs/components.hpp>
-#include <boomhs/tilegrid.hpp>
+#include <boomhs/terrain.hpp>
 
 #include <opengl/colors.hpp>
 #include <opengl/frame.hpp>
@@ -23,10 +23,7 @@ class EntityRegistry;
 class HandleManager;
 class LevelManager;
 struct EngineState;
-struct RiverInfo;
 struct Transform;
-class TileGrid;
-struct TiledataState;
 class WorldObject;
 struct ZoneState;
 } // namespace boomhs
@@ -152,9 +149,6 @@ void
 draw_arrow(RenderState&, glm::vec3 const&, glm::vec3 const&, Color const&);
 
 void
-draw_arrow_abovetile_and_neighbors(RenderState&, boomhs::TilePosition const&);
-
-void
 draw_fbo_testwindow(RenderState&, glm::vec2 const&, glm::vec2 const&, TextureInfo&);
 
 void
@@ -170,16 +164,7 @@ void
 draw_targetreticle(RenderState&, window::FrameTime const&);
 
 void
-draw_rivers(RenderState&, window::FrameTime const&);
-
-void
-draw_stars(RenderState&, window::FrameTime const&);
-
-void
-draw_tilegrid(RenderState&, boomhs::TiledataState const&, window::FrameTime const&);
-
-void
-draw_tilegrid(RenderState&, boomhs::TiledataState const&);
+draw_grid_lines(RenderState&);
 
 void
 render_scene(RenderState&, boomhs::LevelManager&, stlw::float_generator&, window::FrameTime const&,

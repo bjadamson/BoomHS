@@ -18,10 +18,6 @@ class ShaderPrograms;
 namespace boomhs
 {
 
-struct WaterTileThing
-{
-};
-
 struct WaterInfo
 {
   glm::vec2            position;

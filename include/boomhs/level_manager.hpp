@@ -5,8 +5,6 @@
 
 namespace boomhs
 {
-struct TiledataState;
-
 class LevelManager
 {
   ZoneStates zstates_;
@@ -19,7 +17,7 @@ public:
   ZoneState const& active() const;
   ZoneState&       active();
 
-  void make_active(int const level_number, TiledataState& tds);
+  void make_active(int);
   int  num_levels() const;
   int  active_zone() const;
 

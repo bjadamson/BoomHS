@@ -1,6 +1,5 @@
 #pragma once
 #include <boomhs/entity.hpp>
-#include <boomhs/tile.hpp>
 
 namespace opengl
 {

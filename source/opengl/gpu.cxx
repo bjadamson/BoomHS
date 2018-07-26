@@ -6,8 +6,7 @@
 
 #include <boomhs/obj.hpp>
 #include <boomhs/obj_store.hpp>
-#include <boomhs/tilegrid.hpp>
-#include <boomhs/tilegrid_algorithms.hpp>
+#include <boomhs/terrain.hpp>
 
 #include <stlw/algorithm.hpp>
 #include <stlw/math.hpp>
@@ -110,7 +109,7 @@ create_arrow(stlw::Logger &logger, VertexAttribute const& va,
 }
 
 DrawInfo
-create_tilegrid(stlw::Logger &logger, VertexAttribute const& va, glm::vec2 const& dimensions,
+create_terrain_grid(stlw::Logger &logger, VertexAttribute const& va, glm::vec2 const& dimensions,
                 bool const show_yaxis_lines, Color const& color)
 {
   std::vector<float> vertices;

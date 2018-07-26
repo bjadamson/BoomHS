@@ -83,7 +83,7 @@ copy_rectangle_uvs(stlw::Logger&, VertexAttribute const&, OF::RectangleVertices 
 // General
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 DrawInfo
-create_tilegrid(stlw::Logger&, VertexAttribute const&, glm::vec2 const&, bool, Color const&);
+create_terrain_grid(stlw::Logger&, VertexAttribute const&, glm::vec2 const&, bool, Color const&);
 
 DrawInfo
 create_modelnormals(stlw::Logger&, VertexAttribute const&, glm::mat4 const&, boomhs::Obj const&,

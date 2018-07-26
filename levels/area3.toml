@@ -7,14 +7,24 @@ directional_light_specular = [1.0, 1.0, 1.0]
 directional_light_direction = [1.0, 1.0, 1.0]
 
 [[resource]]
-name = "building_skybox"
-type = "texture:3dcube-RGB"
-front = "assets/skybox/greenhaze_back.png"
-right = "assets/skybox/greenhaze_right.png"
-back = "assets/skybox/greenhaze_front.png"
-left = "assets/skybox/greenhaze_left.png"
-top = "assets/skybox/greenhaze_top.png"
+name   = "building_skybox"
+type   = "texture:3dcube-RGB"
+front  = "assets/skybox/greenhaze_back.png"
+right  = "assets/skybox/greenhaze_right.png"
+back   = "assets/skybox/greenhaze_front.png"
+left   = "assets/skybox/greenhaze_left.png"
+top    = "assets/skybox/greenhaze_top.png"
 bottom = "assets/skybox/greenhaze_bottom.png"
+
+[[resource]]
+name   = "night_skybox"
+type   = "texture:3dcube-RGBA"
+front  = "assets/skybox/night_front.png"
+right  = "assets/skybox/night_right.png"
+back   = "assets/skybox/night_back.png"
+left   = "assets/skybox/night_left.png"
+top    = "assets/skybox/night_top.png"
+bottom = "assets/skybox/night_bottom.png"
 
 [[resource]]
 name = "boring_cube"
@@ -68,21 +78,39 @@ wrap = "clamp"
 ###################################################################################################
 # TERRAIN TEXTURES
 [[resource]]
-name = "Floor0"
+name = "blendmap"
+type = "texture:2d-RGB"
+filename = "assets/terrain/blendmap.png"
+wrap = "clamp"
+
+[[resource]]
+name = "floor0"
 type = "texture:2d-RGBA"
 filename = "assets/terrain/Floor0.png"
 wrap = "repeat"
 
 [[resource]]
-name = "Grass0"
+name = "grass"
 type = "texture:2d-RGB"
 filename = "assets/terrain/Grass0.png"
 wrap = "clamp"
 
 [[resource]]
-name = "TextureAtlas"
+name = "brick_path"
 type = "texture:2d-RGB"
-filename = "assets/TextureAtlas.jpg"
+filename = "assets/terrain/brick_path.png"
+wrap = "clamp"
+
+[[resource]]
+name = "dirt"
+type = "texture:2d-RGB"
+filename = "assets/terrain/dirt.png"
+wrap = "clamp"
+
+[[resource]]
+name = "mud"
+type = "texture:2d-RGB"
+filename = "assets/terrain/mud.png"
 wrap = "clamp"
 
 ###########################
@@ -162,84 +190,6 @@ type = "texture:2d-RGB"
 filename = "assets/test_icon.png"
 
 ###################################################################################################
-[[tile]]
-tile = "AT"
-mesh = "at"
-vshader = "3d_pos_normal_color"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "BAR"
-mesh = "bar"
-vshader = "3d_pos_normal_color"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "BRIDGE"
-mesh = "equal"
-vshader = "3d_pos_normal_color"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "DOOR"
-mesh = "door"
-vshader = "3d_pos_normal_color"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "FLOOR"
-mesh = "plus"
-vshader = "floor"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "RIVER"
-mesh = "tilde"
-vshader = "river"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "STAR"
-mesh = "star"
-vshader = "3d_pos_normal_color"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "STAIR_DOWN"
-mesh = "stair_down"
-vshader = "stair"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "STAIR_UP"
-mesh = "stair_up"
-vshader = "stair"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "TELEPORTER"
-mesh = "teleporter"
-vshader = "3d_pos_normal_color"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-[[tile]]
-tile = "WALL"
-mesh = "hashtag"
-vshader = "hashtag"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-
-###################################################################################################
 [[meshes]]
 name = "at"
 path = "assets/"
@@ -262,6 +212,10 @@ path = "assets/"
 
 [[meshes]]
 name = "tree_lowpoly"
+path = "assets/"
+
+[[meshes]]
+name = "tree2"
 path = "assets/"
 
 [[meshes]]
@@ -312,11 +266,15 @@ path = "assets/"
 name = "B"
 path = "assets/"
 
+[[meshes]]
+name = "sphere"
+path = "assets/"
+
 ########### FOG ################
 [[fog]]
 density = 0.007
 gradient = 1.5
-color = [0.0, 0.0, 0.0, 1.0]
+color = [1.0, 1.0, 1.0, 1.0]
 
 ########### ORBITAL DATA ###########
 [[orbital-body]]
@@ -368,9 +326,9 @@ shininess = 1.0
 
 [[material]]
 name = "tree"
-ambient = [0.0, 0.0, 1.0]
-diffuse = [0.0, 0.0, 1.0]
-specular = [0.0, 0.0, 1.0]
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
 shininess = 10.00
 
 [[material]]
@@ -420,6 +378,7 @@ player = "player"
 color = [1.0, 1.0, 1.0, 1.0]
 material = "player"
 name = "player"
+scale = [1.0, 1.0, 1.0]
 
 [[entity]]
 orbital-body = "sun"
@@ -473,13 +432,6 @@ geometry = "cube"
 pointlight = "white"
 scale = [0.4, 0.4, 0.4]
 
-############ SKYBOX
-[[entity]]
-name = "building skybox"
-position = [0.0, 0.0, 0.0]
-shader = "skybox"
-geometry = "cube"
-texture = "building_skybox"
 
 ###################################################################################################
 [[entity]]
@@ -488,86 +440,24 @@ material = "terrain"
 position = [6.0, 1.0, 6.0]
 shader = "3dtexture"
 geometry = "mesh:house"
-texture = "TextureAtlas"
+texture = "grass"
 scale = [0.4, 0.4, 0.4]
 random_junk_from_file = true
 
 [[entity]]
-name = "tree"
-material = "terrain"
-position = [5.8, 0.5, 2.0]
+name = "TreeLowpoly"
+material = "tree"
+position = [0.0, 0.0, 0.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [3.0, 5.0, 3.0]
+scale = [8.0, 6.0, 8.0]
 random_junk_from_file = true
 
 [[entity]]
-name = "tree"
-material = "terrain"
-position = [0.8, 0.5, 29.0]
+name = "Tree2"
+material = "tree"
+position = [1.0, 1.0, 8.0]
 shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [3.0, 5.0, 3.0]
-random_junk_from_file = true
-
-[[entity]]
-name = "tree"
-material = "terrain"
-position = [29.0, 0.5, 29.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [3.0, 5.0, 3.0]
-random_junk_from_file = true
-
-[[entity]]
-name = "tree"
-material = "terrain"
-position = [28.0, 0.5, 28.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [3.0, 5.0, 3.0]
-random_junk_from_file = true
-
-[[entity]]
-name = "tree"
-material = "terrain"
-position = [15.0, 0.5, 15.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [3.0, 5.0, 3.0]
-random_junk_from_file = true
-
-[[entity]]
-name = "tree"
-material = "terrain"
-position = [20.0, 0.5, 20.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [3.0, 5.0, 3.0]
-random_junk_from_file = true
-
-[[entity]]
-name = "tree"
-material = "terrain"
-position = [29.0, 0.5, 0.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [3.0, 5.0, 3.0]
-random_junk_from_file = true
-
-[[entity]]
-name = "tree"
-material = "terrain"
-position = [60.0, 0.5, 60.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
-color = [1.0, 1.0, 1.0, 1.0]
-scale = [60.0, 60.0, 60.0]
+geometry = "mesh:tree2"
+scale = [2.0, 4.0, 2.0]
 random_junk_from_file = true

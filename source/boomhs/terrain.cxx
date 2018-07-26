@@ -221,8 +221,8 @@ TerrainGrid::max_worldpositions() const
   assert(!terrain_.empty());
   auto const& last = terrain_.back();
 
-  auto const tile_dimensions = config.dimensions;
-  return (last.position() * tile_dimensions) + tile_dimensions;
+  auto const dimensions = config.dimensions;
+  return (last.position() * dimensions) + dimensions;
 }
 
 void

@@ -664,50 +664,12 @@ load_entities(stlw::Logger& logger, CppTable const& table,
       assert(it != materials.cend());
       registry.assign<Material>(eid) = it->material;
     }
-
-    if (is_water) {
-      registry.assign<WaterTileThing>(eid);
-    }
   };
 
   auto const entity_table = get_table_array(table, "entity");
   for (auto const& it : *entity_table) {
     load_entity(it);
   }
-}
-
-auto
-load_tileinfos(stlw::Logger& logger, CppTable const& table,
-               std::vector<NameMaterial> const& materials, EntityRegistry& registry)
-{
-  auto const load_tile = [&materials](auto const& file) {
-    auto const tile          = get_string_or_abort(file, "tile");
-    auto const tiletype      = tiletype_from_string(tile);
-    auto const mesh_name     = get_string_or_abort(file, "mesh");
-    auto const vshader_name  = get_string_or_abort(file, "vshader");
-    auto const material_name = get_string_or_abort(file, "material");
-
-    auto const cmp = [&material_name](NameMaterial const& nm) { return nm.name == material_name; };
-    auto const it  = std::find_if(materials.cbegin(), materials.cend(), cmp);
-    assert(it != materials.cend());
-    auto const material = it->material;
-    auto const color    = load_color_or_abort(file, "color");
-    return TileInfo{tiletype, mesh_name, vshader_name, color, material};
-  };
-  auto const  tile_table = get_table_array(table, "tile");
-  auto const& ttable     = tile_table->as_table_array()->get();
-
-  // Ensure we load data for everry tile
-  assert(TileSharedInfoTable::SIZE == ttable.size());
-
-  std::array<TileInfo, TileSharedInfoTable::SIZE> tinfos;
-  FOR(i, ttable.size())
-  {
-    auto const& it   = ttable[i];
-    auto        tile = load_tile(it);
-    tinfos[i]        = MOVE(tile);
-  }
-  return TileSharedInfoTable{MOVE(tinfos)};
 }
 
 using LoadResult = Result<std::pair<std::string, opengl::ShaderProgram>, std::string>;
@@ -807,27 +769,6 @@ load_vas(CppTable const& table)
 namespace boomhs
 {
 
-// This macro exists to reduce code duplication implementing the two different implementation of
-// operator[].
-#define SEARCH_FOR(type, begin, end)                                                               \
-  auto const cmp = [&type](auto const& tinfo) { return tinfo.type == type; };                      \
-  auto const it  = std::find_if(begin, end, cmp);                                                  \
-  assert(it != end);                                                                               \
-  return *it;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// TileSharedInfoTable
-TileInfo const& TileSharedInfoTable::operator[](TileType const type) const
-{
-  SEARCH_FOR(type, data_.cbegin(), data_.cend());
-}
-
-TileInfo& TileSharedInfoTable::operator[](TileType const type)
-{
-  SEARCH_FOR(type, data_.begin(), data_.end());
-}
-#undef SEARCH_FOR
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // LevelLoader
 Result<LevelAssets, std::string>
@@ -865,9 +806,6 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   load_entities(logger, file_datatable, orbital_bodies, texture_table, materials, pointlights,
                 registry);
 
-  LOG_TRACE("loading tile materials ...");
-  auto tile_table = load_tileinfos(logger, file_datatable, materials, registry);
-
   LOG_TRACE("loading lights ...");
   auto const ambient = Color{get_vec3_or_abort(file_datatable, "ambient")};
   auto const directional_light_diffuse =
@@ -884,8 +822,6 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   auto const fog = load_fog(file_datatable);
   LOG_TRACE("yielding assets");
   return Ok(LevelAssets{MOVE(glight), fog,
-
-                        MOVE(tile_table),
 
                         MOVE(objstore), MOVE(texture_table), MOVE(sps)});
 }

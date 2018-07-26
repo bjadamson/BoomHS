@@ -2,7 +2,6 @@
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/inventory.hpp>
-#include <boomhs/tile.hpp>
 #include <stlw/log.hpp>
 
 namespace boomhs
@@ -11,8 +10,6 @@ struct Item;
 
 struct PlayerData
 {
-  TilePosition tile_position;
-
   Inventory inventory;
 };
 

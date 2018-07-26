@@ -1,8 +1,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/npc.hpp>
-#include <boomhs/tile.hpp>
-#include <boomhs/tilegrid.hpp>
+#include <boomhs/terrain.hpp>
 
 #include <stlw/random.hpp>
 
@@ -11,22 +10,18 @@ using namespace boomhs;
 namespace
 {
 
-TilePosition
-generate_npc_position(TileGrid const& tilegrid, EntityRegistry& registry,
+glm::vec3
+generate_npc_position(TerrainGrid const& terrain_grid, EntityRegistry& registry,
                       stlw::float_generator& rng)
 {
-  auto const dimensions = tilegrid.dimensions();
-  auto const width      = dimensions[0];
-  auto const height     = dimensions[1];
+  auto const& dimensions = terrain_grid.config.dimensions;
+  auto const width      = dimensions.x;
+  auto const height     = dimensions.y;
   assert(width > 0 && height > 0);
   uint64_t x, y;
   while (true) {
     x = rng.gen_int_range(0, width - 1);
     y = rng.gen_int_range(0, height - 1);
-
-    if (tilegrid.is_blocked(x, y)) {
-      continue;
-    }
 
     glm::vec3 const pos{x, 0, y};
     static auto constexpr MAX_DISTANCE = 2.0f;
@@ -34,11 +29,11 @@ generate_npc_position(TileGrid const& tilegrid, EntityRegistry& registry,
     if (!nearby.empty()) {
       continue;
     }
-    return TilePosition{x, y};
+    return glm::vec3{x, 0, y};
   }
 
   std::abort();
-  return TilePosition{0, 0};
+  return glm::vec3{0};
 }
 
 } // namespace
@@ -68,7 +63,7 @@ alignment_to_string(Alignment const al)
 }
 
 void
-NPC::create(EntityRegistry& registry, char const* name, TilePosition const& tpos)
+NPC::create(EntityRegistry& registry, char const* name, glm::vec3 const& pos)
 {
   auto eid = registry.create();
   registry.assign<opengl::Color>(eid);
@@ -84,7 +79,7 @@ NPC::create(EntityRegistry& registry, char const* name, TilePosition const& tpos
 
   // transform
   auto& transform       = registry.assign<Transform>(eid);
-  transform.translation = glm::vec3{tpos.x, 0.5, tpos.y};
+  transform.translation = glm::vec3{pos.x, 0.5, pos.y};
 
   // npc TAG
   auto& npcdata     = registry.assign<NPCData>(eid);
@@ -99,11 +94,11 @@ NPC::create(EntityRegistry& registry, char const* name, TilePosition const& tpos
 }
 
 void
-NPC::create_random(TileGrid const& tilegrid, EntityRegistry& registry, stlw::float_generator& rng)
+NPC::create_random(TerrainGrid const& terrain_grid, EntityRegistry& registry, stlw::float_generator& rng)
 {
   auto const make_monster = [&](char const* name) {
-    auto const tpos = generate_npc_position(tilegrid, registry, rng);
-    NPC::create(registry, name, tpos);
+    auto const pos = generate_npc_position(terrain_grid, registry, rng);
+    NPC::create(registry, name, pos);
   };
   if (rng.gen_bool()) {
     make_monster("O");

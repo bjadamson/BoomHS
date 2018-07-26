@@ -9,13 +9,14 @@ class TextureTable;
 
 namespace boomhs
 {
-
 class EntityRegistry;
+class Heightmap;
 
 struct StartAreaGenerator
 {
-  static LevelGeneratedData gen_level(stlw::Logger&, EntityRegistry&, stlw::float_generator&,
-                                      opengl::ShaderPrograms&, opengl::TextureTable&);
+  static LevelGeneratedData
+  gen_level(stlw::Logger&, EntityRegistry&, stlw::float_generator&, opengl::ShaderPrograms&,
+            opengl::TextureTable&, Heightmap const&);
 
   StartAreaGenerator() = delete;
 };

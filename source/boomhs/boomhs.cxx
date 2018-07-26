@@ -17,7 +17,6 @@
 #include <boomhs/state.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/terrain.hpp>
-#include <boomhs/tilegrid_algorithms.hpp>
 #include <boomhs/tree.hpp>
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_ingame.hpp>
@@ -170,14 +169,6 @@ update_orbital_bodies(EngineState& es, LevelData& ldata, glm::mat4 const& view_m
 
       glm::vec2 const wpos{wx, wy};
       directional.screenspace_pos = wpos;
-
-      LOG_ERROR_SPRINTF("player (world) pos: %s, clip: %s, ndc pos: %s, wpos: %s",
-                        glm::to_string(pos), glm::to_string(clip), glm::to_string(ndc),
-                        glm::to_string(wpos));
-
-      // assert(ndc.x <= 1.0f && ndc.x >= -1.0f);
-      // assert(ndc.y <= 1.0f && ndc.y >= -1.0f);
-      // assert(ndc.z <= 1.0f && ndc.z >= -1.0f);
     }
   };
 
@@ -262,19 +253,12 @@ update_visible_entities(LevelManager& lm, EntityRegistry& registry)
 {
   auto& zs       = lm.active();
   auto& ldata    = zs.level_data;
-  auto& tilegrid = ldata.tilegrid();
+  auto& terrain_grid = ldata.terrain;
   auto& player   = ldata.player;
 
   for (auto const eid : registry.view<NPCData>()) {
     auto& isv = registry.get<IsVisible>(eid);
-
-    // Convert to tile position, match tile visibility.
-    auto&              transform = registry.get<Transform>(eid);
-    auto const&        pos       = transform.translation;
-    TilePosition const tpos      = TilePosition::from_floats_truncated(pos.x, pos.z);
-
-    auto const& tile = tilegrid.data(tpos);
-    isv.value        = tile.is_visible(registry);
+    isv.value        = true; //terrain.is_visible(registry);
   }
 }
 
@@ -303,19 +287,6 @@ create_gamestate(Engine& engine, EngineState& engine_state, Camera& camera)
   auto& sps       = gfx_state.sps;
   auto& ttable    = gfx_state.texture_table;
 
-  {
-    TerrainConfig const tc;
-    auto&               sp     = sps.ref_sp(tc.shader_name);
-    auto&               ttable = gfx_state.texture_table;
-
-    char const* HEIGHTMAP_NAME = "Area0-HM";
-    auto const  heightmap = TRY_MOVEOUT(heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
-
-    TerrainGridConfig const tgc;
-    auto                    tg = terrain::generate_grid(logger, tgc, tc, heightmap, sp);
-    auto&                   ld = zs.level_data;
-    ld.terrain                 = MOVE(tg);
-  }
   {
     auto test_r = rexpaint::RexImage::load("assets/test.xp");
     if (!test_r) {

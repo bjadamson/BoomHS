@@ -247,35 +247,6 @@ draw_time_editor(stlw::Logger& logger, Time& time, UiDebugState& uistate)
   }
 }
 
-void
-draw_tilegrid_editor(TiledataState& tds, LevelManager& lm)
-{
-  auto const draw = [&]() {
-    ImGui::InputFloat3("Floor Offset:", glm::value_ptr(tds.floor_offset));
-    ImGui::InputFloat3("Tile Scaling:", glm::value_ptr(tds.tile_scaling));
-
-    std::vector<std::string> levels;
-    FORI(i, lm.num_levels()) { levels.emplace_back(std::to_string(i)); }
-    void* pdata    = reinterpret_cast<void*>(&levels);
-    int   selected = lm.active_zone();
-
-    if (ImGui::Combo("Current Level:", &selected, callback_from_strings, pdata, lm.num_levels())) {
-      lm.make_active(selected, tds);
-    }
-    bool recompute = false;
-    recompute |= ImGui::Checkbox("Draw Tilemap", &tds.draw_tilegrid);
-    recompute |= ImGui::Checkbox("Reveal Tilemap Hidden", &tds.reveal);
-    recompute |= ImGui::Checkbox("Show (x, z)-axis lines", &tds.show_grid_lines);
-    recompute |= ImGui::Checkbox("Show y-axis Lines ", &tds.show_yaxis_lines);
-    ImGui::Checkbox("Draw Neighbor Arrows", &tds.show_neighbortile_arrows);
-
-    if (recompute) {
-      tds.recompute = true;
-    }
-  };
-  imgui_cxx::with_window(draw, "Tilemap Editor Window");
-}
-
 std::string
 collect_water_eids(std::vector<EntityID> const& winfos, EntityRegistry& registry)
 {
@@ -726,33 +697,6 @@ show_entitymaterials_window(UiDebugState& ui, EntityRegistry& registry)
 }
 
 void
-show_tilegrid_materials_window(UiDebugState& ui, LevelData& level_data)
-{
-  auto const draw = [&]() {
-    // 1. Collect Tile names
-    std::vector<std::string> tile_names;
-    FOR(i, static_cast<size_t>(TileType::UNDEFINED))
-    {
-      auto const type = static_cast<TileType>(i);
-      tile_names.emplace_back(to_string(type));
-    }
-
-    int& selected = ui.selected_tilegrid;
-    assert(selected < static_cast<int>(tile_names.size()));
-
-    TileInfo& tileinfo = level_data.tiletable()[static_cast<TileType>(selected)];
-    auto&     material = tileinfo.material;
-    show_material_editor("Tile Material:", material);
-    {
-      void* pdata = reinterpret_cast<void*>(&tile_names);
-      ImGui::Combo("Tile Type:", &selected, callback_from_strings, pdata, tile_names.size());
-      ImGui::Separator();
-    }
-  };
-  imgui_cxx::with_window(draw, "Tilegrid Materials Editor");
-}
-
-void
 show_pointlight_window(UiDebugState& ui, EntityRegistry& registry)
 {
   auto const display_pointlight = [&registry](EntityID const eid) {
@@ -846,14 +790,12 @@ lighting_menu(EngineState& es, LevelData& ldata, EntityRegistry& registry)
   bool& edit_ambientlight      = ui.show_ambientlight_window;
   bool& edit_directionallights = ui.show_directionallight_window;
   bool& edit_entitymaterials   = ui.show_entitymaterial_window;
-  bool& edit_tilegridmaterials = ui.show_tilegridmaterial_window;
 
   auto const draw = [&]() {
     ImGui::MenuItem("Point-Lights", nullptr, &edit_pointlights);
     ImGui::MenuItem("Ambient Lighting", nullptr, &edit_ambientlight);
     ImGui::MenuItem("Directional Lighting", nullptr, &edit_directionallights);
     ImGui::MenuItem("Entity Materials", nullptr, &edit_entitymaterials);
-    ImGui::MenuItem("TileGrid Materials", nullptr, &edit_tilegridmaterials);
   };
   imgui_cxx::with_menu(draw, "Lightning");
   if (edit_pointlights) {
@@ -867,9 +809,6 @@ lighting_menu(EngineState& es, LevelData& ldata, EntityRegistry& registry)
   }
   if (edit_entitymaterials) {
     show_entitymaterials_window(ui, registry);
-  }
-  if (edit_tilegridmaterials) {
-    show_tilegrid_materials_window(ui, ldata);
   }
 }
 
@@ -894,6 +833,9 @@ draw_debugwindow(EngineState& es, LevelManager& lm)
   auto& uistate = es.ui_state.debug;
   ImGui::Checkbox("Enter Pressed", &uistate.enter_pressed);
   ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
+
+  ImGui::Checkbox("Show (x, z)-axis lines", &es.show_grid_lines);
+  ImGui::Checkbox("Show y-axis Lines ", &es.show_yaxis_lines);
 
   ImGui::Separator();
   ImGui::Checkbox("Draw Entities", &es.draw_entities);
@@ -928,7 +870,6 @@ draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window, Draw
     ImGui::MenuItem("Player", nullptr, &uistate.show_playerwindow);
     ImGui::MenuItem("Skybox", nullptr, &uistate.show_skyboxwindow);
     ImGui::MenuItem("Terrain", nullptr, &uistate.show_terrain_editor_window);
-    ImGui::MenuItem("Tilemap", nullptr, &uistate.show_tilegrid_editor_window);
     ImGui::MenuItem("Time", nullptr, &uistate.show_time_window);
     ImGui::MenuItem("Water", nullptr, &uistate.show_water_window);
     ImGui::MenuItem("Exit", nullptr, &es.quit);
@@ -989,7 +930,6 @@ draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, WaterAudioSyste
      window::SDLWindow& window, Camera& camera, DrawState& ds, window::FrameTime const& ft)
 {
   auto& uistate        = es.ui_state.debug;
-  auto& tilegrid_state = es.tilegrid_state;
   auto& zs             = lm.active();
   auto& registry       = zs.registry;
   auto& ldata          = zs.level_data;
@@ -1011,9 +951,6 @@ draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, WaterAudioSyste
   }
   if (uistate.show_skyboxwindow) {
     draw_skybox_window(es, lm, skyboxr);
-  }
-  if (uistate.show_tilegrid_editor_window) {
-    draw_tilegrid_editor(tilegrid_state, lm);
   }
   if (uistate.show_terrain_editor_window) {
     draw_terrain_editor(es, lm);

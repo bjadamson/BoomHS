@@ -174,25 +174,4 @@ EntityDrawHandleMap::lookup(stlw::Logger &logger, EntityID const entity) const
 }
 #undef LOOKUP_IMPLEMENTATION
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// TileDrawHandles
-#define LOOKUP_IMPLEMENTATION                                                                      \
-  assert(type < TileType::UNDEFINED);                                                              \
-  auto const index = static_cast<size_t>(type);                                                    \
-  return drawinfos_[index];
-
-opengl::DrawInfo&
-TileDrawHandles::lookup(stlw::Logger &logger, TileType const type)
-{
-  LOOKUP_IMPLEMENTATION
-}
-
-opengl::DrawInfo const&
-TileDrawHandles::lookup(stlw::Logger &logger, TileType const type) const
-{
-  LOOKUP_IMPLEMENTATION
-}
-#undef LOOKUP_IMPLEMENTATION
-
 } // ns opengl
