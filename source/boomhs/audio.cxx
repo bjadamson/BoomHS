@@ -155,7 +155,7 @@ WaterAudioSystem::create()
 
   source.set_pitch(1.0f);
   source.set_volume(1.0f);
-  source.set_position(0, 50, 0);
+  source.set_position(0, 0, 0);
   source.set_velocity(2, 0, 0);
   source.set_looping(false);
 

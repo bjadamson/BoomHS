@@ -26,6 +26,7 @@
 #include <opengl/frame.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
+#include <opengl/scene_renderer.hpp>
 #include <opengl/skybox_renderer.hpp>
 #include <opengl/sun_renderer.hpp>
 #include <opengl/terrain_renderer.hpp>
@@ -96,6 +97,23 @@ update_playerpos(stlw::Logger& logger, LevelData& ldata, FrameTime const& ft)
   float const player_height = ldata.terrain.get_height(logger, player_pos.x, player_pos.z);
   auto const& player_bbox   = player.bounding_box();
   player_pos.y              = player_height + (player_bbox.dimensions().y / 2.0f);
+}
+
+void
+update_npcpositions(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registry,
+                    FrameTime const& ft)
+{
+  auto const update = [&](auto const eid) {
+    auto& transform         = registry.get<Transform>(eid);
+    auto const& bbox        = registry.get<AABoundingBox>(eid);
+
+    auto& tr = transform.translation;
+    float const height = ldata.terrain.get_height(logger, tr.x, tr.z);
+    tr.y = height + (bbox.dimensions().y / 2.0f);
+  };
+  for (auto const eid : registry.view<NPCData, Transform, AABoundingBox>()) {
+    update(eid);
+  }
 }
 
 void
@@ -323,7 +341,7 @@ place_water(stlw::Logger& logger, ZoneState& zs, ShaderProgram& sp, glm::vec2 co
   auto& wi    = registry.get<WaterInfo>(eid);
   wi.position = pos;
 
-  size_t constexpr num_vertexes = 64;
+  size_t constexpr num_vertexes = 4;
   glm::vec2 constexpr dimensions{20};
   auto const data = WaterFactory::generate_water_data(logger, dimensions, num_vertexes);
   {
@@ -448,10 +466,12 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   static auto           advanced_water_renderer = make_advanced_water_renderer();
   static auto           black_water_renderer    = make_black_water_renderer();
 
-  static auto basic_terrain_renderer  = BasicTerrainRenderer{};
+  static auto default_terrain_renderer  = DefaultTerrainRenderer{};
   static auto black_terrain_renderer  = make_black_terrain_renderer();
   static auto default_entity_renderer = EntityRenderer{};
   static auto black_entity_renderer   = BlackEntityRenderer{};
+  static auto default_scene_renderer  = DefaultSceneRenderer{};
+  static auto black_scene_renderer    = BlackSceneRenderer{};
 
   auto const fmatrices = FrameMatrices::from_camera(camera);
   FrameState fstate{fmatrices, es, zs};
@@ -463,6 +483,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     // Update the world
     update_playaudio(logger, ldata, registry, water_audio);
     update_playerpos(logger, ldata, ft);
+    update_npcpositions(logger, ldata, registry, ft);
     update_nearbytargets(ldata, registry, ft);
 
     update_orbital_bodies(es, ldata, fstate.view_matrix(), fstate.projection_matrix(), registry,
@@ -485,15 +506,15 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   static SunshaftRenderer sunshaft_renderer{logger, screen_size, sunshaft_sp};
 
   auto const draw_scene = [&](bool const black_silhoutte) {
-    auto const draw_advanced = [&](auto& terrain_renderer, auto& entity_renderer) {
+    auto const draw_advanced = [&](auto& terrain_renderer, auto& entity_renderer, auto& scene_renderer) {
       advanced_water_renderer.render_reflection(es, ds, lm, camera, entity_renderer,
-                                                skybox_renderer, terrain_renderer, rng, ft);
+                                                skybox_renderer, terrain_renderer, scene_renderer, rng, ft);
       advanced_water_renderer.render_refraction(es, ds, lm, camera, entity_renderer,
-                                                skybox_renderer, terrain_renderer, rng, ft);
+                                                skybox_renderer, terrain_renderer, scene_renderer, rng, ft);
     };
     if (draw_water && draw_water_advanced && !black_silhoutte) {
       // Render the scene to the refraction and reflection FBOs
-      draw_advanced(basic_terrain_renderer, default_entity_renderer);
+      draw_advanced(default_terrain_renderer, default_entity_renderer, default_scene_renderer);
     }
 
     // render scene
@@ -538,7 +559,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
         draw_basic(black_terrain_renderer, black_entity_renderer);
       }
       else {
-        draw_basic(basic_terrain_renderer, default_entity_renderer);
+        draw_basic(default_terrain_renderer, default_entity_renderer);
       }
     }
     if (es.draw_entities) {
@@ -549,7 +570,12 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
         default_entity_renderer.render(rstate, rng, ft);
       }
     }
-    render::render_scene(rstate, lm, rng, ft, NOCULL_VECTOR);
+    if (black_silhoutte) {
+      black_scene_renderer.render_scene(rstate, lm, rng, ft);
+    }
+    else {
+      default_scene_renderer.render_scene(rstate, lm, rng, ft);
+    }
   };
 
   auto const draw_scene_normal_render = [&]() { draw_scene(false); };

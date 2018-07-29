@@ -1,5 +1,7 @@
 #pragma once
+#include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
+#include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
 namespace stlw
@@ -37,9 +39,10 @@ class NPC
 
 public:
   // Loads a new NPC into the EntityRegistry.
-  static void create(EntityRegistry&, char const*, glm::vec3 const&);
+  static void create(EntityRegistry&, char const*, int, glm::vec3 const&);
 
-  static void create_random(TerrainGrid const&, EntityRegistry&, stlw::float_generator&);
+  static void
+  create_random(stlw::Logger&, TerrainGrid const&, EntityRegistry&, stlw::float_generator&);
 };
 
 inline auto

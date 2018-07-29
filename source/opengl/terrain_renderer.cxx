@@ -77,9 +77,9 @@ namespace opengl
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// BasicTerrainRenderer
+// DefaultTerrainRenderer
 void
-BasicTerrainRenderer::render(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
+DefaultTerrainRenderer::render(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
                              glm::vec4 const& cull_plane)
 {
   auto& fstate = rstate.fs;
@@ -122,7 +122,7 @@ BasicTerrainRenderer::render(RenderState& rstate, EntityRegistry& registry, Fram
 }
 
 void
-BasicTerrainRenderer::bind_impl(stlw::Logger& logger, Terrain const& terrain,
+DefaultTerrainRenderer::bind_impl(stlw::Logger& logger, Terrain const& terrain,
                                 opengl::TextureTable& ttable)
 {
   auto const bind = [&](size_t const tunit) {
@@ -137,7 +137,7 @@ BasicTerrainRenderer::bind_impl(stlw::Logger& logger, Terrain const& terrain,
 }
 
 void
-BasicTerrainRenderer::unbind_impl(stlw::Logger& logger, Terrain const& terrain,
+DefaultTerrainRenderer::unbind_impl(stlw::Logger& logger, Terrain const& terrain,
                                   opengl::TextureTable& ttable)
 {
   auto const unbind = [&](size_t const tunit) {
@@ -152,9 +152,9 @@ BasicTerrainRenderer::unbind_impl(stlw::Logger& logger, Terrain const& terrain,
 }
 
 std::string
-BasicTerrainRenderer::to_string() const
+DefaultTerrainRenderer::to_string() const
 {
-  return "BasicTerrainRenderer";
+  return "DefaultTerrainRenderer";
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -3,6 +3,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/frustum.hpp>
+#include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
@@ -108,7 +109,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
 
   auto&       logger       = es.logger;
   auto const& global_light = ldata.global_light;
-  auto const& player       = ldata.player;
+  //auto const& player       = ldata.player;
 
   render::set_modelmatrix(logger, model_matrix, sp);
   if (set_normalmatrix) {
@@ -616,18 +617,12 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     return;
   }
 
-  auto& sps = zs.gfx_state.sps;
-  auto& sp  = sps.ref_sp("2dtexture");
-  if (!sp.is_2d) {
-    std::abort();
-  }
-
   auto& logger = fstate.es.logger;
   auto& ttable = zs.gfx_state.texture_table;
 
-  auto const selected_npc = *selected;
-  assert(registry.has<Transform>(selected_npc));
-  auto& npc_transform = registry.get<Transform>(selected_npc);
+  auto const npc_selected_eid = *selected;
+  assert(registry.has<Transform>(npc_selected_eid));
+  auto& npc_transform = registry.get<Transform>(npc_selected_eid);
 
   Transform transform;
   transform.translation = npc_transform.translation;
@@ -639,7 +634,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
   auto const proj_matrix = fstate.projection_matrix();
 
-  auto const draw_reticle = [&]() {
+  auto const draw_reticle = [&](auto& sp) {
     auto constexpr ROTATE_SPEED = 80.0f;
     float const angle           = ROTATE_SPEED * ft.since_start_seconds();
     auto const  rot             = glm::angleAxis(glm::radians(angle), Z_UNIT_VECTOR);
@@ -647,6 +642,59 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
     auto const mvp_matrix = proj_matrix * (view_model * rmatrix);
     set_modelmatrix(logger, mvp_matrix, sp);
+
+
+    auto const peid = find_player(registry);
+    auto const& player_data = registry.get<PlayerData>(peid);
+    auto const calc_blendcolor = [&player_data](int const npc_level) {
+
+      int const diff = player_data.level - npc_level;
+      int const abs_diff = std::abs(diff);
+
+      bool const player_gt = diff > 0;
+      bool const player_lt = diff < 0;
+      bool const equals = diff == 0;
+
+      {
+        bool const equals_and_neither_gtlt     = (equals && (!player_gt && !player_lt));
+        bool const gltl_notsame                = ((player_gt && !player_lt)
+                                                   || (!player_gt && player_lt));
+        bool const notequals_and_onlyone_gtlt  = (!equals && gltl_notsame);
+
+        // Ensure that either they are the same (and gt/lt are false)
+        // or
+        // they are not the same and exactly one (gt/lt) is true.
+        assert(equals_and_neither_gtlt || notequals_and_onlyone_gtlt);
+      }
+
+      if (equals) {
+        return LOC::WHITE;
+      }
+      else if (player_gt && (abs_diff <= 2)) {
+        return LOC::BLUE;
+      }
+      else if (player_gt && (abs_diff <= 3)) {
+        return LOC::LIGHT_BLUE;
+      }
+      else if (player_gt && (abs_diff <= 3)) {
+        return LOC::GREEN;
+      }
+      else if (player_gt) {
+        return LOC::GRAY;
+      }
+      else if (player_lt && (abs_diff <= 2)) {
+        return LOC::YELLOW;
+      }
+      else if (player_lt && (abs_diff <= 3)) {
+        return LOC::ORANGE;
+      }
+      else if (player_lt) {
+        return LOC::RED;
+      }
+      std::abort();
+    };
+    auto const blendc = calc_blendcolor(registry.get<NPCData>(npc_selected_eid).level);
+    sp.set_uniform_color(logger, "u_blendcolor", blendc);
 
     auto texture_o = ttable.find("TargetReticle");
     assert(texture_o);
@@ -657,7 +705,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, *texture_o, dinfo); });
   };
 
-  auto const draw_glow = [&]() {
+  auto const draw_glow = [&](auto& sp) {
     auto texture_o = ttable.find("NearbyTargetGlow");
     assert(texture_o);
 
@@ -671,12 +719,22 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, *texture_o, dinfo); });
   };
 
+
+  bool const should_draw_glow = scale < 1.0f;
+  char const* tn = should_draw_glow ? "2dtexture" : "target_reticle";
+
+  auto& sps = zs.gfx_state.sps;
+  auto& sp  = sps.ref_sp(tn);
+  if (!sp.is_2d) {
+    std::abort();
+  }
+
   ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
   sp.while_bound(logger, [&]() {
     if (scale < 1.0f) {
-      draw_glow();
+      draw_glow(sp);
     }
-    draw_reticle();
+    draw_reticle(sp);
   });
 }
 
@@ -736,44 +794,6 @@ draw_grid_lines(RenderState& rstate)
 
   transform.translation = glm::vec3{GRID_DIMENSIONS.x, 0.0f, GRID_DIMENSIONS.y};
   draw_the_terrain_grid(transform.model_matrix(), LOC::GRAY);
-}
-
-void
-render_scene(RenderState& rstate, LevelManager& lm, stlw::float_generator& rng, FrameTime const& ft,
-             glm::vec4 const& cull_plane)
-{
-  auto& fstate = rstate.fs;
-  auto& es     = fstate.es;
-  auto& logger = es.logger;
-
-  auto& zs       = fstate.zs;
-  auto& registry = zs.registry;
-  auto& ldata    = zs.level_data;
-
-  render::draw_targetreticle(rstate, ft);
-
-  if (es.show_grid_lines) {
-    render::draw_grid_lines(rstate);
-  }
-
-  auto const& player = ldata.player;
-  if (es.show_global_axis) {
-    render::draw_global_axis(rstate);
-  }
-  if (es.show_local_axis) {
-    render::draw_local_axis(rstate, player.world_position());
-  }
-
-  {
-    auto const  eid = find_player(registry);
-    auto const& inv = registry.get<PlayerData>(eid).inventory;
-    if (inv.is_open()) {
-      render::draw_inventory_overlay(rstate);
-    }
-  }
-
-  // if checks happen inside fn
-  render::conditionally_draw_player_vectors(rstate, player);
 }
 
 void

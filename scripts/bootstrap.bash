@@ -89,6 +89,11 @@ set(CPPTOML_INCLUDE_DIR "${EXTERNAL_DIR}/cpptoml/include")
 set(BOOMHS_INCLUDES ${PROJECT_DIR}/include/**/*.hpp)
 set(BOOMHS_CODE     ${BOOMHS_INCLUDES} ${BOOMHS_SOURCES})
 
+## BFD and dl are both needed for linux backtraces.
+## BFD_LIB => Backtrace Libraries
+set(BFD_LIB "bfd")
+set(DL_LIB "dl")
+
 ###################################################################################################
 # Create lists of files to be used when issuing build commands further below.
 ##file(GLOB         EXTERNAL_INCLUDE_DIRS include ${EXTERNAL_DIR}/**/include)
@@ -107,12 +112,13 @@ file(GLOB GL_SDL_SOURCES   ${PROJECT_DIR}/source/gl_sdl/*.cxx)
 
 ###################################################################################################
 ## Manage External Dependencies
-find_package(OpenAL REQUIRED)
+find_package(BFD REQUIRED)
 find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(DL REQUIRED)
+find_package(OpenAL REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(SOIL REQUIRED)
-find_package(BFD REQUIRED)
 find_package(ZLIB REQUIRED)
 
 ###################################################################################################
@@ -174,12 +180,13 @@ target_include_directories(GL_SDL_LIB PUBLIC
 ##
 ## The base game is dependent on ALL other libraries. The rest of the libraries need to have
 ## specified which other libraries they will link too here.
-target_link_libraries(Stlw_LIB   External_LIB)
-target_link_libraries(BoomHS_LIB External_LIB Opengl_LIB Stlw_LIB Window_LIB GL_SDL_LIB)
+target_link_libraries(Stlw_LIB   External_LIB ${BFD_LIB} ${DL_LIB})
+target_link_libraries(BoomHS_LIB External_LIB Opengl_LIB Stlw_LIB Window_LIB GL_SDL_LIB ${BFD_LIB}
+    ${DL_LIB})
 
-target_link_libraries(Opengl_LIB External_LIB Stlw_LIB)
-target_link_libraries(Window_LIB External_LIB Opengl_LIB Stlw_LIB)
-target_link_libraries(GL_SDL_LIB External_LIB Opengl_LIB Stlw_LIB Window_LIB)
+target_link_libraries(Opengl_LIB External_LIB Stlw_LIB ${BFD_LIB} ${DL_LIB})
+target_link_libraries(Window_LIB External_LIB Opengl_LIB Stlw_LIB ${BFD_LIB} ${DL_LIB})
+target_link_libraries(GL_SDL_LIB External_LIB Opengl_LIB Stlw_LIB Window_LIB ${BFD_LIB} ${DL_LIB})
 
 ###################################################################################################
 ## Executables
@@ -214,13 +221,13 @@ target_link_libraries(boomhs
   ## System Libraries
   stdc++
   audio
-  bfd ## BFD and dl are both needed for linux backtraces.
-  dl
   pthread
   boost_system
   openal
 
   ## External Libraries
+  ${BFD_LIB}
+  ${DL_LIB}
   ${SDL2_LIBRARIES}
   ${SDL2IMAGE_LIBRARIES}
   ${OPENGL_LIBRARIES}

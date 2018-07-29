@@ -11,25 +11,27 @@ namespace
 {
 
 glm::vec3
-generate_npc_position(TerrainGrid const& terrain_grid, EntityRegistry& registry,
-                      stlw::float_generator& rng)
+generate_npc_position(stlw::Logger& logger, TerrainGrid const& terrain_grid,
+                      EntityRegistry& registry, stlw::float_generator& rng)
 {
-  auto const& dimensions = terrain_grid.config.dimensions;
+  auto const& dimensions = terrain_grid.max_worldpositions();
   auto const width      = dimensions.x;
-  auto const height     = dimensions.y;
-  assert(width > 0 && height > 0);
-  uint64_t x, y;
+  auto const length     = dimensions.y;
+  assert(width > 0 && length > 0);
+  float x, z;
   while (true) {
-    x = rng.gen_int_range(0, width - 1);
-    y = rng.gen_int_range(0, height - 1);
+    x = rng.gen_float_range(0, width - 1);
+    z = rng.gen_float_range(0, length - 1);
 
-    glm::vec3 const pos{x, 0, y};
+    float const y = terrain_grid.get_height(logger, x, z);
+
+    glm::vec3 const pos{x, y, z};
     static auto constexpr MAX_DISTANCE = 2.0f;
     auto const nearby                  = all_nearby_entities(pos, MAX_DISTANCE, registry);
     if (!nearby.empty()) {
       continue;
     }
-    return glm::vec3{x, 0, y};
+    return pos;
   }
 
   std::abort();
@@ -63,7 +65,7 @@ alignment_to_string(Alignment const al)
 }
 
 void
-NPC::create(EntityRegistry& registry, char const* name, glm::vec3 const& pos)
+NPC::create(EntityRegistry& registry, char const* name, int const level, glm::vec3 const& pos)
 {
   auto eid = registry.create();
   registry.assign<opengl::Color>(eid);
@@ -79,13 +81,13 @@ NPC::create(EntityRegistry& registry, char const* name, glm::vec3 const& pos)
 
   // transform
   auto& transform       = registry.assign<Transform>(eid);
-  transform.translation = glm::vec3{pos.x, 0.5, pos.y};
+  transform.translation = pos;
 
   // npc TAG
   auto& npcdata     = registry.assign<NPCData>(eid);
   npcdata.name      = name;
   npcdata.health    = 10;
-  npcdata.level     = 3;
+  npcdata.level     = level;
   npcdata.alignment = Alignment::EVIL;
 
   // visible
@@ -94,11 +96,15 @@ NPC::create(EntityRegistry& registry, char const* name, glm::vec3 const& pos)
 }
 
 void
-NPC::create_random(TerrainGrid const& terrain_grid, EntityRegistry& registry, stlw::float_generator& rng)
+NPC::create_random(stlw::Logger& logger, TerrainGrid const& terrain_grid, EntityRegistry& registry,
+    stlw::float_generator& rng)
 {
   auto const make_monster = [&](char const* name) {
-    auto const pos = generate_npc_position(terrain_grid, registry, rng);
-    NPC::create(registry, name, pos);
+    auto const pos = generate_npc_position(logger, terrain_grid, registry, rng);
+    LOG_ERROR_SPRINTF("NPC POSITION: %s", glm::to_string(pos));
+
+    int const level = rng.gen_int_range(1, 20);
+    NPC::create(registry, name, level, pos);
   };
   if (rng.gen_bool()) {
     make_monster("O");

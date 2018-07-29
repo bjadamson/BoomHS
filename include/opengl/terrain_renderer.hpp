@@ -25,11 +25,11 @@ struct RenderState;
 class ShaderProgram;
 class TextureTable;
 
-class BasicTerrainRenderer
+class DefaultTerrainRenderer
 {
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(BasicTerrainRenderer);
-  BasicTerrainRenderer() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(DefaultTerrainRenderer);
+  DefaultTerrainRenderer() = default;
 
   // fields
   opengl::DebugBoundCheck debug_check;

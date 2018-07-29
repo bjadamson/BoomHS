@@ -167,10 +167,6 @@ void
 draw_grid_lines(RenderState&);
 
 void
-render_scene(RenderState&, boomhs::LevelManager&, stlw::float_generator&, window::FrameTime const&,
-             glm::vec4 const&);
-
-void
 set_modelmatrix(stlw::Logger&, glm::mat4 const&, ShaderProgram&);
 
 void

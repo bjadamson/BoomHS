@@ -11,6 +11,7 @@ struct Item;
 struct PlayerData
 {
   Inventory inventory;
+  int       level = -1;
 };
 
 struct Player
