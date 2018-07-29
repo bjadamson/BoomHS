@@ -658,10 +658,10 @@ IO::process_event(GameState& state, SDL_Event& event, Camera& camera, FrameTime 
   auto const type          = event.type;
   bool const enter_pressed = event.key.keysym.sym == SDLK_RETURN;
   if ((type == SDL_KEYDOWN) && enter_pressed) {
-    ui.enter_pressed ^= true;
+    es.enter_pressed ^= true;
   }
 
-  if (ui.block_input || ui.enter_pressed) {
+  if (es.block_input || es.enter_pressed) {
     return;
   }
 

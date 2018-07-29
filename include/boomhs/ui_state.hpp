@@ -72,10 +72,6 @@ struct UiDebugState
 {
   MOVE_CONSTRUCTIBLE_ONLY(UiDebugState);
 
-  bool enter_pressed         = false;
-  bool block_input           = false;
-  bool update_orbital_bodies = true;
-
   // Buffers
   Buffers buffers;
 

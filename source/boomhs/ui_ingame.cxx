@@ -161,6 +161,9 @@ draw(EngineState& es, LevelManager& lm)
   if (inventory.is_open()) {
     draw_player_inventory(logger, registry, ttable);
   }
+
+  if (es.enter_pressed) {
+  }
 }
 
 } // namespace boomhs::ui_ingame

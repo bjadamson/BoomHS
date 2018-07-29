@@ -774,7 +774,7 @@ world_menu(EngineState& es, LevelData& ldata)
 {
   auto&      ui   = es.ui_state.debug;
   auto const draw = [&]() {
-    ImGui::MenuItem("Update Orbital", nullptr, &ui.update_orbital_bodies);
+    ImGui::MenuItem("Update Orbital", nullptr, &es.update_orbital_bodies);
 
     ImGui::MenuItem("Local Axis", nullptr, &es.show_local_axis);
     ImGui::MenuItem("Global Axis", nullptr, &es.show_global_axis);
@@ -831,7 +831,7 @@ draw_debugwindow(EngineState& es, LevelManager& lm)
   }
 
   auto& uistate = es.ui_state.debug;
-  ImGui::Checkbox("Enter Pressed", &uistate.enter_pressed);
+  ImGui::Checkbox("Enter Pressed", &es.enter_pressed);
   ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
 
   ImGui::Checkbox("Show (x, z)-axis lines", &es.show_grid_lines);

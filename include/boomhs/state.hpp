@@ -63,6 +63,10 @@ struct EngineState
   bool mariolike_edges;
   bool draw_imguimetrics;
 
+  bool enter_pressed         = false;
+  bool block_input           = false;
+  bool update_orbital_bodies = true;
+
   // rendering state
   bool draw_bounding_boxes;
   bool draw_entities;

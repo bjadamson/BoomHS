@@ -191,7 +191,7 @@ update_orbital_bodies(EngineState& es, LevelData& ldata, glm::mat4 const& view_m
   };
 
   auto const eids = find_orbital_bodies(registry);
-  if (es.ui_state.debug.update_orbital_bodies) {
+  if (es.update_orbital_bodies) {
     bool first = true;
     for (auto const eid : eids) {
       update_orbitals(eid, first);
