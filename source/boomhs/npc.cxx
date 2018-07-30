@@ -86,7 +86,11 @@ NPC::create(EntityRegistry& registry, char const* name, int const level, glm::ve
   // npc TAG
   auto& npcdata     = registry.assign<NPCData>(eid);
   npcdata.name      = name;
-  npcdata.health    = 10;
+
+  auto& hp   = npcdata.health;
+  hp.current = 10;
+  hp.max     = hp.current;
+
   npcdata.level     = level;
   npcdata.alignment = Alignment::EVIL;
 
@@ -101,7 +105,6 @@ NPC::create_random(stlw::Logger& logger, TerrainGrid const& terrain_grid, Entity
 {
   auto const make_monster = [&](char const* name) {
     auto const pos = generate_npc_position(logger, terrain_grid, registry, rng);
-    LOG_ERROR_SPRINTF("NPC POSITION: %s", glm::to_string(pos));
 
     int const level = rng.gen_int_range(1, 20);
     NPC::create(registry, name, level, pos);
@@ -112,6 +115,13 @@ NPC::create_random(stlw::Logger& logger, TerrainGrid const& terrain_grid, Entity
   else {
     make_monster("T");
   }
+}
+
+bool
+NPC::is_dead(HealthPoints const& hp)
+{
+  assert(hp.max > 0);
+  return hp.current <= 0;
 }
 
 } // namespace boomhs

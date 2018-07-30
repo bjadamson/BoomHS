@@ -27,10 +27,10 @@ alignment_to_string(Alignment const);
 
 struct NPCData
 {
-  char const* name      = "NOT SET. ERROR";
-  int         health    = -1;
-  int         level     = -1;
-  Alignment   alignment = Alignment::NOT_SET;
+  char const*  name      = "NOT SET. ERROR";
+  HealthPoints health    = {-1, -1};
+  int          level     = -1;
+  Alignment    alignment = Alignment::NOT_SET;
 };
 
 class NPC
@@ -43,6 +43,8 @@ public:
 
   static void
   create_random(stlw::Logger&, TerrainGrid const&, EntityRegistry&, stlw::float_generator&);
+
+  static bool is_dead(HealthPoints const&);
 };
 
 inline auto

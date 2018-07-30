@@ -104,6 +104,12 @@ update_npcpositions(stlw::Logger& logger, LevelData& ldata, EntityRegistry& regi
                     FrameTime const& ft)
 {
   auto const update = [&](auto const eid) {
+    auto& npcdata = registry.get<NPCData>(eid);
+    auto& npc_hp = npcdata.health;
+    if (NPC::is_dead(npc_hp)) {
+      return;
+    }
+
     auto& transform         = registry.get<Transform>(eid);
     auto const& bbox        = registry.get<AABoundingBox>(eid);
 

@@ -134,7 +134,9 @@ draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const
     ImGui::Text("Name %s", npcdata.name);
     ImGui::Text("Level %i", npcdata.level);
     ImGui::Text("Alignment %s", alignment_to_string(npcdata.alignment));
-    ImGui::Text("Health %i", npcdata.health);
+
+    auto& hp = npcdata.health;
+    ImGui::Text("Health %i/%i", hp.current, hp.max);
 
     auto const draw_icon = [&]() {
       ImGui::Image(my_tex_id, ImVec2(ti->width, ti->height), ImVec2(0, 0), ImVec2(1, 1),
