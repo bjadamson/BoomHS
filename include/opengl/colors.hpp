@@ -77,8 +77,7 @@ public:
 
   auto* data() { return colors_.data(); }
 
-  auto rgb() const { return glm::vec3{r(), g(), b()}; }
-
+  auto      rgb() const { return glm::vec3{r(), g(), b()}; }
   glm::vec4 rgba() const { return glm::vec4{r(), g(), b(), a()}; }
 
   std::string to_string() const { return glm::to_string(rgba()); }

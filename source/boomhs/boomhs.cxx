@@ -383,7 +383,8 @@ place_water(stlw::Logger& logger, ZoneState& zs, ShaderProgram& sp, glm::vec2 co
 void
 init(GameState& state)
 {
-  auto& logger = state.engine_state.logger;
+  auto& es = state.engine_state;
+  auto& logger = es.logger;
 
   for (auto& zs : state.level_manager) {
     auto& sps = zs.gfx_state.sps;
@@ -392,6 +393,61 @@ init(GameState& state)
     place_water(logger, zs, water_sp, glm::vec2{0.0f, 0.0f});
     place_water(logger, zs, water_sp, glm::vec2{20.0f, 20.0f});
   }
+
+  auto& ingame = es.ui_state.ingame;
+  auto& chat_history = ingame.chat_history;
+  auto& chat_state = ingame.chat_state;
+
+  chat_history.add_channel(0, "General", LOC::WHITE);
+  chat_history.add_channel(1, "Group",   LOC::LIGHT_BLUE);
+  chat_history.add_channel(2, "Guild",   LOC::LIGHT_GREEN);
+  chat_history.add_channel(3, "Whisper", LOC::MEDIUM_PURPLE);
+  chat_history.add_channel(4, "Area",    LOC::INDIAN_RED);
+
+  auto const addmsg = [&](ChannelId const channel, auto &&msg) {
+    Message m{channel, MOVE(msg)};
+    chat_history.add_message(MOVE(m));
+  };
+  addmsg(0, "Welcome to the server 'Turnshroom Habitat'");
+  addmsg(0, "Wizz: Hey");
+  addmsg(0, "Thorny: Yo");
+  addmsg(0, "Mufk: SUp man");
+  addmsg(2, "Kazaghual: anyone w2b this axe I just found?");
+  addmsg(2, "PizzaMan: Yo I'm here to deliver this pizza, I'll just leave it over here by the "
+      "dragon ok?");
+  addmsg(3, "Moo: grass plz");
+  addmsg(4, "Aladin: STFU Jafar");
+  addmsg(2, "Rocky: JKSLFJS");
+  addmsg(1, "You took 31 damage.");
+  addmsg(1, "You've given 25 damage.");
+  addmsg(1, "You took 61 damage.");
+  addmsg(1, "You've given 20 damage.");
+  addmsg(2, R"(A gender chalks in the vintage coke. When will the murder pocket a wanted symptom?
+            My
+            attitude observes any nuisance into the laughing constant. Every candidate
+            offers the railway under the beforehand molecule. The rescue buys his wrath
+            underneath the above garble.
+            The truth collars the bass into a lower heel. A squashed machinery kisses the
+            abandon. Across its horse swims a sheep. Any umbrella damage rants over a sniff.
+
+            How can a theorem chalk the frustrating fraud? Should the world wash an
+            incomprehensible curriculum?)");
+
+  addmsg(1, R"(The cap ducks inside the freedom. The mum hammers the apathy above our preserved
+            ozone. Will the peanut nose a review species? His vocabulary beams near the virgin.
+
+            The short supporter blames the hack fudge. The waffle exacts the bankrupt within an
+            infantile attitude.)");
+  addmsg(2, "A flesh hazards the sneaking tooth. An analyst steams before an instinct! The muscle "
+            "expands within each brother! Why can't the indefinite garbage harden? The feasible "
+            "cider moans in the forest.");
+  addmsg(1, "Opposite the initiative scratches an inane plant. Why won't the late school "
+            "experiment with a crown? The sneak papers a go dinner without a straw. How can an "
+            "eating guy camp?"
+        "Around the convinced verdict waffles a scratching shed. The "
+            "inhabitant escapes before whatever outcry.");
+
+  chat_state.reset_yscroll_position = true;
 }
 
 void
@@ -459,6 +515,11 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     return BlackTerrainRenderer{sp};
   };
 
+  auto const make_sunshaft_renderer = [&]() {
+    auto& sunshaft_sp = sps.ref_sp("sunshaft");
+    return SunshaftRenderer{logger, screen_size, sunshaft_sp};
+  };
+
   // TODO: move these (they are static for convenience testing)
   static SkyboxRenderer skybox_renderer         = make_skybox_renderer();
   static auto           basic_water_renderer    = make_basic_water_renderer();
@@ -472,6 +533,8 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   static auto black_entity_renderer   = BlackEntityRenderer{};
   static auto default_scene_renderer  = DefaultSceneRenderer{};
   static auto black_scene_renderer    = BlackSceneRenderer{};
+
+  static auto sunshaft_renderer = make_sunshaft_renderer();
 
   auto const fmatrices = FrameMatrices::from_camera(camera);
   FrameState fstate{fmatrices, es, zs};
@@ -502,8 +565,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   bool const  graphics_mode_advanced = GameGraphicsMode::Advanced == graphics_settings.mode;
   bool const  draw_water_advanced    = draw_water && graphics_mode_advanced;
 
-  auto&                   sunshaft_sp = sps.ref_sp("sunshaft");
-  static SunshaftRenderer sunshaft_renderer{logger, screen_size, sunshaft_sp};
+  
 
   auto const draw_scene = [&](bool const black_silhoutte) {
     auto const draw_advanced = [&](auto& terrain_renderer, auto& entity_renderer, auto& scene_renderer) {

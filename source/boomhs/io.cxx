@@ -318,9 +318,9 @@ process_keyup(GameState& state, SDL_Event const& event, Camera& camera, FrameTim
 void
 process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameTime const& ft)
 {
-  auto& es     = state.engine_state;
-  auto& logger = es.logger;
-  auto& ui     = es.ui_state;
+  auto& es      = state.engine_state;
+  auto& logger  = es.logger;
+  auto& uistate = es.ui_state;
 
   auto& lm             = state.level_manager;
   auto& active         = lm.active();
@@ -328,12 +328,18 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
   auto& player         = ldata.player;
   auto& nearby_targets = ldata.nearby_targets;
 
+  auto& debug = uistate.debug;
+  auto& ingame = uistate.ingame;
+  auto& chat_state = ingame.chat_state;
+
   auto const rotate_player = [&](float const angle, glm::vec3 const& axis) {
     player.rotate_degrees(angle, axis);
   };
   switch (event.key.keysym.sym) {
-  case SDLK_ESCAPE:
-    es.main_menu.show ^= true;
+  case SDLK_RETURN:
+    // Toggle whether or not the user is editing, but force the yscroll position to reset.
+    chat_state.currently_editing ^= true;
+    chat_state.reset_yscroll_position = true;
     break;
   case SDLK_w:
     move_forward(state, ft);
@@ -349,8 +355,7 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
     break;
   case SDLK_e:
     if (event.key.keysym.mod & KMOD_CTRL) {
-      auto& uistate = es.ui_state.debug;
-      uistate.show_entitywindow ^= true;
+      debug.show_entitywindow ^= true;
     }
     else {
       try_pickup_nearby_item(state, ft);
@@ -360,11 +365,8 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
   case SDLK_q:
     // move_down(state, ft);
     break;
-  case SDLK_F10:
-    es.quit = true;
-    break;
   case SDLK_F11:
-    ui.draw_debug_ui ^= true;
+    uistate.draw_debug_ui ^= true;
     break;
   case SDLK_t:
     // invert
@@ -504,7 +506,7 @@ process_keystate(GameState& state, Camera& camera, FrameTime const& ft)
 }
 
 void
-process_controllefstate(GameState& state, SDLControllers const& controllers, Camera& camera,
+process_controllerstate(GameState& state, SDLControllers const& controllers, Camera& camera,
                         FrameTime const& ft)
 {
   if (controllers.empty()) {
@@ -647,25 +649,44 @@ IO::process_event(GameState& state, SDL_Event& event, Camera& camera, FrameTime 
   auto& es     = state.engine_state;
   auto& logger = es.logger;
 
+  auto& ui     = es.ui_state;
+  auto& ingame = ui.ingame;
+  auto& chat_buffer = ingame.chat_buffer;
+  auto& currently_editing = ingame.chat_state.currently_editing;
+
+  auto const type               = event.type;
+  bool const event_type_keydown = type == SDL_KEYDOWN;
+  auto const key_pressed        = event.key.keysym.sym;
+  if (event_type_keydown) {
+    switch (key_pressed) {
+      case SDLK_F10:
+        es.quit = true;
+        return;
+      case SDLK_ESCAPE:
+        if (currently_editing) {
+          chat_buffer.clear();
+          currently_editing = false;
+        }
+        else {
+          es.main_menu.show ^= true;
+        }
+        return;
+      default:
+        break;
+    }
+  }
+
   // If the user pressed enter, don't process mouse events (for the game)
-  auto& ui = es.ui_state.debug;
+  if (currently_editing) {
+    return;
+  }
 
   auto& imgui = es.imgui;
-  if (imgui.WantCaptureMouse || imgui.WantCaptureKeyboard) {
-    return;
-  }
+  //if (imgui.WantCaptureMouse || imgui.WantCaptureKeyboard) {
+    //return;
+  //}
 
-  auto const type          = event.type;
-  bool const enter_pressed = event.key.keysym.sym == SDLK_RETURN;
-  if ((type == SDL_KEYDOWN) && enter_pressed) {
-    es.enter_pressed ^= true;
-  }
-
-  if (es.block_input || es.enter_pressed) {
-    return;
-  }
-
-  switch (event.type) {
+  switch (type) {
   case SDL_MOUSEBUTTONDOWN:
     process_mousebutton_down(state, event.button, camera, ft);
     break;
@@ -693,7 +714,7 @@ IO::process(GameState& state, SDLControllers const& controllers, Camera& camera,
 {
   process_mousestate(state, camera, ft);
   process_keystate(state, camera, ft);
-  process_controllefstate(state, controllers, camera, ft);
+  process_controllerstate(state, controllers, camera, ft);
 }
 
 } // namespace boomhs

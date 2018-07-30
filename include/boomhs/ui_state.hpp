@@ -14,6 +14,7 @@ struct UiInGameState
 {
   ChatBuffer  chat_buffer;
   ChatHistory chat_history;
+  ChatState   chat_state;
 };
 
 struct DrawTimeBuffer

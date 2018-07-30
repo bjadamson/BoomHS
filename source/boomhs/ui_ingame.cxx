@@ -11,44 +11,13 @@
 #include <stlw/algorithm.hpp>
 
 #include <extlibs/imgui.hpp>
+#include <algorithm>
 #include <optional>
 
+using namespace boomhs;
 using namespace opengl;
 
-namespace boomhs
-{
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// ChatBuffer
-int
-ChatBuffer::size() const
-{
-  return IM_ARRAYSIZE(buffer());
-}
-
-void
-ChatBuffer::clear()
-{
-  stlw::memzero(buffer(), ChatBuffer::MAX_BUFFER_SIZE);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// ChatHistory
-void
-ChatHistory::add_message(std::string&& m)
-{
-  messages_.emplace_back(MOVE(m));
-}
-
-ListOfMessages const&
-ChatHistory::all_messages() const
-{
-  return messages_;
-}
-
-} // namespace boomhs
-
-namespace boomhs::ui_ingame
+namespace
 {
 
 void
@@ -179,8 +148,239 @@ draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const
 }
 
 void
-draw_chatwindow(EngineState& es)
+draw_chatwindow_body(EngineState& es, PlayerData& player)
 {
+  auto& logger   = es.logger;
+  auto& ingame = es.ui_state.ingame;
+  auto& chat_state = ingame.chat_state;
+  auto& is_editing = chat_state.currently_editing;
+  auto& chat_buffer = ingame.chat_buffer;
+  auto& chat_history = ingame.chat_history;
+  auto const& active_channel = chat_state.active_channel;
+
+
+  auto const copy_message_to_chathistory = [&]()
+  {
+    std::string copy = chat_buffer.buffer();
+    stlw::trim(copy);
+    if (!copy.empty()) {
+      Message m{active_channel, MOVE(copy)};
+      chat_history.add_message(MOVE(m));
+    }
+    chat_buffer.clear();
+  };
+
+  auto const print_chat_message = [&](Message const& m) {
+
+    Color const active_color = Message::is_command_message(m)
+      ? LOC::RED
+      : chat_history.channel_color(active_channel);
+
+    ImVec4 const im_color = imgui_cxx::from_color(active_color);
+    imgui_cxx::text_wrapped_colored(im_color, "%s:%s", player.name.c_str(), m.contents.c_str());
+  };
+  auto& reset_yscroll = chat_state.reset_yscroll_position;
+  auto const draw = [&]()
+  {
+    auto const chat_messages = active_channel == 0
+      ? chat_history.all_messages()
+      : chat_history.all_messages_in_channel(active_channel);
+    for(auto const& m : chat_messages) {
+      print_chat_message(m);
+    }
+
+    if (reset_yscroll) {
+      ui_ingame::reset_active_imguiwindow_yscroll_position(1000);
+      reset_yscroll = false;
+    }
+    if (is_editing) {
+      auto& buffer = chat_buffer.buffer();
+      auto const buffer_size = chat_buffer.size();
+
+      auto const font_height = ImGui::GetFontSize() * 2;
+      auto const input_size = ImVec2(-10, font_height);
+
+      auto constexpr FLAGS = (0
+        | ImGuiInputTextFlags_AllowTabInput
+        | ImGuiInputTextFlags_CtrlEnterForNewLine
+        | ImGuiInputTextFlags_EnterReturnsTrue
+          );
+      bool const enter_pressed = ImGui::InputTextMultiline("", buffer, buffer_size, input_size,
+          FLAGS);
+
+      if (enter_pressed) {
+        copy_message_to_chathistory();
+        is_editing = false;
+        reset_yscroll = true;
+      }
+
+      // Keep focus on the input widget.
+      ImGui::SetItemDefaultFocus();
+      ImGui::SetKeyboardFocusHere(-1);
+    }
+  };
+  auto const height = is_editing ? -20.0f : -5.0f;
+  auto const size = ImVec2(-5, height);
+
+  bool constexpr SHOW_BORDER = false;
+  auto constexpr flags = (0 | ImGuiWindowFlags_NoTitleBar);
+
+  for (auto const& c : chat_history.channels()) {
+    if (ImGui::SmallButton(c.name.c_str())) {
+      chat_state.active_channel = c.id;
+      reset_yscroll = true;
+    }
+    ImGui::SameLine();
+  }
+  ImGui::NewLine();
+
+  IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_WindowPadding, ImVec2(1 ,0));
+  IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_WindowRounding, 1.0);
+  IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_ItemSpacing, ImVec2(1.0, 5.0));
+  IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_ChildRounding, 5.0f);
+
+  imgui_cxx::with_childframe(draw, "ChatWindow InnerChildFrame", size, SHOW_BORDER, flags);
+}
+
+void
+draw_chatwindow(EngineState& es, PlayerData& player)
+{
+  auto& logger = es.logger;
+  auto& ingame = es.ui_state.ingame;
+
+  auto const draw_window = [&]() {
+    auto constexpr flags = (0
+      | ImGuiWindowFlags_AlwaysUseWindowPadding
+      | ImGuiWindowFlags_NoBringToFrontOnFocus
+      | ImGuiWindowFlags_NoCollapse
+      | ImGuiWindowFlags_HorizontalScrollbar
+      | ImGuiWindowFlags_NoResize
+      | ImGuiWindowFlags_NoNavFocus
+      | ImGuiWindowFlags_NoScrollbar
+      | ImGuiWindowFlags_NoScrollWithMouse
+      | ImGuiWindowFlags_NoTitleBar
+      );
+
+    auto const [window_w, window_h] = es.dimensions.size();
+    ImVec2 const offset{10, 6};
+    auto const chat_w = 480, chat_h = 200;
+    auto const chat_x = window_w - chat_w - offset.x, chat_y = window_h - chat_h - offset.y;
+    ImVec2 const chat_pos{chat_x, chat_y};
+    ImGui::SetNextWindowPos(chat_pos);
+
+    ImVec2 const chat_size{chat_w, chat_h};
+    ImGui::SetNextWindowSize(chat_size);
+
+    auto const draw_chatwindow_body_wrapper = [&]() {
+      draw_chatwindow_body(es, player);
+    };
+    imgui_cxx::with_window(draw_chatwindow_body_wrapper, "Chat Window", nullptr, flags);
+  };
+  imgui_cxx::with_stylevars(draw_window, ImGuiStyleVar_ChildRounding, 5.0f);
+}
+
+} // namespace
+
+namespace boomhs
+{
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// ChatBuffer
+int
+ChatBuffer::size() const
+{
+  return IM_ARRAYSIZE(buffer());
+}
+
+void
+ChatBuffer::clear()
+{
+  stlw::memzero(buffer(), ChatBuffer::MAX_BUFFER_SIZE);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Message
+bool
+Message::is_command_message(Message const& m)
+{
+  return m.contents.find("/") == 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// ChatHistory
+Channel const*
+ChatHistory::find_channel(ChannelId const id) const
+{
+  Channel const* p = nullptr;
+  for (auto const& c : channels()) {
+    if (c.id == id) {
+      p = &c;
+      break;
+    }
+  }
+  return p;
+}
+
+bool
+ChatHistory::has_channel(ChannelId const id) const
+{
+  auto const* c = find_channel(id);
+  return (c == nullptr) ? false : true;
+}
+
+void
+ChatHistory::add_channel(ChannelId const id, char const* name, Color const& color)
+{
+  assert(!has_channel(id));
+  Channel c{id, name, color};
+  channels_.emplace_back(MOVE(c));
+}
+
+Color const&
+ChatHistory::channel_color(ChannelId const id) const
+{
+  auto const* p = find_channel(id);
+  assert(p);
+
+  return p->color;
+}
+
+void
+ChatHistory::add_message(Message&& m)
+{
+  assert(has_channel(m.id));
+  messages_.emplace_back(MOVE(m));
+}
+
+ListOfMessages const&
+ChatHistory::all_messages() const
+{
+  return messages_;
+}
+
+ListOfMessages
+ChatHistory::all_messages_in_channel(ChannelId const id) const
+{
+  ListOfMessages filtered;
+  for (auto const& m : all_messages()) {
+    if (m.id == id) {
+      // copy the message into the result
+      filtered.push_back(m);
+    }
+  }
+  return filtered;
+}
+
+} // namespace boomhs
+
+namespace boomhs::ui_ingame
+{
+
+void
+reset_active_imguiwindow_yscroll_position(int const offset)
+{
+  auto const max_y = ImGui::GetScrollMaxY();
+  ImGui::SetScrollY(max_y + offset);
 }
 
 void
@@ -197,73 +397,12 @@ draw(EngineState& es, LevelManager& lm)
 
   auto const eid       = find_player(registry);
   auto&      player    = registry.get<PlayerData>(eid);
-  auto&      inventory = player.inventory;
+  draw_chatwindow(es, player);
+
+  auto& inventory = player.inventory;
   if (inventory.is_open()) {
     draw_player_inventory(logger, registry, ttable);
   }
-
-  draw_chatwindow(es);
-  auto const draw_chatwindow = [&]() {
-    IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_WindowPadding, ImVec2(5 ,0));
-    IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_WindowRounding, 1.0);
-    IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_ItemSpacing, ImVec2(5.0, 5.0));
-    IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_ChildRounding, 5.0f);
-
-    ImGui::Text("TEST");
-    auto const draw_chatframe = [&]()
-    {
-      auto& ingame = es.ui_state.ingame;
-      auto& chat_history = ingame.chat_history;
-      for(auto const& m : chat_history.all_messages()) {
-          ImGui::Text("%s", m.c_str());
-        }
-      auto& chat_buffer = ingame.chat_buffer;
-      auto constexpr INPUT_FLAGS = (0
-        | ImGuiInputTextFlags_AllowTabInput
-        | ImGuiInputTextFlags_CtrlEnterForNewLine
-        | ImGuiInputTextFlags_EnterReturnsTrue
-        | ImGuiInputTextFlags_NoHorizontalScroll
-          );
-      if (es.enter_pressed) {
-        if (ImGui::InputText("You: ", chat_buffer.buffer(), chat_buffer.size(), INPUT_FLAGS)) {
-          // Copy from the buffer into message.
-          std::string message = chat_buffer.buffer();
-          stlw::trim(message);
-          if (!message.empty()) {
-            chat_history.add_message(MOVE(message));
-            chat_buffer.clear();
-            es.enter_pressed = false;
-          }
-        }
-      }
-      ImGui::SetKeyboardFocusHere(-1);
-    };
-    auto const height = ImGui::GetFontSize() * 20;
-    auto const size = ImVec2(-35, -5);
-    bool constexpr SHOW_BORDER = false;
-
-    auto const flags = (0
-      | ImGuiWindowFlags_NoTitleBar
-      );
-    imgui_cxx::with_childframe(draw_chatframe, "TEST CHILDFRAME", size, SHOW_BORDER, flags);
-  };
-
-  auto const draw_window = [&]() {
-    auto constexpr flags = (0
-      //| ImGuiWindowFlags_AlwaysUseWindowPadding
-      | ImGuiWindowFlags_NoBringToFrontOnFocus
-      | ImGuiWindowFlags_NoCollapse
-      //| ImGuiWindowFlags_HorizontalScrollbar
-      //| ImGuiWindowFlags_NoInputs
-      //| ImGuiWindowFlags_NoNavFocus
-      //| ImGuiWindowFlags_NoScrollbar
-      //| ImGuiWindowFlags_NoScrollWithMouse
-      ////| ImGuiWindowFlags_NoResize
-      | ImGuiWindowFlags_NoTitleBar
-      );
-    imgui_cxx::with_window(draw_chatwindow, "Chat Window", nullptr, flags);
-  };
-  imgui_cxx::with_stylevars(draw_window, ImGuiStyleVar_ChildRounding, 5.0f);
 }
 
 } // namespace boomhs::ui_ingame

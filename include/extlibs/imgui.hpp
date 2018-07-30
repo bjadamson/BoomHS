@@ -1,4 +1,6 @@
 #pragma once
+#include <opengl/colors.hpp>
+
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl_gl3.h>
 
@@ -8,6 +10,22 @@
 
 namespace imgui_cxx
 {
+
+inline ImVec4
+from_color(opengl::Color const& c)
+{
+  auto const* data = c.data();
+  return ImVec4{data[0], data[1], data[2], data[3]};
+}
+
+template <typename... Args>
+inline void
+text_wrapped_colored(ImVec4 const& c, char const* fmt, Args&&... args)
+{
+  ImGui::PushStyleColor(ImGuiCol_Text, c);
+  ImGui::TextWrapped(fmt, FORWARD(args));
+  ImGui::PopStyleColor();
+}
 
 template <typename T>
 auto

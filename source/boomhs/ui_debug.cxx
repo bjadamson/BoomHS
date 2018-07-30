@@ -831,13 +831,6 @@ draw_debugwindow(EngineState& es, LevelManager& lm)
   }
 
   auto& uistate = es.ui_state.debug;
-  ImGui::Checkbox("Enter Pressed", &es.enter_pressed);
-  ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
-
-  ImGui::Checkbox("Show (x, z)-axis lines", &es.show_grid_lines);
-  ImGui::Checkbox("Show y-axis Lines ", &es.show_yaxis_lines);
-
-  ImGui::Separator();
   ImGui::Checkbox("Draw Entities", &es.draw_entities);
   ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
 
@@ -845,12 +838,18 @@ draw_debugwindow(EngineState& es, LevelManager& lm)
     auto& water_buffer = es.ui_state.debug.buffers.water;
     ImGui::Checkbox("Draw Water", &water_buffer.draw);
   }
-
   ImGui::Separator();
+
   ImGui::Checkbox("Draw Bounding Boxes", &es.draw_bounding_boxes);
   ImGui::Checkbox("Draw Normals", &es.draw_normals);
   ImGui::Checkbox("Wireframe Rendering", &es.wireframe_override);
 
+  ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
+
+  ImGui::Checkbox("Show (x, z)-axis lines", &es.show_grid_lines);
+  ImGui::Checkbox("Show y-axis Lines ", &es.show_yaxis_lines);
+
+  ImGui::Separator();
   ImGui::Checkbox("ImGui Metrics", &es.draw_imguimetrics);
   if (es.draw_imguimetrics) {
     ImGui::ShowMetricsWindow(&es.draw_imguimetrics);

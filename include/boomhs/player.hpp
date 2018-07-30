@@ -3,6 +3,7 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/inventory.hpp>
 #include <stlw/log.hpp>
+#include <string>
 
 namespace boomhs
 {
@@ -10,8 +11,9 @@ struct Item;
 
 struct PlayerData
 {
-  Inventory inventory;
-  int       level = -1;
+  Inventory   inventory;
+  int         level = -1;
+  std::string name;
 };
 
 struct Player

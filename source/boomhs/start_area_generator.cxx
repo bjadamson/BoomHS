@@ -66,6 +66,7 @@ StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
   auto const peid = find_player(registry);
   auto& player = registry.get<PlayerData>(peid);
   player.level = 14;
+  player.name = "BEN";
 
   LOG_TRACE("placing monsters ...\n");
   place_monsters(logger, terrain, registry, rng);
