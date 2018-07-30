@@ -92,7 +92,7 @@ set(BOOMHS_CODE     ${BOOMHS_INCLUDES} ${BOOMHS_SOURCES})
 ## BFD and dl are both needed for linux backtraces.
 ## BFD_LIB => Backtrace Libraries
 set(BFD_LIB "bfd")
-set(DL_LIB "dl")
+set(STACKTRACE_LIB "dw")
 
 ###################################################################################################
 # Create lists of files to be used when issuing build commands further below.
@@ -167,9 +167,9 @@ target_include_directories(Window_LIB PUBLIC
   ${SDL2_INCLUDE_DIRS}
   )
 
-## GL_SDL_LIB
-add_library(GL_SDL_LIB STATIC ${GL_SDL_SOURCES})
-target_include_directories(GL_SDL_LIB PUBLIC
+## GL_SSTACKTRACE_LIB
+add_library(GL_SSTACKTRACE_LIB STATIC ${GL_SDL_SOURCES})
+target_include_directories(GL_SSTACKTRACE_LIB PUBLIC
   ${EXTERNAL_INCLUDE_DIRS}
   ${SDL2_INCLUDE_DIRS}
   ${OPENGL_INDLUDE_DIRS}
@@ -180,13 +180,13 @@ target_include_directories(GL_SDL_LIB PUBLIC
 ##
 ## The base game is dependent on ALL other libraries. The rest of the libraries need to have
 ## specified which other libraries they will link too here.
-target_link_libraries(Stlw_LIB   External_LIB ${BFD_LIB} ${DL_LIB})
-target_link_libraries(BoomHS_LIB External_LIB Opengl_LIB Stlw_LIB Window_LIB GL_SDL_LIB ${BFD_LIB}
-    ${DL_LIB})
+target_link_libraries(Stlw_LIB   External_LIB ${BFD_LIB} ${STACKTRACE_LIB})
+target_link_libraries(BoomHS_LIB External_LIB Opengl_LIB Stlw_LIB Window_LIB GL_SSTACKTRACE_LIB ${BFD_LIB}
+    ${STACKTRACE_LIB})
 
-target_link_libraries(Opengl_LIB External_LIB Stlw_LIB ${BFD_LIB} ${DL_LIB})
-target_link_libraries(Window_LIB External_LIB Opengl_LIB Stlw_LIB ${BFD_LIB} ${DL_LIB})
-target_link_libraries(GL_SDL_LIB External_LIB Opengl_LIB Stlw_LIB Window_LIB ${BFD_LIB} ${DL_LIB})
+target_link_libraries(Opengl_LIB External_LIB Stlw_LIB ${BFD_LIB} ${STACKTRACE_LIB})
+target_link_libraries(Window_LIB External_LIB Opengl_LIB Stlw_LIB ${BFD_LIB} ${STACKTRACE_LIB})
+target_link_libraries(GL_SSTACKTRACE_LIB External_LIB Opengl_LIB Stlw_LIB Window_LIB ${BFD_LIB} ${STACKTRACE_LIB})
 
 ###################################################################################################
 ## Executables
@@ -216,7 +216,7 @@ target_link_libraries(boomhs
 
   Opengl_LIB
   Window_LIB
-  GL_SDL_LIB
+  GL_SSTACKTRACE_LIB
 
   ## System Libraries
   stdc++
@@ -227,7 +227,7 @@ target_link_libraries(boomhs
 
   ## External Libraries
   ${BFD_LIB}
-  ${DL_LIB}
+  ${STACKTRACE_LIB}
   ${SDL2_LIBRARIES}
   ${SDL2IMAGE_LIBRARIES}
   ${OPENGL_LIBRARIES}

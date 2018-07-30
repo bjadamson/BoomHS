@@ -46,12 +46,15 @@ pip install conan
 # Install basic dependencies
 apt-get install libc++-dev
 
+# Stacktrace
+apt-get install libdw-dev
+
 # Required libraries for GLEW
 apt-get install libXmu-dev libXi-dev libgl-dev dos2unix
 
 # Install sdl-2.0
 apt-get install libsdl2-dev #(TODO: confirm more libraries aren't needed)
-sudo apt-get install libaudio-dev
+apt-get install libaudio-dev
 
 # Install libSOIL
 git clone https://github.com/kbranigan/Simple-OpenGL-Image-Library.git
