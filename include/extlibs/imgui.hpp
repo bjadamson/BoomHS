@@ -117,7 +117,7 @@ with_window(FN const& fn, Args&&... args)
 
 template <typename FN, typename... Args>
 void
-with_stylevar(FN const& fn, Args&&... args)
+with_stylevars(FN const& fn, Args&&... args)
 {
   ImGui::PushStyleVar(FORWARD(args));
   fn();
@@ -172,5 +172,9 @@ struct ImageButtonBuilder
     return ImGui::ImageButton(id, size, uv0, uv1, frame_padding, bg_color, tint_color);
   }
 };
+
+#define IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(NAME, VAL)                                                  \
+  ImGui::PushStyleVar(NAME, VAL);                                                                  \
+  ON_SCOPE_EXIT([]() { ImGui::PopStyleVar(); });
 
 } // namespace imgui_cxx

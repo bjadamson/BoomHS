@@ -89,7 +89,7 @@ draw_menu(EngineState& es, ImVec2 const& size, WaterAudioSystem& water_audio)
     ImGui::SetNextWindowSize(size);
     imgui_cxx::with_window(fn, "Main Menu", nullptr, WINDOW_FLAGS);
   };
-  imgui_cxx::with_stylevar(draw_window, STYLE_VARS, 5.0f);
+  imgui_cxx::with_stylevars(draw_window, STYLE_VARS, 5.0f);
 }
 
 void

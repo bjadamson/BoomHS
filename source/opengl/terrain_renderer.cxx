@@ -63,12 +63,12 @@ render_terrain(Transform& transform, RenderState& rstate, EntityRegistry& regist
     fn(terrain);
   };
 
-  LOG_ERROR("-------------------- Draw Terrain BEGIN ----------------------");
+  LOG_TRACE("-------------------- Draw Terrain BEGIN ----------------------");
 
   for (auto& t : terrain_grid) {
     draw_piece(t);
   }
-  LOG_ERROR("-------------------- Draw Terrain END  ----------------------");
+  LOG_TRACE("-------------------- Draw Terrain END  ----------------------");
 }
 
 } // namespace

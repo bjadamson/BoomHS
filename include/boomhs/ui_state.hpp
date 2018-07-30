@@ -1,15 +1,19 @@
 #pragma once
 #include <boomhs/terrain.hpp>
+#include <boomhs/ui_ingame.hpp>
 
-#include <array>
 #include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
+
+#include <array>
 
 namespace boomhs
 {
 
 struct UiInGameState
 {
+  ChatBuffer  chat_buffer;
+  ChatHistory chat_history;
 };
 
 struct DrawTimeBuffer

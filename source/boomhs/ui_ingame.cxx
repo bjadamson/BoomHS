@@ -8,10 +8,45 @@
 
 #include <opengl/texture.hpp>
 
+#include <stlw/algorithm.hpp>
+
 #include <extlibs/imgui.hpp>
 #include <optional>
 
 using namespace opengl;
+
+namespace boomhs
+{
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// ChatBuffer
+int
+ChatBuffer::size() const
+{
+  return IM_ARRAYSIZE(buffer());
+}
+
+void
+ChatBuffer::clear()
+{
+  stlw::memzero(buffer(), ChatBuffer::MAX_BUFFER_SIZE);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// ChatHistory
+void
+ChatHistory::add_message(std::string&& m)
+{
+  messages_.emplace_back(MOVE(m));
+}
+
+ListOfMessages const&
+ChatHistory::all_messages() const
+{
+  return messages_;
+}
+
+} // namespace boomhs
 
 namespace boomhs::ui_ingame
 {
@@ -82,7 +117,7 @@ draw_player_inventory(stlw::Logger& logger, EntityRegistry& registry, TextureTab
   auto const draw_window = [&]() {
     imgui_cxx::with_window(draw_inventory, "Inventory", nullptr, flags);
   };
-  imgui_cxx::with_stylevar(draw_window, ImGuiStyleVar_ChildRounding, 5.0f);
+  imgui_cxx::with_stylevars(draw_window, ImGuiStyleVar_ChildRounding, 5.0f);
 }
 
 void
@@ -138,9 +173,14 @@ draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const
     };
 
     ImGui::SameLine();
-    imgui_cxx::with_stylevar(draw_icon, ImGuiStyleVar_ChildRounding, 5.0f);
+    imgui_cxx::with_stylevars(draw_icon, ImGuiStyleVar_ChildRounding, 5.0f);
   };
   imgui_cxx::with_window(draw, "Target", nullptr, WINDOW_FLAGS);
+}
+
+void
+draw_chatwindow(EngineState& es)
+{
 }
 
 void
@@ -162,8 +202,68 @@ draw(EngineState& es, LevelManager& lm)
     draw_player_inventory(logger, registry, ttable);
   }
 
-  if (es.enter_pressed) {
-  }
+  draw_chatwindow(es);
+  auto const draw_chatwindow = [&]() {
+    IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_WindowPadding, ImVec2(5 ,0));
+    IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_WindowRounding, 1.0);
+    IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_ItemSpacing, ImVec2(5.0, 5.0));
+    IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_ChildRounding, 5.0f);
+
+    ImGui::Text("TEST");
+    auto const draw_chatframe = [&]()
+    {
+      auto& ingame = es.ui_state.ingame;
+      auto& chat_history = ingame.chat_history;
+      for(auto const& m : chat_history.all_messages()) {
+          ImGui::Text("%s", m.c_str());
+        }
+      auto& chat_buffer = ingame.chat_buffer;
+      auto constexpr INPUT_FLAGS = (0
+        | ImGuiInputTextFlags_AllowTabInput
+        | ImGuiInputTextFlags_CtrlEnterForNewLine
+        | ImGuiInputTextFlags_EnterReturnsTrue
+        | ImGuiInputTextFlags_NoHorizontalScroll
+          );
+      if (es.enter_pressed) {
+        if (ImGui::InputText("You: ", chat_buffer.buffer(), chat_buffer.size(), INPUT_FLAGS)) {
+          // Copy from the buffer into message.
+          std::string message = chat_buffer.buffer();
+          stlw::trim(message);
+          if (!message.empty()) {
+            chat_history.add_message(MOVE(message));
+            chat_buffer.clear();
+            es.enter_pressed = false;
+          }
+        }
+      }
+      ImGui::SetKeyboardFocusHere(-1);
+    };
+    auto const height = ImGui::GetFontSize() * 20;
+    auto const size = ImVec2(-35, -5);
+    bool constexpr SHOW_BORDER = false;
+
+    auto const flags = (0
+      | ImGuiWindowFlags_NoTitleBar
+      );
+    imgui_cxx::with_childframe(draw_chatframe, "TEST CHILDFRAME", size, SHOW_BORDER, flags);
+  };
+
+  auto const draw_window = [&]() {
+    auto constexpr flags = (0
+      //| ImGuiWindowFlags_AlwaysUseWindowPadding
+      | ImGuiWindowFlags_NoBringToFrontOnFocus
+      | ImGuiWindowFlags_NoCollapse
+      //| ImGuiWindowFlags_HorizontalScrollbar
+      //| ImGuiWindowFlags_NoInputs
+      //| ImGuiWindowFlags_NoNavFocus
+      //| ImGuiWindowFlags_NoScrollbar
+      //| ImGuiWindowFlags_NoScrollWithMouse
+      ////| ImGuiWindowFlags_NoResize
+      | ImGuiWindowFlags_NoTitleBar
+      );
+    imgui_cxx::with_window(draw_chatwindow, "Chat Window", nullptr, flags);
+  };
+  imgui_cxx::with_stylevars(draw_window, ImGuiStyleVar_ChildRounding, 5.0f);
 }
 
 } // namespace boomhs::ui_ingame
