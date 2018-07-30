@@ -11,9 +11,12 @@ struct Item;
 
 struct PlayerData
 {
-  Inventory   inventory;
-  int         level = -1;
-  std::string name;
+  Inventory    inventory;
+  HealthPoints hp{44, 50};
+  int          level = -1;
+  std::string  name;
+
+  int damage = 1;
 };
 
 struct Player

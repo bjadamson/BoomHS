@@ -3,6 +3,7 @@
 #include <boomhs/io.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mouse_picker.hpp>
+#include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
@@ -29,6 +30,49 @@ using namespace window;
 
 namespace
 {
+
+void
+kill_entity(stlw::Logger& logger, EntityRegistry& registry, EntityID const eid)
+{
+  auto const& bbox = registry.get<AABoundingBox>(eid);
+  auto const hw = bbox.half_widths();
+
+  // Move the entity half it's bounding box, so it is directly on the ground, or whatever it was
+  // standing on.
+  auto& transform = registry.get<Transform>(eid);
+  transform.translation.y -= hw.y;
+
+  // TODO: Get the normal vector for the terrain at the (x, z) point and rotate the npc to look
+  // properly aligned on slanted terrain.
+  transform.rotate_degrees(90.0f, opengl::X_UNIT_VECTOR);
+}
+
+void
+try_attack_selected_target(stlw::Logger& logger, EntityRegistry& registry,
+                           EntityID const target_eid)
+{
+  auto const player_eid = find_player(registry);
+  auto&      pdata      = registry.get<PlayerData>(player_eid);
+  auto& ptransform      = registry.get<Transform>(player_eid);
+  auto const playerpos  = ptransform.translation;
+
+  auto& npc_transform = registry.get<Transform>(target_eid);
+  auto const npcpos   = npc_transform.translation;
+
+  auto& npcdata = registry.get<NPCData>(target_eid);
+  auto& target_hp = npcdata.health;
+  if (NPC::is_dead(target_hp)) {
+    return;
+  }
+
+  if (glm::distance(npcpos, playerpos) < 2) {
+    target_hp.current -= pdata.damage;
+
+    if (NPC::is_dead(target_hp)) {
+      kill_entity(logger, registry, target_eid);
+    }
+  }
+}
 
 void
 move_worldobject(GameState& state, glm::vec3 (WorldObject::*fn)() const, WorldObject& wo,
@@ -324,6 +368,7 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
 
   auto& lm             = state.level_manager;
   auto& active         = lm.active();
+  auto& registry       = active.registry;
   auto& ldata          = active.level_data;
   auto& player         = ldata.player;
   auto& nearby_targets = ldata.nearby_targets;
@@ -384,14 +429,17 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
     }
   } break;
   case SDLK_BACKQUOTE: {
-    auto&      registry  = active.registry;
     auto const eid       = find_player(registry);
     auto&      player    = registry.get<PlayerData>(eid);
     auto&      inventory = player.inventory;
     inventory.toggle_open();
   } break;
-  case SDLK_SPACE:
-    break;
+  case SDLK_SPACE: {
+    auto const selected_opt = nearby_targets.selected();
+    if (selected_opt) {
+      try_attack_selected_target(logger, registry, *selected_opt);
+    }
+  } break;
   // scaling
   case SDLK_KP_PLUS:
   case SDLK_o:

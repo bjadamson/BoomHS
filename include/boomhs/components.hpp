@@ -12,6 +12,11 @@
 namespace boomhs
 {
 
+struct HealthPoints
+{
+  int current, max;
+};
+
 struct Transform
 {
   glm::vec3 translation{0.0f, 0.0f, 0.0f};
