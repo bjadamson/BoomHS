@@ -1,4 +1,5 @@
 #include <boomhs/camera.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mesh.hpp>
 #include <boomhs/state.hpp>
@@ -46,17 +47,9 @@ WaterFactory::generate_water_data(stlw::Logger& logger, glm::vec2 const& dimensi
   return data;
 }
 
-WaterInfo
-WaterFactory::generate_info(stlw::Logger& logger, TextureInfo& tinfo)
-{
-  WaterInfo wi{};
-  wi.tinfo = &tinfo;
-
-  return wi;
-}
-
-WaterInfo
-WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTable& ttable)
+WaterInfo&
+WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTable& ttable,
+    EntityRegistry& registry)
 {
   LOG_TRACE("Generating water");
 
@@ -64,17 +57,18 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
   assert(texture_o);
   auto& ti = *texture_o;
 
-  auto wi = generate_info(logger, ti);
-
-  auto& tinfo = wi.tinfo;
-  tinfo->while_bound(logger, [&]() {
-    tinfo->set_fieldi(GL_TEXTURE_WRAP_S, GL_REPEAT);
-    tinfo->set_fieldi(GL_TEXTURE_WRAP_T, GL_REPEAT);
-    tinfo->set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    tinfo->set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  ti.while_bound(logger, [&]() {
+    ti.set_fieldi(GL_TEXTURE_WRAP_S, GL_REPEAT);
+    ti.set_fieldi(GL_TEXTURE_WRAP_T, GL_REPEAT);
+    ti.set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    ti.set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   });
   LOG_TRACE("Finished generating water");
-  return wi;
+
+  auto const eid = registry.create();
+  auto& winfo = registry.assign<WaterInfo>(eid);
+  winfo.tinfo = &ti;
+  return winfo;
 }
 
 } // namespace boomhs

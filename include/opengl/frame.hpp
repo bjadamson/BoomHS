@@ -38,7 +38,7 @@ class FrameState
   FrameMatrices const fmatrices_;
 
 public:
-  NO_COPYMOVE(FrameState);
+  NO_COPY_OR_MOVE(FrameState);
   FrameState(FrameMatrices const&, boomhs::EngineState&, boomhs::ZoneState&);
 
   boomhs::EngineState& es;

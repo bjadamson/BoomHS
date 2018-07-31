@@ -68,9 +68,12 @@
   COPY_DEFAULT(CLASSNAME)                                                                          \
   MOVE_DEFAULT(CLASSNAME)
 
-#define NO_COPYMOVE(CLASSNAME)                                                                     \
+#define NO_COPY_OR_MOVE(CLASSNAME)                                                                 \
   NO_COPY(CLASSNAME)                                                                               \
   NO_MOVE(CLASSNAME)
+
+// alias
+#define NO_MOVE_OR_COPY(CLASSNAME) NO_COPY_OR_MOVE(CLASSNAME)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // std iterators
@@ -182,7 +185,7 @@ public:
   }
   ~DestroyFN() { this->fn_(); }
 
-  NO_COPYMOVE(DestroyFN);
+  NO_COPY_OR_MOVE(DestroyFN);
 };
 
 } // namespace impl

@@ -17,6 +17,7 @@ class ShaderPrograms;
 
 namespace boomhs
 {
+class EntityRegistry;
 
 struct WaterInfo
 {
@@ -42,9 +43,8 @@ struct WaterFactory
 {
   static ObjData generate_water_data(stlw::Logger&, glm::vec2 const&, size_t);
 
-  static WaterInfo generate_info(stlw::Logger&, opengl::TextureInfo&);
-
-  static WaterInfo make_default(stlw::Logger&, opengl::ShaderPrograms&, opengl::TextureTable&);
+  static WaterInfo&
+  make_default(stlw::Logger&, opengl::ShaderPrograms&, opengl::TextureTable&, EntityRegistry&);
 };
 
 } // namespace boomhs

@@ -116,7 +116,7 @@ struct Engine
 
   // We mark this as no-move/copy so the registries data never moves, allowing the rest of the
   // program to store references into the data owned by registries.
-  NO_COPYMOVE(Engine);
+  NO_COPY_OR_MOVE(Engine);
 
   Dimensions dimensions() const;
   ScreenSize screen_size() const;

@@ -341,10 +341,7 @@ place_water(stlw::Logger& logger, ZoneState& zs, ShaderProgram& sp, glm::vec2 co
   auto const eid = registry.create();
 
   LOG_TRACE("Placing Water");
-  auto* p = &registry.assign<WaterInfo>(eid);
-  *p      = WaterFactory::make_default(logger, sps, ttable);
-
-  auto& wi    = registry.get<WaterInfo>(eid);
+  auto& wi    = WaterFactory::make_default(logger, sps, ttable, registry);
   wi.position = pos;
 
   size_t constexpr num_vertexes = 4;

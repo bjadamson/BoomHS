@@ -43,7 +43,7 @@ class Clock
   ticks_t since_start() const { return now() - start_; }
 
 public:
-  NO_COPYMOVE(Clock);
+  NO_COPY_OR_MOVE(Clock);
   Clock()
       : frequency_(SDL_GetPerformanceFrequency())
       , start_(now())
