@@ -19,7 +19,8 @@ class EntityRenderer
 {
 public:
   EntityRenderer() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(EntityRenderer);
+  NO_MOVE(EntityRenderer);
+  NO_COPY(EntityRenderer);
 
   void render(RenderState&, stlw::float_generator&, window::FrameTime const&);
 };
