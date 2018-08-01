@@ -26,7 +26,7 @@ Camera::Camera(glm::vec3 const& forward, glm::vec3 const& up)
 void
 Camera::check_pointers() const
 {
-  assert(target_);
+  assert(nullptr != target_);
 }
 
 #define GET_TARGET_IMPL()                                                                          \
@@ -143,6 +143,7 @@ Camera::increase_zoom(float const amount)
 glm::vec3
 Camera::local_position() const
 {
+  check_pointers();
   return to_cartesian(coordinates_);
 }
 

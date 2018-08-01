@@ -352,7 +352,6 @@ init(Engine& engine, EngineState& es, Camera& camera)
   auto assembled = LevelAssembler::assemble_levels(logger, engine.registries);
   ZoneStates zss = TRY_MOVEOUT(MOVE(assembled));
 
-
   GameState state{es, LevelManager{MOVE(zss)}};
 
   auto& lm       = state.level_manager;

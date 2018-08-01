@@ -15,14 +15,14 @@ namespace boomhs
 {
 
 void
-WorldObject::check_pointers() const
+WorldObject::assert_expected() const
 {
-  assert(this->eid_ != 0);
+  assert(this->eid_ != EntityIDMAX);
   assert(this->registry_ != nullptr);
 }
 
 #define GET_REGISTRY_IMPL()                                                                        \
-  check_pointers();                                                                                \
+  assert_expected();                                                                               \
   return *this->registry_
 
 EntityRegistry&
@@ -39,7 +39,7 @@ WorldObject::registry() const
 #undef GET_REGISTRY_IMPL
 
 #define GET_AABOUNDING_BOX_IMPL()                                                                  \
-  check_pointers();                                                                                \
+  assert_expected();                                                                               \
   return this->registry().get<AABoundingBox>(eid())
 
 AABoundingBox &
@@ -56,7 +56,7 @@ WorldObject::bounding_box() const
 #undef GET_AABOUNDINGBOX_IMPL
 
 #define GET_TRANSFORM_IMPL()                                                                       \
-  check_pointers();                                                                                \
+  assert_expected();                                                                               \
   return this->registry().get<Transform>(eid())
 
 Transform const&

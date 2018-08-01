@@ -13,13 +13,13 @@ class EntityRegistry;
 
 class WorldObject
 {
-  EntityID        eid_      = 0;
+  EntityID        eid_      = EntityIDMAX;
   EntityRegistry* registry_ = nullptr;
 
   glm::vec3 forward_, up_;
   float     speed_;
 
-  void check_pointers() const;
+  void assert_expected() const;
 
 public:
   WorldObject() = default;
