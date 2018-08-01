@@ -667,14 +667,13 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     draw_scene_normal_render();
   }
 
-  /*
   {
     glm::vec2 const pos{0.15f, -0.5f};
     glm::vec2 const scale{0.50f, 0.50f};
 
-    render::draw_fbo_testwindow(rstate, pos, scale, sunshaft_renderer.ti());
+    auto& ti = sunshaft_renderer.texture_info();
+    render::draw_fbo_testwindow(rstate, pos, scale, ti);
   }
-  */
   /*
   {
     glm::vec2 const pos{-0.5f, -0.5f};
