@@ -240,7 +240,7 @@ namespace opengl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EntityRenderer
 void
-EntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+EntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
 {
   auto&       fstate    = rstate.fs;
   auto const& es        = fstate.es;
@@ -254,12 +254,76 @@ EntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTim
   auto& registry = zs.registry;
   auto& sps      = zs.gfx_state.sps;
 
+  LOG_ERROR("EntityRenderer::render2d_billboard");
+
 #define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
 #define COMMON_ARGS auto const eid, auto &sn,   auto &transform, auto &is_v, auto &bbox
 
   auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp(sn.value);
-    draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+    if (sp.is_2d) {
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+    }
+  };
+
+  auto const draw_textured_junk_fn = [&](COMMON_ARGS, auto& texture_renderable, auto&&... args) {
+  };
+
+  auto const draw_orbital_fn = [&](COMMON_ARGS, auto&&... args) {
+    auto& sp = sps.ref_sp(sn.value);
+    draw_orbital_body(rstate, sp, eid, transform, is_v, bbox, FORWARD(args));
+  };
+
+  auto const draw_junk_fn = [&](COMMON_ARGS, Color&, JunkEntityFromFILE& je) {
+  };
+  auto const draw_torch_fn = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
+  };
+  auto const draw_boundingboxes = [&](COMMON_ARGS, Selectable& sel, auto&&...) {
+  };
+
+  auto const& draw_pointlight_fn          = draw_common_fn;
+RENDER_ENTITIES(
+  draw_common_fn,
+  draw_orbital_fn,
+  draw_torch_fn,
+  draw_junk_fn,
+  draw_textured_junk_fn,
+  draw_pointlight_fn,
+  COMMON
+      );
+
+  render::draw_targetreticle(rstate, ft);
+
+#undef COMMON
+#undef COMMON_ARGS
+}
+
+void
+EntityRenderer::render2d_ui(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+{
+  auto&       fstate    = rstate.fs;
+  auto const& es        = fstate.es;
+  auto&       logger    = es.logger;
+  auto&       zs        = fstate.zs;
+  auto&       gpu_state = zs.gfx_state.gpu_state;
+
+  auto& eh   = gpu_state.entities;
+  auto& ebbh = gpu_state.entity_boundingboxes;
+
+  auto& registry = zs.registry;
+  auto& sps      = zs.gfx_state.sps;
+
+  LOG_ERROR("EntityRenderer::render2d_ui");
+
+#define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
+#define COMMON_ARGS auto const eid, auto &sn,   auto &transform, auto &is_v, auto &bbox
+
+  auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
+    auto& sp = sps.ref_sp(sn.value);
+
+    if (sp.is_2d) {
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+    }
   };
 
   auto const draw_textured_junk_fn = [&](COMMON_ARGS, auto& texture_renderable, auto&&... args) {
@@ -271,13 +335,73 @@ EntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTim
   };
 
   auto const draw_orbital_fn = [&](COMMON_ARGS, auto&&... args) {
+  };
+
+  auto const draw_junk_fn = [&](COMMON_ARGS, Color&, JunkEntityFromFILE& je) {
+  };
+  auto const draw_torch_fn = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
+  };
+  auto const draw_boundingboxes = [&](COMMON_ARGS, Selectable& sel, auto&&...) {
+  };
+
+  auto const& draw_pointlight_fn          = draw_common_fn;
+RENDER_ENTITIES(
+  draw_common_fn,
+  draw_orbital_fn,
+  draw_torch_fn,
+  draw_junk_fn,
+  draw_textured_junk_fn,
+  draw_pointlight_fn,
+  COMMON
+      );
+#undef COMMON
+#undef COMMON_ARGS
+}
+
+void
+EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+{
+  auto&       fstate    = rstate.fs;
+  auto const& es        = fstate.es;
+  auto&       logger    = es.logger;
+  auto&       zs        = fstate.zs;
+  auto&       gpu_state = zs.gfx_state.gpu_state;
+
+  auto& eh   = gpu_state.entities;
+  auto& ebbh = gpu_state.entity_boundingboxes;
+
+  auto& registry = zs.registry;
+  auto& sps      = zs.gfx_state.sps;
+
+
+  LOG_ERROR("EntityRenderer::render3d");
+
+#define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
+#define COMMON_ARGS auto const eid, auto &sn,   auto &transform, auto &is_v, auto &bbox
+
+  auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp(sn.value);
-    draw_orbital_body(rstate, sp, eid, transform, is_v, bbox, FORWARD(args));
+    if (!sp.is_2d) {
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+    }
+  };
+
+  auto const draw_textured_junk_fn = [&](COMMON_ARGS, auto& texture_renderable, auto&&... args) {
+    auto* ti = texture_renderable.texture_info;
+    assert(ti);
+    ti->while_bound(logger, [&]() {
+      draw_common_fn(eid, sn, transform, is_v, bbox, texture_renderable, FORWARD(args));
+    });
+  };
+
+  auto const draw_orbital_fn = [&](COMMON_ARGS, auto&&... args) {
   };
 
   auto const draw_junk_fn = [&](COMMON_ARGS, Color&, JunkEntityFromFILE& je) {
     auto& sp    = sps.ref_sp(sn.value);
-    draw_entity(rstate, je.draw_mode, sp, eid, eh, transform, is_v, bbox);
+    if (!sp.is_2d) {
+      draw_entity(rstate, je.draw_mode, sp, eid, eh, transform, is_v, bbox);
+    }
   };
   auto const draw_torch_fn = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
     {
@@ -315,7 +439,11 @@ EntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTim
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_color(logger, "u_wirecolor", wire_color);
-      draw_entity(rstate, GL_LINES, sp, eid, ebbh, tr, is_v, bbox);
+      auto& dinfo = ebbh.lookup(logger, eid);
+
+      // We needed to bind the shader program to set the uniforms above, no reason to pay to bind
+      // it again.
+      draw_entity_common_without_binding_sp(rstate, GL_LINES, sp, dinfo, eid, transform);
     });
   };
 
@@ -339,7 +467,66 @@ RENDER_ENTITIES(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BlackEntityRenderer
 void
-BlackEntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+BlackEntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+{
+  auto&       fstate = rstate.fs;
+  auto const& es     = fstate.es;
+  auto&       logger = es.logger;
+  auto&       zs     = fstate.zs;
+
+  auto& gfx_state = zs.gfx_state;
+  auto& sps = gfx_state.sps;
+  auto& gpu_state = gfx_state.gpu_state;
+  auto& eh    = gpu_state.entities;
+
+  LOG_ERROR("BlackEntityRenderer::render2d_billboard");
+
+#define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
+#define COMMON_ARGS auto const eid, auto& sn,   auto &transform, auto &is_v, auto &bbox
+
+  auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
+    auto& sp = sps.ref_sp("silhoutte_black");
+    if (sp.is_2d) {
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+    }
+  };
+
+  auto const draw_orbital_fn = [&](COMMON_ARGS, auto&&... args) {
+    auto& sp = sps.ref_sp("2dsilhoutte_uv");
+    sp.while_bound(logger, [&]() { sp.set_uniform_color_3fv(logger, "u_color", LOC::WHITE); });
+    draw_orbital_body(rstate, sp, eid, transform, is_v, bbox, FORWARD(args));
+  };
+
+  auto const draw_pointlight_fn = [&](COMMON_ARGS, auto&&... args) {
+  };
+#undef COMMON_ARGS
+
+  auto const& draw_torch_fn          = draw_common_fn;
+  auto const& draw_junk_fn           = draw_common_fn;
+  auto const& draw_textured_junk_fn  = draw_common_fn;
+
+  RENDER_ENTITIES(
+  draw_common_fn,
+  draw_orbital_fn,
+  draw_torch_fn,
+  draw_junk_fn,
+  draw_textured_junk_fn,
+  draw_pointlight_fn,
+  COMMON
+      );
+}
+
+void
+BlackEntityRenderer::render2d_ui(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+{
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& logger = es.logger;
+  LOG_ERROR("BlackEntityRenderer::render2d_ui");
+}
+
+void
+BlackEntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
 {
   auto&       fstate = rstate.fs;
   auto const& es     = fstate.es;
@@ -352,23 +539,28 @@ BlackEntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, Fra
   auto& eh    = gpu_state.entities;
 
 
+  LOG_ERROR("BlackEntityRenderer::render3d");
+
+
 #define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
 #define COMMON_ARGS auto const eid, auto& sn,   auto &transform, auto &is_v, auto &bbox
 
   auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp("silhoutte_black");
-    draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+    if (!sp.is_2d) {
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+    }
   };
 
   auto const draw_orbital_fn = [&](COMMON_ARGS, auto&&... args) {
-    auto& sp = sps.ref_sp("2dsilhoutte_uv");
-    sp.while_bound(logger, [&]() { sp.set_uniform_color_3fv(logger, "u_color", LOC::WHITE); });
-    draw_orbital_body(rstate, sp, eid, transform, is_v, bbox, FORWARD(args));
   };
 
   auto const draw_pointlight_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp(sn.value);
-    draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+
+    if (!sp.is_2d) {
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+    }
   };
 #undef COMMON_ARGS
 

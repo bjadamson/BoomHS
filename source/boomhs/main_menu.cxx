@@ -56,8 +56,9 @@ draw_menu(EngineState& es, ImVec2 const& size, WaterAudioSystem& water_audio)
         ImGui::Separator();
         ImGui::Text("Audio");
 
-        auto& uistate = es.ui_state.debug;
-        auto& audio   = uistate.buffers.audio;
+        auto& uistate = es.ui_state;
+        auto& ui_debug = uistate.debug;
+        auto& audio   = ui_debug.buffers.audio;
         if (ImGui::SliderFloat("Ambient Volume", &audio.ambient, 0.0f, 1.0f)) {
           water_audio.set_volume(audio.ambient);
         }
@@ -71,11 +72,16 @@ draw_menu(EngineState& es, ImVec2 const& size, WaterAudioSystem& water_audio)
               GameGraphicsMode::Basic, GameGraphicsMode::Medium, GameGraphicsMode::Advanced);
 
           gs.mode = imgui_cxx::combo_from_array("Graphics Settings", "Basic\0Medium\0Advanced\0\0",
-                                                &uistate.buffers.water.selected_water_graphicsmode,
+                                                &ui_debug.buffers.water.selected_water_graphicsmode,
                                                 GRAPHICS_MODE);
         }
         ImGui::Separator();
         ImGui::Checkbox("Disable Sun Shafts", &gs.disable_sunshafts);
+
+        ImGui::Separator();
+        ImGui::Text("IMGUI");
+        ImGui::Checkbox("Draw Debug", &uistate.draw_debug_ui);
+        ImGui::Checkbox("Draw InGame", &uistate.draw_ingame_ui);
       };
       imgui_cxx::with_window(fn, "Options Window");
     }

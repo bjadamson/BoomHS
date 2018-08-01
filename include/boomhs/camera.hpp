@@ -8,6 +8,7 @@
 
 namespace boomhs
 {
+struct Dimensions;
 struct MouseState;
 
 struct PerspectiveViewport
@@ -21,9 +22,11 @@ struct PerspectiveViewport
 struct OrthoProjection
 {
   float left, right, bottom, top, far, near;
+
+  static OrthoProjection from_ints(int, int, int, int, int, int);
 };
 
-enum CameraMode
+enum class CameraMode
 {
   Perspective = 0,
   Ortho,
@@ -31,9 +34,15 @@ enum CameraMode
   MAX
 };
 
+// clang-format off
 using ModeNamePair                                 = std::pair<CameraMode, char const*>;
 std::array<ModeNamePair, 3> constexpr CAMERA_MODES = {
-    {{Ortho, "Ortho"}, {Perspective, "Perspective"}, {FPS, "FPS"}}};
+    {
+      {CameraMode::Ortho, "Ortho"},
+      {CameraMode::Perspective, "Perspective"},
+      {CameraMode::FPS, "FPS"}}
+};
+// clang-format on
 
 class Camera
 {
@@ -41,7 +50,7 @@ class Camera
   glm::vec3  forward_, up_;
 
   SphericalCoordinates coordinates_;
-  CameraMode           mode_ = Perspective;
+  CameraMode           mode_ = CameraMode::Perspective;
 
   PerspectiveViewport perspective_;
   OrthoProjection     ortho_;
@@ -51,7 +60,7 @@ class Camera
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(glm::vec3 const& f, glm::vec3 const& u);
+  Camera(Dimensions const&, glm::vec3 const& f, glm::vec3 const& u);
 
   // public fields
   bool  flip_y;
@@ -98,7 +107,7 @@ public:
   void    set_target(Transform&);
 
   // static fns
-  static Camera make_defaultcamera();
+  static Camera make_defaultcamera(Dimensions const&);
 
   static glm::mat4
   compute_projectionmatrix(CameraMode, PerspectiveViewport const&, OrthoProjection const&);

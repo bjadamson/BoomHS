@@ -19,7 +19,9 @@ EngineState::EngineState(stlw::Logger& l, ALCdevice& al, ImGuiIO& i, Dimensions 
     , mariolike_edges(false)
     , draw_imguimetrics(false)
     , draw_bounding_boxes(false)
-    , draw_entities(true)
+    , draw_2d_billboard_entities(true)
+    , draw_2d_ui_entities(true)
+    , draw_3d_entities(true)
     , draw_fbo_testwindow(true)
     , draw_terrain(true)
     , draw_normals(false)
@@ -57,7 +59,7 @@ ScreenSize
 Engine::screen_size() const
 {
   auto const d = dimensions();
-  return ScreenSize{d.w, d.h};
+  return ScreenSize{d.right, d.bottom};
 }
 
 } // namespace boomhs

@@ -64,6 +64,13 @@ va = "vertex_uv"
 is_2d = true
 
 [[shaders]]
+name = "2dtexture_ss"
+vertex = "2dtexture_ss.vert"
+fragment = "2dtexture.frag"
+va = "vertex_uv"
+is_2d = true
+
+[[shaders]]
 name = "target_reticle"
 vertex = "2dtexture.vert"
 fragment = "target_reticle.frag"

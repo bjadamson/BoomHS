@@ -1,4 +1,5 @@
 #include <boomhs/camera.hpp>
+#include <boomhs/dimensions.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
 
@@ -11,12 +12,37 @@ using namespace opengl;
 namespace boomhs
 {
 
-Camera::Camera(glm::vec3 const& forward, glm::vec3 const& up)
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// OrthoProjection
+OrthoProjection
+OrthoProjection::from_ints(int const left, int const right, int const bottom, int const top,
+                           int const far, int const near)
+{
+  return OrthoProjection{
+    static_cast<float>(left),
+    static_cast<float>(right),
+    static_cast<float>(bottom),
+    static_cast<float>(top),
+    static_cast<float>(far),
+    static_cast<float>(near)
+  };
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//// Camera
+Camera::Camera(Dimensions const& dimensions, glm::vec3 const& forward, glm::vec3 const& up)
     : forward_(forward)
     , up_(up)
     , coordinates_(0.0f, 0.0f, 0.0f)
     , perspective_({70.0f, 4.0f / 3.0f, 0.1f, 2000.0f})
-    , ortho_({-10, 10, -10, 10, -200, 200})
+    , ortho_(
+        OrthoProjection::from_ints(
+          dimensions.left,
+          dimensions.right,
+          dimensions.top,
+          dimensions.bottom,
+          -1,
+          1))
     , flip_y(false)
     , rotate_lock(false)
     , rotation_speed(600.0)
@@ -51,7 +77,8 @@ Camera::next_mode()
 {
   check_pointers();
 
-  CameraMode const m = static_cast<CameraMode>(mode() + 1);
+  auto const cast = [](auto const v) { return static_cast<int>(v); };
+  CameraMode const m = static_cast<CameraMode>(cast(mode()) + cast(1));
   if (CameraMode::MAX == m) {
     set_mode(static_cast<CameraMode>(0));
   }
@@ -165,14 +192,14 @@ Camera::target_position() const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // free functions
 Camera
-Camera::make_defaultcamera()
+Camera::make_defaultcamera(Dimensions const& dimensions)
 {
   // camera-look at origin
   // cameraspace "up" is === "up" in worldspace.
   auto const FORWARD = -Z_UNIT_VECTOR;
   auto constexpr UP  = Y_UNIT_VECTOR;
 
-  Camera camera(FORWARD, UP);
+  Camera camera(dimensions, FORWARD, UP);
 
   SphericalCoordinates sc;
   sc.radius = 3.8f;
@@ -189,13 +216,21 @@ Camera::compute_projectionmatrix(CameraMode const mode, PerspectiveViewport cons
 {
   auto const fov = glm::radians(p.field_of_view);
   switch (mode) {
-  case Perspective:
-  case FPS:
+  case CameraMode::Perspective:
+  case CameraMode::FPS:
     return glm::perspective(fov, p.viewport_aspect_ratio, p.near_plane, p.far_plane);
-  case Ortho: {
+  case CameraMode::Ortho: {
     return glm::ortho(o.left, o.right, o.bottom, o.top, o.far, o.near);
+    std::cerr << "ortho projection:\n";
+    std::cerr << fmt::sprintf("left: %f, right: %f, bottom: %f, top: %s, far: %f, near: %f",
+        o.left,
+        o.right,
+        o.bottom,
+        o.top,
+        o.far,
+        o.near);
   }
-  case MAX:
+  case CameraMode::MAX:
     break;
   }
 
@@ -210,16 +245,16 @@ Camera::compute_viewmatrix(CameraMode const mode, glm::vec3 const& eye, glm::vec
   auto constexpr ZERO = glm::vec3{0};
 
   switch (mode) {
-  case Ortho: {
+    case CameraMode::Ortho: {
     return glm::lookAt(ZERO, center, Y_UNIT_VECTOR);
   }
-  case FPS: {
+  case CameraMode::FPS: {
     return glm::lookAt(center, fps_center, Y_UNIT_VECTOR);
   }
-  case Perspective: {
+  case CameraMode::Perspective: {
     return glm::lookAt(eye, center, up);
   }
-  case MAX: {
+  case CameraMode::MAX: {
     break;
   }
   }

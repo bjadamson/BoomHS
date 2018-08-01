@@ -1,4 +1,6 @@
 #pragma once
+#include <boomhs/camera.hpp>
+
 #include <extlibs/glm.hpp>
 #include <stlw/type_macros.hpp>
 #include <string>
@@ -20,6 +22,8 @@ struct FrameMatrices
   glm::mat4 const view;
 
   static FrameMatrices from_camera_withposition(boomhs::Camera const&, glm::vec3 const&);
+  static FrameMatrices from_camera_with_mode(boomhs::Camera const&, boomhs::CameraMode);
+
   static FrameMatrices from_camera(boomhs::Camera const&);
 };
 

@@ -67,7 +67,10 @@ struct EngineState
 
   // rendering state
   bool draw_bounding_boxes;
-  bool draw_entities;
+  bool draw_2d_billboard_entities;
+  bool draw_2d_ui_entities;
+
+  bool draw_3d_entities;
   bool draw_fbo_testwindow;
   bool draw_terrain;
   bool draw_normals;

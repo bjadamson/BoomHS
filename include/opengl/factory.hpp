@@ -151,7 +151,10 @@ static constexpr RectangleIndices RECTANGLE_INDICES = {{
 }};
 
 RectangleVertices
-rectangle_vertices();
+rectangle_vertices(float, float, float, float);
+
+RectangleVertices
+rectangle_vertices_default();
 
 inline RectangleUvs
 rectangle_uvs(float const max)

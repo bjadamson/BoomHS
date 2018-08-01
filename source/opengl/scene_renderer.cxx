@@ -31,8 +31,6 @@ DefaultSceneRenderer::render_scene(RenderState& rstate, LevelManager& lm,
   auto& registry = zs.registry;
   auto& ldata    = zs.level_data;
 
-  render::draw_targetreticle(rstate, ft);
-
   if (es.show_grid_lines) {
     render::draw_grid_lines(rstate);
   }

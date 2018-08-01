@@ -4,6 +4,28 @@
 #include <boomhs/state.hpp>
 
 using namespace boomhs;
+using namespace opengl;
+
+namespace
+{
+
+auto
+from_camera_common(Camera const& camera, glm::vec3 const& pos, CameraMode const mode)
+{
+  auto const& perspective = camera.perspective();
+  auto const& ortho       = camera.ortho();
+
+  auto const proj = Camera::compute_projectionmatrix(mode, perspective, ortho);
+
+  auto const& target       = camera.get_target().translation;
+  auto const& up           = camera.eye_up();
+  auto const& fps_center   = camera.world_forward() + target;
+
+  auto const view = Camera::compute_viewmatrix(mode, pos, target, up, fps_center);
+  return FrameMatrices{pos, proj, view};
+}
+
+} // namespace
 
 namespace opengl
 {
@@ -13,26 +35,22 @@ namespace opengl
 FrameMatrices
 FrameMatrices::from_camera_withposition(Camera const& camera, glm::vec3 const& custom_camera_pos)
 {
-  auto const  mode        = camera.mode();
-  auto const& perspective = camera.perspective();
-  auto const& ortho       = camera.ortho();
+  auto const mode = camera.mode();
+  return from_camera_common(camera, custom_camera_pos, mode);
+}
 
-  auto const proj = Camera::compute_projectionmatrix(mode, perspective, ortho);
-
-  auto const& target       = camera.get_target().translation;
-  auto const  position_xyz = custom_camera_pos;
-  auto const& up           = camera.eye_up();
-  auto const& fps_center   = camera.world_forward() + target;
-
-  auto const view = Camera::compute_viewmatrix(mode, position_xyz, target, up, fps_center);
-
-  return FrameMatrices{custom_camera_pos, proj, view};
+FrameMatrices
+FrameMatrices::from_camera_with_mode(Camera const& camera, CameraMode const mode)
+{
+  auto const pos = camera.world_position();
+  return from_camera_common(camera, pos, mode);
 }
 
 FrameMatrices
 FrameMatrices::from_camera(Camera const& camera)
 {
-  return from_camera_withposition(camera, camera.world_position());
+  auto const pos = camera.world_position();
+  return from_camera_withposition(camera, pos);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////

@@ -36,20 +36,60 @@ left = "assets/cube_left.jpg"
 top = "assets/cube_top.jpg"
 bottom = "assets/cube_bottom.jpg"
 
+###################################################################################################
+# 2D TEXTURES
+[[resource]]
+name = "moon"
+type = "texture:2d-RGBA"
+filename = "assets/textures/Blendermoon1.png"
+
+[[resource]]
+name = "TargetReticle"
+type = "texture:2d-RGBA"
+filename = "assets/textures/circle_reticle.png"
+
+[[resource]]
+name = "cloud"
+type = "texture:2d-RGBA"
+filename = "assets/textures/cloud_cumulous_large.png"
+
 [[resource]]
 name = "container"
 type = "texture:2d-RGB"
-filename = "assets/container.jpg"
+filename = "assets/textures/container.jpg"
 
 [[resource]]
 name = "Lava"
 type = "texture:2d-RGBA"
-filename = "assets/lava.jpg"
+filename = "assets/textures/lava.jpg"
+
+[[resource]]
+name = "NearbyTargetGlow"
+type = "texture:2d-RGBA"
+filename = "assets/textures/NearbyTargetGlow.png"
+
+[[resource]]
+name = "sun"
+type = "texture:2d-RGBA"
+filename = "assets/textures/sun.png"
+
+[[resource]]
+name = "wall"
+type = "texture:2d-RGB"
+filename = "assets/textures/wall.jpg"
+
+
+###################################################################################################
+# UI ICONS
+[[resource]]
+name = "RedX"
+type = "texture:2d-RGBA"
+filename = "assets/ui/redx.png"
 
 [[resource]]
 name = "RedX"
 type = "texture:2d-RGBA"
-filename = "assets/redx.png"
+filename = "assets/ui/redx.png"
 
 [[resource]]
 name = "InventorySlotEmpty"
@@ -57,9 +97,14 @@ type = "texture:2d-RGBA"
 filename = "assets/ui/inventory_slot_empty.png"
 
 [[resource]]
-name = "wall"
+name = "test_icon"
 type = "texture:2d-RGB"
-filename = "assets/wall.jpg"
+filename = "assets/ui/test_icon.png"
+
+[[resource]]
+name = "TorchUI"
+type = "texture:2d-RGBA"
+filename = "assets/ui/torch-icon.png"
 
 ###################################################################################################
 # HEIGHTMAPS
@@ -73,6 +118,12 @@ wrap = "clamp"
 name = "Area1-HM"
 type = "texture:2d-RGBA"
 filename = "assets/terrain/Area1-HM.png"
+wrap = "clamp"
+
+[[resource]]
+name = "Area2-HM"
+type = "texture:2d-RGBA"
+filename = "assets/terrain/Area2-HM.png"
 wrap = "clamp"
 
 ###################################################################################################
@@ -145,49 +196,29 @@ wrap = "repeat"
 #############################'
 # OTHER
 [[resource]]
+name = "first-aid"
+type = "texture:2d-RGBA"
+filename = "assets/ui/first_aid.png"
+
+[[resource]]
 name = "gun"
 type = "texture:2d-RGB"
-filename = "assets/gun.png"
+filename = "assets/ui/gun.png"
+
+[[resource]]
+name = "ak47"
+type = "texture:2d-RGBA"
+filename = "assets/ui/ak47.png"
+
+[[resource]]
+name = "fist"
+type = "texture:2d-RGBA"
+filename = "assets/ui/fist.png"
 
 [[resource]]
 name = "sword"
-type = "texture:2d-RGB"
-filename = "assets/sword.png"
-
-[[resource]]
-name = "cloud"
 type = "texture:2d-RGBA"
-filename = "assets/textures/cloud_cumulous_large.png"
-
-[[resource]]
-name = "sun"
-type = "texture:2d-RGBA"
-filename = "assets/textures/sun.png"
-
-[[resource]]
-name = "moon"
-type = "texture:2d-RGBA"
-filename = "assets/textures/Blendermoon1.png"
-
-[[resource]]
-name = "TorchUI"
-type = "texture:2d-RGBA"
-filename = "assets/ui/torch-icon.png"
-
-[[resource]]
-name = "TargetReticle"
-type = "texture:2d-RGBA"
-filename = "assets/circle_reticle.png"
-
-[[resource]]
-name = "NearbyTargetGlow"
-type = "texture:2d-RGBA"
-filename = "assets/textures/NearbyTargetGlow.png"
-
-[[resource]]
-name = "test_icon"
-type = "texture:2d-RGB"
-filename = "assets/test_icon.png"
+filename = "assets/ui/sword.png"
 
 ###################################################################################################
 [[meshes]]

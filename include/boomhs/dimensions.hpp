@@ -8,20 +8,20 @@ namespace boomhs
 
 struct Dimensions
 {
-  int const x;
-  int const y;
-  int const w;
-  int const h;
+  int const left;
+  int const top;
+  int const right;
+  int const bottom;
 
-  constexpr Dimensions(int const offx, int const offy, int const wp, int const hp)
-      : x(offx)
-      , y(offy)
-      , w(wp)
-      , h(hp)
+  constexpr Dimensions(int const l, int const t, int const r, int const b)
+      : left(l)
+      , top(t)
+      , right(r)
+      , bottom(b)
   {
   }
 
-  auto size() const { return std::make_pair(w, h); }
+  auto size() const { return std::make_pair(right, bottom); }
 };
 
 struct ScreenSize

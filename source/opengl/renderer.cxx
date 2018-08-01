@@ -229,7 +229,7 @@ void
 init(stlw::Logger& logger, Dimensions const& dimensions)
 {
   // Initialize opengl
-  glViewport(0, 0, dimensions.w, dimensions.h);
+  glViewport(dimensions.left, dimensions.top, dimensions.right, dimensions.bottom);
 
   glDisable(GL_BLEND);
   glDisable(GL_CULL_FACE);
@@ -540,31 +540,25 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
 }
 
 void
-draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& scale,
-                    TextureInfo& ti)
+draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& size,
+                    ShaderProgram& sp, TextureInfo& ti)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
   auto& logger = es.logger;
 
-  auto& zs     = fstate.zs;
-  auto& ttable = zs.gfx_state.texture_table;
+  auto const& dimensions = es.dimensions;
 
-  auto& sps = zs.gfx_state.sps;
-  auto& sp  = sps.ref_sp("2dtexture");
-
-  auto const v     = OF::rectangle_vertices();
+  auto const pos_inverted_y = glm::vec2{pos.x, (dimensions.bottom - pos.y)};
+  auto const v     = OF::rectangle_vertices(pos_inverted_y.x, pos_inverted_y.y, size.x, size.y);
   DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), v, ti);
 
-  Transform transform;
-  transform.translation = glm::vec3{pos.x, pos.y, 0.0f};
-  transform.scale       = glm::vec3{scale.x, scale.y, 1.0};
-
-  auto const model_matrix = transform.model_matrix();
+  auto const proj_matrix = fstate.projection_matrix();
   sp.while_bound(logger, [&]() {
-    set_modelmatrix(logger, model_matrix, sp);
+    sp.set_uniform_matrix_4fv(logger, "u_projmatrix", proj_matrix);
 
     glActiveTexture(GL_TEXTURE0);
+
 
     auto& vao = dinfo.vao();
     vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
@@ -631,7 +625,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
   transform.translation = npc_transform.translation;
   auto const scale      = nearby_targets.calculate_scale(ft);
 
-  auto const      v = OF::rectangle_vertices();
+  auto const      v = OF::rectangle_vertices_default();
   glm::mat4 const view_model =
       Billboard::compute_viewmodel(transform, fstate.view_matrix(), BillboardType::Spherical);
 
@@ -645,7 +639,6 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
     auto const mvp_matrix = proj_matrix * (view_model * rmatrix);
     set_modelmatrix(logger, mvp_matrix, sp);
-
 
     auto const peid = find_player(registry);
     auto const& player = registry.get<Player>(peid);

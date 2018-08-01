@@ -492,7 +492,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   };
 
   auto const&      dim = es.dimensions;
-  ScreenSize const screen_size{dim.w, dim.h};
+  ScreenSize const screen_size{dim.right, dim.bottom};
   auto const       make_advanced_water_renderer = [&]() {
     auto& ti     = *ttable.find("water-diffuse");
     auto& dudv   = *ttable.find("water-dudv");
@@ -629,12 +629,31 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
         draw_basic(default_terrain_renderer, default_entity_renderer);
       }
     }
-    if (es.draw_entities) {
-      if (black_silhoutte) {
-        black_entity_renderer.render(rstate, rng, ft);
+    // DRAW ALL ENTITIES
+    {
+      if (es.draw_3d_entities) {
+        if (black_silhoutte) {
+          black_entity_renderer.render3d(rstate, rng, ft);
+        }
+        else {
+          default_entity_renderer.render3d(rstate, rng, ft);
+        }
       }
-      else {
-        default_entity_renderer.render(rstate, rng, ft);
+      if (es.draw_2d_billboard_entities) {
+        if (black_silhoutte) {
+          black_entity_renderer.render2d_billboard(rstate, rng, ft);
+        }
+        else {
+          default_entity_renderer.render2d_billboard(rstate, rng, ft);
+        }
+      }
+      if (es.draw_2d_ui_entities) {
+        if (black_silhoutte) {
+          black_entity_renderer.render2d_ui(rstate, rng, ft);
+        }
+        else {
+          default_entity_renderer.render2d_ui(rstate, rng, ft);
+        }
       }
     }
     if (black_silhoutte) {
@@ -667,21 +686,43 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     draw_scene_normal_render();
   }
 
-  {
-    glm::vec2 const pos{0.15f, -0.5f};
-    glm::vec2 const scale{0.50f, 0.50f};
 
-    auto& ti = sunshaft_renderer.texture_info();
-    render::draw_fbo_testwindow(rstate, pos, scale, ti);
-  }
-  /*
+  auto const dimensions = engine.dimensions();
+  auto const draw_icon_on_screen = [&](auto const& pos, auto const& size, char const* tex_name)
   {
-    glm::vec2 const pos{-0.5f, -0.5f};
-    glm::vec2 const scale{0.25f, 0.25f};
+    auto& ti = *ttable.find(tex_name);
+    auto& sp  = sps.ref_sp("2dtexture_ss");
 
-    render::draw_fbo_testwindow(fstate, pos, scale, dudv);
+    // Create a renderstate using an orthographic projection.
+    auto const fmatrices = FrameMatrices::from_camera_with_mode(camera, CameraMode::Ortho);
+    FrameState fstate{fmatrices, es, zs};
+    RenderState rstate_2dtexture{fstate, ds};
+
+
+    // Calculate position with Y inverted, so top left is (0, 0) and bottom right is (pos.x, pos.y).
+    //auto const pos_with_inverted_y = glm::vec2{pos.x, (dimensions.bottom - pos.y)};
+    render::draw_fbo_testwindow(rstate_2dtexture, pos, size, sp, ti);
+  };
+  {
+    glm::vec2 const size{16.0f};
+    glm::vec2 const pos{dimensions.left, dimensions.top};
+    draw_icon_on_screen(pos, size, "first-aid");
   }
-  */
+  {
+    glm::vec2 const size{32.0f};
+    glm::vec2 const pos{0.0f, 32.0f};
+    draw_icon_on_screen(pos, size, "ak47");
+  }
+  {
+    glm::vec2 const size{64.0f};
+    glm::vec2 const pos{1024.0 / 2.0f, 768.0f / 2.0f};
+    draw_icon_on_screen(pos, size, "fist");
+  }
+  {
+    glm::vec2 const size{128.0f};
+    glm::vec2 const pos{dimensions.right - size.x, dimensions.bottom - size.y};
+    draw_icon_on_screen(pos, size, "sword");
+  }
 
   auto& ui_state = es.ui_state;
   if (ui_state.draw_ingame_ui) {
@@ -711,8 +752,9 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     // clear the screen before rending the main menu1
     render::clear_screen(LOC::BLACK);
 
-    auto const& size = engine.dimensions();
-    main_menu::draw(es, ImVec2(size.w, size.h), water_audio);
+    auto const& dimensions = engine.dimensions();
+    auto const size_v      = ImVec2(dimensions.right, dimensions.bottom);
+    main_menu::draw(es, size_v, water_audio);
   }
   else {
     // Disable keyboard shortcuts

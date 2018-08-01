@@ -131,10 +131,10 @@ start(stlw::Logger& logger, Engine& engine)
   // Configure Imgui
   auto& io           = ImGui::GetIO();
   io.MouseDrawCursor = true;
-  io.DisplaySize     = ImVec2{static_cast<float>(dimensions.w), static_cast<float>(dimensions.h)};
+  io.DisplaySize     = ImVec2{static_cast<float>(dimensions.right), static_cast<float>(dimensions.bottom)};
 
   // Construct game state
-  auto        camera = Camera::make_defaultcamera();
+  auto        camera = Camera::make_defaultcamera(dimensions);
 
   EngineState es{logger, *al_device, io, dimensions};
   auto gs = TRY_MOVEOUT(boomhs::init(engine, es, camera));

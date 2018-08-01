@@ -90,12 +90,12 @@ draw_player_inventory(stlw::Logger& logger, EntityRegistry& registry, TextureTab
 }
 
 void
-draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const& ttable,
+draw_nearest_target_info(Dimensions const& dimensions, NearbyTargets const& nearby_targets, TextureTable const& ttable,
                          EntityRegistry& registry)
 {
-  auto constexpr LEFT = 39;
-  auto constexpr TOP  = 768 - 125 - 6;
-  ImGui::SetNextWindowPos(ImVec2(LEFT, TOP));
+  auto const left = dimensions.left + 39;
+  auto const top  = dimensions.bottom - 125 - 6;
+  ImGui::SetNextWindowPos(ImVec2(left, top));
   ImGui::SetNextWindowSize(ImVec2(200, 105));
 
   // clang-format off
@@ -395,7 +395,7 @@ draw(EngineState& es, LevelManager& lm)
 
   auto& ldata          = zs.level_data;
   auto& nearby_targets = ldata.nearby_targets;
-  draw_nearest_target_info(nearby_targets, ttable, registry);
+  draw_nearest_target_info(es.dimensions, nearby_targets, ttable, registry);
 
   auto const eid       = find_player(registry);
   auto&      player    = registry.get<Player>(eid);

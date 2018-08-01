@@ -83,7 +83,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
   registry.view<ShaderName, BillboardRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
         auto&      va = sps.ref_sp(sn.value).va();
-        auto const v  = OF::rectangle_vertices();
+        auto const v  = OF::rectangle_vertices_default();
         auto*      ti = texture.texture_info;
         assert(ti);
         auto handle = opengl::gpu::copy_rectangle_uvs(logger, va, v, *ti);
@@ -189,7 +189,7 @@ namespace boomhs
 Result<ZoneStates, std::string>
 LevelAssembler::assemble_levels(stlw::Logger& logger, std::vector<EntityRegistry>& registries)
 {
-  auto const level_string = [&](int const floor_number) {
+  auto const level_string = [&](int const floor_number) -> std::string {
     return "area" + std::to_string(floor_number) + ".toml";
   };
 
@@ -199,9 +199,11 @@ LevelAssembler::assemble_levels(stlw::Logger& logger, std::vector<EntityRegistry
   stlw::float_generator rng;
   {
     // generate starting area
-    auto& registry = registries[0];
+    int constexpr FLOOR_NUMBER = 0;
+    auto& registry = registries[FLOOR_NUMBER];
 
-    auto  level_assets   = TRY_MOVEOUT(LevelLoader::load_level(logger, registry, level_string(0)));
+    auto  level_name     = level_string(FLOOR_NUMBER);
+    auto  level_assets   = TRY_MOVEOUT(LevelLoader::load_level(logger, registry, level_name));
     auto& ttable         = level_assets.texture_table;
     auto& material_table = level_assets.material_table;
     auto& sps            = level_assets.shader_programs;

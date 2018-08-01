@@ -1,4 +1,5 @@
 #include <opengl/factory.hpp>
+#include <boomhs/dimensions.hpp>
 
 #include <stlw/algorithm.hpp>
 #include <stlw/math.hpp>
@@ -287,8 +288,34 @@ make_rectangle(RectInfo const& info)
   return RectBuffer{MOVE(vertices), MOVE(indices)};
 }
 
+
 RectangleVertices
-rectangle_vertices()
+rectangle_vertices(float const x, float const y, float const w, float const h)
+{
+  auto const x0 = x;
+  auto const y0 = y;
+
+  auto const x1 = x0 + w;
+  auto const y1 = y0 - h;
+
+  auto constexpr Z = 0.0f;
+#define zero  x0, y0, Z
+#define one   x1, y0, Z
+#define two   x1, y1, Z
+#define three x0, y1, Z
+  return stlw::make_array<float>(
+      zero, one, two,
+      two, three, zero
+      );
+#undef zero
+#undef one
+#undef two
+#undef three
+}
+
+
+RectangleVertices
+rectangle_vertices_default()
 {
   float constexpr Z = 0.0f;
 #define zero  -1.0f, -1.0f, Z

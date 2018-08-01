@@ -532,13 +532,13 @@ draw_camera_window(Camera& camera, Player& player)
       camera.set_mode(mode);
     }
     switch (camera.mode()) {
-    case Perspective:
+    case CameraMode::Perspective:
       draw_perspective_controls();
       break;
-    case Ortho:
+    case CameraMode::Ortho:
       draw_ortho_controls();
       break;
-    case FPS:
+    case CameraMode::FPS:
       // TODO: implement this
       std::abort();
       break;
@@ -827,20 +827,28 @@ draw_debugwindow(EngineState& es, LevelManager& lm)
     }
   }
 
-  auto& uistate = es.ui_state.debug;
-  ImGui::Checkbox("Draw Entities", &es.draw_entities);
+  auto& uistate = es.ui_state;
+  auto& debugstate = uistate.debug;
+  ImGui::Checkbox("Draw 3D Entities", &es.draw_3d_entities);
+  ImGui::Checkbox("Draw 2D Billboard Entities", &es.draw_2d_billboard_entities);
+  ImGui::Checkbox("Draw 2D UI Entities", &es.draw_2d_ui_entities);
   ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
 
   {
     auto& water_buffer = es.ui_state.debug.buffers.water;
     ImGui::Checkbox("Draw Water", &water_buffer.draw);
   }
-  ImGui::Separator();
 
   ImGui::Checkbox("Draw Bounding Boxes", &es.draw_bounding_boxes);
   ImGui::Checkbox("Draw Normals", &es.draw_normals);
   ImGui::Checkbox("Wireframe Rendering", &es.wireframe_override);
 
+  ImGui::Separator();
+  ImGui::Text("IMGUI");
+  ImGui::Checkbox("Draw Debug", &uistate.draw_debug_ui);
+  ImGui::Checkbox("Draw InGame", &uistate.draw_ingame_ui);
+
+  ImGui::Separator();
   ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
 
   ImGui::Checkbox("Show (x, z)-axis lines", &es.show_grid_lines);

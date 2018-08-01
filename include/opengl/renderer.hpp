@@ -150,7 +150,7 @@ void
 draw_arrow(RenderState&, glm::vec3 const&, glm::vec3 const&, Color const&);
 
 void
-draw_fbo_testwindow(RenderState&, glm::vec2 const&, glm::vec2 const&, TextureInfo&);
+draw_fbo_testwindow(RenderState&, glm::vec2 const&, glm::vec2 const&, ShaderProgram&, TextureInfo&);
 
 void
 draw_global_axis(RenderState&);

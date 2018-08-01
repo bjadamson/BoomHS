@@ -79,7 +79,7 @@ public:
 
     int x, y;
     SDL_GetWindowPosition(window_.get(), &x, &y);
-    return boomhs::Dimensions{x, y, w, h};
+    return boomhs::Dimensions{0, 0, w, h};
   }
 
   void set_fullscreen(FullscreenFlags const);

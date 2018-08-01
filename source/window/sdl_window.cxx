@@ -203,7 +203,7 @@ sdl_library::make_window(stlw::Logger &logger, bool const fullscreen, int const 
 
     auto const h = dmode.h;
     auto const w = dmode.w;
-    SDL_SetWindowPosition(window_ptr.get(), width / 4, height / 4);
+    SDL_SetWindowPosition(window_ptr.get(), 0, 0);
     check_errors(logger);
   }
 

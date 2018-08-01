@@ -16,14 +16,14 @@ void
 FBInfo::bind_impl(stlw::Logger& logger)
 {
   glBindFramebuffer(GL_FRAMEBUFFER, id);
-  glViewport(dimensions.x, dimensions.y, dimensions.w, dimensions.h);
+  glViewport(dimensions.left, dimensions.top, dimensions.right, dimensions.bottom);
 }
 
 void
 FBInfo::unbind_impl(stlw::Logger& logger)
 {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, screen_size.width, screen_size.height);
+  glViewport(dimensions.left, dimensions.top, screen_size.width, screen_size.height);
 }
 
 void

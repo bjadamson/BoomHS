@@ -147,8 +147,14 @@ class AdvancedWaterRenderer
       auto const& material_table = ldata.material_table;
       tr.render(rstate, material_table, registry, ft, ABOVE_VECTOR);
     }
-    if (es.draw_entities) {
-      er.render(rstate, rng, ft);
+    if (es.draw_3d_entities) {
+      er.render3d(rstate, rng, ft);
+    }
+    if (es.draw_2d_billboard_entities) {
+      er.render2d_billboard(rstate, rng, ft);
+    }
+    if (es.draw_2d_ui_entities) {
+      er.render2d_ui(rstate, rng, ft);
     }
   }
 
