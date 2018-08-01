@@ -2,6 +2,7 @@
 
 #include <boomhs/billboard.hpp>
 #include <boomhs/npc.hpp>
+#include <boomhs/material.hpp>
 #include <boomhs/orbital_body.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
@@ -34,7 +35,6 @@ draw_entity_fn(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo
   auto& registry = zs.registry;
 
   auto const& ldata  = zs.level_data;
-  auto const& player = ldata.player;
 
   bool const skip = !is_v.value;
   if (skip) {
@@ -161,7 +161,7 @@ render_common_entities(RenderState& rstate, stlw::float_generator& rng, FrameTim
 
   registry.view<Common..., MeshRenderable, NPCData>().each(
       [&](auto&&... args) { draw_entity(FORWARD(args)); });
-  registry.view<Common..., MeshRenderable, PlayerData>().each(
+  registry.view<Common..., MeshRenderable, Player>().each(
       [&](auto&&... args) { draw_entity(FORWARD(args)); });
 }
 
@@ -188,7 +188,6 @@ EntityRenderer::render(RenderState& rstate, stlw::float_generator& rng, FrameTim
   auto& sps      = zs.gfx_state.sps;
 
   auto const& ldata  = zs.level_data;
-  auto const& player = ldata.player;
 
 #define COMMON_ARGS auto const eid, auto &sn, auto &transform, auto &is_v, auto &bbox
 

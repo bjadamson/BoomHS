@@ -3,6 +3,7 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/orbital_body.hpp>
+#include <boomhs/player.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/time.hpp>
@@ -467,10 +468,8 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 }
 
 void
-draw_camera_window(Camera& camera, LevelData& ldata)
+draw_camera_window(Camera& camera, Player& player)
 {
-  auto& player = ldata.player;
-
   auto const draw_perspective_controls = [&]() {
     ImGui::Text("Perspective Projection");
     ImGui::Separator();
@@ -562,10 +561,8 @@ draw_mouse_window(MouseState& mstate)
 }
 
 void
-draw_player_window(EngineState& es, LevelData& ldata)
+draw_player_window(EngineState& es, WorldObject& player)
 {
-  auto& player = ldata.player;
-
   auto const draw = [&]() {
     auto const display = player.display();
     ImGui::Text("%s", display.c_str());
@@ -933,6 +930,9 @@ draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, WaterAudioSyste
   auto& registry       = zs.registry;
   auto& ldata          = zs.level_data;
 
+  auto const peid = find_player(registry);
+  auto& player    = registry.get<Player>(peid);
+
   if (uistate.show_entitywindow) {
     draw_entity_editor(es, lm, registry, camera);
   }
@@ -940,13 +940,13 @@ draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, WaterAudioSyste
     draw_time_editor(es.logger, es.time, uistate);
   }
   if (uistate.show_camerawindow) {
-    draw_camera_window(camera, ldata);
+    draw_camera_window(camera, player);
   }
   if (uistate.show_mousewindow) {
     draw_mouse_window(es.mouse_state);
   }
   if (uistate.show_playerwindow) {
-    draw_player_window(es, ldata);
+    draw_player_window(es, player.world_object);
   }
   if (uistate.show_skyboxwindow) {
     draw_skybox_window(es, lm, skyboxr);

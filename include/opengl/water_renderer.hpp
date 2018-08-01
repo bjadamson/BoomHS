@@ -144,7 +144,8 @@ class AdvancedWaterRenderer
       sr.render(rstate, ds, ft);
     }
     if (es.draw_terrain) {
-      tr.render(rstate, registry, ft, ABOVE_VECTOR);
+      auto const& material_table = ldata.material_table;
+      tr.render(rstate, material_table, registry, ft, ABOVE_VECTOR);
     }
     if (es.draw_entities) {
       er.render(rstate, rng, ft);

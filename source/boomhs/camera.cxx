@@ -11,9 +11,8 @@ using namespace opengl;
 namespace boomhs
 {
 
-Camera::Camera(Transform* target, glm::vec3 const& forward, glm::vec3 const& up)
-    : target_(target)
-    , forward_(forward)
+Camera::Camera(glm::vec3 const& forward, glm::vec3 const& up)
+    : forward_(forward)
     , up_(up)
     , coordinates_(0.0f, 0.0f, 0.0f)
     , perspective_({70.0f, 4.0f / 3.0f, 0.1f, 2000.0f})
@@ -25,9 +24,32 @@ Camera::Camera(Transform* target, glm::vec3 const& forward, glm::vec3 const& up)
 }
 
 void
+Camera::check_pointers() const
+{
+  assert(target_);
+}
+
+#define GET_TARGET_IMPL()                                                                          \
+  check_pointers();                                                                                \
+  return *target_
+
+Transform&
+Camera::get_target()
+{
+  GET_TARGET_IMPL();
+}
+
+Transform const&
+Camera::get_target() const
+{
+  GET_TARGET_IMPL();
+}
+#undef GET_TARGET_IMPL
+
+void
 Camera::next_mode()
 {
-  assert(nullptr != target_);
+  check_pointers();
 
   CameraMode const m = static_cast<CameraMode>(mode() + 1);
   if (CameraMode::MAX == m) {
@@ -41,7 +63,7 @@ Camera::next_mode()
 Camera&
 Camera::rotate(float const d_theta, float const d_phi)
 {
-  assert(nullptr != target_);
+  check_pointers();
 
   float constexpr PI     = glm::pi<float>();
   float constexpr TWO_PI = PI * 2.0f;
@@ -92,7 +114,7 @@ Camera::set_target(Transform& target)
 void
 Camera::zoom(float const amount)
 {
-  assert(nullptr != target_);
+  check_pointers();
 
   float constexpr MIN_RADIUS = 0.01f;
   float const new_radius     = coordinates_.radius + amount;
@@ -107,14 +129,14 @@ Camera::zoom(float const amount)
 void
 Camera::decrease_zoom(float const amount)
 {
-  assert(nullptr != target_);
+  check_pointers();
   zoom(-amount);
 }
 
 void
 Camera::increase_zoom(float const amount)
 {
-  assert(nullptr != target_);
+  check_pointers();
   zoom(amount);
 }
 
@@ -133,7 +155,7 @@ Camera::world_position() const
 glm::vec3
 Camera::target_position() const
 {
-  assert(nullptr != target_);
+  check_pointers();
 
   auto& target = get_target();
   return target.translation;
@@ -149,7 +171,7 @@ Camera::make_defaultcamera()
   auto const FORWARD = -Z_UNIT_VECTOR;
   auto constexpr UP  = Y_UNIT_VECTOR;
 
-  Camera camera(nullptr, FORWARD, UP);
+  Camera camera(FORWARD, UP);
 
   SphericalCoordinates sc;
   sc.radius = 3.8f;

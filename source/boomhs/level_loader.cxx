@@ -2,9 +2,9 @@
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/level_loader.hpp>
+#include <boomhs/material.hpp>
 #include <boomhs/obj.hpp>
 #include <boomhs/orbital_body.hpp>
-#include <boomhs/player.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/tree.hpp>
 #include <boomhs/water.hpp>
@@ -394,12 +394,6 @@ load_fog(CppTable const& file)
   return Fog{density, gradient, color};
 }
 
-struct NameMaterial
-{
-  std::string const name;
-  Material const    material;
-};
-
 std::optional<NameMaterial>
 load_material(CppTable const& file)
 {
@@ -457,12 +451,13 @@ auto
 load_materials(stlw::Logger& logger, CppTable const& table, EntityRegistry& registry)
 {
   auto const                table_array = get_table_array(table, "material");
-  std::vector<NameMaterial> result;
+
+  MaterialTable material_table;
   for (auto const& it : *table_array) {
-    auto const material = load_material_or_abort(it);
-    result.emplace_back(material);
+    auto material = load_material_or_abort(it);
+    material_table.add(MOVE(material));
   }
-  return result;
+  return material_table;
 }
 
 struct NamePointlight
@@ -532,7 +527,7 @@ load_orbital_bodies(stlw::Logger& logger, CppTable const& table, EntityRegistry&
 void
 load_entities(stlw::Logger& logger, CppTable const& table,
               std::vector<OrbitalBody> const& orbital_bodies, TextureTable& ttable,
-              std::vector<NameMaterial> const&   materials,
+              MaterialTable const&   material_table,
               std::vector<NamePointlight> const& pointlights, EntityRegistry& registry)
 {
   auto const load_entity = [&](auto const& file) {
@@ -547,7 +542,6 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     auto const material_o    = get_string(file,          "material");
     auto const texture_name  = get_string(file,          "texture");
     auto const pointlight_o  = get_string(file,          "pointlight");
-    auto const player        = get_string(file,          "player");
     auto const is_visible    = get_bool(file,            "is_visible").value_or(true);
     bool const random_junk   = get_bool(file,            "random_junk_from_file").value_or(false);
     bool const is_water      = get_bool(file,            "water").value_or(false);
@@ -592,9 +586,6 @@ load_entities(stlw::Logger& logger, CppTable const& table,
       orbital = *it;
     }
 
-    if (player) {
-      registry.assign<PlayerData>(eid);
-    }
     if (geometry == "cube") {
       auto& cr = registry.assign<CubeRenderable>(eid);
       cr.min   = glm::vec3{-0.5f};
@@ -657,12 +648,8 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     // An object receives light, if it has ALL ambient/diffuse/specular fields
     if (material_o) {
       auto const material_name = *material_o;
-      auto const cmp           = [&material_name](NameMaterial const& nm) {
-        return nm.name == material_name;
-      };
-      auto const it = std::find_if(materials.cbegin(), materials.cend(), cmp);
-      assert(it != materials.cend());
-      registry.assign<Material>(eid) = it->material;
+      auto const& material = material_table.find(material_name);
+      registry.assign<Material>(eid) = material;
     }
   };
 
@@ -794,7 +781,7 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   auto const orbital_bodies = load_orbital_bodies(logger, file_datatable, registry);
 
   LOG_TRACE("loading material data");
-  auto const materials = load_materials(logger, file_datatable, registry);
+  auto material_table = load_materials(logger, file_datatable, registry);
 
   LOG_TRACE("loading attenuation data");
   auto const attenuations = load_attenuations(logger, file_datatable, registry);
@@ -803,7 +790,7 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   auto const pointlights = load_pointlights(logger, file_datatable, attenuations);
 
   LOG_TRACE("loading entities ...");
-  load_entities(logger, file_datatable, orbital_bodies, texture_table, materials, pointlights,
+  load_entities(logger, file_datatable, orbital_bodies, texture_table, material_table, pointlights,
                 registry);
 
   LOG_TRACE("loading lights ...");
@@ -821,7 +808,7 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
 
   auto const fog = load_fog(file_datatable);
   LOG_TRACE("yielding assets");
-  return Ok(LevelAssets{MOVE(glight), fog,
+  return Ok(LevelAssets{MOVE(glight), fog, MOVE(material_table),
 
                         MOVE(objstore), MOVE(texture_table), MOVE(sps)});
 }

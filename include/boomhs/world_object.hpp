@@ -1,28 +1,41 @@
 #pragma once
-#include <boomhs/components.hpp>
-#include <stlw/algorithm.hpp>
-#include <stlw/math.hpp>
+#include <boomhs/entity.hpp>
 #include <stlw/type_macros.hpp>
+
+#include <extlibs/glm.hpp>
+
 #include <string>
 
 namespace boomhs
 {
 class Camera;
-struct GameState;
+class EntityRegistry;
 
 class WorldObject
 {
-  EnttLookup ent_lookup_;
-  glm::vec3  forward_, up_;
-  float      speed_;
+  EntityID        eid_      = 0;
+  EntityRegistry* registry_ = nullptr;
+
+  glm::vec3 forward_, up_;
+  float     speed_;
+
+  void check_pointers() const;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(WorldObject);
-  explicit WorldObject(EnttLookup const& plookup, glm::vec3 const&, glm::vec3 const&);
+  WorldObject() = default;
+  MOVE_DEFAULT(WorldObject);
+  COPY_DEFAULT(WorldObject);
 
-  auto const& transform() const { return ent_lookup_.lookup<Transform>(); }
-  auto&       transform() { return ent_lookup_.lookup<Transform>(); }
-  auto const& bounding_box() const { return ent_lookup_.lookup<AABoundingBox>(); }
+  auto eid() const { return eid_; }
+
+  EntityRegistry&       registry();
+  EntityRegistry const& registry() const;
+
+  Transform&       transform();
+  Transform const& transform() const;
+
+  AABoundingBox&       bounding_box();
+  AABoundingBox const& bounding_box() const;
 
   glm::vec3 eye_forward() const { return forward_; }
   glm::vec3 eye_up() const { return up_; }
@@ -45,8 +58,14 @@ public:
   glm::quat const& orientation() const { return transform().rotation; }
   glm::vec3 const& world_position() const;
 
-  auto speed() const { return speed_; }
+  void set_eid(EntityID const eid) { eid_ = eid; }
+  void set_registry(EntityRegistry& registry) { registry_ = &registry; }
   void set_speed(float const s) { speed_ = s; }
+  void set_forward(glm::vec3 const& v) { forward_ = v; }
+  void set_up(glm::vec3 const& v) { up_ = v; }
+  auto speed() const { return speed_; }
+  auto forward() const { return forward_; }
+  auto up() const { return up_; }
 
   WorldObject& move(glm::vec3 const&);
 
@@ -55,8 +74,6 @@ public:
 
   void move_to(glm::vec3 const& pos) { transform().translation = pos; }
   void move_to(float const x, float const y, float const z) { move_to(glm::vec3{x, y, z}); }
-
-  void set_eid(EntityID const eid) { ent_lookup_.set_eid(eid); }
 
   glm::mat4 model_matrix() const { return transform().model_matrix(); }
 };

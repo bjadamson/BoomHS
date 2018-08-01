@@ -5,6 +5,7 @@
 #include <opengl/shader.hpp>
 
 #include <boomhs/heightmap.hpp>
+#include <boomhs/material.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 
@@ -79,8 +80,8 @@ namespace opengl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // DefaultTerrainRenderer
 void
-DefaultTerrainRenderer::render(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
-                             glm::vec4 const& cull_plane)
+DefaultTerrainRenderer::render(RenderState& rstate, MaterialTable const& mat_table,
+    EntityRegistry& registry, FrameTime const& ft, glm::vec4 const& cull_plane)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -92,7 +93,8 @@ DefaultTerrainRenderer::render(RenderState& rstate, EntityRegistry& registry, Fr
   auto& terrain_grid = ldata.terrain;
 
   Transform transform;
-  Material  mat;
+
+  auto& mat = mat_table.find("terrain");
 
   auto const& dimensions   = terrain_grid.config.dimensions;
   auto const& model_matrix = transform.model_matrix();
@@ -165,8 +167,8 @@ BlackTerrainRenderer::BlackTerrainRenderer(ShaderProgram& sp)
 }
 
 void
-BlackTerrainRenderer::render(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
-                             glm::vec4 const& cull_plane)
+BlackTerrainRenderer::render(RenderState& rstate, MaterialTable const&, EntityRegistry& registry,
+                             FrameTime const& ft, glm::vec4 const& cull_plane)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;

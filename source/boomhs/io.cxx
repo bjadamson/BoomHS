@@ -32,49 +32,6 @@ namespace
 {
 
 void
-kill_entity(stlw::Logger& logger, EntityRegistry& registry, EntityID const eid)
-{
-  auto const& bbox = registry.get<AABoundingBox>(eid);
-  auto const hw = bbox.half_widths();
-
-  // Move the entity half it's bounding box, so it is directly on the ground, or whatever it was
-  // standing on.
-  auto& transform = registry.get<Transform>(eid);
-  transform.translation.y -= hw.y;
-
-  // TODO: Get the normal vector for the terrain at the (x, z) point and rotate the npc to look
-  // properly aligned on slanted terrain.
-  transform.rotate_degrees(90.0f, opengl::X_UNIT_VECTOR);
-}
-
-void
-try_attack_selected_target(stlw::Logger& logger, EntityRegistry& registry,
-                           EntityID const target_eid)
-{
-  auto const player_eid = find_player(registry);
-  auto&      pdata      = registry.get<PlayerData>(player_eid);
-  auto& ptransform      = registry.get<Transform>(player_eid);
-  auto const playerpos  = ptransform.translation;
-
-  auto& npc_transform = registry.get<Transform>(target_eid);
-  auto const npcpos   = npc_transform.translation;
-
-  auto& npcdata = registry.get<NPCData>(target_eid);
-  auto& target_hp = npcdata.health;
-  if (NPC::is_dead(target_hp)) {
-    return;
-  }
-
-  if (glm::distance(npcpos, playerpos) < 2) {
-    target_hp.current -= pdata.damage;
-
-    if (NPC::is_dead(target_hp)) {
-      kill_entity(logger, registry, target_eid);
-    }
-  }
-}
-
-void
 move_worldobject(GameState& state, glm::vec3 (WorldObject::*fn)() const, WorldObject& wo,
                  FrameTime const& ft)
 {
@@ -82,7 +39,7 @@ move_worldobject(GameState& state, glm::vec3 (WorldObject::*fn)() const, WorldOb
 
   auto&            lm           = state.level_manager;
   auto&            zs           = lm.active();
-  LevelData const& ldata        = zs.level_data;
+  auto const& ldata        = zs.level_data;
   auto const&      terrain_grid = ldata.terrain;
 
   auto const max_pos = terrain_grid.max_worldpositions();
@@ -123,58 +80,39 @@ move_worldobject(GameState& state, glm::vec3 (WorldObject::*fn)() const, WorldOb
 }
 
 void
-move_forward(GameState& state, FrameTime const& ft)
+move_forward(GameState& state, WorldObject& wo, FrameTime const& ft)
 {
-  auto& lm     = state.level_manager;
-  auto& ldata  = lm.active().level_data;
-  auto& player = ldata.player;
-
-  move_worldobject(state, &WorldObject::world_forward, player, ft);
+  move_worldobject(state, &WorldObject::world_forward, wo, ft);
 }
 
 void
-move_backward(GameState& state, FrameTime const& ft)
+move_backward(GameState& state, WorldObject& wo, FrameTime const& ft)
 {
-  auto& lm     = state.level_manager;
-  auto& ldata  = lm.active().level_data;
-  auto& player = ldata.player;
-  move_worldobject(state, &WorldObject::world_backward, player, ft);
+  move_worldobject(state, &WorldObject::world_backward, wo, ft);
 }
 
 void
-move_left(GameState& state, FrameTime const& ft)
+move_left(GameState& state, WorldObject& wo, FrameTime const& ft)
 {
-  auto& lm     = state.level_manager;
-  auto& ldata  = lm.active().level_data;
-  auto& player = ldata.player;
-  move_worldobject(state, &WorldObject::world_left, player, ft);
+  move_worldobject(state, &WorldObject::world_left, wo, ft);
 }
 
 void
-move_right(GameState& state, FrameTime const& ft)
+move_right(GameState& state, WorldObject& wo, FrameTime const& ft)
 {
-  auto& lm     = state.level_manager;
-  auto& ldata  = lm.active().level_data;
-  auto& player = ldata.player;
-  move_worldobject(state, &WorldObject::world_right, player, ft);
+  move_worldobject(state, &WorldObject::world_right, wo, ft);
 }
 
 void
-move_up(GameState& state, FrameTime const& ft)
+move_up(GameState& state, WorldObject& wo, FrameTime const& ft)
 {
-  auto& lm     = state.level_manager;
-  auto& ldata  = lm.active().level_data;
-  auto& player = ldata.player;
-  move_worldobject(state, &WorldObject::world_up, player, ft);
+  move_worldobject(state, &WorldObject::world_up, wo, ft);
 }
 
 void
-move_down(GameState& state, FrameTime const& ft)
+move_down(GameState& state, WorldObject& wo, FrameTime const& ft)
 {
-  auto& lm     = state.level_manager;
-  auto& ldata  = lm.active().level_data;
-  auto& player = ldata.player;
-  move_worldobject(state, &WorldObject::world_down, player, ft);
+  move_worldobject(state, &WorldObject::world_down, wo, ft);
 }
 
 void
@@ -187,9 +125,10 @@ try_pickup_nearby_item(GameState& state, FrameTime const& ft)
   auto& registry = active.registry;
 
   auto const  player_eid       = find_player(registry);
-  auto&       player_transform = registry.get<Transform>(player_eid);
+  auto&       player           = registry.get<Player>(player_eid);
+
+  auto&       player_transform = player.world_object.transform();
   auto const& player_pos       = player_transform.translation;
-  auto&       player           = registry.get<PlayerData>(player_eid);
   auto&       inventory        = player.inventory;
 
   static constexpr auto MINIMUM_DISTANCE_TO_PICKUP = 1.0f;
@@ -210,7 +149,7 @@ try_pickup_nearby_item(GameState& state, FrameTime const& ft)
       continue;
     }
 
-    Player::pickup_entity(eid, registry);
+    player.pickup_entity(eid, registry);
 
     if (registry.has<Torch>(eid)) {
       auto& pointlight = registry.get<PointLight>(eid);
@@ -225,17 +164,13 @@ try_pickup_nearby_item(GameState& state, FrameTime const& ft)
 }
 
 void
-process_mousemotion(GameState& state, SDL_MouseMotionEvent const& motion, Camera& camera,
+process_mousemotion(GameState& state, Player& player, SDL_MouseMotionEvent const& motion, Camera& camera,
                     FrameTime const& ft)
 {
   auto& es     = state.engine_state;
   auto& logger = es.logger;
   auto& ms     = es.mouse_state;
   auto& ui     = es.ui_state.debug;
-
-  auto& lm     = state.level_manager;
-  auto& ldata  = lm.active().level_data;
-  auto& player = ldata.player;
 
   {
     // update the mouse relative and current positions
@@ -246,9 +181,10 @@ process_mousemotion(GameState& state, SDL_MouseMotionEvent const& motion, Camera
     ms.coords.y = motion.y;
   }
 
+  auto& wo = player.world_object;
   if (ms.both_pressed()) {
-    player.rotate_to_match_camera_rotation(camera);
-    move_forward(state, ft);
+    wo.rotate_to_match_camera_rotation(camera);
+    move_forward(state, wo, ft);
   }
   if (ms.left_pressed) {
     auto const& sens = ms.sensitivity;
@@ -262,7 +198,7 @@ process_mousemotion(GameState& state, SDL_MouseMotionEvent const& motion, Camera
 
     auto const x_dt     = angle * ft.delta_millis();
     auto constexpr y_dt = 0.0f;
-    player.rotate_degrees(x_dt, opengl::Y_UNIT_VECTOR);
+    wo.rotate_degrees(x_dt, opengl::Y_UNIT_VECTOR);
   }
 }
 
@@ -306,7 +242,7 @@ select_mouse_under_cursor(FrameState& fstate)
 }
 
 void
-process_mousebutton_down(GameState& state, SDL_MouseButtonEvent const& event, Camera& camera,
+process_mousebutton_down(GameState& state, Player& player, SDL_MouseButtonEvent const& event, Camera& camera,
                          FrameTime const& ft)
 {
   auto& es     = state.engine_state;
@@ -330,16 +266,12 @@ process_mousebutton_down(GameState& state, SDL_MouseButtonEvent const& event, Ca
     LOG_INFO("toggling mouse up/down (pitch) lock");
     camera.rotate_lock ^= true;
 
-    auto& lm     = state.level_manager;
-    auto& ldata  = lm.active().level_data;
-    auto& player = ldata.player;
-
-    player.rotate_to_match_camera_rotation(camera);
+    player.world_object.rotate_to_match_camera_rotation(camera);
   }
 }
 
 void
-process_mousebutton_up(GameState& state, SDL_MouseButtonEvent const& event, Camera& camera,
+process_mousebutton_up(GameState& state, Player& player, SDL_MouseButtonEvent const& event, Camera& camera,
                        FrameTime const& ft)
 {
   auto& es = state.engine_state;
@@ -355,12 +287,12 @@ process_mousebutton_up(GameState& state, SDL_MouseButtonEvent const& event, Came
 }
 
 void
-process_keyup(GameState& state, SDL_Event const& event, Camera& camera, FrameTime const& ft)
+process_keyup(GameState& state, Player& player, SDL_Event const& event, Camera& camera, FrameTime const& ft)
 {
 }
 
 void
-process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameTime const& ft)
+process_keydown(GameState& state, Player& player, SDL_Event const& event, Camera& camera, FrameTime const& ft)
 {
   auto& es      = state.engine_state;
   auto& logger  = es.logger;
@@ -370,15 +302,16 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
   auto& active         = lm.active();
   auto& registry       = active.registry;
   auto& ldata          = active.level_data;
-  auto& player         = ldata.player;
-  auto& nearby_targets = ldata.nearby_targets;
+
+  auto& nbt = ldata.nearby_targets;
 
   auto& debug = uistate.debug;
   auto& ingame = uistate.ingame;
   auto& chat_state = ingame.chat_state;
+  auto& player_wo = player.world_object;
 
   auto const rotate_player = [&](float const angle, glm::vec3 const& axis) {
-    player.rotate_degrees(angle, axis);
+    player_wo.rotate_degrees(angle, axis);
   };
   switch (event.key.keysym.sym) {
   case SDLK_RETURN:
@@ -387,16 +320,16 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
     chat_state.reset_yscroll_position = true;
     break;
   case SDLK_w:
-    move_forward(state, ft);
+    move_forward(state, player_wo, ft);
     break;
   case SDLK_s:
-    move_backward(state, ft);
+    move_backward(state, player_wo, ft);
     break;
   case SDLK_d:
-    move_right(state, ft);
+    move_right(state, player_wo, ft);
     break;
   case SDLK_a:
-    move_left(state, ft);
+    move_left(state, player_wo, ft);
     break;
   case SDLK_e:
     if (event.key.keysym.mod & KMOD_CTRL) {
@@ -405,10 +338,10 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
     else {
       try_pickup_nearby_item(state, ft);
     }
-    // move_up(state, ft);
+    // move_up(state, player_wo, ft);
     break;
   case SDLK_q:
-    // move_down(state, ft);
+    // move_down(state, player_wo, ft);
     break;
   case SDLK_F11:
     uistate.draw_debug_ui ^= true;
@@ -422,22 +355,27 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
     assert(keystate);
 
     if (!keystate[SDL_SCANCODE_LSHIFT]) {
-      nearby_targets.cycle_forward(ft);
+      nbt.cycle_forward(ft);
     }
     else {
-      nearby_targets.cycle_backward(ft);
+      nbt.cycle_backward(ft);
     }
   } break;
   case SDLK_BACKQUOTE: {
-    auto const eid       = find_player(registry);
-    auto&      player    = registry.get<PlayerData>(eid);
     auto&      inventory = player.inventory;
     inventory.toggle_open();
   } break;
   case SDLK_SPACE: {
-    auto const selected_opt = nearby_targets.selected();
+    auto const  player_eid = find_player(registry);
+    auto& player           = registry.get<Player>(player_eid);
+    auto const selected_opt = nbt.selected();
+
+    // Toggle the state trackerwhether or not the player is attacking
+    // AND
+    // If the player has an entity selected, try and attack it.
+    player.is_attacking ^= true;
     if (selected_opt) {
-      try_attack_selected_target(logger, registry, *selected_opt);
+      player.try_attack_entity(logger, *selected_opt, registry);
     }
   } break;
   // scaling
@@ -490,7 +428,7 @@ process_keydown(GameState& state, SDL_Event const& event, Camera& camera, FrameT
 }
 
 void
-process_mousewheel(GameState& state, SDL_MouseWheelEvent const& wheel, Camera& camera,
+process_mousewheel(GameState& state, Player& player, SDL_MouseWheelEvent const& wheel, Camera& camera,
                    FrameTime const& ft)
 {
   auto& logger = state.engine_state.logger;
@@ -514,10 +452,11 @@ process_mousestate(GameState& state, Camera& camera, FrameTime const& ft)
   if (ms.both_pressed()) {
 
     auto& lm     = state.level_manager;
-    auto& ldata  = lm.active().level_data;
-    auto& player = ldata.player;
+    auto& registry  = lm.active().registry;
 
-    move_worldobject(state, &WorldObject::world_forward, player, ft);
+    auto const player_eid = find_player(registry);
+    auto& player = registry.get<Player>(player_eid);
+    move_worldobject(state, &WorldObject::world_forward, player.world_object, ft);
   }
 }
 
@@ -531,25 +470,24 @@ process_keystate(GameState& state, Camera& camera, FrameTime const& ft)
   auto& es     = state.engine_state;
   auto& lm     = state.level_manager;
   auto& ldata  = lm.active().level_data;
-  auto& player = ldata.player;
 
   if (keystate[SDL_SCANCODE_W]) {
-    // move_forward(state, ft);
+    // move_forward(state, player, ft);
   }
   if (keystate[SDL_SCANCODE_S]) {
-    // move_backward(state, ft);
+    // move_backward(state, player, ft);
   }
   if (keystate[SDL_SCANCODE_A]) {
-    // move_left(state, ft);
+    // move_left(state, player, ft);
   }
   if (keystate[SDL_SCANCODE_D]) {
-    // move_right(state, ft);
+    // move_right(state, player, ft);
   }
   if (keystate[SDL_SCANCODE_Q]) {
-    // move_up(state, ft);
+    // move_up(state, player, ft);
   }
   if (keystate[SDL_SCANCODE_E]) {
-    // move_down(state, ft);
+    // move_down(state, player, ft);
   }
 }
 
@@ -578,8 +516,10 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Cam
   int32_t constexpr AXIS_MAX = 32767;
 
   auto& lm     = state.level_manager;
-  auto& ldata  = lm.active().level_data;
-  auto& player = ldata.player;
+  auto& registry  = lm.active().registry;
+
+  auto const player_eid = find_player(registry);
+  auto& player_wo = registry.get<Player>(player_eid).world_object;
 
   auto constexpr THRESHOLD  = 0.4f;
   auto const less_threshold = [](auto const& v) { return v <= 0 && (v <= AXIS_MIN * THRESHOLD); };
@@ -589,21 +529,21 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Cam
 
   auto const left_axis_x = c.left_axis_x();
   if (less_threshold(left_axis_x)) {
-    player.rotate_to_match_camera_rotation(camera);
-    move_left(state, ft);
+    player_wo.rotate_to_match_camera_rotation(camera);
+    move_left(state, player_wo, ft);
   }
   if (greater_threshold(left_axis_x)) {
-    player.rotate_to_match_camera_rotation(camera);
-    move_right(state, ft);
+    player_wo.rotate_to_match_camera_rotation(camera);
+    move_right(state, player_wo, ft);
   }
   auto const left_axis_y = c.left_axis_y();
   if (less_threshold(left_axis_y)) {
-    player.rotate_to_match_camera_rotation(camera);
-    move_forward(state, ft);
+    player_wo.rotate_to_match_camera_rotation(camera);
+    move_forward(state, player_wo, ft);
   }
   if (greater_threshold(left_axis_y)) {
-    player.rotate_to_match_camera_rotation(camera);
-    move_backward(state, ft);
+    player_wo.rotate_to_match_camera_rotation(camera);
+    move_backward(state, player_wo, ft);
   }
 
   auto constexpr CONTROLLER_SENSITIVITY = 0.01;
@@ -697,6 +637,13 @@ IO::process_event(GameState& state, SDL_Event& event, Camera& camera, FrameTime 
   auto& es     = state.engine_state;
   auto& logger = es.logger;
 
+  auto& lm     = state.level_manager;
+  auto& active = lm.active();
+  auto& registry = active.registry;
+
+  auto const player_eid = find_player(registry);
+  auto& player = registry.get<Player>(player_eid);
+
   auto& ui     = es.ui_state;
   auto& ingame = ui.ingame;
   auto& chat_buffer = ingame.chat_buffer;
@@ -711,15 +658,24 @@ IO::process_event(GameState& state, SDL_Event& event, Camera& camera, FrameTime 
         es.quit = true;
         return;
       case SDLK_ESCAPE:
-        if (currently_editing) {
-          chat_buffer.clear();
-          currently_editing = false;
+        {
+          auto& ldata  = active.level_data;
+          auto& nbt = ldata.nearby_targets;
+          if (currently_editing) {
+            chat_buffer.clear();
+            currently_editing = false;
+          }
+          else if (player.is_attacking) {
+            player.is_attacking = false;
+          }
+          else if (nbt.selected()) {
+            nbt.clear();
+          }
+          else {
+            es.main_menu.show ^= true;
+          }
+          return;
         }
-        else {
-          es.main_menu.show ^= true;
-        }
-        return;
-      default:
         break;
     }
   }
@@ -736,22 +692,22 @@ IO::process_event(GameState& state, SDL_Event& event, Camera& camera, FrameTime 
 
   switch (type) {
   case SDL_MOUSEBUTTONDOWN:
-    process_mousebutton_down(state, event.button, camera, ft);
+    process_mousebutton_down(state, player, event.button, camera, ft);
     break;
   case SDL_MOUSEBUTTONUP:
-    process_mousebutton_up(state, event.button, camera, ft);
+    process_mousebutton_up(state, player, event.button, camera, ft);
     break;
   case SDL_MOUSEMOTION:
-    process_mousemotion(state, event.motion, camera, ft);
+    process_mousemotion(state, player, event.motion, camera, ft);
     break;
   case SDL_MOUSEWHEEL:
-    process_mousewheel(state, event.wheel, camera, ft);
+    process_mousewheel(state, player, event.wheel, camera, ft);
     break;
   case SDL_KEYDOWN:
-    process_keydown(state, event, camera, ft);
+    process_keydown(state, player, event, camera, ft);
     break;
   case SDL_KEYUP:
-    process_keyup(state, event, camera, ft);
+    process_keyup(state, player, event, camera, ft);
     break;
   }
 }

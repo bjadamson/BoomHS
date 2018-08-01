@@ -37,7 +37,8 @@ DefaultSceneRenderer::render_scene(RenderState& rstate, LevelManager& lm,
     render::draw_grid_lines(rstate);
   }
 
-  auto const& player = ldata.player;
+  auto const player_eid = find_player(registry);
+  auto const& player = registry.get<Player>(player_eid);
   if (es.show_global_axis) {
     render::draw_global_axis(rstate);
   }
@@ -47,7 +48,7 @@ DefaultSceneRenderer::render_scene(RenderState& rstate, LevelManager& lm,
 
   {
     auto const  eid = find_player(registry);
-    auto const& inv = registry.get<PlayerData>(eid).inventory;
+    auto const& inv = registry.get<Player>(eid).inventory;
     if (inv.is_open()) {
       render::draw_inventory_overlay(rstate);
     }

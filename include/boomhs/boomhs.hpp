@@ -19,10 +19,7 @@ namespace boomhs
 class Camera;
 
 Result<GameState, std::string>
-create_gamestate(Engine&, EngineState&, Camera&);
-
-void
-init(GameState&);
+init(Engine&, EngineState&, Camera&);
 
 void
 game_loop(Engine&, GameState&, stlw::float_generator&, Camera&, window::FrameTime const&);

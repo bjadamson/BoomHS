@@ -13,11 +13,12 @@ class FrameTime
   ticks_t const delta_, since_start_;
   double const  frequency_;
 
-  double delta() const { return delta_; }
   double ticks_to_millis(ticks_t const t) const { return t * 1000.0 / frequency_; }
   double millis_to_seconds(double const m) const { return m * 0.001; }
 
 public:
+  COPY_DEFAULT(FrameTime);
+  MOVE_DEFAULT(FrameTime);
   explicit FrameTime(ticks_t const dt, ticks_t const sstart, double const fr)
       : delta_(dt)
       , since_start_(sstart)
@@ -25,7 +26,8 @@ public:
   {
   }
 
-  double delta_millis() const { return ticks_to_millis(delta()); }
+  double delta_ticks() const { return delta_; }
+  double delta_millis() const { return ticks_to_millis(delta_ticks()); }
   double delta_seconds() const { return millis_to_seconds(delta_millis()); }
 
   double since_start_millis() const { return ticks_to_millis(since_start_); }
@@ -35,15 +37,17 @@ public:
 // The clock time when the timer started
 class Clock
 {
-  double const  frequency_;
-  ticks_t const start_;
-  ticks_t       last_;
+  double  frequency_;
+  ticks_t start_;
+  ticks_t last_;
 
   ticks_t now() const { return SDL_GetPerformanceCounter(); }
   ticks_t since_start() const { return now() - start_; }
 
 public:
-  NO_COPY_OR_MOVE(Clock);
+  COPY_DEFAULT(Clock);
+  MOVE_DEFAULT(Clock);
+
   Clock()
       : frequency_(SDL_GetPerformanceFrequency())
       , start_(now())
@@ -58,6 +62,35 @@ public:
     ticks_t const delta = now() - last_;
     return FrameTime{delta, since_start(), frequency_};
   }
+};
+
+class Timer
+{
+  Clock   clock_;
+  bool    expired_   = false;
+  bool    paused_    = false;
+  ticks_t remaining_ = 0.0;
+
+public:
+  COPY_DEFAULT(Timer);
+  MOVE_DEFAULT(Timer);
+  Timer() = default;
+
+  void set(ticks_t const t) { remaining_ = t; }
+
+  void update()
+  {
+    clock_.update();
+    if (!paused_) {
+      remaining_ -= clock_.frame_time().delta_ticks();
+    }
+  }
+
+  bool expired() const { return remaining_ <= 0; }
+
+  bool is_paused() const { return paused_; }
+  void pause() { paused_ = true; }
+  void unpause() { paused_ = false; }
 };
 
 struct FrameCounter

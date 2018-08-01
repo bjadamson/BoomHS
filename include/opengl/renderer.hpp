@@ -22,9 +22,10 @@ struct Dimensions;
 class EntityRegistry;
 class HandleManager;
 class LevelManager;
+class Material;
 struct EngineState;
+struct Player;
 struct Transform;
-class WorldObject;
 struct ZoneState;
 } // namespace boomhs
 
@@ -136,11 +137,11 @@ draw_3dblack_water(RenderState&, GLenum, glm::mat4 const&, ShaderProgram&, DrawI
 
 void
 draw_3dlit_shape(RenderState&, GLenum, glm::vec3 const&, glm::mat4 const&, ShaderProgram&,
-                 DrawInfo&, Material const&, boomhs::EntityRegistry&, bool);
+                 DrawInfo&, boomhs::Material const&, boomhs::EntityRegistry&, bool);
 
 // TODO: move rest to sub-renderers or something
 void
-conditionally_draw_player_vectors(RenderState&, boomhs::WorldObject const&);
+conditionally_draw_player_vectors(RenderState&, boomhs::Player const&);
 
 void
 draw(RenderState&, GLenum, ShaderProgram&, DrawInfo&);

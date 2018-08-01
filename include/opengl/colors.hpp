@@ -73,6 +73,15 @@ public:
   void set_b(float const v) { this->colors_[2] = v; }
   void set_a(float const v) { this->colors_[3] = v; }
 
+  void set(float const r, float const g, float const b, float const a)
+  {
+    set_r(r);
+    set_g(g);
+    set_b(b);
+    set_a(a);
+  }
+  void set(Color const& c) { set(c.r(), c.g(), c.b(), c.a()); }
+
   auto const* data() const { return colors_.data(); }
 
   auto* data() { return colors_.data(); }

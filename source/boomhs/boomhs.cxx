@@ -65,7 +65,9 @@ void
 update_playaudio(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registry,
                  WaterAudioSystem& audio)
 {
-  auto&      player = ldata.player;
+  auto const player_eid = find_player(registry);
+  auto& player = registry.get<Player>(player_eid);
+
   auto const eids = find_all_entities_with_component<WaterInfo, Transform, AABoundingBox>(registry);
   for (auto const eid : eids) {
     auto& water_bbox = registry.get<AABoundingBox>(eid);
@@ -89,18 +91,17 @@ update_playaudio(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registr
 }
 
 void
-update_playerpos(stlw::Logger& logger, LevelData& ldata, FrameTime const& ft)
+update_playerpos(stlw::Logger& logger, Player& player, TerrainGrid& terrain, FrameTime const& ft)
 {
   // Lookup the player height from the terrain at the player's X, Z world-coordinates.
-  auto&       player        = ldata.player;
   auto&       player_pos    = player.transform().translation;
-  float const player_height = ldata.terrain.get_height(logger, player_pos.x, player_pos.z);
+  float const player_height = terrain.get_height(logger, player_pos.x, player_pos.z);
   auto const& player_bbox   = player.bounding_box();
   player_pos.y              = player_height + (player_bbox.dimensions().y / 2.0f);
 }
 
 void
-update_npcpositions(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registry,
+update_npcpositions(stlw::Logger& logger, TerrainGrid& terrain, EntityRegistry& registry,
                     FrameTime const& ft)
 {
   auto const update = [&](auto const eid) {
@@ -114,7 +115,7 @@ update_npcpositions(stlw::Logger& logger, LevelData& ldata, EntityRegistry& regi
     auto const& bbox        = registry.get<AABoundingBox>(eid);
 
     auto& tr = transform.translation;
-    float const height = ldata.terrain.get_height(logger, tr.x, tr.z);
+    float const height = terrain.get_height(logger, tr.x, tr.z);
     tr.y = height + (bbox.dimensions().y / 2.0f);
   };
   for (auto const eid : registry.view<NPCData, Transform, AABoundingBox>()) {
@@ -123,7 +124,7 @@ update_npcpositions(stlw::Logger& logger, LevelData& ldata, EntityRegistry& regi
 }
 
 void
-update_nearbytargets(LevelData& ldata, EntityRegistry& registry, FrameTime const& ft)
+update_nearbytargets(NearbyTargets& nbt, EntityRegistry& registry, FrameTime const& ft)
 {
   auto const player = find_player(registry);
   assert(registry.has<Transform>(player));
@@ -144,9 +145,7 @@ update_nearbytargets(LevelData& ldata, EntityRegistry& registry, FrameTime const
   auto const sort_fn = [](auto const& a, auto const& b) { return a.first < b.first; };
   std::sort(pairs.begin(), pairs.end(), sort_fn);
 
-  auto&      nbt        = ldata.nearby_targets;
   auto const selected_o = nbt.selected();
-
   nbt.clear();
   for (auto const& it : pairs) {
     nbt.add_target(it.second);
@@ -235,7 +234,8 @@ update_torchflicker(LevelData const& ldata, EntityRegistry& registry, stlw::floa
     auto& torch_transform = registry.get<Transform>(eid);
     if (item.is_pickedup) {
       // Player has picked up the torch, make it follow player around
-      auto const& player     = ldata.player;
+      auto const player_eid = find_player(registry);
+      auto const& player = registry.get<Player>(player_eid);
       auto const& player_pos = player.world_position();
 
       torch_transform.translation = player_pos;
@@ -278,7 +278,6 @@ update_visible_entities(LevelManager& lm, EntityRegistry& registry)
   auto& zs       = lm.active();
   auto& ldata    = zs.level_data;
   auto& terrain_grid = ldata.terrain;
-  auto& player   = ldata.player;
 
   for (auto const eid : registry.view<NPCData>()) {
     auto& isv = registry.get<IsVisible>(eid);
@@ -290,44 +289,6 @@ update_visible_entities(LevelManager& lm, EntityRegistry& registry)
 
 namespace boomhs
 {
-
-Result<GameState, std::string>
-create_gamestate(Engine& engine, EngineState& engine_state, Camera& camera)
-{
-  ZoneStates zss =
-      TRY_MOVEOUT(LevelAssembler::assemble_levels(engine_state.logger, engine.registries));
-  GameState state{engine_state, LevelManager{MOVE(zss)}};
-
-  auto& es     = state.engine_state;
-  auto& logger = es.logger;
-
-  auto const player_eid = find_player(engine.registries[0]);
-  auto&      transform  = engine.registries[0].get<Transform>(player_eid);
-  camera.set_target(transform);
-
-  auto& lm        = state.level_manager;
-  auto& zs        = lm.active();
-  auto& gfx_state = zs.gfx_state;
-  auto& sps       = gfx_state.sps;
-  auto& ttable    = gfx_state.texture_table;
-
-  {
-    auto test_r = rexpaint::RexImage::load("assets/test.xp");
-    if (!test_r) {
-      LOG_ERROR_SPRINTF("%s", test_r.unwrapErrMove());
-      std::abort();
-    }
-    auto test = test_r.expect_moveout("loading text.xp");
-    test.flatten();
-    auto save = rexpaint::RexImage::save(test, "assets/test.xp");
-    if (!save) {
-      LOG_ERROR_SPRINTF("%s", save.unwrapErrMove().to_string());
-      std::abort();
-    }
-  }
-
-  return OK_MOVE(state);
-}
 
 void
 place_water(stlw::Logger& logger, ZoneState& zs, ShaderProgram& sp, glm::vec2 const& pos)
@@ -383,11 +344,26 @@ place_water(stlw::Logger& logger, ZoneState& zs, ShaderProgram& sp, glm::vec2 co
   tr.scale.z = dimensions.y;
 }
 
-void
-init(GameState& state)
+Result<GameState, std::string>
+init(Engine& engine, EngineState& es, Camera& camera)
 {
-  auto& es = state.engine_state;
   auto& logger = es.logger;
+
+  auto assembled = LevelAssembler::assemble_levels(logger, engine.registries);
+  ZoneStates zss = TRY_MOVEOUT(MOVE(assembled));
+
+
+  GameState state{es, LevelManager{MOVE(zss)}};
+
+  auto& lm       = state.level_manager;
+  auto& zs       = lm.active();
+  auto& registry = zs.registry;
+
+  {
+    auto const player_eid = find_player(registry);
+    auto&      transform  = registry.get<Transform>(player_eid);
+    camera.set_target(transform);
+  }
 
   for (auto& zs : state.level_manager) {
     auto& sps = zs.gfx_state.sps;
@@ -396,61 +372,79 @@ init(GameState& state)
     place_water(logger, zs, water_sp, glm::vec2{0.0f, 0.0f});
     place_water(logger, zs, water_sp, glm::vec2{20.0f, 20.0f});
   }
+  {
+    auto test_r = rexpaint::RexImage::load("assets/test.xp");
+    if (!test_r) {
+      LOG_ERROR_SPRINTF("%s", test_r.unwrapErrMove());
+      std::abort();
+    }
+    auto test = test_r.expect_moveout("loading text.xp");
+    test.flatten();
+    auto save = rexpaint::RexImage::save(test, "assets/test.xp");
+    if (!save) {
+      LOG_ERROR_SPRINTF("%s", save.unwrapErrMove().to_string());
+      std::abort();
+    }
+  }
 
-  auto& ingame = es.ui_state.ingame;
-  auto& chat_history = ingame.chat_history;
-  auto& chat_state = ingame.chat_state;
+  {
+    auto& ingame = es.ui_state.ingame;
+    auto& chat_history = ingame.chat_history;
+    auto& chat_state = ingame.chat_state;
 
-  chat_history.add_channel(0, "General", LOC::WHITE);
-  chat_history.add_channel(1, "Group",   LOC::LIGHT_BLUE);
-  chat_history.add_channel(2, "Guild",   LOC::LIGHT_GREEN);
-  chat_history.add_channel(3, "Whisper", LOC::MEDIUM_PURPLE);
-  chat_history.add_channel(4, "Area",    LOC::INDIAN_RED);
+    chat_history.add_channel(0, "General", LOC::WHITE);
+    chat_history.add_channel(1, "Group",   LOC::LIGHT_BLUE);
+    chat_history.add_channel(2, "Guild",   LOC::LIGHT_GREEN);
+    chat_history.add_channel(3, "Whisper", LOC::MEDIUM_PURPLE);
+    chat_history.add_channel(4, "Area",    LOC::INDIAN_RED);
 
-  auto const addmsg = [&](ChannelId const channel, auto &&msg) {
-    Message m{channel, MOVE(msg)};
-    chat_history.add_message(MOVE(m));
-  };
-  addmsg(0, "Welcome to the server 'Turnshroom Habitat'");
-  addmsg(0, "Wizz: Hey");
-  addmsg(0, "Thorny: Yo");
-  addmsg(0, "Mufk: SUp man");
-  addmsg(2, "Kazaghual: anyone w2b this axe I just found?");
-  addmsg(2, "PizzaMan: Yo I'm here to deliver this pizza, I'll just leave it over here by the "
-      "dragon ok?");
-  addmsg(3, "Moo: grass plz");
-  addmsg(4, "Aladin: STFU Jafar");
-  addmsg(2, "Rocky: JKSLFJS");
-  addmsg(1, "You took 31 damage.");
-  addmsg(1, "You've given 25 damage.");
-  addmsg(1, "You took 61 damage.");
-  addmsg(1, "You've given 20 damage.");
-  addmsg(2, R"(A gender chalks in the vintage coke. When will the murder pocket a wanted symptom?
-            My
-            attitude observes any nuisance into the laughing constant. Every candidate
-            offers the railway under the beforehand molecule. The rescue buys his wrath
-            underneath the above garble.
-            The truth collars the bass into a lower heel. A squashed machinery kisses the
-            abandon. Across its horse swims a sheep. Any umbrella damage rants over a sniff.
+    auto const addmsg = [&](ChannelId const channel, auto &&msg) {
+      Message m{channel, MOVE(msg)};
+      chat_history.add_message(MOVE(m));
+    };
+    addmsg(0, "Welcome to the server 'Turnshroom Habitat'");
+    addmsg(0, "Wizz: Hey");
+    addmsg(0, "Thorny: Yo");
+    addmsg(0, "Mufk: SUp man");
+    addmsg(2, "Kazaghual: anyone w2b this axe I just found?");
+    addmsg(2, "PizzaMan: Yo I'm here to deliver this pizza, I'll just leave it over here by the "
+        "dragon ok?");
+    addmsg(3, "Moo: grass plz");
+    addmsg(4, "Aladin: STFU Jafar");
+    addmsg(2, "Rocky: JKSLFJS");
+    addmsg(1, "You took 31 damage.");
+    addmsg(1, "You've given 25 damage.");
+    addmsg(1, "You took 61 damage.");
+    addmsg(1, "You've given 20 damage.");
+    addmsg(2, R"(A gender chalks in the vintage coke. When will the murder pocket a wanted symptom?
+              My
+              attitude observes any nuisance into the laughing constant. Every candidate
+              offers the railway under the beforehand molecule. The rescue buys his wrath
+              underneath the above garble.
+              The truth collars the bass into a lower heel. A squashed machinery kisses the
+              abandon. Across its horse swims a sheep. Any umbrella damage rants over a sniff.
 
-            How can a theorem chalk the frustrating fraud? Should the world wash an
-            incomprehensible curriculum?)");
+              How can a theorem chalk the frustrating fraud? Should the world wash an
+              incomprehensible curriculum?)");
 
-  addmsg(1, R"(The cap ducks inside the freedom. The mum hammers the apathy above our preserved
-            ozone. Will the peanut nose a review species? His vocabulary beams near the virgin.
+    addmsg(1, R"(The cap ducks inside the freedom. The mum hammers the apathy above our preserved
+              ozone. Will the peanut nose a review species? His vocabulary beams near the virgin.
 
-            The short supporter blames the hack fudge. The waffle exacts the bankrupt within an
-            infantile attitude.)");
-  addmsg(2, "A flesh hazards the sneaking tooth. An analyst steams before an instinct! The muscle "
-            "expands within each brother! Why can't the indefinite garbage harden? The feasible "
-            "cider moans in the forest.");
-  addmsg(1, "Opposite the initiative scratches an inane plant. Why won't the late school "
-            "experiment with a crown? The sneak papers a go dinner without a straw. How can an "
-            "eating guy camp?"
-        "Around the convinced verdict waffles a scratching shed. The "
-            "inhabitant escapes before whatever outcry.");
+              The short supporter blames the hack fudge. The waffle exacts the bankrupt within an
+              infantile attitude.)");
+    addmsg(2, "A flesh hazards the sneaking tooth. An analyst steams before an instinct! The muscle "
+              "expands within each brother! Why can't the indefinite garbage harden? The feasible "
+              "cider moans in the forest.");
+    addmsg(1, "Opposite the initiative scratches an inane plant. Why won't the late school "
+              "experiment with a crown? The sneak papers a go dinner without a straw. How can an "
+              "eating guy camp?"
+          "Around the convinced verdict waffles a scratching shed. The "
+              "inhabitant escapes before whatever outcry.");
 
-  chat_state.reset_yscroll_position = true;
+    chat_state.reset_yscroll_position = true;
+  }
+
+  return Ok(MOVE(state));
 }
 
 void
@@ -548,9 +542,20 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   {
     // Update the world
     update_playaudio(logger, ldata, registry, water_audio);
-    update_playerpos(logger, ldata, ft);
-    update_npcpositions(logger, ldata, registry, ft);
-    update_nearbytargets(ldata, registry, ft);
+
+    auto const player_eid = find_player(registry);
+    auto& player = registry.get<Player>(player_eid);
+
+    auto& terrain = ldata.terrain;
+    {
+      update_playerpos(logger, player, terrain, ft);
+      update_npcpositions(logger, terrain, registry, ft);
+    }
+
+    auto& nbt = ldata.nearby_targets;
+    update_nearbytargets(nbt, registry, ft);
+
+    player.update(logger, registry, nbt);
 
     update_orbital_bodies(es, ldata, fstate.view_matrix(), fstate.projection_matrix(), registry,
                           ft);
@@ -567,8 +572,6 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   auto const& graphics_settings      = es.graphics_settings;
   bool const  graphics_mode_advanced = GameGraphicsMode::Advanced == graphics_settings.mode;
   bool const  draw_water_advanced    = draw_water && graphics_mode_advanced;
-
-  
 
   auto const draw_scene = [&](bool const black_silhoutte) {
     auto const draw_advanced = [&](auto& terrain_renderer, auto& entity_renderer, auto& scene_renderer) {
@@ -618,7 +621,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
     if (es.draw_terrain) {
       auto const draw_basic = [&](auto& terrain_renderer, auto& entity_renderer) {
-        terrain_renderer.render(rstate, registry, ft, NOCULL_VECTOR);
+        terrain_renderer.render(rstate, ldata.material_table, registry, ft, NOCULL_VECTOR);
       };
       if (black_silhoutte) {
         draw_basic(black_terrain_renderer, black_entity_renderer);

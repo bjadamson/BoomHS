@@ -371,16 +371,6 @@ specular = [0.0, 0.0, 1.0]
 
 ########### ENTITY #############
 [[entity]]
-position = [8.0, 0.0, 2.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:at"
-player = "player"
-color = [1.0, 1.0, 1.0, 1.0]
-material = "player"
-name = "player"
-scale = [1.0, 1.0, 1.0]
-
-[[entity]]
 orbital-body = "sun"
 position = [0.0, 850.0, 0.0]
 shader = "2dtexture"

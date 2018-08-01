@@ -1,6 +1,6 @@
 #pragma once
-#include <boomhs/entity.hpp>
-#include <boomhs/state.hpp>
+#include <boomhs/zone_state.hpp>
+
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>
 
@@ -9,6 +9,7 @@
 
 namespace boomhs
 {
+class EntityRegistry;
 
 class LevelAssembler
 {

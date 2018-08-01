@@ -1,52 +1,51 @@
 #pragma once
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/gcd.hpp>
 #include <boomhs/inventory.hpp>
+#include <boomhs/world_object.hpp>
+
+#include <optional>
 #include <stlw/log.hpp>
 #include <string>
 
 namespace boomhs
 {
 struct Item;
+class NearbyTargets;
 
-struct PlayerData
+struct Player
 {
+  GCD          gcd;
   Inventory    inventory;
   HealthPoints hp{44, 50};
   int          level = -1;
   std::string  name;
 
-  int damage = 1;
+  bool is_attacking = false;
+  int  damage       = 1;
+
+  void pickup_entity(EntityID, EntityRegistry&);
+  void drop_entity(stlw::Logger&, EntityID, EntityRegistry&);
+
+  void try_attack_entity(stlw::Logger&, EntityID, EntityRegistry&);
+
+  void update(stlw::Logger&, EntityRegistry&, NearbyTargets&);
+
+  glm::vec3 world_position() const;
+
+  // WORLD OBJECT
+  //
+  // Ensure fields are set!
+  WorldObject world_object;
+
+  auto const& transform() const { return world_object.transform(); }
+  auto&       transform() { return world_object.transform(); }
+
+  auto const& bounding_box() const { return world_object.bounding_box(); }
 };
 
-struct Player
-{
-  Player() = delete;
-
-  static void pickup_entity(EntityID, EntityRegistry&);
-
-  // Removes entity from the player
-  static void drop_entity(stlw::Logger&, EntityID, EntityRegistry&);
-
-  static glm::vec3 world_position(EntityID, EntityRegistry&);
-};
-
-inline EntityID
-find_player(EntityRegistry& registry)
-{
-  // for now assume only 1 entity has the Player tag
-  assert(1 == registry.view<PlayerData>().size());
-
-  // Assume Player has a Transform
-  auto                    view = registry.view<PlayerData, Transform>();
-  std::optional<EntityID> entity{std::nullopt};
-  for (auto const e : view) {
-    // This assert ensures this loop only runs once.
-    assert(std::nullopt == entity);
-    entity = e;
-  }
-  assert(std::nullopt != entity);
-  return *entity;
-}
+EntityID
+find_player(EntityRegistry&);
 
 } // namespace boomhs

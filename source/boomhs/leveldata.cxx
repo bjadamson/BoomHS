@@ -5,12 +5,13 @@ namespace boomhs
 
 LevelData::LevelData(
                      TerrainGrid&& tgrid, Fog const& fogp,
-                     opengl::GlobalLight const& glight, ObjStore&& ocache, WorldObject&& pl)
+                     opengl::GlobalLight const& glight, MaterialTable&& mat_table,
+                     ObjStore&& ocache)
     : fog(fogp)
     , terrain(MOVE(tgrid))
     , global_light(glight)
+    , material_table(MOVE(mat_table))
     , obj_store(MOVE(ocache))
-    , player(MOVE(pl))
     , time_offset(0.0)
 {
 }

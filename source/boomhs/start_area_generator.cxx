@@ -7,6 +7,7 @@
 #include <boomhs/terrain.hpp>
 
 #include <algorithm>
+#include <opengl/constants.hpp>
 #include <opengl/lighting.hpp>
 #include <opengl/texture.hpp>
 #include <stlw/os.hpp>
@@ -22,23 +23,66 @@ namespace
 {
 
 void
-place_torch(stlw::Logger& logger, TerrainGrid& tgrid, EntityRegistry& registry,
+place_torch(stlw::Logger& logger, TerrainGrid& terrain, EntityRegistry& registry,
             stlw::float_generator& rng, TextureTable& ttable)
 {
   auto  eid       = ItemFactory::create_torch(registry, rng, ttable);
   auto& transform = registry.get<Transform>(eid);
 
   float const x = 2, z = 2;
-  auto const y = tgrid.get_height(logger, x, z);
+  auto const y = terrain.get_height(logger, x, z);
   transform.translation = glm::vec3{x, y, z};
 }
 
 void
-place_monsters(stlw::Logger& logger, TerrainGrid const& tgrid, EntityRegistry& registry,
+place_monsters(stlw::Logger& logger, TerrainGrid const& terrain, EntityRegistry& registry,
                stlw::float_generator& rng)
 {
   auto const num_monsters = rng.gen_int_range(MIN_MONSTERS_PER_FLOOR, MAX_MONSTERS_PER_FLOOR);
-  FORI(i, num_monsters) { NPC::create_random(logger, tgrid, registry, rng); }
+  FORI(i, num_monsters) { NPC::create_random(logger, terrain, registry, rng); }
+}
+
+auto&
+place_player(stlw::Logger& logger, TerrainGrid const& terrain,
+             MaterialTable const& material_table, EntityRegistry& registry)
+{
+  auto const eid = registry.create();
+  auto& transform = registry.assign<Transform>(eid);
+
+  {
+    float const x = 8, z = 8;
+    auto const y = terrain.get_height(logger, x, z);
+    transform.translation = glm::vec3{x, y, z};
+  }
+
+  auto& isv = registry.assign<IsVisible>(eid);
+  isv.value = true;
+
+  auto& sn = registry.assign<ShaderName>(eid);
+  sn.value = "3d_pos_normal_color";
+
+  auto& meshc = registry.assign<MeshRenderable>(eid);
+  meshc.name  = "at";
+
+  auto& cc = registry.assign<Color>(eid);
+  cc.set(LOC::WHITE);
+
+  registry.assign<Material>(eid) = material_table.find("player");
+  auto& player = registry.assign<Player>(eid);
+  {
+    auto& wo = player.world_object;
+    wo.set_eid(eid);
+    wo.set_registry(registry);
+
+    wo.set_forward(-Z_UNIT_VECTOR);
+    wo.set_up(Y_UNIT_VECTOR);
+
+    wo.set_speed(460);
+  }
+  player.level = 14;
+  player.name = "BEN";
+
+  return transform;
 }
 
 } // namespace
@@ -49,6 +93,7 @@ namespace boomhs
 LevelGeneratedData
 StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
                               stlw::float_generator& rng, ShaderPrograms& sps, TextureTable& ttable,
+                              MaterialTable const& material_table,
                               Heightmap const& heightmap)
 {
   LOG_TRACE("Generating Starting Area");
@@ -63,10 +108,8 @@ StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
   LOG_TRACE("Placing Torch");
   place_torch(logger, terrain, registry, rng, ttable);
 
-  auto const peid = find_player(registry);
-  auto& player = registry.get<PlayerData>(peid);
-  player.level = 14;
-  player.name = "BEN";
+  LOG_TRACE("Placing Player");
+  place_player(logger, terrain, material_table, registry);
 
   LOG_TRACE("placing monsters ...\n");
   place_monsters(logger, terrain, registry, rng);

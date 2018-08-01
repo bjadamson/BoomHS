@@ -1,16 +1,14 @@
 #include <boomhs/billboard.hpp>
 #include <boomhs/components.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/heightmap.hpp>
 #include <boomhs/level_assembler.hpp>
 #include <boomhs/level_loader.hpp>
 #include <boomhs/orbital_body.hpp>
-#include <boomhs/player.hpp>
 #include <boomhs/start_area_generator.hpp>
 #include <boomhs/tree.hpp>
-#include <boomhs/world_object.hpp>
 
 #include <boomhs/obj.hpp>
-#include <opengl/constants.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/lighting.hpp>
 
@@ -27,21 +25,14 @@ namespace
 ZoneState
 assemble(LevelGeneratedData&& gendata, LevelAssets&& assets, EntityRegistry& registry)
 {
-  auto const player_eid = find_player(registry);
-  EnttLookup player_lookup{player_eid, registry};
-
-  auto const FORWARD = -Z_UNIT_VECTOR;
-  auto constexpr UP  = Y_UNIT_VECTOR;
-  WorldObject player{player_lookup, FORWARD, UP};
-
   // Combine the generated data with the asset data, creating the LevelData instance.
   LevelData level_data{
                        MOVE(gendata.terrain),
 
                        assets.fog,
                        assets.global_light,
-                       MOVE(assets.obj_store),
-                       MOVE(player)};
+                       MOVE(assets.material_table),
+                       MOVE(assets.obj_store)};
   GfxState  gfx{MOVE(assets.shader_programs), MOVE(assets.texture_table)};
   return ZoneState{MOVE(level_data), MOVE(gfx), registry};
 }
@@ -210,14 +201,16 @@ LevelAssembler::assemble_levels(stlw::Logger& logger, std::vector<EntityRegistry
     // generate starting area
     auto& registry = registries[0];
 
-    auto  level_assets = TRY_MOVEOUT(LevelLoader::load_level(logger, registry, level_string(0)));
-    auto& ttable       = level_assets.texture_table;
-    auto& sps          = level_assets.shader_programs;
+    auto  level_assets   = TRY_MOVEOUT(LevelLoader::load_level(logger, registry, level_string(0)));
+    auto& ttable         = level_assets.texture_table;
+    auto& material_table = level_assets.material_table;
+    auto& sps            = level_assets.shader_programs;
 
     char const* HEIGHTMAP_NAME = "Area0-HM";
     auto const  heightmap = TRY_MOVEOUT(heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
 
-    auto gendata = StartAreaGenerator::gen_level(logger, registry, rng, sps, ttable, heightmap);
+    auto gendata = StartAreaGenerator::gen_level(logger, registry, rng, sps, ttable,
+        material_table, heightmap);
 
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
     zstates.emplace_back(MOVE(zs));

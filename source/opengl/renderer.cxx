@@ -3,6 +3,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/frustum.hpp>
+#include <boomhs/material.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
@@ -378,35 +379,37 @@ draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position
 }
 
 void
-conditionally_draw_player_vectors(RenderState& rstate, WorldObject const& player)
+conditionally_draw_player_vectors(RenderState& rstate, Player const& player)
 {
   auto& fstate = rstate.fs;
-  auto& es     = fstate.es;
-  auto& zs     = fstate.zs;
+  auto& es       = fstate.es;
+  auto& zs       = fstate.zs;
+  auto& registry = zs.registry;
 
   auto& logger = es.logger;
 
   glm::vec3 const pos = player.world_position();
+  auto const& wo = player.world_object;
   if (es.show_player_localspace_vectors) {
     // local-space
     //
     // forward
-    auto const fwd = player.eye_forward();
+    auto const fwd = wo.eye_forward();
     draw_arrow(rstate, pos, pos + fwd, LOC::GREEN);
 
     // right
-    auto const right = player.eye_right();
+    auto const right = wo.eye_right();
     draw_arrow(rstate, pos, pos + right, LOC::RED);
   }
   if (es.show_player_worldspace_vectors) {
     // world-space
     //
     // forward
-    auto const fwd = player.world_forward();
+    auto const fwd = wo.world_forward();
     draw_arrow(rstate, pos, pos + (2.0f * fwd), LOC::LIGHT_BLUE);
 
     // backward
-    glm::vec3 const right = player.world_right();
+    glm::vec3 const right = wo.world_right();
     draw_arrow(rstate, pos, pos + right, LOC::PINK);
   }
 }
@@ -645,10 +648,10 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
 
     auto const peid = find_player(registry);
-    auto const& player_data = registry.get<PlayerData>(peid);
-    auto const calc_blendcolor = [&player_data](int const npc_level) {
+    auto const& player = registry.get<Player>(peid);
+    auto const calc_blendcolor = [&player](int const npc_level) {
 
-      int const diff = player_data.level - npc_level;
+      int const diff = player.level - npc_level;
       int const abs_diff = std::abs(diff);
 
       bool const player_gt = diff > 0;

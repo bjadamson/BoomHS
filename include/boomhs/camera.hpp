@@ -8,7 +8,6 @@
 
 namespace boomhs
 {
-class WorldObject;
 struct MouseState;
 
 struct PerspectiveViewport
@@ -38,7 +37,7 @@ std::array<ModeNamePair, 3> constexpr CAMERA_MODES = {
 
 class Camera
 {
-  Transform* target_;
+  Transform* target_ = nullptr;
   glm::vec3  forward_, up_;
 
   SphericalCoordinates coordinates_;
@@ -47,19 +46,20 @@ class Camera
   PerspectiveViewport perspective_;
   OrthoProjection     ortho_;
 
+  void check_pointers() const;
   void zoom(float);
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(Transform*, glm::vec3 const& f, glm::vec3 const& u);
+  Camera(glm::vec3 const& f, glm::vec3 const& u);
 
   // public fields
   bool  flip_y;
   bool  rotate_lock;
   float rotation_speed;
 
-  Transform&       get_target() { return *target_; }
-  Transform const& get_target() const { return *target_; }
+  Transform&       get_target();
+  Transform const& get_target() const;
 
   auto mode() const { return mode_; }
   void set_mode(CameraMode const m) { mode_ = m; }

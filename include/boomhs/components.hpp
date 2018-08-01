@@ -41,22 +41,21 @@ struct WidthHeightLength
   float const length;
 };
 
-struct AxisAlignedBoundingBox
+// AxisAlignedBoundingBox
+struct AABoundingBox
 {
   glm::vec3 min;
   glm::vec3 max;
 
   // ctor
-  AxisAlignedBoundingBox();
-  AxisAlignedBoundingBox(glm::vec3 const&, glm::vec3 const&);
+  AABoundingBox();
+  AABoundingBox(glm::vec3 const&, glm::vec3 const&);
 
   // methods
   glm::vec3 dimensions() const;
   glm::vec3 center() const;
   glm::vec3 half_widths() const;
 };
-
-using AABoundingBox = AxisAlignedBoundingBox;
 
 struct Name
 {
@@ -142,14 +141,6 @@ all_nearby_entities(glm::vec3 const& pos, float const max_distance, EntityRegist
     }
   }
   return entities;
-}
-
-inline auto
-find_materials(EntityRegistry& registry)
-{
-  using namespace boomhs;
-  using namespace opengl;
-  return find_all_entities_with_component<Material>(registry);
 }
 
 inline auto

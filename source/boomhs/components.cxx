@@ -5,7 +5,7 @@
 namespace boomhs
 {
 
-AxisAlignedBoundingBox::AxisAlignedBoundingBox()
+AABoundingBox::AABoundingBox()
 {
   auto constexpr DEFAULT_SIZE = 1.0f;
 
@@ -18,14 +18,14 @@ AxisAlignedBoundingBox::AxisAlignedBoundingBox()
   max.z = DEFAULT_SIZE;
 }
 
-AxisAlignedBoundingBox::AxisAlignedBoundingBox(glm::vec3 const& minp, glm::vec3 const& maxp)
+AABoundingBox::AABoundingBox(glm::vec3 const& minp, glm::vec3 const& maxp)
     : min(minp)
     , max(maxp)
 {
 }
 
 glm::vec3
-AxisAlignedBoundingBox::dimensions() const
+AABoundingBox::dimensions() const
 {
   auto const w = max.x - min.x;
   auto const h = max.y - min.y;
@@ -34,13 +34,13 @@ AxisAlignedBoundingBox::dimensions() const
 }
 
 glm::vec3
-AxisAlignedBoundingBox::center() const
+AABoundingBox::center() const
 {
   return half_widths();
 }
 
 glm::vec3
-AxisAlignedBoundingBox::half_widths() const
+AABoundingBox::half_widths() const
 {
   return dimensions() / glm::vec3{2.0f};
 }

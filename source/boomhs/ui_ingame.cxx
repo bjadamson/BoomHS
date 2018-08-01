@@ -24,7 +24,7 @@ void
 draw_player_inventory(stlw::Logger& logger, EntityRegistry& registry, TextureTable const& ttable)
 {
   auto const eid       = find_player(registry);
-  auto&      player    = registry.get<PlayerData>(eid);
+  auto&      player    = registry.get<Player>(eid);
   auto&      inventory = player.inventory;
 
   auto const draw_button = [&](TextureInfo const& ti) {
@@ -50,7 +50,7 @@ draw_player_inventory(stlw::Logger& logger, EntityRegistry& registry, TextureTab
       // If the button is pressed, and the slot is occupied (location clicked) then go ahead and
       // remove the item from the player, and removing it from the UI.
       if (button_pressed && slot_occupied) {
-        Player::drop_entity(logger, slot.eid(), registry);
+        player.drop_entity(logger, slot.eid(), registry);
         slot.reset();
       }
     }
@@ -150,7 +150,7 @@ draw_nearest_target_info(NearbyTargets const& nearby_targets, TextureTable const
 }
 
 void
-draw_chatwindow_body(EngineState& es, PlayerData& player)
+draw_chatwindow_body(EngineState& es, Player& player)
 {
   auto& logger   = es.logger;
   auto& ingame = es.ui_state.ingame;
@@ -245,7 +245,7 @@ draw_chatwindow_body(EngineState& es, PlayerData& player)
 }
 
 void
-draw_chatwindow(EngineState& es, PlayerData& player)
+draw_chatwindow(EngineState& es, Player& player)
 {
   auto& logger = es.logger;
   auto& ingame = es.ui_state.ingame;
@@ -398,7 +398,7 @@ draw(EngineState& es, LevelManager& lm)
   draw_nearest_target_info(nearby_targets, ttable, registry);
 
   auto const eid       = find_player(registry);
-  auto&      player    = registry.get<PlayerData>(eid);
+  auto&      player    = registry.get<Player>(eid);
   draw_chatwindow(es, player);
 
   auto& inventory = player.inventory;

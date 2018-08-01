@@ -1,10 +1,8 @@
 #pragma once
 #include <opengl/colors.hpp>
-#include <stlw/algorithm.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <array>
-#include <extlibs/glew.hpp>
 #include <ostream>
 
 namespace opengl
@@ -52,24 +50,6 @@ static constexpr auto ATTENUATION_DISTANCE_STRINGS = "7\0"
                                                      "600\0"
                                                      "3250\0"
                                                      "\0";
-
-struct Material
-{
-  glm::vec3 ambient   = glm::vec3{1.0f};
-  glm::vec3 diffuse   = glm::vec3{1.0f};
-  glm::vec3 specular  = glm::vec3{1.0f};
-  float     shininess = 1.0f;
-
-  Material() = default;
-  MOVE_DEFAULT(Material);
-  COPY_DEFAULT(Material);
-
-  Material(glm::vec3 const&, glm::vec3 const&, glm::vec3 const&, float);
-
-  //
-  // The alpha value for the colors is truncated.
-  Material(opengl::Color const&, opengl::Color const&, opengl::Color const&, float const);
-};
 
 struct Light
 {

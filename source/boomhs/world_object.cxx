@@ -1,22 +1,76 @@
 #include <boomhs/camera.hpp>
+#include <boomhs/components.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <extlibs/fmt.hpp>
+#include <stlw/algorithm.hpp>
 #include <stlw/math.hpp>
+
+using namespace boomhs;
 
 namespace boomhs
 {
 
-WorldObject::WorldObject(EnttLookup const& plookup, glm::vec3 const& forward, glm::vec3 const& up)
-    : ent_lookup_(plookup)
-    , forward_(forward)
-    , up_(up)
-    , speed_(460)
+void
+WorldObject::check_pointers() const
 {
+  assert(this->eid_ != 0);
+  assert(this->registry_ != nullptr);
 }
+
+#define GET_REGISTRY_IMPL()                                                                        \
+  check_pointers();                                                                                \
+  return *this->registry_
+
+EntityRegistry&
+WorldObject::registry()
+{
+  GET_REGISTRY_IMPL();
+}
+
+EntityRegistry const&
+WorldObject::registry() const
+{
+  GET_REGISTRY_IMPL();
+}
+#undef GET_REGISTRY_IMPL
+
+#define GET_AABOUNDING_BOX_IMPL()                                                                  \
+  check_pointers();                                                                                \
+  return this->registry().get<AABoundingBox>(eid())
+
+AABoundingBox &
+WorldObject::bounding_box()
+{
+  GET_AABOUNDING_BOX_IMPL();
+}
+
+AABoundingBox const&
+WorldObject::bounding_box() const
+{
+  GET_AABOUNDING_BOX_IMPL();
+}
+#undef GET_AABOUNDINGBOX_IMPL
+
+#define GET_TRANSFORM_IMPL()                                                                       \
+  check_pointers();                                                                                \
+  return this->registry().get<Transform>(eid())
+
+Transform const&
+WorldObject::transform() const
+{
+  GET_TRANSFORM_IMPL();
+}
+
+Transform&
+WorldObject::transform()
+{
+  GET_TRANSFORM_IMPL();
+}
+#undef GET_TRANSFORM_IMPL
 
 WorldObject&
 WorldObject::move(glm::vec3 const& delta)
