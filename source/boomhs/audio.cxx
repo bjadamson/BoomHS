@@ -233,14 +233,14 @@ namespace boomhs::audio
 bool
 enumerating_devices_supported()
 {
-  ALboolean const enumeration = alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT");
+  ALboolean const enumeration = alcIsExtensionPresent(nullptr, "ALC_ENUMERATION_EXT");
   return enumeration == AL_TRUE;
 }
 
 std::vector<std::string>
 get_all_devices()
 {
-  auto* devices = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
+  auto* devices = alcGetString(nullptr, ALC_DEVICE_SPECIFIER);
 
   ALCchar const *device = devices, *next = devices + 1;
 

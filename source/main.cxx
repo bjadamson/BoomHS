@@ -118,12 +118,12 @@ start(stlw::Logger& logger, Engine& engine)
     return Err(fmt::sprintf("Error opening openal device"));
   }
   ON_SCOPE_EXIT([&al_device]() { alcCloseDevice(al_device); });
-  ALCcontext* ctx = alcCreateContext(al_device, NULL);
+  ALCcontext* ctx = alcCreateContext(al_device, nullptr);
   if (!ctx) {
     return Err(fmt::sprintf("Error making openal context current"));
   }
   ON_SCOPE_EXIT([&ctx]() {
-    alcMakeContextCurrent(NULL);
+    alcMakeContextCurrent(nullptr);
     alcDestroyContext(ctx);
   });
   alcMakeContextCurrent(ctx);
