@@ -806,9 +806,9 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   DirectionalLight dlight{MOVE(light), directional_light_direction};
   GlobalLight      glight{ambient, MOVE(dlight)};
 
-  auto const fog = load_fog(file_datatable);
+  auto fog = load_fog(file_datatable);
   LOG_TRACE("yielding assets");
-  return Ok(LevelAssets{MOVE(glight), fog, MOVE(material_table),
+  return Ok(LevelAssets{MOVE(glight), MOVE(fog), MOVE(material_table),
 
                         MOVE(objstore), MOVE(texture_table), MOVE(sps)});
 }

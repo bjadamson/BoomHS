@@ -29,7 +29,7 @@ assemble(LevelGeneratedData&& gendata, LevelAssets&& assets, EntityRegistry& reg
   LevelData level_data{
                        MOVE(gendata.terrain),
 
-                       assets.fog,
+                       MOVE(assets.fog),
                        assets.global_light,
                        MOVE(assets.material_table),
                        MOVE(assets.obj_store)};

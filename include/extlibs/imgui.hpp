@@ -57,8 +57,8 @@ auto
 with_combo(FN const& fn, Args&&... args)
 {
   if (ImGui::BeginCombo(FORWARD(args))) {
+    ON_SCOPE_EXIT([]() { ImGui::EndCombo(); });
     fn();
-    ImGui::EndCombo();
   }
 }
 
@@ -89,19 +89,19 @@ inline auto
 main_menu_bar_size()
 {
   ImGui::BeginMainMenuBar();
+  ON_SCOPE_EXIT([]() { ImGui::EndMainMenuBar(); });
+
   auto const main_menu_size = ImGui::GetWindowSize();
-  ImGui::EndMainMenuBar();
   return main_menu_size;
 }
 
-template <typename R, typename FN, typename... Args>
-R
+template <typename FN, typename... Args>
+auto
 with_window(FN const& fn, Args&&... args)
 {
   if (ImGui::Begin(FORWARD(args))) {
-    auto r = fn();
-    ImGui::End();
-    return MOVE(r);
+    ON_SCOPE_EXIT([]() { ImGui::End(); });
+    return fn();
   }
   else {
     // not sure why this would ever happen, look it up..
@@ -113,23 +113,9 @@ template <typename FN, typename... Args>
 void
 with_window_logerrors(stlw::Logger& logger, FN const& fn, Args&&... args)
 {
-  auto r = with_window<decltype(fn())>(fn, FORWARD(args));
+  auto r = with_window(fn, FORWARD(args));
   if (r.isErr()) {
     LOG_ERROR(r.unwrapErr());
-  }
-}
-
-template <typename FN, typename... Args>
-void
-with_window(FN const& fn, Args&&... args)
-{
-  if (ImGui::Begin(FORWARD(args))) {
-    fn();
-    ImGui::End();
-  }
-  else {
-    // not sure why this would ever happen, look it up..
-    std::abort();
   }
 }
 
@@ -147,8 +133,8 @@ void
 with_childframe(FN const& fn, Args&&... args)
 {
   if (ImGui::BeginChild(FORWARD(args))) {
+    ON_SCOPE_EXIT([]() { ImGui::EndChild(); });
     fn();
-    ImGui::EndChild();
   }
   else {
     std::abort();
@@ -160,8 +146,8 @@ void
 with_menu(FN const& fn, char const* name)
 {
   if (ImGui::BeginMenu(name)) {
+    ON_SCOPE_EXIT([]() { ImGui::EndMenu(); });
     fn();
-    ImGui::EndMenu();
   }
 }
 
@@ -170,8 +156,8 @@ void
 with_mainmenubar(FN const& fn, Args&&... args)
 {
   if (ImGui::BeginMainMenuBar(FORWARD(args))) {
+    ON_SCOPE_EXIT([]() { ImGui::EndMainMenuBar(); });
     fn();
-    ImGui::EndMainMenuBar();
   }
 }
 

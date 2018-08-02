@@ -26,7 +26,7 @@ class LevelData
 {
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
-  LevelData(TerrainGrid&&, Fog const&, opengl::GlobalLight const&, MaterialTable&&, ObjStore&&);
+  LevelData(TerrainGrid&&, Fog&&, opengl::GlobalLight const&, MaterialTable&&, ObjStore&&);
 
   // public fields
   Skybox      skybox;

@@ -752,13 +752,14 @@ show_fog_window(UiDebugState& state, LevelData& ldata)
 
     ImGui::Separator();
     ImGui::Separator();
-    ImGui::SliderFloat("Density", &ldata.fog.density, 0.0f, 0.01f);
-    ImGui::SliderFloat("Gradient", &ldata.fog.gradient, 0.0f, 10.0f);
+    ImGui::SliderFloat("Density", &fog.density, 0.0f, 0.01f);
+    ImGui::SliderFloat("Gradient", &fog.gradient, 0.0f, 10.0f);
 
     ImGui::Separator();
     ImGui::Separator();
-    ImGui::InputFloat("Density", &ldata.fog.density);
-    ImGui::InputFloat("Gradient", &ldata.fog.gradient);
+
+    ImGui::InputFloat("Density", &fog.density);
+    ImGui::InputFloat("Gradient", &fog.gradient);
 
     bool const close_pressed = ImGui::Button("Close", ImVec2(120, 0));
     state.show_fog_window    = !close_pressed;
