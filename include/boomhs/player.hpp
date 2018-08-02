@@ -13,10 +13,13 @@ namespace boomhs
 {
 struct Item;
 class NearbyTargets;
+class TerrainGrid;
 
-struct Player
+class Player
 {
-  GCD          gcd;
+  GCD gcd;
+
+public:
   Inventory    inventory;
   HealthPoints hp{44, 50};
   int          level = -1;
@@ -28,9 +31,7 @@ struct Player
   void pickup_entity(EntityID, EntityRegistry&);
   void drop_entity(stlw::Logger&, EntityID, EntityRegistry&);
 
-  void try_attack_entity(stlw::Logger&, EntityID, EntityRegistry&);
-
-  void update(stlw::Logger&, EntityRegistry&, NearbyTargets&);
+  void update(stlw::Logger&, EntityRegistry&, TerrainGrid&, NearbyTargets&);
 
   glm::vec3 world_position() const;
 

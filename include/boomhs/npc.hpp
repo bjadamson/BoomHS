@@ -31,6 +31,8 @@ struct NPCData
   HealthPoints health    = {-1, -1};
   int          level     = -1;
   Alignment    alignment = Alignment::NOT_SET;
+
+  bool within_attack_range() const;
 };
 
 class NPC
@@ -45,6 +47,7 @@ public:
   create_random(stlw::Logger&, TerrainGrid const&, EntityRegistry&, stlw::float_generator&);
 
   static bool is_dead(HealthPoints const&);
+  static bool within_attack_range(glm::vec3 const&, glm::vec3 const&);
 };
 
 inline auto

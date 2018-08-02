@@ -5,6 +5,7 @@
 #include <boomhs/nearby_targets.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
+#include <boomhs/terrain.hpp>
 
 using namespace boomhs;
 using namespace opengl;
@@ -30,11 +31,9 @@ kill_entity(stlw::Logger& logger, EntityRegistry& registry, EntityID const eid)
 
 void
 try_attack_selected_target(stlw::Logger& logger, EntityRegistry& registry,
-                           EntityID const target_eid)
+                           Player &player, EntityID const target_eid)
 {
-  auto const player_eid = find_player(registry);
-  auto&      player      = registry.get<Player>(player_eid);
-  auto& ptransform      = registry.get<Transform>(player_eid);
+  auto& ptransform      = player.transform();
   auto const playerpos  = ptransform.translation;
 
   auto& npc_transform = registry.get<Transform>(target_eid);
@@ -42,24 +41,41 @@ try_attack_selected_target(stlw::Logger& logger, EntityRegistry& registry,
 
   auto& npcdata = registry.get<NPCData>(target_eid);
   auto& target_hp = npcdata.health;
-  if (NPC::is_dead(target_hp)) {
+
+  bool const already_dead = NPC::is_dead(target_hp);
+  if (already_dead) {
+    LOG_ERROR("TARGET DEAD");
     return;
   }
 
-  bool const within_attack_range = glm::distance(npcpos, playerpos) < 2;
-  auto& gcd = player.gcd;
+  bool const within_attack_range = NPC::within_attack_range(npcpos, playerpos);
   if (within_attack_range) {
-    gcd.unpause();
+    LOG_ERROR("DAMAGING TARGET");
     target_hp.current -= player.damage;
 
-    if (NPC::is_dead(target_hp)) {
+    bool const target_dead_after_attack = NPC::is_dead(target_hp);
+    bool const dead_from_attack = !already_dead && target_dead_after_attack;
+    if (dead_from_attack) {
       kill_entity(logger, registry, target_eid);
-      player.is_attacking = false;
+      LOG_ERROR("KILLING TARGET");
+    }
+    else if (already_dead) {
+      LOG_ERROR("TARGET ALREADY DEAD");
     }
   }
   else {
-    gcd.pause();
+    LOG_ERROR("TARGET NOT WITHIN ATTACK RANGE");
   }
+}
+
+void
+update_position(stlw::Logger& logger, Player& player, TerrainGrid& terrain)
+{
+  // Lookup the player height from the terrain at the player's X, Z world-coordinates.
+  auto&       player_pos    = player.transform().translation;
+  float const player_height = terrain.get_height(logger, player_pos.x, player_pos.z);
+  auto const& player_bbox   = player.bounding_box();
+  player_pos.y              = player_height + (player_bbox.dimensions().y / 2.0f);
 }
 
 } // namespace
@@ -69,34 +85,6 @@ namespace boomhs
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Player
-void
-Player::try_attack_entity(stlw::Logger& logger, EntityID const eid, EntityRegistry& registry)
-{
-  // If the player is NOT attacking
-  // AND
-  // if the player's GCD IS ready (meaning player hasn't attacked in at-least the amount of time of
-  // time it takes for the GCD to reset)
-  //
-  // THEN
-  // attack the target and reset the GCD
-  if (!is_attacking && gcd.is_ready()) {
-    try_attack_selected_target(logger, registry, eid);
-    gcd.reset();
-  }
-}
-
-void
-Player::update(stlw::Logger& logger, EntityRegistry& registry,
-               NearbyTargets& nbt)
-{
-  gcd.update();
-  if (gcd.is_ready() && is_attacking) {
-    auto const selected_opt = nbt.selected();
-    try_attack_selected_target(logger, registry, *selected_opt);
-    gcd.reset();
-  }
-}
-
 void
 Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
 {
@@ -135,6 +123,45 @@ Player::drop_entity(stlw::Logger& logger, EntityID const eid, EntityRegistry& re
     auto& pointlight = registry.get<PointLight>(eid);
     pointlight.attenuation *= 3.0f;
     LOG_INFO("You have droppped a torch.");
+  }
+}
+
+void
+Player::update(stlw::Logger& logger, EntityRegistry& registry,
+               TerrainGrid& terrain, NearbyTargets& nbt)
+{
+  gcd.update();
+  update_position(logger, *this, terrain);
+
+  // If no target is selected, no more work to do.
+  auto const target_opt = nbt.selected();
+  if (!target_opt) {
+    return;
+  }
+
+  bool const gcd_ready = gcd.is_ready();
+  auto const reset_gcd_if_ready = [&]() {
+    if (gcd_ready) {
+      LOG_ERROR_SPRINTF("RESETTING GCD");
+      gcd.reset(5 * 100000);
+    }
+  };
+  ON_SCOPE_EXIT(reset_gcd_if_ready);
+
+  // Assumed nearby-target selected
+  assert(*target_opt);
+  auto const target_eid = *target_opt;
+  auto const& target = registry.get<NPCData>(target_eid);
+
+  if (is_attacking && NPC::is_dead(target.health)) {
+    is_attacking = false;
+    LOG_ERROR_SPRINTF("NOT ATTACKING CAUSE TARGET DEAD");
+    return;
+  }
+
+  LOG_ERROR_SPRINTF("IS_ATTACKING: %i, GCD_READY: %i", is_attacking, gcd_ready);
+  if (is_attacking && gcd_ready) {
+    try_attack_selected_target(logger, registry, *this, target_eid);
   }
 }
 

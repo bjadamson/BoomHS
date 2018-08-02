@@ -24,7 +24,7 @@ class HandleManager;
 class LevelManager;
 class Material;
 struct EngineState;
-struct Player;
+class Player;
 struct Transform;
 struct ZoneState;
 } // namespace boomhs

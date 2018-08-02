@@ -1,5 +1,4 @@
 #pragma once
-#include <extlibs/sdl.hpp>
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
@@ -41,27 +40,17 @@ class Clock
   ticks_t start_;
   ticks_t last_;
 
-  ticks_t now() const { return SDL_GetPerformanceCounter(); }
+  ticks_t now() const;
   ticks_t since_start() const { return now() - start_; }
 
 public:
   COPY_DEFAULT(Clock);
   MOVE_DEFAULT(Clock);
 
-  Clock()
-      : frequency_(SDL_GetPerformanceFrequency())
-      , start_(now())
-      , last_(start_)
-  {
-  }
-
+  Clock();
   void update() { last_ = now(); }
 
-  FrameTime frame_time() const
-  {
-    ticks_t const delta = now() - last_;
-    return FrameTime{delta, since_start(), frequency_};
-  }
+  FrameTime frame_time() const;
 };
 
 class Timer
@@ -77,20 +66,12 @@ public:
   Timer() = default;
 
   void set(ticks_t const t) { remaining_ = t; }
-
-  void update()
-  {
-    clock_.update();
-    if (!paused_) {
-      remaining_ -= clock_.frame_time().delta_ticks();
-    }
-  }
-
   bool expired() const { return remaining_ <= 0; }
-
   bool is_paused() const { return paused_; }
   void pause() { paused_ = true; }
   void unpause() { paused_ = false; }
+
+  void update();
 };
 
 struct FrameCounter

@@ -373,9 +373,20 @@ process_keydown(GameState& state, Player& player, SDL_Event const& event, Camera
     // Toggle the state trackerwhether or not the player is attacking
     // AND
     // If the player has an entity selected, try and attack it.
-    player.is_attacking ^= true;
+    LOG_ERROR("SPACE BAR PRESSED");
     if (selected_opt) {
-      player.try_attack_entity(logger, *selected_opt, registry);
+      EntityID const target_eid = *selected_opt;
+      auto& target = registry.get<NPCData>(target_eid);
+      if (NPC::is_dead(target.health)) {
+        LOG_ERROR("TARGET IS DEAD");
+        break;
+      }
+      else {
+        player.is_attacking ^= true;
+      }
+    }
+    else {
+      assert(!player.is_attacking);
     }
   } break;
   // scaling
@@ -527,23 +538,24 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Cam
     return v >= 0 && (v >= AXIS_MAX * THRESHOLD);
   };
 
+  auto const rotate_and_move = [&](auto const& move_fn) {
+    player_wo.rotate_to_match_camera_rotation(camera);
+    move_fn(state, player_wo, ft);
+  };
+
   auto const left_axis_x = c.left_axis_x();
   if (less_threshold(left_axis_x)) {
-    player_wo.rotate_to_match_camera_rotation(camera);
-    move_left(state, player_wo, ft);
+    rotate_and_move(move_left);
   }
   if (greater_threshold(left_axis_x)) {
-    player_wo.rotate_to_match_camera_rotation(camera);
-    move_right(state, player_wo, ft);
+    rotate_and_move(move_right);
   }
   auto const left_axis_y = c.left_axis_y();
   if (less_threshold(left_axis_y)) {
-    player_wo.rotate_to_match_camera_rotation(camera);
-    move_forward(state, player_wo, ft);
+    rotate_and_move(move_forward);
   }
   if (greater_threshold(left_axis_y)) {
-    player_wo.rotate_to_match_camera_rotation(camera);
-    move_backward(state, player_wo, ft);
+    rotate_and_move(move_backward);
   }
 
   auto constexpr CONTROLLER_SENSITIVITY = 0.01;

@@ -254,8 +254,6 @@ EntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generator& r
   auto& registry = zs.registry;
   auto& sps      = zs.gfx_state.sps;
 
-  LOG_ERROR("EntityRenderer::render2d_billboard");
-
 #define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
 #define COMMON_ARGS auto const eid, auto &sn,   auto &transform, auto &is_v, auto &bbox
 
@@ -312,8 +310,6 @@ EntityRenderer::render2d_ui(RenderState& rstate, stlw::float_generator& rng, Fra
 
   auto& registry = zs.registry;
   auto& sps      = zs.gfx_state.sps;
-
-  LOG_ERROR("EntityRenderer::render2d_ui");
 
 #define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
 #define COMMON_ARGS auto const eid, auto &sn,   auto &transform, auto &is_v, auto &bbox
@@ -372,9 +368,6 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
 
   auto& registry = zs.registry;
   auto& sps      = zs.gfx_state.sps;
-
-
-  LOG_ERROR("EntityRenderer::render3d");
 
 #define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
 #define COMMON_ARGS auto const eid, auto &sn,   auto &transform, auto &is_v, auto &bbox
@@ -479,8 +472,6 @@ BlackEntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generat
   auto& gpu_state = gfx_state.gpu_state;
   auto& eh    = gpu_state.entities;
 
-  LOG_ERROR("BlackEntityRenderer::render2d_billboard");
-
 #define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
 #define COMMON_ARGS auto const eid, auto& sn,   auto &transform, auto &is_v, auto &bbox
 
@@ -522,7 +513,6 @@ BlackEntityRenderer::render2d_ui(RenderState& rstate, stlw::float_generator& rng
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
   auto& logger = es.logger;
-  LOG_ERROR("BlackEntityRenderer::render2d_ui");
 }
 
 void
@@ -537,10 +527,6 @@ BlackEntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, F
   auto& sps = gfx_state.sps;
   auto& gpu_state = gfx_state.gpu_state;
   auto& eh    = gpu_state.entities;
-
-
-  LOG_ERROR("BlackEntityRenderer::render3d");
-
 
 #define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
 #define COMMON_ARGS auto const eid, auto& sn,   auto &transform, auto &is_v, auto &bbox

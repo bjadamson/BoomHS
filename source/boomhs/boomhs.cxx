@@ -91,17 +91,7 @@ update_playaudio(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registr
 }
 
 void
-update_playerpos(stlw::Logger& logger, Player& player, TerrainGrid& terrain, FrameTime const& ft)
-{
-  // Lookup the player height from the terrain at the player's X, Z world-coordinates.
-  auto&       player_pos    = player.transform().translation;
-  float const player_height = terrain.get_height(logger, player_pos.x, player_pos.z);
-  auto const& player_bbox   = player.bounding_box();
-  player_pos.y              = player_height + (player_bbox.dimensions().y / 2.0f);
-}
-
-void
-update_npcpositions(stlw::Logger& logger, TerrainGrid& terrain, EntityRegistry& registry,
+update_npcpositions(stlw::Logger& logger, EntityRegistry& registry, TerrainGrid& terrain,
                     FrameTime const& ft)
 {
   auto const update = [&](auto const eid) {
@@ -369,7 +359,7 @@ init(Engine& engine, EngineState& es, Camera& camera)
 
     auto& water_sp = draw_water_options_to_shader(GameGraphicsMode::Basic, sps);
     place_water(logger, zs, water_sp, glm::vec2{0.0f, 0.0f});
-    place_water(logger, zs, water_sp, glm::vec2{20.0f, 20.0f});
+    //place_water(logger, zs, water_sp, glm::vec2{20.0f, 20.0f});
   }
   {
     auto test_r = rexpaint::RexImage::load("assets/test.xp");
@@ -538,23 +528,13 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   DrawState   ds;
   RenderState rstate{fstate, ds};
 
+  auto const player_eid = find_player(registry);
+  auto& player = registry.get<Player>(player_eid);
+  auto& nbt = ldata.nearby_targets;
+
   {
     // Update the world
     update_playaudio(logger, ldata, registry, water_audio);
-
-    auto const player_eid = find_player(registry);
-    auto& player = registry.get<Player>(player_eid);
-
-    auto& terrain = ldata.terrain;
-    {
-      update_playerpos(logger, player, terrain, ft);
-      update_npcpositions(logger, terrain, registry, ft);
-    }
-
-    auto& nbt = ldata.nearby_targets;
-    update_nearbytargets(nbt, registry, ft);
-
-    player.update(logger, registry, nbt);
 
     update_orbital_bodies(es, ldata, fstate.view_matrix(), fstate.projection_matrix(), registry,
                           ft);
@@ -562,6 +542,14 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
 
     update_visible_entities(lm, registry);
     update_torchflicker(ldata, registry, rng, ft);
+
+    // Update these as a chunk, so they stay in the correct order.
+    {
+      auto& terrain = ldata.terrain;
+      update_npcpositions(logger, registry, terrain, ft);
+      update_nearbytargets(nbt, registry, ft);
+      player.update(logger, registry, terrain, nbt);
+    }
   }
 
   auto const& water_buffer = es.ui_state.debug.buffers.water;
@@ -698,10 +686,71 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     FrameState fstate{fmatrices, es, zs};
     RenderState rstate_2dtexture{fstate, ds};
 
+    class BlinkTimer
+    {
+      bool is_blinking_ = false;
+      Timer timer_;
+    public:
+      void update() { timer_.update(); }
+      bool expired() const { return timer_.expired(); }
+      bool is_blinking() const { return is_blinking_; }
+      void toggle() { is_blinking_ ^= true; }
+      void set(double const t) { timer_.set(t); }
+    };
 
-    // Calculate position with Y inverted, so top left is (0, 0) and bottom right is (pos.x, pos.y).
-    //auto const pos_with_inverted_y = glm::vec2{pos.x, (dimensions.bottom - pos.y)};
-    render::draw_fbo_testwindow(rstate_2dtexture, pos, size, sp, ti);
+    static BlinkTimer blink_timer;
+    blink_timer.update();
+
+    bool const is_expired       = blink_timer.expired();
+    bool const player_attacking = player.is_attacking;
+
+    auto const reset_attack_timer = [&]() {
+      blink_timer.set(1000 * 3);
+    };
+
+    if (player_attacking) {
+      if (is_expired) {
+        blink_timer.toggle();
+        reset_attack_timer();
+      }
+    }
+    else if (is_expired) {
+      reset_attack_timer();
+    }
+
+    bool const using_blink_shader = player_attacking && blink_timer.is_blinking();
+    auto& spp = using_blink_shader
+        ? sps.ref_sp("2d_ui_blinkcolor_icon")
+        : sp;
+    if (using_blink_shader) {
+
+      auto const& player_transform = player.transform();
+      auto const player_pos = player_transform.translation;
+
+      // We can only be considering the blink shader if we are attacking an entity, and if we are
+      // attacking an entity that means their should be a selected target.
+      auto const selected_nbt = nbt.selected();
+      assert(selected_nbt);
+      auto const target_eid = *selected_nbt;
+      auto const& target = registry.get<Transform>(target_eid);
+      auto const& target_pos = target.translation;
+
+      auto const distance = glm::distance(player_pos, target_pos);
+      bool const close_enough = distance < 2;
+      //LOG_ERROR_SPRINTF("close: %i, distance: %f, ppos: %s tpos: %s",
+          //close_enough,
+          //distance,
+          //glm::to_string(player_pos),
+          //glm::to_string(target_pos)
+          //);
+      auto const blink_color = NPC::within_attack_range(player_pos, target_pos)
+        ? LOC::RED
+        : LOC::BLUE;
+      spp.while_bound(logger, [&]() {
+          spp.set_uniform_color(logger, "u_blinkcolor", blink_color);
+      });
+    }
+    render::draw_fbo_testwindow(rstate_2dtexture, pos, size, spp, ti);
   };
   {
     glm::vec2 const size{16.0f};

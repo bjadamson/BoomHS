@@ -124,4 +124,10 @@ NPC::is_dead(HealthPoints const& hp)
   return hp.current <= 0;
 }
 
+bool
+NPC::within_attack_range(glm::vec3 const& a, glm::vec3 const& b)
+{
+  return glm::distance(a, b) < 2;
+}
+
 } // namespace boomhs
