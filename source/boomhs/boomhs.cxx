@@ -438,7 +438,8 @@ init(Engine& engine, EngineState& es, Camera& camera)
 
 void
 ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
-            WaterAudioSystem& water_audio, FrameTime const& ft)
+            WaterAudioSystem& water_audio, SkyboxRenderer& skybox_renderer, DrawState& ds,
+            FrameTime const& ft)
 {
   auto& es = state.engine_state;
   es.time.update(ft.since_start_seconds());
@@ -454,18 +455,6 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   auto& gfx_state = zs.gfx_state;
   auto& sps       = gfx_state.sps;
   auto& ttable    = gfx_state.texture_table;
-
-  // TODO: Move out into state somewhere.
-  auto const make_skybox_renderer = [&]() {
-    auto&              skybox_sp = sps.ref_sp("skybox");
-    glm::vec3 const    vmin{-0.5f};
-    glm::vec3 const    vmax{0.5f};
-    CubeVertices const cv{vmin, vmax};
-    DrawInfo           dinfo    = opengl::gpu::copy_cubetexture_gpu(logger, cv, skybox_sp.va());
-    auto&              day_ti   = *ttable.find("building_skybox");
-    auto&              night_ti = *ttable.find("night_skybox");
-    return SkyboxRenderer{logger, MOVE(dinfo), day_ti, night_ti, skybox_sp};
-  };
 
   auto const make_basic_water_renderer = [&]() {
     auto& diff   = *ttable.find("water-diffuse");
@@ -507,7 +496,6 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   };
 
   // TODO: move these (they are static for convenience testing)
-  static SkyboxRenderer skybox_renderer         = make_skybox_renderer();
   static auto           basic_water_renderer    = make_basic_water_renderer();
   static auto           medium_water_renderer   = make_medium_water_renderer();
   static auto           advanced_water_renderer = make_advanced_water_renderer();
@@ -525,7 +513,6 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   auto const fmatrices = FrameMatrices::from_camera(camera);
   FrameState fstate{fmatrices, es, zs};
 
-  DrawState   ds;
   RenderState rstate{fstate, ds};
 
   auto const player_eid = find_player(registry);
@@ -783,23 +770,41 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   if (ui_state.draw_ingame_ui) {
     ui_ingame::draw(es, lm);
   }
-
-  if (ui_state.draw_debug_ui) {
-    auto& lm = state.level_manager;
-    ui_debug::draw(es, lm, skybox_renderer, water_audio, engine.window, camera, ds, ft);
-  }
 }
 
 void
 game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
           FrameTime const& ft)
 {
-  auto& es = state.engine_state;
+  auto& es        = state.engine_state;
+  auto& logger      = es.logger;
+  auto& lm        = state.level_manager;
+
+  auto& zs        = lm.active();
+  auto& gfx_state = zs.gfx_state;
+  auto& sps       = gfx_state.sps;
+  auto& ttable    = gfx_state.texture_table;
+
   auto& io = es.imgui;
 
   static auto audio_r     = WaterAudioSystem::create();
   static auto water_audio = audio_r.expect_moveout("WAS");
 
+  // TODO: Move out into state somewhere.
+  auto const make_skybox_renderer = [&]() {
+    auto&              skybox_sp = sps.ref_sp("skybox");
+    glm::vec3 const    vmin{-0.5f};
+    glm::vec3 const    vmax{0.5f};
+    CubeVertices const cv{vmin, vmax};
+    DrawInfo           dinfo    = opengl::gpu::copy_cubetexture_gpu(logger, cv, skybox_sp.va());
+    auto&              day_ti   = *ttable.find("building_skybox");
+    auto&              night_ti = *ttable.find("night_skybox");
+    return SkyboxRenderer{logger, MOVE(dinfo), day_ti, night_ti, skybox_sp};
+  };
+
+  static SkyboxRenderer skybox_renderer         = make_skybox_renderer();
+
+  DrawState ds;
   if (es.main_menu.show) {
     // Enable keyboard shortcuts
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -816,7 +821,14 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
 
     IO::process(state, engine.controllers, camera, ft);
-    ingame_loop(engine, state, rng, camera, water_audio, ft);
+
+    ingame_loop(engine, state, rng, camera, water_audio, skybox_renderer, ds, ft);
+  }
+
+  auto& ui_state = es.ui_state;
+  if (ui_state.draw_debug_ui) {
+    auto& lm = state.level_manager;
+    ui_debug::draw(es, lm, skybox_renderer, water_audio, engine.window, camera, ds, ft);
   }
 }
 
