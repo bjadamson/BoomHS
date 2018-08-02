@@ -9,6 +9,7 @@
 
 using namespace boomhs;
 using namespace opengl;
+using namespace window;
 
 namespace
 {
@@ -83,6 +84,8 @@ update_position(stlw::Logger& logger, Player& player, TerrainGrid& terrain)
 namespace boomhs
 {
 
+static auto const HOW_OFTEN_GCD_RESETS_MS = TimeConversions::seconds_to_millis(1);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Player
 void
@@ -143,7 +146,7 @@ Player::update(stlw::Logger& logger, EntityRegistry& registry,
   auto const reset_gcd_if_ready = [&]() {
     if (gcd_ready) {
       LOG_ERROR_SPRINTF("RESETTING GCD");
-      gcd.reset(5 * 100000);
+      gcd.reset_ms(HOW_OFTEN_GCD_RESETS_MS);
     }
   };
   ON_SCOPE_EXIT(reset_gcd_if_ready);
@@ -159,8 +162,8 @@ Player::update(stlw::Logger& logger, EntityRegistry& registry,
     return;
   }
 
-  LOG_ERROR_SPRINTF("IS_ATTACKING: %i, GCD_READY: %i", is_attacking, gcd_ready);
   if (is_attacking && gcd_ready) {
+    LOG_ERROR_SPRINTF("GCD_READY IS_ATTACKING: %i, GCD_READY: %i", is_attacking, gcd_ready);
     try_attack_selected_target(logger, registry, *this, target_eid);
   }
 }

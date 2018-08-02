@@ -221,14 +221,6 @@ Camera::compute_projectionmatrix(CameraMode const mode, PerspectiveViewport cons
     return glm::perspective(fov, p.viewport_aspect_ratio, p.near_plane, p.far_plane);
   case CameraMode::Ortho: {
     return glm::ortho(o.left, o.right, o.bottom, o.top, o.far, o.near);
-    std::cerr << "ortho projection:\n";
-    std::cerr << fmt::sprintf("left: %f, right: %f, bottom: %f, top: %s, far: %f, near: %f",
-        o.left,
-        o.right,
-        o.bottom,
-        o.top,
-        o.far,
-        o.near);
   }
   case CameraMode::MAX:
     break;

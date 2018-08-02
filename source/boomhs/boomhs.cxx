@@ -695,7 +695,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
       bool expired() const { return timer_.expired(); }
       bool is_blinking() const { return is_blinking_; }
       void toggle() { is_blinking_ ^= true; }
-      void set(double const t) { timer_.set(t); }
+      void set_ms(double const t) { timer_.set_ms(t); }
     };
 
     static BlinkTimer blink_timer;
@@ -705,7 +705,8 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     bool const player_attacking = player.is_attacking;
 
     auto const reset_attack_timer = [&]() {
-      blink_timer.set(1000 * 3);
+      auto const BLINK_TIME_IN_MS = TimeConversions::seconds_to_millis(1);
+      blink_timer.set_ms(BLINK_TIME_IN_MS);
     };
 
     if (player_attacking) {

@@ -5,38 +5,59 @@
 namespace window
 {
 
-using ticks_t = uint64_t;
+using ticks_t = double;
+using freq_t  = int64_t;
+
+struct TimeConversions
+{
+  TimeConversions() = delete;
+
+  static ticks_t ticks_to_millis(ticks_t, freq_t);
+  static ticks_t millis_to_ticks(ticks_t, freq_t);
+
+  static ticks_t millis_to_seconds(ticks_t);
+  static ticks_t seconds_to_millis(ticks_t);
+
+  static ticks_t ticks_to_seconds(ticks_t, freq_t);
+  static ticks_t seconds_to_ticks(ticks_t, freq_t);
+};
 
 class FrameTime
 {
   ticks_t const delta_, since_start_;
-  double const  frequency_;
-
-  double ticks_to_millis(ticks_t const t) const { return t * 1000.0 / frequency_; }
-  double millis_to_seconds(double const m) const { return m * 0.001; }
+  freq_t const  frequency_;
 
 public:
   COPY_DEFAULT(FrameTime);
   MOVE_DEFAULT(FrameTime);
-  explicit FrameTime(ticks_t const dt, ticks_t const sstart, double const fr)
+  explicit FrameTime(ticks_t const dt, ticks_t const sstart, freq_t const fr)
       : delta_(dt)
       , since_start_(sstart)
       , frequency_(fr)
   {
   }
 
-  double delta_ticks() const { return delta_; }
-  double delta_millis() const { return ticks_to_millis(delta_ticks()); }
-  double delta_seconds() const { return millis_to_seconds(delta_millis()); }
+  ticks_t delta_ticks() const { return delta_; }
+  ticks_t delta_millis() const
+  {
+    return TimeConversions::ticks_to_millis(delta_ticks(), frequency_);
+  }
+  ticks_t delta_seconds() const { return TimeConversions::millis_to_seconds(delta_millis()); }
 
-  double since_start_millis() const { return ticks_to_millis(since_start_); }
-  double since_start_seconds() const { return millis_to_seconds(since_start_millis()); }
+  ticks_t since_start_millis() const
+  {
+    return TimeConversions::ticks_to_millis(since_start_, frequency_);
+  }
+  ticks_t since_start_seconds() const
+  {
+    return TimeConversions::millis_to_seconds(since_start_millis());
+  }
 };
 
 // The clock time when the timer started
 class Clock
 {
-  double  frequency_;
+  freq_t  frequency_;
   ticks_t start_;
   ticks_t last_;
 
@@ -56,17 +77,17 @@ public:
 class Timer
 {
   Clock   clock_;
-  bool    expired_   = false;
-  bool    paused_    = false;
-  ticks_t remaining_ = 0.0;
+  bool    expired_      = false;
+  bool    paused_       = false;
+  ticks_t remaining_ms_ = 0.0;
 
 public:
   COPY_DEFAULT(Timer);
   MOVE_DEFAULT(Timer);
   Timer() = default;
 
-  void set(ticks_t const t) { remaining_ = t; }
-  bool expired() const { return remaining_ <= 0; }
+  void set_ms(ticks_t const t) { remaining_ms_ = t; }
+  bool expired() const { return remaining_ms_ <= 0; }
   bool is_paused() const { return paused_; }
   void pause() { paused_ = true; }
   void unpause() { paused_ = false; }
