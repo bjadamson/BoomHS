@@ -292,7 +292,7 @@ place_water(stlw::Logger& logger, ZoneState& zs, ShaderProgram& sp, glm::vec2 co
   auto const eid = registry.create();
 
   LOG_TRACE("Placing Water");
-  auto& wi    = WaterFactory::make_default(logger, sps, ttable, registry);
+  auto& wi    = WaterFactory::make_default(logger, sps, ttable, eid, registry);
   wi.position = pos;
 
   size_t constexpr num_vertexes = 4;
@@ -358,8 +358,11 @@ init(Engine& engine, EngineState& es, Camera& camera)
     auto& sps = zs.gfx_state.sps;
 
     auto& water_sp = draw_water_options_to_shader(GameGraphicsMode::Basic, sps);
-    place_water(logger, zs, water_sp, glm::vec2{0.0f, 0.0f});
-    //place_water(logger, zs, water_sp, glm::vec2{20.0f, 20.0f});
+    FOR(i, 2) {
+      FOR(j, 2) {
+        place_water(logger, zs, water_sp, glm::vec2{i * 20, j * 20});
+      }
+    }
   }
   {
     auto test_r = rexpaint::RexImage::load("assets/test.xp");

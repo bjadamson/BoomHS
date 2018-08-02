@@ -43,8 +43,8 @@ struct WaterFactory
 {
   static ObjData generate_water_data(stlw::Logger&, glm::vec2 const&, size_t);
 
-  static WaterInfo&
-  make_default(stlw::Logger&, opengl::ShaderPrograms&, opengl::TextureTable&, EntityRegistry&);
+  static WaterInfo& make_default(stlw::Logger&, opengl::ShaderPrograms&, opengl::TextureTable&,
+                                 EntityID, EntityRegistry&);
 };
 
 } // namespace boomhs

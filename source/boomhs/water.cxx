@@ -49,7 +49,7 @@ WaterFactory::generate_water_data(stlw::Logger& logger, glm::vec2 const& dimensi
 
 WaterInfo&
 WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTable& ttable,
-    EntityRegistry& registry)
+    EntityID const eid, EntityRegistry& registry)
 {
   LOG_TRACE("Generating water");
 
@@ -65,7 +65,6 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
   });
   LOG_TRACE("Finished generating water");
 
-  auto const eid = registry.create();
   auto& winfo = registry.assign<WaterInfo>(eid);
   winfo.tinfo = &ti;
   return winfo;
