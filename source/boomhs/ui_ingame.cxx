@@ -93,10 +93,15 @@ void
 draw_nearest_target_info(Dimensions const& dimensions, NearbyTargets const& nearby_targets, TextureTable const& ttable,
                          EntityRegistry& registry)
 {
-  auto const left = dimensions.left + 39;
-  auto const top  = dimensions.bottom - 125 - 6;
+  auto constexpr LEFT_OFFSET = 39;
+  auto const left = dimensions.left + LEFT_OFFSET;
+
+  auto constexpr BOTTOM_OFFSET = 119;
+  auto const top  = dimensions.bottom - BOTTOM_OFFSET;
   ImGui::SetNextWindowPos(ImVec2(left, top));
-  ImGui::SetNextWindowSize(ImVec2(200, 105));
+
+  ImVec2 const WINDOW_POS(200, 105);
+  ImGui::SetNextWindowSize(WINDOW_POS);
 
   // clang-format off
   auto static constexpr WINDOW_FLAGS = (0

@@ -753,21 +753,26 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     }
     render::draw_fbo_testwindow(rstate_2dtexture, pos, size, spp, ti);
   };
-  {
-    glm::vec2 const size{16.0f};
-    glm::vec2 const pos{dimensions.left, dimensions.top};
-    draw_icon_on_screen(pos, size, "first-aid");
-  }
-  {
+
+  auto const draw_slot_icon = [&](auto const slot_pos, char const* icon_name) {
     glm::vec2 const size{32.0f};
-    glm::vec2 const pos{0.0f, 32.0f};
-    draw_icon_on_screen(pos, size, "ak47");
-  }
-  {
-    glm::vec2 const size{64.0f};
-    glm::vec2 const pos{1024.0 / 2.0f, 768.0f / 2.0f};
-    draw_icon_on_screen(pos, size, "fist");
-  }
+
+    auto constexpr SPACE_BETWEEN = 10;
+    float const left   = dimensions.left + 39 + 200 + SPACE_BETWEEN
+      + (slot_pos * (size.x + SPACE_BETWEEN));
+
+
+    auto constexpr SPACE_BENEATH = 10;
+    float const bottom = dimensions.bottom - SPACE_BENEATH - size.y;
+    glm::vec2 const pos{left, bottom};
+    draw_icon_on_screen(pos, size, icon_name);
+  };
+
+  draw_slot_icon(0, "fist");
+  draw_slot_icon(1, "sword");
+  draw_slot_icon(2, "ak47");
+  draw_slot_icon(3, "first-aid");
+
   {
     glm::vec2 const size{128.0f};
     glm::vec2 const pos{dimensions.right - size.x, dimensions.bottom - size.y};
