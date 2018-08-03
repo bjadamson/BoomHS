@@ -17,7 +17,6 @@ class FrameTime;
 
 namespace boomhs
 {
-class Camera;
 struct Dimensions;
 class EntityRegistry;
 class HandleManager;

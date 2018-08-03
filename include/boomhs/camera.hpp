@@ -13,10 +13,10 @@ struct MouseState;
 
 struct PerspectiveViewport
 {
-  float       field_of_view;
-  float const viewport_aspect_ratio;
-  float       near_plane;
-  float       far_plane;
+  float field_of_view;
+  float viewport_aspect_ratio;
+  float near_plane;
+  float far_plane;
 };
 
 struct OrthoProjection

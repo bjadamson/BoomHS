@@ -348,12 +348,6 @@ init(Engine& engine, EngineState& es, Camera& camera)
   auto& zs       = lm.active();
   auto& registry = zs.registry;
 
-  {
-    auto const player_eid = find_player(registry);
-    auto&      transform  = registry.get<Transform>(player_eid);
-    camera.set_target(transform);
-  }
-
   for (auto& zs : state.level_manager) {
     auto& sps = zs.gfx_state.sps;
 
@@ -513,13 +507,20 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
 
   static auto sunshaft_renderer = make_sunshaft_renderer();
 
-  auto const fmatrices = FrameMatrices::from_camera(camera);
-  FrameState fstate{fmatrices, es, zs};
+  auto const player_eid = find_player(registry);
+  auto& player = registry.get<Player>(player_eid);
+
+  static bool set_camera_once = false;
+  if (!set_camera_once) {
+    auto&      transform  = registry.get<Transform>(player_eid);
+    camera.set_target(transform);
+  }
+
+  auto const cstate = CameraFrameState::from_camera(camera);
+  FrameState fstate{cstate, es, zs};
 
   RenderState rstate{fstate, ds};
 
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
   auto& nbt = ldata.nearby_targets;
 
   {
@@ -672,8 +673,8 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     auto& sp  = sps.ref_sp("2dtexture_ss");
 
     // Create a renderstate using an orthographic projection.
-    auto const fmatrices = FrameMatrices::from_camera_with_mode(camera, CameraMode::Ortho);
-    FrameState fstate{fmatrices, es, zs};
+    auto const cstate = CameraFrameState::from_camera_with_mode(camera, CameraMode::Ortho);
+    FrameState fstate{cstate, es, zs};
     RenderState rstate_2dtexture{fstate, ds};
 
     class BlinkTimer

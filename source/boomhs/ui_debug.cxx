@@ -471,43 +471,35 @@ void
 draw_camera_window(Camera& camera, Player& player)
 {
   auto const draw_perspective_controls = [&]() {
-    ImGui::Text("Perspective Projection");
+    auto& perspective = camera.perspective_ref();
+    ImGui::InputFloat("Field of View", &perspective.field_of_view);
+    ImGui::InputFloat("Near Plane", &perspective.near_plane);
+    ImGui::InputFloat("Far Plane", &perspective.far_plane);
     ImGui::Separator();
+    auto const scoords = camera.spherical_coordinates();
     {
-      auto const coords = camera.spherical_coordinates();
-      auto const r      = coords.radius_display_string();
-      auto const t      = coords.theta_display_string();
-      auto const p      = coords.phi_display_string();
+      auto const r      = scoords.radius_display_string();
+      auto const t      = scoords.theta_display_string();
+      auto const p      = scoords.phi_display_string();
       ImGui::Text("Spherical Coordinates:\nr: '%s', t: '%s', p: '%s'", r.c_str(), t.c_str(),
                   p.c_str());
     }
     {
       auto const text = glm::to_string(camera.world_position());
-      ImGui::Text("world position:\n'%s'", text.c_str());
+      ImGui::Text("world position:\n'%s'\tcamera phi: %f,\n\tcamera theta: %f", text.c_str(),
+          scoords.phi, scoords.theta);
     }
     {
-      auto const coords = to_cartesian(camera.spherical_coordinates());
+      auto const cart = to_cartesian(scoords);
       ImGui::Text("Cartesian Coordinates (should match world position):\nx: %f, y: %f, z: %f",
-                  coords.x, coords.y, coords.z);
+                  cart.x, cart.y, cart.z);
     }
     {
       glm::vec3 const tfp = camera.target_position();
       ImGui::Text("Follow Target position:\nx: %f, y: %f, z: %f", tfp.x, tfp.y, tfp.z);
     }
-    ImGui::Separator();
-    ImGui::Text("camera xyz: '%s', camera phi: %f, camera theta: %f\n",
-                glm::to_string(camera.world_position()).c_str(), camera.spherical_coordinates().phi,
-                camera.spherical_coordinates().theta);
-    ImGui::Separator();
-    ImGui::Separator();
-    auto& perspective = camera.perspective_ref();
-    ImGui::InputFloat("Field of View", &perspective.field_of_view);
-    ImGui::InputFloat("Near Plane", &perspective.near_plane);
-    ImGui::InputFloat("Far Plane", &perspective.far_plane);
   };
   auto const draw_ortho_controls = [&]() {
-    ImGui::Text("Orthographic Projection");
-    ImGui::Separator();
     auto& ortho = camera.ortho_ref();
     ImGui::InputFloat("Left:", &ortho.left);
     ImGui::InputFloat("Right:", &ortho.right);
@@ -515,6 +507,18 @@ draw_camera_window(Camera& camera, Player& player)
     ImGui::InputFloat("Top:", &ortho.top);
     ImGui::InputFloat("Far:", &ortho.far);
     ImGui::InputFloat("Near:", &ortho.near);
+  };
+  auto const draw_fps_controls = [&]() {
+    auto& perspective = camera.perspective_ref();
+    ImGui::InputFloat("FOV:", &perspective.field_of_view);
+
+    static float b0[2] = {0.0f};
+    if (ImGui::InputFloat2("Aspect:", b0)) {
+      perspective.viewport_aspect_ratio = b0[0] / b0[1];
+    }
+
+    ImGui::InputFloat("Near Plane:", &perspective.near_plane);
+    ImGui::InputFloat("Far Plane:", &perspective.far_plane);
   };
   auto const draw_camera_window = [&]() {
     ImGui::Checkbox("Flip Y Sensitivity", &camera.flip_y);
@@ -531,16 +535,23 @@ draw_camera_window(Camera& camera, Player& player)
       auto const mode = static_cast<CameraMode>(selected);
       camera.set_mode(mode);
     }
+
+    auto const draw_common = [&](char const* text) {
+      ImGui::Text("%s", text);
+      ImGui::Separator();
+    };
     switch (camera.mode()) {
     case CameraMode::Perspective:
+      draw_common("Perspective Projection");
       draw_perspective_controls();
       break;
     case CameraMode::Ortho:
+      draw_common("Ortho Projection");
       draw_ortho_controls();
       break;
     case CameraMode::FPS:
-      // TODO: implement this
-      std::abort();
+      draw_common("FPS Projection");
+      draw_fps_controls();
       break;
     default: {
       break;

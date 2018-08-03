@@ -15,16 +15,16 @@ class ZoneState;
 namespace opengl
 {
 
-struct FrameMatrices
+struct CameraFrameState
 {
   glm::vec3 const camera_world_position;
   glm::mat4 const projection;
   glm::mat4 const view;
 
-  static FrameMatrices from_camera_withposition(boomhs::Camera const&, glm::vec3 const&);
-  static FrameMatrices from_camera_with_mode(boomhs::Camera const&, boomhs::CameraMode);
+  static CameraFrameState from_camera_withposition(boomhs::Camera const&, glm::vec3 const&);
+  static CameraFrameState from_camera_with_mode(boomhs::Camera const&, boomhs::CameraMode);
 
-  static FrameMatrices from_camera(boomhs::Camera const&);
+  static CameraFrameState from_camera(boomhs::Camera const&);
 };
 
 struct DrawState
@@ -39,11 +39,11 @@ struct DrawState
 
 class FrameState
 {
-  FrameMatrices const fmatrices_;
+  CameraFrameState const cstate_;
 
 public:
   NO_COPY_OR_MOVE(FrameState);
-  FrameState(FrameMatrices const&, boomhs::EngineState&, boomhs::ZoneState&);
+  FrameState(CameraFrameState const&, boomhs::EngineState&, boomhs::ZoneState&);
 
   boomhs::EngineState& es;
   boomhs::ZoneState&   zs;

@@ -255,8 +255,8 @@ process_mousebutton_down(GameState& state, Player& player, SDL_MouseButtonEvent 
   if (button == SDL_BUTTON_LEFT) {
     ms.left_pressed = true;
 
-    auto const fmatrices = FrameMatrices::from_camera(camera);
-    FrameState fstate{fmatrices, es, zs};
+    auto const cstate = CameraFrameState::from_camera(camera);
+    FrameState fstate{cstate, es, zs};
     select_mouse_under_cursor(fstate);
   }
   else if (button == SDL_BUTTON_RIGHT) {

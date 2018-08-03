@@ -60,21 +60,6 @@ cmake_minimum_required(VERSION 3.4.3)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
-###################################################################################################
-## Setup basic c++ flags.
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED on)
-
-## Configure the "release" compiler settings
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O0")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17 -stdlib=STDLIB_PLACEHOLDER")
-
-## "Extra" flags
-set(MY_EXTRA_FLAGS "-Wno-unused-variable -Wno-missing-braces -Wno-unused-parameter -fno-omit-frame-pointer")
-
-## Configure the "default" compiler settings
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} STATIC_ANALYSIS_FLAGS_PLACEHOLDER -MJ -Wall -Wextra -g -O0 ${MY_EXTRA_FLAGS} ")
-
 
 ###################################################################################################
 ## Setup variables to different paths; used while issung the build commands further below.
@@ -89,9 +74,8 @@ set(CPPTOML_INCLUDE_DIR "${EXTERNAL_DIR}/cpptoml/include")
 set(BOOMHS_INCLUDES ${PROJECT_DIR}/include/**/*.hpp)
 set(BOOMHS_CODE     ${BOOMHS_INCLUDES} ${BOOMHS_SOURCES})
 
-## BFD and dl are both needed for linux backtraces.
-## BFD_LIB => Backtrace Libraries
-set(BFD_LIB "bfd")
+## BFD_LIB and STACKTRACE_LIB are both needed for linux backtraces.
+set(BFD_LIB        "bfd")
 set(STACKTRACE_LIB "dw")
 
 ###################################################################################################
@@ -102,12 +86,17 @@ set(STACKTRACE_LIB "dw")
 file(GLOB         EXTERNAL_INCLUDE_DIRS include external/**/include)
 file(GLOB_RECURSE EXTERNAL_SOURCES      ${EXTERNAL_DIR}/**/*.cxx)
 
-file(GLOB MAIN_SOURCE      ${PROJECT_DIR}/source/main.cxx)
-file(GLOB BOOMHS_SOURCES   ${PROJECT_DIR}/source/boomhs/*.cxx)
-file(GLOB OPENGL_SOURCES   ${PROJECT_DIR}/source/opengl/*.cxx)
-file(GLOB STLW_SOURCES     ${PROJECT_DIR}/source/stlw/*.cxx)
-file(GLOB WINDOW_SOURCES   ${PROJECT_DIR}/source/window/*.cxx)
-file(GLOB GL_SDL_SOURCES   ${PROJECT_DIR}/source/gl_sdl/*.cxx)
+file(GLOB         MAIN_SOURCE_FILE ${PROJECT_DIR}/source/main.cxx)
+file(GLOB_RECURSE SUBDIR_SOURCE_FILES ${PROJECT_DIR}/source/**/*.cxx )
+
+set(ALL_SOURCE_FILES ${EXTERNAL_SOURCES} ${MAIN_SOURCE_FILE} ${SUBDIR_SOURCE_FILES})
+
+## file(GLOB MAIN_SOURCE      ${PROJECT_DIR}/source/main.cxx)
+## file(GLOB BOOMHS_SOURCES   ${PROJECT_DIR}/source/boomhs/*.cxx)
+## file(GLOB OPENGL_SOURCES   ${PROJECT_DIR}/source/opengl/*.cxx)
+## file(GLOB STLW_SOURCES     ${PROJECT_DIR}/source/stlw/*.cxx)
+## file(GLOB WINDOW_SOURCES   ${PROJECT_DIR}/source/window/*.cxx)
+## file(GLOB GL_SDL_SOURCES   ${PROJECT_DIR}/source/gl_sdl/*.cxx)
 
 
 ###################################################################################################
@@ -122,6 +111,36 @@ find_package(SOIL REQUIRED)
 find_package(ZLIB REQUIRED)
 
 ###################################################################################################
+## Setup basic c++ flags.
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED on)
+
+## Configure the "release" compiler settings
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17 -stdlib=STDLIB_PLACEHOLDER")
+
+
+
+## Compiler Flags
+set(MY_EXTRA_COMPILER_FLAGS "                                                                      \
+    -Wno-unused-variable                                                                           \
+    -Wno-missing-braces                                                                            \
+    -Wno-unused-parameter                                                                          \
+    -fno-omit-frame-pointer")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}                                                \
+    STATIC_ANALYSIS_FLAGS_PLACEHOLDER                                                              \
+    -MJ                                                                                            \
+    -Wall                                                                                          \
+    -Wextra                                                                                        \
+    -g -O0                                                                                         \
+    ${MY_EXTRA_COMPILER_FLAGS}                                                                     \
+    ")
+
+## Linker Flags
+## set(MY_EXTRA_LINKER_FLAGS "-static")
+## set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MY_EXTRA_LINKER_FLAGS}" )
+
+###################################################################################################
 ## Build-environment wide commands that need to be executed before the executables are declared
 ## below.
 include(FindPkgConfig)
@@ -132,61 +151,61 @@ pkg_search_module(SDL2 REQUIRED sdl2)
 ## Static Libraries
 ###################################################################################################
 
-## External_LIB
-add_library(External_LIB STATIC ${EXTERNAL_SOURCES})
-target_include_directories(External_LIB PUBLIC
-  ${EXTERNAL_INCLUDE_DIRS}
-  ${IMGUI_INCLUDE_DIR}
-  ${SDL2_INCLUDE_DIRS}
-  )
+## ## External_LIB
+## add_library(External_LIB STATIC ${EXTERNAL_SOURCES})
+## target_include_directories(External_LIB PUBLIC
+  ## ${EXTERNAL_INCLUDE_DIRS}
+  ## ${IMGUI_INCLUDE_DIR}
+  ## ${SDL2_INCLUDE_DIRS}
+  ## )
 
 ## Stlw_LIB
-add_library(Stlw_LIB   STATIC ${STLW_SOURCES})
-target_include_directories(Stlw_LIB PUBLIC
-  ${EXTERNAL_INCLUDE_DIRS}
-  )
+## add_library(Stlw_LIB   STATIC ${STLW_SOURCES})
+## target_include_directories(Stlw_LIB PUBLIC
+  ## ${EXTERNAL_INCLUDE_DIRS}
+  ## )
 
 ## BoomHS_LIB
-add_library(BoomHS_LIB STATIC ${BOOMHS_SOURCES})
-target_include_directories(BoomHS_LIB PUBLIC
-  ${EXTERNAL_INCLUDE_DIRS}
-  ${SDL2_INCLUDE_DIRS}
-  )
+## add_library(BoomHS_LIB STATIC ${BOOMHS_SOURCES})
+## target_include_directories(BoomHS_LIB PUBLIC
+  ## ${EXTERNAL_INCLUDE_DIRS}
+  ## ${SDL2_INCLUDE_DIRS}
+  ## )
 
 ## Opengl_LIB
-add_library(Opengl_LIB STATIC ${OPENGL_SOURCES})
-target_include_directories(Opengl_LIB PUBLIC
-  ${EXTERNAL_INCLUDE_DIRS}
-  ${OPENGL_INDLUDE_DIRS}
-  )
+## add_library(Opengl_LIB STATIC ${OPENGL_SOURCES})
+## target_include_directories(Opengl_LIB PUBLIC
+  ## ${EXTERNAL_INCLUDE_DIRS}
+  ## ${OPENGL_INDLUDE_DIRS}
+  ## )
 
 ## Window_LIB
-add_library(Window_LIB STATIC ${WINDOW_SOURCES})
-target_include_directories(Window_LIB PUBLIC
-  ${EXTERNAL_INCLUDE_DIRS}
-  ${SDL2_INCLUDE_DIRS}
-  )
+## add_library(Window_LIB STATIC ${WINDOW_SOURCES})
+## target_include_directories(Window_LIB PUBLIC
+  ## ${EXTERNAL_INCLUDE_DIRS}
+  ## ${SDL2_INCLUDE_DIRS}
+  ## )
 
 ## GL_SSTACKTRACE_LIB
-add_library(GL_SSTACKTRACE_LIB STATIC ${GL_SDL_SOURCES})
-target_include_directories(GL_SSTACKTRACE_LIB PUBLIC
-  ${EXTERNAL_INCLUDE_DIRS}
-  ${SDL2_INCLUDE_DIRS}
-  ${OPENGL_INDLUDE_DIRS}
-  )
+## add_library(GL_SSTACKTRACE_LIB STATIC ${GL_SDL_SOURCES})
+## target_include_directories(GL_SSTACKTRACE_LIB PUBLIC
+  ## ${EXTERNAL_INCLUDE_DIRS}
+  ## ## ${SDL2_INCLUDE_DIRS}
+  ## ${OPENGL_INDLUDE_DIRS}
+  ## )
 
 ###################################################################################################
 ## Specify which static libraries depend on each-other (for the linker's sake).
 ##
 ## The base game is dependent on ALL other libraries. The rest of the libraries need to have
 ## specified which other libraries they will link too here.
-target_link_libraries(Stlw_LIB   External_LIB ${BFD_LIB} ${STACKTRACE_LIB})
-target_link_libraries(BoomHS_LIB External_LIB Opengl_LIB Stlw_LIB Window_LIB GL_SSTACKTRACE_LIB ${BFD_LIB}
-    ${STACKTRACE_LIB})
 
-target_link_libraries(Opengl_LIB External_LIB Stlw_LIB ${BFD_LIB} ${STACKTRACE_LIB})
-target_link_libraries(Window_LIB External_LIB Opengl_LIB Stlw_LIB ${BFD_LIB} ${STACKTRACE_LIB})
-target_link_libraries(GL_SSTACKTRACE_LIB External_LIB Opengl_LIB Stlw_LIB Window_LIB ${BFD_LIB} ${STACKTRACE_LIB})
+## target_link_libraries(Stlw_LIB   External_LIB ${BFD_LIB} ${STACKTRACE_LIB})
+## target_link_libraries(BoomHS_LIB External_LIB Opengl_LIB Stlw_LIB Window_LIB GL_SSTACKTRACE_LIB ${BFD_LIB} ${STACKTRACE_LIB})
+
+## target_link_libraries(Opengl_LIB External_LIB Stlw_LIB ${BFD_LIB} ${STACKTRACE_LIB})
+## target_link_libraries(Window_LIB External_LIB Opengl_LIB Stlw_LIB ${BFD_LIB} ${STACKTRACE_LIB})
+## target_link_libraries(GL_SSTACKTRACE_LIB External_LIB Opengl_LIB Stlw_LIB Window_LIB ${BFD_LIB} ${STACKTRACE_LIB})
 
 ###################################################################################################
 ## Executables
@@ -204,19 +223,19 @@ target_link_libraries(     BUILD_POSTPROCESSING stdc++ c++experimental)
 
 ###################################################################################################
 ## **2** Main Executable
-add_executable(boomhs ${MAIN_SOURCE})
+add_executable(boomhs ${ALL_SOURCE_FILES})
 
 target_link_libraries(boomhs
   ## External Directory
-  External_LIB
+  ## External_LIB
 
   ## Internal Project Libraries
-  BoomHS_LIB
-  Stlw_LIB
+  ## BoomHS_LIB
+  ## Stlw_LIB
 
-  Opengl_LIB
-  Window_LIB
-  GL_SSTACKTRACE_LIB
+  ## Opengl_LIB
+  ## Window_LIB
+  ## GL_SSTACKTRACE_LIB
 
   ## System Libraries
   stdc++

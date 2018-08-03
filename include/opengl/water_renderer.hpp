@@ -185,8 +185,8 @@ public:
     glm::vec3 camera_pos = camera.world_position();
     camera_pos.y         = -camera_pos.y;
 
-    auto const  fmatrices = FrameMatrices::from_camera_withposition(camera, camera_pos);
-    FrameState  fstate{fmatrices, es, zs};
+    auto const  cstate = CameraFrameState::from_camera_withposition(camera, camera_pos);
+    FrameState  fstate{cstate, es, zs};
     RenderState rstate{fstate, ds};
 
     with_reflection_fbo(logger, [&]() {
@@ -207,8 +207,8 @@ public:
     auto&       registry  = zs.registry;
     auto const& fog_color = ldata.fog.color;
 
-    auto const  fmatrices = FrameMatrices::from_camera(camera);
-    FrameState  fstate{fmatrices, es, zs};
+    auto const  cstate = CameraFrameState::from_camera(camera);
+    FrameState  fstate{cstate, es, zs};
     RenderState rstate{fstate, ds};
 
     with_refraction_fbo(logger, [&]() {

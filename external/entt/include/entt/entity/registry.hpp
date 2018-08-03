@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cassert>
+#include <iterator>
 #include <algorithm>
 #include <type_traits>
 #include "../config/config.h"
@@ -43,10 +44,10 @@ class Registry {
     using signal_type = SigH<void(Registry &, const Entity)>;
     using traits_type = entt_traits<Entity>;
 
-    template<typename... Component>
+    template<typename handler_family::family_type(*Type)(), typename... Component>
     static void creating(Registry &registry, const Entity entity) {
         if(registry.has<Component...>(entity)) {
-            registry.handlers[handler_family::type<Component...>()]->construct(entity);
+            registry.handlers[Type()]->construct(entity);
         }
     }
 
@@ -73,14 +74,43 @@ class Registry {
         Tag tag;
     };
 
+    template<typename Comp, std::size_t Pivot, typename... Component, std::size_t... Indexes>
+    void connect(std::index_sequence<Indexes...>) {
+        auto &cpool = pools[component_family::type<Comp>()];
+        std::get<1>(cpool).sink().template connect<&Registry::creating<&handler_family::type<Component...>, std::tuple_element_t<(Indexes < Pivot ? Indexes : (Indexes+1)), std::tuple<Component...>>...>>();
+        std::get<2>(cpool).sink().template connect<&Registry::destroying<Component...>>();
+    }
+
+    template<typename... Component, std::size_t... Indexes>
+    void connect(std::index_sequence<Indexes...>) {
+        using accumulator_type = int[];
+        accumulator_type accumulator = { (assure<Component>(), connect<Component, Indexes, Component...>(std::make_index_sequence<sizeof...(Component)-1>{}), 0)... };
+        (void)accumulator;
+    }
+
+    template<typename Comp, std::size_t Pivot, typename... Component, std::size_t... Indexes>
+    void disconnect(std::index_sequence<Indexes...>) {
+        auto &cpool = pools[component_family::type<Comp>()];
+        std::get<1>(cpool).sink().template disconnect<&Registry::creating<&handler_family::type<Component...>, std::tuple_element_t<(Indexes < Pivot ? Indexes : (Indexes+1)), std::tuple<Component...>>...>>();
+        std::get<2>(cpool).sink().template disconnect<&Registry::destroying<Component...>>();
+    }
+
+    template<typename... Component, std::size_t... Indexes>
+    void disconnect(std::index_sequence<Indexes...>) {
+        using accumulator_type = int[];
+        // if a set exists, pools have already been created for it
+        accumulator_type accumulator = { (disconnect<Component, Indexes, Component...>(std::make_index_sequence<sizeof...(Component)-1>{}), 0)... };
+        (void)accumulator;
+    }
+
     template<typename Component>
-    bool managed() const ENTT_NOEXCEPT {
+    inline bool managed() const ENTT_NOEXCEPT {
         const auto ctype = component_family::type<Component>();
         return ctype < pools.size() && std::get<0>(pools[ctype]);
     }
 
     template<typename Component>
-    const SparseSet<Entity, Component> & pool() const ENTT_NOEXCEPT {
+    inline const SparseSet<Entity, Component> & pool() const ENTT_NOEXCEPT {
         assert(managed<Component>());
         const auto ctype = component_family::type<Component>();
         return static_cast<SparseSet<Entity, Component> &>(*std::get<0>(pools[ctype]));
@@ -187,15 +217,23 @@ public:
     }
 
     /**
+     * @brief Returns the number of entities created so far.
+     * @return Number of entities created so far.
+     */
+    size_type size() const ENTT_NOEXCEPT {
+        return entities.size();
+    }
+
+    /**
      * @brief Returns the number of entities still in use.
      * @return Number of entities still in use.
      */
-    size_type size() const ENTT_NOEXCEPT {
+    size_type alive() const ENTT_NOEXCEPT {
         return entities.size() - available;
     }
 
     /**
-     * @brief Increases the capacity of the pool for a given component.
+     * @brief Increases the capacity of the pool for the given component.
      *
      * If the new capacity is greater than the current capacity, new storage is
      * allocated, otherwise the method does nothing.
@@ -222,17 +260,28 @@ public:
     }
 
     /**
-     * @brief Returns the number of entities ever created.
-     * @return Number of entities ever created.
+     * @brief Returns the capacity of the pool for the given component.
+     * @tparam Component Type of component in which one is interested.
+     * @return Capacity of the pool of the given component.
      */
+    template<typename Component>
     size_type capacity() const ENTT_NOEXCEPT {
-        return entities.size();
+        return managed<Component>() ? pool<Component>().capacity() : size_type{};
     }
 
     /**
-     * @brief Checks whether the pool for the given component is empty.
+     * @brief Returns the number of entities that a registry has currently
+     * allocated space for.
+     * @return Capacity of the registry.
+     */
+    size_type capacity() const ENTT_NOEXCEPT {
+        return entities.capacity();
+    }
+
+    /**
+     * @brief Checks whether the pool of the given component is empty.
      * @tparam Component Type of component in which one is interested.
-     * @return True if the pool for the given component is empty, false
+     * @return True if the pool of the given component is empty, false
      * otherwise.
      */
     template<typename Component>
@@ -339,9 +388,18 @@ public:
     }
 
     /**
+     * @brief Returns the entity identifier without the version.
+     * @param entity An entity identifier, either valid or not.
+     * @return The entity identifier without the version.
+     */
+    entity_type entity(const entity_type entity) const ENTT_NOEXCEPT {
+        return entity & traits_type::entity_mask;
+    }
+
+    /**
      * @brief Returns the version stored along with an entity identifier.
      * @param entity An entity identifier, either valid or not.
-     * @return Version stored along with the given entity identifier.
+     * @return The version stored along with the given entity identifier.
      */
     version_type version(const entity_type entity) const ENTT_NOEXCEPT {
         return version_type((entity >> traits_type::entity_shift) & traits_type::version_mask);
@@ -393,7 +451,6 @@ public:
         if(available) {
             const auto entt = next;
             const auto version = entities[entt] & (~traits_type::entity_mask);
-
             entity = entt | version;
             next = entities[entt] & traits_type::entity_mask;
             entities[entt] = entity;
@@ -475,17 +532,17 @@ public:
         // just a way to protect users from listeners that attach components
         assert(orphan(entity));
 
+        // lengthens the implicit list of destroyed entities
         const auto entt = entity & traits_type::entity_mask;
         const auto version = (((entity >> traits_type::entity_shift) + 1) & traits_type::version_mask) << traits_type::entity_shift;
         const auto node = (available ? next : ((entt + 1) & traits_type::entity_mask)) | version;
-
         entities[entt] = node;
         next = entt;
         ++available;
     }
 
     /**
-     * @brief Destroys the entities that own he given components, if any.
+     * @brief Destroys the entities that own the given components, if any.
      *
      * Convenient shortcut to destroy a set of entities at once.<br/>
      * Syntactic sugar for the following snippet:
@@ -1029,7 +1086,7 @@ public:
      * maximize the performance during iterations and users should not make any
      * assumption on the order.<br/>
      * This function can be used to impose an order to the elements in the pool
-     * for the given component. The order is kept valid until a component of the
+     * of the given component. The order is kept valid until a component of the
      * given type is assigned or removed from an entity.
      *
      * The comparison function object must return `true` if the first element
@@ -1163,7 +1220,8 @@ public:
      */
     void reset() {
         each([this](const auto entity) {
-            destroy(entity);
+            // useless this-> used to suppress a warning with clang
+            this->destroy(entity);
         });
     }
 
@@ -1286,6 +1344,7 @@ public:
      * @see View<Entity, Component>
      * @see PersistentView
      * @see RawView
+     * @see RuntimeView
      *
      * @tparam Component Type of components used to construct the view.
      * @return A newly created standard view.
@@ -1321,22 +1380,13 @@ public:
         }
 
         if(!handlers[htype]) {
+            connect<Component...>(std::make_index_sequence<sizeof...(Component)>{});
             handlers[htype] = std::make_unique<SparseSet<entity_type>>();
-            auto &handler = handlers[htype];
+            auto &handler = *handlers[htype];
 
             for(auto entity: view<Component...>()) {
-                handler->construct(entity);
+                handler.construct(entity);
             }
-
-            auto connect = [this](const auto ctype) {
-                auto &cpool = pools[ctype];
-                std::get<1>(cpool).sink().template connect<&Registry::creating<Component...>>();
-                std::get<2>(cpool).sink().template connect<&Registry::destroying<Component...>>();
-            };
-
-            using accumulator_type = int[];
-            accumulator_type accumulator = { (assure<Component>(), connect(component_family::type<Component>()), 0)... };
-            (void)accumulator;
         }
     }
 
@@ -1358,19 +1408,8 @@ public:
     template<typename... Component>
     void discard() {
         if(contains<Component...>()) {
-            const auto htype = handler_family::type<Component...>();
-
-            auto disconnect = [this](const auto ctype) {
-                auto &cpool = pools[ctype];
-                std::get<1>(cpool).sink().template disconnect<&Registry::creating<Component...>>();
-                std::get<2>(cpool).sink().template disconnect<&Registry::destroying<Component...>>();
-            };
-
-            // if a set exists, pools have already been created for it
-            using accumulator_type = int[];
-            accumulator_type accumulator = { (disconnect(component_family::type<Component>()), 0)... };
-            handlers[htype].reset();
-            (void)accumulator;
+            disconnect<Component...>(std::make_index_sequence<sizeof...(Component)>{});
+            handlers[handler_family::type<Component...>()].reset();
         }
     }
 
@@ -1420,6 +1459,7 @@ public:
      * @see View<Entity, Component>
      * @see PersistentView
      * @see RawView
+     * @see RuntimeView
      *
      * @tparam Component Types of components used to construct the view.
      * @return A newly created persistent view.
@@ -1449,6 +1489,7 @@ public:
      * @see View<Entity, Component>
      * @see PersistentView
      * @see RawView
+     * @see RuntimeView
      *
      * @tparam Component Type of component used to construct the view.
      * @return A newly created raw view.
@@ -1457,6 +1498,44 @@ public:
     RawView<Entity, Component> view(raw_t) {
         assure<Component>();
         return RawView<Entity, Component>{pool<Component>()};
+    }
+
+    /**
+     * @brief Returns a runtime view for the given components.
+     *
+     * This kind of views are created on the fly and share with the registry its
+     * internal data structures.<br/>
+     * Users should throw away the view after use. Fortunately, creating and
+     * destroying a view is an incredibly cheap operation because they do not
+     * require any type of initialization.<br/>
+     * As a rule of thumb, storing a view should never be an option.
+     *
+     * Runtime views are well suited when users want to construct a view from
+     * some external inputs and don't know at compile-time what are the required
+     * components.<br/>
+     * This is particularly well suited to plugin systems and mods in general.
+     *
+     * @see View
+     * @see View<Entity, Component>
+     * @see PersistentView
+     * @see RawView
+     * @see RuntimeView
+     *
+     * @tparam It Type of forward iterator.
+     * @param first An iterator to the first element of the range of components.
+     * @param last An iterator past the last element of the range of components.
+     * @return A newly created runtime view.
+     */
+    template<typename It>
+    RuntimeView<Entity> view(It first, It last) {
+        static_assert(std::is_convertible<typename std::iterator_traits<It>::value_type, component_type>::value, "!");
+        std::vector<const SparseSet<Entity> *> set(last - first);
+
+        std::transform(first, last, set.begin(), [this](const component_type ctype) {
+            return ctype < pools.size() ? std::get<0>(pools[ctype]).get() : nullptr;
+        });
+
+        return RuntimeView<Entity>{std::move(set)};
     }
 
     /**
@@ -1470,10 +1549,10 @@ public:
      * @return A temporary object to use to take snasphosts.
      */
     Snapshot<Entity> snapshot() const ENTT_NOEXCEPT {
-        using follow_fn_type = entity_type(*)(const Registry &, const entity_type);
+        using follow_fn_type = entity_type(const Registry &, const entity_type);
         const entity_type seed = available ? (next | (entities[next] & ~traits_type::entity_mask)) : next;
 
-        follow_fn_type follow = [](const Registry &registry, const entity_type entity) -> entity_type {
+        follow_fn_type *follow = [](const Registry &registry, const entity_type entity) -> entity_type {
             const auto &entities = registry.entities;
             const auto entt = entity & traits_type::entity_mask;
             const auto next = entities[entt] & traits_type::entity_mask;
@@ -1499,9 +1578,9 @@ public:
      * @return A temporary object to use to load snasphosts.
      */
     SnapshotLoader<Entity> restore() ENTT_NOEXCEPT {
-        using assure_fn_type = void(*)(Registry &, const entity_type, const bool);
+        using assure_fn_type = void(Registry &, const entity_type, const bool);
 
-        assure_fn_type assure = [](Registry &registry, const entity_type entity, const bool destroyed) {
+        assure_fn_type *assure = [](Registry &registry, const entity_type entity, const bool destroyed) {
             using promotion_type = std::conditional_t<sizeof(size_type) >= sizeof(entity_type), size_type, entity_type>;
             // explicit promotion to avoid warnings with std::uint16_t
             const auto entt = promotion_type{entity} & traits_type::entity_mask;
