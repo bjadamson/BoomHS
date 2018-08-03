@@ -258,8 +258,7 @@ allocate_texture(stlw::Logger &logger, std::string const& filename,
     glActiveTexture(GL_TEXTURE0 + texture_unit);
     ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
 
-    bind::global_bind(logger, ti);
-    ON_SCOPE_EXIT([&]() { bind::global_unbind(logger, ti); });
+    BIND_UNTIL_END_OF_SCOPE(logger, ti);
 
     GpuUploadConfig const guc{format, ti.target};
     auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, guc));

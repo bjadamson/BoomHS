@@ -59,12 +59,10 @@ SkyboxRenderer::render(RenderState& rstate, DrawState& ds, FrameTime const& ft)
   glActiveTexture(GL_TEXTURE0);
   ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
 
-  bind::global_bind(logger, *day_);
-  ON_SCOPE_EXIT([&]() { bind::global_unbind(logger, *day_); });
+  BIND_UNTIL_END_OF_SCOPE(logger, *day_);
 
   glActiveTexture(GL_TEXTURE1);
-  bind::global_bind(logger, *night_);
-  ON_SCOPE_EXIT([&]() { bind::global_unbind(logger, *night_); });
+  BIND_UNTIL_END_OF_SCOPE(logger, *night_);
 
   // Converting the "current hour" to a value in [0.0, 1.0]
   auto const calculate_blend = [&]() {

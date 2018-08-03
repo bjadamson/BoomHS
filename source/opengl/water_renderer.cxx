@@ -85,7 +85,9 @@ render_water_common(Transform& transform, ShaderProgram& sp, RenderState& rstate
   LOG_TRACE("Rendering water");
   auto const winfos = find_all_entities_with_component<WaterInfo>(registry);
   for (auto const weid : winfos) {
+    LOG_ERROR("BEFORE RENDER WI");
     auto& wi = registry.get<WaterInfo>(weid);
+    LOG_ERROR("AFTER RENDER WI");
     render(wi);
   }
   LOG_TRACE("Finished rendering water");
@@ -153,20 +155,18 @@ BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
     sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
     glActiveTexture(GL_TEXTURE0);
-    bind::global_bind(logger, diffuse_);
+    ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
+
+    BIND_UNTIL_END_OF_SCOPE(logger, diffuse_);
 
     glActiveTexture(GL_TEXTURE1);
-    bind::global_bind(logger, normal_);
+    BIND_UNTIL_END_OF_SCOPE(logger, normal_);
 
     assert(winfo.dinfo);
     auto& dinfo = *winfo.dinfo;
 
     auto const model_matrix = transform.model_matrix();
     render::draw_3dshape(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
-
-    bind::global_unbind(logger, diffuse_);
-    bind::global_unbind(logger, normal_);
-    glActiveTexture(GL_TEXTURE0);
   };
 
   render_water_common(transform, sp_, rstate, ds, lm, camera, ft, fn);
@@ -213,10 +213,12 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
     sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
     glActiveTexture(GL_TEXTURE0);
-    bind::global_bind(logger, diffuse_);
+    ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
+
+    BIND_UNTIL_END_OF_SCOPE(logger, diffuse_);
 
     glActiveTexture(GL_TEXTURE1);
-    bind::global_bind(logger, normal_);
+    BIND_UNTIL_END_OF_SCOPE(logger, normal_);
 
     assert(winfo.dinfo);
     auto& dinfo = *winfo.dinfo;
@@ -225,10 +227,6 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
     auto const model_matrix         = transform.model_matrix();
     render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, transform.translation, model_matrix, sp_,
                              dinfo, water_material, registry, SET_NORMALMATRIX);
-
-    bind::global_unbind(logger, diffuse_);
-    bind::global_unbind(logger, normal_);
-    glActiveTexture(GL_TEXTURE0);
   };
 
   render_water_common(transform, sp_, rstate, ds, lm, camera, ft, fn);
@@ -331,38 +329,31 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
     sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
     glActiveTexture(GL_TEXTURE0);
-    bind::global_bind(logger, diffuse_);
+    ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
+
+    BIND_UNTIL_END_OF_SCOPE(logger, diffuse_);
 
     glActiveTexture(GL_TEXTURE1);
-    bind::global_bind(logger, reflection_.tbo);
-    bind::global_bind(logger, reflection_.rbo.resource());
+    BIND_UNTIL_END_OF_SCOPE(logger, reflection_.tbo);
+    BIND_UNTIL_END_OF_SCOPE(logger, reflection_.rbo.resource());
 
     glActiveTexture(GL_TEXTURE2);
-    bind::global_bind(logger, refraction_.tbo);
+    BIND_UNTIL_END_OF_SCOPE(logger, refraction_.tbo);
 
     glActiveTexture(GL_TEXTURE3);
-    bind::global_bind(logger, dudv_);
+    BIND_UNTIL_END_OF_SCOPE(logger, dudv_);
 
     glActiveTexture(GL_TEXTURE4);
-    bind::global_bind(logger, normal_);
+    BIND_UNTIL_END_OF_SCOPE(logger, normal_);
 
     glActiveTexture(GL_TEXTURE5);
-    bind::global_bind(logger, refraction_.dbo);
+    BIND_UNTIL_END_OF_SCOPE(logger, refraction_.dbo);
 
     ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
     bool constexpr SET_NORMALMATRIX = false;
     auto const model_matrix         = transform.model_matrix();
     render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, transform.translation, model_matrix, sp_,
                              dinfo, water_material, registry, SET_NORMALMATRIX);
-    bind::global_unbind(logger, diffuse_);
-    bind::global_unbind(logger, reflection_.tbo);
-    bind::global_unbind(logger, reflection_.rbo.resource());
-    bind::global_unbind(logger, refraction_.tbo);
-    bind::global_unbind(logger, dudv_);
-    bind::global_unbind(logger, normal_);
-    bind::global_unbind(logger, refraction_.dbo);
-
-    glActiveTexture(GL_TEXTURE0);
   };
   render_water_common(transform, sp_, rstate, ds, lm, camera, ft, fn);
 }
