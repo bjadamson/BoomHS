@@ -228,8 +228,12 @@ render_common_entities(RenderState& rstate, stlw::float_generator& rng, FrameTim
 
   registry.view<Common..., MeshRenderable, NPCData>().each(
       [&](auto&&... args) { draw_common_fn(FORWARD(args)); });
-  registry.view<Common..., MeshRenderable, Player>().each(
-      [&](auto&&... args) { draw_common_fn(FORWARD(args)); });
+
+  // Only render the player if the camera isn't in FPS mode.
+  if (CameraMode::FPS != fstate.mode()) {
+    registry.view<Common..., MeshRenderable, Player>().each(
+        [&](auto&&... args) { draw_common_fn(FORWARD(args)); });
+  }
 }
 
 } // namespace

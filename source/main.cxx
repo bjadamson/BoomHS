@@ -75,11 +75,10 @@ loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camer
 }
 
 void
-timed_game_loop(Engine& engine, GameState& state, Camera& camera)
+timed_game_loop(Engine& engine, GameState& state, Camera& camera, stlw::float_generator& rng)
 {
   window::Clock         clock;
   window::FrameCounter  counter;
-  stlw::float_generator rng;
 
   auto& logger = state.engine_state.logger;
   while (!state.engine_state.quit) {
@@ -135,12 +134,13 @@ start(stlw::Logger& logger, Engine& engine)
 
   // Construct game state
   auto        camera = Camera::make_defaultcamera(dimensions);
-
   EngineState es{logger, *al_device, io, dimensions};
-  auto gs = TRY_MOVEOUT(boomhs::init(engine, es, camera));
+
+  stlw::float_generator rng;
+  auto gs = TRY_MOVEOUT(boomhs::init(engine, es, camera, rng));
 
   // Start game in a timed loop
-  timed_game_loop(engine, gs, camera);
+  timed_game_loop(engine, gs, camera, rng);
 
   // Game has finished
   LOG_TRACE("game loop finished.");

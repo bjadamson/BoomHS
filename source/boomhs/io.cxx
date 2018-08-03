@@ -697,9 +697,9 @@ IO::process_event(GameState& state, SDL_Event& event, Camera& camera, FrameTime 
   }
 
   auto& imgui = es.imgui;
-  //if (imgui.WantCaptureMouse || imgui.WantCaptureKeyboard) {
-    //return;
-  //}
+  if (imgui.WantCaptureMouse || imgui.WantCaptureKeyboard) {
+    return;
+  }
 
   switch (type) {
   case SDL_MOUSEBUTTONDOWN:

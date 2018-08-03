@@ -16,11 +16,12 @@ from_camera_common(Camera const& camera, glm::vec3 const& pos, CameraMode const 
 
   auto const proj = Camera::compute_projectionmatrix(mode, perspective, ortho);
 
-  auto const& target       = camera.get_target().translation;
-  auto const& up           = camera.eye_up();
-  auto const& fps_center   = camera.world_forward() + target;
+  auto const& target         = camera.get_target().transform().translation;
+  auto const& up             = camera.eye_up();
+  auto const& camera_forward = camera.world_forward();
 
-  auto const view = Camera::compute_viewmatrix(mode, pos, target, up, fps_center);
+  auto const target_forward = camera.get_target().world_forward();
+  auto const view = Camera::compute_viewmatrix(mode, pos, target, up, target_forward);
   return CameraFrameState{pos, proj, view, mode};
 }
 
@@ -85,6 +86,12 @@ glm::mat4
 FrameState::view_matrix() const
 {
   return cstate_.view;
+}
+
+CameraMode
+FrameState::mode() const
+{
+  return cstate_.mode;
 }
 
 } // namespace boomhs

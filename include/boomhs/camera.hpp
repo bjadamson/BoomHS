@@ -10,6 +10,7 @@ namespace boomhs
 {
 struct Dimensions;
 struct MouseState;
+struct WorldObject;
 
 struct PerspectiveViewport
 {
@@ -28,7 +29,7 @@ struct OrthoProjection
 
 enum class CameraMode
 {
-  Perspective = 0,
+  ThirdPerson = 0,
   Ortho,
   FPS,
   MAX
@@ -38,19 +39,20 @@ enum class CameraMode
 using ModeNamePair                                 = std::pair<CameraMode, char const*>;
 std::array<ModeNamePair, 3> constexpr CAMERA_MODES = {
     {
-      {CameraMode::Ortho, "Ortho"},
-      {CameraMode::Perspective, "Perspective"},
-      {CameraMode::FPS, "FPS"}}
+      {CameraMode::Ortho,       "Ortho"},
+      {CameraMode::ThirdPerson, "ThirdPerson"},
+      {CameraMode::FPS,         "FPS"}
+    }
 };
 // clang-format on
 
 class Camera
 {
-  Transform* target_ = nullptr;
-  glm::vec3  forward_, up_;
+  WorldObject* target_ = nullptr;
+  glm::vec3    forward_, up_;
 
   SphericalCoordinates coordinates_;
-  CameraMode           mode_ = CameraMode::Perspective;
+  CameraMode           mode_ = CameraMode::ThirdPerson;
 
   PerspectiveViewport perspective_;
   OrthoProjection     ortho_;
@@ -67,11 +69,11 @@ public:
   bool  rotate_lock;
   float rotation_speed;
 
-  Transform&       get_target();
-  Transform const& get_target() const;
+  WorldObject&       get_target();
+  WorldObject const& get_target() const;
 
   auto mode() const { return mode_; }
-  void set_mode(CameraMode const m) { mode_ = m; }
+  void set_mode(CameraMode);
   void next_mode();
 
   glm::vec3 eye_forward() const { return forward_; }
@@ -104,7 +106,7 @@ public:
   auto&       ortho_ref() { return ortho_; }
 
   Camera& rotate(float, float);
-  void    set_target(Transform&);
+  void    set_target(WorldObject&);
 
   // static fns
   static Camera make_defaultcamera(Dimensions const&);

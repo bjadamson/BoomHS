@@ -38,6 +38,8 @@ public:
   glm::mat4 camera_matrix() const;
   glm::mat4 projection_matrix() const;
   glm::mat4 view_matrix() const;
+
+  CameraMode mode() const;
 };
 
 } // namespace boomhs

@@ -281,7 +281,8 @@ namespace boomhs
 {
 
 void
-place_water(stlw::Logger& logger, ZoneState& zs, ShaderProgram& sp, glm::vec2 const& pos)
+place_water(stlw::Logger& logger, stlw::float_generator& rng, ZoneState& zs, ShaderProgram& sp,
+            glm::vec2 const& pos)
 {
   auto& registry  = zs.registry;
   auto& gfx_state = zs.gfx_state;
@@ -292,8 +293,9 @@ place_water(stlw::Logger& logger, ZoneState& zs, ShaderProgram& sp, glm::vec2 co
   auto const eid = registry.create();
 
   LOG_TRACE("Placing Water");
-  auto& wi    = WaterFactory::make_default(logger, sps, ttable, eid, registry);
-  wi.position = pos;
+  auto& wi     = WaterFactory::make_default(logger, sps, ttable, eid, registry);
+  wi.position  = pos;
+  wi.mix_color = Color::random(rng);
 
   size_t constexpr num_vertexes = 4;
   glm::vec2 constexpr dimensions{20};
@@ -335,7 +337,7 @@ place_water(stlw::Logger& logger, ZoneState& zs, ShaderProgram& sp, glm::vec2 co
 }
 
 Result<GameState, std::string>
-init(Engine& engine, EngineState& es, Camera& camera)
+init(Engine& engine, EngineState& es, Camera& camera, stlw::float_generator& rng)
 {
   auto& logger = es.logger;
 
@@ -354,7 +356,7 @@ init(Engine& engine, EngineState& es, Camera& camera)
     auto& water_sp = draw_water_options_to_shader(GameGraphicsMode::Basic, sps);
     FOR(i, 4) {
       FOR(j, 4) {
-        place_water(logger, zs, water_sp, glm::vec2{i * 25, j * 25});
+        place_water(logger, rng, zs, water_sp, glm::vec2{i * 25, j * 25});
       }
     }
   }
@@ -512,8 +514,8 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
 
   static bool set_camera_once = false;
   if (!set_camera_once) {
-    auto&      transform  = registry.get<Transform>(player_eid);
-    camera.set_target(transform);
+    camera.set_target(player.world_object);
+    set_camera_once = true;
   }
 
   auto const cstate = CameraFrameState::from_camera(camera);
@@ -813,7 +815,7 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     // Enable keyboard shortcuts
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-    // clear the screen before rending the main menu1
+    // clear the screen before rending the main menu
     render::clear_screen(LOC::BLACK);
 
     auto const& dimensions = engine.dimensions();

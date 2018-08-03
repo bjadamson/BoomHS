@@ -59,18 +59,24 @@ Camera::check_pointers() const
   check_pointers();                                                                                \
   return *target_
 
-Transform&
+WorldObject&
 Camera::get_target()
 {
   GET_TARGET_IMPL();
 }
 
-Transform const&
+WorldObject const&
 Camera::get_target() const
 {
   GET_TARGET_IMPL();
 }
 #undef GET_TARGET_IMPL
+
+void
+Camera::set_mode(CameraMode const m)
+{
+  mode_ = m;
+}
 
 void
 Camera::next_mode()
@@ -133,7 +139,7 @@ Camera::rotate(float const d_theta, float const d_phi)
 }
 
 void
-Camera::set_target(Transform& target)
+Camera::set_target(WorldObject& target)
 {
   target_ = &target;
 }
@@ -185,7 +191,7 @@ Camera::target_position() const
 {
   check_pointers();
 
-  auto& target = get_target();
+  auto& target = get_target().transform();
   return target.translation;
 }
 
@@ -216,7 +222,7 @@ Camera::compute_projectionmatrix(CameraMode const mode, PerspectiveViewport cons
 {
   auto const fov = glm::radians(p.field_of_view);
   switch (mode) {
-  case CameraMode::Perspective:
+  case CameraMode::ThirdPerson:
   case CameraMode::FPS:
     return glm::perspective(fov, p.viewport_aspect_ratio, p.near_plane, p.far_plane);
   case CameraMode::Ortho: {
@@ -231,20 +237,20 @@ Camera::compute_projectionmatrix(CameraMode const mode, PerspectiveViewport cons
 }
 
 glm::mat4
-Camera::compute_viewmatrix(CameraMode const mode, glm::vec3 const& eye, glm::vec3 const& center,
-                           glm::vec3 const& up, glm::vec3 const& fps_center)
+Camera::compute_viewmatrix(CameraMode const mode, glm::vec3 const& pos, glm::vec3 const& target,
+                           glm::vec3 const& up, glm::vec3 const& camera_forward)
 {
   auto constexpr ZERO = glm::vec3{0};
 
   switch (mode) {
     case CameraMode::Ortho: {
-    return glm::lookAt(ZERO, center, Y_UNIT_VECTOR);
+    return glm::lookAt(ZERO, target, Y_UNIT_VECTOR);
   }
   case CameraMode::FPS: {
-    return glm::lookAt(center, fps_center, Y_UNIT_VECTOR);
+    return glm::lookAt(target, target + camera_forward, Y_UNIT_VECTOR);
   }
-  case CameraMode::Perspective: {
-    return glm::lookAt(eye, center, up);
+  case CameraMode::ThirdPerson: {
+    return glm::lookAt(pos, target, up);
   }
   case CameraMode::MAX: {
     break;

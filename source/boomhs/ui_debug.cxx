@@ -471,7 +471,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 void
 draw_camera_window(Camera& camera, Player& player)
 {
-  auto const draw_perspective_controls = [&]() {
+  auto const draw_thirdperson_controls = [&]() {
     auto& perspective = camera.perspective_ref();
     ImGui::InputFloat("Field of View", &perspective.field_of_view);
     ImGui::InputFloat("Near Plane", &perspective.near_plane);
@@ -542,9 +542,9 @@ draw_camera_window(Camera& camera, Player& player)
       ImGui::Separator();
     };
     switch (camera.mode()) {
-    case CameraMode::Perspective:
-      draw_common("Perspective Projection");
-      draw_perspective_controls();
+    case CameraMode::ThirdPerson:
+      draw_common("ThirdPerson Projection");
+      draw_thirdperson_controls();
       break;
     case CameraMode::Ortho:
       draw_common("Ortho Projection");
