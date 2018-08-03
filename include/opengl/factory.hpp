@@ -26,16 +26,19 @@ struct ArrowCreateParams
   float const tip_length_factor = 4.0f;
 };
 
+struct ArrowFactory
+{
+  ArrowFactory() = delete;
+
+  static ArrowVertices create_vertices(ArrowCreateParams const&);
+
+  static constexpr std::array<GLuint, 6> INDICES = {{0, 1, 2, 3, 4, 5}};
+};
+
 } // namespace opengl
 
 namespace opengl::factories
 {
-
-// Arrows
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-ArrowVertices
-make_arrow_vertices(ArrowCreateParams const&);
 
 // Cubes
 ///////////////////////////////////////////////////////////////////////////////////////////////////

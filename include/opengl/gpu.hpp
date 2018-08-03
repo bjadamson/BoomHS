@@ -7,6 +7,13 @@
 
 #include <extlibs/glm.hpp>
 
+namespace boomhs
+{
+class Obj;
+class ObjData;
+struct ShaderName;
+} // namespace boomhs
+
 namespace opengl
 {
 struct ArrowCreateParams;
@@ -17,55 +24,21 @@ class VertexAttribute;
 
 } // namespace opengl
 
-namespace boomhs
-{
-class Obj;
-class ObjData;
-struct ShaderName;
-} // namespace boomhs
-
 namespace opengl::gpu
 {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Arrows
 DrawInfo
-create_arrow_2d(stlw::Logger&, VertexAttribute const&, ArrowCreateParams&&);
-
-DrawInfo
-create_arrow(stlw::Logger&, VertexAttribute const&, ArrowCreateParams&&);
-
-struct WorldOriginArrows
-{
-  DrawInfo x_dinfo;
-  DrawInfo y_dinfo;
-  DrawInfo z_dinfo;
-};
-
-WorldOriginArrows
-create_axis_arrows(stlw::Logger&, VertexAttribute const&);
+copy_arrow(stlw::Logger&, VertexAttribute const&, ArrowVertices const&);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Cubes
-DrawInfo
-copy_cubecolor_gpu(stlw::Logger&, CubeMinMax const&, VertexAttribute const&, Color const&);
-
-inline DrawInfo
-copy_cubecolor_gpu(stlw::Logger& logger, CubeMinMax const& cr, VertexAttribute const& sp,
-                   glm::vec3 const& c)
-{
-  return copy_cubecolor_gpu(logger, cr, sp, Color{c.x, c.y, c.z, 1.0f});
-}
-
 DrawInfo
 copy_cube_gpu(stlw::Logger&, CubeVertices const&, VertexAttribute const&);
 
 DrawInfo
 copy_cube_wireframe_gpu(stlw::Logger&, CubeVertices const&, VertexAttribute const&);
-
-// DrawInfo
-// copy_cubenormalcolor_gpu(stlw::Logger&, CubeMinMax const&, VertexAttribute const&, Color
-// const&);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Rectangles

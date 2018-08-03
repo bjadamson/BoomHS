@@ -55,13 +55,13 @@ calculate_arrow_endpoints(ArrowCreateParams const& params)
 
 } // ns anon
 
-namespace opengl::factories
+namespace opengl
 {
 
-// Arrows
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// Arrow
 ArrowVertices
-make_arrow_vertices(ArrowCreateParams const& params)
+ArrowFactory::create_vertices(ArrowCreateParams const& params)
 {
   auto endpoints = calculate_arrow_endpoints(params);
   auto const& p1 = endpoints.p1, p2 = endpoints.p2;
@@ -89,6 +89,11 @@ make_arrow_vertices(ArrowCreateParams const& params)
 #undef P1
 #undef P2
 }
+
+} // namespace opengl
+
+namespace opengl::factories
+{
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Cubes

@@ -15,6 +15,7 @@
 #include <opengl/global.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/shader.hpp>
+#include <opengl/shapes.hpp>
 
 #include <extlibs/fmt.hpp>
 #include <extlibs/sdl.hpp>
@@ -164,6 +165,28 @@ gl_log_callback(GLenum const source, GLenum const type, GLuint const id, GLenum 
                     severity, message);
 
   std::abort();
+}
+
+struct WorldOriginArrows
+{
+  DrawInfo x_dinfo;
+  DrawInfo y_dinfo;
+  DrawInfo z_dinfo;
+};
+
+WorldOriginArrows
+create_axis_arrows(stlw::Logger &logger, VertexAttribute const& va)
+{
+  glm::vec3 constexpr ORIGIN = glm::zero<glm::vec3>();
+
+  auto const avx = ArrowFactory::create_vertices(ArrowCreateParams{LOC::RED,   ORIGIN, ORIGIN + X_UNIT_VECTOR});
+  auto const avy = ArrowFactory::create_vertices(ArrowCreateParams{LOC::GREEN,   ORIGIN, ORIGIN + Y_UNIT_VECTOR});
+  auto const avz = ArrowFactory::create_vertices(ArrowCreateParams{LOC::BLUE,   ORIGIN, ORIGIN + Z_UNIT_VECTOR});
+
+  auto x = OG::copy_arrow(logger, va, avx);
+  auto y = OG::copy_arrow(logger, va, avy);
+  auto z = OG::copy_arrow(logger, va, avz);
+  return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
 }
 
 } // namespace
@@ -479,7 +502,9 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
   auto& sps = zs.gfx_state.sps;
   auto& sp  = sps.ref_sp("3d_pos_color");
 
-  auto        dinfo = OG::create_arrow(logger, sp.va(), ArrowCreateParams{color, start, head});
+  auto const& acp = ArrowCreateParams{color, start, head};
+  auto const arrow_v = ArrowFactory::create_vertices(acp);
+  auto        dinfo = OG::copy_arrow(logger, sp.va(), arrow_v);
   auto const& ldata = zs.level_data;
 
   Transform transform;
@@ -503,7 +528,7 @@ draw_global_axis(RenderState& rstate)
   LOG_TRACE("Drawing Global Axis");
 
   auto& sp           = sps.ref_sp("3d_pos_color");
-  auto  world_arrows = OG::create_axis_arrows(logger, sp.va());
+  auto  world_arrows = create_axis_arrows(logger, sp.va());
 
   auto const& ldata = zs.level_data;
   Transform   transform;
@@ -538,7 +563,7 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
   LOG_TRACE("Drawing Local Axis");
 
   auto& sp          = sps.ref_sp("3d_pos_color");
-  auto  axis_arrows = OG::create_axis_arrows(logger, sp.va());
+  auto  axis_arrows = create_axis_arrows(logger, sp.va());
 
   Transform transform;
   transform.translation = player_pos;

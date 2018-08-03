@@ -13,6 +13,7 @@ struct CubeMinMax
 };
 
 using ArrowVertices = std::array<float, 42>;
+using ArrowIndices  = std::array<GLuint, 6>;
 
 using CubeVertices = std::array<float, 24>;
 using CubeIndices  = std::array<GLuint, 36>;

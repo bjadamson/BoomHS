@@ -87,30 +87,10 @@ namespace opengl::gpu
 {
 
 DrawInfo
-create_arrow_2d(stlw::Logger &logger, VertexAttribute const& va,
-    ArrowCreateParams &&params)
+copy_arrow(stlw::Logger &logger, VertexAttribute const& va,
+    ArrowVertices const& vertices)
 {
-  auto const vertices = OF::make_arrow_vertices(params);
-
-  static constexpr std::array<GLuint, 6> INDICES = {{
-    0, 1, 2, 3, 4, 5
-  }};
-
-  DrawInfo dinfo{vertices.size(), INDICES.size()};
-  copy_synchronous(logger, va, dinfo, vertices, INDICES);
-  return dinfo;
-}
-
-DrawInfo
-create_arrow(stlw::Logger &logger, VertexAttribute const& va,
-    ArrowCreateParams &&params)
-{
-  auto const vertices = OF::make_arrow_vertices(params);
-
-  static constexpr std::array<GLuint, 6> INDICES = {{
-    0, 1, 2, 3, 4, 5
-  }};
-
+  auto const& INDICES = ArrowFactory::INDICES;
   DrawInfo dinfo{vertices.size(), INDICES.size()};
   copy_synchronous(logger, va, dinfo, vertices, INDICES);
   return dinfo;
@@ -195,17 +175,6 @@ create_terrain_grid(stlw::Logger &logger, VertexAttribute const& va, glm::vec2 c
   DrawInfo dinfo{vertices.size(), num_indices};
   copy_synchronous(logger, va, dinfo, vertices, indices);
   return dinfo;
-}
-
-WorldOriginArrows
-create_axis_arrows(stlw::Logger &logger, VertexAttribute const& va)
-{
-  glm::vec3 constexpr ORIGIN = glm::zero<glm::vec3>();
-
-  auto x = create_arrow(logger, va, ArrowCreateParams{LOC::RED,   ORIGIN, ORIGIN + X_UNIT_VECTOR});
-  auto y = create_arrow(logger, va, ArrowCreateParams{LOC::GREEN, ORIGIN, ORIGIN + Y_UNIT_VECTOR});
-  auto z = create_arrow(logger, va, ArrowCreateParams{LOC::BLUE,  ORIGIN, ORIGIN + Z_UNIT_VECTOR});
-  return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
 }
 
 /*
