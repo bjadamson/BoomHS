@@ -7,6 +7,10 @@
 namespace boomhs
 {
 
+struct Book
+{
+};
+
 struct Item
 {
   char const*          name        = "UNNAMED";

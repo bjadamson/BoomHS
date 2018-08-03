@@ -9,6 +9,11 @@
 #include <stlw/log.hpp>
 #include <string>
 
+namespace opengl
+{
+class TextureTable;
+} // namespace opengl
+
 namespace boomhs
 {
 struct Item;
@@ -31,7 +36,7 @@ public:
   void pickup_entity(EntityID, EntityRegistry&);
   void drop_entity(stlw::Logger&, EntityID, EntityRegistry&);
 
-  void update(stlw::Logger&, EntityRegistry&, TerrainGrid&, NearbyTargets&);
+  void update(stlw::Logger&, EntityRegistry&, TerrainGrid&, opengl::TextureTable&, NearbyTargets&);
 
   glm::vec3 world_position() const;
 

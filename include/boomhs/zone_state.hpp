@@ -16,21 +16,11 @@
 namespace boomhs
 {
 
-struct GpuState
-{
-  // These slots get a value when memory is loaded, set to none when memory is not.
-  opengl::EntityDrawHandleMap entities;
-  opengl::EntityDrawHandleMap entity_boundingboxes;
-
-  NO_COPY(GpuState);
-  MOVE_DEFAULT(GpuState);
-};
-
 struct GfxState
 {
-  GpuState               gpu_state = {};
-  opengl::ShaderPrograms sps;
-  opengl::TextureTable   texture_table;
+  opengl::DrawHandleManager draw_handles;
+  opengl::ShaderPrograms    sps;
+  opengl::TextureTable      texture_table;
 
   explicit GfxState(opengl::ShaderPrograms&& sp, opengl::TextureTable&& tt)
       : sps(MOVE(sp))

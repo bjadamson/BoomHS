@@ -1,41 +1,39 @@
 #pragma once
+#include <opengl/colors.hpp>
 #include <opengl/draw_info.hpp>
-#include <opengl/factory.hpp>
-#include <opengl/global.hpp>
-#include <opengl/texture.hpp>
-#include <opengl/vertex_attribute.hpp>
-
-#include <boomhs/components.hpp>
-#include <boomhs/obj.hpp>
+#include <opengl/shapes.hpp>
 
 #include <stlw/log.hpp>
 
-#include <extlibs/fmt.hpp>
-#include <extlibs/glew.hpp>
-
-#include <array>
+#include <extlibs/glm.hpp>
 
 namespace opengl
 {
+struct ArrowCreateParams;
+struct ShaderPrograms;
+class TextureInfo;
 struct VertexBuffer;
-
-struct CubeVertices
-{
-  glm::vec3 min, max;
-};
+class VertexAttribute;
 
 } // namespace opengl
+
+namespace boomhs
+{
+class Obj;
+class ObjData;
+struct ShaderName;
+} // namespace boomhs
 
 namespace opengl::gpu
 {
 
-// Arrows
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// Arrows
 DrawInfo
-create_arrow_2d(stlw::Logger&, VertexAttribute const&, OF::ArrowCreateParams&&);
+create_arrow_2d(stlw::Logger&, VertexAttribute const&, ArrowCreateParams&&);
 
 DrawInfo
-create_arrow(stlw::Logger&, VertexAttribute const&, OF::ArrowCreateParams&&);
+create_arrow(stlw::Logger&, VertexAttribute const&, ArrowCreateParams&&);
 
 struct WorldOriginArrows
 {
@@ -47,41 +45,39 @@ struct WorldOriginArrows
 WorldOriginArrows
 create_axis_arrows(stlw::Logger&, VertexAttribute const&);
 
-// Cubes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// Cubes
 DrawInfo
-copy_cubecolor_gpu(stlw::Logger&, CubeVertices const&, VertexAttribute const&, Color const&);
+copy_cubecolor_gpu(stlw::Logger&, CubeMinMax const&, VertexAttribute const&, Color const&);
 
 inline DrawInfo
-copy_cubecolor_gpu(stlw::Logger& logger, CubeVertices const& cr, VertexAttribute const& sp,
+copy_cubecolor_gpu(stlw::Logger& logger, CubeMinMax const& cr, VertexAttribute const& sp,
                    glm::vec3 const& c)
 {
   return copy_cubecolor_gpu(logger, cr, sp, Color{c.x, c.y, c.z, 1.0f});
 }
 
 DrawInfo
-copy_cubevertexonly_gpu(stlw::Logger&, CubeVertices const&, VertexAttribute const&);
+copy_cube_gpu(stlw::Logger&, CubeVertices const&, VertexAttribute const&);
 
 DrawInfo
-copy_cube_wireframevertexonly_gpu(stlw::Logger&, CubeVertices const&, VertexAttribute const&);
+copy_cube_wireframe_gpu(stlw::Logger&, CubeVertices const&, VertexAttribute const&);
 
-DrawInfo
-copy_cubenormalcolor_gpu(stlw::Logger&, CubeVertices const&, VertexAttribute const&, Color const&);
+// DrawInfo
+// copy_cubenormalcolor_gpu(stlw::Logger&, CubeMinMax const&, VertexAttribute const&, Color
+// const&);
 
-DrawInfo
-copy_cubetexture_gpu(stlw::Logger&, CubeVertices const&, VertexAttribute const&);
-
-// Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// Rectangles
 DrawInfo
-copy_rectangle(stlw::Logger&, VertexAttribute const&, OF::RectBuffer const&);
+copy_rectangle(stlw::Logger&, VertexAttribute const&, RectBuffer const&);
 
 DrawInfo
-copy_rectangle_uvs(stlw::Logger&, VertexAttribute const&, OF::RectangleVertices const&,
+copy_rectangle_uvs(stlw::Logger&, VertexAttribute const&, RectangleVertices const&,
                    TextureInfo const&);
 
-// General
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// General
 DrawInfo
 create_terrain_grid(stlw::Logger&, VertexAttribute const&, glm::vec2 const&, bool, Color const&);
 

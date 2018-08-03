@@ -61,12 +61,14 @@ public:
   std::string to_string() const;
 };
 
+class DrawHandleManager;
 class EntityDrawHandleMap
 {
   std::vector<opengl::DrawInfo> drawinfos_;
   std::vector<boomhs::EntityID> entities_;
 
-public:
+  friend class DrawHandleManager;
+
   EntityDrawHandleMap() = default;
   NO_COPY(EntityDrawHandleMap);
   MOVE_DEFAULT(EntityDrawHandleMap);
@@ -75,8 +77,35 @@ public:
 
   bool empty() const { return drawinfos_.empty(); }
 
-  opengl::DrawInfo&       lookup(stlw::Logger&, boomhs::EntityID);
-  opengl::DrawInfo const& lookup(stlw::Logger&, boomhs::EntityID) const;
+  opengl::DrawInfo*       lookup(stlw::Logger&, boomhs::EntityID);
+  opengl::DrawInfo const* lookup(stlw::Logger&, boomhs::EntityID) const;
+};
+
+class DrawHandleManager
+{
+  // These slots get a value when memory is loaded, set to none when memory is not.
+  EntityDrawHandleMap entities_;
+  EntityDrawHandleMap bboxes_;
+
+public:
+  DrawHandleManager() = default;
+  NO_COPY(DrawHandleManager);
+  MOVE_DEFAULT(DrawHandleManager);
+
+  void add_entity(boomhs::EntityID, DrawInfo&&);
+  void add_bbox(boomhs::EntityID, DrawInfo&&);
+
+  EntityDrawHandleMap&       entities();
+  EntityDrawHandleMap const& entities() const;
+
+  EntityDrawHandleMap&       bbox_entities();
+  EntityDrawHandleMap const& bbox_entities() const;
+
+  DrawInfo&       lookup_entity(stlw::Logger&, boomhs::EntityID);
+  DrawInfo const& lookup_entity(stlw::Logger&, boomhs::EntityID) const;
+
+  DrawInfo&       lookup_bbox(stlw::Logger&, boomhs::EntityID);
+  DrawInfo const& lookup_bbox(stlw::Logger&, boomhs::EntityID) const;
 };
 
 } // namespace opengl

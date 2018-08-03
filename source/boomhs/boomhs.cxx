@@ -24,6 +24,7 @@
 #include <boomhs/water.hpp>
 
 #include <opengl/entity_renderer.hpp>
+#include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
 #include <opengl/scene_renderer.hpp>
@@ -285,10 +286,10 @@ place_water(stlw::Logger& logger, stlw::float_generator& rng, ZoneState& zs, Sha
             glm::vec2 const& pos)
 {
   auto& registry  = zs.registry;
-  auto& gfx_state = zs.gfx_state;
-  auto& gpu_state = gfx_state.gpu_state;
-  auto& sps       = gfx_state.sps;
-  auto& ttable    = gfx_state.texture_table;
+  auto& gfx_state    = zs.gfx_state;
+  auto& draw_handles = gfx_state.draw_handles;
+  auto& sps          = gfx_state.sps;
+  auto& ttable       = gfx_state.texture_table;
 
   auto const eid = registry.create();
 
@@ -305,23 +306,20 @@ place_water(stlw::Logger& logger, stlw::float_generator& rng, ZoneState& zs, Sha
     auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
     auto              dinfo  = gpu::copy_gpu(logger, sp.va(), buffer);
 
-    auto& entities = gpu_state.entities;
-
-    entities.add(eid, MOVE(dinfo));
-    wi.dinfo = &entities.lookup(logger, eid);
+    draw_handles.add_entity(eid, MOVE(dinfo));
+    wi.dinfo = &draw_handles.lookup_entity(logger, eid);
   }
   {
-    auto& bbox_entities = gpu_state.entity_boundingboxes;
-
     auto& bbox = registry.assign<AABoundingBox>(eid);
     bbox.min   = glm::vec3{-0.5, -0.2, -0.5};
     bbox.max   = glm::vec3{0.5f, 0.2, 0.5};
 
-    CubeVertices const cv{bbox.min, bbox.max};
+    CubeMinMax const cmm{bbox.min, bbox.max};
 
     auto& sp    = sps.ref_sp("wireframe");
-    auto  dinfo = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, cv, sp.va());
-    bbox_entities.add(eid, MOVE(dinfo));
+    auto const vertices = OF::cube_vertices(cmm.min, cmm.max);
+    auto  dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, vertices, sp.va());
+    draw_handles.add_bbox(eid, MOVE(dinfo));
   }
 
   registry.assign<Selectable>(eid);
@@ -541,7 +539,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
       auto& terrain = ldata.terrain;
       update_npcpositions(logger, registry, terrain, ft);
       update_nearbytargets(nbt, registry, ft);
-      player.update(logger, registry, terrain, nbt);
+      player.update(logger, registry, terrain, ttable, nbt);
     }
   }
 
@@ -801,8 +799,10 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
     auto&              skybox_sp = sps.ref_sp("skybox");
     glm::vec3 const    vmin{-0.5f};
     glm::vec3 const    vmax{0.5f};
-    CubeVertices const cv{vmin, vmax};
-    DrawInfo           dinfo    = opengl::gpu::copy_cubetexture_gpu(logger, cv, skybox_sp.va());
+    CubeMinMax const cmm{vmin, vmax};
+
+    auto const vertices = OF::cube_vertices(cmm.min, cmm.max);
+    DrawInfo           dinfo    = opengl::gpu::copy_cube_gpu(logger, vertices, skybox_sp.va());
     auto&              day_ti   = *ttable.find("building_skybox");
     auto&              night_ti = *ttable.find("night_skybox");
     return SkyboxRenderer{logger, MOVE(dinfo), day_ti, night_ti, skybox_sp};

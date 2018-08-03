@@ -20,10 +20,8 @@ struct ItemFactory
 
   static EntityID create_empty(EntityRegistry&, opengl::TextureTable&);
 
-  static EntityID create_item(EntityRegistry&, opengl::TextureTable&, char const*, char const*,
-                              char const*, char const*);
-
-  static EntityID create_torch(EntityRegistry&, stlw::float_generator&, opengl::TextureTable&);
+  static EntityID create_book(EntityRegistry&, opengl::TextureTable&);
+  static EntityID create_torch(EntityRegistry&, opengl::TextureTable&);
 };
 
 } // namespace boomhs

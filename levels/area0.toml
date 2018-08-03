@@ -102,6 +102,11 @@ type = "texture:2d-RGB"
 filename = "assets/ui/test_icon.png"
 
 [[resource]]
+name = "BookUI"
+type = "texture:2d-RGBA"
+filename = "assets/ui/book.png"
+
+[[resource]]
 name = "TorchUI"
 type = "texture:2d-RGBA"
 filename = "assets/ui/torch-icon.png"

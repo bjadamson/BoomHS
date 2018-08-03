@@ -479,7 +479,7 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
   auto& sps = zs.gfx_state.sps;
   auto& sp  = sps.ref_sp("3d_pos_color");
 
-  auto        dinfo = OG::create_arrow(logger, sp.va(), OF::ArrowCreateParams{color, start, head});
+  auto        dinfo = OG::create_arrow(logger, sp.va(), ArrowCreateParams{color, start, head});
   auto const& ldata = zs.level_data;
 
   Transform transform;
@@ -603,7 +603,7 @@ draw_inventory_overlay(RenderState& rstate)
   auto color = LOC::GRAY;
   color.set_a(0.25);
   OF::RectInfo const ri{1.0f, 1.0f, color, std::nullopt, std::nullopt};
-  OF::RectBuffer     buffer = OF::make_rectangle(ri);
+  RectBuffer     buffer = OF::make_rectangle(ri);
 
   DrawInfo dinfo = gpu::copy_rectangle(logger, sp.va(), buffer);
 

@@ -24,12 +24,12 @@ namespace
 
 void
 place_torch(stlw::Logger& logger, TerrainGrid& terrain, EntityRegistry& registry,
-            stlw::float_generator& rng, TextureTable& ttable)
+            TextureTable& ttable, glm::vec2 const& pos)
 {
-  auto  eid       = ItemFactory::create_torch(registry, rng, ttable);
+  auto  const eid       = ItemFactory::create_torch(registry, ttable);
   auto& transform = registry.get<Transform>(eid);
 
-  float const x = 2, z = 2;
+  float const x = pos.x, z = pos.y;
   auto const y = terrain.get_height(logger, x, z);
   transform.translation = glm::vec3{x, y, z};
 }
@@ -106,7 +106,7 @@ StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
   auto terrain = terrain::generate_grid(logger, tgc, tc, heightmap, sp);
 
   LOG_TRACE("Placing Torch");
-  place_torch(logger, terrain, registry, rng, ttable);
+  place_torch(logger, terrain, registry, ttable, glm::vec2{2, 2});
 
   LOG_TRACE("Placing Player");
   place_player(logger, terrain, material_table, registry);

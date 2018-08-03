@@ -152,10 +152,9 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
     auto& logger    = es.logger;
     auto& zs        = lm.active();
     auto& gfx_state = zs.gfx_state;
-    auto& gpu_state = gfx_state.gpu_state;
+    auto& draw_handles = gfx_state.draw_handles;
     auto& sps       = gfx_state.sps;
 
-    auto& entity_map = gfx_state.gpu_state.entities;
     if (registry.has<TreeComponent>(eid) && ImGui::CollapsingHeader("Tree Editor")) {
       auto const make_str = [](char const* text, auto const num) {
         return text + std::to_string(num);
@@ -181,7 +180,7 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
       auto& sn = registry.get<ShaderName>(eid);
       auto& va = sps.ref_sp(sn.value).va();
 
-      auto& dinfo = entity_map.lookup(logger, eid);
+      auto& dinfo = draw_handles.lookup_entity(logger, eid);
       Tree::update_colors(logger, va, dinfo, tc);
     }
   };

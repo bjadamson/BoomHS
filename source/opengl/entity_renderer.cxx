@@ -139,7 +139,7 @@ bbox_in_frustrum(FrameState const& fstate, AABoundingBox const& bbox)
 template <typename... Args>
 void
 draw_entity(RenderState& rstate, GLenum const dm, ShaderProgram& sp, EntityID const eid,
-                   EntityDrawHandleMap &hmap, Transform& transform, IsVisible& is_v,
+                   DrawHandleManager &draw_handles, Transform& transform, IsVisible& is_v,
                    AABoundingBox& bbox, Args&&... args)
 {
   // If entity is not visible, just return.
@@ -156,7 +156,7 @@ draw_entity(RenderState& rstate, GLenum const dm, ShaderProgram& sp, EntityID co
     return;
   }
 
-  auto& dinfo = hmap.lookup(logger, eid);
+  auto& dinfo = draw_handles.lookup_entity(logger, eid);
   sp.while_bound(logger, [&]() {
     draw_entity_common_without_binding_sp(rstate, dm, sp, dinfo, eid, transform);
   });
@@ -184,9 +184,8 @@ draw_orbital_body(RenderState& rstate, ShaderProgram& sp, EntityID const eid, Tr
   ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
 
   auto& zs        = fstate.zs;
-  auto& gpu_state = zs.gfx_state.gpu_state;
-  auto& hmap      = gpu_state.entities;
-  ti->while_bound(logger, [&]() { draw_entity(rstate, GL_TRIANGLES, sp, eid, hmap,
+  auto& draw_handles = zs.gfx_state.draw_handles;
+  ti->while_bound(logger, [&]() { draw_entity(rstate, GL_TRIANGLES, sp, eid, draw_handles,
         transform, is_v, bbox); });
 }
 
@@ -208,7 +207,11 @@ render_common_entities(RenderState& rstate, stlw::float_generator& rng, FrameTim
                        DrawTexturedJunkFN const& draw_textured_junk_fn,
                        DrawPointlightFN const& draw_pointlight_fn)
 {
-  auto& fstate   = rstate.fs;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& logger = es.logger;
+
+
   auto& zs       = fstate.zs;
   auto& registry = zs.registry;
 
@@ -220,6 +223,8 @@ render_common_entities(RenderState& rstate, stlw::float_generator& rng, FrameTim
   registry.view<Common..., TextureRenderable, JunkEntityFromFILE>().each(draw_textured_junk_fn);
 
   registry.view<Common..., Torch, TextureRenderable>().each(draw_torch_fn);
+
+  registry.view<Common..., TextureRenderable, Book>().each(draw_textured_junk_fn);
   registry.view<Common..., Color, JunkEntityFromFILE>().each(draw_junk_fn);
   registry.view<Common..., TreeComponent>().each(draw_common_fn);
 
@@ -246,14 +251,11 @@ namespace opengl
 void
 EntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
 {
-  auto&       fstate    = rstate.fs;
-  auto const& es        = fstate.es;
-  auto&       logger    = es.logger;
-  auto&       zs        = fstate.zs;
-  auto&       gpu_state = zs.gfx_state.gpu_state;
-
-  auto& eh   = gpu_state.entities;
-  auto& ebbh = gpu_state.entity_boundingboxes;
+  auto& fstate    = rstate.fs;
+  auto& es        = fstate.es;
+  auto& logger    = es.logger;
+  auto& zs        = fstate.zs;
+  auto& draw_handles = zs.gfx_state.draw_handles;
 
   auto& registry = zs.registry;
   auto& sps      = zs.gfx_state.sps;
@@ -264,7 +266,7 @@ EntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generator& r
   auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp(sn.value);
     if (sp.is_2d) {
-      draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, draw_handles, transform, is_v, bbox, FORWARD(args));
     }
   };
 
@@ -307,10 +309,8 @@ EntityRenderer::render2d_ui(RenderState& rstate, stlw::float_generator& rng, Fra
   auto const& es        = fstate.es;
   auto&       logger    = es.logger;
   auto&       zs        = fstate.zs;
-  auto&       gpu_state = zs.gfx_state.gpu_state;
 
-  auto& eh   = gpu_state.entities;
-  auto& ebbh = gpu_state.entity_boundingboxes;
+  auto& draw_handles = zs.gfx_state.draw_handles;
 
   auto& registry = zs.registry;
   auto& sps      = zs.gfx_state.sps;
@@ -322,7 +322,7 @@ EntityRenderer::render2d_ui(RenderState& rstate, stlw::float_generator& rng, Fra
     auto& sp = sps.ref_sp(sn.value);
 
     if (sp.is_2d) {
-      draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, draw_handles, transform, is_v, bbox, FORWARD(args));
     }
   };
 
@@ -365,10 +365,7 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
   auto const& es        = fstate.es;
   auto&       logger    = es.logger;
   auto&       zs        = fstate.zs;
-  auto&       gpu_state = zs.gfx_state.gpu_state;
-
-  auto& eh   = gpu_state.entities;
-  auto& ebbh = gpu_state.entity_boundingboxes;
+  auto&       draw_handles = zs.gfx_state.draw_handles;
 
   auto& registry = zs.registry;
   auto& sps      = zs.gfx_state.sps;
@@ -379,7 +376,7 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
   auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp(sn.value);
     if (!sp.is_2d) {
-      draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, draw_handles, transform, is_v, bbox, FORWARD(args));
     }
   };
 
@@ -397,7 +394,7 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
   auto const draw_junk_fn = [&](COMMON_ARGS, Color&, JunkEntityFromFILE& je) {
     auto& sp    = sps.ref_sp(sn.value);
     if (!sp.is_2d) {
-      draw_entity(rstate, je.draw_mode, sp, eid, eh, transform, is_v, bbox);
+      draw_entity(rstate, je.draw_mode, sp, eid, draw_handles, transform, is_v, bbox);
     }
   };
   auto const draw_torch_fn = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
@@ -436,7 +433,7 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_color(logger, "u_wirecolor", wire_color);
-      auto& dinfo = ebbh.lookup(logger, eid);
+      auto& dinfo = draw_handles.lookup_bbox(logger, eid);
 
       // We needed to bind the shader program to set the uniforms above, no reason to pay to bind
       // it again.
@@ -473,8 +470,7 @@ BlackEntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generat
 
   auto& gfx_state = zs.gfx_state;
   auto& sps = gfx_state.sps;
-  auto& gpu_state = gfx_state.gpu_state;
-  auto& eh    = gpu_state.entities;
+  auto& draw_handles = gfx_state.draw_handles;
 
 #define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
 #define COMMON_ARGS auto const eid, auto& sn,   auto &transform, auto &is_v, auto &bbox
@@ -482,7 +478,7 @@ BlackEntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generat
   auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp("silhoutte_black");
     if (sp.is_2d) {
-      draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, draw_handles, transform, is_v, bbox, FORWARD(args));
     }
   };
 
@@ -529,8 +525,7 @@ BlackEntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, F
 
   auto& gfx_state = zs.gfx_state;
   auto& sps = gfx_state.sps;
-  auto& gpu_state = gfx_state.gpu_state;
-  auto& eh    = gpu_state.entities;
+  auto& draw_handles = gfx_state.draw_handles;
 
 #define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
 #define COMMON_ARGS auto const eid, auto& sn,   auto &transform, auto &is_v, auto &bbox
@@ -538,7 +533,7 @@ BlackEntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, F
   auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp("silhoutte_black");
     if (!sp.is_2d) {
-      draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, draw_handles, transform, is_v, bbox, FORWARD(args));
     }
   };
 
@@ -549,7 +544,7 @@ BlackEntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, F
     auto& sp = sps.ref_sp(sn.value);
 
     if (!sp.is_2d) {
-      draw_entity(rstate, GL_TRIANGLES, sp, eid, eh, transform, is_v, bbox, FORWARD(args));
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, draw_handles, transform, is_v, bbox, FORWARD(args));
     }
   };
 #undef COMMON_ARGS

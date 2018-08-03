@@ -2,15 +2,23 @@
 #include <opengl/factory.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/global.hpp>
+#include <opengl/shader.hpp>
+#include <opengl/texture.hpp>
 #include <opengl/vertex_attribute.hpp>
 
+#include <boomhs/components.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/obj.hpp>
 #include <boomhs/obj_store.hpp>
 #include <boomhs/terrain.hpp>
 
+
 #include <stlw/algorithm.hpp>
 #include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
+
+#include <extlibs/fmt.hpp>
+#include <extlibs/glew.hpp>
 #include <array>
 
 using namespace boomhs;
@@ -80,7 +88,7 @@ namespace opengl::gpu
 
 DrawInfo
 create_arrow_2d(stlw::Logger &logger, VertexAttribute const& va,
-    OF::ArrowCreateParams &&params)
+    ArrowCreateParams &&params)
 {
   auto const vertices = OF::make_arrow_vertices(params);
 
@@ -95,7 +103,7 @@ create_arrow_2d(stlw::Logger &logger, VertexAttribute const& va,
 
 DrawInfo
 create_arrow(stlw::Logger &logger, VertexAttribute const& va,
-    OF::ArrowCreateParams &&params)
+    ArrowCreateParams &&params)
 {
   auto const vertices = OF::make_arrow_vertices(params);
 
@@ -194,15 +202,15 @@ create_axis_arrows(stlw::Logger &logger, VertexAttribute const& va)
 {
   glm::vec3 constexpr ORIGIN = glm::zero<glm::vec3>();
 
-  auto x = create_arrow(logger, va, OF::ArrowCreateParams{LOC::RED,   ORIGIN, ORIGIN + X_UNIT_VECTOR});
-  auto y = create_arrow(logger, va, OF::ArrowCreateParams{LOC::GREEN, ORIGIN, ORIGIN + Y_UNIT_VECTOR});
-  auto z = create_arrow(logger, va, OF::ArrowCreateParams{LOC::BLUE,  ORIGIN, ORIGIN + Z_UNIT_VECTOR});
+  auto x = create_arrow(logger, va, ArrowCreateParams{LOC::RED,   ORIGIN, ORIGIN + X_UNIT_VECTOR});
+  auto y = create_arrow(logger, va, ArrowCreateParams{LOC::GREEN, ORIGIN, ORIGIN + Y_UNIT_VECTOR});
+  auto z = create_arrow(logger, va, ArrowCreateParams{LOC::BLUE,  ORIGIN, ORIGIN + Z_UNIT_VECTOR});
   return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
 }
 
 /*
 DrawInfo
-copy_cubecolor_gpu(stlw::Logger &logger, CubeVertices const& cr, VertexAttribute const& va,
+copy_cubecolor_gpu(stlw::Logger &logger, CubeMinMax const& cr, VertexAttribute const& va,
     Color const& color)
 {
   // clang-format off
@@ -230,8 +238,9 @@ copy_cubecolor_gpu(stlw::Logger &logger, CubeVertices const& cr, VertexAttribute
 }
 */
 
+/*
 DrawInfo
-copy_cubenormalcolor_gpu(stlw::Logger &logger, CubeVertices const& cr, VertexAttribute const& va,
+copy_cubenormalcolor_gpu(stlw::Logger &logger, CubeMinMax const& cr, VertexAttribute const& va,
     Color const& color)
 {
   // clang-format off
@@ -313,27 +322,19 @@ copy_cubenormalcolor_gpu(stlw::Logger &logger, CubeVertices const& cr, VertexAtt
   copy_synchronous(logger, va, dinfo, vertex_data, indices);
   return dinfo;
 }
+*/
 
 DrawInfo
-copy_cubevertexonly_gpu(stlw::Logger &logger, CubeVertices const& cv, VertexAttribute const& va)
+copy_cube_gpu(stlw::Logger &logger, CubeVertices const& cv, VertexAttribute const& va)
 {
-  auto const vertices = OF::cube_vertices(cv.min, cv.max);
-  return make_drawinfo(logger, va, vertices, OF::CUBE_INDICES);
+  return make_drawinfo(logger, va, cv, OF::CUBE_INDICES);
 }
 
 DrawInfo
-copy_cube_wireframevertexonly_gpu(stlw::Logger& logger, CubeVertices const& cv,
+copy_cube_wireframe_gpu(stlw::Logger& logger, CubeVertices const& cv,
     VertexAttribute const& va)
 {
-  auto const vertices = OF::cube_vertices(cv.min, cv.max);
-  return make_drawinfo(logger, va, vertices, OF::CUBE_WIREFRAME_INDICES);
-}
-
-DrawInfo
-copy_cubetexture_gpu(stlw::Logger &logger, CubeVertices const& cv, VertexAttribute const& va)
-{
-  auto const vertices = OF::cube_vertices(cv.min, cv.max);
-  return make_drawinfo(logger, va, vertices, OF::CUBE_INDICES);
+  return make_drawinfo(logger, va, cv, OF::CUBE_WIREFRAME_INDICES);
 }
 
 DrawInfo
@@ -356,7 +357,7 @@ copy_gpu(stlw::Logger &logger, VertexAttribute const& va, VertexBuffer const& ob
 
 DrawInfo
 copy_rectangle(stlw::Logger &logger, VertexAttribute const& va,
-    OF::RectBuffer const& buffer)
+    RectBuffer const& buffer)
 {
   auto const& v = buffer.vertices;
   auto const& i = buffer.indices;
@@ -365,7 +366,7 @@ copy_rectangle(stlw::Logger &logger, VertexAttribute const& va,
 
 DrawInfo
 copy_rectangle_uvs(stlw::Logger &logger, VertexAttribute const& va,
-                   OF::RectangleVertices const& v, TextureInfo const& tinfo)
+                   RectangleVertices const& v, TextureInfo const& tinfo)
 {
   auto const& i = OF::RECTANGLE_INDICES;
   auto const uv = OF::rectangle_uvs(tinfo.uv_max);

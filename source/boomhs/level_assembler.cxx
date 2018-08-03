@@ -10,6 +10,7 @@
 
 #include <boomhs/obj.hpp>
 #include <opengl/gpu.hpp>
+#include <opengl/factory.hpp>
 #include <opengl/lighting.hpp>
 
 #include <sstream>
@@ -37,26 +38,26 @@ assemble(LevelGeneratedData&& gendata, LevelAssets&& assets, EntityRegistry& reg
   return ZoneState{MOVE(level_data), MOVE(gfx), registry};
 }
 
-Result<EntityDrawHandleMap, std::string>
+Result<stlw::Nothing, std::string>
 copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
-                EntityRegistry& registry, ObjStore& obj_store)
+                EntityRegistry& registry, ObjStore& obj_store, DrawHandleManager& draw_handles)
 {
-  EntityDrawHandleMap entity_drawmap;
+  auto const copy_cube = [&](auto const eid, auto& sn, auto& cr, auto&&...) {
+    CubeMinMax const cmm{cr.min, cr.max};
+    auto& va = sps.ref_sp(sn.value).va();
 
+    auto const vertices = OF::cube_vertices(cmm.min, cmm.max);
+    auto  handle = opengl::gpu::copy_cube_gpu(logger, vertices, va);
+    draw_handles.add_entity(eid, MOVE(handle));
+  };
   // copy CUBES to GPU
   registry.view<ShaderName, CubeRenderable, PointLight>().each(
-      [&](auto entity, auto& sn, auto& cr, auto&&...) {
-        auto&              va = sps.ref_sp(sn.value).va();
-        CubeVertices const cv{cr.min, cr.max};
-        auto               handle = opengl::gpu::copy_cubevertexonly_gpu(logger, cv, va);
-        entity_drawmap.add(entity, MOVE(handle));
+      [&](auto const eid, auto& sn, auto& cr, auto&&... args) {
+      copy_cube(eid, sn, cr, FORWARD(args));
       });
   registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
-      [&](auto entity, auto& sn, auto& cr, auto& texture) {
-        auto&              va = sps.ref_sp(sn.value).va();
-        CubeVertices const cv{cr.min, cr.max};
-        auto               handle = opengl::gpu::copy_cubetexture_gpu(logger, cv, va);
-        entity_drawmap.add(entity, MOVE(handle));
+      [&](auto const eid, auto& sn, auto& cr, auto& texture) {
+        copy_cube(eid, sn, cr, texture);
       });
 
   // copy MESHES to GPU
@@ -68,7 +69,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
         auto const& obj = obj_store.get(logger, mesh.name);
 
         auto handle = opengl::gpu::copy_gpu(logger, va, obj);
-        entity_drawmap.add(entity, MOVE(handle));
+        draw_handles.add_entity(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto& mesh, auto& texture) {
@@ -78,7 +79,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
         auto const& obj = obj_store.get(logger, mesh.name);
 
         auto handle = opengl::gpu::copy_gpu(logger, va, obj);
-        entity_drawmap.add(entity, MOVE(handle));
+        draw_handles.add_entity(entity, MOVE(handle));
       });
   registry.view<ShaderName, BillboardRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
@@ -87,7 +88,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
         auto*      ti = texture.texture_info;
         assert(ti);
         auto handle = opengl::gpu::copy_rectangle_uvs(logger, va, v, *ti);
-        entity_drawmap.add(entity, MOVE(handle));
+        draw_handles.add_entity(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, JunkEntityFromFILE>().each(
       [&](auto entity, auto& sn, auto& mesh, auto&&...) {
@@ -97,7 +98,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
         auto const& obj = obj_store.get(logger, mesh.name);
 
         auto handle = opengl::gpu::copy_gpu(logger, va, obj);
-        entity_drawmap.add(entity, MOVE(handle));
+        draw_handles.add_entity(entity, MOVE(handle));
       });
 
   registry.view<ShaderName, MeshRenderable, TreeComponent>().each(
@@ -112,11 +113,11 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
         auto& tc = registry.get<typename std::remove_reference<decltype(tree)>::type>(entity);
         tc.set_obj(&obj);
 
-        auto& dinfo = entity_drawmap.lookup(logger, entity);
+        auto& dinfo = draw_handles.lookup_entity(logger, entity);
         Tree::update_colors(logger, va, dinfo, tc);
       });
 
-  return Ok(MOVE(entity_drawmap));
+  return OK_NONE;
 }
 
 void
@@ -128,27 +129,24 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
   auto&       sps       = gfx_state.sps;
   auto&       registry  = zs.registry;
 
-  auto copy_result = copy_assets_gpu(logger, sps, registry, objstore);
-  assert(copy_result);
-  auto edh = copy_result.expect_moveout("Error copying asset to gpu");
+  auto& draw_handles = gfx_state.draw_handles;
+  auto copy_result = copy_assets_gpu(logger, sps, registry, objstore, draw_handles)
+    .expect_moveout("Error copying asset to gpu");
 
   auto& obj_store                 = ldata.obj_store;
   auto constexpr WIREFRAME_SHADER = "wireframe";
   auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
 
-  EntityDrawHandleMap bbox_dh;
   auto const          add_wireframe = [&](auto const eid, auto const& min, auto const& max) {
     {
       auto& bbox = registry.assign<AABoundingBox>(eid);
       bbox.min   = min;
       bbox.max   = max;
 
-      // LOG_ERROR_SPRINTF("box: [min: %s, max: %s, midp: %s], ", glm::to_string(bbox.min),
-      // glm::to_string(bbox.max), glm::to_string(bbox.max - bbox.min));
-
-      CubeVertices const cv{bbox.min, bbox.max};
-      auto               dinfo = opengl::gpu::copy_cube_wireframevertexonly_gpu(logger, cv, va);
-      bbox_dh.add(eid, MOVE(dinfo));
+      CubeMinMax const cmm{bbox.min, bbox.max};
+      auto const cv = OF::cube_vertices(cmm.min, cmm.max);
+      auto    dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, cv, va);
+      draw_handles.add_bbox(eid, MOVE(dinfo));
     }
   };
   for (auto const eid : registry.view<MeshRenderable>()) {
@@ -175,10 +173,6 @@ copy_to_gpu(stlw::Logger& logger, ZoneState& zs)
     glm::vec3 constexpr max = glm::vec3{0.0};
     add_wireframe(eid, min, max);
   }
-
-  auto& gpu_state                = gfx_state.gpu_state;
-  gpu_state.entities             = MOVE(edh);
-  gpu_state.entity_boundingboxes = MOVE(bbox_dh);
 }
 
 } // namespace

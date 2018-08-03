@@ -1,6 +1,7 @@
 #pragma once
 #include <opengl/colors.hpp>
 #include <opengl/draw_info.hpp>
+#include <opengl/shapes.hpp>
 
 #include <array>
 #include <optional>
@@ -14,14 +15,6 @@ struct Obj;
 namespace opengl
 {
 class ShaderProgram;
-} // namespace opengl
-
-namespace opengl::factories
-{
-
-// Arrows
-///////////////////////////////////////////////////////////////////////////////////////////////////
-using ArrayVertices = std::array<float, 42>;
 
 struct ArrowCreateParams
 {
@@ -33,13 +26,19 @@ struct ArrowCreateParams
   float const tip_length_factor = 4.0f;
 };
 
-ArrayVertices
+} // namespace opengl
+
+namespace opengl::factories
+{
+
+// Arrows
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+ArrowVertices
 make_arrow_vertices(ArrowCreateParams const&);
 
 // Cubes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-using CubeVertices = std::array<float, 24>;
-using CubeIndices  = std::array<GLuint, 36>;
 
 // clang-format off
 static constexpr CubeIndices CUBE_INDICES = {{
@@ -82,49 +81,6 @@ cube_vertices(glm::vec3 const&, glm::vec3 const&);
 
 // Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-using RectangleIndices = std::array<GLuint, 6>;
-
-class RectangleVertices
-{
-  using VerticesArray = std::array<float, 18>;
-  using PointArray = std::array<float, 3>;
-
-  VerticesArray varray_;
-
-public:
-  RectangleVertices();
-  RectangleVertices(VerticesArray const&);
-  RectangleVertices(VerticesArray &&);
-
-  auto const& operator[](size_t const i) const { return varray_[i]; }
-
-  PointArray zero() const;
-  PointArray one() const;
-  PointArray two() const;
-  PointArray three() const;
-  PointArray four() const;
-  PointArray five() const;
-};
-
-using PointArray = std::array<float, 2>;
-class RectangleUvs
-{
-  using VerticesArray = std::array<PointArray, 4>;
-  VerticesArray varray_;
-
-public:
-  RectangleUvs();
-  RectangleUvs(VerticesArray const&);
-  RectangleUvs(VerticesArray &&);
-
-  auto const& operator[](size_t const i) const { return varray_[i]; }
-
-  PointArray zero() const;
-  PointArray one() const;
-  PointArray two() const;
-  PointArray three() const;
-};
-
 struct RectInfo
 {
   static constexpr auto NUM_VERTICES = 4;
@@ -135,12 +91,6 @@ struct RectInfo
   std::optional<std::array<Color, NUM_VERTICES>> colors;
 
   std::optional<RectangleUvs> uvs;
-};
-
-struct RectBuffer
-{
-  std::vector<float> vertices;
-  RectangleIndices   indices;
 };
 
 RectBuffer
@@ -156,16 +106,8 @@ rectangle_vertices(float, float, float, float);
 RectangleVertices
 rectangle_vertices_default();
 
-inline RectangleUvs
-rectangle_uvs(float const max)
-{
-  return stlw::make_array<PointArray>(
-      PointArray{0.0f, 0.0f},
-      PointArray{max, 0.0f},
-      PointArray{max, max},
-      PointArray{0.0f, max}
-      );
-}
+RectangleUvs
+rectangle_uvs(float);
 
 } // namespace opengl::factories
 

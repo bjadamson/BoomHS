@@ -5,7 +5,43 @@
 #include <opengl/texture.hpp>
 #include <stlw/random.hpp>
 
+using namespace boomhs;
 using namespace opengl;
+
+namespace
+{
+
+EntityID
+create_item(EntityRegistry& registry, TextureTable& ttable, char const* entity_name,
+            char const* ui_name, char const* mesh_name, char const* texture,
+            char const* shader)
+{
+  auto eid = ItemFactory::create_empty(registry, ttable);
+
+  registry.get<Name>(eid).value = entity_name;
+
+  auto& isv = registry.assign<IsVisible>(eid);
+  isv.value = true;
+
+  auto& meshc = registry.assign<MeshRenderable>(eid);
+  meshc.name  = mesh_name;
+
+  auto& tr        = registry.assign<TextureRenderable>(eid);
+  auto  texture_o = ttable.find(texture);
+  assert(texture_o);
+  tr.texture_info = &*texture_o;
+
+  auto& sn = registry.assign<ShaderName>(eid);
+  sn.value = shader;
+
+  auto& item    = registry.get<Item>(eid);
+  item.ui_tinfo = &*ttable.find(ui_name);
+  assert(item.ui_tinfo);
+
+  return eid;
+}
+
+} // namespace
 
 namespace boomhs
 {
@@ -30,42 +66,30 @@ ItemFactory::create_empty(EntityRegistry& registry, TextureTable& ttable)
   return eid;
 }
 
+
+
 EntityID
-ItemFactory::create_item(EntityRegistry& registry, TextureTable& ttable, char const* entity_name,
-                         char const* mesh_name, char const* texture, char const* shader)
+ItemFactory::create_book(EntityRegistry& registry,
+                         TextureTable& ttable)
 {
-  auto eid = create_empty(registry, ttable);
+  auto eid = create_item(registry, ttable, "Book EID", "BookUI", "B", "container", "2dtexture");
+  registry.assign<Book>(eid);
 
-  registry.get<Name>(eid).value = entity_name;
-
-  auto& isv = registry.assign<IsVisible>(eid);
-  isv.value = true;
-
-  auto& meshc = registry.assign<MeshRenderable>(eid);
-  meshc.name  = mesh_name;
-
-  auto& tr        = registry.assign<TextureRenderable>(eid);
-  auto  texture_o = ttable.find(texture);
-  assert(texture_o);
-  tr.texture_info = &*texture_o;
-
-  auto& sn = registry.assign<ShaderName>(eid);
-  sn.value = shader;
+  auto& item    = registry.get<Item>(eid);
+  item.name    = "Book";
+  item.tooltip = "This is a book";
 
   return eid;
 }
 
 EntityID
-ItemFactory::create_torch(EntityRegistry& registry, stlw::float_generator& rng,
+ItemFactory::create_torch(EntityRegistry& registry,
                           TextureTable& ttable)
 {
-  auto eid = create_item(registry, ttable, "Torch EID", "O", "Lava", "torch");
+  auto eid = create_item(registry, ttable, "Torch EID", "TorchUI", "star", "Lava", "torch");
   registry.assign<Torch>(eid);
 
   auto& item    = registry.get<Item>(eid);
-  item.ui_tinfo = &*ttable.find("TorchUI");
-  assert(item.ui_tinfo);
-
   item.name    = "Torch";
   item.tooltip = "This is a torch";
 

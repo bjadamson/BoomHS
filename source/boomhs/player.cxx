@@ -2,6 +2,7 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/inventory.hpp>
 #include <boomhs/item.hpp>
+#include <boomhs/item_factory.hpp>
 #include <boomhs/nearby_targets.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
@@ -15,24 +16,41 @@ namespace
 {
 
 void
-kill_entity(stlw::Logger& logger, EntityRegistry& registry, EntityID const eid)
+kill_entity(stlw::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
+            EntityRegistry& registry, EntityID const entity_eid)
 {
-  auto const& bbox = registry.get<AABoundingBox>(eid);
+  auto const& bbox = registry.get<AABoundingBox>(entity_eid);
   auto const hw = bbox.half_widths();
 
   // Move the entity half it's bounding box, so it is directly on the ground, or whatever it was
   // standing on.
-  auto& transform = registry.get<Transform>(eid);
-  transform.translation.y -= hw.y;
+  auto& entity_transform = registry.get<Transform>(entity_eid);
+  auto& entity_tr = entity_transform.translation;
+  entity_tr.y -= hw.y;
 
   // TODO: Get the normal vector for the terrain at the (x, z) point and rotate the npc to look
   // properly aligned on slanted terrain.
-  transform.rotate_degrees(90.0f, opengl::X_UNIT_VECTOR);
+  entity_transform.rotate_degrees(90.0f, opengl::X_UNIT_VECTOR);
+
+  {
+    auto  const book_eid = ItemFactory::create_torch(registry, ttable);
+    auto& book_transform = registry.get<Transform>(book_eid);
+    auto& book_tr        = book_transform.translation;
+
+    float const x   = entity_tr.x, z = entity_tr.z;
+    auto const y   = entity_tr.y;
+    auto const xyz = glm::vec3{10, 2, 10};
+    LOG_ERROR_SPRINTF("xyz: %s", glm::to_string(xyz));
+    book_transform.translation = xyz;
+
+    // copy the book to th GPU
+    //copy_to_gpu(book);
+  }
 }
 
 void
-try_attack_selected_target(stlw::Logger& logger, EntityRegistry& registry,
-                           Player &player, EntityID const target_eid)
+try_attack_selected_target(stlw::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
+                           EntityRegistry& registry, Player &player, EntityID const target_eid)
 {
   auto& ptransform      = player.transform();
   auto const playerpos  = ptransform.translation;
@@ -57,7 +75,7 @@ try_attack_selected_target(stlw::Logger& logger, EntityRegistry& registry,
     bool const target_dead_after_attack = NPC::is_dead(target_hp);
     bool const dead_from_attack = !already_dead && target_dead_after_attack;
     if (dead_from_attack) {
-      kill_entity(logger, registry, target_eid);
+      kill_entity(logger, terrain, ttable, registry, target_eid);
       LOG_ERROR("KILLING TARGET");
     }
     else if (already_dead) {
@@ -131,7 +149,7 @@ Player::drop_entity(stlw::Logger& logger, EntityID const eid, EntityRegistry& re
 
 void
 Player::update(stlw::Logger& logger, EntityRegistry& registry,
-               TerrainGrid& terrain, NearbyTargets& nbt)
+               TerrainGrid& terrain, TextureTable& ttable, NearbyTargets& nbt)
 {
   gcd.update();
   update_position(logger, *this, terrain);
@@ -164,7 +182,7 @@ Player::update(stlw::Logger& logger, EntityRegistry& registry,
 
   if (is_attacking && gcd_ready) {
     LOG_ERROR_SPRINTF("GCD_READY IS_ATTACKING: %i, GCD_READY: %i", is_attacking, gcd_ready);
-    try_attack_selected_target(logger, registry, *this, target_eid);
+    try_attack_selected_target(logger, terrain, ttable, registry, *this, target_eid);
   }
 }
 

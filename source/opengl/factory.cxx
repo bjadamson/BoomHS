@@ -8,6 +8,7 @@
 #include <iostream>
 
 using namespace boomhs;
+using namespace opengl;
 using namespace opengl::factories;
 
 namespace
@@ -20,7 +21,7 @@ struct ArrowEndpoints
 };
 
 auto
-calculate_arrow_endpoints(OF::ArrowCreateParams const& params)
+calculate_arrow_endpoints(ArrowCreateParams const& params)
 {
   auto const adjust_if_zero = [=](glm::vec3 const& v) {
     auto constexpr ZERO_VEC = glm::zero<glm::vec3>();
@@ -59,7 +60,7 @@ namespace opengl::factories
 
 // Arrows
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-ArrayVertices
+ArrowVertices
 make_arrow_vertices(ArrowCreateParams const& params)
 {
   auto endpoints = calculate_arrow_endpoints(params);
@@ -89,8 +90,8 @@ make_arrow_vertices(ArrowCreateParams const& params)
 #undef P2
 }
 
-// Cubes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// Cubes
 CubeVertices
 cube_vertices(glm::vec3 const& min, glm::vec3 const& max)
 {
@@ -122,109 +123,8 @@ cube_vertices(glm::vec3 const& min, glm::vec3 const& max)
   return v;
 }
 
-// Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-RectangleVertices::RectangleVertices()
-{
-  stlw::memzero(varray_.data(), sizeof(float) * varray_.size());
-}
-
-RectangleVertices::RectangleVertices(VerticesArray const& va)
-  : varray_(va)
-{
-}
-
-RectangleVertices::RectangleVertices(VerticesArray &&va)
-  : varray_(MOVE(va))
-{
-}
-
-RectangleVertices::PointArray
-RectangleVertices::zero() const
-{
-  auto const& v = varray_;
-  return stlw::make_array<float>(v[0], v[1], v[2]);
-}
-
-RectangleVertices::PointArray
-RectangleVertices::one() const
-{
-  auto const& v = varray_;
-  return stlw::make_array<float>(v[3], v[4], v[5]);
-}
-
-RectangleVertices::PointArray
-RectangleVertices::two() const
-{
-  auto const& v = varray_;
-  return stlw::make_array<float>(v[6], v[7], v[8]);
-}
-
-RectangleVertices::PointArray
-RectangleVertices::three() const
-{
-  auto const& v = varray_;
-  return stlw::make_array<float>(v[9], v[10], v[11]);
-}
-
-RectangleVertices::PointArray
-RectangleVertices::four() const
-{
-  auto const& v = varray_;
-  return stlw::make_array<float>(v[12], v[13], v[14]);
-}
-
-RectangleVertices::PointArray
-RectangleVertices::five() const
-{
-  auto const& v = varray_;
-  return stlw::make_array<float>(v[15], v[16], v[17]);
-}
-
-////////////////////////
-RectangleUvs::RectangleUvs()
-{
-  stlw::memzero(varray_.data(), sizeof(float) * varray_.size());
-}
-
-RectangleUvs::RectangleUvs(VerticesArray const& va)
-  : varray_(va)
-{
-}
-
-RectangleUvs::RectangleUvs(VerticesArray &&va)
-  : varray_(MOVE(va))
-{
-}
-
-PointArray
-RectangleUvs::zero() const
-{
-  auto const& v = varray_[0];
-  return PointArray{stlw::make_array<float>(v[0], 1.0f - v[1])};
-}
-
-PointArray
-RectangleUvs::one() const
-{
-  auto const& v = varray_[1];
-  return PointArray{stlw::make_array<float>(v[0], 1.0f - v[1])};
-}
-
-PointArray
-RectangleUvs::two() const
-{
-  auto const& v = varray_[2];
-  return PointArray{stlw::make_array<float>(v[0], 1.0f - v[1])};
-}
-
-PointArray
-RectangleUvs::three() const
-{
-  auto const& v = varray_[3];
-  return PointArray{stlw::make_array<float>(v[0], 1.0f - v[1])};
-}
-
+// Rectangles
 RectBuffer
 make_rectangle(RectInfo const& info)
 {
@@ -330,6 +230,17 @@ rectangle_vertices_default()
 #undef one
 #undef two
 #undef three
+}
+
+RectangleUvs
+rectangle_uvs(float const max)
+{
+  return stlw::make_array<PointArray>(
+      PointArray{0.0f, 0.0f},
+      PointArray{max, 0.0f},
+      PointArray{max, max},
+      PointArray{0.0f, max}
+      );
 }
 
 } // ns factories::factories

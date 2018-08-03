@@ -155,23 +155,97 @@ EntityDrawHandleMap::add(EntityID const entity, opengl::DrawInfo &&di)
 #define LOOKUP_IMPLEMENTATION                                                                      \
   FOR(i, entities_.size()) {                                                                       \
     if (entities_[i] == entity) {                                                                  \
-      return drawinfos_[i];                                                                        \
+      return &drawinfos_[i];                                                                       \
     }                                                                                              \
   }                                                                                                \
-  LOG_ERROR_FMT("Error could not find entity drawinfo associated to entity {}", entity);           \
-  std::abort();
+  return nullptr;
 
-opengl::DrawInfo&
+opengl::DrawInfo*
 EntityDrawHandleMap::lookup(stlw::Logger &logger, EntityID const entity)
 {
   LOOKUP_IMPLEMENTATION
 }
 
-opengl::DrawInfo const&
+opengl::DrawInfo const*
 EntityDrawHandleMap::lookup(stlw::Logger &logger, EntityID const entity) const
 {
   LOOKUP_IMPLEMENTATION
 }
 #undef LOOKUP_IMPLEMENTATION
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// DrawHandleManager
+void
+DrawHandleManager::add_entity(EntityID const eid, DrawInfo&& dinfo)
+{
+  entities_.add(eid, MOVE(dinfo));
+}
+
+void
+DrawHandleManager::add_bbox(EntityID const eid, DrawInfo&& dinfo)
+{
+  bboxes_.add(eid, MOVE(dinfo));
+}
+
+EntityDrawHandleMap &
+DrawHandleManager::entities()
+{
+  return entities_;
+}
+
+EntityDrawHandleMap const&
+DrawHandleManager::entities() const
+{
+  return entities_;
+}
+
+EntityDrawHandleMap&
+DrawHandleManager::bbox_entities()
+{
+  return bboxes_;
+}
+
+EntityDrawHandleMap const&
+DrawHandleManager::bbox_entities() const
+{
+  return bboxes_;
+}
+
+// TODO: When the maps can be indexed by a single identifier (right now they cannot, as the
+// EntityID is duplicated in both DrawHandle maps (regular entities and bbox entities).
+// Once complete, this macro should look through the various maps for the matching eid.
+#define LOOKUP_MANAGER_IMPL(MAP)                                                                   \
+  auto *p = MAP.lookup(logger, eid);                                                               \
+  if (p) {                                                                                         \
+    return *p;                                                                                     \
+  }                                                                                                \
+  LOG_ERROR_FMT("Error could not find entity drawinfo associated to entity {}", eid);              \
+  std::abort();                                                                                    \
+  return *p;
+
+DrawInfo&
+DrawHandleManager::lookup_entity(stlw::Logger& logger, EntityID const eid)
+{
+  LOOKUP_MANAGER_IMPL(entities());
+}
+
+DrawInfo const&
+DrawHandleManager::lookup_entity(stlw::Logger& logger, EntityID const eid) const
+{
+  LOOKUP_MANAGER_IMPL(entities());
+}
+
+DrawInfo&
+DrawHandleManager::lookup_bbox(stlw::Logger& logger, EntityID const eid)
+{
+  LOOKUP_MANAGER_IMPL(bbox_entities());
+}
+
+DrawInfo const&
+DrawHandleManager::lookup_bbox(stlw::Logger& logger, EntityID const eid) const
+{
+  LOOKUP_MANAGER_IMPL(bbox_entities());
+}
+#undef LOOKUP_MANAGER_IMPL
 
 } // ns opengl
