@@ -90,6 +90,22 @@ ArrowFactory::create_vertices(ArrowCreateParams const& params)
 #undef P2
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Rectangle
+RectangleUvVertices
+RectangleFactory::from_vertices_and_uvs(RectangleVertices const& v, RectangleUvs const& uv)
+{
+  return stlw::concat(
+    v.zero(), uv.zero(),
+    v.one(),  uv.one(),
+    v.two(),  uv.two(),
+
+    v.three(), uv.two(),
+    v.four(),  uv.three(),
+    v.five(),  uv.zero()
+  );
+}
+
 } // namespace opengl
 
 namespace opengl::factories

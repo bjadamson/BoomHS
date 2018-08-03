@@ -84,10 +84,13 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
   registry.view<ShaderName, BillboardRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
         auto&      va = sps.ref_sp(sn.value).va();
-        auto const v  = OF::rectangle_vertices_default();
         auto*      ti = texture.texture_info;
         assert(ti);
-        auto handle = opengl::gpu::copy_rectangle_uvs(logger, va, v, *ti);
+
+        auto const v  = OF::rectangle_vertices_default();
+        auto const uv = OF::rectangle_uvs(ti->uv_max);
+        auto const vertices = RectangleFactory::from_vertices_and_uvs(v, uv);
+        auto handle = opengl::gpu::copy_rectangle_uvs(logger, va, vertices);
         draw_handles.add_entity(entity, MOVE(handle));
       });
   registry.view<ShaderName, MeshRenderable, JunkEntityFromFILE>().each(

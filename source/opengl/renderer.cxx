@@ -598,7 +598,10 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
 
   auto const pos_inverted_y = glm::vec2{pos.x, (dimensions.bottom - pos.y)};
   auto const v     = OF::rectangle_vertices(pos_inverted_y.x, pos_inverted_y.y, size.x, size.y);
-  DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), v, ti);
+  auto const uv = OF::rectangle_uvs(ti.uv_max);
+  auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
+
+  DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
 
   auto const proj_matrix = fstate.projection_matrix();
   sp.while_bound(logger, [&]() {
@@ -739,13 +742,17 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     auto const blendc = calc_blendcolor(registry.get<NPCData>(npc_selected_eid).level);
     sp.set_uniform_color(logger, "u_blendcolor", blendc);
 
-    auto texture_o = ttable.find("TargetReticle");
+    auto *texture_o = ttable.find("TargetReticle");
     assert(texture_o);
-    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), v, *texture_o);
+    auto& ti = *texture_o;
+
+    auto const uv = OF::rectangle_uvs(ti.uv_max);
+    auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
+    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
 
     transform.scale = glm::vec3{scale};
     auto& vao       = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, *texture_o, dinfo); });
+    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
   };
 
   auto const draw_glow = [&](auto& sp) {
@@ -755,11 +762,14 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     auto const mvp_matrix = proj_matrix * view_model;
     set_modelmatrix(logger, mvp_matrix, sp);
 
-    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), v, *texture_o);
+    auto& ti = *texture_o;
+    auto const uv = OF::rectangle_uvs(ti.uv_max);
+    auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
+    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
 
     transform.scale = glm::vec3{scale};
     auto& vao       = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, *texture_o, dinfo); });
+    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
   };
 
 

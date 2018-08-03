@@ -18,7 +18,8 @@ using ArrowIndices  = std::array<GLuint, 6>;
 using CubeVertices = std::array<float, 24>;
 using CubeIndices  = std::array<GLuint, 36>;
 
-using RectangleIndices = std::array<GLuint, 6>;
+using RectangleUvVertices = std::array<float, 30>;
+using RectangleIndices    = std::array<GLuint, 6>;
 
 struct RectBuffer
 {

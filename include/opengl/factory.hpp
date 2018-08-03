@@ -35,6 +35,13 @@ struct ArrowFactory
   static constexpr std::array<GLuint, 6> INDICES = {{0, 1, 2, 3, 4, 5}};
 };
 
+struct RectangleFactory
+{
+  RectangleFactory() = delete;
+
+  static RectangleUvVertices from_vertices_and_uvs(RectangleVertices const&, RectangleUvs const&);
+};
+
 } // namespace opengl
 
 namespace opengl::factories

@@ -16,7 +16,6 @@ struct ShaderName;
 
 namespace opengl
 {
-struct ArrowCreateParams;
 struct ShaderPrograms;
 class TextureInfo;
 struct VertexBuffer;
@@ -46,8 +45,7 @@ DrawInfo
 copy_rectangle(stlw::Logger&, VertexAttribute const&, RectBuffer const&);
 
 DrawInfo
-copy_rectangle_uvs(stlw::Logger&, VertexAttribute const&, RectangleVertices const&,
-                   TextureInfo const&);
+copy_rectangle_uvs(stlw::Logger&, VertexAttribute const&, RectangleUvVertices const&);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // General

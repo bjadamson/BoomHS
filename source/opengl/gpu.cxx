@@ -177,122 +177,6 @@ create_terrain_grid(stlw::Logger &logger, VertexAttribute const& va, glm::vec2 c
   return dinfo;
 }
 
-/*
-DrawInfo
-copy_cubecolor_gpu(stlw::Logger &logger, CubeMinMax const& cr, VertexAttribute const& va,
-    Color const& color)
-{
-  // clang-format off
-  std::array<Color, 8> const c{
-      color, color, color, color,
-      color, color, color, color,
-  };
-#define COLOR(i) c[i].r(), c[i].g(), c[i].b(), c[i].a()
-#define VERTS(a, b, c, d) v[a], v[b], v[c], v[d]
-  auto const v = OF::cube_vertices(cr.min, cr.max);
-  auto const vertex_data = std::array<float, (32 * 2)>{
-    VERTS(0, 1, 2, 3),     COLOR(0),
-    VERTS(4, 5, 6, 7),     COLOR(1),
-    VERTS(8, 9, 10, 11),   COLOR(2),
-    VERTS(12, 13, 14, 15), COLOR(3),
-    VERTS(16, 17, 18, 19), COLOR(4),
-    VERTS(20, 21, 22, 23), COLOR(5),
-    VERTS(24, 25, 26, 27), COLOR(6),
-    VERTS(28, 29, 30, 31), COLOR(7),
-        };
-#undef COLOR
-#undef VERTS
-  // clang-format on
-  return make_drawinfo(logger, va, vertex_data, OF::CUBE_INDICES);
-}
-*/
-
-/*
-DrawInfo
-copy_cubenormalcolor_gpu(stlw::Logger &logger, CubeMinMax const& cr, VertexAttribute const& va,
-    Color const& color)
-{
-  // clang-format off
-  static std::array<glm::vec3, 8> constexpr points = {{
-    glm::vec3{-0.5f, -0.5f,  0.5f},
-    glm::vec3{-0.5f,  0.5f,  0.5f},
-    glm::vec3{ 0.5f,  0.5f,  0.5f},
-    glm::vec3{ 0.5f, -0.5f,  0.5f},
-    glm::vec3{-0.5f, -0.5f, -0.5f},
-    glm::vec3{-0.5f,  0.5f, -0.5f},
-    glm::vec3{ 0.5f,  0.5f, -0.5f},
-    glm::vec3{ 0.5f, -0.5f, -0.5f}
-  }};
-
-  std::array<glm::vec3, 36> vertices = {glm::vec3{0.0f}};
-  std::array<glm::vec3, 36> normals{glm::vec3{0.0f}};
-  std::array<Color, 36> colors{LOC::BLACK};
-
-  auto make_face = [&vertices, &normals, &colors](int const a, int const b, int const c, int const d,
-      std::array<glm::vec3, 8> const& points, Color const& face_color, int index)
-  {
-    vec3 const normal = normalize(cross(points[c] - points[b], points[a] - points[b]));
-
-    vertices[index] = points[a];
-    normals[index] = normal;
-    colors[index] = face_color;
-    index++;
-
-    vertices[index] = points[b];
-    normals[index] = normal;
-    colors[index] = face_color;
-    index++;
-
-    vertices[index] = points[c];
-    normals[index] = normal;
-    colors[index] = face_color;
-    index++;
-
-    vertices[index] = points[a];
-    normals[index] = normal;
-    colors[index] = face_color;
-    index++;
-
-    vertices[index] = points[c];
-    normals[index] = normal;
-    colors[index] = face_color;
-    index++;
-
-    vertices[index] = points[d];
-    normals[index] = normal;
-    colors[index] = face_color;
-  };
-
-  make_face(1, 0, 3, 2, points, color, 6 * 0); // z
-  make_face(2, 3, 7, 6, points, color, 6 * 1); // x
-  make_face(3, 0, 4, 7, points, color, 6 * 2); // -y
-  make_face(6, 5, 1, 2, points, color, 6 * 3); // y
-  make_face(4, 5, 6, 7, points, color, 6 * 4); // -z
-  make_face(5, 4, 0, 1, points, color, 6 * 5); // -x
-
-  std::vector<float> vertex_data;
-  FOR(i, vertices.size()) {
-    vertex_data.emplace_back(vertices[i].x);
-    vertex_data.emplace_back(vertices[i].y);
-    vertex_data.emplace_back(vertices[i].z);
-
-    vertex_data.emplace_back(normals[i].x);
-    vertex_data.emplace_back(normals[i].y);
-    vertex_data.emplace_back(normals[i].z);
-
-    vertex_data.emplace_back(colors[i].r());
-    vertex_data.emplace_back(colors[i].g());
-    vertex_data.emplace_back(colors[i].b());
-    vertex_data.emplace_back(colors[i].a());
-  }
-
-  auto const& indices = OF::CUBE_INDICES_LIGHT;
-  DrawInfo dinfo{vertex_data.size(), indices.size()};
-  copy_synchronous(logger, va, dinfo, vertex_data, indices);
-  return dinfo;
-}
-*/
-
 DrawInfo
 copy_cube_gpu(stlw::Logger &logger, CubeVertices const& cv, VertexAttribute const& va)
 {
@@ -335,22 +219,9 @@ copy_rectangle(stlw::Logger &logger, VertexAttribute const& va,
 
 DrawInfo
 copy_rectangle_uvs(stlw::Logger &logger, VertexAttribute const& va,
-                   RectangleVertices const& v, TextureInfo const& tinfo)
+                   RectangleUvVertices const& vertices)
 {
   auto const& i = OF::RECTANGLE_INDICES;
-  auto const uv = OF::rectangle_uvs(tinfo.uv_max);
-
-  // clang-format off
-  auto const vertices = stlw::concat(
-      v.zero(), uv.zero(),
-      v.one(),  uv.one(),
-      v.two(),  uv.two(),
-
-      v.three(), uv.two(),
-      v.four(),  uv.three(),
-      v.five(),  uv.zero()
-      );
-  // clang-format on
 
   DrawInfo dinfo{vertices.size(), i.size()};
   copy_synchronous(logger, va, dinfo, vertices, i);
