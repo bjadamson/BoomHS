@@ -16,6 +16,7 @@
 #include <opengl/gpu.hpp>
 #include <opengl/shader.hpp>
 
+#include <extlibs/fmt.hpp>
 #include <extlibs/sdl.hpp>
 #include <window/timer.hpp>
 
@@ -166,6 +167,27 @@ gl_log_callback(GLenum const source, GLenum const type, GLuint const id, GLenum 
 }
 
 } // namespace
+
+namespace opengl
+{
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// DrawState
+DrawState::DrawState()
+{
+  stlw::memzero(this, sizeof(DrawState));
+
+  assert(0 == num_vertices);
+  assert(0 == num_drawcalls);
+}
+
+std::string
+DrawState::to_string() const
+{
+  return fmt::sprintf("{vertices: %lu, drawcalls: %lu}", num_vertices, num_drawcalls);
+}
+
+} // namespace opengl
 
 namespace opengl::render
 {

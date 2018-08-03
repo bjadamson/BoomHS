@@ -4,6 +4,7 @@
 #include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/frame.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/heightmap.hpp>
 #include <boomhs/io.hpp>
@@ -23,7 +24,6 @@
 #include <boomhs/water.hpp>
 
 #include <opengl/entity_renderer.hpp>
-#include <opengl/frame.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
 #include <opengl/scene_renderer.hpp>
@@ -352,9 +352,9 @@ init(Engine& engine, EngineState& es, Camera& camera)
     auto& sps = zs.gfx_state.sps;
 
     auto& water_sp = draw_water_options_to_shader(GameGraphicsMode::Basic, sps);
-    FOR(i, 2) {
-      FOR(j, 2) {
-        place_water(logger, zs, water_sp, glm::vec2{i * 20, j * 20});
+    FOR(i, 4) {
+      FOR(j, 4) {
+        place_water(logger, zs, water_sp, glm::vec2{i * 25, j * 25});
       }
     }
   }

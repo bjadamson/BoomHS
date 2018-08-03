@@ -1,5 +1,6 @@
 #include <boomhs/frustum.hpp>
-#include <opengl/frame.hpp>
+#include <boomhs/frame.hpp>
+#include <cmath>
 
 using namespace boomhs;
 using namespace opengl;

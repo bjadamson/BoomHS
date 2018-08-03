@@ -1,15 +1,10 @@
 #pragma once
-#include <cmath>
 #include <extlibs/glm.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace opengl
-{
-struct FrameState;
-} // namespace opengl
-
 namespace boomhs
 {
+struct FrameState;
 
 // We create an enum of the sides so we don't have to call each side 0 or 1.
 // This way it makes it more understandable and readable when dealing with frustum sides.
@@ -45,7 +40,7 @@ public:
   Frustum() = default;
 
   // Call this every time the camera moves to update the frustum
-  void recalculate(opengl::FrameState const&);
+  void recalculate(FrameState const&);
 
   // This takes the center and half the length of the cube.
   bool cube_in_frustum(float, float, float, float size) const;

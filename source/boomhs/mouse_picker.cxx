@@ -2,9 +2,7 @@
 #include <boomhs/mouse_picker.hpp>
 #include <boomhs/state.hpp>
 
-#include <opengl/frame.hpp>
-
-using namespace opengl;
+#include <boomhs/frame.hpp>
 
 namespace boomhs
 {

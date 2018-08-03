@@ -3,17 +3,11 @@
 
 #include <extlibs/glm.hpp>
 #include <stlw/type_macros.hpp>
-#include <string>
 
 namespace boomhs
 {
-class Camera;
 class EngineState;
 class ZoneState;
-} // namespace boomhs
-
-namespace opengl
-{
 
 struct CameraFrameState
 {
@@ -21,20 +15,12 @@ struct CameraFrameState
   glm::mat4 const projection;
   glm::mat4 const view;
 
+  CameraMode const mode;
+
   static CameraFrameState from_camera_withposition(boomhs::Camera const&, glm::vec3 const&);
   static CameraFrameState from_camera_with_mode(boomhs::Camera const&, boomhs::CameraMode);
 
   static CameraFrameState from_camera(boomhs::Camera const&);
-};
-
-struct DrawState
-{
-  size_t num_vertices;
-  size_t num_drawcalls;
-
-  DrawState();
-
-  std::string to_string() const;
 };
 
 class FrameState
@@ -54,4 +40,4 @@ public:
   glm::mat4 view_matrix() const;
 };
 
-} // namespace opengl
+} // namespace boomhs

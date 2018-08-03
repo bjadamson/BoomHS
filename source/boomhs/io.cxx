@@ -1,5 +1,6 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/collision.hpp>
+#include <boomhs/frame.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mouse_picker.hpp>
@@ -7,8 +8,6 @@
 #include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
-
-#include <opengl/frame.hpp>
 
 #include <window/controller.hpp>
 #include <window/sdl_window.hpp>

@@ -1,10 +1,9 @@
-#include <opengl/frame.hpp>
+#include <boomhs/frame.hpp>
 
 #include <boomhs/camera.hpp>
 #include <boomhs/state.hpp>
 
 using namespace boomhs;
-using namespace opengl;
 
 namespace
 {
@@ -22,12 +21,12 @@ from_camera_common(Camera const& camera, glm::vec3 const& pos, CameraMode const 
   auto const& fps_center   = camera.world_forward() + target;
 
   auto const view = Camera::compute_viewmatrix(mode, pos, target, up, fps_center);
-  return CameraFrameState{pos, proj, view};
+  return CameraFrameState{pos, proj, view, mode};
 }
 
 } // namespace
 
-namespace opengl
+namespace boomhs
 {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,22 +50,6 @@ CameraFrameState::from_camera(Camera const& camera)
 {
   auto const pos = camera.world_position();
   return from_camera_withposition(camera, pos);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-// DrawState
-DrawState::DrawState()
-{
-  stlw::memzero(this, sizeof(DrawState));
-
-  assert(0 == num_vertices);
-  assert(0 == num_drawcalls);
-}
-
-std::string
-DrawState::to_string() const
-{
-  return fmt::sprintf("{vertices: %lu, drawcalls: %lu}", num_vertices, num_drawcalls);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -104,4 +87,4 @@ FrameState::view_matrix() const
   return cstate_.view;
 }
 
-} // namespace opengl
+} // namespace boomhs

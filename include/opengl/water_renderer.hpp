@@ -1,12 +1,12 @@
 #pragma once
 #include <boomhs/camera.hpp>
 #include <boomhs/dimensions.hpp>
+#include <boomhs/frame.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/state.hpp>
 
 #include <opengl/bind.hpp>
-#include <opengl/frame.hpp>
 #include <opengl/framebuffer.hpp>
 #include <opengl/renderbuffer.hpp>
 #include <opengl/renderer.hpp>
@@ -185,9 +185,9 @@ public:
     glm::vec3 camera_pos = camera.world_position();
     camera_pos.y         = -camera_pos.y;
 
-    auto const  cstate = CameraFrameState::from_camera_withposition(camera, camera_pos);
-    FrameState  fstate{cstate, es, zs};
-    RenderState rstate{fstate, ds};
+    auto const cstate = boomhs::CameraFrameState::from_camera_withposition(camera, camera_pos);
+    boomhs::FrameState fstate{cstate, es, zs};
+    RenderState        rstate{fstate, ds};
 
     with_reflection_fbo(logger, [&]() {
       advanced_common(rstate, es, lm, ds, er, sr, tr, rng, ft);
@@ -207,9 +207,9 @@ public:
     auto&       registry  = zs.registry;
     auto const& fog_color = ldata.fog.color;
 
-    auto const  cstate = CameraFrameState::from_camera(camera);
-    FrameState  fstate{cstate, es, zs};
-    RenderState rstate{fstate, ds};
+    auto const         cstate = boomhs::CameraFrameState::from_camera(camera);
+    boomhs::FrameState fstate{cstate, es, zs};
+    RenderState        rstate{fstate, ds};
 
     with_refraction_fbo(logger, [&]() {
       advanced_common(rstate, es, lm, ds, er, sr, tr, rng, ft);

@@ -1,13 +1,14 @@
 #pragma once
 #include <boomhs/components.hpp>
+#include <boomhs/frame.hpp>
 #include <boomhs/terrain.hpp>
 
 #include <opengl/colors.hpp>
-#include <opengl/frame.hpp>
 #include <opengl/lighting.hpp>
 #include <stlw/log.hpp>
 
 #include <extlibs/glm.hpp>
+#include <string>
 #include <vector>
 
 namespace window
@@ -40,12 +41,22 @@ class ShaderProgram;
 class ShaderPrograms;
 struct TextureInfo;
 
+struct DrawState
+{
+  size_t num_vertices;
+  size_t num_drawcalls;
+
+  DrawState();
+
+  std::string to_string() const;
+};
+
 struct RenderState
 {
-  FrameState& fs;
-  DrawState&  ds;
+  boomhs::FrameState& fs;
+  DrawState&          ds;
 
-  explicit RenderState(FrameState& f, DrawState& d)
+  explicit RenderState(boomhs::FrameState& f, DrawState& d)
       : fs(f)
       , ds(d)
   {

@@ -1,18 +1,15 @@
 #pragma once
 #include <extlibs/glm.hpp>
 
-namespace opengl
-{
-class FrameState;
-} // namespace opengl
-
 namespace boomhs
 {
+class FrameState;
+
 class MousePicker
 {
 public:
   explicit MousePicker();
-  glm::vec3 calculate_ray(opengl::FrameState&) const;
+  glm::vec3 calculate_ray(FrameState&) const;
 };
 
 } // namespace boomhs
