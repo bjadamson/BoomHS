@@ -1,6 +1,6 @@
 #pragma once
+#include <boomhs/lighting.hpp>
 #include <opengl/colors.hpp>
-#include <opengl/lighting.hpp>
 #include <opengl/texture.hpp>
 
 #include <boomhs/entity.hpp>
@@ -75,7 +75,7 @@ struct IsVisible
 
 struct Torch
 {
-  opengl::Attenuation default_attenuation{1.0f, 0.93f, 0.46f};
+  Attenuation default_attenuation{1.0f, 0.93f, 0.46f};
 };
 
 struct LightFlicker

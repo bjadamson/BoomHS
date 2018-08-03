@@ -3,8 +3,8 @@
 #include <boomhs/material.hpp>
 #include <boomhs/obj_store.hpp>
 
+#include <boomhs/lighting.hpp>
 #include <opengl/colors.hpp>
-#include <opengl/lighting.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
 
@@ -20,9 +20,9 @@ class EntityRegistry;
 
 struct LevelAssets
 {
-  opengl::GlobalLight global_light;
-  Fog                 fog;
-  MaterialTable       material_table;
+  GlobalLight   global_light;
+  Fog           fog;
+  MaterialTable material_table;
 
   ObjStore               obj_store;
   opengl::TextureTable   texture_table;

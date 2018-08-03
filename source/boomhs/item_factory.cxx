@@ -1,7 +1,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/item.hpp>
 #include <boomhs/item_factory.hpp>
-#include <opengl/lighting.hpp>
+#include <boomhs/lighting.hpp>
 #include <opengl/texture.hpp>
 #include <stlw/random.hpp>
 

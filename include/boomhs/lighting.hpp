@@ -3,9 +3,8 @@
 #include <stlw/type_macros.hpp>
 
 #include <array>
-#include <ostream>
 
-namespace opengl
+namespace boomhs
 {
 
 struct Attenuation
@@ -80,7 +79,7 @@ struct PointLight
   Light light;
 
   static constexpr auto INIT_ATTENUATION_INDEX = ATTENUATION_VALUE_TABLE.size() - 1;
-  Attenuation           attenuation = opengl::ATTENUATION_VALUE_TABLE[INIT_ATTENUATION_INDEX];
+  Attenuation           attenuation            = ATTENUATION_VALUE_TABLE[INIT_ATTENUATION_INDEX];
 };
 
 struct PointLights
@@ -88,4 +87,4 @@ struct PointLights
   std::vector<Light> pointlights;
 };
 
-} // namespace opengl
+} // namespace boomhs

@@ -11,7 +11,7 @@
 #include <boomhs/obj.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/factory.hpp>
-#include <opengl/lighting.hpp>
+#include <boomhs/lighting.hpp>
 
 #include <sstream>
 #include <stlw/os.hpp>

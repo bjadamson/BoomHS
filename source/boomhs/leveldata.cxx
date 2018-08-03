@@ -5,7 +5,7 @@ namespace boomhs
 
 LevelData::LevelData(
                      TerrainGrid&& tgrid, Fog && fogp,
-                     opengl::GlobalLight const& glight, MaterialTable&& mat_table,
+                     GlobalLight const& glight, MaterialTable&& mat_table,
                      ObjStore&& ocache)
     : fog(MOVE(fogp))
     , terrain(MOVE(tgrid))

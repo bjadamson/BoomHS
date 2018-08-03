@@ -1,7 +1,9 @@
-#include <opengl/lighting.hpp>
+#include <boomhs/lighting.hpp>
 #include <stlw/algorithm.hpp>
 
-namespace opengl
+using namespace opengl;
+
+namespace boomhs
 {
 
 Attenuation
@@ -49,10 +51,10 @@ operator<<(std::ostream& stream, Attenuation const& att)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // GlobalLight
-GlobalLight::GlobalLight(opengl::Color const& amb, DirectionalLight &&dl)
+GlobalLight::GlobalLight(Color const& amb, DirectionalLight &&dl)
   : ambient(amb)
   , directional(MOVE(dl))
 {
 }
 
-} // ns opengl
+} // ns boomhs

@@ -8,7 +8,7 @@
 
 #include <algorithm>
 #include <opengl/constants.hpp>
-#include <opengl/lighting.hpp>
+#include <boomhs/lighting.hpp>
 #include <opengl/texture.hpp>
 #include <stlw/os.hpp>
 #include <stlw/random.hpp>

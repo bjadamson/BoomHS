@@ -9,7 +9,7 @@
 #include <boomhs/water.hpp>
 #include <boomhs/world_object.hpp>
 
-#include <opengl/lighting.hpp>
+#include <boomhs/lighting.hpp>
 
 #include <stlw/type_macros.hpp>
 #include <vector>
@@ -26,15 +26,15 @@ class LevelData
 {
 public:
   MOVE_CONSTRUCTIBLE_ONLY(LevelData);
-  LevelData(TerrainGrid&&, Fog&&, opengl::GlobalLight const&, MaterialTable&&, ObjStore&&);
+  LevelData(TerrainGrid&&, Fog&&, GlobalLight const&, MaterialTable&&, ObjStore&&);
 
   // public fields
   Skybox      skybox;
   Fog         fog;
   TerrainGrid terrain;
 
-  opengl::GlobalLight global_light;
-  MaterialTable       material_table;
+  GlobalLight   global_light;
+  MaterialTable material_table;
 
   ObjStore obj_store;
 

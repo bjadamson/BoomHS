@@ -3,8 +3,8 @@
 #include <boomhs/frame.hpp>
 #include <boomhs/terrain.hpp>
 
+#include <boomhs/lighting.hpp>
 #include <opengl/colors.hpp>
-#include <opengl/lighting.hpp>
 #include <stlw/log.hpp>
 
 #include <extlibs/glm.hpp>
