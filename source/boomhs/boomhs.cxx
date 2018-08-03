@@ -430,7 +430,7 @@ init(Engine& engine, EngineState& es, Camera& camera, stlw::float_generator& rng
     chat_state.reset_yscroll_position = true;
   }
 
-  return Ok(MOVE(state));
+  return OK_MOVE(state);
 }
 
 void

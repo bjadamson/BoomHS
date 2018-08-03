@@ -40,12 +40,23 @@ GameState::GameState(EngineState& es, LevelManager&& lm)
     : engine_state(es)
     , level_manager(MOVE(lm))
 {
+  auto& logger = engine_state.logger;
+  LOG_ERROR("GameState Initialized");
+}
+
+GameState::GameState(GameState&& o)
+    : engine_state(o.engine_state)
+    , level_manager(MOVE(o.level_manager))
+{
+  auto& logger = engine_state.logger;
+  LOG_ERROR("GameState MOVED");
 }
 
 Engine::Engine(SDLWindow&& w, SDLControllers&& c)
     : window(MOVE(w))
     , controllers(MOVE(c))
 {
+  std::cerr << "Engine constructed\n";
   registries.resize(50);
 }
 

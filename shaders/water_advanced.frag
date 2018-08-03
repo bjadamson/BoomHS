@@ -30,6 +30,7 @@ uniform mat4 u_invviewmatrix;
 uniform float u_wave_offset;
 uniform float u_wavestrength;
 uniform float u_time_offset;
+uniform vec2  u_flowdir;
 
 out vec4 fragment_color;
 
@@ -95,7 +96,8 @@ void main()
     const float weight_effects = 1.0;
 
     vec4 effect_color  = mix(reflect_color, refract_color, refractive_factor) * weight_effects;
-    vec4 texture_color = weighted_texture_sample(u_diffuse_sampler, v_textureuv, u_time_offset, weight_texture);
+    vec4 texture_color = weighted_texture_sample(u_diffuse_sampler, v_textureuv, u_flowdir,
+                                                 u_time_offset, weight_texture);
     light_color        = light_color * weight_light;
 
     fragment_color = effect_color + texture_color + light_color;

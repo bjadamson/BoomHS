@@ -288,8 +288,15 @@ show_water_window(EngineState& es, LevelManager& lm)
       ImGui::ColorEdit4("Mix Color", wi.mix_color.data());
       ImGui::InputFloat("Mix-Intensity", &wi.mix_intensity);
 
-      ImGui::InputFloat("Wind Speed", &wi.wind_speed);
+      ImGui::InputFloat("Wave Offset",   &wi.wave_offset);
+      ImGui::InputFloat("Wind Speed",    &wi.wind_speed);
       ImGui::InputFloat("Wave Strength", &wi.wave_strength);
+
+      auto constexpr WAVE_MIN = -1.0f, WAVE_MAX = 1.0f;
+      auto *direction_ptr     = glm::value_ptr(wi.flow_direction);
+      if (ImGui::SliderFloat2("Wave Direction", direction_ptr, WAVE_MIN, WAVE_MAX)) {
+        wi.flow_direction = glm::normalize(wi.flow_direction);
+      }
     }
   };
 

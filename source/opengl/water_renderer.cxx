@@ -62,11 +62,11 @@ render_water_common(Transform& transform, ShaderProgram& sp, RenderState& rstate
     tr.y = 0.19999f; // pos.y;
     assert(tr.y < 2.0f);
 
-    winfo.wave_offset += ft.delta_millis() * winfo.wind_speed;
+    winfo.wave_offset += ft.delta_seconds() * winfo.wind_speed;
     winfo.wave_offset = ::fmodf(winfo.wave_offset, 1.00f);
 
     auto& time_offset = ldata.time_offset;
-    time_offset += ft.delta_millis() * winfo.wind_speed;
+    time_offset += ft.delta_seconds() * winfo.wind_speed;
     time_offset = ::fmodf(time_offset, 1.00f);
 
     assert(winfo.dinfo);
@@ -76,6 +76,7 @@ render_water_common(Transform& transform, ShaderProgram& sp, RenderState& rstate
     sp.while_bound(logger, [&]() {
       sp.set_uniform_vec4(logger, "u_clipPlane", ABOVE_VECTOR);
       sp.set_uniform_float1(logger, "u_time_offset", time_offset);
+      sp.set_uniform_vec2(logger, "u_flowdir", winfo.flow_direction);
 
       vao.while_bound(logger, [&]() { fn(winfo); });
     });

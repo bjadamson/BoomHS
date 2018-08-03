@@ -20,6 +20,7 @@ uniform Water u_water;
 uniform mat4 u_modelmatrix;
 uniform mat4 u_invviewmatrix;
 uniform float u_time_offset;
+uniform vec2 u_flowdir;
 
 out vec4 fragment_color;
 
@@ -43,7 +44,8 @@ void main()
     const float weight_light   = 1.0;
     const float weight_texture = 1.0;
 
-    vec4 texture_color = weighted_texture_sample(u_diffuse_sampler, v_textureuv, u_time_offset, weight_texture);
+    vec4 texture_color = weighted_texture_sample(u_diffuse_sampler, v_textureuv, u_flowdir,
+                                                 u_time_offset, weight_texture);
     light_color        = light_color * weight_light;
 
     fragment_color = texture_color + light_color;

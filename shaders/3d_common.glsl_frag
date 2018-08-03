@@ -160,9 +160,9 @@ mix_in_water_and_fog(vec4 frag_color, Water water, Fog fog, float visibility)
 }
 
 vec4
-weighted_texture_sample(sampler2D sampler, vec2 uv, float time_offset, float weight)
+weighted_texture_sample(sampler2D sampler, vec2 uv, vec2 flowdir, float time_offset, float weight)
 {
-  return texture(sampler, uv + time_offset) * weight;
+  return texture(sampler, uv + time_offset * flowdir) * weight;
 }
 
 

@@ -13,6 +13,7 @@ uniform Fog u_fog;
 uniform Water u_water;
 uniform mat4 u_modelmatrix;
 uniform float u_time_offset;
+uniform vec2 u_flowdir;
 
 out vec4 fragment_color;
 
@@ -21,6 +22,7 @@ void main()
   clip_check(v_clipdistance);
 
   // nc === normal color
+  vec2 samplepos = v_textureuv + (u_time_offset * u_flowdir);
   vec4 nc = texture(u_normal_sampler, v_textureuv + u_time_offset);
   vec3 surface_normal = vec3(nc.r, -(nc.g / 2.0), nc.b);
   surface_normal = normalize(surface_normal);
@@ -30,7 +32,8 @@ void main()
   }
   else {
     const float weight_texture = 1.0;
-    fragment_color = weighted_texture_sample(u_diffuse_sampler, v_textureuv, u_time_offset, weight_texture);
+    fragment_color = weighted_texture_sample(u_diffuse_sampler, v_textureuv, u_flowdir,
+                                             u_time_offset, weight_texture);
 
     // add additional color to the water texture
     fragment_color = mix_in_water_and_fog(fragment_color, u_water, u_fog, v_visibility);
