@@ -36,11 +36,14 @@ using pair_t = std::pair<std::string, EntityID>;
 
 template <typename... T>
 auto
-collect_all(EntityRegistry& registry, bool const reverse)
+collect_name_eid_pairs(EntityRegistry& registry, bool const reverse = true)
 {
   std::vector<pair_t> pairs;
   for (auto const eid : registry.view<T...>()) {
-    auto const name = registry.get<Name>(eid).value;
+    std::string name = Name::DEFAULT;
+    if (registry.has<Name>(eid)) {
+      name = registry.get<Name>(eid).value;
+    }
     auto       pair = std::make_pair(name, eid);
     pairs.emplace_back(MOVE(pair));
   }
@@ -49,21 +52,6 @@ collect_all(EntityRegistry& registry, bool const reverse)
   }
   return pairs;
 }
-
-auto
-callback_from_pairs(void* const pdata, int const idx, const char** out_text)
-{
-  auto const& vec = *reinterpret_cast<std::vector<pair_t>*>(pdata);
-
-  auto const index_size = static_cast<size_t>(idx);
-  if (idx < 0 || index_size > vec.size()) {
-    return false;
-  }
-  auto const& pair = vec[idx];
-  auto const& name = pair.first;
-  *out_text        = name.c_str();
-  return true;
-};
 
 auto
 callback_from_strings(void* const pvec, int const idx, const char** out_text)
@@ -78,25 +66,25 @@ callback_from_strings(void* const pvec, int const idx, const char** out_text)
   return true;
 };
 
-template <typename T>
-bool
-display_combo_for_entities(char const* text, int* selected, EntityRegistry& registry,
-                           std::vector<T>& pairs)
+
+std::string
+combine_names_into_one_string_forcombo(std::vector<pair_t> const& pairs)
 {
-  void* pdata = reinterpret_cast<void*>(&pairs);
-  return ImGui::Combo(text, selected, callback_from_pairs, pdata, pairs.size());
+  std::stringstream names;
+
+  for (auto const name_eid : pairs) {
+    auto const& name = name_eid.first;
+    names << name << '\0';
+  }
+  names << '\0';
+  return names.str();
 }
 
-EntityID
-comboselected_to_entity(int const selected_index, std::vector<pair_t> const& pairs)
+bool
+display_combo_for_pairs(char const* text, int* selected, std::vector<pair_t> const& pairs)
 {
-  auto const cmp = [&selected_index](auto const& pair) {
-    return pair.second == static_cast<size_t>(selected_index);
-  };
-  auto const it = std::find_if(pairs.cbegin(), pairs.cend(), cmp);
-  assert(it != pairs.cend());
-
-  return it->second;
+  auto const names = combine_names_into_one_string_forcombo(pairs);
+  return ImGui::Combo(text, selected, names.c_str());
 }
 
 template <typename T, typename Table>
@@ -248,18 +236,7 @@ draw_time_editor(stlw::Logger& logger, Time& time, UiDebugState& uistate)
   }
 }
 
-std::string
-collect_water_eids(std::vector<EntityID> const& winfos, EntityRegistry& registry)
-{
-  std::stringstream eid_names;
 
-  for (auto const weid : winfos) {
-    auto& wi = registry.get<WaterInfo>(weid);
-    eid_names << std::to_string(weid) << '\0';
-  }
-  eid_names << '\0';
-  return eid_names.str();
-}
 
 void
 show_water_window(EngineState& es, LevelManager& lm)
@@ -276,14 +253,14 @@ show_water_window(EngineState& es, LevelManager& lm)
     ImGui::Separator();
     ImGui::Separator();
 
-    auto const eid_names_str = collect_water_eids(winfos, registry);
+    auto pairs = collect_name_eid_pairs<WaterInfo, Transform>(registry);
     auto&      buffer        = uistate.buffers.water.selected_waterinfo;
-    ImGui::Combo("eid", &buffer, eid_names_str.c_str());
+    display_combo_for_pairs("WaterInfo:", &buffer, pairs);
 
     if (-1 != buffer) {
       assert(buffer >= 0);
       assert(static_cast<size_t>(buffer) < winfos.size());
-      auto const weid = winfos[buffer];
+      EntityID const weid = pairs[buffer].second;
       auto&      wi   = registry.get<WaterInfo>(weid);
       ImGui::ColorEdit4("Mix Color", wi.mix_color.data());
       ImGui::InputFloat("Mix-Intensity", &wi.mix_intensity);
@@ -692,14 +669,18 @@ show_material_editor(char const* text, Material& material)
 void
 show_entitymaterials_window(UiDebugState& ui, EntityRegistry& registry)
 {
-  auto& selected_material = ui.selected_entity_material;
+  auto& selected_material = ui.selected_material;
 
   auto const draw = [&]() {
-    // display_combo_for_entities<>("Entity", &selected_material, registry, pairs);
 
-    auto const  entities_with_materials = find_materials(registry);
-    auto const& selected_entity         = entities_with_materials[selected_material];
+    auto& selected_pointlight = ui.selected_pointlight;
+    auto  pairs = collect_name_eid_pairs<Material, Transform>(registry);
+    display_combo_for_pairs("Material:", &selected_material, pairs);
 
+    //auto const  entities_with_materials = find_materials(registry);
+    //auto const& selected_entity         = entities_with_materials[selected_material];
+
+    auto const selected_entity = pairs[selected_material].second;
     auto& material = registry.get<Material>(selected_entity);
     ImGui::Separator();
     show_material_editor("Entity Material:", material);
@@ -746,12 +727,12 @@ show_pointlight_window(UiDebugState& ui, EntityRegistry& registry)
   };
   auto const draw_pointlight_editor = [&]() {
     auto& selected_pointlight = ui.selected_pointlight;
-    auto  pairs               = collect_all<PointLight, Transform>(registry, false);
-    display_combo_for_entities<>("PointLight:", &selected_pointlight, registry, pairs);
+    auto  pairs               = collect_name_eid_pairs<PointLight, Transform>(registry);
+    display_combo_for_pairs("PointLight:", &selected_pointlight, pairs);
     ImGui::Separator();
 
     auto const pointlights = find_pointlights(registry);
-    display_pointlight(pointlights[selected_pointlight]);
+    display_pointlight(pairs[selected_pointlight].second);
 
     if (ImGui::Button("Close", ImVec2(120, 0))) {
       ui.show_pointlight_window = false;

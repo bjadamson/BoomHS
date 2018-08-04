@@ -31,7 +31,7 @@
 //
 //   A minimal example:
 //
-//class Test
+// class Test
 //{
 //  // The arguments after logger passed to bind_impl/unbind_impl must match or you will get an
 //  // compiler error.

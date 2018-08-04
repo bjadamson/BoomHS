@@ -283,7 +283,7 @@ namespace boomhs
 
 void
 place_water(stlw::Logger& logger, stlw::float_generator& rng, ZoneState& zs, ShaderProgram& sp,
-            glm::vec2 const& pos)
+            glm::vec2 const& pos, int const count)
 {
   auto& registry  = zs.registry;
   auto& gfx_state    = zs.gfx_state;
@@ -332,6 +332,9 @@ place_water(stlw::Logger& logger, stlw::float_generator& rng, ZoneState& zs, Sha
 
   tr.scale.x = dimensions.x;
   tr.scale.z = dimensions.y;
+
+  auto& name = registry.assign<Name>(eid);
+  name.value = "WaterInfo #" + std::to_string(count);
 }
 
 Result<GameState, std::string>
@@ -352,9 +355,12 @@ init(Engine& engine, EngineState& es, Camera& camera, stlw::float_generator& rng
     auto& sps = zs.gfx_state.sps;
 
     auto& water_sp = draw_water_options_to_shader(GameGraphicsMode::Basic, sps);
+
+    int count = 0;
     FOR(i, 4) {
       FOR(j, 4) {
-        place_water(logger, rng, zs, water_sp, glm::vec2{i * 25, j * 25});
+        place_water(logger, rng, zs, water_sp, glm::vec2{i * 25, j * 25}, count);
+        ++count;
       }
     }
   }

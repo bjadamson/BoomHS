@@ -80,8 +80,8 @@ struct UiDebugState
   // Buffers
   Buffers buffers;
 
-  int selected_entity          = 0;
-  int selected_entity_material = 0;
+  int selected_entity   = 0;
+  int selected_material = 0;
 
   int selected_pointlight = 0;
 
