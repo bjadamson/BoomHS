@@ -809,7 +809,8 @@ draw_grid_lines(RenderState& rstate)
   glm::vec2 constexpr GRID_DIMENSIONS{20, 20};
 
   auto const draw_the_terrain_grid = [&](glm::mat4 const& model_matrix, auto const& color) {
-    auto dinfo = OG::create_terrain_grid(logger, sp.va(), GRID_DIMENSIONS, show_y, color);
+    auto const grid = GridFactory::create_grid(GRID_DIMENSIONS, show_y, color);
+    auto dinfo = OG::copy_grid_gpu(logger, sp.va(), grid);
 
     sp.while_bound(logger, [&]() {
       auto const camera_matrix = fstate.camera_matrix();

@@ -20,6 +20,7 @@ struct ShaderPrograms;
 class TextureInfo;
 struct VertexBuffer;
 class VertexAttribute;
+struct GridVerticesIndices;
 
 } // namespace opengl
 
@@ -50,7 +51,7 @@ copy_rectangle_uvs(stlw::Logger&, VertexAttribute const&, RectangleUvVertices co
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // General
 DrawInfo
-create_terrain_grid(stlw::Logger&, VertexAttribute const&, glm::vec2 const&, bool, Color const&);
+copy_grid_gpu(stlw::Logger&, VertexAttribute const&, GridVerticesIndices const&);
 
 DrawInfo
 create_modelnormals(stlw::Logger&, VertexAttribute const&, glm::mat4 const&, boomhs::Obj const&,

@@ -42,6 +42,18 @@ struct RectangleFactory
   static RectangleUvVertices from_vertices_and_uvs(RectangleVertices const&, RectangleUvs const&);
 };
 
+struct GridVerticesIndices
+{
+  std::vector<float>  vertices;
+  std::vector<GLuint> indices;
+};
+struct GridFactory
+{
+  GridFactory() = delete;
+
+  static GridVerticesIndices create_grid(glm::vec2 const&, bool, Color const&);
+};
+
 } // namespace opengl
 
 namespace opengl::factories
