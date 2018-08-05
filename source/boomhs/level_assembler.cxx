@@ -51,36 +51,25 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
     draw_handles.add_entity(eid, MOVE(handle));
   };
   // copy CUBES to GPU
-  registry.view<ShaderName, CubeRenderable, PointLight>().each(
+  registry.view<ShaderName, CubeRenderable>().each(
       [&](auto const eid, auto& sn, auto& cr, auto&&... args) {
       copy_cube(eid, sn, cr, FORWARD(args));
       });
-  registry.view<ShaderName, CubeRenderable, TextureRenderable>().each(
-      [&](auto const eid, auto& sn, auto& cr, auto& texture) {
-        copy_cube(eid, sn, cr, texture);
-      });
+
+  auto const copy_mesh = [&](auto const eid, auto& sn, auto& mesh, auto&&...) {
+    auto&       va  = sps.ref_sp(sn.value).va();
+    auto const  qa  = BufferFlags::from_va(va);
+    auto const  qo  = ObjQuery{mesh.name, qa};
+    auto const& obj = obj_store.get(logger, mesh.name);
+
+    auto handle = opengl::gpu::copy_gpu(logger, va, obj);
+    draw_handles.add_entity(eid, MOVE(handle));
+  };
 
   // copy MESHES to GPU
-  registry.view<ShaderName, MeshRenderable, Color>().each(
-      [&](auto entity, auto& sn, auto& mesh, auto&) {
-        auto&       va  = sps.ref_sp(sn.value).va();
-        auto const  qa  = BufferFlags::from_va(va);
-        auto const  qo  = ObjQuery{mesh.name, qa};
-        auto const& obj = obj_store.get(logger, mesh.name);
+  registry.view<ShaderName, MeshRenderable>().each(copy_mesh);
 
-        auto handle = opengl::gpu::copy_gpu(logger, va, obj);
-        draw_handles.add_entity(entity, MOVE(handle));
-      });
-  registry.view<ShaderName, MeshRenderable, TextureRenderable>().each(
-      [&](auto entity, auto& sn, auto& mesh, auto& texture) {
-        auto&       va  = sps.ref_sp(sn.value).va();
-        auto const  qa  = BufferFlags::from_va(va);
-        auto const  qo  = ObjQuery{mesh.name, qa};
-        auto const& obj = obj_store.get(logger, mesh.name);
-
-        auto handle = opengl::gpu::copy_gpu(logger, va, obj);
-        draw_handles.add_entity(entity, MOVE(handle));
-      });
+  // copy billboarded textures to GPU
   registry.view<ShaderName, BillboardRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
         auto&      va = sps.ref_sp(sn.value).va();
@@ -93,17 +82,8 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
         auto handle = opengl::gpu::copy_rectangle_uvs(logger, va, vertices);
         draw_handles.add_entity(entity, MOVE(handle));
       });
-  registry.view<ShaderName, MeshRenderable, JunkEntityFromFILE>().each(
-      [&](auto entity, auto& sn, auto& mesh, auto&&...) {
-        auto&       va  = sps.ref_sp(sn.value).va();
-        auto const  qa  = BufferFlags::from_va(va);
-        auto const  qo  = ObjQuery{mesh.name, qa};
-        auto const& obj = obj_store.get(logger, mesh.name);
 
-        auto handle = opengl::gpu::copy_gpu(logger, va, obj);
-        draw_handles.add_entity(entity, MOVE(handle));
-      });
-
+  // Update the tree's to match their initial values.
   registry.view<ShaderName, MeshRenderable, TreeComponent>().each(
       [&](auto entity, auto& sn, auto& mesh, auto& tree) {
         auto& name = registry.get<MeshRenderable>(entity).name;
@@ -113,7 +93,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
         ObjQuery const query{name, flags};
         auto&          obj = obj_store.get(logger, name);
 
-        auto& tc = registry.get<typename std::remove_reference<decltype(tree)>::type>(entity);
+        auto& tc = registry.get<TreeComponent>(entity);
         tc.set_obj(&obj);
 
         auto& dinfo = draw_handles.lookup_entity(logger, entity);
