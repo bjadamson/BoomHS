@@ -136,14 +136,26 @@ get_color(CppTable const& table, char const* name)
   }
 
   std::vector<double> const& c = *load_colors;
-  assert(4 == c.size());
+  assert(4 == c.size() || 3 == c.size());
 
   opengl::Color color;
   color.set_r(c[0]);
   color.set_g(c[1]);
   color.set_b(c[2]);
-  color.set_a(c[3]);
+
+  auto const alpha = (3 == c.size()) ? 1.0f : c[3];
+  color.set_a(alpha);
   return std::make_optional(color);
+}
+
+opengl::Color
+get_color_or_abort(CppTable const& table, char const* name)
+{
+  auto const c = get_color(table, name);
+  if (c) {
+    return *c;
+  }
+  std::abort();
 }
 
 std::optional<glm::vec2>
@@ -439,7 +451,7 @@ load_material_or_abort(CppTable const& file)
 struct NameAttenuation
 {
   std::string const name;
-  Attenuation const attenuation;
+  Attenuation const value;
 };
 
 auto
@@ -477,53 +489,11 @@ load_materials(stlw::Logger& logger, CppTable const& table)
   return material_table;
 }
 
-struct NamePointlight
-{
-  std::string const name;
-  PointLight const  pointlight;
-};
-
-auto
-load_pointlight(CppTable const& file, std::vector<NameAttenuation> const& attenuations)
-{
-  // clang-format off
-  auto const name          = get_string_or_abort(file, "name");
-  auto const attenuation_o = get_string(file,          "attenuation");
-  auto const diffuse       = get_vec3_or_abort(file,   "diffuse");
-  auto const specular      = get_vec3_or_abort(file,   "specular");
-  // clang-format on
-
-  PointLight pl;
-  pl.light = Light{Color{diffuse}, Color{specular}};
-
-  if (attenuation_o) {
-    auto const name = *attenuation_o;
-    auto const cmp  = [&name](NameAttenuation const& na) { return na.name == name; };
-    auto const it   = std::find_if(attenuations.cbegin(), attenuations.cend(), cmp);
-    assert(it != attenuations.cend());
-    pl.attenuation = it->attenuation;
-  }
-  return NamePointlight{name, pl};
-}
-
-auto
-load_pointlights(stlw::Logger& logger, CppTable const& table,
-                 std::vector<NameAttenuation> const& attenuations)
-{
-  auto const                  table_array = get_table_array(table, "pointlight");
-  std::vector<NamePointlight> result;
-  for (auto const& it : *table_array) {
-    auto const pointlight = load_pointlight(it, attenuations);
-    result.emplace_back(pointlight);
-  }
-  return result;
-}
-
 void
 load_entities(stlw::Logger& logger, CppTable const& table,
               TextureTable& ttable,
               MaterialTable const&   material_table,
-              std::vector<NamePointlight> const& pointlights, EntityRegistry& registry)
+              std::vector<NameAttenuation> const& attenuations, EntityRegistry& registry)
 {
   auto const load_entity = [&](auto const& file) {
     // clang-format off
@@ -536,10 +506,12 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     auto const color         = get_color(file,           "color");
     auto const material_o    = get_string(file,          "material");
     auto const texture_name  = get_string(file,          "texture");
-    auto const pointlight_o  = get_string(file,          "pointlight");
     auto const is_visible    = get_bool(file,            "is_visible").value_or(true);
     bool const random_junk   = get_bool(file,            "random_junk_from_file").value_or(false);
+
+    // sub-tables or "inner"-tables
     auto const orbital_o     = get_table(file, "orbital-body");
+    auto const pointlight_o  = get_table(file, "pointlight");
     // clang-format on
 
     // texture OR color fields, not both
@@ -619,12 +591,20 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     }
 
     if (pointlight_o) {
-      auto const cmp = [&pointlight_o](NamePointlight const& np) {
-        return np.name == *pointlight_o;
+      auto const attenuation  = get_string_or_abort(pointlight_o, "attenuation");
+
+      auto const cmp = [&](NameAttenuation const& na) {
+        return na.name == attenuation;
       };
-      auto const it = std::find_if(pointlights.cbegin(), pointlights.cend(), cmp);
-      assert(it != pointlights.cend());
-      registry.assign<PointLight>(eid) = it->pointlight;
+      auto const it = std::find_if(attenuations.cbegin(), attenuations.cend(), cmp);
+      assert(it != attenuations.cend());
+
+      auto& pl = registry.assign<PointLight>(eid);
+      pl.attenuation = it->value;
+
+      auto& light    = pl.light;
+      light.diffuse  = get_color_or_abort(pointlight_o, "diffuse");
+      light.specular = get_color_or_abort(pointlight_o, "specular");
     }
 
     if (stlw::cstrcmp(name.c_str(), "TreeLowpoly")) {
@@ -779,11 +759,8 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   LOG_TRACE("loading attenuation data");
   auto const attenuations = load_attenuations(logger, file_datatable);
 
-  LOG_TRACE("loading pointlight data");
-  auto const pointlights = load_pointlights(logger, file_datatable, attenuations);
-
   LOG_TRACE("loading entities ...");
-  load_entities(logger, file_datatable, texture_table, material_table, pointlights,
+  load_entities(logger, file_datatable, texture_table, material_table, attenuations,
                 registry);
 
   LOG_TRACE("loading lights ...");

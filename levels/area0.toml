@@ -360,37 +360,6 @@ diffuse = [0.0, 0.0, 1.0]
 specular = [0.0, 0.0, 1.0]
 shininess = 10.00
 
-########### POINTLIGHT #############
-[[pointlight]]
-name = "moon"
-attenuation = "nolight"
-diffuse = [0.0, 0.0, 1.0]
-specular = [0.0, 1.0, 0.0]
-
-[[pointlight]]
-name = "white"
-attenuation = "nolight"
-diffuse = [1.0, 1.0, 1.0]
-specular = [1.0, 1.0, 1.0]
-
-[[pointlight]]
-name = "red"
-attenuation = "nolight"
-diffuse = [1.0, 0.0, 0.0]
-specular = [1.0, 0.0, 0.0]
-
-[[pointlight]]
-name = "green"
-attenuation = "nolight"
-diffuse = [0.0, 1.0, 0.0]
-specular = [0.0, 1.0, 0.0]
-
-[[pointlight]]
-name = "blue"
-attenuation = "nolight"
-diffuse = [0.0, 0.0, 1.0]
-specular = [0.0, 0.0, 1.0]
-
 ########### ENTITY #############
 [[entity]]
 name = "sun"
@@ -412,7 +381,11 @@ shader = "2dlight_uv"
 geometry = "billboard:spherical"
 scale = [650.0, 650.0, 650.0]
 texture = "moon"
-pointlight = "moon"
+
+[entity.pointlight]
+attenuation = "nolight"
+diffuse = [0.0, 0.0, 1.0]
+specular = [0.0, 0.0, 1.0]
 
 [entity.orbital-body]
 x = 1200.0
@@ -420,38 +393,53 @@ y = 1200
 z = 1200.0
 offset = 3.1459
 
-######### POINT LIGHTS
 [[entity]]
 name = "point light 0"
 position = [2.0, 2.0, 2.0]
 shader = "light"
 geometry = "cube"
-pointlight = "red"
 scale = [0.4, 0.4, 0.4]
+
+[entity.pointlight]
+attenuation = "nolight"
+diffuse = [1.0, 0.0, 0.0]
+specular = [1.0, 0.0, 0.0]
 
 [[entity]]
 name = "point light 1"
 position = [4.0, 2.0, 2.0]
 shader = "light"
 geometry = "cube"
-pointlight = "green"
 scale = [0.4, 0.4, 0.4]
+
+[entity.pointlight]
+attenuation = "nolight"
+diffuse = [0.0, 1.0, 0.0]
+specular = [0.0, 1.0, 0.0]
 
 [[entity]]
 name = "point light 2"
 position = [4.0, 2.0, 4.0]
 shader = "light"
 geometry = "cube"
-pointlight = "blue"
 scale = [0.4, 0.4, 0.4]
+
+[entity.pointlight]
+attenuation = "nolight"
+diffuse = [0.0, 0.0, 1.0]
+specular = [0.0, 0.0, 1.0]
 
 [[entity]]
 name = "point light 3"
 position = [2.0, 2.0, 4.0]
 shader = "light"
 geometry = "cube"
-pointlight = "white"
 scale = [0.4, 0.4, 0.4]
+
+[entity.pointlight]
+attenuation = "nolight"
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
 
 
 ###################################################################################################
