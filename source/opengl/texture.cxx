@@ -236,7 +236,6 @@ allocate_texture(stlw::Logger &logger, std::string const& filename,
 {
   GLenum const format = taa.format;
   GLint const uv_max = taa.uv_max;
-  GLenum const texture_unit = taa.texture_unit;
 
   assert(ANYOF(format == GL_RGB, format == GL_RGBA));
 
@@ -255,9 +254,6 @@ allocate_texture(stlw::Logger &logger, std::string const& filename,
   //
   // note: Using while_bound() doesn't work here because TRY_MOVEOUT returns a value.
   {
-    glActiveTexture(GL_TEXTURE0 + texture_unit);
-    ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
-
     BIND_UNTIL_END_OF_SCOPE(logger, ti);
 
     GpuUploadConfig const guc{format, ti.target};
@@ -297,10 +293,6 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   auto const upload_fn = [&format, &logger, &ti](std::string const& filename, GLenum const target)
     -> Result<stlw::none_t, std::string>
   {
-    GLenum const TEXTURE_UNIT = GL_TEXTURE0;
-    glActiveTexture(TEXTURE_UNIT);
-    ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
-
     GpuUploadConfig const guc{format, target};
     auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, guc));
 
