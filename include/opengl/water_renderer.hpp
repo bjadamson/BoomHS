@@ -2,7 +2,6 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/dimensions.hpp>
 #include <boomhs/frame.hpp>
-#include <boomhs/game_config.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/state.hpp>
 
@@ -33,9 +32,6 @@ namespace opengl
 static float constexpr CUTOFF_HEIGHT      = 0.4f;
 static glm::vec4 constexpr ABOVE_VECTOR   = {0, -1, 0, CUTOFF_HEIGHT};
 static glm::vec4 constexpr BENEATH_VECTOR = {0, 1, 0, -CUTOFF_HEIGHT};
-
-opengl::ShaderProgram&
-draw_water_options_to_shader(boomhs::GameGraphicsMode, opengl::ShaderPrograms&);
 
 class BlackWaterRenderer
 {

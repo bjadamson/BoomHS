@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/dimensions.hpp>
+#include <boomhs/game_config.hpp>
 #include <boomhs/obj.hpp>
 
 #include <stlw/log.hpp>
@@ -20,11 +21,17 @@ namespace boomhs
 {
 class EntityRegistry;
 
+opengl::ShaderProgram&
+graphics_mode_to_water_shader(boomhs::GameGraphicsMode, opengl::ShaderPrograms&);
+
 struct WaterInfo
 {
   glm::vec2            position;
   opengl::DrawInfo*    dinfo = nullptr;
   opengl::TextureInfo* tinfo = nullptr;
+
+  glm::vec2    dimensions;
+  unsigned int num_vertexes;
 
   opengl::Color mix_color     = LOC::SLATE_BLUE;
   float         mix_intensity = 0.25f;

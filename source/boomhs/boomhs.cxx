@@ -1,4 +1,5 @@
 #include <boomhs/audio.hpp>
+#include <boomhs/billboard.hpp>
 #include <boomhs/boomhs.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/collision.hpp>
@@ -8,7 +9,6 @@
 #include <boomhs/game_config.hpp>
 #include <boomhs/heightmap.hpp>
 #include <boomhs/io.hpp>
-#include <boomhs/level_assembler.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mouse_picker.hpp>
 #include <boomhs/npc.hpp>
@@ -16,6 +16,7 @@
 #include <boomhs/player.hpp>
 #include <boomhs/rexpaint.hpp>
 #include <boomhs/state.hpp>
+#include <boomhs/start_area_generator.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/tree.hpp>
@@ -62,9 +63,8 @@ using namespace window;
 namespace
 {
 
-void
-update_playaudio(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registry,
-                 WaterAudioSystem& audio)
+bool
+player_in_water(stlw::Logger& logger, EntityRegistry& registry)
 {
   auto const player_eid = find_player(registry);
   auto& player = registry.get<Player>(player_eid);
@@ -76,18 +76,22 @@ update_playaudio(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registr
     auto& p_tr       = player.transform();
 
     auto const& player_bbox = player.bounding_box();
-    bool const  collides = collision::bbox_intersects(logger, p_tr, player_bbox, w_tr, water_bbox);
-
-    if (collides) {
-      audio.play_inwater_sound(logger);
-
-      if (audio.is_playing_watersound()) {
-        LOG_TRACE("PLAYING IN-WATER SOUND");
-      }
+    if (collision::bbox_intersects(logger, p_tr, player_bbox, w_tr, water_bbox)) {
+      return true;
     }
-    else {
-      audio.stop_inwater_sound(logger);
-    }
+  }
+  return false;
+}
+
+void
+update_playaudio(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registry,
+                 WaterAudioSystem& audio)
+{
+  if (player_in_water(logger, registry)) {
+    audio.play_inwater_sound(logger);
+  }
+  else {
+    audio.stop_inwater_sound(logger);
   }
 }
 
@@ -281,60 +285,174 @@ update_visible_entities(LevelManager& lm, EntityRegistry& registry)
 namespace boomhs
 {
 
-void
-place_water(stlw::Logger& logger, stlw::float_generator& rng, ZoneState& zs, ShaderProgram& sp,
-            glm::vec2 const& pos, int const count)
+Result<stlw::Nothing, std::string>
+copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
+                EntityRegistry& registry, ObjStore& obj_store, DrawHandleManager& draw_handles)
 {
-  auto& registry  = zs.registry;
-  auto& gfx_state    = zs.gfx_state;
-  auto& draw_handles = gfx_state.draw_handles;
-  auto& sps          = gfx_state.sps;
-  auto& ttable       = gfx_state.texture_table;
+  auto const copy_cube = [&](auto const eid, auto& sn, auto& cr, auto&&...) {
+    CubeMinMax const cmm{cr.min, cr.max};
+    auto& va = sps.ref_sp(sn.value).va();
 
-  auto const eid = registry.create();
-
-  LOG_TRACE("Placing Water");
-  auto& wi     = WaterFactory::make_default(logger, sps, ttable, eid, registry);
-  wi.position  = pos;
-  wi.mix_color = Color::random(rng);
-
-  size_t constexpr num_vertexes = 4;
-  glm::vec2 constexpr dimensions{20};
-  auto const data = WaterFactory::generate_water_data(logger, dimensions, num_vertexes);
-  {
-    BufferFlags const flags{true, false, false, true};
-    auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
-    auto              dinfo  = gpu::copy_gpu(logger, sp.va(), buffer);
-
-    draw_handles.add_entity(eid, MOVE(dinfo));
-    wi.dinfo = &draw_handles.lookup_entity(logger, eid);
-  }
-  {
-    auto& bbox = registry.assign<AABoundingBox>(eid);
-    bbox.min   = glm::vec3{-0.5, -0.2, -0.5};
-    bbox.max   = glm::vec3{0.5f, 0.2, 0.5};
-
-    CubeMinMax const cmm{bbox.min, bbox.max};
-
-    auto& sp    = sps.ref_sp("wireframe");
     auto const vertices = OF::cube_vertices(cmm.min, cmm.max);
-    auto  dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, vertices, sp.va());
-    draw_handles.add_bbox(eid, MOVE(dinfo));
+    auto  handle = opengl::gpu::copy_cube_gpu(logger, vertices, va);
+    draw_handles.add_entity(eid, MOVE(handle));
+  };
+  // copy CUBES to GPU
+  registry.view<ShaderName, CubeRenderable>().each(
+      [&](auto const eid, auto& sn, auto& cr, auto&&... args) {
+      copy_cube(eid, sn, cr, FORWARD(args));
+      });
+
+  auto const copy_mesh = [&](auto const eid, auto& sn, auto& mesh, auto&&...) {
+    auto&       va  = sps.ref_sp(sn.value).va();
+    auto const  qa  = BufferFlags::from_va(va);
+    auto const  qo  = ObjQuery{mesh.name, qa};
+    auto const& obj = obj_store.get(logger, mesh.name);
+
+    auto handle = opengl::gpu::copy_gpu(logger, va, obj);
+    draw_handles.add_entity(eid, MOVE(handle));
+  };
+
+  // copy MESHES to GPU
+  registry.view<ShaderName, MeshRenderable>().each(copy_mesh);
+
+  // copy billboarded textures to GPU
+  registry.view<ShaderName, BillboardRenderable, TextureRenderable>().each(
+      [&](auto entity, auto& sn, auto&, auto& texture) {
+        auto&      va = sps.ref_sp(sn.value).va();
+        auto*      ti = texture.texture_info;
+        assert(ti);
+
+        auto const v  = OF::rectangle_vertices_default();
+        auto const uv = OF::rectangle_uvs(ti->uv_max);
+        auto const vertices = RectangleFactory::from_vertices_and_uvs(v, uv);
+        auto handle = opengl::gpu::copy_rectangle_uvs(logger, va, vertices);
+        draw_handles.add_entity(entity, MOVE(handle));
+      });
+
+  // Update the tree's to match their initial values.
+  registry.view<ShaderName, MeshRenderable, TreeComponent>().each(
+      [&](auto entity, auto& sn, auto& mesh, auto& tree) {
+        auto& name = registry.get<MeshRenderable>(entity).name;
+
+        auto&          va    = sps.ref_sp(sn.value).va();
+        auto const     flags = BufferFlags::from_va(va);
+        ObjQuery const query{name, flags};
+        auto&          obj = obj_store.get(logger, name);
+
+        auto& tc = registry.get<TreeComponent>(entity);
+        tc.set_obj(&obj);
+
+        auto& dinfo = draw_handles.lookup_entity(logger, entity);
+        Tree::update_colors(logger, va, dinfo, tc);
+      });
+
+  return OK_NONE;
+}
+
+void
+copy_state_gpu(stlw::Logger& logger, EngineState const& es, ZoneState& zs)
+{
+  auto&       ldata     = zs.level_data;
+  auto&       objstore  = ldata.obj_store;
+  auto&       gfx_state = zs.gfx_state;
+  auto&       sps       = gfx_state.sps;
+  auto&       registry  = zs.registry;
+
+  auto& draw_handles = gfx_state.draw_handles;
+  auto copy_result = copy_assets_gpu(logger, sps, registry, objstore, draw_handles)
+    .expect_moveout("Error copying asset to gpu");
+
+  auto& obj_store                 = ldata.obj_store;
+  auto constexpr WIREFRAME_SHADER = "wireframe";
+  auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
+
+  auto const          add_wireframe = [&](auto const eid, auto const& min, auto const& max) {
+    {
+      auto& bbox = registry.assign<AABoundingBox>(eid);
+      bbox.min   = min;
+      bbox.max   = max;
+
+      CubeMinMax const cmm{bbox.min, bbox.max};
+      auto const cv = OF::cube_vertices(cmm.min, cmm.max);
+      auto    dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, cv, va);
+      draw_handles.add_bbox(eid, MOVE(dinfo));
+    }
+  };
+  for (auto const eid : registry.view<MeshRenderable>()) {
+    auto& name = registry.get<MeshRenderable>(eid).name;
+
+    auto const     flags = BufferFlags::from_va(va);
+    ObjQuery const query{name, flags};
+    auto&          obj       = obj_store.get(logger, name);
+    auto const     posbuffer = obj.positions();
+    auto const&    min       = posbuffer.min();
+    auto const&    max       = posbuffer.max();
+
+    add_wireframe(eid, min, max);
+    registry.assign<Selectable>(eid);
   }
+  for (auto const eid : registry.view<CubeRenderable>()) {
+    auto const& cr = registry.get<CubeRenderable>(eid);
 
-  registry.assign<Selectable>(eid);
-  registry.assign<ShaderName>(eid);
-  registry.assign<IsVisible>(eid).value = true;
+    add_wireframe(eid, cr.min, cr.max);
+    registry.assign<Selectable>(eid);
+  }
+  for (auto const eid : registry.view<OrbitalBody>()) {
+    glm::vec3 constexpr min = glm::vec3{0.0};
+    glm::vec3 constexpr max = glm::vec3{0.0};
+    add_wireframe(eid, min, max);
+  }
+  for (auto const eid : registry.view<WaterInfo>()) {
+    {
+      BufferFlags const flags{true, false, false, true};
 
-  auto& tr         = registry.assign<Transform>(eid);
-  tr.translation.x = dimensions.x / 2.0f;
-  tr.translation.z = dimensions.y / 2.0f;
+      auto& wi = registry.get<WaterInfo>(eid);
+      auto const dimensions = wi.dimensions;
+      auto const num_vertexes = wi.num_vertexes;
+      auto const data = WaterFactory::generate_water_data(logger, dimensions, num_vertexes);
+      auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
 
-  tr.scale.x = dimensions.x;
-  tr.scale.z = dimensions.y;
+      auto& sp   = graphics_mode_to_water_shader(es.graphics_settings.mode, sps);
+      auto dinfo = gpu::copy_gpu(logger, sp.va(), buffer);
 
-  auto& name = registry.assign<Name>(eid);
-  name.value = "WaterInfo #" + std::to_string(count);
+      draw_handles.add_entity(eid, MOVE(dinfo));
+      wi.dinfo = &draw_handles.lookup_entity(logger, eid);
+    }
+    {
+      auto& bbox = registry.assign<AABoundingBox>(eid);
+      bbox.min   = glm::vec3{-0.5, -0.2, -0.5};
+      bbox.max   = glm::vec3{0.5f, 0.2, 0.5};
+
+      CubeMinMax const cmm{bbox.min, bbox.max};
+
+      auto& sp    = sps.ref_sp("wireframe");
+      auto const vertices = OF::cube_vertices(cmm.min, cmm.max);
+      auto  dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, vertices, sp.va());
+      draw_handles.add_bbox(eid, MOVE(dinfo));
+    }
+  }
+}
+
+ZoneState
+assemble(LevelGeneratedData&& gendata, LevelAssets&& assets, EntityRegistry& registry)
+{
+  // Combine the generated data with the asset data, creating the LevelData instance.
+  LevelData level_data{
+                       MOVE(gendata.terrain),
+
+                       MOVE(assets.fog),
+                       assets.global_light,
+                       MOVE(assets.material_table),
+                       MOVE(assets.obj_store)};
+  GfxState  gfx{MOVE(assets.shader_programs), MOVE(assets.texture_table)};
+  return ZoneState{MOVE(level_data), MOVE(gfx), registry};
+}
+
+std::string
+floornumber_to_levelfilename(int const floor_number)
+{
+  return "area" + std::to_string(floor_number) + ".toml";
 }
 
 Result<GameState, std::string>
@@ -342,28 +460,37 @@ init(Engine& engine, EngineState& es, Camera& camera, stlw::float_generator& rng
 {
   auto& logger = es.logger;
 
-  auto assembled = LevelAssembler::assemble_levels(logger, engine.registries);
-  ZoneStates zss = TRY_MOVEOUT(MOVE(assembled));
+  int constexpr FLOOR_NUMBER = 0;
+  auto& registry = engine.registries[FLOOR_NUMBER];
 
-  GameState state{es, LevelManager{MOVE(zss)}};
+  std::vector<ZoneState> zstates;
+  zstates.reserve(1);
+  {
+    auto  level_name     = floornumber_to_levelfilename(FLOOR_NUMBER);
+    auto  level_assets   = TRY_MOVEOUT(LevelLoader::load_level(logger, registry, level_name));
+    auto& ttable         = level_assets.texture_table;
+    auto& material_table = level_assets.material_table;
+    auto& sps            = level_assets.shader_programs;
+
+    char const* HEIGHTMAP_NAME = "Area0-HM";
+    auto const  heightmap = TRY_MOVEOUT(heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
+
+    auto gendata = StartAreaGenerator::gen_level(logger, registry, rng, sps, ttable,
+        material_table, heightmap);
+
+    ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
+    zstates.emplace_back(MOVE(zs));
+
+    // copy the first zonestate to GPU
+    assert(zstates.size() > 0);
+    copy_state_gpu(logger, es, zstates.front());
+  }
+
+  GameState state{es, LevelManager{MOVE(zstates)}};
 
   auto& lm       = state.level_manager;
   auto& zs       = lm.active();
-  auto& registry = zs.registry;
 
-  for (auto& zs : state.level_manager) {
-    auto& sps = zs.gfx_state.sps;
-
-    auto& water_sp = draw_water_options_to_shader(GameGraphicsMode::Basic, sps);
-
-    int count = 0;
-    FOR(i, 4) {
-      FOR(j, 4) {
-        place_water(logger, rng, zs, water_sp, glm::vec2{i * 25, j * 25}, count);
-        ++count;
-      }
-    }
-  }
   {
     auto test_r = rexpaint::RexImage::load("assets/test.xp");
     if (!test_r) {
@@ -462,14 +589,14 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   auto const make_basic_water_renderer = [&]() {
     auto& diff   = *ttable.find("water-diffuse");
     auto& normal = *ttable.find("water-normal");
-    auto& sp     = draw_water_options_to_shader(GameGraphicsMode::Basic, sps);
+    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
     return BasicWaterRenderer{logger, diff, normal, sp};
   };
 
   auto const make_medium_water_renderer = [&]() {
     auto& diff   = *ttable.find("water-diffuse");
     auto& normal = *ttable.find("water-normal");
-    auto& sp     = draw_water_options_to_shader(GameGraphicsMode::Medium, sps);
+    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Medium, sps);
     return MediumWaterRenderer{logger, diff, normal, sp};
   };
 
@@ -479,7 +606,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     auto& ti     = *ttable.find("water-diffuse");
     auto& dudv   = *ttable.find("water-dudv");
     auto& normal = *ttable.find("water-normal");
-    auto& sp     = draw_water_options_to_shader(GameGraphicsMode::Advanced, sps);
+    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Advanced, sps);
     return AdvancedWaterRenderer{logger, screen_size, sp, ti, dudv, normal};
   };
 

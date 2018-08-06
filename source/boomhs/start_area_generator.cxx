@@ -1,4 +1,5 @@
 #include <boomhs/item_factory.hpp>
+#include <boomhs/game_config.hpp>
 #include <boomhs/heightmap.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/leveldata.hpp>
@@ -85,6 +86,38 @@ place_player(stlw::Logger& logger, TerrainGrid const& terrain,
   return transform;
 }
 
+void
+place_water(stlw::Logger& logger, ShaderPrograms& sps, EntityRegistry& registry,
+            TextureTable& ttable, stlw::float_generator& rng, glm::vec2 const& pos,
+            unsigned int count)
+{
+  auto& water_sp  = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
+  auto const eid = registry.create();
+
+  LOG_TRACE("Placing Water");
+  auto& wi        = WaterFactory::make_default(logger, sps, ttable, eid, registry);
+  wi.position     = pos;
+  wi.mix_color    = Color::random(rng);
+  wi.dimensions   = glm::vec2{20};
+  wi.num_vertexes = 4;
+
+  registry.assign<Selectable>(eid);
+  registry.assign<ShaderName>(eid);
+  registry.assign<IsVisible>(eid).value = true;
+
+  auto& tr         = registry.assign<Transform>(eid);
+
+  auto const& dimensions = wi.dimensions;
+  tr.translation.x = pos.x + dimensions.x / 2.0f;
+  tr.translation.z = pos.y + dimensions.y / 2.0f;
+
+  tr.scale.x = dimensions.x;
+  tr.scale.z = dimensions.y;
+
+  auto& name = registry.assign<Name>(eid);
+  name.value = "WaterInfo #" + std::to_string(count);
+}
+
 } // namespace
 
 namespace boomhs
@@ -113,6 +146,18 @@ StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
 
   LOG_TRACE("placing monsters ...\n");
   place_monsters(logger, terrain, registry, rng);
+
+  LOG_TRACE("placing water ...\n");
+
+
+  int count = 0;
+  FOR(i, 4) {
+    FOR(j, 4) {
+      auto const pos = glm::vec2{i * 25, j * 25};
+      place_water(logger, sps, registry, ttable, rng, pos, count);
+      ++count;
+    }
+  }
 
   LOG_TRACE("finished generating starting area!");
   return LevelGeneratedData{MOVE(terrain)};

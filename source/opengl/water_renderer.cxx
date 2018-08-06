@@ -85,9 +85,7 @@ render_water_common(Transform& transform, ShaderProgram& sp, RenderState& rstate
   LOG_TRACE("Rendering water");
   auto const winfos = find_all_entities_with_component<WaterInfo>(registry);
   for (auto const weid : winfos) {
-    LOG_ERROR("BEFORE RENDER WI");
     auto& wi = registry.get<WaterInfo>(weid);
-    LOG_ERROR("AFTER RENDER WI");
     render(wi);
   }
   LOG_TRACE("Finished rendering water");
@@ -97,29 +95,6 @@ render_water_common(Transform& transform, ShaderProgram& sp, RenderState& rstate
 
 namespace opengl
 {
-
-ShaderProgram&
-draw_water_options_to_shader(GameGraphicsMode const dwo, opengl::ShaderPrograms& sps)
-{
-  ShaderProgram* sp = nullptr;
-
-  switch (dwo) {
-  case GameGraphicsMode::Basic:
-    sp = &sps.ref_sp("water_basic");
-    break;
-  case GameGraphicsMode::Medium:
-    sp = &sps.ref_sp("water_medium");
-    break;
-  case GameGraphicsMode::Advanced:
-    sp = &sps.ref_sp("water_advanced");
-    break;
-  default:
-    std::abort();
-  }
-
-  assert(sp);
-  return *sp;
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BasicWaterRenderer

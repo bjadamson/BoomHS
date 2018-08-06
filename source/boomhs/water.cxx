@@ -26,6 +26,29 @@ using namespace window;
 namespace boomhs
 {
 
+ShaderProgram&
+graphics_mode_to_water_shader(GameGraphicsMode const dwo, opengl::ShaderPrograms& sps)
+{
+  ShaderProgram* sp = nullptr;
+
+  switch (dwo) {
+  case GameGraphicsMode::Basic:
+    sp = &sps.ref_sp("water_basic");
+    break;
+  case GameGraphicsMode::Medium:
+    sp = &sps.ref_sp("water_medium");
+    break;
+  case GameGraphicsMode::Advanced:
+    sp = &sps.ref_sp("water_advanced");
+    break;
+  default:
+    std::abort();
+  }
+
+  assert(sp);
+  return *sp;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // WaterFactory
 ObjData
