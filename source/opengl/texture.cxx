@@ -21,18 +21,10 @@ using namespace opengl;
 namespace
 {
 
-struct GpuUploadConfig
-{
-  GLenum const format;
-  GLenum const target;
-};
-
 Result<ImageData, std::string>
-upload_image_gpu(stlw::Logger &logger, std::string const& path, GpuUploadConfig const& guc)
+upload_image_gpu(stlw::Logger &logger, std::string const& path, GLenum const target,
+                 GLenum const format)
 {
-  auto const format           = guc.format;
-  auto const target           = guc.target;
-
   auto image_data = TRY_MOVEOUT(texture::load_image(logger, path.c_str(), format));
 
   auto const width = image_data.width;
@@ -237,15 +229,13 @@ wrap_mode_from_string(char const* name)
 }
 
 TextureResult
-upload_2d_texture(stlw::Logger &logger, std::string const& filename,
-    TextureAllocationArgs const& taa)
+upload_2d_texture(stlw::Logger &logger, std::string const& filename, TextureInfo&& ti)
 {
-  GLenum const format = taa.format;
-  GLint const uv_max = taa.uv_max;
+  GLenum const format = ti.format;
+  GLint const uv_max = ti.uv_max;
 
   assert(ANYOF(format == GL_RGB, format == GL_RGBA));
 
-  TextureInfo ti;
   ti.gen_texture(logger, 1);
   ti.target = GL_TEXTURE_2D;
   LOG_TRACE_SPRINTF("allocating texture info %s TextureID %u", filename, ti.id);
@@ -262,8 +252,7 @@ upload_2d_texture(stlw::Logger &logger, std::string const& filename,
   {
     BIND_UNTIL_END_OF_SCOPE(logger, ti);
 
-    GpuUploadConfig const guc{format, ti.target};
-    auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, guc));
+    auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, ti.target, format));
     ti.height = image_data.height;
     ti.width = image_data.width;
 
@@ -277,21 +266,19 @@ upload_2d_texture(stlw::Logger &logger, std::string const& filename,
 }
 
 TextureResult
-upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& paths,
-    GLenum const format)
+upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& paths, TextureInfo&& ti)
 {
+  auto const format = ti.format;
   assert(paths.size() == 6);
   assert(ANYOF(format == GL_RGB, format == GL_RGBA));
 
-  TextureInfo ti;
   ti.gen_texture(logger, 1);
   ti.target = GL_TEXTURE_CUBE_MAP;
 
   auto const upload_fn = [&](std::string const& filename, GLenum const target)
     -> Result<stlw::none_t, std::string>
   {
-    GpuUploadConfig const guc{format, target};
-    auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, guc));
+    auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, target, format));
 
     // Either the height is unset (0) or all height/width are the same.
     assert(ti.height == 0 || ti.height == image_data.height);

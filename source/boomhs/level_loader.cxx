@@ -324,28 +324,32 @@ load_textures(stlw::Logger& logger, CppTable const& table)
     auto const name = get_string_or_abort(resource, "name");
     auto const type = get_string_or_abort(resource, "type");
 
+
+    auto const  wrap_s    = get_string(resource, "wrap").value_or("clamp");
+    GLint const wrap_mode = texture::wrap_mode_from_string(wrap_s.c_str());
+
+    auto const uv_max = get_float(resource, "uvs").value_or(1.0f);
+
+    unsigned int const texture_unit = get_unsignedint(resource, "texture_unit").value_or(0);
+
+    TextureInfo ti;
+    ti.wrap = wrap_mode;
+    ti.uv_max = uv_max;
+
     auto const load_2dtexture = [&](GLenum const format) -> Result<stlw::none_t, std::string> {
       auto const               filename = get_string_or_abort(resource, "filename");
       opengl::TextureFilenames texture_names{name, {filename}};
 
-      auto const  wrap_s = get_string(resource, "wrap").value_or("clamp");
-      GLint const wrap   = texture::wrap_mode_from_string(wrap_s.c_str());
-
-      auto const uv_max = get_float(resource, "uvs").value_or(1.0f);
-
-      unsigned int const texture_unit = get_unsignedint(resource, "texture_unit").value_or(0);
-
-      opengl::texture::TextureAllocationArgs const taa{format, uv_max, texture_unit};
-
+      ti.format = format;
       Texture t =
-          TRY_MOVEOUT(opengl::texture::upload_2d_texture(logger, texture_names.filenames[0], taa));
+          TRY_MOVEOUT(opengl::texture::upload_2d_texture(logger, texture_names.filenames[0], MOVE(ti)));
 
       glActiveTexture(GL_TEXTURE0 + texture_unit);
       ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
 
       t->while_bound(logger, [&]() {
-        t->set_fieldi(GL_TEXTURE_WRAP_S, wrap);
-        t->set_fieldi(GL_TEXTURE_WRAP_T, wrap);
+        t->set_fieldi(GL_TEXTURE_WRAP_S, t->wrap);
+        t->set_fieldi(GL_TEXTURE_WRAP_T, t->wrap);
 
         // Set texture filtering parameters
         t->set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -364,8 +368,10 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       auto const bottom = get_string_or_abort(resource, "bottom");
 
       opengl::TextureFilenames texture_names{name, {front, right, back, left, top, bottom}};
+      ti.format = format;
+
       Texture                  t = TRY_MOVEOUT(
-          opengl::texture::upload_3dcube_texture(logger, texture_names.filenames, format));
+          opengl::texture::upload_3dcube_texture(logger, texture_names.filenames, MOVE(ti)));
 
       t->while_bound(logger, [&]() {
         t->set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);

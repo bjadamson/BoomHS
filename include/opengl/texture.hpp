@@ -24,6 +24,7 @@ struct TextureInfo
   GLenum target = 0;
   GLenum format = 0;
   GLuint id     = 0;
+  GLint  wrap   = -1;
 
   GLint width = 0, height = 0;
   float uv_max = -1.0;
@@ -45,6 +46,7 @@ struct TextureInfo
   GLint get_fieldi(GLenum);
   void  set_fieldi(GLenum, GLint);
 
+  bool is_2d() const { return target == GL_TEXTURE_2D; }
   std::string to_string() const;
   static size_t constexpr NUM_BUFFERS = 1;
 };
@@ -186,17 +188,10 @@ load_image(stlw::Logger&, char const*, GLenum const);
 GLint
 wrap_mode_from_string(char const*);
 
-struct TextureAllocationArgs
-{
-  GLenum const  format;
-  float const  uv_max;
-  GLenum const texture_unit;
-};
+TextureResult
+upload_2d_texture(stlw::Logger&, std::string const&, TextureInfo&&);
 
 TextureResult
-upload_2d_texture(stlw::Logger&, std::string const&, TextureAllocationArgs const&);
-
-TextureResult
-upload_3dcube_texture(stlw::Logger&, std::vector<std::string> const&, GLenum);
+upload_3dcube_texture(stlw::Logger&, std::vector<std::string> const&, TextureInfo&&);
 
 } // namespace opengl::texture
