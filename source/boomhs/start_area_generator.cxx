@@ -87,35 +87,45 @@ place_player(stlw::Logger& logger, TerrainGrid const& terrain,
 }
 
 void
-place_water(stlw::Logger& logger, ShaderPrograms& sps, EntityRegistry& registry,
-            TextureTable& ttable, stlw::float_generator& rng, glm::vec2 const& pos,
-            unsigned int count)
+place_waters(stlw::Logger& logger, ShaderPrograms& sps, EntityRegistry& registry,
+            TextureTable& ttable, stlw::float_generator& rng)
 {
   auto& water_sp  = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
-  auto const eid = registry.create();
 
-  LOG_TRACE("Placing Water");
-  auto& wi        = WaterFactory::make_default(logger, sps, ttable, eid, registry);
-  wi.position     = pos;
-  wi.mix_color    = Color::random(rng);
-  wi.dimensions   = glm::vec2{20};
-  wi.num_vertexes = 4;
+  auto const place = [&](glm::vec2 const& pos, unsigned int count) {
+    auto const eid = registry.create();
 
-  registry.assign<Selectable>(eid);
-  registry.assign<ShaderName>(eid);
-  registry.assign<IsVisible>(eid).value = true;
+    auto& wi        = WaterFactory::make_default(logger, sps, ttable, eid, registry);
+    wi.position     = pos;
+    wi.mix_color    = Color::random(rng);
+    wi.dimensions   = glm::vec2{20};
+    wi.num_vertexes = 4;
 
-  auto& tr         = registry.assign<Transform>(eid);
+    registry.assign<Selectable>(eid);
+    registry.assign<ShaderName>(eid);
+    registry.assign<IsVisible>(eid).value = true;
 
-  auto const& dimensions = wi.dimensions;
-  tr.translation.x = pos.x + dimensions.x / 2.0f;
-  tr.translation.z = pos.y + dimensions.y / 2.0f;
+    auto& tr         = registry.assign<Transform>(eid);
 
-  tr.scale.x = dimensions.x;
-  tr.scale.z = dimensions.y;
+    auto const& dimensions = wi.dimensions;
+    tr.translation.x = pos.x + dimensions.x / 2.0f;
+    tr.translation.z = pos.y + dimensions.y / 2.0f;
 
-  auto& name = registry.assign<Name>(eid);
-  name.value = "WaterInfo #" + std::to_string(count);
+    tr.scale.x = dimensions.x;
+    tr.scale.z = dimensions.y;
+
+    auto& name = registry.assign<Name>(eid);
+    name.value = "WaterInfo #" + std::to_string(count);
+  };
+
+  int count = 0;
+  FOR(i, 4) {
+    FOR(j, 4) {
+      auto const pos = glm::vec2{i * 25, j * 25};
+      place(pos, count);
+      ++count;
+    }
+  }
 }
 
 } // namespace
@@ -148,16 +158,7 @@ StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
   place_monsters(logger, terrain, registry, rng);
 
   LOG_TRACE("placing water ...\n");
-
-
-  int count = 0;
-  FOR(i, 4) {
-    FOR(j, 4) {
-      auto const pos = glm::vec2{i * 25, j * 25};
-      place_water(logger, sps, registry, ttable, rng, pos, count);
-      ++count;
-    }
-  }
+  place_waters(logger, sps, registry, ttable, rng);
 
   LOG_TRACE("finished generating starting area!");
   return LevelGeneratedData{MOVE(terrain)};

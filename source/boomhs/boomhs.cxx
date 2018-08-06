@@ -419,20 +419,16 @@ copy_state_gpu(stlw::Logger& logger, EngineState const& es, ZoneState& zs)
       draw_handles.add_entity(eid, MOVE(dinfo));
       wi.dinfo = &draw_handles.lookup_entity(logger, eid);
     }
-    {
-      auto& bbox = registry.assign<AABoundingBox>(eid);
-      bbox.min   = glm::vec3{-0.5, -0.2, -0.5};
-      bbox.max   = glm::vec3{0.5f, 0.2, 0.5};
+  }
 
-      CubeMinMax const cmm{bbox.min, bbox.max};
+  for (auto const eid : registry.view<WaterInfo>()) {
+    auto const min = glm::vec3{-0.5, -0.2, -0.5};
+    auto const max = glm::vec3{0.5f, 0.2, 0.5};
 
-      auto& sp    = sps.ref_sp("wireframe");
-      auto const vertices = OF::cube_vertices(cmm.min, cmm.max);
-      auto  dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, vertices, sp.va());
-      draw_handles.add_bbox(eid, MOVE(dinfo));
-    }
+    add_wireframe(eid, min, max);
   }
 }
+
 
 ZoneState
 assemble(LevelGeneratedData&& gendata, LevelAssets&& assets, EntityRegistry& registry)

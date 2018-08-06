@@ -54,7 +54,7 @@ render_water_common(Transform& transform, ShaderProgram& sp, RenderState& rstate
   auto const render = [&](WaterInfo& winfo) {
     auto const& pos = winfo.position;
 
-    auto& tr = transform.translation;
+    auto &tr = transform.translation;
     tr.x     = pos.x;
     tr.z     = pos.y;
 
