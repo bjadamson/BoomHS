@@ -1,0 +1,347 @@
+[[resource]]
+name   = "building_skybox"
+type   = "texture:3dcube-RGB"
+front  = "assets/skybox/greenhaze_back.png"
+right  = "assets/skybox/greenhaze_right.png"
+back   = "assets/skybox/greenhaze_front.png"
+left   = "assets/skybox/greenhaze_left.png"
+top    = "assets/skybox/greenhaze_top.png"
+bottom = "assets/skybox/greenhaze_bottom.png"
+
+[[resource]]
+name   = "night_skybox"
+type   = "texture:3dcube-RGBA"
+front  = "assets/skybox/night_front.png"
+right  = "assets/skybox/night_right.png"
+back   = "assets/skybox/night_back.png"
+left   = "assets/skybox/night_left.png"
+top    = "assets/skybox/night_top.png"
+bottom = "assets/skybox/night_bottom.png"
+
+[[resource]]
+name = "boring_cube"
+type = "texture:3dcube-RGBA"
+front = "assets/cube_front.jpg"
+right = "assets/cube_right.jpg"
+back = "assets/cube_back.jpg"
+left = "assets/cube_left.jpg"
+top = "assets/cube_top.jpg"
+bottom = "assets/cube_bottom.jpg"
+
+###################################################################################################
+# 2D TEXTURES
+[[resource]]
+name = "moon"
+type = "texture:2d-RGBA"
+filename = "assets/textures/Blendermoon1.png"
+
+[[resource]]
+name = "TargetReticle"
+type = "texture:2d-RGBA"
+filename = "assets/textures/circle_reticle.png"
+
+[[resource]]
+name = "cloud"
+type = "texture:2d-RGBA"
+filename = "assets/textures/cloud_cumulous_large.png"
+
+[[resource]]
+name = "container"
+type = "texture:2d-RGB"
+filename = "assets/textures/container.jpg"
+
+[[resource]]
+name = "Lava"
+type = "texture:2d-RGBA"
+filename = "assets/textures/lava.jpg"
+
+[[resource]]
+name = "NearbyTargetGlow"
+type = "texture:2d-RGBA"
+filename = "assets/textures/NearbyTargetGlow.png"
+
+[[resource]]
+name = "sun"
+type = "texture:2d-RGBA"
+filename = "assets/textures/sun.png"
+
+[[resource]]
+name = "wall"
+type = "texture:2d-RGB"
+filename = "assets/textures/wall.jpg"
+
+
+###################################################################################################
+# UI ICONS
+[[resource]]
+name = "RedX"
+type = "texture:2d-RGBA"
+filename = "assets/ui/redx.png"
+
+[[resource]]
+name = "RedX"
+type = "texture:2d-RGBA"
+filename = "assets/ui/redx.png"
+
+[[resource]]
+name = "InventorySlotEmpty"
+type = "texture:2d-RGBA"
+filename = "assets/ui/inventory_slot_empty.png"
+
+[[resource]]
+name = "test_icon"
+type = "texture:2d-RGB"
+filename = "assets/ui/test_icon.png"
+
+[[resource]]
+name = "BookUI"
+type = "texture:2d-RGBA"
+filename = "assets/ui/book.png"
+
+[[resource]]
+name = "TorchUI"
+type = "texture:2d-RGBA"
+filename = "assets/ui/torch-icon.png"
+
+###################################################################################################
+# HEIGHTMAPS
+[[resource]]
+name = "Area0-HM"
+type = "texture:2d-RGBA"
+filename = "assets/terrain/Area0-HM.png"
+wrap = "clamp"
+
+[[resource]]
+name = "Area1-HM"
+type = "texture:2d-RGBA"
+filename = "assets/terrain/Area1-HM.png"
+wrap = "clamp"
+
+[[resource]]
+name = "Area2-HM"
+type = "texture:2d-RGBA"
+filename = "assets/terrain/Area2-HM.png"
+wrap = "clamp"
+
+###################################################################################################
+# TERRAIN TEXTURES
+[[resource]]
+name = "blendmap"
+type = "texture:2d-RGB"
+filename = "assets/terrain/blendmap.png"
+wrap = "clamp"
+
+[[resource]]
+name = "floor0"
+type = "texture:2d-RGBA"
+filename = "assets/terrain/Floor0.png"
+wrap = "repeat"
+
+[[resource]]
+name = "grass"
+type = "texture:2d-RGB"
+filename = "assets/terrain/Grass0.png"
+wrap = "clamp"
+
+[[resource]]
+name = "brick_path"
+type = "texture:2d-RGB"
+filename = "assets/terrain/brick_path.png"
+wrap = "clamp"
+
+[[resource]]
+name = "dirt"
+type = "texture:2d-RGB"
+filename = "assets/terrain/dirt.png"
+wrap = "clamp"
+
+[[resource]]
+name = "mud"
+type = "texture:2d-RGB"
+filename = "assets/terrain/mud.png"
+wrap = "clamp"
+
+###########################
+# WATER
+[[resource]]
+name = "Water-HM"
+type = "texture:2d-RGBA"
+filename = "assets/water/heightmap.png"
+wrap = "mirror_repeat"
+
+[[resource]]
+name = "water-diffuse"
+type = "texture:2d-RGBA"
+filename = "assets/water/diffuse.png"
+texture_unit = 0
+wrap = "repeat"
+
+[[resource]]
+name = "water-dudv"
+type = "texture:2d-RGBA"
+filename = "assets/water/dudv.png"
+texture_unit = 3
+wrap = "repeat"
+
+[[resource]]
+name = "water-normal"
+type = "texture:2d-RGBA"
+filename = "assets/water/normal.png"
+texture_unit = 4
+wrap = "repeat"
+
+#############################'
+# OTHER
+[[resource]]
+name = "first-aid"
+type = "texture:2d-RGBA"
+filename = "assets/ui/first_aid.png"
+
+[[resource]]
+name = "gun"
+type = "texture:2d-RGB"
+filename = "assets/ui/gun.png"
+
+[[resource]]
+name = "ak47"
+type = "texture:2d-RGBA"
+filename = "assets/ui/ak47.png"
+
+[[resource]]
+name = "fist"
+type = "texture:2d-RGBA"
+filename = "assets/ui/fist.png"
+
+[[resource]]
+name = "sword"
+type = "texture:2d-RGBA"
+filename = "assets/ui/sword.png"
+
+###################################################################################################
+[[meshes]]
+name = "at"
+path = "assets/"
+
+[[meshes]]
+name = "door"
+path = "assets/"
+
+[[meshes]]
+name = "teleporter"
+path = "assets/"
+
+[[meshes]]
+name = "bar"
+path = "assets/"
+
+[[meshes]]
+name = "house"
+path = "assets/"
+
+[[meshes]]
+name = "tree_lowpoly"
+path = "assets/"
+
+[[meshes]]
+name = "tree2"
+path = "assets/"
+
+[[meshes]]
+name = "hashtag"
+path = "assets/"
+
+[[meshes]]
+name = "plus"
+path = "assets/"
+
+[[meshes]]
+name = "O"
+path = "assets/"
+
+[[meshes]]
+name = "T"
+path = "assets/"
+
+[[meshes]]
+name = "cube"
+path = "assets/"
+
+[[meshes]]
+name = "robot"
+path = "assets/"
+
+[[meshes]]
+name = "stair_down"
+path = "assets/"
+
+[[meshes]]
+name = "stair_up"
+path = "assets/"
+
+[[meshes]]
+name = "tilde"
+path = "assets/"
+
+[[meshes]]
+name = "equal"
+path = "assets/"
+
+[[meshes]]
+name = "star"
+path = "assets/"
+
+[[meshes]]
+name = "B"
+path = "assets/"
+
+[[meshes]]
+name = "sphere"
+path = "assets/"
+
+########### ATTENUATION #############
+[[attenuation]]
+name = "default"
+constant = 0.1
+linear = 0.001
+quadratic = 0.000001
+
+[[attenuation]]
+name = "nolight"
+constant = 9999.0
+linear = 9999.0
+quadratic = 9999.0
+
+[[attenuation]]
+name = "moon"
+constant = 0.1
+linear = 0.001
+quadratic = 9999.0
+
+########### MATERIAL #############
+[[material]]
+name = "player"
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[material]]
+name = "terrain"
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 1.0
+
+[[material]]
+name = "tree"
+ambient = [1.0, 1.0, 1.0]
+diffuse = [1.0, 1.0, 1.0]
+specular = [1.0, 1.0, 1.0]
+shininess = 10.00
+
+[[material]]
+name = "water"
+ambient = [0.0, 0.0, 1.0]
+diffuse = [0.0, 0.0, 1.0]
+specular = [0.0, 0.0, 1.0]
+shininess = 10.00

@@ -743,40 +743,44 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   ParsedVertexAttributes pvas = load_vas(engine_table);
   auto                   sps  = TRY_MOVEOUT(load_shaders(logger, MOVE(pvas), engine_table));
 
-  CppTable file_datatable = cpptoml::parse_file("levels/" + filename);
-  assert(file_datatable);
+  CppTable resource_table = cpptoml::parse_file("levels/resources.toml");
+  assert(resource_table);
 
-  auto const mesh_table = get_table_array_or_abort(file_datatable, "meshes");
+  auto const mesh_table = get_table_array_or_abort(resource_table, "meshes");
   ObjStore   objstore =
       TRY_MOVEOUT(load_objfiles(logger, mesh_table).mapErrorMoveOut(loadstatus_to_string));
 
   LOG_TRACE("loading textures ...");
-  auto texture_table = TRY_MOVEOUT(load_textures(logger, file_datatable));
+  auto texture_table = TRY_MOVEOUT(load_textures(logger, resource_table));
 
   LOG_TRACE("loading material data");
-  auto material_table = load_materials(logger, file_datatable);
+  auto material_table = load_materials(logger, resource_table);
 
   LOG_TRACE("loading attenuation data");
-  auto const attenuations = load_attenuations(logger, file_datatable);
+  auto const attenuations = load_attenuations(logger, resource_table);
+
+
+  CppTable level_table = cpptoml::parse_file("levels/" + filename);
+  assert(level_table);
 
   LOG_TRACE("loading entities ...");
-  load_entities(logger, file_datatable, texture_table, material_table, attenuations,
+  load_entities(logger, level_table, texture_table, material_table, attenuations,
                 registry);
 
   LOG_TRACE("loading lights ...");
-  auto const ambient = Color{get_vec3_or_abort(file_datatable, "ambient")};
+  auto const ambient = Color{get_vec3_or_abort(level_table, "ambient")};
   auto const directional_light_diffuse =
-      Color{get_vec3_or_abort(file_datatable, "directional_light_diffuse")};
+      Color{get_vec3_or_abort(level_table, "directional_light_diffuse")};
   auto const directional_light_specular =
-      Color{get_vec3_or_abort(file_datatable, "directional_light_specular")};
+      Color{get_vec3_or_abort(level_table, "directional_light_specular")};
   auto const directional_light_direction =
-      get_vec3_or_abort(file_datatable, "directional_light_direction");
+      get_vec3_or_abort(level_table, "directional_light_direction");
 
   Light            light{directional_light_diffuse, directional_light_specular};
   DirectionalLight dlight{MOVE(light), directional_light_direction};
   GlobalLight      glight{ambient, MOVE(dlight)};
 
-  auto fog = load_fog(file_datatable);
+  auto fog = load_fog(level_table);
   LOG_TRACE("yielding assets");
   return Ok(LevelAssets{MOVE(glight), MOVE(fog), MOVE(material_table),
 
