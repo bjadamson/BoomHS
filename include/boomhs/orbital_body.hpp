@@ -8,7 +8,6 @@ namespace boomhs
 
 struct OrbitalBody
 {
-  std::string name     = "Unnamed";
   float       x_radius = 0.0f;
   float       y_radius = 0.0f;
   float       z_radius = 0.0f;

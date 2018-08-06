@@ -40,6 +40,23 @@ using CppTable      = std::shared_ptr<cpptoml::table>;
 namespace
 {
 
+CppTable
+get_table(CppTable const& table, char const* name)
+{
+  return table->get_table_qualified(name);
+}
+
+CppTable
+get_table_or_abort(CppTable const& table, char const* name)
+{
+
+  auto table_o = get_table(table, name);
+  if (!table_o) {
+    std::abort();
+  }
+  return table_o;
+}
+
 CppTableArray
 get_table_array(CppTable const& table, char const* name)
 {
@@ -437,7 +454,7 @@ load_attenuation(CppTable const& file)
 }
 
 auto
-load_attenuations(stlw::Logger& logger, CppTable const& table, EntityRegistry& registry)
+load_attenuations(stlw::Logger& logger, CppTable const& table)
 {
   auto const                   table_array = get_table_array(table, "attenuation");
   std::vector<NameAttenuation> result;
@@ -448,7 +465,7 @@ load_attenuations(stlw::Logger& logger, CppTable const& table, EntityRegistry& r
 }
 
 auto
-load_materials(stlw::Logger& logger, CppTable const& table, EntityRegistry& registry)
+load_materials(stlw::Logger& logger, CppTable const& table)
 {
   auto const                table_array = get_table_array(table, "material");
 
@@ -502,31 +519,9 @@ load_pointlights(stlw::Logger& logger, CppTable const& table,
   return result;
 }
 
-auto
-load_orbital_bodies(stlw::Logger& logger, CppTable const& table, EntityRegistry& registry)
-{
-  auto const load = [](auto const& file) {
-    // clang-format off
-    auto const name        = get_string_or_abort(file, "name");
-    float const x_radius   = get_float_or_abort(file,  "x_radius");
-    float const y_radius   = get_float_or_abort(file,  "y_radius");
-    float const z_radius   = get_float_or_abort(file,  "z_radius");
-    float const offset     = get_float(file,           "offset").value_or(0.0f);
-    return OrbitalBody{name, x_radius, y_radius, z_radius, offset};
-    // clang-format on
-  };
-  auto const orbital_body_table = get_table_array(table, "orbital-body");
-
-  std::vector<OrbitalBody> orbitals;
-  for (auto const& it : *orbital_body_table) {
-    orbitals.emplace_back(load(it));
-  }
-  return orbitals;
-}
-
 void
 load_entities(stlw::Logger& logger, CppTable const& table,
-              std::vector<OrbitalBody> const& orbital_bodies, TextureTable& ttable,
+              TextureTable& ttable,
               MaterialTable const&   material_table,
               std::vector<NamePointlight> const& pointlights, EntityRegistry& registry)
 {
@@ -544,8 +539,7 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     auto const pointlight_o  = get_string(file,          "pointlight");
     auto const is_visible    = get_bool(file,            "is_visible").value_or(true);
     bool const random_junk   = get_bool(file,            "random_junk_from_file").value_or(false);
-    bool const is_water      = get_bool(file,            "water").value_or(false);
-    auto const orbital_o     = get_string(file,          "orbital-body");
+    auto const orbital_o     = get_table(file, "orbital-body");
     // clang-format on
 
     // texture OR color fields, not both
@@ -579,11 +573,13 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     }
 
     if (orbital_o) {
+      auto const x      = get_float_or_abort(orbital_o, "x");
+      auto const y      = get_float_or_abort(orbital_o, "y");
+      auto const z      = get_float_or_abort(orbital_o, "z");
+      auto const offset = get_float(orbital_o, "offset").value_or(0.0);
+
       auto&      orbital = registry.assign<OrbitalBody>(eid);
-      auto const cmp     = [&orbital_o](auto const& orbital) { return orbital.name == *orbital_o; };
-      auto const it      = std::find_if(orbital_bodies.cbegin(), orbital_bodies.cend(), cmp);
-      assert(it != orbital_bodies.cend());
-      orbital = *it;
+      orbital = OrbitalBody{x, y, z, offset};;
     }
 
     if (geometry == "cube") {
@@ -777,20 +773,17 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   LOG_TRACE("loading textures ...");
   auto texture_table = TRY_MOVEOUT(load_textures(logger, file_datatable));
 
-  LOG_TRACE("loading orbital data");
-  auto const orbital_bodies = load_orbital_bodies(logger, file_datatable, registry);
-
   LOG_TRACE("loading material data");
-  auto material_table = load_materials(logger, file_datatable, registry);
+  auto material_table = load_materials(logger, file_datatable);
 
   LOG_TRACE("loading attenuation data");
-  auto const attenuations = load_attenuations(logger, file_datatable, registry);
+  auto const attenuations = load_attenuations(logger, file_datatable);
 
   LOG_TRACE("loading pointlight data");
   auto const pointlights = load_pointlights(logger, file_datatable, attenuations);
 
   LOG_TRACE("loading entities ...");
-  load_entities(logger, file_datatable, orbital_bodies, texture_table, material_table, pointlights,
+  load_entities(logger, file_datatable, texture_table, material_table, pointlights,
                 registry);
 
   LOG_TRACE("loading lights ...");

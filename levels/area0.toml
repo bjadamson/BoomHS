@@ -312,20 +312,6 @@ density = 0.007
 gradient = 1.5
 color = [1.0, 1.0, 1.0, 1.0]
 
-########### ORBITAL DATA ###########
-[[orbital-body]]
-name = "sun"
-x_radius = 1800.0
-y_radius = 1200.00
-z_radius = 1600.0
-
-[[orbital-body]]
-name = "moon"
-x_radius = 1200.0
-y_radius = 1200
-z_radius = 1200.0
-offset = 3.1459
-
 ########### ATTENUATION #############
 [[attenuation]]
 name = "default"
@@ -407,23 +393,32 @@ specular = [0.0, 0.0, 1.0]
 
 ########### ENTITY #############
 [[entity]]
-orbital-body = "sun"
+name = "sun"
 position = [0.0, 850.0, 0.0]
 shader = "2dtexture"
 geometry = "billboard:spherical"
 scale = [650.0, 650.0, 650.0]
 texture = "sun"
-name = "sun"
+
+[entity.orbital-body]
+x = 1800.0
+y = 1200.00
+z = 1600.0
 
 [[entity]]
-orbital-body = "moon"
+name = "Moon"
 position = [0.0, 750.0, 0.0]
 shader = "2dlight_uv"
 geometry = "billboard:spherical"
 scale = [650.0, 650.0, 650.0]
 texture = "moon"
 pointlight = "moon"
-name = "Moon"
+
+[entity.orbital-body]
+x = 1200.0
+y = 1200
+z = 1200.0
+offset = 3.1459
 
 ######### POINT LIGHTS
 [[entity]]
