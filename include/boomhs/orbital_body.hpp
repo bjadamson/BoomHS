@@ -8,9 +8,9 @@ namespace boomhs
 
 struct OrbitalBody
 {
-  float       x_radius = 0.0f;
-  float       y_radius = 0.0f;
-  float       z_radius = 0.0f;
+  float x_radius = 0.0f;
+  float y_radius = 0.0f;
+  float z_radius = 0.0f;
 
   // Initial orbit offset for the body.
   float offset = 0.0f;

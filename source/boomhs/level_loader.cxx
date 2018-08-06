@@ -158,6 +158,24 @@ get_color_or_abort(CppTable const& table, char const* name)
   std::abort();
 }
 
+auto const&
+get_first_and_only_entry(CppTable const& table, char const* name)
+{
+  auto const ta = get_table_array(table, name);
+
+  // Ensure the value retrieved from the table is itself a table, and get a reference to it.
+  assert(ta->is_table_array());
+  auto const& table_array = ta->get();
+
+  // Confirm there is only one entry in the table array.
+  if (1 != table_array.size()) {
+    std::abort();
+  }
+
+  // Return a reference to the first (and only) entry in the table array.
+  return table_array.front();
+}
+
 std::optional<glm::vec2>
 get_vec2(CppTable const& table, char const* name)
 {
@@ -387,38 +405,13 @@ load_textures(stlw::Logger& logger, CppTable const& table)
   return OK_MOVE(ttable);
 }
 
-std::optional<Color>
-load_color(CppTable const& file, char const* name)
-{
-  return Color{MAKEOPT(get_vec3(file, name))};
-}
-
-Color
-load_color_or_abort(CppTable const& file, char const* name)
-{
-  auto optional = load_color(file, name);
-  if (!optional) {
-    std::abort();
-  }
-  return *optional;
-}
-
 auto
 load_fog(CppTable const& file)
 {
-  auto const table = get_table_array(file, "fog");
-
-  // This is required in order to downcast table to a sized table array.
-  assert(table->is_table_array());
-  auto const& table_array = table->get();
-
-  // For now, assume exactly one fog entry.
-  assert(1 == table_array.size());
-
-  auto const& data     = table_array.front();
+  auto const& data     = get_first_and_only_entry(file, "fog");
   auto const  density  = get_float_or_abort(data, "density");
   auto const  gradient = get_float_or_abort(data, "gradient");
-  auto const  color    = load_color_or_abort(data, "color");
+  auto const  color    = get_color_or_abort(data, "color");
 
   return Fog{density, gradient, color};
 }
@@ -727,6 +720,24 @@ load_vas(CppTable const& table)
   return pvas;
 }
 
+auto
+load_global_lighting(CppTable const& table)
+{
+  //auto const global_lighting = get_table_array(table,              "global-lighting");
+  auto const global_lighting = get_first_and_only_entry(table, "global-lighting");
+  auto const ambient         = get_color_or_abort(global_lighting, "ambient");
+
+
+  auto const directinal_table = get_table_or_abort(global_lighting, "directional");
+  auto const diffuse          = get_color_or_abort(directinal_table, "diffuse");
+  auto const specular         = get_color_or_abort(directinal_table, "specular");
+  auto const direction        =  get_vec3_or_abort(directinal_table, "direction");
+
+  Light            light{diffuse, specular};
+  DirectionalLight dlight{MOVE(light), direction};
+  return GlobalLight{ambient, MOVE(dlight)};
+}
+
 } // namespace
 
 namespace boomhs
@@ -750,41 +761,35 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   ObjStore   objstore =
       TRY_MOVEOUT(load_objfiles(logger, mesh_table).mapErrorMoveOut(loadstatus_to_string));
 
-  LOG_TRACE("loading textures ...");
+  LOG_TRACE("loading level data begin ...");
+  LOG_TRACE("textures ...");
   auto texture_table = TRY_MOVEOUT(load_textures(logger, resource_table));
 
-  LOG_TRACE("loading material data");
+  LOG_TRACE("materials ...");
   auto material_table = load_materials(logger, resource_table);
 
-  LOG_TRACE("loading attenuation data");
+  LOG_TRACE("attenuations ...");
   auto const attenuations = load_attenuations(logger, resource_table);
 
 
   CppTable level_table = cpptoml::parse_file("levels/" + filename);
   assert(level_table);
 
-  LOG_TRACE("loading entities ...");
+  LOG_TRACE("entities ...");
   load_entities(logger, level_table, texture_table, material_table, attenuations,
                 registry);
 
-  LOG_TRACE("loading lights ...");
-  auto const ambient = Color{get_vec3_or_abort(level_table, "ambient")};
-  auto const directional_light_diffuse =
-      Color{get_vec3_or_abort(level_table, "directional_light_diffuse")};
-  auto const directional_light_specular =
-      Color{get_vec3_or_abort(level_table, "directional_light_specular")};
-  auto const directional_light_direction =
-      get_vec3_or_abort(level_table, "directional_light_direction");
+  LOG_TRACE("global lighting ...");
+  auto glight = load_global_lighting(level_table);
 
-  Light            light{directional_light_diffuse, directional_light_specular};
-  DirectionalLight dlight{MOVE(light), directional_light_direction};
-  GlobalLight      glight{ambient, MOVE(dlight)};
-
+  LOG_TRACE("global fog ...");
   auto fog = load_fog(level_table);
-  LOG_TRACE("yielding assets");
+
+  LOG_TRACE("loading level finished successfully!");
   return Ok(LevelAssets{MOVE(glight), MOVE(fog), MOVE(material_table),
 
                         MOVE(objstore), MOVE(texture_table), MOVE(sps)});
 }
+
 
 } // namespace boomhs
