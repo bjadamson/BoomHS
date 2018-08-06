@@ -20,11 +20,12 @@ namespace opengl
 struct TextureInfo
 {
   DebugBoundCheck debug_check;
-  GLenum          target;
-  GLuint          id;
+
+  GLenum target = 0;
+  GLenum format = 0;
+  GLuint id     = 0;
 
   GLint width = 0, height = 0;
-
   float uv_max = -1.0;
 
   // constructors
@@ -180,20 +181,20 @@ using ImageResult   = Result<ImageData, std::string>;
 using TextureResult = Result<Texture, std::string>;
 
 ImageResult
-load_image(stlw::Logger&, char const*, GLint const);
+load_image(stlw::Logger&, char const*, GLenum const);
 
 GLint
 wrap_mode_from_string(char const*);
 
 struct TextureAllocationArgs
 {
-  GLint const  format;
+  GLenum const  format;
   float const  uv_max;
   GLenum const texture_unit;
 };
 
 TextureResult
-allocate_texture(stlw::Logger&, std::string const&, TextureAllocationArgs const&);
+upload_2d_texture(stlw::Logger&, std::string const&, TextureAllocationArgs const&);
 
 TextureResult
 upload_3dcube_texture(stlw::Logger&, std::vector<std::string> const&, GLenum);

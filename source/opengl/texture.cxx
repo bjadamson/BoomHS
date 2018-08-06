@@ -11,7 +11,6 @@
 #include <extlibs/soil.hpp>
 
 #include <algorithm>
-#include <iostream>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -31,18 +30,25 @@ struct GpuUploadConfig
 Result<ImageData, std::string>
 upload_image_gpu(stlw::Logger &logger, std::string const& path, GpuUploadConfig const& guc)
 {
-  auto image_data = TRY_MOVEOUT(texture::load_image(logger, path.c_str(), guc.format));
+  auto const format           = guc.format;
+  auto const target           = guc.target;
+
+  auto image_data = TRY_MOVEOUT(texture::load_image(logger, path.c_str(), format));
 
   auto const width = image_data.width;
   auto const height = image_data.height;
   auto const* data = image_data.data.get();
 
+  // The "internal" format and the data format should match so opengl doesn't need to do runtime
+  // conversions.
+  //
+  // I'm not sure why the internal format is an integer, where as the data format
+  // (represented by format here) is a GLenum.
+  // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
+  GLint const internal_format = format;
+
   LOG_TRACE_SPRINTF("uploading %s with w: %i, h: %i", path, width, height);
-
-  auto const format       = guc.format;
-  auto const target       = guc.target;
-
-  glTexImage2D(target, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+  glTexImage2D(target, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 
   return OK_MOVE(image_data);
 }
@@ -194,7 +200,7 @@ namespace opengl::texture
 {
 
 ImageResult
-load_image(stlw::Logger &logger, char const* path, GLint const format)
+load_image(stlw::Logger &logger, char const* path, GLenum const format)
 {
   int w = 0, h = 0;
 
@@ -231,7 +237,7 @@ wrap_mode_from_string(char const* name)
 }
 
 TextureResult
-allocate_texture(stlw::Logger &logger, std::string const& filename,
+upload_2d_texture(stlw::Logger &logger, std::string const& filename,
     TextureAllocationArgs const& taa)
 {
   GLenum const format = taa.format;
@@ -277,20 +283,11 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   assert(paths.size() == 6);
   assert(ANYOF(format == GL_RGB, format == GL_RGBA));
 
-  static constexpr auto targets = {
-    GL_TEXTURE_CUBE_MAP_POSITIVE_Z, // back
-    GL_TEXTURE_CUBE_MAP_POSITIVE_X, // right
-    GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, // front
-    GL_TEXTURE_CUBE_MAP_NEGATIVE_X, // left
-    GL_TEXTURE_CUBE_MAP_POSITIVE_Y, // top
-    GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, // bottom
-  };
-
   TextureInfo ti;
   ti.gen_texture(logger, 1);
   ti.target = GL_TEXTURE_CUBE_MAP;
 
-  auto const upload_fn = [&format, &logger, &ti](std::string const& filename, GLenum const target)
+  auto const upload_fn = [&](std::string const& filename, GLenum const target)
     -> Result<stlw::none_t, std::string>
   {
     GpuUploadConfig const guc{format, target};
@@ -308,9 +305,19 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   auto const paths_tuple = std::make_tuple(paths[0], paths[1], paths[2], paths[3], paths[4], paths[5]);
 
   auto const fn = [&]() {
-    stlw::zip(upload_fn, targets.begin(), paths_tuple);
 
-    glGenerateMipmap(ti.target);
+    static constexpr auto CUBE_3D_TARGETS = {
+      GL_TEXTURE_CUBE_MAP_POSITIVE_Z, // back
+      GL_TEXTURE_CUBE_MAP_POSITIVE_X, // right
+      GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, // front
+      GL_TEXTURE_CUBE_MAP_NEGATIVE_X, // left
+      GL_TEXTURE_CUBE_MAP_POSITIVE_Y, // top
+      GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, // bottom
+    };
+
+    stlw::zip(upload_fn, CUBE_3D_TARGETS.begin(), paths_tuple);
+
+    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
   };
   ti.while_bound(logger, fn);

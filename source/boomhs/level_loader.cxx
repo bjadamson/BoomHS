@@ -324,7 +324,7 @@ load_textures(stlw::Logger& logger, CppTable const& table)
     auto const name = get_string_or_abort(resource, "name");
     auto const type = get_string_or_abort(resource, "type");
 
-    auto const load_2dtexture = [&](auto const format) -> Result<stlw::none_t, std::string> {
+    auto const load_2dtexture = [&](GLenum const format) -> Result<stlw::none_t, std::string> {
       auto const               filename = get_string_or_abort(resource, "filename");
       opengl::TextureFilenames texture_names{name, {filename}};
 
@@ -338,7 +338,7 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       opengl::texture::TextureAllocationArgs const taa{format, uv_max, texture_unit};
 
       Texture t =
-          TRY_MOVEOUT(opengl::texture::allocate_texture(logger, texture_names.filenames[0], taa));
+          TRY_MOVEOUT(opengl::texture::upload_2d_texture(logger, texture_names.filenames[0], taa));
 
       glActiveTexture(GL_TEXTURE0 + texture_unit);
       ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
@@ -355,7 +355,7 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       ttable.add_texture(MOVE(texture_names), MOVE(t));
       return OK_NONE;
     };
-    auto const load_3dtexture = [&](auto const format) -> Result<stlw::none_t, std::string> {
+    auto const load_3dtexture = [&](GLenum const format) -> Result<stlw::none_t, std::string> {
       auto const front  = get_string_or_abort(resource, "front");
       auto const right  = get_string_or_abort(resource, "right");
       auto const back   = get_string_or_abort(resource, "back");
