@@ -6,9 +6,11 @@
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/ui_state.hpp>
 
+#include <opengl/renderer.hpp>
 #include <opengl/texture.hpp>
 
 #include <stlw/algorithm.hpp>
+#include <window/timer.hpp>
 
 #include <extlibs/imgui.hpp>
 #include <algorithm>
@@ -16,6 +18,7 @@
 
 using namespace boomhs;
 using namespace opengl;
+using namespace window;
 
 namespace
 {
@@ -378,6 +381,127 @@ ChatHistory::all_messages_in_channel(ChannelId const id) const
   return filtered;
 }
 
+class BlinkTimer
+{
+  bool is_blinking_ = false;
+  Timer timer_;
+public:
+  void update() { timer_.update(); }
+  bool expired() const { return timer_.expired(); }
+  bool is_blinking() const { return is_blinking_; }
+  void toggle() { is_blinking_ ^= true; }
+  void set_ms(double const t) { timer_.set_ms(t); }
+};
+
+void
+draw_2dui(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
+{
+  auto& logger   = es.logger;
+  auto& zs       = lm.active();
+  auto& registry = zs.registry;
+
+  auto& ldata    = zs.level_data;
+  auto& nbt      = ldata.nearby_targets;
+
+  // Create a renderstate using an orthographic projection.
+  auto const ortho_cstate = CameraFrameState::from_camera_with_mode(camera, CameraMode::Ortho);
+  FrameState ortho_fstate{ortho_cstate, es, zs};
+  RenderState rstate_2dtexture{ortho_fstate, ds};
+
+  static BlinkTimer blink_timer;
+  blink_timer.update();
+
+  bool const is_expired       = blink_timer.expired();
+
+
+  auto const player_eid = find_player(registry);
+  auto& player          = registry.get<Player>(player_eid);
+  bool const player_attacking = player.is_attacking;
+
+  auto const reset_attack_timer = [&]() {
+    auto const BLINK_TIME_IN_MS = TimeConversions::seconds_to_millis(1);
+    blink_timer.set_ms(BLINK_TIME_IN_MS);
+  };
+
+  if (player_attacking) {
+    if (is_expired) {
+      blink_timer.toggle();
+      reset_attack_timer();
+    }
+  }
+  else if (is_expired) {
+    reset_attack_timer();
+  }
+
+  auto& gfx_state = zs.gfx_state;
+  auto& sps       = gfx_state.sps;
+  auto& ttable    = gfx_state.texture_table;
+
+  bool const using_blink_shader = player_attacking && blink_timer.is_blinking();
+  auto const& shader_name = using_blink_shader ? "2d_ui_blinkcolor_icon" : "2dtexture_ss";
+  auto& spp = sps.ref_sp(shader_name);
+
+  if (using_blink_shader) {
+    auto const& player_transform = player.transform();
+    auto const player_pos = player_transform.translation;
+
+    // We can only be considering the blink shader if we are attacking an entity, and if we are
+    // attacking an entity that means their should be a selected target.
+    auto const selected_nbt = nbt.selected();
+    assert(selected_nbt);
+    auto const target_eid = *selected_nbt;
+    auto const& target = registry.get<Transform>(target_eid);
+    auto const& target_pos = target.translation;
+
+    auto const distance = glm::distance(player_pos, target_pos);
+    bool const close_enough = distance < 2;
+    //LOG_ERROR_SPRINTF("close: %i, distance: %f, ppos: %s tpos: %s",
+        //close_enough,
+        //distance,
+        //glm::to_string(player_pos),
+        //glm::to_string(target_pos)
+        //);
+    auto const blink_color = NPC::within_attack_range(player_pos, target_pos)
+      ? LOC::RED
+      : LOC::BLUE;
+    spp.while_bound(logger, [&]() {
+        spp.set_uniform_color(logger, "u_blinkcolor", blink_color);
+    });
+  }
+
+  auto const dimensions = es.dimensions;
+  auto const draw_icon_on_screen = [&](auto const& pos, auto const& size, char const* tex_name)
+  {
+    auto& ti = *ttable.find(tex_name);
+    render::draw_fbo_testwindow(rstate_2dtexture, pos, size, spp, ti);
+  };
+
+  auto const draw_slot_icon = [&](auto const slot_pos, char const* icon_name) {
+    glm::vec2 const size{32.0f};
+
+    auto constexpr SPACE_BETWEEN = 10;
+    float const left   = dimensions.left + 39 + 200 + SPACE_BETWEEN
+      + (slot_pos * (size.x + SPACE_BETWEEN));
+
+
+    auto constexpr SPACE_BENEATH = 10;
+    float const bottom = dimensions.bottom - SPACE_BENEATH - size.y;
+    glm::vec2 const pos{left, bottom};
+    draw_icon_on_screen(pos, size, icon_name);
+  };
+
+  draw_slot_icon(0, "fist");
+  draw_slot_icon(1, "sword");
+  draw_slot_icon(2, "ak47");
+  draw_slot_icon(3, "first-aid");
+
+  {
+    glm::vec2 const size{128.0f};
+    glm::vec2 const pos{dimensions.right - size.x, dimensions.bottom - size.y};
+    draw_icon_on_screen(pos, size, "sword");
+  }
+}
+
 } // namespace boomhs
 
 namespace boomhs::ui_ingame
@@ -391,7 +515,7 @@ reset_active_imguiwindow_yscroll_position(int const offset)
 }
 
 void
-draw(EngineState& es, LevelManager& lm)
+draw(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
 {
   auto& zs       = lm.active();
   auto& logger   = es.logger;
@@ -401,6 +525,8 @@ draw(EngineState& es, LevelManager& lm)
   auto& ldata = zs.level_data;
   auto& nbt   = ldata.nearby_targets;
   draw_nearest_target_info(es.dimensions, nbt, ttable, registry);
+
+  draw_2dui(es, lm, camera, ds);
 
   auto const eid       = find_player(registry);
   auto&      player    = registry.get<Player>(eid);

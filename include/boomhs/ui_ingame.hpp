@@ -7,8 +7,14 @@
 #include <string>
 #include <vector>
 
+namespace opengl
+{
+class DrawState;
+} // namespace opengl
+
 namespace boomhs
 {
+class Camera;
 struct EngineState;
 class LevelManager;
 
@@ -87,6 +93,6 @@ void
 reset_active_imguiwindow_yscroll_position(int);
 
 void
-draw(EngineState&, LevelManager&);
+draw(EngineState&, LevelManager&, Camera&, opengl::DrawState&);
 
 } // namespace boomhs::ui_ingame

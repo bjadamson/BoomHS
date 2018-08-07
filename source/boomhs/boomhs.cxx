@@ -562,137 +562,63 @@ init(Engine& engine, EngineState& es, Camera& camera, stlw::float_generator& rng
   return OK_MOVE(state);
 }
 
-class BlinkTimer
-{
-  bool is_blinking_ = false;
-  Timer timer_;
-public:
-  void update() { timer_.update(); }
-  bool expired() const { return timer_.expired(); }
-  bool is_blinking() const { return is_blinking_; }
-  void toggle() { is_blinking_ ^= true; }
-  void set_ms(double const t) { timer_.set_ms(t); }
-};
-
-void
-draw_2dui(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
-{
-  auto& logger   = es.logger;
-  auto& zs       = lm.active();
-  auto& registry = zs.registry;
-
-  auto& ldata    = zs.level_data;
-  auto& nbt      = ldata.nearby_targets;
-
-  // Create a renderstate using an orthographic projection.
-  auto const ortho_cstate = CameraFrameState::from_camera_with_mode(camera, CameraMode::Ortho);
-  FrameState ortho_fstate{ortho_cstate, es, zs};
-  RenderState rstate_2dtexture{ortho_fstate, ds};
-
-  static BlinkTimer blink_timer;
-  blink_timer.update();
-
-  bool const is_expired       = blink_timer.expired();
-
-
-  auto const player_eid = find_player(registry);
-  auto& player          = registry.get<Player>(player_eid);
-  bool const player_attacking = player.is_attacking;
-
-  auto const reset_attack_timer = [&]() {
-    auto const BLINK_TIME_IN_MS = TimeConversions::seconds_to_millis(1);
-    blink_timer.set_ms(BLINK_TIME_IN_MS);
-  };
-
-  if (player_attacking) {
-    if (is_expired) {
-      blink_timer.toggle();
-      reset_attack_timer();
-    }
-  }
-  else if (is_expired) {
-    reset_attack_timer();
-  }
-
-  auto& gfx_state = zs.gfx_state;
-  auto& sps       = gfx_state.sps;
-  auto& ttable    = gfx_state.texture_table;
-
-  bool const using_blink_shader = player_attacking && blink_timer.is_blinking();
-  auto const& shader_name = using_blink_shader ? "2d_ui_blinkcolor_icon" : "2dtexture_ss";
-  auto& spp = sps.ref_sp(shader_name);
-
-  if (using_blink_shader) {
-    auto const& player_transform = player.transform();
-    auto const player_pos = player_transform.translation;
-
-    // We can only be considering the blink shader if we are attacking an entity, and if we are
-    // attacking an entity that means their should be a selected target.
-    auto const selected_nbt = nbt.selected();
-    assert(selected_nbt);
-    auto const target_eid = *selected_nbt;
-    auto const& target = registry.get<Transform>(target_eid);
-    auto const& target_pos = target.translation;
-
-    auto const distance = glm::distance(player_pos, target_pos);
-    bool const close_enough = distance < 2;
-    //LOG_ERROR_SPRINTF("close: %i, distance: %f, ppos: %s tpos: %s",
-        //close_enough,
-        //distance,
-        //glm::to_string(player_pos),
-        //glm::to_string(target_pos)
-        //);
-    auto const blink_color = NPC::within_attack_range(player_pos, target_pos)
-      ? LOC::RED
-      : LOC::BLUE;
-    spp.while_bound(logger, [&]() {
-        spp.set_uniform_color(logger, "u_blinkcolor", blink_color);
-    });
-  }
-
-  auto const dimensions = es.dimensions;
-  auto const draw_icon_on_screen = [&](auto const& pos, auto const& size, char const* tex_name)
-  {
-    auto& ti = *ttable.find(tex_name);
-    render::draw_fbo_testwindow(rstate_2dtexture, pos, size, spp, ti);
-  };
-
-  auto const draw_slot_icon = [&](auto const slot_pos, char const* icon_name) {
-    glm::vec2 const size{32.0f};
-
-    auto constexpr SPACE_BETWEEN = 10;
-    float const left   = dimensions.left + 39 + 200 + SPACE_BETWEEN
-      + (slot_pos * (size.x + SPACE_BETWEEN));
-
-
-    auto constexpr SPACE_BENEATH = 10;
-    float const bottom = dimensions.bottom - SPACE_BENEATH - size.y;
-    glm::vec2 const pos{left, bottom};
-    draw_icon_on_screen(pos, size, icon_name);
-  };
-
-  draw_slot_icon(0, "fist");
-  draw_slot_icon(1, "sword");
-  draw_slot_icon(2, "ak47");
-  draw_slot_icon(3, "first-aid");
-
-  {
-    glm::vec2 const size{128.0f};
-    glm::vec2 const pos{dimensions.right - size.x, dimensions.bottom - size.y};
-    draw_icon_on_screen(pos, size, "sword");
-  }
-
-  auto& ui_state = es.ui_state;
-  if (ui_state.draw_ingame_ui) {
-    ui_ingame::draw(es, lm);
-  }
-}
-
 void
 ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
             WaterAudioSystem& water_audio, SkyboxRenderer& skybox_renderer, DrawState& ds,
             FrameTime const& ft)
 {
+  auto const make_basic_water_renderer = [](stlw::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
+    auto& diff   = *ttable.find("water-diffuse");
+    auto& normal = *ttable.find("water-normal");
+    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
+    return BasicWaterRenderer{logger, diff, normal, sp};
+  };
+
+  auto const make_medium_water_renderer = [](stlw::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
+    auto& diff   = *ttable.find("water-diffuse");
+    auto& normal = *ttable.find("water-normal");
+    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Medium, sps);
+    return MediumWaterRenderer{logger, diff, normal, sp};
+  };
+
+  auto const       make_advanced_water_renderer = [](EngineState& es, ZoneState& zs) {
+    auto& logger   = es.logger;
+    auto const&      dim = es.dimensions;
+    ScreenSize const screen_size{dim.right, dim.bottom};
+
+    auto& gfx_state = zs.gfx_state;
+    auto& ttable    = gfx_state.texture_table;
+    auto& sps       = gfx_state.sps;
+    auto& ti     = *ttable.find("water-diffuse");
+    auto& dudv   = *ttable.find("water-dudv");
+    auto& normal = *ttable.find("water-normal");
+    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Advanced, sps);
+    return AdvancedWaterRenderer{logger, screen_size, sp, ti, dudv, normal};
+  };
+
+  auto const make_black_water_renderer = [](EngineState& es, ZoneState& zs) {
+    auto& logger   = es.logger;
+    auto& gfx_state = zs.gfx_state;
+    auto& sps       = gfx_state.sps;
+    auto& sp = sps.ref_sp("silhoutte_black");
+    return BlackWaterRenderer{logger, sp};
+  };
+
+  auto const make_black_terrain_renderer = [](ShaderPrograms& sps) {
+    auto& sp = sps.ref_sp("silhoutte_black");
+    return BlackTerrainRenderer{sp};
+  };
+
+  auto const make_sunshaft_renderer = [](EngineState& es, ZoneState& zs) {
+    auto& logger   = es.logger;
+    auto& gfx_state = zs.gfx_state;
+    auto& sps       = gfx_state.sps;
+    auto& sunshaft_sp = sps.ref_sp("sunshaft");
+    auto const&      dim = es.dimensions;
+    ScreenSize const screen_size{dim.right, dim.bottom};
+    return SunshaftRenderer{logger, screen_size, sunshaft_sp};
+  };
+
   auto& es = state.engine_state;
   es.time.update(ft.since_start_seconds());
 
@@ -708,58 +634,19 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   auto& sps       = gfx_state.sps;
   auto& ttable    = gfx_state.texture_table;
 
-  auto const make_basic_water_renderer = [&]() {
-    auto& diff   = *ttable.find("water-diffuse");
-    auto& normal = *ttable.find("water-normal");
-    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
-    return BasicWaterRenderer{logger, diff, normal, sp};
-  };
-
-  auto const make_medium_water_renderer = [&]() {
-    auto& diff   = *ttable.find("water-diffuse");
-    auto& normal = *ttable.find("water-normal");
-    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Medium, sps);
-    return MediumWaterRenderer{logger, diff, normal, sp};
-  };
-
-  auto const&      dim = es.dimensions;
-  ScreenSize const screen_size{dim.right, dim.bottom};
-  auto const       make_advanced_water_renderer = [&]() {
-    auto& ti     = *ttable.find("water-diffuse");
-    auto& dudv   = *ttable.find("water-dudv");
-    auto& normal = *ttable.find("water-normal");
-    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Advanced, sps);
-    return AdvancedWaterRenderer{logger, screen_size, sp, ti, dudv, normal};
-  };
-
-  auto const make_black_water_renderer = [&]() {
-    auto& sp = sps.ref_sp("silhoutte_black");
-    return BlackWaterRenderer{logger, sp};
-  };
-
-  auto const make_black_terrain_renderer = [&]() {
-    auto& sp = sps.ref_sp("silhoutte_black");
-    return BlackTerrainRenderer{sp};
-  };
-
-  auto const make_sunshaft_renderer = [&]() {
-    auto& sunshaft_sp = sps.ref_sp("sunshaft");
-    return SunshaftRenderer{logger, screen_size, sunshaft_sp};
-  };
-
   // TODO: move these (they are static for convenience testing)
-  static auto           basic_water_renderer    = make_basic_water_renderer();
-  static auto           medium_water_renderer   = make_medium_water_renderer();
-  static auto           advanced_water_renderer = make_advanced_water_renderer();
-  static auto           black_water_renderer    = make_black_water_renderer();
+  static auto           basic_water_renderer    = make_basic_water_renderer(logger, sps, ttable);
+  static auto           medium_water_renderer   = make_medium_water_renderer(logger, sps, ttable);
+  static auto           advanced_water_renderer = make_advanced_water_renderer(es, zs);
+  static auto           black_water_renderer    = make_black_water_renderer(es, zs);
 
   static auto default_terrain_renderer  = DefaultTerrainRenderer{};
-  static auto black_terrain_renderer  = make_black_terrain_renderer();
+  static auto black_terrain_renderer  = make_black_terrain_renderer(sps);
   static auto default_entity_renderer = EntityRenderer{};
   static auto black_entity_renderer   = BlackEntityRenderer{};
   static auto debug_renderer  = DebugRenderer{};
 
-  static auto sunshaft_renderer = make_sunshaft_renderer();
+  static auto sunshaft_renderer = make_sunshaft_renderer(es, zs);
 
   auto const player_eid = find_player(registry);
   auto& player = registry.get<Player>(player_eid);
@@ -919,7 +806,10 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     draw_scene_normal_render();
   }
 
-  draw_2dui(es, lm, camera, ds);
+  auto& ui_state = es.ui_state;
+  if (ui_state.draw_ingame_ui) {
+    ui_ingame::draw(es, lm, camera, ds);
+  }
 }
 
 void
