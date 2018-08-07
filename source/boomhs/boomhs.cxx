@@ -345,32 +345,47 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
 }
 
 void
-copy_state_gpu(stlw::Logger& logger, EngineState const& es, ZoneState& zs)
+copy_state_gpu(EngineState& es, ZoneState& zs)
 {
-  auto&       ldata     = zs.level_data;
-  auto&       objstore  = ldata.obj_store;
-  auto&       gfx_state = zs.gfx_state;
-  auto&       sps       = gfx_state.sps;
-  auto&       registry  = zs.registry;
+  auto& logger = es.logger;
+  auto& ldata     = zs.level_data;
+  auto& objstore  = ldata.obj_store;
+  auto& gfx_state = zs.gfx_state;
+  auto& sps       = gfx_state.sps;
+  auto& registry  = zs.registry;
 
   auto& draw_handles = gfx_state.draw_handles;
   auto copy_result = copy_assets_gpu(logger, sps, registry, objstore, draw_handles)
     .expect_moveout("Error copying asset to gpu");
+}
+
+void
+add_boundingboxes_to_entities(EngineState& es, ZoneState& zs)
+{
+  auto& logger = es.logger;
+  auto& ldata     = zs.level_data;
+  auto& registry  = zs.registry;
+
+  auto& gfx_state    = zs.gfx_state;
+  auto& sps          = gfx_state.sps;
+  auto& draw_handles = gfx_state.draw_handles;
 
   auto& obj_store                 = ldata.obj_store;
   auto constexpr WIREFRAME_SHADER = "wireframe";
   auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
 
-  auto const          add_wireframe = [&](auto const eid, auto const& min, auto const& max) {
+  {
+    CubeMinMax const cmm{glm::vec3{-1.0f}, glm::vec3{1.0f}};
+    auto const cv = OF::cube_vertices(cmm.min, cmm.max);
+    auto    dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, cv, va);
+    draw_handles.set_bbox(MOVE(dinfo));
+  }
+
+  auto const          add_boundingbox = [&](auto const eid, auto const& min, auto const& max) {
     {
       auto& bbox = registry.assign<AABoundingBox>(eid);
       bbox.min   = min;
       bbox.max   = max;
-
-      CubeMinMax const cmm{bbox.min, bbox.max};
-      auto const cv = OF::cube_vertices(cmm.min, cmm.max);
-      auto    dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, cv, va);
-      draw_handles.add_bbox(eid, MOVE(dinfo));
     }
   };
   for (auto const eid : registry.view<MeshRenderable>()) {
@@ -383,19 +398,19 @@ copy_state_gpu(stlw::Logger& logger, EngineState const& es, ZoneState& zs)
     auto const&    min       = posbuffer.min();
     auto const&    max       = posbuffer.max();
 
-    add_wireframe(eid, min, max);
+    add_boundingbox(eid, min, max);
     registry.assign<Selectable>(eid);
   }
   for (auto const eid : registry.view<CubeRenderable>()) {
     auto const& cr = registry.get<CubeRenderable>(eid);
 
-    add_wireframe(eid, cr.min, cr.max);
+    add_boundingbox(eid, cr.min, cr.max);
     registry.assign<Selectable>(eid);
   }
   for (auto const eid : registry.view<OrbitalBody>()) {
     glm::vec3 constexpr min = glm::vec3{0.0};
     glm::vec3 constexpr max = glm::vec3{0.0};
-    add_wireframe(eid, min, max);
+    add_boundingbox(eid, min, max);
   }
   for (auto const eid : registry.view<WaterInfo>()) {
     {
@@ -411,7 +426,7 @@ copy_state_gpu(stlw::Logger& logger, EngineState const& es, ZoneState& zs)
       auto dinfo = gpu::copy_gpu(logger, sp.va(), buffer);
 
       draw_handles.add_entity(eid, MOVE(dinfo));
-      wi.eid = eid;// = &draw_handles.lookup_entity(logger, eid);
+      wi.eid = eid;
     }
   }
 
@@ -419,7 +434,7 @@ copy_state_gpu(stlw::Logger& logger, EngineState const& es, ZoneState& zs)
     auto const min = glm::vec3{-0.5, -0.2, -0.5};
     auto const max = glm::vec3{0.5f, 0.2, 0.5};
 
-    add_wireframe(eid, min, max);
+    add_boundingbox(eid, min, max);
   }
 }
 
@@ -473,7 +488,8 @@ init(Engine& engine, EngineState& es, Camera& camera, stlw::float_generator& rng
 
     // copy the first zonestate to GPU
     assert(zstates.size() > 0);
-    copy_state_gpu(logger, es, zstates.front());
+    copy_state_gpu(es, zstates.front());
+    add_boundingboxes_to_entities(es, zs);
   }
 
   GameState state{es, LevelManager{MOVE(zstates)}};

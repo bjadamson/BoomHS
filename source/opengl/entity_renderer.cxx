@@ -433,7 +433,7 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_color(logger, "u_wirecolor", wire_color);
-      auto& dinfo = draw_handles.lookup_bbox(logger, eid);
+      auto& dinfo = draw_handles.bbox();
 
       // We needed to bind the shader program to set the uniforms above, no reason to pay to bind
       // it again.

@@ -9,6 +9,7 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
+#include <optional>
 #include <string>
 
 namespace opengl
@@ -95,28 +96,26 @@ class EntityDrawHandleMap
 class DrawHandleManager
 {
   // These slots get a value when memory is loaded, set to none when memory is not.
-  EntityDrawHandleMap entities_;
-  EntityDrawHandleMap bboxes_;
+  EntityDrawHandleMap     entities_;
+  std::optional<DrawInfo> bbox_ = {};
 
 public:
   DrawHandleManager() = default;
   NO_COPY(DrawHandleManager);
   MOVE_DEFAULT(DrawHandleManager);
 
+  // methods
   void add_entity(boomhs::EntityID, DrawInfo&&);
-  void add_bbox(boomhs::EntityID, DrawInfo&&);
+  void set_bbox(DrawInfo&&);
 
   EntityDrawHandleMap&       entities();
   EntityDrawHandleMap const& entities() const;
 
-  EntityDrawHandleMap&       bbox_entities();
-  EntityDrawHandleMap const& bbox_entities() const;
+  DrawInfo&       bbox();
+  DrawInfo const& bbox() const;
 
   DrawInfo&       lookup_entity(stlw::Logger&, boomhs::EntityID);
   DrawInfo const& lookup_entity(stlw::Logger&, boomhs::EntityID) const;
-
-  DrawInfo&       lookup_bbox(stlw::Logger&, boomhs::EntityID);
-  DrawInfo const& lookup_bbox(stlw::Logger&, boomhs::EntityID) const;
 };
 
 } // namespace opengl

@@ -209,10 +209,9 @@ DrawHandleManager::add_entity(EntityID const eid, DrawInfo&& dinfo)
 }
 
 void
-DrawHandleManager::add_bbox(EntityID const eid, DrawInfo&& dinfo)
+DrawHandleManager::set_bbox(DrawInfo&& di)
 {
-  assert(!bboxes_.has(eid));
-  bboxes_.add(eid, MOVE(dinfo));
+  bbox_ = MOVE(di);
 }
 
 EntityDrawHandleMap &
@@ -227,16 +226,18 @@ DrawHandleManager::entities() const
   return entities_;
 }
 
-EntityDrawHandleMap&
-DrawHandleManager::bbox_entities()
+DrawInfo&
+DrawHandleManager::bbox()
 {
-  return bboxes_;
+  assert(bbox_);
+  return *bbox_;
 }
 
-EntityDrawHandleMap const&
-DrawHandleManager::bbox_entities() const
+DrawInfo const&
+DrawHandleManager::bbox() const
 {
-  return bboxes_;
+  assert(bbox_);
+  return *bbox_;
 }
 
 // TODO: When the maps can be indexed by a single identifier (right now they cannot, as the
@@ -263,17 +264,6 @@ DrawHandleManager::lookup_entity(stlw::Logger& logger, EntityID const eid) const
   LOOKUP_MANAGER_IMPL(entities());
 }
 
-DrawInfo&
-DrawHandleManager::lookup_bbox(stlw::Logger& logger, EntityID const eid)
-{
-  LOOKUP_MANAGER_IMPL(bbox_entities());
-}
-
-DrawInfo const&
-DrawHandleManager::lookup_bbox(stlw::Logger& logger, EntityID const eid) const
-{
-  LOOKUP_MANAGER_IMPL(bbox_entities());
-}
 #undef LOOKUP_MANAGER_IMPL
 
 } // ns opengl
