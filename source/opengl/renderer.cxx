@@ -512,7 +512,7 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
     auto const camera_matrix = fstate.camera_matrix();
     set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
-    dinfo.vao().while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
+    dinfo.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
   });
 }
 
@@ -534,8 +534,7 @@ draw_global_axis(RenderState& rstate)
   Transform   transform;
 
   auto const draw_axis_arrow = [&](DrawInfo& dinfo) {
-    auto& vao = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
+    dinfo.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
   };
 
   sp.while_bound(logger, [&]() {
@@ -575,8 +574,8 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
     set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
     // assume for now they all share the same VAO layout
-    auto& vao = axis_arrows.x_dinfo.vao();
-    vao.while_bound(logger, [&]() {
+    auto& dinfo = axis_arrows.x_dinfo;
+    dinfo.while_bound(logger, [&]() {
       draw(rstate, GL_LINES, sp, axis_arrows.x_dinfo);
       draw(rstate, GL_LINES, sp, axis_arrows.y_dinfo);
       draw(rstate, GL_LINES, sp, axis_arrows.z_dinfo);
@@ -609,9 +608,7 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
 
     glActiveTexture(GL_TEXTURE0);
 
-
-    auto& vao = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
+    dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
 
     glActiveTexture(GL_TEXTURE0);
   });
@@ -644,8 +641,7 @@ draw_inventory_overlay(RenderState& rstate)
   sp.while_bound(logger, [&]() {
     set_modelmatrix(logger, model_matrix, sp);
 
-    auto& vao = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, dinfo); });
+    dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, dinfo); });
   });
 }
 
@@ -751,8 +747,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
 
     transform.scale = glm::vec3{scale};
-    auto& vao       = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
+    dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
   };
 
   auto const draw_glow = [&](auto& sp) {
@@ -768,8 +763,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
 
     transform.scale = glm::vec3{scale};
-    auto& vao       = dinfo.vao();
-    vao.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
+    dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
   };
 
 
@@ -816,8 +810,7 @@ draw_grid_lines(RenderState& rstate)
       auto const camera_matrix = fstate.camera_matrix();
       set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
 
-      auto& vao = dinfo.vao();
-      vao.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
+      dinfo.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
     });
   };
 

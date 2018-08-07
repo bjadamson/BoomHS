@@ -71,14 +71,13 @@ render_water_common(Transform& transform, ShaderProgram& sp, RenderState& rstate
 
     assert(winfo.dinfo);
     auto& dinfo = *winfo.dinfo;
-    auto& vao   = dinfo.vao();
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_vec4(logger, "u_clipPlane", ABOVE_VECTOR);
       sp.set_uniform_float1(logger, "u_time_offset", time_offset);
       sp.set_uniform_vec2(logger, "u_flowdir", winfo.flow_direction);
 
-      vao.while_bound(logger, [&]() { fn(winfo); });
+      dinfo.while_bound(logger, [&]() { fn(winfo); });
     });
   };
 

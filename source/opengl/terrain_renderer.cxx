@@ -109,8 +109,7 @@ DefaultTerrainRenderer::render(RenderState& rstate, MaterialTable const& mat_tab
       auto& dinfo = terrain.draw_info();
 
       auto const draw_fn = [&]() {
-        auto& vao = dinfo.vao();
-        vao.while_bound(logger, [&]() {
+        dinfo.while_bound(logger, [&]() {
           bool constexpr SET_NORMALMATRIX = true;
           render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, transform.translation, model_matrix,
                                    sp, dinfo, mat, registry, SET_NORMALMATRIX);
@@ -184,10 +183,9 @@ BlackTerrainRenderer::render(RenderState& rstate, MaterialTable const&, EntityRe
     auto const& config = terrain.config;
 
     auto& dinfo = terrain.draw_info();
-    auto& vao   = dinfo.vao();
 
     sp_.while_bound(logger, [&]() {
-      vao.while_bound(logger, [&]() {
+      dinfo.while_bound(logger, [&]() {
         render::draw_3dblack_water(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
       });
     });

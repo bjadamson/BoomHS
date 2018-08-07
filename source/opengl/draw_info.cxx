@@ -90,6 +90,19 @@ DrawInfo::operator=(DrawInfo &&other)
   return *this;
 }
 
+void
+DrawInfo::bind_impl(stlw::Logger& logger)
+{
+  vao().bind_impl(logger);
+
+}
+
+void
+DrawInfo::unbind_impl(stlw::Logger& logger)
+{
+  vao().unbind_impl(logger);
+}
+
 std::string
 DrawInfo::to_string() const
 {
@@ -97,7 +110,7 @@ DrawInfo::to_string() const
 
   std::string result;
   result += fmt::format("NumIndices: {} ", dinfo.num_indices());
-  result += "VAO: " + dinfo.vao_.to_string() + " ";
+  result += "VAO: " + dinfo.vao().to_string() + " ";
   result += "BufferHandles: {" + dinfo.handles_.to_string() + "} ";
   //auto const num_indices = dinfo.num_indices();
 
