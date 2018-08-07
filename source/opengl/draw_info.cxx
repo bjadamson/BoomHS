@@ -26,6 +26,8 @@ BufferHandles::BufferHandles(BufferHandles &&other)
     : vbo_(other.vbo_)
     , ebo_(other.ebo_)
 {
+  assert(this != &other);
+
   other.vbo_ = 0;
   other.ebo_ = 0;
 }
@@ -33,6 +35,8 @@ BufferHandles::BufferHandles(BufferHandles &&other)
 BufferHandles&
 BufferHandles::operator=(BufferHandles &&other)
 {
+  assert(this != &other);
+
   vbo_ = MOVE(other.vbo_);
   ebo_ = MOVE(other.ebo_);
 
@@ -68,11 +72,14 @@ DrawInfo::DrawInfo(DrawInfo &&other)
   , handles_(MOVE(other.handles_))
   , vao_(MOVE(other.vao_))
 {
+  assert(this != &other);
 }
 
 DrawInfo&
 DrawInfo::operator=(DrawInfo &&other)
 {
+  assert(this != &other);
+
   num_vertexes_ = other.num_vertexes_;
   num_indices_ = other.num_indices_;
   other.num_vertexes_ = 0;
@@ -142,11 +149,11 @@ DrawInfo::to_string() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EntityDrawHandleMap
 size_t
-EntityDrawHandleMap::add(EntityID const entity, opengl::DrawInfo &&di)
+EntityDrawHandleMap::add(EntityID const eid, opengl::DrawInfo &&di)
 {
   auto const pos = drawinfos_.size();
   drawinfos_.emplace_back(MOVE(di));
-  entities_.emplace_back(entity);
+  entities_.emplace_back(eid);
 
   // return the index di was stored in.
   return pos;
@@ -154,20 +161,20 @@ EntityDrawHandleMap::add(EntityID const entity, opengl::DrawInfo &&di)
 
 #define LOOKUP_IMPLEMENTATION                                                                      \
   FOR(i, entities_.size()) {                                                                       \
-    if (entities_[i] == entity) {                                                                  \
+    if (entities_[i] == eid) {                                                                     \
       return &drawinfos_[i];                                                                       \
     }                                                                                              \
   }                                                                                                \
   return nullptr;
 
 opengl::DrawInfo*
-EntityDrawHandleMap::lookup(stlw::Logger &logger, EntityID const entity)
+EntityDrawHandleMap::lookup(stlw::Logger &logger, EntityID const eid)
 {
   LOOKUP_IMPLEMENTATION
 }
 
 opengl::DrawInfo const*
-EntityDrawHandleMap::lookup(stlw::Logger &logger, EntityID const entity) const
+EntityDrawHandleMap::lookup(stlw::Logger &logger, EntityID const eid) const
 {
   LOOKUP_IMPLEMENTATION
 }
