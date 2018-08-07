@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/dimensions.hpp>
+#include <boomhs/entity.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/obj.hpp>
 
@@ -27,7 +28,7 @@ graphics_mode_to_water_shader(boomhs::GameGraphicsMode, opengl::ShaderPrograms&)
 struct WaterInfo
 {
   glm::vec2            position;
-  opengl::DrawInfo*    dinfo = nullptr;
+  EntityID             eid;
   opengl::TextureInfo* tinfo = nullptr;
 
   glm::vec2    dimensions;

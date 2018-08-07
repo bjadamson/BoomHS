@@ -411,7 +411,7 @@ copy_state_gpu(stlw::Logger& logger, EngineState const& es, ZoneState& zs)
       auto dinfo = gpu::copy_gpu(logger, sp.va(), buffer);
 
       draw_handles.add_entity(eid, MOVE(dinfo));
-      wi.dinfo = &draw_handles.lookup_entity(logger, eid);
+      wi.eid = eid;// = &draw_handles.lookup_entity(logger, eid);
     }
   }
 

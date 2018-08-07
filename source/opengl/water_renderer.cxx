@@ -70,8 +70,12 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
     time_offset += ft.delta_seconds() * winfo.wind_speed;
     time_offset = ::fmodf(time_offset, 1.00f);
 
-    assert(winfo.dinfo);
-    auto& dinfo = *winfo.dinfo;
+
+    auto&       gfx_state = zs.gfx_state;
+    auto& draw_handles = gfx_state.draw_handles;
+    auto& dinfo = draw_handles.lookup_entity(logger, winfo.eid);
+    //assert(winfo.dinfo);
+    //auto& dinfo = *winfo.dinfo;
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_vec4(logger, "u_clipPlane", ABOVE_VECTOR);
@@ -136,8 +140,10 @@ BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
     glActiveTexture(GL_TEXTURE1);
     BIND_UNTIL_END_OF_SCOPE(logger, normal_);
 
-    assert(winfo.dinfo);
-    auto& dinfo = *winfo.dinfo;
+    auto& zs       = lm.active();
+    auto&       gfx_state = zs.gfx_state;
+    auto& draw_handles = gfx_state.draw_handles;
+    auto& dinfo = draw_handles.lookup_entity(logger, winfo.eid);
 
     auto const model_matrix = transform.model_matrix();
     render::draw_3dshape(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
@@ -193,8 +199,9 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
     glActiveTexture(GL_TEXTURE1);
     BIND_UNTIL_END_OF_SCOPE(logger, normal_);
 
-    assert(winfo.dinfo);
-    auto& dinfo = *winfo.dinfo;
+    auto&       gfx_state = zs.gfx_state;
+    auto& draw_handles = gfx_state.draw_handles;
+    auto& dinfo = draw_handles.lookup_entity(logger, winfo.eid);
 
     bool constexpr SET_NORMALMATRIX = false;
     auto const model_matrix         = transform.model_matrix();
@@ -290,8 +297,10 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
   Material const water_material{};
 
   auto const fn = [&](WaterInfo& winfo, Transform& transform) {
-    assert(winfo.dinfo);
-    auto& dinfo = *winfo.dinfo;
+
+    auto&       gfx_state = zs.gfx_state;
+    auto& draw_handles = gfx_state.draw_handles;
+    auto& dinfo = draw_handles.lookup_entity(logger, winfo.eid);
 
     sp_.set_uniform_vec3(logger, "u_camera_position", camera.world_position());
     sp_.set_uniform_float1(logger, "u_wave_offset", winfo.wave_offset);
@@ -348,8 +357,11 @@ BlackWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
   auto& logger = es.logger;
 
   auto const fn = [&](WaterInfo& winfo, Transform& transform) {
-    assert(winfo.dinfo);
-    auto& dinfo = *winfo.dinfo;
+
+    auto& zs       = lm.active();
+    auto&       gfx_state = zs.gfx_state;
+    auto& draw_handles = gfx_state.draw_handles;
+    auto& dinfo = draw_handles.lookup_entity(logger, winfo.eid);
 
     auto const model_matrix = transform.model_matrix();
     render::draw_3dblack_water(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
