@@ -345,21 +345,6 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
 }
 
 void
-copy_state_gpu(EngineState& es, ZoneState& zs)
-{
-  auto& logger = es.logger;
-  auto& ldata     = zs.level_data;
-  auto& objstore  = ldata.obj_store;
-  auto& gfx_state = zs.gfx_state;
-  auto& sps       = gfx_state.sps;
-  auto& registry  = zs.registry;
-
-  auto& draw_handles = gfx_state.draw_handles;
-  auto copy_result = copy_assets_gpu(logger, sps, registry, objstore, draw_handles)
-    .expect_moveout("Error copying asset to gpu");
-}
-
-void
 add_boundingboxes_to_entities(EngineState& es, ZoneState& zs)
 {
   auto& logger = es.logger;
@@ -466,11 +451,11 @@ init(Engine& engine, EngineState& es, Camera& camera, stlw::float_generator& rng
   auto& logger = es.logger;
 
   int constexpr FLOOR_NUMBER = 0;
-  auto& registry = engine.registries[FLOOR_NUMBER];
 
   std::vector<ZoneState> zstates;
   zstates.reserve(1);
   {
+    auto& registry       = engine.registries[FLOOR_NUMBER];
     auto  level_name     = floornumber_to_levelfilename(FLOOR_NUMBER);
     auto  level_assets   = TRY_MOVEOUT(LevelLoader::load_level(logger, registry, level_name));
     auto& ttable         = level_assets.texture_table;
@@ -485,10 +470,21 @@ init(Engine& engine, EngineState& es, Camera& camera, stlw::float_generator& rng
 
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
     zstates.emplace_back(MOVE(zs));
-
+  }
+  {
     // copy the first zonestate to GPU
     assert(zstates.size() > 0);
-    copy_state_gpu(es, zstates.front());
+
+    auto& zs = zstates.front();
+    auto& ldata     = zs.level_data;
+    auto& objstore  = ldata.obj_store;
+    auto& gfx_state = zs.gfx_state;
+    auto& sps       = gfx_state.sps;
+    auto& registry  = zs.registry;
+
+    auto& draw_handles = gfx_state.draw_handles;
+
+    auto copy_result = TRY_MOVEOUT(copy_assets_gpu(logger, sps, registry, objstore, draw_handles));
     add_boundingboxes_to_entities(es, zs);
   }
 
