@@ -344,18 +344,6 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       Texture t =
           TRY_MOVEOUT(opengl::texture::upload_2d_texture(logger, texture_names.filenames[0], MOVE(ti)));
 
-      glActiveTexture(GL_TEXTURE0 + texture_unit);
-      ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
-
-      t->while_bound(logger, [&]() {
-        t->set_fieldi(GL_TEXTURE_WRAP_S, t->wrap);
-        t->set_fieldi(GL_TEXTURE_WRAP_T, t->wrap);
-
-        // Set texture filtering parameters
-        t->set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        t->set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      });
-
       ttable.add_texture(MOVE(texture_names), MOVE(t));
       return OK_NONE;
     };
@@ -373,14 +361,6 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       Texture                  t = TRY_MOVEOUT(
           opengl::texture::upload_3dcube_texture(logger, texture_names.filenames, MOVE(ti)));
 
-      t->while_bound(logger, [&]() {
-        t->set_fieldi(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        t->set_fieldi(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-        t->set_fieldi(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        t->set_fieldi(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        t->set_fieldi(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-      });
       ttable.add_texture(MOVE(texture_names), MOVE(t));
       return OK_NONE;
     };
@@ -729,7 +709,6 @@ load_vas(CppTable const& table)
 auto
 load_global_lighting(CppTable const& table)
 {
-  //auto const global_lighting = get_table_array(table,              "global-lighting");
   auto const global_lighting = get_first_and_only_entry(table, "global-lighting");
   auto const ambient         = get_color_or_abort(global_lighting, "ambient");
 
@@ -776,7 +755,6 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
 
   LOG_TRACE("attenuations ...");
   auto const attenuations = load_attenuations(logger, resource_table);
-
 
   CppTable level_table = cpptoml::parse_file("levels/" + filename);
   assert(level_table);
