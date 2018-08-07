@@ -281,34 +281,19 @@ namespace boomhs
 
 Result<stlw::Nothing, std::string>
 copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
-                EntityRegistry& registry, ObjStore& obj_store, DrawHandleManager& draw_handles)
+                EntityRegistry& registry, ObjStore& obj_store, DrawHandleManager& dhm)
 {
-  auto const copy_cube = [&](auto const eid, auto& sn, auto& cr, auto&&...) {
-    CubeMinMax const cmm{cr.min, cr.max};
-    auto& va = sps.ref_sp(sn.value).va();
-
-    auto const vertices = OF::cube_vertices(cmm.min, cmm.max);
-    auto  handle = opengl::gpu::copy_cube_gpu(logger, vertices, va);
-    draw_handles.add_entity(eid, MOVE(handle));
-  };
   // copy CUBES to GPU
   registry.view<ShaderName, CubeRenderable>().each(
-      [&](auto const eid, auto& sn, auto& cr, auto&&... args) {
-      copy_cube(eid, sn, cr, FORWARD(args));
+      [&](auto const eid, auto&&...) {
+      dhm.add_cube(logger, sps, eid, registry);
       });
 
-  auto const copy_mesh = [&](auto const eid, auto& sn, auto& mesh, auto&&...) {
-    auto&       va  = sps.ref_sp(sn.value).va();
-    auto const  qa  = BufferFlags::from_va(va);
-    auto const  qo  = ObjQuery{mesh.name, qa};
-    auto const& obj = obj_store.get(logger, mesh.name);
-
-    auto handle = opengl::gpu::copy_gpu(logger, va, obj);
-    draw_handles.add_entity(eid, MOVE(handle));
-  };
-
   // copy MESHES to GPU
-  registry.view<ShaderName, MeshRenderable>().each(copy_mesh);
+  registry.view<ShaderName, MeshRenderable>().each(
+      [&](auto const eid, auto&&...) {
+      dhm.add_mesh(logger, sps, obj_store, eid, registry);
+      });
 
   // copy billboarded textures to GPU
   registry.view<ShaderName, BillboardRenderable, TextureRenderable>().each(
@@ -321,7 +306,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
         auto const uv = OF::rectangle_uvs(ti->uv_max);
         auto const vertices = RectangleFactory::from_vertices_and_uvs(v, uv);
         auto handle = opengl::gpu::copy_rectangle_uvs(logger, va, vertices);
-        draw_handles.add_entity(entity, MOVE(handle));
+        dhm.add_entity(entity, MOVE(handle));
       });
 
   // Update the tree's to match their initial values.
@@ -337,7 +322,7 @@ copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
         auto& tc = registry.get<TreeComponent>(entity);
         tc.set_obj(&obj);
 
-        auto& dinfo = draw_handles.lookup_entity(logger, entity);
+        auto& dinfo = dhm.lookup_entity(logger, entity);
         Tree::update_colors(logger, va, dinfo, tc);
       });
 

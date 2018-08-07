@@ -12,8 +12,14 @@
 #include <optional>
 #include <string>
 
+namespace boomhs
+{
+class ObjStore;
+} // namespace boomhs
+
 namespace opengl
 {
+class ShaderPrograms;
 
 class BufferHandles
 {
@@ -116,6 +122,9 @@ public:
 
   DrawInfo&       lookup_entity(stlw::Logger&, boomhs::EntityID);
   DrawInfo const& lookup_entity(stlw::Logger&, boomhs::EntityID) const;
+
+  void add_mesh(stlw::Logger&, ShaderPrograms&, boomhs::ObjStore&, boomhs::EntityID, boomhs::EntityRegistry&);
+  void add_cube(stlw::Logger&, ShaderPrograms&, boomhs::EntityID, boomhs::EntityRegistry&);
 };
 
 } // namespace opengl

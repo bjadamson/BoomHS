@@ -71,16 +71,6 @@ try_attack_selected_target(stlw::Logger& logger, TerrainGrid& terrain, TextureTa
   if (within_attack_range) {
     LOG_ERROR("DAMAGING TARGET");
     target_hp.current -= player.damage;
-
-    bool const target_dead_after_attack = NPC::is_dead(target_hp);
-    bool const dead_from_attack = !already_dead && target_dead_after_attack;
-    if (dead_from_attack) {
-      kill_entity(logger, terrain, ttable, registry, target_eid);
-      LOG_ERROR("KILLING TARGET");
-    }
-    else if (already_dead) {
-      LOG_ERROR("TARGET ALREADY DEAD");
-    }
   }
   else {
     LOG_ERROR("TARGET NOT WITHIN ATTACK RANGE");
@@ -182,7 +172,23 @@ Player::update(stlw::Logger& logger, EntityRegistry& registry,
 
   if (is_attacking && gcd_ready) {
     LOG_ERROR_SPRINTF("GCD_READY IS_ATTACKING: %i, GCD_READY: %i", is_attacking, gcd_ready);
+
+    auto& npcdata = registry.get<NPCData>(target_eid);
+    auto& target_hp = npcdata.health;
+
+    bool const already_dead = NPC::is_dead(target_hp);
     try_attack_selected_target(logger, terrain, ttable, registry, *this, target_eid);
+
+    bool const target_dead_after_attack = NPC::is_dead(target_hp);
+    bool const dead_from_attack = !already_dead && target_dead_after_attack;
+
+    if (dead_from_attack) {
+      kill_entity(logger, terrain, ttable, registry, target_eid);
+      LOG_ERROR("KILLING TARGET");
+    }
+    else if (already_dead) {
+      LOG_ERROR("TARGET ALREADY DEAD");
+    }
   }
 }
 

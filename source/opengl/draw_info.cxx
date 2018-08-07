@@ -1,4 +1,13 @@
 #include <opengl/draw_info.hpp>
+#include <opengl/buffer.hpp>
+#include <opengl/factory.hpp>
+#include <opengl/gpu.hpp>
+#include <opengl/shader.hpp>
+#include <opengl/shapes.hpp>
+
+#include <boomhs/components.hpp>
+#include <boomhs/obj_store.hpp>
+
 #include <stlw/algorithm.hpp>
 
 #include <iostream>
@@ -265,5 +274,38 @@ DrawHandleManager::lookup_entity(stlw::Logger& logger, EntityID const eid) const
 }
 
 #undef LOOKUP_MANAGER_IMPL
+
+void
+DrawHandleManager::add_mesh(stlw::Logger& logger, ShaderPrograms& sps, ObjStore& obj_store,
+                            EntityID const eid, EntityRegistry& registry)
+{
+  auto& sn = registry.get<ShaderName>(eid);
+  auto&       va  = sps.ref_sp(sn.value).va();
+  auto const  qa  = BufferFlags::from_va(va);
+
+  auto const& mesh = registry.get<MeshRenderable>(eid);
+  auto const  qo  = ObjQuery{mesh.name, qa};
+
+  auto const& obj = obj_store.get(logger, mesh.name);
+
+  auto handle = opengl::gpu::copy_gpu(logger, va, obj);
+  add_entity(eid, MOVE(handle));
+}
+
+void
+DrawHandleManager::add_cube(stlw::Logger& logger, ShaderPrograms& sps, EntityID const eid,
+                            EntityRegistry& registry)
+{
+  auto const& cr = registry.get<CubeRenderable>(eid);
+  CubeMinMax const cmm{cr.min, cr.max};
+
+
+  auto& sn = registry.get<ShaderName>(eid);
+  auto& va = sps.ref_sp(sn.value).va();
+
+  auto const vertices = OF::cube_vertices(cmm.min, cmm.max);
+  auto  handle = opengl::gpu::copy_cube_gpu(logger, vertices, va);
+  add_entity(eid, MOVE(handle));
+}
 
 } // ns opengl
