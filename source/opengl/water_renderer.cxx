@@ -40,7 +40,7 @@ setup(stlw::Logger& logger, TextureInfo& ti, GLint const v)
 
 template <typename FN>
 void
-render_water_common(Transform& transform, ShaderProgram& sp, RenderState& rstate, DrawState& ds,
+render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
                     LevelManager& lm, Camera& camera, FrameTime const& ft, FN const& fn)
 {
   auto& fstate = rstate.fs;
@@ -54,6 +54,7 @@ render_water_common(Transform& transform, ShaderProgram& sp, RenderState& rstate
   auto const render = [&](WaterInfo& winfo) {
     auto const& pos = winfo.position;
 
+    Transform transform;
     auto &tr = transform.translation;
     tr.x     = pos.x;
     tr.z     = pos.y;
@@ -77,14 +78,14 @@ render_water_common(Transform& transform, ShaderProgram& sp, RenderState& rstate
       sp.set_uniform_float1(logger, "u_time_offset", time_offset);
       sp.set_uniform_vec2(logger, "u_flowdir", winfo.flow_direction);
 
-      dinfo.while_bound(logger, [&]() { fn(winfo); });
+      dinfo.while_bound(logger, [&]() { fn(winfo, transform); });
     });
   };
 
   LOG_TRACE("Rendering water");
   auto const winfos = find_all_entities_with_component<WaterInfo>(registry);
-  for (auto const weid : winfos) {
-    auto& wi = registry.get<WaterInfo>(weid);
+  for (auto const eid : winfos) {
+    auto& wi = registry.get<WaterInfo>(eid);
     render(wi);
   }
   LOG_TRACE("Finished rendering water");
@@ -123,8 +124,7 @@ BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
   auto& es     = fstate.es;
   auto& logger = es.logger;
 
-  Transform  transform;
-  auto const fn = [&](WaterInfo& winfo) {
+  auto const fn = [&](WaterInfo& winfo, Transform& transform) {
     sp_.set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
     sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
@@ -143,7 +143,7 @@ BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
     render::draw_3dshape(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
   };
 
-  render_water_common(transform, sp_, rstate, ds, lm, camera, ft, fn);
+  render_water_common(sp_, rstate, ds, lm, camera, ft, fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -179,10 +179,9 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
   auto& zs       = lm.active();
   auto& registry = zs.registry;
 
-  Transform      transform;
   Material const water_material{};
 
-  auto const fn = [&](WaterInfo& winfo) {
+  auto const fn = [&](WaterInfo& winfo, Transform& transform) {
     sp_.set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
     sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
@@ -203,7 +202,7 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
                              dinfo, water_material, registry, SET_NORMALMATRIX);
   };
 
-  render_water_common(transform, sp_, rstate, ds, lm, camera, ft, fn);
+  render_water_common(sp_, rstate, ds, lm, camera, ft, fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -289,9 +288,8 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
   auto& registry = zs.registry;
 
   Material const water_material{};
-  Transform      transform;
 
-  auto const fn = [&](WaterInfo& winfo) {
+  auto const fn = [&](WaterInfo& winfo, Transform& transform) {
     assert(winfo.dinfo);
     auto& dinfo = *winfo.dinfo;
 
@@ -329,7 +327,7 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
     render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, transform.translation, model_matrix, sp_,
                              dinfo, water_material, registry, SET_NORMALMATRIX);
   };
-  render_water_common(transform, sp_, rstate, ds, lm, camera, ft, fn);
+  render_water_common(sp_, rstate, ds, lm, camera, ft, fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -349,8 +347,7 @@ BlackWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
 
   auto& logger = es.logger;
 
-  Transform  transform;
-  auto const fn = [&](WaterInfo& winfo) {
+  auto const fn = [&](WaterInfo& winfo, Transform& transform) {
     assert(winfo.dinfo);
     auto& dinfo = *winfo.dinfo;
 
@@ -358,7 +355,7 @@ BlackWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
     render::draw_3dblack_water(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
   };
 
-  render_water_common(transform, sp_, rstate, ds, lm, camera, ft, fn);
+  render_water_common(sp_, rstate, ds, lm, camera, ft, fn);
 }
 
 } // namespace opengl
