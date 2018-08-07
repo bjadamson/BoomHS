@@ -89,7 +89,7 @@ struct EngineState
   UiState     ui_state     = {};
 
   // Constructors
-  MOVE_CONSTRUCTIBLE_ONLY(EngineState);
+  NO_COPY_OR_MOVE(EngineState);
   EngineState(stlw::Logger&, ALCdevice&, ImGuiIO&, Dimensions const&);
 };
 

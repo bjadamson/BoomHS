@@ -86,9 +86,10 @@ class EntityDrawHandleMap
   size_t add(boomhs::EntityID, opengl::DrawInfo&&);
 
   bool empty() const { return drawinfos_.empty(); }
+  bool has(boomhs::EntityID) const;
 
-  opengl::DrawInfo*       lookup(stlw::Logger&, boomhs::EntityID);
-  opengl::DrawInfo const* lookup(stlw::Logger&, boomhs::EntityID) const;
+  opengl::DrawInfo*       lookup(boomhs::EntityID);
+  opengl::DrawInfo const* lookup(boomhs::EntityID) const;
 };
 
 class DrawHandleManager

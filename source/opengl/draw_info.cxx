@@ -172,6 +172,12 @@ EntityDrawHandleMap::add(EntityID const eid, opengl::DrawInfo &&di)
   return pos;
 }
 
+bool
+EntityDrawHandleMap::has(EntityID const eid) const
+{
+  return lookup(eid);
+}
+
 #define LOOKUP_IMPLEMENTATION                                                                      \
   FOR(i, entities_.size()) {                                                                       \
     if (entities_[i] == eid) {                                                                     \
@@ -181,13 +187,13 @@ EntityDrawHandleMap::add(EntityID const eid, opengl::DrawInfo &&di)
   return nullptr;
 
 opengl::DrawInfo*
-EntityDrawHandleMap::lookup(stlw::Logger &logger, EntityID const eid)
+EntityDrawHandleMap::lookup(EntityID const eid)
 {
   LOOKUP_IMPLEMENTATION
 }
 
 opengl::DrawInfo const*
-EntityDrawHandleMap::lookup(stlw::Logger &logger, EntityID const eid) const
+EntityDrawHandleMap::lookup(EntityID const eid) const
 {
   LOOKUP_IMPLEMENTATION
 }
@@ -198,12 +204,14 @@ EntityDrawHandleMap::lookup(stlw::Logger &logger, EntityID const eid) const
 void
 DrawHandleManager::add_entity(EntityID const eid, DrawInfo&& dinfo)
 {
+  assert(!entities_.has(eid));
   entities_.add(eid, MOVE(dinfo));
 }
 
 void
 DrawHandleManager::add_bbox(EntityID const eid, DrawInfo&& dinfo)
 {
+  assert(!bboxes_.has(eid));
   bboxes_.add(eid, MOVE(dinfo));
 }
 
@@ -235,7 +243,7 @@ DrawHandleManager::bbox_entities() const
 // EntityID is duplicated in both DrawHandle maps (regular entities and bbox entities).
 // Once complete, this macro should look through the various maps for the matching eid.
 #define LOOKUP_MANAGER_IMPL(MAP)                                                                   \
-  auto *p = MAP.lookup(logger, eid);                                                               \
+  auto *p = MAP.lookup(eid);                                                                       \
   if (p) {                                                                                         \
     return *p;                                                                                     \
   }                                                                                                \

@@ -64,7 +64,8 @@ loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camer
   loop_events(state, event, camera, ft, event_fn);
   es.quit |= is_quit_event(event);
 
-  boomhs::game_loop(engine, state, rng, camera, ft);
+  static auto renderers = make_static_renderers(es, state.level_manager);
+  boomhs::game_loop(engine, state, renderers, rng, camera, ft);
 
   // Render Imgui UI
   ImGui::Render();

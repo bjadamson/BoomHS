@@ -24,16 +24,10 @@
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/water.hpp>
 
-#include <opengl/debug_renderer.hpp>
-#include <opengl/entity_renderer.hpp>
+
 #include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
-#include <opengl/renderer.hpp>
-#include <opengl/skybox_renderer.hpp>
-#include <opengl/sun_renderer.hpp>
-#include <opengl/terrain_renderer.hpp>
 #include <opengl/texture.hpp>
-#include <opengl/water_renderer.hpp>
 
 #include <extlibs/sdl.hpp>
 #include <window/controller.hpp>
@@ -562,112 +556,89 @@ init(Engine& engine, EngineState& es, Camera& camera, stlw::float_generator& rng
   return OK_MOVE(state);
 }
 
-struct WaterRenderers
-{
-  BasicWaterRenderer    basic;
-  MediumWaterRenderer   medium;
-  AdvancedWaterRenderer advanced;
-
-  BlackWaterRenderer    silhouette;
-
-  void render(RenderState& rstate, DrawState& ds, LevelManager& lm, Camera& camera,
+void
+WaterRenderers::render(RenderState& rstate, DrawState& ds, LevelManager& lm, Camera& camera,
               FrameTime const& ft, bool const black_silhouette)
-  {
-    if (black_silhouette) {
-      silhouette.render_water(rstate, ds, lm, camera, ft);
+{
+  if (black_silhouette) {
+    silhouette.render_water(rstate, ds, lm, camera, ft);
+  }
+  else {
+    auto const& water_buffer = rstate.fs.es.ui_state.debug.buffers.water;
+    auto const  water_type = static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
+    if (GameGraphicsMode::Basic == water_type) {
+      basic.render_water(rstate, ds, lm, camera, ft);
+    }
+    else if (GameGraphicsMode::Medium == water_type) {
+      medium.render_water(rstate, ds, lm, camera, ft);
+    }
+    else if (GameGraphicsMode::Advanced == water_type) {
+      advanced.render_water(rstate, ds, lm, camera, ft);
     }
     else {
-      auto const& water_buffer = rstate.fs.es.ui_state.debug.buffers.water;
-      auto const  water_type = static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
-      if (GameGraphicsMode::Basic == water_type) {
-        basic.render_water(rstate, ds, lm, camera, ft);
-      }
-      else if (GameGraphicsMode::Medium == water_type) {
-        medium.render_water(rstate, ds, lm, camera, ft);
-      }
-      else if (GameGraphicsMode::Advanced == water_type) {
-        advanced.render_water(rstate, ds, lm, camera, ft);
-      }
-      else {
-        std::abort();
-      }
+      std::abort();
     }
   }
-};
+}
 
-struct StaticRenderers
+void
+StaticRenderers::render(LevelManager&lm, RenderState& rstate, stlw::float_generator& rng, DrawState& ds,
+            FrameTime const& ft, bool const black_silhouette)
 {
-  DefaultTerrainRenderer default_terrain;
-  BlackTerrainRenderer   silhouette_terrain;
+  // Render the scene with no culling (setting it zero disables culling mathematically)
+  glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
 
-  EntityRenderer         default_entity;
-  BlackEntityRenderer    silhouette_entity;
+  auto& fs = rstate.fs;
+  auto& es = fs.es;
+  if (es.draw_terrain) {
+    auto const draw_basic = [&](auto& terrain_renderer, auto& entity_renderer) {
+      auto& zs = fs.zs;
+      auto& ldata = zs.level_data;
+      auto& registry = zs.registry;
 
-  SkyboxRenderer skybox;
-  SunshaftRenderer sunshaft;
-
-  DebugRenderer debug;
-
-  WaterRenderers water;
-
-  void render(LevelManager&lm, RenderState& rstate, stlw::float_generator& rng, DrawState& ds,
-              FrameTime const& ft, bool const black_silhouette)
+      terrain_renderer.render(rstate, ldata.material_table, registry, ft, NOCULL_VECTOR);
+    };
+    if (black_silhouette) {
+      draw_basic(silhouette_terrain, silhouette_entity);
+    }
+    else {
+      draw_basic(default_terrain, default_entity);
+    }
+  }
+  // DRAW ALL ENTITIES
   {
-    // Render the scene with no culling (setting it zero disables culling mathematically)
-    glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
-
-    auto& fs = rstate.fs;
-    auto& es = fs.es;
-    if (es.draw_terrain) {
-      auto const draw_basic = [&](auto& terrain_renderer, auto& entity_renderer) {
-        auto& zs = fs.zs;
-        auto& ldata = zs.level_data;
-        auto& registry = zs.registry;
-
-        terrain_renderer.render(rstate, ldata.material_table, registry, ft, NOCULL_VECTOR);
-      };
+    if (es.draw_3d_entities) {
       if (black_silhouette) {
-        draw_basic(silhouette_terrain, silhouette_entity);
+        silhouette_entity.render3d(rstate, rng, ft);
       }
       else {
-        draw_basic(default_terrain, default_entity);
+        default_entity.render3d(rstate, rng, ft);
       }
     }
-    // DRAW ALL ENTITIES
-    {
-      if (es.draw_3d_entities) {
-        if (black_silhouette) {
-          silhouette_entity.render3d(rstate, rng, ft);
-        }
-        else {
-          default_entity.render3d(rstate, rng, ft);
-        }
+    if (es.draw_2d_billboard_entities) {
+      if (black_silhouette) {
+        silhouette_entity.render2d_billboard(rstate, rng, ft);
       }
-      if (es.draw_2d_billboard_entities) {
-        if (black_silhouette) {
-          silhouette_entity.render2d_billboard(rstate, rng, ft);
-        }
-        else {
-          default_entity.render2d_billboard(rstate, rng, ft);
-        }
-      }
-      if (es.draw_2d_ui_entities) {
-        if (black_silhouette) {
-          silhouette_entity.render2d_ui(rstate, rng, ft);
-        }
-        else {
-          default_entity.render2d_ui(rstate, rng, ft);
-        }
+      else {
+        default_entity.render2d_billboard(rstate, rng, ft);
       }
     }
-    if (black_silhouette) {
-      // do nothing
-    }
-    else {
-      debug.render_scene(rstate, lm, rng, ft);
+    if (es.draw_2d_ui_entities) {
+      if (black_silhouette) {
+        silhouette_entity.render2d_ui(rstate, rng, ft);
+      }
+      else {
+        default_entity.render2d_ui(rstate, rng, ft);
+      }
     }
   }
-};
+  if (black_silhouette) {
+    // do nothing
+  }
+  else {
+    debug.render_scene(rstate, lm, rng, ft);
+  }
+}
 
 void
 render_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, Camera& camera,
@@ -895,8 +866,8 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
 }
 
 void
-game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
-          FrameTime const& ft)
+game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
+          stlw::float_generator& rng, Camera& camera, FrameTime const& ft)
 {
   auto& es        = state.engine_state;
   auto& logger      = es.logger;
@@ -921,7 +892,6 @@ game_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& 
 
   static auto audio_r     = WaterAudioSystem::create();
   static auto water_audio = audio_r.expect_moveout("WAS");
-  static auto static_renderers = make_static_renderers(es, lm);
 
   DrawState ds;
   if (es.main_menu.show) {

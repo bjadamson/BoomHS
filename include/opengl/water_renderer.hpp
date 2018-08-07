@@ -136,21 +136,12 @@ class AdvancedWaterRenderer
     auto const& fog_color = ldata.fog.color;
     render::clear_screen(fog_color);
 
-    if (es.draw_skybox) {
-      sr.render(rstate, ds, ft);
-    }
     if (es.draw_terrain) {
       auto const& material_table = ldata.material_table;
       tr.render(rstate, material_table, registry, ft, ABOVE_VECTOR);
     }
     if (es.draw_3d_entities) {
       er.render3d(rstate, rng, ft);
-    }
-    if (es.draw_2d_billboard_entities) {
-      er.render2d_billboard(rstate, rng, ft);
-    }
-    if (es.draw_2d_ui_entities) {
-      er.render2d_ui(rstate, rng, ft);
     }
   }
 
