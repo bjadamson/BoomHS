@@ -393,9 +393,10 @@ add_boundingboxes_to_entities(EngineState& es, ZoneState& zs)
     registry.assign<Selectable>(eid);
   }
   for (auto const eid : registry.view<OrbitalBody>()) {
-    glm::vec3 constexpr min = glm::vec3{0.0};
-    glm::vec3 constexpr max = glm::vec3{0.0};
+    glm::vec3 constexpr min = glm::vec3{-1.0f};
+    glm::vec3 constexpr max = glm::vec3{1.0f};
     add_boundingbox(eid, min, max);
+    registry.assign<Selectable>(eid);
   }
   for (auto const eid : registry.view<WaterInfo>()) {
     {

@@ -226,13 +226,6 @@ select_mouse_under_cursor(FrameState& fstate)
     bool const intersects = collision::ray_box_intersect(ray, transform, bbox);
     selectable.selected   = intersects;
 
-    // auto&            tree_transform = registry.get<Transform>(eid);
-    // glm::vec3 const& sphere_center  = tree_transform.translation;
-    // float const      rad_squared    = stlw::math::squared(bbox.radius);
-
-    // float      distance = 0.0f;
-    // bool const intersects =
-    // glm::intersectRaySphere(ray_start, ray_dir, sphere_center, rad_squared, distance);
     if (intersects) {
       LOG_ERROR_SPRINTF("intersects (YES) %i", intersects);
       uistate.selected_entity = static_cast<int>(eid);
