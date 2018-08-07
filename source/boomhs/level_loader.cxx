@@ -427,12 +427,6 @@ load_material_or_abort(CppTable const& file)
   return *optional;
 }
 
-struct NameAttenuation
-{
-  std::string const name;
-  Attenuation const value;
-};
-
 auto
 load_attenuation(CppTable const& file)
 {
@@ -469,11 +463,13 @@ load_materials(stlw::Logger& logger, CppTable const& table)
 }
 
 void
-load_entities(stlw::Logger& logger, CppTable const& table,
-              TextureTable& ttable,
-              MaterialTable const&   material_table,
-              std::vector<NameAttenuation> const& attenuations, EntityRegistry& registry)
+load_entities(stlw::Logger& logger, CppTable const& level_table, LevelAssets &assets,
+             EntityRegistry& registry)
 {
+  auto&       ttable       = assets.texture_table;
+  auto const& mtable       = assets.material_table;
+  auto const& attenuations = assets.attenuations;
+
   auto const load_entity = [&](auto const& file) {
     // clang-format off
     auto const name          = get_string(file,          "name").value_or("FromFileUnnamed");
@@ -603,12 +599,12 @@ load_entities(stlw::Logger& logger, CppTable const& table,
     // An object receives light, if it has ALL ambient/diffuse/specular fields
     if (material_o) {
       auto const material_name = *material_o;
-      auto const& material = material_table.find(material_name);
+      auto const& material = mtable.find(material_name);
       registry.assign<Material>(eid) = material;
     }
   };
 
-  auto const entity_table = get_table_array(table, "entity");
+  auto const entity_table = get_table_array(level_table, "entity");
   for (auto const& it : *entity_table) {
     load_entity(it);
   }
@@ -754,14 +750,10 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   auto material_table = load_materials(logger, resource_table);
 
   LOG_TRACE("attenuations ...");
-  auto const attenuations = load_attenuations(logger, resource_table);
+  auto attenuations = load_attenuations(logger, resource_table);
 
   CppTable level_table = cpptoml::parse_file("levels/" + filename);
   assert(level_table);
-
-  LOG_TRACE("entities ...");
-  load_entities(logger, level_table, texture_table, material_table, attenuations,
-                registry);
 
   LOG_TRACE("global lighting ...");
   auto glight = load_global_lighting(level_table);
@@ -770,10 +762,12 @@ LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::str
   auto fog = load_fog(level_table);
 
   LOG_TRACE("loading level finished successfully!");
-  return Ok(LevelAssets{MOVE(glight), MOVE(fog), MOVE(material_table),
+  LevelAssets assets{MOVE(glight), MOVE(fog), MOVE(material_table),
+                        MOVE(attenuations),
 
-                        MOVE(objstore), MOVE(texture_table), MOVE(sps)});
+                        MOVE(objstore), MOVE(texture_table), MOVE(sps)};
+  load_entities(logger, level_table, assets, registry);
+  return OK_MOVE(assets);
 }
-
 
 } // namespace boomhs

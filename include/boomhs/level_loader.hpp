@@ -13,16 +13,25 @@
 #include <stlw/type_macros.hpp>
 
 #include <string>
+#include <vector>
 
 namespace boomhs
 {
 class EntityRegistry;
 
+struct NameAttenuation
+{
+  std::string const name;
+  Attenuation const value;
+};
+using AttenuationList = std::vector<NameAttenuation>;
+
 struct LevelAssets
 {
-  GlobalLight   global_light;
-  Fog           fog;
-  MaterialTable material_table;
+  GlobalLight     global_light;
+  Fog             fog;
+  MaterialTable   material_table;
+  AttenuationList attenuations;
 
   ObjStore               obj_store;
   opengl::TextureTable   texture_table;
