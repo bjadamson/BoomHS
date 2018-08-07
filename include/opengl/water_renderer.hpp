@@ -160,11 +160,11 @@ public:
   explicit AdvancedWaterRenderer(stlw::Logger&, boomhs::ScreenSize const&, ShaderProgram&,
                                  TextureInfo&, TextureInfo&, TextureInfo&);
 
-  template <typename TerrainRenderer, typename EntityRenderer, typename SceneRenderer>
-  void render_reflection(boomhs::EngineState& es, DrawState& ds, boomhs::LevelManager& lm,
-                         boomhs::Camera& camera, EntityRenderer& er, SkyboxRenderer& sr,
-                         TerrainRenderer& tr, SceneRenderer& scene_renderer,
-                         stlw::float_generator& rng, window::FrameTime const& ft)
+  template <typename TerrainRenderer, typename EntityRenderer>
+  void
+  render_reflection(boomhs::EngineState& es, DrawState& ds, boomhs::LevelManager& lm,
+                    boomhs::Camera& camera, EntityRenderer& er, SkyboxRenderer& sr,
+                    TerrainRenderer& tr, stlw::float_generator& rng, window::FrameTime const& ft)
   {
     auto&       logger    = es.logger;
     auto&       zs        = lm.active();
@@ -185,17 +185,15 @@ public:
     boomhs::FrameState fstate{cstate, es, zs};
     RenderState        rstate{fstate, ds};
 
-    with_reflection_fbo(logger, [&]() {
-      advanced_common(rstate, es, lm, ds, er, sr, tr, rng, ft);
-      scene_renderer.render_scene(rstate, lm, rng, ft);
-    });
+    with_reflection_fbo(logger,
+                        [&]() { advanced_common(rstate, es, lm, ds, er, sr, tr, rng, ft); });
   }
 
-  template <typename TerrainRenderer, typename EntityRenderer, typename SceneRenderer>
-  void render_refraction(boomhs::EngineState& es, DrawState& ds, boomhs::LevelManager& lm,
-                         boomhs::Camera& camera, EntityRenderer& er, SkyboxRenderer& sr,
-                         TerrainRenderer& tr, SceneRenderer& scene_renderer,
-                         stlw::float_generator& rng, window::FrameTime const& ft)
+  template <typename TerrainRenderer, typename EntityRenderer>
+  void
+  render_refraction(boomhs::EngineState& es, DrawState& ds, boomhs::LevelManager& lm,
+                    boomhs::Camera& camera, EntityRenderer& er, SkyboxRenderer& sr,
+                    TerrainRenderer& tr, stlw::float_generator& rng, window::FrameTime const& ft)
   {
     auto&       zs        = lm.active();
     auto&       logger    = es.logger;
@@ -207,10 +205,8 @@ public:
     boomhs::FrameState fstate{cstate, es, zs};
     RenderState        rstate{fstate, ds};
 
-    with_refraction_fbo(logger, [&]() {
-      advanced_common(rstate, es, lm, ds, er, sr, tr, rng, ft);
-      scene_renderer.render_scene(rstate, lm, rng, ft);
-    });
+    with_refraction_fbo(logger,
+                        [&]() { advanced_common(rstate, es, lm, ds, er, sr, tr, rng, ft); });
   }
 
   void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&,

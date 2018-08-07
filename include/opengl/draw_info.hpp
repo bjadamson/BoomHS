@@ -6,7 +6,6 @@
 
 #include <boomhs/entity.hpp>
 
-
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
@@ -61,12 +60,12 @@ public:
   void unbind_impl(stlw::Logger&);
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
 
-  auto  vbo() const { return handles_.vbo(); }
-  auto  ebo() const { return handles_.ebo(); }
-  auto  num_vertexes() const { return num_vertexes_; }
-  auto  num_indices() const { return num_indices_; }
+  auto vbo() const { return handles_.vbo(); }
+  auto ebo() const { return handles_.ebo(); }
+  auto num_vertexes() const { return num_vertexes_; }
+  auto num_indices() const { return num_indices_; }
 
-  auto& vao() { return vao_; }
+  auto&       vao() { return vao_; }
   auto const& vao() const { return vao_; }
 
   std::string to_string() const;

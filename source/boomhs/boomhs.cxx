@@ -24,11 +24,11 @@
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/water.hpp>
 
+#include <opengl/debug_renderer.hpp>
 #include <opengl/entity_renderer.hpp>
 #include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
-#include <opengl/scene_renderer.hpp>
 #include <opengl/skybox_renderer.hpp>
 #include <opengl/sun_renderer.hpp>
 #include <opengl/terrain_renderer.hpp>
@@ -562,6 +562,132 @@ init(Engine& engine, EngineState& es, Camera& camera, stlw::float_generator& rng
   return OK_MOVE(state);
 }
 
+class BlinkTimer
+{
+  bool is_blinking_ = false;
+  Timer timer_;
+public:
+  void update() { timer_.update(); }
+  bool expired() const { return timer_.expired(); }
+  bool is_blinking() const { return is_blinking_; }
+  void toggle() { is_blinking_ ^= true; }
+  void set_ms(double const t) { timer_.set_ms(t); }
+};
+
+void
+draw_2dui(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
+{
+  auto& logger   = es.logger;
+  auto& zs       = lm.active();
+  auto& registry = zs.registry;
+
+  auto& ldata    = zs.level_data;
+  auto& nbt      = ldata.nearby_targets;
+
+  // Create a renderstate using an orthographic projection.
+  auto const ortho_cstate = CameraFrameState::from_camera_with_mode(camera, CameraMode::Ortho);
+  FrameState ortho_fstate{ortho_cstate, es, zs};
+  RenderState rstate_2dtexture{ortho_fstate, ds};
+
+  static BlinkTimer blink_timer;
+  blink_timer.update();
+
+  bool const is_expired       = blink_timer.expired();
+
+
+  auto const player_eid = find_player(registry);
+  auto& player          = registry.get<Player>(player_eid);
+  bool const player_attacking = player.is_attacking;
+
+  auto const reset_attack_timer = [&]() {
+    auto const BLINK_TIME_IN_MS = TimeConversions::seconds_to_millis(1);
+    blink_timer.set_ms(BLINK_TIME_IN_MS);
+  };
+
+  if (player_attacking) {
+    if (is_expired) {
+      blink_timer.toggle();
+      reset_attack_timer();
+    }
+  }
+  else if (is_expired) {
+    reset_attack_timer();
+  }
+
+  auto& gfx_state = zs.gfx_state;
+  auto& sps       = gfx_state.sps;
+  auto& ttable    = gfx_state.texture_table;
+
+  bool const using_blink_shader = player_attacking && blink_timer.is_blinking();
+  auto const& shader_name = using_blink_shader ? "2d_ui_blinkcolor_icon" : "2dtexture_ss";
+  auto& spp = sps.ref_sp(shader_name);
+
+  if (using_blink_shader) {
+    auto const& player_transform = player.transform();
+    auto const player_pos = player_transform.translation;
+
+    // We can only be considering the blink shader if we are attacking an entity, and if we are
+    // attacking an entity that means their should be a selected target.
+    auto const selected_nbt = nbt.selected();
+    assert(selected_nbt);
+    auto const target_eid = *selected_nbt;
+    auto const& target = registry.get<Transform>(target_eid);
+    auto const& target_pos = target.translation;
+
+    auto const distance = glm::distance(player_pos, target_pos);
+    bool const close_enough = distance < 2;
+    //LOG_ERROR_SPRINTF("close: %i, distance: %f, ppos: %s tpos: %s",
+        //close_enough,
+        //distance,
+        //glm::to_string(player_pos),
+        //glm::to_string(target_pos)
+        //);
+    auto const blink_color = NPC::within_attack_range(player_pos, target_pos)
+      ? LOC::RED
+      : LOC::BLUE;
+    spp.while_bound(logger, [&]() {
+        spp.set_uniform_color(logger, "u_blinkcolor", blink_color);
+    });
+  }
+
+  auto const dimensions = es.dimensions;
+  auto const draw_icon_on_screen = [&](auto const& pos, auto const& size, char const* tex_name)
+  {
+    auto& ti = *ttable.find(tex_name);
+    render::draw_fbo_testwindow(rstate_2dtexture, pos, size, spp, ti);
+  };
+
+  auto const draw_slot_icon = [&](auto const slot_pos, char const* icon_name) {
+    glm::vec2 const size{32.0f};
+
+    auto constexpr SPACE_BETWEEN = 10;
+    float const left   = dimensions.left + 39 + 200 + SPACE_BETWEEN
+      + (slot_pos * (size.x + SPACE_BETWEEN));
+
+
+    auto constexpr SPACE_BENEATH = 10;
+    float const bottom = dimensions.bottom - SPACE_BENEATH - size.y;
+    glm::vec2 const pos{left, bottom};
+    draw_icon_on_screen(pos, size, icon_name);
+  };
+
+  draw_slot_icon(0, "fist");
+  draw_slot_icon(1, "sword");
+  draw_slot_icon(2, "ak47");
+  draw_slot_icon(3, "first-aid");
+
+  {
+    glm::vec2 const size{128.0f};
+    glm::vec2 const pos{dimensions.right - size.x, dimensions.bottom - size.y};
+    draw_icon_on_screen(pos, size, "sword");
+  }
+
+  auto& ui_state = es.ui_state;
+  if (ui_state.draw_ingame_ui) {
+    ui_ingame::draw(es, lm);
+  }
+}
+
 void
 ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
             WaterAudioSystem& water_audio, SkyboxRenderer& skybox_renderer, DrawState& ds,
@@ -631,8 +757,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   static auto black_terrain_renderer  = make_black_terrain_renderer();
   static auto default_entity_renderer = EntityRenderer{};
   static auto black_entity_renderer   = BlackEntityRenderer{};
-  static auto default_scene_renderer  = DefaultSceneRenderer{};
-  static auto black_scene_renderer    = BlackSceneRenderer{};
+  static auto debug_renderer  = DebugRenderer{};
 
   static auto sunshaft_renderer = make_sunshaft_renderer();
 
@@ -681,15 +806,15 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
   bool const  draw_water_advanced    = draw_water && graphics_mode_advanced;
 
   auto const draw_scene = [&](bool const black_silhoutte) {
-    auto const draw_advanced = [&](auto& terrain_renderer, auto& entity_renderer, auto& scene_renderer) {
+    auto const draw_advanced = [&](auto& terrain_renderer, auto& entity_renderer) {
       advanced_water_renderer.render_reflection(es, ds, lm, camera, entity_renderer,
-                                                skybox_renderer, terrain_renderer, scene_renderer, rng, ft);
+                                                skybox_renderer, terrain_renderer, rng, ft);
       advanced_water_renderer.render_refraction(es, ds, lm, camera, entity_renderer,
-                                                skybox_renderer, terrain_renderer, scene_renderer, rng, ft);
+                                                skybox_renderer, terrain_renderer, rng, ft);
     };
     if (draw_water && draw_water_advanced && !black_silhoutte) {
       // Render the scene to the refraction and reflection FBOs
-      draw_advanced(default_terrain_renderer, default_entity_renderer, default_scene_renderer);
+      draw_advanced(default_terrain_renderer, default_entity_renderer);
     }
 
     // render scene
@@ -765,10 +890,10 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
       }
     }
     if (black_silhoutte) {
-      black_scene_renderer.render_scene(rstate, lm, rng, ft);
+      // do nothing
     }
     else {
-      default_scene_renderer.render_scene(rstate, lm, rng, ft);
+      debug_renderer.render_scene(rstate, lm, rng, ft);
     }
   };
 
@@ -794,115 +919,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     draw_scene_normal_render();
   }
 
-
-  auto const dimensions = engine.dimensions();
-  auto const draw_icon_on_screen = [&](auto const& pos, auto const& size, char const* tex_name)
-  {
-    auto& ti = *ttable.find(tex_name);
-    auto& sp  = sps.ref_sp("2dtexture_ss");
-
-    // Create a renderstate using an orthographic projection.
-    auto const cstate = CameraFrameState::from_camera_with_mode(camera, CameraMode::Ortho);
-    FrameState fstate{cstate, es, zs};
-    RenderState rstate_2dtexture{fstate, ds};
-
-    class BlinkTimer
-    {
-      bool is_blinking_ = false;
-      Timer timer_;
-    public:
-      void update() { timer_.update(); }
-      bool expired() const { return timer_.expired(); }
-      bool is_blinking() const { return is_blinking_; }
-      void toggle() { is_blinking_ ^= true; }
-      void set_ms(double const t) { timer_.set_ms(t); }
-    };
-
-    static BlinkTimer blink_timer;
-    blink_timer.update();
-
-    bool const is_expired       = blink_timer.expired();
-    bool const player_attacking = player.is_attacking;
-
-    auto const reset_attack_timer = [&]() {
-      auto const BLINK_TIME_IN_MS = TimeConversions::seconds_to_millis(1);
-      blink_timer.set_ms(BLINK_TIME_IN_MS);
-    };
-
-    if (player_attacking) {
-      if (is_expired) {
-        blink_timer.toggle();
-        reset_attack_timer();
-      }
-    }
-    else if (is_expired) {
-      reset_attack_timer();
-    }
-
-    bool const using_blink_shader = player_attacking && blink_timer.is_blinking();
-    auto& spp = using_blink_shader
-        ? sps.ref_sp("2d_ui_blinkcolor_icon")
-        : sp;
-    if (using_blink_shader) {
-
-      auto const& player_transform = player.transform();
-      auto const player_pos = player_transform.translation;
-
-      // We can only be considering the blink shader if we are attacking an entity, and if we are
-      // attacking an entity that means their should be a selected target.
-      auto const selected_nbt = nbt.selected();
-      assert(selected_nbt);
-      auto const target_eid = *selected_nbt;
-      auto const& target = registry.get<Transform>(target_eid);
-      auto const& target_pos = target.translation;
-
-      auto const distance = glm::distance(player_pos, target_pos);
-      bool const close_enough = distance < 2;
-      //LOG_ERROR_SPRINTF("close: %i, distance: %f, ppos: %s tpos: %s",
-          //close_enough,
-          //distance,
-          //glm::to_string(player_pos),
-          //glm::to_string(target_pos)
-          //);
-      auto const blink_color = NPC::within_attack_range(player_pos, target_pos)
-        ? LOC::RED
-        : LOC::BLUE;
-      spp.while_bound(logger, [&]() {
-          spp.set_uniform_color(logger, "u_blinkcolor", blink_color);
-      });
-    }
-    render::draw_fbo_testwindow(rstate_2dtexture, pos, size, spp, ti);
-  };
-
-  auto const draw_slot_icon = [&](auto const slot_pos, char const* icon_name) {
-    glm::vec2 const size{32.0f};
-
-    auto constexpr SPACE_BETWEEN = 10;
-    float const left   = dimensions.left + 39 + 200 + SPACE_BETWEEN
-      + (slot_pos * (size.x + SPACE_BETWEEN));
-
-
-    auto constexpr SPACE_BENEATH = 10;
-    float const bottom = dimensions.bottom - SPACE_BENEATH - size.y;
-    glm::vec2 const pos{left, bottom};
-    draw_icon_on_screen(pos, size, icon_name);
-  };
-
-  draw_slot_icon(0, "fist");
-  draw_slot_icon(1, "sword");
-  draw_slot_icon(2, "ak47");
-  draw_slot_icon(3, "first-aid");
-
-  {
-    glm::vec2 const size{128.0f};
-    glm::vec2 const pos{dimensions.right - size.x, dimensions.bottom - size.y};
-    draw_icon_on_screen(pos, size, "sword");
-  }
-
-  auto& ui_state = es.ui_state;
-  if (ui_state.draw_ingame_ui) {
-    ui_ingame::draw(es, lm);
-  }
+  draw_2dui(es, lm, camera, ds);
 }
 
 void

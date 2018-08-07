@@ -632,8 +632,6 @@ draw_inventory_overlay(RenderState& rstate)
 
   DrawInfo dinfo = gpu::copy_rectangle(logger, sp.va(), buffer);
 
-  auto& ttable = zs.gfx_state.texture_table;
-
   Transform  transform;
   auto const model_matrix = transform.model_matrix();
 

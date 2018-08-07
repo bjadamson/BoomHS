@@ -23,11 +23,11 @@ namespace opengl
 {
 class RenderState;
 
-class DefaultSceneRenderer
+class DebugRenderer
 {
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(DefaultSceneRenderer);
-  DefaultSceneRenderer() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(DebugRenderer);
+  DebugRenderer() = default;
 
   void render_scene(RenderState&, boomhs::LevelManager&, stlw::float_generator&,
                     window::FrameTime const&);

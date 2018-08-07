@@ -46,7 +46,7 @@ struct TextureInfo
   GLint get_fieldi(GLenum);
   void  set_fieldi(GLenum, GLint);
 
-  bool is_2d() const { return target == GL_TEXTURE_2D; }
+  bool        is_2d() const { return target == GL_TEXTURE_2D; }
   std::string to_string() const;
   static size_t constexpr NUM_BUFFERS = 1;
 };

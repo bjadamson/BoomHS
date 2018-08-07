@@ -1,4 +1,4 @@
-#include <opengl/scene_renderer.hpp>
+#include <opengl/debug_renderer.hpp>
 #include <opengl/renderer.hpp>
 
 #include <boomhs/components.hpp>
@@ -18,9 +18,9 @@ namespace opengl
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// DefaultSceneRenderer
+// DebugRenderer
 void
-DefaultSceneRenderer::render_scene(RenderState& rstate, LevelManager& lm,
+DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm,
                                    stlw::float_generator& rng, FrameTime const& ft)
 {
   auto& fstate = rstate.fs;

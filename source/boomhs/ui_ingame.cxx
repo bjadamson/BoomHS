@@ -90,7 +90,7 @@ draw_player_inventory(stlw::Logger& logger, EntityRegistry& registry, TextureTab
 }
 
 void
-draw_nearest_target_info(Dimensions const& dimensions, NearbyTargets const& nearby_targets, TextureTable const& ttable,
+draw_nearest_target_info(Dimensions const& dimensions, NearbyTargets const& nbt, TextureTable const& ttable,
                          EntityRegistry& registry)
 {
   auto constexpr LEFT_OFFSET = 39;
@@ -117,7 +117,7 @@ draw_nearest_target_info(Dimensions const& dimensions, NearbyTargets const& near
   );
   // clang-format on
 
-  auto const selected_o = nearby_targets.selected();
+  auto const selected_o = nbt.selected();
   if (!selected_o) {
     auto const draw = [&]() { ImGui::Text("NO TARGET"); };
 
@@ -398,9 +398,9 @@ draw(EngineState& es, LevelManager& lm)
   auto& registry = zs.registry;
   auto& ttable   = zs.gfx_state.texture_table;
 
-  auto& ldata          = zs.level_data;
-  auto& nearby_targets = ldata.nearby_targets;
-  draw_nearest_target_info(es.dimensions, nearby_targets, ttable, registry);
+  auto& ldata = zs.level_data;
+  auto& nbt   = ldata.nearby_targets;
+  draw_nearest_target_info(es.dimensions, nbt, ttable, registry);
 
   auto const eid       = find_player(registry);
   auto&      player    = registry.get<Player>(eid);
