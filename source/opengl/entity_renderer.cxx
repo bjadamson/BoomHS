@@ -227,9 +227,10 @@ render_common_entities(RenderState& rstate, stlw::float_generator& rng, FrameTim
 
   registry.view<Common..., TextureRenderable, JunkEntityFromFILE>().each(draw_textured_junk_fn);
 
-  registry.view<Common..., Torch, TextureRenderable>().each(draw_torch_fn);
+  registry.view<Common..., TextureRenderable, Torch>().each(draw_torch_fn);
 
-  registry.view<Common..., Book, TextureRenderable>().each(draw_book_fn);
+  registry.view<Common..., TextureRenderable, Book>().each(draw_textured_junk_fn);
+  registry.view<Common..., TextureRenderable, Weapon>().each(draw_textured_junk_fn);
 
   registry.view<Common..., Color, JunkEntityFromFILE>().each(draw_junk_fn);
   registry.view<Common..., TreeComponent>().each(draw_common_fn);
@@ -286,7 +287,7 @@ EntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generator& r
 
   auto const draw_junk_fn = [&](COMMON_ARGS, Color&, JunkEntityFromFILE& je) {
   };
-  auto const draw_torch_fn = [&](COMMON_ARGS, Torch&, TextureRenderable&) {
+  auto const draw_torch_fn = [&](COMMON_ARGS, TextureRenderable&, Torch&) {
   };
   auto const draw_book_fn = [&](COMMON_ARGS, Book&, TextureRenderable&) {
   };
@@ -348,7 +349,7 @@ EntityRenderer::render2d_ui(RenderState& rstate, stlw::float_generator& rng, Fra
 
   auto const draw_junk_fn = [&](COMMON_ARGS, Color&, JunkEntityFromFILE& je) {
   };
-  auto const draw_torch_fn = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
+  auto const draw_torch_fn = [&](COMMON_ARGS, TextureRenderable& trenderable, Torch&) {
   };
   auto const draw_book_fn = [&](COMMON_ARGS, Book&, TextureRenderable&) {
   };
@@ -408,7 +409,7 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
       draw_entity(rstate, je.draw_mode, sp, eid, draw_handles, transform, is_v, bbox);
     }
   };
-  auto const draw_torch_fn = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
+  auto const draw_torch_fn = [&](COMMON_ARGS, TextureRenderable& trenderable, Torch& torch) {
     {
       auto& sp = sps.ref_sp(sn.value);
 

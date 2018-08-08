@@ -11,6 +11,10 @@ struct Book
 {
 };
 
+struct Weapon
+{
+};
+
 struct Item
 {
   char const*          name        = "UNNAMED";

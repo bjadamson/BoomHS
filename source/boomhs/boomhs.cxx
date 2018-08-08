@@ -836,21 +836,29 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
           bool const target_dead_after_attack = NPC::is_dead(target_hp);
           bool const dead_from_attack = previously_alive && target_dead_after_attack;
 
-          if (dead_from_attack) {
-            auto& dhm = gfx_state.draw_handles;
-            auto  const book_eid = ItemFactory::create_book(registry, ttable);
-            auto& book_tr = registry.get<Transform>(book_eid);
+          auto const add_worlditem_at_targets_location = [&](EntityID const item_eid) {
+            auto& item_tr = registry.get<Transform>(item_eid);
 
             auto const& target_pos = registry.get<Transform>(target_eid).translation;
-            book_tr.translation = target_pos;
-            LOG_ERROR_SPRINTF("ADDING TORCH AT xyz: %s", glm::to_string(book_tr.translation));
+            item_tr.translation = target_pos;
+            item_tr.rotate_degrees(90, opengl::X_UNIT_VECTOR);
+            auto const& item_name = registry.get<Name>(item_eid).value;
+            LOG_ERROR_SPRINTF("ADDING item %s AT xyz: %s", item_name, glm::to_string(item_tr.translation));
 
             auto& ldata     = zs.level_data;
             auto& obj_store = ldata.obj_store;
             auto& sps       = gfx_state.sps;
 
-            // copy the book to th GPU
-            dhm.add_mesh(logger, sps, obj_store, book_eid, registry);
+            // copy the item to th GPU
+            auto& dhm = gfx_state.draw_handles;
+            dhm.add_mesh(logger, sps, obj_store, item_eid, registry);
+          };
+          if (dead_from_attack) {
+            auto  const book_eid = ItemFactory::create_book(registry, ttable);
+            add_worlditem_at_targets_location(book_eid);
+
+            auto  const spear_eid = ItemFactory::create_spear(registry, ttable);
+            add_worlditem_at_targets_location(spear_eid);
           }
         }
       }

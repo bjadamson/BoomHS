@@ -39,7 +39,7 @@ draw_player_inventory(stlw::Logger& logger, EntityRegistry& registry, TextureTab
     image_builder.tint_color    = ImColor{255, 255, 255, 128};
 
     auto const size = ImVec2(ti.width, ti.height);
-    return image_builder.build(im_texid, size);
+    image_builder.build(im_texid, size);
   };
 
   auto const draw_icon = [&](size_t const pos) {
@@ -48,13 +48,20 @@ draw_player_inventory(stlw::Logger& logger, EntityRegistry& registry, TextureTab
       bool const slot_occupied = slot.occupied();
       auto* ti = slot_occupied ? slot.item(registry).ui_tinfo : ttable.find("InventorySlotEmpty");
       assert(ti);
-      bool const button_pressed = draw_button(*ti);
+      draw_button(*ti);
+      bool const left_mouse_pressed = ImGui::IsItemClicked(0);
+      bool const right_mouse_pressed = ImGui::IsItemClicked(1);
 
       // If the button is pressed, and the slot is occupied (location clicked) then go ahead and
       // remove the item from the player, and removing it from the UI.
-      if (button_pressed && slot_occupied) {
-        player.drop_entity(logger, slot.eid(), registry);
-        slot.reset();
+      if (slot_occupied) {
+        if (right_mouse_pressed) {
+          player.drop_entity(logger, slot.eid(), registry);
+          slot.reset();
+        }
+        else if (left_mouse_pressed) {
+          LOG_ERROR_SPRINTF("Equipping %s", slot.item(registry).name);
+        }
       }
     }
 

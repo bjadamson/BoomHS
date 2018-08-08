@@ -67,8 +67,6 @@ ItemFactory::create_empty(EntityRegistry& registry, TextureTable& ttable)
   return eid;
 }
 
-
-
 EntityID
 ItemFactory::create_book(EntityRegistry& registry,
                          TextureTable& ttable)
@@ -80,6 +78,20 @@ ItemFactory::create_book(EntityRegistry& registry,
   auto& item    = registry.get<Item>(eid);
   item.name    = "Book";
   item.tooltip = "This is a book";
+
+  return eid;
+}
+
+EntityID
+ItemFactory::create_spear(EntityRegistry& registry, opengl::TextureTable& ttable)
+{
+  auto eid = create_item(registry, ttable, "Spear EID", "SpearUI", "hashtag", "container", "3dtexture");
+  registry.assign<Weapon>(eid);
+  registry.assign<Material>(eid);
+
+  auto& item    = registry.get<Item>(eid);
+  item.name    = "Spear";
+  item.tooltip = "A mighty slaying spear!";
 
   return eid;
 }

@@ -99,9 +99,14 @@ type = "texture:2d-RGBA"
 filename = "assets/ui/book.png"
 
 [[resource]]
+name = "SpearUI"
+type = "texture:2d-RGBA"
+filename = "assets/ui/spear.png"
+
+[[resource]]
 name = "TorchUI"
 type = "texture:2d-RGBA"
-filename = "assets/ui/torch-icon.png"
+filename = "assets/ui/torch.png"
 
 ###################################################################################################
 # HEIGHTMAPS
