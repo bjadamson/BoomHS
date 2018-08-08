@@ -91,14 +91,10 @@ void main()
     const float FRESNEL_REFLECTIVE_FACTOR = 2.0;
     refractive_factor = pow(refractive_factor, FRESNEL_REFLECTIVE_FACTOR);
 
-    const float weight_light   = 1.0;
-    const float weight_texture = 1.0;
-    const float weight_effects = 1.0;
-
-    vec4 effect_color  = mix(reflect_color, refract_color, refractive_factor) * weight_effects;
+    vec4 effect_color  = mix(reflect_color, refract_color, refractive_factor) * u_water.weight_mix_effect;
     vec4 texture_color = weighted_texture_sample(u_diffuse_sampler, v_textureuv, u_flowdir,
-                                                 u_time_offset, weight_texture);
-    light_color        = light_color * weight_light;
+                                                 u_time_offset, u_water.weight_texture);
+    light_color        = light_color * u_water.weight_light;
 
     fragment_color = effect_color + texture_color + light_color;
 

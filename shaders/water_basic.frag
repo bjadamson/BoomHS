@@ -31,9 +31,8 @@ void main()
     fragment_color = vec4(surface_normal, 1.0);
   }
   else {
-    const float weight_texture = 1.0;
     fragment_color = weighted_texture_sample(u_diffuse_sampler, v_textureuv, u_flowdir,
-                                             u_time_offset, weight_texture);
+                                             u_time_offset, u_water.weight_texture);
 
     // add additional color to the water texture
     fragment_color = mix_in_water_and_fog(fragment_color, u_water, u_fog, v_visibility);

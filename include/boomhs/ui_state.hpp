@@ -62,6 +62,10 @@ struct WaterBuffer
   bool draw                        = true;
   int  selected_water_graphicsmode = 0;
   int  selected_waterinfo          = -1;
+
+  float weight_light      = 0.60f;
+  float weight_texture    = 1.0f;
+  float weight_mix_effect = 1.0f;
 };
 
 struct Buffers

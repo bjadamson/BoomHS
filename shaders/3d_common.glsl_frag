@@ -43,6 +43,9 @@ struct Water
 {
   vec4 mix_color;
   float mix_intensity;
+  float weight_light;
+  float weight_texture;
+  float weight_mix_effect;
 };
 
 float

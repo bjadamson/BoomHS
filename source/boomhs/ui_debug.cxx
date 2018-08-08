@@ -244,6 +244,7 @@ show_water_window(EngineState& es, LevelManager& lm)
   auto& zs      = lm.active();
   auto& ldata   = zs.level_data;
   auto& uistate = es.ui_state.debug;
+  auto& wbuffer = uistate.buffers.water;
 
   auto&      registry = zs.registry;
   auto const winfos   = find_all_entities_with_component<WaterInfo>(registry);
@@ -251,6 +252,12 @@ show_water_window(EngineState& es, LevelManager& lm)
   auto const draw = [&]() {
     ImGui::Text("Water Info");
     ImGui::Separator();
+    ImGui::Text("Global Fields");
+    ImGui::InputFloat("weight \%light", &wbuffer.weight_light);
+    ImGui::InputFloat("weight \%texture", &wbuffer.weight_texture);
+    ImGui::InputFloat("weight \%mix_effect", &wbuffer.weight_mix_effect);
+    ImGui::Separator();
+    ImGui::Text("Edit properties for individual water instances:");
     ImGui::Separator();
 
     auto pairs = collect_name_eid_pairs<WaterInfo, Transform>(registry);

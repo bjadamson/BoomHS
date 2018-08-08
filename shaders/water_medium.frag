@@ -41,12 +41,9 @@ void main()
     light_color = vec4(surface_normal, 1.0);
   }
   else {
-    const float weight_light   = 1.0;
-    const float weight_texture = 1.0;
-
     vec4 texture_color = weighted_texture_sample(u_diffuse_sampler, v_textureuv, u_flowdir,
-                                                 u_time_offset, weight_texture);
-    light_color        = light_color * weight_light;
+                                                 u_time_offset, u_water.weight_texture);
+    light_color        = light_color * u_water.weight_light;
 
     fragment_color = texture_color + light_color;
 

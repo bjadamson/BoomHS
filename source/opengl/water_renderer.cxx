@@ -82,6 +82,11 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
       sp.set_uniform_float1(logger, "u_time_offset", time_offset);
       sp.set_uniform_vec2(logger, "u_flowdir", winfo.flow_direction);
 
+      auto& wbuffer = es.ui_state.debug.buffers.water;
+      sp.set_uniform_float1(logger, "u_water.weight_light",      wbuffer.weight_light);
+      sp.set_uniform_float1(logger, "u_water.weight_texture",    wbuffer.weight_texture);
+      sp.set_uniform_float1(logger, "u_water.weight_mix_effect", wbuffer.weight_mix_effect);
+
       dinfo.while_bound(logger, [&]() { fn(winfo, transform); });
     });
   };
