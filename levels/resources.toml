@@ -128,6 +128,12 @@ type = "texture:2d-RGBA"
 filename = "assets/terrain/Area2-HM.png"
 wrap = "clamp"
 
+[[resource]]
+name = "Area3-HM"
+type = "texture:2d-RGBA"
+filename = "assets/terrain/Area3-HM.png"
+wrap = "clamp"
+
 ###################################################################################################
 # TERRAIN TEXTURES
 [[resource]]

@@ -23,7 +23,7 @@ namespace
 
 template <typename FN>
 void
-render_terrain(Transform& transform, RenderState& rstate, EntityRegistry& registry,
+render_terrain(RenderState& rstate, EntityRegistry& registry,
                FrameTime const& ft, glm::vec4 const& cull_plane, FN const& fn)
 {
   auto& fstate = rstate.fs;
@@ -42,14 +42,8 @@ render_terrain(Transform& transform, RenderState& rstate, EntityRegistry& regist
   PUSH_CW_STATE_UNTIL_END_OF_SCOPE();
 
   auto const& dimensions = terrain_grid.config.dimensions;
-  auto&       tr         = transform.translation;
 
   auto const draw_piece = [&](auto& terrain) {
-    {
-      auto const& terrain_pos = terrain.position();
-      tr.x                    = terrain_pos.x * dimensions.x;
-      tr.z                    = terrain_pos.y * dimensions.y;
-    }
 
     auto const& config = terrain.config;
     glFrontFace(terrain_grid.winding);
@@ -61,11 +55,24 @@ render_terrain(Transform& transform, RenderState& rstate, EntityRegistry& regist
       glDisable(GL_CULL_FACE);
     }
 
-    fn(terrain);
+    Transform tr;
+
+    {
+      auto const& terrain_pos = terrain.position();
+
+      auto const& zs = fstate.zs;
+      auto const& ldata        = zs.level_data;
+      auto const& terrain_grid = ldata.terrain;
+      auto const& dimensions   = terrain_grid.config.dimensions;
+      tr.translation.x        = terrain_pos.x * dimensions.x;
+      tr.translation.z        = terrain_pos.y * dimensions.y;
+    }
+
+
+    fn(terrain, tr);
   };
 
   LOG_TRACE("-------------------- Draw Terrain BEGIN ----------------------");
-
   for (auto& t : terrain_grid) {
     draw_piece(t);
   }
@@ -92,14 +99,11 @@ DefaultTerrainRenderer::render(RenderState& rstate, MaterialTable const& mat_tab
   auto& ttable       = zs.gfx_state.texture_table;
   auto& terrain_grid = ldata.terrain;
 
-  Transform transform;
-
   auto& mat = mat_table.find("terrain");
 
   auto const& dimensions   = terrain_grid.config.dimensions;
-  auto const& model_matrix = transform.model_matrix();
 
-  auto const fn = [&](auto& terrain) {
+  auto const fn = [&](auto& terrain, auto const& tr) {
     auto& sp = terrain.shader();
     sp.while_bound(logger, [&]() {
       auto const& config = terrain.config;
@@ -111,7 +115,8 @@ DefaultTerrainRenderer::render(RenderState& rstate, MaterialTable const& mat_tab
       auto const draw_fn = [&]() {
         dinfo.while_bound(logger, [&]() {
           bool constexpr SET_NORMALMATRIX = true;
-          render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, transform.translation, model_matrix,
+          auto const model_matrix = tr.model_matrix();
+          render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, tr.translation, model_matrix,
                                    sp, dinfo, mat, registry, SET_NORMALMATRIX);
         });
       };
@@ -119,7 +124,7 @@ DefaultTerrainRenderer::render(RenderState& rstate, MaterialTable const& mat_tab
     });
   };
 
-  render_terrain(transform, rstate, registry, ft, cull_plane, fn);
+  render_terrain(rstate, registry, ft, cull_plane, fn);
 }
 
 void
@@ -173,25 +178,19 @@ BlackTerrainRenderer::render(RenderState& rstate, MaterialTable const&, EntityRe
   auto& es     = fstate.es;
   auto& logger = es.logger;
 
-  auto& zs        = fstate.zs;
-  auto& gfx_state = zs.gfx_state;
-
-  Transform   transform;
-  auto const& model_matrix = transform.model_matrix();
-
-  auto const fn = [&](auto& terrain) {
+  auto const fn = [&](auto& terrain, auto const& tr) {
     auto const& config = terrain.config;
 
     auto& dinfo = terrain.draw_info();
-
     sp_.while_bound(logger, [&]() {
       dinfo.while_bound(logger, [&]() {
+        auto const model_matrix = tr.model_matrix();
         render::draw_3dblack_water(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
       });
     });
   };
 
-  render_terrain(transform, rstate, registry, ft, cull_plane, fn);
+  render_terrain(rstate, registry, ft, cull_plane, fn);
 }
 
 } // namespace opengl
