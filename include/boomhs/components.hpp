@@ -90,7 +90,6 @@ struct LightFlicker
 
 struct JunkEntityFromFILE
 {
-  GLenum draw_mode = GL_TRIANGLES;
 };
 
 struct ShaderName
