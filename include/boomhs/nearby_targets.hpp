@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/entity.hpp>
+#include <opengl/colors.hpp>
 #include <optional>
 #include <vector>
 
@@ -39,6 +40,9 @@ public:
 
   std::optional<EntityID> selected() const;
   void                    set_selected(EntityID);
+
+  static opengl::Color
+  color_from_level_difference(int, int);
 };
 
 } // namespace boomhs

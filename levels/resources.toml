@@ -79,9 +79,9 @@ type = "texture:2d-RGBA"
 filename = "assets/ui/redx.png"
 
 [[resource]]
-name = "RedX"
+name = "target_selectable_cursor"
 type = "texture:2d-RGBA"
-filename = "assets/ui/redx.png"
+filename = "assets/ui/target_selectable_cursor.png"
 
 [[resource]]
 name = "InventorySlotEmpty"

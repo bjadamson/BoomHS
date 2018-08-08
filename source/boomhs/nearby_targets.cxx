@@ -5,6 +5,7 @@
 #include <iostream>
 
 using namespace boomhs;
+using namespace opengl;
 using namespace window;
 
 namespace
@@ -37,7 +38,7 @@ NearbyTargets::calculate_scale(FrameTime const& ft) const
   //
   // Between the time the target is last changed and some other time after then, this function will
   // return a value in the range [0, 1].
-  ticks_t constexpr GROW_TIME_MS = 70;
+  ticks_t constexpr GROW_TIME_MS = 180;
 
   assert(selected_);
   ticks_t const lc     = millis_when_last_target_changed;
@@ -139,6 +140,55 @@ void
 NearbyTargets::update_time(FrameTime const& ft)
 {
   millis_when_last_target_changed = ft.since_start_millis();
+}
+
+Color
+NearbyTargets::color_from_level_difference(int const player_level, int const target_level)
+{
+  int const diff = player_level - target_level;
+  int const abs_diff = std::abs(diff);
+
+  bool const player_gt = diff > 0;
+  bool const player_lt = diff < 0;
+  bool const equals = diff == 0;
+
+  {
+    bool const equals_and_neither_gtlt     = (equals && (!player_gt && !player_lt));
+    bool const gltl_notsame                = ((player_gt && !player_lt)
+                                                || (!player_gt && player_lt));
+    bool const notequals_and_onlyone_gtlt  = (!equals && gltl_notsame);
+
+    // Ensure that either they are the same (and gt/lt are false)
+    // or
+    // they are not the same and exactly one (gt/lt) is true.
+    assert(equals_and_neither_gtlt || notequals_and_onlyone_gtlt);
+  }
+
+  if (equals) {
+    return LOC::WHITE;
+  }
+  else if (player_gt && (abs_diff <= 2)) {
+    return LOC::BLUE;
+  }
+  else if (player_gt && (abs_diff <= 3)) {
+    return LOC::LIGHT_BLUE;
+  }
+  else if (player_gt && (abs_diff <= 3)) {
+    return LOC::GREEN;
+  }
+  else if (player_gt) {
+    return LOC::GRAY;
+  }
+  else if (player_lt && (abs_diff <= 2)) {
+    return LOC::YELLOW;
+  }
+  else if (player_lt && (abs_diff <= 3)) {
+    return LOC::ORANGE;
+  }
+  else if (player_lt) {
+    return LOC::RED;
+  }
+  std::abort();
 }
 
 } // namespace boomhs

@@ -6,6 +6,11 @@
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/ui_state.hpp>
 
+// TODO: rm
+#include <boomhs/billboard.hpp>
+#include <opengl/factory.hpp>
+#include <opengl/gpu.hpp>
+
 #include <opengl/renderer.hpp>
 #include <opengl/texture.hpp>
 
@@ -411,9 +416,9 @@ draw_2dui(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
   auto& nbt      = ldata.nearby_targets;
 
   // Create a renderstate using an orthographic projection.
-  auto const ortho_cstate = CameraFrameState::from_camera_with_mode(camera, CameraMode::Ortho);
-  FrameState ortho_fstate{ortho_cstate, es, zs};
-  RenderState rstate_2dtexture{ortho_fstate, ds};
+  auto const cstate = CameraFrameState::from_camera_with_mode(camera, CameraMode::Ortho);
+  FrameState fstate{cstate, es, zs};
+  RenderState rstate{fstate, ds};
 
   static BlinkTimer blink_timer;
   blink_timer.update();
@@ -477,11 +482,15 @@ draw_2dui(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
   }
 
   auto const dimensions = es.dimensions;
-  auto const draw_icon_on_screen = [&](auto const& pos, auto const& size, char const* tex_name)
+  auto const draw_icon_on_screen = [&rstate, &ttable](auto& sp, auto const& pos,
+                                                                auto const& size,
+                                                                char const* tex_name)
   {
     auto& ti = *ttable.find(tex_name);
-    render::draw_fbo_testwindow(rstate_2dtexture, pos, size, spp, ti);
+    render::draw_fbo_testwindow(rstate, pos, size, sp, ti);
   };
+
+  auto const proj_matrix = fstate.projection_matrix();
 
   auto const draw_slot_icon = [&](auto const slot_pos, char const* icon_name) {
     glm::vec2 const size{32.0f};
@@ -494,7 +503,9 @@ draw_2dui(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
     auto constexpr SPACE_BENEATH = 10;
     float const bottom = dimensions.bottom - SPACE_BENEATH - size.y;
     glm::vec2 const pos{left, bottom};
-    draw_icon_on_screen(pos, size, icon_name);
+    spp.while_bound(logger, [&]() {
+      });
+    draw_icon_on_screen(spp, pos, size, icon_name);
   };
 
   draw_slot_icon(0, "fist");
@@ -503,9 +514,14 @@ draw_2dui(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
   draw_slot_icon(3, "first-aid");
 
   {
-    glm::vec2 const size{128.0f};
-    glm::vec2 const pos{dimensions.right - size.x, dimensions.bottom - size.y};
-    draw_icon_on_screen(pos, size, "sword");
+    glm::vec2 const size{16.0f};
+
+    auto const center = dimensions.center();
+    glm::vec2 const middle_of_screen{center.first, center.second};
+    auto& sp = sps.ref_sp("2dtexture_ss");
+
+    ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
+    draw_icon_on_screen(sp, middle_of_screen, size, "target_selectable_cursor");
   }
 }
 

@@ -668,13 +668,36 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
   Transform transform;
   transform.translation = npc_transform.translation;
   auto const scale      = nearby_targets.calculate_scale(ft);
-
-  auto const      v = OF::rectangle_vertices_default();
-  glm::mat4 const view_model =
-      Billboard::compute_viewmodel(transform, fstate.view_matrix(), BillboardType::Spherical);
+  transform.scale = glm::vec3{scale};
 
   auto const proj_matrix = fstate.projection_matrix();
 
+  auto const draw_billboard = [](RenderState& rstate, Transform& transform, ShaderProgram& sp,
+                                 char const* texture_name) {
+    auto& fstate = rstate.fs;
+    auto& es     = fstate.es;
+    auto& zs     = fstate.zs;
+
+    auto& gfx_state = zs.gfx_state;
+    auto& ttable = gfx_state.texture_table;
+    auto& sps    = gfx_state.sps;
+
+    auto& logger = es.logger;
+
+    auto texture_o = ttable.find(texture_name);
+    assert(texture_o);
+    auto& ti = *texture_o;
+
+    auto const      v = OF::rectangle_vertices_default();
+    auto const uv = OF::rectangle_uvs(ti.uv_max);
+    auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
+    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
+
+    dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
+  };
+
+  glm::mat4 const view_model =
+      Billboard::compute_viewmodel(transform, fstate.view_matrix(), BillboardType::Spherical);
   auto const draw_reticle = [&](auto& sp) {
     auto constexpr ROTATE_SPEED = 80.0f;
     float const angle           = ROTATE_SPEED * ft.since_start_seconds();
@@ -686,84 +709,18 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
 
     auto const peid = find_player(registry);
     auto const& player = registry.get<Player>(peid);
-    auto const calc_blendcolor = [&player](int const npc_level) {
-
-      int const diff = player.level - npc_level;
-      int const abs_diff = std::abs(diff);
-
-      bool const player_gt = diff > 0;
-      bool const player_lt = diff < 0;
-      bool const equals = diff == 0;
-
-      {
-        bool const equals_and_neither_gtlt     = (equals && (!player_gt && !player_lt));
-        bool const gltl_notsame                = ((player_gt && !player_lt)
-                                                   || (!player_gt && player_lt));
-        bool const notequals_and_onlyone_gtlt  = (!equals && gltl_notsame);
-
-        // Ensure that either they are the same (and gt/lt are false)
-        // or
-        // they are not the same and exactly one (gt/lt) is true.
-        assert(equals_and_neither_gtlt || notequals_and_onlyone_gtlt);
-      }
-
-      if (equals) {
-        return LOC::WHITE;
-      }
-      else if (player_gt && (abs_diff <= 2)) {
-        return LOC::BLUE;
-      }
-      else if (player_gt && (abs_diff <= 3)) {
-        return LOC::LIGHT_BLUE;
-      }
-      else if (player_gt && (abs_diff <= 3)) {
-        return LOC::GREEN;
-      }
-      else if (player_gt) {
-        return LOC::GRAY;
-      }
-      else if (player_lt && (abs_diff <= 2)) {
-        return LOC::YELLOW;
-      }
-      else if (player_lt && (abs_diff <= 3)) {
-        return LOC::ORANGE;
-      }
-      else if (player_lt) {
-        return LOC::RED;
-      }
-      std::abort();
-    };
-    auto const blendc = calc_blendcolor(registry.get<NPCData>(npc_selected_eid).level);
+    auto const target_level = registry.get<NPCData>(npc_selected_eid).level;
+    auto const blendc = NearbyTargets::color_from_level_difference(player.level, target_level);
     sp.set_uniform_color(logger, "u_blendcolor", blendc);
 
-    auto *texture_o = ttable.find("TargetReticle");
-    assert(texture_o);
-    auto& ti = *texture_o;
-
-    auto const uv = OF::rectangle_uvs(ti.uv_max);
-    auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
-    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
-
-    transform.scale = glm::vec3{scale};
-    dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
+    draw_billboard(rstate, transform, sp, "TargetReticle");
   };
 
   auto const draw_glow = [&](auto& sp) {
-    auto texture_o = ttable.find("NearbyTargetGlow");
-    assert(texture_o);
-
     auto const mvp_matrix = proj_matrix * view_model;
     set_modelmatrix(logger, mvp_matrix, sp);
-
-    auto& ti = *texture_o;
-    auto const uv = OF::rectangle_uvs(ti.uv_max);
-    auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
-    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
-
-    transform.scale = glm::vec3{scale};
-    dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
+    draw_billboard(rstate, transform, sp, "NearbyTargetGlow");
   };
-
 
   bool const should_draw_glow = scale < 1.0f;
   char const* tn = should_draw_glow ? "2dtexture" : "target_reticle";

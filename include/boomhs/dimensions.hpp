@@ -1,4 +1,5 @@
 #pragma once
+#include <stlw/algorithm.hpp>
 
 #include <extlibs/glew.hpp>
 #include <utility>
@@ -21,7 +22,11 @@ struct Dimensions
   {
   }
 
-  auto size() const { return std::make_pair(right, bottom); }
+  auto size() const { return PAIR(right, bottom); }
+  auto width() const { return right - left; }
+  auto height() const { return bottom - top; }
+
+  auto center() const { return PAIR(width() / 2, height() / 2); }
 };
 
 struct ScreenSize
