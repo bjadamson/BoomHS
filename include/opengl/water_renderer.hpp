@@ -33,14 +33,14 @@ static float constexpr CUTOFF_HEIGHT      = 0.4f;
 static glm::vec4 constexpr ABOVE_VECTOR   = {0, -1, 0, CUTOFF_HEIGHT};
 static glm::vec4 constexpr BENEATH_VECTOR = {0, 1, 0, -CUTOFF_HEIGHT};
 
-class BlackWaterRenderer
+class SilhouetteWaterRenderer
 {
   stlw::Logger&          logger_;
   opengl::ShaderProgram& sp_;
 
 public:
-  BlackWaterRenderer(stlw::Logger&, opengl::ShaderProgram&);
-  MOVE_CONSTRUCTIBLE_ONLY(BlackWaterRenderer);
+  SilhouetteWaterRenderer(stlw::Logger&, opengl::ShaderProgram&);
+  MOVE_CONSTRUCTIBLE_ONLY(SilhouetteWaterRenderer);
 
   void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&,
                     window::FrameTime const&);

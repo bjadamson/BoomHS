@@ -164,14 +164,14 @@ DefaultTerrainRenderer::to_string() const
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// BlackTerrainRenderer
-BlackTerrainRenderer::BlackTerrainRenderer(ShaderProgram& sp)
+// SilhouetteTerrainRenderer
+SilhouetteTerrainRenderer::SilhouetteTerrainRenderer(ShaderProgram& sp)
     : sp_(sp)
 {
 }
 
 void
-BlackTerrainRenderer::render(RenderState& rstate, MaterialTable const&, EntityRegistry& registry,
+SilhouetteTerrainRenderer::render(RenderState& rstate, MaterialTable const&, EntityRegistry& registry,
                              FrameTime const& ft, glm::vec4 const& cull_plane)
 {
   auto& fstate = rstate.fs;

@@ -340,15 +340,15 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// BlackWaterRenderer
-BlackWaterRenderer::BlackWaterRenderer(stlw::Logger& logger, ShaderProgram& sp)
+// SilhouetteWaterRenderer
+SilhouetteWaterRenderer::SilhouetteWaterRenderer(stlw::Logger& logger, ShaderProgram& sp)
     : logger_(logger)
     , sp_(sp)
 {
 }
 
 void
-BlackWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm,
+SilhouetteWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm,
                                  Camera& camera, FrameTime const& ft)
 {
   auto& fstate = rstate.fs;

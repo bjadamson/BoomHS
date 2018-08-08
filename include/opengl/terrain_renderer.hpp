@@ -46,13 +46,13 @@ public:
   std::string to_string() const;
 };
 
-class BlackTerrainRenderer
+class SilhouetteTerrainRenderer
 {
   opengl::ShaderProgram& sp_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(BlackTerrainRenderer);
-  BlackTerrainRenderer(opengl::ShaderProgram&);
+  MOVE_CONSTRUCTIBLE_ONLY(SilhouetteTerrainRenderer);
+  SilhouetteTerrainRenderer(opengl::ShaderProgram&);
 
   // methods
   void render(RenderState&, boomhs::MaterialTable const&, boomhs::EntityRegistry&,

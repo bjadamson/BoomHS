@@ -520,9 +520,9 @@ init(Engine& engine, EngineState& es, Camera& camera, stlw::float_generator& rng
 
 void
 WaterRenderers::render(RenderState& rstate, DrawState& ds, LevelManager& lm, Camera& camera,
-              FrameTime const& ft, bool const black_silhouette)
+              FrameTime const& ft, bool const silhouette_black)
 {
-  if (black_silhouette) {
+  if (silhouette_black) {
     silhouette.render_water(rstate, ds, lm, camera, ft);
   }
   else {
@@ -545,7 +545,7 @@ WaterRenderers::render(RenderState& rstate, DrawState& ds, LevelManager& lm, Cam
 
 void
 StaticRenderers::render(LevelManager&lm, RenderState& rstate, stlw::float_generator& rng, DrawState& ds,
-            FrameTime const& ft, bool const black_silhouette)
+            FrameTime const& ft, bool const silhouette_black)
 {
   // Render the scene with no culling (setting it zero disables culling mathematically)
   glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
@@ -560,7 +560,7 @@ StaticRenderers::render(LevelManager&lm, RenderState& rstate, stlw::float_genera
 
       terrain_renderer.render(rstate, ldata.material_table, registry, ft, NOCULL_VECTOR);
     };
-    if (black_silhouette) {
+    if (silhouette_black) {
       draw_basic(silhouette_terrain, silhouette_entity);
     }
     else {
@@ -570,7 +570,7 @@ StaticRenderers::render(LevelManager&lm, RenderState& rstate, stlw::float_genera
   // DRAW ALL ENTITIES
   {
     if (es.draw_3d_entities) {
-      if (black_silhouette) {
+      if (silhouette_black) {
         silhouette_entity.render3d(rstate, rng, ft);
       }
       else {
@@ -578,7 +578,7 @@ StaticRenderers::render(LevelManager&lm, RenderState& rstate, stlw::float_genera
       }
     }
     if (es.draw_2d_billboard_entities) {
-      if (black_silhouette) {
+      if (silhouette_black) {
         silhouette_entity.render2d_billboard(rstate, rng, ft);
       }
       else {
@@ -586,7 +586,7 @@ StaticRenderers::render(LevelManager&lm, RenderState& rstate, stlw::float_genera
       }
     }
     if (es.draw_2d_ui_entities) {
-      if (black_silhouette) {
+      if (silhouette_black) {
         silhouette_entity.render2d_ui(rstate, rng, ft);
       }
       else {
@@ -594,7 +594,7 @@ StaticRenderers::render(LevelManager&lm, RenderState& rstate, stlw::float_genera
       }
     }
   }
-  if (black_silhouette) {
+  if (silhouette_black) {
     // do nothing
   }
   else {
@@ -617,7 +617,7 @@ render_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, Camera& camer
 
   auto& skybox_renderer = static_renderers.skybox;
 
-  auto const draw_scene = [&](bool const black_silhouette) {
+  auto const draw_scene = [&](bool const silhouette_black) {
     auto& water_renderer = static_renderers.water;
     auto const draw_advanced = [&](auto& terrain_renderer, auto& entity_renderer) {
       water_renderer.advanced.render_reflection(es, ds, lm, camera, entity_renderer,
@@ -625,7 +625,7 @@ render_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, Camera& camer
       water_renderer.advanced.render_refraction(es, ds, lm, camera, entity_renderer,
                                                 skybox_renderer, terrain_renderer, rng, ft);
     };
-    if (draw_water && draw_water_advanced && !black_silhouette) {
+    if (draw_water && draw_water_advanced && !silhouette_black) {
       // Render the scene to the refraction and reflection FBOs
       draw_advanced(static_renderers.default_terrain, static_renderers.default_entity);
     }
@@ -634,10 +634,10 @@ render_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, Camera& camer
     if (es.draw_skybox) {
       auto const& zs    = lm.active();
       auto const& ldata = zs.level_data;
-      auto const clear_color = black_silhouette ? LOC::BLACK : ldata.fog.color;
+      auto const clear_color = silhouette_black ? LOC::BLACK : ldata.fog.color;
       render::clear_screen(clear_color);
 
-      if (!black_silhouette) {
+      if (!silhouette_black) {
         skybox_renderer.render(rstate, ds, ft);
       }
     }
@@ -645,10 +645,10 @@ render_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, Camera& camer
     // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up
     // ontop of the ingame UI nearby target indicators.
     if (draw_water) {
-      water_renderer.render(rstate, ds, lm, camera, ft, black_silhouette);
+      water_renderer.render(rstate, ds, lm, camera, ft, silhouette_black);
     }
 
-    static_renderers.render(lm, rstate, rng, ds, ft, black_silhouette);
+    static_renderers.render(lm, rstate, rng, ds, ft, silhouette_black);
   };
 
   auto const draw_scene_normal_render = [&]() { draw_scene(false); };
@@ -712,12 +712,12 @@ make_static_renderers(EngineState& es, LevelManager& lm)
     auto& gfx_state = zs.gfx_state;
     auto& sps       = gfx_state.sps;
     auto& sp = sps.ref_sp("silhoutte_black");
-    return BlackWaterRenderer{logger, sp};
+    return SilhouetteWaterRenderer{logger, sp};
   };
 
   auto const make_black_terrain_renderer = [](ShaderPrograms& sps) {
     auto& sp = sps.ref_sp("silhoutte_black");
-    return BlackTerrainRenderer{sp};
+    return SilhouetteTerrainRenderer{sp};
   };
 
   auto const make_sunshaft_renderer = [](EngineState& es, ZoneState& zs) {
@@ -754,7 +754,7 @@ make_static_renderers(EngineState& es, LevelManager& lm)
     DefaultTerrainRenderer{},
     make_black_terrain_renderer(sps),
     EntityRenderer{},
-    BlackEntityRenderer{},
+    SilhouetteEntityRenderer{},
     make_skybox_renderer(logger, sps, ttable),
     make_sunshaft_renderer(es, zs),
     DebugRenderer{},

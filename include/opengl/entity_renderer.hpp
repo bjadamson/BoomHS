@@ -27,11 +27,11 @@ public:
   void render3d(RenderState&, stlw::float_generator&, window::FrameTime const&);
 };
 
-class BlackEntityRenderer
+class SilhouetteEntityRenderer
 {
 public:
-  BlackEntityRenderer() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(BlackEntityRenderer);
+  SilhouetteEntityRenderer() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(SilhouetteEntityRenderer);
 
   void render2d_billboard(RenderState&, stlw::float_generator&, window::FrameTime const&);
   void render2d_ui(RenderState&, stlw::float_generator&, window::FrameTime const&);

@@ -46,7 +46,7 @@ struct WaterRenderers
   opengl::MediumWaterRenderer   medium;
   opengl::AdvancedWaterRenderer advanced;
 
-  opengl::BlackWaterRenderer silhouette;
+  opengl::SilhouetteWaterRenderer silhouette;
 
   void render(opengl::RenderState&, opengl::DrawState&, LevelManager&, Camera&,
               window::FrameTime const&, bool);
@@ -54,11 +54,11 @@ struct WaterRenderers
 
 struct StaticRenderers
 {
-  opengl::DefaultTerrainRenderer default_terrain;
-  opengl::BlackTerrainRenderer   silhouette_terrain;
+  opengl::DefaultTerrainRenderer    default_terrain;
+  opengl::SilhouetteTerrainRenderer silhouette_terrain;
 
-  opengl::EntityRenderer      default_entity;
-  opengl::BlackEntityRenderer silhouette_entity;
+  opengl::EntityRenderer           default_entity;
+  opengl::SilhouetteEntityRenderer silhouette_entity;
 
   opengl::SkyboxRenderer   skybox;
   opengl::SunshaftRenderer sunshaft;

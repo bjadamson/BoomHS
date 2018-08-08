@@ -365,9 +365,9 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// BlackEntityRenderer
+// SilhouetteEntityRenderer
 void
-BlackEntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+SilhouetteEntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
 {
   auto&       fstate = rstate.fs;
   auto const& es     = fstate.es;
@@ -398,12 +398,12 @@ BlackEntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generat
 }
 
 void
-BlackEntityRenderer::render2d_ui(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+SilhouetteEntityRenderer::render2d_ui(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
 {
 }
 
 void
-BlackEntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+SilhouetteEntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
 {
   auto&       fstate = rstate.fs;
   auto const& es     = fstate.es;
