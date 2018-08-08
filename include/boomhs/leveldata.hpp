@@ -7,6 +7,7 @@
 #include <boomhs/skybox.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/water.hpp>
+#include <boomhs/wind.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <boomhs/lighting.hpp>
@@ -31,6 +32,7 @@ public:
   // public fields
   Skybox      skybox;
   Fog         fog;
+  Wind        wind;
   TerrainGrid terrain;
 
   GlobalLight   global_light;

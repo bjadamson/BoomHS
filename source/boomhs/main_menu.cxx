@@ -2,6 +2,7 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/main_menu.hpp>
+#include <boomhs/orbital_body.hpp>
 #include <boomhs/state.hpp>
 #include <opengl/colors.hpp>
 #include <window/sdl_window.hpp>
@@ -99,6 +100,57 @@ draw_menu(EngineState& es, ImVec2 const& size, WaterAudioSystem& water_audio)
 }
 
 void
+draw_debugwindow(EngineState& es, ZoneState& zs)
+{
+  auto& registry = zs.registry;
+  ImGui::Checkbox("Draw Skybox", &es.draw_skybox);
+  {
+    auto const eids = find_orbital_bodies(registry);
+    auto       num  = 1;
+    for (auto const eid : eids) {
+      auto& v    = registry.get<IsVisible>(eid);
+      bool& draw = v.value;
+
+      auto const text = "Draw Orbital Body" + std::to_string(num++);
+      ImGui::Checkbox(text.c_str(), &draw);
+    }
+  }
+
+  auto& uistate = es.ui_state;
+  auto& debugstate = uistate.debug;
+  ImGui::Checkbox("Draw 3D Entities", &es.draw_3d_entities);
+  ImGui::Checkbox("Draw 2D Billboard Entities", &es.draw_2d_billboard_entities);
+  ImGui::Checkbox("Draw 2D UI Entities", &es.draw_2d_ui_entities);
+  ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
+
+  {
+    auto& water_buffer = es.ui_state.debug.buffers.water;
+    ImGui::Checkbox("Draw Water", &water_buffer.draw);
+  }
+
+  ImGui::Checkbox("Draw Bounding Boxes", &es.draw_bounding_boxes);
+  ImGui::Checkbox("Draw Normals", &es.draw_normals);
+  ImGui::Checkbox("Wireframe Rendering", &es.wireframe_override);
+
+  ImGui::Separator();
+  ImGui::Text("IMGUI");
+  ImGui::Checkbox("Draw Debug", &uistate.draw_debug_ui);
+  ImGui::Checkbox("Draw InGame", &uistate.draw_ingame_ui);
+
+  ImGui::Separator();
+  ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
+
+  ImGui::Checkbox("Show (x, z)-axis lines", &es.show_grid_lines);
+  ImGui::Checkbox("Show y-axis Lines ", &es.show_yaxis_lines);
+
+  ImGui::Separator();
+  ImGui::Checkbox("ImGui Metrics", &es.draw_imguimetrics);
+  if (es.draw_imguimetrics) {
+    ImGui::ShowMetricsWindow(&es.draw_imguimetrics);
+  }
+}
+
+void
 process_keydown(GameState& state, SDL_Event const& event)
 {
   auto& es = state.engine_state;
@@ -125,9 +177,14 @@ namespace boomhs::main_menu
 {
 
 void
-draw(EngineState& es, ImVec2 const& size, WaterAudioSystem& water_audio)
+draw(EngineState& es, ZoneState& zs, ImVec2 const& size, WaterAudioSystem& water_audio)
 {
   draw_menu(es, size, water_audio);
+
+  auto& uistate = es.ui_state.debug;
+  if (uistate.show_debugwindow) {
+    draw_debugwindow(es, zs);
+  }
 }
 
 void

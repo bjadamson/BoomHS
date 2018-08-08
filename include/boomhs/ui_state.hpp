@@ -103,8 +103,8 @@ struct UiDebugState
   bool show_entitymaterial_window = false;
   bool show_entitywindow          = false;
 
-  bool show_fog_window  = false;
-  bool show_mousewindow = false;
+  bool show_environment_window = false;
+  bool show_mousewindow        = false;
 
   bool show_playerwindow      = false;
   bool show_pointlight_window = false;

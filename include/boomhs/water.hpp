@@ -38,7 +38,6 @@ struct WaterInfo
   float         mix_intensity = 0.25f;
 
   float     wave_offset    = 0.0f;
-  float     wind_speed     = 50.0f;
   float     wave_strength  = 0.01f;
   glm::vec2 flow_direction = glm::normalize(glm::vec2{1.0f, 1.0f});
 

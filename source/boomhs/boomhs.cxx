@@ -914,7 +914,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
     auto const& dimensions = engine.dimensions();
     auto const size_v      = ImVec2(dimensions.right, dimensions.bottom);
-    main_menu::draw(es, size_v, water_audio);
+    main_menu::draw(es, zs, size_v, water_audio);
   }
   else {
     // Disable keyboard shortcuts

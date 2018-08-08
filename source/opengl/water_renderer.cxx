@@ -50,6 +50,7 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
   auto& zs       = lm.active();
   auto& registry = zs.registry;
   auto& ldata    = zs.level_data;
+  auto const& wind = ldata.wind;
 
   auto const render = [&](WaterInfo& winfo) {
     auto const& pos = winfo.position;
@@ -63,19 +64,16 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
     tr.y = 0.19999f; // pos.y;
     assert(tr.y < 2.0f);
 
-    winfo.wave_offset += ft.delta_seconds() * winfo.wind_speed;
+    winfo.wave_offset += ft.delta_seconds() * wind.speed;
     winfo.wave_offset = ::fmodf(winfo.wave_offset, 1.00f);
 
     auto& time_offset = ldata.time_offset;
-    time_offset += ft.delta_seconds() * winfo.wind_speed;
+    time_offset += ft.delta_seconds() * wind.speed;
     time_offset = ::fmodf(time_offset, 1.00f);
 
-
-    auto&       gfx_state = zs.gfx_state;
+    auto& gfx_state    = zs.gfx_state;
     auto& draw_handles = gfx_state.draw_handles;
-    auto& dinfo = draw_handles.lookup_entity(logger, winfo.eid);
-    //assert(winfo.dinfo);
-    //auto& dinfo = *winfo.dinfo;
+    auto& dinfo        = draw_handles.lookup_entity(logger, winfo.eid);
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_vec4(logger, "u_clipPlane", ABOVE_VECTOR);

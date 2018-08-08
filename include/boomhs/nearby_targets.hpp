@@ -41,8 +41,7 @@ public:
   std::optional<EntityID> selected() const;
   void                    set_selected(EntityID);
 
-  static opengl::Color
-  color_from_level_difference(int, int);
+  static opengl::Color color_from_level_difference(int, int);
 };
 
 } // namespace boomhs

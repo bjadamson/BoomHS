@@ -3,7 +3,6 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/frame.hpp>
 #include <boomhs/level_manager.hpp>
-#include <boomhs/orbital_body.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
@@ -236,8 +235,6 @@ draw_time_editor(stlw::Logger& logger, Time& time, UiDebugState& uistate)
   }
 }
 
-
-
 void
 show_water_window(EngineState& es, LevelManager& lm)
 {
@@ -273,8 +270,7 @@ show_water_window(EngineState& es, LevelManager& lm)
       ImGui::InputFloat("Mix-Intensity", &wi.mix_intensity);
 
       ImGui::InputFloat("Wave Offset",   &wi.wave_offset);
-      ImGui::InputFloat("Wind Speed",    &wi.wind_speed);
-      ImGui::InputFloat("Wave Strength", &wi.wave_strength);
+      ImGui::InputFloat("Wave Strength (not currently used :( )", &wi.wave_strength);
 
       auto constexpr WAVE_MIN = -1.0f, WAVE_MAX = 1.0f;
       auto *direction_ptr     = glm::value_ptr(wi.flow_direction);
@@ -749,23 +745,23 @@ show_pointlight_window(UiDebugState& ui, EntityRegistry& registry)
 }
 
 void
-show_fog_window(UiDebugState& state, LevelData& ldata)
+show_environment_window(UiDebugState& state, LevelData& ldata)
 {
   auto&      fog  = ldata.fog;
   auto const draw = [&]() {
-    ImGui::ColorEdit4("Fog Color:", fog.color.data());
-    ImGui::Separator();
+    ImGui::Text("Fog");
+    ImGui::ColorEdit4("Color:", fog.color.data());
 
-    ImGui::Separator();
-    ImGui::Separator();
     ImGui::SliderFloat("Density", &fog.density, 0.0f, 0.01f);
     ImGui::SliderFloat("Gradient", &fog.gradient, 0.0f, 10.0f);
+    ImGui::Separator();
 
-    ImGui::Separator();
-    ImGui::Separator();
+    ImGui::Text("Wind");
+    auto& wind = ldata.wind;
+    ImGui::InputFloat("Speed", &wind.speed);
 
     bool const close_pressed = ImGui::Button("Close", ImVec2(120, 0));
-    state.show_fog_window    = !close_pressed;
+    state.show_environment_window    = !close_pressed;
   };
   imgui_cxx::with_window(draw, "Fog Window");
 }
@@ -814,66 +810,13 @@ lighting_menu(EngineState& es, LevelData& ldata, EntityRegistry& registry)
 }
 
 void
-draw_debugwindow(EngineState& es, LevelManager& lm)
-{
-  auto& zs       = lm.active();
-  auto& registry = zs.registry;
-  ImGui::Checkbox("Draw Skybox", &es.draw_skybox);
-  {
-    auto const eids = find_orbital_bodies(registry);
-    auto       num  = 1;
-    for (auto const eid : eids) {
-      auto& v    = registry.get<IsVisible>(eid);
-      bool& draw = v.value;
-
-      auto const text = "Draw Orbital Body" + std::to_string(num++);
-      ImGui::Checkbox(text.c_str(), &draw);
-    }
-  }
-
-  auto& uistate = es.ui_state;
-  auto& debugstate = uistate.debug;
-  ImGui::Checkbox("Draw 3D Entities", &es.draw_3d_entities);
-  ImGui::Checkbox("Draw 2D Billboard Entities", &es.draw_2d_billboard_entities);
-  ImGui::Checkbox("Draw 2D UI Entities", &es.draw_2d_ui_entities);
-  ImGui::Checkbox("Draw Terrain", &es.draw_terrain);
-
-  {
-    auto& water_buffer = es.ui_state.debug.buffers.water;
-    ImGui::Checkbox("Draw Water", &water_buffer.draw);
-  }
-
-  ImGui::Checkbox("Draw Bounding Boxes", &es.draw_bounding_boxes);
-  ImGui::Checkbox("Draw Normals", &es.draw_normals);
-  ImGui::Checkbox("Wireframe Rendering", &es.wireframe_override);
-
-  ImGui::Separator();
-  ImGui::Text("IMGUI");
-  ImGui::Checkbox("Draw Debug", &uistate.draw_debug_ui);
-  ImGui::Checkbox("Draw InGame", &uistate.draw_ingame_ui);
-
-  ImGui::Separator();
-  ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
-
-  ImGui::Checkbox("Show (x, z)-axis lines", &es.show_grid_lines);
-  ImGui::Checkbox("Show y-axis Lines ", &es.show_yaxis_lines);
-
-  ImGui::Separator();
-  ImGui::Checkbox("ImGui Metrics", &es.draw_imguimetrics);
-  if (es.draw_imguimetrics) {
-    ImGui::ShowMetricsWindow(&es.draw_imguimetrics);
-  }
-}
-
-void
 draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window, DrawState& ds)
 {
   auto&      uistate      = es.ui_state.debug;
   auto const windows_menu = [&]() {
-    ImGui::MenuItem("Debug", nullptr, &uistate.show_debugwindow);
-    ImGui::MenuItem("Entity", nullptr, &uistate.show_entitywindow);
-    ImGui::MenuItem("Fog Window", nullptr, &uistate.show_fog_window);
     ImGui::MenuItem("Camera", nullptr, &uistate.show_camerawindow);
+    ImGui::MenuItem("Entity", nullptr, &uistate.show_entitywindow);
+    ImGui::MenuItem("Environment Window", nullptr, &uistate.show_environment_window);
     ImGui::MenuItem("Mouse", nullptr, &uistate.show_mousewindow);
     ImGui::MenuItem("Player", nullptr, &uistate.show_playerwindow);
     ImGui::MenuItem("Skybox", nullptr, &uistate.show_skyboxwindow);
@@ -966,14 +909,11 @@ draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, WaterAudioSyste
   if (uistate.show_terrain_editor_window) {
     draw_terrain_editor(es, lm);
   }
-  if (uistate.show_fog_window) {
-    show_fog_window(uistate, ldata);
+  if (uistate.show_environment_window) {
+    show_environment_window(uistate, ldata);
   }
   if (uistate.show_water_window) {
     show_water_window(es, lm);
-  }
-  if (uistate.show_debugwindow) {
-    draw_debugwindow(es, lm);
   }
   draw_mainmenu(es, lm, window, ds);
 }
