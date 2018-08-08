@@ -45,4 +45,14 @@ AABoundingBox::half_widths() const
   return dimensions() / glm::vec3{2.0f};
 }
 
+void
+AABoundingBox::add_to_entity(EntityID const eid, EntityRegistry& registry, glm::vec3 const& min,
+                             glm::vec3 const& max)
+{
+  auto& bbox = registry.assign<AABoundingBox>(eid);
+  bbox.min   = min;
+  bbox.max   = max;
+  registry.assign<Selectable>(eid);
+}
+
 } // namespace boomhs

@@ -26,6 +26,7 @@ namespace
     DRAW_COMMON________FN,                                                                         \
     DRAW_ORBITALS______FN,                                                                         \
     DRAW_TORCH_________FN,                                                                         \
+    DRAW_BOOK__________FN,                                                                         \
     DRAW_JUNK__________FN,                                                                         \
     DRAW_TEXTURED_JUNK_FN,                                                                         \
     DRAW_POINTLIGHTS___FN,                                                                         \
@@ -36,6 +37,7 @@ namespace
           decltype(DRAW_COMMON________FN)                                                          \
         , decltype(DRAW_ORBITALS______FN)                                                          \
         , decltype(DRAW_TORCH_________FN)                                                          \
+        , decltype(DRAW_BOOK__________FN)                                                          \
         , decltype(DRAW_JUNK__________FN)                                                          \
         , decltype(DRAW_TEXTURED_JUNK_FN)                                                          \
         , decltype(DRAW_POINTLIGHTS___FN)                                                          \
@@ -45,6 +47,7 @@ namespace
          , draw_common_fn                                                                          \
          , draw_orbital_fn                                                                         \
          , draw_torch_fn                                                                           \
+         , draw_book_fn                                                                            \
          , draw_junk_fn                                                                            \
          , draw_textured_junk_fn                                                                   \
          , draw_pointlight_fn                                                                      \
@@ -194,6 +197,7 @@ draw_orbital_body(RenderState& rstate, ShaderProgram& sp, EntityID const eid, Tr
 template <typename DrawCommonFN,
           typename DrawOrbitalFN,
           typename DrawTorchFN,
+          typename DrawBookFN,
           typename DrawJunkFN,
           typename DrawTexturedJunkFN,
           typename DrawPointlightFN,
@@ -203,6 +207,7 @@ render_common_entities(RenderState& rstate, stlw::float_generator& rng, FrameTim
                        DrawCommonFN const&  draw_common_fn,
                        DrawOrbitalFN const& draw_orbital_body_helper,
                        DrawTorchFN const& draw_torch_fn,
+                       DrawBookFN const& draw_book_fn,
                        DrawJunkFN const& draw_junk_fn,
                        DrawTexturedJunkFN const& draw_textured_junk_fn,
                        DrawPointlightFN const& draw_pointlight_fn)
@@ -224,7 +229,8 @@ render_common_entities(RenderState& rstate, stlw::float_generator& rng, FrameTim
 
   registry.view<Common..., Torch, TextureRenderable>().each(draw_torch_fn);
 
-  registry.view<Common..., TextureRenderable, Book>().each(draw_textured_junk_fn);
+  registry.view<Common..., Book, TextureRenderable>().each(draw_book_fn);
+
   registry.view<Common..., Color, JunkEntityFromFILE>().each(draw_junk_fn);
   registry.view<Common..., TreeComponent>().each(draw_common_fn);
 
@@ -280,7 +286,9 @@ EntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generator& r
 
   auto const draw_junk_fn = [&](COMMON_ARGS, Color&, JunkEntityFromFILE& je) {
   };
-  auto const draw_torch_fn = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
+  auto const draw_torch_fn = [&](COMMON_ARGS, Torch&, TextureRenderable&) {
+  };
+  auto const draw_book_fn = [&](COMMON_ARGS, Book&, TextureRenderable&) {
   };
   auto const draw_boundingboxes = [&](COMMON_ARGS, Selectable& sel, auto&&...) {
   };
@@ -290,6 +298,7 @@ RENDER_ENTITIES(
   draw_common_fn,
   draw_orbital_fn,
   draw_torch_fn,
+  draw_book_fn,
   draw_junk_fn,
   draw_textured_junk_fn,
   draw_pointlight_fn,
@@ -341,6 +350,8 @@ EntityRenderer::render2d_ui(RenderState& rstate, stlw::float_generator& rng, Fra
   };
   auto const draw_torch_fn = [&](COMMON_ARGS, Torch& torch, TextureRenderable& trenderable) {
   };
+  auto const draw_book_fn = [&](COMMON_ARGS, Book&, TextureRenderable&) {
+  };
   auto const draw_boundingboxes = [&](COMMON_ARGS, Selectable& sel, auto&&...) {
   };
 
@@ -349,6 +360,7 @@ RENDER_ENTITIES(
   draw_common_fn,
   draw_orbital_fn,
   draw_torch_fn,
+  draw_book_fn,
   draw_junk_fn,
   draw_textured_junk_fn,
   draw_pointlight_fn,
@@ -375,9 +387,8 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
 
   auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp(sn.value);
-    if (!sp.is_2d) {
-      draw_entity(rstate, GL_TRIANGLES, sp, eid, draw_handles, transform, is_v, bbox, FORWARD(args));
-    }
+    assert(!sp.is_2d);
+    draw_entity(rstate, GL_TRIANGLES, sp, eid, draw_handles, transform, is_v, bbox, FORWARD(args));
   };
 
   auto const draw_textured_junk_fn = [&](COMMON_ARGS, auto& texture_renderable, auto&&... args) {
@@ -422,6 +433,7 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
     assert(ti);
     ti->while_bound(logger, [&]() { draw_common_fn(eid, sn, copy_transform, is_v, bbox, torch); });
   };
+
   auto const draw_boundingboxes = [&](COMMON_ARGS, Selectable& sel, auto&&...) {
     if (!es.draw_bounding_boxes) {
       return;
@@ -441,11 +453,14 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
     });
   };
 
-  auto const& draw_pointlight_fn          = draw_common_fn;
+  auto const& draw_pointlight_fn = draw_common_fn;
+  auto const& draw_book_fn       = draw_common_fn;
+
 RENDER_ENTITIES(
   draw_common_fn,
   draw_orbital_fn,
   draw_torch_fn,
+  draw_book_fn,
   draw_junk_fn,
   draw_textured_junk_fn,
   draw_pointlight_fn,
@@ -493,6 +508,7 @@ BlackEntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generat
 #undef COMMON_ARGS
 
   auto const& draw_torch_fn          = draw_common_fn;
+  auto const& draw_book_fn           = draw_common_fn;
   auto const& draw_junk_fn           = draw_common_fn;
   auto const& draw_textured_junk_fn  = draw_common_fn;
 
@@ -500,6 +516,7 @@ BlackEntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generat
   draw_common_fn,
   draw_orbital_fn,
   draw_torch_fn,
+  draw_book_fn,
   draw_junk_fn,
   draw_textured_junk_fn,
   draw_pointlight_fn,
@@ -550,6 +567,7 @@ BlackEntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, F
 #undef COMMON_ARGS
 
   auto const& draw_torch_fn          = draw_common_fn;
+  auto const& draw_book_fn           = draw_common_fn;
   auto const& draw_junk_fn           = draw_common_fn;
   auto const& draw_textured_junk_fn  = draw_common_fn;
 
@@ -557,6 +575,7 @@ BlackEntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, F
   draw_common_fn,
   draw_orbital_fn,
   draw_torch_fn,
+  draw_book_fn,
   draw_junk_fn,
   draw_textured_junk_fn,
   draw_pointlight_fn,

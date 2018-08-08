@@ -2,6 +2,7 @@
 #include <boomhs/item.hpp>
 #include <boomhs/item_factory.hpp>
 #include <boomhs/lighting.hpp>
+#include <boomhs/material.hpp>
 #include <opengl/texture.hpp>
 #include <stlw/random.hpp>
 
@@ -72,8 +73,9 @@ EntityID
 ItemFactory::create_book(EntityRegistry& registry,
                          TextureTable& ttable)
 {
-  auto eid = create_item(registry, ttable, "Book EID", "BookUI", "B", "container", "2dtexture");
+  auto eid = create_item(registry, ttable, "Book EID", "BookUI", "B", "container", "3dtexture");
   registry.assign<Book>(eid);
+  registry.assign<Material>(eid);
 
   auto& item    = registry.get<Item>(eid);
   item.name    = "Book";

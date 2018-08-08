@@ -280,16 +280,18 @@ DrawHandleManager::add_mesh(stlw::Logger& logger, ShaderPrograms& sps, ObjStore&
                             EntityID const eid, EntityRegistry& registry)
 {
   auto& sn = registry.get<ShaderName>(eid);
-  auto&       va  = sps.ref_sp(sn.value).va();
-  auto const  qa  = BufferFlags::from_va(va);
+  auto& va = sps.ref_sp(sn.value).va();
 
-  auto const& mesh = registry.get<MeshRenderable>(eid);
-  auto const  qo  = ObjQuery{mesh.name, qa};
-
-  auto const& obj = obj_store.get(logger, mesh.name);
+  auto const& mesh_name     = registry.get<MeshRenderable>(eid).name;
+  auto const& obj = obj_store.get(logger, mesh_name);
 
   auto handle = opengl::gpu::copy_gpu(logger, va, obj);
   add_entity(eid, MOVE(handle));
+
+  auto const     posbuffer = obj.positions();
+  auto const&    min       = posbuffer.min();
+  auto const&    max       = posbuffer.max();
+  AABoundingBox::add_to_entity(eid, registry, min, max);
 }
 
 void
@@ -306,6 +308,8 @@ DrawHandleManager::add_cube(stlw::Logger& logger, ShaderPrograms& sps, EntityID 
   auto const vertices = OF::cube_vertices(cmm.min, cmm.max);
   auto  handle = opengl::gpu::copy_cube_gpu(logger, vertices, va);
   add_entity(eid, MOVE(handle));
+
+  AABoundingBox::add_to_entity(eid, registry, cr.min, cr.max);
 }
 
 } // ns opengl

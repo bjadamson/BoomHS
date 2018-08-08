@@ -111,7 +111,7 @@ random_junk_from_file = true
 [[entity]]
 name = "TreeLowpoly"
 material = "tree"
-position = [0.0, 0.0, 0.0]
+position = [10.0, 0.0, 10.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree_lowpoly"
 scale = [8.0, 6.0, 8.0]
@@ -120,7 +120,7 @@ random_junk_from_file = true
 [[entity]]
 name = "Tree2"
 material = "tree"
-position = [1.0, 1.0, 8.0]
+position = [15.0, 1.0, 18.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree2"
 scale = [2.0, 4.0, 2.0]

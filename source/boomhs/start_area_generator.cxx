@@ -24,15 +24,22 @@ namespace
 {
 
 void
-place_torch(stlw::Logger& logger, TerrainGrid& terrain, EntityRegistry& registry,
-            TextureTable& ttable, glm::vec2 const& pos)
+place_item_on_ground(stlw::Logger& logger, TerrainGrid& terrain, Transform &transform,
+    glm::vec2 const& pos)
 {
-  auto  const eid       = ItemFactory::create_torch(registry, ttable);
-  auto& transform = registry.get<Transform>(eid);
-
   float const x = pos.x, z = pos.y;
   auto const y = terrain.get_height(logger, x, z);
   transform.translation = glm::vec3{x, y, z};
+}
+
+void
+place_torch(stlw::Logger& logger, TerrainGrid& terrain, EntityRegistry& registry,
+            TextureTable& ttable, glm::vec2 const& pos)
+{
+  auto const eid = ItemFactory::create_torch(registry, ttable);
+
+  auto& transform = registry.get<Transform>(eid);
+  place_item_on_ground(logger, terrain, transform, pos);
 }
 
 void
@@ -101,7 +108,6 @@ place_waters(stlw::Logger& logger, ShaderPrograms& sps, EntityRegistry& registry
     wi.dimensions   = glm::vec2{20};
     wi.num_vertexes = 4;
 
-    registry.assign<Selectable>(eid);
     registry.assign<ShaderName>(eid);
     registry.assign<IsVisible>(eid).value = true;
 

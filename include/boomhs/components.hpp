@@ -55,6 +55,8 @@ struct AABoundingBox
   glm::vec3 dimensions() const;
   glm::vec3 center() const;
   glm::vec3 half_widths() const;
+
+  static void add_to_entity(EntityID, EntityRegistry&, glm::vec3 const&, glm::vec3 const&);
 };
 
 struct Name

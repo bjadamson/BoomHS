@@ -31,21 +31,6 @@ kill_entity(stlw::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
   // TODO: Get the normal vector for the terrain at the (x, z) point and rotate the npc to look
   // properly aligned on slanted terrain.
   entity_transform.rotate_degrees(90.0f, opengl::X_UNIT_VECTOR);
-
-  {
-    auto  const book_eid = ItemFactory::create_torch(registry, ttable);
-    auto& book_transform = registry.get<Transform>(book_eid);
-    auto& book_tr        = book_transform.translation;
-
-    float const x   = entity_tr.x, z = entity_tr.z;
-    auto const y   = entity_tr.y;
-    auto const xyz = glm::vec3{10, 2, 10};
-    LOG_ERROR_SPRINTF("xyz: %s", glm::to_string(xyz));
-    book_transform.translation = xyz;
-
-    // copy the book to th GPU
-    //copy_to_gpu(book);
-  }
 }
 
 void

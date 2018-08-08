@@ -8,6 +8,8 @@
 #include <boomhs/frame.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/heightmap.hpp>
+#include <boomhs/item.hpp>
+#include <boomhs/item_factory.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mouse_picker.hpp>
@@ -350,38 +352,8 @@ add_boundingboxes_to_entities(EngineState& es, ZoneState& zs)
     auto    dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, cv, va);
     draw_handles.set_bbox(MOVE(dinfo));
   }
-
-  auto const          add_boundingbox = [&](auto const eid, auto const& min, auto const& max) {
-    {
-      auto& bbox = registry.assign<AABoundingBox>(eid);
-      bbox.min   = min;
-      bbox.max   = max;
-    }
-  };
-  for (auto const eid : registry.view<MeshRenderable>()) {
-    auto& name = registry.get<MeshRenderable>(eid).name;
-
-    auto const     flags = BufferFlags::from_va(va);
-    ObjQuery const query{name, flags};
-    auto&          obj       = obj_store.get(logger, name);
-    auto const     posbuffer = obj.positions();
-    auto const&    min       = posbuffer.min();
-    auto const&    max       = posbuffer.max();
-
-    add_boundingbox(eid, min, max);
-    registry.assign<Selectable>(eid);
-  }
-  for (auto const eid : registry.view<CubeRenderable>()) {
-    auto const& cr = registry.get<CubeRenderable>(eid);
-
-    add_boundingbox(eid, cr.min, cr.max);
-    registry.assign<Selectable>(eid);
-  }
   for (auto const eid : registry.view<OrbitalBody>()) {
-    glm::vec3 constexpr min = glm::vec3{-1.0f};
-    glm::vec3 constexpr max = glm::vec3{1.0f};
-    add_boundingbox(eid, min, max);
-    registry.assign<Selectable>(eid);
+    OrbitalBody::add_to_entity(eid, registry);
   }
   for (auto const eid : registry.view<WaterInfo>()) {
     {
@@ -400,15 +372,7 @@ add_boundingboxes_to_entities(EngineState& es, ZoneState& zs)
       wi.eid = eid;
     }
   }
-
-  for (auto const eid : registry.view<WaterInfo>()) {
-    auto const min = glm::vec3{-0.5, -0.2, -0.5};
-    auto const max = glm::vec3{0.5f, 0.2, 0.5};
-
-    add_boundingbox(eid, min, max);
-  }
 }
-
 
 ZoneState
 assemble(LevelGeneratedData&& gendata, LevelAssets&& assets, EntityRegistry& registry)
@@ -843,12 +807,53 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
     update_visible_entities(lm, registry);
     update_torchflicker(ldata, registry, rng, ft);
 
+    auto const is_target_selected_and_alive = [](EntityRegistry& registry, NearbyTargets const& nbt) {
+      auto const target = nbt.selected();
+      if (!target) {
+        return false; // target not selected
+      }
+      auto const target_eid = *target;
+      auto& npcdata = registry.get<NPCData>(target_eid);
+      auto& target_hp = npcdata.health;
+      return !NPC::is_dead(target_hp);
+    };
+
     // Update these as a chunk, so they stay in the correct order.
     {
       auto& terrain = ldata.terrain;
       update_npcpositions(logger, registry, terrain, ft);
       update_nearbytargets(nbt, registry, ft);
+
+      bool const previously_alive = is_target_selected_and_alive(registry, nbt);
       player.update(logger, registry, terrain, ttable, nbt);
+
+      if (previously_alive) {
+        auto const target = nbt.selected();
+        if (target) {
+          auto const target_eid = *target;
+          auto& npcdata = registry.get<NPCData>(target_eid);
+          auto& target_hp = npcdata.health;
+          bool const target_dead_after_attack = NPC::is_dead(target_hp);
+          bool const dead_from_attack = previously_alive && target_dead_after_attack;
+
+          if (dead_from_attack) {
+            auto& dhm = gfx_state.draw_handles;
+            auto  const book_eid = ItemFactory::create_book(registry, ttable);
+            auto& book_tr = registry.get<Transform>(book_eid);
+
+            auto const& target_pos = registry.get<Transform>(target_eid).translation;
+            book_tr.translation = target_pos;
+            LOG_ERROR_SPRINTF("ADDING TORCH AT xyz: %s", glm::to_string(book_tr.translation));
+
+            auto& ldata     = zs.level_data;
+            auto& obj_store = ldata.obj_store;
+            auto& sps       = gfx_state.sps;
+
+            // copy the book to th GPU
+            dhm.add_mesh(logger, sps, obj_store, book_eid, registry);
+          }
+        }
+      }
     }
   }
 
