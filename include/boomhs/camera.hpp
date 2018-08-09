@@ -116,7 +116,7 @@ public:
   compute_projectionmatrix(CameraMode, PerspectiveViewport const&, OrthoProjection const&);
 
   static glm::mat4 compute_viewmatrix(CameraMode, glm::vec3 const&, glm::vec3 const&,
-                                      glm::vec3 const&, glm::vec3 const&, glm::vec3 const&);
+                                      glm::vec3 const&, glm::vec3 const&);
 };
 
 } // namespace boomhs

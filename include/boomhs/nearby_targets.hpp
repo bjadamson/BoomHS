@@ -18,6 +18,12 @@ struct SelectedTarget
   size_t offset = 0;
 };
 
+enum class CycleDirection
+{
+  Forward = 0,
+  Backward
+};
+
 class NearbyTargets
 {
   std::vector<EntityID> targets_ = {};
@@ -35,6 +41,7 @@ public:
 
   void add_target(EntityID);
   void clear();
+  void cycle(CycleDirection, window::FrameTime const&);
   void cycle_forward(window::FrameTime const&);
   void cycle_backward(window::FrameTime const&);
 

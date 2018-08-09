@@ -88,8 +88,6 @@ process_mousemotion(GameState& state, Player& player, SDL_MouseMotionEvent const
   auto& ui     = es.ui_state.debug;
 
   {
-    // TODO: move out to general purpose update mouse code.
-    // update the mouse relative and current positions
     ms.relative.x = motion.xrel;
     ms.relative.y = motion.yrel;
 
@@ -99,15 +97,14 @@ process_mousemotion(GameState& state, Player& player, SDL_MouseMotionEvent const
 
   auto& wo = player.world_object;
   if (camera.mode() == CameraMode::FPS) {
-    LOG_ERROR("FPS");
     auto const& sens = ms.sensitivity;
     float const dx   = sens.x * ms.relative.x;
     float const dy   = sens.y * ms.relative.y;
-    camera.rotate(dx, dy);
+    camera.rotate(dx, 0.0f);
+    auto& movement = player.movement;
     wo.rotate_to_match_camera_rotation(camera);
   }
   else if (camera.mode() == CameraMode::ThirdPerson) {
-    LOG_ERROR("TPS");
     if (ms.left_pressed) {
       auto const& sens = ms.sensitivity;
       float const dx   = sens.x * ms.relative.x;
@@ -181,8 +178,6 @@ process_mousebutton_down(GameState& state, Player& player, SDL_MouseButtonEvent 
   if (button == SDL_BUTTON_MIDDLE) {
     LOG_INFO("toggling mouse up/down (pitch) lock");
     camera.rotate_lock ^= true;
-
-    player.world_object.rotate_to_match_camera_rotation(camera);
   }
 }
 
@@ -212,18 +207,7 @@ process_keyup(GameState& state, Player& player, SDL_Event const& event, Camera& 
   auto& movement = player.movement;
 
   switch (event.key.keysym.sym) {
-    case SDLK_w:
-    movement.forward = glm::vec3{0};
-      break;
-    case SDLK_s:
-    movement.backward = glm::vec3{0};
-      break;
-    case SDLK_d:
-    movement.right = glm::vec3{0};
-      break;
-    case SDLK_a:
-    movement.left = glm::vec3{0};
-      break;
+    break;
   }
 }
 
@@ -256,21 +240,6 @@ process_keydown(GameState& state, Player& player, SDL_Event const& event, Camera
     chat_state.currently_editing ^= true;
     chat_state.reset_yscroll_position = true;
     break;
-  case SDLK_w:
-    movement.forward = player_wo.world_forward();
-    LOG_ERROR("ADJUSTING MOVE DIR");
-    break;
-  case SDLK_s:
-    movement.backward = player_wo.world_backward();
-    break;
-  case SDLK_d:
-    movement.right = player_wo.world_right();
-    LOG_ERROR("ADJUSTING MOVE DIR");
-    break;
-  case SDLK_a:
-    movement.left = player_wo.world_left();
-    LOG_ERROR("ADJUSTING MOVE DIR");
-    break;
   case SDLK_e:
     if (event.key.keysym.mod & KMOD_CTRL) {
       debug.show_entitywindow ^= true;
@@ -292,14 +261,10 @@ process_keydown(GameState& state, Player& player, SDL_Event const& event, Camera
     break;
   case SDLK_TAB: {
     uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
-    assert(keystate);
-
-    if (!keystate[SDL_SCANCODE_LSHIFT]) {
-      nbt.cycle_forward(ft);
-    }
-    else {
-      nbt.cycle_backward(ft);
-    }
+    CycleDirection const dir = keystate[SDL_SCANCODE_LSHIFT]
+      ? CycleDirection::Forward
+      : CycleDirection::Backward;
+    nbt.cycle(dir, ft);
   } break;
   case SDLK_BACKQUOTE: {
     auto&      inventory = player.inventory;
@@ -420,10 +385,8 @@ process_mousestate(GameState& state, Camera& camera, FrameTime const& ft)
   if (both_yes_now) {
     wo.rotate_to_match_camera_rotation(camera);
     movement.mouse_forward = wo.world_forward();
-    LOG_ERROR("both mouse buttons pressed");
   }
-  else if (both_yes_prev && !both_yes_now) {
-    LOG_ERROR("either mouse button let up");
+  else {
     movement.mouse_forward = glm::vec3{0};
   }
 }
@@ -435,28 +398,34 @@ process_keystate(GameState& state, Camera& camera, FrameTime const& ft)
   uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
   assert(keystate);
 
-  auto& es     = state.engine_state;
-  auto& lm     = state.level_manager;
-  auto& ldata  = lm.active().level_data;
+  auto& es       = state.engine_state;
+  auto& logger = es.logger;
+  auto& lm       = state.level_manager;
+  auto& zs       = lm.active();
+  auto& ldata    = zs.level_data;
+  auto& registry = zs.registry;
 
-  if (keystate[SDL_SCANCODE_W]) {
-    // move_forward(state, player, ft);
-  }
-  if (keystate[SDL_SCANCODE_S]) {
-    // move_backward(state, player, ft);
-  }
-  if (keystate[SDL_SCANCODE_A]) {
-    // move_left(state, player, ft);
-  }
-  if (keystate[SDL_SCANCODE_D]) {
-    // move_right(state, player, ft);
-  }
-  if (keystate[SDL_SCANCODE_Q]) {
-    // move_up(state, player, ft);
-  }
-  if (keystate[SDL_SCANCODE_E]) {
-    // move_down(state, player, ft);
-  }
+  auto const player_eid = find_player(registry);
+  auto& player = registry.get<Player>(player_eid);
+  auto &movement = player.movement;
+
+  auto constexpr ZERO = glm::vec3{0};
+  auto& wo = player.world_object;
+
+  movement.forward = keystate[SDL_SCANCODE_W]
+    ? wo.world_forward()
+    : ZERO;
+  movement.backward = keystate[SDL_SCANCODE_S]
+    ? wo.world_backward()
+    : ZERO;
+
+  movement.left = keystate[SDL_SCANCODE_A]
+    ? wo.world_left()
+    : ZERO;
+
+  movement.right = keystate[SDL_SCANCODE_D]
+    ? wo.world_right()
+    : ZERO;
 }
 
 void
@@ -466,7 +435,11 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Cam
   if (controllers.empty()) {
     return;
   }
+
   auto& es     = state.engine_state;
+  auto& lm     = state.level_manager;
+  auto& registry  = lm.active().registry;
+
   auto& logger = es.logger;
   auto& c      = controllers.first();
 
@@ -483,46 +456,43 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Cam
   int32_t constexpr AXIS_MIN = -32768;
   int32_t constexpr AXIS_MAX = 32767;
 
-  auto& lm     = state.level_manager;
-  auto& registry  = lm.active().registry;
-
   auto const player_eid = find_player(registry);
   auto& player = registry.get<Player>(player_eid);
   auto& player_wo = player.world_object;
 
   auto constexpr THRESHOLD  = 0.4f;
-  auto const less_threshold = [](auto const& v) { return v <= 0 && (v <= AXIS_MIN * THRESHOLD); };
+  auto const less_threshold = [&](auto const& v) { return v <= 0 && (v <= AXIS_MIN * THRESHOLD); };
   auto const greater_threshold = [](auto const& v) {
     return v >= 0 && (v >= AXIS_MAX * THRESHOLD);
   };
 
   auto& movement = player.movement;
-  auto const left_axis_x = c.left_axis_x();
-  if (less_threshold(left_axis_x)) {
-    player_wo.rotate_to_match_camera_rotation(camera);
+  auto const axis_left_x = c.axis_left_x();
+  if (less_threshold(axis_left_x)) {
     movement.left = player_wo.world_left();
+    player_wo.rotate_to_match_camera_rotation(camera);
   }
   else {
     movement.left = glm::vec3{0};
   }
-  if (greater_threshold(left_axis_x)) {
-    player_wo.rotate_to_match_camera_rotation(camera);
+  if (greater_threshold(axis_left_x)) {
     movement.right = player_wo.world_right();
+    player_wo.rotate_to_match_camera_rotation(camera);
   }
   else {
     movement.right = glm::vec3{0};
   }
-  auto const left_axis_y = c.left_axis_y();
-  if (less_threshold(left_axis_y)) {
-    player_wo.rotate_to_match_camera_rotation(camera);
+  auto const axis_left_y = c.axis_left_y();
+  if (less_threshold(axis_left_y)) {
     movement.forward = player_wo.world_forward();
+    player_wo.rotate_to_match_camera_rotation(camera);
   }
   else {
     movement.forward = glm::vec3{0};
   }
-  if (greater_threshold(left_axis_y)) {
-    player_wo.rotate_to_match_camera_rotation(camera);
+  if (greater_threshold(axis_left_y)) {
     movement.backward = player_wo.world_backward();
+    player_wo.rotate_to_match_camera_rotation(camera);
   }
   else {
     movement.backward = glm::vec3{0};
@@ -534,18 +504,22 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Cam
     return axis * ft.delta_millis() * CONTROLLER_SENSITIVITY;
   };
   {
-    auto const right_axis_x = c.right_axis_x();
-    if (less_threshold(right_axis_x)) {
-      float const dx = calc_delta(right_axis_x);
+    auto const axis_right_x = c.axis_right_x();
+    if (less_threshold(axis_right_x)) {
+      LOG_ERROR("LT");
+      float const dx = calc_delta(axis_right_x);
       camera.rotate(dx, 0.0);
+      player_wo.rotate_to_match_camera_rotation(camera);
     }
-    if (greater_threshold(right_axis_x)) {
-      float const dx = calc_delta(right_axis_x);
+    if (greater_threshold(axis_right_x)) {
+      LOG_ERROR("GT");
+      float const dx = calc_delta(axis_right_x);
       camera.rotate(dx, 0.0);
+      player_wo.rotate_to_match_camera_rotation(camera);
     }
   }
   {
-    auto const right_axis_y = c.right_axis_y();
+    auto const right_axis_y = c.axis_right_y();
     if (less_threshold(right_axis_y)) {
       float const dy = calc_delta(right_axis_y);
       camera.rotate(0.0, dy);
@@ -557,54 +531,71 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Cam
   }
 
   if (c.button_a()) {
-    LOG_INFO("BUTTON A\n");
+    LOG_DEBUG("BUTTON A\n");
     try_pickup_nearby_item(state, ft);
   }
   if (c.button_b()) {
-    LOG_INFO("BUTTON B\n");
+    LOG_DEBUG("BUTTON B\n");
   }
   if (c.button_x()) {
-    LOG_INFO("BUTTON X\n");
+    LOG_DEBUG("BUTTON X\n");
   }
   if (c.button_y()) {
-    LOG_INFO("BUTTON Y\n");
+    LOG_DEBUG("BUTTON Y\n");
   }
 
   if (c.button_back()) {
-    LOG_INFO("BUTTON BACK\n");
+    LOG_DEBUG("BUTTON BACK\n");
   }
   if (c.button_guide()) {
-    LOG_INFO("BUTTON GUIDE\n");
+    LOG_DEBUG("BUTTON GUIDE\n");
   }
   if (c.button_start()) {
-    LOG_INFO("BUTTON START\n");
+    LOG_DEBUG("BUTTON START\n");
   }
 
+  // joystick buttons
   if (c.button_left_joystick()) {
-    LOG_INFO("BUTTON LEFT JOYSTICK\n");
+    LOG_DEBUG("BUTTON LEFT JOYSTICK\n");
   }
   if (c.button_right_joystick()) {
-    LOG_INFO("BUTTON RIGHT JOYSTICK\n");
+    LOG_DEBUG("BUTTON RIGHT JOYSTICK\n");
   }
 
+  // shoulder buttons
   if (c.button_left_shoulder()) {
-    LOG_INFO("BUTTON LEFT SHOULDER\n");
+    LOG_DEBUG("BUTTON LEFT SHOULDER\n");
   }
   if (c.button_right_shoulder()) {
-    LOG_INFO("BUTTON RIGHT SHOULDER\n");
+    LOG_DEBUG("BUTTON RIGHT SHOULDER\n");
   }
 
+  // trigger buttons
+  if (c.button_left_trigger()) {
+    LOG_DEBUG("BUTTON LEFT TRIGGER\n");
+  }
+  if (c.button_right_trigger()) {
+    LOG_DEBUG("BUTTON RIGHT TRIGGER\n");
+  }
+
+  // d-pad buttons
   if (c.button_dpad_down()) {
-    LOG_INFO("BUTTON DPAD DOWN\n");
+    LOG_DEBUG("BUTTON DPAD DOWN\n");
   }
   if (c.button_dpad_up()) {
-    LOG_INFO("BUTTON DPAD UP\n");
+    LOG_DEBUG("BUTTON DPAD UP\n");
   }
+
+  auto& zs       = lm.active();
+  auto& ldata    = zs.level_data;
+  auto& nbt = ldata.nearby_targets;
   if (c.button_dpad_left()) {
-    LOG_INFO("BUTTON DPAD LEFT\n");
+    LOG_DEBUG("BUTTON DPAD LEFT\n");
+    nbt.cycle_backward(ft);
   }
   if (c.button_dpad_right()) {
-    LOG_INFO("BUTTON DPAD RIGHT\n");
+    LOG_DEBUG("BUTTON DPAD RIGHT\n");
+    nbt.cycle_forward(ft);
   }
 }
 
@@ -698,9 +689,18 @@ void
 IO::process(GameState& state, SDLControllers const& controllers, Camera& camera,
             FrameTime const& ft)
 {
+  auto& es         = state.engine_state;
+  auto& uistate    = es.ui_state;
+  auto& ingame     = uistate.ingame;
+  auto& chat_state = ingame.chat_state;
+
+  if (chat_state.currently_editing) {
+    return;
+  }
+
   process_mousestate(state, camera, ft);
   process_keystate(state, camera, ft);
-  if (state.engine_state.use_controller_input) {
+  if (!state.engine_state.disable_controller_input) {
     // TODO: using controller and keyboard input at the same time does not work.
     // reason: The controller when it's stick's aren't activated, every frame, set's the same
     // variables to the keyboard controller would use to 0, effectively nullifying any input the

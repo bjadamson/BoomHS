@@ -51,13 +51,16 @@ draw_menu(EngineState& es, ImVec2 const& size, WaterAudioSystem& water_audio)
     }
     main_menu.show_options |= ImGui::Button("Options");
     if (main_menu.show_options) {
+      auto& uistate = es.ui_state;
       auto const fn = [&]() {
         ImGui::Text("Options");
-        ImGui::Separator();
+        ImGui::Checkbox("Disable Controller Input", &es.disable_controller_input);
+        ImGui::Text("UI");
+        ImGui::Checkbox("Draw Debug", &uistate.draw_debug_ui);
+        ImGui::Checkbox("Draw InGame", &uistate.draw_ingame_ui);
         ImGui::Separator();
         ImGui::Text("Audio");
 
-        auto& uistate = es.ui_state;
         auto& ui_debug = uistate.debug;
         auto& audio   = ui_debug.buffers.audio;
         if (ImGui::SliderFloat("Ambient Volume", &audio.ambient, 0.0f, 1.0f)) {
@@ -78,11 +81,6 @@ draw_menu(EngineState& es, ImVec2 const& size, WaterAudioSystem& water_audio)
         }
         ImGui::Separator();
         ImGui::Checkbox("Disable Sun Shafts", &gs.disable_sunshafts);
-
-        ImGui::Separator();
-        ImGui::Text("IMGUI");
-        ImGui::Checkbox("Draw Debug", &uistate.draw_debug_ui);
-        ImGui::Checkbox("Draw InGame", &uistate.draw_ingame_ui);
       };
       imgui_cxx::with_window(fn, "Options Window");
     }

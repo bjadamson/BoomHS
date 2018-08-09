@@ -918,8 +918,9 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
     set_camera_once = true;
   }
 
-  static auto audio_r     = WaterAudioSystem::create();
-  static auto water_audio = audio_r.expect_moveout("WAS");
+  static auto water_audio = WaterAudioSystem::create()
+    .expect_moveout("Water Audio System");
+  water_audio.set_volume(es.ui_state.debug.buffers.audio.ambient);
 
   DrawState ds;
 

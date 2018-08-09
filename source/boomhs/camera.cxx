@@ -239,8 +239,7 @@ Camera::compute_projectionmatrix(CameraMode const mode, PerspectiveViewport cons
 
 glm::mat4
 Camera::compute_viewmatrix(CameraMode const mode, glm::vec3 const& pos, glm::vec3 const& target,
-                           glm::vec3 const& up, glm::vec3 const& camera_forward,
-                           glm::vec3 const& target_up)
+                           glm::vec3 const& up, glm::vec3 const& camera_forward)
 {
   auto constexpr ZERO = glm::vec3{0};
 

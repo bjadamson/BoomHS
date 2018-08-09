@@ -115,12 +115,15 @@ update_position(EngineState& es, ZoneState& zs, FrameTime const& ft)
   auto const& movement = player.movement;
 
   // Move the player forward along the it's movement direction
+  auto move_dir = movement.forward
+    + movement.backward
+    + movement.left
+    + movement.right;
+    + movement.mouse_forward;
 
-  auto move_dir = movement.forward + movement.backward + movement.left + movement.right + movement.mouse_forward;
   if (move_dir != glm::vec3{0}) {
     move_dir = glm::normalize(move_dir);
   }
-
   move_worldobject(es, player.world_object, move_dir, terrain, ft);
 
   // Lookup the player height from the terrain at the player's X, Z world-coordinates.

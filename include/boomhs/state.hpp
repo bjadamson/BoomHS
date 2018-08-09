@@ -62,7 +62,7 @@ struct EngineState
   bool                 game_running      = false;
   GameGraphicsSettings graphics_settings = {};
 
-  bool use_controller_input = false;
+  bool disable_controller_input = false;
 
   MouseStates mouse_states = {};
   WindowState window_state = {};

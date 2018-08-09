@@ -22,14 +22,11 @@ struct Controller
 
   //
   // Axis
-  int16_t left_axis_x() const;
-  int16_t left_axis_y() const;
+  int16_t axis_left_x() const;
+  int16_t axis_left_y() const;
 
-  int16_t right_axis_x() const;
-  int16_t right_axis_y() const;
-
-  int16_t left_bumper() const;
-  int16_t right_bumper() const;
+  int16_t axis_right_x() const;
+  int16_t axis_right_y() const;
 
   //
   // Buttons
@@ -47,6 +44,9 @@ struct Controller
 
   bool button_left_shoulder() const;
   bool button_right_shoulder() const;
+
+  bool button_left_trigger() const;
+  bool button_right_trigger() const;
 
   bool button_dpad_down() const;
   bool button_dpad_up() const;

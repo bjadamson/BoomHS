@@ -7,7 +7,7 @@ using namespace window;
 namespace
 {
 
-auto
+int16_t
 read_axis(SDL_GameControllerAxis const axis, Controller const& c)
 {
   return SDL_GameControllerGetAxis(c.controller.get(), axis);
@@ -16,7 +16,7 @@ read_axis(SDL_GameControllerAxis const axis, Controller const& c)
 bool
 is_pressed(SDL_GameControllerButton const button, Controller const& c)
 {
-  return (1 == SDL_JoystickGetButton(c.joystick, button));
+  return (1 == SDL_GameControllerGetButton(c.controller.get(), button));
 }
 
 } // namespace
@@ -41,28 +41,36 @@ operator<<(std::ostream& stream, Controller const& c)
   // TODO: It seems like the SDL controller mapping for my xbox 360 is wrong? I need to dig into
   // it, but aside from that, there's enough here for full controller suport. :D
   auto const fmt = fmt::format(
-      "left_x:       {} left_y: {}\n"
-      "right_x:      {} right_y: {}\n"
-      "trigger_left: {} trigger_right: {}\n"
+      "left axis: ({}, {}), right axis: ({}, {})\n"
+      "joystick left: {}, right: {}\n"
 
+      "buttons\n"
       "a: {}, b: {}, x: {}, y: {}\n"
       "back: {}, guide: {}, start: {}\n"
-      "js_left: {}, js_right: {}\n"
-      "shoulder_left: {}, shoulder_right: {}\n"
 
-      "dpad_down: {}, dpad_up: {}\n"
-      "dpad_left: {}, dpad_right: {}\n",
+      "joystick buttons:\n"
+      "trigger_left: {} trigger_right: {} "
+      "shoulder_left: {}, shoulder_right: {}"
 
-      c.left_axis_x(),  c.left_axis_y(),
-      c.right_axis_x(), c.right_axis_y(),
+      "dpad buttons:\n"
+      "dpad_down: {}, dpad_up: {} "
+      "dpad_left: {}, dpad_right: {}",
 
-      c.left_bumper(),  c.right_bumper(),
+      // axis
+      c.axis_left_x(),  c.axis_left_y(),
+      c.axis_right_x(), c.axis_right_y(),
 
+
+      // joysticsk
+      c.button_left_joystick(), c.button_right_joystick(),
+
+      // button
       c.button_a(),     c.button_b(),    c.button_x(),     c.button_y(),
       c.button_back(),  c.button_back(), c.button_guide(), c.button_start(),
 
-      c.button_left_joystick(), c.button_right_joystick(),
+      c.button_left_trigger(),  c.button_right_trigger(),
       c.button_left_shoulder(), c.button_right_shoulder(),
+
       c.button_dpad_down(), c.button_dpad_up(),
       c.button_dpad_left(), c.button_dpad_right());
   // clang-format on
@@ -111,6 +119,7 @@ Controller::button_start() const
   return is_pressed(SDL_CONTROLLER_BUTTON_START, *this);
 }
 
+// joystick buttons
 bool
 Controller::button_left_joystick() const
 {
@@ -123,6 +132,7 @@ Controller::button_right_joystick() const
   return is_pressed(SDL_CONTROLLER_BUTTON_RIGHTSTICK, *this);
 }
 
+// shoulder buttons
 bool
 Controller::button_left_shoulder() const
 {
@@ -135,6 +145,22 @@ Controller::button_right_shoulder() const
   return is_pressed(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, *this);
 }
 
+// trigger buttons
+// NOTE: We *could* use the axis to figure out how much the controller is preseing down the trigger
+// button if we want.
+bool
+Controller::button_left_trigger() const
+{
+  return read_axis(SDL_CONTROLLER_AXIS_TRIGGERLEFT, *this) > 0;
+}
+
+bool
+Controller::button_right_trigger() const
+{
+  return read_axis(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, *this) > 0;
+}
+
+// d-pad buttons
 bool
 Controller::button_dpad_down() const
 {
@@ -160,39 +186,27 @@ Controller::button_dpad_right() const
 }
 
 int16_t
-Controller::left_axis_x() const
+Controller::axis_left_x() const
 {
   return read_axis(SDL_CONTROLLER_AXIS_LEFTX, *this);
 }
 
 int16_t
-Controller::left_axis_y() const
+Controller::axis_left_y() const
 {
   return read_axis(SDL_CONTROLLER_AXIS_LEFTY, *this);
 }
 
 int16_t
-Controller::right_axis_x() const
+Controller::axis_right_x() const
 {
   return read_axis(SDL_CONTROLLER_AXIS_RIGHTX, *this);
 }
 
 int16_t
-Controller::right_axis_y() const
+Controller::axis_right_y() const
 {
   return read_axis(SDL_CONTROLLER_AXIS_RIGHTY, *this);
-}
-
-int16_t
-Controller::left_bumper() const
-{
-  return read_axis(SDL_CONTROLLER_AXIS_TRIGGERLEFT, *this);
-}
-
-int16_t
-Controller::right_bumper() const
-{
-  return read_axis(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, *this);
 }
 
 void

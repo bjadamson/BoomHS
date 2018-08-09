@@ -54,7 +54,7 @@ struct TerrainBuffer
 
 struct AudioUiBuffer
 {
-  float ambient = 1.0f;
+  float ambient = 0.227f;
 };
 
 struct WaterBuffer

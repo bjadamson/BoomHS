@@ -23,7 +23,7 @@ from_camera_common(Camera const& camera, glm::vec3 const& pos, CameraMode const 
   auto const& camera_forward = camera.world_forward();
 
   auto const target_forward = target.world_forward();
-  auto const view = Camera::compute_viewmatrix(mode, pos, target_tr, camera_up, target_forward, camera_up);
+  auto const view = Camera::compute_viewmatrix(mode, pos, target_tr, camera_up, target_forward);
   return CameraFrameState{pos, proj, view, mode};
 }
 

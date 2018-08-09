@@ -65,6 +65,18 @@ NearbyTargets::clear()
 }
 
 void
+NearbyTargets::cycle(CycleDirection const cycle_dir, FrameTime const& ft)
+{
+  if (CycleDirection::Forward == cycle_dir) {
+    cycle_forward(ft);
+  }
+  else {
+    assert(CycleDirection::Backward == cycle_dir);
+    cycle_backward(ft);
+  }
+}
+
+void
 NearbyTargets::cycle_forward(FrameTime const& ft)
 {
   if (!selected_ && !targets_.empty()) {
