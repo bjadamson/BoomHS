@@ -114,7 +114,7 @@ update_npcpositions(stlw::Logger& logger, EntityRegistry& registry, TerrainGrid&
 
     auto& tr = transform.translation;
     float const height = terrain.get_height(logger, tr.x, tr.z);
-    tr.y = height + (bbox.dimensions().y / 2.0f);
+    tr.y = height + bbox.half_widths().y;
   };
   for (auto const eid : registry.view<NPCData, Transform, AABoundingBox>()) {
     update(eid);
@@ -331,7 +331,7 @@ update_everything(EngineState& es, LevelManager& lm, stlw::float_generator& rng,
 
   // Update these as a chunk, so they stay in the correct order.
   auto& terrain = ldata.terrain;
-  update_npcpositions(logger, registry, terrain, ft);
+  //update_npcpositions(logger, registry, terrain, ft);
   update_nearbytargets(nbt, registry, ft);
 
   bool const previously_alive = is_target_selected_and_alive(registry, nbt);

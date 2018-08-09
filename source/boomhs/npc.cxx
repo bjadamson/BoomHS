@@ -1,5 +1,6 @@
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/material.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/terrain.hpp>
 
@@ -70,6 +71,9 @@ NPC::create(EntityRegistry& registry, char const* name, int const level, glm::ve
   auto eid = registry.create();
   registry.assign<opengl::Color>(eid);
   registry.assign<Name>(eid).value = name;
+
+  // TODO: look this up in the material table
+  registry.assign<Material>(eid);
 
   // Enemies get a mesh
   auto& meshc = registry.assign<MeshRenderable>(eid);

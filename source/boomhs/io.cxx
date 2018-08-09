@@ -143,12 +143,16 @@ select_mouse_under_cursor(FrameState& fstate)
     auto const& transform  = registry.get<Transform>(eid);
     auto&       selectable = registry.get<Selectable>(eid);
 
-    Ray const  ray{ray_start, ray_dir};
-    bool const intersects = collision::ray_box_intersect(ray, transform, bbox);
+    //Ray const  ray{ray_start, ray_dir};
+    //bool const intersects = collision::ray_box_intersect(ray, transform, bbox);
+    auto const model_matrix = transform.model_matrix();
+
+    float distance = 0.0f;
+    bool const intersects = collision::ray_obb_intersection(ray_start, ray_dir, bbox.min, bbox.max, model_matrix, distance);
     selectable.selected   = intersects;
 
     if (intersects) {
-      LOG_ERROR_SPRINTF("intersects (YES) %i", intersects);
+      LOG_ERROR_SPRINTF("intersects (YES) %i distance %f", intersects, distance);
       uistate.selected_entity = static_cast<int>(eid);
     }
   }

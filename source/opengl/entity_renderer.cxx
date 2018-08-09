@@ -10,6 +10,11 @@
 
 #include <opengl/renderer.hpp>
 
+// TEMP
+#include <opengl/factory.hpp>
+#include <opengl/gpu.hpp>
+#include <opengl/shapes.hpp>
+
 #include <stlw/log.hpp>
 #include <stlw/random.hpp>
 #include <window/timer.hpp>
@@ -92,14 +97,23 @@ draw_entity_common_without_binding_sp(RenderState& rstate, GLenum const dm, Shad
     bool const is_lightsource = registry.has<PointLight>(eid);
     bool const receives_light = registry.has<Material>(eid);
     if (is_lightsource) {
+      LOG_WARN("LIGHTSOURCE");
       render::draw_3dlightsource(rstate, dm, model_matrix, sp, dinfo, eid, registry);
     }
     else if (receives_light) {
+      LOG_WARN("RECEVIES LIGHT");
       auto const& tr = transform.translation;
       draw_shape_with_light(rstate, dm, eid, registry, sp, dinfo, tr, model_matrix);
       return;
     }
     else {
+      // TODO: If it's 2d, no surprise.
+      // If it's 3d, I expect it to be the wireframe shader, that's it..
+      LOG_WARN("NEITHER");
+      if (!sp.is_2d) {
+        // should only be wireframes for now..
+        //std::abort();
+      }
       draw_object_withoutlight(rstate, dm, registry, fstate, sp, dinfo, model_matrix);
     }
   };
@@ -340,11 +354,18 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_color(logger, "u_wirecolor", wire_color);
-      auto& dinfo = draw_handles.bbox();
+      //auto& dinfo = draw_handles.bbox();
+
+      CubeMinMax const cmm{bbox.min, bbox.max};
+      auto const cv = OF::cube_vertices(cmm.min, cmm.max);
+      auto    dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, cv, sp.va());
 
       // We needed to bind the shader program to set the uniforms above, no reason to pay to bind
       // it again.
-      draw_entity_common_without_binding_sp(rstate, GL_LINES, sp, dinfo, eid, transform);
+      auto copy_transform = tr;
+      LOG_WARN("DRAW BBOX BEGIN");
+      draw_entity_common_without_binding_sp(rstate, GL_LINES, sp, dinfo, eid, copy_transform);
+      LOG_WARN("DRAW BBOX END");
     });
   };
 
