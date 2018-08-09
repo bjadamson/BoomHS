@@ -170,6 +170,44 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
       auto& dinfo = draw_handles.lookup_entity(logger, eid);
       Tree::update_colors(logger, va, dinfo, tc);
     }
+
+    if (registry.has<PointLight>(eid) && ImGui::CollapsingHeader("Pointlight")) {
+      auto& transform  = registry.get<Transform>(eid);
+      auto& pointlight = registry.get<PointLight>(eid);
+      auto& light      = pointlight.light;
+      ImGui::InputFloat3("position:", glm::value_ptr(transform.translation));
+      ImGui::ColorEdit3("diffuse:", light.diffuse.data());
+      ImGui::ColorEdit3("specular:", light.specular.data());
+      ImGui::Separator();
+
+      ImGui::Text("Attenuation");
+      auto& attenuation = pointlight.attenuation;
+      ImGui::InputFloat("constant:", &attenuation.constant);
+      ImGui::InputFloat("linear:", &attenuation.linear);
+      ImGui::InputFloat("quadratic:", &attenuation.quadratic);
+
+      if (registry.has<LightFlicker>(eid)) {
+        ImGui::Separator();
+        ImGui::Text("Light Flicker");
+
+        auto& flicker = registry.get<LightFlicker>(eid);
+        ImGui::InputFloat("speed:", &flicker.current_speed);
+
+        FOR(i, flicker.colors.size())
+        {
+          auto& light = flicker.colors[i];
+          ImGui::ColorEdit4("color:", light.data(), ImGuiColorEditFlags_Float);
+          ImGui::Separator();
+        }
+      }
+    }
+    if (registry.has<Material>(eid) && ImGui::CollapsingHeader("Material")) {
+      auto& material = registry.get<Material>(eid);
+      ImGui::ColorEdit3("ambient:", glm::value_ptr(material.ambient));
+      ImGui::ColorEdit3("diffuse:", glm::value_ptr(material.diffuse));
+      ImGui::ColorEdit3("specular:", glm::value_ptr(material.specular));
+      ImGui::SliderFloat("shininess:", &material.shininess, 0.0f, 1.0f);
+    }
   };
 
   imgui_cxx::with_window(draw, "Entity Editor Window");
@@ -660,91 +698,6 @@ show_ambientlight_window(UiDebugState& ui, LevelData& ldata)
 }
 
 void
-show_material_editor(char const* text, Material& material)
-{
-  ImGui::Text("%s", text);
-  ImGui::ColorEdit3("ambient:", glm::value_ptr(material.ambient));
-  ImGui::ColorEdit3("diffuse:", glm::value_ptr(material.diffuse));
-  ImGui::ColorEdit3("specular:", glm::value_ptr(material.specular));
-  ImGui::SliderFloat("shininess:", &material.shininess, 0.0f, 1.0f);
-}
-
-void
-show_entitymaterials_window(UiDebugState& ui, EntityRegistry& registry)
-{
-  auto& selected_material = ui.selected_material;
-
-  auto const draw = [&]() {
-
-    auto& selected_pointlight = ui.selected_pointlight;
-    auto  pairs = collect_name_eid_pairs<Material, Transform>(registry);
-    display_combo_for_pairs("Material:", &selected_material, pairs);
-
-    //auto const  entities_with_materials = find_materials(registry);
-    //auto const& selected_entity         = entities_with_materials[selected_material];
-
-    auto const selected_entity = pairs[selected_material].second;
-    auto& material = registry.get<Material>(selected_entity);
-    ImGui::Separator();
-    show_material_editor("Entity Material:", material);
-
-    if (ImGui::Button("Close", ImVec2(120, 0))) {
-      ui.show_entitymaterial_window = false;
-    }
-  };
-  imgui_cxx::with_window(draw, "Entity Materials Editor");
-}
-
-void
-show_pointlight_window(UiDebugState& ui, EntityRegistry& registry)
-{
-  auto const display_pointlight = [&registry](EntityID const eid) {
-    auto& transform  = registry.get<Transform>(eid);
-    auto& pointlight = registry.get<PointLight>(eid);
-    auto& light      = pointlight.light;
-    ImGui::InputFloat3("position:", glm::value_ptr(transform.translation));
-    ImGui::ColorEdit3("diffuse:", light.diffuse.data());
-    ImGui::ColorEdit3("specular:", light.specular.data());
-    ImGui::Separator();
-
-    ImGui::Text("Attenuation");
-    auto& attenuation = pointlight.attenuation;
-    ImGui::InputFloat("constant:", &attenuation.constant);
-    ImGui::InputFloat("linear:", &attenuation.linear);
-    ImGui::InputFloat("quadratic:", &attenuation.quadratic);
-
-    if (registry.has<LightFlicker>(eid)) {
-      ImGui::Separator();
-      ImGui::Text("Light Flicker");
-
-      auto& flicker = registry.get<LightFlicker>(eid);
-      ImGui::InputFloat("speed:", &flicker.current_speed);
-
-      FOR(i, flicker.colors.size())
-      {
-        auto& light = flicker.colors[i];
-        ImGui::ColorEdit4("color:", light.data(), ImGuiColorEditFlags_Float);
-        ImGui::Separator();
-      }
-    }
-  };
-  auto const draw_pointlight_editor = [&]() {
-    auto& selected_pointlight = ui.selected_pointlight;
-    auto  pairs               = collect_name_eid_pairs<PointLight, Transform>(registry);
-    display_combo_for_pairs("PointLight:", &selected_pointlight, pairs);
-    ImGui::Separator();
-
-    auto const pointlights = find_pointlights(registry);
-    display_pointlight(pairs[selected_pointlight].second);
-
-    if (ImGui::Button("Close", ImVec2(120, 0))) {
-      ui.show_pointlight_window = false;
-    }
-  };
-  imgui_cxx::with_window(draw_pointlight_editor, "Pointlight Editor");
-}
-
-void
 show_environment_window(UiDebugState& state, LevelData& ldata)
 {
   auto&      fog  = ldata.fog;
@@ -783,29 +736,19 @@ void
 lighting_menu(EngineState& es, LevelData& ldata, EntityRegistry& registry)
 {
   auto& ui                     = es.ui_state.debug;
-  bool& edit_pointlights       = ui.show_pointlight_window;
   bool& edit_ambientlight      = ui.show_ambientlight_window;
   bool& edit_directionallights = ui.show_directionallight_window;
-  bool& edit_entitymaterials   = ui.show_entitymaterial_window;
 
   auto const draw = [&]() {
-    ImGui::MenuItem("Point-Lights", nullptr, &edit_pointlights);
     ImGui::MenuItem("Ambient Lighting", nullptr, &edit_ambientlight);
     ImGui::MenuItem("Directional Lighting", nullptr, &edit_directionallights);
-    ImGui::MenuItem("Entity Materials", nullptr, &edit_entitymaterials);
   };
   imgui_cxx::with_menu(draw, "Lightning");
-  if (edit_pointlights) {
-    show_pointlight_window(ui, registry);
-  }
   if (edit_ambientlight) {
     show_ambientlight_window(ui, ldata);
   }
   if (edit_directionallights) {
     show_directionallight_window(ui, ldata);
-  }
-  if (edit_entitymaterials) {
-    show_entitymaterials_window(ui, registry);
   }
 }
 

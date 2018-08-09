@@ -85,9 +85,6 @@ struct UiDebugState
   Buffers buffers;
 
   int selected_entity   = 0;
-  int selected_material = 0;
-
-  int selected_pointlight = 0;
 
   // primitive buffers
   int       eid_buffer = 0;
@@ -100,18 +97,15 @@ struct UiDebugState
   bool show_debugwindow             = true;
   bool show_directionallight_window = false;
 
-  bool show_entitymaterial_window = false;
   bool show_entitywindow          = false;
 
   bool show_environment_window = false;
   bool show_mousewindow        = false;
 
   bool show_playerwindow      = false;
-  bool show_pointlight_window = false;
   bool show_skyboxwindow      = false;
   bool show_time_window       = false;
 
-  bool show_terrain_gridmaterial_window = false;
   bool show_terrain_editor_window       = false;
   bool show_water_window                = false;
 };
