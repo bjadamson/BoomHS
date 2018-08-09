@@ -113,6 +113,24 @@ struct TerrainGridConfig
   TerrainGridConfig();
 };
 
+// The result of checking whether a position is outside of the terrain grid.
+//
+// It is implicitely convertible to a bool for easy checking, or you can check the individual
+// components if you need.
+struct TerrainOutOfBoundsResult
+{
+  bool const x;
+  bool const z;
+  explicit TerrainOutOfBoundsResult(bool const xp, bool const zp)
+      : x(xp)
+      , z(zp)
+  {
+  }
+
+  bool is_out() const { return x || z; }
+  explicit operator bool() const { return is_out(); }
+};
+
 class TerrainGrid
 {
   TerrainArray terrain_;
@@ -143,8 +161,9 @@ public:
   auto count() const { return terrain_.size(); }
   auto size() const { return count(); }
 
-  float       get_height(stlw::Logger&, float, float) const;
-  std::string to_string() const;
+  float                    get_height(stlw::Logger&, float, float) const;
+  TerrainOutOfBoundsResult out_of_bounds(float, float) const;
+  std::string              to_string() const;
 };
 
 template <typename FN, typename... Args>

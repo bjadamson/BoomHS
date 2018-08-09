@@ -75,9 +75,7 @@ move_worldobject(EngineState& es, WorldObject& wo, glm::vec3 const& move_vec,
   glm::vec3 const delta  = move_vec * wo.speed() * ft.delta_millis();
   glm::vec3 const newpos = wo.world_position() + delta;
 
-  bool const x_outofbounds = newpos.x >= max_x || newpos.x < 0;
-  bool const y_outofbounds = newpos.z >= max_z || newpos.z < 0;
-  bool const out_of_bounds = x_outofbounds || y_outofbounds;
+  auto const out_of_bounds = terrain.out_of_bounds(newpos.x, newpos.z);
   if (out_of_bounds && !es.mariolike_edges) {
     // If the world object *would* be out of bounds, return early (don't move the WO).
     return;
@@ -89,11 +87,11 @@ move_worldobject(EngineState& es, WorldObject& wo, glm::vec3 const& move_vec,
     return value >= max ? (value - 1) : value;
   };
 
-  if (x_outofbounds) {
+  if (out_of_bounds.x) {
     auto const new_x = flip_sides(newpos.x, 0ul, max_x);
     wo.move_to(new_x, 0.0, newpos.z);
   }
-  else if (y_outofbounds) {
+  else if (out_of_bounds.z) {
     auto const new_z = flip_sides(newpos.z, 0ul, max_z);
     wo.move_to(newpos.x, 0.0, new_z);
   }

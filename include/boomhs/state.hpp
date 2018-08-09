@@ -58,21 +58,19 @@ struct EngineState
   MainMenuState    main_menu;
   Time             time;
 
-  bool                 quit              = false;
-  bool                 game_running      = false;
-  GameGraphicsSettings graphics_settings = {};
-
-  bool disable_controller_input = false;
+  bool                 quit                  = false;
+  bool                 game_running          = false;
+  bool                 update_orbital_bodies = true;
+  GameGraphicsSettings graphics_settings     = {};
 
   MouseStates mouse_states = {};
   WindowState window_state = {};
   UiState     ui_state     = {};
 
+  bool disable_controller_input;
   bool player_collision;
   bool mariolike_edges;
   bool draw_imguimetrics;
-
-  bool update_orbital_bodies = true;
 
   // rendering state
   bool draw_bounding_boxes;

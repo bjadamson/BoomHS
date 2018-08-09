@@ -151,7 +151,9 @@ StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
   TerrainConfig const tc;
   auto& sp     = sps.ref_sp(tc.shader_name);
 
-  TerrainGridConfig const tgc;
+  TerrainGridConfig tgc;
+  tgc.num_rows = 2;
+  tgc.num_cols = 2;
   auto terrain = terrain::generate_grid(logger, tgc, tc, heightmap, sp);
 
   LOG_TRACE("Placing Torch");

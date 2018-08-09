@@ -15,6 +15,7 @@ EngineState::EngineState(stlw::Logger& l, ALCdevice& al, ImGuiIO& i, Dimensions 
     , al_device(al)
     , imgui(i)
     , dimensions(d)
+    , disable_controller_input(true)
     , player_collision(false)
     , mariolike_edges(false)
     , draw_imguimetrics(false)

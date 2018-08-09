@@ -54,7 +54,7 @@ generate_grid_data(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainCo
   {
     FOR(i, cols)
     {
-      auto const pos = glm::vec2{j, i};
+      auto const pos = glm::vec2{i, j};
       auto       t   = terrain::generate_piece(logger, pos, tgc, tc, heightmap, sp);
       tgrid.add(MOVE(t));
     }
@@ -231,9 +231,23 @@ TerrainGrid::add(Terrain&& t)
   terrain_.add(MOVE(t));
 }
 
+TerrainOutOfBoundsResult
+TerrainGrid::out_of_bounds(float const x, float const z) const
+{
+  auto const max_pos = this->max_worldpositions();
+  bool const x_outofbounds = x >= max_pos.x || x < 0;
+  bool const y_outofbounds = z >= max_pos.y || z < 0;
+  return TerrainOutOfBoundsResult{x_outofbounds, y_outofbounds};
+}
+
 float
 TerrainGrid::get_height(stlw::Logger& logger, float const x, float const z) const
 {
+  if (out_of_bounds(x, z)) {
+    LOG_ERROR_SPRINTF("Player out of bounds");
+    return 0.0f;
+  }
+
   auto const& d = config.dimensions;
 
   auto const get_terrain_under_coords = [&]() -> Terrain const& {
@@ -246,8 +260,10 @@ TerrainGrid::get_height(stlw::Logger& logger, float const x, float const z) cons
   };
 
   auto const& t       = get_terrain_under_coords();
-  float const local_x = x - (t.position().x * d.x);
-  float const local_z = z - (t.position().y * d.y);
+  auto const  t_pos   = t.position();
+  float const local_x = x - (t_pos.x * d.x);
+  float const local_z = z - (t_pos.y * d.y);
+  assert(!out_of_bounds(local_x, local_z));
 
   float const num_vertexes_minus1 = t.config.num_vertexes_along_one_side - 1;
 
@@ -256,11 +272,6 @@ TerrainGrid::get_height(stlw::Logger& logger, float const x, float const z) cons
 
   size_t const grid_x = glm::floor(local_x / grid_squaresize);
   size_t const grid_z = glm::floor(local_z / grid_squaresize);
-
-  if (grid_x >= num_vertexes_minus1 || grid_z >= num_vertexes_minus1 || grid_x < 0 || grid_z < 0) {
-    LOG_ERROR_SPRINTF("Player out of bounds");
-    return 0.0f;
-  }
 
   float const x_coord = ::fmodf(local_x, grid_squaresize) / grid_squaresize;
   float const z_coord = ::fmodf(local_z, grid_squaresize) / grid_squaresize;
@@ -280,7 +291,8 @@ TerrainGrid::get_height(stlw::Logger& logger, float const x, float const z) cons
     p3 = glm::vec3{0, hmap.data(grid_x, grid_z + 1), 1};
   }
   float const theight = barry_centric(p1, p2, p3, p4);
-  return theight / 255.0f;
+  float const bitmap_adjusted = theight / 255.0f;
+  return bitmap_adjusted * t.config.height_multiplier;
 }
 
 std::string
