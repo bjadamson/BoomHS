@@ -898,7 +898,7 @@ draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, WaterAudioSyste
     draw_camera_window(camera, player);
   }
   if (uistate.show_mousewindow) {
-    draw_mouse_window(es.mouse_state);
+    draw_mouse_window(es.mouse_states.current);
   }
   if (uistate.show_playerwindow) {
     draw_player_window(es, player.world_object);

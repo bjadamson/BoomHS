@@ -2,7 +2,7 @@
 #include <extlibs/sdl.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace window
+namespace boomhs
 {
 
 struct ScreenCoordinates
@@ -15,4 +15,4 @@ struct MouseSensitivity
   float x, y;
 };
 
-} // namespace window
+} // namespace boomhs

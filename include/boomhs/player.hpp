@@ -4,6 +4,7 @@
 #include <boomhs/gcd.hpp>
 #include <boomhs/inventory.hpp>
 #include <boomhs/world_object.hpp>
+#include <extlibs/glm.hpp>
 
 #include <optional>
 #include <stlw/log.hpp>
@@ -14,11 +15,25 @@ namespace opengl
 class TextureTable;
 } // namespace opengl
 
+namespace window
+{
+class FrameTime;
+} // namespace window
+
 namespace boomhs
 {
+class EngineState;
 struct Item;
 class NearbyTargets;
 class TerrainGrid;
+struct ZoneState;
+
+struct PlayerMovement
+{
+  glm::vec3 forward, backward, left, right;
+
+  glm::vec3 mouse_forward;
+};
 
 class Player
 {
@@ -30,13 +45,16 @@ public:
   int          level = -1;
   std::string  name;
 
+  // Current movement vector
+  PlayerMovement movement;
+
   bool is_attacking = false;
   int  damage       = 1;
 
   void pickup_entity(EntityID, EntityRegistry&);
   void drop_entity(stlw::Logger&, EntityID, EntityRegistry&);
 
-  void update(stlw::Logger&, EntityRegistry&, TerrainGrid&, opengl::TextureTable&, NearbyTargets&);
+  void update(EngineState&, ZoneState&, window::FrameTime const&);
 
   glm::vec3 world_position() const;
 

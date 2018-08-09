@@ -13,7 +13,7 @@ enum class GameGraphicsMode
 struct GameGraphicsSettings
 {
   GameGraphicsMode mode              = GameGraphicsMode::Basic;
-  bool             disable_sunshafts = false;
+  bool             disable_sunshafts = true;
 };
 
 } // namespace boomhs

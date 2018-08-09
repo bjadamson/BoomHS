@@ -12,6 +12,7 @@
 #include <boomhs/item_factory.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_manager.hpp>
+#include <boomhs/mouse.hpp>
 #include <boomhs/mouse_picker.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/orbital_body.hpp>
@@ -33,7 +34,6 @@
 
 #include <extlibs/sdl.hpp>
 #include <window/controller.hpp>
-#include <window/mouse.hpp>
 #include <window/timer.hpp>
 
 #include <stlw/log.hpp>
@@ -77,6 +77,13 @@ player_in_water(stlw::Logger& logger, EntityRegistry& registry)
     }
   }
   return false;
+}
+
+void
+update_mousestates(EngineState& es)
+{
+  auto& mss = es.mouse_states;
+  mss.previous = mss.current;
 }
 
 void
@@ -275,6 +282,100 @@ update_visible_entities(LevelManager& lm, EntityRegistry& registry)
     isv.value        = true; //terrain.is_visible(registry);
   }
 }
+
+void
+update_everything(EngineState& es, LevelManager& lm, stlw::float_generator& rng, FrameState const& fstate, StaticRenderers& static_renderers,
+                  WaterAudioSystem& water_audio, FrameTime const& ft)
+{
+  auto& skybox_renderer = static_renderers.skybox;
+
+  auto& logger   = es.logger;
+  auto& zs       = lm.active();
+  auto& registry = zs.registry;
+
+  auto& ldata  = zs.level_data;
+  auto& skybox = ldata.skybox;
+
+  auto& gfx_state = zs.gfx_state;
+  auto& ttable    = gfx_state.texture_table;
+
+  auto const player_eid = find_player(registry);
+  auto& player = registry.get<Player>(player_eid);
+
+  auto& nbt = ldata.nearby_targets;
+
+  // THIS GOES FIRST ALWAYS.
+  es.time.update(ft.since_start_seconds());
+
+  // Update the world
+  update_playaudio(logger, ldata, registry, water_audio);
+
+  auto const view_matrix = fstate.view_matrix();
+  auto const proj_matrix = fstate.projection_matrix();
+  update_orbital_bodies(es, ldata, view_matrix, proj_matrix, registry, ft);
+  skybox.update(ft);
+
+  update_visible_entities(lm, registry);
+  update_torchflicker(ldata, registry, rng, ft);
+
+  auto const is_target_selected_and_alive = [](EntityRegistry& registry, NearbyTargets const& nbt) {
+    auto const target = nbt.selected();
+    if (!target) {
+      return false; // target not selected
+    }
+    auto const target_eid = *target;
+    auto& npcdata = registry.get<NPCData>(target_eid);
+    auto& target_hp = npcdata.health;
+    return !NPC::is_dead(target_hp);
+  };
+
+  // Update these as a chunk, so they stay in the correct order.
+  auto& terrain = ldata.terrain;
+  update_npcpositions(logger, registry, terrain, ft);
+  update_nearbytargets(nbt, registry, ft);
+
+  bool const previously_alive = is_target_selected_and_alive(registry, nbt);
+  player.update(es, zs, ft);
+
+  if (previously_alive) {
+    auto const target = nbt.selected();
+    if (target) {
+      auto const target_eid = *target;
+      auto& npcdata = registry.get<NPCData>(target_eid);
+      auto& target_hp = npcdata.health;
+      bool const target_dead_after_attack = NPC::is_dead(target_hp);
+      bool const dead_from_attack = previously_alive && target_dead_after_attack;
+
+      auto const add_worlditem_at_targets_location = [&](EntityID const item_eid) {
+        auto& item_tr = registry.get<Transform>(item_eid);
+
+        auto const& target_pos = registry.get<Transform>(target_eid).translation;
+        item_tr.translation = target_pos;
+        item_tr.rotate_degrees(90, opengl::X_UNIT_VECTOR);
+        auto const& item_name = registry.get<Name>(item_eid).value;
+        LOG_ERROR_SPRINTF("ADDING item %s AT xyz: %s", item_name, glm::to_string(item_tr.translation));
+
+        auto& ldata     = zs.level_data;
+        auto& obj_store = ldata.obj_store;
+        auto& sps       = gfx_state.sps;
+
+        // copy the item to th GPU
+        auto& dhm = gfx_state.draw_handles;
+        dhm.add_mesh(logger, sps, obj_store, item_eid, registry);
+      };
+      if (dead_from_attack) {
+        auto  const book_eid = ItemFactory::create_book(registry, ttable);
+        add_worlditem_at_targets_location(book_eid);
+
+        auto  const spear_eid = ItemFactory::create_spear(registry, ttable);
+        add_worlditem_at_targets_location(spear_eid);
+      }
+    }
+  }
+
+  update_mousestates(es);
+}
+
 
 } // namespace
 
@@ -773,98 +874,14 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
             WaterAudioSystem& water_audio, StaticRenderers& static_renderers, DrawState& ds,
             FrameTime const& ft)
 {
-  auto& es = state.engine_state;
-  es.time.update(ft.since_start_seconds());
-
-  auto& skybox_renderer = static_renderers.skybox;
-
-  auto& logger   = es.logger;
-  auto& lm       = state.level_manager;
-  auto& zs       = lm.active();
-  auto& registry = zs.registry;
-
-  auto& ldata  = zs.level_data;
-  auto& skybox = ldata.skybox;
-
-  auto& gfx_state = zs.gfx_state;
-  auto& ttable    = gfx_state.texture_table;
-
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
-
-  auto& nbt = ldata.nearby_targets;
   auto const cstate = CameraFrameState::from_camera(camera);
+
+  auto& lm = state.level_manager;
+  auto& zs = lm.active();
+  auto& es = state.engine_state;
   FrameState fstate{cstate, es, zs};
-  {
-    // Update the world
-    update_playaudio(logger, ldata, registry, water_audio);
 
-    auto const view_matrix = fstate.view_matrix();
-    auto const proj_matrix = fstate.projection_matrix();
-    update_orbital_bodies(es, ldata, view_matrix, proj_matrix, registry, ft);
-    skybox.update(ft);
-
-    update_visible_entities(lm, registry);
-    update_torchflicker(ldata, registry, rng, ft);
-
-    auto const is_target_selected_and_alive = [](EntityRegistry& registry, NearbyTargets const& nbt) {
-      auto const target = nbt.selected();
-      if (!target) {
-        return false; // target not selected
-      }
-      auto const target_eid = *target;
-      auto& npcdata = registry.get<NPCData>(target_eid);
-      auto& target_hp = npcdata.health;
-      return !NPC::is_dead(target_hp);
-    };
-
-    // Update these as a chunk, so they stay in the correct order.
-    {
-      auto& terrain = ldata.terrain;
-      update_npcpositions(logger, registry, terrain, ft);
-      update_nearbytargets(nbt, registry, ft);
-
-      bool const previously_alive = is_target_selected_and_alive(registry, nbt);
-      player.update(logger, registry, terrain, ttable, nbt);
-
-      if (previously_alive) {
-        auto const target = nbt.selected();
-        if (target) {
-          auto const target_eid = *target;
-          auto& npcdata = registry.get<NPCData>(target_eid);
-          auto& target_hp = npcdata.health;
-          bool const target_dead_after_attack = NPC::is_dead(target_hp);
-          bool const dead_from_attack = previously_alive && target_dead_after_attack;
-
-          auto const add_worlditem_at_targets_location = [&](EntityID const item_eid) {
-            auto& item_tr = registry.get<Transform>(item_eid);
-
-            auto const& target_pos = registry.get<Transform>(target_eid).translation;
-            item_tr.translation = target_pos;
-            item_tr.rotate_degrees(90, opengl::X_UNIT_VECTOR);
-            auto const& item_name = registry.get<Name>(item_eid).value;
-            LOG_ERROR_SPRINTF("ADDING item %s AT xyz: %s", item_name, glm::to_string(item_tr.translation));
-
-            auto& ldata     = zs.level_data;
-            auto& obj_store = ldata.obj_store;
-            auto& sps       = gfx_state.sps;
-
-            // copy the item to th GPU
-            auto& dhm = gfx_state.draw_handles;
-            dhm.add_mesh(logger, sps, obj_store, item_eid, registry);
-          };
-          if (dead_from_attack) {
-            auto  const book_eid = ItemFactory::create_book(registry, ttable);
-            add_worlditem_at_targets_location(book_eid);
-
-            auto  const spear_eid = ItemFactory::create_spear(registry, ttable);
-            add_worlditem_at_targets_location(spear_eid);
-          }
-        }
-      }
-    }
-  }
-
+  update_everything(es, lm, rng, fstate, static_renderers, water_audio, ft);
   {
     RenderState rstate{fstate, ds};
     render_scene(rstate, lm, ds, camera, rng, ft, static_renderers);
@@ -905,9 +922,11 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
   static auto water_audio = audio_r.expect_moveout("WAS");
 
   DrawState ds;
+
   if (es.main_menu.show) {
     // Enable keyboard shortcuts
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.MouseDrawCursor = true;
 
     // clear the screen before rending the main menu
     render::clear_screen(LOC::BLACK);
@@ -922,6 +941,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
     IO::process(state, engine.controllers, camera, ft);
 
+    io.MouseDrawCursor = camera.mode() == CameraMode::FPS ? false : true;
     ingame_loop(engine, state, rng, camera, water_audio, static_renderers, ds, ft);
   }
 

@@ -2,11 +2,11 @@
 #include <boomhs/game_config.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/main_menu.hpp>
+#include <boomhs/mouse.hpp>
 #include <boomhs/time.hpp>
 #include <boomhs/ui_state.hpp>
 
 #include <window/controller.hpp>
-#include <window/mouse.hpp>
 #include <window/sdl_window.hpp>
 
 #include <stlw/log.hpp>
@@ -20,20 +20,25 @@ namespace boomhs
 
 struct MouseState
 {
-  MOVE_CONSTRUCTIBLE_ONLY(MouseState);
-
   bool left_pressed  = false;
   bool right_pressed = false;
 
-  window::MouseSensitivity sensitivity{0.002f, 0.002f};
+  MouseSensitivity sensitivity{0.002f, 0.002f};
 
   // "coords" is meant to updated with the *current* screen coordinates of the mouse.
   // "pcoords" is meant to lag behind one frame from *current*, important for calculating the
   // relative difference per-frame.
-  window::ScreenCoordinates coords{0, 0};
-  window::ScreenCoordinates relative{0, 0};
+  ScreenCoordinates coords{0, 0};
+  ScreenCoordinates relative{0, 0};
 
   bool both_pressed() const { return left_pressed && right_pressed; }
+  bool either_pressed() const { return left_pressed || right_pressed; }
+};
+
+struct MouseStates
+{
+  MouseState current;
+  MouseState previous;
 };
 
 struct WindowState
@@ -56,6 +61,12 @@ struct EngineState
   bool                 quit              = false;
   bool                 game_running      = false;
   GameGraphicsSettings graphics_settings = {};
+
+  bool use_controller_input = false;
+
+  MouseStates mouse_states = {};
+  WindowState window_state = {};
+  UiState     ui_state     = {};
 
   bool player_collision;
   bool mariolike_edges;
@@ -83,10 +94,6 @@ struct EngineState
   bool show_grid_lines;
   bool show_yaxis_lines;
   bool wireframe_override;
-
-  MouseState  mouse_state  = {};
-  WindowState window_state = {};
-  UiState     ui_state     = {};
 
   // Constructors
   NO_COPY_OR_MOVE(EngineState);

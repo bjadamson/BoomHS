@@ -1,11 +1,12 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/dimensions.hpp>
+#include <boomhs/mouse.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <opengl/constants.hpp>
 #include <stlw/math.hpp>
-#include <window/mouse.hpp>
+#include <extlibs/imgui.hpp>
 
 using namespace opengl;
 
@@ -238,7 +239,8 @@ Camera::compute_projectionmatrix(CameraMode const mode, PerspectiveViewport cons
 
 glm::mat4
 Camera::compute_viewmatrix(CameraMode const mode, glm::vec3 const& pos, glm::vec3 const& target,
-                           glm::vec3 const& up, glm::vec3 const& camera_forward)
+                           glm::vec3 const& up, glm::vec3 const& camera_forward,
+                           glm::vec3 const& target_up)
 {
   auto constexpr ZERO = glm::vec3{0};
 

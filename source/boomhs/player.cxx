@@ -6,6 +6,7 @@
 #include <boomhs/nearby_targets.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
+#include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 
 using namespace boomhs;
@@ -63,10 +64,67 @@ try_attack_selected_target(stlw::Logger& logger, TerrainGrid& terrain, TextureTa
 }
 
 void
-update_position(stlw::Logger& logger, Player& player, TerrainGrid& terrain)
+move_worldobject(EngineState& es, WorldObject& wo, glm::vec3 const& move_vec,
+                 TerrainGrid const& terrain, FrameTime const& ft)
 {
+  auto& logger = es.logger;
+  auto const max_pos = terrain.max_worldpositions();
+  auto const max_x   = max_pos.x;
+  auto const max_z   = max_pos.y;
+
+  glm::vec3 const delta  = move_vec * wo.speed() * ft.delta_millis();
+  glm::vec3 const newpos = wo.world_position() + delta;
+
+  bool const x_outofbounds = newpos.x >= max_x || newpos.x < 0;
+  bool const y_outofbounds = newpos.z >= max_z || newpos.z < 0;
+  bool const out_of_bounds = x_outofbounds || y_outofbounds;
+  if (out_of_bounds && !es.mariolike_edges) {
+    // If the world object *would* be out of bounds, return early (don't move the WO).
+    return;
+  }
+
+  auto const flip_sides = [](auto const val, auto const min, auto const max) {
+    assert(min < (max - 1));
+    auto value = val < min ? max : min;
+    return value >= max ? (value - 1) : value;
+  };
+
+  if (x_outofbounds) {
+    auto const new_x = flip_sides(newpos.x, 0ul, max_x);
+    wo.move_to(new_x, 0.0, newpos.z);
+  }
+  else if (y_outofbounds) {
+    auto const new_z = flip_sides(newpos.z, 0ul, max_z);
+    wo.move_to(newpos.x, 0.0, new_z);
+  }
+  else {
+    wo.move(delta);
+  }
+}
+
+void
+update_position(EngineState& es, ZoneState& zs, FrameTime const& ft)
+{
+  auto& logger   = es.logger;
+  auto& ldata    = zs.level_data;
+  auto& terrain  = ldata.terrain;
+
+  auto& registry = zs.registry;
+  auto const player_eid = find_player(registry);
+  auto& player = registry.get<Player>(player_eid);
+  auto const& movement = player.movement;
+
+  // Move the player forward along the it's movement direction
+
+  auto move_dir = movement.forward + movement.backward + movement.left + movement.right + movement.mouse_forward;
+  if (move_dir != glm::vec3{0}) {
+    move_dir = glm::normalize(move_dir);
+  }
+
+  move_worldobject(es, player.world_object, move_dir, terrain, ft);
+
   // Lookup the player height from the terrain at the player's X, Z world-coordinates.
-  auto&       player_pos    = player.transform().translation;
+  auto& player_pos = player.transform().translation;
   float const player_height = terrain.get_height(logger, player_pos.x, player_pos.z);
   auto const& player_bbox   = player.bounding_box();
   player_pos.y              = player_height + (player_bbox.dimensions().y / 2.0f);
@@ -123,11 +181,18 @@ Player::drop_entity(stlw::Logger& logger, EntityID const eid, EntityRegistry& re
 }
 
 void
-Player::update(stlw::Logger& logger, EntityRegistry& registry,
-               TerrainGrid& terrain, TextureTable& ttable, NearbyTargets& nbt)
+Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
 {
+  auto& logger   = es.logger;
+  auto& registry = zs.registry;
+  auto& ldata    = zs.level_data;
+  auto& terrain  = ldata.terrain;
+  auto& nbt      = ldata.nearby_targets;
+
+  auto& ttable    = zs.gfx_state.texture_table;
+
   gcd.update();
-  update_position(logger, *this, terrain);
+  update_position(es, zs, ft);
 
   // If no target is selected, no more work to do.
   auto const target_opt = nbt.selected();

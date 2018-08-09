@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/components.hpp>
+#include <boomhs/mouse.hpp>
 #include <boomhs/spherical.hpp>
 
 #include <stlw/log.hpp>
@@ -62,7 +63,7 @@ class Camera
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(Dimensions const&, glm::vec3 const& f, glm::vec3 const& u);
+  Camera(Dimensions const&, glm::vec3 const&, glm::vec3 const&);
 
   // public fields
   bool  flip_y;
@@ -115,7 +116,7 @@ public:
   compute_projectionmatrix(CameraMode, PerspectiveViewport const&, OrthoProjection const&);
 
   static glm::mat4 compute_viewmatrix(CameraMode, glm::vec3 const&, glm::vec3 const&,
-                                      glm::vec3 const&, glm::vec3 const&);
+                                      glm::vec3 const&, glm::vec3 const&, glm::vec3 const&);
 };
 
 } // namespace boomhs
