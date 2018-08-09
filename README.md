@@ -98,16 +98,35 @@ on the fingers (from the command line). You can see the symlink for yourself in 
   + bbk => kill the running game process (parses PID table, unstable).
 
 ## Game Information
-The game's name (atleast for now) is **"Fundamentally Broken"** but everything is under the alias
-BoomHS for historical reasons. The game name isn't final, so keeping this alias until a permanent
-name is chosen.
+The game's name (atleast for now) is a place-holder, BoomHS. At one point I was thinking of calling
+it **Broken"** but that's neither here/now. BoomHS from historical reasons.
 
-### World
-**Fundamentally Broken** is set in a hand-guided procedurally generated world. The game operates
-one turn at a time, initiated by the player taking some kind of action.
+The concept is an online multi-player mmorpg/sandbox with multiple modes. One mode, the hard-core
+mode (or rogue-like mode) will contain perma death.
 
-While adventuring, there is a (TODO) causing you to make forward progress down through dungeons
-and maybe not stick around exploring everything you'd like too because it's right on your heels.
+Player's are put into an online world with a vague goal of stopping the evil wizard from destroying
+the star in your galaxy. The star's destruction will ensure the entire galaxy you live in will be
+destroyed. A player will spawn into the world with nothing, and will need to figure out how to
+survive.
+
+Player's will collect items and resources to get stronger. Items can both be taken from enemy
+monsters, found in the world, taken from other players, or puchased from NPC characters.
+Resources can be used to build the player a home. These homes will exist for the player to take
+refuge in, while hiding from monsters and the environment, or other players. These homes can be
+invaded/destroyed/stolen by other players. Monster's can also invade/destroy/steal player homes for
+their own.
+
+Player's can group together to accomplish their goals. A player wins by making it to the
+end-scenario and escaping the world before it is destroyed. The first player/group who makes it to
+the end can make the decision to help blow up the sun, sacraficing themself. If a group/player
+makes the decision to help the wizard destroy the sun, they themselves cannot move forward. Other
+player's may still escape, they will just have to do it more quickly or something. TBD
+
+##### Progression
+Player's who **win** a world, will gain access to the next-tier world. Those who do not succeed,
+get to play their current level again. Think of it like a ladder, everyone starts on world 0 (this
+will be where all the relatively new players should be), and if you can win world 0, you move on to
+world 1. I'm not sure if backwards-progression would be a fun.
 
 #### World Story
 Initially the player is told they are on the planet (??), and that a few million years ago during a
@@ -165,7 +184,7 @@ surface.
 ### Design Decisions
 "Fundamentally Broken" is a game I'm creating that I want to play. This means:
   * Hard. The game is Hard. You are punished for playing poorly.
-  * Death is Permanent.
+  * Death is Severe. You want to avoid it.
   * Procedural content. The world should be generated from a random seed.
   * Hand-crafted content. the world has hand-created content injected into the procedural.
   * Weird. The world should be weird. I want weird things that capture my imagination as I play.
@@ -183,7 +202,6 @@ surface.
   * Varied Content. Dungeons, open areas, narrow corridors, all with differing atmospheres.
   * Item based progression. There are no levels, instead character advancement is through acquiring
     more poweful items.
-  * Tactical. The game is turn based.
   * Persistent. Monsters are randomly generated once during world gen.
   * No resting, except between levels. This causes you to carefully manage your group's HP and MP.
     (When a group advances to the next area, their MP and HP are restored.
