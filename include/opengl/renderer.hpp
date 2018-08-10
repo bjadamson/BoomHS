@@ -18,7 +18,7 @@ class FrameTime;
 
 namespace boomhs
 {
-struct Dimensions;
+struct ScreenDimensions;
 class EntityRegistry;
 class HandleManager;
 class LevelManager;
@@ -123,7 +123,7 @@ void
 set_blendstate(BlendState const&);
 
 void
-init(stlw::Logger&, boomhs::Dimensions const&);
+init(stlw::Logger&, boomhs::ScreenDimensions const&);
 
 void
 clear_screen(Color const&);

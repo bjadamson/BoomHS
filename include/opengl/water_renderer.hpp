@@ -1,6 +1,6 @@
 #pragma once
 #include <boomhs/camera.hpp>
-#include <boomhs/dimensions.hpp>
+#include <boomhs/screen_size.hpp>
 #include <boomhs/frame.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/state.hpp>

@@ -244,8 +244,8 @@ AdvancedWaterRenderer::AdvancedWaterRenderer(stlw::Logger& logger, ScreenSize co
 {
   {
     // TODO: structured binding bug
-    auto const size = reflection_.fbo->dimensions.size();
-    auto const w = size.first, h = size.second;
+    auto const dim = reflection_.fbo->dimensions;
+    auto const w = dim.width(), h = dim.height();
 
     with_reflection_fbo(logger, [&]() {
       reflection_.tbo = create_texture_attachment(logger, w, h, GL_TEXTURE1);
@@ -255,8 +255,8 @@ AdvancedWaterRenderer::AdvancedWaterRenderer(stlw::Logger& logger, ScreenSize co
 
   {
     // TODO: structured binding bug
-    auto const size = refraction_.fbo->dimensions.size();
-    auto const w = size.first, h = size.second;
+    auto const dim = refraction_.fbo->dimensions;
+    auto const w = dim.width(), h = dim.height();
 
     with_refraction_fbo(logger, [&]() {
       GLenum const tu = GL_TEXTURE2;

@@ -39,8 +39,8 @@ SunshaftRenderer::SunshaftRenderer(stlw::Logger& logger, ScreenSize const& ss, S
     , sp_(sp)
 {
   // TODO: structured binding bug
-  auto const size = buffers_.fbo->dimensions.size();
-  auto const w = size.first, h = size.second;
+  auto const& dim = buffers_.fbo->dimensions;
+  auto const w = dim.width(), h = dim.height();
 
   with_sunshaft_fbo(logger, [&]() {
     buffers_.tbo = create_texture_attachment(logger, w, h, GL_TEXTURE1);

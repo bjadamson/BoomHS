@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/dimensions.hpp>
+#include <boomhs/screen_size.hpp>
 
 #include <opengl/framebuffer.hpp>
 #include <opengl/renderbuffer.hpp>

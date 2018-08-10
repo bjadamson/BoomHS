@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/dimensions.hpp>
+#include <boomhs/screen_size.hpp>
 
 #include <stlw/log.hpp>
 #include <stlw/result.hpp>
@@ -79,7 +79,7 @@ public:
 
     int x, y;
     SDL_GetWindowPosition(window_.get(), &x, &y);
-    return boomhs::Dimensions{0, 0, w, h};
+    return boomhs::ScreenDimensions{0, 0, w, h};
   }
 
   void set_fullscreen(FullscreenFlags const);

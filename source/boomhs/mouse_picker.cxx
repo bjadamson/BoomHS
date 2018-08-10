@@ -1,4 +1,4 @@
-#include <boomhs/dimensions.hpp>
+#include <boomhs/screen_size.hpp>
 #include <boomhs/mouse_picker.hpp>
 #include <boomhs/state.hpp>
 
@@ -12,9 +12,9 @@ MousePicker::MousePicker() {}
 glm::vec3
 MousePicker::calculate_ray(FrameState& fstate) const
 {
-  auto const calc_ndc = [](glm::vec2 const& scoords, Dimensions const& dim) {
-    float const x = ((2.0f * scoords.x) / dim.right) - 1.0f;
-    float const y = ((2.0f * scoords.y) / dim.bottom) - 1.0f;
+  auto const calc_ndc = [](glm::vec2 const& scoords, ScreenDimensions const& dim) {
+    float const x = ((2.0f * scoords.x) / dim.right()) - 1.0f;
+    float const y = ((2.0f * scoords.y) / dim.bottom()) - 1.0f;
 
     auto const assert_fn = [](float const v) {
       assert(v <= 1.0f);

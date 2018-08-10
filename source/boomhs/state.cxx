@@ -10,7 +10,7 @@ using namespace window;
 namespace boomhs
 {
 
-EngineState::EngineState(stlw::Logger& l, ALCdevice& al, ImGuiIO& i, Dimensions const& d)
+EngineState::EngineState(stlw::Logger& l, ALCdevice& al, ImGuiIO& i, ScreenDimensions const& d)
     : logger(l)
     , al_device(al)
     , imgui(i)
@@ -61,7 +61,7 @@ Engine::Engine(SDLWindow&& w, SDLControllers&& c)
   registries.resize(50);
 }
 
-Dimensions
+ScreenDimensions
 Engine::dimensions() const
 {
   return window.get_dimensions();
@@ -71,7 +71,7 @@ ScreenSize
 Engine::screen_size() const
 {
   auto const d = dimensions();
-  return ScreenSize{d.right, d.bottom};
+  return ScreenSize{d.right(), d.bottom()};
 }
 
 } // namespace boomhs

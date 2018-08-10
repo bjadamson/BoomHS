@@ -1,5 +1,5 @@
 #include <boomhs/camera.hpp>
-#include <boomhs/dimensions.hpp>
+#include <boomhs/screen_size.hpp>
 #include <boomhs/mouse.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
@@ -31,17 +31,17 @@ OrthoProjection::from_ints(int const left, int const right, int const bottom, in
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //// Camera
-Camera::Camera(Dimensions const& dimensions, glm::vec3 const& forward, glm::vec3 const& up)
+Camera::Camera(ScreenDimensions const& dimensions, glm::vec3 const& forward, glm::vec3 const& up)
     : forward_(forward)
     , up_(up)
     , coordinates_(0.0f, 0.0f, 0.0f)
     , perspective_({70.0f, 4.0f / 3.0f, 0.1f, 2000.0f})
     , ortho_(
         OrthoProjection::from_ints(
-          dimensions.left,
-          dimensions.right,
-          dimensions.top,
-          dimensions.bottom,
+          dimensions.left(),
+          dimensions.right(),
+          dimensions.top(),
+          dimensions.bottom(),
           -1,
           1))
     , flip_y(false)
@@ -199,7 +199,7 @@ Camera::target_position() const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // free functions
 Camera
-Camera::make_defaultcamera(Dimensions const& dimensions)
+Camera::make_defaultcamera(ScreenDimensions const& dimensions)
 {
   // camera-look at origin
   // cameraspace "up" is === "up" in worldspace.

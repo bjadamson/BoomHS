@@ -5,7 +5,7 @@ using namespace boomhs;
 namespace opengl
 {
 
-FBInfo::FBInfo(Dimensions const& d, ScreenSize const& ss)
+FBInfo::FBInfo(ScreenDimensions const& d, ScreenSize const& ss)
     : dimensions(d)
     , screen_size(ss)
 {
@@ -16,14 +16,14 @@ void
 FBInfo::bind_impl(stlw::Logger& logger)
 {
   glBindFramebuffer(GL_FRAMEBUFFER, id);
-  glViewport(dimensions.left, dimensions.top, dimensions.right, dimensions.bottom);
+  glViewport(dimensions.left(), dimensions.top(), dimensions.right(), dimensions.bottom());
 }
 
 void
 FBInfo::unbind_impl(stlw::Logger& logger)
 {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(dimensions.left, dimensions.top, screen_size.width, screen_size.height);
+  glViewport(dimensions.left(), dimensions.top(), screen_size.width, screen_size.height);
 }
 
 void

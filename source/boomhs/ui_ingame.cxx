@@ -127,14 +127,14 @@ draw_player_inventory(stlw::Logger& logger, EntityRegistry& registry, TextureTab
 }
 
 void
-draw_nearest_target_info(Dimensions const& dimensions, NearbyTargets const& nbt, TextureTable const& ttable,
+draw_nearest_target_info(ScreenDimensions const& dimensions, NearbyTargets const& nbt, TextureTable const& ttable,
                          EntityRegistry& registry)
 {
   auto constexpr LEFT_OFFSET = 39;
-  auto const left = dimensions.left + LEFT_OFFSET;
+  auto const left = dimensions.left() + LEFT_OFFSET;
 
   auto constexpr BOTTOM_OFFSET = 119;
-  auto const top  = dimensions.bottom - BOTTOM_OFFSET;
+  auto const top  = dimensions.bottom() - BOTTOM_OFFSET;
   ImGui::SetNextWindowPos(ImVec2(left, top));
 
   ImVec2 const WINDOW_POS(200, 105);
@@ -504,8 +504,8 @@ draw_2dui(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
   }
 
   auto const dimensions = es.dimensions;
-  auto const draw_icon_on_screen = [&rstate, &ttable](auto& sp, auto const& pos,
-                                                                auto const& size,
+  auto const draw_icon_on_screen = [&rstate, &ttable](auto& sp, glm::vec2 const& pos,
+                                                                glm::vec2 const& size,
                                                                 char const* tex_name)
   {
     auto& ti = *ttable.find(tex_name);
@@ -518,12 +518,12 @@ draw_2dui(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
     glm::vec2 const size{32.0f};
 
     auto constexpr SPACE_BETWEEN = 10;
-    float const left   = dimensions.left + 39 + 200 + SPACE_BETWEEN
+    float const left   = dimensions.left() + 39 + 200 + SPACE_BETWEEN
       + (slot_pos * (size.x + SPACE_BETWEEN));
 
 
     auto constexpr SPACE_BENEATH = 10;
-    float const bottom = dimensions.bottom - SPACE_BENEATH - size.y;
+    float const bottom = dimensions.bottom() - SPACE_BENEATH - size.y;
     glm::vec2 const pos{left, bottom};
     spp.while_bound(logger, [&]() {
       });
@@ -538,8 +538,7 @@ draw_2dui(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
   {
     glm::vec2 const size{16.0f};
 
-    auto const center = dimensions.center();
-    glm::vec2 const middle_of_screen{center.first, center.second};
+    auto const middle_of_screen = dimensions.center().to_vec2();
     auto& sp = sps.ref_sp("2dtexture_ss");
 
     ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();

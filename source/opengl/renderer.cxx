@@ -271,10 +271,10 @@ set_blendstate(BlendState const& state)
 }
 
 void
-init(stlw::Logger& logger, Dimensions const& dimensions)
+init(stlw::Logger& logger, ScreenDimensions const& dimensions)
 {
   // Initialize opengl
-  glViewport(dimensions.left, dimensions.top, dimensions.right, dimensions.bottom);
+  glViewport(dimensions.left(), dimensions.top(), dimensions.right(), dimensions.bottom());
 
   glDisable(GL_BLEND);
   glDisable(GL_CULL_FACE);
@@ -595,7 +595,7 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
 
   auto const& dimensions = es.dimensions;
 
-  auto const pos_inverted_y = glm::vec2{pos.x, (dimensions.bottom - pos.y)};
+  auto const pos_inverted_y = glm::vec2{pos.x, (dimensions.bottom() - pos.y)};
   auto const v     = OF::rectangle_vertices(pos_inverted_y.x, pos_inverted_y.y, size.x, size.y);
   auto const uv = OF::rectangle_uvs(ti.uv_max);
   auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);

@@ -54,7 +54,7 @@ struct EngineState
   stlw::Logger&    logger;
   ALCdevice&       al_device;
   ImGuiIO&         imgui;
-  Dimensions const dimensions;
+  ScreenDimensions const dimensions;
   MainMenuState    main_menu;
   Time             time;
 
@@ -95,7 +95,7 @@ struct EngineState
 
   // Constructors
   NO_COPY_OR_MOVE(EngineState);
-  EngineState(stlw::Logger&, ALCdevice&, ImGuiIO&, Dimensions const&);
+  EngineState(stlw::Logger&, ALCdevice&, ImGuiIO&, ScreenDimensions const&);
 };
 
 struct GameState
@@ -127,7 +127,7 @@ struct Engine
   // program to store references into the data owned by registries.
   NO_COPY_OR_MOVE(Engine);
 
-  Dimensions dimensions() const;
+  ScreenDimensions dimensions() const;
   ScreenSize screen_size() const;
 };
 

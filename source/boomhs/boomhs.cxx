@@ -790,7 +790,7 @@ make_static_renderers(EngineState& es, LevelManager& lm)
   auto const       make_advanced_water_renderer = [](EngineState& es, ZoneState& zs) {
     auto& logger   = es.logger;
     auto const&      dim = es.dimensions;
-    ScreenSize const screen_size{dim.right, dim.bottom};
+    ScreenSize const screen_size{dim.right(), dim.bottom()};
 
     auto& gfx_state = zs.gfx_state;
     auto& ttable    = gfx_state.texture_table;
@@ -821,7 +821,7 @@ make_static_renderers(EngineState& es, LevelManager& lm)
     auto& sps       = gfx_state.sps;
     auto& sunshaft_sp = sps.ref_sp("sunshaft");
     auto const&      dim = es.dimensions;
-    ScreenSize const screen_size{dim.right, dim.bottom};
+    ScreenSize const screen_size{dim.right(), dim.bottom()};
     return SunshaftRenderer{logger, screen_size, sunshaft_sp};
   };
 
@@ -926,7 +926,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
     render::clear_screen(LOC::BLACK);
 
     auto const& dimensions = engine.dimensions();
-    auto const size_v      = ImVec2(dimensions.right, dimensions.bottom);
+    auto const size_v      = ImVec2(dimensions.right(), dimensions.bottom());
     main_menu::draw(es, zs, size_v, water_audio);
   }
   else {

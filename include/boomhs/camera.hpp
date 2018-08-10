@@ -9,7 +9,7 @@
 
 namespace boomhs
 {
-struct Dimensions;
+class ScreenDimensions;
 struct MouseState;
 struct WorldObject;
 
@@ -63,7 +63,7 @@ class Camera
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(Dimensions const&, glm::vec3 const&, glm::vec3 const&);
+  Camera(ScreenDimensions const&, glm::vec3 const&, glm::vec3 const&);
 
   // public fields
   bool  flip_y;
@@ -110,7 +110,7 @@ public:
   void    set_target(WorldObject&);
 
   // static fns
-  static Camera make_defaultcamera(Dimensions const&);
+  static Camera make_defaultcamera(ScreenDimensions const&);
 
   static glm::mat4
   compute_projectionmatrix(CameraMode, PerspectiveViewport const&, OrthoProjection const&);

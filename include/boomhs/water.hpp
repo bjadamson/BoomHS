@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/dimensions.hpp>
+#include <boomhs/screen_size.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/obj.hpp>
