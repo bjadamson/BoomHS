@@ -7,11 +7,6 @@
 namespace opengl
 {
 
-struct CubeMinMax
-{
-  glm::vec3 min, max;
-};
-
 using ArrowVertices = std::array<float, 42>;
 using ArrowIndices  = std::array<GLuint, 6>;
 

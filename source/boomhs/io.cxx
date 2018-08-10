@@ -150,23 +150,29 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
 
   std::vector<std::pair<EntityID, float>> distances;
   for (auto const eid : eids) {
-    auto bbox_copy       = registry.get<AABoundingBox>(eid);
+    auto const& bbox       = registry.get<AABoundingBox>(eid);
     auto const& transform  = registry.get<Transform>(eid);
     auto&       selectable = registry.get<Selectable>(eid);
 
-    //Ray const  ray{ray_start, ray_dir};
-    //bool const intersects = collision::ray_box_intersect(ray, transform, bbox);
 
     auto const model_matrix = transform.model_matrix();
+    bool const can_use_simple_test = (transform.rotation == glm::quat{})
+        && (transform.scale == glm::vec3{1});
 
     float distance = 0.0f;
-    bbox_copy.min *= transform.scale;
-    bbox_copy.max *= transform.scale;
-    bool const intersects = collision::ray_obb_intersection(ray_start, ray_dir, bbox_copy.min, bbox_copy.max,
-        model_matrix, distance);
+    bool intersects = false;
+    if (can_use_simple_test) {
+      Ray const  ray{ray_start, ray_dir};
+
+      intersects = collision::ray_box_intersect(ray, transform, bbox, distance);
+    }
+    else {
+      intersects = collision::ray_obb_intersection(ray_start, ray_dir, bbox.min, bbox.max, model_matrix, distance);
+    }
 
     if (intersects) {
       distances.emplace_back(PAIR(eid, distance));
+      LOG_ERROR_SPRINTF("FOUND using %s test, distance %f", can_use_simple_test ? "SIMPLE" : "COMPLEX", distance);
     }
   }
   bool const something_selected = !distances.empty();
@@ -183,7 +189,6 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
     auto const name = registry.has<Name>(eid)
       ? registry.get<Name>(eid).value
       : "Unnamed";
-    LOG_ERROR_SPRINTF("(FOUND INTERSECTION) eid: %lu name: %s, distance %f", eid, name, pair.second);
   }
   else {
     LOG_ERROR("NO INTERSECTION");

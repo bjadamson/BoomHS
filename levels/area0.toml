@@ -21,8 +21,7 @@ name = "sun"
 position = [0.0, 850.0, 0.0]
 shader = "2dtexture"
 geometry = "billboard:spherical"
-#scale = [650.0, 650.0, 650.0]
-scale = [1.0, 1.0, 1.0]
+scale = [650.0, 650.0, 650.0]
 texture = "sun"
 
 [entity.orbital-body]
@@ -35,8 +34,7 @@ name = "Moon"
 position = [0.0, 750.0, 0.0]
 shader = "2dlight_uv"
 geometry = "billboard:spherical"
-#scale = [650.0, 650.0, 650.0]
-scale = [1.0, 1.0, 1.0]
+scale = [650.0, 650.0, 650.0]
 texture = "moon"
 
 [entity.pointlight]

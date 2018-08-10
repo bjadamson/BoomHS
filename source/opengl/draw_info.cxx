@@ -279,13 +279,10 @@ DrawHandleManager::add_cube(stlw::Logger& logger, ShaderPrograms& sps, EntityID 
                             EntityRegistry& registry)
 {
   auto const& cr = registry.get<CubeRenderable>(eid);
-  CubeMinMax const cmm{cr.min, cr.max};
-
-
   auto& sn = registry.get<ShaderName>(eid);
   auto& va = sps.ref_sp(sn.value).va();
 
-  auto const vertices = OF::cube_vertices(cmm.min, cmm.max);
+  auto const vertices = OF::cube_vertices(cr.min, cr.max);
   auto  handle = opengl::gpu::copy_cube_gpu(logger, vertices, va);
   add_entity(eid, MOVE(handle));
 

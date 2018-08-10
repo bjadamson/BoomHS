@@ -23,7 +23,7 @@ namespace boomhs::collision
 {
 
 bool
-ray_box_intersect(Ray const&, Transform const&, AABoundingBox const&);
+ray_box_intersect(Ray const&, Transform const&, AABoundingBox const&, float&);
 
 bool
 bbox_intersects(stlw::Logger&, Transform const&, AABoundingBox const&, Transform const&,

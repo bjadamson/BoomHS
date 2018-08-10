@@ -101,7 +101,7 @@ class EntityDrawHandleMap
 class DrawHandleManager
 {
   // These slots get a value when memory is loaded, set to none when memory is not.
-  EntityDrawHandleMap     entities_;
+  EntityDrawHandleMap entities_;
 
 public:
   DrawHandleManager() = default;

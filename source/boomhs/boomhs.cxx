@@ -331,7 +331,7 @@ update_everything(EngineState& es, LevelManager& lm, stlw::float_generator& rng,
 
   // Update these as a chunk, so they stay in the correct order.
   auto& terrain = ldata.terrain;
-  //update_npcpositions(logger, registry, terrain, ft);
+  update_npcpositions(logger, registry, terrain, ft);
   update_nearbytargets(nbt, registry, ft);
 
   bool const previously_alive = is_target_selected_and_alive(registry, nbt);
@@ -830,9 +830,8 @@ make_static_renderers(EngineState& es, LevelManager& lm)
     auto&              skybox_sp = sps.ref_sp("skybox");
     glm::vec3 const    vmin{-0.5f};
     glm::vec3 const    vmax{0.5f};
-    CubeMinMax const cmm{vmin, vmax};
 
-    auto const vertices = OF::cube_vertices(cmm.min, cmm.max);
+    auto const vertices = OF::cube_vertices(vmin, vmax);
     DrawInfo           dinfo    = opengl::gpu::copy_cube_gpu(logger, vertices, skybox_sp.va());
     auto&              day_ti   = *ttable.find("building_skybox");
     auto&              night_ti = *ttable.find("night_skybox");

@@ -352,20 +352,16 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
     auto& sp    = sps.ref_sp("wireframe");
     auto  tr    = transform;
 
+    // TODO: It's probably smart to precompute the bbox DrawInfo's ahead of time.
+    auto const cv = OF::cube_vertices(bbox.min, bbox.max);
+    auto    dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, cv, sp.va());
+
     sp.while_bound(logger, [&]() {
       sp.set_uniform_color(logger, "u_wirecolor", wire_color);
-      //auto& dinfo = draw_handles.bbox();
-
-      CubeMinMax const cmm{bbox.min, bbox.max};
-      auto const cv = OF::cube_vertices(cmm.min, cmm.max);
-      auto    dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, cv, sp.va());
 
       // We needed to bind the shader program to set the uniforms above, no reason to pay to bind
       // it again.
-      auto copy_transform = tr;
-      LOG_WARN("DRAW BBOX BEGIN");
-      draw_entity_common_without_binding_sp(rstate, GL_LINES, sp, dinfo, eid, copy_transform);
-      LOG_WARN("DRAW BBOX END");
+      draw_entity_common_without_binding_sp(rstate, GL_LINES, sp, dinfo, eid, tr);
     });
   };
   auto const draw_boundingboxes_for_meshes = [&](COMMON_ARGS, Selectable& sel, auto&&...) {
