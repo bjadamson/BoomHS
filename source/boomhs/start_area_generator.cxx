@@ -105,7 +105,7 @@ place_waters(stlw::Logger& logger, ShaderPrograms& sps, EntityRegistry& registry
     auto& wi        = WaterFactory::make_default(logger, sps, ttable, eid, registry);
     wi.position     = pos;
     wi.mix_color    = Color::random(rng);
-    wi.dimensions   = glm::vec2{20};
+    wi.dimensions   = glm::vec2{1};
     wi.num_vertexes = 4;
 
     registry.assign<ShaderName>(eid);

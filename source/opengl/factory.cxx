@@ -208,7 +208,7 @@ cube_vertices(glm::vec3 const& min, glm::vec3 const& max)
   assert(min.z <= max.z);
 
   // Define the 8 vertices of a unit cube
-  static const CubeVertices v = stlw::make_array<float>(
+  CubeVertices v = stlw::make_array<float>(
     // front
     -midp.x, -midp.y,  midp.z,
      midp.x, -midp.y,  midp.z,

@@ -107,10 +107,23 @@ namespace
 void
 draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, Camera& camera)
 {
-  auto&      uistate = es.ui_state.debug;
-  auto const eid     = uistate.selected_entity;
-
   auto const draw = [&]() {
+    std::optional<EntityID> selected;
+    for (auto const eid : find_all_entities_with_component<Selectable>(registry)) {
+      auto const& sel = registry.get<Selectable>(eid);
+      if (sel.selected) {
+        selected = eid;
+        break;
+      }
+    }
+
+    std::string const eid_str = selected ? std::to_string(*selected) : "none";
+    ImGui::Text("eid: %s", eid_str.c_str());
+    if (!selected) {
+      return;
+    }
+    auto const eid = *selected;
+
     if (registry.has<Name>(eid)) {
       auto& name        = registry.get<Name>(eid).value;
       char  buffer[128] = {'0'};

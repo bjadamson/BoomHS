@@ -108,6 +108,31 @@ name = "TorchUI"
 type = "texture:2d-RGBA"
 filename = "assets/ui/torch.png"
 
+[[resource]]
+name = "first-aid"
+type = "texture:2d-RGBA"
+filename = "assets/ui/first_aid.png"
+
+[[resource]]
+name = "gun"
+type = "texture:2d-RGB"
+filename = "assets/ui/gun.png"
+
+[[resource]]
+name = "ak47"
+type = "texture:2d-RGBA"
+filename = "assets/ui/ak47.png"
+
+[[resource]]
+name = "fist"
+type = "texture:2d-RGBA"
+filename = "assets/ui/fist.png"
+
+[[resource]]
+name = "sword"
+type = "texture:2d-RGBA"
+filename = "assets/ui/sword.png"
+
 ###################################################################################################
 # HEIGHTMAPS
 [[resource]]
@@ -172,6 +197,7 @@ type = "texture:2d-RGB"
 filename = "assets/terrain/mud.png"
 wrap = "clamp"
 
+
 ###########################
 # WATER
 [[resource]]
@@ -203,30 +229,12 @@ wrap = "repeat"
 
 #############################'
 # OTHER
-[[resource]]
-name = "first-aid"
-type = "texture:2d-RGBA"
-filename = "assets/ui/first_aid.png"
 
 [[resource]]
-name = "gun"
+name = "TextureAtlas"
 type = "texture:2d-RGB"
-filename = "assets/ui/gun.png"
-
-[[resource]]
-name = "ak47"
-type = "texture:2d-RGBA"
-filename = "assets/ui/ak47.png"
-
-[[resource]]
-name = "fist"
-type = "texture:2d-RGBA"
-filename = "assets/ui/fist.png"
-
-[[resource]]
-name = "sword"
-type = "texture:2d-RGBA"
-filename = "assets/ui/sword.png"
+filename = "assets/TextureAtlas.jpg"
+wrap = "clamp"
 
 ###################################################################################################
 [[meshes]]

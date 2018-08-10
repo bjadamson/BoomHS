@@ -91,8 +91,8 @@ WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTab
   auto& winfo = registry.assign<WaterInfo>(eid);
   winfo.tinfo = &ti;
 
-  auto const min = glm::vec3{-0.5, -0.2, -0.5};
-  auto const max = glm::vec3{0.5f, 0.2, 0.5};
+  auto const min = glm::vec3{-0.5};
+  auto const max = glm::vec3{0.5f};
   AABoundingBox::add_to_entity(eid, registry, min, max);
 
   return winfo;

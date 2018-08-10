@@ -21,7 +21,8 @@ name = "sun"
 position = [0.0, 850.0, 0.0]
 shader = "2dtexture"
 geometry = "billboard:spherical"
-scale = [650.0, 650.0, 650.0]
+#scale = [650.0, 650.0, 650.0]
+scale = [1.0, 1.0, 1.0]
 texture = "sun"
 
 [entity.orbital-body]
@@ -34,7 +35,8 @@ name = "Moon"
 position = [0.0, 750.0, 0.0]
 shader = "2dlight_uv"
 geometry = "billboard:spherical"
-scale = [650.0, 650.0, 650.0]
+#scale = [650.0, 650.0, 650.0]
+scale = [1.0, 1.0, 1.0]
 texture = "moon"
 
 [entity.pointlight]
@@ -53,7 +55,7 @@ name = "point light 0"
 position = [2.0, 2.0, 2.0]
 shader = "light"
 geometry = "cube"
-scale = [0.4, 0.4, 0.4]
+scale = [1.0, 1.0, 1.0]
 
 [entity.pointlight]
 attenuation = "nolight"
@@ -65,7 +67,7 @@ name = "point light 1"
 position = [4.0, 2.0, 2.0]
 shader = "light"
 geometry = "cube"
-scale = [0.4, 0.4, 0.4]
+scale = [1.0, 1.0, 1.0]
 
 [entity.pointlight]
 attenuation = "nolight"
@@ -77,7 +79,7 @@ name = "point light 2"
 position = [4.0, 2.0, 4.0]
 shader = "light"
 geometry = "cube"
-scale = [0.4, 0.4, 0.4]
+scale = [1.0, 1.0, 1.0]
 
 [entity.pointlight]
 attenuation = "nolight"
@@ -89,7 +91,7 @@ name = "point light 3"
 position = [2.0, 2.0, 4.0]
 shader = "light"
 geometry = "cube"
-scale = [0.4, 0.4, 0.4]
+scale = [1.0, 1.0, 1.0]
 
 [entity.pointlight]
 attenuation = "nolight"
@@ -104,8 +106,8 @@ material = "terrain"
 position = [6.0, 1.0, 6.0]
 shader = "3dtexture"
 geometry = "mesh:house"
-texture = "grass"
-scale = [0.4, 0.4, 0.4]
+texture = "TextureAtlas"
+scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true
 
 [[entity]]
@@ -114,7 +116,7 @@ material = "tree"
 position = [10.0, 0.0, 10.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree_lowpoly"
-scale = [8.0, 6.0, 8.0]
+scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true
 
 [[entity]]
@@ -123,5 +125,5 @@ material = "tree"
 position = [15.0, 1.0, 18.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree2"
-scale = [2.0, 4.0, 2.0]
+scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true
