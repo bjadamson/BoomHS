@@ -13,8 +13,8 @@
 #include <opengl/skybox_renderer.hpp>
 #include <opengl/texture.hpp>
 
-#include <stlw/log.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/type_macros.hpp>
 
 namespace window
 {
@@ -35,11 +35,11 @@ static glm::vec4 constexpr BENEATH_VECTOR = {0, 1, 0, -CUTOFF_HEIGHT};
 
 class SilhouetteWaterRenderer
 {
-  stlw::Logger&          logger_;
+  common::Logger&          logger_;
   opengl::ShaderProgram& sp_;
 
 public:
-  SilhouetteWaterRenderer(stlw::Logger&, opengl::ShaderProgram&);
+  SilhouetteWaterRenderer(common::Logger&, opengl::ShaderProgram&);
   MOVE_CONSTRUCTIBLE_ONLY(SilhouetteWaterRenderer);
 
   void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&,
@@ -48,13 +48,13 @@ public:
 
 class BasicWaterRenderer
 {
-  stlw::Logger&          logger_;
+  common::Logger&          logger_;
   opengl::ShaderProgram& sp_;
   opengl::TextureInfo&   diffuse_;
   opengl::TextureInfo&   normal_;
 
 public:
-  BasicWaterRenderer(stlw::Logger&, opengl::TextureInfo&, opengl::TextureInfo&,
+  BasicWaterRenderer(common::Logger&, opengl::TextureInfo&, opengl::TextureInfo&,
                      opengl::ShaderProgram&);
   MOVE_CONSTRUCTIBLE_ONLY(BasicWaterRenderer);
 
@@ -64,13 +64,13 @@ public:
 
 class MediumWaterRenderer
 {
-  stlw::Logger&          logger_;
+  common::Logger&          logger_;
   opengl::ShaderProgram& sp_;
   opengl::TextureInfo&   diffuse_;
   opengl::TextureInfo&   normal_;
 
 public:
-  MediumWaterRenderer(stlw::Logger&, opengl::TextureInfo&, opengl::TextureInfo&,
+  MediumWaterRenderer(common::Logger&, opengl::TextureInfo&, opengl::TextureInfo&,
                       opengl::ShaderProgram&);
   MOVE_CONSTRUCTIBLE_ONLY(MediumWaterRenderer);
 
@@ -84,7 +84,7 @@ struct ReflectionBuffers
   opengl::TextureInfo  tbo;
   opengl::RenderBuffer rbo;
 
-  ReflectionBuffers(stlw::Logger&, boomhs::ScreenSize const&);
+  ReflectionBuffers(common::Logger&, boomhs::ScreenSize const&);
 
   NO_COPY(ReflectionBuffers);
   MOVE_DEFAULT(ReflectionBuffers);
@@ -96,7 +96,7 @@ struct RefractionBuffers
   opengl::TextureInfo tbo;
   opengl::TextureInfo dbo;
 
-  RefractionBuffers(stlw::Logger&, boomhs::ScreenSize const&);
+  RefractionBuffers(common::Logger&, boomhs::ScreenSize const&);
 
   NO_COPY(RefractionBuffers);
   MOVE_DEFAULT(RefractionBuffers);
@@ -113,13 +113,13 @@ class AdvancedWaterRenderer
   RefractionBuffers refraction_;
 
   template <typename FN>
-  void with_reflection_fbo(stlw::Logger& logger, FN const& fn)
+  void with_reflection_fbo(common::Logger& logger, FN const& fn)
   {
     reflection_.fbo->while_bound(logger, fn);
   }
 
   template <typename FN>
-  void with_refraction_fbo(stlw::Logger& logger, FN const& fn)
+  void with_refraction_fbo(common::Logger& logger, FN const& fn)
   {
     refraction_.fbo->while_bound(logger, fn);
   }
@@ -148,7 +148,7 @@ class AdvancedWaterRenderer
 public:
   MOVE_CONSTRUCTIBLE_ONLY(AdvancedWaterRenderer);
 
-  explicit AdvancedWaterRenderer(stlw::Logger&, boomhs::ScreenSize const&, ShaderProgram&,
+  explicit AdvancedWaterRenderer(common::Logger&, boomhs::ScreenSize const&, ShaderProgram&,
                                  TextureInfo&, TextureInfo&, TextureInfo&);
 
   template <typename TerrainRenderer, typename EntityRenderer>

@@ -3,8 +3,8 @@
 #include <opengl/global.hpp>
 #include <gfx/gl_sdl_log.hpp>
 
-#include <stlw/algorithm.hpp>
-#include <stlw/tuple.hpp>
+#include <common/algorithm.hpp>
+#include <common/tuple.hpp>
 
 #include <extlibs/fmt.hpp>
 #include <extlibs/glew.hpp>
@@ -22,7 +22,7 @@ namespace
 {
 
 Result<ImageData, std::string>
-upload_image_gpu(stlw::Logger &logger, std::string const& path, GLenum const target,
+upload_image_gpu(common::Logger &logger, std::string const& path, GLenum const target,
                  GLenum const format)
 {
   auto image_data = TRY_MOVEOUT(texture::load_image(logger, path.c_str(), format));
@@ -58,20 +58,20 @@ TextureInfo::TextureInfo()
 }
 
 void
-TextureInfo::gen_texture(stlw::Logger &logger, GLsizei const num)
+TextureInfo::gen_texture(common::Logger &logger, GLsizei const num)
 {
   glGenTextures(num, &id);
   LOG_ANY_GL_ERRORS(logger, "glGenTextures");
 }
 
 void
-TextureInfo::bind_impl(stlw::Logger& logger)
+TextureInfo::bind_impl(common::Logger& logger)
 {
   global::texture_bind(*this);
 }
 
 void
-TextureInfo::unbind_impl(stlw::Logger& logger)
+TextureInfo::unbind_impl(common::Logger& logger)
 {
   // This is an expected no-op operation.
   //
@@ -192,7 +192,7 @@ namespace opengl::texture
 {
 
 ImageResult
-load_image(stlw::Logger &logger, char const* path, GLenum const format)
+load_image(common::Logger &logger, char const* path, GLenum const format)
 {
   int w = 0, h = 0;
 
@@ -229,7 +229,7 @@ wrap_mode_from_string(char const* name)
 }
 
 TextureResult
-upload_2d_texture(stlw::Logger &logger, std::string const& filename, TextureInfo&& ti)
+upload_2d_texture(common::Logger &logger, std::string const& filename, TextureInfo&& ti)
 {
   GLenum const format = ti.format;
   GLint const uv_max = ti.uv_max;
@@ -266,7 +266,7 @@ upload_2d_texture(stlw::Logger &logger, std::string const& filename, TextureInfo
 }
 
 TextureResult
-upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& paths, TextureInfo&& ti)
+upload_3dcube_texture(common::Logger &logger, std::vector<std::string> const& paths, TextureInfo&& ti)
 {
   auto const format = ti.format;
   assert(paths.size() == 6);
@@ -276,7 +276,7 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
   ti.target = GL_TEXTURE_CUBE_MAP;
 
   auto const upload_fn = [&](std::string const& filename, GLenum const target)
-    -> Result<stlw::none_t, std::string>
+    -> Result<common::none_t, std::string>
   {
     auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, target, format));
 
@@ -302,7 +302,7 @@ upload_3dcube_texture(stlw::Logger &logger, std::vector<std::string> const& path
       GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, // bottom
     };
 
-    stlw::zip(upload_fn, CUBE_3D_TARGETS.begin(), paths_tuple);
+    common::zip(upload_fn, CUBE_3D_TARGETS.begin(), paths_tuple);
 
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");

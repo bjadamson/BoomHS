@@ -1,12 +1,12 @@
 #include <boomhs/rexpaint.hpp>
-#include <stlw/algorithm.hpp>
-#include <stlw/result.hpp>
+#include <common/algorithm.hpp>
+#include <common/result.hpp>
 
 #include <iostream>
 #include <zlib.h>
 
 using namespace rexpaint;
-using RexIOResult = Result<stlw::none_t, RexError>;
+using RexIOResult = Result<common::none_t, RexError>;
 
 namespace
 {
@@ -174,7 +174,7 @@ RexImage::load(std::string const& filename)
   return Ok(RexImage{version, width, height, MOVE(layers)});
 }
 
-Result<stlw::none_t, RexError>
+Result<common::none_t, RexError>
 RexImage::save(RexImage const& image, std::string const& filename)
 {
   gzFile gz = TRY_MOVEOUT(s_gzopen(filename.c_str(), "wb"));

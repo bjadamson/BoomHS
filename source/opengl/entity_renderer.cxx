@@ -15,7 +15,7 @@
 #include <opengl/gpu.hpp>
 #include <opengl/shapes.hpp>
 
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 #include <boomhs/random.hpp>
 #include <window/timer.hpp>
 

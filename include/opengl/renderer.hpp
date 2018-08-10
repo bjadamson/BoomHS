@@ -5,7 +5,7 @@
 
 #include <boomhs/lighting.hpp>
 #include <opengl/colors.hpp>
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 
 #include <extlibs/glm.hpp>
 #include <string>
@@ -118,7 +118,7 @@ void
 set_blendstate(BlendState const&);
 
 void
-init(stlw::Logger&, boomhs::ScreenDimensions const&);
+init(common::Logger&, boomhs::ScreenDimensions const&);
 
 void
 clear_screen(Color const&);
@@ -173,9 +173,9 @@ void
 draw_grid_lines(RenderState&);
 
 void
-set_modelmatrix(stlw::Logger&, glm::mat4 const&, ShaderProgram&);
+set_modelmatrix(common::Logger&, glm::mat4 const&, ShaderProgram&);
 
 void
-set_mvpmatrix(stlw::Logger&, glm::mat4 const&, glm::mat4 const&, ShaderProgram&);
+set_mvpmatrix(common::Logger&, glm::mat4 const&, glm::mat4 const&, ShaderProgram&);
 
 } // namespace opengl::render

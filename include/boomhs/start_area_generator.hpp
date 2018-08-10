@@ -1,6 +1,6 @@
 #pragma once
 #include <boomhs/leveldata.hpp>
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 
 namespace opengl
 {
@@ -15,7 +15,7 @@ class Heightmap;
 struct StartAreaGenerator
 {
   static LevelGeneratedData
-  gen_level(stlw::Logger&, EntityRegistry&, RNG&, opengl::ShaderPrograms&, opengl::TextureTable&,
+  gen_level(common::Logger&, EntityRegistry&, RNG&, opengl::ShaderPrograms&, opengl::TextureTable&,
             MaterialTable const&, Heightmap const&);
 
   StartAreaGenerator() = delete;

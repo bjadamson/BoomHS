@@ -3,7 +3,7 @@
 #include <boomhs/math.hpp>
 #include <boomhs/random.hpp>
 #include <ostream>
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 
 namespace opengl
 {
@@ -12,7 +12,7 @@ class Color
 {
   static constexpr float DEFAULT_ALPHA = 1.0f;
 
-  std::array<float, 4> colors_ = stlw::make_array<float>(1.0f, 1.0f, 1.0f, DEFAULT_ALPHA);
+  std::array<float, 4> colors_ = common::make_array<float>(1.0f, 1.0f, 1.0f, DEFAULT_ALPHA);
 
 public:
   static Color random(boomhs::RNG& rng, float const alpha = DEFAULT_ALPHA)
@@ -34,7 +34,7 @@ public:
 
   Color() = default;
   explicit constexpr Color(float const r, float const g, float const b, float const a)
-      : colors_(stlw::make_array<float>(r, g, b, a))
+      : colors_(common::make_array<float>(r, g, b, a))
   {
   }
 

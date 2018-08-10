@@ -6,8 +6,8 @@
 
 #include <boomhs/entity.hpp>
 
-#include <stlw/log.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/type_macros.hpp>
 
 #include <string>
 
@@ -62,8 +62,8 @@ public:
   DrawInfo(DrawInfo&&);
   DrawInfo& operator=(DrawInfo&&);
 
-  void bind_impl(stlw::Logger&);
-  void unbind_impl(stlw::Logger&);
+  void bind_impl(common::Logger&);
+  void unbind_impl(common::Logger&);
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
 
   auto vbo() const { return handles_.vbo(); }
@@ -114,12 +114,12 @@ public:
   EntityDrawHandleMap&       entities();
   EntityDrawHandleMap const& entities() const;
 
-  DrawInfo&       lookup_entity(stlw::Logger&, boomhs::EntityID);
-  DrawInfo const& lookup_entity(stlw::Logger&, boomhs::EntityID) const;
+  DrawInfo&       lookup_entity(common::Logger&, boomhs::EntityID);
+  DrawInfo const& lookup_entity(common::Logger&, boomhs::EntityID) const;
 
-  void add_mesh(stlw::Logger&, ShaderPrograms&, boomhs::ObjStore&, boomhs::EntityID,
+  void add_mesh(common::Logger&, ShaderPrograms&, boomhs::ObjStore&, boomhs::EntityID,
                 boomhs::EntityRegistry&);
-  void add_cube(stlw::Logger&, ShaderPrograms&, boomhs::EntityID, boomhs::EntityRegistry&);
+  void add_cube(common::Logger&, ShaderPrograms&, boomhs::EntityID, boomhs::EntityRegistry&);
 };
 
 } // namespace opengl

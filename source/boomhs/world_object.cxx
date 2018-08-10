@@ -6,7 +6,7 @@
 #include <boomhs/world_object.hpp>
 
 #include <extlibs/fmt.hpp>
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 #include <boomhs/math.hpp>
 
 using namespace boomhs;

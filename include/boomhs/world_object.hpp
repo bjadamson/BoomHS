@@ -1,6 +1,6 @@
 #pragma once
 #include <boomhs/entity.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/type_macros.hpp>
 
 #include <extlibs/glm.hpp>
 

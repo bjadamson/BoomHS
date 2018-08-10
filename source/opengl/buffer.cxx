@@ -1,8 +1,8 @@
 #include <boomhs/obj.hpp>
 #include <opengl/buffer.hpp>
 #include <opengl/vertex_attribute.hpp>
-#include <stlw/algorithm.hpp>
-#include <stlw/log.hpp>
+#include <common/algorithm.hpp>
+#include <common/log.hpp>
 
 #include <extlibs/fmt.hpp>
 #include <ostream>
@@ -65,7 +65,7 @@ VertexBuffer::VertexBuffer(BufferFlags const& f)
 }
 
 VertexBuffer
-VertexBuffer::create_interleaved(stlw::Logger& logger, ObjData const& data,
+VertexBuffer::create_interleaved(common::Logger& logger, ObjData const& data,
                                         BufferFlags const& flags)
 {
   LOG_TRACE_SPRINTF("Creating interleaved buffer with flags: %s", flags.to_string());

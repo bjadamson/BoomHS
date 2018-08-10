@@ -9,8 +9,8 @@
 #include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 
-#include <stlw/algorithm.hpp>
-#include <stlw/log.hpp>
+#include <common/algorithm.hpp>
+#include <common/log.hpp>
 
 #include <cassert>
 
@@ -128,7 +128,7 @@ DefaultTerrainRenderer::render(RenderState& rstate, MaterialTable const& mat_tab
 }
 
 void
-DefaultTerrainRenderer::bind_impl(stlw::Logger& logger, Terrain const& terrain,
+DefaultTerrainRenderer::bind_impl(common::Logger& logger, Terrain const& terrain,
                                 opengl::TextureTable& ttable)
 {
   auto const bind = [&](size_t const tunit) {
@@ -143,7 +143,7 @@ DefaultTerrainRenderer::bind_impl(stlw::Logger& logger, Terrain const& terrain,
 }
 
 void
-DefaultTerrainRenderer::unbind_impl(stlw::Logger& logger, Terrain const& terrain,
+DefaultTerrainRenderer::unbind_impl(common::Logger& logger, Terrain const& terrain,
                                   opengl::TextureTable& ttable)
 {
   auto const unbind = [&](size_t const tunit) {

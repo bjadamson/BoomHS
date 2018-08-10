@@ -4,11 +4,11 @@
 #include <opengl/global.hpp>
 #include <gfx/gl_sdl_log.hpp>
 
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 #include <boomhs/math.hpp>
-#include <stlw/os.hpp>
-#include <stlw/result.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/os.hpp>
+#include <common/result.hpp>
+#include <common/type_macros.hpp>
 
 #include <extlibs/fmt.hpp>
 #include <cstring>
@@ -31,7 +31,7 @@ array_to_string(T const& array)
   return result + "}";
 }
 
-using compiled_shader = stlw::ImplicitelyCastableMovableWrapper<GLuint, decltype(glDeleteShader)>;
+using compiled_shader = common::ImplicitelyCastableMovableWrapper<GLuint, decltype(glDeleteShader)>;
 using namespace opengl;
 
 auto constexpr INVALID_PROGRAM_ID = 0;
@@ -45,7 +45,7 @@ is_compiled(GLuint const handle)
 }
 
 Result<compiled_shader, std::string>
-compile_shader(stlw::Logger &logger, GLenum const type, std::string const& data)
+compile_shader(common::Logger &logger, GLenum const type, std::string const& data)
 {
   GLuint const handle = glCreateShader(type);
 
@@ -73,8 +73,8 @@ create_program()
   return Ok(program_id);
 }
 
-inline Result<stlw::none_t, std::string>
-link_program(stlw::Logger &logger, GLuint const program_id)
+inline Result<common::none_t, std::string>
+link_program(common::Logger &logger, GLuint const program_id)
 {
   // Link the program
   LOG_ANY_GL_ERRORS(logger, "glLinkProgram before");
@@ -111,7 +111,7 @@ struct FragmentShaderInfo {
 };
 
 Result<GLuint, std::string>
-compile_sources(stlw::Logger &logger, VertexShaderInfo const &vertex_shader,
+compile_sources(common::Logger &logger, VertexShaderInfo const &vertex_shader,
     FragmentShaderInfo const &fragment_shader)
 {
   LOG_TRACE_SPRINTF("Compiling shaders vert: %s, frag: %s",
@@ -237,7 +237,7 @@ active_attributes_string(GLuint const program)
   GLenum type{0};
 
   GLchar name[buffer_size];
-  stlw::memzero(name, buffer_size);
+  common::memzero(name, buffer_size);
 
   std::string result;
   result += "Active Attributes: {" + std::to_string(count) + "}(";
@@ -269,7 +269,7 @@ active_uniforms_string(GLuint const program)
   GLenum type{0};
 
   GLchar name[buffer_size];
-  stlw::memzero(name, buffer_size);
+  common::memzero(name, buffer_size);
 
   std::string result;
   result += "Number Active Uniforms: {" + std::to_string(count) + "}(";
@@ -296,7 +296,7 @@ namespace opengl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // grogram_factory
 Result<GLuint, std::string>
-program_factory::from_files(stlw::Logger &logger, VertexShaderFilename const& v,
+program_factory::from_files(common::Logger &logger, VertexShaderFilename const& v,
     FragmentShaderFilename const& f)
 {
   auto const prefix = [](auto const &path) {
@@ -306,10 +306,10 @@ program_factory::from_files(stlw::Logger &logger, VertexShaderFilename const& v,
   auto const fragment_shader_path = prefix(f.filename);
 
   // Read the Vertex/Fragment Shader code from ther file
-  auto const vertex_shader_source = TRY_MOVEOUT(stlw::read_file(vertex_shader_path));
+  auto const vertex_shader_source = TRY_MOVEOUT(common::read_file(vertex_shader_path));
 
   auto attribute_variable_info = TRY_MOVEOUT(from_vertex_shader(vertex_shader_path, vertex_shader_source));
-  auto const fragment_source = TRY_MOVEOUT(stlw::read_file(fragment_shader_path));
+  auto const fragment_source = TRY_MOVEOUT(common::read_file(fragment_shader_path));
 
   VertexShaderInfo const vertex_shader{vertex_shader_path, vertex_shader_source,
     MOVE(attribute_variable_info)};
@@ -354,14 +354,14 @@ ProgramHandle::~ProgramHandle()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // ShaderProgram
 void
-ShaderProgram::bind_impl(stlw::Logger &logger)
+ShaderProgram::bind_impl(common::Logger &logger)
 {
   glUseProgram(program_.handle());
   LOG_ANY_GL_ERRORS(logger, "Shader use/enable");
 }
 
 void
-ShaderProgram::unbind_impl(stlw::Logger &logger)
+ShaderProgram::unbind_impl(common::Logger &logger)
 {
 #ifdef DEBUG_BUILD
   glUseProgram(0);
@@ -369,7 +369,7 @@ ShaderProgram::unbind_impl(stlw::Logger &logger)
 }
 
 GLint
-ShaderProgram::get_uniform_location(stlw::Logger &logger, GLchar const *name)
+ShaderProgram::get_uniform_location(common::Logger &logger, GLchar const *name)
 {
   DEBUG_ASSERT_BOUND(*this);
   LOG_DEBUG_SPRINTF("getting uniform '%s' location.", name);
@@ -382,7 +382,7 @@ ShaderProgram::get_uniform_location(stlw::Logger &logger, GLchar const *name)
 }
 
 void
-ShaderProgram::set_uniform_matrix_3fv(stlw::Logger &logger, GLchar const *name, glm::mat3 const &matrix)
+ShaderProgram::set_uniform_matrix_3fv(common::Logger &logger, GLchar const *name, glm::mat3 const &matrix)
 {
   DEBUG_ASSERT_BOUND(*this);
 
@@ -404,7 +404,7 @@ ShaderProgram::set_uniform_matrix_3fv(stlw::Logger &logger, GLchar const *name, 
 }
 
 void
-ShaderProgram::set_uniform_matrix_4fv(stlw::Logger &logger, GLchar const *name, glm::mat4 const &matrix)
+ShaderProgram::set_uniform_matrix_4fv(common::Logger &logger, GLchar const *name, glm::mat4 const &matrix)
 {
   DEBUG_ASSERT_BOUND(*this);
 
@@ -426,7 +426,7 @@ ShaderProgram::set_uniform_matrix_4fv(stlw::Logger &logger, GLchar const *name, 
 }
 
 void
-ShaderProgram::set_uniform_array_2fv(stlw::Logger &logger, GLchar const* name, std::array<float, 2> const& array)
+ShaderProgram::set_uniform_array_2fv(common::Logger &logger, GLchar const* name, std::array<float, 2> const& array)
 {
   DEBUG_ASSERT_BOUND(*this);
 
@@ -447,7 +447,7 @@ ShaderProgram::set_uniform_array_2fv(stlw::Logger &logger, GLchar const* name, s
 }
 
 void
-ShaderProgram::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, std::array<float, 3> const& array)
+ShaderProgram::set_uniform_array_3fv(common::Logger &logger, GLchar const* name, std::array<float, 3> const& array)
 {
   DEBUG_ASSERT_BOUND(*this);
 
@@ -469,7 +469,7 @@ ShaderProgram::set_uniform_array_3fv(stlw::Logger &logger, GLchar const* name, s
 
 
 void
-ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, std::array<float, 4> const &floats)
+ShaderProgram::set_uniform_array_4fv(common::Logger &logger, GLchar const *name, std::array<float, 4> const &floats)
 {
   DEBUG_ASSERT_BOUND(*this);
 
@@ -490,7 +490,7 @@ ShaderProgram::set_uniform_array_4fv(stlw::Logger &logger, GLchar const *name, s
 }
 
 void
-ShaderProgram::set_uniform_float1(stlw::Logger &logger, GLchar const* name, float const value)
+ShaderProgram::set_uniform_float1(common::Logger &logger, GLchar const* name, float const value)
 {
   DEBUG_ASSERT_BOUND(*this);
 
@@ -501,7 +501,7 @@ ShaderProgram::set_uniform_float1(stlw::Logger &logger, GLchar const* name, floa
 }
 
 void
-ShaderProgram::set_uniform_int1(stlw::Logger &logger, GLchar const* name, int const value)
+ShaderProgram::set_uniform_int1(common::Logger &logger, GLchar const* name, int const value)
 {
 
   auto const loc = get_uniform_location(logger, name);
@@ -511,7 +511,7 @@ ShaderProgram::set_uniform_int1(stlw::Logger &logger, GLchar const* name, int co
 }
 
 void
-ShaderProgram::set_uniform_bool(stlw::Logger &logger, GLchar const* name, bool const value)
+ShaderProgram::set_uniform_bool(common::Logger &logger, GLchar const* name, bool const value)
 {
   DEBUG_ASSERT_BOUND(*this);
 
@@ -582,7 +582,7 @@ ShaderPrograms::nickname_at_index(size_t const index) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Free Functions
 Result<ShaderProgram, std::string>
-make_shader_program(stlw::Logger &logger, std::string const& vertex_s, std::string const& fragment_s, VertexAttribute &&va)
+make_shader_program(common::Logger &logger, std::string const& vertex_s, std::string const& fragment_s, VertexAttribute &&va)
 {
   VertexShaderFilename const v{vertex_s};
   FragmentShaderFilename const f{fragment_s};

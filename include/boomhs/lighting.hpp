@@ -1,6 +1,6 @@
 #pragma once
 #include <opengl/colors.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/type_macros.hpp>
 
 #include <array>
 
@@ -29,7 +29,7 @@ std::ostream&
 operator<<(std::ostream&, Attenuation const&);
 
 // https://learnopengl.com/#!Lighting/Light-casters
-static constexpr auto ATTENUATION_VALUE_TABLE = stlw::make_array<Attenuation>(
+static constexpr auto ATTENUATION_VALUE_TABLE = common::make_array<Attenuation>(
     Attenuation{1.0, 0.7, 1.8}, Attenuation{1.0, 0.35, 0.44}, Attenuation{1.0, 0.22, 0.20},
     Attenuation{1.0, 0.14, 0.07}, Attenuation{1.0, 0.09, 0.032}, Attenuation{1.0, 0.07, 0.017},
     Attenuation{1.0, 0.045, 0.0075}, Attenuation{1.0, 0.027, 0.0028},

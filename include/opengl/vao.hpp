@@ -2,8 +2,8 @@
 #include <opengl/bind.hpp>
 #include <opengl/global.hpp>
 
-#include <stlw/log.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/type_macros.hpp>
 
 #include <extlibs/glew.hpp>
 #include <ostream>
@@ -38,8 +38,8 @@ public:
   auto gl_raw_value() { return vao_; }
   auto gl_raw_value() const { return vao_; }
 
-  void bind_impl(stlw::Logger&) { global::vao_bind(*this); }
-  void unbind_impl(stlw::Logger&) { global::vao_unbind(); }
+  void bind_impl(common::Logger&) { global::vao_bind(*this); }
+  void unbind_impl(common::Logger&) { global::vao_unbind(); }
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
 
   std::string to_string() const;

@@ -72,7 +72,7 @@ draw_menu(EngineState& es, ImVec2 const& size, WaterAudioSystem& water_audio)
         ImGui::Text("Graphics");
         auto& gs = es.graphics_settings;
         {
-          auto constexpr GRAPHICS_MODE = stlw::make_array<GameGraphicsMode>(
+          auto constexpr GRAPHICS_MODE = common::make_array<GameGraphicsMode>(
               GameGraphicsMode::Basic, GameGraphicsMode::Medium, GameGraphicsMode::Advanced);
 
           gs.mode = imgui_cxx::combo_from_array("Graphics Settings", "Basic\0Medium\0Advanced\0\0",

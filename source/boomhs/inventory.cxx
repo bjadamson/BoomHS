@@ -2,7 +2,7 @@
 #include <boomhs/inventory.hpp>
 #include <boomhs/item_factory.hpp>
 
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 
 namespace boomhs
 {

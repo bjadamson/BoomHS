@@ -200,7 +200,7 @@ WaterAudioSystem::is_playing_watersound() const
 }
 
 void
-WaterAudioSystem::play_inwater_sound(stlw::Logger& logger)
+WaterAudioSystem::play_inwater_sound(common::Logger& logger)
 {
   auto& source = water_audio.source;
   if (!source.is_playing()) {
@@ -212,7 +212,7 @@ WaterAudioSystem::play_inwater_sound(stlw::Logger& logger)
 }
 
 void
-WaterAudioSystem::stop_inwater_sound(stlw::Logger&)
+WaterAudioSystem::stop_inwater_sound(common::Logger&)
 {
   auto& source = water_audio.source;
   source.stop();

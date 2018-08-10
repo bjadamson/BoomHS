@@ -14,7 +14,7 @@
 #include <opengl/renderer.hpp>
 #include <opengl/texture.hpp>
 
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 #include <window/timer.hpp>
 
 #include <extlibs/imgui.hpp>
@@ -30,7 +30,7 @@ namespace
 {
 
 void
-draw_player_inventory(stlw::Logger& logger, EntityRegistry& registry, TextureTable const& ttable)
+draw_player_inventory(common::Logger& logger, EntityRegistry& registry, TextureTable const& ttable)
 {
   auto const eid       = find_player(registry);
   auto&      player    = registry.get<Player>(eid);
@@ -206,7 +206,7 @@ draw_chatwindow_body(EngineState& es, Player& player)
   auto const copy_message_to_chathistory = [&]()
   {
     std::string copy = chat_buffer.buffer();
-    stlw::trim(copy);
+    common::trim(copy);
     if (!copy.empty()) {
       Message m{active_channel, MOVE(copy)};
       chat_history.add_message(MOVE(m));
@@ -339,7 +339,7 @@ ChatBuffer::size() const
 void
 ChatBuffer::clear()
 {
-  stlw::memzero(buffer(), ChatBuffer::MAX_BUFFER_SIZE);
+  common::memzero(buffer(), ChatBuffer::MAX_BUFFER_SIZE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,9 +1,9 @@
 #include <opengl/factory.hpp>
 #include <boomhs/screen_size.hpp>
 
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 #include <boomhs/math.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/type_macros.hpp>
 #include <array>
 #include <iostream>
 
@@ -70,7 +70,7 @@ ArrowFactory::create_vertices(ArrowCreateParams const& params)
 #define END params.end.x, params.end.y, params.end.z
 #define P1 p1.x, p1.y, p1.z
 #define P2 p2.x, p2.y, p2.z
-  return stlw::make_array<float>(
+  return common::make_array<float>(
       // START -> END
       START, COLOR,
       END, COLOR,
@@ -95,7 +95,7 @@ ArrowFactory::create_vertices(ArrowCreateParams const& params)
 RectangleUvVertices
 RectangleFactory::from_vertices_and_uvs(RectangleVertices const& v, RectangleUvs const& uv)
 {
-  return stlw::concat(
+  return common::concat(
     v.zero(), uv.zero(),
     v.one(),  uv.one(),
     v.two(),  uv.two(),
@@ -200,7 +200,7 @@ cube_vertices(glm::vec3 const& min, glm::vec3 const& max)
   auto const& width     = dimensions.x;
   auto const& height    = dimensions.y;
 
-  return stlw::make_array<float>(
+  return common::make_array<float>(
     min.x,         min.y,          min.z,
     min.x + width, min.y,          min.z,
     min.x + width, min.y + height, min.z,
@@ -293,7 +293,7 @@ rectangle_vertices(float const x, float const y, float const w, float const h)
 #define one   x1, y0, Z
 #define two   x1, y1, Z
 #define three x0, y1, Z
-  return stlw::make_array<float>(
+  return common::make_array<float>(
       zero, one, two,
       two, three, zero
       );
@@ -312,7 +312,7 @@ rectangle_vertices_default()
 #define one    1.0f, -1.0f, Z
 #define two    1.0f,  1.0f, Z
 #define three -1.0f,  1.0f, Z
-  return stlw::make_array<float>(
+  return common::make_array<float>(
       zero, one, two,
       two, three, zero
       );
@@ -325,7 +325,7 @@ rectangle_vertices_default()
 RectangleUvs
 rectangle_uvs(float const max)
 {
-  return stlw::make_array<PointArray>(
+  return common::make_array<PointArray>(
       PointArray{0.0f, 0.0f},
       PointArray{max, 0.0f},
       PointArray{max, max},

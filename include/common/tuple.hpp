@@ -10,7 +10,7 @@
 // Someday replace this with std::apply, once it is finished implemented.
 // http://codereview.stackexchange.com/questions/51407/stdtuple-foreach-implementation
 
-namespace stlw
+namespace common
 {
 
 template <class T>
@@ -187,7 +187,7 @@ auto constexpr map_tuple_elements(T&& tup, F& f, std::index_sequence<Is...>)
 
 } // namespace detail
 
-template <typename T, typename F, size_t TupSize = stlw::tuple_size_v<std::decay_t<T>>>
+template <typename T, typename F, size_t TupSize = common::tuple_size_v<std::decay_t<T>>>
 auto constexpr map_tuple_elements(T&& tup, F f)
 {
   return detail::map_tuple_elements(std::forward<T>(tup), f, std::make_index_sequence<TupSize>{});
@@ -232,4 +232,4 @@ auto constexpr tuple_from_container(T const& c)
   return tuple_from_array(detail::array_from_container<N, V>(c, std::make_index_sequence<N>{}));
 }
 
-} // namespace stlw
+} // namespace common

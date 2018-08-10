@@ -1,9 +1,9 @@
 #include <window/sdl_window.hpp>
 #include <gfx/gl_sdl_log.hpp>
 
-#include <stlw/algorithm.hpp>
-#include <stlw/result.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/algorithm.hpp>
+#include <common/result.hpp>
+#include <common/type_macros.hpp>
 
 #include <extlibs/fmt.hpp>
 #include <extlibs/glew.hpp>
@@ -14,7 +14,7 @@ using namespace window;
 
 namespace {
 void
-check_errors(stlw::Logger &logger)
+check_errors(common::Logger &logger)
 {
   gfx::ErrorLog::abort_if_any_errors(logger);
 }
@@ -81,8 +81,8 @@ SDLWindow::set_fullscreen(FullscreenFlags const fs)
   }
 }
 
-Result<stlw::none_t, std::string>
-sdl_library::init(stlw::Logger &logger)
+Result<common::none_t, std::string>
+sdl_library::init(common::Logger &logger)
 {
   // Initialize video subsystem
   if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
@@ -95,7 +95,7 @@ sdl_library::init(stlw::Logger &logger)
   // (from the docs) The requested attributes should be set before creating an
   // OpenGL window
   auto const set_attribute = [&logger](auto const attribute,
-                                       auto const value) -> Result<stlw::none_t, std::string> {
+                                       auto const value) -> Result<common::none_t, std::string> {
     int const set_r = SDL_GL_SetAttribute(attribute, value);
     check_errors(logger);
     if (0 != set_r) {
@@ -133,7 +133,7 @@ sdl_library::destroy()
 }
 
 Result<SDLWindow, std::string>
-sdl_library::make_window(stlw::Logger &logger, bool const fullscreen, int const height, int const width)
+sdl_library::make_window(common::Logger &logger, bool const fullscreen, int const height, int const width)
 {
   // Hidden dependency between the ordering here, so all the logic exists in one
   // place.

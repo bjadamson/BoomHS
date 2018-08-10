@@ -17,7 +17,7 @@ namespace
 {
 
 void
-kill_entity(stlw::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
+kill_entity(common::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
             EntityRegistry& registry, EntityID const entity_eid)
 {
   auto const& bbox = registry.get<AABoundingBox>(entity_eid);
@@ -35,7 +35,7 @@ kill_entity(stlw::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
 }
 
 void
-try_attack_selected_target(stlw::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
+try_attack_selected_target(common::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
                            EntityRegistry& registry, Player &player, EntityID const target_eid)
 {
   auto& ptransform      = player.transform();
@@ -159,7 +159,7 @@ Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
 }
 
 void
-Player::drop_entity(stlw::Logger& logger, EntityID const eid, EntityRegistry& registry)
+Player::drop_entity(common::Logger& logger, EntityID const eid, EntityRegistry& registry)
 {
   auto const player_eid = find_player(registry);
   auto&      player     = registry.get<Player>(player_eid);

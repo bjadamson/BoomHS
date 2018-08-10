@@ -1,8 +1,8 @@
 #pragma once
 #include <opengl/colors.hpp>
 
-#include <stlw/algorithm.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/algorithm.hpp>
+#include <common/type_macros.hpp>
 
 #include <string>
 #include <vector>

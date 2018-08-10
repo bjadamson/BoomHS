@@ -1,7 +1,7 @@
 #include <experimental/filesystem>
-#include <stlw/algorithm.hpp>
-#include <stlw/optional.hpp>
-#include <stlw/os.hpp>
+#include <common/algorithm.hpp>
+#include <common/optional.hpp>
+#include <common/os.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <cstdlib>
@@ -26,7 +26,7 @@ delete_if_exists(fs::path const &path)
 bool
 copy_to_outdir(std::string const& contents, fs::path const &shader_path, fs::path const &outdir)
 {
-  auto const shader_read_result = stlw::read_file(shader_path.string().c_str());
+  auto const shader_read_result = common::read_file(shader_path.string().c_str());
   if (!shader_read_result) {
     return false;
   }
@@ -38,7 +38,7 @@ copy_to_outdir(std::string const& contents, fs::path const &shader_path, fs::pat
   delete_if_exists(output_shaderfile_name);
 
   // write the modified copy out to the file
-  stlw::write_file(output_shaderfile_name, contents, shader_contents);
+  common::write_file(output_shaderfile_name, contents, shader_contents);
   return true;
 }
 
@@ -92,7 +92,7 @@ get_library_code(fs::path const& path_to_shaders, char const* file_extension)
     auto const path = directory_iter->path();
     bool const is_libraryfile = path.filename().string().find(file_extension) != std::string::npos;
     if (is_libraryfile) {
-      auto const read_result = stlw::read_file(path.string().c_str());
+      auto const read_result = common::read_file(path.string().c_str());
       if (!read_result) {
         return false;
       }

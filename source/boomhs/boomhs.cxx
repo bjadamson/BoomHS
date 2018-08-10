@@ -36,10 +36,10 @@
 #include <window/controller.hpp>
 #include <window/timer.hpp>
 
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/random.hpp>
-#include <stlw/result.hpp>
+#include <common/result.hpp>
 
 #include <extlibs/fastnoise.hpp>
 #include <extlibs/imgui.hpp>
@@ -60,7 +60,7 @@ namespace
 {
 
 bool
-player_in_water(stlw::Logger& logger, EntityRegistry& registry)
+player_in_water(common::Logger& logger, EntityRegistry& registry)
 {
   auto const player_eid = find_player(registry);
   auto& player = registry.get<Player>(player_eid);
@@ -87,7 +87,7 @@ update_mousestates(EngineState& es)
 }
 
 void
-update_playaudio(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registry,
+update_playaudio(common::Logger& logger, LevelData& ldata, EntityRegistry& registry,
                  WaterAudioSystem& audio)
 {
   if (player_in_water(logger, registry)) {
@@ -99,7 +99,7 @@ update_playaudio(stlw::Logger& logger, LevelData& ldata, EntityRegistry& registr
 }
 
 void
-update_npcpositions(stlw::Logger& logger, EntityRegistry& registry, TerrainGrid& terrain,
+update_npcpositions(common::Logger& logger, EntityRegistry& registry, TerrainGrid& terrain,
                     FrameTime const& ft)
 {
   auto const update = [&](auto const eid) {
@@ -382,8 +382,8 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
 namespace boomhs
 {
 
-Result<stlw::Nothing, std::string>
-copy_assets_gpu(stlw::Logger& logger, ShaderPrograms& sps,
+Result<common::Nothing, std::string>
+copy_assets_gpu(common::Logger& logger, ShaderPrograms& sps,
                 EntityRegistry& registry, ObjStore& obj_store, DrawHandleManager& dhm)
 {
   // copy CUBES to GPU
@@ -773,14 +773,14 @@ render_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, Camera& camer
 StaticRenderers
 make_static_renderers(EngineState& es, LevelManager& lm)
 {
-  auto const make_basic_water_renderer = [](stlw::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
+  auto const make_basic_water_renderer = [](common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
     auto& diff   = *ttable.find("water-diffuse");
     auto& normal = *ttable.find("water-normal");
     auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
     return BasicWaterRenderer{logger, diff, normal, sp};
   };
 
-  auto const make_medium_water_renderer = [](stlw::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
+  auto const make_medium_water_renderer = [](common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
     auto& diff   = *ttable.find("water-diffuse");
     auto& normal = *ttable.find("water-normal");
     auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Medium, sps);
@@ -826,7 +826,7 @@ make_static_renderers(EngineState& es, LevelManager& lm)
   };
 
   // TODO: Move out into state somewhere.
-  auto const make_skybox_renderer = [](stlw::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
+  auto const make_skybox_renderer = [](common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
     auto&              skybox_sp = sps.ref_sp("skybox");
     glm::vec3 const    vmin{-0.5f};
     glm::vec3 const    vmax{0.5f};

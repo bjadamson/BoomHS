@@ -8,9 +8,9 @@
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
 
-#include <stlw/log.hpp>
-#include <stlw/result.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/result.hpp>
+#include <common/type_macros.hpp>
 
 #include <string>
 #include <vector>
@@ -45,7 +45,7 @@ struct LevelLoader
   LevelLoader() = delete;
 
   static Result<LevelAssets, std::string>
-  load_level(stlw::Logger&, EntityRegistry&, std::string const&);
+  load_level(common::Logger&, EntityRegistry&, std::string const&);
 };
 
 } // namespace boomhs

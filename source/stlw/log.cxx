@@ -1,13 +1,13 @@
-#include <stlw/log.hpp>
-#include <stlw/algorithm.hpp>
-#include <stlw/compiler.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/algorithm.hpp>
+#include <common/compiler.hpp>
+#include <common/type_macros.hpp>
 
 #include <iostream>
 #include <memory>
 
-using namespace stlw;
-using namespace stlw::impl;
+using namespace common;
+using namespace common::impl;
 
 namespace
 {
@@ -46,7 +46,7 @@ make_logger(char const *file_path, spdlog::level::level_enum const level)
     auto stderr_sink = threadsafe_stderr_sink();
     stderr_sink->set_level(spdlog::level::err);
 
-    auto const sinks = stlw::make_array<spdlog::sink_ptr>(
+    auto const sinks = common::make_array<spdlog::sink_ptr>(
         MOVE(file_sink),
         MOVE(stderr_sink)
         );
@@ -64,7 +64,7 @@ make_logger(char const *file_path, spdlog::level::level_enum const level)
 
 } // ns anon
 
-namespace stlw
+namespace common
 {
 
 impl::LogWriter
@@ -78,4 +78,4 @@ LogFactory::make_default(char const *name)
   return impl::LogWriter{MOVE(logger)};
 }
 
-} // ns stlw
+} // ns common

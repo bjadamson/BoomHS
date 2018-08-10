@@ -1,6 +1,6 @@
 #pragma once
 
-namespace stlw
+namespace common
 {
 
 // Structure abstracting over a pointer and a length.
@@ -32,4 +32,4 @@ make_slice(size_t const length, T const* data)
   return slice<T>{length, data};
 }
 
-} // namespace stlw
+} // namespace common

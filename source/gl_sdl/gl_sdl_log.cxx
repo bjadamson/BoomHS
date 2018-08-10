@@ -1,7 +1,7 @@
 #include <gfx/gl_sdl_log.hpp>
 
 #include <extlibs/fmt.hpp>
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 
 #include <extlibs/sdl.hpp>
 #include <iostream>
@@ -107,7 +107,7 @@ operator<<(std::ostream& stream, SdlErrors const& errors)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 void
-ErrorLog::abort_if_any_errors(stlw::Logger& logger)
+ErrorLog::abort_if_any_errors(common::Logger& logger)
 {
   auto const write_errors = [&logger](char const* prefix, auto const& error) {
     LOG_ERROR_SPRINTF("%s detected: %s\n", prefix, error);
@@ -153,7 +153,7 @@ get_program_log(GLuint const handle)
 }
 
 void
-log_any_gl_errors(stlw::Logger& logger, std::string const& prefix, int const line)
+log_any_gl_errors(common::Logger& logger, std::string const& prefix, int const line)
 {
   GLenum const err = glGetError();
   if (err != GL_NO_ERROR) {

@@ -6,8 +6,8 @@
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
 
-#include <stlw/log.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/type_macros.hpp>
 
 namespace boomhs
 {
@@ -31,7 +31,7 @@ struct SunshaftBuffers
   opengl::TextureInfo  tbo;
   opengl::RenderBuffer rbo;
 
-  SunshaftBuffers(stlw::Logger&, boomhs::ScreenSize const&);
+  SunshaftBuffers(common::Logger&, boomhs::ScreenSize const&);
 
   NO_COPY(SunshaftBuffers);
   MOVE_DEFAULT(SunshaftBuffers);
@@ -45,12 +45,12 @@ class SunshaftRenderer
 public:
   MOVE_CONSTRUCTIBLE_ONLY(SunshaftRenderer);
 
-  explicit SunshaftRenderer(stlw::Logger&, boomhs::ScreenSize const&, opengl::ShaderProgram&);
+  explicit SunshaftRenderer(common::Logger&, boomhs::ScreenSize const&, opengl::ShaderProgram&);
 
   auto& texture_info() { return buffers_.tbo; }
 
   template <typename FN>
-  void with_sunshaft_fbo(stlw::Logger& logger, FN const& fn)
+  void with_sunshaft_fbo(common::Logger& logger, FN const& fn)
   {
     buffers_.fbo->while_bound(logger, fn);
   }

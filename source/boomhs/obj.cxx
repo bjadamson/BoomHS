@@ -1,7 +1,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/obj.hpp>
 
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 
 #include <cassert>
 
@@ -197,7 +197,7 @@ operator<<(std::ostream& stream, LoadStatus const& ls)
 }
 
 LoadResult
-load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
+load_objfile(common::Logger& logger, char const* objpath, char const* mtlpath)
 {
   LOG_TRACE_SPRINTF("Loading objfile: %s mtl: %s", objpath,
                     mtlpath == nullptr ? "nullptr" : mtlpath);
@@ -295,7 +295,7 @@ load_objfile(stlw::Logger& logger, char const* objpath, char const* mtlpath)
 }
 
 LoadResult
-load_objfile(stlw::Logger& logger, std::string const& path, std::string const& name)
+load_objfile(common::Logger& logger, std::string const& path, std::string const& name)
 {
   auto const objpath = path + name;
   return load_objfile(logger, objpath.c_str(), path.c_str());

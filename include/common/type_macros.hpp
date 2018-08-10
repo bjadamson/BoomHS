@@ -144,7 +144,7 @@
   }
 // END Function-defining macros
 
-namespace stlw
+namespace common
 {
 
 namespace impl
@@ -223,7 +223,7 @@ using ImplicitelyCastableMovableWrapper = impl::ICMW<T, DF>;
 
 // Macros and helper-macros for the DO_EFFECT() macro.
 #define ON_SCOPE_EXIT_CONSTRUCT_IN_PLACE(VAR, fn)                                                  \
-  ::stlw::impl::DestroyFN<decltype((fn))> const VAR{fn};
+  ::common::impl::DestroyFN<decltype((fn))> const VAR{fn};
 #define ON_SCOPE_EXIT_MOVE_EXPR_INTO_VAR(VAR, expr)                                                \
   auto TEMPORARY##VAR = expr;                                                                      \
   ON_SCOPE_EXIT_CONSTRUCT_IN_PLACE(VAR, MOVE(TEMPORARY##VAR))
@@ -232,4 +232,4 @@ using ImplicitelyCastableMovableWrapper = impl::ICMW<T, DF>;
 #define ON_SCOPE_EXIT_EXPAND(VAR, expr) ON_SCOPE_EXIT_CONCAT(__scopeignoreme__, VAR, expr)
 #define ON_SCOPE_EXIT(expr) ON_SCOPE_EXIT_EXPAND(__COUNTER__, expr)
 
-} // namespace stlw
+} // namespace common

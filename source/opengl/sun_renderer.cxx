@@ -14,7 +14,7 @@ namespace
 {
 
 void
-setup(stlw::Logger& logger, TextureInfo& ti, GLint const v)
+setup(common::Logger& logger, TextureInfo& ti, GLint const v)
 {
   glActiveTexture(v);
   ti.while_bound(logger, [&]() {
@@ -28,13 +28,13 @@ setup(stlw::Logger& logger, TextureInfo& ti, GLint const v)
 namespace opengl
 {
 
-SunshaftBuffers::SunshaftBuffers(stlw::Logger& logger, ScreenSize const& ss)
+SunshaftBuffers::SunshaftBuffers(common::Logger& logger, ScreenSize const& ss)
     : fbo(FrameBuffer{opengl::make_fbo(logger, ss)})
     , rbo(RBInfo{})
 {
 }
 
-SunshaftRenderer::SunshaftRenderer(stlw::Logger& logger, ScreenSize const& ss, ShaderProgram& sp)
+SunshaftRenderer::SunshaftRenderer(common::Logger& logger, ScreenSize const& ss, ShaderProgram& sp)
     : buffers_(SunshaftBuffers{logger, ss})
     , sp_(sp)
 {

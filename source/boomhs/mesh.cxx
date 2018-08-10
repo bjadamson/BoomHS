@@ -1,7 +1,7 @@
 #include <boomhs/mesh.hpp>
 #include <boomhs/heightmap.hpp>
 #include <cassert>
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 
 using namespace boomhs;
 
@@ -50,7 +50,7 @@ namespace boomhs
 // Algorithm modified from:
 // https://www.youtube.com/watch?v=yNYwZMmgTJk&list=PLRIWtICgwaX0u7Rf9zkZhLoLuZVfUksDP&index=14
 ObjVertices
-MeshFactory::generate_rectangle_mesh(stlw::Logger& logger, glm::vec2 const& dimensions,
+MeshFactory::generate_rectangle_mesh(common::Logger& logger, glm::vec2 const& dimensions,
                                      size_t const num_vertexes)
 {
   LOG_TRACE("Generating rectangle mesh begin");
@@ -95,7 +95,7 @@ MeshFactory::generate_rectangle_mesh(stlw::Logger& logger, glm::vec2 const& dime
 }
 
 ObjVertices
-MeshFactory::generate_uvs(stlw::Logger& logger, glm::vec2 const& dimensions,
+MeshFactory::generate_uvs(common::Logger& logger, glm::vec2 const& dimensions,
                           size_t const num_vertexes, bool const tile)
 {
   size_t constexpr NUM_COMPONENTS = 2; // u, v
@@ -130,7 +130,7 @@ MeshFactory::generate_uvs(stlw::Logger& logger, glm::vec2 const& dimensions,
 // Algorithm modified from:
 // https://www.youtube.com/watch?v=yNYwZMmgTJk&list=PLRIWtICgwaX0u7Rf9zkZhLoLuZVfUksDP&index=14
 ObjIndices
-MeshFactory::generate_indices(stlw::Logger& logger, size_t const num_vertexes)
+MeshFactory::generate_indices(common::Logger& logger, size_t const num_vertexes)
 {
   auto const x_length = num_vertexes, z_length = num_vertexes;
   auto const strips_required          = z_length - 1;
@@ -166,7 +166,7 @@ MeshFactory::generate_indices(stlw::Logger& logger, size_t const num_vertexes)
 }
 
 ObjVertices
-MeshFactory::generate_normals(stlw::Logger& logger, GenerateNormalData const& normal_data)
+MeshFactory::generate_normals(common::Logger& logger, GenerateNormalData const& normal_data)
 {
   auto const num_vertexes = normal_data.num_vertexes;
   auto       normals      = create_normal_buffer(num_vertexes);
@@ -230,7 +230,7 @@ MeshFactory::generate_normals(stlw::Logger& logger, GenerateNormalData const& no
 }
 
 ObjVertices
-MeshFactory::generate_flat_normals(stlw::Logger& logger, size_t const num_vertexes)
+MeshFactory::generate_flat_normals(common::Logger& logger, size_t const num_vertexes)
 {
   auto normals = create_normal_buffer(num_vertexes);
 

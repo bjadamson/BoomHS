@@ -1,7 +1,7 @@
 #pragma once
-#include <stlw/tuple.hpp>
+#include <common/tuple.hpp>
 
-namespace stlw
+namespace common
 {
 
 // Checks that only one of the provided boolean values is true.
@@ -21,7 +21,7 @@ assert_exactly_only_one_true(T const&... bools)
     one_true |= b;
   };
   auto const tuple = std::make_tuple(bools...);
-  stlw::for_each(tuple, assert_fn);
+  common::for_each(tuple, assert_fn);
 }
 
-} // namespace stlw
+} // namespace common

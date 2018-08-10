@@ -1,5 +1,5 @@
 #include <extlibs/fmt.hpp>
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 #include <window/controller.hpp>
 
 using namespace window;
@@ -219,7 +219,7 @@ SDLControllers::add(ControllerPTR&& ptr, SDL_Joystick* joystick)
 }
 
 Result<SDLControllers, std::string>
-SDLControllers::find_attached_controllers(stlw::Logger& logger)
+SDLControllers::find_attached_controllers(common::Logger& logger)
 {
   int const num_controllers = SDL_NumJoysticks();
   LOG_INFO_SPRINTF("Detected %i controllers plugged into the system", num_controllers);

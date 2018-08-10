@@ -3,7 +3,7 @@
 #include <boomhs/ui_ingame.hpp>
 
 #include <boomhs/math.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/type_macros.hpp>
 
 #include <array>
 

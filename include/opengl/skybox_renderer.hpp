@@ -1,7 +1,7 @@
 #pragma once
 #include <opengl/draw_info.hpp>
-#include <stlw/log.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/type_macros.hpp>
 
 namespace window
 {
@@ -25,7 +25,7 @@ class SkyboxRenderer
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(SkyboxRenderer);
-  SkyboxRenderer(stlw::Logger&, opengl::DrawInfo&&, opengl::TextureInfo&, opengl::TextureInfo&,
+  SkyboxRenderer(common::Logger&, opengl::DrawInfo&&, opengl::TextureInfo&, opengl::TextureInfo&,
                  opengl::ShaderProgram&);
 
   void render(RenderState&, DrawState&, window::FrameTime const&);

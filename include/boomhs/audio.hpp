@@ -1,8 +1,8 @@
 #pragma once
-#include <stlw/auto_resource.hpp>
-#include <stlw/log.hpp>
-#include <stlw/result.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/auto_resource.hpp>
+#include <common/log.hpp>
+#include <common/result.hpp>
+#include <common/type_macros.hpp>
 
 #include <extlibs/glm.hpp>
 #include <extlibs/openal.hpp>
@@ -36,8 +36,8 @@ struct AudioBufferState
   void destroy_impl();
 };
 
-using AudioBuffer         = stlw::AutoResource<AudioBufferState>;
-using AudioSourceResource = stlw::AutoResource<AudioSourceState>;
+using AudioBuffer         = common::AutoResource<AudioBufferState>;
+using AudioSourceResource = common::AutoResource<AudioSourceState>;
 
 class AudioSource
 {
@@ -99,8 +99,8 @@ struct WaterAudioSystem
   WaterAudioSystem(AudioObject&&);
 
   // methods
-  void play_inwater_sound(stlw::Logger&);
-  void stop_inwater_sound(stlw::Logger&);
+  void play_inwater_sound(common::Logger&);
+  void stop_inwater_sound(common::Logger&);
 
   bool is_playing_watersound() const;
   void set_volume(float);

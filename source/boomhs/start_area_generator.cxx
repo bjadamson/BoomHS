@@ -11,7 +11,7 @@
 #include <opengl/constants.hpp>
 #include <boomhs/lighting.hpp>
 #include <opengl/texture.hpp>
-#include <stlw/os.hpp>
+#include <common/os.hpp>
 #include <boomhs/random.hpp>
 
 using namespace boomhs;
@@ -24,7 +24,7 @@ namespace
 {
 
 void
-place_item_on_ground(stlw::Logger& logger, TerrainGrid& terrain, Transform &transform,
+place_item_on_ground(common::Logger& logger, TerrainGrid& terrain, Transform &transform,
     glm::vec2 const& pos)
 {
   float const x = pos.x, z = pos.y;
@@ -33,7 +33,7 @@ place_item_on_ground(stlw::Logger& logger, TerrainGrid& terrain, Transform &tran
 }
 
 void
-place_torch(stlw::Logger& logger, TerrainGrid& terrain, EntityRegistry& registry,
+place_torch(common::Logger& logger, TerrainGrid& terrain, EntityRegistry& registry,
             TextureTable& ttable, glm::vec2 const& pos)
 {
   auto const eid = ItemFactory::create_torch(registry, ttable);
@@ -43,7 +43,7 @@ place_torch(stlw::Logger& logger, TerrainGrid& terrain, EntityRegistry& registry
 }
 
 void
-place_monsters(stlw::Logger& logger, TerrainGrid const& terrain, EntityRegistry& registry,
+place_monsters(common::Logger& logger, TerrainGrid const& terrain, EntityRegistry& registry,
                RNG& rng)
 {
   auto const num_monsters = rng.gen_int_range(MIN_MONSTERS_PER_FLOOR, MAX_MONSTERS_PER_FLOOR);
@@ -51,7 +51,7 @@ place_monsters(stlw::Logger& logger, TerrainGrid const& terrain, EntityRegistry&
 }
 
 auto&
-place_player(stlw::Logger& logger, TerrainGrid const& terrain,
+place_player(common::Logger& logger, TerrainGrid const& terrain,
              MaterialTable const& material_table, EntityRegistry& registry)
 {
   auto const eid = registry.create();
@@ -94,7 +94,7 @@ place_player(stlw::Logger& logger, TerrainGrid const& terrain,
 }
 
 void
-place_waters(stlw::Logger& logger, ShaderPrograms& sps, EntityRegistry& registry,
+place_waters(common::Logger& logger, ShaderPrograms& sps, EntityRegistry& registry,
             TextureTable& ttable, RNG& rng)
 {
   auto& water_sp  = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
@@ -140,7 +140,7 @@ namespace boomhs
 {
 
 LevelGeneratedData
-StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
+StartAreaGenerator::gen_level(common::Logger& logger, EntityRegistry& registry,
                               RNG& rng, ShaderPrograms& sps, TextureTable& ttable,
                               MaterialTable const& material_table,
                               Heightmap const& heightmap)

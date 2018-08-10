@@ -21,7 +21,7 @@
 #include <extlibs/sdl.hpp>
 #include <window/timer.hpp>
 
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/random.hpp>
 
@@ -49,7 +49,7 @@ disable_depth_tests()
 }
 
 void
-set_dirlight(stlw::Logger& logger, ShaderProgram& sp, GlobalLight const& global_light)
+set_dirlight(common::Logger& logger, ShaderProgram& sp, GlobalLight const& global_light)
 {
   auto const& directional_light = global_light.directional;
   sp.set_uniform_vec3(logger, "u_dirlight.direction", directional_light.direction);
@@ -60,7 +60,7 @@ set_dirlight(stlw::Logger& logger, ShaderProgram& sp, GlobalLight const& global_
 }
 
 void
-set_pointlight(stlw::Logger& logger, ShaderProgram& sp, size_t const index,
+set_pointlight(common::Logger& logger, ShaderProgram& sp, size_t const index,
                PointLight const& pointlight, glm::vec3 const& pointlight_position)
 {
   std::string const varname = "u_pointlights[" + std::to_string(index) + "]";
@@ -89,7 +89,7 @@ struct PointlightTransform
 };
 
 void
-set_fog(stlw::Logger& logger, Fog const& fog, glm::mat4 const& view_matrix, ShaderProgram& sp)
+set_fog(common::Logger& logger, Fog const& fog, glm::mat4 const& view_matrix, ShaderProgram& sp)
 {
   sp.set_uniform_matrix_4fv(logger, "u_viewmatrix", view_matrix);
 
@@ -158,8 +158,8 @@ void
 gl_log_callback(GLenum const source, GLenum const type, GLuint const id, GLenum const severity,
                 GLsizei const length, GLchar const* message, void const* user_data)
 {
-  auto*       plogger = reinterpret_cast<stlw::Logger const*>(user_data);
-  auto&       logger  = *const_cast<stlw::Logger*>(plogger);
+  auto*       plogger = reinterpret_cast<common::Logger const*>(user_data);
+  auto&       logger  = *const_cast<common::Logger*>(plogger);
   char const* prefix  = (type == GL_DEBUG_TYPE_ERROR) ? "** GL ERROR **" : "";
   LOG_ERROR_SPRINTF("GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n", prefix, type,
                     severity, message);
@@ -175,7 +175,7 @@ struct WorldOriginArrows
 };
 
 WorldOriginArrows
-create_axis_arrows(stlw::Logger &logger, VertexAttribute const& va)
+create_axis_arrows(common::Logger &logger, VertexAttribute const& va)
 {
   glm::vec3 constexpr ORIGIN = glm::zero<glm::vec3>();
 
@@ -198,7 +198,7 @@ namespace opengl
 // DrawState
 DrawState::DrawState()
 {
-  stlw::memzero(this, sizeof(DrawState));
+  common::memzero(this, sizeof(DrawState));
 
   assert(0 == num_vertices);
   assert(0 == num_drawcalls);
@@ -271,7 +271,7 @@ set_blendstate(BlendState const& state)
 }
 
 void
-init(stlw::Logger& logger, ScreenDimensions const& dimensions)
+init(common::Logger& logger, ScreenDimensions const& dimensions)
 {
   // Initialize opengl
   glViewport(dimensions.left(), dimensions.top(), dimensions.right(), dimensions.bottom());
@@ -799,13 +799,13 @@ draw_grid_lines(RenderState& rstate)
 }
 
 void
-set_modelmatrix(stlw::Logger& logger, glm::mat4 const& model_matrix, ShaderProgram& sp)
+set_modelmatrix(common::Logger& logger, glm::mat4 const& model_matrix, ShaderProgram& sp)
 {
   sp.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
 }
 
 void
-set_mvpmatrix(stlw::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 const& model_matrix,
+set_mvpmatrix(common::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 const& model_matrix,
               ShaderProgram& sp)
 {
   auto const mvp_matrix = camera_matrix * model_matrix;

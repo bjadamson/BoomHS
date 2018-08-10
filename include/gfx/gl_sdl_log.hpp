@@ -1,7 +1,7 @@
 #pragma once
-#include <stlw/algorithm.hpp>
-#include <stlw/log.hpp>
-#include <stlw/optional.hpp>
+#include <common/algorithm.hpp>
+#include <common/log.hpp>
+#include <common/optional.hpp>
 
 #include <extlibs/glew.hpp>
 #include <string>
@@ -48,7 +48,7 @@ struct ErrorLog
 
   static void clear();
 
-  static void abort_if_any_errors(stlw::Logger&);
+  static void abort_if_any_errors(common::Logger&);
 
 private:
   ErrorLog() = default;
@@ -63,7 +63,7 @@ std::string
 get_program_log(GLuint const);
 
 void
-log_any_gl_errors(stlw::Logger&, std::string const&, int const);
+log_any_gl_errors(common::Logger&, std::string const&, int const);
 
 } // namespace gfx
 

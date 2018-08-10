@@ -1,10 +1,10 @@
 #pragma once
 #include <cassert>
 #include <iostream>
-#include <stlw/type_macros.hpp>
+#include <common/type_macros.hpp>
 #include <vector>
 
-namespace stlw
+namespace common
 {
 
 // Allocates immediatly upon construction.
@@ -103,4 +103,4 @@ public:
   decltype(auto) cend() const { return this->vec_.cend(); }
 };
 
-} // namespace stlw
+} // namespace common

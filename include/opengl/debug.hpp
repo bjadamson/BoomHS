@@ -1,6 +1,6 @@
 #pragma once
 #include <extlibs/glew.hpp>
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 
 namespace opengl::debug
 {
@@ -9,7 +9,7 @@ inline auto const&
 attrib_to_string_table()
 {
   // clang-format off
-  static constexpr auto TABLE = stlw::make_array<std::pair<GLenum, char const*>>(
+  static constexpr auto TABLE = common::make_array<std::pair<GLenum, char const*>>(
       std::make_pair(GL_FLOAT,             "GL_FLOAT"),
       std::make_pair(GL_FLOAT_VEC2,        "GL_FLOAT_VEC2"),
       std::make_pair(GL_FLOAT_VEC3,        "GL_FLOAT_VEC3"),
@@ -54,7 +54,7 @@ uniform_to_string_table()
 {
   using tuple_t = std::tuple<GLenum, char const*, char const*>;
   // clang-format off
-  static constexpr auto TABLE = stlw::make_array<tuple_t>(
+  static constexpr auto TABLE = common::make_array<tuple_t>(
       //             Symbolic Contant                               (Symbolic Constant String             Shader Uniform Type
       std::make_tuple(GL_FLOAT,                                     "GL_FLOAT",                                     "float"),
       std::make_tuple(GL_FLOAT_VEC2,                                "GL_FLOAT_VEC2",                                "vec2"),

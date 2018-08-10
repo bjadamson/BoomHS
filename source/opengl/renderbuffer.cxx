@@ -13,13 +13,13 @@ RBInfo::destroy_impl()
 }
 
 void
-RBInfo::bind_impl(stlw::Logger& logger)
+RBInfo::bind_impl(common::Logger& logger)
 {
   glBindRenderbuffer(GL_RENDERBUFFER, id);
 }
 
 void
-RBInfo::unbind_impl(stlw::Logger& logger)
+RBInfo::unbind_impl(common::Logger& logger)
 {
   glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }

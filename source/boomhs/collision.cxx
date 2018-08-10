@@ -1,6 +1,6 @@
 #include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 
 namespace boomhs
 {
@@ -9,7 +9,7 @@ Ray::Ray(glm::vec3 const& o, glm::vec3 const& d)
     : orig(o)
     , dir(d)
     , invdir(1.0f / dir)
-    , sign(stlw::make_array<int>(invdir.x < 0, invdir.y < 0, invdir.z < 0))
+    , sign(common::make_array<int>(invdir.x < 0, invdir.y < 0, invdir.z < 0))
 {
 }
 
@@ -168,7 +168,7 @@ ray_box_intersect(Ray const& r, Transform const& transform, AABoundingBox const&
 }
 
 bool
-bbox_intersects(stlw::Logger& logger, Transform const& at, AABoundingBox const& ab,
+bbox_intersects(common::Logger& logger, Transform const& at, AABoundingBox const& ab,
                 Transform const& bt, AABoundingBox const& bb)
 {
   auto const& ac = at.translation;

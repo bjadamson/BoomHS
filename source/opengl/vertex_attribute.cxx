@@ -1,7 +1,7 @@
 #include <opengl/vertex_attribute.hpp>
 #include <extlibs/fmt.hpp>
-#include <stlw/algorithm.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/algorithm.hpp>
+#include <common/type_macros.hpp>
 
 namespace
 {
@@ -40,7 +40,7 @@ public:
 };
 
 void
-ensure_backend_has_enough_vertex_attributes(stlw::Logger &logger, GLint const num_apis)
+ensure_backend_has_enough_vertex_attributes(common::Logger &logger, GLint const num_apis)
 {
   auto max_attribs = 0;
   glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &max_attribs);
@@ -55,7 +55,7 @@ ensure_backend_has_enough_vertex_attributes(stlw::Logger &logger, GLint const nu
 }
 
 void
-configure_and_enable_attrib_pointer(stlw::Logger &logger, AttributePointerInfo const& info,
+configure_and_enable_attrib_pointer(common::Logger &logger, AttributePointerInfo const& info,
     UploadFormatState &ufs)
 {
   ensure_backend_has_enough_vertex_attributes(logger, info.component_count);
@@ -118,7 +118,7 @@ attribute_type_from_string(char const* str)
 //
 // TODO: derive second argument from first somehow?
 #define ATTR_STRING_TO_TYPE(STRING, ATTR_TYPE)                                                     \
-  if (stlw::cstrcmp(str, STRING)) {                                                                \
+  if (common::cstrcmp(str, STRING)) {                                                                \
       return AttributeType::ATTR_TYPE;                                                             \
   }
 
@@ -183,7 +183,7 @@ VertexAttribute::VertexAttribute(size_t const n_apis, GLsizei const stride_p,
 }
 
 void
-VertexAttribute::upload_vertex_format_to_glbound_vao(stlw::Logger &logger) const
+VertexAttribute::upload_vertex_format_to_glbound_vao(common::Logger &logger) const
 {
   UploadFormatState ufs{this->stride_};
   FOR(i, this->num_apis_) {

@@ -1,5 +1,5 @@
 #include <boomhs/obj_store.hpp>
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 
 #include <algorithm>
 #include <extlibs/fmt.hpp>
@@ -61,7 +61,7 @@ ObjCache::has_obj(ObjQuery const& query) const
 }
 
 VertexBuffer const&
-ObjCache::get_obj(stlw::Logger& logger, ObjQuery const& query) const
+ObjCache::get_obj(common::Logger& logger, ObjQuery const& query) const
 {
   auto const it = FIND_OBJ_IN_CACHE(query, buffers_);
   if (it != buffers_.cend()) {
@@ -84,7 +84,7 @@ ObjStore::add_obj(std::string const& name, ObjData&& o) const
 
 /*
 ObjData const&
-ObjStore::data_for(stlw::Logger& logger, ObjQuery const& query) const
+ObjStore::data_for(common::Logger& logger, ObjQuery const& query) const
 {
   auto const cmp = [&query](auto const& pair) {
     bool const  names_match    = pair.first == query.name;
@@ -109,7 +109,7 @@ ObjStore::data_for(stlw::Logger& logger, ObjQuery const& query) const
 
 /*
 VertexBuffer const&
-ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
+ObjStore::get_obj(common::Logger& logger, ObjQuery const& query) const
 {
   auto const& cache         = find_cache(logger, query);
   bool const  cache_has_obj = cache.has_obj(query);
@@ -140,13 +140,13 @@ ObjStore::get_obj(stlw::Logger& logger, ObjQuery const& query) const
   return it->second;
 
 ObjData&
-ObjStore::get(stlw::Logger& logger, std::string const& name)
+ObjStore::get(common::Logger& logger, std::string const& name)
 {
   OBJSTORE_FIND(data_.begin(), data_.end());
 }
 
 ObjData const&
-ObjStore::get(stlw::Logger& logger, std::string const& name) const
+ObjStore::get(common::Logger& logger, std::string const& name) const
 {
   OBJSTORE_FIND(data_.cbegin(), data_.cend());
 }
@@ -155,7 +155,7 @@ ObjStore::get(stlw::Logger& logger, std::string const& name) const
 
 /*
 VertexBuffer
-ObjStore::get_copy(stlw::Logger& logger, ObjQuery const& query) const
+ObjStore::get_copy(common::Logger& logger, ObjQuery const& query) const
 {
   return get_obj(logger, query).copy();
 }
@@ -208,7 +208,7 @@ ObjStore::get_copy(stlw::Logger& logger, ObjQuery const& query) const
   assert(nullptr != cache);
 
 ObjCache&
-ObjStore::find_cache(stlw::Logger& logger, ObjQuery const& query)
+ObjStore::find_cache(common::Logger& logger, ObjQuery const& query)
 {
   ObjCache* cache = nullptr;
   FIND_CACHE(query, cache);
@@ -216,7 +216,7 @@ ObjStore::find_cache(stlw::Logger& logger, ObjQuery const& query)
 }
 
 ObjCache const&
-ObjStore::find_cache(stlw::Logger& logger, ObjQuery const& query) const
+ObjStore::find_cache(common::Logger& logger, ObjQuery const& query) const
 {
   ObjCache const* cache = nullptr;
   FIND_CACHE(query, cache);

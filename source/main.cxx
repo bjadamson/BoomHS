@@ -7,7 +7,7 @@
 
 #include <opengl/renderer.hpp>
 
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 #include <boomhs/random.hpp>
 
 #include <window/controller.hpp>
@@ -94,8 +94,8 @@ timed_game_loop(Engine& engine, GameState& state, Camera& camera, RNG& rng)
   }
 }
 
-Result<stlw::none_t, std::string>
-start(stlw::Logger& logger, Engine& engine)
+Result<common::none_t, std::string>
+start(common::Logger& logger, Engine& engine)
 {
   // Initialize GUI library
   auto* imgui_context = ImGui::CreateContext();
@@ -152,7 +152,7 @@ start(stlw::Logger& logger, Engine& engine)
 
 using WindowResult = Result<SDLWindow, std::string>;
 WindowResult
-make_window(stlw::Logger& logger, bool const fullscreen, float const width, float const height)
+make_window(common::Logger& logger, bool const fullscreen, float const width, float const height)
 {
   // Select windowing library as SDL.
   LOG_DEBUG("Initializing window library globals");
@@ -170,7 +170,7 @@ main(int argc, char* argv[])
     return EXIT_FAILURE;
   }
   std::string const log_name = time_result.unwrap() + "-BoomHS.log";
-  auto              logger   = stlw::LogFactory::make_default(log_name.c_str());
+  auto              logger   = common::LogFactory::make_default(log_name.c_str());
 
   LOG_DEBUG("Creating window ...");
   bool constexpr FULLSCREEN = false;

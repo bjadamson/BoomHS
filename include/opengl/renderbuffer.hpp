@@ -1,9 +1,9 @@
 #pragma once
 #include <opengl/bind.hpp>
-#include <stlw/auto_resource.hpp>
-#include <stlw/log.hpp>
-#include <stlw/result.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/auto_resource.hpp>
+#include <common/log.hpp>
+#include <common/result.hpp>
+#include <common/type_macros.hpp>
 
 #include <extlibs/glew.hpp>
 #include <string>
@@ -21,8 +21,8 @@ struct RBInfo
   MOVE_DEFAULT(RBInfo);
 
   // methods
-  void bind_impl(stlw::Logger&);
-  void unbind_impl(stlw::Logger&);
+  void bind_impl(common::Logger&);
+  void unbind_impl(common::Logger&);
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
   void destroy_impl();
 
@@ -30,6 +30,6 @@ struct RBInfo
 
   static size_t constexpr NUM_BUFFERS = 1;
 };
-using RenderBuffer = stlw::AutoResource<RBInfo>;
+using RenderBuffer = common::AutoResource<RBInfo>;
 
 } // namespace opengl

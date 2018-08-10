@@ -231,7 +231,7 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
 }
 
 void
-draw_time_editor(stlw::Logger& logger, Time& time, UiDebugState& uistate)
+draw_time_editor(common::Logger& logger, Time& time, UiDebugState& uistate)
 {
   if (ImGui::Begin("TimeWindow")) {
     int speed = 0;
@@ -252,7 +252,7 @@ draw_time_editor(stlw::Logger& logger, Time& time, UiDebugState& uistate)
     auto const maybe_clear_fields = [&]() {
       bool const clear_fields = buffer.clear_fields;
       if (clear_fields) {
-        stlw::memzero(&buffer, sizeof(DrawTimeBuffer));
+        common::memzero(&buffer, sizeof(DrawTimeBuffer));
       }
 
       // restore clear_fields
@@ -370,7 +370,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
   auto& grid_config = terrain_grid.config;
   auto& sps         = gfx_state.sps;
 
-  auto const draw = [&]() -> Result<stlw::none_t, std::string> {
+  auto const draw = [&]() -> Result<common::none_t, std::string> {
     if (ImGui::CollapsingHeader("Regenerate Grid")) {
       auto& tbuffer_gridconfig = tbuffers.grid_config;
       imgui_cxx::input_sizet("num rows", &tbuffer_gridconfig.num_rows);
@@ -391,14 +391,14 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
     }
     if (ImGui::CollapsingHeader("Rendering Options")) {
       {
-        auto constexpr WINDING_OPTIONS = stlw::make_array<GLint>(GL_CCW, GL_CW);
+        auto constexpr WINDING_OPTIONS = common::make_array<GLint>(GL_CCW, GL_CW);
         terrain_grid.winding           = imgui_cxx::combo_from_array(
             "Winding Order", "CCW\0CW\0\0", &tbuffers.selected_winding, WINDING_OPTIONS);
       }
       ImGui::Checkbox("Culling Enabled", &terrain_grid.culling_enabled);
       {
         auto constexpr CULLING_OPTIONS =
-            stlw::make_array<GLint>(GL_BACK, GL_FRONT, GL_FRONT_AND_BACK);
+            common::make_array<GLint>(GL_BACK, GL_FRONT, GL_FRONT_AND_BACK);
         terrain_grid.culling_mode =
             imgui_cxx::combo_from_array("Culling Face", "Front\0Back\0Front And Back\0\0",
                                         &tbuffers.selected_culling, CULLING_OPTIONS);
@@ -433,7 +433,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
           auto& st = tbuffers.selected_textures[i];
 
           // clang-format off
-          auto constexpr SAMPLER_NAMES = stlw::make_array<char const*>(
+          auto constexpr SAMPLER_NAMES = common::make_array<char const*>(
               "u_bgsampler",
               "u_rsampler",
               "u_gsampler",
@@ -445,7 +445,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
       }
       {
         auto constexpr WRAP_OPTIONS =
-            stlw::make_array<GLint>(GL_MIRRORED_REPEAT, GL_REPEAT, GL_CLAMP_TO_EDGE);
+            common::make_array<GLint>(GL_MIRRORED_REPEAT, GL_REPEAT, GL_CLAMP_TO_EDGE);
         terrain_config.wrap_mode =
             imgui_cxx::combo_from_array("UV Wrap Mode", "Mirrored Repeat\0Repeat\0Clamp\0\0",
                                         &tbuffers.selected_wrapmode, WRAP_OPTIONS);
@@ -457,7 +457,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
         assert(terrain_texturenames.textures.size() > 0);
 
         auto const update_selectedtexture =
-            [&](size_t const index) -> Result<stlw::Nothing, std::string> {
+            [&](size_t const index) -> Result<common::Nothing, std::string> {
           int const tbuf_index = tbuffers.selected_textures[index];
 
           // Lookup texture in the texture table

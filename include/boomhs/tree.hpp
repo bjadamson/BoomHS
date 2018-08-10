@@ -1,6 +1,6 @@
 #pragma once
 #include <opengl/draw_info.hpp>
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 
 #include <array>
 #include <extlibs/glm.hpp>
@@ -69,10 +69,10 @@ class Tree
 
 public:
   static void
-  update_colors(stlw::Logger&, opengl::VertexAttribute const&, opengl::DrawInfo&, TreeComponent&);
+  update_colors(common::Logger&, opengl::VertexAttribute const&, opengl::DrawInfo&, TreeComponent&);
 
   // static std::pair<EntityID, opengl::DrawInfo>
-  // add_toregistry(stlw::Logger&, EntityID, ObjStore&, opengl::ShaderPrograms&, EntityRegistry&);
+  // add_toregistry(common::Logger&, EntityID, ObjStore&, opengl::ShaderPrograms&, EntityRegistry&);
 };
 
 } // namespace boomhs

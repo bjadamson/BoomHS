@@ -1,9 +1,9 @@
 #pragma once
 #include <opengl/colors.hpp>
 
-#include <stlw/log.hpp>
-#include <stlw/result.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/result.hpp>
+#include <common/type_macros.hpp>
 
 #include <extlibs/glew.hpp>
 #include <extlibs/tinyobj.hpp>
@@ -101,9 +101,9 @@ operator<<(std::ostream&, LoadStatus const&);
 using LoadResult = Result<ObjData, LoadStatus>;
 
 LoadResult
-load_objfile(stlw::Logger&, char const*, char const*);
+load_objfile(common::Logger&, char const*, char const*);
 
 LoadResult
-load_objfile(stlw::Logger&, std::string const&, std::string const&);
+load_objfile(common::Logger&, std::string const&, std::string const&);
 
 } // namespace boomhs

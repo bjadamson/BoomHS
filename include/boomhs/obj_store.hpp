@@ -2,7 +2,7 @@
 #include <boomhs/obj.hpp>
 #include <opengl/buffer.hpp>
 #include <opengl/vertex_attribute.hpp>
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 
 #include <ostream>
 #include <string>
@@ -46,7 +46,7 @@ class ObjCache
 
   bool has_obj(ObjQuery const&) const;
 
-  opengl::VertexBuffer const& get_obj(stlw::Logger&, ObjQuery const&) const;
+  opengl::VertexBuffer const& get_obj(common::Logger&, ObjQuery const&) const;
 
   auto size() const { return buffers_.size(); }
   bool empty() const { return buffers_.empty(); }
@@ -70,8 +70,8 @@ public:
 
   void add_obj(std::string const&, ObjData&&) const;
 
-  ObjData&       get(stlw::Logger&, std::string const&);
-  ObjData const& get(stlw::Logger&, std::string const&) const;
+  ObjData&       get(common::Logger&, std::string const&);
+  ObjData const& get(common::Logger&, std::string const&) const;
 
   auto size() const { return data_.size(); }
   bool empty() const { return data_.empty(); }
@@ -90,15 +90,15 @@ class InterleaveCache
   ObjCache pos_normal_uv_;
   ObjCache pos_uv_;
 
-  ObjCache& find_cache(stlw::Logger&, ObjQuery const&);
-  ObjCache const& find_cache(stlw::Logger&, ObjQuery const&) const;
+  ObjCache& find_cache(common::Logger&, ObjQuery const&);
+  ObjCache const& find_cache(common::Logger&, ObjQuery const&) const;
 
 public:
   void add_obj(std::string const&, ObjData&&) const;
-  ObjData const& data_for(stlw::Logger&, ObjQuery const&) const;
+  ObjData const& data_for(common::Logger&, ObjQuery const&) const;
 
-  opengl::VertexBuffer const& get_obj(stlw::Logger&, ObjQuery const&) const;
-  opengl::VertexBuffer        get_copy(stlw::Logger&, ObjQuery const&) const;
+  opengl::VertexBuffer const& get_obj(common::Logger&, ObjQuery const&) const;
+  opengl::VertexBuffer        get_copy(common::Logger&, ObjQuery const&) const;
 
   auto size() const { return data_.size(); }
   bool empty() const { return data_.empty(); }

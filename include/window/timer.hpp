@@ -1,6 +1,6 @@
 #pragma once
-#include <stlw/log.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/type_macros.hpp>
 
 namespace window
 {
@@ -99,7 +99,7 @@ struct FrameCounter
 {
   int64_t frames_counted = 0u;
 
-  void update(stlw::Logger& logger, Clock const& clock) { ++frames_counted; }
+  void update(common::Logger& logger, Clock const& clock) { ++frames_counted; }
 };
 
 } // namespace window

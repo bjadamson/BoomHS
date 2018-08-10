@@ -1,10 +1,10 @@
 #pragma once
-#include <stlw/auto_resource.hpp>
-#include <stlw/compiler.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/auto_resource.hpp>
+#include <common/compiler.hpp>
+#include <common/type_macros.hpp>
 #include <extlibs/fmt.hpp>
 
-namespace stlw::impl
+namespace common::impl
 {
 
 enum class LogLevel {
@@ -124,4 +124,4 @@ public:
 
 #undef LogWriter_DEFINE_FN
 
-} // ns stlw::impl
+} // ns common::impl

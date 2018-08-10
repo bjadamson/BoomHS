@@ -9,8 +9,8 @@
 #include <boomhs/tree.hpp>
 #include <boomhs/water.hpp>
 
-#include <stlw/algorithm.hpp>
-#include <stlw/result.hpp>
+#include <common/algorithm.hpp>
+#include <common/result.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <extlibs/cpptoml.hpp>
@@ -269,7 +269,7 @@ get_float_or_abort(CppTable const& table, char const* name)
 }
 
 Result<ObjStore, LoadStatus>
-load_objfiles(stlw::Logger& logger, CppTableArray const& mesh_table)
+load_objfiles(common::Logger& logger, CppTableArray const& mesh_table)
 {
   auto const load = [&](auto const& table) -> Result<std::pair<std::string, ObjData>, LoadStatus> {
     auto const path = get_string_or_abort(table, "path");
@@ -316,11 +316,11 @@ public:
 };
 
 Result<opengl::TextureTable, std::string>
-load_textures(stlw::Logger& logger, CppTable const& table)
+load_textures(common::Logger& logger, CppTable const& table)
 {
   opengl::TextureTable ttable;
   auto const           load_texture = [&logger,
-                             &ttable](auto const& resource) -> Result<stlw::none_t, std::string> {
+                             &ttable](auto const& resource) -> Result<common::none_t, std::string> {
     auto const name = get_string_or_abort(resource, "name");
     auto const type = get_string_or_abort(resource, "type");
 
@@ -336,7 +336,7 @@ load_textures(stlw::Logger& logger, CppTable const& table)
     ti.wrap = wrap_mode;
     ti.uv_max = uv_max;
 
-    auto const load_2dtexture = [&](GLenum const format) -> Result<stlw::none_t, std::string> {
+    auto const load_2dtexture = [&](GLenum const format) -> Result<common::none_t, std::string> {
       auto const               filename = get_string_or_abort(resource, "filename");
       opengl::TextureFilenames texture_names{name, {filename}};
 
@@ -347,7 +347,7 @@ load_textures(stlw::Logger& logger, CppTable const& table)
       ttable.add_texture(MOVE(texture_names), MOVE(t));
       return OK_NONE;
     };
-    auto const load_3dtexture = [&](GLenum const format) -> Result<stlw::none_t, std::string> {
+    auto const load_3dtexture = [&](GLenum const format) -> Result<common::none_t, std::string> {
       auto const front  = get_string_or_abort(resource, "front");
       auto const right  = get_string_or_abort(resource, "right");
       auto const back   = get_string_or_abort(resource, "back");
@@ -439,7 +439,7 @@ load_attenuation(CppTable const& file)
 }
 
 auto
-load_attenuations(stlw::Logger& logger, CppTable const& table)
+load_attenuations(common::Logger& logger, CppTable const& table)
 {
   auto const                   table_array = get_table_array(table, "attenuation");
   std::vector<NameAttenuation> result;
@@ -450,7 +450,7 @@ load_attenuations(stlw::Logger& logger, CppTable const& table)
 }
 
 auto
-load_materials(stlw::Logger& logger, CppTable const& table)
+load_materials(common::Logger& logger, CppTable const& table)
 {
   auto const                table_array = get_table_array(table, "material");
 
@@ -463,7 +463,7 @@ load_materials(stlw::Logger& logger, CppTable const& table)
 }
 
 void
-load_entities(stlw::Logger& logger, CppTable const& level_table, LevelAssets &assets,
+load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &assets,
              EntityRegistry& registry)
 {
   auto&       ttable       = assets.texture_table;
@@ -583,13 +583,13 @@ load_entities(stlw::Logger& logger, CppTable const& level_table, LevelAssets &as
       light.specular = get_color_or_abort(pointlight_o, "specular");
     }
 
-    if (stlw::cstrcmp(name.c_str(), "TreeLowpoly")) {
+    if (common::cstrcmp(name.c_str(), "TreeLowpoly")) {
       auto& tc = registry.assign<TreeComponent>(eid);
       tc.add_color(TreeColorType::Leaf, LOC::GREEN);
       tc.add_color(TreeColorType::Leaf, LOC::PINK);
       tc.add_color(TreeColorType::Trunk, LOC::BROWN);
     }
-    if (stlw::cstrcmp(name.c_str(), "Tree2")) {
+    if (common::cstrcmp(name.c_str(), "Tree2")) {
       auto& tc = registry.assign<TreeComponent>(eid);
       tc.add_color(TreeColorType::Leaf, LOC::YELLOW);
       tc.add_color(TreeColorType::Stem, LOC::RED);
@@ -613,7 +613,7 @@ load_entities(stlw::Logger& logger, CppTable const& level_table, LevelAssets &as
 
 using LoadResult = Result<std::pair<std::string, opengl::ShaderProgram>, std::string>;
 LoadResult
-load_shader(stlw::Logger& logger, ParsedVertexAttributes& pvas, CppTable const& table)
+load_shader(common::Logger& logger, ParsedVertexAttributes& pvas, CppTable const& table)
 {
   auto const name     = get_string_or_abort(table, "name");
   auto const vertex   = get_string_or_abort(table, "vertex");
@@ -631,7 +631,7 @@ load_shader(stlw::Logger& logger, ParsedVertexAttributes& pvas, CppTable const& 
 }
 
 Result<opengl::ShaderPrograms, std::string>
-load_shaders(stlw::Logger& logger, ParsedVertexAttributes&& pvas, CppTable const& table)
+load_shaders(common::Logger& logger, ParsedVertexAttributes&& pvas, CppTable const& table)
 {
   auto const             shaders_table = get_table_array_or_abort(table, "shaders");
   opengl::ShaderPrograms sps;
@@ -728,7 +728,7 @@ namespace boomhs
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // LevelLoader
 Result<LevelAssets, std::string>
-LevelLoader::load_level(stlw::Logger& logger, EntityRegistry& registry, std::string const& filename)
+LevelLoader::load_level(common::Logger& logger, EntityRegistry& registry, std::string const& filename)
 {
   CppTable engine_table = cpptoml::parse_file("engine.toml");
   assert(engine_table);

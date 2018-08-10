@@ -1,5 +1,5 @@
 #include <boomhs/lighting.hpp>
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 
 using namespace opengl;
 

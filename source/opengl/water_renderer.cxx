@@ -14,7 +14,7 @@
 
 #include <window/timer.hpp>
 
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 #include <boomhs/random.hpp>
 
 #include <cassert>
@@ -29,7 +29,7 @@ namespace
 {
 
 void
-setup(stlw::Logger& logger, TextureInfo& ti, GLint const v)
+setup(common::Logger& logger, TextureInfo& ti, GLint const v)
 {
   glActiveTexture(v);
   ti.while_bound(logger, [&]() {
@@ -105,7 +105,7 @@ namespace opengl
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BasicWaterRenderer
-BasicWaterRenderer::BasicWaterRenderer(stlw::Logger& logger, TextureInfo& diff, TextureInfo& norm,
+BasicWaterRenderer::BasicWaterRenderer(common::Logger& logger, TextureInfo& diff, TextureInfo& norm,
                                        ShaderProgram& sp)
     : logger_(logger)
     , sp_(sp)
@@ -157,7 +157,7 @@ BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MediumWaterRenderer
-MediumWaterRenderer::MediumWaterRenderer(stlw::Logger& logger, TextureInfo& diff, TextureInfo& norm,
+MediumWaterRenderer::MediumWaterRenderer(common::Logger& logger, TextureInfo& diff, TextureInfo& norm,
                                          ShaderProgram& sp)
     : logger_(logger)
     , sp_(sp)
@@ -217,7 +217,7 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ReflectionBuffers
-ReflectionBuffers::ReflectionBuffers(stlw::Logger& logger, ScreenSize const& ss)
+ReflectionBuffers::ReflectionBuffers(common::Logger& logger, ScreenSize const& ss)
     : fbo(FrameBuffer{opengl::make_fbo(logger, ss)})
     , rbo(RBInfo{})
 {
@@ -225,14 +225,14 @@ ReflectionBuffers::ReflectionBuffers(stlw::Logger& logger, ScreenSize const& ss)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // RefractionBuffers
-RefractionBuffers::RefractionBuffers(stlw::Logger& logger, ScreenSize const& ss)
+RefractionBuffers::RefractionBuffers(common::Logger& logger, ScreenSize const& ss)
     : fbo(FrameBuffer{opengl::make_fbo(logger, ss)})
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // AdvancedWaterRenderer
-AdvancedWaterRenderer::AdvancedWaterRenderer(stlw::Logger& logger, ScreenSize const& screen_size,
+AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, ScreenSize const& screen_size,
                                              ShaderProgram& sp, TextureInfo& diffuse,
                                              TextureInfo& dudv, TextureInfo& normal)
     : sp_(sp)
@@ -344,7 +344,7 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // SilhouetteWaterRenderer
-SilhouetteWaterRenderer::SilhouetteWaterRenderer(stlw::Logger& logger, ShaderProgram& sp)
+SilhouetteWaterRenderer::SilhouetteWaterRenderer(common::Logger& logger, ShaderProgram& sp)
     : logger_(logger)
     , sp_(sp)
 {

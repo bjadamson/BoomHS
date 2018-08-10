@@ -1,9 +1,9 @@
 #pragma once
 #include <boomhs/screen_size.hpp>
 
-#include <stlw/log.hpp>
-#include <stlw/result.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/result.hpp>
+#include <common/type_macros.hpp>
 
 #include <cassert>
 #include <extlibs/sdl.hpp>
@@ -93,10 +93,10 @@ struct sdl_library
 {
   sdl_library() = delete;
 
-  static Result<stlw::none_t, std::string> init(stlw::Logger&);
+  static Result<common::none_t, std::string> init(common::Logger&);
   static void                              destroy();
 
-  static Result<SDLWindow, std::string> make_window(stlw::Logger&, bool, int, int);
+  static Result<SDLWindow, std::string> make_window(common::Logger&, bool, int, int);
 };
 
 } // namespace window

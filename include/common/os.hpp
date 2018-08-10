@@ -3,12 +3,12 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <stlw/result.hpp>
-#include <stlw/tuple.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/result.hpp>
+#include <common/tuple.hpp>
+#include <common/type_macros.hpp>
 #include <string>
 
-namespace stlw
+namespace common
 {
 
 // TODO: boost::path
@@ -61,7 +61,7 @@ write_file(std::experimental::filesystem::path const& path, Text const&... text)
   auto const   write_line = [&os](auto const& text) { os << text; };
 
   auto const tuple_view = std::make_tuple(text...);
-  stlw::for_each(tuple_view, write_line);
+  common::for_each(tuple_view, write_line);
 }
 
-} // namespace stlw
+} // namespace common

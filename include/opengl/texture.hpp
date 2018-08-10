@@ -2,10 +2,10 @@
 #include <opengl/bind.hpp>
 #include <opengl/renderbuffer.hpp>
 
-#include <stlw/auto_resource.hpp>
-#include <stlw/log.hpp>
-#include <stlw/result.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/auto_resource.hpp>
+#include <common/log.hpp>
+#include <common/result.hpp>
+#include <common/type_macros.hpp>
 
 #include <extlibs/glew.hpp>
 #include <map>
@@ -35,13 +35,13 @@ struct TextureInfo
   MOVE_DEFAULT(TextureInfo);
 
   // methods
-  void bind_impl(stlw::Logger&);
-  void unbind_impl(stlw::Logger&);
+  void bind_impl(common::Logger&);
+  void unbind_impl(common::Logger&);
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
 
   void destroy_impl();
 
-  void gen_texture(stlw::Logger&, GLsizei);
+  void gen_texture(common::Logger&, GLsizei);
 
   GLint get_fieldi(GLenum);
   void  set_fieldi(GLenum, GLint);
@@ -51,10 +51,10 @@ struct TextureInfo
   static size_t constexpr NUM_BUFFERS = 1;
 };
 
-using Texture = stlw::AutoResource<TextureInfo>;
+using Texture = common::AutoResource<TextureInfo>;
 
 inline TextureInfo
-create_texture_attachment(stlw::Logger& logger, int const width, int const height,
+create_texture_attachment(common::Logger& logger, int const width, int const height,
                           GLenum const texture_unit)
 {
   assert(width > 0 && height > 0);
@@ -86,7 +86,7 @@ create_texture_attachment(stlw::Logger& logger, int const width, int const heigh
 }
 
 inline auto
-create_depth_texture_attachment(stlw::Logger& logger, int const width, int const height,
+create_depth_texture_attachment(common::Logger& logger, int const width, int const height,
                                 GLenum const texture_unit)
 {
   assert(width > 0 && height > 0);
@@ -116,7 +116,7 @@ create_depth_texture_attachment(stlw::Logger& logger, int const width, int const
 }
 
 inline auto
-create_depth_buffer_attachment(stlw::Logger& logger, int const width, int const height)
+create_depth_buffer_attachment(common::Logger& logger, int const width, int const height)
 {
   RBInfo rbinfo;
   rbinfo.while_bound(logger, [&]() {
@@ -183,15 +183,15 @@ using ImageResult   = Result<ImageData, std::string>;
 using TextureResult = Result<Texture, std::string>;
 
 ImageResult
-load_image(stlw::Logger&, char const*, GLenum const);
+load_image(common::Logger&, char const*, GLenum const);
 
 GLint
 wrap_mode_from_string(char const*);
 
 TextureResult
-upload_2d_texture(stlw::Logger&, std::string const&, TextureInfo&&);
+upload_2d_texture(common::Logger&, std::string const&, TextureInfo&&);
 
 TextureResult
-upload_3dcube_texture(stlw::Logger&, std::vector<std::string> const&, TextureInfo&&);
+upload_3dcube_texture(common::Logger&, std::vector<std::string> const&, TextureInfo&&);
 
 } // namespace opengl::texture

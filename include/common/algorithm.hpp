@@ -1,6 +1,6 @@
 #pragma once
-#include <stlw/tuple.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/tuple.hpp>
+#include <common/type_macros.hpp>
 
 #include <array>
 #include <cassert>
@@ -13,7 +13,7 @@
 #define FORI(q, n) for (int q = 0; q < n; ++q)
 #define PAIR(...) std::make_pair(__VA_ARGS__)
 
-namespace stlw::anyof_detail
+namespace common::anyof_detail
 {
 
 inline bool
@@ -29,9 +29,9 @@ orcombo(First const& first, Rest&&... rest)
   return first || orcombo(FORWARD(rest));
 }
 
-} // namespace stlw::anyof_detail
+} // namespace common::anyof_detail
 
-namespace stlw::allof_detail
+namespace common::allof_detail
 {
 
 inline bool
@@ -47,12 +47,12 @@ allcombo(First const& first, Rest&&... rest)
   return first && allcombo(FORWARD(rest));
 }
 
-} // namespace stlw::allof_detail
+} // namespace common::allof_detail
 
-#define ALLOF(a, ...) ::stlw::allof_detail::allcombo(a, ##__VA_ARGS__)
-#define ANYOF(a, ...) ::stlw::anyof_detail::orcombo(a, ##__VA_ARGS__)
+#define ALLOF(a, ...) ::common::allof_detail::allcombo(a, ##__VA_ARGS__)
+#define ANYOF(a, ...) ::common::anyof_detail::orcombo(a, ##__VA_ARGS__)
 
-namespace stlw
+namespace common
 {
 
 inline bool
@@ -99,9 +99,9 @@ concat(TupleLike&&... tuples)
   return std::apply(fn, std::tuple_cat(std::forward<TupleLike>(tuples)...));
 }
 
-} // namespace stlw
+} // namespace common
 
-namespace stlw
+namespace common
 {
 
 template <typename T, size_t N, class... Args>
@@ -248,7 +248,7 @@ zip(FN const& fn, ContainerIter it, std::tuple<T...> const& tuple)
     fn(value, *it);
     it++;
   };
-  stlw::for_each(tuple, zip_fn);
+  common::for_each(tuple, zip_fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -349,4 +349,4 @@ trim_copy(std::string s)
   return s;
 }
 
-} // namespace stlw
+} // namespace common

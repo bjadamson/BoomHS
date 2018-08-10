@@ -13,14 +13,14 @@ FBInfo::FBInfo(ScreenDimensions const& d, ScreenSize const& ss)
 }
 
 void
-FBInfo::bind_impl(stlw::Logger& logger)
+FBInfo::bind_impl(common::Logger& logger)
 {
   glBindFramebuffer(GL_FRAMEBUFFER, id);
   glViewport(dimensions.left(), dimensions.top(), dimensions.right(), dimensions.bottom());
 }
 
 void
-FBInfo::unbind_impl(stlw::Logger& logger)
+FBInfo::unbind_impl(common::Logger& logger)
 {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glViewport(dimensions.left(), dimensions.top(), screen_size.width, screen_size.height);

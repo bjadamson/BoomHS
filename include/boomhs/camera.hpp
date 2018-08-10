@@ -4,8 +4,8 @@
 #include <boomhs/spherical.hpp>
 
 #include <boomhs/math.hpp>
-#include <stlw/log.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/type_macros.hpp>
 
 namespace boomhs
 {

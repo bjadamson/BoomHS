@@ -3,7 +3,7 @@
 
 #include <opengl/texture.hpp>
 
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 
 using namespace opengl;
 
@@ -53,7 +53,7 @@ namespace boomhs::heightmap
 {
 
 HeightmapResult
-load_fromtable(stlw::Logger &logger, TextureTable const& ttable, std::string const& heightmap_path)
+load_fromtable(common::Logger &logger, TextureTable const& ttable, std::string const& heightmap_path)
 {
   auto const* p_heightmap = ttable.lookup_nickname(heightmap_path);
   if (!p_heightmap) {
@@ -170,7 +170,7 @@ parse(ImageData const& image)
 }
 
 HeightmapResult
-parse(stlw::Logger &logger, char const* path)
+parse(common::Logger &logger, char const* path)
 {
   LOG_TRACE_SPRINTF("Loading Heightmap Data from file %s", path);
   auto const data = TRY_MOVEOUT(texture::load_image(logger, path, GL_RGBA));
@@ -179,7 +179,7 @@ parse(stlw::Logger &logger, char const* path)
 }
 
 HeightmapResult
-parse(stlw::Logger &logger, std::string const& path)
+parse(common::Logger &logger, std::string const& path)
 {
   return parse(logger, path.c_str());
 }
@@ -192,7 +192,7 @@ calculate_number_vertices(int const num_components, TerrainConfig const& tc)
 }
 
 void
-update_vertices_from_heightmap(stlw::Logger& logger, TerrainConfig const& tc,
+update_vertices_from_heightmap(common::Logger& logger, TerrainConfig const& tc,
                                Heightmap const& heightmap, ObjVertices &buffer)
 {
   LOG_TRACE("Updating vertices from heightmap");

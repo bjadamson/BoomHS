@@ -1,8 +1,8 @@
 #pragma once
 #include <opengl/bind.hpp>
 
-#include <stlw/log.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/type_macros.hpp>
 
 #include <extlibs/glm.hpp>
 
@@ -39,8 +39,8 @@ public:
   void render(RenderState&, boomhs::MaterialTable const&, boomhs::EntityRegistry& registry,
               window::FrameTime const&, glm::vec4 const&);
 
-  void bind_impl(stlw::Logger&, boomhs::Terrain const&, opengl::TextureTable&);
-  void unbind_impl(stlw::Logger&, boomhs::Terrain const&, opengl::TextureTable&);
+  void bind_impl(common::Logger&, boomhs::Terrain const&, opengl::TextureTable&);
+  void unbind_impl(common::Logger&, boomhs::Terrain const&, opengl::TextureTable&);
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
 
   std::string to_string() const;

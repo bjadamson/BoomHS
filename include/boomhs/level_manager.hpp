@@ -1,6 +1,6 @@
 #pragma once
 #include <boomhs/zone_state.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/type_macros.hpp>
 #include <vector>
 
 namespace boomhs

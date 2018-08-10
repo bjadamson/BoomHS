@@ -111,7 +111,7 @@ with_window(FN const& fn, Args&&... args)
 
 template <typename FN, typename... Args>
 void
-with_window_logerrors(stlw::Logger& logger, FN const& fn, Args&&... args)
+with_window_logerrors(common::Logger& logger, FN const& fn, Args&&... args)
 {
   auto r = with_window(fn, FORWARD(args));
   if (r.isErr()) {

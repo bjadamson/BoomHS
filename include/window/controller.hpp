@@ -2,8 +2,8 @@
 #include <extlibs/sdl.hpp>
 #include <memory>
 #include <ostream>
-#include <stlw/log.hpp>
-#include <stlw/result.hpp>
+#include <common/log.hpp>
+#include <common/result.hpp>
 
 namespace window
 {
@@ -67,7 +67,7 @@ public:
 
   void add(ControllerPTR&&, SDL_Joystick*);
 
-  static Result<SDLControllers, std::string> find_attached_controllers(stlw::Logger&);
+  static Result<SDLControllers, std::string> find_attached_controllers(common::Logger&);
 
   auto const& first() const
   {

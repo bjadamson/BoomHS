@@ -9,8 +9,8 @@
 #include <window/controller.hpp>
 #include <window/sdl_window.hpp>
 
-#include <stlw/log.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/type_macros.hpp>
 
 #include <extlibs/openal.hpp>
 
@@ -51,7 +51,7 @@ struct WindowState
 
 struct EngineState
 {
-  stlw::Logger&          logger;
+  common::Logger&          logger;
   ALCdevice&             al_device;
   ImGuiIO&               imgui;
   ScreenDimensions const dimensions;
@@ -95,7 +95,7 @@ struct EngineState
 
   // Constructors
   NO_COPY_OR_MOVE(EngineState);
-  EngineState(stlw::Logger&, ALCdevice&, ImGuiIO&, ScreenDimensions const&);
+  EngineState(common::Logger&, ALCdevice&, ImGuiIO&, ScreenDimensions const&);
 };
 
 struct GameState

@@ -1,8 +1,8 @@
 #pragma once
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
-#include <stlw/log.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/type_macros.hpp>
 
 namespace boomhs
 {
@@ -39,7 +39,7 @@ public:
   // Loads a new NPC into the EntityRegistry.
   static void create(EntityRegistry&, char const*, int, glm::vec3 const&);
 
-  static void create_random(stlw::Logger&, TerrainGrid const&, EntityRegistry&, RNG&);
+  static void create_random(common::Logger&, TerrainGrid const&, EntityRegistry&, RNG&);
 
   static bool is_dead(HealthPoints const&);
   static bool within_attack_range(glm::vec3 const&, glm::vec3 const&);

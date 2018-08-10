@@ -2,7 +2,7 @@
 #include <ostream>
 #include <vector>
 
-namespace stlw
+namespace common
 {
 
 // TODO: make this a template template fn?
@@ -25,4 +25,4 @@ print(std::ostream& out, std::vector<T1> const& c, char const* delim = "[,]",
   }
 }
 
-} // namespace stlw
+} // namespace common

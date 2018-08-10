@@ -7,8 +7,8 @@
 #include <opengl/shader.hpp>
 
 #include <cassert>
-#include <stlw/algorithm.hpp>
-#include <stlw/log.hpp>
+#include <common/algorithm.hpp>
+#include <common/log.hpp>
 
 #include <sstream>
 
@@ -20,7 +20,7 @@ namespace
 {
 
 ObjData
-generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
+generate_terrain_data(common::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
                       Heightmap const& heightmap)
 {
   auto const numv_oneside = tc.num_vertexes_along_one_side;
@@ -43,7 +43,7 @@ generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc, Terrai
 }
 
 TerrainGrid
-generate_grid_data(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
+generate_grid_data(common::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
                    Heightmap const& heightmap, ShaderProgram& sp)
 {
   LOG_TRACE("Generating Terrain");
@@ -241,7 +241,7 @@ TerrainGrid::out_of_bounds(float const x, float const z) const
 }
 
 float
-TerrainGrid::get_height(stlw::Logger& logger, float const x, float const z) const
+TerrainGrid::get_height(common::Logger& logger, float const x, float const z) const
 {
   if (out_of_bounds(x, z)) {
     LOG_ERROR_SPRINTF("Player out of bounds");
@@ -312,7 +312,7 @@ namespace boomhs::terrain
 {
 
 Terrain
-generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig const& tgc,
+generate_piece(common::Logger& logger, glm::vec2 const& pos, TerrainGridConfig const& tgc,
                TerrainConfig const& tc, Heightmap const& heightmap, ShaderProgram& sp)
 {
   auto const data = generate_terrain_data(logger, tgc, tc, heightmap);
@@ -335,7 +335,7 @@ generate_piece(stlw::Logger& logger, glm::vec2 const& pos, TerrainGridConfig con
 }
 
 TerrainGrid
-generate_grid(stlw::Logger& logger, TerrainConfig const& tc, Heightmap const& heightmap,
+generate_grid(common::Logger& logger, TerrainConfig const& tc, Heightmap const& heightmap,
               ShaderProgram& sp, TerrainGrid const& prevgrid)
 {
   auto tgrid = generate_grid_data(logger, prevgrid.config, tc, heightmap, sp);
@@ -359,7 +359,7 @@ generate_grid(stlw::Logger& logger, TerrainConfig const& tc, Heightmap const& he
 }
 
 TerrainGrid
-generate_grid(stlw::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
+generate_grid(common::Logger& logger, TerrainGridConfig const& tgc, TerrainConfig const& tc,
               Heightmap const& heightmap, ShaderProgram& sp)
 {
   return generate_grid_data(logger, tgc, tc, heightmap, sp);

@@ -3,7 +3,7 @@
 #include <opengl/draw_info.hpp>
 #include <opengl/shapes.hpp>
 
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 
 #include <extlibs/glm.hpp>
 
@@ -30,41 +30,41 @@ namespace opengl::gpu
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Arrows
 DrawInfo
-copy_arrow(stlw::Logger&, VertexAttribute const&, ArrowVertices const&);
+copy_arrow(common::Logger&, VertexAttribute const&, ArrowVertices const&);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Cubes
 DrawInfo
-copy_cube_gpu(stlw::Logger&, CubeVertices const&, VertexAttribute const&);
+copy_cube_gpu(common::Logger&, CubeVertices const&, VertexAttribute const&);
 
 DrawInfo
-copy_cube_wireframe_gpu(stlw::Logger&, CubeVertices const&, VertexAttribute const&);
+copy_cube_wireframe_gpu(common::Logger&, CubeVertices const&, VertexAttribute const&);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Rectangles
 DrawInfo
-copy_rectangle(stlw::Logger&, VertexAttribute const&, RectBuffer const&);
+copy_rectangle(common::Logger&, VertexAttribute const&, RectBuffer const&);
 
 DrawInfo
-copy_rectangle_uvs(stlw::Logger&, VertexAttribute const&, RectangleUvVertices const&);
+copy_rectangle_uvs(common::Logger&, VertexAttribute const&, RectangleUvVertices const&);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // General
 DrawInfo
-copy_grid_gpu(stlw::Logger&, VertexAttribute const&, GridVerticesIndices const&);
+copy_grid_gpu(common::Logger&, VertexAttribute const&, GridVerticesIndices const&);
 
 DrawInfo
-create_modelnormals(stlw::Logger&, VertexAttribute const&, glm::mat4 const&, boomhs::Obj const&,
+create_modelnormals(common::Logger&, VertexAttribute const&, glm::mat4 const&, boomhs::Obj const&,
                     Color const&);
 
 DrawInfo
-copy_gpu(stlw::Logger&, VertexAttribute const&, boomhs::ObjData const&);
+copy_gpu(common::Logger&, VertexAttribute const&, boomhs::ObjData const&);
 
 DrawInfo
-copy_gpu(stlw::Logger&, VertexAttribute const&, VertexBuffer const&);
+copy_gpu(common::Logger&, VertexAttribute const&, VertexBuffer const&);
 
 void
-overwrite_vertex_buffer(stlw::Logger&, VertexAttribute const&, DrawInfo&, boomhs::ObjData const&);
+overwrite_vertex_buffer(common::Logger&, VertexAttribute const&, DrawInfo&, boomhs::ObjData const&);
 
 } // namespace opengl::gpu
 namespace OG = opengl::gpu;

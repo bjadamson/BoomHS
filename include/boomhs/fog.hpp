@@ -1,6 +1,6 @@
 #pragma once
 #include <opengl/colors.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/type_macros.hpp>
 
 namespace boomhs
 {

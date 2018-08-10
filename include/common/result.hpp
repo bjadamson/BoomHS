@@ -1,11 +1,11 @@
 #pragma once
 #include <extlibs/oktal.hpp>
-#include <stlw/try.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/try.hpp>
+#include <common/type_macros.hpp>
 
 //
 // They each have separate use cases, and build upon the general purpose macros inside
-// stlw/try.hpp.
+// common/try.hpp.
 
 // DO_EFFECT
 //
@@ -66,7 +66,7 @@
 
 //
 // A dummy structure.
-namespace stlw
+namespace common
 {
 
 struct Nothing
@@ -75,7 +75,7 @@ struct Nothing
 
 using none_t = Nothing;
 
-} // namespace stlw
+} // namespace common
 
-#define OK_NONE Ok(stlw::Nothing{})
-#define ERR_NONE Err(stlw::Nothing{})
+#define OK_NONE Ok(common::Nothing{})
+#define ERR_NONE Err(common::Nothing{})

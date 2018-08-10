@@ -2,7 +2,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <opengl/colors.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/type_macros.hpp>
 
 #include <extlibs/glm.hpp>
 #include <vector>

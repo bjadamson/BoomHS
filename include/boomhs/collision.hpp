@@ -26,7 +26,7 @@ bool
 ray_box_intersect(Ray const&, Transform const&, AABoundingBox const&, float&);
 
 bool
-bbox_intersects(stlw::Logger&, Transform const&, AABoundingBox const&, Transform const&,
+bbox_intersects(common::Logger&, Transform const&, AABoundingBox const&, Transform const&,
                 AABoundingBox const&);
 
 // algorithm adapted from:

@@ -1,9 +1,9 @@
 #pragma once
 #include <boomhs/obj.hpp>
 
-#include <stlw/log.hpp>
-#include <stlw/result.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/result.hpp>
+#include <common/type_macros.hpp>
 
 #include <string>
 #include <vector>
@@ -55,7 +55,7 @@ namespace boomhs::heightmap
 {
 
 HeightmapResult
-load_fromtable(stlw::Logger&, opengl::TextureTable const&, std::string const&);
+load_fromtable(common::Logger&, opengl::TextureTable const&, std::string const&);
 
 boomhs::ObjVertices
 generate_normals(int, int, bool, Heightmap const&);
@@ -64,13 +64,13 @@ HeightmapResult
 parse(opengl::ImageData const&);
 
 HeightmapResult
-parse(stlw::Logger&, char const*);
+parse(common::Logger&, char const*);
 
 HeightmapResult
-parse(stlw::Logger&, std::string const&);
+parse(common::Logger&, std::string const&);
 
 void
-update_vertices_from_heightmap(stlw::Logger&, boomhs::TerrainConfig const&, Heightmap const&,
+update_vertices_from_heightmap(common::Logger&, boomhs::TerrainConfig const&, Heightmap const&,
                                boomhs::ObjVertices&);
 
 } // namespace boomhs::heightmap

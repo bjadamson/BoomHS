@@ -13,9 +13,9 @@
 #include <boomhs/terrain.hpp>
 
 
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 #include <boomhs/math.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/type_macros.hpp>
 
 #include <extlibs/fmt.hpp>
 #include <extlibs/glew.hpp>
@@ -31,7 +31,7 @@ namespace
 
 template <typename VERTICES, typename INDICES>
 void
-copy_synchronous(stlw::Logger& logger, VertexAttribute const& va, DrawInfo &dinfo,
+copy_synchronous(common::Logger& logger, VertexAttribute const& va, DrawInfo &dinfo,
                  VERTICES const& vertices, INDICES const& indices)
 {
   auto const bind_and_copy = [&]() {
@@ -61,7 +61,7 @@ copy_synchronous(stlw::Logger& logger, VertexAttribute const& va, DrawInfo &dinf
 
 template<typename V, typename I>
 DrawInfo
-copy_gpu_impl(stlw::Logger &logger, VertexAttribute const& va,
+copy_gpu_impl(common::Logger &logger, VertexAttribute const& va,
     V const& vertices, I const& indices)
 {
   auto const num_indices = static_cast<GLuint>(indices.size());
@@ -72,7 +72,7 @@ copy_gpu_impl(stlw::Logger &logger, VertexAttribute const& va,
 
 template <size_t N, size_t M>
 DrawInfo
-make_drawinfo(stlw::Logger &logger, VertexAttribute const& va,
+make_drawinfo(common::Logger &logger, VertexAttribute const& va,
     std::array<float, N> const& vertex_data, std::array<GLuint, M> const& indices)
 {
   auto const num_indices = static_cast<GLuint>(indices.size());
@@ -87,7 +87,7 @@ namespace opengl::gpu
 {
 
 DrawInfo
-copy_arrow(stlw::Logger &logger, VertexAttribute const& va,
+copy_arrow(common::Logger &logger, VertexAttribute const& va,
     ArrowVertices const& vertices)
 {
   auto const& INDICES = ArrowFactory::INDICES;
@@ -97,7 +97,7 @@ copy_arrow(stlw::Logger &logger, VertexAttribute const& va,
 }
 
 DrawInfo
-copy_grid_gpu(stlw::Logger &logger, VertexAttribute const& va,
+copy_grid_gpu(common::Logger &logger, VertexAttribute const& va,
               GridVerticesIndices const& grid)
 {
   auto const& indices  = grid.indices;
@@ -110,20 +110,20 @@ copy_grid_gpu(stlw::Logger &logger, VertexAttribute const& va,
 }
 
 DrawInfo
-copy_cube_gpu(stlw::Logger &logger, CubeVertices const& cv, VertexAttribute const& va)
+copy_cube_gpu(common::Logger &logger, CubeVertices const& cv, VertexAttribute const& va)
 {
   return make_drawinfo(logger, va, cv, OF::CUBE_INDICES);
 }
 
 DrawInfo
-copy_cube_wireframe_gpu(stlw::Logger& logger, CubeVertices const& cv,
+copy_cube_wireframe_gpu(common::Logger& logger, CubeVertices const& cv,
     VertexAttribute const& va)
 {
   return make_drawinfo(logger, va, cv, OF::CUBE_WIREFRAME_INDICES);
 }
 
 DrawInfo
-copy_gpu(stlw::Logger &logger, VertexAttribute const& va,
+copy_gpu(common::Logger &logger, VertexAttribute const& va,
     ObjData const& data)
 {
   auto const qa    = BufferFlags::from_va(va);
@@ -133,7 +133,7 @@ copy_gpu(stlw::Logger &logger, VertexAttribute const& va,
 }
 
 DrawInfo
-copy_gpu(stlw::Logger &logger, VertexAttribute const& va, VertexBuffer const& object)
+copy_gpu(common::Logger &logger, VertexAttribute const& va, VertexBuffer const& object)
 {
   auto const& v = object.vertices;
   auto const& i = object.indices;
@@ -141,7 +141,7 @@ copy_gpu(stlw::Logger &logger, VertexAttribute const& va, VertexBuffer const& ob
 }
 
 DrawInfo
-copy_rectangle(stlw::Logger &logger, VertexAttribute const& va,
+copy_rectangle(common::Logger &logger, VertexAttribute const& va,
     RectBuffer const& buffer)
 {
   auto const& v = buffer.vertices;
@@ -150,7 +150,7 @@ copy_rectangle(stlw::Logger &logger, VertexAttribute const& va,
 }
 
 DrawInfo
-copy_rectangle_uvs(stlw::Logger &logger, VertexAttribute const& va,
+copy_rectangle_uvs(common::Logger &logger, VertexAttribute const& va,
                    RectangleUvVertices const& vertices)
 {
   auto const& i = OF::RECTANGLE_INDICES;
@@ -161,7 +161,7 @@ copy_rectangle_uvs(stlw::Logger &logger, VertexAttribute const& va,
 }
 
 void
-overwrite_vertex_buffer(stlw::Logger& logger, VertexAttribute const& va, DrawInfo &dinfo,
+overwrite_vertex_buffer(common::Logger& logger, VertexAttribute const& va, DrawInfo &dinfo,
                  ObjData const& objdata)
 {
   auto const upload = [&]() {

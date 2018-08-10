@@ -7,7 +7,7 @@
 #include <extlibs/glm.hpp>
 
 #include <optional>
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 #include <string>
 
 namespace opengl
@@ -52,7 +52,7 @@ public:
   int  damage       = 1;
 
   void pickup_entity(EntityID, EntityRegistry&);
-  void drop_entity(stlw::Logger&, EntityID, EntityRegistry&);
+  void drop_entity(common::Logger&, EntityID, EntityRegistry&);
 
   void update(EngineState&, ZoneState&, window::FrameTime const&);
 

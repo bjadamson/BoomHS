@@ -12,7 +12,7 @@
 
 #include <window/timer.hpp>
 
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 #include <boomhs/random.hpp>
 
 #include <cassert>
@@ -52,7 +52,7 @@ graphics_mode_to_water_shader(GameGraphicsMode const dwo, opengl::ShaderPrograms
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // WaterFactory
 ObjData
-WaterFactory::generate_water_data(stlw::Logger& logger, glm::vec2 const& dimensions,
+WaterFactory::generate_water_data(common::Logger& logger, glm::vec2 const& dimensions,
                                   size_t const num_vertexes)
 {
   auto const count = num_vertexes * num_vertexes;
@@ -71,7 +71,7 @@ WaterFactory::generate_water_data(stlw::Logger& logger, glm::vec2 const& dimensi
 }
 
 WaterInfo&
-WaterFactory::make_default(stlw::Logger& logger, ShaderPrograms& sps, TextureTable& ttable,
+WaterFactory::make_default(common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable,
     EntityID const eid, EntityRegistry& registry)
 {
   LOG_TRACE("Generating water");

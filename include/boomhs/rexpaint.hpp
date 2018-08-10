@@ -1,6 +1,6 @@
 #pragma once
-#include <stlw/result.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/result.hpp>
+#include <common/type_macros.hpp>
 
 #include <array>
 #include <extlibs/fmt.hpp>
@@ -93,7 +93,7 @@ public:
 
   // Save this RexFile into a valid .xp file that RexPaint can load (if the ".xp" suffix is
   // present).
-  static Result<stlw::none_t, RexError> save(RexImage const&, std::string const&);
+  static Result<common::none_t, RexError> save(RexImage const&, std::string const&);
 
   // Image attributes
   auto        version() const { return version_; };

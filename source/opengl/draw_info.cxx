@@ -8,7 +8,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/obj_store.hpp>
 
-#include <stlw/algorithm.hpp>
+#include <common/algorithm.hpp>
 
 #include <iostream>
 
@@ -100,14 +100,14 @@ DrawInfo::operator=(DrawInfo &&other)
 }
 
 void
-DrawInfo::bind_impl(stlw::Logger& logger)
+DrawInfo::bind_impl(common::Logger& logger)
 {
   vao().bind_impl(logger);
 
 }
 
 void
-DrawInfo::unbind_impl(stlw::Logger& logger)
+DrawInfo::unbind_impl(common::Logger& logger)
 {
   vao().unbind_impl(logger);
 }
@@ -242,13 +242,13 @@ DrawHandleManager::entities() const
   return *p;
 
 DrawInfo&
-DrawHandleManager::lookup_entity(stlw::Logger& logger, EntityID const eid)
+DrawHandleManager::lookup_entity(common::Logger& logger, EntityID const eid)
 {
   LOOKUP_MANAGER_IMPL(entities());
 }
 
 DrawInfo const&
-DrawHandleManager::lookup_entity(stlw::Logger& logger, EntityID const eid) const
+DrawHandleManager::lookup_entity(common::Logger& logger, EntityID const eid) const
 {
   LOOKUP_MANAGER_IMPL(entities());
 }
@@ -256,7 +256,7 @@ DrawHandleManager::lookup_entity(stlw::Logger& logger, EntityID const eid) const
 #undef LOOKUP_MANAGER_IMPL
 
 void
-DrawHandleManager::add_mesh(stlw::Logger& logger, ShaderPrograms& sps, ObjStore& obj_store,
+DrawHandleManager::add_mesh(common::Logger& logger, ShaderPrograms& sps, ObjStore& obj_store,
                             EntityID const eid, EntityRegistry& registry)
 {
   auto& sn = registry.get<ShaderName>(eid);
@@ -275,7 +275,7 @@ DrawHandleManager::add_mesh(stlw::Logger& logger, ShaderPrograms& sps, ObjStore&
 }
 
 void
-DrawHandleManager::add_cube(stlw::Logger& logger, ShaderPrograms& sps, EntityID const eid,
+DrawHandleManager::add_cube(common::Logger& logger, ShaderPrograms& sps, EntityID const eid,
                             EntityRegistry& registry)
 {
   auto const& cr = registry.get<CubeRenderable>(eid);

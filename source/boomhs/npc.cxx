@@ -12,7 +12,7 @@ namespace
 {
 
 glm::vec3
-generate_npc_position(stlw::Logger& logger, TerrainGrid const& terrain_grid,
+generate_npc_position(common::Logger& logger, TerrainGrid const& terrain_grid,
                       EntityRegistry& registry, RNG& rng)
 {
   auto const& dimensions = terrain_grid.max_worldpositions();
@@ -104,7 +104,7 @@ NPC::create(EntityRegistry& registry, char const* name, int const level, glm::ve
 }
 
 void
-NPC::create_random(stlw::Logger& logger, TerrainGrid const& terrain_grid, EntityRegistry& registry,
+NPC::create_random(common::Logger& logger, TerrainGrid const& terrain_grid, EntityRegistry& registry,
     RNG& rng)
 {
   auto const make_monster = [&](char const* name) {

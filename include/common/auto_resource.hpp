@@ -1,8 +1,8 @@
 #pragma once
 #include <ostream>
-#include <stlw/type_macros.hpp>
+#include <common/type_macros.hpp>
 
-namespace stlw
+namespace common
 {
 
 // A wrapper around a resource.
@@ -86,4 +86,4 @@ operator<<(std::ostream& ostream, AutoResource<R> const& r)
   return ostream;
 }
 
-} // namespace stlw
+} // namespace common

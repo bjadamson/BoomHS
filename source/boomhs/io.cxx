@@ -13,7 +13,7 @@
 #include <window/sdl_window.hpp>
 #include <window/timer.hpp>
 
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 #include <boomhs/math.hpp>
 
 #include <extlibs/imgui.hpp>

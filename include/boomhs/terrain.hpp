@@ -2,9 +2,9 @@
 #include <boomhs/heightmap.hpp>
 #include <opengl/draw_info.hpp>
 
-#include <stlw/algorithm.hpp>
-#include <stlw/log.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/algorithm.hpp>
+#include <common/log.hpp>
+#include <common/type_macros.hpp>
 
 #include <extlibs/glm.hpp>
 
@@ -154,14 +154,14 @@ public:
   auto num_rows() const { return config.num_rows; }
 
   glm::vec2 max_worldpositions() const;
-  auto      rows_and_columns() const { return stlw::make_array<size_t>(num_rows(), num_cols()); }
+  auto      rows_and_columns() const { return common::make_array<size_t>(num_rows(), num_cols()); }
 
   void add(Terrain&&);
 
   auto count() const { return terrain_.size(); }
   auto size() const { return count(); }
 
-  float                    get_height(stlw::Logger&, float, float) const;
+  float                    get_height(common::Logger&, float, float) const;
   TerrainOutOfBoundsResult out_of_bounds(float, float) const;
   std::string              to_string() const;
 };
@@ -183,14 +183,14 @@ namespace boomhs::terrain
 {
 
 Terrain
-generate_piece(stlw::Logger&, glm::vec2 const&, TerrainGridConfig const&, TerrainConfig const&,
+generate_piece(common::Logger&, glm::vec2 const&, TerrainGridConfig const&, TerrainConfig const&,
                Heightmap const&, opengl::ShaderProgram&);
 TerrainGrid
-generate_grid(stlw::Logger&, TerrainConfig const&, Heightmap const&, opengl::ShaderProgram&,
+generate_grid(common::Logger&, TerrainConfig const&, Heightmap const&, opengl::ShaderProgram&,
               TerrainGrid const&);
 
 TerrainGrid
-generate_grid(stlw::Logger&, TerrainGridConfig const&, TerrainConfig const&, Heightmap const&,
+generate_grid(common::Logger&, TerrainGridConfig const&, TerrainConfig const&, Heightmap const&,
               opengl::ShaderProgram&);
 
 } // namespace boomhs::terrain

@@ -1,6 +1,6 @@
 #pragma once
 #include <extlibs/glew.hpp>
-#include <stlw/log.hpp>
+#include <common/log.hpp>
 #include <string>
 
 namespace opengl
@@ -64,7 +64,7 @@ public:
   explicit VertexAttribute(size_t const, GLsizei const,
                            std::array<AttributePointerInfo, API_BUFFER_SIZE>&&);
 
-  void upload_vertex_format_to_glbound_vao(stlw::Logger&) const;
+  void upload_vertex_format_to_glbound_vao(common::Logger&) const;
   auto stride() const { return stride_; }
 
   bool has_vertices() const;

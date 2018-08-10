@@ -16,7 +16,7 @@ using namespace window;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // SkyboxRenderer
-SkyboxRenderer::SkyboxRenderer(stlw::Logger& logger, DrawInfo&& dinfo, TextureInfo& day,
+SkyboxRenderer::SkyboxRenderer(common::Logger& logger, DrawInfo&& dinfo, TextureInfo& day,
                                TextureInfo& night, ShaderProgram& sp)
     : dinfo_(MOVE(dinfo))
     , day_(&day)

@@ -12,7 +12,7 @@
 
 #include <boomhs/lighting.hpp>
 
-#include <stlw/type_macros.hpp>
+#include <common/type_macros.hpp>
 #include <vector>
 
 namespace boomhs

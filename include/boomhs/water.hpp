@@ -4,8 +4,8 @@
 #include <boomhs/obj.hpp>
 #include <boomhs/screen_size.hpp>
 
-#include <stlw/log.hpp>
-#include <stlw/type_macros.hpp>
+#include <common/log.hpp>
+#include <common/type_macros.hpp>
 
 #include <array>
 #include <extlibs/glm.hpp>
@@ -50,9 +50,9 @@ struct WaterInfo
 
 struct WaterFactory
 {
-  static ObjData generate_water_data(stlw::Logger&, glm::vec2 const&, size_t);
+  static ObjData generate_water_data(common::Logger&, glm::vec2 const&, size_t);
 
-  static WaterInfo& make_default(stlw::Logger&, opengl::ShaderPrograms&, opengl::TextureTable&,
+  static WaterInfo& make_default(common::Logger&, opengl::ShaderPrograms&, opengl::TextureTable&,
                                  EntityID, EntityRegistry&);
 };
 

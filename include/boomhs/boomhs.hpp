@@ -9,7 +9,7 @@
 #include <opengl/terrain_renderer.hpp>
 #include <opengl/water_renderer.hpp>
 
-#include <stlw/result.hpp>
+#include <common/result.hpp>
 #include <string>
 
 namespace opengl

@@ -15,7 +15,7 @@ namespace
 
 template <typename FN>
 std::vector<float>
-generate_tree_colors(stlw::Logger& logger, ObjData const& objdata, FN const& face_to_colormap)
+generate_tree_colors(common::Logger& logger, ObjData const& objdata, FN const& face_to_colormap)
 {
   std::vector<float> colors;
   auto const         update_branchcolors = [&](auto const& shape, int const face) {
@@ -43,7 +43,7 @@ generate_tree_colors(stlw::Logger& logger, ObjData const& objdata, FN const& fac
 }
 
 std::vector<float>
-generate_tree_colors(stlw::Logger& logger, TreeComponent const& tree)
+generate_tree_colors(common::Logger& logger, TreeComponent const& tree)
 {
   std::vector<Color const*> face_to_colormap;
 
@@ -189,7 +189,7 @@ TreeComponent::leaf_color(size_t const index) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Tree
 void
-Tree::update_colors(stlw::Logger& logger, VertexAttribute const& va, DrawInfo& dinfo,
+Tree::update_colors(common::Logger& logger, VertexAttribute const& va, DrawInfo& dinfo,
                     TreeComponent& tree)
 {
   auto& objdata  = tree.obj();
@@ -199,7 +199,7 @@ Tree::update_colors(stlw::Logger& logger, VertexAttribute const& va, DrawInfo& d
 
 /*
 std::pair<EntityID, DrawInfo>
-Tree::add_toregistry(stlw::Logger& logger, EntityID const eid, ObjStore& obj_store,
+Tree::add_toregistry(common::Logger& logger, EntityID const eid, ObjStore& obj_store,
                      ShaderPrograms& sps, EntityRegistry& registry)
 {
   auto& sn = registry.get<ShaderName>(eid).value;
