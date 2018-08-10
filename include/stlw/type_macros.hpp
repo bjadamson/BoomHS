@@ -123,15 +123,9 @@
     assert(!CONTAINER.empty());                                                                    \
     return CONTAINER.front();                                                                      \
   }                                                                                                \
-  auto empty() const                                                                               \
-  {                                                                                                \
-    return CONTAINER.empty();                                                                      \
-  }                                                                                                \
+  auto empty() const { return CONTAINER.empty(); }                                                 \
                                                                                                    \
-  auto size() const                                                                                \
-  {                                                                                                \
-    return CONTAINER.size();                                                                       \
-  }
+  auto size() const { return CONTAINER.size(); }
 
 // TODO: document
 // BEGIN Function-defining macros

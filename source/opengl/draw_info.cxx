@@ -217,12 +217,6 @@ DrawHandleManager::add_entity(EntityID const eid, DrawInfo&& dinfo)
   entities_.add(eid, MOVE(dinfo));
 }
 
-void
-DrawHandleManager::set_bbox(DrawInfo&& di)
-{
-  bbox_ = MOVE(di);
-}
-
 EntityDrawHandleMap &
 DrawHandleManager::entities()
 {
@@ -233,20 +227,6 @@ EntityDrawHandleMap const&
 DrawHandleManager::entities() const
 {
   return entities_;
-}
-
-DrawInfo&
-DrawHandleManager::bbox()
-{
-  assert(bbox_);
-  return *bbox_;
-}
-
-DrawInfo const&
-DrawHandleManager::bbox() const
-{
-  assert(bbox_);
-  return *bbox_;
 }
 
 // TODO: When the maps can be indexed by a single identifier (right now they cannot, as the

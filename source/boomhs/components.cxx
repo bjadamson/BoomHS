@@ -1,6 +1,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/leveldata.hpp>
+#include <stlw/math.hpp>
 
 namespace boomhs
 {
@@ -27,10 +28,7 @@ AABoundingBox::AABoundingBox(glm::vec3 const& minp, glm::vec3 const& maxp)
 glm::vec3
 AABoundingBox::dimensions() const
 {
-  auto const w = max.x - min.x;
-  auto const h = max.y - min.y;
-  auto const l = max.z - min.z;
-  return glm::vec3{w, h, l};
+  return stlw::math::calculate_cube_dimensions(min, max);
 }
 
 glm::vec3

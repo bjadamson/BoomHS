@@ -485,8 +485,8 @@ load_entities(stlw::Logger& logger, CppTable const& level_table, LevelAssets &as
     bool const random_junk   = get_bool(file,            "random_junk_from_file").value_or(false);
 
     // sub-tables or "inner"-tables
-    auto const orbital_o     = get_table(file, "orbital-body");
-    auto const pointlight_o  = get_table(file, "pointlight");
+    auto const orbital_o       = get_table(file, "orbital-body");
+    auto const pointlight_o    = get_table(file, "pointlight");
     // clang-format on
 
     // texture OR color fields, not both
@@ -531,8 +531,9 @@ load_entities(stlw::Logger& logger, CppTable const& level_table, LevelAssets &as
 
     if (geometry == "cube") {
       auto& cr = registry.assign<CubeRenderable>(eid);
-      cr.min   = glm::vec3{-0.5f};
-      cr.max   = glm::vec3{0.5f};
+      auto const cube_vertices_o = get_table_or_abort(file, "cube_vertices");
+      cr.min = get_vec3(cube_vertices_o, "min").value_or(glm::vec3{1.0f});
+      cr.max = get_vec3(cube_vertices_o, "max").value_or(glm::vec3{1.0f});
     }
     else if (boost::starts_with(geometry, "mesh")) {
       auto const parse_meshname = [](auto const& field) {

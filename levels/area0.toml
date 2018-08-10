@@ -57,6 +57,10 @@ shader = "light"
 geometry = "cube"
 scale = [1.0, 1.0, 1.0]
 
+[entity.cube_vertices]
+min = [-1.0, -1.0, -1.0]
+max = [ 1.0,  1.0,  1.0]
+
 [entity.pointlight]
 attenuation = "nolight"
 diffuse = [1.0, 0.0, 0.0]
@@ -74,6 +78,10 @@ attenuation = "nolight"
 diffuse = [0.0, 1.0, 0.0]
 specular = [0.0, 1.0, 0.0]
 
+[entity.cube_vertices]
+min = [-1.5, -1.5, -1.5]
+max = [ 1.5,  1.5,  1.5]
+
 [[entity]]
 name = "point light 2"
 position = [4.0, 2.0, 4.0]
@@ -85,6 +93,10 @@ scale = [1.0, 1.0, 1.0]
 attenuation = "nolight"
 diffuse = [0.0, 0.0, 1.0]
 specular = [0.0, 0.0, 1.0]
+
+[entity.cube_vertices]
+min = [-0.8, -0.8, -0.8]
+max = [ 0.8,  0.8,  0.8]
 
 [[entity]]
 name = "point light 3"
@@ -98,6 +110,9 @@ attenuation = "nolight"
 diffuse = [1.0, 1.0, 1.0]
 specular = [1.0, 1.0, 1.0]
 
+[entity.cube_vertices]
+min = [-0.4, -0.4, -0.4]
+max = [ 0.4,  0.4,  0.4]
 
 ###################################################################################################
 [[entity]]

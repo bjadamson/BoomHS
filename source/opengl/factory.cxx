@@ -196,32 +196,21 @@ namespace opengl::factories
 CubeVertices
 cube_vertices(glm::vec3 const& min, glm::vec3 const& max)
 {
-  glm::vec3 const midp = glm::vec3{
-    glm::distance(min.x, max.x),
-    glm::distance(min.y, max.y),
-    glm::distance(min.z, max.z)
-  }
-  / glm::vec3{2.0f};
+  auto const dimensions = stlw::math::calculate_cube_dimensions(min, max);
+  auto const& width     = dimensions.x;
+  auto const& height    = dimensions.y;
 
-  assert(min.x <= max.x);
-  assert(min.y <= max.y);
-  assert(min.z <= max.z);
+  return stlw::make_array<float>(
+    min.x,         min.y,          min.z,
+    min.x + width, min.y,          min.z,
+    min.x + width, min.y + height, min.z,
+    min.x,         min.y + height, min.z,
 
-  // Define the 8 vertices of a unit cube
-  CubeVertices v = stlw::make_array<float>(
-    // front
-    -midp.x, -midp.y,  midp.z,
-     midp.x, -midp.y,  midp.z,
-     midp.x,  midp.y,  midp.z,
-    -midp.x,  midp.y,  midp.z,
-
-    // back
-    -midp.x, -midp.y, -midp.z,
-     midp.x, -midp.y, -midp.z,
-     midp.x,  midp.y, -midp.z,
-    -midp.x,  midp.y, -midp.z
-  );
-  return v;
+    max.x - width, max.y - height, max.z,
+    max.x,         max.y - height, max.z,
+    max.x,         max.y,          max.z,
+    max.x - width, max.y,          max.z
+    );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

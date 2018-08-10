@@ -447,12 +447,6 @@ add_boundingboxes_to_entities(EngineState& es, ZoneState& zs)
   auto constexpr WIREFRAME_SHADER = "wireframe";
   auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
 
-  {
-    CubeMinMax const cmm{glm::vec3{-1.0f}, glm::vec3{1.0f}};
-    auto const cv = OF::cube_vertices(cmm.min, cmm.max);
-    auto    dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, cv, va);
-    draw_handles.set_bbox(MOVE(dinfo));
-  }
   for (auto const eid : registry.view<OrbitalBody>()) {
     OrbitalBody::add_to_entity(eid, registry);
   }

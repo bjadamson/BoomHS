@@ -129,6 +129,21 @@ rotation_between_vectors(glm::vec3 start, glm::vec3 dest)
   return glm::quat{s * 0.5f, axis.x * invs, axis.y * invs, axis.z * invs};
 }
 
+// Calculates the cube's dimensions, given a min/max point in 3D.
+//
+// Interpret the glm::vec3 returned like:
+//   x == width
+//   y == height
+//   z == length
+inline glm::vec3
+calculate_cube_dimensions(glm::vec3 const& min, glm::vec3 const& max)
+{
+  auto const w = max.x - min.x;
+  auto const h = max.y - min.y;
+  auto const l = max.z - min.z;
+  return glm::vec3{w, h, l};
+}
+
 } // namespace stlw::math
 
 namespace glm

@@ -379,25 +379,9 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_color(logger, "u_wirecolor", wire_color);
-      //auto& dinfo = draw_handles.bbox();
 
-      //CubeMinMax const cmm{bbox.min, bbox.max};
-      //auto const cv = OF::cube_vertices(cmm.min, cmm.max);
+      auto const cv = OF::cube_vertices(bbox.min, bbox.max);
       auto const& min = bbox.min, max = bbox.max;
-      auto const dimensions = bbox.dimensions();
-      auto const& width     = dimensions.x;
-      auto const& height    = dimensions.y;
-      CubeVertices const cv = stlw::make_array<float>(
-          min.x,         min.y,          min.z,
-          min.x + width, min.y,          min.z,
-          min.x + width, min.y + height, min.z,
-          min.x,         min.y + height, min.z,
-
-          max.x - width, max.y - height, max.z,
-          max.x,         max.y - height, max.z,
-          max.x,         max.y,          max.z,
-          max.x - width, max.y,          max.z
-          );
       auto    dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, cv, sp.va());
 
       // We needed to bind the shader program to set the uniforms above, no reason to pay to bind

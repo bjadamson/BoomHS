@@ -21,8 +21,8 @@ struct Weapon
 class PreviousOwners
 {
   std::vector<Name> values_;
-public:
 
+public:
   void add(char const*);
   void add(std::string const&);
   void add(Name const&);
@@ -42,14 +42,18 @@ struct Item
 
 private:
   PreviousOwners owners_;
-public:
 
+public:
   void add_owner(char const* v) { owners_.add(v); }
   void add_owner(std::string const& v) { add_owner(v.c_str()); }
   void add_owner(Name const& n) { add_owner(n.value); }
 
   // By definition, the "last" owner is the
-  auto const& current_owner() const { assert(is_currently_owned()); return owners_[0]; }
+  auto const& current_owner() const
+  {
+    assert(is_currently_owned());
+    return owners_[0];
+  }
   auto const& all_owners() { return owners_; }
 
   bool ever_owned_by(char const*) const;
