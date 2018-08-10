@@ -122,8 +122,14 @@ process_mousemotion(GameState& state, Player& player, SDL_MouseMotionEvent const
   }
 }
 
+enum class MouseButton
+{
+  LEFT,
+  RIGHT
+};
+
 void
-select_mouse_under_cursor(FrameState& fstate)
+select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
 {
   auto& es      = fstate.es;
   auto& logger  = es.logger;
@@ -136,21 +142,45 @@ select_mouse_under_cursor(FrameState& fstate)
   glm::vec3 const  ray_dir   = mouse_picker.calculate_ray(fstate);
   glm::vec3 const& ray_start = fstate.camera_world_position();
 
-  auto const components_bbox =
-      find_all_entities_with_component<AABoundingBox, Transform, Selectable>(registry);
-  for (auto const eid : components_bbox) {
-    auto const& bbox       = registry.get<AABoundingBox>(eid);
-    auto const& transform  = registry.get<Transform>(eid);
-    auto&       selectable = registry.get<Selectable>(eid);
+  std::vector<std::pair<EntityID, float>> distances;
+  auto const eids = find_all_entities_with_component<Selectable>(registry);
+  for (auto const eid : eids) {
+    auto const& bbox = registry.get<AABoundingBox>(eid);
+    auto const& tr   = registry.get<Transform>(eid);
+    auto&       sel  = registry.get<Selectable>(eid);
+    sel.selected = false;
 
-    Ray const  ray{ray_start, ray_dir};
-    bool const intersects = collision::ray_box_intersect(ray, transform, bbox);
-    selectable.selected   = intersects;
+    bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == glm::vec3{1});
+
+    float distance = 0.0f;
+    bool intersects = false;
+    if (can_use_simple_test) {
+      Ray const  ray{ray_start, ray_dir};
+      intersects = collision::ray_box_intersect(ray, tr, bbox, distance);
+    }
+    else {
+      intersects = collision::ray_obb_intersection(ray_start, ray_dir, bbox, tr, distance);
+    }
 
     if (intersects) {
-      LOG_ERROR_SPRINTF("intersects (YES) %i", intersects);
-      uistate.selected_entity = static_cast<int>(eid);
+      distances.emplace_back(PAIR(eid, distance));
+      LOG_TRACE_SPRINTF("Intersection found using %s test, distance %f", can_use_simple_test ? "SIMPLE" : "COMPLEX", distance);
     }
+  }
+  bool const something_selected = !distances.empty();
+  if (something_selected) {
+    auto const cmp = [](auto const& l, auto const& r) { return l.second < r.second; };
+    std::sort(distances.begin(), distances.end(), cmp);
+    auto const& pair = mb == MouseButton::LEFT
+      ? distances.front()
+      : distances.back();
+
+    auto const eid = pair.first;
+    registry.get<Selectable>(eid).selected = true;
+
+    auto const name = registry.has<Name>(eid)
+      ? registry.get<Name>(eid).value
+      : "Unnamed";
   }
 }
 
@@ -165,12 +195,18 @@ process_mousebutton_down(GameState& state, Player& player, SDL_MouseButtonEvent 
   auto& zs = state.level_manager.active();
 
   auto const& button = event.button;
-  if (button == SDL_BUTTON_LEFT) {
-    ms.left_pressed = true;
+  ms.left_pressed = button == SDL_BUTTON_LEFT;
+  ms.right_pressed = button == SDL_BUTTON_RIGHT;
 
+  if (ms.either_pressed()) {
     auto const cstate = CameraFrameState::from_camera(camera);
     FrameState fstate{cstate, es, zs};
-    select_mouse_under_cursor(fstate);
+    if (ms.left_pressed) {
+      select_mouse_under_cursor(fstate, MouseButton::LEFT);
+    }
+    else if (ms.right_pressed) {
+      select_mouse_under_cursor(fstate, MouseButton::RIGHT);
+    }
   }
   else if (button == SDL_BUTTON_RIGHT) {
     ms.right_pressed = true;

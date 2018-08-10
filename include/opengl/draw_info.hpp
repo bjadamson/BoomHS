@@ -9,7 +9,6 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
-#include <optional>
 #include <string>
 
 namespace boomhs
@@ -102,8 +101,7 @@ class EntityDrawHandleMap
 class DrawHandleManager
 {
   // These slots get a value when memory is loaded, set to none when memory is not.
-  EntityDrawHandleMap     entities_;
-  std::optional<DrawInfo> bbox_ = {};
+  EntityDrawHandleMap entities_;
 
 public:
   DrawHandleManager() = default;
@@ -112,13 +110,9 @@ public:
 
   // methods
   void add_entity(boomhs::EntityID, DrawInfo&&);
-  void set_bbox(DrawInfo&&);
 
   EntityDrawHandleMap&       entities();
   EntityDrawHandleMap const& entities() const;
-
-  DrawInfo&       bbox();
-  DrawInfo const& bbox() const;
 
   DrawInfo&       lookup_entity(stlw::Logger&, boomhs::EntityID);
   DrawInfo const& lookup_entity(stlw::Logger&, boomhs::EntityID) const;

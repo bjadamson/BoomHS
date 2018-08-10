@@ -37,14 +37,20 @@ case "$response" in
 esac
 
 # We need python to get started
-sudo apt-get install python-setuptools python-dev build-essential
-sudo apt-get install python-pip
+apt-get install python-setuptools python-dev build-essential
+apt-get install python-pip
 
 # Use pip to install conan (c++ library/package manager)
 pip install conan
 
 # Install basic dependencies
 apt-get install libc++-dev
+
+# dev-version of standard libaries (for GDB)
+# The following versions were in use on my dev pc, so I grabbed dev versions of them all
+# `dpkg --list | grep libstdc++`
+apt-get install libstdc++6-4.8-dbg
+apt-get install libstdc++-4.8-dev
 
 # Stacktrace
 apt-get install libdw-dev

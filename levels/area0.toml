@@ -53,7 +53,11 @@ name = "point light 0"
 position = [2.0, 2.0, 2.0]
 shader = "light"
 geometry = "cube"
-scale = [0.4, 0.4, 0.4]
+scale = [1.0, 1.0, 1.0]
+
+[entity.cube_vertices]
+min = [-1.0, -1.0, -1.0]
+max = [ 1.0,  1.0,  1.0]
 
 [entity.pointlight]
 attenuation = "nolight"
@@ -65,37 +69,48 @@ name = "point light 1"
 position = [4.0, 2.0, 2.0]
 shader = "light"
 geometry = "cube"
-scale = [0.4, 0.4, 0.4]
+scale = [1.0, 1.0, 1.0]
 
 [entity.pointlight]
 attenuation = "nolight"
 diffuse = [0.0, 1.0, 0.0]
 specular = [0.0, 1.0, 0.0]
 
+[entity.cube_vertices]
+min = [-1.5, -1.5, -1.5]
+max = [ 1.5,  1.5,  1.5]
+
 [[entity]]
 name = "point light 2"
 position = [4.0, 2.0, 4.0]
 shader = "light"
 geometry = "cube"
-scale = [0.4, 0.4, 0.4]
+scale = [1.0, 1.0, 1.0]
 
 [entity.pointlight]
 attenuation = "nolight"
 diffuse = [0.0, 0.0, 1.0]
 specular = [0.0, 0.0, 1.0]
 
+[entity.cube_vertices]
+min = [-0.8, -0.8, -0.8]
+max = [ 0.8,  0.8,  0.8]
+
 [[entity]]
 name = "point light 3"
 position = [2.0, 2.0, 4.0]
 shader = "light"
 geometry = "cube"
-scale = [0.4, 0.4, 0.4]
+scale = [1.0, 1.0, 1.0]
 
 [entity.pointlight]
 attenuation = "nolight"
 diffuse = [1.0, 1.0, 1.0]
 specular = [1.0, 1.0, 1.0]
 
+[entity.cube_vertices]
+min = [-0.4, -0.4, -0.4]
+max = [ 0.4,  0.4,  0.4]
 
 ###################################################################################################
 [[entity]]
@@ -104,8 +119,8 @@ material = "terrain"
 position = [6.0, 1.0, 6.0]
 shader = "3dtexture"
 geometry = "mesh:house"
-texture = "grass"
-scale = [0.4, 0.4, 0.4]
+texture = "TextureAtlas"
+scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true
 
 [[entity]]
@@ -114,7 +129,7 @@ material = "tree"
 position = [10.0, 0.0, 10.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree_lowpoly"
-scale = [8.0, 6.0, 8.0]
+scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true
 
 [[entity]]
@@ -123,5 +138,5 @@ material = "tree"
 position = [15.0, 1.0, 18.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree2"
-scale = [2.0, 4.0, 2.0]
+scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true

@@ -217,12 +217,6 @@ DrawHandleManager::add_entity(EntityID const eid, DrawInfo&& dinfo)
   entities_.add(eid, MOVE(dinfo));
 }
 
-void
-DrawHandleManager::set_bbox(DrawInfo&& di)
-{
-  bbox_ = MOVE(di);
-}
-
 EntityDrawHandleMap &
 DrawHandleManager::entities()
 {
@@ -233,20 +227,6 @@ EntityDrawHandleMap const&
 DrawHandleManager::entities() const
 {
   return entities_;
-}
-
-DrawInfo&
-DrawHandleManager::bbox()
-{
-  assert(bbox_);
-  return *bbox_;
-}
-
-DrawInfo const&
-DrawHandleManager::bbox() const
-{
-  assert(bbox_);
-  return *bbox_;
 }
 
 // TODO: When the maps can be indexed by a single identifier (right now they cannot, as the
@@ -299,13 +279,10 @@ DrawHandleManager::add_cube(stlw::Logger& logger, ShaderPrograms& sps, EntityID 
                             EntityRegistry& registry)
 {
   auto const& cr = registry.get<CubeRenderable>(eid);
-  CubeMinMax const cmm{cr.min, cr.max};
-
-
   auto& sn = registry.get<ShaderName>(eid);
   auto& va = sps.ref_sp(sn.value).va();
 
-  auto const vertices = OF::cube_vertices(cmm.min, cmm.max);
+  auto const vertices = OF::cube_vertices(cr.min, cr.max);
   auto  handle = opengl::gpu::copy_cube_gpu(logger, vertices, va);
   add_entity(eid, MOVE(handle));
 

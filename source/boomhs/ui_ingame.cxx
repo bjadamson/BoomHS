@@ -20,6 +20,7 @@
 #include <extlibs/imgui.hpp>
 #include <algorithm>
 #include <optional>
+#include <sstream>
 
 using namespace boomhs;
 using namespace opengl;
@@ -73,7 +74,28 @@ draw_player_inventory(stlw::Logger& logger, EntityRegistry& registry, TextureTab
     // remove_entity() may invalidate slot& reference, find again.
     auto& slot = inventory.slot(pos);
     if (slot.occupied() && ImGui::IsItemHovered()) {
-      ImGui::SetTooltip("%s", slot.item(registry).tooltip);
+      auto& item = slot.item(registry);
+      auto const& tooltip = item.tooltip;
+      if (item.has_single_owner()) {
+        ImGui::SetTooltip("%s |Owner: %s", tooltip, item.current_owner().value.c_str());
+      }
+      else {
+        std::stringstream ss;
+        auto const& prev_owners = item.all_owners();
+        FOR(i, prev_owners.size()) {
+          // SKIP the first owner, as that's considered the current owner.
+          if (i == 0) {
+            continue;
+          }
+          else if (i > 1) {
+            ss << ", ";
+          }
+          ss << prev_owners[i].value;
+        }
+        auto const names = ss.str();
+        ImGui::SetTooltip("%s |Owner: %s |Previous Owners: (%s)", tooltip, item.current_owner().value.c_str(),
+            names.c_str());
+      }
     }
   };
 

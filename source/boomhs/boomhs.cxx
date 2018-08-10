@@ -114,7 +114,7 @@ update_npcpositions(stlw::Logger& logger, EntityRegistry& registry, TerrainGrid&
 
     auto& tr = transform.translation;
     float const height = terrain.get_height(logger, tr.x, tr.z);
-    tr.y = height + (bbox.dimensions().y / 2.0f);
+    tr.y = height + bbox.half_widths().y;
   };
   for (auto const eid : registry.view<NPCData, Transform, AABoundingBox>()) {
     update(eid);
@@ -447,12 +447,6 @@ add_boundingboxes_to_entities(EngineState& es, ZoneState& zs)
   auto constexpr WIREFRAME_SHADER = "wireframe";
   auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
 
-  {
-    CubeMinMax const cmm{glm::vec3{-1.0f}, glm::vec3{1.0f}};
-    auto const cv = OF::cube_vertices(cmm.min, cmm.max);
-    auto    dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, cv, va);
-    draw_handles.set_bbox(MOVE(dinfo));
-  }
   for (auto const eid : registry.view<OrbitalBody>()) {
     OrbitalBody::add_to_entity(eid, registry);
   }
@@ -836,9 +830,8 @@ make_static_renderers(EngineState& es, LevelManager& lm)
     auto&              skybox_sp = sps.ref_sp("skybox");
     glm::vec3 const    vmin{-0.5f};
     glm::vec3 const    vmax{0.5f};
-    CubeMinMax const cmm{vmin, vmax};
 
-    auto const vertices = OF::cube_vertices(cmm.min, cmm.max);
+    auto const vertices = OF::cube_vertices(vmin, vmax);
     DrawInfo           dinfo    = opengl::gpu::copy_cube_gpu(logger, vertices, skybox_sp.va());
     auto&              day_ti   = *ttable.find("building_skybox");
     auto&              night_ti = *ttable.find("night_skybox");

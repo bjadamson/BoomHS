@@ -127,7 +127,7 @@ struct TerrainOutOfBoundsResult
   {
   }
 
-  bool is_out() const { return x || z; }
+  bool     is_out() const { return x || z; }
   explicit operator bool() const { return is_out(); }
 };
 

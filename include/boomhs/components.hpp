@@ -61,9 +61,32 @@ struct AABoundingBox
 
 struct Name
 {
-  static constexpr char const* DEFAULT = "unnamed";
-  std::string                  value   = Name::DEFAULT;
+  std::string value;
+
+  Name() = default;
+  COPY_DEFAULT(Name);
+  MOVE_DEFAULT(Name);
+
+  Name(char const* v)
+      : value(v)
+  {
+  }
+  Name(std::string const& v)
+      : value(v)
+  {
+  }
+  Name(std::string&& v)
+      : value(MOVE(v))
+  {
+  }
+  bool empty() const { return value.empty(); }
 };
+
+inline bool
+operator==(Name const& a, Name const& b)
+{
+  return a.value == b.value;
+}
 
 struct Selectable
 {
