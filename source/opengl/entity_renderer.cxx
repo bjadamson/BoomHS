@@ -368,6 +368,46 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
       LOG_WARN("DRAW BBOX END");
     });
   };
+  auto const draw_boundingboxes_for_meshes = [&](COMMON_ARGS, Selectable& sel, auto&&...) {
+    if (!es.draw_bounding_boxes) {
+      return;
+    }
+    Color const wire_color = sel.selected ? LOC::GREEN : LOC::RED;
+
+    auto& sp    = sps.ref_sp("wireframe");
+    auto  tr    = transform;
+
+    sp.while_bound(logger, [&]() {
+      sp.set_uniform_color(logger, "u_wirecolor", wire_color);
+      //auto& dinfo = draw_handles.bbox();
+
+      //CubeMinMax const cmm{bbox.min, bbox.max};
+      //auto const cv = OF::cube_vertices(cmm.min, cmm.max);
+      auto const& min = bbox.min, max = bbox.max;
+      auto const dimensions = bbox.dimensions();
+      auto const& width     = dimensions.x;
+      auto const& height    = dimensions.y;
+      CubeVertices const cv = stlw::make_array<float>(
+          min.x,         min.y,          min.z,
+          min.x + width, min.y,          min.z,
+          min.x + width, min.y + height, min.z,
+          min.x,         min.y + height, min.z,
+
+          max.x - width, max.y - height, max.z,
+          max.x,         max.y - height, max.z,
+          max.x,         max.y,          max.z,
+          max.x - width, max.y,          max.z
+          );
+      auto    dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, cv, sp.va());
+
+      // We needed to bind the shader program to set the uniforms above, no reason to pay to bind
+      // it again.
+      auto copy_transform = tr;
+      LOG_WARN("DRAW BBOX BEGIN");
+      draw_entity_common_without_binding_sp(rstate, GL_LINES, sp, dinfo, eid, copy_transform);
+      LOG_WARN("DRAW BBOX END");
+    });
+  };
 
   auto const& draw_pointlight_fn = draw_common_fn;
 
@@ -379,8 +419,10 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
     COMMON
     );
 
-  registry.view<COMMON, Selectable>().each(
+  registry.view<COMMON, Selectable, CubeRenderable>().each(
       [&](auto&&... args) { draw_boundingboxes(FORWARD(args)); });
+  registry.view<COMMON, Selectable, MeshRenderable>().each(
+      [&](auto&&... args) { draw_boundingboxes_for_meshes(FORWARD(args)); });
 #undef COMMON
 #undef COMMON_ARGS
 }
