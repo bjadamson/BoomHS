@@ -4,7 +4,7 @@
 #include <boomhs/lighting.hpp>
 #include <boomhs/material.hpp>
 #include <opengl/texture.hpp>
-#include <stlw/random.hpp>
+#include <boomhs/random.hpp>
 
 using namespace boomhs;
 using namespace opengl;

@@ -25,7 +25,7 @@ struct Transform
 
   glm::mat4 model_matrix() const
   {
-    return stlw::math::calculate_modelmatrix(translation, rotation, scale);
+    return math::calculate_modelmatrix(translation, rotation, scale);
   }
 
   void rotate_degrees(float const degrees, glm::vec3 const& axis)

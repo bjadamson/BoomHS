@@ -4,14 +4,10 @@
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace stlw
-{
-class float_generator;
-} // namespace stlw
-
 namespace boomhs
 {
 class EntityRegistry;
+class RNG;
 class TerrainGrid;
 
 enum class Alignment
@@ -43,8 +39,7 @@ public:
   // Loads a new NPC into the EntityRegistry.
   static void create(EntityRegistry&, char const*, int, glm::vec3 const&);
 
-  static void
-  create_random(stlw::Logger&, TerrainGrid const&, EntityRegistry&, stlw::float_generator&);
+  static void create_random(stlw::Logger&, TerrainGrid const&, EntityRegistry&, RNG&);
 
   static bool is_dead(HealthPoints const&);
   static bool within_attack_range(glm::vec3 const&, glm::vec3 const&);

@@ -24,7 +24,7 @@ generate_terrain_data(stlw::Logger& logger, TerrainGridConfig const& tgc, Terrai
                       Heightmap const& heightmap)
 {
   auto const numv_oneside = tc.num_vertexes_along_one_side;
-  auto const num_vertexes = stlw::math::squared(numv_oneside);
+  auto const num_vertexes = math::squared(numv_oneside);
 
   ObjData data;
   data.num_vertexes = num_vertexes;

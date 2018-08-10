@@ -3,8 +3,8 @@
 #include <boomhs/mouse.hpp>
 #include <boomhs/spherical.hpp>
 
+#include <boomhs/math.hpp>
 #include <stlw/log.hpp>
-#include <stlw/math.hpp>
 #include <stlw/type_macros.hpp>
 
 namespace boomhs

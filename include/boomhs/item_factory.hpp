@@ -6,13 +6,9 @@ namespace opengl
 class TextureTable;
 } // namespace opengl
 
-namespace stlw
-{
-class float_generator;
-} // namespace stlw
-
 namespace boomhs
 {
+class RNG;
 
 struct ItemFactory
 {

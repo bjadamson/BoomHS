@@ -37,8 +37,8 @@
 #include <window/timer.hpp>
 
 #include <stlw/log.hpp>
-#include <stlw/math.hpp>
-#include <stlw/random.hpp>
+#include <boomhs/math.hpp>
+#include <boomhs/random.hpp>
 #include <stlw/result.hpp>
 
 #include <extlibs/fastnoise.hpp>
@@ -216,7 +216,7 @@ find_torches(EntityRegistry& registry)
 }
 
 void
-update_torchflicker(LevelData const& ldata, EntityRegistry& registry, stlw::float_generator& rng,
+update_torchflicker(LevelData const& ldata, EntityRegistry& registry, RNG& rng,
                     FrameTime const& ft)
 {
   auto const update_torch = [&](auto const eid) {
@@ -284,7 +284,7 @@ update_visible_entities(LevelManager& lm, EntityRegistry& registry)
 }
 
 void
-update_everything(EngineState& es, LevelManager& lm, stlw::float_generator& rng, FrameState const& fstate, StaticRenderers& static_renderers,
+update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const& fstate, StaticRenderers& static_renderers,
                   WaterAudioSystem& water_audio, FrameTime const& ft)
 {
   auto& skybox_renderer = static_renderers.skybox;
@@ -491,7 +491,7 @@ floornumber_to_levelfilename(int const floor_number)
 }
 
 Result<GameState, std::string>
-init(Engine& engine, EngineState& es, Camera& camera, stlw::float_generator& rng)
+init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
 {
   auto& logger = es.logger;
 
@@ -639,7 +639,7 @@ WaterRenderers::render(RenderState& rstate, DrawState& ds, LevelManager& lm, Cam
 }
 
 void
-StaticRenderers::render(LevelManager&lm, RenderState& rstate, stlw::float_generator& rng, DrawState& ds,
+StaticRenderers::render(LevelManager&lm, RenderState& rstate, RNG& rng, DrawState& ds,
             FrameTime const& ft, bool const silhouette_black)
 {
   // Render the scene with no culling (setting it zero disables culling mathematically)
@@ -699,7 +699,7 @@ StaticRenderers::render(LevelManager&lm, RenderState& rstate, stlw::float_genera
 
 void
 render_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, Camera& camera,
-             stlw::float_generator& rng, FrameTime const& ft, StaticRenderers& static_renderers)
+             RNG& rng, FrameTime const& ft, StaticRenderers& static_renderers)
 {
   auto& es     = rstate.fs.es;
   auto& logger = es.logger;
@@ -863,7 +863,7 @@ make_static_renderers(EngineState& es, LevelManager& lm)
 }
 
 void
-ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
+ingame_loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
             WaterAudioSystem& water_audio, StaticRenderers& static_renderers, DrawState& ds,
             FrameTime const& ft)
 {
@@ -888,7 +888,7 @@ ingame_loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera
 
 void
 game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
-          stlw::float_generator& rng, Camera& camera, FrameTime const& ft)
+          RNG& rng, Camera& camera, FrameTime const& ft)
 {
   auto& es        = state.engine_state;
   auto& logger      = es.logger;

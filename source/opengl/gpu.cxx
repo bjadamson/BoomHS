@@ -14,7 +14,7 @@
 
 
 #include <stlw/algorithm.hpp>
-#include <stlw/math.hpp>
+#include <boomhs/math.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <extlibs/fmt.hpp>

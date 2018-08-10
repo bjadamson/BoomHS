@@ -23,22 +23,17 @@ namespace window
 class FrameTime;
 }
 
-namespace stlw
-{
-class float_generator;
-} // namespace stlw
-
 namespace boomhs
 {
 class Camera;
+class RNG;
 
 Result<GameState, std::string>
-init(Engine&, EngineState&, Camera&, stlw::float_generator&);
+init(Engine&, EngineState&, Camera&, RNG&);
 
 struct StaticRenderers;
 void
-game_loop(Engine&, GameState&, StaticRenderers&, stlw::float_generator&, Camera&,
-          window::FrameTime const&);
+game_loop(Engine&, GameState&, StaticRenderers&, RNG&, Camera&, window::FrameTime const&);
 
 struct WaterRenderers
 {
@@ -68,7 +63,7 @@ struct StaticRenderers
   WaterRenderers water;
 
   NO_COPY_OR_MOVE(StaticRenderers);
-  void render(LevelManager&, opengl::RenderState&, stlw::float_generator&, opengl::DrawState&,
+  void render(LevelManager&, opengl::RenderState&, RNG&, opengl::DrawState&,
               window::FrameTime const&, bool);
 };
 

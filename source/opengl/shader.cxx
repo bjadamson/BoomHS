@@ -5,7 +5,7 @@
 #include <gfx/gl_sdl_log.hpp>
 
 #include <stlw/algorithm.hpp>
-#include <stlw/math.hpp>
+#include <boomhs/math.hpp>
 #include <stlw/os.hpp>
 #include <stlw/result.hpp>
 #include <stlw/type_macros.hpp>

@@ -5,7 +5,7 @@
 #include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
-#include <stlw/math.hpp>
+#include <boomhs/math.hpp>
 
 #include <cassert>
 #include <window/timer.hpp>
@@ -68,7 +68,7 @@ SkyboxRenderer::render(RenderState& rstate, DrawState& ds, FrameTime const& ft)
   auto const calculate_blend = [&]() {
     auto const& hour_of_day = static_cast<float>(es.time.hours());
     auto const  frac        = hour_of_day / 24.0f;
-    auto        blend       = 1.0f - std::abs(stlw::math::squared(-frac) + frac);
+    auto        blend       = 1.0f - std::abs(math::squared(-frac) + frac);
     if (blend < 0.0f) {
       blend = -blend;
     }

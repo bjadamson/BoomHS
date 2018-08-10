@@ -15,7 +15,7 @@
 #include <window/timer.hpp>
 
 #include <stlw/log.hpp>
-#include <stlw/random.hpp>
+#include <boomhs/random.hpp>
 
 #include <cassert>
 #include <extlibs/fmt.hpp>

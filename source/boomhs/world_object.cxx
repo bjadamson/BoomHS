@@ -7,7 +7,7 @@
 
 #include <extlibs/fmt.hpp>
 #include <stlw/algorithm.hpp>
-#include <stlw/math.hpp>
+#include <boomhs/math.hpp>
 
 using namespace boomhs;
 
@@ -125,8 +125,8 @@ WorldObject::rotate_to_match_camera_rotation(Camera const& camera)
   wo_fwd           = glm::normalize(wo_fwd);
 
   float const angle =
-      stlw::math::angle_between_vectors(camera_wo_fwd, wo_fwd, glm::zero<glm::vec3>());
-  glm::quat const new_rotation = stlw::math::rotation_between_vectors(camera_wo_fwd, wo_fwd);
+      math::angle_between_vectors(camera_wo_fwd, wo_fwd, glm::zero<glm::vec3>());
+  glm::quat const new_rotation = math::rotation_between_vectors(camera_wo_fwd, wo_fwd);
 
   auto& t    = transform();
   t.rotation = new_rotation * t.rotation;

@@ -12,7 +12,7 @@
 #include <boomhs/lighting.hpp>
 #include <opengl/texture.hpp>
 #include <stlw/os.hpp>
-#include <stlw/random.hpp>
+#include <boomhs/random.hpp>
 
 using namespace boomhs;
 using namespace opengl;
@@ -44,7 +44,7 @@ place_torch(stlw::Logger& logger, TerrainGrid& terrain, EntityRegistry& registry
 
 void
 place_monsters(stlw::Logger& logger, TerrainGrid const& terrain, EntityRegistry& registry,
-               stlw::float_generator& rng)
+               RNG& rng)
 {
   auto const num_monsters = rng.gen_int_range(MIN_MONSTERS_PER_FLOOR, MAX_MONSTERS_PER_FLOOR);
   FORI(i, num_monsters) { NPC::create_random(logger, terrain, registry, rng); }
@@ -95,7 +95,7 @@ place_player(stlw::Logger& logger, TerrainGrid const& terrain,
 
 void
 place_waters(stlw::Logger& logger, ShaderPrograms& sps, EntityRegistry& registry,
-            TextureTable& ttable, stlw::float_generator& rng)
+            TextureTable& ttable, RNG& rng)
 {
   auto& water_sp  = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
 
@@ -141,7 +141,7 @@ namespace boomhs
 
 LevelGeneratedData
 StartAreaGenerator::gen_level(stlw::Logger& logger, EntityRegistry& registry,
-                              stlw::float_generator& rng, ShaderPrograms& sps, TextureTable& ttable,
+                              RNG& rng, ShaderPrograms& sps, TextureTable& ttable,
                               MaterialTable const& material_table,
                               Heightmap const& heightmap)
 {

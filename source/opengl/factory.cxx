@@ -2,7 +2,7 @@
 #include <boomhs/screen_size.hpp>
 
 #include <stlw/algorithm.hpp>
-#include <stlw/math.hpp>
+#include <boomhs/math.hpp>
 #include <stlw/type_macros.hpp>
 #include <array>
 #include <iostream>
@@ -196,7 +196,7 @@ namespace opengl::factories
 CubeVertices
 cube_vertices(glm::vec3 const& min, glm::vec3 const& max)
 {
-  auto const dimensions = stlw::math::calculate_cube_dimensions(min, max);
+  auto const dimensions = math::calculate_cube_dimensions(min, max);
   auto const& width     = dimensions.x;
   auto const& height    = dimensions.y;
 

@@ -16,7 +16,7 @@
 #include <opengl/shapes.hpp>
 
 #include <stlw/log.hpp>
-#include <stlw/random.hpp>
+#include <boomhs/random.hpp>
 #include <window/timer.hpp>
 
 using namespace boomhs;
@@ -203,7 +203,7 @@ template <typename DrawCommonFN,
           typename DrawPointlightFN,
           typename... Common>
 void
-render_common_3d_entities(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft,
+render_common_3d_entities(RenderState& rstate, RNG& rng, FrameTime const& ft,
                        DrawCommonFN const&  draw_common_fn,
                        DrawTorchFN const& draw_torch_fn,
                        DrawDefaultEntityFN const& draw_default_entity_fn,
@@ -248,7 +248,7 @@ namespace opengl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EntityRenderer
 void
-EntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+EntityRenderer::render2d_billboard(RenderState& rstate, RNG& rng, FrameTime const& ft)
 {
   auto& fstate    = rstate.fs;
   auto& es        = fstate.es;
@@ -274,12 +274,12 @@ EntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generator& r
 }
 
 void
-EntityRenderer::render2d_ui(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+EntityRenderer::render2d_ui(RenderState& rstate, RNG& rng, FrameTime const& ft)
 {
 }
 
 void
-EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
 {
   auto&       fstate    = rstate.fs;
   auto const& es        = fstate.es;
@@ -410,7 +410,7 @@ EntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameT
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // SilhouetteEntityRenderer
 void
-SilhouetteEntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+SilhouetteEntityRenderer::render2d_billboard(RenderState& rstate, RNG& rng, FrameTime const& ft)
 {
   auto&       fstate = rstate.fs;
   auto const& es     = fstate.es;
@@ -441,12 +441,12 @@ SilhouetteEntityRenderer::render2d_billboard(RenderState& rstate, stlw::float_ge
 }
 
 void
-SilhouetteEntityRenderer::render2d_ui(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+SilhouetteEntityRenderer::render2d_ui(RenderState& rstate, RNG& rng, FrameTime const& ft)
 {
 }
 
 void
-SilhouetteEntityRenderer::render3d(RenderState& rstate, stlw::float_generator& rng, FrameTime const& ft)
+SilhouetteEntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
 {
   auto&       fstate = rstate.fs;
   auto const& es     = fstate.es;

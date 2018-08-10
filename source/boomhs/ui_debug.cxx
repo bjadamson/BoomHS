@@ -16,7 +16,7 @@
 #include <opengl/renderer.hpp>
 #include <opengl/skybox_renderer.hpp>
 
-#include <stlw/math.hpp>
+#include <boomhs/math.hpp>
 
 #include <algorithm>
 #include <optional>

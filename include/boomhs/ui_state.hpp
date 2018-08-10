@@ -2,7 +2,7 @@
 #include <boomhs/terrain.hpp>
 #include <boomhs/ui_ingame.hpp>
 
-#include <stlw/math.hpp>
+#include <boomhs/math.hpp>
 #include <stlw/type_macros.hpp>
 
 #include <array>

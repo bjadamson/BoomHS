@@ -44,11 +44,10 @@ ray_obb_intersection(
     float&);          // Output : distance between ray_origin and the intersection with the OBB)
 
 bool
-ray_obb_intersection(
-  glm::vec3 const&, // Ray origin
-  glm::vec3 const&, // Ray direction
-  AABoundingBox,    // Bounding Box of the entity we are testing against.
-  Transform,        // Transform
-  float&);          // Output: distance
+ray_obb_intersection(glm::vec3 const&, // Ray origin
+                     glm::vec3 const&, // Ray direction
+                     AABoundingBox,    // Bounding Box of the entity we are testing against.
+                     Transform,        // Transform
+                     float&);          // Output: distance
 
 } // namespace boomhs::collision

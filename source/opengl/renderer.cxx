@@ -22,8 +22,8 @@
 #include <window/timer.hpp>
 
 #include <stlw/log.hpp>
-#include <stlw/math.hpp>
-#include <stlw/random.hpp>
+#include <boomhs/math.hpp>
+#include <boomhs/random.hpp>
 
 using namespace boomhs;
 using namespace opengl;

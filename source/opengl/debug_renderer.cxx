@@ -6,7 +6,7 @@
 #include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
 
-#include <stlw/random.hpp>
+#include <boomhs/random.hpp>
 
 #include <window/timer.hpp>
 #include <extlibs/glm.hpp>
@@ -21,7 +21,7 @@ namespace opengl
 // DebugRenderer
 void
 DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm,
-                                   stlw::float_generator& rng, FrameTime const& ft)
+                                   RNG& rng, FrameTime const& ft)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -59,7 +59,7 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm,
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BlackSceneRenderer
 void
-BlackSceneRenderer::render_scene(RenderState&, LevelManager&, stlw::float_generator&,
+BlackSceneRenderer::render_scene(RenderState&, LevelManager&, RNG&,
                FrameTime const&)
 {
 }

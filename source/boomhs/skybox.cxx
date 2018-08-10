@@ -4,7 +4,7 @@
 #include <opengl/constants.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
-#include <stlw/math.hpp>
+#include <boomhs/math.hpp>
 
 #include <cassert>
 #include <window/timer.hpp>

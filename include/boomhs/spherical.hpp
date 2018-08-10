@@ -1,6 +1,6 @@
 #pragma once
+#include <boomhs/math.hpp>
 #include <ostream>
-#include <stlw/math.hpp>
 #include <string>
 
 namespace boomhs

@@ -33,7 +33,7 @@ calculate_ratio(float const v, size_t const num_vertexes, float const length)
 ObjVertices
 create_normal_buffer(size_t const num_vertexes)
 {
-  size_t const num_vertices = NORMAL_NUM_COMPONENTS * stlw::math::squared(num_vertexes);
+  size_t const num_vertices = NORMAL_NUM_COMPONENTS * math::squared(num_vertexes);
 
   ObjVertices normals;
   normals.resize(num_vertices);

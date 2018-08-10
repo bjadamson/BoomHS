@@ -7,12 +7,8 @@
 namespace boomhs
 {
 class LevelManager;
+class RNG;
 } // namespace boomhs
-
-namespace stlw
-{
-class float_generator;
-} // namespace stlw
 
 namespace window
 {
@@ -29,8 +25,7 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(DebugRenderer);
   DebugRenderer() = default;
 
-  void render_scene(RenderState&, boomhs::LevelManager&, stlw::float_generator&,
-                    window::FrameTime const&);
+  void render_scene(RenderState&, boomhs::LevelManager&, boomhs::RNG&, window::FrameTime const&);
 };
 
 class BlackSceneRenderer
@@ -39,8 +34,7 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(BlackSceneRenderer);
   BlackSceneRenderer() = default;
 
-  void render_scene(RenderState&, boomhs::LevelManager&, stlw::float_generator&,
-                    window::FrameTime const&);
+  void render_scene(RenderState&, boomhs::LevelManager&, boomhs::RNG&, window::FrameTime const&);
 };
 
 } // namespace opengl

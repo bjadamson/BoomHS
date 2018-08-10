@@ -27,10 +27,10 @@ class ScreenDimensions
 public:
   constexpr ScreenDimensions(PixelT const left, PixelT const top, PixelT const right,
                              PixelT const bottom)
-    : left_(left)
-    , top_(top)
-    , right_(right)
-    , bottom_(bottom)
+      : left_(left)
+      , top_(top)
+      , right_(right)
+      , bottom_(bottom)
   {
   }
 

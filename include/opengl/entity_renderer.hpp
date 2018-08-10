@@ -1,10 +1,10 @@
 #pragma once
 #include <stlw/type_macros.hpp>
 
-namespace stlw
+namespace boomhs
 {
-class float_generator;
-} // namespace stlw
+class RNG;
+} // namespace boomhs
 
 namespace window
 {
@@ -22,9 +22,9 @@ public:
   NO_MOVE(EntityRenderer);
   NO_COPY(EntityRenderer);
 
-  void render2d_billboard(RenderState&, stlw::float_generator&, window::FrameTime const&);
-  void render2d_ui(RenderState&, stlw::float_generator&, window::FrameTime const&);
-  void render3d(RenderState&, stlw::float_generator&, window::FrameTime const&);
+  void render2d_billboard(RenderState&, boomhs::RNG&, window::FrameTime const&);
+  void render2d_ui(RenderState&, boomhs::RNG&, window::FrameTime const&);
+  void render3d(RenderState&, boomhs::RNG&, window::FrameTime const&);
 };
 
 class SilhouetteEntityRenderer
@@ -33,9 +33,9 @@ public:
   SilhouetteEntityRenderer() = default;
   MOVE_CONSTRUCTIBLE_ONLY(SilhouetteEntityRenderer);
 
-  void render2d_billboard(RenderState&, stlw::float_generator&, window::FrameTime const&);
-  void render2d_ui(RenderState&, stlw::float_generator&, window::FrameTime const&);
-  void render3d(RenderState&, stlw::float_generator&, window::FrameTime const&);
+  void render2d_billboard(RenderState&, boomhs::RNG&, window::FrameTime const&);
+  void render2d_ui(RenderState&, boomhs::RNG&, window::FrameTime const&);
+  void render3d(RenderState&, boomhs::RNG&, window::FrameTime const&);
 };
 
 } // namespace opengl

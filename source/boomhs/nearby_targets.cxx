@@ -1,5 +1,5 @@
 #include <boomhs/nearby_targets.hpp>
-#include <stlw/math.hpp>
+#include <boomhs/math.hpp>
 #include <window/timer.hpp>
 
 #include <iostream>

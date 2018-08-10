@@ -15,3 +15,59 @@
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtx/vector_angle.hpp>
 #include <glm/gtx/vector_query.hpp>
+
+#include <ostream>
+
+namespace glm
+{
+
+inline std::ostream&
+operator<<(std::ostream& stream, glm::vec2 const& vec)
+{
+  stream << to_string(vec);
+  return stream;
+}
+
+inline std::ostream&
+operator<<(std::ostream& stream, glm::vec3 const& vec)
+{
+  stream << to_string(vec);
+  return stream;
+}
+
+inline std::ostream&
+operator<<(std::ostream& stream, glm::vec4 const& vec)
+{
+  stream << to_string(vec);
+  return stream;
+}
+
+inline std::ostream&
+operator<<(std::ostream& stream, glm::mat2 const& mat)
+{
+  stream << to_string(mat);
+  return stream;
+}
+
+inline std::ostream&
+operator<<(std::ostream& stream, glm::mat3 const& mat)
+{
+  stream << to_string(mat);
+  return stream;
+}
+
+inline std::ostream&
+operator<<(std::ostream& stream, glm::mat4 const& mat)
+{
+  stream << to_string(mat);
+  return stream;
+}
+
+inline std::ostream&
+operator<<(std::ostream& stream, glm::quat const& quat)
+{
+  stream << to_string(quat);
+  return stream;
+}
+
+} // namespace glm

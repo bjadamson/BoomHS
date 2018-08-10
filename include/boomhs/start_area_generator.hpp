@@ -15,8 +15,8 @@ class Heightmap;
 struct StartAreaGenerator
 {
   static LevelGeneratedData
-  gen_level(stlw::Logger&, EntityRegistry&, stlw::float_generator&, opengl::ShaderPrograms&,
-            opengl::TextureTable&, MaterialTable const&, Heightmap const&);
+  gen_level(stlw::Logger&, EntityRegistry&, RNG&, opengl::ShaderPrograms&, opengl::TextureTable&,
+            MaterialTable const&, Heightmap const&);
 
   StartAreaGenerator() = delete;
 };

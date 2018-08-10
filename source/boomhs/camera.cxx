@@ -5,7 +5,7 @@
 #include <boomhs/world_object.hpp>
 
 #include <opengl/constants.hpp>
-#include <stlw/math.hpp>
+#include <boomhs/math.hpp>
 #include <extlibs/imgui.hpp>
 
 using namespace opengl;

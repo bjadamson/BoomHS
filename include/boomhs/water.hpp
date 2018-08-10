@@ -1,8 +1,8 @@
 #pragma once
-#include <boomhs/screen_size.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/obj.hpp>
+#include <boomhs/screen_size.hpp>
 
 #include <stlw/log.hpp>
 #include <stlw/type_macros.hpp>

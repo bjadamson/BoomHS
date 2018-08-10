@@ -51,12 +51,12 @@ struct WindowState
 
 struct EngineState
 {
-  stlw::Logger&    logger;
-  ALCdevice&       al_device;
-  ImGuiIO&         imgui;
+  stlw::Logger&          logger;
+  ALCdevice&             al_device;
+  ImGuiIO&               imgui;
   ScreenDimensions const dimensions;
-  MainMenuState    main_menu;
-  Time             time;
+  MainMenuState          main_menu;
+  Time                   time;
 
   bool                 quit                  = false;
   bool                 game_running          = false;
@@ -128,7 +128,7 @@ struct Engine
   NO_COPY_OR_MOVE(Engine);
 
   ScreenDimensions dimensions() const;
-  ScreenSize screen_size() const;
+  ScreenSize       screen_size() const;
 };
 
 } // namespace boomhs

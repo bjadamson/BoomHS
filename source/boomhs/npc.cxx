@@ -4,7 +4,7 @@
 #include <boomhs/npc.hpp>
 #include <boomhs/terrain.hpp>
 
-#include <stlw/random.hpp>
+#include <boomhs/random.hpp>
 
 using namespace boomhs;
 
@@ -13,7 +13,7 @@ namespace
 
 glm::vec3
 generate_npc_position(stlw::Logger& logger, TerrainGrid const& terrain_grid,
-                      EntityRegistry& registry, stlw::float_generator& rng)
+                      EntityRegistry& registry, RNG& rng)
 {
   auto const& dimensions = terrain_grid.max_worldpositions();
   auto const width      = dimensions.x;
@@ -105,7 +105,7 @@ NPC::create(EntityRegistry& registry, char const* name, int const level, glm::ve
 
 void
 NPC::create_random(stlw::Logger& logger, TerrainGrid const& terrain_grid, EntityRegistry& registry,
-    stlw::float_generator& rng)
+    RNG& rng)
 {
   auto const make_monster = [&](char const* name) {
     auto const pos = generate_npc_position(logger, terrain_grid, registry, rng);

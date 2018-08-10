@@ -8,7 +8,7 @@
 #include <opengl/renderer.hpp>
 
 #include <stlw/log.hpp>
-#include <stlw/random.hpp>
+#include <boomhs/random.hpp>
 
 #include <window/controller.hpp>
 #include <window/sdl_window.hpp>
@@ -48,7 +48,7 @@ loop_events(GameState& state, SDL_Event& event, Camera& camera, FrameTime const&
 }
 
 void
-loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camera,
+loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
      FrameTime const& ft)
 {
   auto& es     = state.engine_state;
@@ -76,7 +76,7 @@ loop(Engine& engine, GameState& state, stlw::float_generator& rng, Camera& camer
 }
 
 void
-timed_game_loop(Engine& engine, GameState& state, Camera& camera, stlw::float_generator& rng)
+timed_game_loop(Engine& engine, GameState& state, Camera& camera, RNG& rng)
 {
   window::Clock         clock;
   window::FrameCounter  counter;
@@ -137,7 +137,7 @@ start(stlw::Logger& logger, Engine& engine)
   EngineState es{logger, *al_device, io, dimensions};
   auto        camera = Camera::make_defaultcamera(dimensions);
 
-  stlw::float_generator rng;
+  RNG rng;
   auto gs = TRY_MOVEOUT(boomhs::init(engine, es, camera, rng));
 
   // Start game in a timed loop

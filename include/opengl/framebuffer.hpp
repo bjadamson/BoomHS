@@ -14,10 +14,10 @@ namespace opengl
 
 struct FBInfo
 {
-  DebugBoundCheck          debug_check;
-  GLuint                   id;
+  DebugBoundCheck                debug_check;
+  GLuint                         id;
   boomhs::ScreenDimensions const dimensions;
-  boomhs::ScreenSize const screen_size;
+  boomhs::ScreenSize const       screen_size;
 
   FBInfo(boomhs::ScreenDimensions const&, boomhs::ScreenSize const&);
   NO_COPY(FBInfo);

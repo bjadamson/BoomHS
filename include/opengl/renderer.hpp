@@ -29,11 +29,6 @@ struct Transform;
 struct ZoneState;
 } // namespace boomhs
 
-namespace stlw
-{
-class float_generator;
-} // namespace stlw
-
 namespace opengl
 {
 class DrawInfo;

@@ -14,7 +14,7 @@
 #include <window/timer.hpp>
 
 #include <stlw/log.hpp>
-#include <stlw/math.hpp>
+#include <boomhs/math.hpp>
 
 #include <extlibs/imgui.hpp>
 #include <iostream>

@@ -1,8 +1,8 @@
 #pragma once
 #include <boomhs/camera.hpp>
-#include <boomhs/screen_size.hpp>
 #include <boomhs/frame.hpp>
 #include <boomhs/level_manager.hpp>
+#include <boomhs/screen_size.hpp>
 #include <boomhs/state.hpp>
 
 #include <opengl/bind.hpp>
@@ -21,10 +21,10 @@ namespace window
 class FrameTime;
 } // namespace window
 
-namespace stlw
+namespace boomhs
 {
-class float_generator;
-} // namespace stlw
+class RNG;
+} // namespace boomhs
 
 namespace opengl
 {
@@ -127,7 +127,7 @@ class AdvancedWaterRenderer
   template <typename TerrainRenderer, typename EntityRenderer>
   void advanced_common(RenderState& rstate, boomhs::EngineState& es, boomhs::LevelManager& lm,
                        DrawState& ds, EntityRenderer& er, SkyboxRenderer& sr, TerrainRenderer& tr,
-                       stlw::float_generator& rng, window::FrameTime const& ft)
+                       boomhs::RNG& rng, window::FrameTime const& ft)
   {
     auto&       zs       = lm.active();
     auto const& ldata    = zs.level_data;
@@ -152,10 +152,9 @@ public:
                                  TextureInfo&, TextureInfo&, TextureInfo&);
 
   template <typename TerrainRenderer, typename EntityRenderer>
-  void
-  render_reflection(boomhs::EngineState& es, DrawState& ds, boomhs::LevelManager& lm,
-                    boomhs::Camera& camera, EntityRenderer& er, SkyboxRenderer& sr,
-                    TerrainRenderer& tr, stlw::float_generator& rng, window::FrameTime const& ft)
+  void render_reflection(boomhs::EngineState& es, DrawState& ds, boomhs::LevelManager& lm,
+                         boomhs::Camera& camera, EntityRenderer& er, SkyboxRenderer& sr,
+                         TerrainRenderer& tr, boomhs::RNG& rng, window::FrameTime const& ft)
   {
     auto&       logger    = es.logger;
     auto&       zs        = lm.active();
@@ -181,10 +180,9 @@ public:
   }
 
   template <typename TerrainRenderer, typename EntityRenderer>
-  void
-  render_refraction(boomhs::EngineState& es, DrawState& ds, boomhs::LevelManager& lm,
-                    boomhs::Camera& camera, EntityRenderer& er, SkyboxRenderer& sr,
-                    TerrainRenderer& tr, stlw::float_generator& rng, window::FrameTime const& ft)
+  void render_refraction(boomhs::EngineState& es, DrawState& ds, boomhs::LevelManager& lm,
+                         boomhs::Camera& camera, EntityRenderer& er, SkyboxRenderer& sr,
+                         TerrainRenderer& tr, boomhs::RNG& rng, window::FrameTime const& ft)
   {
     auto&       zs        = lm.active();
     auto&       logger    = es.logger;

@@ -1,14 +1,14 @@
 #pragma once
 #include <random>
 
-#include <stlw/math.hpp>
+#include <boomhs/math.hpp>
 #include <stlw/type_macros.hpp>
 
-namespace stlw
+namespace boomhs
 {
 
 // TODO: This generates more than floats...
-class float_generator
+class RNG
 {
   uint64_t const seed_;
   std::mt19937   generator_;
@@ -24,8 +24,8 @@ class float_generator
   }
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(float_generator);
-  explicit float_generator()
+  MOVE_CONSTRUCTIBLE_ONLY(RNG);
+  explicit RNG()
       : seed_(make_seed())
       , generator_(this->seed_)
   {
@@ -37,7 +37,7 @@ public:
     auto constexpr TO   = std::make_pair(-1.0f, 1.0f);
     std::uniform_int_distribution<int> distribution(FROM.first, FROM.second);
     int const                          value = distribution(this->generator_);
-    return stlw::math::normalize(value, FROM, TO);
+    return boomhs::math::normalize(value, FROM, TO);
   }
 
   float gen_0to1()
@@ -46,7 +46,7 @@ public:
     auto constexpr TO   = std::make_pair(0.0f, 1.0f);
     std::uniform_int_distribution<int> distribution(FROM.first, FROM.second);
     int const                          value = distribution(this->generator_);
-    return stlw::math::normalize(value, FROM, TO);
+    return boomhs::math::normalize(value, FROM, TO);
   }
 
   auto gen_bool()
@@ -108,4 +108,4 @@ public:
   }
 };
 
-} // namespace stlw
+} // namespace boomhs
