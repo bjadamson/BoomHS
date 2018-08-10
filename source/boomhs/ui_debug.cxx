@@ -39,7 +39,7 @@ collect_name_eid_pairs(EntityRegistry& registry, bool const reverse = true)
 {
   std::vector<pair_t> pairs;
   for (auto const eid : registry.view<T...>()) {
-    std::string name = Name::DEFAULT;
+    std::string name = "NO NAME";
     if (registry.has<Name>(eid)) {
       name = registry.get<Name>(eid).value;
     }

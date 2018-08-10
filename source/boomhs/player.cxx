@@ -153,6 +153,9 @@ Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
 
   auto& visible = registry.get<IsVisible>(eid);
   visible.value = false;
+
+  // Add ourselves to this list of the item's previous owners.
+  item.add_owner(this->name);
 }
 
 void

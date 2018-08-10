@@ -99,6 +99,40 @@
     return CONTAINER[i];                                                                           \
   }
 
+#define COMMON_WRAPPING_CONTAINER_FNS(CONTAINER)                                                   \
+  INDEX_OPERATOR_FNS(CONTAINER)                                                                    \
+  BEGIN_END_FORWARD_FNS(CONTAINER)                                                                 \
+                                                                                                   \
+  auto& back()                                                                                     \
+  {                                                                                                \
+    assert(!CONTAINER.empty());                                                                    \
+    return CONTAINER.back();                                                                       \
+  }                                                                                                \
+  auto const& back() const                                                                         \
+  {                                                                                                \
+    assert(!CONTAINER.empty());                                                                    \
+    return CONTAINER.back();                                                                       \
+  }                                                                                                \
+  auto& front()                                                                                    \
+  {                                                                                                \
+    assert(!CONTAINER.empty());                                                                    \
+    return CONTAINER.front();                                                                      \
+  }                                                                                                \
+  auto const& front() const                                                                        \
+  {                                                                                                \
+    assert(!CONTAINER.empty());                                                                    \
+    return CONTAINER.front();                                                                      \
+  }                                                                                                \
+  auto empty() const                                                                               \
+  {                                                                                                \
+    return CONTAINER.empty();                                                                      \
+  }                                                                                                \
+                                                                                                   \
+  auto size() const                                                                                \
+  {                                                                                                \
+    return CONTAINER.size();                                                                       \
+  }
+
 // TODO: document
 // BEGIN Function-defining macros
 #define DEFINE_WRAPPER_FUNCTION(FN_NAME, FUNCTION_TO_WRAP)                                         \
