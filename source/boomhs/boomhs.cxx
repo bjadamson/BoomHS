@@ -102,19 +102,13 @@ void
 set_heights_ontop_terrain(common::Logger& logger, TerrainGrid& terrain,
                                EntityRegistry& registry, EntityID const eid)
 {
-  auto& transform         = registry.get<Transform>(eid);
-  auto const& bbox        = registry.get<AABoundingBox>(eid);
-
-  // calculate where the min/max values are from the center of the object after scaling.
-  auto const min = bbox.scaled_min(transform);
-  auto const max = bbox.scaled_max(transform);
-  auto const mid = max - min;
-
-  auto &tr = transform.translation;
+  auto& transform    = registry.get<Transform>(eid);
+  auto const& bbox   = registry.get<AABoundingBox>(eid);
+  auto &tr           = transform.translation;
   float const height = terrain.get_height(logger, tr.x, tr.z);
 
   // update original transform
-  tr.y = height;// + mid.y;
+  tr.y = bbox.half_widths().y + height;
 }
 
 void
@@ -349,9 +343,9 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
 
 
   //auto& terrain = ldata.terrain;
-  for (auto const eid : registry.view<Transform, MeshRenderable>()) {
+  //for (auto const eid : registry.view<Transform, MeshRenderable>()) {
     //set_heights_ontop_terrain(logger, terrain, registry, eid);
-  }
+  //}
 
   bool const previously_alive = is_target_selected_and_alive(registry, nbt);
   player.update(es, zs, ft);
@@ -553,7 +547,7 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
 
     auto& terrain = ldata.terrain;
     for (auto const eid : registry.view<Transform, AABoundingBox, MeshRenderable>()) {
-      set_heights_ontop_terrain(logger, terrain, registry, eid);
+      //set_heights_ontop_terrain(logger, terrain, registry, eid);
     }
   }
 

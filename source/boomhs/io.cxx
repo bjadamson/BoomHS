@@ -87,33 +87,25 @@ process_mousemotion(GameState& state, Player& player, SDL_MouseMotionEvent const
   auto& ms     = es.mouse_states.current;
   auto& ui     = es.ui_state.debug;
 
-  {
-    ms.relative.x = motion.xrel;
-    ms.relative.y = motion.yrel;
-
-    ms.coords.x = motion.x;
-    ms.coords.y = motion.y;
-  }
-
   auto& wo = player.world_object;
   if (camera.mode() == CameraMode::FPS) {
     auto const& sens = ms.sensitivity;
-    float const dx   = sens.x * ms.relative.x;
-    float const dy   = sens.y * ms.relative.y;
+    float const dx   = sens.x * motion.xrel;
+    float const dy   = sens.y * motion.yrel;
     camera.rotate(dx, 0.0f);
     auto& movement = player.movement;
     wo.rotate_to_match_camera_rotation(camera);
   }
   else if (camera.mode() == CameraMode::ThirdPerson) {
-    if (ms.left_pressed) {
+    if (ms.left_pressed()) {
       auto const& sens = ms.sensitivity;
-      float const dx   = sens.x * ms.relative.x;
-      float const dy   = sens.y * ms.relative.y;
+      float const dx   = sens.x * motion.xrel;
+      float const dy   = sens.y * motion.yrel;
       camera.rotate(dx, dy);
     }
-    if (ms.right_pressed) {
+    if (ms.right_pressed()) {
       float const speed = camera.rotation_speed;
-      float const angle = ms.relative.x > 0 ? speed : -speed;
+      float const angle = motion.xrel > 0 ? speed : -speed;
 
       auto const x_dt     = angle * ft.delta_millis();
       auto constexpr y_dt = 0.0f;
@@ -195,21 +187,16 @@ process_mousebutton_down(GameState& state, Player& player, SDL_MouseButtonEvent 
   auto& zs = state.level_manager.active();
 
   auto const& button = event.button;
-  ms.left_pressed = button == SDL_BUTTON_LEFT;
-  ms.right_pressed = button == SDL_BUTTON_RIGHT;
 
   if (ms.either_pressed()) {
     auto const cstate = CameraFrameState::from_camera(camera);
     FrameState fstate{cstate, es, zs};
-    if (ms.left_pressed) {
+    if (ms.left_pressed()) {
       select_mouse_under_cursor(fstate, MouseButton::LEFT);
     }
-    else if (ms.right_pressed) {
+    else if (ms.right_pressed()) {
       select_mouse_under_cursor(fstate, MouseButton::RIGHT);
     }
-  }
-  else if (button == SDL_BUTTON_RIGHT) {
-    ms.right_pressed = true;
   }
   if (button == SDL_BUTTON_MIDDLE) {
     LOG_INFO("toggling mouse up/down (pitch) lock");
@@ -223,14 +210,6 @@ process_mousebutton_up(GameState& state, Player& player, SDL_MouseButtonEvent co
 {
   auto& es = state.engine_state;
   auto& ms = es.mouse_states.current;
-
-  auto const& button = event.button;
-  if (SDL_BUTTON_LEFT == button) {
-    ms.left_pressed = false;
-  }
-  else if (SDL_BUTTON_RIGHT == button) {
-    ms.right_pressed = false;
-  }
 }
 
 void

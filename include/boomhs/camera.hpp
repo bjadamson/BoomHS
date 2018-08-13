@@ -10,7 +10,6 @@
 namespace boomhs
 {
 class ScreenDimensions;
-struct MouseState;
 struct WorldObject;
 
 struct PerspectiveViewport

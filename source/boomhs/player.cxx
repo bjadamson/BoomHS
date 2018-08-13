@@ -116,7 +116,7 @@ update_position(EngineState& es, ZoneState& zs, FrameTime const& ft)
   auto move_dir = movement.forward
     + movement.backward
     + movement.left
-    + movement.right;
+    + movement.right
     + movement.mouse_forward;
 
   if (move_dir != glm::vec3{0}) {
@@ -128,7 +128,7 @@ update_position(EngineState& es, ZoneState& zs, FrameTime const& ft)
   auto& player_pos = player.transform().translation;
   float const player_height = terrain.get_height(logger, player_pos.x, player_pos.z);
   auto const& player_bbox   = player.bounding_box();
-  player_pos.y              = player_height + (player_bbox.dimensions().y / 2.0f);
+  player_pos.y              = player_height + player_bbox.half_widths().y;
 }
 
 } // namespace

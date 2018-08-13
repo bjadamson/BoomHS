@@ -18,21 +18,28 @@ struct ImGuiIO;
 namespace boomhs
 {
 
-struct MouseState
+class MouseState
 {
-  bool left_pressed  = false;
-  bool right_pressed = false;
+  auto mask() const
+  {
+    return SDL_GetMouseState(nullptr, nullptr);
+  }
 
+public:
   MouseSensitivity sensitivity{0.002f, 0.002f};
 
-  // "coords" is meant to updated with the *current* screen coordinates of the mouse.
-  // "pcoords" is meant to lag behind one frame from *current*, important for calculating the
-  // relative difference per-frame.
-  ScreenCoordinates coords{0, 0};
-  ScreenCoordinates relative{0, 0};
+  auto coords() const
+  {
+    int x, y;
+    SDL_GetMouseState(&x, &y);
+    return ScreenCoordinates{x, y};
+  }
+  bool left_pressed() const { return mask() & SDL_BUTTON(SDL_BUTTON_LEFT); }
+  bool right_pressed() const { return mask() & SDL_BUTTON(SDL_BUTTON_RIGHT); }
+  bool middle_pressed() const { return mask() & SDL_BUTTON(SDL_BUTTON_MIDDLE); }
 
-  bool both_pressed() const { return left_pressed && right_pressed; }
-  bool either_pressed() const { return left_pressed || right_pressed; }
+  bool both_pressed() const { return left_pressed() && right_pressed(); }
+  bool either_pressed() const { return left_pressed() || right_pressed(); }
 };
 
 struct MouseStates
