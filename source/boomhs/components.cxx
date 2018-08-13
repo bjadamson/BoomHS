@@ -34,12 +34,7 @@ AABoundingBox::dimensions() const
 glm::vec3
 AABoundingBox::center() const
 {
-  auto const check = [](float const a, float const b) { assert(math::float_compare(a, b)); };
   auto const hw = half_widths();
-  check(min.x + hw.x, max.x - hw.x);
-  check(min.y + hw.y, max.y - hw.y);
-  check(min.z + hw.z, max.z - hw.z);
-
   return glm::vec3{
     min.x + hw.x,
     min.y + hw.y,
@@ -51,6 +46,34 @@ glm::vec3
 AABoundingBox::half_widths() const
 {
   return dimensions() / glm::vec3{2.0f};
+}
+
+glm::vec3
+AABoundingBox::scaled_min(Transform const& tr) const
+{
+  auto const s  = tr.scale;
+  auto const c  = center();
+  auto const hw = half_widths();
+
+  auto r = this->min;
+  r.x = c.x - (s.x * hw.x);
+  r.y = c.y - (s.y * hw.y);
+  r.z = c.z - (s.z * hw.z);
+  return r;
+}
+
+glm::vec3
+AABoundingBox::scaled_max(Transform const& tr) const
+{
+  auto const s  = tr.scale;
+  auto const c  = center();
+  auto const hw = half_widths();
+
+  auto r = this->max;
+  r.x = c.x + (s.x * hw.x);
+  r.y = c.y + (s.y * hw.y);
+  r.z = c.z + (s.z * hw.z);
+  return r;
 }
 
 void

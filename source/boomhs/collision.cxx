@@ -32,14 +32,8 @@ ray_obb_intersection(
   auto const s  = tr.scale;
 
   // calculate where the min/max values are from the center of the object after scaling.
-  auto& min = bbox.min, max = bbox.max;
-  min.x = c.x - (s.x * hw.x);
-  min.y = c.y - (s.y * hw.y);
-  min.z = c.z - (s.z * hw.z);
-
-  max.x = c.x + (s.x * hw.x);
-  max.y = c.y + (s.y * hw.y);
-  max.z = c.z + (s.z * hw.z);
+  auto const min = bbox.scaled_min(tr);
+  auto const max = bbox.scaled_max(tr);
 
   // For the purposes of the ray_obb intersection algorithm, it is expected the transform has no
   // scaling. We've taking the scaling into account by adjusting the bounding box min/max points

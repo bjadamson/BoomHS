@@ -99,6 +99,25 @@ update_playaudio(common::Logger& logger, LevelData& ldata, EntityRegistry& regis
 }
 
 void
+set_heights_ontop_terrain(common::Logger& logger, TerrainGrid& terrain,
+                               EntityRegistry& registry, EntityID const eid)
+{
+  auto& transform         = registry.get<Transform>(eid);
+  auto const& bbox        = registry.get<AABoundingBox>(eid);
+
+  // calculate where the min/max values are from the center of the object after scaling.
+  auto const min = bbox.scaled_min(transform);
+  auto const max = bbox.scaled_max(transform);
+  auto const mid = max - min;
+
+  auto &tr = transform.translation;
+  float const height = terrain.get_height(logger, tr.x, tr.z);
+
+  // update original transform
+  tr.y = height;// + mid.y;
+}
+
+void
 update_npcpositions(common::Logger& logger, EntityRegistry& registry, TerrainGrid& terrain,
                     FrameTime const& ft)
 {
@@ -108,13 +127,7 @@ update_npcpositions(common::Logger& logger, EntityRegistry& registry, TerrainGri
     if (NPC::is_dead(npc_hp)) {
       return;
     }
-
-    auto& transform         = registry.get<Transform>(eid);
-    auto const& bbox        = registry.get<AABoundingBox>(eid);
-
-    auto& tr = transform.translation;
-    float const height = terrain.get_height(logger, tr.x, tr.z);
-    tr.y = height + bbox.half_widths().y;
+    set_heights_ontop_terrain(logger, terrain, registry, eid);
   };
   for (auto const eid : registry.view<NPCData, Transform, AABoundingBox>()) {
     update(eid);
@@ -334,6 +347,12 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
   update_npcpositions(logger, registry, terrain, ft);
   update_nearbytargets(nbt, registry, ft);
 
+
+  //auto& terrain = ldata.terrain;
+  for (auto const eid : registry.view<Transform, MeshRenderable>()) {
+    //set_heights_ontop_terrain(logger, terrain, registry, eid);
+  }
+
   bool const previously_alive = is_target_selected_and_alive(registry, nbt);
   player.update(es, zs, ft);
 
@@ -531,6 +550,11 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
 
     auto copy_result = TRY_MOVEOUT(copy_assets_gpu(logger, sps, registry, objstore, draw_handles));
     add_boundingboxes_to_entities(es, zs);
+
+    auto& terrain = ldata.terrain;
+    for (auto const eid : registry.view<Transform, AABoundingBox, MeshRenderable>()) {
+      set_heights_ontop_terrain(logger, terrain, registry, eid);
+    }
   }
 
   GameState state{es, LevelManager{MOVE(zstates)}};

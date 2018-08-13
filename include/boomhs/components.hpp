@@ -56,6 +56,9 @@ struct AABoundingBox
   glm::vec3 center() const;
   glm::vec3 half_widths() const;
 
+  glm::vec3 scaled_min(Transform const&) const;
+  glm::vec3 scaled_max(Transform const&) const;
+
   static void add_to_entity(EntityID, EntityRegistry&, glm::vec3 const&, glm::vec3 const&);
 };
 
