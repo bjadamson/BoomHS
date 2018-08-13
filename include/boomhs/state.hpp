@@ -51,7 +51,7 @@ struct WindowState
 
 struct EngineState
 {
-  common::Logger&          logger;
+  common::Logger&        logger;
   ALCdevice&             al_device;
   ImGuiIO&               imgui;
   ScreenDimensions const dimensions;
@@ -103,10 +103,7 @@ struct GameState
   EngineState& engine_state;
   LevelManager level_manager;
 
-  NO_COPY(GameState);
-  NO_MOVE_ASSIGN(GameState);
-  GameState(GameState&&);
-  // MOVE_CONSTRUCTIBLE_ONLY(GameState);
+  MOVE_CONSTRUCTIBLE_ONLY(GameState);
 
   explicit GameState(EngineState&, LevelManager&&);
 };

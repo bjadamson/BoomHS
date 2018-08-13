@@ -94,7 +94,7 @@ struct sdl_library
   sdl_library() = delete;
 
   static Result<common::none_t, std::string> init(common::Logger&);
-  static void                              destroy();
+  static void                                destroy();
 
   static Result<SDLWindow, std::string> make_window(common::Logger&, bool, int, int);
 };

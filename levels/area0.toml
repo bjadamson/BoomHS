@@ -120,16 +120,25 @@ position = [6.0, 1.0, 6.0]
 shader = "3dtexture"
 geometry = "mesh:house"
 texture = "TextureAtlas"
-scale = [1.0, 1.0, 1.0]
+scale = [11.0, 11.0, 11.0]
 random_junk_from_file = true
 
 [[entity]]
-name = "TreeLowpoly"
+name = "Tree0"
+material = "tree"
+position = [0.3, 0.0, 1.0]
+shader = "3d_pos_normal_color"
+geometry = "mesh:tree_lowpoly"
+scale = [15.0, 19.0, 8.0]
+random_junk_from_file = true
+
+[[entity]]
+name = "Tree1"
 material = "tree"
 position = [10.0, 0.0, 10.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree_lowpoly"
-scale = [1.0, 1.0, 1.0]
+scale = [20.0, 20.0, 12.0]
 random_junk_from_file = true
 
 [[entity]]
@@ -138,5 +147,14 @@ material = "tree"
 position = [15.0, 1.0, 18.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree2"
-scale = [1.0, 1.0, 1.0]
+scale = [30.0, 30.0, 30.0]
+random_junk_from_file = true
+
+[[entity]]
+name = "Tree2"
+material = "tree"
+position = [40.0, 40.0, 40.0]
+shader = "3d_pos_normal_color"
+geometry = "mesh:tree2"
+scale = [40.0, 40.0, 40.0]
 random_junk_from_file = true

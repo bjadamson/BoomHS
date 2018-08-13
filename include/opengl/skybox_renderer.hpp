@@ -1,7 +1,7 @@
 #pragma once
-#include <opengl/draw_info.hpp>
 #include <common/log.hpp>
 #include <common/type_macros.hpp>
+#include <opengl/draw_info.hpp>
 
 namespace window
 {

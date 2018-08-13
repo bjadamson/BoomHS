@@ -6,8 +6,8 @@
 #include <boomhs/world_object.hpp>
 #include <extlibs/glm.hpp>
 
-#include <optional>
 #include <common/log.hpp>
+#include <optional>
 #include <string>
 
 namespace opengl

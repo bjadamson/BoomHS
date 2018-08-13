@@ -1,6 +1,6 @@
 #pragma once
-#include <ostream>
 #include <common/type_macros.hpp>
+#include <ostream>
 
 namespace common
 {

@@ -1,7 +1,7 @@
 #pragma once
-#include <extlibs/oktal.hpp>
 #include <common/try.hpp>
 #include <common/type_macros.hpp>
+#include <extlibs/oktal.hpp>
 
 //
 // They each have separate use cases, and build upon the general purpose macros inside

@@ -1,7 +1,7 @@
 #pragma once
 #include <cassert>
-#include <iostream>
 #include <common/type_macros.hpp>
+#include <iostream>
 #include <vector>
 
 namespace common

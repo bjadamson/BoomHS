@@ -4,8 +4,8 @@
 #include <boomhs/terrain.hpp>
 
 #include <boomhs/lighting.hpp>
-#include <opengl/colors.hpp>
 #include <common/log.hpp>
+#include <opengl/colors.hpp>
 
 #include <extlibs/glm.hpp>
 #include <string>

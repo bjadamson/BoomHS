@@ -1,8 +1,8 @@
 #pragma once
 #include <boomhs/camera.hpp>
 
-#include <extlibs/glm.hpp>
 #include <common/type_macros.hpp>
+#include <extlibs/glm.hpp>
 
 namespace boomhs
 {

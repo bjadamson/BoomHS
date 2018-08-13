@@ -1,6 +1,6 @@
 #pragma once
-#include <extlibs/sdl.hpp>
 #include <common/type_macros.hpp>
+#include <extlibs/sdl.hpp>
 
 namespace boomhs
 {

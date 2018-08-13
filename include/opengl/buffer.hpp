@@ -51,8 +51,9 @@ public:
   // Public copy method
   VertexBuffer copy() const;
 
-  void                set_colors(Color const&);
-  static VertexBuffer create_interleaved(common::Logger&, boomhs::ObjData const&, BufferFlags const&);
+  void set_colors(Color const&);
+  static VertexBuffer
+  create_interleaved(common::Logger&, boomhs::ObjData const&, BufferFlags const&);
 };
 
 } // namespace opengl

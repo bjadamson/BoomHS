@@ -1,11 +1,11 @@
 #pragma once
+#include <common/result.hpp>
+#include <common/tuple.hpp>
+#include <common/type_macros.hpp>
 #include <experimental/filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <common/result.hpp>
-#include <common/tuple.hpp>
-#include <common/type_macros.hpp>
 #include <string>
 
 namespace common

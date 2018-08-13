@@ -1,8 +1,8 @@
 #pragma once
 #include <boomhs/obj.hpp>
+#include <common/log.hpp>
 #include <opengl/buffer.hpp>
 #include <opengl/vertex_attribute.hpp>
-#include <common/log.hpp>
 
 #include <ostream>
 #include <string>

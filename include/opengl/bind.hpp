@@ -1,8 +1,8 @@
 #pragma once
-#include <extlibs/fmt.hpp>
 #include <common/auto_resource.hpp>
 #include <common/log.hpp>
 #include <common/type_macros.hpp>
+#include <extlibs/fmt.hpp>
 
 // This file contains the macros and classes that allow the application/game code to bind/unbind
 // opengl resources easily, and help ensure that the minimal number of opengl calls to bind
@@ -170,12 +170,12 @@ global_while(common::Logger& logger, common::AutoResource<R>& ar, FN const& fn, 
 
 #define DEFAULT_WHILEBOUND_MEMBERFN_DECLATION()                                                    \
   template <typename FN, typename... Args>                                                         \
-  void while_bound(common::Logger& logger, FN const& fn, Args&&... args)                             \
+  void while_bound(common::Logger& logger, FN const& fn, Args&&... args)                           \
   {                                                                                                \
     ::opengl::bind::global_while(logger, *this, fn, FORWARD(args));                                \
   }                                                                                                \
   template <typename FN, typename... Args>                                                         \
-  void while_bound(FN const& fn, common::Logger& logger, Args&&... args)                             \
+  void while_bound(FN const& fn, common::Logger& logger, Args&&... args)                           \
   {                                                                                                \
     ::opengl::bind::global_while(logger, *this, fn, FORWARD(args));                                \
   }

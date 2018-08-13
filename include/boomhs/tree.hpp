@@ -1,6 +1,6 @@
 #pragma once
-#include <opengl/draw_info.hpp>
 #include <common/log.hpp>
+#include <opengl/draw_info.hpp>
 
 #include <array>
 #include <extlibs/glm.hpp>

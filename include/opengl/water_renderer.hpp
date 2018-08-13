@@ -35,7 +35,7 @@ static glm::vec4 constexpr BENEATH_VECTOR = {0, 1, 0, -CUTOFF_HEIGHT};
 
 class SilhouetteWaterRenderer
 {
-  common::Logger&          logger_;
+  common::Logger&        logger_;
   opengl::ShaderProgram& sp_;
 
 public:
@@ -48,7 +48,7 @@ public:
 
 class BasicWaterRenderer
 {
-  common::Logger&          logger_;
+  common::Logger&        logger_;
   opengl::ShaderProgram& sp_;
   opengl::TextureInfo&   diffuse_;
   opengl::TextureInfo&   normal_;
@@ -64,7 +64,7 @@ public:
 
 class MediumWaterRenderer
 {
-  common::Logger&          logger_;
+  common::Logger&        logger_;
   opengl::ShaderProgram& sp_;
   opengl::TextureInfo&   diffuse_;
   opengl::TextureInfo&   normal_;

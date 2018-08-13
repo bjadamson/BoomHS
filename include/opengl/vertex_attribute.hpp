@@ -1,6 +1,6 @@
 #pragma once
-#include <extlibs/glew.hpp>
 #include <common/log.hpp>
+#include <extlibs/glew.hpp>
 #include <string>
 
 namespace opengl

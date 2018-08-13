@@ -1,7 +1,7 @@
 #pragma once
 #include <boomhs/obj.hpp>
-#include <extlibs/glm.hpp>
 #include <common/log.hpp>
+#include <extlibs/glm.hpp>
 
 namespace boomhs
 {

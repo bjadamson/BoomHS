@@ -1,9 +1,9 @@
 #pragma once
+#include <common/log.hpp>
+#include <common/result.hpp>
 #include <extlibs/sdl.hpp>
 #include <memory>
 #include <ostream>
-#include <common/log.hpp>
-#include <common/result.hpp>
 
 namespace window
 {

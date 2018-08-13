@@ -1,10 +1,10 @@
 #pragma once
 #include <boomhs/screen_size.hpp>
-#include <opengl/bind.hpp>
 #include <common/auto_resource.hpp>
 #include <common/log.hpp>
 #include <common/result.hpp>
 #include <common/type_macros.hpp>
+#include <opengl/bind.hpp>
 
 #include <extlibs/glew.hpp>
 #include <string>

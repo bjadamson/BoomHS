@@ -1,8 +1,8 @@
 #pragma once
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
-#include <opengl/colors.hpp>
 #include <common/type_macros.hpp>
+#include <opengl/colors.hpp>
 
 #include <extlibs/glm.hpp>
 #include <vector>

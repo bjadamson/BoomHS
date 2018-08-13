@@ -1,6 +1,6 @@
 #pragma once
-#include <extlibs/glew.hpp>
 #include <common/algorithm.hpp>
+#include <extlibs/glew.hpp>
 
 namespace opengl::debug
 {

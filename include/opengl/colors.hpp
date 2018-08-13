@@ -2,8 +2,8 @@
 #include <array>
 #include <boomhs/math.hpp>
 #include <boomhs/random.hpp>
-#include <ostream>
 #include <common/algorithm.hpp>
+#include <ostream>
 
 namespace opengl
 {
