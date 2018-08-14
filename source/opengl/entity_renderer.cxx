@@ -260,8 +260,6 @@ EntityRenderer::render2d_billboard(RenderState& rstate, RNG& rng, FrameTime cons
   registry.view<COMMON, BillboardRenderable, OrbitalBody, TextureRenderable>().each(draw_orbital_fn);
   render::draw_targetreticle(rstate, ft);
 
-#undef COMMON
-#undef COMMON_ARGS
 }
 
 void
@@ -280,9 +278,6 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
 
   auto& registry = zs.registry;
   auto& sps      = zs.gfx_state.sps;
-
-#define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
-#define COMMON_ARGS auto const eid, auto &sn,   auto &transform, auto &is_v, auto &bbox
 
   auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp(sn.value);
@@ -336,8 +331,9 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
     ti->while_bound(logger, [&]() { draw_common_fn(eid, sn, copy_transform, is_v, bbox, torch); });
   };
 
-#define COMMON_BBOX                   Transform,  AABoundingBox, Selectable
-  auto const draw_boundingboxes = [&](EntityID const eid, Transform& transform, AABoundingBox& bbox, Selectable& sel, auto&&...) {
+  auto const draw_boundingboxes = [&](EntityID const eid, Transform& transform, AABoundingBox& bbox,
+          Selectable& sel, auto&&...)
+  {
     if (!es.draw_bounding_boxes) {
       return;
     }
@@ -345,10 +341,6 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
 
     auto& sp    = sps.ref_sp("wireframe");
     auto  tr    = transform;
-
-    if (registry.has<WaterInfo>(eid)) {
-      LOG_ERROR_SPRINTF("Drawing WaterInfo BBOX min: %s max: %s", glm::to_string(bbox.cube.min), glm::to_string(bbox.cube.max));
-    }
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_color(logger, "u_wirecolor", wire_color);
@@ -369,14 +361,16 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
     COMMON
     );
 
+#define COMMON_BBOX Transform,  AABoundingBox, Selectable
   registry.view<COMMON_BBOX, CubeRenderable>().each(
       [&](auto&&... args) { draw_boundingboxes(FORWARD(args)); });
   registry.view<COMMON_BBOX, MeshRenderable>().each(
       [&](auto&&... args) { draw_boundingboxes(FORWARD(args)); });
-#undef COMMON_BBOX
 
-#undef COMMON
-#undef COMMON_ARGS
+  registry.view<COMMON_BBOX, WaterInfo>().each(
+      [&](auto&&... args) { draw_boundingboxes(FORWARD(args)); });
+
+#undef COMMON_BBOX
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -393,10 +387,6 @@ SilhouetteEntityRenderer::render2d_billboard(RenderState& rstate, RNG& rng, Fram
   auto& gfx_state = zs.gfx_state;
   auto& sps = gfx_state.sps;
 
-#define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
-#define COMMON_ARGS auto const eid, auto& sn,   auto &transform, auto &is_v, auto &bbox
-
-
   auto const draw_orbital_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp("2dsilhoutte_uv");
     sp.while_bound(logger, [&]() { sp.set_uniform_color_3fv(logger, "u_color", LOC::WHITE); });
@@ -407,8 +397,6 @@ SilhouetteEntityRenderer::render2d_billboard(RenderState& rstate, RNG& rng, Fram
 
   auto const draw_pointlight_fn = [&](COMMON_ARGS, auto&&... args) {
   };
-#undef COMMON_ARGS
-#undef COMMON
 }
 
 void
@@ -428,9 +416,6 @@ SilhouetteEntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime cons
   auto& sps = gfx_state.sps;
   auto& draw_handles = gfx_state.draw_handles;
 
-#define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
-#define COMMON_ARGS auto const eid, auto& sn,   auto &transform, auto &is_v, auto &bbox
-
   auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp("silhoutte_black");
     if (!sp.is_2d) {
@@ -447,7 +432,6 @@ SilhouetteEntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime cons
       draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_v, bbox, FORWARD(args));
     }
   };
-#undef COMMON_ARGS
 
   auto const& draw_torch_fn          = draw_common_fn;
   auto const& draw_default_entity_fn = draw_common_fn;
@@ -460,5 +444,8 @@ SilhouetteEntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime cons
     COMMON
     );
 }
+
+#undef COMMON
+#undef COMMON_ARGS
 
 } // namespace opengl

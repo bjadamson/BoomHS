@@ -27,7 +27,6 @@ graphics_mode_to_water_shader(boomhs::GameGraphicsMode, opengl::ShaderPrograms&)
 
 struct WaterInfo
 {
-  glm::vec2            position;
   EntityID             eid;
   opengl::TextureInfo* tinfo = nullptr;
 

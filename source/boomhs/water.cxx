@@ -91,8 +91,18 @@ WaterFactory::make_default(common::Logger& logger, ShaderPrograms& sps, TextureT
   auto& winfo = registry.assign<WaterInfo>(eid);
   winfo.tinfo = &ti;
 
-  auto const min = glm::vec3{-1.0f};
-  auto const max = glm::vec3{1.0f};
+  registry.assign<IsVisible>(eid).value = true;
+  auto& tr = registry.assign<Transform>(eid);
+
+  // hack
+  tr.translation.y = 0.19999f;
+
+  auto const xdim = winfo.dimensions.x;
+  auto const zdim = winfo.dimensions.y;
+  auto constexpr WATER_HEIGHT = 0.2f;
+
+  auto const min = glm::vec3{0, -WATER_HEIGHT, 0};
+  auto const max = glm::vec3{ xdim,  WATER_HEIGHT,  zdim};
   AABoundingBox::add_to_entity(logger, sps, eid, registry, min, max);
 
   return winfo;

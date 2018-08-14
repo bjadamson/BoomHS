@@ -102,22 +102,13 @@ place_waters(common::Logger& logger, ShaderPrograms& sps, EntityRegistry& regist
     auto const eid = registry.create();
 
     auto& wi        = WaterFactory::make_default(logger, sps, ttable, eid, registry);
-    wi.position     = pos;
     wi.mix_color    = Color::random(rng);
     wi.dimensions   = glm::vec2{20};
     wi.num_vertexes = 4;
 
-    registry.assign<ShaderName>(eid);
-    registry.assign<IsVisible>(eid).value = true;
-
-    auto& tr         = registry.assign<Transform>(eid);
-
-    auto const& dimensions = wi.dimensions;
-    tr.translation.x = pos.x + dimensions.x / 2.0f;
-    tr.translation.z = pos.y + dimensions.y / 2.0f;
-
-    tr.scale.x = dimensions.x;
-    tr.scale.z = dimensions.y;
+    auto& tr = registry.get<Transform>(eid);
+    tr.translation.x = pos.x;
+    tr.translation.z = pos.y;
 
     auto& name = registry.assign<Name>(eid);
     name.value = "WaterInfo #" + std::to_string(count);

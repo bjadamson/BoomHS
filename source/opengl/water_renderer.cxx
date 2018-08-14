@@ -53,16 +53,11 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
   auto const& wind = ldata.wind;
 
   auto const render = [&](WaterInfo& winfo) {
-    auto const& pos = winfo.position;
-
-    Transform transform;
-    auto &tr = transform.translation;
-    tr.x     = pos.x;
-    tr.z     = pos.y;
-
-    // hack
-    tr.y = 0.19999f; // pos.y;
-    assert(tr.y < 2.0f);
+    auto const eid = winfo.eid;
+    if (!registry.get<IsVisible>(eid).value) {
+      return;
+    }
+    auto const &tr = registry.get<Transform>(eid);
 
     winfo.wave_offset += ft.delta_seconds() * wind.speed;
     winfo.wave_offset = ::fmodf(winfo.wave_offset, 1.00f);
@@ -73,7 +68,7 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
 
     auto& gfx_state    = zs.gfx_state;
     auto& draw_handles = gfx_state.draw_handles;
-    auto& dinfo        = draw_handles.lookup_entity(logger, winfo.eid);
+    auto& dinfo        = draw_handles.lookup_entity(logger, eid);
 
     sp.while_bound(logger, [&]() {
       sp.set_uniform_vec4(logger, "u_clipPlane", ABOVE_VECTOR);
@@ -85,7 +80,7 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
       sp.set_uniform_float1(logger, "u_water.weight_texture",    wbuffer.weight_texture);
       sp.set_uniform_float1(logger, "u_water.weight_mix_effect", wbuffer.weight_mix_effect);
 
-      dinfo.while_bound(logger, [&]() { fn(winfo, transform); });
+      dinfo.while_bound(logger, [&]() { fn(winfo, tr); });
     });
   };
 
@@ -131,7 +126,7 @@ BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
   auto& es     = fstate.es;
   auto& logger = es.logger;
 
-  auto const fn = [&](WaterInfo& winfo, Transform& transform) {
+  auto const fn = [&](WaterInfo& winfo, Transform const& transform) {
     sp_.set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
     sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
@@ -190,7 +185,7 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
 
   Material const water_material{};
 
-  auto const fn = [&](WaterInfo& winfo, Transform& transform) {
+  auto const fn = [&](WaterInfo& winfo, Transform const& transform) {
     sp_.set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
     sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
@@ -299,7 +294,7 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
 
   Material const water_material{};
 
-  auto const fn = [&](WaterInfo& winfo, Transform& transform) {
+  auto const fn = [&](WaterInfo& winfo, Transform const& transform) {
 
     auto&       gfx_state = zs.gfx_state;
     auto& draw_handles = gfx_state.draw_handles;
@@ -359,7 +354,7 @@ SilhouetteWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelM
 
   auto& logger = es.logger;
 
-  auto const fn = [&](WaterInfo& winfo, Transform& transform) {
+  auto const fn = [&](WaterInfo& winfo, Transform const& transform) {
 
     auto& zs       = lm.active();
     auto&       gfx_state = zs.gfx_state;

@@ -25,7 +25,7 @@ struct OrbitalBody
   {
     glm::vec3 constexpr min = glm::vec3{-1.0f};
     glm::vec3 constexpr max = glm::vec3{1.0f};
-    AABoundingBox::add_to_entity(logger, sps, eid, registry, min, max);
+    //AABoundingBox::add_to_entity(logger, sps, eid, registry, min, max);
   }
 };
 

@@ -123,6 +123,12 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
       return;
     }
     auto const eid = *selected;
+
+    {
+      auto& isv = registry.get<IsVisible>(eid).value;
+      ImGui::Checkbox("Visible", &isv);
+    }
+
     if (ImGui::Button("Inhabit Selected")) {
       auto& transform = registry.get<Transform>(eid);
       //camera.set_target(transform);
