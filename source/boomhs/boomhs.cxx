@@ -436,7 +436,6 @@ copy_assets_gpu(common::Logger& logger, ShaderPrograms& sps,
         auto&          obj = obj_store.get(logger, name);
 
         auto& tc = registry.get<TreeComponent>(entity);
-        tc.set_obj(&obj);
 
         auto& dinfo = dhm.lookup_entity(logger, entity);
         Tree::update_colors(logger, va, dinfo, tc);

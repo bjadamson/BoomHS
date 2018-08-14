@@ -43,7 +43,6 @@ public:
 
   ObjData&       obj();
   ObjData const& obj() const;
-  void           set_obj(ObjData*);
 
   void add_color(TreeColorType, opengl::Color const&);
 
@@ -59,7 +58,7 @@ public:
   auto num_stems() const { return num_stems_; }
   auto num_leaves() const { return num_leaves_; }
 
-  TreeComponent();
+  TreeComponent(ObjData&);
   COPYMOVE_DEFAULT(TreeComponent);
 };
 

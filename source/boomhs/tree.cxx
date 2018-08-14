@@ -81,8 +81,8 @@ namespace boomhs
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // TreeComponent
-TreeComponent::TreeComponent()
-    : pobj_{nullptr}
+TreeComponent::TreeComponent(ObjData& data)
+    : pobj_{&data}
     , num_trunks_(0)
     , num_stems_(0)
     , num_leaves_(0)
@@ -108,13 +108,6 @@ TreeComponent::obj() const
 {
   assert(nullptr != pobj_);
   return *pobj_;
-}
-
-void
-TreeComponent::set_obj(ObjData* p)
-{
-  assert(nullptr != p);
-  pobj_ = p;
 }
 
 void

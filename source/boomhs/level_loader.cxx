@@ -583,14 +583,17 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &
       light.specular = get_color_or_abort(pointlight_o, "specular");
     }
 
+    auto& obj_store = assets.obj_store;
     if (common::cstrcmp(name.c_str(), "TreeLowpoly")) {
-      auto& tc = registry.assign<TreeComponent>(eid);
+      auto& obj = obj_store.get(logger, registry.get<MeshRenderable>(eid).name);
+      auto& tc = registry.assign<TreeComponent>(eid, obj);
       tc.add_color(TreeColorType::Leaf, LOC::GREEN);
       tc.add_color(TreeColorType::Leaf, LOC::PINK);
       tc.add_color(TreeColorType::Trunk, LOC::BROWN);
     }
     if (common::cstrcmp(name.c_str(), "Tree2")) {
-      auto& tc = registry.assign<TreeComponent>(eid);
+      auto& obj = obj_store.get(logger, registry.get<MeshRenderable>(eid).name);
+      auto& tc = registry.assign<TreeComponent>(eid, obj);
       tc.add_color(TreeColorType::Leaf, LOC::YELLOW);
       tc.add_color(TreeColorType::Stem, LOC::RED);
       tc.add_color(TreeColorType::Stem, LOC::BLUE);
