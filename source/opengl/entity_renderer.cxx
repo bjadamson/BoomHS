@@ -147,7 +147,7 @@ bbox_in_frustrum(FrameState const& fstate, AABoundingBox const& bbox)
 template <typename... Args>
 void
 draw_entity(RenderState& rstate, GLenum const dm, ShaderProgram& sp, EntityID const eid,
-                   DrawHandleManager &draw_handles, Transform& transform, IsVisible& is_v,
+                   DrawInfo &dinfo, Transform& transform, IsVisible& is_v,
                    AABoundingBox& bbox, Args&&... args)
 {
   // If entity is not visible, just return.
@@ -164,7 +164,6 @@ draw_entity(RenderState& rstate, GLenum const dm, ShaderProgram& sp, EntityID co
     return;
   }
 
-  auto& dinfo = draw_handles.lookup_entity(logger, eid);
   sp.while_bound(logger, [&]() {
     draw_entity_common_without_binding_sp(rstate, dm, sp, dinfo, eid, transform);
   });
@@ -193,7 +192,8 @@ draw_orbital_body(RenderState& rstate, ShaderProgram& sp, EntityID const eid, Tr
 
   auto& zs        = fstate.zs;
   auto& draw_handles = zs.gfx_state.draw_handles;
-  ti->while_bound(logger, [&]() { draw_entity(rstate, GL_TRIANGLES, sp, eid, draw_handles,
+  auto& dinfo = draw_handles.lookup_entity(logger, eid);
+  ti->while_bound(logger, [&]() { draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo,
         transform, is_v, bbox); });
 }
 
@@ -296,7 +296,8 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
   auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp(sn.value);
     assert(!sp.is_2d);
-    draw_entity(rstate, GL_TRIANGLES, sp, eid, draw_handles, transform, is_v, bbox, FORWARD(args));
+    auto& dinfo = draw_handles.lookup_entity(logger, eid);
+    draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_v, bbox, FORWARD(args));
   };
 
   auto const draw_default_entity_fn = [&](COMMON_ARGS, auto&&...) {
@@ -314,7 +315,8 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
     }
     else {
       //assert(registry.has<Color>(eid));
-      draw_entity(rstate, GL_TRIANGLES, sp, eid, draw_handles, transform, is_v, bbox);
+      auto& dinfo = draw_handles.lookup_entity(logger, eid);
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_v, bbox);
     }
   };
   auto const draw_torch_fn = [&](COMMON_ARGS, TextureRenderable& trenderable, Torch& torch) {
@@ -420,7 +422,6 @@ SilhouetteEntityRenderer::render2d_billboard(RenderState& rstate, RNG& rng, Fram
 
   auto& gfx_state = zs.gfx_state;
   auto& sps = gfx_state.sps;
-  auto& draw_handles = gfx_state.draw_handles;
 
 #define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
 #define COMMON_ARGS auto const eid, auto& sn,   auto &transform, auto &is_v, auto &bbox
@@ -463,7 +464,8 @@ SilhouetteEntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime cons
   auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp("silhoutte_black");
     if (!sp.is_2d) {
-      draw_entity(rstate, GL_TRIANGLES, sp, eid, draw_handles, transform, is_v, bbox, FORWARD(args));
+      auto& dinfo = draw_handles.lookup_entity(logger, eid);
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_v, bbox, FORWARD(args));
     }
   };
 
@@ -471,7 +473,8 @@ SilhouetteEntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime cons
     auto& sp = sps.ref_sp(sn.value);
 
     if (!sp.is_2d) {
-      draw_entity(rstate, GL_TRIANGLES, sp, eid, draw_handles, transform, is_v, bbox, FORWARD(args));
+      auto& dinfo = draw_handles.lookup_entity(logger, eid);
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_v, bbox, FORWARD(args));
     }
   };
 #undef COMMON_ARGS
