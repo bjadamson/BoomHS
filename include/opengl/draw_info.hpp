@@ -78,7 +78,15 @@ public:
   std::string to_string() const;
 };
 
-using DrawInfoHandle = size_t;
+struct DrawInfoHandle
+{
+  using value_type = size_t;
+
+  value_type value;
+
+  explicit DrawInfoHandle(value_type const v) : value(v) {}
+};
+
 class DrawHandleManager;
 class EntityDrawHandleMap
 {
@@ -91,15 +99,17 @@ class EntityDrawHandleMap
   NO_COPY(EntityDrawHandleMap);
   MOVE_DEFAULT(EntityDrawHandleMap);
 
-  size_t add(boomhs::EntityID, opengl::DrawInfo&&);
+  DrawInfoHandle add(boomhs::EntityID, opengl::DrawInfo&&);
 
   bool empty() const { return drawinfos_.empty(); }
-  bool has(boomhs::EntityID) const;
-
-  std::optional<DrawInfoHandle> lookup(boomhs::EntityID) const;
+  bool has(DrawInfoHandle) const;
+  auto size() const { assert(drawinfos_.size() == entities_.size()); return drawinfos_.size(); }
 
   DrawInfo const& get(DrawInfoHandle) const;
   DrawInfo& get(DrawInfoHandle);
+
+  std::optional<DrawInfoHandle> find(boomhs::EntityID) const;
+
 };
 
 class DrawHandleManager
@@ -116,7 +126,7 @@ public:
   MOVE_DEFAULT(DrawHandleManager);
 
   // methods
-  void add_entity(boomhs::EntityID, DrawInfo&&);
+  DrawInfoHandle add_entity(boomhs::EntityID, DrawInfo&&);
 
   DrawInfo&       lookup_entity(common::Logger&, boomhs::EntityID);
   DrawInfo const& lookup_entity(common::Logger&, boomhs::EntityID) const;

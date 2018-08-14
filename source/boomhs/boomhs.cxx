@@ -444,7 +444,7 @@ copy_assets_gpu(common::Logger& logger, ShaderPrograms& sps,
 }
 
 void
-add_boundingboxes_to_entities(EngineState& es, ZoneState& zs)
+add_orbitalbodies_and_water(EngineState& es, ZoneState& zs)
 {
   auto& logger = es.logger;
   auto& ldata     = zs.level_data;
@@ -463,7 +463,7 @@ add_boundingboxes_to_entities(EngineState& es, ZoneState& zs)
   }
   for (auto const eid : registry.view<WaterInfo>()) {
     {
-      BufferFlags constexpr flags{true, false, false, true};
+      BufferFlags const flags{true, false, false, true};
 
       auto& wi = registry.get<WaterInfo>(eid);
       auto const dimensions = wi.dimensions;
@@ -541,7 +541,7 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
     auto& draw_handles = gfx_state.draw_handles;
 
     auto copy_result = TRY_MOVEOUT(copy_assets_gpu(logger, sps, registry, objstore, draw_handles));
-    add_boundingboxes_to_entities(es, zs);
+    add_orbitalbodies_and_water(es, zs);
 
     auto& terrain = ldata.terrain;
     for (auto const eid : registry.view<Transform, AABoundingBox, MeshRenderable>()) {

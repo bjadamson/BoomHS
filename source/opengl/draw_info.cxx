@@ -170,10 +170,13 @@ DrawInfo::to_string() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EntityDrawHandleMap
-size_t
+DrawInfoHandle
 EntityDrawHandleMap::add(EntityID const eid, opengl::DrawInfo &&di)
 {
-  auto const pos = drawinfos_.size();
+  assert(drawinfos_.size() == entities_.size());
+  assert(std::nullopt == find(eid));
+
+  auto const pos = DrawInfoHandle{drawinfos_.size()};
   drawinfos_.emplace_back(MOVE(di));
   entities_.emplace_back(eid);
 
@@ -182,26 +185,16 @@ EntityDrawHandleMap::add(EntityID const eid, opengl::DrawInfo &&di)
 }
 
 bool
-EntityDrawHandleMap::has(EntityID const eid) const
+EntityDrawHandleMap::has(DrawInfoHandle const dih) const
 {
-  return lookup(eid) != std::nullopt;
-}
-
-std::optional<DrawInfoHandle>
-EntityDrawHandleMap::lookup(EntityID const eid) const
-{
-  FOR(i, entities_.size()) {
-    if (entities_[i] == eid) {
-      return i;
-    }
-  }
-  return {};
+  assert(drawinfos_.size() == entities_.size());
+  return dih.value < entities_.size();
 }
 
 #define GET_IMPL                                                                                   \
-  assert(drawinfos_.size() == entities_.size());                                                   \
-  assert(dindex < drawinfos_.size());                                                              \
-  return drawinfos_[dindex];
+  assert(has(dindex));                                                                             \
+  assert(dindex.value < drawinfos_.size());                                                        \
+  return drawinfos_[dindex.value];
 
 DrawInfo const&
 EntityDrawHandleMap::get(DrawInfoHandle const dindex) const
@@ -217,16 +210,29 @@ EntityDrawHandleMap::get(DrawInfoHandle const dindex)
 
 #undef GET_IMPL
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// DrawHandleManager
-void
-DrawHandleManager::add_entity(EntityID const eid, DrawInfo&& dinfo)
+std::optional<DrawInfoHandle>
+EntityDrawHandleMap::find(boomhs::EntityID const eid) const
 {
-  assert(!entities_.has(eid));
-  entities_.add(eid, MOVE(dinfo));
+  FOR(i, entities_.size()) {
+    if (entities_[i] == eid) {
+      return DrawInfoHandle{i};
+    }
+  }
+  return {};
 }
 
-EntityDrawHandleMap &
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// DrawHandleManager
+DrawInfoHandle
+DrawHandleManager::add_entity(EntityID const eid, DrawInfo&& dinfo)
+{
+  FOR(i, entities().entities_.size()) {
+    assert(!(entities().entities_[i] == eid));
+  }
+  return entities_.add(eid, MOVE(dinfo));
+}
+
+EntityDrawHandleMap&
 DrawHandleManager::entities()
 {
   return entities_;
@@ -242,7 +248,7 @@ DrawHandleManager::entities() const
 // EntityID is duplicated in both DrawHandle maps (regular entities and bbox entities).
 // Once complete, this macro should look through the various maps for the matching eid.
 #define LOOKUP_MANAGER_IMPL(MAP)                                                                   \
-  auto p = MAP.lookup(eid);                                                                        \
+  auto p = MAP.find(eid);                                                                          \
   if (p) {                                                                                         \
     return entities().get(*p);                                                                     \
   }                                                                                                \
@@ -275,7 +281,7 @@ DrawHandleManager::add_mesh(common::Logger& logger, ShaderPrograms& sps, ObjStor
   auto const& obj = obj_store.get(logger, mesh_name);
 
   auto handle = opengl::gpu::copy_gpu(logger, va, obj);
-  add_entity(eid, MOVE(handle));
+  auto const draw_index = add_entity(eid, MOVE(handle));
 
   auto const     posbuffer = obj.positions();
   auto const&    min       = posbuffer.min();
@@ -293,7 +299,7 @@ DrawHandleManager::add_cube(common::Logger& logger, ShaderPrograms& sps, EntityI
 
   auto const vertices = OF::cube_vertices(cr.min, cr.max);
   auto  handle = opengl::gpu::copy_cube_gpu(logger, vertices, va);
-  add_entity(eid, MOVE(handle));
+  auto const draw_index = add_entity(eid, MOVE(handle));
 
   AABoundingBox::add_to_entity(eid, registry, cr.min, cr.max);
 }
