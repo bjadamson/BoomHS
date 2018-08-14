@@ -67,12 +67,12 @@ player_in_water(common::Logger& logger, EntityRegistry& registry)
 
   auto const eids = find_all_entities_with_component<WaterInfo, Transform, AABoundingBox>(registry);
   for (auto const eid : eids) {
-    auto& water_bbox = registry.get<AABoundingBox>(eid);
+    auto& water_bbox = registry.get<AABoundingBox>(eid).cube;
     auto& w_tr       = registry.get<Transform>(eid);
     auto& p_tr       = player.transform();
 
-    auto const& player_bbox = player.bounding_box();
-    if (collision::bbox_intersects(logger, p_tr, player_bbox, w_tr, water_bbox)) {
+    auto const& player_bbox = player.bounding_box().cube;
+    if (collision::cube_intersects(logger, p_tr, player_bbox, w_tr, water_bbox)) {
       return true;
     }
   }
@@ -103,7 +103,7 @@ set_heights_ontop_terrain(common::Logger& logger, TerrainGrid& terrain,
                                EntityRegistry& registry, EntityID const eid)
 {
   auto& transform    = registry.get<Transform>(eid);
-  auto const& bbox   = registry.get<AABoundingBox>(eid);
+  auto const& bbox   = registry.get<AABoundingBox>(eid).cube;
   auto &tr           = transform.translation;
   float const height = terrain.get_height(logger, tr.x, tr.z);
 
@@ -459,7 +459,7 @@ add_orbitalbodies_and_water(EngineState& es, ZoneState& zs)
   auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
 
   for (auto const eid : registry.view<OrbitalBody>()) {
-    OrbitalBody::add_to_entity(eid, registry);
+    OrbitalBody::add_to_entity(logger, sps, eid, registry);
   }
   for (auto const eid : registry.view<WaterInfo>()) {
     {

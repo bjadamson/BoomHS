@@ -5,6 +5,27 @@
 #include <cmath>
 #include <limits>
 
+namespace boomhs
+{
+struct Transform;
+
+struct Cube
+{
+  glm::vec3 min, max;
+
+  // methods
+  glm::vec3 dimensions() const;
+  glm::vec3 center() const;
+  glm::vec3 half_widths() const;
+
+  glm::vec3 scaled_min(Transform const&) const;
+  glm::vec3 scaled_max(Transform const&) const;
+
+  explicit Cube(glm::vec3 const&, glm::vec3 const&);
+};
+
+} // namespace boomhs
+
 namespace boomhs::math
 {
 

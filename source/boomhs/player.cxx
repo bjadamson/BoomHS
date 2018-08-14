@@ -20,7 +20,7 @@ void
 kill_entity(common::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
             EntityRegistry& registry, EntityID const entity_eid)
 {
-  auto const& bbox = registry.get<AABoundingBox>(entity_eid);
+  auto const& bbox = registry.get<AABoundingBox>(entity_eid).cube;
   auto const hw = bbox.half_widths();
 
   // Move the entity half it's bounding box, so it is directly on the ground, or whatever it was
@@ -127,7 +127,7 @@ update_position(EngineState& es, ZoneState& zs, FrameTime const& ft)
   // Lookup the player height from the terrain at the player's X, Z world-coordinates.
   auto& player_pos = player.transform().translation;
   float const player_height = terrain.get_height(logger, player_pos.x, player_pos.z);
-  auto const& player_bbox   = player.bounding_box();
+  auto const& player_bbox   = player.bounding_box().cube;
   player_pos.y              = player_height + player_bbox.half_widths().y;
 }
 

@@ -1,6 +1,10 @@
 #pragma once
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
+#include <opengl/shader.hpp>
+
+#include <common/log.hpp>
+
 #include <extlibs/glm.hpp>
 #include <string>
 
@@ -16,11 +20,12 @@ struct OrbitalBody
   // Initial orbit offset for the body.
   float offset = 0.0f;
 
-  static void add_to_entity(EntityID const eid, EntityRegistry& registry)
+  static void add_to_entity(common::Logger& logger, opengl::ShaderPrograms& sps, EntityID const eid,
+      EntityRegistry& registry)
   {
     glm::vec3 constexpr min = glm::vec3{-1.0f};
     glm::vec3 constexpr max = glm::vec3{1.0f};
-    AABoundingBox::add_to_entity(eid, registry, min, max);
+    AABoundingBox::add_to_entity(logger, sps, eid, registry, min, max);
   }
 };
 

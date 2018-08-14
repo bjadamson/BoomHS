@@ -136,7 +136,7 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
     }
     if (registry.has<AABoundingBox>(eid)) {
       if (ImGui::CollapsingHeader("BoundingBox Editor")) {
-        auto const& bbox = registry.get<AABoundingBox>(eid);
+        auto const& bbox = registry.get<AABoundingBox>(eid).cube;
         ImGui::Text("min: %s", glm::to_string(bbox.min).c_str());
         ImGui::Text("max: %s", glm::to_string(bbox.max).c_str());
       }

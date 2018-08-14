@@ -286,7 +286,7 @@ DrawHandleManager::add_mesh(common::Logger& logger, ShaderPrograms& sps, ObjStor
   auto const     posbuffer = obj.positions();
   auto const&    min       = posbuffer.min();
   auto const&    max       = posbuffer.max();
-  AABoundingBox::add_to_entity(eid, registry, min, max);
+  AABoundingBox::add_to_entity(logger, sps, eid, registry, min, max);
 }
 
 void
@@ -301,7 +301,7 @@ DrawHandleManager::add_cube(common::Logger& logger, ShaderPrograms& sps, EntityI
   auto  handle = opengl::gpu::copy_cube_gpu(logger, vertices, va);
   auto const draw_index = add_entity(eid, MOVE(handle));
 
-  AABoundingBox::add_to_entity(eid, registry, cr.min, cr.max);
+  AABoundingBox::add_to_entity(logger, sps, eid, registry, cr.min, cr.max);
 }
 
 } // ns opengl

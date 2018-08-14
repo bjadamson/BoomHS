@@ -22,21 +22,21 @@ bool
 ray_obb_intersection(
   glm::vec3 const& ray_origin,
   glm::vec3 const& ray_direction,
-  AABoundingBox    bbox,
+  Cube             cube,
   Transform        tr,
   float&           distance
 )
 {
-  auto const c  = bbox.center();
-  auto const hw = bbox.half_widths();
+  auto const c  = cube.center();
+  auto const hw = cube.half_widths();
   auto const s  = tr.scale;
 
   // calculate where the min/max values are from the center of the object after scaling.
-  auto const min = bbox.scaled_min(tr);
-  auto const max = bbox.scaled_max(tr);
+  auto const min = cube.scaled_min(tr);
+  auto const max = cube.scaled_max(tr);
 
   // For the purposes of the ray_obb intersection algorithm, it is expected the transform has no
-  // scaling. We've taking the scaling into account by adjusting the bounding box min/max points
+  // scaling. We've taking the scaling into account by adjusting the bounding cube min/max points
   // using the transform's original scale. Set the scaling of the copied transform to all 1's.
   tr.scale = glm::vec3{1};
   auto const model_matrix = tr.model_matrix();
@@ -114,16 +114,16 @@ ray_obb_intersection(
 }
 
 // algorithm adopted from:
-// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-cube-intersection
 bool
-ray_box_intersect(Ray const& r, Transform const& transform, AABoundingBox const& box,
+ray_cube_intersect(Ray const& r, Transform const& transform, Cube const& cube,
     float& distance)
 {
-  auto const& boxpos = transform.translation;
+  auto const& cubepos = transform.translation;
 
-  glm::vec3 const                minpos = box.min * transform.scale;
-  glm::vec3 const                maxpos = box.max * transform.scale;
-  std::array<glm::vec3, 2> const bounds{{minpos + boxpos, maxpos + boxpos}};
+  glm::vec3 const                minpos = cube.min * transform.scale;
+  glm::vec3 const                maxpos = cube.max * transform.scale;
+  std::array<glm::vec3, 2> const bounds{{minpos + cubepos, maxpos + cubepos}};
 
   // clang-format off
   float txmin  = (bounds[    r.sign[0]].x - r.orig.x) * r.invdir.x;
@@ -162,8 +162,8 @@ ray_box_intersect(Ray const& r, Transform const& transform, AABoundingBox const&
 }
 
 bool
-bbox_intersects(common::Logger& logger, Transform const& at, AABoundingBox const& ab,
-                Transform const& bt, AABoundingBox const& bb)
+cube_intersects(common::Logger& logger, Transform const& at, Cube const& ab,
+                Transform const& bt, Cube const& bb)
 {
   auto const& ac = at.translation;
   auto const& bc = bt.translation;

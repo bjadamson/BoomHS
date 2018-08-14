@@ -1,6 +1,69 @@
 #include <boomhs/math.hpp>
-#include <ostream>
+#include <boomhs/transform.hpp>
+
 #include <utility>
+
+namespace boomhs
+{
+
+Cube::Cube(glm::vec3 const& minp, glm::vec3 const& maxp)
+    : min(minp)
+    , max(maxp)
+{
+}
+
+glm::vec3
+Cube::dimensions() const
+{
+  return math::calculate_cube_dimensions(min, max);
+}
+
+glm::vec3
+Cube::center() const
+{
+  auto const hw = half_widths();
+  return glm::vec3{
+    min.x + hw.x,
+    min.y + hw.y,
+    min.z + hw.z
+  };
+}
+
+glm::vec3
+Cube::half_widths() const
+{
+  return dimensions() / glm::vec3{2.0f};
+}
+
+glm::vec3
+Cube::scaled_min(Transform const& tr) const
+{
+  auto const s  = tr.scale;
+  auto const c  = center();
+  auto const hw = half_widths();
+
+  auto r = this->min;
+  r.x = c.x - (s.x * hw.x);
+  r.y = c.y - (s.y * hw.y);
+  r.z = c.z - (s.z * hw.z);
+  return r;
+}
+
+glm::vec3
+Cube::scaled_max(Transform const& tr) const
+{
+  auto const s  = tr.scale;
+  auto const c  = center();
+  auto const hw = half_widths();
+
+  auto r = this->max;
+  r.x = c.x + (s.x * hw.x);
+  r.y = c.y + (s.y * hw.y);
+  r.z = c.z + (s.z * hw.z);
+  return r;
+}
+
+} // namespace boomhs
 
 namespace boomhs::math
 {

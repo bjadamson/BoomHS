@@ -1,9 +1,14 @@
 #pragma once
-#include <boomhs/lighting.hpp>
 #include <opengl/colors.hpp>
+#include <opengl/draw_info.hpp>
 #include <opengl/texture.hpp>
 
 #include <boomhs/entity.hpp>
+#include <boomhs/lighting.hpp>
+#include <boomhs/math.hpp>
+#include <boomhs/transform.hpp>
+
+#include <common/log.hpp>
 
 #include <cassert>
 #include <string>
@@ -17,23 +22,6 @@ struct HealthPoints
   int current, max;
 };
 
-struct Transform
-{
-  glm::vec3 translation{0.0f, 0.0f, 0.0f};
-  glm::quat rotation;
-  glm::vec3 scale = glm::vec3{1.0f, 1.0f, 1.0f};
-
-  glm::mat4 model_matrix() const
-  {
-    return math::calculate_modelmatrix(translation, rotation, scale);
-  }
-
-  void rotate_degrees(float const degrees, glm::vec3 const& axis)
-  {
-    rotation = glm::angleAxis(glm::radians(degrees), axis) * rotation;
-  }
-};
-
 struct WidthHeightLength
 {
   float const width;
@@ -44,22 +32,15 @@ struct WidthHeightLength
 // AxisAlignedBoundingBox
 struct AABoundingBox
 {
-  glm::vec3 min;
-  glm::vec3 max;
+  Cube cube;
+
+  opengl::DrawInfo draw_info;
 
   // ctor
-  AABoundingBox();
-  AABoundingBox(glm::vec3 const&, glm::vec3 const&);
+  AABoundingBox(glm::vec3 const&, glm::vec3 const&, opengl::DrawInfo&&);
 
-  // methods
-  glm::vec3 dimensions() const;
-  glm::vec3 center() const;
-  glm::vec3 half_widths() const;
-
-  glm::vec3 scaled_min(Transform const&) const;
-  glm::vec3 scaled_max(Transform const&) const;
-
-  static void add_to_entity(EntityID, EntityRegistry&, glm::vec3 const&, glm::vec3 const&);
+  static void add_to_entity(common::Logger&, opengl::ShaderPrograms&, EntityID, EntityRegistry&,
+                            glm::vec3 const&, glm::vec3 const&);
 };
 
 struct Name

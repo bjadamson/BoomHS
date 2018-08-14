@@ -1,6 +1,6 @@
 #pragma once
 #include <boomhs/components.hpp>
-#include <extlibs/glm.hpp>
+#include <boomhs/math.hpp>
 
 namespace boomhs
 {
@@ -23,11 +23,11 @@ namespace boomhs::collision
 {
 
 bool
-ray_box_intersect(Ray const&, Transform const&, AABoundingBox const&, float&);
+ray_cube_intersect(Ray const&, Transform const&, Cube const&, float&);
 
 bool
-bbox_intersects(common::Logger&, Transform const&, AABoundingBox const&, Transform const&,
-                AABoundingBox const&);
+cube_intersects(common::Logger&, Transform const&, Cube const&, Transform const&,
+                Cube const&);
 
 // algorithm adapted from:
 // http://www.opengl-tutorial.org/kr/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/
@@ -46,7 +46,7 @@ ray_obb_intersection(
 bool
 ray_obb_intersection(glm::vec3 const&, // Ray origin
                      glm::vec3 const&, // Ray direction
-                     AABoundingBox,    // Bounding Box of the entity we are testing against.
+                     Cube,             // Bounding cube of the entity we are testing against.
                      Transform,        // Transform
                      float&);          // Output: distance
 

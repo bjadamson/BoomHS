@@ -137,7 +137,7 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
   std::vector<std::pair<EntityID, float>> distances;
   auto const eids = find_all_entities_with_component<Selectable>(registry);
   for (auto const eid : eids) {
-    auto const& bbox = registry.get<AABoundingBox>(eid);
+    auto const& bbox = registry.get<AABoundingBox>(eid).cube;
     auto const& tr   = registry.get<Transform>(eid);
     auto&       sel  = registry.get<Selectable>(eid);
     sel.selected = false;
@@ -148,7 +148,7 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
     bool intersects = false;
     if (can_use_simple_test) {
       Ray const  ray{ray_start, ray_dir};
-      intersects = collision::ray_box_intersect(ray, tr, bbox, distance);
+      intersects = collision::ray_cube_intersect(ray, tr, bbox, distance);
     }
     else {
       intersects = collision::ray_obb_intersection(ray_start, ray_dir, bbox, tr, distance);
