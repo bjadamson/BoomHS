@@ -184,29 +184,38 @@ EntityDrawHandleMap::add(EntityID const eid, opengl::DrawInfo &&di)
 bool
 EntityDrawHandleMap::has(EntityID const eid) const
 {
-  return lookup(eid);
+  return lookup(eid) != std::nullopt;
 }
 
-#define LOOKUP_IMPLEMENTATION                                                                      \
-  FOR(i, entities_.size()) {                                                                       \
-    if (entities_[i] == eid) {                                                                     \
-      return &drawinfos_[i];                                                                       \
-    }                                                                                              \
-  }                                                                                                \
-  return nullptr;
-
-opengl::DrawInfo*
-EntityDrawHandleMap::lookup(EntityID const eid)
-{
-  LOOKUP_IMPLEMENTATION
-}
-
-opengl::DrawInfo const*
+std::optional<DrawInfoHandle>
 EntityDrawHandleMap::lookup(EntityID const eid) const
 {
-  LOOKUP_IMPLEMENTATION
+  FOR(i, entities_.size()) {
+    if (entities_[i] == eid) {
+      return i;
+    }
+  }
+  return {};
 }
-#undef LOOKUP_IMPLEMENTATION
+
+#define GET_IMPL                                                                                   \
+  assert(drawinfos_.size() == entities_.size());                                                   \
+  assert(dindex < drawinfos_.size());                                                              \
+  return drawinfos_[dindex];
+
+DrawInfo const&
+EntityDrawHandleMap::get(DrawInfoHandle const dindex) const
+{
+  GET_IMPL
+}
+
+DrawInfo&
+EntityDrawHandleMap::get(DrawInfoHandle const dindex)
+{
+  GET_IMPL
+}
+
+#undef GET_IMPL
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // DrawHandleManager
@@ -233,13 +242,13 @@ DrawHandleManager::entities() const
 // EntityID is duplicated in both DrawHandle maps (regular entities and bbox entities).
 // Once complete, this macro should look through the various maps for the matching eid.
 #define LOOKUP_MANAGER_IMPL(MAP)                                                                   \
-  auto *p = MAP.lookup(eid);                                                                       \
+  auto p = MAP.lookup(eid);                                                                        \
   if (p) {                                                                                         \
-    return *p;                                                                                     \
+    return entities().get(*p);                                                                     \
   }                                                                                                \
   LOG_ERROR_FMT("Error could not find entity drawinfo associated to entity {}", eid);              \
   std::abort();                                                                                    \
-  return *p;
+  return entities().get(*p);
 
 DrawInfo&
 DrawHandleManager::lookup_entity(common::Logger& logger, EntityID const eid)

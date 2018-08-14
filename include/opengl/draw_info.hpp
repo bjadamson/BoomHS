@@ -9,6 +9,7 @@
 #include <common/log.hpp>
 #include <common/type_macros.hpp>
 
+#include <optional>
 #include <string>
 
 namespace boomhs
@@ -77,6 +78,7 @@ public:
   std::string to_string() const;
 };
 
+using DrawInfoHandle = size_t;
 class DrawHandleManager;
 class EntityDrawHandleMap
 {
@@ -94,8 +96,10 @@ class EntityDrawHandleMap
   bool empty() const { return drawinfos_.empty(); }
   bool has(boomhs::EntityID) const;
 
-  opengl::DrawInfo*       lookup(boomhs::EntityID);
-  opengl::DrawInfo const* lookup(boomhs::EntityID) const;
+  std::optional<DrawInfoHandle> lookup(boomhs::EntityID) const;
+
+  DrawInfo const& get(DrawInfoHandle) const;
+  DrawInfo& get(DrawInfoHandle);
 };
 
 class DrawHandleManager
