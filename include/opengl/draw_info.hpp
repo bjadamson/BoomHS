@@ -103,6 +103,9 @@ class DrawHandleManager
   // These slots get a value when memory is loaded, set to none when memory is not.
   EntityDrawHandleMap entities_;
 
+  EntityDrawHandleMap&       entities();
+  EntityDrawHandleMap const& entities() const;
+
 public:
   DrawHandleManager() = default;
   NO_COPY(DrawHandleManager);
@@ -110,9 +113,6 @@ public:
 
   // methods
   void add_entity(boomhs::EntityID, DrawInfo&&);
-
-  EntityDrawHandleMap&       entities();
-  EntityDrawHandleMap const& entities() const;
 
   DrawInfo&       lookup_entity(common::Logger&, boomhs::EntityID);
   DrawInfo const& lookup_entity(common::Logger&, boomhs::EntityID) const;
