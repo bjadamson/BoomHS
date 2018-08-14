@@ -541,8 +541,8 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &
         assert(0 < len);
         return field.substr(len, field.length() - len);
       };
-      auto& meshc = registry.assign<MeshRenderable>(eid);
-      meshc.name  = parse_meshname(geometry);
+      auto mesh_name  = parse_meshname(geometry);
+      auto& meshc = registry.assign<MeshRenderable>(eid, MOVE(mesh_name));
     }
     else if (boost::starts_with(geometry, "billboard")) {
       auto const parse_billboard = [](auto const& field) {

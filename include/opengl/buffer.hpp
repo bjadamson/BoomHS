@@ -11,7 +11,7 @@ struct BufferFlags
 {
   bool const vertices, normals, colors, uvs;
 
-  explicit BufferFlags(bool const v, bool const n, bool const c, bool const u)
+  explicit constexpr BufferFlags(bool const v, bool const n, bool const c, bool const u)
       : vertices(v)
       , normals(n)
       , colors(c)

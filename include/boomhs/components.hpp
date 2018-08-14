@@ -131,6 +131,9 @@ struct CubeRenderable
 struct MeshRenderable
 {
   std::string name;
+
+  MeshRenderable(std::string&& n) : name(MOVE(n)) {}
+  MeshRenderable(std::string const& n) : name(n) {}
 };
 
 struct TextureRenderable

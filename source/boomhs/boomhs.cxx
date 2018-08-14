@@ -436,7 +436,6 @@ copy_assets_gpu(common::Logger& logger, ShaderPrograms& sps,
         auto&          obj = obj_store.get(logger, name);
 
         auto& tc = registry.get<TreeComponent>(entity);
-
         auto& dinfo = dhm.lookup_entity(logger, entity);
         Tree::update_colors(logger, va, dinfo, tc);
       });
@@ -464,7 +463,7 @@ add_boundingboxes_to_entities(EngineState& es, ZoneState& zs)
   }
   for (auto const eid : registry.view<WaterInfo>()) {
     {
-      BufferFlags const flags{true, false, false, true};
+      BufferFlags constexpr flags{true, false, false, true};
 
       auto& wi = registry.get<WaterInfo>(eid);
       auto const dimensions = wi.dimensions;

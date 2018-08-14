@@ -69,8 +69,7 @@ place_player(common::Logger& logger, TerrainGrid const& terrain,
   auto& sn = registry.assign<ShaderName>(eid);
   sn.value = "3d_pos_normal_color";
 
-  auto& meshc = registry.assign<MeshRenderable>(eid);
-  meshc.name  = "at";
+  registry.assign<MeshRenderable>(eid, "at");
 
   auto& cc = registry.assign<Color>(eid);
   cc.set(LOC::WHITE);

@@ -76,8 +76,7 @@ NPC::create(EntityRegistry& registry, char const* name, int const level, glm::ve
   registry.assign<Material>(eid);
 
   // Enemies get a mesh
-  auto& meshc = registry.assign<MeshRenderable>(eid);
-  meshc.name  = name;
+  registry.assign<MeshRenderable>(eid, name);
 
   // shader
   auto& sn = registry.assign<ShaderName>(eid);

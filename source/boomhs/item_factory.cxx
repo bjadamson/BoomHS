@@ -24,8 +24,7 @@ create_item(EntityRegistry& registry, TextureTable& ttable, char const* entity_n
   auto& isv = registry.assign<IsVisible>(eid);
   isv.value = true;
 
-  auto& meshc = registry.assign<MeshRenderable>(eid);
-  meshc.name  = mesh_name;
+  registry.assign<MeshRenderable>(eid, mesh_name);
 
   auto& tr        = registry.assign<TextureRenderable>(eid);
   auto  texture_o = ttable.find(texture);
