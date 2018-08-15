@@ -36,11 +36,8 @@ namespace boomhs
 {
 
 void
-Frustum::recalculate(FrameState const& fstate)
+Frustum::recalculate(glm::mat4 const& view_mat, glm::mat4 const& proj_mat)
 {
-  glm::mat4 const& proj_mat = fstate.projection_matrix();
-  glm::mat4 const& view_mat = fstate.view_matrix();
-
   auto const& view = glm::value_ptr(view_mat);
   auto const& proj = glm::value_ptr(proj_mat);
 
@@ -144,21 +141,21 @@ Frustum::cube_in_frustum(float const x, float const y, float const z, float cons
 
   for (int i = 0; i < 6; i++) {
     // clang-format off
-    if (data_[i][A] * (x - size) + data_[i][B] * (y - size) + data_[i][C] * (z - size) + data_[i][D] > 0)
+    if ((data_[i][A] * (x - size) + data_[i][B] * (y - size) + data_[i][C] * (z - size) + data_[i][D]) > 0)
       continue;
-    if (data_[i][A] * (x + size) + data_[i][B] * (y - size) + data_[i][C] * (z - size) + data_[i][D] > 0)
+    if ((data_[i][A] * (x + size) + data_[i][B] * (y - size) + data_[i][C] * (z - size) + data_[i][D]) > 0)
       continue;
-    if (data_[i][A] * (x - size) + data_[i][B] * (y + size) + data_[i][C] * (z - size) + data_[i][D] > 0)
+    if ((data_[i][A] * (x - size) + data_[i][B] * (y + size) + data_[i][C] * (z - size) + data_[i][D]) > 0)
       continue;
-    if (data_[i][A] * (x + size) + data_[i][B] * (y + size) + data_[i][C] * (z - size) + data_[i][D] > 0)
+    if ((data_[i][A] * (x + size) + data_[i][B] * (y + size) + data_[i][C] * (z - size) + data_[i][D]) > 0)
       continue;
-    if (data_[i][A] * (x - size) + data_[i][B] * (y - size) + data_[i][C] * (z + size) + data_[i][D] > 0)
+    if ((data_[i][A] * (x - size) + data_[i][B] * (y - size) + data_[i][C] * (z + size) + data_[i][D]) > 0)
       continue;
-    if (data_[i][A] * (x + size) + data_[i][B] * (y - size) + data_[i][C] * (z + size) + data_[i][D] > 0)
+    if ((data_[i][A] * (x + size) + data_[i][B] * (y - size) + data_[i][C] * (z + size) + data_[i][D]) > 0)
       continue;
-    if (data_[i][A] * (x - size) + data_[i][B] * (y + size) + data_[i][C] * (z + size) + data_[i][D] > 0)
+    if ((data_[i][A] * (x - size) + data_[i][B] * (y + size) + data_[i][C] * (z + size) + data_[i][D]) > 0)
       continue;
-    if (data_[i][A] * (x + size) + data_[i][B] * (y + size) + data_[i][C] * (z + size) + data_[i][D] > 0)
+    if ((data_[i][A] * (x + size) + data_[i][B] * (y + size) + data_[i][C] * (z + size) + data_[i][D]) > 0)
       continue;
     // clang-format on
 
@@ -176,19 +173,17 @@ Frustum::cube_in_frustum(glm::vec3 const& pos, float const size) const
 }
 
 bool
-Frustum::bbox_inside(FrameState const& fstate, AABoundingBox const& bbox)
+Frustum::bbox_inside(glm::mat4 const& view_mat, glm::mat4 const& proj_mat, Transform const& tr,
+                     AABoundingBox const& bbox)
 {
   // TODO: only call recalulate when the camera moves
   Frustum frust;
-  frust.recalculate(fstate);
-  /*
+  frust.recalculate(view_mat, proj_mat);
 
-  float const halfsize        = glm::length(bbox.max - bbox.min) / 2.0f;
-  bool const  bbox_in_frustum = view_frust.cube_in_frustum(tr, halfsize);
-
-  return bbox_in_frustrum;
-  */
-  return true;
+  auto const& cube            = bbox.cube;
+  float const halfsize        = glm::length(cube.max - cube.min) / 2.0f;
+  bool const  bbox_in_frustum = frust.cube_in_frustum(tr.translation, halfsize);
+  return bbox_in_frustum;
 }
 
 } // namespace boomhs

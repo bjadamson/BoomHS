@@ -21,7 +21,8 @@ name = "sun"
 position = [0.0, 850.0, 0.0]
 shader = "2dtexture"
 geometry = "billboard:spherical"
-scale = [650.0, 650.0, 650.0]
+#scale = [650.0, 650.0, 650.0]
+scale = [1.0, 1.0, 1.0]
 texture = "sun"
 
 [entity.orbital-body]
@@ -34,7 +35,8 @@ name = "Moon"
 position = [0.0, 750.0, 0.0]
 shader = "2dlight_uv"
 geometry = "billboard:spherical"
-scale = [650.0, 650.0, 650.0]
+#scale = [650.0, 650.0, 650.0]
+scale = [1.0, 1.0, 1.0]
 texture = "moon"
 
 [entity.pointlight]
@@ -120,7 +122,7 @@ position = [6.0, 1.0, 6.0]
 shader = "3dtexture"
 geometry = "mesh:house"
 texture = "TextureAtlas"
-scale = [11.0, 11.0, 11.0]
+scale = [5.0, 5.0, 5.0]
 random_junk_from_file = true
 
 [[entity]]
@@ -129,7 +131,8 @@ material = "tree"
 position = [0.3, 0.0, 1.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree_lowpoly"
-scale = [15.0, 19.0, 8.0]
+#scale = [15.0, 19.0, 8.0]
+scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true
 
 [[entity]]
@@ -138,7 +141,8 @@ material = "tree"
 position = [10.0, 0.0, 10.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree_lowpoly"
-scale = [20.0, 20.0, 12.0]
+#scale = [20.0, 20.0, 12.0]
+scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true
 
 [[entity]]
@@ -147,7 +151,8 @@ material = "tree"
 position = [15.0, 1.0, 18.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree2"
-scale = [30.0, 30.0, 30.0]
+#scale = [30.0, 30.0, 30.0]
+scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true
 
 [[entity]]
@@ -156,5 +161,6 @@ material = "tree"
 position = [40.0, 40.0, 40.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree2"
-scale = [40.0, 40.0, 40.0]
+#scale = [40.0, 40.0, 40.0]
+scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true

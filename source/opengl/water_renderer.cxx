@@ -57,11 +57,15 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
     if (!registry.get<IsVisible>(eid).value) {
       return;
     }
-    if (!Frustum::bbox_inside(fstate, registry.get<AABoundingBox>(winfo.eid))) {
+    auto const &tr = registry.get<Transform>(eid);
+    auto const &bbox = registry.get<AABoundingBox>(eid);
+
+    glm::mat4 const& view_mat = fstate.view_matrix();
+    glm::mat4 const& proj_mat = fstate.projection_matrix();
+    if (!Frustum::bbox_inside(view_mat, proj_mat, tr, bbox)) {
       return;
     }
 
-    auto const &tr = registry.get<Transform>(eid);
 
     winfo.wave_offset += ft.delta_seconds() * wind.speed;
     winfo.wave_offset = ::fmodf(winfo.wave_offset, 1.00f);

@@ -2,6 +2,7 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/frame.hpp>
+#include <boomhs/frustum.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/skybox.hpp>
@@ -105,7 +106,8 @@ namespace
 {
 
 void
-draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, Camera& camera)
+draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, Camera& camera,
+                   glm::mat4 const& view_mat, glm::mat4 const& proj_mat)
 {
   auto const draw = [&]() {
     std::optional<EntityID> selected;
@@ -129,6 +131,15 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
       ImGui::Checkbox("Visible", &isv);
     }
 
+    if (registry.has<AABoundingBox>(eid) && registry.has<Transform>(eid)) {
+      auto const& tr = registry.get<Transform>(eid);
+      auto const& bbox = registry.get<AABoundingBox>(eid);
+
+      // TODO: view/proj matrix
+      bool const bbox_inside = Frustum::bbox_inside(view_mat, proj_mat, tr, bbox);
+      std::string const msg = fmt::sprintf("In View Frustum: %i", bbox_inside);
+      ImGui::Text("%s", msg.c_str());
+    }
     if (ImGui::Button("Inhabit Selected")) {
       auto& transform = registry.get<Transform>(eid);
       //camera.set_target(transform);
@@ -855,7 +866,11 @@ draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, WaterAudioSyste
   auto& player    = registry.get<Player>(peid);
 
   if (uistate.show_entitywindow) {
-    draw_entity_editor(es, lm, registry, camera);
+    auto const cstate = CameraFrameState::from_camera(camera);
+    FrameState fstate{cstate, es, zs};
+    auto const& view_mat = fstate.view_matrix();
+    auto const& proj_mat = fstate.projection_matrix();
+    draw_entity_editor(es, lm, registry, camera, view_mat, proj_mat);
   }
   if (uistate.show_time_window) {
     draw_time_editor(es.logger, es.time, uistate);

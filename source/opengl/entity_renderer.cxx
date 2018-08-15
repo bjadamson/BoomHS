@@ -136,7 +136,9 @@ draw_entity(RenderState& rstate, GLenum const dm, ShaderProgram& sp, EntityID co
   auto& logger    = es.logger;
   auto& zs        = fstate.zs;
 
-  if (!Frustum::bbox_inside(fstate, bbox)) {
+  glm::mat4 const& view_mat = fstate.view_matrix();
+  glm::mat4 const& proj_mat = fstate.projection_matrix();
+  if (!Frustum::bbox_inside(view_mat, proj_mat, transform, bbox)) {
     return;
   }
 
