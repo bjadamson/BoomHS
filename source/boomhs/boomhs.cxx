@@ -741,13 +741,13 @@ render_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, Camera& camer
       draw_advanced(static_renderers.default_terrain, static_renderers.default_entity);
     }
 
+    auto const& zs    = lm.active();
+    auto const& ldata = zs.level_data;
+    auto const clear_color = silhouette_black ? LOC::BLACK : ldata.fog.color;
+    render::clear_screen(clear_color);
+
     // render scene
     if (es.draw_skybox) {
-      auto const& zs    = lm.active();
-      auto const& ldata = zs.level_data;
-      auto const clear_color = silhouette_black ? LOC::BLACK : ldata.fog.color;
-      render::clear_screen(clear_color);
-
       if (!silhouette_black) {
         skybox_renderer.render(rstate, ds, ft);
       }
