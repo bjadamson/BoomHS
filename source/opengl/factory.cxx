@@ -5,7 +5,6 @@
 #include <boomhs/math.hpp>
 #include <common/type_macros.hpp>
 #include <array>
-#include <iostream>
 
 using namespace boomhs;
 using namespace opengl;
@@ -24,10 +23,9 @@ auto
 calculate_arrow_endpoints(ArrowCreateParams const& params)
 {
   auto const adjust_if_zero = [=](glm::vec3 const& v) {
-    auto constexpr ZERO_VEC = glm::zero<glm::vec3>();
     auto constexpr EPSILON = std::numeric_limits<float>::epsilon();
     auto constexpr EPSILON_VEC = glm::vec3{EPSILON, EPSILON, EPSILON};
-    bool const is_zero = glm::all(glm::epsilonEqual(v, ZERO_VEC, EPSILON));
+    bool const is_zero = glm::all(glm::epsilonEqual(v, math::constants::ZERO, EPSILON));
     return is_zero ? EPSILON_VEC : v;
   };
 

@@ -11,19 +11,8 @@ namespace
 auto
 from_camera_common(Camera const& camera, glm::vec3 const& pos, CameraMode const mode)
 {
-  auto const& perspective = camera.perspective();
-  auto const& ortho       = camera.ortho();
-
-  auto const proj = Camera::compute_projectionmatrix(mode, perspective, ortho);
-
-  auto const& target         = camera.get_target();
-  auto const& target_tr      = target.transform().translation;
-
-  auto const& camera_up             = camera.eye_up();
-  auto const& camera_forward = camera.world_forward();
-
-  auto const target_forward = target.world_forward();
-  auto const view = Camera::compute_viewmatrix(mode, pos, target_tr, camera_up, target_forward);
+  auto const proj = camera.compute_projectionmatrix();
+  auto const view = camera.compute_viewmatrix(pos);
   return CameraFrameState{pos, proj, view, mode};
 }
 

@@ -24,6 +24,25 @@ struct Cube
   explicit Cube(glm::vec3 const&, glm::vec3 const&);
 };
 
+struct Frustum
+{
+  float left, right, bottom, top, far, near;
+
+  static Frustum from_ints(int, int, int, int, int, int);
+};
+
+// We create an enum of the sides so we don't have to call each side 0 or 1.
+// This way it makes it more understandable and readable when dealing with frustum sides.
+enum FrustumSide
+{
+  RIGHT  = 0, // The RIGHT  side of the frustum
+  LEFT   = 1, // The LEFT   side of the frustum
+  BOTTOM = 2, // The BOTTOM side of the frustum
+  TOP    = 3, // The TOP    side of the frustum
+  BACK   = 4, // The BACK   side of the frustum
+  FRONT  = 5  // The FRONT  side of the frustum
+};
+
 struct Plane
 {
   // a => The X value of the plane's normal
@@ -53,9 +72,12 @@ struct Plane
 
 namespace boomhs::math::constants
 {
-glm::vec3 constexpr X_UNIT_VECTOR{1.0f, 0.0f, 0.0f};
-glm::vec3 constexpr Y_UNIT_VECTOR{0.0f, 1.0f, 0.0f};
-glm::vec3 constexpr Z_UNIT_VECTOR{0.0f, 0.0f, 1.0f};
+  auto constexpr ZERO = glm::vec3{0};
+
+  auto constexpr X_UNIT_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
+  auto constexpr Y_UNIT_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
+  auto constexpr Z_UNIT_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
+
 } // namespace boomhs::math::constants
 
 namespace boomhs::math

@@ -7,58 +7,6 @@ namespace boomhs
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Plane
-float
-Plane::dotproduct_with_vec3(Plane const& p, glm::vec3 const& v)
-{
-  return (p.a * v.x) + (p.b * v.y) + (p.c * v.z) + (p.d * 1.0);
-}
-
-float
-Plane::dotproduct_with_vec3(glm::vec3 const& v) const
-{
-  return Plane::dotproduct_with_vec3(*this, v);
-}
-
-void
-Plane::normalize()
-{
-  // Here we calculate the magnitude of the normal to the plane (point A B C)
-  // Remember that (A, B, C) is that same thing as the normal's (X, Y, Z).
-  // To calculate magnitude you use the equation:
-  //     magnitude = sqrt(x^2 + y^2 + z^2)
-  float const magnitude = std::sqrt(math::squared(a) + math::squared(b) + math::squared(c));
-
-  // Then we divide the plane's values by it's magnitude.
-  // This makes it easier to work with.
-  a /= magnitude;
-  b /= magnitude;
-  c /= magnitude;
-  d /= magnitude;
-}
-
-#define MAP_INDEX_TO_PLANE_DATA_FIELD(I)                                                           \
-  assert(i < 4);                                                                                   \
-  if (i == 0) { return this->a; }                                                                  \
-  if (i == 1) { return this->b; }                                                                  \
-  if (i == 2) { return this->c; }                                                                  \
-  if (i == 3) { return this->d; }                                                                  \
-  std::abort()
-
-float const&
-Plane::operator[](size_t const i) const
-{
-  MAP_INDEX_TO_PLANE_DATA_FIELD(i);
-}
-
-float&
-Plane::operator[](size_t const i)
-{
-  MAP_INDEX_TO_PLANE_DATA_FIELD(i);
-}
-#undef MAP_INDEX_TO_PLANE_DATA_FIELD
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 // Cube
 Cube::Cube(glm::vec3 const& minp, glm::vec3 const& maxp)
     : min(minp)
@@ -116,6 +64,73 @@ Cube::scaled_max(Transform const& tr) const
   r.z = c.z + (s.z * hw.z);
   return r;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Frustum
+Frustum
+Frustum::from_ints(int const left, int const right, int const bottom, int const top,
+                   int const far, int const near)
+{
+  return Frustum{
+    static_cast<float>(left),
+    static_cast<float>(right),
+    static_cast<float>(bottom),
+    static_cast<float>(top),
+    static_cast<float>(far),
+    static_cast<float>(near)
+  };
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Plane
+float
+Plane::dotproduct_with_vec3(Plane const& p, glm::vec3 const& v)
+{
+  return (p.a * v.x) + (p.b * v.y) + (p.c * v.z) + (p.d * 1.0);
+}
+
+float
+Plane::dotproduct_with_vec3(glm::vec3 const& v) const
+{
+  return Plane::dotproduct_with_vec3(*this, v);
+}
+
+void
+Plane::normalize()
+{
+  // Here we calculate the magnitude of the normal to the plane (point A B C)
+  // Remember that (A, B, C) is that same thing as the normal's (X, Y, Z).
+  // To calculate magnitude you use the equation:
+  //     magnitude = sqrt(x^2 + y^2 + z^2)
+  float const magnitude = std::sqrt(math::squared(a) + math::squared(b) + math::squared(c));
+
+  // Then we normalize the plane by dividing the plane's values by it's magnitude.
+  a /= magnitude;
+  b /= magnitude;
+  c /= magnitude;
+  d /= magnitude;
+}
+
+#define MAP_INDEX_TO_PLANE_DATA_FIELD(I)                                                           \
+  assert(i < 4);                                                                                   \
+  if (i == 0) { return this->a; }                                                                  \
+  if (i == 1) { return this->b; }                                                                  \
+  if (i == 2) { return this->c; }                                                                  \
+  if (i == 3) { return this->d; }                                                                  \
+  std::abort()
+
+float const&
+Plane::operator[](size_t const i) const
+{
+  MAP_INDEX_TO_PLANE_DATA_FIELD(i);
+}
+
+float&
+Plane::operator[](size_t const i)
+{
+  MAP_INDEX_TO_PLANE_DATA_FIELD(i);
+}
+#undef MAP_INDEX_TO_PLANE_DATA_FIELD
 
 } // namespace boomhs
 

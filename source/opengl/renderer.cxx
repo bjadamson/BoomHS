@@ -2,7 +2,6 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
-#include <boomhs/frustum.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/npc.hpp>

@@ -2,12 +2,12 @@
 
 #include <boomhs/billboard.hpp>
 #include <boomhs/components.hpp>
-#include <boomhs/frustum.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tree.hpp>
+#include <boomhs/view_frustum.hpp>
 
 #include <opengl/renderer.hpp>
 
@@ -138,7 +138,7 @@ draw_entity(RenderState& rstate, GLenum const dm, ShaderProgram& sp, EntityID co
 
   glm::mat4 const& view_mat = fstate.view_matrix();
   glm::mat4 const& proj_mat = fstate.projection_matrix();
-  if (!Frustum::bbox_inside(view_mat, proj_mat, transform, bbox)) {
+  if (!ViewFrustum::bbox_inside(view_mat, proj_mat, transform, bbox)) {
     return;
   }
 

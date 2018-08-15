@@ -20,13 +20,6 @@ struct PerspectiveViewport
   float far_plane;
 };
 
-struct OrthoProjection
-{
-  float left, right, bottom, top, far, near;
-
-  static OrthoProjection from_ints(int, int, int, int, int, int);
-};
-
 enum class CameraMode
 {
   ThirdPerson = 0,
@@ -55,7 +48,7 @@ class Camera
   CameraMode           mode_ = CameraMode::ThirdPerson;
 
   PerspectiveViewport perspective_;
-  OrthoProjection     ortho_;
+  Frustum             frustum_;
 
   void check_pointers() const;
   void zoom(float);
@@ -85,7 +78,6 @@ public:
   glm::vec3 eye_left() const { return -eye_right(); }
   glm::vec3 eye_right() const { return glm::normalize(glm::cross(eye_forward(), eye_up())); }
 
-  auto const& ortho() const { return ortho_; }
   auto const& perspective() const { return perspective_; }
 
   glm::vec3 world_forward() const { return glm::normalize(world_position() - target_position()); }
@@ -103,7 +95,7 @@ public:
 
   auto const& perspective_ref() const { return perspective_; }
   auto&       perspective_ref() { return perspective_; }
-  auto&       ortho_ref() { return ortho_; }
+  auto&       frustum_ref() { return frustum_; }
 
   Camera& rotate(float, float);
   void    set_target(WorldObject&);
@@ -111,11 +103,8 @@ public:
   // static fns
   static Camera make_defaultcamera(ScreenDimensions const&);
 
-  static glm::mat4
-  compute_projectionmatrix(CameraMode, PerspectiveViewport const&, OrthoProjection const&);
-
-  static glm::mat4 compute_viewmatrix(CameraMode, glm::vec3 const&, glm::vec3 const&,
-                                      glm::vec3 const&, glm::vec3 const&);
+  glm::mat4 compute_projectionmatrix() const;
+  glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
 };
 
 } // namespace boomhs

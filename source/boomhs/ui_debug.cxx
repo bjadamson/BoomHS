@@ -2,7 +2,6 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/frame.hpp>
-#include <boomhs/frustum.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/skybox.hpp>
@@ -11,6 +10,7 @@
 #include <boomhs/tree.hpp>
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_state.hpp>
+#include <boomhs/view_frustum.hpp>
 #include <boomhs/water.hpp>
 
 #include <opengl/global.hpp>
@@ -145,8 +145,8 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
       auto const& bbox = registry.get<AABoundingBox>(eid);
 
       // TODO: view/proj matrix
-      bool const bbox_inside = Frustum::bbox_inside(view_mat, proj_mat, tr, bbox);
-      std::string const msg = fmt::sprintf("In View Frustum: %i", bbox_inside);
+      bool const bbox_inside = ViewFrustum::bbox_inside(view_mat, proj_mat, tr, bbox);
+      std::string const msg = fmt::sprintf("In ViewFrustum: %i", bbox_inside);
       ImGui::Text("%s", msg.c_str());
     }
     if (ImGui::Button("Inhabit Selected")) {
@@ -561,14 +561,14 @@ draw_camera_window(Camera& camera, Player& player)
       ImGui::Text("Follow Target position:\nx: %f, y: %f, z: %f", tfp.x, tfp.y, tfp.z);
     }
   };
-  auto const draw_ortho_controls = [&]() {
-    auto& ortho = camera.ortho_ref();
-    ImGui::InputFloat("Left:", &ortho.left);
-    ImGui::InputFloat("Right:", &ortho.right);
-    ImGui::InputFloat("Bottom:", &ortho.bottom);
-    ImGui::InputFloat("Top:", &ortho.top);
-    ImGui::InputFloat("Far:", &ortho.far);
-    ImGui::InputFloat("Near:", &ortho.near);
+  auto const draw_frustum_fields = [&]() {
+    auto& frustum = camera.frustum_ref();
+    ImGui::InputFloat("Left:",   &frustum.left);
+    ImGui::InputFloat("Right:",  &frustum.right);
+    ImGui::InputFloat("Bottom:", &frustum.bottom);
+    ImGui::InputFloat("Top:",    &frustum.top);
+    ImGui::InputFloat("Far:",    &frustum.far);
+    ImGui::InputFloat("Near:",   &frustum.near);
   };
   auto const draw_fps_controls = [&]() {
     auto& perspective = camera.perspective_ref();
@@ -608,8 +608,8 @@ draw_camera_window(Camera& camera, Player& player)
       draw_thirdperson_controls();
       break;
     case CameraMode::Ortho:
-      draw_common("Ortho Projection");
-      draw_ortho_controls();
+      draw_common("View Frustum");
+      draw_frustum_fields();
       break;
     case CameraMode::FPS:
       draw_common("FPS Projection");

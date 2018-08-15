@@ -121,7 +121,7 @@ update_position(EngineState& es, ZoneState& zs, FrameTime const& ft)
     + movement.right
     + movement.mouse_forward;
 
-  if (move_dir != glm::vec3{0}) {
+  if (move_dir != math::constants::ZERO) {
     move_dir = glm::normalize(move_dir);
   }
   move_worldobject(es, player.world_object, move_dir, terrain, ft);

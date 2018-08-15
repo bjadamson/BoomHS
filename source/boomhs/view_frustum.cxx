@@ -1,4 +1,4 @@
-#include <boomhs/frustum.hpp>
+#include <boomhs/view_frustum.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/frame.hpp>
 
@@ -15,7 +15,7 @@ namespace boomhs
 {
 
 void
-Frustum::recalculate(glm::mat4 const& view_mat, glm::mat4 const& proj_mat)
+ViewFrustum::recalculate(glm::mat4 const& view_mat, glm::mat4 const& proj_mat)
 {
   glm::mat4 const clip = proj_mat * view_mat;
 
@@ -74,7 +74,7 @@ Frustum::recalculate(glm::mat4 const& view_mat, glm::mat4 const& proj_mat)
 }
 
 bool
-Frustum::cube_in_frustum(float const x, float const y, float const z, float const size) const
+ViewFrustum::cube_in_frustum(float const x, float const y, float const z, float const size) const
 {
   // This test is a bit more work, but not too much more complicated.
   // Basically, what is going on is, that we are given the center of the cube,
@@ -122,17 +122,17 @@ Frustum::cube_in_frustum(float const x, float const y, float const z, float cons
 }
 
 bool
-Frustum::cube_in_frustum(glm::vec3 const& pos, float const size) const
+ViewFrustum::cube_in_frustum(glm::vec3 const& pos, float const size) const
 {
   return cube_in_frustum(pos.x, pos.y, pos.z, size);
 }
 
 bool
-Frustum::bbox_inside(glm::mat4 const& view_mat, glm::mat4 const& proj_mat, Transform const& tr,
+ViewFrustum::bbox_inside(glm::mat4 const& view_mat, glm::mat4 const& proj_mat, Transform const& tr,
                      AABoundingBox const& bbox)
 {
   // TODO: only call recalulate when the camera moves
-  Frustum frust;
+  ViewFrustum frust;
   frust.recalculate(view_mat, proj_mat);
 
   auto const& cube            = bbox.cube;

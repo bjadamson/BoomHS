@@ -5,13 +5,13 @@
 #include <opengl/shader.hpp>
 
 #include <boomhs/camera.hpp>
-#include <boomhs/frustum.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/mesh.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/water.hpp>
+#include <boomhs/view_frustum.hpp>
 
 #include <window/timer.hpp> 
 #include <common/log.hpp>
@@ -62,7 +62,7 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
 
     glm::mat4 const& view_mat = fstate.view_matrix();
     glm::mat4 const& proj_mat = fstate.projection_matrix();
-    if (!Frustum::bbox_inside(view_mat, proj_mat, tr, bbox)) {
+    if (!ViewFrustum::bbox_inside(view_mat, proj_mat, tr, bbox)) {
       return;
     }
 

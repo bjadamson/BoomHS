@@ -14,30 +14,14 @@ namespace boomhs
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// OrthoProjection
-OrthoProjection
-OrthoProjection::from_ints(int const left, int const right, int const bottom, int const top,
-                           int const far, int const near)
-{
-  return OrthoProjection{
-    static_cast<float>(left),
-    static_cast<float>(right),
-    static_cast<float>(bottom),
-    static_cast<float>(top),
-    static_cast<float>(far),
-    static_cast<float>(near)
-  };
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 //// Camera
 Camera::Camera(ScreenDimensions const& dimensions, glm::vec3 const& forward, glm::vec3 const& up)
     : forward_(forward)
     , up_(up)
     , coordinates_(0.0f, 0.0f, 0.0f)
     , perspective_({110.0f, 4.0f / 3.0f, 0.1f, 2000.0f})
-    , ortho_(
-        OrthoProjection::from_ints(
+    , frustum_(
+        Frustum::from_ints(
           dimensions.left(),
           dimensions.right(),
           dimensions.top(),
@@ -218,16 +202,18 @@ Camera::make_defaultcamera(ScreenDimensions const& dimensions)
 }
 
 glm::mat4
-Camera::compute_projectionmatrix(CameraMode const mode, PerspectiveViewport const& p,
-                                 OrthoProjection const& o)
+Camera::compute_projectionmatrix() const
 {
+  auto const& p = perspective_;
+  auto const& f = frustum_;
   auto const fov = glm::radians(p.field_of_view);
-  switch (mode) {
+
+  switch (mode()) {
   case CameraMode::ThirdPerson:
   case CameraMode::FPS:
     return glm::perspective(fov, p.viewport_aspect_ratio, p.near_plane, p.far_plane);
   case CameraMode::Ortho: {
-    return glm::ortho(o.left, o.right, o.bottom, o.top, o.far, o.near);
+    return glm::ortho(f.left, f.right, f.bottom, f.top, f.far, f.near);
   }
   case CameraMode::MAX:
     break;
@@ -238,17 +224,18 @@ Camera::compute_projectionmatrix(CameraMode const mode, PerspectiveViewport cons
 }
 
 glm::mat4
-Camera::compute_viewmatrix(CameraMode const mode, glm::vec3 const& pos, glm::vec3 const& target,
-                           glm::vec3 const& up, glm::vec3 const& camera_forward)
+Camera::compute_viewmatrix(glm::vec3 const& pos) const
 {
-  auto constexpr ZERO = glm::vec3{0};
+  auto const& target  = get_target().transform().translation;
+  auto const& up      = eye_up();
+  auto const& forward = world_forward();
 
-  switch (mode) {
+  switch (mode()) {
     case CameraMode::Ortho: {
     return glm::lookAt(ZERO, target, Y_UNIT_VECTOR);
   }
   case CameraMode::FPS: {
-    return glm::lookAt(target, target + camera_forward, Y_UNIT_VECTOR);
+    return glm::lookAt(target, target + forward, Y_UNIT_VECTOR);
   }
   case CameraMode::ThirdPerson: {
     return glm::lookAt(pos, target, up);

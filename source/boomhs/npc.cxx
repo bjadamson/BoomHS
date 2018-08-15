@@ -36,7 +36,7 @@ generate_npc_position(common::Logger& logger, TerrainGrid const& terrain_grid,
   }
 
   std::abort();
-  return glm::vec3{0};
+  return math::constants::ZERO;
 }
 
 } // namespace

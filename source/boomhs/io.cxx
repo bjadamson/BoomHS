@@ -406,7 +406,7 @@ process_mousestate(GameState& state, Camera& camera, FrameTime const& ft)
     movement.mouse_forward = wo.world_forward();
   }
   else {
-    movement.mouse_forward = glm::vec3{0};
+    movement.mouse_forward = ZERO;
   }
 }
 
@@ -428,7 +428,6 @@ process_keystate(GameState& state, Camera& camera, FrameTime const& ft)
   auto& player = registry.get<Player>(player_eid);
   auto &movement = player.movement;
 
-  auto constexpr ZERO = glm::vec3{0};
   auto& wo = player.world_object;
 
   movement.forward = keystate[SDL_SCANCODE_W]
@@ -492,14 +491,14 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Cam
     player_wo.rotate_to_match_camera_rotation(camera);
   }
   else {
-    movement.left = glm::vec3{0};
+    movement.left = ZERO;
   }
   if (greater_threshold(axis_left_x)) {
     movement.right = player_wo.world_right();
     player_wo.rotate_to_match_camera_rotation(camera);
   }
   else {
-    movement.right = glm::vec3{0};
+    movement.right = ZERO;
   }
   auto const axis_left_y = c.axis_left_y();
   if (less_threshold(axis_left_y)) {
@@ -507,14 +506,14 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Cam
     player_wo.rotate_to_match_camera_rotation(camera);
   }
   else {
-    movement.forward = glm::vec3{0};
+    movement.forward = ZERO;
   }
   if (greater_threshold(axis_left_y)) {
     movement.backward = player_wo.world_backward();
     player_wo.rotate_to_match_camera_rotation(camera);
   }
   else {
-    movement.backward = glm::vec3{0};
+    movement.backward = ZERO;
   }
 
   auto constexpr CONTROLLER_SENSITIVITY = 0.01;
