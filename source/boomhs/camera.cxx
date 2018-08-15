@@ -35,7 +35,7 @@ Camera::Camera(ScreenDimensions const& dimensions, glm::vec3 const& forward, glm
     : forward_(forward)
     , up_(up)
     , coordinates_(0.0f, 0.0f, 0.0f)
-    , perspective_({70.0f, 4.0f / 3.0f, 0.1f, 2000.0f})
+    , perspective_({110.0f, 4.0f / 3.0f, 0.1f, 2000.0f})
     , ortho_(
         OrthoProjection::from_ints(
           dimensions.left(),

@@ -172,6 +172,12 @@ fragment = "water_advanced.frag"
 va = "water"
 
 [[shaders]]
+name = "frustum"
+vertex = "frustum.vert"
+fragment = "frustum.frag"
+va = "vertex_only"
+
+[[shaders]]
 name = "wireframe"
 vertex = "wireframe.vert"
 fragment = "wireframe.frag"

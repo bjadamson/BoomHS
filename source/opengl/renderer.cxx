@@ -586,6 +586,30 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
 }
 
 void
+draw_frustrum(RenderState& rstate, glm::mat4 const& view_mat, glm::mat4 const& proj_mat)
+{
+  glm::mat4 const inv_viewproj = glm::inverse(glm::mat3{proj_mat * view_mat});
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& logger = es.logger;
+
+  auto& zs  = fstate.zs;
+  auto& sps = zs.gfx_state.sps;
+
+  auto const cube_v = OF::cube_vertices(glm::vec3{-1.0}, glm::vec3{1.0});
+
+  auto& sp = sps.ref_sp("frustum");
+  auto dinfo = gpu::copy_cube_wireframe_gpu(logger, cube_v, sp.va());
+
+  sp.while_bound(logger, [&]() {
+      sp.set_uniform_matrix_4fv(logger, "u_invviewproj", inv_viewproj);
+      dinfo.while_bound(logger, [&]() {
+        render::draw(rstate, GL_LINES, sp, dinfo);
+      });
+  });
+}
+
+void
 draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& size,
                     ShaderProgram& sp, TextureInfo& ti)
 {

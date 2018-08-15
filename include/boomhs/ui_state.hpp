@@ -90,6 +90,7 @@ struct UiDebugState
   glm::vec3 last_mouse_clicked_pos;
 
   // window display state
+  bool lock_debugselected           = false;
   bool show_ambientlight_window     = false;
   bool show_camerawindow            = false;
   bool show_debugwindow             = true;

@@ -185,17 +185,20 @@ process_mousebutton_down(GameState& state, Player& player, SDL_MouseButtonEvent 
   auto& ms     = es.mouse_states.current;
 
   auto& zs = state.level_manager.active();
+  auto& uistate = es.ui_state.debug;
 
   auto const& button = event.button;
 
   if (ms.either_pressed()) {
     auto const cstate = CameraFrameState::from_camera(camera);
     FrameState fstate{cstate, es, zs};
-    if (ms.left_pressed()) {
-      select_mouse_under_cursor(fstate, MouseButton::LEFT);
-    }
-    else if (ms.right_pressed()) {
-      select_mouse_under_cursor(fstate, MouseButton::RIGHT);
+    if (!uistate.lock_debugselected) {
+      if (ms.left_pressed()) {
+        select_mouse_under_cursor(fstate, MouseButton::LEFT);
+      }
+      else if (ms.right_pressed()) {
+        select_mouse_under_cursor(fstate, MouseButton::RIGHT);
+      }
     }
   }
   if (button == SDL_BUTTON_MIDDLE) {

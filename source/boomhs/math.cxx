@@ -6,6 +6,22 @@
 namespace boomhs
 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Plane
+float
+Plane::dotproduct_with_vec3(Plane const& p, glm::vec3 const& v)
+{
+  return (p.a * v.x) + (p.b * v.y) + (p.c * v.z) + (p.d * 1.0);
+}
+
+float
+Plane::dotproduct_with_vec3(glm::vec3 const& v) const
+{
+  return Plane::dotproduct_with_vec3(*this, v);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Cube
 Cube::Cube(glm::vec3 const& minp, glm::vec3 const& maxp)
     : min(minp)
     , max(maxp)

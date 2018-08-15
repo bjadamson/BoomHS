@@ -24,6 +24,26 @@ struct Cube
   explicit Cube(glm::vec3 const&, glm::vec3 const&);
 };
 
+struct Plane
+{
+  // a => The X value of the plane's normal
+  // b => The Y value of the plane's normal
+  // c => The Z value of the plane's normal
+  // d => The distance the plane is from the origin
+  float a, b, c, d;
+
+  // Compute dot product of the plane and 3D vector.
+  // Given a plane (a, b, c, d) and a 3D vector (x, y, z) the return value of this function is:
+  //     a*x + b*y + c*z + d*1.
+  // The dotproduct_with_vec3 function is useful for determining the plane's relationship with a
+  // coordinate in 3D space.
+  //
+  // source:
+  // https://docs.microsoft.com/en-us/windows/desktop/direct3d9/d3dxplanedotcoord
+  float dotproduct_with_vec3(glm::vec3 const&) const;
+  static float dotproduct_with_vec3(Plane const&, glm::vec3 const&);
+};
+
 } // namespace boomhs
 
 namespace boomhs::math

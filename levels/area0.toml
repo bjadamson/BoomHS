@@ -115,52 +115,52 @@ min = [-0.4, -0.4, -0.4]
 max = [ 0.4,  0.4,  0.4]
 
 ###################################################################################################
-[[entity]]
-name = "house"
-material = "terrain"
-position = [6.0, 1.0, 6.0]
-shader = "3dtexture"
-geometry = "mesh:house"
-texture = "TextureAtlas"
-scale = [5.0, 5.0, 5.0]
-random_junk_from_file = true
+#[[entity]]
+#name = "house"
+#material = "terrain"
+#position = [6.0, 1.0, 6.0]
+#shader = "3dtexture"
+#geometry = "mesh:house"
+#texture = "TextureAtlas"
+#scale = [5.0, 5.0, 5.0]
+#random_junk_from_file = true
 
 [[entity]]
 name = "Tree0"
 material = "tree"
-position = [0.3, 0.0, 1.0]
+position = [0.3, 0.0, 10.0]
 shader = "3d_pos_normal_color"
 geometry = "mesh:tree_lowpoly"
 #scale = [15.0, 19.0, 8.0]
 scale = [1.0, 1.0, 1.0]
 random_junk_from_file = true
 
-[[entity]]
-name = "Tree1"
-material = "tree"
-position = [10.0, 0.0, 10.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree_lowpoly"
+#[[entity]]
+#name = "Tree1"
+#material = "tree"
+#position = [10.0, 0.0, 10.0]
+#shader = "3d_pos_normal_color"
+#geometry = "mesh:tree_lowpoly"
 #scale = [20.0, 20.0, 12.0]
-scale = [1.0, 1.0, 1.0]
-random_junk_from_file = true
+#scale = [1.0, 1.0, 1.0]
+#random_junk_from_file = true
 
-[[entity]]
-name = "Tree2"
-material = "tree"
-position = [15.0, 1.0, 18.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree2"
-#scale = [30.0, 30.0, 30.0]
-scale = [1.0, 1.0, 1.0]
-random_junk_from_file = true
+#[[entity]]
+#name = "Tree2"
+#material = "tree"
+#position = [15.0, 1.0, 18.0]
+#shader = "3d_pos_normal_color"
+#geometry = "mesh:tree2"
+##scale = [30.0, 30.0, 30.0]
+#scale = [1.0, 1.0, 1.0]
+#random_junk_from_file = true
 
-[[entity]]
-name = "Tree2"
-material = "tree"
-position = [40.0, 40.0, 40.0]
-shader = "3d_pos_normal_color"
-geometry = "mesh:tree2"
+#[[entity]]
+#name = "Tree2"
+#material = "tree"
+#position = [40.0, 40.0, 40.0]
+#shader = "3d_pos_normal_color"
+#geometry = "mesh:tree2"
 #scale = [40.0, 40.0, 40.0]
-scale = [1.0, 1.0, 1.0]
-random_junk_from_file = true
+#scale = [1.0, 1.0, 1.0]
+#random_junk_from_file = true

@@ -109,6 +109,14 @@ void
 draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, Camera& camera,
                    glm::mat4 const& view_mat, glm::mat4 const& proj_mat)
 {
+  auto& logger    = es.logger;
+  auto& zs        = lm.active();
+  auto& gfx_state = zs.gfx_state;
+  auto& draw_handles = gfx_state.draw_handles;
+  auto& sps       = gfx_state.sps;
+
+  auto& uistate   = es.ui_state.debug;
+
   auto const draw = [&]() {
     std::optional<EntityID> selected;
     for (auto const eid : find_all_entities_with_component<Selectable>(registry)) {
@@ -124,6 +132,7 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
     if (!selected) {
       return;
     }
+    ImGui::Checkbox("Lock Selected", &uistate.lock_debugselected);
     auto const eid = *selected;
 
     {
@@ -169,12 +178,6 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
       }
       ImGui::InputFloat3("scale:", glm::value_ptr(transform.scale));
     }
-
-    auto& logger    = es.logger;
-    auto& zs        = lm.active();
-    auto& gfx_state = zs.gfx_state;
-    auto& draw_handles = gfx_state.draw_handles;
-    auto& sps       = gfx_state.sps;
 
     if (registry.has<TreeComponent>(eid) && ImGui::CollapsingHeader("Tree Editor")) {
       auto const make_str = [](char const* text, auto const num) {

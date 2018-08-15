@@ -44,6 +44,8 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm,
     render::draw_local_axis(rstate, player.world_position());
   }
 
+  render::draw_frustrum(rstate, fstate.view_matrix(), fstate.projection_matrix());
+
   {
     auto const  eid = find_player(registry);
     auto const& inv = registry.get<Player>(eid).inventory;

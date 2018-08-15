@@ -151,10 +151,10 @@ StartAreaGenerator::gen_level(common::Logger& logger, EntityRegistry& registry,
   place_player(logger, terrain, material_table, registry);
 
   LOG_TRACE("placing monsters ...\n");
-  place_monsters(logger, terrain, registry, rng);
+  //place_monsters(logger, terrain, registry, rng);
 
   LOG_TRACE("placing water ...\n");
-  place_waters(logger, sps, registry, ttable, rng);
+  //place_waters(logger, sps, registry, ttable, rng);
 
   LOG_TRACE("finished generating starting area!");
   return LevelGeneratedData{MOVE(terrain)};
