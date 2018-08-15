@@ -1,6 +1,7 @@
 #include <opengl/entity_renderer.hpp>
 
 #include <boomhs/billboard.hpp>
+#include <boomhs/frustum.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/orbital_body.hpp>
@@ -113,22 +114,6 @@ draw_entity_common_without_binding_sp(RenderState& rstate, GLenum const dm, Shad
   vao.while_bound(logger, draw);
 }
 
-bool
-bbox_in_frustrum(FrameState const& fstate, AABoundingBox const& bbox)
-{
-  /*
-  // TODO: only call recalulate when the camera moves
-  Frustum view_frust;
-  view_frust.recalculate(fstate);
-
-  float const halfsize        = glm::length(bbox.max - bbox.min) / 2.0f;
-  bool const  bbox_in_frustum = view_frust.cube_in_frustum(tr, halfsize);
-
-  return bbox_in_frustrum;
-  */
-  return false;
-}
-
 // This function performs more work than just drawing the shapes directly.
 //
 // 1. It checks if the entity is visible, returning early if it is.
@@ -151,7 +136,7 @@ draw_entity(RenderState& rstate, GLenum const dm, ShaderProgram& sp, EntityID co
   auto& logger    = es.logger;
   auto& zs        = fstate.zs;
 
-  if (bbox_in_frustrum(fstate, bbox)) {
+  if (!Frustum::bbox_inside(fstate, bbox)) {
     return;
   }
 

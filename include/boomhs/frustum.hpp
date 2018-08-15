@@ -4,6 +4,7 @@
 
 namespace boomhs
 {
+struct AABoundingBox;
 struct FrameState;
 
 // We create an enum of the sides so we don't have to call each side 0 or 1.
@@ -45,6 +46,8 @@ public:
   // This takes the center and half the length of the cube.
   bool cube_in_frustum(float, float, float, float size) const;
   bool cube_in_frustum(glm::vec3 const&, float size) const;
+
+  static bool bbox_inside(FrameState const&, AABoundingBox const&);
 };
 
 } // namespace boomhs

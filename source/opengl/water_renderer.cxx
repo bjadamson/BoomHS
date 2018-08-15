@@ -5,6 +5,7 @@
 #include <opengl/shader.hpp>
 
 #include <boomhs/camera.hpp>
+#include <boomhs/frustum.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/mesh.hpp>
@@ -12,8 +13,7 @@
 #include <boomhs/terrain.hpp>
 #include <boomhs/water.hpp>
 
-#include <window/timer.hpp>
-
+#include <window/timer.hpp> 
 #include <common/log.hpp>
 #include <boomhs/random.hpp>
 
@@ -57,6 +57,10 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
     if (!registry.get<IsVisible>(eid).value) {
       return;
     }
+    if (!Frustum::bbox_inside(fstate, registry.get<AABoundingBox>(winfo.eid))) {
+      return;
+    }
+
     auto const &tr = registry.get<Transform>(eid);
 
     winfo.wave_offset += ft.delta_seconds() * wind.speed;

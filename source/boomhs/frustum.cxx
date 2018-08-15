@@ -1,4 +1,5 @@
 #include <boomhs/frustum.hpp>
+#include <boomhs/components.hpp>
 #include <boomhs/frame.hpp>
 #include <cmath>
 
@@ -172,6 +173,22 @@ bool
 Frustum::cube_in_frustum(glm::vec3 const& pos, float const size) const
 {
   return cube_in_frustum(pos.x, pos.y, pos.z, size);
+}
+
+bool
+Frustum::bbox_inside(FrameState const& fstate, AABoundingBox const& bbox)
+{
+  // TODO: only call recalulate when the camera moves
+  Frustum frust;
+  frust.recalculate(fstate);
+  /*
+
+  float const halfsize        = glm::length(bbox.max - bbox.min) / 2.0f;
+  bool const  bbox_in_frustum = view_frust.cube_in_frustum(tr, halfsize);
+
+  return bbox_in_frustrum;
+  */
+  return true;
 }
 
 } // namespace boomhs
