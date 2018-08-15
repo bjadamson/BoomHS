@@ -32,6 +32,9 @@ struct Plane
   // d => The distance the plane is from the origin
   float a, b, c, d;
 
+  float const& operator[](size_t) const;
+  float&       operator[](size_t);
+
   // Compute dot product of the plane and 3D vector.
   // Given a plane (a, b, c, d) and a 3D vector (x, y, z) the return value of this function is:
   //     a*x + b*y + c*z + d*1.
@@ -40,11 +43,20 @@ struct Plane
   //
   // source:
   // https://docs.microsoft.com/en-us/windows/desktop/direct3d9/d3dxplanedotcoord
-  float dotproduct_with_vec3(glm::vec3 const&) const;
+  float        dotproduct_with_vec3(glm::vec3 const&) const;
   static float dotproduct_with_vec3(Plane const&, glm::vec3 const&);
+
+  void normalize();
 };
 
 } // namespace boomhs
+
+namespace boomhs::math::constants
+{
+glm::vec3 constexpr X_UNIT_VECTOR{1.0f, 0.0f, 0.0f};
+glm::vec3 constexpr Y_UNIT_VECTOR{0.0f, 1.0f, 0.0f};
+glm::vec3 constexpr Z_UNIT_VECTOR{0.0f, 0.0f, 1.0f};
+} // namespace boomhs::math::constants
 
 namespace boomhs::math
 {

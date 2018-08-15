@@ -1,6 +1,6 @@
 #pragma once
-#include <common/type_macros.hpp>
 #include <boomhs/math.hpp>
+#include <common/type_macros.hpp>
 
 namespace boomhs
 {
@@ -37,8 +37,8 @@ public:
   bool cube_in_frustum(float, float, float, float size) const;
   bool cube_in_frustum(glm::vec3 const&, float size) const;
 
-  static bool bbox_inside(glm::mat4 const&, glm::mat4 const&, Transform const&,
-                          AABoundingBox const&);
+  static bool
+  bbox_inside(glm::mat4 const&, glm::mat4 const&, Transform const&, AABoundingBox const&);
 };
 
 } // namespace boomhs

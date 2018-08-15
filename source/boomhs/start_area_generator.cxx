@@ -1,20 +1,23 @@
 #include <boomhs/item_factory.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/heightmap.hpp>
+#include <boomhs/math.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/leveldata.hpp>
+#include <boomhs/lighting.hpp>
 #include <boomhs/player.hpp>
+#include <boomhs/random.hpp>
 #include <boomhs/start_area_generator.hpp>
 #include <boomhs/terrain.hpp>
 
-#include <algorithm>
-#include <opengl/constants.hpp>
-#include <boomhs/lighting.hpp>
 #include <opengl/texture.hpp>
+
 #include <common/os.hpp>
-#include <boomhs/random.hpp>
+
+#include <algorithm>
 
 using namespace boomhs;
+using namespace boomhs::math::constants;
 using namespace opengl;
 
 static auto constexpr MIN_MONSTERS_PER_FLOOR = 15;

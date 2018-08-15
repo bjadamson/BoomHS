@@ -43,6 +43,16 @@ struct AABoundingBox
                             glm::vec3 const&, glm::vec3 const&);
 };
 
+struct OrbitalBody
+{
+  glm::vec3 radius;
+
+  // Initial orbit offset for the body.
+  float offset = 0.0f;
+
+  explicit OrbitalBody(glm::vec3 const&, float);
+};
+
 struct Name
 {
   std::string value;
@@ -113,8 +123,14 @@ struct MeshRenderable
 {
   std::string name;
 
-  MeshRenderable(std::string&& n) : name(MOVE(n)) {}
-  MeshRenderable(std::string const& n) : name(n) {}
+  MeshRenderable(std::string&& n)
+      : name(MOVE(n))
+  {
+  }
+  MeshRenderable(std::string const& n)
+      : name(n)
+  {
+  }
 };
 
 struct TextureRenderable
@@ -140,9 +156,6 @@ find_all_entities_with_component(EntityRegistry& registry)
 inline auto
 all_nearby_entities(glm::vec3 const& pos, float const max_distance, EntityRegistry& registry)
 {
-  using namespace boomhs;
-  using namespace opengl;
-
   std::vector<EntityID> entities;
   auto const            view = registry.view<Transform>();
   for (auto const e : view) {
@@ -157,10 +170,13 @@ all_nearby_entities(glm::vec3 const& pos, float const max_distance, EntityRegist
 inline auto
 find_pointlights(EntityRegistry& registry)
 {
-  using namespace boomhs;
-  using namespace opengl;
-
   return find_all_entities_with_component<PointLight>(registry);
+}
+
+inline auto
+find_orbital_bodies(EntityRegistry& registry)
+{
+  return find_all_entities_with_component<OrbitalBody>(registry);
 }
 
 } // namespace boomhs

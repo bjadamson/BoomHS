@@ -66,7 +66,6 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
       return;
     }
 
-
     winfo.wave_offset += ft.delta_seconds() * wind.speed;
     winfo.wave_offset = ::fmodf(winfo.wave_offset, 1.00f);
 

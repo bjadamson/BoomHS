@@ -648,7 +648,7 @@ draw_player_window(EngineState& es, WorldObject& player)
       player.set_speed(speed);
     }
 
-    glm::quat const quat = glm::angleAxis(glm::radians(0.0f), Y_UNIT_VECTOR);
+    glm::quat const quat = glm::angleAxis(glm::radians(0.0f), math::constants::Y_UNIT_VECTOR);
     float const     dot  = glm::dot(player.orientation(), quat);
     ImGui::Text("dot product: %f", dot);
   };

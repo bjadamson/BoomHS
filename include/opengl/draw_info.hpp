@@ -84,7 +84,10 @@ struct DrawInfoHandle
 
   value_type value;
 
-  explicit DrawInfoHandle(value_type const v) : value(v) {}
+  explicit DrawInfoHandle(value_type const v)
+      : value(v)
+  {
+  }
 };
 
 class DrawHandleManager;
@@ -103,13 +106,16 @@ class EntityDrawHandleMap
 
   bool empty() const { return drawinfos_.empty(); }
   bool has(DrawInfoHandle) const;
-  auto size() const { assert(drawinfos_.size() == entities_.size()); return drawinfos_.size(); }
+  auto size() const
+  {
+    assert(drawinfos_.size() == entities_.size());
+    return drawinfos_.size();
+  }
 
   DrawInfo const& get(DrawInfoHandle) const;
-  DrawInfo& get(DrawInfoHandle);
+  DrawInfo&       get(DrawInfoHandle);
 
   std::optional<DrawInfoHandle> find(boomhs::EntityID) const;
-
 };
 
 class DrawHandleManager

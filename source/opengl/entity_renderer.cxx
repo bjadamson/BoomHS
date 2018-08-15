@@ -1,10 +1,10 @@
 #include <opengl/entity_renderer.hpp>
 
 #include <boomhs/billboard.hpp>
+#include <boomhs/components.hpp>
 #include <boomhs/frustum.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/material.hpp>
-#include <boomhs/orbital_body.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/tree.hpp>

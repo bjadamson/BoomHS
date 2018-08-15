@@ -20,10 +20,7 @@ namespace boomhs
 
 class MouseState
 {
-  auto mask() const
-  {
-    return SDL_GetMouseState(nullptr, nullptr);
-  }
+  auto mask() const { return SDL_GetMouseState(nullptr, nullptr); }
 
 public:
   MouseSensitivity sensitivity{0.002f, 0.002f};

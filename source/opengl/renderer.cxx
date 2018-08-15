@@ -4,6 +4,7 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/frustum.hpp>
 #include <boomhs/material.hpp>
+#include <boomhs/math.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
@@ -26,6 +27,7 @@
 #include <boomhs/random.hpp>
 
 using namespace boomhs;
+using namespace boomhs::math::constants;
 using namespace opengl;
 using namespace window;
 

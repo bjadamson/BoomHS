@@ -26,8 +26,7 @@ bool
 ray_cube_intersect(Ray const&, Transform const&, Cube const&, float&);
 
 bool
-cube_intersects(common::Logger&, Transform const&, Cube const&, Transform const&,
-                Cube const&);
+cube_intersects(common::Logger&, Transform const&, Cube const&, Transform const&, Cube const&);
 
 // algorithm adapted from:
 // http://www.opengl-tutorial.org/kr/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/

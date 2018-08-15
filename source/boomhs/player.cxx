@@ -3,6 +3,7 @@
 #include <boomhs/inventory.hpp>
 #include <boomhs/item.hpp>
 #include <boomhs/item_factory.hpp>
+#include <boomhs/math.hpp>
 #include <boomhs/nearby_targets.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
@@ -10,6 +11,7 @@
 #include <boomhs/terrain.hpp>
 
 using namespace boomhs;
+using namespace boomhs::math::constants;
 using namespace opengl;
 using namespace window;
 
@@ -31,7 +33,7 @@ kill_entity(common::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
 
   // TODO: Get the normal vector for the terrain at the (x, z) point and rotate the npc to look
   // properly aligned on slanted terrain.
-  entity_transform.rotate_degrees(90.0f, opengl::X_UNIT_VECTOR);
+  entity_transform.rotate_degrees(90.0f, X_UNIT_VECTOR);
 }
 
 void

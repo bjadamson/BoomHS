@@ -1,8 +1,8 @@
 #include <boomhs/audio.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/components.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/main_menu.hpp>
-#include <boomhs/orbital_body.hpp>
 #include <boomhs/state.hpp>
 #include <opengl/colors.hpp>
 #include <window/sdl_window.hpp>

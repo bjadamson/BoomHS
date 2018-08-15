@@ -4,7 +4,6 @@
 #include <boomhs/level_loader.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/obj.hpp>
-#include <boomhs/orbital_body.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/tree.hpp>
 #include <boomhs/water.hpp>
@@ -508,11 +507,7 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &
       transform.scale = *scale_o;
     }
     if (rotation_o) {
-      // TODO: simplify
-      glm::vec3 const rotation = *rotation_o;
-      transform.rotate_degrees(rotation.x, opengl::X_UNIT_VECTOR);
-      transform.rotate_degrees(rotation.y, opengl::Y_UNIT_VECTOR);
-      transform.rotate_degrees(rotation.z, opengl::Z_UNIT_VECTOR);
+      transform.rotate_xyz_degrees(*rotation_o);
     }
 
     if (random_junk) {
@@ -523,10 +518,10 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &
       auto const x      = get_float_or_abort(orbital_o, "x");
       auto const y      = get_float_or_abort(orbital_o, "y");
       auto const z      = get_float_or_abort(orbital_o, "z");
-      auto const offset = get_float(orbital_o, "offset").value_or(0.0);
 
-      auto&      orbital = registry.assign<OrbitalBody>(eid);
-      orbital = OrbitalBody{x, y, z, offset};;
+      auto const radius = glm::vec3{x, y, z};
+      auto const offset = get_float(orbital_o, "offset").value_or(0.0);
+      registry.assign<OrbitalBody>(eid, radius, offset);
     }
 
     if (geometry == "cube") {

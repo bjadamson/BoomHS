@@ -20,6 +20,13 @@ struct Transform
   {
     rotation = glm::angleAxis(glm::radians(degrees), axis) * rotation;
   }
+
+  void rotate_xyz_degrees(glm::vec3 const& rot)
+  {
+    rotate_degrees(rot.x, math::constants::X_UNIT_VECTOR);
+    rotate_degrees(rot.y, math::constants::Y_UNIT_VECTOR);
+    rotate_degrees(rot.z, math::constants::Z_UNIT_VECTOR);
+  }
 };
 
 } // namespace boomhs

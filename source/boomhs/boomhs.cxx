@@ -15,7 +15,6 @@
 #include <boomhs/mouse.hpp>
 #include <boomhs/mouse_picker.hpp>
 #include <boomhs/npc.hpp>
-#include <boomhs/orbital_body.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/rexpaint.hpp>
 #include <boomhs/state.hpp>
@@ -53,6 +52,7 @@
 #include <string>
 
 using namespace boomhs;
+using namespace boomhs::math::constants;
 using namespace opengl;
 using namespace window;
 
@@ -179,9 +179,9 @@ update_orbital_bodies(EngineState& es, LevelData& ldata, glm::mat4 const& view_m
     float const cos_time           = std::cos(time + orbital.offset);
     float const sin_time           = std::sin(time + orbital.offset);
 
-    pos.x = orbital.x_radius * cos_time;
-    pos.y = orbital.y_radius * sin_time;
-    pos.z = orbital.z_radius * sin_time;
+    pos.x = orbital.radius.x * cos_time;
+    pos.y = orbital.radius.y * sin_time;
+    pos.z = orbital.radius.z * sin_time;
 
     // TODO: HACK
     if (first) {
@@ -364,7 +364,7 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
 
         auto const& target_pos = registry.get<Transform>(target_eid).translation;
         item_tr.translation = target_pos;
-        item_tr.rotate_degrees(90, opengl::X_UNIT_VECTOR);
+        item_tr.rotate_degrees(90, X_UNIT_VECTOR);
         auto const& item_name = registry.get<Name>(item_eid).value;
         LOG_ERROR_SPRINTF("ADDING item %s AT xyz: %s", item_name, glm::to_string(item_tr.translation));
 
@@ -459,7 +459,9 @@ add_orbitalbodies_and_water(EngineState& es, ZoneState& zs)
   auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
 
   for (auto const eid : registry.view<OrbitalBody>()) {
-    OrbitalBody::add_to_entity(logger, sps, eid, registry);
+    auto constexpr MIN = glm::vec3{-1.0f};
+    auto constexpr MAX = glm::vec3{-1.0f};
+    AABoundingBox::add_to_entity(logger, sps, eid, registry, MIN, MAX);
   }
   for (auto const eid : registry.view<WaterInfo>()) {
     {

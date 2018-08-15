@@ -12,6 +12,8 @@ using namespace opengl;
 namespace boomhs
 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// AABoundingBox
 AABoundingBox::AABoundingBox(glm::vec3 const& minp, glm::vec3 const& maxp,
                              opengl::DrawInfo&& dinfo)
     : cube(Cube{minp, maxp})
@@ -30,6 +32,14 @@ AABoundingBox::add_to_entity(common::Logger& logger, ShaderPrograms& sps, Entity
   registry.assign<AABoundingBox>(eid, min, max, MOVE(dinfo));
 
   registry.assign<Selectable>(eid);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// OrbitalBody
+OrbitalBody::OrbitalBody(glm::vec3 const& r, float const o)
+    : radius(r)
+    , offset(o)
+{
 }
 
 } // namespace boomhs

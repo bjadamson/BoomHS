@@ -4,10 +4,10 @@
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
 
-#include <opengl/constants.hpp>
 #include <boomhs/math.hpp>
 #include <extlibs/imgui.hpp>
 
+using namespace boomhs::math::constants;
 using namespace opengl;
 
 namespace boomhs

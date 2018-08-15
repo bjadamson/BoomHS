@@ -24,6 +24,7 @@ float constexpr SCALE_FACTOR  = 0.20f;
 float constexpr ZOOM_FACTOR   = 0.2f;
 
 using namespace boomhs;
+using namespace boomhs::math::constants;
 using namespace opengl;
 using namespace window;
 
@@ -109,7 +110,7 @@ process_mousemotion(GameState& state, Player& player, SDL_MouseMotionEvent const
 
       auto const x_dt     = angle * ft.delta_millis();
       auto constexpr y_dt = 0.0f;
-      wo.rotate_degrees(x_dt, opengl::Y_UNIT_VECTOR);
+      wo.rotate_degrees(x_dt, Y_UNIT_VECTOR);
     }
   }
 }
@@ -353,10 +354,10 @@ process_keydown(GameState& state, Player& player, SDL_Event const& event, Camera
     break;
   }
   case SDLK_LEFT:
-    rotate_player(90.0f, opengl::Y_UNIT_VECTOR);
+    rotate_player(90.0f, Y_UNIT_VECTOR);
     break;
   case SDLK_RIGHT:
-    rotate_player(-90.0f, opengl::Y_UNIT_VECTOR);
+    rotate_player(-90.0f, Y_UNIT_VECTOR);
     break;
   }
 }
