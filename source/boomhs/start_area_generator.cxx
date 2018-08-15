@@ -103,8 +103,6 @@ place_waters(common::Logger& logger, ShaderPrograms& sps, EntityRegistry& regist
 
     auto& wi        = WaterFactory::make_default(logger, sps, ttable, eid, registry);
     wi.mix_color    = Color::random(rng);
-    wi.dimensions   = glm::vec2{20};
-    wi.num_vertexes = 4;
 
     auto& tr = registry.get<Transform>(eid);
     tr.translation.x = pos.x;

@@ -88,8 +88,10 @@ WaterFactory::make_default(common::Logger& logger, ShaderPrograms& sps, TextureT
   });
   LOG_TRACE("Finished generating water");
 
-  auto& winfo = registry.assign<WaterInfo>(eid);
-  winfo.tinfo = &ti;
+  auto& wi = registry.assign<WaterInfo>(eid);
+  wi.tinfo = &ti;
+  wi.dimensions   = glm::vec2{20};
+  wi.num_vertexes = 4;
 
   registry.assign<IsVisible>(eid).value = true;
   auto& tr = registry.assign<Transform>(eid);
@@ -97,15 +99,15 @@ WaterFactory::make_default(common::Logger& logger, ShaderPrograms& sps, TextureT
   // hack
   tr.translation.y = 0.19999f;
 
-  auto const xdim = winfo.dimensions.x;
-  auto const zdim = winfo.dimensions.y;
+  auto const xdim = wi.dimensions.x;
+  auto const zdim = wi.dimensions.y;
   auto constexpr WATER_HEIGHT = 0.2f;
 
   auto const min = glm::vec3{0, -WATER_HEIGHT, 0};
   auto const max = glm::vec3{ xdim,  WATER_HEIGHT,  zdim};
   AABoundingBox::add_to_entity(logger, sps, eid, registry, min, max);
 
-  return winfo;
+  return wi;
 }
 
 } // namespace boomhs
