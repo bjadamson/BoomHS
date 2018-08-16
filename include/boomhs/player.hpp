@@ -28,13 +28,6 @@ class NearbyTargets;
 class TerrainGrid;
 struct ZoneState;
 
-struct PlayerMovement
-{
-  glm::vec3 forward, backward, left, right;
-
-  glm::vec3 mouse_forward;
-};
-
 class Player
 {
   GCD gcd;
@@ -44,9 +37,6 @@ public:
   HealthPoints hp{44, 50};
   int          level = -1;
   std::string  name;
-
-  // Current movement vector
-  PlayerMovement movement;
 
   bool is_attacking = false;
   int  damage       = 1;

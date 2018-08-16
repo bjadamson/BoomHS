@@ -84,7 +84,7 @@ class CameraFPS
   glm::vec3 forward_, up_;
   Transform transform;
 
-  Viewport&     viewport_;
+  Viewport& viewport_;
 
   friend class Camera;
 

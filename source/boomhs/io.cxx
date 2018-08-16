@@ -187,7 +187,6 @@ process_keyup(GameState& state, Player& player, SDL_Event const& event, Camera& 
   auto& logger = es.logger;
 
   auto& wo = player.world_object;
-  auto& movement = player.movement;
 
   switch (event.key.keysym.sym) {
     break;
@@ -212,7 +211,6 @@ process_keydown(GameState& state, Player& player, SDL_Event const& event, Camera
   auto& ingame = uistate.ingame;
   auto& chat_state = ingame.chat_state;
   auto& player_wo = player.world_object;
-  auto& movement = player.movement;
 
   auto const rotate_player = [&](float const angle, glm::vec3 const& axis) {
     player_wo.rotate_degrees(angle, axis);
@@ -364,7 +362,7 @@ process_mousestate(GameState& state, Camera& camera, FrameTime const& ft)
   auto& player = registry.get<Player>(player_eid);
   auto& wo = player.world_object;
 
-  auto& movement = player.movement;
+  auto& movement = es.movement_state;
   if (both_yes_now) {
     wo.rotate_to_match_camera_rotation(camera);
     movement.mouse_forward = wo.world_forward();
@@ -390,8 +388,8 @@ process_keystate(GameState& state, Camera& camera, FrameTime const& ft)
 
   auto const player_eid = find_player(registry);
   auto& player = registry.get<Player>(player_eid);
-  auto &movement = player.movement;
 
+  auto& movement = es.movement_state;
   auto& wo = player.world_object;
 
   movement.forward = keystate[SDL_SCANCODE_W]
@@ -448,7 +446,7 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Cam
     return v >= 0 && (v >= AXIS_MAX * THRESHOLD);
   };
 
-  auto& movement = player.movement;
+  auto& movement = es.movement_state;
   auto const axis_left_x = c.axis_left_x();
   if (less_threshold(axis_left_x)) {
     movement.left = player_wo.world_left();

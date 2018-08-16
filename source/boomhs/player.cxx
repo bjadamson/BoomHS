@@ -112,7 +112,7 @@ update_position(EngineState& es, ZoneState& zs, FrameTime const& ft)
   auto& registry = zs.registry;
   auto const player_eid = find_player(registry);
   auto& player = registry.get<Player>(player_eid);
-  auto const& movement = player.movement;
+  auto const& movement = es.movement_state;
 
   // Move the player forward along the it's movement direction
   auto move_dir = movement.forward

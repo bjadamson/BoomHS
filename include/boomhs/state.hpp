@@ -53,6 +53,13 @@ struct WindowState
   window::SwapIntervalFlag sync       = window::SwapIntervalFlag::SYNCHRONIZED;
 };
 
+struct MovementState
+{
+  glm::vec3 forward, backward, left, right;
+
+  glm::vec3 mouse_forward;
+};
+
 struct EngineState
 {
   common::Logger&        logger;
@@ -70,6 +77,9 @@ struct EngineState
   MouseStates mouse_states = {};
   WindowState window_state = {};
   UiState     ui_state     = {};
+
+  // Current player movement vector
+  MovementState movement_state = {};
 
   bool disable_controller_input;
   bool player_collision;
