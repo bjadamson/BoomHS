@@ -178,11 +178,14 @@ struct WorldOriginArrows
 WorldOriginArrows
 create_axis_arrows(common::Logger &logger, VertexAttribute const& va)
 {
-  glm::vec3 constexpr ORIGIN = glm::zero<glm::vec3>();
+  auto constexpr ORIGIN = math::constants::ZERO;
+  ArrowCreateParams constexpr acx{LOC::RED,   ORIGIN, X_UNIT_VECTOR};
+  ArrowCreateParams constexpr acy{LOC::GREEN, ORIGIN, Y_UNIT_VECTOR};
+  ArrowCreateParams constexpr acz{LOC::BLUE,  ORIGIN, Z_UNIT_VECTOR};
 
-  auto const avx = ArrowFactory::create_vertices(ArrowCreateParams{LOC::RED,   ORIGIN, ORIGIN + X_UNIT_VECTOR});
-  auto const avy = ArrowFactory::create_vertices(ArrowCreateParams{LOC::GREEN,   ORIGIN, ORIGIN + Y_UNIT_VECTOR});
-  auto const avz = ArrowFactory::create_vertices(ArrowCreateParams{LOC::BLUE,   ORIGIN, ORIGIN + Z_UNIT_VECTOR});
+  auto const avx = ArrowFactory::create_vertices(acx);
+  auto const avy = ArrowFactory::create_vertices(acy);
+  auto const avz = ArrowFactory::create_vertices(acz);
 
   auto x = OG::copy_arrow(logger, va, avx);
   auto y = OG::copy_arrow(logger, va, avy);
@@ -558,14 +561,12 @@ draw_global_axis(RenderState& rstate)
   Transform   transform;
 
   auto const draw_axis_arrow = [&](DrawInfo& dinfo) {
-    dinfo.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
+    dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_LINES, sp, dinfo); });
   };
 
   sp.while_bound(logger, [&]() {
     auto const camera_matrix = fstate.camera_matrix();
     set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
-
-    // assume for now they all share the same VAO layout
     draw_axis_arrow(world_arrows.x_dinfo);
     draw_axis_arrow(world_arrows.y_dinfo);
     draw_axis_arrow(world_arrows.z_dinfo);
@@ -593,17 +594,18 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
 
   auto const& ldata = zs.level_data;
 
+  auto const bind_and_draw = [&](auto& dinfo) {
+    dinfo.while_bound(logger, [&]() {
+        draw(rstate, GL_LINES, sp, dinfo);
+        });
+  };
+
   sp.while_bound(logger, [&]() {
     auto const camera_matrix = fstate.camera_matrix();
     set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
-
-    // assume for now they all share the same VAO layout
-    auto& dinfo = axis_arrows.x_dinfo;
-    dinfo.while_bound(logger, [&]() {
-      draw(rstate, GL_LINES, sp, axis_arrows.x_dinfo);
-      draw(rstate, GL_LINES, sp, axis_arrows.y_dinfo);
-      draw(rstate, GL_LINES, sp, axis_arrows.z_dinfo);
-    });
+    bind_and_draw(axis_arrows.x_dinfo);
+    bind_and_draw(axis_arrows.y_dinfo);
+    bind_and_draw(axis_arrows.z_dinfo);
   });
 
   LOG_TRACE("Finished Drawing Local Axis");
