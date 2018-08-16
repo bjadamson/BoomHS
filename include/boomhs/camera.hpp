@@ -12,12 +12,27 @@ namespace boomhs
 class ScreenDimensions;
 struct WorldObject;
 
-struct PerspectiveViewport
+class AspectRatio
 {
-  float field_of_view;
-  float viewport_aspect_ratio;
-  float near_plane;
-  float far_plane;
+  float n, d;
+  std::array<float, 2> nd_;
+public:
+  explicit AspectRatio(float const np, float const dp)
+      : nd_({np , dp})
+  {
+  }
+
+  float compute() const { return nd_[0] / nd_[1]; }
+
+  float* data() { return nd_.data(); }
+  float const* data() const { return nd_.data(); }
+};
+
+struct Viewport
+{
+  AspectRatio aspect_ratio;
+  float       field_of_view;
+  Frustum     frustum;
 };
 
 enum class CameraMode
@@ -47,8 +62,7 @@ class Camera
   SphericalCoordinates coordinates_;
   CameraMode           mode_ = CameraMode::ThirdPerson;
 
-  PerspectiveViewport perspective_;
-  Frustum             frustum_;
+  Viewport viewport_;
 
   void check_pointers() const;
   void zoom(float);
@@ -78,8 +92,6 @@ public:
   glm::vec3 eye_left() const { return -eye_right(); }
   glm::vec3 eye_right() const { return glm::normalize(glm::cross(eye_forward(), eye_up())); }
 
-  auto const& perspective() const { return perspective_; }
-
   glm::vec3 world_forward() const { return glm::normalize(world_position() - target_position()); }
 
   SphericalCoordinates spherical_coordinates() const { return coordinates_; }
@@ -93,9 +105,9 @@ public:
   void decrease_zoom(float);
   void increase_zoom(float);
 
-  auto const& perspective_ref() const { return perspective_; }
-  auto&       perspective_ref() { return perspective_; }
-  auto&       frustum_ref() { return frustum_; }
+  auto const& viewport_ref() const { return viewport_; }
+  auto&       viewport_ref() { return viewport_; }
+  auto&       frustum_ref() { return viewport_.frustum; }
 
   Camera& rotate(float, float);
   void    set_target(WorldObject&);

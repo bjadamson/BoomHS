@@ -7,8 +7,25 @@
 #include <boomhs/math.hpp>
 #include <extlibs/imgui.hpp>
 
+using namespace boomhs;
 using namespace boomhs::math::constants;
 using namespace opengl;
+
+auto
+make_viewport(float const fov, ScreenDimensions const& dimensions, AspectRatio const ar,
+              float const near, float const far)
+{
+  // TODO: use near/far
+  Frustum frustum = Frustum::from_ints(
+      dimensions.left(),
+      dimensions.right(),
+      dimensions.top(),
+      dimensions.bottom(),
+      near,
+      far);
+
+  return Viewport{ar, fov, frustum};
+}
 
 namespace boomhs
 {
@@ -19,15 +36,7 @@ Camera::Camera(ScreenDimensions const& dimensions, glm::vec3 const& forward, glm
     : forward_(forward)
     , up_(up)
     , coordinates_(0.0f, 0.0f, 0.0f)
-    , perspective_({110.0f, 4.0f / 3.0f, 0.1f, 2000.0f})
-    , frustum_(
-        Frustum::from_ints(
-          dimensions.left(),
-          dimensions.right(),
-          dimensions.top(),
-          dimensions.bottom(),
-          -1,
-          1))
+    , viewport_(make_viewport(110.0f, dimensions, AspectRatio{4.0f, 3.0f}, -1.0f, 1.0f))
     , flip_y(false)
     , rotate_lock(false)
     , rotation_speed(600.0)
@@ -204,14 +213,16 @@ Camera::make_defaultcamera(ScreenDimensions const& dimensions)
 glm::mat4
 Camera::compute_projectionmatrix() const
 {
-  auto const& p = perspective_;
-  auto const& f = frustum_;
-  auto const fov = glm::radians(p.field_of_view);
+  auto const& v = viewport_;
+  auto const& f = v.frustum;
+  auto const fov = glm::radians(v.field_of_view);
 
   switch (mode()) {
   case CameraMode::ThirdPerson:
-  case CameraMode::FPS:
-    return glm::perspective(fov, p.viewport_aspect_ratio, p.near_plane, p.far_plane);
+  case CameraMode::FPS: {
+    auto const ar = v.aspect_ratio.compute();
+    return glm::perspective(fov, ar, f.near, f.far);
+  }
   case CameraMode::Ortho: {
     return glm::ortho(f.left, f.right, f.bottom, f.top, f.far, f.near);
   }

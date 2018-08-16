@@ -533,11 +533,6 @@ void
 draw_camera_window(Camera& camera, Player& player)
 {
   auto const draw_thirdperson_controls = [&]() {
-    auto& perspective = camera.perspective_ref();
-    ImGui::InputFloat("Field of View", &perspective.field_of_view);
-    ImGui::InputFloat("Near Plane", &perspective.near_plane);
-    ImGui::InputFloat("Far Plane", &perspective.far_plane);
-    ImGui::Separator();
     auto const scoords = camera.spherical_coordinates();
     {
       auto const r      = scoords.radius_display_string();
@@ -561,31 +556,30 @@ draw_camera_window(Camera& camera, Player& player)
       ImGui::Text("Follow Target position:\nx: %f, y: %f, z: %f", tfp.x, tfp.y, tfp.z);
     }
   };
-  auto const draw_frustum_fields = [&]() {
+  auto const draw_camera_window = [&]() {
+    ImGui::Checkbox("Flip Y Sensitivity", &camera.flip_y);
+    ImGui::Checkbox("Mouse Rotation Lock", &camera.rotate_lock);
+    ImGui::InputFloat("Mouse Rotation Speed", &camera.rotation_speed);
+    ImGui::Separator();
+
+    ImGui::Text("Viewport");
+    auto& viewport = camera.viewport_ref();
+    ImGui::InputFloat("FOV:", &viewport.field_of_view);
+    ImGui::Separator();
+
+    auto& aspect_ratio = viewport.aspect_ratio;
+    ImGui::InputFloat2("Aspect:", aspect_ratio.data());
+
     auto& frustum = camera.frustum_ref();
+    ImGui::Text("Frustum");
     ImGui::InputFloat("Left:",   &frustum.left);
     ImGui::InputFloat("Right:",  &frustum.right);
     ImGui::InputFloat("Bottom:", &frustum.bottom);
     ImGui::InputFloat("Top:",    &frustum.top);
     ImGui::InputFloat("Far:",    &frustum.far);
     ImGui::InputFloat("Near:",   &frustum.near);
-  };
-  auto const draw_fps_controls = [&]() {
-    auto& perspective = camera.perspective_ref();
-    ImGui::InputFloat("FOV:", &perspective.field_of_view);
+    ImGui::Separator();
 
-    static float b0[2] = {0.0f};
-    if (ImGui::InputFloat2("Aspect:", b0)) {
-      perspective.viewport_aspect_ratio = b0[0] / b0[1];
-    }
-
-    ImGui::InputFloat("Near Plane:", &perspective.near_plane);
-    ImGui::InputFloat("Far Plane:", &perspective.far_plane);
-  };
-  auto const draw_camera_window = [&]() {
-    ImGui::Checkbox("Flip Y Sensitivity", &camera.flip_y);
-    ImGui::Checkbox("Mouse Rotation Lock", &camera.rotate_lock);
-    ImGui::InputFloat("Mouse Rotation Speed", &camera.rotation_speed);
     std::vector<std::string> mode_strings;
     for (auto const& it : CAMERA_MODES) {
       mode_strings.emplace_back(it.second);
@@ -598,27 +592,8 @@ draw_camera_window(Camera& camera, Player& player)
       camera.set_mode(mode);
     }
 
-    auto const draw_common = [&](char const* text) {
-      ImGui::Text("%s", text);
-      ImGui::Separator();
-    };
-    switch (camera.mode()) {
-    case CameraMode::ThirdPerson:
-      draw_common("ThirdPerson Projection");
-      draw_thirdperson_controls();
-      break;
-    case CameraMode::Ortho:
-      draw_common("View Frustum");
-      draw_frustum_fields();
-      break;
-    case CameraMode::FPS:
-      draw_common("FPS Projection");
-      draw_fps_controls();
-      break;
-    default: {
-      break;
-    }
-    }
+    ImGui::Text("Third Person");
+    draw_thirdperson_controls();
   };
   imgui_cxx::with_window(draw_camera_window, "CAMERA INFO WINDOW");
 }
