@@ -45,13 +45,21 @@ enum class CameraMode
 
 // clang-format off
 using ModeNamePair                                 = std::pair<CameraMode, char const*>;
-std::array<ModeNamePair, 3> constexpr CAMERA_MODES = {
+struct CameraModes
+{
+  CameraModes() = delete;
+
+  static std::array<ModeNamePair, 3> constexpr CAMERA_MODES = {
     {
       {CameraMode::Ortho,       "Ortho"},
       {CameraMode::ThirdPerson, "ThirdPerson"},
       {CameraMode::FPS,         "FPS"}
     }
+  };
+
+  static std::vector<std::string> string_list();
 };
+
 // clang-format on
 
 class Camera

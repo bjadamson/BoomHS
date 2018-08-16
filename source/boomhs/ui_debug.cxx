@@ -565,10 +565,10 @@ draw_camera_window(Camera& camera, Player& player)
     ImGui::Text("Viewport");
     auto& viewport = camera.viewport_ref();
     ImGui::InputFloat("FOV:", &viewport.field_of_view);
-    ImGui::Separator();
 
     auto& aspect_ratio = viewport.aspect_ratio;
     ImGui::InputFloat2("Aspect:", aspect_ratio.data());
+    ImGui::Separator();
 
     auto& frustum = camera.frustum_ref();
     ImGui::Text("Frustum");
@@ -580,20 +580,17 @@ draw_camera_window(Camera& camera, Player& player)
     ImGui::InputFloat("Near:",   &frustum.near);
     ImGui::Separator();
 
-    std::vector<std::string> mode_strings;
-    for (auto const& it : CAMERA_MODES) {
-      mode_strings.emplace_back(it.second);
-    }
+    auto mode_strings = CameraModes::string_list();
     int selected = static_cast<int>(camera.mode());
-    ;
     void* pdata = reinterpret_cast<void*>(&mode_strings);
     if (ImGui::Combo("Mode:", &selected, callback_from_strings, pdata, mode_strings.size())) {
       auto const mode = static_cast<CameraMode>(selected);
       camera.set_mode(mode);
     }
 
-    ImGui::Text("Third Person");
-    draw_thirdperson_controls();
+    if (ImGui::CollapsingHeader("Third Person Information")) {
+      draw_thirdperson_controls();
+    }
   };
   imgui_cxx::with_window(draw_camera_window, "CAMERA INFO WINDOW");
 }

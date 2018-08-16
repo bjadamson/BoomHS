@@ -31,7 +31,19 @@ namespace boomhs
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//// Camera
+// CameraModes
+std::vector<std::string>
+CameraModes::string_list()
+{
+  std::vector<std::string> result;
+  for (auto const& it : CAMERA_MODES) {
+    result.emplace_back(it.second);
+  }
+  return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Camera
 Camera::Camera(ScreenDimensions const& dimensions, glm::vec3 const& forward, glm::vec3 const& up)
     : forward_(forward)
     , up_(up)
