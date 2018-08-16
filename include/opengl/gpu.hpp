@@ -33,6 +33,11 @@ DrawInfo
 copy_arrow(common::Logger&, VertexAttribute const&, ArrowVertices const&);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// Lines
+DrawInfo
+copy_line(common::Logger&, VertexAttribute const&, LineVertices const&);
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // Cubes
 DrawInfo
 copy_cube_gpu(common::Logger&, CubeVertices const&, VertexAttribute const&);

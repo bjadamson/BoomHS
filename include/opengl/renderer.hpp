@@ -158,13 +158,16 @@ void
 draw_fbo_testwindow(RenderState&, glm::vec2 const&, glm::vec2 const&, ShaderProgram&, TextureInfo&);
 
 void
-draw_frustrum(RenderState&, glm::mat4 const&, glm::mat4 const&);
+draw_frustrum(RenderState&, glm::mat4 const&, glm::mat4 const&, glm::mat4 const&);
 
 void
 draw_global_axis(RenderState&);
 
 void
 draw_inventory_overlay(RenderState&);
+
+void
+draw_line(RenderState&, glm::vec3 const&, glm::vec3 const&, Color const&);
 
 void
 draw_local_axis(RenderState&, glm::vec3 const&);

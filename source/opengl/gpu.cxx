@@ -97,6 +97,16 @@ copy_arrow(common::Logger &logger, VertexAttribute const& va,
 }
 
 DrawInfo
+copy_line(common::Logger &logger, VertexAttribute const& va,
+    LineVertices const& vertices)
+{
+  auto const& INDICES = LineFactory::INDICES;
+  DrawInfo dinfo{vertices.size(), INDICES.size()};
+  copy_synchronous(logger, va, dinfo, vertices, INDICES);
+  return dinfo;
+}
+
+DrawInfo
 copy_grid_gpu(common::Logger &logger, VertexAttribute const& va,
               GridVerticesIndices const& grid)
 {

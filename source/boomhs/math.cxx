@@ -17,7 +17,7 @@ Cube::Cube(glm::vec3 const& minp, glm::vec3 const& maxp)
 glm::vec3
 Cube::dimensions() const
 {
-  return math::calculate_cube_dimensions(min, max);
+  return math::compute_cube_dimensions(min, max);
 }
 
 glm::vec3

@@ -201,27 +201,6 @@ Camera::target_position() const
   return target.translation;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// free functions
-Camera
-Camera::make_defaultcamera(ScreenDimensions const& dimensions)
-{
-  // camera-look at origin
-  // cameraspace "up" is === "up" in worldspace.
-  auto const FORWARD = -Z_UNIT_VECTOR;
-  auto constexpr UP  = Y_UNIT_VECTOR;
-
-  Camera camera(dimensions, FORWARD, UP);
-
-  SphericalCoordinates sc;
-  sc.radius = 3.8f;
-  sc.theta  = glm::radians(-0.229f);
-  sc.phi    = glm::radians(38.2735f);
-  camera.set_coordinates(sc);
-
-  return camera;
-}
-
 glm::mat4
 Camera::compute_projectionmatrix() const
 {
@@ -269,6 +248,27 @@ Camera::compute_viewmatrix(glm::vec3 const& pos) const
   }
   std::abort();
   return glm::mat4{}; // appease compiler
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// free functions
+Camera
+Camera::make_defaultcamera(ScreenDimensions const& dimensions)
+{
+  // camera-look at origin
+  // cameraspace "up" is === "up" in worldspace.
+  auto const FORWARD = -Z_UNIT_VECTOR;
+  auto constexpr UP  = Y_UNIT_VECTOR;
+
+  Camera camera(dimensions, FORWARD, UP);
+
+  SphericalCoordinates sc;
+  sc.radius = 3.8f;
+  sc.theta  = glm::radians(-0.229f);
+  sc.phi    = glm::radians(38.2735f);
+  camera.set_coordinates(sc);
+
+  return camera;
 }
 
 } // namespace boomhs

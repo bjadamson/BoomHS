@@ -172,9 +172,9 @@ fragment = "water_advanced.frag"
 va = "water"
 
 [[shaders]]
-name = "frustum"
-vertex = "frustum.vert"
-fragment = "frustum.frag"
+name = "line"
+vertex = "line.vert"
+fragment = "line.frag"
 va = "vertex_only"
 
 [[shaders]]

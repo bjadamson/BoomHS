@@ -11,10 +11,7 @@ struct Transform
   glm::quat rotation;
   glm::vec3 scale = glm::vec3{1.0f, 1.0f, 1.0f};
 
-  glm::mat4 model_matrix() const
-  {
-    return math::calculate_modelmatrix(translation, rotation, scale);
-  }
+  glm::mat4 model_matrix() const { return math::compute_modelmatrix(translation, rotation, scale); }
 
   void rotate_degrees(float const degrees, glm::vec3 const& axis)
   {

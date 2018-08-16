@@ -2,6 +2,7 @@
 #include <opengl/renderer.hpp>
 
 #include <boomhs/components.hpp>
+#include <boomhs/camera.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
@@ -20,7 +21,7 @@ namespace opengl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // DebugRenderer
 void
-DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm,
+DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camera,
                                    RNG& rng, FrameTime const& ft)
 {
   auto& fstate = rstate.fs;
@@ -44,7 +45,10 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm,
     render::draw_local_axis(rstate, player.world_position());
   }
 
-  render::draw_frustrum(rstate, fstate.view_matrix(), fstate.projection_matrix());
+  Transform camera_transform;
+  camera_transform.translation = camera.world_position();
+  auto const model = camera_transform.model_matrix();
+  render::draw_frustrum(rstate, model, fstate.view_matrix(), fstate.projection_matrix());
 
   {
     auto const  eid = find_player(registry);
@@ -61,7 +65,7 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm,
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BlackSceneRenderer
 void
-BlackSceneRenderer::render_scene(RenderState&, LevelManager&, RNG&,
+BlackSceneRenderer::render_scene(RenderState&, LevelManager&, Camera&, RNG&,
                FrameTime const&)
 {
 }

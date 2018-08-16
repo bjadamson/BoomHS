@@ -503,7 +503,7 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
   auto& sps = zs.gfx_state.sps;
   auto& sp  = sps.ref_sp("3d_pos_color");
 
-  auto const& acp = ArrowCreateParams{color, start, head};
+  auto const acp = ArrowCreateParams{color, start, head};
   auto const arrow_v = ArrowFactory::create_vertices(acp);
   auto        dinfo = OG::copy_arrow(logger, sp.va(), arrow_v);
   auto const& ldata = zs.level_data;
@@ -513,6 +513,29 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
     auto const camera_matrix = fstate.camera_matrix();
     set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
+    dinfo.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
+  });
+}
+
+void
+draw_line(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& end, Color const& color)
+{
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& zs     = fstate.zs;
+
+  auto& logger   = es.logger;
+  auto& registry = zs.registry;
+
+  auto& sps = zs.gfx_state.sps;
+  auto& sp  = sps.ref_sp("line");
+
+  auto const  lcp   = LineCreateParams{start, end};
+  auto const  line_v = LineFactory::create_vertices(lcp);
+  auto        dinfo = OG::copy_line(logger, sp.va(), line_v);
+
+  sp.while_bound(logger, [&]() {
+    sp.set_uniform_color(logger, "u_linecolor", color);
     dinfo.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
   });
 }
@@ -587,27 +610,64 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
 }
 
 void
-draw_frustrum(RenderState& rstate, glm::mat4 const& view_mat, glm::mat4 const& proj_mat)
+draw_frustrum(RenderState& rstate, glm::mat4 const& model, glm::mat4 const& view,
+              glm::mat4 const& proj)
 {
-  glm::mat4 const inv_viewproj = glm::inverse(glm::mat3{proj_mat * view_mat});
-  auto& fstate = rstate.fs;
-  auto& es     = fstate.es;
-  auto& logger = es.logger;
+  auto const mvp = math::compute_mvp_matrix(model, view, proj);
+  glm::mat4 const inv_viewproj = glm::inverse(mvp);
 
-  auto& zs  = fstate.zs;
-  auto& sps = zs.gfx_state.sps;
+  glm::vec4 const f[8u] =
+  {
+      // near face
+      {-1, -1, 1, 1.0f},
+      { 1, -1, 1, 1.0f},
+      { 1,  1, 1, 1.0f},
+      {-1,  1, 1, 1.0f},
 
-  auto const cube_v = OF::cube_vertices(glm::vec3{-1.0}, glm::vec3{1.0});
+      // far face
+      {-1, -1, -1, 1.0f},
+      { 1, -1, -1, 1.0f},
+      { 1,  1, -1, 1.0f},
+      {-1,  1, -1, 1.0f}
+  };
 
-  auto& sp = sps.ref_sp("frustum");
-  auto dinfo = gpu::copy_cube_wireframe_gpu(logger, cube_v, sp.va());
+  glm::vec3 v[8u];
+  for (int i = 0; i < 8; i++)
+  {
+    glm::vec4 const ff = inv_viewproj * f[i];
+    v[i].x = (ff.x / 8) / ff.w;
+    v[i].y = (ff.y / 8) / ff.w;
+    v[i].z = (ff.z / 8) / ff.w;
+  }
 
-  sp.while_bound(logger, [&]() {
-      sp.set_uniform_matrix_4fv(logger, "u_invviewproj", inv_viewproj);
-      dinfo.while_bound(logger, [&]() {
-        render::draw(rstate, GL_LINES, sp, dinfo);
-      });
-  });
+  //auto const cube_v = common::make_array<float>(
+      //v[0].x, v[0].y, v[0].z,
+      //v[1].x, v[1].y, v[1].z,
+      //v[2].x, v[2].y, v[2].z,
+      //v[3].x, v[3].y, v[3].z,
+
+      //v[4].x, v[4].y, v[4].z,
+      //v[5].x, v[5].y, v[5].z,
+      //v[6].x, v[6].y, v[6].z,
+      //v[7].x, v[7].y, v[7].z
+      //);
+  //auto const cube_v = OF::cube_vertices(glm::vec3{-0.5}, glm::vec3{0.5});
+
+  draw_line(rstate, v[0], v[1], LOC::BLUE);
+  draw_line(rstate, v[1], v[2], LOC::BLUE);
+  draw_line(rstate, v[2], v[3], LOC::BLUE);
+  draw_line(rstate, v[3], v[0], LOC::BLUE);
+
+  draw_line(rstate, v[4], v[5], LOC::GREEN);
+  draw_line(rstate, v[5], v[6], LOC::GREEN);
+  draw_line(rstate, v[6], v[7], LOC::GREEN);
+  draw_line(rstate, v[7], v[4], LOC::GREEN);
+
+  // connecting lines
+  draw_line(rstate, v[0], v[4], LOC::RED);
+  draw_line(rstate, v[1], v[5], LOC::RED);
+  draw_line(rstate, v[2], v[6], LOC::RED);
+  draw_line(rstate, v[3], v[7], LOC::RED);
 }
 
 void

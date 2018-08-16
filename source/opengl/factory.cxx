@@ -89,6 +89,21 @@ ArrowFactory::create_vertices(ArrowCreateParams const& params)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// Line
+LineVertices
+LineFactory::create_vertices(LineCreateParams const& params)
+{
+  auto const& start = params.start;
+  auto const& end   = params.end;
+
+  // clang-format off
+  return common::make_array<float>(
+      start.x, start.y, start.z,
+      end.x,   end.y,   end.z);
+  // clang-format on
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // Rectangle
 RectangleUvVertices
 RectangleFactory::from_vertices_and_uvs(RectangleVertices const& v, RectangleUvs const& uv)
@@ -194,7 +209,7 @@ namespace opengl::factories
 CubeVertices
 cube_vertices(glm::vec3 const& min, glm::vec3 const& max)
 {
-  auto const dimensions = math::calculate_cube_dimensions(min, max);
+  auto const dimensions = math::compute_cube_dimensions(min, max);
   auto const& width     = dimensions.x;
   auto const& height    = dimensions.y;
 

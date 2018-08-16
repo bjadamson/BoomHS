@@ -72,11 +72,11 @@ struct Plane
 
 namespace boomhs::math::constants
 {
-  auto constexpr ZERO = glm::vec3{0};
+auto constexpr ZERO = glm::vec3{0};
 
-  auto constexpr X_UNIT_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
-  auto constexpr Y_UNIT_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
-  auto constexpr Z_UNIT_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
+auto constexpr X_UNIT_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
+auto constexpr Y_UNIT_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
+auto constexpr Z_UNIT_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
 
 } // namespace boomhs::math::constants
 
@@ -106,16 +106,6 @@ inline glm::vec3
 lerp(glm::vec3 const& a, glm::vec3 const& b, float const f)
 {
   return (a * (1.0 - f)) + (b * f);
-}
-
-inline glm::mat4
-calculate_modelmatrix(glm::vec3 const& translation, glm::quat const& rotation,
-                      glm::vec3 const& scale)
-{
-  auto const tmatrix = glm::translate(glm::mat4{}, translation);
-  auto const rmatrix = glm::toMat4(rotation);
-  auto const smatrix = glm::scale(glm::mat4{}, scale);
-  return tmatrix * rmatrix * smatrix;
 }
 
 inline bool
@@ -182,12 +172,33 @@ rotation_between_vectors(glm::vec3 start, glm::vec3 dest);
 //   y == height
 //   z == length
 inline glm::vec3
-calculate_cube_dimensions(glm::vec3 const& min, glm::vec3 const& max)
+compute_cube_dimensions(glm::vec3 const& min, glm::vec3 const& max)
 {
   auto const w = max.x - min.x;
   auto const h = max.y - min.y;
   auto const l = max.z - min.z;
   return glm::vec3{w, h, l};
+}
+
+inline glm::mat4
+compute_modelmatrix(glm::vec3 const& translation, glm::quat const& rotation, glm::vec3 const& scale)
+{
+  auto const tmatrix = glm::translate(glm::mat4{}, translation);
+  auto const rmatrix = glm::toMat4(rotation);
+  auto const smatrix = glm::scale(glm::mat4{}, scale);
+  return tmatrix * rmatrix * smatrix;
+}
+
+inline glm::mat4
+compute_modelview_matrix(glm::mat4 const& model, glm::mat4 const& view)
+{
+  return view * model;
+}
+
+inline glm::mat4
+compute_mvp_matrix(glm::mat4 const& model, glm::mat4 const& view, glm::mat4 const& proj)
+{
+  return proj * view * model;
 }
 
 } // namespace boomhs::math

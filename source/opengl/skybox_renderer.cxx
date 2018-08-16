@@ -83,16 +83,15 @@ SkyboxRenderer::render(RenderState& rstate, DrawState& ds, FrameTime const& ft)
   view_matrix[3][1] = 0.0f;
   view_matrix[3][2] = 0.0f;
 
-  auto const proj_matrix   = fstate.projection_matrix();
-  auto const camera_matrix = proj_matrix * view_matrix;
-
+  auto const proj_matrix  = fstate.projection_matrix();
   auto const draw_fn = [&]() { render::draw_2d(rstate, GL_TRIANGLES, sp_, dinfo_); };
-
   sp_.while_bound(logger, [&]() {
     {
       auto const& skybox     = ldata.skybox;
       auto const& transform  = skybox.transform();
-      auto const  mvp_matrix = camera_matrix * transform.model_matrix();
+
+      auto const model_matrix = transform.model_matrix();
+      auto const mvp_matrix   = math::compute_mvp_matrix(model_matrix, view_matrix, proj_matrix);
       sp_.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
     }
     sp_.set_uniform_color(logger, "u_fog.color", fog.color);

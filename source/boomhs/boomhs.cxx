@@ -657,7 +657,7 @@ WaterRenderers::render(RenderState& rstate, DrawState& ds, LevelManager& lm, Cam
 }
 
 void
-StaticRenderers::render(LevelManager&lm, RenderState& rstate, RNG& rng, DrawState& ds,
+StaticRenderers::render(LevelManager&lm, RenderState& rstate, Camera& camera, RNG& rng, DrawState& ds,
             FrameTime const& ft, bool const silhouette_black)
 {
   // Render the scene with no culling (setting it zero disables culling mathematically)
@@ -711,7 +711,7 @@ StaticRenderers::render(LevelManager&lm, RenderState& rstate, RNG& rng, DrawStat
     // do nothing
   }
   else {
-    debug.render_scene(rstate, lm, rng, ft);
+    debug.render_scene(rstate, lm, camera, rng, ft);
   }
 }
 
@@ -761,7 +761,7 @@ render_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, Camera& camer
       water_renderer.render(rstate, ds, lm, camera, ft, silhouette_black);
     }
 
-    static_renderers.render(lm, rstate, rng, ds, ft, silhouette_black);
+    static_renderers.render(lm, rstate, camera, rng, ds, ft, silhouette_black);
   };
 
   auto const draw_scene_normal_render = [&]() { draw_scene(false); };

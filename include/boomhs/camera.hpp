@@ -14,17 +14,18 @@ struct WorldObject;
 
 class AspectRatio
 {
-  float n, d;
+  float                n, d;
   std::array<float, 2> nd_;
+
 public:
   explicit AspectRatio(float const np, float const dp)
-      : nd_({np , dp})
+      : nd_({np, dp})
   {
   }
 
   float compute() const { return nd_[0] / nd_[1]; }
 
-  float* data() { return nd_.data(); }
+  float*       data() { return nd_.data(); }
   float const* data() const { return nd_.data(); }
 };
 

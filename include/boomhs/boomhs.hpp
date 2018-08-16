@@ -63,7 +63,7 @@ struct StaticRenderers
   WaterRenderers water;
 
   NO_COPY_OR_MOVE(StaticRenderers);
-  void render(LevelManager&, opengl::RenderState&, RNG&, opengl::DrawState&,
+  void render(LevelManager&, opengl::RenderState&, Camera&, RNG&, opengl::DrawState&,
               window::FrameTime const&, bool);
 };
 
