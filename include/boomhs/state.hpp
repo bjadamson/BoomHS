@@ -23,8 +23,12 @@ class MouseState
   auto mask() const { return SDL_GetMouseState(nullptr, nullptr); }
 
 public:
-  MouseSensitivity sensitivity{0.002f, 0.002f};
+  MouseState();
 
+  // fields
+  MouseSensitivity sensitivity;
+
+  // methods
   auto coords() const
   {
     int x, y;
@@ -58,6 +62,8 @@ struct MovementState
   glm::vec3 forward, backward, left, right;
 
   glm::vec3 mouse_forward;
+
+  NO_COPY_OR_MOVE(MovementState);
 };
 
 struct EngineState

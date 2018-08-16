@@ -282,7 +282,7 @@ sed -i "s|STDLIB_PLACEHOLDER|${CXX_STD_LIBRARY}|g"                      ${ROOT}/
 
 cat > "${BUILD}/conanfile.txt" << "EOF"
 [requires]
-glm/0.9.8.0@TimSimpson/testing
+glm/0.9.8.5@bincrafters/stable
 Boost/1.60.0/lasote/stable
 
 [generators]

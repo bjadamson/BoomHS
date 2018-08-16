@@ -36,8 +36,8 @@ fps_mousemove(WorldObject& wo, Camera& camera, WorldObject& player, MouseState c
               int32_t const xrel, int32_t const yrel)
 {
   auto const& sens = ms.sensitivity;
-  float const dx   = /*sens.x **/ xrel;
-  float const dy   = /*sens.y **/ yrel;
+  float const dx   = sens.x * xrel;
+  float const dy   = sens.y * yrel;
   camera.rotate(dx, dy);
 }
 

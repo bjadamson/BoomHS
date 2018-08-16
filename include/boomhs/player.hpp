@@ -30,16 +30,23 @@ struct ZoneState;
 
 class Player
 {
+  EntityID eid_;
+  EntityRegistry* registry_;
+
   GCD gcd;
 
 public:
+  explicit Player(EntityID, EntityRegistry&, glm::vec3 const&, glm::vec3 const&);
+
+  WorldObject  world_object;
   Inventory    inventory;
   HealthPoints hp{44, 50};
   int          level = -1;
   std::string  name;
 
   bool is_attacking = false;
-  int  damage       = 1;
+  int   damage       = 1;
+  float speed;
 
   void pickup_entity(EntityID, EntityRegistry&);
   void drop_entity(common::Logger&, EntityID, EntityRegistry&);
@@ -48,17 +55,12 @@ public:
 
   void update(EngineState&, ZoneState&, window::FrameTime const&);
 
+  auto const& transform() const { return registry_->get<Transform>(eid_); }
+  auto&       transform() { return registry_->get<Transform>(eid_); }
+
+  auto const& bounding_box() const { return registry_->get<AABoundingBox>(eid_); }
+
   glm::vec3 world_position() const;
-
-  // WORLD OBJECT
-  //
-  // Ensure fields are set!
-  WorldObject world_object;
-
-  auto const& transform() const { return world_object.transform(); }
-  auto&       transform() { return world_object.transform(); }
-
-  auto const& bounding_box() const { return world_object.bounding_box(); }
 };
 
 EntityID

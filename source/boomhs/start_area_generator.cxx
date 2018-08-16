@@ -53,7 +53,7 @@ place_monsters(common::Logger& logger, TerrainGrid const& terrain, EntityRegistr
   FORI(i, num_monsters) { NPC::create_random(logger, terrain, registry, rng); }
 }
 
-auto&
+void
 place_player(common::Logger& logger, TerrainGrid const& terrain,
              MaterialTable const& material_table, EntityRegistry& registry)
 {
@@ -78,21 +78,13 @@ place_player(common::Logger& logger, TerrainGrid const& terrain,
   cc.set(LOC::WHITE);
 
   registry.assign<Material>(eid) = material_table.find("player");
-  auto& player = registry.assign<Player>(eid);
-  {
-    auto& wo = player.world_object;
-    wo.set_eid(eid);
-    wo.set_registry(registry);
 
-    wo.set_forward(-Z_UNIT_VECTOR);
-    wo.set_up(Y_UNIT_VECTOR);
-
-    wo.set_speed(460);
-  }
+  auto const FWD     = -Z_UNIT_VECTOR;
+  auto constexpr UP  =  Y_UNIT_VECTOR;
+  auto& player = registry.assign<Player>(eid, eid, registry, FWD, UP);
   player.level = 14;
-  player.name = "BEN";
-
-  return transform;
+  player.name  = "BEN";
+  player.speed = 460;
 }
 
 void

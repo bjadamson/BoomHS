@@ -607,22 +607,20 @@ draw_mouse_window(MouseState& mstate)
 }
 
 void
-draw_player_window(EngineState& es, WorldObject& player)
+draw_player_window(EngineState& es, Player& player)
 {
   auto const draw = [&]() {
-    auto const display = player.display();
+    auto& wo = player.world_object;
+    auto const display = wo.display();
     ImGui::Text("%s", display.c_str());
 
     ImGui::Checkbox("Player Collisions Enabled", &es.player_collision);
     ImGui::Checkbox("Localspace Vectors Vectors", &es.show_player_localspace_vectors);
     ImGui::Checkbox("Worldspace Vectors Vectors", &es.show_player_worldspace_vectors);
-    float speed = player.speed();
-    if (ImGui::InputFloat("Player Speed", &speed)) {
-      player.set_speed(speed);
-    }
+    ImGui::InputFloat("Player Speed", &player.speed);
 
     glm::quat const quat = glm::angleAxis(glm::radians(0.0f), math::constants::Y_UNIT_VECTOR);
-    float const     dot  = glm::dot(player.orientation(), quat);
+    float const     dot  = glm::dot(wo.orientation(), quat);
     ImGui::Text("dot product: %f", dot);
   };
   imgui_cxx::with_window(draw, "PLAYER INFO WINDOW");
@@ -858,7 +856,7 @@ draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, WaterAudioSyste
     draw_mouse_window(es.mouse_states.current);
   }
   if (uistate.show_playerwindow) {
-    draw_player_window(es, player.world_object);
+    draw_player_window(es, player);
   }
   if (uistate.show_skyboxwindow) {
     draw_skybox_window(es, lm, skyboxr);

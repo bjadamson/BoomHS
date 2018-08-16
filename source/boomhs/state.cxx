@@ -10,6 +10,11 @@ using namespace window;
 namespace boomhs
 {
 
+MouseState::MouseState()
+    : sensitivity(MouseSensitivity{0.002f, 0.002f})
+{
+}
+
 EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, ScreenDimensions const& d)
     : logger(l)
     , al_device(al)

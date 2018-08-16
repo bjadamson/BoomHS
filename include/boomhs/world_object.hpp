@@ -1,5 +1,4 @@
 #pragma once
-#include <boomhs/entity.hpp>
 #include <common/type_macros.hpp>
 
 #include <extlibs/glm.hpp>
@@ -9,34 +8,20 @@
 namespace boomhs
 {
 class Camera;
-class EntityRegistry;
 
 class WorldObject
 {
-  EntityID        eid_      = EntityIDMAX;
-  EntityRegistry* registry_ = nullptr;
-
+  Transform *transform_;
   glm::vec3 forward_, up_;
-  float     speed_;
-
-  void assert_expected() const;
 
 public:
-  WorldObject() = default;
+  WorldObject(Transform&, glm::vec3 const&, glm::vec3 const&);
   MOVE_DEFAULT(WorldObject);
   COPY_DEFAULT(WorldObject);
 
-  auto eid() const { return eid_; }
+  // fields
 
-  EntityRegistry&       registry();
-  EntityRegistry const& registry() const;
-
-  Transform&       transform();
-  Transform const& transform() const;
-
-  AABoundingBox&       bounding_box();
-  AABoundingBox const& bounding_box() const;
-
+  // methods
   glm::vec3 eye_forward() const { return forward_; }
   glm::vec3 eye_up() const { return up_; }
   glm::vec3 eye_backward() const { return -eye_forward(); }
@@ -55,15 +40,12 @@ public:
 
   std::string display() const;
 
+  Transform& transform() { return *transform_; }
+  Transform const& transform() const { return *transform_; }
+
   glm::quat const& orientation() const { return transform().rotation; }
   glm::vec3 const& world_position() const;
 
-  void set_eid(EntityID const eid) { eid_ = eid; }
-  void set_registry(EntityRegistry& registry) { registry_ = &registry; }
-  void set_speed(float const s) { speed_ = s; }
-  void set_forward(glm::vec3 const& v) { forward_ = v; }
-  void set_up(glm::vec3 const& v) { up_ = v; }
-  auto speed() const { return speed_; }
   auto forward() const { return forward_; }
   auto up() const { return up_; }
 

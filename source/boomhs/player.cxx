@@ -67,14 +67,14 @@ try_attack_selected_target(common::Logger& logger, TerrainGrid& terrain, Texture
 
 void
 move_worldobject(EngineState& es, WorldObject& wo, glm::vec3 const& move_vec,
-                 TerrainGrid const& terrain, FrameTime const& ft)
+                 float const speed, TerrainGrid const& terrain, FrameTime const& ft)
 {
   auto& logger = es.logger;
   auto const max_pos = terrain.max_worldpositions();
   auto const max_x   = max_pos.x;
   auto const max_z   = max_pos.y;
 
-  glm::vec3 const delta  = move_vec * wo.speed() * ft.delta_millis();
+  glm::vec3 const delta  = move_vec * speed * ft.delta_millis();
   glm::vec3 const newpos = wo.world_position() + delta;
 
   auto const out_of_bounds = terrain.out_of_bounds(newpos.x, newpos.z);
@@ -103,18 +103,13 @@ move_worldobject(EngineState& es, WorldObject& wo, glm::vec3 const& move_vec,
 }
 
 void
-update_position(EngineState& es, ZoneState& zs, FrameTime const& ft)
+update_position(EngineState& es, LevelData& ldata, Player& player, FrameTime const& ft)
 {
   auto& logger   = es.logger;
-  auto& ldata    = zs.level_data;
   auto& terrain  = ldata.terrain;
-
-  auto& registry = zs.registry;
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
   auto const& movement = es.movement_state;
 
-  // Move the player forward along the it's movement direction
+  // Move the player forward along it's movement direction
   auto move_dir = movement.forward
     + movement.backward
     + movement.left
@@ -124,7 +119,8 @@ update_position(EngineState& es, ZoneState& zs, FrameTime const& ft)
   if (move_dir != math::constants::ZERO) {
     move_dir = glm::normalize(move_dir);
   }
-  move_worldobject(es, player.world_object, move_dir, terrain, ft);
+  LOG_ERROR_SPRINTF("move dir: %s, speed: %f", glm::to_string(move_dir), player.speed);
+  move_worldobject(es, player.world_object, move_dir, player.speed, terrain, ft);
 
   // Lookup the player height from the terrain at the player's X, Z world-coordinates.
   auto& player_pos = player.transform().translation;
@@ -142,6 +138,13 @@ static auto const HOW_OFTEN_GCD_RESETS_MS = TimeConversions::seconds_to_millis(1
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Player
+Player::Player(EntityID const eid, EntityRegistry& r, glm::vec3 const& fwd, glm::vec3 const& up)
+    : eid_(eid)
+    , registry_(&r)
+    , world_object(transform(), fwd, up)
+{
+}
+
 void
 Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
 {
@@ -198,7 +201,7 @@ Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
   auto& ttable    = zs.gfx_state.texture_table;
 
   gcd.update();
-  update_position(es, zs, ft);
+  update_position(es, ldata, *this, ft);
 
   // If no target is selected, no more work to do.
   auto const target_opt = nbt.selected();
@@ -251,7 +254,7 @@ Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
 void
 Player::try_pickup_nearby_item(common::Logger& logger, EntityRegistry& registry, FrameTime const& ft)
 {
-  auto const& player_pos       = world_object.transform().translation;
+  auto const& player_pos       = transform().translation;
 
   static constexpr auto MINIMUM_DISTANCE_TO_PICKUP = 1.0f;
   auto const            items                      = find_items(registry);
@@ -288,8 +291,7 @@ Player::try_pickup_nearby_item(common::Logger& logger, EntityRegistry& registry,
 glm::vec3
 Player::world_position() const
 {
-  auto& tr = world_object.registry().get<Transform>(world_object.eid());
-  return tr.translation;
+  return transform().translation;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

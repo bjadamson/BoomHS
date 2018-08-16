@@ -10,67 +10,17 @@
 #include <boomhs/math.hpp>
 
 using namespace boomhs;
+using namespace boomhs::math::constants;
 
 namespace boomhs
 {
 
-void
-WorldObject::assert_expected() const
+WorldObject::WorldObject(Transform& tr, glm::vec3 const& forward, glm::vec3 const& up)
+    : transform_(&tr)
+    , forward_(forward)
+    , up_(up)
 {
-  assert(this->eid_ != EntityIDMAX);
-  assert(this->registry_ != nullptr);
 }
-
-#define GET_REGISTRY_IMPL()                                                                        \
-  assert_expected();                                                                               \
-  return *this->registry_
-
-EntityRegistry&
-WorldObject::registry()
-{
-  GET_REGISTRY_IMPL();
-}
-
-EntityRegistry const&
-WorldObject::registry() const
-{
-  GET_REGISTRY_IMPL();
-}
-#undef GET_REGISTRY_IMPL
-
-#define GET_AABOUNDING_BOX_IMPL()                                                                  \
-  assert_expected();                                                                               \
-  return this->registry().get<AABoundingBox>(eid())
-
-AABoundingBox &
-WorldObject::bounding_box()
-{
-  GET_AABOUNDING_BOX_IMPL();
-}
-
-AABoundingBox const&
-WorldObject::bounding_box() const
-{
-  GET_AABOUNDING_BOX_IMPL();
-}
-#undef GET_AABOUNDINGBOX_IMPL
-
-#define GET_TRANSFORM_IMPL()                                                                       \
-  assert_expected();                                                                               \
-  return this->registry().get<Transform>(eid())
-
-Transform const&
-WorldObject::transform() const
-{
-  GET_TRANSFORM_IMPL();
-}
-
-Transform&
-WorldObject::transform()
-{
-  GET_TRANSFORM_IMPL();
-}
-#undef GET_TRANSFORM_IMPL
 
 WorldObject&
 WorldObject::move(glm::vec3 const& delta)
@@ -124,8 +74,7 @@ WorldObject::rotate_to_match_camera_rotation(Camera const& camera)
   wo_fwd.y         = 0;
   wo_fwd           = glm::normalize(wo_fwd);
 
-  float const angle =
-      math::angle_between_vectors(camera_wo_fwd, wo_fwd, glm::zero<glm::vec3>());
+  float const angle = math::angle_between_vectors(camera_wo_fwd, wo_fwd, ZERO);
   glm::quat const new_rotation = math::rotation_between_vectors(camera_wo_fwd, wo_fwd);
 
   auto& t    = transform();
