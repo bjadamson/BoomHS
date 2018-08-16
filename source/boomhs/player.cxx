@@ -248,6 +248,43 @@ Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
   }
 }
 
+void
+Player::try_pickup_nearby_item(common::Logger& logger, EntityRegistry& registry, FrameTime const& ft)
+{
+  auto const& player_pos       = world_object.transform().translation;
+
+  static constexpr auto MINIMUM_DISTANCE_TO_PICKUP = 1.0f;
+  auto const            items                      = find_items(registry);
+  for (EntityID const eid : items) {
+    Item& item = registry.get<Item>(eid);
+    if (item.is_pickedup) {
+      LOG_INFO("item already picked up.\n");
+      continue;
+    }
+
+    auto&       item_transform = registry.get<Transform>(eid);
+    auto const& item_pos       = item_transform.translation;
+    auto const  distance       = glm::distance(item_pos, player_pos);
+
+    if (distance > MINIMUM_DISTANCE_TO_PICKUP) {
+      LOG_INFO("There is nothing nearby to pickup.");
+      continue;
+    }
+
+    pickup_entity(eid, registry);
+
+    if (registry.has<Torch>(eid)) {
+      auto& pointlight = registry.get<PointLight>(eid);
+      pointlight.attenuation /= 3.0f;
+
+      LOG_INFO("You have picked up a torch.");
+    }
+    else {
+      LOG_INFO("You have picked up an item.");
+    }
+  }
+}
+
 glm::vec3
 Player::world_position() const
 {

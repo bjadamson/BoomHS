@@ -32,54 +32,6 @@ namespace
 {
 
 void
-try_pickup_nearby_item(GameState& state, FrameTime const& ft)
-{
-  auto& lm       = state.level_manager;
-  auto& es       = state.engine_state;
-  auto& logger   = es.logger;
-  auto& active   = lm.active();
-  auto& registry = active.registry;
-
-  auto const  player_eid       = find_player(registry);
-  auto&       player           = registry.get<Player>(player_eid);
-
-  auto&       player_transform = player.world_object.transform();
-  auto const& player_pos       = player_transform.translation;
-  auto&       inventory        = player.inventory;
-
-  static constexpr auto MINIMUM_DISTANCE_TO_PICKUP = 1.0f;
-  auto const            items                      = find_items(registry);
-  for (EntityID const eid : items) {
-    Item& item = registry.get<Item>(eid);
-    if (item.is_pickedup) {
-      LOG_INFO("item already picked up.\n");
-      continue;
-    }
-
-    auto&       item_transform = registry.get<Transform>(eid);
-    auto const& item_pos       = item_transform.translation;
-    auto const  distance       = glm::distance(item_pos, player_pos);
-
-    if (distance > MINIMUM_DISTANCE_TO_PICKUP) {
-      LOG_INFO("There is nothing nearby to pickup.");
-      continue;
-    }
-
-    player.pickup_entity(eid, registry);
-
-    if (registry.has<Torch>(eid)) {
-      auto& pointlight = registry.get<PointLight>(eid);
-      pointlight.attenuation /= 3.0f;
-
-      LOG_INFO("You have picked up a torch.");
-    }
-    else {
-      LOG_INFO("You have picked up an item.");
-    }
-  }
-}
-
-void
 process_mousemotion(GameState& state, Player& player, SDL_MouseMotionEvent const& motion,
                     Camera& camera, FrameTime const& ft)
 {
@@ -264,7 +216,7 @@ process_keydown(GameState& state, Player& player, SDL_Event const& event, Camera
       debug.show_entitywindow ^= true;
     }
     else {
-      try_pickup_nearby_item(state, ft);
+      player.try_pickup_nearby_item(logger, registry, ft);
     }
     // move_up(state, player_wo, ft);
     break;
@@ -550,7 +502,7 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Cam
 
   if (c.button_a()) {
     LOG_DEBUG("BUTTON A\n");
-    try_pickup_nearby_item(state, ft);
+    player.try_pickup_nearby_item(logger, registry, ft);
   }
   if (c.button_b()) {
     LOG_DEBUG("BUTTON B\n");

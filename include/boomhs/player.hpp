@@ -54,6 +54,9 @@ public:
   void pickup_entity(EntityID, EntityRegistry&);
   void drop_entity(common::Logger&, EntityID, EntityRegistry&);
 
+  void
+  try_pickup_nearby_item(common::Logger&, EntityRegistry&, window::FrameTime const&);
+
   void update(EngineState&, ZoneState&, window::FrameTime const&);
 
   glm::vec3 world_position() const;
