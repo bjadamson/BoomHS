@@ -82,15 +82,17 @@ public:
 class CameraFPS
 {
   glm::vec3 forward_, up_;
+  Transform transform;
 
-  CameraTarget& target_;
   Viewport&     viewport_;
 
   friend class Camera;
 
 public:
-  CameraFPS(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&);
+  CameraFPS(glm::vec3 const&, glm::vec3 const&, Viewport&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraFPS);
+
+  CameraFPS& rotate(float, float);
 
   glm::vec3 world_position() const;
 

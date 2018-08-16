@@ -157,12 +157,25 @@ CameraArcball::compute_viewmatrix(glm::vec3 const& target_pos) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraFPS
-CameraFPS::CameraFPS(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t, Viewport& vp)
+CameraFPS::CameraFPS(glm::vec3 const& forward, glm::vec3 const& up, Viewport& vp)
     : forward_(forward)
     , up_(up)
-    , target_(t)
     , viewport_(vp)
 {
+}
+
+CameraFPS&
+CameraFPS::rotate(float const dx, float const dy)
+{
+  transform.rotate_degrees(dx, Y_UNIT_VECTOR);
+  transform.rotate_degrees(dy, X_UNIT_VECTOR);
+  return *this;
+}
+
+glm::vec3
+CameraFPS::world_position() const
+{
+  return transform.translation;
 }
 
 glm::mat4
@@ -177,7 +190,7 @@ CameraFPS::compute_projectionmatrix() const
 glm::mat4
 CameraFPS::compute_viewmatrix(glm::vec3 const& world_forward) const
 {
-  auto const pos = target_.get().transform().translation;
+  auto const pos = transform.translation;
 
   // NOTE: this might need to be changed back to (pos +  world_forward)
   //
@@ -217,7 +230,7 @@ Camera::Camera(ScreenDimensions const& dimensions, Viewport&& vp, glm::vec3 cons
     : viewport_(MOVE(vp))
     , mode_(CameraMode::ThirdPerson)
     , arcball(forward, up, target_, viewport_)
-    , fps(forward, up, target_, viewport_)
+    , fps(forward, up, viewport_)
     , ortho(forward, up, target_, viewport_)
 {
 }
@@ -238,6 +251,9 @@ void
 Camera::set_mode(CameraMode const m)
 {
   mode_ = m;
+  if (CameraMode::FPS == m) {
+    fps.transform.translation = arcball.world_position();
+  }
 }
 
 void
@@ -254,16 +270,16 @@ Camera::next_mode()
 }
 
 Camera&
-Camera::rotate(float const d_theta, float const d_phi)
+Camera::rotate(float const dx, float const dy)
 {
   switch (mode()) {
     case CameraMode::FPS:
-      arcball.rotate(d_theta, d_phi);
+      fps.rotate(dx, dy);
       break;
     case CameraMode::Ortho:
       //break;
     case CameraMode::ThirdPerson:
-      arcball.rotate(d_theta, d_phi);
+      arcball.rotate(dx, dy);
       break;
     case CameraMode::MAX:
       std::abort();
@@ -319,6 +335,7 @@ Camera::world_forward() const
 {
   switch (mode()) {
     case CameraMode::FPS:
+      return glm::normalize(Z_UNIT_VECTOR * fps.transform.rotation);
     case CameraMode::Ortho:
     case CameraMode::ThirdPerson:
       return glm::normalize(arcball.world_position() - arcball.target_position());
@@ -334,7 +351,9 @@ Camera::world_position() const
 {
   switch (mode()) {
     case CameraMode::FPS:
+      return fps.world_position();
     case CameraMode::Ortho:
+      return ZERO;
     case CameraMode::ThirdPerson:
       return arcball.world_position();
     case CameraMode::MAX:

@@ -36,11 +36,9 @@ fps_mousemove(WorldObject& wo, Camera& camera, Player& player, MouseState const&
               int32_t const xrel, int32_t const yrel)
 {
   auto const& sens = ms.sensitivity;
-  float const dx   = sens.x * xrel;
-  float const dy   = sens.y * yrel;
-  camera.rotate(dx, 0.0f);
-  auto& movement = player.movement;
-  wo.rotate_to_match_camera_rotation(camera);
+  float const dx   = /*sens.x **/ xrel;
+  float const dy   = /*sens.y **/ yrel;
+  camera.rotate(dx, dy);
 }
 
 void
@@ -59,7 +57,6 @@ thirdperson_mousemove(WorldObject& wo, Camera& camera, MouseState const& ms, int
     float const angle = xrel > 0 ? speed : -speed;
 
     auto const x_dt     = angle * ft.delta_millis();
-    auto constexpr y_dt = 0.0f;
     wo.rotate_degrees(x_dt, Y_UNIT_VECTOR);
   }
 }
