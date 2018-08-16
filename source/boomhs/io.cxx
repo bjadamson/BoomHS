@@ -252,8 +252,6 @@ process_keydown(GameState& state, Player& player, SDL_Event const& event, Camera
     inventory.toggle_open();
   } break;
   case SDLK_SPACE: {
-    auto const  player_eid = find_player(registry);
-    auto& player           = registry.get<Player>(player_eid);
     auto const selected_opt = nbt.selected();
 
     // Toggle the state trackerwhether or not the player is attacking
@@ -342,7 +340,7 @@ process_mousewheel(GameState& state, Player& player, SDL_MouseWheelEvent const& 
 }
 
 void
-process_mousestate(GameState& state, Camera& camera, FrameTime const& ft)
+process_mousestate(GameState& state, Player& player, Camera& camera, FrameTime const& ft)
 {
   auto& es     = state.engine_state;
   auto& logger = es.logger;
@@ -358,10 +356,7 @@ process_mousestate(GameState& state, Camera& camera, FrameTime const& ft)
   auto& lm     = state.level_manager;
   auto& registry  = lm.active().registry;
 
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
   auto& wo = player.world_object;
-
   auto& movement = es.movement_state;
   if (both_yes_now) {
     wo.rotate_to_match_camera_rotation(camera);
@@ -373,7 +368,7 @@ process_mousestate(GameState& state, Camera& camera, FrameTime const& ft)
 }
 
 void
-process_keystate(GameState& state, Camera& camera, FrameTime const& ft)
+process_keystate(GameState& state, Player& player, Camera& camera, FrameTime const& ft)
 {
   // continual keypress responses procesed here
   uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
@@ -385,9 +380,6 @@ process_keystate(GameState& state, Camera& camera, FrameTime const& ft)
   auto& zs       = lm.active();
   auto& ldata    = zs.level_data;
   auto& registry = zs.registry;
-
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
 
   auto& movement = es.movement_state;
   auto& wo = player.world_object;
@@ -409,8 +401,8 @@ process_keystate(GameState& state, Camera& camera, FrameTime const& ft)
 }
 
 void
-process_controllerstate(GameState& state, SDLControllers const& controllers, Camera& camera,
-                        FrameTime const& ft)
+process_controllerstate(GameState& state, SDLControllers const& controllers, Player& player,
+                        Camera& camera, FrameTime const& ft)
 {
   if (controllers.empty()) {
     return;
@@ -436,10 +428,6 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Cam
   int32_t constexpr AXIS_MIN = -32768;
   int32_t constexpr AXIS_MAX = 32767;
 
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
-  auto& player_wo = player.world_object;
-
   auto constexpr THRESHOLD  = 0.4f;
   auto const less_threshold = [&](auto const& v) { return v <= 0 && (v <= AXIS_MIN * THRESHOLD); };
   auto const greater_threshold = [](auto const& v) {
@@ -448,6 +436,8 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Cam
 
   auto& movement = es.movement_state;
   auto const axis_left_x = c.axis_left_x();
+
+  auto& player_wo = player.world_object;
   if (less_threshold(axis_left_x)) {
     movement.left = player_wo.world_left();
     player_wo.rotate_to_match_camera_rotation(camera);
@@ -674,12 +664,17 @@ IO::process(GameState& state, SDLControllers const& controllers, Camera& camera,
   auto& ingame     = uistate.ingame;
   auto& chat_state = ingame.chat_state;
 
+  auto& zs = state.level_manager.active();
+  auto& registry = zs.registry;
+  auto const player_eid = find_player(registry);
+  auto& player = registry.get<Player>(player_eid);
+
   if (chat_state.currently_editing) {
     return;
   }
 
-  process_mousestate(state, camera, ft);
-  process_keystate(state, camera, ft);
+  process_mousestate(state, player, camera, ft);
+  process_keystate(state, player, camera, ft);
   if (!state.engine_state.disable_controller_input) {
     // TODO: using controller and keyboard input at the same time does not work.
     // reason: The controller when it's stick's aren't activated, every frame, set's the same
@@ -688,7 +683,7 @@ IO::process(GameState& state, SDLControllers const& controllers, Camera& camera,
     //
     // Idea: We could use separate vector's for tracking the controller input, if we want to allow
     // both at the same time (why?).
-    process_controllerstate(state, controllers, camera, ft);
+    process_controllerstate(state, controllers, player, camera, ft);
   }
 }
 
