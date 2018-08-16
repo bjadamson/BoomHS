@@ -20,6 +20,7 @@ namespace boomhs
 {
 struct ScreenDimensions;
 class EntityRegistry;
+class Frustum;
 class HandleManager;
 class LevelManager;
 class Material;
@@ -158,7 +159,7 @@ void
 draw_fbo_testwindow(RenderState&, glm::vec2 const&, glm::vec2 const&, ShaderProgram&, TextureInfo&);
 
 void
-draw_frustrum(RenderState&, glm::mat4 const&, glm::mat4 const&, glm::mat4 const&);
+draw_frustum(RenderState&, boomhs::Frustum const&, glm::mat4 const&);
 
 void
 draw_global_axis(RenderState&);

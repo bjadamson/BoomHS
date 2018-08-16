@@ -538,22 +538,22 @@ draw_camera_window(Camera& camera, Player& player)
       auto const r      = scoords.radius_display_string();
       auto const t      = scoords.theta_display_string();
       auto const p      = scoords.phi_display_string();
-      ImGui::Text("Spherical Coordinates:\nr: '%s', t: '%s', p: '%s'", r.c_str(), t.c_str(),
+      ImGui::Text("Spherical Coordinates:\tr: '%s', t: '%s', p: '%s'", r.c_str(), t.c_str(),
                   p.c_str());
     }
     {
       auto const text = glm::to_string(camera.world_position());
-      ImGui::Text("world position:\n'%s'\tcamera phi: %f,\n\tcamera theta: %f", text.c_str(),
+      ImGui::Text("world position: '%s'\ncamera phi: %f,\tcamera theta: %f", text.c_str(),
           scoords.phi, scoords.theta);
     }
     {
       auto const cart = to_cartesian(scoords);
-      ImGui::Text("Cartesian Coordinates (should match world position):\nx: %f, y: %f, z: %f",
+      ImGui::Text("Cartesian Coordinates\t x: %f, y: %f, z: %f",
                   cart.x, cart.y, cart.z);
     }
     {
       glm::vec3 const tfp = camera.target_position();
-      ImGui::Text("Follow Target position:\nx: %f, y: %f, z: %f", tfp.x, tfp.y, tfp.z);
+      ImGui::Text("Follow Target position\t x: %f, y: %f, z: %f", tfp.x, tfp.y, tfp.z);
     }
   };
   auto const draw_camera_window = [&]() {

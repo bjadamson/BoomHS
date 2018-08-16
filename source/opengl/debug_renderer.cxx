@@ -48,7 +48,7 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camer
   Transform camera_transform;
   camera_transform.translation = camera.world_position();
   auto const model = camera_transform.model_matrix();
-  render::draw_frustrum(rstate, model, fstate.view_matrix(), fstate.projection_matrix());
+  render::draw_frustum(rstate, camera.frustum_ref(), model);
 
   {
     auto const  eid = find_player(registry);

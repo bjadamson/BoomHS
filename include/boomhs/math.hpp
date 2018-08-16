@@ -26,9 +26,7 @@ struct Cube
 
 struct Frustum
 {
-  float left, right, bottom, top, far, near;
-
-  static Frustum from_ints(int, int, int, int, int, int);
+  float left, right, bottom, top, near, far;
 };
 
 // We create an enum of the sides so we don't have to call each side 0 or 1.

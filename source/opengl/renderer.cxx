@@ -536,7 +536,7 @@ draw_line(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& end, Col
 
   sp.while_bound(logger, [&]() {
     sp.set_uniform_color(logger, "u_linecolor", color);
-    dinfo.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
+    dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_LINES, sp, dinfo); });
   });
 }
 
@@ -610,48 +610,38 @@ draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
 }
 
 void
-draw_frustrum(RenderState& rstate, glm::mat4 const& model, glm::mat4 const& view,
-              glm::mat4 const& proj)
+draw_frustum(RenderState& rstate, Frustum const& frustum, glm::mat4 const& model)
 {
+  auto& fstate     = rstate.fs;
+  auto const proj  = fstate.projection_matrix();
+  auto const view  = fstate.view_matrix();
+
   auto const mvp = math::compute_mvp_matrix(model, view, proj);
   glm::mat4 const inv_viewproj = glm::inverse(mvp);
 
   glm::vec4 const f[8u] =
   {
       // near face
-      {-1, -1, 1, 1.0f},
-      { 1, -1, 1, 1.0f},
-      { 1,  1, 1, 1.0f},
-      {-1,  1, 1, 1.0f},
+      {-1, -1, frustum.near, 1.0f},
+      { 1, -1, frustum.near, 1.0f},
+      { 1,  1, frustum.near, 1.0f},
+      {-1,  1, frustum.near, 1.0f},
 
       // far face
-      {-1, -1, -1, 1.0f},
-      { 1, -1, -1, 1.0f},
-      { 1,  1, -1, 1.0f},
-      {-1,  1, -1, 1.0f}
+      {-1, -1, frustum.far, 1.0f},
+      { 1, -1, frustum.far, 1.0f},
+      { 1,  1, frustum.far, 1.0f},
+      {-1,  1, frustum.far, 1.0f}
   };
 
   glm::vec3 v[8u];
   for (int i = 0; i < 8; i++)
   {
     glm::vec4 const ff = inv_viewproj * f[i];
-    v[i].x = (ff.x / 8) / ff.w;
-    v[i].y = (ff.y / 8) / ff.w;
-    v[i].z = (ff.z / 8) / ff.w;
+    v[i].x = ff.x / ff.w;
+    v[i].y = ff.y / ff.w;
+    v[i].z = ff.z / ff.w;
   }
-
-  //auto const cube_v = common::make_array<float>(
-      //v[0].x, v[0].y, v[0].z,
-      //v[1].x, v[1].y, v[1].z,
-      //v[2].x, v[2].y, v[2].z,
-      //v[3].x, v[3].y, v[3].z,
-
-      //v[4].x, v[4].y, v[4].z,
-      //v[5].x, v[5].y, v[5].z,
-      //v[6].x, v[6].y, v[6].z,
-      //v[7].x, v[7].y, v[7].z
-      //);
-  //auto const cube_v = OF::cube_vertices(glm::vec3{-0.5}, glm::vec3{0.5});
 
   draw_line(rstate, v[0], v[1], LOC::BLUE);
   draw_line(rstate, v[1], v[2], LOC::BLUE);

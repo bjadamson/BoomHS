@@ -135,7 +135,7 @@ start(common::Logger& logger, Engine& engine)
 
   // Construct game state
   EngineState es{logger, *al_device, io, dimensions};
-  auto        camera = Camera::make_defaultcamera(dimensions);
+  auto        camera = Camera::make_default(dimensions);
 
   RNG rng;
   auto gs = TRY_MOVEOUT(boomhs::init(engine, es, camera, rng));

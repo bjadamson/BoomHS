@@ -67,19 +67,6 @@ Cube::scaled_max(Transform const& tr) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Frustum
-Frustum
-Frustum::from_ints(int const left, int const right, int const bottom, int const top,
-                   int const far, int const near)
-{
-  return Frustum{
-    static_cast<float>(left),
-    static_cast<float>(right),
-    static_cast<float>(bottom),
-    static_cast<float>(top),
-    static_cast<float>(far),
-    static_cast<float>(near)
-  };
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Plane

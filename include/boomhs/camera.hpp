@@ -14,16 +14,15 @@ struct WorldObject;
 
 class AspectRatio
 {
-  float                n, d;
   std::array<float, 2> nd_;
 
 public:
-  explicit AspectRatio(float const np, float const dp)
+  explicit constexpr AspectRatio(float const np, float const dp)
       : nd_({np, dp})
   {
   }
 
-  float compute() const { return nd_[0] / nd_[1]; }
+  float constexpr compute() const { return nd_[0] / nd_[1]; }
 
   float*       data() { return nd_.data(); }
   float const* data() const { return nd_.data(); }
@@ -45,9 +44,9 @@ enum class CameraMode
 };
 
 // clang-format off
-using ModeNamePair                                 = std::pair<CameraMode, char const*>;
 struct CameraModes
 {
+  using ModeNamePair = std::pair<CameraMode, char const*>;
   CameraModes() = delete;
 
   static std::array<ModeNamePair, 3> constexpr CAMERA_MODES = {
@@ -78,7 +77,7 @@ class Camera
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(ScreenDimensions const&, glm::vec3 const&, glm::vec3 const&);
+  Camera(ScreenDimensions const&, Viewport&&, glm::vec3 const&, glm::vec3 const&);
 
   // public fields
   bool  flip_y;
@@ -116,13 +115,15 @@ public:
 
   auto const& viewport_ref() const { return viewport_; }
   auto&       viewport_ref() { return viewport_; }
+
+  auto const& frustum_ref() const { return viewport_.frustum; }
   auto&       frustum_ref() { return viewport_.frustum; }
 
   Camera& rotate(float, float);
   void    set_target(WorldObject&);
 
   // static fns
-  static Camera make_defaultcamera(ScreenDimensions const&);
+  static Camera make_default(ScreenDimensions const&);
 
   glm::mat4 compute_projectionmatrix() const;
   glm::mat4 compute_viewmatrix(glm::vec3 const&) const;

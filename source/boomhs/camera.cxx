@@ -15,16 +15,14 @@ auto
 make_viewport(float const fov, ScreenDimensions const& dimensions, AspectRatio const ar,
               float const near, float const far)
 {
-  // TODO: use near/far
-  Frustum frustum = Frustum::from_ints(
-      dimensions.left(),
-      dimensions.right(),
-      dimensions.top(),
-      dimensions.bottom(),
+  Frustum frustum{
+      static_cast<float>(dimensions.left()),
+      static_cast<float>(dimensions.right()),
+      static_cast<float>(dimensions.bottom()),
+      static_cast<float>(dimensions.top()),
       near,
-      far);
-
-  return Viewport{ar, fov, frustum};
+      far};
+  return Viewport{ar, fov, MOVE(frustum)};
 }
 
 namespace boomhs
@@ -44,11 +42,12 @@ CameraModes::string_list()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
-Camera::Camera(ScreenDimensions const& dimensions, glm::vec3 const& forward, glm::vec3 const& up)
+Camera::Camera(ScreenDimensions const& dimensions, Viewport&& vp, glm::vec3 const& forward,
+               glm::vec3 const& up)
     : forward_(forward)
     , up_(up)
     , coordinates_(0.0f, 0.0f, 0.0f)
-    , viewport_(make_viewport(110.0f, dimensions, AspectRatio{4.0f, 3.0f}, -1.0f, 1.0f))
+    , viewport_(MOVE(vp))
     , flip_y(false)
     , rotate_lock(false)
     , rotation_speed(600.0)
@@ -157,12 +156,10 @@ Camera::zoom(float const amount)
 
   float constexpr MIN_RADIUS = 0.01f;
   float const new_radius     = coordinates_.radius + amount;
-  if (new_radius >= MIN_RADIUS) {
-    coordinates_.radius = new_radius;
-  }
-  else {
-    coordinates_.radius = MIN_RADIUS;
-  }
+
+  coordinates_.radius = (new_radius >= MIN_RADIUS)
+    ? new_radius
+    : MIN_RADIUS;
 }
 
 void
@@ -215,7 +212,7 @@ Camera::compute_projectionmatrix() const
     return glm::perspective(fov, ar, f.near, f.far);
   }
   case CameraMode::Ortho: {
-    return glm::ortho(f.left, f.right, f.bottom, f.top, f.far, f.near);
+    return glm::ortho(f.left, f.right, f.bottom, f.top, f.near, f.far);
   }
   case CameraMode::MAX:
     break;
@@ -253,14 +250,20 @@ Camera::compute_viewmatrix(glm::vec3 const& pos) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // free functions
 Camera
-Camera::make_defaultcamera(ScreenDimensions const& dimensions)
+Camera::make_default(ScreenDimensions const& dimensions)
 {
   // camera-look at origin
   // cameraspace "up" is === "up" in worldspace.
   auto const FORWARD = -Z_UNIT_VECTOR;
   auto constexpr UP  = Y_UNIT_VECTOR;
 
-  Camera camera(dimensions, FORWARD, UP);
+  auto constexpr FOV  = 110.0f;
+  auto constexpr AR   = AspectRatio{4.0f, 3.0f};
+  auto constexpr NEAR = 0.1f;
+  auto constexpr FAR  = 10000.0f;
+  auto vp = make_viewport(FOV, dimensions, AR, NEAR, FAR);
+
+  Camera camera(dimensions, MOVE(vp), FORWARD, UP);
 
   SphericalCoordinates sc;
   sc.radius = 3.8f;
