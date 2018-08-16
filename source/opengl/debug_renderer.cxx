@@ -50,14 +50,6 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camer
   auto const model = camera_transform.model_matrix();
   render::draw_frustum(rstate, camera.frustum_ref(), model);
 
-  {
-    auto const  eid = find_player(registry);
-    auto const& inv = registry.get<Player>(eid).inventory;
-    if (inv.is_open()) {
-      render::draw_inventory_overlay(rstate);
-    }
-  }
-
   // if checks happen inside fn
   render::conditionally_draw_player_vectors(rstate, player);
 }
