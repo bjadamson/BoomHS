@@ -532,8 +532,8 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 void
 draw_camera_window(Camera& camera, Player& player)
 {
-  auto const draw_thirdperson_controls = [&]() {
-    auto const scoords = camera.spherical_coordinates();
+  auto const draw_thirdperson_controls = [](CameraArcball const& tp_camera) {
+    auto const scoords = tp_camera.spherical_coordinates();
     {
       auto const r      = scoords.radius_display_string();
       auto const t      = scoords.theta_display_string();
@@ -542,7 +542,7 @@ draw_camera_window(Camera& camera, Player& player)
                   p.c_str());
     }
     {
-      auto const text = glm::to_string(camera.world_position());
+      auto const text = glm::to_string(tp_camera.world_position());
       ImGui::Text("world position: '%s'\ncamera phi: %f,\tcamera theta: %f", text.c_str(),
           scoords.phi, scoords.theta);
     }
@@ -552,14 +552,15 @@ draw_camera_window(Camera& camera, Player& player)
                   cart.x, cart.y, cart.z);
     }
     {
-      glm::vec3 const tfp = camera.target_position();
+      glm::vec3 const tfp = tp_camera.target_position();
       ImGui::Text("Follow Target position\t x: %f, y: %f, z: %f", tfp.x, tfp.y, tfp.z);
     }
   };
   auto const draw_camera_window = [&]() {
-    ImGui::Checkbox("Flip Y Sensitivity", &camera.flip_y);
-    ImGui::Checkbox("Mouse Rotation Lock", &camera.rotate_lock);
-    ImGui::InputFloat("Mouse Rotation Speed", &camera.rotation_speed);
+    auto& tp_camera = camera.arcball;
+    ImGui::Checkbox("Flip Y Sensitivity", &tp_camera.flip_y);
+    ImGui::Checkbox("Mouse Rotation Lock", &tp_camera.rotate_lock);
+    ImGui::InputFloat("Mouse Rotation Speed", &tp_camera.rotation_speed);
     ImGui::Separator();
 
     ImGui::Text("Viewport");
@@ -589,7 +590,7 @@ draw_camera_window(Camera& camera, Player& player)
     }
 
     if (ImGui::CollapsingHeader("Third Person Information")) {
-      draw_thirdperson_controls();
+      draw_thirdperson_controls(camera.arcball);
     }
   };
   imgui_cxx::with_window(draw_camera_window, "CAMERA INFO WINDOW");

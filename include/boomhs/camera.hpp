@@ -61,28 +61,69 @@ struct CameraModes
 };
 
 // clang-format on
+class CameraFPS
+{
+public:
+  CameraFPS() = default;
+  MOVE_CONSTRUCTIBLE_ONLY(CameraFPS);
+
+  glm::vec3 world_position() const;
+};
+
+class CameraArcball
+{
+  WorldObject* target_ = nullptr;
+  glm::vec3    forward_, up_;
+
+  SphericalCoordinates coordinates_;
+
+  void zoom(float);
+  void check_pointers() const;
+
+  friend class Camera;
+public:
+  CameraArcball(glm::vec3 const&, glm::vec3 const&);
+  MOVE_CONSTRUCTIBLE_ONLY(CameraArcball);
+
+  // fields
+  bool  flip_y = false;
+  bool  rotate_lock = false;
+  float rotation_speed;
+
+  // methods
+  SphericalCoordinates spherical_coordinates() const { return coordinates_; }
+  void                 set_coordinates(SphericalCoordinates const& sc) { coordinates_ = sc; }
+
+  WorldObject&       get_target();
+  WorldObject const& get_target() const;
+
+  void decrease_zoom(float);
+  void increase_zoom(float);
+
+  CameraArcball& rotate(float, float);
+
+  glm::vec3 local_position() const;
+  glm::vec3 world_position() const;
+
+  glm::vec3 target_position() const;
+};
 
 class Camera
 {
   WorldObject* target_ = nullptr;
   glm::vec3    forward_, up_;
 
-  SphericalCoordinates coordinates_;
-  CameraMode           mode_ = CameraMode::ThirdPerson;
-
+  CameraMode mode_ = CameraMode::ThirdPerson;
   Viewport viewport_;
 
   void check_pointers() const;
-  void zoom(float);
-
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
   Camera(ScreenDimensions const&, Viewport&&, glm::vec3 const&, glm::vec3 const&);
 
   // public fields
-  bool  flip_y;
-  bool  rotate_lock;
-  float rotation_speed;
+  CameraArcball arcball;
+  CameraFPS     fps;
 
   WorldObject&       get_target();
   WorldObject const& get_target() const;
@@ -100,18 +141,8 @@ public:
   glm::vec3 eye_left() const { return -eye_right(); }
   glm::vec3 eye_right() const { return glm::normalize(glm::cross(eye_forward(), eye_up())); }
 
-  glm::vec3 world_forward() const { return glm::normalize(world_position() - target_position()); }
-
-  SphericalCoordinates spherical_coordinates() const { return coordinates_; }
-  void                 set_coordinates(SphericalCoordinates const& sc) { coordinates_ = sc; }
-
-  glm::vec3 local_position() const;
-  glm::vec3 world_position() const;
-
-  glm::vec3 target_position() const;
-
-  void decrease_zoom(float);
-  void increase_zoom(float);
+  glm::vec3 world_forward() const { return glm::normalize(arcball.world_position() - arcball.target_position()); }
+  glm::vec3 world_position() const { return arcball.world_position(); }
 
   auto const& viewport_ref() const { return viewport_; }
   auto&       viewport_ref() { return viewport_; }
@@ -122,11 +153,11 @@ public:
   Camera& rotate(float, float);
   void    set_target(WorldObject&);
 
-  // static fns
-  static Camera make_default(ScreenDimensions const&);
-
   glm::mat4 compute_projectionmatrix() const;
   glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
+
+  // static fns
+  static Camera make_default(ScreenDimensions const&);
 };
 
 } // namespace boomhs

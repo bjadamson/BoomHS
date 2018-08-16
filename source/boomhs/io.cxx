@@ -32,6 +32,39 @@ namespace
 {
 
 void
+fps_mousemove(WorldObject& wo, Camera& camera, Player& player, MouseState const& ms,
+              int32_t const xrel, int32_t const yrel)
+{
+  auto const& sens = ms.sensitivity;
+  float const dx   = sens.x * xrel;
+  float const dy   = sens.y * yrel;
+  camera.rotate(dx, 0.0f);
+  auto& movement = player.movement;
+  wo.rotate_to_match_camera_rotation(camera);
+}
+
+void
+thirdperson_mousemove(WorldObject& wo, Camera& camera, MouseState const& ms, int32_t const xrel,
+                      int32_t const yrel, FrameTime const& ft)
+{
+  if (ms.left_pressed()) {
+    auto const& sens = ms.sensitivity;
+    float const dx   = sens.x * xrel;
+    float const dy   = sens.y * yrel;
+    camera.rotate(dx, dy);
+  }
+  if (ms.right_pressed()) {
+    auto constexpr  RIGHTCLICK_TURN_SPEED = 600.0f;
+    float constexpr speed = RIGHTCLICK_TURN_SPEED;
+    float const angle = xrel > 0 ? speed : -speed;
+
+    auto const x_dt     = angle * ft.delta_millis();
+    auto constexpr y_dt = 0.0f;
+    wo.rotate_degrees(x_dt, Y_UNIT_VECTOR);
+  }
+}
+
+void
 process_mousemotion(GameState& state, Player& player, SDL_MouseMotionEvent const& motion,
                     Camera& camera, FrameTime const& ft)
 {
@@ -41,28 +74,17 @@ process_mousemotion(GameState& state, Player& player, SDL_MouseMotionEvent const
   auto& ui     = es.ui_state.debug;
 
   auto& wo = player.world_object;
-  if (camera.mode() == CameraMode::FPS) {
-    auto const& sens = ms.sensitivity;
-    float const dx   = sens.x * motion.xrel;
-    float const dy   = sens.y * motion.yrel;
-    camera.rotate(dx, 0.0f);
-    auto& movement = player.movement;
-    wo.rotate_to_match_camera_rotation(camera);
-  }
-  else if (camera.mode() == CameraMode::ThirdPerson) {
-    if (ms.left_pressed()) {
-      auto const& sens = ms.sensitivity;
-      float const dx   = sens.x * motion.xrel;
-      float const dy   = sens.y * motion.yrel;
-      camera.rotate(dx, dy);
-    }
-    if (ms.right_pressed()) {
-      float const speed = camera.rotation_speed;
-      float const angle = motion.xrel > 0 ? speed : -speed;
 
-      auto const x_dt     = angle * ft.delta_millis();
-      auto constexpr y_dt = 0.0f;
-      wo.rotate_degrees(x_dt, Y_UNIT_VECTOR);
+  bool const debug_camera = false;
+  if (debug_camera) {
+    //debug_cameramove();
+  }
+  else {
+    if (camera.mode() == CameraMode::FPS) {
+      fps_mousemove(wo, camera, player, ms, motion.xrel, motion.yrel);
+    }
+    else if (camera.mode() == CameraMode::ThirdPerson) {
+      thirdperson_mousemove(wo, camera, ms, motion.xrel, motion.yrel, ft);
     }
   }
 }
@@ -156,7 +178,7 @@ process_mousebutton_down(GameState& state, Player& player, SDL_MouseButtonEvent 
   }
   if (button == SDL_BUTTON_MIDDLE) {
     LOG_INFO("toggling mouse up/down (pitch) lock");
-    camera.rotate_lock ^= true;
+    camera.arcball.rotate_lock ^= true;
   }
 }
 
@@ -324,10 +346,10 @@ process_mousewheel(GameState& state, Player& player, SDL_MouseWheelEvent const& 
   auto& lm    = state.level_manager;
   auto& ldata = lm.active().level_data;
   if (wheel.y > 0) {
-    camera.decrease_zoom(ZOOM_FACTOR);
+    camera.arcball.decrease_zoom(ZOOM_FACTOR);
   }
   else {
-    camera.increase_zoom(ZOOM_FACTOR);
+    camera.arcball.increase_zoom(ZOOM_FACTOR);
   }
 }
 

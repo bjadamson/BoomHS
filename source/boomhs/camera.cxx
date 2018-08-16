@@ -41,65 +41,42 @@ CameraModes::string_list()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Camera
-Camera::Camera(ScreenDimensions const& dimensions, Viewport&& vp, glm::vec3 const& forward,
-               glm::vec3 const& up)
+// CameraArcball
+CameraArcball::CameraArcball(glm::vec3 const& forward, glm::vec3 const& up)
     : forward_(forward)
     , up_(up)
     , coordinates_(0.0f, 0.0f, 0.0f)
-    , viewport_(MOVE(vp))
-    , flip_y(false)
-    , rotate_lock(false)
     , rotation_speed(600.0)
 {
 }
 
 void
-Camera::check_pointers() const
+CameraArcball::zoom(float const amount)
 {
-  assert(nullptr != target_);
-}
+  float constexpr MIN_RADIUS = 0.01f;
+  float const new_radius     = coordinates_.radius + amount;
 
-#define GET_TARGET_IMPL()                                                                          \
-  check_pointers();                                                                                \
-  return *target_
-
-WorldObject&
-Camera::get_target()
-{
-  GET_TARGET_IMPL();
-}
-
-WorldObject const&
-Camera::get_target() const
-{
-  GET_TARGET_IMPL();
-}
-#undef GET_TARGET_IMPL
-
-void
-Camera::set_mode(CameraMode const m)
-{
-  mode_ = m;
+  coordinates_.radius = (new_radius >= MIN_RADIUS)
+    ? new_radius
+    : MIN_RADIUS;
 }
 
 void
-Camera::next_mode()
+CameraArcball::decrease_zoom(float const amount)
 {
   check_pointers();
-
-  auto const cast = [](auto const v) { return static_cast<int>(v); };
-  CameraMode const m = static_cast<CameraMode>(cast(mode()) + cast(1));
-  if (CameraMode::MAX == m) {
-    set_mode(static_cast<CameraMode>(0));
-  }
-  else {
-    set_mode(m);
-  }
+  zoom(-amount);
 }
 
-Camera&
-Camera::rotate(float const d_theta, float const d_phi)
+void
+CameraArcball::increase_zoom(float const amount)
+{
+  check_pointers();
+  zoom(amount);
+}
+
+CameraArcball&
+CameraArcball::rotate(float const d_theta, float const d_phi)
 {
   check_pointers();
 
@@ -143,61 +120,118 @@ Camera::rotate(float const d_theta, float const d_phi)
   return *this;
 }
 
-void
-Camera::set_target(WorldObject& target)
+#define GET_TARGET_IMPL()                                                                          \
+  check_pointers();                                                                                \
+  return *target_
+
+WorldObject&
+CameraArcball::get_target()
 {
-  target_ = &target;
+  GET_TARGET_IMPL();
 }
 
-void
-Camera::zoom(float const amount)
+WorldObject const&
+CameraArcball::get_target() const
 {
-  check_pointers();
-
-  float constexpr MIN_RADIUS = 0.01f;
-  float const new_radius     = coordinates_.radius + amount;
-
-  coordinates_.radius = (new_radius >= MIN_RADIUS)
-    ? new_radius
-    : MIN_RADIUS;
-}
-
-void
-Camera::decrease_zoom(float const amount)
-{
-  check_pointers();
-  zoom(-amount);
-}
-
-void
-Camera::increase_zoom(float const amount)
-{
-  check_pointers();
-  zoom(amount);
+  GET_TARGET_IMPL();
 }
 
 glm::vec3
-Camera::local_position() const
+CameraArcball::local_position() const
 {
   check_pointers();
   return to_cartesian(coordinates_);
 }
 
 glm::vec3
-Camera::world_position() const
+CameraArcball::world_position() const
 {
+  check_pointers();
   return target_position() + local_position();
 }
 
 glm::vec3
-Camera::target_position() const
+CameraArcball::target_position() const
 {
   check_pointers();
-
   auto& target = get_target().transform();
   return target.translation;
 }
 
+void
+CameraArcball::check_pointers() const
+{
+  assert(nullptr != target_);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Camera
+Camera::Camera(ScreenDimensions const& dimensions, Viewport&& vp,
+                           glm::vec3 const& forward, glm::vec3 const& up)
+    : forward_(forward)
+    , up_(up)
+    , viewport_(MOVE(vp))
+    , arcball(forward_, up_)
+{
+}
+
+void
+Camera::check_pointers() const
+{
+  assert(nullptr != target_);
+  arcball.check_pointers();
+}
+
+WorldObject&
+Camera::get_target()
+{
+  GET_TARGET_IMPL();
+}
+
+WorldObject const&
+Camera::get_target() const
+{
+  GET_TARGET_IMPL();
+}
+#undef GET_TARGET_IMPL
+
+void
+Camera::set_mode(CameraMode const m)
+{
+  mode_ = m;
+}
+
+void
+Camera::next_mode()
+{
+  check_pointers();
+
+  auto const cast = [](auto const v) { return static_cast<int>(v); };
+  CameraMode const m = static_cast<CameraMode>(cast(mode()) + cast(1));
+  if (CameraMode::MAX == m) {
+    set_mode(static_cast<CameraMode>(0));
+  }
+  else {
+    set_mode(m);
+  }
+}
+
+Camera&
+Camera::rotate(float const d_theta, float const d_phi)
+{
+  arcball.rotate(d_theta, d_phi);
+  return *this;
+}
+
+void
+Camera::set_target(WorldObject& target)
+{
+  target_ = &target;
+  arcball.target_ = &target;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Camera
 glm::mat4
 Camera::compute_projectionmatrix() const
 {
@@ -269,7 +303,7 @@ Camera::make_default(ScreenDimensions const& dimensions)
   sc.radius = 3.8f;
   sc.theta  = glm::radians(-0.229f);
   sc.phi    = glm::radians(38.2735f);
-  camera.set_coordinates(sc);
+  camera.arcball.set_coordinates(sc);
 
   return camera;
 }
