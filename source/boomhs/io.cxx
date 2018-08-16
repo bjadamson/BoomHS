@@ -32,7 +32,7 @@ namespace
 {
 
 void
-fps_mousemove(WorldObject& wo, Camera& camera, Player& player, MouseState const& ms,
+fps_mousemove(WorldObject& wo, Camera& camera, WorldObject& player, MouseState const& ms,
               int32_t const xrel, int32_t const yrel)
 {
   auto const& sens = ms.sensitivity;
@@ -62,7 +62,7 @@ thirdperson_mousemove(WorldObject& wo, Camera& camera, MouseState const& ms, int
 }
 
 void
-process_mousemotion(GameState& state, Player& player, SDL_MouseMotionEvent const& motion,
+process_mousemotion(GameState& state, WorldObject& wo, SDL_MouseMotionEvent const& motion,
                     Camera& camera, FrameTime const& ft)
 {
   auto& es     = state.engine_state;
@@ -70,9 +70,8 @@ process_mousemotion(GameState& state, Player& player, SDL_MouseMotionEvent const
   auto& ms     = es.mouse_states.current;
   auto& ui     = es.ui_state.debug;
 
-  auto& wo = player.world_object;
   if (camera.mode() == CameraMode::FPS) {
-    fps_mousemove(wo, camera, player, ms, motion.xrel, motion.yrel);
+    fps_mousemove(wo, camera, wo, ms, motion.xrel, motion.yrel);
   }
   else if (camera.mode() == CameraMode::ThirdPerson) {
     thirdperson_mousemove(wo, camera, ms, motion.xrel, motion.yrel, ft);
@@ -142,7 +141,7 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
 }
 
 void
-process_mousebutton_down(GameState& state, Player& player, SDL_MouseButtonEvent const& event, Camera& camera,
+process_mousebutton_down(GameState& state, WorldObject& player, SDL_MouseButtonEvent const& event, Camera& camera,
                          FrameTime const& ft)
 {
   auto& es     = state.engine_state;
@@ -173,7 +172,7 @@ process_mousebutton_down(GameState& state, Player& player, SDL_MouseButtonEvent 
 }
 
 void
-process_mousebutton_up(GameState& state, Player& player, SDL_MouseButtonEvent const& event, Camera& camera,
+process_mousebutton_up(GameState& state, WorldObject& player, SDL_MouseButtonEvent const& event, Camera& camera,
                        FrameTime const& ft)
 {
   auto& es = state.engine_state;
@@ -181,12 +180,10 @@ process_mousebutton_up(GameState& state, Player& player, SDL_MouseButtonEvent co
 }
 
 void
-process_keyup(GameState& state, Player& player, SDL_Event const& event, Camera& camera, FrameTime const& ft)
+process_keyup(GameState& state, WorldObject& player, SDL_Event const& event, Camera& camera, FrameTime const& ft)
 {
   auto& es     = state.engine_state;
   auto& logger = es.logger;
-
-  auto& wo = player.world_object;
 
   switch (event.key.keysym.sym) {
     break;
@@ -194,7 +191,8 @@ process_keyup(GameState& state, Player& player, SDL_Event const& event, Camera& 
 }
 
 void
-process_keydown(GameState& state, Player& player, SDL_Event const& event, Camera& camera, FrameTime const& ft)
+process_keydown(GameState& state, Player& player, WorldObject& player_wo, SDL_Event const& event,
+                Camera& camera, FrameTime const& ft)
 {
   auto& es      = state.engine_state;
   auto& logger  = es.logger;
@@ -210,7 +208,6 @@ process_keydown(GameState& state, Player& player, SDL_Event const& event, Camera
   auto& debug = uistate.debug;
   auto& ingame = uistate.ingame;
   auto& chat_state = ingame.chat_state;
-  auto& player_wo = player.world_object;
 
   auto const rotate_player = [&](float const angle, glm::vec3 const& axis) {
     player_wo.rotate_degrees(angle, axis);
@@ -228,16 +225,13 @@ process_keydown(GameState& state, Player& player, SDL_Event const& event, Camera
     else {
       player.try_pickup_nearby_item(logger, registry, ft);
     }
-    // move_up(state, player_wo, ft);
     break;
   case SDLK_q:
-    // move_down(state, player_wo, ft);
     break;
   case SDLK_F11:
     uistate.draw_debug_ui ^= true;
     break;
   case SDLK_t:
-    // invert
     camera.next_mode();
     break;
   case SDLK_TAB: {
@@ -257,7 +251,6 @@ process_keydown(GameState& state, Player& player, SDL_Event const& event, Camera
     // Toggle the state trackerwhether or not the player is attacking
     // AND
     // If the player has an entity selected, try and attack it.
-    LOG_ERROR("SPACE BAR PRESSED");
     if (selected_opt) {
       EntityID const target_eid = *selected_opt;
       auto& target = registry.get<NPCData>(target_eid);
@@ -276,43 +269,9 @@ process_keydown(GameState& state, Player& player, SDL_Event const& event, Camera
   // scaling
   case SDLK_KP_PLUS:
   case SDLK_o:
-    // et.scale_entities(sf(SCALE_FACTOR));
     break;
   case SDLK_KP_MINUS:
-    // z-rotation
     break;
-  case SDLK_j: {
-    auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
-    // et.rotate_entities(ANGLE, ROTATION_VECTOR);
-    break;
-  }
-  case SDLK_k: {
-    auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
-    // et.rotate_entities(-ANGLE, ROTATION_VECTOR);
-    break;
-  }
-  // y-rotation
-  case SDLK_u: {
-    auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
-    // et.rotate_entities(ANGLE, ROTATION_VECTOR);
-    break;
-  }
-  case SDLK_i: {
-    auto constexpr ROTATION_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
-    // et.rotate_entities(-ANGLE, ROTATION_VECTOR);
-    break;
-  }
-  // x-rotation
-  case SDLK_n: {
-    auto constexpr ROTATION_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
-    // et.rotate_entities(ANGLE, ROTATION_VECTOR);
-    break;
-  }
-  case SDLK_m: {
-    auto constexpr ROTATION_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
-    // et.rotate_entities(-ANGLE, ROTATION_VECTOR);
-    break;
-  }
   case SDLK_LEFT:
     rotate_player(90.0f, Y_UNIT_VECTOR);
     break;
@@ -323,7 +282,7 @@ process_keydown(GameState& state, Player& player, SDL_Event const& event, Camera
 }
 
 void
-process_mousewheel(GameState& state, Player& player, SDL_MouseWheelEvent const& wheel, Camera& camera,
+process_mousewheel(GameState& state, WorldObject& wo, SDL_MouseWheelEvent const& wheel, Camera& camera,
                    FrameTime const& ft)
 {
   auto& logger = state.engine_state.logger;
@@ -340,7 +299,7 @@ process_mousewheel(GameState& state, Player& player, SDL_MouseWheelEvent const& 
 }
 
 void
-process_mousestate(GameState& state, Player& player, Camera& camera, FrameTime const& ft)
+process_mousestate(GameState& state, WorldObject& wo, Camera& camera, FrameTime const& ft)
 {
   auto& es     = state.engine_state;
   auto& logger = es.logger;
@@ -356,7 +315,6 @@ process_mousestate(GameState& state, Player& player, Camera& camera, FrameTime c
   auto& lm     = state.level_manager;
   auto& registry  = lm.active().registry;
 
-  auto& wo = player.world_object;
   auto& movement = es.movement_state;
   if (both_yes_now) {
     wo.rotate_to_match_camera_rotation(camera);
@@ -368,7 +326,7 @@ process_mousestate(GameState& state, Player& player, Camera& camera, FrameTime c
 }
 
 void
-process_keystate(GameState& state, Player& player, Camera& camera, FrameTime const& ft)
+process_keystate(GameState& state, WorldObject& wo, Camera& camera, FrameTime const& ft)
 {
   // continual keypress responses procesed here
   uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
@@ -382,7 +340,6 @@ process_keystate(GameState& state, Player& player, Camera& camera, FrameTime con
   auto& registry = zs.registry;
 
   auto& movement = es.movement_state;
-  auto& wo = player.world_object;
 
   movement.forward = keystate[SDL_SCANCODE_W]
     ? wo.world_forward()
@@ -402,7 +359,7 @@ process_keystate(GameState& state, Player& player, Camera& camera, FrameTime con
 
 void
 process_controllerstate(GameState& state, SDLControllers const& controllers, Player& player,
-                        Camera& camera, FrameTime const& ft)
+                        WorldObject& player_wo, Camera& camera, FrameTime const& ft)
 {
   if (controllers.empty()) {
     return;
@@ -437,7 +394,6 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Pla
   auto& movement = es.movement_state;
   auto const axis_left_x = c.axis_left_x();
 
-  auto& player_wo = player.world_object;
   if (less_threshold(axis_left_x)) {
     movement.left = player_wo.world_left();
     player_wo.rotate_to_match_camera_rotation(camera);
@@ -586,6 +542,7 @@ IO::process_event(GameState& state, SDL_Event& event, Camera& camera, FrameTime 
 
   auto const player_eid = find_player(registry);
   auto& player = registry.get<Player>(player_eid);
+  auto& player_wo = player.world_object;
 
   auto& ui     = es.ui_state;
   auto& ingame = ui.ingame;
@@ -635,22 +592,22 @@ IO::process_event(GameState& state, SDL_Event& event, Camera& camera, FrameTime 
 
   switch (type) {
   case SDL_MOUSEBUTTONDOWN:
-    process_mousebutton_down(state, player, event.button, camera, ft);
+    process_mousebutton_down(state, player_wo, event.button, camera, ft);
     break;
   case SDL_MOUSEBUTTONUP:
-    process_mousebutton_up(state, player, event.button, camera, ft);
+    process_mousebutton_up(state, player_wo, event.button, camera, ft);
     break;
   case SDL_MOUSEMOTION:
-    process_mousemotion(state, player, event.motion, camera, ft);
+    process_mousemotion(state, player_wo, event.motion, camera, ft);
     break;
   case SDL_MOUSEWHEEL:
-    process_mousewheel(state, player, event.wheel, camera, ft);
+    process_mousewheel(state, player_wo, event.wheel, camera, ft);
     break;
   case SDL_KEYDOWN:
-    process_keydown(state, player, event, camera, ft);
+    process_keydown(state, player, player_wo, event, camera, ft);
     break;
   case SDL_KEYUP:
-    process_keyup(state, player, event, camera, ft);
+    process_keyup(state, player_wo, event, camera, ft);
     break;
   }
 }
@@ -664,17 +621,18 @@ IO::process(GameState& state, SDLControllers const& controllers, Camera& camera,
   auto& ingame     = uistate.ingame;
   auto& chat_state = ingame.chat_state;
 
-  auto& zs = state.level_manager.active();
-  auto& registry = zs.registry;
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
-
   if (chat_state.currently_editing) {
     return;
   }
 
-  process_mousestate(state, player, camera, ft);
-  process_keystate(state, player, camera, ft);
+  auto& zs = state.level_manager.active();
+  auto& registry = zs.registry;
+  auto const player_eid = find_player(registry);
+  auto& player = registry.get<Player>(player_eid);
+  auto& player_wo = player.world_object;
+
+  process_mousestate(state, player_wo, camera, ft);
+  process_keystate(state, player_wo, camera, ft);
   if (!state.engine_state.disable_controller_input) {
     // TODO: using controller and keyboard input at the same time does not work.
     // reason: The controller when it's stick's aren't activated, every frame, set's the same
@@ -683,7 +641,7 @@ IO::process(GameState& state, SDLControllers const& controllers, Camera& camera,
     //
     // Idea: We could use separate vector's for tracking the controller input, if we want to allow
     // both at the same time (why?).
-    process_controllerstate(state, controllers, player, camera, ft);
+    process_controllerstate(state, controllers, player, player_wo, camera, ft);
   }
 }
 

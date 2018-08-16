@@ -40,6 +40,7 @@ enum class CameraMode
   ThirdPerson = 0,
   Ortho,
   FPS,
+  FREE_FLOATING,
   MAX
 };
 
@@ -48,10 +49,13 @@ struct CameraModes
   using ModeNamePair = std::pair<CameraMode, char const*>;
   CameraModes()      = delete;
 
-  static std::array<ModeNamePair, 3> constexpr CAMERA_MODES = {
+  static std::array<ModeNamePair, static_cast<size_t>(CameraMode::MAX)> constexpr CAMERA_MODES = {
       {{CameraMode::Ortho, "Ortho"},
        {CameraMode::ThirdPerson, "ThirdPerson"},
-       {CameraMode::FPS, "FPS"}}};
+       {CameraMode::FPS, "FPS"},
+       {CameraMode::FREE_FLOATING, "Free Floating"}
+      }
+  };
 
   static std::vector<std::string> string_list();
 };

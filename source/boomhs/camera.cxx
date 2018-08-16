@@ -261,7 +261,7 @@ Camera::next_mode()
 {
   auto const cast = [](auto const v) { return static_cast<int>(v); };
   CameraMode const m = static_cast<CameraMode>(cast(mode()) + cast(1));
-  if (CameraMode::MAX == m) {
+  if (CameraMode::MAX == m || CameraMode::FREE_FLOATING == m) {
     set_mode(static_cast<CameraMode>(0));
   }
   else {
@@ -281,6 +281,7 @@ Camera::rotate(float const dx, float const dy)
     case CameraMode::ThirdPerson:
       arcball.rotate(dx, dy);
       break;
+    case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:
       std::abort();
       break;
@@ -306,6 +307,7 @@ Camera::eye_forward() const
       return ortho.forward_;
     case CameraMode::ThirdPerson:
       return arcball.forward_;
+    case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:
       break;
   }
@@ -323,6 +325,7 @@ Camera::eye_up() const
       return ortho.up_;
     case CameraMode::ThirdPerson:
       return arcball.up_;
+    case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:
       break;
   }
@@ -339,6 +342,7 @@ Camera::world_forward() const
     case CameraMode::Ortho:
     case CameraMode::ThirdPerson:
       return glm::normalize(arcball.world_position() - arcball.target_position());
+    case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:
       break;
   }
@@ -356,6 +360,7 @@ Camera::world_position() const
       return ZERO;
     case CameraMode::ThirdPerson:
       return arcball.world_position();
+    case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:
       break;
   }
@@ -373,6 +378,7 @@ Camera::compute_projectionmatrix() const
     return fps.compute_projectionmatrix();
   case CameraMode::Ortho:
     return ortho.compute_projectionmatrix();
+  case CameraMode::FREE_FLOATING:
   case CameraMode::MAX:
     break;
   }
@@ -391,6 +397,7 @@ Camera::compute_viewmatrix(glm::vec3 const& target_pos) const
       return fps.compute_viewmatrix(world_forward());
     case CameraMode::ThirdPerson:
       return arcball.compute_viewmatrix(target_pos);
+    case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:
       break;
   }
