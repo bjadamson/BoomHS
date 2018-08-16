@@ -42,9 +42,12 @@ CameraModes::string_list()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraArcball
-CameraArcball::CameraArcball(glm::vec3 const& forward, glm::vec3 const& up)
+CameraArcball::CameraArcball(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t,
+                             Viewport& vp)
     : forward_(forward)
     , up_(up)
+    , target_(t)
+    , viewport_(vp)
     , coordinates_(0.0f, 0.0f, 0.0f)
     , rotation_speed(600.0)
 {
@@ -64,22 +67,18 @@ CameraArcball::zoom(float const amount)
 void
 CameraArcball::decrease_zoom(float const amount)
 {
-  check_pointers();
   zoom(-amount);
 }
 
 void
 CameraArcball::increase_zoom(float const amount)
 {
-  check_pointers();
   zoom(amount);
 }
 
 CameraArcball&
 CameraArcball::rotate(float const d_theta, float const d_phi)
 {
-  check_pointers();
-
   float constexpr PI     = glm::pi<float>();
   float constexpr TWO_PI = PI * 2.0f;
 
@@ -120,80 +119,120 @@ CameraArcball::rotate(float const d_theta, float const d_phi)
   return *this;
 }
 
-#define GET_TARGET_IMPL()                                                                          \
-  check_pointers();                                                                                \
-  return *target_
-
-WorldObject&
-CameraArcball::get_target()
-{
-  GET_TARGET_IMPL();
-}
-
-WorldObject const&
-CameraArcball::get_target() const
-{
-  GET_TARGET_IMPL();
-}
-
 glm::vec3
 CameraArcball::local_position() const
 {
-  check_pointers();
   return to_cartesian(coordinates_);
 }
 
 glm::vec3
 CameraArcball::world_position() const
 {
-  check_pointers();
   return target_position() + local_position();
 }
 
 glm::vec3
 CameraArcball::target_position() const
 {
-  check_pointers();
-  auto& target = get_target().transform();
+  auto& target = target_.get().transform();
   return target.translation;
 }
 
-void
-CameraArcball::check_pointers() const
+glm::mat4
+CameraArcball::compute_projectionmatrix() const
 {
-  assert(nullptr != target_);
+  auto const ar  = viewport_.aspect_ratio.compute();
+  auto const fov = glm::radians(viewport_.field_of_view);
+  auto const& f  = viewport_.frustum;
+
+  return glm::perspective(fov, ar, f.near, f.far);
+}
+
+glm::mat4
+CameraArcball::compute_viewmatrix(glm::vec3 const& target_pos) const
+{
+  auto const& target  = target_.get().transform().translation;
+  return glm::lookAt(target_pos, target, up_);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// CameraFPS
+CameraFPS::CameraFPS(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t, Viewport& vp)
+    : forward_(forward)
+    , up_(up)
+    , target_(t)
+    , viewport_(vp)
+{
+}
+
+glm::mat4
+CameraFPS::compute_projectionmatrix() const
+{
+  auto const ar  = viewport_.aspect_ratio.compute();
+  auto const fov = glm::radians(viewport_.field_of_view);
+  auto const& f  = viewport_.frustum;
+  return glm::perspective(fov, ar, f.near, f.far);
+}
+
+glm::mat4
+CameraFPS::compute_viewmatrix(glm::vec3 const& world_forward) const
+{
+  auto const pos = target_.get().transform().translation;
+
+  // NOTE: this might need to be changed back to (pos +  world_forward)
+  //
+  // I changed it temporarily to make FPS camera work, but I think it will be wrong
+  // again in the future when the FPS camera doesn't use the ARCBALL camera for anything.
+  return glm::lookAt(pos, pos - world_forward, up_);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// CameraORTHO
+CameraORTHO::CameraORTHO(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t,
+                         Viewport& vp)
+    : forward_(forward)
+    , up_(up)
+    , target_(t)
+    , viewport_(vp)
+{
+}
+
+glm::mat4
+CameraORTHO::compute_projectionmatrix() const
+{
+  auto const& f = viewport_.frustum;
+  return glm::ortho(f.left, f.right, f.bottom, f.top, f.near, f.far);
+}
+
+glm::mat4
+CameraORTHO::compute_viewmatrix(glm::vec3 const& target) const
+{
+  return glm::lookAt(ZERO, target, Y_UNIT_VECTOR);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
-Camera::Camera(ScreenDimensions const& dimensions, Viewport&& vp,
-                           glm::vec3 const& forward, glm::vec3 const& up)
-    : forward_(forward)
-    , up_(up)
-    , viewport_(MOVE(vp))
-    , arcball(forward_, up_)
+Camera::Camera(ScreenDimensions const& dimensions, Viewport&& vp, glm::vec3 const& forward,
+               glm::vec3 const& up)
+    : viewport_(MOVE(vp))
+    , mode_(CameraMode::ThirdPerson)
+    , arcball(forward, up, target_, viewport_)
+    , fps(forward, up, target_, viewport_)
+    , ortho(forward, up, target_, viewport_)
 {
-}
-
-void
-Camera::check_pointers() const
-{
-  assert(nullptr != target_);
-  arcball.check_pointers();
 }
 
 WorldObject&
 Camera::get_target()
 {
-  GET_TARGET_IMPL();
+  return target_.get();
 }
 
 WorldObject const&
 Camera::get_target() const
 {
-  GET_TARGET_IMPL();
+  return target_.get();
 }
-#undef GET_TARGET_IMPL
 
 void
 Camera::set_mode(CameraMode const m)
@@ -204,8 +243,6 @@ Camera::set_mode(CameraMode const m)
 void
 Camera::next_mode()
 {
-  check_pointers();
-
   auto const cast = [](auto const v) { return static_cast<int>(v); };
   CameraMode const m = static_cast<CameraMode>(cast(mode()) + cast(1));
   if (CameraMode::MAX == m) {
@@ -219,35 +256,104 @@ Camera::next_mode()
 Camera&
 Camera::rotate(float const d_theta, float const d_phi)
 {
-  arcball.rotate(d_theta, d_phi);
+  switch (mode()) {
+    case CameraMode::FPS:
+      arcball.rotate(d_theta, d_phi);
+      break;
+    case CameraMode::Ortho:
+      //break;
+    case CameraMode::ThirdPerson:
+      arcball.rotate(d_theta, d_phi);
+      break;
+    case CameraMode::MAX:
+      std::abort();
+      break;
+  }
   return *this;
 }
 
 void
 Camera::set_target(WorldObject& target)
 {
-  target_ = &target;
-  arcball.target_ = &target;
+  target_.set(target);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
+glm::vec3
+Camera::eye_forward() const
+{
+  switch (mode()) {
+    case CameraMode::FPS:
+      return fps.forward_;
+    case CameraMode::Ortho:
+      return ortho.forward_;
+    case CameraMode::ThirdPerson:
+      return arcball.forward_;
+    case CameraMode::MAX:
+      break;
+  }
+  std::abort();
+  return ZERO;
+}
+
+glm::vec3
+Camera::eye_up() const
+{
+  switch (mode()) {
+    case CameraMode::FPS:
+      return fps.up_;
+    case CameraMode::Ortho:
+      return ortho.up_;
+    case CameraMode::ThirdPerson:
+      return arcball.up_;
+    case CameraMode::MAX:
+      break;
+  }
+  std::abort();
+  return ZERO;
+}
+
+glm::vec3
+Camera::world_forward() const
+{
+  switch (mode()) {
+    case CameraMode::FPS:
+    case CameraMode::Ortho:
+    case CameraMode::ThirdPerson:
+      return glm::normalize(arcball.world_position() - arcball.target_position());
+    case CameraMode::MAX:
+      break;
+  }
+  std::abort();
+  return ZERO;
+}
+
+glm::vec3
+Camera::world_position() const
+{
+  switch (mode()) {
+    case CameraMode::FPS:
+    case CameraMode::Ortho:
+    case CameraMode::ThirdPerson:
+      return arcball.world_position();
+    case CameraMode::MAX:
+      break;
+  }
+  std::abort();
+  return ZERO;
+}
+
 glm::mat4
 Camera::compute_projectionmatrix() const
 {
-  auto const& v = viewport_;
-  auto const& f = v.frustum;
-  auto const fov = glm::radians(v.field_of_view);
-
   switch (mode()) {
   case CameraMode::ThirdPerson:
-  case CameraMode::FPS: {
-    auto const ar = v.aspect_ratio.compute();
-    return glm::perspective(fov, ar, f.near, f.far);
-  }
-  case CameraMode::Ortho: {
-    return glm::ortho(f.left, f.right, f.bottom, f.top, f.near, f.far);
-  }
+    return arcball.compute_projectionmatrix();
+  case CameraMode::FPS:
+    return fps.compute_projectionmatrix();
+  case CameraMode::Ortho:
+    return ortho.compute_projectionmatrix();
   case CameraMode::MAX:
     break;
   }
@@ -257,25 +363,17 @@ Camera::compute_projectionmatrix() const
 }
 
 glm::mat4
-Camera::compute_viewmatrix(glm::vec3 const& pos) const
+Camera::compute_viewmatrix(glm::vec3 const& target_pos) const
 {
-  auto const& target  = get_target().transform().translation;
-  auto const& up      = eye_up();
-  auto const& forward = world_forward();
-
   switch (mode()) {
-    case CameraMode::Ortho: {
-    return glm::lookAt(ZERO, target, Y_UNIT_VECTOR);
-  }
-  case CameraMode::FPS: {
-    return glm::lookAt(target, target + forward, Y_UNIT_VECTOR);
-  }
-  case CameraMode::ThirdPerson: {
-    return glm::lookAt(pos, target, up);
-  }
-  case CameraMode::MAX: {
-    break;
-  }
+    case CameraMode::Ortho:
+      return ortho.compute_viewmatrix(target_pos);
+    case CameraMode::FPS:
+      return fps.compute_viewmatrix(world_forward());
+    case CameraMode::ThirdPerson:
+      return arcball.compute_viewmatrix(target_pos);
+    case CameraMode::MAX:
+      break;
   }
   std::abort();
   return glm::mat4{}; // appease compiler

@@ -74,18 +74,11 @@ process_mousemotion(GameState& state, Player& player, SDL_MouseMotionEvent const
   auto& ui     = es.ui_state.debug;
 
   auto& wo = player.world_object;
-
-  bool const debug_camera = false;
-  if (debug_camera) {
-    //debug_cameramove();
+  if (camera.mode() == CameraMode::FPS) {
+    fps_mousemove(wo, camera, player, ms, motion.xrel, motion.yrel);
   }
-  else {
-    if (camera.mode() == CameraMode::FPS) {
-      fps_mousemove(wo, camera, player, ms, motion.xrel, motion.yrel);
-    }
-    else if (camera.mode() == CameraMode::ThirdPerson) {
-      thirdperson_mousemove(wo, camera, ms, motion.xrel, motion.yrel, ft);
-    }
+  else if (camera.mode() == CameraMode::ThirdPerson) {
+    thirdperson_mousemove(wo, camera, ms, motion.xrel, motion.yrel, ft);
   }
 }
 

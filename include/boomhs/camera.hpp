@@ -43,59 +43,103 @@ enum class CameraMode
   MAX
 };
 
-// clang-format off
 struct CameraModes
 {
   using ModeNamePair = std::pair<CameraMode, char const*>;
-  CameraModes() = delete;
+  CameraModes()      = delete;
 
   static std::array<ModeNamePair, 3> constexpr CAMERA_MODES = {
-    {
-      {CameraMode::Ortho,       "Ortho"},
-      {CameraMode::ThirdPerson, "ThirdPerson"},
-      {CameraMode::FPS,         "FPS"}
-    }
-  };
+      {{CameraMode::Ortho, "Ortho"},
+       {CameraMode::ThirdPerson, "ThirdPerson"},
+       {CameraMode::FPS, "FPS"}}};
 
   static std::vector<std::string> string_list();
 };
 
-// clang-format on
+class CameraTarget
+{
+  WorldObject* target_ = nullptr;
+
+  friend class Camera;
+
+public:
+  CameraTarget() = default;
+
+  WorldObject& get()
+  {
+    assert(target_);
+    return *target_;
+  }
+  WorldObject const& get() const
+  {
+    assert(target_);
+    return *target_;
+  }
+
+  void set(WorldObject& t) { target_ = &t; }
+};
+
 class CameraFPS
 {
+  glm::vec3 forward_, up_;
+
+  CameraTarget& target_;
+  Viewport&     viewport_;
+
+  friend class Camera;
+
 public:
-  CameraFPS() = default;
+  CameraFPS(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraFPS);
 
   glm::vec3 world_position() const;
+
+  glm::mat4 compute_projectionmatrix() const;
+  glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
+};
+
+class CameraORTHO
+{
+  glm::vec3 forward_, up_;
+
+  CameraTarget& target_;
+  Viewport&     viewport_;
+
+  friend class Camera;
+
+public:
+  CameraORTHO(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&);
+  MOVE_CONSTRUCTIBLE_ONLY(CameraORTHO);
+
+  glm::mat4 compute_projectionmatrix() const;
+  glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
 };
 
 class CameraArcball
 {
-  WorldObject* target_ = nullptr;
-  glm::vec3    forward_, up_;
+  glm::vec3 forward_, up_;
+
+  CameraTarget& target_;
+  Viewport&     viewport_;
 
   SphericalCoordinates coordinates_;
 
   void zoom(float);
-  void check_pointers() const;
 
   friend class Camera;
+
 public:
-  CameraArcball(glm::vec3 const&, glm::vec3 const&);
+  CameraArcball(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraArcball);
 
   // fields
-  bool  flip_y = false;
+  bool  flip_y      = false;
   bool  rotate_lock = false;
   float rotation_speed;
 
   // methods
   SphericalCoordinates spherical_coordinates() const { return coordinates_; }
   void                 set_coordinates(SphericalCoordinates const& sc) { coordinates_ = sc; }
-
-  WorldObject&       get_target();
-  WorldObject const& get_target() const;
 
   void decrease_zoom(float);
   void increase_zoom(float);
@@ -106,17 +150,17 @@ public:
   glm::vec3 world_position() const;
 
   glm::vec3 target_position() const;
+
+  glm::mat4 compute_projectionmatrix() const;
+  glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
 };
 
 class Camera
 {
-  WorldObject* target_ = nullptr;
-  glm::vec3    forward_, up_;
+  CameraTarget target_;
+  Viewport     viewport_;
+  CameraMode   mode_;
 
-  CameraMode mode_ = CameraMode::ThirdPerson;
-  Viewport viewport_;
-
-  void check_pointers() const;
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
   Camera(ScreenDimensions const&, Viewport&&, glm::vec3 const&, glm::vec3 const&);
@@ -124,6 +168,7 @@ public:
   // public fields
   CameraArcball arcball;
   CameraFPS     fps;
+  CameraORTHO   ortho;
 
   WorldObject&       get_target();
   WorldObject const& get_target() const;
@@ -132,17 +177,17 @@ public:
   void set_mode(CameraMode);
   void next_mode();
 
-  glm::vec3 eye_forward() const { return forward_; }
+  glm::vec3 eye_forward() const;
   glm::vec3 eye_backward() const { return -eye_forward(); }
 
-  glm::vec3 eye_up() const { return up_; }
+  glm::vec3 eye_up() const;
   glm::vec3 eye_down() const { return -eye_up(); }
 
   glm::vec3 eye_left() const { return -eye_right(); }
   glm::vec3 eye_right() const { return glm::normalize(glm::cross(eye_forward(), eye_up())); }
 
-  glm::vec3 world_forward() const { return glm::normalize(arcball.world_position() - arcball.target_position()); }
-  glm::vec3 world_position() const { return arcball.world_position(); }
+  glm::vec3 world_forward() const;
+  glm::vec3 world_position() const;
 
   auto const& viewport_ref() const { return viewport_; }
   auto&       viewport_ref() { return viewport_; }
