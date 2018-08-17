@@ -109,6 +109,11 @@ public:
   CameraFPS(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraFPS);
 
+  // fields
+  MouseSensitivity sensitivity;
+  bool             rotation_lock;
+
+  // methods
   CameraFPS& rotate(float, float);
 
   glm::vec3 world_position() const;
@@ -140,6 +145,7 @@ class CameraArcball
 
   CameraTarget& target_;
   Viewport&     viewport_;
+  bool&         flip_y_;
 
   SphericalCoordinates coordinates_;
 
@@ -148,13 +154,12 @@ class CameraArcball
   friend class Camera;
 
 public:
-  CameraArcball(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&);
+  CameraArcball(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&, bool&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraArcball);
 
   // fields
-  bool  flip_y      = false;
-  bool  rotate_lock = false;
-  float rotation_speed;
+  MouseSensitivity sensitivity;
+  bool             rotation_lock;
 
   // methods
   SphericalCoordinates spherical_coordinates() const { return coordinates_; }
@@ -182,12 +187,14 @@ class Camera
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(ScreenDimensions const&, Viewport&&, glm::vec3 const&, glm::vec3 const&);
+  Camera(Viewport&&, glm::vec3 const&, glm::vec3 const&);
 
   // public fields
   CameraArcball arcball;
   CameraFPS     fps;
   CameraORTHO   ortho;
+
+  bool flip_y = false;
 
   WorldObject& get_target();
   WorldObject const& get_target() const;
@@ -195,6 +202,7 @@ public:
   auto mode() const { return mode_; }
   void set_mode(CameraMode);
   void next_mode();
+  void toggle_rotation_lock();
 
   glm::vec3 eye_forward() const;
   glm::vec3 eye_backward() const { return -eye_forward(); }

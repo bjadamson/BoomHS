@@ -51,13 +51,15 @@ CameraTarget::validate() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraArcball
 CameraArcball::CameraArcball(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t,
-                             Viewport& vp)
+                             Viewport& vp, bool& flip_y)
     : forward_(forward)
     , up_(up)
     , target_(t)
     , viewport_(vp)
     , coordinates_(0.0f, 0.0f, 0.0f)
-    , rotation_speed(600.0)
+    , flip_y_(flip_y)
+    , sensitivity(0.002, 0.002)
+    , rotation_lock(false)
 {
 }
 
@@ -90,8 +92,11 @@ CameraArcball::rotate(float const d_theta, float const d_phi)
   float constexpr PI     = glm::pi<float>();
   float constexpr TWO_PI = PI * 2.0f;
 
+  float const dx = d_theta * sensitivity.x;
+  float const dy = d_phi   * sensitivity.y;
+
   auto& theta = coordinates_.theta;
-  theta       = (up_.y > 0.0f) ? (theta - d_theta) : (theta + d_theta);
+  theta       = (up_.y > 0.0f) ? (theta - dx) : (theta + dx);
   if (theta > TWO_PI) {
     theta -= TWO_PI;
   }
@@ -100,10 +105,10 @@ CameraArcball::rotate(float const d_theta, float const d_phi)
   }
 
   auto&       phi     = coordinates_.phi;
-  float const new_phi = flip_y ? (phi + d_phi) : (phi - d_phi);
+  float const new_phi = flip_y_ ? (phi + dy) : (phi - dy);
   bool const  top_hemisphere =
       (new_phi > 0 && new_phi < (PI / 2.0f)) || (new_phi < -(PI / 2.0f) && new_phi > -TWO_PI);
-  if (!rotate_lock || top_hemisphere) {
+  if (!rotation_lock || top_hemisphere) {
     phi = new_phi;
   }
 
@@ -169,14 +174,16 @@ CameraFPS::CameraFPS(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget
     , up_(up)
     , target_(t)
     , viewport_(vp)
+    , sensitivity(0.2, 0.2)
+    , rotation_lock(true)
 {
 }
 
 CameraFPS&
 CameraFPS::rotate(float const dx, float const dy)
 {
-  transform().rotate_degrees(dx, Y_UNIT_VECTOR);
-  transform().rotate_degrees(dy, X_UNIT_VECTOR);
+  transform().rotate_degrees(dx * sensitivity.x, Y_UNIT_VECTOR);
+  transform().rotate_degrees(dy * sensitivity.y, X_UNIT_VECTOR);
   return *this;
 }
 
@@ -233,11 +240,11 @@ CameraORTHO::compute_viewmatrix(glm::vec3 const& target) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
-Camera::Camera(ScreenDimensions const& dimensions, Viewport&& vp, glm::vec3 const& forward,
+Camera::Camera(Viewport&& vp, glm::vec3 const& forward,
                glm::vec3 const& up)
     : viewport_(MOVE(vp))
     , mode_(CameraMode::ThirdPerson)
-    , arcball(forward, up, target_, viewport_)
+    , arcball(forward, up, target_, viewport_, flip_y)
     , fps(forward, up, target_, viewport_)
     , ortho(forward, up, target_, viewport_)
 {
@@ -270,7 +277,27 @@ Camera::next_mode()
     set_mode(static_cast<CameraMode>(0));
   }
   else {
+    assert(m < CameraMode::FREE_FLOATING);
     set_mode(m);
+  }
+}
+
+void
+Camera::toggle_rotation_lock()
+{
+  switch (mode()) {
+    case CameraMode::FPS:
+      fps.rotation_lock ^= true;
+      break;
+    case CameraMode::Ortho:
+      break;
+    case CameraMode::ThirdPerson:
+      arcball.rotation_lock ^= true;
+      break;
+    case CameraMode::FREE_FLOATING:
+    case CameraMode::MAX:
+      std::abort();
+      break;
   }
 }
 
@@ -300,8 +327,7 @@ Camera::set_target(WorldObject& wo)
   target_.set(wo);
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Camera
+
 glm::vec3
 Camera::eye_forward() const
 {
@@ -426,7 +452,7 @@ Camera::make_default(ScreenDimensions const& dimensions)
   auto constexpr FAR  = 10000.0f;
   auto vp = make_viewport(FOV, dimensions, AR, NEAR, FAR);
 
-  Camera camera(dimensions, MOVE(vp), FORWARD, UP);
+  Camera camera(MOVE(vp), FORWARD, UP);
 
   SphericalCoordinates sc;
   sc.radius = 3.8f;

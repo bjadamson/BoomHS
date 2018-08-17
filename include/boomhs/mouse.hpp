@@ -13,6 +13,12 @@ struct ScreenCoordinates
 struct MouseSensitivity
 {
   float x, y;
+
+  explicit MouseSensitivity(float const xp, float const yp)
+      : x(xp)
+      , y(yp)
+  {
+  }
 };
 
 } // namespace boomhs

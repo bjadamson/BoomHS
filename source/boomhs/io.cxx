@@ -35,10 +35,7 @@ void
 fps_mousemove(WorldObject& wo, Camera& camera, WorldObject& player, MouseState const& ms,
               int32_t const xrel, int32_t const yrel)
 {
-  auto const& sens = ms.sensitivity;
-  float const dx   = sens.x * xrel;
-  float const dy   = sens.y * yrel;
-  camera.rotate(dx, dy);
+  camera.rotate(xrel, yrel);
 }
 
 void
@@ -46,10 +43,7 @@ thirdperson_mousemove(WorldObject& wo, Camera& camera, MouseState const& ms, int
                       int32_t const yrel, FrameTime const& ft)
 {
   if (ms.left_pressed()) {
-    auto const& sens = ms.sensitivity;
-    float const dx   = sens.x * xrel;
-    float const dy   = sens.y * yrel;
-    camera.rotate(dx, dy);
+    camera.rotate(xrel, yrel);
   }
   if (ms.right_pressed()) {
     auto constexpr  RIGHTCLICK_TURN_SPEED = 600.0f;
@@ -167,7 +161,7 @@ process_mousebutton_down(GameState& state, WorldObject& player, SDL_MouseButtonE
   }
   if (button == SDL_BUTTON_MIDDLE) {
     LOG_INFO("toggling mouse up/down (pitch) lock");
-    camera.arcball.rotate_lock ^= true;
+    camera.toggle_rotation_lock();
   }
 }
 

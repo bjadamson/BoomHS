@@ -23,12 +23,8 @@ class MouseState
   auto mask() const { return SDL_GetMouseState(nullptr, nullptr); }
 
 public:
-  MouseState();
+  MouseState() = default;
 
-  // fields
-  MouseSensitivity sensitivity;
-
-  // methods
   auto coords() const
   {
     int x, y;

@@ -557,12 +557,6 @@ draw_camera_window(Camera& camera, Player& player)
     }
   };
   auto const draw_camera_window = [&]() {
-    auto& tp_camera = camera.arcball;
-    ImGui::Checkbox("Flip Y Sensitivity", &tp_camera.flip_y);
-    ImGui::Checkbox("Mouse Rotation Lock", &tp_camera.rotate_lock);
-    ImGui::InputFloat("Mouse Rotation Speed", &tp_camera.rotation_speed);
-    ImGui::Separator();
-
     ImGui::Text("Viewport");
     auto& viewport = camera.viewport_ref();
     ImGui::InputFloat("FOV:", &viewport.field_of_view);
@@ -597,11 +591,24 @@ draw_camera_window(Camera& camera, Player& player)
 }
 
 void
-draw_mouse_window(MouseState& mstate)
+draw_mouse_window(MouseState& mstate, Camera& camera)
 {
   auto const draw = [&]() {
-    ImGui::InputFloat("X sensitivity:", &mstate.sensitivity.x, 0.0f, 1.0f);
-    ImGui::InputFloat("Y sensitivity:", &mstate.sensitivity.y, 0.0f, 1.0f);
+    ImGui::Checkbox("Flip Y Sensitivity", &camera.flip_y);
+    ImGui::Separator();
+
+    if (ImGui::CollapsingHeader("First Person")) {
+      auto& fps = camera.fps;
+      ImGui::InputFloat("FPS X sensitivity:", &fps.sensitivity.x, 0.0f, 1.0f);
+      ImGui::InputFloat("FPS Y sensitivity:", &fps.sensitivity.y, 0.0f, 1.0f);
+      ImGui::Checkbox("FPS Mouse Rotation Lock", &fps.rotation_lock);
+    }
+    if (ImGui::CollapsingHeader("Third Person")) {
+      auto& arcball = camera.arcball;
+      ImGui::InputFloat("TPS X sensitivity:",  &arcball.sensitivity.x, 0.0f, 1.0f);
+      ImGui::InputFloat("TPS Y sensitivity:",  &arcball.sensitivity.y, 0.0f, 1.0f);
+      ImGui::Checkbox("TPS Mouse Rotation Lock", &arcball.rotation_lock);
+    }
   };
   imgui_cxx::with_window(draw, "MOUSE INFO WINDOW");
 }
@@ -852,7 +859,7 @@ draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, WaterAudioSyste
     draw_camera_window(camera, player);
   }
   if (uistate.show_mousewindow) {
-    draw_mouse_window(es.mouse_states.current);
+    draw_mouse_window(es.mouse_states.current, camera);
   }
   if (uistate.show_playerwindow) {
     draw_player_window(es, player);
