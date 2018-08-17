@@ -438,7 +438,7 @@ conditionally_draw_player_vectors(RenderState& rstate, Player const& player)
   auto& logger = es.logger;
 
   glm::vec3 const pos = player.world_position();
-  auto const& wo = player.world_object;
+  auto const& wo = player.world_object();
   if (es.show_player_localspace_vectors) {
     // local-space
     //
@@ -784,8 +784,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     auto const mvp_matrix = proj_matrix * (view_model * rmatrix);
     set_modelmatrix(logger, mvp_matrix, sp);
 
-    auto const peid = find_player(registry);
-    auto const& player = registry.get<Player>(peid);
+    auto const& player = find_player(registry);
     auto const target_level = registry.get<NPCData>(npc_selected_eid).level;
     auto const blendc = NearbyTargets::color_from_level_difference(player.level, target_level);
     sp.set_uniform_color(logger, "u_blendcolor", blendc);

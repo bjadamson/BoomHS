@@ -1,4 +1,5 @@
 #pragma once
+#include <boomhs/entity.hpp>
 #include <common/type_macros.hpp>
 
 #include <extlibs/glm.hpp>
@@ -11,11 +12,13 @@ class Camera;
 
 class WorldObject
 {
-  Transform *transform_;
+  EntityID eid_ = EntityIDMAX;
+  EntityRegistry* registry_ = nullptr;
+
   glm::vec3 forward_, up_;
 
 public:
-  WorldObject(Transform&, glm::vec3 const&, glm::vec3 const&);
+  WorldObject(EntityID, EntityRegistry&, glm::vec3 const&, glm::vec3 const&);
   MOVE_DEFAULT(WorldObject);
   COPY_DEFAULT(WorldObject);
 
@@ -40,8 +43,8 @@ public:
 
   std::string display() const;
 
-  Transform& transform() { return *transform_; }
-  Transform const& transform() const { return *transform_; }
+  Transform& transform() { return registry_->get<Transform>(eid_); }
+  Transform const& transform() const { return registry_->get<Transform>(eid_); }
 
   glm::quat const& orientation() const { return transform().rotation; }
   glm::vec3 const& world_position() const;

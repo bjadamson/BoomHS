@@ -540,9 +540,8 @@ IO::process_event(GameState& state, SDL_Event& event, Camera& camera, FrameTime 
   auto& active = lm.active();
   auto& registry = active.registry;
 
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
-  auto& player_wo = player.world_object;
+  auto& player = find_player(registry);
+  auto& player_wo = player.world_object();
 
   auto& ui     = es.ui_state;
   auto& ingame = ui.ingame;
@@ -627,9 +626,9 @@ IO::process(GameState& state, SDLControllers const& controllers, Camera& camera,
 
   auto& zs = state.level_manager.active();
   auto& registry = zs.registry;
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
-  auto& player_wo = player.world_object;
+
+  auto& player = find_player(registry);
+  auto player_wo = player.world_object();
 
   process_mousestate(state, player_wo, camera, ft);
   process_keystate(state, player_wo, camera, ft);

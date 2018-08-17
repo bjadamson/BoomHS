@@ -23,9 +23,6 @@ class FrameTime;
 namespace boomhs
 {
 class EngineState;
-struct Item;
-class NearbyTargets;
-class TerrainGrid;
 struct ZoneState;
 
 class Player
@@ -33,12 +30,14 @@ class Player
   EntityID eid_;
   EntityRegistry* registry_;
 
-  GCD gcd;
+  WorldObject wo_;
+  GCD gcd_;
 
 public:
+  NO_COPY(Player);
+  MOVE_DEFAULT(Player);
   explicit Player(EntityID, EntityRegistry&, glm::vec3 const&, glm::vec3 const&);
 
-  WorldObject  world_object;
   Inventory    inventory;
   HealthPoints hp{44, 50};
   int          level = -1;
@@ -48,6 +47,7 @@ public:
   int   damage       = 1;
   float speed;
 
+
   void pickup_entity(EntityID, EntityRegistry&);
   void drop_entity(common::Logger&, EntityID, EntityRegistry&);
 
@@ -56,14 +56,17 @@ public:
   void update(EngineState&, ZoneState&, window::FrameTime const&);
 
   auto const& transform() const { return registry_->get<Transform>(eid_); }
-  auto&       transform() { return registry_->get<Transform>(eid_); }
+  Transform&       transform() { return registry_->get<Transform>(eid_); }
 
   auto const& bounding_box() const { return registry_->get<AABoundingBox>(eid_); }
 
-  glm::vec3 world_position() const;
+  glm::vec3   world_position() const;
+
+  WorldObject& world_object() { return wo_; }
+  WorldObject const& world_object() const { return wo_; }
 };
 
-EntityID
+Player&
 find_player(EntityRegistry&);
 
 } // namespace boomhs

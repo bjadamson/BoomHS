@@ -62,8 +62,7 @@ namespace
 bool
 player_in_water(common::Logger& logger, EntityRegistry& registry)
 {
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
+  auto& player = find_player(registry);
 
   auto const eids = find_all_entities_with_component<WaterInfo, Transform, AABoundingBox>(registry);
   for (auto const eid : eids) {
@@ -131,9 +130,7 @@ update_npcpositions(common::Logger& logger, EntityRegistry& registry, TerrainGri
 void
 update_nearbytargets(NearbyTargets& nbt, EntityRegistry& registry, FrameTime const& ft)
 {
-  auto const player = find_player(registry);
-  assert(registry.has<Transform>(player));
-  auto const& ptransform = registry.get<Transform>(player);
+  auto const& player = find_player(registry);
 
   auto const enemies = find_enemies(registry);
   using pair_t       = std::pair<float, EntityID>;
@@ -143,7 +140,7 @@ update_nearbytargets(NearbyTargets& nbt, EntityRegistry& registry, FrameTime con
       continue;
     }
     auto const& etransform = registry.get<Transform>(eid);
-    float const distance   = glm::distance(ptransform.translation, etransform.translation);
+    float const distance   = glm::distance(player.transform().translation, etransform.translation);
     pairs.emplace_back(std::make_pair(distance, eid));
   }
 
@@ -239,8 +236,7 @@ update_torchflicker(LevelData const& ldata, EntityRegistry& registry, RNG& rng,
     auto& torch_transform = registry.get<Transform>(eid);
     if (item.is_pickedup) {
       // Player has picked up the torch, make it follow player around
-      auto const player_eid = find_player(registry);
-      auto const& player = registry.get<Player>(player_eid);
+      auto const& player = find_player(registry);
       auto const& player_pos = player.world_position();
 
       torch_transform.translation = player_pos;
@@ -306,9 +302,7 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
   auto& gfx_state = zs.gfx_state;
   auto& ttable    = gfx_state.texture_table;
 
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
-
+  auto& player = find_player(registry);
   auto& nbt = ldata.nearby_targets;
 
   // THIS GOES FIRST ALWAYS.
@@ -920,12 +914,11 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
   auto& io = es.imgui;
 
   auto& registry = zs.registry;
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
+  auto& player = find_player(registry);
 
   static bool set_camera_once = false;
   if (!set_camera_once) {
-    camera.set_target(player.world_object);
+    camera.set_target(player.world_object());
     set_camera_once = true;
   }
 

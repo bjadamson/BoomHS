@@ -58,7 +58,15 @@ place_player(common::Logger& logger, TerrainGrid const& terrain,
              MaterialTable const& material_table, EntityRegistry& registry)
 {
   auto const eid = registry.create();
-  auto& transform = registry.assign<Transform>(eid);
+
+  auto const FWD     = -Z_UNIT_VECTOR;
+  auto constexpr UP  =  Y_UNIT_VECTOR;
+  auto& player = registry.assign<Player>(eid, eid, registry, FWD, UP);
+  player.level = 14;
+  player.name  = "BEN";
+  player.speed = 460;
+
+  auto& transform = player.transform();
 
   {
     float const x = 8, z = 8;
@@ -79,12 +87,7 @@ place_player(common::Logger& logger, TerrainGrid const& terrain,
 
   registry.assign<Material>(eid) = material_table.find("player");
 
-  auto const FWD     = -Z_UNIT_VECTOR;
-  auto constexpr UP  =  Y_UNIT_VECTOR;
-  auto& player = registry.assign<Player>(eid, eid, registry, FWD, UP);
-  player.level = 14;
-  player.name  = "BEN";
-  player.speed = 460;
+  
 }
 
 void

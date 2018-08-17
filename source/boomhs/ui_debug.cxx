@@ -610,7 +610,7 @@ void
 draw_player_window(EngineState& es, Player& player)
 {
   auto const draw = [&]() {
-    auto& wo = player.world_object;
+    auto wo = player.world_object();
     auto const display = wo.display();
     ImGui::Text("%s", display.c_str());
 
@@ -836,8 +836,7 @@ draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, WaterAudioSyste
   auto& registry       = zs.registry;
   auto& ldata          = zs.level_data;
 
-  auto const peid = find_player(registry);
-  auto& player    = registry.get<Player>(peid);
+  auto& player = find_player(registry);
 
   if (uistate.show_entitywindow) {
     auto const cstate = CameraFrameState::from_camera(camera);

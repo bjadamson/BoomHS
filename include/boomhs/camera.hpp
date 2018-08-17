@@ -2,6 +2,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/mouse.hpp>
 #include <boomhs/spherical.hpp>
+#include <boomhs/world_object.hpp>
 
 #include <boomhs/math.hpp>
 #include <common/log.hpp>
@@ -10,7 +11,6 @@
 namespace boomhs
 {
 class ScreenDimensions;
-struct WorldObject;
 
 class AspectRatio
 {
@@ -62,25 +62,35 @@ struct CameraModes
 
 class CameraTarget
 {
-  WorldObject* target_ = nullptr;
+  WorldObject* wo_;
+
+  // methods
+  void validate() const;
 
   friend class Camera;
 
 public:
   CameraTarget() = default;
 
-  WorldObject& get()
+  WorldObject&
+  get()
   {
-    assert(target_);
-    return *target_;
-  }
-  WorldObject const& get() const
-  {
-    assert(target_);
-    return *target_;
+    validate();
+    return *wo_;
   }
 
-  void set(WorldObject& t) { target_ = &t; }
+  WorldObject const&
+  get() const
+  {
+    validate();
+    return *wo_;
+  }
+
+  void
+  set(WorldObject& wo)
+  {
+    wo_ = &wo;
+  }
 };
 
 class CameraFPS
@@ -176,7 +186,7 @@ public:
   CameraFPS     fps;
   CameraORTHO   ortho;
 
-  WorldObject&       get_target();
+  WorldObject& get_target();
   WorldObject const& get_target() const;
 
   auto mode() const { return mode_; }

@@ -119,8 +119,9 @@ update_position(EngineState& es, LevelData& ldata, Player& player, FrameTime con
   if (move_dir != math::constants::ZERO) {
     move_dir = glm::normalize(move_dir);
   }
-  LOG_ERROR_SPRINTF("move dir: %s, speed: %f", glm::to_string(move_dir), player.speed);
-  move_worldobject(es, player.world_object, move_dir, player.speed, terrain, ft);
+
+  auto wo = player.world_object();
+  move_worldobject(es, wo, move_dir, player.speed, terrain, ft);
 
   // Lookup the player height from the terrain at the player's X, Z world-coordinates.
   auto& player_pos = player.transform().translation;
@@ -141,16 +142,15 @@ static auto const HOW_OFTEN_GCD_RESETS_MS = TimeConversions::seconds_to_millis(1
 Player::Player(EntityID const eid, EntityRegistry& r, glm::vec3 const& fwd, glm::vec3 const& up)
     : eid_(eid)
     , registry_(&r)
-    , world_object(transform(), fwd, up)
+    , wo_(eid, r, fwd, up)
 {
 }
 
 void
 Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
 {
-  auto const player_eid = find_player(registry);
-  auto&      player     = registry.get<Player>(player_eid);
-  auto&      inventory  = player.inventory;
+  auto& player    = find_player(registry);
+  auto& inventory = player.inventory;
 
   assert(inventory.add_item(eid));
   auto& item       = registry.get<Item>(eid);
@@ -166,9 +166,8 @@ Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
 void
 Player::drop_entity(common::Logger& logger, EntityID const eid, EntityRegistry& registry)
 {
-  auto const player_eid = find_player(registry);
-  auto&      player     = registry.get<Player>(player_eid);
-  auto&      inventory  = player.inventory;
+  auto& player    = find_player(registry);
+  auto& inventory = player.inventory;
 
   auto& item       = registry.get<Item>(eid);
   item.is_pickedup = false;
@@ -177,7 +176,7 @@ Player::drop_entity(common::Logger& logger, EntityID const eid, EntityRegistry& 
   visible.value = true;
 
   // Move the dropped item to the player's position
-  auto const& player_pos = registry.get<Transform>(player_eid).translation;
+  auto const& player_pos = player.world_object().world_position();
 
   auto& transform       = registry.get<Transform>(eid);
   transform.translation = player_pos;
@@ -200,7 +199,7 @@ Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
 
   auto& ttable    = zs.gfx_state.texture_table;
 
-  gcd.update();
+  gcd_.update();
   update_position(es, ldata, *this, ft);
 
   // If no target is selected, no more work to do.
@@ -209,11 +208,11 @@ Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
     return;
   }
 
-  bool const gcd_ready = gcd.is_ready();
+  bool const gcd_ready = gcd_.is_ready();
   auto const reset_gcd_if_ready = [&]() {
     if (gcd_ready) {
       LOG_ERROR_SPRINTF("RESETTING GCD");
-      gcd.reset_ms(HOW_OFTEN_GCD_RESETS_MS);
+      gcd_.reset_ms(HOW_OFTEN_GCD_RESETS_MS);
     }
   };
   ON_SCOPE_EXIT(reset_gcd_if_ready);
@@ -296,22 +295,22 @@ Player::world_position() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-EntityID
+Player&
 find_player(EntityRegistry& registry)
 {
   // for now assume only 1 entity has the Player tag
   assert(1 == registry.view<Player>().size());
 
   // Assume Player has a Transform
-  auto                    view = registry.view<Player, Transform>();
-  std::optional<EntityID> entity{std::nullopt};
-  for (auto const e : view) {
+  auto                    view = registry.view<Player>();
+  Player* player = nullptr;
+  for (auto const eid : view) {
     // This assert ensures this loop only runs once.
-    assert(std::nullopt == entity);
-    entity = e;
+    assert(nullptr == player);
+    player = &registry.get<Player>(eid);
   }
-  assert(std::nullopt != entity);
-  return *entity;
+  assert(nullptr != player);
+  return *player;
 }
 
 } // namespace boomhs

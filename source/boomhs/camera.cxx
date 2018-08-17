@@ -41,6 +41,14 @@ CameraModes::string_list()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// CameraTarget
+void
+CameraTarget::validate() const
+{
+  assert(nullptr != wo_);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraArcball
 CameraArcball::CameraArcball(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t,
                              Viewport& vp)
@@ -134,8 +142,7 @@ CameraArcball::world_position() const
 glm::vec3
 CameraArcball::target_position() const
 {
-  auto& target = target_.get().transform();
-  return target.translation;
+  return target_.get().transform().translation;
 }
 
 glm::mat4
@@ -151,7 +158,7 @@ CameraArcball::compute_projectionmatrix() const
 glm::mat4
 CameraArcball::compute_viewmatrix(glm::vec3 const& target_pos) const
 {
-  auto const& target  = target_.get().transform().translation;
+  auto const& target =  target_.get().transform().translation;
   return glm::lookAt(target_pos, target, up_);
 }
 
@@ -290,9 +297,9 @@ Camera::rotate(float const dx, float const dy)
 }
 
 void
-Camera::set_target(WorldObject& target)
+Camera::set_target(WorldObject& wo)
 {
-  target_.set(target);
+  target_.set(wo);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

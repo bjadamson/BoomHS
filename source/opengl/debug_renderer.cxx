@@ -36,8 +36,7 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camer
     render::draw_grid_lines(rstate);
   }
 
-  auto const player_eid = find_player(registry);
-  auto const& player = registry.get<Player>(player_eid);
+  auto& player = find_player(registry);
   if (es.show_global_axis) {
     render::draw_global_axis(rstate);
   }

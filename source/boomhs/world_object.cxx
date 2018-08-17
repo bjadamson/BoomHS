@@ -15,11 +15,14 @@ using namespace boomhs::math::constants;
 namespace boomhs
 {
 
-WorldObject::WorldObject(Transform& tr, glm::vec3 const& forward, glm::vec3 const& up)
-    : transform_(&tr)
+WorldObject::WorldObject(EntityID const eid, EntityRegistry& r, glm::vec3 const& forward,
+                         glm::vec3 const& up)
+    : eid_(eid)
+    , registry_(&r)
     , forward_(forward)
     , up_(up)
 {
+  registry_->assign<Transform>(eid_);
 }
 
 WorldObject&

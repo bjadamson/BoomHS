@@ -30,11 +30,10 @@ namespace
 {
 
 void
-draw_player_inventory(common::Logger& logger, EntityRegistry& registry, TextureTable const& ttable)
+draw_player_inventory(common::Logger& logger, Player& player, EntityRegistry& registry,
+                      TextureTable const& ttable)
 {
-  auto const eid       = find_player(registry);
-  auto&      player    = registry.get<Player>(eid);
-  auto&      inventory = player.inventory;
+  auto& inventory = player.inventory;
 
   auto const draw_button = [&](TextureInfo const& ti) {
     ImTextureID im_texid = reinterpret_cast<void*>(ti.id);
@@ -448,8 +447,7 @@ draw_2dui(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
   bool const is_expired       = blink_timer.expired();
 
 
-  auto const player_eid = find_player(registry);
-  auto& player          = registry.get<Player>(player_eid);
+  auto& player                = find_player(registry);
   bool const player_attacking = player.is_attacking;
 
   auto const reset_attack_timer = [&]() {
@@ -572,13 +570,12 @@ draw(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
 
   draw_2dui(es, lm, camera, ds);
 
-  auto const eid       = find_player(registry);
-  auto&      player    = registry.get<Player>(eid);
+  auto& player = find_player(registry);
   draw_chatwindow(es, player);
 
   auto& inventory = player.inventory;
   if (inventory.is_open()) {
-    draw_player_inventory(logger, registry, ttable);
+    draw_player_inventory(logger, player, registry, ttable);
   }
 }
 
