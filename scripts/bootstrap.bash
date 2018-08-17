@@ -282,8 +282,7 @@ sed -i "s|STDLIB_PLACEHOLDER|${CXX_STD_LIBRARY}|g"                      ${ROOT}/
 
 cat > "${BUILD}/conanfile.txt" << "EOF"
 [requires]
-glm/0.9.8.5@bincrafters/stable
-Boost/1.60.0/lasote/stable
+glm/0.9.8.0@TimSimpson/testing
 
 [generators]
 cmake
@@ -296,7 +295,7 @@ conan install --build missing                                                   
   -s arch=x86_64                                                                                   \
   -s compiler.version=6.0                                                                          \
   -s compiler.libcxx=${CXX_STD_LIBRARY}                                                            \
-  -s build_type=${DEBUG_OR_RELEASE}
+  -s build_type=${DEBUG_OR_RELEASE} .
 
 cmake .. -G "Unix Makefiles"                                                                       \
   -DCMAKE_BUILD_TYPE=${DEBUG_OR_RELEASE}                                                           \
