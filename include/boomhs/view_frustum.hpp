@@ -5,7 +5,7 @@
 namespace boomhs
 {
 struct AABoundingBox;
-struct Transform;
+class Transform;
 
 class ViewFrustum
 {

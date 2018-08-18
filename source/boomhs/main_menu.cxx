@@ -128,7 +128,8 @@ draw_debugwindow(EngineState& es, ZoneState& zs)
 
   ImGui::Checkbox("Draw Bounding Boxes", &es.draw_bounding_boxes);
   ImGui::Checkbox("Draw Normals", &es.draw_normals);
-  ImGui::Checkbox("Wireframe Rendering", &es.wireframe_override);
+  ImGui::Checkbox("View View Frustum", &es.draw_view_frustum);
+  ImGui::Checkbox("Draw Wireframe Rendering", &es.wireframe_override);
 
   ImGui::Separator();
   ImGui::Text("IMGUI");

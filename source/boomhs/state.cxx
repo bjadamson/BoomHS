@@ -20,6 +20,7 @@ EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, ScreenDim
     , mariolike_edges(false)
     , draw_imguimetrics(false)
     , draw_bounding_boxes(false)
+    , draw_view_frustum(false)
     , draw_2d_billboard_entities(true)
     , draw_2d_ui_entities(true)
     , draw_3d_entities(true)

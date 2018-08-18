@@ -1,8 +1,8 @@
 #pragma once
 #include <boomhs/entity.hpp>
-#include <common/type_macros.hpp>
+#include <boomhs/math.hpp>
 
-#include <extlibs/glm.hpp>
+#include <common/type_macros.hpp>
 
 #include <string>
 
@@ -12,7 +12,7 @@ class Camera;
 
 class WorldObject
 {
-  EntityID eid_ = EntityIDMAX;
+  EntityID        eid_      = EntityIDMAX;
   EntityRegistry* registry_ = nullptr;
 
   glm::vec3 forward_, up_;
@@ -43,10 +43,10 @@ public:
 
   std::string display() const;
 
-  Transform& transform() { return registry_->get<Transform>(eid_); }
+  Transform&       transform() { return registry_->get<Transform>(eid_); }
   Transform const& transform() const { return registry_->get<Transform>(eid_); }
 
-  glm::quat const& orientation() const { return transform().rotation; }
+  glm::quat        orientation() const { return transform().rotation_quat(); }
   glm::vec3 const& world_position() const;
 
   auto forward() const { return forward_; }
@@ -54,7 +54,7 @@ public:
 
   WorldObject& move(glm::vec3 const&);
 
-  void rotate_degrees(float const, glm::vec3 const&);
+  void rotate_degrees(float const, math::EulerAxis);
   void rotate_to_match_camera_rotation(Camera const&);
 
   void move_to(glm::vec3 const& pos) { transform().translation = pos; }

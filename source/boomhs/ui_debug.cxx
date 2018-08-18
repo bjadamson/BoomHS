@@ -171,10 +171,11 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
       auto& transform = registry.get<Transform>(eid);
       ImGui::InputFloat3("pos:", glm::value_ptr(transform.translation));
       {
-        auto buffer = glm::degrees(glm::eulerAngles(transform.rotation));
-        if (ImGui::InputFloat3("rot:", glm::value_ptr(buffer))) {
-          transform.rotation = glm::quat(buffer * (3.14159f / 180.f));
+        glm::vec3 buffer = transform.get_rotation_degrees();
+        if (ImGui::InputFloat3("quat rot:", glm::value_ptr(buffer))) {
+          transform.set_rotation(glm::quat{glm::radians(buffer)});
         }
+        ImGui::Text("euler rot:%s", glm::to_string(transform.get_rotation_degrees()).c_str());
       }
       ImGui::InputFloat3("scale:", glm::value_ptr(transform.scale));
     }

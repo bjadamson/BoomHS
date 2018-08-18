@@ -19,7 +19,7 @@ static constexpr float SKYBOX_SCALE_SIZE = 1000.0f;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Skybox
 Skybox::Skybox()
-    : speed_(800.0f)
+    : speed_(10.0f)
 {
   transform_.scale = glm::vec3{SKYBOX_SCALE_SIZE};
 }
@@ -27,7 +27,7 @@ Skybox::Skybox()
 void
 Skybox::update(FrameTime const& ft)
 {
-  transform_.rotate_degrees(speed_ * ft.delta_millis(), math::constants::Y_UNIT_VECTOR);
+  transform_.rotate_degrees(speed_ * ft.delta_millis(), math::EulerAxis::Y);
 }
 
 } // namespace boomhs

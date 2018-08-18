@@ -8,6 +8,7 @@
 #include <extlibs/imgui.hpp>
 
 using namespace boomhs;
+using namespace boomhs::math;
 using namespace boomhs::math::constants;
 using namespace opengl;
 
@@ -89,9 +90,6 @@ CameraArcball::increase_zoom(float const amount)
 CameraArcball&
 CameraArcball::rotate(float const d_theta, float const d_phi)
 {
-  float constexpr PI     = glm::pi<float>();
-  float constexpr TWO_PI = PI * 2.0f;
-
   float const dx = d_theta * sensitivity.x;
   float const dy = d_phi   * sensitivity.y;
 
@@ -174,16 +172,20 @@ CameraFPS::CameraFPS(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget
     , up_(up)
     , target_(t)
     , viewport_(vp)
-    , sensitivity(0.2, 0.2)
+    , sensitivity(0.02, 0.02)
     , rotation_lock(true)
 {
 }
 
 CameraFPS&
-CameraFPS::rotate(float const dx, float const dy)
+CameraFPS::rotate_degrees(float dx, float dy)
 {
-  transform().rotate_degrees(dx * sensitivity.x, Y_UNIT_VECTOR);
-  transform().rotate_degrees(dy * sensitivity.y, X_UNIT_VECTOR);
+  dx *= sensitivity.x;
+  dy *= sensitivity.y;
+
+  auto& t = transform();
+  t.rotate_degrees(dx, EulerAxis::Y);
+  t.rotate_degrees(dy, EulerAxis::X);
   return *this;
 }
 
@@ -306,7 +308,7 @@ Camera::rotate(float const dx, float const dy)
 {
   switch (mode()) {
     case CameraMode::FPS:
-      fps.rotate(dx, dy);
+      fps.rotate_degrees(glm::degrees(dx), glm::degrees(dy));
       break;
     case CameraMode::Ortho:
       //break;
@@ -369,7 +371,7 @@ Camera::world_forward() const
 {
   switch (mode()) {
     case CameraMode::FPS:
-      return glm::normalize(Z_UNIT_VECTOR * fps.transform().rotation);
+      return glm::normalize(Z_UNIT_VECTOR * fps.transform().rotation_quat());
     case CameraMode::Ortho:
     case CameraMode::ThirdPerson:
       return glm::normalize(arcball.world_position() - arcball.target_position());

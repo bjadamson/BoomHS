@@ -358,7 +358,7 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
 
         auto const& target_pos = registry.get<Transform>(target_eid).translation;
         item_tr.translation = target_pos;
-        item_tr.rotate_degrees(90, X_UNIT_VECTOR);
+        item_tr.rotate_degrees(90, math::EulerAxis::X);
         auto const& item_name = registry.get<Name>(item_eid).value;
         LOG_ERROR_SPRINTF("ADDING item %s AT xyz: %s", item_name, glm::to_string(item_tr.translation));
 

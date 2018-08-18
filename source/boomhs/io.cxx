@@ -24,6 +24,7 @@ float constexpr SCALE_FACTOR  = 0.20f;
 float constexpr ZOOM_FACTOR   = 0.2f;
 
 using namespace boomhs;
+using namespace boomhs::math;
 using namespace boomhs::math::constants;
 using namespace opengl;
 using namespace window;
@@ -46,12 +47,12 @@ thirdperson_mousemove(WorldObject& wo, Camera& camera, MouseState const& ms, int
     camera.rotate(xrel, yrel);
   }
   if (ms.right_pressed()) {
-    auto constexpr  RIGHTCLICK_TURN_SPEED = 600.0f;
-    float constexpr speed = RIGHTCLICK_TURN_SPEED;
+    auto constexpr  RIGHTCLICK_TURN_SPEED_DEGREES = 60.0f;
+    float constexpr speed = RIGHTCLICK_TURN_SPEED_DEGREES;
     float const angle = xrel > 0 ? speed : -speed;
 
     auto const x_dt     = angle * ft.delta_millis();
-    wo.rotate_degrees(x_dt, Y_UNIT_VECTOR);
+    wo.rotate_degrees(glm::degrees(x_dt), EulerAxis::Y);
   }
 }
 
@@ -100,7 +101,7 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
     auto&       sel  = registry.get<Selectable>(eid);
     sel.selected = false;
 
-    bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == glm::vec3{1});
+    bool const can_use_simple_test = (tr.rotation_quat() == glm::quat{}) && (tr.scale == ONE);
 
     float distance = 0.0f;
     bool intersects = false;
@@ -203,7 +204,7 @@ process_keydown(GameState& state, Player& player, WorldObject& player_wo, SDL_Ev
   auto& ingame = uistate.ingame;
   auto& chat_state = ingame.chat_state;
 
-  auto const rotate_player = [&](float const angle, glm::vec3 const& axis) {
+  auto const rotate_player = [&](float const angle, auto const axis) {
     player_wo.rotate_degrees(angle, axis);
   };
   switch (event.key.keysym.sym) {
@@ -267,10 +268,10 @@ process_keydown(GameState& state, Player& player, WorldObject& player_wo, SDL_Ev
   case SDLK_KP_MINUS:
     break;
   case SDLK_LEFT:
-    rotate_player(90.0f, Y_UNIT_VECTOR);
+    rotate_player(90.0f, EulerAxis::Y);
     break;
   case SDLK_RIGHT:
-    rotate_player(-90.0f, Y_UNIT_VECTOR);
+    rotate_player(-90.0f, EulerAxis::Y);
     break;
   }
 }

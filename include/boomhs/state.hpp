@@ -90,6 +90,7 @@ struct EngineState
 
   // rendering state
   bool draw_bounding_boxes;
+  bool draw_view_frustum;
   bool draw_2d_billboard_entities;
   bool draw_2d_ui_entities;
 

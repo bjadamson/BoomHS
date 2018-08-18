@@ -27,11 +27,11 @@ struct ZoneState;
 
 class Player
 {
-  EntityID eid_;
+  EntityID        eid_;
   EntityRegistry* registry_;
 
   WorldObject wo_;
-  GCD gcd_;
+  GCD         gcd_;
 
 public:
   NO_COPY(Player);
@@ -43,10 +43,9 @@ public:
   int          level = -1;
   std::string  name;
 
-  bool is_attacking = false;
+  bool  is_attacking = false;
   int   damage       = 1;
   float speed;
-
 
   void pickup_entity(EntityID, EntityRegistry&);
   void drop_entity(common::Logger&, EntityID, EntityRegistry&);
@@ -56,13 +55,13 @@ public:
   void update(EngineState&, ZoneState&, window::FrameTime const&);
 
   auto const& transform() const { return registry_->get<Transform>(eid_); }
-  Transform&       transform() { return registry_->get<Transform>(eid_); }
+  Transform&  transform() { return registry_->get<Transform>(eid_); }
 
   auto const& bounding_box() const { return registry_->get<AABoundingBox>(eid_); }
 
-  glm::vec3   world_position() const;
+  glm::vec3 world_position() const;
 
-  WorldObject& world_object() { return wo_; }
+  WorldObject&       world_object() { return wo_; }
   WorldObject const& world_object() const { return wo_; }
 };
 

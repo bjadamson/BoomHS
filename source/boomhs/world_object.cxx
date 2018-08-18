@@ -10,6 +10,7 @@
 #include <boomhs/math.hpp>
 
 using namespace boomhs;
+using namespace boomhs::math;
 using namespace boomhs::math::constants;
 
 namespace boomhs
@@ -49,11 +50,12 @@ WorldObject::world_position() const
 }
 
 void
-WorldObject::rotate_degrees(float const angle, glm::vec3 const& axis)
+WorldObject::rotate_degrees(float const angle, EulerAxis const axis)
 {
   auto& t = transform();
   t.rotate_degrees(angle, axis);
 }
+
 
 void
 WorldObject::rotate_to_match_camera_rotation(Camera const& camera)
@@ -77,11 +79,9 @@ WorldObject::rotate_to_match_camera_rotation(Camera const& camera)
   wo_fwd.y         = 0;
   wo_fwd           = glm::normalize(wo_fwd);
 
-  float const angle = math::angle_between_vectors(camera_wo_fwd, wo_fwd, ZERO);
-  glm::quat const new_rotation = math::rotation_between_vectors(camera_wo_fwd, wo_fwd);
-
-  auto& t    = transform();
-  t.rotation = new_rotation * t.rotation;
+  glm::quat const rot_between = math::rotation_between_vectors(camera_wo_fwd, wo_fwd);
+  auto& t = transform();
+  t.set_rotation(rot_between * t.rotation_quat());
 }
 
 } // namespace boomhs

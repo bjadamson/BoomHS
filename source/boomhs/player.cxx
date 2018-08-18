@@ -33,7 +33,7 @@ kill_entity(common::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
 
   // TODO: Get the normal vector for the terrain at the (x, z) point and rotate the npc to look
   // properly aligned on slanted terrain.
-  entity_transform.rotate_degrees(90.0f, X_UNIT_VECTOR);
+  entity_transform.rotate_degrees(90.0f, math::EulerAxis::X);
 }
 
 void

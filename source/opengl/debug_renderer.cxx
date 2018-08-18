@@ -47,7 +47,10 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camer
   Transform camera_transform;
   camera_transform.translation = camera.world_position();
   auto const model = camera_transform.model_matrix();
-  render::draw_frustum(rstate, camera.frustum_ref(), model);
+
+  if (es.draw_view_frustum) {
+    render::draw_frustum(rstate, camera.frustum_ref(), model);
+  }
 
   // if checks happen inside fn
   render::conditionally_draw_player_vectors(rstate, player);

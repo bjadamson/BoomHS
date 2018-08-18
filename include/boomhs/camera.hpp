@@ -53,9 +53,7 @@ struct CameraModes
       {{CameraMode::Ortho, "Ortho"},
        {CameraMode::ThirdPerson, "ThirdPerson"},
        {CameraMode::FPS, "FPS"},
-       {CameraMode::FREE_FLOATING, "Free Floating"}
-      }
-  };
+       {CameraMode::FREE_FLOATING, "Free Floating"}}};
 
   static std::vector<std::string> string_list();
 };
@@ -72,25 +70,19 @@ class CameraTarget
 public:
   CameraTarget() = default;
 
-  WorldObject&
-  get()
+  WorldObject& get()
   {
     validate();
     return *wo_;
   }
 
-  WorldObject const&
-  get() const
+  WorldObject const& get() const
   {
     validate();
     return *wo_;
   }
 
-  void
-  set(WorldObject& wo)
-  {
-    wo_ = &wo;
-  }
+  void set(WorldObject& wo) { wo_ = &wo; }
 };
 
 class CameraFPS
@@ -98,11 +90,11 @@ class CameraFPS
   glm::vec3 forward_, up_;
 
   CameraTarget& target_;
-  Viewport& viewport_;
+  Viewport&     viewport_;
 
   friend class Camera;
 
-  auto& transform() { return target_.get().transform(); }
+  auto&       transform() { return target_.get().transform(); }
   auto const& transform() const { return target_.get().transform(); }
 
 public:
@@ -113,8 +105,8 @@ public:
   MouseSensitivity sensitivity;
   bool             rotation_lock;
 
-  // methods
-  CameraFPS& rotate(float, float);
+  // methods (assumes values are in degrees)
+  CameraFPS& rotate_degrees(float, float);
 
   glm::vec3 world_position() const;
 
@@ -196,7 +188,7 @@ public:
 
   bool flip_y = false;
 
-  WorldObject& get_target();
+  WorldObject&       get_target();
   WorldObject const& get_target() const;
 
   auto mode() const { return mode_; }
