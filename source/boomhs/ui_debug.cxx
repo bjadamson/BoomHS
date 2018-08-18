@@ -560,7 +560,11 @@ draw_camera_window(Camera& camera, Player& player)
   auto const draw_camera_window = [&]() {
     ImGui::Text("Viewport");
     auto& viewport = camera.viewport_ref();
-    ImGui::InputFloat("FOV:", &viewport.field_of_view);
+
+    auto fov = glm::degrees(viewport.field_of_view);
+    if (ImGui::InputFloat("FOV (degrees):", &fov)) {
+      viewport.field_of_view = glm::radians(fov);
+    }
 
     auto& aspect_ratio = viewport.aspect_ratio;
     ImGui::InputFloat2("Aspect:", aspect_ratio.data());

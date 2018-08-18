@@ -152,7 +152,7 @@ glm::mat4
 CameraArcball::compute_projectionmatrix() const
 {
   auto const ar  = viewport_.aspect_ratio.compute();
-  auto const fov = glm::radians(viewport_.field_of_view);
+  auto const fov = viewport_.field_of_view;
   auto const& f  = viewport_.frustum;
 
   return glm::perspective(fov, ar, f.near, f.far);
@@ -199,7 +199,7 @@ glm::mat4
 CameraFPS::compute_projectionmatrix() const
 {
   auto const ar  = viewport_.aspect_ratio.compute();
-  auto const fov = glm::radians(viewport_.field_of_view);
+  auto const fov = viewport_.field_of_view;
   auto const& f  = viewport_.frustum;
   return glm::perspective(fov, ar, f.near, f.far);
 }
@@ -448,7 +448,7 @@ Camera::make_default(ScreenDimensions const& dimensions)
   auto const FORWARD = -Z_UNIT_VECTOR;
   auto constexpr UP  = Y_UNIT_VECTOR;
 
-  auto constexpr FOV  = 110.0f;
+  auto constexpr FOV  = glm::radians(110.0f);
   auto constexpr AR   = AspectRatio{4.0f, 3.0f};
   auto constexpr NEAR = 0.1f;
   auto constexpr FAR  = 10000.0f;
