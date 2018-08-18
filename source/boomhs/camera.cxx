@@ -114,8 +114,10 @@ CameraArcball::rotate(float const d_theta, float const d_phi)
 
   auto&       phi     = coordinates_.phi;
   float const new_phi = flip_y_ ? (phi + dy) : (phi - dy);
-  bool const  top_hemisphere =
-      (new_phi > 0 && new_phi < (PI / 2.0f)) || (new_phi < -(PI / 2.0f) && new_phi > -TWO_PI);
+
+  bool const in_region0     = new_phi > 0 && new_phi < (PI / 2.0f);
+  bool const in_region1     = new_phi < -(PI / 2.0f);
+  bool const top_hemisphere = in_region0 || in_region1;
   if (!rotation_lock || top_hemisphere) {
     phi = new_phi;
   }
@@ -194,8 +196,14 @@ CameraFPS::rotate_degrees(float dx, float dy)
   dy = dy * sensitivity.y;
 
   auto& t = transform();
-  t.rotate_degrees(dx, EulerAxis::Y);
-  t.rotate_degrees(dy, EulerAxis::X);
+  float const new_phi = dx + t.get_rotation_degrees().x;
+  bool const in_region0     = new_phi < 90 && new_phi >= 0;
+  bool const in_region1     = new_phi > -90 && new_phi > 0;
+  bool const top_hemisphere = in_region0 || in_region1;
+  //if (top_hemisphere) {
+    t.rotate_degrees(dx, EulerAxis::Y);
+    t.rotate_degrees(dy, EulerAxis::X);
+  //}
   return *this;
 }
 
