@@ -11,6 +11,7 @@
 namespace window
 {
 class FrameTime;
+class SDLWindow;
 } // namespace window
 
 namespace boomhs
@@ -113,6 +114,7 @@ public:
   // methods (assumes values are in degrees)
   CameraFPS& rotate_degrees(float, float);
 
+  void update(int, int, ScreenDimensions const&, window::SDLWindow&);
   glm::vec3 world_position() const;
 
   glm::mat4 compute_projectionmatrix() const;

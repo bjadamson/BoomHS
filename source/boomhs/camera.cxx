@@ -3,6 +3,8 @@
 #include <boomhs/mouse.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
+
+#include <window/sdl_window.hpp>
 #include <window/timer.hpp>
 
 #include <boomhs/math.hpp>
@@ -189,33 +191,84 @@ CameraFPS::CameraFPS(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget
 {
 }
 
+// theta: the angle (in radians) that v rotates around k
+// v: a vector in 3D space
+// k: a unit vector describing the axis of rotation
+glm::vec3 ROTATE(float const theta, const glm::vec3& v, const glm::vec3& k)
+{
+  std::cout << "Rotating " << glm::to_string(v) << " "
+            << theta << " radians around "
+            << glm::to_string(k) << "..." << std::endl;
+
+  float cos_theta = cos(theta);
+  float sin_theta = sin(theta);
+
+  glm::vec3 rotated = (v * cos_theta) + (glm::cross(k, v) * sin_theta) + (k * glm::dot(k, v)) * (1 - cos_theta);
+
+  std::cout << "Rotated: " << glm::to_string(rotated) << std::endl;
+  return rotated;
+}
+
+void
+CameraFPS::update(int const xpos, int const ypos, ScreenDimensions const& dim,
+                  SDLWindow& window)
+{
+#define CAMERA_ANGULAR_SPEED_DEG 1.0f
+  auto const mouseAxisX = 1, mouseAxisY = -1;
+
+  int const width  = dim.width() / 2;
+  int const height = dim.height() / 2;
+  std::cerr << "W: '" << width << "' h: '" << height << "'\n";
+  std::cerr << "xpos: '" << xpos << "' ypos: '" << ypos << "'\n";
+  int const mouseDeltaX = mouseAxisX * (xpos - width);
+  int const mouseDeltaY = -mouseAxisY * (ypos- height);  // mouse y-offsets are upside-down!
+
+  // HACK:  reset the cursor pos.:
+  //app.SetCursorPosition(app.GetWidth()/2, app.GetHeight()/2);
+  SDL_WarpMouseInWindow(window.raw(), width, height);
+
+  float lookRightRads = glm::radians(mouseDeltaX * CAMERA_ANGULAR_SPEED_DEG);
+  float lookUpRads    = glm::radians(mouseDeltaY * CAMERA_ANGULAR_SPEED_DEG);
+
+  // Limit the aim vector in such a way that the 'up' vector never drops below the horizon:
+#define MIN_UPWARDS_TILT_DEG 1.0f
+  static const float zenithMinDeclination = glm::radians(MIN_UPWARDS_TILT_DEG);
+  static const float zenithMaxDeclination = glm::radians(180.0f - MIN_UPWARDS_TILT_DEG);
+
+  const float currentDeclination = std::acosf(forward_.y);  ///< declination from vertical y-axis
+  const float requestedDeclination = currentDeclination - lookUpRads;
+
+  // Clamp the up/down rotation to at most the min/max zenith:
+  if(requestedDeclination < zenithMinDeclination) {
+    lookUpRads = currentDeclination - zenithMinDeclination;
+  }
+  else if(requestedDeclination > zenithMaxDeclination) {
+    lookUpRads = currentDeclination - zenithMaxDeclination;
+  }
+
+  // Rotate both the "aim" vector and the "up" vector ccw by 
+  // lookUpRads radians within their common plane -- which should 
+  // also contain the y-axis:  (i.e. no diagonal tilt allowed!)
+  auto const right = glm::normalize(glm::cross(forward_, up_));
+  forward_ = ROTATE(lookUpRads, forward_, right);
+  up_      = ROTATE(lookUpRads, up_, right);
+
+#define ASSERT_ORTHONORMAL(A, B, C) \
+  assert(float_compare(glm::dot(A, B), 0)); \
+  assert(float_compare(glm::dot(A, C), 0)); \
+  assert(float_compare(glm::dot(B, C), 0));
+
+  ASSERT_ORTHONORMAL(forward_, up_, right);
+
+  // Rotate both the "aim" and the "up" vector ccw about the vertical y-axis:
+  // (again, this keeps the y-axis in their common plane, and disallows diagonal tilt)
+  forward_ = ROTATE(-lookRightRads, forward_, constants::Y_UNIT_VECTOR);
+  up_      = ROTATE(-lookRightRads, up_, constants::Y_UNIT_VECTOR);
+}
+
 CameraFPS&
 CameraFPS::rotate_degrees(float dx, float dy)
 {
-  dx = dx * sensitivity.x;
-  dy = dy * sensitivity.y;
-
-  auto& t = transform();
-
-  glm::quat quat = t.rotation_quat();
-  quat = glm::angleAxis(dx, constants::Y_UNIT_VECTOR) * quat;
-  quat = glm::angleAxis(dy, constants::X_UNIT_VECTOR) * quat;
-
-  //glm::quat const new_rot = x_rot * y_rot * t.rotation_quat();
-  t.set_rotation(quat);
-
-  //glm::vec3 vs;
-  //glm::extractEulerAngleXYZ(glm::mat4{new_rot}, vs.x, vs.y, vs.z);
-  //std::cerr << "values: '" << glm::to_string(glm::degrees(vs)) << "'\n";
-//
-  //float const new_phi = dx + t.get_rotation_degrees().x;
-  //bool const in_region0     = new_phi < 90 && new_phi >= 0;
-  //bool const in_region1     = new_phi > -90 && new_phi > 0;
-  //bool const top_hemisphere = in_region0 || in_region1;
-  //if (top_hemisphere) {
-    //t.rotate_degrees(dx, EulerAxis::Y);
-    //t.rotate_degrees(dy, EulerAxis::X);
-  //}
   return *this;
 }
 

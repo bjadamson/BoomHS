@@ -287,8 +287,9 @@ update_visible_entities(LevelManager& lm, EntityRegistry& registry)
 }
 
 void
-update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const& fstate, StaticRenderers& static_renderers,
-                  WaterAudioSystem& water_audio, FrameTime const& ft)
+update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const& fstate, Camera& camera,
+                  StaticRenderers& static_renderers, WaterAudioSystem& water_audio,
+                  SDLWindow& window, FrameTime const& ft)
 {
   auto& skybox_renderer = static_renderers.skybox;
 
@@ -343,6 +344,12 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
 
   bool const previously_alive = is_target_selected_and_alive(registry, nbt);
   player.update(es, zs, ft);
+
+  if (CameraMode::FPS == camera.mode()) {
+    auto const& ms = es.mouse_states;
+    auto const& current = ms.current.coords();
+    camera.fps.update(current.x, current.y, es.dimensions, window);
+  }
 
   if (previously_alive) {
     auto const target = nbt.selected();
@@ -886,7 +893,7 @@ ingame_loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
   auto& es = state.engine_state;
   FrameState fstate{cstate, es, zs};
 
-  update_everything(es, lm, rng, fstate, static_renderers, water_audio, ft);
+  update_everything(es, lm, rng, fstate, camera, static_renderers, water_audio, engine.window, ft);
   {
     RenderState rstate{fstate, ds};
     render_scene(rstate, lm, ds, camera, rng, ft, static_renderers);

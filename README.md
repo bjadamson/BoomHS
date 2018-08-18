@@ -23,7 +23,8 @@ active development.
 
 ## Getting Started
 The easiest way to get started is to use the installation script to install required libraries. Run
-the following commands to install dependencies, 
+the following commands to install dependencies,
+
 ```bash
 git clone https://github.com/bjadamson/BoomHS.git
 cd BoomHS
@@ -35,18 +36,14 @@ scripts/build-and-run.bash
 
 ## Project Information
 ### Install dependencies.
-To install external dependencies, we rely on a script (for reproducability) so we can reliably
-setup builds that work on new machines. The intent is to make it easy to startup development on a
-new machine quickly. <i>Today</i> this is a goal, not a reality.
+To install external dependencies, a script is used.
 ```bash
 scripts/install-dependencies.bash
 ```
 
 ### Bootstrap the project
 Bootstrapping the project is handled through a script. This script takes care of enumerating all
-the source files in the project and telling cmake about them. It also takes care of finding the
-compiler on your system. It then invokes cmake with the list of source file (and external libraries
-defined in the script as well).
+the source files in the project and passing them to cmake. 
 ```bash
 scripts/bootstrap.bash
 ```
@@ -62,8 +59,7 @@ The bootstrapping script supports some command line arguments.
   supported by the script, and then immediately exit.
 
 ### Compiling the Project
-Compiling is easy, all the hard work was done during the bootstrapping process. Compiling the
-project is as easy as running the build script.
+(Must bootstrap before this step).
 
 ```bash
 scripts/build.bash
@@ -73,8 +69,6 @@ scripts/build.bash
 When adding a new source file to the project, you must run the bootstrap script again.
 
 ### Run the project
-Running the project is easy too (yep you guessed it) if your using the command line, you just need
-to run the build-and-run script.
 ```bash
 scripts/build-and-run.bash
 ```
@@ -95,9 +89,6 @@ on the fingers (from the command line). You can see the symlink for yourself in 
   + bbk => kill the running game process (parses PID table, unstable).
 
 ## Game Information
-The game's name (atleast for now) is a place-holder, BoomHS. At one point I was thinking of calling
-it **Broken** but that's neither here/now. BoomHS from historical reasons.
-
 The concept is an online multi-player mmorpg/sandbox with multiple modes. One mode, the hard-core
 mode (or rogue-like mode) will contain perma death.
 
@@ -140,7 +131,7 @@ chance to read the journal. When the journal was read, they noted the mention of
 "super-powerful" spell. A spell that's entire purpose is to blow up our sun.
 
 ### Design Decisions
-"I am creagint the game that I would like to play some day. This means:
+"I am creating the game that I would like to play some day. This means:
   * Hard. The game is Hard. You are punished for playing poorly.
   * Death is Severe. You want to avoid it.
   * Procedural content. The world should be generated from a random seed.
