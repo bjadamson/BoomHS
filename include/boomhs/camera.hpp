@@ -8,6 +8,11 @@
 #include <common/log.hpp>
 #include <common/type_macros.hpp>
 
+namespace window
+{
+class FrameTime;
+} // namespace window
+
 namespace boomhs
 {
 class ScreenDimensions;
@@ -141,7 +146,7 @@ class CameraArcball
 
   SphericalCoordinates coordinates_;
 
-  void zoom(float);
+  void zoom(float, window::FrameTime const&);
 
   friend class Camera;
 
@@ -157,8 +162,8 @@ public:
   SphericalCoordinates spherical_coordinates() const { return coordinates_; }
   void                 set_coordinates(SphericalCoordinates const& sc) { coordinates_ = sc; }
 
-  void decrease_zoom(float);
-  void increase_zoom(float);
+  void decrease_zoom(float, window::FrameTime const&);
+  void increase_zoom(float, window::FrameTime const&);
 
   CameraArcball& rotate(float, float);
 
@@ -214,7 +219,7 @@ public:
   auto const& frustum_ref() const { return viewport_.frustum; }
   auto&       frustum_ref() { return viewport_.frustum; }
 
-  Camera& rotate(float, float);
+  Camera& rotate(float, float, window::FrameTime const&);
   void    set_target(WorldObject&);
 
   glm::mat4 compute_projectionmatrix() const;

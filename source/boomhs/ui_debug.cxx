@@ -586,7 +586,11 @@ draw_camera_window(Camera& camera, Player& player)
       ImGui::InputFloat("Far:",    &frustum.far);
       ImGui::InputFloat("Near:",   &frustum.near);
     }
-    if (ImGui::CollapsingHeader("Third Person Information")) {
+    if (ImGui::CollapsingHeader("FPS Camera")) {
+      auto const rot = glm::degrees(glm::eulerAngles(camera.get_target().orientation()));
+      ImGui::Text("FollowTarget Rotation: %s", glm::to_string(rot).c_str());
+    }
+    if (ImGui::CollapsingHeader("Arcball Camera")) {
       draw_thirdperson_controls(camera.arcball);
     }
   };

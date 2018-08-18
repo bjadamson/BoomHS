@@ -3,6 +3,7 @@
 #include <boomhs/mouse.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
+#include <window/timer.hpp>
 
 #include <boomhs/math.hpp>
 #include <extlibs/imgui.hpp>
@@ -11,6 +12,14 @@ using namespace boomhs;
 using namespace boomhs::math;
 using namespace boomhs::math::constants;
 using namespace opengl;
+using namespace window;
+
+
+// Without this multiplier, the camera would take years to rotate. This is because we normalize the
+// rotation and scaling with the delta time each frame.
+//
+// This massive speed multiplier is needed to restore numbers fast enough for humans to enjoy.
+double constexpr ROTATION_SPEED_MULTIPLIER = 10000.0;
 
 auto
 make_viewport(float const fov, ScreenDimensions const& dimensions, AspectRatio const ar,
@@ -65,10 +74,11 @@ CameraArcball::CameraArcball(glm::vec3 const& forward, glm::vec3 const& up, Came
 }
 
 void
-CameraArcball::zoom(float const amount)
+CameraArcball::zoom(float const amount, FrameTime const& ft)
 {
   float constexpr MIN_RADIUS = 0.01f;
-  float const new_radius     = coordinates_.radius + amount;
+  float const delta          = (amount * ft.delta_millis() * ROTATION_SPEED_MULTIPLIER);
+  float const new_radius     = coordinates_.radius + delta;
 
   coordinates_.radius = (new_radius >= MIN_RADIUS)
     ? new_radius
@@ -76,15 +86,15 @@ CameraArcball::zoom(float const amount)
 }
 
 void
-CameraArcball::decrease_zoom(float const amount)
+CameraArcball::decrease_zoom(float const amount, window::FrameTime const& ft)
 {
-  zoom(-amount);
+  zoom(-amount, ft);
 }
 
 void
-CameraArcball::increase_zoom(float const amount)
+CameraArcball::increase_zoom(float const amount, window::FrameTime const& ft)
 {
-  zoom(amount);
+  zoom(amount, ft);
 }
 
 CameraArcball&
@@ -180,8 +190,8 @@ CameraFPS::CameraFPS(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget
 CameraFPS&
 CameraFPS::rotate_degrees(float dx, float dy)
 {
-  dx *= sensitivity.x;
-  dy *= sensitivity.y;
+  dx = dx * sensitivity.x;
+  dy = dy * sensitivity.y;
 
   auto& t = transform();
   t.rotate_degrees(dx, EulerAxis::Y);
@@ -304,8 +314,11 @@ Camera::toggle_rotation_lock()
 }
 
 Camera&
-Camera::rotate(float const dx, float const dy)
+Camera::rotate(float dx, float dy, FrameTime const& ft)
 {
+  dx *= ft.delta_millis() * ROTATION_SPEED_MULTIPLIER;
+  dy *= ft.delta_millis() * ROTATION_SPEED_MULTIPLIER;
+
   switch (mode()) {
     case CameraMode::FPS:
       fps.rotate_degrees(glm::degrees(dx), glm::degrees(dy));

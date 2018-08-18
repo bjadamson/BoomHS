@@ -34,24 +34,24 @@ namespace
 
 void
 fps_mousemove(WorldObject& wo, Camera& camera, WorldObject& player, MouseState const& ms,
-              int32_t const xrel, int32_t const yrel)
+              float const xrel, float const yrel, FrameTime const& ft)
 {
-  camera.rotate(xrel, yrel);
+  camera.rotate(xrel, yrel, ft);
 }
 
 void
-thirdperson_mousemove(WorldObject& wo, Camera& camera, MouseState const& ms, int32_t const xrel,
-                      int32_t const yrel, FrameTime const& ft)
+thirdperson_mousemove(WorldObject& wo, Camera& camera, MouseState const& ms, float const xrel,
+                      float const yrel, FrameTime const& ft)
 {
   if (ms.left_pressed()) {
-    camera.rotate(xrel, yrel);
+    camera.rotate(xrel, yrel, ft);
   }
   if (ms.right_pressed()) {
     auto constexpr  RIGHTCLICK_TURN_SPEED_DEGREES = 60.0f;
     float constexpr speed = RIGHTCLICK_TURN_SPEED_DEGREES;
     float const angle = xrel > 0 ? speed : -speed;
 
-    auto const x_dt     = angle * ft.delta_millis();
+    auto const x_dt = angle * ft.delta_millis();
     wo.rotate_degrees(glm::degrees(x_dt), EulerAxis::Y);
   }
 }
@@ -65,11 +65,16 @@ process_mousemotion(GameState& state, WorldObject& wo, SDL_MouseMotionEvent cons
   auto& ms     = es.mouse_states.current;
   auto& ui     = es.ui_state.debug;
 
+  // convert from int to floating-point value
+  float const xrel = motion.xrel, yrel = motion.yrel;
   if (camera.mode() == CameraMode::FPS) {
-    fps_mousemove(wo, camera, wo, ms, motion.xrel, motion.yrel);
+    fps_mousemove(wo, camera, wo, ms, xrel, yrel, ft);
   }
   else if (camera.mode() == CameraMode::ThirdPerson) {
-    thirdperson_mousemove(wo, camera, ms, motion.xrel, motion.yrel, ft);
+    thirdperson_mousemove(wo, camera, ms, xrel, yrel, ft);
+  }
+  else {
+    LOG_ERROR("MouseMotion not implemented for this camera mode");
   }
 }
 
@@ -285,11 +290,13 @@ process_mousewheel(GameState& state, WorldObject& wo, SDL_MouseWheelEvent const&
 
   auto& lm    = state.level_manager;
   auto& ldata = lm.active().level_data;
+
+  auto& arcball = camera.arcball;
   if (wheel.y > 0) {
-    camera.arcball.decrease_zoom(ZOOM_FACTOR);
+    arcball.decrease_zoom(ZOOM_FACTOR, ft);
   }
   else {
-    camera.arcball.increase_zoom(ZOOM_FACTOR);
+    arcball.increase_zoom(ZOOM_FACTOR, ft);
   }
 }
 
@@ -429,13 +436,13 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Pla
     if (less_threshold(axis_right_x)) {
       LOG_ERROR("LT");
       float const dx = calc_delta(axis_right_x);
-      camera.rotate(dx, 0.0);
+      camera.rotate(dx, 0.0, ft);
       player_wo.rotate_to_match_camera_rotation(camera);
     }
     if (greater_threshold(axis_right_x)) {
       LOG_ERROR("GT");
       float const dx = calc_delta(axis_right_x);
-      camera.rotate(dx, 0.0);
+      camera.rotate(dx, 0.0, ft);
       player_wo.rotate_to_match_camera_rotation(camera);
     }
   }
@@ -443,11 +450,11 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Pla
     auto const right_axis_y = c.axis_right_y();
     if (less_threshold(right_axis_y)) {
       float const dy = calc_delta(right_axis_y);
-      camera.rotate(0.0, dy);
+      camera.rotate(0.0, dy, ft);
     }
     if (greater_threshold(right_axis_y)) {
       float const dy = calc_delta(right_axis_y);
-      camera.rotate(0.0, dy);
+      camera.rotate(0.0, dy, ft);
     }
   }
 
