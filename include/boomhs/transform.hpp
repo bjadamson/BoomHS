@@ -6,7 +6,6 @@ namespace boomhs
 
 struct TransformRotation
 {
-  glm::vec3 euler = math::constants::ZERO;
   glm::quat quat;
 };
 

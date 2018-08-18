@@ -28,7 +28,6 @@ void
 Transform::set_rotation(glm::quat const& rot)
 {
   rotation_.quat = rot;
-  rotation_.euler = glm::eulerAngles(rotation_.quat);
 }
 
 void

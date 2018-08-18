@@ -196,13 +196,25 @@ CameraFPS::rotate_degrees(float dx, float dy)
   dy = dy * sensitivity.y;
 
   auto& t = transform();
-  float const new_phi = dx + t.get_rotation_degrees().x;
-  bool const in_region0     = new_phi < 90 && new_phi >= 0;
-  bool const in_region1     = new_phi > -90 && new_phi > 0;
-  bool const top_hemisphere = in_region0 || in_region1;
+
+  glm::quat quat = t.rotation_quat();
+  quat = glm::angleAxis(dx, constants::Y_UNIT_VECTOR) * quat;
+  quat = glm::angleAxis(dy, constants::X_UNIT_VECTOR) * quat;
+
+  //glm::quat const new_rot = x_rot * y_rot * t.rotation_quat();
+  t.set_rotation(quat);
+
+  //glm::vec3 vs;
+  //glm::extractEulerAngleXYZ(glm::mat4{new_rot}, vs.x, vs.y, vs.z);
+  //std::cerr << "values: '" << glm::to_string(glm::degrees(vs)) << "'\n";
+//
+  //float const new_phi = dx + t.get_rotation_degrees().x;
+  //bool const in_region0     = new_phi < 90 && new_phi >= 0;
+  //bool const in_region1     = new_phi > -90 && new_phi > 0;
+  //bool const top_hemisphere = in_region0 || in_region1;
   //if (top_hemisphere) {
-    t.rotate_degrees(dx, EulerAxis::Y);
-    t.rotate_degrees(dy, EulerAxis::X);
+    //t.rotate_degrees(dx, EulerAxis::Y);
+    //t.rotate_degrees(dy, EulerAxis::X);
   //}
   return *this;
 }
