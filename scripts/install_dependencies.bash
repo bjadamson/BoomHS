@@ -19,6 +19,23 @@ function install_cmake() {
   cd ../
 }
 
+function install_clang() {
+  svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm
+  cd llvm/tools
+  svn co http://llvm.org/svn/llvm-project/cfe/trunk clang
+  cd ../..
+  cd llvm/tools/clang/tools
+  svn co http://llvm.org/svn/llvm-project/clang-tools-extra/trunk extra
+  cd ../../../..
+  cd llvm/projects
+  svn co http://llvm.org/svn/llvm-project/compiler-rt/trunk compiler-rt
+  cd ../..
+  mkdir build
+  cd build
+  cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ../llvm
+  make
+}
+
 # Logic starts here.
 mkdir temp
 cd temp
@@ -31,6 +48,15 @@ read -r -p "Do you want to install cmake 3.4.3 from the cmake official website? 
 case "$response" in
     [yY][eE][sS]|[yY])
         install_cmake
+        ;;
+    *)
+        ;;
+esac
+
+read -r -p "Do you want to install clang from source (follows the instructions from clang website automatially website? [y/N] " response
+case "$response" in
+    [yY][eE][sS]|[yY])
+        install_clang
         ;;
     *)
         ;;

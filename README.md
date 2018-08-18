@@ -8,7 +8,6 @@ active development.
 ## Table of contents
 
   + [Getting Started](#getting-started)
-  + [Project Information](#project-information)
     * [Install Dependencies](#install-dependencies)
     * [Bootstrapping](#bootstrap-the-project)
       + [Command-Line Arguments](#command-line-arguments)
@@ -16,14 +15,16 @@ active development.
     * [Run the Project](#run-the-project)
     * [Other Information](#other-information)
     * [Hints](#hints)
-  + [Game Information](#game-information)
+  + [Project Information](#project-information)
     * [World Story](#world-story)
   + [Design Decisions](#design-decisions)
   + [Screenshots](#screenshots)
 
 ## Getting Started
-The easiest way to get started is to use the installation script to install required libraries. Run
-the following commands to install dependencies,
+General Procedure
+1. Install dependencies.
+2. Bootstrap the project (setup cmake database).
+3. Build and run.
 
 ```bash
 git clone https://github.com/bjadamson/BoomHS.git
@@ -34,7 +35,6 @@ scripts/build.bash
 scripts/build-and-run.bash
 ```
 
-## Project Information
 ### Install dependencies.
 To install external dependencies, a script is used.
 ```bash
@@ -74,7 +74,8 @@ scripts/build-and-run.bash
 ```
 
 ## Other Information
-  + Source-code formatting. The clang-formatter tool is used for this purpose.
+  + Source-code formatting is done by invoking this script. The script looks for the
+    clang-formatter tool installed locally on your machine.
 ```bash
 scripts/code-format.bash
 ```
@@ -88,7 +89,7 @@ on the fingers (from the command line). You can see the symlink for yourself in 
   + bbf => run the source code formatter.
   + bbk => kill the running game process (parses PID table, unstable).
 
-## Game Information
+## Project Information
 The concept is an online multi-player mmorpg/sandbox with multiple modes. One mode, the hard-core
 mode (or rogue-like mode) will contain perma death.
 
