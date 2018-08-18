@@ -536,58 +536,56 @@ draw_camera_window(Camera& camera, Player& player)
   auto const draw_thirdperson_controls = [](CameraArcball const& tp_camera) {
     auto const scoords = tp_camera.spherical_coordinates();
     {
-      auto const r      = scoords.radius_display_string();
-      auto const t      = scoords.theta_display_string();
-      auto const p      = scoords.phi_display_string();
-      ImGui::Text("Spherical Coordinates:\tr: '%s', t: '%s', p: '%s'", r.c_str(), t.c_str(),
-                  p.c_str());
+      auto const r = scoords.radius;
+      auto const t = glm::degrees(scoords.theta);
+      auto const p = glm::degrees(scoords.phi);
+      ImGui::Text("Spherical Coordinates:\tr: '%f', t: '%f', p: '%f'", r, t, p);
+    }
+    {
+      auto const c = to_cartesian(scoords);
+      ImGui::Text("Cartesian Coordinates\t%s", glm::to_string(c).c_str());
     }
     {
       auto const text = glm::to_string(tp_camera.world_position());
-      ImGui::Text("world position: '%s'\ncamera phi: %f,\tcamera theta: %f", text.c_str(),
-          scoords.phi, scoords.theta);
+      ImGui::Text("Camera world position :\t%s", text.c_str());
     }
     {
-      auto const cart = to_cartesian(scoords);
-      ImGui::Text("Cartesian Coordinates\t x: %f, y: %f, z: %f",
-                  cart.x, cart.y, cart.z);
-    }
-    {
-      glm::vec3 const tfp = tp_camera.target_position();
-      ImGui::Text("Follow Target position\t x: %f, y: %f, z: %f", tfp.x, tfp.y, tfp.z);
+      auto const tp = glm::to_string(tp_camera.target_position());
+      ImGui::Text("Follow Target position:\t%s", tp.c_str());
     }
   };
   auto const draw_camera_window = [&]() {
-    ImGui::Text("Viewport");
-    auto& viewport = camera.viewport_ref();
-
-    auto fov = glm::degrees(viewport.field_of_view);
-    if (ImGui::InputFloat("FOV (degrees):", &fov)) {
-      viewport.field_of_view = glm::radians(fov);
+    {
+      auto mode_strings = CameraModes::string_list();
+      int selected = static_cast<int>(camera.mode());
+      void* pdata = reinterpret_cast<void*>(&mode_strings);
+      if (ImGui::Combo("Mode:", &selected, callback_from_strings, pdata, mode_strings.size())) {
+        auto const mode = static_cast<CameraMode>(selected);
+        camera.set_mode(mode);
+      }
+      ImGui::Separator();
     }
+    {
+      ImGui::Text("Viewport");
+      auto& viewport = camera.viewport_ref();
 
-    auto& aspect_ratio = viewport.aspect_ratio;
-    ImGui::InputFloat2("Aspect:", aspect_ratio.data());
-    ImGui::Separator();
+      auto fov = glm::degrees(viewport.field_of_view);
+      if (ImGui::InputFloat("FOV (degrees):", &fov)) {
+        viewport.field_of_view = glm::radians(fov);
+      }
 
-    auto& frustum = camera.frustum_ref();
-    ImGui::Text("Frustum");
-    ImGui::InputFloat("Left:",   &frustum.left);
-    ImGui::InputFloat("Right:",  &frustum.right);
-    ImGui::InputFloat("Bottom:", &frustum.bottom);
-    ImGui::InputFloat("Top:",    &frustum.top);
-    ImGui::InputFloat("Far:",    &frustum.far);
-    ImGui::InputFloat("Near:",   &frustum.near);
-    ImGui::Separator();
-
-    auto mode_strings = CameraModes::string_list();
-    int selected = static_cast<int>(camera.mode());
-    void* pdata = reinterpret_cast<void*>(&mode_strings);
-    if (ImGui::Combo("Mode:", &selected, callback_from_strings, pdata, mode_strings.size())) {
-      auto const mode = static_cast<CameraMode>(selected);
-      camera.set_mode(mode);
+      auto& aspect_ratio = viewport.aspect_ratio;
+      ImGui::InputFloat2("Aspect:", aspect_ratio.data());
     }
-
+    if (ImGui::CollapsingHeader("Frustum")) {
+      auto& frustum = camera.frustum_ref();
+      ImGui::InputFloat("Left:",   &frustum.left);
+      ImGui::InputFloat("Right:",  &frustum.right);
+      ImGui::InputFloat("Bottom:", &frustum.bottom);
+      ImGui::InputFloat("Top:",    &frustum.top);
+      ImGui::InputFloat("Far:",    &frustum.far);
+      ImGui::InputFloat("Near:",   &frustum.near);
+    }
     if (ImGui::CollapsingHeader("Third Person Information")) {
       draw_thirdperson_controls(camera.arcball);
     }

@@ -40,7 +40,6 @@ to_spherical(glm::vec3 cartesian)
   float const radius = sqrt(x2 + y2 + z2);
   float       theta  = atan(y / x);
   if (cartesian.x < 0) {
-    float constexpr PI = glm::pi<float>();
     theta += constants::PI;
   }
   float const phi = std::atan((x2 + y2) / z);
