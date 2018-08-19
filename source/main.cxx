@@ -1,5 +1,6 @@
 #include <boomhs/boomhs.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/controller.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/main_menu.hpp>
@@ -10,7 +11,6 @@
 #include <common/log.hpp>
 #include <boomhs/random.hpp>
 
-#include <window/controller.hpp>
 #include <window/sdl_window.hpp>
 #include <boomhs/clock.hpp>
 

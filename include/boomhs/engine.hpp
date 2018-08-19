@@ -1,4 +1,5 @@
 #pragma once
+#include <boomhs/controller.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/main_menu.hpp>
 #include <boomhs/mouse.hpp>
@@ -6,7 +7,6 @@
 #include <boomhs/time.hpp>
 #include <boomhs/ui_state.hpp>
 
-#include <window/controller.hpp>
 #include <window/sdl_window.hpp>
 
 #include <common/log.hpp>
@@ -17,6 +17,12 @@ struct ImGuiIO;
 
 namespace boomhs
 {
+
+struct DeviceStates
+{
+  ControllerStates controller;
+  MouseStates      mouse;
+};
 
 struct EngineState
 {
@@ -32,9 +38,9 @@ struct EngineState
   bool                 update_orbital_bodies = true;
   GameGraphicsSettings graphics_settings     = {};
 
-  MouseStates         mouse_states = {};
-  window::WindowState window_state = {};
-  UiState             ui_state     = {};
+  DeviceStates        device_states = {};
+  window::WindowState window_state  = {};
+  UiState             ui_state      = {};
 
   // Current player movement vector
   MovementState movement_state = {};
@@ -74,13 +80,13 @@ using EntityRegistries = std::vector<EntityRegistry>;
 
 struct Engine
 {
-  window::SDLWindow      window;
-  window::SDLControllers controllers;
+  window::SDLWindow window;
+  SDLControllers    controllers;
 
   EntityRegistries registries = {};
 
   Engine() = delete;
-  explicit Engine(window::SDLWindow&&, window::SDLControllers&&);
+  explicit Engine(window::SDLWindow&&, SDLControllers&&);
 
   // We mark this as no-move/copy so the registries data never moves, allowing the rest of the
   // program to store references into the data owned by registries.

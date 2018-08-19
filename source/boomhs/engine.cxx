@@ -1,6 +1,6 @@
 #include <boomhs/engine.hpp>
+#include <boomhs/controller.hpp>
 
-#include <window/controller.hpp>
 #include <window/sdl_window.hpp>
 
 #include <extlibs/imgui.hpp>

@@ -1,5 +1,6 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/collision.hpp>
+#include <boomhs/controller.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/frame.hpp>
 #include <boomhs/io.hpp>
@@ -10,7 +11,6 @@
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
 
-#include <window/controller.hpp>
 #include <window/sdl_window.hpp>
 #include <boomhs/clock.hpp>
 
@@ -34,25 +34,27 @@ namespace
 {
 
 void
-fps_mousemove(WorldObject& wo, Camera& camera, WorldObject& player, MouseState const& ms,
-              float const xrel, float const yrel, FrameTime const& ft)
+fps_mousemove(WorldObject& wo, Camera& camera, WorldObject& player,
+              DeviceSensitivity const& dsens, float const xrel, float const yrel,
+              FrameTime const& ft)
 {
-  camera.rotate(xrel, yrel, ft);
+  camera.rotate(xrel, yrel, dsens, ft);
 }
 
 void
-thirdperson_mousemove(WorldObject& wo, Camera& camera, MouseState const& ms, float const xrel,
-                      float const yrel, FrameTime const& ft)
+thirdperson_mousemove(WorldObject& wo, Camera& camera, MouseState const& ms,
+                      DeviceSensitivity const& dsens, float const xrel, float const yrel,
+                      FrameTime const& ft)
 {
   if (ms.left_pressed()) {
-    camera.rotate(xrel, yrel, ft);
+    camera.rotate(xrel, yrel, dsens, ft);
   }
   if (ms.right_pressed()) {
     auto constexpr  RIGHTCLICK_TURN_SPEED_DEGREES = 60.0f;
     float constexpr speed = RIGHTCLICK_TURN_SPEED_DEGREES;
     float const angle = xrel > 0 ? speed : -speed;
 
-    auto const x_dt = angle * ft.delta_millis();
+    auto const x_dt  = angle * ft.delta_millis();
     wo.rotate_degrees(glm::degrees(x_dt), EulerAxis::Y);
   }
 }
@@ -63,16 +65,16 @@ process_mousemotion(GameState& state, WorldObject& wo, SDL_MouseMotionEvent cons
 {
   auto& es     = state.engine_state;
   auto& logger = es.logger;
-  auto& ms     = es.mouse_states.current;
+  auto& ms     = es.device_states.mouse;
   auto& ui     = es.ui_state.debug;
 
   // convert from int to floating-point value
   float const xrel = motion.xrel, yrel = motion.yrel;
-  if (camera.mode() == CameraMode::FPS) {
-    fps_mousemove(wo, camera, wo, ms, xrel, yrel, ft);
+  if (camera.is_firstperson()) {
+    fps_mousemove(wo, camera, wo, ms.first_person, xrel, yrel, ft);
   }
-  else if (camera.mode() == CameraMode::ThirdPerson) {
-    thirdperson_mousemove(wo, camera, ms, xrel, yrel, ft);
+  else if (camera.is_thirdperson()) {
+    thirdperson_mousemove(wo, camera, ms.current, ms.third_person, xrel, yrel, ft);
   }
   else {
     LOG_ERROR("MouseMotion not implemented for this camera mode");
@@ -147,7 +149,7 @@ process_mousebutton_down(GameState& state, WorldObject& player, SDL_MouseButtonE
 {
   auto& es     = state.engine_state;
   auto& logger = es.logger;
-  auto& ms     = es.mouse_states.current;
+  auto& ms     = es.device_states.mouse.current;
 
   auto& zs = state.level_manager.active();
   auto& uistate = es.ui_state.debug;
@@ -177,7 +179,7 @@ process_mousebutton_up(GameState& state, WorldObject& player, SDL_MouseButtonEve
                        FrameTime const& ft)
 {
   auto& es = state.engine_state;
-  auto& ms = es.mouse_states.current;
+  auto& ms = es.device_states.mouse.current;
 }
 
 void
@@ -306,7 +308,7 @@ process_mousestate(GameState& state, WorldObject& wo, Camera& camera, FrameTime 
 {
   auto& es     = state.engine_state;
   auto& logger = es.logger;
-  auto& mss    = es.mouse_states;
+  auto& mss    = es.device_states.mouse;
 
   auto& ms_now  = mss.current;
   auto& ms_prev = mss.previous;
@@ -427,38 +429,34 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Pla
     movement.backward = ZERO;
   }
 
-  auto constexpr CONTROLLER_SENSITIVITY = 0.01;
-
-  auto const calc_delta = [&ft](auto const axis) {
-    return axis * ft.delta_millis() * CONTROLLER_SENSITIVITY;
-  };
   {
-    auto const axis_right_x = c.axis_right_x();
-    if (less_threshold(axis_right_x)) {
-      LOG_ERROR("LT");
-      float const dx = calc_delta(axis_right_x);
-      camera.rotate(dx, 0.0, ft);
-      player_wo.rotate_to_match_camera_rotation(camera);
+    auto const& ds = es.device_states.controller;
+    auto const& sens = camera.is_firstperson()
+      ? ds.first_person
+      : ds.third_person;
+    {
+      auto const axis_right_x = c.axis_right_x();
+      if (less_threshold(axis_right_x)) {
+        LOG_ERROR("LT");
+        camera.rotate(axis_right_x, 0.0, sens, ft);
+        player_wo.rotate_to_match_camera_rotation(camera);
+      }
+      if (greater_threshold(axis_right_x)) {
+        LOG_ERROR("GT");
+        camera.rotate(axis_right_x, 0.0, sens, ft);
+        player_wo.rotate_to_match_camera_rotation(camera);
+      }
     }
-    if (greater_threshold(axis_right_x)) {
-      LOG_ERROR("GT");
-      float const dx = calc_delta(axis_right_x);
-      camera.rotate(dx, 0.0, ft);
-      player_wo.rotate_to_match_camera_rotation(camera);
+    {
+      auto const right_axis_y = c.axis_right_y();
+      if (less_threshold(right_axis_y)) {
+        camera.rotate(0.0, right_axis_y, sens, ft);
+      }
+      if (greater_threshold(right_axis_y)) {
+        camera.rotate(0.0, right_axis_y, sens, ft);
+      }
     }
   }
-  {
-    auto const right_axis_y = c.axis_right_y();
-    if (less_threshold(right_axis_y)) {
-      float const dy = calc_delta(right_axis_y);
-      camera.rotate(0.0, dy, ft);
-    }
-    if (greater_threshold(right_axis_y)) {
-      float const dy = calc_delta(right_axis_y);
-      camera.rotate(0.0, dy, ft);
-    }
-  }
-
   if (c.button_a()) {
     LOG_DEBUG("BUTTON A\n");
     player.try_pickup_nearby_item(logger, registry, ft);

@@ -99,7 +99,7 @@ struct UiDebugState
   bool show_entitywindow = false;
 
   bool show_environment_window = false;
-  bool show_mousewindow        = false;
+  bool show_devicewindow       = false;
 
   bool show_playerwindow = false;
   bool show_skyboxwindow = false;

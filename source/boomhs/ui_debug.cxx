@@ -598,26 +598,49 @@ draw_camera_window(Camera& camera, Player& player)
 }
 
 void
-draw_mouse_window(MouseState& mstate, Camera& camera)
+draw_device_window(DeviceStates& dstates, Camera& camera)
 {
   auto const draw = [&]() {
     ImGui::Checkbox("Flip Y Sensitivity", &camera.flip_y);
     ImGui::Separator();
 
-    if (ImGui::CollapsingHeader("First Person")) {
-      auto& fps = camera.fps;
-      ImGui::InputFloat("FPS X sensitivity:", &fps.sensitivity.x, 0.0f, 1.0f);
-      ImGui::InputFloat("FPS Y sensitivity:", &fps.sensitivity.y, 0.0f, 1.0f);
-      ImGui::Checkbox("FPS Mouse Rotation Lock", &fps.rotation_lock);
+    if (ImGui::CollapsingHeader("Mouse")) {
+      auto& sens = dstates.mouse;
+      {
+        auto& fps = camera.fps;
+        ImGui::Text("First Person");
+        ImGui::InputFloat("MOUSE FPS X sensitivity:", &sens.first_person.x, 0.0f, 1.0f);
+        ImGui::InputFloat("MOUSE FPS Y sensitivity:", &sens.first_person.y, 0.0f, 1.0f);
+        ImGui::Checkbox("MOUSE FPS Rotation Lock", &fps.rotation_lock);
+      }
+      ImGui::Separator();
+      {
+        auto& arcball = camera.arcball;
+        ImGui::Text("Third Person");
+        ImGui::InputFloat("MOUSE TPS X sensitivity:",  &sens.third_person.x, 0.0f, 1.0f);
+        ImGui::InputFloat("MOUSE TPS Y sensitivity:",  &sens.third_person.y, 0.0f, 1.0f);
+        ImGui::Checkbox("MOUSE TPS Rotation Lock", &arcball.rotation_lock);
+      }
     }
-    if (ImGui::CollapsingHeader("Third Person")) {
-      auto& arcball = camera.arcball;
-      ImGui::InputFloat("TPS X sensitivity:",  &arcball.sensitivity.x, 0.0f, 1.0f);
-      ImGui::InputFloat("TPS Y sensitivity:",  &arcball.sensitivity.y, 0.0f, 1.0f);
-      ImGui::Checkbox("TPS Mouse Rotation Lock", &arcball.rotation_lock);
+    if (ImGui::CollapsingHeader("Controller")) {
+      auto& sens = dstates.controller;
+      {
+        auto& fps = camera.fps;
+        ImGui::Text("First Person");
+        ImGui::InputFloat("Controler FPS X sensitivity:", &sens.first_person.x, 0.0f, 1.0f);
+        ImGui::InputFloat("Controler FPS Y sensitivity:", &sens.first_person.y, 0.0f, 1.0f);
+        ImGui::Checkbox("Controler FPS Rotation Lock", &fps.rotation_lock);
+      }
+      ImGui::Separator();
+      {
+        auto& arcball = camera.arcball;
+        ImGui::InputFloat("Controler TPS X sensitivity:",  &sens.third_person.x, 0.0f, 1.0f);
+        ImGui::InputFloat("Controler TPS Y sensitivity:",  &sens.third_person.y, 0.0f, 1.0f);
+        ImGui::Checkbox("Controler TPS Rotation Lock", &arcball.rotation_lock);
+      }
     }
   };
-  imgui_cxx::with_window(draw, "MOUSE INFO WINDOW");
+  imgui_cxx::with_window(draw, "Device Info Window");
 }
 
 void
@@ -779,8 +802,8 @@ draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window, Draw
   auto const windows_menu = [&]() {
     ImGui::MenuItem("Camera", nullptr, &uistate.show_camerawindow);
     ImGui::MenuItem("Entity", nullptr, &uistate.show_entitywindow);
+    ImGui::MenuItem("Device", nullptr, &uistate.show_devicewindow);
     ImGui::MenuItem("Environment Window", nullptr, &uistate.show_environment_window);
-    ImGui::MenuItem("Mouse", nullptr, &uistate.show_mousewindow);
     ImGui::MenuItem("Player", nullptr, &uistate.show_playerwindow);
     ImGui::MenuItem("Skybox", nullptr, &uistate.show_skyboxwindow);
     ImGui::MenuItem("Terrain", nullptr, &uistate.show_terrain_editor_window);
@@ -863,8 +886,8 @@ draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, WaterAudioSyste
   if (uistate.show_camerawindow) {
     draw_camera_window(camera, player);
   }
-  if (uistate.show_mousewindow) {
-    draw_mouse_window(es.mouse_states.current, camera);
+  if (uistate.show_devicewindow) {
+    draw_device_window(es.device_states, camera);
   }
   if (uistate.show_playerwindow) {
     draw_player_window(es, player);

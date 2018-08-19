@@ -4,6 +4,7 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>
+#include <boomhs/controller.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/frame.hpp>
 #include <boomhs/game_config.hpp>
@@ -32,7 +33,6 @@
 #include <opengl/texture.hpp>
 
 #include <extlibs/sdl.hpp>
-#include <window/controller.hpp>
 #include <boomhs/clock.hpp>
 
 #include <common/log.hpp>
@@ -81,7 +81,7 @@ player_in_water(common::Logger& logger, EntityRegistry& registry)
 void
 update_mousestates(EngineState& es)
 {
-  auto& mss = es.mouse_states;
+  auto& mss = es.device_states.mouse;
   mss.previous = mss.current;
 }
 
@@ -346,7 +346,7 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
   player.update(es, zs, ft);
 
   if (CameraMode::FPS == camera.mode()) {
-    auto const& ms = es.mouse_states;
+    auto const& ms = es.device_states.mouse;
     auto const& current = ms.current.coords();
     camera.fps.update(current.x, current.y, es.dimensions, window);
   }

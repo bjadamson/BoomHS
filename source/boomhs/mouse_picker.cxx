@@ -41,7 +41,7 @@ MousePicker::calculate_ray(FrameState& fstate) const
   };
 
   auto&           es           = fstate.es;
-  auto const&     coords       = es.mouse_states.current.coords();
+  auto const&     coords       = es.device_states.mouse.current.coords();
   auto const      mouse_coords = glm::vec2{coords.x, coords.y};
   glm::vec2 const ndc          = calc_ndc(mouse_coords, es.dimensions);
 

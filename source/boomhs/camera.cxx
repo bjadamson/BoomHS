@@ -20,7 +20,7 @@ using namespace window;
 // rotation and scaling with the delta time each frame.
 //
 // This massive speed multiplier is needed to restore numbers fast enough for humans to enjoy.
-double constexpr ROTATION_SPEED_MULTIPLIER = 10000.0;
+double constexpr ZOOM_SPEED_MULTIPLIER = 1000.0;
 
 auto
 make_viewport(float const fov, ScreenDimensions const& dimensions, AspectRatio const ar,
@@ -69,7 +69,6 @@ CameraArcball::CameraArcball(glm::vec3 const& forward, glm::vec3 const& up, Came
     , viewport_(vp)
     , coordinates_(0.0f, 0.0f, 0.0f)
     , flip_y_(flip_y)
-    , sensitivity(0.002, 0.002)
     , rotation_lock(false)
 {
 }
@@ -78,7 +77,7 @@ void
 CameraArcball::zoom(float const amount, FrameTime const& ft)
 {
   float constexpr MIN_RADIUS = 0.01f;
-  float const delta          = (amount * ft.delta_millis() * ROTATION_SPEED_MULTIPLIER);
+  float const delta          = (amount * ft.delta_millis() * ZOOM_SPEED_MULTIPLIER);
   float const new_radius     = coordinates_.radius + delta;
 
   coordinates_.radius = (new_radius >= MIN_RADIUS)
@@ -99,11 +98,9 @@ CameraArcball::increase_zoom(float const amount, FrameTime const& ft)
 }
 
 CameraArcball&
-CameraArcball::rotate(float const d_theta, float const d_phi)
+CameraArcball::rotate(float const dx, float const dy, DeviceSensitivity const& sens,
+    FrameTime const& ft)
 {
-  float const dx = d_theta * sensitivity.x;
-  float const dy = d_phi   * sensitivity.y;
-
   auto& theta = coordinates_.theta;
   theta       = (up_.y > 0.0f) ? (theta - dx) : (theta + dx);
   if (theta > TWO_PI) {
@@ -131,14 +128,12 @@ CameraArcball::rotate(float const d_theta, float const d_phi)
     phi += TWO_PI;
   }
 
-  // If phi is between 0 to PI or -PI to -2PI, make 'up' be positive Y, other wise make it negative
-  // Y
-  auto& up = up_;
+  // If phi in range (0, PI) or (-PI to -2PI), make 'up' be positive Y, otherwise make it negative Y
   if ((phi > 0 && phi < PI) || (phi < -PI && phi > -TWO_PI)) {
-    up = Y_UNIT_VECTOR;
+    up_ = Y_UNIT_VECTOR;
   }
   else {
-    up = -Y_UNIT_VECTOR;
+    up_ = -Y_UNIT_VECTOR;
   }
   return *this;
 }
@@ -185,27 +180,8 @@ CameraFPS::CameraFPS(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget
     , up_(up)
     , target_(t)
     , viewport_(vp)
-    , sensitivity(0.02, 0.02)
     , rotation_lock(true)
 {
-}
-
-// theta: the angle (in radians) that v rotates around k
-// v: a vector in 3D space
-// k: a unit vector describing the axis of rotation
-glm::vec3 ROTATE(float const theta, const glm::vec3& v, const glm::vec3& k)
-{
-  std::cout << "Rotating " << glm::to_string(v) << " "
-            << theta << " radians around "
-            << glm::to_string(k) << "..." << std::endl;
-
-  float cos_theta = cos(theta);
-  float sin_theta = sin(theta);
-
-  glm::vec3 rotated = (v * cos_theta) + (glm::cross(k, v) * sin_theta) + (k * glm::dot(k, v)) * (1 - cos_theta);
-
-  std::cout << "Rotated: " << glm::to_string(rotated) << std::endl;
-  return rotated;
 }
 
 void
@@ -215,7 +191,7 @@ CameraFPS::update(int const xpos, int const ypos, ScreenDimensions const& dim,
 }
 
 CameraFPS&
-CameraFPS::rotate_degrees(float dx, float dy)
+CameraFPS::rotate_degrees(float dx, float dy, DeviceSensitivity const& sens, FrameTime const& ft)
 {
   return *this;
 }
@@ -331,19 +307,19 @@ Camera::toggle_rotation_lock()
 }
 
 Camera&
-Camera::rotate(float dx, float dy, FrameTime const& ft)
+Camera::rotate(float dx, float dy, DeviceSensitivity const& sens, FrameTime const& ft)
 {
-  dx *= ft.delta_millis() * ROTATION_SPEED_MULTIPLIER;
-  dy *= ft.delta_millis() * ROTATION_SPEED_MULTIPLIER;
+  dx *= ft.delta_millis() * sens.x;
+  dy *= ft.delta_millis() * sens.y;
 
   switch (mode()) {
     case CameraMode::FPS:
-      fps.rotate_degrees(glm::degrees(dx), glm::degrees(dy));
+      fps.rotate_degrees(glm::degrees(dx), glm::degrees(dy), sens, ft);
       break;
     case CameraMode::Ortho:
       //break;
     case CameraMode::ThirdPerson:
-      arcball.rotate(dx, dy);
+      arcball.rotate(dx, dy, sens, ft);
       break;
     case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:

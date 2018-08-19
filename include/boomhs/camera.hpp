@@ -86,11 +86,10 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(CameraFPS);
 
   // fields
-  MouseSensitivity sensitivity;
-  bool             rotation_lock;
+  bool rotation_lock;
 
   // methods (assumes values are in degrees)
-  CameraFPS& rotate_degrees(float, float);
+  CameraFPS& rotate_degrees(float, float, DeviceSensitivity const&, FrameTime const&);
 
   void update(int, int, ScreenDimensions const&, window::SDLWindow&);
   glm::vec3 world_position() const;
@@ -135,8 +134,7 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(CameraArcball);
 
   // fields
-  MouseSensitivity sensitivity;
-  bool             rotation_lock;
+  bool rotation_lock;
 
   // methods
   SphericalCoordinates spherical_coordinates() const { return coordinates_; }
@@ -145,7 +143,7 @@ public:
   void decrease_zoom(float, FrameTime const&);
   void increase_zoom(float, FrameTime const&);
 
-  CameraArcball& rotate(float, float);
+  CameraArcball& rotate(float, float, DeviceSensitivity const&, FrameTime const&);
 
   glm::vec3 local_position() const;
   glm::vec3 world_position() const;
@@ -179,15 +177,14 @@ public:
   auto mode() const { return mode_; }
   void set_mode(CameraMode);
   void next_mode();
+  bool is_firstperson() const { return CameraMode::FPS == mode(); }
+  bool is_thirdperson() const { return CameraMode::ThirdPerson == mode(); }
+
   void toggle_rotation_lock();
 
   glm::vec3 eye_forward() const;
   glm::vec3 eye_backward() const { return -eye_forward(); }
-  glm::vec3 eye_up() const;
-  glm::vec3 eye_up() const
-  {
-    return world_up() * get_target().orientation();
-  }
+  glm::vec3 eye_up() const { return world_up() * get_target().orientation(); }
 
   glm::vec3 eye_left() const { return -eye_right(); }
   glm::vec3 eye_right() const { return glm::normalize(glm::cross(eye_forward(), eye_up())); }
@@ -202,7 +199,7 @@ public:
   auto const& frustum_ref() const { return viewport_.frustum; }
   auto&       frustum_ref() { return viewport_.frustum; }
 
-  Camera& rotate(float, float, FrameTime const&);
+  Camera& rotate(float, float, DeviceSensitivity const&, FrameTime const&);
   void    set_target(WorldObject&);
 
   glm::mat4 compute_projectionmatrix() const;

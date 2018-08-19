@@ -1,4 +1,6 @@
 #pragma once
+#include <boomhs/device.hpp>
+
 #include <common/type_macros.hpp>
 #include <extlibs/sdl.hpp>
 
@@ -8,17 +10,6 @@ namespace boomhs
 struct ScreenCoordinates
 {
   int x, y;
-};
-
-struct MouseSensitivity
-{
-  float x, y;
-
-  explicit MouseSensitivity(float const xp, float const yp)
-      : x(xp)
-      , y(yp)
-  {
-  }
 };
 
 class MouseState
@@ -46,6 +37,9 @@ struct MouseStates
 {
   MouseState current;
   MouseState previous;
+
+  DeviceSensitivity first_person{10.0f, 10.0f};
+  DeviceSensitivity third_person{10.0f, 10.0f};
 };
 
 } // namespace boomhs
