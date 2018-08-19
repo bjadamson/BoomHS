@@ -12,7 +12,7 @@
 
 #include <window/controller.hpp>
 #include <window/sdl_window.hpp>
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 
 #include <extlibs/imgui.hpp>
 #include <extlibs/openal.hpp>
@@ -79,8 +79,8 @@ loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
 void
 timed_game_loop(Engine& engine, GameState& state, Camera& camera, RNG& rng)
 {
-  window::Clock         clock;
-  window::FrameCounter  counter;
+  Clock         clock;
+  FrameCounter  counter;
 
   auto& logger = state.engine_state.logger;
   while (!state.engine_state.quit) {

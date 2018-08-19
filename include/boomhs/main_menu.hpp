@@ -3,14 +3,10 @@
 
 struct ImVec2;
 
-namespace window
-{
-class FrameTime;
-} // namespace window
-
 namespace boomhs
 {
 class Camera;
+class FrameTime;
 class WaterAudioSystem;
 struct EngineState;
 struct GameState;
@@ -31,6 +27,6 @@ void
 draw(EngineState&, ZoneState&, ImVec2 const&, WaterAudioSystem&);
 
 void
-process_event(GameState&, SDL_Event&, Camera&, window::FrameTime const&);
+process_event(GameState&, SDL_Event&, Camera&, FrameTime const&);
 
 } // namespace boomhs::main_menu

@@ -1,6 +1,6 @@
 #pragma once
 #include <opengl/bind.hpp>
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 #include <opengl/vertex_attribute.hpp>
 
 #include <common/algorithm.hpp>
@@ -127,24 +127,24 @@ public:
     return set_uniform_vec4(logger, name.c_str(), v);
   }
 
-  void set_uniform_color(common::Logger& logger, GLchar const* name, Color const& c)
+  void set_uniform_color(common::Logger& logger, GLchar const* name, boomhs::Color const& c)
   {
     auto const arr = common::make_array<float>(c.r(), c.g(), c.b(), c.a());
     set_uniform_array_4fv(logger, name, arr);
   }
 
-  void set_uniform_color(common::Logger& logger, std::string const& name, Color const& c)
+  void set_uniform_color(common::Logger& logger, std::string const& name, boomhs::Color const& c)
   {
     return set_uniform_color(logger, name.c_str(), c);
   }
 
-  void set_uniform_color_3fv(common::Logger& logger, GLchar const* name, Color const& c)
+  void set_uniform_color_3fv(common::Logger& logger, GLchar const* name, boomhs::Color const& c)
   {
     auto const arr = common::make_array<float>(c.r(), c.g(), c.b());
     set_uniform_array_3fv(logger, name, arr);
   }
 
-  void set_uniform_color_3fv(common::Logger& logger, std::string const& name, Color const& c)
+  void set_uniform_color_3fv(common::Logger& logger, std::string const& name, boomhs::Color const& c)
   {
     return set_uniform_color_3fv(logger, name.c_str(), c);
   }

@@ -9,7 +9,7 @@
 #include <boomhs/zone_state.hpp>
 
 #include <cassert>
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 
 using namespace boomhs;
 using namespace opengl;

@@ -4,7 +4,7 @@
 #include <boomhs/world_object.hpp>
 
 #include <window/sdl_window.hpp>
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 
 #include <boomhs/math.hpp>
 #include <extlibs/imgui.hpp>
@@ -87,13 +87,13 @@ CameraArcball::zoom(float const amount, FrameTime const& ft)
 }
 
 void
-CameraArcball::decrease_zoom(float const amount, window::FrameTime const& ft)
+CameraArcball::decrease_zoom(float const amount, FrameTime const& ft)
 {
   zoom(-amount, ft);
 }
 
 void
-CameraArcball::increase_zoom(float const amount, window::FrameTime const& ft)
+CameraArcball::increase_zoom(float const amount, FrameTime const& ft)
 {
   zoom(amount, ft);
 }

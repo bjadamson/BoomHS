@@ -1,5 +1,5 @@
 #pragma once
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/texture.hpp>
 
@@ -102,7 +102,7 @@ struct LightFlicker
   float base_speed    = 0.0f;
   float current_speed = 0.0f;
 
-  std::array<opengl::Color, 2> colors;
+  std::array<Color, 2> colors;
 };
 
 struct JunkEntityFromFILE

@@ -15,7 +15,7 @@
 #include <opengl/texture.hpp>
 
 #include <common/algorithm.hpp>
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 
 #include <extlibs/imgui.hpp>
 #include <algorithm>

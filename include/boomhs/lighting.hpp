@@ -1,6 +1,6 @@
 #pragma once
 #include <common/type_macros.hpp>
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 
 #include <array>
 
@@ -52,8 +52,8 @@ static constexpr auto ATTENUATION_DISTANCE_STRINGS = "7\0"
 
 struct Light
 {
-  opengl::Color diffuse  = LOC::WHITE;
-  opengl::Color specular = LOC::BLACK;
+  Color diffuse  = LOC::WHITE;
+  Color specular = LOC::BLACK;
 };
 
 struct DirectionalLight
@@ -66,12 +66,12 @@ struct DirectionalLight
 
 struct GlobalLight
 {
-  opengl::Color ambient;
+  Color ambient;
 
   // TODO: could there be more than one instance of "directional light"?
   DirectionalLight directional;
 
-  explicit GlobalLight(opengl::Color const&, DirectionalLight&&);
+  explicit GlobalLight(Color const&, DirectionalLight&&);
 };
 
 struct PointLight

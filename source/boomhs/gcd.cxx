@@ -1,7 +1,5 @@
 #include <boomhs/gcd.hpp>
 
-using namespace window;
-
 namespace boomhs
 {
 

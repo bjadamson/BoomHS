@@ -69,7 +69,7 @@ void
 NPC::create(EntityRegistry& registry, char const* name, int const level, glm::vec3 const& pos)
 {
   auto eid = registry.create();
-  registry.assign<opengl::Color>(eid);
+  registry.assign<Color>(eid);
   registry.assign<Name>(eid).value = name;
 
   // TODO: look this up in the material table

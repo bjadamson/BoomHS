@@ -7,7 +7,7 @@
 #include <boomhs/state.hpp>
 #include <boomhs/zone_state.hpp>
 
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 #include <window/sdl_window.hpp>
 
 #include <extlibs/imgui.hpp>

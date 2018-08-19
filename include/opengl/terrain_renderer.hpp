@@ -11,14 +11,10 @@
 namespace boomhs
 {
 class EntityRegistry;
+class FrameTime;
 class MaterialTable;
 class Terrain;
 } // namespace boomhs
-
-namespace window
-{
-class FrameTime;
-} // namespace window
 
 namespace opengl
 {
@@ -37,7 +33,7 @@ public:
 
   // methods
   void render(RenderState&, boomhs::MaterialTable const&, boomhs::EntityRegistry& registry,
-              window::FrameTime const&, glm::vec4 const&);
+              boomhs::FrameTime const&, glm::vec4 const&);
 
   void bind_impl(common::Logger&, boomhs::Terrain const&, opengl::TextureTable&);
   void unbind_impl(common::Logger&, boomhs::Terrain const&, opengl::TextureTable&);
@@ -56,7 +52,7 @@ public:
 
   // methods
   void render(RenderState&, boomhs::MaterialTable const&, boomhs::EntityRegistry&,
-              window::FrameTime const&, glm::vec4 const&);
+              boomhs::FrameTime const&, glm::vec4 const&);
 };
 
 } // namespace opengl

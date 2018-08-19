@@ -12,7 +12,7 @@
 
 #include <window/controller.hpp>
 #include <window/sdl_window.hpp>
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 
 #include <common/log.hpp>
 #include <boomhs/math.hpp>

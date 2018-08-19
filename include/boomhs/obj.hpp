@@ -1,5 +1,5 @@
 #pragma once
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 
 #include <common/log.hpp>
 #include <common/result.hpp>

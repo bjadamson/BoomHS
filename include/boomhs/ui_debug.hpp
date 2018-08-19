@@ -1,5 +1,5 @@
 #pragma once
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 
 namespace opengl
 {
@@ -29,6 +29,6 @@ namespace boomhs::ui_debug
 
 void
 draw(EngineState&, LevelManager&, opengl::SkyboxRenderer&, WaterAudioSystem&, window::SDLWindow&,
-     Camera&, opengl::DrawState&, window::FrameTime const&);
+     Camera&, opengl::DrawState&, FrameTime const&);
 
 } // namespace boomhs::ui_debug

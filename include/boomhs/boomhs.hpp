@@ -16,13 +16,9 @@ struct DrawState;
 struct RenderState;
 } // namespace opengl
 
-namespace window
-{
-class FrameTime;
-}
-
 namespace boomhs
 {
+class FrameTime;
 class Camera;
 class RNG;
 
@@ -31,7 +27,7 @@ init(Engine&, EngineState&, Camera&, RNG&);
 
 struct StaticRenderers;
 void
-game_loop(Engine&, GameState&, StaticRenderers&, RNG&, Camera&, window::FrameTime const&);
+game_loop(Engine&, GameState&, StaticRenderers&, RNG&, Camera&, FrameTime const&);
 
 struct WaterRenderers
 {
@@ -42,7 +38,7 @@ struct WaterRenderers
   opengl::SilhouetteWaterRenderer silhouette;
 
   void render(opengl::RenderState&, opengl::DrawState&, LevelManager&, Camera&,
-              window::FrameTime const&, bool);
+              FrameTime const&, bool);
 };
 
 struct StaticRenderers
@@ -62,7 +58,7 @@ struct StaticRenderers
 
   NO_COPY_OR_MOVE(StaticRenderers);
   void render(LevelManager&, opengl::RenderState&, Camera&, RNG&, opengl::DrawState&,
-              window::FrameTime const&, bool);
+              FrameTime const&, bool);
 };
 
 StaticRenderers

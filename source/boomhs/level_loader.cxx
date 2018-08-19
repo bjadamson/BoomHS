@@ -126,7 +126,7 @@ get_bool_or_abort(CppTable const& table, char const* name)
   return get_or_abort<bool>(table, name);
 }
 
-std::optional<opengl::Color>
+std::optional<Color>
 get_color(CppTable const& table, char const* name)
 {
   auto const load_colors = table->template get_array_of<double>(name);
@@ -137,7 +137,7 @@ get_color(CppTable const& table, char const* name)
   std::vector<double> const& c = *load_colors;
   assert(4 == c.size() || 3 == c.size());
 
-  opengl::Color color;
+  Color color;
   color.set_r(c[0]);
   color.set_g(c[1]);
   color.set_b(c[2]);
@@ -147,7 +147,7 @@ get_color(CppTable const& table, char const* name)
   return std::make_optional(color);
 }
 
-opengl::Color
+Color
 get_color_or_abort(CppTable const& table, char const* name)
 {
   auto const c = get_color(table, name);

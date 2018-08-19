@@ -6,7 +6,7 @@
 #include <boomhs/world_object.hpp>
 
 #include <boomhs/lighting.hpp>
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>

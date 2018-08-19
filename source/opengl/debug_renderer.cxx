@@ -9,7 +9,7 @@
 
 #include <boomhs/random.hpp>
 
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 #include <extlibs/glm.hpp>
 
 using namespace boomhs;

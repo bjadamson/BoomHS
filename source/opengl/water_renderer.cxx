@@ -12,7 +12,7 @@
 #include <boomhs/water.hpp>
 #include <boomhs/view_frustum.hpp>
 
-#include <window/timer.hpp> 
+#include <boomhs/clock.hpp> 
 #include <common/log.hpp>
 #include <boomhs/random.hpp>
 

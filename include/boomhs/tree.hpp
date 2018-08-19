@@ -18,7 +18,7 @@ class ObjStore;
 class EntityRegistry;
 
 template <size_t N>
-using TreeColors = std::array<opengl::Color, N>;
+using TreeColors = std::array<Color, N>;
 
 enum class TreeColorType
 {
@@ -44,15 +44,15 @@ public:
   ObjData&       obj();
   ObjData const& obj() const;
 
-  void add_color(TreeColorType, opengl::Color const&);
+  void add_color(TreeColorType, Color const&);
 
-  opengl::Color& trunk_color(size_t);
-  opengl::Color& stem_color(size_t);
-  opengl::Color& leaf_color(size_t);
+  Color& trunk_color(size_t);
+  Color& stem_color(size_t);
+  Color& leaf_color(size_t);
 
-  opengl::Color const& trunk_color(size_t) const;
-  opengl::Color const& stem_color(size_t) const;
-  opengl::Color const& leaf_color(size_t) const;
+  Color const& trunk_color(size_t) const;
+  Color const& stem_color(size_t) const;
+  Color const& leaf_color(size_t) const;
 
   auto num_trunks() const { return num_trunks_; }
   auto num_stems() const { return num_stems_; }

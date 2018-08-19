@@ -843,7 +843,7 @@ namespace boomhs::ui_debug
 
 void
 draw(EngineState& es, LevelManager& lm, SkyboxRenderer& skyboxr, WaterAudioSystem& water_audio,
-     window::SDLWindow& window, Camera& camera, DrawState& ds, window::FrameTime const& ft)
+     window::SDLWindow& window, Camera& camera, DrawState& ds, FrameTime const& ft)
 {
   auto& uistate        = es.ui_state.debug;
   auto& zs             = lm.active();

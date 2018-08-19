@@ -5,10 +5,8 @@
 #include <boomhs/math.hpp>
 
 #include <cassert>
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 
-using namespace opengl;
-using namespace window;
 
 namespace boomhs
 {

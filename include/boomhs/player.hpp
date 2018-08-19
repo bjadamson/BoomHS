@@ -15,14 +15,10 @@ namespace opengl
 class TextureTable;
 } // namespace opengl
 
-namespace window
-{
-class FrameTime;
-} // namespace window
-
 namespace boomhs
 {
 class EngineState;
+class FrameTime;
 struct ZoneState;
 
 struct MovementState
@@ -59,9 +55,9 @@ public:
   void pickup_entity(EntityID, EntityRegistry&);
   void drop_entity(common::Logger&, EntityID, EntityRegistry&);
 
-  void try_pickup_nearby_item(common::Logger&, EntityRegistry&, window::FrameTime const&);
+  void try_pickup_nearby_item(common::Logger&, EntityRegistry&, FrameTime const&);
 
-  void update(EngineState&, ZoneState&, window::FrameTime const&);
+  void update(EngineState&, ZoneState&, FrameTime const&);
 
   auto const& transform() const { return registry_->get<Transform>(eid_); }
   Transform&  transform() { return registry_->get<Transform>(eid_); }

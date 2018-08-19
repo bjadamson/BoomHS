@@ -1,5 +1,5 @@
 #pragma once
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 
 #include <common/algorithm.hpp>
 #include <common/type_macros.hpp>
@@ -39,7 +39,7 @@ struct Channel
 {
   ChannelId     id;
   std::string   name;
-  opengl::Color color;
+  Color color;
 };
 
 struct ChatState
@@ -73,10 +73,10 @@ public:
   ChatHistory() = default;
   MOVE_CONSTRUCTIBLE_ONLY(ChatHistory);
 
-  void        add_channel(ChannelId, char const*, opengl::Color const&);
+  void        add_channel(ChannelId, char const*, Color const&);
   auto const& channels() const { return channels_; }
 
-  opengl::Color const& channel_color(ChannelId) const;
+  Color const& channel_color(ChannelId) const;
 
   void                  add_message(Message&&);
   ListOfMessages const& all_messages() const;

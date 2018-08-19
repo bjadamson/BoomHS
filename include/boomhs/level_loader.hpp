@@ -4,7 +4,7 @@
 #include <boomhs/obj_store.hpp>
 
 #include <boomhs/lighting.hpp>
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
 

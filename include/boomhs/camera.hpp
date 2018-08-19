@@ -11,12 +11,12 @@
 
 namespace window
 {
-class FrameTime;
 class SDLWindow;
 } // namespace window
 
 namespace boomhs
 {
+class FrameTime;
 class ScreenDimensions;
 
 class AspectRatio
@@ -126,7 +126,7 @@ class CameraArcball
 
   SphericalCoordinates coordinates_;
 
-  void zoom(float, window::FrameTime const&);
+  void zoom(float, FrameTime const&);
 
   friend class Camera;
 
@@ -142,8 +142,8 @@ public:
   SphericalCoordinates spherical_coordinates() const { return coordinates_; }
   void                 set_coordinates(SphericalCoordinates const& sc) { coordinates_ = sc; }
 
-  void decrease_zoom(float, window::FrameTime const&);
-  void increase_zoom(float, window::FrameTime const&);
+  void decrease_zoom(float, FrameTime const&);
+  void increase_zoom(float, FrameTime const&);
 
   CameraArcball& rotate(float, float);
 
@@ -199,7 +199,7 @@ public:
   auto const& frustum_ref() const { return viewport_.frustum; }
   auto&       frustum_ref() { return viewport_.frustum; }
 
-  Camera& rotate(float, float, window::FrameTime const&);
+  Camera& rotate(float, float, FrameTime const&);
   void    set_target(WorldObject&);
 
   glm::mat4 compute_projectionmatrix() const;

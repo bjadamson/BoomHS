@@ -22,7 +22,7 @@
 
 #include <extlibs/fmt.hpp>
 #include <extlibs/sdl.hpp>
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 
 #include <common/log.hpp>
 #include <boomhs/math.hpp>
@@ -724,7 +724,7 @@ draw_inventory_overlay(RenderState& rstate)
 }
 
 void
-draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
+draw_targetreticle(RenderState& rstate, FrameTime const& ft)
 {
   auto&       fstate   = rstate.fs;
   auto&       es       = fstate.es;

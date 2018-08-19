@@ -5,21 +5,17 @@
 
 #include <boomhs/lighting.hpp>
 #include <common/log.hpp>
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 
 #include <extlibs/glm.hpp>
 #include <string>
 #include <vector>
 
-namespace window
-{
-class FrameTime;
-} // namespace window
-
 namespace boomhs
 {
 struct ScreenDimensions;
 class EntityRegistry;
+class FrameTime;
 class Frustum;
 class HandleManager;
 class LevelManager;
@@ -122,7 +118,7 @@ void
 init(common::Logger&, boomhs::ScreenDimensions const&);
 
 void
-clear_screen(Color const&);
+clear_screen(boomhs::Color const&);
 
 // TODO: keep these extract rest to sub-renderers
 void
@@ -153,7 +149,7 @@ void
 draw(RenderState&, GLenum, ShaderProgram&, DrawInfo&);
 
 void
-draw_arrow(RenderState&, glm::vec3 const&, glm::vec3 const&, Color const&);
+draw_arrow(RenderState&, glm::vec3 const&, glm::vec3 const&, boomhs::Color const&);
 
 void
 draw_fbo_testwindow(RenderState&, glm::vec2 const&, glm::vec2 const&, ShaderProgram&, TextureInfo&);
@@ -168,13 +164,13 @@ void
 draw_inventory_overlay(RenderState&);
 
 void
-draw_line(RenderState&, glm::vec3 const&, glm::vec3 const&, Color const&);
+draw_line(RenderState&, glm::vec3 const&, glm::vec3 const&, boomhs::Color const&);
 
 void
 draw_local_axis(RenderState&, glm::vec3 const&);
 
 void
-draw_targetreticle(RenderState&, window::FrameTime const&);
+draw_targetreticle(RenderState&, boomhs::FrameTime const&);
 
 void
 draw_grid_lines(RenderState&);

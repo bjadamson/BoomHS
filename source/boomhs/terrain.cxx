@@ -14,7 +14,6 @@
 
 using namespace boomhs;
 using namespace opengl;
-using namespace window;
 
 namespace
 {
