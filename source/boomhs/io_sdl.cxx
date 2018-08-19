@@ -157,6 +157,13 @@ IO_SDL::read_devices(SDLReadDevicesArgs &&rda)
   behavior.update_keyboard(MouseAndKeyboardArgs{state, camera, player_wo, ft});
   behavior.update_mouse(MouseAndKeyboardArgs{state, camera, player_wo, ft});
   if (!es.disable_controller_input) {
+    // TODO: using controller and keyboard input at the same time does not work.
+    // reason: The controller when it's stick's aren't activated, every frame, set's the same
+    // variables to the keyboard controller would use to 0, effectively nullifying any input the
+    // keyboard can do.
+    //
+    // Idea: We could use separate vector's for tracking the controller input, if we want to allow
+    // both at the same time (why?).
     behavior.update_controller(ControllerArgs{state, controllers, player, camera, ft});
   }
 }

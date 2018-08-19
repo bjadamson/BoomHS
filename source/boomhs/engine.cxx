@@ -19,7 +19,7 @@ EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, ScreenDim
     , al_device(al)
     , imgui(i)
     , dimensions(d)
-    , disable_controller_input(false)
+    , disable_controller_input(true)
     , player_collision(false)
     , mariolike_edges(false)
     , draw_imguimetrics(false)
