@@ -122,7 +122,7 @@ update_position(EngineState& es, LevelData& ldata, Player& player, FrameTime con
     move_dir = glm::normalize(move_dir);
   }
 
-  auto wo = player.world_object();
+  auto& wo = player.world_object();
   move_worldobject(es, wo, move_dir, player.speed, terrain, ft);
 
   // Lookup the player height from the terrain at the player's X, Z world-coordinates.

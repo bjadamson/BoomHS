@@ -183,14 +183,17 @@ public:
 
   glm::vec3 eye_forward() const;
   glm::vec3 eye_backward() const { return -eye_forward(); }
-
   glm::vec3 eye_up() const;
-  glm::vec3 eye_down() const { return -eye_up(); }
+  glm::vec3 eye_up() const
+  {
+    return world_up() * get_target().orientation();
+  }
 
   glm::vec3 eye_left() const { return -eye_right(); }
   glm::vec3 eye_right() const { return glm::normalize(glm::cross(eye_forward(), eye_up())); }
 
   glm::vec3 world_forward() const;
+  glm::vec3 world_up() const;
   glm::vec3 world_position() const;
 
   auto const& viewport_ref() const { return viewport_; }

@@ -38,10 +38,7 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camer
 
   auto& player = find_player(registry);
   if (es.show_global_axis) {
-    render::draw_global_axis(rstate);
-  }
-  if (es.show_local_axis) {
-    render::draw_local_axis(rstate, player.world_position());
+    render::draw_axis(rstate, math::constants::ZERO);
   }
 
   Transform camera_transform;

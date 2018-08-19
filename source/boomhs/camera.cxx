@@ -212,57 +212,6 @@ void
 CameraFPS::update(int const xpos, int const ypos, ScreenDimensions const& dim,
                   SDLWindow& window)
 {
-#define CAMERA_ANGULAR_SPEED_DEG 1.0f
-  auto const mouseAxisX = 1, mouseAxisY = -1;
-
-  int const width  = dim.width() / 2;
-  int const height = dim.height() / 2;
-  std::cerr << "W: '" << width << "' h: '" << height << "'\n";
-  std::cerr << "xpos: '" << xpos << "' ypos: '" << ypos << "'\n";
-  int const mouseDeltaX = mouseAxisX * (xpos - width);
-  int const mouseDeltaY = -mouseAxisY * (ypos- height);  // mouse y-offsets are upside-down!
-
-  // HACK:  reset the cursor pos.:
-  //app.SetCursorPosition(app.GetWidth()/2, app.GetHeight()/2);
-  SDL_WarpMouseInWindow(window.raw(), width, height);
-
-  float lookRightRads = glm::radians(mouseDeltaX * CAMERA_ANGULAR_SPEED_DEG);
-  float lookUpRads    = glm::radians(mouseDeltaY * CAMERA_ANGULAR_SPEED_DEG);
-
-  // Limit the aim vector in such a way that the 'up' vector never drops below the horizon:
-#define MIN_UPWARDS_TILT_DEG 1.0f
-  static const float zenithMinDeclination = glm::radians(MIN_UPWARDS_TILT_DEG);
-  static const float zenithMaxDeclination = glm::radians(180.0f - MIN_UPWARDS_TILT_DEG);
-
-  const float currentDeclination = std::acosf(forward_.y);  ///< declination from vertical y-axis
-  const float requestedDeclination = currentDeclination - lookUpRads;
-
-  // Clamp the up/down rotation to at most the min/max zenith:
-  if(requestedDeclination < zenithMinDeclination) {
-    lookUpRads = currentDeclination - zenithMinDeclination;
-  }
-  else if(requestedDeclination > zenithMaxDeclination) {
-    lookUpRads = currentDeclination - zenithMaxDeclination;
-  }
-
-  // Rotate both the "aim" vector and the "up" vector ccw by 
-  // lookUpRads radians within their common plane -- which should 
-  // also contain the y-axis:  (i.e. no diagonal tilt allowed!)
-  auto const right = glm::normalize(glm::cross(forward_, up_));
-  forward_ = ROTATE(lookUpRads, forward_, right);
-  up_      = ROTATE(lookUpRads, up_, right);
-
-#define ASSERT_ORTHONORMAL(A, B, C) \
-  assert(float_compare(glm::dot(A, B), 0)); \
-  assert(float_compare(glm::dot(A, C), 0)); \
-  assert(float_compare(glm::dot(B, C), 0));
-
-  ASSERT_ORTHONORMAL(forward_, up_, right);
-
-  // Rotate both the "aim" and the "up" vector ccw about the vertical y-axis:
-  // (again, this keeps the y-axis in their common plane, and disallows diagonal tilt)
-  forward_ = ROTATE(-lookRightRads, forward_, constants::Y_UNIT_VECTOR);
-  up_      = ROTATE(-lookRightRads, up_, constants::Y_UNIT_VECTOR);
 }
 
 CameraFPS&
@@ -287,15 +236,11 @@ CameraFPS::compute_projectionmatrix() const
 }
 
 glm::mat4
-CameraFPS::compute_viewmatrix(glm::vec3 const& world_forward) const
+CameraFPS::compute_viewmatrix(glm::vec3 const& eye_fwd) const
 {
   auto const pos = transform().translation;
 
-  // NOTE: this might need to be changed back to (pos +  world_forward)
-  //
-  // I changed it temporarily to make FPS camera work, but I think it will be wrong
-  // again in the future when the FPS camera doesn't use the ARCBALL camera for anything.
-  return glm::lookAt(pos, pos - world_forward, up_);
+  return glm::lookAt(pos, pos + eye_fwd, up_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -420,6 +365,23 @@ Camera::eye_forward() const
 {
   switch (mode()) {
     case CameraMode::FPS:
+      return glm::normalize(-Z_UNIT_VECTOR * fps.transform().rotation_quat());
+    case CameraMode::Ortho:
+    case CameraMode::ThirdPerson:
+      return glm::normalize(arcball.world_position() - arcball.target_position());
+    case CameraMode::FREE_FLOATING:
+    case CameraMode::MAX:
+      break;
+  }
+  std::abort();
+  return ZERO;
+}
+
+glm::vec3
+Camera::world_forward() const
+{
+  switch (mode()) {
+    case CameraMode::FPS:
       return fps.forward_;
     case CameraMode::Ortho:
       return ortho.forward_;
@@ -434,7 +396,7 @@ Camera::eye_forward() const
 }
 
 glm::vec3
-Camera::eye_up() const
+Camera::world_up() const
 {
   switch (mode()) {
     case CameraMode::FPS:
@@ -443,23 +405,6 @@ Camera::eye_up() const
       return ortho.up_;
     case CameraMode::ThirdPerson:
       return arcball.up_;
-    case CameraMode::FREE_FLOATING:
-    case CameraMode::MAX:
-      break;
-  }
-  std::abort();
-  return ZERO;
-}
-
-glm::vec3
-Camera::world_forward() const
-{
-  switch (mode()) {
-    case CameraMode::FPS:
-      return glm::normalize(Z_UNIT_VECTOR * fps.transform().rotation_quat());
-    case CameraMode::Ortho:
-    case CameraMode::ThirdPerson:
-      return glm::normalize(arcball.world_position() - arcball.target_position());
     case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:
       break;
@@ -512,7 +457,7 @@ Camera::compute_viewmatrix(glm::vec3 const& target_pos) const
     case CameraMode::Ortho:
       return ortho.compute_viewmatrix(target_pos);
     case CameraMode::FPS:
-      return fps.compute_viewmatrix(world_forward());
+      return fps.compute_viewmatrix(eye_forward());
     case CameraMode::ThirdPerson:
       return arcball.compute_viewmatrix(target_pos);
     case CameraMode::FREE_FLOATING:

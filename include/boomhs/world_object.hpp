@@ -19,22 +19,24 @@ class WorldObject
 
 public:
   WorldObject(EntityID, EntityRegistry&, glm::vec3 const&, glm::vec3 const&);
+  NO_COPY(WorldObject);
   MOVE_DEFAULT(WorldObject);
-  COPY_DEFAULT(WorldObject);
 
-  // fields
-
-  // methods
-  glm::vec3 eye_forward() const { return forward_; }
-  glm::vec3 eye_up() const { return up_; }
+  // The "local" vectors are the object's world vectors multiplied with the object's rotation.
+  //
+  // The direction the object face's, normalized.
+  glm::vec3 eye_forward() const;
+  glm::vec3 eye_up() const;
   glm::vec3 eye_backward() const { return -eye_forward(); }
 
   glm::vec3 eye_left() const { return -eye_right(); }
   glm::vec3 eye_right() const { return glm::normalize(glm::cross(eye_forward(), eye_up())); }
   glm::vec3 eye_down() const { return -eye_up(); }
 
-  glm::vec3 world_forward() const { return forward_ * orientation(); }
-  glm::vec3 world_up() const { return up_ * orientation(); }
+  // The "world" vectors are the the 3 Axis unit vector (X_UNIT_VECTOR, Y_UNIT_VECTOR,
+  // Z_UNIT_VECTOR) translated to the object's position.
+  glm::vec3 world_forward() const { return forward_; }
+  glm::vec3 world_up() const { return up_; }
   glm::vec3 world_backward() const { return -world_forward(); }
 
   glm::vec3 world_left() const { return -world_right(); }
@@ -48,9 +50,6 @@ public:
 
   glm::quat        orientation() const { return transform().rotation_quat(); }
   glm::vec3 const& world_position() const;
-
-  auto forward() const { return forward_; }
-  auto up() const { return up_; }
 
   WorldObject& move(glm::vec3 const&);
 

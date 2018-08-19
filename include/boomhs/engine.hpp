@@ -57,7 +57,6 @@ struct EngineState
   bool draw_skybox;
 
   bool show_global_axis;
-  bool show_local_axis;
 
   bool show_player_localspace_vectors;
   bool show_player_worldspace_vectors;

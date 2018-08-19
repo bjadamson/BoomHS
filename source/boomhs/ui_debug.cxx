@@ -624,7 +624,7 @@ void
 draw_player_window(EngineState& es, Player& player)
 {
   auto const draw = [&]() {
-    auto wo = player.world_object();
+    auto &wo = player.world_object();
     auto const display = wo.display();
     ImGui::Text("%s", display.c_str());
 
@@ -747,9 +747,7 @@ world_menu(EngineState& es, LevelData& ldata)
   auto&      ui   = es.ui_state.debug;
   auto const draw = [&]() {
     ImGui::MenuItem("Update Orbital", nullptr, &es.update_orbital_bodies);
-
-    ImGui::MenuItem("Local Axis", nullptr, &es.show_local_axis);
-    ImGui::MenuItem("Global Axis", nullptr, &es.show_global_axis);
+    ImGui::MenuItem("Draw Global Axis", nullptr, &es.show_global_axis);
   };
   imgui_cxx::with_menu(draw, "World");
 }

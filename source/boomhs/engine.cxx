@@ -33,7 +33,6 @@ EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, ScreenDim
     , draw_normals(false)
     , draw_skybox(true)
     , show_global_axis(false)
-    , show_local_axis(false)
     , show_player_localspace_vectors(false)
     , show_player_worldspace_vectors(false)
     , show_grid_lines(false)

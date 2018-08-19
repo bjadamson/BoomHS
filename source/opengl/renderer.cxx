@@ -445,24 +445,20 @@ conditionally_draw_player_vectors(RenderState& rstate, Player const& player)
   if (es.show_player_localspace_vectors) {
     // local-space
     //
-    // forward
+    // eye-forward
     auto const fwd = wo.eye_forward();
-    draw_arrow(rstate, pos, pos + fwd, LOC::GREEN);
+    draw_arrow(rstate, pos, pos + (2.0f * fwd), LOC::PURPLE);
 
-    // right
+    // eye-up
+    auto const up = wo.eye_up();
+    draw_arrow(rstate, pos, pos + up, LOC::YELLOW);
+
+    // eye-right
     auto const right = wo.eye_right();
-    draw_arrow(rstate, pos, pos + right, LOC::RED);
+    draw_arrow(rstate, pos, pos + right, LOC::ORANGE);
   }
   if (es.show_player_worldspace_vectors) {
-    // world-space
-    //
-    // forward
-    auto const fwd = wo.world_forward();
-    draw_arrow(rstate, pos, pos + (2.0f * fwd), LOC::LIGHT_BLUE);
-
-    // backward
-    glm::vec3 const right = wo.world_right();
-    draw_arrow(rstate, pos, pos + right, LOC::PINK);
+    draw_axis(rstate, pos);
   }
 }
 
@@ -547,7 +543,7 @@ draw_line(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& end, Col
 }
 
 void
-draw_global_axis(RenderState& rstate)
+draw_axis(RenderState& rstate, glm::vec3 const& pos)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -555,13 +551,13 @@ draw_global_axis(RenderState& rstate)
   auto& sps    = zs.gfx_state.sps;
 
   auto& logger = es.logger;
-  LOG_TRACE("Drawing Global Axis");
 
   auto& sp           = sps.ref_sp("3d_pos_color");
   auto  world_arrows = create_axis_arrows(logger, sp.va());
 
   auto const& ldata = zs.level_data;
   Transform   transform;
+  transform.translation = pos;
 
   auto const draw_axis_arrow = [&](DrawInfo& dinfo) {
     dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_LINES, sp, dinfo); });
@@ -576,42 +572,6 @@ draw_global_axis(RenderState& rstate)
   });
 
   LOG_TRACE("Finished Drawing Global Axis");
-}
-
-void
-draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
-{
-  auto& fstate = rstate.fs;
-  auto& es     = fstate.es;
-  auto& zs     = fstate.zs;
-  auto& sps    = zs.gfx_state.sps;
-
-  auto& logger = es.logger;
-  LOG_TRACE("Drawing Local Axis");
-
-  auto& sp          = sps.ref_sp("3d_pos_color");
-  auto  axis_arrows = create_axis_arrows(logger, sp.va());
-
-  Transform transform;
-  transform.translation = player_pos;
-
-  auto const& ldata = zs.level_data;
-
-  auto const bind_and_draw = [&](auto& dinfo) {
-    dinfo.while_bound(logger, [&]() {
-        draw(rstate, GL_LINES, sp, dinfo);
-        });
-  };
-
-  sp.while_bound(logger, [&]() {
-    auto const camera_matrix = fstate.camera_matrix();
-    set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
-    bind_and_draw(axis_arrows.x_dinfo);
-    bind_and_draw(axis_arrows.y_dinfo);
-    bind_and_draw(axis_arrows.z_dinfo);
-  });
-
-  LOG_TRACE("Finished Drawing Local Axis");
 }
 
 void

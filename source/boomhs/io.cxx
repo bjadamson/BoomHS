@@ -321,7 +321,7 @@ process_mousestate(GameState& state, WorldObject& wo, Camera& camera, FrameTime 
   auto& movement = es.movement_state;
   if (both_yes_now) {
     wo.rotate_to_match_camera_rotation(camera);
-    movement.mouse_forward = wo.world_forward();
+    movement.mouse_forward = wo.eye_forward();
   }
   else {
     movement.mouse_forward = ZERO;
@@ -345,18 +345,18 @@ process_keystate(GameState& state, WorldObject& wo, Camera& camera, FrameTime co
   auto& movement = es.movement_state;
 
   movement.forward = keystate[SDL_SCANCODE_W]
-    ? wo.world_forward()
+    ? wo.eye_forward()
     : ZERO;
   movement.backward = keystate[SDL_SCANCODE_S]
-    ? wo.world_backward()
+    ? wo.eye_backward()
     : ZERO;
 
   movement.left = keystate[SDL_SCANCODE_A]
-    ? wo.world_left()
+    ? wo.eye_left()
     : ZERO;
 
   movement.right = keystate[SDL_SCANCODE_D]
-    ? wo.world_right()
+    ? wo.eye_right()
     : ZERO;
 }
 
@@ -398,14 +398,14 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Pla
   auto const axis_left_x = c.axis_left_x();
 
   if (less_threshold(axis_left_x)) {
-    movement.left = player_wo.world_left();
+    movement.left = player_wo.eye_left();
     player_wo.rotate_to_match_camera_rotation(camera);
   }
   else {
     movement.left = ZERO;
   }
   if (greater_threshold(axis_left_x)) {
-    movement.right = player_wo.world_right();
+    movement.right = player_wo.eye_right();
     player_wo.rotate_to_match_camera_rotation(camera);
   }
   else {
@@ -413,14 +413,14 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Pla
   }
   auto const axis_left_y = c.axis_left_y();
   if (less_threshold(axis_left_y)) {
-    movement.forward = player_wo.world_forward();
+    movement.forward = player_wo.eye_forward();
     player_wo.rotate_to_match_camera_rotation(camera);
   }
   else {
     movement.forward = ZERO;
   }
   if (greater_threshold(axis_left_y)) {
-    movement.backward = player_wo.world_backward();
+    movement.backward = player_wo.eye_backward();
     player_wo.rotate_to_match_camera_rotation(camera);
   }
   else {
@@ -631,7 +631,7 @@ IO::process(GameState& state, SDLControllers const& controllers, Camera& camera,
   auto& registry = zs.registry;
 
   auto& player = find_player(registry);
-  auto player_wo = player.world_object();
+  auto& player_wo = player.world_object();
 
   process_mousestate(state, player_wo, camera, ft);
   process_keystate(state, player_wo, camera, ft);
