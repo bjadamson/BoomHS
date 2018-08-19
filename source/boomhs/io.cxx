@@ -634,13 +634,6 @@ IO::process(GameState& state, SDLControllers const& controllers, Camera& camera,
   process_mousestate(state, player_wo, camera, ft);
   process_keystate(state, player_wo, camera, ft);
   if (!state.engine_state.disable_controller_input) {
-    // TODO: using controller and keyboard input at the same time does not work.
-    // reason: The controller when it's stick's aren't activated, every frame, set's the same
-    // variables to the keyboard controller would use to 0, effectively nullifying any input the
-    // keyboard can do.
-    //
-    // Idea: We could use separate vector's for tracking the controller input, if we want to allow
-    // both at the same time (why?).
     process_controllerstate(state, controllers, player, player_wo, camera, ft);
   }
 }
