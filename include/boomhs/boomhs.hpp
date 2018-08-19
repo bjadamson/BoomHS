@@ -1,6 +1,4 @@
 #pragma once
-#include <boomhs/state.hpp>
-
 #include <opengl/debug_renderer.hpp>
 #include <opengl/entity_renderer.hpp>
 #include <opengl/renderer.hpp>

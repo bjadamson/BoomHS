@@ -3,9 +3,9 @@
 
 #include <boomhs/components.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/engine.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/player.hpp>
-#include <boomhs/state.hpp>
 
 #include <boomhs/random.hpp>
 

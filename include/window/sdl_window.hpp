@@ -32,6 +32,14 @@ enum class SwapIntervalFlag
 };
 // clang-format on
 
+struct WindowState
+{
+  MOVE_CONSTRUCTIBLE_ONLY(WindowState);
+
+  FullscreenFlags  fullscreen = FullscreenFlags::NOT_FULLSCREEN;
+  SwapIntervalFlag sync       = SwapIntervalFlag::SYNCHRONIZED;
+};
+
 using window_type = SDL_Window;
 using window_ptr  = std::unique_ptr<window_type, decltype(&SDL_DestroyWindow)>;
 

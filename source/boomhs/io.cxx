@@ -1,5 +1,6 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/collision.hpp>
+#include <boomhs/engine.hpp>
 #include <boomhs/frame.hpp>
 #include <boomhs/io.hpp>
 #include <boomhs/level_manager.hpp>

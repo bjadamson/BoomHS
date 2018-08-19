@@ -25,6 +25,15 @@ namespace boomhs
 class EngineState;
 struct ZoneState;
 
+struct MovementState
+{
+  glm::vec3 forward, backward, left, right;
+
+  glm::vec3 mouse_forward;
+
+  NO_COPY_OR_MOVE(MovementState);
+};
+
 class Player
 {
   EntityID        eid_;

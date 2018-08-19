@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/components.hpp>
+#include <boomhs/frame.hpp>
 #include <boomhs/mouse.hpp>
 #include <boomhs/spherical.hpp>
 #include <boomhs/world_object.hpp>
@@ -39,29 +40,6 @@ struct Viewport
   AspectRatio aspect_ratio;
   float       field_of_view;
   Frustum     frustum;
-};
-
-enum class CameraMode
-{
-  ThirdPerson = 0,
-  Ortho,
-  FPS,
-  FREE_FLOATING,
-  MAX
-};
-
-struct CameraModes
-{
-  using ModeNamePair = std::pair<CameraMode, char const*>;
-  CameraModes()      = delete;
-
-  static std::array<ModeNamePair, static_cast<size_t>(CameraMode::MAX)> constexpr CAMERA_MODES = {
-      {{CameraMode::Ortho, "Ortho"},
-       {CameraMode::ThirdPerson, "ThirdPerson"},
-       {CameraMode::FPS, "FPS"},
-       {CameraMode::FREE_FLOATING, "Free Floating"}}};
-
-  static std::vector<std::string> string_list();
 };
 
 class CameraTarget

@@ -2,7 +2,6 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mesh.hpp>
-#include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/water.hpp>
 

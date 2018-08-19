@@ -8,7 +8,6 @@
 #include <boomhs/level_manager.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/mesh.hpp>
-#include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/water.hpp>
 #include <boomhs/view_frustum.hpp>

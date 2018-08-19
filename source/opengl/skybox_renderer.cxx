@@ -1,10 +1,12 @@
 #include <opengl/skybox_renderer.hpp>
-#include <boomhs/state.hpp>
 
 #include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
+
+#include <boomhs/engine.hpp>
 #include <boomhs/math.hpp>
+#include <boomhs/zone_state.hpp>
 
 #include <cassert>
 #include <window/timer.hpp>

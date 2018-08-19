@@ -4,7 +4,8 @@
 #include <opengl/renderbuffer.hpp>
 #include <opengl/renderer.hpp>
 
-#include <boomhs/state.hpp>
+#include <boomhs/engine.hpp>
+#include <boomhs/zone_state.hpp>
 
 using namespace boomhs;
 using namespace opengl;

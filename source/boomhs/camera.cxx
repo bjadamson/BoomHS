@@ -1,7 +1,6 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/screen_size.hpp>
 #include <boomhs/mouse.hpp>
-#include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <window/sdl_window.hpp>

@@ -1,13 +1,16 @@
 #include <boomhs/billboard.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/components.hpp>
+#include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/fog.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
-#include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
+#include <boomhs/screen_size.hpp>
+#include <boomhs/zone_state.hpp>
 
 #include <opengl/renderer.hpp>
 #include <opengl/draw_info.hpp>

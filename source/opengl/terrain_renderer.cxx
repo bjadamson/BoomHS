@@ -4,10 +4,11 @@
 #include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
 
+#include <boomhs/engine.hpp>
 #include <boomhs/heightmap.hpp>
 #include <boomhs/material.hpp>
-#include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
+#include <boomhs/zone_state.hpp>
 
 #include <common/algorithm.hpp>
 #include <common/log.hpp>

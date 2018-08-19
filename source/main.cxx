@@ -15,6 +15,7 @@
 #include <window/timer.hpp>
 
 #include <extlibs/imgui.hpp>
+#include <extlibs/openal.hpp>
 
 using namespace boomhs;
 using namespace window;

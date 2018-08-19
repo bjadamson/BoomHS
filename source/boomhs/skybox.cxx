@@ -1,5 +1,4 @@
 #include <boomhs/skybox.hpp>
-#include <boomhs/state.hpp>
 
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>

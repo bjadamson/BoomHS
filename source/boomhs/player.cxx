@@ -1,14 +1,16 @@
 #include <boomhs/components.hpp>
+#include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/inventory.hpp>
 #include <boomhs/item.hpp>
 #include <boomhs/item_factory.hpp>
+#include <boomhs/leveldata.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/nearby_targets.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
-#include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
+#include <boomhs/zone_state.hpp>
 
 using namespace boomhs;
 using namespace boomhs::math::constants;
