@@ -1,34 +1,20 @@
+#include <boomhs/io_behavior.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/collision.hpp>
-#include <boomhs/controller.hpp>
-#include <boomhs/engine.hpp>
-#include <boomhs/frame.hpp>
-#include <boomhs/io.hpp>
-#include <boomhs/level_manager.hpp>
-#include <boomhs/mouse_picker.hpp>
+#include <boomhs/math.hpp>
 #include <boomhs/npc.hpp>
+#include <boomhs/engine.hpp>
 #include <boomhs/player.hpp>
+#include <boomhs/raycast.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
 
-#include <window/sdl_window.hpp>
-#include <boomhs/clock.hpp>
-
-#include <common/log.hpp>
-#include <boomhs/math.hpp>
-
-#include <extlibs/imgui.hpp>
-#include <iostream>
-
-float constexpr MOVE_DISTANCE = 1.0f;
-float constexpr SCALE_FACTOR  = 0.20f;
-float constexpr ZOOM_FACTOR   = 0.2f;
+float constexpr ZOOM_FACTOR = 0.2f;
 
 using namespace boomhs;
 using namespace boomhs::math;
 using namespace boomhs::math::constants;
 using namespace opengl;
-using namespace window;
 
 namespace
 {
@@ -59,28 +45,6 @@ thirdperson_mousemove(WorldObject& wo, Camera& camera, MouseState const& ms,
   }
 }
 
-void
-process_mousemotion(GameState& state, WorldObject& wo, SDL_MouseMotionEvent const& motion,
-                    Camera& camera, FrameTime const& ft)
-{
-  auto& es     = state.engine_state;
-  auto& logger = es.logger;
-  auto& ms     = es.device_states.mouse;
-  auto& ui     = es.ui_state.debug;
-
-  // convert from int to floating-point value
-  float const xrel = motion.xrel, yrel = motion.yrel;
-  if (camera.is_firstperson()) {
-    fps_mousemove(wo, camera, wo, ms.first_person, xrel, yrel, ft);
-  }
-  else if (camera.is_thirdperson()) {
-    thirdperson_mousemove(wo, camera, ms.current, ms.third_person, xrel, yrel, ft);
-  }
-  else {
-    LOG_ERROR("MouseMotion not implemented for this camera mode");
-  }
-}
-
 enum class MouseButton
 {
   LEFT,
@@ -97,8 +61,7 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
   auto& zs       = fstate.zs;
   auto& registry = zs.registry;
 
-  MousePicker      mouse_picker;
-  glm::vec3 const  ray_dir   = mouse_picker.calculate_ray(fstate);
+  glm::vec3 const  ray_dir   = Raycast::calculate_ray(fstate);
   glm::vec3 const& ray_start = fstate.camera_world_position();
 
   std::vector<std::pair<EntityID, float>> distances;
@@ -143,10 +106,22 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
   }
 }
 
-void
-process_mousebutton_down(GameState& state, WorldObject& player, SDL_MouseButtonEvent const& event, Camera& camera,
-                         FrameTime const& ft)
+} // namespace
+
+namespace boomhs
 {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// PlayerPlayingGameBehavior
+void
+PlayerPlayingGameBehavior::mousebutton_down(MouseButtonEvent&& mbe)
+{
+  auto& state       = mbe.game_state;
+  auto& camera      = mbe.camera;
+  auto const& event = mbe.event;
+  auto const& ft    = mbe.frame_time;
+  auto& player      = mbe.player;
+
   auto& es     = state.engine_state;
   auto& logger = es.logger;
   auto& ms     = es.device_states.mouse.current;
@@ -175,18 +150,76 @@ process_mousebutton_down(GameState& state, WorldObject& player, SDL_MouseButtonE
 }
 
 void
-process_mousebutton_up(GameState& state, WorldObject& player, SDL_MouseButtonEvent const& event, Camera& camera,
-                       FrameTime const& ft)
+PlayerPlayingGameBehavior::mousebutton_up(MouseButtonEvent&& mbe)
 {
+  auto& state       = mbe.game_state;
+  auto& camera      = mbe.camera;
+  auto const& event = mbe.event;
+  auto const& ft    = mbe.frame_time;
+  auto& player      = mbe.player;
+
   auto& es = state.engine_state;
   auto& ms = es.device_states.mouse.current;
 }
 
 void
-process_keyup(GameState& state, WorldObject& player, SDL_Event const& event, Camera& camera, FrameTime const& ft)
+PlayerPlayingGameBehavior::mouse_wheel(MouseWheelEvent &&mwe)
 {
+  auto& state    = mwe.game_state;
+  auto& camera   = mwe.camera;
+  auto& wheel    = mwe.wheel;
+  auto& player   = mwe.player;
+  auto const& ft = mwe.frame_time;
+
+  auto& logger = state.engine_state.logger;
+  LOG_TRACE("mouse wheel event detected.");
+
+  auto& lm    = state.level_manager;
+  auto& ldata = lm.active().level_data;
+
+  auto& arcball = camera.arcball;
+  if (wheel.y > 0) {
+    arcball.decrease_zoom(ZOOM_FACTOR, ft);
+  }
+  else {
+    arcball.increase_zoom(ZOOM_FACTOR, ft);
+  }
+}
+
+void
+PlayerPlayingGameBehavior::mouse_motion(MouseMotionEvent&& mme)
+{
+  auto& state        = mme.game_state;
+  auto& camera       = mme.camera;
+  auto const& motion = mme.motion;
+  auto& player       = mme.player;
+  auto const& ft     = mme.frame_time;
+
   auto& es     = state.engine_state;
   auto& logger = es.logger;
+  auto& ms     = es.device_states.mouse;
+  auto& ui     = es.ui_state.debug;
+
+  // convert from int to floating-point value
+  float const xrel = motion.xrel, yrel = motion.yrel;
+  if (camera.is_firstperson()) {
+    fps_mousemove(player, camera, player, ms.first_person, xrel, yrel, ft);
+  }
+  else if (camera.is_thirdperson()) {
+    thirdperson_mousemove(player, camera, ms.current, ms.third_person, xrel, yrel, ft);
+  }
+  else {
+    LOG_ERROR("MouseMotion not implemented for this camera mode");
+  }
+}
+
+void
+PlayerPlayingGameBehavior::keyup(KeyEvent&& ke)
+{
+  auto& state       = ke.game_state;
+  auto const& event = ke.event;
+  auto& es          = state.engine_state;
+  auto& logger      = es.logger;
 
   switch (event.key.keysym.sym) {
     break;
@@ -194,12 +227,18 @@ process_keyup(GameState& state, WorldObject& player, SDL_Event const& event, Cam
 }
 
 void
-process_keydown(GameState& state, Player& player, WorldObject& player_wo, SDL_Event const& event,
-                Camera& camera, FrameTime const& ft)
+PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
 {
-  auto& es      = state.engine_state;
-  auto& logger  = es.logger;
-  auto& uistate = es.ui_state;
+  auto& state       = ke.game_state;
+  auto& camera      = ke.camera;
+  auto const& event = ke.event;
+  auto const& ft    = ke.frame_time;
+  auto& player      = ke.player;
+
+  auto& es         = state.engine_state;
+  auto& logger     = es.logger;
+  auto& uistate    = es.ui_state;
+  auto& player_wo  = player.world_object();
 
   auto& lm             = state.level_manager;
   auto& active         = lm.active();
@@ -285,27 +324,13 @@ process_keydown(GameState& state, Player& player, WorldObject& player_wo, SDL_Ev
 }
 
 void
-process_mousewheel(GameState& state, WorldObject& wo, SDL_MouseWheelEvent const& wheel, Camera& camera,
-                   FrameTime const& ft)
+PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs &&mk)
 {
-  auto& logger = state.engine_state.logger;
-  LOG_TRACE("mouse wheel event detected.");
+  auto& state        = mk.game_state;
+  auto& camera       = mk.camera;
+  auto& player       = mk.player;
+  auto const& ft     = mk.frame_time;
 
-  auto& lm    = state.level_manager;
-  auto& ldata = lm.active().level_data;
-
-  auto& arcball = camera.arcball;
-  if (wheel.y > 0) {
-    arcball.decrease_zoom(ZOOM_FACTOR, ft);
-  }
-  else {
-    arcball.increase_zoom(ZOOM_FACTOR, ft);
-  }
-}
-
-void
-process_mousestate(GameState& state, WorldObject& wo, Camera& camera, FrameTime const& ft)
-{
   auto& es     = state.engine_state;
   auto& logger = es.logger;
   auto& mss    = es.device_states.mouse;
@@ -322,8 +347,8 @@ process_mousestate(GameState& state, WorldObject& wo, Camera& camera, FrameTime 
 
   auto& movement = es.movement_state;
   if (both_yes_now) {
-    wo.rotate_to_match_camera_rotation(camera);
-    movement.mouse_forward = wo.eye_forward();
+    player.rotate_to_match_camera_rotation(camera);
+    movement.mouse_forward = player.eye_forward();
   }
   else {
     movement.mouse_forward = ZERO;
@@ -331,8 +356,13 @@ process_mousestate(GameState& state, WorldObject& wo, Camera& camera, FrameTime 
 }
 
 void
-process_keystate(GameState& state, WorldObject& wo, Camera& camera, FrameTime const& ft)
+PlayerPlayingGameBehavior::process_keyboard_state(MouseAndKeyboardArgs &&mk)
 {
+  auto& state        = mk.game_state;
+  auto& camera       = mk.camera;
+  auto& player       = mk.player;
+  auto const& ft     = mk.frame_time;
+
   // continual keypress responses procesed here
   uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
   assert(keystate);
@@ -347,25 +377,31 @@ process_keystate(GameState& state, WorldObject& wo, Camera& camera, FrameTime co
   auto& movement = es.movement_state;
 
   movement.forward = keystate[SDL_SCANCODE_W]
-    ? wo.eye_forward()
+    ? player.eye_forward()
     : ZERO;
   movement.backward = keystate[SDL_SCANCODE_S]
-    ? wo.eye_backward()
+    ? player.eye_backward()
     : ZERO;
 
   movement.left = keystate[SDL_SCANCODE_A]
-    ? wo.eye_left()
+    ? player.eye_left()
     : ZERO;
 
   movement.right = keystate[SDL_SCANCODE_D]
-    ? wo.eye_right()
+    ? player.eye_right()
     : ZERO;
 }
 
 void
-process_controllerstate(GameState& state, SDLControllers const& controllers, Player& player,
-                        WorldObject& player_wo, Camera& camera, FrameTime const& ft)
+PlayerPlayingGameBehavior::process_controller_state(ControllerArgs&& ca)
 {
+  auto& state             = ca.game_state;
+  auto const& controllers = ca.controllers;
+  auto& camera            = ca.camera;
+  auto& player            = ca.player;
+  auto& player_wo         = player.world_object();
+  auto const& ft          = ca.frame_time;
+
   if (controllers.empty()) {
     return;
   }
@@ -526,116 +562,59 @@ process_controllerstate(GameState& state, SDLControllers const& controllers, Pla
   }
 }
 
-} // namespace
-
-namespace boomhs
-{
-
+/////////////////////////////////////////////////////gfx_window_sdl///////////////////////////////////////////////
+// TerminalOnlyBehavior
 void
-IO::process_event(GameState& state, SDL_Event& event, Camera& camera, FrameTime const& ft)
+TerminalOnlyBehavior::mousebutton_down(MouseButtonEvent&&)
 {
-  auto& es     = state.engine_state;
-  auto& logger = es.logger;
-
-  auto& lm     = state.level_manager;
-  auto& active = lm.active();
-  auto& registry = active.registry;
-
-  auto& player = find_player(registry);
-  auto& player_wo = player.world_object();
-
-  auto& ui     = es.ui_state;
-  auto& ingame = ui.ingame;
-  auto& chat_buffer = ingame.chat_buffer;
-  auto& currently_editing = ingame.chat_state.currently_editing;
-
-  auto const type               = event.type;
-  bool const event_type_keydown = type == SDL_KEYDOWN;
-  auto const key_pressed        = event.key.keysym.sym;
-  if (event_type_keydown) {
-    switch (key_pressed) {
-      case SDLK_F10:
-        es.quit = true;
-        return;
-      case SDLK_ESCAPE:
-        {
-          auto& ldata  = active.level_data;
-          auto& nbt = ldata.nearby_targets;
-          if (currently_editing) {
-            chat_buffer.clear();
-            currently_editing = false;
-          }
-          else if (player.is_attacking) {
-            player.is_attacking = false;
-          }
-          else if (nbt.selected()) {
-            nbt.clear();
-          }
-          else {
-            es.main_menu.show ^= true;
-          }
-          return;
-        }
-        break;
-    }
-  }
-
-  // If the user pressed enter, don't process mouse events (for the game)
-  if (currently_editing) {
-    return;
-  }
-
-  auto& imgui = es.imgui;
-  if (imgui.WantCaptureMouse || imgui.WantCaptureKeyboard) {
-    return;
-  }
-
-  switch (type) {
-  case SDL_MOUSEBUTTONDOWN:
-    process_mousebutton_down(state, player_wo, event.button, camera, ft);
-    break;
-  case SDL_MOUSEBUTTONUP:
-    process_mousebutton_up(state, player_wo, event.button, camera, ft);
-    break;
-  case SDL_MOUSEMOTION:
-    process_mousemotion(state, player_wo, event.motion, camera, ft);
-    break;
-  case SDL_MOUSEWHEEL:
-    process_mousewheel(state, player_wo, event.wheel, camera, ft);
-    break;
-  case SDL_KEYDOWN:
-    process_keydown(state, player, player_wo, event, camera, ft);
-    break;
-  case SDL_KEYUP:
-    process_keyup(state, player_wo, event, camera, ft);
-    break;
-  }
+  std::cerr << "mousebutton down\n";
 }
 
 void
-IO::process(GameState& state, SDLControllers const& controllers, Camera& camera,
-            FrameTime const& ft)
+TerminalOnlyBehavior::mousebutton_up(MouseButtonEvent&&)
 {
-  auto& es         = state.engine_state;
-  auto& uistate    = es.ui_state;
-  auto& ingame     = uistate.ingame;
-  auto& chat_state = ingame.chat_state;
+  std::cerr << "mousebutton up\n";
+}
+void
+TerminalOnlyBehavior::mouse_motion(MouseMotionEvent&&)
+{
+  std::cerr << "mouse motion\n";
+}
 
-  if (chat_state.currently_editing) {
-    return;
-  }
+void
+TerminalOnlyBehavior::mouse_wheel(MouseWheelEvent&&)
+{
+  std::cerr << "mouse wheel\n";
+}
 
-  auto& zs = state.level_manager.active();
-  auto& registry = zs.registry;
+void
+TerminalOnlyBehavior::keydown(KeyEvent &&)
+{
+  std::cerr << "keydown\n";
+}
 
-  auto& player = find_player(registry);
-  auto& player_wo = player.world_object();
+void
+TerminalOnlyBehavior::keyup(KeyEvent&&)
+{
+  std::cerr << "keyup\n";
+}
 
-  process_mousestate(state, player_wo, camera, ft);
-  process_keystate(state, player_wo, camera, ft);
-  if (!state.engine_state.disable_controller_input) {
-    process_controllerstate(state, controllers, player, player_wo, camera, ft);
-  }
+void
+TerminalOnlyBehavior::process_mouse_state(MouseAndKeyboardArgs&&)
+{
+  std::cerr << "processing mouse state\n";
+}
+
+void
+TerminalOnlyBehavior::process_keyboard_state(MouseAndKeyboardArgs&&)
+{
+  std::cerr << "processing keyboard state\n";
+}
+
+void
+TerminalOnlyBehavior::process_controller_state(ControllerArgs&&)
+{
+  std::cerr << "processing controller state\n";
 }
 
 } // namespace boomhs

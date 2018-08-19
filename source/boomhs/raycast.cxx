@@ -1,4 +1,4 @@
-#include <boomhs/mouse_picker.hpp>
+#include <boomhs/raycast.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/screen_info.hpp>
 
@@ -7,10 +7,8 @@
 namespace boomhs
 {
 
-MousePicker::MousePicker() {}
-
 glm::vec3
-MousePicker::calculate_ray(FrameState& fstate) const
+Raycast::calculate_ray(FrameState& fstate)
 {
   auto const calc_ndc = [](glm::vec2 const& scoords, ScreenDimensions const& dim) {
     float const x = ((2.0f * scoords.x) / dim.right()) - 1.0f;

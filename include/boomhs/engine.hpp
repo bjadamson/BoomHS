@@ -1,6 +1,7 @@
 #pragma once
 #include <boomhs/controller.hpp>
 #include <boomhs/game_config.hpp>
+#include <boomhs/io_behavior.hpp>
 #include <boomhs/main_menu.hpp>
 #include <boomhs/mouse.hpp>
 #include <boomhs/player.hpp>
@@ -17,6 +18,7 @@ struct ImGuiIO;
 
 namespace boomhs
 {
+struct PlayerBehavior;
 
 struct DeviceStates
 {
@@ -32,6 +34,7 @@ struct EngineState
   ScreenDimensions const dimensions;
   MainMenuState          main_menu;
   Time                   time;
+  PlayerBehaviors        behaviors;
 
   bool                 quit                  = false;
   bool                 game_running          = false;

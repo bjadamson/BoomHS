@@ -11,10 +11,10 @@
 #include <boomhs/heightmap.hpp>
 #include <boomhs/item.hpp>
 #include <boomhs/item_factory.hpp>
-#include <boomhs/io.hpp>
+#include <boomhs/io_sdl.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mouse.hpp>
-#include <boomhs/mouse_picker.hpp>
+#include <boomhs/raycast.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/rexpaint.hpp>
@@ -951,7 +951,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
     // Disable keyboard shortcuts
     io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
 
-    IO::process(state, engine.controllers, camera, ft);
+    IO_SDL::read_devices(SDLReadDevicesArgs{state, engine.controllers, camera, ft});
 
     io.MouseDrawCursor = camera.mode() == CameraMode::FPS ? false : true;
     ingame_loop(engine, state, rng, camera, water_audio, static_renderers, ds, ft);

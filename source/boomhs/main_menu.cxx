@@ -3,6 +3,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/game_config.hpp>
+#include <boomhs/io_sdl.hpp>
 #include <boomhs/main_menu.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/zone_state.hpp>
@@ -190,8 +191,13 @@ draw(EngineState& es, ZoneState& zs, ImVec2 const& size, WaterAudioSystem& water
 }
 
 void
-process_event(GameState& state, SDL_Event& event, Camera& camera, FrameTime const& ft)
+process_event(SDLEventProcessArgs && epa)
 {
+  auto& state    = epa.game_state;
+  auto& event    = epa.event;
+  auto& camera   = epa.camera;
+  auto const& ft = epa.frame_time;
+
   switch (event.type) {
   case SDL_KEYDOWN:
     process_keydown(state, event);

@@ -39,6 +39,7 @@ EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, ScreenDim
     , show_yaxis_lines(false)
     , wireframe_override(false)
 {
+  behaviors.active = &behaviors.player_playing_behavior;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
