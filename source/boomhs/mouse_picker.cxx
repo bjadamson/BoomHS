@@ -1,6 +1,6 @@
 #include <boomhs/mouse_picker.hpp>
 #include <boomhs/engine.hpp>
-#include <boomhs/screen_size.hpp>
+#include <boomhs/screen_info.hpp>
 
 #include <boomhs/frame.hpp>
 

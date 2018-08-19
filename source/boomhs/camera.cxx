@@ -1,5 +1,5 @@
 #include <boomhs/camera.hpp>
-#include <boomhs/screen_size.hpp>
+#include <boomhs/screen_info.hpp>
 #include <boomhs/mouse.hpp>
 #include <boomhs/world_object.hpp>
 

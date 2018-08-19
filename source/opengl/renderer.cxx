@@ -9,7 +9,7 @@
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/terrain.hpp>
-#include <boomhs/screen_size.hpp>
+#include <boomhs/screen_info.hpp>
 #include <boomhs/zone_state.hpp>
 
 #include <opengl/renderer.hpp>
