@@ -191,8 +191,10 @@ CameraFPS::update(int const xpos, int const ypos, ScreenDimensions const& dim,
 }
 
 CameraFPS&
-CameraFPS::rotate_degrees(float dx, float dy, DeviceSensitivity const& sens, FrameTime const& ft)
+CameraFPS::rotate_degrees(float const dx, float const dy, DeviceSensitivity const& sens, FrameTime const& ft)
 {
+  //transform().rotate_degrees(dy, EulerAxis::X);
+  //transform().rotate_degrees(dx, EulerAxis::Y);
   return *this;
 }
 

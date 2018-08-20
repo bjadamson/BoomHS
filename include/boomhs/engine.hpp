@@ -4,7 +4,6 @@
 #include <boomhs/io_behavior.hpp>
 #include <boomhs/main_menu.hpp>
 #include <boomhs/mouse.hpp>
-#include <boomhs/player.hpp>
 #include <boomhs/time.hpp>
 #include <boomhs/ui_state.hpp>
 
@@ -24,6 +23,15 @@ struct DeviceStates
 {
   ControllerStates controller;
   MouseStates      mouse;
+};
+
+struct MovementState
+{
+  glm::vec3 forward, backward, left, right;
+
+  glm::vec3 mouse_forward;
+
+  NO_COPY_OR_MOVE(MovementState);
 };
 
 struct EngineState
