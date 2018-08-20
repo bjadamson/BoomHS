@@ -29,20 +29,6 @@ struct WidthHeightLength
   float const length;
 };
 
-// AxisAlignedBoundingBox
-struct AABoundingBox
-{
-  Cube cube;
-
-  opengl::DrawInfo draw_info;
-
-  // ctor
-  AABoundingBox(glm::vec3 const&, glm::vec3 const&, opengl::DrawInfo&&);
-
-  static void add_to_entity(common::Logger&, opengl::ShaderPrograms&, EntityID, EntityRegistry&,
-                            glm::vec3 const&, glm::vec3 const&);
-};
-
 struct OrbitalBody
 {
   glm::vec3 radius;
@@ -137,21 +123,6 @@ struct TextureRenderable
 {
   opengl::TextureInfo* texture_info = nullptr;
 };
-
-template <typename... C>
-auto
-find_all_entities_with_component(EntityRegistry& registry)
-{
-  using namespace boomhs;
-  using namespace opengl;
-
-  std::vector<EntityID> entities;
-  auto const            view = registry.view<C...>();
-  for (auto const e : view) {
-    entities.emplace_back(e);
-  }
-  return entities;
-}
 
 inline auto
 all_nearby_entities(glm::vec3 const& pos, float const max_distance, EntityRegistry& registry)

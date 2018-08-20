@@ -1,6 +1,7 @@
 #pragma once
 #include <boomhs/entity.hpp>
 #include <boomhs/math.hpp>
+#include <boomhs/transform.hpp>
 
 #include <common/type_macros.hpp>
 

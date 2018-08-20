@@ -1,6 +1,9 @@
 #pragma once
-#include <boomhs/components.hpp>
 #include <boomhs/math.hpp>
+#include <common/log.hpp>
+#include <extlibs/glm.hpp>
+
+#include <array>
 
 namespace boomhs
 {

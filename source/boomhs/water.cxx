@@ -1,4 +1,6 @@
 #include <boomhs/camera.hpp>
+#include <boomhs/bounding_object.hpp>
+#include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mesh.hpp>

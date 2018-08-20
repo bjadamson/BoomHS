@@ -1,10 +1,14 @@
 #pragma once
-#include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
+
+#include <extlibs/glm.hpp>
+
 #include <string>
+#include <vector>
 
 namespace boomhs
 {
+class Transform;
 
 enum class BillboardType
 {

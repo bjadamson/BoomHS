@@ -4,7 +4,9 @@
 #include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
 
+#include <boomhs/bounding_object.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/components.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/mesh.hpp>

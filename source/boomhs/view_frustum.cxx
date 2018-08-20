@@ -1,8 +1,10 @@
 #include <boomhs/view_frustum.hpp>
-#include <boomhs/components.hpp>
+#include <boomhs/bounding_object.hpp>
 #include <boomhs/frame.hpp>
+#include <boomhs/transform.hpp>
 
 #include <common/type_macros.hpp>
+#include <common/algorithm.hpp>
 #include <cmath>
 
 using namespace boomhs;

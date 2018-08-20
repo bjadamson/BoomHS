@@ -1,6 +1,7 @@
 #include <boomhs/audio.hpp>
 #include <boomhs/billboard.hpp>
 #include <boomhs/boomhs.hpp>
+#include <boomhs/bounding_object.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>

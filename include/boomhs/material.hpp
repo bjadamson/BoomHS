@@ -1,5 +1,4 @@
 #pragma once
-#include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <common/type_macros.hpp>
 #include <boomhs/colors.hpp>

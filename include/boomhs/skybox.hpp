@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/components.hpp>
+#include <boomhs/transform.hpp>
 #include <common/type_macros.hpp>
 
 namespace boomhs

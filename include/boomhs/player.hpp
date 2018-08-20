@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/components.hpp>
+#include <boomhs/bounding_object.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/gcd.hpp>
 #include <boomhs/inventory.hpp>
@@ -28,6 +28,9 @@ class Player
 
   WorldObject wo_;
   GCD         gcd_;
+
+  // body parts
+  EntityID head_eid_;
 
 public:
   NO_COPY(Player);

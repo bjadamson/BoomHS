@@ -1,4 +1,5 @@
 #include <boomhs/components.hpp>
+#include <boomhs/bounding_object.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/inventory.hpp>
@@ -145,7 +146,9 @@ Player::Player(EntityID const eid, EntityRegistry& r, glm::vec3 const& fwd, glm:
     : eid_(eid)
     , registry_(&r)
     , wo_(eid, r, fwd, up)
+    , head_eid_(registry_->create())
 {
+  //registry.assign
 }
 
 void

@@ -2,6 +2,7 @@
 #include <opengl/renderer.hpp>
 
 #include <boomhs/billboard.hpp>
+#include <boomhs/bounding_object.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/npc.hpp>

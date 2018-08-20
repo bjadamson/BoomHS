@@ -1,5 +1,4 @@
 #pragma once
-#include <boomhs/components.hpp>
 #include <boomhs/frame.hpp>
 #include <boomhs/mouse.hpp>
 #include <boomhs/spherical.hpp>

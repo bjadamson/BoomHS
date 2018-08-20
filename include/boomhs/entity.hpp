@@ -100,4 +100,16 @@ public:
   void set_eid(EntityID const eid) { eid_ = eid; }
 };
 
+template <typename... C>
+auto
+find_all_entities_with_component(EntityRegistry& registry)
+{
+  std::vector<EntityID> entities;
+  auto const            view = registry.view<C...>();
+  for (auto const e : view) {
+    entities.emplace_back(e);
+  }
+  return entities;
+}
+
 } // namespace boomhs

@@ -1,7 +1,5 @@
 #include <boomhs/material.hpp>
 
-using namespace opengl;
-
 namespace boomhs
 {
 
