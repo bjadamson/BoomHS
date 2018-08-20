@@ -94,7 +94,7 @@ WaterFactory::make_default(common::Logger& logger, ShaderPrograms& sps, TextureT
   wi.dimensions   = glm::vec2{20};
   wi.num_vertexes = 4;
 
-  registry.assign<IsVisible>(eid).value = true;
+  registry.assign<IsRenderable>(eid);
   auto& tr = registry.assign<Transform>(eid);
 
   // hack

@@ -91,7 +91,7 @@ WorldObject::rotate_to_match_camera_rotation(Camera const& camera)
 
   glm::quat const rot_between = math::rotation_between_vectors(camera_wo_fwd, wo_fwd);
   auto& t = transform();
-  t.set_rotation(rot_between * t.rotation_quat());
+  t.rotation = rot_between * t.rotation;
 }
 
 } // namespace boomhs

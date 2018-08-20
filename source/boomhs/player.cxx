@@ -14,6 +14,7 @@
 #include <boomhs/zone_state.hpp>
 
 using namespace boomhs;
+using namespace boomhs::math;
 using namespace boomhs::math::constants;
 using namespace opengl;
 using namespace window;
@@ -138,17 +139,67 @@ update_position(EngineState& es, LevelData& ldata, Player& player, FrameTime con
 namespace boomhs
 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// PlayerHead
+PlayerHead::PlayerHead(EntityRegistry& registry, EntityID const eid,
+    glm::vec3 const& fwd, glm::vec3 const& up)
+    : registry_(&registry)
+    , eid_(eid)
+    , world_object(eid, registry, fwd, up)
+{
+}
+
+void
+PlayerHead::update(FrameTime const& ft)
+{
+  auto const player_eid = find_player_eid(*registry_);
+
+  auto const& player_bbox = registry_->get<AABoundingBox>(player_eid).cube;
+  auto const& head_bbox   = registry_->get<AABoundingBox>(eid_).cube;
+
+  auto const& player_tr = registry_->get<Transform>(player_eid);
+  auto& head_tr         = registry_->get<Transform>(eid_);
+
+  auto const player_half_height = player_bbox.scaled_half_widths(player_tr).y;
+  auto const head_half_height   = head_bbox.scaled_half_widths(head_tr).y;
+
+  head_tr.translation = player_tr.translation;
+  head_tr.translation.y += (player_half_height - head_half_height);
+}
+
+PlayerHead
+PlayerHead::create(common::Logger& logger, EntityRegistry& registry, ShaderPrograms& sps)
+{
+  // construct the head
+  auto eid = registry.create();
+  registry.assign<IsRenderable>(eid);
+  registry.assign<Name>(eid, "PlayerHead");
+
+  auto& bbox = AABoundingBox::add_to_entity(logger, sps, eid, registry, -ONE, ONE);
+
+  // The head follows the Player
+  auto const player_eid = find_player_eid(registry);
+  auto& ft = registry.assign<FollowTransform>(eid, player_eid);
+  //ft.target_offset = glm::vec3{0.0f, 0.6f, 0.0f};
+  auto& player = find_player(registry).world_object();
+  PlayerHead ph{registry, eid, -constants::Z_UNIT_VECTOR, constants::X_UNIT_VECTOR};
+  auto& tr = ph.world_object.transform();
+  tr.scale = glm::vec3{0.1};
+
+  return MOVE(ph);
+}
+
 static auto const HOW_OFTEN_GCD_RESETS_MS = TimeConversions::seconds_to_millis(1);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Player
-Player::Player(EntityID const eid, EntityRegistry& r, glm::vec3 const& fwd, glm::vec3 const& up)
-    : eid_(eid)
-    , registry_(&r)
+Player::Player(common::Logger& logger, EntityID const eid, EntityRegistry& r, ShaderPrograms& sps,
+               glm::vec3 const& fwd, glm::vec3 const& up)
+    : registry_(&r)
+    , eid_(eid)
     , wo_(eid, r, fwd, up)
-    , head_eid_(registry_->create())
+    , head_(PlayerHead::create(logger, *registry_, sps))
 {
-  //registry.assign
 }
 
 void
@@ -157,16 +208,17 @@ Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
   auto& player    = find_player(registry);
   auto& inventory = player.inventory;
 
+
   assert(inventory.add_item(eid));
   auto& item       = registry.get<Item>(eid);
   item.is_pickedup = true;
 
-  auto& visible = registry.get<IsVisible>(eid);
-  visible.value = false;
+  registry.get<IsRenderable>(eid).hidden = true;
 
   // Add ourselves to this list of the item's previous owners.
   item.add_owner(this->name);
 }
+
 
 void
 Player::drop_entity(common::Logger& logger, EntityID const eid, EntityRegistry& registry)
@@ -177,8 +229,7 @@ Player::drop_entity(common::Logger& logger, EntityID const eid, EntityRegistry& 
   auto& item       = registry.get<Item>(eid);
   item.is_pickedup = false;
 
-  auto& visible = registry.get<IsVisible>(eid);
-  visible.value = true;
+  registry.get<IsRenderable>(eid).hidden = false;
 
   // Move the dropped item to the player's position
   auto const& player_pos = player.world_object().world_position();
@@ -206,6 +257,7 @@ Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
 
   gcd_.update();
   update_position(es, ldata, *this, ft);
+  head_.update(ft);
 
   // If no target is selected, no more work to do.
   auto const target_opt = nbt.selected();
@@ -300,22 +352,27 @@ Player::world_position() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-Player&
-find_player(EntityRegistry& registry)
+EntityID
+find_player_eid(EntityRegistry& registry)
 {
   // for now assume only 1 entity has the Player tag
   assert(1 == registry.view<Player>().size());
 
-  // Assume Player has a Transform
-  auto                    view = registry.view<Player>();
-  Player* player = nullptr;
-  for (auto const eid : view) {
+  EntityID const *peid = nullptr;
+  for (auto const eid : registry.view<Player>()) {
     // This assert ensures this loop only runs once.
-    assert(nullptr == player);
-    player = &registry.get<Player>(eid);
+    assert(nullptr == peid);
+    peid = &eid;
   }
-  assert(nullptr != player);
-  return *player;
+  assert(nullptr != peid);
+  return *peid;
+}
+
+Player&
+find_player(EntityRegistry& registry)
+{
+  auto const peid = find_player_eid(registry);
+  return registry.get<Player>(peid);
 }
 
 } // namespace boomhs

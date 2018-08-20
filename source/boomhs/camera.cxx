@@ -192,8 +192,8 @@ CameraFPS::update(int const xpos, int const ypos, ScreenDimensions const& dim,
 CameraFPS&
 CameraFPS::rotate_degrees(float const dx, float const dy, DeviceSensitivity const& sens, FrameTime const& ft)
 {
-  //transform().rotate_degrees(dy, EulerAxis::X);
-  //transform().rotate_degrees(dx, EulerAxis::Y);
+  transform().rotate_degrees(dy, EulerAxis::X);
+  transform().rotate_degrees(dx, EulerAxis::Y);
   return *this;
 }
 
@@ -342,7 +342,7 @@ Camera::eye_forward() const
 {
   switch (mode()) {
     case CameraMode::FPS:
-      return glm::normalize(-Z_UNIT_VECTOR * fps.transform().rotation_quat());
+      return glm::normalize(-Z_UNIT_VECTOR * fps.transform().rotation);
     case CameraMode::Ortho:
     case CameraMode::ThirdPerson:
       return glm::normalize(arcball.world_position() - arcball.target_position());

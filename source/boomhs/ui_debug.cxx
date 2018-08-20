@@ -137,8 +137,8 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
     auto const eid = *selected;
 
     {
-      auto& isv = registry.get<IsVisible>(eid).value;
-      ImGui::Checkbox("Visible", &isv);
+      auto& isr = registry.get<IsRenderable>(eid).hidden;
+      ImGui::Checkbox("Hidden From Rendering", &isr);
     }
 
     if (registry.has<AABoundingBox>(eid) && registry.has<Transform>(eid)) {
@@ -174,7 +174,7 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
       {
         glm::vec3 buffer = transform.get_rotation_degrees();
         if (ImGui::InputFloat3("quat rot:", glm::value_ptr(buffer))) {
-          transform.set_rotation(glm::quat{glm::radians(buffer)});
+          transform.rotation = glm::quat{glm::radians(buffer)};
         }
         ImGui::Text("euler rot:%s", glm::to_string(transform.get_rotation_degrees()).c_str());
       }

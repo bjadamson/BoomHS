@@ -70,7 +70,8 @@ NPC::create(EntityRegistry& registry, char const* name, int const level, glm::ve
 {
   auto eid = registry.create();
   registry.assign<Color>(eid);
-  registry.assign<Name>(eid).value = name;
+  registry.assign<Name>(eid, name);
+  registry.assign<IsRenderable>(eid);
 
   // TODO: look this up in the material table
   registry.assign<Material>(eid);
@@ -79,8 +80,7 @@ NPC::create(EntityRegistry& registry, char const* name, int const level, glm::ve
   registry.assign<MeshRenderable>(eid, name);
 
   // shader
-  auto& sn = registry.assign<ShaderName>(eid);
-  sn.value = "3d_pos_normal_color";
+  registry.assign<ShaderName>(eid, "3d_pos_normal_color");
 
   // transform
   auto& transform       = registry.assign<Transform>(eid);
@@ -96,10 +96,6 @@ NPC::create(EntityRegistry& registry, char const* name, int const level, glm::ve
 
   npcdata.level     = level;
   npcdata.alignment = Alignment::EVIL;
-
-  // visible
-  auto& isv = registry.assign<IsVisible>(eid);
-  isv.value = true;
 }
 
 void

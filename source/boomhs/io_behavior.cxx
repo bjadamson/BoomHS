@@ -72,7 +72,7 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
     auto&       sel  = registry.get<Selectable>(eid);
     sel.selected = false;
 
-    bool const can_use_simple_test = (tr.rotation_quat() == glm::quat{}) && (tr.scale == ONE);
+    bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == ONE);
 
     float distance = 0.0f;
     bool intersects = false;

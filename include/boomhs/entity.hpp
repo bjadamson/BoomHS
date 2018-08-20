@@ -1,6 +1,8 @@
 #pragma once
+#include <boomhs/transform.hpp>
 #include <common/type_macros.hpp>
 #include <extlibs/entt.hpp>
+#include <extlibs/glm.hpp>
 
 namespace boomhs
 {
@@ -108,6 +110,20 @@ find_all_entities_with_component(EntityRegistry& registry)
   auto const            view = registry.view<C...>();
   for (auto const e : view) {
     entities.emplace_back(e);
+  }
+  return entities;
+}
+
+inline auto
+all_nearby_entities(glm::vec3 const& pos, float const max_distance, EntityRegistry& registry)
+{
+  std::vector<EntityID> entities;
+  auto const            view = registry.view<Transform>();
+  for (auto const e : view) {
+    auto& transform = registry.get<Transform>(e);
+    if (glm::distance(transform.translation, pos) <= max_distance) {
+      entities.emplace_back(e);
+    }
   }
   return entities;
 }

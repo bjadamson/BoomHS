@@ -4,6 +4,8 @@
 #include <boomhs/gcd.hpp>
 #include <boomhs/inventory.hpp>
 #include <boomhs/world_object.hpp>
+
+#include <common/log.hpp>
 #include <extlibs/glm.hpp>
 
 #include <common/log.hpp>
@@ -12,6 +14,7 @@
 
 namespace opengl
 {
+class ShaderPrograms;
 class TextureTable;
 } // namespace opengl
 
@@ -21,6 +24,22 @@ class EngineState;
 class FrameTime;
 struct ZoneState;
 
+class PlayerHead
+{
+  EntityRegistry* registry_;
+  EntityID eid_;
+
+  friend class Player;
+public:
+  explicit PlayerHead(EntityRegistry&, EntityID, glm::vec3 const&, glm::vec3 const&);
+  void update(FrameTime const&);
+
+  // fields
+  WorldObject world_object;
+
+  static PlayerHead create(common::Logger&, EntityRegistry&, opengl::ShaderPrograms&);
+};
+
 class Player
 {
   EntityID        eid_;
@@ -28,14 +47,13 @@ class Player
 
   WorldObject wo_;
   GCD         gcd_;
-
-  // body parts
-  EntityID head_eid_;
+  PlayerHead  head_;
 
 public:
   NO_COPY(Player);
   MOVE_DEFAULT(Player);
-  explicit Player(EntityID, EntityRegistry&, glm::vec3 const&, glm::vec3 const&);
+  explicit Player(common::Logger&, EntityID, EntityRegistry&, opengl::ShaderPrograms&,
+                  glm::vec3 const&, glm::vec3 const&);
 
   Inventory    inventory;
   HealthPoints hp{44, 50};
@@ -60,9 +78,15 @@ public:
 
   glm::vec3 world_position() const;
 
+  WorldObject&       head_world_object() { return head_.world_object; }
+  WorldObject const& head_world_object() const { return head_.world_object; }
+
   WorldObject&       world_object() { return wo_; }
   WorldObject const& world_object() const { return wo_; }
 };
+
+EntityID
+find_player_eid(EntityRegistry&);
 
 Player&
 find_player(EntityRegistry&);

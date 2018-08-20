@@ -110,11 +110,10 @@ draw_debugwindow(EngineState& es, ZoneState& zs)
     auto const eids = find_orbital_bodies(registry);
     auto       num  = 1;
     for (auto const eid : eids) {
-      auto& v    = registry.get<IsVisible>(eid);
-      bool& draw = v.value;
+      auto& hidden    = registry.get<IsRenderable>(eid).hidden;
 
       auto const text = "Draw Orbital Body" + std::to_string(num++);
-      ImGui::Checkbox(text.c_str(), &draw);
+      ImGui::Checkbox(text.c_str(), &hidden);
     }
   }
 

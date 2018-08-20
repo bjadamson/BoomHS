@@ -49,7 +49,7 @@ public:
   Transform&       transform() { return registry_->get<Transform>(eid_); }
   Transform const& transform() const { return registry_->get<Transform>(eid_); }
 
-  glm::quat        orientation() const { return transform().rotation_quat(); }
+  glm::quat        orientation() const { return transform().rotation; }
   glm::vec3 const& world_position() const;
 
   WorldObject& move(glm::vec3 const&);

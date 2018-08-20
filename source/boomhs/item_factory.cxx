@@ -21,9 +21,7 @@ create_item(EntityRegistry& registry, TextureTable& ttable, char const* entity_n
 
   registry.get<Name>(eid).value = entity_name;
 
-  auto& isv = registry.assign<IsVisible>(eid);
-  isv.value = true;
-
+  registry.assign<IsRenderable>(eid);
   registry.assign<MeshRenderable>(eid, mesh_name);
 
   auto& tr        = registry.assign<TextureRenderable>(eid);
@@ -31,8 +29,7 @@ create_item(EntityRegistry& registry, TextureTable& ttable, char const* entity_n
   assert(texture_o);
   tr.texture_info = &*texture_o;
 
-  auto& sn = registry.assign<ShaderName>(eid);
-  sn.value = shader;
+  registry.assign<ShaderName>(eid, shader);
 
   auto& item    = registry.get<Item>(eid);
   item.ui_tinfo = &*ttable.find(ui_name);
@@ -50,7 +47,7 @@ EntityID
 ItemFactory::create_empty(EntityRegistry& registry, TextureTable& ttable)
 {
   auto eid                         = registry.create();
-  registry.assign<Name>(eid).value = "Empty Item";
+  registry.assign<Name>(eid, "Empty Item");
 
   Item& item       = registry.assign<Item>(eid);
   item.is_pickedup = false;

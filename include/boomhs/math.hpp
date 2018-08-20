@@ -7,7 +7,7 @@
 
 namespace boomhs
 {
-class Transform;
+struct Transform;
 
 struct Cube
 {
@@ -20,6 +20,8 @@ struct Cube
 
   glm::vec3 scaled_min(Transform const&) const;
   glm::vec3 scaled_max(Transform const&) const;
+  glm::vec3 scaled_dimensions(Transform const&) const;
+  glm::vec3 scaled_half_widths(Transform const&) const;
 
   explicit Cube(glm::vec3 const&, glm::vec3 const&);
 };

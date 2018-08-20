@@ -4,25 +4,15 @@
 namespace boomhs
 {
 
-struct TransformRotation
+struct Transform
 {
-  glm::quat quat;
-};
-
-class Transform
-{
-  TransformRotation rotation_;
-
-public:
   // fields
   glm::vec3 translation = math::constants::ZERO;
+  glm::quat rotation;
   glm::vec3 scale       = math::constants::ONE;
 
   // methods
   glm::mat4 model_matrix() const;
-
-  // This uses radians internally.
-  glm::quat rotation_quat() const;
 
   // radians.
   glm::vec3 get_rotation_radians() const;
@@ -43,8 +33,6 @@ public:
   {
     rotate_xyz_degrees(glm::vec3{x, y, z});
   }
-
-  void set_rotation(glm::quat const&);
 };
 
 } // namespace boomhs

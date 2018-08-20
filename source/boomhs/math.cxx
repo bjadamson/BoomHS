@@ -44,6 +44,14 @@ Cube::dimensions() const
 }
 
 glm::vec3
+Cube::scaled_dimensions(Transform const& tr) const
+{
+  auto const smin = scaled_min(tr);
+  auto const smax = scaled_max(tr);
+  return math::compute_cube_dimensions(smin, smax);
+}
+
+glm::vec3
 Cube::center() const
 {
   auto const hw = half_widths();
@@ -58,6 +66,12 @@ glm::vec3
 Cube::half_widths() const
 {
   return dimensions() / glm::vec3{2.0f};
+}
+
+glm::vec3
+Cube::scaled_half_widths(Transform const& tr) const
+{
+  return scaled_dimensions(tr) / glm::vec3{2.0f};
 }
 
 glm::vec3
@@ -87,6 +101,8 @@ Cube::scaled_max(Transform const& tr) const
   r.z = c.z + (s.z * hw.z);
   return r;
 }
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Frustum

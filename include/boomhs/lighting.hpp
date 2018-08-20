@@ -1,6 +1,8 @@
 #pragma once
-#include <common/type_macros.hpp>
 #include <boomhs/colors.hpp>
+#include <boomhs/entity.hpp>
+
+#include <common/type_macros.hpp>
 
 #include <array>
 
@@ -86,5 +88,11 @@ struct PointLights
 {
   std::vector<Light> pointlights;
 };
+
+inline auto
+find_pointlights(EntityRegistry& registry)
+{
+  return find_all_entities_with_component<PointLight>(registry);
+}
 
 } // namespace boomhs

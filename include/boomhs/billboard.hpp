@@ -8,7 +8,7 @@
 
 namespace boomhs
 {
-class Transform;
+struct Transform;
 
 enum class BillboardType
 {

@@ -7,7 +7,7 @@
 
 namespace boomhs
 {
-class Transform;
+struct Transform;
 
 struct Ray
 {

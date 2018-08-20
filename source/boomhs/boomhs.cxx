@@ -137,7 +137,7 @@ update_nearbytargets(NearbyTargets& nbt, EntityRegistry& registry, FrameTime con
   using pair_t       = std::pair<float, EntityID>;
   std::vector<pair_t> pairs;
   for (auto const eid : enemies) {
-    if (!registry.get<IsVisible>(eid).value) {
+    if (registry.get<IsRenderable>(eid).hidden) {
       continue;
     }
     auto const& etransform = registry.get<Transform>(eid);
@@ -282,8 +282,8 @@ update_visible_entities(LevelManager& lm, EntityRegistry& registry)
   auto& terrain_grid = ldata.terrain;
 
   for (auto const eid : registry.view<NPCData>()) {
-    auto& isv = registry.get<IsVisible>(eid);
-    isv.value        = true; //terrain.is_visible(registry);
+    auto& isr = registry.get<IsRenderable>(eid);
+    isr.hidden        = false; //terrain.is_visible(registry);
   }
 }
 
@@ -926,7 +926,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
   static bool set_camera_once = false;
   if (!set_camera_once) {
-    camera.set_target(player.world_object());
+    camera.set_target(player.head_world_object());
     set_camera_once = true;
   }
 

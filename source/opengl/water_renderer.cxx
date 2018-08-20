@@ -55,7 +55,7 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
 
   auto const render = [&](WaterInfo& winfo) {
     auto const eid = winfo.eid;
-    if (!registry.get<IsVisible>(eid).value) {
+    if (registry.get<IsRenderable>(eid).hidden) {
       return;
     }
     auto const &tr = registry.get<Transform>(eid);

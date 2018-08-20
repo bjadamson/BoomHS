@@ -9,40 +9,28 @@ namespace boomhs
 glm::mat4
 Transform::model_matrix() const
 {
-  return math::compute_modelmatrix(translation, rotation_.quat, scale);
+  return math::compute_modelmatrix(translation, rotation, scale);
 }
 
 glm::vec3
 Transform::get_rotation_radians() const
 {
-  return glm::eulerAngles(rotation_.quat);
-}
-
-glm::quat
-Transform::rotation_quat() const
-{
-  return rotation_.quat;
-}
-
-void
-Transform::set_rotation(glm::quat const& rot)
-{
-  rotation_.quat = rot;
+  return glm::eulerAngles(rotation);
 }
 
 void
 Transform::rotate_radians(float const radians, EulerAxis const axis)
 {
-  auto& quat = rotation_.quat;
+  auto& r = rotation;
   switch (axis) {
     case EulerAxis::X:
-      quat = glm::angleAxis(radians, constants::X_UNIT_VECTOR) * quat;
+      r = glm::angleAxis(radians, constants::X_UNIT_VECTOR) * r;
       break;
     case EulerAxis::Y:
-      quat = glm::angleAxis(radians, constants::Y_UNIT_VECTOR) * quat;
+      r = glm::angleAxis(radians, constants::Y_UNIT_VECTOR) * r;
       break;
     case EulerAxis::Z:
-      quat = glm::angleAxis(radians, constants::Z_UNIT_VECTOR) * quat;
+      r = glm::angleAxis(radians, constants::Z_UNIT_VECTOR) * r;
       break;
     case EulerAxis::INVALID:
       std::abort();
