@@ -186,8 +186,8 @@ CameraFPS::CameraFPS(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget
   cs.flip_x = true;
   cs.flip_y = true;
 
-  cs.sensitivity.x = 100.0f;
-  cs.sensitivity.y = 100.0f;
+  cs.sensitivity.x = 10.0f;
+  cs.sensitivity.y = 10.0f;
 }
 
 void
@@ -199,9 +199,6 @@ CameraFPS::update(int const xpos, int const ypos, ScreenDimensions const& dim,
 CameraFPS&
 CameraFPS::rotate_radians(float dx, float dy, FrameTime const& ft)
 {
-  dx = glm::radians(dx);
-  dy = glm::radians(dy);
-
   xrot_ += dx;
   {
     float const newy_rot = yrot_ + dy;

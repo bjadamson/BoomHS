@@ -946,7 +946,8 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
     auto const& dimensions = engine.dimensions();
     auto const size_v      = ImVec2(dimensions.right(), dimensions.bottom());
-    main_menu::draw(es, engine.window, ds, lm, size_v, water_audio);
+    auto& skybox_renderer  = static_renderers.skybox;
+    main_menu::draw(es, engine.window, camera, skybox_renderer, ds, lm, size_v, water_audio);
   }
   else {
     // Disable keyboard shortcuts
@@ -962,8 +963,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
   auto& ui_state = es.ui_state;
   if (ui_state.draw_debug_ui) {
     auto& lm = state.level_manager;
-    auto& skybox_renderer = static_renderers.skybox;
-    ui_debug::draw(es, lm, skybox_renderer, water_audio, camera, ft);
+    ui_debug::draw(es, lm, camera, ft);
   }
 }
 

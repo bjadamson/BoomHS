@@ -6,6 +6,7 @@ struct ImVec2;
 namespace opengl
 {
 struct DrawState;
+class SkyboxRenderer;
 } // namespace opengl
 
 namespace window
@@ -36,8 +37,8 @@ namespace boomhs::main_menu
 {
 
 void
-draw(EngineState&, window::SDLWindow&, opengl::DrawState&, LevelManager&, ImVec2 const&,
-     WaterAudioSystem&);
+draw(EngineState&, window::SDLWindow&, Camera&, opengl::SkyboxRenderer&, opengl::DrawState&,
+     LevelManager&, ImVec2 const&, WaterAudioSystem&);
 
 void
 process_event(SDLEventProcessArgs &&);
