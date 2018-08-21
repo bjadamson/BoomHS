@@ -99,9 +99,6 @@ CameraArcball::increase_zoom(float const amount, FrameTime const& ft)
 CameraArcball&
 CameraArcball::rotate_radians(float dx, float dy, FrameTime const& ft)
 {
-  dx *= cs.sensitivity.x;
-  dy *= cs.sensitivity.y;
-
   auto& theta = coordinates_.theta;
   theta       = (up_.y > 0.0f) ? (theta - dx) : (theta + dx);
   if (theta > TWO_PI) {
@@ -202,9 +199,6 @@ CameraFPS::update(int const xpos, int const ypos, ScreenDimensions const& dim,
 CameraFPS&
 CameraFPS::rotate_radians(float dx, float dy, FrameTime const& ft)
 {
-  dx *= cs.sensitivity.x;
-  dy *= cs.sensitivity.y;
-
   dx = glm::radians(dx);
   dy = glm::radians(dy);
 

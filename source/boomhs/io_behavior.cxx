@@ -26,6 +26,8 @@ fps_mousemove(Camera& camera, Player& player, float const xrel, float const yrel
   camera.rotate_radians(xrel, yrel, ft);
   player.world_object().rotate_to_match_camera_rotation(camera);
 
+  player.transform().rotate_degrees(180.0f, EulerAxis::Y);
+
   //player.head_world_object().rotate_to_match_camera_rotation(camera);
 
   //auto& player_rot = player.transform().rotation;
@@ -213,7 +215,11 @@ PlayerPlayingGameBehavior::mouse_motion(MouseMotionEvent&& mme)
   //xrel = glm::radians(xrel);
   //yrel = glm::radians(yrel);
 
-  if (camera.is_firstperson()) {
+  bool const is_fps = camera.is_firstperson();
+  auto const& cs    = is_fps? camera.fps.cs : camera.arcball.cs;
+  xrel *= cs.sensitivity.x;
+  yrel *= cs.sensitivity.y;
+  if (is_fps) {
     fps_mousemove(camera, player, xrel, yrel, ft);
   }
   else if (camera.is_thirdperson()) {

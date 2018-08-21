@@ -440,9 +440,8 @@ conditionally_draw_player_vectors(RenderState& rstate, Player const& player)
 
   auto& logger = es.logger;
 
-  glm::vec3 const pos = player.world_position();
-  auto const& wo = player.world_object();
-  if (es.show_player_localspace_vectors) {
+  auto const draw_local_axis = [&rstate](auto const& wo) {
+    glm::vec3 const pos = wo.world_position();
     // local-space
     //
     // eye-forward
@@ -456,9 +455,15 @@ conditionally_draw_player_vectors(RenderState& rstate, Player const& player)
     // eye-right
     auto const right = wo.eye_right();
     draw_arrow(rstate, pos, pos + right, LOC::ORANGE);
+  };
+
+  if (es.show_player_localspace_vectors) {
+    draw_local_axis(player.world_object());
+    draw_local_axis(player.head_world_object());
   }
   if (es.show_player_worldspace_vectors) {
-    draw_axis(rstate, pos);
+    draw_axis(rstate, player.world_position());
+    draw_axis(rstate, player.head_world_object().transform().translation);
   }
 }
 
