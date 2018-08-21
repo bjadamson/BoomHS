@@ -6,25 +6,28 @@
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/ui_state.hpp>
 
-// TODO: rm
-#include <boomhs/billboard.hpp>
-#include <opengl/factory.hpp>
-#include <opengl/gpu.hpp>
-
 #include <opengl/renderer.hpp>
-#include <opengl/texture.hpp>
-
-#include <common/algorithm.hpp>
-#include <boomhs/clock.hpp>
 
 #include <extlibs/imgui.hpp>
-#include <algorithm>
-#include <optional>
 #include <sstream>
 
 using namespace boomhs;
 using namespace opengl;
 using namespace window;
+
+// clang-format off
+auto static constexpr DEFAULT_WINDOW_FLAGS = (0
+    | ImGuiWindowFlags_NoBringToFrontOnFocus
+    | ImGuiWindowFlags_NoCollapse
+    | ImGuiWindowFlags_NoInputs
+    | ImGuiWindowFlags_NoMove
+    | ImGuiWindowFlags_NoResize
+    | ImGuiWindowFlags_NoScrollbar
+    | ImGuiWindowFlags_NoScrollWithMouse
+    | ImGuiWindowFlags_NoSavedSettings
+    | ImGuiWindowFlags_NoTitleBar
+  );
+// clang-format on
 
 namespace
 {
@@ -139,25 +142,11 @@ draw_nearest_target_info(ScreenDimensions const& dimensions, NearbyTargets const
   ImVec2 const WINDOW_POS(200, 105);
   ImGui::SetNextWindowSize(WINDOW_POS);
 
-  // clang-format off
-  auto static constexpr WINDOW_FLAGS = (0
-    | ImGuiWindowFlags_NoBringToFrontOnFocus
-    | ImGuiWindowFlags_NoCollapse
-    | ImGuiWindowFlags_NoInputs
-    | ImGuiWindowFlags_NoMove
-    | ImGuiWindowFlags_NoResize
-    | ImGuiWindowFlags_NoScrollbar
-    | ImGuiWindowFlags_NoScrollWithMouse
-    | ImGuiWindowFlags_NoSavedSettings
-    | ImGuiWindowFlags_NoTitleBar
-  );
-  // clang-format on
-
   auto const selected_o = nbt.selected();
   if (!selected_o) {
     auto const draw = [&]() { ImGui::Text("NO TARGET"); };
 
-    imgui_cxx::with_window(draw, "Target", nullptr, WINDOW_FLAGS);
+    imgui_cxx::with_window(draw, "Target", nullptr, DEFAULT_WINDOW_FLAGS);
     return;
   }
 
@@ -187,7 +176,7 @@ draw_nearest_target_info(ScreenDimensions const& dimensions, NearbyTargets const
     ImGui::SameLine();
     imgui_cxx::with_stylevars(draw_icon, ImGuiStyleVar_ChildRounding, 5.0f);
   };
-  imgui_cxx::with_window(draw, "Target", nullptr, WINDOW_FLAGS);
+  imgui_cxx::with_window(draw, "Target", nullptr, DEFAULT_WINDOW_FLAGS);
 }
 
 void
@@ -320,6 +309,38 @@ draw_chatwindow(EngineState& es, Player& player)
     imgui_cxx::with_window(draw_chatwindow_body_wrapper, "Chat Window", nullptr, flags);
   };
   imgui_cxx::with_stylevars(draw_window, ImGuiStyleVar_ChildRounding, 5.0f);
+}
+
+void
+draw_debugoverlay_window(EngineState& es, LevelManager& lm, DrawState& ds)
+{
+  auto const framerate = es.imgui.Framerate;
+  auto const ms_frame  = 1000.0f / framerate;
+
+  auto const draw = [&]() {
+    ImGui::Text("Debug Information");
+    ImGui::Separator();
+    ImGui::Text("#verts: %s", ds.to_string().c_str());
+    ImGui::Text("FPS(avg): %.1f", framerate);
+    ImGui::Text("ms/frame: %.3f", ms_frame);
+    ImGui::Text("Current Level: %i", lm.active_zone());
+  };
+  auto const height = 20.0f;
+  auto const size = ImVec2(50, height);
+
+  bool constexpr SHOW_BORDER = false;
+
+  auto const [window_w, window_h] = es.dimensions.size();
+  ImVec2 const offset{100, 50};
+  auto const chat_w = 300, chat_h = 100;
+  auto const chat_x = window_w - chat_w - offset.x, chat_y = chat_h - offset.y;
+  ImVec2 const chat_pos{chat_x, chat_y};
+  ImGui::SetNextWindowPos(chat_pos);
+
+  ImVec2 const chat_size{chat_w, chat_h};
+  ImGui::SetNextWindowSize(chat_size);
+
+  imgui_cxx::with_window(draw, "Debug Overlay", nullptr, DEFAULT_WINDOW_FLAGS);
 }
 
 } // namespace
@@ -572,6 +593,8 @@ draw(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
 
   auto& player = find_player(registry);
   draw_chatwindow(es, player);
+
+  draw_debugoverlay_window(es, lm, ds);
 
   auto& inventory = player.inventory;
   if (inventory.is_open()) {

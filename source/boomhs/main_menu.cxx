@@ -882,18 +882,6 @@ draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window, Draw
     imgui_cxx::with_menu(settings_menu, "Settings");
     world_menu(es, ldata);
     lighting_menu(es, ldata, registry);
-
-    auto const framerate = es.imgui.Framerate;
-    auto const ms_frame  = 1000.0f / framerate;
-
-    ImGui::SameLine(ImGui::GetWindowWidth() * 0.30f);
-    ImGui::Text("#verts: %s", ds.to_string().c_str());
-
-    ImGui::SameLine(ImGui::GetWindowWidth() * 0.60f);
-    ImGui::Text("Current Level: %i", lm.active_zone());
-
-    ImGui::SameLine(ImGui::GetWindowWidth() * 0.76f);
-    ImGui::Text("FPS(avg): %.1f ms/frame: %.3f", framerate, ms_frame);
   };
   imgui_cxx::with_mainmenubar(draw_mainmenu);
 }

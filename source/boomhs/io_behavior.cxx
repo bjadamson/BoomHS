@@ -212,8 +212,6 @@ PlayerPlayingGameBehavior::mouse_motion(MouseMotionEvent&& mme)
 
   // convert from int to floating-point value
   float xrel = motion.xrel, yrel = motion.yrel;
-  //xrel = glm::radians(xrel);
-  //yrel = glm::radians(yrel);
 
   bool const is_fps = camera.is_firstperson();
   auto const& cs    = is_fps? camera.fps.cs : camera.arcball.cs;
