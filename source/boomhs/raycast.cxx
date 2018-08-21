@@ -1,16 +1,14 @@
-#include <boomhs/screen_size.hpp>
-#include <boomhs/mouse_picker.hpp>
-#include <boomhs/state.hpp>
+#include <boomhs/raycast.hpp>
+#include <boomhs/engine.hpp>
+#include <boomhs/screen_info.hpp>
 
 #include <boomhs/frame.hpp>
 
 namespace boomhs
 {
 
-MousePicker::MousePicker() {}
-
 glm::vec3
-MousePicker::calculate_ray(FrameState& fstate) const
+Raycast::calculate_ray(FrameState& fstate)
 {
   auto const calc_ndc = [](glm::vec2 const& scoords, ScreenDimensions const& dim) {
     float const x = ((2.0f * scoords.x) / dim.right()) - 1.0f;
@@ -41,7 +39,7 @@ MousePicker::calculate_ray(FrameState& fstate) const
   };
 
   auto&           es           = fstate.es;
-  auto const&     coords       = es.mouse_states.current.coords();
+  auto const&     coords       = es.device_states.mouse.current.coords();
   auto const      mouse_coords = glm::vec2{coords.x, coords.y};
   glm::vec2 const ndc          = calc_ndc(mouse_coords, es.dimensions);
 

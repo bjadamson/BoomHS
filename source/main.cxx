@@ -1,7 +1,9 @@
 #include <boomhs/boomhs.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/controller.hpp>
 #include <boomhs/entity.hpp>
-#include <boomhs/io.hpp>
+#include <boomhs/io_behavior.hpp>
+#include <boomhs/io_sdl.hpp>
 #include <boomhs/main_menu.hpp>
 #include <boomhs/state.hpp>
 
@@ -10,11 +12,11 @@
 #include <common/log.hpp>
 #include <boomhs/random.hpp>
 
-#include <window/controller.hpp>
 #include <window/sdl_window.hpp>
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 
 #include <extlibs/imgui.hpp>
+#include <extlibs/openal.hpp>
 
 using namespace boomhs;
 using namespace window;
@@ -38,12 +40,14 @@ is_quit_event(SDL_Event& event)
 
 template <typename FN>
 void
-loop_events(GameState& state, SDL_Event& event, Camera& camera, FrameTime const& ft, FN const& fn)
+loop_events(SDLEventProcessArgs&& epa, FN const& fn)
 {
-  auto& es = state.engine_state;
+  auto& es    = epa.game_state.engine_state;
+  auto& event = epa.event;
+
   while ((!es.quit) && (0 != SDL_PollEvent(&event))) {
     ImGui_ImplSdlGL3_ProcessEvent(&event);
-    fn(state, event, camera, ft);
+    fn(MOVE(epa));
   }
 }
 
@@ -58,10 +62,10 @@ loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
   auto& window = engine.window;
   ImGui_ImplSdlGL3_NewFrame(window.raw());
 
-  auto const& event_fn = es.main_menu.show ? &main_menu::process_event : &IO::process_event;
+  auto const& event_fn = es.main_menu.show ? &main_menu::process_event : &IO_SDL::process_event;
 
   SDL_Event event;
-  loop_events(state, event, camera, ft, event_fn);
+  loop_events(SDLEventProcessArgs{state, event, camera, ft}, event_fn);
   es.quit |= is_quit_event(event);
 
   static auto renderers = make_static_renderers(es, state.level_manager);
@@ -78,8 +82,8 @@ loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
 void
 timed_game_loop(Engine& engine, GameState& state, Camera& camera, RNG& rng)
 {
-  window::Clock         clock;
-  window::FrameCounter  counter;
+  Clock         clock;
+  FrameCounter  counter;
 
   auto& logger = state.engine_state.logger;
   while (!state.engine_state.quit) {

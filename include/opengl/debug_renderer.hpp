@@ -7,14 +7,10 @@
 namespace boomhs
 {
 class Camera;
+class FrameTime;
 class LevelManager;
 class RNG;
 } // namespace boomhs
-
-namespace window
-{
-class FrameTime;
-} // namespace window
 
 namespace opengl
 {
@@ -27,7 +23,7 @@ public:
   DebugRenderer() = default;
 
   void render_scene(RenderState&, boomhs::LevelManager&, boomhs::Camera&, boomhs::RNG&,
-                    window::FrameTime const&);
+                    boomhs::FrameTime const&);
 };
 
 class BlackSceneRenderer
@@ -37,7 +33,7 @@ public:
   BlackSceneRenderer() = default;
 
   void render_scene(RenderState&, boomhs::LevelManager&, boomhs::Camera&, boomhs::RNG&,
-                    window::FrameTime const&);
+                    boomhs::FrameTime const&);
 };
 
 } // namespace opengl

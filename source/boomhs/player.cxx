@@ -1,16 +1,20 @@
 #include <boomhs/components.hpp>
+#include <boomhs/bounding_object.hpp>
+#include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/inventory.hpp>
 #include <boomhs/item.hpp>
 #include <boomhs/item_factory.hpp>
+#include <boomhs/leveldata.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/nearby_targets.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
-#include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
+#include <boomhs/zone_state.hpp>
 
 using namespace boomhs;
+using namespace boomhs::math;
 using namespace boomhs::math::constants;
 using namespace opengl;
 using namespace window;
@@ -33,7 +37,7 @@ kill_entity(common::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
 
   // TODO: Get the normal vector for the terrain at the (x, z) point and rotate the npc to look
   // properly aligned on slanted terrain.
-  entity_transform.rotate_degrees(90.0f, X_UNIT_VECTOR);
+  entity_transform.rotate_degrees(90.0f, math::EulerAxis::X);
 }
 
 void
@@ -67,14 +71,14 @@ try_attack_selected_target(common::Logger& logger, TerrainGrid& terrain, Texture
 
 void
 move_worldobject(EngineState& es, WorldObject& wo, glm::vec3 const& move_vec,
-                 TerrainGrid const& terrain, FrameTime const& ft)
+                 float const speed, TerrainGrid const& terrain, FrameTime const& ft)
 {
   auto& logger = es.logger;
   auto const max_pos = terrain.max_worldpositions();
   auto const max_x   = max_pos.x;
   auto const max_z   = max_pos.y;
 
-  glm::vec3 const delta  = move_vec * wo.speed() * ft.delta_millis();
+  glm::vec3 const delta  = move_vec * speed * ft.delta_millis();
   glm::vec3 const newpos = wo.world_position() + delta;
 
   auto const out_of_bounds = terrain.out_of_bounds(newpos.x, newpos.z);
@@ -103,18 +107,13 @@ move_worldobject(EngineState& es, WorldObject& wo, glm::vec3 const& move_vec,
 }
 
 void
-update_position(EngineState& es, ZoneState& zs, FrameTime const& ft)
+update_position(EngineState& es, LevelData& ldata, Player& player, FrameTime const& ft)
 {
   auto& logger   = es.logger;
-  auto& ldata    = zs.level_data;
   auto& terrain  = ldata.terrain;
+  auto const& movement = es.movement_state;
 
-  auto& registry = zs.registry;
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
-  auto const& movement = player.movement;
-
-  // Move the player forward along the it's movement direction
+  // Move the player forward along it's movement direction
   auto move_dir = movement.forward
     + movement.backward
     + movement.left
@@ -124,7 +123,9 @@ update_position(EngineState& es, ZoneState& zs, FrameTime const& ft)
   if (move_dir != math::constants::ZERO) {
     move_dir = glm::normalize(move_dir);
   }
-  move_worldobject(es, player.world_object, move_dir, terrain, ft);
+
+  auto& wo = player.world_object();
+  move_worldobject(es, wo, move_dir, player.speed, terrain, ft);
 
   // Lookup the player height from the terrain at the player's X, Z world-coordinates.
   auto& player_pos = player.transform().translation;
@@ -138,43 +139,100 @@ update_position(EngineState& es, ZoneState& zs, FrameTime const& ft)
 namespace boomhs
 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// PlayerHead
+PlayerHead::PlayerHead(EntityRegistry& registry, EntityID const eid,
+    glm::vec3 const& fwd, glm::vec3 const& up)
+    : registry_(&registry)
+    , eid_(eid)
+    , world_object(eid, registry, fwd, up)
+{
+}
+
+void
+PlayerHead::update(FrameTime const& ft)
+{
+  auto const player_eid = find_player_eid(*registry_);
+
+  auto const& player_bbox = registry_->get<AABoundingBox>(player_eid).cube;
+  auto const& head_bbox   = registry_->get<AABoundingBox>(eid_).cube;
+
+  auto const& player_tr = registry_->get<Transform>(player_eid);
+  auto& head_tr         = registry_->get<Transform>(eid_);
+
+  auto const player_half_height = player_bbox.scaled_half_widths(player_tr).y;
+  auto const head_half_height   = head_bbox.scaled_half_widths(head_tr).y;
+
+  head_tr.translation = player_tr.translation;
+  head_tr.translation.y += (player_half_height - head_half_height);
+}
+
+PlayerHead
+PlayerHead::create(common::Logger& logger, EntityRegistry& registry, ShaderPrograms& sps)
+{
+  // construct the head
+  auto eid = registry.create();
+  registry.assign<IsRenderable>(eid);
+  registry.assign<Name>(eid, "PlayerHead");
+
+  auto& bbox = AABoundingBox::add_to_entity(logger, sps, eid, registry, -ONE, ONE);
+
+  // The head follows the Player
+  auto const player_eid = find_player_eid(registry);
+  auto& ft = registry.assign<FollowTransform>(eid, player_eid);
+  //ft.target_offset = glm::vec3{0.0f, 0.6f, 0.0f};
+  auto& player = find_player(registry).world_object();
+  PlayerHead ph{registry, eid, -constants::Z_UNIT_VECTOR, constants::X_UNIT_VECTOR};
+  auto& tr = ph.world_object.transform();
+  tr.scale = glm::vec3{0.1};
+
+  return MOVE(ph);
+}
+
 static auto const HOW_OFTEN_GCD_RESETS_MS = TimeConversions::seconds_to_millis(1);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Player
+Player::Player(common::Logger& logger, EntityID const eid, EntityRegistry& r, ShaderPrograms& sps,
+               glm::vec3 const& fwd, glm::vec3 const& up)
+    : registry_(&r)
+    , eid_(eid)
+    , wo_(eid, r, fwd, up)
+    , head_(PlayerHead::create(logger, *registry_, sps))
+{
+}
+
 void
 Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
 {
-  auto const player_eid = find_player(registry);
-  auto&      player     = registry.get<Player>(player_eid);
-  auto&      inventory  = player.inventory;
+  auto& player    = find_player(registry);
+  auto& inventory = player.inventory;
+
 
   assert(inventory.add_item(eid));
   auto& item       = registry.get<Item>(eid);
   item.is_pickedup = true;
 
-  auto& visible = registry.get<IsVisible>(eid);
-  visible.value = false;
+  registry.get<IsRenderable>(eid).hidden = true;
 
   // Add ourselves to this list of the item's previous owners.
   item.add_owner(this->name);
 }
 
+
 void
 Player::drop_entity(common::Logger& logger, EntityID const eid, EntityRegistry& registry)
 {
-  auto const player_eid = find_player(registry);
-  auto&      player     = registry.get<Player>(player_eid);
-  auto&      inventory  = player.inventory;
+  auto& player    = find_player(registry);
+  auto& inventory = player.inventory;
 
   auto& item       = registry.get<Item>(eid);
   item.is_pickedup = false;
 
-  auto& visible = registry.get<IsVisible>(eid);
-  visible.value = true;
+  registry.get<IsRenderable>(eid).hidden = false;
 
   // Move the dropped item to the player's position
-  auto const& player_pos = registry.get<Transform>(player_eid).translation;
+  auto const& player_pos = player.world_object().world_position();
 
   auto& transform       = registry.get<Transform>(eid);
   transform.translation = player_pos;
@@ -197,8 +255,9 @@ Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
 
   auto& ttable    = zs.gfx_state.texture_table;
 
-  gcd.update();
-  update_position(es, zs, ft);
+  gcd_.update();
+  update_position(es, ldata, *this, ft);
+  head_.update(ft);
 
   // If no target is selected, no more work to do.
   auto const target_opt = nbt.selected();
@@ -206,11 +265,11 @@ Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
     return;
   }
 
-  bool const gcd_ready = gcd.is_ready();
+  bool const gcd_ready = gcd_.is_ready();
   auto const reset_gcd_if_ready = [&]() {
     if (gcd_ready) {
       LOG_ERROR_SPRINTF("RESETTING GCD");
-      gcd.reset_ms(HOW_OFTEN_GCD_RESETS_MS);
+      gcd_.reset_ms(HOW_OFTEN_GCD_RESETS_MS);
     }
   };
   ON_SCOPE_EXIT(reset_gcd_if_ready);
@@ -251,7 +310,7 @@ Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
 void
 Player::try_pickup_nearby_item(common::Logger& logger, EntityRegistry& registry, FrameTime const& ft)
 {
-  auto const& player_pos       = world_object.transform().translation;
+  auto const& player_pos       = transform().translation;
 
   static constexpr auto MINIMUM_DISTANCE_TO_PICKUP = 1.0f;
   auto const            items                      = find_items(registry);
@@ -288,28 +347,32 @@ Player::try_pickup_nearby_item(common::Logger& logger, EntityRegistry& registry,
 glm::vec3
 Player::world_position() const
 {
-  auto& tr = world_object.registry().get<Transform>(world_object.eid());
-  return tr.translation;
+  return transform().translation;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 EntityID
-find_player(EntityRegistry& registry)
+find_player_eid(EntityRegistry& registry)
 {
   // for now assume only 1 entity has the Player tag
   assert(1 == registry.view<Player>().size());
 
-  // Assume Player has a Transform
-  auto                    view = registry.view<Player, Transform>();
-  std::optional<EntityID> entity{std::nullopt};
-  for (auto const e : view) {
+  EntityID const *peid = nullptr;
+  for (auto const eid : registry.view<Player>()) {
     // This assert ensures this loop only runs once.
-    assert(std::nullopt == entity);
-    entity = e;
+    assert(nullptr == peid);
+    peid = &eid;
   }
-  assert(std::nullopt != entity);
-  return *entity;
+  assert(nullptr != peid);
+  return *peid;
+}
+
+Player&
+find_player(EntityRegistry& registry)
+{
+  auto const peid = find_player_eid(registry);
+  return registry.get<Player>(peid);
 }
 
 } // namespace boomhs

@@ -1,4 +1,7 @@
 #include <boomhs/spherical.hpp>
+#include <boomhs/math.hpp>
+
+using namespace boomhs::math;
 
 namespace boomhs
 {
@@ -10,10 +13,10 @@ to_cartesian(SphericalCoordinates const& coords)
   float const theta  = coords.theta;
   float const phi    = coords.phi;
 
-  float const sin_phi = sinf(phi);
-  float const x       = radius * sin_phi * sinf(theta);
+  float const sin_phi = std::sinf(phi);
+  float const x       = radius * sin_phi * std::sinf(theta);
   float const y       = radius * cosf(phi);
-  float const z       = radius * sin_phi * cosf(theta);
+  float const z       = radius * sin_phi * std::cosf(theta);
 
   // Convert spherical coordinates into Cartesian coordinates
   // float const x = sin(phi) * cos(theta) * radius;
@@ -26,10 +29,8 @@ to_cartesian(SphericalCoordinates const& coords)
 SphericalCoordinates
 to_spherical(glm::vec3 cartesian)
 {
-  static constexpr float EPSILONF = std::numeric_limits<float>::epsilon();
-
   if (cartesian.x == 0) {
-    cartesian.x = EPSILONF;
+    cartesian.x = constants::EPSILONF;
   }
   float const &x = cartesian.x, y = cartesian.y, z = cartesian.z;
   float const  x2 = x * x;
@@ -39,10 +40,9 @@ to_spherical(glm::vec3 cartesian)
   float const radius = sqrt(x2 + y2 + z2);
   float       theta  = atan(y / x);
   if (cartesian.x < 0) {
-    float constexpr PI = glm::pi<float>();
-    theta += PI;
+    theta += constants::PI;
   }
-  float const phi = atan((x2 + y2) / z);
+  float const phi = std::atan((x2 + y2) / z);
 
   return SphericalCoordinates{radius, theta, phi};
 }

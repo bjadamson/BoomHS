@@ -1,8 +1,8 @@
 #include <extlibs/fmt.hpp>
 #include <common/algorithm.hpp>
-#include <window/controller.hpp>
+#include <boomhs/controller.hpp>
 
-using namespace window;
+using namespace boomhs;
 
 namespace
 {
@@ -21,7 +21,7 @@ is_pressed(SDL_GameControllerButton const button, Controller const& c)
 
 } // namespace
 
-namespace window
+namespace boomhs
 {
 
 void
@@ -253,4 +253,4 @@ SDLControllers::find_attached_controllers(common::Logger& logger)
   return OK_MOVE(controllers);
 }
 
-} // namespace window
+} // namespace boomhs

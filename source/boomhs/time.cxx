@@ -91,6 +91,36 @@ years_to_seconds(int const years)
 namespace boomhs
 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// TimeConversions
+ticks_t
+TimeConversions::ticks_to_millis(ticks_t const t, freq_t const freq)
+{
+  assert(t != 0.0);
+  return t * 1000.0 / freq;
+}
+
+ticks_t
+TimeConversions::millis_to_ticks(ticks_t const t, freq_t const freq)
+{
+  return t / 1000.0 * freq;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+ticks_t
+TimeConversions::millis_to_seconds(ticks_t const m)
+{
+  return m * 0.001;
+}
+
+ticks_t
+TimeConversions::seconds_to_millis(ticks_t const s)
+{
+  return s * 1000.0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Time
 int64_t
 Time::elapsed() const
 {

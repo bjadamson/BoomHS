@@ -1,12 +1,21 @@
 #pragma once
+#include <boomhs/device.hpp>
+
 #include <common/log.hpp>
 #include <common/result.hpp>
 #include <extlibs/sdl.hpp>
+
 #include <memory>
 #include <ostream>
 
-namespace window
+namespace boomhs
 {
+
+struct ControllerStates
+{
+  DeviceSensitivity first_person{0.01f, 0.01f};
+  DeviceSensitivity third_person{0.01f, 0.01f};
+};
 
 void
 destroy_controller(SDL_GameController*);
@@ -80,4 +89,4 @@ public:
   auto size() const { return controllers_.size(); }
 };
 
-} // namespace window
+} // namespace boomhs

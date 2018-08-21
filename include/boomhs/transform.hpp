@@ -1,28 +1,37 @@
 #pragma once
 #include <boomhs/math.hpp>
-#include <extlibs/glm.hpp>
 
 namespace boomhs
 {
 
 struct Transform
 {
-  glm::vec3 translation{0.0f, 0.0f, 0.0f};
+  // fields
+  glm::vec3 translation = math::constants::ZERO;
   glm::quat rotation;
-  glm::vec3 scale = glm::vec3{1.0f, 1.0f, 1.0f};
+  glm::vec3 scale       = math::constants::ONE;
 
-  glm::mat4 model_matrix() const { return math::compute_modelmatrix(translation, rotation, scale); }
+  // methods
+  glm::mat4 model_matrix() const;
 
-  void rotate_degrees(float const degrees, glm::vec3 const& axis)
+  // radians.
+  glm::vec3 get_rotation_radians() const;
+
+  void rotate_radians(float, math::EulerAxis);
+  void rotate_xyz_radians(glm::vec3 const&);
+  void rotate_xyz_radians(float const x, float const y, float const z)
   {
-    rotation = glm::angleAxis(glm::radians(degrees), axis) * rotation;
+    rotate_xyz_radians(glm::vec3{x, y, z});
   }
 
-  void rotate_xyz_degrees(glm::vec3 const& rot)
+  // degrees.
+  glm::vec3 get_rotation_degrees() const;
+
+  void rotate_degrees(float, math::EulerAxis);
+  void rotate_xyz_degrees(glm::vec3 const&);
+  void rotate_xyz_degrees(float const x, float const y, float const z)
   {
-    rotate_degrees(rot.x, math::constants::X_UNIT_VECTOR);
-    rotate_degrees(rot.y, math::constants::Y_UNIT_VECTOR);
-    rotate_degrees(rot.z, math::constants::Z_UNIT_VECTOR);
+    rotate_xyz_degrees(glm::vec3{x, y, z});
   }
 };
 

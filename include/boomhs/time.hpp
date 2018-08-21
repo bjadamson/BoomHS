@@ -6,6 +6,23 @@
 namespace boomhs
 {
 
+using ticks_t = double;
+using freq_t  = int64_t;
+
+struct TimeConversions
+{
+  TimeConversions() = delete;
+
+  static ticks_t ticks_to_millis(ticks_t, freq_t);
+  static ticks_t millis_to_ticks(ticks_t, freq_t);
+
+  static ticks_t millis_to_seconds(ticks_t);
+  static ticks_t seconds_to_millis(ticks_t);
+
+  static ticks_t ticks_to_seconds(ticks_t, freq_t);
+  static ticks_t seconds_to_ticks(ticks_t, freq_t);
+};
+
 class Time
 {
   // seconds

@@ -111,7 +111,7 @@ TreeComponent::obj() const
 }
 
 void
-TreeComponent::add_color(TreeColorType const type, opengl::Color const& color)
+TreeComponent::add_color(TreeColorType const type, Color const& color)
 {
   assert_onemore_isnot_toomany();
 

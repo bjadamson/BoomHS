@@ -4,16 +4,17 @@
 #include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
 
+#include <boomhs/bounding_object.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/components.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/mesh.hpp>
-#include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/water.hpp>
 #include <boomhs/view_frustum.hpp>
 
-#include <window/timer.hpp> 
+#include <boomhs/clock.hpp> 
 #include <common/log.hpp>
 #include <boomhs/random.hpp>
 
@@ -54,7 +55,7 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
 
   auto const render = [&](WaterInfo& winfo) {
     auto const eid = winfo.eid;
-    if (!registry.get<IsVisible>(eid).value) {
+    if (registry.get<IsRenderable>(eid).hidden) {
       return;
     }
     auto const &tr = registry.get<Transform>(eid);

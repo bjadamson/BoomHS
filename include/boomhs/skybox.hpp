@@ -1,14 +1,11 @@
 #pragma once
-#include <boomhs/components.hpp>
+#include <boomhs/transform.hpp>
 #include <common/type_macros.hpp>
-
-namespace window
-{
-class FrameTime;
-} // namespace window
 
 namespace boomhs
 {
+class FrameTime;
+
 class Skybox
 {
   Transform transform_;
@@ -17,7 +14,7 @@ class Skybox
 public:
   Skybox();
   MOVE_CONSTRUCTIBLE_ONLY(Skybox);
-  void update(window::FrameTime const&);
+  void update(FrameTime const&);
 
   auto const& transform() const { return transform_; }
   auto&       transform() { return transform_; }

@@ -1,8 +1,8 @@
 #include <boomhs/mesh.hpp>
 #include <boomhs/obj.hpp>
-#include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 
+#include <opengl/buffer.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/shader.hpp>
 
@@ -14,7 +14,6 @@
 
 using namespace boomhs;
 using namespace opengl;
-using namespace window;
 
 namespace
 {

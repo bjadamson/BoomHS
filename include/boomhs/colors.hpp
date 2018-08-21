@@ -5,7 +5,7 @@
 #include <common/algorithm.hpp>
 #include <ostream>
 
-namespace opengl
+namespace boomhs
 {
 
 class Color
@@ -244,6 +244,6 @@ namespace LIST_OF_COLORS
   constexpr Color BLACK                  = {0.000, 0.000, 0.000};
 // clang-format on
 } // namespace LIST_OF_COLORS
-} // namespace opengl
+} // namespace boomhs
 
-namespace LOC = opengl::LIST_OF_COLORS;
+namespace LOC = boomhs::LIST_OF_COLORS;

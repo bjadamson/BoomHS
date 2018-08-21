@@ -1,8 +1,7 @@
 #pragma once
-#include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <common/type_macros.hpp>
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 
 #include <extlibs/glm.hpp>
 #include <vector>
@@ -25,7 +24,7 @@ struct Material
 
   //
   // The alpha value for the colors is truncated.
-  Material(opengl::Color const&, opengl::Color const&, opengl::Color const&, float const);
+  Material(Color const&, Color const&, Color const&, float const);
 };
 
 struct NameMaterial

@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/screen_size.hpp>
+#include <boomhs/screen_info.hpp>
 
 #include <opengl/framebuffer.hpp>
 #include <opengl/renderbuffer.hpp>
@@ -12,13 +12,9 @@
 namespace boomhs
 {
 class Camera;
+class FrameTime;
 class LevelManager;
 } // namespace boomhs
-
-namespace window
-{
-class FrameTime;
-} // namespace window
 
 namespace opengl
 {
@@ -56,7 +52,7 @@ public:
   }
 
   void render(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&,
-              window::FrameTime const&);
+              boomhs::FrameTime const&);
 };
 
 } // namespace opengl

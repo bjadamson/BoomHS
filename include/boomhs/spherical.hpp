@@ -23,12 +23,6 @@ struct SphericalCoordinates
       : SphericalCoordinates(v.x, v.y, v.z)
   {
   }
-
-  std::string radius_display_string() const { return std::to_string(this->radius); }
-
-  std::string theta_display_string() const { return std::to_string(glm::degrees(this->theta)); }
-
-  std::string phi_display_string() const { return std::to_string(glm::degrees(this->phi)); }
 };
 
 std::ostream&

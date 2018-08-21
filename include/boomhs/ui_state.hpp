@@ -68,10 +68,16 @@ struct WaterBuffer
   float weight_mix_effect = 1.0f;
 };
 
+struct LogBuffer
+{
+  int log_level = 2;
+};
+
 struct Buffers
 {
   AudioUiBuffer  audio;
   DrawTimeBuffer draw_time_window;
+  LogBuffer      log;
   SkyboxBuffer   skybox;
   TerrainBuffer  terrain;
   WaterBuffer    water;
@@ -99,7 +105,7 @@ struct UiDebugState
   bool show_entitywindow = false;
 
   bool show_environment_window = false;
-  bool show_mousewindow        = false;
+  bool show_devicewindow       = false;
 
   bool show_playerwindow = false;
   bool show_skyboxwindow = false;

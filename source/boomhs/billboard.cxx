@@ -1,4 +1,5 @@
 #include <boomhs/billboard.hpp>
+#include <boomhs/transform.hpp>
 
 namespace
 {

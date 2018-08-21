@@ -53,12 +53,20 @@ place_monsters(common::Logger& logger, TerrainGrid const& terrain, EntityRegistr
   FORI(i, num_monsters) { NPC::create_random(logger, terrain, registry, rng); }
 }
 
-auto&
-place_player(common::Logger& logger, TerrainGrid const& terrain,
+void
+place_player(common::Logger& logger, ShaderPrograms& sps, TerrainGrid const& terrain,
              MaterialTable const& material_table, EntityRegistry& registry)
 {
   auto const eid = registry.create();
-  auto& transform = registry.assign<Transform>(eid);
+
+  auto const FWD     = -Z_UNIT_VECTOR;
+  auto constexpr UP  =  Y_UNIT_VECTOR;
+  auto& player = registry.assign<Player>(eid, logger, eid, registry, sps, FWD, UP);
+  player.level = 14;
+  player.name  = "BEN";
+  player.speed = 460;
+
+  auto& transform = player.transform();
 
   {
     float const x = 8, z = 8;
@@ -66,33 +74,14 @@ place_player(common::Logger& logger, TerrainGrid const& terrain,
     transform.translation = glm::vec3{x, y, z};
   }
 
-  auto& isv = registry.assign<IsVisible>(eid);
-  isv.value = true;
-
-  auto& sn = registry.assign<ShaderName>(eid);
-  sn.value = "3d_pos_normal_color";
-
+  registry.assign<IsRenderable>(eid);
+  registry.assign<ShaderName>(eid, "3d_pos_normal_color");
   registry.assign<MeshRenderable>(eid, "at");
 
   auto& cc = registry.assign<Color>(eid);
   cc.set(LOC::WHITE);
 
   registry.assign<Material>(eid) = material_table.find("player");
-  auto& player = registry.assign<Player>(eid);
-  {
-    auto& wo = player.world_object;
-    wo.set_eid(eid);
-    wo.set_registry(registry);
-
-    wo.set_forward(-Z_UNIT_VECTOR);
-    wo.set_up(Y_UNIT_VECTOR);
-
-    wo.set_speed(460);
-  }
-  player.level = 14;
-  player.name = "BEN";
-
-  return transform;
 }
 
 void
@@ -111,8 +100,8 @@ place_waters(common::Logger& logger, ShaderPrograms& sps, EntityRegistry& regist
     tr.translation.x = pos.x;
     tr.translation.z = pos.y;
 
-    auto& name = registry.assign<Name>(eid);
-    name.value = "WaterInfo #" + std::to_string(count);
+    auto name = "WaterInfo #" + std::to_string(count);
+    registry.assign<Name>(eid, MOVE(name));
   };
 
   int count = 0;
@@ -151,7 +140,7 @@ StartAreaGenerator::gen_level(common::Logger& logger, EntityRegistry& registry,
   place_torch(logger, terrain, registry, ttable, glm::vec2{2, 2});
 
   LOG_TRACE("Placing Player");
-  place_player(logger, terrain, material_table, registry);
+  place_player(logger, sps, terrain, material_table, registry);
 
   LOG_TRACE("placing monsters ...\n");
   place_monsters(logger, terrain, registry, rng);

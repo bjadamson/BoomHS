@@ -1,13 +1,37 @@
 #pragma once
-#include <boomhs/camera.hpp>
-
 #include <common/type_macros.hpp>
 #include <extlibs/glm.hpp>
 
+#include <array>
+
 namespace boomhs
 {
+class Camera;
 class EngineState;
 class ZoneState;
+
+enum class CameraMode
+{
+  ThirdPerson = 0,
+  Ortho,
+  FPS,
+  FREE_FLOATING,
+  MAX
+};
+
+struct CameraModes
+{
+  using ModeNamePair = std::pair<CameraMode, char const*>;
+  CameraModes()      = delete;
+
+  static std::array<ModeNamePair, static_cast<size_t>(CameraMode::MAX)> constexpr CAMERA_MODES = {
+      {{CameraMode::Ortho, "Ortho"},
+       {CameraMode::ThirdPerson, "ThirdPerson"},
+       {CameraMode::FPS, "FPS"},
+       {CameraMode::FREE_FLOATING, "Free Floating"}}};
+
+  static std::vector<std::string> string_list();
+};
 
 struct CameraFrameState
 {

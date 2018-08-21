@@ -1,7 +1,6 @@
 #include <boomhs/frame.hpp>
 
 #include <boomhs/camera.hpp>
-#include <boomhs/state.hpp>
 
 using namespace boomhs;
 

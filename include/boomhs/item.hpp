@@ -1,11 +1,17 @@
 #pragma once
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/item.hpp>
 #include <common/type_macros.hpp>
 #include <opengl/texture.hpp>
 
 #include <string>
 #include <vector>
+
+namespace opengl
+{
+struct TextureInfo;
+} // namespace opengl
 
 namespace boomhs
 {

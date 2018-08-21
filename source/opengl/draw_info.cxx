@@ -5,6 +5,7 @@
 #include <opengl/shader.hpp>
 #include <opengl/shapes.hpp>
 
+#include <boomhs/bounding_object.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/obj_store.hpp>
 

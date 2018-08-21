@@ -20,6 +20,8 @@ struct Cube
 
   glm::vec3 scaled_min(Transform const&) const;
   glm::vec3 scaled_max(Transform const&) const;
+  glm::vec3 scaled_dimensions(Transform const&) const;
+  glm::vec3 scaled_half_widths(Transform const&) const;
 
   explicit Cube(glm::vec3 const&, glm::vec3 const&);
 };
@@ -71,15 +73,28 @@ struct Plane
 namespace boomhs::math::constants
 {
 auto constexpr ZERO = glm::vec3{0};
+auto constexpr ONE  = glm::vec3{1};
 
 auto constexpr X_UNIT_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
 auto constexpr Y_UNIT_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
 auto constexpr Z_UNIT_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
 
+auto constexpr PI       = glm::pi<float>();
+auto constexpr TWO_PI   = PI * 2.0f;
+auto constexpr EPSILONF = std::numeric_limits<float>::epsilon();
+
 } // namespace boomhs::math::constants
 
 namespace boomhs::math
 {
+
+enum class EulerAxis
+{
+  X = 0,
+  Y,
+  Z,
+  INVALID
+};
 
 template <typename T>
 inline auto
@@ -135,11 +150,10 @@ normalize(T const value, P1 const& from_range, P2 const& to_range)
 inline float
 angle_between_vectors(glm::vec3 const& a, glm::vec3 const& b, glm::vec3 const& origin)
 {
-  using namespace glm;
-  vec3 const da = normalize(a - origin);
-  vec3 const db = normalize(b - origin);
+  glm::vec3 const da = glm::normalize(a - origin);
+  glm::vec3 const db = glm::normalize(b - origin);
 
-  return acos(dot(da, db));
+  return std::acos(glm::dot(da, db));
 }
 
 inline glm::vec3
@@ -198,5 +212,29 @@ compute_mvp_matrix(glm::mat4 const& model, glm::mat4 const& view, glm::mat4 cons
 {
   return proj * view * model;
 }
+
+///////////////////////////////
+// Quaternion to Euler
+//
+// algorithm modified from source:
+// http://bediyap.com/programming/convert-quaternion-to-euler-rotations/
+///////////////////////////////
+enum class RotSeq
+{
+  zyx,
+  zyz,
+  zxy,
+  zxz,
+  yxz,
+  yxy,
+  yzx,
+  yzy,
+  xyz,
+  xyx,
+  xzy,
+  xzx
+};
+glm::vec3
+quat_to_euler(glm::quat const&, RotSeq);
 
 } // namespace boomhs::math

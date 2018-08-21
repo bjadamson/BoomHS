@@ -1,7 +1,30 @@
 #include <boomhs/math.hpp>
 #include <boomhs/transform.hpp>
 
-#include <utility>
+namespace
+{
+
+glm::vec3
+three_axis_rotation(float const r11, float const r12, float const r21, float const r31, float const r32)
+{
+  glm::vec3 res;
+  res[0] = std::atan2( r11, r12 );
+  res[1] = std::acos ( r21 );
+  res[2] = std::atan2( r31, r32 );
+  return res;
+}
+
+glm::vec3
+threeaxisrot(float const r11, float const r12, float const r21, float const r31, float const r32)
+{
+  glm::vec3 res;
+  res[0] = std::atan2( r31, r32 );
+  res[1] = std::asin ( r21 );
+  res[2] = std::atan2( r11, r12 );
+  return res;
+}
+
+} // namespace
 
 namespace boomhs
 {
@@ -21,6 +44,14 @@ Cube::dimensions() const
 }
 
 glm::vec3
+Cube::scaled_dimensions(Transform const& tr) const
+{
+  auto const smin = scaled_min(tr);
+  auto const smax = scaled_max(tr);
+  return math::compute_cube_dimensions(smin, smax);
+}
+
+glm::vec3
 Cube::center() const
 {
   auto const hw = half_widths();
@@ -35,6 +66,12 @@ glm::vec3
 Cube::half_widths() const
 {
   return dimensions() / glm::vec3{2.0f};
+}
+
+glm::vec3
+Cube::scaled_half_widths(Transform const& tr) const
+{
+  return scaled_dimensions(tr) / glm::vec3{2.0f};
 }
 
 glm::vec3
@@ -64,6 +101,8 @@ Cube::scaled_max(Transform const& tr) const
   r.z = c.z + (s.z * hw.z);
   return r;
 }
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Frustum
@@ -129,31 +168,137 @@ namespace boomhs::math
 glm::quat
 rotation_between_vectors(glm::vec3 start, glm::vec3 dest)
 {
-  using namespace glm;
-  start = normalize(start);
-  dest  = normalize(dest);
+  start = glm::normalize(start);
+  dest  = glm::normalize(dest);
 
-  float const cos_theta = dot(start, dest);
-  vec3        axis;
+  float const cos_theta = glm::dot(start, dest);
+  glm::vec3 axis;
   if (cos_theta < -1 + 0.001f) {
     // special case when vectors in opposite directions:
     // there is no "ideal" rotation axis
     // So guess one; any will do as long as it's perpendicular to start
-    axis = cross(vec3(0.0f, 0.0f, 1.0f), start);
+    axis = glm::cross(constants::Z_UNIT_VECTOR, start);
     if (glm::length2(axis) < 0.01) {
       // bad luck, they were parallel, try again!
-      axis = cross(vec3(1.0f, 0.0f, 0.0f), start);
+      axis = glm::cross(constants::X_UNIT_VECTOR, start);
     }
 
-    axis = normalize(axis);
-    return angleAxis(radians(180.0f), axis);
+    axis = glm::normalize(axis);
+    return glm::angleAxis(glm::radians(180.0f), axis);
   }
-  axis = cross(start, dest);
+  axis = glm::cross(start, dest);
 
   float const s    = sqrt((1 + cos_theta) * 2);
   float const invs = 1 / s;
 
   return glm::quat{s * 0.5f, axis.x * invs, axis.y * invs, axis.z * invs};
 }
+
+glm::vec3
+quat_to_euler(glm::quat const& q, RotSeq const rot_seq)
+{
+    switch(rot_seq) {
+      case RotSeq::zyx:
+      return threeaxisrot( 2*(q.x*q.y + q.w*q.z),
+                     q.w*q.w + q.x*q.x - q.y*q.y - q.z*q.z,
+                    -2*(q.x*q.z - q.w*q.y),
+                     2*(q.y*q.z + q.w*q.x),
+                     q.w*q.w - q.x*q.x - q.y*q.y + q.z*q.z);
+      break;
+
+      case RotSeq::zyz:
+      return three_axis_rotation( 2*(q.y*q.z - q.w*q.x),
+                   2*(q.x*q.z + q.w*q.y),
+                   q.w*q.w - q.x*q.x - q.y*q.y + q.z*q.z,
+                   2*(q.y*q.z + q.w*q.x),
+                  -2*(q.x*q.z - q.w*q.y));
+      break;
+
+      case RotSeq::zxy:
+      return threeaxisrot( -2*(q.x*q.y - q.w*q.z),
+                      q.w*q.w - q.x*q.x + q.y*q.y - q.z*q.z,
+                      2*(q.y*q.z + q.w*q.x),
+                     -2*(q.x*q.z - q.w*q.y),
+                      q.w*q.w - q.x*q.x - q.y*q.y + q.z*q.z);
+      break;
+
+      case RotSeq::zxz:
+      return three_axis_rotation( 2*(q.x*q.z + q.w*q.y),
+                  -2*(q.y*q.z - q.w*q.x),
+                   q.w*q.w - q.x*q.x - q.y*q.y + q.z*q.z,
+                   2*(q.x*q.z - q.w*q.y),
+                   2*(q.y*q.z + q.w*q.x));
+      break;
+
+      case RotSeq::yxz:
+      return threeaxisrot( 2*(q.x*q.z + q.w*q.y),
+                     q.w*q.w - q.x*q.x - q.y*q.y + q.z*q.z,
+                    -2*(q.y*q.z - q.w*q.x),
+                     2*(q.x*q.y + q.w*q.z),
+                     q.w*q.w - q.x*q.x + q.y*q.y - q.z*q.z);
+      break;
+
+      case RotSeq::yxy:
+      return three_axis_rotation( 2*(q.x*q.y - q.w*q.z),
+                   2*(q.y*q.z + q.w*q.x),
+                   q.w*q.w - q.x*q.x + q.y*q.y - q.z*q.z,
+                   2*(q.x*q.y + q.w*q.z),
+                  -2*(q.y*q.z - q.w*q.x));
+      break;
+
+      case RotSeq::yzx:
+      return threeaxisrot( -2*(q.x*q.z - q.w*q.y),
+                      q.w*q.w + q.x*q.x - q.y*q.y - q.z*q.z,
+                      2*(q.x*q.y + q.w*q.z),
+                     -2*(q.y*q.z - q.w*q.x),
+                      q.w*q.w - q.x*q.x + q.y*q.y - q.z*q.z);
+      break;
+
+      case RotSeq::yzy:
+      return three_axis_rotation( 2*(q.y*q.z + q.w*q.x),
+                  -2*(q.x*q.y - q.w*q.z),
+                   q.w*q.w - q.x*q.x + q.y*q.y - q.z*q.z,
+                   2*(q.y*q.z - q.w*q.x),
+                   2*(q.x*q.y + q.w*q.z));
+      break;
+
+      case RotSeq::xyz:
+      return threeaxisrot( -2*(q.y*q.z - q.w*q.x),
+                    q.w*q.w - q.x*q.x - q.y*q.y + q.z*q.z,
+                    2*(q.x*q.z + q.w*q.y),
+                   -2*(q.x*q.y - q.w*q.z),
+                    q.w*q.w + q.x*q.x - q.y*q.y - q.z*q.z);
+      break;
+
+      case RotSeq::xyx:
+      return three_axis_rotation( 2*(q.x*q.y + q.w*q.z),
+                  -2*(q.x*q.z - q.w*q.y),
+                   q.w*q.w + q.x*q.x - q.y*q.y - q.z*q.z,
+                   2*(q.x*q.y - q.w*q.z),
+                   2*(q.x*q.z + q.w*q.y));
+      break;
+
+      case RotSeq::xzy:
+      return threeaxisrot( 2*(q.y*q.z + q.w*q.x),
+                     q.w*q.w - q.x*q.x + q.y*q.y - q.z*q.z,
+                    -2*(q.x*q.y - q.w*q.z),
+                     2*(q.x*q.z + q.w*q.y),
+                     q.w*q.w + q.x*q.x - q.y*q.y - q.z*q.z);
+      break;
+
+      case RotSeq::xzx:
+      return three_axis_rotation( 2*(q.x*q.z - q.w*q.y),
+                   2*(q.x*q.y + q.w*q.z),
+                   q.w*q.w + q.x*q.x - q.y*q.y - q.z*q.z,
+                   2*(q.x*q.z + q.w*q.y),
+                  -2*(q.x*q.y - q.w*q.z));
+      break;
+    default:
+      break;
+   }
+  std::abort();
+  return constants::ZERO;
+}
+
 
 } // namespace boomhs::math

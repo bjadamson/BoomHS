@@ -1,5 +1,5 @@
 #include <opengl/factory.hpp>
-#include <boomhs/screen_size.hpp>
+#include <boomhs/screen_info.hpp>
 
 #include <common/algorithm.hpp>
 #include <boomhs/math.hpp>

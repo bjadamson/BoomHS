@@ -1,5 +1,5 @@
 #pragma once
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/shapes.hpp>
 
@@ -18,7 +18,7 @@ class ShaderProgram;
 
 struct ArrowCreateParams
 {
-  Color const& color;
+  boomhs::Color const& color;
 
   glm::vec3 start;
   glm::vec3 end;
@@ -66,7 +66,7 @@ struct GridFactory
 {
   GridFactory() = delete;
 
-  static GridVerticesIndices create_grid(glm::vec2 const&, bool, Color const&);
+  static GridVerticesIndices create_grid(glm::vec2 const&, bool, boomhs::Color const&);
 };
 
 } // namespace opengl
@@ -124,8 +124,8 @@ struct RectInfo
   float                 width, height;
 
   // use one, not both (checked in debug builds)
-  std::optional<Color>                           color;
-  std::optional<std::array<Color, NUM_VERTICES>> colors;
+  std::optional<boomhs::Color>                           color;
+  std::optional<std::array<boomhs::Color, NUM_VERTICES>> colors;
 
   std::optional<RectangleUvs> uvs;
 };

@@ -1,12 +1,8 @@
 #include <boomhs/nearby_targets.hpp>
 #include <boomhs/math.hpp>
-#include <window/timer.hpp>
-
-#include <iostream>
+#include <boomhs/clock.hpp>
 
 using namespace boomhs;
-using namespace opengl;
-using namespace window;
 
 namespace
 {

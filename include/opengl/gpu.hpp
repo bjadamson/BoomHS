@@ -1,5 +1,5 @@
 #pragma once
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/shapes.hpp>
 
@@ -60,7 +60,7 @@ copy_grid_gpu(common::Logger&, VertexAttribute const&, GridVerticesIndices const
 
 DrawInfo
 create_modelnormals(common::Logger&, VertexAttribute const&, glm::mat4 const&, boomhs::Obj const&,
-                    Color const&);
+                    boomhs::Color const&);
 
 DrawInfo
 copy_gpu(common::Logger&, VertexAttribute const&, boomhs::ObjData const&);

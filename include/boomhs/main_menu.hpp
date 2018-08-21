@@ -3,18 +3,27 @@
 
 struct ImVec2;
 
+namespace opengl
+{
+struct DrawState;
+class SkyboxRenderer;
+} // namespace opengl
+
 namespace window
 {
-class FrameTime;
+class SDLWindow;
 } // namespace window
 
 namespace boomhs
 {
-class Camera;
-class WaterAudioSystem;
+class  Camera;
 struct EngineState;
+class  FrameTime;
 struct GameState;
-struct ZoneState;
+struct LevelManager;
+class  PlayerBehavior;
+class  SDLEventProcessArgs;
+class  WaterAudioSystem;
 
 struct MainMenuState
 {
@@ -28,9 +37,10 @@ namespace boomhs::main_menu
 {
 
 void
-draw(EngineState&, ZoneState&, ImVec2 const&, WaterAudioSystem&);
+draw(EngineState&, window::SDLWindow&, Camera&, opengl::SkyboxRenderer&, opengl::DrawState&,
+     LevelManager&, ImVec2 const&, WaterAudioSystem&);
 
 void
-process_event(GameState&, SDL_Event&, Camera&, window::FrameTime const&);
+process_event(SDLEventProcessArgs &&);
 
 } // namespace boomhs::main_menu

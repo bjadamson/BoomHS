@@ -1,19 +1,19 @@
 #include <opengl/entity_renderer.hpp>
+#include <opengl/renderer.hpp>
 
 #include <boomhs/billboard.hpp>
+#include <boomhs/bounding_object.hpp>
 #include <boomhs/components.hpp>
+#include <boomhs/engine.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/player.hpp>
-#include <boomhs/state.hpp>
 #include <boomhs/tree.hpp>
 #include <boomhs/view_frustum.hpp>
-
-#include <opengl/renderer.hpp>
+#include <boomhs/zone_state.hpp>
 
 using namespace boomhs;
 using namespace opengl;
-using namespace window;
 
 namespace
 {
@@ -123,11 +123,11 @@ draw_entity_common_without_binding_sp(RenderState& rstate, GLenum const dm, Shad
 template <typename... Args>
 void
 draw_entity(RenderState& rstate, GLenum const dm, ShaderProgram& sp, EntityID const eid,
-                   DrawInfo &dinfo, Transform& transform, IsVisible& is_v,
+                   DrawInfo &dinfo, Transform& transform, IsRenderable& is_r,
                    AABoundingBox& bbox, Args&&... args)
 {
   // If entity is not visible, just return.
-  if (!is_v.value) {
+  if (is_r.hidden) {
     return;
   }
 
@@ -149,7 +149,7 @@ draw_entity(RenderState& rstate, GLenum const dm, ShaderProgram& sp, EntityID co
 
 void
 draw_orbital_body(RenderState& rstate, ShaderProgram& sp, EntityID const eid, Transform& transform,
-                  IsVisible& is_v, AABoundingBox& bbox, BillboardRenderable& bboard, OrbitalBody&,
+                  IsRenderable& is_r, AABoundingBox& bbox, BillboardRenderable& bboard, OrbitalBody&,
                   TextureRenderable& trenderable)
 {
   auto& fstate = rstate.fs;
@@ -172,7 +172,7 @@ draw_orbital_body(RenderState& rstate, ShaderProgram& sp, EntityID const eid, Tr
   auto& draw_handles = zs.gfx_state.draw_handles;
   auto& dinfo = draw_handles.lookup_entity(logger, eid);
   ti->while_bound(logger, [&]() { draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo,
-        transform, is_v, bbox); });
+        transform, is_r, bbox); });
 }
 
 template <typename DrawCommonFN,
@@ -237,12 +237,12 @@ EntityRenderer::render2d_billboard(RenderState& rstate, RNG& rng, FrameTime cons
   auto& registry = zs.registry;
   auto& sps      = zs.gfx_state.sps;
 
-#define COMMON                      ShaderName, Transform,       IsVisible,  AABoundingBox
-#define COMMON_ARGS auto const eid, auto &sn,   auto &transform, auto &is_v, auto &bbox
+#define COMMON                      ShaderName, Transform,       IsRenderable,  AABoundingBox
+#define COMMON_ARGS auto const eid, auto &sn,   auto &transform, auto &is_r, auto &bbox
 
   auto const draw_orbital_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp(sn.value);
-    draw_orbital_body(rstate, sp, eid, transform, is_v, bbox, FORWARD(args));
+    draw_orbital_body(rstate, sp, eid, transform, is_r, bbox, FORWARD(args));
   };
   registry.view<COMMON, BillboardRenderable, OrbitalBody, TextureRenderable>().each(draw_orbital_fn);
   render::draw_targetreticle(rstate, ft);
@@ -270,7 +270,7 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
     auto& sp = sps.ref_sp(sn.value);
     assert(!sp.is_2d);
     auto& dinfo = draw_handles.lookup_entity(logger, eid);
-    draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_v, bbox, FORWARD(args));
+    draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_r, bbox, FORWARD(args));
   };
 
   auto const draw_default_entity_fn = [&](COMMON_ARGS, auto&&...) {
@@ -283,13 +283,13 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
       auto* ti = tr.texture_info;
       assert(ti);
       ti->while_bound(logger, [&]() {
-        draw_common_fn(eid, sn, transform, is_v, bbox, tr);
+        draw_common_fn(eid, sn, transform, is_r, bbox, tr);
       });
     }
     else {
       //assert(registry.has<Color>(eid));
       auto& dinfo = draw_handles.lookup_entity(logger, eid);
-      draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_v, bbox);
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_r, bbox);
     }
   };
   auto const draw_torch_fn = [&](COMMON_ARGS, TextureRenderable& trenderable, Torch& torch) {
@@ -315,16 +315,17 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
 
     auto* ti = trenderable.texture_info;
     assert(ti);
-    ti->while_bound(logger, [&]() { draw_common_fn(eid, sn, copy_transform, is_v, bbox, torch); });
+    ti->while_bound(logger, [&]() { draw_common_fn(eid, sn, copy_transform, is_r, bbox, torch); });
   };
 
-  auto const draw_boundingboxes = [&](EntityID const eid, Transform& transform, AABoundingBox& bbox,
-          Selectable& sel, auto&&...)
+  auto const draw_boundingboxes = [&](std::pair<Color, Color> const& colors, EntityID const eid,
+                                      Transform& transform, AABoundingBox& bbox, Selectable& sel,
+                                      auto&&...)
   {
     if (!es.draw_bounding_boxes) {
       return;
     }
-    Color const wire_color = sel.selected ? LOC::GREEN : LOC::RED;
+    Color const wire_color = sel.selected ? colors.first : colors.second;
 
     auto& sp    = sps.ref_sp("wireframe");
     auto  tr    = transform;
@@ -348,15 +349,12 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
     COMMON
     );
 
-#define COMMON_BBOX Transform,  AABoundingBox, Selectable
-  registry.view<COMMON_BBOX, CubeRenderable>().each(
-      [&](auto&&... args) { draw_boundingboxes(FORWARD(args)); });
-  registry.view<COMMON_BBOX, MeshRenderable>().each(
-      [&](auto&&... args) { draw_boundingboxes(FORWARD(args)); });
+#define COMMON_BBOX Transform, AABoundingBox, Selectable
+  registry.view<COMMON_BBOX>().each(
+      [&](auto&&... args) { draw_boundingboxes(PAIR(LOC::GREEN, LOC::RED), FORWARD(args)); });
 
   registry.view<COMMON_BBOX, WaterInfo>().each(
-      [&](auto&&... args) { draw_boundingboxes(FORWARD(args)); });
-
+      [&](auto&&... args) { draw_boundingboxes(PAIR(LOC::BLUE, LOC::ORANGE), FORWARD(args)); });
 #undef COMMON_BBOX
 }
 
@@ -377,7 +375,7 @@ SilhouetteEntityRenderer::render2d_billboard(RenderState& rstate, RNG& rng, Fram
   auto const draw_orbital_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp("2dsilhoutte_uv");
     sp.while_bound(logger, [&]() { sp.set_uniform_color_3fv(logger, "u_color", LOC::WHITE); });
-    draw_orbital_body(rstate, sp, eid, transform, is_v, bbox, FORWARD(args));
+    draw_orbital_body(rstate, sp, eid, transform, is_r, bbox, FORWARD(args));
   };
 
   registry.view<COMMON, BillboardRenderable, OrbitalBody, TextureRenderable>().each(draw_orbital_fn);
@@ -407,7 +405,7 @@ SilhouetteEntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime cons
     auto& sp = sps.ref_sp("silhoutte_black");
     if (!sp.is_2d) {
       auto& dinfo = draw_handles.lookup_entity(logger, eid);
-      draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_v, bbox, FORWARD(args));
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_r, bbox, FORWARD(args));
     }
   };
 
@@ -416,7 +414,7 @@ SilhouetteEntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime cons
 
     if (!sp.is_2d) {
       auto& dinfo = draw_handles.lookup_entity(logger, eid);
-      draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_v, bbox, FORWARD(args));
+      draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_r, bbox, FORWARD(args));
     }
   };
 

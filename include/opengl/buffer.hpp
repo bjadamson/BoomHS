@@ -1,6 +1,6 @@
 #pragma once
 #include <boomhs/obj.hpp>
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 #include <string>
 
 namespace opengl
@@ -51,7 +51,7 @@ public:
   // Public copy method
   VertexBuffer copy() const;
 
-  void set_colors(Color const&);
+  void set_colors(boomhs::Color const&);
   static VertexBuffer
   create_interleaved(common::Logger&, boomhs::ObjData const&, BufferFlags const&);
 };

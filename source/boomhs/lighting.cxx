@@ -1,8 +1,6 @@
 #include <boomhs/lighting.hpp>
 #include <common/algorithm.hpp>
 
-using namespace opengl;
-
 namespace boomhs
 {
 

@@ -126,7 +126,7 @@ get_bool_or_abort(CppTable const& table, char const* name)
   return get_or_abort<bool>(table, name);
 }
 
-std::optional<opengl::Color>
+std::optional<Color>
 get_color(CppTable const& table, char const* name)
 {
   auto const load_colors = table->template get_array_of<double>(name);
@@ -137,7 +137,7 @@ get_color(CppTable const& table, char const* name)
   std::vector<double> const& c = *load_colors;
   assert(4 == c.size() || 3 == c.size());
 
-  opengl::Color color;
+  Color color;
   color.set_r(c[0]);
   color.set_g(c[1]);
   color.set_b(c[2]);
@@ -147,7 +147,7 @@ get_color(CppTable const& table, char const* name)
   return std::make_optional(color);
 }
 
-opengl::Color
+Color
 get_color_or_abort(CppTable const& table, char const* name)
 {
   auto const c = get_color(table, name);
@@ -480,7 +480,7 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &
     auto const color         = get_color(file,           "color");
     auto const material_o    = get_string(file,          "material");
     auto const texture_name  = get_string(file,          "texture");
-    auto const is_visible    = get_bool(file,            "is_visible").value_or(true);
+    auto const is_hidden     = get_bool(file,            "hidden").value_or(false);
     bool const random_junk   = get_bool(file,            "random_junk_from_file").value_or(false);
 
     // sub-tables or "inner"-tables
@@ -492,16 +492,13 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &
     assert((!color && !texture_name) || (!color && texture_name) || (color && !texture_name));
 
     auto eid                         = registry.create();
-    registry.assign<Name>(eid).value = name;
+    registry.assign<Name>(eid, name);
 
     auto& transform       = registry.assign<Transform>(eid);
     transform.translation = pos;
 
-    auto& isv = registry.assign<IsVisible>(eid);
-    isv.value = is_visible;
-
-    auto& sn = registry.assign<ShaderName>(eid);
-    sn.value = shader;
+    registry.assign<IsRenderable>(eid, is_hidden);
+    registry.assign<ShaderName>(eid, shader);
 
     if (scale_o) {
       transform.scale = *scale_o;

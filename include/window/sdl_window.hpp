@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/screen_size.hpp>
+#include <boomhs/screen_info.hpp>
 
 #include <common/log.hpp>
 #include <common/result.hpp>
@@ -31,6 +31,14 @@ enum class SwapIntervalFlag
   //           = 0x4
 };
 // clang-format on
+
+struct WindowState
+{
+  MOVE_CONSTRUCTIBLE_ONLY(WindowState);
+
+  FullscreenFlags  fullscreen = FullscreenFlags::NOT_FULLSCREEN;
+  SwapIntervalFlag sync       = SwapIntervalFlag::SYNCHRONIZED;
+};
 
 using window_type = SDL_Window;
 using window_ptr  = std::unique_ptr<window_type, decltype(&SDL_DestroyWindow)>;

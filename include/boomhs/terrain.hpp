@@ -18,11 +18,6 @@ class ShaderProgram;
 class TextureTable;
 } // namespace opengl
 
-namespace window
-{
-class FrameTime;
-} // namespace window
-
 namespace boomhs
 {
 

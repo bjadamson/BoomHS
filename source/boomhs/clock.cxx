@@ -1,40 +1,10 @@
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 #include <extlibs/sdl.hpp>
 
 #include <iostream>
-namespace window
-{
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// TimeConversions
-ticks_t
-TimeConversions::ticks_to_millis(ticks_t const t, freq_t const freq)
+namespace boomhs
 {
-  assert(t != 0.0);
-  double const freq_d = static_cast<double>(SDL_GetPerformanceFrequency());
-  return t * 1000.0 / freq_d;
-}
-
-ticks_t
-TimeConversions::millis_to_ticks(ticks_t const t, freq_t const freq)
-{
-  double const freq_d = static_cast<double>(SDL_GetPerformanceFrequency());
-  return t / 1000.0 * freq_d;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-ticks_t
-TimeConversions::millis_to_seconds(ticks_t const m)
-{
-  return m * 0.001;
-}
-
-ticks_t
-TimeConversions::seconds_to_millis(ticks_t const s)
-{
-  return s * 1000.0;
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ticks_t
@@ -85,4 +55,4 @@ Timer::update()
   }
 }
 
-} // namespace window
+} // namespace boomhs

@@ -1,16 +1,12 @@
 #pragma once
 #include <boomhs/entity.hpp>
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 #include <optional>
 #include <vector>
 
-namespace window
-{
-class FrameTime;
-} // namespace window
-
 namespace boomhs
 {
+class FrameTime;
 
 struct SelectedTarget
 {
@@ -32,23 +28,23 @@ class NearbyTargets
   std::optional<SelectedTarget> selected_                       = std::nullopt;
 
   bool empty() const;
-  void update_time(window::FrameTime const&);
+  void update_time(FrameTime const&);
 
 public:
   NearbyTargets() = default;
 
-  float calculate_scale(window::FrameTime const&) const;
+  float calculate_scale(FrameTime const&) const;
 
   void add_target(EntityID);
   void clear();
-  void cycle(CycleDirection, window::FrameTime const&);
-  void cycle_forward(window::FrameTime const&);
-  void cycle_backward(window::FrameTime const&);
+  void cycle(CycleDirection, FrameTime const&);
+  void cycle_forward(FrameTime const&);
+  void cycle_backward(FrameTime const&);
 
   std::optional<EntityID> selected() const;
   void                    set_selected(EntityID);
 
-  static opengl::Color color_from_level_difference(int, int);
+  static Color color_from_level_difference(int, int);
 };
 
 } // namespace boomhs

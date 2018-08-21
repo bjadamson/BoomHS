@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/screen_size.hpp>
+#include <boomhs/screen_info.hpp>
 #include <common/auto_resource.hpp>
 #include <common/log.hpp>
 #include <common/result.hpp>

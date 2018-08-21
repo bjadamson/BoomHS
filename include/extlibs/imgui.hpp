@@ -1,5 +1,5 @@
 #pragma once
-#include <opengl/colors.hpp>
+#include <boomhs/colors.hpp>
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl_gl3.h>
@@ -12,7 +12,7 @@ namespace imgui_cxx
 {
 
 inline ImVec4
-from_color(opengl::Color const& c)
+from_color(boomhs::Color const& c)
 {
   auto const* data = c.data();
   return ImVec4{data[0], data[1], data[2], data[3]};
@@ -141,13 +141,13 @@ with_childframe(FN const& fn, Args&&... args)
   }
 }
 
-template <typename FN>
+template <typename FN, typename... Args>
 void
-with_menu(FN const& fn, char const* name)
+with_menu(FN const& fn, char const* name, Args&&... args)
 {
   if (ImGui::BeginMenu(name)) {
     ON_SCOPE_EXIT([]() { ImGui::EndMenu(); });
-    fn();
+    fn(FORWARD(args));
   }
 }
 

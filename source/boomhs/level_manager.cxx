@@ -1,5 +1,4 @@
 #include <boomhs/level_manager.hpp>
-#include <boomhs/state.hpp>
 
 namespace boomhs
 {

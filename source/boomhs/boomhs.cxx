@@ -1,19 +1,21 @@
 #include <boomhs/audio.hpp>
 #include <boomhs/billboard.hpp>
 #include <boomhs/boomhs.hpp>
+#include <boomhs/bounding_object.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>
+#include <boomhs/controller.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/frame.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/heightmap.hpp>
 #include <boomhs/item.hpp>
 #include <boomhs/item_factory.hpp>
-#include <boomhs/io.hpp>
+#include <boomhs/io_sdl.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mouse.hpp>
-#include <boomhs/mouse_picker.hpp>
+#include <boomhs/raycast.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/rexpaint.hpp>
@@ -32,8 +34,7 @@
 #include <opengl/texture.hpp>
 
 #include <extlibs/sdl.hpp>
-#include <window/controller.hpp>
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 
 #include <common/log.hpp>
 #include <boomhs/math.hpp>
@@ -62,8 +63,7 @@ namespace
 bool
 player_in_water(common::Logger& logger, EntityRegistry& registry)
 {
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
+  auto& player = find_player(registry);
 
   auto const eids = find_all_entities_with_component<WaterInfo, Transform, AABoundingBox>(registry);
   for (auto const eid : eids) {
@@ -82,7 +82,7 @@ player_in_water(common::Logger& logger, EntityRegistry& registry)
 void
 update_mousestates(EngineState& es)
 {
-  auto& mss = es.mouse_states;
+  auto& mss = es.device_states.mouse;
   mss.previous = mss.current;
 }
 
@@ -131,19 +131,17 @@ update_npcpositions(common::Logger& logger, EntityRegistry& registry, TerrainGri
 void
 update_nearbytargets(NearbyTargets& nbt, EntityRegistry& registry, FrameTime const& ft)
 {
-  auto const player = find_player(registry);
-  assert(registry.has<Transform>(player));
-  auto const& ptransform = registry.get<Transform>(player);
+  auto const& player = find_player(registry);
 
   auto const enemies = find_enemies(registry);
   using pair_t       = std::pair<float, EntityID>;
   std::vector<pair_t> pairs;
   for (auto const eid : enemies) {
-    if (!registry.get<IsVisible>(eid).value) {
+    if (registry.get<IsRenderable>(eid).hidden) {
       continue;
     }
     auto const& etransform = registry.get<Transform>(eid);
-    float const distance   = glm::distance(ptransform.translation, etransform.translation);
+    float const distance   = glm::distance(player.transform().translation, etransform.translation);
     pairs.emplace_back(std::make_pair(distance, eid));
   }
 
@@ -239,8 +237,7 @@ update_torchflicker(LevelData const& ldata, EntityRegistry& registry, RNG& rng,
     auto& torch_transform = registry.get<Transform>(eid);
     if (item.is_pickedup) {
       // Player has picked up the torch, make it follow player around
-      auto const player_eid = find_player(registry);
-      auto const& player = registry.get<Player>(player_eid);
+      auto const& player = find_player(registry);
       auto const& player_pos = player.world_position();
 
       torch_transform.translation = player_pos;
@@ -285,14 +282,15 @@ update_visible_entities(LevelManager& lm, EntityRegistry& registry)
   auto& terrain_grid = ldata.terrain;
 
   for (auto const eid : registry.view<NPCData>()) {
-    auto& isv = registry.get<IsVisible>(eid);
-    isv.value        = true; //terrain.is_visible(registry);
+    auto& isr = registry.get<IsRenderable>(eid);
+    isr.hidden        = false; //terrain.is_visible(registry);
   }
 }
 
 void
-update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const& fstate, StaticRenderers& static_renderers,
-                  WaterAudioSystem& water_audio, FrameTime const& ft)
+update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const& fstate, Camera& camera,
+                  StaticRenderers& static_renderers, WaterAudioSystem& water_audio,
+                  SDLWindow& window, FrameTime const& ft)
 {
   auto& skybox_renderer = static_renderers.skybox;
 
@@ -306,9 +304,7 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
   auto& gfx_state = zs.gfx_state;
   auto& ttable    = gfx_state.texture_table;
 
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
-
+  auto& player = find_player(registry);
   auto& nbt = ldata.nearby_targets;
 
   // THIS GOES FIRST ALWAYS.
@@ -350,6 +346,12 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
   bool const previously_alive = is_target_selected_and_alive(registry, nbt);
   player.update(es, zs, ft);
 
+  if (CameraMode::FPS == camera.mode()) {
+    auto const& ms = es.device_states.mouse;
+    auto const& current = ms.current.coords();
+    camera.fps.update(current.x, current.y, es.dimensions, window);
+  }
+
   if (previously_alive) {
     auto const target = nbt.selected();
     if (target) {
@@ -364,7 +366,7 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
 
         auto const& target_pos = registry.get<Transform>(target_eid).translation;
         item_tr.translation = target_pos;
-        item_tr.rotate_degrees(90, X_UNIT_VECTOR);
+        item_tr.rotate_degrees(90, math::EulerAxis::X);
         auto const& item_name = registry.get<Name>(item_eid).value;
         LOG_ERROR_SPRINTF("ADDING item %s AT xyz: %s", item_name, glm::to_string(item_tr.translation));
 
@@ -892,7 +894,7 @@ ingame_loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
   auto& es = state.engine_state;
   FrameState fstate{cstate, es, zs};
 
-  update_everything(es, lm, rng, fstate, static_renderers, water_audio, ft);
+  update_everything(es, lm, rng, fstate, camera, static_renderers, water_audio, engine.window, ft);
   {
     RenderState rstate{fstate, ds};
     render_scene(rstate, lm, ds, camera, rng, ft, static_renderers);
@@ -920,12 +922,11 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
   auto& io = es.imgui;
 
   auto& registry = zs.registry;
-  auto const player_eid = find_player(registry);
-  auto& player = registry.get<Player>(player_eid);
+  auto& player = find_player(registry);
 
   static bool set_camera_once = false;
   if (!set_camera_once) {
-    camera.set_target(player.world_object);
+    camera.set_target(player.head_world_object());
     set_camera_once = true;
   }
 
@@ -945,23 +946,24 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
     auto const& dimensions = engine.dimensions();
     auto const size_v      = ImVec2(dimensions.right(), dimensions.bottom());
-    main_menu::draw(es, zs, size_v, water_audio);
+    auto& skybox_renderer  = static_renderers.skybox;
+    main_menu::draw(es, engine.window, camera, skybox_renderer, ds, lm, size_v, water_audio);
   }
   else {
     // Disable keyboard shortcuts
     io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
 
-    IO::process(state, engine.controllers, camera, ft);
+    IO_SDL::read_devices(SDLReadDevicesArgs{state, engine.controllers, camera, ft});
 
-    io.MouseDrawCursor = camera.mode() == CameraMode::FPS ? false : true;
+    bool const fps = camera.mode() == CameraMode::FPS;
+    io.MouseDrawCursor = fps ? false : true;
     ingame_loop(engine, state, rng, camera, water_audio, static_renderers, ds, ft);
   }
 
   auto& ui_state = es.ui_state;
   if (ui_state.draw_debug_ui) {
     auto& lm = state.level_manager;
-    auto& skybox_renderer = static_renderers.skybox;
-    ui_debug::draw(es, lm, skybox_renderer, water_audio, engine.window, camera, ds, ft);
+    ui_debug::draw(es, lm, camera, ft);
   }
 }
 

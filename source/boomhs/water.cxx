@@ -1,8 +1,9 @@
 #include <boomhs/camera.hpp>
+#include <boomhs/bounding_object.hpp>
+#include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mesh.hpp>
-#include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/water.hpp>
 
@@ -10,7 +11,7 @@
 #include <opengl/gpu.hpp>
 #include <opengl/shader.hpp>
 
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 
 #include <common/log.hpp>
 #include <boomhs/random.hpp>
@@ -93,7 +94,7 @@ WaterFactory::make_default(common::Logger& logger, ShaderPrograms& sps, TextureT
   wi.dimensions   = glm::vec2{20};
   wi.num_vertexes = 4;
 
-  registry.assign<IsVisible>(eid).value = true;
+  registry.assign<IsRenderable>(eid);
   auto& tr = registry.assign<Transform>(eid);
 
   // hack

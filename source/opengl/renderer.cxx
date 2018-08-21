@@ -1,13 +1,16 @@
 #include <boomhs/billboard.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/components.hpp>
+#include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/fog.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
-#include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
+#include <boomhs/screen_info.hpp>
+#include <boomhs/zone_state.hpp>
 
 #include <opengl/renderer.hpp>
 #include <opengl/draw_info.hpp>
@@ -19,7 +22,7 @@
 
 #include <extlibs/fmt.hpp>
 #include <extlibs/sdl.hpp>
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 
 #include <common/log.hpp>
 #include <boomhs/math.hpp>
@@ -437,29 +440,30 @@ conditionally_draw_player_vectors(RenderState& rstate, Player const& player)
 
   auto& logger = es.logger;
 
-  glm::vec3 const pos = player.world_position();
-  auto const& wo = player.world_object;
-  if (es.show_player_localspace_vectors) {
+  auto const draw_local_axis = [&rstate](auto const& wo) {
+    glm::vec3 const pos = wo.world_position();
     // local-space
     //
-    // forward
+    // eye-forward
     auto const fwd = wo.eye_forward();
-    draw_arrow(rstate, pos, pos + fwd, LOC::GREEN);
+    draw_arrow(rstate, pos, pos + (2.0f * fwd), LOC::PURPLE);
 
-    // right
+    // eye-up
+    auto const up = wo.eye_up();
+    draw_arrow(rstate, pos, pos + up, LOC::YELLOW);
+
+    // eye-right
     auto const right = wo.eye_right();
-    draw_arrow(rstate, pos, pos + right, LOC::RED);
+    draw_arrow(rstate, pos, pos + right, LOC::ORANGE);
+  };
+
+  if (es.show_player_localspace_vectors) {
+    draw_local_axis(player.world_object());
+    draw_local_axis(player.head_world_object());
   }
   if (es.show_player_worldspace_vectors) {
-    // world-space
-    //
-    // forward
-    auto const fwd = wo.world_forward();
-    draw_arrow(rstate, pos, pos + (2.0f * fwd), LOC::LIGHT_BLUE);
-
-    // backward
-    glm::vec3 const right = wo.world_right();
-    draw_arrow(rstate, pos, pos + right, LOC::PINK);
+    draw_axis(rstate, player.world_position());
+    draw_axis(rstate, player.head_world_object().transform().translation);
   }
 }
 
@@ -544,7 +548,7 @@ draw_line(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& end, Col
 }
 
 void
-draw_global_axis(RenderState& rstate)
+draw_axis(RenderState& rstate, glm::vec3 const& pos)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -552,13 +556,13 @@ draw_global_axis(RenderState& rstate)
   auto& sps    = zs.gfx_state.sps;
 
   auto& logger = es.logger;
-  LOG_TRACE("Drawing Global Axis");
 
   auto& sp           = sps.ref_sp("3d_pos_color");
   auto  world_arrows = create_axis_arrows(logger, sp.va());
 
   auto const& ldata = zs.level_data;
   Transform   transform;
+  transform.translation = pos;
 
   auto const draw_axis_arrow = [&](DrawInfo& dinfo) {
     dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_LINES, sp, dinfo); });
@@ -573,42 +577,6 @@ draw_global_axis(RenderState& rstate)
   });
 
   LOG_TRACE("Finished Drawing Global Axis");
-}
-
-void
-draw_local_axis(RenderState& rstate, glm::vec3 const& player_pos)
-{
-  auto& fstate = rstate.fs;
-  auto& es     = fstate.es;
-  auto& zs     = fstate.zs;
-  auto& sps    = zs.gfx_state.sps;
-
-  auto& logger = es.logger;
-  LOG_TRACE("Drawing Local Axis");
-
-  auto& sp          = sps.ref_sp("3d_pos_color");
-  auto  axis_arrows = create_axis_arrows(logger, sp.va());
-
-  Transform transform;
-  transform.translation = player_pos;
-
-  auto const& ldata = zs.level_data;
-
-  auto const bind_and_draw = [&](auto& dinfo) {
-    dinfo.while_bound(logger, [&]() {
-        draw(rstate, GL_LINES, sp, dinfo);
-        });
-  };
-
-  sp.while_bound(logger, [&]() {
-    auto const camera_matrix = fstate.camera_matrix();
-    set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
-    bind_and_draw(axis_arrows.x_dinfo);
-    bind_and_draw(axis_arrows.y_dinfo);
-    bind_and_draw(axis_arrows.z_dinfo);
-  });
-
-  LOG_TRACE("Finished Drawing Local Axis");
 }
 
 void
@@ -721,7 +689,7 @@ draw_inventory_overlay(RenderState& rstate)
 }
 
 void
-draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
+draw_targetreticle(RenderState& rstate, FrameTime const& ft)
 {
   auto&       fstate   = rstate.fs;
   auto&       es       = fstate.es;
@@ -784,8 +752,7 @@ draw_targetreticle(RenderState& rstate, window::FrameTime const& ft)
     auto const mvp_matrix = proj_matrix * (view_model * rmatrix);
     set_modelmatrix(logger, mvp_matrix, sp);
 
-    auto const peid = find_player(registry);
-    auto const& player = registry.get<Player>(peid);
+    auto const& player = find_player(registry);
     auto const target_level = registry.get<NPCData>(npc_selected_eid).level;
     auto const blendc = NearbyTargets::color_from_level_difference(player.level, target_level);
     sp.set_uniform_color(logger, "u_blendcolor", blendc);

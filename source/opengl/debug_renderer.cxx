@@ -3,13 +3,13 @@
 
 #include <boomhs/components.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/engine.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/player.hpp>
-#include <boomhs/state.hpp>
 
 #include <boomhs/random.hpp>
 
-#include <window/timer.hpp>
+#include <boomhs/clock.hpp>
 #include <extlibs/glm.hpp>
 
 using namespace boomhs;
@@ -36,26 +36,17 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camer
     render::draw_grid_lines(rstate);
   }
 
-  auto const player_eid = find_player(registry);
-  auto const& player = registry.get<Player>(player_eid);
+  auto& player = find_player(registry);
   if (es.show_global_axis) {
-    render::draw_global_axis(rstate);
-  }
-  if (es.show_local_axis) {
-    render::draw_local_axis(rstate, player.world_position());
+    render::draw_axis(rstate, math::constants::ZERO);
   }
 
   Transform camera_transform;
   camera_transform.translation = camera.world_position();
   auto const model = camera_transform.model_matrix();
-  render::draw_frustum(rstate, camera.frustum_ref(), model);
 
-  {
-    auto const  eid = find_player(registry);
-    auto const& inv = registry.get<Player>(eid).inventory;
-    if (inv.is_open()) {
-      render::draw_inventory_overlay(rstate);
-    }
+  if (es.draw_view_frustum) {
+    render::draw_frustum(rstate, camera.frustum_ref(), model);
   }
 
   // if checks happen inside fn

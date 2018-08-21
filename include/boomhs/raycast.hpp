@@ -5,11 +5,11 @@ namespace boomhs
 {
 class FrameState;
 
-class MousePicker
+struct Raycast
 {
-public:
-  explicit MousePicker();
-  glm::vec3 calculate_ray(FrameState&) const;
+  Raycast() = delete;
+
+  static glm::vec3 calculate_ray(FrameState&);
 };
 
 } // namespace boomhs
