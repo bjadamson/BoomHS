@@ -946,7 +946,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
     auto const& dimensions = engine.dimensions();
     auto const size_v      = ImVec2(dimensions.right(), dimensions.bottom());
-    main_menu::draw(es, zs, size_v, water_audio);
+    main_menu::draw(es, engine.window, ds, lm, size_v, water_audio);
   }
   else {
     // Disable keyboard shortcuts
@@ -954,7 +954,8 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
     IO_SDL::read_devices(SDLReadDevicesArgs{state, engine.controllers, camera, ft});
 
-    io.MouseDrawCursor = camera.mode() == CameraMode::FPS ? false : true;
+    bool const fps = camera.mode() == CameraMode::FPS;
+    io.MouseDrawCursor = fps ? false : true;
     ingame_loop(engine, state, rng, camera, water_audio, static_renderers, ds, ft);
   }
 
@@ -962,7 +963,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
   if (ui_state.draw_debug_ui) {
     auto& lm = state.level_manager;
     auto& skybox_renderer = static_renderers.skybox;
-    ui_debug::draw(es, lm, skybox_renderer, water_audio, engine.window, camera, ds, ft);
+    ui_debug::draw(es, lm, skybox_renderer, water_audio, camera, ft);
   }
 }
 

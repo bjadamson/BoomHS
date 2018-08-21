@@ -43,7 +43,7 @@ struct MouseMotionEvent
   GameState&                  game_state;
   SDL_MouseMotionEvent const& motion;
   Camera&                     camera;
-  WorldObject&                player;
+  Player&                     player;
   FrameTime const&            frame_time;
 };
 

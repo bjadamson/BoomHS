@@ -7,7 +7,6 @@
 #include <boomhs/clock.hpp>
 
 #include <boomhs/math.hpp>
-#include <extlibs/imgui.hpp>
 
 using namespace boomhs;
 using namespace boomhs::math;
@@ -61,15 +60,16 @@ CameraTarget::validate() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraArcball
 CameraArcball::CameraArcball(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t,
-                             Viewport& vp, bool& flip_y)
+                             Viewport& vp)
     : forward_(forward)
     , up_(up)
     , target_(t)
     , viewport_(vp)
     , coordinates_(0.0f, 0.0f, 0.0f)
-    , flip_y_(flip_y)
-    , rotation_lock(false)
 {
+  cs.rotation_lock = false;
+  cs.sensitivity.x = 10.0f;
+  cs.sensitivity.y = 10.0f;
 }
 
 void
@@ -97,9 +97,11 @@ CameraArcball::increase_zoom(float const amount, FrameTime const& ft)
 }
 
 CameraArcball&
-CameraArcball::rotate(float const dx, float const dy, DeviceSensitivity const& sens,
-    FrameTime const& ft)
+CameraArcball::rotate_radians(float dx, float dy, FrameTime const& ft)
 {
+  dx *= cs.sensitivity.x;
+  dy *= cs.sensitivity.y;
+
   auto& theta = coordinates_.theta;
   theta       = (up_.y > 0.0f) ? (theta - dx) : (theta + dx);
   if (theta > TWO_PI) {
@@ -110,12 +112,12 @@ CameraArcball::rotate(float const dx, float const dy, DeviceSensitivity const& s
   }
 
   auto&       phi     = coordinates_.phi;
-  float const new_phi = flip_y_ ? (phi + dy) : (phi - dy);
+  float const new_phi = cs.flip_y ? (phi + dy) : (phi - dy);
 
   bool const in_region0     = new_phi > 0 && new_phi < (PI / 2.0f);
   bool const in_region1     = new_phi < -(PI / 2.0f);
   bool const top_hemisphere = in_region0 || in_region1;
-  if (!rotation_lock || top_hemisphere) {
+  if (!cs.rotation_lock || top_hemisphere) {
     phi = new_phi;
   }
 
@@ -177,10 +179,18 @@ CameraArcball::compute_viewmatrix(glm::vec3 const& target_pos) const
 CameraFPS::CameraFPS(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t, Viewport& vp)
     : forward_(forward)
     , up_(up)
+    , xrot_(0)
+    , yrot_(0)
     , target_(t)
     , viewport_(vp)
-    , rotation_lock(true)
 {
+  cs.rotation_lock = true;
+
+  cs.flip_x = true;
+  cs.flip_y = true;
+
+  cs.sensitivity.x = 100.0f;
+  cs.sensitivity.y = 100.0f;
 }
 
 void
@@ -190,10 +200,36 @@ CameraFPS::update(int const xpos, int const ypos, ScreenDimensions const& dim,
 }
 
 CameraFPS&
-CameraFPS::rotate_degrees(float const dx, float const dy, DeviceSensitivity const& sens, FrameTime const& ft)
+CameraFPS::rotate_radians(float dx, float dy, FrameTime const& ft)
 {
-  transform().rotate_degrees(dy, EulerAxis::X);
-  transform().rotate_degrees(dx, EulerAxis::Y);
+  dx *= cs.sensitivity.x;
+  dy *= cs.sensitivity.y;
+
+  dx = glm::radians(dx);
+  dy = glm::radians(dy);
+
+  xrot_ += dx;
+  {
+    float const newy_rot = yrot_ + dy;
+    if (std::abs(newy_rot) < glm::radians(65.0f)) {
+      yrot_ = newy_rot;
+    }
+  }
+
+  auto const xaxis = cs.flip_x
+    ?  Y_UNIT_VECTOR
+    : -Y_UNIT_VECTOR;
+
+  auto const yaxis = cs.flip_y
+    ?  X_UNIT_VECTOR
+    : -X_UNIT_VECTOR;
+
+  // combine existing rotation with new rotation.
+  // Y-axis first
+  glm::quat a   = glm::angleAxis(yrot_, yaxis) * glm::angleAxis(dy, yaxis);
+  glm::quat b   = glm::angleAxis(xrot_, xaxis) * glm::angleAxis(dx, xaxis);
+  transform().rotation = a * b;
+
   return *this;
 }
 
@@ -246,11 +282,10 @@ CameraORTHO::compute_viewmatrix(glm::vec3 const& target) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
-Camera::Camera(Viewport&& vp, glm::vec3 const& forward,
-               glm::vec3 const& up)
+Camera::Camera(Viewport&& vp, glm::vec3 const& forward, glm::vec3 const& up)
     : viewport_(MOVE(vp))
     , mode_(CameraMode::ThirdPerson)
-    , arcball(forward, up, target_, viewport_, flip_y)
+    , arcball(forward, up, target_, viewport_)
     , fps(forward, up, target_, viewport_)
     , ortho(forward, up, target_, viewport_)
 {
@@ -272,6 +307,12 @@ void
 Camera::set_mode(CameraMode const m)
 {
   mode_ = m;
+
+  bool const fps_mode   = mode_ == CameraMode::FPS;
+  auto const mouse_mode = fps_mode
+      ? SDL_TRUE
+      : SDL_FALSE;
+  assert(0 == SDL_SetRelativeMouseMode(mouse_mode));
 }
 
 void
@@ -293,12 +334,12 @@ Camera::toggle_rotation_lock()
 {
   switch (mode()) {
     case CameraMode::FPS:
-      fps.rotation_lock ^= true;
+      fps.cs.rotation_lock ^= true;
       break;
     case CameraMode::Ortho:
       break;
     case CameraMode::ThirdPerson:
-      arcball.rotation_lock ^= true;
+      arcball.cs.rotation_lock ^= true;
       break;
     case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:
@@ -308,19 +349,19 @@ Camera::toggle_rotation_lock()
 }
 
 Camera&
-Camera::rotate(float dx, float dy, DeviceSensitivity const& sens, FrameTime const& ft)
+Camera::rotate_radians(float dx, float dy, FrameTime const& ft)
 {
-  dx *= ft.delta_millis() * sens.x;
-  dy *= ft.delta_millis() * sens.y;
+  dx *= ft.delta_millis();
+  dy *= ft.delta_millis();
 
   switch (mode()) {
     case CameraMode::FPS:
-      fps.rotate_degrees(glm::degrees(dx), glm::degrees(dy), sens, ft);
+      fps.rotate_radians(dx, dy, ft);
       break;
     case CameraMode::Ortho:
       //break;
     case CameraMode::ThirdPerson:
-      arcball.rotate(dx, dy, sens, ft);
+      arcball.rotate_radians(dx, dy, ft);
       break;
     case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:

@@ -1,16 +1,6 @@
 #pragma once
 #include <boomhs/clock.hpp>
 
-namespace opengl
-{
-struct DrawState;
-} // namespace opengl
-
-namespace window
-{
-class SDLWindow;
-} // namespace window
-
 namespace boomhs
 {
 class Camera;
@@ -28,7 +18,7 @@ namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState&, LevelManager&, opengl::SkyboxRenderer&, WaterAudioSystem&, window::SDLWindow&,
-     Camera&, opengl::DrawState&, FrameTime const&);
+draw(EngineState&, LevelManager&, opengl::SkyboxRenderer&, WaterAudioSystem&, Camera&,
+     FrameTime const&);
 
 } // namespace boomhs::ui_debug

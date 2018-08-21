@@ -1,5 +1,6 @@
 #include <boomhs/audio.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/colors.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/game_config.hpp>
@@ -8,7 +9,7 @@
 #include <boomhs/state.hpp>
 #include <boomhs/zone_state.hpp>
 
-#include <boomhs/colors.hpp>
+#include <opengl/renderer.hpp>
 #include <window/sdl_window.hpp>
 
 #include <extlibs/imgui.hpp>
@@ -173,20 +174,153 @@ process_keydown(GameState& state, SDL_Event const& event)
   }
 }
 
+void
+show_ambientlight_window(UiDebugState& ui, LevelData& ldata)
+{
+  auto const draw = [&]() {
+    ImGui::Text("Global Light");
+
+    auto& global_light = ldata.global_light;
+    ImGui::ColorEdit3("Ambient Light Color:", global_light.ambient.data());
+
+    if (ImGui::Button("Close", ImVec2(120, 0))) {
+      ui.show_ambientlight_window = false;
+    }
+  };
+  imgui_cxx::with_window(draw, "Global Light Editor");
+}
+
+void
+show_directionallight_window(UiDebugState& ui, LevelData& ldata)
+{
+  auto& directional = ldata.global_light.directional;
+
+  auto const draw = [&]() {
+    ImGui::Text("Directional Light");
+    ImGui::InputFloat3("direction:", glm::value_ptr(directional.direction));
+
+    auto& colors = directional.light;
+    ImGui::ColorEdit3("Diffuse:", colors.diffuse.data());
+    ImGui::ColorEdit3("Specular:", colors.specular.data());
+
+    if (ImGui::Button("Close", ImVec2(120, 0))) {
+      ui.show_directionallight_window = false;
+    }
+  };
+  imgui_cxx::with_window(draw, "Directional Light Editor");
+}
+
+void
+lighting_menu(EngineState& es, LevelData& ldata, EntityRegistry& registry)
+{
+  auto& ui                     = es.ui_state.debug;
+  bool& edit_ambientlight      = ui.show_ambientlight_window;
+  bool& edit_directionallights = ui.show_directionallight_window;
+
+  auto const draw = [&]() {
+    ImGui::MenuItem("Ambient Lighting", nullptr, &edit_ambientlight);
+    ImGui::MenuItem("Directional Lighting", nullptr, &edit_directionallights);
+  };
+  imgui_cxx::with_menu(draw, "Lightning");
+  if (edit_ambientlight) {
+    show_ambientlight_window(ui, ldata);
+  }
+  if (edit_directionallights) {
+    show_directionallight_window(ui, ldata);
+  }
+}
+
+void
+world_menu(EngineState& es, LevelData& ldata)
+{
+  auto&      ui   = es.ui_state.debug;
+  auto const draw = [&]() {
+    ImGui::MenuItem("Update Orbital", nullptr, &es.update_orbital_bodies);
+    ImGui::MenuItem("Draw Global Axis", nullptr, &es.show_global_axis);
+  };
+  imgui_cxx::with_menu(draw, "World");
+}
+
+void
+draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window, DrawState& ds)
+{
+  auto&      uistate      = es.ui_state.debug;
+  auto const windows_menu = [&]() {
+    ImGui::MenuItem("Camera", nullptr, &uistate.show_camerawindow);
+    ImGui::MenuItem("Entity", nullptr, &uistate.show_entitywindow);
+    ImGui::MenuItem("Device", nullptr, &uistate.show_devicewindow);
+    ImGui::MenuItem("Environment Window", nullptr, &uistate.show_environment_window);
+    ImGui::MenuItem("Player", nullptr, &uistate.show_playerwindow);
+    ImGui::MenuItem("Skybox", nullptr, &uistate.show_skyboxwindow);
+    ImGui::MenuItem("Terrain", nullptr, &uistate.show_terrain_editor_window);
+    ImGui::MenuItem("Time", nullptr, &uistate.show_time_window);
+    ImGui::MenuItem("Water", nullptr, &uistate.show_water_window);
+    ImGui::MenuItem("Exit", nullptr, &es.quit);
+  };
+
+  auto&      window_state  = es.window_state;
+  auto const settings_menu = [&]() {
+    auto const setwindow_row = [&](char const* text, auto const fullscreen) {
+      if (ImGui::MenuItem(text, nullptr, nullptr, window_state.fullscreen != fullscreen)) {
+        window.set_fullscreen(fullscreen);
+        window_state.fullscreen = fullscreen;
+      }
+    };
+    setwindow_row("NOT Fullscreen", window::FullscreenFlags::NOT_FULLSCREEN);
+    setwindow_row("Fullscreen", window::FullscreenFlags::FULLSCREEN);
+    setwindow_row("Fullscreen DESKTOP", window::FullscreenFlags::FULLSCREEN_DESKTOP);
+    auto const setsync_row = [&](char const* text, auto const sync) {
+      if (ImGui::MenuItem(text, nullptr, nullptr, window_state.sync != sync)) {
+        window.set_swapinterval(sync);
+        window_state.sync = sync;
+      }
+    };
+    setsync_row("Synchronized", window::SwapIntervalFlag::SYNCHRONIZED);
+    setsync_row("Late Tearing", window::SwapIntervalFlag::LATE_TEARING);
+  };
+
+  auto&      zs            = lm.active();
+  auto&      ldata         = zs.level_data;
+  auto&      registry      = zs.registry;
+  auto const draw_mainmenu = [&]() {
+    imgui_cxx::with_menu(windows_menu, "Windows");
+    imgui_cxx::with_menu(settings_menu, "Settings");
+    world_menu(es, ldata);
+    lighting_menu(es, ldata, registry);
+
+    auto const framerate = es.imgui.Framerate;
+    auto const ms_frame  = 1000.0f / framerate;
+
+    ImGui::SameLine(ImGui::GetWindowWidth() * 0.30f);
+    ImGui::Text("#verts: %s", ds.to_string().c_str());
+
+    ImGui::SameLine(ImGui::GetWindowWidth() * 0.60f);
+    ImGui::Text("Current Level: %i", lm.active_zone());
+
+    ImGui::SameLine(ImGui::GetWindowWidth() * 0.76f);
+    ImGui::Text("FPS(avg): %.1f ms/frame: %.3f", framerate, ms_frame);
+  };
+  imgui_cxx::with_mainmenubar(draw_mainmenu);
+}
+
 } // namespace
 
 namespace boomhs::main_menu
 {
 
 void
-draw(EngineState& es, ZoneState& zs, ImVec2 const& size, WaterAudioSystem& water_audio)
+draw(EngineState& es, SDLWindow& window, DrawState& ds, LevelManager& lm, ImVec2 const& size,
+     WaterAudioSystem& water_audio)
 {
   draw_menu(es, size, water_audio);
 
   auto& uistate = es.ui_state.debug;
   if (uistate.show_debugwindow) {
+    auto& zs = lm.active();
     draw_debugwindow(es, zs);
   }
+
+  draw_mainmenu(es, lm, window, ds);
 }
 
 void

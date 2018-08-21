@@ -114,7 +114,7 @@ IO_SDL::process_event(SDLEventProcessArgs &&epa)
     behavior.on_mouse_up(MouseButtonEvent{state, camera, event.button, player_wo, ft});
     break;
   case SDL_MOUSEMOTION:
-    behavior.on_mouse_motion(MouseMotionEvent{state, event.motion, camera, player_wo, ft});
+    behavior.on_mouse_motion(MouseMotionEvent{state, event.motion, camera, player, ft});
     break;
   case SDL_MOUSEWHEEL:
     behavior.on_mouse_wheel(MouseWheelEvent{state, event.wheel, camera, player_wo, ft});

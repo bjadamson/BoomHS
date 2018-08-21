@@ -20,20 +20,28 @@ namespace
 {
 
 void
-fps_mousemove(WorldObject& wo, Camera& camera, WorldObject& player,
-              DeviceSensitivity const& dsens, float const xrel, float const yrel,
+fps_mousemove(Camera& camera, Player& player, float const xrel, float const yrel,
               FrameTime const& ft)
 {
-  camera.rotate(xrel, yrel, dsens, ft);
+  camera.rotate_radians(xrel, yrel, ft);
+  player.world_object().rotate_to_match_camera_rotation(camera);
+
+  //player.head_world_object().rotate_to_match_camera_rotation(camera);
+
+  //auto& player_rot = player.transform().rotation;
+  //auto& camera_rot = camera.get_target().transform().rotation;
+
+  //glm::mat4 camera_quat = glm::toMat4(camera_rot);
+  //glm::mat4 player_quat = glm::toMat4(player_rot);
 }
 
 void
-thirdperson_mousemove(WorldObject& wo, Camera& camera, MouseState const& ms,
-                      DeviceSensitivity const& dsens, float const xrel, float const yrel,
+thirdperson_mousemove(Player& player, Camera& camera, MouseState const& ms,
+                      float const xrel, float const yrel,
                       FrameTime const& ft)
 {
   if (ms.left_pressed()) {
-    camera.rotate(xrel, yrel, dsens, ft);
+    camera.rotate_radians(xrel, yrel, ft);
   }
   if (ms.right_pressed()) {
     auto constexpr  RIGHTCLICK_TURN_SPEED_DEGREES = 60.0f;
@@ -41,7 +49,7 @@ thirdperson_mousemove(WorldObject& wo, Camera& camera, MouseState const& ms,
     float const angle = xrel > 0 ? speed : -speed;
 
     auto const x_dt  = angle * ft.delta_millis();
-    wo.rotate_degrees(glm::degrees(x_dt), EulerAxis::Y);
+    player.world_object().rotate_degrees(glm::degrees(x_dt), EulerAxis::Y);
   }
 }
 
@@ -201,16 +209,23 @@ PlayerPlayingGameBehavior::mouse_motion(MouseMotionEvent&& mme)
   auto& ui     = es.ui_state.debug;
 
   // convert from int to floating-point value
-  float const xrel = motion.xrel, yrel = motion.yrel;
+  float xrel = motion.xrel, yrel = motion.yrel;
+  //xrel = glm::radians(xrel);
+  //yrel = glm::radians(yrel);
+
   if (camera.is_firstperson()) {
-    fps_mousemove(player, camera, player, ms.first_person, xrel, yrel, ft);
+    fps_mousemove(camera, player, xrel, yrel, ft);
   }
   else if (camera.is_thirdperson()) {
-    thirdperson_mousemove(player, camera, ms.current, ms.third_person, xrel, yrel, ft);
+    thirdperson_mousemove(player, camera, ms.current, xrel, yrel, ft);
   }
   else {
     LOG_ERROR("MouseMotion not implemented for this camera mode");
   }
+
+
+  auto const coords = es.device_states.mouse.current.coords();
+  LOG_ERROR_SPRINTF("MOUSE POSITION %i:%i", coords.x, coords.y);
 }
 
 void
@@ -467,29 +482,26 @@ PlayerPlayingGameBehavior::process_controller_state(ControllerArgs&& ca)
 
   {
     auto const& ds = es.device_states.controller;
-    auto const& sens = camera.is_firstperson()
-      ? ds.first_person
-      : ds.third_person;
     {
       auto const axis_right_x = c.axis_right_x();
       if (less_threshold(axis_right_x)) {
         LOG_ERROR("LT");
-        camera.rotate(axis_right_x, 0.0, sens, ft);
+        camera.rotate_radians(axis_right_x, 0.0, ft);
         player_wo.rotate_to_match_camera_rotation(camera);
       }
       if (greater_threshold(axis_right_x)) {
         LOG_ERROR("GT");
-        camera.rotate(axis_right_x, 0.0, sens, ft);
+        camera.rotate_radians(axis_right_x, 0.0, ft);
         player_wo.rotate_to_match_camera_rotation(camera);
       }
     }
     {
       auto const right_axis_y = c.axis_right_y();
       if (less_threshold(right_axis_y)) {
-        camera.rotate(0.0, right_axis_y, sens, ft);
+        camera.rotate_radians(0.0, right_axis_y, ft);
       }
       if (greater_threshold(right_axis_y)) {
-        camera.rotate(0.0, right_axis_y, sens, ft);
+        camera.rotate_radians(0.0, right_axis_y, ft);
       }
     }
   }

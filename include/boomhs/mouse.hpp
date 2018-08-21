@@ -37,9 +37,6 @@ struct MouseStates
 {
   MouseState current;
   MouseState previous;
-
-  DeviceSensitivity first_person{10.0f, 10.0f};
-  DeviceSensitivity third_person{10.0f, 10.0f};
 };
 
 } // namespace boomhs

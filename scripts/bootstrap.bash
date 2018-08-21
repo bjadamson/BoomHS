@@ -286,6 +286,7 @@ glm/0.9.8.0@TimSimpson/testing
 
 [generators]
 cmake
+ninja
 EOF
 
 cd ${BUILD}
@@ -297,7 +298,7 @@ conan install --build missing                                                   
   -s compiler.libcxx=${CXX_STD_LIBRARY}                                                            \
   -s build_type=${DEBUG_OR_RELEASE} .
 
-cmake .. -G "Unix Makefiles"                                                                       \
+cmake .. -G "Unix Makefiles" -j 4                                                                  \
   -DCMAKE_BUILD_TYPE=${DEBUG_OR_RELEASE}                                                           \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cd ..

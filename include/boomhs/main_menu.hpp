@@ -3,15 +3,25 @@
 
 struct ImVec2;
 
+namespace opengl
+{
+struct DrawState;
+} // namespace opengl
+
+namespace window
+{
+class SDLWindow;
+} // namespace window
+
 namespace boomhs
 {
 class  Camera;
 struct EngineState;
 class  FrameTime;
 struct GameState;
+struct LevelManager;
 class  PlayerBehavior;
 class  SDLEventProcessArgs;
-struct ZoneState;
 class  WaterAudioSystem;
 
 struct MainMenuState
@@ -26,7 +36,8 @@ namespace boomhs::main_menu
 {
 
 void
-draw(EngineState&, ZoneState&, ImVec2 const&, WaterAudioSystem&);
+draw(EngineState&, window::SDLWindow&, opengl::DrawState&, LevelManager&, ImVec2 const&,
+     WaterAudioSystem&);
 
 void
 process_event(SDLEventProcessArgs &&);

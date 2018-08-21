@@ -68,9 +68,20 @@ public:
   void set(WorldObject& wo) { wo_ = &wo; }
 };
 
+struct CameraState
+{
+  DeviceSensitivity sensitivity;
+
+  bool rotation_lock;
+
+  bool flip_y = false;
+  bool flip_x = false;
+};
+
 class CameraFPS
 {
   glm::vec3 forward_, up_;
+  float xrot_, yrot_;
 
   CameraTarget& target_;
   Viewport&     viewport_;
@@ -85,10 +96,10 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(CameraFPS);
 
   // fields
-  bool rotation_lock;
+  CameraState cs;
 
-  // methods (assumes values are in degrees)
-  CameraFPS& rotate_degrees(float, float, DeviceSensitivity const&, FrameTime const&);
+  // methods
+  CameraFPS& rotate_radians(float, float, FrameTime const&);
 
   void update(int, int, ScreenDimensions const&, window::SDLWindow&);
   glm::vec3 world_position() const;
@@ -103,7 +114,6 @@ class CameraORTHO
 
   CameraTarget& target_;
   Viewport&     viewport_;
-
   friend class Camera;
 
 public:
@@ -120,7 +130,6 @@ class CameraArcball
 
   CameraTarget& target_;
   Viewport&     viewport_;
-  bool&         flip_y_;
 
   SphericalCoordinates coordinates_;
 
@@ -129,11 +138,11 @@ class CameraArcball
   friend class Camera;
 
 public:
-  CameraArcball(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&, bool&);
+  CameraArcball(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraArcball);
 
   // fields
-  bool rotation_lock;
+  CameraState   cs;
 
   // methods
   SphericalCoordinates spherical_coordinates() const { return coordinates_; }
@@ -142,7 +151,7 @@ public:
   void decrease_zoom(float, FrameTime const&);
   void increase_zoom(float, FrameTime const&);
 
-  CameraArcball& rotate(float, float, DeviceSensitivity const&, FrameTime const&);
+  CameraArcball& rotate_radians(float, float, FrameTime const&);
 
   glm::vec3 local_position() const;
   glm::vec3 world_position() const;
@@ -167,8 +176,6 @@ public:
   CameraArcball arcball;
   CameraFPS     fps;
   CameraORTHO   ortho;
-
-  bool flip_y = false;
 
   WorldObject&       get_target();
   WorldObject const& get_target() const;
@@ -198,7 +205,7 @@ public:
   auto const& frustum_ref() const { return viewport_.frustum; }
   auto&       frustum_ref() { return viewport_.frustum; }
 
-  Camera& rotate(float, float, DeviceSensitivity const&, FrameTime const&);
+  Camera& rotate_radians(float, float, FrameTime const&);
   void    set_target(WorldObject&);
 
   glm::mat4 compute_projectionmatrix() const;
