@@ -51,6 +51,7 @@ scripts/bootstrap.bash
 ##### Command-Line Arguments
 The bootstrapping script supports some command line arguments.
 
+* Build System: The [-n] flag switches build systems from the default (Unix Makfiles) to Ninja.
 * Static Analysis: The [-a] flag enables static analysis information to be linked with the binary
   during compilation.
 * Debug/Release: The [-r] flag will instruct CMake to build a release binary (no debugging

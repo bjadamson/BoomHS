@@ -8,8 +8,9 @@ mkdir -p ${BUILD}
 STATIC_ANALYSIS_FLAGS=""
 DEBUG_OR_RELEASE="Debug"
 CXX_STD_LIBRARY="libc++"
+BUILD_SYSTEM="Unix Makefiles"
 
-while getopts ":ahr" opt; do
+while getopts ":ahnr" opt; do
   case ${opt} in
     a )
       export STATIC_ANALYSIS_FLAGS="-fsanitize=address"
@@ -17,9 +18,13 @@ while getopts ":ahr" opt; do
     r )
       export DEBUG_OR_RELEASE="Release"
       ;;
+    n )
+      export BUILD_SYSTEM="Ninja"
+      ;;
     \h )
       echo "Help options for bootstrapping process."
       echo "[-a] To enable Static Analysis."
+      echo "[-n] To to to use the Ninja Build."
       echo "[-r] To switch from Debug to Release mode."
 
       echo "[-h] See this message."
@@ -33,12 +38,16 @@ shift $((OPTIND -1))
 
 echo "Configuring project ..."
 echo "DEBUG/RELEASE: $DEBUG_OR_RELEASE"
+
 printf "Static Analysis: (ON|OFF): "
 if [ -z "$STATIC_ANALYSIS_FLAGS" ]; then
   echo "OFF"
 else
   echo "ON"
 fi
+
+printf "Build System: "
+echo $BUILD_SYSTEM
 
 # Generate a CMakeLists.txt file for CMake to use when executing a build.
 cat > "${ROOT}/CMakeLists.txt" << "EOF"
@@ -286,7 +295,6 @@ glm/0.9.8.0@TimSimpson/testing
 
 [generators]
 cmake
-ninja
 EOF
 
 cd ${BUILD}
@@ -298,7 +306,7 @@ conan install --build missing                                                   
   -s compiler.libcxx=${CXX_STD_LIBRARY}                                                            \
   -s build_type=${DEBUG_OR_RELEASE} .
 
-cmake .. -G "Unix Makefiles" -j 4                                                                  \
+cmake ..  -G "${BUILD_SYSTEM}"                                                                     \
   -DCMAKE_BUILD_TYPE=${DEBUG_OR_RELEASE}                                                           \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cd ..

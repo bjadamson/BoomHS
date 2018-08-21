@@ -3,7 +3,7 @@ set -ex
 source "scripts/common.bash"
 
 cd ${BUILD}
-cmake --build .
+time cmake --build .
 cd ..
 ${BUILD}/bin/BUILD_POSTPROCESSING
 
