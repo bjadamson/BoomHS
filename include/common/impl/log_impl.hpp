@@ -116,9 +116,14 @@ public:
   DEFINE_LOGWRITER_FN(warn)
   DEFINE_LOGWRITER_FN(error)
 
+  void set_level(spdlog::level::level_enum const level)
+  {
+    flusher_->set_level(level);
+  }
+
   void flush()
   {
-    flusher_.resource().flush();
+    flusher_->flush();
   }
 };
 

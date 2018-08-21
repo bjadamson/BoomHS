@@ -228,10 +228,6 @@ PlayerPlayingGameBehavior::mouse_motion(MouseMotionEvent&& mme)
   else {
     LOG_ERROR("MouseMotion not implemented for this camera mode");
   }
-
-
-  auto const coords = es.device_states.mouse.current.coords();
-  LOG_ERROR_SPRINTF("MOUSE POSITION %i:%i", coords.x, coords.y);
 }
 
 void

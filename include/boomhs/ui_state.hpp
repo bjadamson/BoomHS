@@ -68,10 +68,16 @@ struct WaterBuffer
   float weight_mix_effect = 1.0f;
 };
 
+struct LogBuffer
+{
+  int log_level = 2;
+};
+
 struct Buffers
 {
   AudioUiBuffer  audio;
   DrawTimeBuffer draw_time_window;
+  LogBuffer      log;
   SkyboxBuffer   skybox;
   TerrainBuffer  terrain;
   WaterBuffer    water;

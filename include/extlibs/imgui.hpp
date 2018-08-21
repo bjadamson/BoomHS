@@ -141,13 +141,13 @@ with_childframe(FN const& fn, Args&&... args)
   }
 }
 
-template <typename FN>
+template <typename FN, typename... Args>
 void
-with_menu(FN const& fn, char const* name)
+with_menu(FN const& fn, char const* name, Args&&... args)
 {
   if (ImGui::BeginMenu(name)) {
     ON_SCOPE_EXIT([]() { ImGui::EndMenu(); });
-    fn();
+    fn(FORWARD(args));
   }
 }
 

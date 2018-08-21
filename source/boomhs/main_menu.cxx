@@ -321,6 +321,30 @@ lighting_menu(EngineState& es, LevelData& ldata, EntityRegistry& registry)
 }
 
 void
+log_menu(EngineState& es, LevelData& ldata)
+{
+  auto& logger  = es.logger;
+  auto& ui      = es.ui_state.debug;
+  auto& buffers = ui.buffers;
+
+  bool constexpr yes = true;
+  auto const log_menu_item = [&](char const* name, auto const level) {
+    auto const level_int = static_cast<int>(ui.buffers.log.log_level);
+    bool const* selected = (level == level_int) ? &yes : nullptr;
+    if (ImGui::MenuItem(name, nullptr, selected)) {
+      logger.set_level(level);
+      ui.buffers.log.log_level = level_int;
+    }
+  };
+
+  log_menu_item("Trace", spdlog::level::trace);
+  log_menu_item("Debug", spdlog::level::debug);
+  log_menu_item("Info",  spdlog::level::info);
+  log_menu_item("Warn",  spdlog::level::warn);
+  log_menu_item("Error", spdlog::level::err);
+}
+
+void
 world_menu(EngineState& es, LevelData& ldata)
 {
   auto&      ui   = es.ui_state.debug;
@@ -814,11 +838,15 @@ void
 draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window, DrawState& ds)
 {
   auto&      uistate      = es.ui_state.debug;
+  auto&      zs            = lm.active();
+  auto&      ldata         = zs.level_data;
+
   auto const windows_menu = [&]() {
     ImGui::MenuItem("Camera", nullptr, &uistate.show_camerawindow);
     ImGui::MenuItem("Entity", nullptr, &uistate.show_entitywindow);
     ImGui::MenuItem("Device", nullptr, &uistate.show_devicewindow);
     ImGui::MenuItem("Environment Window", nullptr, &uistate.show_environment_window);
+    imgui_cxx::with_menu(log_menu, "Log", es, ldata);
     ImGui::MenuItem("Player", nullptr, &uistate.show_playerwindow);
     ImGui::MenuItem("Skybox", nullptr, &uistate.show_skyboxwindow);
     ImGui::MenuItem("Terrain", nullptr, &uistate.show_terrain_editor_window);
@@ -848,8 +876,6 @@ draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window, Draw
     setsync_row("Late Tearing", window::SwapIntervalFlag::LATE_TEARING);
   };
 
-  auto&      zs            = lm.active();
-  auto&      ldata         = zs.level_data;
   auto&      registry      = zs.registry;
   auto const draw_mainmenu = [&]() {
     imgui_cxx::with_menu(windows_menu, "Windows");
