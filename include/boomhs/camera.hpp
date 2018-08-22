@@ -101,9 +101,7 @@ public:
   // methods
   CameraFPS& rotate_radians(float, float, FrameTime const&);
 
-  void update(int, int, ScreenDimensions const&, window::SDLWindow&);
   glm::vec3 world_position() const;
-
   glm::mat4 compute_projectionmatrix() const;
   glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
 };
@@ -207,9 +205,6 @@ public:
 
   Camera& rotate_radians(float, float, FrameTime const&);
   void    set_target(WorldObject&);
-
-  glm::mat4 compute_projectionmatrix() const;
-  glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
 
   // static fns
   static Camera make_default(ScreenDimensions const&);

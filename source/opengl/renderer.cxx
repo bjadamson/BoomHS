@@ -640,8 +640,7 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
 
   auto const& dimensions = es.dimensions;
 
-  auto const pos_inverted_y = glm::vec2{pos.x, (dimensions.bottom() - pos.y)};
-  auto const v     = OF::rectangle_vertices(pos_inverted_y.x, pos_inverted_y.y, size.x, size.y);
+  auto const v     = OF::rectangle_vertices(pos.x, pos.y, size.x, size.y);
   auto const uv = OF::rectangle_uvs(ti.uv_max);
   auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
 
@@ -656,35 +655,6 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
     dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
 
     glActiveTexture(GL_TEXTURE0);
-  });
-}
-
-void
-draw_inventory_overlay(RenderState& rstate)
-{
-  auto& fstate = rstate.fs;
-  auto& es     = fstate.es;
-  auto& logger = es.logger;
-
-  auto& zs  = fstate.zs;
-  auto& sps = zs.gfx_state.sps;
-  auto& sp  = sps.ref_sp("2dcolor");
-
-  auto color = LOC::GRAY;
-  color.set_a(0.25);
-  OF::RectInfo const ri{1.0f, 1.0f, color, std::nullopt, std::nullopt};
-  RectBuffer     buffer = OF::make_rectangle(ri);
-
-  DrawInfo dinfo = gpu::copy_rectangle(logger, sp.va(), buffer);
-
-  Transform  transform;
-  auto const model_matrix = transform.model_matrix();
-
-  ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
-  sp.while_bound(logger, [&]() {
-    set_modelmatrix(logger, model_matrix, sp);
-
-    dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, dinfo); });
   });
 }
 
@@ -767,7 +737,7 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
   };
 
   bool const should_draw_glow = scale < 1.0f;
-  char const* tn = should_draw_glow ? "2dtexture" : "target_reticle";
+  char const* tn = should_draw_glow ? "billboard" : "target_reticle";
 
   auto& sps = zs.gfx_state.sps;
   auto& sp  = sps.ref_sp(tn);

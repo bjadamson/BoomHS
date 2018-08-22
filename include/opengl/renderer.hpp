@@ -157,9 +157,6 @@ void
 draw_frustum(RenderState&, boomhs::Frustum const&, glm::mat4 const&);
 
 void
-draw_inventory_overlay(RenderState&);
-
-void
 draw_line(RenderState&, glm::vec3 const&, glm::vec3 const&, boomhs::Color const&);
 
 void

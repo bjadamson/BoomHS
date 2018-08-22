@@ -6,6 +6,8 @@
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/ui_state.hpp>
 
+#include <opengl/factory.hpp>
+#include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
 
 #include <extlibs/imgui.hpp>
@@ -448,19 +450,18 @@ public:
 };
 
 void
-draw_2dui(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
+draw_2dui(RenderState& rstate)
 {
+  auto& fstate   = rstate.fs;
+  auto& es       = fstate.es;
+  auto& ds       = rstate.ds;
+
   auto& logger   = es.logger;
-  auto& zs       = lm.active();
+  auto& zs       = fstate.zs;
   auto& registry = zs.registry;
 
   auto& ldata    = zs.level_data;
   auto& nbt      = ldata.nearby_targets;
-
-  // Create a renderstate using an orthographic projection.
-  auto const cstate = CameraFrameState::from_camera_with_mode(camera, CameraMode::Ortho);
-  FrameState fstate{cstate, es, zs};
-  RenderState rstate{fstate, ds};
 
   static BlinkTimer blink_timer;
   blink_timer.update();
@@ -491,7 +492,7 @@ draw_2dui(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
   auto& ttable    = gfx_state.texture_table;
 
   bool const using_blink_shader = player_attacking && blink_timer.is_blinking();
-  auto const& shader_name = using_blink_shader ? "2d_ui_blinkcolor_icon" : "2dtexture_ss";
+  auto const& shader_name = using_blink_shader ? "2d_ui_blinkcolor_icon" : "2dtexture";
   auto& spp = sps.ref_sp(shader_name);
 
   if (using_blink_shader) {
@@ -558,11 +559,39 @@ draw_2dui(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
     glm::vec2 const size{16.0f};
 
     auto const middle_of_screen = dimensions.center().to_vec2();
-    auto& sp = sps.ref_sp("2dtexture_ss");
+    auto& sp = sps.ref_sp("2dtexture");
 
     ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
     draw_icon_on_screen(sp, middle_of_screen, size, "target_selectable_cursor");
   }
+}
+
+void
+draw_inventory_overlay(RenderState& rstate)
+{
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& zs     = fstate.zs;
+  auto& logger = es.logger;
+  auto& sps    = zs.gfx_state.sps;
+  auto& sp     = sps.ref_sp("2dcolor");
+
+  auto color = LOC::GRAY;
+  color.set_a(0.40);
+  OF::RectInfo const ri{1.0f, 1.0f, color, std::nullopt, std::nullopt};
+  RectBuffer     buffer = OF::make_rectangle(ri);
+
+  DrawInfo dinfo = gpu::copy_rectangle(logger, sp.va(), buffer);
+
+  Transform  transform;
+  auto const model_matrix = transform.model_matrix();
+
+  ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
+  sp.while_bound(logger, [&]() {
+      render::set_modelmatrix(logger, model_matrix, sp);
+
+    dinfo.while_bound(logger, [&]() { render::draw_2d(rstate, GL_TRIANGLES, sp, dinfo); });
+  });
 }
 
 } // namespace boomhs
@@ -589,7 +618,11 @@ draw(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
   auto& nbt   = ldata.nearby_targets;
   draw_nearest_target_info(es.dimensions, nbt, ttable, registry);
 
-  draw_2dui(es, lm, camera, ds);
+  // Create a renderstate using an orthographic projection.
+  auto const cstate = CameraFrameState::from_camera_with_mode(camera, CameraMode::Ortho);
+  FrameState fstate{cstate, es, zs};
+  RenderState rstate{fstate, ds};
+  draw_2dui(rstate);
 
   auto& player = find_player(registry);
   draw_chatwindow(es, player);
@@ -598,6 +631,7 @@ draw(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
 
   auto& inventory = player.inventory;
   if (inventory.is_open()) {
+    draw_inventory_overlay(rstate);
     draw_player_inventory(logger, player, registry, ttable);
   }
 }

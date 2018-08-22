@@ -57,6 +57,13 @@ va = "vertex_color"
 is_2d = true
 
 [[shaders]]
+name = "billboard"
+vertex = "billboard.vert"
+fragment = "billboard.frag"
+va = "vertex_uv"
+is_2d = true
+
+[[shaders]]
 name = "2dtexture"
 vertex = "2dtexture.vert"
 fragment = "2dtexture.frag"
@@ -64,22 +71,15 @@ va = "vertex_uv"
 is_2d = true
 
 [[shaders]]
-name = "2dtexture_ss"
-vertex = "2dtexture_ss.vert"
-fragment = "2dtexture.frag"
-va = "vertex_uv"
-is_2d = true
-
-[[shaders]]
 name = "2d_ui_blinkcolor_icon"
-vertex = "2dtexture_ss.vert"
+vertex = "2dtexture.vert"
 fragment = "2d_ui_blinkcolor_icon.frag"
 va = "vertex_uv"
 is_2d = true
 
 [[shaders]]
 name = "target_reticle"
-vertex = "2dtexture.vert"
+vertex = "billboard.vert"
 fragment = "target_reticle.frag"
 va = "vertex_uv"
 is_2d = true

@@ -190,12 +190,6 @@ CameraFPS::CameraFPS(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget
   cs.sensitivity.y = 10.0f;
 }
 
-void
-CameraFPS::update(int const xpos, int const ypos, ScreenDimensions const& dim,
-                  SDLWindow& window)
-{
-}
-
 CameraFPS&
 CameraFPS::rotate_radians(float dx, float dy, FrameTime const& ft)
 {
@@ -368,7 +362,6 @@ Camera::set_target(WorldObject& wo)
   target_.set(wo);
 }
 
-
 glm::vec3
 Camera::eye_forward() const
 {
@@ -440,43 +433,6 @@ Camera::world_position() const
   return ZERO;
 }
 
-glm::mat4
-Camera::compute_projectionmatrix() const
-{
-  switch (mode()) {
-  case CameraMode::ThirdPerson:
-    return arcball.compute_projectionmatrix();
-  case CameraMode::FPS:
-    return fps.compute_projectionmatrix();
-  case CameraMode::Ortho:
-    return ortho.compute_projectionmatrix();
-  case CameraMode::FREE_FLOATING:
-  case CameraMode::MAX:
-    break;
-  }
-
-  std::abort();
-  return glm::mat4{}; // appease compiler
-}
-
-glm::mat4
-Camera::compute_viewmatrix(glm::vec3 const& target_pos) const
-{
-  switch (mode()) {
-    case CameraMode::Ortho:
-      return ortho.compute_viewmatrix(target_pos);
-    case CameraMode::FPS:
-      return fps.compute_viewmatrix(eye_forward());
-    case CameraMode::ThirdPerson:
-      return arcball.compute_viewmatrix(target_pos);
-    case CameraMode::FREE_FLOATING:
-    case CameraMode::MAX:
-      break;
-  }
-  std::abort();
-  return glm::mat4{}; // appease compiler
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // free functions
 Camera
@@ -489,7 +445,7 @@ Camera::make_default(ScreenDimensions const& dimensions)
 
   auto constexpr FOV  = glm::radians(110.0f);
   auto constexpr AR   = AspectRatio{4.0f, 3.0f};
-  auto constexpr NEAR = 0.1f;
+  auto constexpr NEAR = 0.001f;
   auto constexpr FAR  = 10000.0f;
   auto vp = make_viewport(FOV, dimensions, AR, NEAR, FAR);
 

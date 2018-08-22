@@ -346,12 +346,6 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
   bool const previously_alive = is_target_selected_and_alive(registry, nbt);
   player.update(es, zs, ft);
 
-  if (CameraMode::FPS == camera.mode()) {
-    auto const& ms = es.device_states.mouse;
-    auto const& current = ms.current.coords();
-    camera.fps.update(current.x, current.y, es.dimensions, window);
-  }
-
   if (previously_alive) {
     auto const target = nbt.selected();
     if (target) {

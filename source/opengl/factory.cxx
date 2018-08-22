@@ -301,7 +301,7 @@ rectangle_vertices(float const x, float const y, float const w, float const h)
   auto const x1 = x0 + w;
   auto const y1 = y0 - h;
 
-  auto constexpr Z = 0.0f;
+  auto constexpr Z = -0.5f;
 #define zero  x0, y0, Z
 #define one   x1, y0, Z
 #define two   x1, y1, Z
