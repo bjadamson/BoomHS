@@ -737,21 +737,19 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
   };
 
   bool const should_draw_glow = scale < 1.0f;
-  char const* tn = should_draw_glow ? "billboard" : "target_reticle";
 
   auto& sps = zs.gfx_state.sps;
-  auto& sp  = sps.ref_sp(tn);
-  if (!sp.is_2d) {
-    std::abort();
-  }
+  auto& sp = sps.ref_sp(should_draw_glow ? "billboard" : "target_reticle");
 
+  BIND_UNTIL_END_OF_SCOPE(logger, sp);
   ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
-  sp.while_bound(logger, [&]() {
-    if (scale < 1.0f) {
-      draw_glow(sp);
-    }
+
+  if (should_draw_glow) {
+    draw_glow(sp);
+  }
+  else {
     draw_reticle(sp);
-  });
+  }
 }
 
 void

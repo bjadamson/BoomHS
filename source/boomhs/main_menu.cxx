@@ -434,6 +434,10 @@ show_water_window(EngineState& es, LevelManager& lm)
     ImGui::InputFloat("weight \%texture", &wbuffer.weight_texture);
     ImGui::InputFloat("weight \%mix_effect", &wbuffer.weight_mix_effect);
     ImGui::Separator();
+    ImGui::Separator();
+    ImGui::Text("Advanced Water Options");
+    ImGui::InputFloat("u_fresnel_reflect_power", &wbuffer.fresnel_reflect_power);
+    ImGui::InputFloat("u_depth_divider", &wbuffer.depth_divider);
     ImGui::Text("Edit properties for individual water instances:");
     ImGui::Separator();
 

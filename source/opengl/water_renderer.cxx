@@ -302,11 +302,25 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
 
   Material const water_material{};
 
+  auto& wbuffer = es.ui_state.debug.buffers.water;
   auto const fn = [&](WaterInfo& winfo, Transform const& transform) {
 
     auto&       gfx_state = zs.gfx_state;
     auto& draw_handles = gfx_state.draw_handles;
     auto& dinfo = draw_handles.lookup_entity(logger, winfo.eid);
+
+    // TODO: These don't need to be set every frame, but only when the view frustum is updated.
+    //
+    // Since I don't have a routine that allows the frustum to be changed at runtime if I don't
+    // compute it every frame, for now.. compute these every frame
+    {
+      sp_.set_uniform_float1(logger, "u_fresnel_reflect_power", wbuffer.fresnel_reflect_power);
+      sp_.set_uniform_float1(logger, "u_depth_divider", wbuffer.depth_divider);
+
+      auto const& fr = camera.frustum_ref();
+      sp_.set_uniform_float1(logger, "u_near", fr.near);
+      sp_.set_uniform_float1(logger, "u_far", fr.far);
+    }
 
     sp_.set_uniform_vec3(logger, "u_camera_position", camera.world_position());
     sp_.set_uniform_float1(logger, "u_wave_offset", winfo.wave_offset);

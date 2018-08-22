@@ -63,9 +63,12 @@ struct WaterBuffer
   int  selected_water_graphicsmode = 0;
   int  selected_waterinfo          = -1;
 
-  float weight_light      = 0.60f;
-  float weight_texture    = 1.0f;
-  float weight_mix_effect = 1.0f;
+  float fresnel_reflect_power = 2.0;
+  float depth_divider         = 5.0;
+
+  float weight_light      = 0.50;
+  float weight_texture    = 0.70;
+  float weight_mix_effect = 0.40;
 };
 
 struct LogBuffer

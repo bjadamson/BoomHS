@@ -377,7 +377,7 @@ ShaderProgram::get_uniform_location(common::Logger &logger, GLchar const *name)
   LOG_DEBUG_SPRINTF("uniform '%s' found at '%d'.", name, loc);
 
   LOG_ANY_GL_ERRORS(logger, "get_uniform_location");
-  //assert(-1 != loc);
+  assert(-1 != loc);
   return loc;
 }
 
