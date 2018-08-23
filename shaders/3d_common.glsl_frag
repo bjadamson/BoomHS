@@ -1,4 +1,4 @@
-#define MAX_NUM_POINTLIGHTS 6
+#define MAX_NUM_POINTLIGHTS 7
 
 struct Material {
   vec3 ambient;

@@ -527,7 +527,15 @@ ShaderProgram::to_string() const
   auto const& handle = this->handle();
   auto const attributes = active_attributes_string(handle);
   auto const uniforms = active_uniforms_string(handle);
+
+#ifdef DEBUG_BUILD
+  auto const& v = source_paths_.vertex;
+  auto const& f = source_paths_.fragment;
+  return fmt::sprintf("ShaderProgram (vs): '%s' fs: '%s' attributes: %s", v.filename, f.filename, attributes);
+  // + uniforms);
+#else
   return fmt::sprintf("ShaderProgram: %s", attributes);// + uniforms);
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -584,10 +592,14 @@ ShaderPrograms::nickname_at_index(size_t const index) const
 Result<ShaderProgram, std::string>
 make_shader_program(common::Logger &logger, std::string const& vertex_s, std::string const& fragment_s, VertexAttribute &&va)
 {
-  VertexShaderFilename const v{vertex_s};
-  FragmentShaderFilename const f{fragment_s};
+  VertexShaderFilename v{vertex_s};
+  FragmentShaderFilename f{fragment_s};
   auto sp = TRY_MOVEOUT(program_factory::from_files(logger, v, f));
-  return Ok(ShaderProgram{ProgramHandle{sp}, MOVE(va)});
+  return Ok(ShaderProgram{ProgramHandle{sp}, MOVE(va)
+#ifdef DEBUG_BUILD
+      , PathToShaderSources{MOVE(v), MOVE(f)}
+#endif
+      });
 }
 
 std::ostream&

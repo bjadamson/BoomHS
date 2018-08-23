@@ -101,8 +101,7 @@ SkyboxRenderer::render(RenderState& rstate, DrawState& ds, FrameTime const& ft)
     auto const blend = calculate_blend();
     sp_.set_uniform_float1(logger, "u_blend_factor", blend);
 
-    auto& vao = dinfo_.vao();
-    vao.while_bound(logger, draw_fn);
+    dinfo_.while_bound(logger, draw_fn);
   });
 }
 

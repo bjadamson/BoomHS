@@ -1,5 +1,6 @@
 #pragma once
 #include <common/auto_resource.hpp>
+#include <common/compiler.hpp>
 #include <common/log.hpp>
 #include <common/type_macros.hpp>
 #include <extlibs/fmt.hpp>
@@ -129,15 +130,15 @@ global_unbind(common::Logger& logger, Obj& obj, Args&&... args)
 
 #define WHILE_BOUND_IMPL                                                                           \
   {                                                                                                \
-    auto const thing_s = fmt::sprintf(obj.to_string());                                            \
+    auto const thing_s = fmt::sprintf("%s", debug_obj.to_string());                                \
                                                                                                    \
     auto const unbind_fn = [&]() {                                                                 \
       LOG_TRACE_SPRINTF("unbind %s", thing_s);                                                     \
-      ::opengl::bind::global_unbind(logger, obj, FORWARD(args));                                   \
+      ::opengl::bind::global_unbind(logger, debug_obj, FORWARD(args));                             \
     };                                                                                             \
                                                                                                    \
-    LOG_TRACE_SPRINTF("bind %s", thing_s);                                                         \
-    ::opengl::bind::global_bind(logger, obj, FORWARD(args));                                       \
+    LOG_TRACE_SPRINTF("binding %s", thing_s);                                                      \
+    ::opengl::bind::global_bind(logger, debug_obj, FORWARD(args));                                 \
                                                                                                    \
     ON_SCOPE_EXIT([&]() { unbind_fn(); });                                                         \
     fn();                                                                                          \
@@ -148,7 +149,7 @@ namespace opengl::bind
 
 template <typename T, typename FN, typename... Args>
 void
-global_while(common::Logger& logger, T& obj, FN const& fn, Args&&... args)
+global_while(common::Logger& logger, T& debug_obj, FN const& fn, Args&&... args)
 {
   WHILE_BOUND_IMPL
 }
@@ -157,8 +158,28 @@ template <typename R, typename FN, typename... Args>
 void
 global_while(common::Logger& logger, common::AutoResource<R>& ar, FN const& fn, Args&&... args)
 {
-  auto& obj = ar.resource();
+  auto& debug_obj = ar.resource();
   WHILE_BOUND_IMPL
+}
+
+template <typename T>
+bool
+global_is_bound(T const& debug_obj)
+{
+#ifdef DEBUG_BUILD
+  return debug_obj.bound_state == BoundState::BOUND;
+#else
+  // result is ignored is release builds
+  std::abort();
+  return false;
+#endif
+}
+
+template <typename R>
+bool
+global_is_bound(common::AutoResource<R> const& ar)
+{
+  return global_is_bound(ar.resource());
 }
 
 #undef WHILE_BOUND_IMPL
@@ -178,7 +199,8 @@ global_while(common::Logger& logger, common::AutoResource<R>& ar, FN const& fn, 
   void while_bound(FN const& fn, common::Logger& logger, Args&&... args)                           \
   {                                                                                                \
     ::opengl::bind::global_while(logger, *this, fn, FORWARD(args));                                \
-  }
+  }                                                                                                \
+  inline bool is_bound() const { return ::opengl::bind::global_is_bound(this->debug_check); }
 
 #define BIND_UNTIL_END_OF_SCOPE(LOGGER, BINDEE)                                                    \
   ::opengl::bind::global_bind(LOGGER, BINDEE);                                                     \

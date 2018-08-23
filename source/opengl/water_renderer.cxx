@@ -376,18 +376,40 @@ SilhouetteWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelM
 
   auto& logger = es.logger;
 
-  auto const fn = [&](WaterInfo& winfo, Transform const& transform) {
+  auto& zs       = lm.active();
+  auto& registry = zs.registry;
 
-    auto& zs       = lm.active();
+  auto const render = [&](WaterInfo& winfo) {
+    auto const eid = winfo.eid;
+    if (registry.get<IsRenderable>(eid).hidden) {
+      return;
+    }
+    auto const &tr = registry.get<Transform>(eid);
+    auto const &bbox = registry.get<AABoundingBox>(eid);
+
+    glm::mat4 const& view_mat = fstate.view_matrix();
+    glm::mat4 const& proj_mat = fstate.projection_matrix();
+    if (!ViewFrustum::bbox_inside(view_mat, proj_mat, tr, bbox)) {
+      return;
+    }
+
     auto&       gfx_state = zs.gfx_state;
     auto& draw_handles = gfx_state.draw_handles;
     auto& dinfo = draw_handles.lookup_entity(logger, winfo.eid);
 
-    auto const model_matrix = transform.model_matrix();
+    auto const model_matrix = tr.model_matrix();
+    BIND_UNTIL_END_OF_SCOPE(logger, sp_);
+    BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
     render::draw_3dblack_water(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
   };
 
-  render_water_common(sp_, rstate, ds, lm, camera, ft, fn);
+  LOG_TRACE("Rendering silhouette water");
+  auto const winfos = find_all_entities_with_component<WaterInfo>(registry);
+  for (auto const eid : winfos) {
+    auto& wi = registry.get<WaterInfo>(eid);
+    render(wi);
+  }
+  LOG_TRACE("Finished rendering silhouette water");
 }
 
 } // namespace opengl

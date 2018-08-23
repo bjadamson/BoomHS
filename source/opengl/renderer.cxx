@@ -485,6 +485,8 @@ draw(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
   LOG_DEBUG("---------------------------------------------------------------------------");
   */
 
+  FOR_DEBUG_ONLY([&]() { assert(sp.is_bound()); });
+  FOR_DEBUG_ONLY([&]() { assert(dinfo.is_bound()); });
   if (sp.instance_count) {
     auto const ic = *sp.instance_count;
     glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
@@ -720,7 +722,7 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
     auto const  rmatrix         = glm::toMat4(rot);
 
     auto const mvp_matrix = proj_matrix * (view_model * rmatrix);
-    set_modelmatrix(logger, mvp_matrix, sp);
+    sp.while_bound(logger, [&]() { sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix); });
 
     auto const& player = find_player(registry);
     auto const target_level = registry.get<NPCData>(npc_selected_eid).level;

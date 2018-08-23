@@ -55,23 +55,6 @@ draw_shape_with_light(RenderState& rstate, GLenum const dm, EntityID const eid,
                           SET_NORMALMATRIX);
 }
 
-void
-draw_object_withoutlight(RenderState& rstate, GLenum const dm, EntityRegistry& registry,
-                         FrameState& fstate, ShaderProgram& sp, DrawInfo& dinfo,
-                         glm::mat4 const& model_matrix)
-{
-  auto& es     = fstate.es;
-  auto& logger = es.logger;
-
-  // Can't receive light
-  assert(!registry.has<Material>());
-  if (!sp.is_2d) {
-    auto const camera_matrix = fstate.camera_matrix();
-    render::set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
-  }
-  render::draw(rstate, dm, sp, dinfo);
-}
-
 template <typename... Args>
 void
 draw_entity_common_without_binding_sp(RenderState& rstate, GLenum const dm, ShaderProgram& sp,
@@ -85,33 +68,27 @@ draw_entity_common_without_binding_sp(RenderState& rstate, GLenum const dm, Shad
   auto& registry = zs.registry;
   auto const model_matrix   = transform.model_matrix();
 
-  auto const draw = [&]() {
-    bool const is_lightsource = registry.has<PointLight>(eid);
-    bool const receives_light = registry.has<Material>(eid);
-    if (is_lightsource) {
-      LOG_WARN("LIGHTSOURCE");
-      render::draw_3dlightsource(rstate, dm, model_matrix, sp, dinfo, eid, registry);
-    }
-    else if (receives_light) {
-      LOG_WARN("RECEVIES LIGHT");
-      auto const& tr = transform.translation;
-      draw_shape_with_light(rstate, dm, eid, registry, sp, dinfo, tr, model_matrix);
-      return;
-    }
-    else {
-      // TODO: If it's 2d, no surprise.
-      // If it's 3d, I expect it to be the wireframe shader, that's it..
-      LOG_WARN("NEITHER");
-      if (!sp.is_2d) {
-        // should only be wireframes for now..
-        //std::abort();
-      }
-      draw_object_withoutlight(rstate, dm, registry, fstate, sp, dinfo, model_matrix);
-    }
-  };
+  bool const is_lightsource = registry.has<PointLight>(eid);
+  bool const receives_light = registry.has<Material>(eid);
 
-  auto& vao = dinfo.vao();
-  vao.while_bound(logger, draw);
+  BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
+  if (is_lightsource) {
+    LOG_WARN("LIGHTSOURCE");
+    render::draw_3dlightsource(rstate, dm, model_matrix, sp, dinfo, eid, registry);
+  }
+  else if (receives_light) {
+    LOG_WARN("RECEVIES LIGHT");
+    auto const& tr = transform.translation;
+    draw_shape_with_light(rstate, dm, eid, registry, sp, dinfo, tr, model_matrix);
+    return;
+  }
+  else {
+    LOG_WARN("WITHOUT LIGHT");
+    //auto const camera_matrix = fstate.camera_matrix();
+    //render::set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
+    //render::draw(rstate, dm, sp, dinfo);
+    std::abort();
+  }
 }
 
 // This function performs more work than just drawing the shapes directly.
@@ -161,7 +138,10 @@ draw_orbital_body(RenderState& rstate, ShaderProgram& sp, EntityID const eid, Tr
 
   auto const proj_matrix = fstate.projection_matrix();
   auto const mvp_matrix  = proj_matrix * view_model;
-  sp.while_bound(logger, [&]() { render::set_modelmatrix(logger, mvp_matrix, sp); });
+  sp.while_bound(logger, [&]() {
+      sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
+      //render::set_modelmatrix(logger, mvp_matrix, sp);
+      });
 
   auto* ti = trenderable.texture_info;
   assert(ti);
@@ -171,8 +151,9 @@ draw_orbital_body(RenderState& rstate, ShaderProgram& sp, EntityID const eid, Tr
   auto& zs        = fstate.zs;
   auto& draw_handles = zs.gfx_state.draw_handles;
   auto& dinfo = draw_handles.lookup_entity(logger, eid);
-  ti->while_bound(logger, [&]() { draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo,
-        transform, is_r, bbox); });
+
+  BIND_UNTIL_END_OF_SCOPE(logger, *ti);
+  draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_r, bbox);
 }
 
 template <typename DrawCommonFN,
@@ -191,31 +172,43 @@ render_common_3d_entities(RenderState& rstate, RNG& rng, FrameTime const& ft,
   auto& es     = fstate.es;
   auto& logger = es.logger;
 
+  LOG_TRACE("================ BEGIN RENDERING COMMON 3D ENTITIES ================");
 
   auto& zs       = fstate.zs;
   auto& registry = zs.registry;
 
   // define rendering order here
 
+  LOG_TRACE("Rendering Torch");
   registry.view<Common..., TextureRenderable, Torch>().each(draw_torch_fn);
 
+  LOG_TRACE("Rendering Book");
   registry.view<Common..., TextureRenderable, Book>().each(draw_default_entity_fn);
+
+  LOG_TRACE("Rendering Weapon");
   registry.view<Common..., TextureRenderable, Weapon>().each(draw_default_entity_fn);
 
+  LOG_TRACE("Rendering Junk");
   registry.view<Common..., JunkEntityFromFILE>().each(draw_default_entity_fn);
+
+  LOG_TRACE("Rendering Trees");
   registry.view<Common..., TreeComponent>().each(draw_common_fn);
 
   // CUBES
+  LOG_TRACE("Rendering Pointlights");
   registry.view<Common..., CubeRenderable, PointLight>().each(draw_pointlight_fn);
 
+  LOG_TRACE("Rendering NPCs");
   registry.view<Common..., MeshRenderable, NPCData>().each(
       [&](auto&&... args) { draw_common_fn(FORWARD(args)); });
 
   // Only render the player if the camera isn't in FPS mode.
   if (CameraMode::FPS != fstate.mode()) {
+    LOG_TRACE("Rendering Player");
     registry.view<Common..., MeshRenderable, Player>().each(
         [&](auto&&... args) { draw_common_fn(FORWARD(args)); });
   }
+  LOG_TRACE("================ END RENDERING COMMON 3D ENTITIES ================");
 }
 
 } // namespace
@@ -244,9 +237,13 @@ EntityRenderer::render2d_billboard(RenderState& rstate, RNG& rng, FrameTime cons
     auto& sp = sps.ref_sp(sn.value);
     draw_orbital_body(rstate, sp, eid, transform, is_r, bbox, FORWARD(args));
   };
-  registry.view<COMMON, BillboardRenderable, OrbitalBody, TextureRenderable>().each(draw_orbital_fn);
-  render::draw_targetreticle(rstate, ft);
 
+  LOG_TRACE("BEGIN Rendering 2d billboard entities with Default Entity Renderer");
+  registry.view<COMMON, BillboardRenderable, OrbitalBody, TextureRenderable>().each(draw_orbital_fn);
+
+  LOG_TRACE("BEGIN drawing target reticle with Default Entity Renderer");
+  render::draw_targetreticle(rstate, ft);
+  LOG_TRACE("END Rendering 2d billboard entities with Default Entity Renderer");
 }
 
 void
@@ -335,12 +332,19 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
 
       // We needed to bind the shader program to set the uniforms above, no reason to pay to bind
       // it again.
-      draw_entity_common_without_binding_sp(rstate, GL_LINES, sp, bbox.draw_info, eid, tr);
+      auto const model_matrix = tr.model_matrix();
+      auto& dinfo = bbox.draw_info;
+      dinfo.while_bound(logger, [&]() {
+        auto const camera_matrix = fstate.camera_matrix();
+        render::set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
+        render::draw(rstate, GL_LINES, sp, dinfo);
+        });
     });
   };
 
   auto const& draw_pointlight_fn = draw_common_fn;
 
+  LOG_TRACE("BEGIN Rendering 3d entities with Default Entity Renderer");
   RENDER_3D_ENTITIES(
     draw_common_fn,
     draw_torch_fn,
@@ -348,6 +352,7 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
     draw_pointlight_fn,
     COMMON
     );
+  LOG_TRACE("END Rendering 3d entities with Default Entity Renderer");
 
 #define COMMON_BBOX Transform, AABoundingBox, Selectable
   registry.view<COMMON_BBOX>().each(
@@ -375,10 +380,13 @@ SilhouetteEntityRenderer::render2d_billboard(RenderState& rstate, RNG& rng, Fram
   auto const draw_orbital_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp("2dsilhoutte_uv");
     sp.while_bound(logger, [&]() { sp.set_uniform_color_3fv(logger, "u_color", LOC::WHITE); });
+
     draw_orbital_body(rstate, sp, eid, transform, is_r, bbox, FORWARD(args));
   };
 
+  LOG_TRACE("BEGIN Rendering Billboard entities with SilhouetteEntityRenderer");
   registry.view<COMMON, BillboardRenderable, OrbitalBody, TextureRenderable>().each(draw_orbital_fn);
+  LOG_TRACE("END Rendering Billboard entities with SilhouetteEntityRenderer");
 
   auto const draw_pointlight_fn = [&](COMMON_ARGS, auto&&... args) {
   };
@@ -405,7 +413,14 @@ SilhouetteEntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime cons
     auto& sp = sps.ref_sp("silhoutte_black");
     if (!sp.is_2d) {
       auto& dinfo = draw_handles.lookup_entity(logger, eid);
-      draw_entity(rstate, GL_TRIANGLES, sp, eid, dinfo, transform, is_r, bbox, FORWARD(args));
+
+      BIND_UNTIL_END_OF_SCOPE(logger, sp);
+      BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
+
+      auto const camera_matrix = fstate.camera_matrix();
+      auto const model_matrix   = transform.model_matrix();
+      render::set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
+      render::draw(rstate, GL_TRIANGLES, sp, dinfo);
     }
   };
 
@@ -421,6 +436,7 @@ SilhouetteEntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime cons
   auto const& draw_torch_fn          = draw_common_fn;
   auto const& draw_default_entity_fn = draw_common_fn;
 
+  LOG_TRACE("BEGIN Rendering 3d entities with SilhouetteEntityRenderer");
   RENDER_3D_ENTITIES(
     draw_common_fn,
     draw_torch_fn,
@@ -428,6 +444,7 @@ SilhouetteEntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime cons
     draw_pointlight_fn,
     COMMON
     );
+  LOG_TRACE("END Rendering 3d entities with SilhouetteEntityRenderer");
 }
 
 #undef COMMON

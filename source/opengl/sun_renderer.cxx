@@ -90,9 +90,8 @@ SunshaftRenderer::render(RenderState& rstate, DrawState& ds, LevelManager& lm, C
     render::set_modelmatrix(logger, model_matrix, sp_);
     sp_.set_uniform_vec2(logger, "u_dirlight.screenspace_pos", directional_light.screenspace_pos);
 
-    auto& vao = dinfo.vao();
     glActiveTexture(GL_TEXTURE0);
-    vao.while_bound(logger, [&]() { render::draw_2d(rstate, GL_TRIANGLES, sp_, ti, dinfo); });
+    dinfo.while_bound(logger, [&]() { render::draw_2d(rstate, GL_TRIANGLES, sp_, ti, dinfo); });
     // glActiveTexture(GL_TEXTURE0);
   });
 }

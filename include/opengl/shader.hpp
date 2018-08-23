@@ -60,16 +60,34 @@ public:
   auto const& handle() const { return program_; }
 };
 
+#ifdef DEBUG_BUILD
+struct PathToShaderSources
+{
+  VertexShaderFilename vertex;
+  FragmentShaderFilename fragment;
+};
+#endif
+
 class ShaderProgram
 {
   ProgramHandle   program_;
+#ifdef DEBUG_BUILD
+  PathToShaderSources source_paths_;
+#endif
   VertexAttribute va_;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(ShaderProgram);
-  explicit ShaderProgram(ProgramHandle&& ph, VertexAttribute&& va)
+  explicit ShaderProgram(ProgramHandle&& ph, VertexAttribute&& va
+#ifdef DEBUG_BUILD
+      , PathToShaderSources&& sources
+#endif
+      )
       : program_(MOVE(ph))
       , va_(MOVE(va))
+#ifdef DEBUG_BUILD
+      , source_paths_(MOVE(sources))
+#endif
   {
   }
 
