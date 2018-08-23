@@ -84,10 +84,7 @@ draw_entity_common_without_binding_sp(RenderState& rstate, GLenum const dm, Shad
   }
   else {
     LOG_WARN("WITHOUT LIGHT");
-    //auto const camera_matrix = fstate.camera_matrix();
-    //render::set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
-    //render::draw(rstate, dm, sp, dinfo);
-    std::abort();
+    render::draw(rstate, dm, sp, dinfo);
   }
 }
 

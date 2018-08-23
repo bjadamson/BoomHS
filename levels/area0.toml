@@ -30,10 +30,10 @@ x = 1800.0
 y = 1200.00
 z = 1600.0
 
-[entity.pointlight]
-attenuation = "nolight"
-diffuse = [0.0, 0.0, 1.0]
-specular = [0.0, 0.0, 1.0]
+#[entity.pointlight]
+#attenuation = "nolight"
+#diffuse = [0.0, 0.0, 1.0]
+#specular = [0.0, 0.0, 1.0]
 
 [[entity]]
 name = "Moon"
