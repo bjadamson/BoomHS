@@ -76,31 +76,6 @@ gl_log_callback(GLenum const source, GLenum const type, GLuint const id, GLenum 
   std::abort();
 }
 
-struct WorldOriginArrows
-{
-  DrawInfo x_dinfo;
-  DrawInfo y_dinfo;
-  DrawInfo z_dinfo;
-};
-
-WorldOriginArrows
-create_axis_arrows(common::Logger &logger, VertexAttribute const& va)
-{
-  auto constexpr ORIGIN = math::constants::ZERO;
-  ArrowCreateParams constexpr acx{LOC::RED,   ORIGIN, X_UNIT_VECTOR};
-  ArrowCreateParams constexpr acy{LOC::GREEN, ORIGIN, Y_UNIT_VECTOR};
-  ArrowCreateParams constexpr acz{LOC::BLUE,  ORIGIN, Z_UNIT_VECTOR};
-
-  auto const avx = ArrowFactory::create_vertices(acx);
-  auto const avy = ArrowFactory::create_vertices(acy);
-  auto const avz = ArrowFactory::create_vertices(acz);
-
-  auto x = OG::copy_arrow(logger, va, avx);
-  auto y = OG::copy_arrow(logger, va, avy);
-  auto z = OG::copy_arrow(logger, va, avz);
-  return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
-}
-
 } // namespace
 
 namespace opengl
@@ -494,7 +469,7 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
     auto const  rmatrix         = glm::toMat4(rot);
 
     auto const mvp_matrix = proj_matrix * (view_model * rmatrix);
-    sp.while_bound(logger, [&]() { sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix); });
+    sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 
     auto const& player = find_player(registry);
     auto const target_level = registry.get<NPCData>(npc_selected_eid).level;
@@ -506,18 +481,17 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
 
   auto const draw_glow = [&](auto& sp) {
     auto const mvp_matrix = proj_matrix * view_model;
-    set_modelmatrix(logger, mvp_matrix, sp);
+    sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
     draw_billboard(rstate, transform, sp, "NearbyTargetGlow");
   };
 
   bool const should_draw_glow = scale < 1.0f;
 
   auto& sps = zs.gfx_state.sps;
-  auto& sp = sps.ref_sp(should_draw_glow ? "billboard" : "target_reticle");
 
+  auto& sp = sps.ref_sp(should_draw_glow ? "billboard" : "target_reticle");
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
   ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
-
   if (should_draw_glow) {
     draw_glow(sp);
   }
