@@ -142,9 +142,6 @@ draw_3dlit_shape(RenderState&, GLenum, glm::vec3 const&, glm::mat4 const&, Shade
 
 // TODO: move rest to sub-renderers or something
 void
-conditionally_draw_player_vectors(RenderState&, boomhs::Player const&);
-
-void
 draw(RenderState&, GLenum, ShaderProgram&, DrawInfo&);
 
 void
@@ -154,13 +151,7 @@ void
 draw_fbo_testwindow(RenderState&, glm::vec2 const&, glm::vec2 const&, ShaderProgram&, TextureInfo&);
 
 void
-draw_frustum(RenderState&, boomhs::Frustum const&, glm::mat4 const&);
-
-void
 draw_line(RenderState&, glm::vec3 const&, glm::vec3 const&, boomhs::Color const&);
-
-void
-draw_axis(RenderState&, glm::vec3 const&);
 
 void
 draw_targetreticle(RenderState&, boomhs::FrameTime const&);

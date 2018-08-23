@@ -17,6 +17,7 @@
 #include <opengl/factory.hpp>
 #include <opengl/global.hpp>
 #include <opengl/gpu.hpp>
+#include <opengl/light_renderer.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/shapes.hpp>
 
@@ -53,46 +54,6 @@ disable_depth_tests()
 }
 
 void
-set_dirlight(common::Logger& logger, ShaderProgram& sp, GlobalLight const& global_light)
-{
-  auto const& directional_light = global_light.directional;
-  sp.set_uniform_vec3(logger, "u_dirlight.direction", directional_light.direction);
-
-  auto const& light = directional_light.light;
-  sp.set_uniform_color_3fv(logger, "u_dirlight.diffuse", light.diffuse);
-  sp.set_uniform_color_3fv(logger, "u_dirlight.specular", light.specular);
-}
-
-void
-set_pointlight(common::Logger& logger, ShaderProgram& sp, size_t const index,
-               PointLight const& pointlight, glm::vec3 const& pointlight_position)
-{
-  std::string const varname = "u_pointlights[" + std::to_string(index) + "]";
-  auto const make_field = [&varname](char const* fieldname) { return varname + "." + fieldname; };
-
-  sp.set_uniform_color_3fv(logger, make_field("diffuse"), pointlight.light.diffuse);
-  sp.set_uniform_color_3fv(logger, make_field("specular"), pointlight.light.specular);
-  sp.set_uniform_vec3(logger, make_field("position"), pointlight_position);
-
-  auto const& attenuation       = pointlight.attenuation;
-  auto const  attenuation_field = [&make_field](char const* fieldname) {
-    return make_field("attenuation.") + fieldname;
-  };
-  auto const constant  = attenuation_field("constant");
-  auto const linear    = attenuation_field("linear");
-  auto const quadratic = attenuation_field("quadratic");
-  sp.set_uniform_float1(logger, constant, attenuation.constant);
-  sp.set_uniform_float1(logger, linear, attenuation.linear);
-  sp.set_uniform_float1(logger, quadratic, attenuation.quadratic);
-}
-
-struct PointlightTransform
-{
-  Transform const&  transform;
-  PointLight const& pointlight;
-};
-
-void
 set_fog(common::Logger& logger, Fog const& fog, glm::mat4 const& view_matrix, ShaderProgram& sp)
 {
   sp.set_uniform_matrix_4fv(logger, "u_viewmatrix", view_matrix);
@@ -100,62 +61,6 @@ set_fog(common::Logger& logger, Fog const& fog, glm::mat4 const& view_matrix, Sh
   sp.set_uniform_float1(logger, "u_fog.density", fog.density);
   sp.set_uniform_float1(logger, "u_fog.gradient", fog.gradient);
   sp.set_uniform_color(logger, "u_fog.color", fog.color);
-}
-
-void
-set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
-                           glm::mat4 const& model_matrix, ShaderProgram& sp, DrawInfo& dinfo,
-                           Material const&                         material,
-                           std::vector<PointlightTransform> const& pointlights,
-                           bool const                              set_normalmatrix)
-{
-  auto&       fstate = rstate.fs;
-  auto&       es     = fstate.es;
-  auto&       zs     = fstate.zs;
-  auto const& ldata  = zs.level_data;
-
-  auto&       logger       = es.logger;
-  auto const& global_light = ldata.global_light;
-  //auto const& player       = ldata.player;
-
-  render::set_modelmatrix(logger, model_matrix, sp);
-  if (set_normalmatrix) {
-    sp.set_uniform_matrix_3fv(logger, "u_normalmatrix",
-                              glm::inverseTranspose(glm::mat3{model_matrix}));
-  }
-
-  set_dirlight(logger, sp, global_light);
-
-  // ambient
-  LOG_TRACE_SPRINTF("AMBIENT COLOR: %s", global_light.ambient.to_string());
-  sp.set_uniform_color_3fv(logger, "u_ambient.color", global_light.ambient);
-
-  // specular
-  sp.set_uniform_float1(logger, "u_reflectivity", 1.0f);
-
-  // pointlight
-  auto const view_matrix = fstate.view_matrix();
-  {
-    auto const inv_viewmatrix = glm::inverse(glm::mat3{view_matrix});
-    sp.set_uniform_matrix_4fv(logger, "u_invviewmatrix", inv_viewmatrix);
-  }
-
-  FOR(i, pointlights.size())
-  {
-    auto const& transform  = pointlights[i].transform;
-    auto const& pointlight = pointlights[i].pointlight;
-    set_pointlight(logger, sp, i, pointlight, transform.translation);
-  }
-
-  // Material uniforms
-  sp.set_uniform_vec3(logger, "u_material.ambient", material.ambient);
-  sp.set_uniform_vec3(logger, "u_material.diffuse", material.diffuse);
-  sp.set_uniform_vec3(logger, "u_material.specular", material.specular);
-  sp.set_uniform_float1(logger, "u_material.shininess", material.shininess);
-  // TODO: when re-implementing LOS restrictions
-  // sp.set_uniform_vec3(logger, "u_player.position",  player.world_position());
-  // sp.set_uniform_vec3(logger, "u_player.direction",  player.forward_vector());
-  // sp.set_uniform_float1(logger, "u_player.cutoff",  glm::cos(glm::radians(90.0f)));
 }
 
 void
@@ -411,60 +316,10 @@ draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position
   auto& zs     = fstate.zs;
 
   if (!es.draw_normals) {
-    auto const                       pointlight_eids = find_pointlights(registry);
-    std::vector<PointlightTransform> pointlights;
-
-    FOR(i, pointlight_eids.size())
-    {
-      auto const&               eid        = pointlight_eids[i];
-      auto&                     transform  = registry.get<Transform>(eid);
-      auto&                     pointlight = registry.get<PointLight>(eid);
-      PointlightTransform const plt{transform, pointlight};
-
-      pointlights.emplace_back(plt);
-    }
-    set_receiveslight_uniforms(rstate, position, model_matrix, sp, dinfo, material, pointlights,
-                               set_normalmatrix);
+    LightRenderer::set_light_uniforms(rstate, registry, sp, material, position, model_matrix, set_normalmatrix);
   }
 
   draw_3dshape(rstate, dm, model_matrix, sp, dinfo);
-}
-
-void
-conditionally_draw_player_vectors(RenderState& rstate, Player const& player)
-{
-  auto& fstate = rstate.fs;
-  auto& es       = fstate.es;
-  auto& zs       = fstate.zs;
-  auto& registry = zs.registry;
-
-  auto& logger = es.logger;
-
-  auto const draw_local_axis = [&rstate](auto const& wo) {
-    glm::vec3 const pos = wo.world_position();
-    // local-space
-    //
-    // eye-forward
-    auto const fwd = wo.eye_forward();
-    draw_arrow(rstate, pos, pos + (2.0f * fwd), LOC::PURPLE);
-
-    // eye-up
-    auto const up = wo.eye_up();
-    draw_arrow(rstate, pos, pos + up, LOC::YELLOW);
-
-    // eye-right
-    auto const right = wo.eye_right();
-    draw_arrow(rstate, pos, pos + right, LOC::ORANGE);
-  };
-
-  if (es.show_player_localspace_vectors) {
-    draw_local_axis(player.world_object());
-    draw_local_axis(player.head_world_object());
-  }
-  if (es.show_player_worldspace_vectors) {
-    draw_axis(rstate, player.world_position());
-    draw_axis(rstate, player.head_world_object().transform().translation);
-  }
 }
 
 void
@@ -547,89 +402,6 @@ draw_line(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& end, Col
     sp.set_uniform_color(logger, "u_linecolor", color);
     dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_LINES, sp, dinfo); });
   });
-}
-
-void
-draw_axis(RenderState& rstate, glm::vec3 const& pos)
-{
-  auto& fstate = rstate.fs;
-  auto& es     = fstate.es;
-  auto& zs     = fstate.zs;
-  auto& sps    = zs.gfx_state.sps;
-
-  auto& logger = es.logger;
-
-  auto& sp           = sps.ref_sp("3d_pos_color");
-  auto  world_arrows = create_axis_arrows(logger, sp.va());
-
-  auto const& ldata = zs.level_data;
-  Transform   transform;
-  transform.translation = pos;
-
-  auto const draw_axis_arrow = [&](DrawInfo& dinfo) {
-    dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_LINES, sp, dinfo); });
-  };
-
-  sp.while_bound(logger, [&]() {
-    auto const camera_matrix = fstate.camera_matrix();
-    set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
-    draw_axis_arrow(world_arrows.x_dinfo);
-    draw_axis_arrow(world_arrows.y_dinfo);
-    draw_axis_arrow(world_arrows.z_dinfo);
-  });
-
-  LOG_TRACE("Finished Drawing Global Axis");
-}
-
-void
-draw_frustum(RenderState& rstate, Frustum const& frustum, glm::mat4 const& model)
-{
-  auto& fstate     = rstate.fs;
-  auto const proj  = fstate.projection_matrix();
-  auto const view  = fstate.view_matrix();
-
-  auto const mvp = math::compute_mvp_matrix(model, view, proj);
-  glm::mat4 const inv_viewproj = glm::inverse(mvp);
-
-  glm::vec4 const f[8u] =
-  {
-      // near face
-      {-1, -1, frustum.near, 1.0f},
-      { 1, -1, frustum.near, 1.0f},
-      { 1,  1, frustum.near, 1.0f},
-      {-1,  1, frustum.near, 1.0f},
-
-      // far face
-      {-1, -1, frustum.far, 1.0f},
-      { 1, -1, frustum.far, 1.0f},
-      { 1,  1, frustum.far, 1.0f},
-      {-1,  1, frustum.far, 1.0f}
-  };
-
-  glm::vec3 v[8u];
-  for (int i = 0; i < 8; i++)
-  {
-    glm::vec4 const ff = inv_viewproj * f[i];
-    v[i].x = ff.x / ff.w;
-    v[i].y = ff.y / ff.w;
-    v[i].z = ff.z / ff.w;
-  }
-
-  draw_line(rstate, v[0], v[1], LOC::BLUE);
-  draw_line(rstate, v[1], v[2], LOC::BLUE);
-  draw_line(rstate, v[2], v[3], LOC::BLUE);
-  draw_line(rstate, v[3], v[0], LOC::BLUE);
-
-  draw_line(rstate, v[4], v[5], LOC::GREEN);
-  draw_line(rstate, v[5], v[6], LOC::GREEN);
-  draw_line(rstate, v[6], v[7], LOC::GREEN);
-  draw_line(rstate, v[7], v[4], LOC::GREEN);
-
-  // connecting lines
-  draw_line(rstate, v[0], v[4], LOC::RED);
-  draw_line(rstate, v[1], v[5], LOC::RED);
-  draw_line(rstate, v[2], v[6], LOC::RED);
-  draw_line(rstate, v[3], v[7], LOC::RED);
 }
 
 void
