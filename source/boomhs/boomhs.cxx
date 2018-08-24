@@ -15,7 +15,6 @@
 #include <boomhs/io_sdl.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mouse.hpp>
-#include <boomhs/raycast.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/rexpaint.hpp>
@@ -63,15 +62,18 @@ namespace
 bool
 player_in_water(common::Logger& logger, EntityRegistry& registry)
 {
-  auto& player = find_player(registry);
+  auto const& player = find_player(registry);
+  auto const& player_bbox = player.bounding_box().cube;
+  auto const& p_tr        = player.transform();
 
   auto const eids = find_all_entities_with_component<WaterInfo, Transform, AABoundingBox>(registry);
   for (auto const eid : eids) {
-    auto& water_bbox = registry.get<AABoundingBox>(eid).cube;
-    auto& w_tr       = registry.get<Transform>(eid);
-    auto& p_tr       = player.transform();
+    auto const& water_bbox = registry.get<AABoundingBox>(eid).cube;
+    auto const& water_info = registry.get<WaterInfo>(eid);
+    auto  w_tr       = registry.get<Transform>(eid);
+    w_tr.scale.x = water_info.dimensions.x;
+    w_tr.scale.z = water_info.dimensions.y;
 
-    auto const& player_bbox = player.bounding_box().cube;
     if (collision::cube_intersects(logger, p_tr, player_bbox, w_tr, water_bbox)) {
       return true;
     }

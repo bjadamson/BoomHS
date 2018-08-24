@@ -4,6 +4,8 @@
 #include <array>
 #include <cmath>
 #include <limits>
+#include <ostream>
+#include <string>
 
 namespace boomhs
 {
@@ -24,7 +26,12 @@ struct Cube
   glm::vec3 scaled_half_widths(Transform const&) const;
 
   explicit Cube(glm::vec3 const&, glm::vec3 const&);
+
+  std::string to_string() const;
 };
+
+std::ostream&
+operator<<(std::ostream&, Cube const&);
 
 struct Frustum
 {

@@ -6,7 +6,6 @@
 #include <boomhs/io_sdl.hpp>
 #include <boomhs/io_behavior.hpp>
 #include <boomhs/level_manager.hpp>
-#include <boomhs/raycast.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/state.hpp>

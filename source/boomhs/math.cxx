@@ -1,5 +1,6 @@
 #include <boomhs/math.hpp>
 #include <boomhs/transform.hpp>
+#include <extlibs/fmt.hpp>
 
 namespace
 {
@@ -102,7 +103,18 @@ Cube::scaled_max(Transform const& tr) const
   return r;
 }
 
+std::string
+Cube::to_string() const
+{
+  return fmt::sprintf("min: %s max %s", glm::to_string(min), glm::to_string(max));
+}
 
+std::ostream&
+operator<<(std::ostream& ostream, Cube const& cube)
+{
+  ostream << cube.to_string();
+  return ostream;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Frustum
