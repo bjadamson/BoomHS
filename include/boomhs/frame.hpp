@@ -8,6 +8,7 @@ namespace boomhs
 {
 class Camera;
 class EngineState;
+class Frustum;
 class ZoneState;
 
 enum class CameraMode
@@ -38,6 +39,7 @@ struct CameraFrameState
   glm::vec3 const camera_world_position;
   glm::mat4 const projection_matrix;
   glm::mat4 const view_matrix;
+  Frustum  const& frustum;
 
   CameraMode const mode;
 };
@@ -54,6 +56,7 @@ public:
   ZoneState&   zs;
 
   glm::vec3 camera_world_position() const;
+  Frustum const& frustum() const;
   glm::mat4 camera_matrix() const;
   glm::mat4 projection_matrix() const;
   glm::mat4 view_matrix() const;

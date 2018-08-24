@@ -632,19 +632,19 @@ WaterRenderers::render(RenderState& rstate, DrawState& ds, LevelManager& lm, Cam
               FrameTime const& ft, bool const silhouette_black)
 {
   if (silhouette_black) {
-    silhouette.render_water(rstate, ds, lm, camera, ft);
+    silhouette.render_water(rstate, ds, lm, ft);
   }
   else {
     auto const& water_buffer = rstate.fs.es.ui_state.debug.buffers.water;
     auto const  water_type = static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
     if (GameGraphicsMode::Basic == water_type) {
-      basic.render_water(rstate, ds, lm, camera, ft);
+      basic.render_water(rstate, ds, lm, ft);
     }
     else if (GameGraphicsMode::Medium == water_type) {
-      medium.render_water(rstate, ds, lm, camera, ft);
+      medium.render_water(rstate, ds, lm, ft);
     }
     else if (GameGraphicsMode::Advanced == water_type) {
-      advanced.render_water(rstate, ds, lm, camera, ft);
+      advanced.render_water(rstate, ds, lm, ft);
     }
     else {
       std::abort();

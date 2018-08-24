@@ -1,6 +1,6 @@
 #include <boomhs/frame.hpp>
-
 #include <boomhs/camera.hpp>
+#include <boomhs/math.hpp>
 
 using namespace boomhs;
 
@@ -34,7 +34,8 @@ make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
       std::abort();
       break;
   }
-  CameraFrameState cfs{camera_world_pos, proj, view, mode};
+  auto const& frustum = camera.frustum_ref();
+  CameraFrameState cfs{camera_world_pos, proj, view, frustum, mode};
   return FrameState{es, zs, MOVE(cfs)};
 }
 
@@ -79,6 +80,12 @@ glm::vec3
 FrameState::camera_world_position() const
 {
   return cfs_.camera_world_position;
+}
+
+Frustum const&
+FrameState::frustum() const
+{
+  return cfs_.frustum;
 }
 
 glm::mat4

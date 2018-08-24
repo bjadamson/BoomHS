@@ -42,7 +42,7 @@ setup(common::Logger& logger, TextureInfo& ti, GLint const v)
 template <typename FN>
 void
 render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
-                    LevelManager& lm, Camera& camera, FrameTime const& ft, FN const& fn)
+                    LevelManager& lm, FrameTime const& ft, FN const& fn)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -128,7 +128,7 @@ BasicWaterRenderer::BasicWaterRenderer(common::Logger& logger, TextureInfo& diff
 
 void
 BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm,
-                                 Camera& camera, FrameTime const& ft)
+                                 FrameTime const& ft)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -155,7 +155,7 @@ BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
     render::draw_3dshape(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
   };
 
-  render_water_common(sp_, rstate, ds, lm, camera, ft, fn);
+  render_water_common(sp_, rstate, ds, lm, ft, fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -182,7 +182,7 @@ MediumWaterRenderer::MediumWaterRenderer(common::Logger& logger, TextureInfo& di
 
 void
 MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm,
-                                  Camera& camera, FrameTime const& ft)
+                                  FrameTime const& ft)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -215,7 +215,7 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
                              dinfo, water_material, registry, SET_NORMALMATRIX);
   };
 
-  render_water_common(sp_, rstate, ds, lm, camera, ft, fn);
+  render_water_common(sp_, rstate, ds, lm, ft, fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -291,10 +291,10 @@ AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, ScreenSize 
 
 void
 AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm,
-                                    Camera& camera, FrameTime const& ft)
+                                    FrameTime const& ft)
 {
-  auto& fstate = rstate.fs;
-  auto& es     = fstate.es;
+  auto& fs = rstate.fs;
+  auto& es = fs.es;
 
   auto& logger   = es.logger;
   auto& zs       = lm.active();
@@ -317,12 +317,12 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
       sp_.set_uniform_float1(logger, "u_fresnel_reflect_power", wbuffer.fresnel_reflect_power);
       sp_.set_uniform_float1(logger, "u_depth_divider", wbuffer.depth_divider);
 
-      auto const& fr = camera.frustum_ref();
+      auto const& fr = fs.frustum();
       sp_.set_uniform_float1(logger, "u_near", fr.near);
       sp_.set_uniform_float1(logger, "u_far", fr.far);
     }
 
-    sp_.set_uniform_vec3(logger, "u_camera_position", camera.world_position());
+    sp_.set_uniform_vec3(logger, "u_camera_position", fs.camera_world_position());
     sp_.set_uniform_float1(logger, "u_wave_offset", winfo.wave_offset);
     sp_.set_uniform_float1(logger, "u_wavestrength", winfo.wave_strength);
 
@@ -356,7 +356,7 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
     render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, transform.translation, model_matrix, sp_,
                              dinfo, water_material, registry, SET_NORMALMATRIX);
   };
-  render_water_common(sp_, rstate, ds, lm, camera, ft, fn);
+  render_water_common(sp_, rstate, ds, lm, ft, fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -369,7 +369,7 @@ SilhouetteWaterRenderer::SilhouetteWaterRenderer(common::Logger& logger, ShaderP
 
 void
 SilhouetteWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm,
-                                 Camera& camera, FrameTime const& ft)
+                                 FrameTime const& ft)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;

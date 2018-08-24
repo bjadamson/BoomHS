@@ -38,8 +38,7 @@ public:
   SilhouetteWaterRenderer(common::Logger&, opengl::ShaderProgram&);
   MOVE_CONSTRUCTIBLE_ONLY(SilhouetteWaterRenderer);
 
-  void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&,
-                    boomhs::FrameTime const&);
+  void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::FrameTime const&);
 };
 
 class BasicWaterRenderer
@@ -54,8 +53,7 @@ public:
                      opengl::ShaderProgram&);
   MOVE_CONSTRUCTIBLE_ONLY(BasicWaterRenderer);
 
-  void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&,
-                    boomhs::FrameTime const&);
+  void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::FrameTime const&);
 };
 
 class MediumWaterRenderer
@@ -70,8 +68,7 @@ public:
                       opengl::ShaderProgram&);
   MOVE_CONSTRUCTIBLE_ONLY(MediumWaterRenderer);
 
-  void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&,
-                    boomhs::FrameTime const&);
+  void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::FrameTime const&);
 };
 
 struct ReflectionBuffers
@@ -192,8 +189,7 @@ public:
                         [&]() { advanced_common(rstate, es, lm, ds, er, sr, tr, rng, ft); });
   }
 
-  void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&,
-                    boomhs::FrameTime const&);
+  void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::FrameTime const&);
 };
 
 } // namespace opengl
