@@ -36,34 +36,34 @@ struct CameraModes
 struct CameraFrameState
 {
   glm::vec3 const camera_world_position;
-  glm::mat4 const projection;
-  glm::mat4 const view;
+  glm::mat4 const projection_matrix;
+  glm::mat4 const view_matrix;
 
   CameraMode const mode;
-
-  static CameraFrameState from_camera_withposition(boomhs::Camera const&, glm::vec3 const&);
-  static CameraFrameState from_camera_with_mode(boomhs::Camera const&, boomhs::CameraMode);
-
-  static CameraFrameState from_camera(boomhs::Camera const&);
 };
 
 class FrameState
 {
-  CameraFrameState const cstate_;
+  CameraFrameState const cfs_;
 
 public:
+  FrameState(EngineState&, ZoneState&, CameraFrameState&&);
   NO_COPY_OR_MOVE(FrameState);
-  FrameState(CameraFrameState const&, boomhs::EngineState&, boomhs::ZoneState&);
 
-  boomhs::EngineState& es;
-  boomhs::ZoneState&   zs;
+  EngineState& es;
+  ZoneState&   zs;
 
   glm::vec3 camera_world_position() const;
   glm::mat4 camera_matrix() const;
   glm::mat4 projection_matrix() const;
   glm::mat4 view_matrix() const;
+  CameraMode camera_mode() const;
 
-  CameraMode mode() const;
+  static FrameState from_camera_withposition(EngineState&, ZoneState&, Camera const&,
+                                             glm::vec3 const&);
+  static FrameState from_camera_with_mode(EngineState&, ZoneState&, Camera const&, CameraMode);
+
+  static FrameState from_camera(EngineState&, ZoneState&, Camera const&);
 };
 
 } // namespace boomhs

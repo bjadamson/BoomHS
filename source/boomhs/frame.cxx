@@ -8,7 +8,8 @@ namespace
 {
 
 auto
-make_framestate(Camera const& camera, glm::vec3 const& camera_world_pos, CameraMode const mode)
+make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
+                glm::vec3 const& camera_world_pos, CameraMode const mode)
 {
   glm::mat4 proj, view;
 
@@ -33,7 +34,8 @@ make_framestate(Camera const& camera, glm::vec3 const& camera_world_pos, CameraM
       std::abort();
       break;
   }
-  return CameraFrameState{camera_world_pos, proj, view, mode};
+  CameraFrameState cfs{camera_world_pos, proj, view, mode};
+  return FrameState{es, zs, MOVE(cfs)};
 }
 
 } // namespace
@@ -42,32 +44,32 @@ namespace boomhs
 {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// CameraFrameState
-CameraFrameState
-CameraFrameState::from_camera_withposition(Camera const& camera, glm::vec3 const& custom_camera_pos)
+// FrameState
+FrameState
+FrameState::from_camera_withposition(EngineState& es, ZoneState& zs, Camera const& camera, glm::vec3 const& custom_camera_pos)
 {
-  auto const mode = camera.mode();
-  return make_framestate(camera, custom_camera_pos, mode);
+  auto const cmode = camera.mode();
+  return make_framestate(es, zs, camera, custom_camera_pos, cmode);
 }
 
-CameraFrameState
-CameraFrameState::from_camera_with_mode(Camera const& camera, CameraMode const mode)
+FrameState
+FrameState::from_camera_with_mode(EngineState& es, ZoneState& zs, Camera const& camera, CameraMode const mode)
 {
   auto const camera_world_pos = camera.world_position();
-  return make_framestate(camera, camera_world_pos, mode);
+  return make_framestate(es, zs, camera, camera_world_pos, mode);
 }
 
-CameraFrameState
-CameraFrameState::from_camera(Camera const& camera)
+FrameState
+FrameState::from_camera(EngineState& es, ZoneState& zs, Camera const& camera)
 {
   auto const pos = camera.world_position();
-  return from_camera_withposition(camera, pos);
+  return from_camera_withposition(es, zs, camera, pos);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // FrameState
-FrameState::FrameState(CameraFrameState const& cstate, EngineState& e, ZoneState& z)
-    : cstate_(cstate)
+FrameState::FrameState(EngineState& e, ZoneState& z, CameraFrameState&& cfs)
+    : cfs_(MOVE(cfs))
     , es(e)
     , zs(z)
 {
@@ -76,33 +78,31 @@ FrameState::FrameState(CameraFrameState const& cstate, EngineState& e, ZoneState
 glm::vec3
 FrameState::camera_world_position() const
 {
-  return cstate_.camera_world_position;
+  return cfs_.camera_world_position;
 }
 
 glm::mat4
 FrameState::camera_matrix() const
 {
-  auto const proj = projection_matrix();
-  auto const view = view_matrix();
-  return proj * view;
+  return projection_matrix() * view_matrix();
 }
 
 glm::mat4
 FrameState::projection_matrix() const
 {
-  return cstate_.projection;
+  return cfs_.projection_matrix;
 }
 
 glm::mat4
 FrameState::view_matrix() const
 {
-  return cstate_.view;
+  return cfs_.view_matrix;
 }
 
 CameraMode
-FrameState::mode() const
+FrameState::camera_mode() const
 {
-  return cstate_.mode;
+  return cfs_.mode;
 }
 
 } // namespace boomhs

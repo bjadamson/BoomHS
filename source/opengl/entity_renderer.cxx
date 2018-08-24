@@ -200,7 +200,7 @@ render_common_3d_entities(RenderState& rstate, RNG& rng, FrameTime const& ft,
       [&](auto&&... args) { draw_common_fn(FORWARD(args)); });
 
   // Only render the player if the camera isn't in FPS mode.
-  if (CameraMode::FPS != fstate.mode()) {
+  if (CameraMode::FPS != fstate.camera_mode()) {
     LOG_TRACE("Rendering Player");
     registry.view<Common..., MeshRenderable, Player>().each(
         [&](auto&&... args) { draw_common_fn(FORWARD(args)); });

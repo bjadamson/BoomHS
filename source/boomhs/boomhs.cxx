@@ -881,16 +881,15 @@ ingame_loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
             WaterAudioSystem& water_audio, StaticRenderers& static_renderers, DrawState& ds,
             FrameTime const& ft)
 {
-  auto const cstate = CameraFrameState::from_camera(camera);
 
   auto& lm = state.level_manager;
   auto& zs = lm.active();
   auto& es = state.engine_state;
-  FrameState fstate{cstate, es, zs};
+  auto fs = FrameState::from_camera(es, zs, camera);
 
-  update_everything(es, lm, rng, fstate, camera, static_renderers, water_audio, engine.window, ft);
+  update_everything(es, lm, rng, fs, camera, static_renderers, water_audio, engine.window, ft);
   {
-    RenderState rstate{fstate, ds};
+    RenderState rstate{fs, ds};
     render_scene(rstate, lm, ds, camera, rng, ft, static_renderers);
   }
 

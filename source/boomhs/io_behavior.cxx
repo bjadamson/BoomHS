@@ -142,14 +142,13 @@ PlayerPlayingGameBehavior::mousebutton_down(MouseButtonEvent&& mbe)
   auto const& button = event.button;
 
   if (ms.either_pressed()) {
-    auto const cstate = CameraFrameState::from_camera(camera);
-    FrameState fstate{cstate, es, zs};
+    auto fs = FrameState::from_camera(es, zs, camera);
     if (!uistate.lock_debugselected) {
       if (ms.left_pressed()) {
-        select_mouse_under_cursor(fstate, MouseButton::LEFT);
+        select_mouse_under_cursor(fs, MouseButton::LEFT);
       }
       else if (ms.right_pressed()) {
-        select_mouse_under_cursor(fstate, MouseButton::RIGHT);
+        select_mouse_under_cursor(fs, MouseButton::RIGHT);
       }
     }
   }

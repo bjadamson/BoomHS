@@ -619,9 +619,8 @@ draw(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
   draw_nearest_target_info(es.dimensions, nbt, ttable, registry);
 
   // Create a renderstate using an orthographic projection.
-  auto const cstate = CameraFrameState::from_camera_with_mode(camera, CameraMode::Ortho);
-  FrameState fstate{cstate, es, zs};
-  RenderState rstate{fstate, ds};
+  auto fs = FrameState::from_camera_with_mode(es, zs, camera, CameraMode::Ortho);
+  RenderState rstate{fs, ds};
   draw_2dui(rstate);
 
   auto& player = find_player(registry);

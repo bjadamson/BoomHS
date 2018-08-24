@@ -167,9 +167,8 @@ public:
     glm::vec3 camera_pos = camera.world_position();
     camera_pos.y         = -camera_pos.y;
 
-    auto const cstate = boomhs::CameraFrameState::from_camera_withposition(camera, camera_pos);
-    boomhs::FrameState fstate{cstate, es, zs};
-    RenderState        rstate{fstate, ds};
+    auto fs   = boomhs::FrameState::from_camera_withposition(es, zs, camera, camera_pos);
+    RenderState rstate{fs, ds};
 
     with_reflection_fbo(logger,
                         [&]() { advanced_common(rstate, es, lm, ds, er, sr, tr, rng, ft); });
@@ -186,9 +185,8 @@ public:
     auto&       registry  = zs.registry;
     auto const& fog_color = ldata.fog.color;
 
-    auto const         cstate = boomhs::CameraFrameState::from_camera(camera);
-    boomhs::FrameState fstate{cstate, es, zs};
-    RenderState        rstate{fstate, ds};
+    auto fs   = boomhs::FrameState::from_camera(es, zs, camera);
+    RenderState rstate{fs, ds};
 
     with_refraction_fbo(logger,
                         [&]() { advanced_common(rstate, es, lm, ds, er, sr, tr, rng, ft); });
