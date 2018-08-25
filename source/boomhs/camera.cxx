@@ -256,16 +256,25 @@ CameraORTHO::CameraORTHO(glm::vec3 const& forward, glm::vec3 const& up, CameraTa
 }
 
 glm::mat4
-CameraORTHO::compute_projectionmatrix() const
+CameraORTHO::compute_projectionmatrix(bool const zoom_squeeze) const
 {
   auto const& f  = viewport_.frustum;
   auto const& ar = viewport_.aspect_ratio.compute();
 
-  float const left  = 0.0f + zoom_.x;
-  float const right = 128.0f - zoom_.x;
+  float left, right, top, bottom;
+  if (zoom_squeeze) {
+    left  = 0.0f + zoom_.x;
+    right = 128.0f - zoom_.x;
 
-  float const top    = 0.0f + zoom_.y;
-  float const bottom = 96.0f - zoom_.y;
+    top    = 0.0f + zoom_.y;
+    bottom = 96.0f - zoom_.y;
+  }
+  else {
+    left   = f.left;
+    right  = f.right;
+    bottom = f.bottom;
+    top    = f.top;
+  }
 
   return glm::ortho(left, right, top, bottom, f.near, f.far);
 }

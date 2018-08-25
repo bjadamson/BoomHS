@@ -67,6 +67,8 @@ public:
   static FrameState from_camera_with_mode(EngineState&, ZoneState&, Camera const&, CameraMode);
 
   static FrameState from_camera(EngineState&, ZoneState&, Camera const&);
+
+  static FrameState from_camera_for_2dui_overlay(EngineState&, ZoneState&, Camera const&);
 };
 
 } // namespace boomhs

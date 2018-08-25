@@ -9,7 +9,8 @@ namespace
 
 auto
 make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
-                glm::vec3 const& camera_world_pos, CameraMode const mode)
+                glm::vec3 const& camera_world_pos, CameraMode const mode,
+                bool const ortho_squeeze = true)
 {
   glm::mat4 proj, view;
 
@@ -18,7 +19,7 @@ make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
 
   switch (mode) {
     case CameraMode::Ortho:
-      proj = camera.ortho.compute_projectionmatrix();
+      proj = camera.ortho.compute_projectionmatrix(ortho_squeeze);
       view = camera.ortho.compute_viewmatrix(target_pos);
       break;
     case CameraMode::FPS:
@@ -58,6 +59,13 @@ FrameState::from_camera_with_mode(EngineState& es, ZoneState& zs, Camera const& 
 {
   auto const camera_world_pos = camera.world_position();
   return make_framestate(es, zs, camera, camera_world_pos, mode);
+}
+
+FrameState
+FrameState::from_camera_for_2dui_overlay(EngineState& es, ZoneState& zs, Camera const& camera)
+{
+  auto const camera_world_pos = camera.world_position();
+  return make_framestate(es, zs, camera, camera_world_pos, CameraMode::Ortho, false);
 }
 
 FrameState

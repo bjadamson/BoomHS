@@ -125,7 +125,7 @@ public:
   glm::vec2 click_position;
 
   // methods
-  glm::mat4 compute_projectionmatrix() const;
+  glm::mat4 compute_projectionmatrix(bool) const;
   glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
 
   void grow_view(glm::vec2 const&);

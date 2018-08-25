@@ -897,7 +897,7 @@ ingame_loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
 
   auto& ui_state = es.ui_state;
   if (ui_state.draw_ingame_ui) {
-    ui_ingame::draw(es, lm, camera, ds);
+    ui_ingame::draw(fs, camera, ds);
   }
 }
 

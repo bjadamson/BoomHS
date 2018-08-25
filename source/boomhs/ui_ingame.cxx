@@ -1,10 +1,10 @@
 #include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
-#include <boomhs/level_manager.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/ui_state.hpp>
+#include <boomhs/zone_state.hpp>
 
 #include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
@@ -314,7 +314,7 @@ draw_chatwindow(EngineState& es, Player& player)
 }
 
 void
-draw_debugoverlay_window(EngineState& es, LevelManager& lm, DrawState& ds)
+draw_debugoverlay_window(EngineState& es, DrawState& ds)
 {
   auto const framerate = es.imgui.Framerate;
   auto const ms_frame  = 1000.0f / framerate;
@@ -325,7 +325,6 @@ draw_debugoverlay_window(EngineState& es, LevelManager& lm, DrawState& ds)
     ImGui::Text("#verts: %s", ds.to_string().c_str());
     ImGui::Text("FPS(avg): %.1f", framerate);
     ImGui::Text("ms/frame: %.3f", ms_frame);
-    ImGui::Text("Current Level: %i", lm.active_zone());
   };
   auto const height = 20.0f;
   auto const size = ImVec2(50, height);
@@ -609,9 +608,10 @@ reset_active_imguiwindow_yscroll_position(int const offset)
 }
 
 void
-draw(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
+draw(FrameState& fs, Camera& camera, DrawState& ds)
 {
-  auto& zs       = lm.active();
+  auto& es       = fs.es;
+  auto& zs       = fs.zs;
   auto& logger   = es.logger;
   auto& registry = zs.registry;
   auto& ttable   = zs.gfx_state.texture_table;
@@ -621,14 +621,15 @@ draw(EngineState& es, LevelManager& lm, Camera& camera, DrawState& ds)
   draw_nearest_target_info(es.dimensions, nbt, ttable, registry);
 
   // Create a renderstate using an orthographic projection.
-  auto fs = FrameState::from_camera_with_mode(es, zs, camera, CameraMode::Ortho);
-  RenderState rstate{fs, ds};
+
+  auto fss = FrameState::from_camera_for_2dui_overlay(es, zs, camera);
+  RenderState rstate{fss, ds};
   draw_2dui(rstate);
 
   auto& player = find_player(registry);
   draw_chatwindow(es, player);
 
-  draw_debugoverlay_window(es, lm, ds);
+  draw_debugoverlay_window(es, ds);
 
   auto& inventory = player.inventory;
   if (inventory.is_open()) {

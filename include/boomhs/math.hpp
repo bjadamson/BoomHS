@@ -11,6 +11,11 @@ namespace boomhs
 {
 struct Transform;
 
+struct Rectangle
+{
+  glm::vec2 min, max;
+};
+
 struct Cube
 {
   glm::vec3 min, max;
