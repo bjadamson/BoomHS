@@ -141,20 +141,32 @@ PlayerPlayingGameBehavior::mousebutton_down(MouseButtonEvent&& mbe)
 
   auto const& button = event.button;
 
-  if (ms.either_pressed()) {
-    auto fs = FrameState::from_camera(es, zs, camera);
-    if (!uistate.lock_debugselected) {
-      if (ms.left_pressed()) {
-        select_mouse_under_cursor(fs, MouseButton::LEFT);
-      }
-      else if (ms.right_pressed()) {
-        select_mouse_under_cursor(fs, MouseButton::RIGHT);
+  auto const mode = camera.mode();
+  if (mode == CameraMode::FPS || mode == CameraMode::ThirdPerson) {
+    if (ms.either_pressed()) {
+      auto fs = FrameState::from_camera(es, zs, camera);
+      if (!uistate.lock_debugselected) {
+        if (ms.left_pressed()) {
+          select_mouse_under_cursor(fs, MouseButton::LEFT);
+        }
+        else if (ms.right_pressed()) {
+          select_mouse_under_cursor(fs, MouseButton::RIGHT);
+        }
       }
     }
+    if (button == SDL_BUTTON_MIDDLE) {
+      LOG_INFO("toggling mouse up/down (pitch) lock");
+      camera.toggle_rotation_lock();
+    }
   }
-  if (button == SDL_BUTTON_MIDDLE) {
-    LOG_INFO("toggling mouse up/down (pitch) lock");
-    camera.toggle_rotation_lock();
+  else if (mode == CameraMode::Ortho) {
+    if (ms.middle_pressed()) {
+      auto const c = glm::vec2{ms.coords().x, ms.coords().y};
+      camera.ortho.click_position = c;
+
+      auto& ds         = es.device_states;
+      ds.cursors.set_active(SDL_SYSTEM_CURSOR_HAND);
+    }
   }
 }
 
@@ -169,6 +181,12 @@ PlayerPlayingGameBehavior::mousebutton_up(MouseButtonEvent&& mbe)
 
   auto& es = state.engine_state;
   auto& ms = es.device_states.mouse.current;
+
+  auto const mode = camera.mode();
+  if (mode == CameraMode::Ortho) {
+    auto& ds         = es.device_states;
+    ds.cursors.set_active(SDL_SYSTEM_CURSOR_ARROW);
+  }
 }
 
 void
@@ -187,11 +205,14 @@ PlayerPlayingGameBehavior::mouse_wheel(MouseWheelEvent &&mwe)
   auto& ldata = lm.active().level_data;
 
   auto& arcball = camera.arcball;
+  auto& ortho   = camera.ortho;
   if (wheel.y > 0) {
     arcball.decrease_zoom(ZOOM_FACTOR, ft);
+    ortho.grow_view(glm::vec2{1.0f});
   }
   else {
     arcball.increase_zoom(ZOOM_FACTOR, ft);
+    ortho.shink_view(glm::vec2{1.0f});
   }
 }
 
@@ -206,7 +227,7 @@ PlayerPlayingGameBehavior::mouse_motion(MouseMotionEvent&& mme)
 
   auto& es     = state.engine_state;
   auto& logger = es.logger;
-  auto& ms     = es.device_states.mouse;
+  auto& ms     = es.device_states.mouse.current;
   auto& ui     = es.ui_state.debug;
 
   // convert from int to floating-point value
@@ -220,10 +241,10 @@ PlayerPlayingGameBehavior::mouse_motion(MouseMotionEvent&& mme)
     fps_mousemove(camera, player, xrel, yrel, ft);
   }
   else if (camera.is_thirdperson()) {
-    thirdperson_mousemove(player, camera, ms.current, xrel, yrel, ft);
+    thirdperson_mousemove(player, camera, ms, xrel, yrel, ft);
   }
-  else {
-    LOG_ERROR("MouseMotion not implemented for this camera mode");
+  else{
+    LOG_ERROR("No mouse motion implemented for this camera type");
   }
 }
 
@@ -245,13 +266,16 @@ PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
 {
   auto& state       = ke.game_state;
   auto& camera      = ke.camera;
+  auto& ortho       = camera.ortho;
   auto const& event = ke.event;
   auto const& ft    = ke.frame_time;
   auto& player      = ke.player;
 
+
   auto& es         = state.engine_state;
   auto& logger     = es.logger;
   auto& uistate    = es.ui_state;
+  auto& ds         = es.device_states;
   auto& player_wo  = player.world_object();
 
   auto& lm             = state.level_manager;
@@ -328,11 +352,46 @@ PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
     break;
   case SDLK_KP_MINUS:
     break;
+
+  case SDLK_KP_1:
+    ortho.lookat_position -= Y_UNIT_VECTOR;
+    break;
+  case SDLK_KP_3:
+    ortho.lookat_position += Y_UNIT_VECTOR;
+    break;
+  case SDLK_KP_2:
+    ortho.lookat_position += Z_UNIT_VECTOR;
+    break;
+  case SDLK_KP_8:
+    ortho.lookat_position -= Z_UNIT_VECTOR;
+    break;
+  case SDLK_KP_4:
+    ortho.lookat_position -= X_UNIT_VECTOR;
+    break;
+  case SDLK_KP_6:
+    ortho.lookat_position += X_UNIT_VECTOR;
+    break;
+
+
+  case SDLK_UP:
+    ortho.scroll(glm::vec2{0, -1});
+    break;
+  case SDLK_DOWN:
+    ortho.scroll(glm::vec2{0, 1});
+    break;
   case SDLK_LEFT:
-    rotate_player(90.0f, EulerAxis::Y);
+    ortho.scroll(glm::vec2{1, 0});
     break;
   case SDLK_RIGHT:
-    rotate_player(-90.0f, EulerAxis::Y);
+    ortho.scroll(glm::vec2{-1, 0});
+    break;
+
+  case SDLK_PAGEUP:
+    ortho.position        += Y_UNIT_VECTOR;
+    break;
+
+  case SDLK_PAGEDOWN:
+    ortho.position        -= Y_UNIT_VECTOR;
     break;
   }
 }
@@ -347,7 +406,8 @@ PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs &&mk)
 
   auto& es     = state.engine_state;
   auto& logger = es.logger;
-  auto& mss    = es.device_states.mouse;
+  auto& ds     = es.device_states;
+  auto& mss    = ds.mouse;
 
   auto& ms_now  = mss.current;
   auto& ms_prev = mss.previous;
@@ -359,13 +419,34 @@ PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs &&mk)
   auto& lm     = state.level_manager;
   auto& registry  = lm.active().registry;
 
-  auto& movement = es.movement_state;
-  if (both_yes_now) {
-    player.rotate_to_match_camera_rotation(camera);
-    movement.mouse_forward = player.eye_forward();
+  auto const mode = camera.mode();
+  if (mode == CameraMode::FPS || mode == CameraMode::ThirdPerson) {
+    auto& movement = es.movement_state;
+    if (both_yes_now) {
+      player.rotate_to_match_camera_rotation(camera);
+      movement.mouse_forward = player.eye_forward();
+    }
+    else {
+      movement.mouse_forward = ZERO;
+    }
   }
-  else {
-    movement.mouse_forward = ZERO;
+  else if (mode == CameraMode::Ortho) {
+    if (ms_now.middle_pressed()) {
+      auto const& click_pos = camera.ortho.click_position;
+
+      auto const coords   = ms_now.coords();
+      auto const now      = glm::vec2{coords.x, coords.y};
+      auto const distance = glm::distance(click_pos, now);
+
+      auto const& viewport = camera.viewport_ref();
+      auto const& frustum  = viewport.frustum;
+      float const dx = -(now - click_pos).x / frustum.width();
+      float const dy = -(now - click_pos).y / frustum.height();
+
+      auto constexpr SCROLL_SPEED = 15.0f;
+      auto const multiplier = SCROLL_SPEED * distance * ft.delta_millis();
+      camera.ortho.scroll(glm::vec2{dx, dy} * multiplier);
+    }
   }
 }
 
@@ -480,7 +561,6 @@ PlayerPlayingGameBehavior::process_controller_state(ControllerArgs&& ca)
   }
 
   {
-    auto const& ds = es.device_states.controller;
     {
       auto const axis_right_x = c.axis_right_x();
       if (less_threshold(axis_right_x)) {

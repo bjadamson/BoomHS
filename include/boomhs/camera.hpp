@@ -109,17 +109,29 @@ public:
 class CameraORTHO
 {
   glm::vec3 forward_, up_;
-
   CameraTarget& target_;
   Viewport&     viewport_;
+
+  glm::vec2 zoom_;
   friend class Camera;
 
 public:
   CameraORTHO(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraORTHO);
 
+  // fields
+  glm::vec3 position;
+  glm::vec3 lookat_position;
+  glm::vec2 click_position;
+
+  // methods
   glm::mat4 compute_projectionmatrix() const;
   glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
+
+  void grow_view(glm::vec2 const&);
+  void shink_view(glm::vec2 const&);
+
+  void scroll(glm::vec2 const&);
 };
 
 class CameraArcball

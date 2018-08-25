@@ -36,6 +36,16 @@ operator<<(std::ostream&, Cube const&);
 struct Frustum
 {
   float left, right, bottom, top, near, far;
+
+  auto height() const { assert(bottom > top); return bottom - top; }
+  auto width() const { assert(right > left); return right - left; }
+  auto depth() const { assert(far > near); return far - near; }
+
+  auto dimensions() const { return glm::vec3(width(), height(), depth()); }
+
+  glm::vec3 center() const { return dimensions() / 2.0f; }
+
+  std::string to_string() const;
 };
 
 // We create an enum of the sides so we don't have to call each side 0 or 1.

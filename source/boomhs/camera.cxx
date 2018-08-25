@@ -249,31 +249,61 @@ CameraORTHO::CameraORTHO(glm::vec3 const& forward, glm::vec3 const& up, CameraTa
     , up_(up)
     , target_(t)
     , viewport_(vp)
+    , zoom_(glm::vec2{0, 0})
+    , position(-3, 50, 108)
+    , lookat_position(-3, -180.0f, 48)
 {
 }
 
 glm::mat4
 CameraORTHO::compute_projectionmatrix() const
 {
-  auto const& f = viewport_.frustum;
-  return glm::ortho(f.left, f.right, f.bottom, f.top, f.near, f.far);
+  auto const& f  = viewport_.frustum;
+  auto const& ar = viewport_.aspect_ratio.compute();
+
+  float const left  = 0.0f + zoom_.x;
+  float const right = 128.0f - zoom_.x;
+
+  float const top    = 0.0f + zoom_.y;
+  float const bottom = 96.0f - zoom_.y;
+
+  return glm::ortho(left, right, top, bottom, f.near, f.far);
 }
 
 glm::mat4
 CameraORTHO::compute_viewmatrix(glm::vec3 const& target) const
 {
-  return glm::lookAt(ZERO, target, Y_UNIT_VECTOR);
+  return glm::lookAt(position, lookat_position, up_);
+}
+
+void
+CameraORTHO::grow_view(glm::vec2 const& amount)
+{
+  zoom_ += amount;
+}
+
+void
+CameraORTHO::shink_view(glm::vec2 const& amount)
+{
+  zoom_ -= amount;
+}
+
+void
+CameraORTHO::scroll(glm::vec2 const& sv)
+{
+  position        += glm::vec3{sv.x, 0, sv.y};
+  lookat_position += glm::vec3{sv.x, 0, sv.y};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
 Camera::Camera(Viewport&& vp, glm::vec3 const& forward, glm::vec3 const& up)
     : viewport_(MOVE(vp))
-    , mode_(CameraMode::ThirdPerson)
     , arcball(forward, up, target_, viewport_)
     , fps(forward, up, target_, viewport_)
     , ortho(forward, up, target_, viewport_)
 {
+  set_mode(CameraMode::ThirdPerson);
 }
 
 WorldObject&
@@ -344,7 +374,7 @@ Camera::rotate_radians(float dx, float dy, FrameTime const& ft)
       fps.rotate_radians(dx, dy, ft);
       break;
     case CameraMode::Ortho:
-      //break;
+      break;
     case CameraMode::ThirdPerson:
       arcball.rotate_radians(dx, dy, ft);
       break;
@@ -369,6 +399,8 @@ Camera::eye_forward() const
     case CameraMode::FPS:
       return glm::normalize(-Z_UNIT_VECTOR * fps.transform().rotation);
     case CameraMode::Ortho:
+      return ortho.forward_;
+      break;
     case CameraMode::ThirdPerson:
       return glm::normalize(arcball.world_position() - arcball.target_position());
     case CameraMode::FREE_FLOATING:
@@ -422,7 +454,7 @@ Camera::world_position() const
     case CameraMode::FPS:
       return fps.world_position();
     case CameraMode::Ortho:
-      return ZERO;
+      return ortho.position;
     case CameraMode::ThirdPerson:
       return arcball.world_position();
     case CameraMode::FREE_FLOATING:

@@ -23,6 +23,7 @@ struct DeviceStates
 {
   ControllerStates controller;
   MouseStates      mouse;
+  CursorManager    cursors;
 };
 
 struct MovementState

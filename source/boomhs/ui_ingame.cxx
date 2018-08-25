@@ -523,7 +523,8 @@ draw_2dui(RenderState& rstate)
     });
   }
 
-  auto const dimensions = es.dimensions;
+  auto const dimensions = fstate.frustum();
+  //auto const& frust = fstate.frustum();
   auto const draw_icon_on_screen = [&rstate, &ttable](auto& sp, glm::vec2 const& pos,
                                                                 glm::vec2 const& size,
                                                                 char const* tex_name)
@@ -538,12 +539,12 @@ draw_2dui(RenderState& rstate)
     glm::vec2 const size{32.0f};
 
     auto constexpr SPACE_BETWEEN = 10;
-    float const left   = dimensions.left() + 39 + 200 + SPACE_BETWEEN
+    float const left   = dimensions.left + 39 + 200 + SPACE_BETWEEN
       + (slot_pos * (size.x + SPACE_BETWEEN));
 
 
     auto constexpr SPACE_BENEATH = 10;
-    float const bottom = dimensions.bottom() - SPACE_BENEATH - size.y;
+    float const bottom = dimensions.bottom - SPACE_BENEATH - size.y;
     glm::vec2 const pos{left, bottom};
     spp.while_bound(logger, [&]() {
       });
@@ -558,7 +559,8 @@ draw_2dui(RenderState& rstate)
   {
     glm::vec2 const size{16.0f};
 
-    auto const middle_of_screen = dimensions.center().to_vec2();
+    auto const center = dimensions.center();
+    auto const middle_of_screen = glm::vec2{center.x, center.y};
     auto& sp = sps.ref_sp("2dtexture");
 
     ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();

@@ -931,10 +931,10 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
   DrawState ds;
 
+  SDL_ShowCursor(SDL_ENABLE);
   if (es.main_menu.show) {
     // Enable keyboard shortcuts
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.MouseDrawCursor = true;
 
     // clear the screen before rending the main menu
     render::clear_screen(LOC::BLACK);
@@ -947,11 +947,11 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
   else {
     // Disable keyboard shortcuts
     io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
+    io.MouseDrawCursor = false;
 
     IO_SDL::read_devices(SDLReadDevicesArgs{state, engine.controllers, camera, ft});
 
-    bool const fps = camera.mode() == CameraMode::FPS;
-    io.MouseDrawCursor = fps ? false : true;
+    SDL_SetCursor(es.device_states.cursors.active());
     ingame_loop(engine, state, rng, camera, water_audio, static_renderers, ds, ft);
   }
 

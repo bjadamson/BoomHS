@@ -701,6 +701,11 @@ draw_camera_window(Camera& camera, Player& player)
     if (ImGui::CollapsingHeader("Arcball Camera")) {
       draw_thirdperson_controls(camera.arcball);
     }
+    if (ImGui::CollapsingHeader("Ortho Camera")) {
+      auto& ortho = camera.ortho;
+      ImGui::InputFloat3("Position", glm::value_ptr(ortho.position));
+      ImGui::InputFloat3("LookAt Position", glm::value_ptr(ortho.lookat_position));
+    }
   };
   imgui_cxx::with_window(draw_camera_window, "CAMERA INFO WINDOW");
 }
