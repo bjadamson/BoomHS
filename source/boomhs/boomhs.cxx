@@ -931,10 +931,11 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
   DrawState ds;
 
-  SDL_ShowCursor(SDL_ENABLE);
   if (es.main_menu.show) {
     // Enable keyboard shortcuts
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    SDL_ShowCursor(false);
+    io.MouseDrawCursor = true;
 
     // clear the screen before rending the main menu
     render::clear_screen(LOC::BLACK);
@@ -945,6 +946,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
     main_menu::draw(es, engine.window, camera, skybox_renderer, ds, lm, size_v, water_audio);
   }
   else {
+    SDL_ShowCursor(SDL_ENABLE);
     // Disable keyboard shortcuts
     io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
     io.MouseDrawCursor = false;
