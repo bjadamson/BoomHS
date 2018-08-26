@@ -158,11 +158,9 @@ set_blendstate(BlendState const& state)
 }
 
 void
-init(common::Logger& logger, ScreenDimensions const& dimensions)
+init(common::Logger& logger)
 {
   // Initialize opengl
-  glViewport(dimensions.left(), dimensions.top(), dimensions.right(), dimensions.bottom());
-
   glDisable(GL_BLEND);
   glDisable(GL_CULL_FACE);
 
@@ -570,6 +568,12 @@ set_mvpmatrix(common::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 
 {
   auto const mvp_matrix = camera_matrix * model_matrix;
   sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
+}
+
+void
+set_viewport(ScreenDimensions const& vp)
+{
+  glViewport(vp.left(), vp.top(), vp.right(), vp.bottom());
 }
 
 } // namespace opengl::render

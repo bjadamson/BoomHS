@@ -745,6 +745,7 @@ render_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, Camera& camer
     auto const& ldata = zs.level_data;
     auto const clear_color = silhouette_black ? LOC::BLACK : ldata.fog.color;
     render::clear_screen(clear_color);
+    render::set_viewport(es.dimensions);
 
     // render scene
     if (es.draw_skybox) {
@@ -939,6 +940,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
     // clear the screen before rending the main menu
     render::clear_screen(LOC::BLACK);
+    render::set_viewport(es.dimensions);
 
     auto const& dimensions = engine.dimensions();
     auto const size_v      = ImVec2(dimensions.right(), dimensions.bottom());

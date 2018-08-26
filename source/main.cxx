@@ -113,8 +113,7 @@ start(common::Logger& logger, Engine& engine)
   auto& registries = engine.registries;
 
   // Initialize opengl
-  auto const dimensions = engine.dimensions();
-  opengl::render::init(logger, dimensions);
+  opengl::render::init(logger);
 
   // Initialize openAL
   ALCdevice* al_device = alcOpenDevice(nullptr);
@@ -133,8 +132,9 @@ start(common::Logger& logger, Engine& engine)
   alcMakeContextCurrent(ctx);
 
   // Configure Imgui
-  auto& io           = ImGui::GetIO();
-  io.DisplaySize     = ImVec2{static_cast<float>(dimensions.right()), static_cast<float>(dimensions.bottom())};
+  auto& io              = ImGui::GetIO();
+  auto const dimensions = engine.dimensions();
+  io.DisplaySize        = ImVec2{static_cast<float>(dimensions.right()), static_cast<float>(dimensions.bottom())};
 
   // Construct game state
   EngineState es{logger, *al_device, io, dimensions};

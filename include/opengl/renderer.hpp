@@ -114,7 +114,7 @@ void
 set_blendstate(BlendState const&);
 
 void
-init(common::Logger&, boomhs::ScreenDimensions const&);
+init(common::Logger&);
 
 void
 clear_screen(boomhs::Color const&);
@@ -164,5 +164,8 @@ set_modelmatrix(common::Logger&, glm::mat4 const&, ShaderProgram&);
 
 void
 set_mvpmatrix(common::Logger&, glm::mat4 const&, glm::mat4 const&, ShaderProgram&);
+
+void
+set_viewport(boomhs::ScreenDimensions const&);
 
 } // namespace opengl::render
