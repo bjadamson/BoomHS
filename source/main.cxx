@@ -5,9 +5,8 @@
 #include <boomhs/io_behavior.hpp>
 #include <boomhs/io_sdl.hpp>
 #include <boomhs/main_menu.hpp>
+#include <boomhs/scene_renderer.hpp>
 #include <boomhs/state.hpp>
-
-#include <opengl/renderer.hpp>
 
 #include <common/log.hpp>
 #include <boomhs/random.hpp>
@@ -136,8 +135,18 @@ start(common::Logger& logger, Engine& engine)
   auto const dimensions = engine.dimensions();
   io.DisplaySize        = ImVec2{static_cast<float>(dimensions.right()), static_cast<float>(dimensions.bottom())};
 
+  auto constexpr NEAR = 0.001f;
+  auto constexpr FAR  = 10000.0f;
+  Frustum const frustum{
+    static_cast<float>(dimensions.left()),
+    static_cast<float>(dimensions.right()),
+    static_cast<float>(dimensions.bottom()),
+    static_cast<float>(dimensions.top()),
+    NEAR,
+    FAR};
+
   // Construct game state
-  EngineState es{logger, *al_device, io, dimensions};
+  EngineState es{logger, *al_device, io, dimensions, frustum};
   auto        camera = Camera::make_default(dimensions);
 
   RNG rng;

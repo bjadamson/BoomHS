@@ -144,7 +144,7 @@ PlayerPlayingGameBehavior::mousebutton_down(MouseButtonEvent&& mbe)
   auto const mode = camera.mode();
   if (mode == CameraMode::FPS || mode == CameraMode::ThirdPerson) {
     if (ms.either_pressed()) {
-      auto fs = FrameState::from_camera(es, zs, camera);
+      auto fs = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), es.frustum);
       if (!uistate.lock_debugselected) {
         if (ms.left_pressed()) {
           select_mouse_under_cursor(fs, MouseButton::LEFT);
@@ -438,8 +438,8 @@ PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs &&mk)
       auto const now      = glm::vec2{coords.x, coords.y};
       auto const distance = glm::distance(click_pos, now);
 
-      auto const& viewport = camera.viewport_ref();
-      auto const& frustum  = viewport.frustum;
+      auto const& view_settings = camera.view_settings_ref();
+      auto const& frustum       = es.frustum;
       float const dx = -(now - click_pos).x / frustum.width();
       float const dy = -(now - click_pos).y / frustum.height();
 

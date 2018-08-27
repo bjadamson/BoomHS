@@ -1,6 +1,6 @@
 #pragma once
+#include <boomhs/math.hpp>
 #include <common/type_macros.hpp>
-#include <extlibs/glm.hpp>
 
 #include <array>
 
@@ -10,6 +10,7 @@ class Camera;
 class EngineState;
 class Frustum;
 class ZoneState;
+struct ViewSettings;
 
 enum class CameraMode
 {
@@ -63,12 +64,12 @@ public:
   CameraMode camera_mode() const;
 
   static FrameState from_camera_withposition(EngineState&, ZoneState&, Camera const&,
-                                             glm::vec3 const&);
-  static FrameState from_camera_with_mode(EngineState&, ZoneState&, Camera const&, CameraMode);
+                                             ViewSettings const&, Frustum const&, glm::vec3 const&);
+  static FrameState from_camera_with_mode(EngineState&, ZoneState&, Camera const&, CameraMode, ViewSettings const&, Frustum const&);
 
-  static FrameState from_camera(EngineState&, ZoneState&, Camera const&);
+  static FrameState from_camera(EngineState&, ZoneState&, Camera const&, ViewSettings const&, Frustum const&);
 
-  static FrameState from_camera_for_2dui_overlay(EngineState&, ZoneState&, Camera const&);
+  static FrameState from_camera_for_2dui_overlay(EngineState&, ZoneState&, Camera const&, ViewSettings const&, Frustum const&);
 };
 
 } // namespace boomhs

@@ -200,7 +200,7 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camer
   auto const model = camera_transform.model_matrix();
 
   if (es.draw_view_frustum) {
-    draw_frustum(rstate, camera.frustum_ref(), model);
+    draw_frustum(rstate, es.frustum, model);
   }
 
   // if checks happen inside fn

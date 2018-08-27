@@ -14,11 +14,13 @@ namespace boomhs
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EngineState
-EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, ScreenDimensions const& d)
+EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, ScreenDimensions const& d,
+    Frustum const& frust)
     : logger(l)
     , al_device(al)
     , imgui(i)
     , dimensions(d)
+    , frustum(frust)
     , disable_controller_input(true)
     , player_collision(false)
     , mariolike_edges(false)

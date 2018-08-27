@@ -183,7 +183,7 @@ draw(EngineState& es, LevelManager& lm, Camera& camera, FrameTime const& ft)
   auto& player = find_player(registry);
 
   if (uistate.show_entitywindow) {
-    auto const fs = FrameState::from_camera(es, zs, camera);
+    auto const fs = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), es.frustum);
     auto const& view_mat = fs.view_matrix();
     auto const& proj_mat = fs.projection_matrix();
     draw_entity_editor(es, lm, registry, camera, view_mat, proj_mat);

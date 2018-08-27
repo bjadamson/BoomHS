@@ -509,8 +509,6 @@ draw_grid_lines(RenderState& rstate)
   auto& sps    = zs.gfx_state.sps;
   auto& sp     = sps.ref_sp("3d_pos_color");
 
-  auto const& leveldata = zs.level_data;
-
   bool const show_y = es.show_yaxis_lines;
 
   glm::vec2 constexpr GRID_DIMENSIONS{20, 20};

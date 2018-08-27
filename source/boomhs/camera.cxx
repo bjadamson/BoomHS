@@ -20,20 +20,6 @@ using namespace window;
 // This massive speed multiplier is needed to restore numbers fast enough for humans to enjoy.
 double constexpr ZOOM_SPEED_MULTIPLIER = 1000.0;
 
-auto
-make_viewport(float const fov, ScreenDimensions const& dimensions, AspectRatio const ar,
-              float const near, float const far)
-{
-  Frustum frustum{
-      static_cast<float>(dimensions.left()),
-      static_cast<float>(dimensions.right()),
-      static_cast<float>(dimensions.bottom()),
-      static_cast<float>(dimensions.top()),
-      near,
-      far};
-  return Viewport{ar, fov, MOVE(frustum)};
-}
-
 namespace boomhs
 {
 
@@ -60,11 +46,11 @@ CameraTarget::validate() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraArcball
 CameraArcball::CameraArcball(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t,
-                             Viewport& vp)
+                             ViewSettings& vp)
     : forward_(forward)
     , up_(up)
     , target_(t)
-    , viewport_(vp)
+    , view_settings_(vp)
     , coordinates_(0.0f, 0.0f, 0.0f)
 {
   cs.rotation_lock = false;
@@ -155,11 +141,10 @@ CameraArcball::target_position() const
 }
 
 glm::mat4
-CameraArcball::compute_projectionmatrix() const
+CameraArcball::compute_projectionmatrix(ViewSettings const& vp, Frustum const& f) const
 {
-  auto const ar  = viewport_.aspect_ratio.compute();
-  auto const fov = viewport_.field_of_view;
-  auto const& f  = viewport_.frustum;
+  auto const ar  = vp.aspect_ratio.compute();
+  auto const fov = vp.field_of_view;
 
   return glm::perspective(fov, ar, f.near, f.far);
 }
@@ -173,13 +158,13 @@ CameraArcball::compute_viewmatrix(glm::vec3 const& target_pos) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraFPS
-CameraFPS::CameraFPS(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t, Viewport& vp)
+CameraFPS::CameraFPS(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t, ViewSettings& vp)
     : forward_(forward)
     , up_(up)
     , xrot_(0)
     , yrot_(0)
     , target_(t)
-    , viewport_(vp)
+    , view_settings_(vp)
 {
   cs.rotation_lock = true;
 
@@ -225,11 +210,10 @@ CameraFPS::world_position() const
 }
 
 glm::mat4
-CameraFPS::compute_projectionmatrix() const
+CameraFPS::compute_projectionmatrix(ViewSettings const& vp, Frustum const& f) const
 {
-  auto const ar  = viewport_.aspect_ratio.compute();
-  auto const fov = viewport_.field_of_view;
-  auto const& f  = viewport_.frustum;
+  auto const ar  = vp.aspect_ratio.compute();
+  auto const fov = vp.field_of_view;
   return glm::perspective(fov, ar, f.near, f.far);
 }
 
@@ -244,11 +228,11 @@ CameraFPS::compute_viewmatrix(glm::vec3 const& eye_fwd) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraORTHO
 CameraORTHO::CameraORTHO(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t,
-                         Viewport& vp)
+                         ViewSettings& vp)
     : forward_(forward)
     , up_(up)
     , target_(t)
-    , viewport_(vp)
+    , view_settings_(vp)
     , zoom_(glm::vec2{0, 0})
     , position(-3, 50, 108)
     , lookat_position(-3, -180.0f, 48)
@@ -256,10 +240,9 @@ CameraORTHO::CameraORTHO(glm::vec3 const& forward, glm::vec3 const& up, CameraTa
 }
 
 glm::mat4
-CameraORTHO::compute_projectionmatrix(bool const zoom_squeeze) const
+CameraORTHO::compute_projectionmatrix(bool const zoom_squeeze, ViewSettings const& vp, Frustum const& f) const
 {
-  auto const& f  = viewport_.frustum;
-  auto const& ar = viewport_.aspect_ratio.compute();
+  auto const& ar = vp.aspect_ratio.compute();
 
   float left, right, top, bottom;
   if (zoom_squeeze) {
@@ -306,11 +289,11 @@ CameraORTHO::scroll(glm::vec2 const& sv)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
-Camera::Camera(Viewport&& vp, glm::vec3 const& forward, glm::vec3 const& up)
-    : viewport_(MOVE(vp))
-    , arcball(forward, up, target_, viewport_)
-    , fps(forward, up, target_, viewport_)
-    , ortho(forward, up, target_, viewport_)
+Camera::Camera(ViewSettings&& vp, glm::vec3 const& forward, glm::vec3 const& up)
+    : view_settings_(MOVE(vp))
+    , arcball(forward, up, target_, view_settings_)
+    , fps(forward, up, target_, view_settings_)
+    , ortho(forward, up, target_, view_settings_)
 {
   set_mode(CameraMode::ThirdPerson);
 }
@@ -486,10 +469,7 @@ Camera::make_default(ScreenDimensions const& dimensions)
 
   auto constexpr FOV  = glm::radians(110.0f);
   auto constexpr AR   = AspectRatio{4.0f, 3.0f};
-  auto constexpr NEAR = 0.001f;
-  auto constexpr FAR  = 10000.0f;
-  auto vp = make_viewport(FOV, dimensions, AR, NEAR, FAR);
-
+  ViewSettings vp{AR, FOV};
   Camera camera(MOVE(vp), FORWARD, UP);
 
   SphericalCoordinates sc;

@@ -125,6 +125,19 @@ Frustum::to_string() const
       left, right, bottom, top, near, far);
 }
 
+Frustum
+operator/(Frustum const& n, Frustum const& d)
+{
+  return Frustum{
+    n.left   / d.left,
+    n.right  / d.right,
+    n.bottom / d.bottom,
+    n.top    / d.top,
+    n.near   / d.near,
+    n.far    / d.far
+  };
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Plane
 float

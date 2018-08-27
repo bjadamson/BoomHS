@@ -639,7 +639,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
 }
 
 void
-draw_camera_window(Camera& camera, Player& player)
+draw_camera_window(Camera& camera, Player& player, Frustum& frustum)
 {
   auto const draw_thirdperson_controls = [](CameraArcball const& tp_camera) {
     auto const scoords = tp_camera.spherical_coordinates();
@@ -662,7 +662,7 @@ draw_camera_window(Camera& camera, Player& player)
       ImGui::Text("Follow Target position:\t%s", tp.c_str());
     }
   };
-  auto const draw_camera_window = [&]() {
+  auto const draw_window = [&]() {
     {
       auto mode_strings = CameraModes::string_list();
       int selected = static_cast<int>(camera.mode());
@@ -674,19 +674,18 @@ draw_camera_window(Camera& camera, Player& player)
       ImGui::Separator();
     }
     {
-      ImGui::Text("Viewport");
-      auto& viewport = camera.viewport_ref();
+      ImGui::Text("View Settings");
+      auto& view_settings = camera.view_settings_ref();
 
-      auto fov = glm::degrees(viewport.field_of_view);
+      auto fov = glm::degrees(view_settings.field_of_view);
       if (ImGui::InputFloat("FOV (degrees):", &fov)) {
-        viewport.field_of_view = glm::radians(fov);
+        view_settings.field_of_view = glm::radians(fov);
       }
 
-      auto& aspect_ratio = viewport.aspect_ratio;
+      auto& aspect_ratio = view_settings.aspect_ratio;
       ImGui::InputFloat2("Aspect:", aspect_ratio.data());
     }
     if (ImGui::CollapsingHeader("Frustum")) {
-      auto& frustum = camera.frustum_ref();
       ImGui::InputFloat("Left:",   &frustum.left);
       ImGui::InputFloat("Right:",  &frustum.right);
       ImGui::InputFloat("Bottom:", &frustum.bottom);
@@ -707,7 +706,7 @@ draw_camera_window(Camera& camera, Player& player)
       ImGui::InputFloat3("LookAt Position", glm::value_ptr(ortho.lookat_position));
     }
   };
-  imgui_cxx::with_window(draw_camera_window, "CAMERA INFO WINDOW");
+  imgui_cxx::with_window(draw_window, "CAMERA INFO WINDOW");
 }
 
 void
@@ -922,7 +921,7 @@ draw(EngineState& es, SDLWindow& window, Camera& camera, SkyboxRenderer& skyboxr
     draw_time_editor(es.logger, es.time, uistate);
   }
   if (uistate.show_camerawindow) {
-    draw_camera_window(camera, player);
+    draw_camera_window(camera, player, es.frustum);
   }
   if (uistate.show_devicewindow) {
     draw_device_window(es.device_states, camera);

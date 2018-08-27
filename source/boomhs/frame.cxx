@@ -9,6 +9,7 @@ namespace
 
 auto
 make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
+                ViewSettings const& view_settings, Frustum const& frustum,
                 glm::vec3 const& camera_world_pos, CameraMode const mode,
                 bool const ortho_squeeze = true)
 {
@@ -19,15 +20,15 @@ make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
 
   switch (mode) {
     case CameraMode::Ortho:
-      proj = camera.ortho.compute_projectionmatrix(ortho_squeeze);
+      proj = camera.ortho.compute_projectionmatrix(ortho_squeeze, view_settings, frustum);
       view = camera.ortho.compute_viewmatrix(target_pos);
       break;
     case CameraMode::FPS:
-      proj = camera.fps.compute_projectionmatrix();
+      proj = camera.fps.compute_projectionmatrix(view_settings, frustum);
       view = camera.fps.compute_viewmatrix(camera.eye_forward());
       break;
     case CameraMode::ThirdPerson:
-      proj = camera.arcball.compute_projectionmatrix();
+      proj = camera.arcball.compute_projectionmatrix(view_settings, frustum);
       view = camera.arcball.compute_viewmatrix(camera_world_pos);
       break;
     case CameraMode::FREE_FLOATING:
@@ -35,7 +36,6 @@ make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
       std::abort();
       break;
   }
-  auto const& frustum = camera.frustum_ref();
   CameraFrameState cfs{camera_world_pos, proj, view, frustum, mode};
   return FrameState{es, zs, MOVE(cfs)};
 }
@@ -48,31 +48,33 @@ namespace boomhs
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // FrameState
 FrameState
-FrameState::from_camera_withposition(EngineState& es, ZoneState& zs, Camera const& camera, glm::vec3 const& custom_camera_pos)
+FrameState::from_camera_withposition(EngineState& es, ZoneState& zs, Camera const& camera,
+                                     ViewSettings const& vs, Frustum const& frustum,
+                                     glm::vec3 const& custom_camera_pos)
 {
   auto const cmode = camera.mode();
-  return make_framestate(es, zs, camera, custom_camera_pos, cmode);
+  return make_framestate(es, zs, camera, vs, frustum, custom_camera_pos, cmode);
 }
 
 FrameState
-FrameState::from_camera_with_mode(EngineState& es, ZoneState& zs, Camera const& camera, CameraMode const mode)
+FrameState::from_camera_with_mode(EngineState& es, ZoneState& zs, Camera const& camera, CameraMode const mode, ViewSettings const& vs, Frustum const& frustum)
 {
   auto const camera_world_pos = camera.world_position();
-  return make_framestate(es, zs, camera, camera_world_pos, mode);
+  return make_framestate(es, zs, camera, vs, frustum, camera_world_pos, mode);
 }
 
 FrameState
-FrameState::from_camera_for_2dui_overlay(EngineState& es, ZoneState& zs, Camera const& camera)
+FrameState::from_camera_for_2dui_overlay(EngineState& es, ZoneState& zs, Camera const& camera, ViewSettings const& vs, Frustum const& frustum)
 {
   auto const camera_world_pos = camera.world_position();
-  return make_framestate(es, zs, camera, camera_world_pos, CameraMode::Ortho, false);
+  return make_framestate(es, zs, camera, vs, frustum, camera_world_pos, CameraMode::Ortho, false);
 }
 
 FrameState
-FrameState::from_camera(EngineState& es, ZoneState& zs, Camera const& camera)
+FrameState::from_camera(EngineState& es, ZoneState& zs, Camera const& camera, ViewSettings const& vs, Frustum const& frustum)
 {
   auto const pos = camera.world_position();
-  return from_camera_withposition(es, zs, camera, pos);
+  return from_camera_withposition(es, zs, camera, vs, frustum, pos);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////

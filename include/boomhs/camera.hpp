@@ -34,11 +34,10 @@ public:
   float const* data() const { return nd_.data(); }
 };
 
-struct Viewport
+struct ViewSettings
 {
   AspectRatio aspect_ratio;
   float       field_of_view;
-  Frustum     frustum;
 };
 
 class CameraTarget
@@ -84,7 +83,7 @@ class CameraFPS
   float xrot_, yrot_;
 
   CameraTarget& target_;
-  Viewport&     viewport_;
+  ViewSettings& view_settings_;
 
   friend class Camera;
 
@@ -92,7 +91,7 @@ class CameraFPS
   auto const& transform() const { return target_.get().transform(); }
 
 public:
-  CameraFPS(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&);
+  CameraFPS(glm::vec3 const&, glm::vec3 const&, CameraTarget&, ViewSettings&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraFPS);
 
   // fields
@@ -102,7 +101,7 @@ public:
   CameraFPS& rotate_radians(float, float, FrameTime const&);
 
   glm::vec3 world_position() const;
-  glm::mat4 compute_projectionmatrix() const;
+  glm::mat4 compute_projectionmatrix(ViewSettings const&, Frustum const&) const;
   glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
 };
 
@@ -110,13 +109,13 @@ class CameraORTHO
 {
   glm::vec3 forward_, up_;
   CameraTarget& target_;
-  Viewport&     viewport_;
+  ViewSettings&     view_settings_;
 
   glm::vec2 zoom_;
   friend class Camera;
 
 public:
-  CameraORTHO(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&);
+  CameraORTHO(glm::vec3 const&, glm::vec3 const&, CameraTarget&, ViewSettings&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraORTHO);
 
   // fields
@@ -125,7 +124,7 @@ public:
   glm::vec2 click_position;
 
   // methods
-  glm::mat4 compute_projectionmatrix(bool) const;
+  glm::mat4 compute_projectionmatrix(bool, ViewSettings const&, Frustum const&) const;
   glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
 
   void grow_view(glm::vec2 const&);
@@ -139,7 +138,7 @@ class CameraArcball
   glm::vec3 forward_, up_;
 
   CameraTarget& target_;
-  Viewport&     viewport_;
+  ViewSettings&     view_settings_;
 
   SphericalCoordinates coordinates_;
 
@@ -148,7 +147,7 @@ class CameraArcball
   friend class Camera;
 
 public:
-  CameraArcball(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&);
+  CameraArcball(glm::vec3 const&, glm::vec3 const&, CameraTarget&, ViewSettings&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraArcball);
 
   // fields
@@ -168,19 +167,19 @@ public:
 
   glm::vec3 target_position() const;
 
-  glm::mat4 compute_projectionmatrix() const;
+  glm::mat4 compute_projectionmatrix(ViewSettings const&, Frustum const&) const;
   glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
 };
 
 class Camera
 {
   CameraTarget target_;
-  Viewport     viewport_;
+  ViewSettings     view_settings_;
   CameraMode   mode_;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(Viewport&&, glm::vec3 const&, glm::vec3 const&);
+  Camera(ViewSettings&&, glm::vec3 const&, glm::vec3 const&);
 
   // public fields
   CameraArcball arcball;
@@ -209,11 +208,8 @@ public:
   glm::vec3 world_up() const;
   glm::vec3 world_position() const;
 
-  auto const& viewport_ref() const { return viewport_; }
-  auto&       viewport_ref() { return viewport_; }
-
-  auto const& frustum_ref() const { return viewport_.frustum; }
-  auto&       frustum_ref() { return viewport_.frustum; }
+  auto const& view_settings_ref() const { return view_settings_; }
+  auto&       view_settings_ref() { return view_settings_; }
 
   Camera& rotate_radians(float, float, FrameTime const&);
   void    set_target(WorldObject&);
