@@ -1,6 +1,8 @@
 #pragma once
 #include <extlibs/glm.hpp>
 
+#include <boomhs/screen_info.hpp>
+
 #include <array>
 #include <cmath>
 #include <limits>
@@ -109,6 +111,49 @@ auto constexpr TWO_PI   = PI * 2.0f;
 auto constexpr EPSILONF = std::numeric_limits<float>::epsilon();
 
 } // namespace boomhs::math::constants
+
+namespace boomhs::math::space_conversions
+{
+
+inline glm::vec4
+clip_to_eye(glm::vec4 const& clip, glm::mat4 const& proj_matrix, float const z)
+{
+  auto const      inv_proj    = glm::inverse(proj_matrix);
+  glm::vec4 const eye_coords  = inv_proj * clip;
+  return glm::vec4{eye_coords.x, eye_coords.y, z, 0.0f};
+}
+
+inline glm::vec3
+eye_to_world(glm::vec4 const& eye, glm::mat4 const& view_matrix)
+{
+  glm::mat4 const inv_view  = glm::inverse(view_matrix);
+  glm::vec4 const ray       = inv_view * eye;
+  glm::vec3 const ray_world = glm::vec3{ray.x, ray.y, ray.z};
+  return glm::normalize(ray_world);
+}
+
+inline glm::vec2
+screen_to_ndc(glm::vec2 const& scoords, ScreenDimensions const& view_rect)
+{
+  float const x = ((2.0f * scoords.x) / view_rect.right()) - 1.0f;
+  float const y = ((2.0f * scoords.y) / view_rect.bottom()) - 1.0f;
+
+  auto const assert_fn = [](float const v) {
+    assert(v <= 1.0f);
+    assert(v >= -1.0f);
+  };
+  assert_fn(x);
+  assert_fn(y);
+  return glm::vec2{x, -y};
+}
+
+inline glm::vec4
+ndc_to_clip(glm::vec2 const& ndc, float const z)
+{
+  return glm::vec4{ndc.x, ndc.y, z, 1.0f};
+}
+
+} // namespace boomhs::math::space_conversions
 
 namespace boomhs::math
 {

@@ -43,6 +43,8 @@ struct CameraFrameState
   Frustum  const& frustum;
 
   CameraMode const mode;
+
+  MOVE_CONSTRUCTIBLE_ONLY(CameraFrameState);
 };
 
 class FrameState
@@ -56,11 +58,13 @@ public:
   EngineState& es;
   ZoneState&   zs;
 
-  glm::vec3 camera_world_position() const;
-  Frustum const& frustum() const;
-  glm::mat4 camera_matrix() const;
   glm::mat4 projection_matrix() const;
   glm::mat4 view_matrix() const;
+
+  Frustum const& frustum() const;
+  glm::mat4 camera_matrix() const;
+
+  glm::vec3  camera_world_position() const;
   CameraMode camera_mode() const;
 
   static FrameState from_camera_withposition(EngineState&, ZoneState&, Camera const&,
