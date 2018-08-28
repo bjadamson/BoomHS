@@ -20,7 +20,8 @@ namespace
 {
 
 void
-draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, Camera& camera,
+draw_entity_editor(char const* prefix, int const window_flags, EngineState& es, LevelManager& lm,
+                   EntityRegistry& registry, Camera& camera,
                    glm::mat4 const& view_mat, glm::mat4 const& proj_mat)
 {
   auto& logger    = es.logger;
@@ -162,10 +163,9 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
     }
   };
 
-  imgui_cxx::with_window(draw, "Entity Editor Window");
+  auto const title = std::string{prefix} + ":Entity Editor Window";
+  imgui_cxx::with_window(draw, title.c_str(), nullptr, window_flags);
 }
-
-
 
 } // namespace
 
@@ -173,7 +173,8 @@ namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState& es, LevelManager& lm, Camera& camera, FrameTime const& ft)
+draw(char const* prefix, int const window_flags, EngineState& es, LevelManager& lm, Camera& camera,
+     FrameTime const& ft)
 {
   auto& uistate        = es.ui_state.debug;
   auto& zs             = lm.active();
@@ -186,7 +187,7 @@ draw(EngineState& es, LevelManager& lm, Camera& camera, FrameTime const& ft)
     auto const fs = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), es.frustum);
     auto const& view_mat = fs.view_matrix();
     auto const& proj_mat = fs.projection_matrix();
-    draw_entity_editor(es, lm, registry, camera, view_mat, proj_mat);
+    draw_entity_editor(prefix, window_flags, es, lm, registry, camera, view_mat, proj_mat);
   }
 }
 

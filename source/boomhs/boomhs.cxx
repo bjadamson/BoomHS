@@ -6,6 +6,7 @@
 #include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/controller.hpp>
+#include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/frame.hpp>
 #include <boomhs/game_config.hpp>
@@ -16,9 +17,14 @@
 #include <boomhs/level_manager.hpp>
 #include <boomhs/mouse.hpp>
 #include <boomhs/npc.hpp>
+
+#include <boomhs/ortho_renderer.hpp>
+#include <boomhs/perspective_renderer.hpp>
+#include <boomhs/scene_renderer.hpp>
+
 #include <boomhs/player.hpp>
 #include <boomhs/rexpaint.hpp>
-#include <boomhs/scene_renderer.hpp>
+
 #include <boomhs/state.hpp>
 #include <boomhs/start_area_generator.hpp>
 #include <boomhs/skybox.hpp>
@@ -631,25 +637,44 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
 }
 
 void
-ingame_loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
+draw_everything(FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
             WaterAudioSystem& water_audio, StaticRenderers& static_renderers, DrawState& ds,
             FrameTime const& ft)
 {
-
-  auto& lm = state.level_manager;
-  auto& zs = lm.active();
-  auto& es = state.engine_state;
-  auto fs = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), es.frustum);
-
-  update_everything(es, lm, rng, fs, camera, static_renderers, water_audio, engine.window, ft);
+  auto& es        = fs.es;
+  auto& zs        = lm.active();
+  auto const& dim = es.dimensions;
   {
     RenderState rstate{fs, ds};
-    SceneRenderer::draw(rstate, lm, ds, camera, rng, ft, static_renderers);
-  }
 
-  auto& ui_state = es.ui_state;
-  if (ui_state.draw_ingame_ui) {
-    ui_ingame::draw(fs, camera, ds);
+    auto const mode = camera.mode();
+    if (CameraMode::FPS == mode || CameraMode::ThirdPerson == mode) {
+      render::set_viewport(es.dimensions);
+      PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);
+
+      float const right  = dim.right();
+      float const bottom = dim.bottom();
+
+      auto& io = es.imgui;
+      io.DisplaySize = ImVec2{right, bottom};
+      auto& ui_state = es.ui_state;
+      if (ui_state.draw_ingame_ui) {
+        ui_ingame::draw(fs, camera, ds);
+      }
+      if (ui_state.draw_debug_ui) {
+
+        auto static constexpr WINDOW_FLAGS = (0
+          | ImGuiWindowFlags_AlwaysAutoResize
+        );
+        ui_debug::draw("Perspective", WINDOW_FLAGS, es, lm, camera, ft);
+      }
+    }
+    else if (CameraMode::Ortho == mode) {
+      OrthoRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);
+    }
+    else {
+      std::abort();
+    }
   }
 }
 
@@ -683,6 +708,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
   DrawState ds;
 
+  auto const& dimensions = engine.dimensions();
   if (es.main_menu.show) {
     // Enable keyboard shortcuts
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
@@ -693,7 +719,6 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
     render::clear_screen(LOC::BLACK);
     render::set_viewport(es.dimensions);
 
-    auto const& dimensions = engine.dimensions();
     auto const size_v      = ImVec2(dimensions.right(), dimensions.bottom());
     auto& skybox_renderer  = static_renderers.skybox;
     main_menu::draw(es, engine.window, camera, skybox_renderer, ds, lm, size_v, water_audio);
@@ -707,13 +732,10 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
     IO_SDL::read_devices(SDLReadDevicesArgs{state, engine.controllers, camera, ft});
 
     SDL_SetCursor(es.device_states.cursors.active());
-    ingame_loop(engine, state, rng, camera, water_audio, static_renderers, ds, ft);
-  }
 
-  auto& ui_state = es.ui_state;
-  if (ui_state.draw_debug_ui) {
-    auto& lm = state.level_manager;
-    ui_debug::draw(es, lm, camera, ft);
+    auto fs         = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), es.frustum);
+    update_everything(es, lm, rng, fs, camera, static_renderers, water_audio, engine.window, ft);
+    draw_everything(fs, lm, rng, camera, water_audio, static_renderers, ds, ft);
   }
 }
 

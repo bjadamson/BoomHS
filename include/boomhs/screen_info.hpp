@@ -50,4 +50,16 @@ public:
   auto center() const { return ScreenCoords{width() / 2, height() / 2}; }
 };
 
+template <typename T>
+ScreenDimensions
+operator/(ScreenDimensions const& n, T const& d)
+{
+  return ScreenDimensions{
+    n.left()   / d,
+    n.top()    / d,
+    n.right()  / d,
+    n.bottom() / d
+  };
+}
+
 } // namespace boomhs

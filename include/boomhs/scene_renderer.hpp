@@ -19,16 +19,6 @@ class  Camera;
 class  FrameTime;
 class  LevelManager;
 class  RNG;
-class  StaticRenderers;
-
-struct SceneRenderer
-{
-  SceneRenderer() = delete;
-
-  static void
-  draw(opengl::RenderState&, LevelManager&, opengl::DrawState&, Camera&, RNG& rng, FrameTime const&,
-              StaticRenderers&);
-};
 
 struct WaterRenderers
 {

@@ -130,13 +130,10 @@ start(common::Logger& logger, Engine& engine)
   });
   alcMakeContextCurrent(ctx);
 
-  // Configure Imgui
-  auto& io              = ImGui::GetIO();
+  // Construct game state
+  auto constexpr NEAR   = 0.001f;
+  auto constexpr FAR    = 10000.0f;
   auto const dimensions = engine.dimensions();
-  io.DisplaySize        = ImVec2{static_cast<float>(dimensions.right()), static_cast<float>(dimensions.bottom())};
-
-  auto constexpr NEAR = 0.001f;
-  auto constexpr FAR  = 10000.0f;
   Frustum const frustum{
     static_cast<float>(dimensions.left()),
     static_cast<float>(dimensions.right()),
@@ -145,7 +142,7 @@ start(common::Logger& logger, Engine& engine)
     NEAR,
     FAR};
 
-  // Construct game state
+  auto& io = ImGui::GetIO();
   EngineState es{logger, *al_device, io, dimensions, frustum};
   auto        camera = Camera::make_default(dimensions);
 
