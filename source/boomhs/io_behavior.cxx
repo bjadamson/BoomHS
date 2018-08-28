@@ -73,6 +73,7 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
 
   glm::vec3 const  ray_dir   = Raycast::calculate_ray(fstate);
   glm::vec3 const& ray_start = fstate.camera_world_position();
+  auto const cmode           = fstate.camera_mode();
 
   std::vector<std::pair<EntityID, float>> distances;
   auto const eids = find_all_entities_with_component<Selectable>(registry);
@@ -84,20 +85,28 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
 
     bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == ONE);
 
-    float distance = 0.0f;
     bool intersects = false;
-    if (can_use_simple_test) {
-      Ray const  ray{ray_start, ray_dir};
-      intersects = collision::ray_cube_intersect(ray, tr, bbox, distance);
+    if (CameraMode::FPS == cmode || CameraMode::ThirdPerson == cmode) {
+      float distance = 0.0f;
+      if (can_use_simple_test) {
+        Ray const  ray{ray_start, ray_dir};
+        intersects = collision::ray_cube_intersect(ray, tr, bbox, distance);
+      }
+      else {
+        intersects = collision::ray_obb_intersection(ray_start, ray_dir, bbox, tr, distance);
+      }
+      if (intersects) {
+        distances.emplace_back(PAIR(eid, distance));
+        LOG_TRACE_SPRINTF("Intersection found using %s test, distance %f", can_use_simple_test ? "SIMPLE" : "COMPLEX", distance);
+      }
+    }
+    else if (CameraMode::Ortho == cmode) {
+      //intersects = ???;
     }
     else {
-      intersects = collision::ray_obb_intersection(ray_start, ray_dir, bbox, tr, distance);
+      std::abort();
     }
-
-    if (intersects) {
-      distances.emplace_back(PAIR(eid, distance));
-      LOG_TRACE_SPRINTF("Intersection found using %s test, distance %f", can_use_simple_test ? "SIMPLE" : "COMPLEX", distance);
-    }
+    
   }
   bool const something_selected = !distances.empty();
   if (something_selected) {
@@ -139,21 +148,22 @@ PlayerPlayingGameBehavior::mousebutton_down(MouseButtonEvent&& mbe)
   auto& zs = state.level_manager.active();
   auto& uistate = es.ui_state.debug;
 
-  auto const& button = event.button;
-
-  auto const mode = camera.mode();
-  if (mode == CameraMode::FPS || mode == CameraMode::ThirdPerson) {
-    if (ms.either_pressed()) {
-      auto fs = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), es.frustum);
-      if (!uistate.lock_debugselected) {
-        if (ms.left_pressed()) {
-          select_mouse_under_cursor(fs, MouseButton::LEFT);
-        }
-        else if (ms.right_pressed()) {
-          select_mouse_under_cursor(fs, MouseButton::RIGHT);
-        }
+  if (ms.either_pressed()) {
+    auto fs = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), es.frustum);
+    if (!uistate.lock_debugselected) {
+      if (ms.left_pressed()) {
+        LOG_ERROR("selecting mouse...");
+        select_mouse_under_cursor(fs, MouseButton::LEFT);
+      }
+      else if (ms.right_pressed()) {
+        select_mouse_under_cursor(fs, MouseButton::RIGHT);
       }
     }
+  }
+
+  auto const& button = event.button;
+  auto const mode = camera.mode();
+  if (mode == CameraMode::FPS || mode == CameraMode::ThirdPerson) {
     if (button == SDL_BUTTON_MIDDLE) {
       LOG_INFO("toggling mouse up/down (pitch) lock");
       camera.toggle_rotation_lock();
