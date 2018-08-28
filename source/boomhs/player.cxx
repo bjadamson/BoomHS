@@ -12,6 +12,7 @@
 #include <boomhs/player.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/zone_state.hpp>
+#include <optional>
 
 using namespace boomhs;
 using namespace boomhs::math;
@@ -186,7 +187,7 @@ PlayerHead::create(common::Logger& logger, EntityRegistry& registry, ShaderProgr
   auto& tr = ph.world_object.transform();
   tr.scale = glm::vec3{0.1};
 
-  return MOVE(ph);
+  return ph;
 }
 
 static auto const HOW_OFTEN_GCD_RESETS_MS = TimeConversions::seconds_to_millis(1);
@@ -358,13 +359,13 @@ find_player_eid(EntityRegistry& registry)
   // for now assume only 1 entity has the Player tag
   assert(1 == registry.view<Player>().size());
 
-  EntityID const *peid = nullptr;
+  std::optional<EntityID> peid;
   for (auto const eid : registry.view<Player>()) {
     // This assert ensures this loop only runs once.
-    assert(nullptr == peid);
-    peid = &eid;
+    assert(!peid);
+    peid = eid;
   }
-  assert(nullptr != peid);
+  assert(peid);
   return *peid;
 }
 
