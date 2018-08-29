@@ -227,15 +227,13 @@ CameraFPS::compute_viewmatrix(glm::vec3 const& eye_fwd) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraORTHO
-CameraORTHO::CameraORTHO(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t,
-                         ViewSettings& vp)
-    : forward_(forward)
-    , up_(up)
+CameraORTHO::CameraORTHO(CameraTarget& t, ViewSettings& vp)
+    : forward_(-Y_UNIT_VECTOR)
+    , up_(-Z_UNIT_VECTOR)
     , target_(t)
     , view_settings_(vp)
     , zoom_(glm::vec2{0, 0})
-    , position(-3, 50, 108)
-    , lookat_position(-3, -180.0f, 48)
+    , position(50, 50, 50)
 {
 }
 
@@ -265,7 +263,7 @@ CameraORTHO::compute_projectionmatrix(bool const zoom_squeeze, ViewSettings cons
 glm::mat4
 CameraORTHO::compute_viewmatrix(glm::vec3 const& target) const
 {
-  return glm::lookAt(position, lookat_position, up_);
+  return glm::lookAt(position, position + forward_, up_);
 }
 
 void
@@ -283,8 +281,7 @@ CameraORTHO::shink_view(glm::vec2 const& amount)
 void
 CameraORTHO::scroll(glm::vec2 const& sv)
 {
-  position        += glm::vec3{sv.x, 0, sv.y};
-  lookat_position += glm::vec3{sv.x, 0, sv.y};
+  position += glm::vec3{sv.x, 0, sv.y};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -293,7 +290,7 @@ Camera::Camera(ViewSettings&& vp, glm::vec3 const& forward, glm::vec3 const& up)
     : view_settings_(MOVE(vp))
     , arcball(forward, up, target_, view_settings_)
     , fps(forward, up, target_, view_settings_)
-    , ortho(forward, up, target_, view_settings_)
+    , ortho(target_, view_settings_)
 {
   set_mode(CameraMode::ThirdPerson);
 }

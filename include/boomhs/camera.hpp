@@ -115,12 +115,11 @@ class CameraORTHO
   friend class Camera;
 
 public:
-  CameraORTHO(glm::vec3 const&, glm::vec3 const&, CameraTarget&, ViewSettings&);
+  CameraORTHO(CameraTarget&, ViewSettings&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraORTHO);
 
   // fields
   glm::vec3 position;
-  glm::vec3 lookat_position;
   glm::vec2 click_position;
 
   // methods

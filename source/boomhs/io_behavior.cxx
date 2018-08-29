@@ -362,31 +362,11 @@ PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
   case SDLK_KP_MINUS:
     break;
 
-  case SDLK_KP_1:
-    ortho.lookat_position -= Y_UNIT_VECTOR;
-    break;
-  case SDLK_KP_3:
-    ortho.lookat_position += Y_UNIT_VECTOR;
-    break;
-  case SDLK_KP_2:
-    ortho.lookat_position += Z_UNIT_VECTOR;
-    break;
-  case SDLK_KP_8:
-    ortho.lookat_position -= Z_UNIT_VECTOR;
-    break;
-  case SDLK_KP_4:
-    ortho.lookat_position -= X_UNIT_VECTOR;
-    break;
-  case SDLK_KP_6:
-    ortho.lookat_position += X_UNIT_VECTOR;
-    break;
-
-
   case SDLK_UP:
-    ortho.scroll(glm::vec2{0, -1});
+    ortho.scroll(glm::vec2{0, 1});
     break;
   case SDLK_DOWN:
-    ortho.scroll(glm::vec2{0, 1});
+    ortho.scroll(glm::vec2{0, -1});
     break;
   case SDLK_LEFT:
     ortho.scroll(glm::vec2{1, 0});
@@ -396,11 +376,10 @@ PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
     break;
 
   case SDLK_PAGEUP:
-    ortho.position        += Y_UNIT_VECTOR;
+    ortho.position += Y_UNIT_VECTOR;
     break;
-
   case SDLK_PAGEDOWN:
-    ortho.position        -= Y_UNIT_VECTOR;
+    ortho.position -= Y_UNIT_VECTOR;
     break;
   }
 }
@@ -449,12 +428,12 @@ PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs &&mk)
 
       auto const& view_settings = camera.view_settings_ref();
       auto const& frustum       = es.frustum;
-      float const dx = -(now - click_pos).x / frustum.width();
-      float const dy = -(now - click_pos).y / frustum.height();
+      float const dx = (now - click_pos).x / frustum.width();
+      float const dy = (now - click_pos).y / frustum.height();
 
       auto constexpr SCROLL_SPEED = 15.0f;
       auto const multiplier = SCROLL_SPEED * distance * ft.delta_millis();
-      camera.ortho.scroll(glm::vec2{dx, dy} * multiplier);
+      camera.ortho.scroll(glm::vec2{-dx, -dy} * multiplier);
     }
   }
 }
