@@ -58,8 +58,8 @@ public:
   EngineState& es;
   ZoneState&   zs;
 
-  glm::mat4 projection_matrix() const;
-  glm::mat4 view_matrix() const;
+  glm::mat4 const& projection_matrix() const;
+  glm::mat4 const& view_matrix() const;
 
   Frustum const& frustum() const;
   glm::mat4 camera_matrix() const;

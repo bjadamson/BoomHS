@@ -104,13 +104,13 @@ FrameState::camera_matrix() const
   return projection_matrix() * view_matrix();
 }
 
-glm::mat4
+glm::mat4 const&
 FrameState::projection_matrix() const
 {
   return cfs_.projection_matrix;
 }
 
-glm::mat4
+glm::mat4 const&
 FrameState::view_matrix() const
 {
   return cfs_.view_matrix;

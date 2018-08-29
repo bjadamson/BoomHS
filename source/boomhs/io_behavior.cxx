@@ -28,14 +28,6 @@ fps_mousemove(Camera& camera, Player& player, float const xrel, float const yrel
   player.world_object().rotate_to_match_camera_rotation(camera);
 
   player.transform().rotate_degrees(180.0f, EulerAxis::Y);
-
-  //player.head_world_object().rotate_to_match_camera_rotation(camera);
-
-  //auto& player_rot = player.transform().rotation;
-  //auto& camera_rot = camera.get_target().transform().rotation;
-
-  //glm::mat4 camera_quat = glm::toMat4(camera_rot);
-  //glm::mat4 player_quat = glm::toMat4(player_rot);
 }
 
 void
@@ -83,7 +75,7 @@ ray_intersects_cube(common::Logger& logger, bool const can_use_simple_test,
     distances.emplace_back(PAIR(eid, distance));
 
     char const* test_name = can_use_simple_test ? "SIMPLE" : "COMPLEX";
-    LOG_TRACE_SPRINTF("Intersection found using %s test, distance %f", test_name, distance);
+    LOG_ERROR_SPRINTF("Intersection found using %s test, distance %f", test_name, distance);
   }
   return intersects;
 }

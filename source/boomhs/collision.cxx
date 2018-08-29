@@ -126,8 +126,8 @@ ray_cube_intersect(Ray const& r, Transform const& transform, Cube const& cube,
   std::array<glm::vec3, 2> const bounds{{minpos + cubepos, maxpos + cubepos}};
 
   // clang-format off
-  float txmin  = (bounds[    r.sign[0]].x - r.orig.x) * r.invdir.x;
-  float txmax  = (bounds[1 - r.sign[0]].x - r.orig.x) * r.invdir.x;
+  float txmin = (bounds[    r.sign[0]].x - r.orig.x) * r.invdir.x;
+  float txmax = (bounds[1 - r.sign[0]].x - r.orig.x) * r.invdir.x;
   float tymin = (bounds[    r.sign[1]].y - r.orig.y) * r.invdir.y;
   float tymax = (bounds[1 - r.sign[1]].y - r.orig.y) * r.invdir.y;
 
