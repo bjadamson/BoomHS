@@ -61,6 +61,32 @@ enum class MouseButton
   RIGHT
 };
 
+using EntityDistances = std::vector<std::pair<EntityID, float>>;
+
+bool
+ray_intersects_cube(common::Logger& logger, bool const can_use_simple_test,
+                    glm::vec3 const& ray_dir, glm::vec3 const& ray_start, EntityID const eid,
+                    Transform const& tr, Cube const& cube, EntityDistances& distances)
+{
+  float distance = 0.0f;
+  bool intersects = false;
+  if (can_use_simple_test) {
+    Ray const  ray{ray_start, ray_dir};
+    intersects = collision::ray_cube_intersect(ray, tr, cube, distance);
+  }
+  else {
+    intersects = collision::ray_obb_intersection(ray_start, ray_dir, cube, tr, distance);
+  }
+
+  if (intersects) {
+    distances.emplace_back(PAIR(eid, distance));
+
+    char const* test_name = can_use_simple_test ? "SIMPLE" : "COMPLEX";
+    LOG_TRACE_SPRINTF("Intersection found using %s test, distance %f", test_name, distance);
+  }
+  return intersects;
+}
+
 void
 select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
 {
@@ -70,42 +96,38 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
 
   auto& zs       = fstate.zs;
   auto& registry = zs.registry;
+  auto const cmode = fstate.camera_mode();
 
-  glm::vec3 const  ray_dir   = Raycast::calculate_ray(fstate);
-  glm::vec3 const& ray_start = fstate.camera_world_position();
-  auto const cmode           = fstate.camera_mode();
-
-  std::vector<std::pair<EntityID, float>> distances;
-  auto const eids = find_all_entities_with_component<Selectable>(registry);
-  for (auto const eid : eids) {
-    auto const& bbox = registry.get<AABoundingBox>(eid).cube;
+  EntityDistances distances;
+  glm::vec3 ray_dir;
+  glm::vec3 ray_start;
+  for (auto const eid : find_all_entities_with_component<Selectable>(registry)) {
+    auto const& cube = registry.get<AABoundingBox>(eid).cube;
     auto const& tr   = registry.get<Transform>(eid);
     auto&       sel  = registry.get<Selectable>(eid);
     sel.selected = false;
 
     bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == ONE);
-
-    bool intersects = false;
     if (CameraMode::FPS == cmode || CameraMode::ThirdPerson == cmode) {
-      float distance = 0.0f;
-      if (can_use_simple_test) {
-        Ray const  ray{ray_start, ray_dir};
-        intersects = collision::ray_cube_intersect(ray, tr, bbox, distance);
-      }
-      else {
-        intersects = collision::ray_obb_intersection(ray_start, ray_dir, bbox, tr, distance);
-      }
-      if (intersects) {
-        distances.emplace_back(PAIR(eid, distance));
-        LOG_TRACE_SPRINTF("Intersection found using %s test, distance %f", can_use_simple_test ? "SIMPLE" : "COMPLEX", distance);
-      }
+      ray_dir   = Raycast::calculate_ray(fstate);
+      ray_start = fstate.camera_world_position();
     }
     else if (CameraMode::Ortho == cmode) {
-      //intersects = ???;
+      auto const coords = es.device_states.mouse.current.coords();
+
+      //auto const po0 = 
+      //p0 := ScreenToWorld(MouseButtonEvent.x,MouseButtonEvent.y,0);
+      //p1 := ScreenToWorld(MouseButtonEvent.x,MouseButtonEvent.y,1);
+      //p0 should be the ray starting point and p1 the ray ending point...
+
+      ray_start = glm::vec3{coords.x, coords.y, 1.0f};
+      ray_dir = -Y_UNIT_VECTOR;
     }
     else {
       std::abort();
     }
+    bool const intersects = ray_intersects_cube(logger, can_use_simple_test, ray_dir, ray_start,
+                                                eid, tr, cube, distances);
   }
   bool const something_selected = !distances.empty();
   if (something_selected) {

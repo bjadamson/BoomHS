@@ -162,6 +162,17 @@ ndc_to_clip(glm::vec2 const& ndc, float const z)
   return glm::vec4{ndc.x, ndc.y, z, 1.0f};
 }
 
+inline glm::vec3
+screen_to_world(glm::vec2 const& scoords, Rectangle const& view_rect, glm::mat4 const& proj_matrix,
+                glm::mat4 const& view_matrix, float const z)
+{
+  glm::vec2 const ndc   = screen_to_ndc(scoords, view_rect);
+  glm::vec4 const clip  = ndc_to_clip(ndc, z);
+  glm::vec4 const eye   = clip_to_eye(clip, proj_matrix, z);
+  glm::vec3 const world = eye_to_world(eye, view_matrix);
+  return world;
+}
+
 } // namespace boomhs::math::space_conversions
 
 namespace boomhs::math

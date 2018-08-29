@@ -20,11 +20,11 @@ Raycast::calculate_ray(FrameState& fstate)
   auto const&     coords       = es.device_states.mouse.current.coords();
   auto const      mouse_coords = glm::vec2{coords.x, coords.y};
 
-  glm::vec2 const ndc   = sconv::screen_to_ndc(mouse_coords, es.dimensions.as_rectangle());
-  glm::vec4 const clip  = sconv::ndc_to_clip(ndc, Z);
-  glm::vec4 const eye   = sconv::clip_to_eye(clip, fstate.projection_matrix(), Z);
-  glm::vec3 const world = sconv::eye_to_world(eye, fstate.view_matrix());
-  return world;
+  auto const proj = fstate.projection_matrix();
+  auto const view = fstate.view_matrix();
+
+  auto const view_rect = es.dimensions.as_rectangle();
+  return sconv::screen_to_world(mouse_coords, view_rect, proj, view, Z);
 }
 
 } // namespace boomhs
