@@ -15,6 +15,7 @@ using namespace boomhs;
 using namespace boomhs::math;
 using namespace boomhs::math::constants;
 using namespace opengl;
+namespace sconv = math::space_conversions;
 
 namespace
 {
@@ -114,14 +115,17 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
     }
     else if (CameraMode::Ortho == cmode) {
       auto const coords = es.device_states.mouse.current.coords();
+      glm::vec2 const mouse_pos{coords.x, coords.y};
 
-      //auto const po0 = 
-      //p0 := ScreenToWorld(MouseButtonEvent.x,MouseButtonEvent.y,0);
-      //p1 := ScreenToWorld(MouseButtonEvent.x,MouseButtonEvent.y,1);
-      //p0 should be the ray starting point and p1 the ray ending point...
+      auto const proj_matrix = fstate.projection_matrix();
+      auto const view_matrix = fstate.view_matrix();
+      auto const view_rect   = es.dimensions.as_rectangle();
 
-      ray_start = glm::vec3{coords.x, coords.y, 1.0f};
-      ray_dir = -Y_UNIT_VECTOR;
+      auto const p0 = sconv::screen_to_world(mouse_pos, view_rect, proj_matrix, view_matrix, 0.0f);
+      auto const p1 = sconv::screen_to_world(mouse_pos, view_rect, proj_matrix, view_matrix, 1.0f);
+
+      ray_start = p0;
+      ray_dir = glm::normalize(p1 - p0);
     }
     else {
       std::abort();
@@ -274,8 +278,7 @@ PlayerPlayingGameBehavior::mouse_motion(MouseMotionEvent&& mme)
   else if (camera.is_thirdperson()) {
     thirdperson_mousemove(player, camera, ms, xrel, yrel, ft);
   }
-  else{
-    LOG_ERROR("No mouse motion implemented for this camera type");
+  else {
   }
 }
 
