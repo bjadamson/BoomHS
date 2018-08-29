@@ -1,8 +1,6 @@
 #pragma once
 #include <extlibs/glm.hpp>
 
-#include <boomhs/screen_info.hpp>
-
 #include <array>
 #include <cmath>
 #include <limits>
@@ -15,7 +13,18 @@ struct Transform;
 
 struct Rectangle
 {
+  // fields
   glm::vec2 min, max;
+
+  // ctor
+  explicit Rectangle(int, int, int, int);
+
+  // methods
+  auto left() const { return min.x; }
+  auto top() const {  return min.y; }
+
+  auto right()  const { return max.x; }
+  auto bottom() const {  return max.y; }
 };
 
 struct Cube
@@ -133,7 +142,7 @@ eye_to_world(glm::vec4 const& eye, glm::mat4 const& view_matrix)
 }
 
 inline glm::vec2
-screen_to_ndc(glm::vec2 const& scoords, ScreenDimensions const& view_rect)
+screen_to_ndc(glm::vec2 const& scoords, Rectangle const& view_rect)
 {
   float const x = ((2.0f * scoords.x) / view_rect.right()) - 1.0f;
   float const y = ((2.0f * scoords.y) / view_rect.bottom()) - 1.0f;

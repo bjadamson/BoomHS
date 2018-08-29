@@ -106,7 +106,6 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
     else {
       std::abort();
     }
-    
   }
   bool const something_selected = !distances.empty();
   if (something_selected) {

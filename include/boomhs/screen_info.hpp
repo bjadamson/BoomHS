@@ -1,5 +1,5 @@
 #pragma once
-#include <extlibs/glm.hpp>
+#include <boomhs/math.hpp>
 
 namespace boomhs
 {
@@ -48,6 +48,7 @@ public:
   auto height() const { return bottom() - top(); }
 
   auto center() const { return ScreenCoords{width() / 2, height() / 2}; }
+  auto as_rectangle() const { return Rectangle{left_, top_, right_, bottom_}; }
 };
 
 template <typename T>
