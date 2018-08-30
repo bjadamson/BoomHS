@@ -7,7 +7,7 @@ namespace common
 {
 
 // The clock time when the timer started
-class Clock
+class Timer
 {
   freq_t  frequency_;
   ticks_t start_;
@@ -16,8 +16,8 @@ class Clock
   ticks_t now() const;
 
 public:
-  COPYMOVE_DEFAULT(Clock);
-  Clock();
+  COPYMOVE_DEFAULT(Timer);
+  Timer();
 
   void update() { last_ = now(); }
   ticks_t since_start() const { return now() - start_; }
@@ -29,7 +29,7 @@ public:
 
 class StopWatch
 {
-  Clock   clock_;
+  Timer   clock_;
   bool    expired_      = false;
   bool    paused_       = false;
   ticks_t remaining_ms_ = 0.0;

@@ -10,7 +10,7 @@
 #include <boomhs/scene_renderer.hpp>
 #include <boomhs/state.hpp>
 
-#include <common/clock.hpp>
+#include <common/timer.hpp>
 #include <common/log.hpp>
 #include <common/time.hpp>
 
@@ -72,20 +72,20 @@ timed_game_loop(Engine& engine, GameState& state, Camera& camera, RNG& rng)
   auto& es     = state.engine_state;
   auto& logger = es.logger;
 
-  Clock clock;
-  FrameCounter  counter;
+  Timer timer;
+  FrameCounter fcounter;
 
   auto& zs = state.level_manager.active();
   auto renderers = make_static_renderers(es, zs);
   while (!es.quit) {
-    auto const ft = FrameTime::from_clock(clock);
+    auto const ft = FrameTime::from_timer(timer);
     loop(engine, state, renderers, rng, camera, ft);
 
-    if ((counter.frames_counted % 60 == 0)) {
+    if ((fcounter.frames_counted % 60 == 0)) {
       es.time.add_hours(1);
     }
-    clock.update();
-    counter.update(logger, clock);
+    timer.update();
+    fcounter.update();
   }
 }
 

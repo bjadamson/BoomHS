@@ -1,4 +1,4 @@
-#include <common/clock.hpp>
+#include <common/timer.hpp>
 #include <extlibs/sdl.hpp>
 
 namespace common
@@ -20,8 +20,8 @@ TimeConversions::seconds_to_ticks(ticks_t const ticks, freq_t const freq)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Clock
-Clock::Clock()
+// Timer
+Timer::Timer()
     : frequency_(SDL_GetPerformanceFrequency())
     , start_(now())
     , last_(start_)
@@ -29,19 +29,19 @@ Clock::Clock()
 }
 
 ticks_t
-Clock::now() const
+Timer::now() const
 {
   return SDL_GetPerformanceCounter();
 }
 
 ticks_t
-Clock::delta_ticks_since_last_update() const
+Timer::delta_ticks_since_last_update() const
 {
   return now() - last_;
 }
 
 ticks_t
-Clock::delta_millis_since_last_update() const
+Timer::delta_millis_since_last_update() const
 {
   ticks_t const dt = delta_ticks_since_last_update();
   return common::TimeConversions::ticks_to_millis(dt, frequency());

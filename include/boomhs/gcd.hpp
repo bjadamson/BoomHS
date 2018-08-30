@@ -1,5 +1,5 @@
 #pragma once
-#include <common/clock.hpp>
+#include <common/timer.hpp>
 
 namespace boomhs
 {
