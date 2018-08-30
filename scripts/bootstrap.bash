@@ -74,13 +74,14 @@ conan_basic_setup()
 ## Setup variables to different paths; used while issung the build commands further below.
 set(PROJECT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(EXTERNAL_DIR ${PROJECT_DIR}/external)
-set(TOOLS_DIRECTORY ${PROJECT_DIR}/tools/)
+set(TOOLS_DIRECTORY ${PROJECT_DIR}/tools)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
 set(IMGUI_INCLUDE_DIR "${EXTERNAL_DIR}/imgui/include/imgui")
 set(CPPTOML_INCLUDE_DIR "${EXTERNAL_DIR}/cpptoml/include")
 
-set(BOOMHS_INCLUDES ${PROJECT_DIR}/include/**/*.hpp)
+set(INCLUDE_DIRECTORY ${PROJECT_DIR}/include)
+set(BOOMHS_INCLUDES ${INCLUDE_DIRECTORY}/**/*.hpp)
 set(BOOMHS_CODE     ${BOOMHS_INCLUDES} ${BOOMHS_SOURCES})
 
 ## BFD_LIB and STACKTRACE_LIB are both needed for linux backtraces.
@@ -89,21 +90,20 @@ set(STACKTRACE_LIB "dw")
 
 ###################################################################################################
 # Create lists of files to be used when issuing build commands further below.
-##file(GLOB         EXTERNAL_INCLUDE_DIRS include ${EXTERNAL_DIR}/**/include)
-##file(GLOB_RECURSE EXTERNAL_SOURCES              ${EXTERNAL_DIR}/**/source/*.cxx)
-
 file(GLOB         EXTERNAL_INCLUDE_DIRS include external/**/include)
 file(GLOB_RECURSE EXTERNAL_SOURCES      ${EXTERNAL_DIR}/**/*.cxx)
 
 file(GLOB         MAIN_SOURCE_FILE ${PROJECT_DIR}/source/main.cxx)
 file(GLOB_RECURSE SUBDIR_SOURCE_FILES ${PROJECT_DIR}/source/**/*.cxx )
 
-set(ALL_SOURCE_FILES ${EXTERNAL_SOURCES} ${MAIN_SOURCE_FILE} ${SUBDIR_SOURCE_FILES})
+set(SUBDIR_AND_EXTERNAL_SOURCE_FILES ${SUBDIR_SOURCE_FILES}              ${EXTERNAL_SOURCES})
+set(ALL_SOURCE_FILES                 ${SUBDIR_AND_EXTERNAL_SOURCE_FILES} ${MAIN_SOURCE_FILE})
+set(ALL_HEADER_FILES                 ${PROJECT_DIR}/include/**/*.hpp     ${EXTERNAL_DIR}/**/*.hpp)
 
 ## file(GLOB MAIN_SOURCE      ${PROJECT_DIR}/source/main.cxx)
 ## file(GLOB BOOMHS_SOURCES   ${PROJECT_DIR}/source/boomhs/*.cxx)
 ## file(GLOB OPENGL_SOURCES   ${PROJECT_DIR}/source/opengl/*.cxx)
-## file(GLOB COMMON_SOURCES   {PROJECT_DIR}/source/common/*.cxx)
+## file(GLOB COMMON_SOURCES   ${PROJECT_DIR}/source/common/*.cxx)
 ## file(GLOB GL_SDL_SOURCES   ${PROJECT_DIR}/source/gl_sdl/*.cxx)
 
 
@@ -159,6 +159,19 @@ pkg_search_module(SDL2 REQUIRED sdl2)
 ## Static Libraries
 ###################################################################################################
 
+add_library(PROJECT_SOURCE_CODE STATIC ${SUBDIR_AND_EXTERNAL_SOURCE_FILES})
+target_include_directories(PROJECT_SOURCE_CODE PUBLIC
+  ${EXTERNAL_INCLUDE_DIRS}
+  ${CPPTOML_INCLUDE_DIR}
+  ${GLEW_INCLUDE_DIRS}
+  ${IMGUI_INCLUDE_DIR}
+  ${LIBAUDIO_INCLUDE_DIRS}
+  ${OPENGL_INDLUDE_DIRS}
+  ${SDL2_INCLUDE_DIRS}
+  ${SDL2IMAGE_INCLUDE_DIRS}
+  ${SOIL_INCLUDE_DIR}
+  )
+
 ## ## External_LIB
 ## add_library(External_LIB STATIC ${EXTERNAL_SOURCES})
 ## target_include_directories(External_LIB PUBLIC
@@ -210,6 +223,24 @@ pkg_search_module(SDL2 REQUIRED sdl2)
 ###################################################################################################
 ## Executables
 ###################################################################################################
+set(EXTERNAL_LIBS
+  ${BFD_LIB}
+  ${STACKTRACE_LIB}
+  ${SDL2_LIBRARIES}
+  ${SDL2IMAGE_LIBRARIES}
+  ${OPENGL_LIBRARIES}
+  ${GLEW_LIBRARIES}
+  ${SOIL_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+  )
+
+set(SYSTEM_LIBS
+  stdc++
+  audio
+  pthread
+  boost_system
+  openal
+  )
 
 ###################################################################################################
 ## **1** Build Post-Processing Application
@@ -222,49 +253,29 @@ target_include_directories(BUILD_POSTPROCESSING PUBLIC ${EXTERNAL_INCLUDE_DIRS})
 target_link_libraries(     BUILD_POSTPROCESSING stdc++ c++experimental)
 
 ###################################################################################################
-## **2** Main Executable
-add_executable(boomhs ${ALL_SOURCE_FILES})
+## **2** Build Ortho Mouse Selection Test
+##
+## Test Application for developing/figuring out ortho raycasting.
+add_executable(ortho_raycast ${TOOLS_DIRECTORY}/ortho_raycast.cxx)
+
+target_link_libraries(ortho_raycast
+  PROJECT_SOURCE_CODE
+  ${SYSTEM_LIBS}
+  ${EXTERNAL_LIBS}
+  )
+
+target_include_directories(ortho_raycast PUBLIC)
+
+###################################################################################################
+## **3** Main Executable
+add_executable(boomhs ${MAIN_SOURCE_FILE})
 
 target_link_libraries(boomhs
-  ## External Directory
-  ## External_LIB
-
-  ## Internal Project Libraries
-  ## BoomHS_LIB
-  ## COMMON_LIB
-
-  ## Opengl_LIB
-  ## GL_SSTACKTRACE_LIB
-
-  ## System Libraries
-  stdc++
-  audio
-  pthread
-  boost_system
-  openal
-
-  ## External Libraries
-  ${BFD_LIB}
-  ${STACKTRACE_LIB}
-  ${SDL2_LIBRARIES}
-  ${SDL2IMAGE_LIBRARIES}
-  ${OPENGL_LIBRARIES}
-  ${GLEW_LIBRARIES}
-  ${SOIL_LIBRARIES}
-  ${ZLIB_LIBRARIES}
+  PROJECT_SOURCE_CODE
+  ${SYSTEM_LIBS}
+  ${EXTERNAL_LIBS}
   )
-
-target_include_directories(boomhs PUBLIC
-  ${EXTERNAL_INCLUDE_DIRS}
-  ${CPPTOML_INCLUDE_DIR}
-  ${GLEW_INCLUDE_DIRS}
-  ${IMGUI_INCLUDE_DIR}
-  ${LIBAUDIO_INCLUDE_DIRS}
-  ${OPENGL_INDLUDE_DIRS}
-  ${SDL2_INCLUDE_DIRS}
-  ${SDL2IMAGE_INCLUDE_DIRS}
-  ${SOIL_INCLUDE_DIR}
-  )
+target_include_directories(boomhs PUBLIC)
 
 ## Additional build targets CMake should generate. These are useful for debugging or
 ## code-maintenance.
