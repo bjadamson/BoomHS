@@ -1,7 +1,6 @@
 #include <opengl/texture.hpp>
-
 #include <opengl/global.hpp>
-#include <gfx/gl_sdl_log.hpp>
+#include <gl_sdl/gl_sdl_log.hpp>
 
 #include <common/algorithm.hpp>
 #include <common/tuple.hpp>

@@ -1,6 +1,7 @@
 #pragma once
 #include <boomhs/screen_info.hpp>
 
+#include <common/auto_resource.hpp>
 #include <common/log.hpp>
 #include <common/result.hpp>
 #include <common/type_macros.hpp>
@@ -11,7 +12,7 @@
 #include <string>
 #include <type_traits>
 
-namespace window
+namespace gl_sdl
 {
 
 // clang-format off
@@ -68,15 +69,20 @@ public:
   void set_swapinterval(SwapIntervalFlag const);
 };
 
-struct SDLGlobalContext
+class SDLGlobalContext;
+using SDLContext = common::AutoResource<SDLGlobalContext>;
+class SDLGlobalContext
 {
-  NO_MOVE_OR_COPY(SDLGlobalContext);
-
   SDLGlobalContext() = default;
-  ~SDLGlobalContext();
+public:
+  MOVE_CONSTRUCTIBLE_ONLY(SDLGlobalContext);
 
   Result<SDLWindow, std::string>
   make_window(common::Logger&, bool, int, int) const;
+
+  void destroy_impl();
+
+  static Result<SDLContext, std::string> create(common::Logger&);
 };
 
-} // namespace window
+} // namespace gl_sdl

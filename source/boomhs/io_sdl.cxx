@@ -11,7 +11,7 @@
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
 
-#include <window/sdl_window.hpp>
+#include <gl_sdl/sdl_window.hpp>
 
 #include <common/log.hpp>
 #include <boomhs/math.hpp>
@@ -24,7 +24,7 @@ using namespace boomhs;
 using namespace boomhs::math;
 using namespace boomhs::math::constants;
 using namespace opengl;
-using namespace window;
+using namespace gl_sdl;
 
 namespace boomhs
 {

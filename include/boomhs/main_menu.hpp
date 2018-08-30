@@ -9,10 +9,10 @@ struct DrawState;
 class SkyboxRenderer;
 } // namespace opengl
 
-namespace window
+namespace gl_sdl
 {
 class SDLWindow;
-} // namespace window
+} // namespace gl_sdl
 
 namespace boomhs
 {
@@ -37,7 +37,7 @@ namespace boomhs::main_menu
 {
 
 void
-draw(EngineState&, window::SDLWindow&, Camera&, opengl::SkyboxRenderer&, opengl::DrawState&,
+draw(EngineState&, gl_sdl::SDLWindow&, Camera&, opengl::SkyboxRenderer&, opengl::DrawState&,
      LevelManager&, ImVec2 const&, WaterAudioSystem&);
 
 void

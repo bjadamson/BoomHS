@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace gfx
+namespace gl_sdl
 {
 
 struct GlErrors
@@ -65,9 +65,9 @@ get_program_log(GLuint const);
 void
 log_any_gl_errors(common::Logger&, std::string const&, int const);
 
-} // namespace gfx
+} // namespace gl_sdl
 
 #define LOG_ANY_GL_ERRORS(logger, msg)                                                             \
   do {                                                                                             \
-    ::gfx::log_any_gl_errors(logger, msg, __LINE__);                                               \
+    ::gl_sdl::log_any_gl_errors(logger, msg, __LINE__);                                            \
   } while (0)

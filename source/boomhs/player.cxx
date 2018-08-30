@@ -20,7 +20,7 @@ using namespace boomhs::math;
 using namespace boomhs::math::constants;
 using namespace common;
 using namespace opengl;
-using namespace window;
+using namespace gl_sdl;
 
 namespace
 {

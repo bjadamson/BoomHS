@@ -60,7 +60,7 @@
 using namespace boomhs;
 using namespace boomhs::math::constants;
 using namespace opengl;
-using namespace window;
+using namespace gl_sdl;
 
 namespace
 {

@@ -1,12 +1,12 @@
 #include <boomhs/engine.hpp>
 #include <boomhs/controller.hpp>
 
-#include <window/sdl_window.hpp>
+#include <gl_sdl/sdl_window.hpp>
 
 #include <extlibs/imgui.hpp>
 #include <extlibs/openal.hpp>
 
-using namespace window;
+using namespace gl_sdl;
 
 
 namespace boomhs

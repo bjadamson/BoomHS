@@ -8,10 +8,10 @@
 #include <common/log.hpp>
 #include <common/type_macros.hpp>
 
-namespace window
+namespace gl_sdl
 {
 class SDLWindow;
-} // namespace window
+} // namespace gl_sdl
 
 namespace boomhs
 {

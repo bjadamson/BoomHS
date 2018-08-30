@@ -7,7 +7,7 @@
 #include <boomhs/mouse.hpp>
 #include <boomhs/ui_state.hpp>
 
-#include <window/sdl_window.hpp>
+#include <gl_sdl/sdl_window.hpp>
 
 #include <common/log.hpp>
 #include <common/time.hpp>
@@ -55,7 +55,7 @@ struct EngineState
   GameGraphicsSettings graphics_settings     = {};
 
   DeviceStates        device_states = {};
-  window::WindowState window_state  = {};
+  gl_sdl::WindowState window_state  = {};
   UiState             ui_state      = {};
 
   // Current player movement vector
@@ -96,13 +96,13 @@ using EntityRegistries = std::vector<EntityRegistry>;
 
 struct Engine
 {
-  window::SDLWindow window;
+  gl_sdl::SDLWindow window;
   SDLControllers    controllers;
 
   EntityRegistries registries = {};
 
   Engine() = delete;
-  explicit Engine(window::SDLWindow&&, SDLControllers&&);
+  explicit Engine(gl_sdl::SDLWindow&&, SDLControllers&&);
 
   // We mark this as no-move/copy so the registries data never moves, allowing the rest of the
   // program to store references into the data owned by registries.

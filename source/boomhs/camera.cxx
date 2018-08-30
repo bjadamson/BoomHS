@@ -4,14 +4,14 @@
 #include <boomhs/mouse.hpp>
 #include <boomhs/world_object.hpp>
 
-#include <window/sdl_window.hpp>
+#include <gl_sdl/sdl_window.hpp>
 
 #include <boomhs/math.hpp>
 
 using namespace boomhs;
 using namespace boomhs::math;
 using namespace boomhs::math::constants;
-using namespace window;
+using namespace gl_sdl;
 
 
 // Without this multiplier, the camera would take years to rotate. This is because we normalize the

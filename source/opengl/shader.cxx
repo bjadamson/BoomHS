@@ -2,7 +2,7 @@
 #include <opengl/debug.hpp>
 #include <extlibs/glew.hpp>
 #include <opengl/global.hpp>
-#include <gfx/gl_sdl_log.hpp>
+#include <gl_sdl/gl_sdl_log.hpp>
 
 #include <common/algorithm.hpp>
 #include <boomhs/math.hpp>
@@ -60,7 +60,7 @@ compile_shader(common::Logger &logger, GLenum const type, std::string const& dat
   if (true == is_compiled(handle)) {
     return Ok(compiled_shader{handle, glDeleteShader});
   }
-  return Err(gfx::get_shader_log(handle));
+  return Err(gl_sdl::get_shader_log(handle));
 }
 
 inline Result<GLuint, std::string>
@@ -85,8 +85,8 @@ link_program(common::Logger &logger, GLuint const program_id)
   GLint result;
   glGetProgramiv(program_id, GL_LINK_STATUS, &result);
   if (result == GL_FALSE) {
-    auto const program_log = gfx::get_program_log(program_id);
-    auto const shader_log = gfx::get_shader_log(program_id);
+    auto const program_log = gl_sdl::get_program_log(program_id);
+    auto const shader_log  = gl_sdl::get_shader_log(program_id);
     auto const fmt = fmt::sprintf("Linking the shader failed. Progam log '%s'. Shader Log '%s'",
         program_log, shader_log);
     return Err(fmt);

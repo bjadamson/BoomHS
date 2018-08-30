@@ -14,14 +14,14 @@
 #include <common/log.hpp>
 #include <common/time.hpp>
 
-#include <window/sdl_window.hpp>
+#include <gl_sdl/sdl_window.hpp>
 
 #include <extlibs/imgui.hpp>
 #include <extlibs/openal.hpp>
 
 using namespace boomhs;
 using namespace common;
-using namespace window;
+using namespace gl_sdl;
 
 namespace
 {
@@ -168,10 +168,9 @@ main(int argc, char* argv[])
     return EXIT_FAILURE;
   };
 
-  SDLGlobalContext sdl_gl;
-
   LOG_DEBUG("Initializing OpenGL context and SDL window.");
-  TRY_OR_ELSE_RETURN(auto window, sdl_gl.make_window(logger, FULLSCREEN, 1024, 768), on_error);
+  TRY_OR_ELSE_RETURN(auto sdl_gl, SDLGlobalContext::create(logger), on_error);
+  TRY_OR_ELSE_RETURN(auto window, sdl_gl->make_window(logger, FULLSCREEN, 1024, 768), on_error);
   TRY_OR_ELSE_RETURN(auto controller, SDLControllers::find_attached_controllers(logger), on_error);
   Engine engine{MOVE(window), MOVE(controller)};
 

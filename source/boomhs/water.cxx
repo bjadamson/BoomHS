@@ -20,7 +20,7 @@
 
 using namespace boomhs;
 using namespace opengl;
-using namespace window;
+using namespace gl_sdl;
 
 namespace boomhs
 {

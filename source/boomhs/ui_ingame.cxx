@@ -16,7 +16,7 @@
 
 using namespace boomhs;
 using namespace opengl;
-using namespace window;
+using namespace gl_sdl;
 
 // clang-format off
 auto static constexpr DEFAULT_WINDOW_FLAGS = (0

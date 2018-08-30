@@ -104,7 +104,6 @@ set(ALL_SOURCE_FILES ${EXTERNAL_SOURCES} ${MAIN_SOURCE_FILE} ${SUBDIR_SOURCE_FIL
 ## file(GLOB BOOMHS_SOURCES   ${PROJECT_DIR}/source/boomhs/*.cxx)
 ## file(GLOB OPENGL_SOURCES   ${PROJECT_DIR}/source/opengl/*.cxx)
 ## file(GLOB COMMON_SOURCES   {PROJECT_DIR}/source/common/*.cxx)
-## file(GLOB WINDOW_SOURCES   ${PROJECT_DIR}/source/window/*.cxx)
 ## file(GLOB GL_SDL_SOURCES   ${PROJECT_DIR}/source/gl_sdl/*.cxx)
 
 
@@ -188,13 +187,6 @@ pkg_search_module(SDL2 REQUIRED sdl2)
   ## ${OPENGL_INDLUDE_DIRS}
   ## )
 
-## Window_LIB
-## add_library(Window_LIB STATIC ${WINDOW_SOURCES})
-## target_include_directories(Window_LIB PUBLIC
-  ## ${EXTERNAL_INCLUDE_DIRS}
-  ## ${SDL2_INCLUDE_DIRS}
-  ## )
-
 ## GL_SSTACKTRACE_LIB
 ## add_library(GL_SSTACKTRACE_LIB STATIC ${GL_SDL_SOURCES})
 ## target_include_directories(GL_SSTACKTRACE_LIB PUBLIC
@@ -210,11 +202,10 @@ pkg_search_module(SDL2 REQUIRED sdl2)
 ## specified which other libraries they will link too here.
 
 ## target_link_libraries(COMMON_LIB   External_LIB ${BFD_LIB} ${STACKTRACE_LIB})
-## target_link_libraries(BoomHS_LIB External_LIB Opengl_LIB COMMON_LIB Window_LIB GL_SSTACKTRACE_LIB ${BFD_LIB} ${STACKTRACE_LIB})
+## target_link_libraries(BoomHS_LIB External_LIB Opengl_LIB COMMON_LIB GL_SSTACKTRACE_LIB ${BFD_LIB} ${STACKTRACE_LIB})
 
 ## target_link_libraries(Opengl_LIB External_LIB COMMON_LIB ${BFD_LIB} ${STACKTRACE_LIB})
-## target_link_libraries(Window_LIB External_LIB Opengl_LIB COMMON_LIB ${BFD_LIB} ${STACKTRACE_LIB})
-## target_link_libraries(GL_SSTACKTRACE_LIB External_LIB Opengl_LIB COMMON_LIB Window_LIB ${BFD_LIB} ${STACKTRACE_LIB})
+## target_link_libraries(GL_SSTACKTRACE_LIB External_LIB Opengl_LIB COMMON_LIB ${BFD_LIB} ${STACKTRACE_LIB})
 
 ###################################################################################################
 ## Executables
@@ -243,7 +234,6 @@ target_link_libraries(boomhs
   ## COMMON_LIB
 
   ## Opengl_LIB
-  ## Window_LIB
   ## GL_SSTACKTRACE_LIB
 
   ## System Libraries

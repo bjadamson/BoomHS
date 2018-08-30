@@ -28,7 +28,7 @@
 
 #include <common/time.hpp>
 
-#include <window/sdl_window.hpp>
+#include <gl_sdl/sdl_window.hpp>
 
 #include <extlibs/fmt.hpp>
 #include <extlibs/imgui.hpp>
@@ -40,7 +40,7 @@
 
 using namespace boomhs;
 using namespace opengl;
-using namespace window;
+using namespace gl_sdl;
 
 namespace
 {
@@ -843,7 +843,7 @@ show_environment_window(UiDebugState& state, LevelData& ldata)
 }
 
 void
-draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window, DrawState& ds)
+draw_mainmenu(EngineState& es, LevelManager& lm, SDLWindow& window, DrawState& ds)
 {
   auto&      uistate      = es.ui_state.debug;
   auto&      zs            = lm.active();
@@ -871,17 +871,17 @@ draw_mainmenu(EngineState& es, LevelManager& lm, window::SDLWindow& window, Draw
         window_state.fullscreen = fullscreen;
       }
     };
-    setwindow_row("NOT Fullscreen", window::FullscreenFlags::NOT_FULLSCREEN);
-    setwindow_row("Fullscreen", window::FullscreenFlags::FULLSCREEN);
-    setwindow_row("Fullscreen DESKTOP", window::FullscreenFlags::FULLSCREEN_DESKTOP);
+    setwindow_row("NOT Fullscreen", FullscreenFlags::NOT_FULLSCREEN);
+    setwindow_row("Fullscreen", FullscreenFlags::FULLSCREEN);
+    setwindow_row("Fullscreen DESKTOP", FullscreenFlags::FULLSCREEN_DESKTOP);
     auto const setsync_row = [&](char const* text, auto const sync) {
       if (ImGui::MenuItem(text, nullptr, nullptr, window_state.sync != sync)) {
         window.set_swapinterval(sync);
         window_state.sync = sync;
       }
     };
-    setsync_row("Synchronized", window::SwapIntervalFlag::SYNCHRONIZED);
-    setsync_row("Late Tearing", window::SwapIntervalFlag::LATE_TEARING);
+    setsync_row("Synchronized", SwapIntervalFlag::SYNCHRONIZED);
+    setsync_row("Late Tearing", SwapIntervalFlag::LATE_TEARING);
   };
 
   auto&      registry      = zs.registry;

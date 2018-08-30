@@ -1,5 +1,5 @@
-#include <window/sdl_window.hpp>
-#include <gfx/gl_sdl_log.hpp>
+#include <gl_sdl/sdl_window.hpp>
+#include <gl_sdl/gl_sdl_log.hpp>
 
 #include <common/algorithm.hpp>
 #include <common/result.hpp>
@@ -11,19 +11,33 @@
 #include <iostream>
 
 using namespace boomhs;
-using namespace window;
+using namespace gl_sdl;
 
 namespace {
 
 void
 check_errors(common::Logger &logger)
 {
-  gfx::ErrorLog::abort_if_any_errors(logger);
+  ErrorLog::abort_if_any_errors(logger);
+}
+
+Result<common::none_t, std::string>
+set_attribute(common::Logger& logger, SDL_GLattr const attr, int const value)
+{
+  int const set_r = SDL_GL_SetAttribute(attr, value);
+  check_errors(logger);
+  if (0 != set_r) {
+    auto const fmt = fmt::format("Setting attribute '{}' failed, error is '{}'\n",
+                                  std::to_string(attr), SDL_GetError());
+    std::abort();
+    return Err(fmt);
+  }
+  return OK_NONE;
 }
 
 } // namespace anonymous
 
-namespace window
+namespace gl_sdl
 {
 
 SDLWindow::SDLWindow(window_ptr&& w, SDL_GLContext c)
@@ -118,16 +132,16 @@ SDLWindow::set_fullscreen(FullscreenFlags const fs)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // SDLGlobalContext
-SDLGlobalContext::~SDLGlobalContext()
+void
+SDLGlobalContext::destroy_impl()
 {
   if (SDL_WasInit(SDL_INIT_EVERYTHING)) {
     SDL_Quit();
   }
 }
 
-Result<SDLWindow, std::string>
-SDLGlobalContext::make_window(common::Logger &logger, bool const fullscreen, int const width,
-                              int const height) const
+Result<SDLContext, std::string>
+SDLGlobalContext::create(common::Logger& logger)
 {
   // Initialize video subsystem
   if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
@@ -137,34 +151,33 @@ SDLGlobalContext::make_window(common::Logger &logger, bool const fullscreen, int
   }
   check_errors(logger);
 
-  // (from the docs) The requested attributes should be set before creating an
-  // OpenGL window
-  auto const set_attribute = [&logger](auto const attribute,
-                                       auto const value) -> Result<common::none_t, std::string> {
-    int const set_r = SDL_GL_SetAttribute(attribute, value);
-    check_errors(logger);
-    if (0 != set_r) {
-      auto const fmt = fmt::format("Setting attribute '{}' failed, error is '{}'\n",
-                                   std::to_string(attribute), SDL_GetError());
-      std::abort();
-      return Err(fmt);
-    }
-    return OK_NONE;
+  return Ok(SDLContext{SDLGlobalContext{}});
+}
+
+
+Result<SDLWindow, std::string>
+SDLGlobalContext::make_window(common::Logger &logger, bool const fullscreen, int const width,
+                              int const height) const
+{
+  auto const set_a = [&logger](auto const attr, auto const v) {
+    return set_attribute(logger, attr, v);
   };
 
+  // (from the docs) The requested attributes should be set before creating an
+  // OpenGL window
   // Use OpenGL 3.1 core
-  DO_EFFECT(set_attribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
-  DO_EFFECT(set_attribute(SDL_GL_CONTEXT_MINOR_VERSION, 1));
+  DO_EFFECT(set_a(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
+  DO_EFFECT(set_a(SDL_GL_CONTEXT_MINOR_VERSION, 1));
 
-  DO_EFFECT(set_attribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG));
-  DO_EFFECT(set_attribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
+  DO_EFFECT(set_a(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG));
+  DO_EFFECT(set_a(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
 
   // Turn on double buffering with a 24bit Z buffer.
   // You may need to change this to 16 or 32 for your system
-  DO_EFFECT(set_attribute(SDL_GL_DOUBLEBUFFER, 1));
+  DO_EFFECT(set_a(SDL_GL_DOUBLEBUFFER, 1));
 
-  DO_EFFECT(set_attribute(SDL_GL_DEPTH_SIZE, 24));
-  DO_EFFECT(set_attribute(SDL_GL_STENCIL_SIZE, 8));
+  DO_EFFECT(set_a(SDL_GL_DEPTH_SIZE, 24));
+  DO_EFFECT(set_a(SDL_GL_STENCIL_SIZE, 8));
 
 
   // Hidden dependency between the ordering here, so all the logic exists in one
@@ -256,7 +269,7 @@ SDLGlobalContext::make_window(common::Logger &logger, bool const fullscreen, int
   bool const success = window.try_set_swapinterval(SwapIntervalFlag::LATE_TEARING);
   if (!success) {
     // SDL fills up the log with info about the failed attempt above.
-    gfx::ErrorLog::clear();
+    ErrorLog::clear();
 
     bool const backup_success = window.try_set_swapinterval(SwapIntervalFlag::SYNCHRONIZED);
     if (!backup_success) {
@@ -267,4 +280,4 @@ SDLGlobalContext::make_window(common::Logger &logger, bool const fullscreen, int
   return OK_MOVE(window);
 }
 
-} // ns window
+} // ns gl_sdl
