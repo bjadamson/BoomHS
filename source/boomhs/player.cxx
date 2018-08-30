@@ -2,6 +2,7 @@
 #include <boomhs/bounding_object.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/inventory.hpp>
 #include <boomhs/item.hpp>
 #include <boomhs/item_factory.hpp>
@@ -17,6 +18,7 @@
 using namespace boomhs;
 using namespace boomhs::math;
 using namespace boomhs::math::constants;
+using namespace common;
 using namespace opengl;
 using namespace window;
 

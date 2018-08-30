@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/clock.hpp>
+#include <common/clock.hpp>
 
 namespace boomhs
 {
@@ -7,7 +7,7 @@ struct Item;
 
 class GCD
 {
-  Timer timer_;
+  common::Timer timer_;
 
 public:
   GCD() = default;
@@ -20,7 +20,7 @@ public:
   void pause() { timer_.pause(); }
   void unpause() { timer_.unpause(); }
 
-  void reset_ms(ticks_t);
+  void reset_ms(common::ticks_t);
   void update() { timer_.update(); }
 };
 

@@ -4,6 +4,7 @@
 #include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/fog.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/npc.hpp>
@@ -23,7 +24,6 @@
 
 #include <extlibs/fmt.hpp>
 #include <extlibs/sdl.hpp>
-#include <boomhs/clock.hpp>
 
 #include <common/log.hpp>
 #include <boomhs/math.hpp>

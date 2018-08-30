@@ -7,6 +7,7 @@
 #include <boomhs/bounding_object.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/components.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/mesh.hpp>
@@ -14,7 +15,6 @@
 #include <boomhs/water.hpp>
 #include <boomhs/view_frustum.hpp>
 
-#include <boomhs/clock.hpp> 
 #include <common/log.hpp>
 #include <boomhs/random.hpp>
 

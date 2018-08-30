@@ -14,7 +14,6 @@
 #include <boomhs/player.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/state.hpp>
-#include <boomhs/time.hpp>
 #include <boomhs/tree.hpp>
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_state.hpp>
@@ -26,6 +25,8 @@
 #include <opengl/global.hpp>
 #include <opengl/renderer.hpp>
 #include <opengl/skybox_renderer.hpp>
+
+#include <common/time.hpp>
 
 #include <window/sdl_window.hpp>
 
@@ -356,7 +357,7 @@ world_menu(EngineState& es, LevelData& ldata)
 }
 
 void
-draw_time_editor(common::Logger& logger, Time& time, UiDebugState& uistate)
+draw_time_editor(common::Logger& logger, common::Time& time, UiDebugState& uistate)
 {
   if (ImGui::Begin("TimeWindow")) {
     int speed = 0;

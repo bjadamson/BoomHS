@@ -11,6 +11,7 @@
 #include <boomhs/controller.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/frame.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/heightmap.hpp>
 #include <boomhs/item.hpp>
@@ -36,7 +37,6 @@
 #include <opengl/texture.hpp>
 
 #include <extlibs/sdl.hpp>
-#include <boomhs/clock.hpp>
 
 #include <common/log.hpp>
 #include <boomhs/math.hpp>

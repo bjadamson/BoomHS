@@ -3,6 +3,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/tree.hpp>

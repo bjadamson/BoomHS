@@ -48,63 +48,35 @@ class SDLWindow
   window_ptr    window_;
   SDL_GLContext context_;
 
+  NO_COPY(SDLWindow);
+  NO_MOVE_ASSIGN(SDLWindow);
 public:
-  // ctors
-  SDLWindow(window_ptr&& w, SDL_GLContext c)
-      : window_(MOVE(w))
-      , context_(c)
-  {
-  }
-  ~SDLWindow()
-  {
-    if (nullptr != context_) {
-      SDL_GL_DeleteContext(context_);
-    }
-  }
-
-  NO_COPY(SDLWindow)
+  SDLWindow(window_ptr&&, SDL_GLContext);
+  ~SDLWindow();
 
   // move-constructible
-  SDLWindow(SDLWindow&& other)
-      : window_(MOVE(other.window_))
-      , context_(other.context_)
-  {
-    other.context_ = nullptr;
-    other.window_  = nullptr;
-  }
+  SDLWindow(SDLWindow&&);
 
-  // not move assignable
-  SDLWindow& operator=(SDLWindow&&) = delete;
+  // methods
+  boomhs::ScreenDimensions get_dimensions() const;
 
   // Allow getting the window's SDL pointer
   window_type* raw() { return window_.get(); }
 
-  auto get_dimensions() const
-  {
-    int w = 0, h = 0;
-    assert(nullptr != window_.get());
-    SDL_GetWindowSize(window_.get(), &w, &h);
-
-    int x, y;
-    SDL_GetWindowPosition(window_.get(), &x, &y);
-    return boomhs::ScreenDimensions{0, 0, w, h};
-  }
-
   void set_fullscreen(FullscreenFlags const);
-
   bool try_set_swapinterval(SwapIntervalFlag const);
-
   void set_swapinterval(SwapIntervalFlag const);
 };
 
-struct sdl_library
+struct SDLGlobalContext
 {
-  sdl_library() = delete;
+  NO_MOVE_OR_COPY(SDLGlobalContext);
 
-  static Result<common::none_t, std::string> init(common::Logger&);
-  static void                                destroy();
+  SDLGlobalContext() = default;
+  ~SDLGlobalContext();
 
-  static Result<SDLWindow, std::string> make_window(common::Logger&, bool, int, int);
+  Result<SDLWindow, std::string>
+  make_window(common::Logger&, bool, int, int) const;
 };
 
 } // namespace window

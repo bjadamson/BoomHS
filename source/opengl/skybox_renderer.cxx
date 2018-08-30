@@ -5,11 +5,11 @@
 #include <opengl/texture.hpp>
 
 #include <boomhs/engine.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/zone_state.hpp>
 
 #include <cassert>
-#include <boomhs/clock.hpp>
 
 using namespace boomhs;
 using namespace opengl;

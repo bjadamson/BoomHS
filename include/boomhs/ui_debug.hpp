@@ -1,5 +1,4 @@
 #pragma once
-#include <boomhs/clock.hpp>
 
 namespace boomhs
 {

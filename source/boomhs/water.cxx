@@ -11,8 +11,6 @@
 #include <opengl/gpu.hpp>
 #include <opengl/shader.hpp>
 
-#include <boomhs/clock.hpp>
-
 #include <common/log.hpp>
 #include <boomhs/random.hpp>
 

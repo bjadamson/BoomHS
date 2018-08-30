@@ -5,6 +5,7 @@
 #include <opengl/renderer.hpp>
 
 #include <boomhs/engine.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/zone_state.hpp>
 
 using namespace boomhs;

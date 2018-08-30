@@ -1,6 +1,7 @@
 #include <boomhs/io_behavior.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/collision.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/engine.hpp>

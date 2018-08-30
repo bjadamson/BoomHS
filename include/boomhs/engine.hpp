@@ -5,12 +5,12 @@
 #include <boomhs/math.hpp>
 #include <boomhs/main_menu.hpp>
 #include <boomhs/mouse.hpp>
-#include <boomhs/time.hpp>
 #include <boomhs/ui_state.hpp>
 
 #include <window/sdl_window.hpp>
 
 #include <common/log.hpp>
+#include <common/time.hpp>
 #include <common/type_macros.hpp>
 
 struct ALCdevice_struct;
@@ -46,7 +46,7 @@ struct EngineState
   ScreenDimensions const dimensions;
   Frustum                frustum;
   MainMenuState          main_menu;
-  Time                   time;
+  common::Time           time;
   PlayerBehaviors        behaviors;
 
   bool                 quit                  = false;

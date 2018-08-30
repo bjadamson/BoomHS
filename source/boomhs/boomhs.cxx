@@ -9,12 +9,14 @@
 #include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/frame.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/heightmap.hpp>
 #include <boomhs/item.hpp>
 #include <boomhs/item_factory.hpp>
 #include <boomhs/io_sdl.hpp>
 #include <boomhs/level_manager.hpp>
+#include <boomhs/math.hpp>
 #include <boomhs/mouse.hpp>
 #include <boomhs/npc.hpp>
 
@@ -25,6 +27,7 @@
 #include <boomhs/player.hpp>
 #include <boomhs/rexpaint.hpp>
 
+#include <boomhs/random.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/start_area_generator.hpp>
 #include <boomhs/skybox.hpp>
@@ -39,16 +42,12 @@
 #include <opengl/gpu.hpp>
 #include <opengl/texture.hpp>
 
-#include <extlibs/sdl.hpp>
-#include <boomhs/clock.hpp>
-
 #include <common/log.hpp>
-#include <boomhs/math.hpp>
-#include <boomhs/random.hpp>
 #include <common/result.hpp>
 
 #include <extlibs/fastnoise.hpp>
 #include <extlibs/imgui.hpp>
+#include <extlibs/sdl.hpp>
 
 #include <cassert>
 #include <chrono>

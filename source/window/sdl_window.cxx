@@ -10,9 +10,11 @@
 
 #include <iostream>
 
+using namespace boomhs;
 using namespace window;
 
 namespace {
+
 void
 check_errors(common::Logger &logger)
 {
@@ -23,6 +25,39 @@ check_errors(common::Logger &logger)
 
 namespace window
 {
+
+SDLWindow::SDLWindow(window_ptr&& w, SDL_GLContext c)
+    : window_(MOVE(w))
+    , context_(c)
+{
+}
+
+SDLWindow::SDLWindow(SDLWindow&& other)
+    : window_(MOVE(other.window_))
+    , context_(other.context_)
+{
+  other.context_ = nullptr;
+  other.window_  = nullptr;
+}
+
+SDLWindow::~SDLWindow()
+{
+  if (nullptr != context_) {
+    SDL_GL_DeleteContext(context_);
+  }
+}
+
+ScreenDimensions
+SDLWindow::get_dimensions() const
+{
+  int w = 0, h = 0;
+  assert(nullptr != window_.get());
+  SDL_GetWindowSize(window_.get(), &w, &h);
+
+  int x, y;
+  SDL_GetWindowPosition(window_.get(), &x, &y);
+  return boomhs::ScreenDimensions{0, 0, w, h};
+}
 
 bool
 SDLWindow::try_set_swapinterval(SwapIntervalFlag const swap_flag)
@@ -81,8 +116,18 @@ SDLWindow::set_fullscreen(FullscreenFlags const fs)
   }
 }
 
-Result<common::none_t, std::string>
-sdl_library::init(common::Logger &logger)
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// SDLGlobalContext
+SDLGlobalContext::~SDLGlobalContext()
+{
+  if (SDL_WasInit(SDL_INIT_EVERYTHING)) {
+    SDL_Quit();
+  }
+}
+
+Result<SDLWindow, std::string>
+SDLGlobalContext::make_window(common::Logger &logger, bool const fullscreen, int const width,
+                              int const height) const
 {
   // Initialize video subsystem
   if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
@@ -121,20 +166,7 @@ sdl_library::init(common::Logger &logger)
   DO_EFFECT(set_attribute(SDL_GL_DEPTH_SIZE, 24));
   DO_EFFECT(set_attribute(SDL_GL_STENCIL_SIZE, 8));
 
-  return OK_NONE;
-}
 
-void
-sdl_library::destroy()
-{
-  if (SDL_WasInit(SDL_INIT_EVERYTHING)) {
-    SDL_Quit();
-  }
-}
-
-Result<SDLWindow, std::string>
-sdl_library::make_window(common::Logger &logger, bool const fullscreen, int const height, int const width)
-{
   // Hidden dependency between the ordering here, so all the logic exists in one
   // place.
   //

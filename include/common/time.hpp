@@ -3,7 +3,7 @@
 #include <common/type_macros.hpp>
 #include <string>
 
-namespace boomhs
+namespace common
 {
 
 using ticks_t = double;
@@ -79,4 +79,4 @@ public:
   static Result<std::string, char const*> get_time_now();
 };
 
-} // namespace boomhs
+} // namespace common

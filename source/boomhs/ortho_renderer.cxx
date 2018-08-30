@@ -5,6 +5,7 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/ui_debug.hpp>

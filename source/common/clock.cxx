@@ -1,9 +1,7 @@
-#include <boomhs/clock.hpp>
+#include <common/clock.hpp>
 #include <extlibs/sdl.hpp>
 
-#include <iostream>
-
-namespace boomhs
+namespace common
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,11 +34,17 @@ Clock::now() const
   return SDL_GetPerformanceCounter();
 }
 
-FrameTime
-Clock::frame_time() const
+ticks_t
+Clock::delta_ticks_since_last_update() const
 {
-  ticks_t const delta = now() - last_;
-  return FrameTime{delta, since_start(), frequency_};
+  return now() - last_;
+}
+
+ticks_t
+Clock::delta_millis_since_last_update() const
+{
+  ticks_t const dt = delta_ticks_since_last_update();
+  return common::TimeConversions::ticks_to_millis(dt, frequency());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,11 +52,12 @@ Clock::frame_time() const
 void
 Timer::update()
 {
-  auto const dt = clock_.frame_time().delta_millis();
+  auto const dt = clock_.delta_millis_since_last_update();
+
   clock_.update();
   if (!paused_) {
     remaining_ms_ -= dt;
   }
 }
 
-} // namespace boomhs
+} // namespace common

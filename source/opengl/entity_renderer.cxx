@@ -5,6 +5,7 @@
 #include <boomhs/bounding_object.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/engine.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/player.hpp>

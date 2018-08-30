@@ -2,22 +2,25 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/controller.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/io_behavior.hpp>
 #include <boomhs/io_sdl.hpp>
 #include <boomhs/main_menu.hpp>
+#include <boomhs/random.hpp>
 #include <boomhs/scene_renderer.hpp>
 #include <boomhs/state.hpp>
 
+#include <common/clock.hpp>
 #include <common/log.hpp>
-#include <boomhs/random.hpp>
+#include <common/time.hpp>
 
 #include <window/sdl_window.hpp>
-#include <boomhs/clock.hpp>
 
 #include <extlibs/imgui.hpp>
 #include <extlibs/openal.hpp>
 
 using namespace boomhs;
+using namespace common;
 using namespace window;
 
 namespace
@@ -69,14 +72,13 @@ timed_game_loop(Engine& engine, GameState& state, Camera& camera, RNG& rng)
   auto& es     = state.engine_state;
   auto& logger = es.logger;
 
-  Clock         clock;
+  Clock clock;
   FrameCounter  counter;
-
 
   auto& zs = state.level_manager.active();
   auto renderers = make_static_renderers(es, zs);
   while (!es.quit) {
-    auto const ft = clock.frame_time();
+    auto const ft = FrameTime::from_clock(clock);
     loop(engine, state, renderers, rng, camera, ft);
 
     if ((counter.frames_counted % 60 == 0)) {
@@ -149,18 +151,6 @@ start(common::Logger& logger, Engine& engine)
 
 } // namespace
 
-using WindowResult = Result<SDLWindow, std::string>;
-WindowResult
-make_window(common::Logger& logger, bool const fullscreen, float const width, float const height)
-{
-  // Select windowing library as SDL.
-  LOG_DEBUG("Initializing window library globals");
-  DO_EFFECT(window::sdl_library::init(logger));
-
-  LOG_DEBUG("Instantiating window instance.");
-  return window::sdl_library::make_window(logger, fullscreen, height, width);
-}
-
 int
 main(int argc, char* argv[])
 {
@@ -171,14 +161,17 @@ main(int argc, char* argv[])
   std::string const log_name = time_result.unwrap() + "-BoomHS.log";
   auto              logger   = common::LogFactory::make_default(log_name.c_str());
 
-  LOG_DEBUG("Creating window ...");
   bool constexpr FULLSCREEN = false;
 
   auto const on_error = [&logger](auto const& error) {
     LOG_ERROR(error);
     return EXIT_FAILURE;
   };
-  TRY_OR_ELSE_RETURN(auto window, make_window(logger, FULLSCREEN, 1024, 768), on_error);
+
+  SDLGlobalContext sdl_gl;
+
+  LOG_DEBUG("Initializing OpenGL context and SDL window.");
+  TRY_OR_ELSE_RETURN(auto window, sdl_gl.make_window(logger, FULLSCREEN, 1024, 768), on_error);
   TRY_OR_ELSE_RETURN(auto controller, SDLControllers::find_attached_controllers(logger), on_error);
   Engine engine{MOVE(window), MOVE(controller)};
 

@@ -6,13 +6,13 @@
 #include <boomhs/components.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/engine.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/player.hpp>
 
 #include <boomhs/random.hpp>
 
-#include <boomhs/clock.hpp>
 #include <extlibs/glm.hpp>
 
 using namespace boomhs;

@@ -439,8 +439,8 @@ ChatHistory::all_messages_in_channel(ChannelId const id) const
 
 class BlinkTimer
 {
-  bool is_blinking_ = false;
-  Timer timer_;
+  bool          is_blinking_ = false;
+  common::Timer timer_;
 public:
   void update() { timer_.update(); }
   bool expired() const { return timer_.expired(); }
@@ -473,7 +473,7 @@ draw_2dui(RenderState& rstate)
   bool const player_attacking = player.is_attacking;
 
   auto const reset_attack_timer = [&]() {
-    auto const BLINK_TIME_IN_MS = TimeConversions::seconds_to_millis(1);
+    auto const BLINK_TIME_IN_MS = common::TimeConversions::seconds_to_millis(1);
     blink_timer.set_ms(BLINK_TIME_IN_MS);
   };
 

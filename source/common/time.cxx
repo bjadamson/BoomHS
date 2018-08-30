@@ -1,6 +1,6 @@
-#include <boomhs/time.hpp>
+#include <common/time.hpp>
 
-using namespace boomhs;
+using namespace common;
 
 namespace
 {
@@ -88,7 +88,7 @@ years_to_seconds(int const years)
 
 } // namespace
 
-namespace boomhs
+namespace common
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -337,4 +337,4 @@ Time::get_time_now()
   return Ok(std::string{buff});
 }
 
-} // namespace boomhs
+} // namespace common

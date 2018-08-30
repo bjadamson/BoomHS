@@ -12,7 +12,6 @@
 #include <boomhs/world_object.hpp>
 
 #include <window/sdl_window.hpp>
-#include <boomhs/clock.hpp>
 
 #include <common/log.hpp>
 #include <boomhs/math.hpp>

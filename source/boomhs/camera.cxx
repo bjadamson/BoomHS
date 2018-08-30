@@ -1,10 +1,10 @@
 #include <boomhs/camera.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/screen_info.hpp>
 #include <boomhs/mouse.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <window/sdl_window.hpp>
-#include <boomhs/clock.hpp>
 
 #include <boomhs/math.hpp>
 

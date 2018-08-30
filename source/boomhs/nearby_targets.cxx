@@ -1,6 +1,6 @@
 #include <boomhs/nearby_targets.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/math.hpp>
-#include <boomhs/clock.hpp>
 
 using namespace boomhs;
 
