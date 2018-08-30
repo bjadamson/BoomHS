@@ -23,51 +23,36 @@ using namespace window;
 namespace
 {
 
-bool
-is_quit_event(SDL_Event& event)
-{
-  bool is_quit = false;
-
-  switch (event.type) {
-  case SDL_QUIT: {
-    is_quit = true;
-    break;
-  }
-  }
-  return is_quit;
-}
-
-template <typename FN>
 void
-loop_events(SDLEventProcessArgs&& epa, FN const& fn)
+loop_events(GameState& state, Camera& camera, bool const show_mainmenu, bool& quit,
+            FrameTime const& ft)
 {
-  auto& es    = epa.game_state.engine_state;
-  auto& event = epa.event;
+  auto const& fn = show_mainmenu
+    ? &main_menu::process_event
+    : &IO_SDL::process_event;
 
-  while ((!es.quit) && (0 != SDL_PollEvent(&event))) {
+  SDL_Event event;
+  while ((!quit) && (0 != SDL_PollEvent(&event))) {
     ImGui_ImplSdlGL3_ProcessEvent(&event);
-    fn(MOVE(epa));
+    fn(SDLEventProcessArgs{state, event, camera, ft});
   }
+  quit |= event.type == SDL_QUIT;
 }
 
 void
-loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
+loop(Engine& engine, GameState& state, StaticRenderers& renderers, RNG& rng, Camera& camera,
      FrameTime const& ft)
 {
   auto& es     = state.engine_state;
   auto& logger = es.logger;
 
-  // Reset Imgui for next game frame.
   auto& window = engine.window;
+
+  // Reset Imgui for next game frame.
   ImGui_ImplSdlGL3_NewFrame(window.raw());
 
-  auto const& event_fn = es.main_menu.show ? &main_menu::process_event : &IO_SDL::process_event;
+  loop_events(state, camera, es.main_menu.show, es.quit, ft);
 
-  SDL_Event event;
-  loop_events(SDLEventProcessArgs{state, event, camera, ft}, event_fn);
-  es.quit |= is_quit_event(event);
-
-  static auto renderers = make_static_renderers(es, state.level_manager);
   boomhs::game_loop(engine, state, renderers, rng, camera, ft);
 
   // Render Imgui UI
@@ -81,16 +66,21 @@ loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
 void
 timed_game_loop(Engine& engine, GameState& state, Camera& camera, RNG& rng)
 {
+  auto& es     = state.engine_state;
+  auto& logger = es.logger;
+
   Clock         clock;
   FrameCounter  counter;
 
-  auto& logger = state.engine_state.logger;
-  while (!state.engine_state.quit) {
+
+  auto& zs = state.level_manager.active();
+  auto renderers = make_static_renderers(es, zs);
+  while (!es.quit) {
     auto const ft = clock.frame_time();
-    loop(engine, state, rng, camera, ft);
+    loop(engine, state, renderers, rng, camera, ft);
 
     if ((counter.frames_counted % 60 == 0)) {
-      state.engine_state.time.add_hours(1);
+      es.time.add_hours(1);
     }
     clock.update();
     counter.update(logger, clock);

@@ -19,6 +19,7 @@ class  Camera;
 class  FrameTime;
 class  LevelManager;
 class  RNG;
+struct ZoneState;
 
 struct WaterRenderers
 {
@@ -53,6 +54,6 @@ struct StaticRenderers
 };
 
 StaticRenderers
-make_static_renderers(EngineState&, LevelManager&);
+make_static_renderers(EngineState&, ZoneState&);
 
 } // namespace boomhs

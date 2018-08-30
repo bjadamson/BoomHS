@@ -4,7 +4,10 @@
 #include <common/log.hpp>
 #include <common/result.hpp>
 #include <common/type_macros.hpp>
+
 #include <opengl/bind.hpp>
+#include <opengl/renderbuffer.hpp>
+#include <opengl/texture.hpp>
 
 #include <extlibs/glew.hpp>
 #include <string>
@@ -30,6 +33,15 @@ struct FBInfo
   void destroy_impl();
 
   std::string to_string() const;
+
+  TextureInfo
+  attach_color_buffer(common::Logger&, int, int, GLenum);
+
+  TextureInfo
+  attach_depth_buffer(common::Logger&, int, int, GLenum);
+
+  RenderBuffer
+  attach_render_buffer(common::Logger&, int, int);
 
   static size_t constexpr NUM_BUFFERS = 1;
 };

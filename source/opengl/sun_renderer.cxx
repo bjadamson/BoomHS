@@ -39,14 +39,12 @@ SunshaftRenderer::SunshaftRenderer(common::Logger& logger, ScreenSize const& ss,
     : buffers_(SunshaftBuffers{logger, ss})
     , sp_(sp)
 {
-  // TODO: structured binding bug
   auto const& dim = buffers_.fbo->dimensions;
   auto const w = dim.width(), h = dim.height();
 
-  with_sunshaft_fbo(logger, [&]() {
-    buffers_.tbo = create_texture_attachment(logger, w, h, GL_TEXTURE1);
-    buffers_.rbo = create_depth_buffer_attachment(logger, w, h);
-  });
+  auto& fbo = buffers_.fbo;
+  buffers_.tbo = fbo->attach_color_buffer(logger, w, h, GL_TEXTURE1);
+  buffers_.rbo = fbo->attach_render_buffer(logger, w, h);
 
   {
     ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });

@@ -246,26 +246,23 @@ AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, ScreenSize 
     , refraction_(logger, screen_size)
 {
   {
-    // TODO: structured binding bug
     auto const dim = reflection_.fbo->dimensions;
     auto const w = dim.width(), h = dim.height();
 
-    with_reflection_fbo(logger, [&]() {
-      reflection_.tbo = create_texture_attachment(logger, w, h, GL_TEXTURE1);
-      reflection_.rbo = create_depth_buffer_attachment(logger, w, h);
-    });
+    auto& fbo = reflection_.fbo;
+    reflection_.tbo = fbo->attach_color_buffer(logger, w, h, GL_TEXTURE1);
+    reflection_.rbo = fbo->attach_render_buffer(logger, w, h);
   }
 
   {
-    // TODO: structured binding bug
     auto const dim = refraction_.fbo->dimensions;
     auto const w = dim.width(), h = dim.height();
-
-    with_refraction_fbo(logger, [&]() {
+    {
       GLenum const tu = GL_TEXTURE2;
-      refraction_.tbo = create_texture_attachment(logger, w, h, tu);
-      refraction_.dbo = create_depth_texture_attachment(logger, w, h, tu);
-    });
+      auto& fbo = refraction_.fbo;
+      refraction_.tbo = fbo->attach_color_buffer(logger, w, h, tu);
+      refraction_.dbo = fbo->attach_depth_buffer(logger, w, h, tu);
+    }
   }
 
   {

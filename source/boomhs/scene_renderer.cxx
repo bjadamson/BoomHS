@@ -28,6 +28,7 @@
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/water.hpp>
+#include <boomhs/zone_state.hpp>
 
 
 #include <opengl/factory.hpp>
@@ -56,7 +57,6 @@
 using namespace boomhs;
 using namespace boomhs::math::constants;
 using namespace opengl;
-using namespace window;
 
 namespace boomhs
 {
@@ -150,7 +150,7 @@ StaticRenderers::render(LevelManager&lm, RenderState& rstate, Camera& camera, RN
 }
 
 StaticRenderers
-make_static_renderers(EngineState& es, LevelManager& lm)
+make_static_renderers(EngineState& es, ZoneState& zs)
 {
   auto const make_basic_water_renderer = [](common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
     auto& diff   = *ttable.find("water-diffuse");
@@ -218,8 +218,6 @@ make_static_renderers(EngineState& es, LevelManager& lm)
   };
 
   auto& logger   = es.logger;
-
-  auto& zs        = lm.active();
   auto& gfx_state = zs.gfx_state;
   auto& sps       = gfx_state.sps;
   auto& ttable    = gfx_state.texture_table;
