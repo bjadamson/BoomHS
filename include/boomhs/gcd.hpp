@@ -7,21 +7,21 @@ struct Item;
 
 class GCD
 {
-  common::Timer timer_;
+  common::StopWatch stopwatch_;
 
 public:
   GCD() = default;
   MOVE_DEFAULT(GCD);
   COPY_DEFAULT(GCD);
 
-  bool is_ready() const { return timer_.expired(); }
+  bool is_ready() const { return stopwatch_.expired(); }
 
-  bool is_paused() const { return timer_.is_paused(); }
-  void pause() { timer_.pause(); }
-  void unpause() { timer_.unpause(); }
+  bool is_paused() const { return stopwatch_.is_paused(); }
+  void pause() { stopwatch_.pause(); }
+  void unpause() { stopwatch_.unpause(); }
 
   void reset_ms(common::ticks_t);
-  void update() { timer_.update(); }
+  void update() { stopwatch_.update(); }
 };
 
 } // namespace boomhs

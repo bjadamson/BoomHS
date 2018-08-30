@@ -27,7 +27,7 @@ public:
   auto frequency() const { return frequency_; }
 };
 
-class Timer
+class StopWatch
 {
   Clock   clock_;
   bool    expired_      = false;
@@ -35,9 +35,8 @@ class Timer
   ticks_t remaining_ms_ = 0.0;
 
 public:
-  COPY_DEFAULT(Timer);
-  MOVE_DEFAULT(Timer);
-  Timer() = default;
+  COPYMOVE_DEFAULT(StopWatch);
+  StopWatch() = default;
 
   void set_ms(ticks_t const t) { remaining_ms_ = t; }
   bool expired() const { return remaining_ms_ <= 0; }

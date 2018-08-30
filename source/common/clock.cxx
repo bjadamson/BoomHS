@@ -48,9 +48,9 @@ Clock::delta_millis_since_last_update() const
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Timer
+// StopWatch
 void
-Timer::update()
+StopWatch::update()
 {
   auto const dt = clock_.delta_millis_since_last_update();
 

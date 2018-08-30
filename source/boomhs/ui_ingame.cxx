@@ -440,13 +440,13 @@ ChatHistory::all_messages_in_channel(ChannelId const id) const
 class BlinkTimer
 {
   bool          is_blinking_ = false;
-  common::Timer timer_;
+  common::StopWatch stopwatch_;
 public:
-  void update() { timer_.update(); }
-  bool expired() const { return timer_.expired(); }
+  void update() { stopwatch_.update(); }
+  bool expired() const { return stopwatch_.expired(); }
   bool is_blinking() const { return is_blinking_; }
   void toggle() { is_blinking_ ^= true; }
-  void set_ms(double const t) { timer_.set_ms(t); }
+  void set_ms(double const t) { stopwatch_.set_ms(t); }
 };
 
 void
