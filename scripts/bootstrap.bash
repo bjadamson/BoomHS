@@ -8,9 +8,9 @@ mkdir -p ${BUILD}
 STATIC_ANALYSIS_FLAGS=""
 DEBUG_OR_RELEASE="Debug"
 CXX_STD_LIBRARY="libc++"
-BUILD_SYSTEM="Unix Makefiles"
+BUILD_SYSTEM="Ninja"
 
-while getopts ":ahnr" opt; do
+while getopts ":ahmr" opt; do
   case ${opt} in
     a )
       export STATIC_ANALYSIS_FLAGS="-fsanitize=address"
@@ -18,13 +18,13 @@ while getopts ":ahnr" opt; do
     r )
       export DEBUG_OR_RELEASE="Release"
       ;;
-    n )
-      export BUILD_SYSTEM="Ninja"
+    m )
+      export BUILD_SYSTEM="Unix Makefiles"
       ;;
     \h )
       echo "Help options for bootstrapping process."
       echo "[-a] To enable Static Analysis."
-      echo "[-n] To to to use the Ninja Build."
+      echo "[-m] To to to use the default 'Make' build-system."
       echo "[-r] To switch from Debug to Release mode."
 
       echo "[-h] See this message."
@@ -292,7 +292,7 @@ sed -i "s|STDLIB_PLACEHOLDER|${CXX_STD_LIBRARY}|g"                      ${ROOT}/
 
 cat > "${BUILD}/conanfile.txt" << "EOF"
 [requires]
-glm/0.9.8.5@bincrafters/stable
+glm/0.9.8.0@TimSimpson/testing
 
 [generators]
 cmake
