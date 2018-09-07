@@ -69,6 +69,9 @@ apt-get install python-pip
 # Use pip to install conan (c++ library/package manager)
 pip install conan
 
+# Tell conan about the "bincrafters" remote (where from we get out dependencies)
+conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+
 # Install basic dependencies
 apt-get install libc++-dev
 
