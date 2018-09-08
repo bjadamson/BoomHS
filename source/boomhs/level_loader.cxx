@@ -663,9 +663,9 @@ load_vas(CppTable const& table)
     auto const datatype = GL_FLOAT;
     auto const num      = get_or_abort<int>(data_table, "num");
 
-    auto const uint_index     = static_cast<GLuint>(index);
-    auto const attribute_type = attribute_type_from_string(fieldname);
-    auto       api = opengl::AttributePointerInfo{uint_index, datatype, attribute_type, num};
+    auto const uint_index        = static_cast<GLuint>(index);
+    auto const attribute_type    = attribute_type_from_string(fieldname);
+    opengl::AttributePointerInfo api{uint_index, datatype, attribute_type, num};
 
     ++index;
     return cpptoml::option<opengl::AttributePointerInfo>{MOVE(api)};
@@ -708,7 +708,7 @@ load_global_lighting(CppTable const& table)
   auto const directinal_table = get_table_or_abort(global_lighting, "directional");
   auto const diffuse          = get_color_or_abort(directinal_table, "diffuse");
   auto const specular         = get_color_or_abort(directinal_table, "specular");
-  auto const direction        =  get_vec3_or_abort(directinal_table, "direction");
+  auto const direction        = get_vec3_or_abort(directinal_table, "direction");
 
   Light            light{diffuse, specular};
   DirectionalLight dlight{MOVE(light), direction};

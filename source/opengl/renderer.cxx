@@ -83,12 +83,11 @@ namespace opengl
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // DrawState
-DrawState::DrawState()
+DrawState::DrawState(bool const wireframe_override)
+    : num_vertices(0)
+    , num_drawcalls(0)
+    , draw_wireframes(wireframe_override)
 {
-  common::memzero(this, sizeof(DrawState));
-
-  assert(0 == num_vertices);
-  assert(0 == num_drawcalls);
 }
 
 std::string
@@ -197,7 +196,7 @@ draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo
   disable_depth_tests();
   ON_SCOPE_EXIT([]() { enable_depth_tests(); });
 
-  draw(rstate, dm, sp, dinfo);
+  draw(rstate.fs.es.logger, rstate.ds, dm, sp, dinfo);
 }
 
 void
@@ -233,7 +232,7 @@ draw_3dlightsource(RenderState& rstate, GLenum const dm, glm::mat4 const& model_
     set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
   }
 
-  draw(rstate, dm, sp, dinfo);
+  draw(logger, rstate.ds, dm, sp, dinfo);
 }
 
 void
@@ -260,7 +259,7 @@ draw_3dshape(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix
 
   // misc
   sp.set_uniform_bool(logger, "u_drawnormals", es.draw_normals);
-  draw(rstate, dm, sp, dinfo);
+  draw(logger, rstate.ds, dm, sp, dinfo);
 }
 
 void
@@ -275,7 +274,7 @@ draw_3dblack_water(RenderState& rstate, GLenum const dm, glm::mat4 const& model_
   auto const camera_matrix = fstate.camera_matrix();
   set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
 
-  draw(rstate, dm, sp, dinfo);
+  draw(logger, rstate.ds, dm, sp, dinfo);
 }
 
 void
@@ -296,14 +295,10 @@ draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position
 }
 
 void
-draw(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
+draw(common::Logger& logger, DrawState& ds, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
 {
-  auto&      fstate      = rstate.fs;
-  auto&      es          = fstate.es;
-  auto&      logger      = es.logger;
-  auto const draw_mode   = es.wireframe_override ? GL_LINE_LOOP : dm;
+  auto const draw_mode   = ds.draw_wireframes ? GL_LINE_LOOP : dm;
   auto const num_indices = dinfo.num_indices();
-  auto constexpr OFFSET  = nullptr;
 
   /*
   LOG_DEBUG("---------------------------------------------------------------------------");
@@ -315,16 +310,43 @@ draw(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
 
   FOR_DEBUG_ONLY([&]() { assert(sp.is_bound()); });
   FOR_DEBUG_ONLY([&]() { assert(dinfo.is_bound()); });
+  draw_elements(logger, draw_mode, sp, num_indices);
+
+  ds.num_vertices += num_indices;
+  ++ds.num_drawcalls;
+}
+
+void
+draw_elements(common::Logger& logger, GLenum const draw_mode, ShaderProgram& sp,
+              GLuint const num_indices)
+{
+  auto constexpr INDICES_PTR = nullptr;
+
   if (sp.instance_count) {
-    auto const ic = *sp.instance_count;
-    glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
+    auto const prim_count = *sp.instance_count;
+    glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, INDICES_PTR, prim_count);
   }
   else {
-    glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
+    glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, INDICES_PTR);
   }
+}
 
-  rstate.ds.num_vertices += num_indices;
-  ++rstate.ds.num_drawcalls;
+void
+draw_2delements(common::Logger& logger, GLenum const draw_mode, ShaderProgram& sp,
+                GLuint const num_indices)
+{
+  disable_depth_tests();
+  ON_SCOPE_EXIT([]() { enable_depth_tests(); });
+
+  draw_elements(logger, draw_mode, sp, num_indices);
+}
+
+void
+draw_2delements(common::Logger& logger, GLenum const draw_mode, ShaderProgram& sp, TextureInfo& ti,
+                GLuint const num_indices)
+{
+  BIND_UNTIL_END_OF_SCOPE(logger, ti);
+  draw_2delements(logger, draw_mode, sp, ti, num_indices);
 }
 
 void
@@ -343,14 +365,13 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
   auto const acp = ArrowCreateParams{color, start, head};
   auto const arrow_v = ArrowFactory::create_vertices(acp);
   auto        dinfo = OG::copy_arrow(logger, sp.va(), arrow_v);
-  auto const& ldata = zs.level_data;
 
   Transform transform;
   sp.while_bound(logger, [&]() {
     auto const camera_matrix = fstate.camera_matrix();
     set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
 
-    dinfo.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
+    dinfo.while_bound(logger, [&]() { draw(logger, rstate.ds, GL_LINES, sp, dinfo); });
   });
 }
 
@@ -521,7 +542,7 @@ draw_grid_lines(RenderState& rstate)
       auto const camera_matrix = fstate.camera_matrix();
       set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
 
-      dinfo.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
+      dinfo.while_bound(logger, [&]() { draw(logger, rstate.ds, GL_LINES, sp, dinfo); });
     });
   };
 

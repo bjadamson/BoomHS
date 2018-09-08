@@ -705,7 +705,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
     .expect_moveout("Water Audio System");
   water_audio.set_volume(es.ui_state.debug.buffers.audio.ambient);
 
-  DrawState ds;
+  DrawState ds{es.wireframe_override};
 
   auto const& dimensions = engine.dimensions();
   if (es.main_menu.show) {

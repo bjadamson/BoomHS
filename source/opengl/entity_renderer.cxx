@@ -85,7 +85,7 @@ draw_entity_common_without_binding_sp(RenderState& rstate, GLenum const dm, Shad
   }
   else {
     LOG_WARN("WITHOUT LIGHT");
-    render::draw(rstate, dm, sp, dinfo);
+    render::draw(logger, rstate.ds, dm, sp, dinfo);
   }
 }
 
@@ -335,7 +335,7 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
       dinfo.while_bound(logger, [&]() {
         auto const camera_matrix = fstate.camera_matrix();
         render::set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
-        render::draw(rstate, GL_LINES, sp, dinfo);
+        render::draw(logger, rstate.ds, GL_LINES, sp, dinfo);
         });
     });
   };
@@ -418,7 +418,7 @@ SilhouetteEntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime cons
       auto const camera_matrix = fstate.camera_matrix();
       auto const model_matrix   = transform.model_matrix();
       render::set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
-      render::draw(rstate, GL_TRIANGLES, sp, dinfo);
+      render::draw(logger, rstate.ds, GL_TRIANGLES, sp, dinfo);
     }
   };
 

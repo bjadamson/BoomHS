@@ -588,11 +588,11 @@ draw_inventory_overlay(RenderState& rstate)
   auto const model_matrix = transform.model_matrix();
 
   ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
-  sp.while_bound(logger, [&]() {
-      render::set_modelmatrix(logger, model_matrix, sp);
+  BIND_UNTIL_END_OF_SCOPE(logger, sp);
+  render::set_modelmatrix(logger, model_matrix, sp);
 
-    dinfo.while_bound(logger, [&]() { render::draw_2d(rstate, GL_TRIANGLES, sp, dinfo); });
-  });
+  BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
+  render::draw_2d(rstate, GL_TRIANGLES, sp, dinfo);
 }
 
 } // namespace boomhs

@@ -15,6 +15,7 @@
 #include <common/time.hpp>
 
 #include <gl_sdl/sdl_window.hpp>
+#include <opengl/renderer.hpp>
 
 #include <extlibs/imgui.hpp>
 #include <extlibs/openal.hpp>
@@ -38,8 +39,8 @@ loop_events(GameState& state, Camera& camera, bool const show_mainmenu, bool& qu
   while ((!quit) && (0 != SDL_PollEvent(&event))) {
     ImGui_ImplSdlGL3_ProcessEvent(&event);
     fn(SDLEventProcessArgs{state, event, camera, ft});
+    quit |= event.type == SDL_QUIT;
   }
-  quit |= event.type == SDL_QUIT;
 }
 
 void
@@ -162,7 +163,6 @@ main(int argc, char* argv[])
   auto              logger   = common::LogFactory::make_default(log_name.c_str());
 
   bool constexpr FULLSCREEN = false;
-
   auto const on_error = [&logger](auto const& error) {
     LOG_ERROR(error);
     return EXIT_FAILURE;

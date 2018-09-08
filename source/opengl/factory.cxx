@@ -105,6 +105,7 @@ LineFactory::create_vertices(LineCreateParams const& params)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Rectangle
+
 RectangleUvVertices
 RectangleFactory::from_vertices_and_uvs(RectangleVertices const& v, RectangleUvs const& uv)
 {
@@ -338,6 +339,7 @@ rectangle_vertices_default()
 RectangleUvs
 rectangle_uvs(float const max)
 {
+  using PointArray = RectangleUvs::PointArray;
   return common::make_array<PointArray>(
       PointArray{0.0f, 0.0f},
       PointArray{max, 0.0f},

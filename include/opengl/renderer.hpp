@@ -37,7 +37,9 @@ struct DrawState
   size_t num_vertices;
   size_t num_drawcalls;
 
-  DrawState();
+  bool const draw_wireframes;
+
+  DrawState(bool);
 
   std::string to_string() const;
 };
@@ -142,7 +144,20 @@ draw_3dlit_shape(RenderState&, GLenum, glm::vec3 const&, glm::mat4 const&, Shade
 
 // TODO: move rest to sub-renderers or something
 void
-draw(RenderState&, GLenum, ShaderProgram&, DrawInfo&);
+draw(common::Logger&, DrawState&, GLenum, ShaderProgram&, DrawInfo&);
+
+//////////
+// Direct drawing API
+void
+draw_2delements(common::Logger&, GLenum, ShaderProgram&, GLuint);
+
+void
+draw_2delements(common::Logger&, GLenum, ShaderProgram&, TextureInfo&, GLuint);
+
+void
+draw_elements(common::Logger&, GLenum, ShaderProgram&, GLuint);
+
+//////////
 
 void
 draw_arrow(RenderState&, glm::vec3 const&, glm::vec3 const&, boomhs::Color const&);

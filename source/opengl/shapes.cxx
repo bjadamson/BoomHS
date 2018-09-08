@@ -79,28 +79,28 @@ RectangleUvs::RectangleUvs(VerticesArray &&va)
 {
 }
 
-PointArray
+RectangleUvs::PointArray
 RectangleUvs::zero() const
 {
   auto const& v = varray_[0];
   return PointArray{common::make_array<float>(v[0], 1.0f - v[1])};
 }
 
-PointArray
+RectangleUvs::PointArray
 RectangleUvs::one() const
 {
   auto const& v = varray_[1];
   return PointArray{common::make_array<float>(v[0], 1.0f - v[1])};
 }
 
-PointArray
+RectangleUvs::PointArray
 RectangleUvs::two() const
 {
   auto const& v = varray_[2];
   return PointArray{common::make_array<float>(v[0], 1.0f - v[1])};
 }
 
-PointArray
+RectangleUvs::PointArray
 RectangleUvs::three() const
 {
   auto const& v = varray_[3];
