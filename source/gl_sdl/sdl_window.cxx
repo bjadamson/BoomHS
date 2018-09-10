@@ -197,7 +197,10 @@ SDLGlobalContext::make_window(common::Logger &logger, bool const fullscreen, int
   // First, create the SDL window.
   auto const title = "Hello World!";
   auto const fullscreen_flag = fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
-  auto const flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | fullscreen_flag;
+  auto const flags = SDL_WINDOW_OPENGL
+    | SDL_WINDOW_SHOWN
+    | SDL_WINDOW_MOUSE_FOCUS
+    | fullscreen_flag;
   int const x = SDL_WINDOWPOS_CENTERED;
   int const y = SDL_WINDOWPOS_CENTERED;
   auto raw = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width,

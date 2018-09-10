@@ -53,7 +53,7 @@ uv       = { datatype = "float", num = 2 }
 name = "2dcolor"
 vertex = "2dcolor.vert"
 fragment = "2dcolor.frag"
-va = "vertex_color"
+va = "vertex_only"
 is_2d = true
 
 [[shaders]]

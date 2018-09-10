@@ -584,20 +584,17 @@ draw_inventory_overlay(RenderState& rstate)
   auto const make_rectangle = [&]() {
 
     auto const TOP_LEFT = glm::vec2{vr.left(), vr.top()};
-    auto const TL_NDC       = math::space_conversions::screen_to_ndc(TOP_LEFT, vr);
+    auto const TL_NDC   = math::space_conversions::screen_to_ndc(TOP_LEFT, vr);
 
     auto const BOTTOM_RIGHT = glm::vec2{vr.right(), vr.bottom()};
-    auto const BR_NDC           = math::space_conversions::screen_to_ndc(BOTTOM_RIGHT, vr);
+    auto const BR_NDC       = math::space_conversions::screen_to_ndc(BOTTOM_RIGHT, vr);
 
-    Rectangle      const rect{TL_NDC.x, TL_NDC.y, BR_NDC.x, BR_NDC.y};
-    OF::RectangleColors const rect_colors{color, std::nullopt};
-    OF::RectInfo const ri{rect, rect_colors, std::nullopt};
+    Rectangle    const rect{TL_NDC.x, TL_NDC.y, BR_NDC.x, BR_NDC.y};
+    OF::RectInfo const ri{rect, std::nullopt, std::nullopt, std::nullopt};
     return OF::make_rectangle(ri);
   };
 
-  //Rectangle const rect{0.0f, 0.0f, 1.0f, 1.0f};
-  RectBuffer   buffer = make_rectangle();
-
+  RectBuffer const buffer = make_rectangle();
   DrawInfo dinfo = gpu::copy_rectangle(logger, sp.va(), buffer);
 
   Transform  transform;
@@ -606,6 +603,7 @@ draw_inventory_overlay(RenderState& rstate)
   ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
   render::set_modelmatrix(logger, model_matrix, sp);
+  sp.set_uniform_color(logger, "u_color", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
   render::draw_2d(rstate, GL_TRIANGLES, sp, dinfo);

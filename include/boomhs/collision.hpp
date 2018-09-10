@@ -52,4 +52,10 @@ ray_obb_intersection(glm::vec3 const&, // Ray origin
                      Transform,        // Transform
                      float&);          // Output: distance
 
+bool
+point_rectangle_intersects(
+    glm::vec2 const&,
+    Rectangle const&
+    );
+
 } // namespace boomhs::collision

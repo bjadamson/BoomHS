@@ -14,10 +14,7 @@ CursorManager::CursorManager()
 
 CursorManager::~CursorManager()
 {
-  FOR(i, cursors.size()) {
-    auto *cursor = cursors[i];
-    SDL_FreeCursor(cursor);
-  }
+  std::for_each(cursors.cbegin(), cursors.cend(), &SDL_FreeCursor);
 }
 
 bool

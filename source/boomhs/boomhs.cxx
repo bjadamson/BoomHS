@@ -711,7 +711,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
   if (es.main_menu.show) {
     // Enable keyboard shortcuts
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    SDL_ShowCursor(false);
+    SDL_ShowCursor(SDL_DISABLE);
     io.MouseDrawCursor = true;
 
     // clear the screen before rending the main menu

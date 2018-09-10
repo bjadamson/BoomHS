@@ -19,6 +19,18 @@ namespace boomhs::collision
 {
 
 bool
+point_rectangle_intersects(
+    glm::vec2 const& point,
+    Rectangle const& rect
+    )
+{
+  bool const within_lr = point.x >= rect.left() && point.x <= rect.right();
+  bool const within_tb = point.y >= rect.top()  && point.y <= rect.bottom();
+
+  return within_lr && within_tb;
+}
+
+bool
 ray_obb_intersection(
   glm::vec3 const& ray_origin,
   glm::vec3 const& ray_direction,
