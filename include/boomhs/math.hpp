@@ -17,14 +17,30 @@ struct Rectangle
   glm::vec2 min, max;
 
   // ctor
-  explicit Rectangle(int, int, int, int);
+  explicit constexpr Rectangle(int const l, int const t, int const r, int const b)
+      : Rectangle(static_cast<float>(l),
+          static_cast<float>(t),
+          static_cast<float>(r),
+          static_cast<float>(b))
+  {
+  }
+
+  explicit constexpr Rectangle(float const l, float const t, float const r, float const b)
+      : min(glm::vec2{l, t})
+      , max(glm::vec2{r, b})
+  {
+  }
+
 
   // methods
-  auto left() const { return min.x; }
-  auto top() const {  return min.y; }
+  auto constexpr left() const { return min.x; }
+  auto constexpr top() const {  return min.y; }
 
-  auto right()  const { return max.x; }
-  auto bottom() const {  return max.y; }
+  auto constexpr right()  const { return max.x; }
+  auto constexpr bottom() const {  return max.y; }
+
+  auto constexpr width() const { return right() - left(); }
+  auto constexpr height() const { return top() - bottom(); }
 };
 
 struct Cube
@@ -141,7 +157,7 @@ eye_to_world(glm::vec4 const& eye, glm::mat4 const& view_matrix)
   return glm::normalize(ray_world);
 }
 
-inline glm::vec2
+inline constexpr glm::vec2
 screen_to_ndc(glm::vec2 const& scoords, Rectangle const& view_rect)
 {
   float const x = ((2.0f * scoords.x) / view_rect.right()) - 1.0f;

@@ -232,18 +232,14 @@ cube_vertices(glm::vec3 const& min, glm::vec3 const& max)
 RectBuffer
 make_rectangle(RectInfo const& info)
 {
-  auto const& color_o = info.color;
-  auto const& colors_o = info.colors;
-
-  auto const& uvs_o = info.uvs;
-
-  float const height = info.height;
-  float const width = info.width;
+  auto const& color_o  = info.colors.color;
+  auto const& colors_o = info.colors.colors;
+  auto const& uvs_o    = info.uvs;
 
   std::vector<float> vertices;
   auto const add_point = [&](glm::vec2 const& point, int const index)
   {
-    assert(index < RectInfo::NUM_VERTICES);
+    assert(index < RectangleColors::NUM_VERTICES);
     vertices.emplace_back(point.x);
     vertices.emplace_back(point.y);
 
@@ -273,12 +269,12 @@ make_rectangle(RectInfo const& info)
     }
   };
 
-  glm::vec2 constexpr ORIGIN{0, 0};
-  auto const p0 = glm::vec2{ORIGIN.x - width, ORIGIN.y - height};
-  auto const p1 = glm::vec2{ORIGIN.x + width, ORIGIN.y - height};
+  auto const& r = info.rect;
+  auto const p0 = glm::vec2{r.left(), r.bottom()};
+  auto const p1 = glm::vec2{r.right(), r.bottom()};
 
-  auto const p2 = glm::vec2{ORIGIN.x + width, ORIGIN.y + height};
-  auto const p3 = glm::vec2{ORIGIN.x - width, ORIGIN.y + height};
+  auto const p2 = glm::vec2{r.right(), r.top()};
+  auto const p3 = glm::vec2{r.left(), r.top()};
 
   add_point(p0, 0);
   add_point(p1, 1);
@@ -302,7 +298,7 @@ rectangle_vertices(float const x, float const y, float const w, float const h)
   auto const x1 = x0 + w;
   auto const y1 = y0 - h;
 
-  auto constexpr Z = -0.5f;
+  auto constexpr Z = -0.01f;
 #define zero  x0, y0, Z
 #define one   x1, y0, Z
 #define two   x1, y1, Z

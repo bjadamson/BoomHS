@@ -1,5 +1,6 @@
 #pragma once
 #include <boomhs/colors.hpp>
+#include <boomhs/math.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/shapes.hpp>
 
@@ -118,14 +119,20 @@ cube_vertices(glm::vec3 const&, glm::vec3 const&);
 
 // Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-struct RectInfo
+struct RectangleColors
 {
   static constexpr auto NUM_VERTICES = 4;
-  float                 width, height;
 
   // use one, not both (checked in debug builds)
   std::optional<boomhs::Color>                           color;
   std::optional<std::array<boomhs::Color, NUM_VERTICES>> colors;
+};
+
+struct RectInfo
+{
+  // fields
+  boomhs::Rectangle rect;
+  RectangleColors   colors;
 
   std::optional<RectangleUvs> uvs;
 };

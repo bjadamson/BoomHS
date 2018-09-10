@@ -579,8 +579,24 @@ draw_inventory_overlay(RenderState& rstate)
 
   auto color = LOC::GRAY;
   color.set_a(0.40);
-  OF::RectInfo const ri{1.0f, 1.0f, color, std::nullopt, std::nullopt};
-  RectBuffer     buffer = OF::make_rectangle(ri);
+
+  auto const vr = es.dimensions.rect();
+  auto const make_rectangle = [&]() {
+
+    auto const TOP_LEFT = glm::vec2{vr.left(), vr.top()};
+    auto const TL_NDC       = math::space_conversions::screen_to_ndc(TOP_LEFT, vr);
+
+    auto const BOTTOM_RIGHT = glm::vec2{vr.right(), vr.bottom()};
+    auto const BR_NDC           = math::space_conversions::screen_to_ndc(BOTTOM_RIGHT, vr);
+
+    Rectangle      const rect{TL_NDC.x, TL_NDC.y, BR_NDC.x, BR_NDC.y};
+    OF::RectangleColors const rect_colors{color, std::nullopt};
+    OF::RectInfo const ri{rect, rect_colors, std::nullopt};
+    return OF::make_rectangle(ri);
+  };
+
+  //Rectangle const rect{0.0f, 0.0f, 1.0f, 1.0f};
+  RectBuffer   buffer = make_rectangle();
 
   DrawInfo dinfo = gpu::copy_rectangle(logger, sp.va(), buffer);
 

@@ -112,7 +112,7 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
 
       auto const proj_matrix = fstate.projection_matrix();
       auto const view_matrix = fstate.view_matrix();
-      auto const view_rect   = es.dimensions.as_rectangle();
+      auto const view_rect   = es.dimensions.rect();
 
       auto const p0 = sconv::screen_to_world(mouse_pos, view_rect, proj_matrix, view_matrix, 0.0f);
       auto const p1 = sconv::screen_to_world(mouse_pos, view_rect, proj_matrix, view_matrix, 1.0f);

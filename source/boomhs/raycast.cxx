@@ -23,7 +23,7 @@ Raycast::calculate_ray(FrameState& fstate)
   auto const proj = fstate.projection_matrix();
   auto const view = fstate.view_matrix();
 
-  auto const view_rect = es.dimensions.as_rectangle();
+  auto const view_rect = es.dimensions.rect();
   return sconv::screen_to_world(mouse_coords, view_rect, proj, view, Z);
 }
 

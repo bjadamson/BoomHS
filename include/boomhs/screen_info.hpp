@@ -34,25 +34,25 @@ public:
   {
   }
 
-  auto left() const { return left_; }
-  auto top() const { return top_; }
+  auto constexpr left() const { return left_; }
+  auto constexpr top() const { return top_; }
 
-  auto right() const { return right_; }
-  auto bottom() const { return bottom_; }
+  auto constexpr right() const { return right_; }
+  auto constexpr bottom() const { return bottom_; }
 
-  auto left_top() const { return ScreenCoords{left(), top()}; }
-  auto right_bottom() const { return ScreenCoords{right(), bottom()}; }
+  auto constexpr left_top() const { return ScreenCoords{left(), top()}; }
+  auto constexpr right_bottom() const { return ScreenCoords{right(), bottom()}; }
 
-  auto size() const { return ScreenSize{right(), bottom()}; }
-  auto width() const { return right() - left(); }
-  auto height() const { return bottom() - top(); }
+  auto constexpr size() const { return ScreenSize{right(), bottom()}; }
+  auto constexpr width() const { return right() - left(); }
+  auto constexpr height() const { return bottom() - top(); }
 
-  auto center() const { return ScreenCoords{width() / 2, height() / 2}; }
-  auto as_rectangle() const { return Rectangle{left_, top_, right_, bottom_}; }
+  auto constexpr center() const { return ScreenCoords{width() / 2, height() / 2}; }
+  auto constexpr rect() const { return Rectangle{left_, top_, right_, bottom_}; }
 };
 
 template <typename T>
-ScreenDimensions
+constexpr ScreenDimensions
 operator/(ScreenDimensions const& n, T const& d)
 {
   return ScreenDimensions{
