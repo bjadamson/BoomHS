@@ -311,12 +311,6 @@ void
 Camera::set_mode(CameraMode const m)
 {
   mode_ = m;
-
-  bool const fps_mode   = mode_ == CameraMode::FPS;
-  auto const mouse_mode = fps_mode
-      ? SDL_TRUE
-      : SDL_FALSE;
-  assert(0 == SDL_SetRelativeMouseMode(mouse_mode));
 }
 
 void

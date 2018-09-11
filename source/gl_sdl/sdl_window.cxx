@@ -254,6 +254,8 @@ SDLGlobalContext::make_window(common::Logger &logger, char const* title, bool co
     check_errors(logger);
   }
 
+  // Initially relative mode is not active. (expected user experience in most cases)
+  SDL_SetRelativeMouseMode(SDL_FALSE);
 
   // Third, initialize GLEW.
   glewExperimental = GL_TRUE;

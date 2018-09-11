@@ -136,6 +136,12 @@ start(common::Logger& logger, Engine& engine)
     FAR};
 
   auto& io = ImGui::GetIO();
+
+  // Disable ImGui's Software cursor
+  //
+  // Instead we'll use the system hardware cursor (using SDL).
+  io.MouseDrawCursor = false;
+
   EngineState es{logger, *al_device, io, dimensions, frustum};
   auto        camera = Camera::make_default(dimensions);
 

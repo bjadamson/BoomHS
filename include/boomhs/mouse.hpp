@@ -17,6 +17,10 @@ class CursorManager
 {
   static auto constexpr CURSOR_INDEX_BEGIN = SDL_SYSTEM_CURSOR_ARROW;
   static auto constexpr CURSOR_INDEX_END   = SDL_NUM_SYSTEM_CURSORS;
+
+  static_assert(CURSOR_INDEX_END > CURSOR_INDEX_BEGIN, "CursorEndIndex Must Be > CursorBeginIndex");
+  static auto constexpr CURSOR_COUNT       = CURSOR_INDEX_END - CURSOR_INDEX_BEGIN - 1;
+
   std::array<SDL_Cursor*, CURSOR_INDEX_END - CURSOR_INDEX_BEGIN> cursors;
   SDL_SystemCursor active_ = CURSOR_INDEX_BEGIN;
 

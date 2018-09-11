@@ -690,8 +690,6 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
   auto& sps       = gfx_state.sps;
   auto& ttable    = gfx_state.texture_table;
 
-  auto& io = es.imgui;
-
   auto& registry = zs.registry;
   auto& player = find_player(registry);
 
@@ -707,12 +705,13 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
   DrawState ds{es.wireframe_override};
 
+  auto& io = es.imgui;
   auto const& dimensions = engine.dimensions();
   if (es.main_menu.show) {
+    SDL_SetRelativeMouseMode(SDL_FALSE);
+
     // Enable keyboard shortcuts
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    SDL_ShowCursor(SDL_DISABLE);
-    io.MouseDrawCursor = true;
 
     // clear the screen before rending the main menu
     render::clear_screen(LOC::BLACK);
@@ -722,13 +721,16 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
     main_menu::draw(es, engine.window, camera, skybox_renderer, ds, lm, dimensions, water_audio);
   }
   else {
-    SDL_ShowCursor(SDL_ENABLE);
+    {
+      bool const fps_mode = camera.mode() == CameraMode::FPS;
+      auto const relative_mode = fps_mode ? SDL_TRUE : SDL_FALSE;
+      assert(0 == SDL_SetRelativeMouseMode(relative_mode));
+    }
+
     // Disable keyboard shortcuts
     io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
-    io.MouseDrawCursor = false;
 
     IO_SDL::read_devices(SDLReadDevicesArgs{state, engine.controllers, camera, ft});
-
     SDL_SetCursor(es.device_states.cursors.active());
 
     auto fs         = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), es.frustum);

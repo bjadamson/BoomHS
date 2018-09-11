@@ -1,6 +1,5 @@
 #include <boomhs/collision.hpp>
 #include <boomhs/frame_time.hpp>
-#include <boomhs/mouse.hpp>
 
 #include <common/log.hpp>
 #include <common/timer.hpp>
@@ -113,27 +112,20 @@ main(int argc, char **argv)
   TRY_OR_ELSE_RETURN(auto window,
       sdl_gl->make_window(logger, "Ortho Raycast Test", FULLSCREEN, WIDTH, HEIGHT), on_error);
 
-  CursorManager cmanager;
-  //SDL_SetCursor(cmanager.active());
-  cmanager.set_active(SDL_SYSTEM_CURSOR_ARROW);
-
   ScreenDimensions constexpr SCREEN_DIM{0, 0, WIDTH, HEIGHT};
   OR::init(logger);
   OR::set_viewport(SCREEN_DIM);
 
-  //SDL_ShowCursor(SDL_ENABLE);
-
   Timer timer;
   FrameCounter fcounter;
-
-  SDL_Event event;
-  bool quit = false;
 
   auto const view_rect = SCREEN_DIM.rect();
   auto const color_rect = Rectangle{10, 10, 80, 80};
   auto pair = make_program_and_rectangle(logger, color_rect, view_rect);
 
   auto color = LOC::RED;
+  SDL_Event event;
+  bool quit = false;
   while (!quit) {
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
