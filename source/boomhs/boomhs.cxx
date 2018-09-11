@@ -716,11 +716,10 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
     // clear the screen before rending the main menu
     render::clear_screen(LOC::BLACK);
-    render::set_viewport(es.dimensions);
+    render::set_viewport(dimensions);
 
-    auto const size_v      = ImVec2(dimensions.right(), dimensions.bottom());
     auto& skybox_renderer  = static_renderers.skybox;
-    main_menu::draw(es, engine.window, camera, skybox_renderer, ds, lm, size_v, water_audio);
+    main_menu::draw(es, engine.window, camera, skybox_renderer, ds, lm, dimensions, water_audio);
   }
   else {
     SDL_ShowCursor(SDL_ENABLE);
