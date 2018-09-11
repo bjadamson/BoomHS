@@ -110,9 +110,8 @@ main(int argc, char **argv)
   };
 
   TRY_OR_ELSE_RETURN(auto sdl_gl, SDLGlobalContext::create(logger), on_error);
-  TRY_OR_ELSE_RETURN(auto window, sdl_gl->make_window(logger, FULLSCREEN, WIDTH, HEIGHT), on_error);
-
-  
+  TRY_OR_ELSE_RETURN(auto window,
+      sdl_gl->make_window(logger, "Ortho Raycast Test", FULLSCREEN, WIDTH, HEIGHT), on_error);
 
   CursorManager cmanager;
   //SDL_SetCursor(cmanager.active());
@@ -122,8 +121,7 @@ main(int argc, char **argv)
   OR::init(logger);
   OR::set_viewport(SCREEN_DIM);
 
-  SDL_GL_SetSwapInterval(1);
-  SDL_ShowCursor(true);
+  //SDL_ShowCursor(SDL_ENABLE);
 
   Timer timer;
   FrameCounter fcounter;
@@ -142,7 +140,7 @@ main(int argc, char **argv)
       quit = process_event(logger, event, color_rect, &color);
     }
 
-    OR::clear_screen(LOC::BLACK);
+    OR::clear_screen(LOC::WHITE);
     draw_rectangle(logger, pair.first, pair.second, color);
 
     // Update window with OpenGL rendering

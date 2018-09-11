@@ -156,8 +156,8 @@ SDLGlobalContext::create(common::Logger& logger)
 
 
 Result<SDLWindow, std::string>
-SDLGlobalContext::make_window(common::Logger &logger, bool const fullscreen, int const width,
-                              int const height) const
+SDLGlobalContext::make_window(common::Logger &logger, char const* title, bool const fullscreen,
+                              int const width, int const height) const
 {
   auto const set_a = [&logger](auto const attr, auto const v) {
     return set_attribute(logger, attr, v);
@@ -195,7 +195,6 @@ SDLGlobalContext::make_window(common::Logger &logger, bool const fullscreen, int
   // will handle it (by design).
 
   // First, create the SDL window.
-  auto const title = "Hello World!";
   auto const fullscreen_flag = fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
   auto const flags = SDL_WINDOW_OPENGL
     | SDL_WINDOW_SHOWN

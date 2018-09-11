@@ -78,7 +78,7 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(SDLGlobalContext);
 
   Result<SDLWindow, std::string>
-  make_window(common::Logger&, bool, int, int) const;
+  make_window(common::Logger&, char const*, bool, int, int) const;
 
   void destroy_impl();
 

@@ -170,7 +170,7 @@ main(int argc, char* argv[])
 
   LOG_DEBUG("Initializing OpenGL context and SDL window.");
   TRY_OR_ELSE_RETURN(auto sdl_gl, SDLGlobalContext::create(logger), on_error);
-  TRY_OR_ELSE_RETURN(auto window, sdl_gl->make_window(logger, FULLSCREEN, 1024, 768), on_error);
+  TRY_OR_ELSE_RETURN(auto window, sdl_gl->make_window(logger, "BoomHS", FULLSCREEN, 1024, 768), on_error);
   TRY_OR_ELSE_RETURN(auto controller, SDLControllers::find_attached_controllers(logger), on_error);
   Engine engine{MOVE(window), MOVE(controller)};
 
