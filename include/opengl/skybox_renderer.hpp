@@ -6,7 +6,7 @@
 namespace boomhs
 {
 class FrameTime;
-} // ns boomhs
+} // namespace boomhs
 
 namespace opengl
 {

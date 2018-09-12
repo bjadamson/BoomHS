@@ -27,9 +27,10 @@ struct ZoneState;
 class PlayerHead
 {
   EntityRegistry* registry_;
-  EntityID eid_;
+  EntityID        eid_;
 
   friend class Player;
+
 public:
   explicit PlayerHead(EntityRegistry&, EntityID, glm::vec3 const&, glm::vec3 const&);
   void update(FrameTime const&);

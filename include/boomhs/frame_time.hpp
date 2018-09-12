@@ -1,6 +1,6 @@
 #pragma once
-#include <common/timer.hpp>
 #include <common/time.hpp>
+#include <common/timer.hpp>
 #include <common/type_macros.hpp>
 
 namespace boomhs
@@ -28,7 +28,10 @@ public:
   {
     return common::TimeConversions::ticks_to_millis(delta_ticks(), frequency_);
   }
-  ticks_t delta_seconds() const { return common::TimeConversions::millis_to_seconds(delta_millis()); }
+  ticks_t delta_seconds() const
+  {
+    return common::TimeConversions::millis_to_seconds(delta_millis());
+  }
 
   ticks_t since_start_millis() const
   {

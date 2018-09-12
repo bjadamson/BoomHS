@@ -18,7 +18,7 @@ using CubeIndices  = std::array<GLuint, 36>;
 
 using RectangleUvVertices = std::array<float, 30>;
 
-using RectangleIndices    = std::array<GLuint, 6>;
+using RectangleIndices = std::array<GLuint, 6>;
 
 struct RectBuffer
 {
@@ -31,6 +31,7 @@ class RectangleVertices
 public:
   using VerticesArray = std::array<float, 18>;
   using PointArray    = std::array<float, 3>;
+
 private:
   VerticesArray varray_;
 
@@ -54,8 +55,9 @@ public:
 class RectangleUvs
 {
 public:
-  using PointArray = std::array<float, 2>;
+  using PointArray    = std::array<float, 2>;
   using VerticesArray = std::array<PointArray, 4>;
+
 private:
   VerticesArray varray_;
 

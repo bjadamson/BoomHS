@@ -19,7 +19,7 @@ public:
   COPYMOVE_DEFAULT(Timer);
   Timer();
 
-  void update() { last_ = now(); }
+  void    update() { last_ = now(); }
   ticks_t since_start() const { return now() - start_; }
   ticks_t delta_ticks_since_last_update() const;
   ticks_t delta_millis_since_last_update() const;

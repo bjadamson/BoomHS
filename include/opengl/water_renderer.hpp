@@ -164,8 +164,8 @@ public:
     glm::vec3 camera_pos = camera.world_position();
     camera_pos.y         = -camera_pos.y;
 
-    auto fs   = boomhs::FrameState::from_camera_withposition(es, zs, camera,
-        camera.view_settings_ref(), es.frustum, camera_pos);
+    auto fs = boomhs::FrameState::from_camera_withposition(
+        es, zs, camera, camera.view_settings_ref(), es.frustum, camera_pos);
     RenderState rstate{fs, ds};
 
     with_reflection_fbo(logger,
@@ -183,7 +183,8 @@ public:
     auto&       registry  = zs.registry;
     auto const& fog_color = ldata.fog.color;
 
-    auto fs   = boomhs::FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), es.frustum);
+    auto fs =
+        boomhs::FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), es.frustum);
     RenderState rstate{fs, ds};
 
     with_refraction_fbo(logger,

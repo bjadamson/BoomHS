@@ -1,6 +1,6 @@
 #pragma once
-#include <boomhs/entity.hpp>
 #include <boomhs/colors.hpp>
+#include <boomhs/entity.hpp>
 #include <optional>
 #include <vector>
 

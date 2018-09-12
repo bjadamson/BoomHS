@@ -2,10 +2,10 @@
 
 namespace boomhs
 {
-class  Camera;
-class  FrameTime;
+class Camera;
+class FrameTime;
 struct GameState;
-class  SDLControllers;
+class SDLControllers;
 
 struct SDLReadDevicesArgs
 {
@@ -27,7 +27,7 @@ struct IO_SDL
 {
   static void read_devices(SDLReadDevicesArgs&&);
 
-  static void process_event(SDLEventProcessArgs &&);
+  static void process_event(SDLEventProcessArgs&&);
 };
 
 } // namespace boomhs

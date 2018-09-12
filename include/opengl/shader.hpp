@@ -1,6 +1,6 @@
 #pragma once
-#include <opengl/bind.hpp>
 #include <boomhs/colors.hpp>
+#include <opengl/bind.hpp>
 #include <opengl/vertex_attribute.hpp>
 
 #include <common/algorithm.hpp>
@@ -63,14 +63,14 @@ public:
 #ifdef DEBUG_BUILD
 struct PathToShaderSources
 {
-  VertexShaderFilename vertex;
+  VertexShaderFilename   vertex;
   FragmentShaderFilename fragment;
 };
 #endif
 
 class ShaderProgram
 {
-  ProgramHandle   program_;
+  ProgramHandle program_;
 #ifdef DEBUG_BUILD
   PathToShaderSources source_paths_;
 #endif
@@ -80,9 +80,10 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(ShaderProgram);
   explicit ShaderProgram(ProgramHandle&& ph, VertexAttribute&& va
 #ifdef DEBUG_BUILD
-      , PathToShaderSources&& sources
+                         ,
+                         PathToShaderSources&& sources
 #endif
-      )
+                         )
       : program_(MOVE(ph))
       , va_(MOVE(va))
 #ifdef DEBUG_BUILD
@@ -162,7 +163,8 @@ public:
     set_uniform_array_3fv(logger, name, arr);
   }
 
-  void set_uniform_color_3fv(common::Logger& logger, std::string const& name, boomhs::Color const& c)
+  void
+  set_uniform_color_3fv(common::Logger& logger, std::string const& name, boomhs::Color const& c)
   {
     return set_uniform_color_3fv(logger, name.c_str(), c);
   }

@@ -83,6 +83,11 @@ namespace opengl
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // DrawState
+DrawState::DrawState()
+    : DrawState(false)
+{
+}
+
 DrawState::DrawState(bool const wireframe_override)
     : num_vertices(0)
     , num_drawcalls(0)

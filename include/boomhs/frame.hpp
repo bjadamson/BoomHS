@@ -40,7 +40,7 @@ struct CameraFrameState
   glm::vec3 const camera_world_position;
   glm::mat4 const projection_matrix;
   glm::mat4 const view_matrix;
-  Frustum  const& frustum;
+  Frustum const&  frustum;
 
   CameraMode const mode;
 
@@ -62,18 +62,21 @@ public:
   glm::mat4 const& view_matrix() const;
 
   Frustum const& frustum() const;
-  glm::mat4 camera_matrix() const;
+  glm::mat4      camera_matrix() const;
 
   glm::vec3  camera_world_position() const;
   CameraMode camera_mode() const;
 
   static FrameState from_camera_withposition(EngineState&, ZoneState&, Camera const&,
                                              ViewSettings const&, Frustum const&, glm::vec3 const&);
-  static FrameState from_camera_with_mode(EngineState&, ZoneState&, Camera const&, CameraMode, ViewSettings const&, Frustum const&);
+  static FrameState from_camera_with_mode(EngineState&, ZoneState&, Camera const&, CameraMode,
+                                          ViewSettings const&, Frustum const&);
 
-  static FrameState from_camera(EngineState&, ZoneState&, Camera const&, ViewSettings const&, Frustum const&);
+  static FrameState
+  from_camera(EngineState&, ZoneState&, Camera const&, ViewSettings const&, Frustum const&);
 
-  static FrameState from_camera_for_2dui_overlay(EngineState&, ZoneState&, Camera const&, ViewSettings const&, Frustum const&);
+  static FrameState from_camera_for_2dui_overlay(EngineState&, ZoneState&, Camera const&,
+                                                 ViewSettings const&, Frustum const&);
 };
 
 } // namespace boomhs

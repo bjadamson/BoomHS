@@ -583,13 +583,10 @@ draw_inventory_overlay(RenderState& rstate)
   auto const vr = es.dimensions.rect();
   auto const make_rectangle = [&]() {
 
-    auto const TOP_LEFT = glm::vec2{vr.left(), vr.top()};
-    auto const TL_NDC   = math::space_conversions::screen_to_ndc(TOP_LEFT, vr);
+    auto const TL = glm::vec2{vr.left(), vr.top()};
+    auto const BR = glm::vec2{vr.right(), vr.bottom()};
 
-    auto const BOTTOM_RIGHT = glm::vec2{vr.right(), vr.bottom()};
-    auto const BR_NDC       = math::space_conversions::screen_to_ndc(BOTTOM_RIGHT, vr);
-
-    Rectangle    const rect{TL_NDC.x, TL_NDC.y, BR_NDC.x, BR_NDC.y};
+    Rectangle    const rect{TL.x, TL.y, BR.x, BR.y};
     OF::RectInfo const ri{rect, std::nullopt, std::nullopt, std::nullopt};
     return OF::make_rectangle(ri);
   };
@@ -597,12 +594,15 @@ draw_inventory_overlay(RenderState& rstate)
   RectBuffer const buffer = make_rectangle();
   DrawInfo dinfo = gpu::copy_rectangle(logger, sp.va(), buffer);
 
-  Transform  transform;
-  auto const model_matrix = transform.model_matrix();
-
   ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
-  render::set_modelmatrix(logger, model_matrix, sp);
+
+  auto constexpr NEAR   = 1.0f;
+  auto constexpr FAR    = -1.0f;
+
+  auto const& f = es.frustum;
+  auto const pm = glm::ortho(f.left, f.right, f.bottom, f.top, NEAR, FAR);
+  sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
   sp.set_uniform_color(logger, "u_color", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);

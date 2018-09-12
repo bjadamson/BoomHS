@@ -15,10 +15,10 @@ class RenderState;
 
 namespace boomhs
 {
-class  Camera;
-class  FrameTime;
-class  LevelManager;
-class  RNG;
+class Camera;
+class FrameTime;
+class LevelManager;
+class RNG;
 struct ZoneState;
 
 struct WaterRenderers
@@ -29,8 +29,8 @@ struct WaterRenderers
 
   opengl::SilhouetteWaterRenderer silhouette;
 
-  void render(opengl::RenderState&, opengl::DrawState&, LevelManager&, Camera&,
-              FrameTime const&, bool);
+  void
+  render(opengl::RenderState&, opengl::DrawState&, LevelManager&, Camera&, FrameTime const&, bool);
 };
 
 struct StaticRenderers

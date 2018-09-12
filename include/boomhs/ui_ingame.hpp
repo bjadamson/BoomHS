@@ -36,9 +36,9 @@ public:
 using ChannelId = uint32_t;
 struct Channel
 {
-  ChannelId     id;
-  std::string   name;
-  Color color;
+  ChannelId   id;
+  std::string name;
+  Color       color;
 };
 
 struct ChatState

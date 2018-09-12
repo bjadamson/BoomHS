@@ -17,6 +17,7 @@
 #include <cstdlib>
 
 using namespace boomhs;
+using namespace boomhs::math;
 using namespace common;
 using namespace gl_sdl;
 using namespace opengl;
@@ -28,12 +29,12 @@ make_program_and_rectangle(common::Logger& logger, Rectangle const& rect,
                            Rectangle const& view_rect)
 {
   auto const TOP_LEFT = glm::vec2{rect.left(), rect.top()};
-  auto const TL_NDC   = math::space_conversions::screen_to_ndc(TOP_LEFT, view_rect);
+  //auto const TL_NDC   = math::space_conversions::screen_to_ndc(TOP_LEFT, view_rect);
 
   auto const BOTTOM_RIGHT = glm::vec2{rect.right(), rect.bottom()};
-  auto const BR_NDC       = math::space_conversions::screen_to_ndc(BOTTOM_RIGHT, view_rect);
+  //auto const BR_NDC       = math::space_conversions::screen_to_ndc(BOTTOM_RIGHT, view_rect);
 
-  Rectangle      const ndc_rect{TL_NDC.x, TL_NDC.y, BR_NDC.x, BR_NDC.y};
+  Rectangle      const ndc_rect{TOP_LEFT.x, TOP_LEFT.y, BOTTOM_RIGHT.x, BOTTOM_RIGHT.y};
   OF::RectInfo const ri{ndc_rect, std::nullopt, std::nullopt, std::nullopt};
   RectBuffer  buffer = OF::make_rectangle(ri);
 
@@ -50,15 +51,24 @@ make_program_and_rectangle(common::Logger& logger, Rectangle const& rect,
 }
 
 void
-draw_rectangle(common::Logger& logger, ShaderProgram& sp, DrawInfo& dinfo, Color const& color)
+draw_rectangle(common::Logger& logger, ScreenDimensions const& sd, ShaderProgram& sp,
+                     DrawInfo& dinfo, Color const& color)
 {
-  Transform  transform;
-  auto const model_matrix = transform.model_matrix();
+  auto constexpr NEAR   = 1.0f;
+  auto constexpr FAR    = -1.0f;
+  Frustum const f{
+    static_cast<float>(sd.left()),
+    static_cast<float>(sd.right()),
+    static_cast<float>(sd.bottom()),
+    static_cast<float>(sd.top()),
+    NEAR,
+    FAR};
+  auto const pm = glm::ortho(f.left, f.right, f.bottom, f.top, f.near, f.far);
 
-  DrawState ds{false};
-  ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
+  DrawState ds;
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
-  OR::set_modelmatrix(logger, model_matrix, sp);
+
+  sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
   sp.set_uniform_color(logger, "u_color", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
@@ -116,12 +126,12 @@ main(int argc, char **argv)
   OR::init(logger);
   OR::set_viewport(SCREEN_DIM);
 
+  auto const view_rect = SCREEN_DIM.rect();
+  auto const color_rect = Rectangle{WIDTH / 4, HEIGHT / 4, WIDTH / 2, HEIGHT / 2};
+  auto pair = make_program_and_rectangle(logger, color_rect, view_rect);
+
   Timer timer;
   FrameCounter fcounter;
-
-  auto const view_rect = SCREEN_DIM.rect();
-  auto const color_rect = Rectangle{10, 10, 80, 80};
-  auto pair = make_program_and_rectangle(logger, color_rect, view_rect);
 
   auto color = LOC::RED;
   SDL_Event event;
@@ -133,7 +143,7 @@ main(int argc, char **argv)
     }
 
     OR::clear_screen(LOC::WHITE);
-    draw_rectangle(logger, pair.first, pair.second, color);
+    draw_rectangle(logger, SCREEN_DIM, pair.first, pair.second, color);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());

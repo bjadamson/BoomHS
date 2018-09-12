@@ -51,6 +51,7 @@ class SDLWindow
 
   NO_COPY(SDLWindow);
   NO_MOVE_ASSIGN(SDLWindow);
+
 public:
   SDLWindow(window_ptr&&, SDL_GLContext);
   ~SDLWindow();
@@ -74,11 +75,11 @@ using SDLContext = common::AutoResource<SDLGlobalContext>;
 class SDLGlobalContext
 {
   SDLGlobalContext() = default;
+
 public:
   MOVE_CONSTRUCTIBLE_ONLY(SDLGlobalContext);
 
-  Result<SDLWindow, std::string>
-  make_window(common::Logger&, char const*, bool, int, int) const;
+  Result<SDLWindow, std::string> make_window(common::Logger&, char const*, bool, int, int) const;
 
   void destroy_impl();
 

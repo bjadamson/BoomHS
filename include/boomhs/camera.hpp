@@ -80,7 +80,7 @@ struct CameraState
 class CameraFPS
 {
   glm::vec3 forward_, up_;
-  float xrot_, yrot_;
+  float     xrot_, yrot_;
 
   CameraTarget& target_;
   ViewSettings& view_settings_;
@@ -107,9 +107,9 @@ public:
 
 class CameraORTHO
 {
-  glm::vec3 forward_, up_;
+  glm::vec3     forward_, up_;
   CameraTarget& target_;
-  ViewSettings&     view_settings_;
+  ViewSettings& view_settings_;
 
   glm::vec2 zoom_;
   friend class Camera;
@@ -137,7 +137,7 @@ class CameraArcball
   glm::vec3 forward_, up_;
 
   CameraTarget& target_;
-  ViewSettings&     view_settings_;
+  ViewSettings& view_settings_;
 
   SphericalCoordinates coordinates_;
 
@@ -150,7 +150,7 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(CameraArcball);
 
   // fields
-  CameraState   cs;
+  CameraState cs;
 
   // methods
   SphericalCoordinates spherical_coordinates() const { return coordinates_; }
@@ -173,7 +173,7 @@ public:
 class Camera
 {
   CameraTarget target_;
-  ViewSettings     view_settings_;
+  ViewSettings view_settings_;
   CameraMode   mode_;
 
 public:

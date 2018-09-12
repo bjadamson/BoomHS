@@ -14,15 +14,15 @@ class SDLWindow;
 
 namespace boomhs
 {
-class  Camera;
+class Camera;
 struct ScreenDimensions;
 struct EngineState;
-class  FrameTime;
+class FrameTime;
 struct GameState;
 struct LevelManager;
-class  PlayerBehavior;
-class  SDLEventProcessArgs;
-class  WaterAudioSystem;
+class PlayerBehavior;
+class SDLEventProcessArgs;
+class WaterAudioSystem;
 
 struct MainMenuState
 {
@@ -40,6 +40,6 @@ draw(EngineState&, gl_sdl::SDLWindow&, Camera&, opengl::SkyboxRenderer&, opengl:
      LevelManager&, ScreenDimensions const&, WaterAudioSystem&);
 
 void
-process_event(SDLEventProcessArgs &&);
+process_event(SDLEventProcessArgs&&);
 
 } // namespace boomhs::main_menu

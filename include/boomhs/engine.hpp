@@ -2,8 +2,8 @@
 #include <boomhs/controller.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/io_behavior.hpp>
-#include <boomhs/math.hpp>
 #include <boomhs/main_menu.hpp>
+#include <boomhs/math.hpp>
 #include <boomhs/mouse.hpp>
 #include <boomhs/ui_state.hpp>
 
@@ -38,9 +38,9 @@ struct MovementState
 
 struct EngineState
 {
-  common::Logger&        logger;
-  ALCdevice_struct&      al_device;
-  ImGuiIO&               imgui;
+  common::Logger&   logger;
+  ALCdevice_struct& al_device;
+  ImGuiIO&          imgui;
 
   // TODO: move ScreenDimensions into Frustu, the replace with Rectangle inside math.
   ScreenDimensions const dimensions;
@@ -89,7 +89,8 @@ struct EngineState
 
   // Constructors
   NO_COPY_OR_MOVE(EngineState);
-  EngineState(common::Logger&, ALCdevice_struct&, ImGuiIO&, ScreenDimensions const&, Frustum const& frustum);
+  EngineState(common::Logger&, ALCdevice_struct&, ImGuiIO&, ScreenDimensions const&,
+              Frustum const& frustum);
 };
 
 using EntityRegistries = std::vector<EntityRegistry>;

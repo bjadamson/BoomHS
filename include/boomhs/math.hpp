@@ -18,10 +18,8 @@ struct Rectangle
 
   // ctor
   explicit constexpr Rectangle(int const l, int const t, int const r, int const b)
-      : Rectangle(static_cast<float>(l),
-          static_cast<float>(t),
-          static_cast<float>(r),
-          static_cast<float>(b))
+      : Rectangle(static_cast<float>(l), static_cast<float>(t), static_cast<float>(r),
+                  static_cast<float>(b))
   {
   }
 
@@ -31,13 +29,12 @@ struct Rectangle
   {
   }
 
-
   // methods
   auto constexpr left() const { return min.x; }
-  auto constexpr top() const {  return min.y; }
+  auto constexpr top() const { return min.y; }
 
-  auto constexpr right()  const { return max.x; }
-  auto constexpr bottom() const {  return max.y; }
+  auto constexpr right() const { return max.x; }
+  auto constexpr bottom() const { return max.y; }
 
   auto constexpr width() const { return right() - left(); }
   auto constexpr height() const { return top() - bottom(); }
@@ -69,9 +66,21 @@ struct Frustum
 {
   float left, right, bottom, top, near, far;
 
-  auto height() const { assert(bottom > top); return bottom - top; }
-  auto width() const { assert(right > left); return right - left; }
-  auto depth() const { assert(far > near); return far - near; }
+  auto height() const
+  {
+    assert(bottom > top);
+    return bottom - top;
+  }
+  auto width() const
+  {
+    assert(right > left);
+    return right - left;
+  }
+  auto depth() const
+  {
+    assert(far > near);
+    return far - near;
+  }
 
   auto dimensions() const { return glm::vec3(width(), height(), depth()); }
 
@@ -143,8 +152,8 @@ namespace boomhs::math::space_conversions
 inline glm::vec4
 clip_to_eye(glm::vec4 const& clip, glm::mat4 const& proj_matrix, float const z)
 {
-  auto const      inv_proj    = glm::inverse(proj_matrix);
-  glm::vec4 const eye_coords  = inv_proj * clip;
+  auto const      inv_proj   = glm::inverse(proj_matrix);
+  glm::vec4 const eye_coords = inv_proj * clip;
   return glm::vec4{eye_coords.x, eye_coords.y, z, 0.0f};
 }
 

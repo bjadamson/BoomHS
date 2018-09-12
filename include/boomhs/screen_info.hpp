@@ -55,12 +55,7 @@ template <typename T>
 constexpr ScreenDimensions
 operator/(ScreenDimensions const& n, T const& d)
 {
-  return ScreenDimensions{
-    n.left()   / d,
-    n.top()    / d,
-    n.right()  / d,
-    n.bottom() / d
-  };
+  return ScreenDimensions{n.left() / d, n.top() / d, n.right() / d, n.bottom() / d};
 }
 
 } // namespace boomhs

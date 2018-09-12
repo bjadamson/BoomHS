@@ -110,7 +110,10 @@ struct IsRenderable
   bool hidden = false;
 
   IsRenderable() = default;
-  explicit IsRenderable(bool const h) : hidden(h) {}
+  explicit IsRenderable(bool const h)
+      : hidden(h)
+  {
+  }
 };
 
 struct Torch

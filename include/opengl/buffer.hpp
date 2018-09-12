@@ -1,6 +1,6 @@
 #pragma once
-#include <boomhs/obj.hpp>
 #include <boomhs/colors.hpp>
+#include <boomhs/obj.hpp>
 #include <string>
 
 namespace opengl

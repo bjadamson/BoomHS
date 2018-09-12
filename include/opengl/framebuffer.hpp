@@ -34,14 +34,11 @@ struct FBInfo
 
   std::string to_string() const;
 
-  TextureInfo
-  attach_color_buffer(common::Logger&, int, int, GLenum);
+  TextureInfo attach_color_buffer(common::Logger&, int, int, GLenum);
 
-  TextureInfo
-  attach_depth_buffer(common::Logger&, int, int, GLenum);
+  TextureInfo attach_depth_buffer(common::Logger&, int, int, GLenum);
 
-  RenderBuffer
-  attach_render_buffer(common::Logger&, int, int);
+  RenderBuffer attach_render_buffer(common::Logger&, int, int);
 
   static size_t constexpr NUM_BUFFERS = 1;
 };

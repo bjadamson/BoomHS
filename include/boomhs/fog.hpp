@@ -1,6 +1,6 @@
 #pragma once
-#include <common/type_macros.hpp>
 #include <boomhs/colors.hpp>
+#include <common/type_macros.hpp>
 
 namespace boomhs
 {

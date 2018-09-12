@@ -5,12 +5,12 @@
 
 namespace boomhs
 {
-class  Camera;
+class Camera;
 struct GameState;
-class  FrameTime;
-class  Player;
-class  SDLControllers;
-class  WorldObject;
+class FrameTime;
+class Player;
+class SDLControllers;
+class WorldObject;
 
 struct MouseAndKeyboardArgs
 {
@@ -82,16 +82,13 @@ struct PlayerBehavior
   OnMouseMotion on_mouse_motion;
   OnMouseWheel  on_mouse_wheel;
 
-  OnKeyDown     on_key_down;
-  OnKeyUp       on_key_up;
+  OnKeyDown on_key_down;
+  OnKeyUp   on_key_up;
 
   MouseKeyboardUpdate update_keyboard;
   MouseKeyboardUpdate update_mouse;
   ControllerUpdate    update_controller;
 };
-
-
-
 
 struct PlayerPlayingGameBehavior
 {
@@ -101,7 +98,7 @@ struct PlayerPlayingGameBehavior
   static void mouse_motion(MouseMotionEvent&&);
   static void mouse_wheel(MouseWheelEvent&&);
 
-  static void keydown(KeyEvent &&);
+  static void keydown(KeyEvent&&);
   static void keyup(KeyEvent&&);
 
   static void process_mouse_state(MouseAndKeyboardArgs&&);
@@ -117,7 +114,7 @@ struct TerminalOnlyBehavior
   static void mouse_motion(MouseMotionEvent&&);
   static void mouse_wheel(MouseWheelEvent&&);
 
-  static void keydown(KeyEvent &&);
+  static void keydown(KeyEvent&&);
   static void keyup(KeyEvent&&);
 
   static void process_mouse_state(MouseAndKeyboardArgs&&);
@@ -130,33 +127,30 @@ struct PlayerBehaviors
   PlayerBehavior const* active = nullptr;
 
   PlayerBehavior const player_playing_behavior{
-    &PlayerPlayingGameBehavior::mousebutton_down,
-    &PlayerPlayingGameBehavior::mousebutton_up,
+      &PlayerPlayingGameBehavior::mousebutton_down,
+      &PlayerPlayingGameBehavior::mousebutton_up,
 
-    &PlayerPlayingGameBehavior::mouse_motion,
-    &PlayerPlayingGameBehavior::mouse_wheel,
+      &PlayerPlayingGameBehavior::mouse_motion,
+      &PlayerPlayingGameBehavior::mouse_wheel,
 
-    &PlayerPlayingGameBehavior::keydown,
-    &PlayerPlayingGameBehavior::keyup,
+      &PlayerPlayingGameBehavior::keydown,
+      &PlayerPlayingGameBehavior::keyup,
 
-    &PlayerPlayingGameBehavior::process_mouse_state,
-    &PlayerPlayingGameBehavior::process_keyboard_state,
-    &PlayerPlayingGameBehavior::process_controller_state
-  };
-  PlayerBehavior const terminal_behavior{
-    &TerminalOnlyBehavior::mousebutton_down,
-    &TerminalOnlyBehavior::mousebutton_up,
+      &PlayerPlayingGameBehavior::process_mouse_state,
+      &PlayerPlayingGameBehavior::process_keyboard_state,
+      &PlayerPlayingGameBehavior::process_controller_state};
+  PlayerBehavior const terminal_behavior{&TerminalOnlyBehavior::mousebutton_down,
+                                         &TerminalOnlyBehavior::mousebutton_up,
 
-    &TerminalOnlyBehavior::mouse_motion,
-    &TerminalOnlyBehavior::mouse_wheel,
+                                         &TerminalOnlyBehavior::mouse_motion,
+                                         &TerminalOnlyBehavior::mouse_wheel,
 
-    &TerminalOnlyBehavior::keydown,
-    &TerminalOnlyBehavior::keyup,
+                                         &TerminalOnlyBehavior::keydown,
+                                         &TerminalOnlyBehavior::keyup,
 
-    &TerminalOnlyBehavior::process_mouse_state,
-    &TerminalOnlyBehavior::process_keyboard_state,
-    &TerminalOnlyBehavior::process_controller_state
-  };
+                                         &TerminalOnlyBehavior::process_mouse_state,
+                                         &TerminalOnlyBehavior::process_keyboard_state,
+                                         &TerminalOnlyBehavior::process_controller_state};
 };
 
 } // namespace boomhs

@@ -2,9 +2,9 @@
 #include <boomhs/frame.hpp>
 #include <boomhs/terrain.hpp>
 
+#include <boomhs/colors.hpp>
 #include <boomhs/lighting.hpp>
 #include <common/log.hpp>
-#include <boomhs/colors.hpp>
 
 #include <extlibs/glm.hpp>
 #include <string>
@@ -39,6 +39,7 @@ struct DrawState
 
   bool const draw_wireframes;
 
+  DrawState();
   DrawState(bool);
 
   std::string to_string() const;
