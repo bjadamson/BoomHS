@@ -325,19 +325,18 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
     auto& sp    = sps.ref_sp("wireframe");
     auto  tr    = transform;
 
-    sp.while_bound(logger, [&]() {
-      sp.set_uniform_color(logger, "u_wirecolor", wire_color);
+    BIND_UNTIL_END_OF_SCOPE(logger, sp);
+    sp.set_uniform_color(logger, "u_wirecolor", wire_color);
 
-      // We needed to bind the shader program to set the uniforms above, no reason to pay to bind
-      // it again.
-      auto const model_matrix = tr.model_matrix();
-      auto& dinfo = bbox.draw_info;
-      dinfo.while_bound(logger, [&]() {
-        auto const camera_matrix = fstate.camera_matrix();
-        render::set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
-        render::draw(logger, rstate.ds, GL_LINES, sp, dinfo);
-        });
-    });
+    // We needed to bind the shader program to set the uniforms above, no reason to pay to bind
+    // it again.
+    auto const model_matrix = tr.model_matrix();
+    auto& dinfo = bbox.draw_info;
+
+    BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
+    auto const camera_matrix = fstate.camera_matrix();
+    render::set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
+    render::draw(logger, rstate.ds, GL_LINES, sp, dinfo);
   };
 
   auto const& draw_pointlight_fn = draw_common_fn;

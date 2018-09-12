@@ -1,4 +1,5 @@
 #include <boomhs/collision.hpp>
+#include <boomhs/components.hpp>
 #include <boomhs/frame_time.hpp>
 
 #include <common/log.hpp>
@@ -23,6 +24,25 @@ using namespace gl_sdl;
 using namespace opengl;
 
 namespace OR = opengl::render;
+
+auto
+make_program_and_bbox(common::Logger& logger)
+{
+  std::vector<opengl::AttributePointerInfo> apis;
+  {
+    auto const attr_type    = AttributeType::POSITION;
+    apis.emplace_back(AttributePointerInfo{0, GL_FLOAT, attr_type, 3});
+  }
+
+  auto va = make_vertex_attribute(apis);
+  auto sp = make_shader_program(logger, "wireframe.vert", "wireframe.frag", MOVE(va))
+    .expect_moveout("Error loading wireframe shader program");
+
+  CubeRenderable const cr{glm::vec3{0}, glm::vec3{1}};
+  auto const vertices = OF::cube_vertices(cr.min, cr.max);
+
+  return PAIR(MOVE(sp), gpu::copy_cube_gpu(logger, vertices, sp.va()));
+}
 
 auto
 make_program_and_rectangle(common::Logger& logger, Rectangle const& rect,
@@ -50,9 +70,8 @@ make_program_and_rectangle(common::Logger& logger, Rectangle const& rect,
   return PAIR(MOVE(sp), gpu::copy_rectangle(logger, sp.va(), buffer));
 }
 
-void
-draw_rectangle(common::Logger& logger, ScreenDimensions const& sd, ShaderProgram& sp,
-                     DrawInfo& dinfo, Color const& color)
+auto
+calculate_pm(ScreenDimensions const& sd)
 {
   auto constexpr NEAR   = 1.0f;
   auto constexpr FAR    = -1.0f;
@@ -63,11 +82,43 @@ draw_rectangle(common::Logger& logger, ScreenDimensions const& sd, ShaderProgram
     static_cast<float>(sd.top()),
     NEAR,
     FAR};
-  auto const pm = glm::ortho(f.left, f.right, f.bottom, f.top, f.near, f.far);
+  return glm::ortho(f.left, f.right, f.bottom, f.top, f.near, f.far);
+}
 
-  DrawState ds;
+void
+draw_bbox(common::Logger& logger, ScreenDimensions const& sd, ShaderProgram& sp, DrawInfo& dinfo,
+          DrawState& ds)
+{
+  auto const pm = calculate_pm(sd);
+
+  Color const wire_color = LOC::BLUE;
+
+  Transform tr;
+  auto const model_matrix = tr.model_matrix();
+
+
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
+  sp.set_uniform_color(logger, "u_wirecolor", wire_color);
 
+  auto const pos = glm::vec3{0, 5, 0};
+  auto const forward = -constants::Y_UNIT_VECTOR;
+  auto const up      = -constants::Z_UNIT_VECTOR;
+  auto const vm = glm::lookAt(pos, pos + forward, up);
+  //auto const vm = glm::mat4{};
+
+  BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
+  auto const camera_matrix = pm * vm;
+  render::set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
+  render::draw(logger, ds, GL_LINES, sp, dinfo);
+}
+
+void
+draw_rectangle(common::Logger& logger, ScreenDimensions const& sd, ShaderProgram& sp,
+                     DrawInfo& dinfo, Color const& color, DrawState& ds)
+{
+  auto const pm = calculate_pm(sd);
+
+  BIND_UNTIL_END_OF_SCOPE(logger, sp);
   sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
   sp.set_uniform_color(logger, "u_color", color);
 
@@ -128,7 +179,8 @@ main(int argc, char **argv)
 
   auto const view_rect = SCREEN_DIM.rect();
   auto const color_rect = Rectangle{WIDTH / 4, HEIGHT / 4, WIDTH / 2, HEIGHT / 2};
-  auto pair = make_program_and_rectangle(logger, color_rect, view_rect);
+  auto rect_pair = make_program_and_rectangle(logger, color_rect, view_rect);
+  auto bbox_pair = make_program_and_bbox(logger);
 
   Timer timer;
   FrameCounter fcounter;
@@ -143,7 +195,11 @@ main(int argc, char **argv)
     }
 
     OR::clear_screen(LOC::WHITE);
-    draw_rectangle(logger, SCREEN_DIM, pair.first, pair.second, color);
+
+
+    DrawState ds;
+    draw_rectangle(logger, SCREEN_DIM, rect_pair.first, rect_pair.second, color, ds);
+    draw_bbox(logger, SCREEN_DIM, bbox_pair.first, bbox_pair.second, ds);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());

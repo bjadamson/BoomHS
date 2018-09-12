@@ -102,17 +102,20 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
     sel.selected = false;
 
     bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == ONE);
+
+    auto const proj_matrix = fstate.projection_matrix();
+    auto const view_matrix = fstate.view_matrix();
+    auto const view_rect   = es.dimensions.rect();
     if (CameraMode::FPS == cmode || CameraMode::ThirdPerson == cmode) {
-      ray_dir   = Raycast::calculate_ray(fstate);
+
+      auto const coords = es.device_states.mouse.current.coords();
+      glm::vec2 const mouse_pos{coords.x, coords.y};
+      ray_dir   = Raycast::calculate_ray_into_screen(mouse_pos, proj_matrix, view_matrix, view_rect);
       ray_start = fstate.camera_world_position();
     }
     else if (CameraMode::Ortho == cmode) {
       auto const coords = es.device_states.mouse.current.coords();
       glm::vec2 const mouse_pos{coords.x, coords.y};
-
-      auto const proj_matrix = fstate.projection_matrix();
-      auto const view_matrix = fstate.view_matrix();
-      auto const view_rect   = es.dimensions.rect();
 
       auto const p0 = sconv::screen_to_world(mouse_pos, view_rect, proj_matrix, view_matrix, 0.0f);
       auto const p1 = sconv::screen_to_world(mouse_pos, view_rect, proj_matrix, view_matrix, 1.0f);

@@ -233,7 +233,7 @@ CameraORTHO::CameraORTHO(CameraTarget& t, ViewSettings& vp)
     , target_(t)
     , view_settings_(vp)
     , zoom_(glm::vec2{0, 0})
-    , position(50, 50, 50)
+    , position(0, 5, 0)
 {
 }
 
