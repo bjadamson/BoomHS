@@ -144,12 +144,13 @@ draw_rectangle_pm(common::Logger& logger, ShaderProgram& sp,
 
 bool
 process_event(common::Logger& logger, SDL_Event& event, Rectangle const& view_rect,
-              glm::mat4 const& pm, glm::mat4 const& vm, Transform& tr, 
+              glm::mat4 const& pm, glm::mat4 const& vm, Transform& tr,
               Rectangle const& pm_rect, Color* pm_rect_color,
               Cube const& cube, Color* wire_color)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
   auto const key_pressed        = event.key.keysym.sym;
+
 
   if (event_type_keydown) {
     switch (key_pressed) {
@@ -158,22 +159,35 @@ process_event(common::Logger& logger, SDL_Event& event, Rectangle const& view_re
         return true;
         break;
       case SDLK_a:
-        CAMERA_POS += glm::vec3{1, 0, 0};
+        CAMERA_POS += constants::Z_UNIT_VECTOR;
         break;
       case SDLK_d:
-        CAMERA_POS += glm::vec3{-1, 0, 0};
+        CAMERA_POS -= constants::Z_UNIT_VECTOR;
         break;
       case SDLK_w:
-        CAMERA_POS += glm::vec3{0, 1, 0};
+        CAMERA_POS += constants::X_UNIT_VECTOR;
         break;
       case SDLK_s:
-        CAMERA_POS += glm::vec3{0, -1, 0};
+        CAMERA_POS -= constants::X_UNIT_VECTOR;
         break;
       case SDLK_e:
-        CAMERA_POS += glm::vec3{0, 0, 1};
+        CAMERA_POS -= constants::Y_UNIT_VECTOR;
         break;
       case SDLK_q:
-        CAMERA_POS += glm::vec3{0, 0, -1};
+        CAMERA_POS += constants::Y_UNIT_VECTOR;
+        break;
+
+      case SDLK_UP:
+        tr.translation -= constants::X_UNIT_VECTOR;
+        break;
+      case SDLK_DOWN:
+        tr.translation += constants::X_UNIT_VECTOR;
+        break;
+      case SDLK_LEFT:
+        tr.translation -= constants::Z_UNIT_VECTOR;
+        break;
+      case SDLK_RIGHT:
+        tr.translation += constants::Z_UNIT_VECTOR;
         break;
       default:
         break;

@@ -108,14 +108,13 @@ public:
 class CameraORTHO
 {
   glm::vec3     forward_, up_;
-  CameraTarget& target_;
   ViewSettings& view_settings_;
 
   glm::vec2 zoom_;
   friend class Camera;
 
 public:
-  CameraORTHO(CameraTarget&, ViewSettings&);
+  CameraORTHO(ViewSettings&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraORTHO);
 
   // fields
