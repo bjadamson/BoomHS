@@ -41,11 +41,13 @@ static Frustum constexpr FRUSTUM{
     NEAR,
     FAR};
 
-static auto const VIEW_FORWARD = -constants::Y_UNIT_VECTOR;
-static auto const VIEW_UP      =  constants::X_UNIT_VECTOR;
+static auto const VIEW_FORWARD =  constants::Y_UNIT_VECTOR;
+static auto const VIEW_UP      =  constants::Z_UNIT_VECTOR;
 
 
-static glm::vec3 CAMERA_POS{0, 5, 0};
+// TODO: why is the camera positioned at -1 Y instead (implying camera is below scene on Y axis
+// lookup 
+static glm::vec3 CAMERA_POS{0, -1, 0};
 
 namespace OR = opengl::render;
 
@@ -53,10 +55,7 @@ auto
 make_program_and_bbox(common::Logger& logger, Cube const& cr)
 {
   std::vector<opengl::AttributePointerInfo> apis;
-  {
-    auto const attr_type    = AttributeType::POSITION;
-    apis.emplace_back(AttributePointerInfo{0, GL_FLOAT, attr_type, 3});
-  }
+  apis.emplace_back(AttributePointerInfo{0, GL_FLOAT, AttributeType::POSITION, 3});
 
   auto va = make_vertex_attribute(apis);
   auto sp = make_shader_program(logger, "wireframe.vert", "wireframe.frag", MOVE(va))
@@ -108,7 +107,7 @@ calculate_pm(float const near, float const far)
 auto
 calculate_vm()
 {
-  return glm::lookAt(CAMERA_POS, CAMERA_POS + VIEW_FORWARD, VIEW_UP);
+  return glm::lookAt(CAMERA_POS, VIEW_FORWARD, VIEW_UP);
 }
 
 void
@@ -159,16 +158,16 @@ process_event(common::Logger& logger, SDL_Event& event, Rectangle const& view_re
         return true;
         break;
       case SDLK_a:
-        CAMERA_POS += constants::Z_UNIT_VECTOR;
-        break;
-      case SDLK_d:
-        CAMERA_POS -= constants::Z_UNIT_VECTOR;
-        break;
-      case SDLK_w:
         CAMERA_POS += constants::X_UNIT_VECTOR;
         break;
-      case SDLK_s:
+      case SDLK_d:
         CAMERA_POS -= constants::X_UNIT_VECTOR;
+        break;
+      case SDLK_w:
+        CAMERA_POS += constants::Z_UNIT_VECTOR;
+        break;
+      case SDLK_s:
+        CAMERA_POS -= constants::Z_UNIT_VECTOR;
         break;
       case SDLK_e:
         CAMERA_POS -= constants::Y_UNIT_VECTOR;
@@ -178,16 +177,16 @@ process_event(common::Logger& logger, SDL_Event& event, Rectangle const& view_re
         break;
 
       case SDLK_UP:
-        tr.translation -= constants::X_UNIT_VECTOR;
-        break;
-      case SDLK_DOWN:
-        tr.translation += constants::X_UNIT_VECTOR;
-        break;
-      case SDLK_LEFT:
         tr.translation -= constants::Z_UNIT_VECTOR;
         break;
-      case SDLK_RIGHT:
+      case SDLK_DOWN:
         tr.translation += constants::Z_UNIT_VECTOR;
+        break;
+      case SDLK_LEFT:
+        tr.translation -= constants::X_UNIT_VECTOR;
+        break;
+      case SDLK_RIGHT:
+        tr.translation += constants::X_UNIT_VECTOR;
         break;
       default:
         break;
@@ -243,7 +242,7 @@ main(int argc, char **argv)
   auto const color_rect = Rectangle{WIDTH / 4, HEIGHT / 4, WIDTH / 2, HEIGHT / 2};
   auto rect_pair = make_program_and_rectangle(logger, color_rect, view_rect);
 
-  Cube const cr{glm::vec3{4, 4, 40}, glm::vec3{100, 4, 100}};
+  Cube const cr{glm::vec3{0, 0, 0}, glm::vec3{100, 0, 100}};
   auto bbox_pair = make_program_and_bbox(logger, cr);
 
   Timer timer;
@@ -266,7 +265,7 @@ main(int argc, char **argv)
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       quit = process_event(logger, event, view_rect, pm, vm, tr, color_rect, &color, cr, &wire_color);
     }
-    LOG_ERROR_SPRINTF("cam pos: %s", glm::to_string(CAMERA_POS));
+    LOG_ERROR_SPRINTF("cam pos: %s, TR pos: %s", glm::to_string(CAMERA_POS), glm::to_string(tr.translation));
 
     OR::clear_screen(LOC::WHITE);
 

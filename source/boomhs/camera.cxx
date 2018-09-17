@@ -229,7 +229,7 @@ CameraFPS::compute_viewmatrix(glm::vec3 const& eye_fwd) const
 // CameraORTHO
 CameraORTHO::CameraORTHO(ViewSettings& vp)
     : forward_(-Y_UNIT_VECTOR)
-    , up_(X_UNIT_VECTOR)
+    , up_(Z_UNIT_VECTOR)
     , view_settings_(vp)
     , zoom_(glm::vec2{0, 0})
     , position(0, 5, 0)
@@ -280,7 +280,7 @@ CameraORTHO::shink_view(glm::vec2 const& amount)
 void
 CameraORTHO::scroll(glm::vec2 const& sv)
 {
-  position += glm::vec3{-sv.x, 0, -sv.y};
+  position += glm::vec3{sv.x, 0, sv.y};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
