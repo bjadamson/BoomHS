@@ -30,11 +30,22 @@ static auto constexpr FAR    = 100.0f;
 static auto constexpr FOV    = glm::radians(110.0f);
 static auto constexpr AR     = AspectRatio{4.0f, 3.0f};
 
-static auto const FORWARD    = constants::Z_UNIT_VECTOR;
-static auto const UP         = -constants::Y_UNIT_VECTOR;
+static int constexpr WIDTH  = 1024;
+static int constexpr HEIGHT = 768;
+ScreenDimensions constexpr SCREEN_DIM{0, 0, WIDTH, HEIGHT};
+static Frustum constexpr FRUSTUM{
+    static_cast<float>(SCREEN_DIM.left()),
+    static_cast<float>(SCREEN_DIM.right()),
+    static_cast<float>(SCREEN_DIM.bottom()),
+    static_cast<float>(SCREEN_DIM.top()),
+    NEAR,
+    FAR};
+
+static auto const VIEW_FORWARD = -constants::Y_UNIT_VECTOR;
+static auto const VIEW_UP      =  constants::X_UNIT_VECTOR;
 
 
-static glm::vec3 CAMERA_POS{0, 0, -1};
+static glm::vec3 CAMERA_POS{0, 5, 0};
 
 namespace OR = opengl::render;
 
@@ -83,23 +94,21 @@ make_program_and_rectangle(common::Logger& logger, Rectangle const& rect,
 }
 
 auto
-calculate_pm(ScreenDimensions const& sd)
+calculate_pm(float const near, float const far)
 {
-  Frustum const f{
-    static_cast<float>(sd.left()),
-    static_cast<float>(sd.right()),
-    static_cast<float>(sd.bottom()),
-    static_cast<float>(sd.top()),
-    NEAR,
-    FAR};
-  return glm::perspective(FOV, AR.compute(), f.near, f.far);
-  //return glm::ortho(f.left, f.right, f.bottom, f.top, f.near, f.far);
+  return glm::ortho(
+      FRUSTUM.left,
+      FRUSTUM.right,
+      FRUSTUM.bottom,
+      FRUSTUM.top,
+      near,
+      far);
 }
 
 auto
 calculate_vm()
 {
-  return glm::lookAt(CAMERA_POS, CAMERA_POS + FORWARD, UP);
+  return glm::lookAt(CAMERA_POS, CAMERA_POS + VIEW_FORWARD, VIEW_UP);
 }
 
 void
@@ -118,10 +127,12 @@ draw_bbox(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm, Tran
 }
 
 void
-draw_rectangle_pm(common::Logger& logger, ScreenDimensions const& sd, ShaderProgram& sp,
+draw_rectangle_pm(common::Logger& logger, ShaderProgram& sp,
                      DrawInfo& dinfo, Color const& color, DrawState& ds)
 {
-  auto const pm = calculate_pm(sd);
+  int constexpr NEAR = -1.0;
+  int constexpr FAR  = 1.0f;
+  auto const pm = calculate_pm(-1.0f, 1.0f);
 
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
   sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
@@ -200,7 +211,6 @@ int
 main(int argc, char **argv)
 {
   bool constexpr FULLSCREEN = false;
-  int constexpr  WIDTH =  1024, HEIGHT = 768;
 
   auto logger = common::LogFactory::make_stderr();
   auto const on_error = [&logger](auto const& error) {
@@ -212,16 +222,14 @@ main(int argc, char **argv)
   TRY_OR_ELSE_RETURN(auto window,
       sdl_gl->make_window(logger, "Ortho Raycast Test", FULLSCREEN, WIDTH, HEIGHT), on_error);
 
-  ScreenDimensions constexpr SCREEN_DIM{0, 0, WIDTH, HEIGHT};
   OR::init(logger);
   OR::set_viewport(SCREEN_DIM);
 
   auto const view_rect = SCREEN_DIM.rect();
   auto const color_rect = Rectangle{WIDTH / 4, HEIGHT / 4, WIDTH / 2, HEIGHT / 2};
-  //auto rect_pair = make_program_and_rectangle(logger, color_rect, view_rect);
+  auto rect_pair = make_program_and_rectangle(logger, color_rect, view_rect);
 
-
-  Cube const cr{glm::vec3{0}, glm::vec3{1}};
+  Cube const cr{glm::vec3{4, 4, 40}, glm::vec3{100, 4, 100}};
   auto bbox_pair = make_program_and_bbox(logger, cr);
 
   Timer timer;
@@ -237,7 +245,7 @@ main(int argc, char **argv)
   glm::mat4 pm;
   glm::mat4 vm;
   while (!quit) {
-    pm = calculate_pm(SCREEN_DIM);
+    pm = calculate_pm(NEAR, FAR);
     vm = calculate_vm();
 
     auto const ft = FrameTime::from_timer(timer);
@@ -250,7 +258,7 @@ main(int argc, char **argv)
 
 
     DrawState ds;
-    //draw_rectangle_pm(logger, SCREEN_DIM, rect_pair.first, rect_pair.second, color, ds);
+    draw_rectangle_pm(logger, rect_pair.first, rect_pair.second, color, ds);
 
     draw_bbox(logger, pm, vm, tr, bbox_pair.first, bbox_pair.second, ds, wire_color);
 
