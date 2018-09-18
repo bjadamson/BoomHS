@@ -25,37 +25,40 @@ using namespace common;
 using namespace gl_sdl;
 using namespace opengl;
 
-static auto constexpr NEAR   = 0.001f;
-static auto constexpr FAR    = 100.0f;
-static auto constexpr FOV    = glm::radians(110.0f);
-static auto constexpr AR     = AspectRatio{4.0f, 3.0f};
+// clang-format off
+static auto constexpr NEAR = 0.001f;
+static auto constexpr FAR  = 500.0f;
+static auto constexpr FOV  = glm::radians(110.0f);
+static auto constexpr AR   = AspectRatio{4.0f, 3.0f};
 
 static int constexpr WIDTH  = 1024;
 static int constexpr HEIGHT = 768;
 ScreenDimensions constexpr SCREEN_DIM{0, 0, WIDTH, HEIGHT};
 static Frustum constexpr FRUSTUM{
-    static_cast<float>(SCREEN_DIM.left()),
-    static_cast<float>(SCREEN_DIM.right()),
-    static_cast<float>(SCREEN_DIM.bottom()),
-    static_cast<float>(SCREEN_DIM.top()),
+    SCREEN_DIM.float_left(),
+    SCREEN_DIM.float_right(),
+    SCREEN_DIM.float_bottom(),
+    SCREEN_DIM.float_top(),
     NEAR,
     FAR};
+// clang-format on
 
-static auto const VIEW_FORWARD =  constants::Y_UNIT_VECTOR;
-static auto const VIEW_UP      =  constants::Z_UNIT_VECTOR;
+static auto const VIEW_FORWARD = -constants::Y_UNIT_VECTOR;
+static auto const VIEW_UP      = -constants::Z_UNIT_VECTOR;
 
 
 // TODO: why is the camera positioned at -1 Y instead (implying camera is below scene on Y axis
 // lookup 
-static glm::vec3 CAMERA_POS{0, -1, 0};
+static glm::vec3 CAMERA_POS{0,  1, 0};
 
 namespace OR = opengl::render;
 
 auto
 make_program_and_bbox(common::Logger& logger, Cube const& cr)
 {
-  std::vector<opengl::AttributePointerInfo> apis;
-  apis.emplace_back(AttributePointerInfo{0, GL_FLOAT, AttributeType::POSITION, 3});
+  std::vector<opengl::AttributePointerInfo> const apis{{
+    AttributePointerInfo{0, GL_FLOAT, AttributeType::POSITION, 3}
+  }};
 
   auto va = make_vertex_attribute(apis);
   auto sp = make_shader_program(logger, "wireframe.vert", "wireframe.frag", MOVE(va))
@@ -80,11 +83,9 @@ make_program_and_rectangle(common::Logger& logger, Rectangle const& rect,
   OF::RectInfo const ri{ndc_rect, std::nullopt, std::nullopt, std::nullopt};
   RectBuffer  buffer = OF::make_rectangle(ri);
 
-  std::vector<opengl::AttributePointerInfo> apis;
-  {
-    auto const attr_type    = AttributeType::POSITION;
-    apis.emplace_back(AttributePointerInfo{0, GL_FLOAT, attr_type, 3});
-  }
+  std::vector<opengl::AttributePointerInfo> const apis{{
+    AttributePointerInfo{0, GL_FLOAT, AttributeType::POSITION, 3}
+  }};
 
   auto va = make_vertex_attribute(apis);
   auto sp = make_shader_program(logger, "2dcolor.vert", "2dcolor.frag", MOVE(va))
@@ -107,7 +108,7 @@ calculate_pm(float const near, float const far)
 auto
 calculate_vm()
 {
-  return glm::lookAt(CAMERA_POS, VIEW_FORWARD, VIEW_UP);
+  return glm::lookAt(CAMERA_POS, CAMERA_POS + VIEW_FORWARD, VIEW_UP);
 }
 
 void

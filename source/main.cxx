@@ -127,13 +127,16 @@ start(common::Logger& logger, Engine& engine)
   auto constexpr NEAR   = 0.001f;
   auto constexpr FAR    = 100.0f;
   auto const dimensions = engine.dimensions();
+
+  // clang-format off
   Frustum const frustum{
-    static_cast<float>(dimensions.left()),
-    static_cast<float>(dimensions.right()),
-    static_cast<float>(dimensions.bottom()),
-    static_cast<float>(dimensions.top()),
+    dimensions.float_left(),
+    dimensions.float_right(),
+    dimensions.float_bottom(),
+    dimensions.float_top(),
     NEAR,
     FAR};
+  // clang-format on
 
   auto& io = ImGui::GetIO();
 

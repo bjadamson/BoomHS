@@ -229,10 +229,10 @@ CameraFPS::compute_viewmatrix(glm::vec3 const& eye_fwd) const
 // CameraORTHO
 CameraORTHO::CameraORTHO(ViewSettings& vp)
     : forward_(-Y_UNIT_VECTOR)
-    , up_(Z_UNIT_VECTOR)
+    , up_(-Z_UNIT_VECTOR)
     , view_settings_(vp)
     , zoom_(glm::vec2{0, 0})
-    , position(0, 5, 0)
+    , position(0, 1, 0)
 {
 }
 
@@ -256,7 +256,7 @@ CameraORTHO::compute_projectionmatrix(bool const zoom_squeeze, ViewSettings cons
     top    = f.top;
   }
 
-  return glm::ortho(left, right, bottom, top, f.near, f.far);
+  return glm::ortho(left, right, top, bottom, f.near, f.far);
 }
 
 glm::mat4

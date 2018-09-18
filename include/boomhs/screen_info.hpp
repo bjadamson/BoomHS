@@ -40,6 +40,12 @@ public:
   auto constexpr right() const { return right_; }
   auto constexpr bottom() const { return bottom_; }
 
+  auto constexpr float_left() const { return static_cast<float>(left()); }
+  auto constexpr float_top() const { return static_cast<float>(top()); }
+
+  auto constexpr float_right() const { return static_cast<float>(right()); }
+  auto constexpr float_bottom() const { return static_cast<float>(bottom()); }
+
   auto constexpr left_top() const { return ScreenCoords{left(), top()}; }
   auto constexpr right_bottom() const { return ScreenCoords{right(), bottom()}; }
 
