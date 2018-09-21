@@ -75,6 +75,7 @@ conan_basic_setup()
 set(PROJECT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(EXTERNAL_DIR ${PROJECT_DIR}/external)
 set(TOOLS_DIRECTORY ${PROJECT_DIR}/tools)
+set(TEST_DIRECTORY ${PROJECT_DIR}/test)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
 set(IMGUI_INCLUDE_DIR "${EXTERNAL_DIR}/imgui/include/imgui")
@@ -256,15 +257,15 @@ target_link_libraries(     BUILD_POSTPROCESSING stdc++ c++experimental)
 ## **2** Build Ortho Mouse Selection Test
 ##
 ## Test Application for developing/figuring out ortho raycasting.
-add_executable(ortho_raycast ${TOOLS_DIRECTORY}/ortho_raycast.cxx)
+add_executable(raycast_test ${TEST_DIRECTORY}/raycast.cxx)
 
-target_link_libraries(ortho_raycast
+target_link_libraries(raycast_test
   PROJECT_SOURCE_CODE
   ${SYSTEM_LIBS}
   ${EXTERNAL_LIBS}
   )
 
-target_include_directories(ortho_raycast PUBLIC)
+target_include_directories(raycast_test PUBLIC)
 
 ###################################################################################################
 ## **3** Main Executable

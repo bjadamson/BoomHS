@@ -174,21 +174,24 @@ draw_rectangle_pm(common::Logger& logger, ShaderProgram& sp,
   OR::draw_2delements(logger, GL_TRIANGLES, sp, dinfo.num_indices());
 }
 
+struct ViewportDisplayInfo
+{
+  Rectangle const& view_rect;
+  glm::mat4 const& perspective, view;
+
+  Cube const& cube;
+};
+
+
 bool
 process_event(common::Logger& logger, SDL_Event& event,
-              Rectangle const& lhs_view_rect, Rectangle const& rhs_view_rect,
-
-              glm::mat4 const& ortho_pm, glm::mat4 const& ortho_vm,
-              glm::mat4 const& pers_pm, glm::mat4 const& pers_vm,
-
+              ViewportDisplayInfo const& left_vdi, ViewportDisplayInfo const& right_vdi,
               Transform& tr,
               Rectangle const& pm_rect, Color* pm_rect_color,
-              Cube const& cube, Color* wire_color)
+              Color* wire_color)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
   auto const key_pressed        = event.key.keysym.sym;
-
-
   auto &camera_pos = active_camera_pos();
 
   if (event_type_keydown) {
@@ -250,41 +253,42 @@ process_event(common::Logger& logger, SDL_Event& event,
       *pm_rect_color = LOC::RED;
     }
 
-    auto const middle_point = lhs_view_rect.right();
+    auto const middle_point = left_vdi.view_rect.right();
     MOUSE_ON_RHS_SCREEN = mouse_pos.x > middle_point;
 
     glm::vec2 mouse_start;
-    bool collision = false;
     float distance = 0.0f;
     glm::mat4 const* pm        = nullptr;
     glm::mat4 const* vm        = nullptr;
     Rectangle const* view_rect = nullptr;
+    Cube      const* cube      = nullptr;
 
     if (MOUSE_ON_RHS_SCREEN) {
       // RHS
-      view_rect = &rhs_view_rect;
+      cube        = &right_vdi.cube;
+      view_rect   = &right_vdi.view_rect;
       mouse_start = mouse_pos - glm::vec2{middle_point, 0};
 
-      pm = &pers_pm;
-      vm = &pers_vm;
+      pm = &right_vdi.perspective;
+      vm = &right_vdi.view;
     }
     else {
       // LHS
-      view_rect = &lhs_view_rect;
+      cube        = &left_vdi.cube;
+      view_rect   = &left_vdi.view_rect;
       mouse_start = mouse_pos;
 
-      pm = &ortho_pm;
-      vm = &ortho_vm;
+      pm = &left_vdi.perspective;
+      vm = &left_vdi.view;
     }
 
-    auto const& camera_pos = active_camera_pos();
-    glm::vec3 const ray_dir   = Raycast::calculate_ray_into_screen(mouse_start, *pm,
+    auto const& camera_pos  = active_camera_pos();
+    glm::vec3 const ray_dir = Raycast::calculate_ray_into_screen(mouse_start, *pm,
                                                                   *vm, *view_rect);
     glm::vec3 const ray_start = camera_pos;
     Ray const  ray{ray_start, ray_dir};
 
-    collision = collision::ray_cube_intersect(ray, tr, cube, distance);
-
+    bool const collision = collision::ray_cube_intersect(ray, tr, *cube, distance);
     if (collision) {
       *wire_color = LOC::PURPLE;
     }
@@ -333,10 +337,10 @@ main(int argc, char **argv)
     200, 200, 400, 400};
   auto rect_pair = make_program_and_rectangle(logger, color_rect, SCREEN_DIM.rect());
 
-  Cube const cr{glm::vec3{0, 0, 0}, glm::vec3{100, 0, 100}};
-  auto bbox_pair = make_program_and_bbox(logger, cr);
+  Cube const cr_LHS{glm::vec3{0, 0, 0}, glm::vec3{100, 0, 100}};
+  auto bbox_pair = make_program_and_bbox(logger, cr_LHS);
 
-  Cube const RHS_cr{glm::vec3{0, 0, 0}, glm::vec3{100, 100, 100}};
+  Cube const cr_RHS{glm::vec3{0, 0, 0}, glm::vec3{100, 100, 100}};
   auto const pers_pm = glm::perspective(FOV, AR.compute(), FRUSTUM.near, FRUSTUM.far);
 
   Timer timer;
@@ -359,13 +363,14 @@ main(int argc, char **argv)
 
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
+
+      ViewportDisplayInfo const left_vdi{lhs_view_rect, ortho_pm, ortho_vm, cr_LHS};
+      ViewportDisplayInfo const right_vdi{rhs_view_rect, pers_pm,  pers_vm,  cr_RHS};
       quit = process_event(logger, event,
-          lhs_view_rect, rhs_view_rect,
-          ortho_pm, ortho_vm,
-          pers_pm, pers_vm,
+          left_vdi, right_vdi,
           tr,
           color_rect, &color,
-          cr, &wire_color);
+          &wire_color);
     }
 
     auto const& camera_pos = active_camera_pos();
@@ -384,9 +389,8 @@ main(int argc, char **argv)
     OR::set_scissor(RHS);
     OR::clear_screen(LOC::BLACK);
 
-    auto bbox_pair_RHS = make_program_and_bbox(logger, RHS_cr);
+    auto bbox_pair_RHS = make_program_and_bbox(logger, cr_RHS);
     draw_bbox(logger, pers_pm, pers_vm, tr, bbox_pair_RHS.first, bbox_pair_RHS.second, ds, wire_color);
-
 
     OR::set_scissor(SCREEN_DIM);
     OR::set_viewport(SCREEN_DIM);
