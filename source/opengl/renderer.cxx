@@ -595,9 +595,16 @@ set_mvpmatrix(common::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 
 }
 
 void
-set_viewport(ScreenDimensions const& vp)
+set_viewport(ScreenDimensions const& p)
 {
-  glViewport(vp.left(), vp.top(), vp.right(), vp.bottom());
+  glViewport(p.left(), p.top(), p.right(), p.bottom());
 }
+
+void
+set_scissor(ScreenDimensions const& p)
+{
+  glScissor(p.left(), p.top(), p.right(), p.bottom());
+}
+
 
 } // namespace opengl::render

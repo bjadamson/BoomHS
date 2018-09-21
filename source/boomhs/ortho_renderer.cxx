@@ -83,8 +83,8 @@ OrthoRenderer::draw_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, 
   auto& es = fs.es;
   auto const& dim = es.dimensions;
 
-  PixelT const cutoff_point = dim.right() / 3;
-  draw_ortho_lhs(es, lm, camera, ft, cutoff_point);
+  PixelT const cutoff_point = 0;//dim.right() / 3;
+  //draw_ortho_lhs(es, lm, camera, ft, cutoff_point);
   draw_ortho_rhs(rstate, ds, lm, static_renderers, camera, rng, ft, cutoff_point);
 }
 

@@ -43,9 +43,17 @@ static Frustum constexpr FRUSTUM{
     FAR};
 // clang-format on
 
-static glm::vec3  CAMERA_POS   = glm::vec3{0, 1, 0};
-static auto const VIEW_FORWARD = -constants::Y_UNIT_VECTOR;
-static auto const VIEW_UP      =  constants::Z_UNIT_VECTOR;
+static glm::vec3  ORTHO_CAMERA_POS = glm::vec3{0, 1, 0};
+static glm::vec3  PERS_CAMERA_POS  = glm::vec3{0, 0, 1};
+static bool MOUSE_ON_RHS_SCREEN = false;
+
+auto&
+active_camera_pos()
+{
+  return MOUSE_ON_RHS_SCREEN
+    ? PERS_CAMERA_POS
+    : ORTHO_CAMERA_POS;
+}
 
 namespace OR = opengl::render;
 
@@ -90,7 +98,7 @@ make_program_and_rectangle(common::Logger& logger, Rectangle const& rect,
 }
 
 auto
-calculate_pm(float const near, float const far)
+calculate_ortho_pm(float const near, float const far)
 {
   return glm::ortho(
       FRUSTUM.left,
@@ -102,9 +110,12 @@ calculate_pm(float const near, float const far)
 }
 
 auto
-calculate_vm(common::Logger& logger)
+calculate_vm_looking_down_on_scene(common::Logger& logger)
 {
-  auto const& eye   = CAMERA_POS;
+  auto const VIEW_FORWARD = -constants::Y_UNIT_VECTOR;
+  auto const VIEW_UP      = constants::Z_UNIT_VECTOR;
+
+  auto const& eye   = ORTHO_CAMERA_POS;
   auto const center = eye + VIEW_FORWARD;
   auto const& up    = VIEW_UP;
 
@@ -113,12 +124,23 @@ calculate_vm(common::Logger& logger)
   // Flip the "right" vector computed by lookAt() so the X-Axis points "right" onto the screen.
   //
   // See implementation of glm::lookAtRH() for more details.
+  //
+  // s => right vector
   auto& sx = r[0][0];
   auto& sy = r[1][0];
   auto& sz = r[2][0];
   math::negate(sx, sy, sz);
 
   return r;
+}
+
+auto
+calculate_vm_fps(common::Logger& logger)
+{
+  auto const VIEW_FORWARD = -constants::Z_UNIT_VECTOR;
+  auto const VIEW_UP      = constants::Y_UNIT_VECTOR;
+  auto const pos          = PERS_CAMERA_POS;
+  return glm::lookAtRH(pos, pos + VIEW_FORWARD, VIEW_UP);
 }
 
 void
@@ -142,7 +164,7 @@ draw_rectangle_pm(common::Logger& logger, ShaderProgram& sp,
 {
   int constexpr NEAR = -1.0;
   int constexpr FAR  = 1.0f;
-  auto const pm = calculate_pm(-1.0f, 1.0f);
+  auto const pm = calculate_ortho_pm(-1.0f, 1.0f);
 
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
   sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
@@ -153,14 +175,21 @@ draw_rectangle_pm(common::Logger& logger, ShaderProgram& sp,
 }
 
 bool
-process_event(common::Logger& logger, SDL_Event& event, Rectangle const& view_rect,
-              glm::mat4 const& pm, glm::mat4 const& vm, Transform& tr,
+process_event(common::Logger& logger, SDL_Event& event,
+              Rectangle const& lhs_view_rect, Rectangle const& rhs_view_rect,
+
+              glm::mat4 const& ortho_pm, glm::mat4 const& ortho_vm,
+              glm::mat4 const& pers_pm, glm::mat4 const& pers_vm,
+
+              Transform& tr,
               Rectangle const& pm_rect, Color* pm_rect_color,
               Cube const& cube, Color* wire_color)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
   auto const key_pressed        = event.key.keysym.sym;
 
+
+  auto &camera_pos = active_camera_pos();
 
   if (event_type_keydown) {
     switch (key_pressed) {
@@ -169,22 +198,22 @@ process_event(common::Logger& logger, SDL_Event& event, Rectangle const& view_re
         return true;
         break;
       case SDLK_a:
-        CAMERA_POS += constants::X_UNIT_VECTOR;
+        camera_pos += constants::X_UNIT_VECTOR;
         break;
       case SDLK_d:
-        CAMERA_POS -= constants::X_UNIT_VECTOR;
+        camera_pos -= constants::X_UNIT_VECTOR;
         break;
       case SDLK_w:
-        CAMERA_POS += constants::Z_UNIT_VECTOR;
+        camera_pos += constants::Z_UNIT_VECTOR;
         break;
       case SDLK_s:
-        CAMERA_POS -= constants::Z_UNIT_VECTOR;
+        camera_pos -= constants::Z_UNIT_VECTOR;
         break;
       case SDLK_e:
-        CAMERA_POS -= constants::Y_UNIT_VECTOR;
+        camera_pos -= constants::Y_UNIT_VECTOR;
         break;
       case SDLK_q:
-        CAMERA_POS += constants::Y_UNIT_VECTOR;
+        camera_pos += constants::Y_UNIT_VECTOR;
         break;
 
       case SDLK_UP:
@@ -198,6 +227,12 @@ process_event(common::Logger& logger, SDL_Event& event, Rectangle const& view_re
         break;
       case SDLK_RIGHT:
         tr.translation += constants::X_UNIT_VECTOR;
+        break;
+      case SDLK_PAGEUP:
+        tr.translation += constants::Y_UNIT_VECTOR;
+        break;
+      case SDLK_PAGEDOWN:
+        tr.translation -= constants::Y_UNIT_VECTOR;
         break;
       default:
         break;
@@ -215,13 +250,42 @@ process_event(common::Logger& logger, SDL_Event& event, Rectangle const& view_re
       *pm_rect_color = LOC::RED;
     }
 
-    glm::vec3 const ray_dir   = Raycast::calculate_ray_into_screen(mouse_pos, pm,
-                                                                   vm, view_rect);
-    glm::vec3 const ray_start = CAMERA_POS;
+    auto const middle_point = lhs_view_rect.right();
+    MOUSE_ON_RHS_SCREEN = mouse_pos.x > middle_point;
+
+    glm::vec2 mouse_start;
+    bool collision = false;
+    float distance = 0.0f;
+    glm::mat4 const* pm        = nullptr;
+    glm::mat4 const* vm        = nullptr;
+    Rectangle const* view_rect = nullptr;
+
+    if (MOUSE_ON_RHS_SCREEN) {
+      // RHS
+      view_rect = &rhs_view_rect;
+      mouse_start = mouse_pos - glm::vec2{middle_point, 0};
+
+      pm = &pers_pm;
+      vm = &pers_vm;
+    }
+    else {
+      // LHS
+      view_rect = &lhs_view_rect;
+      mouse_start = mouse_pos;
+
+      pm = &ortho_pm;
+      vm = &ortho_vm;
+    }
+
+    auto const& camera_pos = active_camera_pos();
+    glm::vec3 const ray_dir   = Raycast::calculate_ray_into_screen(mouse_start, *pm,
+                                                                  *vm, *view_rect);
+    glm::vec3 const ray_start = camera_pos;
     Ray const  ray{ray_start, ray_dir};
 
-    float distance = 0.0f;
-    if (collision::ray_cube_intersect(ray, tr, cube, distance)) {
+    collision = collision::ray_cube_intersect(ray, tr, cube, distance);
+
+    if (collision) {
       *wire_color = LOC::PURPLE;
     }
     else {
@@ -247,14 +311,33 @@ main(int argc, char **argv)
       sdl_gl->make_window(logger, "Ortho Raycast Test", FULLSCREEN, WIDTH, HEIGHT), on_error);
 
   OR::init(logger);
-  OR::set_viewport(SCREEN_DIM);
+  glEnable(GL_SCISSOR_TEST);
 
-  auto const view_rect = SCREEN_DIM.rect();
-  auto const color_rect = Rectangle{WIDTH / 4, HEIGHT / 4, WIDTH / 2, HEIGHT / 2};
-  auto rect_pair = make_program_and_rectangle(logger, color_rect, view_rect);
+  auto const MIDDLE_HORIZ = SCREEN_DIM.right() / 2;
+  auto const LHS = ScreenDimensions{
+    SCREEN_DIM.left(),
+    SCREEN_DIM.top(),
+    MIDDLE_HORIZ,
+    SCREEN_DIM.bottom()
+  };
+  auto const RHS = ScreenDimensions{
+    MIDDLE_HORIZ,
+    SCREEN_DIM.top(),
+    SCREEN_DIM.right(),
+    SCREEN_DIM.bottom()
+  };
+  auto const lhs_view_rect = LHS.rect();
+  auto const rhs_view_rect = RHS.rect();
+
+  auto const color_rect = Rectangle{
+    200, 200, 400, 400};
+  auto rect_pair = make_program_and_rectangle(logger, color_rect, SCREEN_DIM.rect());
 
   Cube const cr{glm::vec3{0, 0, 0}, glm::vec3{100, 0, 100}};
   auto bbox_pair = make_program_and_bbox(logger, cr);
+
+  Cube const RHS_cr{glm::vec3{0, 0, 0}, glm::vec3{100, 100, 100}};
+  auto const pers_pm = glm::perspective(FOV, AR.compute(), FRUSTUM.near, FRUSTUM.far);
 
   Timer timer;
   FrameCounter fcounter;
@@ -268,25 +351,46 @@ main(int argc, char **argv)
   Transform tr;
   tr.translation = glm::vec3{5, 0, 5};
 
-  glm::mat4 pm;
-  glm::mat4 vm;
   while (!quit) {
-    pm = calculate_pm(NEAR, FAR);
-    vm = calculate_vm(logger);
+    glm::mat4 const ortho_pm = calculate_ortho_pm(NEAR, FAR);
+    glm::mat4 const ortho_vm = calculate_vm_looking_down_on_scene(logger);
+
+    glm::mat4 const pers_vm  = calculate_vm_fps(logger);
 
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
-      quit = process_event(logger, event, view_rect, pm, vm, tr, color_rect, &color, cr, &wire_color);
+      quit = process_event(logger, event,
+          lhs_view_rect, rhs_view_rect,
+          ortho_pm, ortho_vm,
+          pers_pm, pers_vm,
+          tr,
+          color_rect, &color,
+          cr, &wire_color);
     }
-    LOG_ERROR_SPRINTF("cube tr: %s", glm::to_string(tr.translation));
 
+    auto const& camera_pos = active_camera_pos();
+    LOG_ERROR_SPRINTF("camera pos: %s, cube tr: %s",
+        glm::to_string(camera_pos),
+        glm::to_string(tr.translation));
+
+    OR::set_viewport(LHS);
+    OR::set_scissor(LHS);
     OR::clear_screen(LOC::WHITE);
 
-
     DrawState ds;
-    draw_rectangle_pm(logger, rect_pair.first, rect_pair.second, color, ds);
+    draw_bbox(logger, ortho_pm, ortho_vm, tr, bbox_pair.first, bbox_pair.second, ds, wire_color);
 
-    draw_bbox(logger, pm, vm, tr, bbox_pair.first, bbox_pair.second, ds, wire_color);
+    OR::set_viewport(RHS);
+    OR::set_scissor(RHS);
+    OR::clear_screen(LOC::BLACK);
+
+    auto bbox_pair_RHS = make_program_and_bbox(logger, RHS_cr);
+    draw_bbox(logger, pers_pm, pers_vm, tr, bbox_pair_RHS.first, bbox_pair_RHS.second, ds, wire_color);
+
+
+    OR::set_scissor(SCREEN_DIM);
+    OR::set_viewport(SCREEN_DIM);
+    draw_rectangle_pm(logger, rect_pair.first, rect_pair.second, color, ds);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());

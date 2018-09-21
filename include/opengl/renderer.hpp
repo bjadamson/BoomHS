@@ -184,4 +184,7 @@ set_mvpmatrix(common::Logger&, glm::mat4 const&, glm::mat4 const&, ShaderProgram
 void
 set_viewport(boomhs::ScreenDimensions const&);
 
+void
+set_scissor(boomhs::ScreenDimensions const&);
+
 } // namespace opengl::render
