@@ -21,7 +21,7 @@ make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
   switch (mode) {
     case CameraMode::Ortho:
       proj = camera.ortho.compute_projectionmatrix(ortho_squeeze, view_settings, frustum);
-      view = camera.ortho.compute_viewmatrix(target_pos);
+      view = camera.ortho.compute_viewmatrix();
       break;
     case CameraMode::FPS:
       proj = camera.fps.compute_projectionmatrix(view_settings, frustum);

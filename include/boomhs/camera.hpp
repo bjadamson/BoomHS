@@ -123,7 +123,7 @@ public:
 
   // methods
   glm::mat4 compute_projectionmatrix(bool, ViewSettings const&, Frustum const&) const;
-  glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
+  glm::mat4 compute_viewmatrix() const;
 
   void grow_view(glm::vec2 const&);
   void shink_view(glm::vec2 const&);

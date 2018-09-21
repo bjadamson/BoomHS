@@ -104,15 +104,20 @@ calculate_pm(float const near, float const far)
 auto
 calculate_vm(common::Logger& logger)
 {
-  auto const& eye    = CAMERA_POS;
-  auto const& center = CAMERA_POS + VIEW_FORWARD;
-  auto const& up     = VIEW_UP;
+  auto const& eye   = CAMERA_POS;
+  auto const center = eye + VIEW_FORWARD;
+  auto const& up    = VIEW_UP;
+
+  auto r = glm::lookAtRH(eye, center, up);
 
   // Flip the "right" vector computed by lookAt() so the X-Axis points "right" onto the screen.
-  auto r = glm::lookAtRH(eye, center, up);
-  r[0][0] = -r[0][0];
-  r[1][0] = -r[1][0];
-  r[2][0] = -r[2][0];
+  //
+  // See implementation of glm::lookAtRH() for more details.
+  auto& sx = r[0][0];
+  auto& sy = r[1][0];
+  auto& sz = r[2][0];
+  math::negate(sx, sy, sz);
+
   return r;
 }
 
@@ -261,6 +266,8 @@ main(int argc, char **argv)
   bool quit = false;
 
   Transform tr;
+  tr.translation = glm::vec3{5, 0, 5};
+
   glm::mat4 pm;
   glm::mat4 vm;
   while (!quit) {

@@ -229,7 +229,7 @@ CameraFPS::compute_viewmatrix(glm::vec3 const& eye_fwd) const
 // CameraORTHO
 CameraORTHO::CameraORTHO(ViewSettings& vp)
     : forward_(-Y_UNIT_VECTOR)
-    , up_(-Z_UNIT_VECTOR)
+    , up_(Z_UNIT_VECTOR)
     , view_settings_(vp)
     , zoom_(glm::vec2{0, 0})
     , position(0, 1, 0)
@@ -242,27 +242,41 @@ CameraORTHO::compute_projectionmatrix(bool const zoom_squeeze, ViewSettings cons
   auto const& ar = vp.aspect_ratio.compute();
 
   float left, right, top, bottom;
-  if (zoom_squeeze) {
-    left  = 0.0f + zoom_.x;
-    right = 128.0f - zoom_.x;
-
-    top    = 0.0f + zoom_.y;
-    bottom = 96.0f - zoom_.y;
-  }
-  else {
+  //if (zoom_squeeze) {
+    //left  = 0.0f + zoom_.x;
+    //right = 128.0f - zoom_.x;
+//
+    //top    = 0.0f + zoom_.y;
+    //bottom = 96.0f - zoom_.y;
+  //}
+  //else {
     left   = f.left;
     right  = f.right;
     bottom = f.bottom;
     top    = f.top;
-  }
+  //}
 
   return glm::ortho(left, right, bottom, top, f.near, f.far);
 }
 
 glm::mat4
-CameraORTHO::compute_viewmatrix(glm::vec3 const&) const
+CameraORTHO::compute_viewmatrix() const
 {
-  return glm::lookAt(position, position + forward_, up_);
+  auto const& eye   = position;
+  auto const center = eye + forward_;
+  auto const& up    = up_;
+
+  auto r = glm::lookAtRH(eye, center, up);
+
+  // Flip the "right" vector computed by lookAt() so the X-Axis points "right" onto the screen.
+  //
+  // See implementation of glm::lookAtRH() for more details.
+  auto& sx = r[0][0];
+  auto& sy = r[1][0];
+  auto& sz = r[2][0];
+  math::negate(sx, sy, sz);
+
+  return r;
 }
 
 void

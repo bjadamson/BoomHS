@@ -211,6 +211,14 @@ enum class EulerAxis
   INVALID
 };
 
+template <typename ...T>
+inline void
+negate(T&&... values)
+{
+  auto const negate_impl = [](auto &v) { v = -v; };
+  (negate_impl(values), ...);
+}
+
 template <typename T>
 inline auto
 squared(T const& value)
