@@ -43,13 +43,9 @@ static Frustum constexpr FRUSTUM{
     FAR};
 // clang-format on
 
+static glm::vec3  CAMERA_POS   = glm::vec3{0, 1, 0};
 static auto const VIEW_FORWARD = -constants::Y_UNIT_VECTOR;
-static auto const VIEW_UP      = -constants::Z_UNIT_VECTOR;
-
-
-// TODO: why is the camera positioned at -1 Y instead (implying camera is below scene on Y axis
-// lookup 
-static glm::vec3 CAMERA_POS{0,  1, 0};
+static auto const VIEW_UP      =  constants::Z_UNIT_VECTOR;
 
 namespace OR = opengl::render;
 
@@ -106,9 +102,18 @@ calculate_pm(float const near, float const far)
 }
 
 auto
-calculate_vm()
+calculate_vm(common::Logger& logger)
 {
-  return glm::lookAt(CAMERA_POS, CAMERA_POS + VIEW_FORWARD, VIEW_UP);
+  auto const& eye    = CAMERA_POS;
+  auto const& center = CAMERA_POS + VIEW_FORWARD;
+  auto const& up     = VIEW_UP;
+
+  // Flip the "right" vector computed by lookAt() so the X-Axis points "right" onto the screen.
+  auto r = glm::lookAtRH(eye, center, up);
+  r[0][0] = -r[0][0];
+  r[1][0] = -r[1][0];
+  r[2][0] = -r[2][0];
+  return r;
 }
 
 void
@@ -260,13 +265,13 @@ main(int argc, char **argv)
   glm::mat4 vm;
   while (!quit) {
     pm = calculate_pm(NEAR, FAR);
-    vm = calculate_vm();
+    vm = calculate_vm(logger);
 
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       quit = process_event(logger, event, view_rect, pm, vm, tr, color_rect, &color, cr, &wire_color);
     }
-    LOG_ERROR_SPRINTF("cam pos: %s, TR pos: %s", glm::to_string(CAMERA_POS), glm::to_string(tr.translation));
+    LOG_ERROR_SPRINTF("cube tr: %s", glm::to_string(tr.translation));
 
     OR::clear_screen(LOC::WHITE);
 

@@ -256,7 +256,7 @@ CameraORTHO::compute_projectionmatrix(bool const zoom_squeeze, ViewSettings cons
     top    = f.top;
   }
 
-  return glm::ortho(left, right, top, bottom, f.near, f.far);
+  return glm::ortho(left, right, bottom, top, f.near, f.far);
 }
 
 glm::mat4
