@@ -15,12 +15,10 @@ using namespace boomhs::math::constants;
 namespace boomhs
 {
 
-WorldObject::WorldObject(EntityID const eid, EntityRegistry& r, glm::vec3 const& forward,
-                         glm::vec3 const& up)
+WorldObject::WorldObject(EntityID const eid, EntityRegistry& r, WorldOrientation const& world_orien)
     : eid_(eid)
     , registry_(&r)
-    , forward_(forward)
-    , up_(up)
+    , world_orientation_(&world_orien)
 {
   registry_->assign<Transform>(eid_);
 }
@@ -28,13 +26,13 @@ WorldObject::WorldObject(EntityID const eid, EntityRegistry& r, glm::vec3 const&
 glm::vec3
 WorldObject::eye_forward() const
 {
-  return forward_ * orientation();
+  return world_orientation_->forward * orientation();
 }
 
 glm::vec3
 WorldObject::eye_up() const
 {
-  return up_ * orientation();
+  return world_orientation_->up * orientation();
 }
 
 WorldObject&
@@ -47,11 +45,9 @@ WorldObject::move(glm::vec3 const& delta)
 std::string
 WorldObject::display() const
 {
-  return fmt::sprintf("world_pos: '%s'\neye_forward: '%s'\nworld_forward: '%s'\n"
-                      "world_right: '%s'\nworld_up: '%s'\nquat: '%s'\n",
-                      glm::to_string(world_position()), glm::to_string(eye_forward()),
-                      glm::to_string(world_forward()), glm::to_string(world_right()),
-                      glm::to_string(world_up()), glm::to_string(orientation()));
+  return fmt::sprintf(
+                      "quat: '%s'\n",
+                      glm::to_string(orientation()));
 }
 
 glm::vec3 const&

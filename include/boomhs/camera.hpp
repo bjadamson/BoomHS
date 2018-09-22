@@ -79,19 +79,21 @@ struct CameraState
 
 class CameraFPS
 {
-  glm::vec3 forward_, up_;
   float     xrot_, yrot_;
+  WorldOrientation const& world_orientation_;
 
   CameraTarget& target_;
-  ViewSettings& view_settings_;
 
   friend class Camera;
 
   auto&       transform() { return target_.get().transform(); }
   auto const& transform() const { return target_.get().transform(); }
 
+  auto const& forward() const { return world_orientation_.forward; }
+  auto const& up() const { return world_orientation_.up; }
+
 public:
-  CameraFPS(glm::vec3 const&, glm::vec3 const&, CameraTarget&, ViewSettings&);
+  CameraFPS(CameraTarget&, WorldOrientation const&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraFPS);
 
   // fields
@@ -101,20 +103,22 @@ public:
   CameraFPS& rotate_radians(float, float, FrameTime const&);
 
   glm::vec3 world_position() const;
-  glm::mat4 compute_projectionmatrix(ViewSettings const&, Frustum const&) const;
-  glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
+  glm::mat4 calc_pm(ViewSettings const&, Frustum const&) const;
+  glm::mat4 calc_vm(glm::vec3 const&) const;
 };
 
 class CameraORTHO
 {
-  glm::vec3     forward_, up_;
-  ViewSettings& view_settings_;
+  WorldOrientation const& world_orientation_;
 
   glm::vec2 zoom_;
   friend class Camera;
 
+  auto const& forward() const { return world_orientation_.forward; }
+  auto const& up() const { return world_orientation_.up; }
+
 public:
-  CameraORTHO(ViewSettings&);
+  CameraORTHO(WorldOrientation const&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraORTHO);
 
   // fields
@@ -122,8 +126,8 @@ public:
   glm::vec2 click_position;
 
   // methods
-  glm::mat4 compute_projectionmatrix(bool, ViewSettings const&, Frustum const&) const;
-  glm::mat4 compute_viewmatrix() const;
+  glm::mat4 calc_pm(bool, AspectRatio const&, Frustum const&) const;
+  glm::mat4 calc_vm() const;
 
   void grow_view(glm::vec2 const&);
   void shink_view(glm::vec2 const&);
@@ -133,19 +137,22 @@ public:
 
 class CameraArcball
 {
-  glm::vec3 forward_, up_;
-
   CameraTarget& target_;
-  ViewSettings& view_settings_;
+  glm::vec3 forward_, up_;
+  glm::vec3 const world_up_;
 
   SphericalCoordinates coordinates_;
 
   void zoom(float, FrameTime const&);
 
+  auto forward() const { return forward_; }
+  auto up() const { return up_; }
+  auto world_orientation() const { return WorldOrientation{forward(), up()}; }
+
   friend class Camera;
 
 public:
-  CameraArcball(glm::vec3 const&, glm::vec3 const&, CameraTarget&, ViewSettings&);
+  CameraArcball(CameraTarget&, WorldOrientation const&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraArcball);
 
   // fields
@@ -165,19 +172,19 @@ public:
 
   glm::vec3 target_position() const;
 
-  glm::mat4 compute_projectionmatrix(ViewSettings const&, Frustum const&) const;
-  glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
+  glm::mat4 calc_pm(ViewSettings const&, Frustum const&) const;
+  glm::mat4 calc_vm(glm::vec3 const&) const;
 };
 
 class Camera
 {
-  CameraTarget target_;
-  ViewSettings view_settings_;
-  CameraMode   mode_;
+  CameraTarget            target_;
+  ViewSettings            view_settings_;
+  CameraMode              mode_;
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(ViewSettings&&, glm::vec3 const&, glm::vec3 const&);
+  Camera(ViewSettings&&, WorldOrientation const&, WorldOrientation const&);
 
   // public fields
   CameraArcball arcball;
@@ -205,6 +212,7 @@ public:
   glm::vec3 world_forward() const;
   glm::vec3 world_up() const;
   glm::vec3 world_position() const;
+  WorldOrientation const& world_orientation_ref() const;
 
   auto const& view_settings_ref() const { return view_settings_; }
   auto&       view_settings_ref() { return view_settings_; }
@@ -213,7 +221,7 @@ public:
   void    set_target(WorldObject&);
 
   // static fns
-  static Camera make_default(ScreenDimensions const&);
+  static Camera make_default(ScreenDimensions const&, WorldOrientation const&, WorldOrientation const&);
 };
 
 } // namespace boomhs

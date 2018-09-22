@@ -98,43 +98,6 @@ make_program_and_rectangle(common::Logger& logger, Rectangle const& rect,
 }
 
 auto
-calculate_ortho_pm(float const near, float const far)
-{
-  return glm::ortho(
-      FRUSTUM.left,
-      FRUSTUM.right,
-      FRUSTUM.bottom,
-      FRUSTUM.top,
-      near,
-      far);
-}
-
-auto
-calculate_vm_looking_down_on_scene(common::Logger& logger)
-{
-  auto const VIEW_FORWARD = -constants::Y_UNIT_VECTOR;
-  auto const VIEW_UP      = constants::Z_UNIT_VECTOR;
-
-  auto const& eye   = ORTHO_CAMERA_POS;
-  auto const center = eye + VIEW_FORWARD;
-  auto const& up    = VIEW_UP;
-
-  auto r = glm::lookAtRH(eye, center, up);
-
-  // Flip the "right" vector computed by lookAt() so the X-Axis points "right" onto the screen.
-  //
-  // See implementation of glm::lookAtRH() for more details.
-  //
-  // s => right vector
-  auto& sx = r[0][0];
-  auto& sy = r[1][0];
-  auto& sz = r[2][0];
-  math::negate(sx, sy, sz);
-
-  return r;
-}
-
-auto
 calculate_vm_fps(common::Logger& logger)
 {
   auto const VIEW_FORWARD = -constants::Z_UNIT_VECTOR;
@@ -159,12 +122,21 @@ draw_bbox(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm, Tran
 }
 
 void
-draw_rectangle_pm(common::Logger& logger, ShaderProgram& sp,
+draw_rectangle_pm(common::Logger& logger, CameraORTHO const& camera, ShaderProgram& sp,
                      DrawInfo& dinfo, Color const& color, DrawState& ds)
 {
   int constexpr NEAR = -1.0;
   int constexpr FAR  = 1.0f;
-  auto const pm = calculate_ortho_pm(-1.0f, 1.0f);
+  Frustum const f{
+    FRUSTUM.left,
+    FRUSTUM.right,
+    FRUSTUM.bottom,
+    FRUSTUM.top,
+    NEAR,
+    FAR
+  };
+
+  auto const pm = camera.calc_pm(false, AR, f);
 
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
   sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
@@ -330,6 +302,24 @@ main(int argc, char **argv)
     SCREEN_DIM.right(),
     SCREEN_DIM.bottom()
   };
+
+  auto const PERS_FORWARD = -constants::Z_UNIT_VECTOR;
+  auto constexpr PERS_UP  =  constants::Y_UNIT_VECTOR;
+  WorldOrientation const PERS_WO{PERS_FORWARD, PERS_UP};
+
+  auto const ORTHO_FORWARD = -constants::Y_UNIT_VECTOR;
+  auto constexpr ORTHO_UP  =  constants::Z_UNIT_VECTOR;
+  WorldOrientation const ORTHO_WO{ORTHO_FORWARD, ORTHO_UP};
+  CameraORTHO cam_ortho{ORTHO_WO};
+
+  CameraTarget cam_target;
+
+  EntityRegistry er;
+  auto const eid = er.create();
+  WorldObject  wo{eid, er, PERS_WO};
+  cam_target.set(wo);
+  CameraFPS cam_fps{cam_target, PERS_WO};
+
   auto const lhs_view_rect = LHS.rect();
   auto const rhs_view_rect = RHS.rect();
 
@@ -356,8 +346,8 @@ main(int argc, char **argv)
   tr.translation = glm::vec3{5, 0, 5};
 
   while (!quit) {
-    glm::mat4 const ortho_pm = calculate_ortho_pm(NEAR, FAR);
-    glm::mat4 const ortho_vm = calculate_vm_looking_down_on_scene(logger);
+    glm::mat4 const ortho_pm = cam_ortho.calc_pm(false, AR, FRUSTUM);
+    glm::mat4 const ortho_vm = cam_ortho.calc_vm();
 
     glm::mat4 const pers_vm  = calculate_vm_fps(logger);
 
@@ -394,7 +384,7 @@ main(int argc, char **argv)
 
     OR::set_scissor(SCREEN_DIM);
     OR::set_viewport(SCREEN_DIM);
-    draw_rectangle_pm(logger, rect_pair.first, rect_pair.second, color, ds);
+    draw_rectangle_pm(logger, cam_ortho, rect_pair.first, rect_pair.second, color, ds);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());

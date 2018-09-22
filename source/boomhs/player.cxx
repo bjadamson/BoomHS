@@ -144,11 +144,10 @@ namespace boomhs
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // PlayerHead
-PlayerHead::PlayerHead(EntityRegistry& registry, EntityID const eid,
-    glm::vec3 const& fwd, glm::vec3 const& up)
+PlayerHead::PlayerHead(EntityRegistry& registry, EntityID const eid, WorldOrientation const& wo)
     : registry_(&registry)
     , eid_(eid)
-    , world_object(eid, registry, fwd, up)
+    , world_object(eid, registry, wo)
 {
 }
 
@@ -171,7 +170,8 @@ PlayerHead::update(FrameTime const& ft)
 }
 
 PlayerHead
-PlayerHead::create(common::Logger& logger, EntityRegistry& registry, ShaderPrograms& sps)
+PlayerHead::create(common::Logger& logger, EntityRegistry& registry, ShaderPrograms& sps,
+                   WorldOrientation const& world_orientation)
 {
   // construct the head
   auto eid = registry.create();
@@ -183,9 +183,9 @@ PlayerHead::create(common::Logger& logger, EntityRegistry& registry, ShaderProgr
   // The head follows the Player
   auto const player_eid = find_player_eid(registry);
   auto& ft = registry.assign<FollowTransform>(eid, player_eid);
-  //ft.target_offset = glm::vec3{0.0f, 0.6f, 0.0f};
   auto& player = find_player(registry).world_object();
-  PlayerHead ph{registry, eid, -constants::Z_UNIT_VECTOR, constants::X_UNIT_VECTOR};
+
+  PlayerHead ph{registry, eid, world_orientation};
   auto& tr = ph.world_object.transform();
   tr.scale = glm::vec3{0.1};
 
@@ -197,11 +197,11 @@ static auto const HOW_OFTEN_GCD_RESETS_MS = TimeConversions::seconds_to_millis(1
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Player
 Player::Player(common::Logger& logger, EntityID const eid, EntityRegistry& r, ShaderPrograms& sps,
-               glm::vec3 const& fwd, glm::vec3 const& up)
+               WorldOrientation const& world_orientation)
     : registry_(&r)
     , eid_(eid)
-    , wo_(eid, r, fwd, up)
-    , head_(PlayerHead::create(logger, *registry_, sps))
+    , wo_(eid, r, world_orientation)
+    , head_(PlayerHead::create(logger, *registry_, sps, world_orientation))
 {
 }
 

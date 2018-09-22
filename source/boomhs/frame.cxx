@@ -20,16 +20,16 @@ make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
 
   switch (mode) {
     case CameraMode::Ortho:
-      proj = camera.ortho.compute_projectionmatrix(ortho_squeeze, view_settings, frustum);
-      view = camera.ortho.compute_viewmatrix();
+      proj = camera.ortho.calc_pm(ortho_squeeze, view_settings.aspect_ratio, frustum);
+      view = camera.ortho.calc_vm();
       break;
     case CameraMode::FPS:
-      proj = camera.fps.compute_projectionmatrix(view_settings, frustum);
-      view = camera.fps.compute_viewmatrix(camera.eye_forward());
+      proj = camera.fps.calc_pm(view_settings, frustum);
+      view = camera.fps.calc_vm(camera.eye_forward());
       break;
     case CameraMode::ThirdPerson:
-      proj = camera.arcball.compute_projectionmatrix(view_settings, frustum);
-      view = camera.arcball.compute_viewmatrix(camera_world_pos);
+      proj = camera.arcball.calc_pm(view_settings, frustum);
+      view = camera.arcball.calc_vm(camera_world_pos);
       break;
     case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:

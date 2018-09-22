@@ -32,13 +32,14 @@ class PlayerHead
   friend class Player;
 
 public:
-  explicit PlayerHead(EntityRegistry&, EntityID, glm::vec3 const&, glm::vec3 const&);
+  explicit PlayerHead(EntityRegistry&, EntityID, WorldOrientation const&);
   void update(FrameTime const&);
 
   // fields
   WorldObject world_object;
 
-  static PlayerHead create(common::Logger&, EntityRegistry&, opengl::ShaderPrograms&);
+  static PlayerHead create(common::Logger&, EntityRegistry&, opengl::ShaderPrograms&,
+                           WorldOrientation const&);
 };
 
 class Player
@@ -54,7 +55,7 @@ public:
   NO_COPY(Player);
   MOVE_DEFAULT(Player);
   explicit Player(common::Logger&, EntityID, EntityRegistry&, opengl::ShaderPrograms&,
-                  glm::vec3 const&, glm::vec3 const&);
+                  WorldOrientation const&);
 
   Inventory    inventory;
   HealthPoints hp{44, 50};

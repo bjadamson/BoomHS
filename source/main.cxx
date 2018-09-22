@@ -21,6 +21,7 @@
 #include <extlibs/openal.hpp>
 
 using namespace boomhs;
+using namespace boomhs::math;
 using namespace common;
 using namespace gl_sdl;
 
@@ -146,7 +147,17 @@ start(common::Logger& logger, Engine& engine)
   io.MouseDrawCursor = false;
 
   EngineState es{logger, *al_device, io, dimensions, frustum};
-  auto        camera = Camera::make_default(dimensions);
+
+  // camera-look at origin
+  // cameraspace "up" is === "up" in worldspace.
+  auto const PERS_FORWARD = -constants::Z_UNIT_VECTOR;
+  auto constexpr PERS_UP  =  constants::Y_UNIT_VECTOR;
+  WorldOrientation const pers_wo{PERS_FORWARD, PERS_UP};
+
+  auto const ORTHO_FORWARD = -constants::Y_UNIT_VECTOR;
+  auto constexpr ORTHO_UP  =  constants::Z_UNIT_VECTOR;
+  WorldOrientation const ortho_wo{ORTHO_FORWARD, ORTHO_UP};
+  auto                   camera = Camera::make_default(dimensions, pers_wo, ortho_wo);
 
   RNG rng;
   auto gs = TRY_MOVEOUT(boomhs::init(engine, es, camera, rng));

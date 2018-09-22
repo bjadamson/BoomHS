@@ -45,12 +45,11 @@ CameraTarget::validate() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraArcball
-CameraArcball::CameraArcball(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t,
-                             ViewSettings& vp)
-    : forward_(forward)
-    , up_(up)
-    , target_(t)
-    , view_settings_(vp)
+CameraArcball::CameraArcball(CameraTarget& t, WorldOrientation const& wo)
+    : target_(t)
+    , forward_(wo.forward)
+    , up_(wo.up)
+    , world_up_(up_)
     , coordinates_(0.0f, 0.0f, 0.0f)
 {
   cs.rotation_lock = false;
@@ -86,7 +85,7 @@ CameraArcball&
 CameraArcball::rotate_radians(float dx, float dy, FrameTime const& ft)
 {
   auto& theta = coordinates_.theta;
-  theta       = (up_.y > 0.0f) ? (theta - dx) : (theta + dx);
+  theta       = (up().y > 0.0f) ? (theta - dx) : (theta + dx);
   if (theta > TWO_PI) {
     theta -= TWO_PI;
   }
@@ -114,10 +113,10 @@ CameraArcball::rotate_radians(float dx, float dy, FrameTime const& ft)
 
   // If phi in range (0, PI) or (-PI to -2PI), make 'up' be positive Y, otherwise make it negative Y
   if ((phi > 0 && phi < PI) || (phi < -PI && phi > -TWO_PI)) {
-    up_ = Y_UNIT_VECTOR;
+    up_ = world_up_;
   }
   else {
-    up_ = -Y_UNIT_VECTOR;
+    up_ = -world_up_;
   }
   return *this;
 }
@@ -141,7 +140,7 @@ CameraArcball::target_position() const
 }
 
 glm::mat4
-CameraArcball::compute_projectionmatrix(ViewSettings const& vp, Frustum const& f) const
+CameraArcball::calc_pm(ViewSettings const& vp, Frustum const& f) const
 {
   auto const ar  = vp.aspect_ratio.compute();
   auto const fov = vp.field_of_view;
@@ -150,21 +149,19 @@ CameraArcball::compute_projectionmatrix(ViewSettings const& vp, Frustum const& f
 }
 
 glm::mat4
-CameraArcball::compute_viewmatrix(glm::vec3 const& target_pos) const
+CameraArcball::calc_vm(glm::vec3 const& target_pos) const
 {
   auto const& target =  target_.get().transform().translation;
-  return glm::lookAt(target_pos, target, up_);
+  return glm::lookAt(target_pos, target, up());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraFPS
-CameraFPS::CameraFPS(glm::vec3 const& forward, glm::vec3 const& up, CameraTarget& t, ViewSettings& vp)
-    : forward_(forward)
-    , up_(up)
-    , xrot_(0)
+CameraFPS::CameraFPS(CameraTarget& t, WorldOrientation const& wo)
+    : xrot_(0)
     , yrot_(0)
+    , world_orientation_(wo)
     , target_(t)
-    , view_settings_(vp)
 {
   cs.rotation_lock = true;
 
@@ -187,12 +184,12 @@ CameraFPS::rotate_radians(float dx, float dy, FrameTime const& ft)
   }
 
   auto const xaxis = cs.flip_x
-    ?  Y_UNIT_VECTOR
-    : -Y_UNIT_VECTOR;
+    ?  world_orientation_.up
+    : -world_orientation_.up;
 
   auto const yaxis = cs.flip_y
-    ?  X_UNIT_VECTOR
-    : -X_UNIT_VECTOR;
+    ?  world_orientation_.right()
+    : -world_orientation_.right();
 
   // combine existing rotation with new rotation.
   // Y-axis first
@@ -210,7 +207,7 @@ CameraFPS::world_position() const
 }
 
 glm::mat4
-CameraFPS::compute_projectionmatrix(ViewSettings const& vp, Frustum const& f) const
+CameraFPS::calc_pm(ViewSettings const& vp, Frustum const& f) const
 {
   auto const ar  = vp.aspect_ratio.compute();
   auto const fov = vp.field_of_view;
@@ -218,29 +215,26 @@ CameraFPS::compute_projectionmatrix(ViewSettings const& vp, Frustum const& f) co
 }
 
 glm::mat4
-CameraFPS::compute_viewmatrix(glm::vec3 const& eye_fwd) const
+CameraFPS::calc_vm(glm::vec3 const& eye_fwd) const
 {
   auto const pos = transform().translation;
 
-  return glm::lookAt(pos, pos + eye_fwd, up_);
+  return glm::lookAt(pos, pos + eye_fwd, up());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraORTHO
-CameraORTHO::CameraORTHO(ViewSettings& vp)
-    : forward_(-Y_UNIT_VECTOR)
-    , up_(Z_UNIT_VECTOR)
-    , view_settings_(vp)
+CameraORTHO::CameraORTHO(WorldOrientation const& world_orientation)
+    : world_orientation_(world_orientation)
     , zoom_(glm::vec2{0, 0})
     , position(0, 1, 0)
 {
 }
 
 glm::mat4
-CameraORTHO::compute_projectionmatrix(bool const zoom_squeeze, ViewSettings const& vp, Frustum const& f) const
+CameraORTHO::calc_pm(bool const zoom_squeeze, AspectRatio const& ar,
+                                      Frustum const& f) const
 {
-  auto const& ar = vp.aspect_ratio.compute();
-
   float left, right, top, bottom;
   //if (zoom_squeeze) {
     //left  = 0.0f + zoom_.x;
@@ -260,11 +254,11 @@ CameraORTHO::compute_projectionmatrix(bool const zoom_squeeze, ViewSettings cons
 }
 
 glm::mat4
-CameraORTHO::compute_viewmatrix() const
+CameraORTHO::calc_vm() const
 {
   auto const& eye   = position;
-  auto const center = eye + forward_;
-  auto const& up    = up_;
+  auto const center = eye + world_orientation_.forward;
+  auto const& up    = world_orientation_.up;
 
   auto r = glm::lookAtRH(eye, center, up);
 
@@ -299,11 +293,11 @@ CameraORTHO::scroll(glm::vec2 const& sv)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
-Camera::Camera(ViewSettings&& vp, glm::vec3 const& forward, glm::vec3 const& up)
+Camera::Camera(ViewSettings&& vp, WorldOrientation const& pers_wo, WorldOrientation const& ortho_wo)
     : view_settings_(MOVE(vp))
-    , arcball(forward, up, target_, view_settings_)
-    , fps(forward, up, target_, view_settings_)
-    , ortho(view_settings_)
+    , arcball(target_, pers_wo)
+    , fps(target_, pers_wo)
+    , ortho(ortho_wo)
 {
   set_mode(CameraMode::ThirdPerson);
 }
@@ -393,9 +387,9 @@ Camera::eye_forward() const
 {
   switch (mode()) {
     case CameraMode::FPS:
-      return glm::normalize(-Z_UNIT_VECTOR * fps.transform().rotation);
+      return glm::normalize(fps.forward() * fps.transform().rotation);
     case CameraMode::Ortho:
-      return ortho.forward_;
+      return ortho.forward();
       break;
     case CameraMode::ThirdPerson:
       return glm::normalize(arcball.world_position() - arcball.target_position());
@@ -412,11 +406,11 @@ Camera::world_forward() const
 {
   switch (mode()) {
     case CameraMode::FPS:
-      return fps.forward_;
+      return fps.forward();
     case CameraMode::Ortho:
-      return ortho.forward_;
+      return ortho.forward();
     case CameraMode::ThirdPerson:
-      return arcball.forward_;
+      return arcball.forward();
     case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:
       break;
@@ -430,11 +424,11 @@ Camera::world_up() const
 {
   switch (mode()) {
     case CameraMode::FPS:
-      return fps.up_;
+      return fps.up();
     case CameraMode::Ortho:
-      return ortho.up_;
+      return ortho.up();
     case CameraMode::ThirdPerson:
-      return arcball.up_;
+      return arcball.up();
     case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:
       break;
@@ -461,20 +455,37 @@ Camera::world_position() const
   return ZERO;
 }
 
+WorldOrientation const&
+Camera::world_orientation_ref() const
+{
+  switch (mode()) {
+    case CameraMode::FPS:
+      return fps.world_orientation_;
+    case CameraMode::Ortho:
+      return ortho.world_orientation_;
+    case CameraMode::ThirdPerson:
+      // TODO: FIX FAST
+      return fps.world_orientation_;
+
+    case CameraMode::FREE_FLOATING:
+    case CameraMode::MAX:
+      break;
+  }
+  std::abort();
+  static WorldOrientation const WO_ZERO{ZERO, ZERO};
+  return WO_ZERO;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // free functions
 Camera
-Camera::make_default(ScreenDimensions const& dimensions)
+Camera::make_default(ScreenDimensions const& dimensions, WorldOrientation const& pers_wo,
+                     WorldOrientation const& ortho_wo)
 {
-  // camera-look at origin
-  // cameraspace "up" is === "up" in worldspace.
-  auto const FORWARD = -Z_UNIT_VECTOR;
-  auto constexpr UP  = Y_UNIT_VECTOR;
-
   auto constexpr FOV  = glm::radians(110.0f);
   auto constexpr AR   = AspectRatio{4.0f, 3.0f};
   ViewSettings vp{AR, FOV};
-  Camera camera(MOVE(vp), FORWARD, UP);
+  Camera camera(MOVE(vp), pers_wo, ortho_wo);
 
   SphericalCoordinates sc;
   sc.radius = 3.8f;

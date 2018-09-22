@@ -532,7 +532,7 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
     auto const  heightmap = TRY_MOVEOUT(heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
 
     auto gendata = StartAreaGenerator::gen_level(logger, registry, rng, sps, ttable,
-        material_table, heightmap);
+        material_table, heightmap, camera.world_orientation_ref());
 
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
     zstates.emplace_back(MOVE(zs));

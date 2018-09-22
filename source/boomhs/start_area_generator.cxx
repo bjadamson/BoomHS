@@ -55,13 +55,12 @@ place_monsters(common::Logger& logger, TerrainGrid const& terrain, EntityRegistr
 
 void
 place_player(common::Logger& logger, ShaderPrograms& sps, TerrainGrid const& terrain,
-             MaterialTable const& material_table, EntityRegistry& registry)
+             MaterialTable const& material_table, EntityRegistry& registry,
+             WorldOrientation const& world_orientation)
 {
   auto const eid = registry.create();
 
-  auto const FWD     = -Z_UNIT_VECTOR;
-  auto constexpr UP  =  Y_UNIT_VECTOR;
-  auto& player = registry.assign<Player>(eid, logger, eid, registry, sps, FWD, UP);
+  auto& player = registry.assign<Player>(eid, logger, eid, registry, sps, world_orientation);
   player.level = 14;
   player.name  = "BEN";
   player.speed = 460;
@@ -123,7 +122,7 @@ LevelGeneratedData
 StartAreaGenerator::gen_level(common::Logger& logger, EntityRegistry& registry,
                               RNG& rng, ShaderPrograms& sps, TextureTable& ttable,
                               MaterialTable const& material_table,
-                              Heightmap const& heightmap)
+                              Heightmap const& heightmap, WorldOrientation const& world_orientation)
 {
   LOG_TRACE("Generating Starting Area");
 
@@ -140,7 +139,7 @@ StartAreaGenerator::gen_level(common::Logger& logger, EntityRegistry& registry,
   place_torch(logger, terrain, registry, ttable, glm::vec2{2, 2});
 
   LOG_TRACE("Placing Player");
-  place_player(logger, sps, terrain, material_table, registry);
+  place_player(logger, sps, terrain, material_table, registry, world_orientation);
 
   LOG_TRACE("placing monsters ...\n");
   place_monsters(logger, terrain, registry, rng);
