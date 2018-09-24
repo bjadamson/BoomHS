@@ -345,9 +345,9 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
   update_npcpositions(logger, registry, terrain, ft);
   update_nearbytargets(nbt, registry, ft);
 
-  //LOG_ERROR_SPRINTF("ortho cam pos: %s, player pos: %s",
-      //glm::to_string(camera.ortho.position),
-      //glm::to_string(player.transform().translation));
+  LOG_ERROR_SPRINTF("ortho cam pos: %s, player pos: %s",
+      glm::to_string(camera.ortho.position),
+      glm::to_string(player.transform().translation));
 
   //auto& terrain = ldata.terrain;
   //for (auto const eid : registry.view<Transform, MeshRenderable>()) {

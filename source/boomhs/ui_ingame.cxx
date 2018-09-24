@@ -635,7 +635,6 @@ draw(FrameState& fs, Camera& camera, DrawState& ds)
   draw_nearest_target_info(es.dimensions, nbt, ttable, registry);
 
   // Create a renderstate using an orthographic projection.
-
   auto fss = FrameState::from_camera_for_2dui_overlay(es, zs, camera, camera.view_settings_ref(), es.frustum);
   RenderState rstate{fss, ds};
   draw_2dui(rstate);

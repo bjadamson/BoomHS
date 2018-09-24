@@ -136,7 +136,7 @@ draw_rectangle_pm(common::Logger& logger, CameraORTHO const& camera, ShaderProgr
     FAR
   };
 
-  auto const pm = camera.calc_pm(false, AR, f);
+  auto const pm = camera.calc_pm(AR, f);
 
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
   sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
@@ -346,7 +346,7 @@ main(int argc, char **argv)
   tr.translation = glm::vec3{5, 0, 5};
 
   while (!quit) {
-    glm::mat4 const ortho_pm = cam_ortho.calc_pm(false, AR, FRUSTUM);
+    glm::mat4 const ortho_pm = cam_ortho.calc_pm(AR, FRUSTUM);
     glm::mat4 const ortho_vm = cam_ortho.calc_vm();
 
     glm::mat4 const pers_vm  = calculate_vm_fps(logger);

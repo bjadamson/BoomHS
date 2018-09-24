@@ -232,23 +232,13 @@ CameraORTHO::CameraORTHO(WorldOrientation const& world_orientation)
 }
 
 glm::mat4
-CameraORTHO::calc_pm(bool const zoom_squeeze, AspectRatio const& ar,
-                                      Frustum const& f) const
+CameraORTHO::calc_pm(AspectRatio const& ar, Frustum const& f) const
 {
-  float left, right, top, bottom;
-  if (zoom_squeeze) {
-    left  = 0.0f + zoom_.x;
-    right = 128.0f - zoom_.x;
+  float const left   = f.left   + zoom_.x;
+  float const right  = f.right  - zoom_.x;
 
-    top    = 0.0f + zoom_.y;
-    bottom = 96.0f - zoom_.y;
-  }
-  else {
-    left   = f.left;
-    right  = f.right;
-    bottom = f.bottom;
-    top    = f.top;
-  }
+  float const top    = f.top    + zoom_.y;
+  float const bottom = f.bottom - zoom_.y;
 
   return glm::ortho(left, right, bottom, top, f.near, f.far);
 }
@@ -389,7 +379,7 @@ Camera::eye_forward() const
     case CameraMode::FPS:
       return glm::normalize(fps.forward() * fps.transform().rotation);
     case CameraMode::Ortho:
-      return ortho.forward();
+      return glm::normalize(ortho.position + ortho.forward());
       break;
     case CameraMode::ThirdPerson:
       return glm::normalize(arcball.world_position() - arcball.target_position());

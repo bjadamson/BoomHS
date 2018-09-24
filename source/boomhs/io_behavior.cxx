@@ -98,8 +98,17 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
   auto const view_matrix = fstate.view_matrix();
   auto const view_rect   = es.dimensions.rect();
 
-  auto const ray_dir   = Raycast::calculate_ray_into_screen(mouse_pos, proj_matrix, view_matrix,
-                                                            view_rect);
+  //glm::vec3 ray_dir;
+  //if (CameraMode::Ortho == fstate.camera_mode()) {
+    //namespace sconv = boomhs::math::space_conversions;
+    //auto const r0 = sconv::screen_to_world(mouse_pos, view_rect, proj_matrix, view_matrix, 0);
+    //auto const r1 = sconv::screen_to_world(mouse_pos, view_rect, proj_matrix, view_matrix, -1);
+    //ray_dir = glm::normalize(r1 - rk);
+  //}
+  //else {
+    //ray_dir = Raycast::calculate_ray_into_screen(mouse_pos, proj_matrix, view_matrix, view_rect);
+  //}
+  auto const ray_dir   = Raycast::calculate_ray_into_screen(mouse_pos, proj_matrix, view_matrix, view_rect);
   auto const ray_start = fstate.camera_world_position();
 
   EntityDistances distances;
@@ -109,8 +118,6 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
     auto&       sel  = registry.get<Selectable>(eid);
 
     bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == ONE);
-
-
     bool const intersects = ray_intersects_cube(logger, can_use_simple_test, ray_dir, ray_start,
                                                 eid, tr, cube, distances);
     if (intersects) {

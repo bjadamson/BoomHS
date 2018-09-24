@@ -126,7 +126,7 @@ public:
   glm::vec2 click_position;
 
   // methods
-  glm::mat4 calc_pm(bool, AspectRatio const&, Frustum const&) const;
+  glm::mat4 calc_pm(AspectRatio const&, Frustum const&) const;
   glm::mat4 calc_vm() const;
 
   void grow_view(glm::vec2 const&);

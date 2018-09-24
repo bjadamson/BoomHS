@@ -10,8 +10,7 @@ namespace
 auto
 make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
                 ViewSettings const& view_settings, Frustum const& frustum,
-                glm::vec3 const& camera_world_pos, CameraMode const mode,
-                bool const ortho_squeeze = false)
+                glm::vec3 const& camera_world_pos, CameraMode const mode)
 {
   glm::mat4 proj, view;
 
@@ -20,7 +19,7 @@ make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
 
   switch (mode) {
     case CameraMode::Ortho:
-      proj = camera.ortho.calc_pm(ortho_squeeze, view_settings.aspect_ratio, frustum);
+      proj = camera.ortho.calc_pm(view_settings.aspect_ratio, frustum);
       view = camera.ortho.calc_vm();
       break;
     case CameraMode::FPS:
@@ -57,24 +56,28 @@ FrameState::from_camera_withposition(EngineState& es, ZoneState& zs, Camera cons
 }
 
 FrameState
-FrameState::from_camera_with_mode(EngineState& es, ZoneState& zs, Camera const& camera, CameraMode const mode, ViewSettings const& vs, Frustum const& frustum)
+FrameState::from_camera_with_mode(EngineState& es, ZoneState& zs, Camera const& camera,
+                                  CameraMode const mode, ViewSettings const& vs,
+                                  Frustum const& frustum)
 {
   auto const camera_world_pos = camera.world_position();
   return make_framestate(es, zs, camera, vs, frustum, camera_world_pos, mode);
 }
 
 FrameState
-FrameState::from_camera_for_2dui_overlay(EngineState& es, ZoneState& zs, Camera const& camera, ViewSettings const& vs, Frustum const& frustum)
+FrameState::from_camera_for_2dui_overlay(EngineState& es, ZoneState& zs, Camera const& camera,
+                                         ViewSettings const& vs, Frustum const& frustum)
 {
   auto const camera_world_pos = camera.world_position();
-  return make_framestate(es, zs, camera, vs, frustum, camera_world_pos, CameraMode::Ortho, false);
+  return make_framestate(es, zs, camera, vs, frustum, camera_world_pos, CameraMode::Ortho);
 }
 
 FrameState
-FrameState::from_camera(EngineState& es, ZoneState& zs, Camera const& camera, ViewSettings const& vs, Frustum const& frustum)
+FrameState::from_camera(EngineState& es, ZoneState& zs, Camera const& cam, ViewSettings const& vs,
+                        Frustum const& frustum)
 {
-  auto const pos = camera.world_position();
-  return from_camera_withposition(es, zs, camera, vs, frustum, pos);
+  auto const pos = cam.world_position();
+  return from_camera_withposition(es, zs, cam, vs, frustum, pos);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
