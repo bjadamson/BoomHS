@@ -171,8 +171,8 @@ draw_bboxes(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm,
 }
 
 void
-draw_rectangle_pm(common::Logger& logger, CameraORTHO const& camera, ShaderProgram& sp,
-                     DrawInfo& dinfo, Color const& color, DrawState& ds)
+draw_rectangle_pm(common::Logger& logger, Rectangle const& viewport, CameraORTHO const& camera,
+                  ShaderProgram& sp, DrawInfo& dinfo, Color const& color, DrawState& ds)
 {
   int constexpr NEAR = -1.0;
   int constexpr FAR  = 1.0f;
@@ -392,8 +392,8 @@ gen_cube_entities(common::Logger& logger, ShaderProgram const& sp, RNG &rng)
 }
 
 void
-draw_cursor_under_mouse(common::Logger& logger, ShaderProgram& sp, CameraORTHO const& cam_ortho,
-                        DrawState& ds)
+draw_cursor_under_mouse(common::Logger& logger, Rectangle const& viewport, ShaderProgram& sp,
+                        CameraORTHO const& cam_ortho, DrawState& ds)
 {
   auto const& cp = cam_ortho.click_position;
   int x, y;
@@ -407,7 +407,7 @@ draw_cursor_under_mouse(common::Logger& logger, ShaderProgram& sp, CameraORTHO c
   OF::RectInfo const ri{rect, RECT_C, std::nullopt};
   auto const rbuffer = OF::make_rectangle(ri);
   auto di            = OG::copy_rectangle(logger, sp.va(), rbuffer);
-  draw_rectangle_pm(logger, cam_ortho, sp, di, LOC::BLACK, ds);
+  draw_rectangle_pm(logger, viewport, cam_ortho, sp, di, LOC::BLACK, ds);
 }
 
 int
@@ -495,7 +495,7 @@ main(int argc, char **argv)
   auto const draw_pm = [&](DrawState& ds) {
     OR::set_scissor(SCREEN_DIM);
     OR::set_viewport(SCREEN_DIM);
-    draw_rectangle_pm(logger, cam_ortho, rect_pair.first, rect_pair.second, color, ds);
+    draw_rectangle_pm(logger, SCREEN_DIM.rect(), cam_ortho, rect_pair.first, rect_pair.second, color, ds);
   };
 
   while (!quit) {
@@ -518,7 +518,11 @@ main(int argc, char **argv)
     draw_lhs(ds, ortho_pm, ortho_vm);
     if (!MOUSE_ON_RHS_SCREEN && MOUSE_BUTTON_PRESSED) {
       auto& sp = rect_pair.first;
-      draw_cursor_under_mouse(logger, sp, cam_ortho, ds);
+
+
+      OR::set_scissor(SCREEN_DIM);
+      OR::set_viewport(SCREEN_DIM);
+      draw_cursor_under_mouse(logger, SCREEN_DIM.rect(), sp, cam_ortho, ds);
     }
     draw_rhs(ds, pers_pm, pers_vm);
     draw_pm(ds);
