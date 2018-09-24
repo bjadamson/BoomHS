@@ -101,8 +101,8 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
   glm::vec3 const ray_start = (CameraMode::Ortho == fstate.camera_mode())
       ? CameraORTHO::EYE_FORWARD
       : fstate.camera_world_position();
-  glm::vec3 const ray_dir = Raycast::calculate_ray_into_screen(mouse_pos, proj_matrix, view_matrix, view_rect);
-
+  glm::vec3 const ray_dir = Raycast::calculate_ray_into_screen(mouse_pos, proj_matrix, view_matrix,
+                                                               view_rect);
   EntityDistances distances;
   for (auto const eid : find_all_entities_with_component<Selectable>(registry)) {
     auto const& cube = registry.get<AABoundingBox>(eid).cube;
@@ -382,6 +382,19 @@ PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
     break;
   case SDLK_RIGHT:
     ortho.scroll(glm::vec2{1, 0});
+    break;
+
+  case SDLK_KP_2:
+    ortho.view_size.y += 1;
+    break;
+  case SDLK_KP_4:
+    ortho.view_size.x -= 1;
+    break;
+  case SDLK_KP_6:
+    ortho.view_size.x += 1;
+    break;
+  case SDLK_KP_8:
+    ortho.view_size.y -= 1;
     break;
 
   case SDLK_PAGEUP:

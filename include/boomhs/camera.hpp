@@ -125,6 +125,7 @@ public:
   static glm::vec3 constexpr EYE_FORWARD = math::constants::Y_UNIT_VECTOR;
   glm::vec3 position;
   glm::vec2 click_position;
+  glm::vec2 view_size;
 
   // methods
   glm::mat4 calc_pm(AspectRatio const&, Frustum const&) const;
