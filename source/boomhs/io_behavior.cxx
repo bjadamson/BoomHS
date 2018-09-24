@@ -90,46 +90,27 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
 
   auto& zs       = fstate.zs;
   auto& registry = zs.registry;
-  auto const cmode = fstate.camera_mode();
+
+  auto const coords = es.device_states.mouse.current.coords();
+  glm::vec2 const mouse_pos{coords.x, coords.y};
+
+  auto const proj_matrix = fstate.projection_matrix();
+  auto const view_matrix = fstate.view_matrix();
+  auto const view_rect   = es.dimensions.rect();
+
+  auto const ray_dir   = Raycast::calculate_ray_into_screen(mouse_pos, proj_matrix, view_matrix,
+                                                            view_rect);
+  auto const ray_start = fstate.camera_world_position();
 
   EntityDistances distances;
-  glm::vec3 ray_dir;
-  glm::vec3 ray_start;
   for (auto const eid : find_all_entities_with_component<Selectable>(registry)) {
     auto const& cube = registry.get<AABoundingBox>(eid).cube;
     auto const& tr   = registry.get<Transform>(eid);
     auto&       sel  = registry.get<Selectable>(eid);
-    sel.selected = false;
 
     bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == ONE);
 
-    auto const proj_matrix = fstate.projection_matrix();
-    auto const view_matrix = fstate.view_matrix();
-    auto const view_rect   = es.dimensions.rect();
 
-    auto const coords = es.device_states.mouse.current.coords();
-    glm::vec2 const mouse_pos{coords.x, coords.y};
-
-    //if (CameraMode::FPS == cmode || CameraMode::ThirdPerson == cmode) {
-      ray_dir   = Raycast::calculate_ray_into_screen(mouse_pos, proj_matrix, view_matrix, view_rect);
-      ray_start = fstate.camera_world_position();
-    //}
-    //else if (CameraMode::Ortho == cmode) {
-      //auto const p0 = sconv::screen_to_world(mouse_pos, view_rect, proj_matrix, view_matrix, 0.0f);
-      //auto const p1 = sconv::screen_to_world(mouse_pos, view_rect, proj_matrix, view_matrix, 1.0f);
-
-      //ray_start = fstate.camera_world_position();
-      //ray_dir = -Y_UNIT_VECTOR;//glm::normalize(p1 - p0);
-
-
-      //LOG_ERROR_SPRINTF("p0 %s, p1 %s", glm::to_string(p0), glm::to_string(p1));
-
-      //LOG_ERROR_SPRINTF("mouse pos: %s", glm::to_string(mouse_pos));
-      //LOG_ERROR_SPRINTF("ray_start %s, ray_dir %s", glm::to_string(ray_start), glm::to_string(ray_dir));
-    //}
-    //else {
-      //std::abort();
-    //}
     bool const intersects = ray_intersects_cube(logger, can_use_simple_test, ray_dir, ray_start,
                                                 eid, tr, cube, distances);
     if (intersects) {
@@ -137,6 +118,7 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
       LOG_ERROR_SPRINTF("mouse pos: %s", glm::to_string(mouse_pos));
       LOG_ERROR_SPRINTF("ray_start %s, ray_dir %s", glm::to_string(ray_start), glm::to_string(ray_dir));
     }
+    sel.selected = intersects;
   }
   bool const something_selected = !distances.empty();
   if (something_selected) {
@@ -147,8 +129,6 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
       : distances.back();
 
     auto const eid = pair.first;
-    registry.get<Selectable>(eid).selected = true;
-
     auto const name = registry.has<Name>(eid)
       ? registry.get<Name>(eid).value
       : "Unnamed";

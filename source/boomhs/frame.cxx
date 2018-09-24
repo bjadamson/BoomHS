@@ -11,7 +11,7 @@ auto
 make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
                 ViewSettings const& view_settings, Frustum const& frustum,
                 glm::vec3 const& camera_world_pos, CameraMode const mode,
-                bool const ortho_squeeze = true)
+                bool const ortho_squeeze = false)
 {
   glm::mat4 proj, view;
 
