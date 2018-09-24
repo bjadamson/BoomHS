@@ -26,7 +26,8 @@ using namespace common;
 using namespace gl_sdl;
 using namespace opengl;
 
-static int constexpr NUM_CUBES = 300;
+static int constexpr NUM_CUBES                     = 300;
+static float constexpr SCREENSIZE_VIEWPORT_RATIO_X = 2.0f;
 
 // clang-format off
 static auto constexpr NEAR = 0.001f;
@@ -86,10 +87,7 @@ make_program_and_rectangle(common::Logger& logger, Rectangle const& rect,
                            Rectangle const& view_rect)
 {
   auto const TOP_LEFT = glm::vec2{rect.left(), rect.top()};
-  //auto const TL_NDC   = math::space_conversions::screen_to_ndc(TOP_LEFT, view_rect);
-
   auto const BOTTOM_RIGHT = glm::vec2{rect.right(), rect.bottom()};
-  //auto const BR_NDC       = math::space_conversions::screen_to_ndc(BOTTOM_RIGHT, view_rect);
 
   Rectangle      const ndc_rect{TOP_LEFT.x, TOP_LEFT.y, BOTTOM_RIGHT.x, BOTTOM_RIGHT.y};
   OF::RectInfo const ri{ndc_rect, std::nullopt, std::nullopt, std::nullopt};
@@ -177,10 +175,10 @@ draw_rectangle_pm(common::Logger& logger, Rectangle const& viewport, CameraORTHO
   int constexpr NEAR = -1.0;
   int constexpr FAR  = 1.0f;
   Frustum const f{
-    FRUSTUM.left,
-    FRUSTUM.right,
-    FRUSTUM.bottom,
-    FRUSTUM.top,
+    viewport.left(),
+    viewport.right(),
+    viewport.bottom(),
+    viewport.top(),
     NEAR,
     FAR
   };
@@ -259,19 +257,23 @@ process_keydown(SDL_Keycode const keycode, glm::vec3& camera_pos, CubeEntities& 
   return false;
 }
 
+struct PmRect
+{
+  Rectangle const& rect;
+  bool is_mousedover = false;
+
+  explicit PmRect(Rectangle const& r)
+      : rect(r)
+  {}
+};
+
 void
 on_mouse_cube_collisions(glm::vec2 const& mouse_pos, glm::vec2 const& mouse_start,
                     Rectangle const& view_rect, glm::mat4 const& pm, glm::mat4 const& vm,
-                    Rectangle const& pm_rect, Color* pm_rect_color,
+                    PmRect &pm_rect,
                     CubeEntities& cube_ents)
 {
-  if (collision::point_rectangle_intersects(mouse_pos, pm_rect)) {
-    *pm_rect_color = LOC::GREEN;
-    //LOG_ERROR_SPRINTF("mouse pos: %f:%f", p.x, p.y);
-  }
-  else {
-    *pm_rect_color = LOC::RED;
-  }
+  pm_rect.is_mousedover = collision::point_rectangle_intersects(mouse_pos, pm_rect.rect);
 
   auto const& camera_pos  = active_camera_pos();
   glm::vec3 const ray_dir = Raycast::calculate_ray_into_screen(mouse_start, pm,
@@ -295,8 +297,7 @@ on_mouse_cube_collisions(glm::vec2 const& mouse_pos, glm::vec2 const& mouse_star
 void
 process_mousemotion(SDL_MouseMotionEvent const& motion,
                     ViewportDisplayInfo const& left_vdi, ViewportDisplayInfo const& right_vdi,
-                    Rectangle const& pm_rect, Color* pm_rect_color,
-                    CubeEntities& cube_ents)
+                    PmRect& pm_rect, CubeEntities& cube_ents)
 {
   float const x = motion.x, y = motion.y;
   auto const mouse_pos = glm::vec2{x, y};
@@ -325,15 +326,13 @@ process_mousemotion(SDL_MouseMotionEvent const& motion,
     pm = &left_vdi.perspective;
     vm = &left_vdi.view;
   }
-  on_mouse_cube_collisions(mouse_pos, mouse_start, *view_rect, *pm, *vm, pm_rect, pm_rect_color,
-                            cube_ents);
+  on_mouse_cube_collisions(mouse_pos, mouse_start, *view_rect, *pm, *vm, pm_rect, cube_ents);
 }
 
 bool
 process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
               ViewportDisplayInfo const& left_vdi, ViewportDisplayInfo const& right_vdi,
-              CubeEntities& cube_ents,
-              Rectangle const& pm_rect, Color* pm_rect_color)
+              CubeEntities& cube_ents, PmRect& pm_rect)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
   auto &camera_pos = active_camera_pos();
@@ -346,7 +345,7 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
   }
   else {
     if (event.type == SDL_MOUSEMOTION) {
-      process_mousemotion(event.motion, left_vdi, right_vdi, pm_rect, pm_rect_color, cube_ents);
+      process_mousemotion(event.motion, left_vdi, right_vdi, pm_rect, cube_ents);
     }
     else if (event.type == SDL_MOUSEBUTTONDOWN) {
       MOUSE_BUTTON_PRESSED = true;
@@ -398,8 +397,12 @@ draw_cursor_under_mouse(common::Logger& logger, Rectangle const& viewport, Shade
   auto const& cp = cam_ortho.click_position;
   int x, y;
   SDL_GetMouseState(&x, &y);
-  Rectangle const rect{cp.x, cp.y, static_cast<float>(x), static_cast<float>(y)};
-  LOG_ERROR_SPRINTF("click rect: %s", rect.to_string());
+  float const minx = cp.x * SCREENSIZE_VIEWPORT_RATIO_X;
+  float const miny = cp.y;
+  float const maxx = x * SCREENSIZE_VIEWPORT_RATIO_X;
+  float const maxy = y;
+
+  Rectangle const rect{minx, miny, maxx, maxy};
   OF::RectangleColors const RECT_C{
     std::nullopt,
     std::nullopt
@@ -428,15 +431,15 @@ main(int argc, char **argv)
   OR::init(logger);
   glEnable(GL_SCISSOR_TEST);
 
-  auto const MIDDLE_HORIZ = SCREEN_DIM.right() / 2;
+  float const MIDDLE_HORIZ = SCREEN_DIM.right() / SCREENSIZE_VIEWPORT_RATIO_X;
   auto const LHS = ScreenDimensions{
     SCREEN_DIM.left(),
     SCREEN_DIM.top(),
-    MIDDLE_HORIZ,
+    static_cast<int>(MIDDLE_HORIZ),
     SCREEN_DIM.bottom()
   };
   auto const RHS = ScreenDimensions{
-    MIDDLE_HORIZ,
+    (int)MIDDLE_HORIZ,
     SCREEN_DIM.top(),
     SCREEN_DIM.right(),
     SCREEN_DIM.bottom()
@@ -459,19 +462,18 @@ main(int argc, char **argv)
   cam_target.set(wo);
   CameraFPS cam_fps{cam_target, PERS_WO};
 
-  auto const lhs_view_rect = LHS.rect();
-  auto const rhs_view_rect = RHS.rect();
+  auto const lhs_rect    = LHS.rect();
+  auto const rhs_rect    = RHS.rect();
+  auto const screen_rect = SCREEN_DIM.rect();
 
   auto const color_rect = Rectangle{
     200, 200, 400, 400};
-  auto rect_pair = make_program_and_rectangle(logger, color_rect, SCREEN_DIM.rect());
+  auto rect_pair = make_program_and_rectangle(logger, color_rect, screen_rect);
 
   auto const pers_pm = glm::perspective(FOV, AR.compute(), FRUSTUM.near, FRUSTUM.far);
 
   Timer timer;
   FrameCounter fcounter;
-
-  auto color = LOC::RED;
 
   SDL_Event event;
   bool quit = false;
@@ -492,12 +494,13 @@ main(int argc, char **argv)
     OR::clear_screen(LOC::BLACK);
     draw_bboxes(logger, pm, vm, cube_ents, wire_sp, ds);
   };
-  auto const draw_pm = [&](DrawState& ds) {
+  auto const draw_pm = [&](DrawState& ds, Color const& color) {
     OR::set_scissor(SCREEN_DIM);
     OR::set_viewport(SCREEN_DIM);
-    draw_rectangle_pm(logger, SCREEN_DIM.rect(), cam_ortho, rect_pair.first, rect_pair.second, color, ds);
+    draw_rectangle_pm(logger, screen_rect, cam_ortho, rect_pair.first, rect_pair.second, color, ds);
   };
 
+  PmRect pm_rect{color_rect};
   while (!quit) {
     glm::mat4 const ortho_pm = cam_ortho.calc_pm(AR, FRUSTUM);
     glm::mat4 const ortho_vm = cam_ortho.calc_vm();
@@ -506,26 +509,25 @@ main(int argc, char **argv)
 
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
-      ViewportDisplayInfo const left_vdi{lhs_view_rect, ortho_pm, ortho_vm};
-      ViewportDisplayInfo const right_vdi{rhs_view_rect, pers_pm,  pers_vm};
-      quit = process_event(logger, event, cam_ortho,
-          left_vdi, right_vdi,
-          cube_ents,
-          color_rect, &color);
+      ViewportDisplayInfo const left_vdi{lhs_rect, ortho_pm, ortho_vm};
+      ViewportDisplayInfo const right_vdi{rhs_rect, pers_pm,  pers_vm};
+      quit = process_event(logger, event, cam_ortho, left_vdi, right_vdi, cube_ents, pm_rect);
     }
 
     DrawState ds;
     draw_lhs(ds, ortho_pm, ortho_vm);
     if (!MOUSE_ON_RHS_SCREEN && MOUSE_BUTTON_PRESSED) {
       auto& sp = rect_pair.first;
-
-
-      OR::set_scissor(SCREEN_DIM);
-      OR::set_viewport(SCREEN_DIM);
-      draw_cursor_under_mouse(logger, SCREEN_DIM.rect(), sp, cam_ortho, ds);
+      OR::set_scissor(LHS);
+      OR::set_viewport(LHS);
+      draw_cursor_under_mouse(logger, lhs_rect, sp, cam_ortho, ds);
     }
     draw_rhs(ds, pers_pm, pers_vm);
-    draw_pm(ds);
+
+    {
+      auto const color = pm_rect.is_mousedover ? LOC::ORANGE : LOC::GREEN;
+      draw_pm(ds, color);
+    }
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());
