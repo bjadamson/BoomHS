@@ -234,11 +234,11 @@ CameraORTHO::CameraORTHO(WorldOrientation const& world_orientation)
 glm::mat4
 CameraORTHO::calc_pm(AspectRatio const& ar, Frustum const& f) const
 {
-  float const left   = f.left   + zoom_.x;
-  float const right  = f.right  - zoom_.x;
+  float const left   = f.left   + zoom_.x - position.x;
+  float const right  = f.right  - zoom_.x - position.x;
 
-  float const top    = f.top    + zoom_.y;
-  float const bottom = f.bottom - zoom_.y;
+  float const top    = f.top    + zoom_.y + position.z;
+  float const bottom = f.bottom - zoom_.y + position.z;
 
   return glm::ortho(left, right, bottom, top, f.near, f.far);
 }
@@ -246,11 +246,11 @@ CameraORTHO::calc_pm(AspectRatio const& ar, Frustum const& f) const
 glm::mat4
 CameraORTHO::calc_vm() const
 {
-  auto const& eye   = position;
-  auto const center = eye + world_orientation_.forward;
-  auto const& up    = world_orientation_.up;
+  auto constexpr EYE = constants::Y_UNIT_VECTOR;
+  auto const center  = EYE + world_orientation_.forward;
+  auto const& up     = world_orientation_.up;
 
-  auto r = glm::lookAtRH(eye, center, up);
+  auto r = glm::lookAtRH(EYE, center, up);
 
   // Flip the "right" vector computed by lookAt() so the X-Axis points "right" onto the screen.
   //
