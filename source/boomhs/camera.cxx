@@ -246,11 +246,10 @@ CameraORTHO::calc_pm(AspectRatio const& ar, Frustum const& f) const
 glm::mat4
 CameraORTHO::calc_vm() const
 {
-  auto constexpr EYE = constants::Y_UNIT_VECTOR;
-  auto const center  = EYE + world_orientation_.forward;
+  auto const center  = EYE_FORWARD + world_orientation_.forward;
   auto const& up     = world_orientation_.up;
 
-  auto r = glm::lookAtRH(EYE, center, up);
+  auto r = glm::lookAtRH(EYE_FORWARD, center, up);
 
   // Flip the "right" vector computed by lookAt() so the X-Axis points "right" onto the screen.
   //

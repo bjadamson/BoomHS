@@ -122,6 +122,7 @@ public:
   MOVE_CONSTRUCTIBLE_ONLY(CameraORTHO);
 
   // fields
+  static glm::vec3 constexpr EYE_FORWARD = math::constants::Y_UNIT_VECTOR;
   glm::vec3 position;
   glm::vec2 click_position;
 
