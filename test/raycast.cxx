@@ -3,6 +3,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/frame_time.hpp>
 #include <boomhs/raycast.hpp>
+#include <boomhs/random.hpp>
 
 #include <common/log.hpp>
 #include <common/timer.hpp>
@@ -45,12 +46,12 @@ static Frustum constexpr FRUSTUM{
 
 static glm::vec3  ORTHO_CAMERA_POS = glm::vec3{0, 1, 0};
 static glm::vec3  PERS_CAMERA_POS  = glm::vec3{0, 0, 1};
-static bool MOUSE_ON_RHS_SCREEN = false;
+static bool MOUSE_ON_SCREEN = false;
 
 auto&
 active_camera_pos()
 {
-  return MOUSE_ON_RHS_SCREEN
+  return MOUSE_ON_SCREEN
     ? PERS_CAMERA_POS
     : ORTHO_CAMERA_POS;
 }
@@ -122,6 +123,16 @@ draw_bbox(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm, Tran
 }
 
 void
+draw_bboxes(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm,
+            std::vector<Transform> const& trs, ShaderProgram& sp, DrawInfo& dinfo, DrawState& ds,
+            Color const& color)
+{
+  for (auto const& tr : trs) {
+    draw_bbox(logger, pm, vm, tr, sp, dinfo, ds, color);
+  }
+}
+
+void
 draw_rectangle_pm(common::Logger& logger, CameraORTHO const& camera, ShaderProgram& sp,
                      DrawInfo& dinfo, Color const& color, DrawState& ds)
 {
@@ -158,13 +169,19 @@ struct ViewportDisplayInfo
 bool
 process_event(common::Logger& logger, SDL_Event& event,
               ViewportDisplayInfo const& left_vdi, ViewportDisplayInfo const& right_vdi,
-              Transform& tr,
+              std::vector<Transform>& trs,
               Rectangle const& pm_rect, Color* pm_rect_color,
               Color* wire_color)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
   auto const key_pressed        = event.key.keysym.sym;
   auto &camera_pos = active_camera_pos();
+
+  auto const move_trs = [&trs](auto const& delta_v) {
+    for (auto& tr : trs) {
+      tr.translation += delta_v;
+    }
+  };
 
   if (event_type_keydown) {
     switch (key_pressed) {
@@ -192,22 +209,22 @@ process_event(common::Logger& logger, SDL_Event& event,
         break;
 
       case SDLK_UP:
-        tr.translation -= constants::Z_UNIT_VECTOR;
+        move_trs(-constants::Z_UNIT_VECTOR);
         break;
       case SDLK_DOWN:
-        tr.translation += constants::Z_UNIT_VECTOR;
+        move_trs(constants::Z_UNIT_VECTOR);
         break;
       case SDLK_LEFT:
-        tr.translation -= constants::X_UNIT_VECTOR;
+        move_trs(-constants::X_UNIT_VECTOR);
         break;
       case SDLK_RIGHT:
-        tr.translation += constants::X_UNIT_VECTOR;
+        move_trs(constants::X_UNIT_VECTOR);
         break;
       case SDLK_PAGEUP:
-        tr.translation += constants::Y_UNIT_VECTOR;
+        move_trs(constants::Y_UNIT_VECTOR);
         break;
       case SDLK_PAGEDOWN:
-        tr.translation -= constants::Y_UNIT_VECTOR;
+        move_trs(-constants::Y_UNIT_VECTOR);
         break;
       default:
         break;
@@ -226,7 +243,7 @@ process_event(common::Logger& logger, SDL_Event& event,
     }
 
     auto const middle_point = left_vdi.view_rect.right();
-    MOUSE_ON_RHS_SCREEN = mouse_pos.x > middle_point;
+    MOUSE_ON_SCREEN = mouse_pos.x > middle_point;
 
     glm::vec2 mouse_start;
     float distance = 0.0f;
@@ -235,7 +252,7 @@ process_event(common::Logger& logger, SDL_Event& event,
     Rectangle const* view_rect = nullptr;
     Cube      const* cube      = nullptr;
 
-    if (MOUSE_ON_RHS_SCREEN) {
+    if (MOUSE_ON_SCREEN) {
       // RHS
       cube        = &right_vdi.cube;
       view_rect   = &right_vdi.view_rect;
@@ -260,7 +277,13 @@ process_event(common::Logger& logger, SDL_Event& event,
     glm::vec3 const ray_start = camera_pos;
     Ray const  ray{ray_start, ray_dir};
 
-    bool const collision = collision::ray_cube_intersect(ray, tr, *cube, distance);
+    bool collision = false;
+    for (auto const& tr : trs) {
+      collision |= collision::ray_cube_intersect(ray, tr, *cube, distance);
+      if (collision) {
+        break;
+      }
+    }
     if (collision) {
       *wire_color = LOC::PURPLE;
     }
@@ -269,6 +292,21 @@ process_event(common::Logger& logger, SDL_Event& event,
     }
   }
   return event.type == SDL_QUIT;
+}
+
+auto
+gen_trs(RNG &rng)
+{
+  auto const gen = [&rng](auto const& l, auto const& h) { return rng.gen_float_range(l, h); };
+  auto const gen_low_x = [&gen]() { return gen(0, WIDTH); };
+  auto const gen_low_z = [&gen]() { return gen(0, HEIGHT); };
+  auto const gen_tr = [&]() { return glm::vec3{gen_low_x(), 0, gen_low_z()}; };
+
+  std::vector<Transform> trs;
+  FOR(i, 30) {
+    trs.emplace_back(gen_tr());
+  }
+  return trs;
 }
 
 int
@@ -310,7 +348,7 @@ main(int argc, char **argv)
   auto const ORTHO_FORWARD = -constants::Y_UNIT_VECTOR;
   auto constexpr ORTHO_UP  =  constants::Z_UNIT_VECTOR;
   WorldOrientation const ORTHO_WO{ORTHO_FORWARD, ORTHO_UP};
-  CameraORTHO cam_ortho{ORTHO_WO};
+  CameraORTHO cam_ortho{ORTHO_WO, glm::vec2{WIDTH, HEIGHT}};
 
   CameraTarget cam_target;
 
@@ -327,10 +365,12 @@ main(int argc, char **argv)
     200, 200, 400, 400};
   auto rect_pair = make_program_and_rectangle(logger, color_rect, SCREEN_DIM.rect());
 
-  Cube const cr_LHS{glm::vec3{0, 0, 0}, glm::vec3{100, 0, 100}};
-  auto bbox_pair = make_program_and_bbox(logger, cr_LHS);
+  glm::vec3 const min{0, 0, 0};
+  glm::vec3 const max{100, 100, 100};
+  Cube const cr{min, max};
+  Cube const cr_LHS{glm::vec3{min.x, 0, min.z}, glm::vec3{max.x, 0, max.z}};
+  auto bbox_pair = make_program_and_bbox(logger, cr);
 
-  Cube const cr_RHS{glm::vec3{0, 0, 0}, glm::vec3{100, 100, 100}};
   auto const pers_pm = glm::perspective(FOV, AR.compute(), FRUSTUM.near, FRUSTUM.far);
 
   Timer timer;
@@ -342,8 +382,8 @@ main(int argc, char **argv)
   SDL_Event event;
   bool quit = false;
 
-  Transform tr;
-  tr.translation = glm::vec3{5, 0, 5};
+  RNG rng;
+  std::vector<Transform> trs = gen_trs(rng);
 
   while (!quit) {
     glm::mat4 const ortho_pm = cam_ortho.calc_pm(AR, FRUSTUM);
@@ -355,32 +395,30 @@ main(int argc, char **argv)
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
 
       ViewportDisplayInfo const left_vdi{lhs_view_rect, ortho_pm, ortho_vm, cr_LHS};
-      ViewportDisplayInfo const right_vdi{rhs_view_rect, pers_pm,  pers_vm,  cr_RHS};
+      ViewportDisplayInfo const right_vdi{rhs_view_rect, pers_pm,  pers_vm, cr};
       quit = process_event(logger, event,
           left_vdi, right_vdi,
-          tr,
+          trs,
           color_rect, &color,
           &wire_color);
     }
 
     auto const& camera_pos = active_camera_pos();
-    LOG_ERROR_SPRINTF("camera pos: %s, cube tr: %s",
-        glm::to_string(camera_pos),
-        glm::to_string(tr.translation));
+    LOG_ERROR_SPRINTF("camera pos: %s",
+        glm::to_string(camera_pos));
 
     OR::set_viewport(LHS);
     OR::set_scissor(LHS);
     OR::clear_screen(LOC::WHITE);
 
     DrawState ds;
-    draw_bbox(logger, ortho_pm, ortho_vm, tr, bbox_pair.first, bbox_pair.second, ds, wire_color);
+    draw_bboxes(logger, ortho_pm, ortho_vm, trs, bbox_pair.first, bbox_pair.second, ds, wire_color);
 
     OR::set_viewport(RHS);
     OR::set_scissor(RHS);
     OR::clear_screen(LOC::BLACK);
 
-    auto bbox_pair_RHS = make_program_and_bbox(logger, cr_RHS);
-    draw_bbox(logger, pers_pm, pers_vm, tr, bbox_pair_RHS.first, bbox_pair_RHS.second, ds, wire_color);
+    draw_bboxes(logger, pers_pm, pers_vm, trs, bbox_pair.first, bbox_pair.second, ds, wire_color);
 
     OR::set_scissor(SCREEN_DIM);
     OR::set_viewport(SCREEN_DIM);

@@ -8,8 +8,14 @@ struct Transform
 {
   // fields
   glm::vec3 translation = math::constants::ZERO;
-  glm::quat rotation;
-  glm::vec3 scale = math::constants::ONE;
+  glm::quat rotation    = {};
+  glm::vec3 scale       = math::constants::ONE;
+
+  Transform() {}
+  Transform(glm::vec3 const& tr)
+      : translation(tr)
+  {
+  }
 
   // methods
   glm::mat4 model_matrix() const;

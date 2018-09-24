@@ -118,7 +118,7 @@ class CameraORTHO
   auto const& up() const { return world_orientation_.up; }
 
 public:
-  CameraORTHO(WorldOrientation const&);
+  CameraORTHO(WorldOrientation const&, glm::vec2 const&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraORTHO);
 
   // fields
@@ -186,7 +186,7 @@ class Camera
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(ViewSettings&&, WorldOrientation const&, WorldOrientation const&);
+  Camera(ViewSettings&&, WorldOrientation const&, WorldOrientation const&, glm::vec2 const&);
 
   // public fields
   CameraArcball arcball;

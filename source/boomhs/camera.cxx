@@ -224,11 +224,11 @@ CameraFPS::calc_vm(glm::vec3 const& eye_fwd) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraORTHO
-CameraORTHO::CameraORTHO(WorldOrientation const& world_orientation)
+CameraORTHO::CameraORTHO(WorldOrientation const& world_orientation, glm::vec2 const& vs)
     : world_orientation_(world_orientation)
     , zoom_(glm::vec2{0, 0})
     , position(0, 1, 0)
-    , view_size(128, 128)
+    , view_size(vs)
 {
 }
 
@@ -287,11 +287,12 @@ CameraORTHO::scroll(glm::vec2 const& sv)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
-Camera::Camera(ViewSettings&& vp, WorldOrientation const& pers_wo, WorldOrientation const& ortho_wo)
+Camera::Camera(ViewSettings&& vp, WorldOrientation const& pers_wo, WorldOrientation const& ortho_wo,
+               glm::vec2 const& ortho_view_size)
     : view_settings_(MOVE(vp))
     , arcball(target_, pers_wo)
     , fps(target_, pers_wo)
-    , ortho(ortho_wo)
+    , ortho(ortho_wo, ortho_view_size)
 {
   set_mode(CameraMode::ThirdPerson);
 }
@@ -479,7 +480,8 @@ Camera::make_default(ScreenDimensions const& dimensions, WorldOrientation const&
   auto constexpr FOV  = glm::radians(110.0f);
   auto constexpr AR   = AspectRatio{4.0f, 3.0f};
   ViewSettings vp{AR, FOV};
-  Camera camera(MOVE(vp), pers_wo, ortho_wo);
+  glm::vec2 const ORTHO_VIEW_SIZE{128, 128};
+  Camera camera(MOVE(vp), pers_wo, ortho_wo, ORTHO_VIEW_SIZE);
 
   SphericalCoordinates sc;
   sc.radius = 3.8f;
