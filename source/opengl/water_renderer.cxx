@@ -78,18 +78,18 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
     auto& draw_handles = gfx_state.draw_handles;
     auto& dinfo        = draw_handles.lookup_entity(logger, eid);
 
-    sp.while_bound(logger, [&]() {
-      sp.set_uniform_vec4(logger, "u_clipPlane", ABOVE_VECTOR);
-      sp.set_uniform_float1(logger, "u_time_offset", time_offset);
-      sp.set_uniform_vec2(logger, "u_flowdir", winfo.flow_direction);
+    BIND_UNTIL_END_OF_SCOPE(logger, sp);
+    sp.set_uniform_vec4(logger, "u_clipPlane", ABOVE_VECTOR);
+    sp.set_uniform_float1(logger, "u_time_offset", time_offset);
+    sp.set_uniform_vec2(logger, "u_flowdir", winfo.flow_direction);
 
-      auto& wbuffer = es.ui_state.debug.buffers.water;
-      sp.set_uniform_float1(logger, "u_water.weight_light",      wbuffer.weight_light);
-      sp.set_uniform_float1(logger, "u_water.weight_texture",    wbuffer.weight_texture);
-      sp.set_uniform_float1(logger, "u_water.weight_mix_effect", wbuffer.weight_mix_effect);
+    auto& wbuffer = es.ui_state.debug.buffers.water;
+    sp.set_uniform_float1(logger, "u_water.weight_light",      wbuffer.weight_light);
+    sp.set_uniform_float1(logger, "u_water.weight_texture",    wbuffer.weight_texture);
+    sp.set_uniform_float1(logger, "u_water.weight_mix_effect", wbuffer.weight_mix_effect);
 
-      dinfo.while_bound(logger, [&]() { fn(winfo, tr); });
-    });
+    BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
+    fn(winfo, tr);
   };
 
   LOG_TRACE("Rendering water");
