@@ -38,6 +38,8 @@ struct Rectangle
 
   auto constexpr width() const { return right() - left(); }
   auto constexpr height() const { return top() - bottom(); }
+
+  std::string to_string() const;
 };
 
 struct Cube
