@@ -280,16 +280,25 @@ on_mouse_cube_collisions(glm::vec2 const& mouse_pos, glm::vec2 const& mouse_star
     return;
   }
 
-  auto const& camera_pos = active_camera_pos();
-  auto const& click_pos  = cam_ortho.click_position;
+  auto const calc_rays = [&]() {
+    auto const& click_pos  = cam_ortho.click_position;
+    std::array<glm::vec2, 4> const mouse_pos = {{
+      glm::vec2{mouse_start.x, mouse_start.y},
+      glm::vec2{click_pos.x,   mouse_start.y},
+      glm::vec2{click_pos.x,   click_pos.y},
+      glm::vec2{mouse_start.x, click_pos.y}
+    }};
 
-  std::array<glm::vec2, 4> const mouse_positions = {{
-    glm::vec2{mouse_start.x, mouse_start.y},
-    glm::vec2{click_pos.x,   mouse_start.y},
-    glm::vec2{click_pos.x,   click_pos.y},
-    glm::vec2{mouse_start.x, click_pos.y}
-  }};
+    auto const& camera_pos = active_camera_pos();
+    return std::array<Ray, 4>{{
+      Ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_pos[0], pm, vm, view_rect)},
+      Ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_pos[1], pm, vm, view_rect)},
+      Ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_pos[2], pm, vm, view_rect)},
+      Ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_pos[3], pm, vm, view_rect)}
+    }};
+  };
 
+  auto const rays = calc_rays();
   for (auto &cube_ent : cube_ents) {
     auto const& cube = cube_ent.cube();
     auto tr          = cube_ent.transform();
@@ -301,12 +310,9 @@ on_mouse_cube_collisions(glm::vec2 const& mouse_pos, glm::vec2 const& mouse_star
     }
 
     bool intersects = false;
-    for (auto const& mp : mouse_positions) {
-      glm::vec3 const ray_dir = Raycast::calculate_ray_into_screen(mp, pm, vm, view_rect);
-      Ray const ray{camera_pos, ray_dir};
-
+    FOR(i, rays.size()) {
       float distance = 0.0f;
-      intersects |= collision::ray_cube_intersect(ray, tr, cr, distance);
+      intersects |= collision::ray_cube_intersect(rays[i], tr, cr, distance);
 
       // Optimization, if we find a ray that intersects no need to check the rest of the corners.
       BREAK_THIS_LOOP_IF(intersects);
