@@ -343,18 +343,25 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
       return true;
     }
   }
-  else {
-    if (event.type == SDL_MOUSEMOTION) {
-      process_mousemotion(event.motion, left_vdi, right_vdi, pm_rect, cube_ents);
+  else if (event.type == SDL_MOUSEWHEEL) {
+    auto& wheel = event.wheel;
+    if (wheel.y > 0) {
+      cam_ortho.grow_view(glm::vec2{1.0f});
     }
-    else if (event.type == SDL_MOUSEBUTTONDOWN) {
-      MOUSE_BUTTON_PRESSED = true;
-      cam_ortho.click_position.x = event.button.x;
-      cam_ortho.click_position.y = event.button.y;
+    else {
+      cam_ortho.shink_view(glm::vec2{1.0f});
     }
-    else if (event.type == SDL_MOUSEBUTTONUP) {
-      MOUSE_BUTTON_PRESSED = false;
-    }
+  }
+  else if (event.type == SDL_MOUSEMOTION) {
+    process_mousemotion(event.motion, left_vdi, right_vdi, pm_rect, cube_ents);
+  }
+  else if (event.type == SDL_MOUSEBUTTONDOWN) {
+    MOUSE_BUTTON_PRESSED = true;
+    cam_ortho.click_position.x = event.button.x;
+    cam_ortho.click_position.y = event.button.y;
+  }
+  else if (event.type == SDL_MOUSEBUTTONUP) {
+    MOUSE_BUTTON_PRESSED = false;
   }
   return event.type == SDL_QUIT;
 }
