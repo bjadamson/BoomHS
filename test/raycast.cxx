@@ -142,7 +142,7 @@ public:
   {
   }
 
-  bool moused_over = false;
+  bool selected = false;
 
   auto const& cube() const { return cube_; }
   auto& cube() { return cube_; }
@@ -162,7 +162,7 @@ draw_bboxes(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm,
 {
   for (auto &cube_tr : cube_ents) {
     auto const& tr    = cube_tr.transform();
-    auto const& wire_color = cube_tr.moused_over ? LOC::BLUE : LOC::RED;
+    auto const& wire_color = cube_tr.selected ? LOC::BLUE : LOC::RED;
     auto &dinfo = cube_tr.draw_info();
     draw_bbox(logger, pm, vm, tr, sp, dinfo, ds, wire_color);
   }
@@ -261,7 +261,7 @@ process_keydown(SDL_Keycode const keycode, glm::vec3& camera_pos, CubeEntities& 
 struct PmRect
 {
   Rectangle const& rect;
-  bool is_mousedover = false;
+  bool selected = false;
 
   explicit PmRect(Rectangle const& r)
       : rect(r)
@@ -270,33 +270,53 @@ struct PmRect
 
 void
 on_mouse_cube_collisions(glm::vec2 const& mouse_pos, glm::vec2 const& mouse_start,
+                    CameraORTHO const& cam_ortho,
                     Rectangle const& view_rect, glm::mat4 const& pm, glm::mat4 const& vm,
-                    PmRect &pm_rect,
-                    CubeEntities& cube_ents)
+                    PmRect &pm_rect, CubeEntities& cube_ents)
 {
-  pm_rect.is_mousedover = collision::point_rectangle_intersects(mouse_pos, pm_rect.rect);
+  pm_rect.selected = collision::point_rectangle_intersects(mouse_pos, pm_rect.rect);
 
-  auto const& camera_pos  = active_camera_pos();
-  glm::vec3 const ray_dir = Raycast::calculate_ray_into_screen(mouse_start, pm,
-                                                                vm, view_rect);
-  Ray const ray{camera_pos, ray_dir};
-  for (auto &cube_tr : cube_ents) {
-    auto const& cube = cube_tr.cube();
+  if (!MOUSE_BUTTON_PRESSED) {
+    return;
+  }
 
-    auto tr          = cube_tr.transform();
+  auto const& camera_pos = active_camera_pos();
+  auto const& click_pos  = cam_ortho.click_position;
+
+  std::array<glm::vec2, 4> const mouse_positions = {{
+    glm::vec2{mouse_start.x, mouse_start.y},
+    glm::vec2{click_pos.x,   mouse_start.y},
+    glm::vec2{click_pos.x,   click_pos.y},
+    glm::vec2{mouse_start.x, click_pos.y}
+  }};
+
+  for (auto &cube_ent : cube_ents) {
+    auto const& cube = cube_ent.cube();
+    auto tr          = cube_ent.transform();
     Cube cr{cube.min, cube.max};
     if (!MOUSE_ON_RHS_SCREEN) {
       tr.translation.y = 0.0f;
       cr.min.y = 0;
       cr.max.y = 0;
     }
-    float distance = 0.0f;
-    cube_tr.moused_over = collision::ray_cube_intersect(ray, tr, cr, distance);
+
+    bool intersects = false;
+    for (auto const& mp : mouse_positions) {
+      glm::vec3 const ray_dir = Raycast::calculate_ray_into_screen(mp, pm, vm, view_rect);
+      Ray const ray{camera_pos, ray_dir};
+
+      float distance = 0.0f;
+      intersects |= collision::ray_cube_intersect(ray, tr, cr, distance);
+
+      // Optimization, if we find a ray that intersects no need to check the rest of the corners.
+      BREAK_THIS_LOOP_IF(intersects);
+    }
+    cube_ent.selected = intersects;
   }
 }
 
 void
-process_mousemotion(SDL_MouseMotionEvent const& motion,
+process_mousemotion(SDL_MouseMotionEvent const& motion, CameraORTHO const& cam_ortho,
                     ViewportDisplayInfo const& left_vdi, ViewportDisplayInfo const& right_vdi,
                     PmRect& pm_rect, CubeEntities& cube_ents)
 {
@@ -327,7 +347,7 @@ process_mousemotion(SDL_MouseMotionEvent const& motion,
     pm = &left_vdi.perspective;
     vm = &left_vdi.view;
   }
-  on_mouse_cube_collisions(mouse_pos, mouse_start, *view_rect, *pm, *vm, pm_rect, cube_ents);
+  on_mouse_cube_collisions(mouse_pos, mouse_start, cam_ortho, *view_rect, *pm, *vm, pm_rect, cube_ents);
 }
 
 bool
@@ -354,7 +374,7 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
     }
   }
   else if (event.type == SDL_MOUSEMOTION) {
-    process_mousemotion(event.motion, left_vdi, right_vdi, pm_rect, cube_ents);
+    process_mousemotion(event.motion, cam_ortho, left_vdi, right_vdi, pm_rect, cube_ents);
   }
   else if (event.type == SDL_MOUSEBUTTONDOWN) {
     MOUSE_BUTTON_PRESSED = true;
@@ -363,6 +383,10 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
   }
   else if (event.type == SDL_MOUSEBUTTONUP) {
     MOUSE_BUTTON_PRESSED = false;
+
+    for (auto& cube_ent : cube_ents) {
+      cube_ent.selected = false;
+    }
   }
   return event.type == SDL_QUIT;
 }
@@ -529,7 +553,7 @@ main(int argc, char **argv)
     draw_rhs(ds, pers_pm, pers_vm);
 
     {
-      auto const color = pm_rect.is_mousedover ? LOC::ORANGE : LOC::PURPLE;
+      auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
       draw_pm(ds, color);
     }
 

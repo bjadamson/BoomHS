@@ -12,6 +12,7 @@
 #define FOR(q, n) for (unsigned int q = 0u; q < n; ++q)
 #define FORI(q, n) for (int q = 0; q < n; ++q)
 #define PAIR(...) std::make_pair(__VA_ARGS__)
+#define BREAK_THIS_LOOP_IF(v) if (v) { break; }
 
 namespace common::anyof_detail
 {

@@ -56,6 +56,8 @@ struct Cube
   glm::vec3 scaled_dimensions(Transform const&) const;
   glm::vec3 scaled_half_widths(Transform const&) const;
 
+  Rectangle constexpr xz_rect() const { return Rectangle{min.x, min.z, max.x, max.z}; }
+
   explicit Cube(glm::vec3 const&, glm::vec3 const&);
 
   std::string to_string() const;
