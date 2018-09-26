@@ -140,6 +140,9 @@ struct RectInfo
 RectBuffer
 make_rectangle(RectInfo const&);
 
+RectLineBuffer
+make_line_rectangle(boomhs::Rectangle const&);
+
 static constexpr RectangleIndices RECTANGLE_INDICES = {{
   0, 1, 2, 3, 4, 5
 }};

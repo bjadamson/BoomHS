@@ -51,6 +51,9 @@ DrawInfo
 copy_rectangle(common::Logger&, VertexAttribute const&, RectBuffer const&);
 
 DrawInfo
+copy_rectangle(common::Logger &, VertexAttribute const&, RectLineBuffer const&);
+
+DrawInfo
 copy_rectangle_uvs(common::Logger&, VertexAttribute const&, RectangleUvVertices const&);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

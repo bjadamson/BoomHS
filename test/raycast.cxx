@@ -26,7 +26,7 @@ using namespace common;
 using namespace gl_sdl;
 using namespace opengl;
 
-static int constexpr NUM_CUBES                     = 300;
+static int constexpr NUM_CUBES                     = 100;
 static float constexpr SCREENSIZE_VIEWPORT_RATIO_X = 2.0f;
 
 // clang-format off
@@ -83,7 +83,7 @@ make_bbox(common::Logger& logger, ShaderProgram const& sp, Cube const& cr)
 }
 
 auto
-make_program_and_rectangle(common::Logger& logger, Rectangle const& rect,
+make_program_and_rect_gpuhandle(common::Logger& logger, Rectangle const& rect,
                            Rectangle const& view_rect)
 {
   auto const TOP_LEFT = glm::vec2{rect.left(), rect.top()};
@@ -170,7 +170,8 @@ draw_bboxes(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm,
 
 void
 draw_rectangle_pm(common::Logger& logger, Rectangle const& viewport, CameraORTHO const& camera,
-                  ShaderProgram& sp, DrawInfo& dinfo, Color const& color, DrawState& ds)
+                  ShaderProgram& sp, DrawInfo& dinfo, Color const& color, GLenum const draw_mode,
+                  DrawState& ds)
 {
   int constexpr NEAR = -1.0;
   int constexpr FAR  = 1.0f;
@@ -190,7 +191,7 @@ draw_rectangle_pm(common::Logger& logger, Rectangle const& viewport, CameraORTHO
   sp.set_uniform_color(logger, "u_color", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
-  OR::draw_2delements(logger, GL_TRIANGLES, sp, dinfo.num_indices());
+  OR::draw_2delements(logger, draw_mode, sp, dinfo.num_indices());
 }
 
 struct ViewportDisplayInfo
@@ -401,23 +402,18 @@ void
 draw_cursor_under_mouse(common::Logger& logger, Rectangle const& viewport, ShaderProgram& sp,
                         CameraORTHO const& cam_ortho, DrawState& ds)
 {
-  auto const& cp = cam_ortho.click_position;
+  auto const& click_pos = cam_ortho.click_position;
   int x, y;
   SDL_GetMouseState(&x, &y);
-  float const minx = cp.x * SCREENSIZE_VIEWPORT_RATIO_X;
-  float const miny = cp.y;
+  float const minx = click_pos.x * SCREENSIZE_VIEWPORT_RATIO_X;
+  float const miny = click_pos.y;
   float const maxx = x * SCREENSIZE_VIEWPORT_RATIO_X;
   float const maxy = y;
 
   Rectangle const rect{minx, miny, maxx, maxy};
-  OF::RectangleColors const RECT_C{
-    std::nullopt,
-    std::nullopt
-  };
-  OF::RectInfo const ri{rect, RECT_C, std::nullopt};
-  auto const rbuffer = OF::make_rectangle(ri);
+  auto const rbuffer = OF::make_line_rectangle(rect);
   auto di            = OG::copy_rectangle(logger, sp.va(), rbuffer);
-  draw_rectangle_pm(logger, viewport, cam_ortho, sp, di, LOC::BLACK, ds);
+  draw_rectangle_pm(logger, viewport, cam_ortho, sp, di, LOC::LIME_GREEN, GL_LINE_LOOP, ds);
 }
 
 int
@@ -475,7 +471,9 @@ main(int argc, char **argv)
 
   auto const color_rect = Rectangle{
     200, 200, 400, 400};
-  auto rect_pair = make_program_and_rectangle(logger, color_rect, screen_rect);
+  auto pair = make_program_and_rect_gpuhandle(logger, color_rect, screen_rect);
+  auto& rect_sp        = pair.first;
+  auto& rect_gpuhandle = pair.second;
 
   auto const pers_pm = glm::perspective(FOV, AR.compute(), FRUSTUM.near, FRUSTUM.far);
 
@@ -504,7 +502,7 @@ main(int argc, char **argv)
   auto const draw_pm = [&](DrawState& ds, Color const& color) {
     OR::set_scissor(SCREEN_DIM);
     OR::set_viewport(SCREEN_DIM);
-    draw_rectangle_pm(logger, screen_rect, cam_ortho, rect_pair.first, rect_pair.second, color, ds);
+    draw_rectangle_pm(logger, screen_rect, cam_ortho, rect_sp, rect_gpuhandle, color, GL_TRIANGLES, ds);
   };
 
   PmRect pm_rect{color_rect};
@@ -524,15 +522,14 @@ main(int argc, char **argv)
     DrawState ds;
     draw_lhs(ds, ortho_pm, ortho_vm);
     if (!MOUSE_ON_RHS_SCREEN && MOUSE_BUTTON_PRESSED) {
-      auto& sp = rect_pair.first;
       OR::set_scissor(LHS);
       OR::set_viewport(LHS);
-      draw_cursor_under_mouse(logger, lhs_rect, sp, cam_ortho, ds);
+      draw_cursor_under_mouse(logger, lhs_rect, rect_sp, cam_ortho, ds);
     }
     draw_rhs(ds, pers_pm, pers_vm);
 
     {
-      auto const color = pm_rect.is_mousedover ? LOC::ORANGE : LOC::GREEN;
+      auto const color = pm_rect.is_mousedover ? LOC::ORANGE : LOC::PURPLE;
       draw_pm(ds, color);
     }
 

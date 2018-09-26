@@ -288,6 +288,34 @@ make_rectangle(RectInfo const& info)
   return RectBuffer{MOVE(vertices), MOVE(indices)};
 }
 
+RectLineBuffer
+make_line_rectangle(Rectangle const& r)
+{
+  std::vector<float> vertices;
+  auto const add_point = [&vertices](auto const& p) {
+    vertices.emplace_back(p.x);
+    vertices.emplace_back(p.y);
+
+    static constexpr float Z = 0.0f;
+    vertices.emplace_back(Z);
+  };
+
+  auto const p0 = glm::vec2{r.left(), r.bottom()};
+  auto const p1 = glm::vec2{r.right(), r.bottom()};
+
+  auto const p2 = glm::vec2{r.right(), r.top()};
+  auto const p3 = glm::vec2{r.left(), r.top()};
+
+  add_point(p0);
+  add_point(p1);
+  add_point(p2);
+  add_point(p3);
+  RectangleLineIndices indices = {{
+    0, 1, 2, 3
+  }};
+  return RectLineBuffer{MOVE(vertices), MOVE(indices)};
+}
+
 
 RectangleVertices
 rectangle_vertices(float const x, float const y, float const w, float const h)

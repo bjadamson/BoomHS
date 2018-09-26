@@ -18,12 +18,19 @@ using CubeIndices  = std::array<GLuint, 36>;
 
 using RectangleUvVertices = std::array<float, 30>;
 
-using RectangleIndices = std::array<GLuint, 6>;
+using RectangleIndices     = std::array<GLuint, 6>;
+using RectangleLineIndices = std::array<GLuint, 4>;
 
 struct RectBuffer
 {
   std::vector<float> vertices;
   RectangleIndices   indices;
+};
+
+struct RectLineBuffer
+{
+  std::vector<float>   vertices;
+  RectangleLineIndices indices;
 };
 
 class RectangleVertices

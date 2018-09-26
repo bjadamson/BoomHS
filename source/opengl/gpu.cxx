@@ -160,6 +160,15 @@ copy_rectangle(common::Logger &logger, VertexAttribute const& va,
 }
 
 DrawInfo
+copy_rectangle(common::Logger &logger, VertexAttribute const& va,
+    RectLineBuffer const& buffer)
+{
+  auto const& v = buffer.vertices;
+  auto const& i = buffer.indices;
+  return copy_gpu_impl(logger, va, v, i);
+}
+
+DrawInfo
 copy_rectangle_uvs(common::Logger &logger, VertexAttribute const& va,
                    RectangleUvVertices const& vertices)
 {
