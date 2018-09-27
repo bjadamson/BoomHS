@@ -105,6 +105,22 @@ concat(TupleLike&&... tuples)
 namespace common
 {
 
+// Given a reference to a value, and a pair of two values, return a reference to the item in the
+// pair that is not the same as the value passed in.
+//
+// ie:
+//
+// auto a = 5, b = 10;
+//
+// assert(other_of(a, PAIR(a, b)) == b);
+// assert(other_of(b, PAIR(a, b)) == a);
+template <typename T>
+constexpr T const&
+other_of_two(T const& value, std::pair<T, T> const& pair)
+{
+  return value == pair.first ? pair.second : pair.first;
+}
+
 template <typename T, size_t N, class... Args>
 constexpr auto
 make_array(Args&&... args)

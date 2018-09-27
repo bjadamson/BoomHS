@@ -18,6 +18,10 @@
 
 #include <ostream>
 
+#define VEC2 glm::vec2
+#define VEC3 glm::vec3
+#define VEC4 glm::vec4
+
 namespace glm
 {
 

@@ -31,6 +31,15 @@ point_rectangle_intersects(
 }
 
 bool
+rectangles_overlap(Rectangle const& a, Rectangle const& b)
+{
+  return a.left()   < b.right()
+      && a.right()  > b.left()
+      && a.bottom()    > b.top()
+      && a.top() < b.bottom();
+}
+
+bool
 ray_obb_intersection(
   glm::vec3 const& ray_origin,
   glm::vec3 const& ray_direction,

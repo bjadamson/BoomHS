@@ -24,8 +24,13 @@ struct Rectangle
   }
 
   explicit constexpr Rectangle(float const l, float const t, float const r, float const b)
-      : min(glm::vec2{l, t})
-      , max(glm::vec2{r, b})
+      : Rectangle(glm::vec2{l, t}, glm::vec2{r, b})
+  {
+  }
+
+  explicit constexpr Rectangle(glm::vec2 const& p0, glm::vec2 const& p1)
+      : min(p0)
+      , max(p1)
   {
   }
 
@@ -36,8 +41,14 @@ struct Rectangle
   auto constexpr right() const { return max.x; }
   auto constexpr bottom() const { return max.y; }
 
-  auto constexpr width() const { return right() - left(); }
-  auto constexpr height() const { return top() - bottom(); }
+  auto constexpr left_top() const { return glm::vec2{left(), top()}; }
+  auto constexpr left_bottom() const { return glm::vec2{left(), bottom()}; }
+
+  auto constexpr right_top() const { return glm::vec2{right(), top()}; }
+  auto constexpr right_bottom() const { return glm::vec2{right(), bottom()}; }
+
+  auto width() const { return std::abs(right() - left()); }
+  auto height() const { return std::abs(top() - bottom()); }
 
   std::string to_string() const;
 };
@@ -236,6 +247,13 @@ opposite_signs(int const x, int const y)
   return ((x ^ y) < 0);
 }
 
+template <typename T>
+T const&
+lesser_of(T const& a, T const& b)
+{
+  return a < b ? a : b;
+}
+
 inline bool
 float_compare(float const a, float const b)
 {
@@ -313,9 +331,9 @@ rotation_between_vectors(glm::vec3 start, glm::vec3 dest);
 inline glm::vec3
 compute_cube_dimensions(glm::vec3 const& min, glm::vec3 const& max)
 {
-  auto const w = max.x - min.x;
-  auto const h = max.y - min.y;
-  auto const l = max.z - min.z;
+  auto const w = std::abs(max.x - min.x);
+  auto const h = std::abs(max.y - min.y);
+  auto const l = std::abs(max.z - min.z);
   return glm::vec3{w, h, l};
 }
 

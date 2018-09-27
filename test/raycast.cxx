@@ -5,6 +5,7 @@
 #include <boomhs/raycast.hpp>
 #include <boomhs/random.hpp>
 
+#include <common/algorithm.hpp>
 #include <common/log.hpp>
 #include <common/timer.hpp>
 #include <common/type_macros.hpp>
@@ -268,37 +269,50 @@ struct PmRect
   {}
 };
 
+Rectangle
+make_mouse_rect(CameraORTHO const& camera, glm::vec2 const& mouse_pos)
+{
+  auto const& click_pos  = camera.click_position;
+
+  auto const lx = lesser_of(click_pos.x, mouse_pos.x);
+  auto const rx = other_of_two(lx, PAIR(click_pos.x, mouse_pos.x));
+
+  auto const ty = lesser_of(click_pos.y, mouse_pos.y);
+  auto const by = other_of_two(ty, PAIR(click_pos.y, mouse_pos.y));
+
+  return Rectangle{VEC2{lx, ty}, VEC2{rx, by}};
+}
+
+auto
+make_mouse_rays(Rectangle const& mouse_rect, glm::mat4 const& pm, glm::mat4 const& vm,
+                Rectangle const& view_rect)
+{
+  auto const& camera_pos = active_camera_pos();
+  auto const calc_ray = [&](auto const& point) {
+    return Raycast::calculate_ray_into_screen(point, pm, vm, view_rect);
+  };
+  return common::make_array<Ray>(
+      Ray{camera_pos, calc_ray(mouse_rect.left_top())},
+      Ray{camera_pos, calc_ray(mouse_rect.left_bottom())},
+      Ray{camera_pos, calc_ray(mouse_rect.right_bottom())},
+      Ray{camera_pos, calc_ray(mouse_rect.right_top())}
+    );
+}
+
 void
 on_mouse_cube_collisions(glm::vec2 const& mouse_pos, glm::vec2 const& mouse_start,
-                    CameraORTHO const& cam_ortho,
-                    Rectangle const& view_rect, glm::mat4 const& pm, glm::mat4 const& vm,
+                    CameraORTHO const& cam_ortho, Rectangle const& view_rect,
+                    glm::mat4 const& pm, glm::mat4 const& vm,
                     PmRect &pm_rect, CubeEntities& cube_ents)
 {
-  pm_rect.selected = collision::point_rectangle_intersects(mouse_pos, pm_rect.rect);
-
   if (!MOUSE_BUTTON_PRESSED) {
     return;
   }
 
-  auto const calc_rays = [&]() {
-    auto const& click_pos  = cam_ortho.click_position;
-    std::array<glm::vec2, 4> const mouse_pos = {{
-      glm::vec2{mouse_start.x, mouse_start.y},
-      glm::vec2{click_pos.x,   mouse_start.y},
-      glm::vec2{click_pos.x,   click_pos.y},
-      glm::vec2{mouse_start.x, click_pos.y}
-    }};
+  auto const mouse_rect = make_mouse_rect(cam_ortho, mouse_start);
+  pm_rect.selected = collision::rectangles_overlap(mouse_rect, pm_rect.rect);
 
-    auto const& camera_pos = active_camera_pos();
-    return std::array<Ray, 4>{{
-      Ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_pos[0], pm, vm, view_rect)},
-      Ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_pos[1], pm, vm, view_rect)},
-      Ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_pos[2], pm, vm, view_rect)},
-      Ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_pos[3], pm, vm, view_rect)}
-    }};
-  };
-
-  auto const rays = calc_rays();
+  auto const rays = make_mouse_rays(mouse_rect, pm, vm, view_rect);
   for (auto &cube_ent : cube_ents) {
     auto const& cube = cube_ent.cube();
     auto tr          = cube_ent.transform();
@@ -393,6 +407,7 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
     for (auto& cube_ent : cube_ents) {
       cube_ent.selected = false;
     }
+    pm_rect.selected = false;
   }
   return event.type == SDL_QUIT;
 }

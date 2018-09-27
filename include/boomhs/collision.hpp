@@ -55,4 +55,7 @@ ray_obb_intersection(glm::vec3 const&, // Ray origin
 bool
 point_rectangle_intersects(glm::vec2 const&, Rectangle const&);
 
+bool
+rectangles_overlap(Rectangle const&, Rectangle const&);
+
 } // namespace boomhs::collision
