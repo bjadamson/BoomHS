@@ -453,17 +453,8 @@ gen_cube_entities(common::Logger& logger, ShaderProgram const& sp, RNG &rng)
 
 void
 draw_cursor_under_mouse(common::Logger& logger, Rectangle const& viewport, ShaderProgram& sp,
-                        CameraORTHO const& cam_ortho, DrawState& ds)
+                        Rectangle const& rect, CameraORTHO const& cam_ortho, DrawState& ds)
 {
-  auto const& click_pos = cam_ortho.click_position;
-  int x, y;
-  SDL_GetMouseState(&x, &y);
-  float const minx = click_pos.x * SCREENSIZE_VIEWPORT_RATIO_X;
-  float const miny = click_pos.y;
-  float const maxx = x * SCREENSIZE_VIEWPORT_RATIO_X;
-  float const maxy = y;
-
-  Rectangle const rect{minx, miny, maxx, maxy};
   auto const rbuffer = OF::make_line_rectangle(rect);
   auto di            = OG::copy_rectangle(logger, sp.va(), rbuffer);
   draw_rectangle_pm(logger, viewport, cam_ortho, sp, di, LOC::LIME_GREEN, GL_LINE_LOOP, ds);
@@ -501,12 +492,33 @@ draw_scene(common::Logger& logger,
   };
 
   draw_lhs(ds, ortho_pm, ortho_vm);
-  if (!MOUSE_ON_RHS_SCREEN && MOUSE_BUTTON_PRESSED) {
-    OR::set_scissor(LHS);
-    OR::set_viewport(LHS);
-    draw_cursor_under_mouse(logger, LHS.rect(), rect_sp, cam_ortho, ds);
-  }
   draw_rhs(ds, pers_pm, pers_vm);
+
+  if (MOUSE_BUTTON_PRESSED) {
+    int mouse_x, mouse_y;
+    SDL_GetMouseState(&mouse_x, &mouse_y);
+
+    auto const& click_pos = cam_ortho.click_position;
+    float const minx = click_pos.x;
+    float const miny = click_pos.y;
+    float const maxx = mouse_x;
+    float const maxy = mouse_y;
+
+    Rectangle mouse_rect{minx, miny, maxx, maxy};
+    ScreenDimensions const* pview_port = nullptr;
+    if (!MOUSE_ON_RHS_SCREEN) {
+      mouse_rect.min.x *= SCREENSIZE_VIEWPORT_RATIO_X;
+      mouse_rect.max.x *= SCREENSIZE_VIEWPORT_RATIO_X;
+      pview_port = &LHS;
+    }
+    else if (MOUSE_ON_RHS_SCREEN) {
+      pview_port = &RHS;
+    }
+    assert(pview_port);
+    OR::set_scissor(*pview_port);
+    OR::set_viewport(*pview_port);
+    draw_cursor_under_mouse(logger, pview_port->rect(), rect_sp, mouse_rect, cam_ortho, ds);
+  }
 
   {
     auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
