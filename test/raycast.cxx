@@ -83,6 +83,14 @@ make_bbox(common::Logger& logger, ShaderProgram const& sp, Cube const& cr)
   return gpu::copy_cube_wireframe_gpu(logger, vertices, sp.va());
 }
 
+struct ProgramAndGpuHandle
+{
+  MOVE_CONSTRUCTIBLE_ONLY(ProgramAndGpuHandle);
+
+  ShaderProgram sp;
+  DrawInfo di;
+};
+
 auto
 make_program_and_rect_gpuhandle(common::Logger& logger, Rectangle const& rect,
                            Rectangle const& view_rect)
@@ -101,7 +109,7 @@ make_program_and_rect_gpuhandle(common::Logger& logger, Rectangle const& rect,
   auto va = make_vertex_attribute(apis);
   auto sp = make_shader_program(logger, "2dcolor.vert", "2dcolor.frag", MOVE(va))
     .expect_moveout("Error loading 2dcolor shader program");
-  return PAIR(MOVE(sp), gpu::copy_rectangle(logger, sp.va(), buffer));
+  return ProgramAndGpuHandle{MOVE(sp), gpu::copy_rectangle(logger, sp.va(), buffer)};
 }
 
 auto
@@ -461,6 +469,51 @@ draw_cursor_under_mouse(common::Logger& logger, Rectangle const& viewport, Shade
   draw_rectangle_pm(logger, viewport, cam_ortho, sp, di, LOC::LIME_GREEN, GL_LINE_LOOP, ds);
 }
 
+void
+draw_scene(common::Logger& logger,
+           glm::mat4 const& ortho_pm, glm::mat4 const& ortho_vm,
+           glm::mat4 const& pers_pm, glm::mat4 const& pers_vm,
+           ScreenDimensions const& LHS, ScreenDimensions const& RHS,
+           ScreenDimensions const& screen_dim, CameraORTHO const& cam_ortho,
+           ProgramAndGpuHandle& pair, ShaderProgram& wire_sp, PmRect const& pm_rect,
+           CubeEntities& cube_ents)
+{
+  auto& rect_sp        = pair.sp;
+  auto& rect_gpuhandle = pair.di;
+
+  DrawState ds;
+  auto const draw_lhs = [&](DrawState& ds, auto const& pm, auto const& vm) {
+    OR::set_viewport(LHS);
+    OR::set_scissor(LHS);
+    OR::clear_screen(LOC::WHITE);
+    draw_bboxes(logger, pm, vm, cube_ents, wire_sp, ds);
+  };
+  auto const draw_rhs = [&](DrawState& ds, auto const& pm, auto const& vm) {
+    OR::set_viewport(RHS);
+    OR::set_scissor(RHS);
+    OR::clear_screen(LOC::BLACK);
+    draw_bboxes(logger, pm, vm, cube_ents, wire_sp, ds);
+  };
+  auto const draw_pm = [&](DrawState& ds, Color const& color) {
+    OR::set_scissor(SCREEN_DIM);
+    OR::set_viewport(SCREEN_DIM);
+    draw_rectangle_pm(logger, screen_dim.rect(), cam_ortho, rect_sp, rect_gpuhandle, color, GL_TRIANGLES, ds);
+  };
+
+  draw_lhs(ds, ortho_pm, ortho_vm);
+  if (!MOUSE_ON_RHS_SCREEN && MOUSE_BUTTON_PRESSED) {
+    OR::set_scissor(LHS);
+    OR::set_viewport(LHS);
+    draw_cursor_under_mouse(logger, LHS.rect(), rect_sp, cam_ortho, ds);
+  }
+  draw_rhs(ds, pers_pm, pers_vm);
+
+  {
+    auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
+    draw_pm(ds, color);
+  }
+}
+
 int
 main(int argc, char **argv)
 {
@@ -510,17 +563,9 @@ main(int argc, char **argv)
   cam_target.set(wo);
   CameraFPS cam_fps{cam_target, PERS_WO};
 
-  auto const lhs_rect    = LHS.rect();
-  auto const rhs_rect    = RHS.rect();
-  auto const screen_rect = SCREEN_DIM.rect();
-
   auto const color_rect = Rectangle{
     200, 200, 400, 400};
-  auto pair = make_program_and_rect_gpuhandle(logger, color_rect, screen_rect);
-  auto& rect_sp        = pair.first;
-  auto& rect_gpuhandle = pair.second;
-
-  auto const pers_pm = glm::perspective(FOV, AR.compute(), FRUSTUM.near, FRUSTUM.far);
+  auto rectprog = make_program_and_rect_gpuhandle(logger, color_rect, SCREEN_DIM.rect());
 
   Timer timer;
   FrameCounter fcounter;
@@ -532,25 +577,8 @@ main(int argc, char **argv)
   RNG rng;
   auto cube_ents = gen_cube_entities(logger, wire_sp, rng);
 
-  auto const draw_lhs = [&](DrawState& ds, auto const& pm, auto const& vm) {
-    OR::set_viewport(LHS);
-    OR::set_scissor(LHS);
-    OR::clear_screen(LOC::WHITE);
-    draw_bboxes(logger, pm, vm, cube_ents, wire_sp, ds);
-  };
-  auto const draw_rhs = [&](DrawState& ds, auto const& pm, auto const& vm) {
-    OR::set_viewport(RHS);
-    OR::set_scissor(RHS);
-    OR::clear_screen(LOC::BLACK);
-    draw_bboxes(logger, pm, vm, cube_ents, wire_sp, ds);
-  };
-  auto const draw_pm = [&](DrawState& ds, Color const& color) {
-    OR::set_scissor(SCREEN_DIM);
-    OR::set_viewport(SCREEN_DIM);
-    draw_rectangle_pm(logger, screen_rect, cam_ortho, rect_sp, rect_gpuhandle, color, GL_TRIANGLES, ds);
-  };
-
   PmRect pm_rect{color_rect};
+  auto const pers_pm = glm::perspective(FOV, AR.compute(), FRUSTUM.near, FRUSTUM.far);
   while (!quit) {
     glm::mat4 const ortho_pm = cam_ortho.calc_pm(AR, FRUSTUM);
     glm::mat4 const ortho_vm = cam_ortho.calc_vm();
@@ -559,24 +587,12 @@ main(int argc, char **argv)
 
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
-      ViewportDisplayInfo const left_vdi{lhs_rect, ortho_pm, ortho_vm};
-      ViewportDisplayInfo const right_vdi{rhs_rect, pers_pm,  pers_vm};
+      ViewportDisplayInfo const left_vdi{LHS.rect(), ortho_pm, ortho_vm};
+      ViewportDisplayInfo const right_vdi{RHS.rect(), pers_pm,  pers_vm};
       quit = process_event(logger, event, cam_ortho, left_vdi, right_vdi, cube_ents, pm_rect);
     }
 
-    DrawState ds;
-    draw_lhs(ds, ortho_pm, ortho_vm);
-    if (!MOUSE_ON_RHS_SCREEN && MOUSE_BUTTON_PRESSED) {
-      OR::set_scissor(LHS);
-      OR::set_viewport(LHS);
-      draw_cursor_under_mouse(logger, lhs_rect, rect_sp, cam_ortho, ds);
-    }
-    draw_rhs(ds, pers_pm, pers_vm);
-
-    {
-      auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
-      draw_pm(ds, color);
-    }
+    draw_scene(logger, ortho_pm, ortho_vm, pers_pm, pers_vm, LHS, RHS, SCREEN_DIM, cam_ortho, rectprog, wire_sp, pm_rect, cube_ents);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());

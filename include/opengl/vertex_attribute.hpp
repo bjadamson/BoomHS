@@ -20,11 +20,8 @@ enum class AttributeType
 AttributeType
 attribute_type_from_string(char const*);
 
-class AttributePointerInfo
+struct AttributePointerInfo
 {
-  static void invalidate(AttributePointerInfo&);
-
-public:
   static constexpr auto INVALID_TYPE = -1;
 
   // fields
@@ -35,14 +32,12 @@ public:
 
   // constructors
   AttributePointerInfo() = default;
-  COPY_DEFAULT(AttributePointerInfo);
   AttributePointerInfo(GLuint const, GLint const, AttributeType const, GLsizei const);
-  AttributePointerInfo(AttributePointerInfo&&) noexcept;
 
-  std::string to_string() const;
+  COPYMOVE_DEFAULT(AttributePointerInfo);
 
   // methods
-  AttributePointerInfo& operator=(AttributePointerInfo&&) noexcept;
+  std::string to_string() const;
 };
 
 std::ostream&
@@ -58,9 +53,9 @@ private:
   GLsizei                                           stride_;
   std::array<AttributePointerInfo, API_BUFFER_SIZE> apis_;
 
+  COPY_DEFAULT(VertexAttribute);
 public:
   MOVE_DEFAULT(VertexAttribute);
-  COPY_DEFAULT(VertexAttribute);
   explicit VertexAttribute(size_t const, GLsizei const,
                            std::array<AttributePointerInfo, API_BUFFER_SIZE>&&);
 
@@ -71,6 +66,8 @@ public:
   bool has_normals() const;
   bool has_colors() const;
   bool has_uvs() const;
+
+  auto clone() const { return *this; }
 
   std::string to_string() const;
 

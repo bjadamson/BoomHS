@@ -310,7 +310,7 @@ public:
 
     // TODO: for now assume we always find requested VA.
     assert(find_it != pair_.cend());
-    return find_it->second;
+    return find_it->second.clone();
   }
 };
 

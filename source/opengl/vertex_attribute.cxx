@@ -145,33 +145,6 @@ AttributePointerInfo::AttributePointerInfo(GLuint const i, GLint const t, Attrib
 {
 }
 
-AttributePointerInfo::AttributePointerInfo(AttributePointerInfo &&other) noexcept
-  : AttributePointerInfo(other.index, other.datatype, other.typezilla, other.component_count)
-{
-  invalidate(other);
-}
-
-AttributePointerInfo&
-AttributePointerInfo::operator=(AttributePointerInfo &&other) noexcept
-{
-  index = other.index;
-  datatype = other.datatype;
-  typezilla = other.typezilla;
-  component_count = other.component_count;
-
-  invalidate(other);
-  return *this;
-}
-
-void
-AttributePointerInfo::invalidate(AttributePointerInfo &api)
-{
-  api.index = 0;
-  api.datatype = INVALID_TYPE;
-  api.typezilla = AttributeType::OTHER;
-  api.component_count = 0;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // VertexAttribute
 VertexAttribute::VertexAttribute(size_t const n_apis, GLsizei const stride_p,
