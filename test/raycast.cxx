@@ -292,6 +292,28 @@ make_mouse_rect(CameraORTHO const& camera, glm::vec2 const& mouse_pos)
 }
 
 void
+on_rhs_mouse_cube_collisions(common::Logger& logger, glm::vec2 const& mouse_pos,
+                             glm::mat4 const& pm, glm::mat4 const& vm, Rectangle const& viewport,
+                             CubeEntities& cube_ents)
+{
+  auto &camera_pos = active_camera_pos();
+  Ray const ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_pos, pm, vm, viewport)};
+  for (auto &cube_ent : cube_ents) {
+    auto const& cube = cube_ent.cube();
+    auto tr          = cube_ent.transform();
+    Cube cr{cube.min, cube.max};
+    if (!MOUSE_ON_RHS_SCREEN) {
+      tr.translation.y = 0.0f;
+      cr.min.y = 0;
+      cr.max.y = 0;
+    }
+
+    float distance = 0.0f;
+    cube_ent.selected = collision::ray_cube_intersect(ray, tr, cr, distance);
+  }
+}
+
+void
 on_lhs_mouse_cube_collisions(common::Logger& logger,
                          glm::vec2 const& mouse_pos, glm::vec2 const& mouse_start,
                          Rectangle const& mouse_rect,
@@ -360,29 +382,18 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
     vm = &left_vdi.view;
   }
 
-  auto const mouse_rect = make_mouse_rect(cam_ortho, mouse_start);
   if (MOUSE_ON_RHS_SCREEN) {
-    auto &camera_pos = active_camera_pos();
-    Ray const ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_start, *pm, *vm, *view_rect)};
-    for (auto &cube_ent : cube_ents) {
-      auto const& cube = cube_ent.cube();
-      auto tr          = cube_ent.transform();
-      Cube cr{cube.min, cube.max};
-      if (!MOUSE_ON_RHS_SCREEN) {
-        tr.translation.y = 0.0f;
-        cr.min.y = 0;
-        cr.max.y = 0;
-      }
-
-      float distance = 0.0f;
-      cube_ent.selected = collision::ray_cube_intersect(ray, tr, cr, distance);
-    }
+    // RHS
+    on_rhs_mouse_cube_collisions(logger, mouse_start, *pm, *vm, *view_rect, cube_ents);
   }
   else {
     if (MOUSE_BUTTON_PRESSED) {
+      // LHS
+      auto const mouse_rect = make_mouse_rect(cam_ortho, mouse_start);
       on_lhs_mouse_cube_collisions(logger, mouse_pos, mouse_start, mouse_rect, cam_ortho,
                                    *view_rect, *pm, *vm, cube_ents);
     }
+    pm_rect.selected = collision::point_rectangle_intersects(mouse_start, pm_rect.rect);
   }
 }
 
