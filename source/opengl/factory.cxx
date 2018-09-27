@@ -270,11 +270,11 @@ make_rectangle(RectInfo const& info)
   };
 
   auto const& r = info.rect;
-  auto const p0 = glm::vec2{r.left(), r.bottom()};
-  auto const p1 = glm::vec2{r.right(), r.bottom()};
+  auto const p0 = glm::vec2{r.left, r.bottom};
+  auto const p1 = glm::vec2{r.right, r.bottom};
 
-  auto const p2 = glm::vec2{r.right(), r.top()};
-  auto const p3 = glm::vec2{r.left(), r.top()};
+  auto const p2 = glm::vec2{r.right, r.top};
+  auto const p3 = glm::vec2{r.left, r.top};
 
   add_point(p0, 0);
   add_point(p1, 1);
@@ -300,11 +300,11 @@ make_line_rectangle(Rectangle const& r)
     vertices.emplace_back(Z);
   };
 
-  auto const p0 = glm::vec2{r.left(), r.bottom()};
-  auto const p1 = glm::vec2{r.right(), r.bottom()};
+  auto const p0 = glm::vec2{r.left, r.bottom};
+  auto const p1 = glm::vec2{r.right, r.bottom};
 
-  auto const p2 = glm::vec2{r.right(), r.top()};
-  auto const p3 = glm::vec2{r.left(), r.top()};
+  auto const p2 = glm::vec2{r.right, r.top};
+  auto const p3 = glm::vec2{r.left, r.top};
 
   add_point(p0);
   add_point(p1);

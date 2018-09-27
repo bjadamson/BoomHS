@@ -95,8 +95,8 @@ auto
 make_program_and_rect_gpuhandle(common::Logger& logger, Rectangle const& rect,
                            Rectangle const& view_rect)
 {
-  auto const TOP_LEFT = glm::vec2{rect.left(), rect.top()};
-  auto const BOTTOM_RIGHT = glm::vec2{rect.right(), rect.bottom()};
+  auto const TOP_LEFT = glm::vec2{rect.left, rect.top};
+  auto const BOTTOM_RIGHT = glm::vec2{rect.right, rect.bottom};
 
   Rectangle      const ndc_rect{TOP_LEFT.x, TOP_LEFT.y, BOTTOM_RIGHT.x, BOTTOM_RIGHT.y};
   OF::RectInfo const ri{ndc_rect, std::nullopt, std::nullopt, std::nullopt};
@@ -185,10 +185,10 @@ draw_rectangle_pm(common::Logger& logger, Rectangle const& viewport, CameraORTHO
   int constexpr NEAR = -1.0;
   int constexpr FAR  = 1.0f;
   Frustum const f{
-    viewport.left(),
-    viewport.right(),
-    viewport.bottom(),
-    viewport.top(),
+    viewport.left,
+    viewport.right,
+    viewport.bottom,
+    viewport.top,
     NEAR,
     FAR
   };
@@ -291,36 +291,14 @@ make_mouse_rect(CameraORTHO const& camera, glm::vec2 const& mouse_pos)
   return Rectangle{VEC2{lx, ty}, VEC2{rx, by}};
 }
 
-auto
-make_mouse_rays(Rectangle const& mouse_rect, glm::mat4 const& pm, glm::mat4 const& vm,
-                Rectangle const& view_rect)
-{
-  auto const& camera_pos = active_camera_pos();
-  auto const calc_ray = [&](auto const& point) {
-    return Raycast::calculate_ray_into_screen(point, pm, vm, view_rect);
-  };
-  return common::make_array<Ray>(
-      Ray{camera_pos, calc_ray(mouse_rect.left_top())},
-      Ray{camera_pos, calc_ray(mouse_rect.left_bottom())},
-      Ray{camera_pos, calc_ray(mouse_rect.right_bottom())},
-      Ray{camera_pos, calc_ray(mouse_rect.right_top())}
-    );
-}
-
 void
-on_mouse_cube_collisions(glm::vec2 const& mouse_pos, glm::vec2 const& mouse_start,
-                    CameraORTHO const& cam_ortho, Rectangle const& view_rect,
-                    glm::mat4 const& pm, glm::mat4 const& vm,
-                    PmRect &pm_rect, CubeEntities& cube_ents)
+on_lhs_mouse_cube_collisions(common::Logger& logger,
+                         glm::vec2 const& mouse_pos, glm::vec2 const& mouse_start,
+                         Rectangle const& mouse_rect,
+                         CameraORTHO const& cam_ortho, Rectangle const& view_rect,
+                         glm::mat4 const& pm, glm::mat4 const& vm,
+                         CubeEntities& cube_ents)
 {
-  if (!MOUSE_BUTTON_PRESSED) {
-    return;
-  }
-
-  auto const mouse_rect = make_mouse_rect(cam_ortho, mouse_start);
-  pm_rect.selected = collision::rectangles_overlap(mouse_rect, pm_rect.rect);
-
-  auto const rays = make_mouse_rays(mouse_rect, pm, vm, view_rect);
   for (auto &cube_ent : cube_ents) {
     auto const& cube = cube_ent.cube();
     auto tr          = cube_ent.transform();
@@ -331,27 +309,33 @@ on_mouse_cube_collisions(glm::vec2 const& mouse_pos, glm::vec2 const& mouse_star
       cr.max.y = 0;
     }
 
-    bool intersects = false;
-    FOR(i, rays.size()) {
-      float distance = 0.0f;
-      intersects |= collision::ray_cube_intersect(rays[i], tr, cr, distance);
+    auto xz = cr.xz_rect();
+    xz.left   = xz.left;
+    xz.right  = xz.left + (xz.width() / SCREENSIZE_VIEWPORT_RATIO_X);
 
-      // Optimization, if we find a ray that intersects no need to check the rest of the corners.
-      BREAK_THIS_LOOP_IF(intersects);
-    }
-    cube_ent.selected = intersects;
+    xz.top    = xz.top;
+    xz.bottom = xz.bottom;
+
+    xz.left  += tr.translation.x / SCREENSIZE_VIEWPORT_RATIO_X;
+    xz.right += tr.translation.x / SCREENSIZE_VIEWPORT_RATIO_X;
+
+    xz.top    += tr.translation.z;
+    xz.bottom += tr.translation.z;
+
+    cube_ent.selected = collision::rectangles_overlap(mouse_rect, xz);
   }
 }
 
 void
-process_mousemotion(SDL_MouseMotionEvent const& motion, CameraORTHO const& cam_ortho,
+process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
+                    CameraORTHO const& cam_ortho,
                     ViewportDisplayInfo const& left_vdi, ViewportDisplayInfo const& right_vdi,
                     PmRect& pm_rect, CubeEntities& cube_ents)
 {
   float const x = motion.x, y = motion.y;
   auto const mouse_pos = glm::vec2{x, y};
 
-  auto const middle_point = left_vdi.view_rect.right();
+  auto const& middle_point = left_vdi.view_rect.right;
   MOUSE_ON_RHS_SCREEN = mouse_pos.x > middle_point;
 
   glm::vec2 mouse_start;
@@ -375,7 +359,31 @@ process_mousemotion(SDL_MouseMotionEvent const& motion, CameraORTHO const& cam_o
     pm = &left_vdi.perspective;
     vm = &left_vdi.view;
   }
-  on_mouse_cube_collisions(mouse_pos, mouse_start, cam_ortho, *view_rect, *pm, *vm, pm_rect, cube_ents);
+
+  auto const mouse_rect = make_mouse_rect(cam_ortho, mouse_start);
+  if (MOUSE_ON_RHS_SCREEN) {
+    auto &camera_pos = active_camera_pos();
+    Ray const ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_start, *pm, *vm, *view_rect)};
+    for (auto &cube_ent : cube_ents) {
+      auto const& cube = cube_ent.cube();
+      auto tr          = cube_ent.transform();
+      Cube cr{cube.min, cube.max};
+      if (!MOUSE_ON_RHS_SCREEN) {
+        tr.translation.y = 0.0f;
+        cr.min.y = 0;
+        cr.max.y = 0;
+      }
+
+      float distance = 0.0f;
+      cube_ent.selected = collision::ray_cube_intersect(ray, tr, cr, distance);
+    }
+  }
+  else {
+    if (MOUSE_BUTTON_PRESSED) {
+      on_lhs_mouse_cube_collisions(logger, mouse_pos, mouse_start, mouse_rect, cam_ortho,
+                                   *view_rect, *pm, *vm, cube_ents);
+    }
+  }
 }
 
 bool
@@ -402,7 +410,7 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
     }
   }
   else if (event.type == SDL_MOUSEMOTION) {
-    process_mousemotion(event.motion, cam_ortho, left_vdi, right_vdi, pm_rect, cube_ents);
+    process_mousemotion(logger, event.motion, cam_ortho, left_vdi, right_vdi, pm_rect, cube_ents);
   }
   else if (event.type == SDL_MOUSEBUTTONDOWN) {
     MOUSE_BUTTON_PRESSED = true;
@@ -488,13 +496,13 @@ draw_scene(common::Logger& logger,
   auto const draw_pm = [&](DrawState& ds, Color const& color) {
     OR::set_scissor(SCREEN_DIM);
     OR::set_viewport(SCREEN_DIM);
-    draw_rectangle_pm(logger, screen_dim.rect(), cam_ortho, rect_sp, rect_gpuhandle, color, GL_TRIANGLES, ds);
+    draw_rectangle_pm(logger, screen_dim.rect(), cam_ortho, rect_sp, rect_gpuhandle, color,
+                      GL_TRIANGLES, ds);
   };
 
   draw_lhs(ds, ortho_pm, ortho_vm);
   draw_rhs(ds, pers_pm, pers_vm);
 
-  if (MOUSE_BUTTON_PRESSED) {
     int mouse_x, mouse_y;
     SDL_GetMouseState(&mouse_x, &mouse_y);
 
@@ -506,19 +514,20 @@ draw_scene(common::Logger& logger,
 
     Rectangle mouse_rect{minx, miny, maxx, maxy};
     ScreenDimensions const* pview_port = nullptr;
-    if (!MOUSE_ON_RHS_SCREEN) {
-      mouse_rect.min.x *= SCREENSIZE_VIEWPORT_RATIO_X;
-      mouse_rect.max.x *= SCREENSIZE_VIEWPORT_RATIO_X;
+    if (!MOUSE_ON_RHS_SCREEN && MOUSE_BUTTON_PRESSED) {
+      mouse_rect.left *= SCREENSIZE_VIEWPORT_RATIO_X;
+      mouse_rect.right *= SCREENSIZE_VIEWPORT_RATIO_X;
       pview_port = &LHS;
+
+      assert(pview_port);
+      OR::set_scissor(*pview_port);
+      OR::set_viewport(*pview_port);
+      draw_cursor_under_mouse(logger, pview_port->rect(), rect_sp, mouse_rect, cam_ortho, ds);
     }
-    else if (MOUSE_ON_RHS_SCREEN) {
-      pview_port = &RHS;
-    }
-    assert(pview_port);
-    OR::set_scissor(*pview_port);
-    OR::set_viewport(*pview_port);
-    draw_cursor_under_mouse(logger, pview_port->rect(), rect_sp, mouse_rect, cam_ortho, ds);
-  }
+    //else if (MOUSE_ON_RHS_SCREEN) {
+      //p//view_port = &RHS;
+      //draw_cursor_under_mouse(logger, pview_port->rect(), rect_sp, mouse_rect, cam_ortho, ds);
+    //}
 
   {
     auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
@@ -604,7 +613,8 @@ main(int argc, char **argv)
       quit = process_event(logger, event, cam_ortho, left_vdi, right_vdi, cube_ents, pm_rect);
     }
 
-    draw_scene(logger, ortho_pm, ortho_vm, pers_pm, pers_vm, LHS, RHS, SCREEN_DIM, cam_ortho, rectprog, wire_sp, pm_rect, cube_ents);
+    draw_scene(logger, ortho_pm, ortho_vm, pers_pm, pers_vm, LHS, RHS, SCREEN_DIM, cam_ortho,
+               rectprog, wire_sp, pm_rect, cube_ents);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());

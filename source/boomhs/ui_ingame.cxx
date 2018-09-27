@@ -583,8 +583,8 @@ draw_inventory_overlay(RenderState& rstate)
   auto const vr = es.dimensions.rect();
   auto const make_rectangle = [&]() {
 
-    auto const TL = glm::vec2{vr.left(), vr.top()};
-    auto const BR = glm::vec2{vr.right(), vr.bottom()};
+    auto const TL = glm::vec2{vr.left, vr.top};
+    auto const BR = glm::vec2{vr.right, vr.bottom};
 
     Rectangle    const rect{TL.x, TL.y, BR.x, BR.y};
     OF::RectInfo const ri{rect, std::nullopt, std::nullopt, std::nullopt};

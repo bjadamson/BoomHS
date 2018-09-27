@@ -14,7 +14,8 @@ struct Transform;
 struct Rectangle
 {
   // fields
-  glm::vec2 min, max;
+  float left, top;
+  float right, bottom;
 
   // ctor
   explicit constexpr Rectangle(int const l, int const t, int const r, int const b)
@@ -29,26 +30,27 @@ struct Rectangle
   }
 
   explicit constexpr Rectangle(glm::vec2 const& p0, glm::vec2 const& p1)
-      : min(p0)
-      , max(p1)
+      : left(p0.x)
+      , top(p0.y)
+      , right(p1.x)
+      , bottom(p1.y)
   {
   }
 
   // methods
-  auto constexpr left() const { return min.x; }
-  auto constexpr top() const { return min.y; }
+  auto constexpr left_top() const { return glm::vec2{left, top}; }
+  auto constexpr left_bottom() const { return glm::vec2{left, bottom}; }
 
-  auto constexpr right() const { return max.x; }
-  auto constexpr bottom() const { return max.y; }
+  auto constexpr right_top() const { return glm::vec2{right, top}; }
+  auto constexpr right_bottom() const { return glm::vec2{right, bottom}; }
 
-  auto constexpr left_top() const { return glm::vec2{left(), top()}; }
-  auto constexpr left_bottom() const { return glm::vec2{left(), bottom()}; }
+  auto width() const { return std::abs(right - left); }
+  auto height() const { return std::abs(top - bottom); }
+  auto dimensions() const { return VEC2{width(), height()}; }
 
-  auto constexpr right_top() const { return glm::vec2{right(), top()}; }
-  auto constexpr right_bottom() const { return glm::vec2{right(), bottom()}; }
-
-  auto width() const { return std::abs(right() - left()); }
-  auto height() const { return std::abs(top() - bottom()); }
+  auto half_dimensions() const { return dimensions() / 2; }
+  auto half_width() const { return width() / 2; }
+  auto half_height() const { return height() / 2; }
 
   std::string to_string() const;
 };
@@ -184,8 +186,8 @@ eye_to_world(glm::vec4 const& eye, glm::mat4 const& view_matrix)
 inline constexpr glm::vec2
 screen_to_ndc(glm::vec2 const& scoords, Rectangle const& view_rect)
 {
-  float const x = ((2.0f * scoords.x) / view_rect.right()) - 1.0f;
-  float const y = ((2.0f * scoords.y) / view_rect.bottom()) - 1.0f;
+  float const x = ((2.0f * scoords.x) / view_rect.right) - 1.0f;
+  float const y = ((2.0f * scoords.y) / view_rect.bottom) - 1.0f;
 
   auto const assert_fn = [](float const v) {
     assert(v <= 1.0f);

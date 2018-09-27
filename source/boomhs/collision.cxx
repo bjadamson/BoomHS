@@ -24,8 +24,8 @@ point_rectangle_intersects(
     Rectangle const& rect
     )
 {
-  bool const within_lr = point.x >= rect.left() && point.x <= rect.right();
-  bool const within_tb = point.y >= rect.top()  && point.y <= rect.bottom();
+  bool const within_lr = point.x >= rect.left && point.x <= rect.right;
+  bool const within_tb = point.y >= rect.top  && point.y <= rect.bottom;
 
   return within_lr && within_tb;
 }
@@ -33,10 +33,10 @@ point_rectangle_intersects(
 bool
 rectangles_overlap(Rectangle const& a, Rectangle const& b)
 {
-  return a.left()   < b.right()
-      && a.right()  > b.left()
-      && a.bottom()    > b.top()
-      && a.top() < b.bottom();
+  return a.left   < b.right
+      && a.right  > b.left
+      && a.bottom > b.top
+      && a.top    < b.bottom;
 }
 
 bool
