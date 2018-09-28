@@ -55,6 +55,44 @@ struct FloatRect
   std::string to_string() const;
 };
 
+struct IntPoint
+{
+  int x, y;
+};
+struct IntRect
+{
+  int left, top;
+  int right, bottom;
+
+  explicit constexpr IntRect(int const l, int const t, int const r, int const b)
+      : left(l)
+      , top(t)
+      , right(r)
+      , bottom(b)
+  {
+  }
+
+  explicit constexpr IntRect(IntPoint const& tl, IntPoint const& br)
+      : left(tl.x)
+      , top(tl.y)
+      , right(br.x)
+      , bottom(br.y)
+  {
+  }
+
+  static IntRect
+  from_floats(float const l, float const t, float const r, float const b)
+  {
+    auto const cast = [](auto const& v) { return static_cast<int>(v); };
+    IntPoint const tl{cast(l), cast(t)};
+    IntPoint const br{cast(l), cast(t)};
+    return IntRect{tl, br};
+  }
+
+  auto constexpr left_top() const { return IntPoint{left, top}; }
+  auto constexpr right_bottom() const { return IntPoint{right, bottom}; }
+};
+
 struct Cube
 {
   glm::vec3 min, max;
@@ -108,11 +146,10 @@ struct Frustum
     return far - near;
   }
 
-  auto LT_RB_rect() const { return FloatRect{left, top, right, bottom}; }
-  //Viewport  as_viewport() const { return Viewport{left, top, right, bottom}; }
+  auto viewport_float_rect() const { return FloatRect{left, top, right, bottom}; }
+  auto viewport_int_rect()   const { return IntRect::from_floats(left, top, right, bottom); }
 
   auto dimensions() const { return glm::vec3(width(), height(), depth()); }
-
   glm::vec3 center() const { return dimensions() / 2.0f; }
 
   std::string to_string() const;

@@ -4,33 +4,41 @@
 namespace boomhs
 {
 
-using PixelT = int;
-
 struct ScreenCoords
 {
-  PixelT x;
-  PixelT y;
+  int x;
+  int y;
 
   glm::vec2 to_vec2() const { return glm::vec2{x, y}; }
 };
 
 struct ScreenSize
 {
-  PixelT width;
-  PixelT height;
+  int width;
+  int height;
 };
 
 class Viewport
 {
-  PixelT left_, top_, right_, bottom_;
+  int left_, top_, right_, bottom_;
 
 public:
-  constexpr Viewport(PixelT const left, PixelT const top, PixelT const right,
-                             PixelT const bottom)
+  constexpr Viewport(int const left, int const top, int const right,
+                              int const bottom)
       : left_(left)
       , top_(top)
       , right_(right)
       , bottom_(bottom)
+  {
+  }
+
+  constexpr Viewport(IntPoint const& tl, IntPoint const& br)
+      : Viewport(tl.x, tl.y, br.x, br.y)
+  {
+  }
+
+  constexpr Viewport(IntRect const& r)
+      : Viewport(r.left_top(), r.right_bottom())
   {
   }
 
@@ -60,10 +68,10 @@ public:
   from_float_rect(FloatRect const& rect)
   {
     return Viewport{
-      (PixelT)rect.left,
-      (PixelT)rect.top,
-      (PixelT)rect.right,
-      (PixelT)rect.bottom};
+      (int)rect.left,
+      (int)rect.top,
+      (int)rect.right,
+      (int)rect.bottom};
   }
 };
 
