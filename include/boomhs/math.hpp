@@ -73,10 +73,7 @@ struct IntRect
   }
 
   explicit constexpr IntRect(IntPoint const& tl, IntPoint const& br)
-      : left(tl.x)
-      , top(tl.y)
-      , right(br.x)
-      , bottom(br.y)
+      : IntRect(tl.x, tl.y, br.x, br.y)
   {
   }
 
@@ -85,8 +82,14 @@ struct IntRect
   {
     auto const cast = [](auto const& v) { return static_cast<int>(v); };
     IntPoint const tl{cast(l), cast(t)};
-    IntPoint const br{cast(l), cast(t)};
+    IntPoint const br{cast(r), cast(b)};
     return IntRect{tl, br};
+  }
+
+  static IntRect
+  from_floats(glm::vec2 const& p0, glm::vec2 const& p1)
+  {
+    return from_floats(p0.x, p0.y, p1.x, p1.y);
   }
 
   auto constexpr left_top() const { return IntPoint{left, top}; }

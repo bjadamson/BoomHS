@@ -23,8 +23,7 @@ class Viewport
   int left_, top_, right_, bottom_;
 
 public:
-  constexpr Viewport(int const left, int const top, int const right,
-                              int const bottom)
+  constexpr Viewport(int const left, int const top, int const right, int const bottom)
       : left_(left)
       , top_(top)
       , right_(right)
@@ -62,17 +61,7 @@ public:
   auto constexpr height() const { return bottom() - top(); }
 
   auto constexpr center() const { return ScreenCoords{width() / 2, height() / 2}; }
-  auto constexpr rect() const { return FloatRect{left_, top_, right_, bottom_}; }
-
-  static Viewport
-  from_float_rect(FloatRect const& rect)
-  {
-    return Viewport{
-      (int)rect.left,
-      (int)rect.top,
-      (int)rect.right,
-      (int)rect.bottom};
-  }
+  auto constexpr rect_float() const { return FloatRect{left_, top_, right_, bottom_}; }
 };
 
 template <typename T>

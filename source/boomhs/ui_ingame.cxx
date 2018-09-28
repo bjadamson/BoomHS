@@ -582,12 +582,11 @@ draw_inventory_overlay(RenderState& rstate)
   auto color = LOC::GRAY;
   color.set_a(0.40);
 
-  auto const vp = Viewport{es.frustum.viewport_int_rect()};
-  auto const vr = vp.rect();
+  auto const vp_rect = es.frustum.viewport_int_rect();
   auto const make_rectangle = [&]() {
 
-    auto const TL = glm::vec2{vr.left, vr.top};
-    auto const BR = glm::vec2{vr.right, vr.bottom};
+    auto const TL = glm::vec2{vp_rect.left,  vp_rect.top};
+    auto const BR = glm::vec2{vp_rect.right, vp_rect.bottom};
 
     FloatRect const rect{TL.x, TL.y, BR.x, BR.y};
     OF::RectInfo   const ri{rect, std::nullopt, std::nullopt, std::nullopt};

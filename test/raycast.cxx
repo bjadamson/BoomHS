@@ -563,7 +563,7 @@ draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
 
   OR::set_scissor(view_port);
   OR::set_viewport(view_port);
-  draw_cursor_under_mouse(logger, view_port.rect(), rect_sp, mouse_rect, camera, ds);
+  draw_cursor_under_mouse(logger, view_port.rect_float(), rect_sp, mouse_rect, camera, ds);
 }
 
 void
@@ -592,7 +592,7 @@ draw_scene(common::Logger& logger,
   auto const draw_pm = [&](auto& sp, auto& di, DrawState& ds, Color const& color) {
     OR::set_scissor(SCREEN_DIM);
     OR::set_viewport(SCREEN_DIM);
-    draw_rectangle_pm(logger, screen_dim.rect(), camera, sp, di, color, GL_TRIANGLES, ds);
+    draw_rectangle_pm(logger, screen_dim.rect_float(), camera, sp, di, color, GL_TRIANGLES, ds);
   };
 
   draw_lhs(ds, ortho_pm, ortho_vm);
@@ -685,7 +685,7 @@ main(int argc, char **argv)
   auto const cr1 = FloatRect{600, 600, 800, 800};
   auto rect_sp = make_rectangle_program(logger);
 
-  auto const sd_rect = SCREEN_DIM.rect();
+  auto const sd_rect = SCREEN_DIM.rect_float();
   auto const& va = rect_sp.va();
   auto di0 = make_perspective_rect_gpuhandle(logger, cr0, va, sd_rect);
   auto di1 = make_perspective_rect_gpuhandle(logger, cr1, va, sd_rect);
@@ -716,8 +716,8 @@ main(int argc, char **argv)
 
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
-      ViewportDisplayInfo const left_vdi{LHS.rect(), ortho_pm, ortho_vm};
-      ViewportDisplayInfo const right_vdi{RHS.rect(), pers_pm,  pers_vm};
+      ViewportDisplayInfo const left_vdi{LHS.rect_float(), ortho_pm, ortho_vm};
+      ViewportDisplayInfo const right_vdi{RHS.rect_float(), pers_pm,  pers_vm};
       quit = process_event(logger, event, cam_ortho, left_vdi, right_vdi, cube_ents, pm_rects);
     }
 
@@ -725,7 +725,7 @@ main(int argc, char **argv)
     SDL_GetMouseState(&mouse_x, &mouse_y);
     glm::vec2 const mouse_pos{mouse_x, mouse_y};
 
-    update(logger, cam_ortho, LHS.rect(), RHS.rect(), mouse_pos, cube_ents, ft);
+    update(logger, cam_ortho, LHS.rect_float(), RHS.rect_float(), mouse_pos, cube_ents, ft);
     draw_scene(logger, ortho_pm, ortho_vm, pers_pm, pers_vm, rect_sp, LHS, RHS, SCREEN_DIM,
                cam_ortho, wire_sp, pm_rects, mouse_pos, cube_ents);
 
