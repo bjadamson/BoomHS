@@ -14,13 +14,11 @@ namespace boomhs
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EngineState
-EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, Viewport const& window_vp,
-    Frustum const& frust)
+EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, Frustum const& f)
     : logger(l)
     , al_device(al)
     , imgui(i)
-    , window_viewport(window_vp)
-    , frustum(frust)
+    , frustum(f)
     , disable_controller_input(true)
     , player_collision(false)
     , mariolike_edges(false)
@@ -54,16 +52,9 @@ Engine::Engine(SDLWindow&& w, SDLControllers&& c)
 }
 
 Viewport
-Engine::dimensions() const
+Engine::window_viewport() const
 {
-  return window.get_dimensions();
-}
-
-ScreenSize
-Engine::screen_size() const
-{
-  auto const d = dimensions();
-  return ScreenSize{d.right(), d.bottom()};
+  return window.viewport();
 }
 
 } // namespace boomhs

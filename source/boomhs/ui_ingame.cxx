@@ -296,7 +296,8 @@ draw_chatwindow(EngineState& es, Player& player)
       | ImGuiWindowFlags_NoTitleBar
       );
 
-    auto const [window_w, window_h] = es.window_viewport.size();
+    auto const vp  = Viewport::from_float_rect(es.frustum.LT_RB_rect());
+    auto const [window_w, window_h] = vp.size();
     ImVec2 const offset{10, 6};
     auto const chat_w = 480, chat_h = 200;
     auto const chat_x = window_w - chat_w - offset.x, chat_y = window_h - chat_h - offset.y;
@@ -332,7 +333,8 @@ draw_debugoverlay_window(EngineState& es, DrawState& ds)
 
   bool constexpr SHOW_BORDER = false;
 
-  auto const [window_w, window_h] = es.window_viewport.size();
+  auto const vp  = Viewport::from_float_rect(es.frustum.LT_RB_rect());
+  auto const [window_w, window_h] = vp.size();
   ImVec2 const offset{100, 50};
   auto const chat_w = 300, chat_h = 100;
   auto const chat_x = window_w - chat_w - offset.x, chat_y = chat_h - offset.y;
@@ -580,14 +582,15 @@ draw_inventory_overlay(RenderState& rstate)
   auto color = LOC::GRAY;
   color.set_a(0.40);
 
-  auto const vr = es.window_viewport.rect();
+  auto const vp  = Viewport::from_float_rect(es.frustum.LT_RB_rect());
+  auto const vr = vp.rect();
   auto const make_rectangle = [&]() {
 
     auto const TL = glm::vec2{vr.left, vr.top};
     auto const BR = glm::vec2{vr.right, vr.bottom};
 
-    Rectangle    const rect{TL.x, TL.y, BR.x, BR.y};
-    OF::RectInfo const ri{rect, std::nullopt, std::nullopt, std::nullopt};
+    FloatRect const rect{TL.x, TL.y, BR.x, BR.y};
+    OF::RectInfo   const ri{rect, std::nullopt, std::nullopt, std::nullopt};
     return OF::make_rectangle(ri);
   };
 
@@ -632,7 +635,9 @@ draw(FrameState& fs, Camera& camera, DrawState& ds)
 
   auto& ldata = zs.level_data;
   auto& nbt   = ldata.nearby_targets;
-  draw_nearest_target_info(es.window_viewport, nbt, ttable, registry);
+
+  auto const vp  = Viewport::from_float_rect(es.frustum.LT_RB_rect());
+  draw_nearest_target_info(vp, nbt, ttable, registry);
 
   // Create a renderstate using an orthographic projection.
   auto fss = FrameState::from_camera_for_2dui_overlay(es, zs, camera, camera.view_settings_ref(), es.frustum);

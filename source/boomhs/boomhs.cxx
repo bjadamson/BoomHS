@@ -643,22 +643,21 @@ draw_everything(FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
             WaterAudioSystem& water_audio, StaticRenderers& static_renderers, DrawState& ds,
             FrameTime const& ft)
 {
-  auto& es             = fs.es;
-  auto& zs             = lm.active();
-  auto const& viewport = es.window_viewport;
+  auto& es            = fs.es;
+  auto& zs            = lm.active();
   {
     RenderState rstate{fs, ds};
 
     auto const mode = camera.mode();
     if (CameraMode::FPS == mode || CameraMode::ThirdPerson == mode) {
-      render::set_viewport(viewport);
+      auto const& fr = es.frustum;
+      auto const  vp = Viewport::from_float_rect(fr.LT_RB_rect());
+
+      render::set_viewport(vp);
       PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);
 
-      float const right  = viewport.right();
-      float const bottom = viewport.bottom();
-
       auto& io = es.imgui;
-      io.DisplaySize = ImVec2{right, bottom};
+      io.DisplaySize = ImVec2{fr.right, fr.bottom};
       auto& ui_state = es.ui_state;
       if (ui_state.draw_ingame_ui) {
         ui_ingame::draw(fs, camera, ds);
@@ -709,7 +708,8 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
   DrawState ds{es.wireframe_override};
 
   auto& io = es.imgui;
-  auto const& dimensions = engine.dimensions();
+  auto const viewport = engine.window_viewport();
+
   if (es.main_menu.show) {
     SDL_SetRelativeMouseMode(SDL_FALSE);
 
@@ -718,10 +718,10 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
     // clear the screen before rending the main menu
     render::clear_screen(LOC::BLACK);
-    render::set_viewport(dimensions);
+    render::set_viewport(viewport);
 
     auto& skybox_renderer  = static_renderers.skybox;
-    main_menu::draw(es, engine.window, camera, skybox_renderer, ds, lm, dimensions, water_audio);
+    main_menu::draw(es, engine.window, camera, skybox_renderer, ds, lm, viewport, water_audio);
   }
   else {
     {

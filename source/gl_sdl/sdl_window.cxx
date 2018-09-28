@@ -62,12 +62,13 @@ SDLWindow::~SDLWindow()
 }
 
 Viewport
-SDLWindow::get_dimensions() const
+SDLWindow::viewport() const
 {
   int w = 0, h = 0;
   assert(nullptr != window_.get());
   SDL_GetWindowSize(window_.get(), &w, &h);
 
+  // TODO: use x, y instead of 0, 0
   int x, y;
   SDL_GetWindowPosition(window_.get(), &x, &y);
   return boomhs::Viewport{0, 0, w, h};

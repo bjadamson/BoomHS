@@ -42,7 +42,6 @@ struct EngineState
   ALCdevice_struct& al_device;
   ImGuiIO&          imgui;
 
-  Viewport const  window_viewport;
   Frustum         frustum;
   MainMenuState   main_menu;
   common::Time    time;
@@ -88,8 +87,7 @@ struct EngineState
 
   // Constructors
   NO_COPY_OR_MOVE(EngineState);
-  EngineState(common::Logger&, ALCdevice_struct&, ImGuiIO&, Viewport const&,
-              Frustum const& frustum);
+  EngineState(common::Logger&, ALCdevice_struct&, ImGuiIO&, Frustum const& frustum);
 };
 
 using EntityRegistries = std::vector<EntityRegistry>;
@@ -108,8 +106,7 @@ struct Engine
   // program to store references into the data owned by registries.
   NO_COPY_OR_MOVE(Engine);
 
-  Viewport dimensions() const;
-  ScreenSize       screen_size() const;
+  Viewport window_viewport() const;
 };
 
 } // namespace boomhs

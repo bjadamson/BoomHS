@@ -31,9 +31,9 @@ namespace boomhs
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Rectangle
+// FloatRect
 std::string
-Rectangle::to_string() const
+FloatRect::to_string() const
 {
   return fmt::sprintf("left/top: (%f,%f) right/bottom: (%f,%f)", left, top, right, bottom);
 }

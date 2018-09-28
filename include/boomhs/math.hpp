@@ -11,25 +11,25 @@ namespace boomhs
 {
 struct Transform;
 
-struct Rectangle
+struct FloatRect
 {
   // fields
   float left, top;
   float right, bottom;
 
   // ctor
-  explicit constexpr Rectangle(int const l, int const t, int const r, int const b)
-      : Rectangle(static_cast<float>(l), static_cast<float>(t), static_cast<float>(r),
+  explicit constexpr FloatRect(int const l, int const t, int const r, int const b)
+      : FloatRect(static_cast<float>(l), static_cast<float>(t), static_cast<float>(r),
                   static_cast<float>(b))
   {
   }
 
-  explicit constexpr Rectangle(float const l, float const t, float const r, float const b)
-      : Rectangle(glm::vec2{l, t}, glm::vec2{r, b})
+  explicit constexpr FloatRect(float const l, float const t, float const r, float const b)
+      : FloatRect(glm::vec2{l, t}, glm::vec2{r, b})
   {
   }
 
-  explicit constexpr Rectangle(glm::vec2 const& p0, glm::vec2 const& p1)
+  explicit constexpr FloatRect(glm::vec2 const& p0, glm::vec2 const& p1)
       : left(p0.x)
       , top(p0.y)
       , right(p1.x)
@@ -69,7 +69,7 @@ struct Cube
   glm::vec3 scaled_dimensions(Transform const&) const;
   glm::vec3 scaled_half_widths(Transform const&) const;
 
-  Rectangle constexpr xz_rect() const { return Rectangle{min.x, min.z, max.x, max.z}; }
+  auto constexpr xz_rect() const { return FloatRect{min.x, min.z, max.x, max.z}; }
 
   explicit Cube(glm::vec3 const&, glm::vec3 const&);
 
@@ -82,6 +82,15 @@ operator<<(std::ostream&, Cube const&);
 struct Frustum
 {
   float left, right, bottom, top, near, far;
+
+  int left_int() const { return left; }
+  int right_int() const { return right; }
+
+  int bottom_int() const { return bottom; }
+  int top_int() const { return top; }
+
+  int near_int() const { return near; }
+  int far_int() const { return far; }
 
   auto height() const
   {
@@ -98,6 +107,9 @@ struct Frustum
     assert(far > near);
     return far - near;
   }
+
+  auto LT_RB_rect() const { return FloatRect{left, top, right, bottom}; }
+  //Viewport  as_viewport() const { return Viewport{left, top, right, bottom}; }
 
   auto dimensions() const { return glm::vec3(width(), height(), depth()); }
 
@@ -184,7 +196,7 @@ eye_to_world(glm::vec4 const& eye, glm::mat4 const& view_matrix)
 }
 
 inline constexpr glm::vec2
-screen_to_ndc(glm::vec2 const& scoords, Rectangle const& view_rect)
+screen_to_ndc(glm::vec2 const& scoords, FloatRect const& view_rect)
 {
   float const x = ((2.0f * scoords.x) / view_rect.right) - 1.0f;
   float const y = ((2.0f * scoords.y) / view_rect.bottom) - 1.0f;
@@ -205,7 +217,7 @@ ndc_to_clip(glm::vec2 const& ndc, float const z)
 }
 
 inline glm::vec3
-screen_to_world(glm::vec2 const& scoords, Rectangle const& view_rect, glm::mat4 const& proj_matrix,
+screen_to_world(glm::vec2 const& scoords, FloatRect const& view_rect, glm::mat4 const& proj_matrix,
                 glm::mat4 const& view_matrix, float const z)
 {
   glm::vec2 const ndc   = screen_to_ndc(scoords, view_rect);

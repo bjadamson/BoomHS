@@ -37,10 +37,10 @@ namespace
 {
 
 void
-draw_ortho_lhs(EngineState& es, LevelManager& lm, Camera& camera, FrameTime const& ft,
-               PixelT const cutoff_point)
+draw_ortho_lhs(EngineState& es, LevelManager& lm, Camera& camera, PixelT const cutoff_point,
+               FrameTime const& ft)
 {
-  auto const& vp = es.window_viewport;
+  auto const vp = Viewport::from_float_rect(es.frustum.LT_RB_rect());
   Viewport const LHS{
     vp.left(), vp.top(), cutoff_point, vp.bottom()
   };
@@ -59,10 +59,11 @@ draw_ortho_lhs(EngineState& es, LevelManager& lm, Camera& camera, FrameTime cons
 void
 draw_ortho_rhs(RenderState& rstate, DrawState& ds, LevelManager& lm,
               StaticRenderers& static_renderers, Camera& camera, RNG& rng,
-              FrameTime const& ft, PixelT const cutoff_point)
+              PixelT const cutoff_point, FrameTime const& ft)
 {
   auto& es = rstate.fs.es;
-  auto const& vp = es.window_viewport;
+  auto const vp = Viewport::from_float_rect(es.frustum.LT_RB_rect());
+
   Viewport const RHS{
     cutoff_point, vp.top(), vp.right(), vp.right_bottom().y
   };
@@ -83,8 +84,8 @@ OrthoRenderer::draw_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, 
   auto& es = fs.es;
 
   PixelT const cutoff_point = 0;
-  //draw_ortho_lhs(es, lm, camera, ft, cutoff_point);
-  draw_ortho_rhs(rstate, ds, lm, static_renderers, camera, rng, ft, cutoff_point);
+  //draw_ortho_lhs(es, lm, camera, cutoff_point, ft);
+  draw_ortho_rhs(rstate, ds, lm, static_renderers, camera, rng, cutoff_point, ft);
 }
 
 } // namespace boomhs

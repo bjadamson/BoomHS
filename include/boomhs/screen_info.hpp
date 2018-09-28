@@ -54,7 +54,17 @@ public:
   auto constexpr height() const { return bottom() - top(); }
 
   auto constexpr center() const { return ScreenCoords{width() / 2, height() / 2}; }
-  auto constexpr rect() const { return Rectangle{left_, top_, right_, bottom_}; }
+  auto constexpr rect() const { return FloatRect{left_, top_, right_, bottom_}; }
+
+  static Viewport
+  from_float_rect(FloatRect const& rect)
+  {
+    return Viewport{
+      (PixelT)rect.left,
+      (PixelT)rect.top,
+      (PixelT)rect.right,
+      (PixelT)rect.bottom};
+  }
 };
 
 template <typename T>

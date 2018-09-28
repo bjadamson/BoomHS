@@ -93,13 +93,13 @@ struct ProgramAndGpuHandle
 };
 
 auto
-make_perspective_rect_gpuhandle(common::Logger& logger, Rectangle const& rect,
-                           VertexAttribute const& va, Rectangle const& view_rect)
+make_perspective_rect_gpuhandle(common::Logger& logger, FloatRect const& rect,
+                           VertexAttribute const& va, FloatRect const& view_rect)
 {
   auto const TOP_LEFT = glm::vec2{rect.left, rect.top};
   auto const BOTTOM_RIGHT = glm::vec2{rect.right, rect.bottom};
 
-  Rectangle      const ndc_rect{TOP_LEFT.x, TOP_LEFT.y, BOTTOM_RIGHT.x, BOTTOM_RIGHT.y};
+  FloatRect const ndc_rect{TOP_LEFT.x, TOP_LEFT.y, BOTTOM_RIGHT.x, BOTTOM_RIGHT.y};
   OF::RectInfo const ri{ndc_rect, std::nullopt, std::nullopt, std::nullopt};
   RectBuffer  buffer = OF::make_rectangle(ri);
 
@@ -184,7 +184,7 @@ draw_bboxes(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm,
 }
 
 void
-draw_rectangle_pm(common::Logger& logger, Rectangle const& viewport, CameraORTHO const& camera,
+draw_rectangle_pm(common::Logger& logger, FloatRect const& viewport, CameraORTHO const& camera,
                   ShaderProgram& sp, DrawInfo& dinfo, Color const& color, GLenum const draw_mode,
                   DrawState& ds)
 {
@@ -211,7 +211,7 @@ draw_rectangle_pm(common::Logger& logger, Rectangle const& viewport, CameraORTHO
 
 struct ViewportDisplayInfo
 {
-  Rectangle const& view_rect;
+  FloatRect const& view_rect;
   glm::mat4 const& perspective, view;
 };
 
@@ -306,12 +306,12 @@ process_keydown(SDL_Keycode const keycode, glm::vec3& camera_pos, CubeEntities& 
 
 struct PmRect
 {
-  Rectangle const& rect;
+  FloatRect const& rect;
   DrawInfo         di;
 
   bool selected = false;
 
-  explicit PmRect(Rectangle const& r, DrawInfo &&d)
+  explicit PmRect(FloatRect const& r, DrawInfo &&d)
       : rect(r)
       , di(MOVE(d))
   {}
@@ -325,7 +325,7 @@ struct PmRects
   BEGIN_END_FORWARD_FNS(pms);
 };
 
-Rectangle
+auto
 make_mouse_rect(CameraORTHO const& camera, glm::vec2 const& mouse_pos)
 {
   auto const& click_pos = camera.mouse_click.left_right;
@@ -336,12 +336,12 @@ make_mouse_rect(CameraORTHO const& camera, glm::vec2 const& mouse_pos)
   auto const ty = lesser_of(click_pos.y, mouse_pos.y);
   auto const by = other_of_two(ty, PAIR(click_pos.y, mouse_pos.y));
 
-  return Rectangle{VEC2{lx, ty}, VEC2{rx, by}};
+  return FloatRect{VEC2{lx, ty}, VEC2{rx, by}};
 }
 
 void
 on_rhs_mouse_cube_collisions(common::Logger& logger, glm::vec2 const& mouse_pos,
-                             glm::mat4 const& pm, glm::mat4 const& vm, Rectangle const& viewport,
+                             glm::mat4 const& pm, glm::mat4 const& vm, FloatRect const& viewport,
                              CubeEntities& cube_ents)
 {
   auto &camera_pos = active_camera_pos();
@@ -364,8 +364,8 @@ on_rhs_mouse_cube_collisions(common::Logger& logger, glm::vec2 const& mouse_pos,
 void
 on_lhs_mouse_cube_collisions(common::Logger& logger,
                          glm::vec2 const& mouse_pos, glm::vec2 const& mouse_start,
-                         Rectangle const& mouse_rect,
-                         CameraORTHO const& cam_ortho, Rectangle const& view_rect,
+                         FloatRect const& mouse_rect,
+                         CameraORTHO const& cam_ortho, FloatRect const& view_rect,
                          glm::mat4 const& pm, glm::mat4 const& vm,
                          CubeEntities& cube_ents)
 {
@@ -410,9 +410,9 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 
   glm::vec2 mouse_start;
   float distance = 0.0f;
-  glm::mat4 const* pm        = nullptr;
-  glm::mat4 const* vm        = nullptr;
-  Rectangle const* view_rect = nullptr;
+  glm::mat4 const* pm             = nullptr;
+  glm::mat4 const* vm             = nullptr;
+  FloatRect const* view_rect = nullptr;
   if (MOUSE_ON_RHS_SCREEN) {
     // RHS
     view_rect   = &right_vdi.view_rect;
@@ -538,8 +538,8 @@ gen_cube_entities(common::Logger& logger, ShaderProgram const& sp, RNG &rng)
 }
 
 void
-draw_cursor_under_mouse(common::Logger& logger, Rectangle const& viewport, ShaderProgram& sp,
-                        Rectangle const& rect, CameraORTHO const& cam_ortho, DrawState& ds)
+draw_cursor_under_mouse(common::Logger& logger, FloatRect const& viewport, ShaderProgram& sp,
+                        FloatRect const& rect, CameraORTHO const& cam_ortho, DrawState& ds)
 {
   auto const rbuffer = OF::make_line_rectangle(rect);
   auto di            = OG::copy_rectangle(logger, sp.va(), rbuffer);
@@ -557,7 +557,7 @@ draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
   float const maxx = mouse_pos.x;
   float const maxy = mouse_pos.y;
 
-  Rectangle mouse_rect{minx, miny, maxx, maxy};
+  FloatRect mouse_rect{minx, miny, maxx, maxy};
   mouse_rect.left *= SCREENSIZE_VIEWPORT_RATIO_X;
   mouse_rect.right *= SCREENSIZE_VIEWPORT_RATIO_X;
 
@@ -611,8 +611,8 @@ draw_scene(common::Logger& logger,
 }
 
 void
-update(common::Logger& logger, CameraORTHO& camera, Rectangle const& left_viewport,
-       Rectangle const& right_viewport, glm::vec2 const& mouse_pos, CubeEntities& cube_ents,
+update(common::Logger& logger, CameraORTHO& camera, FloatRect const& left_viewport,
+       FloatRect const& right_viewport, glm::vec2 const& mouse_pos, CubeEntities& cube_ents,
        FrameTime const& ft)
 {
   if (MIDDLE_MOUSE_BUTTON_PRESSED) {
@@ -681,8 +681,8 @@ main(int argc, char **argv)
   cam_target.set(wo);
   CameraFPS cam_fps{cam_target, PERS_WO};
 
-  auto const cr0 = Rectangle{200, 200, 400, 400};
-  auto const cr1 = Rectangle{600, 600, 800, 800};
+  auto const cr0 = FloatRect{200, 200, 400, 400};
+  auto const cr1 = FloatRect{600, 600, 800, 800};
   auto rect_sp = make_rectangle_program(logger);
 
   auto const sd_rect = SCREEN_DIM.rect();

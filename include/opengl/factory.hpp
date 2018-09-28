@@ -131,7 +131,7 @@ struct RectangleColors
 struct RectInfo
 {
   // fields
-  boomhs::Rectangle rect;
+  boomhs::FloatRect rect;
   RectangleColors   colors;
 
   std::optional<RectangleUvs> uvs;
@@ -141,7 +141,7 @@ RectBuffer
 make_rectangle(RectInfo const&);
 
 RectLineBuffer
-make_line_rectangle(boomhs::Rectangle const&);
+make_line_rectangle(boomhs::FloatRect const&);
 
 static constexpr RectangleIndices RECTANGLE_INDICES = {{
   0, 1, 2, 3, 4, 5

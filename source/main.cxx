@@ -127,14 +127,14 @@ start(common::Logger& logger, Engine& engine)
   // Construct game state
   auto constexpr NEAR   = 0.001f;
   auto constexpr FAR    = 100.0f;
-  auto const viewport = engine.dimensions();
+  auto const window_viewport = engine.window_viewport();
 
   // clang-format off
   Frustum const frustum{
-    viewport.float_left(),
-    viewport.float_right(),
-    viewport.float_bottom(),
-    viewport.float_top(),
+    window_viewport.float_left(),
+    window_viewport.float_right(),
+    window_viewport.float_bottom(),
+    window_viewport.float_top(),
     NEAR,
     FAR};
   // clang-format on
@@ -146,8 +146,7 @@ start(common::Logger& logger, Engine& engine)
   // Instead we'll use the system hardware cursor (using SDL).
   io.MouseDrawCursor = false;
 
-  // TODO: get rid of viewport from EngineState
-  EngineState es{logger, *al_device, io, viewport, frustum};
+  EngineState es{logger, *al_device, io, frustum};
 
   // camera-look at origin
   // cameraspace "up" is === "up" in worldspace.

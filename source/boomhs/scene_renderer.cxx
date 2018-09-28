@@ -166,8 +166,8 @@ make_static_renderers(EngineState& es, ZoneState& zs)
 
   auto const       make_advanced_water_renderer = [](EngineState& es, ZoneState& zs) {
     auto& logger   = es.logger;
-    auto const&      vp = es.window_viewport;
-    ScreenSize const screen_size{vp.right(), vp.bottom()};
+    auto const& f  = es.frustum;
+    ScreenSize const screen_size{f.right_int(), f.bottom_int()};
 
     auto& gfx_state = zs.gfx_state;
     auto& ttable    = gfx_state.texture_table;
@@ -197,8 +197,9 @@ make_static_renderers(EngineState& es, ZoneState& zs)
     auto& gfx_state = zs.gfx_state;
     auto& sps       = gfx_state.sps;
     auto& sunshaft_sp = sps.ref_sp("sunshaft");
-    auto const&      vp = es.window_viewport;
-    ScreenSize const screen_size{vp.right(), vp.bottom()};
+
+    auto const& f = es.frustum;
+    ScreenSize const screen_size{f.right_int(), f.bottom_int()};
     return SunshaftRenderer{logger, screen_size, sunshaft_sp};
   };
 

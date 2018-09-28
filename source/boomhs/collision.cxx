@@ -21,7 +21,7 @@ namespace boomhs::collision
 bool
 point_rectangle_intersects(
     glm::vec2 const& point,
-    Rectangle const& rect
+    FloatRect const& rect
     )
 {
   bool const within_lr = point.x >= rect.left && point.x <= rect.right;
@@ -31,7 +31,7 @@ point_rectangle_intersects(
 }
 
 bool
-rectangles_overlap(Rectangle const& a, Rectangle const& b)
+rectangles_overlap(FloatRect const& a, FloatRect const& b)
 {
   return a.left   < b.right
       && a.right  > b.left
