@@ -18,8 +18,6 @@ using namespace gl_sdl;
 // rotation and scaling with the delta time each frame.
 //
 // This massive speed multiplier is needed to restore numbers fast enough for humans to enjoy.
-double constexpr ZOOM_SPEED_MULTIPLIER = 1000.0;
-
 namespace boomhs
 {
 
@@ -61,6 +59,8 @@ void
 CameraArcball::zoom(float const amount, FrameTime const& ft)
 {
   float constexpr MIN_RADIUS = 0.01f;
+  float constexpr ZOOM_SPEED_MULTIPLIER = 1000.0;
+
   float const delta          = (amount * ft.delta_millis() * ZOOM_SPEED_MULTIPLIER);
   float const new_radius     = coordinates_.radius + delta;
 
@@ -238,11 +238,11 @@ CameraORTHO::calc_pm(AspectRatio const& ar, Frustum const& f) const
   auto const& view_width  = view_size.x;
   auto const& view_height = view_size.y;
 
-  float const left   = 0.0f + f.left      + zoom_.x - position.x;
-  float const right  = left + view_width  - zoom_.x - position.x;
+  float const left   = 0.0f + f.left      + zoom().x - position.x;
+  float const right  = left + view_width  - zoom().x - position.x;
 
-  float const top    = 0.0f + f.top       + zoom_.y + position.z;
-  float const bottom = top  + view_height - zoom_.y + position.z;
+  float const top    = 0.0f + f.top       + zoom().y + position.z;
+  float const bottom = top  + view_height - zoom().y + position.z;
 
   return glm::ortho(left, right, bottom, top, f.near, f.far);
 }

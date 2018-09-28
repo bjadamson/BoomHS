@@ -141,6 +141,7 @@ public:
   void shink_view(glm::vec2 const&);
 
   void scroll(glm::vec2 const&);
+  auto zoom() const { return zoom_; }
 };
 
 class CameraArcball

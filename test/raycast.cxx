@@ -215,14 +215,20 @@ struct ViewportDisplayInfo
   glm::mat4 const& perspective, view;
 };
 
+void
+move_cubes(glm::vec3 const& delta_v, CubeEntities& cube_ents)
+{
+  for (auto& cube_tr : cube_ents) {
+    auto& tr = cube_tr.transform();
+    tr.translation += delta_v;
+  }
+}
+
 bool
 process_keydown(SDL_Keycode const keycode, glm::vec3& camera_pos, CubeEntities& cube_ents)
 {
   auto const move_trs = [&](auto const& delta_v) {
-    for (auto& cube_tr : cube_ents) {
-      auto& tr = cube_tr.transform();
-      tr.translation += delta_v;
-    }
+    move_cubes(delta_v, cube_ents);
   };
   auto const rotate_ents = [&](float const angle_degrees, glm::vec3 const& axis) {
     for (auto& cube_ent : cube_ents) {
@@ -581,9 +587,9 @@ draw_scene(common::Logger& logger,
     Rectangle mouse_rect{minx, miny, maxx, maxy};
     ScreenDimensions const* pview_port = nullptr;
     if (!MOUSE_ON_RHS_SCREEN && MOUSE_BUTTON_PRESSED) {
+      pview_port = &LHS;
       mouse_rect.left *= SCREENSIZE_VIEWPORT_RATIO_X;
       mouse_rect.right *= SCREENSIZE_VIEWPORT_RATIO_X;
-      pview_port = &LHS;
 
       assert(pview_port);
       OR::set_scissor(*pview_port);
@@ -600,7 +606,8 @@ draw_scene(common::Logger& logger,
 
 void
 update(common::Logger& logger, CameraORTHO& camera, Rectangle const& left_viewport,
-       Rectangle const& right_viewport, glm::vec2 const& mouse_pos, FrameTime const& ft)
+       Rectangle const& right_viewport, glm::vec2 const& mouse_pos, CubeEntities& cube_ents,
+       FrameTime const& ft)
 {
   if (MIDDLE_MOUSE_BUTTON_PRESSED) {
     auto const& middle_clickpos = camera.mouse_click.middle;
@@ -610,11 +617,12 @@ update(common::Logger& logger, CameraORTHO& camera, Rectangle const& left_viewpo
         ? left_viewport
         : right_viewport;
     float const dx = (mouse_pos - middle_clickpos).x / frustum.width();
-    float const dy = -((mouse_pos - middle_clickpos).y / frustum.height());
+    float const dy = (mouse_pos - middle_clickpos).y / frustum.height();
 
     auto constexpr SCROLL_SPEED = 15.0f;
     auto const multiplier = SCROLL_SPEED * distance * ft.delta_millis();
-    camera.scroll(glm::vec2{dx, dy} * multiplier);
+
+    move_cubes(glm::vec3{dx, 0, dy} * multiplier, cube_ents);
   }
 }
 
@@ -711,7 +719,7 @@ main(int argc, char **argv)
     SDL_GetMouseState(&mouse_x, &mouse_y);
     glm::vec2 const mouse_pos{mouse_x, mouse_y};
 
-    update(logger, cam_ortho, LHS.rect(), RHS.rect(), mouse_pos, ft);
+    update(logger, cam_ortho, LHS.rect(), RHS.rect(), mouse_pos, cube_ents, ft);
     draw_scene(logger, ortho_pm, ortho_vm, pers_pm, pers_vm, rect_sp, LHS, RHS, SCREEN_DIM,
                cam_ortho, wire_sp, pm_rects, mouse_pos, cube_ents);
 
