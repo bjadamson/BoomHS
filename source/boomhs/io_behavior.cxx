@@ -181,7 +181,7 @@ PlayerPlayingGameBehavior::mousebutton_down(MouseButtonEvent&& mbe)
   else if (mode == CameraMode::Ortho) {
     if (ms.middle_pressed()) {
       auto const c = glm::vec2{ms.coords().x, ms.coords().y};
-      camera.ortho.click_position = c;
+      camera.ortho.mouse_click.left_right = c;
 
       auto& ds         = es.device_states;
       ds.cursors.set_active(SDL_SYSTEM_CURSOR_HAND);
@@ -442,7 +442,7 @@ PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs &&mk)
   }
   else if (mode == CameraMode::Ortho) {
     if (ms_now.middle_pressed()) {
-      auto const& click_pos = camera.ortho.click_position;
+      auto const& click_pos = camera.ortho.mouse_click.middle;
 
       auto const coords   = ms_now.coords();
       auto const now      = glm::vec2{coords.x, coords.y};

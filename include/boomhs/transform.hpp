@@ -23,7 +23,9 @@ struct Transform
   // radians.
   glm::vec3 get_rotation_radians() const;
 
+  void rotate_radians(float, glm::vec3 const&);
   void rotate_radians(float, math::EulerAxis);
+
   void rotate_xyz_radians(glm::vec3 const&);
   void rotate_xyz_radians(float const x, float const y, float const z)
   {
@@ -33,7 +35,9 @@ struct Transform
   // degrees.
   glm::vec3 get_rotation_degrees() const;
 
+  void rotate_degrees(float, glm::vec3 const&);
   void rotate_degrees(float, math::EulerAxis);
+
   void rotate_xyz_degrees(glm::vec3 const&);
   void rotate_xyz_degrees(float const x, float const y, float const z)
   {

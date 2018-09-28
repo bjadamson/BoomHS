@@ -124,7 +124,13 @@ public:
   // fields
   static glm::vec3 constexpr EYE_FORWARD = math::constants::Y_UNIT_VECTOR;
   glm::vec3 position;
-  glm::vec2 click_position;
+
+  struct ClickPositions {
+    glm::vec2 left_right;
+    glm::vec2 middle;
+  };
+
+  ClickPositions mouse_click;
   glm::vec2 view_size;
 
   // methods

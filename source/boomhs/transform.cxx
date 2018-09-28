@@ -19,18 +19,23 @@ Transform::get_rotation_radians() const
 }
 
 void
+Transform::rotate_radians(float const radians, glm::vec3 const& axis)
+{
+  rotation = glm::angleAxis(radians, axis) * rotation;
+}
+
+void
 Transform::rotate_radians(float const radians, EulerAxis const axis)
 {
-  auto& r = rotation;
   switch (axis) {
     case EulerAxis::X:
-      r = glm::angleAxis(radians, constants::X_UNIT_VECTOR) * r;
+      rotate_radians(radians, constants::X_UNIT_VECTOR);
       break;
     case EulerAxis::Y:
-      r = glm::angleAxis(radians, constants::Y_UNIT_VECTOR) * r;
+      rotate_radians(radians, constants::Y_UNIT_VECTOR);
       break;
     case EulerAxis::Z:
-      r = glm::angleAxis(radians, constants::Z_UNIT_VECTOR) * r;
+      rotate_radians(radians, constants::Z_UNIT_VECTOR);
       break;
     case EulerAxis::INVALID:
       std::abort();
@@ -50,6 +55,12 @@ glm::vec3
 Transform::get_rotation_degrees() const
 {
   return glm::degrees(get_rotation_radians());
+}
+
+void
+Transform::rotate_degrees(float const degrees, glm::vec3 const& axis)
+{
+  rotate_radians(glm::radians(degrees), axis);
 }
 
 void

@@ -50,8 +50,9 @@ static Frustum constexpr FRUSTUM{
 
 static glm::vec3  ORTHO_CAMERA_POS = glm::vec3{0, 1, 0};
 static glm::vec3  PERS_CAMERA_POS  = glm::vec3{0, 0, 1};
-static bool MOUSE_ON_RHS_SCREEN = false;
-static bool MOUSE_BUTTON_PRESSED = false;
+static bool MOUSE_ON_RHS_SCREEN         = false;
+static bool MOUSE_BUTTON_PRESSED        = false;
+static bool MIDDLE_MOUSE_BUTTON_PRESSED = false;
 
 auto&
 active_camera_pos()
@@ -223,6 +224,11 @@ process_keydown(SDL_Keycode const keycode, glm::vec3& camera_pos, CubeEntities& 
       tr.translation += delta_v;
     }
   };
+  auto const rotate_ents = [&](float const angle_degrees, glm::vec3 const& axis) {
+    for (auto& cube_ent : cube_ents) {
+      cube_ent.transform().rotate_degrees(angle_degrees, axis);
+    }
+  };
   switch (keycode)
   {
     case SDLK_F10:
@@ -266,6 +272,26 @@ process_keydown(SDL_Keycode const keycode, glm::vec3& camera_pos, CubeEntities& 
     case SDLK_PAGEDOWN:
       move_trs(-constants::Y_UNIT_VECTOR);
       break;
+
+    case SDLK_KP_2:
+        rotate_ents(1.0f, constants::Y_UNIT_VECTOR);
+        break;
+    case SDLK_KP_4:
+        rotate_ents(1.0f, constants::X_UNIT_VECTOR);
+        break;
+    case SDLK_KP_6:
+        rotate_ents(-1.0f, constants::Y_UNIT_VECTOR);
+        break;
+    case SDLK_KP_8:
+        rotate_ents(-1.0f, constants::X_UNIT_VECTOR);
+        break;
+    case SDLK_KP_3:
+        rotate_ents(1.0f, constants::Z_UNIT_VECTOR);
+        break;
+    case SDLK_KP_9:
+        rotate_ents(-1.0f, constants::Z_UNIT_VECTOR);
+        break;
+
     default:
       break;
   }
@@ -296,7 +322,7 @@ struct PmRects
 Rectangle
 make_mouse_rect(CameraORTHO const& camera, glm::vec2 const& mouse_pos)
 {
-  auto const& click_pos  = camera.click_position;
+  auto const& click_pos = camera.mouse_click.left_right;
 
   auto const lx = lesser_of(click_pos.x, mouse_pos.x);
   auto const rx = other_of_two(lx, PAIR(click_pos.x, mouse_pos.x));
@@ -444,15 +470,31 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
     process_mousemotion(logger, event.motion, cam_ortho, left_vdi, right_vdi, pm_rects, cube_ents);
   }
   else if (event.type == SDL_MOUSEBUTTONDOWN) {
-    MOUSE_BUTTON_PRESSED = true;
-    cam_ortho.click_position.x = event.button.x;
-    cam_ortho.click_position.y = event.button.y;
+    auto const& mouse_button = event.button;
+    if (mouse_button.button == SDL_BUTTON_MIDDLE) {
+      MIDDLE_MOUSE_BUTTON_PRESSED = true;
+      auto &middle_clickpos = cam_ortho.mouse_click.middle;
+      middle_clickpos.x = mouse_button.x;
+      middle_clickpos.y = mouse_button.y;
+    }
+    else {
+      MOUSE_BUTTON_PRESSED = true;
+      auto &leftright_clickpos = cam_ortho.mouse_click.left_right;
+      leftright_clickpos.x = mouse_button.x;
+      leftright_clickpos.y = mouse_button.y;
+    }
   }
   else if (event.type == SDL_MOUSEBUTTONUP) {
-    MOUSE_BUTTON_PRESSED = false;
+    auto const& mouse_button = event.button;
+    if (mouse_button.button == SDL_BUTTON_MIDDLE) {
+      MIDDLE_MOUSE_BUTTON_PRESSED = false;
+    }
+    else {
+      MOUSE_BUTTON_PRESSED = false;
 
-    for (auto& cube_ent : cube_ents) {
-      cube_ent.selected = false;
+      for (auto& cube_ent : cube_ents) {
+        cube_ent.selected = false;
+      }
     }
   }
   return event.type == SDL_QUIT;
@@ -505,7 +547,7 @@ draw_scene(common::Logger& logger,
            ShaderProgram& rect_sp,
            ScreenDimensions const& LHS, ScreenDimensions const& RHS,
            ScreenDimensions const& screen_dim, CameraORTHO const& cam_ortho,
-           ShaderProgram& wire_sp, PmRects &pm_rects,
+           ShaderProgram& wire_sp, PmRects &pm_rects, glm::vec2 const& mouse_pos,
            CubeEntities& cube_ents)
 {
   DrawState ds;
@@ -530,14 +572,11 @@ draw_scene(common::Logger& logger,
   draw_lhs(ds, ortho_pm, ortho_vm);
   draw_rhs(ds, pers_pm, pers_vm);
 
-    int mouse_x, mouse_y;
-    SDL_GetMouseState(&mouse_x, &mouse_y);
-
-    auto const& click_pos = cam_ortho.click_position;
+    auto const& click_pos = cam_ortho.mouse_click.left_right;
     float const minx = click_pos.x;
     float const miny = click_pos.y;
-    float const maxx = mouse_x;
-    float const maxy = mouse_y;
+    float const maxx = mouse_pos.x;
+    float const maxy = mouse_pos.y;
 
     Rectangle mouse_rect{minx, miny, maxx, maxy};
     ScreenDimensions const* pview_port = nullptr;
@@ -556,6 +595,26 @@ draw_scene(common::Logger& logger,
       auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
       draw_pm(rect_sp, pm_rect.di, ds, color);
     }
+  }
+}
+
+void
+update(common::Logger& logger, CameraORTHO& camera, Rectangle const& left_viewport,
+       Rectangle const& right_viewport, glm::vec2 const& mouse_pos, FrameTime const& ft)
+{
+  if (MIDDLE_MOUSE_BUTTON_PRESSED) {
+    auto const& middle_clickpos = camera.mouse_click.middle;
+    auto const distance         = glm::distance(middle_clickpos, mouse_pos);
+
+    auto const& frustum = MOUSE_ON_RHS_SCREEN
+        ? left_viewport
+        : right_viewport;
+    float const dx = (mouse_pos - middle_clickpos).x / frustum.width();
+    float const dy = -((mouse_pos - middle_clickpos).y / frustum.height());
+
+    auto constexpr SCROLL_SPEED = 15.0f;
+    auto const multiplier = SCROLL_SPEED * distance * ft.delta_millis();
+    camera.scroll(glm::vec2{dx, dy} * multiplier);
   }
 }
 
@@ -648,8 +707,13 @@ main(int argc, char **argv)
       quit = process_event(logger, event, cam_ortho, left_vdi, right_vdi, cube_ents, pm_rects);
     }
 
+    int mouse_x, mouse_y;
+    SDL_GetMouseState(&mouse_x, &mouse_y);
+    glm::vec2 const mouse_pos{mouse_x, mouse_y};
+
+    update(logger, cam_ortho, LHS.rect(), RHS.rect(), mouse_pos, ft);
     draw_scene(logger, ortho_pm, ortho_vm, pers_pm, pers_vm, rect_sp, LHS, RHS, SCREEN_DIM,
-               cam_ortho, wire_sp, pm_rects, cube_ents);
+               cam_ortho, wire_sp, pm_rects, mouse_pos, cube_ents);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());
