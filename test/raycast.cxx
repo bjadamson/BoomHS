@@ -64,7 +64,7 @@ active_camera_pos()
 namespace OR = opengl::render;
 
 auto
-make_program(common::Logger& logger)
+make_wireframe_program(common::Logger& logger)
 {
   std::vector<opengl::AttributePointerInfo> const apis{{
     AttributePointerInfo{0, GL_FLOAT, AttributeType::POSITION, 3}
@@ -92,8 +92,8 @@ struct ProgramAndGpuHandle
 };
 
 auto
-make_program_and_rect_gpuhandle(common::Logger& logger, Rectangle const& rect,
-                           Rectangle const& view_rect)
+make_perspective_rect_gpuhandle(common::Logger& logger, Rectangle const& rect,
+                           VertexAttribute const& va, Rectangle const& view_rect)
 {
   auto const TOP_LEFT = glm::vec2{rect.left, rect.top};
   auto const BOTTOM_RIGHT = glm::vec2{rect.right, rect.bottom};
@@ -102,14 +102,19 @@ make_program_and_rect_gpuhandle(common::Logger& logger, Rectangle const& rect,
   OF::RectInfo const ri{ndc_rect, std::nullopt, std::nullopt, std::nullopt};
   RectBuffer  buffer = OF::make_rectangle(ri);
 
+  return gpu::copy_rectangle(logger, va, buffer);
+}
+
+auto
+make_rectangle_program(common::Logger& logger)
+{
   std::vector<opengl::AttributePointerInfo> const apis{{
     AttributePointerInfo{0, GL_FLOAT, AttributeType::POSITION, 3}
   }};
 
   auto va = make_vertex_attribute(apis);
-  auto sp = make_shader_program(logger, "2dcolor.vert", "2dcolor.frag", MOVE(va))
+  return make_shader_program(logger, "2dcolor.vert", "2dcolor.frag", MOVE(va))
     .expect_moveout("Error loading 2dcolor shader program");
-  return ProgramAndGpuHandle{MOVE(sp), gpu::copy_rectangle(logger, sp.va(), buffer)};
 }
 
 auto
@@ -270,11 +275,22 @@ process_keydown(SDL_Keycode const keycode, glm::vec3& camera_pos, CubeEntities& 
 struct PmRect
 {
   Rectangle const& rect;
+  DrawInfo         di;
+
   bool selected = false;
 
-  explicit PmRect(Rectangle const& r)
+  explicit PmRect(Rectangle const& r, DrawInfo &&d)
       : rect(r)
+      , di(MOVE(d))
   {}
+};
+
+struct PmRects
+{
+  std::array<PmRect, 2> pms;
+
+  INDEX_OPERATOR_FNS(pms);
+  BEGIN_END_FORWARD_FNS(pms);
 };
 
 Rectangle
@@ -352,7 +368,7 @@ void
 process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
                     CameraORTHO const& cam_ortho,
                     ViewportDisplayInfo const& left_vdi, ViewportDisplayInfo const& right_vdi,
-                    PmRect& pm_rect, CubeEntities& cube_ents)
+                    PmRects& pm_rects, CubeEntities& cube_ents)
 {
   float const x = motion.x, y = motion.y;
   auto const mouse_pos = glm::vec2{x, y};
@@ -385,6 +401,8 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
   if (MOUSE_ON_RHS_SCREEN) {
     // RHS
     on_rhs_mouse_cube_collisions(logger, mouse_start, *pm, *vm, *view_rect, cube_ents);
+
+    pm_rects[1].selected = collision::point_rectangle_intersects(mouse_pos, pm_rects[1].rect);
   }
   else {
     if (MOUSE_BUTTON_PRESSED) {
@@ -393,14 +411,16 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
       on_lhs_mouse_cube_collisions(logger, mouse_pos, mouse_start, mouse_rect, cam_ortho,
                                    *view_rect, *pm, *vm, cube_ents);
     }
-    pm_rect.selected = collision::point_rectangle_intersects(mouse_start, pm_rect.rect);
+    //for (auto& pm_rect : pm_rects) {
+      pm_rects[0].selected = collision::point_rectangle_intersects(mouse_start, pm_rects[0].rect);
+    //}
   }
 }
 
 bool
 process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
               ViewportDisplayInfo const& left_vdi, ViewportDisplayInfo const& right_vdi,
-              CubeEntities& cube_ents, PmRect& pm_rect)
+              CubeEntities& cube_ents, PmRects& pm_rects)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
   auto &camera_pos = active_camera_pos();
@@ -421,7 +441,7 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
     }
   }
   else if (event.type == SDL_MOUSEMOTION) {
-    process_mousemotion(logger, event.motion, cam_ortho, left_vdi, right_vdi, pm_rect, cube_ents);
+    process_mousemotion(logger, event.motion, cam_ortho, left_vdi, right_vdi, pm_rects, cube_ents);
   }
   else if (event.type == SDL_MOUSEBUTTONDOWN) {
     MOUSE_BUTTON_PRESSED = true;
@@ -434,7 +454,6 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
     for (auto& cube_ent : cube_ents) {
       cube_ent.selected = false;
     }
-    pm_rect.selected = false;
   }
   return event.type == SDL_QUIT;
 }
@@ -483,14 +502,12 @@ void
 draw_scene(common::Logger& logger,
            glm::mat4 const& ortho_pm, glm::mat4 const& ortho_vm,
            glm::mat4 const& pers_pm, glm::mat4 const& pers_vm,
+           ShaderProgram& rect_sp,
            ScreenDimensions const& LHS, ScreenDimensions const& RHS,
            ScreenDimensions const& screen_dim, CameraORTHO const& cam_ortho,
-           ProgramAndGpuHandle& pair, ShaderProgram& wire_sp, PmRect const& pm_rect,
+           ShaderProgram& wire_sp, PmRects &pm_rects,
            CubeEntities& cube_ents)
 {
-  auto& rect_sp        = pair.sp;
-  auto& rect_gpuhandle = pair.di;
-
   DrawState ds;
   auto const draw_lhs = [&](DrawState& ds, auto const& pm, auto const& vm) {
     OR::set_viewport(LHS);
@@ -504,11 +521,10 @@ draw_scene(common::Logger& logger,
     OR::clear_screen(LOC::BLACK);
     draw_bboxes(logger, pm, vm, cube_ents, wire_sp, ds);
   };
-  auto const draw_pm = [&](DrawState& ds, Color const& color) {
+  auto const draw_pm = [&](auto& sp, auto& di, DrawState& ds, Color const& color) {
     OR::set_scissor(SCREEN_DIM);
     OR::set_viewport(SCREEN_DIM);
-    draw_rectangle_pm(logger, screen_dim.rect(), cam_ortho, rect_sp, rect_gpuhandle, color,
-                      GL_TRIANGLES, ds);
+    draw_rectangle_pm(logger, screen_dim.rect(), cam_ortho, sp, di, color, GL_TRIANGLES, ds);
   };
 
   draw_lhs(ds, ortho_pm, ortho_vm);
@@ -535,14 +551,11 @@ draw_scene(common::Logger& logger,
       OR::set_viewport(*pview_port);
       draw_cursor_under_mouse(logger, pview_port->rect(), rect_sp, mouse_rect, cam_ortho, ds);
     }
-    //else if (MOUSE_ON_RHS_SCREEN) {
-      //p//view_port = &RHS;
-      //draw_cursor_under_mouse(logger, pview_port->rect(), rect_sp, mouse_rect, cam_ortho, ds);
-    //}
-
   {
-    auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
-    draw_pm(ds, color);
+    for (auto& pm_rect : pm_rects) {
+      auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
+      draw_pm(rect_sp, pm_rect.di, ds, color);
+    }
   }
 }
 
@@ -595,9 +608,14 @@ main(int argc, char **argv)
   cam_target.set(wo);
   CameraFPS cam_fps{cam_target, PERS_WO};
 
-  auto const color_rect = Rectangle{
-    200, 200, 400, 400};
-  auto rectprog = make_program_and_rect_gpuhandle(logger, color_rect, SCREEN_DIM.rect());
+  auto const cr0 = Rectangle{200, 200, 400, 400};
+  auto const cr1 = Rectangle{600, 600, 800, 800};
+  auto rect_sp = make_rectangle_program(logger);
+
+  auto const sd_rect = SCREEN_DIM.rect();
+  auto const& va = rect_sp.va();
+  auto di0 = make_perspective_rect_gpuhandle(logger, cr0, va, sd_rect);
+  auto di1 = make_perspective_rect_gpuhandle(logger, cr1, va, sd_rect);
 
   Timer timer;
   FrameCounter fcounter;
@@ -605,11 +623,17 @@ main(int argc, char **argv)
   SDL_Event event;
   bool quit = false;
 
-  auto wire_sp   = make_program(logger);
+  auto wire_sp   = make_wireframe_program(logger);
   RNG rng;
   auto cube_ents = gen_cube_entities(logger, wire_sp, rng);
 
-  PmRect pm_rect{color_rect};
+  PmRects pm_rects{
+    std::array<PmRect, 2>{{
+      PmRect{cr0, MOVE(di0)},
+      PmRect{cr1, MOVE(di1)}
+    }}
+  };
+
   auto const pers_pm = glm::perspective(FOV, AR.compute(), FRUSTUM.near, FRUSTUM.far);
   while (!quit) {
     glm::mat4 const ortho_pm = cam_ortho.calc_pm(AR, FRUSTUM);
@@ -621,11 +645,11 @@ main(int argc, char **argv)
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       ViewportDisplayInfo const left_vdi{LHS.rect(), ortho_pm, ortho_vm};
       ViewportDisplayInfo const right_vdi{RHS.rect(), pers_pm,  pers_vm};
-      quit = process_event(logger, event, cam_ortho, left_vdi, right_vdi, cube_ents, pm_rect);
+      quit = process_event(logger, event, cam_ortho, left_vdi, right_vdi, cube_ents, pm_rects);
     }
 
-    draw_scene(logger, ortho_pm, ortho_vm, pers_pm, pers_vm, LHS, RHS, SCREEN_DIM, cam_ortho,
-               rectprog, wire_sp, pm_rect, cube_ents);
+    draw_scene(logger, ortho_pm, ortho_vm, pers_pm, pers_vm, rect_sp, LHS, RHS, SCREEN_DIM,
+               cam_ortho, wire_sp, pm_rects, cube_ents);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());
