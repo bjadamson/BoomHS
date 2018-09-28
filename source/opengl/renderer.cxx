@@ -411,8 +411,6 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
   auto& es     = fstate.es;
   auto& logger = es.logger;
 
-  auto const& dimensions = es.dimensions;
-
   auto const v     = OF::rectangle_vertices(pos.x, pos.y, size.x, size.y);
   auto const uv = OF::rectangle_uvs(ti.uv_max);
   auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
@@ -595,13 +593,13 @@ set_mvpmatrix(common::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 
 }
 
 void
-set_viewport(ScreenViewport const& p)
+set_viewport(Viewport const& p)
 {
   glViewport(p.left(), p.top(), p.right(), p.bottom());
 }
 
 void
-set_scissor(ScreenViewport const& p)
+set_scissor(Viewport const& p)
 {
   glScissor(p.left(), p.top(), p.right(), p.bottom());
 }

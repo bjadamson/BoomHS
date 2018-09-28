@@ -38,7 +38,7 @@ static auto constexpr AR   = AspectRatio{4.0f, 3.0f};
 
 static int constexpr WIDTH  = 1024;
 static int constexpr HEIGHT = 768;
-ScreenViewport constexpr SCREEN_DIM{0, 0, WIDTH, HEIGHT};
+Viewport constexpr SCREEN_DIM{0, 0, WIDTH, HEIGHT};
 static Frustum constexpr FRUSTUM{
     SCREEN_DIM.float_left(),
     SCREEN_DIM.float_right(),
@@ -549,7 +549,7 @@ draw_cursor_under_mouse(common::Logger& logger, Rectangle const& viewport, Shade
 void
 draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
                glm::vec2 const& mouse_pos, ShaderProgram& rect_sp,
-               ScreenViewport const& view_port, DrawState& ds)
+               Viewport const& view_port, DrawState& ds)
 {
   auto const& click_pos = camera.mouse_click.left_right;
   float const minx = click_pos.x;
@@ -571,8 +571,8 @@ draw_scene(common::Logger& logger,
            glm::mat4 const& ortho_pm, glm::mat4 const& ortho_vm,
            glm::mat4 const& pers_pm, glm::mat4 const& pers_vm,
            ShaderProgram& rect_sp,
-           ScreenViewport const& LHS, ScreenViewport const& RHS,
-           ScreenViewport const& screen_dim, CameraORTHO const& camera,
+           Viewport const& LHS, Viewport const& RHS,
+           Viewport const& screen_dim, CameraORTHO const& camera,
            ShaderProgram& wire_sp, PmRects &pm_rects, glm::vec2 const& mouse_pos,
            CubeEntities& cube_ents)
 {
@@ -651,13 +651,13 @@ main(int argc, char **argv)
   glEnable(GL_SCISSOR_TEST);
 
   float const MIDDLE_HORIZ = SCREEN_DIM.right() / SCREENSIZE_VIEWPORT_RATIO_X;
-  auto const LHS = ScreenViewport{
+  auto const LHS = Viewport{
     SCREEN_DIM.left(),
     SCREEN_DIM.top(),
     static_cast<int>(MIDDLE_HORIZ),
     SCREEN_DIM.bottom()
   };
-  auto const RHS = ScreenViewport{
+  auto const RHS = Viewport{
     (int)MIDDLE_HORIZ,
     SCREEN_DIM.top(),
     SCREEN_DIM.right(),

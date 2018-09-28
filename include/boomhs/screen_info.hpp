@@ -20,12 +20,12 @@ struct ScreenSize
   PixelT height;
 };
 
-class ScreenViewport
+class Viewport
 {
   PixelT left_, top_, right_, bottom_;
 
 public:
-  constexpr ScreenViewport(PixelT const left, PixelT const top, PixelT const right,
+  constexpr Viewport(PixelT const left, PixelT const top, PixelT const right,
                              PixelT const bottom)
       : left_(left)
       , top_(top)
@@ -58,10 +58,10 @@ public:
 };
 
 template <typename T>
-constexpr ScreenViewport
-operator/(ScreenViewport const& n, T const& d)
+constexpr Viewport
+operator/(Viewport const& n, T const& d)
 {
-  return ScreenViewport{n.left() / d, n.top() / d, n.right() / d, n.bottom() / d};
+  return Viewport{n.left() / d, n.top() / d, n.right() / d, n.bottom() / d};
 }
 
 } // namespace boomhs

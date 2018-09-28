@@ -16,7 +16,7 @@ class SDLWindow;
 namespace boomhs
 {
 class FrameTime;
-class ScreenViewport;
+class Viewport;
 
 class AspectRatio
 {

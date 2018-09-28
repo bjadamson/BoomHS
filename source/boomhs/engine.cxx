@@ -14,12 +14,12 @@ namespace boomhs
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EngineState
-EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, ScreenViewport const& d,
+EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, Viewport const& window_vp,
     Frustum const& frust)
     : logger(l)
     , al_device(al)
     , imgui(i)
-    , dimensions(d)
+    , window_viewport(window_vp)
     , frustum(frust)
     , disable_controller_input(true)
     , player_collision(false)
@@ -53,7 +53,7 @@ Engine::Engine(SDLWindow&& w, SDLControllers&& c)
   registries.resize(50);
 }
 
-ScreenViewport
+Viewport
 Engine::dimensions() const
 {
   return window.get_dimensions();

@@ -19,10 +19,10 @@ struct FBInfo
 {
   DebugBoundCheck                debug_check;
   GLuint                         id;
-  boomhs::ScreenViewport const dimensions;
+  boomhs::Viewport const dimensions;
   boomhs::ScreenSize const       screen_size;
 
-  FBInfo(boomhs::ScreenViewport const&, boomhs::ScreenSize const&);
+  FBInfo(boomhs::Viewport const&, boomhs::ScreenSize const&);
   NO_COPY(FBInfo);
   MOVE_DEFAULT(FBInfo);
 

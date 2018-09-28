@@ -42,12 +42,11 @@ struct EngineState
   ALCdevice_struct& al_device;
   ImGuiIO&          imgui;
 
-  // TODO: move ScreenViewport into Frustu, the replace with Rectangle inside math.
-  ScreenViewport const dimensions;
-  Frustum                frustum;
-  MainMenuState          main_menu;
-  common::Time           time;
-  PlayerBehaviors        behaviors;
+  Viewport const  window_viewport;
+  Frustum         frustum;
+  MainMenuState   main_menu;
+  common::Time    time;
+  PlayerBehaviors behaviors;
 
   bool                 quit                  = false;
   bool                 game_running          = false;
@@ -89,7 +88,7 @@ struct EngineState
 
   // Constructors
   NO_COPY_OR_MOVE(EngineState);
-  EngineState(common::Logger&, ALCdevice_struct&, ImGuiIO&, ScreenViewport const&,
+  EngineState(common::Logger&, ALCdevice_struct&, ImGuiIO&, Viewport const&,
               Frustum const& frustum);
 };
 
@@ -109,7 +108,7 @@ struct Engine
   // program to store references into the data owned by registries.
   NO_COPY_OR_MOVE(Engine);
 
-  ScreenViewport dimensions() const;
+  Viewport dimensions() const;
   ScreenSize       screen_size() const;
 };
 

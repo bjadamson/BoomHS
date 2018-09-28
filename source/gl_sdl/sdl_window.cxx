@@ -61,7 +61,7 @@ SDLWindow::~SDLWindow()
   }
 }
 
-ScreenViewport
+Viewport
 SDLWindow::get_dimensions() const
 {
   int w = 0, h = 0;
@@ -70,7 +70,7 @@ SDLWindow::get_dimensions() const
 
   int x, y;
   SDL_GetWindowPosition(window_.get(), &x, &y);
-  return boomhs::ScreenViewport{0, 0, w, h};
+  return boomhs::Viewport{0, 0, w, h};
 }
 
 bool

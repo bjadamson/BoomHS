@@ -132,14 +132,14 @@ draw_player_inventory(common::Logger& logger, Player& player, EntityRegistry& re
 }
 
 void
-draw_nearest_target_info(ScreenViewport const& dimensions, NearbyTargets const& nbt, TextureTable const& ttable,
+draw_nearest_target_info(Viewport const& viewport, NearbyTargets const& nbt, TextureTable const& ttable,
                          EntityRegistry& registry)
 {
   auto constexpr LEFT_OFFSET = 39;
-  auto const left = dimensions.left() + LEFT_OFFSET;
+  auto const left = viewport.left() + LEFT_OFFSET;
 
   auto constexpr BOTTOM_OFFSET = 119;
-  auto const top  = dimensions.bottom() - BOTTOM_OFFSET;
+  auto const top  = viewport.bottom() - BOTTOM_OFFSET;
   ImGui::SetNextWindowPos(ImVec2(left, top));
 
   ImVec2 const WINDOW_POS(200, 105);
@@ -296,7 +296,7 @@ draw_chatwindow(EngineState& es, Player& player)
       | ImGuiWindowFlags_NoTitleBar
       );
 
-    auto const [window_w, window_h] = es.dimensions.size();
+    auto const [window_w, window_h] = es.window_viewport.size();
     ImVec2 const offset{10, 6};
     auto const chat_w = 480, chat_h = 200;
     auto const chat_x = window_w - chat_w - offset.x, chat_y = window_h - chat_h - offset.y;
@@ -332,7 +332,7 @@ draw_debugoverlay_window(EngineState& es, DrawState& ds)
 
   bool constexpr SHOW_BORDER = false;
 
-  auto const [window_w, window_h] = es.dimensions.size();
+  auto const [window_w, window_h] = es.window_viewport.size();
   ImVec2 const offset{100, 50};
   auto const chat_w = 300, chat_h = 100;
   auto const chat_x = window_w - chat_w - offset.x, chat_y = chat_h - offset.y;
@@ -580,7 +580,7 @@ draw_inventory_overlay(RenderState& rstate)
   auto color = LOC::GRAY;
   color.set_a(0.40);
 
-  auto const vr = es.dimensions.rect();
+  auto const vr = es.window_viewport.rect();
   auto const make_rectangle = [&]() {
 
     auto const TL = glm::vec2{vr.left, vr.top};
@@ -632,7 +632,7 @@ draw(FrameState& fs, Camera& camera, DrawState& ds)
 
   auto& ldata = zs.level_data;
   auto& nbt   = ldata.nearby_targets;
-  draw_nearest_target_info(es.dimensions, nbt, ttable, registry);
+  draw_nearest_target_info(es.window_viewport, nbt, ttable, registry);
 
   // Create a renderstate using an orthographic projection.
   auto fss = FrameState::from_camera_for_2dui_overlay(es, zs, camera, camera.view_settings_ref(), es.frustum);

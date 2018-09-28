@@ -58,7 +58,7 @@ auto static constexpr WINDOW_FLAGS = (0
 auto static constexpr STYLE_VARS = (0 | ImGuiStyleVar_ChildRounding);
 
 void
-draw_menu(EngineState& es, ScreenViewport const& dimensions, WaterAudioSystem& water_audio)
+draw_menu(EngineState& es, Viewport const& dimensions, WaterAudioSystem& water_audio)
 {
   auto const size      = ImVec2(dimensions.right(), dimensions.bottom());
   //ImVec2 const size{dimensions.right(), dimensions.bottom()};
@@ -904,7 +904,7 @@ namespace boomhs::main_menu
 
 void
 draw(EngineState& es, SDLWindow& window, Camera& camera, SkyboxRenderer& skyboxr, DrawState& ds,
-     LevelManager& lm, ScreenViewport const& dimensions, WaterAudioSystem& water_audio)
+     LevelManager& lm, Viewport const& dimensions, WaterAudioSystem& water_audio)
 {
   draw_menu(es, dimensions, water_audio);
 

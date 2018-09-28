@@ -12,7 +12,7 @@
 
 namespace boomhs
 {
-struct ScreenViewport;
+struct Viewport;
 class EntityRegistry;
 class FrameTime;
 class Frustum;
@@ -182,9 +182,9 @@ void
 set_mvpmatrix(common::Logger&, glm::mat4 const&, glm::mat4 const&, ShaderProgram&);
 
 void
-set_viewport(boomhs::ScreenViewport const&);
+set_viewport(boomhs::Viewport const&);
 
 void
-set_scissor(boomhs::ScreenViewport const&);
+set_scissor(boomhs::Viewport const&);
 
 } // namespace opengl::render

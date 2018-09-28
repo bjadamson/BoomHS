@@ -643,19 +643,19 @@ draw_everything(FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
             WaterAudioSystem& water_audio, StaticRenderers& static_renderers, DrawState& ds,
             FrameTime const& ft)
 {
-  auto& es        = fs.es;
-  auto& zs        = lm.active();
-  auto const& dim = es.dimensions;
+  auto& es             = fs.es;
+  auto& zs             = lm.active();
+  auto const& viewport = es.window_viewport;
   {
     RenderState rstate{fs, ds};
 
     auto const mode = camera.mode();
     if (CameraMode::FPS == mode || CameraMode::ThirdPerson == mode) {
-      render::set_viewport(es.dimensions);
+      render::set_viewport(viewport);
       PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);
 
-      float const right  = dim.right();
-      float const bottom = dim.bottom();
+      float const right  = viewport.right();
+      float const bottom = viewport.bottom();
 
       auto& io = es.imgui;
       io.DisplaySize = ImVec2{right, bottom};

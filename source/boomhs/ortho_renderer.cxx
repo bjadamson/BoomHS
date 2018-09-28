@@ -40,9 +40,9 @@ void
 draw_ortho_lhs(EngineState& es, LevelManager& lm, Camera& camera, FrameTime const& ft,
                PixelT const cutoff_point)
 {
-  auto const& sd = es.dimensions;
-  ScreenViewport const LHS{
-    sd.left(), sd.top(), cutoff_point, sd.bottom()
+  auto const& vp = es.window_viewport;
+  Viewport const LHS{
+    vp.left(), vp.top(), cutoff_point, vp.bottom()
   };
   render::set_viewport(LHS);
 
@@ -62,9 +62,9 @@ draw_ortho_rhs(RenderState& rstate, DrawState& ds, LevelManager& lm,
               FrameTime const& ft, PixelT const cutoff_point)
 {
   auto& es = rstate.fs.es;
-  auto const& sd = es.dimensions;
-  ScreenViewport const RHS{
-    cutoff_point, sd.top(), sd.right(), sd.right_bottom().y
+  auto const& vp = es.window_viewport;
+  Viewport const RHS{
+    cutoff_point, vp.top(), vp.right(), vp.right_bottom().y
   };
   render::set_viewport(RHS);
   PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);
@@ -81,9 +81,8 @@ OrthoRenderer::draw_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, 
 {
   auto& fs = rstate.fs;
   auto& es = fs.es;
-  auto const& dim = es.dimensions;
 
-  PixelT const cutoff_point = 0;//dim.right() / 3;
+  PixelT const cutoff_point = 0;
   //draw_ortho_lhs(es, lm, camera, ft, cutoff_point);
   draw_ortho_rhs(rstate, ds, lm, static_renderers, camera, rng, ft, cutoff_point);
 }
