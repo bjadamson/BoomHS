@@ -34,7 +34,7 @@ make_fb_ti(common::Logger& logger, int const width, int const height, GLenum con
 namespace opengl
 {
 
-FBInfo::FBInfo(ScreenDimensions const& d, ScreenSize const& ss)
+FBInfo::FBInfo(ScreenViewport const& d, ScreenSize const& ss)
     : dimensions(d)
     , screen_size(ss)
 {

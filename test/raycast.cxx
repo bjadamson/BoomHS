@@ -38,7 +38,7 @@ static auto constexpr AR   = AspectRatio{4.0f, 3.0f};
 
 static int constexpr WIDTH  = 1024;
 static int constexpr HEIGHT = 768;
-ScreenDimensions constexpr SCREEN_DIM{0, 0, WIDTH, HEIGHT};
+ScreenViewport constexpr SCREEN_DIM{0, 0, WIDTH, HEIGHT};
 static Frustum constexpr FRUSTUM{
     SCREEN_DIM.float_left(),
     SCREEN_DIM.float_right(),
@@ -547,12 +547,32 @@ draw_cursor_under_mouse(common::Logger& logger, Rectangle const& viewport, Shade
 }
 
 void
+draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
+               glm::vec2 const& mouse_pos, ShaderProgram& rect_sp,
+               ScreenViewport const& view_port, DrawState& ds)
+{
+  auto const& click_pos = camera.mouse_click.left_right;
+  float const minx = click_pos.x;
+  float const miny = click_pos.y;
+  float const maxx = mouse_pos.x;
+  float const maxy = mouse_pos.y;
+
+  Rectangle mouse_rect{minx, miny, maxx, maxy};
+  mouse_rect.left *= SCREENSIZE_VIEWPORT_RATIO_X;
+  mouse_rect.right *= SCREENSIZE_VIEWPORT_RATIO_X;
+
+  OR::set_scissor(view_port);
+  OR::set_viewport(view_port);
+  draw_cursor_under_mouse(logger, view_port.rect(), rect_sp, mouse_rect, camera, ds);
+}
+
+void
 draw_scene(common::Logger& logger,
            glm::mat4 const& ortho_pm, glm::mat4 const& ortho_vm,
            glm::mat4 const& pers_pm, glm::mat4 const& pers_vm,
            ShaderProgram& rect_sp,
-           ScreenDimensions const& LHS, ScreenDimensions const& RHS,
-           ScreenDimensions const& screen_dim, CameraORTHO const& cam_ortho,
+           ScreenViewport const& LHS, ScreenViewport const& RHS,
+           ScreenViewport const& screen_dim, CameraORTHO const& camera,
            ShaderProgram& wire_sp, PmRects &pm_rects, glm::vec2 const& mouse_pos,
            CubeEntities& cube_ents)
 {
@@ -572,30 +592,16 @@ draw_scene(common::Logger& logger,
   auto const draw_pm = [&](auto& sp, auto& di, DrawState& ds, Color const& color) {
     OR::set_scissor(SCREEN_DIM);
     OR::set_viewport(SCREEN_DIM);
-    draw_rectangle_pm(logger, screen_dim.rect(), cam_ortho, sp, di, color, GL_TRIANGLES, ds);
+    draw_rectangle_pm(logger, screen_dim.rect(), camera, sp, di, color, GL_TRIANGLES, ds);
   };
 
   draw_lhs(ds, ortho_pm, ortho_vm);
   draw_rhs(ds, pers_pm, pers_vm);
 
-    auto const& click_pos = cam_ortho.mouse_click.left_right;
-    float const minx = click_pos.x;
-    float const miny = click_pos.y;
-    float const maxx = mouse_pos.x;
-    float const maxy = mouse_pos.y;
+  if (!MOUSE_ON_RHS_SCREEN && MOUSE_BUTTON_PRESSED) {
+    draw_mouserect(logger, camera, mouse_pos, rect_sp, LHS, ds);
+  }
 
-    Rectangle mouse_rect{minx, miny, maxx, maxy};
-    ScreenDimensions const* pview_port = nullptr;
-    if (!MOUSE_ON_RHS_SCREEN && MOUSE_BUTTON_PRESSED) {
-      pview_port = &LHS;
-      mouse_rect.left *= SCREENSIZE_VIEWPORT_RATIO_X;
-      mouse_rect.right *= SCREENSIZE_VIEWPORT_RATIO_X;
-
-      assert(pview_port);
-      OR::set_scissor(*pview_port);
-      OR::set_viewport(*pview_port);
-      draw_cursor_under_mouse(logger, pview_port->rect(), rect_sp, mouse_rect, cam_ortho, ds);
-    }
   {
     for (auto& pm_rect : pm_rects) {
       auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
@@ -645,13 +651,13 @@ main(int argc, char **argv)
   glEnable(GL_SCISSOR_TEST);
 
   float const MIDDLE_HORIZ = SCREEN_DIM.right() / SCREENSIZE_VIEWPORT_RATIO_X;
-  auto const LHS = ScreenDimensions{
+  auto const LHS = ScreenViewport{
     SCREEN_DIM.left(),
     SCREEN_DIM.top(),
     static_cast<int>(MIDDLE_HORIZ),
     SCREEN_DIM.bottom()
   };
-  auto const RHS = ScreenDimensions{
+  auto const RHS = ScreenViewport{
     (int)MIDDLE_HORIZ,
     SCREEN_DIM.top(),
     SCREEN_DIM.right(),

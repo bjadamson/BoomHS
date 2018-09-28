@@ -127,14 +127,14 @@ start(common::Logger& logger, Engine& engine)
   // Construct game state
   auto constexpr NEAR   = 0.001f;
   auto constexpr FAR    = 100.0f;
-  auto const dimensions = engine.dimensions();
+  auto const viewport = engine.dimensions();
 
   // clang-format off
   Frustum const frustum{
-    dimensions.float_left(),
-    dimensions.float_right(),
-    dimensions.float_bottom(),
-    dimensions.float_top(),
+    viewport.float_left(),
+    viewport.float_right(),
+    viewport.float_bottom(),
+    viewport.float_top(),
     NEAR,
     FAR};
   // clang-format on
@@ -146,7 +146,8 @@ start(common::Logger& logger, Engine& engine)
   // Instead we'll use the system hardware cursor (using SDL).
   io.MouseDrawCursor = false;
 
-  EngineState es{logger, *al_device, io, dimensions, frustum};
+  // TODO: get rid of viewport from EngineState
+  EngineState es{logger, *al_device, io, viewport, frustum};
 
   // camera-look at origin
   // cameraspace "up" is === "up" in worldspace.
@@ -157,7 +158,7 @@ start(common::Logger& logger, Engine& engine)
   auto const ORTHO_FORWARD = -constants::Y_UNIT_VECTOR;
   auto constexpr ORTHO_UP  =  constants::Z_UNIT_VECTOR;
   WorldOrientation const ortho_wo{ORTHO_FORWARD, ORTHO_UP};
-  auto                   camera = Camera::make_default(dimensions, pers_wo, ortho_wo);
+  auto                   camera = Camera::make_default(pers_wo, ortho_wo);
 
   RNG rng;
   auto gs = TRY_MOVEOUT(boomhs::init(engine, es, camera, rng));

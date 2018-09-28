@@ -14,7 +14,7 @@ namespace boomhs
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EngineState
-EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, ScreenDimensions const& d,
+EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, ScreenViewport const& d,
     Frustum const& frust)
     : logger(l)
     , al_device(al)
@@ -53,7 +53,7 @@ Engine::Engine(SDLWindow&& w, SDLControllers&& c)
   registries.resize(50);
 }
 
-ScreenDimensions
+ScreenViewport
 Engine::dimensions() const
 {
   return window.get_dimensions();

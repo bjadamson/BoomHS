@@ -132,7 +132,7 @@ draw_player_inventory(common::Logger& logger, Player& player, EntityRegistry& re
 }
 
 void
-draw_nearest_target_info(ScreenDimensions const& dimensions, NearbyTargets const& nbt, TextureTable const& ttable,
+draw_nearest_target_info(ScreenViewport const& dimensions, NearbyTargets const& nbt, TextureTable const& ttable,
                          EntityRegistry& registry)
 {
   auto constexpr LEFT_OFFSET = 39;

@@ -41,7 +41,7 @@ draw_ortho_lhs(EngineState& es, LevelManager& lm, Camera& camera, FrameTime cons
                PixelT const cutoff_point)
 {
   auto const& sd = es.dimensions;
-  ScreenDimensions const LHS{
+  ScreenViewport const LHS{
     sd.left(), sd.top(), cutoff_point, sd.bottom()
   };
   render::set_viewport(LHS);
@@ -63,7 +63,7 @@ draw_ortho_rhs(RenderState& rstate, DrawState& ds, LevelManager& lm,
 {
   auto& es = rstate.fs.es;
   auto const& sd = es.dimensions;
-  ScreenDimensions const RHS{
+  ScreenViewport const RHS{
     cutoff_point, sd.top(), sd.right(), sd.right_bottom().y
   };
   render::set_viewport(RHS);

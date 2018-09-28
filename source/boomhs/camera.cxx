@@ -474,8 +474,7 @@ Camera::world_orientation_ref() const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // free functions
 Camera
-Camera::make_default(ScreenDimensions const& dimensions, WorldOrientation const& pers_wo,
-                     WorldOrientation const& ortho_wo)
+Camera::make_default(WorldOrientation const& pers_wo, WorldOrientation const& ortho_wo)
 {
   auto constexpr FOV  = glm::radians(110.0f);
   auto constexpr AR   = AspectRatio{4.0f, 3.0f};

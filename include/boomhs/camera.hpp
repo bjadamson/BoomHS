@@ -16,7 +16,7 @@ class SDLWindow;
 namespace boomhs
 {
 class FrameTime;
-class ScreenDimensions;
+class ScreenViewport;
 
 class AspectRatio
 {
@@ -230,7 +230,7 @@ public:
   void    set_target(WorldObject&);
 
   // static fns
-  static Camera make_default(ScreenDimensions const&, WorldOrientation const&, WorldOrientation const&);
+  static Camera make_default(WorldOrientation const&, WorldOrientation const&);
 };
 
 } // namespace boomhs

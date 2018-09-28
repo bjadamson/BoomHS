@@ -595,13 +595,13 @@ set_mvpmatrix(common::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 
 }
 
 void
-set_viewport(ScreenDimensions const& p)
+set_viewport(ScreenViewport const& p)
 {
   glViewport(p.left(), p.top(), p.right(), p.bottom());
 }
 
 void
-set_scissor(ScreenDimensions const& p)
+set_scissor(ScreenViewport const& p)
 {
   glScissor(p.left(), p.top(), p.right(), p.bottom());
 }

@@ -60,7 +60,7 @@ public:
   SDLWindow(SDLWindow&&);
 
   // methods
-  boomhs::ScreenDimensions get_dimensions() const;
+  boomhs::ScreenViewport get_dimensions() const;
 
   // Allow getting the window's SDL pointer
   window_type* raw() { return window_.get(); }
