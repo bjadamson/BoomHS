@@ -212,7 +212,7 @@ draw_rectangle_pm(common::Logger& logger, FloatRect const& viewport, CameraORTHO
 struct ViewportDisplayInfo
 {
   FloatRect const& view_rect;
-  glm::mat4 const& perspective, view;
+  glm::mat4 const& pm, vm;
 };
 
 struct Viewports
@@ -426,44 +426,32 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 
   MOUSE_ON_RHS_SCREEN = mouse_pos.x > middle_point;
 
-  glm::vec2 mouse_start;
-  float distance = 0.0f;
-  glm::mat4 const* pm             = nullptr;
-  glm::mat4 const* vm             = nullptr;
-  FloatRect const* view_rect = nullptr;
+  ViewportDisplayInfo const* vdi = nullptr;
   if (MOUSE_ON_RHS_SCREEN) {
-    // RHS
-    view_rect   = &right.view_rect;
-    mouse_start = mouse_pos - glm::vec2{middle_point, 0};
-
-    pm = &right.perspective;
-    vm = &right.view;
+    vdi = &right;
   }
   else {
-    // LHS
-    view_rect   = &left.view_rect;
-    mouse_start = mouse_pos;
-
-    pm = &left.perspective;
-    vm = &left.view;
+    vdi = &left;
   }
+  auto const mouse_start = mouse_pos - vdi->view_rect.left_top();
 
+  auto const& pm        = vdi->pm;
+  auto const& vm        = vdi->vm;
+  auto const& view_rect = vdi->view_rect;
   if (MOUSE_ON_RHS_SCREEN) {
     // RHS
-    on_rhs_mouse_cube_collisions(logger, mouse_start, *pm, *vm, *view_rect, cube_ents);
-
-    pm_rects[1].selected = collision::point_rectangle_intersects(mouse_pos, pm_rects[1].rect);
+    on_rhs_mouse_cube_collisions(logger, mouse_start, pm, vm, view_rect, cube_ents);
   }
   else {
     if (MOUSE_BUTTON_PRESSED) {
       // LHS
       auto const mouse_rect = make_mouse_rect(cam_ortho, mouse_start);
-      on_lhs_mouse_cube_collisions(logger, mouse_rect, cam_ortho,
-                                   *view_rect, *pm, *vm, cube_ents);
+      on_lhs_mouse_cube_collisions(logger, mouse_rect, cam_ortho, view_rect, pm, vm, cube_ents);
     }
-    //for (auto& pm_rect : pm_rects) {
-      pm_rects[0].selected = collision::point_rectangle_intersects(mouse_start, pm_rects[0].rect);
-    //}
+  }
+
+  for (auto& pm_rect : pm_rects) {
+    pm_rect.selected = collision::point_rectangle_intersects(mouse_pos, pm_rect.rect);
   }
 }
 
