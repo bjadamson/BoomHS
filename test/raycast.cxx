@@ -27,9 +27,10 @@ using namespace common;
 using namespace gl_sdl;
 using namespace opengl;
 
-static int constexpr NUM_CUBES                     = 100;
-static float constexpr SCREENSIZE_VIEWPORT_RATIO_X = 2.0f;
-static float constexpr SCREENSIZE_VIEWPORT_RATIO_Y = 1.0f;
+static int constexpr NUM_CUBES                   = 100;
+
+static int constexpr SCREENSIZE_VIEWPORT_RATIO_X = 2.0f;
+static int constexpr SCREENSIZE_VIEWPORT_RATIO_Y = 1.0f;
 
 // clang-format off
 static auto constexpr NEAR = 0.001f;
@@ -204,8 +205,8 @@ draw_rectangle_pm(common::Logger& logger, FloatRect const& viewport, CameraORTHO
 
 struct ViewportDisplayInfo
 {
-  Viewport const& viewport;
-  glm::mat4 const& pm, vm;
+  Viewport const viewport;
+  glm::mat4 const pm, vm;
 
   auto mouse_offset() const { return viewport.rect().left_top(); }
 };
@@ -640,6 +641,29 @@ update(common::Logger& logger, CameraORTHO& camera, FloatRect const& left_viewpo
   }
 }
 
+auto
+get_mousepos()
+{
+  int mouse_x, mouse_y;
+  SDL_GetMouseState(&mouse_x, &mouse_y);
+  return glm::ivec2{mouse_x, mouse_y};
+}
+
+auto
+get_viewports(common::Logger &logger, CameraORTHO const& camera, Frustum const& frustum,
+              Viewport const& lhs, Viewport const& rhs, Viewport const& screen_viewport,
+              glm::mat4 const& pers_pm)
+{
+  glm::mat4 const ortho_pm = camera.calc_pm(AR, frustum);
+  glm::mat4 const ortho_vm = camera.calc_vm();
+
+  glm::mat4 const pers_vm  = calculate_vm_fps(logger);
+
+  ViewportDisplayInfo const left{lhs, ortho_pm, ortho_vm};
+  ViewportDisplayInfo const right{rhs, pers_pm,  pers_vm};
+  return Viewports{left, right, screen_viewport};
+}
+
 int
 main(int argc, char **argv)
 {
@@ -658,25 +682,25 @@ main(int argc, char **argv)
   OR::init(logger);
   glEnable(GL_SCISSOR_TEST);
 
-  Viewport constexpr SCREEN_DIM{0, 0, WIDTH, HEIGHT};
-  float const MIDDLE_HORIZ = SCREEN_DIM.right() / SCREENSIZE_VIEWPORT_RATIO_X;
+  Viewport constexpr SCREEN_VIEWPORT{0, 0, WIDTH, HEIGHT};
+  int const MIDDLE_HORIZ = SCREEN_VIEWPORT.right() / SCREENSIZE_VIEWPORT_RATIO_X;
   auto const LHS = Viewport{
-    SCREEN_DIM.left(),
-    SCREEN_DIM.top(),
+    SCREEN_VIEWPORT.left(),
+    SCREEN_VIEWPORT.top(),
     static_cast<int>(MIDDLE_HORIZ),
-    SCREEN_DIM.bottom()
+    SCREEN_VIEWPORT.bottom()
   };
   auto const RHS = Viewport{
     (int)MIDDLE_HORIZ,
-    SCREEN_DIM.top(),
-    SCREEN_DIM.right(),
-    SCREEN_DIM.bottom()
+    SCREEN_VIEWPORT.top(),
+    SCREEN_VIEWPORT.right(),
+    SCREEN_VIEWPORT.bottom()
   };
   Frustum constexpr FRUSTUM{
-    SCREEN_DIM.float_left(),
-    SCREEN_DIM.float_right(),
-    SCREEN_DIM.float_bottom(),
-    SCREEN_DIM.float_top(),
+    SCREEN_VIEWPORT.float_left(),
+    SCREEN_VIEWPORT.float_right(),
+    SCREEN_VIEWPORT.float_bottom(),
+    SCREEN_VIEWPORT.float_top(),
     NEAR,
     FAR};
 
@@ -701,7 +725,7 @@ main(int argc, char **argv)
   auto const cr1 = FloatRect{600, 600, 800, 800};
   auto rect_sp = make_rectangle_program(logger);
 
-  auto const sd_rect = SCREEN_DIM.rect_float();
+  auto const sd_rect = SCREEN_VIEWPORT.rect_float();
   auto const& va = rect_sp.va();
   auto di0 = make_perspective_rect_gpuhandle(logger, cr0, va, sd_rect);
   auto di1 = make_perspective_rect_gpuhandle(logger, cr1, va, sd_rect);
@@ -725,24 +749,13 @@ main(int argc, char **argv)
 
   auto const pers_pm = glm::perspective(FOV, AR.compute(), FRUSTUM.near, FRUSTUM.far);
   while (!quit) {
-    glm::mat4 const ortho_pm = cam_ortho.calc_pm(AR, FRUSTUM);
-    glm::mat4 const ortho_vm = cam_ortho.calc_vm();
-
-    glm::mat4 const pers_vm  = calculate_vm_fps(logger);
-
-    ViewportDisplayInfo const left{LHS, ortho_pm, ortho_vm};
-    ViewportDisplayInfo const right{RHS, pers_pm,  pers_vm};
-    Viewports const viewports{left, right, SCREEN_DIM};
-
+    auto const viewports = get_viewports(logger, cam_ortho, FRUSTUM, LHS, RHS, SCREEN_VIEWPORT, pers_pm);
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       quit = process_event(logger, event, cam_ortho, viewports, cube_ents, pm_rects);
     }
 
-    int mouse_x, mouse_y;
-    SDL_GetMouseState(&mouse_x, &mouse_y);
-    glm::ivec2 const mouse_pos{mouse_x, mouse_y};
-
+    auto const mouse_pos = get_mousepos();
     update(logger, cam_ortho, LHS.rect_float(), RHS.rect_float(), mouse_pos, cube_ents, ft);
 
     PmDrawInfo pm_info{pm_rects, rect_sp};
