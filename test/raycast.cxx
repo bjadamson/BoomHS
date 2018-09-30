@@ -580,15 +580,19 @@ draw_scene(common::Logger& logger, Viewports const& viewports, PmDrawInfo& pm_in
            ShaderProgram& wire_sp, glm::ivec2 const& mouse_pos,
            CubeEntities& cube_ents)
 {
-  DrawState ds;
-
   auto const& LHS = viewports.left;
   auto const& RHS = viewports.right;
+  auto& pm_sp = pm_info.sp;
+
   auto const draw_lhs = [&](DrawState& ds) {
     OR::set_viewport(LHS.viewport);
     OR::set_scissor(LHS.viewport);
     OR::clear_screen(LOC::WHITE);
     draw_bboxes(logger, LHS.pm, LHS.vm, cube_ents, wire_sp, ds);
+
+    if (MOUSE_BUTTON_PRESSED) {
+      draw_mouserect(logger, camera, mouse_pos, pm_sp, LHS.viewport, ds);
+    }
   };
   auto const draw_rhs = [&](DrawState& ds) {
     OR::set_viewport(RHS.viewport);
@@ -602,21 +606,17 @@ draw_scene(common::Logger& logger, Viewports const& viewports, PmDrawInfo& pm_in
     OR::set_viewport(viewport);
     draw_rectangle_pm(logger, viewport.rect_float(), camera, sp, di, color, GL_TRIANGLES, ds);
   };
-
-  draw_lhs(ds);
-  draw_rhs(ds);
-
-  auto& pm_sp = pm_info.sp;
-  if (!MOUSE_ON_RHS_SCREEN && MOUSE_BUTTON_PRESSED) {
-    draw_mouserect(logger, camera, mouse_pos, pm_sp, LHS.viewport, ds);
-  }
-
-  {
+  auto const draw_pms = [&](auto& ds) {
     for (auto& pm_rect : pm_info.rects) {
       auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
       draw_pm(pm_sp, pm_rect.di, ds, color);
     }
-  }
+  };
+
+  DrawState ds;
+  draw_lhs(ds);
+  draw_rhs(ds);
+  draw_pms(ds);
 }
 
 void
