@@ -40,7 +40,7 @@ void
 draw_ortho_lhs(EngineState& es, LevelManager& lm, Camera& camera, int const cutoff_point,
                FrameTime const& ft)
 {
-  auto const vp = es.frustum.viewport_int_rect();
+  auto const vp = es.frustum.viewport_rect();
   Viewport const LHS{
     vp.left, vp.top, cutoff_point, vp.bottom
   };
@@ -62,7 +62,7 @@ draw_ortho_rhs(RenderState& rstate, DrawState& ds, LevelManager& lm,
               int const cutoff_point, FrameTime const& ft)
 {
   auto& es = rstate.fs.es;
-  auto const vp = es.frustum.viewport_int_rect();
+  auto const vp = es.frustum.viewport_rect();
 
   Viewport const RHS{
     cutoff_point, vp.top, vp.right, vp.right_bottom().y

@@ -3,15 +3,11 @@
 
 #include <array>
 #include <common/type_macros.hpp>
+#include <extlibs/glm.hpp>
 #include <extlibs/sdl.hpp>
 
 namespace boomhs
 {
-
-struct ScreenCoordinates
-{
-  float x, y;
-};
 
 class CursorManager
 {
@@ -48,7 +44,7 @@ public:
   {
     int x, y;
     SDL_GetMouseState(&x, &y);
-    return ScreenCoordinates{static_cast<float>(x), static_cast<float>(y)};
+    return glm::ivec2{x, y};
   }
   bool left_pressed() const { return mask() & SDL_BUTTON(SDL_BUTTON_LEFT); }
   bool right_pressed() const { return mask() & SDL_BUTTON(SDL_BUTTON_RIGHT); }

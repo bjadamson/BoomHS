@@ -96,10 +96,10 @@ auto
 make_perspective_rect_gpuhandle(common::Logger& logger, FloatRect const& rect,
                            VertexAttribute const& va, FloatRect const& view_rect)
 {
-  auto const TOP_LEFT = glm::vec2{rect.left, rect.top};
-  auto const BOTTOM_RIGHT = glm::vec2{rect.right, rect.bottom};
+  auto const LEFT_TOP     = glm::vec2{rect.left, rect.top};
+  auto const RIGHT_BOTTOM = glm::vec2{rect.right, rect.bottom};
 
-  FloatRect const ndc_rect{TOP_LEFT.x, TOP_LEFT.y, BOTTOM_RIGHT.x, BOTTOM_RIGHT.y};
+  FloatRect const ndc_rect{LEFT_TOP.x, LEFT_TOP.y, RIGHT_BOTTOM.x, RIGHT_BOTTOM.y};
   OF::RectInfo const ri{ndc_rect, std::nullopt, std::nullopt, std::nullopt};
   RectBuffer  buffer = OF::make_rectangle(ri);
 
@@ -211,8 +211,10 @@ draw_rectangle_pm(common::Logger& logger, FloatRect const& viewport, CameraORTHO
 
 struct ViewportDisplayInfo
 {
-  FloatRect const& view_rect;
+  IntRect const& view_rect;
   glm::mat4 const& pm, vm;
+
+  auto mouse_offset() const { return view_rect.left_top(); }
 };
 
 struct Viewports
@@ -341,7 +343,7 @@ struct PmRects
 };
 
 auto
-make_mouse_rect(CameraORTHO const& camera, glm::vec2 const& mouse_pos)
+make_mouse_rect(CameraORTHO const& camera, glm::ivec2 const& mouse_pos)
 {
   auto const& click_pos = camera.mouse_click.left_right;
 
@@ -356,11 +358,15 @@ make_mouse_rect(CameraORTHO const& camera, glm::vec2 const& mouse_pos)
 
 void
 on_rhs_mouse_cube_collisions(common::Logger& logger, glm::vec2 const& mouse_pos,
-                             glm::mat4 const& pm, glm::mat4 const& vm, FloatRect const& viewport,
+                             ViewportDisplayInfo const& vdi,
                              CubeEntities& cube_ents)
 {
+  auto const& pm        = vdi.pm;
+  auto const& vm        = vdi.vm;
+  auto const& view_rect = vdi.view_rect;
+
   auto &camera_pos = active_camera_pos();
-  Ray const ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_pos, pm, vm, viewport)};
+  Ray const ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_pos, pm, vm, view_rect)};
 
   for (auto &cube_ent : cube_ents) {
     auto const& cube = cube_ent.cube();
@@ -372,12 +378,15 @@ on_rhs_mouse_cube_collisions(common::Logger& logger, glm::vec2 const& mouse_pos,
 }
 
 void
-on_lhs_mouse_cube_collisions(common::Logger& logger,
-                         FloatRect const& mouse_rect,
-                         CameraORTHO const& cam_ortho, FloatRect const& view_rect,
-                         glm::mat4 const& pm, glm::mat4 const& vm,
+on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_ortho,
+                         glm::ivec2 const& mouse_start, ViewportDisplayInfo const& vdi,
                          CubeEntities& cube_ents)
 {
+  auto const& pm        = vdi.pm;
+  auto const& vm        = vdi.vm;
+  auto const& view_rect = vdi.view_rect;
+  auto const mouse_rect = make_mouse_rect(cam_ortho, mouse_start);
+
   for (auto &cube_ent : cube_ents) {
     auto const& cube = cube_ent.cube();
     auto tr          = cube_ent.transform();
@@ -412,7 +421,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
                     PmRects& pm_rects, CubeEntities& cube_ents)
 {
   float const x = motion.x, y = motion.y;
-  auto const mouse_pos = glm::vec2{x, y};
+  auto const mouse_pos = glm::ivec2{x, y};
 
   auto const& left  = viewports.left;
   auto const& right = viewports.right;
@@ -428,20 +437,15 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
   else {
     vdi = &left;
   }
-  auto const mouse_start = mouse_pos - vdi->view_rect.left_top();
-
-  auto const& pm        = vdi->pm;
-  auto const& vm        = vdi->vm;
-  auto const& view_rect = vdi->view_rect;
+  auto const mouse_start = mouse_pos - vdi->mouse_offset();
   if (MOUSE_ON_RHS_SCREEN) {
     // RHS
-    on_rhs_mouse_cube_collisions(logger, mouse_start, pm, vm, view_rect, cube_ents);
+    on_rhs_mouse_cube_collisions(logger, mouse_start, *vdi, cube_ents);
   }
   else {
     if (MOUSE_BUTTON_PRESSED) {
       // LHS
-      auto const mouse_rect = make_mouse_rect(cam_ortho, mouse_start);
-      on_lhs_mouse_cube_collisions(logger, mouse_rect, cam_ortho, view_rect, pm, vm, cube_ents);
+      on_lhs_mouse_cube_collisions(logger, cam_ortho, mouse_start, *vdi, cube_ents);
     }
   }
 
@@ -548,7 +552,7 @@ draw_cursor_under_mouse(common::Logger& logger, FloatRect const& viewport, Shade
 
 void
 draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
-               glm::vec2 const& mouse_pos, ShaderProgram& rect_sp,
+               glm::ivec2 const& mouse_pos, ShaderProgram& rect_sp,
                Viewport const& view_port, DrawState& ds)
 {
   auto const& click_pos = camera.mouse_click.left_right;
@@ -573,7 +577,7 @@ draw_scene(common::Logger& logger,
            ShaderProgram& rect_sp,
            Viewport const& LHS, Viewport const& RHS,
            Viewport const& screen_dim, CameraORTHO const& camera,
-           ShaderProgram& wire_sp, PmRects &pm_rects, glm::vec2 const& mouse_pos,
+           ShaderProgram& wire_sp, PmRects &pm_rects, glm::ivec2 const& mouse_pos,
            CubeEntities& cube_ents)
 {
   DrawState ds;
@@ -612,12 +616,12 @@ draw_scene(common::Logger& logger,
 
 void
 update(common::Logger& logger, CameraORTHO& camera, FloatRect const& left_viewport,
-       FloatRect const& right_viewport, glm::vec2 const& mouse_pos, CubeEntities& cube_ents,
+       FloatRect const& right_viewport, glm::ivec2 const& mouse_pos, CubeEntities& cube_ents,
        FrameTime const& ft)
 {
   if (MIDDLE_MOUSE_BUTTON_PRESSED) {
     auto const& middle_clickpos = camera.mouse_click.middle;
-    auto const distance         = glm::distance(middle_clickpos, mouse_pos);
+    float const distance        = ivec2_distance(middle_clickpos, mouse_pos);
 
     auto const& frustum = MOUSE_ON_RHS_SCREEN
         ? left_viewport
@@ -716,15 +720,15 @@ main(int argc, char **argv)
 
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
-      ViewportDisplayInfo const left{LHS.rect_float(), ortho_pm, ortho_vm};
-      ViewportDisplayInfo const right{RHS.rect_float(), pers_pm,  pers_vm};
+      ViewportDisplayInfo const left{LHS.rect(), ortho_pm, ortho_vm};
+      ViewportDisplayInfo const right{RHS.rect(), pers_pm,  pers_vm};
       Viewports const viewports{left, right};
       quit = process_event(logger, event, cam_ortho, viewports, cube_ents, pm_rects);
     }
 
     int mouse_x, mouse_y;
     SDL_GetMouseState(&mouse_x, &mouse_y);
-    glm::vec2 const mouse_pos{mouse_x, mouse_y};
+    glm::ivec2 const mouse_pos{mouse_x, mouse_y};
 
     update(logger, cam_ortho, LHS.rect_float(), RHS.rect_float(), mouse_pos, cube_ents, ft);
     draw_scene(logger, ortho_pm, ortho_vm, pers_pm, pers_vm, rect_sp, LHS, RHS, SCREEN_DIM,

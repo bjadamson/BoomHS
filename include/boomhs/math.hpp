@@ -82,6 +82,9 @@ struct IntRect : public RectT<int, glm::ivec2>
   {
   }
 
+  auto
+  into_float_rect() const { return FloatRect{left, top, right, bottom}; }
+
   static IntRect
   from_floats(float const l, float const t, float const r, float const b)
   {
@@ -151,8 +154,7 @@ struct Frustum
     return far - near;
   }
 
-  auto viewport_float_rect() const { return FloatRect{left, top, right, bottom}; }
-  auto viewport_int_rect()   const { return IntRect::from_floats(left, top, right, bottom); }
+  auto viewport_rect()   const { return IntRect::from_floats(left, top, right, bottom); }
 
   auto dimensions() const { return glm::vec3(width(), height(), depth()); }
   glm::vec3 center() const { return dimensions() / 2.0f; }
@@ -332,6 +334,14 @@ inline bool
 anynan(glm::vec3 const& v)
 {
   return std::isnan(v.x) || std::isnan(v.y) || std::isnan(v.z);
+}
+
+inline int
+ivec2_distance(glm::ivec2 const& a, glm::ivec2 const& b)
+{
+  float const dx = std::abs(std::abs(a.x) - std::abs(b.x));
+  float const dy = std::abs(std::abs(a.y) - std::abs(b.y));
+  return std::sqrt(squared(dx) + squared(dy));
 }
 
 // Normalizes "value" from the "from_range" to the "to_range"

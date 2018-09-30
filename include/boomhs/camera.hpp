@@ -118,7 +118,7 @@ class CameraORTHO
   auto const& up() const { return world_orientation_.up; }
 
 public:
-  CameraORTHO(WorldOrientation const&, glm::vec2 const&);
+  CameraORTHO(WorldOrientation const&, glm::ivec2 const&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraORTHO);
 
   // fields
@@ -126,12 +126,12 @@ public:
   glm::vec3 position;
 
   struct ClickPositions {
-    glm::vec2 left_right;
-    glm::vec2 middle;
+    glm::ivec2 left_right;
+    glm::ivec2 middle;
   };
 
   ClickPositions mouse_click;
-  glm::vec2 view_size;
+  glm::ivec2 view_size;
 
   // methods
   glm::mat4 calc_pm(AspectRatio const&, Frustum const&) const;
@@ -193,7 +193,7 @@ class Camera
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(ViewSettings&&, WorldOrientation const&, WorldOrientation const&, glm::vec2 const&);
+  Camera(ViewSettings&&, WorldOrientation const&, WorldOrientation const&, glm::ivec2 const&);
 
   // public fields
   CameraArcball arcball;

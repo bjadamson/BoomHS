@@ -654,7 +654,7 @@ draw_everything(FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
     auto const mode = camera.mode();
     if (CameraMode::FPS == mode || CameraMode::ThirdPerson == mode) {
       auto const& fr = es.frustum;
-      render::set_viewport(fr.viewport_int_rect());
+      render::set_viewport(fr.viewport_rect());
       PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);
 
       auto& io = es.imgui;

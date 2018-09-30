@@ -85,7 +85,7 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
 
   auto const proj_matrix = fstate.projection_matrix();
   auto const view_matrix = fstate.view_matrix();
-  auto const view_rect   = es.frustum.viewport_float_rect();
+  auto const view_rect   = es.frustum.viewport_rect();
 
   glm::vec3 const ray_start = (CameraMode::Ortho == fstate.camera_mode())
       ? CameraORTHO::EYE_FORWARD
@@ -432,14 +432,14 @@ PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs &&mk)
     if (ms_now.middle_pressed()) {
       auto const& click_pos = camera.ortho.mouse_click.middle;
 
-      auto const coords   = ms_now.coords();
-      auto const now      = glm::vec2{coords.x, coords.y};
-      auto const distance = glm::distance(click_pos, now);
+      auto const coords_now = ms_now.coords();
+      auto const distance   = ivec2_distance(click_pos, coords_now);
 
       auto const& view_settings = camera.view_settings_ref();
       auto const& frustum       = es.frustum;
-      float const dx = (now - click_pos).x / frustum.width();
-      float const dy = (now - click_pos).y / frustum.height();
+
+      float const dx = (coords_now - click_pos).x / frustum.width();
+      float const dy = (coords_now - click_pos).y / frustum.height();
 
       auto constexpr SCROLL_SPEED = 15.0f;
       auto const multiplier = SCROLL_SPEED * distance * ft.delta_millis();

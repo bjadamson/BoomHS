@@ -224,7 +224,7 @@ CameraFPS::calc_vm(glm::vec3 const& eye_fwd) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraORTHO
-CameraORTHO::CameraORTHO(WorldOrientation const& world_orientation, glm::vec2 const& vs)
+CameraORTHO::CameraORTHO(WorldOrientation const& world_orientation, glm::ivec2 const& vs)
     : world_orientation_(world_orientation)
     , zoom_(glm::vec2{0, 0})
     , position(0, 1, 0)
@@ -288,7 +288,7 @@ CameraORTHO::scroll(glm::vec2 const& sv)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
 Camera::Camera(ViewSettings&& vp, WorldOrientation const& pers_wo, WorldOrientation const& ortho_wo,
-               glm::vec2 const& ortho_view_size)
+               glm::ivec2 const& ortho_view_size)
     : view_settings_(MOVE(vp))
     , arcball(target_, pers_wo)
     , fps(target_, pers_wo)

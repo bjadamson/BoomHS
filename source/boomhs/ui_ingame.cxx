@@ -296,7 +296,7 @@ draw_chatwindow(EngineState& es, Player& player)
       | ImGuiWindowFlags_NoTitleBar
       );
 
-    auto const vp = Viewport{es.frustum.viewport_int_rect()};
+    auto const vp = Viewport{es.frustum.viewport_rect()};
     auto const [window_w, window_h] = vp.size();
     ImVec2 const offset{10, 6};
     auto const chat_w = 480, chat_h = 200;
@@ -333,7 +333,7 @@ draw_debugoverlay_window(EngineState& es, DrawState& ds)
 
   bool constexpr SHOW_BORDER = false;
 
-  auto const vp = Viewport{es.frustum.viewport_int_rect()};
+  auto const vp = Viewport{es.frustum.viewport_rect()};
   auto const [window_w, window_h] = vp.size();
   ImVec2 const offset{100, 50};
   auto const chat_w = 300, chat_h = 100;
@@ -582,7 +582,7 @@ draw_inventory_overlay(RenderState& rstate)
   auto color = LOC::GRAY;
   color.set_a(0.40);
 
-  auto const vp_rect = es.frustum.viewport_int_rect();
+  auto const vp_rect = es.frustum.viewport_rect();
   auto const make_rectangle = [&]() {
 
     auto const TL = glm::vec2{vp_rect.left,  vp_rect.top};
@@ -635,7 +635,7 @@ draw(FrameState& fs, Camera& camera, DrawState& ds)
   auto& ldata = zs.level_data;
   auto& nbt   = ldata.nearby_targets;
 
-  auto const vp = Viewport{es.frustum.viewport_int_rect()};
+  auto const vp = Viewport{es.frustum.viewport_rect()};
   draw_nearest_target_info(vp, nbt, ttable, registry);
 
   // Create a renderstate using an orthographic projection.

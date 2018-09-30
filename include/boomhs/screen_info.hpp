@@ -3,20 +3,13 @@
 
 namespace boomhs
 {
-
-struct ScreenCoords
-{
-  int x;
-  int y;
-
-  glm::vec2 to_vec2() const { return glm::vec2{x, y}; }
-};
-
 struct ScreenSize
 {
   int width;
   int height;
 };
+
+using ScreenCoords = glm::ivec2;
 
 class Viewport
 {
@@ -61,7 +54,8 @@ public:
   auto constexpr height() const { return bottom() - top(); }
 
   auto constexpr center() const { return ScreenCoords{width() / 2, height() / 2}; }
-  auto constexpr rect_float() const { return FloatRect{left_, top_, right_, bottom_}; }
+  auto constexpr rect() const { return IntRect{left_, top_, right_, bottom_}; }
+  auto constexpr rect_float() const { return rect().into_float_rect(); }
 };
 
 template <typename T>

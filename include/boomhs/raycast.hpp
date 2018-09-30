@@ -9,7 +9,7 @@ struct Raycast
 {
   Raycast() = delete;
 
-  static glm::vec3 calculate_ray_into_screen(glm::vec2 const&, glm::mat4 const&, glm::mat4 const&, FloatRect const&);
+  static glm::vec3 calculate_ray_into_screen(glm::vec2 const&, glm::mat4 const&, glm::mat4 const&, IntRect const&);
 };
 
 } // namespace boomhs
