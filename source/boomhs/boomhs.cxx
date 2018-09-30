@@ -68,19 +68,22 @@ namespace
 bool
 player_in_water(common::Logger& logger, EntityRegistry& registry)
 {
-  auto const& player = find_player(registry);
+  auto const& player      = find_player(registry);
   auto const& player_bbox = player.bounding_box().cube;
-  auto const& p_tr        = player.transform();
+  auto const& player_tr   = player.transform();
 
   auto const eids = find_all_entities_with_component<WaterInfo, Transform, AABoundingBox>(registry);
   for (auto const eid : eids) {
     auto const& water_bbox = registry.get<AABoundingBox>(eid).cube;
     auto const& water_info = registry.get<WaterInfo>(eid);
-    auto  w_tr       = registry.get<Transform>(eid);
-    w_tr.scale.x = water_info.dimensions.x;
-    w_tr.scale.z = water_info.dimensions.y;
 
-    if (collision::cube_intersects(logger, p_tr, player_bbox, w_tr, water_bbox)) {
+    auto  water_tr   = registry.get<Transform>(eid);
+    water_tr.scale.x = water_info.dimensions.x;
+    water_tr.scale.z = water_info.dimensions.y;
+
+    CubeTransform const& player_ct{player_bbox, player_tr};
+    CubeTransform const& water_ct{water_bbox,  water_tr};
+    if (collision::cubes_overlap(logger, player_ct, water_ct)) {
       return true;
     }
   }

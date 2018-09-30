@@ -163,4 +163,11 @@ find_orbital_bodies(EntityRegistry& registry)
   return find_all_entities_with_component<OrbitalBody>(registry);
 }
 
+// combined components
+struct CubeTransform
+{
+  Cube const& cube;
+  Transform const& transform;
+};
+
 } // namespace boomhs

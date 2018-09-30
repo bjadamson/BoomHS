@@ -361,18 +361,13 @@ on_rhs_mouse_cube_collisions(common::Logger& logger, glm::vec2 const& mouse_pos,
 {
   auto &camera_pos = active_camera_pos();
   Ray const ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_pos, pm, vm, viewport)};
+
   for (auto &cube_ent : cube_ents) {
     auto const& cube = cube_ent.cube();
-    auto tr          = cube_ent.transform();
-    Cube cr{cube.min, cube.max};
-    if (!MOUSE_ON_RHS_SCREEN) {
-      tr.translation.y = 0.0f;
-      cr.min.y = 0;
-      cr.max.y = 0;
-    }
+    auto const& tr   = cube_ent.transform();
 
     float distance = 0.0f;
-    cube_ent.selected = collision::ray_cube_intersect(ray, tr, cr, distance);
+    cube_ent.selected = collision::ray_intersects_cube(logger, ray, tr, cube, distance);
   }
 }
 

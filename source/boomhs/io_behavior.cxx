@@ -58,25 +58,14 @@ enum class MouseButton
 using EntityDistances = std::vector<std::pair<EntityID, float>>;
 
 bool
-ray_intersects_cube(common::Logger& logger, bool const can_use_simple_test,
-                    glm::vec3 const& ray_dir, glm::vec3 const& ray_start, EntityID const eid,
+ray_intersects_cube_entity(common::Logger& logger, EntityID const eid,
+                    Ray const& ray,
                     Transform const& tr, Cube const& cube, EntityDistances& distances)
 {
   float distance = 0.0f;
-  bool intersects = false;
-  if (can_use_simple_test) {
-    Ray const  ray{ray_start, ray_dir};
-    intersects = collision::ray_cube_intersect(ray, tr, cube, distance);
-  }
-  else {
-    intersects = collision::ray_obb_intersection(ray_start, ray_dir, cube, tr, distance);
-  }
-
+  bool const intersects = collision::ray_intersects_cube(logger, ray, tr, cube, distance);
   if (intersects) {
     distances.emplace_back(PAIR(eid, distance));
-
-    char const* test_name = can_use_simple_test ? "SIMPLE" : "COMPLEX";
-    LOG_ERROR_SPRINTF("Intersection found using %s test, distance %f", test_name, distance);
   }
   return intersects;
 }
@@ -109,9 +98,8 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
     auto const& tr   = registry.get<Transform>(eid);
     auto&       sel  = registry.get<Selectable>(eid);
 
-    bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == ONE);
-    bool const intersects = ray_intersects_cube(logger, can_use_simple_test, ray_dir, ray_start,
-                                                eid, tr, cube, distances);
+    Ray const  ray{ray_start, ray_dir};
+    bool const intersects = ray_intersects_cube_entity(logger, eid, ray, tr, cube, distances);
     if (intersects) {
       LOG_ERROR("\n\n\n\n\n\n\nIntersects something\n\n\n\n\n\n\n");
       LOG_ERROR_SPRINTF("mouse pos: %s", glm::to_string(mouse_pos));

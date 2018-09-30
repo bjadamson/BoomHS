@@ -1,14 +1,20 @@
 #include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>
+#include <boomhs/math.hpp>
+
 #include <common/algorithm.hpp>
+
+using namespace boomhs;
+using namespace boomhs::math;
+using namespace boomhs::math::constants;
 
 namespace boomhs
 {
 
 Ray::Ray(glm::vec3 const& o, glm::vec3 const& d)
-    : orig(o)
-    , dir(d)
-    , invdir(1.0f / dir)
+    : origin(o)
+    , direction(d)
+    , invdir(1.0f / direction)
     , sign(common::make_array<int>(invdir.x < 0, invdir.y < 0, invdir.z < 0))
 {
 }
@@ -41,11 +47,10 @@ rectangles_overlap(FloatRect const& a, FloatRect const& b)
 
 bool
 ray_obb_intersection(
-  glm::vec3 const& ray_origin,
-  glm::vec3 const& ray_direction,
-  Cube             cube,
-  Transform        tr,
-  float&           distance
+  Ray const& ray,
+  Cube       cube,
+  Transform  tr,
+  float&     distance
 )
 {
   auto const c  = cube.center();
@@ -61,13 +66,12 @@ ray_obb_intersection(
   // using the transform's original scale. Set the scaling of the copied transform to all 1's.
   tr.scale = glm::vec3{1};
   auto const model_matrix = tr.model_matrix();
-  return ray_obb_intersection(ray_origin, ray_direction, min, max, model_matrix, distance);
+  return ray_obb_intersection(ray, min, max, model_matrix, distance);
 }
 
 bool
 ray_obb_intersection(
-  glm::vec3 const& ray_origin,    // Ray origin, in world space
-  glm::vec3 const& ray_direction, // Ray direction (NOT target position!), world space. Normalized.
+  Ray const& ray,
   glm::vec3 const& aabb_min,      // Minimum X,Y,Z coords of the mesh when not transformed at all.
   glm::vec3 const& aabb_max,      // Maximum X,Y,Z coords. Often aabb_min*-1 if your mesh is
                                   // centered, but it's not always the case.
@@ -80,13 +84,13 @@ ray_obb_intersection(
   float t_max = 100000.0f;
 
   glm::vec3 const OBB_position_worldspace(model_matrix[3].x, model_matrix[3].y, model_matrix[3].z);
-  glm::vec3 const delta = OBB_position_worldspace - ray_origin;
+  glm::vec3 const delta = OBB_position_worldspace - ray.origin;
 
 #define TEST_PLANE_INTERSECTION_IMPL(INDEX, AABB_MIN, AABB_MAX)                                    \
   {                                                                                                \
     glm::vec3 const axis(model_matrix[INDEX].x, model_matrix[INDEX].y, model_matrix[INDEX].z);     \
     float const e = glm::dot(axis, delta);                                                         \
-    float const f = glm::dot(ray_direction, axis);                                                 \
+    float const f = glm::dot(ray.direction, axis);                                                 \
                                                                                                    \
     if (std::fabs(f) > 0.001f ) { /* Standard case */                                              \
       float t1 = (e + AABB_MIN) / f; /* Intersection with the "left" plane */                      \
@@ -134,10 +138,8 @@ ray_obb_intersection(
   return true;
 }
 
-// algorithm adopted from:
-// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-cube-intersection
 bool
-ray_cube_intersect(Ray const& r, Transform const& transform, Cube const& cube,
+ray_axis_aligned_cube_intersect(Ray const& r, Transform const& transform, Cube const& cube,
     float& distance)
 {
   auto const& cubepos = transform.translation;
@@ -147,10 +149,10 @@ ray_cube_intersect(Ray const& r, Transform const& transform, Cube const& cube,
   std::array<glm::vec3, 2> const bounds{{minpos + cubepos, maxpos + cubepos}};
 
   // clang-format off
-  float txmin = (bounds[    r.sign[0]].x - r.orig.x) * r.invdir.x;
-  float txmax = (bounds[1 - r.sign[0]].x - r.orig.x) * r.invdir.x;
-  float tymin = (bounds[    r.sign[1]].y - r.orig.y) * r.invdir.y;
-  float tymax = (bounds[1 - r.sign[1]].y - r.orig.y) * r.invdir.y;
+  float txmin = (bounds[    r.sign[0]].x - r.origin.x) * r.invdir.x;
+  float txmax = (bounds[1 - r.sign[0]].x - r.origin.x) * r.invdir.x;
+  float tymin = (bounds[    r.sign[1]].y - r.origin.y) * r.invdir.y;
+  float tymax = (bounds[1 - r.sign[1]].y - r.origin.y) * r.invdir.y;
 
   if ((txmin > tymax) || (tymin > txmax)) {
     return false;
@@ -162,8 +164,8 @@ ray_cube_intersect(Ray const& r, Transform const& transform, Cube const& cube,
     txmax = tymax;
   }
 
-  float tzmin = (bounds[    r.sign[2]].z - r.orig.z) * r.invdir.z;
-  float tzmax = (bounds[1 - r.sign[2]].z - r.orig.z) * r.invdir.z;
+  float tzmin = (bounds[    r.sign[2]].z - r.origin.z) * r.invdir.z;
+  float tzmax = (bounds[1 - r.sign[2]].z - r.origin.z) * r.invdir.z;
   // clang-format on
 
   if ((txmin > tzmax) || (tzmin > txmax)) {
@@ -183,20 +185,46 @@ ray_cube_intersect(Ray const& r, Transform const& transform, Cube const& cube,
 }
 
 bool
-cube_intersects(common::Logger& logger, Transform const& at, Cube const& ab,
-                Transform const& bt, Cube const& bb)
+cubes_overlap(common::Logger& logger, CubeTransform const& a, CubeTransform const& b)
 {
-  auto const& ac = at.translation;
-  auto const& bc = bt.translation;
+  auto const& at = a.transform;
+  auto const& bt = b.transform;
 
-  auto const ah = ab.half_widths() * at.scale;
-  auto const bh = bb.half_widths() * bt.scale;
+  auto const ah = a.cube.half_widths() * at.scale;
+  auto const bh = b.cube.half_widths() * bt.scale;
 
-  bool const x = std::fabs(ac.x - bc.x) <= (ah.x + bh.x);
-  bool const y = std::fabs(ac.y - bc.y) <= (ah.y + bh.y);
-  bool const z = std::fabs(ac.z - bc.z) <= (ah.z + bh.z);
+  auto const& att = at.translation;
+  auto const& btt = bt.translation;
+  bool const x = std::fabs(att.x - btt.x) <= (ah.x + bh.x);
+  bool const y = std::fabs(att.y - btt.y) <= (ah.y + bh.y);
+  bool const z = std::fabs(att.z - btt.z) <= (ah.z + bh.z);
 
   return x && y && z;
 }
+
+bool
+ray_intersects_cube(common::Logger& logger, Ray const& ray,
+                    Transform const& tr, Cube const& cube, float& distance)
+{
+  bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == ONE);
+
+  bool intersects = false;
+  auto const log_intersection = [&](char const* test_name) {
+    if (intersects) {
+      LOG_ERROR_SPRINTF("Intersection found using %s test, distance %f", test_name, distance);
+    }
+  };
+
+  if (can_use_simple_test) {
+    intersects = collision::ray_axis_aligned_cube_intersect(ray, tr, cube, distance);
+    log_intersection("SIMPLE");
+  }
+  else {
+    intersects = collision::ray_obb_intersection(ray, cube, tr, distance);
+    log_intersection("COMPLEX");
+  }
+  return intersects;
+}
+
 
 } // namespace boomhs::collision
