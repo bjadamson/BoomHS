@@ -39,14 +39,6 @@ static auto constexpr AR   = AspectRatio{4.0f, 3.0f};
 
 static int constexpr WIDTH  = 1024;
 static int constexpr HEIGHT = 768;
-Viewport constexpr SCREEN_DIM{0, 0, WIDTH, HEIGHT};
-static Frustum constexpr FRUSTUM{
-    SCREEN_DIM.float_left(),
-    SCREEN_DIM.float_right(),
-    SCREEN_DIM.float_bottom(),
-    SCREEN_DIM.float_top(),
-    NEAR,
-    FAR};
 // clang-format on
 
 static glm::vec3  ORTHO_CAMERA_POS = glm::vec3{0, 1, 0};
@@ -212,24 +204,25 @@ draw_rectangle_pm(common::Logger& logger, FloatRect const& viewport, CameraORTHO
 
 struct ViewportDisplayInfo
 {
-  IntRect const& view_rect;
+  Viewport const& viewport;
   glm::mat4 const& pm, vm;
 
-  auto mouse_offset() const { return view_rect.left_top(); }
+  auto mouse_offset() const { return viewport.rect().left_top(); }
 };
 
 struct Viewports
 {
   ViewportDisplayInfo left, right;
+  Viewport fullscreen;
 
   // clang-format off
-  auto center()        const { return right.view_rect.center_left(); }
+  auto center()        const { return right.viewport.rect().center_left(); }
 
-  auto center_left()   const { return left.view_rect.center_left(); }
-  auto center_right()  const { return right.view_rect.center_right(); }
+  auto center_left()   const { return left.viewport.rect().center_left(); }
+  auto center_right()  const { return right.viewport.rect().center_right(); }
 
-  auto center_top()    const { return right.view_rect.left_top(); }
-  auto center_bottom() const { return right.view_rect.left_bottom(); }
+  auto center_top()    const { return right.viewport.rect().left_top(); }
+  auto center_bottom() const { return right.viewport.rect().left_bottom(); }
   // clang-format on
 };
 
@@ -364,7 +357,7 @@ on_rhs_mouse_cube_collisions(common::Logger& logger, glm::vec2 const& mouse_pos,
 {
   auto const& pm        = vdi.pm;
   auto const& vm        = vdi.vm;
-  auto const& view_rect = vdi.view_rect;
+  auto const view_rect  = vdi.viewport.rect();
 
   auto &camera_pos = active_camera_pos();
   Ray const ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_pos, pm, vm, view_rect)};
@@ -385,7 +378,7 @@ on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_orth
 {
   auto const& pm        = vdi.pm;
   auto const& vm        = vdi.vm;
-  auto const& view_rect = vdi.view_rect;
+  auto const view_rect  = vdi.viewport.rect();
   auto const mouse_rect = make_mouse_rect(cam_ortho, mouse_start);
 
   for (auto &cube_ent : cube_ents) {
@@ -574,46 +567,53 @@ draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
   draw_cursor_under_mouse(logger, view_port.rect_float(), rect_sp, mouse_rect, camera, ds);
 }
 
+struct PmDrawInfo
+{
+  PmRects&       rects;
+  ShaderProgram& sp;
+};
+
 void
-draw_scene(common::Logger& logger,
-           glm::mat4 const& ortho_pm, glm::mat4 const& ortho_vm,
-           glm::mat4 const& pers_pm, glm::mat4 const& pers_vm,
-           ShaderProgram& rect_sp,
-           Viewport const& LHS, Viewport const& RHS,
-           Viewport const& screen_dim, CameraORTHO const& camera,
-           ShaderProgram& wire_sp, PmRects &pm_rects, glm::ivec2 const& mouse_pos,
+draw_scene(common::Logger& logger, Viewports const& viewports, PmDrawInfo& pm_info,
+           CameraORTHO const& camera,
+           ShaderProgram& wire_sp, glm::ivec2 const& mouse_pos,
            CubeEntities& cube_ents)
 {
   DrawState ds;
-  auto const draw_lhs = [&](DrawState& ds, auto const& pm, auto const& vm) {
-    OR::set_viewport(LHS);
-    OR::set_scissor(LHS);
+
+  auto const& LHS = viewports.left;
+  auto const& RHS = viewports.right;
+  auto const draw_lhs = [&](DrawState& ds) {
+    OR::set_viewport(LHS.viewport);
+    OR::set_scissor(LHS.viewport);
     OR::clear_screen(LOC::WHITE);
-    draw_bboxes(logger, pm, vm, cube_ents, wire_sp, ds);
+    draw_bboxes(logger, LHS.pm, LHS.vm, cube_ents, wire_sp, ds);
   };
-  auto const draw_rhs = [&](DrawState& ds, auto const& pm, auto const& vm) {
-    OR::set_viewport(RHS);
-    OR::set_scissor(RHS);
+  auto const draw_rhs = [&](DrawState& ds) {
+    OR::set_viewport(RHS.viewport);
+    OR::set_scissor(RHS.viewport);
     OR::clear_screen(LOC::BLACK);
-    draw_bboxes(logger, pm, vm, cube_ents, wire_sp, ds);
+    draw_bboxes(logger, RHS.pm, RHS.vm, cube_ents, wire_sp, ds);
   };
   auto const draw_pm = [&](auto& sp, auto& di, DrawState& ds, Color const& color) {
-    OR::set_scissor(SCREEN_DIM);
-    OR::set_viewport(SCREEN_DIM);
-    draw_rectangle_pm(logger, screen_dim.rect_float(), camera, sp, di, color, GL_TRIANGLES, ds);
+    auto const& viewport = viewports.fullscreen;
+    OR::set_scissor(viewport);
+    OR::set_viewport(viewport);
+    draw_rectangle_pm(logger, viewport.rect_float(), camera, sp, di, color, GL_TRIANGLES, ds);
   };
 
-  draw_lhs(ds, ortho_pm, ortho_vm);
-  draw_rhs(ds, pers_pm, pers_vm);
+  draw_lhs(ds);
+  draw_rhs(ds);
 
+  auto& pm_sp = pm_info.sp;
   if (!MOUSE_ON_RHS_SCREEN && MOUSE_BUTTON_PRESSED) {
-    draw_mouserect(logger, camera, mouse_pos, rect_sp, LHS, ds);
+    draw_mouserect(logger, camera, mouse_pos, pm_sp, LHS.viewport, ds);
   }
 
   {
-    for (auto& pm_rect : pm_rects) {
+    for (auto& pm_rect : pm_info.rects) {
       auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
-      draw_pm(rect_sp, pm_rect.di, ds, color);
+      draw_pm(pm_sp, pm_rect.di, ds, color);
     }
   }
 }
@@ -658,6 +658,7 @@ main(int argc, char **argv)
   OR::init(logger);
   glEnable(GL_SCISSOR_TEST);
 
+  Viewport constexpr SCREEN_DIM{0, 0, WIDTH, HEIGHT};
   float const MIDDLE_HORIZ = SCREEN_DIM.right() / SCREENSIZE_VIEWPORT_RATIO_X;
   auto const LHS = Viewport{
     SCREEN_DIM.left(),
@@ -671,6 +672,13 @@ main(int argc, char **argv)
     SCREEN_DIM.right(),
     SCREEN_DIM.bottom()
   };
+  Frustum constexpr FRUSTUM{
+    SCREEN_DIM.float_left(),
+    SCREEN_DIM.float_right(),
+    SCREEN_DIM.float_bottom(),
+    SCREEN_DIM.float_top(),
+    NEAR,
+    FAR};
 
   auto const PERS_FORWARD = -constants::Z_UNIT_VECTOR;
   auto constexpr PERS_UP  =  constants::Y_UNIT_VECTOR;
@@ -722,11 +730,12 @@ main(int argc, char **argv)
 
     glm::mat4 const pers_vm  = calculate_vm_fps(logger);
 
+    ViewportDisplayInfo const left{LHS, ortho_pm, ortho_vm};
+    ViewportDisplayInfo const right{RHS, pers_pm,  pers_vm};
+    Viewports const viewports{left, right, SCREEN_DIM};
+
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
-      ViewportDisplayInfo const left{LHS.rect(), ortho_pm, ortho_vm};
-      ViewportDisplayInfo const right{RHS.rect(), pers_pm,  pers_vm};
-      Viewports const viewports{left, right};
       quit = process_event(logger, event, cam_ortho, viewports, cube_ents, pm_rects);
     }
 
@@ -735,8 +744,9 @@ main(int argc, char **argv)
     glm::ivec2 const mouse_pos{mouse_x, mouse_y};
 
     update(logger, cam_ortho, LHS.rect_float(), RHS.rect_float(), mouse_pos, cube_ents, ft);
-    draw_scene(logger, ortho_pm, ortho_vm, pers_pm, pers_vm, rect_sp, LHS, RHS, SCREEN_DIM,
-               cam_ortho, wire_sp, pm_rects, mouse_pos, cube_ents);
+
+    PmDrawInfo pm_info{pm_rects, rect_sp};
+    draw_scene(logger, viewports, pm_info, cam_ortho, wire_sp, mouse_pos, cube_ents);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());
