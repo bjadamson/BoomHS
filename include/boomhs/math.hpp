@@ -1,4 +1,5 @@
 #pragma once
+#include <extlibs/fmt.hpp>
 #include <extlibs/glm.hpp>
 
 #include <array>
@@ -11,68 +12,72 @@ namespace boomhs
 {
 struct Transform;
 
-struct FloatRect
+template <typename T, typename V>
+struct RectT
 {
   // fields
-  float left, top;
-  float right, bottom;
-
-  // ctor
-  explicit constexpr FloatRect(int const l, int const t, int const r, int const b)
-      : FloatRect(static_cast<float>(l), static_cast<float>(t), static_cast<float>(r),
-                  static_cast<float>(b))
-  {
-  }
-
-  explicit constexpr FloatRect(float const l, float const t, float const r, float const b)
-      : FloatRect(glm::vec2{l, t}, glm::vec2{r, b})
-  {
-  }
-
-  explicit constexpr FloatRect(glm::vec2 const& p0, glm::vec2 const& p1)
-      : left(p0.x)
-      , top(p0.y)
-      , right(p1.x)
-      , bottom(p1.y)
-  {
-  }
+  T left, top;
+  T right, bottom;
 
   // methods
-  auto constexpr left_top() const { return glm::vec2{left, top}; }
-  auto constexpr left_bottom() const { return glm::vec2{left, bottom}; }
+  auto constexpr left_top() const { return V{left, top}; }
+  auto constexpr left_bottom() const { return V{left, bottom}; }
 
-  auto constexpr right_top() const { return glm::vec2{right, top}; }
-  auto constexpr right_bottom() const { return glm::vec2{right, bottom}; }
+  auto constexpr right_top() const { return V{right, top}; }
+  auto constexpr right_bottom() const { return V{right, bottom}; }
 
   auto width() const { return std::abs(right - left); }
   auto height() const { return std::abs(top - bottom); }
-  auto dimensions() const { return VEC2{width(), height()}; }
+  auto dimensions() const { return V{width(), height()}; }
 
   auto half_dimensions() const { return dimensions() / 2; }
   auto half_width() const { return width() / 2; }
   auto half_height() const { return height() / 2; }
 
-  std::string to_string() const;
+  auto center() const { return left_top() + half_dimensions(); }
+  auto center_left() const { return V{left, center().y}; }
+  auto center_right() const { return V{right, center().y}; }
+
+  auto center_top() const { return V{center().x, top}; }
+  auto center_bottom() const { return V{center().x, bottom}; }
+
+  std::string to_string() const
+  {
+    return fmt::sprintf("left/top: (%f,%f) right/bottom: (%f,%f)", left, top, right, bottom);
+  }
 };
 
-struct IntPoint
+class FloatRect : public RectT<float, glm::vec2>
 {
-  int x, y;
-};
-struct IntRect
-{
-  int left, top;
-  int right, bottom;
+  float cast(int const v) const { return static_cast<float>(v); }
+public:
 
-  explicit constexpr IntRect(int const l, int const t, int const r, int const b)
-      : left(l)
-      , top(t)
-      , right(r)
-      , bottom(b)
+  // ctor
+  explicit constexpr FloatRect(float const l, float const t, float const r, float const b)
+      : RectT{l, t, r, b}
   {
   }
 
-  explicit constexpr IntRect(IntPoint const& tl, IntPoint const& br)
+  explicit constexpr FloatRect(glm::vec2 const& p0, glm::vec2 const& p1)
+      : FloatRect(p0.x, p0.y, p1.x, p1.y)
+  {
+  }
+
+  // conversion ctor
+  explicit constexpr FloatRect(int const l, int const t, int const r, int const b)
+      : FloatRect(cast(l), cast(t), cast(r), cast(b))
+  {
+  }
+};
+
+struct IntRect : public RectT<int, glm::ivec2>
+{
+  explicit constexpr IntRect(int const l, int const t, int const r, int const b)
+      : RectT{l, t, r, b}
+  {
+  }
+
+  explicit constexpr IntRect(glm::ivec2 const& tl, glm::ivec2 const& br)
       : IntRect(tl.x, tl.y, br.x, br.y)
   {
   }
@@ -81,8 +86,8 @@ struct IntRect
   from_floats(float const l, float const t, float const r, float const b)
   {
     auto const cast = [](auto const& v) { return static_cast<int>(v); };
-    IntPoint const tl{cast(l), cast(t)};
-    IntPoint const br{cast(r), cast(b)};
+    glm::ivec2 const tl{cast(l), cast(t)};
+    glm::ivec2 const br{cast(r), cast(b)};
     return IntRect{tl, br};
   }
 
@@ -91,9 +96,6 @@ struct IntRect
   {
     return from_floats(p0.x, p0.y, p1.x, p1.y);
   }
-
-  auto constexpr left_top() const { return IntPoint{left, top}; }
-  auto constexpr right_bottom() const { return IntPoint{right, bottom}; }
 };
 
 struct Cube

@@ -1,6 +1,5 @@
 #include <boomhs/math.hpp>
 #include <boomhs/transform.hpp>
-#include <extlibs/fmt.hpp>
 
 namespace
 {
@@ -29,14 +28,6 @@ threeaxisrot(float const r11, float const r12, float const r21, float const r31,
 
 namespace boomhs
 {
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// FloatRect
-std::string
-FloatRect::to_string() const
-{
-  return fmt::sprintf("left/top: (%f,%f) right/bottom: (%f,%f)", left, top, right, bottom);
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Cube

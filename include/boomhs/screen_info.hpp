@@ -31,7 +31,7 @@ public:
   {
   }
 
-  constexpr Viewport(IntPoint const& tl, IntPoint const& br)
+  constexpr Viewport(glm::ivec2 const& tl, glm::ivec2 const& br)
       : Viewport(tl.x, tl.y, br.x, br.y)
   {
   }
