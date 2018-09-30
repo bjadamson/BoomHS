@@ -29,6 +29,7 @@ using namespace opengl;
 
 static int constexpr NUM_CUBES                     = 100;
 static float constexpr SCREENSIZE_VIEWPORT_RATIO_X = 2.0f;
+static float constexpr SCREENSIZE_VIEWPORT_RATIO_Y = 1.0f;
 
 // clang-format off
 static auto constexpr NEAR = 0.001f;
@@ -402,13 +403,13 @@ on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_orth
     xz.right  = xz.left + (xz.width() / SCREENSIZE_VIEWPORT_RATIO_X);
 
     xz.top    = xz.top;
-    xz.bottom = xz.bottom;
+    xz.bottom = xz.top + (xz.height() / SCREENSIZE_VIEWPORT_RATIO_Y);
 
     xz.left  += tr.translation.x / SCREENSIZE_VIEWPORT_RATIO_X;
     xz.right += tr.translation.x / SCREENSIZE_VIEWPORT_RATIO_X;
 
-    xz.top    += tr.translation.z;
-    xz.bottom += tr.translation.z;
+    xz.top    += tr.translation.z / SCREENSIZE_VIEWPORT_RATIO_Y;
+    xz.bottom += tr.translation.z / SCREENSIZE_VIEWPORT_RATIO_Y;
 
     cube_ent.selected = collision::rectangles_overlap(mouse_rect, xz);
   }
@@ -562,8 +563,11 @@ draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
   float const maxy = mouse_pos.y;
 
   FloatRect mouse_rect{minx, miny, maxx, maxy};
-  mouse_rect.left *= SCREENSIZE_VIEWPORT_RATIO_X;
+  mouse_rect.left  *= SCREENSIZE_VIEWPORT_RATIO_X;
   mouse_rect.right *= SCREENSIZE_VIEWPORT_RATIO_X;
+
+  mouse_rect.top    *= SCREENSIZE_VIEWPORT_RATIO_Y;
+  mouse_rect.bottom *= SCREENSIZE_VIEWPORT_RATIO_Y;
 
   OR::set_scissor(view_port);
   OR::set_viewport(view_port);
