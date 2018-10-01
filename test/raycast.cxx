@@ -626,7 +626,7 @@ update(common::Logger& logger, CameraORTHO& camera, FloatRect const& left_viewpo
 {
   if (MIDDLE_MOUSE_BUTTON_PRESSED) {
     auto const& middle_clickpos = camera.mouse_click.middle;
-    float const distance        = ivec2_distance(middle_clickpos, mouse_pos);
+    float const distance        = pythag_distance(middle_clickpos, mouse_pos);
 
     auto const& frustum = MOUSE_ON_RHS_SCREEN
         ? left_viewport

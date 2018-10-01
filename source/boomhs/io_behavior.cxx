@@ -433,7 +433,7 @@ PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs &&mk)
       auto const& click_pos = camera.ortho.mouse_click.middle;
 
       auto const coords_now = ms_now.coords();
-      auto const distance   = ivec2_distance(click_pos, coords_now);
+      auto const distance   = pythag_distance(click_pos, coords_now);
 
       auto const& view_settings = camera.view_settings_ref();
       auto const& frustum       = es.frustum;

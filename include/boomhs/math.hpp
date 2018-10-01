@@ -337,11 +337,10 @@ anynan(glm::vec3 const& v)
 }
 
 inline int
-ivec2_distance(glm::ivec2 const& a, glm::ivec2 const& b)
+pythag_distance(glm::ivec2 const& a, glm::ivec2 const& b)
 {
-  float const dx = std::abs(std::abs(a.x) - std::abs(b.x));
-  float const dy = std::abs(std::abs(a.y) - std::abs(b.y));
-  return std::sqrt(squared(dx) + squared(dy));
+  // pythagorean theorem
+  return std::sqrt(squared(b.x - a.x) + squared(b.y - a.y));
 }
 
 // Normalizes "value" from the "from_range" to the "to_range"
