@@ -40,12 +40,19 @@ struct RectT
 
   auto center_top() const { return V{center().x, top}; }
   auto center_bottom() const { return V{center().x, bottom}; }
-
-  std::string to_string() const
-  {
-    return fmt::sprintf("left/top: (%f,%f) right/bottom: (%f,%f)", left, top, right, bottom);
-  }
 };
+
+#define RECT_TO_STRING_MEMBER_IMPL(FMT_IDENTIFIER)                                                 \
+std::string to_string() const                                                                      \
+{                                                                                                  \
+  return fmt::sprintf(                                                                             \
+      "left/top: ("#FMT_IDENTIFIER","#FMT_IDENTIFIER") "                                           \
+      "right/bottom: ("#FMT_IDENTIFIER","#FMT_IDENTIFIER") "                                       \
+      "width/height: ("#FMT_IDENTIFIER","#FMT_IDENTIFIER")",                                       \
+      left, top,                                                                                   \
+      right, bottom,                                                                               \
+      width(), height());                                                                          \
+}
 
 class FloatRect : public RectT<float, glm::vec2>
 {
@@ -68,6 +75,8 @@ public:
       : FloatRect(cast(l), cast(t), cast(r), cast(b))
   {
   }
+
+  RECT_TO_STRING_MEMBER_IMPL(%f);
 };
 
 struct IntRect : public RectT<int, glm::ivec2>
@@ -94,12 +103,10 @@ struct IntRect : public RectT<int, glm::ivec2>
     return IntRect{tl, br};
   }
 
-  static IntRect
-  from_floats(glm::vec2 const& p0, glm::vec2 const& p1)
-  {
-    return from_floats(p0.x, p0.y, p1.x, p1.y);
-  }
+  RECT_TO_STRING_MEMBER_IMPL(%i);
 };
+
+#undef RECT_TO_STRING_MEMBER_IMPL
 
 struct Cube
 {
@@ -141,23 +148,30 @@ struct Frustum
   auto height() const
   {
     assert(bottom > top);
-    return bottom - top;
+    return std::abs(bottom - top);
   }
   auto width() const
   {
     assert(right > left);
-    return right - left;
+    return std::abs(right - left);
   }
   auto depth() const
   {
     assert(far > near);
-    return far - near;
+    return std::abs(far - near);
   }
 
-  auto viewport_rect()   const { return IntRect::from_floats(left, top, right, bottom); }
+  auto half_height() const { return height() / 2; }
+  auto half_width() const { return width() / 2; }
+  auto half_depth() const { return depth() / 2; }
+
+  int half_height_int() const { return half_height(); }
+  int half_width_int() const { return half_height(); }
+  int half_depth_int() const { return half_height(); }
 
   auto dimensions() const { return glm::vec3(width(), height(), depth()); }
-  glm::vec3 center() const { return dimensions() / 2.0f; }
+  auto center() const { return dimensions() / 2; }
+  auto viewport_rect() const { return IntRect::from_floats(left, top, right, bottom); }
 
   std::string to_string() const;
 };
