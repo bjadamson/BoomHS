@@ -563,8 +563,7 @@ draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
   mouse_rect.top    *= SCREENSIZE_VIEWPORT_RATIO_Y;
   mouse_rect.bottom *= SCREENSIZE_VIEWPORT_RATIO_Y;
 
-  OR::set_scissor(view_port);
-  OR::set_viewport(view_port);
+  OR::set_viewport_and_scissor(view_port);
   draw_cursor_under_mouse(logger, view_port.rect_float(), rect_sp, mouse_rect, camera, ds);
 }
 
@@ -585,8 +584,7 @@ draw_scene(common::Logger& logger, Viewports const& viewports, PmDrawInfo& pm_in
   auto& pm_sp = pm_info.sp;
 
   auto const draw_lhs = [&](DrawState& ds) {
-    OR::set_viewport(LHS.viewport);
-    OR::set_scissor(LHS.viewport);
+    OR::set_viewport_and_scissor(LHS.viewport);
     OR::clear_screen(LOC::WHITE);
     draw_bboxes(logger, LHS.pm, LHS.vm, cube_ents, wire_sp, ds);
 
@@ -595,15 +593,13 @@ draw_scene(common::Logger& logger, Viewports const& viewports, PmDrawInfo& pm_in
     }
   };
   auto const draw_rhs = [&](DrawState& ds) {
-    OR::set_viewport(RHS.viewport);
-    OR::set_scissor(RHS.viewport);
+    OR::set_viewport_and_scissor(RHS.viewport);
     OR::clear_screen(LOC::BLACK);
     draw_bboxes(logger, RHS.pm, RHS.vm, cube_ents, wire_sp, ds);
   };
   auto const draw_pm = [&](auto& sp, auto& di, DrawState& ds, Color const& color) {
     auto const& viewport = viewports.fullscreen;
-    OR::set_scissor(viewport);
-    OR::set_viewport(viewport);
+    OR::set_viewport_and_scissor(viewport);
     draw_rectangle_pm(logger, viewport.rect_float(), camera, sp, di, color, GL_TRIANGLES, ds);
   };
   auto const draw_pms = [&](auto& ds) {
@@ -680,7 +676,7 @@ main(int argc, char **argv)
       sdl_gl->make_window(logger, "Ortho Raycast Test", FULLSCREEN, WIDTH, HEIGHT), on_error);
 
   OR::init(logger);
-  glEnable(GL_SCISSOR_TEST);
+  ENABLE_SCISSOR_TEST_UNTIL_SCOPE_EXIT();
 
   Viewport constexpr SCREEN_VIEWPORT{0, 0, WIDTH, HEIGHT};
   int const MIDDLE_HORIZ = SCREEN_VIEWPORT.right() / SCREENSIZE_VIEWPORT_RATIO_X;

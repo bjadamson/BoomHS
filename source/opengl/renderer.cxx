@@ -604,5 +604,11 @@ set_scissor(Viewport const& p)
   glScissor(p.left(), p.top(), p.right(), p.bottom());
 }
 
+void
+set_viewport_and_scissor(Viewport const& p)
+{
+  set_viewport(p);
+  set_scissor(p);
+}
 
 } // namespace opengl::render

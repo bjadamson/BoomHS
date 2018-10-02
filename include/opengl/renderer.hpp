@@ -101,6 +101,10 @@ struct BlendState
   glEnable(GL_BLEND);                                                                              \
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
+#define ENABLE_SCISSOR_TEST_UNTIL_SCOPE_EXIT()                                                     \
+  glEnable(GL_SCISSOR_TEST);                                                                       \
+  ON_SCOPE_EXIT([]() { glDisable(GL_SCISSOR_TEST); })
+
 namespace opengl::render
 {
 
@@ -182,9 +186,12 @@ void
 set_mvpmatrix(common::Logger&, glm::mat4 const&, glm::mat4 const&, ShaderProgram&);
 
 void
+set_scissor(boomhs::Viewport const&);
+
+void
 set_viewport(boomhs::Viewport const&);
 
 void
-set_scissor(boomhs::Viewport const&);
+set_viewport_and_scissor(boomhs::Viewport const&);
 
 } // namespace opengl::render

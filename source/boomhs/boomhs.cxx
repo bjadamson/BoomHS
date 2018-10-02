@@ -654,7 +654,7 @@ draw_everything(FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
     auto const mode = camera.mode();
     if (CameraMode::FPS == mode || CameraMode::ThirdPerson == mode) {
       auto const& fr = es.frustum;
-      render::set_viewport(fr.viewport_rect());
+      render::set_viewport_and_scissor(fr.viewport_rect());
       PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);
 
       auto& io = es.imgui;
@@ -719,7 +719,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
     // clear the screen before rending the main menu
     render::clear_screen(LOC::BLACK);
-    render::set_viewport(viewport);
+    render::set_viewport_and_scissor(viewport);
 
     auto& skybox_renderer  = static_renderers.skybox;
     main_menu::draw(es, engine.window, camera, skybox_renderer, ds, lm, viewport, water_audio);
