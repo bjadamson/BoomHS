@@ -28,13 +28,13 @@ struct RectT
 
   auto width() const { return std::abs(right - left); }
   auto height() const { return std::abs(top - bottom); }
-  auto dimensions() const { return V{width(), height()}; }
+  auto size() const { return V{width(), height()}; }
 
-  auto half_dimensions() const { return dimensions() / 2; }
+  auto half_size() const { return size() / 2; }
   auto half_width() const { return width() / 2; }
   auto half_height() const { return height() / 2; }
 
-  auto center() const { return left_top() + half_dimensions(); }
+  auto center() const { return left_top() + half_size(); }
   auto center_left() const { return V{left, center().y}; }
   auto center_right() const { return V{right, center().y}; }
 
