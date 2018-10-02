@@ -22,6 +22,10 @@
 #define VEC3 glm::vec3
 #define VEC4 glm::vec4
 
+#define IVEC2 glm::ivec2
+#define IVEC3 glm::ivec3
+#define IVEC4 glm::ivec4
+
 namespace glm
 {
 
