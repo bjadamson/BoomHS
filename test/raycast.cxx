@@ -33,13 +33,13 @@ static int constexpr SCREENSIZE_VIEWPORT_RATIO_X = 2.0f;
 static int constexpr SCREENSIZE_VIEWPORT_RATIO_Y = 1.0f;
 
 // clang-format off
+static int constexpr WIDTH  = 1024;
+static int constexpr HEIGHT = 768;
+
 static auto constexpr NEAR = 0.001f;
 static auto constexpr FAR  = 1000.0f;
 static auto constexpr FOV  = glm::radians(110.0f);
 static auto constexpr AR   = AspectRatio{4.0f, 3.0f};
-
-static int constexpr WIDTH  = 1024;
-static int constexpr HEIGHT = 768;
 // clang-format on
 
 static glm::vec3  ORTHO_CAMERA_POS = glm::vec3{0, 1, 0};
@@ -88,13 +88,9 @@ struct ProgramAndGpuHandle
 
 auto
 make_perspective_rect_gpuhandle(common::Logger& logger, RectFloat const& rect,
-                           VertexAttribute const& va, RectFloat const& view_rect)
+                                VertexAttribute const& va)
 {
-  auto const LEFT_TOP     = glm::vec2{rect.left, rect.top};
-  auto const RIGHT_BOTTOM = glm::vec2{rect.right, rect.bottom};
-
-  RectFloat const ndc_rect{LEFT_TOP.x, LEFT_TOP.y, RIGHT_BOTTOM.x, RIGHT_BOTTOM.y};
-  OF::RectInfo const ri{ndc_rect, std::nullopt, std::nullopt, std::nullopt};
+  OF::RectInfo const ri{rect, std::nullopt, std::nullopt, std::nullopt};
   RectBuffer  buffer = OF::make_rectangle(ri);
 
   return gpu::copy_rectangle(logger, va, buffer);
@@ -182,15 +178,15 @@ draw_rectangle_pm(common::Logger& logger, RectFloat const& viewport, CameraORTHO
                   ShaderProgram& sp, DrawInfo& dinfo, Color const& color, GLenum const draw_mode,
                   DrawState& ds)
 {
-  int constexpr NEAR = -1.0;
-  int constexpr FAR  = 1.0f;
+  int constexpr NEAR_PM = -1.0;
+  int constexpr FAR_PM  = 1.0f;
   Frustum const f{
     viewport.left,
     viewport.right,
     viewport.bottom,
     viewport.top,
-    NEAR,
-    FAR
+    NEAR_PM,
+    FAR_PM
   };
 
   auto const pm = camera.calc_pm(AR, f);
@@ -318,8 +314,8 @@ process_keydown(SDL_Keycode const keycode, glm::vec3& camera_pos, CubeEntities& 
 
 struct PmRect
 {
-  RectFloat const& rect;
-  DrawInfo         di;
+  RectFloat const rect;
+  DrawInfo        di;
 
   bool selected = false;
 
@@ -709,22 +705,13 @@ main(int argc, char **argv)
   WorldOrientation const ORTHO_WO{ORTHO_FORWARD, ORTHO_UP};
   CameraORTHO cam_ortho{ORTHO_WO, glm::vec2{WIDTH, HEIGHT}};
 
-  CameraTarget cam_target;
-
-  EntityRegistry er;
-  auto const eid = er.create();
-  WorldObject  wo{eid, er, PERS_WO};
-  cam_target.set(wo);
-  CameraFPS cam_fps{cam_target, PERS_WO};
-
   auto const cr0 = RectFloat{200, 200, 400, 400};
   auto const cr1 = RectFloat{600, 600, 800, 800};
   auto rect_sp = make_rectangle_program(logger);
 
-  auto const sd_rect = SCREEN_VIEWPORT.rect_float();
   auto const& va = rect_sp.va();
-  auto di0 = make_perspective_rect_gpuhandle(logger, cr0, va, sd_rect);
-  auto di1 = make_perspective_rect_gpuhandle(logger, cr1, va, sd_rect);
+  auto di0 = make_perspective_rect_gpuhandle(logger, cr0, va);
+  auto di1 = make_perspective_rect_gpuhandle(logger, cr1, va);
 
   Timer timer;
   FrameCounter fcounter;
