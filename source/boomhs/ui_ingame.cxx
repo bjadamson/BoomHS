@@ -588,7 +588,7 @@ draw_inventory_overlay(RenderState& rstate)
     auto const TL = glm::vec2{vp_rect.left,  vp_rect.top};
     auto const BR = glm::vec2{vp_rect.right, vp_rect.bottom};
 
-    FloatRect const rect{TL.x, TL.y, BR.x, BR.y};
+    RectFloat const rect{TL.x, TL.y, BR.x, BR.y};
     OF::RectInfo   const ri{rect, std::nullopt, std::nullopt, std::nullopt};
     return OF::make_rectangle(ri);
   };

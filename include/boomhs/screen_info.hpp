@@ -13,7 +13,7 @@ using ScreenCoords = glm::ivec2;
 
 class Viewport
 {
-  IntRect rect_;
+  RectInt rect_;
 
 public:
   constexpr Viewport(int const left, int const top, int const right, int const bottom)
@@ -26,7 +26,7 @@ public:
   {
   }
 
-  constexpr Viewport(IntRect const& r)
+  constexpr Viewport(RectInt const& r)
       : Viewport(r.left_top(), r.right_bottom())
   {
   }

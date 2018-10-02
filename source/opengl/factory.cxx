@@ -289,7 +289,7 @@ make_rectangle(RectInfo const& info)
 }
 
 RectLineBuffer
-make_line_rectangle(FloatRect const& r)
+make_line_rectangle(RectFloat const& r)
 {
   std::vector<float> vertices;
   auto const add_point = [&vertices](auto const& p) {

@@ -54,53 +54,53 @@ std::string to_string() const                                                   
       width(), height());                                                                          \
 }
 
-class FloatRect : public RectT<float, glm::vec2>
+class RectFloat : public RectT<float, glm::vec2>
 {
   float cast(int const v) const { return static_cast<float>(v); }
 public:
 
   // ctor
-  explicit constexpr FloatRect(float const l, float const t, float const r, float const b)
+  explicit constexpr RectFloat(float const l, float const t, float const r, float const b)
       : RectT{l, t, r, b}
   {
   }
 
-  explicit constexpr FloatRect(glm::vec2 const& p0, glm::vec2 const& p1)
-      : FloatRect(p0.x, p0.y, p1.x, p1.y)
+  explicit constexpr RectFloat(glm::vec2 const& p0, glm::vec2 const& p1)
+      : RectFloat(p0.x, p0.y, p1.x, p1.y)
   {
   }
 
   // conversion ctor
-  explicit constexpr FloatRect(int const l, int const t, int const r, int const b)
-      : FloatRect(cast(l), cast(t), cast(r), cast(b))
+  explicit constexpr RectFloat(int const l, int const t, int const r, int const b)
+      : RectFloat(cast(l), cast(t), cast(r), cast(b))
   {
   }
 
   RECT_TO_STRING_MEMBER_IMPL(%f);
 };
 
-struct IntRect : public RectT<int, glm::ivec2>
+struct RectInt : public RectT<int, glm::ivec2>
 {
-  explicit constexpr IntRect(int const l, int const t, int const r, int const b)
+  explicit constexpr RectInt(int const l, int const t, int const r, int const b)
       : RectT{l, t, r, b}
   {
   }
 
-  explicit constexpr IntRect(glm::ivec2 const& tl, glm::ivec2 const& br)
-      : IntRect(tl.x, tl.y, br.x, br.y)
+  explicit constexpr RectInt(glm::ivec2 const& tl, glm::ivec2 const& br)
+      : RectInt(tl.x, tl.y, br.x, br.y)
   {
   }
 
   auto
-  into_float_rect() const { return FloatRect{left, top, right, bottom}; }
+  into_float_rect() const { return RectFloat{left, top, right, bottom}; }
 
-  static IntRect
+  static RectInt
   from_floats(float const l, float const t, float const r, float const b)
   {
     auto const cast = [](auto const& v) { return static_cast<int>(v); };
     glm::ivec2 const tl{cast(l), cast(t)};
     glm::ivec2 const br{cast(r), cast(b)};
-    return IntRect{tl, br};
+    return RectInt{tl, br};
   }
 
   RECT_TO_STRING_MEMBER_IMPL(%i);
@@ -122,7 +122,7 @@ struct Cube
   glm::vec3 scaled_dimensions(Transform const&) const;
   glm::vec3 scaled_half_widths(Transform const&) const;
 
-  auto constexpr xz_rect() const { return FloatRect{min.x, min.z, max.x, max.z}; }
+  auto constexpr xz_rect() const { return RectFloat{min.x, min.z, max.x, max.z}; }
 
   explicit Cube(glm::vec3 const&, glm::vec3 const&);
 
@@ -171,7 +171,7 @@ struct Frustum
 
   auto dimensions() const { return glm::vec3(width(), height(), depth()); }
   auto center() const { return dimensions() / 2; }
-  auto viewport_rect() const { return IntRect::from_floats(left, top, right, bottom); }
+  auto viewport_rect() const { return RectInt::from_floats(left, top, right, bottom); }
 
   std::string to_string() const;
 };
@@ -254,7 +254,7 @@ eye_to_world(glm::vec4 const& eye, glm::mat4 const& view_matrix)
 }
 
 inline constexpr glm::vec2
-screen_to_ndc(glm::vec2 const& scoords, FloatRect const& view_rect)
+screen_to_ndc(glm::vec2 const& scoords, RectFloat const& view_rect)
 {
   float const x = ((2.0f * scoords.x) / view_rect.right) - 1.0f;
   float const y = ((2.0f * scoords.y) / view_rect.bottom) - 1.0f;
@@ -275,7 +275,7 @@ ndc_to_clip(glm::vec2 const& ndc, float const z)
 }
 
 inline glm::vec3
-screen_to_world(glm::vec2 const& scoords, FloatRect const& view_rect, glm::mat4 const& proj_matrix,
+screen_to_world(glm::vec2 const& scoords, RectFloat const& view_rect, glm::mat4 const& proj_matrix,
                 glm::mat4 const& view_matrix, float const z)
 {
   glm::vec2 const ndc   = screen_to_ndc(scoords, view_rect);

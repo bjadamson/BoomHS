@@ -59,9 +59,9 @@ bool
 ray_intersects_cube(common::Logger&, Ray const&, Transform const&, Cube const&, float&);
 
 bool
-point_rectangle_intersects(glm::vec2 const&, FloatRect const&);
+point_rectangle_intersects(glm::vec2 const&, RectFloat const&);
 
 bool
-rectangles_overlap(FloatRect const&, FloatRect const&);
+rectangles_overlap(RectFloat const&, RectFloat const&);
 
 } // namespace boomhs::collision

@@ -15,7 +15,7 @@ glm::vec3
 Raycast::calculate_ray_into_screen(glm::vec2 const& point, glm::mat4 const& proj,
                                    glm::mat4 const& view, Viewport const& vr)
 {
-  //FloatRect const float_view_rect{vr.left, vr.top, vr.right, vr.bottom};
+  //RectFloat const float_view_rect{vr.left, vr.top, vr.right, vr.bottom};
 
   // When doing mouse picking, we want our ray to be pointed "into" the screen
   float constexpr Z            = -1.0f;
