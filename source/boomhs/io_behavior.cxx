@@ -651,59 +651,87 @@ PlayerPlayingGameBehavior::process_controller_state(ControllerArgs&& ca)
   }
 }
 
-/////////////////////////////////////////////////////gfx_window_sdl///////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // TerminalOnlyBehavior
 void
-TerminalOnlyBehavior::mousebutton_down(MouseButtonEvent&&)
+TerminalOnlyBehavior::mousebutton_down(MouseButtonEvent&& args)
 {
-  std::cerr << "mousebutton down\n";
+  auto& state  = args.game_state;
+  auto& es     = state.engine_state;
+  auto& logger = es.logger;
+  LOG_ERROR("mousebutton down");
 }
 
 void
-TerminalOnlyBehavior::mousebutton_up(MouseButtonEvent&&)
+TerminalOnlyBehavior::mousebutton_up(MouseButtonEvent&& args)
 {
-  std::cerr << "mousebutton up\n";
-}
-void
-TerminalOnlyBehavior::mouse_motion(MouseMotionEvent&&)
-{
-  std::cerr << "mouse motion\n";
+  auto& state  = args.game_state;
+  auto& es     = state.engine_state;
+  auto& logger = es.logger;
+  LOG_ERROR("mousebutton up");
 }
 
 void
-TerminalOnlyBehavior::mouse_wheel(MouseWheelEvent&&)
+TerminalOnlyBehavior::mouse_motion(MouseMotionEvent&& args)
 {
-  std::cerr << "mouse wheel\n";
+  auto& state  = args.game_state;
+  auto& es     = state.engine_state;
+  auto& logger = es.logger;
+  LOG_ERROR("mouse motion");
 }
 
 void
-TerminalOnlyBehavior::keydown(KeyEvent &&)
+TerminalOnlyBehavior::mouse_wheel(MouseWheelEvent&& args)
 {
-  std::cerr << "keydown\n";
+  auto& state  = args.game_state;
+  auto& es     = state.engine_state;
+  auto& logger = es.logger;
+  LOG_ERROR("mouse wheel");
 }
 
 void
-TerminalOnlyBehavior::keyup(KeyEvent&&)
+TerminalOnlyBehavior::keydown(KeyEvent&& args)
 {
-  std::cerr << "keyup\n";
+  auto& state  = args.game_state;
+  auto& es     = state.engine_state;
+  auto& logger = es.logger;
+  LOG_ERROR("keydown");
 }
 
 void
-TerminalOnlyBehavior::process_mouse_state(MouseAndKeyboardArgs&&)
+TerminalOnlyBehavior::keyup(KeyEvent&& args)
 {
-  std::cerr << "processing mouse state\n";
+  auto& state  = args.game_state;
+  auto& es     = state.engine_state;
+  auto& logger = es.logger;
+  LOG_ERROR("keyup");
 }
 
 void
-TerminalOnlyBehavior::process_keyboard_state(MouseAndKeyboardArgs&&)
+TerminalOnlyBehavior::process_mouse_state(MouseAndKeyboardArgs&& args)
 {
-  std::cerr << "processing keyboard state\n";
+  auto& state  = args.game_state;
+  auto& es     = state.engine_state;
+  auto& logger = es.logger;
+  LOG_ERROR("processing mouse state");
 }
 
 void
-TerminalOnlyBehavior::process_controller_state(ControllerArgs&&)
+TerminalOnlyBehavior::process_keyboard_state(MouseAndKeyboardArgs&& args)
 {
-  std::cerr << "processing controller state\n";
+  auto& state  = args.game_state;
+  auto& es     = state.engine_state;
+  auto& logger = es.logger;
+  LOG_ERROR("processing keyboard state");
+}
+
+void
+TerminalOnlyBehavior::process_controller_state(ControllerArgs&& args)
+{
+  auto& state  = args.game_state;
+  auto& es     = state.engine_state;
+  auto& logger = es.logger;
+  LOG_ERROR("processing controller state");
 }
 
 } // namespace boomhs
