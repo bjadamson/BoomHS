@@ -13,14 +13,11 @@ using ScreenCoords = glm::ivec2;
 
 class Viewport
 {
-  int left_, top_, right_, bottom_;
+  IntRect rect_;
 
 public:
   constexpr Viewport(int const left, int const top, int const right, int const bottom)
-      : left_(left)
-      , top_(top)
-      , right_(right)
-      , bottom_(bottom)
+      : rect_(left, top, right, bottom)
   {
   }
 
@@ -34,11 +31,11 @@ public:
   {
   }
 
-  auto constexpr left() const { return left_; }
-  auto constexpr top() const { return top_; }
+  auto constexpr left() const { return rect_.left; }
+  auto constexpr top() const { return rect_.top; }
 
-  auto constexpr right() const { return right_; }
-  auto constexpr bottom() const { return bottom_; }
+  auto constexpr right() const { return rect_.right; }
+  auto constexpr bottom() const { return rect_.bottom; }
 
   auto constexpr float_left() const { return static_cast<float>(left()); }
   auto constexpr float_top() const { return static_cast<float>(top()); }
@@ -54,7 +51,7 @@ public:
   auto constexpr height() const { return bottom() - top(); }
 
   auto constexpr center() const { return ScreenCoords{width() / 2, height() / 2}; }
-  auto constexpr rect() const { return IntRect{left_, top_, right_, bottom_}; }
+  auto constexpr rect() const { return rect_; }
   auto constexpr rect_float() const { return rect().into_float_rect(); }
 };
 
