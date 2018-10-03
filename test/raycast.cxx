@@ -28,9 +28,7 @@ using namespace gl_sdl;
 using namespace opengl;
 
 static int constexpr NUM_CUBES                   = 100;
-
-static int constexpr SCREENSIZE_VIEWPORT_RATIO_X = 2.0f;
-static int constexpr SCREENSIZE_VIEWPORT_RATIO_Y = 1.0f;
+static glm::ivec2 constexpr SCREENSIZE_VIEWPORT_RATIO{2.0f, 1.0};
 
 // clang-format off
 static int constexpr WIDTH  = 1024;
@@ -390,16 +388,16 @@ on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_orth
 
     auto xz = cr.xz_rect();
     xz.left   = xz.left;
-    xz.right  = xz.left + (xz.width() / SCREENSIZE_VIEWPORT_RATIO_X);
+    xz.right  = xz.left + (xz.width() / SCREENSIZE_VIEWPORT_RATIO.x);
 
     xz.top    = xz.top;
-    xz.bottom = xz.top + (xz.height() / SCREENSIZE_VIEWPORT_RATIO_Y);
+    xz.bottom = xz.top + (xz.height() / SCREENSIZE_VIEWPORT_RATIO.y);
 
-    xz.left  += tr.translation.x / SCREENSIZE_VIEWPORT_RATIO_X;
-    xz.right += tr.translation.x / SCREENSIZE_VIEWPORT_RATIO_X;
+    xz.left  += tr.translation.x / SCREENSIZE_VIEWPORT_RATIO.x;
+    xz.right += tr.translation.x / SCREENSIZE_VIEWPORT_RATIO.x;
 
-    xz.top    += tr.translation.z / SCREENSIZE_VIEWPORT_RATIO_Y;
-    xz.bottom += tr.translation.z / SCREENSIZE_VIEWPORT_RATIO_Y;
+    xz.top    += tr.translation.z / SCREENSIZE_VIEWPORT_RATIO.y;
+    xz.bottom += tr.translation.z / SCREENSIZE_VIEWPORT_RATIO.y;
 
     cube_ent.selected = collision::rectangles_overlap(mouse_rect, xz);
   }
@@ -553,11 +551,11 @@ draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
   float const maxy = mouse_pos.y;
 
   RectFloat mouse_rect{minx, miny, maxx, maxy};
-  mouse_rect.left  *= SCREENSIZE_VIEWPORT_RATIO_X;
-  mouse_rect.right *= SCREENSIZE_VIEWPORT_RATIO_X;
+  mouse_rect.left  *= SCREENSIZE_VIEWPORT_RATIO.x;
+  mouse_rect.right *= SCREENSIZE_VIEWPORT_RATIO.x;
 
-  mouse_rect.top    *= SCREENSIZE_VIEWPORT_RATIO_Y;
-  mouse_rect.bottom *= SCREENSIZE_VIEWPORT_RATIO_Y;
+  mouse_rect.top    *= SCREENSIZE_VIEWPORT_RATIO.y;
+  mouse_rect.bottom *= SCREENSIZE_VIEWPORT_RATIO.y;
 
   OR::set_viewport_and_scissor(view_port);
   draw_cursor_under_mouse(logger, view_port.rect_float(), rect_sp, mouse_rect, camera, ds);
@@ -580,6 +578,8 @@ draw_scene(common::Logger& logger, Viewports const& viewports, PmDrawInfo& pm_in
   auto& pm_sp = pm_info.sp;
 
   auto const draw_lhs = [&](DrawState& ds) {
+
+    std::cerr << "setting LHS viewport: " << LHS.viewport.rect().to_string() << "\n";
     OR::set_viewport_and_scissor(LHS.viewport);
     OR::clear_screen(LOC::WHITE);
     draw_bboxes(logger, LHS.pm, LHS.vm, cube_ents, wire_sp, ds);
@@ -677,18 +677,18 @@ main(int argc, char **argv)
   Viewport constexpr SCREEN_VIEWPORT{glm::ivec2{0, 0}, WIDTH, HEIGHT};
   LOG_ERROR_SPRINTF("SV %s", SCREEN_VIEWPORT.rect().to_string());
 
-  int const VIEWPORT_WIDTH  = SCREEN_VIEWPORT.width() / SCREENSIZE_VIEWPORT_RATIO_X;
-  int const VIEWPORT_HEIGHT = SCREEN_VIEWPORT.height() / SCREENSIZE_VIEWPORT_RATIO_Y;
+  int const VIEWPORT_WIDTH  = SCREEN_VIEWPORT.width() / SCREENSIZE_VIEWPORT_RATIO.x;
+  int const VIEWPORT_HEIGHT = SCREEN_VIEWPORT.height() / SCREENSIZE_VIEWPORT_RATIO.y;
 
   auto const LHS = Viewport{
     PAIR(SCREEN_VIEWPORT.left(), SCREEN_VIEWPORT.top()),
     VIEWPORT_WIDTH,
-    SCREEN_VIEWPORT.height()
+    VIEWPORT_HEIGHT
   };
   auto const RHS = Viewport{
     PAIR(VIEWPORT_WIDTH, SCREEN_VIEWPORT.top()),
     VIEWPORT_WIDTH,
-    SCREEN_VIEWPORT.height()
+    VIEWPORT_HEIGHT
   };
   Frustum constexpr FRUSTUM{
     SCREEN_VIEWPORT.float_left(),

@@ -592,24 +592,39 @@ set_mvpmatrix(common::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 
   sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 }
 
-void
-set_viewport(Viewport const& p)
+namespace detail
 {
-  glViewport(p.left(), p.top(), p.width(), p.height());
+
+void
+set_yflipped_viewport(Viewport const& vp, void(*fn)(int, int, int, int))
+{
+  auto const left   = vp.left();
+  auto const bottom = vp.top() + vp.height();
+  auto const width  = vp.width();
+  auto const height = vp.height();
+
+  fn(left, vp.top(), width, height);
+}
+
+} // namespace detail
+
+void
+set_viewport(Viewport const& vp)
+{
+  detail::set_yflipped_viewport(vp, glViewport);
 }
 
 void
-set_scissor(Viewport const& p)
+set_scissor(Viewport const& vp)
 {
-  glScissor(p.left(), p.top(), p.width(), p.height());
+  detail::set_yflipped_viewport(vp, glScissor);
 }
 
 void
-set_viewport_and_scissor(Viewport const& p)
+set_viewport_and_scissor(Viewport const& vp)
 {
-  std::cerr << "setting vs range " << p.rect().to_string() << "\n";
-  set_viewport(p);
-  set_scissor(p);
+  set_viewport(vp);
+  set_scissor(vp);
 }
 
 } // namespace opengl::render
