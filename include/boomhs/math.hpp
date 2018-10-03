@@ -27,7 +27,7 @@ struct RectT
   auto constexpr right_bottom() const { return V{right, bottom}; }
 
   auto width() const { return std::abs(right - left); }
-  auto height() const { return std::abs(top - bottom); }
+  auto height() const { return std::abs(bottom - top); }
   auto size() const { return V{width(), height()}; }
 
   auto half_size() const { return size() / 2; }

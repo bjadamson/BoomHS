@@ -674,19 +674,21 @@ main(int argc, char **argv)
   OR::init(logger);
   ENABLE_SCISSOR_TEST_UNTIL_SCOPE_EXIT();
 
-  Viewport constexpr SCREEN_VIEWPORT{0, 0, WIDTH, HEIGHT};
-  int const MIDDLE_HORIZ = SCREEN_VIEWPORT.right() / SCREENSIZE_VIEWPORT_RATIO_X;
+  Viewport constexpr SCREEN_VIEWPORT{glm::ivec2{0, 0}, WIDTH, HEIGHT};
+  LOG_ERROR_SPRINTF("SV %s", SCREEN_VIEWPORT.rect().to_string());
+
+  int const VIEWPORT_WIDTH  = SCREEN_VIEWPORT.width() / SCREENSIZE_VIEWPORT_RATIO_X;
+  int const VIEWPORT_HEIGHT = SCREEN_VIEWPORT.height() / SCREENSIZE_VIEWPORT_RATIO_Y;
+
   auto const LHS = Viewport{
-    SCREEN_VIEWPORT.left(),
-    SCREEN_VIEWPORT.top(),
-    static_cast<int>(MIDDLE_HORIZ),
-    SCREEN_VIEWPORT.bottom()
+    PAIR(SCREEN_VIEWPORT.left(), SCREEN_VIEWPORT.top()),
+    VIEWPORT_WIDTH,
+    SCREEN_VIEWPORT.height()
   };
   auto const RHS = Viewport{
-    (int)MIDDLE_HORIZ,
-    SCREEN_VIEWPORT.top(),
-    SCREEN_VIEWPORT.right(),
-    SCREEN_VIEWPORT.bottom()
+    PAIR(VIEWPORT_WIDTH, SCREEN_VIEWPORT.top()),
+    VIEWPORT_WIDTH,
+    SCREEN_VIEWPORT.height()
   };
   Frustum constexpr FRUSTUM{
     SCREEN_VIEWPORT.float_left(),
@@ -695,10 +697,6 @@ main(int argc, char **argv)
     SCREEN_VIEWPORT.float_top(),
     NEAR,
     FAR};
-
-  auto const PERS_FORWARD = -constants::Z_UNIT_VECTOR;
-  auto constexpr PERS_UP  =  constants::Y_UNIT_VECTOR;
-  WorldOrientation const PERS_WO{PERS_FORWARD, PERS_UP};
 
   auto const ORTHO_FORWARD = -constants::Y_UNIT_VECTOR;
   auto constexpr ORTHO_UP  =  constants::Z_UNIT_VECTOR;

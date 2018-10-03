@@ -595,18 +595,19 @@ set_mvpmatrix(common::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 
 void
 set_viewport(Viewport const& p)
 {
-  glViewport(p.left(), p.top(), p.right(), p.bottom());
+  glViewport(p.left(), p.top(), p.width(), p.height());
 }
 
 void
 set_scissor(Viewport const& p)
 {
-  glScissor(p.left(), p.top(), p.right(), p.bottom());
+  glScissor(p.left(), p.top(), p.width(), p.height());
 }
 
 void
 set_viewport_and_scissor(Viewport const& p)
 {
+  std::cerr << "setting vs range " << p.rect().to_string() << "\n";
   set_viewport(p);
   set_scissor(p);
 }
