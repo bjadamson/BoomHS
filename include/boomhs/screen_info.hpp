@@ -24,15 +24,17 @@ using ScreenCoords = glm::ivec2;
 
 class Viewport
 {
-  RectInt rect_;
+  int left_, top_, width_, height_;
 
 public:
-
-  // Conversion constructor, converts user arguments (left, top, right, bottom) to what the
-  // viewport expects (left, bottom, width, height)
   constexpr Viewport(int const left_x, int const top_y, int const width, int const height)
-      : rect_(left_x, top_y, left_x + width, top_y + height)
+      : left_(left_x)
+      , top_(top_y)
+      , width_(width)
+      , height_(height)
   {
+    assert(width_ >= 0);
+    assert(height_ >= 0);
   }
 
   constexpr Viewport(glm::ivec2 const& tl, int const width, int const height)
@@ -50,11 +52,17 @@ public:
   {
   }
 
-  auto constexpr left() const { return rect_.left; }
-  auto constexpr top() const { return rect_.top; }
+  auto constexpr width() const { return width_; }
+  auto constexpr height() const { return height_; }
 
-  auto constexpr right() const { return rect_.right; }
-  auto constexpr bottom() const { return rect_.bottom; }
+  auto constexpr half_height() const { return height() / 2; }
+  auto constexpr half_width() const { return width() / 2; }
+
+  auto constexpr left() const { return left_; }
+  auto constexpr top() const { return top_; }
+
+  auto constexpr right() const { return left() + width(); }
+  auto constexpr bottom() const { return top() + height(); }
 
   auto constexpr float_left() const { return static_cast<float>(left()); }
   auto constexpr float_top() const { return static_cast<float>(top()); }
@@ -65,23 +73,20 @@ public:
   auto constexpr left_top() const { return ScreenCoords{left(), top()}; }
   auto constexpr right_bottom() const { return ScreenCoords{right(), bottom()}; }
 
-  auto constexpr size() const { return ScreenSize{rect_.size()}; }
-  auto width() const { return rect_.width(); }
-  auto height() const { return rect_.height(); }
+  auto constexpr center() const { return ScreenCoords{half_width(), half_height()}; }
+  auto constexpr rect() const { return RectInt{left(), top(), right(), bottom()}; }
+  auto constexpr rect_float() const { return rect().float_rect(); }
 
-  auto half_height() const { return height() / 2; }
-  auto half_width() const { return width() / 2; }
-
-  auto constexpr center() const { return ScreenCoords{width() / 2, height() / 2}; }
-  auto constexpr rect() const { return rect_; }
-  auto constexpr rect_float() const { return rect().into_float_rect(); }
+  auto constexpr size() const { return ScreenSize{width(), height()}; }
+  auto constexpr size_rect() const { return RectInt{left(), top(), width(), height()}; }
+  auto constexpr size_rect_float() const { return size_rect().float_rect(); }
 };
 
 template <typename T>
 constexpr Viewport
-operator/(Viewport const& n, T const& d)
+operator/(Viewport const& vp, T const& d)
 {
-  return Viewport{n.left() / d, n.top() / d, n.right() / d, n.bottom() / d};
+  return Viewport{vp.rect() / d};
 }
 
 } // namespace boomhs

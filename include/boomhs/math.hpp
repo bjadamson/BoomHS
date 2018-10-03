@@ -42,13 +42,23 @@ struct RectT
   auto center_bottom() const { return V{center().x, bottom}; }
 };
 
-#define RECT_TO_STRING_MEMBER_IMPL(FMT_IDENTIFIER)                                                 \
+template <typename T, typename V>
+constexpr RectT<T, V>
+operator/(RectT<T, V> const& rect, T const& d)
+{
+  auto constexpr left   = rect.left()   / d;
+  auto constexpr top    = rect.top()    / d;
+  auto constexpr right  = rect.right()  / d;
+  auto constexpr bottom = rect.bottom() / d;
+  return RectT{left, top, right, bottom};
+}
+
+#define DEFINE_RECT_TO_STRING_MEMBER_IMPL(FMT_IDENTIFIER)                                          \
 std::string to_string() const                                                                      \
 {                                                                                                  \
   return fmt::sprintf(                                                                             \
-      "left/top: ("#FMT_IDENTIFIER","#FMT_IDENTIFIER") "                                           \
-      "right/bottom: ("#FMT_IDENTIFIER","#FMT_IDENTIFIER") "                                       \
-      "width/height: ("#FMT_IDENTIFIER","#FMT_IDENTIFIER")",                                       \
+      "("#FMT_IDENTIFIER","#FMT_IDENTIFIER")"", ""("#FMT_IDENTIFIER","#FMT_IDENTIFIER") "          \
+      "(w:"#FMT_IDENTIFIER",h:"#FMT_IDENTIFIER")",                                                 \
       left, top,                                                                                   \
       right, bottom,                                                                               \
       width(), height());                                                                          \
@@ -76,7 +86,7 @@ public:
   {
   }
 
-  RECT_TO_STRING_MEMBER_IMPL(%f);
+  DEFINE_RECT_TO_STRING_MEMBER_IMPL(%f);
 };
 
 struct RectInt : public RectT<int, glm::ivec2>
@@ -92,7 +102,7 @@ struct RectInt : public RectT<int, glm::ivec2>
   }
 
   auto
-  into_float_rect() const { return RectFloat{left, top, right, bottom}; }
+  float_rect() const { return RectFloat{left, top, right, bottom}; }
 
   static RectInt
   from_floats(float const l, float const t, float const r, float const b)
@@ -103,10 +113,10 @@ struct RectInt : public RectT<int, glm::ivec2>
     return RectInt{tl, br};
   }
 
-  RECT_TO_STRING_MEMBER_IMPL(%i);
+  DEFINE_RECT_TO_STRING_MEMBER_IMPL(%i);
 };
 
-#undef RECT_TO_STRING_MEMBER_IMPL
+#undef DEFINE_RECT_TO_STRING_MEMBER_IMPL
 
 struct Cube
 {

@@ -558,7 +558,7 @@ draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
   mouse_rect.bottom *= SCREENSIZE_VIEWPORT_RATIO.y;
 
   OR::set_viewport_and_scissor(view_port);
-  draw_cursor_under_mouse(logger, view_port.rect_float(), rect_sp, mouse_rect, camera, ds);
+  draw_cursor_under_mouse(logger, view_port.rect().float_rect(), rect_sp, mouse_rect, camera, ds);
 }
 
 struct PmDrawInfo
@@ -578,8 +578,6 @@ draw_scene(common::Logger& logger, Viewports const& viewports, PmDrawInfo& pm_in
   auto& pm_sp = pm_info.sp;
 
   auto const draw_lhs = [&](DrawState& ds) {
-
-    std::cerr << "setting LHS viewport: " << LHS.viewport.rect().to_string() << "\n";
     OR::set_viewport_and_scissor(LHS.viewport);
     OR::clear_screen(LOC::WHITE);
     draw_bboxes(logger, LHS.pm, LHS.vm, cube_ents, wire_sp, ds);
