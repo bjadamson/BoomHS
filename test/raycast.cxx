@@ -709,12 +709,6 @@ main(int argc, char **argv)
   auto di0 = make_perspective_rect_gpuhandle(logger, cr0, va);
   auto di1 = make_perspective_rect_gpuhandle(logger, cr1, va);
 
-  Timer timer;
-  FrameCounter fcounter;
-
-  SDL_Event event;
-  bool quit = false;
-
   auto wire_sp   = make_wireframe_program(logger);
   RNG rng;
   auto cube_ents = gen_cube_entities(logger, wire_sp, rng);
@@ -725,6 +719,12 @@ main(int argc, char **argv)
       PmRect{cr1, MOVE(di1)}
     }}
   };
+
+  Timer timer;
+  FrameCounter fcounter;
+
+  SDL_Event event;
+  bool quit = false;
 
   auto const pers_pm = glm::perspective(FOV, AR.compute(), FRUSTUM.near, FRUSTUM.far);
   while (!quit) {

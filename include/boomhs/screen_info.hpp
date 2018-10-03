@@ -84,8 +84,11 @@ public:
   // static fns
   static Viewport from_frustum(Frustum const& f)
   {
-    auto const rect = RectInt::from_floats(f.left, f.top, f.width(), f.height());
-    return Viewport{rect};
+    auto const left   = f.left_int();
+    auto const top    = f.top_int();
+    auto const width  = f.width_int();
+    auto const height = f.height_int();
+    return Viewport{left, top, width, height};
   }
 };
 

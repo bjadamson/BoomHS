@@ -171,6 +171,9 @@ struct Frustum
     return std::abs(far - near);
   }
 
+  int width_int() const { return width(); }
+  int height_int() const { return height(); }
+
   auto half_height() const { return height() / 2; }
   auto half_width() const { return width() / 2; }
   auto half_depth() const { return depth() / 2; }
