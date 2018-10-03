@@ -28,7 +28,7 @@ using namespace gl_sdl;
 using namespace opengl;
 
 static int constexpr NUM_CUBES                   = 100;
-static glm::ivec2 constexpr SCREENSIZE_VIEWPORT_RATIO{2.0f, 1.0};
+static glm::ivec2 constexpr SCREENSIZE_VIEWPORT_RATIO{2.0f, 2.0};
 
 // clang-format off
 static int constexpr WIDTH  = 1024;

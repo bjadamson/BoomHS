@@ -595,15 +595,22 @@ set_mvpmatrix(common::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 
 namespace detail
 {
 
+// Handles extracting the correct values out of the Viewport for the function.
+//
+// Primary purpose is to handle conversion from
+//   left, top, width, height
+//
+// to
+//   left, bottom, width, height
 void
-set_yflipped_viewport(Viewport const& vp, void(*fn)(int, int, int, int))
+gl_fn_with_viewport(Viewport const& vp, void(*fn)(int, int, int, int))
 {
   auto const left   = vp.left();
-  auto const bottom = vp.top() + vp.height();
+  auto const bottom = vp.top();
   auto const width  = vp.width();
   auto const height = vp.height();
 
-  fn(left, vp.top(), width, height);
+  fn(left, bottom, width, height);
 }
 
 } // namespace detail
@@ -611,13 +618,13 @@ set_yflipped_viewport(Viewport const& vp, void(*fn)(int, int, int, int))
 void
 set_viewport(Viewport const& vp)
 {
-  detail::set_yflipped_viewport(vp, glViewport);
+  detail::gl_fn_with_viewport(vp, glViewport);
 }
 
 void
 set_scissor(Viewport const& vp)
 {
-  detail::set_yflipped_viewport(vp, glScissor);
+  detail::gl_fn_with_viewport(vp, glScissor);
 }
 
 void
