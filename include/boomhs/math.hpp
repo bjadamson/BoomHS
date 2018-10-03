@@ -181,7 +181,6 @@ struct Frustum
 
   auto dimensions() const { return glm::vec3(width(), height(), depth()); }
   auto center() const { return dimensions() / 2; }
-  auto viewport_rect() const { return RectInt::from_floats(left, top, right, bottom); }
 
   std::string to_string() const;
 };

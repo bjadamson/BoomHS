@@ -193,7 +193,6 @@ draw_chatwindow_body(EngineState& es, Player& player)
   auto& chat_history = ingame.chat_history;
   auto const& active_channel = chat_state.active_channel;
 
-
   auto const copy_message_to_chathistory = [&]()
   {
     std::string copy = chat_buffer.buffer();
@@ -296,7 +295,8 @@ draw_chatwindow(EngineState& es, Player& player)
       | ImGuiWindowFlags_NoTitleBar
       );
 
-    auto const vp = Viewport{es.frustum.viewport_rect()};
+    auto const vp = Viewport::from_frustum(es.frustum);
+
     auto const [window_w, window_h] = vp.size();
     ImVec2 const offset{10, 6};
     auto const chat_w = 480, chat_h = 200;
@@ -333,7 +333,7 @@ draw_debugoverlay_window(EngineState& es, DrawState& ds)
 
   bool constexpr SHOW_BORDER = false;
 
-  auto const vp = Viewport{es.frustum.viewport_rect()};
+  auto const vp = Viewport::from_frustum(es.frustum);
   auto const [window_w, window_h] = vp.size();
   ImVec2 const offset{100, 50};
   auto const chat_w = 300, chat_h = 100;
@@ -582,14 +582,10 @@ draw_inventory_overlay(RenderState& rstate)
   auto color = LOC::GRAY;
   color.set_a(0.40);
 
-  auto const vp_rect = es.frustum.viewport_rect();
+  auto const vp = Viewport::from_frustum(es.frustum);
   auto const make_rectangle = [&]() {
 
-    auto const TL = glm::vec2{vp_rect.left,  vp_rect.top};
-    auto const BR = glm::vec2{vp_rect.right, vp_rect.bottom};
-
-    RectFloat const rect{TL.x, TL.y, BR.x, BR.y};
-    OF::RectInfo   const ri{rect, std::nullopt, std::nullopt, std::nullopt};
+    OF::RectInfo   const ri{vp.rect_float(), std::nullopt, std::nullopt, std::nullopt};
     return OF::make_rectangle(ri);
   };
 
@@ -635,7 +631,7 @@ draw(FrameState& fs, Camera& camera, DrawState& ds)
   auto& ldata = zs.level_data;
   auto& nbt   = ldata.nearby_targets;
 
-  auto const vp = Viewport{es.frustum.viewport_rect()};
+  auto const vp = Viewport::from_frustum(es.frustum);
   draw_nearest_target_info(vp, nbt, ttable, registry);
 
   // Create a renderstate using an orthographic projection.

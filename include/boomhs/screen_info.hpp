@@ -80,6 +80,13 @@ public:
   auto constexpr size() const { return ScreenSize{width(), height()}; }
   auto constexpr size_rect() const { return RectInt{left(), top(), width(), height()}; }
   auto constexpr size_rect_float() const { return size_rect().float_rect(); }
+
+  // static fns
+  static Viewport from_frustum(Frustum const& f)
+  {
+    auto const rect = RectInt::from_floats(f.left, f.top, f.width(), f.height());
+    return Viewport{rect};
+  }
 };
 
 template <typename T>
