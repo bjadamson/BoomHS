@@ -26,6 +26,8 @@ using namespace boomhs;
 using namespace opengl;
 using namespace gl_sdl;
 
+//auto static constexpr WIGGLE_UNDERATH_OFFSET = -0.2f;
+
 namespace
 {
 

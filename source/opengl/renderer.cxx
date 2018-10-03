@@ -34,9 +34,6 @@ using namespace boomhs::math::constants;
 using namespace opengl;
 using namespace gl_sdl;
 
-glm::vec3 static constexpr VIEWING_OFFSET{0.5f, 0.0f, 0.5f};
-auto static constexpr WIGGLE_UNDERATH_OFFSET = -0.2f;
-
 namespace
 {
 
@@ -609,7 +606,7 @@ gl_fn_with_viewport(Viewport const& vp, void(*fn)(int, int, int, int))
 
   // TODO:
   // vp.bottom() for TEST program. vp.top() for boomhs program. WHY?
-  auto const bottom = vp.top();
+  auto const bottom = vp.bottom();
 
 
   auto const width  = vp.width();
@@ -637,6 +634,7 @@ set_viewport_and_scissor(Viewport const& vp)
 {
   set_viewport(vp);
   set_scissor(vp);
+  std::cerr << "setting vps: '" << vp.rect().to_string() << "'\n";
 }
 
 } // namespace opengl::render

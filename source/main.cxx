@@ -57,7 +57,6 @@ loop(Engine& engine, GameState& state, StaticRenderers& renderers, RNG& rng, Cam
   ImGui_ImplSdlGL3_NewFrame(window.raw());
 
   loop_events(state, camera, es.main_menu.show, es.quit, ft);
-
   boomhs::game_loop(engine, state, renderers, rng, camera, ft);
 
   // Render Imgui UI
@@ -157,7 +156,7 @@ start(common::Logger& logger, Engine& engine)
   auto const ORTHO_FORWARD = -constants::Y_UNIT_VECTOR;
   auto constexpr ORTHO_UP  =  constants::Z_UNIT_VECTOR;
   WorldOrientation const ortho_wo{ORTHO_FORWARD, ORTHO_UP};
-  auto                   camera = Camera::make_default(pers_wo, ortho_wo);
+  auto              camera = Camera::make_default(pers_wo, ortho_wo);
 
   RNG rng;
   auto gs = TRY_MOVEOUT(boomhs::init(engine, es, camera, rng));
