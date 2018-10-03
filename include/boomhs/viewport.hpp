@@ -82,7 +82,7 @@ public:
   auto constexpr size_rect_float() const { return size_rect().float_rect(); }
 
   // static fns
-  static Viewport from_frustum(Frustum const& f)
+  static constexpr Viewport from_frustum(Frustum const& f)
   {
     // Converting the Frustum to a Viewport discards the NEAR and FAR values, while truncating the
     // following values from floats to integers.

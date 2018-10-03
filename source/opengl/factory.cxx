@@ -1,5 +1,5 @@
 #include <opengl/factory.hpp>
-#include <boomhs/screen_info.hpp>
+#include <boomhs/viewport.hpp>
 
 #include <common/algorithm.hpp>
 #include <boomhs/math.hpp>

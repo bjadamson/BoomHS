@@ -1,6 +1,6 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/frame_time.hpp>
-#include <boomhs/screen_info.hpp>
+#include <boomhs/viewport.hpp>
 #include <boomhs/mouse.hpp>
 #include <boomhs/world_object.hpp>
 

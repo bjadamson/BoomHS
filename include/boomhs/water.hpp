@@ -2,7 +2,7 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/obj.hpp>
-#include <boomhs/screen_info.hpp>
+#include <boomhs/viewport.hpp>
 
 #include <common/log.hpp>
 #include <common/type_macros.hpp>

@@ -5,7 +5,7 @@
 #include <boomhs/main_menu.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/mouse.hpp>
-#include <boomhs/screen_info.hpp>
+#include <boomhs/viewport.hpp>
 #include <boomhs/ui_state.hpp>
 
 #include <gl_sdl/sdl_window.hpp>

@@ -3,7 +3,7 @@
 #include <boomhs/engine.hpp>
 #include <boomhs/frame.hpp>
 #include <boomhs/level_manager.hpp>
-#include <boomhs/screen_info.hpp>
+#include <boomhs/viewport.hpp>
 
 #include <opengl/bind.hpp>
 #include <opengl/framebuffer.hpp>

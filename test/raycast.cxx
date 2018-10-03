@@ -4,7 +4,7 @@
 #include <boomhs/frame_time.hpp>
 #include <boomhs/raycast.hpp>
 #include <boomhs/random.hpp>
-#include <boomhs/screen_info.hpp>
+#include <boomhs/viewport.hpp>
 
 #include <common/algorithm.hpp>
 #include <common/log.hpp>

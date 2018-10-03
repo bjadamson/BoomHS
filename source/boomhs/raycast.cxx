@@ -1,7 +1,7 @@
 #include <boomhs/raycast.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/engine.hpp>
-#include <boomhs/screen_info.hpp>
+#include <boomhs/viewport.hpp>
 
 #include <boomhs/frame.hpp>
 
