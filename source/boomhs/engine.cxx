@@ -54,7 +54,7 @@ Engine::Engine(SDLWindow&& w, SDLControllers&& c)
 Viewport
 Engine::window_viewport() const
 {
-  return window.viewport();
+  return Viewport{window.view_rect()};
 }
 
 } // namespace boomhs

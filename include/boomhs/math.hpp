@@ -113,6 +113,12 @@ struct RectInt : public RectT<int, glm::ivec2>
     return RectInt{tl, br};
   }
 
+  float constexpr float_left() const { return left; }
+  float constexpr float_right() const { return right; }
+
+  float constexpr float_top() const { return top; }
+  float constexpr float_bottom() const { return bottom; }
+
   DEFINE_RECT_TO_STRING_MEMBER_IMPL(%i);
 };
 

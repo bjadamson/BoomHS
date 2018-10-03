@@ -127,14 +127,14 @@ start(common::Logger& logger, Engine& engine)
   // Construct game state
   auto constexpr NEAR   = 0.001f;
   auto constexpr FAR    = 100.0f;
-  auto const window_viewport = engine.window_viewport();
+  auto const window_rect = engine.window_viewport();
 
   // clang-format off
   Frustum const frustum{
-    window_viewport.float_left(),
-    window_viewport.float_right(),
-    window_viewport.float_bottom(),
-    window_viewport.float_top(),
+    window_rect.float_left(),
+    window_rect.float_right(),
+    window_rect.float_bottom(),
+    window_rect.float_top(),
     NEAR,
     FAR};
   // clang-format on

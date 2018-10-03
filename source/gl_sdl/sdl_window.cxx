@@ -61,8 +61,8 @@ SDLWindow::~SDLWindow()
   }
 }
 
-Viewport
-SDLWindow::viewport() const
+RectInt
+SDLWindow::view_rect() const
 {
   int w = 0, h = 0;
   assert(nullptr != window_.get());
@@ -71,7 +71,7 @@ SDLWindow::viewport() const
   // TODO: use x, y instead of 0, 0
   int x, y;
   SDL_GetWindowPosition(window_.get(), &x, &y);
-  return boomhs::Viewport{0, 0, w, h};
+  return RectInt{0, 0, w, h};
 }
 
 bool

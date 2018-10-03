@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/screen_info.hpp>
+#include <boomhs/math.hpp>
 
 #include <common/auto_resource.hpp>
 #include <common/log.hpp>
@@ -60,7 +60,7 @@ public:
   SDLWindow(SDLWindow&&);
 
   // methods
-  boomhs::Viewport viewport() const;
+  boomhs::RectInt view_rect() const;
 
   // Allow getting the window's SDL pointer
   window_type* raw() { return window_.get(); }
