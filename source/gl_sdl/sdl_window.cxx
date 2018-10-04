@@ -64,14 +64,14 @@ SDLWindow::~SDLWindow()
 RectInt
 SDLWindow::view_rect() const
 {
-  int w = 0, h = 0;
   assert(nullptr != window_.get());
-  SDL_GetWindowSize(window_.get(), &w, &h);
 
-  // TODO: use x, y instead of 0, 0
   int x, y;
   SDL_GetWindowPosition(window_.get(), &x, &y);
-  return RectInt{0, 0, w, h};
+
+  int w = 0, h = 0;
+  SDL_GetWindowSize(window_.get(), &w, &h);
+  return RectInt{x, y, w, h};
 }
 
 bool

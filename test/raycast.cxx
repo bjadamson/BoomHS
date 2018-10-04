@@ -670,27 +670,27 @@ main(int argc, char **argv)
   OR::init(logger);
   ENABLE_SCISSOR_TEST_UNTIL_SCOPE_EXIT();
 
-  Viewport constexpr SCREEN_VIEWPORT{glm::ivec2{0, 0}, WIDTH, HEIGHT};
-  LOG_ERROR_SPRINTF("SV %s", SCREEN_VIEWPORT.rect().to_string());
+  Viewport const screen_vp{window.view_rect()};
+  LOG_ERROR_SPRINTF("SV %s", screen_vp.rect().to_string());
 
-  int const VIEWPORT_WIDTH  = SCREEN_VIEWPORT.width() / SCREENSIZE_VIEWPORT_RATIO.x;
-  int const VIEWPORT_HEIGHT = SCREEN_VIEWPORT.height() / SCREENSIZE_VIEWPORT_RATIO.y;
+  int const VIEWPORT_WIDTH  = screen_vp.width() / SCREENSIZE_VIEWPORT_RATIO.x;
+  int const VIEWPORT_HEIGHT = screen_vp.height() / SCREENSIZE_VIEWPORT_RATIO.y;
 
   auto const LHS = Viewport{
-    PAIR(SCREEN_VIEWPORT.left(), SCREEN_VIEWPORT.top()),
+    PAIR(screen_vp.left(), screen_vp.top()),
     VIEWPORT_WIDTH,
     VIEWPORT_HEIGHT
   };
   auto const RHS = Viewport{
-    PAIR(VIEWPORT_WIDTH, SCREEN_VIEWPORT.top()),
+    PAIR(VIEWPORT_WIDTH, screen_vp.top()),
     VIEWPORT_WIDTH,
     VIEWPORT_HEIGHT
   };
-  Frustum constexpr FRUSTUM{
-    SCREEN_VIEWPORT.float_left(),
-    SCREEN_VIEWPORT.float_right(),
-    SCREEN_VIEWPORT.float_bottom(),
-    SCREEN_VIEWPORT.float_top(),
+  Frustum const frustum{
+    screen_vp.float_left(),
+    screen_vp.float_right(),
+    screen_vp.float_bottom(),
+    screen_vp.float_top(),
     NEAR,
     FAR};
 
@@ -724,10 +724,10 @@ main(int argc, char **argv)
   SDL_Event event;
   bool quit = false;
 
-  auto const pers_pm = glm::perspective(FOV, AR.compute(), FRUSTUM.near, FRUSTUM.far);
+  auto const pers_pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
   PmDrawInfo pm_info{pm_rects, rect_sp};
   while (!quit) {
-    auto const viewports = get_viewports(logger, cam_ortho, FRUSTUM, LHS, RHS, SCREEN_VIEWPORT, pers_pm);
+    auto const viewports = get_viewports(logger, cam_ortho, frustum, LHS, RHS, screen_vp, pers_pm);
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       quit = process_event(logger, event, cam_ortho, viewports, cube_ents, pm_rects);
