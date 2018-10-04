@@ -635,7 +635,7 @@ get_mousepos()
 }
 
 auto
-get_viewports(common::Logger &logger, CameraORTHO const& camera, Frustum const& frustum,
+create_viewports(common::Logger &logger, CameraORTHO const& camera, Frustum const& frustum,
               Viewport const& lhs, Viewport const& rhs, Viewport const& screen_viewport,
               glm::mat4 const& pers_pm)
 {
@@ -689,7 +689,7 @@ main(int argc, char **argv)
   auto const ORTHO_FORWARD = -constants::Y_UNIT_VECTOR;
   auto constexpr ORTHO_UP  =  constants::Z_UNIT_VECTOR;
   WorldOrientation const ORTHO_WO{ORTHO_FORWARD, ORTHO_UP};
-  CameraORTHO cam_ortho{ORTHO_WO, glm::vec2{window_rect.width(), window_rect.height()}};
+  CameraORTHO cam_ortho{ORTHO_WO, window_rect.size()};
 
   auto const cr0 = RectFloat{200, 200, 400, 400};
   auto const cr1 = RectFloat{600, 600, 800, 800};
@@ -719,7 +719,7 @@ main(int argc, char **argv)
   auto const pers_pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
   PmDrawInfo pm_info{pm_rects, rect_sp};
   while (!quit) {
-    auto const viewports = get_viewports(logger, cam_ortho, frustum, LHS, RHS, screen_vp, pers_pm);
+    auto const viewports = create_viewports(logger, cam_ortho, frustum, LHS, RHS, screen_vp, pers_pm);
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       quit = process_event(logger, event, cam_ortho, viewports, cube_ents, pm_rects);

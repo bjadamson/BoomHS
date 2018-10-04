@@ -592,25 +592,27 @@ set_mvpmatrix(common::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 
 namespace detail
 {
 
-// Handles extracting the correct values out of the Viewport for the function.
-//
-// Primary purpose is to handle conversion from
+// Invoke OpenGL function using information from the Viewport, handling coordinate conversions.
+// ie converts:
 //   left, top, width, height
 //
-// to
+// to:
 //   left, bottom, width, height
 void
-gl_fn_with_viewport(Viewport const& vp, void(*fn)(int, int, int, int))
+gl_fn_using_viewport(Viewport const& vp, void(*fn)(int, int, int, int))
 {
-  auto const left   = vp.left();
+  auto const left = vp.left();
 
-  // TODO:
-  // vp.bottom() for TEST program. vp.top() for boomhs program. WHY?
+  // OpenGL assumes (0, 0) is the BOTTOM-left corner.
+  // Our Viewport deals with (0, 0) is the TOP-left corner.
+  //
+  // Convert viewport's "top" to OpenGL's "bottom".
   auto const bottom = vp.top();
 
   auto const width  = vp.width();
   auto const height = vp.height();
 
+  // OpenGL functions (using viewport data) assume this argument order.
   fn(left, bottom, width, height);
 }
 
@@ -619,13 +621,13 @@ gl_fn_with_viewport(Viewport const& vp, void(*fn)(int, int, int, int))
 void
 set_viewport(Viewport const& vp)
 {
-  detail::gl_fn_with_viewport(vp, glViewport);
+  detail::gl_fn_using_viewport(vp, glViewport);
 }
 
 void
 set_scissor(Viewport const& vp)
 {
-  detail::gl_fn_with_viewport(vp, glScissor);
+  detail::gl_fn_using_viewport(vp, glScissor);
 }
 
 void
@@ -633,7 +635,6 @@ set_viewport_and_scissor(Viewport const& vp)
 {
   set_viewport(vp);
   set_scissor(vp);
-  std::cerr << "setting vps: '" << vp.rect().to_string() << "'\n";
 }
 
 } // namespace opengl::render
