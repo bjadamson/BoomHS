@@ -3,7 +3,6 @@ This repository contains the source code for the <b>BoomHS</b> project. BoomHS i
 active development.
 
 ![Alt text](/screenshots/33.png?raw=true "06/24/2018")
-![Alt text](/screenshots/32.png?raw=true "05/18/2018.")
 
 ## Table of contents
 
@@ -18,7 +17,7 @@ active development.
   + [Project Information](#project-information)
     * [World Story](#world-story)
   + [Design Decisions](#design-decisions)
-  + [Screenshots](#screenshots)
+  + [Screenshots](https://github.com/bjadamson/BoomHS/tree/release/screenshots)
 
 ## Getting Started
 General Procedure
@@ -158,25 +157,6 @@ Caving/exploring underground, stakes raised given the pull on the planet's gravi
 could allow for the "cursed moons" to circle in a skeejawed kind of orbit that allows them to appear randomly (one at a time, both at same time) and wreak havoc on the planet involved. 
 thought, large asteroid hits single moon, moon breaks into multiple moons, asteroid also caught by planets gravitational pull, becomes an additional moon. Check science of this realistically happening, could the chunks actually be knocked into seperate orbits. 
 Ben idea, curse comes, moon chunks decaying 
-
-## Screenshots
-![Alt text](/screenshots/34.png?raw=true "06/30/2018 - NPCs can be killed")
-![Alt text](/screenshots/31.png?raw=true "05/14/2018 - direction change")
-![Alt text](/screenshots/28.png?raw=true "02/25/2018")
-![Alt text](/screenshots/27.png?raw=true "02/24/2018")
-![Alt text](/screenshots/26.png?raw=true "02/23/2018")
-![Alt text](/screenshots/25.png?raw=true "02/22/2018")
-![Alt text](/screenshots/24.png?raw=true "02/24/2018")
-![Alt text](/screenshots/22.png?raw=true "02/05/2018")
-![Alt text](/screenshots/21.png?raw=true "01/25/2018")
-![Alt text](/screenshots/20.png?raw=true "01/25/2018")
-![Alt text](/screenshots/18.png?raw=true "01/25/2018")
-![Alt text](/screenshots/29.png?raw=true "02/28/2018 - First loaded prefab")
-![Alt text](/screenshots/17.png?raw=true "01/24/2018")
-![Alt text](/screenshots/16.png?raw=true "01/24/2018")
-![Alt text](/screenshots/15.png?raw=true "01/10/2018")
-![Alt text](/screenshots/14.png?raw=true "01/02/2018")
-![Alt text](/screenshots/13.png?raw=true "01/02/2018")
 
 #### links
 * https://github.com/cbaggers/cepl
