@@ -32,9 +32,6 @@ static int constexpr NUM_CUBES                   = 100;
 static glm::ivec2 constexpr SCREENSIZE_VIEWPORT_RATIO{2.0f, 2.0};
 
 // clang-format off
-static int constexpr WIDTH  = 1024;
-static int constexpr HEIGHT = 768;
-
 static auto constexpr NEAR = 0.001f;
 static auto constexpr FAR  = 1000.0f;
 static auto constexpr FOV  = glm::radians(110.0f);
@@ -510,11 +507,11 @@ make_cube(RNG& rng)
 }
 
 auto
-gen_cube_entities(common::Logger& logger, ShaderProgram const& sp, RNG &rng)
+gen_cube_entities(common::Logger& logger, ScreenSize const& ss, ShaderProgram const& sp, RNG &rng)
 {
   auto const gen = [&rng](auto const& l, auto const& h) { return rng.gen_float_range(l, h); };
-  auto const gen_low_x = [&gen]() { return gen(0, WIDTH); };
-  auto const gen_low_z = [&gen]() { return gen(0, HEIGHT); };
+  auto const gen_low_x = [&gen, &ss]() { return gen(0, ss.width); };
+  auto const gen_low_z = [&gen, &ss]() { return gen(0, ss.height); };
   auto const gen_tr = [&]() { return glm::vec3{gen_low_x(), 0, gen_low_z()}; };
 
   CubeEntities cube_ents;
@@ -696,7 +693,7 @@ main(int argc, char **argv)
   auto const ORTHO_FORWARD = -constants::Y_UNIT_VECTOR;
   auto constexpr ORTHO_UP  =  constants::Z_UNIT_VECTOR;
   WorldOrientation const ORTHO_WO{ORTHO_FORWARD, ORTHO_UP};
-  CameraORTHO cam_ortho{ORTHO_WO, glm::vec2{WIDTH, HEIGHT}};
+  CameraORTHO cam_ortho{ORTHO_WO, glm::vec2{screen_vp.width(), screen_vp.height()}};
 
   auto const cr0 = RectFloat{200, 200, 400, 400};
   auto const cr1 = RectFloat{600, 600, 800, 800};
@@ -708,7 +705,7 @@ main(int argc, char **argv)
 
   auto wire_sp   = make_wireframe_program(logger);
   RNG rng;
-  auto cube_ents = gen_cube_entities(logger, wire_sp, rng);
+  auto cube_ents = gen_cube_entities(logger, screen_vp.size(), wire_sp, rng);
 
   PmRects pm_rects{
     std::array<PmRect, 2>{{
