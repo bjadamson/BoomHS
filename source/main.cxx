@@ -125,7 +125,7 @@ start(common::Logger& logger, Engine& engine)
 
   // Construct game state
   auto constexpr NEAR   = 0.001f;
-  auto constexpr FAR    = 100.0f;
+  auto constexpr FAR    = 5000.0f;
   auto const window_rect = engine.window_viewport();
 
   // clang-format off
