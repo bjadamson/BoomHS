@@ -32,7 +32,7 @@
 // DO_EFFECT MACRO
 #define DO_EFFECT(expr) DO_EFFECT_EXPAND_VAR(__COUNTER__, expr)
 
-// TRY_OR_ELSE_RETURN
+// TRY_OR
 //
 // Evaluates the expression, behaves accordingly:
 //   * If evaluating the expression yields an error, invokes the user provided function on the
@@ -41,15 +41,15 @@
 //   The value returned from the function invocation is returned at the callsite of the
 //   macro.
 //   * Otherwise MOVES the evaluated expression into the variable VAR_NAME.
-#define TRY_OR_ELSE_RETURN(VAR_NAME, expr, fn)                                                     \
+#define TRY_OR(VAR_NAME, expr, fn)                                                                 \
   EVAL_INTO_VAR_OR(VAR_NAME, expr, [&](auto&& r) { return fn(r.unwrapErr()); })
 
-// TRY_OR_ELSE_RETURN_DEFAULT_T
+// TRY_OR_DEFAULT_T
 //
 // Evaluates the expression, behaves accordingly.
 //   * If evaluating the expression yields an error, return a default instance of T.
 //   * Otherwise MOVES the evaluated expression into the variable VAR_NAME.
-#define TRY_OR_ELSE_RETURN_DEFAULT_T(VAR_NAME, expr, T)                                            \
+#define TRY_OR_DEFAULT_T(VAR_NAME, expr, T)                                                        \
   EVAL_INTO_VAR_OR(VAR_NAME, expr, [](auto const&) { return T{}; })
 
 // OK_MOVE

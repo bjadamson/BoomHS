@@ -660,7 +660,7 @@ main(int argc, char **argv)
     return EXIT_FAILURE;
   };
 
-  TRY_OR_ELSE_RETURN(auto gl_sdl, GlSdl::make_default(logger, "Multiple Viewport Raycast", FULLSCREEN, 1024, 768), on_error);
+  TRY_OR(auto gl_sdl, GlSdl::make_default(logger, "Multiple Viewport Raycast", FULLSCREEN, 1024, 768), on_error);
   auto& window = gl_sdl.window;
 
   OR::init(logger);
@@ -669,7 +669,7 @@ main(int argc, char **argv)
   auto const window_rect = window.view_rect();
   auto const frustum = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
 
-  Viewport const screen_vp{window.view_rect()};
+  Viewport const screen_vp{window_rect};
   LOG_ERROR_SPRINTF("SV %s", screen_vp.rect().to_string());
 
   int const VIEWPORT_WIDTH  = screen_vp.width() / SCREENSIZE_VIEWPORT_RATIO.x;
