@@ -86,12 +86,7 @@ public:
   {
     // Converting the Frustum to a Viewport discards the NEAR and FAR values, while truncating the
     // following values from floats to integers.
-    auto const left   = f.left_int();
-    auto const top    = f.top_int();
-    auto const width  = f.width_int();
-    auto const height = f.height_int();
-
-    return Viewport{left, top, width, height};
+    return Viewport{f.left, f.top, f.width(), f.height()};
   }
 };
 

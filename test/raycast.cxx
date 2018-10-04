@@ -168,7 +168,7 @@ draw_bboxes(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm,
 }
 
 void
-draw_rectangle_pm(common::Logger& logger, RectFloat const& viewport, CameraORTHO const& camera,
+draw_rectangle_pm(common::Logger& logger, RectInt const& viewport, CameraORTHO const& camera,
                   ShaderProgram& sp, DrawInfo& dinfo, Color const& color, GLenum const draw_mode,
                   DrawState& ds)
 {
@@ -526,7 +526,7 @@ gen_cube_entities(common::Logger& logger, ScreenSize const& ss, ShaderProgram co
 }
 
 void
-draw_cursor_under_mouse(common::Logger& logger, RectFloat const& viewport, ShaderProgram& sp,
+draw_cursor_under_mouse(common::Logger& logger, RectInt const& viewport, ShaderProgram& sp,
                         RectFloat const& rect, CameraORTHO const& cam_ortho, DrawState& ds)
 {
   auto const rbuffer = OF::make_line_rectangle(rect);
@@ -553,7 +553,7 @@ draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
   mouse_rect.bottom *= SCREENSIZE_VIEWPORT_RATIO.y;
 
   OR::set_viewport_and_scissor(view_port);
-  draw_cursor_under_mouse(logger, view_port.rect().float_rect(), rect_sp, mouse_rect, camera, ds);
+  draw_cursor_under_mouse(logger, view_port.rect(), rect_sp, mouse_rect, camera, ds);
 }
 
 struct PmDrawInfo
@@ -589,7 +589,7 @@ draw_scene(common::Logger& logger, Viewports const& viewports, PmDrawInfo& pm_in
   auto const draw_pm = [&](auto& sp, auto& di, DrawState& ds, Color const& color) {
     auto const& viewport = viewports.fullscreen;
     OR::set_viewport_and_scissor(viewport);
-    draw_rectangle_pm(logger, viewport.rect_float(), camera, sp, di, color, GL_TRIANGLES, ds);
+    draw_rectangle_pm(logger, viewport.rect(), camera, sp, di, color, GL_TRIANGLES, ds);
   };
   auto const draw_pms = [&](auto& ds) {
     for (auto& pm_rect : pm_info.rects) {

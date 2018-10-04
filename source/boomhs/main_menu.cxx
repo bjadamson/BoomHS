@@ -689,10 +689,11 @@ draw_camera_window(Camera& camera, Player& player, Frustum& frustum)
       ImGui::InputFloat2("Aspect:", aspect_ratio.data());
     }
     if (ImGui::CollapsingHeader("Frustum")) {
-      ImGui::InputFloat("Left:",   &frustum.left);
-      ImGui::InputFloat("Right:",  &frustum.right);
-      ImGui::InputFloat("Bottom:", &frustum.bottom);
-      ImGui::InputFloat("Top:",    &frustum.top);
+      ImGui::InputInt("Left:",     &frustum.left);
+      ImGui::InputInt("Right:",    &frustum.right);
+      ImGui::InputInt("Bottom:",   &frustum.bottom);
+      ImGui::InputInt("Top:",      &frustum.top);
+
       ImGui::InputFloat("Far:",    &frustum.far);
       ImGui::InputFloat("Near:",   &frustum.near);
     }

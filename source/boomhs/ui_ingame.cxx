@@ -599,7 +599,7 @@ draw_inventory_overlay(RenderState& rstate)
   auto constexpr FAR    = -1.0f;
 
   auto const& f = es.frustum;
-  auto const pm = glm::ortho(f.left, f.right, f.bottom, f.top, NEAR, FAR);
+  auto const pm = glm::ortho(f.left_float(), f.right_float(), f.bottom_float(), f.top_float(), NEAR, FAR);
   sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
   sp.set_uniform_color(logger, "u_color", color);
 

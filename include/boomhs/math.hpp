@@ -150,16 +150,14 @@ operator<<(std::ostream&, Cube const&);
 
 struct Frustum
 {
-  float left, right, bottom, top, near, far;
+  int left, right, bottom, top;
+  float near, far;
 
-  int left_int() const { return left; }
-  int right_int() const { return right; }
+  float bottom_float() const { return bottom; }
+  float top_float() const { return top; }
 
-  int bottom_int() const { return bottom; }
-  int top_int() const { return top; }
-
-  int near_int() const { return near; }
-  int far_int() const { return far; }
+  float left_float() const { return left; }
+  float right_float() const { return right; }
 
   auto height() const
   {

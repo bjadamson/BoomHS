@@ -128,10 +128,10 @@ Frustum
 Frustum::from_rect_and_nearfar(RectInt const& rect, float const near, float const far)
 {
   return Frustum{
-    rect.float_left(),
-    rect.float_right(),
-    rect.float_bottom(),
-    rect.float_top(),
+    rect.left,
+    rect.right,
+    rect.bottom,
+    rect.top,
     near,
     far};
 }

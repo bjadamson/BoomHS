@@ -658,7 +658,7 @@ draw_everything(FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
       PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);
 
       auto& io = es.imgui;
-      io.DisplaySize = ImVec2{fr.right, fr.bottom};
+      io.DisplaySize = ImVec2{fr.right_float(), fr.bottom_float()};
       auto& ui_state = es.ui_state;
       if (ui_state.draw_ingame_ui) {
         ui_ingame::draw(fs, camera, ds);
