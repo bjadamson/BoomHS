@@ -42,7 +42,7 @@ draw_ortho_lhs(EngineState& es, LevelManager& lm, Camera& camera, int const cuto
 {
   auto const vp = Viewport::from_frustum(es.frustum);
   Viewport const LHS{
-    vp.left(), vp.top(), cutoff_point, vp.bottom()
+    vp.left_top(), cutoff_point, vp.height()
   };
   render::set_viewport_and_scissor(LHS);
 
@@ -65,7 +65,7 @@ draw_ortho_rhs(RenderState& rstate, DrawState& ds, LevelManager& lm,
   auto const vp = Viewport::from_frustum(es.frustum);
 
   Viewport const RHS{
-    cutoff_point, vp.top(), vp.right(), vp.right_bottom().y
+    cutoff_point, vp.top(), vp.width(), vp.height()
   };
   render::set_viewport_and_scissor(RHS);
   PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);

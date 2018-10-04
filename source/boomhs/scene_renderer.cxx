@@ -203,7 +203,6 @@ make_static_renderers(EngineState& es, ZoneState& zs)
     return SunshaftRenderer{logger, screen_size, sunshaft_sp};
   };
 
-  // TODO: Move out into state somewhere.
   auto const make_skybox_renderer = [](common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
     auto&              skybox_sp = sps.ref_sp("skybox");
     glm::vec3 const    vmin{-0.5f};

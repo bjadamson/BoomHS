@@ -55,8 +55,6 @@ active_camera_pos()
     : ORTHO_CAMERA_POS;
 }
 
-namespace OR = opengl::render;
-
 auto
 make_wireframe_program(common::Logger& logger)
 {
@@ -348,8 +346,7 @@ make_mouse_rect(CameraORTHO const& camera, glm::ivec2 const& mouse_pos)
 
 void
 on_rhs_mouse_cube_collisions(common::Logger& logger, glm::vec2 const& mouse_pos,
-                             ViewportDisplayInfo const& vdi,
-                             CubeEntities& cube_ents)
+                             ViewportDisplayInfo const& vdi, CubeEntities& cube_ents)
 {
   auto const& pm        = vdi.pm;
   auto const& vm        = vdi.vm;
@@ -728,6 +725,7 @@ main(int argc, char **argv)
   bool quit = false;
 
   auto const pers_pm = glm::perspective(FOV, AR.compute(), FRUSTUM.near, FRUSTUM.far);
+  PmDrawInfo pm_info{pm_rects, rect_sp};
   while (!quit) {
     auto const viewports = get_viewports(logger, cam_ortho, FRUSTUM, LHS, RHS, SCREEN_VIEWPORT, pers_pm);
     auto const ft = FrameTime::from_timer(timer);
@@ -738,7 +736,6 @@ main(int argc, char **argv)
     auto const mouse_pos = get_mousepos();
     update(logger, cam_ortho, LHS.rect_float(), RHS.rect_float(), mouse_pos, cube_ents, ft);
 
-    PmDrawInfo pm_info{pm_rects, rect_sp};
     draw_scene(logger, viewports, pm_info, cam_ortho, wire_sp, mouse_pos, cube_ents);
 
     // Update window with OpenGL rendering

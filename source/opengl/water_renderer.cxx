@@ -248,7 +248,7 @@ AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, ScreenSize 
     , refraction_(logger, screen_size)
 {
   {
-    auto const dim = reflection_.fbo->dimensions;
+    auto const dim = reflection_.fbo->view_port;
     auto const w = dim.width(), h = dim.height();
 
     auto& fbo = reflection_.fbo;
@@ -257,7 +257,7 @@ AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, ScreenSize 
   }
 
   {
-    auto const dim = refraction_.fbo->dimensions;
+    auto const dim = refraction_.fbo->view_port;
     auto const w = dim.width(), h = dim.height();
     {
       GLenum const tu = GL_TEXTURE2;

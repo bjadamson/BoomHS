@@ -195,3 +195,5 @@ void
 set_viewport_and_scissor(boomhs::Viewport const&);
 
 } // namespace opengl::render
+
+namespace OR = opengl::render;

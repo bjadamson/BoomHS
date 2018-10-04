@@ -105,7 +105,7 @@ start(common::Logger& logger, Engine& engine)
   auto& registries = engine.registries;
 
   // Initialize opengl
-  opengl::render::init(logger);
+  OR::init(logger);
 
   // Initialize openAL
   ALCdevice* al_device = alcOpenDevice(nullptr);

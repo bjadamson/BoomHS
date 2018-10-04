@@ -606,8 +606,7 @@ gl_fn_with_viewport(Viewport const& vp, void(*fn)(int, int, int, int))
 
   // TODO:
   // vp.bottom() for TEST program. vp.top() for boomhs program. WHY?
-  auto const bottom = vp.bottom();
-
+  auto const bottom = vp.top();
 
   auto const width  = vp.width();
   auto const height = vp.height();

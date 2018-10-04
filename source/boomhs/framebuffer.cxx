@@ -1,4 +1,5 @@
 #include <opengl/framebuffer.hpp>
+#include <opengl/renderer.hpp>
 
 using namespace boomhs;
 using namespace opengl;
@@ -34,8 +35,8 @@ make_fb_ti(common::Logger& logger, int const width, int const height, GLenum con
 namespace opengl
 {
 
-FBInfo::FBInfo(Viewport const& d, ScreenSize const& ss)
-    : dimensions(d)
+FBInfo::FBInfo(Viewport const& vp, ScreenSize const& ss)
+    : view_port(vp)
     , screen_size(ss)
 {
   glGenFramebuffers(1, &id);
@@ -45,14 +46,16 @@ void
 FBInfo::bind_impl(common::Logger& logger)
 {
   glBindFramebuffer(GL_FRAMEBUFFER, id);
-  glViewport(dimensions.left(), dimensions.top(), dimensions.right(), dimensions.bottom());
+  OR::set_viewport(view_port);
 }
 
 void
 FBInfo::unbind_impl(common::Logger& logger)
 {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(dimensions.left(), dimensions.top(), screen_size.width, screen_size.height);
+
+  Viewport const vp{view_port.left_top(), screen_size.width, screen_size.height};
+  OR::set_viewport(vp);
 }
 
 void

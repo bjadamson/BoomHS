@@ -40,7 +40,7 @@ SunshaftRenderer::SunshaftRenderer(common::Logger& logger, ScreenSize const& ss,
     : buffers_(SunshaftBuffers{logger, ss})
     , sp_(sp)
 {
-  auto const& dim = buffers_.fbo->dimensions;
+  auto const& dim = buffers_.fbo->view_port;
   auto const w = dim.width(), h = dim.height();
 
   auto& fbo = buffers_.fbo;
