@@ -197,9 +197,6 @@ struct Frustum
   from_rect_and_nearfar(RectInt const&, float, float);
 };
 
-Frustum
-operator/(Frustum const&, Frustum const&);
-
 // We create an enum of the sides so we don't have to call each side 0 or 1.
 // This way it makes it more understandable and readable when dealing with frustum sides.
 enum FrustumSide
