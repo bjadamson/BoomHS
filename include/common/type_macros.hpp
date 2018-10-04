@@ -221,7 +221,7 @@ public:
 template <typename T, typename DF>
 using ImplicitelyCastableMovableWrapper = impl::ICMW<T, DF>;
 
-// Macros and helper-macros for the DO_EFFECT() macro.
+// Macros and helper-macros
 #define ON_SCOPE_EXIT_CONSTRUCT_IN_PLACE(VAR, fn)                                                  \
   ::common::impl::DestroyFN<decltype((fn))> const VAR{fn};
 #define ON_SCOPE_EXIT_MOVE_EXPR_INTO_VAR(VAR, expr)                                                \

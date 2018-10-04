@@ -179,13 +179,15 @@ main(int argc, char* argv[])
   };
 
   LOG_DEBUG("Initializing OpenGL context and SDL window.");
-  TRY_OR(auto gl_sdl, GlSdl::make_default(logger, "BoomHS", FULLSCREEN, 1024, 768), on_error);
+  auto gl_sdl = TRY_OR_RETURN(
+      GlSdl::make_default(logger, "BoomHS", FULLSCREEN, 1024, 768),
+      on_error);
 
-  TRY_OR(auto controller, SDLControllers::find_attached_controllers(logger), on_error);
+  auto controller = TRY_OR_RETURN(SDLControllers::find_attached_controllers(logger), on_error);
   Engine engine{MOVE(gl_sdl.window), MOVE(controller)};
 
   LOG_DEBUG("Starting game loop");
-  TRY_OR(auto _, start(logger, engine), on_error);
+  TRY_OR_RETURN(start(logger, engine), on_error);
 
   LOG_DEBUG("Game loop finished successfully! Ending program now.");
   return EXIT_SUCCESS;

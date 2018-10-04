@@ -32,6 +32,7 @@
 // DO_EFFECT MACRO
 #define DO_EFFECT(expr) DO_EFFECT_EXPAND_VAR(__COUNTER__, expr)
 
+
 // TRY_OR
 //
 // Evaluates the expression, behaves accordingly:
@@ -63,6 +64,28 @@
 //    auto st = ...;
 //    return OK_MOVE(st);
 #define OK_MOVE(...) Ok(MOVE(__VA_ARGS__))
+
+
+// TRY_OR_RETURN
+//
+// A syntatically nicer version of the TRY_OR macro above.
+//
+// Performs the same functionality.
+//
+// NOTE: I am leaving TRY_OR() in this file in case there is a compiler (MSVC? not sure at the time
+// of writing this) that will not support this macro invocation.
+//
+// Uses a compiler extension supported by GCC and clang.
+#define TRY_OR_RETURN(expr, fn)                                                                    \
+    ({                                                                                             \
+        auto res = expr;                                                                           \
+        if (!res.isOk()) {                                                                         \
+          typedef details::ResultErrType<decltype(res)>::type E;                                   \
+          return fn(res.storage().get<E>());                                                       \
+        }                                                                                          \
+        typedef details::ResultOkType<decltype(res)>::type T;                                      \
+        res.storage().get_moveout<T>();                                                            \
+    })
 
 //
 // A dummy structure.
