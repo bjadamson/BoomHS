@@ -11,7 +11,7 @@
 #include <common/timer.hpp>
 #include <common/type_macros.hpp>
 
-#include <gl_sdl/sdl_window.hpp>
+#include <gl_sdl/common.hpp>
 
 #include <opengl/bind.hpp>
 #include <opengl/factory.hpp>
@@ -663,9 +663,8 @@ main(int argc, char **argv)
     return EXIT_FAILURE;
   };
 
-  TRY_OR_ELSE_RETURN(auto sdl_gl, SDLGlobalContext::create(logger), on_error);
-  TRY_OR_ELSE_RETURN(auto window,
-      sdl_gl->make_window(logger, "Ortho Raycast Test", FULLSCREEN, WIDTH, HEIGHT), on_error);
+  TRY_OR_ELSE_RETURN(auto gl_sdl, GlSdl::make_default(logger, "Multiple Viewport Raycast", FULLSCREEN, 1024, 768), on_error);
+  auto& window = gl_sdl.window;
 
   OR::init(logger);
   ENABLE_SCISSOR_TEST_UNTIL_SCOPE_EXIT();

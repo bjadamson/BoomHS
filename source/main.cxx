@@ -14,7 +14,7 @@
 #include <common/log.hpp>
 #include <common/time.hpp>
 
-#include <gl_sdl/sdl_window.hpp>
+#include <gl_sdl/common.hpp>
 #include <opengl/renderer.hpp>
 
 #include <extlibs/imgui.hpp>
@@ -188,10 +188,10 @@ main(int argc, char* argv[])
   };
 
   LOG_DEBUG("Initializing OpenGL context and SDL window.");
-  TRY_OR_ELSE_RETURN(auto sdl_gl, SDLGlobalContext::create(logger), on_error);
-  TRY_OR_ELSE_RETURN(auto window, sdl_gl->make_window(logger, "BoomHS", FULLSCREEN, 1024, 768), on_error);
+  TRY_OR_ELSE_RETURN(auto gl_sdl, GlSdl::make_default(logger, "BoomHS", FULLSCREEN, 1024, 768), on_error);
+
   TRY_OR_ELSE_RETURN(auto controller, SDLControllers::find_attached_controllers(logger), on_error);
-  Engine engine{MOVE(window), MOVE(controller)};
+  Engine engine{MOVE(gl_sdl.window), MOVE(controller)};
 
   LOG_DEBUG("Starting game loop");
   TRY_OR_ELSE_RETURN(auto _, start(logger, engine), on_error);
