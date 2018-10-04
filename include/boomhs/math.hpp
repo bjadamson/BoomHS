@@ -192,6 +192,9 @@ struct Frustum
   auto center() const { return dimensions() / 2; }
 
   std::string to_string() const;
+
+  static Frustum
+  from_rect_and_nearfar(RectInt const&, float, float);
 };
 
 Frustum

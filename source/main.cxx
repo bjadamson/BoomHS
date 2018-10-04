@@ -126,17 +126,8 @@ start(common::Logger& logger, Engine& engine)
   // Construct game state
   auto constexpr NEAR   = 0.001f;
   auto constexpr FAR    = 5000.0f;
-  auto const window_rect = engine.window_viewport();
-
-  // clang-format off
-  Frustum const frustum{
-    window_rect.float_left(),
-    window_rect.float_right(),
-    window_rect.float_bottom(),
-    window_rect.float_top(),
-    NEAR,
-    FAR};
-  // clang-format on
+  auto const window_viewport = engine.window_viewport();
+  auto const frustum = Frustum::from_rect_and_nearfar(window_viewport.rect(), NEAR, FAR);
 
   auto& io = ImGui::GetIO();
 

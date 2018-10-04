@@ -125,6 +125,18 @@ Frustum::to_string() const
 }
 
 Frustum
+Frustum::from_rect_and_nearfar(RectInt const& rect, float const near, float const far)
+{
+  return Frustum{
+    rect.float_left(),
+    rect.float_right(),
+    rect.float_bottom(),
+    rect.float_top(),
+    near,
+    far};
+}
+
+Frustum
 operator/(Frustum const& n, Frustum const& d)
 {
   return Frustum{

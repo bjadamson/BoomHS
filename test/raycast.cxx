@@ -666,6 +666,9 @@ main(int argc, char **argv)
   OR::init(logger);
   ENABLE_SCISSOR_TEST_UNTIL_SCOPE_EXIT();
 
+  auto const window_rect = window.view_rect();
+  auto const frustum = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
+
   Viewport const screen_vp{window.view_rect()};
   LOG_ERROR_SPRINTF("SV %s", screen_vp.rect().to_string());
 
@@ -682,18 +685,11 @@ main(int argc, char **argv)
     VIEWPORT_WIDTH,
     VIEWPORT_HEIGHT
   };
-  Frustum const frustum{
-    screen_vp.float_left(),
-    screen_vp.float_right(),
-    screen_vp.float_bottom(),
-    screen_vp.float_top(),
-    NEAR,
-    FAR};
 
   auto const ORTHO_FORWARD = -constants::Y_UNIT_VECTOR;
   auto constexpr ORTHO_UP  =  constants::Z_UNIT_VECTOR;
   WorldOrientation const ORTHO_WO{ORTHO_FORWARD, ORTHO_UP};
-  CameraORTHO cam_ortho{ORTHO_WO, glm::vec2{screen_vp.width(), screen_vp.height()}};
+  CameraORTHO cam_ortho{ORTHO_WO, glm::vec2{window_rect.width(), window_rect.height()}};
 
   auto const cr0 = RectFloat{200, 200, 400, 400};
   auto const cr1 = RectFloat{600, 600, 800, 800};
@@ -705,7 +701,7 @@ main(int argc, char **argv)
 
   auto wire_sp   = make_wireframe_program(logger);
   RNG rng;
-  auto cube_ents = gen_cube_entities(logger, screen_vp.size(), wire_sp, rng);
+  auto cube_ents = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);
 
   PmRects pm_rects{
     std::array<PmRect, 2>{{
