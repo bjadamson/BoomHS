@@ -184,8 +184,8 @@ void
 clear_screen(Color const& color)
 {
   // https://stackoverflow.com/a/23944124/562174
-  glDisable(GL_DEPTH_TEST);
-  ON_SCOPE_EXIT([]() { enable_depth_tests(); });
+  //glDisable(GL_DEPTH_TEST);
+  //ON_SCOPE_EXIT([]() { enable_depth_tests(); });
 
   // Render
   glClearColor(color.r(), color.g(), color.b(), color.a());
