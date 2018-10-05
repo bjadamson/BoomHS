@@ -222,30 +222,31 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ReflectionBuffers
-ReflectionBuffers::ReflectionBuffers(common::Logger& logger, ScreenSize const& ss)
-    : fbo(FrameBuffer{opengl::make_fbo(logger, ss)})
+ReflectionBuffers::ReflectionBuffers(common::Logger& logger, Viewport const& vp, ScreenSize const& ss)
+    : fbo(FrameBuffer{opengl::make_fbo(logger, vp, ss)})
     , rbo(RBInfo{})
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // RefractionBuffers
-RefractionBuffers::RefractionBuffers(common::Logger& logger, ScreenSize const& ss)
-    : fbo(FrameBuffer{opengl::make_fbo(logger, ss)})
+RefractionBuffers::RefractionBuffers(common::Logger& logger, Viewport const& vp, ScreenSize const& ss)
+    : fbo(FrameBuffer{opengl::make_fbo(logger, vp, ss)})
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // AdvancedWaterRenderer
-AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, ScreenSize const& screen_size,
+AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, Viewport const& vp,
+                                             ScreenSize const& screen_size,
                                              ShaderProgram& sp, TextureInfo& diffuse,
                                              TextureInfo& dudv, TextureInfo& normal)
     : sp_(sp)
     , diffuse_(diffuse)
     , dudv_(dudv)
     , normal_(normal)
-    , reflection_(logger, screen_size)
-    , refraction_(logger, screen_size)
+    , reflection_(logger, vp, screen_size)
+    , refraction_(logger, vp, screen_size)
 {
   {
     auto const dim = reflection_.fbo->view_port;

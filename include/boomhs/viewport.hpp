@@ -18,6 +18,12 @@ struct ScreenSize
       : ScreenSize(p.x, p.y)
   {
   }
+
+  // static fns
+  static constexpr ScreenSize from_frustum(Frustum const& fr)
+  {
+    return ScreenSize{fr.width(), fr.height()};
+  }
 };
 
 using ScreenCoords = glm::ivec2;

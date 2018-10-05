@@ -45,9 +45,9 @@ struct FBInfo
 using FrameBuffer = common::AutoResource<FBInfo>;
 
 inline auto
-make_fbo(common::Logger& logger, boomhs::ScreenSize const& ss)
+make_fbo(common::Logger& logger, boomhs::Viewport const& vp, boomhs::ScreenSize const& ss)
 {
-  FBInfo fb{{0, 0, ss.width, ss.height}, ss};
+  FBInfo fb{vp, ss};
   fb.while_bound(logger, []() { glDrawBuffer(GL_COLOR_ATTACHMENT0); });
   return fb;
 }

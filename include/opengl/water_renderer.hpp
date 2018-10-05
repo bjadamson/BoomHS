@@ -77,7 +77,7 @@ struct ReflectionBuffers
   opengl::TextureInfo  tbo;
   opengl::RenderBuffer rbo;
 
-  ReflectionBuffers(common::Logger&, boomhs::ScreenSize const&);
+  ReflectionBuffers(common::Logger&, boomhs::Viewport const&, boomhs::ScreenSize const&);
 
   NO_COPY(ReflectionBuffers);
   MOVE_DEFAULT(ReflectionBuffers);
@@ -89,7 +89,7 @@ struct RefractionBuffers
   opengl::TextureInfo tbo;
   opengl::TextureInfo dbo;
 
-  RefractionBuffers(common::Logger&, boomhs::ScreenSize const&);
+  RefractionBuffers(common::Logger&, boomhs::Viewport const&, boomhs::ScreenSize const&);
 
   NO_COPY(RefractionBuffers);
   MOVE_DEFAULT(RefractionBuffers);
@@ -141,8 +141,8 @@ class AdvancedWaterRenderer
 public:
   MOVE_CONSTRUCTIBLE_ONLY(AdvancedWaterRenderer);
 
-  explicit AdvancedWaterRenderer(common::Logger&, boomhs::ScreenSize const&, ShaderProgram&,
-                                 TextureInfo&, TextureInfo&, TextureInfo&);
+  explicit AdvancedWaterRenderer(common::Logger&, boomhs::Viewport const&, boomhs::ScreenSize const&,
+                                 ShaderProgram&, TextureInfo&, TextureInfo&, TextureInfo&);
 
   template <typename TerrainRenderer, typename EntityRenderer>
   void render_reflection(boomhs::EngineState& es, DrawState& ds, boomhs::LevelManager& lm,

@@ -6,6 +6,7 @@
 
 #include <boomhs/engine.hpp>
 #include <boomhs/frame_time.hpp>
+#include <boomhs/viewport.hpp>
 #include <boomhs/zone_state.hpp>
 
 using namespace boomhs;
@@ -30,14 +31,15 @@ setup(common::Logger& logger, TextureInfo& ti, GLint const v)
 namespace opengl
 {
 
-SunshaftBuffers::SunshaftBuffers(common::Logger& logger, ScreenSize const& ss)
-    : fbo(FrameBuffer{opengl::make_fbo(logger, ss)})
+SunshaftBuffers::SunshaftBuffers(common::Logger& logger, Viewport const& vp, ScreenSize const& ss)
+    : fbo(FrameBuffer{opengl::make_fbo(logger, vp, ss)})
     , rbo(RBInfo{})
 {
 }
 
-SunshaftRenderer::SunshaftRenderer(common::Logger& logger, ScreenSize const& ss, ShaderProgram& sp)
-    : buffers_(SunshaftBuffers{logger, ss})
+SunshaftRenderer::SunshaftRenderer(common::Logger& logger, Viewport const& vp, ScreenSize const& ss,
+                                   ShaderProgram& sp)
+    : buffers_(SunshaftBuffers{logger, vp, ss})
     , sp_(sp)
 {
   auto const& dim = buffers_.fbo->view_port;

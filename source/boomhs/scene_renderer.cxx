@@ -166,8 +166,10 @@ make_static_renderers(EngineState& es, ZoneState& zs)
 
   auto const       make_advanced_water_renderer = [](EngineState& es, ZoneState& zs) {
     auto& logger   = es.logger;
-    auto const& f  = es.frustum;
-    ScreenSize const screen_size{f.right, f.bottom};
+    auto const& fr = es.frustum;
+
+    auto const screen_size = ScreenSize::from_frustum(fr);
+    auto const viewport    = Viewport::from_frustum(fr);
 
     auto& gfx_state = zs.gfx_state;
     auto& ttable    = gfx_state.texture_table;
@@ -176,7 +178,7 @@ make_static_renderers(EngineState& es, ZoneState& zs)
     auto& dudv   = *ttable.find("water-dudv");
     auto& normal = *ttable.find("water-normal");
     auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Advanced, sps);
-    return AdvancedWaterRenderer{logger, screen_size, sp, ti, dudv, normal};
+    return AdvancedWaterRenderer{logger, viewport, screen_size, sp, ti, dudv, normal};
   };
 
   auto const make_black_water_renderer = [](EngineState& es, ZoneState& zs) {
@@ -198,9 +200,10 @@ make_static_renderers(EngineState& es, ZoneState& zs)
     auto& sps       = gfx_state.sps;
     auto& sunshaft_sp = sps.ref_sp("sunshaft");
 
-    auto const& f = es.frustum;
-    ScreenSize const screen_size{f.right, f.bottom};
-    return SunshaftRenderer{logger, screen_size, sunshaft_sp};
+    auto const& fr         = es.frustum;
+    auto const screen_size = ScreenSize::from_frustum(fr);
+    auto const viewport    = Viewport::from_frustum(fr);
+    return SunshaftRenderer{logger, viewport, screen_size, sunshaft_sp};
   };
 
   auto const make_skybox_renderer = [](common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
