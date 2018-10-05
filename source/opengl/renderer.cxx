@@ -607,7 +607,7 @@ gl_fn_using_viewport(Viewport const& vp, void(*fn)(int, int, int, int))
   // Our Viewport deals with (0, 0) is the TOP-left corner.
   //
   // Convert viewport's "top" to OpenGL's "bottom".
-  auto const bottom = vp.top();
+  auto const bottom = 768 - vp.top() - vp.height();;
 
   auto const width  = vp.width();
   auto const height = vp.height();
