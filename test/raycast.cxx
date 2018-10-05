@@ -201,19 +201,19 @@ struct ViewportDisplayInfo
   auto mouse_offset() const { return viewport.rect().left_top(); }
 };
 
-struct Viewports
+struct ViewportInfos
 {
-  ViewportDisplayInfo left, right;
+  ViewportDisplayInfo left_top, right_top;
   Viewport fullscreen;
 
   // clang-format off
-  auto center()        const { return right.viewport.rect().center_left(); }
+  auto center()        const { return right_top.viewport.rect().center_left(); }
 
-  auto center_left()   const { return left.viewport.rect().center_left(); }
-  auto center_right()  const { return right.viewport.rect().center_right(); }
+  auto center_left()   const { return left_top.viewport.rect().center_left(); }
+  auto center_right()  const { return right_top.viewport.rect().center_right(); }
 
-  auto center_top()    const { return right.viewport.rect().left_top(); }
-  auto center_bottom() const { return right.viewport.rect().left_bottom(); }
+  auto center_top()    const { return right_top.viewport.rect().left_top(); }
+  auto center_bottom() const { return right_top.viewport.rect().left_bottom(); }
   // clang-format on
 };
 
@@ -397,7 +397,7 @@ on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_orth
 
 void
 process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
-                    CameraORTHO const& cam_ortho, Viewports const& viewports,
+                    CameraORTHO const& cam_ortho, ViewportInfos const& viewports,
                     PmRects& pm_rects, CubeEntities& cube_ents)
 {
   auto const mouse_pos     = glm::ivec2{motion.x, motion.y};
@@ -406,16 +406,16 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
   MOUSE_ON_RHS_SCREEN      = mouse_pos.x > middle_point;
   ViewportDisplayInfo const* vdi = nullptr;
   if (MOUSE_ON_RHS_SCREEN) {
-    vdi = &viewports.right;
+    vdi = &viewports.right_top;
   }
   else {
-    vdi = &viewports.left;
+    vdi = &viewports.left_top;
   }
   auto const mouse_start = mouse_pos - vdi->mouse_offset();
 
   if (MOUSE_ON_RHS_SCREEN) {
     // RHS
-    auto const& right = viewports.right;
+    auto const& right = viewports.right_top;
     on_rhs_mouse_cube_collisions(logger, mouse_start, *vdi, cube_ents);
   }
   else {
@@ -432,7 +432,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 
 bool
 process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
-              Viewports const& viewports, CubeEntities& cube_ents, PmRects& pm_rects)
+              ViewportInfos const& viewports, CubeEntities& cube_ents, PmRects& pm_rects)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
   auto &camera_pos = active_camera_pos();
@@ -555,13 +555,13 @@ struct PmDrawInfo
 };
 
 void
-draw_scene(common::Logger& logger, Viewports const& viewports, PmDrawInfo& pm_info,
+draw_scene(common::Logger& logger, ViewportInfos const& viewports, PmDrawInfo& pm_info,
            CameraORTHO const& camera,
            ShaderProgram& wire_sp, glm::ivec2 const& mouse_pos,
            CubeEntities& cube_ents)
 {
-  auto const& LHS         = viewports.left;
-  auto const& RHS         = viewports.right;
+  auto const& LHS         = viewports.left_top;
+  auto const& RHS         = viewports.right_top;
   auto const& fullscreen  = viewports.fullscreen;
   auto& pm_sp = pm_info.sp;
 
@@ -640,7 +640,7 @@ create_viewports(common::Logger &logger, CameraORTHO const& camera, Frustum cons
 
   ViewportDisplayInfo const left{lhs, ortho_pm, ortho_vm};
   ViewportDisplayInfo const right{rhs, pers_pm,  pers_vm};
-  return Viewports{left, right, screen_viewport};
+  return ViewportInfos{left, right, screen_viewport};
 }
 
 int
