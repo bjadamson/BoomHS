@@ -120,7 +120,7 @@ operator<<(std::ostream& ostream, Cube const& cube)
 std::string
 Frustum::to_string() const
 {
-  return fmt::sprintf("left: %f, right: %f, bottom: %f, top: %f, near: %f, far: %f",
+  return fmt::sprintf("left: %i, right: %i, bottom: %i, top: %i, near: %f, far: %f",
       left, right, bottom, top, near, far);
 }
 
