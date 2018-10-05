@@ -582,7 +582,8 @@ draw_inventory_overlay(RenderState& rstate)
   auto color = LOC::GRAY;
   color.set_a(0.40);
 
-  auto const vp = Viewport::from_frustum(es.frustum);
+  auto const& f = es.frustum;
+  auto const vp = Viewport::from_frustum(f);
   auto const make_rectangle = [&]() {
 
     OF::RectInfo   const ri{vp.rect_float(), std::nullopt, std::nullopt, std::nullopt};
@@ -598,7 +599,6 @@ draw_inventory_overlay(RenderState& rstate)
   auto constexpr NEAR   = 1.0f;
   auto constexpr FAR    = -1.0f;
 
-  auto const& f = es.frustum;
   auto const pm = glm::ortho(f.left_float(), f.right_float(), f.bottom_float(), f.top_float(), NEAR, FAR);
   sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
   sp.set_uniform_color(logger, "u_color", color);
@@ -631,11 +631,12 @@ draw(FrameState& fs, Camera& camera, DrawState& ds)
   auto& ldata = zs.level_data;
   auto& nbt   = ldata.nearby_targets;
 
-  auto const vp = Viewport::from_frustum(es.frustum);
+  auto const& frustum = es.frustum;
+  auto const vp       = Viewport::from_frustum(frustum);
   draw_nearest_target_info(vp, nbt, ttable, registry);
 
   // Create a renderstate using an orthographic projection.
-  auto fss = FrameState::from_camera_for_2dui_overlay(es, zs, camera, camera.view_settings_ref(), es.frustum);
+  auto fss = FrameState::from_camera_for_2dui_overlay(es, zs, camera, camera.view_settings_ref(), frustum);
   RenderState rstate{fss, ds};
   draw_2dui(rstate);
 
