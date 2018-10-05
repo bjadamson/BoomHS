@@ -607,6 +607,7 @@ gl_fn_using_viewport(Viewport const& vp, int const screen_height, void(*fn)(int,
   // Our Viewport deals with (0, 0) is the TOP-left corner.
   //
   // Convert viewport's "top" to OpenGL's "bottom".
+  // https://www.opengl.org/discussion_boards/showthread.php/129422-glViewport-from-top-left-not-bottom-left?p=970469&viewfull=1#post970469
   auto const bottom = screen_height - vp.top() - vp.height();
 
   auto const width  = vp.width();

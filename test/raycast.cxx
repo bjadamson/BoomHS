@@ -677,8 +677,6 @@ main(int argc, char **argv)
   auto const frustum = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
 
   Viewport const screen_vp{window_rect};
-  LOG_ERROR_SPRINTF("SV %s", screen_vp.rect().to_string());
-
   int const VIEWPORT_WIDTH  = screen_vp.width() / SCREENSIZE_VIEWPORT_RATIO.x;
   int const VIEWPORT_HEIGHT = screen_vp.height() / SCREENSIZE_VIEWPORT_RATIO.y;
 
@@ -692,13 +690,15 @@ main(int argc, char **argv)
     VIEWPORT_WIDTH,
     VIEWPORT_HEIGHT
   };
+
+  auto const mid_height = screen_vp.top() + screen_vp.half_height();
   auto const LHS_BOTTOM = Viewport{
-    PAIR(screen_vp.left(), screen_vp.top() + screen_vp.half_height()),
+    PAIR(screen_vp.left(), mid_height),
     VIEWPORT_WIDTH,
     VIEWPORT_HEIGHT
   };
   auto const RHS_BOTTOM = Viewport{
-    PAIR(VIEWPORT_WIDTH, screen_vp.top() + screen_vp.half_height()),
+    PAIR(VIEWPORT_WIDTH, mid_height),
     VIEWPORT_WIDTH,
     VIEWPORT_HEIGHT
   };
