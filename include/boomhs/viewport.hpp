@@ -71,6 +71,9 @@ public:
   auto constexpr float_bottom() const { return static_cast<float>(bottom()); }
 
   auto constexpr left_top() const { return ScreenCoords{left(), top()}; }
+  auto constexpr left_bottom() const { return ScreenCoords{left(), bottom()}; }
+
+  auto constexpr right_top() const { return ScreenCoords{right(), top()}; }
   auto constexpr right_bottom() const { return ScreenCoords{right(), bottom()}; }
 
   auto constexpr center() const { return ScreenCoords{half_width(), half_height()}; }

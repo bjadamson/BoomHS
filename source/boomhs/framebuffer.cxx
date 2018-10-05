@@ -53,9 +53,7 @@ void
 FBInfo::unbind_impl(common::Logger& logger)
 {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-  Viewport const vp{view_port.left_top(), screen_size.width, screen_size.height};
-  OR::set_viewport_and_scissor(vp);
+  OR::set_viewport_and_scissor(view_port);
 }
 
 void
