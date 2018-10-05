@@ -363,12 +363,9 @@ on_rhs_mouse_cube_collisions(common::Logger& logger, glm::vec2 const& mouse_pos,
 
 void
 on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_ortho,
-                         glm::ivec2 const& mouse_start, ViewportDisplayInfo const& vdi,
+                         glm::ivec2 const& mouse_start,
                          CubeEntities& cube_ents)
 {
-  auto const& pm        = vdi.pm;
-  auto const& vm        = vdi.vm;
-  auto const view_rect  = vdi.viewport.rect();
   auto const mouse_rect = make_mouse_rect(cam_ortho, mouse_start);
 
   for (auto &cube_ent : cube_ents) {
@@ -400,36 +397,31 @@ on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_orth
 
 void
 process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
-                    CameraORTHO const& cam_ortho,
-                    Viewports const& viewports,
+                    CameraORTHO const& cam_ortho, Viewports const& viewports,
                     PmRects& pm_rects, CubeEntities& cube_ents)
 {
-  float const x = motion.x, y = motion.y;
-  auto const mouse_pos = glm::ivec2{x, y};
-
-  auto const& left  = viewports.left;
-  auto const& right = viewports.right;
-
+  auto const mouse_pos     = glm::ivec2{motion.x, motion.y};
   auto const& middle_point = viewports.center().x;
 
-  MOUSE_ON_RHS_SCREEN = mouse_pos.x > middle_point;
-
+  MOUSE_ON_RHS_SCREEN      = mouse_pos.x > middle_point;
   ViewportDisplayInfo const* vdi = nullptr;
   if (MOUSE_ON_RHS_SCREEN) {
-    vdi = &right;
+    vdi = &viewports.right;
   }
   else {
-    vdi = &left;
+    vdi = &viewports.left;
   }
   auto const mouse_start = mouse_pos - vdi->mouse_offset();
+
   if (MOUSE_ON_RHS_SCREEN) {
     // RHS
+    auto const& right = viewports.right;
     on_rhs_mouse_cube_collisions(logger, mouse_start, *vdi, cube_ents);
   }
   else {
+    // LHS
     if (MOUSE_BUTTON_PRESSED) {
-      // LHS
-      on_lhs_mouse_cube_collisions(logger, cam_ortho, mouse_start, *vdi, cube_ents);
+      on_lhs_mouse_cube_collisions(logger, cam_ortho, mouse_start, cube_ents);
     }
   }
 
