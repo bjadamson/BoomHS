@@ -35,9 +35,8 @@ make_fb_ti(common::Logger& logger, int const width, int const height, GLenum con
 namespace opengl
 {
 
-FBInfo::FBInfo(Viewport const& vp, ScreenSize const& ss)
+FBInfo::FBInfo(Viewport const& vp)
     : view_port(vp)
-    , screen_size(ss)
 {
   glGenFramebuffers(1, &id);
 }
