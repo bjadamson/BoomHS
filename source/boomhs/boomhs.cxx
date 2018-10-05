@@ -654,7 +654,7 @@ draw_everything(FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
     auto const mode = camera.mode();
     if (CameraMode::FPS == mode || CameraMode::ThirdPerson == mode) {
       auto const& fr = es.frustum;
-      render::set_viewport_and_scissor(Viewport::from_frustum(fr));
+      render::set_viewport_and_scissor(Viewport::from_frustum(fr), fr.height());
       PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);
 
       auto& io = es.imgui;
@@ -711,6 +711,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
   auto& io = es.imgui;
   auto const viewport = engine.window_viewport();
 
+  auto const& fr = es.frustum;
   if (es.main_menu.show) {
     SDL_SetRelativeMouseMode(SDL_FALSE);
 
@@ -719,7 +720,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
 
     // clear the screen before rending the main menu
     render::clear_screen(LOC::BLACK);
-    render::set_viewport_and_scissor(viewport);
+    render::set_viewport_and_scissor(viewport, fr.height());
 
     auto& skybox_renderer  = static_renderers.skybox;
     main_menu::draw(es, engine.window, camera, skybox_renderer, ds, lm, viewport, water_audio);
@@ -737,7 +738,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
     IO_SDL::read_devices(SDLReadDevicesArgs{state, engine.controllers, camera, ft});
     SDL_SetCursor(es.device_states.cursors.active());
 
-    auto fs         = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), es.frustum);
+    auto fs         = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), fr);
     update_everything(es, lm, rng, fs, camera, static_renderers, water_audio, engine.window, ft);
     draw_everything(fs, lm, rng, camera, water_audio, static_renderers, ds, ft);
   }

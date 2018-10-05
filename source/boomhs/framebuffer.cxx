@@ -35,8 +35,9 @@ make_fb_ti(common::Logger& logger, int const width, int const height, GLenum con
 namespace opengl
 {
 
-FBInfo::FBInfo(Viewport const& vp)
+FBInfo::FBInfo(Viewport const& vp, ScreenSize const& ss)
     : view_port(vp)
+    , screen_size(ss)
 {
   glGenFramebuffers(1, &id);
 }
@@ -45,14 +46,14 @@ void
 FBInfo::bind_impl(common::Logger& logger)
 {
   glBindFramebuffer(GL_FRAMEBUFFER, id);
-  OR::set_viewport_and_scissor(view_port);
+  OR::set_viewport_and_scissor(view_port, screen_size.height);
 }
 
 void
 FBInfo::unbind_impl(common::Logger& logger)
 {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  OR::set_viewport_and_scissor(view_port);
+  OR::set_viewport_and_scissor(view_port, screen_size.height);
 }
 
 void

@@ -186,13 +186,13 @@ void
 set_mvpmatrix(common::Logger&, glm::mat4 const&, glm::mat4 const&, ShaderProgram&);
 
 void
-set_scissor(boomhs::Viewport const&);
+set_scissor(boomhs::Viewport const&, int);
 
 void
-set_viewport(boomhs::Viewport const&);
+set_viewport(boomhs::Viewport const&, int);
 
 void
-set_viewport_and_scissor(boomhs::Viewport const&);
+set_viewport_and_scissor(boomhs::Viewport const&, int);
 
 } // namespace opengl::render
 

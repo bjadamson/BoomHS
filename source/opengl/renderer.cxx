@@ -599,7 +599,7 @@ namespace detail
 // to:
 //   left, bottom, width, height
 void
-gl_fn_using_viewport(Viewport const& vp, void(*fn)(int, int, int, int))
+gl_fn_using_viewport(Viewport const& vp, int const screen_height, void(*fn)(int, int, int, int))
 {
   auto const left = vp.left();
 
@@ -607,7 +607,7 @@ gl_fn_using_viewport(Viewport const& vp, void(*fn)(int, int, int, int))
   // Our Viewport deals with (0, 0) is the TOP-left corner.
   //
   // Convert viewport's "top" to OpenGL's "bottom".
-  auto const bottom = 768 - vp.top() - vp.height();;
+  auto const bottom = screen_height - vp.top() - vp.height();
 
   auto const width  = vp.width();
   auto const height = vp.height();
@@ -619,22 +619,22 @@ gl_fn_using_viewport(Viewport const& vp, void(*fn)(int, int, int, int))
 } // namespace detail
 
 void
-set_viewport(Viewport const& vp)
+set_viewport(Viewport const& vp, int const screen_height)
 {
-  detail::gl_fn_using_viewport(vp, glViewport);
+  detail::gl_fn_using_viewport(vp, screen_height, glViewport);
 }
 
 void
-set_scissor(Viewport const& vp)
+set_scissor(Viewport const& vp, int const screen_height)
 {
-  detail::gl_fn_using_viewport(vp, glScissor);
+  detail::gl_fn_using_viewport(vp, screen_height, glScissor);
 }
 
 void
-set_viewport_and_scissor(Viewport const& vp)
+set_viewport_and_scissor(Viewport const& vp, int const screen_height)
 {
-  set_viewport(vp);
-  set_scissor(vp);
+  set_viewport(vp, screen_height);
+  set_scissor(vp, screen_height);
 }
 
 } // namespace opengl::render

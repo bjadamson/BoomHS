@@ -529,7 +529,7 @@ draw_cursor_under_mouse(common::Logger& logger, RectInt const& viewport, ShaderP
 void
 draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
                glm::ivec2 const& mouse_pos, ShaderProgram& rect_sp,
-               Viewport const& view_port, DrawState& ds)
+               Viewport const& view_port, int const screen_height, DrawState& ds)
 {
   auto const& click_pos = camera.mouse_click.left_right;
   float const minx = click_pos.x;
@@ -544,7 +544,7 @@ draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
   mouse_rect.top    *= SCREENSIZE_VIEWPORT_RATIO.y;
   mouse_rect.bottom *= SCREENSIZE_VIEWPORT_RATIO.y;
 
-  OR::set_viewport_and_scissor(view_port);
+  OR::set_viewport_and_scissor(view_port, screen_height);
   draw_cursor_under_mouse(logger, view_port.rect(), rect_sp, mouse_rect, camera, ds);
 }
 
@@ -560,27 +560,29 @@ draw_scene(common::Logger& logger, Viewports const& viewports, PmDrawInfo& pm_in
            ShaderProgram& wire_sp, glm::ivec2 const& mouse_pos,
            CubeEntities& cube_ents)
 {
-  auto const& LHS = viewports.left;
-  auto const& RHS = viewports.right;
+  auto const& LHS         = viewports.left;
+  auto const& RHS         = viewports.right;
+  auto const& fullscreen  = viewports.fullscreen;
   auto& pm_sp = pm_info.sp;
 
+  auto const screen_height = fullscreen.height();
   auto const draw_lhs = [&](DrawState& ds) {
-    OR::set_viewport_and_scissor(LHS.viewport);
+    OR::set_viewport_and_scissor(LHS.viewport,  screen_height);
     OR::clear_screen(LOC::WHITE);
     draw_bboxes(logger, LHS.pm, LHS.vm, cube_ents, wire_sp, ds);
 
     if (MOUSE_BUTTON_PRESSED) {
-      draw_mouserect(logger, camera, mouse_pos, pm_sp, LHS.viewport, ds);
+      draw_mouserect(logger, camera, mouse_pos, pm_sp, LHS.viewport, screen_height, ds);
     }
   };
   auto const draw_rhs = [&](DrawState& ds) {
-    OR::set_viewport_and_scissor(RHS.viewport);
+    OR::set_viewport_and_scissor(RHS.viewport, screen_height);
     OR::clear_screen(LOC::BLACK);
     draw_bboxes(logger, RHS.pm, RHS.vm, cube_ents, wire_sp, ds);
   };
   auto const draw_pm = [&](auto& sp, auto& di, DrawState& ds, Color const& color) {
     auto const& viewport = viewports.fullscreen;
-    OR::set_viewport_and_scissor(viewport);
+    OR::set_viewport_and_scissor(viewport, screen_height);
     draw_rectangle_pm(logger, viewport.rect(), camera, sp, di, color, GL_TRIANGLES, ds);
   };
   auto const draw_pms = [&](auto& ds) {

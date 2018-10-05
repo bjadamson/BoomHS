@@ -40,11 +40,12 @@ void
 draw_ortho_lhs(EngineState& es, LevelManager& lm, Camera& camera, int const cutoff_point,
                FrameTime const& ft)
 {
-  auto const vp = Viewport::from_frustum(es.frustum);
+  auto const& frustum = es.frustum;
+  auto const vp = Viewport::from_frustum(frustum);
   Viewport const LHS{
     vp.left_top(), cutoff_point, vp.height()
   };
-  render::set_viewport_and_scissor(LHS);
+  render::set_viewport_and_scissor(LHS, frustum.height());
 
   auto& io = es.imgui;
   float const right  = LHS.right();
@@ -62,12 +63,13 @@ draw_ortho_rhs(RenderState& rstate, DrawState& ds, LevelManager& lm,
               int const cutoff_point, FrameTime const& ft)
 {
   auto& es = rstate.fs.es;
-  auto const vp = Viewport::from_frustum(es.frustum);
+  auto const& frustum = es.frustum;
+  auto const vp = Viewport::from_frustum(frustum);
 
   Viewport const RHS{
     cutoff_point, vp.top(), vp.width(), vp.height()
   };
-  render::set_viewport_and_scissor(RHS);
+  render::set_viewport_and_scissor(RHS, frustum.height());
   PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);
 }
 

@@ -17,11 +17,12 @@ namespace opengl
 
 struct FBInfo
 {
-  DebugBoundCheck        debug_check;
-  GLuint                 id;
-  boomhs::Viewport const view_port;
+  DebugBoundCheck         debug_check;
+  GLuint                  id;
+  boomhs::Viewport   const view_port;
+  boomhs::ScreenSize const screen_size;
 
-  FBInfo(boomhs::Viewport const&);
+  FBInfo(boomhs::Viewport const&, boomhs::ScreenSize const&);
   NO_COPY(FBInfo);
   MOVE_DEFAULT(FBInfo);
 
@@ -46,7 +47,7 @@ using FrameBuffer = common::AutoResource<FBInfo>;
 inline auto
 make_fbo(common::Logger& logger, boomhs::ScreenSize const& ss)
 {
-  FBInfo fb{{0, 0, ss.width, ss.height}};
+  FBInfo fb{{0, 0, ss.width, ss.height}, ss};
   fb.while_bound(logger, []() { glDrawBuffer(GL_COLOR_ATTACHMENT0); });
   return fb;
 }
