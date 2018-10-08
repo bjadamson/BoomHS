@@ -358,7 +358,7 @@ on_rhs_mouse_cube_collisions(common::Logger& logger, glm::vec2 const& mouse_pos,
     auto const& tr   = cube_ent.transform();
 
     float distance = 0.0f;
-    cube_ent.selected = collision::ray_intersects_cube(logger, ray, tr, cube, distance);
+    cube_ent.selected = collision::intersects(logger, ray, tr, cube, distance);
   }
 }
 
@@ -392,7 +392,13 @@ on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_orth
     xz.top    += tr.translation.z / SCREENSIZE_VIEWPORT_RATIO.y;
     xz.bottom += tr.translation.z / SCREENSIZE_VIEWPORT_RATIO.y;
 
-    cube_ent.selected = collision::rectangles_overlap(mouse_rect, xz);
+    xz.left  += cam_ortho.zoom().x;
+    xz.right -= cam_ortho.zoom().x;
+
+    xz.top    += cam_ortho.zoom().y;
+    xz.bottom -= cam_ortho.zoom().y;
+
+    cube_ent.selected = collision::overlap_axis_aligned(mouse_rect, xz);
   }
 }
 
@@ -427,7 +433,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
   }
 
   for (auto& pm_rect : pm_rects) {
-    pm_rect.selected = collision::point_rectangle_intersects(mouse_pos, pm_rect.rect);
+    pm_rect.selected = collision::intersects(mouse_pos, pm_rect.rect);
   }
 }
 

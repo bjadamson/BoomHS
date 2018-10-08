@@ -26,42 +26,27 @@ struct Ray
 namespace boomhs::collision
 {
 
-
-
-// Determine whether a ray and an Axis Aligned Cube
-// algorithm adopted from:
-// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-cube-intersection
+// Determine whether an axis-aligned Ray and the Cube intersect.
+//
+// Ray: A ray to cast when determining the intersections.
+// Transform: The transform applied to the Cube when applying the intersection test.
+// Cube: The cube being tested for intersection witht he ray.
+// Float: The output value being the distance the ray traveled before intersecting with the cube.
 bool
-ray_axis_aligned_cube_intersect(Ray const&, Transform const&, Cube const&, float&);
+intersects(common::Logger&, Ray const&, Transform const&, Cube const&, float&);
 
+// Determine whether an axis-aligned Point and the RectFloat intersect.
+// Point: A point within a 2-dimensional coordinate system.
+// Rect: A rectangle in a 2-dimensionsional coordinate system.
 bool
-cubes_overlap(common::Logger&, CubeTransform const&, CubeTransform const&);
+intersects(glm::vec2 const&, RectFloat const&);
 
-// algorithm adapted from:
-// http://www.opengl-tutorial.org/kr/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/
-// https://github.com/opengl-tutorials/ogl/blob/master/misc05_picking/misc05_picking_custom.cpp
+// Determine whether two axis-aligned 2-dimensional rectangles overlap.
 bool
-ray_obb_intersection(
-    Ray const&,
-    glm::vec3 const&, // Minimum X,Y,Z coords of the mesh when not transformed at all.
-    glm::vec3 const&, // Maximum X,Y,Z coords. Often aabb_min*-1 if your mesh is centered, but it's
-                      // not always the case.
-    glm::mat4 const&, // Transformation applied to the mesh (which will thus be also applied to its
-    float&);          // Output : distance between ray_origin and the intersection with the OBB)
+overlap_axis_aligned(RectFloat const&, RectFloat const&);
 
+// Determine whether two axis-aligned cubes overlap.
 bool
-ray_obb_intersection(Ray const&,
-                     Cube,             // Bounding cube of the entity we are testing against.
-                     Transform,        // Transform
-                     float&);          // Output: distance
-
-bool
-ray_intersects_cube(common::Logger&, Ray const&, Transform const&, Cube const&, float&);
-
-bool
-point_rectangle_intersects(glm::vec2 const&, RectFloat const&);
-
-bool
-rectangles_overlap(RectFloat const&, RectFloat const&);
+overlap_axis_aligned(common::Logger&, CubeTransform const&, CubeTransform const&);
 
 } // namespace boomhs::collision

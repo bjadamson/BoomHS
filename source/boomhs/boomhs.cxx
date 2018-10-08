@@ -83,7 +83,7 @@ player_in_water(common::Logger& logger, EntityRegistry& registry)
 
     CubeTransform const& player_ct{player_bbox, player_tr};
     CubeTransform const& water_ct{water_bbox,  water_tr};
-    if (collision::cubes_overlap(logger, player_ct, water_ct)) {
+    if (collision::overlap_axis_aligned(logger, player_ct, water_ct)) {
       return true;
     }
   }

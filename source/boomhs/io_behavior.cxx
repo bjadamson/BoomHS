@@ -63,7 +63,7 @@ ray_intersects_cube_entity(common::Logger& logger, EntityID const eid,
                     Transform const& tr, Cube const& cube, EntityDistances& distances)
 {
   float distance = 0.0f;
-  bool const intersects = collision::ray_intersects_cube(logger, ray, tr, cube, distance);
+  bool const intersects = collision::intersects(logger, ray, tr, cube, distance);
   if (intersects) {
     distances.emplace_back(PAIR(eid, distance));
   }

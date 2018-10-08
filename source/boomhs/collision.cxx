@@ -8,67 +8,12 @@ using namespace boomhs;
 using namespace boomhs::math;
 using namespace boomhs::math::constants;
 
-namespace boomhs
+namespace
 {
 
-Ray::Ray(glm::vec3 const& o, glm::vec3 const& d)
-    : origin(o)
-    , direction(d)
-    , invdir(1.0f / direction)
-    , sign(common::make_array<int>(invdir.x < 0, invdir.y < 0, invdir.z < 0))
-{
-}
-
-} // namespace boomhs
-
-namespace boomhs::collision
-{
-
-bool
-point_rectangle_intersects(
-    glm::vec2 const& point,
-    RectFloat const& rect
-    )
-{
-  bool const within_lr = point.x >= rect.left && point.x <= rect.right;
-  bool const within_tb = point.y >= rect.top  && point.y <= rect.bottom;
-
-  return within_lr && within_tb;
-}
-
-bool
-rectangles_overlap(RectFloat const& a, RectFloat const& b)
-{
-  return a.left   < b.right
-      && a.right  > b.left
-      && a.bottom > b.top
-      && a.top    < b.bottom;
-}
-
-bool
-ray_obb_intersection(
-  Ray const& ray,
-  Cube       cube,
-  Transform  tr,
-  float&     distance
-)
-{
-  auto const c  = cube.center();
-  auto const hw = cube.half_widths();
-  auto const s  = tr.scale;
-
-  // calculate where the min/max values are from the center of the object after scaling.
-  auto const min = cube.scaled_min(tr);
-  auto const max = cube.scaled_max(tr);
-
-  // For the purposes of the ray_obb intersection algorithm, it is expected the transform has no
-  // scaling. We've taking the scaling into account by adjusting the bounding cube min/max points
-  // using the transform's original scale. Set the scaling of the copied transform to all 1's.
-  tr.scale = glm::vec3{1};
-  auto const model_matrix = tr.model_matrix();
-  return ray_obb_intersection(ray, min, max, model_matrix, distance);
-}
-
+// algorithm adapted from:
+// http://www.opengl-tutorial.org/kr/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/
+// https://github.com/opengl-tutorials/ogl/blob/master/misc05_picking/misc05_picking_custom.cpp
 bool
 ray_obb_intersection(
   Ray const& ray,
@@ -139,6 +84,33 @@ ray_obb_intersection(
 }
 
 bool
+ray_obb_intersection(
+  Ray const& ray,
+  Cube       cube,
+  Transform  tr,
+  float&     distance
+)
+{
+  auto const c  = cube.center();
+  auto const hw = cube.half_widths();
+  auto const s  = tr.scale;
+
+  // calculate where the min/max values are from the center of the object after scaling.
+  auto const min = cube.scaled_min(tr);
+  auto const max = cube.scaled_max(tr);
+
+  // For the purposes of the ray_obb intersection algorithm, it is expected the transform has no
+  // scaling. We've taking the scaling into account by adjusting the bounding cube min/max points
+  // using the transform's original scale. Set the scaling of the copied transform to all 1's.
+  tr.scale = glm::vec3{1};
+  auto const model_matrix = tr.model_matrix();
+  return ray_obb_intersection(ray, min, max, model_matrix, distance);
+}
+
+// Determine whether a ray and an Axis Aligned Cube
+// algorithm adopted from:
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-cube-intersection
+bool
 ray_axis_aligned_cube_intersect(Ray const& r, Transform const& transform, Cube const& cube,
     float& distance)
 {
@@ -184,8 +156,73 @@ ray_axis_aligned_cube_intersect(Ray const& r, Transform const& transform, Cube c
   return true;
 }
 
+
+
+} // namespace
+
+namespace boomhs
+{
+
+Ray::Ray(glm::vec3 const& o, glm::vec3 const& d)
+    : origin(o)
+    , direction(d)
+    , invdir(1.0f / direction)
+    , sign(common::make_array<int>(invdir.x < 0, invdir.y < 0, invdir.z < 0))
+{
+}
+
+} // namespace boomhs
+
+namespace boomhs::collision
+{
+
 bool
-cubes_overlap(common::Logger& logger, CubeTransform const& a, CubeTransform const& b)
+intersects(
+    glm::vec2 const& point,
+    RectFloat const& rect
+    )
+{
+  bool const within_lr = point.x >= rect.left && point.x <= rect.right;
+  bool const within_tb = point.y >= rect.top  && point.y <= rect.bottom;
+
+  return within_lr && within_tb;
+}
+
+bool
+intersects(common::Logger& logger, Ray const& ray,
+                    Transform const& tr, Cube const& cube, float& distance)
+{
+  bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == ONE);
+
+  bool intersects = false;
+  auto const log_intersection = [&](char const* test_name) {
+    if (intersects) {
+      LOG_ERROR_SPRINTF("Intersection found using %s test, distance %f", test_name, distance);
+    }
+  };
+
+  if (can_use_simple_test) {
+    intersects = ray_axis_aligned_cube_intersect(ray, tr, cube, distance);
+    log_intersection("SIMPLE");
+  }
+  else {
+    intersects = ray_obb_intersection(ray, cube, tr, distance);
+    log_intersection("COMPLEX");
+  }
+  return intersects;
+}
+
+bool
+overlap_axis_aligned(RectFloat const& a, RectFloat const& b)
+{
+  return a.left   < b.right
+      && a.right  > b.left
+      && a.bottom > b.top
+      && a.top    < b.bottom;
+}
+
+bool
+overlap_axis_aligned(common::Logger& logger, CubeTransform const& a, CubeTransform const& b)
 {
   auto const& at = a.transform;
   auto const& bt = b.transform;
@@ -201,30 +238,5 @@ cubes_overlap(common::Logger& logger, CubeTransform const& a, CubeTransform cons
 
   return x && y && z;
 }
-
-bool
-ray_intersects_cube(common::Logger& logger, Ray const& ray,
-                    Transform const& tr, Cube const& cube, float& distance)
-{
-  bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == ONE);
-
-  bool intersects = false;
-  auto const log_intersection = [&](char const* test_name) {
-    if (intersects) {
-      LOG_ERROR_SPRINTF("Intersection found using %s test, distance %f", test_name, distance);
-    }
-  };
-
-  if (can_use_simple_test) {
-    intersects = collision::ray_axis_aligned_cube_intersect(ray, tr, cube, distance);
-    log_intersection("SIMPLE");
-  }
-  else {
-    intersects = collision::ray_obb_intersection(ray, cube, tr, distance);
-    log_intersection("COMPLEX");
-  }
-  return intersects;
-}
-
 
 } // namespace boomhs::collision
