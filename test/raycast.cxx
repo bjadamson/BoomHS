@@ -28,7 +28,7 @@ using namespace common;
 using namespace gl_sdl;
 using namespace opengl;
 
-static int constexpr NUM_CUBES                   = 100;
+static int constexpr NUM_CUBES                   = 1;
 static glm::ivec2 constexpr SCREENSIZE_VIEWPORT_RATIO{2.0f, 2.0};
 
 // clang-format off
@@ -371,6 +371,7 @@ on_rhs_mouse_cube_collisions(common::Logger& logger, glm::vec2 const& mouse_pos,
 
 void
 on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_ortho,
+                         ViewportDisplayInfo const& vdi,
                          glm::ivec2 const& mouse_start, CubeEntities& cube_ents)
 {
   auto const mouse_rect = make_mouse_rect(cam_ortho, mouse_start);
@@ -404,7 +405,12 @@ on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_orth
     xz.bottom -= zoom.y;
 
     RectTransform const rect_tr{xz, tr};
-    cube_ent.selected = collision::overlap(mouse_rect, rect_tr);
+
+    auto const& pm = vdi.pm;
+    auto const& vm = vdi.vm;
+    auto const cam_matrix = pm * vm;
+
+    cube_ent.selected = collision::overlap(mouse_rect, rect_tr, cam_matrix);
   }
 }
 
@@ -434,7 +440,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
   else {
     // LHS
     if (MOUSE_BUTTON_PRESSED) {
-      on_lhs_mouse_cube_collisions(logger, cam_ortho, mouse_start, cube_ents);
+      on_lhs_mouse_cube_collisions(logger, cam_ortho, viewports.left_top, mouse_start, cube_ents);
     }
   }
 
@@ -505,9 +511,12 @@ make_cube(RNG& rng)
   float constexpr MIN = -100, MAX = 100;
   static_assert(MIN < MAX, "MIN must be atleast one less than MAX");
 
-  auto const gen = [&rng]() { return rng.gen_float_range(MIN + 1, MAX); };
-  glm::vec3 const min{MIN, MIN, MIN};
-  glm::vec3 const max{gen(), gen(), gen()};
+  //auto const gen = [&rng]() { return rng.gen_float_range(MIN + 1, MAX); };
+  //glm::vec3 const min{MIN, MIN, MIN};
+  //glm::vec3 const max{gen(), gen(), gen()};
+
+  glm::vec3 const min{MIN};
+  glm::vec3 const max{MAX};
   return Cube{min, max};
 }
 
@@ -522,7 +531,7 @@ gen_cube_entities(common::Logger& logger, ScreenSize const& ss, ShaderProgram co
   CubeEntities cube_ents;
   FOR(i, NUM_CUBES) {
     auto cube = make_cube(rng);
-    auto tr = gen_tr();
+    auto tr = glm::vec3{0};//gen_tr();
     auto di = make_bbox(logger, sp, cube);
     CubeEntity pair{MOVE(cube), MOVE(tr), MOVE(di)};
     cube_ents.emplace_back(MOVE(pair));

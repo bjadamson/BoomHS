@@ -99,6 +99,15 @@ struct RectT
     }
 
     COMMON_WRAPPING_CONTAINER_FNS(vertices);
+
+    auto to_string() const
+    {
+      return fmt::sprintf("{%s, %s, %s, %s}",
+          glm::to_string(vertices[0]),
+          glm::to_string(vertices[1]),
+          glm::to_string(vertices[2]),
+          glm::to_string(vertices[3]));
+    }
   };
 
   auto constexpr points() const {

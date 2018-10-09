@@ -160,9 +160,10 @@ ray_axis_aligned_cube_intersect(Ray const& r, Transform const& transform, Cube c
 }
 
 auto
-rotated_rectangle_points(RectFloat const& rect, glm::quat const& rotation)
+rotated_rectangle_points(RectFloat const& rect, Transform const& tr,
+                         glm::mat4 const& cam_matrix)
 {
-  auto const rmatrix = glm::toMat4(rotation);
+  auto const mvp_matrix = cam_matrix * tr.model_matrix();
 
   auto const p0 = rect.p0();
   auto const p1 = rect.p1();
@@ -172,10 +173,10 @@ rotated_rectangle_points(RectFloat const& rect, glm::quat const& rotation)
   //auto const rect_c = rect.center();
   //glm::vec3 const rect_center{rect_c.x, rect_c.y, 0};
 
-  auto const v4p0 = rmatrix * VEC4(p0.x, p0.y, 0, 0);
-  auto const v4p1 = rmatrix * VEC4(p1.x, p1.y, 0, 0);
-  auto const v4p2 = rmatrix * VEC4(p2.x, p2.y, 0, 0);
-  auto const v4p3 = rmatrix * VEC4(p3.x, p3.y, 0, 0);
+  auto const v4p0 = mvp_matrix * VEC4(p0.x, p0.y, 0, 1) / 1;
+  auto const v4p1 = mvp_matrix * VEC4(p1.x, p1.y, 0, 1) / 1;
+  auto const v4p2 = mvp_matrix * VEC4(p2.x, p2.y, 0, 1) / 1;
+  auto const v4p3 = mvp_matrix * VEC4(p3.x, p3.y, 0, 1) / 1;
 
   //auto const v4p0 = rotate_around(VEC3(p0.x, p0.y, 0), rect_center, rmatrix);
   //auto const v4p1 = rotate_around(VEC3(p1.x, p1.y, 0), rect_center, rmatrix);
@@ -200,8 +201,8 @@ overlap_rect(typename RectT<T, V>::RectPoints const& a, typename RectT<T, V>::Re
   static auto constexpr MIN = std::numeric_limits<float>::max();
   static auto constexpr MAX = std::numeric_limits<float>::min();
 
-  //std::cerr << "a: '" << a.to_string() << "'\n";
-  //std::cerr << "b: '" << b.to_string() << "'\n";
+  std::cerr << "a: '" << a.to_string() << "'\n";
+  std::cerr << "b: '" << b.to_string() << "'\n";
   auto const calc_minmax = [](auto const& polygon, auto const& normal)
   {
     float min = MIN, max = MAX;
@@ -324,13 +325,13 @@ overlap_axis_aligned(common::Logger& logger, CubeTransform const& a, CubeTransfo
 }
 
 bool
-overlap(RectFloat const& a, RectTransform const& rect_tr)
+overlap(RectFloat const& a, RectTransform const& rect_tr, glm::mat4 const& cam_matrix)
 {
   auto const& b  = rect_tr.rect;
   auto const& tr = rect_tr.transform;
 
-  auto const a_points = a.points();
-  auto const b_points = rotated_rectangle_points(b, tr.rotation);
+  auto const a_points = rotated_rectangle_points(a, Transform{}, cam_matrix);
+  auto const b_points = rotated_rectangle_points(b, tr, cam_matrix);
 
   bool const simple_test = tr.rotation == glm::quat{};
   return simple_test
