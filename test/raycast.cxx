@@ -112,8 +112,8 @@ calculate_vm_fps(common::Logger& logger)
 }
 
 void
-draw_bbox(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm, Transform const& tr,
-          ShaderProgram& sp, DrawInfo& dinfo, DrawState& ds, Color const& color)
+draw_bbox(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm, ShaderProgram& sp,
+          Transform const& tr, DrawInfo& dinfo, Color const& color, DrawState& ds)
 {
   auto const model_matrix = tr.model_matrix();
 
@@ -160,10 +160,13 @@ draw_bboxes(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm,
             DrawState& ds)
 {
   for (auto &cube_tr : cube_ents) {
-    auto const& tr    = cube_tr.transform();
-    auto const& wire_color = cube_tr.selected ? LOC::BLUE : LOC::RED;
-    auto &dinfo = cube_tr.draw_info();
-    draw_bbox(logger, pm, vm, tr, sp, dinfo, ds, wire_color);
+    //auto const& cube    = cube_tr.cube();
+    auto const& tr      = cube_tr.transform();
+    auto &dinfo         = cube_tr.draw_info();
+    bool const selected = cube_tr.selected;
+
+    auto const& wire_color = selected ? LOC::BLUE : LOC::RED;
+    draw_bbox(logger, pm, vm, sp, tr, dinfo, wire_color, ds);
   }
 }
 
@@ -228,14 +231,16 @@ move_cubes(glm::vec3 const& delta_v, CubeEntities& cube_ents)
 }
 
 bool
-process_keydown(SDL_Keycode const keycode, glm::vec3& camera_pos, CubeEntities& cube_ents)
+process_keydown(common::Logger& logger, SDL_Keycode const keycode, glm::vec3& camera_pos,
+                CubeEntities& cube_ents)
 {
   auto const move_trs = [&](auto const& delta_v) {
     move_cubes(delta_v, cube_ents);
   };
   auto const rotate_ents = [&](float const angle_degrees, glm::vec3 const& axis) {
     for (auto& cube_ent : cube_ents) {
-      cube_ent.transform().rotate_degrees(angle_degrees, axis);
+      auto& tr = cube_ent.transform();
+      tr.rotate_degrees(angle_degrees, axis);
     }
   };
   switch (keycode)
@@ -285,15 +290,17 @@ process_keydown(SDL_Keycode const keycode, glm::vec3& camera_pos, CubeEntities& 
     case SDLK_KP_2:
         rotate_ents(1.0f, constants::Y_UNIT_VECTOR);
         break;
+    case SDLK_KP_8:
+        rotate_ents(-1.0f, constants::Y_UNIT_VECTOR);
+        break;
+
     case SDLK_KP_4:
         rotate_ents(1.0f, constants::X_UNIT_VECTOR);
         break;
     case SDLK_KP_6:
-        rotate_ents(-1.0f, constants::Y_UNIT_VECTOR);
-        break;
-    case SDLK_KP_8:
         rotate_ents(-1.0f, constants::X_UNIT_VECTOR);
         break;
+
     case SDLK_KP_3:
         rotate_ents(1.0f, constants::Z_UNIT_VECTOR);
         break;
@@ -364,8 +371,7 @@ on_rhs_mouse_cube_collisions(common::Logger& logger, glm::vec2 const& mouse_pos,
 
 void
 on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_ortho,
-                         glm::ivec2 const& mouse_start,
-                         CubeEntities& cube_ents)
+                         glm::ivec2 const& mouse_start, CubeEntities& cube_ents)
 {
   auto const mouse_rect = make_mouse_rect(cam_ortho, mouse_start);
 
@@ -380,17 +386,12 @@ on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_orth
     }
 
     auto xz = cr.xz_rect();
-    xz.left   = xz.left;
     xz.right  /= SCREENSIZE_VIEWPORT_RATIO.x;
-
-    xz.top    = xz.top;
     xz.bottom /= SCREENSIZE_VIEWPORT_RATIO.y;
 
-    xz.left  += tr.translation.x / SCREENSIZE_VIEWPORT_RATIO.x;
-    xz.right += tr.translation.x / SCREENSIZE_VIEWPORT_RATIO.x;
-
-    xz.top    += tr.translation.z / SCREENSIZE_VIEWPORT_RATIO.y;
-    xz.bottom += tr.translation.z / SCREENSIZE_VIEWPORT_RATIO.y;
+    auto const xm = tr.translation.x / SCREENSIZE_VIEWPORT_RATIO.x;
+    auto const zm = tr.translation.z / SCREENSIZE_VIEWPORT_RATIO.y;
+    xz.move(xm, zm);
 
     auto const zoom = cam_ortho.zoom();
     xz.left  += zoom.x;
@@ -449,17 +450,17 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
 
   if (event_type_keydown) {
     SDL_Keycode const key_pressed = event.key.keysym.sym;
-    if (process_keydown(key_pressed, camera_pos, cube_ents)) {
+    if (process_keydown(logger, key_pressed, camera_pos, cube_ents)) {
       return true;
     }
   }
   else if (event.type == SDL_MOUSEWHEEL) {
     auto& wheel = event.wheel;
     if (wheel.y > 0) {
-      cam_ortho.grow_view(glm::vec2{1.0f});
+      cam_ortho.grow_view(VEC2{1.0f});
     }
     else {
-      cam_ortho.shink_view(glm::vec2{1.0f});
+      cam_ortho.shink_view(VEC2{1.0f});
     }
   }
   else if (event.type == SDL_MOUSEMOTION) {
@@ -570,8 +571,6 @@ draw_scene(common::Logger& logger, ViewportInfos const& viewports, PmDrawInfo& p
            ShaderProgram& wire_sp, glm::ivec2 const& mouse_pos,
            CubeEntities& cube_ents)
 {
-  
-
   auto const& fullscreen  = viewports.fullscreen;
   auto& pm_sp = pm_info.sp;
 

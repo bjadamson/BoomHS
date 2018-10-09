@@ -160,7 +160,7 @@ ray_axis_aligned_cube_intersect(Ray const& r, Transform const& transform, Cube c
 }
 
 auto
-rotate_rectangle(RectFloat const& rect, glm::quat const& rotation)
+rotated_rectangle_points(RectFloat const& rect, glm::quat const& rotation)
 {
   auto const rmatrix = glm::toMat4(rotation);
 
@@ -169,13 +169,18 @@ rotate_rectangle(RectFloat const& rect, glm::quat const& rotation)
   auto const p2 = rect.p2();
   auto const p3 = rect.p3();
 
-  auto const rect_c = rect.center();
-  glm::vec3 const rect_center{rect_c.x, rect_c.y, 0};
+  //auto const rect_c = rect.center();
+  //glm::vec3 const rect_center{rect_c.x, rect_c.y, 0};
 
-  auto const v4p0 = rotate_around(VEC3(p0.x, p0.y, 0), rect_center, rmatrix);
-  auto const v4p1 = rotate_around(VEC3(p1.x, p1.y, 0), rect_center, rmatrix);
-  auto const v4p2 = rotate_around(VEC3(p2.x, p2.y, 0), rect_center, rmatrix);
-  auto const v4p3 = rotate_around(VEC3(p3.x, p3.y, 0), rect_center, rmatrix);
+  auto const v4p0 = rmatrix * VEC4(p0.x, p0.y, 0, 0);
+  auto const v4p1 = rmatrix * VEC4(p1.x, p1.y, 0, 0);
+  auto const v4p2 = rmatrix * VEC4(p2.x, p2.y, 0, 0);
+  auto const v4p3 = rmatrix * VEC4(p3.x, p3.y, 0, 0);
+
+  //auto const v4p0 = rotate_around(VEC3(p0.x, p0.y, 0), rect_center, rmatrix);
+  //auto const v4p1 = rotate_around(VEC3(p1.x, p1.y, 0), rect_center, rmatrix);
+  //auto const v4p2 = rotate_around(VEC3(p2.x, p2.y, 0), rect_center, rmatrix);
+  //auto const v4p3 = rotate_around(VEC3(p3.x, p3.y, 0), rect_center, rmatrix);
 
   auto const v2p0 = VEC2(v4p0.x, v4p0.y);
   auto const v2p1 = VEC2(v4p1.x, v4p1.y);
@@ -311,9 +316,9 @@ overlap_axis_aligned(common::Logger& logger, CubeTransform const& a, CubeTransfo
 
   auto const& att = at.translation;
   auto const& btt = bt.translation;
-  bool const x = std::fabs(att.x - btt.x) <= (ah.x + bh.x);
-  bool const y = std::fabs(att.y - btt.y) <= (ah.y + bh.y);
-  bool const z = std::fabs(att.z - btt.z) <= (ah.z + bh.z);
+  bool const x = std::abs(att.x - btt.x) <= (ah.x + bh.x);
+  bool const y = std::abs(att.y - btt.y) <= (ah.y + bh.y);
+  bool const z = std::abs(att.z - btt.z) <= (ah.z + bh.z);
 
   return x && y && z;
 }
@@ -325,7 +330,7 @@ overlap(RectFloat const& a, RectTransform const& rect_tr)
   auto const& tr = rect_tr.transform;
 
   auto const a_points = a.points();
-  auto const b_points = rotate_rectangle(b, tr.rotation);
+  auto const b_points = rotated_rectangle_points(b, tr.rotation);
 
   bool const simple_test = tr.rotation == glm::quat{};
   return simple_test

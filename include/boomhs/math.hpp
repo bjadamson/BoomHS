@@ -43,6 +43,20 @@ struct RectT
   auto center_top() const { return V{center().x, top}; }
   auto center_bottom() const { return V{center().x, bottom}; }
 
+  void move(T const& x, T const& y)
+  {
+    left  += x;
+    right += x;
+
+    top    += y;
+    bottom += y;
+  }
+
+  void move(V const& v)
+  {
+    move(v.x, v.y);
+  }
+
   V constexpr p0() const { return left_bottom(); }
   V constexpr p1() const { return right_bottom(); }
   V constexpr p2() const { return right_top(); }
