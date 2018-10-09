@@ -381,10 +381,10 @@ on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_orth
 
     auto xz = cr.xz_rect();
     xz.left   = xz.left;
-    xz.right  = xz.left + (xz.width() / SCREENSIZE_VIEWPORT_RATIO.x);
+    xz.right  /= SCREENSIZE_VIEWPORT_RATIO.x;
 
     xz.top    = xz.top;
-    xz.bottom = xz.top + (xz.height() / SCREENSIZE_VIEWPORT_RATIO.y);
+    xz.bottom /= SCREENSIZE_VIEWPORT_RATIO.y;
 
     xz.left  += tr.translation.x / SCREENSIZE_VIEWPORT_RATIO.x;
     xz.right += tr.translation.x / SCREENSIZE_VIEWPORT_RATIO.x;
