@@ -28,7 +28,7 @@ using namespace common;
 using namespace gl_sdl;
 using namespace opengl;
 
-static int constexpr NUM_CUBES                   = 1;
+static int constexpr NUM_CUBES                   = 100;
 static glm::ivec2 constexpr SCREENSIZE_VIEWPORT_RATIO{2.0f, 2.0};
 
 // clang-format off
@@ -511,12 +511,12 @@ make_cube(RNG& rng)
   float constexpr MIN = -100, MAX = 100;
   static_assert(MIN < MAX, "MIN must be atleast one less than MAX");
 
-  //auto const gen = [&rng]() { return rng.gen_float_range(MIN + 1, MAX); };
-  //glm::vec3 const min{MIN, MIN, MIN};
-  //glm::vec3 const max{gen(), gen(), gen()};
+  auto const gen = [&rng]() { return rng.gen_float_range(MIN + 1, MAX); };
+  glm::vec3 const min{MIN, MIN, MIN};
+  glm::vec3 const max{gen(), gen(), gen()};
 
-  glm::vec3 const min{MIN};
-  glm::vec3 const max{MAX};
+  //glm::vec3 const min{MIN};
+  //glm::vec3 const max{MAX};
   return Cube{min, max};
 }
 
@@ -531,7 +531,7 @@ gen_cube_entities(common::Logger& logger, ScreenSize const& ss, ShaderProgram co
   CubeEntities cube_ents;
   FOR(i, NUM_CUBES) {
     auto cube = make_cube(rng);
-    auto tr = glm::vec3{0};//gen_tr();
+    auto tr = gen_tr();
     auto di = make_bbox(logger, sp, cube);
     CubeEntity pair{MOVE(cube), MOVE(tr), MOVE(di)};
     cube_ents.emplace_back(MOVE(pair));

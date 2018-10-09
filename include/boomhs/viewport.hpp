@@ -1,8 +1,12 @@
 #pragma once
 #include <boomhs/math.hpp>
+#include <extlibs/fmt.hpp>
+
+#include <string>
 
 namespace boomhs
 {
+
 struct ScreenSize
 {
   int width;
@@ -82,13 +86,24 @@ public:
   auto constexpr right_top() const { return ScreenCoords{right(), top()}; }
   auto constexpr right_bottom() const { return ScreenCoords{right(), bottom()}; }
 
-  auto constexpr center() const { return ScreenCoords{half_width(), half_height()}; }
   auto constexpr rect() const { return RectInt{left(), top(), right(), bottom()}; }
   auto constexpr rect_float() const { return rect().float_rect(); }
+
+  auto constexpr center() const { return ScreenCoords{half_width(), half_height()}; }
+  auto constexpr center_left() const { return ScreenCoords{rect().center_left()}; }
+  auto constexpr center_right() const { return ScreenCoords{rect().center_right()}; }
+
+  auto constexpr center_top() const { return ScreenCoords{rect().center_top()}; }
+  auto constexpr center_bottom() const { return ScreenCoords{rect().center_bottom()}; }
 
   auto constexpr size() const { return ScreenSize{width(), height()}; }
   auto constexpr size_rect() const { return RectInt{left(), top(), width(), height()}; }
   auto constexpr size_rect_float() const { return size_rect().float_rect(); }
+
+  auto to_string() const
+  {
+    return fmt::sprintf("{%i, %i, %i, %i}", left(), top(), width(), height());
+  }
 
   // static fns
   static constexpr Viewport from_frustum(Frustum const& f)

@@ -37,30 +37,56 @@ namespace
 {
 
 void
-draw_ortho_lhs(EngineState& es, LevelManager& lm, Camera& camera, int const cutoff_point,
-               FrameTime const& ft)
+draw_ortho_lhs(RenderState& rstate, LevelManager& lm, StaticRenderers& srs, Camera& camera,
+               RNG& rng, glm::ivec2 const& divide, DrawState& ds, FrameTime const& ft)
 {
-  auto const& frustum = es.frustum;
-  auto const vp = Viewport::from_frustum(frustum);
-  Viewport const LHS{
-    vp.left_top(), cutoff_point, vp.height()
-  };
-  render::set_viewport_and_scissor(LHS, frustum.height());
+  auto& fs = rstate.fs;
+  auto& es = fs.es;
+  auto& logger   = es.logger;
+  /*
 
   auto& io = es.imgui;
   float const right  = LHS.right();
   float const bottom = LHS.bottom();
   io.DisplaySize = ImVec2{right, bottom};
+  io.DisplayPosition = ImVec2{right, bottom};
   auto& ui_state = es.ui_state;
   if (ui_state.draw_debug_ui) {
     ui_debug::draw("Ortho", WINDOW_FLAGS, es, lm, camera, ft);
   }
+  */
+
+
+  auto const& frustum   = es.frustum;
+  LOG_ERROR_SPRINTF("Frustum: %s", frustum.to_string());
+
+  auto const vp = Viewport::from_frustum(frustum);
+  LOG_ERROR_SPRINTF("vp: %s", vp.to_string());
+
+  Viewport const LHS{
+    vp.left_top(), vp.half_width(), vp.height()
+  };
+  LOG_ERROR_SPRINTF("LHS: %s", LHS.to_string());
+
+  render::set_viewport_and_scissor(LHS, frustum.height());
+  PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, srs, ft);
+
+
+
+
+
+  Viewport const RHS{
+    vp.center_top(), vp.half_width(), vp.height()
+  };
+  LOG_ERROR_SPRINTF("RHS: %s", RHS.to_string());
+
+  render::set_viewport_and_scissor(RHS, frustum.height());
+  PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, srs, ft);
 }
 
 void
-draw_ortho_rhs(RenderState& rstate, DrawState& ds, LevelManager& lm,
-              StaticRenderers& static_renderers, Camera& camera, RNG& rng,
-              int const cutoff_point, FrameTime const& ft)
+draw_ortho_rhs(RenderState& rstate, LevelManager& lm, StaticRenderers& srs, Camera& camera,
+              RNG& rng, int const cutoff_point, DrawState& ds, FrameTime const& ft)
 {
   auto& es = rstate.fs.es;
   auto const& frustum = es.frustum;
@@ -70,7 +96,7 @@ draw_ortho_rhs(RenderState& rstate, DrawState& ds, LevelManager& lm,
     cutoff_point, vp.top(), vp.width(), vp.height()
   };
   render::set_viewport_and_scissor(RHS, frustum.height());
-  PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);
+  PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, srs, ft);
 }
 
 } // namespace
@@ -80,14 +106,17 @@ namespace boomhs
 
 void
 OrthoRenderer::draw_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, Camera& camera,
-             RNG& rng, StaticRenderers& static_renderers, FrameTime const& ft)
+             RNG& rng, StaticRenderers& srs, FrameTime const& ft)
 {
   auto& fs = rstate.fs;
   auto& es = fs.es;
 
-  int const cutoff_point = 0;
-  //draw_ortho_lhs(es, lm, camera, cutoff_point, ft);
-  draw_ortho_rhs(rstate, ds, lm, static_renderers, camera, rng, cutoff_point, ft);
+  auto const frustum = Viewport::from_frustum(es.frustum);
+  int const divide_width  = frustum.width() / 3;
+  int const divide_height = frustum.height() / 2;
+  auto const divide = IVEC2(divide_width, divide_height);
+  draw_ortho_lhs(rstate, lm, srs, camera, rng, divide, ds, ft);
+  //draw_ortho_rhs(rstate, lm, srs, camera, rng, divide.x, ds, ft);
 }
 
 } // namespace boomhs
