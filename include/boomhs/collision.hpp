@@ -4,10 +4,12 @@
 #include <extlibs/glm.hpp>
 
 #include <array>
+#include <utility>
 
 namespace boomhs
 {
 struct CubeTransform;
+struct RectTransform;
 struct Transform;
 
 struct Ray
@@ -48,5 +50,16 @@ overlap_axis_aligned(RectFloat const&, RectFloat const&);
 // Determine whether two axis-aligned cubes overlap.
 bool
 overlap_axis_aligned(common::Logger&, CubeTransform const&, CubeTransform const&);
+
+// Determine if two rectangles overlap with eachother.
+//
+// The first rectangle has no rotation, but has been scaled.
+// The second rectangle has an associated transform (that may contain a rotation).
+bool
+overlap(RectFloat const&, RectTransform const&);
+
+// Determine if two rectangles overlap with eachother.
+//bool
+//overlap(RectInt const&, RectInt const&, Transform const&);
 
 } // namespace boomhs::collision

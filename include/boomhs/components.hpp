@@ -166,7 +166,13 @@ find_orbital_bodies(EntityRegistry& registry)
 // combined components
 struct CubeTransform
 {
-  Cube const& cube;
+  Cube      const& cube;
+  Transform const& transform;
+};
+
+struct RectTransform
+{
+  RectFloat const& rect;
   Transform const& transform;
 };
 

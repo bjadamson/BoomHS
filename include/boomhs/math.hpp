@@ -1,4 +1,6 @@
 #pragma once
+#include <common/algorithm.hpp>
+
 #include <extlibs/fmt.hpp>
 #include <extlibs/glm.hpp>
 
@@ -40,6 +42,54 @@ struct RectT
 
   auto center_top() const { return V{center().x, top}; }
   auto center_bottom() const { return V{center().x, bottom}; }
+
+  V constexpr p0() const { return left_bottom(); }
+  V constexpr p1() const { return right_bottom(); }
+  V constexpr p2() const { return right_top(); }
+  V constexpr p3() const { return left_top(); }
+
+  auto constexpr operator[](size_t const i) const
+  {
+    switch (i) {
+      case 0:
+        return p0();
+      case 1:
+        return p1();
+      case 2:
+        return p2();
+      case 3:
+        return p3();
+      default:
+        break;
+    }
+
+    /* INVALID to index this far into a rectangle. Rectangle only has 4 points. */
+    std::abort();
+
+    /* Satisfy Compiler */
+    return V{};
+  }
+
+  struct RectPoints
+  {
+    std::array<V, 4> vertices;
+
+    RectPoints(V const& p0, V const& p1, V const& p2, V const& p3)
+        : vertices(common::make_array<V>(p0, p1, p2, p3))
+    {
+    }
+
+    RectPoints(V&& p0, V&& p1, V&& p2, V&& p3)
+        : vertices(common::make_array<V>(MOVE(p0), MOVE(p1), MOVE(p2), MOVE(p3)))
+    {
+    }
+
+    COMMON_WRAPPING_CONTAINER_FNS(vertices);
+  };
+
+  auto constexpr points() const {
+    return RectPoints(p0(), p1(), p2(), p3());
+  }
 };
 
 template <typename T, typename V>

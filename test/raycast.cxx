@@ -392,13 +392,16 @@ on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_orth
     xz.top    += tr.translation.z / SCREENSIZE_VIEWPORT_RATIO.y;
     xz.bottom += tr.translation.z / SCREENSIZE_VIEWPORT_RATIO.y;
 
-    xz.left  += cam_ortho.zoom().x;
-    xz.right -= cam_ortho.zoom().x;
+    auto const zoom = cam_ortho.zoom();
+    xz.left  += zoom.x;
+    xz.right -= zoom.x;
 
-    xz.top    += cam_ortho.zoom().y;
-    xz.bottom -= cam_ortho.zoom().y;
+    xz.top    += zoom.y;
+    xz.bottom -= zoom.y;
 
-    cube_ent.selected = collision::overlap_axis_aligned(mouse_rect, xz);
+    RectTransform const rect_tr{xz, tr};
+
+    cube_ent.selected = collision::overlap(mouse_rect, rect_tr);
   }
 }
 

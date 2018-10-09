@@ -1,8 +1,11 @@
 #include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/math.hpp>
+#include <boomhs/transform.hpp>
 
 #include <common/algorithm.hpp>
+#include <iostream>
+#include <limits>
 
 using namespace boomhs;
 using namespace boomhs::math;
@@ -156,7 +159,83 @@ ray_axis_aligned_cube_intersect(Ray const& r, Transform const& transform, Cube c
   return true;
 }
 
+auto
+rotate_rectangle(RectFloat const& rect, glm::quat const& rotation)
+{
+  auto const rmatrix = glm::toMat4(rotation);
 
+  auto const p0 = rect.p0();
+  auto const p1 = rect.p1();
+  auto const p2 = rect.p2();
+  auto const p3 = rect.p3();
+
+  auto const rect_c = rect.center();
+  glm::vec3 const rect_center{rect_c.x, rect_c.y, 0};
+
+  auto const v4p0 = rotate_around(VEC3(p0.x, p0.y, 0), rect_center, rmatrix);
+  auto const v4p1 = rotate_around(VEC3(p1.x, p1.y, 0), rect_center, rmatrix);
+  auto const v4p2 = rotate_around(VEC3(p2.x, p2.y, 0), rect_center, rmatrix);
+  auto const v4p3 = rotate_around(VEC3(p3.x, p3.y, 0), rect_center, rmatrix);
+
+  auto const v2p0 = VEC2(v4p0.x, v4p0.y);
+  auto const v2p1 = VEC2(v4p1.x, v4p1.y);
+  auto const v2p2 = VEC2(v4p2.x, v4p2.y);
+  auto const v2p3 = VEC2(v4p3.x, v4p3.y);
+
+  return RectFloat::RectPoints{v2p0, v2p1, v2p2, v2p3};
+}
+
+// Determine whether two (possibly rotated) polygons overlap eachother.
+// Algorithm mutated from:
+// https://www.codeproject.com/Articles/15573/2D-Polygon-Collision-Detection
+template <typename T, typename V>
+bool
+overlap_rect(typename RectT<T, V>::RectPoints const& a, typename RectT<T, V>::RectPoints const& b)
+{
+  static auto constexpr MIN = std::numeric_limits<float>::max();
+  static auto constexpr MAX = std::numeric_limits<float>::min();
+
+  //std::cerr << "a: '" << a.to_string() << "'\n";
+  //std::cerr << "b: '" << b.to_string() << "'\n";
+  auto const calc_minmax = [](auto const& polygon, auto const& normal)
+  {
+    float min = MIN, max = MAX;
+    for (auto const& p : polygon) {
+      auto const projected = (normal.x * p.x) + (normal.y * p.y);
+      if (projected < min) {
+        min = projected;
+      }
+      if (projected > max) {
+        max = projected;
+      }
+    }
+    return PAIR(min, max);
+  };
+
+  std::array<typename RectT<T, V>::RectPoints, 2> const rects{{a, b}};
+  for (auto const& polygon : rects)
+  {
+    auto const polygon_vertex_count = polygon.size();
+    FOR(i1, polygon_vertex_count)
+    {
+      int const i2 = (i1 + 1) % polygon_vertex_count;
+      auto const& p1 = polygon[i1];
+      auto const& p2 = polygon[i2];
+
+      glm::vec2 const normal{p2.y - p1.y, p1.x - p2.x};
+
+      auto const [min_a, max_a] = calc_minmax(a, normal);
+      auto const [min_b, max_b] = calc_minmax(b, normal);
+
+      if (max_a < min_b || max_b < min_a) {
+        // not overlapping
+        return false;
+      }
+    }
+  }
+  // overlapping
+  return true;
+}
 
 } // namespace
 
@@ -237,6 +316,21 @@ overlap_axis_aligned(common::Logger& logger, CubeTransform const& a, CubeTransfo
   bool const z = std::fabs(att.z - btt.z) <= (ah.z + bh.z);
 
   return x && y && z;
+}
+
+bool
+overlap(RectFloat const& a, RectTransform const& rect_tr)
+{
+  auto const& b  = rect_tr.rect;
+  auto const& tr = rect_tr.transform;
+
+  auto const a_points = a.points();
+  auto const b_points = rotate_rectangle(b, tr.rotation);
+
+  bool const simple_test = tr.rotation == glm::quat{};
+  return simple_test
+      ? overlap_axis_aligned(a, b)
+      : overlap_rect<float, glm::vec2>(a_points, b_points);
 }
 
 } // namespace boomhs::collision
