@@ -386,7 +386,10 @@ on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_orth
     }
 
     auto xz = cr.xz_rect();
+    xz.left   /= SCREENSIZE_VIEWPORT_RATIO.x;
     xz.right  /= SCREENSIZE_VIEWPORT_RATIO.x;
+
+    xz.top    /= SCREENSIZE_VIEWPORT_RATIO.y;
     xz.bottom /= SCREENSIZE_VIEWPORT_RATIO.y;
 
     auto const xm = tr.translation.x / SCREENSIZE_VIEWPORT_RATIO.x;
@@ -401,7 +404,6 @@ on_lhs_mouse_cube_collisions(common::Logger& logger, CameraORTHO const& cam_orth
     xz.bottom -= zoom.y;
 
     RectTransform const rect_tr{xz, tr};
-
     cube_ent.selected = collision::overlap(mouse_rect, rect_tr);
   }
 }
@@ -500,7 +502,7 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
 auto
 make_cube(RNG& rng)
 {
-  float constexpr MIN = 0, MAX = 200;
+  float constexpr MIN = -100, MAX = 100;
   static_assert(MIN < MAX, "MIN must be atleast one less than MAX");
 
   auto const gen = [&rng]() { return rng.gen_float_range(MIN + 1, MAX); };
