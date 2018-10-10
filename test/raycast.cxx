@@ -171,7 +171,8 @@ draw_bboxes(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm,
 }
 
 void
-draw_rectangle_pm(common::Logger& logger, RectInt const& viewport, CameraORTHO const& camera,
+draw_rectangle_pm(common::Logger& logger, ScreenSize const& ss, RectInt const& viewport,
+                  CameraORTHO const& camera,
                   ShaderProgram& sp, DrawInfo& dinfo, Color const& color, GLenum const draw_mode,
                   DrawState& ds)
 {
@@ -186,7 +187,7 @@ draw_rectangle_pm(common::Logger& logger, RectInt const& viewport, CameraORTHO c
     FAR_PM
   };
 
-  auto const pm = camera.calc_pm(AR, f);
+  auto const pm = camera.calc_pm(AR, f, ss, VEC2(0));
 
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
   sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
@@ -540,18 +541,20 @@ gen_cube_entities(common::Logger& logger, ScreenSize const& ss, ShaderProgram co
 }
 
 void
-draw_cursor_under_mouse(common::Logger& logger, RectInt const& viewport, ShaderProgram& sp,
-                        RectFloat const& rect, CameraORTHO const& cam_ortho, DrawState& ds)
+draw_cursor_under_mouse(common::Logger& logger, ScreenSize const& ss, RectInt const& viewport,
+                        ShaderProgram& sp, RectFloat const& rect, CameraORTHO const& cam_ortho,
+                        DrawState& ds)
 {
   auto const rbuffer = OF::make_line_rectangle(rect);
   auto di            = OG::copy_rectangle(logger, sp.va(), rbuffer);
-  draw_rectangle_pm(logger, viewport, cam_ortho, sp, di, LOC::LIME_GREEN, GL_LINE_LOOP, ds);
+  draw_rectangle_pm(logger, ss, viewport, cam_ortho, sp, di, LOC::LIME_GREEN, GL_LINE_LOOP, ds);
 }
 
 void
 draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
                glm::ivec2 const& mouse_pos, ShaderProgram& rect_sp,
-               Viewport const& view_port, int const screen_height, DrawState& ds)
+               ScreenSize const& screen_size, Viewport const& view_port,
+               DrawState& ds)
 {
   auto const& click_pos = camera.mouse_click.left_right;
   float const minx = click_pos.x;
@@ -566,8 +569,8 @@ draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
   mouse_rect.top    *= SCREENSIZE_VIEWPORT_RATIO.y;
   mouse_rect.bottom *= SCREENSIZE_VIEWPORT_RATIO.y;
 
-  OR::set_viewport_and_scissor(view_port, screen_height);
-  draw_cursor_under_mouse(logger, view_port.rect(), rect_sp, mouse_rect, camera, ds);
+  OR::set_viewport_and_scissor(view_port, screen_size.height);
+  draw_cursor_under_mouse(logger, screen_size, view_port.rect(), rect_sp, mouse_rect, camera, ds);
 }
 
 struct PmDrawInfo
@@ -585,14 +588,15 @@ draw_scene(common::Logger& logger, ViewportInfos const& viewports, PmDrawInfo& p
   auto const& fullscreen  = viewports.fullscreen;
   auto& pm_sp = pm_info.sp;
 
-  auto const screen_height = fullscreen.height();
+  auto const screen_size = fullscreen.size();
+  auto const screen_height = screen_size.height;
   auto const draw_lhs = [&](DrawState& ds, auto& vdi) {
     OR::set_viewport_and_scissor(vdi.viewport, screen_height);
     OR::clear_screen(LOC::WHITE);
     draw_bboxes(logger, vdi.pm, vdi.vm, cube_ents, wire_sp, ds);
 
     if (MOUSE_BUTTON_PRESSED) {
-      draw_mouserect(logger, camera, mouse_pos, pm_sp, vdi.viewport, screen_height, ds);
+      draw_mouserect(logger, camera, mouse_pos, pm_sp, screen_size, vdi.viewport, ds);
     }
   };
   auto const draw_rhs = [&](DrawState& ds, auto& vdi) {
@@ -603,7 +607,7 @@ draw_scene(common::Logger& logger, ViewportInfos const& viewports, PmDrawInfo& p
   auto const draw_pm = [&](auto& sp, auto& di, DrawState& ds, Color const& color) {
     auto const& viewport = viewports.fullscreen;
     OR::set_viewport_and_scissor(viewport, screen_height);
-    draw_rectangle_pm(logger, viewport.rect(), camera, sp, di, color, GL_TRIANGLES, ds);
+    draw_rectangle_pm(logger, viewport.size(), viewport.rect(), camera, sp, di, color, GL_TRIANGLES, ds);
   };
   auto const draw_pms = [&](auto& ds) {
     for (auto& pm_rect : pm_info.rects) {
@@ -658,7 +662,7 @@ create_viewports(common::Logger &logger, CameraORTHO const& camera, Frustum cons
               Viewport const& lhs_bottom, Viewport const& rhs_bottom,
               Viewport const& screen_viewport, glm::mat4 const& pers_pm)
 {
-  glm::mat4 const ortho_pm = camera.calc_pm(AR, frustum);
+  glm::mat4 const ortho_pm = camera.calc_pm(AR, frustum, screen_viewport.size(), VEC2(0));
   glm::mat4 const ortho_vm = camera.calc_vm();
 
   glm::mat4 const pers_vm  = calculate_vm_fps(logger);
@@ -725,7 +729,7 @@ main(int argc, char **argv)
   auto const ORTHO_FORWARD = -constants::Y_UNIT_VECTOR;
   auto constexpr ORTHO_UP  =  constants::Z_UNIT_VECTOR;
   WorldOrientation const ORTHO_WO{ORTHO_FORWARD, ORTHO_UP};
-  CameraORTHO cam_ortho{ORTHO_WO, window_rect.size()};
+  CameraORTHO cam_ortho{ORTHO_WO};
 
   auto const cr0 = RectFloat{200, 200, 400, 400};
   auto const cr1 = RectFloat{600, 600, 800, 800};

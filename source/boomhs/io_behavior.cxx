@@ -372,18 +372,18 @@ PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
     ortho.scroll(glm::vec2{1, 0});
     break;
 
-  case SDLK_KP_2:
-    ortho.view_size.y += 1;
-    break;
-  case SDLK_KP_4:
-    ortho.view_size.x -= 1;
-    break;
-  case SDLK_KP_6:
-    ortho.view_size.x += 1;
-    break;
-  case SDLK_KP_8:
-    ortho.view_size.y -= 1;
-    break;
+  //case SDLK_KP_2:
+    //ortho.view_size.y += 1;
+    //break;
+  //case SDLK_KP_4:
+    //ortho.view_size.x -= 1;
+    //break;
+  //case SDLK_KP_6:
+    //ortho.view_size.x += 1;
+    //break;
+  //case SDLK_KP_8:
+    //ortho.view_size.y -= 1;
+    //break;
 
   case SDLK_PAGEUP:
     ortho.position += Y_UNIT_VECTOR;

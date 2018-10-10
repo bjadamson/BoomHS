@@ -18,6 +18,7 @@ enum class CameraMode
   Ortho,
   FPS,
   FREE_FLOATING,
+  Fullscreen_2DUI,
   MAX
 };
 

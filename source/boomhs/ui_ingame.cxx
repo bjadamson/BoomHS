@@ -545,7 +545,7 @@ draw_2dui(RenderState& rstate)
 
 
     auto constexpr SPACE_BENEATH = 10;
-    float const bottom = view_frustum.top + SPACE_BENEATH + size.y;
+    float const bottom = view_frustum.bottom - SPACE_BENEATH;
     glm::vec2 const pos{left, bottom};
     spp.while_bound(logger, [&]() {
       });
@@ -636,13 +636,15 @@ draw(FrameState& fs, Camera& camera, DrawState& ds)
   draw_nearest_target_info(vp, nbt, ttable, registry);
 
   // Create a renderstate using an orthographic projection.
-  auto fss = FrameState::from_camera_for_2dui_overlay(es, zs, camera, camera.view_settings_ref(), frustum);
+  auto const ztemp = camera.ortho.zoom();
+  auto const vsettings = camera.view_settings_ref();
+  auto fss = FrameState::from_camera_for_2dui_overlay(es, zs, camera, vsettings, frustum);
+
   RenderState rstate{fss, ds};
   draw_2dui(rstate);
 
   auto& player = find_player(registry);
   draw_chatwindow(es, player);
-
   draw_debugoverlay_window(es, ds);
 
   auto& inventory = player.inventory;

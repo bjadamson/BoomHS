@@ -1,8 +1,11 @@
 #include <boomhs/frame.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/math.hpp>
+#include <boomhs/viewport.hpp>
 
 using namespace boomhs;
+
+ScreenSize constexpr DEFAULT_ORTHO_VIEWSIZE{128, 128};
 
 namespace
 {
@@ -18,10 +21,17 @@ make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
   auto& target_pos = target.transform().translation;
 
   switch (mode) {
-    case CameraMode::Ortho:
-      proj = camera.ortho.calc_pm(view_settings.aspect_ratio, frustum);
+    case CameraMode::Ortho: {
+      auto const& zoom = camera.ortho.zoom();
+      proj = camera.ortho.calc_pm(view_settings.aspect_ratio, frustum, DEFAULT_ORTHO_VIEWSIZE, zoom);
       view = camera.ortho.calc_vm();
-      break;
+    } break;
+    case CameraMode::Fullscreen_2DUI:
+    {
+      auto const vp = Viewport::from_frustum(frustum);
+      proj = camera.ortho.calc_pm(view_settings.aspect_ratio, frustum, vp.size(), VEC2(0));
+      view = camera.ortho.calc_vm();
+    } break;
     case CameraMode::FPS:
       proj = camera.fps.calc_pm(view_settings, frustum);
       view = camera.fps.calc_vm(camera.eye_forward());
@@ -69,7 +79,7 @@ FrameState::from_camera_for_2dui_overlay(EngineState& es, ZoneState& zs, Camera 
                                          ViewSettings const& vs, Frustum const& frustum)
 {
   auto const camera_world_pos = camera.world_position();
-  return make_framestate(es, zs, camera, vs, frustum, camera_world_pos, CameraMode::Ortho);
+  return make_framestate(es, zs, camera, vs, frustum,  camera_world_pos, CameraMode::Fullscreen_2DUI);
 }
 
 FrameState

@@ -15,8 +15,9 @@ class SDLWindow;
 
 namespace boomhs
 {
-class FrameTime;
-class Viewport;
+class  FrameTime;
+struct ScreenSize;
+class  Viewport;
 
 class AspectRatio
 {
@@ -118,7 +119,7 @@ class CameraORTHO
   auto const& up() const { return world_orientation_.up; }
 
 public:
-  CameraORTHO(WorldOrientation const&, glm::ivec2 const&);
+  CameraORTHO(WorldOrientation const&);
   MOVE_CONSTRUCTIBLE_ONLY(CameraORTHO);
 
   // fields
@@ -131,10 +132,9 @@ public:
   };
 
   ClickPositions mouse_click;
-  glm::ivec2 view_size;
 
   // methods
-  glm::mat4 calc_pm(AspectRatio const&, Frustum const&) const;
+  glm::mat4 calc_pm(AspectRatio const&, Frustum const&, ScreenSize const&, glm::vec2 const&) const;
   glm::mat4 calc_vm() const;
 
   void grow_view(glm::vec2 const&);
@@ -193,7 +193,7 @@ class Camera
 
 public:
   MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(ViewSettings&&, WorldOrientation const&, WorldOrientation const&, glm::ivec2 const&);
+  Camera(ViewSettings&&, WorldOrientation const&, WorldOrientation const&);
 
   // public fields
   CameraArcball arcball;

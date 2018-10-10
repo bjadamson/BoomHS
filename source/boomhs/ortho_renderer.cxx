@@ -63,6 +63,7 @@ draw_ortho_lhs(RenderState& rstate, LevelManager& lm, StaticRenderers& srs, Came
   auto const vp = Viewport::from_frustum(frustum);
   LOG_ERROR_SPRINTF("vp: %s", vp.to_string());
 
+  /*
   Viewport const LHS{
     vp.left_top(), vp.half_width(), vp.height()
   };
@@ -70,6 +71,7 @@ draw_ortho_lhs(RenderState& rstate, LevelManager& lm, StaticRenderers& srs, Came
 
   render::set_viewport_and_scissor(LHS, frustum.height());
   PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, srs, ft);
+  */
 
 
 

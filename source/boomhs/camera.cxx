@@ -224,25 +224,25 @@ CameraFPS::calc_vm(glm::vec3 const& eye_fwd) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraORTHO
-CameraORTHO::CameraORTHO(WorldOrientation const& world_orientation, glm::ivec2 const& vs)
+CameraORTHO::CameraORTHO(WorldOrientation const& world_orientation)
     : world_orientation_(world_orientation)
-    , zoom_(glm::vec2{0, 0})
+    , zoom_(VEC2{0, 0})
     , position(0, 1, 0)
-    , view_size(vs)
 {
 }
 
 glm::mat4
-CameraORTHO::calc_pm(AspectRatio const& ar, Frustum const& f) const
+CameraORTHO::calc_pm(AspectRatio const& ar, Frustum const& f, ScreenSize const& view_size,
+                     glm::vec2 const& zoom) const
 {
-  auto const& view_width  = view_size.x;
-  auto const& view_height = view_size.y;
+  auto const& view_width  = view_size.width;
+  auto const& view_height = view_size.height;
 
-  float const left   = 0.0f + f.left      + zoom().x - position.x;
-  float const right  = left + view_width  - zoom().x - position.x;
+  float const left   = 0.0f + f.left      + zoom.x - position.x;
+  float const right  = left + view_width  - zoom.x - position.x;
 
-  float const top    = 0.0f + f.top       + zoom().y + position.z;
-  float const bottom = top  + view_height - zoom().y + position.z;
+  float const top    = 0.0f + f.top       + zoom.y + position.z;
+  float const bottom = top  + view_height - zoom.y + position.z;
 
   return glm::ortho(left, right, bottom, top, f.near, f.far);
 }
@@ -287,12 +287,11 @@ CameraORTHO::scroll(glm::vec2 const& sv)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
-Camera::Camera(ViewSettings&& vp, WorldOrientation const& pers_wo, WorldOrientation const& ortho_wo,
-               glm::ivec2 const& ortho_view_size)
+Camera::Camera(ViewSettings&& vp, WorldOrientation const& pers_wo, WorldOrientation const& ortho_wo)
     : view_settings_(MOVE(vp))
     , arcball(target_, pers_wo)
     , fps(target_, pers_wo)
-    , ortho(ortho_wo, ortho_view_size)
+    , ortho(ortho_wo)
 {
   set_mode(CameraMode::ThirdPerson);
 }
@@ -337,6 +336,7 @@ Camera::toggle_rotation_lock()
       fps.cs.rotation_lock ^= true;
       break;
     case CameraMode::Ortho:
+    case CameraMode::Fullscreen_2DUI:
       break;
     case CameraMode::ThirdPerson:
       arcball.cs.rotation_lock ^= true;
@@ -359,6 +359,7 @@ Camera::rotate_radians(float dx, float dy, FrameTime const& ft)
       fps.rotate_radians(dx, dy, ft);
       break;
     case CameraMode::Ortho:
+    case CameraMode::Fullscreen_2DUI:
       break;
     case CameraMode::ThirdPerson:
       arcball.rotate_radians(dx, dy, ft);
@@ -384,6 +385,7 @@ Camera::eye_forward() const
     case CameraMode::FPS:
       return glm::normalize(fps.forward() * fps.transform().rotation);
     case CameraMode::Ortho:
+    case CameraMode::Fullscreen_2DUI:
       return glm::normalize(ortho.position + ortho.forward());
       break;
     case CameraMode::ThirdPerson:
@@ -403,6 +405,7 @@ Camera::world_forward() const
     case CameraMode::FPS:
       return fps.forward();
     case CameraMode::Ortho:
+    case CameraMode::Fullscreen_2DUI:
       return ortho.forward();
     case CameraMode::ThirdPerson:
       return arcball.forward();
@@ -421,6 +424,7 @@ Camera::world_up() const
     case CameraMode::FPS:
       return fps.up();
     case CameraMode::Ortho:
+    case CameraMode::Fullscreen_2DUI:
       return ortho.up();
     case CameraMode::ThirdPerson:
       return arcball.up();
@@ -439,6 +443,7 @@ Camera::world_position() const
     case CameraMode::FPS:
       return fps.world_position();
     case CameraMode::Ortho:
+    case CameraMode::Fullscreen_2DUI:
       return ortho.position;
     case CameraMode::ThirdPerson:
       return arcball.world_position();
@@ -457,6 +462,7 @@ Camera::world_orientation_ref() const
     case CameraMode::FPS:
       return fps.world_orientation_;
     case CameraMode::Ortho:
+    case CameraMode::Fullscreen_2DUI:
       return ortho.world_orientation_;
     case CameraMode::ThirdPerson:
       // TODO: FIX FAST
@@ -479,8 +485,7 @@ Camera::make_default(WorldOrientation const& pers_wo, WorldOrientation const& or
   auto constexpr FOV  = glm::radians(110.0f);
   auto constexpr AR   = AspectRatio{4.0f, 3.0f};
   ViewSettings vp{AR, FOV};
-  glm::vec2 const ORTHO_VIEW_SIZE{128, 128};
-  Camera camera(MOVE(vp), pers_wo, ortho_wo, ORTHO_VIEW_SIZE);
+  Camera camera(MOVE(vp), pers_wo, ortho_wo);
 
   SphericalCoordinates sc;
   sc.radius = 3.8f;
