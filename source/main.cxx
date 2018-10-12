@@ -145,14 +145,8 @@ start(common::Logger& logger, Engine& engine)
   auto              camera = Camera::make_default(pers_wo, ortho_wo);
 
   RNG rng;
-  auto gs = TRY_MOVEOUT(boomhs::init(engine, es, camera, rng));
-
-  {
-    auto& zs = gs.level_manager().active();
-    auto const vp = Viewport::from_frustum(frustum);
-    auto srs = make_static_renderers(es, zs, vp);
-    gs.set_renderers(MOVE(srs));
-  }
+  auto gs = TRY_MOVEOUT(boomhs::create_gamestate(engine, es, camera, rng));
+  boomhs::init_gamestate_inplace(gs, camera);
 
   // Start game in a timed loop
   timed_game_loop(engine, gs, camera, rng);

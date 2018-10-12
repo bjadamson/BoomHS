@@ -1,4 +1,5 @@
 #pragma once
+#include <boomhs/audio.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/scene_renderer.hpp>
 #include <optional>
@@ -11,12 +12,13 @@ class GameState
 {
   EngineState& es_;
   LevelManager lm_;
+  WaterAudioSystem was_;
 
   std::optional<StaticRenderers> renderers_;
 public:
   NOCOPY_MOVE_DEFAULT(GameState);
 
-  explicit GameState(EngineState&, LevelManager&&);
+  explicit GameState(EngineState&, LevelManager&&, WaterAudioSystem&&);
 
   void set_renderers(StaticRenderers&& sr)
   {
@@ -25,6 +27,7 @@ public:
 
   auto& engine_state() { return es_; }
   auto& level_manager() { return lm_; }
+  auto& water_audio() { return was_; }
 
   auto& static_renderers()
   {

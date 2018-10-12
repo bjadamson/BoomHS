@@ -18,7 +18,10 @@ class Engine;
 class RNG;
 
 Result<GameState, std::string>
-init(Engine&, EngineState&, Camera&, RNG&);
+create_gamestate(Engine&, EngineState&, Camera&, RNG&);
+
+void
+init_gamestate_inplace(GameState&, Camera&);
 
 void
 game_loop(Engine&, GameState&, RNG&, Camera&, FrameTime const&);

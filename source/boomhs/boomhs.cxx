@@ -98,9 +98,11 @@ update_mousestates(EngineState& es)
 }
 
 void
-update_playaudio(common::Logger& logger, LevelData& ldata, EntityRegistry& registry,
+update_playaudio(common::Logger& logger, EngineState& es, LevelData& ldata, EntityRegistry& registry,
                  WaterAudioSystem& audio)
 {
+  audio.set_volume(es.ui_state.debug.buffers.audio.ambient);
+
   if (player_in_water(logger, registry)) {
     audio.play_inwater_sound(logger);
   }
@@ -320,7 +322,7 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
   es.time.update(ft.since_start_seconds());
 
   // Update the world
-  update_playaudio(logger, ldata, registry, water_audio);
+  update_playaudio(logger, es, ldata, registry, water_audio);
 
   auto const view_matrix = fstate.view_matrix();
   auto const proj_matrix = fstate.projection_matrix();
@@ -512,7 +514,7 @@ floornumber_to_levelfilename(int const floor_number)
 }
 
 Result<GameState, std::string>
-init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
+create_gamestate(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
 {
   auto& logger = es.logger;
 
@@ -559,10 +561,29 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
     }
   }
 
-  GameState state{es, LevelManager{MOVE(zstates)}};
+  auto water_audio = TRY_MOVEOUT(WaterAudioSystem::create());
+  LevelManager lm{MOVE(zstates)};
+  return Ok(GameState{es, MOVE(lm), MOVE(water_audio)});
+}
 
-  auto& lm       = state.level_manager();
-  auto& zs       = lm.active();
+void
+init_gamestate_inplace(GameState& gs, Camera& camera)
+{
+  auto& es = gs.engine_state();
+  auto& lm = gs.level_manager();
+
+  auto& logger = es.logger;
+  auto& zs     = lm.active();
+
+  auto& registry = zs.registry;
+  auto& player = find_player(registry);
+  camera.set_target(player.head_world_object());
+
+  {
+    auto const vp = Viewport::from_frustum(es.frustum);
+    auto srs = make_static_renderers(es, zs, vp);
+    gs.set_renderers(MOVE(srs));
+  }
 
   {
     auto test_r = rexpaint::RexImage::load("assets/test.xp");
@@ -578,7 +599,6 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
       std::abort();
     }
   }
-
   {
     auto& ingame = es.ui_state.ingame;
     auto& chat_history = ingame.chat_history;
@@ -635,13 +655,11 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
 
     chat_state.reset_yscroll_position = true;
   }
-
-  return OK_MOVE(state);
 }
 
 void
 draw_everything(GameState& gs, FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
-            WaterAudioSystem& water_audio, StaticRenderers& static_renderers, DrawState& ds,
+            StaticRenderers& static_renderers, DrawState& ds,
             FrameTime const& ft)
 {
   auto& es            = fs.es;
@@ -681,30 +699,18 @@ draw_everything(GameState& gs, FrameState& fs, LevelManager& lm, RNG& rng, Camer
 }
 
 void
-game_loop(Engine& engine, GameState& game_state, RNG& rng, Camera& camera, FrameTime const& ft)
+game_loop(Engine& engine, GameState& gs, RNG& rng, Camera& camera, FrameTime const& ft)
 {
-  auto& es        = game_state.engine_state();
-  auto& lm        = game_state.level_manager();
-  auto& srs       = game_state.static_renderers();
+  auto& es        = gs.engine_state();
+  auto& lm        = gs.level_manager();
+  auto& srs       = gs.static_renderers();
 
   auto& logger    = es.logger;
   auto& zs        = lm.active();
   auto& gfx_state = zs.gfx_state;
   auto& sps       = gfx_state.sps;
   auto& ttable    = gfx_state.texture_table;
-
-  auto& registry = zs.registry;
-  auto& player = find_player(registry);
-
-  static bool set_camera_once = false;
-  if (!set_camera_once) {
-    camera.set_target(player.head_world_object());
-    set_camera_once = true;
-  }
-
-  static auto water_audio = WaterAudioSystem::create()
-    .expect_moveout("Water Audio System");
-  water_audio.set_volume(es.ui_state.debug.buffers.audio.ambient);
+  auto& water_audio = gs.water_audio();
 
   DrawState ds{es.wireframe_override};
 
@@ -735,12 +741,12 @@ game_loop(Engine& engine, GameState& game_state, RNG& rng, Camera& camera, Frame
     // Disable keyboard shortcuts
     io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
 
-    IO_SDL::read_devices(SDLReadDevicesArgs{game_state, engine.controllers, camera, ft});
+    IO_SDL::read_devices(SDLReadDevicesArgs{gs, engine.controllers, camera, ft});
     SDL_SetCursor(es.device_states.cursors.active());
 
     auto fs         = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), fr);
     update_everything(es, lm, rng, fs, camera, srs, water_audio, engine.window, ft);
-    draw_everything(game_state, fs, lm, rng, camera, water_audio, srs, ds, ft);
+    draw_everything(gs, fs, lm, rng, camera, srs, ds, ft);
   }
 }
 
