@@ -84,9 +84,7 @@ auto
 make_perspective_rect_gpuhandle(common::Logger& logger, RectFloat const& rect,
                                 VertexAttribute const& va)
 {
-  OF::RectInfo const ri{rect, std::nullopt, std::nullopt, std::nullopt};
-  RectBuffer  buffer = OF::make_rectangle(ri);
-
+  RectBuffer buffer = OF::RectBuilder{rect}.build();
   return gpu::copy_rectangle(logger, va, buffer);
 }
 

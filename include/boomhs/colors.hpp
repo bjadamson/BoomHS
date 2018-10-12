@@ -99,6 +99,9 @@ operator<<(std::ostream& os, Color const& c)
   return os;
 }
 
+template <size_t N>
+using ColorArray = std::array<Color, N>;
+
 namespace LIST_OF_COLORS
 {
 // clang-format off

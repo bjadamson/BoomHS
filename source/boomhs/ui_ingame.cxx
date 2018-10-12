@@ -579,18 +579,11 @@ draw_inventory_overlay(RenderState& rstate)
   auto& sps    = zs.gfx_state.sps;
   auto& sp     = sps.ref_sp("2dcolor");
 
-  auto color = LOC::GRAY;
-  color.set_a(0.40);
+  auto const& f   = es.frustum;
+  auto const vp   = Viewport::from_frustum(f);
+  auto const rect = vp.rect_float();
+  auto buffer     = OF::RectBuilder{rect}.build();
 
-  auto const& f = es.frustum;
-  auto const vp = Viewport::from_frustum(f);
-  auto const make_rectangle = [&]() {
-
-    OF::RectInfo   const ri{vp.rect_float(), std::nullopt, std::nullopt, std::nullopt};
-    return OF::make_rectangle(ri);
-  };
-
-  RectBuffer const buffer = make_rectangle();
   DrawInfo dinfo = gpu::copy_rectangle(logger, sp.va(), buffer);
 
   ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
@@ -601,6 +594,9 @@ draw_inventory_overlay(RenderState& rstate)
 
   auto const pm = glm::ortho(f.left_float(), f.right_float(), f.bottom_float(), f.top_float(), NEAR, FAR);
   sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
+
+  auto color = LOC::GRAY;
+  color.set_a(0.40);
   sp.set_uniform_color(logger, "u_color", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);

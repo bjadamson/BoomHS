@@ -119,26 +119,36 @@ cube_vertices(glm::vec3 const&, glm::vec3 const&);
 
 // Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-struct RectangleColors
+class RectangleColorArray
 {
-  static constexpr auto NUM_VERTICES = 4;
+public:
+  static constexpr int NUM_VERTICES = 4;
 
-  // use one, not both (checked in debug builds)
-  std::optional<boomhs::Color>                           color;
-  std::optional<std::array<boomhs::Color, NUM_VERTICES>> colors;
+private:
+  boomhs::ColorArray<NUM_VERTICES> data_;
+
+public:
+  COMMON_WRAPPING_CONTAINER_FNS(data_);
 };
 
-struct RectInfo
+struct RectBuilder
 {
-  // fields
-  boomhs::RectFloat rect;
-  RectangleColors   colors;
+  boomhs::RectFloat                  rect;
 
-  std::optional<RectangleUvs> uvs;
+  // use one of the following rectangle types.
+  std::optional<RectangleColorArray> color_array;
+  std::optional<boomhs::Color>       uniform_color;
+
+  std::optional<RectangleUvs>        uvs;
+
+  RectBuilder(boomhs::RectFloat const&);
+
+  RectBuffer
+  build() const;
 };
 
 RectBuffer
-make_rectangle(RectInfo const&);
+make_rectangle(RectBuilder const&);
 
 RectLineBuffer
 make_line_rectangle(boomhs::RectFloat const&);

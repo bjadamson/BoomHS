@@ -229,17 +229,37 @@ cube_vertices(glm::vec3 const& min, glm::vec3 const& max)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Rectangles
-RectBuffer
-make_rectangle(RectInfo const& info)
+RectBuilder::RectBuilder(RectFloat const& r)
+    : rect(r)
 {
-  auto const& color_o  = info.colors.color;
-  auto const& colors_o = info.colors.colors;
-  auto const& uvs_o    = info.uvs;
+}
+
+RectBuffer
+RectBuilder::build() const
+{
+  bool const uniform_only = (uniform_color && (!color_array   && !uvs));
+  bool const color_only   = (color_array   && (!uniform_color && !uvs));
+  bool const uvs_only     = (uvs           && (!color_array   && !uniform_color));
+
+  bool const none         = !uniform_only && !color_only && !uvs;
+  bool const exactly_one  = uniform_only || color_only  || uvs_only;
+  assert(exactly_one || none);
+
+  //assert(colors_or_uvs_strictly);
+  return make_rectangle(*this);
+}
+
+RectBuffer
+make_rectangle(RectBuilder const& builder)
+{
+  auto const& color_o  = builder.uniform_color;
+  auto const& colors_o = builder.color_array;
+  auto const& uvs_o    = builder.uvs;
 
   std::vector<float> vertices;
   auto const add_point = [&](glm::vec2 const& point, int const index)
   {
-    assert(index < RectangleColors::NUM_VERTICES);
+    assert(index < RectangleColorArray::NUM_VERTICES);
     vertices.emplace_back(point.x);
     vertices.emplace_back(point.y);
 
@@ -247,7 +267,6 @@ make_rectangle(RectInfo const& info)
     vertices.emplace_back(Z);
 
     if (color_o) {
-      assert(!colors_o);
       auto const& c = *color_o;
       vertices.emplace_back(c.r());
       vertices.emplace_back(c.g());
@@ -255,7 +274,6 @@ make_rectangle(RectInfo const& info)
       vertices.emplace_back(c.a());
     }
     else if (colors_o) {
-      assert(!color_o);
       auto const& c = (*colors_o)[index];
       vertices.emplace_back(c.r());
       vertices.emplace_back(c.g());
@@ -269,7 +287,7 @@ make_rectangle(RectInfo const& info)
     }
   };
 
-  auto const& r = info.rect;
+  auto const& r = builder.rect;
   auto const p0 = glm::vec2{r.left, r.bottom};
   auto const p1 = glm::vec2{r.right, r.bottom};
 
