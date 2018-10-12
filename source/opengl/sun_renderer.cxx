@@ -40,7 +40,7 @@ SunshaftBuffers::SunshaftBuffers(common::Logger& logger, Viewport const& vp, Scr
 SunshaftRenderer::SunshaftRenderer(common::Logger& logger, Viewport const& vp, ScreenSize const& ss,
                                    ShaderProgram& sp)
     : buffers_(SunshaftBuffers{logger, vp, ss})
-    , sp_(sp)
+    , sp_(&sp)
 {
   auto const& dim = buffers_.fbo->view_port;
   auto const w = dim.width(), h = dim.height();
@@ -55,7 +55,7 @@ SunshaftRenderer::SunshaftRenderer(common::Logger& logger, Viewport const& vp, S
   }
 
   // connect texture units to shader program
-  sp_.while_bound(logger, [&]() { sp_.set_uniform_int1(logger, "u_sampler", 0); });
+  sp_->while_bound(logger, [&]() { sp_->set_uniform_int1(logger, "u_sampler", 0); });
 }
 
 void
@@ -77,7 +77,7 @@ SunshaftRenderer::render(RenderState& rstate, DrawState& ds, LevelManager& lm, C
   auto const uv = OF::rectangle_uvs(ti.uv_max);
   auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
 
-  DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp_.va(), vuvs);
+  DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp_->va(), vuvs);
 
   glm::vec2 const pos{0.00f, 0.00f};
   glm::vec2 const scale{1.00f, 1.00f};
@@ -87,12 +87,12 @@ SunshaftRenderer::render(RenderState& rstate, DrawState& ds, LevelManager& lm, C
   transform.scale       = glm::vec3{scale.x, scale.y, 1.0};
 
   auto const model_matrix = transform.model_matrix();
-  sp_.while_bound(logger, [&]() {
-    render::set_modelmatrix(logger, model_matrix, sp_);
-    sp_.set_uniform_vec2(logger, "u_dirlight.screenspace_pos", directional_light.screenspace_pos);
+  sp_->while_bound(logger, [&]() {
+    render::set_modelmatrix(logger, model_matrix, *sp_);
+    sp_->set_uniform_vec2(logger, "u_dirlight.screenspace_pos", directional_light.screenspace_pos);
 
     glActiveTexture(GL_TEXTURE0);
-    dinfo.while_bound(logger, [&]() { render::draw_2d(rstate, GL_TRIANGLES, sp_, ti, dinfo); });
+    dinfo.while_bound(logger, [&]() { render::draw_2d(rstate, GL_TRIANGLES, *sp_, ti, dinfo); });
     // glActiveTexture(GL_TEXTURE0);
   });
 }

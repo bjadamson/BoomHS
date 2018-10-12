@@ -5,8 +5,8 @@ namespace boomhs
 {
 
 GameState::GameState(EngineState& es, LevelManager&& lm)
-    : engine_state(es)
-    , level_manager(MOVE(lm))
+    : es_(es)
+    , lm_(MOVE(lm))
 {
 }
 

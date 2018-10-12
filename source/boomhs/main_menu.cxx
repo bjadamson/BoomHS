@@ -8,7 +8,6 @@
 #include <boomhs/frame.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/io_sdl.hpp>
-#include <boomhs/level_manager.hpp>
 #include <boomhs/main_menu.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/player.hpp>
@@ -249,7 +248,7 @@ draw_debugwindow(EngineState& es, ZoneState& zs)
 void
 process_keydown(GameState& state, SDL_Event const& event)
 {
-  auto& es = state.engine_state;
+  auto& es = state.engine_state();
   auto& ui = es.ui_state;
 
   switch (event.key.keysym.sym) {

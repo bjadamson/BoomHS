@@ -31,42 +31,39 @@ static glm::vec4 constexpr BENEATH_VECTOR = {0, 1, 0, -CUTOFF_HEIGHT};
 
 class SilhouetteWaterRenderer
 {
-  common::Logger&        logger_;
-  opengl::ShaderProgram& sp_;
+  opengl::ShaderProgram* sp_;
 
 public:
   SilhouetteWaterRenderer(common::Logger&, opengl::ShaderProgram&);
-  MOVE_CONSTRUCTIBLE_ONLY(SilhouetteWaterRenderer);
+  NOCOPY_MOVE_DEFAULT(SilhouetteWaterRenderer);
 
   void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::FrameTime const&);
 };
 
 class BasicWaterRenderer
 {
-  common::Logger&        logger_;
-  opengl::ShaderProgram& sp_;
-  opengl::TextureInfo&   diffuse_;
-  opengl::TextureInfo&   normal_;
+  opengl::ShaderProgram* sp_;
+  opengl::TextureInfo*   diffuse_;
+  opengl::TextureInfo*   normal_;
 
 public:
   BasicWaterRenderer(common::Logger&, opengl::TextureInfo&, opengl::TextureInfo&,
                      opengl::ShaderProgram&);
-  MOVE_CONSTRUCTIBLE_ONLY(BasicWaterRenderer);
+  NOCOPY_MOVE_DEFAULT(BasicWaterRenderer);
 
   void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::FrameTime const&);
 };
 
 class MediumWaterRenderer
 {
-  common::Logger&        logger_;
-  opengl::ShaderProgram& sp_;
-  opengl::TextureInfo&   diffuse_;
-  opengl::TextureInfo&   normal_;
+  opengl::ShaderProgram* sp_;
+  opengl::TextureInfo*   diffuse_;
+  opengl::TextureInfo*   normal_;
 
 public:
   MediumWaterRenderer(common::Logger&, opengl::TextureInfo&, opengl::TextureInfo&,
                       opengl::ShaderProgram&);
-  MOVE_CONSTRUCTIBLE_ONLY(MediumWaterRenderer);
+  NOCOPY_MOVE_DEFAULT(MediumWaterRenderer);
 
   void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::FrameTime const&);
 };
@@ -79,8 +76,7 @@ struct ReflectionBuffers
 
   ReflectionBuffers(common::Logger&, boomhs::Viewport const&, boomhs::ScreenSize const&);
 
-  NO_COPY(ReflectionBuffers);
-  MOVE_DEFAULT(ReflectionBuffers);
+  NOCOPY_MOVE_DEFAULT(ReflectionBuffers);
 };
 
 struct RefractionBuffers
@@ -91,16 +87,15 @@ struct RefractionBuffers
 
   RefractionBuffers(common::Logger&, boomhs::Viewport const&, boomhs::ScreenSize const&);
 
-  NO_COPY(RefractionBuffers);
-  MOVE_DEFAULT(RefractionBuffers);
+  NOCOPY_MOVE_DEFAULT(RefractionBuffers);
 };
 
 class AdvancedWaterRenderer
 {
-  opengl::ShaderProgram& sp_;
-  opengl::TextureInfo&   diffuse_;
-  opengl::TextureInfo&   dudv_;
-  opengl::TextureInfo&   normal_;
+  opengl::ShaderProgram* sp_;
+  opengl::TextureInfo*   diffuse_;
+  opengl::TextureInfo*   dudv_;
+  opengl::TextureInfo*   normal_;
 
   ReflectionBuffers reflection_;
   RefractionBuffers refraction_;
@@ -139,7 +134,7 @@ class AdvancedWaterRenderer
   }
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(AdvancedWaterRenderer);
+  NOCOPY_MOVE_DEFAULT(AdvancedWaterRenderer);
 
   explicit AdvancedWaterRenderer(common::Logger&, boomhs::Viewport const&, boomhs::ScreenSize const&,
                                  ShaderProgram&, TextureInfo&, TextureInfo&, TextureInfo&);

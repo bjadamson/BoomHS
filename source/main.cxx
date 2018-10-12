@@ -45,10 +45,9 @@ loop_events(GameState& state, Camera& camera, bool const show_mainmenu, bool& qu
 }
 
 void
-loop(Engine& engine, GameState& state, StaticRenderers& renderers, RNG& rng, Camera& camera,
-     FrameTime const& ft)
+loop(Engine& engine, GameState& gs, RNG& rng, Camera& camera, FrameTime const& ft)
 {
-  auto& es     = state.engine_state;
+  auto& es     = gs.engine_state();
   auto& logger = es.logger;
 
   auto& window = engine.window;
@@ -56,8 +55,8 @@ loop(Engine& engine, GameState& state, StaticRenderers& renderers, RNG& rng, Cam
   // Reset Imgui for next game frame.
   ImGui_ImplSdlGL3_NewFrame(window.raw());
 
-  loop_events(state, camera, es.main_menu.show, es.quit, ft);
-  boomhs::game_loop(engine, state, renderers, rng, camera, ft);
+  loop_events(gs, camera, es.main_menu.show, es.quit, ft);
+  boomhs::game_loop(engine, gs, rng, camera, ft);
 
   // Render Imgui UI
   ImGui::Render();
@@ -68,19 +67,15 @@ loop(Engine& engine, GameState& state, StaticRenderers& renderers, RNG& rng, Cam
 }
 
 void
-timed_game_loop(Engine& engine, GameState& state, Camera& camera, RNG& rng)
+timed_game_loop(Engine& engine, GameState& gs, Camera& camera, RNG& rng)
 {
-  auto& es     = state.engine_state;
-  auto& logger = es.logger;
-
   Timer timer;
   FrameCounter fcounter;
 
-  auto& zs = state.level_manager.active();
-  auto renderers = make_static_renderers(es, zs);
+  auto& es = gs.engine_state();
   while (!es.quit) {
     auto const ft = FrameTime::from_timer(timer);
-    loop(engine, state, renderers, rng, camera, ft);
+    loop(engine, gs, rng, camera, ft);
 
     if ((fcounter.frames_counted % 60 == 0)) {
       es.time.add_hours(1);
@@ -151,6 +146,12 @@ start(common::Logger& logger, Engine& engine)
 
   RNG rng;
   auto gs = TRY_MOVEOUT(boomhs::init(engine, es, camera, rng));
+
+  {
+    auto& zs = gs.level_manager().active();
+    auto srs = make_static_renderers(es, zs);
+    gs.set_renderers(MOVE(srs));
+  }
 
   // Start game in a timed loop
   timed_game_loop(engine, gs, camera, rng);

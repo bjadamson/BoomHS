@@ -303,8 +303,6 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
                   StaticRenderers& static_renderers, WaterAudioSystem& water_audio,
                   SDLWindow& window, FrameTime const& ft)
 {
-  auto& skybox_renderer = static_renderers.skybox;
-
   auto& logger   = es.logger;
   auto& zs       = lm.active();
   auto& registry = zs.registry;
@@ -563,7 +561,7 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
 
   GameState state{es, LevelManager{MOVE(zstates)}};
 
-  auto& lm       = state.level_manager;
+  auto& lm       = state.level_manager();
   auto& zs       = lm.active();
 
   {
@@ -681,13 +679,13 @@ draw_everything(FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
 }
 
 void
-game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
-          RNG& rng, Camera& camera, FrameTime const& ft)
+game_loop(Engine& engine, GameState& state, RNG& rng, Camera& camera, FrameTime const& ft)
 {
-  auto& es        = state.engine_state;
-  auto& logger      = es.logger;
-  auto& lm        = state.level_manager;
+  auto& es        = state.engine_state();
+  auto& lm        = state.level_manager();
+  auto& srs       = state.static_renderers();
 
+  auto& logger    = es.logger;
   auto& zs        = lm.active();
   auto& gfx_state = zs.gfx_state;
   auto& sps       = gfx_state.sps;
@@ -722,7 +720,7 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
     render::clear_screen(LOC::BLACK);
     render::set_viewport_and_scissor(viewport, fr.height());
 
-    auto& skybox_renderer  = static_renderers.skybox;
+    auto& skybox_renderer  = srs.skybox;
     main_menu::draw(es, engine.window, camera, skybox_renderer, ds, lm, viewport, water_audio);
   }
   else {
@@ -739,8 +737,8 @@ game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
     SDL_SetCursor(es.device_states.cursors.active());
 
     auto fs         = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), fr);
-    update_everything(es, lm, rng, fs, camera, static_renderers, water_audio, engine.window, ft);
-    draw_everything(fs, lm, rng, camera, water_audio, static_renderers, ds, ft);
+    update_everything(es, lm, rng, fs, camera, srs, water_audio, engine.window, ft);
+    draw_everything(fs, lm, rng, camera, water_audio, srs, ds, ft);
   }
 }
 

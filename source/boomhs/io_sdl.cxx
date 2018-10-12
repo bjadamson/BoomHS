@@ -37,10 +37,10 @@ IO_SDL::process_event(SDLEventProcessArgs &&epa)
   auto& camera   = epa.camera;
   auto const& ft = epa.frame_time;
 
-  auto& es     = state.engine_state;
+  auto& es     = state.engine_state();
   auto& logger = es.logger;
 
-  auto& lm     = state.level_manager;
+  auto& lm     = state.level_manager();
   auto& active = lm.active();
   auto& registry = active.registry;
 
@@ -134,7 +134,7 @@ IO_SDL::read_devices(SDLReadDevicesArgs &&rda)
   auto& camera            = rda.camera;
   auto const& ft          = rda.frame_time;
 
-  auto& es         = state.engine_state;
+  auto& es         = state.engine_state();
   auto& uistate    = es.ui_state;
   auto& ingame     = uistate.ingame;
   auto& chat_state = ingame.chat_state;
@@ -143,7 +143,7 @@ IO_SDL::read_devices(SDLReadDevicesArgs &&rda)
     return;
   }
 
-  auto& zs = state.level_manager.active();
+  auto& zs = state.level_manager().active();
   auto& registry = zs.registry;
 
   auto& player = find_player(registry);

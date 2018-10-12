@@ -30,8 +30,7 @@ struct TextureInfo
 
   // constructors
   TextureInfo();
-  NO_COPY(TextureInfo);
-  MOVE_DEFAULT(TextureInfo);
+  NOCOPY_MOVE_DEFAULT(TextureInfo);
 
   // methods
   void bind_impl(common::Logger&);
@@ -74,7 +73,7 @@ class TextureTable
 
 public:
   TextureTable() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(TextureTable);
+  NOCOPY_MOVE_DEFAULT(TextureTable);
   BEGIN_END_FORWARD_FNS(data_);
 
   void add_texture(TextureFilenames&&, Texture&&);

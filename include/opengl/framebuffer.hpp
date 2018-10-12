@@ -17,10 +17,10 @@ namespace opengl
 
 struct FBInfo
 {
-  DebugBoundCheck         debug_check;
-  GLuint                  id;
-  boomhs::Viewport   const view_port;
-  boomhs::ScreenSize const screen_size;
+  DebugBoundCheck     debug_check;
+  GLuint              id;
+  boomhs::Viewport    view_port;
+  boomhs::ScreenSize  screen_size;
 
   FBInfo(boomhs::Viewport const&, boomhs::ScreenSize const&);
   NO_COPY(FBInfo);
@@ -34,10 +34,8 @@ struct FBInfo
 
   std::string to_string() const;
 
-  TextureInfo attach_color_buffer(common::Logger&, int, int, GLenum);
-
-  TextureInfo attach_depth_buffer(common::Logger&, int, int, GLenum);
-
+  TextureInfo  attach_color_buffer(common::Logger&, int, int, GLenum);
+  TextureInfo  attach_depth_buffer(common::Logger&, int, int, GLenum);
   RenderBuffer attach_render_buffer(common::Logger&, int, int);
 
   static size_t constexpr NUM_BUFFERS = 1;

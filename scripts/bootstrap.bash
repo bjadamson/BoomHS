@@ -78,11 +78,15 @@ set(TOOLS_DIRECTORY ${PROJECT_DIR}/tools)
 set(TEST_DIRECTORY ${PROJECT_DIR}/test)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
-set(IMGUI_INCLUDE_DIR "${EXTERNAL_DIR}/imgui/include/imgui")
-set(CPPTOML_INCLUDE_DIR "${EXTERNAL_DIR}/cpptoml/include")
+set(IMGUI_INCLUDE_DIR    "${EXTERNAL_DIR}/imgui/include/imgui")
+set(CPPTOML_INCLUDE_DIR  "${EXTERNAL_DIR}/cpptoml/include")
+set(CMAKE_PREFIX_PATH    "${EXTERNAL_DIR}")
 
 set(INCLUDE_DIRECTORY ${PROJECT_DIR}/include)
+set(SOURCES_DIRECTORY ${PROJECT_DIR}/source)
+
 set(BOOMHS_INCLUDES ${INCLUDE_DIRECTORY}/**/*.hpp)
+set(BOOMHS_INCLUDES ${SOURCES_DIRECTORY}/**/*.cxx)
 set(BOOMHS_CODE     ${BOOMHS_INCLUDES} ${BOOMHS_SOURCES})
 
 ## BFD_LIB and STACKTRACE_LIB are both needed for linux backtraces.
@@ -91,13 +95,20 @@ set(STACKTRACE_LIB "dw")
 
 ###################################################################################################
 # Create lists of files to be used when issuing build commands further below.
-file(GLOB         EXTERNAL_INCLUDE_DIRS include external/**/include)
-file(GLOB_RECURSE EXTERNAL_SOURCES      ${EXTERNAL_DIR}/**/*.cxx)
+file(GLOB         EXTERNAL_INCLUDE_DIRS
+                  include external/**/include
+                  external/boost/libs/**/include/)
+
+file(GLOB_RECURSE EXTERNAL_SOURCES
+        ${EXTERNAL_DIR}/backward/*.cxx
+        ${EXTERNAL_DIR}/imgui/*.cxx
+        ${EXTERNAL_DIR}/tinyobj/*.cxx
+        ${EXTERNAL_DIR}/fastnoise/*.cxx)
 
 file(GLOB         MAIN_SOURCE_FILE ${PROJECT_DIR}/source/main.cxx)
 file(GLOB_RECURSE SUBDIR_SOURCE_FILES ${PROJECT_DIR}/source/**/*.cxx )
 
-set(SUBDIR_AND_EXTERNAL_SOURCE_FILES ${SUBDIR_SOURCE_FILES}              ${EXTERNAL_SOURCES})
+set(SUBDIR_AND_EXTERNAL_SOURCE_FILES ${EXTERNAL_SOURCES}                 ${SUBDIR_SOURCE_FILES})
 set(ALL_SOURCE_FILES                 ${SUBDIR_AND_EXTERNAL_SOURCE_FILES} ${MAIN_SOURCE_FILE})
 set(ALL_HEADER_FILES                 ${PROJECT_DIR}/include/**/*.hpp     ${EXTERNAL_DIR}/**/*.hpp)
 
@@ -110,8 +121,10 @@ set(ALL_HEADER_FILES                 ${PROJECT_DIR}/include/**/*.hpp     ${EXTER
 
 ###################################################################################################
 ## Manage External Dependencies
+set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} ${PROJECT_DIR}/external)
+set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} ${PROJECT_DIR}/external)
+
 find_package(BFD REQUIRED)
-find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(DL REQUIRED)
 find_package(OpenAL REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -239,7 +252,6 @@ set(SYSTEM_LIBS
   stdc++
   audio
   pthread
-  boost_system
   openal
   )
 

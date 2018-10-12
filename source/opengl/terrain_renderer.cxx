@@ -167,7 +167,7 @@ DefaultTerrainRenderer::to_string() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // SilhouetteTerrainRenderer
 SilhouetteTerrainRenderer::SilhouetteTerrainRenderer(ShaderProgram& sp)
-    : sp_(sp)
+    : sp_(&sp)
 {
 }
 
@@ -183,10 +183,10 @@ SilhouetteTerrainRenderer::render(RenderState& rstate, MaterialTable const&, Ent
     auto const& config = terrain.config;
 
     auto& dinfo = terrain.draw_info();
-    sp_.while_bound(logger, [&]() {
+    sp_->while_bound(logger, [&]() {
       dinfo.while_bound(logger, [&]() {
         auto const model_matrix = tr.model_matrix();
-        render::draw_3dblack_water(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
+        render::draw_3dblack_water(rstate, GL_TRIANGLE_STRIP, model_matrix, *sp_, dinfo);
       });
     });
   };

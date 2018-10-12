@@ -11,7 +11,7 @@ class LevelManager
   int        active_ = 0;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(LevelManager);
+  NOCOPY_MOVE_DEFAULT(LevelManager);
   explicit LevelManager(ZoneStates&&);
 
   ZoneState const& active() const;

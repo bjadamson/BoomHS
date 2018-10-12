@@ -23,6 +23,8 @@ struct ZoneState;
 
 struct WaterRenderers
 {
+  NOCOPY_MOVE_DEFAULT(WaterRenderers);
+
   opengl::BasicWaterRenderer    basic;
   opengl::MediumWaterRenderer   medium;
   opengl::AdvancedWaterRenderer advanced;
@@ -35,6 +37,8 @@ struct WaterRenderers
 
 struct StaticRenderers
 {
+  NOCOPY_MOVE_DEFAULT(StaticRenderers);
+
   opengl::DefaultTerrainRenderer    default_terrain;
   opengl::SilhouetteTerrainRenderer silhouette_terrain;
 
@@ -45,10 +49,8 @@ struct StaticRenderers
   opengl::SunshaftRenderer sunshaft;
 
   opengl::DebugRenderer debug;
+  WaterRenderers        water;
 
-  WaterRenderers water;
-
-  NO_COPY_OR_MOVE(StaticRenderers);
   void render(LevelManager&, opengl::RenderState&, Camera&, RNG&, opengl::DrawState&,
               FrameTime const&, bool);
 };

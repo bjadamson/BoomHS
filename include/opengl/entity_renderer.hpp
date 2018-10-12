@@ -15,8 +15,7 @@ class EntityRenderer
 {
 public:
   EntityRenderer() = default;
-  NO_MOVE(EntityRenderer);
-  NO_COPY(EntityRenderer);
+  NOCOPY_MOVE_DEFAULT(EntityRenderer);
 
   void render2d_billboard(RenderState&, boomhs::RNG&, boomhs::FrameTime const&);
   void render2d_ui(RenderState&, boomhs::RNG&, boomhs::FrameTime const&);
@@ -27,7 +26,7 @@ class SilhouetteEntityRenderer
 {
 public:
   SilhouetteEntityRenderer() = default;
-  MOVE_CONSTRUCTIBLE_ONLY(SilhouetteEntityRenderer);
+  NOCOPY_MOVE_DEFAULT(SilhouetteEntityRenderer);
 
   void render2d_billboard(RenderState&, boomhs::RNG&, boomhs::FrameTime const&);
   void render2d_ui(RenderState&, boomhs::RNG&, boomhs::FrameTime const&);

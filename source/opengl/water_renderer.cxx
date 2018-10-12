@@ -112,19 +112,18 @@ namespace opengl
 // BasicWaterRenderer
 BasicWaterRenderer::BasicWaterRenderer(common::Logger& logger, TextureInfo& diff, TextureInfo& norm,
                                        ShaderProgram& sp)
-    : logger_(logger)
-    , sp_(sp)
-    , diffuse_(diff)
-    , normal_(norm)
+    : sp_(&sp)
+    , diffuse_(&diff)
+    , normal_(&norm)
 {
   ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
-  setup(logger, diffuse_, GL_TEXTURE0);
-  setup(logger, normal_, GL_TEXTURE1);
+  setup(logger, *diffuse_, GL_TEXTURE0);
+  setup(logger, *normal_, GL_TEXTURE1);
 
   // connect texture units to shader program
-  sp_.while_bound(logger, [&]() {
-    sp_.set_uniform_int1(logger, "u_diffuse_sampler", 0);
-    sp_.set_uniform_int1(logger, "u_normal_sampler", 1);
+  sp_->while_bound(logger, [&]() {
+    sp_->set_uniform_int1(logger, "u_diffuse_sampler", 0);
+    sp_->set_uniform_int1(logger, "u_normal_sampler", 1);
   });
 }
 
@@ -137,16 +136,16 @@ BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
   auto& logger = es.logger;
 
   auto const fn = [&](WaterInfo& winfo, Transform const& transform) {
-    sp_.set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
-    sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
+    sp_->set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
+    sp_->set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
     glActiveTexture(GL_TEXTURE0);
     ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
 
-    BIND_UNTIL_END_OF_SCOPE(logger, diffuse_);
+    BIND_UNTIL_END_OF_SCOPE(logger, *diffuse_);
 
     glActiveTexture(GL_TEXTURE1);
-    BIND_UNTIL_END_OF_SCOPE(logger, normal_);
+    BIND_UNTIL_END_OF_SCOPE(logger, *normal_);
 
     auto& zs       = lm.active();
     auto&       gfx_state = zs.gfx_state;
@@ -154,31 +153,29 @@ BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
     auto& dinfo = draw_handles.lookup_entity(logger, winfo.eid);
 
     auto const model_matrix = transform.model_matrix();
-    render::draw_3dshape(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
+    render::draw_3dshape(rstate, GL_TRIANGLE_STRIP, model_matrix, *sp_, dinfo);
   };
 
-  render_water_common(sp_, rstate, ds, lm, ft, fn);
+  render_water_common(*sp_, rstate, ds, lm, ft, fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MediumWaterRenderer
-MediumWaterRenderer::MediumWaterRenderer(common::Logger& logger, TextureInfo& diff, TextureInfo& norm,
-                                         ShaderProgram& sp)
-    : logger_(logger)
-    , sp_(sp)
-    , diffuse_(diff)
-    , normal_(norm)
+MediumWaterRenderer::MediumWaterRenderer(common::Logger& logger, TextureInfo& diff, TextureInfo& norm, ShaderProgram& sp)
+    : sp_(&sp)
+    , diffuse_(&diff)
+    , normal_(&norm)
 {
   {
     ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
-    setup(logger, diffuse_, GL_TEXTURE0);
-    setup(logger, normal_, GL_TEXTURE1);
+    setup(logger, *diffuse_, GL_TEXTURE0);
+    setup(logger, *normal_, GL_TEXTURE1);
   }
 
   // connect texture units to shader program
-  sp_.while_bound(logger, [&]() {
-    sp_.set_uniform_int1(logger, "u_diffuse_sampler", 0);
-    sp_.set_uniform_int1(logger, "u_normal_sampler", 1);
+  sp_->while_bound(logger, [&]() {
+    sp_->set_uniform_int1(logger, "u_diffuse_sampler", 0);
+    sp_->set_uniform_int1(logger, "u_normal_sampler", 1);
   });
 }
 
@@ -196,16 +193,16 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
   Material const water_material{};
 
   auto const fn = [&](WaterInfo& winfo, Transform const& transform) {
-    sp_.set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
-    sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
+    sp_->set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
+    sp_->set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
     glActiveTexture(GL_TEXTURE0);
     ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
 
-    BIND_UNTIL_END_OF_SCOPE(logger, diffuse_);
+    BIND_UNTIL_END_OF_SCOPE(logger, *diffuse_);
 
     glActiveTexture(GL_TEXTURE1);
-    BIND_UNTIL_END_OF_SCOPE(logger, normal_);
+    BIND_UNTIL_END_OF_SCOPE(logger, *normal_);
 
     auto&       gfx_state = zs.gfx_state;
     auto& draw_handles = gfx_state.draw_handles;
@@ -213,11 +210,11 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
 
     bool constexpr SET_NORMALMATRIX = false;
     auto const model_matrix         = transform.model_matrix();
-    render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, transform.translation, model_matrix, sp_,
+    render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, transform.translation, model_matrix, *sp_,
                              dinfo, water_material, registry, SET_NORMALMATRIX);
   };
 
-  render_water_common(sp_, rstate, ds, lm, ft, fn);
+  render_water_common(*sp_, rstate, ds, lm, ft, fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -241,10 +238,10 @@ AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, Viewport co
                                              ScreenSize const& screen_size,
                                              ShaderProgram& sp, TextureInfo& diffuse,
                                              TextureInfo& dudv, TextureInfo& normal)
-    : sp_(sp)
-    , diffuse_(diffuse)
-    , dudv_(dudv)
-    , normal_(normal)
+    : sp_(&sp)
+    , diffuse_(&diffuse)
+    , dudv_(&dudv)
+    , normal_(&normal)
     , reflection_(logger, vp, screen_size)
     , refraction_(logger, vp, screen_size)
 {
@@ -270,22 +267,22 @@ AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, Viewport co
 
   {
     ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
-    setup(logger, diffuse_, GL_TEXTURE0);
+    setup(logger, *diffuse_, GL_TEXTURE0);
     setup(logger, reflection_.tbo, GL_TEXTURE1);
     setup(logger, refraction_.tbo, GL_TEXTURE2);
-    setup(logger, dudv_, GL_TEXTURE3);
-    setup(logger, normal_, GL_TEXTURE4);
+    setup(logger, *dudv_, GL_TEXTURE3);
+    setup(logger, *normal_, GL_TEXTURE4);
     setup(logger, refraction_.dbo, GL_TEXTURE5);
   }
 
   // connect texture units to shader program
-  sp_.while_bound(logger, [&]() {
-    sp_.set_uniform_int1(logger, "u_diffuse_sampler", 0);
-    sp_.set_uniform_int1(logger, "u_reflect_sampler", 1);
-    sp_.set_uniform_int1(logger, "u_refract_sampler", 2);
-    sp_.set_uniform_int1(logger, "u_dudv_sampler", 3);
-    sp_.set_uniform_int1(logger, "u_normal_sampler", 4);
-    sp_.set_uniform_int1(logger, "u_depth_sampler", 5);
+  sp_->while_bound(logger, [&]() {
+    sp_->set_uniform_int1(logger, "u_diffuse_sampler", 0);
+    sp_->set_uniform_int1(logger, "u_reflect_sampler", 1);
+    sp_->set_uniform_int1(logger, "u_refract_sampler", 2);
+    sp_->set_uniform_int1(logger, "u_dudv_sampler", 3);
+    sp_->set_uniform_int1(logger, "u_normal_sampler", 4);
+    sp_->set_uniform_int1(logger, "u_depth_sampler", 5);
   });
 }
 
@@ -314,25 +311,25 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
     // Since I don't have a routine that allows the frustum to be changed at runtime if I don't
     // compute it every frame, for now.. compute these every frame
     {
-      sp_.set_uniform_float1(logger, "u_fresnel_reflect_power", wbuffer.fresnel_reflect_power);
-      sp_.set_uniform_float1(logger, "u_depth_divider", wbuffer.depth_divider);
+      sp_->set_uniform_float1(logger, "u_fresnel_reflect_power", wbuffer.fresnel_reflect_power);
+      sp_->set_uniform_float1(logger, "u_depth_divider", wbuffer.depth_divider);
 
       auto const& fr = fs.frustum();
-      sp_.set_uniform_float1(logger, "u_near", fr.near);
-      sp_.set_uniform_float1(logger, "u_far", fr.far);
+      sp_->set_uniform_float1(logger, "u_near", fr.near);
+      sp_->set_uniform_float1(logger, "u_far", fr.far);
     }
 
-    sp_.set_uniform_vec3(logger, "u_camera_position", fs.camera_world_position());
-    sp_.set_uniform_float1(logger, "u_wave_offset", winfo.wave_offset);
-    sp_.set_uniform_float1(logger, "u_wavestrength", winfo.wave_strength);
+    sp_->set_uniform_vec3(logger, "u_camera_position", fs.camera_world_position());
+    sp_->set_uniform_float1(logger, "u_wave_offset", winfo.wave_offset);
+    sp_->set_uniform_float1(logger, "u_wavestrength", winfo.wave_strength);
 
-    sp_.set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
-    sp_.set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
+    sp_->set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
+    sp_->set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
     glActiveTexture(GL_TEXTURE0);
     ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
 
-    BIND_UNTIL_END_OF_SCOPE(logger, diffuse_);
+    BIND_UNTIL_END_OF_SCOPE(logger, *diffuse_);
 
     glActiveTexture(GL_TEXTURE1);
     BIND_UNTIL_END_OF_SCOPE(logger, reflection_.tbo);
@@ -342,10 +339,10 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
     BIND_UNTIL_END_OF_SCOPE(logger, refraction_.tbo);
 
     glActiveTexture(GL_TEXTURE3);
-    BIND_UNTIL_END_OF_SCOPE(logger, dudv_);
+    BIND_UNTIL_END_OF_SCOPE(logger, *dudv_);
 
     glActiveTexture(GL_TEXTURE4);
-    BIND_UNTIL_END_OF_SCOPE(logger, normal_);
+    BIND_UNTIL_END_OF_SCOPE(logger, *normal_);
 
     glActiveTexture(GL_TEXTURE5);
     BIND_UNTIL_END_OF_SCOPE(logger, refraction_.dbo);
@@ -353,17 +350,16 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
     ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
     bool constexpr SET_NORMALMATRIX = false;
     auto const model_matrix         = transform.model_matrix();
-    render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, transform.translation, model_matrix, sp_,
+    render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, transform.translation, model_matrix, *sp_,
                              dinfo, water_material, registry, SET_NORMALMATRIX);
   };
-  render_water_common(sp_, rstate, ds, lm, ft, fn);
+  render_water_common(*sp_, rstate, ds, lm, ft, fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // SilhouetteWaterRenderer
 SilhouetteWaterRenderer::SilhouetteWaterRenderer(common::Logger& logger, ShaderProgram& sp)
-    : logger_(logger)
-    , sp_(sp)
+    : sp_(&sp)
 {
 }
 
@@ -398,9 +394,9 @@ SilhouetteWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelM
     auto& dinfo = draw_handles.lookup_entity(logger, winfo.eid);
 
     auto const model_matrix = tr.model_matrix();
-    BIND_UNTIL_END_OF_SCOPE(logger, sp_);
+    BIND_UNTIL_END_OF_SCOPE(logger, *sp_);
     BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
-    render::draw_3dblack_water(rstate, GL_TRIANGLE_STRIP, model_matrix, sp_, dinfo);
+    render::draw_3dblack_water(rstate, GL_TRIANGLE_STRIP, model_matrix, *sp_, dinfo);
   };
 
   LOG_TRACE("Rendering silhouette water");

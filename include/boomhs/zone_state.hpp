@@ -28,8 +28,7 @@ struct GfxState
   {
   }
 
-  NO_COPY(GfxState);
-  MOVE_DEFAULT(GfxState);
+  NOCOPY_MOVE_DEFAULT(GfxState);
 };
 
 // This lives here, and not in zone.hpp, to avoid circular include cyle.
@@ -45,8 +44,7 @@ struct ZoneState
       , registry(reg)
   {
   }
-  NO_COPY(ZoneState);
-  MOVE_DEFAULT(ZoneState);
+  NOCOPY_MOVE_DEFAULT(ZoneState);
 };
 // This lives here, and not in zone.hpp, to avoid circular include cyle.
 using ZoneStates = std::vector<ZoneState>;

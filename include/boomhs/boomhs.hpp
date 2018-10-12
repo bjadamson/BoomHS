@@ -20,8 +20,7 @@ class RNG;
 Result<GameState, std::string>
 init(Engine&, EngineState&, Camera&, RNG&);
 
-struct StaticRenderers;
 void
-game_loop(Engine&, GameState&, StaticRenderers&, RNG&, Camera&, FrameTime const&);
+game_loop(Engine&, GameState&, RNG&, Camera&, FrameTime const&);
 
 } // namespace boomhs

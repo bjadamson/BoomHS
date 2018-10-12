@@ -8,12 +8,20 @@
 #define DEFAULT_CONSTRUCTIBLE(CLASSNAME) CLASSNAME() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// Basic COPY/MOVE definitions
+#define COPY_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME const&) = default;
+#define COPY_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME const&) = default;
+
+#define MOVE_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME&&) = default;
+#define MOVE_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME&&) = default;
+
+#define MOVE_CONSTRUCTIBLE_NOEXCEPT(CLASSNAME) CLASSNAME(CLASSNAME&&) noexcept = default;
+#define MOVE_ASSIGNABLE_NOEXCEPT(CLASSNAME) CLASSNAME& operator=(CLASSNAME&&) noexcept = default;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // COPY
 #define NO_COPY_ASSIGN(CLASSNAME) CLASSNAME& operator=(CLASSNAME const&) = delete;
 #define NO_COPY_CONSTRUTIBLE(CLASSNAME) CLASSNAME(CLASSNAME const&) = delete;
-
-#define COPY_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME const&) = default;
-#define COPY_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME const&) = default;
 
 #define COPY_DEFAULT(CLASSNAME)                                                                    \
   COPY_CONSTRUCTIBLE(CLASSNAME)                                                                    \
@@ -42,9 +50,6 @@
   CLASSNAME(CLASSNAME&&)       = delete;                                                           \
   CLASSNAME(CLASSNAME const&&) = delete;
 
-#define MOVE_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME&&) = default;
-#define MOVE_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME&&) = default;
-
 #define MOVE_DEFAULT(CLASSNAME)                                                                    \
   MOVE_CONSTRUCTIBLE(CLASSNAME)                                                                    \
   MOVE_ASSIGNABLE(CLASSNAME)
@@ -71,6 +76,11 @@
 #define NO_COPY_OR_MOVE(CLASSNAME)                                                                 \
   NO_COPY(CLASSNAME)                                                                               \
   NO_MOVE(CLASSNAME)
+
+#define NOCOPY_MOVE_DEFAULT(CLASSNAME)                                                             \
+  MOVE_CONSTRUCTIBLE(CLASSNAME)                                                                    \
+  MOVE_ASSIGNABLE(CLASSNAME)                                                                       \
+  NO_COPY(CLASSNAME)
 
 // alias
 #define NO_MOVE_OR_COPY(CLASSNAME) NO_COPY_OR_MOVE(CLASSNAME)

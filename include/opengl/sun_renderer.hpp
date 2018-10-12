@@ -29,17 +29,16 @@ struct SunshaftBuffers
 
   SunshaftBuffers(common::Logger&, boomhs::Viewport const&, boomhs::ScreenSize const&);
 
-  NO_COPY(SunshaftBuffers);
-  MOVE_DEFAULT(SunshaftBuffers);
+  NOCOPY_MOVE_DEFAULT(SunshaftBuffers);
 };
 
 class SunshaftRenderer
 {
-  opengl::ShaderProgram& sp_;
+  opengl::ShaderProgram* sp_;
   SunshaftBuffers        buffers_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(SunshaftRenderer);
+  NOCOPY_MOVE_DEFAULT(SunshaftRenderer);
 
   explicit SunshaftRenderer(common::Logger&, boomhs::Viewport const&, boomhs::ScreenSize const&,
                             opengl::ShaderProgram&);

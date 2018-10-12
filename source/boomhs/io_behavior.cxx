@@ -138,11 +138,11 @@ PlayerPlayingGameBehavior::mousebutton_down(MouseButtonEvent&& mbe)
   auto const& ft    = mbe.frame_time;
   auto& player      = mbe.player;
 
-  auto& es     = state.engine_state;
+  auto& es     = state.engine_state();
   auto& logger = es.logger;
   auto& ms     = es.device_states.mouse.current;
 
-  auto& zs = state.level_manager.active();
+  auto& zs = state.level_manager().active();
   auto& uistate = es.ui_state.debug;
 
   if (ms.either_pressed()) {
@@ -186,7 +186,7 @@ PlayerPlayingGameBehavior::mousebutton_up(MouseButtonEvent&& mbe)
   auto const& ft    = mbe.frame_time;
   auto& player      = mbe.player;
 
-  auto& es = state.engine_state;
+  auto& es = state.engine_state();
   auto& ms = es.device_states.mouse.current;
 
   auto const mode = camera.mode();
@@ -205,10 +205,10 @@ PlayerPlayingGameBehavior::mouse_wheel(MouseWheelEvent &&mwe)
   auto& player   = mwe.player;
   auto const& ft = mwe.frame_time;
 
-  auto& logger = state.engine_state.logger;
+  auto& logger = state.engine_state().logger;
   LOG_TRACE("mouse wheel event detected.");
 
-  auto& lm    = state.level_manager;
+  auto& lm    = state.level_manager();
   auto& ldata = lm.active().level_data;
 
   auto& arcball = camera.arcball;
@@ -232,7 +232,7 @@ PlayerPlayingGameBehavior::mouse_motion(MouseMotionEvent&& mme)
   auto& player       = mme.player;
   auto const& ft     = mme.frame_time;
 
-  auto& es     = state.engine_state;
+  auto& es     = state.engine_state();
   auto& logger = es.logger;
   auto& ms     = es.device_states.mouse.current;
   auto& ui     = es.ui_state.debug;
@@ -259,7 +259,7 @@ PlayerPlayingGameBehavior::keyup(KeyEvent&& ke)
 {
   auto& state       = ke.game_state;
   auto const& event = ke.event;
-  auto& es          = state.engine_state;
+  auto& es          = state.engine_state();
   auto& logger      = es.logger;
 
   switch (event.key.keysym.sym) {
@@ -278,13 +278,13 @@ PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
   auto& player      = ke.player;
 
 
-  auto& es         = state.engine_state;
+  auto& es         = state.engine_state();
   auto& logger     = es.logger;
   auto& uistate    = es.ui_state;
   auto& ds         = es.device_states;
   auto& player_wo  = player.world_object();
 
-  auto& lm             = state.level_manager;
+  auto& lm             = state.level_manager();
   auto& active         = lm.active();
   auto& registry       = active.registry;
   auto& ldata          = active.level_data;
@@ -402,7 +402,7 @@ PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs &&mk)
   auto& player       = mk.player;
   auto const& ft     = mk.frame_time;
 
-  auto& es     = state.engine_state;
+  auto& es     = state.engine_state();
   auto& logger = es.logger;
   auto& ds     = es.device_states;
   auto& mss    = ds.mouse;
@@ -414,7 +414,7 @@ PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs &&mk)
   bool const both_yes_prev = ms_prev.both_pressed();
   bool const both_not_prev = !both_yes_prev;
 
-  auto& lm     = state.level_manager;
+  auto& lm     = state.level_manager();
   auto& registry  = lm.active().registry;
 
   auto const mode = camera.mode();
@@ -460,9 +460,9 @@ PlayerPlayingGameBehavior::process_keyboard_state(MouseAndKeyboardArgs &&mk)
   uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
   assert(keystate);
 
-  auto& es       = state.engine_state;
+  auto& es       = state.engine_state();
   auto& logger = es.logger;
-  auto& lm       = state.level_manager;
+  auto& lm       = state.level_manager();
   auto& zs       = lm.active();
   auto& ldata    = zs.level_data;
   auto& registry = zs.registry;
@@ -499,8 +499,8 @@ PlayerPlayingGameBehavior::process_controller_state(ControllerArgs&& ca)
     return;
   }
 
-  auto& es     = state.engine_state;
-  auto& lm     = state.level_manager;
+  auto& es     = state.engine_state();
+  auto& lm     = state.level_manager();
   auto& registry  = lm.active().registry;
 
   auto& logger = es.logger;
@@ -657,7 +657,7 @@ void
 TerminalOnlyBehavior::mousebutton_down(MouseButtonEvent&& args)
 {
   auto& state  = args.game_state;
-  auto& es     = state.engine_state;
+  auto& es     = state.engine_state();
   auto& logger = es.logger;
   LOG_ERROR("mousebutton down");
 }
@@ -666,7 +666,7 @@ void
 TerminalOnlyBehavior::mousebutton_up(MouseButtonEvent&& args)
 {
   auto& state  = args.game_state;
-  auto& es     = state.engine_state;
+  auto& es     = state.engine_state();
   auto& logger = es.logger;
   LOG_ERROR("mousebutton up");
 }
@@ -675,7 +675,7 @@ void
 TerminalOnlyBehavior::mouse_motion(MouseMotionEvent&& args)
 {
   auto& state  = args.game_state;
-  auto& es     = state.engine_state;
+  auto& es     = state.engine_state();
   auto& logger = es.logger;
   LOG_ERROR("mouse motion");
 }
@@ -684,7 +684,7 @@ void
 TerminalOnlyBehavior::mouse_wheel(MouseWheelEvent&& args)
 {
   auto& state  = args.game_state;
-  auto& es     = state.engine_state;
+  auto& es     = state.engine_state();
   auto& logger = es.logger;
   LOG_ERROR("mouse wheel");
 }
@@ -693,7 +693,7 @@ void
 TerminalOnlyBehavior::keydown(KeyEvent&& args)
 {
   auto& state  = args.game_state;
-  auto& es     = state.engine_state;
+  auto& es     = state.engine_state();
   auto& logger = es.logger;
   LOG_ERROR("keydown");
 }
@@ -702,7 +702,7 @@ void
 TerminalOnlyBehavior::keyup(KeyEvent&& args)
 {
   auto& state  = args.game_state;
-  auto& es     = state.engine_state;
+  auto& es     = state.engine_state();
   auto& logger = es.logger;
   LOG_ERROR("keyup");
 }
@@ -711,7 +711,7 @@ void
 TerminalOnlyBehavior::process_mouse_state(MouseAndKeyboardArgs&& args)
 {
   auto& state  = args.game_state;
-  auto& es     = state.engine_state;
+  auto& es     = state.engine_state();
   auto& logger = es.logger;
   LOG_ERROR("processing mouse state");
 }
@@ -720,7 +720,7 @@ void
 TerminalOnlyBehavior::process_keyboard_state(MouseAndKeyboardArgs&& args)
 {
   auto& state  = args.game_state;
-  auto& es     = state.engine_state;
+  auto& es     = state.engine_state();
   auto& logger = es.logger;
   LOG_ERROR("processing keyboard state");
 }
@@ -729,7 +729,7 @@ void
 TerminalOnlyBehavior::process_controller_state(ControllerArgs&& args)
 {
   auto& state  = args.game_state;
-  auto& es     = state.engine_state;
+  auto& es     = state.engine_state();
   auto& logger = es.logger;
   LOG_ERROR("processing controller state");
 }
