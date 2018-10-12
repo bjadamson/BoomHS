@@ -37,7 +37,7 @@ namespace
 {
 
 void
-draw_ortho_lhs(GameState& gs, RenderState& rstate, LevelManager& lm, StaticRenderers& srs, Camera& camera,
+draw_lhs(GameState& gs, RenderState& rstate, LevelManager& lm, StaticRenderers& srs, Camera& camera,
                RNG& rng, glm::ivec2 const& divide, DrawState& ds, FrameTime const& ft)
 {
   auto& fs = rstate.fs;
@@ -66,7 +66,7 @@ draw_ortho_lhs(GameState& gs, RenderState& rstate, LevelManager& lm, StaticRende
 }
 
 void
-draw_ortho_rhs(RenderState& rstate, LevelManager& lm, StaticRenderers& srs, Camera& camera,
+draw_rhs(RenderState& rstate, LevelManager& lm, StaticRenderers& srs, Camera& camera,
               RNG& rng, int const cutoff_point, DrawState& ds, FrameTime const& ft)
 {
   auto& es = rstate.fs.es;
@@ -96,8 +96,8 @@ OrthoRenderer::draw_scene(GameState& gs, RenderState& rstate, LevelManager& lm, 
   int const divide_width  = frustum.width() / 3;
   int const divide_height = frustum.height() / 2;
   auto const divide = IVEC2(divide_width, divide_height);
-  draw_ortho_lhs(gs, rstate, lm, srs, camera, rng, divide, ds, ft);
-  draw_ortho_rhs(rstate, lm, srs, camera, rng, divide.x, ds, ft);
+  draw_lhs(gs, rstate, lm, srs, camera, rng, divide, ds, ft);
+  draw_rhs(rstate, lm, srs, camera, rng, divide.x, ds, ft);
 }
 
 } // namespace boomhs
