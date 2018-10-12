@@ -206,6 +206,7 @@ public:
   auto mode() const { return mode_; }
   void set_mode(CameraMode);
   void next_mode();
+
   bool is_firstperson() const { return CameraMode::FPS == mode(); }
   bool is_thirdperson() const { return CameraMode::ThirdPerson == mode(); }
 

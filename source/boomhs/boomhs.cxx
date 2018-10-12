@@ -640,7 +640,7 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
 }
 
 void
-draw_everything(FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
+draw_everything(GameState& gs, FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
             WaterAudioSystem& water_audio, StaticRenderers& static_renderers, DrawState& ds,
             FrameTime const& ft)
 {
@@ -652,7 +652,9 @@ draw_everything(FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
     auto const mode = camera.mode();
     if (CameraMode::FPS == mode || CameraMode::ThirdPerson == mode) {
       auto const& fr = es.frustum;
-      render::set_viewport_and_scissor(Viewport::from_frustum(fr), fr.height());
+      auto const vp  = Viewport::from_frustum(fr);
+      render::set_viewport_and_scissor(vp, fr.height());
+
       PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);
 
       auto& io = es.imgui;
@@ -670,7 +672,7 @@ draw_everything(FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
       }
     }
     else if (CameraMode::Ortho == mode) {
-      OrthoRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);
+      OrthoRenderer::draw_scene(gs, rstate, lm, ds, camera, rng, static_renderers, ft);
     }
     else {
       std::abort();
@@ -679,11 +681,11 @@ draw_everything(FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
 }
 
 void
-game_loop(Engine& engine, GameState& state, RNG& rng, Camera& camera, FrameTime const& ft)
+game_loop(Engine& engine, GameState& game_state, RNG& rng, Camera& camera, FrameTime const& ft)
 {
-  auto& es        = state.engine_state();
-  auto& lm        = state.level_manager();
-  auto& srs       = state.static_renderers();
+  auto& es        = game_state.engine_state();
+  auto& lm        = game_state.level_manager();
+  auto& srs       = game_state.static_renderers();
 
   auto& logger    = es.logger;
   auto& zs        = lm.active();
@@ -733,12 +735,12 @@ game_loop(Engine& engine, GameState& state, RNG& rng, Camera& camera, FrameTime 
     // Disable keyboard shortcuts
     io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
 
-    IO_SDL::read_devices(SDLReadDevicesArgs{state, engine.controllers, camera, ft});
+    IO_SDL::read_devices(SDLReadDevicesArgs{game_state, engine.controllers, camera, ft});
     SDL_SetCursor(es.device_states.cursors.active());
 
     auto fs         = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), fr);
     update_everything(es, lm, rng, fs, camera, srs, water_audio, engine.window, ft);
-    draw_everything(fs, lm, rng, camera, water_audio, srs, ds, ft);
+    draw_everything(game_state, fs, lm, rng, camera, water_audio, srs, ds, ft);
   }
 }
 

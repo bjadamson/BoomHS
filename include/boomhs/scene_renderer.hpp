@@ -56,6 +56,6 @@ struct StaticRenderers
 };
 
 StaticRenderers
-make_static_renderers(EngineState&, ZoneState&);
+make_static_renderers(EngineState&, ZoneState&, Viewport const&);
 
 } // namespace boomhs

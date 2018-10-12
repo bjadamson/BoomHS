@@ -28,6 +28,11 @@ struct ScreenSize
   {
     return ScreenSize{fr.width(), fr.height()};
   }
+
+  auto to_string() const
+  {
+    return fmt::sprintf("{%i, %i}", width, height);
+  }
 };
 
 using ScreenCoords = glm::ivec2;

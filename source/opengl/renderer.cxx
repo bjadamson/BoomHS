@@ -165,6 +165,8 @@ init(common::Logger& logger)
   glDisable(GL_BLEND);
   glDisable(GL_CULL_FACE);
 
+  glEnable(GL_SCISSOR_TEST);
+
   enable_depth_tests();
 
   glEnable(GL_DEBUG_OUTPUT);

@@ -149,7 +149,8 @@ start(common::Logger& logger, Engine& engine)
 
   {
     auto& zs = gs.level_manager().active();
-    auto srs = make_static_renderers(es, zs);
+    auto const vp = Viewport::from_frustum(frustum);
+    auto srs = make_static_renderers(es, zs, vp);
     gs.set_renderers(MOVE(srs));
   }
 

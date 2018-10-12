@@ -279,6 +279,8 @@ PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
 
 
   auto& es         = state.engine_state();
+  auto& sr         = state.static_renderers();
+
   auto& logger     = es.logger;
   auto& uistate    = es.ui_state;
   auto& ds         = es.device_states;
@@ -317,9 +319,9 @@ PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
   case SDLK_F11:
     uistate.draw_debug_ui ^= true;
     break;
-  case SDLK_t:
+  case SDLK_t: {
     camera.next_mode();
-    break;
+  } break;
   case SDLK_TAB: {
     uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
     CycleDirection const dir = keystate[SDL_SCANCODE_LSHIFT]

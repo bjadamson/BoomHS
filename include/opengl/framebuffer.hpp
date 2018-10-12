@@ -19,10 +19,8 @@ struct FBInfo
 {
   DebugBoundCheck     debug_check;
   GLuint              id;
-  boomhs::Viewport    view_port;
-  boomhs::ScreenSize  screen_size;
 
-  FBInfo(boomhs::Viewport const&, boomhs::ScreenSize const&);
+  FBInfo();
   NO_COPY(FBInfo);
   MOVE_DEFAULT(FBInfo);
 
@@ -43,9 +41,9 @@ struct FBInfo
 using FrameBuffer = common::AutoResource<FBInfo>;
 
 inline auto
-make_fbo(common::Logger& logger, boomhs::Viewport const& vp, boomhs::ScreenSize const& ss)
+make_fbo(common::Logger& logger)
 {
-  FBInfo fb{vp, ss};
+  FBInfo fb;
   fb.while_bound(logger, []() { glDrawBuffer(GL_COLOR_ATTACHMENT0); });
   return fb;
 }

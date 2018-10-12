@@ -31,19 +31,18 @@ setup(common::Logger& logger, TextureInfo& ti, GLint const v)
 namespace opengl
 {
 
-SunshaftBuffers::SunshaftBuffers(common::Logger& logger, Viewport const& vp, ScreenSize const& ss)
-    : fbo(FrameBuffer{opengl::make_fbo(logger, vp, ss)})
+SunshaftBuffers::SunshaftBuffers(common::Logger& logger)
+    : fbo(FrameBuffer{opengl::make_fbo(logger)})
     , rbo(RBInfo{})
 {
 }
 
-SunshaftRenderer::SunshaftRenderer(common::Logger& logger, Viewport const& vp, ScreenSize const& ss,
+SunshaftRenderer::SunshaftRenderer(common::Logger& logger, Viewport const& view_port,
                                    ShaderProgram& sp)
-    : buffers_(SunshaftBuffers{logger, vp, ss})
+    : buffers_(SunshaftBuffers{logger})
     , sp_(&sp)
 {
-  auto const& dim = buffers_.fbo->view_port;
-  auto const w = dim.width(), h = dim.height();
+  auto const w = view_port.width(), h = view_port.height();
 
   auto& fbo = buffers_.fbo;
   buffers_.tbo = fbo->attach_color_buffer(logger, w, h, GL_TEXTURE1);

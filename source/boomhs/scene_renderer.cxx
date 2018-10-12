@@ -148,7 +148,7 @@ StaticRenderers::render(LevelManager&lm, RenderState& rstate, Camera& camera, RN
 }
 
 StaticRenderers
-make_static_renderers(EngineState& es, ZoneState& zs)
+make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
 {
   auto const make_basic_water_renderer = [](common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
     auto& diff   = *ttable.find("water-diffuse");
@@ -164,12 +164,8 @@ make_static_renderers(EngineState& es, ZoneState& zs)
     return MediumWaterRenderer{logger, diff, normal, sp};
   };
 
-  auto const       make_advanced_water_renderer = [](EngineState& es, ZoneState& zs) {
+  auto const       make_advanced_water_renderer = [&](EngineState& es, ZoneState& zs) {
     auto& logger   = es.logger;
-    auto const& fr = es.frustum;
-
-    auto const screen_size = ScreenSize::from_frustum(fr);
-    auto const viewport    = Viewport::from_frustum(fr);
 
     auto& gfx_state = zs.gfx_state;
     auto& ttable    = gfx_state.texture_table;
@@ -178,7 +174,7 @@ make_static_renderers(EngineState& es, ZoneState& zs)
     auto& dudv   = *ttable.find("water-dudv");
     auto& normal = *ttable.find("water-normal");
     auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Advanced, sps);
-    return AdvancedWaterRenderer{logger, viewport, screen_size, sp, ti, dudv, normal};
+    return AdvancedWaterRenderer{logger, viewport, sp, ti, dudv, normal};
   };
 
   auto const make_black_water_renderer = [](EngineState& es, ZoneState& zs) {
@@ -194,16 +190,13 @@ make_static_renderers(EngineState& es, ZoneState& zs)
     return SilhouetteTerrainRenderer{sp};
   };
 
-  auto const make_sunshaft_renderer = [](EngineState& es, ZoneState& zs) {
+  auto const make_sunshaft_renderer = [&](EngineState& es, ZoneState& zs) {
     auto& logger   = es.logger;
     auto& gfx_state = zs.gfx_state;
     auto& sps       = gfx_state.sps;
     auto& sunshaft_sp = sps.ref_sp("sunshaft");
 
-    auto const& fr         = es.frustum;
-    auto const screen_size = ScreenSize::from_frustum(fr);
-    auto const viewport    = Viewport::from_frustum(fr);
-    return SunshaftRenderer{logger, viewport, screen_size, sunshaft_sp};
+    return SunshaftRenderer{logger, viewport, sunshaft_sp};
   };
 
   auto const make_skybox_renderer = [](common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {

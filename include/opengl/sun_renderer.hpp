@@ -27,7 +27,7 @@ struct SunshaftBuffers
   opengl::TextureInfo  tbo;
   opengl::RenderBuffer rbo;
 
-  SunshaftBuffers(common::Logger&, boomhs::Viewport const&, boomhs::ScreenSize const&);
+  SunshaftBuffers(common::Logger&);
 
   NOCOPY_MOVE_DEFAULT(SunshaftBuffers);
 };
@@ -40,8 +40,7 @@ class SunshaftRenderer
 public:
   NOCOPY_MOVE_DEFAULT(SunshaftRenderer);
 
-  explicit SunshaftRenderer(common::Logger&, boomhs::Viewport const&, boomhs::ScreenSize const&,
-                            opengl::ShaderProgram&);
+  explicit SunshaftRenderer(common::Logger&, boomhs::Viewport const&, opengl::ShaderProgram&);
 
   auto& texture_info() { return buffers_.tbo; }
 

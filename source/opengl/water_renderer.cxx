@@ -219,35 +219,33 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ReflectionBuffers
-ReflectionBuffers::ReflectionBuffers(common::Logger& logger, Viewport const& vp, ScreenSize const& ss)
-    : fbo(FrameBuffer{opengl::make_fbo(logger, vp, ss)})
+ReflectionBuffers::ReflectionBuffers(common::Logger& logger)
+    : fbo(FrameBuffer{opengl::make_fbo(logger)})
     , rbo(RBInfo{})
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // RefractionBuffers
-RefractionBuffers::RefractionBuffers(common::Logger& logger, Viewport const& vp, ScreenSize const& ss)
-    : fbo(FrameBuffer{opengl::make_fbo(logger, vp, ss)})
+RefractionBuffers::RefractionBuffers(common::Logger& logger)
+    : fbo(FrameBuffer{opengl::make_fbo(logger)})
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // AdvancedWaterRenderer
-AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, Viewport const& vp,
-                                             ScreenSize const& screen_size,
+AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, Viewport const& view_port,
                                              ShaderProgram& sp, TextureInfo& diffuse,
                                              TextureInfo& dudv, TextureInfo& normal)
     : sp_(&sp)
     , diffuse_(&diffuse)
     , dudv_(&dudv)
     , normal_(&normal)
-    , reflection_(logger, vp, screen_size)
-    , refraction_(logger, vp, screen_size)
+    , reflection_(logger)
+    , refraction_(logger)
 {
   {
-    auto const dim = reflection_.fbo->view_port;
-    auto const w = dim.width(), h = dim.height();
+    auto const w = view_port.width(), h = view_port.height();
 
     auto& fbo = reflection_.fbo;
     reflection_.tbo = fbo->attach_color_buffer(logger, w, h, GL_TEXTURE1);
@@ -255,8 +253,7 @@ AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, Viewport co
   }
 
   {
-    auto const dim = refraction_.fbo->view_port;
-    auto const w = dim.width(), h = dim.height();
+    auto const w = view_port.width(), h = view_port.height();
     {
       GLenum const tu = GL_TEXTURE2;
       auto& fbo = refraction_.fbo;
