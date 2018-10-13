@@ -50,7 +50,7 @@ MaterialTable::find(std::string const& material_name) const
 }
 #undef FIND_IMPL
 
-std::vector<EntityID>
+EntityArray
 find_materials(EntityRegistry& registry)
 {
   return find_all_entities_with_component<Material>(registry);

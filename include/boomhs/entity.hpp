@@ -4,11 +4,15 @@
 #include <extlibs/entt.hpp>
 #include <extlibs/glm.hpp>
 
+#include <vector>
+
 namespace boomhs
 {
 
 using EntityID                    = uint32_t;
 static auto constexpr EntityIDMAX = UINT32_MAX;
+
+using EntityArray = std::vector<EntityID>;
 
 class EntityRegistry
 {
@@ -106,8 +110,8 @@ template <typename... C>
 auto
 find_all_entities_with_component(EntityRegistry& registry)
 {
-  std::vector<EntityID> entities;
-  auto const            view = registry.view<C...>();
+  EntityArray entities;
+  auto const view = registry.view<C...>();
   for (auto const e : view) {
     entities.emplace_back(e);
   }
@@ -117,8 +121,8 @@ find_all_entities_with_component(EntityRegistry& registry)
 inline auto
 all_nearby_entities(glm::vec3 const& pos, float const max_distance, EntityRegistry& registry)
 {
-  std::vector<EntityID> entities;
-  auto const            view = registry.view<Transform>();
+  EntityArray entities;
+  auto const view = registry.view<Transform>();
   for (auto const e : view) {
     auto& transform = registry.get<Transform>(e);
     if (glm::distance(transform.translation, pos) <= max_distance) {

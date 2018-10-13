@@ -9,7 +9,7 @@ namespace
 
 bool
 should_change_offset(std::optional<SelectedTarget> const& selected,
-                     std::vector<EntityID> const&         targets)
+                     EntityArray const&         targets)
 {
   return selected && (targets.size() > 1);
 }

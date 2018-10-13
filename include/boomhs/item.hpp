@@ -71,7 +71,7 @@ public:
 inline auto
 find_items(EntityRegistry& registry)
 {
-  std::vector<EntityID> items;
+  EntityArray items;
   auto                  view = registry.view<Item>();
   for (auto const eid : view) {
     items.emplace_back(eid);

@@ -105,7 +105,7 @@ draw_player_inventory(common::Logger& logger, Player& player, EntityRegistry& re
   };
 
   auto const draw_inventory = [&]() {
-    imgui_cxx::draw_grid(draw_icon);
+    imgui_cxx::draw_grid(8, 5, draw_icon);
   };
 
   auto constexpr flags = (0 | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize |

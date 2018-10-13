@@ -62,27 +62,6 @@ with_combo(FN const& fn, Args&&... args)
   }
 }
 
-template <typename FN, typename ...Args>
-auto
-draw_grid(FN const& fn, Args&&... args)
-{
-  int constexpr TOTAL        = 40;
-  int constexpr ROW_COUNT    = 8;
-  int constexpr COLUMN_COUNT = TOTAL / ROW_COUNT;
-
-  assert(0 == (TOTAL % ROW_COUNT));
-  assert(0 == (TOTAL % COLUMN_COUNT));
-
-  FOR(i, TOTAL)
-  {
-    if (i > 0 && ((i % ROW_COUNT) == 0)) {
-      ImGui::NewLine();
-    }
-    fn(i, FORWARD(args));
-    ImGui::SameLine();
-  }
-}
-
 inline auto
 input_string(char const* text, std::string& val)
 {
@@ -147,6 +126,30 @@ with_stylevars(FN const& fn, Args&&... args)
   ImGui::PushStyleVar(FORWARD(args));
   fn();
   ImGui::PopStyleVar();
+}
+
+struct GridInfo
+{
+  // The number of rows/columns in the grid.
+  int row_count, col_count;
+};
+
+template <typename FN, typename ...Args>
+void
+draw_grid(int const row_count, int const col_count, FN const& fn, Args&&... args)
+{
+  auto const total = row_count * col_count;
+  assert(0 == (total % row_count));
+  assert(0 == (total % col_count));
+
+  FORI(i, total)
+  {
+    if (i > 0 && ((i % row_count) == 0)) {
+      ImGui::NewLine();
+    }
+    fn(i, FORWARD(args));
+    ImGui::SameLine();
+  }
 }
 
 template <typename FN, typename... Args>

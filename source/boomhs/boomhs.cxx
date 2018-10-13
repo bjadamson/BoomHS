@@ -224,7 +224,7 @@ update_orbital_bodies(EngineState& es, LevelData& ldata, glm::mat4 const& view_m
 inline auto
 find_torches(EntityRegistry& registry)
 {
-  std::vector<EntityID> torches;
+  EntityArray torches;
   auto                  view = registry.view<Torch>();
   for (auto const eid : view) {
     assert(registry.has<Transform>(eid));
