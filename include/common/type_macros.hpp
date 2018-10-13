@@ -109,9 +109,13 @@
     return CONTAINER[i];                                                                           \
   }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Define common container-like forwarding functions.
 #define COMMON_WRAPPING_CONTAINER_FNS(CONTAINER)                                                   \
   INDEX_OPERATOR_FNS(CONTAINER)                                                                    \
   BEGIN_END_FORWARD_FNS(CONTAINER)                                                                 \
+                                                                                                   \
+using VALUE_T = typename decltype(CONTAINER)::value_type;                                          \
                                                                                                    \
   auto& back()                                                                                     \
   {                                                                                                \
@@ -134,25 +138,25 @@
     return CONTAINER.front();                                                                      \
   }                                                                                                \
   auto empty() const { return CONTAINER.empty(); }                                                 \
+  auto size() const { return CONTAINER.size(); }                                                   \
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Define common vector-like forwarding functions.
+#define DEFINE_VECTOR_LIKE_WRAPPER_FNS(VEC_LIKE_CONTAINER)                                         \
+  COMMON_WRAPPING_CONTAINER_FNS(VEC_LIKE_CONTAINER);                                               \
                                                                                                    \
-  auto size() const { return CONTAINER.size(); }
-
-// TODO: document
-// BEGIN Function-defining macros
-#define DEFINE_WRAPPER_FUNCTION(FN_NAME, FUNCTION_TO_WRAP)                                         \
-  template <typename... P>                                                                         \
-  decltype(auto) FN_NAME(P&&... p)                                                                 \
-  {                                                                                                \
-    return FUNCTION_TO_WRAP(FORWARD(p));                                                           \
-  }
-
-#define DEFINE_STATIC_WRAPPER_FUNCTION(FN_NAME, FUNCTION_TO_WRAP)                                  \
-  template <typename... P>                                                                         \
-  static decltype(auto) FN_NAME(P&&... p)                                                          \
-  {                                                                                                \
-    return FUNCTION_TO_WRAP(FORWARD(p));                                                           \
-  }
-// END Function-defining macros
+  auto clear() { VEC_LIKE_CONTAINER.clear(); }                                                     \
+                                                                                                   \
+  void push_back(VALUE_T const& item) {                                                            \
+    VEC_LIKE_CONTAINER.push_back(item);                                                            \
+  }                                                                                                \
+  void push_back(VALUE_T&& item) {                                                                 \
+    VEC_LIKE_CONTAINER.push_back(MOVE(item));                                                      \
+  }                                                                                                \
+  template<class... Args>                                                                          \
+  void emplace_back(Args&&... args) {                                                              \
+    VEC_LIKE_CONTAINER.emplace_back(FORWARD(args));                                                \
+  }                                                                                                \
 
 namespace common
 {

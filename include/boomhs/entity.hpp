@@ -12,7 +12,12 @@ namespace boomhs
 using EntityID                    = uint32_t;
 static auto constexpr EntityIDMAX = UINT32_MAX;
 
-using EntityArray = std::vector<EntityID>;
+class EntityArray
+{
+  std::vector<EntityID> data_;
+public:
+  DEFINE_VECTOR_LIKE_WRAPPER_FNS(data_);
+};
 
 class EntityRegistry
 {
