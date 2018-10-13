@@ -237,6 +237,7 @@ RectBuilder::RectBuilder(RectFloat const& r)
 RectBuffer
 RectBuilder::build() const
 {
+  // clang-format off
   bool const uniform_only = (uniform_color && (!color_array   && !uvs));
   bool const color_only   = (color_array   && (!uniform_color && !uvs));
   bool const uvs_only     = (uvs           && (!color_array   && !uniform_color));
@@ -244,8 +245,8 @@ RectBuilder::build() const
   bool const none         = !uniform_only && !color_only && !uvs;
   bool const exactly_one  = uniform_only || color_only  || uvs_only;
   assert(exactly_one || none);
+  // clang-format on
 
-  //assert(colors_or_uvs_strictly);
   return make_rectangle(*this);
 }
 

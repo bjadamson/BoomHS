@@ -105,21 +105,7 @@ draw_player_inventory(common::Logger& logger, Player& player, EntityRegistry& re
   };
 
   auto const draw_inventory = [&]() {
-    int constexpr TOTAL        = 40;
-    int constexpr ROW_COUNT    = 8;
-    int constexpr COLUMN_COUNT = TOTAL / ROW_COUNT;
-
-    assert(0 == (TOTAL % ROW_COUNT));
-    assert(0 == (TOTAL % COLUMN_COUNT));
-
-    FOR(i, TOTAL)
-    {
-      if (i > 0 && ((i % ROW_COUNT) == 0)) {
-        ImGui::NewLine();
-      }
-      draw_icon(i);
-      ImGui::SameLine();
-    }
+    imgui_cxx::draw_grid(draw_icon);
   };
 
   auto constexpr flags = (0 | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize |

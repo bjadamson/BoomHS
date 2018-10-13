@@ -10,6 +10,8 @@
 #include <boomhs/state.hpp>
 #include <boomhs/ui_debug.hpp>
 
+#include <opengl/factory.hpp>
+#include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
 
 #include <common/log.hpp>
@@ -45,24 +47,82 @@ draw_lhs(GameState& gs, RenderState& rstate, LevelManager& lm, StaticRenderers& 
   auto& es = fs.es;
   auto& logger   = es.logger;
 
-  auto& io = es.imgui;
+  auto& gfx_state = zs.gfx_state;
+  auto& sps       = zs.gfx_state.sps;
+  auto& sp        = sps.ref_sp("2dcolor");
 
   auto const& frustum = es.frustum;
   auto const vp = Viewport::from_frustum(frustum);
   Viewport const LHS{
     vp.left_top(), vp.half_width(), vp.height()
   };
-  float const right  = LHS.right();
-  float const bottom = LHS.bottom();
-  io.DisplaySize = ImVec2{right, bottom};
-
-  auto& ui_state = es.ui_state;
-  if (ui_state.draw_debug_ui) {
-    ui_debug::draw("Ortho", WINDOW_FLAGS, es, lm, camera, ft);
-  }
 
   render::set_viewport_and_scissor(LHS, frustum.height());
-  PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, srs, ft);
+
+  auto top_left    = vp.rect_float();
+  auto bottom_left = top_left;
+
+  auto const midpoint = top_left.bottom / 2;
+  top_left.bottom = midpoint;
+  bottom_left.top = midpoint;
+
+  {
+    auto buffer     = OF::RectBuilder{top_left}.build();
+    DrawInfo dinfo = gpu::copy_rectangle(logger, sp.va(), buffer);
+    BIND_UNTIL_END_OF_SCOPE(logger, sp);
+
+    auto constexpr NEAR   = 1.0f;
+    auto constexpr FAR    = -1.0f;
+
+    auto const& f   = es.frustum;
+    auto const pm = glm::ortho(f.left_float(), f.right_float(), f.bottom_float(), f.top_float(), NEAR, FAR);
+    sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
+
+    auto color = LOC::SANDY_BROWN;
+    sp.set_uniform_color(logger, "u_color", color);
+
+    BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
+    render::draw_2d(rstate, GL_TRIANGLES, sp, dinfo);
+  }
+
+  auto const right_bottom = LHS.right_bottom();
+  auto const left_top     = LHS.left_top();
+
+
+  auto const top_left_imgui    = ImVec2{top_left.left,    top_left.top};
+  auto const bottom_left_imgui = ImVec2{bottom_left.left, bottom_left.top};
+
+  auto const lhs_rect = LHS.rect_float();
+  ImGui::SetNextWindowPos(bottom_left_imgui);
+  ImGui::SetNextWindowSize(top_left_imgui);
+
+  {
+    auto const& ttable    = gfx_state.texture_table;
+    assert(ttable.find("moon"));
+    auto const& moon_ti = *ttable.find("moon");
+
+    auto const draw_button = [&](int const i, TextureInfo const& ti) {
+      ImTextureID im_texid = reinterpret_cast<void*>(ti.id);
+
+      imgui_cxx::ImageButtonBuilder image_builder;
+      image_builder.frame_padding = 0;
+      image_builder.bg_color      = ImColor{255, 255, 255, 255};
+      image_builder.tint_color    = ImColor{255, 255, 255, 128};
+
+      auto const size = ImVec2(32, 32);
+      image_builder.build(im_texid, size);
+    };
+
+    auto const draw_selected_unit_grid = [&]() {
+      imgui_cxx::draw_grid(draw_button, moon_ti);
+    };
+    auto constexpr flags = (0 | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize |
+                            ImGuiWindowFlags_NoTitleBar);
+    auto const draw_window = [&]() {
+      imgui_cxx::with_window(draw_selected_unit_grid, "Selected Units", nullptr, flags);
+    };
+    imgui_cxx::with_stylevars(draw_window, ImGuiStyleVar_ChildRounding, 5.0f);
+  }
 }
 
 void

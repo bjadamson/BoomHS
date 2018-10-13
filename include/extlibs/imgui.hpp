@@ -62,6 +62,27 @@ with_combo(FN const& fn, Args&&... args)
   }
 }
 
+template <typename FN, typename ...Args>
+auto
+draw_grid(FN const& fn, Args&&... args)
+{
+  int constexpr TOTAL        = 40;
+  int constexpr ROW_COUNT    = 8;
+  int constexpr COLUMN_COUNT = TOTAL / ROW_COUNT;
+
+  assert(0 == (TOTAL % ROW_COUNT));
+  assert(0 == (TOTAL % COLUMN_COUNT));
+
+  FOR(i, TOTAL)
+  {
+    if (i > 0 && ((i % ROW_COUNT) == 0)) {
+      ImGui::NewLine();
+    }
+    fn(i, FORWARD(args));
+    ImGui::SameLine();
+  }
+}
+
 inline auto
 input_string(char const* text, std::string& val)
 {
