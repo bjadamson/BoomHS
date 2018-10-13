@@ -128,7 +128,7 @@ private:
   boomhs::ColorArray<NUM_VERTICES> data_;
 
 public:
-  COMMON_WRAPPING_CONTAINER_FNS(data_);
+  DEFINE_ARRAY_LIKE_WRAPPER_FNS(data_);
 };
 
 struct RectBuilder

@@ -36,7 +36,7 @@ public:
   bool contains(char const*) const;
   bool contains(std::string const&) const;
 
-  COMMON_WRAPPING_CONTAINER_FNS(values_);
+  DEFINE_ARRAY_LIKE_WRAPPER_FNS(values_);
 };
 
 struct Item

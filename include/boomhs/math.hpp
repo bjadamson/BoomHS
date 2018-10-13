@@ -98,7 +98,7 @@ struct RectT
     {
     }
 
-    COMMON_WRAPPING_CONTAINER_FNS(vertices);
+    DEFINE_ARRAY_LIKE_WRAPPER_FNS(vertices);
 
     auto to_string() const
     {

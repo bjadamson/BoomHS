@@ -111,7 +111,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Define common container-like forwarding functions.
-#define COMMON_WRAPPING_CONTAINER_FNS(CONTAINER)                                                   \
+#define DEFINE_ARRAY_LIKE_WRAPPER_FNS(CONTAINER)                                                   \
   INDEX_OPERATOR_FNS(CONTAINER)                                                                    \
   BEGIN_END_FORWARD_FNS(CONTAINER)                                                                 \
                                                                                                    \
@@ -143,7 +143,7 @@ using VALUE_T = typename decltype(CONTAINER)::value_type;                       
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Define common vector-like forwarding functions.
 #define DEFINE_VECTOR_LIKE_WRAPPER_FNS(VEC_LIKE_CONTAINER)                                         \
-  COMMON_WRAPPING_CONTAINER_FNS(VEC_LIKE_CONTAINER);                                               \
+  DEFINE_ARRAY_LIKE_WRAPPER_FNS(VEC_LIKE_CONTAINER);                                               \
                                                                                                    \
   auto clear() { VEC_LIKE_CONTAINER.clear(); }                                                     \
                                                                                                    \
