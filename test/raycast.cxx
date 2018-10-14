@@ -685,7 +685,7 @@ main(int argc, char **argv)
     return EXIT_FAILURE;
   };
 
-  auto gl_sdl = TRY_OR_RETURN(
+  auto gl_sdl = TRY_OR(
       GlSdl::make_default(logger, "Multiple Viewport Raycast", FULLSCREEN, 1024, 768),
       on_error);
 
