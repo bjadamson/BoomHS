@@ -64,13 +64,11 @@ copy_synchronous(common::Logger& logger, VertexAttribute const& va, DrawInfo &di
 
 } // namespace detail
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Lines
-DrawInfo
-copy_line(common::Logger&, VertexAttribute const&, LineVertices const&);
-
 DrawInfo
 copy(common::Logger &, VertexAttribute const&, boomhs::VertexFactory::ArrowVertices const&);
+
+DrawInfo
+copy(common::Logger &, VertexAttribute const&, boomhs::VertexFactory::LineVertices const&);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Cubes

@@ -87,4 +87,17 @@ VertexFactory::build(ArrowTemplate const& arrow)
 #undef P2
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Line
+VertexFactory::LineVertices
+VertexFactory::build(LineTemplate const& line)
+{
+  auto const& start = line.start;
+  auto const& end   = line.end;
+
+  return common::make_array<float>(
+      start.x, start.y, start.z,
+      end.x,   end.y,   end.z);
+}
+
 } // namespace boomhs

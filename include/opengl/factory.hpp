@@ -17,21 +17,6 @@ struct Obj;
 namespace opengl
 {
 
-struct LineCreateParams
-{
-  glm::vec3 start;
-  glm::vec3 end;
-};
-
-struct LineFactory
-{
-  LineFactory() = delete;
-
-  static LineVertices create_vertices(LineCreateParams const&);
-
-  static constexpr std::array<GLuint, 2> INDICES = {{0, 1}};
-};
-
 struct RectangleFactory
 {
   RectangleFactory() = delete;

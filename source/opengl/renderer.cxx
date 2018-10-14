@@ -393,9 +393,9 @@ draw_line(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& end, Col
   auto& sps = zs.gfx_state.sps;
   auto& sp  = sps.ref_sp("line");
 
-  auto const  lcp   = LineCreateParams{start, end};
-  auto const  line_v = LineFactory::create_vertices(lcp);
-  auto        dinfo = OG::copy_line(logger, sp.va(), line_v);
+  LineTemplate const lt{start, end};
+  auto const  line_v = VertexFactory::build(lt);
+  auto        dinfo  = OG::copy(logger, sp.va(), line_v);
 
   sp.while_bound(logger, [&]() {
     sp.set_uniform_color(logger, "u_linecolor", color);

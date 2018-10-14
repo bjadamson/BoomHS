@@ -7,9 +7,6 @@
 namespace opengl
 {
 
-using LineVertices = std::array<float, 6>;
-using LineIndices  = std::array<float, 2>;
-
 using CubeVertices = std::array<float, 24>;
 using CubeIndices  = std::array<GLuint, 36>;
 

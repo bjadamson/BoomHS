@@ -87,20 +87,15 @@ namespace opengl::gpu
 {
 
 DrawInfo
-copy(common::Logger &logger, VertexAttribute const& va,
-    VertexFactory::ArrowVertices const& vertices)
+copy(common::Logger &logger, VertexAttribute const& va, VertexFactory::ArrowVertices const& verts)
 {
-  return make_drawinfo(logger, va, vertices, VertexFactory::ARROW_INDICES);
+  return make_drawinfo(logger, va, verts, VertexFactory::ARROW_INDICES);
 }
 
 DrawInfo
-copy_line(common::Logger &logger, VertexAttribute const& va,
-    LineVertices const& vertices)
+copy(common::Logger &logger, VertexAttribute const& va, VertexFactory::LineVertices const& verts)
 {
-  auto const& INDICES = LineFactory::INDICES;
-  DrawInfo dinfo{vertices.size(), INDICES.size()};
-  copy_synchronous(logger, va, dinfo, vertices, INDICES);
-  return dinfo;
+  return make_drawinfo(logger, va, verts, VertexFactory::LINE_INDICES);
 }
 
 DrawInfo

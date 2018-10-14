@@ -14,21 +14,6 @@ namespace opengl
 {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Line
-LineVertices
-LineFactory::create_vertices(LineCreateParams const& params)
-{
-  auto const& start = params.start;
-  auto const& end   = params.end;
-
-  // clang-format off
-  return common::make_array<float>(
-      start.x, start.y, start.z,
-      end.x,   end.y,   end.z);
-  // clang-format on
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 // Rectangle
 
 RectangleUvVertices
