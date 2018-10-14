@@ -28,9 +28,9 @@ AABoundingBox::add_to_entity(common::Logger& logger, ShaderPrograms& sps, Entity
 {
   auto& va    = sps.ref_sp("wireframe").va();
 
-  auto const cv = OF::cube_vertices(min, max);
-  auto dinfo = opengl::gpu::copy_cube_wireframe_gpu(logger, cv, va);
-  auto& bbox = registry.assign<AABoundingBox>(eid, min, max, MOVE(dinfo));
+  auto const cv = VertexFactory::build_cube(min, max);
+  auto dinfo    = OG::copy_cube_wireframe_gpu(logger, cv, va);
+  auto& bbox    = registry.assign<AABoundingBox>(eid, min, max, MOVE(dinfo));
 
   registry.assign<Selectable>(eid);
   return bbox;

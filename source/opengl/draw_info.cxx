@@ -3,7 +3,6 @@
 #include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/shader.hpp>
-#include <opengl/shapes.hpp>
 
 #include <boomhs/bounding_object.hpp>
 #include <boomhs/components.hpp>
@@ -298,8 +297,8 @@ DrawHandleManager::add_cube(common::Logger& logger, ShaderPrograms& sps, EntityI
   auto& sn = registry.get<ShaderName>(eid);
   auto& va = sps.ref_sp(sn.value).va();
 
-  auto const vertices = OF::cube_vertices(cr.min, cr.max);
-  auto  handle = opengl::gpu::copy_cube_gpu(logger, vertices, va);
+  auto const vertices   = VertexFactory::build_cube(cr.min, cr.max);
+  auto  handle          = OG::copy_cube_gpu(logger, vertices, va);
   auto const draw_index = add_entity(eid, MOVE(handle));
 
   AABoundingBox::add_to_entity(logger, sps, eid, registry, cr.min, cr.max);

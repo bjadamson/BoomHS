@@ -20,7 +20,7 @@
 #include <opengl/gpu.hpp>
 #include <opengl/light_renderer.hpp>
 #include <opengl/shader.hpp>
-#include <opengl/shapes.hpp>
+#include <boomhs/shapes.hpp>
 
 #include <extlibs/fmt.hpp>
 #include <extlibs/sdl.hpp>
@@ -411,12 +411,11 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
   auto& es     = fstate.es;
   auto& logger = es.logger;
 
-  auto const v     = VertexFactory::build(pos.x, pos.y, size.x, size.y);
-  auto const uv = OF::rectangle_uvs(ti.uv_max);
-  auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
+  auto const v    = VertexFactory::build(pos.x, pos.y, size.x, size.y);
+  auto const uv   = UvFactory::build_rectangle(ti.uv_max);
+  auto const vuvs = RectangleFactory::from_vertices_and_uvs(v, uv);
 
-  DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
-
+  DrawInfo   dinfo       = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
   auto const proj_matrix = fstate.projection_matrix();
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
   sp.set_uniform_matrix_4fv(logger, "u_projmatrix", proj_matrix);
@@ -472,7 +471,7 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
     auto& ti = *texture_o;
 
     auto const      v = VertexFactory::build_default();
-    auto const uv = OF::rectangle_uvs(ti.uv_max);
+    auto const uv = UvFactory::build_rectangle(ti.uv_max);
     auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
     DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
 

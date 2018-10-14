@@ -17,7 +17,7 @@ namespace opengl
 // Rectangle
 
 RectangleUvVertices
-RectangleFactory::from_vertices_and_uvs(VertexFactory::RectangleVertices const& v, RectangleUvs const& uv)
+RectangleFactory::from_vertices_and_uvs(VertexFactory::RectangleVertices const& v, UvFactory::RectangleUvs const& uv)
 {
   return common::concat(
     v.zero(), uv.zero(),
@@ -34,28 +34,6 @@ RectangleFactory::from_vertices_and_uvs(VertexFactory::RectangleVertices const& 
 
 namespace opengl::factories
 {
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Cubes
-CubeVertices
-cube_vertices(glm::vec3 const& min, glm::vec3 const& max)
-{
-  auto const dimensions = math::compute_cube_dimensions(min, max);
-  auto const& width     = dimensions.x;
-  auto const& height    = dimensions.y;
-
-  return common::make_array<float>(
-    min.x,         min.y,          min.z,
-    min.x + width, min.y,          min.z,
-    min.x + width, min.y + height, min.z,
-    min.x,         min.y + height, min.z,
-
-    max.x - width, max.y - height, max.z,
-    max.x,         max.y - height, max.z,
-    max.x,         max.y,          max.z,
-    max.x - width, max.y,          max.z
-    );
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Rectangles
@@ -133,8 +111,7 @@ make_rectangle(RectBuilder const& builder)
   add_point(p3, 3);
   add_point(p0, 0);
 
-  auto indices = OF::RECTANGLE_INDICES;
-  return RectBuffer{MOVE(vertices), MOVE(indices)};
+  return RectBuffer{MOVE(vertices)};
 }
 
 RectLineBuffer
@@ -159,22 +136,7 @@ make_line_rectangle(RectFloat const& r)
   add_point(p1);
   add_point(p2);
   add_point(p3);
-  RectangleLineIndices indices = {{
-    0, 1, 2, 3
-  }};
-  return RectLineBuffer{MOVE(vertices), MOVE(indices)};
-}
-
-RectangleUvs
-rectangle_uvs(float const max)
-{
-  using PointArray = RectangleUvs::PointArray;
-  return common::make_array<PointArray>(
-      PointArray{0.0f, 0.0f},
-      PointArray{max, 0.0f},
-      PointArray{max, max},
-      PointArray{0.0f, max}
-      );
+  return RectLineBuffer{MOVE(vertices)};
 }
 
 } // ns factories::factories

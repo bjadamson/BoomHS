@@ -204,7 +204,7 @@ make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
     glm::vec3 const    vmin{-0.5f};
     glm::vec3 const    vmax{0.5f};
 
-    auto const vertices = OF::cube_vertices(vmin, vmax);
+    auto const vertices = VertexFactory::build_cube(vmin, vmax);
     DrawInfo           dinfo    = opengl::gpu::copy_cube_gpu(logger, vertices, skybox_sp.va());
     auto&              day_ti   = *ttable.find("building_skybox");
     auto&              night_ti = *ttable.find("night_skybox");

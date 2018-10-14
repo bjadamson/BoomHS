@@ -4,7 +4,7 @@
 #include <boomhs/vertex_factory.hpp>
 
 #include <opengl/draw_info.hpp>
-#include <opengl/shapes.hpp>
+#include <boomhs/shapes.hpp>
 
 #include <array>
 #include <optional>
@@ -22,56 +22,14 @@ struct RectangleFactory
 {
   RectangleFactory() = delete;
 
-  static RectangleUvVertices from_vertices_and_uvs(boomhs::VertexFactory::RectangleVertices const&,
-                                                   RectangleUvs const&);
+  static boomhs::RectangleUvVertices from_vertices_and_uvs(boomhs::VertexFactory::RectangleVertices const&,
+                                                   boomhs::UvFactory::RectangleUvs const&);
 };
 
 } // namespace opengl
 
 namespace opengl::factories
 {
-
-// Cubes
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-// clang-format off
-static constexpr CubeIndices CUBE_INDICES = {{
-  0, 1, 2,  2, 3, 0, // front
-  1, 5, 6,  6, 2, 1, // top
-  7, 6, 5,  5, 4, 7, // back
-  4, 0, 3,  3, 7, 4, // bottom
-  4, 5, 1,  1, 0, 4, // left
-  3, 2, 6,  6, 7, 3, // right
-}};
-
-static constexpr CubeIndices CUBE_INDICES_LIGHT = {{
-  0,  1,  2,    3,  4,  5,
-  6,  7,  8,    9,  10, 11,
-  12, 13, 14,   15, 16, 17,
-  18, 19, 20,   21, 22, 23,
-  24, 25, 26,   27, 28, 29,
-  30, 31, 32,   33, 34, 35
-}};
-
-static constexpr std::array<GLuint, 24> CUBE_WIREFRAME_INDICES = {{
-  0, 1, // front
-  1, 2,
-  2, 3,
-  3, 0,
-
-  4, 5, // back
-  5, 6,
-  6, 7,
-  7, 4,
-
-  0, 4, // connect front/back
-  1, 5,
-  2, 6,
-  3, 7
-}};
-
-CubeVertices
-cube_vertices(glm::vec3 const&, glm::vec3 const&);
 
 // Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -92,29 +50,22 @@ struct RectBuilder
   boomhs::RectFloat                  rect;
 
   // use one of the following rectangle types.
-  std::optional<RectangleColorArray> color_array;
-  std::optional<boomhs::Color>       uniform_color;
+  std::optional<RectangleColorArray>             color_array;
+  std::optional<boomhs::Color>                   uniform_color;
 
-  std::optional<RectangleUvs>        uvs;
+  std::optional<boomhs::UvFactory::RectangleUvs> uvs;
 
   RectBuilder(boomhs::RectFloat const&);
 
-  RectBuffer
+  boomhs::RectBuffer
   build() const;
 };
 
-RectBuffer
+boomhs::RectBuffer
 make_rectangle(RectBuilder const&);
 
-RectLineBuffer
+boomhs::RectLineBuffer
 make_line_rectangle(boomhs::RectFloat const&);
-
-static constexpr RectangleIndices RECTANGLE_INDICES = {{
-  0, 1, 2, 3, 4, 5
-}};
-
-RectangleUvs
-rectangle_uvs(float);
 
 } // namespace opengl::factories
 

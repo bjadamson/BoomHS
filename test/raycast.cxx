@@ -67,8 +67,7 @@ make_wireframe_program(common::Logger& logger)
 auto
 make_bbox(common::Logger& logger, ShaderProgram const& sp, Cube const& cr)
 {
-  auto const vertices = OF::cube_vertices(cr.min, cr.max);
-
+  auto const vertices = VertexFactory::build_cube(cr.min, cr.max);
   return gpu::copy_cube_wireframe_gpu(logger, vertices, sp.va());
 }
 

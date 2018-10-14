@@ -108,14 +108,14 @@ copy(common::Logger& logger, VertexAttribute const& va,
 DrawInfo
 copy_cube_gpu(common::Logger &logger, CubeVertices const& cv, VertexAttribute const& va)
 {
-  return make_drawinfo(logger, va, cv, OF::CUBE_INDICES);
+  return make_drawinfo(logger, va, cv, VertexFactory::CUBE_INDICES);
 }
 
 DrawInfo
 copy_cube_wireframe_gpu(common::Logger& logger, CubeVertices const& cv,
     VertexAttribute const& va)
 {
-  return make_drawinfo(logger, va, cv, OF::CUBE_WIREFRAME_INDICES);
+  return make_drawinfo(logger, va, cv, VertexFactory::CUBE_WIREFRAME_INDICES);
 }
 
 DrawInfo
@@ -137,28 +137,24 @@ copy_gpu(common::Logger &logger, VertexAttribute const& va, VertexBuffer const& 
 }
 
 DrawInfo
-copy_rectangle(common::Logger &logger, VertexAttribute const& va,
-    RectBuffer const& buffer)
+copy_rectangle(common::Logger &logger, VertexAttribute const& va, RectBuffer const& buffer)
 {
   auto const& v = buffer.vertices;
-  auto const& i = buffer.indices;
-  return copy_gpu_impl(logger, va, v, i);
+  return copy_gpu_impl(logger, va, v, VertexFactory::RECTANGLE_DEFAULT_INDICES);
 }
 
 DrawInfo
-copy_rectangle(common::Logger &logger, VertexAttribute const& va,
-    RectLineBuffer const& buffer)
+copy_rectangle(common::Logger &logger, VertexAttribute const& va, RectLineBuffer const& buffer)
 {
   auto const& v = buffer.vertices;
-  auto const& i = buffer.indices;
-  return copy_gpu_impl(logger, va, v, i);
+  return copy_gpu_impl(logger, va, v, VertexFactory::RECTANGLE_LINE_INDICES);
 }
 
 DrawInfo
 copy_rectangle_uvs(common::Logger &logger, VertexAttribute const& va,
                    RectangleUvVertices const& vertices)
 {
-  auto const& i = OF::RECTANGLE_INDICES;
+  auto const& i = VertexFactory::RECTANGLE_DEFAULT_INDICES;
 
   DrawInfo dinfo{vertices.size(), i.size()};
   copy_synchronous(logger, va, dinfo, vertices, i);

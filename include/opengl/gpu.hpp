@@ -3,7 +3,7 @@
 #include <boomhs/vertex_factory.hpp>
 
 #include <opengl/draw_info.hpp>
-#include <opengl/shapes.hpp>
+#include <boomhs/shapes.hpp>
 
 #include <common/log.hpp>
 
@@ -76,21 +76,21 @@ copy(common::Logger&, VertexAttribute const&, boomhs::VertexFactory::GridVertice
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Cubes
 DrawInfo
-copy_cube_gpu(common::Logger&, CubeVertices const&, VertexAttribute const&);
+copy_cube_gpu(common::Logger&, boomhs::CubeVertices const&, VertexAttribute const&);
 
 DrawInfo
-copy_cube_wireframe_gpu(common::Logger&, CubeVertices const&, VertexAttribute const&);
+copy_cube_wireframe_gpu(common::Logger&, boomhs::CubeVertices const&, VertexAttribute const&);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Rectangles
 DrawInfo
-copy_rectangle(common::Logger&, VertexAttribute const&, RectBuffer const&);
+copy_rectangle(common::Logger&, VertexAttribute const&, boomhs::RectBuffer const&);
 
 DrawInfo
-copy_rectangle(common::Logger &, VertexAttribute const&, RectLineBuffer const&);
+copy_rectangle(common::Logger &, VertexAttribute const&, boomhs::RectLineBuffer const&);
 
 DrawInfo
-copy_rectangle_uvs(common::Logger&, VertexAttribute const&, RectangleUvVertices const&);
+copy_rectangle_uvs(common::Logger&, VertexAttribute const&, boomhs::RectangleUvVertices const&);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // General
