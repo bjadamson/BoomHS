@@ -1,7 +1,7 @@
 #include <boomhs/audio.hpp>
 #include <boomhs/bounding_object.hpp>
 #include <boomhs/camera.hpp>
-#include <boomhs/colors.hpp>
+#include <boomhs/color.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>

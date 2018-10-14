@@ -3,8 +3,8 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/leveldata.hpp>
 #include <boomhs/math.hpp>
+#include <boomhs/vertex_factory.hpp>
 
-#include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/shader.hpp>
 

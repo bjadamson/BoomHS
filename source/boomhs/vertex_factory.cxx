@@ -160,11 +160,6 @@ VertexFactory::build(GridTemplate const& grid)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Rectangle
-VertexFactory::RectangleVertices::RectangleVertices()
-{
-  common::memzero(varray_.data(), sizeof(vertices_t) * varray_.size());
-}
-
 VertexFactory::RectangleVertices::RectangleVertices(VerticesArray const& va)
   : varray_(va)
 {
@@ -285,59 +280,16 @@ VertexFactory::build_cube(glm::vec3 const& min, glm::vec3 const& max)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // UvFactory
-UvFactory::RectangleUvs
+RectangleUvs
 UvFactory::build_rectangle(float const uv_max)
 {
-  using PointArray = UvFactory::RectangleUvs::PointArray;
+  using PointArray = RectangleUvs::PointArray;
   return common::make_array<PointArray>(
       PointArray{0.0f,   0.0f},
       PointArray{uv_max, 0.0f},
       PointArray{uv_max, uv_max},
       PointArray{0.0f,   uv_max}
       );
-}
-
-UvFactory::RectangleUvs::RectangleUvs()
-{
-  common::memzero(varray_.data(), sizeof(float) * varray_.size());
-}
-
-UvFactory::RectangleUvs::RectangleUvs(VerticesArray const& va)
-  : varray_(va)
-{
-}
-
-UvFactory::RectangleUvs::RectangleUvs(VerticesArray &&va)
-  : varray_(MOVE(va))
-{
-}
-
-UvFactory::RectangleUvs::PointArray
-UvFactory::RectangleUvs::zero() const
-{
-  auto const& v = varray_[0];
-  return PointArray{common::make_array<float>(v[0], 1.0f - v[1])};
-}
-
-UvFactory::RectangleUvs::PointArray
-UvFactory::RectangleUvs::one() const
-{
-  auto const& v = varray_[1];
-  return PointArray{common::make_array<float>(v[0], 1.0f - v[1])};
-}
-
-UvFactory::RectangleUvs::PointArray
-UvFactory::RectangleUvs::two() const
-{
-  auto const& v = varray_[2];
-  return PointArray{common::make_array<float>(v[0], 1.0f - v[1])};
-}
-
-UvFactory::RectangleUvs::PointArray
-UvFactory::RectangleUvs::three() const
-{
-  auto const& v = varray_[3];
-  return PointArray{common::make_array<float>(v[0], 1.0f - v[1])};
 }
 
 } // namespace boomhs

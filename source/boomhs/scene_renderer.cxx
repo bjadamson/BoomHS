@@ -29,11 +29,10 @@
 #include <boomhs/tree.hpp>
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_ingame.hpp>
+#include <boomhs/vertex_factory.hpp>
 #include <boomhs/water.hpp>
 #include <boomhs/zone_state.hpp>
 
-
-#include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/texture.hpp>
 
@@ -205,7 +204,7 @@ make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
     glm::vec3 const    vmax{0.5f};
 
     auto const vertices = VertexFactory::build_cube(vmin, vmax);
-    DrawInfo           dinfo    = opengl::gpu::copy_cube_gpu(logger, vertices, skybox_sp.va());
+    DrawInfo           dinfo    = OG::copy_cube_gpu(logger, vertices, skybox_sp.va());
     auto&              day_ti   = *ttable.find("building_skybox");
     auto&              night_ti = *ttable.find("night_skybox");
     return SkyboxRenderer{logger, MOVE(dinfo), day_ti, night_ti, skybox_sp};

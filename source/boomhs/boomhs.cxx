@@ -36,10 +36,9 @@
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/vertex_interleave.hpp>
+#include <boomhs/vertex_factory.hpp>
 #include <boomhs/water.hpp>
 
-
-#include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/texture.hpp>
 

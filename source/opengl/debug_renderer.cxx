@@ -1,5 +1,4 @@
 #include <opengl/debug_renderer.hpp>
-#include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
 

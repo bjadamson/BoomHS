@@ -9,8 +9,8 @@
 #include <boomhs/perspective_renderer.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/ui_debug.hpp>
+#include <boomhs/vertex_factory.hpp>
 
-#include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
 
@@ -67,7 +67,7 @@ draw_lhs(GameState& gs, RenderState& rstate, LevelManager& lm, StaticRenderers& 
   bottom_left.top = midpoint;
 
   {
-    auto buffer     = OF::RectBuilder{top_left}.build();
+    auto buffer     = RectBuilder{top_left}.build();
     DrawInfo dinfo = gpu::copy_rectangle(logger, sp.va(), buffer);
     BIND_UNTIL_END_OF_SCOPE(logger, sp);
 

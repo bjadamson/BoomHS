@@ -1,9 +1,9 @@
 #pragma once
-#include <boomhs/colors.hpp>
+#include <boomhs/color.hpp>
 #include <boomhs/vertex_factory.hpp>
 
 #include <opengl/draw_info.hpp>
-#include <boomhs/shapes.hpp>
+#include <boomhs/shape.hpp>
 
 #include <common/log.hpp>
 

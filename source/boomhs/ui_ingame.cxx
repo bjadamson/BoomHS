@@ -7,7 +7,6 @@
 #include <boomhs/ui_state.hpp>
 #include <boomhs/zone_state.hpp>
 
-#include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
 
@@ -566,9 +565,9 @@ draw_inventory_overlay(RenderState& rstate)
   auto const& f   = es.frustum;
   auto const vp   = Viewport::from_frustum(f);
   auto const rect = vp.rect_float();
-  auto buffer     = OF::RectBuilder{rect}.build();
+  auto buffer     = RectBuilder{rect}.build();
 
-  DrawInfo dinfo = gpu::copy_rectangle(logger, sp.va(), buffer);
+  DrawInfo dinfo = OG::copy_rectangle(logger, sp.va(), buffer);
 
   ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
   BIND_UNTIL_END_OF_SCOPE(logger, sp);

@@ -1,7 +1,7 @@
 #pragma once
-#include <boomhs/colors.hpp>
+#include <boomhs/color.hpp>
 
-#include <boomhs/shapes.hpp>
+#include <boomhs/shape.hpp>
 #include <extlibs/glm.hpp>
 
 #include <array>
@@ -77,7 +77,7 @@ public:
     VerticesArray varray_;
 
   public:
-    RectangleVertices();
+    RectangleVertices() = default;
     RectangleVertices(VerticesArray const&);
     RectangleVertices(VerticesArray&&);
 
@@ -150,30 +150,6 @@ class UvFactory
 {
   UvFactory() = delete;
 public:
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  // Rectangle
-  class RectangleUvs
-  {
-  public:
-    using PointArray    = std::array<vertices_t, 2>;
-    using VerticesArray = std::array<PointArray, 4>;
-
-  private:
-    VerticesArray varray_;
-
-  public:
-    RectangleUvs();
-    RectangleUvs(VerticesArray const&);
-    RectangleUvs(VerticesArray&&);
-
-    auto const& operator[](size_t const i) const { return varray_[i]; }
-
-    PointArray zero() const;
-    PointArray one() const;
-    PointArray two() const;
-    PointArray three() const;
-  };
-
   static RectangleUvs build_rectangle(float);
 };
 

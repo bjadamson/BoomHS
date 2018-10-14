@@ -5,7 +5,7 @@
 #include <boomhs/nearby_targets.hpp>
 #include <boomhs/world_object.hpp>
 
-#include <boomhs/colors.hpp>
+#include <boomhs/color.hpp>
 #include <boomhs/lighting.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/shader.hpp>

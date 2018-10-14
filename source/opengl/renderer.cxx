@@ -10,18 +10,18 @@
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/terrain.hpp>
+#include <boomhs/vertex_factory.hpp>
 #include <boomhs/vertex_interleave.hpp>
 #include <boomhs/viewport.hpp>
 #include <boomhs/zone_state.hpp>
 
 #include <opengl/renderer.hpp>
 #include <opengl/draw_info.hpp>
-#include <opengl/factory.hpp>
 #include <opengl/global.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/light_renderer.hpp>
 #include <opengl/shader.hpp>
-#include <boomhs/shapes.hpp>
+#include <boomhs/shape.hpp>
 
 #include <extlibs/fmt.hpp>
 #include <extlibs/sdl.hpp>

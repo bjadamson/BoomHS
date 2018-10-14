@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/colors.hpp>
+#include <boomhs/color.hpp>
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl_gl3.h>

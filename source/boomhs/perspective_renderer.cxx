@@ -31,9 +31,6 @@
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/water.hpp>
 
-
-#include <opengl/factory.hpp>
-#include <opengl/gpu.hpp>
 #include <opengl/texture.hpp>
 
 #include <extlibs/sdl.hpp>

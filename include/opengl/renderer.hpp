@@ -2,7 +2,7 @@
 #include <boomhs/frame.hpp>
 #include <boomhs/terrain.hpp>
 
-#include <boomhs/colors.hpp>
+#include <boomhs/color.hpp>
 #include <boomhs/lighting.hpp>
 #include <common/log.hpp>
 

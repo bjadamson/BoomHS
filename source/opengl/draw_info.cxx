@@ -1,12 +1,12 @@
 #include <opengl/draw_info.hpp>
 #include <opengl/buffer.hpp>
-#include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/shader.hpp>
 
 #include <boomhs/bounding_object.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/obj_store.hpp>
+#include <boomhs/vertex_factory.hpp>
 
 #include <common/algorithm.hpp>
 
@@ -280,7 +280,7 @@ DrawHandleManager::add_mesh(common::Logger& logger, ShaderPrograms& sps, ObjStor
   auto const& mesh_name     = registry.get<MeshRenderable>(eid).name;
   auto const& obj = obj_store.get(logger, mesh_name);
 
-  auto handle = opengl::gpu::copy_gpu(logger, va, obj);
+  auto handle = OG::copy_gpu(logger, va, obj);
   auto const draw_index = add_entity(eid, MOVE(handle));
 
   auto const     posbuffer = obj.positions();

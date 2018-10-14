@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/colors.hpp>
+#include <boomhs/color.hpp>
 #include <opengl/bind.hpp>
 #include <opengl/vertex_attribute.hpp>
 

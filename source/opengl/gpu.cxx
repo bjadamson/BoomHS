@@ -1,5 +1,4 @@
 #include <opengl/gpu.hpp>
-#include <opengl/factory.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/global.hpp>
 #include <opengl/shader.hpp>
@@ -8,13 +7,13 @@
 
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/math.hpp>
 #include <boomhs/obj.hpp>
 #include <boomhs/obj_store.hpp>
 #include <boomhs/terrain.hpp>
-
+#include <boomhs/vertex_factory.hpp>
 
 #include <common/algorithm.hpp>
-#include <boomhs/math.hpp>
 #include <common/type_macros.hpp>
 
 #include <extlibs/fmt.hpp>

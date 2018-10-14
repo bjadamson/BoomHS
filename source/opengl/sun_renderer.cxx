@@ -1,11 +1,11 @@
 #include <opengl/sun_renderer.hpp>
-#include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderbuffer.hpp>
 #include <opengl/renderer.hpp>
 
 #include <boomhs/engine.hpp>
 #include <boomhs/frame_time.hpp>
+#include <boomhs/vertex_factory.hpp>
 #include <boomhs/vertex_interleave.hpp>
 #include <boomhs/viewport.hpp>
 #include <boomhs/zone_state.hpp>
@@ -77,7 +77,7 @@ SunshaftRenderer::render(RenderState& rstate, DrawState& ds, LevelManager& lm, C
   auto const uv   = UvFactory::build_rectangle(ti.uv_max);
   auto const vuvs = vertex_interleave(v, uv);
 
-  DrawInfo dinfo = gpu::copy_rectangle(logger, sp_->va(), vuvs);
+  DrawInfo dinfo = OG::copy_rectangle(logger, sp_->va(), vuvs);
 
   glm::vec2 const pos{0.00f, 0.00f};
   glm::vec2 const scale{1.00f, 1.00f};

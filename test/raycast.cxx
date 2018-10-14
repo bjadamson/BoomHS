@@ -4,6 +4,7 @@
 #include <boomhs/frame_time.hpp>
 #include <boomhs/raycast.hpp>
 #include <boomhs/random.hpp>
+#include <boomhs/vertex_factory.hpp>
 #include <boomhs/viewport.hpp>
 
 #include <common/algorithm.hpp>
@@ -14,7 +15,6 @@
 #include <gl_sdl/common.hpp>
 
 #include <opengl/bind.hpp>
-#include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
@@ -68,7 +68,7 @@ auto
 make_bbox(common::Logger& logger, ShaderProgram const& sp, Cube const& cr)
 {
   auto const vertices = VertexFactory::build_cube(cr.min, cr.max);
-  return gpu::copy_cube_wireframe_gpu(logger, vertices, sp.va());
+  return OG::copy_cube_wireframe_gpu(logger, vertices, sp.va());
 }
 
 struct ProgramAndGpuHandle
@@ -83,8 +83,8 @@ auto
 make_perspective_rect_gpuhandle(common::Logger& logger, RectFloat const& rect,
                                 VertexAttribute const& va)
 {
-  RectBuffer buffer = OF::RectBuilder{rect}.build();
-  return gpu::copy_rectangle(logger, va, buffer);
+  RectBuffer buffer = RectBuilder{rect}.build();
+  return OG::copy_rectangle(logger, va, buffer);
 }
 
 auto
@@ -542,7 +542,7 @@ draw_cursor_under_mouse(common::Logger& logger, ScreenSize const& ss, RectInt co
                         ShaderProgram& sp, RectFloat const& rect, CameraORTHO const& cam_ortho,
                         DrawState& ds)
 {
-  auto builder = OF::RectBuilder{rect};
+  auto builder = RectBuilder{rect};
   builder.line = {};
   auto di      = OG::copy_rectangle(logger, sp.va(), builder.build());
   draw_rectangle_pm(logger, ss, viewport, cam_ortho, sp, di, LOC::LIME_GREEN, GL_LINE_LOOP, ds);

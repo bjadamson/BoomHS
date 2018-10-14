@@ -1,16 +1,14 @@
-#include <opengl/factory.hpp>
+#include <boomhs/shape.hpp>
+#include <boomhs/math.hpp>
+#include <boomhs/vertex_factory.hpp>
+#include <boomhs/viewport.hpp>
 
 #include <common/algorithm.hpp>
 #include <common/type_macros.hpp>
 
-#include <boomhs/math.hpp>
-#include <boomhs/viewport.hpp>
-
 #include <array>
 
 using namespace boomhs;
-using namespace opengl;
-using namespace opengl::factories;
 
 namespace
 {
@@ -108,11 +106,49 @@ make_rectangle(RectBuilder const& builder)
 
 } // namespace
 
-namespace opengl::factories
+namespace boomhs
 {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Rectangles
+RectangleUvs::RectangleUvs(VerticesArray const& va)
+  : varray_(va)
+{
+}
+
+RectangleUvs::RectangleUvs(VerticesArray &&va)
+  : varray_(MOVE(va))
+{
+}
+
+RectangleUvs::PointArray
+RectangleUvs::zero() const
+{
+  auto const& v = varray_[0];
+  return PointArray{common::make_array<float>(v[0], 1.0f - v[1])};
+}
+
+RectangleUvs::PointArray
+RectangleUvs::one() const
+{
+  auto const& v = varray_[1];
+  return PointArray{common::make_array<float>(v[0], 1.0f - v[1])};
+}
+
+RectangleUvs::PointArray
+RectangleUvs::two() const
+{
+  auto const& v = varray_[2];
+  return PointArray{common::make_array<float>(v[0], 1.0f - v[1])};
+}
+
+RectangleUvs::PointArray
+RectangleUvs::three() const
+{
+  auto const& v = varray_[3];
+  return PointArray{common::make_array<float>(v[0], 1.0f - v[1])};
+}
+
 RectBuilder::RectBuilder(RectFloat const& r)
     : rect(r)
 {
@@ -135,4 +171,4 @@ RectBuilder::build() const
   return make_rectangle(*this);
 }
 
-} // ns factories::factories
+} // ns boomhs
