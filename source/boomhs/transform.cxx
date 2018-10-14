@@ -28,18 +28,18 @@ void
 Transform::rotate_radians(float const radians, EulerAxis const axis)
 {
   switch (axis) {
-    case EulerAxis::X:
-      rotate_radians(radians, constants::X_UNIT_VECTOR);
-      break;
-    case EulerAxis::Y:
-      rotate_radians(radians, constants::Y_UNIT_VECTOR);
-      break;
-    case EulerAxis::Z:
-      rotate_radians(radians, constants::Z_UNIT_VECTOR);
-      break;
-    case EulerAxis::INVALID:
-      std::abort();
-      break;
+  case EulerAxis::X:
+    rotate_radians(radians, constants::X_UNIT_VECTOR);
+    break;
+  case EulerAxis::Y:
+    rotate_radians(radians, constants::Y_UNIT_VECTOR);
+    break;
+  case EulerAxis::Z:
+    rotate_radians(radians, constants::Z_UNIT_VECTOR);
+    break;
+  case EulerAxis::INVALID:
+    std::abort();
+    break;
   }
 }
 

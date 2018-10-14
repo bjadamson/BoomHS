@@ -1,7 +1,7 @@
 #include <gl_sdl/gl_sdl_log.hpp>
 
-#include <extlibs/fmt.hpp>
 #include <common/log.hpp>
+#include <extlibs/fmt.hpp>
 
 #include <extlibs/sdl.hpp>
 #include <iostream>

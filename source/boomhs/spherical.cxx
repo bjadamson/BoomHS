@@ -1,5 +1,5 @@
-#include <boomhs/spherical.hpp>
 #include <boomhs/math.hpp>
+#include <boomhs/spherical.hpp>
 
 using namespace boomhs::math;
 

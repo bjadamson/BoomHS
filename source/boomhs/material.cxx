@@ -7,16 +7,15 @@ namespace boomhs
 // Material
 Material::Material(glm::vec3 const& amb, glm::vec3 const& diff, glm::vec3 const& spec,
                    float const shiny)
-  : ambient(amb)
-  , diffuse(diff)
-  , specular(spec)
-  , shininess(shiny)
+    : ambient(amb)
+    , diffuse(diff)
+    , specular(spec)
+    , shininess(shiny)
 {
 }
 
-Material::Material(Color const& amb, Color const& diff, Color const& spec,
-    float const shiny)
-  : Material(amb.rgb(), diff.rgb(), spec.rgb(), shiny)
+Material::Material(Color const& amb, Color const& diff, Color const& spec, float const shiny)
+    : Material(amb.rgb(), diff.rgb(), spec.rgb(), shiny)
 {
 }
 
@@ -29,9 +28,7 @@ MaterialTable::add(NameMaterial&& nm)
 }
 
 #define FIND_IMPL(MATERIAL_NAME, BEGIN, END)                                                       \
-  auto const cmp           = [&MATERIAL_NAME](NameMaterial const& nm) {                            \
-    return nm.name == MATERIAL_NAME;                                                               \
-  };                                                                                               \
+  auto const cmp = [&MATERIAL_NAME](NameMaterial const& nm) { return nm.name == MATERIAL_NAME; };  \
                                                                                                    \
   auto const it = std::find_if(BEGIN, END, cmp);                                                   \
   assert(it != END);                                                                               \

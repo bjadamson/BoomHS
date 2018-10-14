@@ -1,11 +1,11 @@
-#include <boomhs/view_frustum.hpp>
 #include <boomhs/bounding_object.hpp>
 #include <boomhs/frame.hpp>
 #include <boomhs/transform.hpp>
+#include <boomhs/view_frustum.hpp>
 
-#include <common/type_macros.hpp>
-#include <common/algorithm.hpp>
 #include <cmath>
+#include <common/algorithm.hpp>
+#include <common/type_macros.hpp>
 
 using namespace boomhs;
 using namespace opengl;
@@ -24,9 +24,9 @@ ViewFrustum::recalculate(glm::mat4 const& view_mat, glm::mat4 const& proj_mat)
   // Define the center/xyz planes for the frustum
   auto const center = Plane{clip[0][3], clip[1][3], clip[2][3], clip[3][3]};
 
-  auto const xside  = Plane{clip[0][0], clip[1][0], clip[2][0], clip[3][0]};
-  auto const yside  = Plane{clip[0][1], clip[1][1], clip[2][1], clip[3][1]};
-  auto const zside  = Plane{clip[0][2], clip[1][2], clip[2][2], clip[3][2]};
+  auto const xside = Plane{clip[0][0], clip[1][0], clip[2][0], clip[3][0]};
+  auto const yside = Plane{clip[0][1], clip[1][1], clip[2][1], clip[3][1]};
+  auto const zside = Plane{clip[0][2], clip[1][2], clip[2][2], clip[3][2]};
   // Now we actually want to get the sides of the frustum.  To do this we take
   // the clipping planes we received above and extract the sides from them.
   // Once we have a normal (A,B,C) and a distance (D) to the plane, we want to normalize that
@@ -68,10 +68,10 @@ ViewFrustum::recalculate(glm::mat4 const& view_mat, glm::mat4 const& proj_mat)
   back.normalize();
 
   auto& front = planes_[FRONT];
-  front.a = center.a + zside[0];
-  front.b = center.b + zside[1];
-  front.c = center.c + zside[2];
-  front.d = center.d + zside[3];
+  front.a     = center.a + zside[0];
+  front.b     = center.b + zside[1];
+  front.c     = center.c + zside[2];
+  front.d     = center.d + zside[3];
   front.normalize();
 }
 
@@ -89,16 +89,11 @@ ViewFrustum::cube_in_frustum(float const x, float const y, float const z, float 
   // This happens when all the corners of the bounding box are not behind any one plane.
   // This is rare and shouldn't effect the overall rendering speed.
   auto const points = common::make_array<glm::vec3>(
-      glm::vec3{x - size, y - size, z - size},
-      glm::vec3{x + size, y - size, z - size},
-      glm::vec3{x - size, y + size, z - size},
-      glm::vec3{x + size, y + size, z - size},
+      glm::vec3{x - size, y - size, z - size}, glm::vec3{x + size, y - size, z - size},
+      glm::vec3{x - size, y + size, z - size}, glm::vec3{x + size, y + size, z - size},
 
-      glm::vec3{x - size, y - size, z + size},
-      glm::vec3{x + size, y - size, z + size},
-      glm::vec3{x - size, y + size, z + size},
-      glm::vec3{x + size, y + size, z + size}
-      );
+      glm::vec3{x - size, y - size, z + size}, glm::vec3{x + size, y - size, z + size},
+      glm::vec3{x - size, y + size, z + size}, glm::vec3{x + size, y + size, z + size});
 
   auto const point_within_plane = [](glm::vec3 const& point, Plane const& plane) {
     return Plane::dotproduct_with_vec3(plane, point) >= 0;
@@ -131,7 +126,7 @@ ViewFrustum::cube_in_frustum(glm::vec3 const& pos, float const size) const
 
 bool
 ViewFrustum::bbox_inside(glm::mat4 const& view_mat, glm::mat4 const& proj_mat, Transform const& tr,
-                     AABoundingBox const& bbox)
+                         AABoundingBox const& bbox)
 {
   // TODO: only call recalulate when the camera moves
   ViewFrustum frust;

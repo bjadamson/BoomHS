@@ -20,7 +20,6 @@
 #include <boomhs/water.hpp>
 #include <boomhs/zone_state.hpp>
 
-#include <opengl/renderer.hpp>
 #include <opengl/global.hpp>
 #include <opengl/renderer.hpp>
 #include <opengl/skybox_renderer.hpp>
@@ -59,8 +58,8 @@ auto static constexpr STYLE_VARS = (0 | ImGuiStyleVar_ChildRounding);
 void
 draw_menu(EngineState& es, Viewport const& dimensions, WaterAudioSystem& water_audio)
 {
-  auto const size      = ImVec2(dimensions.right(), dimensions.bottom());
-  //ImVec2 const size{dimensions.right(), dimensions.bottom()};
+  auto const size = ImVec2(dimensions.right(), dimensions.bottom());
+  // ImVec2 const size{dimensions.right(), dimensions.bottom()};
   bool const draw_debug = es.ui_state.draw_debug_ui;
   auto&      main_menu  = es.main_menu;
 
@@ -81,8 +80,8 @@ draw_menu(EngineState& es, Viewport const& dimensions, WaterAudioSystem& water_a
     }
     main_menu.show_options |= ImGui::Button("Options");
     if (main_menu.show_options) {
-      auto& uistate = es.ui_state;
-      auto const fn = [&]() {
+      auto&      uistate = es.ui_state;
+      auto const fn      = [&]() {
         ImGui::Text("Options");
         ImGui::Checkbox("Disable Controller Input", &es.disable_controller_input);
         ImGui::Text("UI");
@@ -92,7 +91,7 @@ draw_menu(EngineState& es, Viewport const& dimensions, WaterAudioSystem& water_a
         ImGui::Text("Audio");
 
         auto& ui_debug = uistate.debug;
-        auto& audio   = ui_debug.buffers.audio;
+        auto& audio    = ui_debug.buffers.audio;
         if (ImGui::SliderFloat("Ambient Volume", &audio.ambient, 0.0f, 1.0f)) {
           water_audio.set_volume(audio.ambient);
         }
@@ -138,7 +137,7 @@ collect_name_eid_pairs(EntityRegistry& registry, bool const reverse = true)
     if (registry.has<Name>(eid)) {
       name = registry.get<Name>(eid).value;
     }
-    auto       pair = std::make_pair(name, eid);
+    auto pair = std::make_pair(name, eid);
     pairs.emplace_back(MOVE(pair));
   }
   if (reverse) {
@@ -159,7 +158,6 @@ callback_from_strings(void* const pvec, int const idx, const char** out_text)
   *out_text = vec[idx].c_str();
   return true;
 };
-
 
 std::string
 combine_names_into_one_string_forcombo(std::vector<pair_t> const& pairs)
@@ -203,14 +201,14 @@ draw_debugwindow(EngineState& es, ZoneState& zs)
     auto const eids = find_orbital_bodies(registry);
     auto       num  = 1;
     for (auto const eid : eids) {
-      auto& hidden    = registry.get<IsRenderable>(eid).hidden;
+      auto& hidden = registry.get<IsRenderable>(eid).hidden;
 
       auto const text = "Draw Orbital Body" + std::to_string(num++);
       ImGui::Checkbox(text.c_str(), &hidden);
     }
   }
 
-  auto& uistate = es.ui_state;
+  auto& uistate    = es.ui_state;
   auto& debugstate = uistate.debug;
   ImGui::Checkbox("Draw 3D Entities", &es.draw_3d_entities);
   ImGui::Checkbox("Draw 2D Billboard Entities", &es.draw_2d_billboard_entities);
@@ -331,10 +329,10 @@ log_menu(EngineState& es, LevelData& ldata)
   auto& ui      = es.ui_state.debug;
   auto& buffers = ui.buffers;
 
-  bool constexpr yes = true;
+  bool constexpr yes       = true;
   auto const log_menu_item = [&](char const* name, auto const level) {
-    auto const level_int = static_cast<int>(ui.buffers.log.log_level);
-    bool const* selected = (level == level_int) ? &yes : nullptr;
+    auto const  level_int = static_cast<int>(ui.buffers.log.log_level);
+    bool const* selected  = (level == level_int) ? &yes : nullptr;
     if (ImGui::MenuItem(name, nullptr, selected)) {
       logger.set_level(level);
       ui.buffers.log.log_level = level_int;
@@ -343,8 +341,8 @@ log_menu(EngineState& es, LevelData& ldata)
 
   log_menu_item("Trace", spdlog::level::trace);
   log_menu_item("Debug", spdlog::level::debug);
-  log_menu_item("Info",  spdlog::level::info);
-  log_menu_item("Warn",  spdlog::level::warn);
+  log_menu_item("Info", spdlog::level::info);
+  log_menu_item("Warn", spdlog::level::warn);
   log_menu_item("Error", spdlog::level::err);
 }
 
@@ -445,23 +443,23 @@ show_water_window(EngineState& es, LevelManager& lm)
     ImGui::Text("Edit properties for individual water instances:");
     ImGui::Separator();
 
-    auto pairs = collect_name_eid_pairs<WaterInfo, Transform>(registry);
-    auto&      buffer        = uistate.buffers.water.selected_waterinfo;
+    auto  pairs  = collect_name_eid_pairs<WaterInfo, Transform>(registry);
+    auto& buffer = uistate.buffers.water.selected_waterinfo;
     display_combo_for_pairs("WaterInfo:", &buffer, pairs);
 
     if (-1 != buffer) {
       assert(buffer >= 0);
       assert(static_cast<size_t>(buffer) < winfos.size());
       EntityID const weid = pairs[buffer].second;
-      auto&      wi   = registry.get<WaterInfo>(weid);
+      auto&          wi   = registry.get<WaterInfo>(weid);
       ImGui::ColorEdit4("Mix Color", wi.mix_color.data());
       ImGui::InputFloat("Mix-Intensity", &wi.mix_intensity);
 
-      ImGui::InputFloat("Wave Offset",   &wi.wave_offset);
+      ImGui::InputFloat("Wave Offset", &wi.wave_offset);
       ImGui::InputFloat("Wave Strength (not currently used :( )", &wi.wave_strength);
 
       auto constexpr WAVE_MIN = -1.0f, WAVE_MAX = 1.0f;
-      auto *direction_ptr     = glm::value_ptr(wi.flow_direction);
+      auto* direction_ptr = glm::value_ptr(wi.flow_direction);
       if (ImGui::SliderFloat2("Wave Direction", direction_ptr, WAVE_MIN, WAVE_MAX)) {
         wi.flow_direction = glm::normalize(wi.flow_direction);
       }
@@ -668,9 +666,9 @@ draw_camera_window(Camera& camera, Player& player, Frustum& frustum)
   };
   auto const draw_window = [&]() {
     {
-      auto mode_strings = CameraModes::string_list();
-      int selected = static_cast<int>(camera.mode());
-      void* pdata = reinterpret_cast<void*>(&mode_strings);
+      auto  mode_strings = CameraModes::string_list();
+      int   selected     = static_cast<int>(camera.mode());
+      void* pdata        = reinterpret_cast<void*>(&mode_strings);
       if (ImGui::Combo("Mode:", &selected, callback_from_strings, pdata, mode_strings.size())) {
         auto const mode = static_cast<CameraMode>(selected);
         camera.set_mode(mode);
@@ -690,13 +688,13 @@ draw_camera_window(Camera& camera, Player& player, Frustum& frustum)
       ImGui::InputFloat2("Aspect:", aspect_ratio.data());
     }
     if (ImGui::CollapsingHeader("Frustum")) {
-      ImGui::InputInt("Left:",     &frustum.left);
-      ImGui::InputInt("Right:",    &frustum.right);
-      ImGui::InputInt("Bottom:",   &frustum.bottom);
-      ImGui::InputInt("Top:",      &frustum.top);
+      ImGui::InputInt("Left:", &frustum.left);
+      ImGui::InputInt("Right:", &frustum.right);
+      ImGui::InputInt("Bottom:", &frustum.bottom);
+      ImGui::InputInt("Top:", &frustum.top);
 
-      ImGui::InputFloat("Far:",    &frustum.far);
-      ImGui::InputFloat("Near:",   &frustum.near);
+      ImGui::InputFloat("Far:", &frustum.far);
+      ImGui::InputFloat("Near:", &frustum.near);
     }
     if (ImGui::CollapsingHeader("FPS Camera")) {
       auto const rot = glm::degrees(glm::eulerAngles(camera.get_target().orientation()));
@@ -734,8 +732,8 @@ draw_device_window(DeviceStates& dstates, Camera& camera)
       ImGui::Separator();
       {
         ImGui::Text("Third Person");
-        ImGui::InputFloat("MOUSE TPS X sensitivity:",  &arcball.sensitivity.x, 0.0f, 1.0f);
-        ImGui::InputFloat("MOUSE TPS Y sensitivity:",  &arcball.sensitivity.y, 0.0f, 1.0f);
+        ImGui::InputFloat("MOUSE TPS X sensitivity:", &arcball.sensitivity.x, 0.0f, 1.0f);
+        ImGui::InputFloat("MOUSE TPS Y sensitivity:", &arcball.sensitivity.y, 0.0f, 1.0f);
         ImGui::Checkbox("MOUSE TPS Invert X", &arcball.flip_x);
         ImGui::Checkbox("MOUSE TPS Invert Y", &arcball.flip_y);
 
@@ -752,8 +750,8 @@ draw_device_window(DeviceStates& dstates, Camera& camera)
       }
       ImGui::Separator();
       {
-        ImGui::InputFloat("Controler TPS X sensitivity:",  &arcball.sensitivity.x, 0.0f, 1.0f);
-        ImGui::InputFloat("Controler TPS Y sensitivity:",  &arcball.sensitivity.y, 0.0f, 1.0f);
+        ImGui::InputFloat("Controler TPS X sensitivity:", &arcball.sensitivity.x, 0.0f, 1.0f);
+        ImGui::InputFloat("Controler TPS Y sensitivity:", &arcball.sensitivity.y, 0.0f, 1.0f);
         ImGui::Checkbox("Controler TPS Rotation Lock", &arcball.rotation_lock);
       }
     }
@@ -765,7 +763,7 @@ void
 draw_player_window(EngineState& es, Player& player)
 {
   auto const draw = [&]() {
-    auto &wo = player.world_object();
+    auto&      wo      = player.world_object();
     auto const display = wo.display();
     ImGui::Text("%s", display.c_str());
 
@@ -840,8 +838,8 @@ show_environment_window(UiDebugState& state, LevelData& ldata)
     auto& wind = ldata.wind;
     ImGui::InputFloat("Speed", &wind.speed);
 
-    bool const close_pressed = ImGui::Button("Close", ImVec2(120, 0));
-    state.show_environment_window    = !close_pressed;
+    bool const close_pressed      = ImGui::Button("Close", ImVec2(120, 0));
+    state.show_environment_window = !close_pressed;
   };
   imgui_cxx::with_window(draw, "Fog Window");
 }
@@ -849,9 +847,9 @@ show_environment_window(UiDebugState& state, LevelData& ldata)
 void
 draw_mainmenu(EngineState& es, LevelManager& lm, SDLWindow& window, DrawState& ds)
 {
-  auto&      uistate      = es.ui_state.debug;
-  auto&      zs            = lm.active();
-  auto&      ldata         = zs.level_data;
+  auto& uistate = es.ui_state.debug;
+  auto& zs      = lm.active();
+  auto& ldata   = zs.level_data;
 
   auto const windows_menu = [&]() {
     ImGui::MenuItem("Camera", nullptr, &uistate.show_camerawindow);
@@ -898,7 +896,6 @@ draw_mainmenu(EngineState& es, LevelManager& lm, SDLWindow& window, DrawState& d
   imgui_cxx::with_mainmenubar(draw_mainmenu);
 }
 
-
 } // namespace
 
 namespace boomhs::main_menu
@@ -916,9 +913,9 @@ draw(EngineState& es, SDLWindow& window, Camera& camera, SkyboxRenderer& skyboxr
     draw_debugwindow(es, zs);
   }
 
-  auto& zs             = lm.active();
-  auto& registry       = zs.registry;
-  auto& ldata          = zs.level_data;
+  auto& zs       = lm.active();
+  auto& registry = zs.registry;
+  auto& ldata    = zs.level_data;
 
   auto& player = find_player(registry);
   if (uistate.show_time_window) {
@@ -949,12 +946,12 @@ draw(EngineState& es, SDLWindow& window, Camera& camera, SkyboxRenderer& skyboxr
 }
 
 void
-process_event(SDLEventProcessArgs && epa)
+process_event(SDLEventProcessArgs&& epa)
 {
-  auto& state    = epa.game_state;
-  auto& event    = epa.event;
-  auto& camera   = epa.camera;
-  auto const& ft = epa.frame_time;
+  auto&       state  = epa.game_state;
+  auto&       event  = epa.event;
+  auto&       camera = epa.camera;
+  auto const& ft     = epa.frame_time;
 
   switch (event.type) {
   case SDL_KEYDOWN:

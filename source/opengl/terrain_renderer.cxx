@@ -1,8 +1,8 @@
-#include <opengl/terrain_renderer.hpp>
 #include <opengl/buffer.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
+#include <opengl/terrain_renderer.hpp>
 
 #include <boomhs/engine.hpp>
 #include <boomhs/heightmap.hpp>
@@ -24,8 +24,8 @@ namespace
 
 template <typename FN>
 void
-render_terrain(RenderState& rstate, EntityRegistry& registry,
-               FrameTime const& ft, glm::vec4 const& cull_plane, FN const& fn)
+render_terrain(RenderState& rstate, EntityRegistry& registry, FrameTime const& ft,
+               glm::vec4 const& cull_plane, FN const& fn)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -45,7 +45,6 @@ render_terrain(RenderState& rstate, EntityRegistry& registry,
   auto const& dimensions = terrain_grid.config.dimensions;
 
   auto const draw_piece = [&](auto& terrain) {
-
     auto const& config = terrain.config;
     glFrontFace(terrain_grid.winding);
     if (terrain_grid.culling_enabled) {
@@ -61,14 +60,13 @@ render_terrain(RenderState& rstate, EntityRegistry& registry,
     {
       auto const& terrain_pos = terrain.position();
 
-      auto const& zs = fstate.zs;
+      auto const& zs           = fstate.zs;
       auto const& ldata        = zs.level_data;
       auto const& terrain_grid = ldata.terrain;
       auto const& dimensions   = terrain_grid.config.dimensions;
-      tr.translation.x        = terrain_pos.x * dimensions.x;
-      tr.translation.z        = terrain_pos.y * dimensions.y;
+      tr.translation.x         = terrain_pos.x * dimensions.x;
+      tr.translation.z         = terrain_pos.y * dimensions.y;
     }
-
 
     fn(terrain, tr);
   };
@@ -89,7 +87,8 @@ namespace opengl
 // DefaultTerrainRenderer
 void
 DefaultTerrainRenderer::render(RenderState& rstate, MaterialTable const& mat_table,
-    EntityRegistry& registry, FrameTime const& ft, glm::vec4 const& cull_plane)
+                               EntityRegistry& registry, FrameTime const& ft,
+                               glm::vec4 const& cull_plane)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -102,7 +101,7 @@ DefaultTerrainRenderer::render(RenderState& rstate, MaterialTable const& mat_tab
 
   auto& mat = mat_table.find("terrain");
 
-  auto const& dimensions   = terrain_grid.config.dimensions;
+  auto const& dimensions = terrain_grid.config.dimensions;
 
   auto const fn = [&](auto& terrain, auto const& tr) {
     auto& sp = terrain.shader();
@@ -116,9 +115,9 @@ DefaultTerrainRenderer::render(RenderState& rstate, MaterialTable const& mat_tab
       auto const draw_fn = [&]() {
         dinfo.while_bound(logger, [&]() {
           bool constexpr SET_NORMALMATRIX = true;
-          auto const model_matrix = tr.model_matrix();
-          render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, tr.translation, model_matrix,
-                                   sp, dinfo, mat, registry, SET_NORMALMATRIX);
+          auto const model_matrix         = tr.model_matrix();
+          render::draw_3dlit_shape(rstate, GL_TRIANGLE_STRIP, tr.translation, model_matrix, sp,
+                                   dinfo, mat, registry, SET_NORMALMATRIX);
         });
       };
       this->while_bound(draw_fn, logger, terrain, ttable);
@@ -130,7 +129,7 @@ DefaultTerrainRenderer::render(RenderState& rstate, MaterialTable const& mat_tab
 
 void
 DefaultTerrainRenderer::bind_impl(common::Logger& logger, Terrain const& terrain,
-                                opengl::TextureTable& ttable)
+                                  opengl::TextureTable& ttable)
 {
   auto const bind = [&](size_t const tunit) {
     glActiveTexture(GL_TEXTURE0 + tunit);
@@ -145,7 +144,7 @@ DefaultTerrainRenderer::bind_impl(common::Logger& logger, Terrain const& terrain
 
 void
 DefaultTerrainRenderer::unbind_impl(common::Logger& logger, Terrain const& terrain,
-                                  opengl::TextureTable& ttable)
+                                    opengl::TextureTable& ttable)
 {
   auto const unbind = [&](size_t const tunit) {
     auto& tinfo = *ttable.find(terrain.texture_name(tunit));
@@ -172,8 +171,9 @@ SilhouetteTerrainRenderer::SilhouetteTerrainRenderer(ShaderProgram& sp)
 }
 
 void
-SilhouetteTerrainRenderer::render(RenderState& rstate, MaterialTable const&, EntityRegistry& registry,
-                             FrameTime const& ft, glm::vec4 const& cull_plane)
+SilhouetteTerrainRenderer::render(RenderState&    rstate, MaterialTable const&,
+                                  EntityRegistry& registry, FrameTime const& ft,
+                                  glm::vec4 const& cull_plane)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;

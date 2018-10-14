@@ -16,8 +16,8 @@ generate_npc_position(common::Logger& logger, TerrainGrid const& terrain_grid,
                       EntityRegistry& registry, RNG& rng)
 {
   auto const& dimensions = terrain_grid.max_worldpositions();
-  auto const width      = dimensions.x;
-  auto const length     = dimensions.y;
+  auto const  width      = dimensions.x;
+  auto const  length     = dimensions.y;
   assert(width > 0 && length > 0);
   float x, z;
   while (true) {
@@ -87,8 +87,8 @@ NPC::create(EntityRegistry& registry, char const* name, int const level, glm::ve
   transform.translation = pos;
 
   // npc TAG
-  auto& npcdata     = registry.assign<NPCData>(eid);
-  npcdata.name      = name;
+  auto& npcdata = registry.assign<NPCData>(eid);
+  npcdata.name  = name;
 
   auto& hp   = npcdata.health;
   hp.current = 10;
@@ -99,8 +99,8 @@ NPC::create(EntityRegistry& registry, char const* name, int const level, glm::ve
 }
 
 void
-NPC::create_random(common::Logger& logger, TerrainGrid const& terrain_grid, EntityRegistry& registry,
-    RNG& rng)
+NPC::create_random(common::Logger& logger, TerrainGrid const& terrain_grid,
+                   EntityRegistry& registry, RNG& rng)
 {
   auto const make_monster = [&](char const* name) {
     auto const pos = generate_npc_position(logger, terrain_grid, registry, rng);

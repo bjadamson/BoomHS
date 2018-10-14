@@ -1,5 +1,5 @@
-#include <boomhs/state.hpp>
 #include <boomhs/engine.hpp>
+#include <boomhs/state.hpp>
 
 namespace boomhs
 {

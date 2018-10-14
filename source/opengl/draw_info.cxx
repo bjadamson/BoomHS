@@ -1,5 +1,5 @@
-#include <opengl/draw_info.hpp>
 #include <opengl/buffer.hpp>
+#include <opengl/draw_info.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/shader.hpp>
 
@@ -30,8 +30,8 @@ BufferHandles::~BufferHandles()
   glDeleteBuffers(NUM_BUFFERS, &vbo_);
 }
 
-  // move-construction OK.
-BufferHandles::BufferHandles(BufferHandles &&other)
+// move-construction OK.
+BufferHandles::BufferHandles(BufferHandles&& other)
     : vbo_(other.vbo_)
     , ebo_(other.ebo_)
 {
@@ -42,7 +42,7 @@ BufferHandles::BufferHandles(BufferHandles &&other)
 }
 
 BufferHandles&
-BufferHandles::operator=(BufferHandles &&other)
+BufferHandles::operator=(BufferHandles&& other)
 {
   assert(this != &other);
 
@@ -61,7 +61,7 @@ BufferHandles::to_string() const
 }
 
 std::ostream&
-operator<<(std::ostream &stream, BufferHandles const& buffers)
+operator<<(std::ostream& stream, BufferHandles const& buffers)
 {
   stream << buffers.to_string();
   return stream;
@@ -70,32 +70,32 @@ operator<<(std::ostream &stream, BufferHandles const& buffers)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // DrawInfo
 DrawInfo::DrawInfo(size_t const num_vertexes, GLuint const num_indices)
-  : num_vertexes_(num_vertexes)
-  , num_indices_(num_indices)
+    : num_vertexes_(num_vertexes)
+    , num_indices_(num_indices)
 {
 }
 
-DrawInfo::DrawInfo(DrawInfo &&other)
-  : num_vertexes_(other.num_vertexes_)
-  , num_indices_(other.num_indices_)
-  , handles_(MOVE(other.handles_))
-  , vao_(MOVE(other.vao_))
+DrawInfo::DrawInfo(DrawInfo&& other)
+    : num_vertexes_(other.num_vertexes_)
+    , num_indices_(other.num_indices_)
+    , handles_(MOVE(other.handles_))
+    , vao_(MOVE(other.vao_))
 {
   assert(this != &other);
 }
 
 DrawInfo&
-DrawInfo::operator=(DrawInfo &&other)
+DrawInfo::operator=(DrawInfo&& other)
 {
   assert(this != &other);
 
-  num_vertexes_ = other.num_vertexes_;
-  num_indices_ = other.num_indices_;
+  num_vertexes_       = other.num_vertexes_;
+  num_indices_        = other.num_indices_;
   other.num_vertexes_ = 0;
-  other.num_indices_ = 0;
+  other.num_indices_  = 0;
 
   handles_ = MOVE(other.handles_);
-  vao_ = MOVE(other.vao_);
+  vao_     = MOVE(other.vao_);
   return *this;
 }
 
@@ -103,7 +103,6 @@ void
 DrawInfo::bind_impl(common::Logger& logger)
 {
   vao().bind_impl(logger);
-
 }
 
 void
@@ -121,7 +120,7 @@ DrawInfo::to_string() const
   result += fmt::format("NumIndices: {} ", dinfo.num_indices());
   result += "VAO: " + dinfo.vao().to_string() + " ";
   result += "BufferHandles: {" + dinfo.handles_.to_string() + "} ";
-  //auto const num_indices = dinfo.num_indices();
+  // auto const num_indices = dinfo.num_indices();
 
   // TODO: maybe need to bind the element buffer before calling glMapBuffer?
   /*
@@ -171,7 +170,7 @@ DrawInfo::to_string() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EntityDrawHandleMap
 DrawInfoHandle
-EntityDrawHandleMap::add(EntityID const eid, opengl::DrawInfo &&di)
+EntityDrawHandleMap::add(EntityID const eid, opengl::DrawInfo&& di)
 {
   assert(drawinfos_.size() == entities_.size());
   assert(std::nullopt == find(eid));
@@ -197,13 +196,9 @@ EntityDrawHandleMap::has(DrawInfoHandle const dih) const
   return drawinfos_[dindex.value];
 
 DrawInfo const&
-EntityDrawHandleMap::get(DrawInfoHandle const dindex) const
-{
-  GET_IMPL
-}
+EntityDrawHandleMap::get(DrawInfoHandle const dindex) const {GET_IMPL}
 
-DrawInfo&
-EntityDrawHandleMap::get(DrawInfoHandle const dindex)
+DrawInfo& EntityDrawHandleMap::get(DrawInfoHandle const dindex)
 {
   GET_IMPL
 }
@@ -213,7 +208,8 @@ EntityDrawHandleMap::get(DrawInfoHandle const dindex)
 std::optional<DrawInfoHandle>
 EntityDrawHandleMap::find(boomhs::EntityID const eid) const
 {
-  FOR(i, entities_.size()) {
+  FOR(i, entities_.size())
+  {
     if (entities_[i] == eid) {
       return DrawInfoHandle{i};
     }
@@ -226,9 +222,7 @@ EntityDrawHandleMap::find(boomhs::EntityID const eid) const
 DrawInfoHandle
 DrawHandleManager::add_entity(EntityID const eid, DrawInfo&& dinfo)
 {
-  FOR(i, entities().entities_.size()) {
-    assert(!(entities().entities_[i] == eid));
-  }
+  FOR(i, entities().entities_.size()) { assert(!(entities().entities_[i] == eid)); }
   return entities_.add(eid, MOVE(dinfo));
 }
 
@@ -277,15 +271,15 @@ DrawHandleManager::add_mesh(common::Logger& logger, ShaderPrograms& sps, ObjStor
   auto& sn = registry.get<ShaderName>(eid);
   auto& va = sps.ref_sp(sn.value).va();
 
-  auto const& mesh_name     = registry.get<MeshRenderable>(eid).name;
-  auto const& obj = obj_store.get(logger, mesh_name);
+  auto const& mesh_name = registry.get<MeshRenderable>(eid).name;
+  auto const& obj       = obj_store.get(logger, mesh_name);
 
-  auto handle = OG::copy_gpu(logger, va, obj);
+  auto       handle     = OG::copy_gpu(logger, va, obj);
   auto const draw_index = add_entity(eid, MOVE(handle));
 
-  auto const     posbuffer = obj.positions();
-  auto const&    min       = posbuffer.min();
-  auto const&    max       = posbuffer.max();
+  auto const  posbuffer = obj.positions();
+  auto const& min       = posbuffer.min();
+  auto const& max       = posbuffer.max();
   AABoundingBox::add_to_entity(logger, sps, eid, registry, min, max);
 }
 
@@ -294,14 +288,14 @@ DrawHandleManager::add_cube(common::Logger& logger, ShaderPrograms& sps, EntityI
                             EntityRegistry& registry)
 {
   auto const& cr = registry.get<CubeRenderable>(eid);
-  auto& sn = registry.get<ShaderName>(eid);
-  auto& va = sps.ref_sp(sn.value).va();
+  auto&       sn = registry.get<ShaderName>(eid);
+  auto&       va = sps.ref_sp(sn.value).va();
 
   auto const vertices   = VertexFactory::build_cube(cr.min, cr.max);
-  auto  handle          = OG::copy_cube_gpu(logger, vertices, va);
+  auto       handle     = OG::copy_cube_gpu(logger, vertices, va);
   auto const draw_index = add_entity(eid, MOVE(handle));
 
   AABoundingBox::add_to_entity(logger, sps, eid, registry, cr.min, cr.max);
 }
 
-} // ns opengl
+} // namespace opengl

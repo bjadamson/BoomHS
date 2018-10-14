@@ -1,10 +1,10 @@
-#include <boomhs/io_behavior.hpp>
 #include <boomhs/camera.hpp>
 #include <boomhs/collision.hpp>
+#include <boomhs/engine.hpp>
 #include <boomhs/frame_time.hpp>
+#include <boomhs/io_behavior.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/npc.hpp>
-#include <boomhs/engine.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/raycast.hpp>
 #include <boomhs/state.hpp>
@@ -32,19 +32,18 @@ fps_mousemove(Camera& camera, Player& player, float const xrel, float const yrel
 }
 
 void
-thirdperson_mousemove(Player& player, Camera& camera, MouseState const& ms,
-                      float const xrel, float const yrel,
-                      FrameTime const& ft)
+thirdperson_mousemove(Player& player, Camera& camera, MouseState const& ms, float const xrel,
+                      float const yrel, FrameTime const& ft)
 {
   if (ms.left_pressed()) {
     camera.rotate_radians(xrel, yrel, ft);
   }
   if (ms.right_pressed()) {
-    auto constexpr  RIGHTCLICK_TURN_SPEED_DEGREES = 60.0f;
-    float constexpr speed = RIGHTCLICK_TURN_SPEED_DEGREES;
-    float const angle = xrel > 0 ? speed : -speed;
+    auto constexpr RIGHTCLICK_TURN_SPEED_DEGREES = 60.0f;
+    float constexpr speed                        = RIGHTCLICK_TURN_SPEED_DEGREES;
+    float const angle                            = xrel > 0 ? speed : -speed;
 
-    auto const x_dt  = angle * ft.delta_millis();
+    auto const x_dt = angle * ft.delta_millis();
     player.world_object().rotate_degrees(glm::degrees(x_dt), EulerAxis::Y);
   }
 }
@@ -58,11 +57,10 @@ enum class MouseButton
 using EntityDistances = std::vector<std::pair<EntityID, float>>;
 
 bool
-ray_intersects_cube_entity(common::Logger& logger, EntityID const eid,
-                    Ray const& ray,
-                    Transform const& tr, Cube const& cube, EntityDistances& distances)
+ray_intersects_cube_entity(common::Logger& logger, EntityID const eid, Ray const& ray,
+                           Transform const& tr, Cube const& cube, EntityDistances& distances)
 {
-  float distance = 0.0f;
+  float      distance   = 0.0f;
   bool const intersects = collision::intersects(logger, ray, tr, cube, distance);
   if (intersects) {
     distances.emplace_back(PAIR(eid, distance));
@@ -80,7 +78,7 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
   auto& zs       = fstate.zs;
   auto& registry = zs.registry;
 
-  auto const coords = es.device_states.mouse.current.coords();
+  auto const      coords = es.device_states.mouse.current.coords();
   glm::vec2 const mouse_pos{coords.x, coords.y};
 
   auto const proj_matrix = fstate.projection_matrix();
@@ -88,10 +86,10 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
   auto const view_rect   = Viewport::from_frustum(es.frustum);
 
   glm::vec3 const ray_start = (CameraMode::Ortho == fstate.camera_mode())
-      ? CameraORTHO::EYE_FORWARD
-      : fstate.camera_world_position();
-  glm::vec3 const ray_dir = Raycast::calculate_ray_into_screen(mouse_pos, proj_matrix, view_matrix,
-                                                               view_rect);
+                                  ? CameraORTHO::EYE_FORWARD
+                                  : fstate.camera_world_position();
+  glm::vec3 const ray_dir =
+      Raycast::calculate_ray_into_screen(mouse_pos, proj_matrix, view_matrix, view_rect);
   EntityDistances distances;
   for (auto const eid : find_all_entities_with_component<Selectable>(registry)) {
     auto const& cube = registry.get<AABoundingBox>(eid).cube;
@@ -103,7 +101,8 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
     if (intersects) {
       LOG_ERROR("\n\n\n\n\n\n\nIntersects something\n\n\n\n\n\n\n");
       LOG_ERROR_SPRINTF("mouse pos: %s", glm::to_string(mouse_pos));
-      LOG_ERROR_SPRINTF("ray_start %s, ray_dir %s", glm::to_string(ray_start), glm::to_string(ray_dir));
+      LOG_ERROR_SPRINTF("ray_start %s, ray_dir %s", glm::to_string(ray_start),
+                        glm::to_string(ray_dir));
     }
     sel.selected = intersects;
   }
@@ -111,14 +110,10 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
   if (something_selected) {
     auto const cmp = [](auto const& l, auto const& r) { return l.second < r.second; };
     std::sort(distances.begin(), distances.end(), cmp);
-    auto const& pair = mb == MouseButton::LEFT
-      ? distances.front()
-      : distances.back();
+    auto const& pair = mb == MouseButton::LEFT ? distances.front() : distances.back();
 
-    auto const eid = pair.first;
-    auto const name = registry.has<Name>(eid)
-      ? registry.get<Name>(eid).value
-      : "Unnamed";
+    auto const eid  = pair.first;
+    auto const name = registry.has<Name>(eid) ? registry.get<Name>(eid).value : "Unnamed";
   }
 }
 
@@ -132,17 +127,17 @@ namespace boomhs
 void
 PlayerPlayingGameBehavior::mousebutton_down(MouseButtonEvent&& mbe)
 {
-  auto& state       = mbe.game_state;
-  auto& camera      = mbe.camera;
-  auto const& event = mbe.event;
-  auto const& ft    = mbe.frame_time;
-  auto& player      = mbe.player;
+  auto&       state  = mbe.game_state;
+  auto&       camera = mbe.camera;
+  auto const& event  = mbe.event;
+  auto const& ft     = mbe.frame_time;
+  auto&       player = mbe.player;
 
   auto& es     = state.engine_state();
   auto& logger = es.logger;
   auto& ms     = es.device_states.mouse.current;
 
-  auto& zs = state.level_manager().active();
+  auto& zs      = state.level_manager().active();
   auto& uistate = es.ui_state.debug;
 
   if (ms.either_pressed()) {
@@ -159,7 +154,7 @@ PlayerPlayingGameBehavior::mousebutton_down(MouseButtonEvent&& mbe)
   }
 
   auto const& button = event.button;
-  auto const mode = camera.mode();
+  auto const  mode   = camera.mode();
   if (mode == CameraMode::FPS || mode == CameraMode::ThirdPerson) {
     if (button == SDL_BUTTON_MIDDLE) {
       LOG_INFO("toggling mouse up/down (pitch) lock");
@@ -168,10 +163,10 @@ PlayerPlayingGameBehavior::mousebutton_down(MouseButtonEvent&& mbe)
   }
   else if (mode == CameraMode::Ortho) {
     if (ms.middle_pressed()) {
-      auto const c = glm::vec2{ms.coords().x, ms.coords().y};
+      auto const c                        = glm::vec2{ms.coords().x, ms.coords().y};
       camera.ortho.mouse_click.left_right = c;
 
-      auto& ds         = es.device_states;
+      auto& ds = es.device_states;
       ds.cursors.set_active(SDL_SYSTEM_CURSOR_HAND);
     }
   }
@@ -180,30 +175,30 @@ PlayerPlayingGameBehavior::mousebutton_down(MouseButtonEvent&& mbe)
 void
 PlayerPlayingGameBehavior::mousebutton_up(MouseButtonEvent&& mbe)
 {
-  auto& state       = mbe.game_state;
-  auto& camera      = mbe.camera;
-  auto const& event = mbe.event;
-  auto const& ft    = mbe.frame_time;
-  auto& player      = mbe.player;
+  auto&       state  = mbe.game_state;
+  auto&       camera = mbe.camera;
+  auto const& event  = mbe.event;
+  auto const& ft     = mbe.frame_time;
+  auto&       player = mbe.player;
 
   auto& es = state.engine_state();
   auto& ms = es.device_states.mouse.current;
 
   auto const mode = camera.mode();
   if (mode == CameraMode::Ortho) {
-    auto& ds         = es.device_states;
+    auto& ds = es.device_states;
     ds.cursors.set_active(SDL_SYSTEM_CURSOR_ARROW);
   }
 }
 
 void
-PlayerPlayingGameBehavior::mouse_wheel(MouseWheelEvent &&mwe)
+PlayerPlayingGameBehavior::mouse_wheel(MouseWheelEvent&& mwe)
 {
-  auto& state    = mwe.game_state;
-  auto& camera   = mwe.camera;
-  auto& wheel    = mwe.wheel;
-  auto& player   = mwe.player;
-  auto const& ft = mwe.frame_time;
+  auto&       state  = mwe.game_state;
+  auto&       camera = mwe.camera;
+  auto&       wheel  = mwe.wheel;
+  auto&       player = mwe.player;
+  auto const& ft     = mwe.frame_time;
 
   auto& logger = state.engine_state().logger;
   LOG_TRACE("mouse wheel event detected.");
@@ -226,10 +221,10 @@ PlayerPlayingGameBehavior::mouse_wheel(MouseWheelEvent &&mwe)
 void
 PlayerPlayingGameBehavior::mouse_motion(MouseMotionEvent&& mme)
 {
-  auto& state        = mme.game_state;
-  auto& camera       = mme.camera;
+  auto&       state  = mme.game_state;
+  auto&       camera = mme.camera;
   auto const& motion = mme.motion;
-  auto& player       = mme.player;
+  auto&       player = mme.player;
   auto const& ft     = mme.frame_time;
 
   auto& es     = state.engine_state();
@@ -240,8 +235,8 @@ PlayerPlayingGameBehavior::mouse_motion(MouseMotionEvent&& mme)
   // convert from int to floating-point value
   float xrel = motion.xrel, yrel = motion.yrel;
 
-  bool const is_fps = camera.is_firstperson();
-  auto const& cs    = is_fps? camera.fps.cs : camera.arcball.cs;
+  bool const  is_fps = camera.is_firstperson();
+  auto const& cs     = is_fps ? camera.fps.cs : camera.arcball.cs;
   xrel *= cs.sensitivity.x;
   yrel *= cs.sensitivity.y;
   if (is_fps) {
@@ -257,10 +252,10 @@ PlayerPlayingGameBehavior::mouse_motion(MouseMotionEvent&& mme)
 void
 PlayerPlayingGameBehavior::keyup(KeyEvent&& ke)
 {
-  auto& state       = ke.game_state;
-  auto const& event = ke.event;
-  auto& es          = state.engine_state();
-  auto& logger      = es.logger;
+  auto&       state  = ke.game_state;
+  auto const& event  = ke.event;
+  auto&       es     = state.engine_state();
+  auto&       logger = es.logger;
 
   switch (event.key.keysym.sym) {
     break;
@@ -268,33 +263,32 @@ PlayerPlayingGameBehavior::keyup(KeyEvent&& ke)
 }
 
 void
-PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
+PlayerPlayingGameBehavior::keydown(KeyEvent&& ke)
 {
-  auto& state       = ke.game_state;
-  auto& camera      = ke.camera;
-  auto& ortho       = camera.ortho;
-  auto const& event = ke.event;
-  auto const& ft    = ke.frame_time;
-  auto& player      = ke.player;
+  auto&       state  = ke.game_state;
+  auto&       camera = ke.camera;
+  auto&       ortho  = camera.ortho;
+  auto const& event  = ke.event;
+  auto const& ft     = ke.frame_time;
+  auto&       player = ke.player;
 
+  auto& es = state.engine_state();
+  auto& sr = state.static_renderers();
 
-  auto& es         = state.engine_state();
-  auto& sr         = state.static_renderers();
+  auto& logger    = es.logger;
+  auto& uistate   = es.ui_state;
+  auto& ds        = es.device_states;
+  auto& player_wo = player.world_object();
 
-  auto& logger     = es.logger;
-  auto& uistate    = es.ui_state;
-  auto& ds         = es.device_states;
-  auto& player_wo  = player.world_object();
-
-  auto& lm             = state.level_manager();
-  auto& active         = lm.active();
-  auto& registry       = active.registry;
-  auto& ldata          = active.level_data;
+  auto& lm       = state.level_manager();
+  auto& active   = lm.active();
+  auto& registry = active.registry;
+  auto& ldata    = active.level_data;
 
   auto& nbt = ldata.nearby_targets;
 
-  auto& debug = uistate.debug;
-  auto& ingame = uistate.ingame;
+  auto& debug      = uistate.debug;
+  auto& ingame     = uistate.ingame;
   auto& chat_state = ingame.chat_state;
 
   auto const rotate_player = [&](float const angle, auto const axis) {
@@ -323,14 +317,13 @@ PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
     camera.next_mode();
   } break;
   case SDLK_TAB: {
-    uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
-    CycleDirection const dir = keystate[SDL_SCANCODE_LSHIFT]
-      ? CycleDirection::Forward
-      : CycleDirection::Backward;
+    uint8_t const*       keystate = SDL_GetKeyboardState(nullptr);
+    CycleDirection const dir =
+        keystate[SDL_SCANCODE_LSHIFT] ? CycleDirection::Forward : CycleDirection::Backward;
     nbt.cycle(dir, ft);
   } break;
   case SDLK_BACKQUOTE: {
-    auto&      inventory = player.inventory;
+    auto& inventory = player.inventory;
     inventory.toggle_open();
   } break;
   case SDLK_SPACE: {
@@ -341,7 +334,7 @@ PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
     // If the player has an entity selected, try and attack it.
     if (selected_opt) {
       EntityID const target_eid = *selected_opt;
-      auto& target = registry.get<NPCData>(target_eid);
+      auto&          target     = registry.get<NPCData>(target_eid);
       if (NPC::is_dead(target.health)) {
         LOG_ERROR("TARGET IS DEAD");
         break;
@@ -374,18 +367,18 @@ PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
     ortho.scroll(glm::vec2{1, 0});
     break;
 
-  //case SDLK_KP_2:
-    //ortho.view_size.y += 1;
-    //break;
-  //case SDLK_KP_4:
-    //ortho.view_size.x -= 1;
-    //break;
-  //case SDLK_KP_6:
-    //ortho.view_size.x += 1;
-    //break;
-  //case SDLK_KP_8:
-    //ortho.view_size.y -= 1;
-    //break;
+    // case SDLK_KP_2:
+    // ortho.view_size.y += 1;
+    // break;
+    // case SDLK_KP_4:
+    // ortho.view_size.x -= 1;
+    // break;
+    // case SDLK_KP_6:
+    // ortho.view_size.x += 1;
+    // break;
+    // case SDLK_KP_8:
+    // ortho.view_size.y -= 1;
+    // break;
 
   case SDLK_PAGEUP:
     ortho.position += Y_UNIT_VECTOR;
@@ -397,11 +390,11 @@ PlayerPlayingGameBehavior::keydown(KeyEvent &&ke)
 }
 
 void
-PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs &&mk)
+PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs&& mk)
 {
-  auto& state        = mk.game_state;
-  auto& camera       = mk.camera;
-  auto& player       = mk.player;
+  auto&       state  = mk.game_state;
+  auto&       camera = mk.camera;
+  auto&       player = mk.player;
   auto const& ft     = mk.frame_time;
 
   auto& es     = state.engine_state();
@@ -412,12 +405,12 @@ PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs &&mk)
   auto& ms_now  = mss.current;
   auto& ms_prev = mss.previous;
 
-  bool const both_yes_now = ms_now.both_pressed();
+  bool const both_yes_now  = ms_now.both_pressed();
   bool const both_yes_prev = ms_prev.both_pressed();
   bool const both_not_prev = !both_yes_prev;
 
-  auto& lm     = state.level_manager();
-  auto& registry  = lm.active().registry;
+  auto& lm       = state.level_manager();
+  auto& registry = lm.active().registry;
 
   auto const mode = camera.mode();
   if (mode == CameraMode::FPS || mode == CameraMode::ThirdPerson) {
@@ -444,18 +437,18 @@ PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs &&mk)
       float const dy = (coords_now - click_pos).y / frustum.height();
 
       auto constexpr SCROLL_SPEED = 15.0f;
-      auto const multiplier = SCROLL_SPEED * distance * ft.delta_millis();
+      auto const multiplier       = SCROLL_SPEED * distance * ft.delta_millis();
       camera.ortho.scroll(glm::vec2{dx, dy} * multiplier);
     }
   }
 }
 
 void
-PlayerPlayingGameBehavior::process_keyboard_state(MouseAndKeyboardArgs &&mk)
+PlayerPlayingGameBehavior::process_keyboard_state(MouseAndKeyboardArgs&& mk)
 {
-  auto& state        = mk.game_state;
-  auto& camera       = mk.camera;
-  auto& player       = mk.player;
+  auto&       state  = mk.game_state;
+  auto&       camera = mk.camera;
+  auto&       player = mk.player;
   auto const& ft     = mk.frame_time;
 
   // continual keypress responses procesed here
@@ -463,7 +456,7 @@ PlayerPlayingGameBehavior::process_keyboard_state(MouseAndKeyboardArgs &&mk)
   assert(keystate);
 
   auto& es       = state.engine_state();
-  auto& logger = es.logger;
+  auto& logger   = es.logger;
   auto& lm       = state.level_manager();
   auto& zs       = lm.active();
   auto& ldata    = zs.level_data;
@@ -471,39 +464,31 @@ PlayerPlayingGameBehavior::process_keyboard_state(MouseAndKeyboardArgs &&mk)
 
   auto& movement = es.movement_state;
 
-  movement.forward = keystate[SDL_SCANCODE_W]
-    ? player.eye_forward()
-    : ZERO;
-  movement.backward = keystate[SDL_SCANCODE_S]
-    ? player.eye_backward()
-    : ZERO;
+  movement.forward  = keystate[SDL_SCANCODE_W] ? player.eye_forward() : ZERO;
+  movement.backward = keystate[SDL_SCANCODE_S] ? player.eye_backward() : ZERO;
 
-  movement.left = keystate[SDL_SCANCODE_A]
-    ? player.eye_left()
-    : ZERO;
+  movement.left = keystate[SDL_SCANCODE_A] ? player.eye_left() : ZERO;
 
-  movement.right = keystate[SDL_SCANCODE_D]
-    ? player.eye_right()
-    : ZERO;
+  movement.right = keystate[SDL_SCANCODE_D] ? player.eye_right() : ZERO;
 }
 
 void
 PlayerPlayingGameBehavior::process_controller_state(ControllerArgs&& ca)
 {
-  auto& state             = ca.game_state;
+  auto&       state       = ca.game_state;
   auto const& controllers = ca.controllers;
-  auto& camera            = ca.camera;
-  auto& player            = ca.player;
-  auto& player_wo         = player.world_object();
+  auto&       camera      = ca.camera;
+  auto&       player      = ca.player;
+  auto&       player_wo   = player.world_object();
   auto const& ft          = ca.frame_time;
 
   if (controllers.empty()) {
     return;
   }
 
-  auto& es     = state.engine_state();
-  auto& lm     = state.level_manager();
-  auto& registry  = lm.active().registry;
+  auto& es       = state.engine_state();
+  auto& lm       = state.level_manager();
+  auto& registry = lm.active().registry;
 
   auto& logger = es.logger;
   auto& c      = controllers.first();
@@ -527,7 +512,7 @@ PlayerPlayingGameBehavior::process_controller_state(ControllerArgs&& ca)
     return v >= 0 && (v >= AXIS_MAX * THRESHOLD);
   };
 
-  auto& movement = es.movement_state;
+  auto&      movement    = es.movement_state;
   auto const axis_left_x = c.axis_left_x();
 
   if (less_threshold(axis_left_x)) {
@@ -640,9 +625,9 @@ PlayerPlayingGameBehavior::process_controller_state(ControllerArgs&& ca)
     LOG_DEBUG("BUTTON DPAD UP\n");
   }
 
-  auto& zs       = lm.active();
-  auto& ldata    = zs.level_data;
-  auto& nbt = ldata.nearby_targets;
+  auto& zs    = lm.active();
+  auto& ldata = zs.level_data;
+  auto& nbt   = ldata.nearby_targets;
   if (c.button_dpad_left()) {
     LOG_DEBUG("BUTTON DPAD LEFT\n");
     nbt.cycle_backward(ft);

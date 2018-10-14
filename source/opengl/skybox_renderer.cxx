@@ -85,12 +85,12 @@ SkyboxRenderer::render(RenderState& rstate, DrawState& ds, FrameTime const& ft)
   view_matrix[3][1] = 0.0f;
   view_matrix[3][2] = 0.0f;
 
-  auto const proj_matrix  = fstate.projection_matrix();
-  auto const draw_fn = [&]() { render::draw_2d(rstate, GL_TRIANGLES, *sp_, dinfo_); };
+  auto const proj_matrix = fstate.projection_matrix();
+  auto const draw_fn     = [&]() { render::draw_2d(rstate, GL_TRIANGLES, *sp_, dinfo_); };
   sp_->while_bound(logger, [&]() {
     {
-      auto const& skybox     = ldata.skybox;
-      auto const& transform  = skybox.transform();
+      auto const& skybox    = ldata.skybox;
+      auto const& transform = skybox.transform();
 
       auto const model_matrix = transform.model_matrix();
       auto const mvp_matrix   = math::compute_mvp_matrix(model_matrix, view_matrix, proj_matrix);

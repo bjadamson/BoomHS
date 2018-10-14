@@ -22,16 +22,16 @@ namespace
 
 void
 draw_entity_editor(char const* prefix, int const window_flags, EngineState& es, LevelManager& lm,
-                   EntityRegistry& registry, Camera& camera,
-                   glm::mat4 const& view_mat, glm::mat4 const& proj_mat)
+                   EntityRegistry& registry, Camera& camera, glm::mat4 const& view_mat,
+                   glm::mat4 const& proj_mat)
 {
-  auto& logger    = es.logger;
-  auto& zs        = lm.active();
-  auto& gfx_state = zs.gfx_state;
+  auto& logger       = es.logger;
+  auto& zs           = lm.active();
+  auto& gfx_state    = zs.gfx_state;
   auto& draw_handles = gfx_state.draw_handles;
-  auto& sps       = gfx_state.sps;
+  auto& sps          = gfx_state.sps;
 
-  auto& uistate   = es.ui_state.debug;
+  auto& uistate = es.ui_state.debug;
 
   auto const draw = [&]() {
     std::optional<EntityID> selected;
@@ -57,17 +57,17 @@ draw_entity_editor(char const* prefix, int const window_flags, EngineState& es, 
     }
 
     if (registry.has<AABoundingBox>(eid) && registry.has<Transform>(eid)) {
-      auto const& tr = registry.get<Transform>(eid);
+      auto const& tr   = registry.get<Transform>(eid);
       auto const& bbox = registry.get<AABoundingBox>(eid);
 
       // TODO: view/proj matrix
-      bool const bbox_inside = ViewFrustum::bbox_inside(view_mat, proj_mat, tr, bbox);
-      std::string const msg = fmt::sprintf("In ViewFrustum: %i", bbox_inside);
+      bool const        bbox_inside = ViewFrustum::bbox_inside(view_mat, proj_mat, tr, bbox);
+      std::string const msg         = fmt::sprintf("In ViewFrustum: %i", bbox_inside);
       ImGui::Text("%s", msg.c_str());
     }
     if (ImGui::Button("Inhabit Selected")) {
       auto& transform = registry.get<Transform>(eid);
-      //camera.set_target(transform);
+      // camera.set_target(transform);
     }
 
     if (registry.has<Name>(eid)) {
@@ -177,10 +177,10 @@ void
 draw(char const* prefix, int const window_flags, EngineState& es, LevelManager& lm, Camera& camera,
      FrameTime const& ft)
 {
-  auto& uistate        = es.ui_state.debug;
-  auto& zs             = lm.active();
-  auto& registry       = zs.registry;
-  auto& ldata          = zs.level_data;
+  auto& uistate  = es.ui_state.debug;
+  auto& zs       = lm.active();
+  auto& registry = zs.registry;
+  auto& ldata    = zs.level_data;
 
   auto& player = find_player(registry);
 

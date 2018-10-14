@@ -1,10 +1,10 @@
-#include <boomhs/item_factory.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/heightmap.hpp>
-#include <boomhs/math.hpp>
-#include <boomhs/npc.hpp>
+#include <boomhs/item_factory.hpp>
 #include <boomhs/leveldata.hpp>
 #include <boomhs/lighting.hpp>
+#include <boomhs/math.hpp>
+#include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/random.hpp>
 #include <boomhs/start_area_generator.hpp>
@@ -27,11 +27,11 @@ namespace
 {
 
 void
-place_item_on_ground(common::Logger& logger, TerrainGrid& terrain, Transform &transform,
-    glm::vec2 const& pos)
+place_item_on_ground(common::Logger& logger, TerrainGrid& terrain, Transform& transform,
+                     glm::vec2 const& pos)
 {
   float const x = pos.x, z = pos.y;
-  auto const y = terrain.get_height(logger, x, z);
+  auto const  y         = terrain.get_height(logger, x, z);
   transform.translation = glm::vec3{x, y, z};
 }
 
@@ -69,7 +69,7 @@ place_player(common::Logger& logger, ShaderPrograms& sps, TerrainGrid const& ter
 
   {
     float const x = 8, z = 8;
-    auto const y = terrain.get_height(logger, x, z);
+    auto const  y         = terrain.get_height(logger, x, z);
     transform.translation = glm::vec3{x, y, z};
   }
 
@@ -85,17 +85,17 @@ place_player(common::Logger& logger, ShaderPrograms& sps, TerrainGrid const& ter
 
 void
 place_waters(common::Logger& logger, ShaderPrograms& sps, EntityRegistry& registry,
-            TextureTable& ttable, RNG& rng)
+             TextureTable& ttable, RNG& rng)
 {
-  auto& water_sp  = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
+  auto& water_sp = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
 
   auto const place = [&](glm::vec2 const& pos, unsigned int count) {
     auto const eid = registry.create();
 
-    auto& wi        = WaterFactory::make_default(logger, sps, ttable, eid, registry);
-    wi.mix_color    = Color::random(rng);
+    auto& wi     = WaterFactory::make_default(logger, sps, ttable, eid, registry);
+    wi.mix_color = Color::random(rng);
 
-    auto& tr = registry.get<Transform>(eid);
+    auto& tr         = registry.get<Transform>(eid);
     tr.translation.x = pos.x;
     tr.translation.z = pos.y;
 
@@ -104,8 +104,10 @@ place_waters(common::Logger& logger, ShaderPrograms& sps, EntityRegistry& regist
   };
 
   int count = 0;
-  FOR(i, 4) {
-    FOR(j, 4) {
+  FOR(i, 4)
+  {
+    FOR(j, 4)
+    {
       auto const pos = glm::vec2{i * 25, j * 25};
       place(pos, count);
       ++count;
@@ -119,16 +121,16 @@ namespace boomhs
 {
 
 LevelGeneratedData
-StartAreaGenerator::gen_level(common::Logger& logger, EntityRegistry& registry,
-                              RNG& rng, ShaderPrograms& sps, TextureTable& ttable,
-                              MaterialTable const& material_table,
-                              Heightmap const& heightmap, WorldOrientation const& world_orientation)
+StartAreaGenerator::gen_level(common::Logger& logger, EntityRegistry& registry, RNG& rng,
+                              ShaderPrograms& sps, TextureTable& ttable,
+                              MaterialTable const& material_table, Heightmap const& heightmap,
+                              WorldOrientation const& world_orientation)
 {
   LOG_TRACE("Generating Starting Area");
 
   LOG_TRACE("Generating Terrain");
   TerrainConfig const tc;
-  auto& sp     = sps.ref_sp(tc.shader_name);
+  auto&               sp = sps.ref_sp(tc.shader_name);
 
   TerrainGridConfig tgc;
   tgc.num_rows = 2;

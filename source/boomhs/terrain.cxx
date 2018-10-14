@@ -233,7 +233,7 @@ TerrainGrid::add(Terrain&& t)
 TerrainOutOfBoundsResult
 TerrainGrid::out_of_bounds(float const x, float const z) const
 {
-  auto const max_pos = this->max_worldpositions();
+  auto const max_pos       = this->max_worldpositions();
   bool const x_outofbounds = x >= max_pos.x || x < 0;
   bool const y_outofbounds = z >= max_pos.y || z < 0;
   return TerrainOutOfBoundsResult{x_outofbounds, y_outofbounds};
@@ -289,7 +289,7 @@ TerrainGrid::get_height(common::Logger& logger, float const x, float const z) co
     p2 = glm::vec3{1, hmap.data(grid_x + 1, grid_z + 1), 1};
     p3 = glm::vec3{0, hmap.data(grid_x, grid_z + 1), 1};
   }
-  float const theight = barry_centric(p1, p2, p3, p4);
+  float const theight         = barry_centric(p1, p2, p3, p4);
   float const bitmap_adjusted = theight / 255.0f;
   return bitmap_adjusted * t.config.height_multiplier;
 }

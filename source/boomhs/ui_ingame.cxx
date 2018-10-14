@@ -59,7 +59,7 @@ draw_player_inventory(common::Logger& logger, Player& player, EntityRegistry& re
       auto* ti = slot_occupied ? slot.item(registry).ui_tinfo : ttable.find("InventorySlotEmpty");
       assert(ti);
       draw_button(*ti);
-      bool const left_mouse_pressed = ImGui::IsItemClicked(0);
+      bool const left_mouse_pressed  = ImGui::IsItemClicked(0);
       bool const right_mouse_pressed = ImGui::IsItemClicked(1);
 
       // If the button is pressed, and the slot is occupied (location clicked) then go ahead and
@@ -78,15 +78,16 @@ draw_player_inventory(common::Logger& logger, Player& player, EntityRegistry& re
     // remove_entity() may invalidate slot& reference, find again.
     auto& slot = inventory.slot(pos);
     if (slot.occupied() && ImGui::IsItemHovered()) {
-      auto& item = slot.item(registry);
+      auto&       item    = slot.item(registry);
       auto const& tooltip = item.tooltip;
       if (item.has_single_owner()) {
         ImGui::SetTooltip("%s |Owner: %s", tooltip, item.current_owner().value.c_str());
       }
       else {
         std::stringstream ss;
-        auto const& prev_owners = item.all_owners();
-        FOR(i, prev_owners.size()) {
+        auto const&       prev_owners = item.all_owners();
+        FOR(i, prev_owners.size())
+        {
           // SKIP the first owner, as that's considered the current owner.
           if (i == 0) {
             continue;
@@ -97,15 +98,13 @@ draw_player_inventory(common::Logger& logger, Player& player, EntityRegistry& re
           ss << prev_owners[i].value;
         }
         auto const names = ss.str();
-        ImGui::SetTooltip("%s |Owner: %s |Previous Owners: (%s)", tooltip, item.current_owner().value.c_str(),
-            names.c_str());
+        ImGui::SetTooltip("%s |Owner: %s |Previous Owners: (%s)", tooltip,
+                          item.current_owner().value.c_str(), names.c_str());
       }
     }
   };
 
-  auto const draw_inventory = [&]() {
-    imgui_cxx::draw_grid(40, 8, draw_icon);
-  };
+  auto const draw_inventory = [&]() { imgui_cxx::draw_grid(40, 8, draw_icon); };
 
   auto constexpr flags = (0 | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize |
                           ImGuiWindowFlags_NoTitleBar);
@@ -117,14 +116,14 @@ draw_player_inventory(common::Logger& logger, Player& player, EntityRegistry& re
 }
 
 void
-draw_nearest_target_info(Viewport const& viewport, NearbyTargets const& nbt, TextureTable const& ttable,
-                         EntityRegistry& registry)
+draw_nearest_target_info(Viewport const& viewport, NearbyTargets const& nbt,
+                         TextureTable const& ttable, EntityRegistry& registry)
 {
   auto constexpr LEFT_OFFSET = 39;
-  auto const left = viewport.left() + LEFT_OFFSET;
+  auto const left            = viewport.left() + LEFT_OFFSET;
 
   auto constexpr BOTTOM_OFFSET = 119;
-  auto const top  = viewport.bottom() - BOTTOM_OFFSET;
+  auto const top               = viewport.bottom() - BOTTOM_OFFSET;
   ImGui::SetNextWindowPos(ImVec2(left, top));
 
   ImVec2 const WINDOW_POS(200, 105);
@@ -170,16 +169,15 @@ draw_nearest_target_info(Viewport const& viewport, NearbyTargets const& nbt, Tex
 void
 draw_chatwindow_body(EngineState& es, Player& player)
 {
-  auto& logger   = es.logger;
-  auto& ingame = es.ui_state.ingame;
-  auto& chat_state = ingame.chat_state;
-  auto& is_editing = chat_state.currently_editing;
-  auto& chat_buffer = ingame.chat_buffer;
-  auto& chat_history = ingame.chat_history;
+  auto&       logger         = es.logger;
+  auto&       ingame         = es.ui_state.ingame;
+  auto&       chat_state     = ingame.chat_state;
+  auto&       is_editing     = chat_state.currently_editing;
+  auto&       chat_buffer    = ingame.chat_buffer;
+  auto&       chat_history   = ingame.chat_history;
   auto const& active_channel = chat_state.active_channel;
 
-  auto const copy_message_to_chathistory = [&]()
-  {
+  auto const copy_message_to_chathistory = [&]() {
     std::string copy = chat_buffer.buffer();
     common::trim(copy);
     if (!copy.empty()) {
@@ -190,21 +188,18 @@ draw_chatwindow_body(EngineState& es, Player& player)
   };
 
   auto const print_chat_message = [&](Message const& m) {
-
-    Color const active_color = Message::is_command_message(m)
-      ? LOC::RED
-      : chat_history.channel_color(active_channel);
+    Color const active_color =
+        Message::is_command_message(m) ? LOC::RED : chat_history.channel_color(active_channel);
 
     ImVec4 const im_color = imgui_cxx::from_color(active_color);
     imgui_cxx::text_wrapped_colored(im_color, "%s:%s", player.name.c_str(), m.contents.c_str());
   };
-  auto& reset_yscroll = chat_state.reset_yscroll_position;
-  auto const draw = [&]()
-  {
+  auto&      reset_yscroll = chat_state.reset_yscroll_position;
+  auto const draw          = [&]() {
     auto const chat_messages = active_channel == 0
-      ? chat_history.all_messages()
-      : chat_history.all_messages_in_channel(active_channel);
-    for(auto const& m : chat_messages) {
+                                   ? chat_history.all_messages()
+                                   : chat_history.all_messages_in_channel(active_channel);
+    for (auto const& m : chat_messages) {
       print_chat_message(m);
     }
 
@@ -213,23 +208,21 @@ draw_chatwindow_body(EngineState& es, Player& player)
       reset_yscroll = false;
     }
     if (is_editing) {
-      auto& buffer = chat_buffer.buffer();
+      auto&      buffer      = chat_buffer.buffer();
       auto const buffer_size = chat_buffer.size();
 
       auto const font_height = ImGui::GetFontSize() * 2;
-      auto const input_size = ImVec2(-10, font_height);
+      auto const input_size  = ImVec2(-10, font_height);
 
-      auto constexpr FLAGS = (0
-        | ImGuiInputTextFlags_AllowTabInput
-        | ImGuiInputTextFlags_CtrlEnterForNewLine
-        | ImGuiInputTextFlags_EnterReturnsTrue
-          );
-      bool const enter_pressed = ImGui::InputTextMultiline("", buffer, buffer_size, input_size,
-          FLAGS);
+      auto constexpr FLAGS =
+          (0 | ImGuiInputTextFlags_AllowTabInput | ImGuiInputTextFlags_CtrlEnterForNewLine |
+           ImGuiInputTextFlags_EnterReturnsTrue);
+      bool const enter_pressed =
+          ImGui::InputTextMultiline("", buffer, buffer_size, input_size, FLAGS);
 
       if (enter_pressed) {
         copy_message_to_chathistory();
-        is_editing = false;
+        is_editing    = false;
         reset_yscroll = true;
       }
 
@@ -239,21 +232,21 @@ draw_chatwindow_body(EngineState& es, Player& player)
     }
   };
   auto const height = is_editing ? -20.0f : -5.0f;
-  auto const size = ImVec2(-5, height);
+  auto const size   = ImVec2(-5, height);
 
   bool constexpr SHOW_BORDER = false;
-  auto constexpr flags = (0 | ImGuiWindowFlags_NoTitleBar);
+  auto constexpr flags       = (0 | ImGuiWindowFlags_NoTitleBar);
 
   for (auto const& c : chat_history.channels()) {
     if (ImGui::SmallButton(c.name.c_str())) {
       chat_state.active_channel = c.id;
-      reset_yscroll = true;
+      reset_yscroll             = true;
     }
     ImGui::SameLine();
   }
   ImGui::NewLine();
 
-  IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_WindowPadding, ImVec2(1 ,0));
+  IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_WindowPadding, ImVec2(1, 0));
   IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_WindowRounding, 1.0);
   IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_ItemSpacing, ImVec2(1.0, 5.0));
   IMGUI_PUSH_STYLEVAR_SCOPE_EXIT(ImGuiStyleVar_ChildRounding, 5.0f);
@@ -268,33 +261,25 @@ draw_chatwindow(EngineState& es, Player& player)
   auto& ingame = es.ui_state.ingame;
 
   auto const draw_window = [&]() {
-    auto constexpr flags = (0
-      | ImGuiWindowFlags_AlwaysUseWindowPadding
-      | ImGuiWindowFlags_NoBringToFrontOnFocus
-      | ImGuiWindowFlags_NoCollapse
-      | ImGuiWindowFlags_HorizontalScrollbar
-      | ImGuiWindowFlags_NoResize
-      | ImGuiWindowFlags_NoNavFocus
-      | ImGuiWindowFlags_NoScrollbar
-      | ImGuiWindowFlags_NoScrollWithMouse
-      | ImGuiWindowFlags_NoTitleBar
-      );
+    auto constexpr flags =
+        (0 | ImGuiWindowFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoBringToFrontOnFocus |
+         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_HorizontalScrollbar |
+         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoScrollbar |
+         ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoTitleBar);
 
     auto const vp = Viewport::from_frustum(es.frustum);
 
     auto const [window_w, window_h] = vp.size();
     ImVec2 const offset{10, 6};
-    auto const chat_w = 480, chat_h = 200;
-    auto const chat_x = window_w - chat_w - offset.x, chat_y = window_h - chat_h - offset.y;
+    auto const   chat_w = 480, chat_h = 200;
+    auto const   chat_x = window_w - chat_w - offset.x, chat_y = window_h - chat_h - offset.y;
     ImVec2 const chat_pos{chat_x, chat_y};
     ImGui::SetNextWindowPos(chat_pos);
 
     ImVec2 const chat_size{chat_w, chat_h};
     ImGui::SetNextWindowSize(chat_size);
 
-    auto const draw_chatwindow_body_wrapper = [&]() {
-      draw_chatwindow_body(es, player);
-    };
+    auto const draw_chatwindow_body_wrapper = [&]() { draw_chatwindow_body(es, player); };
     imgui_cxx::with_window(draw_chatwindow_body_wrapper, "Chat Window", nullptr, flags);
   };
   imgui_cxx::with_stylevars(draw_window, ImGuiStyleVar_ChildRounding, 5.0f);
@@ -314,15 +299,15 @@ draw_debugoverlay_window(EngineState& es, DrawState& ds)
     ImGui::Text("ms/frame: %.3f", ms_frame);
   };
   auto const height = 20.0f;
-  auto const size = ImVec2(50, height);
+  auto const size   = ImVec2(50, height);
 
   bool constexpr SHOW_BORDER = false;
 
-  auto const vp = Viewport::from_frustum(es.frustum);
+  auto const vp                   = Viewport::from_frustum(es.frustum);
   auto const [window_w, window_h] = vp.size();
   ImVec2 const offset{100, 50};
-  auto const chat_w = 300, chat_h = 100;
-  auto const chat_x = window_w - chat_w - offset.x, chat_y = chat_h - offset.y;
+  auto const   chat_w = 300, chat_h = 100;
+  auto const   chat_x = window_w - chat_w - offset.x, chat_y = chat_h - offset.y;
   ImVec2 const chat_pos{chat_x, chat_y};
   ImGui::SetNextWindowPos(chat_pos);
 
@@ -426,8 +411,9 @@ ChatHistory::all_messages_in_channel(ChannelId const id) const
 
 class BlinkTimer
 {
-  bool          is_blinking_ = false;
+  bool              is_blinking_ = false;
   common::StopWatch stopwatch_;
+
 public:
   void update() { stopwatch_.update(); }
   bool expired() const { return stopwatch_.expired(); }
@@ -439,24 +425,23 @@ public:
 void
 draw_2dui(RenderState& rstate)
 {
-  auto& fstate   = rstate.fs;
-  auto& es       = fstate.es;
-  auto& ds       = rstate.ds;
+  auto& fstate = rstate.fs;
+  auto& es     = fstate.es;
+  auto& ds     = rstate.ds;
 
   auto& logger   = es.logger;
   auto& zs       = fstate.zs;
   auto& registry = zs.registry;
 
-  auto& ldata    = zs.level_data;
-  auto& nbt      = ldata.nearby_targets;
+  auto& ldata = zs.level_data;
+  auto& nbt   = ldata.nearby_targets;
 
   static BlinkTimer blink_timer;
   blink_timer.update();
 
-  bool const is_expired       = blink_timer.expired();
+  bool const is_expired = blink_timer.expired();
 
-
-  auto& player                = find_player(registry);
+  auto&      player           = find_player(registry);
   bool const player_attacking = player.is_attacking;
 
   auto const reset_attack_timer = [&]() {
@@ -478,43 +463,38 @@ draw_2dui(RenderState& rstate)
   auto& sps       = gfx_state.sps;
   auto& ttable    = gfx_state.texture_table;
 
-  bool const using_blink_shader = player_attacking && blink_timer.is_blinking();
-  auto const& shader_name = using_blink_shader ? "2d_ui_blinkcolor_icon" : "2dtexture";
-  auto& spp = sps.ref_sp(shader_name);
+  bool const  using_blink_shader = player_attacking && blink_timer.is_blinking();
+  auto const& shader_name        = using_blink_shader ? "2d_ui_blinkcolor_icon" : "2dtexture";
+  auto&       spp                = sps.ref_sp(shader_name);
 
   if (using_blink_shader) {
     auto const& player_transform = player.transform();
-    auto const player_pos = player_transform.translation;
+    auto const  player_pos       = player_transform.translation;
 
     // We can only be considering the blink shader if we are attacking an entity, and if we are
     // attacking an entity that means their should be a selected target.
     auto const selected_nbt = nbt.selected();
     assert(selected_nbt);
-    auto const target_eid = *selected_nbt;
-    auto const& target = registry.get<Transform>(target_eid);
+    auto const  target_eid = *selected_nbt;
+    auto const& target     = registry.get<Transform>(target_eid);
     auto const& target_pos = target.translation;
 
-    auto const distance = glm::distance(player_pos, target_pos);
+    auto const distance     = glm::distance(player_pos, target_pos);
     bool const close_enough = distance < 2;
-    //LOG_ERROR_SPRINTF("close: %i, distance: %f, ppos: %s tpos: %s",
-        //close_enough,
-        //distance,
-        //glm::to_string(player_pos),
-        //glm::to_string(target_pos)
-        //);
-    auto const blink_color = NPC::within_attack_range(player_pos, target_pos)
-      ? LOC::RED
-      : LOC::BLUE;
-    spp.while_bound(logger, [&]() {
-        spp.set_uniform_color(logger, "u_blinkcolor", blink_color);
-    });
+    // LOG_ERROR_SPRINTF("close: %i, distance: %f, ppos: %s tpos: %s",
+    // close_enough,
+    // distance,
+    // glm::to_string(player_pos),
+    // glm::to_string(target_pos)
+    //);
+    auto const blink_color =
+        NPC::within_attack_range(player_pos, target_pos) ? LOC::RED : LOC::BLUE;
+    spp.while_bound(logger, [&]() { spp.set_uniform_color(logger, "u_blinkcolor", blink_color); });
   }
 
-  auto const view_frustum = fstate.frustum();
+  auto const view_frustum        = fstate.frustum();
   auto const draw_icon_on_screen = [&rstate, &ttable](auto& sp, glm::vec2 const& pos,
-                                                                glm::vec2 const& size,
-                                                                char const* tex_name)
-  {
+                                                      glm::vec2 const& size, char const* tex_name) {
     auto& ti = *ttable.find(tex_name);
     render::draw_fbo_testwindow(rstate, pos, size, sp, ti);
   };
@@ -525,12 +505,11 @@ draw_2dui(RenderState& rstate)
     glm::vec2 const size{32.0f};
 
     auto constexpr SPACE_BETWEEN = 10;
-    float const left   = view_frustum.left + 39 + 200 + SPACE_BETWEEN
-      + (slot_pos * (size.x + SPACE_BETWEEN));
-
+    float const left =
+        view_frustum.left + 39 + 200 + SPACE_BETWEEN + (slot_pos * (size.x + SPACE_BETWEEN));
 
     auto constexpr SPACE_BENEATH = 10;
-    float const bottom = view_frustum.bottom - SPACE_BENEATH;
+    float const     bottom       = view_frustum.bottom - SPACE_BENEATH;
     glm::vec2 const pos{left, bottom};
     draw_icon_on_screen(spp, pos, size, icon_name);
   };
@@ -543,9 +522,9 @@ draw_2dui(RenderState& rstate)
   {
     glm::vec2 const size{16.0f};
 
-    auto const center = view_frustum.center();
+    auto const center           = view_frustum.center();
     auto const middle_of_screen = glm::vec2{center.x, center.y};
-    auto& sp = sps.ref_sp("2dtexture");
+    auto&      sp               = sps.ref_sp("2dtexture");
 
     ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
     draw_icon_on_screen(sp, middle_of_screen, size, "target_selectable_cursor");
@@ -562,20 +541,21 @@ draw_inventory_overlay(RenderState& rstate)
   auto& sps    = zs.gfx_state.sps;
   auto& sp     = sps.ref_sp("2dcolor");
 
-  auto const& f   = es.frustum;
-  auto const vp   = Viewport::from_frustum(f);
-  auto const rect = vp.rect_float();
-  auto buffer     = RectBuilder{rect}.build();
+  auto const& f      = es.frustum;
+  auto const  vp     = Viewport::from_frustum(f);
+  auto const  rect   = vp.rect_float();
+  auto        buffer = RectBuilder{rect}.build();
 
   DrawInfo dinfo = OG::copy_rectangle(logger, sp.va(), buffer);
 
   ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
 
-  auto constexpr NEAR   = 1.0f;
-  auto constexpr FAR    = -1.0f;
+  auto constexpr NEAR = 1.0f;
+  auto constexpr FAR  = -1.0f;
 
-  auto const pm = glm::ortho(f.left_float(), f.right_float(), f.bottom_float(), f.top_float(), NEAR, FAR);
+  auto const pm =
+      glm::ortho(f.left_float(), f.right_float(), f.bottom_float(), f.top_float(), NEAR, FAR);
   sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
 
   auto color = LOC::GRAY;
@@ -611,13 +591,13 @@ draw(FrameState& fs, Camera& camera, DrawState& ds)
   auto& nbt   = ldata.nearby_targets;
 
   auto const& frustum = es.frustum;
-  auto const vp       = Viewport::from_frustum(frustum);
+  auto const  vp      = Viewport::from_frustum(frustum);
   draw_nearest_target_info(vp, nbt, ttable, registry);
 
   // Create a renderstate using an orthographic projection.
-  auto const ztemp = camera.ortho.zoom();
+  auto const ztemp     = camera.ortho.zoom();
   auto const vsettings = camera.view_settings_ref();
-  auto fss = FrameState::from_camera_for_2dui_overlay(es, zs, camera, vsettings, frustum);
+  auto       fss = FrameState::from_camera_for_2dui_overlay(es, zs, camera, vsettings, frustum);
 
   RenderState rstate{fss, ds};
   draw_2dui(rstate);

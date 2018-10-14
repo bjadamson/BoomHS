@@ -1,5 +1,5 @@
-#include <boomhs/engine.hpp>
 #include <boomhs/controller.hpp>
+#include <boomhs/engine.hpp>
 
 #include <gl_sdl/sdl_window.hpp>
 
@@ -7,7 +7,6 @@
 #include <extlibs/openal.hpp>
 
 using namespace gl_sdl;
-
 
 namespace boomhs
 {

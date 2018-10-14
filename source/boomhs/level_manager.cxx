@@ -25,7 +25,7 @@ LevelManager::active()
 void
 LevelManager::make_active(int const level_number)
 {
-  active_       = level_number;
+  active_ = level_number;
 }
 
 int

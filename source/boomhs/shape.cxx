@@ -1,5 +1,5 @@
-#include <boomhs/shape.hpp>
 #include <boomhs/math.hpp>
+#include <boomhs/shape.hpp>
 #include <boomhs/vertex_factory.hpp>
 #include <boomhs/viewport.hpp>
 
@@ -29,9 +29,7 @@ make_line_rectangle(RectFloat const& r)
 #define P2 p2.x, p2.y, p2.z
 #define P3 p3.x, p3.y, p3.z
 
-  return RectLineBuffer{{
-    P0, P1, P2, P3
-  }};
+  return RectLineBuffer{{P0, P1, P2, P3}};
 #undef P0
 #undef P1
 #undef P2
@@ -47,7 +45,7 @@ make_rectangle(RectBuilder const& builder)
   auto const& line_o   = builder.line;
 
   if (line_o) {
-    auto const lr     = make_line_rectangle(builder.rect);
+    auto const    lr = make_line_rectangle(builder.rect);
     VerticesArray vertices{lr.cbegin(), lr.cend()};
 
     auto constexpr li = VertexFactory::RECTANGLE_LINE_INDICES;
@@ -55,8 +53,7 @@ make_rectangle(RectBuilder const& builder)
   }
 
   std::vector<float> vertices;
-  auto const add_point = [&](glm::vec2 const& point, int const index)
-  {
+  auto const         add_point = [&](glm::vec2 const& point, int const index) {
     assert(index < RectBuilder::RectangleColorArray::NUM_VERTICES);
     vertices.emplace_back(point.x);
     vertices.emplace_back(point.y);
@@ -85,9 +82,9 @@ make_rectangle(RectBuilder const& builder)
     }
   };
 
-  auto const& r = builder.rect;
-  auto const p0 = glm::vec2{r.left, r.bottom};
-  auto const p1 = glm::vec2{r.right, r.bottom};
+  auto const& r  = builder.rect;
+  auto const  p0 = glm::vec2{r.left, r.bottom};
+  auto const  p1 = glm::vec2{r.right, r.bottom};
 
   auto const p2 = glm::vec2{r.right, r.top};
   auto const p3 = glm::vec2{r.left, r.top};
@@ -112,12 +109,12 @@ namespace boomhs
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Rectangles
 RectangleUvs::RectangleUvs(VerticesArray const& va)
-  : varray_(va)
+    : varray_(va)
 {
 }
 
-RectangleUvs::RectangleUvs(VerticesArray &&va)
-  : varray_(MOVE(va))
+RectangleUvs::RectangleUvs(VerticesArray&& va)
+    : varray_(MOVE(va))
 {
 }
 
@@ -171,4 +168,4 @@ RectBuilder::build() const
   return make_rectangle(*this);
 }
 
-} // ns boomhs
+} // namespace boomhs

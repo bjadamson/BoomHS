@@ -1,8 +1,8 @@
-#include <opengl/water_renderer.hpp>
 #include <opengl/buffer.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
+#include <opengl/water_renderer.hpp>
 
 #include <boomhs/bounding_object.hpp>
 #include <boomhs/camera.hpp>
@@ -12,11 +12,11 @@
 #include <boomhs/material.hpp>
 #include <boomhs/mesh.hpp>
 #include <boomhs/terrain.hpp>
-#include <boomhs/water.hpp>
 #include <boomhs/view_frustum.hpp>
+#include <boomhs/water.hpp>
 
-#include <common/log.hpp>
 #include <boomhs/random.hpp>
+#include <common/log.hpp>
 
 #include <cassert>
 #include <extlibs/fmt.hpp>
@@ -26,7 +26,7 @@ using namespace boomhs;
 using namespace opengl;
 using namespace gl_sdl;
 
-//auto static constexpr WIGGLE_UNDERATH_OFFSET = -0.2f;
+// auto static constexpr WIGGLE_UNDERATH_OFFSET = -0.2f;
 
 namespace
 {
@@ -43,25 +43,25 @@ setup(common::Logger& logger, TextureInfo& ti, GLint const v)
 
 template <typename FN>
 void
-render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
-                    LevelManager& lm, FrameTime const& ft, FN const& fn)
+render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds, LevelManager& lm,
+                    FrameTime const& ft, FN const& fn)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
 
-  auto& logger   = es.logger;
-  auto& zs       = lm.active();
-  auto& registry = zs.registry;
-  auto& ldata    = zs.level_data;
-  auto const& wind = ldata.wind;
+  auto&       logger   = es.logger;
+  auto&       zs       = lm.active();
+  auto&       registry = zs.registry;
+  auto&       ldata    = zs.level_data;
+  auto const& wind     = ldata.wind;
 
   auto const render = [&](WaterInfo& winfo) {
     auto const eid = winfo.eid;
     if (registry.get<IsRenderable>(eid).hidden) {
       return;
     }
-    auto const &tr = registry.get<Transform>(eid);
-    auto const &bbox = registry.get<AABoundingBox>(eid);
+    auto const& tr   = registry.get<Transform>(eid);
+    auto const& bbox = registry.get<AABoundingBox>(eid);
 
     glm::mat4 const& view_mat = fstate.view_matrix();
     glm::mat4 const& proj_mat = fstate.projection_matrix();
@@ -86,8 +86,8 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds,
     sp.set_uniform_vec2(logger, "u_flowdir", winfo.flow_direction);
 
     auto& wbuffer = es.ui_state.debug.buffers.water;
-    sp.set_uniform_float1(logger, "u_water.weight_light",      wbuffer.weight_light);
-    sp.set_uniform_float1(logger, "u_water.weight_texture",    wbuffer.weight_texture);
+    sp.set_uniform_float1(logger, "u_water.weight_light", wbuffer.weight_light);
+    sp.set_uniform_float1(logger, "u_water.weight_texture", wbuffer.weight_texture);
     sp.set_uniform_float1(logger, "u_water.weight_mix_effect", wbuffer.weight_mix_effect);
 
     BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
@@ -147,10 +147,10 @@ BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
     glActiveTexture(GL_TEXTURE1);
     BIND_UNTIL_END_OF_SCOPE(logger, *normal_);
 
-    auto& zs       = lm.active();
-    auto&       gfx_state = zs.gfx_state;
+    auto& zs           = lm.active();
+    auto& gfx_state    = zs.gfx_state;
     auto& draw_handles = gfx_state.draw_handles;
-    auto& dinfo = draw_handles.lookup_entity(logger, winfo.eid);
+    auto& dinfo        = draw_handles.lookup_entity(logger, winfo.eid);
 
     auto const model_matrix = transform.model_matrix();
     render::draw_3dshape(rstate, GL_TRIANGLE_STRIP, model_matrix, *sp_, dinfo);
@@ -161,7 +161,8 @@ BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MediumWaterRenderer
-MediumWaterRenderer::MediumWaterRenderer(common::Logger& logger, TextureInfo& diff, TextureInfo& norm, ShaderProgram& sp)
+MediumWaterRenderer::MediumWaterRenderer(common::Logger& logger, TextureInfo& diff,
+                                         TextureInfo& norm, ShaderProgram& sp)
     : sp_(&sp)
     , diffuse_(&diff)
     , normal_(&norm)
@@ -204,9 +205,9 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
     glActiveTexture(GL_TEXTURE1);
     BIND_UNTIL_END_OF_SCOPE(logger, *normal_);
 
-    auto&       gfx_state = zs.gfx_state;
+    auto& gfx_state    = zs.gfx_state;
     auto& draw_handles = gfx_state.draw_handles;
-    auto& dinfo = draw_handles.lookup_entity(logger, winfo.eid);
+    auto& dinfo        = draw_handles.lookup_entity(logger, winfo.eid);
 
     bool constexpr SET_NORMALMATRIX = false;
     auto const model_matrix         = transform.model_matrix();
@@ -247,7 +248,7 @@ AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, Viewport co
   {
     auto const w = view_port.width(), h = view_port.height();
 
-    auto& fbo = reflection_.fbo;
+    auto& fbo       = reflection_.fbo;
     reflection_.tbo = fbo->attach_color_buffer(logger, w, h, GL_TEXTURE1);
     reflection_.rbo = fbo->attach_render_buffer(logger, w, h);
   }
@@ -255,10 +256,10 @@ AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, Viewport co
   {
     auto const w = view_port.width(), h = view_port.height();
     {
-      GLenum const tu = GL_TEXTURE2;
-      auto& fbo = refraction_.fbo;
-      refraction_.tbo = fbo->attach_color_buffer(logger, w, h, tu);
-      refraction_.dbo = fbo->attach_depth_buffer(logger, w, h, tu);
+      GLenum const tu  = GL_TEXTURE2;
+      auto&        fbo = refraction_.fbo;
+      refraction_.tbo  = fbo->attach_color_buffer(logger, w, h, tu);
+      refraction_.dbo  = fbo->attach_depth_buffer(logger, w, h, tu);
     }
   }
 
@@ -296,12 +297,11 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
 
   Material const water_material{};
 
-  auto& wbuffer = es.ui_state.debug.buffers.water;
-  auto const fn = [&](WaterInfo& winfo, Transform const& transform) {
-
-    auto&       gfx_state = zs.gfx_state;
+  auto&      wbuffer = es.ui_state.debug.buffers.water;
+  auto const fn      = [&](WaterInfo& winfo, Transform const& transform) {
+    auto& gfx_state    = zs.gfx_state;
     auto& draw_handles = gfx_state.draw_handles;
-    auto& dinfo = draw_handles.lookup_entity(logger, winfo.eid);
+    auto& dinfo        = draw_handles.lookup_entity(logger, winfo.eid);
 
     // TODO: These don't need to be set every frame, but only when the view frustum is updated.
     //
@@ -362,7 +362,7 @@ SilhouetteWaterRenderer::SilhouetteWaterRenderer(common::Logger& logger, ShaderP
 
 void
 SilhouetteWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManager& lm,
-                                 FrameTime const& ft)
+                                      FrameTime const& ft)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -377,8 +377,8 @@ SilhouetteWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelM
     if (registry.get<IsRenderable>(eid).hidden) {
       return;
     }
-    auto const &tr = registry.get<Transform>(eid);
-    auto const &bbox = registry.get<AABoundingBox>(eid);
+    auto const& tr   = registry.get<Transform>(eid);
+    auto const& bbox = registry.get<AABoundingBox>(eid);
 
     glm::mat4 const& view_mat = fstate.view_matrix();
     glm::mat4 const& proj_mat = fstate.projection_matrix();
@@ -386,9 +386,9 @@ SilhouetteWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelM
       return;
     }
 
-    auto&       gfx_state = zs.gfx_state;
+    auto& gfx_state    = zs.gfx_state;
     auto& draw_handles = gfx_state.draw_handles;
-    auto& dinfo = draw_handles.lookup_entity(logger, winfo.eid);
+    auto& dinfo        = draw_handles.lookup_entity(logger, winfo.eid);
 
     auto const model_matrix = tr.model_matrix();
     BIND_UNTIL_END_OF_SCOPE(logger, *sp_);

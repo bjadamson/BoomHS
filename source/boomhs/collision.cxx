@@ -19,12 +19,12 @@ namespace
 // https://github.com/opengl-tutorials/ogl/blob/master/misc05_picking/misc05_picking_custom.cpp
 bool
 ray_obb_intersection(
-  Ray const& ray,
-  glm::vec3 const& aabb_min,      // Minimum X,Y,Z coords of the mesh when not transformed at all.
-  glm::vec3 const& aabb_max,      // Maximum X,Y,Z coords. Often aabb_min*-1 if your mesh is
-                                  // centered, but it's not always the case.
-  glm::mat4 const& model_matrix,  // Transformation applied to the mesh (which will thus be also
-  float& intersection_distance    // Output : distance between ray_origin and the OBB intersection.
+    Ray const&       ray,
+    glm::vec3 const& aabb_min,     // Minimum X,Y,Z coords of the mesh when not transformed at all.
+    glm::vec3 const& aabb_max,     // Maximum X,Y,Z coords. Often aabb_min*-1 if your mesh is
+                                   // centered, but it's not always the case.
+    glm::mat4 const& model_matrix, // Transformation applied to the mesh (which will thus be also
+    float& intersection_distance   // Output : distance between ray_origin and the OBB intersection.
 )
 {
   // Intersection method from Real-Time Rendering and Essential Mathematics for Games
@@ -37,10 +37,10 @@ ray_obb_intersection(
 #define TEST_PLANE_INTERSECTION_IMPL(INDEX, AABB_MIN, AABB_MAX)                                    \
   {                                                                                                \
     glm::vec3 const axis(model_matrix[INDEX].x, model_matrix[INDEX].y, model_matrix[INDEX].z);     \
-    float const e = glm::dot(axis, delta);                                                         \
-    float const f = glm::dot(ray.direction, axis);                                                 \
+    float const     e = glm::dot(axis, delta);                                                     \
+    float const     f = glm::dot(ray.direction, axis);                                             \
                                                                                                    \
-    if (std::fabs(f) > 0.001f ) { /* Standard case */                                              \
+    if (std::fabs(f) > 0.001f) {     /* Standard case */                                           \
       float t1 = (e + AABB_MIN) / f; /* Intersection with the "left" plane */                      \
       float t2 = (e + AABB_MAX) / f; /* Intersection with the "right" plane */                     \
       /* t1 and t2 now contain distances betwen ray origin and ray-plane intersections */          \
@@ -49,8 +49,8 @@ ray_obb_intersection(
       /* so if it's not the case, invert t1 and t2*/                                               \
       if (t1 > t2) {                                                                               \
         float const temp = t1;                                                                     \
-        t1 = t2;                                                                                   \
-        t2 = temp; /* swap t1 and t2*/                                                             \
+        t1               = t2;                                                                     \
+        t2               = temp; /* swap t1 and t2*/                                               \
       }                                                                                            \
                                                                                                    \
       /* t_max is the nearest "far" intersection (amongst the X,Y and Z planes pairs) */           \
@@ -69,7 +69,7 @@ ray_obb_intersection(
         return false;                                                                              \
       }                                                                                            \
     }                                                                                              \
-    else if((-e + AABB_MIN) > 0.0f || (-e + AABB_MAX) < 0.0f) {                                    \
+    else if ((-e + AABB_MIN) > 0.0f || (-e + AABB_MAX) < 0.0f) {                                   \
       /* Rare case : the ray is almost parallel to the planes, so they don't have any */           \
       /* intersection. */                                                                          \
       return false;                                                                                \
@@ -87,12 +87,7 @@ ray_obb_intersection(
 }
 
 bool
-ray_obb_intersection(
-  Ray const& ray,
-  Cube       cube,
-  Transform  tr,
-  float&     distance
-)
+ray_obb_intersection(Ray const& ray, Cube cube, Transform tr, float& distance)
 {
   auto const c  = cube.center();
   auto const hw = cube.half_widths();
@@ -105,7 +100,7 @@ ray_obb_intersection(
   // For the purposes of the ray_obb intersection algorithm, it is expected the transform has no
   // scaling. We've taking the scaling into account by adjusting the bounding cube min/max points
   // using the transform's original scale. Set the scaling of the copied transform to all 1's.
-  tr.scale = glm::vec3{1};
+  tr.scale                = glm::vec3{1};
   auto const model_matrix = tr.model_matrix();
   return ray_obb_intersection(ray, min, max, model_matrix, distance);
 }
@@ -115,7 +110,7 @@ ray_obb_intersection(
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-cube-intersection
 bool
 ray_axis_aligned_cube_intersect(Ray const& r, Transform const& transform, Cube const& cube,
-    float& distance)
+                                float& distance)
 {
   auto const& cubepos = transform.translation;
 
@@ -160,8 +155,7 @@ ray_axis_aligned_cube_intersect(Ray const& r, Transform const& transform, Cube c
 }
 
 auto
-rotated_rectangle_points(RectFloat const& rect, Transform const& tr,
-                         glm::mat4 const& cam_matrix)
+rotated_rectangle_points(RectFloat const& rect, Transform const& tr, glm::mat4 const& cam_matrix)
 {
   auto const mvp_matrix = cam_matrix * tr.model_matrix();
 
@@ -170,18 +164,18 @@ rotated_rectangle_points(RectFloat const& rect, Transform const& tr,
   auto const p2 = rect.p2();
   auto const p3 = rect.p3();
 
-  //auto const rect_c = rect.center();
-  //glm::vec3 const rect_center{rect_c.x, rect_c.y, 0};
+  // auto const rect_c = rect.center();
+  // glm::vec3 const rect_center{rect_c.x, rect_c.y, 0};
 
   auto const v4p0 = mvp_matrix * VEC4(p0.x, p0.y, 0, 1) / 1;
   auto const v4p1 = mvp_matrix * VEC4(p1.x, p1.y, 0, 1) / 1;
   auto const v4p2 = mvp_matrix * VEC4(p2.x, p2.y, 0, 1) / 1;
   auto const v4p3 = mvp_matrix * VEC4(p3.x, p3.y, 0, 1) / 1;
 
-  //auto const v4p0 = rotate_around(VEC3(p0.x, p0.y, 0), rect_center, rmatrix);
-  //auto const v4p1 = rotate_around(VEC3(p1.x, p1.y, 0), rect_center, rmatrix);
-  //auto const v4p2 = rotate_around(VEC3(p2.x, p2.y, 0), rect_center, rmatrix);
-  //auto const v4p3 = rotate_around(VEC3(p3.x, p3.y, 0), rect_center, rmatrix);
+  // auto const v4p0 = rotate_around(VEC3(p0.x, p0.y, 0), rect_center, rmatrix);
+  // auto const v4p1 = rotate_around(VEC3(p1.x, p1.y, 0), rect_center, rmatrix);
+  // auto const v4p2 = rotate_around(VEC3(p2.x, p2.y, 0), rect_center, rmatrix);
+  // auto const v4p3 = rotate_around(VEC3(p3.x, p3.y, 0), rect_center, rmatrix);
 
   auto const v2p0 = VEC2(v4p0.x, v4p0.y);
   auto const v2p1 = VEC2(v4p1.x, v4p1.y);
@@ -203,8 +197,7 @@ overlap_rect(typename RectT<T, V>::RectPoints const& a, typename RectT<T, V>::Re
 
   std::cerr << "a: '" << a.to_string() << "'\n";
   std::cerr << "b: '" << b.to_string() << "'\n";
-  auto const calc_minmax = [](auto const& polygon, auto const& normal)
-  {
+  auto const calc_minmax = [](auto const& polygon, auto const& normal) {
     float min = MIN, max = MAX;
     for (auto const& p : polygon) {
       auto const projected = (normal.x * p.x) + (normal.y * p.y);
@@ -219,12 +212,11 @@ overlap_rect(typename RectT<T, V>::RectPoints const& a, typename RectT<T, V>::Re
   };
 
   std::array<typename RectT<T, V>::RectPoints, 2> const rects{{a, b}};
-  for (auto const& polygon : rects)
-  {
+  for (auto const& polygon : rects) {
     auto const polygon_vertex_count = polygon.size();
     FOR(i1, polygon_vertex_count)
     {
-      int const i2 = (i1 + 1) % polygon_vertex_count;
+      int const   i2 = (i1 + 1) % polygon_vertex_count;
       auto const& p1 = polygon[i1];
       auto const& p2 = polygon[i2];
 
@@ -262,24 +254,21 @@ namespace boomhs::collision
 {
 
 bool
-intersects(
-    glm::vec2 const& point,
-    RectFloat const& rect
-    )
+intersects(glm::vec2 const& point, RectFloat const& rect)
 {
   bool const within_lr = point.x >= rect.left && point.x <= rect.right;
-  bool const within_tb = point.y >= rect.top  && point.y <= rect.bottom;
+  bool const within_tb = point.y >= rect.top && point.y <= rect.bottom;
 
   return within_lr && within_tb;
 }
 
 bool
-intersects(common::Logger& logger, Ray const& ray,
-                    Transform const& tr, Cube const& cube, float& distance)
+intersects(common::Logger& logger, Ray const& ray, Transform const& tr, Cube const& cube,
+           float& distance)
 {
   bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == ONE);
 
-  bool intersects = false;
+  bool       intersects       = false;
   auto const log_intersection = [&](char const* test_name) {
     if (intersects) {
       LOG_ERROR_SPRINTF("Intersection found using %s test, distance %f", test_name, distance);
@@ -300,10 +289,7 @@ intersects(common::Logger& logger, Ray const& ray,
 bool
 overlap_axis_aligned(RectFloat const& a, RectFloat const& b)
 {
-  return a.left   < b.right
-      && a.right  > b.left
-      && a.bottom > b.top
-      && a.top    < b.bottom;
+  return a.left < b.right && a.right > b.left && a.bottom > b.top && a.top < b.bottom;
 }
 
 bool
@@ -317,9 +303,9 @@ overlap_axis_aligned(common::Logger& logger, CubeTransform const& a, CubeTransfo
 
   auto const& att = at.translation;
   auto const& btt = bt.translation;
-  bool const x = std::abs(att.x - btt.x) <= (ah.x + bh.x);
-  bool const y = std::abs(att.y - btt.y) <= (ah.y + bh.y);
-  bool const z = std::abs(att.z - btt.z) <= (ah.z + bh.z);
+  bool const  x   = std::abs(att.x - btt.x) <= (ah.x + bh.x);
+  bool const  y   = std::abs(att.y - btt.y) <= (ah.y + bh.y);
+  bool const  z   = std::abs(att.z - btt.z) <= (ah.z + bh.z);
 
   return x && y && z;
 }
@@ -334,9 +320,8 @@ overlap(RectFloat const& a, RectTransform const& rect_tr, glm::mat4 const& cam_m
   auto const b_points = rotated_rectangle_points(b, tr, cam_matrix);
 
   bool const simple_test = tr.rotation == glm::quat{};
-  return simple_test
-      ? overlap_axis_aligned(a, b)
-      : overlap_rect<float, glm::vec2>(a_points, b_points);
+  return simple_test ? overlap_axis_aligned(a, b)
+                     : overlap_rect<float, glm::vec2>(a_points, b_points);
 }
 
 } // namespace boomhs::collision

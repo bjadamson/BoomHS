@@ -12,9 +12,9 @@
 #include <boomhs/frame.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/heightmap.hpp>
+#include <boomhs/io_sdl.hpp>
 #include <boomhs/item.hpp>
 #include <boomhs/item_factory.hpp>
-#include <boomhs/io_sdl.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/mouse.hpp>
@@ -22,9 +22,9 @@
 #include <boomhs/player.hpp>
 #include <boomhs/random.hpp>
 #include <boomhs/rexpaint.hpp>
-#include <boomhs/state.hpp>
-#include <boomhs/start_area_generator.hpp>
 #include <boomhs/skybox.hpp>
+#include <boomhs/start_area_generator.hpp>
+#include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/tree.hpp>
 #include <boomhs/ui_debug.hpp>
@@ -62,14 +62,14 @@ namespace boomhs
 // WaterRenderers
 void
 WaterRenderers::render(RenderState& rstate, DrawState& ds, LevelManager& lm, Camera& camera,
-              FrameTime const& ft, bool const silhouette_black)
+                       FrameTime const& ft, bool const silhouette_black)
 {
   if (silhouette_black) {
     silhouette.render_water(rstate, ds, lm, ft);
   }
   else {
     auto const& water_buffer = rstate.fs.es.ui_state.debug.buffers.water;
-    auto const  water_type = static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
+    auto const water_type = static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
     if (GameGraphicsMode::Basic == water_type) {
       basic.render_water(rstate, ds, lm, ft);
     }
@@ -88,8 +88,8 @@ WaterRenderers::render(RenderState& rstate, DrawState& ds, LevelManager& lm, Cam
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // StaticRenderers
 void
-StaticRenderers::render(LevelManager&lm, RenderState& rstate, Camera& camera, RNG& rng, DrawState& ds,
-            FrameTime const& ft, bool const silhouette_black)
+StaticRenderers::render(LevelManager& lm, RenderState& rstate, Camera& camera, RNG& rng,
+                        DrawState& ds, FrameTime const& ft, bool const silhouette_black)
 {
   // Render the scene with no culling (setting it zero disables culling mathematically)
   glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
@@ -98,8 +98,8 @@ StaticRenderers::render(LevelManager&lm, RenderState& rstate, Camera& camera, RN
   auto& es = fs.es;
   if (es.draw_terrain) {
     auto const draw_basic = [&](auto& terrain_renderer, auto& entity_renderer) {
-      auto& zs = fs.zs;
-      auto& ldata = zs.level_data;
+      auto& zs       = fs.zs;
+      auto& ldata    = zs.level_data;
       auto& registry = zs.registry;
 
       terrain_renderer.render(rstate, ldata.material_table, registry, ft, NOCULL_VECTOR);
@@ -149,38 +149,40 @@ StaticRenderers::render(LevelManager&lm, RenderState& rstate, Camera& camera, RN
 StaticRenderers
 make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
 {
-  auto const make_basic_water_renderer = [](common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
+  auto const make_basic_water_renderer = [](common::Logger& logger, ShaderPrograms& sps,
+                                            TextureTable& ttable) {
     auto& diff   = *ttable.find("water-diffuse");
     auto& normal = *ttable.find("water-normal");
     auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
     return BasicWaterRenderer{logger, diff, normal, sp};
   };
 
-  auto const make_medium_water_renderer = [](common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
+  auto const make_medium_water_renderer = [](common::Logger& logger, ShaderPrograms& sps,
+                                             TextureTable& ttable) {
     auto& diff   = *ttable.find("water-diffuse");
     auto& normal = *ttable.find("water-normal");
     auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Medium, sps);
     return MediumWaterRenderer{logger, diff, normal, sp};
   };
 
-  auto const       make_advanced_water_renderer = [&](EngineState& es, ZoneState& zs) {
-    auto& logger   = es.logger;
+  auto const make_advanced_water_renderer = [&](EngineState& es, ZoneState& zs) {
+    auto& logger = es.logger;
 
     auto& gfx_state = zs.gfx_state;
     auto& ttable    = gfx_state.texture_table;
     auto& sps       = gfx_state.sps;
-    auto& ti     = *ttable.find("water-diffuse");
-    auto& dudv   = *ttable.find("water-dudv");
-    auto& normal = *ttable.find("water-normal");
-    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Advanced, sps);
+    auto& ti        = *ttable.find("water-diffuse");
+    auto& dudv      = *ttable.find("water-dudv");
+    auto& normal    = *ttable.find("water-normal");
+    auto& sp        = graphics_mode_to_water_shader(GameGraphicsMode::Advanced, sps);
     return AdvancedWaterRenderer{logger, viewport, sp, ti, dudv, normal};
   };
 
   auto const make_black_water_renderer = [](EngineState& es, ZoneState& zs) {
-    auto& logger   = es.logger;
+    auto& logger    = es.logger;
     auto& gfx_state = zs.gfx_state;
     auto& sps       = gfx_state.sps;
-    auto& sp = sps.ref_sp("silhoutte_black");
+    auto& sp        = sps.ref_sp("silhoutte_black");
     return SilhouetteWaterRenderer{logger, sp};
   };
 
@@ -190,46 +192,43 @@ make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
   };
 
   auto const make_sunshaft_renderer = [&](EngineState& es, ZoneState& zs) {
-    auto& logger   = es.logger;
-    auto& gfx_state = zs.gfx_state;
-    auto& sps       = gfx_state.sps;
+    auto& logger      = es.logger;
+    auto& gfx_state   = zs.gfx_state;
+    auto& sps         = gfx_state.sps;
     auto& sunshaft_sp = sps.ref_sp("sunshaft");
 
     return SunshaftRenderer{logger, viewport, sunshaft_sp};
   };
 
-  auto const make_skybox_renderer = [](common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
-    auto&              skybox_sp = sps.ref_sp("skybox");
-    glm::vec3 const    vmin{-0.5f};
-    glm::vec3 const    vmax{0.5f};
+  auto const make_skybox_renderer = [](common::Logger& logger, ShaderPrograms& sps,
+                                       TextureTable& ttable) {
+    auto&           skybox_sp = sps.ref_sp("skybox");
+    glm::vec3 const vmin{-0.5f};
+    glm::vec3 const vmax{0.5f};
 
     auto const vertices = VertexFactory::build_cube(vmin, vmax);
-    DrawInfo           dinfo    = OG::copy_cube_gpu(logger, vertices, skybox_sp.va());
-    auto&              day_ti   = *ttable.find("building_skybox");
-    auto&              night_ti = *ttable.find("night_skybox");
+    DrawInfo   dinfo    = OG::copy_cube_gpu(logger, vertices, skybox_sp.va());
+    auto&      day_ti   = *ttable.find("building_skybox");
+    auto&      night_ti = *ttable.find("night_skybox");
     return SkyboxRenderer{logger, MOVE(dinfo), day_ti, night_ti, skybox_sp};
   };
 
-  auto& logger   = es.logger;
+  auto& logger    = es.logger;
   auto& gfx_state = zs.gfx_state;
   auto& sps       = gfx_state.sps;
   auto& ttable    = gfx_state.texture_table;
-  return StaticRenderers{
-    DefaultTerrainRenderer{},
-    make_black_terrain_renderer(sps),
-    EntityRenderer{},
-    SilhouetteEntityRenderer{},
-    make_skybox_renderer(logger, sps, ttable),
-    make_sunshaft_renderer(es, zs),
-    DebugRenderer{},
+  return StaticRenderers{DefaultTerrainRenderer{},
+                         make_black_terrain_renderer(sps),
+                         EntityRenderer{},
+                         SilhouetteEntityRenderer{},
+                         make_skybox_renderer(logger, sps, ttable),
+                         make_sunshaft_renderer(es, zs),
+                         DebugRenderer{},
 
-    WaterRenderers{
-      make_basic_water_renderer(logger, sps, ttable),
-      make_medium_water_renderer(logger, sps, ttable),
-      make_advanced_water_renderer(es, zs),
-      make_black_water_renderer(es, zs)
-    }
-  };
+                         WaterRenderers{make_basic_water_renderer(logger, sps, ttable),
+                                        make_medium_water_renderer(logger, sps, ttable),
+                                        make_advanced_water_renderer(es, zs),
+                                        make_black_water_renderer(es, zs)}};
 }
 
 } // namespace boomhs

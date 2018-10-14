@@ -1,7 +1,7 @@
-#include <opengl/sun_renderer.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderbuffer.hpp>
 #include <opengl/renderer.hpp>
+#include <opengl/sun_renderer.hpp>
 
 #include <boomhs/engine.hpp>
 #include <boomhs/frame_time.hpp>
@@ -45,7 +45,7 @@ SunshaftRenderer::SunshaftRenderer(common::Logger& logger, Viewport const& view_
 {
   auto const w = view_port.width(), h = view_port.height();
 
-  auto& fbo = buffers_.fbo;
+  auto& fbo    = buffers_.fbo;
   buffers_.tbo = fbo->attach_color_buffer(logger, w, h, GL_TEXTURE1);
   buffers_.rbo = fbo->attach_render_buffer(logger, w, h);
 
@@ -72,7 +72,7 @@ SunshaftRenderer::render(RenderState& rstate, DrawState& ds, LevelManager& lm, C
   auto const& global_light      = ldata.global_light;
   auto const& directional_light = global_light.directional;
 
-  auto&    ti    = texture_info();
+  auto&      ti   = texture_info();
   auto const v    = VertexFactory::build_default();
   auto const uv   = UvFactory::build_rectangle(ti.uv_max);
   auto const vuvs = vertex_interleave(v, uv);

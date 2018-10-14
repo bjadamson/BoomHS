@@ -2,8 +2,8 @@
 #include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
 
-#include <boomhs/components.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/components.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/frame_time.hpp>
 #include <boomhs/level_manager.hpp>
@@ -30,12 +30,12 @@ struct WorldOriginArrows
 };
 
 WorldOriginArrows
-create_axis_arrows(common::Logger &logger, VertexAttribute const& va)
+create_axis_arrows(common::Logger& logger, VertexAttribute const& va)
 {
   auto constexpr ORIGIN = constants::ZERO;
-  ArrowTemplate constexpr acx{LOC::RED,   ORIGIN, constants::X_UNIT_VECTOR};
+  ArrowTemplate constexpr acx{LOC::RED, ORIGIN, constants::X_UNIT_VECTOR};
   ArrowTemplate constexpr acy{LOC::GREEN, ORIGIN, constants::Y_UNIT_VECTOR};
-  ArrowTemplate constexpr acz{LOC::BLUE,  ORIGIN, constants::Z_UNIT_VECTOR};
+  ArrowTemplate constexpr acz{LOC::BLUE, ORIGIN, constants::Z_UNIT_VECTOR};
 
   auto const avx = VertexFactory::build(acx);
   auto const avy = VertexFactory::build(acy);
@@ -82,7 +82,7 @@ draw_axis(RenderState& rstate, glm::vec3 const& pos)
 void
 conditionally_draw_player_vectors(RenderState& rstate, Player const& player)
 {
-  auto& fstate = rstate.fs;
+  auto& fstate   = rstate.fs;
   auto& es       = fstate.es;
   auto& zs       = fstate.zs;
   auto& registry = zs.registry;
@@ -119,35 +119,31 @@ conditionally_draw_player_vectors(RenderState& rstate, Player const& player)
 void
 draw_frustum(RenderState& rstate, Frustum const& frustum, glm::mat4 const& model)
 {
-  auto& fstate     = rstate.fs;
-  auto const proj  = fstate.projection_matrix();
-  auto const view  = fstate.view_matrix();
+  auto&      fstate = rstate.fs;
+  auto const proj   = fstate.projection_matrix();
+  auto const view   = fstate.view_matrix();
 
-  auto const mvp = math::compute_mvp_matrix(model, view, proj);
+  auto const      mvp          = math::compute_mvp_matrix(model, view, proj);
   glm::mat4 const inv_viewproj = glm::inverse(mvp);
 
-  glm::vec4 const f[8u] =
-  {
-      // near face
-      {-1, -1, frustum.near, 1.0f},
-      { 1, -1, frustum.near, 1.0f},
-      { 1,  1, frustum.near, 1.0f},
-      {-1,  1, frustum.near, 1.0f},
+  glm::vec4 const f[8u] = {// near face
+                           {-1, -1, frustum.near, 1.0f},
+                           {1, -1, frustum.near, 1.0f},
+                           {1, 1, frustum.near, 1.0f},
+                           {-1, 1, frustum.near, 1.0f},
 
-      // far face
-      {-1, -1, frustum.far, 1.0f},
-      { 1, -1, frustum.far, 1.0f},
-      { 1,  1, frustum.far, 1.0f},
-      {-1,  1, frustum.far, 1.0f}
-  };
+                           // far face
+                           {-1, -1, frustum.far, 1.0f},
+                           {1, -1, frustum.far, 1.0f},
+                           {1, 1, frustum.far, 1.0f},
+                           {-1, 1, frustum.far, 1.0f}};
 
   glm::vec3 v[8u];
-  for (int i = 0; i < 8; i++)
-  {
+  for (int i = 0; i < 8; i++) {
     glm::vec4 const ff = inv_viewproj * f[i];
-    v[i].x = ff.x / ff.w;
-    v[i].y = ff.y / ff.w;
-    v[i].z = ff.z / ff.w;
+    v[i].x             = ff.x / ff.w;
+    v[i].y             = ff.y / ff.w;
+    v[i].z             = ff.z / ff.w;
   }
 
   render::draw_line(rstate, v[0], v[1], LOC::BLUE);
@@ -175,8 +171,8 @@ namespace opengl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // DebugRenderer
 void
-DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camera,
-                                   RNG& rng, FrameTime const& ft)
+DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camera, RNG& rng,
+                            FrameTime const& ft)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -197,7 +193,7 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camer
 
   Transform camera_transform;
   camera_transform.translation = camera.world_position();
-  auto const model = camera_transform.model_matrix();
+  auto const model             = camera_transform.model_matrix();
 
   if (es.draw_view_frustum) {
     draw_frustum(rstate, es.frustum, model);
@@ -210,8 +206,7 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camer
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BlackSceneRenderer
 void
-BlackSceneRenderer::render_scene(RenderState&, LevelManager&, Camera&, RNG&,
-               FrameTime const&)
+BlackSceneRenderer::render_scene(RenderState&, LevelManager&, Camera&, RNG&, FrameTime const&)
 {
 }
 

@@ -1,5 +1,5 @@
-#include <gl_sdl/sdl_window.hpp>
 #include <gl_sdl/gl_sdl_log.hpp>
+#include <gl_sdl/sdl_window.hpp>
 
 #include <common/algorithm.hpp>
 #include <common/result.hpp>
@@ -13,10 +13,11 @@
 using namespace boomhs;
 using namespace gl_sdl;
 
-namespace {
+namespace
+{
 
 void
-check_errors(common::Logger &logger)
+check_errors(common::Logger& logger)
 {
   ErrorLog::abort_if_any_errors(logger);
 }
@@ -28,14 +29,14 @@ set_attribute(common::Logger& logger, SDL_GLattr const attr, int const value)
   check_errors(logger);
   if (0 != set_r) {
     auto const fmt = fmt::format("Setting attribute '{}' failed, error is '{}'\n",
-                                  std::to_string(attr), SDL_GetError());
+                                 std::to_string(attr), SDL_GetError());
     std::abort();
     return Err(fmt);
   }
   return OK_NONE;
 }
 
-} // namespace anonymous
+} // namespace
 
 namespace gl_sdl
 {
@@ -109,7 +110,6 @@ SDLWindow::set_swapinterval(SwapIntervalFlag const swap)
   }
 }
 
-
 void
 SDLWindow::set_fullscreen(FullscreenFlags const fs)
 {
@@ -155,9 +155,8 @@ SDLGlobalContext::create(common::Logger& logger)
   return Ok(SDLContext{SDLGlobalContext{}});
 }
 
-
 Result<SDLWindow, std::string>
-SDLGlobalContext::make_window(common::Logger &logger, char const* title, bool const fullscreen,
+SDLGlobalContext::make_window(common::Logger& logger, char const* title, bool const fullscreen,
                               int const width, int const height) const
 {
   auto const set_a = [&logger](auto const attr, auto const v) {
@@ -180,7 +179,6 @@ SDLGlobalContext::make_window(common::Logger &logger, char const* title, bool co
   DO_EFFECT(set_a(SDL_GL_DEPTH_SIZE, 24));
   DO_EFFECT(set_a(SDL_GL_STENCIL_SIZE, 8));
 
-
   // Hidden dependency between the ordering here, so all the logic exists in one
   // place.
   //
@@ -197,13 +195,11 @@ SDLGlobalContext::make_window(common::Logger &logger, char const* title, bool co
 
   // First, create the SDL window.
   auto const fullscreen_flag = fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
-  auto const flags = SDL_WINDOW_OPENGL
-    | SDL_WINDOW_SHOWN
-    | SDL_WINDOW_MOUSE_FOCUS
-    | fullscreen_flag;
-  int const x = SDL_WINDOWPOS_CENTERED;
-  int const y = SDL_WINDOWPOS_CENTERED;
-  auto raw = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width,
+  auto const flags =
+      SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_MOUSE_FOCUS | fullscreen_flag;
+  int const x   = SDL_WINDOWPOS_CENTERED;
+  int const y   = SDL_WINDOWPOS_CENTERED;
+  auto      raw = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width,
                               height, flags);
   check_errors(logger);
   if (nullptr == raw) {
@@ -270,7 +266,7 @@ SDLGlobalContext::make_window(common::Logger &logger, char const* title, bool co
 
   // Use v-sync
   // NOTE: must happen AFTER SDL_GL_MakeCurrent call occurs.
-  SDLWindow window{MOVE(window_ptr), gl_context};
+  SDLWindow  window{MOVE(window_ptr), gl_context};
   bool const success = window.try_set_swapinterval(SwapIntervalFlag::LATE_TEARING);
   if (!success) {
     // SDL fills up the log with info about the failed attempt above.
@@ -285,4 +281,4 @@ SDLGlobalContext::make_window(common::Logger &logger, char const* title, bool co
   return OK_MOVE(window);
 }
 
-} // ns gl_sdl
+} // namespace gl_sdl

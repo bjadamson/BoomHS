@@ -1,5 +1,5 @@
-#include <boomhs/components.hpp>
 #include <boomhs/bounding_object.hpp>
+#include <boomhs/components.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/frame_time.hpp>
@@ -30,12 +30,12 @@ kill_entity(common::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
             EntityRegistry& registry, EntityID const entity_eid)
 {
   auto const& bbox = registry.get<AABoundingBox>(entity_eid).cube;
-  auto const hw = bbox.half_widths();
+  auto const  hw   = bbox.half_widths();
 
   // Move the entity half it's bounding box, so it is directly on the ground, or whatever it was
   // standing on.
   auto& entity_transform = registry.get<Transform>(entity_eid);
-  auto& entity_tr = entity_transform.translation;
+  auto& entity_tr        = entity_transform.translation;
   entity_tr.y -= hw.y;
 
   // TODO: Get the normal vector for the terrain at the (x, z) point and rotate the npc to look
@@ -45,15 +45,15 @@ kill_entity(common::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
 
 void
 try_attack_selected_target(common::Logger& logger, TerrainGrid& terrain, TextureTable& ttable,
-                           EntityRegistry& registry, Player &player, EntityID const target_eid)
+                           EntityRegistry& registry, Player& player, EntityID const target_eid)
 {
-  auto& ptransform      = player.transform();
+  auto&      ptransform = player.transform();
   auto const playerpos  = ptransform.translation;
 
-  auto& npc_transform = registry.get<Transform>(target_eid);
-  auto const npcpos   = npc_transform.translation;
+  auto&      npc_transform = registry.get<Transform>(target_eid);
+  auto const npcpos        = npc_transform.translation;
 
-  auto& npcdata = registry.get<NPCData>(target_eid);
+  auto& npcdata   = registry.get<NPCData>(target_eid);
   auto& target_hp = npcdata.health;
 
   bool const already_dead = NPC::is_dead(target_hp);
@@ -73,10 +73,10 @@ try_attack_selected_target(common::Logger& logger, TerrainGrid& terrain, Texture
 }
 
 void
-move_worldobject(EngineState& es, WorldObject& wo, glm::vec3 const& move_vec,
-                 float const speed, TerrainGrid const& terrain, FrameTime const& ft)
+move_worldobject(EngineState& es, WorldObject& wo, glm::vec3 const& move_vec, float const speed,
+                 TerrainGrid const& terrain, FrameTime const& ft)
 {
-  auto& logger = es.logger;
+  auto&      logger  = es.logger;
   auto const max_pos = terrain.max_worldpositions();
   auto const max_x   = max_pos.x;
   auto const max_z   = max_pos.y;
@@ -112,16 +112,13 @@ move_worldobject(EngineState& es, WorldObject& wo, glm::vec3 const& move_vec,
 void
 update_position(EngineState& es, LevelData& ldata, Player& player, FrameTime const& ft)
 {
-  auto& logger   = es.logger;
-  auto& terrain  = ldata.terrain;
+  auto&       logger   = es.logger;
+  auto&       terrain  = ldata.terrain;
   auto const& movement = es.movement_state;
 
   // Move the player forward along it's movement direction
-  auto move_dir = movement.forward
-    + movement.backward
-    + movement.left
-    + movement.right
-    + movement.mouse_forward;
+  auto move_dir = movement.forward + movement.backward + movement.left + movement.right +
+                  movement.mouse_forward;
 
   if (move_dir != math::constants::ZERO) {
     move_dir = glm::normalize(move_dir);
@@ -131,7 +128,7 @@ update_position(EngineState& es, LevelData& ldata, Player& player, FrameTime con
   move_worldobject(es, wo, move_dir, player.speed, terrain, ft);
 
   // Lookup the player height from the terrain at the player's X, Z world-coordinates.
-  auto& player_pos = player.transform().translation;
+  auto&       player_pos    = player.transform().translation;
   float const player_height = terrain.get_height(logger, player_pos.x, player_pos.z);
   auto const& player_bbox   = player.bounding_box().cube;
   player_pos.y              = player_height + player_bbox.half_widths().y;
@@ -160,7 +157,7 @@ PlayerHead::update(FrameTime const& ft)
   auto const& head_bbox   = registry_->get<AABoundingBox>(eid_).cube;
 
   auto const& player_tr = registry_->get<Transform>(player_eid);
-  auto& head_tr         = registry_->get<Transform>(eid_);
+  auto&       head_tr   = registry_->get<Transform>(eid_);
 
   auto const player_half_height = player_bbox.scaled_half_widths(player_tr).y;
   auto const head_half_height   = head_bbox.scaled_half_widths(head_tr).y;
@@ -182,12 +179,12 @@ PlayerHead::create(common::Logger& logger, EntityRegistry& registry, ShaderProgr
 
   // The head follows the Player
   auto const player_eid = find_player_eid(registry);
-  auto& ft = registry.assign<FollowTransform>(eid, player_eid);
-  auto& player = find_player(registry).world_object();
+  auto&      ft         = registry.assign<FollowTransform>(eid, player_eid);
+  auto&      player     = find_player(registry).world_object();
 
   PlayerHead ph{registry, eid, world_orientation};
-  auto& tr = ph.world_object.transform();
-  tr.scale = glm::vec3{0.1};
+  auto&      tr = ph.world_object.transform();
+  tr.scale      = glm::vec3{0.1};
 
   return ph;
 }
@@ -211,7 +208,6 @@ Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
   auto& player    = find_player(registry);
   auto& inventory = player.inventory;
 
-
   assert(inventory.add_item(eid));
   auto& item       = registry.get<Item>(eid);
   item.is_pickedup = true;
@@ -221,7 +217,6 @@ Player::pickup_entity(EntityID const eid, EntityRegistry& registry)
   // Add ourselves to this list of the item's previous owners.
   item.add_owner(this->name);
 }
-
 
 void
 Player::drop_entity(common::Logger& logger, EntityID const eid, EntityRegistry& registry)
@@ -256,7 +251,7 @@ Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
   auto& terrain  = ldata.terrain;
   auto& nbt      = ldata.nearby_targets;
 
-  auto& ttable    = zs.gfx_state.texture_table;
+  auto& ttable = zs.gfx_state.texture_table;
 
   gcd_.update();
   update_position(es, ldata, *this, ft);
@@ -268,7 +263,7 @@ Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
     return;
   }
 
-  bool const gcd_ready = gcd_.is_ready();
+  bool const gcd_ready          = gcd_.is_ready();
   auto const reset_gcd_if_ready = [&]() {
     if (gcd_ready) {
       LOG_ERROR_SPRINTF("RESETTING GCD");
@@ -279,8 +274,8 @@ Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
 
   // Assumed nearby-target selected
   assert(*target_opt);
-  auto const target_eid = *target_opt;
-  auto const& target = registry.get<NPCData>(target_eid);
+  auto const  target_eid = *target_opt;
+  auto const& target     = registry.get<NPCData>(target_eid);
 
   if (is_attacking && NPC::is_dead(target.health)) {
     is_attacking = false;
@@ -291,14 +286,14 @@ Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
   if (is_attacking && gcd_ready) {
     LOG_ERROR_SPRINTF("GCD_READY IS_ATTACKING: %i, GCD_READY: %i", is_attacking, gcd_ready);
 
-    auto& npcdata = registry.get<NPCData>(target_eid);
+    auto& npcdata   = registry.get<NPCData>(target_eid);
     auto& target_hp = npcdata.health;
 
     bool const already_dead = NPC::is_dead(target_hp);
     try_attack_selected_target(logger, terrain, ttable, registry, *this, target_eid);
 
     bool const target_dead_after_attack = NPC::is_dead(target_hp);
-    bool const dead_from_attack = !already_dead && target_dead_after_attack;
+    bool const dead_from_attack         = !already_dead && target_dead_after_attack;
 
     if (dead_from_attack) {
       kill_entity(logger, terrain, ttable, registry, target_eid);
@@ -311,9 +306,10 @@ Player::update(EngineState& es, ZoneState& zs, FrameTime const& ft)
 }
 
 void
-Player::try_pickup_nearby_item(common::Logger& logger, EntityRegistry& registry, FrameTime const& ft)
+Player::try_pickup_nearby_item(common::Logger& logger, EntityRegistry& registry,
+                               FrameTime const& ft)
 {
-  auto const& player_pos       = transform().translation;
+  auto const& player_pos = transform().translation;
 
   static constexpr auto MINIMUM_DISTANCE_TO_PICKUP = 1.0f;
   auto const            items                      = find_items(registry);

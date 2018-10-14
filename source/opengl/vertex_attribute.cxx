@@ -1,7 +1,7 @@
-#include <opengl/vertex_attribute.hpp>
-#include <extlibs/fmt.hpp>
 #include <common/algorithm.hpp>
 #include <common/type_macros.hpp>
+#include <extlibs/fmt.hpp>
+#include <opengl/vertex_attribute.hpp>
 
 namespace
 {
@@ -13,7 +13,7 @@ class UploadFormatState
   static constexpr auto INVALID_TYPE = 0;
 
   GLsizei const stride_;
-  GLsizei components_skipped_ = 0;
+  GLsizei       components_skipped_ = 0;
 
 public:
   GLint component_type_ = INVALID_TYPE;
@@ -40,7 +40,7 @@ public:
 };
 
 void
-ensure_backend_has_enough_vertex_attributes(common::Logger &logger, GLint const num_apis)
+ensure_backend_has_enough_vertex_attributes(common::Logger& logger, GLint const num_apis)
 {
   auto max_attribs = 0;
   glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &max_attribs);
@@ -49,14 +49,14 @@ ensure_backend_has_enough_vertex_attributes(common::Logger &logger, GLint const 
 
   if (max_attribs <= num_apis) {
     LOG_ERROR_SPRINTF("Error requested '%d' vertex attributes from opengl, only '%d' available",
-        num_apis, max_attribs);
+                      num_apis, max_attribs);
     std::abort();
   }
 }
 
 void
-configure_and_enable_attrib_pointer(common::Logger &logger, AttributePointerInfo const& info,
-    UploadFormatState &ufs)
+configure_and_enable_attrib_pointer(common::Logger& logger, AttributePointerInfo const& info,
+                                    UploadFormatState& ufs)
 {
   ensure_backend_has_enough_vertex_attributes(logger, info.component_count);
 
@@ -81,17 +81,20 @@ configure_and_enable_attrib_pointer(common::Logger &logger, AttributePointerInfo
   // clang-format on
   ufs.increase_offset(info.component_count);
 
-  auto const make_decimals = [](auto const a0, auto const a1, auto const a2, auto const a3, auto const a4) {
+  auto const make_decimals = [](auto const a0, auto const a1, auto const a2, auto const a3,
+                                auto const a4) {
     return fmt::sprintf("%-15d %-15d %-15d %-15d %-15d", a0, a1, a2, a3, a4);
   };
 
-  auto const make_strings = [](auto const a0, auto const a1, auto const a2, auto const a3, auto const a4) {
+  auto const make_strings = [](auto const a0, auto const a1, auto const a2, auto const a3,
+                               auto const a4) {
     return fmt::sprintf("%-15s %-15s %-15s %-15s %-15s", a0, a1, a2, a3, a4);
   };
 
   auto const s = make_decimals(info.index, info.component_count, DONT_NORMALIZE_THE_DATA,
-      stride_size_in_bytes, offset_size_in_bytes);
-  auto const z = make_strings("attribute_index", "component_count", "normalize_data", "stride", "offset");
+                               stride_size_in_bytes, offset_size_in_bytes);
+  auto const z =
+      make_strings("attribute_index", "component_count", "normalize_data", "stride", "offset");
 
   LOG_DEBUG(z);
   LOG_DEBUG(s);
@@ -100,14 +103,12 @@ configure_and_enable_attrib_pointer(common::Logger &logger, AttributePointerInfo
 bool
 va_has_attribute_type(VertexAttribute const& va, AttributeType const at)
 {
-  auto const cmp = [&at](auto const& api) {
-    return api.typezilla == at;
-  };
-  auto const it = std::find_if(va.cbegin(), va.cend(), cmp);
+  auto const cmp = [&at](auto const& api) { return api.typezilla == at; };
+  auto const it  = std::find_if(va.cbegin(), va.cend(), cmp);
   return it != va.cend();
 }
 
-} // ns anonymous
+} // namespace
 
 namespace opengl
 {
@@ -137,29 +138,30 @@ attribute_type_from_string(char const* str)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // AttributePointerInfo
 AttributePointerInfo::AttributePointerInfo(GLuint const i, GLint const t, AttributeType const at,
-    GLsizei const cc)
-  : index(i)
-  , datatype(t)
-  , typezilla(at)
-  , component_count(cc)
+                                           GLsizei const cc)
+    : index(i)
+    , datatype(t)
+    , typezilla(at)
+    , component_count(cc)
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // VertexAttribute
 VertexAttribute::VertexAttribute(size_t const n_apis, GLsizei const stride_p,
-    std::array<AttributePointerInfo, API_BUFFER_SIZE> &&array)
-  : num_apis_(n_apis)
-  , stride_(stride_p)
-  , apis_(MOVE(array))
+                                 std::array<AttributePointerInfo, API_BUFFER_SIZE>&& array)
+    : num_apis_(n_apis)
+    , stride_(stride_p)
+    , apis_(MOVE(array))
 {
 }
 
 void
-VertexAttribute::upload_vertex_format_to_glbound_vao(common::Logger &logger) const
+VertexAttribute::upload_vertex_format_to_glbound_vao(common::Logger& logger) const
 {
   UploadFormatState ufs{this->stride_};
-  FOR(i, this->num_apis_) {
+  FOR(i, this->num_apis_)
+  {
     auto const& api = this->apis_[i];
     assert(api.datatype != AttributePointerInfo::INVALID_TYPE);
     assert(api.typezilla != AttributeType::OTHER);
@@ -196,10 +198,8 @@ VertexAttribute::has_uvs() const
 std::string
 AttributePointerInfo::to_string() const
 {
-  return fmt::format("(API) -- '{}' datatype: {}' component_count: '{}'",
-      this->index,
-      this->datatype,
-      this->component_count);
+  return fmt::format("(API) -- '{}' datatype: {}' component_count: '{}'", this->index,
+                     this->datatype, this->component_count);
 }
 
 std::ostream&
@@ -213,10 +213,8 @@ std::string
 VertexAttribute::to_string() const
 {
   std::string result;
-  result += fmt::format("(VA) -- num_apis: '{}' stride: '{}'\n",
-      num_apis_,
-      stride_);
-  for(auto const& api : apis_) {
+  result += fmt::format("(VA) -- num_apis: '{}' stride: '{}'\n", num_apis_, stride_);
+  for (auto const& api : apis_) {
     result += "    ";
     result += api.to_string();
     result += "\n";
@@ -235,4 +233,4 @@ operator<<(std::ostream& stream, VertexAttribute const& va)
   return stream;
 }
 
-} // ns opengl
+} // namespace opengl

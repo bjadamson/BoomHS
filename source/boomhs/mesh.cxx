@@ -1,5 +1,5 @@
-#include <boomhs/mesh.hpp>
 #include <boomhs/heightmap.hpp>
+#include <boomhs/mesh.hpp>
 #include <cassert>
 #include <common/algorithm.hpp>
 

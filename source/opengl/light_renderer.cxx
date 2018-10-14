@@ -61,10 +61,10 @@ struct PointlightTransform
 
 void
 set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
-      glm::mat4 const& model_matrix, ShaderProgram& sp,
-      Material const&                         material,
-      std::vector<PointlightTransform> const& pointlights,
-      bool const                              set_normalmatrix)
+                           glm::mat4 const& model_matrix, ShaderProgram& sp,
+                           Material const&                         material,
+                           std::vector<PointlightTransform> const& pointlights,
+                           bool const                              set_normalmatrix)
 {
   auto&       fstate = rstate.fs;
   auto&       es     = fstate.es;
@@ -73,7 +73,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
 
   auto&       logger       = es.logger;
   auto const& global_light = ldata.global_light;
-  //auto const& player       = ldata.player;
+  // auto const& player       = ldata.player;
 
   render::set_modelmatrix(logger, model_matrix, sp);
   if (set_normalmatrix) {
@@ -121,10 +121,9 @@ namespace opengl
 {
 
 void
-LightRenderer::set_light_uniforms(RenderState& rstate, EntityRegistry& registry,
-                                  ShaderProgram& sp, Material const& material,
-                                  glm::vec3 const& position, glm::mat4 const& model_matrix,
-                                  bool const set_normalmatrix)
+LightRenderer::set_light_uniforms(RenderState& rstate, EntityRegistry& registry, ShaderProgram& sp,
+                                  Material const& material, glm::vec3 const& position,
+                                  glm::mat4 const& model_matrix, bool const set_normalmatrix)
 {
   auto const                       pointlight_eids = find_pointlights(registry);
   std::vector<PointlightTransform> pointlights;
@@ -139,8 +138,7 @@ LightRenderer::set_light_uniforms(RenderState& rstate, EntityRegistry& registry,
     pointlights.emplace_back(plt);
   }
   set_receiveslight_uniforms(rstate, position, model_matrix, sp, material, pointlights,
-                               set_normalmatrix);
+                             set_normalmatrix);
 }
-
 
 } // namespace opengl

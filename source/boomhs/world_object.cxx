@@ -4,9 +4,9 @@
 #include <boomhs/terrain.hpp>
 #include <boomhs/world_object.hpp>
 
-#include <extlibs/fmt.hpp>
-#include <common/algorithm.hpp>
 #include <boomhs/math.hpp>
+#include <common/algorithm.hpp>
+#include <extlibs/fmt.hpp>
 
 using namespace boomhs;
 using namespace boomhs::math;
@@ -45,9 +45,7 @@ WorldObject::move(glm::vec3 const& delta)
 std::string
 WorldObject::display() const
 {
-  return fmt::sprintf(
-                      "quat: '%s'\n",
-                      glm::to_string(orientation()));
+  return fmt::sprintf("quat: '%s'\n", glm::to_string(orientation()));
 }
 
 glm::vec3 const&
@@ -86,8 +84,8 @@ WorldObject::rotate_to_match_camera_rotation(Camera const& camera)
   wo_fwd           = glm::normalize(wo_fwd);
 
   glm::quat const rot_between = math::rotation_between_vectors(camera_wo_fwd, wo_fwd);
-  auto& t = transform();
-  t.rotation = rot_between * t.rotation;
+  auto&           t           = transform();
+  t.rotation                  = rot_between * t.rotation;
 }
 
 } // namespace boomhs

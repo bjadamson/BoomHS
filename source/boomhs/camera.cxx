@@ -1,7 +1,7 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/frame_time.hpp>
-#include <boomhs/viewport.hpp>
 #include <boomhs/mouse.hpp>
+#include <boomhs/viewport.hpp>
 #include <boomhs/world_object.hpp>
 
 #include <gl_sdl/sdl_window.hpp>
@@ -12,7 +12,6 @@ using namespace boomhs;
 using namespace boomhs::math;
 using namespace boomhs::math::constants;
 using namespace gl_sdl;
-
 
 // Without this multiplier, the camera would take years to rotate. This is because we normalize the
 // rotation and scaling with the delta time each frame.
@@ -58,15 +57,13 @@ CameraArcball::CameraArcball(CameraTarget& t, WorldOrientation const& wo)
 void
 CameraArcball::zoom(float const amount, FrameTime const& ft)
 {
-  float constexpr MIN_RADIUS = 0.01f;
+  float constexpr MIN_RADIUS            = 0.01f;
   float constexpr ZOOM_SPEED_MULTIPLIER = 1000.0;
 
-  float const delta          = (amount * ft.delta_millis() * ZOOM_SPEED_MULTIPLIER);
-  float const new_radius     = coordinates_.radius + delta;
+  float const delta      = (amount * ft.delta_millis() * ZOOM_SPEED_MULTIPLIER);
+  float const new_radius = coordinates_.radius + delta;
 
-  coordinates_.radius = (new_radius >= MIN_RADIUS)
-    ? new_radius
-    : MIN_RADIUS;
+  coordinates_.radius = (new_radius >= MIN_RADIUS) ? new_radius : MIN_RADIUS;
 }
 
 void
@@ -151,7 +148,7 @@ CameraArcball::calc_pm(ViewSettings const& vp, Frustum const& f) const
 glm::mat4
 CameraArcball::calc_vm(glm::vec3 const& target_pos) const
 {
-  auto const& target =  target_.get().transform().translation;
+  auto const& target = target_.get().transform().translation;
   return glm::lookAt(target_pos, target, up());
 }
 
@@ -183,18 +180,14 @@ CameraFPS::rotate_radians(float dx, float dy, FrameTime const& ft)
     }
   }
 
-  auto const xaxis = cs.flip_x
-    ?  world_orientation_.up
-    : -world_orientation_.up;
+  auto const xaxis = cs.flip_x ? world_orientation_.up : -world_orientation_.up;
 
-  auto const yaxis = cs.flip_y
-    ?  world_orientation_.right()
-    : -world_orientation_.right();
+  auto const yaxis = cs.flip_y ? world_orientation_.right() : -world_orientation_.right();
 
   // combine existing rotation with new rotation.
   // Y-axis first
-  glm::quat a   = glm::angleAxis(yrot_, yaxis) * glm::angleAxis(dy, yaxis);
-  glm::quat b   = glm::angleAxis(xrot_, xaxis) * glm::angleAxis(dx, xaxis);
+  glm::quat a          = glm::angleAxis(yrot_, yaxis) * glm::angleAxis(dy, yaxis);
+  glm::quat b          = glm::angleAxis(xrot_, xaxis) * glm::angleAxis(dx, xaxis);
   transform().rotation = a * b;
 
   return *this;
@@ -238,11 +231,11 @@ CameraORTHO::calc_pm(AspectRatio const& ar, Frustum const& f, ScreenSize const& 
   auto const& view_width  = view_size.width;
   auto const& view_height = view_size.height;
 
-  float const left   = 0.0f + f.left      + zoom.x - position.x;
-  float const right  = left + view_width  - zoom.x - position.x;
+  float const left  = 0.0f + f.left + zoom.x - position.x;
+  float const right = left + view_width - zoom.x - position.x;
 
-  float const top    = 0.0f + f.top       + zoom.y + position.z;
-  float const bottom = top  + view_height - zoom.y + position.z;
+  float const top    = 0.0f + f.top + zoom.y + position.z;
+  float const bottom = top + view_height - zoom.y + position.z;
 
   return glm::ortho(left, right, bottom, top, f.near, f.far);
 }
@@ -250,11 +243,11 @@ CameraORTHO::calc_pm(AspectRatio const& ar, Frustum const& f, ScreenSize const& 
 glm::mat4
 CameraORTHO::calc_vm() const
 {
-  auto const center  = EYE_FORWARD + world_orientation_.forward;
+  auto const  center = EYE_FORWARD + world_orientation_.forward;
   auto const& up     = world_orientation_.up;
 
   auto const EYE_POS = EYE_FORWARD + glm::vec3{0, 1 * position.y, 0};
-  auto r = glm::lookAtRH(EYE_POS, center, up);
+  auto       r       = glm::lookAtRH(EYE_POS, center, up);
 
   // Flip the "right" vector computed by lookAt() so the X-Axis points "right" onto the screen.
   //
@@ -317,8 +310,8 @@ Camera::set_mode(CameraMode const m)
 void
 Camera::next_mode()
 {
-  auto const cast = [](auto const v) { return static_cast<int>(v); };
-  CameraMode const m = static_cast<CameraMode>(cast(mode()) + cast(1));
+  auto const       cast = [](auto const v) { return static_cast<int>(v); };
+  CameraMode const m    = static_cast<CameraMode>(cast(mode()) + cast(1));
   if (CameraMode::MAX == m || CameraMode::FREE_FLOATING == m) {
     set_mode(static_cast<CameraMode>(0));
   }
@@ -332,19 +325,19 @@ void
 Camera::toggle_rotation_lock()
 {
   switch (mode()) {
-    case CameraMode::FPS:
-      fps.cs.rotation_lock ^= true;
-      break;
-    case CameraMode::Ortho:
-    case CameraMode::Fullscreen_2DUI:
-      break;
-    case CameraMode::ThirdPerson:
-      arcball.cs.rotation_lock ^= true;
-      break;
-    case CameraMode::FREE_FLOATING:
-    case CameraMode::MAX:
-      std::abort();
-      break;
+  case CameraMode::FPS:
+    fps.cs.rotation_lock ^= true;
+    break;
+  case CameraMode::Ortho:
+  case CameraMode::Fullscreen_2DUI:
+    break;
+  case CameraMode::ThirdPerson:
+    arcball.cs.rotation_lock ^= true;
+    break;
+  case CameraMode::FREE_FLOATING:
+  case CameraMode::MAX:
+    std::abort();
+    break;
   }
 }
 
@@ -355,19 +348,19 @@ Camera::rotate_radians(float dx, float dy, FrameTime const& ft)
   dy *= ft.delta_millis();
 
   switch (mode()) {
-    case CameraMode::FPS:
-      fps.rotate_radians(dx, dy, ft);
-      break;
-    case CameraMode::Ortho:
-    case CameraMode::Fullscreen_2DUI:
-      break;
-    case CameraMode::ThirdPerson:
-      arcball.rotate_radians(dx, dy, ft);
-      break;
-    case CameraMode::FREE_FLOATING:
-    case CameraMode::MAX:
-      std::abort();
-      break;
+  case CameraMode::FPS:
+    fps.rotate_radians(dx, dy, ft);
+    break;
+  case CameraMode::Ortho:
+  case CameraMode::Fullscreen_2DUI:
+    break;
+  case CameraMode::ThirdPerson:
+    arcball.rotate_radians(dx, dy, ft);
+    break;
+  case CameraMode::FREE_FLOATING:
+  case CameraMode::MAX:
+    std::abort();
+    break;
   }
   return *this;
 }
@@ -382,17 +375,17 @@ glm::vec3
 Camera::eye_forward() const
 {
   switch (mode()) {
-    case CameraMode::FPS:
-      return glm::normalize(fps.forward() * fps.transform().rotation);
-    case CameraMode::Ortho:
-    case CameraMode::Fullscreen_2DUI:
-      return glm::normalize(ortho.position + ortho.forward());
-      break;
-    case CameraMode::ThirdPerson:
-      return glm::normalize(arcball.world_position() - arcball.target_position());
-    case CameraMode::FREE_FLOATING:
-    case CameraMode::MAX:
-      break;
+  case CameraMode::FPS:
+    return glm::normalize(fps.forward() * fps.transform().rotation);
+  case CameraMode::Ortho:
+  case CameraMode::Fullscreen_2DUI:
+    return glm::normalize(ortho.position + ortho.forward());
+    break;
+  case CameraMode::ThirdPerson:
+    return glm::normalize(arcball.world_position() - arcball.target_position());
+  case CameraMode::FREE_FLOATING:
+  case CameraMode::MAX:
+    break;
   }
   std::abort();
   return ZERO;
@@ -402,16 +395,16 @@ glm::vec3
 Camera::world_forward() const
 {
   switch (mode()) {
-    case CameraMode::FPS:
-      return fps.forward();
-    case CameraMode::Ortho:
-    case CameraMode::Fullscreen_2DUI:
-      return ortho.forward();
-    case CameraMode::ThirdPerson:
-      return arcball.forward();
-    case CameraMode::FREE_FLOATING:
-    case CameraMode::MAX:
-      break;
+  case CameraMode::FPS:
+    return fps.forward();
+  case CameraMode::Ortho:
+  case CameraMode::Fullscreen_2DUI:
+    return ortho.forward();
+  case CameraMode::ThirdPerson:
+    return arcball.forward();
+  case CameraMode::FREE_FLOATING:
+  case CameraMode::MAX:
+    break;
   }
   std::abort();
   return ZERO;
@@ -421,16 +414,16 @@ glm::vec3
 Camera::world_up() const
 {
   switch (mode()) {
-    case CameraMode::FPS:
-      return fps.up();
-    case CameraMode::Ortho:
-    case CameraMode::Fullscreen_2DUI:
-      return ortho.up();
-    case CameraMode::ThirdPerson:
-      return arcball.up();
-    case CameraMode::FREE_FLOATING:
-    case CameraMode::MAX:
-      break;
+  case CameraMode::FPS:
+    return fps.up();
+  case CameraMode::Ortho:
+  case CameraMode::Fullscreen_2DUI:
+    return ortho.up();
+  case CameraMode::ThirdPerson:
+    return arcball.up();
+  case CameraMode::FREE_FLOATING:
+  case CameraMode::MAX:
+    break;
   }
   std::abort();
   return ZERO;
@@ -440,16 +433,16 @@ glm::vec3
 Camera::world_position() const
 {
   switch (mode()) {
-    case CameraMode::FPS:
-      return fps.world_position();
-    case CameraMode::Ortho:
-    case CameraMode::Fullscreen_2DUI:
-      return ortho.position;
-    case CameraMode::ThirdPerson:
-      return arcball.world_position();
-    case CameraMode::FREE_FLOATING:
-    case CameraMode::MAX:
-      break;
+  case CameraMode::FPS:
+    return fps.world_position();
+  case CameraMode::Ortho:
+  case CameraMode::Fullscreen_2DUI:
+    return ortho.position;
+  case CameraMode::ThirdPerson:
+    return arcball.world_position();
+  case CameraMode::FREE_FLOATING:
+  case CameraMode::MAX:
+    break;
   }
   std::abort();
   return ZERO;
@@ -459,18 +452,18 @@ WorldOrientation const&
 Camera::world_orientation_ref() const
 {
   switch (mode()) {
-    case CameraMode::FPS:
-      return fps.world_orientation_;
-    case CameraMode::Ortho:
-    case CameraMode::Fullscreen_2DUI:
-      return ortho.world_orientation_;
-    case CameraMode::ThirdPerson:
-      // TODO: FIX FAST
-      return fps.world_orientation_;
+  case CameraMode::FPS:
+    return fps.world_orientation_;
+  case CameraMode::Ortho:
+  case CameraMode::Fullscreen_2DUI:
+    return ortho.world_orientation_;
+  case CameraMode::ThirdPerson:
+    // TODO: FIX FAST
+    return fps.world_orientation_;
 
-    case CameraMode::FREE_FLOATING:
-    case CameraMode::MAX:
-      break;
+  case CameraMode::FREE_FLOATING:
+  case CameraMode::MAX:
+    break;
   }
   std::abort();
   static WorldOrientation const WO_ZERO{ZERO, ZERO};
@@ -482,10 +475,10 @@ Camera::world_orientation_ref() const
 Camera
 Camera::make_default(WorldOrientation const& pers_wo, WorldOrientation const& ortho_wo)
 {
-  auto constexpr FOV  = glm::radians(110.0f);
-  auto constexpr AR   = AspectRatio{4.0f, 3.0f};
+  auto constexpr FOV = glm::radians(110.0f);
+  auto constexpr AR  = AspectRatio{4.0f, 3.0f};
   ViewSettings vp{AR, FOV};
-  Camera camera(MOVE(vp), pers_wo, ortho_wo);
+  Camera       camera(MOVE(vp), pers_wo, ortho_wo);
 
   SphericalCoordinates sc;
   sc.radius = 3.8f;

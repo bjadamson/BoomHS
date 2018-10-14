@@ -35,10 +35,7 @@ make_fb_ti(common::Logger& logger, int const width, int const height, GLenum con
 namespace opengl
 {
 
-FBInfo::FBInfo()
-{
-  glGenFramebuffers(1, &id);
-}
+FBInfo::FBInfo() { glGenFramebuffers(1, &id); }
 
 void
 FBInfo::bind_impl(common::Logger& logger)
@@ -66,7 +63,7 @@ FBInfo::to_string() const
 
 TextureInfo
 FBInfo::attach_color_buffer(common::Logger& logger, int const width, int const height,
-                          GLenum const tu)
+                            GLenum const tu)
 {
   auto ti = make_fb_ti(logger, width, height, tu);
   ti.while_bound(logger, [&]() {
@@ -77,19 +74,19 @@ FBInfo::attach_color_buffer(common::Logger& logger, int const width, int const h
   // attach texture to FBO
   while_bound(logger, [&]() {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, ti.target, ti.id, 0);
-    });
+  });
   return ti;
 }
 
 TextureInfo
 FBInfo::attach_depth_buffer(common::Logger& logger, int const width, int const height,
-                                GLenum const tu)
+                            GLenum const tu)
 {
   auto ti = make_fb_ti(logger, width, height, tu);
   ti.while_bound(logger, [&]() {
     // allocate GPU memory for texture
     glTexImage2D(ti.target, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
-        nullptr);
+                 nullptr);
   });
   // attach texture to FBO
   while_bound(logger, [&]() {
@@ -102,14 +99,13 @@ RenderBuffer
 FBInfo::attach_render_buffer(common::Logger& logger, int const width, int const height)
 {
   RBInfo rbinfo;
-  rbinfo.while_bound(logger, [&]() {
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-  });
+  rbinfo.while_bound(
+      logger, [&]() { glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height); });
 
   // attach render buffer to FBO
   while_bound(logger, [&]() {
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbinfo.id);
-    });
+  });
   return RenderBuffer{MOVE(rbinfo)};
 }
 

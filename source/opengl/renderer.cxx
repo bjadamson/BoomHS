@@ -15,20 +15,20 @@
 #include <boomhs/viewport.hpp>
 #include <boomhs/zone_state.hpp>
 
-#include <opengl/renderer.hpp>
+#include <boomhs/shape.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/global.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/light_renderer.hpp>
+#include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
-#include <boomhs/shape.hpp>
 
 #include <extlibs/fmt.hpp>
 #include <extlibs/sdl.hpp>
 
-#include <common/log.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/random.hpp>
+#include <common/log.hpp>
 
 using namespace boomhs;
 using namespace boomhs::math::constants;
@@ -187,8 +187,8 @@ void
 clear_screen(Color const& color)
 {
   // https://stackoverflow.com/a/23944124/562174
-  //glDisable(GL_DEPTH_TEST);
-  //ON_SCOPE_EXIT([]() { enable_depth_tests(); });
+  // glDisable(GL_DEPTH_TEST);
+  // ON_SCOPE_EXIT([]() { enable_depth_tests(); });
 
   // Render
   glClearColor(color.r(), color.g(), color.b(), color.a());
@@ -293,7 +293,8 @@ draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position
   auto& zs     = fstate.zs;
 
   if (!es.draw_normals) {
-    LightRenderer::set_light_uniforms(rstate, registry, sp, material, position, model_matrix, set_normalmatrix);
+    LightRenderer::set_light_uniforms(rstate, registry, sp, material, position, model_matrix,
+                                      set_normalmatrix);
   }
 
   draw_3dshape(rstate, dm, model_matrix, sp, dinfo);
@@ -369,7 +370,7 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
 
   auto const acp     = ArrowTemplate{color, start, head};
   auto const arrow_v = VertexFactory::build(acp);
-  auto        dinfo  = OG::copy(logger, sp.va(), arrow_v);
+  auto       dinfo   = OG::copy(logger, sp.va(), arrow_v);
 
   Transform transform;
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
@@ -395,8 +396,8 @@ draw_line(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& end, Col
   auto& sp  = sps.ref_sp("line");
 
   LineTemplate const lt{start, end};
-  auto const  line_v = VertexFactory::build(lt);
-  auto        dinfo  = OG::copy(logger, sp.va(), line_v);
+  auto const         line_v = VertexFactory::build(lt);
+  auto               dinfo  = OG::copy(logger, sp.va(), line_v);
 
   sp.while_bound(logger, [&]() {
     sp.set_uniform_color(logger, "u_linecolor", color);
@@ -451,7 +452,7 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
   Transform transform;
   transform.translation = npc_transform.translation;
   auto const scale      = nearby_targets.calculate_scale(ft);
-  transform.scale = glm::vec3{scale};
+  transform.scale       = glm::vec3{scale};
 
   auto const proj_matrix = fstate.projection_matrix();
 
@@ -462,8 +463,8 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
     auto& zs     = fstate.zs;
 
     auto& gfx_state = zs.gfx_state;
-    auto& ttable = gfx_state.texture_table;
-    auto& sps    = gfx_state.sps;
+    auto& ttable    = gfx_state.texture_table;
+    auto& sps       = gfx_state.sps;
 
     auto& logger = es.logger;
 
@@ -471,10 +472,10 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
     assert(texture_o);
     auto& ti = *texture_o;
 
-    auto const      v = VertexFactory::build_default();
-    auto const uv = UvFactory::build_rectangle(ti.uv_max);
+    auto const v     = VertexFactory::build_default();
+    auto const uv    = UvFactory::build_rectangle(ti.uv_max);
     auto const vuvs  = vertex_interleave(v, uv);
-    DrawInfo dinfo = OG::copy_rectangle(logger, sp.va(), vuvs);
+    DrawInfo   dinfo = OG::copy_rectangle(logger, sp.va(), vuvs);
 
     dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
   };
@@ -490,9 +491,9 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
     auto const mvp_matrix = proj_matrix * (view_model * rmatrix);
     sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
 
-    auto const& player = find_player(registry);
-    auto const target_level = registry.get<NPCData>(npc_selected_eid).level;
-    auto const blendc = NearbyTargets::color_from_level_difference(player.level, target_level);
+    auto const& player       = find_player(registry);
+    auto const  target_level = registry.get<NPCData>(npc_selected_eid).level;
+    auto const  blendc = NearbyTargets::color_from_level_difference(player.level, target_level);
     sp.set_uniform_color(logger, "u_blendcolor", blendc);
 
     draw_billboard(rstate, transform, sp, "TargetReticle");
@@ -530,14 +531,14 @@ draw_grid_lines(RenderState& rstate)
   auto& sps    = zs.gfx_state.sps;
   auto& sp     = sps.ref_sp("3d_pos_color");
 
-  auto const& grid_dimensions = es.grid_lines.dimensions;
-  auto const draw_the_terrain_grid = [&](auto const& color) {
-    Transform transform;
+  auto const& grid_dimensions       = es.grid_lines.dimensions;
+  auto const  draw_the_terrain_grid = [&](auto const& color) {
+    Transform  transform;
     auto const model_matrix = transform.model_matrix();
 
     auto const grid_t = GridTemplate{grid_dimensions, color};
     auto const grid_v = VertexFactory::build(grid_t);
-    auto dinfo        = OG::copy(logger, sp.va(), grid_v);
+    auto       dinfo  = OG::copy(logger, sp.va(), grid_v);
 
     auto const camera_matrix = fstate.camera_matrix();
     BIND_UNTIL_END_OF_SCOPE(logger, sp);
@@ -574,7 +575,7 @@ namespace detail
 // to:
 //   left, bottom, width, height
 void
-gl_fn_using_viewport(Viewport const& vp, int const screen_height, void(*fn)(int, int, int, int))
+gl_fn_using_viewport(Viewport const& vp, int const screen_height, void (*fn)(int, int, int, int))
 {
   auto const left = vp.left();
 

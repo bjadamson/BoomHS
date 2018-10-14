@@ -323,7 +323,6 @@ load_textures(common::Logger& logger, CppTable const& table)
     auto const name = get_string_or_abort(resource, "name");
     auto const type = get_string_or_abort(resource, "type");
 
-
     auto const  wrap_s    = get_string(resource, "wrap").value_or("clamp");
     GLint const wrap_mode = texture::wrap_mode_from_string(wrap_s.c_str());
 
@@ -332,7 +331,7 @@ load_textures(common::Logger& logger, CppTable const& table)
     unsigned int const texture_unit = get_unsignedint(resource, "texture_unit").value_or(0);
 
     TextureInfo ti;
-    ti.wrap = wrap_mode;
+    ti.wrap   = wrap_mode;
     ti.uv_max = uv_max;
 
     auto const load_2dtexture = [&](GLenum const format) -> Result<common::none_t, std::string> {
@@ -340,8 +339,8 @@ load_textures(common::Logger& logger, CppTable const& table)
       opengl::TextureFilenames texture_names{name, {filename}};
 
       ti.format = format;
-      Texture t =
-          TRY_MOVEOUT(opengl::texture::upload_2d_texture(logger, texture_names.filenames[0], MOVE(ti)));
+      Texture t = TRY_MOVEOUT(
+          opengl::texture::upload_2d_texture(logger, texture_names.filenames[0], MOVE(ti)));
 
       ttable.add_texture(MOVE(texture_names), MOVE(t));
       return OK_NONE;
@@ -357,7 +356,7 @@ load_textures(common::Logger& logger, CppTable const& table)
       opengl::TextureFilenames texture_names{name, {front, right, back, left, top, bottom}};
       ti.format = format;
 
-      Texture                  t = TRY_MOVEOUT(
+      Texture t = TRY_MOVEOUT(
           opengl::texture::upload_3dcube_texture(logger, texture_names.filenames, MOVE(ti)));
 
       ttable.add_texture(MOVE(texture_names), MOVE(t));
@@ -451,7 +450,7 @@ load_attenuations(common::Logger& logger, CppTable const& table)
 auto
 load_materials(common::Logger& logger, CppTable const& table)
 {
-  auto const                table_array = get_table_array(table, "material");
+  auto const table_array = get_table_array(table, "material");
 
   MaterialTable material_table;
   for (auto const& it : *table_array) {
@@ -462,8 +461,8 @@ load_materials(common::Logger& logger, CppTable const& table)
 }
 
 void
-load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &assets,
-             EntityRegistry& registry)
+load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets& assets,
+              EntityRegistry& registry)
 {
   auto&       ttable       = assets.texture_table;
   auto const& mtable       = assets.material_table;
@@ -491,7 +490,7 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &
     // texture OR color fields, not both
     assert((!color && !texture_name) || (!color && texture_name) || (color && !texture_name));
 
-    auto eid                         = registry.create();
+    auto eid = registry.create();
     registry.assign<Name>(eid, name);
 
     auto& transform       = registry.assign<Transform>(eid);
@@ -512,9 +511,9 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &
     }
 
     if (orbital_o) {
-      auto const x      = get_float_or_abort(orbital_o, "x");
-      auto const y      = get_float_or_abort(orbital_o, "y");
-      auto const z      = get_float_or_abort(orbital_o, "z");
+      auto const x = get_float_or_abort(orbital_o, "x");
+      auto const y = get_float_or_abort(orbital_o, "y");
+      auto const z = get_float_or_abort(orbital_o, "z");
 
       auto const radius = glm::vec3{x, y, z};
       auto const offset = get_float(orbital_o, "offset").value_or(0.0);
@@ -522,10 +521,10 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &
     }
 
     if (geometry == "cube") {
-      auto& cr = registry.assign<CubeRenderable>(eid);
+      auto&      cr              = registry.assign<CubeRenderable>(eid);
       auto const cube_vertices_o = get_table_or_abort(file, "cube_vertices");
-      cr.min = get_vec3(cube_vertices_o, "min").value_or(glm::vec3{1.0f});
-      cr.max = get_vec3(cube_vertices_o, "max").value_or(glm::vec3{1.0f});
+      cr.min                     = get_vec3(cube_vertices_o, "min").value_or(glm::vec3{1.0f});
+      cr.max                     = get_vec3(cube_vertices_o, "max").value_or(glm::vec3{1.0f});
     }
     else if (boost::starts_with(geometry, "mesh")) {
       auto const parse_meshname = [](auto const& field) {
@@ -533,8 +532,8 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &
         assert(0 < len);
         return field.substr(len, field.length() - len);
       };
-      auto mesh_name  = parse_meshname(geometry);
-      auto& meshc = registry.assign<MeshRenderable>(eid, MOVE(mesh_name));
+      auto  mesh_name = parse_meshname(geometry);
+      auto& meshc     = registry.assign<MeshRenderable>(eid, MOVE(mesh_name));
     }
     else if (boost::starts_with(geometry, "billboard")) {
       auto const parse_billboard = [](auto const& field) {
@@ -559,15 +558,13 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &
     }
 
     if (pointlight_o) {
-      auto const attenuation  = get_string_or_abort(pointlight_o, "attenuation");
+      auto const attenuation = get_string_or_abort(pointlight_o, "attenuation");
 
-      auto const cmp = [&](NameAttenuation const& na) {
-        return na.name == attenuation;
-      };
-      auto const it = std::find_if(attenuations.cbegin(), attenuations.cend(), cmp);
+      auto const cmp = [&](NameAttenuation const& na) { return na.name == attenuation; };
+      auto const it  = std::find_if(attenuations.cbegin(), attenuations.cend(), cmp);
       assert(it != attenuations.cend());
 
-      auto& pl = registry.assign<PointLight>(eid);
+      auto& pl       = registry.assign<PointLight>(eid);
       pl.attenuation = it->value;
 
       auto& light    = pl.light;
@@ -578,14 +575,14 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &
     auto& obj_store = assets.obj_store;
     if (common::cstrcmp(name.c_str(), "TreeLowpoly")) {
       auto& obj = obj_store.get(logger, registry.get<MeshRenderable>(eid).name);
-      auto& tc = registry.assign<TreeComponent>(eid, obj);
+      auto& tc  = registry.assign<TreeComponent>(eid, obj);
       tc.add_color(TreeColorType::Leaf, LOC::GREEN);
       tc.add_color(TreeColorType::Leaf, LOC::PINK);
       tc.add_color(TreeColorType::Trunk, LOC::BROWN);
     }
     if (common::cstrcmp(name.c_str(), "Tree2")) {
       auto& obj = obj_store.get(logger, registry.get<MeshRenderable>(eid).name);
-      auto& tc = registry.assign<TreeComponent>(eid, obj);
+      auto& tc  = registry.assign<TreeComponent>(eid, obj);
       tc.add_color(TreeColorType::Leaf, LOC::YELLOW);
       tc.add_color(TreeColorType::Stem, LOC::RED);
       tc.add_color(TreeColorType::Stem, LOC::BLUE);
@@ -594,8 +591,8 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets &
 
     // An object receives light, if it has ALL ambient/diffuse/specular fields
     if (material_o) {
-      auto const material_name = *material_o;
-      auto const& material = mtable.find(material_name);
+      auto const  material_name      = *material_o;
+      auto const& material           = mtable.find(material_name);
       registry.assign<Material>(eid) = material;
     }
   };
@@ -663,8 +660,8 @@ load_vas(CppTable const& table)
     auto const datatype = GL_FLOAT;
     auto const num      = get_or_abort<int>(data_table, "num");
 
-    auto const uint_index        = static_cast<GLuint>(index);
-    auto const attribute_type    = attribute_type_from_string(fieldname);
+    auto const                   uint_index     = static_cast<GLuint>(index);
+    auto const                   attribute_type = attribute_type_from_string(fieldname);
     opengl::AttributePointerInfo api{uint_index, datatype, attribute_type, num};
 
     ++index;
@@ -704,7 +701,6 @@ load_global_lighting(CppTable const& table)
   auto const global_lighting = get_first_and_only_entry(table, "global-lighting");
   auto const ambient         = get_color_or_abort(global_lighting, "ambient");
 
-
   auto const directinal_table = get_table_or_abort(global_lighting, "directional");
   auto const diffuse          = get_color_or_abort(directinal_table, "diffuse");
   auto const specular         = get_color_or_abort(directinal_table, "specular");
@@ -723,7 +719,8 @@ namespace boomhs
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // LevelLoader
 Result<LevelAssets, std::string>
-LevelLoader::load_level(common::Logger& logger, EntityRegistry& registry, std::string const& filename)
+LevelLoader::load_level(common::Logger& logger, EntityRegistry& registry,
+                        std::string const& filename)
 {
   CppTable engine_table = cpptoml::parse_file("engine.toml");
   assert(engine_table);
@@ -758,10 +755,10 @@ LevelLoader::load_level(common::Logger& logger, EntityRegistry& registry, std::s
   auto fog = load_fog(level_table);
 
   LOG_TRACE("loading level finished successfully!");
-  LevelAssets assets{MOVE(glight), MOVE(fog), MOVE(material_table),
-                        MOVE(attenuations),
+  LevelAssets assets{MOVE(glight),       MOVE(fog),           MOVE(material_table),
+                     MOVE(attenuations),
 
-                        MOVE(objstore), MOVE(texture_table), MOVE(sps)};
+                     MOVE(objstore),     MOVE(texture_table), MOVE(sps)};
   load_entities(logger, level_table, assets, registry);
   return OK_MOVE(assets);
 }
