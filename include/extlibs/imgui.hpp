@@ -136,15 +136,22 @@ struct GridInfo
 
 template <typename FN, typename ...Args>
 void
-draw_grid(int const row_count, int const col_count, FN const& fn, Args&&... args)
+draw_grid(int const total, int const col_width, FN const& fn, Args&&... args)
 {
-  auto const total = row_count * col_count;
-  assert(0 == (total % row_count));
-  assert(0 == (total % col_count));
+  if (0 == total) {
+    return;
+  }
+  assert(col_width > 0);
+
+  bool const is_square = total % col_width == 0;
+  auto row_count       = total / col_width;
+  if (!is_square) {
+    ++row_count;
+  }
 
   FORI(i, total)
   {
-    if (i > 0 && ((i % row_count) == 0)) {
+    if (i > 0 && ((i % col_width) == 0)) {
       ImGui::NewLine();
     }
     fn(i, FORWARD(args));

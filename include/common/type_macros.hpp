@@ -115,7 +115,8 @@
   INDEX_OPERATOR_FNS(CONTAINER)                                                                    \
   BEGIN_END_FORWARD_FNS(CONTAINER)                                                                 \
                                                                                                    \
-using VALUE_T = typename decltype(CONTAINER)::value_type;                                          \
+using CONTAINER_T = decltype(CONTAINER);                                                           \
+using VALUE_T     = typename decltype(CONTAINER)::value_type;                                      \
                                                                                                    \
   auto& back()                                                                                     \
   {                                                                                                \
@@ -157,6 +158,19 @@ using VALUE_T = typename decltype(CONTAINER)::value_type;                       
   void emplace_back(Args&&... args) {                                                              \
     VEC_LIKE_CONTAINER.emplace_back(FORWARD(args));                                                \
   }                                                                                                \
+/*                                                                                                   \
+  template<typename F>                                                                             \
+  CONTAINER_T where(F const& fn) const                                                             \
+  {                                                                                                \
+    CONTAINER_T result;                                                                            \
+    for (auto const& it : VEC_LIKE_CONTAINER) {                                                    \
+      if (fn(it)) {                                                                                \
+        result.emplace_back(it);                                                                   \
+      }                                                                                            \
+    }                                                                                              \
+    return result;                                                                                 \
+  }                                                                                                \
+*/
 
 namespace common
 {

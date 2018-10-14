@@ -1,12 +1,12 @@
 #include <boomhs/ortho_renderer.hpp>
-
-#include <boomhs/perspective_renderer.hpp>
+#include <boomhs/components.hpp>
 
 #include <boomhs/camera.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/frame_time.hpp>
 #include <boomhs/level_manager.hpp>
+#include <boomhs/perspective_renderer.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/ui_debug.hpp>
 
@@ -114,7 +114,12 @@ draw_lhs(GameState& gs, RenderState& rstate, LevelManager& lm, StaticRenderers& 
     };
 
     auto const draw_selected_unit_grid = [&]() {
-      imgui_cxx::draw_grid(draw_button, moon_ti);
+      auto& registry = zs.registry;
+      int const COL_WIDTH = 4;
+
+      int count = find_all_entities_with_component<Selectable>(registry)
+        .count([](auto const& s) { return s.selected; });
+      imgui_cxx::draw_grid(count, COL_WIDTH, draw_button, moon_ti);
     };
     auto constexpr flags = (0 | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize |
                             ImGuiWindowFlags_NoTitleBar);
