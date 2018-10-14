@@ -82,8 +82,15 @@ struct EngineState
   bool show_player_localspace_vectors;
   bool show_player_worldspace_vectors;
 
-  bool show_grid_lines;
-  bool show_yaxis_lines;
+  struct GridLinesInfo
+  {
+    bool      show = false;
+    glm::vec3 dimensions = VEC3{10, 1, 10};
+  };
+
+  GridLinesInfo grid_lines;
+
+  // Draw *Everything* with a wireframe drawing mode.
   bool wireframe_override;
 
   // Constructors

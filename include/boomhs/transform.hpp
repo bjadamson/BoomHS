@@ -23,6 +23,15 @@ struct Transform
   // radians.
   glm::vec3 get_rotation_radians() const;
 
+  void move(glm::vec3 const& delta)
+  {
+    translation += delta;
+  }
+  void move(float const x, float const y, float const z)
+  {
+    move(VEC3(x, y, z));
+  }
+
   void rotate_radians(float, glm::vec3 const&);
   void rotate_radians(float, math::EulerAxis);
 

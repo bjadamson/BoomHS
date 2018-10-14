@@ -35,8 +35,6 @@ EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, Frustum c
     , show_global_axis(false)
     , show_player_localspace_vectors(false)
     , show_player_worldspace_vectors(false)
-    , show_grid_lines(false)
-    , show_yaxis_lines(false)
     , wireframe_override(false)
 {
   behaviors.active = &behaviors.player_playing_behavior;

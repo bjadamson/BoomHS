@@ -4,6 +4,9 @@
 #include <opengl/shapes.hpp>
 #include <extlibs/glm.hpp>
 
+#include <array>
+#include <vector>
+
 using vertices_t = float;
 using indices_t  = unsigned int;
 
@@ -14,7 +17,7 @@ namespace boomhs
 // Arrow
 struct ArrowTemplate
 {
-  boomhs::Color const& color;
+  Color const& color;
 
   glm::vec3 start;
   glm::vec3 end;
@@ -26,6 +29,12 @@ struct LineTemplate
 {
   glm::vec3 start;
   glm::vec3 end;
+};
+
+struct GridTemplate
+{
+  glm::vec3    dimensions;
+  Color const& color;
 };
 
 class VertexFactory
@@ -44,6 +53,18 @@ public:
   using LineIndices                         = std::array<indices_t,  2>;
   static constexpr LineIndices LINE_INDICES = {{0, 1}};
   static LineVertices build(LineTemplate const&);
+
+  // Grid
+  using GridVertices                        = std::vector<vertices_t>;
+  using GridIndices                         = std::vector<indices_t>;
+
+  struct GridVerticesIndices
+  {
+    GridVertices vertices;
+    GridIndices  indices;
+  };
+
+  static GridVerticesIndices build(GridTemplate const&);
 };
 
 } // namespace boomhs

@@ -70,6 +70,9 @@ copy(common::Logger &, VertexAttribute const&, boomhs::VertexFactory::ArrowVerti
 DrawInfo
 copy(common::Logger &, VertexAttribute const&, boomhs::VertexFactory::LineVertices const&);
 
+DrawInfo
+copy(common::Logger&, VertexAttribute const&, boomhs::VertexFactory::GridVerticesIndices const&);
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Cubes
 DrawInfo
@@ -91,8 +94,7 @@ copy_rectangle_uvs(common::Logger&, VertexAttribute const&, RectangleUvVertices 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // General
-DrawInfo
-copy_grid_gpu(common::Logger&, VertexAttribute const&, GridVerticesIndices const&);
+
 
 DrawInfo
 create_modelnormals(common::Logger&, VertexAttribute const&, glm::mat4 const&, boomhs::Obj const&,

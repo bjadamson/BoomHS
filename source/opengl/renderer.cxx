@@ -533,49 +533,24 @@ draw_grid_lines(RenderState& rstate)
   auto& sps    = zs.gfx_state.sps;
   auto& sp     = sps.ref_sp("3d_pos_color");
 
-  bool const show_y = es.show_yaxis_lines;
+  auto const& grid_dimensions = es.grid_lines.dimensions;
+  auto const draw_the_terrain_grid = [&](auto const& color) {
+    Transform transform;
+    auto const model_matrix = transform.model_matrix();
 
-  glm::vec2 constexpr GRID_DIMENSIONS{20, 20};
+    auto const grid_t = GridTemplate{grid_dimensions, color};
+    auto const grid_v = VertexFactory::build(grid_t);
+    auto dinfo        = OG::copy(logger, sp.va(), grid_v);
 
-  auto const draw_the_terrain_grid = [&](glm::mat4 const& model_matrix, auto const& color) {
-    auto const grid = GridFactory::create_grid(GRID_DIMENSIONS, show_y, color);
-    auto dinfo = OG::copy_grid_gpu(logger, sp.va(), grid);
+    auto const camera_matrix = fstate.camera_matrix();
+    BIND_UNTIL_END_OF_SCOPE(logger, sp);
+    set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
 
-    sp.while_bound(logger, [&]() {
-      auto const camera_matrix = fstate.camera_matrix();
-      set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
-
-      dinfo.while_bound(logger, [&]() { draw(logger, rstate.ds, GL_LINES, sp, dinfo); });
-    });
+    BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
+    draw(logger, rstate.ds, GL_LINES, sp, dinfo);
   };
 
-
-  Transform transform;
-  draw_the_terrain_grid(transform.model_matrix(), LOC::RED);
-
-  transform.translation = glm::vec3{-GRID_DIMENSIONS.x, 0.0f, 0};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::BLUE);
-
-  transform.translation = glm::vec3{-GRID_DIMENSIONS.x, 0.0f, -GRID_DIMENSIONS.y};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::GREEN);
-
-  transform.translation = glm::vec3{-GRID_DIMENSIONS.x, 0.0f, GRID_DIMENSIONS.y};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::ORANGE);
-
-  transform.translation = glm::vec3{GRID_DIMENSIONS.x, 0.0f, 0};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::PURPLE);
-
-  transform.translation = glm::vec3{GRID_DIMENSIONS.x, 0.0f, -GRID_DIMENSIONS.y};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::BROWN);
-
-  transform.translation = glm::vec3{GRID_DIMENSIONS.x, 0.0f, GRID_DIMENSIONS.y};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::NAVY);
-
-  transform.translation = glm::vec3{-GRID_DIMENSIONS.x, 0.0f, -GRID_DIMENSIONS.y};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::YELLOW);
-
-  transform.translation = glm::vec3{GRID_DIMENSIONS.x, 0.0f, GRID_DIMENSIONS.y};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::GRAY);
+  draw_the_terrain_grid(LOC::RED);
 }
 
 void

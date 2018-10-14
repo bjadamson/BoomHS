@@ -70,10 +70,10 @@ copy_gpu_impl(common::Logger &logger, VertexAttribute const& va,
   return dinfo;
 }
 
-template <size_t N, size_t M>
+template<typename V, typename I>
 DrawInfo
 make_drawinfo(common::Logger &logger, VertexAttribute const& va,
-    std::array<float, N> const& vertex_data, std::array<GLuint, M> const& indices)
+              V const& vertex_data, I const& indices)
 {
   auto const num_indices = static_cast<GLuint>(indices.size());
   DrawInfo dinfo{vertex_data.size(), num_indices};
@@ -99,16 +99,10 @@ copy(common::Logger &logger, VertexAttribute const& va, VertexFactory::LineVerti
 }
 
 DrawInfo
-copy_grid_gpu(common::Logger &logger, VertexAttribute const& va,
-              GridVerticesIndices const& grid)
+copy(common::Logger& logger, VertexAttribute const& va,
+     VertexFactory::GridVerticesIndices const& grid)
 {
-  auto const& indices  = grid.indices;
-  auto const& vertices = grid.vertices;
-
-  auto const num_indices = static_cast<GLuint>(indices.size());
-  DrawInfo dinfo{vertices.size(), num_indices};
-  copy_synchronous(logger, va, dinfo, vertices, indices);
-  return dinfo;
+  return make_drawinfo(logger, va, grid.vertices, grid.indices);
 }
 
 DrawInfo

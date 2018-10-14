@@ -187,7 +187,7 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camer
   auto& registry = zs.registry;
   auto& ldata    = zs.level_data;
 
-  if (es.show_grid_lines) {
+  if (es.grid_lines.show) {
     render::draw_grid_lines(rstate);
   }
 

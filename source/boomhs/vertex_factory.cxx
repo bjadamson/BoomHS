@@ -100,4 +100,60 @@ VertexFactory::build(LineTemplate const& line)
       end.x,   end.y,   end.z);
 }
 
+VertexFactory::GridVerticesIndices
+VertexFactory::build(GridTemplate const& grid)
+{
+  auto const& color      = grid.color;
+  auto const& dimensions = grid.dimensions;
+
+  VertexFactory::GridVerticesIndices result;
+  auto& v = result.vertices;
+  auto& i = result.indices;
+
+  size_t count = 0u;
+  auto const add_point = [&](glm::vec3 const& pos) {
+    v.emplace_back(pos.x);
+    v.emplace_back(pos.y);
+    v.emplace_back(pos.z);
+
+    v.emplace_back(color.r());
+    v.emplace_back(color.g());
+    v.emplace_back(color.b());
+    v.emplace_back(color.a());
+
+    i.emplace_back(count++);
+  };
+
+  auto const add_line = [&add_point](glm::vec3 const& p0, glm::vec3 const& p1) {
+    add_point(p0);
+    add_point(p1);
+  };
+
+  auto const add_lines_between = [&](auto const& pos) {
+    VEC3 const P0{pos.x + 0, pos.y, pos.z + 0};
+    VEC3 const P1{pos.x + 1, pos.y, pos.z + 0};
+    VEC3 const P2{pos.x + 1, pos.y, pos.z + 1};
+    VEC3 const P3{pos.x + 0, pos.y, pos.z + 1};
+
+    add_line(P0, P1);
+    add_line(P3, P2);
+    add_line(P2, P1);
+    add_line(P3, P0);
+  };
+
+  auto const loop_over_xz_plane = [&](auto const y) {
+    FOR(x, dimensions.x) {
+      FOR(z, dimensions.z) {
+        add_lines_between(VEC3{x, y, z});
+      }
+    }
+  };
+
+  FOR(y, dimensions.y) {
+    loop_over_xz_plane(y);
+  }
+
+  return result;
+}
+
 } // namespace boomhs

@@ -235,8 +235,10 @@ draw_debugwindow(EngineState& es, ZoneState& zs)
   ImGui::Separator();
   ImGui::Checkbox("Mariolike Edges", &es.mariolike_edges);
 
-  ImGui::Checkbox("Show (x, z)-axis lines", &es.show_grid_lines);
-  ImGui::Checkbox("Show y-axis Lines ", &es.show_yaxis_lines);
+  ImGui::Separator();
+  ImGui::Text("Test GRID");
+  ImGui::Checkbox("Show", &es.grid_lines.show);
+  ImGui::InputFloat3("Dimensions", glm::value_ptr(es.grid_lines.dimensions));
 
   ImGui::Separator();
   ImGui::Checkbox("ImGui Metrics", &es.draw_imguimetrics);
