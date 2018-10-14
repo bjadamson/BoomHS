@@ -418,15 +418,12 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
   DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
 
   auto const proj_matrix = fstate.projection_matrix();
-  sp.while_bound(logger, [&]() {
-    sp.set_uniform_matrix_4fv(logger, "u_projmatrix", proj_matrix);
+  BIND_UNTIL_END_OF_SCOPE(logger, sp);
+  sp.set_uniform_matrix_4fv(logger, "u_projmatrix", proj_matrix);
 
-    glActiveTexture(GL_TEXTURE0);
-
-    dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
-
-    glActiveTexture(GL_TEXTURE0);
-  });
+  glActiveTexture(GL_TEXTURE0);
+  BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
+  draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo);
 }
 
 void
