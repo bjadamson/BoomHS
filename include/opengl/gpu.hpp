@@ -1,5 +1,7 @@
 #pragma once
 #include <boomhs/colors.hpp>
+#include <boomhs/vertex_factory.hpp>
+
 #include <opengl/draw_info.hpp>
 #include <opengl/shapes.hpp>
 
@@ -27,15 +29,48 @@ struct GridVerticesIndices;
 namespace opengl::gpu
 {
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Arrows
-DrawInfo
-copy_arrow(common::Logger&, VertexAttribute const&, ArrowVertices const&);
+namespace detail
+{
+
+template <typename VERTICES, typename INDICES>
+void
+copy_synchronous(common::Logger& logger, VertexAttribute const& va, DrawInfo &dinfo,
+                 VERTICES const& vertices, INDICES const& indices)
+{
+  auto const bind_and_copy = [&]() {
+    glBindBuffer(GL_ARRAY_BUFFER, dinfo.vbo());
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dinfo.ebo());
+
+    va.upload_vertex_format_to_glbound_vao(logger);
+
+    // copy the vertices
+    LOG_DEBUG_SPRINTF("inserting '%i' vertices into GL_BUFFER_ARRAY\n", vertices.size());
+    auto const  vertices_size = vertices.size() * sizeof(GLfloat);
+    auto const& vertices_data = vertices.data();
+    glBufferData(GL_ARRAY_BUFFER, vertices_size, vertices_data, GL_STATIC_DRAW);
+
+    // copy the vertice rendering order
+    LOG_DEBUG_SPRINTF("inserting '%i' indices into GL_ELEMENT_BUFFER_ARRAY\n", indices.size());
+    auto const  indices_size = sizeof(GLuint) * indices.size();
+    auto const& indices_data = indices.data();
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, indices_data, GL_STATIC_DRAW);
+  };
+
+  LOG_TRACE("Starting synchronous cpu -> gpu copy");
+  auto &vao = dinfo.vao();
+  vao.while_bound(logger, bind_and_copy);
+  LOG_TRACE("cpu -> gpu copy complete");
+}
+
+} // namespace detail
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Lines
 DrawInfo
 copy_line(common::Logger&, VertexAttribute const&, LineVertices const&);
+
+DrawInfo
+copy(common::Logger &, VertexAttribute const&, boomhs::VertexFactory::ArrowVertices const&);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Cubes

@@ -10,6 +10,7 @@
 #include <boomhs/level_manager.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/player.hpp>
+#include <boomhs/vertex_factory.hpp>
 
 #include <boomhs/random.hpp>
 
@@ -33,17 +34,17 @@ WorldOriginArrows
 create_axis_arrows(common::Logger &logger, VertexAttribute const& va)
 {
   auto constexpr ORIGIN = constants::ZERO;
-  ArrowCreateParams constexpr acx{LOC::RED,   ORIGIN, constants::X_UNIT_VECTOR};
-  ArrowCreateParams constexpr acy{LOC::GREEN, ORIGIN, constants::Y_UNIT_VECTOR};
-  ArrowCreateParams constexpr acz{LOC::BLUE,  ORIGIN, constants::Z_UNIT_VECTOR};
+  ArrowTemplate constexpr acx{LOC::RED,   ORIGIN, constants::X_UNIT_VECTOR};
+  ArrowTemplate constexpr acy{LOC::GREEN, ORIGIN, constants::Y_UNIT_VECTOR};
+  ArrowTemplate constexpr acz{LOC::BLUE,  ORIGIN, constants::Z_UNIT_VECTOR};
 
-  auto const avx = ArrowFactory::create_vertices(acx);
-  auto const avy = ArrowFactory::create_vertices(acy);
-  auto const avz = ArrowFactory::create_vertices(acz);
+  auto const avx = VertexFactory::build(acx);
+  auto const avy = VertexFactory::build(acy);
+  auto const avz = VertexFactory::build(acz);
 
-  auto x = OG::copy_arrow(logger, va, avx);
-  auto y = OG::copy_arrow(logger, va, avy);
-  auto z = OG::copy_arrow(logger, va, avz);
+  auto x = OG::copy(logger, va, avx);
+  auto y = OG::copy(logger, va, avy);
+  auto z = OG::copy(logger, va, avz);
   return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
 }
 

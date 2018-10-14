@@ -7,9 +7,6 @@
 namespace opengl
 {
 
-using ArrowVertices = std::array<float, 42>;
-using ArrowIndices  = std::array<GLuint, 6>;
-
 using LineVertices = std::array<float, 6>;
 using LineIndices  = std::array<float, 2>;
 

@@ -366,17 +366,18 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
   auto& sps = zs.gfx_state.sps;
   auto& sp  = sps.ref_sp("3d_pos_color");
 
-  auto const acp = ArrowCreateParams{color, start, head};
-  auto const arrow_v = ArrowFactory::create_vertices(acp);
-  auto        dinfo = OG::copy_arrow(logger, sp.va(), arrow_v);
+  auto const acp     = ArrowTemplate{color, start, head};
+  auto const arrow_v = VertexFactory::build(acp);
+  auto        dinfo  = OG::copy(logger, sp.va(), arrow_v);
 
   Transform transform;
-  sp.while_bound(logger, [&]() {
-    auto const camera_matrix = fstate.camera_matrix();
-    set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
+  BIND_UNTIL_END_OF_SCOPE(logger, sp);
 
-    dinfo.while_bound(logger, [&]() { draw(logger, rstate.ds, GL_LINES, sp, dinfo); });
-  });
+  auto const camera_matrix = fstate.camera_matrix();
+  set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
+
+  BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
+  draw(logger, rstate.ds, GL_LINES, sp, dinfo);
 }
 
 void

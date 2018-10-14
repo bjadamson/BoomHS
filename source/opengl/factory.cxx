@@ -10,83 +10,8 @@ using namespace boomhs;
 using namespace opengl;
 using namespace opengl::factories;
 
-namespace
-{
-
-struct ArrowEndpoints
-{
-  glm::vec3 p1;
-  glm::vec3 p2;
-};
-
-auto
-calculate_arrow_endpoints(ArrowCreateParams const& params)
-{
-  auto const adjust_if_zero = [=](glm::vec3 const& v) {
-    auto constexpr EPSILON = std::numeric_limits<float>::epsilon();
-    auto constexpr EPSILON_VEC = glm::vec3{EPSILON, EPSILON, EPSILON};
-    bool const is_zero = glm::all(glm::epsilonEqual(v, math::constants::ZERO, EPSILON));
-    return is_zero ? EPSILON_VEC : v;
-  };
-
-  // Normalizing a zero vector is undefined. Therefore if the user passes us a zero vector, since
-  // we are creating an arrow, pretend the point is EPSILON away from the true origin (so
-  // normalizing the crossproduct doesn't yield vector's with NaN for their components).
-  auto const A = adjust_if_zero(params.start);
-  auto const B = adjust_if_zero(params.end);
-
-  glm::vec3 const v = A - B;
-  glm::vec3 const rev = -v;
-
-  glm::vec3 const cross1 = glm::normalize(glm::cross(A, B));
-  glm::vec3 const cross2 = glm::normalize(glm::cross(B, A));
-
-  glm::vec3 const vp1 = glm::normalize(rev + cross1);
-  glm::vec3 const vp2 = glm::normalize(rev + cross2) ;
-
-  float const factor = params.tip_length_factor;
-  glm::vec3 const p1 = B - (vp1 / factor);
-  glm::vec3 const p2 = B - (vp2 / factor);
-
-  return ArrowEndpoints{p1, p2};
-}
-
-} // ns anon
-
 namespace opengl
 {
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Arrow
-ArrowVertices
-ArrowFactory::create_vertices(ArrowCreateParams const& params)
-{
-  auto endpoints = calculate_arrow_endpoints(params);
-  auto const& p1 = endpoints.p1, p2 = endpoints.p2;
-#define COLOR params.color.r(), params.color.g(), params.color.b(), params.color.a()
-#define START params.start.x, params.start.y, params.start.z
-#define END params.end.x, params.end.y, params.end.z
-#define P1 p1.x, p1.y, p1.z
-#define P2 p2.x, p2.y, p2.z
-  return common::make_array<float>(
-      // START -> END
-      START, COLOR,
-      END, COLOR,
-
-      // END -> P1
-      END, COLOR,
-      P1, COLOR,
-
-      // END -> P2
-      END, COLOR,
-      P2, COLOR
-      );
-#undef COLOR
-#undef START
-#undef END
-#undef P1
-#undef P2
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Line

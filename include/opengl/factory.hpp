@@ -1,6 +1,7 @@
 #pragma once
 #include <boomhs/colors.hpp>
 #include <boomhs/math.hpp>
+
 #include <opengl/draw_info.hpp>
 #include <opengl/shapes.hpp>
 
@@ -15,26 +16,6 @@ struct Obj;
 
 namespace opengl
 {
-class ShaderProgram;
-
-struct ArrowCreateParams
-{
-  boomhs::Color const& color;
-
-  glm::vec3 start;
-  glm::vec3 end;
-
-  float const tip_length_factor = 4.0f;
-};
-
-struct ArrowFactory
-{
-  ArrowFactory() = delete;
-
-  static ArrowVertices create_vertices(ArrowCreateParams const&);
-
-  static constexpr std::array<GLuint, 6> INDICES = {{0, 1, 2, 3, 4, 5}};
-};
 
 struct LineCreateParams
 {
