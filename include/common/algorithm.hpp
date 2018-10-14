@@ -84,7 +84,21 @@ combine_vectors(std::vector<T>&& a, std::vector<T>&& b)
 
   dest.insert(dest.end(), a.cbegin(), a.cend());
   dest.insert(dest.end(), b.cbegin(), b.cend());
-  return MOVE(dest);
+  return dest;
+}
+
+template <typename T, size_t N>
+auto
+vec_from_array(std::array<T, N> const& array)
+{
+  return std::vector<T>{array.cbegin(), array.cend()};
+}
+
+template <typename T, size_t N>
+auto
+vec_from_array(std::array<T, N> &&array)
+{
+  return std::vector<T>{array.cbegin(), array.cend()};
 }
 
 // Combines tuples/arrays at compile time into a user defined type.

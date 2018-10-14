@@ -1,9 +1,11 @@
 #include <opengl/factory.hpp>
-#include <boomhs/viewport.hpp>
 
 #include <common/algorithm.hpp>
-#include <boomhs/math.hpp>
 #include <common/type_macros.hpp>
+
+#include <boomhs/math.hpp>
+#include <boomhs/viewport.hpp>
+
 #include <array>
 
 using namespace boomhs;
@@ -38,8 +40,6 @@ make_line_rectangle(RectFloat const& r)
 #undef P3
 }
 
-
-
 RectBuffer
 make_rectangle(RectBuilder const& builder)
 {
@@ -49,11 +49,11 @@ make_rectangle(RectBuilder const& builder)
   auto const& line_o   = builder.line;
 
   if (line_o) {
-    auto lr = make_line_rectangle(builder.rect);
+    auto const lr     = make_line_rectangle(builder.rect);
+    VerticesArray vertices{lr.cbegin(), lr.cend()};
 
-    RectBuffer buffer;
-    std::copy(lr.cbegin(), lr.cend(), buffer.begin());
-    return buffer;
+    auto constexpr li = VertexFactory::RECTANGLE_LINE_INDICES;
+    return RectBuffer{MOVE(vertices), common::vec_from_array(li)};
   }
 
   std::vector<float> vertices;
@@ -102,15 +102,11 @@ make_rectangle(RectBuilder const& builder)
   add_point(p3, 3);
   add_point(p0, 0);
 
-  return RectBuffer{MOVE(vertices)};
+  auto constexpr li = VertexFactory::RECTANGLE_DEFAULT_INDICES;
+  return RectBuffer{MOVE(vertices), common::vec_from_array(li)};
 }
 
 } // namespace
-
-namespace opengl
-{
-
-} // namespace opengl
 
 namespace opengl::factories
 {

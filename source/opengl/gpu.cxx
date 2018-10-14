@@ -140,7 +140,8 @@ DrawInfo
 copy_rectangle(common::Logger &logger, VertexAttribute const& va, RectBuffer const& buffer)
 {
   auto const& v = buffer.vertices;
-  return copy_gpu_impl(logger, va, v, VertexFactory::RECTANGLE_DEFAULT_INDICES);
+  auto const& i = buffer.indices;
+  return copy_gpu_impl(logger, va, v, i);
 }
 
 DrawInfo
@@ -151,9 +152,10 @@ copy_rectangle(common::Logger &logger, VertexAttribute const& va, RectLineBuffer
 }
 
 DrawInfo
-copy_rectangle_uvs(common::Logger &logger, VertexAttribute const& va,
+copy_rectangle(common::Logger &logger, VertexAttribute const& va,
                    RectangleUvVertices const& vertices)
 {
+  // TODO: this is strange.
   auto const& i = VertexFactory::RECTANGLE_DEFAULT_INDICES;
 
   DrawInfo dinfo{vertices.size(), i.size()};

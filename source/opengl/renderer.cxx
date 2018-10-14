@@ -416,7 +416,7 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
   auto const uv   = UvFactory::build_rectangle(ti.uv_max);
   auto const vuvs = vertex_interleave(v, uv);
 
-  DrawInfo   dinfo       = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
+  DrawInfo   dinfo       = OG::copy_rectangle(logger, sp.va(), vuvs);
   auto const proj_matrix = fstate.projection_matrix();
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
   sp.set_uniform_matrix_4fv(logger, "u_projmatrix", proj_matrix);
@@ -474,7 +474,7 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
     auto const      v = VertexFactory::build_default();
     auto const uv = UvFactory::build_rectangle(ti.uv_max);
     auto const vuvs  = vertex_interleave(v, uv);
-    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
+    DrawInfo dinfo = OG::copy_rectangle(logger, sp.va(), vuvs);
 
     dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
   };

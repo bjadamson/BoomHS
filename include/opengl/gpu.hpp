@@ -87,10 +87,10 @@ DrawInfo
 copy_rectangle(common::Logger&, VertexAttribute const&, boomhs::RectBuffer const&);
 
 DrawInfo
-copy_rectangle(common::Logger &, VertexAttribute const&, boomhs::RectLineBuffer const&);
+copy_rectangle(common::Logger&, VertexAttribute const&, boomhs::RectLineBuffer const&);
 
 DrawInfo
-copy_rectangle_uvs(common::Logger&, VertexAttribute const&, boomhs::RectangleUvVertices const&);
+copy_rectangle(common::Logger&, VertexAttribute const&, boomhs::RectangleUvVertices const&);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // General

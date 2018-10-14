@@ -77,7 +77,7 @@ SunshaftRenderer::render(RenderState& rstate, DrawState& ds, LevelManager& lm, C
   auto const uv   = UvFactory::build_rectangle(ti.uv_max);
   auto const vuvs = vertex_interleave(v, uv);
 
-  DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp_->va(), vuvs);
+  DrawInfo dinfo = gpu::copy_rectangle(logger, sp_->va(), vuvs);
 
   glm::vec2 const pos{0.00f, 0.00f};
   glm::vec2 const scale{1.00f, 1.00f};

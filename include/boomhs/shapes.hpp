@@ -19,11 +19,13 @@ using RectangleUvVertices  = std::array<vertices_t, 30>;
 using RectangleIndices     = std::array<indices_t, 6>;
 using RectangleLineIndices = std::array<indices_t, 4>;
 
-using VerticsArray = std::vector<vertices_t>;
+using VerticesArray = std::vector<vertices_t>;
+using IndicesArray  = std::vector<indices_t>;
 
 struct RectBuffer
 {
-  VerticsArray vertices;
+  VerticesArray vertices;
+  IndicesArray  indices;
 
   DEFINE_VECTOR_LIKE_WRAPPER_FNS(vertices);
 };
