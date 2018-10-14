@@ -10,53 +10,35 @@ using namespace boomhs;
 using namespace opengl;
 using namespace opengl::factories;
 
-namespace opengl
+namespace
 {
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Rectangle
-
-RectangleUvVertices
-RectangleFactory::from_vertices_and_uvs(VertexFactory::RectangleVertices const& v, UvFactory::RectangleUvs const& uv)
+RectLineBuffer
+make_line_rectangle(RectFloat const& r)
 {
-  return common::concat(
-    v.zero(), uv.zero(),
-    v.one(),  uv.one(),
-    v.two(),  uv.two(),
+  static constexpr float Z = 0.0f;
 
-    v.three(), uv.two(),
-    v.four(),  uv.three(),
-    v.five(),  uv.zero()
-  );
+  auto const p0 = VEC3{r.left, r.bottom, Z};
+  auto const p1 = VEC3{r.right, r.bottom, Z};
+
+  auto const p2 = VEC3{r.right, r.top, Z};
+  auto const p3 = VEC3{r.left, r.top, Z};
+
+#define P0 p0.x, p0.y, p0.z
+#define P1 p1.x, p1.y, p1.z
+#define P2 p2.x, p2.y, p2.z
+#define P3 p3.x, p3.y, p3.z
+
+  return RectLineBuffer{{
+    P0, P1, P2, P3
+  }};
+#undef P0
+#undef P1
+#undef P2
+#undef P3
 }
 
-} // namespace opengl
 
-namespace opengl::factories
-{
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Rectangles
-RectBuilder::RectBuilder(RectFloat const& r)
-    : rect(r)
-{
-}
-
-RectBuffer
-RectBuilder::build() const
-{
-  // clang-format off
-  bool const uniform_only = (uniform_color && (!color_array   && !uvs));
-  bool const color_only   = (color_array   && (!uniform_color && !uvs));
-  bool const uvs_only     = (uvs           && (!color_array   && !uniform_color));
-
-  bool const none         = !uniform_only && !color_only && !uvs;
-  bool const exactly_one  = uniform_only || color_only  || uvs_only;
-  assert(exactly_one || none);
-  // clang-format on
-
-  return make_rectangle(*this);
-}
 
 RectBuffer
 make_rectangle(RectBuilder const& builder)
@@ -64,11 +46,20 @@ make_rectangle(RectBuilder const& builder)
   auto const& color_o  = builder.uniform_color;
   auto const& colors_o = builder.color_array;
   auto const& uvs_o    = builder.uvs;
+  auto const& line_o   = builder.line;
+
+  if (line_o) {
+    auto lr = make_line_rectangle(builder.rect);
+
+    RectBuffer buffer;
+    std::copy(lr.cbegin(), lr.cend(), buffer.begin());
+    return buffer;
+  }
 
   std::vector<float> vertices;
   auto const add_point = [&](glm::vec2 const& point, int const index)
   {
-    assert(index < RectangleColorArray::NUM_VERTICES);
+    assert(index < RectBuilder::RectangleColorArray::NUM_VERTICES);
     vertices.emplace_back(point.x);
     vertices.emplace_back(point.y);
 
@@ -114,29 +105,38 @@ make_rectangle(RectBuilder const& builder)
   return RectBuffer{MOVE(vertices)};
 }
 
-RectLineBuffer
-make_line_rectangle(RectFloat const& r)
+} // namespace
+
+namespace opengl
 {
-  static constexpr float Z = 0.0f;
 
-  auto const p0 = VEC3{r.left, r.bottom, Z};
-  auto const p1 = VEC3{r.right, r.bottom, Z};
+} // namespace opengl
 
-  auto const p2 = VEC3{r.right, r.top, Z};
-  auto const p3 = VEC3{r.left, r.top, Z};
+namespace opengl::factories
+{
 
-#define P0 p0.x, p0.y, p0.z
-#define P1 p1.x, p1.y, p1.z
-#define P2 p2.x, p2.y, p2.z
-#define P3 p3.x, p3.y, p3.z
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Rectangles
+RectBuilder::RectBuilder(RectFloat const& r)
+    : rect(r)
+{
+}
 
-  return RectLineBuffer{{
-    P0, P1, P2, P3
-  }};
-#undef P0
-#undef P1
-#undef P2
-#undef P3
+RectBuffer
+RectBuilder::build() const
+{
+  // clang-format off
+  bool const uniform_only = (uniform_color && (!color_array   && !uvs           && !line));
+  bool const color_only   = (color_array   && (!uniform_color && !uvs           && !line));
+  bool const uvs_only     = (uvs           && (!color_array   && !uniform_color && !line));
+  bool const line_only    = (line          && (!color_array   && !uniform_color && !uvs));
+
+  bool const none         = !uniform_only && !color_only && !uvs    && !line_only;
+  bool const exactly_one  = uniform_only || color_only  || uvs_only || line_only;
+  assert(exactly_one || none);
+  // clang-format on
+
+  return make_rectangle(*this);
 }
 
 } // ns factories::factories

@@ -70,8 +70,8 @@ public:
   class RectangleVertices
   {
   public:
-    using VerticesArray = std::array<float, 18>;
-    using PointArray    = std::array<float, 3>;
+    using VerticesArray = std::array<vertices_t, 18>;
+    using PointArray    = std::array<vertices_t, 3>;
 
   private:
     VerticesArray varray_;
@@ -92,7 +92,7 @@ public:
 
     auto const& array() const { return varray_; }
   };
-  static RectangleVertices build(float, float, float, float);
+  static RectangleVertices build(vertices_t, vertices_t, vertices_t, vertices_t);
   static RectangleVertices build_default();
 
   static constexpr RectangleIndices RECTANGLE_DEFAULT_INDICES = {{
@@ -155,7 +155,7 @@ public:
   class RectangleUvs
   {
   public:
-    using PointArray    = std::array<float, 2>;
+    using PointArray    = std::array<vertices_t, 2>;
     using VerticesArray = std::array<PointArray, 4>;
 
   private:

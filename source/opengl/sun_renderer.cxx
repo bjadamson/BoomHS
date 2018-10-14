@@ -6,6 +6,7 @@
 
 #include <boomhs/engine.hpp>
 #include <boomhs/frame_time.hpp>
+#include <boomhs/vertex_interleave.hpp>
 #include <boomhs/viewport.hpp>
 #include <boomhs/zone_state.hpp>
 
@@ -74,7 +75,7 @@ SunshaftRenderer::render(RenderState& rstate, DrawState& ds, LevelManager& lm, C
   auto&    ti    = texture_info();
   auto const v    = VertexFactory::build_default();
   auto const uv   = UvFactory::build_rectangle(ti.uv_max);
-  auto const vuvs = RectangleFactory::from_vertices_and_uvs(v, uv);
+  auto const vuvs = vertex_interleave(v, uv);
 
   DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp_->va(), vuvs);
 

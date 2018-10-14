@@ -35,6 +35,7 @@
 #include <boomhs/tree.hpp>
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_ingame.hpp>
+#include <boomhs/vertex_interleave.hpp>
 #include <boomhs/water.hpp>
 
 
@@ -430,7 +431,7 @@ copy_assets_gpu(common::Logger& logger, ShaderPrograms& sps,
 
         auto const v        = VertexFactory::build_default();
         auto const uv       = UvFactory::build_rectangle(ti->uv_max);
-        auto const vertices = RectangleFactory::from_vertices_and_uvs(v, uv);
+        auto const vertices = vertex_interleave(v, uv);
         auto handle = opengl::gpu::copy_rectangle_uvs(logger, va, vertices);
         dhm.add_entity(entity, MOVE(handle));
       });

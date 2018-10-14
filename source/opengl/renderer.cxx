@@ -10,6 +10,7 @@
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/terrain.hpp>
+#include <boomhs/vertex_interleave.hpp>
 #include <boomhs/viewport.hpp>
 #include <boomhs/zone_state.hpp>
 
@@ -413,7 +414,7 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
 
   auto const v    = VertexFactory::build(pos.x, pos.y, size.x, size.y);
   auto const uv   = UvFactory::build_rectangle(ti.uv_max);
-  auto const vuvs = RectangleFactory::from_vertices_and_uvs(v, uv);
+  auto const vuvs = vertex_interleave(v, uv);
 
   DrawInfo   dinfo       = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
   auto const proj_matrix = fstate.projection_matrix();
@@ -472,7 +473,7 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
 
     auto const      v = VertexFactory::build_default();
     auto const uv = UvFactory::build_rectangle(ti.uv_max);
-    auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
+    auto const vuvs  = vertex_interleave(v, uv);
     DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
 
     dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });

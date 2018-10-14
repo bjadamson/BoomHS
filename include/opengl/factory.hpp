@@ -15,38 +15,27 @@ namespace boomhs
 struct Obj;
 } // namespace boomhs
 
-namespace opengl
-{
-
-struct RectangleFactory
-{
-  RectangleFactory() = delete;
-
-  static boomhs::RectangleUvVertices from_vertices_and_uvs(boomhs::VertexFactory::RectangleVertices const&,
-                                                   boomhs::UvFactory::RectangleUvs const&);
-};
-
-} // namespace opengl
-
 namespace opengl::factories
 {
 
 // Rectangles
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-class RectangleColorArray
-{
-public:
-  static constexpr int NUM_VERTICES = 4;
-
-private:
-  boomhs::ColorArray<NUM_VERTICES> data_;
-
-public:
-  DEFINE_ARRAY_LIKE_WRAPPER_FNS(data_);
-};
-
 struct RectBuilder
 {
+  class RectangleColorArray
+  {
+  public:
+    static constexpr int NUM_VERTICES = 4;
+
+  private:
+    boomhs::ColorArray<NUM_VERTICES> data_;
+
+  public:
+    DEFINE_ARRAY_LIKE_WRAPPER_FNS(data_);
+  };
+
+  //
+  // FIELDS
   boomhs::RectFloat                  rect;
 
   // use one of the following rectangle types.
@@ -55,17 +44,14 @@ struct RectBuilder
 
   std::optional<boomhs::UvFactory::RectangleUvs> uvs;
 
+  struct LineRectangleMarker {};
+  std::optional<LineRectangleMarker>             line;
+
   RectBuilder(boomhs::RectFloat const&);
 
   boomhs::RectBuffer
   build() const;
 };
-
-boomhs::RectBuffer
-make_rectangle(RectBuilder const&);
-
-boomhs::RectLineBuffer
-make_line_rectangle(boomhs::RectFloat const&);
 
 } // namespace opengl::factories
 

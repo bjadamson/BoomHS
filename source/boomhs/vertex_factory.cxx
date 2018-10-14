@@ -66,7 +66,7 @@ VertexFactory::build(ArrowTemplate const& arrow)
 
 #define P1 p1.x, p1.y, p1.z
 #define P2 p2.x, p2.y, p2.z
-  return common::make_array<float>(
+  return common::make_array<vertices_t>(
       // START -> END
       START, COLOR,
       END, COLOR,
@@ -95,7 +95,7 @@ VertexFactory::build(LineTemplate const& line)
   auto const& start = line.start;
   auto const& end   = line.end;
 
-  return common::make_array<float>(
+  return common::make_array<vertices_t>(
       start.x, start.y, start.z,
       end.x,   end.y,   end.z);
 }
@@ -162,7 +162,7 @@ VertexFactory::build(GridTemplate const& grid)
 // Rectangle
 VertexFactory::RectangleVertices::RectangleVertices()
 {
-  common::memzero(varray_.data(), sizeof(float) * varray_.size());
+  common::memzero(varray_.data(), sizeof(vertices_t) * varray_.size());
 }
 
 VertexFactory::RectangleVertices::RectangleVertices(VerticesArray const& va)
@@ -179,46 +179,47 @@ VertexFactory::RectangleVertices::PointArray
 VertexFactory::RectangleVertices::zero() const
 {
   auto const& v = varray_;
-  return common::make_array<float>(v[0], v[1], v[2]);
+  return common::make_array<vertices_t>(v[0], v[1], v[2]);
 }
 
 VertexFactory::RectangleVertices::PointArray
 VertexFactory::RectangleVertices::one() const
 {
   auto const& v = varray_;
-  return common::make_array<float>(v[3], v[4], v[5]);
+  return common::make_array<vertices_t>(v[3], v[4], v[5]);
 }
 
 VertexFactory::RectangleVertices::PointArray
 VertexFactory::RectangleVertices::two() const
 {
   auto const& v = varray_;
-  return common::make_array<float>(v[6], v[7], v[8]);
+  return common::make_array<vertices_t>(v[6], v[7], v[8]);
 }
 
 VertexFactory::RectangleVertices::PointArray
 VertexFactory::RectangleVertices::three() const
 {
   auto const& v = varray_;
-  return common::make_array<float>(v[9], v[10], v[11]);
+  return common::make_array<vertices_t>(v[9], v[10], v[11]);
 }
 
 VertexFactory::RectangleVertices::PointArray
 VertexFactory::RectangleVertices::four() const
 {
   auto const& v = varray_;
-  return common::make_array<float>(v[12], v[13], v[14]);
+  return common::make_array<vertices_t>(v[12], v[13], v[14]);
 }
 
 VertexFactory::RectangleVertices::PointArray
 VertexFactory::RectangleVertices::five() const
 {
   auto const& v = varray_;
-  return common::make_array<float>(v[15], v[16], v[17]);
+  return common::make_array<vertices_t>(v[15], v[16], v[17]);
 }
 
 VertexFactory::RectangleVertices
-VertexFactory::build(float left, float top, float w, float h)
+VertexFactory::build(vertices_t const left, vertices_t const top, vertices_t const w,
+                     vertices_t const h)
 {
   auto const x0 = left;
   auto const y0 = top;

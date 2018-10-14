@@ -542,8 +542,9 @@ draw_cursor_under_mouse(common::Logger& logger, ScreenSize const& ss, RectInt co
                         ShaderProgram& sp, RectFloat const& rect, CameraORTHO const& cam_ortho,
                         DrawState& ds)
 {
-  auto const rbuffer = OF::make_line_rectangle(rect);
-  auto di            = OG::copy_rectangle(logger, sp.va(), rbuffer);
+  auto builder = OF::RectBuilder{rect};
+  builder.line = {};
+  auto di      = OG::copy_rectangle(logger, sp.va(), builder.build());
   draw_rectangle_pm(logger, ss, viewport, cam_ortho, sp, di, LOC::LIME_GREEN, GL_LINE_LOOP, ds);
 }
 
