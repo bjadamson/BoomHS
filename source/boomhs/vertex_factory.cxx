@@ -100,6 +100,8 @@ VertexFactory::build(LineTemplate const& line)
       end.x,   end.y,   end.z);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Grid
 VertexFactory::GridVerticesIndices
 VertexFactory::build(GridTemplate const& grid)
 {
@@ -154,6 +156,109 @@ VertexFactory::build(GridTemplate const& grid)
   }
 
   return result;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Rectangle
+VertexFactory::RectangleVertices::RectangleVertices()
+{
+  common::memzero(varray_.data(), sizeof(float) * varray_.size());
+}
+
+VertexFactory::RectangleVertices::RectangleVertices(VerticesArray const& va)
+  : varray_(va)
+{
+}
+
+VertexFactory::RectangleVertices::RectangleVertices(VerticesArray &&va)
+  : varray_(MOVE(va))
+{
+}
+
+VertexFactory::RectangleVertices::PointArray
+VertexFactory::RectangleVertices::zero() const
+{
+  auto const& v = varray_;
+  return common::make_array<float>(v[0], v[1], v[2]);
+}
+
+VertexFactory::RectangleVertices::PointArray
+VertexFactory::RectangleVertices::one() const
+{
+  auto const& v = varray_;
+  return common::make_array<float>(v[3], v[4], v[5]);
+}
+
+VertexFactory::RectangleVertices::PointArray
+VertexFactory::RectangleVertices::two() const
+{
+  auto const& v = varray_;
+  return common::make_array<float>(v[6], v[7], v[8]);
+}
+
+VertexFactory::RectangleVertices::PointArray
+VertexFactory::RectangleVertices::three() const
+{
+  auto const& v = varray_;
+  return common::make_array<float>(v[9], v[10], v[11]);
+}
+
+VertexFactory::RectangleVertices::PointArray
+VertexFactory::RectangleVertices::four() const
+{
+  auto const& v = varray_;
+  return common::make_array<float>(v[12], v[13], v[14]);
+}
+
+VertexFactory::RectangleVertices::PointArray
+VertexFactory::RectangleVertices::five() const
+{
+  auto const& v = varray_;
+  return common::make_array<float>(v[15], v[16], v[17]);
+}
+
+VertexFactory::RectangleVertices
+VertexFactory::build(float left, float top, float w, float h)
+{
+  auto const x0 = left;
+  auto const y0 = top;
+
+  auto const x1 = x0 + w;
+  auto const y1 = y0 - h;
+
+  auto constexpr Z = -0.01f;
+#define zero  x0, y0, Z
+#define one   x1, y0, Z
+#define two   x1, y1, Z
+#define three x0, y1, Z
+  return common::make_array<float>(
+      zero, one, two,
+      two, three, zero
+      );
+#undef zero
+#undef one
+#undef two
+#undef three
+}
+
+
+VertexFactory::RectangleVertices
+VertexFactory::build_default()
+{
+  float constexpr Z = 0.0f;
+#define zero  -1.0f, -1.0f, Z
+#define one    1.0f, -1.0f, Z
+#define two    1.0f,  1.0f, Z
+#define three -1.0f,  1.0f, Z
+  return common::make_array<float>(
+      zero, one, two,
+      two, three, zero
+      );
+#undef zero
+#undef one
+#undef two
+#undef three
 }
 
 } // namespace boomhs

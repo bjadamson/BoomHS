@@ -72,9 +72,9 @@ SunshaftRenderer::render(RenderState& rstate, DrawState& ds, LevelManager& lm, C
   auto const& directional_light = global_light.directional;
 
   auto&    ti    = texture_info();
-  auto const v = OF::rectangle_vertices_default();
-  auto const uv = OF::rectangle_uvs(ti.uv_max);
-  auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
+  auto const v    = VertexFactory::build_default();
+  auto const uv   = OF::rectangle_uvs(ti.uv_max);
+  auto const vuvs = RectangleFactory::from_vertices_and_uvs(v, uv);
 
   DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp_->va(), vuvs);
 

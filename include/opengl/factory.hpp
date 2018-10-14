@@ -1,6 +1,7 @@
 #pragma once
 #include <boomhs/colors.hpp>
 #include <boomhs/math.hpp>
+#include <boomhs/vertex_factory.hpp>
 
 #include <opengl/draw_info.hpp>
 #include <opengl/shapes.hpp>
@@ -21,7 +22,8 @@ struct RectangleFactory
 {
   RectangleFactory() = delete;
 
-  static RectangleUvVertices from_vertices_and_uvs(RectangleVertices const&, RectangleUvs const&);
+  static RectangleUvVertices from_vertices_and_uvs(boomhs::VertexFactory::RectangleVertices const&,
+                                                   RectangleUvs const&);
 };
 
 } // namespace opengl
@@ -110,12 +112,6 @@ make_line_rectangle(boomhs::RectFloat const&);
 static constexpr RectangleIndices RECTANGLE_INDICES = {{
   0, 1, 2, 3, 4, 5
 }};
-
-RectangleVertices
-rectangle_vertices(float, float, float, float);
-
-RectangleVertices
-rectangle_vertices_default();
 
 RectangleUvs
 rectangle_uvs(float);

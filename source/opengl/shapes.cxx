@@ -5,65 +5,7 @@ namespace opengl
 {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Rectangles
-RectangleVertices::RectangleVertices()
-{
-  common::memzero(varray_.data(), sizeof(float) * varray_.size());
-}
-
-RectangleVertices::RectangleVertices(VerticesArray const& va)
-  : varray_(va)
-{
-}
-
-RectangleVertices::RectangleVertices(VerticesArray &&va)
-  : varray_(MOVE(va))
-{
-}
-
-RectangleVertices::PointArray
-RectangleVertices::zero() const
-{
-  auto const& v = varray_;
-  return common::make_array<float>(v[0], v[1], v[2]);
-}
-
-RectangleVertices::PointArray
-RectangleVertices::one() const
-{
-  auto const& v = varray_;
-  return common::make_array<float>(v[3], v[4], v[5]);
-}
-
-RectangleVertices::PointArray
-RectangleVertices::two() const
-{
-  auto const& v = varray_;
-  return common::make_array<float>(v[6], v[7], v[8]);
-}
-
-RectangleVertices::PointArray
-RectangleVertices::three() const
-{
-  auto const& v = varray_;
-  return common::make_array<float>(v[9], v[10], v[11]);
-}
-
-RectangleVertices::PointArray
-RectangleVertices::four() const
-{
-  auto const& v = varray_;
-  return common::make_array<float>(v[12], v[13], v[14]);
-}
-
-RectangleVertices::PointArray
-RectangleVertices::five() const
-{
-  auto const& v = varray_;
-  return common::make_array<float>(v[15], v[16], v[17]);
-}
-
-////////////////////////
+// RectangleUvs
 RectangleUvs::RectangleUvs()
 {
   common::memzero(varray_.data(), sizeof(float) * varray_.size());

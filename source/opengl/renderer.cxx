@@ -411,7 +411,7 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
   auto& es     = fstate.es;
   auto& logger = es.logger;
 
-  auto const v     = OF::rectangle_vertices(pos.x, pos.y, size.x, size.y);
+  auto const v     = VertexFactory::build(pos.x, pos.y, size.x, size.y);
   auto const uv = OF::rectangle_uvs(ti.uv_max);
   auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
 
@@ -474,7 +474,7 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
     assert(texture_o);
     auto& ti = *texture_o;
 
-    auto const      v = OF::rectangle_vertices_default();
+    auto const      v = VertexFactory::build_default();
     auto const uv = OF::rectangle_uvs(ti.uv_max);
     auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
     DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);

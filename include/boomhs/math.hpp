@@ -143,18 +143,18 @@ class RectFloat : public RectT<float, glm::vec2>
 public:
 
   // ctor
-  explicit constexpr RectFloat(float const l, float const t, float const r, float const b)
+  constexpr RectFloat(float const l, float const t, float const r, float const b)
       : RectT{l, t, r, b}
   {
   }
 
-  explicit constexpr RectFloat(glm::vec2 const& p0, glm::vec2 const& p1)
+  constexpr RectFloat(glm::vec2 const& p0, glm::vec2 const& p1)
       : RectFloat(p0.x, p0.y, p1.x, p1.y)
   {
   }
 
   // conversion ctor
-  explicit constexpr RectFloat(int const l, int const t, int const r, int const b)
+  constexpr RectFloat(int const l, int const t, int const r, int const b)
       : RectFloat(cast(l), cast(t), cast(r), cast(b))
   {
   }
@@ -164,12 +164,12 @@ public:
 
 struct RectInt : public RectT<int, glm::ivec2>
 {
-  explicit constexpr RectInt(int const l, int const t, int const r, int const b)
+  constexpr RectInt(int const l, int const t, int const r, int const b)
       : RectT{l, t, r, b}
   {
   }
 
-  explicit constexpr RectInt(glm::ivec2 const& tl, glm::ivec2 const& br)
+  constexpr RectInt(glm::ivec2 const& tl, glm::ivec2 const& br)
       : RectInt(tl.x, tl.y, br.x, br.y)
   {
   }

@@ -27,32 +27,6 @@ struct RectLineBuffer
   RectangleLineIndices indices;
 };
 
-class RectangleVertices
-{
-public:
-  using VerticesArray = std::array<float, 18>;
-  using PointArray    = std::array<float, 3>;
-
-private:
-  VerticesArray varray_;
-
-public:
-  RectangleVertices();
-  RectangleVertices(VerticesArray const&);
-  RectangleVertices(VerticesArray&&);
-
-  auto const& operator[](size_t const i) const { return varray_[i]; }
-
-  PointArray zero() const;
-  PointArray one() const;
-  PointArray two() const;
-  PointArray three() const;
-  PointArray four() const;
-  PointArray five() const;
-
-  auto const& array() const { return varray_; }
-};
-
 class RectangleUvs
 {
 public:

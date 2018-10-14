@@ -533,8 +533,6 @@ draw_2dui(RenderState& rstate)
     auto constexpr SPACE_BENEATH = 10;
     float const bottom = view_frustum.bottom - SPACE_BENEATH;
     glm::vec2 const pos{left, bottom};
-    spp.while_bound(logger, [&]() {
-      });
     draw_icon_on_screen(spp, pos, size, icon_name);
   };
 
