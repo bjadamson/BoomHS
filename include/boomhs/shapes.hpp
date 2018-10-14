@@ -1,6 +1,5 @@
 #pragma once
 #include <array>
-#include <extlibs/glm.hpp>
 #include <vector>
 
 namespace boomhs
@@ -20,15 +19,14 @@ using RectangleLineIndices = std::array<indices_t, 4>;
 
 using VerticsArray = std::vector<vertices_t>;
 
-// TODO: consolidate?
 struct RectBuffer
 {
-  VerticsArray     vertices;
+  VerticsArray vertices;
 };
 
 struct RectLineBuffer
 {
-  VerticsArray vertices;
+  std::array<vertices_t, 12> vertices;
 };
 
 } // namespace boomhs

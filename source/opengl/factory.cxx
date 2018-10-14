@@ -117,26 +117,26 @@ make_rectangle(RectBuilder const& builder)
 RectLineBuffer
 make_line_rectangle(RectFloat const& r)
 {
-  std::vector<float> vertices;
-  auto const add_point = [&vertices](auto const& p) {
-    vertices.emplace_back(p.x);
-    vertices.emplace_back(p.y);
+  static constexpr float Z = 0.0f;
 
-    static constexpr float Z = 0.0f;
-    vertices.emplace_back(Z);
-  };
+  auto const p0 = VEC3{r.left, r.bottom, Z};
+  auto const p1 = VEC3{r.right, r.bottom, Z};
 
-  auto const p0 = glm::vec2{r.left, r.bottom};
-  auto const p1 = glm::vec2{r.right, r.bottom};
+  auto const p2 = VEC3{r.right, r.top, Z};
+  auto const p3 = VEC3{r.left, r.top, Z};
 
-  auto const p2 = glm::vec2{r.right, r.top};
-  auto const p3 = glm::vec2{r.left, r.top};
+#define P0 p0.x, p0.y, p0.z
+#define P1 p1.x, p1.y, p1.z
+#define P2 p2.x, p2.y, p2.z
+#define P3 p3.x, p3.y, p3.z
 
-  add_point(p0);
-  add_point(p1);
-  add_point(p2);
-  add_point(p3);
-  return RectLineBuffer{MOVE(vertices)};
+  return RectLineBuffer{{
+    P0, P1, P2, P3
+  }};
+#undef P0
+#undef P1
+#undef P2
+#undef P3
 }
 
 } // ns factories::factories
