@@ -162,13 +162,14 @@ auto&
 active_camera_pos()
 {
   switch (MOUSE_INFO.sector) {
-    // LEFT
-    case ScreenSector::TOP_LEFT:
-      return PERS_CAMERA_POS;
+    // PERSPECTIVE
     case ScreenSector::BOTTOM_LEFT:
       return PERS_CAMERA_POS;
 
-    // RIGHT
+
+    // ORTHO
+    case ScreenSector::TOP_LEFT:
+      return ORTHO_CAMERA_POS;
     case ScreenSector::TOP_RIGHT:
       return ORTHO_CAMERA_POS;
     case ScreenSector::BOTTOM_RIGHT:
