@@ -55,6 +55,7 @@ overlap_axis_aligned(common::Logger&, CubeTransform const&, CubeTransform const&
 //
 // The first rectangle has no rotation, but has been scaled.
 // The second rectangle has an associated transform (that may contain a rotation).
+// The Camera matrix associated with the rectangles.
 bool
 overlap(RectFloat const&, RectTransform const&, glm::mat4 const&);
 
