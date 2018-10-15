@@ -4,7 +4,6 @@
 #include <boomhs/transform.hpp>
 
 #include <common/algorithm.hpp>
-#include <iostream>
 #include <limits>
 
 using namespace boomhs;
@@ -195,8 +194,6 @@ overlap_rect(typename RectT<T, V>::RectPoints const& a, typename RectT<T, V>::Re
   static auto constexpr MIN = std::numeric_limits<float>::max();
   static auto constexpr MAX = std::numeric_limits<float>::min();
 
-  std::cerr << "a: '" << a.to_string() << "'\n";
-  std::cerr << "b: '" << b.to_string() << "'\n";
   auto const calc_minmax = [](auto const& polygon, auto const& normal) {
     float min = MIN, max = MAX;
     for (auto const& p : polygon) {
