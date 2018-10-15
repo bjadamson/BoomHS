@@ -583,10 +583,10 @@ draw_scene(common::Logger& logger, ViewportInfos const& viewports, PmDrawInfo& p
            ShaderProgram& wire_sp, glm::ivec2 const& mouse_pos,
            CubeEntities& cube_ents)
 {
-  auto const& fullscreen  = viewports.fullscreen;
+  auto const& fullscreen_vp = viewports.fullscreen;
   auto& pm_sp = pm_info.sp;
 
-  auto const screen_size = fullscreen.size();
+  auto const screen_size = fullscreen_vp.size();
   auto const screen_height = screen_size.height;
   auto const draw_lhs = [&](DrawState& ds, auto& vdi) {
     OR::set_viewport_and_scissor(vdi.viewport, screen_height);
@@ -602,15 +602,14 @@ draw_scene(common::Logger& logger, ViewportInfos const& viewports, PmDrawInfo& p
     OR::clear_screen(LOC::BLACK);
     draw_bboxes(logger, vdi.pm, vdi.vm, cube_ents, wire_sp, ds);
   };
-  auto const draw_pm = [&](auto& sp, auto& di, DrawState& ds, Color const& color) {
-    auto const& viewport = viewports.fullscreen;
-    OR::set_viewport_and_scissor(viewport, screen_height);
+  auto const draw_pm = [&](auto& sp, auto& di, auto& viewport, DrawState& ds, Color const& color) {
     draw_rectangle_pm(logger, viewport.size(), viewport.rect(), camera, sp, di, color, GL_TRIANGLES, ds);
   };
-  auto const draw_pms = [&](auto& ds) {
+  auto const draw_pms = [&](auto& ds, auto& viewport) {
+    OR::set_viewport_and_scissor(viewport, screen_height);
     for (auto& pm_rect : pm_info.rects) {
       auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
-      draw_pm(pm_sp, pm_rect.di, ds, color);
+      draw_pm(pm_sp, pm_rect.di, viewport, ds, color);
     }
   };
 
@@ -621,7 +620,7 @@ draw_scene(common::Logger& logger, ViewportInfos const& viewports, PmDrawInfo& p
   draw_lhs(ds, viewports.left_bottom);
   draw_rhs(ds, viewports.right_bottom);
 
-  draw_pms(ds);
+  draw_pms(ds, fullscreen_vp);
 }
 
 void
