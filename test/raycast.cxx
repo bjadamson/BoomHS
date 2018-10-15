@@ -372,13 +372,26 @@ struct PmRect
   {}
 };
 
-struct PmRects
+struct ViewportPmRects
 {
   std::vector<PmRect> pms;
 
-  MOVE_CONSTRUCTIBLE_ONLY(PmRects);
+  MOVE_DEFAULT(ViewportPmRects);
+  NO_COPY(ViewportPmRects);
+
   INDEX_OPERATOR_FNS(pms);
   BEGIN_END_FORWARD_FNS(pms);
+};
+
+struct PmViewports
+{
+  std::vector<ViewportPmRects> viewports;
+
+  MOVE_DEFAULT(PmViewports);
+  NO_COPY(PmViewports);
+
+  INDEX_OPERATOR_FNS(viewports);
+  BEGIN_END_FORWARD_FNS(viewports);
 };
 
 auto
@@ -463,7 +476,7 @@ draw_rectangle_under_clicked_mouse(common::Logger& logger, CameraORTHO const& ca
 void
 process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
                     CameraORTHO const& cam_ortho, ViewportInfos const& viewports,
-                    PmRects& pm_rects0, PmRects& pm_rects1, CubeEntities& cube_ents)
+                    PmViewports& pm_vps, CubeEntities& cube_ents)
 {
   auto const mouse_pos = glm::ivec2{motion.x, motion.y};
   auto const ss        = mouse_pos_to_screensector(viewports, mouse_pos);
@@ -504,18 +517,16 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
     std::abort();
   }
 
-  for (auto& pm_rect : pm_rects0) {
-    pm_rect.selected = collision::intersects(mouse_pos, pm_rect.rect);
-  }
-  for (auto& pm_rect : pm_rects1) {
-    pm_rect.selected = collision::intersects(mouse_pos, pm_rect.rect);
+  for (auto& pm_vp : pm_vps) {
+    for (auto& pm_rect : pm_vp) {
+      pm_rect.selected = collision::intersects(mouse_pos, pm_rect.rect);
+    }
   }
 }
 
 bool
 process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
-              ViewportInfos const& viewports, CubeEntities& cube_ents,
-              PmRects& pm_rects0, PmRects& pm_rects1)
+              ViewportInfos const& viewports, CubeEntities& cube_ents, PmViewports& pm_vps)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
   auto &camera_pos = active_camera_pos();
@@ -536,8 +547,7 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
     }
   }
   else if (event.type == SDL_MOUSEMOTION) {
-    process_mousemotion(logger, event.motion, cam_ortho, viewports, pm_rects0, pm_rects1,
-                        cube_ents);
+    process_mousemotion(logger, event.motion, cam_ortho, viewports, pm_vps, cube_ents);
   }
   else if (event.type == SDL_MOUSEBUTTONDOWN) {
     auto const& mouse_button = event.button;
@@ -640,9 +650,9 @@ draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
 
 struct PmDrawInfo
 {
-  PmRects&        rects;
-  ShaderProgram& sp;
-  Viewport const& viewport;
+  ViewportPmRects& rects;
+  ShaderProgram&   sp;
+  Viewport const&  viewport;
 };
 
 struct PmDrawInfos
@@ -821,7 +831,6 @@ main(int argc, char **argv)
   WorldOrientation const ORTHO_WO{ORTHO_FORWARD, ORTHO_UP};
   CameraORTHO cam_ortho{ORTHO_WO};
 
-  //auto const cr0 = RectFloat{200, 200, 400, 400};
   //auto const cr1 = RectFloat{600, 600, 800, 800};
 
   auto const make_perspective_rect = [](auto const& viewport, glm::ivec2 const& offset) {
@@ -834,54 +843,65 @@ main(int argc, char **argv)
     return RectFloat{left, top, right, bottom};
   };
 
-  auto const cr0 = make_perspective_rect(LHS_BOTTOM, IVEC2{50});
-  auto const cr1 = make_perspective_rect(RHS_BOTTOM, IVEC2{50});
-
-  auto rect_sp = make_rectangle_program(logger);
-
-  auto const& va = rect_sp.va();
-  auto di0 = make_perspective_rect_gpuhandle(logger, cr0, va);
-  auto di1 = make_perspective_rect_gpuhandle(logger, cr1, va);
-
-  auto wire_sp   = make_wireframe_program(logger);
-  RNG rng;
-  auto cube_ents = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);
-
-  auto const make_pm_rects = [](auto const& r, auto &&di) {
-    std::vector<PmRect> vector_pms;
-    vector_pms.emplace_back(PmRect{r, MOVE(di)});
-    return PmRects{MOVE(vector_pms)};
+  auto wire_sp        = make_wireframe_program(logger);
+  auto make_cube_ents = [&]() {
+    RNG rng;
+    return gen_cube_entities(logger, window_rect.size(), wire_sp, rng);
   };
 
+  auto rect_sp = make_rectangle_program(logger);
+  auto const& va = rect_sp.va();
+
+  auto const make_viewportpm_rects = [&](auto const& r) {
+    std::vector<PmRect> vector_pms;
+
+    auto di = make_perspective_rect_gpuhandle(logger, r, va);
+    vector_pms.emplace_back(PmRect{r, MOVE(di)});
+    return ViewportPmRects{MOVE(vector_pms)};
+  };
+
+  auto const make_vp = [&](auto const& cr0, auto const& cr1) {
+    auto pm0 = make_viewportpm_rects(cr0);
+    auto pm1 = make_viewportpm_rects(cr1);
+
+    std::vector<ViewportPmRects> pms;
+    pms.emplace_back(MOVE(pm0));
+    pms.emplace_back(MOVE(pm1));
+
+    return PmViewports{MOVE(pms)};
+  };
+  auto const make_pminfos = [&](auto &pm_vp) {
+    PmDrawInfo pm_info_lb{pm_vp[0], rect_sp, LHS_BOTTOM};
+    PmDrawInfo pm_info_rb{pm_vp[1], rect_sp, RHS_BOTTOM};
+
+    std::vector<PmDrawInfo> pm_infos_vec;
+    pm_infos_vec.emplace_back(MOVE(pm_info_lb));
+    pm_infos_vec.emplace_back(MOVE(pm_info_rb));
+    return PmDrawInfos{MOVE(pm_infos_vec)};
+  };
+
+  auto const cr0 = make_perspective_rect(LHS_BOTTOM, IVEC2{50});
+  auto const cr1 = make_perspective_rect(RHS_BOTTOM, IVEC2{50});
+  auto pm_vp = make_vp(cr0, cr1);
+  auto pm_infos = make_pminfos(pm_vp);
+
+  auto const pers_pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
+  auto cube_ents = make_cube_ents();
   Timer timer;
   FrameCounter fcounter;
 
   SDL_Event event;
   bool quit = false;
-
-  auto const pers_pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
-
-  auto pm0 = make_pm_rects(cr0, MOVE(di0));
-  auto pm1 = make_pm_rects(cr1, MOVE(di1));
-
-  PmDrawInfo pm_info_lb{pm0, rect_sp, LHS_BOTTOM};
-  PmDrawInfo pm_info_rb{pm1, rect_sp, RHS_BOTTOM};
-  std::vector<PmDrawInfo> pm_infos_vec;
-  pm_infos_vec.emplace_back(MOVE(pm_info_lb));
-  pm_infos_vec.emplace_back(MOVE(pm_info_rb));
-  PmDrawInfos pm_infos{MOVE(pm_infos_vec)};
-
   while (!quit) {
     auto const viewports = create_viewports(logger, cam_ortho, frustum, LHS_TOP, RHS_TOP,
                                             LHS_BOTTOM, RHS_BOTTOM, screen_vp, pers_pm);
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
-      quit = process_event(logger, event, cam_ortho, viewports, cube_ents, pm0, pm1);
+      quit = process_event(logger, event, cam_ortho, viewports, cube_ents, pm_vp);
     }
 
     auto const mouse_pos = get_mousepos();
     update(logger, cam_ortho, viewports, mouse_pos, cube_ents, ft);
-
     draw_scene(logger, viewports, pm_infos, cam_ortho, wire_sp, mouse_pos, cube_ents);
 
     // Update window with OpenGL rendering
