@@ -44,10 +44,10 @@ static auto PERS_CAMERA_POS  = CameraPosition{0, 0, 1};
 
 enum ScreenSector
 {
-  TOP_LEFT = 0,
-  TOP_RIGHT,
-  BOTTOM_LEFT,
-  BOTTOM_RIGHT,
+  LEFT_TOP = 0,
+  RIGHT_TOP,
+  LEFT_BOTTOM,
+  RIGHT_BOTTOM,
   MAX
 };
 
@@ -95,18 +95,18 @@ mouse_pos_to_screensector(ViewportInfos const& viewports, glm::ivec2 const& mous
 
   if (!mouse_on_rhs) {
     if (!mouse_on_bottom) {
-      return ScreenSector::TOP_LEFT;
+      return ScreenSector::LEFT_TOP;
     }
     else if (mouse_on_bottom) {
-      return ScreenSector::BOTTOM_LEFT;
+      return ScreenSector::LEFT_BOTTOM;
     }
   }
   else {
     if (!mouse_on_bottom) {
-      return ScreenSector::TOP_RIGHT;
+      return ScreenSector::RIGHT_TOP;
     }
     else if (mouse_on_bottom) {
-      return ScreenSector::BOTTOM_RIGHT;
+      return ScreenSector::RIGHT_BOTTOM;
     }
   }
   std::abort();
@@ -117,16 +117,16 @@ screen_sector_to_float_rect(ScreenSector const ss, ViewportInfos const& viewport
 {
   RectFloat rect{0, 0, 0, 0};
   switch (ss) {
-    case ScreenSector::TOP_LEFT:
+    case ScreenSector::LEFT_TOP:
       rect = viewports.left_top.viewport.rect_float();
       break;
-    case ScreenSector::BOTTOM_LEFT:
+    case ScreenSector::LEFT_BOTTOM:
       rect = viewports.left_bottom.viewport.rect_float();
       break;
-    case ScreenSector::TOP_RIGHT:
+    case ScreenSector::RIGHT_TOP:
       rect = viewports.right_top.viewport.rect_float();
       break;
-    case ScreenSector::BOTTOM_RIGHT:
+    case ScreenSector::RIGHT_BOTTOM:
       rect = viewports.right_top.viewport.rect_float();
       break;
     default:
@@ -140,16 +140,16 @@ screen_sector_to_vdi(ScreenSector const ss, ViewportInfos const& viewports)
 {
   ViewportDisplayInfo const* vdi = nullptr;
   switch (ss) {
-    case ScreenSector::TOP_LEFT:
+    case ScreenSector::LEFT_TOP:
       vdi = &viewports.left_top;
       break;
-    case ScreenSector::BOTTOM_LEFT:
+    case ScreenSector::LEFT_BOTTOM:
       vdi = &viewports.left_bottom;
       break;
-    case ScreenSector::TOP_RIGHT:
+    case ScreenSector::RIGHT_TOP:
       vdi = &viewports.right_top;
       break;
-    case ScreenSector::BOTTOM_RIGHT:
+    case ScreenSector::RIGHT_BOTTOM:
       vdi = &viewports.right_bottom;
       break;
     default:
@@ -163,16 +163,16 @@ active_camera_pos()
 {
   switch (MOUSE_INFO.sector) {
     // PERSPECTIVE
-    case ScreenSector::BOTTOM_LEFT:
+    case ScreenSector::LEFT_BOTTOM:
       return PERS_CAMERA_POS;
 
 
     // ORTHO
-    case ScreenSector::TOP_LEFT:
+    case ScreenSector::LEFT_TOP:
       return ORTHO_CAMERA_POS;
-    case ScreenSector::TOP_RIGHT:
+    case ScreenSector::RIGHT_TOP:
       return ORTHO_CAMERA_POS;
-    case ScreenSector::BOTTOM_RIGHT:
+    case ScreenSector::RIGHT_BOTTOM:
       return ORTHO_CAMERA_POS;
 
     default:
@@ -537,11 +537,11 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
   MOUSE_INFO.sector    = mouse_pos_to_screensector(viewports, mouse_pos);
   MOUSE_INFO.pos       = mouse_pos;
 
-  bool const lhs_top    = (ScreenSector::TOP_LEFT     == MOUSE_INFO.sector);
-  bool const lhs_bottom = (ScreenSector::BOTTOM_LEFT  == MOUSE_INFO.sector);
+  bool const lhs_top    = (ScreenSector::LEFT_TOP     == MOUSE_INFO.sector);
+  bool const lhs_bottom = (ScreenSector::LEFT_BOTTOM  == MOUSE_INFO.sector);
 
-  bool const rhs_top    = (ScreenSector::TOP_RIGHT    == MOUSE_INFO.sector);
-  bool const rhs_bottom = (ScreenSector::BOTTOM_RIGHT == MOUSE_INFO.sector);
+  bool const rhs_top    = (ScreenSector::RIGHT_TOP    == MOUSE_INFO.sector);
+  bool const rhs_bottom = (ScreenSector::RIGHT_BOTTOM == MOUSE_INFO.sector);
 
   bool const lhs    = lhs_top    || lhs_bottom;
   bool const rhs    = rhs_top    || rhs_bottom;
@@ -802,7 +802,7 @@ create_viewports(common::Logger &logger, CameraORTHO const& camera, Frustum cons
   ViewportDisplayInfo const right_top{rhs_top, pers_pm,  pers_vm};
 
   ViewportDisplayInfo const left_bottom{lhs_bottom, ortho_pm, ortho_vm};
-  ViewportDisplayInfo const right_bottom{rhs_bottom, pers_pm,  pers_vm};
+  ViewportDisplayInfo const right_bottom{rhs_bottom, ortho_pm,  ortho_vm};
 
   ViewportDisplayInfo const fullscreen{screen_viewport, pers_pm, pers_vm};
 
