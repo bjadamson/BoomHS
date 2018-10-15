@@ -365,7 +365,7 @@ SilhouetteEntityRenderer::render2d_billboard(RenderState& rstate, RNG& rng, Fram
 
   auto const draw_orbital_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp("2dsilhoutte_uv");
-    sp.while_bound(logger, [&]() { sp.set_uniform_color_3fv(logger, "u_color", LOC::WHITE); });
+    sp.while_bound(logger, [&]() { sp.set_uniform_color_rgb(logger, "u_color", LOC::WHITE); });
 
     draw_orbital_body(rstate, sp, eid, transform, is_r, bbox, FORWARD(args));
   };

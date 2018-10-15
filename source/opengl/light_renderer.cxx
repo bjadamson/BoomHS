@@ -26,8 +26,8 @@ set_dirlight(common::Logger& logger, ShaderProgram& sp, GlobalLight const& globa
   sp.set_uniform_vec3(logger, "u_dirlight.direction", directional_light.direction);
 
   auto const& light = directional_light.light;
-  sp.set_uniform_color_3fv(logger, "u_dirlight.diffuse", light.diffuse);
-  sp.set_uniform_color_3fv(logger, "u_dirlight.specular", light.specular);
+  sp.set_uniform_color_rgb(logger, "u_dirlight.diffuse", light.diffuse);
+  sp.set_uniform_color_rgb(logger, "u_dirlight.specular", light.specular);
 }
 
 void
@@ -37,8 +37,8 @@ set_pointlight(common::Logger& logger, ShaderProgram& sp, size_t const index,
   std::string const varname = "u_pointlights[" + std::to_string(index) + "]";
   auto const make_field = [&varname](char const* fieldname) { return varname + "." + fieldname; };
 
-  sp.set_uniform_color_3fv(logger, make_field("diffuse"), pointlight.light.diffuse);
-  sp.set_uniform_color_3fv(logger, make_field("specular"), pointlight.light.specular);
+  sp.set_uniform_color_rgb(logger, make_field("diffuse"), pointlight.light.diffuse);
+  sp.set_uniform_color_rgb(logger, make_field("specular"), pointlight.light.specular);
   sp.set_uniform_vec3(logger, make_field("position"), pointlight_position);
 
   auto const& attenuation       = pointlight.attenuation;
@@ -85,7 +85,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
 
   // ambient
   LOG_TRACE_SPRINTF("AMBIENT COLOR: %s", global_light.ambient.to_string());
-  sp.set_uniform_color_3fv(logger, "u_ambient.color", global_light.ambient);
+  sp.set_uniform_color_rgb(logger, "u_ambient.color", global_light.ambient);
 
   // specular
   sp.set_uniform_float1(logger, "u_reflectivity", 1.0f);
