@@ -393,7 +393,7 @@ ShaderProgram::get_uniform_location(common::Logger& logger, GLchar const* name)
 }
 
 void
-ShaderProgram::set_uniform_matrix_3fv(common::Logger& logger, GLchar const* name,
+ShaderProgram::set_uniform_mat3(common::Logger& logger, GLchar const* name,
                                       glm::mat3 const& matrix)
 {
   DEBUG_ASSERT_BOUND(*this);
@@ -412,11 +412,11 @@ ShaderProgram::set_uniform_matrix_3fv(common::Logger& logger, GLchar const* name
   LOG_DEBUG_SPRINTF("sending uniform mat3 at loc '%d' with data '%s' to GPU", loc,
                     glm::to_string(matrix));
   glUniformMatrix3fv(loc, COUNT, TRANSPOSE_MATRICES, glm::value_ptr(matrix));
-  LOG_ANY_GL_ERRORS(logger, "set_uniform_matrix_3fv");
+  LOG_ANY_GL_ERRORS(logger, "set_uniform_mat3");
 }
 
 void
-ShaderProgram::set_uniform_matrix_4fv(common::Logger& logger, GLchar const* name,
+ShaderProgram::set_uniform_mat4(common::Logger& logger, GLchar const* name,
                                       glm::mat4 const& matrix)
 {
   DEBUG_ASSERT_BOUND(*this);
@@ -435,7 +435,7 @@ ShaderProgram::set_uniform_matrix_4fv(common::Logger& logger, GLchar const* name
   LOG_DEBUG_SPRINTF("sending uniform mat4 at loc '%d' with data '%s' to GPU", loc,
                     glm::to_string(matrix));
   glUniformMatrix4fv(loc, COUNT, TRANSPOSE_MATRICES, glm::value_ptr(matrix));
-  LOG_ANY_GL_ERRORS(logger, "set_uniform_matrix_4fv");
+  LOG_ANY_GL_ERRORS(logger, "set_uniform_mat4");
 }
 
 void

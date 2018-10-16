@@ -77,7 +77,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
 
   render::set_modelmatrix(logger, model_matrix, sp);
   if (set_normalmatrix) {
-    sp.set_uniform_matrix_3fv(logger, "u_normalmatrix",
+    sp.set_uniform_mat3(logger, "u_normalmatrix",
                               glm::inverseTranspose(glm::mat3{model_matrix}));
   }
 
@@ -94,7 +94,7 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
   auto const view_matrix = fstate.view_matrix();
   {
     auto const inv_viewmatrix = glm::inverse(glm::mat3{view_matrix});
-    sp.set_uniform_matrix_4fv(logger, "u_invviewmatrix", inv_viewmatrix);
+    sp.set_uniform_mat4(logger, "u_invviewmatrix", inv_viewmatrix);
   }
 
   FOR(i, pointlights.size())

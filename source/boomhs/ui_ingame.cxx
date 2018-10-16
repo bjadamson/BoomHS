@@ -556,7 +556,7 @@ draw_inventory_overlay(RenderState& rstate)
 
   auto const pm =
       glm::ortho(f.left_float(), f.right_float(), f.bottom_float(), f.top_float(), NEAR, FAR);
-  sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
+  sp.set_uniform_mat4(logger, "u_projmatrix", pm);
 
   auto color = LOC::GRAY;
   color.set_a(0.40);

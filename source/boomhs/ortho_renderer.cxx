@@ -70,7 +70,7 @@ draw_lhs(GameState& gs, RenderState& rstate, LevelManager& lm, StaticRenderers& 
     auto const& f = es.frustum;
     auto const  pm =
         glm::ortho(f.left_float(), f.right_float(), f.bottom_float(), f.top_float(), NEAR, FAR);
-    sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
+    sp.set_uniform_mat4(logger, "u_projmatrix", pm);
 
     auto color = LOC::SANDY_BROWN;
     sp.set_uniform_color(logger, "u_color", color);

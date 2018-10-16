@@ -137,7 +137,7 @@ draw_orbital_body(RenderState& rstate, ShaderProgram& sp, EntityID const eid, Tr
   auto const proj_matrix = fstate.projection_matrix();
   auto const mvp_matrix  = proj_matrix * view_model;
   sp.while_bound(logger, [&]() {
-    sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
+    sp.set_uniform_mat4(logger, "u_mvpmatrix", mvp_matrix);
     // render::set_modelmatrix(logger, mvp_matrix, sp);
   });
 

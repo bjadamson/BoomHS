@@ -109,8 +109,8 @@ public:
 
   GLint get_uniform_location(common::Logger&, GLchar const*);
 
-  void set_uniform_matrix_3fv(common::Logger&, GLchar const*, glm::mat3 const&);
-  void set_uniform_matrix_4fv(common::Logger&, GLchar const*, glm::mat4 const&);
+  void set_uniform_mat3(common::Logger&, GLchar const*, glm::mat3 const&);
+  void set_uniform_mat4(common::Logger&, GLchar const*, glm::mat4 const&);
 
   void set_uniform_array_2fv(common::Logger&, GLchar const*, std::array<float, 2> const&);
   void set_uniform_array_3fv(common::Logger&, GLchar const*, std::array<float, 3> const&);

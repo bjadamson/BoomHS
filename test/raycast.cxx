@@ -322,7 +322,7 @@ draw_rectangle_pm(common::Logger& logger, ScreenSize const& ss, RectInt const& v
   auto const pm = camera.calc_pm(AR, f, ss, VEC2(0));
 
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
-  sp.set_uniform_matrix_4fv(logger, "u_projmatrix", pm);
+  sp.set_uniform_mat4(logger, "u_projmatrix", pm);
   sp.set_uniform_color(logger, "u_color", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
