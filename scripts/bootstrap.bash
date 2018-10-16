@@ -301,7 +301,7 @@ echo $(pwd)
 conan install --build missing                                                                      \
   -s compiler=clang                                                                                \
   -s arch=x86_64                                                                                   \
-  -s compiler.version=7.0                                                                          \
+  -s compiler.version=8.0                                                                          \
   -s compiler.libcxx=${CXX_STD_LIBRARY}                                                            \
   -s build_type=${DEBUG_OR_RELEASE} .
 
