@@ -1,42 +1,12 @@
 #!/usr/bin/env bash
 source "scripts/common.bash"
 
-# Control Begins Here !!
 full_clean
 mkdir -p ${BUILD}
 
-STATIC_ANALYSIS_FLAGS=""
-DEBUG_OR_RELEASE="Debug"
-CXX_STD_LIBRARY="libc++"
-BUILD_SYSTEM="Ninja"
-
-while getopts ":ahmr" opt; do
-  case ${opt} in
-    a )
-      export STATIC_ANALYSIS_FLAGS="-fsanitize=address"
-      ;;
-    r )
-      export DEBUG_OR_RELEASE="Release"
-      ;;
-    m )
-      export BUILD_SYSTEM="Unix Makefiles"
-      ;;
-    \h )
-      echo "Help options for bootstrapping process."
-      echo "[-a] To enable Static Analysis."
-      echo "[-m] To to to use the default 'Make' build-system."
-      echo "[-r] To switch from Debug to Release mode."
-
-      echo "[-h] See this message."
-      echo "Please run again without the -h flag."
-      echo "Quitting now."
-      exit
-      ;;
-  esac
-done
-shift $((OPTIND -1))
-
 echo "Configuring project ..."
+source "scripts/helper_load_userargs.bash"
+
 echo "DEBUG/RELEASE: $DEBUG_OR_RELEASE"
 
 printf "Static Analysis: (ON|OFF): "
@@ -331,7 +301,7 @@ echo $(pwd)
 conan install --build missing                                                                      \
   -s compiler=clang                                                                                \
   -s arch=x86_64                                                                                   \
-  -s compiler.version=6.0                                                                          \
+  -s compiler.version=7.0                                                                          \
   -s compiler.libcxx=${CXX_STD_LIBRARY}                                                            \
   -s build_type=${DEBUG_OR_RELEASE} .
 

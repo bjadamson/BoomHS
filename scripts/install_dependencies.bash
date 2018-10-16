@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -ex
 source "scripts/common.bash"
+source "scripts/helper_load_userargs.bash"
 
+# GLOBAL VARIABLES
 CWD=$(pwd)
+
 function cleanup {
   echo "Removing ./temp/"
   cd $CWD
@@ -15,7 +18,7 @@ function install_cmake() {
   cd cmake-3.4.3
   ./configure
   make
-  make install
+  sudo make install
   cd ../
 }
 
@@ -32,14 +35,19 @@ function install_clang() {
   cd ../..
   mkdir build
   cd build
-  cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ../llvm
+  cmake ../llvm -G "${BUILD_SYSTEM}"                                                                       \
+      -DCMAKE_BUILD_TYPE=${DEBUG_OR_RELEASE}                                                       \
+      -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
   make
+  sudo make install
 }
 
 # Logic starts here.
+
 mkdir temp
 cd temp
 trap cleanup EXIT
+
 
 # We need cmake
 apt-get install git wget
