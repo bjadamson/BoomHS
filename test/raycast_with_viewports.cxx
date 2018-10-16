@@ -540,7 +540,8 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
   bool const top    = lhs_top    || rhs_top;
   bool const bottom = lhs_bottom || rhs_bottom;
 
-  auto const& vi         = screen_sector_to_vi(MOUSE_INFO.sector, vp_grid);
+  // TODO: changing this to a reference causes a BUG noted in test/debug-membug.cxx
+  auto const vi         = screen_sector_to_vi(MOUSE_INFO.sector, vp_grid);
   auto const mouse_start = mouse_pos - vi.mouse_offset();
   if (lhs_top) {
     if (MOUSE_BUTTON_PRESSED) {
@@ -781,16 +782,40 @@ get_mousepos()
 
 auto
 create_viewport_grid(common::Logger &logger, CameraORTHO const& camera, Frustum const& frustum,
-              Viewport const& lhs_top, Viewport const& rhs_top,
-              Viewport const& lhs_bottom, Viewport const& rhs_bottom,
-              Viewport const& screen_viewport, glm::mat4 const& pers_pm)
+                     RectInt const& window_rect, glm::mat4 const& pers_pm)
 {
-  glm::mat4 const ortho_pm = camera.calc_pm(AR, frustum, screen_viewport.size(), VEC2(0));
+  glm::mat4 const ortho_pm = camera.calc_pm(AR, frustum, window_rect.size(), VEC2(0));
   glm::mat4 const ortho_vm = camera.calc_vm();
   ViewportDisplayInfo const ortho_vdi{ortho_pm, ortho_vm};
 
   glm::mat4 const pers_vm  = calculate_vm_fps(logger);
   ViewportDisplayInfo const pers_vdi{pers_pm, pers_vm};
+
+  int const viewport_width  = window_rect.width() / SCREENSIZE_VIEWPORT_RATIO.x;
+  int const viewport_height = window_rect.height() / SCREENSIZE_VIEWPORT_RATIO.y;
+
+  auto const lhs_top = Viewport{
+    PAIR(window_rect.left, window_rect.top),
+    viewport_width,
+    viewport_height
+  };
+  auto const rhs_top = Viewport{
+    PAIR(viewport_width, window_rect.top),
+    viewport_width,
+    viewport_height
+  };
+
+  auto const mid_height = window_rect.top + window_rect.half_height();
+  auto const lhs_bottom = Viewport{
+    PAIR(window_rect.left, mid_height),
+    viewport_width,
+    viewport_height
+  };
+  auto const rhs_bottom = Viewport{
+    PAIR(viewport_width, mid_height),
+    viewport_width,
+    viewport_height
+  };
 
   ViewportInfo const left_top    {lhs_top,    ortho_vdi};
   ViewportInfo const right_top   {rhs_top,    pers_vdi};
@@ -798,15 +823,13 @@ create_viewport_grid(common::Logger &logger, CameraORTHO const& camera, Frustum 
   ViewportInfo const left_bottom {lhs_bottom, ortho_vdi};
   ViewportInfo const right_bottom{rhs_bottom, ortho_vdi};
 
-  //ViewportInfo const fullscreen{screen_viewport, ViewportDisplayInfo{pers_pm, pers_vm}};
-
-  auto const screen_size = screen_viewport.size();
-  return ViewportGrid{screen_size, left_top, right_top, left_bottom, right_bottom/*, fullscreen*/};
+  auto const screen_size = window_rect.size();
+  return ViewportGrid{screen_size, left_top, right_top, left_bottom, right_bottom};
 }
 
 auto
 make_pminfos(common::Logger& logger, ShaderProgram& sp, RNG &rng,
-             Viewport const& lhs_bottom, Viewport const& rhs_bottom)
+             ViewportInfo const& lhs_bottom, ViewportInfo const& rhs_bottom)
 {
   auto const make_perspective_rect = [&](auto const& viewport, glm::ivec2 const& offset) {
     auto const gen = [&rng](float const val) { return rng.gen_float_range(val, val + 150); };
@@ -841,7 +864,7 @@ make_pminfos(common::Logger& logger, ShaderProgram& sp, RNG &rng,
     return PmViewports{MOVE(pms)};
   };
 
-  auto pm_vps = make_vp(lhs_bottom, rhs_bottom);
+  auto pm_vps = make_vp(lhs_bottom.viewport, rhs_bottom.viewport);
 
   std::vector<PmDrawInfo> pm_infos_vec;
   FOR(i, pm_vps.size()) {
@@ -866,38 +889,8 @@ main(int argc, char **argv)
       GlSdl::make_default(logger, "Multiple Viewport Raycast", FULLSCREEN, 1024, 768),
       on_error);
 
-  auto& window = gl_sdl.window;
-
   OR::init(logger);
   ENABLE_SCISSOR_TEST_UNTIL_SCOPE_EXIT();
-
-  auto const window_rect = window.view_rect();
-  Viewport const screen_vp{window_rect};
-  int const VIEWPORT_WIDTH  = screen_vp.width() / SCREENSIZE_VIEWPORT_RATIO.x;
-  int const VIEWPORT_HEIGHT = screen_vp.height() / SCREENSIZE_VIEWPORT_RATIO.y;
-
-  auto const LHS_TOP = Viewport{
-    PAIR(screen_vp.left(), screen_vp.top()),
-    VIEWPORT_WIDTH,
-    VIEWPORT_HEIGHT
-  };
-  auto const RHS_TOP = Viewport{
-    PAIR(VIEWPORT_WIDTH, screen_vp.top()),
-    VIEWPORT_WIDTH,
-    VIEWPORT_HEIGHT
-  };
-
-  auto const mid_height = screen_vp.top() + screen_vp.half_height();
-  auto const LHS_BOTTOM = Viewport{
-    PAIR(screen_vp.left(), mid_height),
-    VIEWPORT_WIDTH,
-    VIEWPORT_HEIGHT
-  };
-  auto const RHS_BOTTOM = Viewport{
-    PAIR(VIEWPORT_WIDTH, mid_height),
-    VIEWPORT_WIDTH,
-    VIEWPORT_HEIGHT
-  };
 
   auto const ORTHO_FORWARD = -constants::Y_UNIT_VECTOR;
   auto constexpr ORTHO_UP  =  constants::Z_UNIT_VECTOR;
@@ -908,19 +901,22 @@ main(int argc, char **argv)
 
   RNG rng;
   auto rect_sp        = make_rectangle_program(logger);
-  auto pm_infos       = make_pminfos(logger, rect_sp, rng, LHS_BOTTOM, RHS_BOTTOM);
-  auto wire_sp        = make_wireframe_program(logger);
-  auto const frustum  = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
-  auto const pers_pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
-  auto cube_ents = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);
+
+  auto& window           = gl_sdl.window;
+  auto const window_rect = window.view_rect();
+  auto const frustum     = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
+  auto const pers_pm     = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
+  auto vp_grid           = create_viewport_grid(logger, cam_ortho, frustum, window_rect, pers_pm);
+  auto pm_infos          = make_pminfos(logger, rect_sp, rng, vp_grid.left_bottom, vp_grid.right_bottom);
+  auto wire_sp           = make_wireframe_program(logger);
+  auto cube_ents         = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);
+
   Timer timer;
   FrameCounter fcounter;
-
   SDL_Event event;
   bool quit = false;
   while (!quit) {
-    auto vp_grid = create_viewport_grid(logger, cam_ortho, frustum, LHS_TOP, RHS_TOP,
-                                            LHS_BOTTOM, RHS_BOTTOM, screen_vp, pers_pm);
+    auto vp_grid = create_viewport_grid(logger, cam_ortho, frustum, window_rect, pers_pm);
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       quit = process_event(logger, event, cam_ortho, vp_grid, cube_ents, pm_infos.viewports);

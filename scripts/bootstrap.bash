@@ -256,7 +256,7 @@ set(SYSTEM_LIBS
   )
 
 ###################################################################################################
-## **1** COMPILE -- Post-Processing Application
+## COMPILE -- Post-Processing Application
 ##
 ## Application that does post-processing on the OpenGL shader code (after the main executable has
 ## been compiled). The scripts included with the project automatically execute this application on
@@ -266,9 +266,9 @@ target_include_directories(BUILD_POSTPROCESSING PUBLIC ${EXTERNAL_INCLUDE_DIRS})
 target_link_libraries(     BUILD_POSTPROCESSING stdc++ c++experimental)
 
 ###################################################################################################
-## **2** COMPILE -- Ortho Mouse Selection Test
+## COMPILE -- Raycast Testing within Multiple Viewports Mouse Selection Test
 ##
-## Test Application for developing/figuring out ortho raycasting.
+## Test Application for developing/figuring out raycasting and selection testing.
 add_executable(raycast_with_viewports ${TEST_DIRECTORY}/raycast_with_viewports.cxx)
 
 target_link_libraries(raycast_with_viewports
@@ -280,7 +280,22 @@ target_link_libraries(raycast_with_viewports
 target_include_directories(raycast_with_viewports PUBLIC)
 
 ###################################################################################################
-## **3** COMPILE -- Main Executable
+## COMPILE -- Memory BUG I want to make sure doesn't show up in future tests.
+##
+##            I'm PRETTY reasonably sure there is a bug, but not 100% sure.
+##
+add_executable(debug-membug ${TEST_DIRECTORY}/debug-membug.cxx)
+
+target_link_libraries(debug-membug
+  PROJECT_SOURCE_CODE
+  ${SYSTEM_LIBS}
+  ${EXTERNAL_LIBS}
+  )
+
+target_include_directories(debug-membug PUBLIC)
+
+###################################################################################################
+## COMPILE -- Main Executable
 add_executable(boomhs ${MAIN_SOURCE_FILE})
 
 target_link_libraries(boomhs
