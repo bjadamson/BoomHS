@@ -528,7 +528,7 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, CameraORTHO const& ca
 void
 process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
                     CameraPosition &camera_pos,
-                    CameraORTHO const& cam_ortho, ViewportGrid& vp_grid,
+                    CameraORTHO const& cam_ortho, ViewportGrid const& vp_grid,
                     PmViewports& pm_vps, CubeEntities& cube_ents)
 {
   auto const mouse_pos = glm::ivec2{motion.x, motion.y};
@@ -574,7 +574,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 
 bool
 process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
-              ViewportGrid& vp_grid, CubeEntities& cube_ents, PmViewports& pm_vps)
+              ViewportGrid const& vp_grid, CubeEntities& cube_ents, PmViewports& pm_vps)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
   auto &camera_pos = active_camera_pos();
