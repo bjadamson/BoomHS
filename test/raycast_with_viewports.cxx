@@ -70,16 +70,17 @@ struct ViewportInfo
 {
   Viewport const            viewport;
   ViewportDisplayInfo const display;
-  //bool DUMMY = false;
 
   auto mouse_offset() const { return viewport.rect().left_top(); }
 };
 
 struct ViewportGrid
 {
+  ScreenSize   screen_size;
+
   ViewportInfo left_top, right_top;
   ViewportInfo left_bottom, right_bottom;
-  ViewportInfo fullscreen;
+  //ViewportInfo fullscreen;
 
   MOVE_CONSTRUCTIBLE_ONLY(ViewportGrid);
 
@@ -120,38 +121,28 @@ mouse_pos_to_screensector(ViewportGrid const& vp_grid, glm::ivec2 const& mouse_p
   std::abort();
 }
 
-#define SCREEN_SECTOR_TO_VI_IMPL                                                                  \
-  switch (ss) {                                                                                   \
-    case ScreenSector::LEFT_TOP:                                                                  \
-      return vp_grid.left_top;                                                                    \
-    case ScreenSector::LEFT_BOTTOM:                                                               \
-      return vp_grid.left_bottom;                                                                 \
-    case ScreenSector::RIGHT_TOP:                                                                 \
-      return vp_grid.right_top;                                                                   \
-    case ScreenSector::RIGHT_BOTTOM:                                                              \
-      return vp_grid.right_bottom;                                                                \
-    default:                                                                                      \
-      std::abort();                                                                               \
-  }
-
-ViewportInfo&
-screen_sector_to_vi(ScreenSector const ss, ViewportGrid& vp_grid)
-{
-  SCREEN_SECTOR_TO_VI_IMPL
-}
-
 ViewportInfo const&
 screen_sector_to_vi(ScreenSector const ss, ViewportGrid const& vp_grid)
 {
-  SCREEN_SECTOR_TO_VI_IMPL
+  switch (ss) {
+    case ScreenSector::LEFT_TOP:
+      return vp_grid.left_top;
+    case ScreenSector::LEFT_BOTTOM:
+      return vp_grid.left_bottom;
+    case ScreenSector::RIGHT_TOP:
+      return vp_grid.right_top;
+    case ScreenSector::RIGHT_BOTTOM:
+      return vp_grid.right_bottom;
+    default:
+      break;
+  }
+  std::abort();
 }
-
-#undef SCREEN_SECTOR_TO_VI_IMPL
 
 auto
 screen_sector_to_float_rect(ScreenSector const ss, ViewportGrid const& vp_grid)
 {
-  auto& vi = screen_sector_to_vi(ss, vp_grid);
+  auto const& vi = screen_sector_to_vi(ss, vp_grid);
   return vi.viewport.rect_float();
 }
 
@@ -284,7 +275,6 @@ draw_bboxes(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm,
             DrawState& ds)
 {
   for (auto &cube_tr : cube_ents) {
-    //auto const& cube    = cube_tr.cube();
     auto const& tr      = cube_tr.transform();
     auto &dinfo         = cube_tr.draw_info();
     bool const selected = cube_tr.selected;
@@ -314,7 +304,7 @@ draw_rectangle_pm(common::Logger& logger, ScreenSize const& ss, RectInt const& v
   auto const pm = camera.calc_pm(AR, f, ss, VEC2(0));
 
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
-  sp.set_uniform_mat4(logger, "u_projmatrix", pm);
+  sp.set_uniform_mat4(logger,  "u_projmatrix", pm);
   sp.set_uniform_color(logger, "u_color", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
@@ -425,6 +415,9 @@ struct PmRect
       : rect(r)
       , di(MOVE(d))
   {}
+
+  MOVE_DEFAULT(PmRect);
+  NO_COPY(PmRect);
 };
 
 struct ViewportPmRects
@@ -474,8 +467,8 @@ cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mou
   auto const& vm        = vdi.vm;
   auto const view_rect  = vi.viewport.rect();
 
-  Ray const ray{camera_pos, Raycast::calculate_ray_into_screen(mouse_pos, pm, vm, view_rect)};
-
+  auto const dir = Raycast::calculate_ray_into_screen(mouse_pos, pm, vm, view_rect);
+  Ray const ray{camera_pos, dir};
   for (auto &cube_ent : cube_ents) {
     auto const& cube = cube_ent.cube();
     auto const& tr   = cube_ent.transform();
@@ -547,7 +540,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
   bool const top    = lhs_top    || rhs_top;
   bool const bottom = lhs_bottom || rhs_bottom;
 
-  auto const& vi = screen_sector_to_vi(MOUSE_INFO.sector, vp_grid);
+  auto const& vi         = screen_sector_to_vi(MOUSE_INFO.sector, vp_grid);
   auto const mouse_start = mouse_pos - vi.mouse_offset();
   if (lhs_top) {
     if (MOUSE_BUTTON_PRESSED) {
@@ -714,8 +707,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
            CameraORTHO const& camera, ShaderProgram& wire_sp, glm::ivec2 const& mouse_pos,
            CubeEntities& cube_ents)
 {
-  auto const& fullscreen_vp = vp_grid.fullscreen;
-  auto const screen_size    = vp_grid.fullscreen.viewport.size();
+  auto const screen_size    = vp_grid.screen_size;
   auto const screen_height  = screen_size.height;
 
   auto const draw_2dscene = [&](DrawState& ds, auto& vi, auto& sp) {
@@ -795,18 +787,21 @@ create_viewport_grid(common::Logger &logger, CameraORTHO const& camera, Frustum 
 {
   glm::mat4 const ortho_pm = camera.calc_pm(AR, frustum, screen_viewport.size(), VEC2(0));
   glm::mat4 const ortho_vm = camera.calc_vm();
+  ViewportDisplayInfo const ortho_vdi{ortho_pm, ortho_vm};
 
   glm::mat4 const pers_vm  = calculate_vm_fps(logger);
+  ViewportDisplayInfo const pers_vdi{pers_pm, pers_vm};
 
-  ViewportInfo const left_top    {lhs_top,    ViewportDisplayInfo{ortho_pm,   ortho_vm}};
-  ViewportInfo const right_top   {rhs_top,    ViewportDisplayInfo{pers_pm,    pers_vm}};
+  ViewportInfo const left_top    {lhs_top,    ortho_vdi};
+  ViewportInfo const right_top   {rhs_top,    pers_vdi};
 
-  ViewportInfo const left_bottom {lhs_bottom, ViewportDisplayInfo{ortho_pm,   ortho_vm}};
-  ViewportInfo const right_bottom{rhs_bottom, ViewportDisplayInfo{ortho_pm,   ortho_vm}};
+  ViewportInfo const left_bottom {lhs_bottom, ortho_vdi};
+  ViewportInfo const right_bottom{rhs_bottom, ortho_vdi};
 
-  ViewportInfo const fullscreen{screen_viewport, ViewportDisplayInfo{pers_pm, pers_vm}};
+  //ViewportInfo const fullscreen{screen_viewport, ViewportDisplayInfo{pers_pm, pers_vm}};
 
-  return ViewportGrid{left_top, right_top, left_bottom, right_bottom, fullscreen};
+  auto const screen_size = screen_viewport.size();
+  return ViewportGrid{screen_size, left_top, right_top, left_bottom, right_bottom/*, fullscreen*/};
 }
 
 auto

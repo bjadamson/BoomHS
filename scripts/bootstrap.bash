@@ -256,7 +256,7 @@ set(SYSTEM_LIBS
   )
 
 ###################################################################################################
-## **1** Build Post-Processing Application
+## **1** COMPILE -- Post-Processing Application
 ##
 ## Application that does post-processing on the OpenGL shader code (after the main executable has
 ## been compiled). The scripts included with the project automatically execute this application on
@@ -266,21 +266,21 @@ target_include_directories(BUILD_POSTPROCESSING PUBLIC ${EXTERNAL_INCLUDE_DIRS})
 target_link_libraries(     BUILD_POSTPROCESSING stdc++ c++experimental)
 
 ###################################################################################################
-## **2** Build Ortho Mouse Selection Test
+## **2** COMPILE -- Ortho Mouse Selection Test
 ##
 ## Test Application for developing/figuring out ortho raycasting.
-add_executable(raycast_test ${TEST_DIRECTORY}/raycast.cxx)
+add_executable(raycast_with_viewports ${TEST_DIRECTORY}/raycast_with_viewports.cxx)
 
-target_link_libraries(raycast_test
+target_link_libraries(raycast_with_viewports
   PROJECT_SOURCE_CODE
   ${SYSTEM_LIBS}
   ${EXTERNAL_LIBS}
   )
 
-target_include_directories(raycast_test PUBLIC)
+target_include_directories(raycast_with_viewports PUBLIC)
 
 ###################################################################################################
-## **3** Main Executable
+## **3** COMPILE -- Main Executable
 add_executable(boomhs ${MAIN_SOURCE_FILE})
 
 target_link_libraries(boomhs
