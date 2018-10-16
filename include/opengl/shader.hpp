@@ -112,22 +112,22 @@ public:
   void set_uniform_mat3(common::Logger&, GLchar const*, glm::mat3 const&);
   void set_uniform_mat4(common::Logger&, GLchar const*, glm::mat4 const&);
 
-  void set_uniform_array_2fv(common::Logger&, GLchar const*, std::array<float, 2> const&);
-  void set_uniform_array_3fv(common::Logger&, GLchar const*, std::array<float, 3> const&);
-  void set_uniform_array_4fv(common::Logger&, GLchar const*, std::array<float, 4> const&);
+  void set_uniform_array2(common::Logger&, GLchar const*, std::array<float, 2> const&);
+  void set_uniform_array3(common::Logger&, GLchar const*, std::array<float, 3> const&);
+  void set_uniform_array4(common::Logger&, GLchar const*, std::array<float, 4> const&);
 
   std::string to_string() const;
 
   void set_uniform_vec2(common::Logger& logger, GLchar const* name, glm::vec2 const& v)
   {
     auto const arr = common::make_array<float>(v.x, v.y);
-    set_uniform_array_2fv(logger, name, arr);
+    set_uniform_array2(logger, name, arr);
   }
 
   void set_uniform_vec3(common::Logger& logger, GLchar const* name, glm::vec3 const& v)
   {
     auto const arr = common::make_array<float>(v.x, v.y, v.z);
-    set_uniform_array_3fv(logger, name, arr);
+    set_uniform_array3(logger, name, arr);
   }
 
   void set_uniform_vec3(common::Logger& logger, std::string const& name, glm::vec3 const& v)
@@ -138,7 +138,7 @@ public:
   void set_uniform_vec4(common::Logger& logger, GLchar const* name, glm::vec4 const& v)
   {
     auto const arr = common::make_array<float>(v.x, v.y, v.z, v.w);
-    set_uniform_array_4fv(logger, name, arr);
+    set_uniform_array4(logger, name, arr);
   }
 
   void set_uniform_vec4(common::Logger& logger, std::string const& name, glm::vec4 const& v)
@@ -149,7 +149,7 @@ public:
   void set_uniform_color(common::Logger& logger, GLchar const* name, boomhs::Color const& c)
   {
     auto const arr = common::make_array<float>(c.r(), c.g(), c.b(), c.a());
-    set_uniform_array_4fv(logger, name, arr);
+    set_uniform_array4(logger, name, arr);
   }
 
   void set_uniform_color(common::Logger& logger, std::string const& name, boomhs::Color const& c)
@@ -160,7 +160,7 @@ public:
   void set_uniform_color_rgb(common::Logger& logger, GLchar const* name, boomhs::Color const& c)
   {
     auto const arr = common::make_array<float>(c.r(), c.g(), c.b());
-    set_uniform_array_3fv(logger, name, arr);
+    set_uniform_array3(logger, name, arr);
   }
 
   void

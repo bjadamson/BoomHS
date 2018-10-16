@@ -439,7 +439,7 @@ ShaderProgram::set_uniform_mat4(common::Logger& logger, GLchar const* name,
 }
 
 void
-ShaderProgram::set_uniform_array_2fv(common::Logger& logger, GLchar const* name,
+ShaderProgram::set_uniform_array2(common::Logger& logger, GLchar const* name,
                                      std::array<float, 2> const& array)
 {
   DEBUG_ASSERT_BOUND(*this);
@@ -457,11 +457,11 @@ ShaderProgram::set_uniform_array_2fv(common::Logger& logger, GLchar const* name,
                     array_to_string(array));
 
   glUniform2fv(loc, COUNT, array.data());
-  LOG_ANY_GL_ERRORS(logger, "set_uniform_array_2fv");
+  LOG_ANY_GL_ERRORS(logger, "set_uniform_array2");
 }
 
 void
-ShaderProgram::set_uniform_array_3fv(common::Logger& logger, GLchar const* name,
+ShaderProgram::set_uniform_array3(common::Logger& logger, GLchar const* name,
                                      std::array<float, 3> const& array)
 {
   DEBUG_ASSERT_BOUND(*this);
@@ -479,11 +479,11 @@ ShaderProgram::set_uniform_array_3fv(common::Logger& logger, GLchar const* name,
                     array_to_string(array));
 
   glUniform3fv(loc, COUNT, array.data());
-  LOG_ANY_GL_ERRORS(logger, "set_uniform_array_3fv");
+  LOG_ANY_GL_ERRORS(logger, "set_uniform_array3");
 }
 
 void
-ShaderProgram::set_uniform_array_4fv(common::Logger& logger, GLchar const* name,
+ShaderProgram::set_uniform_array4(common::Logger& logger, GLchar const* name,
                                      std::array<float, 4> const& floats)
 {
   DEBUG_ASSERT_BOUND(*this);
@@ -501,7 +501,7 @@ ShaderProgram::set_uniform_array_4fv(common::Logger& logger, GLchar const* name,
   GLsizei constexpr COUNT = 1;
 
   glUniform4fv(loc, COUNT, floats.data());
-  LOG_ANY_GL_ERRORS(logger, "set_uniform_array_4fv");
+  LOG_ANY_GL_ERRORS(logger, "set_uniform_array4");
 }
 
 void
