@@ -841,7 +841,7 @@ create_viewport_grid(common::Logger &logger, CameraORTHO const& camera, Frustum 
 
 auto
 make_pminfos(common::Logger& logger, ShaderProgram& sp, RNG &rng,
-             ViewportInfo const& lhs_bottom, ViewportInfo const& rhs_bottom)
+             std::vector<ViewportInfo*> const& vis)
 {
   auto const make_perspective_rect = [&](auto const& viewport, glm::ivec2 const& offset) {
     auto const gen = [&rng](float const val) { return rng.gen_float_range(val, val + 150); };
@@ -863,20 +863,16 @@ make_pminfos(common::Logger& logger, ShaderProgram& sp, RNG &rng,
     vector_pms.emplace_back(PmRect{r, MOVE(di)});
     return ViewportPmRects{MOVE(vector_pms), viewport};
   };
-  auto const make_vp = [&](auto const& vp0, auto const& vp1) {
-    auto const cr0 = make_perspective_rect(vp0, IVEC2{50});
-    auto const cr1 = make_perspective_rect(vp1, IVEC2{50});
-    auto pm0 = make_viewportpm_rects(cr0, vp0);
-    auto pm1 = make_viewportpm_rects(cr1, vp1);
 
-    std::vector<ViewportPmRects> pms;
+  std::vector<ViewportPmRects> pms;
+  for (auto& vi : vis) {
+    auto const& viewport = vi->viewport;
+    auto const prect     = make_perspective_rect(viewport, IVEC2{50});
+
+    auto pm0 = make_viewportpm_rects(prect, viewport);
     pms.emplace_back(MOVE(pm0));
-    pms.emplace_back(MOVE(pm1));
-
-    return PmViewports{MOVE(pms)};
-  };
-
-  auto pm_vps = make_vp(lhs_bottom.viewport, rhs_bottom.viewport);
+  }
+  PmViewports pm_vps{MOVE(pms)};
 
   std::vector<PmDrawInfo> pm_infos_vec;
   FOR(i, pm_vps.size()) {
@@ -919,9 +915,12 @@ main(int argc, char **argv)
   auto const pers_pm     = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
   auto vp_grid           = create_viewport_grid(logger, cam_ortho, frustum, window_rect, pers_pm);
 
+  std::vector<ViewportInfo*> viewport_infos;
+  viewport_infos.push_back(&vp_grid.left_bottom);
+  viewport_infos.push_back(&vp_grid.right_top);
+
   RNG rng;
-  auto pm_infos          = make_pminfos(logger, rect_sp, rng, vp_grid.left_bottom,
-                                        vp_grid.right_bottom);
+  auto pm_infos          = make_pminfos(logger, rect_sp, rng, viewport_infos);
   auto wire_sp           = make_wireframe_program(logger);
   auto cube_ents         = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);
 
