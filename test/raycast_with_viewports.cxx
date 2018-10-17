@@ -726,11 +726,12 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
     auto const& vdi = vi.display;
     draw_bboxes(logger, vdi.pm, vdi.vm, cube_ents, wire_sp, ds);
   };
-  auto const draw_pms = [&](auto& ds, auto& vi, auto& pm_info, auto const& color) {
-    auto const& viewport= vi.viewport;
+  auto const draw_pms = [&](auto& ds, auto& pm_info, auto const& color) {
+    auto& vi             = pm_info.vp_rects;
+    auto const& viewport = vi.viewport;
     OR::set_viewport_and_scissor(viewport, screen_height);
     OR::clear_screen(color);
-    for (auto& pm_rect : pm_info.vp_rects.rects) {
+    for (auto& pm_rect : vi.rects) {
       auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
       draw_rectangle_pm(logger, viewport.size(), viewport.rect(), camera, pm_info.sp, pm_rect.di,
                         color, GL_TRIANGLES, ds);
@@ -740,11 +741,11 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
   DrawState ds;
   // draw LHS
   draw_2dscene(ds, vp_grid.left_top, pm_infos[0].sp);
-  draw_pms(ds, vp_grid.left_bottom, pm_infos[0], LOC::BLUE);
+  draw_pms(ds, pm_infos[0], LOC::BLUE);
 
   // draw RHS
   draw_3dscene(ds, vp_grid.right_top);
-  draw_pms(ds, vp_grid.right_bottom, pm_infos[1], LOC::RED);
+  draw_pms(ds, pm_infos[1], LOC::RED);
 
   // fullscreen
   //draw_pms(ds, vp_grid.fullscreen, pm_info_fs);
