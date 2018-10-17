@@ -39,8 +39,6 @@ static auto constexpr AR   = AspectRatio{4.0f, 3.0f};
 // clang-format on
 
 using CameraPosition = glm::vec3;
-static auto ORTHO_CAMERA_POS = CameraPosition{0, 1, 0};
-static auto PERS_CAMERA_POS  = CameraPosition{0, 0, 1};
 
 enum ScreenSector
 {
@@ -72,18 +70,56 @@ struct ViewportInfo
   ViewportDisplayInfo const display;
   ScreenSector const        screen_sector;
 
+  glm::vec3 camera_position;
   auto mouse_offset() const { return viewport.rect().left_top(); }
 };
+
+#define SCREEN_SECTOR_TO_VI_IMPL                                                                   \
+  auto const match      = [&ss](auto const& vi) { return vi.screen_sector == ss; };                \
+  if (match(left_top)) {                                                                           \
+    return left_top;                                                                               \
+  }                                                                                                \
+  else if (match(left_bottom)) {                                                                   \
+    return left_bottom;                                                                            \
+  }                                                                                                \
+  else if (match(right_bottom)) {                                                                  \
+    return right_bottom;                                                                           \
+  }                                                                                                \
+  else if (match(right_top)) {                                                                     \
+    return right_top;                                                                              \
+  }                                                                                                \
+                                                                                                   \
+  /* If we get here, programming error.*/                                                          \
+  std::abort();
 
 struct ViewportGrid
 {
   ScreenSize   screen_size;
 
-  ViewportInfo left_top, right_top;
+  ViewportInfo left_top,    right_top;
   ViewportInfo left_bottom, right_bottom;
-  //ViewportInfo fullscreen;
 
   MOVE_CONSTRUCTIBLE_ONLY(ViewportGrid);
+
+  ViewportInfo const&
+  screen_sector_to_vi(ScreenSector const ss) const
+  {
+    SCREEN_SECTOR_TO_VI_IMPL
+  }
+
+  ViewportInfo&
+  screen_sector_to_vi(ScreenSector const ss)
+  {
+    SCREEN_SECTOR_TO_VI_IMPL
+  }
+
+#undef SCREEN_SECTOR_TO_VI_IMPL
+
+  glm::vec3&
+  active_camera_pos()
+  {
+    return screen_sector_to_vi(MOUSE_INFO.sector).camera_position;
+  }
 
   // clang-format off
   auto center()        const { return left_top.viewport.rect().right_bottom(); }
@@ -122,56 +158,11 @@ mouse_pos_to_screensector(ViewportGrid const& vp_grid, glm::ivec2 const& mouse_p
   std::abort();
 }
 
-ViewportInfo const&
-screen_sector_to_vi(ScreenSector const ss, ViewportGrid const& vp_grid)
-{
-  auto const match      = [&ss](auto const& vi) { return vi.screen_sector == ss; };
-  if (match(vp_grid.left_top)) {
-    return vp_grid.left_top;
-  }
-  else if (match(vp_grid.left_bottom)) {
-    return vp_grid.left_bottom;
-  }
-  else if (match(vp_grid.right_bottom)) {
-    return vp_grid.right_bottom;
-  }
-  else if (match(vp_grid.right_top)) {
-    return vp_grid.right_top;
-  }
-
-  // If we get here, programming error.
-  std::abort();
-}
-
 auto
 screen_sector_to_float_rect(ScreenSector const ss, ViewportGrid const& vp_grid)
 {
-  auto const& vi = screen_sector_to_vi(ss, vp_grid);
+  auto const& vi = vp_grid.screen_sector_to_vi(ss);
   return vi.viewport.rect_float();
-}
-
-auto&
-active_camera_pos()
-{
-  switch (MOUSE_INFO.sector) {
-    // PERSPECTIVE
-    case ScreenSector::LEFT_BOTTOM:
-      return PERS_CAMERA_POS;
-
-
-    // ORTHO
-    case ScreenSector::LEFT_TOP:
-      return ORTHO_CAMERA_POS;
-    case ScreenSector::RIGHT_TOP:
-      return ORTHO_CAMERA_POS;
-    case ScreenSector::RIGHT_BOTTOM:
-      return ORTHO_CAMERA_POS;
-
-    default:
-      break;
-  }
-
-  std::abort();
 }
 
 auto
@@ -226,6 +217,8 @@ calculate_vm_fps(common::Logger& logger)
 {
   auto const VIEW_FORWARD = -constants::Z_UNIT_VECTOR;
   auto const VIEW_UP      = constants::Y_UNIT_VECTOR;
+
+  static auto PERS_CAMERA_POS  = CameraPosition{0, 0, 1};
   auto const pos          = PERS_CAMERA_POS;
   return glm::lookAtRH(pos, pos + VIEW_FORWARD, VIEW_UP);
 }
@@ -544,7 +537,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
   bool const top    = lhs_top    || rhs_top;
   bool const bottom = lhs_bottom || rhs_bottom;
 
-  auto const& vi         = screen_sector_to_vi(MOUSE_INFO.sector, vp_grid);
+  auto const& vi         = vp_grid.screen_sector_to_vi(MOUSE_INFO.sector);
   auto const mouse_start = mouse_pos - vi.mouse_offset();
   if (lhs_top) {
     if (MOUSE_BUTTON_PRESSED) {
@@ -571,10 +564,10 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 
 bool
 process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
-              ViewportGrid const& vp_grid, CubeEntities& cube_ents, PmViewports& pm_vps)
+              ViewportGrid& vp_grid, CubeEntities& cube_ents, PmViewports& pm_vps)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
-  auto &camera_pos = active_camera_pos();
+  auto &camera_pos = vp_grid.active_camera_pos();
 
   if (event_type_keydown) {
     SDL_Keycode const key_pressed = event.key.keysym.sym;
@@ -734,9 +727,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
     for (auto const& pm_info : pm_infos) {
       auto& vi             = pm_info.vp_rects;
       auto const& viewport = vi.viewport;
-      auto const& bg_color = viewport.bg_color();
       OR::set_viewport_and_scissor(viewport, screen_height);
-      OR::clear_screen(bg_color);
       for (auto& pm_rect : vi.rects) {
         auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
         draw_rectangle_pm(logger, viewport.size(), viewport.rect(), camera, pm_info.sp, pm_rect.di,
@@ -748,6 +739,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
   DrawState ds;
   // draw LHS
   draw_2dscene(ds, vp_grid.left_top, pm_sp);
+  //draw_2dscene(ds, vp_grid.right_bottom, pm_sp);
 
   // draw RHS
   draw_3dscene(ds, vp_grid.right_top);
