@@ -730,27 +730,30 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
     auto const& vdi = vi.display;
     draw_bboxes(logger, vdi.pm, vdi.vm, cube_ents, wire_sp, ds);
   };
-  auto const draw_pms = [&](auto& ds, auto& pm_info) {
-    auto& vi             = pm_info.vp_rects;
-    auto const& viewport = vi.viewport;
-    auto const& bg_color = viewport.bg_color();
-    OR::set_viewport_and_scissor(viewport, screen_height);
-    OR::clear_screen(bg_color);
-    for (auto& pm_rect : vi.rects) {
-      auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
-      draw_rectangle_pm(logger, viewport.size(), viewport.rect(), camera, pm_info.sp, pm_rect.di,
-                        color, GL_TRIANGLES, ds);
+  auto const draw_pms = [&](auto& ds, auto& pm_infos) {
+    for (auto const& pm_info : pm_infos) {
+      auto& vi             = pm_info.vp_rects;
+      auto const& viewport = vi.viewport;
+      auto const& bg_color = viewport.bg_color();
+      OR::set_viewport_and_scissor(viewport, screen_height);
+      OR::clear_screen(bg_color);
+      for (auto& pm_rect : vi.rects) {
+        auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
+        draw_rectangle_pm(logger, viewport.size(), viewport.rect(), camera, pm_info.sp, pm_rect.di,
+                          color, GL_TRIANGLES, ds);
+      }
     }
   };
 
   DrawState ds;
   // draw LHS
   draw_2dscene(ds, vp_grid.left_top, pm_sp);
-  draw_pms(ds, pm_infos[0]);
 
   // draw RHS
   draw_3dscene(ds, vp_grid.right_top);
-  draw_pms(ds, pm_infos[1]);
+
+  // draw PMS
+  draw_pms(ds, pm_infos);
 
   // fullscreen
   //draw_pms(ds, vp_grid.fullscreen, pm_info_fs);
