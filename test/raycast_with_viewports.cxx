@@ -70,6 +70,7 @@ struct ViewportInfo
 {
   Viewport const            viewport;
   ViewportDisplayInfo const display;
+  ScreenSector const        screen_sector;
 
   auto mouse_offset() const { return viewport.rect().left_top(); }
 };
@@ -124,18 +125,21 @@ mouse_pos_to_screensector(ViewportGrid const& vp_grid, glm::ivec2 const& mouse_p
 ViewportInfo const&
 screen_sector_to_vi(ScreenSector const ss, ViewportGrid const& vp_grid)
 {
-  switch (ss) {
-    case ScreenSector::LEFT_TOP:
-      return vp_grid.left_top;
-    case ScreenSector::LEFT_BOTTOM:
-      return vp_grid.left_bottom;
-    case ScreenSector::RIGHT_TOP:
-      return vp_grid.right_top;
-    case ScreenSector::RIGHT_BOTTOM:
-      return vp_grid.right_bottom;
-    default:
-      break;
+  auto const match      = [&ss](auto const& vi) { return vi.screen_sector == ss; };
+  if (match(vp_grid.left_top)) {
+    return vp_grid.left_top;
   }
+  else if (match(vp_grid.left_bottom)) {
+    return vp_grid.left_bottom;
+  }
+  else if (match(vp_grid.right_bottom)) {
+    return vp_grid.right_bottom;
+  }
+  else if (match(vp_grid.right_top)) {
+    return vp_grid.right_top;
+  }
+
+  // If we get here, programming error.
   std::abort();
 }
 
@@ -704,8 +708,8 @@ struct PmDrawInfos
 
 void
 draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_infos,
-           CameraORTHO const& camera, ShaderProgram& wire_sp, glm::ivec2 const& mouse_pos,
-           CubeEntities& cube_ents)
+           CameraORTHO const& camera, ShaderProgram& wire_sp, ShaderProgram& pm_sp,
+           glm::ivec2 const& mouse_pos, CubeEntities& cube_ents)
 {
   auto const screen_size    = vp_grid.screen_size;
   auto const screen_height  = screen_size.height;
@@ -726,11 +730,12 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
     auto const& vdi = vi.display;
     draw_bboxes(logger, vdi.pm, vdi.vm, cube_ents, wire_sp, ds);
   };
-  auto const draw_pms = [&](auto& ds, auto& pm_info, auto const& color) {
+  auto const draw_pms = [&](auto& ds, auto& pm_info) {
     auto& vi             = pm_info.vp_rects;
     auto const& viewport = vi.viewport;
+    auto const& bg_color = viewport.bg_color();
     OR::set_viewport_and_scissor(viewport, screen_height);
-    OR::clear_screen(color);
+    OR::clear_screen(bg_color);
     for (auto& pm_rect : vi.rects) {
       auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
       draw_rectangle_pm(logger, viewport.size(), viewport.rect(), camera, pm_info.sp, pm_rect.di,
@@ -740,12 +745,12 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
 
   DrawState ds;
   // draw LHS
-  draw_2dscene(ds, vp_grid.left_top, pm_infos[0].sp);
-  draw_pms(ds, pm_infos[0], LOC::BLUE);
+  draw_2dscene(ds, vp_grid.left_top, pm_sp);
+  draw_pms(ds, pm_infos[0]);
 
   // draw RHS
   draw_3dscene(ds, vp_grid.right_top);
-  draw_pms(ds, pm_infos[1], LOC::RED);
+  draw_pms(ds, pm_infos[1]);
 
   // fullscreen
   //draw_pms(ds, vp_grid.fullscreen, pm_info_fs);
@@ -797,31 +802,35 @@ create_viewport_grid(common::Logger &logger, CameraORTHO const& camera, Frustum 
   auto const lhs_top = Viewport{
     PAIR(window_rect.left, window_rect.top),
     viewport_width,
-    viewport_height
+    viewport_height,
+    LOC::WHITE
   };
   auto const rhs_top = Viewport{
     PAIR(viewport_width, window_rect.top),
     viewport_width,
-    viewport_height
+    viewport_height,
+    LOC::GREEN
   };
 
   auto const mid_height = window_rect.top + window_rect.half_height();
   auto const lhs_bottom = Viewport{
     PAIR(window_rect.left, mid_height),
     viewport_width,
-    viewport_height
+    viewport_height,
+    LOC::BLUE
   };
   auto const rhs_bottom = Viewport{
     PAIR(viewport_width, mid_height),
     viewport_width,
-    viewport_height
+    viewport_height,
+    LOC::YELLOW
   };
 
-  ViewportInfo const left_top    {lhs_top,    ortho_vdi};
-  ViewportInfo const right_top   {rhs_top,    pers_vdi};
+  ViewportInfo const left_top    {lhs_top,    ortho_vdi, ScreenSector::LEFT_TOP};
+  ViewportInfo const right_top   {rhs_top,    pers_vdi, ScreenSector::RIGHT_TOP};
 
-  ViewportInfo const left_bottom {lhs_bottom, ortho_vdi};
-  ViewportInfo const right_bottom{rhs_bottom, ortho_vdi};
+  ViewportInfo const left_bottom {lhs_bottom, ortho_vdi, ScreenSector::LEFT_BOTTOM};
+  ViewportInfo const right_bottom{rhs_bottom, ortho_vdi, ScreenSector::RIGHT_BOTTOM};
 
   auto const screen_size = window_rect.size();
   return ViewportGrid{screen_size, left_top, right_top, left_bottom, right_bottom};
@@ -899,15 +908,17 @@ main(int argc, char **argv)
 
   //auto const cr1 = RectFloat{600, 600, 800, 800};
 
-  RNG rng;
-  auto rect_sp        = make_rectangle_program(logger);
+  auto rect_sp           = make_rectangle_program(logger);
 
   auto& window           = gl_sdl.window;
   auto const window_rect = window.view_rect();
   auto const frustum     = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
   auto const pers_pm     = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
   auto vp_grid           = create_viewport_grid(logger, cam_ortho, frustum, window_rect, pers_pm);
-  auto pm_infos          = make_pminfos(logger, rect_sp, rng, vp_grid.left_bottom, vp_grid.right_bottom);
+
+  RNG rng;
+  auto pm_infos          = make_pminfos(logger, rect_sp, rng, vp_grid.left_bottom,
+                                        vp_grid.right_bottom);
   auto wire_sp           = make_wireframe_program(logger);
   auto cube_ents         = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);
 
@@ -924,7 +935,7 @@ main(int argc, char **argv)
 
     auto const mouse_pos = get_mousepos();
     update(logger, cam_ortho, vp_grid, mouse_pos, cube_ents, ft);
-    draw_scene(logger, vp_grid, pm_infos, cam_ortho, wire_sp, mouse_pos, cube_ents);
+    draw_scene(logger, vp_grid, pm_infos, cam_ortho, wire_sp, rect_sp, mouse_pos, cube_ents);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());

@@ -1,4 +1,5 @@
 #pragma once
+#include <boomhs/color.hpp>
 #include <boomhs/math.hpp>
 #include <extlibs/fmt.hpp>
 
@@ -40,6 +41,7 @@ using ScreenCoords = glm::ivec2;
 class Viewport
 {
   int left_, top_, width_, height_;
+  Color bg_color_ = LOC::WHITE;
 
 public:
   constexpr Viewport(int const left_x, int const top_y, int const width, int const height)
@@ -52,6 +54,13 @@ public:
     assert(height_ >= 0);
   }
 
+  constexpr Viewport(int const left_x, int const top_y, int const width, int const height,
+                     Color const& bg_c)
+      : Viewport(left_x, top_y, width, height)
+  {
+    bg_color_ = bg_c;
+  }
+
   constexpr Viewport(glm::ivec2 const& tl, int const width, int const height)
       : Viewport(tl.x, tl.y, width, height)
   {
@@ -62,10 +71,19 @@ public:
   {
   }
 
+  constexpr Viewport(std::pair<int, int> const& tl, int const width, int const height,
+                     Color const& bg_c)
+      : Viewport(tl.first, tl.second, width, height, bg_c)
+  {
+  }
+
   constexpr Viewport(RectInt const& r)
       : Viewport(r.left_top(), r.width(), r.height())
   {
   }
+
+  auto const& bg_color() const { return bg_color_; }
+  void set_bg_color(Color const& c) { bg_color_ = c; }
 
   auto constexpr width() const { return width_; }
   auto constexpr height() const { return height_; }
