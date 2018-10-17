@@ -376,7 +376,11 @@ Camera::eye_forward() const
 {
   switch (mode()) {
   case CameraMode::FPS:
-    return glm::normalize(fps.forward() * fps.transform().rotation);
+  {
+    auto const& f   = fps.forward();
+    auto const& rot = fps.transform().rotation;
+    return f * rot;
+  }
   case CameraMode::Ortho:
   case CameraMode::Fullscreen_2DUI:
     return glm::normalize(ortho.position + ortho.forward());
@@ -389,6 +393,12 @@ Camera::eye_forward() const
   }
   std::abort();
   return ZERO;
+}
+
+glm::vec3
+Camera::eye_up() const
+{
+  return world_up() * get_target().orientation();
 }
 
 glm::vec3

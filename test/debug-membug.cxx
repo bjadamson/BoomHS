@@ -2,11 +2,6 @@
 
 struct TEST
 {
-  // Commenting out this DUMMY field removes the memory violation.
-  //
-  // WHY? Static-Analysis BUG?
-  // or
-  // Compiler BUG?
   int DUMMY = 0;
   glm::mat4 const mat4;
 

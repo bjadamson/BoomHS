@@ -1,4 +1,7 @@
 #pragma once
+#define GLM_FORCE_CTOR_INIT
+#define GLM_ENABLE_EXPERIMENTAL
+#define GLM_FORCE_PURE
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
 
