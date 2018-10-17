@@ -39,6 +39,8 @@ static auto constexpr AR   = AspectRatio{4.0f, 3.0f};
 // clang-format on
 
 using CameraPosition = glm::vec3;
+static auto ORTHO_CAMERA_POS = CameraPosition{0, 1, 0};
+static auto PERS_CAMERA_POS  = CameraPosition{0, 0, 1};
 
 enum ScreenSector
 {
@@ -218,7 +220,6 @@ calculate_vm_fps(common::Logger& logger)
   auto const VIEW_FORWARD = -constants::Z_UNIT_VECTOR;
   auto const VIEW_UP      = constants::Y_UNIT_VECTOR;
 
-  static auto PERS_CAMERA_POS  = CameraPosition{0, 0, 1};
   auto const pos          = PERS_CAMERA_POS;
   return glm::lookAtRH(pos, pos + VIEW_FORWARD, VIEW_UP);
 }
@@ -739,7 +740,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
   DrawState ds;
   // draw LHS
   draw_2dscene(ds, vp_grid.left_top, pm_sp);
-  //draw_2dscene(ds, vp_grid.right_bottom, pm_sp);
+  draw_2dscene(ds, vp_grid.right_bottom, pm_sp);
 
   // draw RHS
   draw_3dscene(ds, vp_grid.right_top);
@@ -821,14 +822,15 @@ create_viewport_grid(common::Logger &logger, CameraORTHO const& camera, Frustum 
     LOC::YELLOW
   };
 
-  ViewportInfo const left_top    {lhs_top,    ortho_vdi, ScreenSector::LEFT_TOP};
-  ViewportInfo const right_top   {rhs_top,    pers_vdi, ScreenSector::RIGHT_TOP};
 
-  ViewportInfo const left_bottom {lhs_bottom, ortho_vdi, ScreenSector::LEFT_BOTTOM};
-  ViewportInfo const right_bottom{rhs_bottom, ortho_vdi, ScreenSector::RIGHT_BOTTOM};
+  ViewportInfo const left_top    {lhs_top,    ortho_vdi, ScreenSector::LEFT_TOP, PERS_CAMERA_POS};
+  ViewportInfo const right_top   {rhs_top,    pers_vdi, ScreenSector::RIGHT_TOP, PERS_CAMERA_POS};
+
+  ViewportInfo const left_bot {lhs_bottom, ortho_vdi, ScreenSector::LEFT_BOTTOM, ORTHO_CAMERA_POS};
+  ViewportInfo const right_bot{rhs_bottom, ortho_vdi, ScreenSector::RIGHT_BOTTOM, PERS_CAMERA_POS};
 
   auto const screen_size = window_rect.size();
-  return ViewportGrid{screen_size, left_top, right_top, left_bottom, right_bottom};
+  return ViewportGrid{screen_size, left_top, right_top, left_bot, right_bot};
 }
 
 auto
