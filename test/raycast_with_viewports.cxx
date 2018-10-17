@@ -540,8 +540,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
   bool const top    = lhs_top    || rhs_top;
   bool const bottom = lhs_bottom || rhs_bottom;
 
-  // TODO: changing this to a reference causes a BUG noted in test/debug-membug.cxx
-  auto const vi         = screen_sector_to_vi(MOUSE_INFO.sector, vp_grid);
+  auto const& vi         = screen_sector_to_vi(MOUSE_INFO.sector, vp_grid);
   auto const mouse_start = mouse_pos - vi.mouse_offset();
   if (lhs_top) {
     if (MOUSE_BUTTON_PRESSED) {
