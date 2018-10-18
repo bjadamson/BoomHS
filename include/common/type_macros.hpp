@@ -73,6 +73,12 @@
   COPY_DEFAULT(CLASSNAME)                                                                          \
   MOVE_DEFAULT(CLASSNAME)
 
+#define COPYMOVE_CONSTRUCTIBLE_NO_COPYASSIGN(CLASSNAME)                                            \
+  MOVE_CONSTRUCTIBLE(CLASSNAME)                                                                    \
+  COPY_CONSTRUCTIBLE(CLASSNAME)                                                                    \
+  NO_MOVE_ASSIGN(CLASSNAME)                                                                        \
+  NO_COPY_ASSIGN(CLASSNAME)
+
 #define NO_COPY_OR_MOVE(CLASSNAME)                                                                 \
   NO_COPY(CLASSNAME)                                                                               \
   NO_MOVE(CLASSNAME)

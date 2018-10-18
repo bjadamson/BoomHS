@@ -16,7 +16,7 @@ class GameState
 
   std::optional<StaticRenderers> renderers_;
 public:
-  NOCOPY_MOVE_DEFAULT(GameState);
+  MOVE_CONSTRUCTIBLE_ONLY(GameState);
 
   explicit GameState(EngineState&, LevelManager&&, WaterAudioSystem&&);
 

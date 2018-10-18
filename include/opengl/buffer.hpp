@@ -41,10 +41,12 @@ struct VertexBuffer
 
 private:
   VertexBuffer(BufferFlags const&);
-  COPY_DEFAULT(VertexBuffer);
+  COPY_CONSTRUCTIBLE(VertexBuffer);
+  NO_COPY_ASSIGN(VertexBuffer);
 
 public:
-  MOVE_DEFAULT(VertexBuffer);
+  MOVE_CONSTRUCTIBLE(VertexBuffer);
+  NO_MOVE_ASSIGN(VertexBuffer);
 
   std::string to_string() const;
 

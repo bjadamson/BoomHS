@@ -245,7 +245,7 @@ class CubeEntity
   Transform tr_;
   DrawInfo di_;
 public:
-  COPYMOVE_DEFAULT(CubeEntity);
+  MOVE_ONLY(CubeEntity);
 
   CubeEntity(Cube&& cube, Transform&& tr, DrawInfo&& di)
       : cube_(MOVE(cube))
@@ -414,8 +414,7 @@ struct PmRect
       , di(MOVE(d))
   {}
 
-  MOVE_DEFAULT(PmRect);
-  NO_COPY(PmRect);
+  MOVE_CONSTRUCTIBLE_ONLY(PmRect);
 };
 
 struct ViewportPmRects
@@ -423,8 +422,7 @@ struct ViewportPmRects
   std::vector<PmRect> rects;
   Viewport const      viewport;
 
-  MOVE_DEFAULT(ViewportPmRects);
-  NO_COPY(ViewportPmRects);
+  MOVE_CONSTRUCTIBLE_ONLY(ViewportPmRects);
 };
 
 struct PmViewports

@@ -49,9 +49,6 @@ struct ErrorLog
   static void clear();
 
   static void abort_if_any_errors(common::Logger&);
-
-private:
-  ErrorLog() = default;
 };
 std::ostream&
 operator<<(std::ostream& stream, ErrorLog const& ge);
