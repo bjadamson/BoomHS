@@ -439,20 +439,6 @@ struct PmViewports
   auto size() const { return viewports.size(); }
 };
 
-auto
-make_mouse_rect(CameraORTHO const& camera, glm::ivec2 const& mouse_pos)
-{
-  auto const& click_pos = camera.mouse_click.left_right;
-
-  auto const lx = lesser_of(click_pos.x, mouse_pos.x);
-  auto const rx = other_of_two(lx, PAIR(click_pos.x, mouse_pos.x));
-
-  auto const ty = lesser_of(click_pos.y, mouse_pos.y);
-  auto const by = other_of_two(ty, PAIR(click_pos.y, mouse_pos.y));
-
-  return RectFloat{VEC2{lx, ty}, VEC2{rx, by}};
-}
-
 void
 cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mouse_pos,
                                     CameraPosition &camera_pos,
@@ -472,6 +458,20 @@ cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mou
     float distance = 0.0f;
     cube_ent.selected = collision::intersects(logger, ray, tr, cube, distance);
   }
+}
+
+auto
+make_mouse_rect(CameraORTHO const& camera, glm::ivec2 const& mouse_pos)
+{
+  auto const& click_pos = camera.mouse_click.left_right;
+
+  auto const lx = lesser_of(click_pos.x, mouse_pos.x);
+  auto const rx = other_of_two(lx, PAIR(click_pos.x, mouse_pos.x));
+
+  auto const ty = lesser_of(click_pos.y, mouse_pos.y);
+  auto const by = other_of_two(ty, PAIR(click_pos.y, mouse_pos.y));
+
+  return RectFloat{VEC2{lx, ty}, VEC2{rx, by}};
 }
 
 void
