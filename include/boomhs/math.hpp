@@ -416,9 +416,15 @@ lesser_of(T const& a, T const& b)
 }
 
 inline bool
-float_compare(float const a, float const b)
+compare_epsilon(float const a, float const b)
 {
-  return std::fabs(a - b) < std::numeric_limits<float>::epsilon();
+  return std::fabs(a - b) < constants::EPSILONF;
+}
+
+inline bool
+is_unitv(glm::vec3 const& v)
+{
+  return compare_epsilon(glm::length(v), 1);
 }
 
 inline glm::vec3

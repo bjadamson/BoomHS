@@ -54,7 +54,6 @@ enum ScreenSector
 struct MouseCursorInfo
 {
   ScreenSector sector;
-  glm::ivec2   pos;
 };
 
 static bool MOUSE_BUTTON_PRESSED        = false;
@@ -63,14 +62,16 @@ static MouseCursorInfo MOUSE_INFO;
 
 struct ViewportDisplayInfo
 {
-  glm::mat4 const pm, vm;
+  glm::mat4 pm, vm;
 };
 
 struct ViewportInfo
 {
-  Viewport const            viewport;
-  ViewportDisplayInfo const display;
-  ScreenSector const        screen_sector;
+  Viewport             viewport;
+  ViewportDisplayInfo  display;
+  ScreenSector         screen_sector;
+
+  MOVE_DEFAULT_ONLY(ViewportInfo);
 
   glm::vec3 camera_position;
   auto mouse_offset() const { return viewport.rect().left_top(); }
@@ -101,7 +102,7 @@ struct ViewportGrid
   ViewportInfo left_top,    right_top;
   ViewportInfo left_bottom, right_bottom;
 
-  MOVE_CONSTRUCTIBLE_ONLY(ViewportGrid);
+  MOVE_DEFAULT_ONLY(ViewportGrid);
 
   ViewportInfo const&
   screen_sector_to_vi(ScreenSector const ss) const
@@ -214,16 +215,6 @@ make_rectangle_program(common::Logger& logger)
     .expect_moveout("Error loading 2dcolor shader program");
 }
 
-auto
-calculate_vm_fps(common::Logger& logger)
-{
-  auto const VIEW_FORWARD = -constants::Z_UNIT_VECTOR;
-  auto const VIEW_UP      = constants::Y_UNIT_VECTOR;
-
-  auto const pos          = PERS_CAMERA_POS;
-  return glm::lookAtRH(pos, pos + VIEW_FORWARD, VIEW_UP);
-}
-
 void
 draw_bbox(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm, ShaderProgram& sp,
           Transform const& tr, DrawInfo& dinfo, Color const& color, DrawState& ds)
@@ -245,7 +236,7 @@ class CubeEntity
   Transform tr_;
   DrawInfo di_;
 public:
-  MOVE_ONLY(CubeEntity);
+  MOVE_DEFAULT_ONLY(CubeEntity);
 
   CubeEntity(Cube&& cube, Transform&& tr, DrawInfo&& di)
       : cube_(MOVE(cube))
@@ -522,7 +513,6 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 {
   auto const mouse_pos = glm::ivec2{motion.x, motion.y};
   MOUSE_INFO.sector    = mouse_pos_to_screensector(vp_grid, mouse_pos);
-  MOUSE_INFO.pos       = mouse_pos;
 
   bool const lhs_top    = (ScreenSector::LEFT_TOP     == MOUSE_INFO.sector);
   bool const lhs_bottom = (ScreenSector::LEFT_BOTTOM  == MOUSE_INFO.sector);
@@ -772,11 +762,14 @@ update(common::Logger& logger, CameraORTHO& camera, ViewportGrid const& vp_grid,
 }
 
 auto
-get_mousepos()
+calculate_vm_fps(common::Logger& logger, glm::vec3 const& forward, glm::vec3 const& up)
 {
-  int mouse_x, mouse_y;
-  SDL_GetMouseState(&mouse_x, &mouse_y);
-  return glm::ivec2{mouse_x, mouse_y};
+  assert(is_unitv(forward));
+  assert(is_unitv(up));
+
+  auto const view_pos = PERS_CAMERA_POS;
+  auto const target   = view_pos + forward;
+  return glm::lookAtRH(view_pos, target, up);
 }
 
 auto
@@ -787,7 +780,9 @@ create_viewport_grid(common::Logger &logger, CameraORTHO const& camera, Frustum 
   glm::mat4 const ortho_vm = camera.calc_vm();
   ViewportDisplayInfo const ortho_vdi{ortho_pm, ortho_vm};
 
-  glm::mat4 const pers_vm  = calculate_vm_fps(logger);
+  auto const VIEW_FORWARD = -constants::Z_UNIT_VECTOR;
+  auto const VIEW_UP      = constants::Y_UNIT_VECTOR;
+  glm::mat4 const pers_vm  = calculate_vm_fps(logger, VIEW_FORWARD, VIEW_UP);
   ViewportDisplayInfo const pers_vdi{pers_pm, pers_vm};
 
   int const viewport_width  = window_rect.width() / SCREENSIZE_VIEWPORT_RATIO.x;
@@ -821,14 +816,14 @@ create_viewport_grid(common::Logger &logger, CameraORTHO const& camera, Frustum 
   };
 
 
-  ViewportInfo const left_top    {lhs_top,    ortho_vdi, ScreenSector::LEFT_TOP, PERS_CAMERA_POS};
-  ViewportInfo const right_top   {rhs_top,    pers_vdi, ScreenSector::RIGHT_TOP, PERS_CAMERA_POS};
+  ViewportInfo left_top    {lhs_top,    ortho_vdi, ScreenSector::LEFT_TOP, PERS_CAMERA_POS};
+  ViewportInfo right_top   {rhs_top,    pers_vdi, ScreenSector::RIGHT_TOP, PERS_CAMERA_POS};
 
-  ViewportInfo const left_bot {lhs_bottom, ortho_vdi, ScreenSector::LEFT_BOTTOM, ORTHO_CAMERA_POS};
-  ViewportInfo const right_bot{rhs_bottom, ortho_vdi, ScreenSector::RIGHT_BOTTOM, PERS_CAMERA_POS};
+  ViewportInfo left_bot {lhs_bottom, ortho_vdi, ScreenSector::LEFT_BOTTOM, ORTHO_CAMERA_POS};
+  ViewportInfo right_bot{rhs_bottom, ortho_vdi, ScreenSector::RIGHT_BOTTOM, PERS_CAMERA_POS};
 
-  auto const screen_size = window_rect.size();
-  return ViewportGrid{screen_size, left_top, right_top, left_bot, right_bot};
+  auto const ss = window_rect.size();
+  return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
 }
 
 auto
@@ -872,6 +867,14 @@ make_pminfos(common::Logger& logger, ShaderProgram& sp, RNG &rng,
     pm_infos_vec.emplace_back(MOVE(info));
   }
   return PmDrawInfos{MOVE(pm_infos_vec), MOVE(pm_vps)};
+}
+
+auto
+get_mousepos()
+{
+  int mouse_x, mouse_y;
+  SDL_GetMouseState(&mouse_x, &mouse_y);
+  return glm::ivec2{mouse_x, mouse_y};
 }
 
 int
@@ -921,7 +924,7 @@ main(int argc, char **argv)
   SDL_Event event;
   bool quit = false;
   while (!quit) {
-    auto vp_grid = create_viewport_grid(logger, cam_ortho, frustum, window_rect, pers_pm);
+    vp_grid = create_viewport_grid(logger, cam_ortho, frustum, window_rect, pers_pm);
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       quit = process_event(logger, event, cam_ortho, vp_grid, cube_ents, pm_infos.viewports);

@@ -59,7 +59,7 @@
   NO_MOVE_ASSIGN(CLASSNAME)                                                                        \
   MOVE_CONSTRUCTIBLE(CLASSNAME)
 
-#define MOVE_ONLY(CLASSNAME)                                                                       \
+#define MOVE_DEFAULT_ONLY(CLASSNAME)                                                               \
   NO_COPY(CLASSNAME)                                                                               \
   MOVE_DEFAULT(CLASSNAME)
 

@@ -52,7 +52,7 @@ struct RexLayer
   RexLayer(Width, Height);
   RexLayer() = default;
 
-  MOVE_ONLY(RexLayer);
+  MOVE_DEFAULT_ONLY(RexLayer);
 };
 
 struct RexError
