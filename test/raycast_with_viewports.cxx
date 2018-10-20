@@ -742,8 +742,8 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
 
 
 void
-update(common::Logger& logger, CameraORTHO& camera, ViewportGrid const& vp_grid,
-       glm::ivec2 const& mouse_pos, CubeEntities& cube_ents, FrameTime const& ft)
+update(common::Logger& logger, ViewportGrid const& vp_grid, glm::ivec2 const& mouse_pos,
+       CubeEntities& cube_ents, FrameTime const& ft)
 {
   auto const rect = screen_sector_to_float_rect(MOUSE_INFO.sector, vp_grid);
 
@@ -937,7 +937,7 @@ main(int argc, char **argv)
     }
 
     auto const mouse_pos = get_mousepos();
-    update(logger, cam_ortho, vp_grid, mouse_pos, cube_ents, ft);
+    update(logger, vp_grid, mouse_pos, cube_ents, ft);
     draw_scene(logger, vp_grid, pm_infos, cam_ortho, wire_sp, rect_sp, mouse_pos, cube_ents);
 
     // Update window with OpenGL rendering
