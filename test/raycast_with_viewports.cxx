@@ -79,8 +79,14 @@ struct ViewportDisplayInfo
 
 struct ViewportInfo
 {
+  enum class ProjectionType {
+    Orthographic = 0,
+    Perspective
+  };
+
   Viewport             viewport;
   ScreenSector         screen_sector;
+  ProjectionType       projection_type;
   CameraORTHO          camera;
 
   ViewportDisplayInfo  display = {};
@@ -181,6 +187,24 @@ struct ViewportGrid
   auto center_top()    const { return right_top().viewport.rect().left_top(); }
   auto center_bottom() const { return right_top().viewport.rect().left_bottom(); }
   // clang-format on
+
+  void update(AspectRatio const& ar, Frustum const& frustum, RectInt const& window_rect,
+              glm::mat4 const& pers_pm)
+  {
+    for (auto& vi : *this) {
+      switch (vi.projection_type) {
+        case ViewportInfo::ProjectionType::Orthographic:
+          vi.calc_ortho(AR, frustum, window_rect);
+          break;
+        case ViewportInfo::ProjectionType::Perspective:
+          vi.calc_perspective(pers_pm);
+          break;
+        default:
+          // programming error.
+          std::abort();
+      }
+    }
+  }
 };
 
 ScreenSector
@@ -843,11 +867,12 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect, CameraO
     LOC::YELLOW
   };
 
-  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP, camera.clone()};
-  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP, camera.clone()};
+  using PT = ViewportInfo::ProjectionType;
+  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP, PT::Orthographic, camera.clone()};
+  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP, PT::Perspective, camera.clone()};
 
-  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, camera.clone()};
-  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, camera.clone()};
+  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, PT::Orthographic, camera.clone()};
+  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, PT::Orthographic, camera.clone()};
 
   auto const ss = window_rect.size();
   return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
@@ -954,13 +979,7 @@ main(int argc, char **argv)
   bool quit = false;
   while (!quit) {
     auto const ft = FrameTime::from_timer(timer);
-    {
-      vp_grid.left_top().calc_ortho(AR, frustum, window_rect);
-      vp_grid.left_bottom().calc_ortho(AR, frustum, window_rect);
-
-      vp_grid.right_top().calc_perspective(pers_pm);
-      vp_grid.right_bottom().calc_ortho(AR, frustum, window_rect);
-    }
+    vp_grid.update(AR, frustum, window_rect, pers_pm);
 
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       quit = process_event(logger, event, vp_grid, cube_ents, pm_infos.viewports);
