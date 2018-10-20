@@ -40,8 +40,8 @@ static auto constexpr AR   = AspectRatio{4.0f, 3.0f};
 // clang-format on
 
 using CameraPosition = glm::vec3;
-static auto ORTHO_CAMERA_POS = CameraPosition{0, 1, 0};
-static auto PERS_CAMERA_POS  = CameraPosition{0, 0, 1};
+static auto CAMERA_POS_TOPDOWN = CameraPosition{0, 1, 0};
+static auto CAMERA_POS_INTOSCENE  = CameraPosition{0, 0, 1};
 
 enum ScreenSector
 {
@@ -88,8 +88,8 @@ struct ViewportInfo
 
 public:
   enum class ProjectionType {
-    Orthographic = 0,
-    Perspective
+    TopDown = 0,
+    IntoScene
   };
 
   Viewport       viewport;
@@ -105,10 +105,10 @@ public:
               glm::mat4 const& pers_pm)
   {
     switch (projection_type) {
-      case ViewportInfo::ProjectionType::Orthographic:
+      case ViewportInfo::ProjectionType::TopDown:
         calc_ortho(AR, frustum, window_rect);
         break;
-      case ViewportInfo::ProjectionType::Perspective: {
+      case ViewportInfo::ProjectionType::IntoScene: {
         calc_perspective(pers_pm);
       } break;
       default:
@@ -359,7 +359,7 @@ draw_rectangle_pm(common::Logger& logger, ScreenSize const& ss, RectInt const& v
   };
 
   auto constexpr ZOOM = glm::ivec2{0};
-  auto const pm = CameraORTHO::compute_pm(AR, f, ss, ORTHO_CAMERA_POS, ZOOM);
+  auto const pm = CameraORTHO::compute_pm(AR, f, ss, CAMERA_POS_TOPDOWN, ZOOM);
 
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
   sp.set_uniform_mat4(logger,  "u_projmatrix", pm);
@@ -865,30 +865,31 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
     LOC::LIGHT_GOLDENROD_YELLOW
   };
 
-  auto const     ORTHO_FORWARD = -constants::Y_UNIT_VECTOR;
-  auto constexpr ORTHO_UP      =  constants::Z_UNIT_VECTOR;
+  auto const     TOPDOWN_FORWARD = -constants::Y_UNIT_VECTOR;
+  auto constexpr TOPDOWN_UP      =  constants::Z_UNIT_VECTOR;
 
-  WorldOrientation const ortho_wo{ORTHO_FORWARD, ORTHO_UP};
-  CameraORTHO            camera_ortho{ortho_wo};
-  camera_ortho.position = ORTHO_CAMERA_POS;
 
-  auto const     PERSPECTIVE_FORWARD = -constants::Z_UNIT_VECTOR;
-  auto constexpr PERSPECTIVE_UP      = constants::Y_UNIT_VECTOR;
+  WorldOrientation const ortho_wo{TOPDOWN_FORWARD, TOPDOWN_UP};
+  CameraORTHO            camera_td{ortho_wo};
+  camera_td.position = CAMERA_POS_TOPDOWN;
 
-  WorldOrientation const     pers_wo{PERSPECTIVE_FORWARD, PERSPECTIVE_UP};
-  CameraORTHO                camera_pers_fwd{pers_wo};
-  camera_pers_fwd.position = PERS_CAMERA_POS;
+  auto const     INTOSCENE_FORWARD = -constants::Z_UNIT_VECTOR;
+  auto constexpr INTOSCENE_UP      = constants::Y_UNIT_VECTOR;
 
-  WorldOrientation const     pers_backwards{-PERSPECTIVE_FORWARD, PERSPECTIVE_UP};
-  CameraORTHO                camera_pers_bkwd{pers_backwards};
-  camera_pers_bkwd.position = PERS_CAMERA_POS;
+  WorldOrientation const     wo_intoscene{INTOSCENE_FORWARD, INTOSCENE_UP};
+  CameraORTHO                camera_into_fwd{wo_intoscene};
+  camera_into_fwd.position = CAMERA_POS_INTOSCENE;
+
+  WorldOrientation const     wo_backwards{-INTOSCENE_FORWARD, INTOSCENE_UP};
+  CameraORTHO                camera_into_bkwd{wo_backwards};
+  camera_into_bkwd.position = CAMERA_POS_INTOSCENE;
 
   using PT = ViewportInfo::ProjectionType;
-  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP, PT::Orthographic, camera_ortho.clone()};
-  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP, PT::Perspective, camera_pers_fwd.clone()};
+  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     PT::TopDown, camera_td.clone()};
+  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, PT::TopDown, camera_td.clone()};
 
-  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, PT::Perspective, camera_pers_bkwd.clone()};
-  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, PT::Orthographic, camera_ortho.clone()};
+  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,   PT::IntoScene, camera_into_fwd.clone()};
+  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, PT::IntoScene, camera_into_bkwd.clone()};
 
   auto const ss = window_rect.size();
   return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
