@@ -70,12 +70,12 @@ struct ViewportDisplayInfo
 struct ViewportInfo
 {
   Viewport             viewport;
-  ViewportDisplayInfo  display;
   ScreenSector         screen_sector;
+  glm::vec3            camera_position;
+
+  ViewportDisplayInfo  display = {};
 
   MOVE_DEFAULT_ONLY(ViewportInfo);
-
-  glm::vec3 camera_position;
   auto mouse_offset() const { return viewport.rect().left_top(); }
 };
 
@@ -762,19 +762,17 @@ update(common::Logger& logger, CameraORTHO& camera, ViewportGrid const& vp_grid,
 }
 
 auto
-calculate_vm_fps(common::Logger& logger, glm::vec3 const& forward, glm::vec3 const& up)
+calculate_vm_fps(glm::vec3 const& pos, glm::vec3 const& forward, glm::vec3 const& up)
 {
-  assert(is_unitv(forward));
-  assert(is_unitv(up));
+  assert(math::is_unitv(forward));
+  assert(math::is_unitv(up));
 
-  auto const view_pos = PERS_CAMERA_POS;
-  auto const target   = view_pos + forward;
-  return glm::lookAtRH(view_pos, target, up);
+  auto const target = pos + forward;
+  return glm::lookAtRH(pos, target, up);
 }
 
 auto
-create_viewport_grid(common::Logger &logger, RectInt const& window_rect,
-                     ViewportDisplayInfo const& pers_vdi, ViewportDisplayInfo const& ortho_vdi)
+create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
 {
   int const viewport_width  = window_rect.width() / SCREENSIZE_VIEWPORT_RATIO.x;
   int const viewport_height = window_rect.height() / SCREENSIZE_VIEWPORT_RATIO.y;
@@ -806,12 +804,11 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect,
     LOC::YELLOW
   };
 
+  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP, PERS_CAMERA_POS};
+  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP, PERS_CAMERA_POS};
 
-  ViewportInfo left_top    {lhs_top,    ortho_vdi, ScreenSector::LEFT_TOP, PERS_CAMERA_POS};
-  ViewportInfo right_top   {rhs_top,    pers_vdi, ScreenSector::RIGHT_TOP, PERS_CAMERA_POS};
-
-  ViewportInfo left_bot {lhs_bottom, ortho_vdi, ScreenSector::LEFT_BOTTOM, ORTHO_CAMERA_POS};
-  ViewportInfo right_bot{rhs_bottom, ortho_vdi, ScreenSector::RIGHT_BOTTOM, PERS_CAMERA_POS};
+  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, ORTHO_CAMERA_POS};
+  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, PERS_CAMERA_POS};
 
   auto const ss = window_rect.size();
   return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
@@ -899,8 +896,7 @@ main(int argc, char **argv)
   auto const window_rect = window.view_rect();
   auto const frustum     = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
 
-  ViewportDisplayInfo pers_vdi, ortho_vdi;
-  auto vp_grid = create_viewport_grid(logger, window_rect, pers_vdi, ortho_vdi);
+  auto vp_grid = create_viewport_grid(logger, window_rect);
 
   std::vector<ViewportInfo*> viewport_infos;
   viewport_infos.push_back(&vp_grid.left_bottom);
@@ -911,7 +907,7 @@ main(int argc, char **argv)
   auto wire_sp           = make_wireframe_program(logger);
   auto cube_ents         = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);
 
-  auto const pers_pm     = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
+  glm::mat4 const pers_pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
 
   Timer timer;
   FrameCounter fcounter;
@@ -920,17 +916,22 @@ main(int argc, char **argv)
   while (!quit) {
     auto const ft = FrameTime::from_timer(timer);
 
-    glm::mat4 const ortho_pm = cam_ortho.calc_pm(AR, frustum, window_rect.size());
-    glm::mat4 const ortho_vm = cam_ortho.calc_vm();
+    vp_grid = create_viewport_grid(logger, window_rect);
+    {
+      glm::mat4 const ortho_pm = cam_ortho.calc_pm(AR, frustum, window_rect.size());
+      glm::mat4 const ortho_vm = cam_ortho.calc_vm();
 
-    auto const VIEW_FORWARD = -constants::Z_UNIT_VECTOR;
-    auto const VIEW_UP      = constants::Y_UNIT_VECTOR;
-    glm::mat4 const pers_vm  = calculate_vm_fps(logger, VIEW_FORWARD, VIEW_UP);
+      auto const VIEW_FORWARD = -constants::Z_UNIT_VECTOR;
+      auto const VIEW_UP      = constants::Y_UNIT_VECTOR;
+      glm::mat4 const pers_vm  = calculate_vm_fps(PERS_CAMERA_POS, VIEW_FORWARD, VIEW_UP);
 
-    ortho_vdi = ViewportDisplayInfo{ortho_pm, ortho_vm};
-    pers_vdi  = ViewportDisplayInfo{pers_pm, pers_vm};
+      vp_grid.left_top.display    = ViewportDisplayInfo{ortho_pm, ortho_vm};
+      vp_grid.left_bottom.display = ViewportDisplayInfo{ortho_pm, ortho_vm};
 
-    vp_grid = create_viewport_grid(logger, window_rect, pers_vdi, ortho_vdi);
+      vp_grid.right_top.display    = ViewportDisplayInfo{pers_pm, pers_vm};
+      vp_grid.right_bottom.display = ViewportDisplayInfo{ortho_pm, ortho_vm};
+    }
+
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       quit = process_event(logger, event, cam_ortho, vp_grid, cube_ents, pm_infos.viewports);
     }
