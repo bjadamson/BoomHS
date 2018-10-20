@@ -44,10 +44,9 @@ CameraTarget::validate() const
 // CameraArcball
 CameraArcball::CameraArcball(CameraTarget& t, WorldOrientation const& wo)
     : target_(t)
-    , forward_(wo.forward)
-    , up_(wo.up)
-    , world_up_(up_)
     , coordinates_(0.0f, 0.0f, 0.0f)
+    , orientation_{wo.forward, wo.up}
+    , world_up_(wo.up)
 {
   cs.rotation_lock = false;
   cs.sensitivity.x = 10.0f;
@@ -110,10 +109,10 @@ CameraArcball::rotate_radians(float dx, float dy, FrameTime const& ft)
 
   // If phi in range (0, PI) or (-PI to -2PI), make 'up' be positive Y, otherwise make it negative Y
   if ((phi > 0 && phi < PI) || (phi < -PI && phi > -TWO_PI)) {
-    up_ = world_up_;
+    orientation_.up = world_up_;
   }
   else {
-    up_ = -world_up_;
+    orientation_.up = -world_up_;
   }
   return *this;
 }
@@ -157,7 +156,7 @@ CameraArcball::calc_vm(glm::vec3 const& target_pos) const
 CameraFPS::CameraFPS(CameraTarget& t, WorldOrientation const& wo)
     : xrot_(0)
     , yrot_(0)
-    , world_orientation_(wo)
+    , orientation_(wo)
     , target_(t)
 {
   cs.rotation_lock = true;
@@ -180,9 +179,9 @@ CameraFPS::rotate_radians(float dx, float dy, FrameTime const& ft)
     }
   }
 
-  auto const xaxis = cs.flip_x ? world_orientation_.up : -world_orientation_.up;
+  auto const xaxis = cs.flip_x ? orientation_.up : -orientation_.up;
 
-  auto const yaxis = cs.flip_y ? world_orientation_.right() : -world_orientation_.right();
+  auto const yaxis = cs.flip_y ? orientation_.right() : -orientation_.right();
 
   // combine existing rotation with new rotation.
   // Y-axis first
@@ -218,7 +217,7 @@ CameraFPS::calc_vm(glm::vec3 const& eye_fwd) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraORTHO
 CameraORTHO::CameraORTHO(WorldOrientation const& world_orientation)
-    : world_orientation_(world_orientation)
+    : orientation_(world_orientation)
     , zoom_(VEC2{0, 0})
     , position(0, 1, 0)
 {
@@ -243,8 +242,8 @@ CameraORTHO::calc_pm(AspectRatio const& ar, Frustum const& f, ScreenSize const& 
 glm::mat4
 CameraORTHO::calc_vm() const
 {
-  auto const  center = EYE_FORWARD + world_orientation_.forward;
-  auto const& up     = world_orientation_.up;
+  auto const  center = EYE_FORWARD + orientation_.forward;
+  auto const& up     = orientation_.up;
 
   auto const EYE_POS = EYE_FORWARD + glm::vec3{0, 1 * position.y, 0};
   auto       r       = glm::lookAtRH(EYE_POS, center, up);
@@ -459,17 +458,17 @@ Camera::world_position() const
 }
 
 WorldOrientation const&
-Camera::world_orientation_ref() const
+Camera::orientation_ref() const
 {
   switch (mode()) {
   case CameraMode::FPS:
-    return fps.world_orientation_;
+    return fps.orientation_;
   case CameraMode::Ortho:
   case CameraMode::Fullscreen_2DUI:
-    return ortho.world_orientation_;
+    return ortho.orientation_;
   case CameraMode::ThirdPerson:
     // TODO: FIX FAST
-    return fps.world_orientation_;
+    return fps.orientation_;
 
   case CameraMode::FREE_FLOATING:
   case CameraMode::MAX:

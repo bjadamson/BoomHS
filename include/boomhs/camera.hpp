@@ -81,7 +81,7 @@ struct CameraState
 class CameraFPS
 {
   float     xrot_, yrot_;
-  WorldOrientation const& world_orientation_;
+  WorldOrientation const orientation_;
 
   CameraTarget& target_;
 
@@ -90,8 +90,8 @@ class CameraFPS
   auto&       transform() { return target_.get().transform(); }
   auto const& transform() const { return target_.get().transform(); }
 
-  auto const& forward() const { return world_orientation_.forward; }
-  auto const& up() const { return world_orientation_.up; }
+  auto const& forward() const { return orientation_.forward; }
+  auto const& up() const { return orientation_.up; }
 
 public:
   CameraFPS(CameraTarget&, WorldOrientation const&);
@@ -110,13 +110,13 @@ public:
 
 class CameraORTHO
 {
-  WorldOrientation const& world_orientation_;
+  WorldOrientation const orientation_;
 
   glm::vec2 zoom_;
   friend class Camera;
 
-  auto const& forward() const { return world_orientation_.forward; }
-  auto const& up() const { return world_orientation_.up; }
+  auto const& forward() const { return orientation_.forward; }
+  auto const& up() const { return orientation_.up; }
 
 public:
   CameraORTHO(WorldOrientation const&);
@@ -139,17 +139,18 @@ public:
 
 class CameraArcball
 {
-  CameraTarget& target_;
-  glm::vec3 forward_, up_;
-  glm::vec3 const world_up_;
-
+  CameraTarget&        target_;
   SphericalCoordinates coordinates_;
 
+  WorldOrientation     orientation_;
+  glm::vec3 const      world_up_;
+
+  // methods
   void zoom(float, FrameTime const&);
 
-  auto forward() const { return forward_; }
-  auto up() const { return up_; }
-  auto world_orientation() const { return WorldOrientation{forward(), up()}; }
+  auto forward() const { return orientation_.forward; }
+  auto up() const { return orientation_.up; }
+  auto orientation() const { return WorldOrientation{forward(), up()}; }
 
   friend class Camera;
 
@@ -215,7 +216,7 @@ public:
   glm::vec3 world_forward() const;
   glm::vec3 world_up() const;
   glm::vec3 world_position() const;
-  WorldOrientation const& world_orientation_ref() const;
+  WorldOrientation const& orientation_ref() const;
 
   auto const& view_settings_ref() const { return view_settings_; }
   auto&       view_settings_ref() { return view_settings_; }
