@@ -921,6 +921,8 @@ main(int argc, char **argv)
   SDL_Event event;
   bool quit = false;
   while (!quit) {
+    auto const ft = FrameTime::from_timer(timer);
+
     glm::mat4 const ortho_pm = cam_ortho.calc_pm(AR, frustum, window_rect.size());
     glm::mat4 const ortho_vm = cam_ortho.calc_vm();
 
@@ -932,7 +934,6 @@ main(int argc, char **argv)
     pers_vdi  = ViewportDisplayInfo{pers_pm, pers_vm};
 
     vp_grid = create_viewport_grid(logger, window_rect, pers_vdi, ortho_vdi);
-    auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       quit = process_event(logger, event, cam_ortho, vp_grid, cube_ents, pm_infos.viewports);
     }
