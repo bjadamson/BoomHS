@@ -532,9 +532,9 @@ cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mou
 }
 
 auto
-make_mouse_rect(glm::ivec2 const& mouse_pos)
+make_mouse_rect(glm::ivec2 const& mouse_pos, glm::ivec2 const& delta)
 {
-  auto const& click_pos = MOUSE_INFO.click_positions.left_right;
+  auto const& click_pos = MOUSE_INFO.click_positions.left_right - delta;
 
   auto const lx = lesser_of(click_pos.x, mouse_pos.x);
   auto const rx = other_of_two(lx, PAIR(click_pos.x, mouse_pos.x));
@@ -547,9 +547,12 @@ make_mouse_rect(glm::ivec2 const& mouse_pos)
 
 void
 select_cubes_under_user_drawn_rect(common::Logger& logger, CameraMatrices const& cm,
-                         glm::ivec2 const& mouse_start, CubeEntities& cube_ents)
+                         glm::ivec2 const& mouse_pos, glm::ivec2 const& delta,
+                         CubeEntities& cube_ents)
 {
-  auto const mouse_rect = make_mouse_rect(mouse_start);
+  auto const mouse_start = mouse_pos - delta;
+  auto const mouse_rect = make_mouse_rect(mouse_start, delta);
+  LOG_ERROR_SPRINTF("mouse rect: %s", mouse_rect.to_string());
 
   for (auto &cube_ent : cube_ents) {
     auto const& cube = cube_ent.cube();
@@ -605,13 +608,13 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
   bool const bottom = lhs_bottom || rhs_bottom;
 
   auto const& vi         = vp_grid.screen_sector_to_vi(MOUSE_INFO.sector);
-  auto const mouse_start = mouse_pos - vi.mouse_offset();
   if (lhs_top || rhs_bottom) {
     if (MOUSE_BUTTON_PRESSED) {
-      select_cubes_under_user_drawn_rect(logger, vi.matrices, mouse_start, cube_ents);
+      select_cubes_under_user_drawn_rect(logger, vi.matrices, mouse_pos, vi.mouse_offset(), cube_ents);
     }
   }
   else if (rhs_top || lhs_bottom) {
+    auto const mouse_start = mouse_pos - vi.mouse_offset();
     cast_rays_through_cubes_into_screen(logger, mouse_start, camera_pos, vi, cube_ents);
   }
   else {
