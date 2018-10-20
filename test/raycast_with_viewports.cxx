@@ -185,6 +185,17 @@ struct ViewportGrid
     return screen_sector_to_vi(MOUSE_INFO.sector).camera.position;
   }
 
+  Viewport
+  fullscreen_viewport() const
+  {
+    auto const lt = left_top().viewport.left_top();
+
+    auto const w = screen_size.width;
+    auto const h = screen_size.height;
+
+    return Viewport{lt.x, lt.y, w, h};
+  }
+
   // clang-format off
   auto center()        const { return left_top().viewport.rect().right_bottom(); }
 
@@ -706,7 +717,7 @@ gen_cube_entities(common::Logger& logger, ScreenSize const& ss, ShaderProgram co
 }
 
 void
-draw_cursor_under_mouse(common::Logger& logger, ScreenSize const& ss, RectInt const& viewport,
+allocate_and_draw_line_rect(common::Logger& logger, ScreenSize const& ss, RectInt const& viewport,
                         ShaderProgram& sp, RectFloat const& rect, DrawState& ds)
 {
   auto builder = RectBuilder{rect};
@@ -727,14 +738,7 @@ draw_mouserect(common::Logger& logger, glm::ivec2 const& mouse_pos, ShaderProgra
   float const maxy = mouse_pos.y;
 
   RectFloat mouse_rect{minx, miny, maxx, maxy};
-  mouse_rect.left  *= SCREENSIZE_VIEWPORT_RATIO.x;
-  mouse_rect.right *= SCREENSIZE_VIEWPORT_RATIO.x;
-
-  mouse_rect.top    *= SCREENSIZE_VIEWPORT_RATIO.y;
-  mouse_rect.bottom *= SCREENSIZE_VIEWPORT_RATIO.y;
-
-  OR::set_viewport_and_scissor(view_port, screen_size.height);
-  draw_cursor_under_mouse(logger, screen_size, view_port.rect(), sp, mouse_rect, ds);
+  allocate_and_draw_line_rect(logger, screen_size, view_port.rect(), sp, mouse_rect, ds);
 }
 
 struct PmDrawInfo
@@ -754,12 +758,12 @@ struct PmDrawInfos
 
 void
 draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_infos,
-           Frustum const& frustum,
-           ShaderProgram& wire_sp, ShaderProgram& pm_sp,
+           Frustum const& frustum, ShaderProgram& wire_sp, ShaderProgram& pm_sp,
            glm::ivec2 const& mouse_pos, CubeEntities& cube_ents)
 {
   auto const screen_size    = vp_grid.screen_size;
   auto const screen_height  = screen_size.height;
+  auto const fs_vp          = vp_grid.fullscreen_viewport();
 
   auto const draw_2dscene = [&](DrawState& ds, auto& vi, auto& sp) {
     OR::set_viewport_and_scissor(vi.viewport, screen_height);
@@ -768,7 +772,8 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
     draw_bboxes(logger, m.pm, m.vm, cube_ents, wire_sp, ds);
 
     if (MOUSE_BUTTON_PRESSED) {
-      draw_mouserect(logger, mouse_pos, sp, screen_size, vi.viewport, ds);
+      OR::set_viewport_and_scissor(fs_vp, screen_height);
+      draw_mouserect(logger, mouse_pos, sp, screen_size, fs_vp, ds);
     }
   };
   auto const draw_3dscene = [&](DrawState& ds, auto& vi) {
@@ -807,7 +812,6 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
   // fullscreen
   //draw_pms(ds, vp_grid.fullscreen, pm_info_fs);
 }
-
 
 void
 update(common::Logger& logger, ViewportGrid& vp_grid, glm::ivec2 const& mouse_pos,
