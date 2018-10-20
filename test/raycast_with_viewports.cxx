@@ -65,14 +65,13 @@ static MouseCursorInfo MOUSE_INFO;
 struct ViewportDisplayInfo
 {
   glm::mat4 pm, vm;
+  glm::vec3 camera_position;
 };
 
 struct ViewportInfo
 {
   Viewport             viewport;
   ScreenSector         screen_sector;
-  glm::vec3            camera_position;
-
   ViewportDisplayInfo  display = {};
 
   MOVE_DEFAULT_ONLY(ViewportInfo);
@@ -123,7 +122,7 @@ struct ViewportGrid
   glm::vec3&
   active_camera_pos()
   {
-    return screen_sector_to_vi(MOUSE_INFO.sector).camera_position;
+    return screen_sector_to_vi(MOUSE_INFO.sector).display.camera_position;
   }
 
   // clang-format off
@@ -804,11 +803,11 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
     LOC::YELLOW
   };
 
-  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP, PERS_CAMERA_POS};
-  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP, PERS_CAMERA_POS};
+  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP};
+  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP};
 
-  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, ORTHO_CAMERA_POS};
-  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, PERS_CAMERA_POS};
+  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM};
+  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM};
 
   auto const ss = window_rect.size();
   return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
@@ -915,8 +914,6 @@ main(int argc, char **argv)
   bool quit = false;
   while (!quit) {
     auto const ft = FrameTime::from_timer(timer);
-
-    vp_grid = create_viewport_grid(logger, window_rect);
     {
       glm::mat4 const ortho_pm = cam_ortho.calc_pm(AR, frustum, window_rect.size());
       glm::mat4 const ortho_vm = cam_ortho.calc_vm();
@@ -925,11 +922,16 @@ main(int argc, char **argv)
       auto const VIEW_UP      = constants::Y_UNIT_VECTOR;
       glm::mat4 const pers_vm  = calculate_vm_fps(PERS_CAMERA_POS, VIEW_FORWARD, VIEW_UP);
 
-      vp_grid.left_top.display    = ViewportDisplayInfo{ortho_pm, ortho_vm};
-      vp_grid.left_bottom.display = ViewportDisplayInfo{ortho_pm, ortho_vm};
+      {
+        ViewportDisplayInfo const ortho_vdi{ortho_pm, ortho_vm, ORTHO_CAMERA_POS};
+        ViewportDisplayInfo const pers_vdi{pers_pm, pers_vm, PERS_CAMERA_POS};
 
-      vp_grid.right_top.display    = ViewportDisplayInfo{pers_pm, pers_vm};
-      vp_grid.right_bottom.display = ViewportDisplayInfo{ortho_pm, ortho_vm};
+        vp_grid.left_top.display    = ortho_vdi;
+        vp_grid.left_bottom.display = ortho_vdi;
+
+        vp_grid.right_top.display    = pers_vdi;
+        vp_grid.right_bottom.display = ortho_vdi;
+      }
     }
 
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
