@@ -595,17 +595,13 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 
   auto const& vi         = vp_grid.screen_sector_to_vi(MOUSE_INFO.sector);
   auto const mouse_start = mouse_pos - vi.mouse_offset();
-  if (lhs_top) {
+  if (lhs_top || rhs_bottom) {
     if (MOUSE_BUTTON_PRESSED) {
       select_cubes_under_user_drawn_rect(logger, vi.matrices, mouse_start, cube_ents);
     }
   }
-  else if(lhs_bottom) {
-  }
-  else if (rhs_top) {
+  else if (rhs_top || lhs_bottom) {
     cast_rays_through_cubes_into_screen(logger, mouse_start, camera_pos, vi, cube_ents);
-  }
-  else if (rhs_bottom) {
   }
   else {
     std::abort();
@@ -767,7 +763,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
 
   auto const draw_2dscene = [&](DrawState& ds, auto& vi, auto& sp) {
     OR::set_viewport_and_scissor(vi.viewport, screen_height);
-    OR::clear_screen(LOC::WHITE);
+    OR::clear_screen(vi.viewport.bg_color());
     auto const& m = vi.matrices;
     draw_bboxes(logger, m.pm, m.vm, cube_ents, wire_sp, ds);
 
@@ -777,7 +773,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
   };
   auto const draw_3dscene = [&](DrawState& ds, auto& vi) {
     OR::set_viewport_and_scissor(vi.viewport, screen_height);
-    OR::clear_screen(LOC::BLACK);
+    OR::clear_screen(vi.viewport.bg_color());
     auto const& m = vi.matrices;
     draw_bboxes(logger, m.pm, m.vm, cube_ents, wire_sp, ds);
   };
@@ -803,6 +799,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
 
   // draw RHS
   draw_3dscene(ds, vp_grid.right_top());
+  draw_3dscene(ds, vp_grid.left_bottom());
 
   // draw PMS
   draw_pms(ds, pm_infos);
@@ -859,13 +856,13 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
     PAIR(window_rect.left, mid_height),
     viewport_width,
     viewport_height,
-    LOC::BLUE
+    LOC::LIGHT_SKY_BLUE
   };
   auto const rhs_bottom = Viewport{
     PAIR(viewport_width, mid_height),
     viewport_width,
     viewport_height,
-    LOC::YELLOW
+    LOC::LIGHT_GOLDENROD_YELLOW
   };
 
   auto const     ORTHO_FORWARD = -constants::Y_UNIT_VECTOR;
@@ -878,15 +875,19 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   auto const     PERSPECTIVE_FORWARD = -constants::Z_UNIT_VECTOR;
   auto constexpr PERSPECTIVE_UP      = constants::Y_UNIT_VECTOR;
 
-  WorldOrientation const pers_wo{PERSPECTIVE_FORWARD, PERSPECTIVE_UP};
-  CameraORTHO            camera_pers{pers_wo};
-  camera_pers.position = PERS_CAMERA_POS;
+  WorldOrientation const     pers_wo{PERSPECTIVE_FORWARD, PERSPECTIVE_UP};
+  CameraORTHO                camera_pers_fwd{pers_wo};
+  camera_pers_fwd.position = PERS_CAMERA_POS;
+
+  WorldOrientation const     pers_backwards{-PERSPECTIVE_FORWARD, PERSPECTIVE_UP};
+  CameraORTHO                camera_pers_bkwd{pers_backwards};
+  camera_pers_bkwd.position = PERS_CAMERA_POS;
 
   using PT = ViewportInfo::ProjectionType;
   ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP, PT::Orthographic, camera_ortho.clone()};
-  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP, PT::Perspective, camera_pers.clone()};
+  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP, PT::Perspective, camera_pers_fwd.clone()};
 
-  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, PT::Orthographic, camera_ortho.clone()};
+  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, PT::Perspective, camera_pers_bkwd.clone()};
   ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, PT::Orthographic, camera_ortho.clone()};
 
   auto const ss = window_rect.size();
