@@ -83,6 +83,11 @@ struct CameraState
   auto& target() { CAMERA_TARGET_BODY_IMPL }                                                       \
   auto const& target() const { CAMERA_TARGET_BODY_IMPL }
 
+using CameraPosition = glm::vec3;
+using CameraCenter   = glm::vec3;
+using CameraForward  = glm::vec3;
+using CameraUp       = glm::vec3;
+
 class CameraFPS
 {
   float            xrot_, yrot_;
@@ -121,10 +126,8 @@ class CameraORTHO
   glm::vec2 zoom_;
   friend class Camera;
 
-  auto const& forward() const { return orientation_.forward; }
-  auto const& up() const { return orientation_.up; }
-
   COPY_DEFAULT(CameraORTHO);
+
 public:
   CameraORTHO(WorldOrientation const&);
   MOVE_DEFAULT(CameraORTHO);
@@ -134,8 +137,14 @@ public:
   glm::vec3 position;
 
   // methods
+  // Compute the projection-matrix.
   glm::mat4 calc_pm(AspectRatio const&, Frustum const&, ScreenSize const&) const;
+
+  // Compute the view-matrix.
   glm::mat4 calc_vm() const;
+
+  auto const& forward() const { return orientation_.forward; }
+  auto const& up() const { return orientation_.up; }
 
   void grow_view(glm::vec2 const&);
   void shink_view(glm::vec2 const&);
@@ -148,6 +157,13 @@ public:
   // Rationale: It is easy to accidentally take a reference to a copy of an instance of this class.
   // To make it more unlikely, force the user to call clone().
   auto clone() const { return *this; }
+
+  // Compute the projection-matrix.
+  static glm::mat4 compute_pm(AspectRatio const&, Frustum const&, ScreenSize const&,
+                              CameraPosition const&, glm::ivec2 const&);
+
+  // Compute the view-matrix.
+  static glm::mat4 compute_vm(CameraPosition const&, CameraCenter const&, CameraUp const&);
 };
 
 class CameraArcball

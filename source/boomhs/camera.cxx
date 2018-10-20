@@ -224,11 +224,18 @@ CameraORTHO::CameraORTHO(WorldOrientation const& world_orientation)
 }
 
 glm::mat4
-CameraORTHO::calc_pm(AspectRatio const& ar, Frustum const& f, ScreenSize const& view_size) const
+CameraORTHO::calc_pm(AspectRatio const& ar, Frustum const& f, ScreenSize const& ss) const
 {
-  auto const& view_width  = view_size.width;
-  auto const& view_height = view_size.height;
-  auto const& zoom        = this->zoom();
+  auto const& zoom = this->zoom();
+  return compute_pm(ar, f, ss, position, zoom);
+}
+
+glm::mat4
+CameraORTHO::compute_pm(AspectRatio const& AR, Frustum const& f, ScreenSize const& ss,
+    CameraPosition const& position, glm::ivec2 const& zoom)
+{
+  auto const& view_width  = ss.width;
+  auto const& view_height = ss.height;
 
   // clang-format off
   float const left  = 0.0f + f.left      + zoom.x - position.x;
@@ -244,12 +251,18 @@ CameraORTHO::calc_pm(AspectRatio const& ar, Frustum const& f, ScreenSize const& 
 glm::mat4
 CameraORTHO::calc_vm() const
 {
-  auto const  target = position + orientation_.forward;
+  auto const pos     = position;
+  auto const  target = pos + orientation_.forward;
   auto const& up     = orientation_.up;
-  auto const pos = position;
 
+  return compute_vm(pos, target, up);
+}
+
+glm::mat4
+CameraORTHO::compute_vm(CameraPosition const& pos, CameraCenter const& center, CameraUp const& up)
+{
   // Calculate the view model matrix.
-  auto vm = glm::lookAtRH(pos, target, up);
+  auto vm = glm::lookAtRH(pos, center, up);
 
   // Flip the "right" vector computed by lookAt() so the X-Axis points "right" onto the screen.
   //
