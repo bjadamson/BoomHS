@@ -124,9 +124,10 @@ class CameraORTHO
   auto const& forward() const { return orientation_.forward; }
   auto const& up() const { return orientation_.up; }
 
+  COPY_DEFAULT(CameraORTHO);
 public:
   CameraORTHO(WorldOrientation const&);
-  MOVE_DEFAULT_ONLY(CameraORTHO);
+  MOVE_DEFAULT(CameraORTHO);
 
   // fields
   static glm::vec3 constexpr EYE_FORWARD = math::constants::Y_UNIT_VECTOR;
@@ -141,6 +142,12 @@ public:
 
   void scroll(glm::vec2 const&);
   auto const& zoom() const { return zoom_; }
+
+  // Explicit copy method.
+  //
+  // Rationale: It is easy to accidentally take a reference to a copy of an instance of this class.
+  // To make it more unlikely, force the user to call clone().
+  auto clone() const { return *this; }
 };
 
 class CameraArcball

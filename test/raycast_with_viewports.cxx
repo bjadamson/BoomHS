@@ -62,6 +62,16 @@ static bool MOUSE_BUTTON_PRESSED        = false;
 static bool MIDDLE_MOUSE_BUTTON_PRESSED = false;
 static MouseCursorInfo MOUSE_INFO;
 
+auto
+calculate_vm_fps(glm::vec3 const& pos, glm::vec3 const& forward, glm::vec3 const& up)
+{
+  assert(math::is_unitv(forward));
+  assert(math::is_unitv(up));
+
+  auto const target = pos + forward;
+  return glm::lookAtRH(pos, target, up);
+}
+
 struct ViewportDisplayInfo
 {
   glm::mat4 pm, vm;
@@ -72,38 +82,76 @@ struct ViewportInfo
 {
   Viewport             viewport;
   ScreenSector         screen_sector;
+  CameraORTHO          camera;
+
   ViewportDisplayInfo  display = {};
 
   MOVE_DEFAULT_ONLY(ViewportInfo);
   auto mouse_offset() const { return viewport.rect().left_top(); }
-};
 
-#define SCREEN_SECTOR_TO_VI_IMPL                                                                   \
-  auto const match      = [&ss](auto const& vi) { return vi.screen_sector == ss; };                \
-  if (match(left_top)) {                                                                           \
-    return left_top;                                                                               \
-  }                                                                                                \
-  else if (match(left_bottom)) {                                                                   \
-    return left_bottom;                                                                            \
-  }                                                                                                \
-  else if (match(right_bottom)) {                                                                  \
-    return right_bottom;                                                                           \
-  }                                                                                                \
-  else if (match(right_top)) {                                                                     \
-    return right_top;                                                                              \
-  }                                                                                                \
-                                                                                                   \
-  /* If we get here, programming error.*/                                                          \
-  std::abort();
+  void calc_ortho(AspectRatio const& ar, Frustum const& frustum, RectInt const& rect)
+  {
+    display.pm = camera.calc_pm(AR, frustum, rect.size());
+    display.vm = camera.calc_vm();
+  }
+
+  void calc_perspective(glm::mat4 const& pm)
+  {
+    auto const VIEW_FORWARD = -constants::Z_UNIT_VECTOR;
+    auto const VIEW_UP      = constants::Y_UNIT_VECTOR;
+    glm::mat4 const vm      = calculate_vm_fps(PERS_CAMERA_POS, VIEW_FORWARD, VIEW_UP);
+
+    display.pm = pm;
+    display.vm = vm;
+  }
+};
 
 struct ViewportGrid
 {
   ScreenSize   screen_size;
 
-  ViewportInfo left_top,    right_top;
-  ViewportInfo left_bottom, right_bottom;
+  std::array<ViewportInfo, 4> infos;
 
+  ViewportGrid(ScreenSize const& ss, ViewportInfo&& lt, ViewportInfo&& rt, ViewportInfo&& lb,
+               ViewportInfo&& rb)
+      : infos(common::make_array<ViewportInfo>(MOVE(lt), MOVE(rt), MOVE(lb), MOVE(rb)))
+      , screen_size(ss)
+  {
+  }
+
+  BEGIN_END_FORWARD_FNS(infos);
+  INDEX_OPERATOR_FNS(infos);
   MOVE_DEFAULT_ONLY(ViewportGrid);
+
+  auto& left_top() { return infos[0]; }
+  auto const& left_top() const { return infos[0]; }
+
+  auto& right_top() { return infos[1]; }
+  auto const& right_top() const { return infos[1]; }
+
+  auto& left_bottom() { return infos[2]; }
+  auto const& left_bottom() const { return infos[2]; }
+
+  auto& right_bottom() { return infos[3]; }
+  auto const& right_bottom() const { return infos[3]; }
+
+#define SCREEN_SECTOR_TO_VI_IMPL                                                                   \
+  auto const match      = [&ss](auto const& vi) { return vi.screen_sector == ss; };                \
+  if (match(left_top())) {                                                                         \
+    return left_top();                                                                             \
+  }                                                                                                \
+  else if (match(left_bottom())) {                                                                 \
+    return left_bottom();                                                                          \
+  }                                                                                                \
+  else if (match(right_bottom())) {                                                                \
+    return right_bottom();                                                                         \
+  }                                                                                                \
+  else if (match(right_top())) {                                                                   \
+    return right_top();                                                                            \
+  }                                                                                                \
+                                                                                                   \
+  /* If we get here, programming error.*/                                                          \
+  std::abort();
 
   ViewportInfo const&
   screen_sector_to_vi(ScreenSector const ss) const
@@ -126,13 +174,13 @@ struct ViewportGrid
   }
 
   // clang-format off
-  auto center()        const { return left_top.viewport.rect().right_bottom(); }
+  auto center()        const { return left_top().viewport.rect().right_bottom(); }
 
-  auto center_left()   const { return left_top.viewport.rect().left_bottom(); }
-  auto center_right()  const { return right_top.viewport.rect().right_bottom(); }
+  auto center_left()   const { return left_top().viewport.rect().left_bottom(); }
+  auto center_right()  const { return right_top().viewport.rect().right_bottom(); }
 
-  auto center_top()    const { return right_top.viewport.rect().left_top(); }
-  auto center_bottom() const { return right_top.viewport.rect().left_bottom(); }
+  auto center_top()    const { return right_top().viewport.rect().left_top(); }
+  auto center_bottom() const { return right_top().viewport.rect().left_bottom(); }
   // clang-format on
 };
 
@@ -551,8 +599,8 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 }
 
 bool
-process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
-              ViewportGrid& vp_grid, CubeEntities& cube_ents, PmViewports& pm_vps)
+process_event(common::Logger& logger, SDL_Event& event, ViewportGrid& vp_grid,
+              CubeEntities& cube_ents, PmViewports& pm_vps)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
   auto &camera_pos = vp_grid.active_camera_pos();
@@ -565,11 +613,14 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
   }
   else if (event.type == SDL_MOUSEWHEEL) {
     auto& wheel = event.wheel;
-    if (wheel.y > 0) {
-      cam_ortho.grow_view(VEC2{1.0f});
-    }
-    else {
-      cam_ortho.shink_view(VEC2{1.0f});
+
+    auto const& fn = (wheel.y > 0)
+      ? &CameraORTHO::grow_view
+      : &CameraORTHO::shink_view;
+
+    for (auto& vp : vp_grid) {
+      auto& camera = vp.camera;
+      (camera.*fn)(glm::vec2{1.0f});
     }
   }
   else if (event.type == SDL_MOUSEMOTION) {
@@ -726,11 +777,11 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
 
   DrawState ds;
   // draw LHS
-  draw_2dscene(ds, vp_grid.left_top, pm_sp);
-  draw_2dscene(ds, vp_grid.right_bottom, pm_sp);
+  draw_2dscene(ds, vp_grid.left_top(), pm_sp);
+  draw_2dscene(ds, vp_grid.right_bottom(), pm_sp);
 
   // draw RHS
-  draw_3dscene(ds, vp_grid.right_top);
+  draw_3dscene(ds, vp_grid.right_top());
 
   // draw PMS
   draw_pms(ds, pm_infos);
@@ -761,17 +812,7 @@ update(common::Logger& logger, ViewportGrid const& vp_grid, glm::ivec2 const& mo
 }
 
 auto
-calculate_vm_fps(glm::vec3 const& pos, glm::vec3 const& forward, glm::vec3 const& up)
-{
-  assert(math::is_unitv(forward));
-  assert(math::is_unitv(up));
-
-  auto const target = pos + forward;
-  return glm::lookAtRH(pos, target, up);
-}
-
-auto
-create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
+create_viewport_grid(common::Logger &logger, RectInt const& window_rect, CameraORTHO const& camera)
 {
   int const viewport_width  = window_rect.width() / SCREENSIZE_VIEWPORT_RATIO.x;
   int const viewport_height = window_rect.height() / SCREENSIZE_VIEWPORT_RATIO.y;
@@ -803,11 +844,11 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
     LOC::YELLOW
   };
 
-  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP};
-  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP};
+  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP, camera.clone()};
+  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP, camera.clone()};
 
-  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM};
-  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM};
+  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, camera.clone()};
+  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, camera.clone()};
 
   auto const ss = window_rect.size();
   return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
@@ -895,11 +936,11 @@ main(int argc, char **argv)
   auto const window_rect = window.view_rect();
   auto const frustum     = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
 
-  auto vp_grid = create_viewport_grid(logger, window_rect);
+  auto vp_grid = create_viewport_grid(logger, window_rect, cam_ortho);
 
   std::vector<ViewportInfo*> viewport_infos;
-  viewport_infos.push_back(&vp_grid.left_bottom);
-  viewport_infos.push_back(&vp_grid.right_top);
+  viewport_infos.push_back(&vp_grid.left_bottom());
+  viewport_infos.push_back(&vp_grid.right_top());
 
   RNG rng;
   auto pm_infos          = make_pminfos(logger, rect_sp, rng, viewport_infos);
@@ -915,27 +956,15 @@ main(int argc, char **argv)
   while (!quit) {
     auto const ft = FrameTime::from_timer(timer);
     {
-      glm::mat4 const ortho_pm = cam_ortho.calc_pm(AR, frustum, window_rect.size());
-      glm::mat4 const ortho_vm = cam_ortho.calc_vm();
+      vp_grid.left_top().calc_ortho(AR, frustum, window_rect);
+      vp_grid.left_bottom().calc_ortho(AR, frustum, window_rect);
 
-      auto const VIEW_FORWARD = -constants::Z_UNIT_VECTOR;
-      auto const VIEW_UP      = constants::Y_UNIT_VECTOR;
-      glm::mat4 const pers_vm  = calculate_vm_fps(PERS_CAMERA_POS, VIEW_FORWARD, VIEW_UP);
-
-      {
-        ViewportDisplayInfo const ortho_vdi{ortho_pm, ortho_vm, ORTHO_CAMERA_POS};
-        ViewportDisplayInfo const pers_vdi{pers_pm, pers_vm, PERS_CAMERA_POS};
-
-        vp_grid.left_top.display    = ortho_vdi;
-        vp_grid.left_bottom.display = ortho_vdi;
-
-        vp_grid.right_top.display    = pers_vdi;
-        vp_grid.right_bottom.display = ortho_vdi;
-      }
+      vp_grid.right_top().calc_perspective(pers_pm);
+      vp_grid.right_bottom().calc_ortho(AR, frustum, window_rect);
     }
 
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
-      quit = process_event(logger, event, cam_ortho, vp_grid, cube_ents, pm_infos.viewports);
+      quit = process_event(logger, event, vp_grid, cube_ents, pm_infos.viewports);
     }
 
     auto const mouse_pos = get_mousepos();
