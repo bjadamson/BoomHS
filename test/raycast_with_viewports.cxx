@@ -72,7 +72,6 @@ struct ViewportInfo
   Viewport             viewport;
   ViewportDisplayInfo  display;
   ScreenSector         screen_sector;
-  glm::vec3            forward, up;
 
   MOVE_DEFAULT_ONLY(ViewportInfo);
 
@@ -455,7 +454,7 @@ cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mou
 }
 
 auto
-make_mouse_rect(CameraORTHO const& camera, glm::ivec2 const& mouse_pos)
+make_mouse_rect(glm::ivec2 const& mouse_pos)
 {
   auto const& click_pos = MOUSE_INFO.click_positions.left_right;
 
@@ -469,11 +468,10 @@ make_mouse_rect(CameraORTHO const& camera, glm::ivec2 const& mouse_pos)
 }
 
 void
-select_cubes_under_user_drawn_rect(common::Logger& logger, CameraORTHO const& cam_ortho,
-                         ViewportDisplayInfo const& vdi,
+select_cubes_under_user_drawn_rect(common::Logger& logger, ViewportDisplayInfo const& vdi,
                          glm::ivec2 const& mouse_start, CubeEntities& cube_ents)
 {
-  auto const mouse_rect = make_mouse_rect(cam_ortho, mouse_start);
+  auto const mouse_rect = make_mouse_rect(mouse_start);
 
   for (auto &cube_ent : cube_ents) {
     auto const& cube = cube_ent.cube();
@@ -491,12 +489,12 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, CameraORTHO const& ca
     auto const zm = tr.translation.z / SCREENSIZE_VIEWPORT_RATIO.y;
     xz.move(xm, zm);
 
-    auto const zoom = cam_ortho.zoom();
-    xz.left  += zoom.x;
-    xz.right -= zoom.x;
+    //auto const zoom = cam_ortho.zoom();
+    //xz.left  += zoom.x;
+    //xz.right -= zoom.x;
 
-    xz.top    += zoom.y;
-    xz.bottom -= zoom.y;
+    //xz.top    += zoom.y;
+    //xz.bottom -= zoom.y;
 
     RectTransform const rect_tr{xz, tr};
 
@@ -510,8 +508,7 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, CameraORTHO const& ca
 
 void
 process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
-                    CameraPosition &camera_pos,
-                    CameraORTHO const& cam_ortho, ViewportGrid const& vp_grid,
+                    CameraPosition &camera_pos, ViewportGrid const& vp_grid,
                     PmViewports& pm_vps, CubeEntities& cube_ents)
 {
   auto const mouse_pos = glm::ivec2{motion.x, motion.y};
@@ -533,7 +530,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
   auto const mouse_start = mouse_pos - vi.mouse_offset();
   if (lhs_top) {
     if (MOUSE_BUTTON_PRESSED) {
-      select_cubes_under_user_drawn_rect(logger, cam_ortho, vi.display, mouse_start, cube_ents);
+      select_cubes_under_user_drawn_rect(logger, vi.display, mouse_start, cube_ents);
     }
   }
   else if(lhs_bottom) {
@@ -577,7 +574,7 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
     }
   }
   else if (event.type == SDL_MOUSEMOTION) {
-    process_mousemotion(logger, event.motion, camera_pos, cam_ortho, vp_grid, pm_vps, cube_ents);
+    process_mousemotion(logger, event.motion, camera_pos, vp_grid, pm_vps, cube_ents);
   }
   else if (event.type == SDL_MOUSEBUTTONDOWN) {
     auto const& mouse_button = event.button;
