@@ -88,8 +88,8 @@ struct ViewportInfo
 
 public:
   enum class ProjectionType {
-    TopDown = 0,
-    IntoScene
+    Ortho = 0,
+    Perspective
   };
 
   Viewport       viewport;
@@ -105,10 +105,10 @@ public:
               glm::mat4 const& pers_pm)
   {
     switch (projection_type) {
-      case ViewportInfo::ProjectionType::TopDown:
+      case ViewportInfo::ProjectionType::Ortho:
         calc_ortho(AR, frustum, window_rect);
         break;
-      case ViewportInfo::ProjectionType::IntoScene: {
+      case ViewportInfo::ProjectionType::Perspective: {
         calc_perspective(pers_pm);
       } break;
       default:
@@ -370,7 +370,7 @@ draw_rectangle_pm(common::Logger& logger, ScreenSize const& ss, RectInt const& v
   };
 
   auto constexpr ZOOM = glm::ivec2{0};
-  auto const pm = CameraORTHO::compute_pm(AR, f, ss, CAMERA_POS_TOPDOWN, ZOOM);
+  auto const pm = CameraORTHO::compute_pm(AR, f, ss, constants::ZERO, ZOOM);
 
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
   sp.set_uniform_mat4(logger,  "u_projmatrix", pm);
@@ -892,11 +892,11 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   camera_into_bkwd.position = CAMERA_POS_INTOSCENE;
 
   using PT = ViewportInfo::ProjectionType;
-  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     PT::TopDown, camera_td.clone()};
-  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, PT::TopDown, camera_td.clone()};
+  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     PT::Ortho, camera_td.clone()};
+  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, PT::Ortho, camera_td.clone()};
 
-  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,   PT::IntoScene, camera_into_fwd.clone()};
-  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, PT::IntoScene, camera_into_bkwd.clone()};
+  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,   PT::Perspective, camera_into_fwd.clone()};
+  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, PT::Perspective, camera_into_bkwd.clone()};
 
   auto const ss = window_rect.size();
   return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
