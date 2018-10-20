@@ -60,6 +60,15 @@ struct EngineState
   // Current player movement vector
   MovementState movement_state = {};
 
+  // While the user has "pressed" a mouse button down and held it, this value holds the origin of
+  // where the user began holding down the mouse button.
+  //
+  // This field is useful for drawing things relative to where a user clicks and holds down/drags
+  // the mouse.
+  //
+  // ie: Unit selection from a top-down perspective.
+  MouseClickPositions mouse_click_origin;
+
   bool disable_controller_input;
   bool player_collision;
   bool mariolike_edges;

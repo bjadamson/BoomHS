@@ -2,6 +2,7 @@
 #include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/frame_time.hpp>
+#include <boomhs/mouse.hpp>
 #include <boomhs/raycast.hpp>
 #include <boomhs/random.hpp>
 #include <boomhs/vertex_factory.hpp>
@@ -54,6 +55,7 @@ enum ScreenSector
 struct MouseCursorInfo
 {
   ScreenSector sector;
+  MouseClickPositions click_positions;
 };
 
 static bool MOUSE_BUTTON_PRESSED        = false;
@@ -70,6 +72,7 @@ struct ViewportInfo
   Viewport             viewport;
   ViewportDisplayInfo  display;
   ScreenSector         screen_sector;
+  glm::vec3            forward, up;
 
   MOVE_DEFAULT_ONLY(ViewportInfo);
 
@@ -454,7 +457,7 @@ cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mou
 auto
 make_mouse_rect(CameraORTHO const& camera, glm::ivec2 const& mouse_pos)
 {
-  auto const& click_pos = camera.mouse_click.left_right;
+  auto const& click_pos = MOUSE_INFO.click_positions.left_right;
 
   auto const lx = lesser_of(click_pos.x, mouse_pos.x);
   auto const rx = other_of_two(lx, PAIR(click_pos.x, mouse_pos.x));
@@ -580,13 +583,13 @@ process_event(common::Logger& logger, SDL_Event& event, CameraORTHO& cam_ortho,
     auto const& mouse_button = event.button;
     if (mouse_button.button == SDL_BUTTON_MIDDLE) {
       MIDDLE_MOUSE_BUTTON_PRESSED = true;
-      auto &middle_clickpos = cam_ortho.mouse_click.middle;
+      auto &middle_clickpos = MOUSE_INFO.click_positions.middle;
       middle_clickpos.x = mouse_button.x;
       middle_clickpos.y = mouse_button.y;
     }
     else {
       MOUSE_BUTTON_PRESSED = true;
-      auto &leftright_clickpos = cam_ortho.mouse_click.left_right;
+      auto &leftright_clickpos = MOUSE_INFO.click_positions.left_right;
       leftright_clickpos.x = mouse_button.x;
       leftright_clickpos.y = mouse_button.y;
     }
@@ -656,7 +659,7 @@ draw_mouserect(common::Logger& logger, CameraORTHO const& camera,
                ScreenSize const& screen_size, Viewport const& view_port,
                DrawState& ds)
 {
-  auto const& click_pos = camera.mouse_click.left_right;
+  auto const& click_pos = MOUSE_INFO.click_positions.left_right;
   float const minx = click_pos.x;
   float const miny = click_pos.y;
   float const maxx = mouse_pos.x;
@@ -748,7 +751,7 @@ update(common::Logger& logger, CameraORTHO& camera, ViewportGrid const& vp_grid,
   auto const rect = screen_sector_to_float_rect(MOUSE_INFO.sector, vp_grid);
 
   if (MIDDLE_MOUSE_BUTTON_PRESSED) {
-    auto const& middle_clickpos = camera.mouse_click.middle;
+    auto const& middle_clickpos = MOUSE_INFO.click_positions.middle;
     float const distance        = pythag_distance(middle_clickpos, mouse_pos);
 
     float const dx = (mouse_pos - middle_clickpos).x / rect.width();
@@ -773,18 +776,9 @@ calculate_vm_fps(common::Logger& logger, glm::vec3 const& forward, glm::vec3 con
 }
 
 auto
-create_viewport_grid(common::Logger &logger, CameraORTHO const& camera, Frustum const& frustum,
-                     RectInt const& window_rect, glm::mat4 const& pers_pm)
+create_viewport_grid(common::Logger &logger, RectInt const& window_rect,
+                     ViewportDisplayInfo const& pers_vdi, ViewportDisplayInfo const& ortho_vdi)
 {
-  glm::mat4 const ortho_pm = camera.calc_pm(AR, frustum, window_rect.size(), VEC2(0));
-  glm::mat4 const ortho_vm = camera.calc_vm();
-  ViewportDisplayInfo const ortho_vdi{ortho_pm, ortho_vm};
-
-  auto const VIEW_FORWARD = -constants::Z_UNIT_VECTOR;
-  auto const VIEW_UP      = constants::Y_UNIT_VECTOR;
-  glm::mat4 const pers_vm  = calculate_vm_fps(logger, VIEW_FORWARD, VIEW_UP);
-  ViewportDisplayInfo const pers_vdi{pers_pm, pers_vm};
-
   int const viewport_width  = window_rect.width() / SCREENSIZE_VIEWPORT_RATIO.x;
   int const viewport_height = window_rect.height() / SCREENSIZE_VIEWPORT_RATIO.y;
 
@@ -907,8 +901,9 @@ main(int argc, char **argv)
   auto& window           = gl_sdl.window;
   auto const window_rect = window.view_rect();
   auto const frustum     = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
-  auto const pers_pm     = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
-  auto vp_grid           = create_viewport_grid(logger, cam_ortho, frustum, window_rect, pers_pm);
+
+  ViewportDisplayInfo pers_vdi, ortho_vdi;
+  auto vp_grid = create_viewport_grid(logger, window_rect, pers_vdi, ortho_vdi);
 
   std::vector<ViewportInfo*> viewport_infos;
   viewport_infos.push_back(&vp_grid.left_bottom);
@@ -919,12 +914,24 @@ main(int argc, char **argv)
   auto wire_sp           = make_wireframe_program(logger);
   auto cube_ents         = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);
 
+  auto const pers_pm     = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
+
   Timer timer;
   FrameCounter fcounter;
   SDL_Event event;
   bool quit = false;
   while (!quit) {
-    vp_grid = create_viewport_grid(logger, cam_ortho, frustum, window_rect, pers_pm);
+    glm::mat4 const ortho_pm = cam_ortho.calc_pm(AR, frustum, window_rect.size(), VEC2(0));
+    glm::mat4 const ortho_vm = cam_ortho.calc_vm();
+
+    auto const VIEW_FORWARD = -constants::Z_UNIT_VECTOR;
+    auto const VIEW_UP      = constants::Y_UNIT_VECTOR;
+    glm::mat4 const pers_vm  = calculate_vm_fps(logger, VIEW_FORWARD, VIEW_UP);
+
+    ortho_vdi = ViewportDisplayInfo{ortho_pm, ortho_vm};
+    pers_vdi  = ViewportDisplayInfo{pers_pm, pers_vm};
+
+    vp_grid = create_viewport_grid(logger, window_rect, pers_vdi, ortho_vdi);
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       quit = process_event(logger, event, cam_ortho, vp_grid, cube_ents, pm_infos.viewports);

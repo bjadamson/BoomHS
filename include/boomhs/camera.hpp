@@ -126,13 +126,6 @@ public:
   static glm::vec3 constexpr EYE_FORWARD = math::constants::Y_UNIT_VECTOR;
   glm::vec3 position;
 
-  struct ClickPositions {
-    glm::ivec2 left_right;
-    glm::ivec2 middle;
-  };
-
-  ClickPositions mouse_click;
-
   // methods
   glm::mat4 calc_pm(AspectRatio const&, Frustum const&, ScreenSize const&, glm::vec2 const&) const;
   glm::mat4 calc_vm() const;

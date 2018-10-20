@@ -33,6 +33,11 @@ public:
   ~CursorManager();
 };
 
+struct MouseClickPositions {
+  glm::ivec2 left_right;
+  glm::ivec2 middle;
+};
+
 class MouseState
 {
   auto mask() const { return SDL_GetMouseState(nullptr, nullptr); }

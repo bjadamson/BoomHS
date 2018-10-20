@@ -163,8 +163,8 @@ PlayerPlayingGameBehavior::mousebutton_down(MouseButtonEvent&& mbe)
   }
   else if (mode == CameraMode::Ortho) {
     if (ms.middle_pressed()) {
-      auto const c                        = glm::vec2{ms.coords().x, ms.coords().y};
-      camera.ortho.mouse_click.left_right = c;
+      auto const c                     = glm::vec2{ms.coords().x, ms.coords().y};
+      es.mouse_click_origin.left_right = c;
 
       auto& ds = es.device_states;
       ds.cursors.set_active(SDL_SYSTEM_CURSOR_HAND);
@@ -425,7 +425,7 @@ PlayerPlayingGameBehavior::process_mouse_state(MouseAndKeyboardArgs&& mk)
   }
   else if (mode == CameraMode::Ortho) {
     if (ms_now.middle_pressed()) {
-      auto const& click_pos = camera.ortho.mouse_click.middle;
+      auto const& click_pos = es.mouse_click_origin.middle;
 
       auto const coords_now = ms_now.coords();
       auto const distance   = pythag_distance(click_pos, coords_now);
