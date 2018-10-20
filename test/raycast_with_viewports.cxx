@@ -815,8 +815,9 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
 
 
 void
-update(common::Logger& logger, ViewportGrid const& vp_grid, glm::ivec2 const& mouse_pos,
-       CubeEntities& cube_ents, FrameTime const& ft)
+update(common::Logger& logger, ViewportGrid& vp_grid, glm::ivec2 const& mouse_pos,
+       CubeEntities& cube_ents, Frustum const& frustum, RectInt const& window_rect,
+       glm::mat4 const& pers_pm, FrameTime const& ft)
 {
   auto const rect = screen_sector_to_float_rect(MOUSE_INFO.sector, vp_grid);
 
@@ -832,6 +833,8 @@ update(common::Logger& logger, ViewportGrid const& vp_grid, glm::ivec2 const& mo
 
     move_cubes(glm::vec3{dx, 0, dy} * multiplier, cube_ents);
   }
+
+  vp_grid.update(AR, frustum, window_rect, pers_pm);
 }
 
 auto
@@ -973,20 +976,19 @@ main(int argc, char **argv)
 
   glm::mat4 const pers_pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
 
-  Timer timer;
   FrameCounter fcounter;
   SDL_Event event;
   bool quit = false;
+
+  Timer timer;
   while (!quit) {
     auto const ft = FrameTime::from_timer(timer);
-    vp_grid.update(AR, frustum, window_rect, pers_pm);
-
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       quit = process_event(logger, event, vp_grid, cube_ents, pm_infos.viewports);
     }
 
     auto const mouse_pos = get_mousepos();
-    update(logger, vp_grid, mouse_pos, cube_ents, ft);
+    update(logger, vp_grid, mouse_pos, cube_ents, frustum, window_rect, pers_pm, ft);
     draw_scene(logger, vp_grid, pm_infos, cam_ortho, wire_sp, rect_sp, mouse_pos, cube_ents);
 
     // Update window with OpenGL rendering
