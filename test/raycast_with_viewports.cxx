@@ -75,7 +75,6 @@ calculate_vm_fps(glm::vec3 const& pos, glm::vec3 const& forward, glm::vec3 const
 struct ViewportDisplayInfo
 {
   glm::mat4 pm, vm;
-  glm::vec3 camera_position;
 };
 
 struct ViewportInfo
@@ -170,7 +169,7 @@ struct ViewportGrid
   glm::vec3&
   active_camera_pos()
   {
-    return screen_sector_to_vi(MOUSE_INFO.sector).display.camera_position;
+    return screen_sector_to_vi(MOUSE_INFO.sector).camera.position;
   }
 
   // clang-format off
