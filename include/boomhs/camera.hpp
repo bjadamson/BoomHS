@@ -78,24 +78,30 @@ struct CameraState
   bool flip_x = false;
 };
 
+#define CAMERA_TARGET_BODY_IMPL assert(target_); return *target_;
+#define CAMERA_CLASS_TARGET_IMPL                                                                   \
+  auto& target() { CAMERA_TARGET_BODY_IMPL }                                                       \
+  auto const& target() const { CAMERA_TARGET_BODY_IMPL }
+
 class CameraFPS
 {
-  float     xrot_, yrot_;
-  WorldOrientation const orientation_;
+  float            xrot_, yrot_;
+  WorldOrientation orientation_;
 
-  CameraTarget& target_;
+  CameraTarget* target_;
 
-  friend class Camera;
+  CAMERA_CLASS_TARGET_IMPL
 
-  auto&       transform() { return target_.get().transform(); }
-  auto const& transform() const { return target_.get().transform(); }
+  auto&       transform() { return target().get().transform(); }
+  auto const& transform() const { return target().get().transform(); }
 
   auto const& forward() const { return orientation_.forward; }
   auto const& up() const { return orientation_.up; }
 
+  friend class Camera;
 public:
   CameraFPS(CameraTarget&, WorldOrientation const&);
-  MOVE_CONSTRUCTIBLE_ONLY(CameraFPS);
+  MOVE_DEFAULT_ONLY(CameraFPS);
 
   // fields
   CameraState cs;
@@ -110,7 +116,7 @@ public:
 
 class CameraORTHO
 {
-  WorldOrientation const orientation_;
+  WorldOrientation orientation_;
 
   glm::vec2 zoom_;
   friend class Camera;
@@ -120,7 +126,7 @@ class CameraORTHO
 
 public:
   CameraORTHO(WorldOrientation const&);
-  MOVE_CONSTRUCTIBLE_ONLY(CameraORTHO);
+  MOVE_DEFAULT_ONLY(CameraORTHO);
 
   // fields
   static glm::vec3 constexpr EYE_FORWARD = math::constants::Y_UNIT_VECTOR;
@@ -139,11 +145,11 @@ public:
 
 class CameraArcball
 {
-  CameraTarget&        target_;
+  CameraTarget*        target_;
   SphericalCoordinates coordinates_;
 
   WorldOrientation     orientation_;
-  glm::vec3 const      world_up_;
+  glm::vec3            world_up_;
 
   // methods
   void zoom(float, FrameTime const&);
@@ -152,11 +158,15 @@ class CameraArcball
   auto up() const { return orientation_.up; }
   auto orientation() const { return WorldOrientation{forward(), up()}; }
 
+  CAMERA_CLASS_TARGET_IMPL
+#undef CAMERA_CLASS_TARGET_IMPL
+#undef CAMERA_TARGET_BODY_IMPL
+
   friend class Camera;
 
 public:
   CameraArcball(CameraTarget&, WorldOrientation const&);
-  MOVE_CONSTRUCTIBLE_ONLY(CameraArcball);
+  MOVE_DEFAULT_ONLY(CameraArcball);
 
   // fields
   CameraState cs;
@@ -186,7 +196,7 @@ class Camera
   CameraMode              mode_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(Camera);
+  MOVE_DEFAULT_ONLY(Camera);
   Camera(ViewSettings&&, WorldOrientation const&, WorldOrientation const&);
 
   // public fields

@@ -43,7 +43,7 @@ CameraTarget::validate() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CameraArcball
 CameraArcball::CameraArcball(CameraTarget& t, WorldOrientation const& wo)
-    : target_(t)
+    : target_(&t)
     , coordinates_(0.0f, 0.0f, 0.0f)
     , orientation_{wo.forward, wo.up}
     , world_up_(wo.up)
@@ -132,7 +132,7 @@ CameraArcball::world_position() const
 glm::vec3
 CameraArcball::target_position() const
 {
-  return target_.get().transform().translation;
+  return target().get().transform().translation;
 }
 
 glm::mat4
@@ -145,10 +145,10 @@ CameraArcball::calc_pm(ViewSettings const& vp, Frustum const& f) const
 }
 
 glm::mat4
-CameraArcball::calc_vm(glm::vec3 const& target_pos) const
+CameraArcball::calc_vm(glm::vec3 const& pos) const
 {
-  auto const& target = target_.get().transform().translation;
-  return glm::lookAt(target_pos, target, up());
+  auto const& target_pos = target().get().transform().translation;
+  return glm::lookAt(pos, target_pos, up());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -157,7 +157,7 @@ CameraFPS::CameraFPS(CameraTarget& t, WorldOrientation const& wo)
     : xrot_(0)
     , yrot_(0)
     , orientation_(wo)
-    , target_(t)
+    , target_(&t)
 {
   cs.rotation_lock = true;
 
