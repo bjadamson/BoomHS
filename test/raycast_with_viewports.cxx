@@ -293,7 +293,7 @@ draw_rectangle_pm(common::Logger& logger, ScreenSize const& ss, RectInt const& v
     FAR_PM
   };
 
-  auto const pm = camera.calc_pm(AR, f, ss, VEC2(0));
+  auto const pm = camera.calc_pm(AR, f, ss);
 
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
   sp.set_uniform_mat4(logger,  "u_projmatrix", pm);
@@ -921,7 +921,7 @@ main(int argc, char **argv)
   SDL_Event event;
   bool quit = false;
   while (!quit) {
-    glm::mat4 const ortho_pm = cam_ortho.calc_pm(AR, frustum, window_rect.size(), VEC2(0));
+    glm::mat4 const ortho_pm = cam_ortho.calc_pm(AR, frustum, window_rect.size());
     glm::mat4 const ortho_vm = cam_ortho.calc_vm();
 
     auto const VIEW_FORWARD = -constants::Z_UNIT_VECTOR;

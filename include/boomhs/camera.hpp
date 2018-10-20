@@ -127,14 +127,14 @@ public:
   glm::vec3 position;
 
   // methods
-  glm::mat4 calc_pm(AspectRatio const&, Frustum const&, ScreenSize const&, glm::vec2 const&) const;
+  glm::mat4 calc_pm(AspectRatio const&, Frustum const&, ScreenSize const&) const;
   glm::mat4 calc_vm() const;
 
   void grow_view(glm::vec2 const&);
   void shink_view(glm::vec2 const&);
 
   void scroll(glm::vec2 const&);
-  auto zoom() const { return zoom_; }
+  auto const& zoom() const { return zoom_; }
 };
 
 class CameraArcball

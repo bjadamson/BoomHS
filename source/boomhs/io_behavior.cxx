@@ -85,9 +85,9 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
   auto const view_matrix = fstate.view_matrix();
   auto const view_rect   = Viewport::from_frustum(es.frustum);
 
-  glm::vec3 const ray_start = (CameraMode::Ortho == fstate.camera_mode())
-                                  ? CameraORTHO::EYE_FORWARD
-                                  : fstate.camera_world_position();
+  glm::vec3 const ray_start = /*(CameraMode::Ortho == fstate.camera_mode()) */
+                                  //? CameraORTHO::EYE_FORWARD
+                                  /*:*/ fstate.camera_world_position();
   glm::vec3 const ray_dir =
       Raycast::calculate_ray_into_screen(mouse_pos, proj_matrix, view_matrix, view_rect);
   EntityDistances distances;
