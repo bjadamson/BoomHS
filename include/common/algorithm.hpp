@@ -168,11 +168,10 @@ template <size_t N, typename F, typename...Args>
 auto constexpr
 make_array_from(F&& fn, Args&&...pack)
 {
-  auto constexpr NUM_ARGS = sizeof...(pack);
-  using T                 = decltype(fn(FORWARD(pack)));
+  using T = decltype(fn(FORWARD(pack)));
 
   std::array<T, N> arr;
-  FOR(i, NUM_ARGS) {
+  FOR(i, N) {
     arr[i] = fn(FORWARD(pack));
   }
   return arr;
@@ -187,7 +186,7 @@ make_array_from(F&& fn, Args&&...pack)
 // ie: 0, 1, 2, ... up to N-1
 template <size_t N, typename F>
 auto constexpr
-make_array_from_forwarding_index(F&& fn)
+make_array_from_fn_forwarding_index(F&& fn)
 {
   using T = decltype(fn(N));
   std::array<T, N> arr;

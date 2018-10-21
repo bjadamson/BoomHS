@@ -784,7 +784,27 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
     }
   };
 
+  // TODO: don't copy directly, refactor.
+  /*
+  auto const make_viewport_infos = [](RNG& rng, ViewportGrid const& vp_grid) {
+    auto constexpr NUM_VIEWPORTS = 4;
+    auto const array_of_ints = rng.gen_int_array_range<NUM_VIEWPORTS>(0, NUM_VIEWPORTS - 1);
+    for (auto const& ai : array_of_ints) {
+    }
+
+    auto const fn = [&](auto const i) { return &vp_grid[array_of_ints[i]]; };
+    return common::make_array_from_fn_forwarding_index<array_of_ints.size()>(fn);
+  };
+
+  RNG rng;
+  auto viewport_infos = make_viewport_infos(rng, vp_grid);
+  */
+
   DrawState ds;
+  //for (auto const* vi : viewport_infos) {
+    //draw_2dscene(ds, *vi, pm_sp);
+  //}
+
   // draw LHS
   draw_2dscene(ds, vp_grid.left_top(), pm_sp);
   draw_2dscene(ds, vp_grid.right_bottom(), pm_sp);
@@ -795,9 +815,6 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
 
   // draw PMS
   draw_pms(ds, pm_infos);
-
-  // fullscreen
-  //draw_pms(ds, vp_grid.fullscreen, pm_info_fs);
 }
 
 void
@@ -889,7 +906,7 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
 template <size_t N>
 auto
 make_pminfos(common::Logger& logger, ShaderProgram& sp, RNG &rng,
-             std::array<ViewportInfo*, N> const& vis)
+             std::array<ViewportInfo const*, N> const& vis)
 {
   auto const make_perspective_rect = [&](auto const& viewport, glm::ivec2 const& offset) {
     auto const gen = [&rng](float const val) { return rng.gen_float_range(val, val + 150); };
@@ -962,12 +979,12 @@ main(int argc, char **argv)
   auto vp_grid           = create_viewport_grid(logger, window_rect);
 
   RNG rng;
-  auto const make_viewport_infos = [](RNG& rng, ViewportGrid& vp_grid) {
+  auto const make_viewport_infos = [](RNG& rng, ViewportGrid const& vp_grid) {
     auto constexpr NUM_VIEWPORTS = 4;
     auto const array_of_ints = rng.gen_int_array_range<NUM_VIEWPORTS>(0, NUM_VIEWPORTS - 1);
 
     auto const fn = [&](auto const i) { return &vp_grid[array_of_ints[i]]; };
-    return common::make_array_from_forwarding_index<array_of_ints.size()>(fn);
+    return common::make_array_from_fn_forwarding_index<array_of_ints.size()>(fn);
   };
 
   auto viewport_infos     = make_viewport_infos(rng, vp_grid);
