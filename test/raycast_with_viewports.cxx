@@ -69,16 +69,9 @@ struct CameraMatrices
 
 struct ViewportInfo
 {
-  enum class ProjectionType {
-    Ortho = 0,
-    Perspective,
-    MAX
-  };
-
   Viewport       viewport;
   ScreenSector   screen_sector;
-  ProjectionType projection_type;
-  CameraORTHO    camera;
+  Camera         camera;
   CameraMatrices matrices = {};
 
   MOVE_DEFAULT_ONLY(ViewportInfo);
@@ -87,19 +80,9 @@ struct ViewportInfo
   void update(AspectRatio const& ar, Frustum const& frustum, RectInt const& window_rect,
               glm::mat4 const& pers_pm)
   {
-    switch (projection_type) {
-      case ViewportInfo::ProjectionType::Ortho:
-        matrices.pm = camera.calc_pm(AR, frustum, window_rect.size());
-        break;
-      case ViewportInfo::ProjectionType::Perspective: {
-        matrices.pm = pers_pm;
-      } break;
-      default:
-        // programming error.
-        std::abort();
-    }
-
-    matrices.vm = camera.calc_vm();
+    ViewSettings const vs{AR, FOV};
+    matrices.pm = camera.calc_pm(vs, frustum, window_rect.size());
+    matrices.vm = camera.ortho.calc_vm();
   }
 };
 
@@ -166,7 +149,7 @@ struct ViewportGrid
   glm::vec3&
   active_camera_pos()
   {
-    return screen_sector_to_vi(MOUSE_INFO.sector).camera.position;
+    return screen_sector_to_vi(MOUSE_INFO.sector).camera.ortho.position;
   }
 
   Viewport
@@ -633,7 +616,7 @@ process_event(common::Logger& logger, SDL_Event& event, ViewportGrid& vp_grid,
       : &CameraORTHO::shink_view;
 
     for (auto& vp : vp_grid) {
-      auto& camera = vp.camera;
+      auto& camera = vp.camera.ortho;
       (camera.*fn)(glm::vec2{1.0f});
     }
   }
@@ -748,9 +731,9 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
            Frustum const& frustum, ShaderProgram& wire_sp, ShaderProgram& pm_sp,
            glm::ivec2 const& mouse_pos, CubeEntities& cube_ents)
 {
-  auto const screen_size    = vp_grid.screen_size;
-  auto const screen_height  = screen_size.height;
-  auto const fs_vp          = vp_grid.fullscreen_viewport();
+  auto const screen_size   = vp_grid.screen_size;
+  auto const screen_height = screen_size.height;
+  auto const fs_vp         = vp_grid.fullscreen_viewport();
 
   auto const draw_2dscene = [&](DrawState& ds, auto& vi, auto& sp) {
     OR::set_viewport_and_scissor(vi.viewport, screen_height);
@@ -777,7 +760,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
       for (auto& pm_rect : vi.rects) {
         auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
 
-        auto const pm = CameraORTHO::compute_pm(AR, frustum, screen_size, constants::ZERO, glm::ivec2{0, 0});
+        auto const pm = CameraORTHO::compute_pm(AR, frustum, screen_size, constants::ZERO, glm::ivec2{0});
         draw_rectangle_pm(logger, viewport.size(), viewport.rect(), pm_info.sp, pm_rect.di,
                           color, GL_TRIANGLES, ds);
       }
@@ -873,31 +856,32 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
     LOC::LIGHT_GOLDENROD_YELLOW
   };
 
-  auto const     TOPDOWN_FORWARD = -constants::Y_UNIT_VECTOR;
-  auto constexpr TOPDOWN_UP      =  constants::Z_UNIT_VECTOR;
-
-
-  WorldOrientation const ortho_wo{TOPDOWN_FORWARD, TOPDOWN_UP};
-  CameraORTHO            camera_td{ortho_wo};
-  camera_td.position = CAMERA_POS_TOPDOWN;
-
   auto const     INTOSCENE_FORWARD = -constants::Z_UNIT_VECTOR;
   auto constexpr INTOSCENE_UP      = constants::Y_UNIT_VECTOR;
 
-  WorldOrientation const     wo_intoscene{INTOSCENE_FORWARD, INTOSCENE_UP};
-  CameraORTHO                camera_into_fwd{wo_intoscene};
-  camera_into_fwd.position = CAMERA_POS_INTOSCENE;
+  auto const     TOPDOWN_FORWARD = -constants::Y_UNIT_VECTOR;
+  auto constexpr TOPDOWN_UP      =  constants::Z_UNIT_VECTOR;
 
-  WorldOrientation const     wo_backwards{-INTOSCENE_FORWARD, INTOSCENE_UP};
-  CameraORTHO                camera_into_bkwd{wo_backwards};
-  camera_into_bkwd.position = CAMERA_POS_INTOSCENE;
+  WorldOrientation const topdown_wo{TOPDOWN_FORWARD, TOPDOWN_UP};
+  WorldOrientation const wo_intoscene{INTOSCENE_FORWARD, INTOSCENE_UP};
+  WorldOrientation const wo_backwards{-INTOSCENE_FORWARD, INTOSCENE_UP};
 
-  using PT = ViewportInfo::ProjectionType;
-  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     PT::Ortho, camera_td.clone()};
-  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, PT::Ortho, camera_td.clone()};
+  auto camera_td           = Camera::make_default(wo_intoscene, topdown_wo);
+  camera_td.ortho.position = CAMERA_POS_TOPDOWN;
+  camera_td.set_mode(CameraMode::Ortho);
 
-  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,   PT::Perspective, camera_into_fwd.clone()};
-  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, PT::Perspective, camera_into_bkwd.clone()};
+  auto camera_into           = Camera::make_default(wo_intoscene, topdown_wo);
+  camera_into.ortho.position = CAMERA_POS_INTOSCENE;
+  camera_into.set_mode(CameraMode::ThirdPerson);
+
+  auto camera_bkwd           = Camera::make_default(wo_backwards, topdown_wo);
+  camera_bkwd.ortho.position = CAMERA_POS_INTOSCENE;
+
+  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     camera_td.clone()};
+  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, camera_td.clone()};
+
+  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,   camera_into.clone()};
+  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, camera_bkwd.clone()};
 
   auto const ss = window_rect.size();
   return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};

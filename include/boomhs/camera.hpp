@@ -88,6 +88,15 @@ using CameraCenter   = glm::vec3;
 using CameraForward  = glm::vec3;
 using CameraUp       = glm::vec3;
 
+/*
+ * Explicit copy method.
+ *
+ * Rationale: It is easy to accidentally take a reference to a copy of an instance of this class.
+ * To make it more unlikely, force the user to call clone().
+*/
+#define CLONE_CAMERA_IMPL                                                                          \
+auto clone() const { return *this; }
+
 class CameraFPS
 {
   float            xrot_, yrot_;
@@ -104,9 +113,10 @@ class CameraFPS
   auto const& up() const { return orientation_.up; }
 
   friend class Camera;
+  COPY_DEFAULT(CameraFPS);
 public:
   CameraFPS(CameraTarget&, WorldOrientation const&);
-  MOVE_DEFAULT_ONLY(CameraFPS);
+  MOVE_DEFAULT(CameraFPS);
 
   // fields
   CameraState cs;
@@ -117,6 +127,8 @@ public:
   glm::vec3 world_position() const;
   glm::mat4 calc_pm(ViewSettings const&, Frustum const&) const;
   glm::mat4 calc_vm(glm::vec3 const&) const;
+
+  CLONE_CAMERA_IMPL
 };
 
 class CameraORTHO
@@ -152,12 +164,6 @@ public:
   void scroll(glm::vec2 const&);
   auto const& zoom() const { return zoom_; }
 
-  // Explicit copy method.
-  //
-  // Rationale: It is easy to accidentally take a reference to a copy of an instance of this class.
-  // To make it more unlikely, force the user to call clone().
-  auto clone() const { return *this; }
-
   // Compute the projection-matrix.
   static glm::mat4 compute_pm(AspectRatio const&, Frustum const&, ScreenSize const&,
                               CameraPosition const&, glm::ivec2 const&);
@@ -186,10 +192,11 @@ class CameraArcball
 #undef CAMERA_TARGET_BODY_IMPL
 
   friend class Camera;
+  COPY_DEFAULT(CameraArcball);
 
 public:
   CameraArcball(CameraTarget&, WorldOrientation const&);
-  MOVE_DEFAULT_ONLY(CameraArcball);
+  MOVE_DEFAULT(CameraArcball);
 
   // fields
   CameraState cs;
@@ -210,6 +217,8 @@ public:
 
   glm::mat4 calc_pm(ViewSettings const&, Frustum const&) const;
   glm::mat4 calc_vm(glm::vec3 const&) const;
+
+  CLONE_CAMERA_IMPL
 };
 
 class Camera
@@ -218,8 +227,9 @@ class Camera
   ViewSettings            view_settings_;
   CameraMode              mode_;
 
+  COPY_DEFAULT(Camera);
 public:
-  MOVE_DEFAULT_ONLY(Camera);
+  MOVE_DEFAULT(Camera);
   Camera(ViewSettings&&, WorldOrientation const&, WorldOrientation const&);
 
   // public fields
@@ -257,8 +267,15 @@ public:
   Camera& rotate_radians(float, float, FrameTime const&);
   void    set_target(WorldObject&);
 
+  glm::mat4 calc_pm(ViewSettings const&, Frustum const&, ScreenSize const&) const;
+  glm::mat4 calc_vm(glm::vec3 const&) const;
+
+  CLONE_CAMERA_IMPL
+
   // static fns
   static Camera make_default(WorldOrientation const&, WorldOrientation const&);
 };
+
+#undef CLONE_CAMERA_IMPL
 
 } // namespace boomhs

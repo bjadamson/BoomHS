@@ -495,6 +495,45 @@ Camera::orientation_ref() const
   return WO_ZERO;
 }
 
+glm::mat4
+Camera::calc_pm(ViewSettings const& vs, Frustum const& frustum,
+                ScreenSize const& ss) const
+{
+  switch (mode()) {
+    case CameraMode::FPS:
+      return fps.calc_pm(vs, frustum);
+    case CameraMode::ThirdPerson:
+      return arcball.calc_pm(vs, frustum);
+    case CameraMode::Ortho:
+    case CameraMode::Fullscreen_2DUI:
+      return ortho.calc_pm(vs.aspect_ratio, frustum, ss);
+    case CameraMode::FREE_FLOATING:
+    case CameraMode::MAX:
+      break;
+  }
+  std::abort();
+  return glm::mat4{};
+}
+
+glm::mat4
+Camera::calc_vm(glm::vec3 const& pos) const
+{
+  switch (mode()) {
+    case CameraMode::FPS:
+      return fps.calc_vm(pos);
+    case CameraMode::ThirdPerson:
+      return arcball.calc_vm(pos);
+    case CameraMode::Ortho:
+    case CameraMode::Fullscreen_2DUI:
+      return ortho.calc_vm();
+    case CameraMode::FREE_FLOATING:
+    case CameraMode::MAX:
+      break;
+  }
+  std::abort();
+  return glm::mat4{};
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // free functions
 Camera
