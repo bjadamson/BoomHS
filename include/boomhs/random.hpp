@@ -2,12 +2,12 @@
 #include <random>
 
 #include <boomhs/math.hpp>
+#include <common/algorithm.hpp>
 #include <common/type_macros.hpp>
 
 namespace boomhs
 {
 
-// TODO: This generates more than floats...
 class RNG
 {
   uint64_t const seed_;
@@ -21,6 +21,26 @@ class RNG
     int out;
     seeder.generate(&out, &out + 1);
     return static_cast<uint32_t>(out);
+  }
+
+  // Generate an integer within the range [low, high].
+  template <typename T>
+  auto gen_range(T const low, T const high)
+  {
+    assert(low <= high);
+    std::uniform_int_distribution<T> distribution{low, high};
+    return distribution(this->generator_);
+  }
+
+  // Generate an array of integers within the range [low, high].
+  template <size_t N, typename T>
+  auto gen_array_range(T const low, T const high)
+  {
+    // Construct a function to pass to make_array_from that captures the "this" pointer of the RNG
+    // instance. This will allow the function 'fn' to be callable without passing the "this"
+    // pointer explicitely to make_array_from.
+    auto const fn = [this](auto&&... args) { return gen_range(FORWARD(args)); };
+    return common::make_array_from<N>(fn, low, high);
   }
 
 public:
@@ -88,23 +108,25 @@ public:
 
   auto gen_float_range(float const low, float const high)
   {
-    assert(low <= high);
-    std::uniform_real_distribution<float> distribution{low, high};
-    return distribution(this->generator_);
+    return gen_range(low, high);
   }
 
+  // Generate an integer within the range [low, high].
   auto gen_int_range(int const low, int const high)
   {
-    assert(low <= high);
-    std::uniform_int_distribution<int> distribution{low, high};
-    return distribution(this->generator_);
+    return gen_range(low, high);
+  }
+
+  // Generate an array of integers within the range [low, high].
+  template <size_t N>
+  auto gen_int_array_range(int const low, int const high)
+  {
+    return gen_array_range<N>(low, high);
   }
 
   auto gen_uint64_range(uint64_t const low, uint64_t const high)
   {
-    assert(low <= high);
-    std::uniform_int_distribution<uint64_t> distribution{low, high};
-    return distribution(this->generator_);
+    return gen_range(low, high);
   }
 };
 

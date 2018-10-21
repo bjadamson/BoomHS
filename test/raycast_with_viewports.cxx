@@ -40,8 +40,8 @@ static auto constexpr AR   = AspectRatio{4.0f, 3.0f};
 // clang-format on
 
 using CameraPosition = glm::vec3;
-static auto CAMERA_POS_TOPDOWN = CameraPosition{0, 1, 0};
-static auto CAMERA_POS_INTOSCENE  = CameraPosition{0, 0, 1};
+static auto CAMERA_POS_TOPDOWN   = CameraPosition{0, 1, 0};
+static auto CAMERA_POS_INTOSCENE = CameraPosition{0, 0, 1};
 
 enum ScreenSector
 {
@@ -131,9 +131,8 @@ struct ViewportGrid
   {
   }
 
-  BEGIN_END_FORWARD_FNS(infos);
-  INDEX_OPERATOR_FNS(infos);
   MOVE_DEFAULT_ONLY(ViewportGrid);
+  DEFINE_ARRAY_LIKE_WRAPPER_FNS(infos);
 
   auto& left_top() { return infos[0]; }
   auto const& left_top() const { return infos[0]; }
@@ -902,9 +901,10 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
 }
 
+template <size_t N>
 auto
 make_pminfos(common::Logger& logger, ShaderProgram& sp, RNG &rng,
-             std::vector<ViewportInfo*> const& vis)
+             std::array<ViewportInfo*, N> const& vis)
 {
   auto const make_perspective_rect = [&](auto const& viewport, glm::ivec2 const& offset) {
     auto const gen = [&rng](float const val) { return rng.gen_float_range(val, val + 150); };
@@ -976,12 +976,17 @@ main(int argc, char **argv)
   auto const frustum     = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
   auto vp_grid           = create_viewport_grid(logger, window_rect);
 
-  std::vector<ViewportInfo*> viewport_infos;
-  viewport_infos.push_back(&vp_grid.left_bottom());
-  viewport_infos.push_back(&vp_grid.right_top());
-
-  auto rect_sp            = make_rectangle_program(logger);
   RNG rng;
+  auto const make_viewport_infos = [](RNG& rng, ViewportGrid& vp_grid) {
+    auto constexpr NUM_VIEWPORTS = 4;
+    auto const array_of_ints = rng.gen_int_array_range<NUM_VIEWPORTS>(0, NUM_VIEWPORTS - 1);
+
+    auto const fn = [&](auto const i) { return &vp_grid[array_of_ints[i]]; };
+    return common::make_array_from_forwarding_index<array_of_ints.size()>(fn);
+  };
+
+  auto viewport_infos     = make_viewport_infos(rng, vp_grid);
+  auto rect_sp            = make_rectangle_program(logger);
   auto pm_infos           = make_pminfos(logger, rect_sp, rng, viewport_infos);
   auto wire_sp            = make_wireframe_program(logger);
   auto cube_ents          = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);

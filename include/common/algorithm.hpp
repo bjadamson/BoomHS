@@ -150,12 +150,61 @@ make_array(Args&&... args)
   return make_array<T, N>(FORWARD(args));
 }
 
+// Invoke a function 'F' with variadic argument list 'Args'
+//
+// Any return value from the function 'F' is discarded.
+template <typename F, typename...Args>
+void constexpr
+invoke_fn(F&& f, Args&&...args)
+{
+  (static_cast<void>(f(std::forward<Args>(args))), ...);
+}
+
+// Construct an array with 'N' elements from a function 'F' using arguments 'Args'.
+//
+// Construct an array of N elements, each element constructed by passing the function F all of the
+// arguments Args.
+template <size_t N, typename F, typename...Args>
+auto constexpr
+make_array_from(F&& fn, Args&&...pack)
+{
+  auto constexpr NUM_ARGS = sizeof...(pack);
+  using T                 = decltype(fn(FORWARD(pack)));
+
+  std::array<T, N> arr;
+  FOR(i, NUM_ARGS) {
+    arr[i] = fn(FORWARD(pack));
+  }
+  return arr;
+}
+
+// Construct an array of 'N' elements invoking a function 'F' 'N' times.
+//
+// The function 'F' should accept a single index parameter 'i'. This function 'F' will forward the
+// index value 'i' during the array construction to each 'F' invocation.
+//
+// The parameter 'i' is the current index of the array being constructed.
+// ie: 0, 1, 2, ... up to N-1
+template <size_t N, typename F>
+auto constexpr
+make_array_from_forwarding_index(F&& fn)
+{
+  using T = decltype(fn(N));
+  std::array<T, N> arr;
+  FOR(i, N) {
+    arr[i] = fn(i);
+  }
+
+  return arr;
+}
+
+// Construct a std::vector<T> with 'n' size.
 template <typename T>
 auto
-vec_with_size(size_t const s)
+vec_with_size(size_t const n)
 {
   std::vector<T> buffer;
-  buffer.resize(s);
+  buffer.resize(n);
   return buffer;
 }
 
