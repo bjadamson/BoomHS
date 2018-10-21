@@ -69,27 +69,10 @@ struct CameraMatrices
 
 struct ViewportInfo
 {
-  void calc_ortho(AspectRatio const& ar, Frustum const& frustum, RectInt const& rect)
-  {
-    matrices.pm = camera.calc_pm(AR, frustum, rect.size());
-    matrices.vm = camera.calc_vm();
-  }
-
-  void calc_perspective(glm::mat4 const& pm)
-  {
-    auto const& pos    = camera.position;
-    auto const target  = pos + camera.forward();
-    auto const& up     = camera.up();
-    glm::mat4 const vm = glm::lookAtRH(pos, target, up);
-
-    matrices.pm = pm;
-    matrices.vm = vm;
-  }
-
-public:
   enum class ProjectionType {
     Ortho = 0,
-    Perspective
+    Perspective,
+    MAX
   };
 
   Viewport       viewport;
@@ -106,15 +89,17 @@ public:
   {
     switch (projection_type) {
       case ViewportInfo::ProjectionType::Ortho:
-        calc_ortho(AR, frustum, window_rect);
+        matrices.pm = camera.calc_pm(AR, frustum, window_rect.size());
         break;
       case ViewportInfo::ProjectionType::Perspective: {
-        calc_perspective(pers_pm);
+        matrices.pm = pers_pm;
       } break;
       default:
         // programming error.
         std::abort();
     }
+
+    matrices.vm = camera.calc_vm();
   }
 };
 
@@ -829,7 +814,7 @@ update(common::Logger& logger, ViewportGrid& vp_grid, glm::ivec2 const& mouse_po
     float const dx = (mouse_pos - middle_clickpos).x / rect.width();
     float const dy = (mouse_pos - middle_clickpos).y / rect.height();
 
-    auto constexpr SCROLL_SPEED = 15.0f;
+    auto constexpr SCROLL_SPEED = 25.0f;
     auto const multiplier = SCROLL_SPEED * distance * ft.delta_millis();
 
     move_cubes(glm::vec3{dx, 0, dy} * multiplier, cube_ents);
