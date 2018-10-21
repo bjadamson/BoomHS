@@ -184,7 +184,7 @@ class CameraArcball
 
   auto forward() const { return orientation_.forward; }
   auto up() const { return orientation_.up; }
-  auto orientation() const { return WorldOrientation{forward(), up()}; }
+  auto orientation() const { return orientation_; }
 
   CAMERA_CLASS_TARGET_IMPL
 #undef CAMERA_CLASS_TARGET_IMPL

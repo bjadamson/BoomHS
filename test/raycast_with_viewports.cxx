@@ -863,9 +863,11 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
 
   auto camera_into = Camera::make_default(wo_intoscene, topdown_wo);
   camera_into.set_mode(CameraMode::ThirdPerson);
+  camera_into.ortho.position = CAMERA_POS_INTOSCENE;
 
   auto camera_bkwd = Camera::make_default(wo_backwards, topdown_wo);
   camera_bkwd.set_mode(CameraMode::ThirdPerson);
+  camera_bkwd.ortho.position = CAMERA_POS_INTOSCENE;
 
   auto const pick_camera = [&](RNG& rng) {
     int const val = rng.gen_int_range(0, 2);
@@ -892,10 +894,8 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
 }
 
-template <size_t N>
 auto
-make_pminfos(common::Logger& logger, ShaderProgram& sp, RNG &rng,
-             std::array<ViewportInfo const*, N> const& vis)
+make_pminfos(common::Logger& logger, ShaderProgram& sp, RNG &rng, ViewportGrid const& vp_grid)
 {
   auto const make_perspective_rect = [&](auto const& viewport, glm::ivec2 const& offset) {
     auto const gen = [&rng](float const val) { return rng.gen_float_range(val, val + 150); };
@@ -918,8 +918,9 @@ make_pminfos(common::Logger& logger, ShaderProgram& sp, RNG &rng,
     return ViewportPmRects{MOVE(vector_pms), viewport};
   };
 
+  auto const vis_randomized = vp_grid.get_random_ordered_infos(rng);
   std::vector<ViewportPmRects> pms;
-  for (auto& vi : vis) {
+  for (auto const& vi : vis_randomized) {
     auto const& viewport = vi->viewport;
     auto const prect     = make_perspective_rect(viewport, IVEC2{50});
 
@@ -967,11 +968,10 @@ main(int argc, char **argv)
   auto vp_grid           = create_viewport_grid(logger, window_rect);
 
   RNG rng;
-  auto vis_randomized     = vp_grid.get_random_ordered_infos(rng);
-  auto rect_sp            = make_rectangle_program(logger);
-  auto pm_infos           = make_pminfos(logger, rect_sp, rng, vis_randomized);
-  auto wire_sp            = make_wireframe_program(logger);
-  auto cube_ents          = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);
+  auto rect_sp   = make_rectangle_program(logger);
+  auto pm_infos  = make_pminfos(logger, rect_sp, rng, vp_grid);
+  auto wire_sp   = make_wireframe_program(logger);
+  auto cube_ents = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);
 
   glm::mat4 const pers_pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
 
