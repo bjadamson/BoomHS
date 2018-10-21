@@ -209,12 +209,12 @@ PlayerPlayingGameBehavior::mouse_wheel(MouseWheelEvent&& mwe)
   auto& arcball = camera.arcball;
   auto& ortho   = camera.ortho;
   if (wheel.y > 0) {
-    arcball.decrease_zoom(ZOOM_FACTOR, ft);
-    ortho.grow_view(glm::vec2{1.0f});
+    arcball.zoom_out(ZOOM_FACTOR, ft);
+    ortho.zoom_in(glm::vec2{1.0f}, ft);
   }
   else {
-    arcball.increase_zoom(ZOOM_FACTOR, ft);
-    ortho.shink_view(glm::vec2{1.0f});
+    arcball.zoom_in(ZOOM_FACTOR, ft);
+    ortho.zoom_in(glm::vec2{1.0f}, ft);
   }
 }
 

@@ -66,13 +66,13 @@ CameraArcball::zoom(float const amount, FrameTime const& ft)
 }
 
 void
-CameraArcball::decrease_zoom(float const amount, FrameTime const& ft)
+CameraArcball::zoom_out(float const amount, FrameTime const& ft)
 {
   zoom(-amount, ft);
 }
 
 void
-CameraArcball::increase_zoom(float const amount, FrameTime const& ft)
+CameraArcball::zoom_in(float const amount, FrameTime const& ft)
 {
   zoom(amount, ft);
 }
@@ -276,15 +276,22 @@ CameraORTHO::compute_vm(CameraPosition const& pos, CameraCenter const& center, C
 }
 
 void
-CameraORTHO::grow_view(glm::vec2 const& amount)
+CameraORTHO::zoom(glm::vec2 const& amount, FrameTime const& ft)
 {
-  zoom_ += amount;
+  auto const delta = amount * ft.delta_millis();
+  zoom_ += delta;
 }
 
 void
-CameraORTHO::shink_view(glm::vec2 const& amount)
+CameraORTHO::zoom_out(glm::vec2 const& amount, FrameTime const& ft)
 {
-  zoom_ -= amount;
+  zoom(amount, ft);
+}
+
+void
+CameraORTHO::zoom_in(glm::vec2 const& amount, FrameTime const& ft)
+{
+  zoom(-amount, ft);
 }
 
 void
@@ -295,13 +302,14 @@ CameraORTHO::scroll(glm::vec2 const& sv)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Camera
-Camera::Camera(ViewSettings&& vp, WorldOrientation const& pers_wo, WorldOrientation const& ortho_wo)
+Camera::Camera(CameraMode const cmode, ViewSettings&& vp, WorldOrientation const& pers_wo,
+               WorldOrientation const& ortho_wo)
     : view_settings_(MOVE(vp))
+    , mode_(cmode)
     , arcball(target_, pers_wo)
     , fps(target_, pers_wo)
     , ortho(ortho_wo)
 {
-  set_mode(CameraMode::ThirdPerson);
 }
 
 WorldObject&
@@ -384,6 +392,9 @@ void
 Camera::set_target(WorldObject& wo)
 {
   target_.set(wo);
+
+  fps.target_ = &target_;
+  arcball.target_ = &target_;
 }
 
 glm::vec3
@@ -534,15 +545,47 @@ Camera::calc_vm(glm::vec3 const& pos) const
   return glm::mat4{};
 }
 
+#define ZOOM_INOUT_IMPL(METHOD)                                                                    \
+  switch (mode()) {                                                                                \
+    case CameraMode::FPS:                                                                          \
+    case CameraMode::Fullscreen_2DUI:                                                              \
+      break;                                                                                       \
+                                                                                                   \
+    case CameraMode::Ortho:                                                                        \
+      ortho.METHOD(glm::vec2{v}, ft);                                                              \
+      break;                                                                                       \
+                                                                                                   \
+    case CameraMode::ThirdPerson:                                                                  \
+      arcball.METHOD(v, ft);                                                                       \
+      break;                                                                                       \
+    case CameraMode::FREE_FLOATING:                                                                \
+    case CameraMode::MAX:                                                                          \
+      std::abort();                                                                                \
+  }
+
+void
+Camera::zoom_out(float const v, FrameTime const& ft)
+{
+  ZOOM_INOUT_IMPL(zoom_out);
+}
+
+void
+Camera::zoom_in(float const v, FrameTime const& ft)
+{
+  ZOOM_INOUT_IMPL(zoom_in);
+}
+
+#undef ZOOM_INOUT_IMPL
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // free functions
 Camera
-Camera::make_default(WorldOrientation const& pers_wo, WorldOrientation const& ortho_wo)
+Camera::make_default(CameraMode const mode, WorldOrientation const& pers_wo, WorldOrientation const& ortho_wo)
 {
   auto constexpr FOV = glm::radians(110.0f);
   auto constexpr AR  = AspectRatio{4.0f, 3.0f};
   ViewSettings vp{AR, FOV};
-  Camera       camera(MOVE(vp), pers_wo, ortho_wo);
+  Camera       camera(mode, MOVE(vp), pers_wo, ortho_wo);
 
   SphericalCoordinates sc;
   sc.radius = 3.8f;

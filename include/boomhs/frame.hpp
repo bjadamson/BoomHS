@@ -15,10 +15,12 @@ struct ViewSettings;
 enum class CameraMode
 {
   ThirdPerson = 0,
-  Ortho,
   FPS,
-  FREE_FLOATING,
+
+  Ortho,
   Fullscreen_2DUI,
+
+  FREE_FLOATING,
   MAX
 };
 

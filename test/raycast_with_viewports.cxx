@@ -37,6 +37,7 @@ static auto constexpr NEAR = 0.001f;
 static auto constexpr FAR  = 1000.0f;
 static auto constexpr FOV  = glm::radians(110.0f);
 static auto constexpr AR   = AspectRatio{4.0f, 3.0f};
+static auto constexpr VS   = ViewSettings{AR, FOV};
 // clang-format on
 
 using CameraPosition = glm::vec3;
@@ -65,6 +66,8 @@ static MouseCursorInfo MOUSE_INFO;
 struct CameraMatrices
 {
   glm::mat4 pm, vm;
+
+  MOVE_DEFAULT_ONLY(CameraMatrices);
 };
 
 struct ViewportInfo
@@ -80,9 +83,10 @@ struct ViewportInfo
   void update(AspectRatio const& ar, Frustum const& frustum, RectInt const& window_rect,
               glm::mat4 const& pers_pm)
   {
-    ViewSettings const vs{AR, FOV};
-    matrices.pm = camera.calc_pm(vs, frustum, window_rect.size());
-    matrices.vm = camera.ortho.calc_vm();
+    matrices.pm = camera.calc_pm(VS, frustum, window_rect.size());
+
+    // TODO: it seems the mouse raycasting doesn't work quite right with this next change.??
+    matrices.vm = camera.calc_vm(camera.world_position());
   }
 };
 
@@ -186,7 +190,7 @@ struct ViewportGrid
   void update(AspectRatio const& ar, Frustum const& frustum, RectInt const& window_rect,
               glm::mat4 const& pers_pm)
   {
-    for (auto& vi : *this) {
+    for (auto& vi : infos) {
       vi.update(AR, frustum, window_rect, pers_pm);
     }
   }
@@ -496,7 +500,7 @@ cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mou
   auto const& pm       = m.pm;
   auto const& vm       = m.vm;
 
-  auto const& camera_pos = glm::vec3{0};//vi.camera.world_position();
+  auto const& camera_pos = vi.camera.world_position();
   auto const dir = Raycast::calculate_ray_into_screen(mouse_pos, pm, vm, view_rect);
   Ray const ray{camera_pos, dir};
   for (auto &cube_ent : cube_ents) {
@@ -566,23 +570,22 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, CameraMatrices const&
 
 void
 process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
-                    ViewportGrid const& vp_grid,
-                    PmViewports& pm_vps, CubeEntities& cube_ents)
+                    ViewportGrid const& vp_grid, PmViewports& pm_vps, CubeEntities& cube_ents)
 {
-  auto const mouse_pos = glm::ivec2{motion.x, motion.y};
-  MOUSE_INFO.sector    = mouse_pos_to_screensector(vp_grid, mouse_pos);
+  auto const mouse_pos   = glm::ivec2{motion.x, motion.y};
+  MOUSE_INFO.sector      = mouse_pos_to_screensector(vp_grid, mouse_pos);
+  auto const& vi         = vp_grid.screen_sector_to_vi(MOUSE_INFO.sector);
+  auto const& camera     = vi.camera;
+  auto const camera_mode = camera.mode();
 
-  auto const& vi = vp_grid.screen_sector_to_vi(MOUSE_INFO.sector);
-  switch (vi.camera.mode()) {
+  switch (camera_mode) {
     case CameraMode::ThirdPerson:
     case CameraMode::FPS:
-    case CameraMode::FREE_FLOATING:
     {
       auto const mouse_start = mouse_pos - vi.mouse_offset();
       cast_rays_through_cubes_into_screen(logger, mouse_start, vi, cube_ents);
     } break;
 
-    case CameraMode::Fullscreen_2DUI:
     case CameraMode::Ortho:
     {
       if (MOUSE_BUTTON_PRESSED) {
@@ -590,6 +593,9 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
                                            cube_ents);
       }
     } break;
+
+    case CameraMode::Fullscreen_2DUI:
+    case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:
       std::abort();
   }
@@ -603,14 +609,14 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 
 bool
 process_event(common::Logger& logger, SDL_Event& event, ViewportGrid& vp_grid,
-              CubeEntities& cube_ents, PmViewports& pm_vps)
+              CubeEntities& cube_ents, PmViewports& pm_vps, FrameTime const& ft)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
-  auto &camera_pos = vp_grid.active_camera().ortho.position;
+  auto &camera = vp_grid.active_camera();
 
   if (event_type_keydown) {
     SDL_Keycode const key_pressed = event.key.keysym.sym;
-    if (process_keydown(logger, key_pressed, camera_pos, cube_ents)) {
+    if (process_keydown(logger, key_pressed, camera.ortho.position, cube_ents)) {
       return true;
     }
   }
@@ -618,13 +624,10 @@ process_event(common::Logger& logger, SDL_Event& event, ViewportGrid& vp_grid,
     auto& wheel = event.wheel;
 
     auto const& fn = (wheel.y > 0)
-      ? &CameraORTHO::grow_view
-      : &CameraORTHO::shink_view;
+      ? &Camera::zoom_out
+      : &Camera::zoom_in;
 
-    for (auto& vp : vp_grid) {
-      auto& camera = vp.camera.ortho;
-      (camera.*fn)(glm::vec2{1.0f});
-    }
+    (camera.*fn)(1.0f, ft);
   }
   else if (event.type == SDL_MOUSEMOTION) {
     process_mousemotion(logger, event.motion, vp_grid, pm_vps, cube_ents);
@@ -741,14 +744,14 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
   auto const screen_height = screen_size.height;
   auto const fs_vp         = vp_grid.fullscreen_viewport();
 
-  auto const draw_scene = [&](DrawState& ds, auto& vi) {
+  auto const draw_viewport = [&](DrawState& ds, auto& vi) {
     OR::set_viewport_and_scissor(vi.viewport, screen_height);
     OR::clear_screen(vi.viewport.bg_color());
     auto const& m = vi.matrices;
     draw_bboxes(logger, m.pm, m.vm, cube_ents, wire_sp, ds);
   };
-  auto const draw_scene_with_boxselection = [&](DrawState& ds, auto& vi, auto& sp) {
-    draw_scene(ds, vi);
+  auto const draw_viewport_with_boxselection = [&](DrawState& ds, auto& vi, auto& sp) {
+    draw_viewport(ds, vi);
     if (MOUSE_BUTTON_PRESSED) {
       OR::set_viewport_and_scissor(fs_vp, screen_height);
       draw_mouserect(logger, mouse_pos, sp, screen_size, fs_vp, ds);
@@ -769,22 +772,26 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
     }
   };
 
+  auto const draw_vi = [&](auto const& vi, DrawState& ds, bool const draw_with_boxselect) {
+    if (draw_with_boxselect) {
+      draw_viewport_with_boxselection(ds, vi, pm_sp);
+    }
+    else {
+      draw_viewport(ds, vi);
+    }
+  };
+
+  auto const& vi_mousein = vp_grid.screen_sector_to_vi(MOUSE_INFO.sector);
+  auto const figureout_draw_with_mouserect = [&](auto const& vi) {
+    bool const is_ortho = CameraMode::Ortho == vi.camera.mode();
+    bool const same_grid_as_mouse = (&vi_mousein == &vi);
+    return is_ortho && same_grid_as_mouse;
+  };
+
   DrawState ds;
   for (auto const& vi : vp_grid) {
-    switch (vi.camera.mode()) {
-      case CameraMode::ThirdPerson:
-      case CameraMode::FPS:
-      case CameraMode::FREE_FLOATING:
-        draw_scene(ds, vi);
-        break;
-
-      case CameraMode::Ortho:
-      case CameraMode::Fullscreen_2DUI:
-        draw_scene_with_boxselection(ds, vi, pm_sp);
-        break;
-      case CameraMode::MAX:
-        std::abort();
-    }
+    bool const draw_with_boxselect = figureout_draw_with_mouserect(vi);
+    draw_vi(vi, ds, draw_with_boxselect);
   }
 
   // draw PMS
@@ -857,27 +864,26 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   WorldOrientation const wo_intoscene{INTOSCENE_FORWARD,  INTOSCENE_UP};
   WorldOrientation const wo_backwards{-INTOSCENE_FORWARD, INTOSCENE_UP};
 
-  auto camera_td           = Camera::make_default(wo_intoscene, topdown_wo);
+  auto camera_td = Camera::make_default(CameraMode::Ortho, wo_intoscene, topdown_wo);
   camera_td.ortho.position = CAMERA_POS_TOPDOWN;
-  camera_td.set_mode(CameraMode::Ortho);
 
-  auto camera_into = Camera::make_default(wo_intoscene, topdown_wo);
-  camera_into.set_mode(CameraMode::ThirdPerson);
-  camera_into.ortho.position = CAMERA_POS_INTOSCENE;
+  auto camera_into = Camera::make_default(CameraMode::ThirdPerson, wo_intoscene, topdown_wo);
+  //camera_into.ortho.position = CAMERA_POS_INTOSCENE;
 
-  auto camera_bkwd = Camera::make_default(wo_backwards, topdown_wo);
-  camera_bkwd.set_mode(CameraMode::ThirdPerson);
-  camera_bkwd.ortho.position = CAMERA_POS_INTOSCENE;
+  auto camera_bkwd = Camera::make_default(CameraMode::ThirdPerson, wo_backwards, topdown_wo);
+  //camera_bkwd.ortho.position = CAMERA_POS_INTOSCENE;
 
   auto const pick_camera = [&](RNG& rng) {
     int const val = rng.gen_int_range(0, 2);
-    LOG_ERROR_SPRINTF("val: %i", val);
     switch (val) {
       case 0:
+        LOG_ERROR("camera_td");
         return camera_td.clone();
       case 1:
+        LOG_ERROR("camera_into");
         return camera_into.clone();
       case 2:
+        LOG_ERROR("camera_bkwd");
         return camera_bkwd.clone();
     }
     std::abort();
@@ -887,8 +893,8 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     pick_camera(rng)};
   ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, pick_camera(rng)};
 
-  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,   pick_camera(rng)};
-  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, pick_camera(rng)};
+  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,    pick_camera(rng)};
+  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM,  pick_camera(rng)};
 
   auto const ss = window_rect.size();
   return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
@@ -965,7 +971,20 @@ main(int argc, char **argv)
   auto& window           = gl_sdl.window;
   auto const window_rect = window.view_rect();
   auto const frustum     = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
-  auto vp_grid           = create_viewport_grid(logger, window_rect);
+
+  EntityRegistry registry;
+  auto const eid = registry.create();
+
+
+  auto const     INTOSCENE_FORWARD = -constants::Z_UNIT_VECTOR;
+  auto constexpr INTOSCENE_UP      =  constants::Y_UNIT_VECTOR;
+  WorldOrientation const wo_intoscene{INTOSCENE_FORWARD,  INTOSCENE_UP};
+  WorldObject EMPTY_WO{eid, registry, wo_intoscene};
+
+  auto vp_grid = create_viewport_grid(logger, window_rect);
+  for (auto& vi : vp_grid) {
+    vi.camera.set_target(EMPTY_WO);
+  }
 
   RNG rng;
   auto rect_sp   = make_rectangle_program(logger);
@@ -983,7 +1002,7 @@ main(int argc, char **argv)
   while (!quit) {
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
-      quit = process_event(logger, event, vp_grid, cube_ents, pm_infos.viewports);
+      quit = process_event(logger, event, vp_grid, cube_ents, pm_infos.viewports, ft);
     }
 
     auto const mouse_pos = get_mousepos();

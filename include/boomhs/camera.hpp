@@ -136,9 +136,10 @@ class CameraORTHO
   WorldOrientation orientation_;
 
   glm::vec2 zoom_;
-  friend class Camera;
+  void zoom(glm::vec2 const&, FrameTime const&);
 
   COPY_DEFAULT(CameraORTHO);
+  friend class Camera;
 
 public:
   CameraORTHO(WorldOrientation const&);
@@ -157,8 +158,8 @@ public:
   auto const& forward() const { return orientation_.forward; }
   auto const& up() const { return orientation_.up; }
 
-  void grow_view(glm::vec2 const&);
-  void shink_view(glm::vec2 const&);
+  void zoom_in(glm::vec2 const&, FrameTime const&);
+  void zoom_out(glm::vec2 const&, FrameTime const&);
 
   void scroll(glm::vec2 const&);
   auto const& zoom() const { return zoom_; }
@@ -204,8 +205,8 @@ public:
   SphericalCoordinates spherical_coordinates() const { return coordinates_; }
   void                 set_coordinates(SphericalCoordinates const& sc) { coordinates_ = sc; }
 
-  void decrease_zoom(float, FrameTime const&);
-  void increase_zoom(float, FrameTime const&);
+  void zoom_out(float, FrameTime const&);
+  void zoom_in(float, FrameTime const&);
 
   CameraArcball& rotate_radians(float, float, FrameTime const&);
 
@@ -229,7 +230,7 @@ class Camera
   COPY_DEFAULT(Camera);
 public:
   MOVE_DEFAULT(Camera);
-  Camera(ViewSettings&&, WorldOrientation const&, WorldOrientation const&);
+  Camera(CameraMode, ViewSettings&&, WorldOrientation const&, WorldOrientation const&);
 
   // public fields
   CameraArcball arcball;
@@ -269,10 +270,13 @@ public:
   glm::mat4 calc_pm(ViewSettings const&, Frustum const&, ScreenSize const&) const;
   glm::mat4 calc_vm(glm::vec3 const&) const;
 
+  void zoom_out(float, FrameTime const&);
+  void zoom_in(float, FrameTime const&);
+
   CLONE_CAMERA_IMPL
 
   // static fns
-  static Camera make_default(WorldOrientation const&, WorldOrientation const&);
+  static Camera make_default(CameraMode, WorldOrientation const&, WorldOrientation const&);
 };
 
 #undef CLONE_CAMERA_IMPL

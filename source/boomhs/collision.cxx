@@ -274,11 +274,11 @@ intersects(common::Logger& logger, Ray const& ray, Transform const& tr, Cube con
 
   if (can_use_simple_test) {
     intersects = ray_axis_aligned_cube_intersect(ray, tr, cube, distance);
-    log_intersection("SIMPLE");
+    //log_intersection("SIMPLE");
   }
   else {
     intersects = ray_obb_intersection(ray, cube, tr, distance);
-    log_intersection("COMPLEX");
+    //log_intersection("COMPLEX");
   }
   return intersects;
 }
