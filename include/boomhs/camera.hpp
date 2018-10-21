@@ -145,7 +145,6 @@ public:
   MOVE_DEFAULT(CameraORTHO);
 
   // fields
-  static glm::vec3 constexpr EYE_FORWARD = math::constants::Y_UNIT_VECTOR;
   glm::vec3 position;
 
   // methods

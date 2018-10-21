@@ -146,10 +146,10 @@ struct ViewportGrid
 
 #undef SCREEN_SECTOR_TO_VI_IMPL
 
-  glm::vec3&
-  active_camera_pos()
+  auto&
+  active_camera()
   {
-    return screen_sector_to_vi(MOUSE_INFO.sector).camera.ortho.position;
+    return screen_sector_to_vi(MOUSE_INFO.sector).camera;
   }
 
   Viewport
@@ -161,6 +161,16 @@ struct ViewportGrid
     auto const h = screen_size.height;
 
     return Viewport{lt.x, lt.y, w, h};
+  }
+
+  auto
+  get_random_ordered_infos(RNG& rng) const
+  {
+    auto constexpr NUM_VIEWPORTS = 4;
+    auto const array_of_ints = rng.gen_int_array_range<NUM_VIEWPORTS>(0, NUM_VIEWPORTS - 1);
+
+    auto const fn = [&](auto const i) { return &(*this)[array_of_ints[i]]; };
+    return common::make_array_from_fn_forwarding_index<array_of_ints.size()>(fn);
   }
 
   // clang-format off
@@ -479,14 +489,14 @@ struct PmViewports
 
 void
 cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mouse_pos,
-                                    CameraPosition &camera_pos, ViewportInfo const& vi,
-                                    CubeEntities& cube_ents)
+                                    ViewportInfo const& vi, CubeEntities& cube_ents)
 {
-  auto const view_rect  = vi.viewport.rect();
-  auto const& m         = vi.matrices;
-  auto const& pm        = m.pm;
-  auto const& vm        = m.vm;
+  auto const view_rect = vi.viewport.rect();
+  auto const& m        = vi.matrices;
+  auto const& pm       = m.pm;
+  auto const& vm       = m.vm;
 
+  auto const& camera_pos = glm::vec3{0};//vi.camera.world_position();
   auto const dir = Raycast::calculate_ray_into_screen(mouse_pos, pm, vm, view_rect);
   Ray const ray{camera_pos, dir};
   for (auto &cube_ent : cube_ents) {
@@ -556,36 +566,32 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, CameraMatrices const&
 
 void
 process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
-                    CameraPosition &camera_pos, ViewportGrid const& vp_grid,
+                    ViewportGrid const& vp_grid,
                     PmViewports& pm_vps, CubeEntities& cube_ents)
 {
   auto const mouse_pos = glm::ivec2{motion.x, motion.y};
   MOUSE_INFO.sector    = mouse_pos_to_screensector(vp_grid, mouse_pos);
 
-  bool const lhs_top    = (ScreenSector::LEFT_TOP     == MOUSE_INFO.sector);
-  bool const lhs_bottom = (ScreenSector::LEFT_BOTTOM  == MOUSE_INFO.sector);
+  auto const& vi = vp_grid.screen_sector_to_vi(MOUSE_INFO.sector);
+  switch (vi.camera.mode()) {
+    case CameraMode::ThirdPerson:
+    case CameraMode::FPS:
+    case CameraMode::FREE_FLOATING:
+    {
+      auto const mouse_start = mouse_pos - vi.mouse_offset();
+      cast_rays_through_cubes_into_screen(logger, mouse_start, vi, cube_ents);
+    } break;
 
-  bool const rhs_top    = (ScreenSector::RIGHT_TOP    == MOUSE_INFO.sector);
-  bool const rhs_bottom = (ScreenSector::RIGHT_BOTTOM == MOUSE_INFO.sector);
-
-  bool const lhs    = lhs_top    || lhs_bottom;
-  bool const rhs    = rhs_top    || rhs_bottom;
-
-  bool const top    = lhs_top    || rhs_top;
-  bool const bottom = lhs_bottom || rhs_bottom;
-
-  auto const& vi         = vp_grid.screen_sector_to_vi(MOUSE_INFO.sector);
-  if (lhs_top || rhs_bottom) {
-    if (MOUSE_BUTTON_PRESSED) {
-      select_cubes_under_user_drawn_rect(logger, vi.matrices, mouse_pos, vi.mouse_offset(), cube_ents);
-    }
-  }
-  else if (rhs_top || lhs_bottom) {
-    auto const mouse_start = mouse_pos - vi.mouse_offset();
-    cast_rays_through_cubes_into_screen(logger, mouse_start, camera_pos, vi, cube_ents);
-  }
-  else {
-    std::abort();
+    case CameraMode::Fullscreen_2DUI:
+    case CameraMode::Ortho:
+    {
+      if (MOUSE_BUTTON_PRESSED) {
+        select_cubes_under_user_drawn_rect(logger, vi.matrices, mouse_pos, vi.mouse_offset(),
+                                           cube_ents);
+      }
+    } break;
+    case CameraMode::MAX:
+      std::abort();
   }
 
   for (auto& pm_vp : pm_vps) {
@@ -600,7 +606,7 @@ process_event(common::Logger& logger, SDL_Event& event, ViewportGrid& vp_grid,
               CubeEntities& cube_ents, PmViewports& pm_vps)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
-  auto &camera_pos = vp_grid.active_camera_pos();
+  auto &camera_pos = vp_grid.active_camera().ortho.position;
 
   if (event_type_keydown) {
     SDL_Keycode const key_pressed = event.key.keysym.sym;
@@ -621,7 +627,7 @@ process_event(common::Logger& logger, SDL_Event& event, ViewportGrid& vp_grid,
     }
   }
   else if (event.type == SDL_MOUSEMOTION) {
-    process_mousemotion(logger, event.motion, camera_pos, vp_grid, pm_vps, cube_ents);
+    process_mousemotion(logger, event.motion, vp_grid, pm_vps, cube_ents);
   }
   else if (event.type == SDL_MOUSEBUTTONDOWN) {
     auto const& mouse_button = event.button;
@@ -735,16 +741,14 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
   auto const screen_height = screen_size.height;
   auto const fs_vp         = vp_grid.fullscreen_viewport();
 
-  auto const clear_and_draw_bboxes = [&](DrawState& ds, auto& vi) {
+  auto const draw_scene = [&](DrawState& ds, auto& vi) {
     OR::set_viewport_and_scissor(vi.viewport, screen_height);
     OR::clear_screen(vi.viewport.bg_color());
     auto const& m = vi.matrices;
     draw_bboxes(logger, m.pm, m.vm, cube_ents, wire_sp, ds);
   };
-
-  auto const& draw_3dscene = clear_and_draw_bboxes;
-  auto const draw_2dscene  = [&](DrawState& ds, auto& vi, auto& sp) {
-    clear_and_draw_bboxes(ds, vi);
+  auto const draw_scene_with_boxselection = [&](DrawState& ds, auto& vi, auto& sp) {
+    draw_scene(ds, vi);
     if (MOUSE_BUTTON_PRESSED) {
       OR::set_viewport_and_scissor(fs_vp, screen_height);
       draw_mouserect(logger, mouse_pos, sp, screen_size, fs_vp, ds);
@@ -765,34 +769,23 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
     }
   };
 
-  // TODO: don't copy directly, refactor.
-  /*
-  auto const make_viewport_infos = [](RNG& rng, ViewportGrid const& vp_grid) {
-    auto constexpr NUM_VIEWPORTS = 4;
-    auto const array_of_ints = rng.gen_int_array_range<NUM_VIEWPORTS>(0, NUM_VIEWPORTS - 1);
-    for (auto const& ai : array_of_ints) {
-    }
-
-    auto const fn = [&](auto const i) { return &vp_grid[array_of_ints[i]]; };
-    return common::make_array_from_fn_forwarding_index<array_of_ints.size()>(fn);
-  };
-
-  RNG rng;
-  auto viewport_infos = make_viewport_infos(rng, vp_grid);
-  */
-
   DrawState ds;
-  //for (auto const* vi : viewport_infos) {
-    //draw_2dscene(ds, *vi, pm_sp);
-  //}
+  for (auto const& vi : vp_grid) {
+    switch (vi.camera.mode()) {
+      case CameraMode::ThirdPerson:
+      case CameraMode::FPS:
+      case CameraMode::FREE_FLOATING:
+        draw_scene(ds, vi);
+        break;
 
-  // draw LHS
-  draw_2dscene(ds, vp_grid.left_top(), pm_sp);
-  draw_2dscene(ds, vp_grid.right_bottom(), pm_sp);
-
-  // draw RHS
-  draw_3dscene(ds, vp_grid.right_top());
-  draw_3dscene(ds, vp_grid.left_bottom());
+      case CameraMode::Ortho:
+      case CameraMode::Fullscreen_2DUI:
+        draw_scene_with_boxselection(ds, vi, pm_sp);
+        break;
+      case CameraMode::MAX:
+        std::abort();
+    }
+  }
 
   // draw PMS
   draw_pms(ds, pm_infos);
@@ -868,18 +861,32 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   camera_td.ortho.position = CAMERA_POS_TOPDOWN;
   camera_td.set_mode(CameraMode::Ortho);
 
-  auto camera_into           = Camera::make_default(wo_intoscene, topdown_wo);
-  camera_into.ortho.position = CAMERA_POS_INTOSCENE;
+  auto camera_into             = Camera::make_default(wo_intoscene, topdown_wo);
   camera_into.set_mode(CameraMode::ThirdPerson);
 
-  auto camera_bkwd           = Camera::make_default(wo_backwards, topdown_wo);
-  camera_bkwd.ortho.position = CAMERA_POS_INTOSCENE;
+  auto camera_bkwd             = Camera::make_default(wo_backwards, topdown_wo);
+  camera_bkwd.set_mode(CameraMode::ThirdPerson);
 
-  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     camera_td.clone()};
-  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, camera_td.clone()};
+  auto const pick_camera = [&](RNG& rng) {
+    int const val = rng.gen_int_range(0, 2);
+    LOG_ERROR_SPRINTF("val: %i", val);
+    switch (val) {
+      case 0:
+        return camera_td.clone();
+      case 1:
+        return camera_into.clone();
+      case 2:
+        return camera_bkwd.clone();
+    }
+    std::abort();
+  };
 
-  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,   camera_into.clone()};
-  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, camera_bkwd.clone()};
+  RNG rng;
+  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     pick_camera(rng)};
+  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, pick_camera(rng)};
+
+  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,   pick_camera(rng)};
+  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM, pick_camera(rng)};
 
   auto const ss = window_rect.size();
   return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
@@ -961,17 +968,9 @@ main(int argc, char **argv)
   auto vp_grid           = create_viewport_grid(logger, window_rect);
 
   RNG rng;
-  auto const make_viewport_infos = [](RNG& rng, ViewportGrid const& vp_grid) {
-    auto constexpr NUM_VIEWPORTS = 4;
-    auto const array_of_ints = rng.gen_int_array_range<NUM_VIEWPORTS>(0, NUM_VIEWPORTS - 1);
-
-    auto const fn = [&](auto const i) { return &vp_grid[array_of_ints[i]]; };
-    return common::make_array_from_fn_forwarding_index<array_of_ints.size()>(fn);
-  };
-
-  auto viewport_infos     = make_viewport_infos(rng, vp_grid);
+  auto vis_randomized     = vp_grid.get_random_ordered_infos(rng);
   auto rect_sp            = make_rectangle_program(logger);
-  auto pm_infos           = make_pminfos(logger, rect_sp, rng, viewport_infos);
+  auto pm_infos           = make_pminfos(logger, rect_sp, rng, vis_randomized);
   auto wire_sp            = make_wireframe_program(logger);
   auto cube_ents          = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);
 
