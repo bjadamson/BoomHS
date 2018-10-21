@@ -848,23 +848,23 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   };
 
   auto const     INTOSCENE_FORWARD = -constants::Z_UNIT_VECTOR;
-  auto constexpr INTOSCENE_UP      = constants::Y_UNIT_VECTOR;
+  auto constexpr INTOSCENE_UP      =  constants::Y_UNIT_VECTOR;
 
-  auto const     TOPDOWN_FORWARD = -constants::Y_UNIT_VECTOR;
-  auto constexpr TOPDOWN_UP      =  constants::Z_UNIT_VECTOR;
+  auto const     TOPDOWN_FORWARD   = -constants::Y_UNIT_VECTOR;
+  auto constexpr TOPDOWN_UP        =  constants::Z_UNIT_VECTOR;
 
-  WorldOrientation const topdown_wo{TOPDOWN_FORWARD, TOPDOWN_UP};
-  WorldOrientation const wo_intoscene{INTOSCENE_FORWARD, INTOSCENE_UP};
+  WorldOrientation const topdown_wo  {TOPDOWN_FORWARD,    TOPDOWN_UP};
+  WorldOrientation const wo_intoscene{INTOSCENE_FORWARD,  INTOSCENE_UP};
   WorldOrientation const wo_backwards{-INTOSCENE_FORWARD, INTOSCENE_UP};
 
   auto camera_td           = Camera::make_default(wo_intoscene, topdown_wo);
   camera_td.ortho.position = CAMERA_POS_TOPDOWN;
   camera_td.set_mode(CameraMode::Ortho);
 
-  auto camera_into             = Camera::make_default(wo_intoscene, topdown_wo);
+  auto camera_into = Camera::make_default(wo_intoscene, topdown_wo);
   camera_into.set_mode(CameraMode::ThirdPerson);
 
-  auto camera_bkwd             = Camera::make_default(wo_backwards, topdown_wo);
+  auto camera_bkwd = Camera::make_default(wo_backwards, topdown_wo);
   camera_bkwd.set_mode(CameraMode::ThirdPerson);
 
   auto const pick_camera = [&](RNG& rng) {
@@ -947,6 +947,7 @@ get_mousepos()
 int
 main(int argc, char **argv)
 {
+  char const* TITLE = "Multiple Viewport Raycast";
   bool constexpr FULLSCREEN = false;
 
   auto logger = common::LogFactory::make_stderr();
@@ -955,9 +956,7 @@ main(int argc, char **argv)
     return EXIT_FAILURE;
   };
 
-  auto gl_sdl = TRY_OR(
-      GlSdl::make_default(logger, "Multiple Viewport Raycast", FULLSCREEN, 1024, 768),
-      on_error);
+  auto gl_sdl = TRY_OR(GlSdl::make_default(logger, TITLE, FULLSCREEN, 1024, 768), on_error);
 
   OR::init(logger);
   ENABLE_SCISSOR_TEST_UNTIL_SCOPE_EXIT();

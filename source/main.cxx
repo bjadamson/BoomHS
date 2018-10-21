@@ -161,23 +161,23 @@ start(common::Logger& logger, Engine& engine)
 int
 main(int argc, char* argv[])
 {
+  bool constexpr FULLSCREEN = false;
+  char const* TITLE         = "BoomHS";
+
   auto const time_result = Time::get_time_now();
   if (!time_result) {
     return EXIT_FAILURE;
   }
-  std::string const log_name = time_result.unwrap() + "-BoomHS.log";
+  std::string const log_name = time_result.unwrap() + "-" + std::string{TITLE} + ".log";
   auto              logger   = common::LogFactory::make_default(log_name.c_str());
 
-  bool constexpr FULLSCREEN = false;
   auto const on_error = [&logger](auto const& error) {
     LOG_ERROR(error);
     return EXIT_FAILURE;
   };
 
   LOG_DEBUG("Initializing OpenGL context and SDL window.");
-  auto gl_sdl = TRY_OR(
-      GlSdl::make_default(logger, "BoomHS", FULLSCREEN, 1024, 768),
-      on_error);
+  auto gl_sdl = TRY_OR(GlSdl::make_default(logger, TITLE, FULLSCREEN, 1024, 768), on_error);
 
   auto controller = TRY_OR(SDLControllers::find_attached_controllers(logger), on_error);
   Engine engine{MOVE(gl_sdl.window), MOVE(controller)};
