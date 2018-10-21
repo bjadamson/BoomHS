@@ -735,22 +735,20 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
   auto const screen_height = screen_size.height;
   auto const fs_vp         = vp_grid.fullscreen_viewport();
 
-  auto const draw_2dscene = [&](DrawState& ds, auto& vi, auto& sp) {
+  auto const clear_and_draw_bboxes = [&](DrawState& ds, auto& vi) {
     OR::set_viewport_and_scissor(vi.viewport, screen_height);
     OR::clear_screen(vi.viewport.bg_color());
     auto const& m = vi.matrices;
     draw_bboxes(logger, m.pm, m.vm, cube_ents, wire_sp, ds);
+  };
 
+  auto const& draw_3dscene = clear_and_draw_bboxes;
+  auto const draw_2dscene  = [&](DrawState& ds, auto& vi, auto& sp) {
+    clear_and_draw_bboxes(ds, vi);
     if (MOUSE_BUTTON_PRESSED) {
       OR::set_viewport_and_scissor(fs_vp, screen_height);
       draw_mouserect(logger, mouse_pos, sp, screen_size, fs_vp, ds);
     }
-  };
-  auto const draw_3dscene = [&](DrawState& ds, auto& vi) {
-    OR::set_viewport_and_scissor(vi.viewport, screen_height);
-    OR::clear_screen(vi.viewport.bg_color());
-    auto const& m = vi.matrices;
-    draw_bboxes(logger, m.pm, m.vm, cube_ents, wire_sp, ds);
   };
   auto const draw_pms = [&](auto& ds, auto& pm_infos) {
     for (auto const& pm_info : pm_infos) {
