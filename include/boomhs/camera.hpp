@@ -150,6 +150,7 @@ public:
 
   // fields
   glm::vec3 position;
+  bool flip_rightv = false;
 
   // methods
   // Compute the projection-matrix.
@@ -172,7 +173,7 @@ public:
                               CameraPosition const&, glm::ivec2 const&);
 
   // Compute the view-matrix.
-  static glm::mat4 compute_vm(CameraPosition const&, CameraCenter const&, CameraUp const&);
+  static glm::mat4 compute_vm(CameraPosition const&, CameraCenter const&, CameraUp const&, bool);
 };
 
 class CameraArcball

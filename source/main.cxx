@@ -144,6 +144,7 @@ start(common::Logger& logger, Engine& engine)
   WorldOrientation const wo_2dorthographic{ORTHO_FORWARD, ORTHO_UP};
   auto              camera = Camera::make_default(CameraMode::ThirdPerson, wo_3dperspective,
                                                   wo_2dorthographic);
+  camera.ortho.flip_rightv = true;
 
   RNG rng;
   auto gs = TRY_MOVEOUT(boomhs::create_gamestate(engine, es, wo_3dperspective, camera, rng));

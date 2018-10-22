@@ -41,8 +41,9 @@ static auto constexpr VS   = ViewSettings{AR, FOV};
 // clang-format on
 
 using CameraPosition = glm::vec3;
-static auto CAMERA_POS_TOPDOWN   = CameraPosition{0, 1, 0};
-static auto CAMERA_POS_INTOSCENE = CameraPosition{0, 0, 1};
+static auto CAMERA_POS_TOPDOWN   = CameraPosition{0,  1,  0};
+static auto CAMERA_POS_BOTTOP    = CameraPosition{0, -1,  0};
+static auto CAMERA_POS_INTOSCENE = CameraPosition{0,  0,  1};
 
 enum ScreenSector
 {
@@ -861,19 +862,24 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   auto constexpr PERS_PLUSZ_UP      = constants::Y_UNIT_VECTOR;
   auto const wo_pers_plusz          = WorldOrientation{PERS_MINUSZ_FORWARD, PERS_MINUSZ_UP};
 
-  auto const     ORTHO_TOPDOWN_FORWARD   = -constants::Y_UNIT_VECTOR;
-  auto constexpr ORTHO_TOPDOWN_UP        =  constants::Z_UNIT_VECTOR;
-  auto const wo_ortho_td                 = WorldOrientation{ORTHO_TOPDOWN_FORWARD, ORTHO_TOPDOWN_UP};
+  auto const     ORTHO_TOPDOWN_FORWARD = -constants::Y_UNIT_VECTOR;
+  auto constexpr ORTHO_TOPDOWN_UP      =  constants::Z_UNIT_VECTOR;
+  auto const wo_ortho_td               = WorldOrientation{ORTHO_TOPDOWN_FORWARD, ORTHO_TOPDOWN_UP};
 
-  auto const ORTHO_BOTTOMTOP_FORWARD =  constants::Y_UNIT_VECTOR;
-  auto const ORTHO_BOTTOMTOP_UP      = -constants::Z_UNIT_VECTOR;
-  auto const wo_ortho_bu             = WorldOrientation{ORTHO_BOTTOMTOP_FORWARD, ORTHO_BOTTOMTOP_UP};
+  auto const ORTHO_BOTTOMTOP_FORWARD   =  constants::Y_UNIT_VECTOR;
+  auto const ORTHO_BOTTOMTOP_UP        =  constants::Z_UNIT_VECTOR;
+  auto const wo_ortho_bu               = WorldOrientation{ORTHO_BOTTOMTOP_FORWARD, ORTHO_BOTTOMTOP_UP};
 
+  // TODO: Understand the following better.
+  //
+  // The top-down camera should flip the right unit vector.
+  // The bottom-up camera does NOT flip the right unit vector.
   auto ortho_td = Camera::make_default(CameraMode::Ortho, wo_pers_minusz, wo_ortho_td);
   ortho_td.ortho.position = CAMERA_POS_TOPDOWN;
+  ortho_td.ortho.flip_rightv = true;
 
-  //auto ortho_bu = Camera::make_default(CameraMode::Ortho, wo_pers_plusz, wo_ortho_bu);
-  //ortho_bu.ortho.position = CAMERA_POS_TOPDOWN;
+  auto ortho_bu = Camera::make_default(CameraMode::Ortho, wo_pers_minusz, wo_ortho_bu);
+  ortho_bu.ortho.position = CAMERA_POS_BOTTOP;
 
   auto const tps_fwd = Camera::make_default(CameraMode::ThirdPerson, wo_pers_minusz, wo_ortho_td);
   auto const tps_bkwd = Camera::make_default(CameraMode::ThirdPerson, wo_pers_plusz, wo_ortho_td);
@@ -882,22 +888,19 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   auto const fps_bkwd = Camera::make_default(CameraMode::FPS, wo_pers_plusz, wo_ortho_td);
 
   auto const pick_camera = [&](RNG& rng) {
-    int const val = rng.gen_int_range(0, 4);
+    int const val = rng.gen_int_range(0, 5);
     switch (val) {
       case 0:
-        LOG_ERROR("ortho_td");
         return ortho_td.clone();
       case 1:
-        LOG_ERROR("tps_fwd");
-        return tps_fwd.clone();
+        return ortho_bu.clone();
       case 2:
-        LOG_ERROR("tps_bkwd");
-        return tps_bkwd.clone();
+        return tps_fwd.clone();
       case 3:
-        LOG_ERROR("fps_fwd");
-        return fps_fwd.clone();
+        return tps_bkwd.clone();
       case 4:
-        LOG_ERROR("fps_bkwd");
+        return fps_fwd.clone();
+      case 5:
         return fps_bkwd.clone();
     }
     std::abort();

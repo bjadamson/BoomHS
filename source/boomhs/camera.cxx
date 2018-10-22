@@ -253,22 +253,25 @@ CameraORTHO::calc_vm() const
   auto const  target = pos + eye_forward();
   auto const& up     = eye_up();
 
-  return compute_vm(pos, target, up);
+  return compute_vm(pos, target, up, flip_rightv);
 }
 
 glm::mat4
-CameraORTHO::compute_vm(CameraPosition const& pos, CameraCenter const& center, CameraUp const& up)
+CameraORTHO::compute_vm(CameraPosition const& pos, CameraCenter const& center, CameraUp const& up,
+                        bool const flip_rightv)
 {
   // Calculate the view model matrix.
   auto vm = glm::lookAtRH(pos, center, up);
 
-  // Flip the "right" vector computed by lookAt() so the X-Axis points "right" onto the screen.
+  // Flip the "right" vector computed by lookAt() so the X-Axis points "right" on the user's screen.
   //
   // See implementation of glm::lookAtRH() for more details.
-  auto& sx = vm[0][0];
-  auto& sy = vm[1][0];
-  auto& sz = vm[2][0];
-  math::negate(sx, sy, sz);
+  if (flip_rightv) {
+    auto& sx = vm[0][0];
+    auto& sy = vm[1][0];
+    auto& sz = vm[2][0];
+    math::negate(sx, sy, sz);
+  }
 
   return vm;
 }

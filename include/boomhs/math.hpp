@@ -349,8 +349,7 @@ screen_to_ndc(glm::vec2 const& scoords, RectFloat const& view_rect)
   float const y = ((2.0f * scoords.y) / view_rect.bottom) - 1.0f;
 
   auto const assert_fn = [](float const v) {
-    assert(v <= 1.0f);
-    assert(v >= -1.0f);
+    assert(std::abs(v) <= 1.0f);
   };
   assert_fn(x);
   assert_fn(y);
