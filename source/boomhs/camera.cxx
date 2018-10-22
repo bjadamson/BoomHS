@@ -335,7 +335,7 @@ Camera::next_mode()
 {
   auto const       cast = [](auto const v) { return static_cast<int>(v); };
   CameraMode const m    = static_cast<CameraMode>(cast(mode()) + cast(1));
-  if (CameraMode::MAX == m || CameraMode::FREE_FLOATING == m) {
+  if (CameraMode::MAX == m || CameraMode::Fullscreen_2DUI == m) {
     set_mode(static_cast<CameraMode>(0));
   }
   else {
