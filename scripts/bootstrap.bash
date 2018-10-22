@@ -46,6 +46,7 @@ set(PROJECT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(EXTERNAL_DIR ${PROJECT_DIR}/external)
 set(TOOLS_DIRECTORY ${PROJECT_DIR}/tools)
 set(TEST_DIRECTORY ${PROJECT_DIR}/test)
+set(DEMO_DIRECTORY ${PROJECT_DIR}/demo)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
 set(IMGUI_INCLUDE_DIR    "${EXTERNAL_DIR}/imgui/include/imgui")
@@ -236,18 +237,18 @@ target_include_directories(BUILD_POSTPROCESSING PUBLIC ${EXTERNAL_INCLUDE_DIRS})
 target_link_libraries(     BUILD_POSTPROCESSING stdc++ c++experimental)
 
 ###################################################################################################
-## COMPILE -- Raycast Testing within Multiple Viewports Mouse Selection Test
+## COMPILE -- Raycast/Boxselection && Multiple Viewports Mouse Selection Demo
 ##
-## Test Application for developing/figuring out raycasting and selection testing.
-add_executable(raycast_with_viewports ${TEST_DIRECTORY}/raycast_with_viewports.cxx)
+## Application for developing/testing out raycasting and mouse box selection demo.
+add_executable(viewport_mouse_raycast_boxselection ${DEMO_DIRECTORY}/viewports_and_mouse_raycast_boxselection.cxx)
 
-target_link_libraries(raycast_with_viewports
+target_link_libraries(viewport_mouse_raycast_boxselection
   PROJECT_SOURCE_CODE
   ${SYSTEM_LIBS}
   ${EXTERNAL_LIBS}
   )
 
-target_include_directories(raycast_with_viewports PUBLIC)
+target_include_directories(viewport_mouse_raycast_boxselection PUBLIC)
 
 ###################################################################################################
 ## COMPILE -- Memory BUG I want to make sure doesn't show up in future tests.

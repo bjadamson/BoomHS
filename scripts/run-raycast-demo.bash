@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 source "scripts/common-static-analysis.bash"
 
-${BUILD}/bin/raycast_with_viewports
+${BUILD}/bin/viewport_mouse_raycast_boxselection

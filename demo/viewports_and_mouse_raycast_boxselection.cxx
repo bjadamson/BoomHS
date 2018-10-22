@@ -23,6 +23,26 @@
 
 #include <cstdlib>
 
+//
+// A test application used to develop/maintain code regarding muliple viewports and mouse selection
+// using different camera perspectives.
+//
+// This application was developed as a sandbox application for implementing the above features.
+//
+// Summary:
+//          Splits the screen into multiple viewports, rendering the same scene of 3dimensional
+//          cubes from multiple camera positions/types (orthographic/perspective).
+//
+//          + If the user clicks and holds the left mouse button down within a orthographic
+//          viewports a hollow rectangle is drawn from the point where the user clicked the mouse
+//          initially and where the cursor is currently. This is used to test mouse box selection.
+//
+//          + If the user moves the mouse over a cube within one of the perspective viewports the
+//          cube all of the cubes the mouse is over change color. This is used to test mouse
+//          raycasting.
+//
+//          + If the user uses the arrow keys the entities within the scene are translated
+//          accordingly.
 using namespace boomhs;
 using namespace boomhs::math;
 using namespace common;
