@@ -68,7 +68,7 @@ FrameState::from_camera_with_mode(EngineState& es, ZoneState& zs, Camera const& 
                                   CameraMode const mode, ViewSettings const& vs,
                                   Frustum const& frustum)
 {
-  auto const camera_world_pos = camera.world_position();
+  auto const camera_world_pos = camera.position();
   return make_framestate(es, zs, camera, vs, frustum, camera_world_pos, mode);
 }
 
@@ -76,7 +76,7 @@ FrameState
 FrameState::from_camera_for_2dui_overlay(EngineState& es, ZoneState& zs, Camera const& camera,
                                          ViewSettings const& vs, Frustum const& frustum)
 {
-  auto const camera_world_pos = camera.world_position();
+  auto const camera_world_pos = camera.position();
   return make_framestate(es, zs, camera, vs, frustum, camera_world_pos,
                          CameraMode::Fullscreen_2DUI);
 }
@@ -85,7 +85,7 @@ FrameState
 FrameState::from_camera(EngineState& es, ZoneState& zs, Camera const& cam, ViewSettings const& vs,
                         Frustum const& frustum)
 {
-  auto const pos = cam.world_position();
+  auto const pos = cam.position();
   return from_camera_withposition(es, zs, cam, vs, frustum, pos);
 }
 

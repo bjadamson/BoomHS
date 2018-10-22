@@ -156,7 +156,7 @@ public:
     // By inverting the camera's Y position before computing the view matrices, we can render the
     // world as if the camera was beneath the water's surface. This is how computing the reflection
     // texture works.
-    glm::vec3 camera_pos = camera.world_position();
+    glm::vec3 camera_pos = camera.position();
     camera_pos.y         = -camera_pos.y;
 
     auto fs = boomhs::FrameState::from_camera_withposition(

@@ -123,7 +123,7 @@ CameraArcball::local_position() const
 }
 
 glm::vec3
-CameraArcball::world_position() const
+CameraArcball::position() const
 {
   return target_position() + local_position();
 }
@@ -191,7 +191,7 @@ CameraFPS::rotate_radians(float dx, float dy, FrameTime const& ft)
 }
 
 glm::vec3
-CameraFPS::world_position() const
+CameraFPS::position() const
 {
   return transform().translation;
 }
@@ -417,34 +417,6 @@ Camera::eye_forward() const
 glm::vec3
 Camera::eye_up() const
 {
-  return world_up() * get_target().orientation();
-}
-
-glm::vec3
-Camera::world_forward() const
-{
-  switch (mode()) {
-  case CameraMode::FPS:
-    return fps.eye_forward();
-
-  case CameraMode::Ortho:
-  case CameraMode::Fullscreen_2DUI:
-    return ortho.eye_forward();
-
-  case CameraMode::ThirdPerson:
-    return arcball.eye_forward();
-
-  case CameraMode::FREE_FLOATING:
-  case CameraMode::MAX:
-    break;
-  }
-  std::abort();
-  return ZERO;
-}
-
-glm::vec3
-Camera::world_up() const
-{
   switch (mode()) {
   case CameraMode::FPS:
     return fps.eye_up();
@@ -465,18 +437,18 @@ Camera::world_up() const
 }
 
 glm::vec3
-Camera::world_position() const
+Camera::position() const
 {
   switch (mode()) {
   case CameraMode::FPS:
-    return fps.world_position();
+    return fps.position();
 
   case CameraMode::Ortho:
   case CameraMode::Fullscreen_2DUI:
     return ortho.position;
 
   case CameraMode::ThirdPerson:
-    return arcball.world_position();
+    return arcball.position();
 
   case CameraMode::FREE_FLOATING:
   case CameraMode::MAX:

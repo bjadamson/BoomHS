@@ -84,9 +84,7 @@ struct ViewportInfo
               glm::mat4 const& pers_pm)
   {
     matrices.pm = camera.calc_pm(VS, frustum, window_rect.size());
-
-    // TODO: it seems the mouse raycasting doesn't work quite right with this next change.??
-    matrices.vm = camera.calc_vm(camera.world_position());
+    matrices.vm = camera.calc_vm(camera.position());
   }
 };
 
@@ -500,7 +498,7 @@ cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mou
   auto const& pm       = m.pm;
   auto const& vm       = m.vm;
 
-  auto const& camera_pos = vi.camera.world_position();
+  auto const& camera_pos = vi.camera.position();
   auto const dir = Raycast::calculate_ray_into_screen(mouse_pos, pm, vm, view_rect);
   Ray const ray{camera_pos, dir};
   for (auto &cube_ent : cube_ents) {
@@ -854,47 +852,63 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
     LOC::LIGHT_GOLDENROD_YELLOW
   };
 
-  auto const     INTOSCENE_FORWARD = -constants::Z_UNIT_VECTOR;
-  auto constexpr INTOSCENE_UP      =  constants::Y_UNIT_VECTOR;
+  // pers => perspective
+  auto const     PERS_MINUSZ_FORWARD = -constants::Z_UNIT_VECTOR;
+  auto constexpr PERS_MINUSZ_UP      =  constants::Y_UNIT_VECTOR;
+  auto const wo_pers_minusz          = WorldOrientation{PERS_MINUSZ_FORWARD, PERS_MINUSZ_UP};
 
-  auto const     TOPDOWN_FORWARD   = -constants::Y_UNIT_VECTOR;
-  auto constexpr TOPDOWN_UP        =  constants::Z_UNIT_VECTOR;
+  auto const     PERS_PLUSZ_FORWARD = constants::Z_UNIT_VECTOR;
+  auto constexpr PERS_PLUSZ_UP      = constants::Y_UNIT_VECTOR;
+  auto const wo_pers_plusz          = WorldOrientation{PERS_MINUSZ_FORWARD, PERS_MINUSZ_UP};
 
-  WorldOrientation const topdown_wo  {TOPDOWN_FORWARD,    TOPDOWN_UP};
-  WorldOrientation const wo_intoscene{INTOSCENE_FORWARD,  INTOSCENE_UP};
-  WorldOrientation const wo_backwards{-INTOSCENE_FORWARD, INTOSCENE_UP};
+  auto const     ORTHO_TOPDOWN_FORWARD   = -constants::Y_UNIT_VECTOR;
+  auto constexpr ORTHO_TOPDOWN_UP        =  constants::Z_UNIT_VECTOR;
+  auto const wo_ortho_td                 = WorldOrientation{ORTHO_TOPDOWN_FORWARD, ORTHO_TOPDOWN_UP};
 
-  auto camera_td = Camera::make_default(CameraMode::Ortho, wo_intoscene, topdown_wo);
-  camera_td.ortho.position = CAMERA_POS_TOPDOWN;
+  auto const ORTHO_BOTTOMTOP_FORWARD =  constants::Y_UNIT_VECTOR;
+  auto const ORTHO_BOTTOMTOP_UP      = -constants::Z_UNIT_VECTOR;
+  auto const wo_ortho_bu             = WorldOrientation{ORTHO_BOTTOMTOP_FORWARD, ORTHO_BOTTOMTOP_UP};
 
-  auto camera_into = Camera::make_default(CameraMode::ThirdPerson, wo_intoscene, topdown_wo);
-  //camera_into.ortho.position = CAMERA_POS_INTOSCENE;
+  auto ortho_td = Camera::make_default(CameraMode::Ortho, wo_pers_minusz, wo_ortho_td);
+  ortho_td.ortho.position = CAMERA_POS_TOPDOWN;
 
-  auto camera_bkwd = Camera::make_default(CameraMode::ThirdPerson, wo_backwards, topdown_wo);
-  //camera_bkwd.ortho.position = CAMERA_POS_INTOSCENE;
+  //auto ortho_bu = Camera::make_default(CameraMode::Ortho, wo_pers_plusz, wo_ortho_bu);
+  //ortho_bu.ortho.position = CAMERA_POS_TOPDOWN;
+
+  auto const tps_fwd = Camera::make_default(CameraMode::ThirdPerson, wo_pers_minusz, wo_ortho_td);
+  auto const tps_bkwd = Camera::make_default(CameraMode::ThirdPerson, wo_pers_plusz, wo_ortho_td);
+
+  auto const fps_fwd = Camera::make_default(CameraMode::FPS, wo_pers_minusz, wo_ortho_td);
+  auto const fps_bkwd = Camera::make_default(CameraMode::FPS, wo_pers_plusz, wo_ortho_td);
 
   auto const pick_camera = [&](RNG& rng) {
-    int const val = rng.gen_int_range(0, 2);
+    int const val = rng.gen_int_range(0, 4);
     switch (val) {
       case 0:
-        LOG_ERROR("camera_td");
-        return camera_td.clone();
+        LOG_ERROR("ortho_td");
+        return ortho_td.clone();
       case 1:
-        LOG_ERROR("camera_into");
-        return camera_into.clone();
+        LOG_ERROR("tps_fwd");
+        return tps_fwd.clone();
       case 2:
-        LOG_ERROR("camera_bkwd");
-        return camera_bkwd.clone();
+        LOG_ERROR("tps_bkwd");
+        return tps_bkwd.clone();
+      case 3:
+        LOG_ERROR("fps_fwd");
+        return fps_fwd.clone();
+      case 4:
+        LOG_ERROR("fps_bkwd");
+        return fps_bkwd.clone();
     }
     std::abort();
   };
 
   RNG rng;
-  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     camera_into.clone()};
-  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, camera_bkwd.clone()};
+  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     pick_camera(rng)};
+  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, pick_camera(rng)};
 
-  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,    camera_td.clone()};
-  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM,  camera_td.clone()};
+  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,    pick_camera(rng)};
+  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM,  pick_camera(rng)};
 
   auto const ss = window_rect.size();
   return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
@@ -980,6 +994,7 @@ main(int argc, char **argv)
   auto constexpr INTOSCENE_UP      =  constants::Y_UNIT_VECTOR;
   WorldOrientation const wo_intoscene{INTOSCENE_FORWARD,  INTOSCENE_UP};
   WorldObject EMPTY_WO{eid, registry, wo_intoscene};
+  registry.get<Transform>(eid).translation = CAMERA_POS_INTOSCENE;
 
   auto vp_grid = create_viewport_grid(logger, window_rect);
   for (auto& vi : vp_grid) {

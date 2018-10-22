@@ -192,7 +192,7 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camer
   }
 
   Transform camera_transform;
-  camera_transform.translation = camera.world_position();
+  camera_transform.translation = camera.position();
   auto const model             = camera_transform.model_matrix();
 
   if (es.draw_view_frustum) {

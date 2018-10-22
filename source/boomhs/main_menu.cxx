@@ -656,8 +656,8 @@ draw_camera_window(Camera& camera, Player& player, Frustum& frustum)
       ImGui::Text("Cartesian Coordinates\t%s", glm::to_string(c).c_str());
     }
     {
-      auto const text = glm::to_string(tp_camera.world_position());
-      ImGui::Text("Camera world position :\t%s", text.c_str());
+      auto const text = glm::to_string(tp_camera.position());
+      ImGui::Text("Camera position :\t%s", text.c_str());
     }
     {
       auto const tp = glm::to_string(tp_camera.target_position());

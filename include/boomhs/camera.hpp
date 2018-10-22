@@ -127,7 +127,7 @@ public:
   // methods
   CameraFPS& rotate_radians(float, float, FrameTime const&);
 
-  glm::vec3 world_position() const;
+  glm::vec3 position() const;
   glm::mat4 calc_pm(ViewSettings const&, Frustum const&) const;
   glm::mat4 calc_vm(glm::vec3 const&) const;
 
@@ -185,9 +185,10 @@ class CameraArcball
 
   // methods
   void zoom(float, FrameTime const&);
+  glm::vec3 local_position() const;
 
   auto eye_forward() const {
-    return glm::normalize(world_position() - target_position());
+    return glm::normalize(position() - target_position());
   }
   auto eye_up() const { return up_inverted_ ? -world_up_ : world_up_; }
 
@@ -214,8 +215,7 @@ public:
 
   CameraArcball& rotate_radians(float, float, FrameTime const&);
 
-  glm::vec3 local_position() const;
-  glm::vec3 world_position() const;
+  glm::vec3 position() const;
 
   glm::vec3 target_position() const;
 
@@ -260,9 +260,7 @@ public:
   glm::vec3 eye_left() const { return -eye_right(); }
   glm::vec3 eye_right() const { return glm::normalize(glm::cross(eye_forward(), eye_up())); }
 
-  glm::vec3 world_forward() const;
-  glm::vec3 world_up() const;
-  glm::vec3 world_position() const;
+  glm::vec3 position() const;
 
   auto const& view_settings_ref() const { return view_settings_; }
   auto&       view_settings_ref() { return view_settings_; }
