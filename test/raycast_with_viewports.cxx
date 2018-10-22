@@ -890,11 +890,11 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   };
 
   RNG rng;
-  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     pick_camera(rng)};
-  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, pick_camera(rng)};
+  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     camera_into.clone()};
+  ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, camera_bkwd.clone()};
 
-  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,    pick_camera(rng)};
-  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM,  pick_camera(rng)};
+  ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,    camera_td.clone()};
+  ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM,  camera_td.clone()};
 
   auto const ss = window_rect.size();
   return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};

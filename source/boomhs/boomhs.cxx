@@ -506,7 +506,8 @@ floornumber_to_levelfilename(int const floor_number)
 }
 
 Result<GameState, std::string>
-create_gamestate(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
+create_gamestate(Engine& engine, EngineState& es, WorldOrientation const& wo, Camera& camera,
+                 RNG& rng)
 {
   auto& logger = es.logger;
 
@@ -526,7 +527,7 @@ create_gamestate(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
     auto const  heightmap = TRY_MOVEOUT(heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
 
     auto gendata = StartAreaGenerator::gen_level(logger, registry, rng, sps, ttable, material_table,
-                                                 heightmap, camera.orientation_ref());
+                                                 heightmap, wo);
 
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
     zstates.emplace_back(MOVE(zs));

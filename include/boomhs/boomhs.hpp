@@ -16,9 +16,10 @@ class FrameTime;
 class Camera;
 class Engine;
 class RNG;
+class WorldOrientation;
 
 Result<GameState, std::string>
-create_gamestate(Engine&, EngineState&, Camera&, RNG&);
+create_gamestate(Engine&, EngineState&, WorldOrientation const&, Camera&, RNG&);
 
 void
 init_gamestate_inplace(GameState&, Camera&);

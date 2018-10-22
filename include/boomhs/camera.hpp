@@ -8,6 +8,9 @@
 #include <common/log.hpp>
 #include <common/type_macros.hpp>
 
+// TODO
+#include <iostream>
+
 namespace gl_sdl
 {
 class SDLWindow;
@@ -109,13 +112,13 @@ class CameraFPS
   auto&       transform() { return target().get().transform(); }
   auto const& transform() const { return target().get().transform(); }
 
-  auto const& forward() const { return orientation_.forward; }
-  auto const& up() const { return orientation_.up; }
+  auto eye_forward() const { return orientation_.forward * transform().rotation; }
+  auto const& eye_up() const { return orientation_.up; }
 
   friend class Camera;
   COPY_DEFAULT(CameraFPS);
 public:
-  CameraFPS(CameraTarget&, WorldOrientation const&);
+  CameraFPS(WorldOrientation const&);
   MOVE_DEFAULT(CameraFPS);
 
   // fields
@@ -142,7 +145,7 @@ class CameraORTHO
   friend class Camera;
 
 public:
-  CameraORTHO(WorldOrientation const&);
+  CameraORTHO(WorldOrientation const&, glm::vec3 const&);
   MOVE_DEFAULT(CameraORTHO);
 
   // fields
@@ -155,8 +158,8 @@ public:
   // Compute the view-matrix.
   glm::mat4 calc_vm() const;
 
-  auto const& forward() const { return orientation_.forward; }
-  auto const& up() const { return orientation_.up; }
+  auto const& eye_forward() const { return orientation_.forward; }
+  auto const& eye_up() const { return orientation_.up; }
 
   void zoom_in(glm::vec2 const&, FrameTime const&);
   void zoom_out(glm::vec2 const&, FrameTime const&);
@@ -177,15 +180,16 @@ class CameraArcball
   CameraTarget*        target_;
   SphericalCoordinates coordinates_;
 
-  WorldOrientation     orientation_;
+  bool up_inverted_;
   glm::vec3            world_up_;
 
   // methods
   void zoom(float, FrameTime const&);
 
-  auto forward() const { return orientation_.forward; }
-  auto up() const { return orientation_.up; }
-  auto orientation() const { return orientation_; }
+  auto eye_forward() const {
+    return glm::normalize(world_position() - target_position());
+  }
+  auto eye_up() const { return up_inverted_ ? -world_up_ : world_up_; }
 
   CAMERA_CLASS_TARGET_IMPL
 #undef CAMERA_CLASS_TARGET_IMPL
@@ -195,7 +199,7 @@ class CameraArcball
   COPY_DEFAULT(CameraArcball);
 
 public:
-  CameraArcball(CameraTarget&, WorldOrientation const&);
+  CameraArcball(glm::vec3 const&);
   MOVE_DEFAULT(CameraArcball);
 
   // fields
@@ -230,7 +234,7 @@ class Camera
   COPY_DEFAULT(Camera);
 public:
   MOVE_DEFAULT(Camera);
-  Camera(CameraMode, ViewSettings&&, WorldOrientation const&, WorldOrientation const&);
+  Camera(CameraMode, ViewSettings&&, CameraArcball&&, CameraFPS&&, CameraORTHO&&);
 
   // public fields
   CameraArcball arcball;
@@ -259,7 +263,6 @@ public:
   glm::vec3 world_forward() const;
   glm::vec3 world_up() const;
   glm::vec3 world_position() const;
-  WorldOrientation const& orientation_ref() const;
 
   auto const& view_settings_ref() const { return view_settings_; }
   auto&       view_settings_ref() { return view_settings_; }
