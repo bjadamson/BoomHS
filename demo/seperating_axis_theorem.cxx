@@ -54,10 +54,16 @@ static auto constexpr AR  = AspectRatio{4.0f, 3.0f};
 static int constexpr NEAR = -1.0;
 static int constexpr FAR  = 1.0f;
 
+static int constexpr WIDTH     = 1024;
+static int constexpr HEIGHT    = 768;
+static auto constexpr VIEWPORT = Viewport{0, 0, WIDTH, HEIGHT};
+
 struct PmRect
 {
   RectFloat       rect;
   DrawInfo        di;
+
+  Transform transform;
 
   bool selected = false;
 
@@ -73,40 +79,9 @@ struct ViewportPmRects
 {
   std::vector<PmRect> rects;
   Viewport            viewport;
+  ShaderProgram*      sp;
 
   MOVE_DEFAULT_ONLY(ViewportPmRects);
-};
-
-struct PmViewports
-{
-  std::vector<ViewportPmRects> viewports;
-
-  MOVE_DEFAULT_ONLY(PmViewports);
-
-  INDEX_OPERATOR_FNS(viewports);
-  BEGIN_END_FORWARD_FNS(viewports);
-
-  // TODO: DON'T HAVE TO WRITE MANUALLY.
-  auto size() const { return viewports.size(); }
-};
-
-struct PmDrawInfo
-{
-  ViewportPmRects  vp_rects;
-  ShaderProgram&   sp;
-};
-
-struct PmDrawInfos
-{
-  std::vector<PmDrawInfo> infos;
-  DEFINE_VECTOR_LIKE_WRAPPER_FNS(infos);
-};
-
-struct CameraMatrices
-{
-  glm::mat4 pm, vm;
-
-  MOVE_DEFAULT_ONLY(CameraMatrices);
 };
 
 auto
@@ -127,22 +102,6 @@ make_rectangle_program(common::Logger& logger)
   auto va = make_vertex_attribute(apis);
   return make_shader_program(logger, "2dcolor.vert", "2dcolor.frag", MOVE(va))
     .expect_moveout("Error loading 2dcolor shader program");
-}
-
-void
-draw_rectangle_pm(common::Logger& logger, ScreenSize const& ss, Frustum const& frustum,
-                  ShaderProgram& sp, DrawInfo& dinfo, Color const& color, GLenum const draw_mode,
-                  DrawState& ds)
-{
-  auto constexpr ZOOM = glm::ivec2{0};
-  auto const pm = CameraORTHO::compute_pm(AR, frustum, ss, constants::ZERO, ZOOM);
-
-  BIND_UNTIL_END_OF_SCOPE(logger, sp);
-  sp.set_uniform_mat4(logger,  "u_projmatrix", pm);
-  sp.set_uniform_color(logger, "u_color", color);
-
-  BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
-  OR::draw_2delements(logger, draw_mode, sp, dinfo.num_indices());
 }
 
 bool
@@ -190,17 +149,18 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode)
 
 void
 process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
-                    PmDrawInfo& pmdi)
+                    ViewportPmRects& vp_rects)
 {
   auto const mouse_pos   = glm::ivec2{motion.x, motion.y};
 
-  for (auto& pm_rect : pmdi.vp_rects.rects) {
+  for (auto& pm_rect : vp_rects.rects) {
     pm_rect.selected = collision::intersects(mouse_pos, pm_rect.rect);
   }
 }
 
 bool
-process_event(common::Logger& logger, SDL_Event& event, PmDrawInfo& pmdi, FrameTime const& ft)
+process_event(common::Logger& logger, SDL_Event& event, ViewportPmRects& vp_rects,
+              FrameTime const& ft)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
 
@@ -211,7 +171,7 @@ process_event(common::Logger& logger, SDL_Event& event, PmDrawInfo& pmdi, FrameT
     }
   }
   else if (event.type == SDL_MOUSEMOTION) {
-    process_mousemotion(logger, event.motion, pmdi);
+    process_mousemotion(logger, event.motion, vp_rects);
   }
   return event.type == SDL_QUIT;
 }
@@ -219,16 +179,8 @@ process_event(common::Logger& logger, SDL_Event& event, PmDrawInfo& pmdi, FrameT
 auto
 make_pminfo(common::Logger& logger, Viewport const& viewport, ShaderProgram& sp, RNG &rng)
 {
-  auto const make_perspective_rect = [&](Viewport const& viewport, glm::ivec2 const& offset) {
-    auto const gen = [&rng](float const val) { return rng.gen_float_range(val, val + 350); };
-
-    auto const center = viewport.center();
-    auto const left   = viewport.left()  + gen(offset.x);
-    auto const right  = viewport.right() - gen(offset.x);
-
-    auto const top    = viewport.top()    + gen(offset.y);
-    auto const bottom = viewport.bottom() - gen(offset.y);
-    return RectFloat{left, top, right, bottom};
+  auto const make_perspective_rect = [&](glm::ivec2 const& offset) {
+    return RectFloat{-50, -50, 50, 50};
   };
 
   auto const& va = sp.va();
@@ -237,26 +189,69 @@ make_pminfo(common::Logger& logger, Viewport const& viewport, ShaderProgram& sp,
 
     auto di = make_perspective_rect_gpuhandle(logger, r, va);
     vector_pms.emplace_back(PmRect{r, MOVE(di)});
-    return ViewportPmRects{MOVE(vector_pms), viewport};
+
+    di = make_perspective_rect_gpuhandle(logger, r, va);
+    vector_pms.emplace_back(PmRect{r, MOVE(di)});
+    return ViewportPmRects{MOVE(vector_pms), viewport, &sp};
   };
 
-  auto const prect     = make_perspective_rect(viewport, IVEC2{50});
-  auto pm0 = make_viewportpm_rects(prect, viewport);
-  return PmDrawInfo{MOVE(pm0), sp};
+  auto const prect = make_perspective_rect(IVEC2{50});
+  auto vppm_rects  = make_viewportpm_rects(prect, viewport);
+
+  {
+    glm::quat const q = glm::angleAxis(glm::radians(45.0f), constants::Z_UNIT_VECTOR);
+    auto const rmatrix = glm::toMat4(q);
+
+    for (auto& rect : vppm_rects.rects) {
+      rect.transform.translation = glm::vec3{rng.gen_3dposition(VEC3{0}, VEC3{500})};
+      rect.transform.translation.z = 0.0f;
+      rect.transform.rotation = rmatrix;
+    }
+  }
+
+  return vppm_rects;
 }
 
-auto
-get_mousepos()
+void
+draw_rectangle_pm(common::Logger& logger, Frustum const& frustum, ShaderProgram& sp,
+                  PmRect& pm_rect, glm::mat4 const& pm,
+                  Color const& color, GLenum const draw_mode, DrawState& ds)
 {
-  int mouse_x, mouse_y;
-  SDL_GetMouseState(&mouse_x, &mouse_y);
-  return glm::ivec2{mouse_x, mouse_y};
+  auto& dinfo = pm_rect.di;
+
+  BIND_UNTIL_END_OF_SCOPE(logger, sp);
+
+  auto const rmatrix = glm::toMat4(pm_rect.transform.rotation);
+  auto const tmatrix = glm::translate(glm::mat4{}, pm_rect.transform.translation);
+  auto const model = tmatrix * rmatrix;
+  sp.set_uniform_mat4(logger,  "u_projmatrix", pm * model);
+  sp.set_uniform_color(logger, "u_color", color);
+
+  BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
+  OR::draw_2delements(logger, draw_mode, sp, dinfo.num_indices());
 }
+
+void
+draw_pm(common::Logger& logger, Frustum const& frustum, DrawState& ds, ViewportPmRects& vp_rects)
+{
+  auto const screen_height = VIEWPORT.height();
+
+  auto const& viewport = vp_rects.viewport;
+  OR::set_viewport_and_scissor(viewport, screen_height);
+
+  auto constexpr ZOOM = glm::ivec2{0};
+  auto const pm = CameraORTHO::compute_pm(AR, frustum, viewport.size(), constants::ZERO, ZOOM);
+
+  for (auto& pm_rect : vp_rects.rects) {
+    auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
+    draw_rectangle_pm(logger, frustum, *vp_rects.sp, pm_rect, pm, color, GL_TRIANGLES, ds);
+  }
+};
 
 int
 main(int argc, char **argv)
 {
-  char const* TITLE = "Multiple Viewport Raycast";
+  char const* TITLE = "Seperating Axis Theorem";
   bool constexpr FULLSCREEN = false;
 
   auto logger = common::LogFactory::make_stderr();
@@ -264,10 +259,6 @@ main(int argc, char **argv)
     LOG_ERROR(error);
     return EXIT_FAILURE;
   };
-
-  int constexpr WIDTH = 1024;
-  int constexpr HEIGHT = 768;
-  auto constexpr VIEWPORT = Viewport{0, 0, WIDTH, HEIGHT};
 
   auto gl_sdl = TRY_OR(GlSdl::make_default(logger, TITLE, FULLSCREEN, WIDTH, HEIGHT), on_error);
 
@@ -281,7 +272,7 @@ main(int argc, char **argv)
   RNG rng;
   auto rect_sp            = make_rectangle_program(logger);
 
-  auto pm_info            = make_pminfo(logger, VIEWPORT, rect_sp, rng);
+  auto vp_rects           = make_pminfo(logger, VIEWPORT, rect_sp, rng);
   glm::mat4 const pers_pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
 
   FrameCounter fcounter;
@@ -292,28 +283,12 @@ main(int argc, char **argv)
   while (!quit) {
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
-      quit = process_event(logger, event, pm_info, ft);
+      quit = process_event(logger, event, vp_rects, ft);
     }
 
-    auto const mouse_pos = get_mousepos();
-
-    auto const screen_size = VIEWPORT.size();
-    auto const screen_height = VIEWPORT.height();
-    auto const draw_pm = [&](auto& ds, auto& pm_info) {
-      auto& vi             = pm_info.vp_rects;
-      auto const& viewport = vi.viewport;
-      OR::set_viewport_and_scissor(viewport, screen_height);
-      for (auto& pm_rect : vi.rects) {
-        auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
-
-        auto const pm = CameraORTHO::compute_pm(AR, frustum, screen_size, constants::ZERO, glm::ivec2{0});
-        draw_rectangle_pm(logger, viewport.size(), frustum, pm_info.sp, pm_rect.di, color,
-                         GL_TRIANGLES, ds);
-      }
-    };
-
     DrawState ds;
-    draw_pm(ds, pm_info);
+    OR::clear_screen(LOC::DEEP_SKY_BLUE);
+    draw_pm(logger, frustum, ds, vp_rects);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());

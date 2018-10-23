@@ -92,6 +92,14 @@ public:
     return std::array<float, 3>{x, y, z};
   }
 
+  auto gen_3dposition(glm::vec3 const& lower, glm::vec3 const& upper)
+  {
+    auto const x = gen_position({lower[0], upper[0]});
+    auto const y = gen_position({lower[1], upper[1]});
+    auto const z = gen_position({lower[2], upper[2]});
+    return glm::vec3{x, y, z};
+  }
+
   auto gen_3dposition_above_ground()
   {
     auto const LOWER = std::array<float, 3>{0, 1, 0};
